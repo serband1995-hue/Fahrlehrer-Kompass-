@@ -6,11 +6,11 @@
 <meta name="theme-color" content="#0c1410">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-<meta name="apple-mobile-web-app-title" content="S.A. Akademie">
+<meta name="apple-mobile-web-app-title" content="Fahrlehrer-Kompass">
 <link rel="manifest" href="manifest.json">
 <link rel="icon" href="icon-192.png" type="image/png">
 <link rel="apple-touch-icon" href="apple-touch-icon.png">
-<title>S.A. Akademie</title>
+<title>Fahrlehrer-Kompass</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Anton&family=Kaushan+Script&family=Playfair+Display:ital,wght@0,400;0,500;0,600;0,700;1,500;1,600&family=Barlow:wght@400;500;600;700;800&display=swap" rel="stylesheet">
@@ -1148,8 +1148,8 @@ input,select,textarea{font-family:inherit;font-size:15px;color:var(--txt);}
 <body>
 
 <div id="splash">
-  <img id="splashLogo" alt="S.A. Akademie">
-  <div class="sp-name">S.A. <b>Akademie</b></div>
+  <img id="splashLogo" alt="Fahrlehrer-Kompass">
+  <div class="sp-name">Fahrlehrer-<b>Kompass</b></div>
   <div class="sp-quote" id="spQuote"></div>
 </div>
 
@@ -1161,7 +1161,7 @@ input,select,textarea{font-family:inherit;font-size:15px;color:var(--txt);}
       </button>
     </div>
     <button class="tb-logo-btn" id="homeBtn" aria-label="Zum Dashboard">
-      <span class="tb-logo-wrap"><img id="brandLogo" alt="S.A. Akademie"></span>
+      <span class="tb-logo-wrap"><img id="brandLogo" alt="Fahrlehrer-Kompass"></span>
     </button>
     <div class="tb-side tb-right">
       <div class="tb-title" id="tbTitle">Schüler</div>
@@ -1178,10 +1178,10 @@ input,select,textarea{font-family:inherit;font-size:15px;color:var(--txt);}
 <aside class="drawer" id="drawer">
   <div class="drawer-head">
     <div class="brand">
-      <div class="brand-mark"><img id="drawerLogo" alt="S.A. Akademie"></div>
+      <div class="brand-mark"><img id="drawerLogo" alt="Fahrlehrer-Kompass"></div>
       <div>
         <div class="brand-eye">Fahrlehrer Serband</div>
-        <div class="brand-script">S.A. <b>Akademie</b></div>
+        <div class="brand-script">Fahrlehrer-<b>Kompass</b></div>
       </div>
     </div>
   </div>
@@ -1218,7 +1218,7 @@ input,select,textarea{font-family:inherit;font-size:15px;color:var(--txt);}
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v4M12 17v4M3 12h4M17 12h4M5.6 5.6l2.8 2.8M15.6 15.6l2.8 2.8M5.6 18.4l2.8-2.8M15.6 8.4l2.8-2.8"/></svg>
       Datensicherung</button>
   </nav>
-  <div class="drawer-foot">Serband App · v1.0 · läuft offline auf deinem Gerät</div>
+  <div class="drawer-foot">Fahrlehrer-Kompass · v1.0 · läuft offline auf deinem Gerät</div>
 </aside>
 
 <div id="printRoot"></div>
@@ -3140,7 +3140,7 @@ function routeSettings(){
     try{
       const blob=new Blob([JSON.stringify({app:"serband",version:1,datum:new Date().toISOString(),data:DB},null,1)],{type:"application/json"});
       const a=document.createElement("a");a.href=URL.createObjectURL(blob);
-      a.download="Serband_Backup_"+heute().d.replace(/\./g,"-")+".json";a.click();
+      a.download="Fahrlehrer-Kompass_Backup_"+heute().d.replace(/\./g,"-")+".json";a.click();
       setTimeout(()=>URL.revokeObjectURL(a.href),1000);toast("Backup erstellt");
     }catch(e){toast("Backup nicht möglich");}});
   $("#impBtn").addEventListener("click",()=>$("#impFile").click());
@@ -4877,7 +4877,7 @@ function routeArchive(){
 /* ---------- PDF / Druck ---------- */
 function printDoc(title,bodyHtml){
   const root=$("#printRoot"); if(!root){toast("Druck nicht möglich");return;}
-  root.innerHTML=`<div class="pr-doc"><div class="pr-top"><div class="pr-brand">Fahrschule Boost · Fahrlehrer Serband</div><div class="pr-title">${title}</div></div>${bodyHtml}<div class="pr-foot">Erstellt am ${isoDE(todayISO())} · Serband App</div></div>`;
+  root.innerHTML=`<div class="pr-doc"><div class="pr-top"><div class="pr-brand">Fahrschule Boost · Fahrlehrer Serband</div><div class="pr-title">${title}</div></div>${bodyHtml}<div class="pr-foot">Erstellt am ${isoDE(todayISO())} · Fahrlehrer-Kompass</div></div>`;
   document.body.classList.add("printing");
   window.onafterprint=function(){document.body.classList.remove("printing");window.onafterprint=null;};
   setTimeout(()=>{ try{window.print();}catch(e){document.body.classList.remove("printing");toast("Drucken nicht möglich");} },80);
