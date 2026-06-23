@@ -45,23 +45,43 @@
 /* ===== HELL-MODUS ===== */
 body{transition:background-color .3s var(--ease,ease),color .3s var(--ease,ease);}
 body.light{
-  --bg:#f2f7f3; --bg-soft:#eaf1ec; --surface:#ffffff; --surface-2:#e6f0e8;
-  --line:#bdd5c6; --line-soft:#cce0d2;
-  --txt:#162118; --muted:#456252; --faint:#7a9a82;
-  --glass:rgba(255,255,255,.93); --glass-2:rgba(240,250,244,.88);
-  --glass-brd:rgba(58,115,80,.18); --glass-brd-top:rgba(58,115,80,.26);
-  --glass-glow:rgba(58,115,80,.09);
-  --elev-1:0 2px 8px rgba(0,0,0,.07); --elev-2:0 5px 18px rgba(0,0,0,.10); --elev-3:0 10px 28px rgba(0,0,0,.13);
-  --orange-soft:rgba(58,115,80,.10); --orange-line:rgba(58,115,80,.22);
+  --bg:#eef4ef; --bg-soft:#e4ede6; --surface:#f8fbf8; --surface-2:#ddeae0;
+  --line:#a8c8b4; --line-soft:#bcd6c6;
+  --txt:#0d1a10; --muted:#2a4535; --faint:#4e7260;
+  --glass:rgba(248,251,248,.95); --glass-2:rgba(234,244,236,.90);
+  --glass-brd:rgba(58,115,80,.22); --glass-brd-top:rgba(58,115,80,.32);
+  --glass-glow:rgba(58,115,80,.10);
+  --elev-1:0 2px 8px rgba(0,0,0,.09); --elev-2:0 5px 18px rgba(0,0,0,.12); --elev-3:0 10px 28px rgba(0,0,0,.15);
+  --orange-soft:rgba(58,115,80,.12); --orange-line:rgba(58,115,80,.25);
 }
 body.light::before{
-  background:radial-gradient(120% 80% at 50% -10%,#d8eddf 0%,var(--bg) 55%),
-    radial-gradient(80% 50% at 80% 110%,#cfe9d6 0%,transparent 60%);}
-body.light::after{opacity:.04;}
-body.light .topbar{background:linear-gradient(180deg,rgba(242,247,243,.97),rgba(242,247,243,.82));}
-body.light .drawer{background:linear-gradient(170deg,#eaf2ec,#deeee4);}
-body.light .sheet{background:#f8fbf9;}
-body.light .splash-bg,body.light #splash{background:radial-gradient(120% 90% at 50% 20%,#d8eddf 0%,#f0f7f2 70%);}
+  background:radial-gradient(120% 80% at 50% -10%,#c8e4d0 0%,var(--bg) 55%),
+    radial-gradient(80% 50% at 80% 110%,#bfdfcc 0%,transparent 60%);}
+body.light::after{opacity:.05;}
+body.light .topbar{background:linear-gradient(180deg,rgba(238,244,239,.98),rgba(238,244,239,.85));}
+body.light .drawer{background:linear-gradient(170deg,#daeae0,#cde3d6);}
+body.light .sheet{background:#f2f8f4;}
+body.light .splash-bg,body.light #splash{background:radial-gradient(120% 90% at 50% 20%,#c8e4d0 0%,#eef4ef 70%);}
+/* Logo sichtbar im Hell-Modus */
+body.light .tb-logo-wrap{
+  background:radial-gradient(120% 120% at 50% 0%,rgba(40,90,55,.85),rgba(14,38,22,.95));
+  box-shadow:0 4px 14px rgba(0,0,0,.25),var(--inset-top);}
+body.light .brand-mark{
+  background:radial-gradient(120% 120% at 50% 0%,rgba(40,90,55,.85),rgba(14,38,22,.95));
+  box-shadow:0 4px 12px rgba(0,0,0,.2);}
+/* Cards im Hell-Modus — mehr Kontrast */
+body.light .s-card{background:linear-gradient(160deg,#ffffff,#f4faf5);border-color:var(--line);box-shadow:0 2px 10px rgba(0,0,0,.09);}
+body.light .s-name{color:#0d1a10;}
+body.light .s-meta{color:#2a4535;}
+body.light .s-form-chip{background:#ddeae0;border-color:var(--line);color:#0d1a10;}
+body.light .d-tile{background:linear-gradient(160deg,#ffffff,#f2f9f3);border-color:var(--line);}
+body.light .nav-action{background:linear-gradient(160deg,#ffffff,#f2f9f3);border-color:var(--line);}
+body.light .mini-stat{background:#ffffff;border-color:var(--line);}
+body.light .seg-i{background:#e4ede6;color:#2a4535;border-color:var(--line);}
+body.light .seg-i.on{background:var(--akzent);color:#fff;}
+body.light .month-bars{background:#ffffff;border-color:var(--line);}
+body.light .blk-h{color:#2a4535;}
+body.light .muted-p{color:#2a4535;}
 /* ===== THEME-TOGGLE BUTTON ===== */
 .theme-btn{width:36px;height:36px;border-radius:11px;display:flex;align-items:center;justify-content:center;
   background:var(--glass);border:1px solid var(--glass-brd);color:var(--muted);
@@ -3322,17 +3342,11 @@ function formView(existing){
         <input id="f_name" type="text" placeholder="Vor- und Nachname" value="${esc(s.name)}" autocomplete="off"></div>
       <div class="field"><label>Ausbildungsform</label>
         <div class="pills" id="formPills">${FORMS.map(f=>`<button class="pill ${s.form===f?'sel':''}" data-form="${f}">${formLabel(f)}</button>`).join("")}</div></div>
-      <div class="field"><label>Beginn der Ausbildung <span style="color:var(--faint);font-weight:600">· optional</span></label>
+      <div class="field"><label style="display:flex;align-items:center;gap:8px;">Beginn der Ausbildung <span style="font-size:11.5px;font-weight:600;color:var(--faint);background:var(--surface-2);padding:2px 8px;border-radius:6px;">optional</span></label>
         <input id="f_beginn" type="text" placeholder="TT.MM.JJJJ" value="${esc(s.beginn||"")}" autocomplete="off"></div>
-      ${profCard}
-      <div class="field"><label>Nächster Termin <span style="color:var(--faint);font-weight:600">· optional</span></label>
-        <div style="display:flex;gap:10px;">
-          <input id="f_nextDate" type="text" placeholder="TT.MM.JJJJ" value="${esc(s.nextDate||"")}" autocomplete="off" style="flex:1">
-          <input id="f_nextTime" type="text" placeholder="HH:MM" value="${esc(s.nextTime||"")}" autocomplete="off" style="width:108px;text-align:center"></div></div>
-      <div class="field"><label>Nächster Schritt <span style="color:var(--faint);font-weight:600">· optional, sonst automatisch aus dem Plan</span></label>
-        <input id="f_next" type="text" placeholder="z. B. Überlandfahrt üben" value="${esc(s.next||"")}" autocomplete="off"></div>
+      ${hasBogen?profCard:""}
       <div class="btn-row">
-        <button class="btn btn-primary" id="saveBtn">${isEdit?"Änderungen speichern":"Schüler anlegen"}</button>
+        <button class="btn btn-primary" id="saveBtn">${isEdit?"Änderungen speichern":"Schüler anlegen →"}</button>
         ${isEdit?"":`<button class="btn btn-ghost" id="cancelBtn">Abbrechen</button>`}</div>
     </div></div>`;
   let pick={form:s.form,profil:s.profil};
@@ -3348,8 +3362,7 @@ function formView(existing){
   $("#saveBtn").addEventListener("click",()=>{
     const name=$("#f_name").value.trim();
     if(!name){toast("Bitte einen Namen eingeben");$("#f_name").focus();return;}
-    const data={name,form:pick.form||"B",beginn:$("#f_beginn").value.trim(),
-      next:$("#f_next").value.trim(),nextDate:$("#f_nextDate").value.trim(),nextTime:$("#f_nextTime").value.trim()};
+    const data={name,form:pick.form||"B",beginn:$("#f_beginn").value.trim()};
     if(!hasBogen)data.profil=pick.profil||null;
     if(isEdit){Object.assign(existing,data);save();toast("Gespeichert");routeDetail(existing.id);}
     else{const nst={id:uid(),created:Date.now(),notiz:"",bogen:null,plan:newPlan(),profil:data.profil||null,...data};
