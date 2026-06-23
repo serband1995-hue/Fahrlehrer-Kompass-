@@ -42,6 +42,32 @@
   --pop: cubic-bezier(.34,1.56,.64,1);
   --smooth: cubic-bezier(.25,.46,.45,.94);
 }
+/* ===== HELL-MODUS ===== */
+body{transition:background-color .3s var(--ease,ease),color .3s var(--ease,ease);}
+body.light{
+  --bg:#f2f7f3; --bg-soft:#eaf1ec; --surface:#ffffff; --surface-2:#e6f0e8;
+  --line:#bdd5c6; --line-soft:#cce0d2;
+  --txt:#162118; --muted:#456252; --faint:#7a9a82;
+  --glass:rgba(255,255,255,.93); --glass-2:rgba(240,250,244,.88);
+  --glass-brd:rgba(58,115,80,.18); --glass-brd-top:rgba(58,115,80,.26);
+  --glass-glow:rgba(58,115,80,.09);
+  --elev-1:0 2px 8px rgba(0,0,0,.07); --elev-2:0 5px 18px rgba(0,0,0,.10); --elev-3:0 10px 28px rgba(0,0,0,.13);
+  --orange-soft:rgba(58,115,80,.10); --orange-line:rgba(58,115,80,.22);
+}
+body.light::before{
+  background:radial-gradient(120% 80% at 50% -10%,#d8eddf 0%,var(--bg) 55%),
+    radial-gradient(80% 50% at 80% 110%,#cfe9d6 0%,transparent 60%);}
+body.light::after{opacity:.04;}
+body.light .topbar{background:linear-gradient(180deg,rgba(242,247,243,.97),rgba(242,247,243,.82));}
+body.light .drawer{background:linear-gradient(170deg,#eaf2ec,#deeee4);}
+body.light .sheet{background:#f8fbf9;}
+body.light .splash-bg,body.light #splash{background:radial-gradient(120% 90% at 50% 20%,#d8eddf 0%,#f0f7f2 70%);}
+/* ===== THEME-TOGGLE BUTTON ===== */
+.theme-btn{width:36px;height:36px;border-radius:11px;display:flex;align-items:center;justify-content:center;
+  background:var(--glass);border:1px solid var(--glass-brd);color:var(--muted);
+  transition:transform .16s var(--pop);flex:0 0 auto;margin-right:6px;}
+.theme-btn:active{transform:scale(.88);}
+.theme-btn svg{width:18px;height:18px;}
 *{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent;}
 html,body{height:100%;}
 body{background:var(--bg);color:var(--txt);font-family:'Barlow',system-ui,sans-serif;
@@ -572,6 +598,10 @@ input,select,textarea{font-family:inherit;font-size:15px;color:var(--txt);}
   background:#f2efe9;color:#1a1b1f;padding:13px 22px;border-radius:14px;font-weight:800;font-size:14px;
   box-shadow:0 12px 34px rgba(0,0,0,.45);opacity:0;pointer-events:none;transition:all .3s var(--ease);z-index:80;}
 .toast.show{opacity:1;transform:translateX(-50%) translateY(0);}
+.toast.undo{display:flex;align-items:center;gap:14px;pointer-events:auto;}
+.toast.undo .ut-txt{font-weight:800;}
+.toast.undo .ut-btn{background:#1a1b1f;color:#fff;border:none;padding:7px 14px;border-radius:9px;font-weight:800;font-size:13px;cursor:pointer;flex:0 0 auto;}
+.toast.undo .ut-btn:active{transform:scale(.95);}
 .fade-up{animation:fadeUp .32s var(--ease) both;}
 @keyframes fadeUp{from{opacity:0;transform:translateY(14px);}to{opacity:1;transform:translateY(0);}}
 @media(max-width:600px){.nav-actions,.termine{grid-template-columns:1fr;}}
@@ -604,6 +634,38 @@ input,select,textarea{font-family:inherit;font-size:15px;color:var(--txt);}
 .fc-miss-sum{background:rgba(207,90,72,.1);border:1px solid rgba(207,90,72,.28);border-radius:12px;padding:13px 15px;font-size:14px;color:#e3a294;margin-bottom:16px;line-height:1.5;}
 .fc-miss-sum b{color:#f0b5a8;}
 .fc-miss-row{display:flex;align-items:center;gap:9px;padding:12px 0;border-bottom:1px solid var(--line-soft);}
+.fc-grp{margin-bottom:18px;}
+.fc-grp-head{display:flex;align-items:center;justify-content:space-between;padding:6px 0 2px;border-bottom:2px solid var(--line);}
+.fc-grp-head .fc-nm{font-weight:800;font-size:15px;}
+.fc-grp-eur{font-weight:800;font-size:13px;color:#e3a294;}
+.es-act.on{outline:2px solid var(--gruen-bright);outline-offset:-2px;}
+.es-act.good{color:#bfe6c5;}
+/* Historie-Timeline */
+.hist-add{display:flex;gap:8px;margin-bottom:18px;}
+.hist-add input{flex:1;background:var(--surface-2);border:1px solid var(--line);border-radius:11px;padding:12px 14px;color:var(--txt);font-size:14px;font-family:inherit;}
+.hist-add button{flex:0 0 auto;background:var(--gruen);border:none;border-radius:11px;padding:0 18px;color:#fff;font-weight:800;font-size:14px;cursor:pointer;}
+.htl{position:relative;padding-left:26px;}
+.htl::before{content:"";position:absolute;left:7px;top:6px;bottom:6px;width:2px;background:var(--line);}
+.htl-item{position:relative;padding:0 0 18px;}
+.htl-item::before{content:"";position:absolute;left:-23px;top:4px;width:12px;height:12px;border-radius:50%;background:var(--gruen-bright);border:2px solid var(--bg);}
+.htl-item.fc::before{background:#cf5a48;}
+.htl-item.pruefung::before{background:#e0a44a;}
+.htl-item.manual::before{background:#7aa7c7;}
+.htl-date{font-size:12px;color:var(--faint);font-weight:700;letter-spacing:.3px;}
+.htl-text{font-size:14.5px;font-weight:600;margin-top:2px;line-height:1.4;}
+.htl-eur{display:inline-block;margin-top:3px;font-size:12.5px;font-weight:800;padding:2px 8px;border-radius:7px;}
+.htl-eur.plus{background:rgba(74,139,69,.16);color:#9ed99a;}
+.htl-eur.minus{background:rgba(207,90,72,.16);color:#e3a294;}
+.htl-del{position:absolute;right:0;top:2px;background:none;border:none;color:var(--faint);font-size:16px;cursor:pointer;padding:4px;}
+/* Nicht-Besteher */
+.nb-row{background:var(--surface-2);border:1px solid var(--line);border-radius:12px;padding:12px 14px;margin-bottom:10px;cursor:pointer;}
+.nb-row:active{transform:scale(.99);}
+.nb-top{display:flex;align-items:center;justify-content:space-between;}
+.nb-name{font-weight:800;font-size:14.5px;}
+.nb-date{font-size:12px;color:var(--faint);font-weight:700;}
+.nb-meta{font-size:12px;color:var(--muted);margin-top:2px;}
+.nb-grund{font-size:13.5px;color:#e3a294;margin-top:5px;font-weight:600;}
+.nb-note{font-size:12.5px;color:var(--muted);margin-top:4px;font-style:italic;}
 .next-stud.none{cursor:default;display:flex;align-items:center;gap:13px;background:linear-gradient(160deg,var(--glass),var(--glass-2));border-color:var(--glass-brd);}
 .ns-top{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:9px;}
 .ns-label{font-size:11px;letter-spacing:.06em;text-transform:uppercase;color:#9fc3ab;font-weight:800;}
@@ -625,7 +687,41 @@ input,select,textarea{font-family:inherit;font-size:15px;color:var(--txt);}
 .ne-date{font-family:'Playfair Display',serif;font-weight:600;font-size:26px;letter-spacing:.01em;margin-top:3px}
 .ne-names{font-size:13px;color:var(--txt);font-weight:600;margin-top:2px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .ne-empty{font-size:14px;color:var(--muted);margin-top:6px;font-weight:600}
+/* Dashboard Quick-Row */
+.dash-quick-row{display:flex;gap:10px;margin-bottom:16px;}
+.dq-btn{flex:1;display:flex;flex-direction:column;align-items:center;gap:6px;background:var(--surface);border:1px solid var(--line-soft);border-radius:14px;padding:14px 8px;font-size:12px;font-weight:800;color:var(--muted);}
+.dq-btn svg{width:22px;height:22px;color:var(--gruen-bright,#4a8b45);}
+.dq-btn:active{transform:scale(.96);}
+/* Nächste Prüfung Card */
+.nex-card{background:var(--surface);border:1px solid var(--line-soft);border-radius:16px;padding:16px;margin-bottom:16px;cursor:pointer;}
+.nex-card.none{display:flex;align-items:center;gap:12px;}
+.nex-card:active{transform:scale(.99);}
+.nex-top{display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:12px;}
+.nex-label{font-size:11px;font-weight:800;letter-spacing:.8px;color:var(--muted);text-transform:uppercase;margin-bottom:3px;}
+.nex-date{font-size:18px;font-weight:800;font-family:'Playfair Display',serif;}
+.nex-days{text-align:center;background:var(--gruen-soft);border:1px solid var(--gruen-line);border-radius:12px;padding:8px 14px;}
+.nex-dn{display:block;font-size:22px;font-weight:800;color:var(--gruen-bright,#4a8b45);line-height:1;}
+.nex-dl{display:block;font-size:10px;font-weight:700;color:var(--muted);margin-top:2px;}
+.nex-student{border-top:1px solid var(--line-soft);padding-top:10px;}
+.nex-name{font-size:15px;font-weight:800;margin-bottom:4px;}
+.nex-lessons{font-size:12.5px;color:var(--muted);font-weight:600;line-height:1.5;}
+.nex-lessons.warn{color:#e0843a;font-weight:800;}
+.nex-empty{font-size:14px;color:var(--faint);}
 .dash-tiles{display:grid;grid-template-columns:repeat(3,1fr);gap:11px;margin-bottom:16px}
+/* Auslastungs-Card (dezent) */
+.cap-card{display:block;width:100%;text-align:left;background:var(--surface);border:1px solid var(--line-soft);border-radius:14px;padding:14px 16px;margin-bottom:8px;}
+.cap-card:active{transform:scale(.99);}
+.cap-head{display:flex;align-items:center;justify-content:space-between;margin-bottom:8px;}
+.cap-title{font-size:12px;font-weight:800;letter-spacing:.6px;text-transform:uppercase;color:var(--muted);}
+.cap-pct{font-size:17px;font-weight:800;}
+.cap-bar{height:7px;border-radius:5px;background:var(--surface-2);overflow:hidden;margin-bottom:9px;}
+.cap-fill{height:100%;border-radius:5px;transition:width .5s var(--ease);}
+.cap-foot{display:flex;align-items:center;gap:7px;font-size:12.5px;font-weight:600;color:var(--muted);line-height:1.4;}
+.cap-dot{width:8px;height:8px;border-radius:50%;flex:0 0 auto;}
+.cap-detail{background:var(--surface-2);border-radius:12px;padding:6px 14px;}
+.cap-drow{display:flex;justify-content:space-between;align-items:center;padding:9px 0;border-bottom:1px solid var(--line-soft);font-size:13.5px;color:var(--muted);}
+.cap-drow:last-child{border-bottom:none;}
+.cap-drow b{color:var(--txt);font-size:14.5px;}
 .d-tile{position:relative;overflow:hidden;background:linear-gradient(160deg,var(--glass),var(--glass-2));border:1px solid var(--glass-brd);border-radius:var(--r-tile);padding:16px 14px;
   display:flex;flex-direction:column;align-items:flex-start;gap:9px;text-align:left;box-shadow:var(--elev-2),var(--inset-top);backdrop-filter:blur(12px);
   transition:transform .2s var(--pop),box-shadow .25s}
@@ -696,22 +792,23 @@ input,select,textarea{font-family:inherit;font-size:15px;color:var(--txt);}
 .seg-i.on{background:var(--orange);color:#fff}
 .stat-grid4{display:grid;grid-template-columns:1fr 1fr;gap:10px}
 .two-mini{display:grid;grid-template-columns:1fr 1fr;gap:10px}
-.mini-stat{background:var(--surface);border:1px solid var(--line);border-radius:13px;padding:13px 15px}
-.ms-v{font-family:'Anton',sans-serif;font-size:22px;line-height:1}
-.ms-l{font-size:12.5px;font-weight:700;margin-top:6px}
-.ms-s{font-size:11.5px;color:var(--muted);margin-top:2px}
+.mini-stat{background:var(--surface);border:1px solid var(--line);border-radius:14px;padding:14px 15px;position:relative;overflow:hidden}
+.mini-stat::before{content:"";position:absolute;inset:0;border-radius:inherit;background:linear-gradient(135deg,rgba(74,139,92,.07),transparent 55%);pointer-events:none}
+.ms-v{font-family:'Playfair Display',serif;font-weight:700;font-size:28px;line-height:1;color:var(--txt)}
+.ms-l{font-size:11.5px;font-weight:800;margin-top:7px;color:var(--muted);text-transform:uppercase;letter-spacing:.04em}
+.ms-s{font-size:11px;color:var(--faint);margin-top:2px}
 .bar-row{margin-bottom:11px}
 .bar-top{display:flex;justify-content:space-between;align-items:baseline;gap:10px;margin-bottom:5px}
 .bar-lab{font-size:13px;font-weight:600;color:var(--txt)}
 .bar-val{font-size:12px;color:var(--muted);font-weight:700;white-space:nowrap}
 .bar-track{height:9px;border-radius:6px;background:var(--surface-2);overflow:hidden}
 .bar-fill{height:100%;border-radius:6px;transition:width .5s var(--ease)}
-.month-bars{display:flex;gap:8px;align-items:flex-end;background:var(--surface);border:1px solid var(--line);border-radius:14px;padding:14px}
-.mb{flex:1;display:flex;flex-direction:column;align-items:center;gap:6px}
-.mb-track{width:100%;max-width:34px;height:78px;background:var(--surface-2);border-radius:7px;display:flex;align-items:flex-end;overflow:hidden}
-.mb-fill{width:100%;background:var(--orange);border-radius:7px;transition:height .5s var(--ease)}
-.mb-lab{font-size:10.5px;color:var(--muted);font-weight:700}
-.mb-val{font-size:11px;font-weight:800}
+.month-bars{display:flex;gap:8px;align-items:flex-end;background:var(--surface);border:1px solid var(--line);border-radius:14px;padding:16px 14px;margin-bottom:6px}
+.mb{flex:1;display:flex;flex-direction:column;align-items:center;gap:5px}
+.mb-track{width:100%;max-width:34px;height:110px;background:var(--surface-2);border-radius:7px;display:flex;align-items:flex-end;overflow:hidden}
+.mb-fill{width:100%;background:var(--gruen);border-radius:7px;transition:height .65s var(--ease)}
+.mb-lab{font-size:10px;color:var(--muted);font-weight:800;letter-spacing:.03em}
+.mb-val{font-size:11px;font-weight:800;transition:color .3s}
 .termin-blk{background:var(--surface);border:1px solid var(--line);border-radius:14px;padding:14px;margin-bottom:10px}
 .tb-row{display:flex;align-items:center;gap:10px;margin-bottom:10px}
 .tb-date{font-family:'Anton',sans-serif;font-size:18px}
@@ -925,6 +1022,33 @@ input,select,textarea{font-family:inherit;font-size:15px;color:var(--txt);}
 .cal-gear{width:40px;height:40px;border-radius:12px;display:flex;align-items:center;justify-content:center;background:var(--glass);border:1px solid var(--glass-brd);color:var(--muted);box-shadow:var(--inset-top);}
 .cal-gear:active{transform:scale(.9);}
 .cal-gear svg{width:19px;height:19px;}
+/* Kalender-Such-Button */
+.cal-search-btn{width:40px;height:40px;border-radius:12px;display:flex;align-items:center;justify-content:center;background:var(--glass);border:1px solid var(--glass-brd);color:var(--muted);box-shadow:var(--inset-top);}
+.cal-search-btn:active{transform:scale(.9);}
+.cal-search-btn svg{width:19px;height:19px;}
+/* Kalender-Suche Sheet */
+.cs-student{width:100%;display:flex;align-items:center;justify-content:space-between;padding:12px 14px;background:var(--surface);border:1px solid var(--line-soft);border-radius:12px;margin-bottom:8px;text-align:left;}
+.cs-student:active{background:var(--surface-2);transform:scale(.98);}
+.cs-sname{font-size:15px;font-weight:700;color:var(--txt);}
+.cs-form{font-size:11px;padding:2px 8px;border-radius:20px;background:var(--surface-2);color:var(--muted);font-weight:700;flex:0 0 auto;}
+.cs-empty{color:var(--faint);font-size:14px;padding:18px 0;text-align:center;}
+.cs-stud-head{display:flex;align-items:center;gap:12px;margin-bottom:16px;padding-bottom:14px;border-bottom:1px solid var(--line-soft);}
+.cs-back{font-size:13px;font-weight:800;color:var(--akzent-bright);padding:6px 0;flex:0 0 auto;}
+.cs-stud-name{font-family:'Playfair Display',serif;font-size:18px;font-weight:600;line-height:1.1;}
+.cs-section-h{font-size:10.5px;font-weight:800;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);margin:14px 0 8px;padding:0 2px;}
+.cs-section-h.future{color:var(--akzent-bright);}
+.cs-section-h.past{color:var(--faint);}
+.cs-item{width:100%;display:flex;align-items:center;justify-content:space-between;gap:10px;padding:10px 13px;border-radius:11px;margin-bottom:6px;text-align:left;border:1px solid transparent;transition:background .12s;}
+.cs-item.future{background:var(--surface);border-color:var(--line-soft);cursor:pointer;}
+.cs-item.future:active{background:var(--surface-2);transform:scale(.98);}
+.cs-item.past{background:transparent;border-color:var(--line-soft);cursor:pointer;opacity:.8;}
+.cs-item.past:active{background:var(--surface);opacity:1;}
+.csi-date{font-size:13.5px;font-weight:700;color:var(--txt);white-space:nowrap;}
+.csi-info{font-size:12.5px;color:var(--muted);font-weight:600;text-align:right;}
+.csi-info.exam-pass{color:var(--gruen);}
+.csi-info.exam-fail{color:var(--rot);}
+.csi-info.exam-future{color:#c9a227;}
+.cs-arrow{font-size:14px;color:var(--faint);margin-left:4px;}
 .cal-counter{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:14px;}
 .cc-card{background:linear-gradient(160deg,var(--glass),var(--glass-2));border:1px solid var(--glass-brd);border-radius:14px;padding:13px 14px;box-shadow:inset 0 1px 0 var(--glass-brd-top);}
 .cc-h{font-size:11px;letter-spacing:.05em;text-transform:uppercase;color:var(--faint);font-weight:800;margin-bottom:8px;}
@@ -945,11 +1069,23 @@ input,select,textarea{font-family:inherit;font-size:15px;color:var(--txt);}
 .cal-filters::-webkit-scrollbar{display:none;}
 .cal-fchip{flex:0 0 auto;padding:7px 14px;border-radius:18px;font-size:13px;font-weight:700;background:var(--surface-2);border:1px solid var(--line);color:var(--muted);}
 .cal-fchip.on{background:var(--gruen-soft);border-color:var(--gruen-line);color:#bcd6c5;}
+.cal-legend-bar{display:flex;flex-wrap:wrap;gap:8px 14px;margin-bottom:14px;}
+.clb-item{display:inline-flex;align-items:center;gap:5px;font-size:11px;font-weight:700;color:var(--muted);}
+.clb-item i{width:9px;height:9px;border-radius:2px;flex:0 0 auto;}
 .cal-nav{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:16px;}
 .cal-arrow{width:40px;height:40px;border-radius:12px;display:flex;align-items:center;justify-content:center;background:var(--glass);border:1px solid var(--glass-brd);color:var(--txt);box-shadow:var(--inset-top);}
 .cal-arrow:active{transform:scale(.9);}
 .cal-arrow svg{width:20px;height:20px;}
-.cal-title{flex:1;text-align:center;font-family:'Playfair Display',serif;font-size:18px;font-weight:600;}
+.cal-title-wrap{flex:1;display:flex;flex-direction:column;align-items:center;gap:3px;}
+.cal-title{text-align:center;font-family:'Playfair Display',serif;font-size:18px;font-weight:600;line-height:1.15;}
+.cal-kw{font-family:'Barlow',sans-serif;font-size:11.5px;font-weight:800;letter-spacing:1px;color:var(--gruen-bright,#4a8b45);background:var(--gruen-soft,rgba(74,139,69,.12));border:1px solid var(--gruen-line,rgba(74,139,69,.3));padding:1px 9px;border-radius:999px;text-transform:uppercase;}
+/* Feiertage */
+.cm-cell.holiday .cm-num{color:#e0986a;font-weight:800;}
+.cm-hol{width:5px;height:5px;border-radius:50%;background:#e0986a;margin-top:3px;}
+.cw-col.holiday .cw-dayhead{background:rgba(224,152,106,.14);border-color:rgba(224,152,106,.3);}
+.cw-col.holiday .cw-dnum{color:#e0986a;}
+.cw-holiday{font-size:10.5px;font-weight:800;color:#e0986a;background:rgba(224,152,106,.12);border:1px solid rgba(224,152,106,.25);border-radius:7px;padding:4px 5px;margin-bottom:5px;line-height:1.25;text-align:center;}
+.cd-holiday{background:rgba(224,152,106,.12);border:1px solid rgba(224,152,106,.3);border-radius:11px;padding:11px 14px;margin-bottom:12px;font-size:13.5px;font-weight:800;color:#e0a679;text-align:center;}
 /* View-Sheet */
 .cal-viewopts{display:flex;flex-direction:column;gap:8px;}
 .cal-viewopt{display:flex;align-items:center;justify-content:space-between;padding:15px 16px;border-radius:14px;background:var(--surface);border:1px solid var(--line);text-align:left;}
@@ -978,18 +1114,25 @@ input,select,textarea{font-family:inherit;font-size:15px;color:var(--txt);}
 .cw-free{width:100%;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:1px;border:1px dashed var(--line);border-radius:5px;background:transparent;padding:4px 2px;}
 .cw-free-t{font-size:9px;font-weight:700;color:var(--muted);}
 .cw-free-p{font-size:8.5px;font-weight:700;color:var(--gruen-bright,#4a8b45);}
-.cw-col{background:var(--surface);border:1px solid var(--line-soft);border-radius:10px;padding:5px;min-height:120px;}
+.cw-col{background:var(--surface);border:1px solid var(--line-soft);border-radius:10px;padding:6px;min-height:140px;}
 .cw-col.today{background:var(--gruen-soft);border-color:var(--gruen-line);}
-.cw-dayhead{width:100%;display:flex;flex-direction:column;align-items:center;gap:1px;padding:4px 0 7px;border-bottom:1px solid var(--line-soft);margin-bottom:6px;}
-.cw-wd{font-size:10px;font-weight:800;color:var(--faint);text-transform:uppercase;}
-.cw-dnum{font-size:16px;font-weight:700;font-family:'Playfair Display',serif;}
+.cw-dayhead{width:100%;display:flex;flex-direction:column;align-items:center;gap:1px;padding:5px 0 8px;border-bottom:1px solid var(--line-soft);margin-bottom:7px;}
+.cw-wd{font-size:11px;font-weight:800;color:var(--faint);text-transform:uppercase;}
+.cw-dnum{font-size:18px;font-weight:800;font-family:'Playfair Display',serif;}
 .cw-col.today .cw-dnum{color:#bcd6c5;}
 .cw-events{display:flex;flex-direction:column;gap:4px;}
-.cw-ev{border-left:3px solid var(--gruen-bright,#4a8b45);background:var(--bg-soft);border-radius:5px;padding:4px 5px;text-align:left;}
-.cw-ev.exam-soon{box-shadow:0 0 0 1.5px #cf9a3e inset;background:rgba(207,154,62,.1);}
+.cw-ev{border-left:3px solid var(--gruen-bright,#4a8b45);background:var(--bg-soft);border-radius:6px;padding:5px 6px;text-align:left;}
+.cw-ev.exam-soon{box-shadow:0 0 0 1.5px #c9a227 inset;background:rgba(201,162,39,.1);}
+.cw-ev.exam-done{background:var(--bg-soft);opacity:.92;}
+.cw-ev.exam-pass{background:rgba(76,175,114,.1);}
+.cw-ev.exam-fail{background:rgba(217,79,79,.1);}
+.exd-strike{text-decoration:line-through;opacity:.7;}
+.exd-mark{font-size:10px;font-weight:800;white-space:nowrap;}
+.ct-ev.exam-done .ct-ev-n .exd-strike{text-decoration:line-through;opacity:.7;}
 .cw-ev.theorie{border-left-color:#9b7dc4;}
-.cw-evt{display:block;font-size:9.5px;color:var(--muted);font-weight:700;}
-.cw-evn{display:block;font-size:10.5px;font-weight:600;line-height:1.25;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.cw-evt{display:block;font-size:10px;color:var(--muted);font-weight:700;}
+.cw-evn{display:block;font-size:11.5px;font-weight:700;line-height:1.3;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.cw-fz{display:block;font-size:10px;font-weight:800;color:var(--gruen-bright,#4a8b45);opacity:.85;margin-top:1px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
 .cw-evstat{color:var(--rot);font-size:9px;}
 .cw-empty{text-align:center;color:var(--faint);font-size:12px;padding:8px 0;}
 /* Tag */
@@ -1018,7 +1161,7 @@ input,select,textarea{font-family:inherit;font-size:15px;color:var(--txt);}
 .ct-now::before{content:"";position:absolute;left:-5px;top:-3px;width:8px;height:8px;border-radius:50%;background:var(--gruen-bright,#4a8b45);}
 .ct-events{position:absolute;left:52px;right:0;top:0;bottom:0;}
 .ct-ev{position:absolute;left:2px;right:2px;background:linear-gradient(160deg,var(--surface),var(--surface-2));border:1px solid var(--line);border-left:3px solid var(--gruen-bright,#4a8b45);border-radius:9px;padding:6px 10px;overflow:hidden;cursor:pointer;box-shadow:0 3px 8px rgba(0,0,0,.2);}
-.ct-ev.exam-soon{border-color:#cf9a3e;box-shadow:0 0 0 1.5px #cf9a3e,0 3px 8px rgba(0,0,0,.2);}
+.ct-ev.exam-soon{border-color:#c9a227;box-shadow:0 0 0 1.5px #c9a227,0 3px 8px rgba(0,0,0,.2);}
 .ct-ev.off{opacity:.5;}
 .ct-ev.off .ct-ev-n{text-decoration:line-through;}
 .ct-ev-t{font-size:10px;color:var(--muted);font-weight:700;}
@@ -1164,6 +1307,9 @@ input,select,textarea{font-family:inherit;font-size:15px;color:var(--txt);}
       <span class="tb-logo-wrap"><img id="brandLogo" alt="Fahrlehrer-Kompass"></span>
     </button>
     <div class="tb-side tb-right">
+      <button class="theme-btn" id="themeBtn" aria-label="Design wechseln">
+        <svg id="themeIcon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="5"/><path d="M12 1v2M12 21v2M4.22 4.22l1.42 1.42M18.36 18.36l1.42 1.42M1 12h2M21 12h2M4.22 19.78l1.42-1.42M18.36 5.64l1.42-1.42"/></svg>
+      </button>
       <div class="tb-title" id="tbTitle">Schüler</div>
     </div>
   </header>
@@ -1892,6 +2038,17 @@ if("serviceWorker" in navigator){
   window.addEventListener("load",()=>{ navigator.serviceWorker.register("./sw.js").catch(()=>{}); });
 }
 function uid(){return "s"+Date.now().toString(36)+Math.random().toString(36).slice(2,6);}
+/* ===== Schüler-Historie (Zeitleiste) =====
+   Jeder Eintrag: {t:ISO-Zeitstempel, typ, text, eur?(±Verdienst), manual?} */
+function logHist(sid,typ,text,extra){
+  const s=(typeof sid==="object")?sid:DB.students.find(x=>x.id===sid);
+  if(!s)return;
+  if(!Array.isArray(s.hist))s.hist=[];
+  const e={t:new Date().toISOString(),typ,text};
+  if(extra&&typeof extra==="object"){ if("eur" in extra)e.eur=extra.eur; if(extra.manual)e.manual=true; if(extra.iso)e.iso=extra.iso; }
+  s.hist.push(e);
+}
+function histList(s){ return Array.isArray(s.hist)?s.hist.slice().sort((a,b)=>(""+b.t).localeCompare(""+a.t)):[]; }
 function newPlan(){return {ampeln:{},stunden:{},fahrcheck:{},sonder:{ueberland:[],autobahn:[],nacht:[]},theorie:false,notes:{}};}
 function ensure(s){ if(!s.plan) s.plan=newPlan(); if(!s.plan.sonder) s.plan.sonder={ueberland:[],autobahn:[],nacht:[]}; if(!s.plan.notes) s.plan.notes={}; if(!s.plan.fahrcheck) s.plan.fahrcheck={}; if(s.bogen&&!s.bogen.colorPct) s.bogen=null; if(!s.risk) s.risk={};
   // Alteinträge ohne echtes Datum ({d:"",iso:""}) sind keine erledigten Sonderfahrten -> auf null normalisieren
@@ -1981,7 +2138,17 @@ function countUp(el,target,suffix){
     if(k<1)requestAnimationFrame(step);}
   requestAnimationFrame(step);
 }
-function toast(m){const t=$("#toast");t.textContent=m;t.classList.add("show");clearTimeout(t._t);t._t=setTimeout(()=>t.classList.remove("show"),1900);}
+function toast(m){const t=$("#toast");t.textContent=m;t.classList.remove("undo");t.classList.add("show");clearTimeout(t._t);t._t=setTimeout(()=>t.classList.remove("show"),1900);}
+/* Undo-Toast: zeigt kurz eine Aktion + "Rückgängig"-Link (ca. 5s). onUndo wird bei Klick ausgeführt. */
+function toastUndo(msg,onUndo,ms){
+  const t=$("#toast"); ms=ms||5000;
+  t.classList.add("undo","show");
+  t.innerHTML=`<span class="ut-txt"></span><button class="ut-btn" type="button">Rückgängig</button>`;
+  t.querySelector(".ut-txt").textContent=msg;
+  const close=()=>{ t.classList.remove("show"); setTimeout(()=>{t.classList.remove("undo");t.innerHTML="";},300); };
+  t.querySelector(".ut-btn").onclick=()=>{ clearTimeout(t._t); close(); try{onUndo&&onUndo();}catch(e){} };
+  clearTimeout(t._t); t._t=setTimeout(close,ms);
+}
 function celebrate(colors){
   const cols=colors||["#E8451F","#E0A32E","#3FAE6B","#2F7DD1","#f2efe9"];
   const box=document.createElement("div");box.className="confetti";
@@ -2028,6 +2195,25 @@ const ICN={
   down:`<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 4v12M6 12l6 6 6-6M5 21h14"/></svg>`,
   up:`<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20V8M6 12l6-6 6 6M5 21h14"/></svg>`
 };
+/* ===== HELL/DUNKEL TOGGLE ===== */
+const THEME_KEY='serband-theme';
+function applyTheme(){
+  const t=localStorage.getItem(THEME_KEY)||'dark';
+  document.body.classList.toggle('light',t==='light');
+  const ic=$("#themeIcon"); if(!ic)return;
+  if(t==='dark'){
+    // Sonne anzeigen (→ Wechsel zu hell)
+    ic.innerHTML='<circle cx="12" cy="12" r="5"/><path d="M12 1v2M12 21v2M4.22 4.22l1.42 1.42M18.36 18.36l1.42 1.42M1 12h2M21 12h2M4.22 19.78l1.42-1.42M18.36 5.64l1.42-1.42"/>';
+  } else {
+    // Mond anzeigen (→ Wechsel zu dunkel)
+    ic.innerHTML='<path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/>';
+  }
+}
+function toggleTheme(){
+  const next=(localStorage.getItem(THEME_KEY)||'dark')==='dark'?'light':'dark';
+  localStorage.setItem(THEME_KEY,next);
+  applyTheme();
+}
 
 /* ============================================================
    DRAWER + FAB
@@ -2169,6 +2355,10 @@ function routeDetail(id){
         <div class="na-ic">${ICN.bolt}</div>
         <div class="na-body"><div class="na-name">Prüfungs-Risiko-Check</div><div class="na-sub">${riskSicher}/${RISK_THEMES.length} sicher</div></div>
         <span class="na-arrow">${ICN.arrow}</span></button>
+      <button class="nav-action" data-go="hist">
+        <div class="na-ic">${ICN.cal||""}</div>
+        <div class="na-body"><div class="na-name">Historie</div><div class="na-sub">${(Array.isArray(s.hist)&&s.hist.length)?`${s.hist.length} Einträge · zuletzt ${isoDE((""+histList(s)[0].t).slice(0,10))}`:"Noch keine Einträge"}</div></div>
+        <span class="na-arrow">${ICN.arrow}</span></button>
     </div>
     ${lagebildCard(s)}
     ${coachCard(s)}
@@ -2202,11 +2392,54 @@ function routeDetail(id){
       DB.students=DB.students.filter(x=>x.id!==id);save();toast("Schüler gelöscht");routeHome();}});
   document.querySelectorAll(".nav-action").forEach(b=>b.addEventListener("click",()=>{
     const go=b.dataset.go; if(!go)return;
-    if(go==="plan")routePlan(id);else if(go==="risk")routeRisk(id);else routeProfil(id);}));
+    if(go==="plan")routePlan(id);else if(go==="risk")routeRisk(id);else if(go==="hist")routeHistorie(id);else routeProfil(id);}));
   document.querySelectorAll(".tile").forEach(t=>t.addEventListener("click",()=>{
     const k=t.dataset.tile;if(k==="note")routeNotes(id);}));
   bindExamReady(s,()=>routeDetail(id));
   const _rk=$("#riskEditBtn");if(_rk)_rk.addEventListener("click",()=>routeRisk(id));
+}
+/* ===== Schüler-Historie (Zeitleiste) ===== */
+function histIcon(typ){ return ({fc:"FC",pruefung:"Prüfung",theorie:"Theorie",ready:"Warteliste",del:"Termin",note:"Notiz"})[typ]||""; }
+function routeHistorie(id){
+  const s=DB.students.find(x=>x.id===id); if(!s){ routeHome(); return; }
+  ensure(s);
+  $("#tbTitle").textContent="Historie"; setFab(false); view.scrollTop=0;
+  const list=histList(s);
+  let h=`<div class="view-inner view-read fade-up">
+    <div class="back-row"><button class="back-btn" id="backBtn">${ICN.back} ${esc(s.name)}</button></div>
+    <div class="sec-h" style="margin:4px 0 10px;">Histo<span class="o">rie</span></div>
+    <p class="muted-p" style="font-size:13px;margin-bottom:16px;">Chronologie von ${esc(s.name)}. Wichtige Schritte werden automatisch festgehalten – eigene Notizen kannst du hier ergänzen.</p>
+    <div class="hist-add"><input type="text" id="histInput" placeholder="Eigene Notiz hinzufügen …" maxlength="200"><button id="histAddBtn">+</button></div>`;
+  if(!list.length){
+    h+=`<p class="muted-p" style="text-align:center;padding:24px 0;">Noch keine Einträge.</p>`;
+  } else {
+    h+=`<div class="htl">`;
+    list.forEach(e=>{
+      const cls=e.manual?"manual":(e.typ||"");
+      const dstr=isoDE((""+e.t).slice(0,10));
+      const time=(""+e.t).slice(11,16);
+      let eurHtml="";
+      if(typeof e.eur==="number"&&e.eur!==0){ const plus=e.eur>0; eurHtml=`<div class="htl-eur ${plus?'plus':'minus'}">${plus?'+':'−'}${eurFmt(Math.abs(e.eur))}</div>`; }
+      const tag=histIcon(e.typ); const tagHtml=tag?`<span style="opacity:.6;font-weight:800;">${tag} · </span>`:"";
+      h+=`<div class="htl-item ${cls}">
+        ${e.manual?`<button class="htl-del" data-hdel="${e.t}" aria-label="Notiz löschen">✕</button>`:""}
+        <div class="htl-date">${dstr}${time?` · ${time}`:""}</div>
+        <div class="htl-text">${tagHtml}${esc(e.text)}</div>
+        ${eurHtml}
+      </div>`;
+    });
+    h+=`</div>`;
+  }
+  h+=`</div>`; view.innerHTML=h;
+  $("#backBtn").addEventListener("click",()=>routeDetail(id));
+  const addBtn=$("#histAddBtn"), inp=$("#histInput");
+  const doAdd=()=>{ const v=(inp.value||"").trim(); if(!v)return; logHist(s,"note",v,{manual:true}); save(); routeHistorie(id); };
+  if(addBtn)addBtn.addEventListener("click",doAdd);
+  if(inp)inp.addEventListener("keydown",e=>{ if(e.key==="Enter")doAdd(); });
+  document.querySelectorAll("[data-hdel]").forEach(b=>b.addEventListener("click",()=>{
+    const t=b.dataset.hdel;
+    if(Array.isArray(s.hist)){ const i=s.hist.findIndex(x=>x.t===t&&x.manual); if(i>=0){ s.hist.splice(i,1); save(); routeHistorie(id); } }
+  }));
 }
 function tileHTML(key,name,sub,icon){
   return `<button class="tile" data-tile="${key}">
@@ -2490,7 +2723,7 @@ function routePlan(id){
   </div>`;
   $("#backBtn").addEventListener("click",()=>routeDetail(id));
   $("#theoToggle").addEventListener("click",()=>{
-    pl.theorie=!pl.theorie;$("#theoToggle").classList.toggle("on",pl.theorie); if(pl.theorie){ if(!s.theoryPassed)s.theoryPassed=new Date().toISOString(); if(!s.ready&&!s.passed){ s.ready=s.theoryPassed; toast("Theorie bestanden – auf die Praxis-Warteliste gesetzt"); } delete s.theorieWait; } else { delete s.theoryPassed; } save();refreshPlanRing(s);renderPlanActions(s);routePlan(id);});
+    pl.theorie=!pl.theorie;$("#theoToggle").classList.toggle("on",pl.theorie); if(pl.theorie){ if(!s.theoryPassed)s.theoryPassed=new Date().toISOString(); logHist(s,"theorie","Theorieprüfung bestanden"); if(!s.ready&&!s.passed){ s.ready=s.theoryPassed; toast("Theorie bestanden – auf die Praxis-Warteliste gesetzt"); } delete s.theorieWait; } else { delete s.theoryPassed; } save();refreshPlanRing(s);renderPlanActions(s);routePlan(id);});
   const twt=$("#theorieWaitToggle"); if(twt)twt.addEventListener("click",()=>{
     if(s.theorieWait){ delete s.theorieWait; toast("Fahrstunden wieder aufgenommen"); } else { s.theorieWait=new Date().toISOString(); toast("Pausiert – wartet auf Theorie"); }
     save(); twt.classList.toggle("on",!!s.theorieWait);
@@ -3256,9 +3489,29 @@ function openAddLessonSheet(art){
     $("#alSave").addEventListener("click",()=>{
       const date=$("#alDate").value, von=$("#alTime").value, note=$("#alNote").value.trim();
       if(!date||!von){toast("Datum & Zeit wählen");return;}
-      if(isSchalt){ addLesson({date,von,bis:min2hm(hm2min(von)+15),art,sid,note}); }
-      else { for(let i=0;i<dur;i++){ const v=min2hm(hm2min(von)+i*blockMin); addLesson({date,von:v,bis:min2hm(hm2min(v)+blockMin),art,sid,note:i===0?note:""}); } }
-      closeSheet(); toast(lab+" eingetragen ✓"); routeKalender();
+      // Fahrzeug-Auswahl (Schritt 3)
+      const fzList=DB.workCfg.fahrzeuge||[];
+      const fzRelevant=["fahrstunde","sonder","nacht","schalt"].indexOf(art)>=0;
+      if(fzRelevant&&fzList.length){
+        openSheet(`<div class="sheet-h">Fahrzeug · ${esc(st?st.name:"")}</div>
+          <p class="muted-p" style="font-size:13px;margin:-4px 0 14px;">${isoDE(date)} · ${von}</p>
+          <div class="es-actions">
+            ${fzList.map(fz=>`<button class="es-act fz-opt" data-fzid="${esc(fz.id)}">${esc(fz.name)}<span style="float:right;font-size:12px;opacity:.6;font-weight:600;">${fz.typ==="automatik"?"Automatik":"Schalter"}</span></button>`).join("")}
+            <button class="es-act" id="fzSkip">Kein Fahrzeug (überspringen)</button>
+          </div>`);
+        const doBook=(fzid)=>{
+          const fz=fzList.find(f=>f.id===fzid)||null;
+          if(isSchalt){ addLesson({date,von,bis:min2hm(hm2min(von)+15),art,sid,note,fahrzeug:fz?fz.name:null}); }
+          else { for(let i=0;i<dur;i++){ const v=min2hm(hm2min(von)+i*blockMin); addLesson({date,von:v,bis:min2hm(hm2min(v)+blockMin),art,sid,note:i===0?note:"",fahrzeug:fz?fz.name:null}); } }
+          closeSheet(); toast(lab+" eingetragen ✓"); routeKalender();
+        };
+        document.querySelectorAll(".fz-opt").forEach(b=>b.addEventListener("click",()=>doBook(b.dataset.fzid)));
+        $("#fzSkip").addEventListener("click",()=>doBook(null));
+      } else {
+        if(isSchalt){ addLesson({date,von,bis:min2hm(hm2min(von)+15),art,sid,note}); }
+        else { for(let i=0;i<dur;i++){ const v=min2hm(hm2min(von)+i*blockMin); addLesson({date,von:v,bis:min2hm(hm2min(v)+blockMin),art,sid,note:i===0?note:""}); } }
+        closeSheet(); toast(lab+" eingetragen ✓"); routeKalender();
+      }
     });
   }
 }
@@ -3266,6 +3519,20 @@ function openAddLessonSheet(art){
 /* Termin bearbeiten / verschieben / löschen */
 function openEventSheet(kind,id,sid){
   ensureDB();
+  if(kind==="examDone"){
+    const ex=(DB.exams||[]).find(e=>e.id===id);
+    const st=DB.students.find(s=>s.id===sid);
+    const pass=ex&&ex.result==="pass";
+    openSheet(`<div class="sheet-h">${pass?"Prüfung bestanden ✓":"Prüfung nicht bestanden"}</div>
+      <p class="muted-p" style="font-size:13.5px;margin:-4px 0 14px;">${ex?esc(ex.name):"—"} · ${ex?isoDE(ex.date):""}${ex&&ex.von?` · ${ex.von}`:""}${ex&&ex.pruefer?` · ${esc(ex.pruefer)}`:""}</p>
+      <div class="es-actions">
+        ${st?`<button class="es-act primary" id="esAkte">Schülerakte öffnen</button>`:''}
+        <button class="es-act" id="esToStats">In Statistik öffnen</button>
+      </div>`);
+    const ak=$("#esAkte"); if(ak)ak.addEventListener("click",()=>{ closeSheet(); routeDetail(sid); });
+    $("#esToStats").addEventListener("click",()=>{ closeSheet(); routeStats('cur'); });
+    return;
+  }
   if(kind==="pruefung"){
     const st=DB.students.find(s=>s.id===sid);
     const t=DB.termine.find(x=>x.id===id);
@@ -3289,12 +3556,15 @@ function openEventSheet(kind,id,sid){
   const st=DB.students.find(s=>s.id===l.sid);
   const artLab=(CAL_ARTEN[l.art]||CAL_ARTEN.fahrstunde).lab;
   const statusInfo=l.status&&l.status!=="geplant"?`<span class="es-badge">${esc(l.status)}</span>`:"";
+  const fcRelevant=["fahrstunde","sonder","nacht"].indexOf(l.art)>=0;
+  const fcLab={v1:"1 FC vergessen",v2:"2 FC vergessen",geschenkt:"geschenkt",nachgereicht:"FC nachgereicht"}[l.fc]||"2 FC erhalten";
   // SCHRITT 1: Optionen-Übersicht
   openSheet(`<div class="sheet-h">${st?esc(st.name):"Termin"}</div>
     <p class="muted-p" style="font-size:13.5px;margin:-4px 0 ${l.note?'8px':'16px'};">${isoDE(l.date)} · ${l.von}–${l.bis} · ${artLab} ${statusInfo}</p>
     ${l.note?`<div class="es-note">${esc(l.note)}</div>`:''}
     <div class="es-actions">
       ${st?`<button class="es-act primary" id="esAkte">Schülerakte öffnen</button>`:''}
+      ${fcRelevant?`<button class="es-act" id="esFC">Fahrcheck · <b>${fcLab}</b></button>`:''}
       <button class="es-act" id="esEdit">Bearbeiten / verschieben</button>
       <button class="es-act" id="esOther">Mit anderem Schüler gefahren</button>
       <button class="es-act" id="esNoshow">Nicht erschienen</button>
@@ -3303,6 +3573,7 @@ function openEventSheet(kind,id,sid){
       <button class="es-act danger" id="esDelete">Termin löschen</button>
     </div>`);
   const ak=$("#esAkte"); if(ak)ak.addEventListener("click",()=>{ closeSheet(); routeDetail(l.sid); });
+  const fcb=$("#esFC"); if(fcb)fcb.addEventListener("click",()=>{ closeSheet(); openFCMenu(id); });
   $("#esEdit").addEventListener("click",()=>openEventEdit(id));
   $("#esOther").addEventListener("click",()=>{ closeSheet(); nsQuickAction("other",id,"lesson",routeKalender); });
   $("#esNoshow").addEventListener("click",()=>{ l.status="nicht erschienen"; save(); closeSheet(); toast("Als nicht erschienen vermerkt"); routeKalender(); });
@@ -3500,7 +3771,7 @@ function routeArbeitszeit(){
 
 /* ===================== KALENDER-ANSICHT ===================== */
 let _calView="woche", _calDate=null, _calFilter="alle";
-const CAL_ARTEN={ fahrstunde:{lab:"Fahrstunde",col:"var(--gruen-bright,#4a8b45)"}, nacht:{lab:"Nachtfahrt",col:"#5a7da8"}, sonder:{lab:"Sonderfahrt",col:"#e0843a",sf:true}, pruefung:{lab:"Prüfung",col:"#cf9a3e"}, theorie:{lab:"Theorie",col:"#9b7dc4"}, schalt:{lab:"Schaltkompetenz",col:"#c4607d",min:15}, block:{lab:"Blockiert",col:"#88939a"} };
+const CAL_ARTEN={ fahrstunde:{lab:"Fahrstunde",col:"var(--gruen-bright,#4a8b45)"}, nacht:{lab:"Nachtfahrt",col:"#5a7da8",hideleg:true}, sonder:{lab:"Sonderfahrt",col:"#5a7da8",sf:true}, pruefung:{lab:"Prüfung",col:"#c9a227"}, theorie:{lab:"Theorie",col:"#9b7dc4"}, schalt:{lab:"Schaltkompetenz",col:"#c4607d",min:15}, block:{lab:"Blockiert",col:"#88939a"} };
 function eventMatchesFilter(art){ if(_calFilter==="alle")return true; return art===_calFilter; }
 function routeKalender(){
   ensureDB();
@@ -3511,6 +3782,7 @@ function routeKalender(){
     <div class="cal-head">
       <button class="cal-viewbtn" id="calViewBtn">${viewLabels[_calView]} <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" style="width:14px;height:14px;"><path d="M6 9l6 6 6-6"/></svg></button>
       <div style="display:flex;gap:8px;align-items:center;">
+        <button class="cal-search-btn" id="calSearch" aria-label="Schüler suchen"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="7"/><path d="M21 21l-4.3-4.3"/></svg></button>
         <button class="cal-gear" id="calGear" aria-label="Arbeitszeiten"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M12 2v3M12 19v3M2 12h3M19 12h3M4.9 4.9l2.1 2.1M17 17l2.1 2.1M4.9 19.1L7 17M17 7l2.1-2.1"/></svg></button>
         <button class="cal-today" id="calToday">Heute</button>
       </div>
@@ -3519,9 +3791,10 @@ function routeKalender(){
     <div class="cal-filters" id="calFilters">
       ${[["alle","Alle"],["fahrstunde","Fahrstunden"],["pruefung","Prüfungen"],["theorie","Theorie"]].map(([k,l])=>`<button class="cal-fchip${_calFilter===k?' on':''}" data-f="${k}">${l}</button>`).join("")}
     </div>
+    <div class="cal-legend-bar">${Object.entries(CAL_ARTEN).filter(([k,v])=>!v.hideleg&&k!=='block').map(([k,v])=>`<span class="clb-item"><i style="background:${v.col}"></i>${v.lab}</span>`).join("")}</div>
     <div class="cal-nav">
       <button class="cal-arrow" id="calPrev"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M15 18l-6-6 6-6"/></svg></button>
-      <div class="cal-title" id="calTitle">${calTitle()}</div>
+      <div class="cal-title-wrap"><div class="cal-title" id="calTitle">${calTitle()}</div><div class="cal-kw" id="calKW">${calKW()}</div></div>
       <button class="cal-arrow" id="calNext"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M9 18l6-6-6-6"/></svg></button>
     </div>
     <div id="calBody">${_calView==="monat"?calMonthHTML():_calView==="woche"?calWeekHTML():calDayHTML()}</div>
@@ -3548,9 +3821,19 @@ function calTitle(){
   if(_calView==="woche"){ const ws=isoWeekStart(_calDate); const we=addDays(ws,5); const a=parseISO(ws), z=parseISO(we); return `${a.getDate()}. ${deMonth(a.getMonth()).slice(0,3)} – ${z.getDate()}. ${deMonth(z.getMonth()).slice(0,3)}`; }
   return `${deWeekdayLong(_calDate)}, ${parseISO(_calDate).getDate()}. ${deMonth(parseISO(_calDate).getMonth())}`;
 }
+function calKW(){
+  if(_calView==="monat"){
+    const d=parseISO(_calDate); const first=dateISO(new Date(d.getFullYear(),d.getMonth(),1)); const last=dateISO(new Date(d.getFullYear(),d.getMonth()+1,0));
+    const a=isoWeekNo(first), z=isoWeekNo(last);
+    return a===z?`KW ${a}`:`KW ${a}–${z}`;
+  }
+  // Tag & Woche: eine konkrete KW
+  return `KW ${isoWeekNo(_calDate)}`;
+}
 function bindCalControls(){
   $("#calToday").addEventListener("click",()=>{ _calDate=todayISO(); routeKalender(); });
   $("#calGear").addEventListener("click",routeArbeitszeit);
+  $("#calSearch").addEventListener("click",openCalSearchSheet);
   $("#calFab").addEventListener("click",openAddSheet);
   $("#calViewBtn").addEventListener("click",openCalViewSheet);
   $("#calPrev").addEventListener("click",()=>{ _calDate=calShift(-1); routeKalender(); });
@@ -3600,19 +3883,19 @@ function calMonthHTML(){
   const firstWd=wdOf(1); const leadEmpty=firstWd===6?0:firstWd; // Sonntag existiert in diesem Raster nicht
   let cells=""; for(let i=0;i<leadEmpty;i++)cells+=`<div class="cm-cell empty"></div>`;
   for(let day=1;day<=dim;day++){ const w=wdOf(day); if(w===6)continue; // Sonntag überspringen – findet eh nichts statt
-    const iso=dateISO(new Date(y,m,day)); const has=dayEvents(iso).some(e=>eventMatchesFilter(e.art)); const isToday=iso===todayISO();
-    cells+=`<div class="cm-cell${isToday?' today':''}" data-calday="${iso}"><span class="cm-num">${day}</span>${has?'<span class="cm-dot"></span>':''}</div>`; }
+    const iso=dateISO(new Date(y,m,day)); const has=dayEvents(iso).some(e=>eventMatchesFilter(e.art)); const isToday=iso===todayISO(); const hol=holidayName(iso);
+    cells+=`<div class="cm-cell${isToday?' today':''}${hol?' holiday':''}" data-calday="${iso}"${hol?` title="${esc(hol)}"`:''}><span class="cm-num">${day}</span>${hol?'<span class="cm-hol"></span>':(has?'<span class="cm-dot"></span>':'')}</div>`; }
   return `<div class="cm-grid-h six">${["Mo","Di","Mi","Do","Fr","Sa"].map(w=>`<div>${w}</div>`).join("")}</div><div class="cm-grid six">${cells}</div>
-    <div class="cm-legend">${Object.entries(CAL_ARTEN).filter(([k])=>k!=='nacht').map(([k,v])=>`<span class="cm-leg"><i style="background:${v.col}"></i>${v.lab}</span>`).join("")}</div>`;
+    <div class="cm-legend">${Object.entries(CAL_ARTEN).filter(([k,v])=>!v.hideleg&&k!=='block').map(([k,v])=>`<span class="cm-leg"><i style="background:${v.col}"></i>${v.lab}</span>`).join("")}</div>`;
 }
 // WOCHENANSICHT – einheitliche Kacheln: alle Standard-Slots (frei + belegt) je Tag, Sonntag entfällt
 function calWeekHTML(){
   const ws=isoWeekStart(_calDate);
   let cols="";
-  for(let i=0;i<6;i++){ const iso=addDays(ws,i); const isToday=iso===todayISO();
-    cols+=`<div class="cw-col${isToday?' today':''}">
+  for(let i=0;i<6;i++){ const iso=addDays(ws,i); const isToday=iso===todayISO(); const hol=holidayName(iso);
+    cols+=`<div class="cw-col${isToday?' today':''}${hol?' holiday':''}">
       <button class="cw-dayhead" data-calday="${iso}"><span class="cw-wd">${deWeekday(iso)}</span><span class="cw-dnum">${parseISO(iso).getDate()}</span></button>
-      <div class="cw-events">${weekDayRowsHTML(iso)}</div></div>`;
+      <div class="cw-events">${hol?`<div class="cw-holiday">${esc(hol)}</div>`:''}${weekDayRowsHTML(iso)}</div></div>`;
   }
   return `<div class="cw-grid six">${cols}</div>`;
 }
@@ -3634,11 +3917,21 @@ function sfKuerzel(e){ if(e.srcSonder){ const grp=e.srcSonder.split(":")[1]; ret
 function firstName(n){ return (n||"").split(" ")[0]; }
 function calEventChip(e,iso){
   const c=CAL_ARTEN[e.art]||CAL_ARTEN.fahrstunde;
+  // Erledigte Prüfung: eigene Optik (bestanden = grün + Häkchen + durchgestrichen, nicht bestanden = rot + durchgestrichen)
+  if(e.kind==="examDone"){
+    const pass=e.result==="pass";
+    const col=pass?"#4caf72":"#d94f4f";
+    const icon=pass?"✓":"✕";
+    const lbl=pass?"bestanden":"nicht bestanden";
+    return `<div class="cw-ev exam-done ${pass?'exam-pass':'exam-fail'}" style="border-left-color:${col}" data-evedit="${e.kind}|${e.id}|${e.sid||''}"><span class="cw-evt">${e.pruefTime||e.von} · Prüfung</span><span class="cw-evn"><span class="exd-strike">${esc(firstName(e.name))}</span> <span class="exd-mark" style="color:${col}">${icon} ${lbl}</span></span></div>`;
+  }
   const stat=e.status&&e.status!=="geplant"?` <span class="cw-evstat">${e.status}</span>`:"";
   const off=e.status&&e.status!=="geplant";
   const sf=c.sf?`<span class="cw-sf">${sfKuerzel(e)}</span>`:'';
   const examSoon=e.sid&&!!terminFor(e.sid);
-  return `<div class="cw-ev${off?' off':''}${examSoon?' exam-soon':''}" style="border-left-color:${c.col}" data-evedit="${e.kind}|${e.id}|${e.sid||''}"><span class="cw-evt">${e.von}</span><span class="cw-evn">${esc(firstName(e.name))}${sf}${stat}</span></div>`;
+  const fzTag=e.fahrzeug?`<span class="cw-fz">${esc(e.fahrzeug)}</span>`:'';
+  const pruefLabel=e.pruefTime?`<span class="cw-fz" style="color:${c.col}">Prüfung ${e.pruefTime}</span>`:'';
+  return `<div class="cw-ev${off?' off':''}${examSoon?' exam-soon':''}" style="border-left-color:${c.col}" data-evedit="${e.kind}|${e.id}|${e.sid||''}"><span class="cw-evt">${e.von}</span><span class="cw-evn">${esc(firstName(e.name))}${sf}${stat}${fzTag}${pruefLabel}</span></div>`;
 }
 // TAGESANSICHT
 function calDayHTML(){
@@ -3665,6 +3958,11 @@ function calDayHTML(){
   items.forEach(it=>{
     const top=(it.von-startH*60)*pxPerMin; const h=Math.max(34,(it.bis-it.von)*pxPerMin-3);
     if(it.type==="ev"){ const e=it.e; const c=CAL_ARTEN[e.art]||CAL_ARTEN.fahrstunde;
+      if(e.kind==="examDone"){
+        const pass=e.result==="pass"; const col=pass?"#4caf72":"#d94f4f"; const icon=pass?"✓":"✕"; const lbl=pass?"bestanden":"nicht bestanden";
+        blocks+=`<div class="ct-ev exam-done ${pass?'exam-pass':'exam-fail'}" style="top:${top}px;height:${h}px;border-left-color:${col}" data-evedit="${e.kind}|${e.id}|${e.sid||''}"><div class="ct-ev-t">${e.pruefTime||min2hm(it.von)}</div><div class="ct-ev-n"><span class="exd-strike">${esc(e.name)}</span></div><div class="ct-ev-a" style="color:${col};font-weight:800">${icon} Prüfung ${lbl}</div></div>`;
+        return;
+      }
       const off=e.status&&e.status!=="geplant"; const stat=off?`<span class="cd-stat">${e.status}</span>`:"";
       const sf=c.sf?`<span class="ct-sf">${sfKuerzel(e)}</span>`:'';
       const examSoon=e.sid&&!!terminFor(e.sid);
@@ -3677,7 +3975,8 @@ function calDayHTML(){
   });
   const cnt=countRange(iso,iso);
   const doneUE=dayUE(iso,true), planUE=dayUE(iso,false);
-  return `<div class="cd-summary"><span><b>${evs.length}</b> belegt</span><span><b>${free.length}</b> frei</span><span><b>${doneUE+planUE}</b> UE</span></div>
+  const hol=holidayName(iso);
+  return `${hol?`<div class="cd-holiday">🎌 ${esc(hol)} · Feiertag in Hessen</div>`:''}<div class="cd-summary"><span><b>${evs.length}</b> belegt</span><span><b>${free.length}</b> frei</span><span><b>${doneUE+planUE}</b> UE</span></div>
     <div class="ct-wrap" style="height:${totalH}px">${hourLines}${nowLine}<div class="ct-events">${blocks}</div></div>`;
 }
 // UE eines Tages (done=nur absolvierte)
@@ -3700,17 +3999,36 @@ function ueRange(fromISO,toISO){
       if(e.status==="abgebrochen"||e.status==="nicht erschienen")return;
       const ue=ueOf(e.art);
       if(isAbsolved(cur,e.bis))done+=ue; else plan+=ue;
-      // FC-abgerechnete UE (zählt fürs Gehalt): Prüfungen immer voll, Lessons je nach fc-Status
+      // FC-abgerechnete UE (zählt fürs Gehalt):
+      // Prüfungen immer voll. Fahrstunden NEU: Standard (kein fc-Vermerk) = voll bezahlt (Schüler bringt 2 FC).
+      // Ausnahmen werden abgehakt: v1 = nur 1 FC (halbe UE), v2/geschenkt = 0.
+      // nachgereicht = wieder voll, wird aber dem AKTUELLEN Monat gutgeschrieben (s.u., nicht hier).
       if(e.kind==="pruefung"){ fcCounted+=ue; }
-      else if(e.fc==="voll")fcCounted+=ue;
-      else if(e.fc==="halb")fcCounted+=ue/2;
-      // geschenkt/offen/null => 0 fürs Gehalt
+      else if(["fahrstunde","sonder","nacht"].indexOf(e.art)>=0){
+        if(e.fc==="v1")fcCounted+=ue/2;
+        else if(e.fc==="v2"||e.fc==="geschenkt")fcCounted+=0;
+        else if(e.fc==="nachgereicht")fcCounted+=0; // wird separat dem aktuellen Monat gutgeschrieben
+        else fcCounted+=ue; // Standard: voll
+      }
     });
     cur=addDays(cur,1);
   }
   // Bereits absolvierte/abgerechnete UE als Sockel – nur wenn der aktuelle Monat im Zeitraum liegt
   const su=(DB.verdienst&&DB.verdienst.startUE)||0;
   if(su>0){ const [mf,mt]=isoMonthRange(todayISO()); if(fromISO<=mt&&toISO>=mf){ done+=su; fcCounted+=su; } }
+  // Nachgereichte FCs: zählen fürs Gehalt im Monat, in dem sie nachgereicht wurden (nachAm), nicht rückwirkend.
+  (DB.lessons||[]).forEach(l=>{
+    if(l.fc==="nachgereicht"&&l.nachAm){
+      const dm=(""+l.nachAm).slice(0,10);
+      if(dm>=fromISO&&dm<=toISO){ fcCounted+=ueOf(l.art); }
+    }
+  });
+  // Stattgefundene Prüfungen: 46€ (=2 UE) pro Prüfung, gutgeschrieben am Tag des Eintragens (earnAt).
+  // Egal ob bestanden oder nicht. Fallback auf das Prüfungsdatum, falls earnAt fehlt (Altdaten).
+  (DB.exams||[]).forEach(ex=>{
+    const dm=(""+(ex.earnAt||ex.date||"")).slice(0,10);
+    if(dm&&dm>=fromISO&&dm<=toISO){ const u=ueOf("pruefung"); done+=u; fcCounted+=u; }
+  });
   return {done,plan,total:done+plan,fcCounted};
 }
 // Offene FCs (gefahren, nicht abgegeben) in einem Zeitraum
@@ -3751,6 +4069,39 @@ function parseISO(iso){ const p=(""+iso).slice(0,10).split("-"); return new Date
 function weekdayMon0(iso){ const d=parseISO(iso); return (d.getDay()+6)%7; } // 0=Mo … 6=So
 function addDays(iso,n){ const d=parseISO(iso); d.setDate(d.getDate()+n); return dateISO(d); }
 function isoWeekStart(iso){ return addDays(iso, -weekdayMon0(iso)); } // Montag der Woche
+// ISO-8601 Kalenderwoche (Woche mit dem ersten Donnerstag des Jahres = KW1)
+function isoWeekNo(iso){ const d=parseISO(iso); const t=new Date(d.getFullYear(),d.getMonth(),d.getDate()); const day=(t.getDay()+6)%7; t.setDate(t.getDate()-day+3); const firstTh=new Date(t.getFullYear(),0,4); const firstDay=(firstTh.getDay()+6)%7; firstTh.setDate(firstTh.getDate()-firstDay+3); return 1+Math.round((t-firstTh)/(7*24*3600*1000)); }
+/* ===== Feiertage (Hessen + bundesweit) =====
+   Hessen hat dieselben gesetzlichen Feiertage wie der Bund plus Fronleichnam,
+   aber keine weiteren Sondertage (kein Reformationstag, kein Allerheiligen). */
+function easterSunday(year){ // Gauß/Anonymous-Algorithmus -> Ostersonntag
+  const a=year%19,b=Math.floor(year/100),c=year%100,d=Math.floor(b/4),e=b%4,f=Math.floor((b+8)/25),g=Math.floor((b-f+1)/3),h=(19*a+b-d-g+15)%30,i=Math.floor(c/4),k=c%4,l=(32+2*e+2*i-h-k)%7,m=Math.floor((a+11*h+22*l)/451),mon=Math.floor((h+l-7*m+114)/31),day=((h+l-7*m+114)%31)+1;
+  return new Date(year,mon-1,day);
+}
+let _holidayCache={};
+function holidaysForYear(year){
+  if(_holidayCache[year])return _holidayCache[year];
+  const map={};
+  const add=(d,name)=>{ map[dateISO(d)]=name; };
+  // Feste Feiertage
+  add(new Date(year,0,1),"Neujahr");
+  add(new Date(year,4,1),"Tag der Arbeit");
+  add(new Date(year,9,3),"Tag der Deutschen Einheit");
+  add(new Date(year,11,25),"1. Weihnachtstag");
+  add(new Date(year,11,26),"2. Weihnachtstag");
+  // Bewegliche Feiertage (relativ zu Ostersonntag)
+  const es=easterSunday(year);
+  const rel=(off)=>{ const d=new Date(es); d.setDate(d.getDate()+off); return d; };
+  add(rel(-2),"Karfreitag");
+  add(rel(1),"Ostermontag");
+  add(rel(39),"Christi Himmelfahrt");
+  add(rel(50),"Pfingstmontag");
+  add(rel(60),"Fronleichnam"); // in Hessen gesetzlicher Feiertag
+  _holidayCache[year]=map;
+  return map;
+}
+function holidayName(iso){ const y=parseISO(iso).getFullYear(); return holidaysForYear(y)[(""+iso).slice(0,10)]||null; }
+function isHoliday(iso){ return !!holidayName(iso); }
 function isoMonthRange(iso){ const d=parseISO(iso); const first=new Date(d.getFullYear(),d.getMonth(),1); const last=new Date(d.getFullYear(),d.getMonth()+1,0); return [dateISO(first),dateISO(last)]; }
 function deWeekday(iso){ return ["Mo","Di","Mi","Do","Fr","Sa","So"][weekdayMon0(iso)]; }
 function deWeekdayLong(iso){ return ["Montag","Dienstag","Mittwoch","Donnerstag","Freitag","Samstag","Sonntag"][weekdayMon0(iso)]; }
@@ -3782,9 +4133,13 @@ function dayTheorieWindow(iso){
 // Alle Termine (Fahrstunden + Prüfungen) eines Tages, vereinheitlicht
 function dayEvents(iso){
   const ev=[];
-  (DB.lessons||[]).filter(l=>l.date===iso).forEach(l=>{ const st=DB.students.find(s=>s.id===l.sid); ev.push({kind:"lesson",id:l.id,von:l.von,bis:l.bis,art:l.art||"fahrstunde",sid:l.sid,name:st?st.name:(l.name||"—"),status:l.status||"geplant",fc:l.fc||null,note:l.note||"",srcSonder:l.srcSonder||null}); });
-  // Prüfungstermine: jeder belegte Slot = ein 90-Min-Event (Default 09:00, falls keine Zeit)
-  (DB.termine||[]).filter(t=>t.date===iso).forEach(t=>{ (t.slots||[]).forEach(sid=>{ if(sid){ const st=DB.students.find(s=>s.id===sid); ev.push({kind:"pruefung",id:t.id,von:t.von||"09:00",bis:t.bis||min2hm(hm2min(t.von||"09:00")+(DB.workCfg.blockMin||90)),art:"pruefung",sid,name:st?st.name:"—",status:"geplant"}); } }); });
+  (DB.lessons||[]).filter(l=>l.date===iso).forEach(l=>{ const st=DB.students.find(s=>s.id===l.sid); ev.push({kind:"lesson",id:l.id,von:l.von,bis:l.bis,art:l.art||"fahrstunde",sid:l.sid,name:st?st.name:(l.name||"—"),status:l.status||"geplant",fc:l.fc||null,note:l.note||"",srcSonder:l.srcSonder||null,fahrzeug:l.fahrzeug||null}); });
+  // Prüfungstermine: jeder belegte Slot = ein 90-Min-Event (Default 09:00, falls keine Zeit).
+  // NUR solange noch kein Ergebnis eingetragen ist – sonst zählt die Prüfung über exams.earnAt (s. ueRange).
+  // Prüfungstermine: Block beginnt 15 Min VOR der eingetragenen Prüfungszeit (Vorlauf).
+  (DB.termine||[]).filter(t=>t.date===iso).forEach(t=>{ (t.slots||[]).forEach(sid=>{ if(sid){ const st=DB.students.find(s=>s.id===sid); const rawVon=t.von||"09:00"; const blockVon=min2hm(hm2min(rawVon)+15); const blockBis=t.bis||min2hm(hm2min(rawVon)+(DB.workCfg.blockMin||90)); ev.push({kind:"pruefung",id:t.id,von:blockVon,bis:blockBis,art:"pruefung",sid,name:st?st.name:"—",status:"geplant",pruefTime:rawVon}); } }); });
+  // Erledigte Prüfungen (Ergebnis liegt vor): bleiben dauerhaft im Kalender als Erfolgs-/Misserfolgs-Marker.
+  (DB.exams||[]).filter(ex=>ex.date===iso).forEach(ex=>{ const rawVon=ex.von||"09:00"; const blockVon=min2hm(hm2min(rawVon)+15); const blockBis=min2hm(hm2min(rawVon)+(DB.workCfg.blockMin||90)); ev.push({kind:"examDone",id:ex.id,von:blockVon,bis:blockBis,art:"pruefung",sid:ex.sid,name:ex.name||"—",status:"erledigt",result:ex.result,pruefTime:rawVon,pruefer:ex.pruefer||""}); });
   return ev.sort((a,b)=>hm2min(a.von)-hm2min(b.von));
 }
 function dayHasEvents(iso){ return dayEvents(iso).length>0; }
@@ -3804,7 +4159,7 @@ function countRange(fromISO,toISO){
   return {planned,free,slots};
 }
 // Lesson-CRUD
-function addLesson(o){ ensureDB(); const l={id:uid(),date:o.date,von:o.von,bis:o.bis||min2hm(hm2min(o.von)+(DB.workCfg.blockMin||90)),art:o.art||"fahrstunde",sid:o.sid||null,name:o.name||"",status:o.status||"geplant",note:o.note||"",fc:o.fc||null}; if(o.srcSonder)l.srcSonder=o.srcSonder; DB.lessons.push(l); save(); return l; }
+function addLesson(o){ ensureDB(); const l={id:uid(),date:o.date,von:o.von,bis:o.bis||min2hm(hm2min(o.von)+(DB.workCfg.blockMin||90)),art:o.art||"fahrstunde",sid:o.sid||null,name:o.name||"",status:o.status||"geplant",note:o.note||"",fc:o.fc||null}; if(o.srcSonder)l.srcSonder=o.srcSonder; if(o.fahrzeug)l.fahrzeug=o.fahrzeug; DB.lessons.push(l); save(); return l; }
 // Verknüpfung: Sonderfahrt aus Ausbildungsplan -> Kalender-Termin (ÜL/AB/NF)
 const SF_KUERZEL={ueberland:"ÜL",autobahn:"AB",nacht:"NF"};
 const SF_LABEL={ueberland:"Überlandfahrt",autobahn:"Autobahnfahrt",nacht:"Nachtfahrt"};
@@ -3857,6 +4212,10 @@ function ensureDB(){ let _ensureDirty=false; if(!Array.isArray(DB.exams))DB.exam
   }; }
   if(!Array.isArray(DB.workCfg.pausen))DB.workCfg.pausen=[];
   if(!DB.workCfg.axis||typeof DB.workCfg.axis!=="object"){ DB.workCfg.axis={von:"08:00",bis:"24:00"}; }
+  if(!Array.isArray(DB.workCfg.fahrzeuge)||!DB.workCfg.fahrzeuge.length){
+    DB.workCfg.fahrzeuge=[{id:"fz1",name:"Cupra 1",typ:"automatik"},{id:"fz2",name:"Audi A1",typ:"schalt"}];
+    _ensureDirty=true;
+  }
   if(!DB.verdienst||typeof DB.verdienst!=="object"){ DB.verdienst={
     proUE:23,        // € pro Unterrichtseinheit (45 Min)
     fixum:2100,      // monatliches Fixum
@@ -3979,6 +4338,71 @@ function waitlist(){ return activeStudents().filter(s=>s.ready).sort((a,b)=>{ co
 function nextWaitOrder(){ let m=0; activeStudents().forEach(s=>{ if(s.ready&&typeof s.waitOrder==='number'&&s.waitOrder>m)m=s.waitOrder; }); return m+1; }
 function setReady(s){ if(!s.ready)s.ready=new Date().toISOString(); }
 function bumpBack(s,n){ const wl=waitlist(); const idx=wl.indexOf(s); if(idx<0)return; const rest=wl.filter(x=>x!==s); const pos=Math.min(idx+n,rest.length); rest.splice(pos,0,s); rest.forEach((x,i)=>x.waitOrder=i+1); }
+// Durchfaller hinter ALLE setzen, die bereits einen Prüfungstermin haben (aber vor die Termin-losen).
+function bumpBehindScheduled(s){
+  const wl=waitlist().filter(x=>x!==s);
+  const withT=wl.filter(x=>terminFor(x.id));
+  const without=wl.filter(x=>!terminFor(x.id));
+  const ordered=[...withT,s,...without];
+  ordered.forEach((x,i)=>x.waitOrder=i+1);
+}
+// Prüfungstermine ohne belegte Slots automatisch entfernen (Daten bleiben in exams erhalten).
+// Gibt die entfernten Termine zurück (für Undo).
+function pruneEmptyTermine(){
+  const removed=[];
+  DB.termine=(DB.termine||[]).filter(t=>{
+    const hasSlot=(t.slots||[]).some(Boolean);
+    if(!hasSlot){ removed.push(JSON.parse(JSON.stringify(t))); return false; }
+    return true;
+  });
+  return removed;
+}
+// Zentrale Ergebnis-Eintragung: setzt earnAt (Verdienst-Timing), entfernt leere Termine,
+// schreibt Historie, behandelt bestanden/durchgefallen, bietet Undo.
+function commitExamResult(s,opts){
+  const id=s.id;
+  const date=opts.date||todayISO();
+  const attempt=DB.exams.filter(e=>e.sid===id).length+1;
+  // Uhrzeit der Prüfung sichern (für die dauerhafte Kalender-Markierung), bevor der Termin entfernt wird
+  const _t=terminFor(id);
+  const von=opts.von||(_t?_t.von:null)||null;
+  const ex={id:uid(),sid:id,name:s.name,date,result:opts.result,pruefer:opts.pruefer||"",note:opts.note||"",attempt,earnAt:todayISO()};
+  if(von)ex.von=von;
+  if(opts.result==='fail'){ ex.faults=(opts.faults||[]).slice(); ex.eingriff=!!opts.eingriff; ex.eingNote=opts.eingNote||""; }
+  else { ex.faults=[]; ex.eingriff=false; }
+  // Snapshot für Undo
+  const snap={ exLen:DB.exams.length, termine:JSON.parse(JSON.stringify(DB.termine||[])),
+    passed:s.passed, ready:s.ready, waitOrder:s.waitOrder, attempts:s.attempts, histLen:Array.isArray(s.hist)?s.hist.length:0 };
+  DB.exams.push(ex);
+  clearSlot(id);
+  pruneEmptyTermine();
+  const eur=Math.round(ueOf("pruefung")*DB.verdienst.proUE);
+  if(opts.result==='pass'){
+    s.passed=date; delete s.ready; delete s.waitOrder;
+    logHist(s,"pruefung",`Praktische Prüfung bestanden${opts.pruefer?` · ${opts.pruefer}`:""}`,{eur});
+    save();
+    toastUndo("Bestanden – ins Archiv ✓",()=>undoExam(s,snap,()=>routePruefungen()));
+    celebrate(); routeArchive();
+  } else {
+    s.attempts=(s.attempts||0)+1;
+    bumpBehindScheduled(s);
+    const grund=(opts.faults&&opts.faults.length)?opts.faults.map(f=>FAULT_LABEL[f]||f).slice(0,2).join(", "):(opts.eingriff?"Eingriff":"");
+    logHist(s,"pruefung",`Praktische Prüfung nicht bestanden${opts.pruefer?` · ${opts.pruefer}`:""}${grund?` · ${grund}`:""}`,{eur});
+    save();
+    toastUndo("Eingetragen · zurück in Warteliste",()=>undoExam(s,snap,()=>routePruefungen()));
+    routePruefungen();
+  }
+}
+function undoExam(s,snap,after){
+  DB.exams.length=snap.exLen;            // letzten Prüfungseintrag entfernen
+  DB.termine=snap.termine;                // Termine (inkl. evtl. entfernter) wiederherstellen
+  if(snap.passed)s.passed=snap.passed; else delete s.passed;
+  if(snap.ready)s.ready=snap.ready; else delete s.ready;
+  if(typeof snap.waitOrder==='number')s.waitOrder=snap.waitOrder; else delete s.waitOrder;
+  if(typeof snap.attempts==='number')s.attempts=snap.attempts; else delete s.attempts;
+  if(Array.isArray(s.hist))s.hist.length=snap.histLen;
+  save(); if(after)after();
+}
 
 function futureTermine(){ const t=todayISO(); return DB.termine.filter(x=>x.date>=t).sort((a,b)=>a.date<b.date?-1:1); }
 function terminFor(sid){ for(const t of futureTermine()){ if(t.slots&&t.slots.indexOf(sid)>=0)return t; } return null; }
@@ -3996,9 +4420,70 @@ function faultCounts(ex){ const c={}; ex.filter(e=>e.result==='fail').forEach(e=
 
 function barRow(label,pct,sub,color){ color=color||"var(--orange)"; const w=Math.max(0,Math.min(100,pct||0)); return `<div class="bar-row"><div class="bar-top"><span class="bar-lab">${label}</span><span class="bar-val">${sub!=null?sub:(pct==null?"–":w+" %")}</span></div><div class="bar-track"><div class="bar-fill" style="width:${w}%;background:${color}"></div></div></div>`; }
 function miniStat(label,val,sub){ return `<div class="mini-stat"><div class="ms-v">${val}</div><div class="ms-l">${label}</div><div class="ms-s">${sub}</div></div>`; }
+function miniStatAnim(label,val,suffix,sub){
+  const isNum=val!==null&&val!=="–"&&!isNaN(+val);
+  const disp=isNum?`<div class="ms-v" data-count="${Math.round(+val)}" data-suffix="${suffix||''}">${Math.round(+val)}${suffix||''}</div>`:`<div class="ms-v">${val==null?"–":val}</div>`;
+  return `<div class="mini-stat">${disp}<div class="ms-l">${label}</div><div class="ms-s">${sub}</div></div>`;
+}
+function barRowAnim(label,pct,sub,color){ color=color||"var(--akzent)"; const w=Math.max(0,Math.min(100,pct||0)); return `<div class="bar-row"><div class="bar-top"><span class="bar-lab">${label}</span><span class="bar-val">${sub!=null?sub:w+" %"}</span></div><div class="bar-track"><div class="bar-fill" data-w="${w}" style="width:0%;background:${color}"></div></div></div>`; }
 function periodChips(active){ return `<div class="seg">${PERIODS.map(([k,l])=>`<button class="seg-i${k===active?' on':''}" data-period="${k}">${l}</button>`).join("")}</div>`; }
 function bindPeriod(fn){ document.querySelectorAll(".seg-i[data-period]").forEach(b=>b.addEventListener("click",()=>fn(b.dataset.period))); }
 
+/* ============================================================
+   KALENDER-SUCHE
+   ============================================================ */
+function openCalSearchSheet(){
+  const artLabel={fahrstunde:"Fahrstunde",nacht:"Nachtfahrt",sonder:"Sonderfahrt",schalt:"Schaltlektion",theorie:"Theorie",block:"Blockiert",pruefung:"Prüfung"};
+  openSheet(`<div class="sheet-h">Schüler suchen</div>
+    <div class="search-wrap" style="margin-bottom:14px;"><span class="search-ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="11" cy="11" r="7"/><path d="M21 21l-4.3-4.3"/></svg></span><input id="csInput" type="search" placeholder="Name eingeben …" autocomplete="off"></div>
+    <div id="csList"></div>`);
+  const inp=$("#csInput"), list=$("#csList");
+  inp.focus();
+  inp.addEventListener("input",()=>{
+    const q=(inp.value||"").trim().toLowerCase();
+    if(q.length<1){ list.innerHTML=""; return; }
+    const matches=(DB.students||[]).filter(s=>(s.name||"").toLowerCase().includes(q)&&!isDummyStudent(s)).slice(0,8);
+    if(!matches.length){ list.innerHTML=`<div class="cs-empty">Kein Schüler gefunden</div>`; return; }
+    list.innerHTML=matches.map(s=>{
+      const hasFuture=(DB.lessons||[]).some(l=>l.sid===s.id&&l.date>=todayISO()&&l.status!=="abgebrochen"&&l.status!=="nicht erschienen");
+      const hasPast=(DB.lessons||[]).some(l=>l.sid===s.id&&l.date<todayISO());
+      const meta=[hasFuture?"Termine geplant":"",hasPast?"Vergangenheit":""].filter(Boolean).join(" · ")||"Keine Termine";
+      return `<button class="cs-student" data-sid="${s.id}"><div><div class="cs-sname">${esc(s.name)}</div><div style="font-size:11.5px;color:var(--muted);margin-top:2px;">${meta}</div></div><span class="cs-form">${esc(s.form||"B")}</span></button>`;
+    }).join("");
+    document.querySelectorAll(".cs-student").forEach(b=>b.addEventListener("click",()=>showCalStudentDetail(b.dataset.sid)));
+  });
+}
+function showCalStudentDetail(sid){
+  const s=DB.students.find(x=>x.id===sid); if(!s)return;
+  const today=todayISO();
+  const artLabel={fahrstunde:"Fahrstunde",nacht:"Nachtfahrt",sonder:"Sonderfahrt",schalt:"Schaltlektion",theorie:"Theorie",block:"Blockiert"};
+  // Lessons
+  const allL=(DB.lessons||[]).filter(l=>l.sid===sid&&l.status!=="abgebrochen"&&l.status!=="nicht erschienen");
+  const pastL=allL.filter(l=>l.date<today).sort((a,b)=>b.date.localeCompare(a.date));
+  const futureL=allL.filter(l=>l.date>=today).sort((a,b)=>a.date.localeCompare(b.date));
+  // Exams done
+  const pastEx=(DB.exams||[]).filter(ex=>ex.sid===sid).sort((a,b)=>b.date.localeCompare(a.date));
+  // Future exam slots
+  const futureEx=(DB.termine||[]).filter(t=>(t.slots||[]).includes(sid)).sort((a,b)=>a.date.localeCompare(b.date));
+  // Merge future: lessons + exam slots, sorted asc
+  const futureItems=[
+    ...futureL.map(l=>({ date:l.date, html:`<button class="cs-item future" data-date="${l.date}"><div class="csi-date">${deWeekday(l.date)} · ${isoDE(l.date)}</div><div class="csi-info">${l.von} · ${artLabel[l.art]||l.art}</div></button>` })),
+    ...futureEx.map(t=>({ date:t.date, html:`<button class="cs-item future" data-date="${t.date}"><div class="csi-date">${deWeekday(t.date)} · ${isoDE(t.date)}</div><div class="csi-info exam-future">🏆 Prüfung · ${t.von||"?"}</div></button>` }))
+  ].sort((a,b)=>a.date.localeCompare(b.date));
+  // Merge past: lessons + done exams, sorted desc
+  const pastItems=[
+    ...pastL.map(l=>({ date:l.date, html:`<button class="cs-item past" data-date="${l.date}"><div class="csi-date">${deWeekday(l.date)} · ${isoDE(l.date)}</div><div class="csi-info">${l.von} · ${artLabel[l.art]||l.art}</div></button>` })),
+    ...pastEx.map(ex=>({ date:ex.date, html:`<button class="cs-item past" data-date="${ex.date}"><div class="csi-date">${deWeekday(ex.date)} · ${isoDE(ex.date)}</div><div class="csi-info ${ex.result==="pass"?"exam-pass":"exam-fail"}">${ex.result==="pass"?"✓ Bestanden":"✕ Nicht bestanden"}</div></button>` }))
+  ].sort((a,b)=>b.date.localeCompare(a.date));
+  const totalF=futureItems.length, totalP=pastItems.length;
+  openSheet(`<div class="cs-stud-head"><button class="cs-back" id="csBack">← Zurück</button><div class="cs-stud-name">${esc(s.name)}</div></div>
+    ${totalF?`<div class="cs-section-h future">Geplant · ${totalF}</div>${futureItems.map(i=>i.html).join("")}`:`<div class="cs-empty">Keine geplanten Termine</div>`}
+    ${totalP?`<div class="cs-section-h past">Vergangene Termine · ${totalP}</div>${pastItems.map(i=>i.html).join("")}`:""}`);
+  $("#csBack").addEventListener("click",openCalSearchSheet);
+  document.querySelectorAll(".cs-item[data-date]").forEach(b=>b.addEventListener("click",()=>{
+    _calDate=b.dataset.date; _calView="tag"; closeSheet(); routeKalender();
+  }));
+}
 function openSheet(html){ $("#sheet").innerHTML=html; $("#sheet").classList.add("open"); $("#sheetScrim").classList.add("open"); }
 function closeSheet(){ $("#sheet").classList.remove("open"); $("#sheetScrim").classList.remove("open"); }
 
@@ -4031,7 +4516,7 @@ function examReadyCard(s){
   return freigabeCard(s);
 }
 function bindExamReady(s,rerender){
-  const on=$("#readyOn"); if(on)on.addEventListener("click",()=>{ setReady(s); save(); toast("Auf die Warteliste gesetzt"); celebrate(); rerender(); });
+  const on=$("#readyOn"); if(on)on.addEventListener("click",()=>{ setReady(s); logHist(s,"ready","Auf die Praxis-Warteliste gesetzt"); save(); toast("Auf die Warteliste gesetzt"); celebrate(); rerender(); });
   const off=$("#readyOff"); if(off)off.addEventListener("click",()=>{ delete s.ready; delete s.waitOrder; clearSlot(s.id); save(); toast("Von der Warteliste genommen"); rerender(); });
   const force=$("#readyForce"); if(force)force.addEventListener("click",()=>{ if(confirm("Diesen Schüler trotz offener Punkte manuell auf die Warteliste setzen?")){ setReady(s); save(); toast("Manuell auf die Warteliste gesetzt"); rerender(); } });
   const ex=$("#examBtn"); if(ex)ex.addEventListener("click",()=>routeExam(s.id));
@@ -4181,13 +4666,9 @@ function renderResultStep(s){
   $("#saveExam").addEventListener("click",()=>{
     const date=$("#exDate").value||todayISO();
     const noteEl=$("#exNote"); const note=noteEl?noteEl.value.trim():"";
-    const attempt=DB.exams.filter(e=>e.sid===id).length+1;
-    const ex={id:uid(),sid:id,name:s.name,date,result:_examChoice,pruefer:_examPr||"",note,attempt};
-    if(_examChoice==='fail'){ ex.faults=_examFaults.slice(); ex.eingriff=!!_examEingriff; const en=$("#eingNote"); ex.eingNote=en?en.value.trim():""; }
-    else { ex.faults=[]; ex.eingriff=false; }
-    DB.exams.push(ex); clearSlot(id);
-    if(_examChoice==='pass'){ s.passed=date; delete s.ready; delete s.waitOrder; save(); toast("Bestanden – ins Archiv ✓"); celebrate(); routeArchive(); }
-    else { s.attempts=(s.attempts||0)+1; bumpBack(s,5); save(); toast("Eingetragen · 5 Plätze zurück"); routePruefungen(); }
+    const en=$("#eingNote");
+    commitExamResult(s,{ result:_examChoice, date, pruefer:_examPr||"", note,
+      faults:_examFaults, eingriff:_examEingriff, eingNote:en?en.value.trim():"" });
   });
 }
 function routeExam(id){
@@ -4251,13 +4732,9 @@ function renderExam(s){
   $("#saveExam").addEventListener("click",()=>{
     const date=$("#exDate").value||todayISO();
     const noteEl=$("#exNote"); const note=noteEl?noteEl.value.trim():"";
-    const attempt=DB.exams.filter(e=>e.sid===id).length+1;
-    const ex={id:uid(),sid:id,name:s.name,date,result:_examChoice,pruefer:_examPr||"",note,attempt};
-    if(_examChoice==='fail'){ ex.faults=_examFaults.slice(); ex.eingriff=!!_examEingriff; const en=$("#eingNote"); ex.eingNote=en?en.value.trim():""; }
-    else { ex.faults=[]; ex.eingriff=false; }
-    DB.exams.push(ex); clearSlot(id);
-    if(_examChoice==='pass'){ s.passed=date; delete s.ready; delete s.waitOrder; save(); toast("Bestanden – ins Archiv ✓"); celebrate(); routeArchive(); }
-    else { s.attempts=(s.attempts||0)+1; bumpBack(s,5); save(); toast("Eingetragen · 5 Plätze zurück"); routePruefungen(); }
+    const en=$("#eingNote");
+    commitExamResult(s,{ result:_examChoice, date, pruefer:_examPr||"", note,
+      faults:_examFaults, eingriff:_examEingriff, eingNote:en?en.value.trim():"" });
   });
 }
 
@@ -4290,16 +4767,16 @@ function routePruefungen(){
             return `<div class="slot${st?'':' free'}" data-tid="${t.id}" data-slot="${i}">${st?`<span class="slot-name">${esc(st.name)}</span><button class="slot-result" data-result="${st.id}" aria-label="Ergebnis eintragen">Ergebnis ›</button><button class="slot-x" data-tid="${t.id}" data-slot="${i}" aria-label="frei">✕</button>`:`<span class="slot-free">+ Schüler einteilen</span>`}</div>`; }).join("")}</div></div>`;
       });
     }
-    html+=`<div class="blk-h" style="margin-top:20px;">Warteliste <span class="count-pill">${wl.length}</span></div>`;
-    if(!wl.length){ html+=`<p class="muted-p">Kein Schüler ist als prüfungsreif markiert. Markiere jemanden in seiner Datei oder im Ausbildungsplan (ab 90 %).</p>`; }
+    const wlFree=wl.filter(s=>!terminFor(s.id)); // eingeteilte erscheinen oben im Termin-Block, nicht doppelt in der Warteliste
+    html+=`<div class="blk-h" style="margin-top:20px;">Warteliste <span class="count-pill">${wlFree.length}</span></div>`;
+    if(!wlFree.length){ html+=`<p class="muted-p">Niemand wartet aktuell auf einen freien Prüfungstermin.</p>`; }
     else {
-      const withT=wl.map(s=>({s,t:terminFor(s.id)}));
-      withT.sort((a,b)=>{ if(a.t&&b.t)return a.t.date<b.t.date?-1:1; if(a.t)return -1; if(b.t)return 1; return 0; });
+      const withT=wlFree.map(s=>({s,t:null}));
       withT.forEach(({s,t})=>{ const n=daysSince(s.ready); const pr=stand(s);
         html+=`<button class="wait-card" data-id="${s.id}">
-          <div class="wait-days"${t?' style="background:var(--orange-soft);border:1px solid var(--orange-line)"':''}><div class="wd-n">${t?isoDE(t.date).slice(0,5):n}</div><div class="wd-l">${t?'Prüfung':(n===1?'Tag':'Tage')}</div></div>
+          <div class="wait-days"><div class="wd-n">${n}</div><div class="wd-l">${n===1?'Tag':'Tage'}</div></div>
           <div class="wait-body"><div class="wait-name">${esc(s.name)}</div>
-            <div class="wait-since">${t?`eingeteilt · ${esc(s.form||'B')}`:`wartet seit ${fmtDateDE(s.ready)} · ${esc(s.form||'B')}`}${s.attempts?` · ${s.attempts+1}. Versuch`:""}</div></div>
+            <div class="wait-since">wartet seit ${fmtDateDE(s.ready)} · ${esc(s.form||'B')}${s.attempts?` · ${s.attempts+1}. Versuch`:""}</div></div>
           <span class="ready-pct ${pr>=90?'ok':''}">${pr}%</span></button>`;
       });
     }
@@ -4385,92 +4862,113 @@ function openSlotSheet(tid,slot){ const taken=assignedSet(); const avail=waitlis
 }
 
 /* ---------- Dashboard ---------- */
-/* ===== Fahrcheck-System (FC) ===== */
-// Lessons die einen FC-Status brauchen: absolvierte Fahrstunde/Sonder/Nacht ohne fc, nicht abgesagt
-function fcPendingLessons(){
-  const out=[];
-  (DB.lessons||[]).forEach(l=>{
-    if(l.status==="abgebrochen"||l.status==="nicht erschienen")return;
-    if(["fahrstunde","sonder","nacht"].indexOf(l.art)<0)return;
-    if(l.fc)return; // schon bewertet
-    if(!isAbsolved(l.date,l.bis))return; // nur gefahrene
-    out.push(l);
-  });
-  return out.sort((a,b)=>(""+a.date+a.von).localeCompare(""+b.date+b.von));
+/* ===== Fahrcheck-System (FC) — NEU =====
+   Logik: Standard = Schüler bringt 2 FC pro Fahrstunde -> automatisch voll, KEINE Bestätigung nötig.
+   Nur Ausnahmen werden vermerkt:
+     l.fc = "v1"          -> 1 FC vergessen (nur 1×23€)
+     l.fc = "v2"          -> 2 FC vergessen (0€)
+     l.fc = "geschenkt"   -> bewusst geschenkt (0€)
+     l.fc = "nachgereicht"-> später nachgebracht (wieder voll, zählt im Monat von l.nachAm)
+   Kein Vermerk (null/undefined) = Normalfall, voll bezahlt. */
+
+// Fahrstunden-Lesson finden
+function fcLesson(id){ return (DB.lessons||[]).find(x=>x.id===id); }
+// Lessons mit offenem Verlust (v1/v2) – für Übersicht "FC vergessen"
+function fcForgottenLessons(){
+  return (DB.lessons||[]).filter(l=>l.fc==="v1"||l.fc==="v2").sort((a,b)=>(""+b.date).localeCompare(""+a.date));
 }
-function fcMissingLessons(){
-  return (DB.lessons||[]).filter(l=>l.fc==="vergessen").sort((a,b)=>(""+b.date).localeCompare(""+a.date));
-}
+// entgangenes Geld gesamt (offene v1/v2, noch nicht nachgereicht)
+function fcForgottenEuro(){ let ue=0; fcForgottenLessons().forEach(l=>{ ue += (l.fc==="v1")? ueOf(l.art)/2 : ueOf(l.art); }); return Math.round(ue*DB.verdienst.proUE); }
+function eurFmt(n){ return (Math.round(n)).toLocaleString("de-DE")+" €"; }
+
+// Dashboard-Karte: zeigt NUR offene Ausnahmen (vergessene FC). Kein Bestätigen mehr im Normalfall.
 function fcPendingCardHTML(){
-  const pend=fcPendingLessons(); const missing=fcMissingLessons();
-  if(!pend.length&&!missing.length)return "";
+  const forg=fcForgottenLessons();
+  if(!forg.length)return "";
+  const eur=fcForgottenEuro();
   let h=`<div class="fc-card">`;
-  if(pend.length){
-    h+=`<div class="fc-h">Fahrchecks offen <span class="fc-cnt">${pend.length}</span></div>`;
-    pend.slice(0,6).forEach(l=>{ const st=DB.students.find(s=>s.id===l.sid);
-      h+=`<div class="fc-row" data-fcid="${l.id}">
-        <div class="fc-info"><div class="fc-nm">${esc(st?st.name:"—")}</div><div class="fc-meta">${isoDE(l.date)} · ${l.von} · ${(CAL_ARTEN[l.art]||CAL_ARTEN.fahrstunde).lab}</div></div>
-        <button class="fc-yes" data-fcyes="${l.id}">FC abgegeben</button>
-        <button class="fc-more" data-fcmore="${l.id}" aria-label="Weitere Optionen">⋯</button>
-      </div>`; });
-    if(pend.length>6)h+=`<div class="fc-more-note">+ ${pend.length-6} weitere</div>`;
-  }
-  if(missing.length){
-    const eur=fcMissingEuro();
-    h+=`<button class="fc-missing-link" id="fcMissingLink"><span>FCs fehlen: <b>${missing.length}</b></span><span class="fc-missing-eur">${eurFmt(eur)} offen ›</span></button>`;
-  }
+  h+=`<button class="fc-missing-link" id="fcMissingLink"><span>FC vergessen: <b>${forg.length}</b></span><span class="fc-missing-eur">${eurFmt(eur)} offen ›</span></button>`;
   h+=`</div>`; return h;
 }
-function fcMissingEuro(){ let ue=0; fcMissingLessons().forEach(l=>ue+=ueOf(l.art)); return Math.round(ue*DB.verdienst.proUE); }
-function eurFmt(n){ return (Math.round(n)).toLocaleString("de-DE")+" €"; }
 function bindFC(){
-  document.querySelectorAll("[data-fcyes]").forEach(b=>b.addEventListener("click",e=>{ e.stopPropagation(); setFC(b.dataset.fcyes,"voll"); }));
-  document.querySelectorAll("[data-fcmore]").forEach(b=>b.addEventListener("click",e=>{ e.stopPropagation(); openFCMenu(b.dataset.fcmore); }));
   const ml=$("#fcMissingLink"); if(ml)ml.addEventListener("click",routeFCMissing);
 }
+
+// Zentrale Funktion: FC-Status einer Fahrstunde setzen (mit Historie + Undo)
 function setFC(id,status){
-  const l=(DB.lessons||[]).find(x=>x.id===id); if(!l)return;
-  l.fc=status; save();
-  const labels={voll:"FC abgegeben ✓",halb:"1 FC abgegeben ✓",geschenkt:"45 Min geschenkt",vergessen:"In „FCs fehlen“ verschoben"};
-  toast(labels[status]||"Gespeichert");
-  routeDashboard();
-}
-function openFCMenu(id){
-  const l=(DB.lessons||[]).find(x=>x.id===id); if(!l)return;
+  const l=fcLesson(id); if(!l)return;
   const st=DB.students.find(s=>s.id===l.sid);
+  const prev=l.fc||null; const prevNachAm=l.nachAm||null;
+  const ueFull=ueOf(l.art); const eurFull=Math.round(ueFull*DB.verdienst.proUE);
+  let msg="", histTxt="", eurDelta=0;
+  if(status==="v1"){ l.fc="v1"; delete l.nachAm; msg="1 FC vergessen vermerkt"; histTxt="1 Fahrcheck vergessen"; eurDelta=-Math.round(ueFull/2*DB.verdienst.proUE); }
+  else if(status==="v2"){ l.fc="v2"; delete l.nachAm; msg="2 FC vergessen vermerkt"; histTxt="2 Fahrchecks vergessen"; eurDelta=-eurFull; }
+  else if(status==="geschenkt"){ l.fc="geschenkt"; delete l.nachAm; msg="45 Min geschenkt"; histTxt="Fahrstunde geschenkt"; eurDelta=-eurFull; }
+  else if(status==="nachgereicht"){ l.fc="nachgereicht"; l.nachAm=new Date().toISOString(); msg="FC nachgereicht – Verdienst gutgeschrieben"; histTxt="FC nachgereicht"; const back=(prev==="v1")?Math.round(ueFull/2*DB.verdienst.proUE):eurFull; eurDelta=back; }
+  else if(status==="normal"){ delete l.fc; delete l.nachAm; msg="Auf Normal gesetzt"; histTxt="FC auf Normal gesetzt"; }
+  if(st&&histTxt)logHist(st,"fc",histTxt+(l.date?` · ${isoDE(l.date)}`:""),eurDelta?{eur:eurDelta}:null);
+  save();
+  toastUndo(msg,()=>{ if(prev===null)delete l.fc; else l.fc=prev; if(prevNachAm)l.nachAm=prevNachAm; else delete l.nachAm;
+    if(st&&Array.isArray(st.hist))st.hist.pop(); save(); if($("#view"))refreshCurrentView(); });
+  refreshCurrentView();
+}
+
+// Sheet zum Vermerken einer Ausnahme – wird im Kalender/Termin und in der Vergessen-Liste genutzt
+function openFCMenu(id){
+  const l=fcLesson(id); if(!l)return;
+  const st=DB.students.find(s=>s.id===l.sid);
+  const cur=l.fc||null;
+  const tag=(v,lab,sub,cls)=>`<button class="es-act${cls?(' '+cls):''}${cur===v?' on':''}" data-fcset="${v}">${lab}${sub?`<span style="display:block;font-size:12px;opacity:.7;font-weight:600;margin-top:2px;">${sub}</span>`:""}</button>`;
+  let acts="";
+  acts+=tag("normal","Normal · 2 FC erhalten","voller Verdienst","primary");
+  acts+=tag("v1","1 FC vergessen","nur 1 × "+DB.verdienst.proUE+" €");
+  acts+=tag("v2","2 FC vergessen","0 €");
+  acts+=tag("geschenkt","45 Min geschenkt","0 €");
+  if(cur==="v1"||cur==="v2"){ acts+=tag("nachgereicht","FC nachgereicht","Verdienst kommt zurück (akt. Monat)","good"); }
+  acts+=`<button class="es-act danger" data-fcdel="${id}">Hat nicht stattgefunden (löschen)</button>`;
   openSheet(`<div class="sheet-h">Fahrcheck · ${esc(st?st.name:"")}</div>
     <p class="muted-p" style="font-size:13px;margin:-4px 0 14px;">${isoDE(l.date)} · ${l.von} · ${(CAL_ARTEN[l.art]||CAL_ARTEN.fahrstunde).lab}</p>
-    <div class="es-actions">
-      <button class="es-act primary" data-fcset="voll">Beide Fahrchecks abgegeben</button>
-      <button class="es-act" data-fcset="halb">Nur 1 Fahrcheck abgegeben</button>
-      <button class="es-act" data-fcset="geschenkt">45 Min geschenkt (0 €)</button>
-      <button class="es-act" data-fcset="vergessen">FCs vergessen / nicht abgegeben</button>
-      <button class="es-act danger" data-fcdel="${id}">Hat nicht stattgefunden (löschen)</button>
-    </div>`);
+    <p class="muted-p" style="font-size:12.5px;margin:-6px 0 14px;color:var(--faint);">Standard ist „2 FC erhalten“ – hier nur Ausnahmen vermerken.</p>
+    <div class="es-actions">${acts}</div>`);
   document.querySelectorAll("[data-fcset]").forEach(b=>b.addEventListener("click",()=>{ closeSheet(); setFC(id,b.dataset.fcset); }));
-  document.querySelectorAll("[data-fcdel]").forEach(b=>b.addEventListener("click",()=>{ deleteLesson(b.dataset.fcdel); closeSheet(); toast("Termin gelöscht"); routeDashboard(); }));
+  document.querySelectorAll("[data-fcdel]").forEach(b=>b.addEventListener("click",()=>{ const sid=l.sid; deleteLesson(b.dataset.fcdel); if(sid)logHist(sid,"del","Fahrstunde gelöscht (nicht stattgefunden)"); save(); closeSheet(); toast("Termin gelöscht"); refreshCurrentView(); }));
 }
-/* FCs-fehlen-Liste */
+
+/* Übersicht „FC vergessen“ – welche Schüler, wie oft, wie viel Geld entgeht */
 function routeFCMissing(){
-  ensureDB(); $("#tbTitle").textContent="FCs fehlen"; setFab(false); view.scrollTop=0;
-  const miss=fcMissingLessons(); const eur=fcMissingEuro();
+  ensureDB(); $("#tbTitle").textContent="FC vergessen"; setFab(false); view.scrollTop=0;
+  const forg=fcForgottenLessons(); const eur=fcForgottenEuro();
+  // Gruppieren pro Schüler
+  const byStud={};
+  forg.forEach(l=>{ const k=l.sid||"?"; if(!byStud[k])byStud[k]={sid:l.sid,lessons:[],ue:0}; byStud[k].lessons.push(l); byStud[k].ue += (l.fc==="v1")?ueOf(l.art)/2:ueOf(l.art); });
+  const groups=Object.values(byStud).sort((a,b)=>b.ue-a.ue);
   let h=`<div class="view-inner view-read fade-up">
     <div class="back-row"><button class="back-btn" id="backBtn">${ICN.back} Start</button></div>
-    <div class="sec-h" style="margin:4px 0 4px;">FCs <span class="o">fehlen</span></div>
-    <p class="muted-p" style="font-size:13.5px;margin-bottom:14px;">Diese Fahrstunden wurden gefahren, aber die Fahrchecks fehlen noch. Sobald abgegeben, fließt der Verdienst nach.</p>
-    <div class="fc-miss-sum">Aktuell entgehen dir <b>${eurFmt(eur)}</b> durch ${miss.length} offene Fahrcheck${miss.length===1?'':'s'}.</div>`;
-  if(!miss.length)h+=`<p class="muted-p" style="text-align:center;padding:20px;">Keine offenen Fahrchecks 🎉</p>`;
-  else miss.forEach(l=>{ const st=DB.students.find(s=>s.id===l.sid);
-    h+=`<div class="fc-miss-row">
-      <div class="fc-info"><div class="fc-nm">${esc(st?st.name:"—")}</div><div class="fc-meta">${isoDE(l.date)} · ${l.von} · ${(CAL_ARTEN[l.art]||CAL_ARTEN.fahrstunde).lab}</div></div>
-      <button class="fc-yes" data-fcnow="${l.id}">Jetzt abgegeben</button>
-      <button class="fc-more" data-fcmore2="${l.id}" aria-label="Optionen">⋯</button>
-    </div>`; });
+    <div class="sec-h" style="margin:4px 0 4px;">FC <span class="o">vergessen</span></div>
+    <p class="muted-p" style="font-size:13.5px;margin-bottom:14px;">Wenn ein Schüler einen oder beide Fahrchecks nicht dabei hatte. Sobald nachgereicht, fließt der Verdienst im aktuellen Monat nach.</p>
+    <div class="fc-miss-sum">Aktuell entgehen dir <b>${eurFmt(eur)}</b> durch ${forg.length} vergessene${forg.length===1?'n':''} Fahrcheck${forg.length===1?'':'s'}.</div>`;
+  if(!groups.length)h+=`<p class="muted-p" style="text-align:center;padding:20px;">Niemand hat aktuell FC vergessen 🎉</p>`;
+  else groups.forEach(g=>{ const st=DB.students.find(s=>s.id===g.sid); const cnt=g.lessons.length; const euro=Math.round(g.ue*DB.verdienst.proUE);
+    h+=`<div class="fc-grp"><div class="fc-grp-head"><div class="fc-nm">${esc(st?st.name:"—")}</div><div class="fc-grp-eur">−${eurFmt(euro)} · ${cnt}×</div></div>`;
+    g.lessons.forEach(l=>{ h+=`<div class="fc-miss-row">
+        <div class="fc-info"><div class="fc-meta">${isoDE(l.date)} · ${l.von} · ${l.fc==="v1"?"1 FC fehlt":"2 FC fehlen"}</div></div>
+        <button class="fc-yes" data-fcnach="${l.id}">Nachgereicht</button>
+        <button class="fc-more" data-fcmore2="${l.id}" aria-label="Optionen">⋯</button>
+      </div>`; });
+    h+=`</div>`; });
   h+=`</div>`; view.innerHTML=h;
   $("#backBtn").addEventListener("click",routeDashboard);
-  document.querySelectorAll("[data-fcnow]").forEach(b=>b.addEventListener("click",()=>{ const l=DB.lessons.find(x=>x.id===b.dataset.fcnow); if(l){l.fc="voll";save();} toast("FC abgegeben ✓ – Verdienst aktualisiert"); routeFCMissing(); }));
-  document.querySelectorAll("[data-fcmore2]").forEach(b=>b.addEventListener("click",()=>{ const id=b.dataset.fcmore2; openSheet(`<div class="sheet-h">Optionen</div><div class="es-actions"><button class="es-act" data-h="halb">Nur 1 FC abgegeben</button><button class="es-act" data-h="geschenkt">45 Min geschenkt</button><button class="es-act danger" data-h="del">Hat nicht stattgefunden (löschen)</button></div>`);
-    document.querySelectorAll("[data-h]").forEach(x=>x.addEventListener("click",()=>{ const v=x.dataset.h; if(v==="del"){deleteLesson(id);}else{const l=DB.lessons.find(z=>z.id===id);if(l){l.fc=v;save();}} closeSheet(); toast("Aktualisiert"); routeFCMissing(); })); }));
+  document.querySelectorAll("[data-fcnach]").forEach(b=>b.addEventListener("click",()=>setFC(b.dataset.fcnach,"nachgereicht")));
+  document.querySelectorAll("[data-fcmore2]").forEach(b=>b.addEventListener("click",()=>openFCMenu(b.dataset.fcmore2)));
+}
+
+// Hilfsfunktion: aktuelle Ansicht neu zeichnen (für Undo/Refresh nach FC-Aktion)
+function refreshCurrentView(){
+  const tb=($("#tbTitle")&&$("#tbTitle").textContent)||"";
+  if(tb==="FC vergessen")return routeFCMissing();
+  if(tb==="Kalender")return (typeof routeKalender==="function")?routeKalender():routeDashboard();
+  if(tb==="Schülerdatei")return; // Detailseite aktualisiert sich beim nächsten Öffnen
+  return routeDashboard();
 }
 
 function nextStudentCardHTML(){
@@ -4521,41 +5019,122 @@ function nsQuickAction(act,lid,kind,retFn){
   }
 }
 
+/* ===== Kapazitäts-Rechnung =====
+   Wöchentliche Slot-Kapazität vs. aktiver Fahrbedarf.
+   Aktiv = in Ausbildung, fährt regelmäßig. Ausgenommen: Theorie-Wartende (fahren nicht),
+   prüfungsreife/Warteliste (fahren kaum), Dummys, Schüler unter 1% Fortschritt. */
+function isDummyStudent(s){
+  const n=(s.name||"").toLowerCase().trim();
+  if(!n)return true;
+  return n==="test"||n.includes("serband test")||n==="serband"||n==="dummy"||n.startsWith("test ")||n.endsWith(" test");
+}
+function capacityStats(){
+  // Wochen-Slot-Kapazität aus Arbeitszeit ableiten (Fallback: 6/Tag Mo-Fr + 2 Sa = 32)
+  const slotsPerWeek=(typeof DB.workCfg.kapazitaetWoche==="number"&&DB.workCfg.kapazitaetWoche>0)?DB.workCfg.kapazitaetWoche:32;
+  const avgPerStudent=1.5; // Schnitt 1-2× pro Woche
+  // Aktiv fahrende Schüler: nicht passed, kein Theorie-Wait, nicht prüfungsreif/Warteliste, >=1%, kein Dummy
+  const fahrend=DB.students.filter(s=>{
+    if(s.passed)return false;
+    if(isDummyStudent(s))return false;
+    if(s.theorieWait&&!s.theoryPassed)return false; // wartet auf Theorie
+    if(s.ready)return false;                          // prüfungsreif/Warteliste → fährt kaum noch
+    if(stand(s)<1)return false;                       // unter 1% (gerade erst angelegt)
+    return true;
+  });
+  const bedarf=Math.round(fahrend.length*avgPerStudent);
+  const auslastung=slotsPerWeek>0?Math.round(bedarf/slotsPerWeek*100):0;
+  // Wie viele Neue noch? Ein neuer Schüler braucht anfangs ~2 Slots/Woche
+  const freieSlots=Math.max(0,slotsPerWeek-bedarf);
+  const platzNeu=Math.floor(freieSlots/2);
+  let ampel="gruen", text="";
+  if(auslastung>=100){ ampel="rot"; text="Voll ausgelastet – aktuell keine neuen Schüler aufnehmen."; }
+  else if(auslastung>=85){ ampel="gelb"; text=`Fast voll – höchstens ${platzNeu} neue${platzNeu===1?'r':''} Schüler möglich.`; }
+  else { ampel="gruen"; text=`Du hast Luft für ca. ${platzNeu} neue Schüler.`; }
+  return {slotsPerWeek,fahrend:fahrend.length,bedarf,auslastung,platzNeu,ampel,text};
+}
+function capacityCardHTML(){
+  const c=capacityStats();
+  const col={gruen:"#4caf72",gelb:"#e0a44a",rot:"#d94f4f"}[c.ampel];
+  const pct=Math.min(100,c.auslastung);
+  return `<button class="cap-card" id="capCard">
+    <div class="cap-head"><span class="cap-title">Auslastung</span><span class="cap-pct" style="color:${col}">${c.auslastung}%</span></div>
+    <div class="cap-bar"><div class="cap-fill" style="width:${pct}%;background:${col}"></div></div>
+    <div class="cap-foot"><span class="cap-dot" style="background:${col}"></span>${c.text}</div>
+  </button>`;
+}
+function openCapacitySheet(){
+  const c=capacityStats();
+  openSheet(`<div class="sheet-h">Auslastung</div>
+    <p class="muted-p" style="font-size:13px;margin:-4px 0 14px;">Berechnung deiner wöchentlichen Kapazität.</p>
+    <div class="cap-detail">
+      <div class="cap-drow"><span>Slots pro Woche</span><b>${c.slotsPerWeek}</b></div>
+      <div class="cap-drow"><span>Aktiv fahrende Schüler</span><b>${c.fahrend}</b></div>
+      <div class="cap-drow"><span>Bedarf (Ø 1,5×/Woche)</span><b>${c.bedarf} Slots</b></div>
+      <div class="cap-drow"><span>Auslastung</span><b>${c.auslastung}%</b></div>
+      <div class="cap-drow"><span>Platz für Neue</span><b>${c.platzNeu}</b></div>
+    </div>
+    <p class="muted-p" style="font-size:12.5px;margin:14px 0 4px;">Theorie-Wartende und prüfungsreife Schüler werden nicht mitgezählt, da sie nicht regelmäßig fahren.</p>
+    <div class="field" style="margin-top:14px;"><label>Slots pro Woche anpassen</label><input type="number" id="capWoche" value="${c.slotsPerWeek}" inputmode="numeric"></div>
+    <div class="btn-row"><button class="btn btn-ghost" id="capCancel" style="flex:0;padding:13px 18px;">Schließen</button><button class="btn btn-primary" id="capSave">Speichern</button></div>`);
+  $("#capCancel").addEventListener("click",closeSheet);
+  $("#capSave").addEventListener("click",()=>{ const v=+$("#capWoche").value; if(v>0){ DB.workCfg.kapazitaetWoche=v; save(); } closeSheet(); routeDashboard(); });
+}
 function routeDashboard(){
   ensureDB();
+  // KAPAZITÄTS-RECHNUNG vorbereiten (wird unten als Card gerendert)
   $("#tbTitle").textContent="Start"; setFab(true); view.scrollTop=0;
-  const act=activeStudents().length; const ready=waitlist().length; const q=quoteOf(examsIn('cur')); const nx=nextTermin();
-  const calT=countRange(todayISO(),todayISO());
-  const calSub=`Heute · ${calT.planned} geplant · ${calT.free} frei`;
+  const act=activeStudents().length; const ready=waitlist().length; const q=quoteOf(examsIn('cur'));
   view.innerHTML=`<div class="view-inner view-wide fade-up">
     <div class="hero compact"><div class="greet">Willkommen zurück</div><div class="hero-brand">Serband</div></div>
-    <button class="cal-shortcut" data-go="kalender">
-      <div class="cs-ic">${ICN.cal}</div>
-      <div class="cs-body"><div class="cs-name">Kalender</div><div class="cs-sub">${calSub}</div></div>
-      <span class="cs-arrow">${ICN.arrow}</span>
-    </button>
+    <div class="dash-quick-row">
+      <button class="dq-btn" data-go="kalender">${ICN.cal}<span>Kalender</span></button>
+      <button class="dq-btn" data-go="pruef">${ICN.trophy}<span>Prüfungen</span></button>
+      <button class="dq-btn" data-go="stats">${ICN.bolt}<span>Statistik</span></button>
+    </div>
+    ${nextExamDashCard()}
     ${nextStudentCardHTML()}
     ${fcPendingCardHTML()}
-    <div class="next-exam ${nx?'':'none'}">
-      ${nx?`<div class="ne-ic">${ICN.trophy}</div><div class="ne-body"><div class="ne-label">Nächste Prüfung</div>
-        <div class="ne-date">${isoDE(nx.date)}</div><div class="ne-names">${nx.names.map(esc).join(" · ")}</div></div>`
-      :`<div class="ne-ic" style="background:var(--surface-2);color:var(--faint)">${ICN.trophy}</div><div class="ne-body"><div class="ne-label">Nächste Prüfung</div><div class="ne-empty">Kein Termin geplant</div></div><button class="mini-btn" id="ndAdd">+ Termin</button>`}
-    </div>
     <div class="dash-tiles">
       <button class="d-tile" data-go="home"><div class="badge">${ICN.users}</div><div class="dt-n" data-count="${act}">0</div><div class="dt-l">Meine Fahrschüler</div></button>
       <button class="d-tile" data-go="pruef"><div class="badge">${ICN.trophy}</div><div class="dt-n" data-count="${ready}">0</div><div class="dt-l">Prüfungsreif</div></button>
       <button class="d-tile" data-go="stats"><div class="badge">${ICN.bolt}</div>${q.pct==null?'<div class="dt-n">–</div>':`<div class="dt-n" data-count="${q.pct}" data-suffix="%">0</div>`}<div class="dt-l">Quote · Monat</div></button>
     </div>
-    <div class="dash-nav">
-      <button class="nav-action" data-go="pruef"><div class="na-ic">${ICN.trophy}</div><div class="na-body"><div class="na-name">Prüfungen</div><div class="na-sub">Termine, Warteliste &amp; Theorie-Status</div></div><span class="na-arrow">${ICN.arrow}</span></button>
-    </div>
+    ${capacityCardHTML()}
   </div>`;
   document.querySelectorAll(".d-tile .dt-n[data-count]").forEach(el=>countUp(el,+el.dataset.count,el.dataset.suffix||""));
-  const go=k=>{ if(k==='home')routeHome(); else if(k==='pruef')routePruefungen(); else if(k==='stats')routeStats('cur'); else if(k==='archive')routeArchive(); else if(k==='kalender')routeKalender(); };
+  const go=k=>{ if(k==='home')routeHome(); else if(k==='pruef')routePruefungen(); else if(k==='stats')routeStats('cur'); else if(k==='kalender')routeKalender(); };
   document.querySelectorAll("[data-go]").forEach(b=>b.addEventListener("click",()=>go(b.dataset.go)));
   const na=$("#ndAdd"); if(na)na.addEventListener("click",e=>{e.stopPropagation();openTerminSheet();});
+  const cap=$("#capCard"); if(cap)cap.addEventListener("click",openCapacitySheet);
   bindNextStudent();
   bindFC();
+}
+// Nächste Prüfung-Card: Student, Datum, geplante Fahrstunden bis dahin
+function nextExamDashCard(){
+  const ts=futureTermine().sort((a,b)=>a.date<b.date?-1:1);
+  if(!ts.length){
+    return `<div class="nex-card none"><div class="nex-ic">${ICN.trophy}</div><div class="nex-body"><div class="nex-label">Nächste Prüfung</div><div class="nex-empty">Kein Termin geplant</div></div><button class="mini-btn" id="ndAdd">+ Termin</button></div>`;
+  }
+  const t=ts[0]; const today=todayISO();
+  const daysLeft=Math.max(0,Math.round((new Date(t.date)-new Date(today))/(1000*60*60*24)));
+  const studentIds=(t.slots||[]).filter(Boolean);
+  const students=studentIds.map(sid=>DB.students.find(s=>s.id===sid)).filter(Boolean);
+  let html=`<div class="nex-card" data-go="pruef">
+    <div class="nex-top">
+      <div><div class="nex-label">Nächste Prüfung</div><div class="nex-date">${isoDE(t.date)}${t.von?` · ${t.von}`:""}</div></div>
+      <div class="nex-days"><span class="nex-dn">${daysLeft}</span><span class="nex-dl">${daysLeft===1?"Tag":"Tage"}</span></div>
+    </div>`;
+  students.forEach(s=>{
+    // Geplante Fahrstunden zwischen heute und Prüfungsdatum (exklusiv)
+    const geplant=(DB.lessons||[]).filter(l=>l.sid===s.id&&l.date>today&&l.date<t.date&&l.status!=="abgebrochen"&&l.status!=="nicht erschienen"&&["fahrstunde","sonder","nacht"].indexOf(l.art)>=0).sort((a,b)=>a.date.localeCompare(b.date));
+    const gDates=geplant.map(l=>`${deWeekday(l.date)} ${isoDE(l.date).slice(0,5)}`);
+    html+=`<div class="nex-student">
+      <div class="nex-name">${esc(s.name)}</div>
+      ${geplant.length?`<div class="nex-lessons"><b>${geplant.length}</b> Fahrstunde${geplant.length===1?"":"n"} geplant: ${gDates.slice(0,4).join(" · ")}${gDates.length>4?` +${gDates.length-4}`:""}</div>`:`<div class="nex-lessons warn">Noch keine Fahrstunden geplant!</div>`}
+    </div>`;
+  });
+  html+=`</div>`;
+  return html;
 }
 
 /* ---------- Statistik ---------- */
@@ -4650,59 +5229,115 @@ function routeStats(period){
   const ex=examsIn(period);
   const q=quoteOf(ex), fq=firstAttemptQuote(ex), avgA=avgAttempts(ex), eq=eingriffQuote(ex);
   const all=DB.students, active=activeStudents(), passed=all.filter(s=>s.passed);
-  const colKeys=['rot','gelb','gruen','blau']; const colCount={rot:0,gelb:0,gruen:0,blau:0}; let withProfil=0;
-  all.forEach(s=>{ if(s.profil&&colCount[s.profil]!=null){colCount[s.profil]++;withProfil++;} });
-  const formCount={}; active.forEach(s=>{const f=s.form||'B';formCount[f]=(formCount[f]||0)+1;});
   const avgProg=active.length?Math.round(active.reduce((a,s)=>a+stand(s),0)/active.length):0;
   const theoCount=active.filter(s=>s.plan&&s.plan.theorie).length;
   const fc=faultCounts(ex); const fcTotal=fc.reduce((a,x)=>a+x[1],0);
-  const quoteForColor=c=>{ const ids=new Set(all.filter(s=>s.profil===c).map(s=>s.id)); return quoteOf(ex.filter(e=>ids.has(e.sid))); };
-  const simIds=new Set(all.filter(s=>s.simEmpf).map(s=>s.id));
-  const simShare=active.length?Math.round(active.filter(s=>s.simEmpf).length/active.length*100):0;
-  const qSim=quoteOf(ex.filter(e=>simIds.has(e.sid))); const qNoSim=quoteOf(ex.filter(e=>!simIds.has(e.sid)));
   const now=new Date(); const MN=["Jan","Feb","Mär","Apr","Mai","Jun","Jul","Aug","Sep","Okt","Nov","Dez"]; const months=[];
   for(let k=5;k>=0;k--){ const d=new Date(now.getFullYear(),now.getMonth()-k,1); const key=d.getFullYear()+"-"+pad2(d.getMonth()+1); const me=DB.exams.filter(e=>e.date&&(""+e.date).slice(0,7)===key); months.push([MN[d.getMonth()],quoteOf(me)]); }
-
+  // Monatsbalkens mit Farbkodierung
+  const monthBarsHTML=months.map(([lab,mq])=>{
+    const pct=mq.pct==null?0:mq.pct;
+    const col=mq.pct==null?'var(--faint)':pct>=70?'var(--gruen)':pct>=50?'var(--gelb)':'var(--rot)';
+    return `<div class="mb"><div class="mb-track"><div class="mb-fill" data-h="${pct}" style="height:0%;background:${col}"></div></div><div class="mb-lab">${lab}</div><div class="mb-val" style="color:${col}">${mq.pct==null?"–":mq.pct+"%"}</div></div>`;
+  }).join("");
+  // Fehlerbalken
+  const faultBarsHTML=fc.length?fc.slice(0,10).map(([fid,n])=>{
+    const pct=Math.round(n/fcTotal*100);
+    return `<div class="bar-row"><div class="bar-top"><span class="bar-lab">${esc(FAULT_LABEL[fid]||fid)}</span><span class="bar-val">${n}× · ${pct} %</span></div><div class="bar-track"><div class="bar-fill" data-w="${pct}" style="width:0%;background:var(--rot)"></div></div></div>`;
+  }).join(""):`<p class="muted-p">Noch keine Fehler erfasst.</p>`;
+  // avgA Darstellung
+  const avgAVal=avgA==null?"–":(""+avgA).replace(".",",");
   view.innerHTML=`<div class="view-inner view-read fade-up">
-    <div class="row-between" style="margin-bottom:12px;"><div class="sec-h">Stat<span class="o">istik</span></div></div>
+    <div class="row-between" style="margin-bottom:14px;"><div class="sec-h">Stat<span class="o">istik</span></div></div>
     ${verdienstModulHTML()}
     ${periodChips(period)}
-    <div class="stat-grid4">
-      ${miniStat("Bestehensquote", q.pct==null?"–":q.pct+" %", q.total?`${q.pass}/${q.total}`:"keine Prüfung")}
-      ${miniStat("Erstprüfer-Quote", fq.pct==null?"–":fq.pct+" %", fq.total?`${fq.pass}/${fq.total}`:"–")}
-      ${miniStat("Ø Versuche", avgA==null?"–":(""+avgA).replace(".",","), "bis bestanden")}
-      ${miniStat("Eingriff-Quote", eq==null?"–":eq+" %", "der Durchfaller")}
+    <div class="stat-grid4" style="margin-bottom:18px;">
+      ${miniStatAnim("Quote",q.pct==null?"–":q.pct,"%",q.total?q.pass+"/"+q.total+" bestanden":"keine Prüfung")}
+      ${miniStatAnim("Erstversuch",fq.pct==null?"–":fq.pct,"%",fq.total?fq.pass+"/"+fq.total+" Prüfungen":"–")}
+      <div class="mini-stat"><div class="ms-v">${avgAVal}</div><div class="ms-l">Ø Versuche</div><div class="ms-s">bis bestanden</div></div>
+      ${miniStatAnim("Eingriff",eq==null?"–":eq,"%","der Durchfälle")}
     </div>
-    <div class="blk-h">Quoten-Verlauf · 6 Monate</div>
-    <div class="month-bars">${months.map(([lab,mq])=>`<div class="mb"><div class="mb-track"><div class="mb-fill" style="height:${mq.pct==null?0:mq.pct}%"></div></div><div class="mb-lab">${lab}</div><div class="mb-val">${mq.pct==null?"–":mq.pct}</div></div>`).join("")}</div>
+    <div class="blk-h">Quoten · 6 Monate</div>
+    <div class="month-bars">${monthBarsHTML}</div>
+    <div style="display:flex;gap:10px;margin:8px 0 18px;font-size:11px;font-weight:700;">
+      <span style="display:flex;align-items:center;gap:4px;color:var(--gruen)"><i style="width:10px;height:10px;border-radius:3px;background:var(--gruen);display:inline-block"></i>≥70%</span>
+      <span style="display:flex;align-items:center;gap:4px;color:var(--gelb)"><i style="width:10px;height:10px;border-radius:3px;background:var(--gelb);display:inline-block"></i>50–69%</span>
+      <span style="display:flex;align-items:center;gap:4px;color:var(--rot)"><i style="width:10px;height:10px;border-radius:3px;background:var(--rot);display:inline-block"></i>&lt;50%</span>
+    </div>
     <div class="blk-h">Häufigste Fehler</div>
-    ${fc.length?fc.slice(0,10).map(([fid,n])=>barRow(FAULT_LABEL[fid]||fid,Math.round(n/fcTotal*100),`${n}× · ${Math.round(n/fcTotal*100)} %`)).join(""):`<p class="muted-p">Noch keine Fehler erfasst.</p>`}
-    <div class="blk-h">Schüler</div>
-    <div class="stat-grid4">
-      ${miniStat("Aktiv",active.length,"in Ausbildung")}
-      ${miniStat("Bestanden",passed.length,"im Archiv")}
-      ${miniStat("Gesamt",all.length,"alle")}
-      ${miniStat("Ø Fortschritt",avgProg+" %","aktive")}
+    ${faultBarsHTML}
+    <button class="nav-action" id="toNichtBesteher" style="margin-top:14px;">
+      <div class="na-ic">${ICN.bolt||""}</div>
+      <div class="na-body"><div class="na-name">Nicht-Besteher</div><div class="na-sub">${ex.filter(e=>e.result==='fail').length} im Zeitraum · Gründe &amp; Prüfer</div></div>
+      <span class="na-arrow">${ICN.arrow}</span>
+    </button>
+    <div class="blk-h" style="margin-top:22px;">Schüler</div>
+    <div class="stat-grid4" style="margin-bottom:12px;">
+      ${miniStatAnim("Aktiv",active.length,"","in Ausbildung")}
+      ${miniStatAnim("Bestanden",passed.length,"","im Archiv")}
+      ${miniStatAnim("Gesamt",all.length,"","alle Schüler")}
+      ${miniStatAnim("Ø Fortschritt",avgProg,"%","aktive Schüler")}
     </div>
-    <div class="blk-h">Farbverteilung</div>
-    ${colKeys.map(c=>barRow(PROFILE[c].word,withProfil?Math.round(colCount[c]/withProfil*100):0,`${colCount[c]}× · ${withProfil?Math.round(colCount[c]/withProfil*100):0} %`,PROFILE[c].color)).join("")}
-    <div class="blk-h">Klassen</div>
-    ${Object.entries(formCount).sort((a,b)=>b[1]-a[1]).map(([f,n])=>barRow(f,active.length?Math.round(n/active.length*100):0,`${n}× · ${active.length?Math.round(n/active.length*100):0} %`)).join("")||'<p class="muted-p">–</p>'}
-    <div class="blk-h">Theorie bestanden</div>
-    ${barRow("Theorie",active.length?Math.round(theoCount/active.length*100):0,`${theoCount}/${active.length}`,"var(--gruen)")}
-    <div class="blk-h">Muster · Quote pro Farbtyp</div>
-    ${colKeys.map(c=>{const cq=quoteForColor(c);return barRow(PROFILE[c].word,cq.pct==null?0:cq.pct,cq.total?`${cq.pass}/${cq.total} · ${cq.pct} %`:"keine",PROFILE[c].color);}).join("")}
-    <div class="blk-h">Simulator</div>
-    ${barRow("Empfehlungs-Anteil",simShare,`${simShare} % der aktiven`,"var(--orange)")}
-    <div class="two-mini" style="margin-top:4px;">
-      ${miniStat("Quote mit Sim.",qSim.pct==null?"–":qSim.pct+" %",qSim.total?`${qSim.pass}/${qSim.total}`:"keine")}
-      ${miniStat("Quote ohne Sim.",qNoSim.pct==null?"–":qNoSim.pct+" %",qNoSim.total?`${qNoSim.pass}/${qNoSim.total}`:"keine")}
-    </div>
-    <button class="nav-action" id="toPruefer" style="margin-top:22px;"><div class="na-ic">${ICN.profile}</div><div class="na-body"><div class="na-name">Prüfer-Statistik</div><div class="na-sub">Quoten &amp; Vorlieben pro Prüfer</div></div><span class="na-arrow">${ICN.arrow}</span></button>
+    ${barRowAnim("Theorie bestanden",active.length?Math.round(theoCount/active.length*100):0,theoCount+"/"+active.length+" Schüler","var(--gruen)")}
+    <button class="nav-action" id="toPruefer" style="margin-top:22px;margin-bottom:12px;">
+      <div class="na-ic">${ICN.profile}</div>
+      <div class="na-body"><div class="na-name">Prüfer-Statistik</div><div class="na-sub">Quoten &amp; Vorlieben pro Prüfer</div></div>
+      <span class="na-arrow">${ICN.arrow}</span>
+    </button>
   </div>`;
+  // Balken animieren (double rAF damit transition greift)
+  requestAnimationFrame(()=>requestAnimationFrame(()=>{
+    document.querySelectorAll('.mb-fill[data-h]').forEach(el=>{el.style.height=el.dataset.h+'%';});
+    document.querySelectorAll('.bar-fill[data-w]').forEach(el=>{el.style.width=el.dataset.w+'%';});
+  }));
+  // Count-up auf animierten Mini-Stats
+  document.querySelectorAll('.ms-v[data-count]').forEach(el=>countUp(el,+el.dataset.count,el.dataset.suffix||''));
   bindPeriod(routeStats);
   $("#toPruefer").addEventListener("click",routePruefer);
+  const _nb=$("#toNichtBesteher"); if(_nb)_nb.addEventListener("click",()=>routeNichtBesteher(period));
   const vg=$("#vdGear"); if(vg)vg.addEventListener("click",openVerdienstSheet);
+}
+/* ===== Nicht-Besteher-Statistik ===== */
+function routeNichtBesteher(period){
+  ensureDB(); period=period||'cur';
+  $("#tbTitle").textContent="Nicht-Besteher"; setFab(false); view.scrollTop=0;
+  const fails=examsIn(period).filter(e=>e.result==='fail').sort((a,b)=>(""+b.date).localeCompare(""+a.date));
+  // Gruppierung pro Prüfer für Auswertung
+  const byPr={};
+  fails.forEach(e=>{ const k=e.pruefer||"—"; if(!byPr[k])byPr[k]={pruefer:k,fails:[],faultCnt:{}}; byPr[k].fails.push(e); (e.faults||[]).forEach(f=>{byPr[k].faultCnt[f]=(byPr[k].faultCnt[f]||0)+1;}); });
+  const prGroups=Object.values(byPr).sort((a,b)=>b.fails.length-a.fails.length);
+  let h=`<div class="view-inner view-read fade-up">
+    <div class="back-row"><button class="back-btn" id="backBtn">${ICN.back} Statistik</button></div>
+    <div class="sec-h" style="margin:4px 0 10px;">Nicht-<span class="o">Besteher</span></div>
+    ${periodChips(period)}
+    <p class="muted-p" style="font-size:13px;margin:12px 0 16px;">Wer wann bei welchem Prüfer und aus welchem Grund nicht bestanden hat – rein zur Auswertung.</p>`;
+  if(!fails.length){
+    h+=`<p class="muted-p" style="text-align:center;padding:24px 0;">Keine Nicht-Besteher in diesem Zeitraum 🎉</p>`;
+  } else {
+    // Auswertung pro Prüfer
+    h+=`<div class="blk-h">Pro Prüfer</div>`;
+    prGroups.forEach(g=>{
+      const topFaults=Object.entries(g.faultCnt).sort((a,b)=>b[1]-a[1]).slice(0,2).map(([fid,n])=>`${FAULT_LABEL[fid]||fid} (${n}×)`).join(", ");
+      h+=`<div class="fc-grp"><div class="fc-grp-head"><div class="fc-nm">${esc(g.pruefer)}</div><div class="fc-grp-eur" style="color:var(--muted)">${g.fails.length}× durchgefallen</div></div>
+        ${topFaults?`<div class="muted-p" style="font-size:12.5px;padding:6px 0 2px;">Häufig: ${esc(topFaults)}</div>`:""}</div>`;
+    });
+    // Einzelliste
+    h+=`<div class="blk-h" style="margin-top:18px;">Alle Einträge</div>`;
+    fails.forEach(e=>{
+      const st=DB.students.find(x=>x.id===e.sid);
+      const grund=(e.faults&&e.faults.length)?e.faults.map(f=>FAULT_LABEL[f]||f).join(", "):(e.eingriff?"Eingriff des Fahrlehrers":"—");
+      h+=`<div class="nb-row" data-sid="${e.sid}">
+        <div class="nb-top"><span class="nb-name">${esc(st?st.name:e.name||"—")}</span><span class="nb-date">${isoDE(e.date)}</span></div>
+        <div class="nb-meta">${e.pruefer?`Prüfer: ${esc(e.pruefer)} · `:""}${e.attempt?`${e.attempt}. Versuch`:""}</div>
+        <div class="nb-grund">${esc(grund)}</div>
+        ${e.eingNote?`<div class="nb-note">${esc(e.eingNote)}</div>`:""}
+      </div>`;
+    });
+  }
+  h+=`</div>`; view.innerHTML=h;
+  $("#backBtn").addEventListener("click",()=>routeStats(period));
+  bindPeriod(routeNichtBesteher);
+  document.querySelectorAll(".nb-row[data-sid]").forEach(r=>r.addEventListener("click",()=>{ const sid=r.dataset.sid; if(sid)routeDetail(sid); }));
 }
 
 /* ---------- Prüfer-Statistik ---------- */
@@ -5168,6 +5803,8 @@ const SPLASH_QUOTES=[
 ];
 function setSplashQuote(){ const q=SPLASH_QUOTES[Math.floor(Math.random()*SPLASH_QUOTES.length)]; const el=$("#spQuote"); if(el)el.innerHTML=`${q[0]}<span class="sp-by"><b>${q[1]}</b> · ${q[2]}</span>`; }
 setSplashQuote();
+applyTheme();
+$("#themeBtn").addEventListener("click",toggleTheme);
 routeDashboard();
 (function(){
   const minWait=new Promise(r=>setTimeout(r,2300));
