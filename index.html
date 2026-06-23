@@ -958,15 +958,17 @@ input,select,textarea{font-family:inherit;font-size:15px;color:var(--txt);}
 .no-hit{color:var(--muted);font-size:14px;text-align:center;padding:30px 0}
 #printRoot{display:none}
 @media print{
-  html,body{height:auto!important;overflow:visible!important;background:#fff!important}
+  html,body{height:auto!important;min-height:100%!important;overflow:visible!important;background:#fff!important;position:static!important;}
   body.printing>*{display:none!important}
-  body.printing>#printRoot{display:block!important;position:static!important;height:auto!important;overflow:visible!important}
-  #printRoot,.pr-doc{height:auto!important;overflow:visible!important}
-  .pr-doc{-webkit-print-color-adjust:exact;print-color-adjust:exact}
-  .pr-sec{break-inside:auto}
-  .pr-sec h3{break-after:avoid}
-  .pr-tbl tr{break-inside:avoid}
-  @page{margin:14mm}
+  body.printing>#printRoot{display:block!important;position:static!important;height:auto!important;min-height:100%!important;overflow:visible!important;width:100%!important;padding:0!important;}
+  #printRoot,.pr-doc{height:auto!important;min-height:auto!important;overflow:visible!important;max-height:none!important;}
+  .pr-doc{-webkit-print-color-adjust:exact;print-color-adjust:exact;}
+  .pr-sec{break-inside:avoid;page-break-inside:avoid;margin-bottom:10px;}
+  .pr-sec h3{break-after:avoid;page-break-after:avoid;}
+  .pr-tbl{width:100%;border-collapse:collapse;}
+  .pr-tbl tr{break-inside:avoid;page-break-inside:avoid;}
+  .pr-tbl td{padding:3px 6px;border-bottom:1px solid #eee;font-size:11px;}
+  @page{margin:14mm;size:A4 portrait;}
 }
 .pr-doc{color:#111;background:#fff;font-family:Arial,Helvetica,sans-serif;font-size:12px;line-height:1.5}
 .pr-top{border-bottom:2px solid #E8451F;padding-bottom:8px;margin-bottom:14px}
@@ -1282,11 +1284,39 @@ input,select,textarea{font-family:inherit;font-size:15px;color:var(--txt);}
 .vd-bonus-note.ok{background:rgba(207,154,62,.12);border-color:rgba(207,154,62,.3);color:#e8c45a;font-weight:700;}
 .vd-offen{font-size:12.5px;color:#e3a294;background:rgba(207,90,72,.1);border:1px solid rgba(207,90,72,.25);border-radius:10px;padding:9px 12px;margin-bottom:12px;text-align:center;}
 .vd-offen b{color:#f0b5a8;}
-.vd-mini-grid{display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px;}
-.vd-mini{text-align:center;background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:12px 6px;}
-.vm-k{font-size:10.5px;letter-spacing:.04em;text-transform:uppercase;color:var(--faint);font-weight:800;}
-.vm-v{font-family:'Playfair Display',serif;font-size:19px;font-weight:600;margin-top:4px;}
-.vm-s{font-size:11px;color:var(--muted);margin-top:2px;}
+/* ===== THERMOMETER ===== */
+.thermo-wrap{display:flex;gap:14px;margin-bottom:16px;}
+.thermo-left{display:flex;flex-direction:column;align-items:center;flex:0 0 52px;}
+.thermo-tube{width:100%;flex:1;min-height:200px;border-radius:10px 10px 6px 6px;background:var(--surface-2);border:1px solid var(--line);overflow:hidden;display:flex;flex-direction:column-reverse;position:relative;}
+.th-seg{width:100%;flex:0 0 0px;transition:flex-basis .85s var(--ease);}
+.th-gruen{background:linear-gradient(0deg,#1e6b38,#4caf72);}
+.th-orange{background:linear-gradient(0deg,#a05c18,#e89828);}
+.th-gold{background:linear-gradient(0deg,#906010,#e8c45a);}
+.thermo-base{width:100%;height:26px;flex:0 0 26px;background:linear-gradient(180deg,#78868f,#5a666e);display:flex;align-items:center;justify-content:center;font-size:8.5px;font-weight:800;color:rgba(255,255,255,.85);letter-spacing:.07em;text-transform:uppercase;border-radius:0 0 6px 6px;}
+.thermo-right{flex:1;position:relative;min-height:226px;}
+.th-mark{position:absolute;left:0;right:0;display:flex;align-items:center;gap:7px;transform:translateY(50%);}
+.th-tick{width:10px;height:1.5px;background:var(--line);flex:0 0 auto;}
+.th-val{font-size:10px;font-weight:800;color:var(--muted);white-space:nowrap;}
+.th-mark.t-cur .th-tick{background:var(--akzent-bright);width:14px;height:2px;}
+.th-mark.t-cur .th-val{color:var(--akzent-bright);font-size:12px;}
+.th-mark.t-gold .th-val{color:#d4a520;}
+.th-mark.t-bonus .th-val{color:#cf9a3e;}
+/* Info-Karten unter Thermometer */
+.thermo-info{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:12px;}
+.thi-card{background:var(--surface);border:1px solid var(--line);border-radius:13px;padding:13px 14px;}
+.thi-card.future{border-style:dashed;}
+.thi-k{font-size:10px;font-weight:800;text-transform:uppercase;letter-spacing:.05em;color:var(--faint);}
+.thi-v{font-family:'Playfair Display',serif;font-size:22px;font-weight:700;margin-top:5px;color:var(--txt);line-height:1;}
+.thi-s{font-size:11px;color:var(--muted);margin-top:4px;}
+/* Bonus / Ziel Zeile */
+.th-goal{display:flex;align-items:center;gap:12px;padding:11px 14px;border-radius:11px;border:1px solid var(--line);background:var(--surface);margin-bottom:12px;}
+.thg-lab{font-size:12.5px;font-weight:700;flex:1;color:var(--txt);}
+.thg-val{font-family:'Playfair Display',serif;font-size:16px;font-weight:600;color:var(--akzent-bright);white-space:nowrap;}
+/* SF-Picker */
+.sf-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:14px;}
+.sf-opt{padding:11px 10px;border-radius:11px;background:var(--surface);border:1px solid var(--line);font-size:13px;font-weight:700;text-align:left;}
+.sf-opt.done{opacity:.45;border-style:dashed;}
+.sf-opt:active{background:var(--gruen-soft);}
 /* Assign-Sheet */
 .as-list{display:flex;flex-direction:column;gap:6px;max-height:50vh;overflow-y:auto;}
 .as-item{display:flex;align-items:center;justify-content:space-between;padding:13px 14px;border-radius:11px;background:var(--surface);border:1px solid var(--line);text-align:left;}
@@ -2804,14 +2834,13 @@ function buildSonder(s){
       const i=+cell.dataset.sn;
       cell.addEventListener("click",e=>{
         if(e.target.closest(".cal"))return;
-        if(sfDone(arr[i])){ arr[i]=null; removeSonderFromKalender(s,sd.key,i); } else { arr[i]=heute(); }
+        if(sfDone(arr[i])){ arr[i]=null; } else { arr[i]=heute(); }
         pl.sonder[sd.key]=arr;
         const done=sfDone(arr[i]);
         cell.classList.toggle("filled",done);
         cell.querySelector(".d").textContent=done?arr[i].d:"";
         cell.classList.remove("pop");void cell.offsetWidth;cell.classList.add("pop");
         const c=$("#c_"+sd.key);if(c)c.textContent=sfCount(arr);
-        if(done)syncSonderToKalender(s,sd.key,i,arr[i].iso);
         save();refreshPlanRing(s);});
       cell.querySelector(".cal").addEventListener("click",e=>{e.stopPropagation();
         _cal={sid:s.id,kind:"sonder",n:null,grp:sd.key,idx:i};openPicker(arr[i]);});
@@ -2837,8 +2866,6 @@ $("#calPick").addEventListener("change",e=>{
     if(g){const cell=g.querySelector(`.std[data-sn="${_cal.idx}"]`);
       if(cell){cell.classList.add("filled");cell.querySelector(".d").textContent=o.d;}}
     const c=$("#c_"+_cal.grp);if(c)c.textContent=sfCount(arr);
-    // Verknüpfung Ausbildungsplan -> Kalender: Sonderfahrt als Termin eintragen
-    syncSonderToKalender(s,_cal.grp,_cal.idx,val);
   }
   save();refreshPlanRing(s);
   _cal={sid:null,kind:null,n:null,grp:null,idx:null};
@@ -3594,6 +3621,37 @@ function openEventSheet(kind,id,sid){
   const rs=$("#esReset"); if(rs)rs.addEventListener("click",()=>{ l.status="geplant"; save(); closeSheet(); toast("Status zurückgesetzt"); routeKalender(); });
   $("#esDelete").addEventListener("click",()=>{ if(confirm("Diesen Termin löschen?")){ deleteLesson(id); closeSheet(); toast("Termin gelöscht"); routeKalender(); } });
 }
+// SF-Picker: Welche Sonderfahrt wurde im Kalender gebucht?
+function openSFPickerForLesson(lessonId,sid,date,von,bis,note,newArt){
+  const s=DB.students.find(x=>x.id===sid); if(!s){save();closeSheet();toast("Gespeichert ✓");routeKalender();return;}
+  ensure(s);
+  const SF_LAB={ueberland:"Überlandfahrt",autobahn:"Autobahnfahrt",nacht:"Nachtfahrt"};
+  let opts='';
+  SONDER_DEF.forEach(sd=>{
+    const arr=s.plan.sonder[sd.key]||(s.plan.sonder[sd.key]=[]);
+    for(let i=0;i<sd.soll;i++){
+      const done=sfDone(arr[i]);
+      opts+=`<button class="sf-opt${done?' done':''}" data-grp="${sd.key}" data-idx="${i}">${sd.label} ${i+1}${done?` · ✓ ${arr[i].d}`:''}</button>`;
+    }
+  });
+  openSheet(`<div class="sheet-h">Welche Sonderfahrt?</div>
+    <p class="muted-p" style="margin-bottom:14px;">Wähle welche Pflichtfahrt das war — sie wird dann im Ausbildungsplan grün markiert.</p>
+    <div class="sf-grid">${opts}</div>
+    <button class="btn btn-ghost btn-full" id="sfSkip" style="margin-top:4px;">Ohne Zuordnung speichern</button>`);
+  document.querySelectorAll('.sf-opt').forEach(b=>b.addEventListener('click',()=>{
+    const grp=b.dataset.grp, idx=+b.dataset.idx;
+    const key=`${sid}:${grp}:${idx}`;
+    ensure(s);
+    const arr=s.plan.sonder[grp]||(s.plan.sonder[grp]=[]);
+    arr[idx]={d:isoToShort(date),iso:date};
+    updateLesson(lessonId,{date,von,bis,art:'sonder',note,srcSonder:key});
+    save(); closeSheet(); toast('Sonderfahrt eingetragen ✓'); routeKalender();
+  }));
+  $('#sfSkip').addEventListener('click',()=>{
+    updateLesson(lessonId,{date,von,bis,art:'sonder',note});
+    save(); closeSheet(); toast('Gespeichert ✓'); routeKalender();
+  });
+}
 // SCHRITT 2: Bearbeiten/Verschieben-Detail
 function openEventEdit(id){
   const l=(DB.lessons||[]).find(x=>x.id===id); if(!l)return;
@@ -3612,7 +3670,13 @@ function openEventEdit(id){
     const date=$("#esDate").value||l.date; const von=$("#esTime").value||l.von;
     const dur=newArt==="schalt"?15:(DB.workCfg.blockMin||90);
     const bis=min2hm(hm2min(von)+dur);
-    updateLesson(id,{date,von,bis,art:newArt,note:$("#esNote").value.trim()}); closeSheet(); toast("Gespeichert ✓"); routeKalender();
+    const note=$("#esNote").value.trim();
+    if(newArt==="sonder"&&l.art!=="sonder"&&l.sid){
+      // Art wird auf Sonderfahrt geändert → SF-Picker anzeigen
+      openSFPickerForLesson(id,l.sid,date,von,bis,note,"sonder");
+    } else {
+      updateLesson(id,{date,von,bis,art:newArt,note}); closeSheet(); toast("Gespeichert ✓"); routeKalender();
+    }
   });
 }
 /* Freien Slot an Schüler vergeben */
@@ -4026,9 +4090,10 @@ function ueRange(fromISO,toISO){
     });
     cur=addDays(cur,1);
   }
-  // Bereits absolvierte/abgerechnete UE als Sockel – nur wenn der aktuelle Monat im Zeitraum liegt
+  // Bereits absolvierte/abgerechnete UE als Sockel – nur für den spezifischen Startmonat
   const su=(DB.verdienst&&DB.verdienst.startUE)||0;
-  if(su>0){ const [mf,mt]=isoMonthRange(todayISO()); if(fromISO<=mt&&toISO>=mf){ done+=su; fcCounted+=su; } }
+  const startMonth=(DB.verdienst&&DB.verdienst.startMonth)||"2026-06";
+  if(su>0){ const [smStart,smEnd]=isoMonthRange(startMonth+"-01"); if(fromISO<=smEnd&&toISO>=smStart){done+=su;fcCounted+=su;} }
   // Nachgereichte FCs: zählen fürs Gehalt im Monat, in dem sie nachgereicht wurden (nachAm), nicht rückwirkend.
   (DB.lessons||[]).forEach(l=>{
     if(l.fc==="nachgereicht"&&l.nachAm){
@@ -4230,15 +4295,11 @@ function ensureDB(){ let _ensureDirty=false; if(!Array.isArray(DB.exams))DB.exam
     _ensureDirty=true;
   }
   if(!DB.verdienst||typeof DB.verdienst!=="object"){ DB.verdienst={
-    proUE:23,        // € pro Unterrichtseinheit (45 Min)
-    fixum:2100,      // monatliches Fixum
-    fixUE:140,       // im Fixum enthaltene UE
-    bonusUE:240,     // ab dieser UE-Zahl gibt es den Bonus
-    bonus:500,       // Bonusbetrag
-    ziel:240,        // persönliches Monatsziel in UE
-    startUE:0        // bereits absolvierte/abgerechnete UE als Monats-Sockel
+    proUE:23, fixum:2100, fixUE:140, bonusUE:240, bonus:500, ziel:240,
+    startUE:0, startMonth:"2026-06"
   }; }
   if(typeof DB.verdienst.startUE!=="number")DB.verdienst.startUE=0;
+  if(!DB.verdienst.startMonth)DB.verdienst.startMonth="2026-06";
   if(!DB.prueferData||typeof DB.prueferData!=="object")DB.prueferData={};
   if(!Array.isArray(DB.orte))DB.orte=[];
   if(!Array.isArray(DB.prueferTags))DB.prueferTags=[];
@@ -5115,6 +5176,9 @@ function routeDashboard(){
     ${capacityCardHTML()}
   </div>`;
   document.querySelectorAll(".d-tile .dt-n[data-count]").forEach(el=>countUp(el,+el.dataset.count,el.dataset.suffix||""));
+  requestAnimationFrame(()=>requestAnimationFrame(()=>{
+    document.querySelectorAll('.th-seg[data-th]').forEach(el=>{el.style.flexBasis=el.dataset.th+'px';});
+  }));
   const go=k=>{ if(k==='home')routeHome(); else if(k==='pruef')routePruefungen(); else if(k==='stats')routeStats('cur'); else if(k==='kalender')routeKalender(); };
   document.querySelectorAll("[data-go]").forEach(b=>b.addEventListener("click",()=>go(b.dataset.go)));
   const na=$("#ndAdd"); if(na)na.addEventListener("click",e=>{e.stopPropagation();openTerminSheet();});
@@ -5177,59 +5241,61 @@ function verdienstModulHTML(){
   const v=DB.verdienst; const today=todayISO();
   const [moStart,moEnd]=monthRangeOf(today);
   const moUE=ueRange(moStart,moEnd);
-  // "verdient" = nur FC-abgegebene UE (fcCounted). "voraussichtlich" = alle eingetragenen Termine (total).
   const verdientUE=moUE.fcCounted;
-  const verdientJetzt=gehaltAusUE(verdientUE);
-  const verdientVoraus=gehaltAusUE(moUE.total);
-  // offene FCs (gefahren, aber noch nicht abgegeben)
-  const offenUE=moUE.done-moUE.fcCounted;
-  // Balken-Segmente (in UE-Skala bis max(ziel, total))
-  const maxUE=Math.max(v.ziel,moUE.total,v.fixUE+1);
-  const pct=(x)=>Math.max(0,Math.min(100,x/maxUE*100));
-  // Sockel = Fixum-UE (silbern), dann verdient über fixUE (waldgrün), dann plan (hellgrün)
-  const fixPart=Math.min(moUE.total,v.fixUE);
-  const doneOver=Math.max(0,verdientUE-v.fixUE);
-  const planOver=Math.max(0,moUE.total-Math.max(verdientUE,v.fixUE)); // alles über verdient/fix = voraussichtlich
-  const fixW=pct(fixPart), doneW=pct(doneOver), planW=pct(planOver);
-  const zielLineLeft=pct(v.ziel);
-  const bonusReached=verdientUE>=v.bonusUE; // Bonus zählt erst, wenn die UE wirklich per FC abgerechnet sind
-  const bisBonus=Math.max(0,v.bonusUE-verdientUE);
-  // Tag & Woche (Leistungswert)
-  const tg=ueRange(today,today);
-  const wkUE=ueRange(maxISO(isoWeekStart(today),today)===today?isoWeekStart(today):isoWeekStart(today),addDays(isoWeekStart(today),6));
-  const jrUE=ueRange(...yearRange(today));
+  const geplantUE=Math.max(0,moUE.total-moUE.done); // zukünftig
+  const verdientEuro=gehaltAusUE(verdientUE);
+  const vorausEuro=gehaltAusUE(verdientUE+geplantUE);
+  const offenUE=Math.max(0,moUE.done-verdientUE);
+  const MAX=300;
+  // Thermometer-Füllung: nur verdiente UE
+  const TUBE=200; // px
+  const toH=(ue)=>Math.round(Math.max(0,Math.min(ue,MAX))/MAX*TUBE);
+  const gruenH=toH(Math.min(verdientUE,140));
+  const orangeH=verdientUE>140?toH(Math.min(verdientUE,250))-toH(140):0;
+  const goldH=verdientUE>250?toH(Math.min(verdientUE,MAX))-toH(250):0;
+  // Skalenmarken
+  const marks=[0,70,140,200,250,300];
+  const curPos=Math.round(Math.min(verdientUE,MAX)/MAX*TUBE);
+  const marksHTML=marks.map(ue=>{
+    const bot=Math.round(ue/MAX*TUBE)+26; // +26 für Base-Höhe
+    const isCur=ue>0&&Math.abs(ue-verdientUE)<15&&ue!==0&&ue!==300;
+    const cls=ue===250?'t-bonus':ue===300?'t-gold':'';
+    return `<div class="th-mark ${isCur?'t-cur':cls}" style="bottom:${bot}px"><div class="th-tick"></div><div class="th-val">${ue} UE</div></div>`;
+  }).join('');
+  // Aktuell-Marker
+  const curBot=curPos+26;
+  const curMarker=`<div class="th-mark t-cur" style="bottom:${curBot}px"><div class="th-tick"></div><div class="th-val">${Math.round(verdientUE)} UE ◄</div></div>`;
+  // Bis-250 Zeile — beantwortet: wie viele NEUE Termine noch legen?
+  const restUE=Math.max(0,250-Math.round(verdientUE)-Math.round(geplantUE)); // noch zu legen
+  const bonusJetzt=verdientUE>=250;
+  const bonusMitPlan=(verdientUE+geplantUE)>=250;
+  let bisHtml;
+  if(bonusJetzt){
+    bisHtml=`<div class="th-goal" style="border-color:rgba(207,154,62,.4);background:rgba(207,154,62,.1);"><div class="thg-lab">🥇 Bonus erreicht!</div><div class="thg-val" style="color:#cf9a3e;">+${eur(v.bonus)} dabei</div></div>`;
+  }else if(bonusMitPlan){
+    bisHtml=`<div class="th-goal"><div class="thg-lab">✓ Mit den geplanten Terminen knackst du den Bonus</div><div class="thg-val">250 UE</div></div>`;
+  }else{
+    bisHtml=`<div class="th-goal"><div class="thg-lab">Für den Bonus noch zu legen</div><div class="thg-val">${restUE} UE · ~${Math.ceil(restUE/2)} Fahrstd.</div></div>`;
+  }
   return `<div class="vd-card">
     <div class="vd-head"><div class="vd-title">Verdienst · ${deMonth(parseISO(today).getMonth())}</div><button class="vd-gear" id="vdGear" aria-label="Einstellungen">${ICN.gear||"⚙"}</button></div>
-
-    <div class="vd-bar-wrap">
-      <div class="vd-bar">
-        <div class="vd-seg fix" style="width:${fixW}%"></div>
-        <div class="vd-seg done" style="width:${doneW}%"></div>
-        <div class="vd-seg plan" style="width:${planW}%"></div>
-        ${bonusReached?`<div class="vd-seg bonus" style="width:${pct(2)}%"></div>`:''}
-        <div class="vd-zielline" style="left:${zielLineLeft}%"><span>Ziel ${v.ziel}</span></div>
+    <div class="thermo-wrap">
+      <div class="thermo-left">
+        <div class="thermo-tube">
+          <div class="th-seg th-gruen" data-th="${gruenH}" style="flex-basis:0px"></div>
+          <div class="th-seg th-orange" data-th="${orangeH}" style="flex-basis:0px"></div>
+          <div class="th-seg th-gold" data-th="${goldH}" style="flex-basis:0px"></div>
+        </div>
+        <div class="thermo-base">Fixum</div>
       </div>
-      <div class="vd-legend">
-        <span class="vl"><i class="fix"></i>Fixum</span>
-        <span class="vl"><i class="done"></i>verdient</span>
-        <span class="vl"><i class="plan"></i>geplant</span>
-        <span class="vl"><i class="bonus"></i>Bonus</span>
-      </div>
+      <div class="thermo-right">${marksHTML}${curMarker}</div>
     </div>
-
-    <div class="vd-nums">
-      <div class="vd-num"><div class="vn-k">Schon verdient</div><div class="vn-v">${eur(verdientJetzt)}</div><div class="vn-s">${fmtUE(verdientUE)} UE abgerechnet</div></div>
-      <div class="vd-num"><div class="vn-k">Voraussichtlich</div><div class="vn-v hl">${eur(verdientVoraus)}</div><div class="vn-s">${fmtUE(moUE.total)} UE inkl. geplant</div></div>
+    <div class="thermo-info">
+      <div class="thi-card"><div class="thi-k">✅ Verdient</div><div class="thi-v">${eur(verdientEuro)}</div><div class="thi-s">${Math.round(verdientUE)} UE abgerechnet</div></div>
+      <div class="thi-card future"><div class="thi-k">📅 Voraussichtlich</div><div class="thi-v">${eur(vorausEuro)}</div><div class="thi-s">inkl. ${Math.round(geplantUE)} UE geplant</div></div>
     </div>
-    ${offenUE>0.3?`<div class="vd-offen">⚠ ${fmtUE(offenUE)} UE gefahren, aber FC noch offen · <b>${eur(leistungAusUE(offenUE))}</b> stehen aus</div>`:''}
-    ${bonusReached?`<div class="vd-bonus-note ok">Bonus erreicht – ${eur(v.bonus)} sind dabei! 🎉</div>`
-      :`<div class="vd-bonus-note">Noch <b>${bisBonus} UE</b> bis zum ${eur(v.bonus)}-Bonus${bisBonus<=20?` · nur ${Math.ceil(bisBonus/2)} Fahrstunden!`:''}</div>`}
-
-    <div class="vd-mini-grid">
-      <div class="vd-mini"><div class="vm-k">Heute</div><div class="vm-v">${tg.total} UE</div><div class="vm-s">${eur(leistungAusUE(tg.total))}</div></div>
-      <div class="vd-mini"><div class="vm-k">Diese Woche</div><div class="vm-v">${wkUE.total} UE</div><div class="vm-s">${eur(leistungAusUE(wkUE.total))}</div></div>
-      <div class="vd-mini"><div class="vm-k">Dieses Jahr</div><div class="vm-v">${jrUE.done} UE</div><div class="vm-s">absolviert</div></div>
-    </div>
+    ${offenUE>0.3?`<div class="vd-offen">⚠ ${fmtUE(offenUE)} UE gefahren, FC noch offen · <b>${eur(leistungAusUE(offenUE))}</b> stehen aus</div>`:''}
+    ${bisHtml}
   </div>`;
 }
 function eur(n){ return (Math.round(n)).toLocaleString("de-DE")+" €"; }
@@ -5298,10 +5364,11 @@ function routeStats(period){
       <span class="na-arrow">${ICN.arrow}</span>
     </button>
   </div>`;
-  // Balken animieren (double rAF damit transition greift)
+  // Balken + Thermometer animieren (double rAF damit transition greift)
   requestAnimationFrame(()=>requestAnimationFrame(()=>{
     document.querySelectorAll('.mb-fill[data-h]').forEach(el=>{el.style.height=el.dataset.h+'%';});
     document.querySelectorAll('.bar-fill[data-w]').forEach(el=>{el.style.width=el.dataset.w+'%';});
+    document.querySelectorAll('.th-seg[data-th]').forEach(el=>{el.style.flexBasis=el.dataset.th+'px';});
   }));
   // Count-up auf animierten Mini-Stats
   document.querySelectorAll('.ms-v[data-count]').forEach(el=>countUp(el,+el.dataset.count,el.dataset.suffix||''));
@@ -5557,9 +5624,23 @@ function printBogen(s){
   const cp=s.bogen.colorPct;
   const order=["rot","gelb","gruen","blau"].sort((a,b)=>(cp[b]||0)-(cp[a]||0));
   const bars=order.map(c=>`<div class="pr-bar"><span>${PROFILE[c].word}</span><span class="pr-bv">${cp[c]||0} %</span></div><div style="background:#eee;border-radius:5px;height:8px;margin:2px 0 8px;overflow:hidden;"><div style="height:100%;width:${Math.max(0,Math.min(100,cp[c]||0))}%;background:${PROFILE[c].hex};border-radius:5px;"></div></div>`).join("");
+  // Lerntyp-Verteilung (echte Daten aus lernPct) als Balken
+  let lernSection="";
+  if(s.bogen.lernPct){
+    const lp=s.bogen.lernPct;
+    const LERN_LAB={visuell:"Visuell (sehen/zeigen)",auditiv:"Auditiv (erklären/hören)",praktisch:"Praktisch (selbst tun)"};
+    const lorder=["visuell","auditiv","praktisch"].sort((a,b)=>(lp[b]||0)-(lp[a]||0));
+    const lbars=lorder.map(k=>{
+      const val=Math.max(0,Math.min(100,lp[k]||0));
+      return `<div class="pr-bar"><span>${LERN_LAB[k]}</span><span class="pr-bv">${lp[k]||0} %</span></div><div style="background:#eee;border-radius:5px;height:8px;margin:2px 0 8px;overflow:hidden;"><div style="height:100%;width:${val}%;background:#5a8ec4;border-radius:5px;"></div></div>`;
+    }).join("");
+    const tempoTxt=(lp.tempo>=60)?"Braucht viele Wiederholungen, kleine Schritte":(lp.tempo<=35?"Lernt zügig, große Schritte möglich":"Normales Lerntempo");
+    lernSection=`<div class="pr-sec" style="margin-top:14px;"><h3><span>Lerntyp</span></h3>${lbars}<div class="pr-sub" style="margin-top:6px;"><b>Lerntempo:</b> ${tempoTxt}</div></div>`;
+  }
   const body=`
     <div class="pr-meta"><b>${esc(s.name)}</b> · ${esc(headline)}</div>
     <div class="pr-sec"><h3><span>Farbverteilung</span></h3>${bars}</div>
+    ${lernSection}
     <div class="pr-sec"><h3><span>Auswertung</span></h3><div class="pr-summary">${summary}</div></div>`;
   printDoc("Persönlichkeitsprofil",body);
 }
