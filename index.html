@@ -1,4 +1,4 @@
-<!DOCTYPE html> 
+<!DOCTYPE html>
 <html lang="de">
 <head>
 <meta charset="UTF-8">
@@ -6768,15 +6768,27 @@ function formatPhoneForWa(tel){
   return digits;
 }
 
+function findLastNextLesson(sid){
+  const all=(DB.lessons||[]).filter(l=>l.sid===sid && l.status!=="abgebrochen");
+  const todayIso=heute().iso;
+  const past=all.filter(l=>l.date<todayIso || (l.date===todayIso)).sort((a,b)=>(b.date+b.von).localeCompare(a.date+a.von));
+  const future=all.filter(l=>l.date>todayIso).sort((a,b)=>(a.date+a.von).localeCompare(b.date+b.von));
+  return { last: past[0]||null, next: future[0]||null };
+}
+
 function shareStandWhatsApp(s){
   const amp=(s.plan&&s.plan.ampeln)||{};
   const reds=[],yellows=[],greens=[];
   STUFEN.forEach(st=>st.items.forEach(it=>{const v=amp[it.id];if(v==="gruen")greens.push(it.t);else if(v==="gelb")yellows.push(it.t);else if(v==="rot")reds.push(it.t);}));
   const weak=[...reds,...yellows].slice(0,3);
-  let msg=`Hey ${s.name?s.name.split(" ")[0]:""}! 👋\n\nDein aktueller Ausbildungsstand:\n✅ ${greens.length} von ${ALL_SKILLS.length} Themen sicher\n`;
+  const {last,next}=findLastNextLesson(s.id);
+  let msg=`Hey ${s.name?s.name.split(" ")[0]:""}! 👋\n\n`;
+  if(last) msg+=`Letzte Fahrstunde: ${isoDE(last.date)} um ${last.von} Uhr\n`;
+  msg+=`\nDein aktueller Ausbildungsstand:\n✅ ${greens.length} von ${ALL_SKILLS.length} Themen sicher\n`;
   if(weak.length){
     msg+=`\nDas übst du als Nächstes:\n`+weak.map(w=>`• ${w}`).join("\n")+"\n";
   }
+  if(next) msg+=`\n📅 Nächster Termin: ${isoDE(next.date)} um ${next.von} Uhr\n`;
   msg+=`\nBis zur nächsten Fahrstunde! 🚗`;
   const encoded=encodeURIComponent(msg);
   const phone=formatPhoneForWa(s.telefon);
