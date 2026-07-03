@@ -88,6 +88,15 @@ body.light .muted-p{color:#2a4535;}
   transition:transform .16s var(--pop);flex:0 0 auto;margin-right:6px;}
 .theme-btn:active{transform:scale(.88);}
 .theme-btn svg{width:18px;height:18px;}
+.bell-btn{width:36px;height:36px;border-radius:11px;display:flex;align-items:center;justify-content:center;
+  background:var(--glass);border:1px solid var(--glass-brd);color:var(--muted);position:relative;
+  transition:transform .16s var(--pop);flex:0 0 auto;margin-right:6px;}
+.bell-btn:active{transform:scale(.88);}
+.bell-btn svg{width:18px;height:18px;}
+.bell-dot{position:absolute;top:5px;right:5px;width:9px;height:9px;border-radius:50%;background:transparent;border:1.5px solid transparent;}
+.bell-btn.bell-red .bell-dot{background:var(--rot);border-color:var(--bg);}
+.bell-btn.bell-red{color:var(--rot);}
+.bell-btn.bell-green .bell-dot{background:var(--gruen);border-color:var(--bg);}
 *{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent;}
 html,body{height:100%;}
 body{background:var(--bg);color:var(--txt);font-family:'Barlow',system-ui,sans-serif;
@@ -1671,6 +1680,10 @@ input,select,textarea{font-family:inherit;font-size:15px;color:var(--txt);}
       <span class="tb-logo-wrap"><img id="brandLogo" alt="Fahrlehrer-Kompass"></span>
     </button>
     <div class="tb-side tb-right">
+      <button class="icon-btn bell-btn" id="bellBtn" aria-label="Erinnerungen">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 8a6 6 0 0 0-12 0c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg>
+        <span class="bell-dot" id="bellDot"></span>
+      </button>
       <button class="theme-btn" id="themeBtn" aria-label="Design wechseln">
         <svg id="themeIcon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="5"/><path d="M12 1v2M12 21v2M4.22 4.22l1.42 1.42M18.36 18.36l1.42 1.42M1 12h2M21 12h2M4.22 19.78l1.42-1.42M18.36 5.64l1.42-1.42"/></svg>
       </button>
@@ -2481,6 +2494,7 @@ async function afterLogin(user) {
   await pullFromCloud();
   // Login-Overlay verstecken
   document.getElementById("loginOverlay").classList.add("hidden");
+  updateBell();
   // Periodischer Sync alle 2 Minuten
   _syncTimer = setInterval(() => pushToCloud(), 120000);
   // Sofort einmal pushen (aktuellen Stand sichern)
@@ -2557,6 +2571,7 @@ function _tryOfflineSession() {
         _authUser = { id: c.id, email: c.email };
         _authProfile = { id: c.id, email: c.email, role: "fahrlehrer", aktiv: true };
         document.getElementById("loginOverlay").classList.add("hidden");
+        updateBell();
         toast("Offline-Modus · Daten werden beim nächsten Start synchronisiert");
         return true;
       }
@@ -2661,7 +2676,51 @@ function logHist(sid,typ,text,extra){
 }
 function histList(s){ return Array.isArray(s.hist)?s.hist.slice().sort((a,b)=>(""+b.t).localeCompare(""+a.t)):[]; }
 function newPlan(){return {ampeln:{},stunden:{},fahrcheck:{},sonder:{ueberland:[],autobahn:[],nacht:[]},theorie:false,notes:{}};}
+const EDITABLE_STUFEN_KEYS=["grund","aufbau","leistung"];
+const FIXED_STUFEN_KEYS=["sonder","grundfahr","technik"];
+
+function ensureAusbildungsplaene(){
+  if(!Array.isArray(DB.ausbildungsplaene)||!DB.ausbildungsplaene.length){
+    const editable=STUFEN.filter(st=>EDITABLE_STUFEN_KEYS.includes(st.key));
+    DB.ausbildungsplaene=[{
+      id:"plan_"+uid(),
+      name:"Mein Ausbildungsplan",
+      standard:true,
+      stufen:JSON.parse(JSON.stringify(editable))
+    }];
+    return true;
+  }
+  return false;
+}
+function standardPlan(){
+  ensureAusbildungsplaene();
+  return DB.ausbildungsplaene.find(p=>p.standard)||DB.ausbildungsplaene[0];
+}
+// Kombiniert die eingefrorene Kopie eines Schülers (Grund/Aufbau/Leistung)
+// mit den festen, für alle gleichen Stufen (Sonderfahrten/Grundfahraufgaben/Technik).
+function stufenFor(s){
+  const fixed=STUFEN.filter(st=>FIXED_STUFEN_KEYS.includes(st.key));
+  const custom=(s.planSnapshot&&s.planSnapshot.length)?s.planSnapshot:STUFEN.filter(st=>EDITABLE_STUFEN_KEYS.includes(st.key));
+  return [...custom,...fixed];
+}
+function allSkillsFor(s){
+  const out=[]; stufenFor(s).forEach(st=>st.items.forEach(it=>out.push(it.id))); return out;
+}
+function evalSkillsFor(s){
+  const out=[]; stufenFor(s).forEach(st=>{if(st.eval!==false)st.items.forEach(it=>out.push(it.id));}); return out;
+}
+// Migration: bestehende Schüler ohne planSnapshot bekommen exakt die aktuelle
+// Grund/Aufbau/Leistung-Struktur eingefroren -> keine Änderung an ihrem Stand.
+function ensureStudentPlan(s){
+  if(!s.planSnapshot){
+    const std=standardPlan();
+    s.planId=std.id;
+    s.planSnapshot=JSON.parse(JSON.stringify(std.stufen));
+  }
+}
+
 function ensure(s){ if(!s.plan) s.plan=newPlan(); if(!s.plan.sonder) s.plan.sonder={ueberland:[],autobahn:[],nacht:[]}; if(!s.plan.notes) s.plan.notes={}; if(!s.plan.fahrcheck) s.plan.fahrcheck={}; if(s.bogen&&!s.bogen.colorPct) s.bogen=null; if(!s.risk) s.risk={};
+  ensureStudentPlan(s);
   // Alteinträge ohne echtes Datum ({d:"",iso:""}) sind keine erledigten Sonderfahrten -> auf null normalisieren
   const sd=s.plan.sonder; if(sd){ ["ueberland","autobahn","nacht"].forEach(k=>{ if(Array.isArray(sd[k])) sd[k]=sd[k].map(o=>(o&&o.iso)?o:null); }); }
   return s; }
@@ -2679,14 +2738,15 @@ const SEED=[];
    ============================================================ */
 const ALL_SKILLS=[];STUFEN.forEach(st=>st.items.forEach(it=>ALL_SKILLS.push(it.id)));
 const EVAL_SKILLS=[];STUFEN.forEach(st=>{if(st.eval!==false)st.items.forEach(it=>EVAL_SKILLS.push(it.id));});
-function planProgress(plan, umschreiber){
+function planProgress(plan, umschreiber, evalSkills){
   if(!plan) return 0;
-  let pts=0; EVAL_SKILLS.forEach(id=>{const v=plan.ampeln[id]; if(v==="gruen")pts+=1; else if(v==="gelb")pts+=0.5;});
-  const skill=pts/EVAL_SKILLS.length;
+  const skills=evalSkills||EVAL_SKILLS;
+  let pts=0; skills.forEach(id=>{const v=plan.ampeln[id]; if(v==="gruen")pts+=1; else if(v==="gelb")pts+=0.5;});
+  const skill=pts/skills.length;
   const theo=plan.theorie?1:0;
   return Math.round((skill*0.8+theo*0.2)*100);
 }
-function stand(s){return planProgress(s.plan, s.umschreiber);}
+function stand(s){return planProgress(s.plan, s.umschreiber, evalSkillsFor(s));}
 function planLastDate(plan){
   if(!plan) return null; let best=null;
   const take=o=>{if(o&&o.iso&&(!best||o.iso>best.iso))best=o;};
@@ -3382,7 +3442,7 @@ function routePlan(id){
   const s=DB.students.find(x=>x.id===id);if(!s)return routeHome();
   ensure(s);
   $("#tbTitle").textContent="Ausbildungsplan";setFab(false);view.scrollTop=0;
-  const pl=s.plan;const pct=planProgress(pl);
+  const pl=s.plan;const pct=planProgress(pl,s.umschreiber,evalSkillsFor(s));
   const p=s.profil?PROFILE[s.profil]:null;const col=p?p.color:"var(--orange)";
   view.innerHTML=`<div class="view-inner view-wide fade-up">
     <div class="back-row" style="justify-content:space-between"><button class="back-btn" id="backBtn">${ICN.back} ${esc(s.name)}</button><button class="mini-btn" id="pdfPlanBtn">📄 Als PDF</button></div>
@@ -3441,7 +3501,7 @@ function routePlan(id){
   animateRings();
 }
 function refreshPlanRing(s){
-  const pct=planProgress(s.plan, s.umschreiber);
+  const pct=planProgress(s.plan, s.umschreiber, evalSkillsFor(s));
   const p=s.profil?PROFILE[s.profil]:null;const col=p?p.color:"var(--orange)";
   const holder=$("#planRing");if(!holder)return;
   holder.innerHTML=ring(pct,108,4,col);animateRings();renderPlanActions(s);
@@ -3528,9 +3588,124 @@ $("#calPick").addEventListener("change",e=>{
   save();refreshPlanRing(s);
   _cal={sid:null,kind:null,n:null,grp:null,idx:null};
 });
+/* ============================================================
+   AUSBILDUNGSPLAN-VORLAGEN (Prüfgebiete)
+   ============================================================ */
+function routePlanVorlagen(){
+  ensureAusbildungsplaene();
+  $("#tbTitle").textContent="Vorlagen";setFab(false);view.scrollTop=0;
+  const rows=DB.ausbildungsplaene.map(p=>{
+    const n=activeStudents().filter(s=>s.planId===p.id).length;
+    const canDelete=DB.ausbildungsplaene.length>1;
+    return `<div class="res-block" style="animation:none;">
+      <h4>${esc(p.name)}${p.standard?' <span style="color:#4a8b45;font-size:12px;font-weight:700;">· Standard</span>':''}</h4>
+      <p>${n} aktive${n===1?'r':''} Schüler nutzt${n===1?'':'en'} diese Vorlage.</p>
+      <div class="btn-row" style="flex-wrap:wrap;">
+        <button class="btn btn-ghost" data-editplan="${p.id}">Bearbeiten</button>
+        ${!p.standard?`<button class="btn btn-ghost" data-stdplan="${p.id}">Als Standard</button>`:''}
+        ${canDelete?`<button class="btn btn-ghost" style="color:#f08080;border-color:rgba(200,60,60,.3);" data-delplan="${p.id}">Löschen</button>`:''}
+      </div></div>`;
+  }).join("");
+  view.innerHTML=`<div class="view-inner view-read fade-up">
+    <div class="back-row"><button class="back-btn" id="backBtn">${ICN.back} Einstellungen</button></div>
+    <p style="color:var(--muted);font-size:13px;margin-bottom:12px;">Grundstufe, Aufbaustufe und Leistungsstufe sind pro Vorlage frei gestaltbar. Sonderfahrten, Grundfahraufgaben und Technik sind für alle Vorlagen gleich (gesetzlich vorgegeben).</p>
+    ${rows}
+    <div class="res-block" style="animation:none;"><h4>+ Neues Prüfgebiet</h4>
+      <p>Startet als Kopie einer bestehenden Vorlage — du musst nicht bei null anfangen.</p>
+      <div class="btn-row"><button class="btn btn-primary" id="newPlanBtn">Neues Prüfgebiet anlegen</button></div></div>
+  </div>`;
+  $("#backBtn").addEventListener("click",routeSettings);
+  view.querySelectorAll("[data-editplan]").forEach(b=>b.addEventListener("click",()=>routePlanVorlageEdit(b.dataset.editplan)));
+  view.querySelectorAll("[data-stdplan]").forEach(b=>b.addEventListener("click",()=>{
+    DB.ausbildungsplaene.forEach(p=>p.standard=(p.id===b.dataset.stdplan));
+    save();routePlanVorlagen();toast("Standard-Vorlage geändert ✓");
+  }));
+  view.querySelectorAll("[data-delplan]").forEach(b=>b.addEventListener("click",()=>{
+    const p=DB.ausbildungsplaene.find(x=>x.id===b.dataset.delplan);
+    const n=activeStudents().filter(s=>s.planId===p.id).length;
+    const warn=n?` ${n} Schüler nutzen sie noch — sie behalten ihren Stand, sind aber keiner Vorlage mehr zugeordnet.`:"";
+    if(!confirm(`"${p.name}" wirklich löschen?${warn}`))return;
+    DB.ausbildungsplaene=DB.ausbildungsplaene.filter(x=>x.id!==p.id);
+    if(!DB.ausbildungsplaene.some(x=>x.standard))DB.ausbildungsplaene[0].standard=true;
+    save();routePlanVorlagen();toast("Vorlage gelöscht");
+  }));
+  $("#newPlanBtn").addEventListener("click",()=>{
+    const src=DB.ausbildungsplaene.find(p=>p.standard)||DB.ausbildungsplaene[0];
+    const name=(prompt("Name des neuen Prüfgebiets:", "")||"").trim();
+    if(!name)return;
+    DB.ausbildungsplaene.push({id:"plan_"+uid(),name,standard:false,stufen:JSON.parse(JSON.stringify(src.stufen))});
+    save();routePlanVorlagen();toast("Vorlage \""+name+"\" angelegt ✓");
+  });
+}
+
+function routePlanVorlageEdit(planId){
+  const p=DB.ausbildungsplaene.find(x=>x.id===planId);
+  if(!p){routePlanVorlagen();return;}
+  $("#tbTitle").textContent=p.name;setFab(false);view.scrollTop=0;
+  const stufenHtml=p.stufen.map(st=>{
+    const rows=st.items.map((it,idx)=>`
+      <div class="skill-wrap" data-planitem="${it.id}">
+        <div class="skill" style="align-items:center;">
+          <div style="flex:1;min-width:0;">
+            <input class="pv-txt" data-field="t" data-idx="${idx}" data-stkey="${st.key}" value="${esc(it.t)}" style="width:100%;background:var(--surface-2);border:1px solid var(--line);border-radius:8px;padding:6px 10px;color:var(--txt);font-size:13.5px;margin-bottom:4px;">
+            <input class="pv-txt" data-field="ort" data-idx="${idx}" data-stkey="${st.key}" value="${esc(it.ort||"")}" placeholder="Ort (optional)" style="width:100%;background:var(--surface-2);border:1px solid var(--line);border-radius:8px;padding:6px 10px;color:var(--muted);font-size:12.5px;">
+          </div>
+          <div style="display:flex;flex-direction:column;gap:4px;margin-left:8px;">
+            <button class="mini-btn" data-up="${st.key}|${idx}" ${idx===0?'disabled style="opacity:.3;"':''}>↑</button>
+            <button class="mini-btn" data-down="${st.key}|${idx}" ${idx===st.items.length-1?'disabled style="opacity:.3;"':''}>↓</button>
+          </div>
+          <button class="mini-btn" style="color:#f08080;margin-left:4px;" data-delitem="${st.key}|${idx}">✕</button>
+        </div>
+      </div>`).join("");
+    return `<div class="res-block" style="animation:none;">
+      <h4>${st.nr} · ${esc(st.titel)}</h4>
+      ${rows}
+      <div class="btn-row" style="margin-top:8px;"><button class="btn btn-ghost" data-additem="${st.key}">+ Punkt hinzufügen</button></div>
+    </div>`;
+  }).join("");
+  const fixedHtml=STUFEN.filter(st=>FIXED_STUFEN_KEYS.includes(st.key)).map(st=>
+    `<div class="res-block" style="animation:none;opacity:.55;"><h4>🔒 ${st.nr} · ${esc(st.titel)}</h4>
+      <p>Gesetzlich vorgegeben — für alle Vorlagen gleich, nicht editierbar. ${st.items.length} Punkte.</p></div>`
+  ).join("");
+  view.innerHTML=`<div class="view-inner view-read fade-up">
+    <div class="back-row"><button class="back-btn" id="backBtn">${ICN.back} Vorlagen</button></div>
+    <div class="res-block" style="animation:none;"><h4>Name der Vorlage</h4>
+      <input id="planNameInput" value="${esc(p.name)}" style="width:100%;background:var(--surface-2);border:1px solid var(--line);border-radius:10px;padding:10px 14px;color:var(--txt);font-size:15px;margin-top:6px;"></div>
+    ${stufenHtml}
+    ${fixedHtml}
+  </div>`;
+  $("#backBtn").addEventListener("click",routePlanVorlagen);
+  $("#planNameInput").addEventListener("change",e=>{p.name=e.target.value.trim()||p.name;save();});
+  view.querySelectorAll(".pv-txt").forEach(inp=>inp.addEventListener("change",e=>{
+    const st=p.stufen.find(x=>x.key===e.target.dataset.stkey);
+    st.items[e.target.dataset.idx][e.target.dataset.field]=e.target.value.trim();
+    save();
+  }));
+  view.querySelectorAll("[data-up]").forEach(b=>b.addEventListener("click",()=>{
+    const[key,idx]=b.dataset.up.split("|");const st=p.stufen.find(x=>x.key===key);const i=+idx;
+    if(i>0){[st.items[i-1],st.items[i]]=[st.items[i],st.items[i-1]];save();routePlanVorlageEdit(planId);}
+  }));
+  view.querySelectorAll("[data-down]").forEach(b=>b.addEventListener("click",()=>{
+    const[key,idx]=b.dataset.down.split("|");const st=p.stufen.find(x=>x.key===key);const i=+idx;
+    if(i<st.items.length-1){[st.items[i+1],st.items[i]]=[st.items[i],st.items[i+1]];save();routePlanVorlageEdit(planId);}
+  }));
+  view.querySelectorAll("[data-delitem]").forEach(b=>b.addEventListener("click",()=>{
+    const[key,idx]=b.dataset.delitem.split("|");const st=p.stufen.find(x=>x.key===key);
+    if(!confirm("Diesen Punkt wirklich löschen?"))return;
+    st.items.splice(+idx,1);save();routePlanVorlageEdit(planId);
+  }));
+  view.querySelectorAll("[data-additem]").forEach(b=>b.addEventListener("click",()=>{
+    const st=p.stufen.find(x=>x.key===b.dataset.additem);
+    const t=(prompt("Neuer Punkt (Titel):","")||"").trim();
+    if(!t)return;
+    st.items.push({id:"custom_"+uid(),t});
+    save();routePlanVorlageEdit(planId);
+  }));
+}
+
 function buildStufen(s){
   const pl=s.plan,wrap=$("#stufenWrap");
-  wrap.innerHTML=STUFEN.map((st,si)=>{
+  wrap.innerHTML=stufenFor(s).map((st,si)=>{
     const total=st.items.length;
     const done=st.items.filter(it=>pl.ampeln[it.id]==="gruen").length;
     let lastGrp=null;
@@ -3571,7 +3746,7 @@ function buildStufen(s){
       const v=b.dataset.v;
       if(pl.ampeln[sid]===v){delete pl.ampeln[sid];}else{pl.ampeln[sid]=v;}
       row.querySelectorAll(".amp").forEach(x=>x.classList.toggle("on",x.dataset.v===pl.ampeln[sid]));
-      const st=STUFEN.find(t=>t.items.some(i=>i.id===sid));
+      const st=stufenFor(s).find(t=>t.items.some(i=>i.id===sid));
       const d=wrap.querySelector(`[data-done="${st.key}"]`);
       if(d)d.textContent=st.items.filter(i=>pl.ampeln[i.id]==="gruen").length+"/"+st.items.length;
       save();refreshPlanRing(s);
@@ -4005,6 +4180,8 @@ function routeNotes(id){
 function formView(existing){
   const isEdit=!!existing;
   const s=existing||{name:"",form:"B",beginn:"",profil:null,next:"",nextDate:"",nextTime:"",telefon:""};
+  ensureAusbildungsplaene();
+  const showPlanPicker=!isEdit&&DB.ausbildungsplaene.length>1;
   $("#tbTitle").textContent=isEdit?"Schüler bearbeiten":"Neuer Schüler";setFab(false);view.scrollTop=0;
   const hasBogen=!!(existing&&existing.bogen);
   let profCard="";
@@ -4032,17 +4209,23 @@ function formView(existing){
         <input id="f_beginn" type="text" placeholder="TT.MM.JJJJ" value="${esc(s.beginn||"")}" autocomplete="off"></div>
       <div class="field"><label style="display:flex;align-items:center;gap:8px;">Telefonnummer <span style="font-size:11.5px;font-weight:600;color:var(--faint);background:var(--surface-2);padding:2px 8px;border-radius:6px;">optional</span></label>
         <input id="f_telefon" type="tel" placeholder="z.B. 0151 23456789" value="${esc(s.telefon||"")}" autocomplete="off"></div>
+      ${showPlanPicker?`<div class="field"><label>Prüfungsgebiet</label>
+        <div class="pills" id="planPills">${DB.ausbildungsplaene.map(p=>`<button class="pill ${p.standard?'sel':''}" data-plan="${p.id}">${esc(p.name)}</button>`).join("")}</div></div>`:""}
       ${hasBogen?profCard:""}
       <div class="btn-row">
         <button class="btn btn-primary" id="saveBtn">${isEdit?"Änderungen speichern":"Schüler anlegen →"}</button>
         ${isEdit?"":`<button class="btn btn-ghost" id="cancelBtn">Abbrechen</button>`}</div>
     </div></div>`;
-  let pick={form:s.form,profil:s.profil};
+  let pick={form:s.form,profil:s.profil,planId:(DB.ausbildungsplaene.find(p=>p.standard)||DB.ausbildungsplaene[0]).id};
   $("#backBtn").addEventListener("click",()=>isEdit?routeDetail(s.id):routeHome());
   const cb=$("#cancelBtn");if(cb)cb.addEventListener("click",routeHome);
   document.querySelectorAll("#formPills .pill").forEach(b=>b.addEventListener("click",()=>{
     document.querySelectorAll("#formPills .pill").forEach(x=>x.classList.remove("sel"));
     b.classList.add("sel");pick.form=b.dataset.form;}));
+  const planPillsEl=$("#planPills");
+  if(planPillsEl)planPillsEl.querySelectorAll(".pill").forEach(b=>b.addEventListener("click",()=>{
+    planPillsEl.querySelectorAll(".pill").forEach(x=>x.classList.remove("sel"));
+    b.classList.add("sel");pick.planId=b.dataset.plan;}));
   document.querySelectorAll("#colorOpts .color-opt").forEach(b=>b.addEventListener("click",()=>{
     const was=b.classList.contains("sel");
     document.querySelectorAll("#colorOpts .color-opt").forEach(x=>x.classList.remove("sel"));
@@ -4053,7 +4236,10 @@ function formView(existing){
     const data={name,form:pick.form||"B",beginn:$("#f_beginn").value.trim(),telefon:$("#f_telefon").value.trim()};
     if(!hasBogen)data.profil=pick.profil||null;
     if(isEdit){Object.assign(existing,data);save();toast("Gespeichert");routeDetail(existing.id);}
-    else{const nst={id:uid(),created:Date.now(),notiz:"",bogen:null,plan:newPlan(),profil:data.profil||null,...data};
+    else{
+      const chosenPlan=DB.ausbildungsplaene.find(p=>p.id===pick.planId)||DB.ausbildungsplaene.find(p=>p.standard)||DB.ausbildungsplaene[0];
+      const nst={id:uid(),created:Date.now(),notiz:"",bogen:null,plan:newPlan(),profil:data.profil||null,
+        planId:chosenPlan.id,planSnapshot:JSON.parse(JSON.stringify(chosenPlan.stufen)),...data};
       DB.students.push(nst);save();routeBogen(nst.id,true);}
   });
 }
@@ -4089,6 +4275,9 @@ function routeSettings(){
     ${logoutBtn}
     ${_authUser?`<div class="res-block" style="animation:none;background:rgba(74,139,69,.06);border-color:rgba(74,139,69,.2);"><h4 style="color:#4a8b45">☁ Cloud-Konto</h4><p style="color:#6a9b7a;font-size:13px;">${_authUser.email}</p><p style="color:var(--muted);font-size:12px;margin-top:4px;">Daten werden automatisch gesichert.</p></div>`:""}
     ${adminBtn}
+    <div class="res-block" style="animation:none;"><h4>📋 Ausbildungsplan-Vorlagen</h4>
+      <p>Grundstufe, Aufbaustufe und Leistungsstufe individuell gestalten — z.B. eigene Prüfgebiete anlegen.</p>
+      <div class="btn-row"><button class="btn btn-ghost" onclick="routePlanVorlagen()">Vorlagen verwalten</button></div></div>
     <div class="res-block" style="animation:none;"><h4>⚙ Kapazität</h4>
       <p>Wöchentliche Slot-Kapazität für die Auslastungsanzeige.</p>
       <div style="display:flex;align-items:center;gap:12px;margin-top:10px;">
@@ -6586,11 +6775,11 @@ body{font-family:Arial,Helvetica,sans-serif;font-size:12px;color:#111;background
 }
 function printPlan(s){
   ensure(s);
-  const pl=s.plan; const pct=planProgress(pl);
+  const pl=s.plan; const pct=planProgress(pl,s.umschreiber,evalSkillsFor(s));
   const std=[]; for(let i=1;i<=30;i++){ if(pl.stunden[i])std.push(`${pad2(i)}. ${esc(pl.stunden[i].d)}${pl.fahrcheck[i]?" (FC)":""}`); }
   const sonder=SONDER_DEF.map(sd=>{ const arr=pl.sonder[sd.key]||[]; return `${sd.label}: ${sfCount(arr)}/${sd.soll}`; }).join(" · ");
   const VL={rot:"Rot",gelb:"Gelb",gruen:"Grün"};
-  const stufenHtml=STUFEN.map(st=>{
+  const stufenHtml=stufenFor(s).map(st=>{
     const rows=st.items.map(it=>{ const v=pl.ampeln[it.id]; const lab=v?VL[v]:"–"; return `<tr><td>${esc(it.t)}${it.ort?` <span class="pr-ort">(${esc(it.ort)})</span>`:""}</td><td class="pr-${v||"none"}">${lab}</td></tr>`; }).join("");
     const done=st.items.filter(it=>pl.ampeln[it.id]==="gruen").length;
     const note=pl.notes[st.key]?`<div class="pr-note"><b>Notiz:</b> ${esc(pl.notes[st.key])}</div>`:"";
@@ -6606,7 +6795,7 @@ function printPlan(s){
 /* ===== GESAMTAKTE: kompletter Schüler in einem PDF ===== */
 function printGesamtakte(s){
   ensure(s);
-  const pl=s.plan; const pct=planProgress(pl);
+  const pl=s.plan; const pct=planProgress(pl,s.umschreiber,evalSkillsFor(s));
   const VL={rot:"Rot",gelb:"Gelb",gruen:"Grün"};
   // 1. Kopf-Infos
   const head=`<div class="pr-meta"><b>${esc(s.name)}</b> · Klasse ${esc(s.form||"B")}${s.beginn?` · Beginn ${esc(s.beginn)}`:""}</div>
@@ -6644,7 +6833,7 @@ function printGesamtakte(s){
   const fahrSec=`<div class="pr-sec"><h3><span>Fahrstunden</span><span class="pr-cnt">${std.length}/30</span></h3><div class="pr-list">${std.length?std.join(" · "):"—"}</div></div>
     <div class="pr-sec"><h3><span>Sonderfahrten</span></h3><table class="pr-tbl"><tbody>${sonderRows}</tbody></table></div>`;
   // 4. Ausbildungsplan-Stufen (alle Ampeln)
-  const stufenHtml=STUFEN.map(st=>{
+  const stufenHtml=stufenFor(s).map(st=>{
     const rows=st.items.map(it=>{ const v=pl.ampeln[it.id]; const lab=v?VL[v]:"–"; return `<tr><td>${esc(it.t)}${it.ort?` <span class="pr-ort">(${esc(it.ort)})</span>`:""}</td><td class="pr-${v||"none"}">${lab}</td></tr>`; }).join("");
     const done=st.items.filter(it=>pl.ampeln[it.id]==="gruen").length;
     const note=pl.notes[st.key]?`<div class="pr-note"><b>Notiz:</b> ${esc(pl.notes[st.key])}</div>`:"";
@@ -6768,6 +6957,44 @@ function formatPhoneForWa(tel){
   return digits;
 }
 
+function morgenIso(){
+  const d=new Date(); d.setDate(d.getDate()+1);
+  return d.getFullYear()+"-"+pad2(d.getMonth()+1)+"-"+pad2(d.getDate());
+}
+
+function getMorgenTermine(){
+  const mi=morgenIso();
+  return (DB.lessons||[]).filter(l=>l.date===mi && l.status!=="abgebrochen" && l.sid)
+    .sort((a,b)=>a.von.localeCompare(b.von));
+}
+
+function updateBell(){
+  const btn=document.getElementById("bellBtn");
+  if(!btn) return;
+  const list=getMorgenTermine();
+  btn.classList.remove("bell-red","bell-green");
+  btn.classList.add(list.length?"bell-red":"bell-green");
+}
+
+function openBellSheet(){
+  const list=getMorgenTermine();
+  const rows=list.length? list.map(l=>{
+    const s=DB.students.find(x=>x.id===l.sid);
+    if(!s) return "";
+    const phone=formatPhoneForWa(s.telefon);
+    const msg=encodeURIComponent(`Hey ${s.name.split(" ")[0]}! Kurze Erinnerung: morgen um ${l.von} Uhr ist deine Fahrstunde. Bis dann! 🚗`);
+    const url=phone?`https://wa.me/${phone}?text=${msg}`:`https://wa.me/?text=${msg}`;
+    return `<a class="es-act" href="${url}" target="_blank" rel="noopener" style="display:flex;justify-content:space-between;align-items:center;text-decoration:none;">
+      <span>${esc(s.name)} · ${l.von} Uhr</span><span style="color:#25D366;">WhatsApp ›</span>
+    </a>`;
+  }).join("") : `<p class="muted-p" style="text-align:center;padding:20px 0;">Keine Fahrstunden morgen — nichts zu erinnern 👍</p>`;
+  openSheet(`<div class="sheet-h">🔔 Erinnerungen für morgen</div>
+    <div class="es-actions">${rows}</div>`);
+}
+
+const bellBtn=document.getElementById("bellBtn");
+if(bellBtn) bellBtn.addEventListener("click",openBellSheet);
+
 function findLastNextLesson(sid){
   const all=(DB.lessons||[]).filter(l=>l.sid===sid && l.status!=="abgebrochen");
   const todayIso=heute().iso;
@@ -6779,12 +7006,12 @@ function findLastNextLesson(sid){
 function shareStandWhatsApp(s){
   const amp=(s.plan&&s.plan.ampeln)||{};
   const reds=[],yellows=[],greens=[];
-  STUFEN.forEach(st=>st.items.forEach(it=>{const v=amp[it.id];if(v==="gruen")greens.push(it.t);else if(v==="gelb")yellows.push(it.t);else if(v==="rot")reds.push(it.t);}));
+  stufenFor(s).forEach(st=>st.items.forEach(it=>{const v=amp[it.id];if(v==="gruen")greens.push(it.t);else if(v==="gelb")yellows.push(it.t);else if(v==="rot")reds.push(it.t);}));
   const weak=[...reds,...yellows].slice(0,3);
   const {last,next}=findLastNextLesson(s.id);
   let msg=`Hey ${s.name?s.name.split(" ")[0]:""}! 👋\n\n`;
   if(last) msg+=`Letzte Fahrstunde: ${isoDE(last.date)} um ${last.von} Uhr\n`;
-  msg+=`\nDein aktueller Ausbildungsstand:\n✅ ${greens.length} von ${ALL_SKILLS.length} Themen sicher\n`;
+  msg+=`\nDein aktueller Ausbildungsstand:\n✅ ${greens.length} von ${allSkillsFor(s).length} Themen sicher\n`;
   if(weak.length){
     msg+=`\nDas übst du als Nächstes:\n`+weak.map(w=>`• ${w}`).join("\n")+"\n";
   }
@@ -6800,12 +7027,12 @@ function lagebildCard(s){
   const E=s.bogen?evalBogen(s.bogen):null;
   const amp=s.plan.ampeln||{};
   const reds=[],yellows=[],greens=[];
-  STUFEN.forEach(st=>st.items.forEach(it=>{const v=amp[it.id];if(v==="gruen")greens.push(it.t);else if(v==="gelb")yellows.push(it.t);else if(v==="rot")reds.push(it.t);}));
+  stufenFor(s).forEach(st=>st.items.forEach(it=>{const v=amp[it.id];if(v==="gruen")greens.push(it.t);else if(v==="gelb")yellows.push(it.t);else if(v==="rot")reds.push(it.t);}));
   const weak=[...reds,...yellows].slice(0,3);
   const openRisk=RISK_THEMES.filter(t=>riskStatus(s,t.id)!=="sicher");
   const R=examReadiness(s);
   const strengths=[];
-  if(greens.length) strengths.push(`${greens.length} von ${ALL_SKILLS.length} Themen sicher`);
+  if(greens.length) strengths.push(`${greens.length} von ${allSkillsFor(s).length} Themen sicher`);
   if(E) strengths.push(COLOR_EXTRA[E.top].staerken[0]);
   if(!strengths.length) strengths.push("Noch am Anfang – jede Stunde zählt.");
   const weaks=[];
