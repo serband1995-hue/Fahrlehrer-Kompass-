@@ -911,6 +911,9 @@ input,select,textarea{font-family:inherit;font-size:15px;color:var(--txt);}
 .cs-arrow{color:rgba(255,255,255,.9);flex:0 0 auto;position:relative;z-index:1;}
 .cs-arrow svg{width:20px;height:20px;}
 .mini-btn{background:var(--glass);border:1px solid var(--glass-brd);color:var(--txt);font-weight:700;font-size:13px;padding:9px 14px;border-radius:12px;flex:0 0 auto;box-shadow:var(--inset-top)}
+.drag-handle{background:none;border:none;color:var(--muted);font-size:20px;padding:8px 6px;margin-right:2px;flex:0 0 auto;cursor:grab;touch-action:none;line-height:1;}
+.drag-handle:active{cursor:grabbing;color:var(--txt);}
+.skill-wrap.dragging{box-shadow:0 8px 24px rgba(0,0,0,.4);border-radius:14px;background:var(--surface-2);opacity:.96;}
 .mini-btn:active{transform:scale(.96)}
 .blk-h{font-family:'Anton',sans-serif;text-transform:uppercase;font-size:12.5px;letter-spacing:.08em;color:var(--muted);margin:20px 0 10px;display:flex;align-items:center;gap:8px}
 .muted-p{color:var(--muted);font-size:13.5px;line-height:1.6}
@@ -3638,31 +3641,120 @@ function routePlanVorlagen(){
   });
 }
 
+function renderStufeRows(st){
+  return st.items.map((it)=>`
+      <div class="skill-wrap" data-planitem="${it.id}">
+        <div class="skill" style="align-items:center;">
+          <button class="drag-handle" title="Halten und ziehen zum Verschieben">⠿</button>
+          <div style="flex:1;min-width:0;">
+            <input class="pv-txt" data-field="t" data-itemid="${it.id}" data-stkey="${st.key}" value="${esc(it.t)}" style="width:100%;background:var(--surface-2);border:1px solid var(--line);border-radius:8px;padding:6px 10px;color:var(--txt);font-size:13.5px;margin-bottom:4px;">
+            <input class="pv-txt" data-field="ort" data-itemid="${it.id}" data-stkey="${st.key}" value="${esc(it.ort||"")}" placeholder="Ort (optional)" style="width:100%;background:var(--surface-2);border:1px solid var(--line);border-radius:8px;padding:6px 10px;color:var(--muted);font-size:12.5px;">
+          </div>
+          <button class="mini-btn" style="color:#f08080;margin-left:6px;" data-delitem="${it.id}">✕</button>
+        </div>
+      </div>`).join("");
+}
+function wireStufeBlock(p,planId,stKey){
+  const block=view.querySelector(`[data-stufeblock="${stKey}"]`);
+  if(!block)return;
+  const st=p.stufen.find(x=>x.key===stKey);
+  block.querySelectorAll(".pv-txt").forEach(inp=>inp.addEventListener("change",e=>{
+    const it=st.items.find(x=>x.id===e.target.dataset.itemid);
+    if(it)it[e.target.dataset.field]=e.target.value.trim();
+    save();
+  }));
+  block.querySelectorAll("[data-delitem]").forEach(b=>b.addEventListener("click",()=>{
+    const itemId=b.dataset.delitem;
+    if(!confirm("Diesen Punkt wirklich löschen?"))return;
+    st.items=st.items.filter(x=>x.id!==itemId);save();refreshStufeBlock(p,planId,stKey);
+  }));
+  const rowsWrap=block.querySelector(".stufe-rows");
+  if(rowsWrap)wireDragReorder(rowsWrap,st,()=>save());
+}
+// Echtes Ziehen per Finger/Maus, überall in der Liste ablegbar — nutzt Pointer Events
+// (funktioniert einheitlich für Touch UND Maus, anders als natives HTML5-Drag).
+function wireDragReorder(container,st,onDone){
+  container.querySelectorAll(".drag-handle").forEach(handle=>{
+    handle.addEventListener("pointerdown",e=>{
+      e.preventDefault();
+      const wrap=handle.closest(".skill-wrap");
+      if(!wrap)return;
+      let startY=e.clientY;
+      try{wrap.setPointerCapture(e.pointerId);}catch(err){}
+      wrap.classList.add("dragging");
+      wrap.style.position="relative";wrap.style.zIndex="50";
+      const onMove=(ev)=>{
+        const dy=ev.clientY-startY;
+        wrap.style.transform=`translateY(${dy}px)`;
+        const siblings=Array.from(container.children).filter(c=>c!==wrap);
+        const wrapRect=wrap.getBoundingClientRect();
+        const wrapMid=wrapRect.top+wrapRect.height/2;
+        let target=null,before=true;
+        for(const sib of siblings){
+          const r=sib.getBoundingClientRect();
+          const sibMid=r.top+r.height/2;
+          if(wrapMid<sibMid){target=sib;before=true;break;}
+        }
+        if(!target&&siblings.length){target=siblings[siblings.length-1];before=false;}
+        if(target){
+          const curNext=wrap.nextElementSibling;
+          const willMove=(before&&curNext!==target)||(!before&&wrap.previousElementSibling!==target);
+          if(willMove){
+            // FLIP: Positionen aller Geschwister VOR dem Umsortieren merken
+            const firstRects=new Map();
+            siblings.forEach(s=>firstRects.set(s,s.getBoundingClientRect()));
+            if(before)container.insertBefore(wrap,target);
+            else container.insertBefore(wrap,target.nextElementSibling);
+            // Nachher-Positionen vergleichen, verdrängte Kacheln sichtbar rübergleiten lassen
+            siblings.forEach(s=>{
+              const first=firstRects.get(s);
+              const last=s.getBoundingClientRect();
+              const deltaY=first.top-last.top;
+              if(deltaY){
+                s.style.transition="none";
+                s.style.transform=`translateY(${deltaY}px)`;
+                requestAnimationFrame(()=>{
+                  s.style.transition="transform .18s ease";
+                  s.style.transform="translateY(0px)";
+                });
+              }
+            });
+            wrap.style.transform="translateY(0px)";startY=ev.clientY;
+          }
+        }
+      };
+      const onUp=(ev)=>{
+        try{wrap.releasePointerCapture(e.pointerId);}catch(err){}
+        wrap.classList.remove("dragging");
+        wrap.style.position="";wrap.style.zIndex="";wrap.style.transform="";
+        Array.from(container.children).forEach(el=>{el.style.transition="";el.style.transform="";});
+        window.removeEventListener("pointermove",onMove);
+        window.removeEventListener("pointerup",onUp);
+        const newOrderIds=Array.from(container.children).map(el=>el.dataset.planitem);
+        st.items.sort((a,b)=>newOrderIds.indexOf(a.id)-newOrderIds.indexOf(b.id));
+        onDone();
+      };
+      window.addEventListener("pointermove",onMove);
+      window.addEventListener("pointerup",onUp);
+    });
+  });
+}
+// Zeichnet nur EINEN Stufen-Block neu — kein Vollseiten-Reload, kein Flackern.
+function refreshStufeBlock(p,planId,stKey){
+  const st=p.stufen.find(x=>x.key===stKey);
+  const rowsWrap=view.querySelector(`[data-stufeblock="${stKey}"] .stufe-rows`);
+  if(rowsWrap)rowsWrap.innerHTML=renderStufeRows(st);
+  wireStufeBlock(p,planId,stKey);
+}
 function routePlanVorlageEdit(planId){
   const p=DB.ausbildungsplaene.find(x=>x.id===planId);
   if(!p){routePlanVorlagen();return;}
   $("#tbTitle").textContent=p.name;setFab(false);view.scrollTop=0;
-  const stufenHtml=p.stufen.map(st=>{
-    const rows=st.items.map((it,idx)=>`
-      <div class="skill-wrap" data-planitem="${it.id}">
-        <div class="skill" style="align-items:center;">
-          <div style="flex:1;min-width:0;">
-            <input class="pv-txt" data-field="t" data-idx="${idx}" data-stkey="${st.key}" value="${esc(it.t)}" style="width:100%;background:var(--surface-2);border:1px solid var(--line);border-radius:8px;padding:6px 10px;color:var(--txt);font-size:13.5px;margin-bottom:4px;">
-            <input class="pv-txt" data-field="ort" data-idx="${idx}" data-stkey="${st.key}" value="${esc(it.ort||"")}" placeholder="Ort (optional)" style="width:100%;background:var(--surface-2);border:1px solid var(--line);border-radius:8px;padding:6px 10px;color:var(--muted);font-size:12.5px;">
-          </div>
-          <div style="display:flex;flex-direction:column;gap:4px;margin-left:8px;">
-            <button class="mini-btn" data-up="${st.key}|${idx}" ${idx===0?'disabled style="opacity:.3;"':''}>↑</button>
-            <button class="mini-btn" data-down="${st.key}|${idx}" ${idx===st.items.length-1?'disabled style="opacity:.3;"':''}>↓</button>
-          </div>
-          <button class="mini-btn" style="color:#f08080;margin-left:4px;" data-delitem="${st.key}|${idx}">✕</button>
-        </div>
-      </div>`).join("");
-    return `<div class="res-block" style="animation:none;">
+  const stufenHtml=p.stufen.map(st=>`<div class="res-block" style="animation:none;" data-stufeblock="${st.key}">
       <h4>${st.nr} · ${esc(st.titel)}</h4>
-      ${rows}
+      <div class="stufe-rows">${renderStufeRows(st)}</div>
       <div class="btn-row" style="margin-top:8px;"><button class="btn btn-ghost" data-additem="${st.key}">+ Punkt hinzufügen</button></div>
-    </div>`;
-  }).join("");
+    </div>`).join("");
   const fixedHtml=STUFEN.filter(st=>FIXED_STUFEN_KEYS.includes(st.key)).map(st=>
     `<div class="res-block" style="animation:none;opacity:.55;"><h4>🔒 ${st.nr} · ${esc(st.titel)}</h4>
       <p>Gesetzlich vorgegeben — für alle Vorlagen gleich, nicht editierbar. ${st.items.length} Punkte.</p></div>`
@@ -3676,30 +3768,13 @@ function routePlanVorlageEdit(planId){
   </div>`;
   $("#backBtn").addEventListener("click",routePlanVorlagen);
   $("#planNameInput").addEventListener("change",e=>{p.name=e.target.value.trim()||p.name;save();});
-  view.querySelectorAll(".pv-txt").forEach(inp=>inp.addEventListener("change",e=>{
-    const st=p.stufen.find(x=>x.key===e.target.dataset.stkey);
-    st.items[e.target.dataset.idx][e.target.dataset.field]=e.target.value.trim();
-    save();
-  }));
-  view.querySelectorAll("[data-up]").forEach(b=>b.addEventListener("click",()=>{
-    const[key,idx]=b.dataset.up.split("|");const st=p.stufen.find(x=>x.key===key);const i=+idx;
-    if(i>0){[st.items[i-1],st.items[i]]=[st.items[i],st.items[i-1]];save();routePlanVorlageEdit(planId);}
-  }));
-  view.querySelectorAll("[data-down]").forEach(b=>b.addEventListener("click",()=>{
-    const[key,idx]=b.dataset.down.split("|");const st=p.stufen.find(x=>x.key===key);const i=+idx;
-    if(i<st.items.length-1){[st.items[i+1],st.items[i]]=[st.items[i],st.items[i+1]];save();routePlanVorlageEdit(planId);}
-  }));
-  view.querySelectorAll("[data-delitem]").forEach(b=>b.addEventListener("click",()=>{
-    const[key,idx]=b.dataset.delitem.split("|");const st=p.stufen.find(x=>x.key===key);
-    if(!confirm("Diesen Punkt wirklich löschen?"))return;
-    st.items.splice(+idx,1);save();routePlanVorlageEdit(planId);
-  }));
+  p.stufen.forEach(st=>wireStufeBlock(p,planId,st.key));
   view.querySelectorAll("[data-additem]").forEach(b=>b.addEventListener("click",()=>{
     const st=p.stufen.find(x=>x.key===b.dataset.additem);
     const t=(prompt("Neuer Punkt (Titel):","")||"").trim();
     if(!t)return;
     st.items.push({id:"custom_"+uid(),t});
-    save();routePlanVorlageEdit(planId);
+    save();refreshStufeBlock(p,planId,st.key);
   }));
 }
 
