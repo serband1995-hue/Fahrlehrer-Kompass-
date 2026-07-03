@@ -3680,11 +3680,15 @@ function wireDragReorder(container,st,onDone){
       const wrap=handle.closest(".skill-wrap");
       if(!wrap)return;
       let startY=e.clientY;
+      let lastClientY=e.clientY;
+      let scrollRAF=null;
+      const SCROLL_ZONE=70,SCROLL_SPEED=11;
       try{wrap.setPointerCapture(e.pointerId);}catch(err){}
       wrap.classList.add("dragging");
       wrap.style.position="relative";wrap.style.zIndex="50";
-      const onMove=(ev)=>{
-        const dy=ev.clientY-startY;
+
+      const reorderCheck=()=>{
+        const dy=lastClientY-startY;
         wrap.style.transform=`translateY(${dy}px)`;
         const siblings=Array.from(container.children).filter(c=>c!==wrap);
         const wrapRect=wrap.getBoundingClientRect();
@@ -3719,15 +3723,33 @@ function wireDragReorder(container,st,onDone){
                 });
               }
             });
-            wrap.style.transform="translateY(0px)";startY=ev.clientY;
+            wrap.style.transform=`translateY(${lastClientY-startY}px)`;startY=lastClientY;
           }
         }
       };
+
+      // Läuft die GANZE Ziehzeit über, nicht nur bei Fingerbewegung — sonst würde
+      // Auto-Scroll aufhören, sobald der Finger am Rand ruhig gehalten wird.
+      const scrollLoop=()=>{
+        const vr=view.getBoundingClientRect();
+        if(lastClientY<vr.top+SCROLL_ZONE&&view.scrollTop>0){
+          view.scrollTop=Math.max(0,view.scrollTop-SCROLL_SPEED);
+          reorderCheck();
+        }else if(lastClientY>vr.bottom-SCROLL_ZONE&&view.scrollTop<view.scrollHeight-view.clientHeight){
+          view.scrollTop=Math.min(view.scrollHeight-view.clientHeight,view.scrollTop+SCROLL_SPEED);
+          reorderCheck();
+        }
+        scrollRAF=requestAnimationFrame(scrollLoop);
+      };
+      scrollRAF=requestAnimationFrame(scrollLoop);
+
+      const onMove=(ev)=>{lastClientY=ev.clientY;reorderCheck();};
       const onUp=(ev)=>{
         try{wrap.releasePointerCapture(e.pointerId);}catch(err){}
         wrap.classList.remove("dragging");
         wrap.style.position="";wrap.style.zIndex="";wrap.style.transform="";
         Array.from(container.children).forEach(el=>{el.style.transition="";el.style.transform="";});
+        if(scrollRAF)cancelAnimationFrame(scrollRAF);
         window.removeEventListener("pointermove",onMove);
         window.removeEventListener("pointerup",onUp);
         const newOrderIds=Array.from(container.children).map(el=>el.dataset.planitem);
