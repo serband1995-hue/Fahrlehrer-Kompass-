@@ -27,6 +27,8 @@
   --rot:#cf5a48; --gelb:#cf9a3e; --gruen:#4caf72; --blau:#2F7DD1;
   /* heller Grünton für Kalender/Dashboard-Akzente (war bisher nur per Fallback gesetzt) */
   --gruen-bright:#4a8b45;
+  /* === Gold-Akzent, neu — für Fortschritt/Erfolge/Hervorhebungen, nicht für Ampeln === */
+  --gold:#c9a227; --gold-soft:rgba(201,162,39,.16);
   /* === Glasmorphism === */
   --glass:rgba(28, 48, 37, 0.55); --glass-2:rgba(34, 58, 45, 0.42);
   --glass-brd:rgba(120, 170, 140, 0.16); --glass-brd-top:rgba(170, 210, 185, 0.26);
@@ -45,23 +47,24 @@
 /* ===== HELL-MODUS ===== */
 body{transition:background-color .3s var(--ease,ease),color .3s var(--ease,ease);}
 body.light{
-  --bg:#eef4ef; --bg-soft:#e4ede6; --surface:#f8fbf8; --surface-2:#ddeae0;
-  --line:#a8c8b4; --line-soft:#bcd6c6;
-  --txt:#0d1a10; --muted:#2a4535; --faint:#4e7260;
-  --glass:rgba(248,251,248,.95); --glass-2:rgba(234,244,236,.90);
-  --glass-brd:rgba(58,115,80,.22); --glass-brd-top:rgba(58,115,80,.32);
-  --glass-glow:rgba(58,115,80,.10);
-  --elev-1:0 2px 8px rgba(0,0,0,.09); --elev-2:0 5px 18px rgba(0,0,0,.12); --elev-3:0 10px 28px rgba(0,0,0,.15);
-  --orange-soft:rgba(58,115,80,.12); --orange-line:rgba(58,115,80,.25);
+  --bg:#f3f1e9; --bg-soft:#ece7d8; --surface:#fffdf7; --surface-2:#ece7d8;
+  --line:#ddd5bd; --line-soft:#e5decb;
+  --txt:#2a2c22; --muted:#6b6a55; --faint:#96936f;
+  --glass:rgba(255,253,247,.95); --glass-2:rgba(236,231,216,.90);
+  --glass-brd:rgba(184,135,58,.20); --glass-brd-top:rgba(184,135,58,.30);
+  --glass-glow:rgba(58,115,80,.08);
+  --elev-1:0 2px 10px rgba(60,50,20,.08); --elev-2:0 5px 20px rgba(60,50,20,.10); --elev-3:0 10px 30px rgba(60,50,20,.13);
+  --orange-soft:rgba(58,115,80,.10); --orange-line:rgba(58,115,80,.22);
+  --gold:#b8873a; --gold-soft:rgba(184,135,58,.14);
 }
 body.light::before{
   background:radial-gradient(120% 80% at 50% -10%,#c8e4d0 0%,var(--bg) 55%),
     radial-gradient(80% 50% at 80% 110%,#bfdfcc 0%,transparent 60%);}
 body.light::after{opacity:.05;}
-body.light .topbar{background:linear-gradient(180deg,rgba(238,244,239,.98),rgba(238,244,239,.85));}
-body.light .drawer{background:linear-gradient(170deg,#daeae0,#cde3d6);}
-body.light .sheet{background:#f2f8f4;}
-body.light .splash-bg,body.light #splash{background:radial-gradient(120% 90% at 50% 20%,#c8e4d0 0%,#eef4ef 70%);}
+body.light .topbar{background:linear-gradient(180deg,rgba(255,253,247,.98),rgba(255,253,247,.85));}
+body.light .drawer{background:linear-gradient(170deg,#f0ead4,#e6dec2);}
+body.light .sheet{background:#fdfbf4;}
+body.light .splash-bg,body.light #splash{background:radial-gradient(120% 90% at 50% 20%,#cfddbc 0%,#f3f1e9 70%);}
 /* Logo sichtbar im Hell-Modus */
 body.light .tb-logo-wrap{
   background:radial-gradient(120% 120% at 50% 0%,rgba(40,90,55,.85),rgba(14,38,22,.95));
@@ -69,19 +72,19 @@ body.light .tb-logo-wrap{
 body.light .brand-mark{
   background:radial-gradient(120% 120% at 50% 0%,rgba(40,90,55,.85),rgba(14,38,22,.95));
   box-shadow:0 4px 12px rgba(0,0,0,.2);}
-/* Cards im Hell-Modus — mehr Kontrast */
-body.light .s-card{background:linear-gradient(160deg,#ffffff,#f4faf5);border-color:var(--line);box-shadow:0 2px 10px rgba(0,0,0,.09);}
-body.light .s-name{color:#0d1a10;}
-body.light .s-meta{color:#2a4535;}
-body.light .s-form-chip{background:#ddeae0;border-color:var(--line);color:#0d1a10;}
-body.light .d-tile{background:linear-gradient(160deg,#ffffff,#f2f9f3);border-color:var(--line);}
-body.light .nav-action{background:linear-gradient(160deg,#ffffff,#f2f9f3);border-color:var(--line);}
-body.light .mini-stat{background:#ffffff;border-color:var(--line);}
-body.light .seg-i{background:#e4ede6;color:#2a4535;border-color:var(--line);}
+/* Cards im Hell-Modus — warmes Beige statt kuehlem Weiss */
+body.light .s-card{background:linear-gradient(160deg,#fffdf7,#f6f1e0);border-color:var(--line);box-shadow:0 2px 10px rgba(60,50,20,.08);}
+body.light .s-name{color:#2a2c22;}
+body.light .s-meta{color:#6b6a55;}
+body.light .s-form-chip{background:#ece7d8;border-color:var(--line);color:#2a2c22;}
+body.light .d-tile{background:linear-gradient(160deg,#fffdf7,#f5efdc);border-color:var(--line);}
+body.light .nav-action{background:linear-gradient(160deg,#fffdf7,#f5efdc);border-color:var(--line);}
+body.light .mini-stat{background:#fffdf7;border-color:var(--line);}
+body.light .seg-i{background:#ece7d8;color:#6b6a55;border-color:var(--line);}
 body.light .seg-i.on{background:var(--akzent);color:#fff;}
-body.light .month-bars{background:#ffffff;border-color:var(--line);}
-body.light .blk-h{color:#2a4535;}
-body.light .muted-p{color:#2a4535;}
+body.light .month-bars{background:#fffdf7;border-color:var(--line);}
+body.light .blk-h{color:#6b6a55;}
+body.light .muted-p{color:#6b6a55;}
 /* ===== THEME-TOGGLE BUTTON ===== */
 .theme-btn{width:36px;height:36px;border-radius:11px;display:flex;align-items:center;justify-content:center;
   background:var(--glass);border:1px solid var(--glass-brd);color:var(--muted);
@@ -246,6 +249,82 @@ input,select,textarea{font-family:inherit;font-size:15px;color:var(--txt);}
 .s-form-chip{font-size:11px;font-weight:800;letter-spacing:.04em;color:var(--txt);
   background:var(--bg);border:1px solid var(--line);border-radius:6px;padding:1px 6px;}
 @keyframes cardIn{from{opacity:0;transform:translateY(12px);}to{opacity:1;transform:translateY(0);}}
+/* ===== Wetter-Animationen im Dashboard-Widget ===== */
+.weather-widget{position:relative;overflow:hidden;}
+.weather-widget.wx-sun::before{content:"";position:absolute;top:50%;left:18px;width:64px;height:64px;border-radius:50%;
+  background:radial-gradient(circle,rgba(255,196,80,.5),transparent 70%);transform:translateY(-50%);
+  animation:wxSunPulse 3s ease-in-out infinite;pointer-events:none;}
+@keyframes wxSunPulse{0%,100%{opacity:.55;transform:translateY(-50%) scale(1);}50%{opacity:1;transform:translateY(-50%) scale(1.18);}}
+.weather-widget.wx-rain::after{content:"";position:absolute;inset:0;
+  background:repeating-linear-gradient(112deg,transparent 0 7px,rgba(140,180,220,.32) 7px 8px,transparent 8px 16px);
+  animation:wxRainFall .55s linear infinite;pointer-events:none;}
+@keyframes wxRainFall{from{background-position:0 0;}to{background-position:-22px 38px;}}
+.weather-widget.wx-storm::after{content:"";position:absolute;inset:0;
+  background:repeating-linear-gradient(112deg,transparent 0 7px,rgba(140,180,220,.32) 7px 8px,transparent 8px 16px);
+  animation:wxRainFall .5s linear infinite;pointer-events:none;}
+.weather-widget.wx-storm::before{content:"";position:absolute;inset:0;background:rgba(255,255,255,0);
+  animation:wxFlash 4.2s ease-in-out infinite;pointer-events:none;}
+@keyframes wxFlash{0%,92%,100%{background:rgba(255,255,255,0);}93%,95%{background:rgba(255,255,255,.16);}}
+.weather-widget.wx-cloud::before,.weather-widget.wx-cloud::after{content:"";position:absolute;border-radius:50%;
+  background:rgba(255,255,255,.09);filter:blur(1.5px);pointer-events:none;}
+.weather-widget.wx-cloud::before{width:58px;height:22px;top:10px;left:-30px;animation:wxCloudDrift 10s linear infinite;}
+.weather-widget.wx-cloud::after{width:42px;height:16px;top:38px;left:-50px;animation:wxCloudDrift 14s linear infinite;animation-delay:-5s;}
+@keyframes wxCloudDrift{from{transform:translateX(0);}to{transform:translateX(320px);}}
+.weather-widget.wx-snow::after{content:"";position:absolute;inset:0;
+  background-image:radial-gradient(circle,rgba(255,255,255,.75) 1.4px,transparent 2px);background-size:20px 20px;
+  animation:wxSnowFall 3.2s linear infinite;pointer-events:none;}
+@keyframes wxSnowFall{from{background-position:0 0;}to{background-position:12px 56px;}}
+.weather-widget.wx-mist::after{content:"";position:absolute;inset:0;
+  background:linear-gradient(90deg,transparent,rgba(255,255,255,.07),transparent);
+  animation:wxMistDrift 5.5s ease-in-out infinite;pointer-events:none;}
+@keyframes wxMistDrift{0%,100%{opacity:.35;}50%{opacity:.9;}}
+@media(prefers-reduced-motion:reduce){.weather-widget::before,.weather-widget::after{animation:none!important;}}
+/* ===== Wetter-Detailansicht (im Sheet, beim Antippen des Dashboard-Widgets) ===== */
+.wx-detail{position:relative;overflow:hidden;border-radius:20px;padding:30px 20px 26px;text-align:center;min-height:260px;
+  background:linear-gradient(160deg,#3a5a78,#1e3548);color:#fff;}
+.wx-detail-loc,.wx-detail-temp,.wx-detail-desc,.wx-detail-range,.wx-detail-hum{position:relative;z-index:3;}
+.wx-detail-loc{font-size:13px;font-weight:700;opacity:.85;}
+.wx-detail-temp{font-family:'Anton',sans-serif;font-size:62px;line-height:1;margin:6px 0 2px;}
+.wx-detail-desc{font-size:16px;font-weight:600;text-transform:capitalize;}
+.wx-detail-range{font-size:12.5px;opacity:.85;margin-top:16px;}
+.wx-detail-hum{font-size:12px;opacity:.7;margin-top:4px;}
+/* Sonne: pulsierende Strahlen oben rechts */
+.wx-detail.wx-sun{background:linear-gradient(160deg,#4a90d9,#2a5c94);}
+.wx-detail.wx-sun::before{content:"";position:absolute;top:-34px;right:-34px;width:160px;height:160px;border-radius:50%;
+  background:radial-gradient(circle,rgba(255,224,140,.95),rgba(255,180,60,.35) 55%,transparent 72%);
+  animation:wxDetailSunPulse 4s ease-in-out infinite;pointer-events:none;z-index:1;}
+@keyframes wxDetailSunPulse{0%,100%{transform:scale(1);opacity:.85;}50%{transform:scale(1.14);opacity:1;}}
+/* Regen: dichtere, größere Streifen */
+.wx-detail.wx-rain{background:linear-gradient(160deg,#3d4f62,#212b36);}
+.wx-detail.wx-rain::after{content:"";position:absolute;inset:0;z-index:1;
+  background:repeating-linear-gradient(112deg,transparent 0 9px,rgba(185,213,236,.30) 9px 10px,transparent 10px 22px);
+  animation:wxRainFallBig .5s linear infinite;pointer-events:none;}
+@keyframes wxRainFallBig{from{background-position:0 0;}to{background-position:-28px 50px;}}
+/* Gewitter: Regen plus gelegentliches Aufblitzen */
+.wx-detail.wx-storm{background:linear-gradient(160deg,#333c48,#181e26);}
+.wx-detail.wx-storm::after{content:"";position:absolute;inset:0;z-index:1;
+  background:repeating-linear-gradient(112deg,transparent 0 9px,rgba(185,213,236,.30) 9px 10px,transparent 10px 22px);
+  animation:wxRainFallBig .45s linear infinite;pointer-events:none;}
+.wx-detail.wx-storm::before{content:"";position:absolute;inset:0;z-index:2;background:rgba(255,255,255,0);
+  animation:wxDetailFlash 4.2s ease-in-out infinite;pointer-events:none;}
+@keyframes wxDetailFlash{0%,92%,100%{background:rgba(255,255,255,0);}93%,95%{background:rgba(255,255,255,.22);}}
+/* Wolken: mehrere driftende Formen in unterschiedlichem Tempo */
+.wx-detail.wx-cloud{background:linear-gradient(160deg,#6b7c8c,#414f5c);}
+.wx-detail.wx-cloud .wx-c{position:absolute;border-radius:50%;background:rgba(255,255,255,.16);filter:blur(2px);z-index:1;pointer-events:none;}
+@keyframes wxCloudDriftBig{from{transform:translateX(0);}to{transform:translateX(260px);}}
+/* Schnee: fallende Punkte, kälterer Grundton */
+.wx-detail.wx-snow{background:linear-gradient(160deg,#5c7488,#33465a);}
+.wx-detail.wx-snow::after{content:"";position:absolute;inset:0;z-index:1;
+  background-image:radial-gradient(circle,rgba(255,255,255,.85) 2px,transparent 2.6px);background-size:26px 26px;
+  animation:wxDetailSnowFall 3.4s linear infinite;pointer-events:none;}
+@keyframes wxDetailSnowFall{from{background-position:0 0;}to{background-position:16px 64px;}}
+/* Nebel: sanft ziehender Schleier */
+.wx-detail.wx-mist{background:linear-gradient(160deg,#7a8378,#4c554c);}
+.wx-detail.wx-mist::after{content:"";position:absolute;inset:0;z-index:1;
+  background:linear-gradient(100deg,transparent,rgba(255,255,255,.14),transparent);
+  animation:wxDetailMist 5.5s ease-in-out infinite;pointer-events:none;}
+@keyframes wxDetailMist{0%,100%{opacity:.4;transform:translateX(-10%);}50%{opacity:.9;transform:translateX(10%);}}
+@media(prefers-reduced-motion:reduce){.wx-detail *{animation:none!important;}}
 .empty{display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;min-height:60vh;padding:30px;}
 .empty img{width:110px;margin-bottom:20px;border-radius:24px;box-shadow:var(--inset-top),0 16px 40px rgba(0,0,0,.5);animation:cardIn .6s var(--ease) both;}
 .empty h2{font-family:'Playfair Display',serif;font-weight:600;font-size:26px;letter-spacing:.01em;margin-bottom:8px;}
@@ -4557,23 +4636,40 @@ function openAddSheet(){
     else if(t==="theorie"){ openTheorieSheet(); }
     else openAddLessonSheet(t); }));
 }
+const LEKTIONEN_14=[
+  "Persönliche Voraussetzungen","Risikofaktor Mensch","Rechtliche Rahmenbedingungen",
+  "Das Straßenverkehrssystem und seine Nutzung","Vorfahrt und Verkehrsregelung",
+  "Verkehrszeichen, Verkehrseinrichtungen und Bahnübergänge","Andere Teilnehmer im Straßenverkehr",
+  "Geschwindigkeit, Abstand und umweltschonende Fahrweise","Verkehrsverhalten bei Fahrmanövern, Verkehrsbeobachtung",
+  "Ruhender Verkehr","Besondere Verkehrssituationen, Folgen von Fehlverhalten","Lebenslanges Lernen",
+  "Technische Bedingungen, Personen- und Güterbeförderung (Zusatzstoff)",
+  "Fahren mit Solokraftfahrzeugen und Zügen (Zusatzstoff)"
+];
 /* Theorie hinzufügen – kein Schüler nötig, nur Datum + Uhrzeit (Anfang/Ende) */
 function openTheorieSheet(){
   ensureDB();
   const defDate=_calView==="tag"?_calDate:todayISO();
   const wd=weekdayMon0(defDate); const win=(wd<=4?DB.workCfg.theorieWoche:DB.workCfg.theorieSamstag)||{von:"18:00",bis:"21:00"};
+  const lektChips=LEKTIONEN_14.map((name,i)=>`<button class="chip lekt-chip" data-lekt="${i+1}" style="text-align:left;white-space:normal;">${i+1}. ${esc(name)}</button>`).join("");
   openSheet(`<div class="sheet-h">Theorie</div>
     <div class="field"><label>Datum</label><input type="date" id="thDate" value="${defDate}"></div>
     <div class="field"><label>Von</label><input type="time" id="thVon" value="${win.von}"></div>
     <div class="field"><label>Bis</label><input type="time" id="thBis" value="${win.bis}"></div>
-    <div class="field"><label>Notiz (optional)</label><textarea id="thNote" rows="2" placeholder="z. B. Thema des Abends …"></textarea></div>
+    <div class="field"><label>Welche Lektion?</label><div style="display:flex;flex-direction:column;gap:6px;max-height:240px;overflow-y:auto;">${lektChips}</div></div>
+    <div class="field"><label>Notiz (optional)</label><textarea id="thNote" rows="2" placeholder="Zusätzliche Notiz …"></textarea></div>
     <div class="btn-row"><button class="btn btn-ghost" id="thCancel" style="flex:0;padding:13px 18px;">Abbrechen</button><button class="btn btn-primary" id="thSave">Eintragen</button></div>`);
+  let pickedLekt=null;
+  document.querySelectorAll(".lekt-chip").forEach(b=>b.addEventListener("click",()=>{
+    document.querySelectorAll(".lekt-chip").forEach(x=>x.classList.remove("sel"));
+    const already=pickedLekt===+b.dataset.lekt;
+    if(!already){b.classList.add("sel");pickedLekt=+b.dataset.lekt;}else{pickedLekt=null;}
+  }));
   $("#thCancel").addEventListener("click",closeSheet);
   $("#thSave").addEventListener("click",()=>{
     const date=$("#thDate").value, von=$("#thVon").value, bis=$("#thBis").value||min2hm(hm2min(von)+(DB.workCfg.blockMin||90));
     if(!date||!von){toast("Datum & Zeit wählen");return;}
-    addLesson({date,von,bis,art:"theorie",sid:null,note:$("#thNote").value.trim()});
-    closeSheet(); toast("Theorie eingetragen ✓"); routeKalender();
+    addLesson({date,von,bis,art:"theorie",sid:null,note:$("#thNote").value.trim(),lektion:pickedLekt||null});
+    closeSheet(); toast(pickedLekt?`Lektion ${pickedLekt} eingetragen ✓`:"Theorie eingetragen ✓"); routeKalender();
   });
 }
 /* Zeit blockieren (kein Schüler, belegt Slot) */
@@ -4601,8 +4697,27 @@ function openAddLessonSheet(art){
   const defTime=art==="theorie"?"18:00":art==="nacht"?"19:30":"10:00";
   // Schritt 1: Schüler wählen
   openSheet(`<div class="sheet-h">${lab} · mit wem?</div>
+    <button class="btn btn-ghost" id="alNewStudent" style="width:100%;margin-bottom:10px;">+ Neuer Schüler</button>
     <div class="field"><input type="text" id="alSearch" placeholder="Schüler suchen …" autocomplete="off"></div>
     <div class="as-list" id="alList">${cand.map(s=>`<button class="as-item" data-sid="${s.id}"><span class="as-nm">${esc(s.name)}</span><span class="as-cls">${esc(s.form||'')}</span></button>`).join("")}</div>`);
+  $("#alNewStudent").addEventListener("click",()=>{
+    openSheet(`<div class="sheet-h">Neuer Schüler</div>
+      <div class="field"><label>Name</label><input type="text" id="alnsName" placeholder="Vor- und Nachname" autocomplete="off"></div>
+      <div class="field"><label>Telefonnummer <span style="font-size:11px;color:var(--faint);">optional</span></label><input type="tel" id="alnsTel" placeholder="z. B. 0151 23456789" autocomplete="off"></div>
+      <div class="btn-row"><button class="btn btn-ghost" id="alnsBack" style="flex:0;padding:13px 16px;">Zurück</button><button class="btn btn-primary" id="alnsSave">Anlegen &amp; weiter</button></div>`);
+    $("#alnsBack").addEventListener("click",()=>openAddLessonSheet(art));
+    $("#alnsSave").addEventListener("click",()=>{
+      const name=$("#alnsName").value.trim();
+      if(!name){toast("Bitte einen Namen eingeben");return;}
+      ensureAusbildungsplaene();
+      const chosenPlan=DB.ausbildungsplaene.find(p=>p.standard)||DB.ausbildungsplaene[0];
+      const nst={id:uid(),created:Date.now(),notiz:"",bogen:null,plan:newPlan(),profil:null,form:"B",
+        name,telefon:$("#alnsTel").value.trim(),planId:chosenPlan.id,planSnapshot:JSON.parse(JSON.stringify(chosenPlan.stufen))};
+      DB.students.push(nst);save();
+      toast("Schüler angelegt ✓");
+      step2(nst.id);
+    });
+  });
   const renderList=(q)=>{ const list=cand.filter(s=>matchStudent(s.name,q)); $("#alList").innerHTML=list.map(s=>`<button class="as-item" data-sid="${s.id}"><span class="as-nm">${esc(s.name)}</span><span class="as-cls">${esc(s.form||'')}</span></button>`).join("")||'<p class="muted-p" style="font-size:13px;">Kein Treffer</p>'; bindList(); };
   const bindList=()=>{ document.querySelectorAll("#alList .as-item").forEach(b=>b.addEventListener("click",()=>step2(b.dataset.sid))); };
   $("#alSearch").addEventListener("input",e=>renderList(e.target.value));
@@ -5393,7 +5508,7 @@ function dayTheorieWindow(iso){
 // Alle Termine (Fahrstunden + Prüfungen) eines Tages, vereinheitlicht
 function dayEvents(iso){
   const ev=[];
-  (DB.lessons||[]).filter(l=>l.date===iso).forEach(l=>{ const st=DB.students.find(s=>s.id===l.sid); ev.push({kind:"lesson",id:l.id,von:l.von,bis:l.bis,art:l.art||"fahrstunde",sid:l.sid,name:st?st.name:(l.name||"—"),status:l.status||"geplant",fc:l.fc||null,note:l.note||"",srcSonder:l.srcSonder||null,fahrzeug:l.fahrzeug||null}); });
+  (DB.lessons||[]).filter(l=>l.date===iso).forEach(l=>{ const st=DB.students.find(s=>s.id===l.sid); const dispName=st?st.name:(l.art==="theorie"&&l.lektion?`Lektion ${l.lektion}`:(l.name||"—")); ev.push({kind:"lesson",id:l.id,von:l.von,bis:l.bis,art:l.art||"fahrstunde",sid:l.sid,name:dispName,status:l.status||"geplant",fc:l.fc||null,note:l.note||"",srcSonder:l.srcSonder||null,fahrzeug:l.fahrzeug||null,lektion:l.lektion||null}); });
   // Prüfungstermine: jeder belegte Slot = ein 90-Min-Event (Default 09:00, falls keine Zeit).
   // NUR solange noch kein Ergebnis eingetragen ist – sonst zählt die Prüfung über exams.earnAt (s. ueRange).
   // Prüfungstermine: Block beginnt 15 Min VOR der eingetragenen Prüfungszeit (Vorlauf).
@@ -5421,7 +5536,7 @@ function countRange(fromISO,toISO){
   return {planned,free,slots,plannedUE};
 }
 // Lesson-CRUD
-function addLesson(o){ ensureDB(); const l={id:uid(),date:o.date,von:o.von,bis:o.bis||min2hm(hm2min(o.von)+(DB.workCfg.blockMin||90)),art:o.art||"fahrstunde",sid:o.sid||null,name:o.name||"",status:o.status||"geplant",note:o.note||"",fc:o.fc||null}; if(o.srcSonder)l.srcSonder=o.srcSonder; if(o.fahrzeug)l.fahrzeug=o.fahrzeug; DB.lessons.push(l); save(); return l; }
+function addLesson(o){ ensureDB(); const l={id:uid(),date:o.date,von:o.von,bis:o.bis||min2hm(hm2min(o.von)+(DB.workCfg.blockMin||90)),art:o.art||"fahrstunde",sid:o.sid||null,name:o.name||"",status:o.status||"geplant",note:o.note||"",fc:o.fc||null}; if(o.srcSonder)l.srcSonder=o.srcSonder; if(o.fahrzeug)l.fahrzeug=o.fahrzeug; if(o.lektion)l.lektion=o.lektion; DB.lessons.push(l); save(); return l; }
 // Verknüpfung: Sonderfahrt aus Ausbildungsplan -> Kalender-Termin (ÜL/AB/NF)
 const SF_KUERZEL={ueberland:"ÜL",autobahn:"AB",nacht:"NF"};
 const SF_LABEL={ueberland:"Überlandfahrt",autobahn:"Autobahnfahrt",nacht:"Nachtfahrt"};
@@ -5465,6 +5580,22 @@ function ensureDB(){ let _ensureDirty=false; if(!Array.isArray(DB.exams))DB.exam
   if(!Array.isArray(DB.lessons))DB.lessons=[];
   if(!DB.sichtbarkeit||typeof DB.sichtbarkeit!=="object"){ DB.sichtbarkeit={vortest:true,fahrcheck:true,simulator:true}; }
   if(!DB.weatherCfg||typeof DB.weatherCfg!=="object"){ DB.weatherCfg={apiKey:"",city:"Offenbach,DE"}; }
+  // Einmalige Bereinigung: Schüler, die versehentlich in mehreren Prüfungs-Plätzen gleichzeitig stehen
+  // (Ursache der "doppelt im Kalender"-Meldung) — behält den ERSTEN Fund, entfernt alle weiteren.
+  if(!DB._pruefungDedupDone){
+    const seen=new Set();
+    (DB.termine||[]).forEach(t=>{
+      if(!Array.isArray(t.slots))return;
+      t.slots=t.slots.map(sid=>{
+        if(!sid)return sid;
+        if(seen.has(sid))return null;
+        seen.add(sid);
+        return sid;
+      });
+    });
+    DB._pruefungDedupDone=true;
+    _ensureDirty=true;
+  }
   if(!DB.workCfg||typeof DB.workCfg!=="object"){ DB.workCfg={
     // Vormittags- und Nachmittagsblock, Pause dazwischen. Zeiten in "HH:MM".
     vorMittag:{von:"10:00",bis:"14:30"},
@@ -5669,7 +5800,7 @@ function undoExam(s,snap,after){
 function futureTermine(){ const t=todayISO(); return DB.termine.filter(x=>x.date>=t).sort((a,b)=>a.date<b.date?-1:1); }
 function terminFor(sid){ for(const t of futureTermine()){ if(t.slots&&t.slots.indexOf(sid)>=0)return t; } return null; }
 function assignedSet(){ const set=new Set(); futureTermine().forEach(t=>(t.slots||[]).forEach(x=>{if(x)set.add(x);})); return set; }
-function createTermin(date,plaetze,von){ const taken=assignedSet(); const avail=waitlist().filter(s=>!taken.has(s.id)); const slots=[]; for(let i=0;i<plaetze;i++)slots.push(avail[i]?avail[i].id:null); const t={id:uid(),date,plaetze,slots}; if(von){ t.von=von; t.bis=min2hm(hm2min(von)+(DB.workCfg.blockMin||90)); } DB.termine.push(t); save(); return t; }
+function createTermin(date,plaetze,von){ const slots=[]; for(let i=0;i<plaetze;i++)slots.push(null); const t={id:uid(),date,plaetze,slots}; if(von){ t.von=von; t.bis=min2hm(hm2min(von)+(DB.workCfg.blockMin||90)); } DB.termine.push(t); save(); return t; }
 function clearSlot(sid){ DB.termine.forEach(t=>{ if(t.slots)t.slots=t.slots.map(x=>x===sid?null:x); }); }
 function nextTermin(){ for(const t of futureTermine()){ const names=(t.slots||[]).filter(Boolean).map(id=>{const st=DB.students.find(x=>x.id===id);return st?st.name:null;}).filter(Boolean); if(names.length)return {date:t.date,names}; } return null; }
 
@@ -6101,7 +6232,7 @@ function openTerminSheet(){
     g.innerHTML=Array.from({length:p},(_,i)=>`
       <div style="display:flex;align-items:center;gap:10px;margin-bottom:8px;">
         <span style="font-size:13px;font-weight:700;color:var(--muted);flex:0 0 56px;">Platz ${i+1}</span>
-        <input type="time" class="nt-time" value="${times[i]}" step="300" style="flex:1;padding:10px 12px;border-radius:10px;border:1px solid var(--line);background:var(--surface);color:var(--txt);font-size:15px;">
+        <input type="time" class="nt-time" value="${times[i]}" step="60" style="flex:1;padding:10px 12px;border-radius:10px;border:1px solid var(--line);background:var(--surface);color:var(--txt);font-size:15px;">
       </div>`).join('');
   };
   openSheet(`<div class="sheet-h">Prüfungstermin</div>
@@ -6119,11 +6250,9 @@ function openTerminSheet(){
   $("#ntSave").addEventListener("click",()=>{
     const d=$("#ntDate").value; if(!d){toast("Bitte Datum wählen");return;}
     const times=[...document.querySelectorAll(".nt-time")].map(i=>i.value||"09:00");
-    const taken=assignedSet(); const avail=waitlist().filter(s=>!taken.has(s.id));
-    // Für jeden Platz EINEN eigenen Termin mit eigener Uhrzeit
+    // Plätze starten leer — Zuordnung passiert bewusst nur manuell über "Schüler einteilen"
     times.forEach((von,i)=>{
-      const sid=avail[i]?avail[i].id:null;
-      const t={id:uid(),date:d,plaetze:1,slots:[sid],von,bis:min2hm(hm2min(von)+(DB.workCfg.blockMin||90))};
+      const t={id:uid(),date:d,plaetze:1,slots:[null],von,bis:min2hm(hm2min(von)+(DB.workCfg.blockMin||90))};
       DB.termine.push(t);
     });
     save(); closeSheet(); toast(`${p} Prüfungstermin${p>1?'e':''} eingetragen – im Kalender sichtbar ✓`); routePruefungen();
@@ -6134,7 +6263,7 @@ function openTerminEdit(tid,retFn){
   const t=DB.termine.find(x=>x.id===tid); if(!t)return;
   openSheet(`<div class="sheet-h">Prüfungstermin ändern</div>
     <div class="field"><label>Datum</label><input type="date" id="teDate" value="${t.date}"></div>
-    <div class="field"><label>Uhrzeit</label><input type="time" id="teTime" value="${t.von||'09:00'}" step="300"></div>
+    <div class="field"><label>Uhrzeit</label><input type="time" id="teTime" value="${t.von||'09:00'}" step="60"></div>
     <div class="btn-row"><button class="btn btn-ghost" id="teDel" style="flex:0;padding:13px 16px;color:#ff7a6b;">Löschen</button><button class="btn btn-primary" id="teSave">Speichern</button></div>`);
   $("#teSave").addEventListener("click",()=>{
     const d=$("#teDate").value; if(!d){toast("Bitte Datum wählen");return;}
@@ -6162,7 +6291,11 @@ function openSlotSheet(tid,slot){
   $("#slCancel").addEventListener("click",closeSheet);
   const slc=$("#slClear"); if(slc)slc.addEventListener("click",()=>{if(t)t.slots[slot]=null;save();closeSheet();routePruefungen();});
   document.querySelectorAll(".sl-item").forEach(b=>b.addEventListener("click",()=>{
-    const t=DB.termine.find(x=>x.id===tid); if(t){t.slots[slot]=b.dataset.id;save();}
+    const chosenId=b.dataset.id;
+    // Absicherung gegen Doppel-Einträge: denselben Schüler zuerst aus JEDEM Platz entfernen,
+    // in dem er aktuell irgendwo steht (auch in anderen Prüfungsterminen) — bevor er neu zugewiesen wird.
+    (DB.termine||[]).forEach(x=>{ if(Array.isArray(x.slots)){ x.slots=x.slots.map(sid=>sid===chosenId?null:sid); } });
+    const t=DB.termine.find(x=>x.id===tid); if(t){t.slots[slot]=chosenId;save();}
     closeSheet(); routePruefungen();
   }));
 }
@@ -6424,7 +6557,11 @@ async function fetchWeather(){
     const res=await fetch(`https://api.openweathermap.org/data/2.5/weather?q=${city}&appid=${cfg.apiKey}&units=metric&lang=de`);
     if(!res.ok)return null;
     const data=await res.json();
-    const result={temp:Math.round(data.main.temp),desc:data.weather[0].description,icon:data.weather[0].icon};
+    const result={
+      temp:Math.round(data.main.temp),desc:data.weather[0].description,icon:data.weather[0].icon,
+      feels:Math.round(data.main.feels_like),tmin:Math.round(data.main.temp_min),tmax:Math.round(data.main.temp_max),
+      humidity:data.main.humidity,city:cfg.city
+    };
     localStorage.setItem("serband-weather-cache",JSON.stringify({ts:Date.now(),city:cfg.city,data:result}));
     return result;
   }catch(e){ return null; }
@@ -6433,12 +6570,40 @@ function weatherEmoji(icon){
   const m={"01":"☀️","02":"⛅","03":"☁️","04":"☁️","09":"🌧️","10":"🌦️","11":"⛈️","13":"❄️","50":"🌫️"};
   return m[(icon||"").slice(0,2)]||"🌤️";
 }
+function weatherAnimClass(icon){
+  const key=(icon||"").slice(0,2);
+  if(key==="01")return "wx-sun";
+  if(["02","03","04"].includes(key))return "wx-cloud";
+  if(["09","10"].includes(key))return "wx-rain";
+  if(key==="11")return "wx-storm";
+  if(key==="13")return "wx-snow";
+  if(key==="50")return "wx-mist";
+  return "";
+}
+let _lastWeather=null;
 function weatherWidgetHTML(w){
   if(!w)return "";
-  return `<div class="weather-widget" style="display:flex;align-items:center;gap:10px;background:var(--surface);border:1px solid var(--line);border-radius:14px;padding:12px 16px;margin-top:10px;animation:cardIn .5s var(--ease) both;">
-    <span style="font-size:26px;">${weatherEmoji(w.icon)}</span>
-    <div><div style="font-weight:800;font-size:16px;">${w.temp}°C</div><div style="font-size:12px;color:var(--muted);text-transform:capitalize;">${esc(w.desc)}</div></div>
+  _lastWeather=w;
+  return `<div class="weather-widget ${weatherAnimClass(w.icon)}" id="weatherWidgetCard" style="display:flex;align-items:center;gap:10px;background:var(--surface);border:1px solid var(--line);border-radius:14px;padding:12px 16px;margin-top:10px;animation:cardIn .5s var(--ease) both;cursor:pointer;">
+    <span style="font-size:26px;position:relative;z-index:2;">${weatherEmoji(w.icon)}</span>
+    <div style="position:relative;z-index:2;"><div style="font-weight:800;font-size:16px;">${w.temp}°C</div><div style="font-size:12px;color:var(--muted);text-transform:capitalize;">${esc(w.desc)}</div></div>
   </div>`;
+}
+function openWeatherDetail(){
+  const w=_lastWeather; if(!w)return;
+  const cls=weatherAnimClass(w.icon);
+  const clouds=cls==="wx-cloud"?`
+      <div class="wx-c" style="width:90px;height:34px;top:20px;left:10%;animation:wxCloudDriftBig 11s linear infinite;"></div>
+      <div class="wx-c" style="width:66px;height:26px;top:60px;left:-10%;animation:wxCloudDriftBig 15s linear infinite;animation-delay:-5s;"></div>
+      <div class="wx-c" style="width:50px;height:20px;top:100px;left:40%;animation:wxCloudDriftBig 13s linear infinite;animation-delay:-8s;"></div>`:"";
+  openSheet(`<div class="wx-detail ${cls}">
+      ${clouds}
+      <div class="wx-detail-loc">📍 ${esc(w.city||"Offenbach,DE").split(",")[0]}</div>
+      <div class="wx-detail-temp">${w.temp}°</div>
+      <div class="wx-detail-desc">${esc(w.desc)}</div>
+      <div class="wx-detail-range">↑ ${w.tmax}° / ↓ ${w.tmin}° · Gefühlt wie ${w.feels}°</div>
+      <div class="wx-detail-hum">💧 Luftfeuchtigkeit ${w.humidity}%</div>
+    </div>`);
 }
 function routeDashboard(){
   ensureDB();
@@ -6476,7 +6641,7 @@ function routeDashboard(){
   bindFC();
   bindBackupBanner();
   if(DB.weatherCfg&&DB.weatherCfg.apiKey){
-    fetchWeather().then(w=>{ const slot=$("#weatherSlot"); if(slot&&w)slot.innerHTML=weatherWidgetHTML(w); });
+    fetchWeather().then(w=>{ const slot=$("#weatherSlot"); if(slot&&w){ slot.innerHTML=weatherWidgetHTML(w); const c=$("#weatherWidgetCard"); if(c)c.addEventListener("click",openWeatherDetail); } });
   }
 }
 // Nächste Prüfung-Card: Student, Datum, geplante Fahrstunden bis dahin
