@@ -534,6 +534,8 @@ input,select,textarea{font-family:inherit;font-size:15px;color:var(--txt);}
 .res-main{font-family:'Anton',sans-serif;text-transform:uppercase;font-size:clamp(24px,5vw,32px);letter-spacing:.02em;animation:cardIn .5s var(--ease) .3s both;}
 .res-sub{color:var(--muted);font-size:14px;margin-top:8px;animation:cardIn .5s var(--ease) .4s both;max-width:520px;margin-left:auto;margin-right:auto;}
 .res-block{background:var(--surface);border:1px solid var(--line);border-radius:var(--r-card);padding:18px;margin-top:14px;animation:cardIn .5s var(--ease) both;}
+@keyframes badgePop{from{transform:scale(.6);opacity:0;}to{transform:scale(1);opacity:1;}}
+.prog-badge{animation:badgePop .45s var(--pop) .1s both;}
 .res-block h4{font-family:'Anton',sans-serif;text-transform:uppercase;font-size:13px;letter-spacing:.14em;color:var(--orange);margin-bottom:9px;}
 .res-block p{font-size:14.5px;line-height:1.65;color:var(--txt);}
 .res-block ul{margin:4px 0 0 18px;display:flex;flex-direction:column;gap:6px;font-size:14.5px;}
@@ -637,6 +639,13 @@ input,select,textarea{font-family:inherit;font-size:15px;color:var(--txt);}
 .skill .sk-ort{font-size:11.5px;color:var(--muted);font-weight:600;margin-top:2px;}
 .ampel{display:flex;gap:7px;flex:0 0 auto;}
 .amp{width:26px;height:26px;border-radius:50%;border:2px solid var(--line);background:transparent;transition:all .15s var(--pop);}
+/* Fahrmodus: größere Tap-Ziele bei den am häufigsten genutzten Elementen, bewusst kein globales Zoom (würde die Zieh-Logik durcheinanderbringen) */
+body.fahrmodus .amp{width:38px;height:38px;}
+body.fahrmodus .chip{padding:13px 20px;font-size:16px;}
+body.fahrmodus .mini-btn{padding:13px 18px;font-size:15px;}
+body.fahrmodus .btn{padding:17px 22px;font-size:16.5px;}
+body.fahrmodus .check-toggle{transform:scale(1.25);}
+body.fahrmodus .es-act{padding:16px 18px;font-size:15.5px;}
 .amp:active{transform:scale(.85);}
 .amp[data-v="rot"].on{background:var(--rot);border-color:var(--rot);}
 .amp[data-v="gelb"].on{background:var(--gelb);border-color:var(--gelb);}
@@ -766,7 +775,7 @@ input,select,textarea{font-family:inherit;font-size:15px;color:var(--txt);}
 .toast.undo .ut-btn{background:#1a1b1f;color:#fff;border:none;padding:7px 14px;border-radius:9px;font-weight:800;font-size:13px;cursor:pointer;flex:0 0 auto;}
 .toast.undo .ut-btn:active{transform:scale(.95);}
 .fade-up{animation:fadeUp .32s var(--ease) both;}
-@keyframes fadeUp{from{opacity:0;transform:translateY(14px);}to{opacity:1;transform:translateY(0);}}
+@keyframes fadeUp{from{opacity:0;transform:translateX(26px);}to{opacity:1;transform:translateX(0);}}
 @media(max-width:600px){.nav-actions,.termine{grid-template-columns:1fr;}}
 @media (prefers-reduced-motion: reduce){*{animation-duration:.001ms !important;transition-duration:.001ms !important;}}
 
@@ -1294,6 +1303,10 @@ input,select,textarea{font-family:inherit;font-size:15px;color:var(--txt);}
 .cw-ev.exam-done{background:var(--bg-soft);opacity:.92;}
 .cw-ev.exam-pass{background:rgba(76,175,114,.1);}
 .cw-ev.exam-fail{background:rgba(217,79,79,.1);}
+.cw-draggable{touch-action:none;cursor:grab;}
+.cw-draggable.cw-dragging-src{opacity:.32;}
+.cw-free.cw-drop-target{background:rgba(74,139,69,.28)!important;box-shadow:0 0 0 2px var(--gruen-bright,#4a8b45) inset;}
+.cw-drag-clone{position:fixed;z-index:500;pointer-events:none;opacity:.94;box-shadow:0 10px 26px rgba(0,0,0,.45);border-radius:6px;transform:scale(1.04);}
 .exd-strike{text-decoration:line-through;opacity:.7;}
 .exd-mark{font-size:10px;font-weight:800;white-space:nowrap;}
 .ct-ev.exam-done .ct-ev-n .exd-strike{text-decoration:line-through;opacity:.7;}
@@ -2498,6 +2511,7 @@ async function afterLogin(user) {
   // Login-Overlay verstecken
   document.getElementById("loginOverlay").classList.add("hidden");
   updateBell();
+  if(DB.fahrmodus)document.body.classList.add("fahrmodus");
   // Periodischer Sync alle 2 Minuten
   _syncTimer = setInterval(() => pushToCloud(), 120000);
   // Sofort einmal pushen (aktuellen Stand sichern)
@@ -2575,6 +2589,7 @@ function _tryOfflineSession() {
         _authProfile = { id: c.id, email: c.email, role: "fahrlehrer", aktiv: true };
         document.getElementById("loginOverlay").classList.add("hidden");
         updateBell();
+        if(DB.fahrmodus)document.body.classList.add("fahrmodus");
         toast("Offline-Modus · Daten werden beim nächsten Start synchronisiert");
         return true;
       }
@@ -2809,7 +2824,7 @@ function countUp(el,target,suffix){
     if(k<1)requestAnimationFrame(step);}
   requestAnimationFrame(step);
 }
-function toast(m){const t=$("#toast");t.textContent=m;t.classList.remove("undo");t.classList.add("show");clearTimeout(t._t);t._t=setTimeout(()=>t.classList.remove("show"),1900);}
+function toast(m){const t=$("#toast");t.textContent=m;t.classList.remove("undo");t.classList.add("show");clearTimeout(t._t);t._t=setTimeout(()=>t.classList.remove("show"),1900);if(navigator.vibrate)try{navigator.vibrate(28);}catch(e){}}
 /* Undo-Toast: zeigt kurz eine Aktion + "Rückgängig"-Link (ca. 5s). onUndo wird bei Klick ausgeführt. */
 function toastUndo(msg,onUndo,ms){
   const t=$("#toast"); ms=ms||5000;
@@ -2942,13 +2957,17 @@ function routeHome(){
     gridHTML+=group.map((s,i)=>cardHTML(s,i)).join("");
   });
   const letterNav=letters.map(l=>`<button class="alpha-nav-btn" data-letter="${l}" style="display:block;font-size:11px;font-weight:800;color:var(--muted);padding:3px 0;background:none;border:none;cursor:pointer;line-height:1.4;">${l}</button>`).join("");
+  const recent=getRecentStudents();
+  const recentHtml=recent.length?`<div style="display:flex;gap:8px;margin-bottom:12px;overflow-x:auto;">${recent.map(rs=>`<button class="chip recent-chip" data-id="${rs.id}" style="flex:0 0 auto;">${esc((rs.name||"").split(" ")[0])}</button>`).join("")}</div>`:"";
   view.innerHTML=`<div class="view-inner view-wide fade-up" style="position:relative;padding-right:32px;">
     <div class="row-between" style="margin-bottom:12px;"><div class="sec-h">Meine <span class="o">Schüler</span></div><div class="count-pill">${list.length}</div></div>
+    ${recentHtml}
     <div class="search-wrap"><span class="search-ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="11" cy="11" r="7"/><path d="M21 21l-4.3-4.3"/></svg></span><input id="studentSearch" type="search" placeholder="Schüler suchen …" autocomplete="off"><button class="search-clear" id="searchClear" aria-label="Leeren" style="display:none;">✕</button></div>
     <div id="studentGrid">${gridHTML}</div>
     <div class="no-hit" id="noHit" style="display:none;">Kein Schüler gefunden.</div>
-    <div style="position:fixed;right:6px;top:50%;transform:translateY(-50%);z-index:30;display:flex;flex-direction:column;align-items:center;background:var(--surface);border-radius:12px;padding:4px 3px;box-shadow:var(--elev-2);" id="alphaNav">${letterNav}</div>
-  </div>`;
+    </div>
+    <div style="position:fixed;right:6px;top:50%;transform:translateY(-50%);z-index:30;display:flex;flex-direction:column;align-items:center;background:var(--surface);border-radius:12px;padding:4px 3px;box-shadow:var(--elev-2);" id="alphaNav">${letterNav}</div>`;
+  document.querySelectorAll(".recent-chip").forEach(c=>c.addEventListener("click",()=>routeDetail(c.dataset.id)));
   animateRings();
   document.querySelectorAll(".s-card").forEach(c=>c.addEventListener("click",()=>routeDetail(c.dataset.id)));
   // Buchstaben-Navigation
@@ -3041,9 +3060,25 @@ function routeWaitlist(){
 /* ============================================================
    DETAIL (Schülerdatei)
    ============================================================ */
+function trackRecentStudent(id){
+  try{
+    let arr=JSON.parse(localStorage.getItem("serband-recent-students")||"[]");
+    arr=arr.filter(x=>x!==id);
+    arr.unshift(id);
+    arr=arr.slice(0,3);
+    localStorage.setItem("serband-recent-students",JSON.stringify(arr));
+  }catch(e){}
+}
+function getRecentStudents(){
+  try{
+    const ids=JSON.parse(localStorage.getItem("serband-recent-students")||"[]");
+    return ids.map(id=>DB.students.find(s=>s.id===id)).filter(Boolean);
+  }catch(e){return [];}
+}
 function routeDetail(id){
   const s=DB.students.find(x=>x.id===id);if(!s){routeHome();return;}
   ensure(s);
+  trackRecentStudent(id);
   $("#tbTitle").textContent="Schülerdatei";setFab(false);view.scrollTop=0;
   const p=s.profil?PROFILE[s.profil]:null;const col=p?p.color:"var(--orange)";
   const pct=stand(s);const done=pct>=100;
@@ -3087,11 +3122,11 @@ function routeDetail(id){
       <div class="vb-body"><div class="vb-name">Stand teilen</div><div class="vb-sub">Aktuellen Ausbildungsstand per WhatsApp schicken</div></div>
       <div class="vb-arr">›</div>
     </button>
-    <a class="vortest-big" href="https://fahrschule-boost.de/kalender-vortest/" target="_blank" rel="noopener">
+    ${sichtbar("vortest")?`<a class="vortest-big" href="https://fahrschule-boost.de/kalender-vortest/" target="_blank" rel="noopener">
       <div class="vb-ic">🗓</div>
       <div class="vb-body"><div class="vb-name">Vortest-Termin buchen</div><div class="vb-sub">Öffnet den Boost-Kalender</div></div>
       <div class="vb-arr">›</div>
-    </a>
+    </a>`:""}
     ${lagebildCard(s)}
     ${coachCard(s)}
     <div class="tiles">
@@ -3441,6 +3476,25 @@ function routeProfil(id,justDone){
    AUSBILDUNGSPLAN
    ============================================================ */
 let _cal={sid:null,kind:null,n:null,grp:null,idx:null};
+// Grobe Einschätzung aus Ausbildungsstand + Theorie — bewusst als Anhaltspunkt markiert, keine echte Vorhersage
+function examPrognose(s){
+  const pct=planProgress(s.plan,s.umschreiber,evalSkillsFor(s));
+  const theorieOk=!!(s.plan&&s.plan.theorie);
+  const allExams=DB.exams||[];
+  const passRate=allExams.length?Math.round(allExams.filter(e=>e.result==="pass").length/allExams.length*100):null;
+  let label,color,hint;
+  if(pct>=90&&theorieOk){label="Sehr gut vorbereitet";color="var(--gruen)";hint="Ausbildungsstand und Theorie passen — bereit für die Prüfungsanmeldung.";}
+  else if(pct>=70){label="Auf gutem Weg";color="#cf9a3e";hint=theorieOk?"Ausbildungsstand steigt, Theorie schon bestanden.":"Noch ein paar Themen offen, Theorie im Blick behalten.";}
+  else{label="Noch Zeit nötig";color="#cf5a48";hint="Ausbildungsstand braucht noch Übung, bevor eine Prüfung Sinn ergibt.";}
+  return `<div class="res-block prognose-card" style="animation:none;">
+    <h4>🎯 Prüfungs-Einschätzung</h4>
+    <div style="display:flex;align-items:center;gap:12px;margin:8px 0;">
+      <div class="prog-badge" style="width:44px;height:44px;border-radius:50%;background:${color};display:flex;align-items:center;justify-content:center;color:#fff;font-weight:800;font-size:14px;flex:0 0 auto;">${pct}%</div>
+      <div><div style="font-weight:800;font-size:14.5px;">${label}</div><div style="font-size:12.5px;color:var(--muted);margin-top:2px;">${hint}</div></div>
+    </div>
+    ${passRate!==null?`<p style="font-size:11px;color:var(--faint);margin-top:4px;">Zum Vergleich: ${passRate}% deiner bisherigen Prüfungen insgesamt bestanden. Grober Anhaltspunkt aus dem Ausbildungsstand, keine echte Vorhersage.</p>`:''}
+  </div>`;
+}
 function routePlan(id){
   const s=DB.students.find(x=>x.id===id);if(!s)return routeHome();
   ensure(s);
@@ -3465,6 +3519,7 @@ function routePlan(id){
       <div class="tc-body"><div class="tc-name">Umschreiber</div><div class="tc-sub">Sonderfahrten zählen nicht zur %-Wertung</div></div>
       <button class="check-toggle ${s.umschreiber?'on':''}" id="umschreiberToggle" aria-label="Umschreiber"></button>
     </div>
+    ${examPrognose(s)}
     ${!pl.theorie?`<div class="theorie-card" id="theorieWaitCard" style="margin-top:9px;">
       <div class="tc-body"><div class="tc-name">Pausiert – wartet auf Theorie</div><div class="tc-sub">Keine Fahrstunden, bis die Theorie bestanden ist</div></div>
       <button class="check-toggle ${s.theorieWait?'on':''}" id="theorieWaitToggle" aria-label="Wartet auf Theorie"></button>
@@ -4375,6 +4430,22 @@ function routeSettings(){
     <div class="res-block" style="animation:none;"><h4>📋 Ausbildungsplan-Vorlagen</h4>
       <p>Grundstufe, Aufbaustufe und Leistungsstufe individuell gestalten — z.B. eigene Prüfgebiete anlegen.</p>
       <div class="btn-row"><button class="btn btn-ghost" onclick="routePlanVorlagen()">Vorlagen verwalten</button></div></div>
+    <div class="res-block" style="animation:none;"><h4>🔧 Sichtbare Funktionen</h4>
+      <p>Einzelne Funktionen ausblenden, die du nicht brauchst.</p>
+      <div class="field"><div class="toggle-row"><div><div class="tc-name" style="font-weight:800;font-size:14px;">Vortest-Button</div><div class="tc-sub" style="font-size:12.5px;color:var(--muted);margin-top:2px;">Link zum Boost-Buchungskalender in der Schülerakte</div></div><button class="check-toggle${DB.sichtbarkeit.vortest?' on':''}" data-vis="vortest"></button></div></div>
+      <div class="field"><div class="toggle-row"><div><div class="tc-name" style="font-weight:800;font-size:14px;">Fahrcheck</div><div class="tc-sub" style="font-size:12.5px;color:var(--muted);margin-top:2px;">FC-Auswahl beim Bearbeiten einer Fahrstunde</div></div><button class="check-toggle${DB.sichtbarkeit.fahrcheck?' on':''}" data-vis="fahrcheck"></button></div></div>
+      <div class="field"><div class="toggle-row"><div><div class="tc-name" style="font-weight:800;font-size:14px;">Simulator-Empfehlung</div><div class="tc-sub" style="font-size:12.5px;color:var(--muted);margin-top:2px;">Karte in der Schülerakte</div></div><button class="check-toggle${DB.sichtbarkeit.simulator?' on':''}" data-vis="simulator"></button></div></div>
+    </div>
+    <div class="res-block" style="animation:none;"><h4>🚗 Fahrmodus</h4>
+      <p>Größere Tap-Ziele bei Ampeln und Buttons — für unterwegs, ohne genau hinschauen zu müssen.</p>
+      <div class="field"><div class="toggle-row"><div><div class="tc-name" style="font-weight:800;font-size:14px;">Fahrmodus aktiv</div><div class="tc-sub" style="font-size:12.5px;color:var(--muted);margin-top:2px;">Bleibt an, bis du ihn wieder ausschaltest</div></div><button class="check-toggle${DB.fahrmodus?' on':''}" id="fahrmodusToggle"></button></div></div>
+    </div>
+    <div class="res-block" style="animation:none;"><h4>🌤 Wetter-Widget</h4>
+      <p>Kostenlosen API-Key auf <b>openweathermap.org</b> holen (Registrierung reicht), hier eintragen — dann erscheint das aktuelle Wetter oben im Dashboard.</p>
+      <div class="field" style="margin-top:8px;"><label>API-Key</label><input id="weatherKeyInput" type="text" placeholder="z.B. a1b2c3d4e5f6..." value="${esc(DB.weatherCfg.apiKey||"")}" autocomplete="off"></div>
+      <div class="field"><label>Stadt</label><input id="weatherCityInput" type="text" placeholder="Offenbach,DE" value="${esc(DB.weatherCfg.city||"Offenbach,DE")}" autocomplete="off"></div>
+      <div class="btn-row"><button class="btn btn-ghost" id="weatherSaveBtn">Speichern</button></div>
+    </div>
     <div class="res-block" style="animation:none;"><h4>⚙ Kapazität</h4>
       <p>Wöchentliche Slot-Kapazität für die Auslastungsanzeige.</p>
       <div style="display:flex;align-items:center;gap:12px;margin-top:10px;">
@@ -4434,6 +4505,24 @@ function routeSettings(){
         DB=j.data;ensureDB();save();toast("Backup eingespielt");routeDashboard();}
     }catch(_){toast("Keine gültige Backup-Datei");}};
     r.readAsText(f);});
+  document.querySelectorAll("[data-vis]").forEach(b=>b.addEventListener("click",()=>{
+    const key=b.dataset.vis;
+    DB.sichtbarkeit[key]=!DB.sichtbarkeit[key];
+    save();routeSettings();
+  }));
+  const wSave=$("#weatherSaveBtn");
+  if(wSave)wSave.addEventListener("click",()=>{
+    DB.weatherCfg.apiKey=$("#weatherKeyInput").value.trim();
+    DB.weatherCfg.city=$("#weatherCityInput").value.trim()||"Offenbach,DE";
+    localStorage.removeItem("serband-weather-cache");
+    save();toast("Wetter-Einstellungen gespeichert ✓");
+  });
+  const fm=$("#fahrmodusToggle");
+  if(fm)fm.addEventListener("click",()=>{
+    DB.fahrmodus=!DB.fahrmodus;
+    document.body.classList.toggle("fahrmodus",DB.fahrmodus);
+    save();routeSettings();
+  });
 }
 /* ===================== ERWEITERUNG: Dashboard · Prüfungen · Statistik · Archiv ===================== */
 const READY_MIN=90;
@@ -4615,7 +4704,7 @@ function openEventSheet(kind,id,sid){
     ${l.note?`<div class="es-note">${esc(l.note)}</div>`:''}
     <div class="es-actions">
       ${st?`<button class="es-act primary" id="esAkte">Schülerakte öffnen</button>`:''}
-      ${fcRelevant?`<button class="es-act" id="esFC">Fahrcheck · <b>${fcLab}</b></button>`:''}
+      ${fcRelevant&&sichtbar("fahrcheck")?`<button class="es-act" id="esFC">Fahrcheck · <b>${fcLab}</b></button>`:''}
       <button class="es-act" id="esEdit">Bearbeiten / verschieben</button>
       <button class="es-act" id="esOther">Mit anderem Schüler gefahren</button>
       <button class="es-act" id="esNoshow">Nicht erschienen</button>
@@ -4886,8 +4975,8 @@ function routeKalender(){
       <button class="cal-arrow" id="calNext"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M9 18l6-6-6-6"/></svg></button>
     </div>
     <div id="calBody">${_calView==="monat"?calMonthHTML():_calView==="woche"?calWeekHTML():calDayHTML()}</div>
-    <button class="cal-fab" id="calFab" aria-label="Hinzufügen"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg></button>
-    </div>`;
+    </div>
+    <button class="cal-fab" id="calFab" aria-label="Hinzufügen"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg></button>`;
   view.innerHTML=html;
   bindCalControls();
 }
@@ -4933,9 +5022,91 @@ function bindCalControls(){
   document.querySelectorAll("[data-evsid]").forEach(e=>e.addEventListener("click",()=>{ const sid=e.dataset.evsid; if(sid&&sid!=="null")routeDetail(sid); }));
   // freien Slot antippen -> vergeben
   document.querySelectorAll("[data-freeslot]").forEach(s=>s.addEventListener("click",()=>{ const [date,von,bis,art]=s.dataset.freeslot.split("|"); openAssignSlotSheet(date,von,bis,art); }));
-  // Termin antippen -> bearbeiten/verschieben/löschen
-  document.querySelectorAll("[data-evedit]").forEach(b=>b.addEventListener("click",()=>{ const [kind,id,sid]=b.dataset.evedit.split("|"); openEventSheet(kind,id,sid); }));
+  // Termin antippen -> bearbeiten/verschieben/löschen (aber nicht direkt nach echtem Ziehen)
+  document.querySelectorAll("[data-evedit]").forEach(b=>b.addEventListener("click",()=>{ if(_calDragHappened){_calDragHappened=false;return;} const [kind,id,sid]=b.dataset.evedit.split("|"); openEventSheet(kind,id,sid); }));
+  wireCalendarDrag();
   bindCalSwipe();
+}
+let _calDragHappened=false;
+// Fahrstunden per Finger auf einen freien Slot ziehen — auch spaltenübergreifend (anderer Tag).
+// Nur "geplant"-Fahrstunden sind ziehbar; Prüfungstermine (mehrere Schüler pro Slot-Block) bewusst ausgenommen.
+function wireCalendarDrag(){
+  document.querySelectorAll(".cw-draggable").forEach(chip=>{
+    chip.addEventListener("pointerdown",e=>{
+      const startX=e.clientX,startY=e.clientY;
+      let dragging=false,clone=null,curTarget=null;
+      const THRESH=9,SCROLL_ZONE=60,SCROLL_SPEED=10;
+      let scrollRAF=null,lastX=startX,lastY=startY;
+      const startDrag=()=>{
+        dragging=true;_calDragHappened=true;
+        chip.classList.add("cw-dragging-src");
+        const r=chip.getBoundingClientRect();
+        clone=chip.cloneNode(true);
+        clone.className="cw-ev cw-drag-clone";
+        clone.style.width=r.width+"px";
+        clone.style.left=r.left+"px";
+        clone.style.top=r.top+"px";
+        document.body.appendChild(clone);
+      };
+      const moveClone=()=>{
+        if(!clone)return;
+        clone.style.left=(lastX-startX+clone._baseLeft)+"px";
+        clone.style.top=(lastY-startY+clone._baseTop)+"px";
+      };
+      const updateTarget=()=>{
+        if(curTarget)curTarget.classList.remove("cw-drop-target");
+        const el=document.elementFromPoint(lastX,lastY);
+        const free=el?el.closest(".cw-free"):null;
+        curTarget=free;
+        if(curTarget)curTarget.classList.add("cw-drop-target");
+      };
+      const scrollLoop=()=>{
+        const vr=view.getBoundingClientRect();
+        if(lastY<vr.top+SCROLL_ZONE&&view.scrollTop>0){view.scrollTop-=SCROLL_SPEED;}
+        else if(lastY>vr.bottom-SCROLL_ZONE&&view.scrollTop<view.scrollHeight-view.clientHeight){view.scrollTop+=SCROLL_SPEED;}
+        if(dragging)updateTarget();
+        scrollRAF=requestAnimationFrame(scrollLoop);
+      };
+      scrollRAF=requestAnimationFrame(scrollLoop);
+      try{chip.setPointerCapture(e.pointerId);}catch(err){}
+      const onMove=(ev)=>{
+        lastX=ev.clientX;lastY=ev.clientY;
+        if(!dragging){
+          if(Math.abs(lastX-startX)>THRESH||Math.abs(lastY-startY)>THRESH){
+            startDrag();
+            const r0=chip.getBoundingClientRect();
+            clone._baseLeft=r0.left;clone._baseTop=r0.top;
+          }else return;
+        }
+        moveClone();
+        updateTarget();
+      };
+      const onUp=()=>{
+        try{chip.releasePointerCapture(e.pointerId);}catch(err){}
+        if(scrollRAF)cancelAnimationFrame(scrollRAF);
+        window.removeEventListener("pointermove",onMove);
+        window.removeEventListener("pointerup",onUp);
+        if(dragging){
+          chip.classList.remove("cw-dragging-src");
+          if(curTarget)curTarget.classList.remove("cw-drop-target");
+          if(clone)clone.remove();
+          if(curTarget){
+            const[date,von]=curTarget.dataset.freeslot.split("|");
+            const lid=chip.dataset.dragid;
+            const l=DB.lessons.find(x=>x.id===lid);
+            if(l){
+              const durMin=hm2min(l.bis)-hm2min(l.von);
+              l.date=date;l.von=von;l.bis=min2hm(hm2min(von)+durMin);
+              save();toast("Fahrstunde verschoben ✓");
+            }
+          }
+          routeKalender();
+        }
+      };
+      window.addEventListener("pointermove",onMove);
+      window.addEventListener("pointerup",onUp);
+    });
+  });
 }
 // Swipe nach links/rechts -> vor/zurück (Tag/Woche/Monat)
 function bindCalSwipe(){
@@ -5018,7 +5189,8 @@ function calEventChip(e,iso){
   const examSoon=e.sid&&!!terminFor(e.sid);
   const fzTag=e.fahrzeug?`<span class="cw-fz">${esc(e.fahrzeug)}</span>`:'';
   const pruefLabel=e.pruefTime?`<span class="cw-fz" style="color:${c.col}">Prüfung ${e.pruefTime}</span>`:'';
-  return `<div class="cw-ev${off?' off':''}${examSoon?' exam-soon':''}" style="border-left-color:${c.col}" data-evedit="${e.kind}|${e.id}|${e.sid||''}"><span class="cw-evt">${e.von}</span><span class="cw-evn">${esc(firstName(e.name))}${sf}${stat}${fzTag}${pruefLabel}</span></div>`;
+  const draggable=e.kind==="lesson"&&e.status==="geplant";
+  return `<div class="cw-ev${off?' off':''}${examSoon?' exam-soon':''}${draggable?' cw-draggable':''}" style="border-left-color:${c.col}" data-evedit="${e.kind}|${e.id}|${e.sid||''}"${draggable?` data-dragid="${e.id}"`:''}><span class="cw-evt">${e.von}</span><span class="cw-evn">${esc(firstName(e.name))}${sf}${stat}${fzTag}${pruefLabel}</span></div>`;
 }
 // TAGESANSICHT
 function calDayHTML(){
@@ -5288,8 +5460,11 @@ function nextLessonEvent(){
   return null;
 }
 
+function sichtbar(key){ return !DB.sichtbarkeit || DB.sichtbarkeit[key]!==false; }
 function ensureDB(){ let _ensureDirty=false; if(!Array.isArray(DB.exams))DB.exams=[]; if(!Array.isArray(DB.pruefer))DB.pruefer=[]; if(!Array.isArray(DB.termine))DB.termine=[];
   if(!Array.isArray(DB.lessons))DB.lessons=[];
+  if(!DB.sichtbarkeit||typeof DB.sichtbarkeit!=="object"){ DB.sichtbarkeit={vortest:true,fahrcheck:true,simulator:true}; }
+  if(!DB.weatherCfg||typeof DB.weatherCfg!=="object"){ DB.weatherCfg={apiKey:"",city:"Offenbach,DE"}; }
   if(!DB.workCfg||typeof DB.workCfg!=="object"){ DB.workCfg={
     // Vormittags- und Nachmittagsblock, Pause dazwischen. Zeiten in "HH:MM".
     vorMittag:{von:"10:00",bis:"14:30"},
@@ -5643,6 +5818,7 @@ function openReactivateSheet(s,rerender){
   });
 }
 function simCard(s){
+  if(!sichtbar("simulator"))return "";
   const d=s.simEmpf;
   if(d){
     return `<div class="sim-card on"><div class="sim-body"><div class="sim-name">Simulator empfohlen</div><div class="sim-sub">am ${isoDE(d)}</div></div>
@@ -6193,8 +6369,23 @@ function capacityCardHTML(){
     <div class="cap-foot"><span class="cap-dot" style="background:${col}"></span>${c.text}</div>
   </button>`;
 }
+// Nächste konkrete freie Termine, nächste 7 Tage, max. 5 — direkt umsatzwirksam nutzbar
+function naechsteFreieLuecken(){
+  const out=[]; let cur=todayISO();
+  for(let i=0;i<7&&out.length<5;i++){
+    dayFreeSlots(cur).forEach(s=>{ if(out.length<5) out.push({date:cur,von:s.von,bis:s.bis,art:s.art}); });
+    cur=addDays(cur,1);
+  }
+  return out;
+}
 function openCapacitySheet(){
   const c=capacityStats();
+  const luecken=naechsteFreieLuecken();
+  const lueckenHtml=luecken.length
+    ? luecken.map(l=>`<button class="es-act cap-gap" data-freeslot="${l.date}|${l.von}|${l.bis}|${l.art}" style="display:flex;justify-content:space-between;align-items:center;text-align:left;">
+        <span>${deWeekday(l.date)} · ${isoDE(l.date)} · ${l.von}</span><span style="color:var(--gruen-bright,#4a8b45);font-weight:700;">Vergeben ›</span>
+      </button>`).join("")
+    : `<p class="muted-p" style="font-size:12.5px;">Keine freien Lücken in den nächsten 7 Tagen — gut ausgelastet.</p>`;
   openSheet(`<div class="sheet-h">Auslastung</div>
     <p class="muted-p" style="font-size:13px;margin:-4px 0 14px;">Berechnung deiner wöchentlichen Kapazität.</p>
     <div class="cap-detail">
@@ -6206,9 +6397,48 @@ function openCapacitySheet(){
     </div>
     <p class="muted-p" style="font-size:12.5px;margin:14px 0 4px;">Theorie-Wartende und prüfungsreife Schüler werden nicht mitgezählt, da sie nicht regelmäßig fahren.</p>
     <div class="field" style="margin-top:14px;"><label>Slots pro Woche anpassen</label><input type="number" id="capWoche" value="${c.slotsPerWeek}" inputmode="numeric"></div>
-    <div class="btn-row"><button class="btn btn-ghost" id="capCancel" style="flex:0;padding:13px 18px;">Schließen</button><button class="btn btn-primary" id="capSave">Speichern</button></div>`);
+    <div class="btn-row"><button class="btn btn-ghost" id="capCancel" style="flex:0;padding:13px 18px;">Schließen</button><button class="btn btn-primary" id="capSave">Speichern</button></div>
+    <div class="sheet-h" style="margin-top:20px;font-size:15px;">📅 Nächste freie Lücken</div>
+    <div class="es-actions">${lueckenHtml}</div>`);
   $("#capCancel").addEventListener("click",closeSheet);
   $("#capSave").addEventListener("click",()=>{ const v=+$("#capWoche").value; if(v>0){ DB.workCfg.kapazitaetWoche=v; save(); } closeSheet(); routeDashboard(); });
+  document.querySelectorAll(".cap-gap").forEach(b=>b.addEventListener("click",()=>{
+    const [date,von,bis,art]=b.dataset.freeslot.split("|");
+    closeSheet();
+    openAssignSlotSheet(date,von,bis,art);
+  }));
+}
+// Wetter: höchstens alle 30 Minuten neu abfragen (spart Anfragen, reicht für Tagesplanung völlig)
+async function fetchWeather(){
+  const cfg=DB.weatherCfg;
+  if(!cfg||!cfg.apiKey)return null;
+  try{
+    const cacheRaw=localStorage.getItem("serband-weather-cache");
+    if(cacheRaw){
+      const cache=JSON.parse(cacheRaw);
+      if(cache.city===cfg.city&&(Date.now()-cache.ts)<30*60*1000)return cache.data;
+    }
+  }catch(e){}
+  try{
+    const city=encodeURIComponent(cfg.city||"Offenbach,DE");
+    const res=await fetch(`https://api.openweathermap.org/data/2.5/weather?q=${city}&appid=${cfg.apiKey}&units=metric&lang=de`);
+    if(!res.ok)return null;
+    const data=await res.json();
+    const result={temp:Math.round(data.main.temp),desc:data.weather[0].description,icon:data.weather[0].icon};
+    localStorage.setItem("serband-weather-cache",JSON.stringify({ts:Date.now(),city:cfg.city,data:result}));
+    return result;
+  }catch(e){ return null; }
+}
+function weatherEmoji(icon){
+  const m={"01":"☀️","02":"⛅","03":"☁️","04":"☁️","09":"🌧️","10":"🌦️","11":"⛈️","13":"❄️","50":"🌫️"};
+  return m[(icon||"").slice(0,2)]||"🌤️";
+}
+function weatherWidgetHTML(w){
+  if(!w)return "";
+  return `<div class="weather-widget" style="display:flex;align-items:center;gap:10px;background:var(--surface);border:1px solid var(--line);border-radius:14px;padding:12px 16px;margin-top:10px;animation:cardIn .5s var(--ease) both;">
+    <span style="font-size:26px;">${weatherEmoji(w.icon)}</span>
+    <div><div style="font-weight:800;font-size:16px;">${w.temp}°C</div><div style="font-size:12px;color:var(--muted);text-transform:capitalize;">${esc(w.desc)}</div></div>
+  </div>`;
 }
 function routeDashboard(){
   ensureDB();
@@ -6217,6 +6447,7 @@ function routeDashboard(){
   const act=activeStudents().length; const ready=waitlist().length; const q=quoteOf(examsIn('cur'));
   view.innerHTML=`<div class="view-inner view-wide fade-up">
     <div class="hero compact"><div class="greet">Willkommen zurück</div><div class="hero-brand">Serband</div></div>
+    <div id="weatherSlot"></div>
     ${backupBannerHTML()}
     <div class="dash-quick-row">
       <button class="dq-btn" data-go="kalender">${ICN.cal}<span>Kalender</span></button>
@@ -6244,6 +6475,9 @@ function routeDashboard(){
   bindNextStudent();
   bindFC();
   bindBackupBanner();
+  if(DB.weatherCfg&&DB.weatherCfg.apiKey){
+    fetchWeather().then(w=>{ const slot=$("#weatherSlot"); if(slot&&w)slot.innerHTML=weatherWidgetHTML(w); });
+  }
 }
 // Nächste Prüfung-Card: Student, Datum, geplante Fahrstunden bis dahin
 function nextExamDashCard(){
@@ -6390,6 +6624,19 @@ function eur(n){ return (Math.round(n)).toLocaleString("de-DE")+" €"; }
 function fmtUE(n){ const r=Math.round(n*100)/100; return (r%1===0?r.toString():r.toFixed(2).replace(".",",")); }
 function maxISO(a,b){ return a>b?a:b; }
 
+// Durchschnittliche UE bis zur bestandenen Prüfung — eigene Erfolgs-Kennzahl, zeigt Serbands Entwicklung als Lehrer
+function erfolgsStatistik(){
+  const passed=(DB.exams||[]).filter(e=>e.result==="pass"&&e.sid&&e.date);
+  if(!passed.length)return null;
+  const ueOf=a=>a==="schalt"?0.33:2;
+  const relevantArts=["fahrstunde","nacht","schalt","sonder"];
+  const ueList=passed.map(ex=>{
+    const lessons=(DB.lessons||[]).filter(l=>l.sid===ex.sid&&l.date<=ex.date&&l.status!=="abgebrochen"&&l.status!=="nicht erschienen"&&relevantArts.includes(l.art));
+    return lessons.reduce((sum,l)=>sum+ueOf(l.art),0);
+  });
+  const avgUE=ueList.reduce((a,b)=>a+b,0)/ueList.length;
+  return { avgUE:Math.round(avgUE*10)/10, count:passed.length };
+}
 function routeStats(period){
   ensureDB(); period=period||'cur'; _curStatPeriod=period;
   // Beim Aufrufen der Statistik: Verdienst-PIN zurücksetzen (immer neu entsperren)
@@ -6401,6 +6648,7 @@ function routeStats(period){
   const avgProg=active.length?Math.round(active.reduce((a,s)=>a+stand(s),0)/active.length):0;
   const theoCount=active.filter(s=>s.plan&&s.plan.theorie).length;
   const fc=faultCounts(ex); const fcTotal=fc.reduce((a,x)=>a+x[1],0);
+  const erfolg=erfolgsStatistik();
   const now=new Date(); const MN=["Jan","Feb","Mär","Apr","Mai","Jun","Jul","Aug","Sep","Okt","Nov","Dez"]; const months=[];
   for(let k=5;k>=0;k--){ const d=new Date(now.getFullYear(),now.getMonth()-k,1); const key=d.getFullYear()+"-"+pad2(d.getMonth()+1); const me=DB.exams.filter(e=>e.date&&(""+e.date).slice(0,7)===key); months.push([MN[d.getMonth()],quoteOf(me)]); }
   // Monatsbalkens mit Farbkodierung
@@ -6433,6 +6681,7 @@ function routeStats(period){
       <span style="display:flex;align-items:center;gap:4px;color:var(--gelb)"><i style="width:10px;height:10px;border-radius:3px;background:var(--gelb);display:inline-block"></i>50–69%</span>
       <span style="display:flex;align-items:center;gap:4px;color:var(--rot)"><i style="width:10px;height:10px;border-radius:3px;background:var(--rot);display:inline-block"></i>&lt;50%</span>
     </div>
+    ${erfolg?`<div class="res-block" style="animation:none;margin-top:4px;"><h4>🏅 Erfolgs-Statistik</h4><div style="display:flex;align-items:center;gap:14px;margin-top:6px;"><div style="font-family:'Anton',sans-serif;font-size:30px;color:var(--gruen-bright);">${erfolg.avgUE}</div><div style="font-size:12.5px;color:var(--muted);">Ø Unterrichtseinheiten bis zur bestandenen Prüfung<br>Basis: ${erfolg.count} bestandene Prüfung${erfolg.count===1?'':'en'}</div></div></div>`:``}
     <div class="blk-h">Häufigste Fehler</div>
     ${faultBarsHTML}
     <button class="nav-action" id="toNichtBesteher" style="margin-top:14px;">
