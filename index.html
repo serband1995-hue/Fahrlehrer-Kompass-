@@ -3508,21 +3508,31 @@ function routePlan(id){
     </div>`:''}
     <div class="plan-actions" id="planActions"></div>
     <div class="plan-sec">
-      <div class="plan-sec-h"><span class="nr">·</span><span class="ti">Fahrstunden</span><span class="su">Fläche = heute · 📅 = anderes Datum · FC = Fahrchecks</span></div>
-      <div class="std-grid" id="stdGrid"></div>
-      <div class="legende">Antippen trägt das heutige Datum ein, nochmal antippen löscht es.</div>
-      <div class="sonder">${s.umschreiber?`<div style="padding:12px 14px;background:var(--surface);border:1px dashed var(--line);border-radius:12px;font-size:13px;color:var(--muted);font-weight:700;">✓ Umschreiber – Sonderfahrten nicht erforderlich</div>`:''}
-      ${SONDER_DEF.map(sd=>`
-        <div class="sonder-row"${s.umschreiber?' style="opacity:.4;pointer-events:none;"':''}>
-          <div class="top"><span>${sd.label}</span><span class="soll"><b id="c_${sd.key}">0</b> / ${sd.soll} Std.</span></div>
-          <div class="std-grid" data-sgrid="${sd.key}" style="grid-template-columns:repeat(auto-fill,minmax(84px,1fr));"></div>
-        </div>`).join("")}</div>
+      <div class="acc open" data-acc="fahrstunden">
+        <button class="acc-h"><span class="nr">·</span><span class="ti">Fahrstunden</span><span class="su">Fläche = heute · 📅 = anderes Datum · FC = Fahrchecks</span><span class="chev">${ICN.chev}</span></button>
+        <div class="acc-body"><div class="acc-inner">
+          <div class="std-grid" id="stdGrid"></div>
+          <div class="legende">Antippen trägt das heutige Datum ein, nochmal antippen löscht es.</div>
+        </div></div>
+      </div>
+      <div class="acc open" data-acc="sonderfahrten" style="margin-top:10px;">
+        <button class="acc-h"><span class="nr">·</span><span class="ti">Sonderfahrten</span><span class="chev">${ICN.chev}</span></button>
+        <div class="acc-body"><div class="acc-inner">
+          <div class="sonder">${s.umschreiber?`<div style="padding:12px 14px;background:var(--surface);border:1px dashed var(--line);border-radius:12px;font-size:13px;color:var(--muted);font-weight:700;">✓ Umschreiber – Sonderfahrten nicht erforderlich</div>`:''}
+          ${SONDER_DEF.map(sd=>`
+            <div class="sonder-row"${s.umschreiber?' style="opacity:.4;pointer-events:none;"':''}>
+              <div class="top"><span>${sd.label}</span><span class="soll"><b id="c_${sd.key}">0</b> / ${sd.soll} Std.</span></div>
+              <div class="std-grid" data-sgrid="${sd.key}" style="grid-template-columns:repeat(auto-fill,minmax(84px,1fr));"></div>
+            </div>`).join("")}</div>
+        </div></div>
+      </div>
     </div>
     <div class="plan-sec">
       <div class="plan-sec-h"><span class="nr">·</span><span class="ti">Stufen</span><span class="su">rot · gelb · grün antippen</span></div>
       <div id="stufenWrap"></div>
     </div>
   </div>`;
+  view.querySelectorAll('[data-acc="fahrstunden"] > .acc-h, [data-acc="sonderfahrten"] > .acc-h').forEach(h=>h.addEventListener("click",()=>{ h.closest(".acc").classList.toggle("open"); }));
   $("#backBtn").addEventListener("click",()=>routeDetail(id));
   $("#theoToggle").addEventListener("click",()=>{
     pl.theorie=!pl.theorie;$("#theoToggle").classList.toggle("on",pl.theorie); if(pl.theorie){ if(!s.theoryPassed)s.theoryPassed=new Date().toISOString(); logHist(s,"theorie","Theorieprüfung bestanden"); if(stand(s)>=90&&!s.ready&&!s.passed){ s.ready=s.theoryPassed; toast("Theorie bestanden – auf die Praxis-Warteliste gesetzt"); } else if(stand(s)<90&&!s.ready&&!s.passed){ toast("Theorie bestanden – erst ab 90 % kommt er auf die Warteliste"); } delete s.theorieWait; } else { delete s.theoryPassed; } save();refreshPlanRing(s);renderPlanActions(s);routePlan(id);});
@@ -3859,7 +3869,7 @@ function buildStufen(s){
           ${ampelHtml}
         </div>${panel}
       </div>`;}).join("");
-    return `<div class="acc${si===0?' open':''}" data-acc="${st.key}">
+    return `<div class="acc" data-acc="${st.key}">
       <button class="acc-h"><span class="nr">${st.nr}</span><span class="ti">${esc(st.titel)}</span>
         <span class="done" data-done="${st.key}">${done}/${total}</span><span class="chev">${ICN.chev}</span></button>
       <div class="acc-body"><div class="acc-inner">
