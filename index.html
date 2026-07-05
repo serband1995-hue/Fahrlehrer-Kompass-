@@ -1615,6 +1615,18 @@ input,select,textarea{font-family:inherit;font-size:15px;color:var(--txt);}
 .wx-desc{font-size:16px;font-weight:700;color:var(--muted);text-transform:capitalize;margin-top:4px;}
 .wx-city{font-family:'Kaushan Script',cursive;color:var(--brand-accent);font-size:18px;margin-top:8px;}
 
+/* ===== Glas-Karten-Look (seriös, kein Spielzeug): leichte Transparenz, weicher Schatten, dezenter Lichtreflex oben ===== */
+.weather-widget,.heute-card,.cap-card{
+  background:linear-gradient(165deg,var(--glass),var(--glass-2));
+  backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px);
+  box-shadow:var(--elev-1),inset 0 1px 0 var(--glass-brd-top);
+  border:1px solid var(--glass-brd);
+}
+.heute-row{display:flex;gap:10px;margin-top:10px;}
+.heute-card{flex:1;border-radius:16px;padding:16px 14px;text-align:center;}
+.hc-n{font-family:'Anton',sans-serif;font-size:30px;color:var(--txt);line-height:1;}
+.hc-l{font-size:11px;font-weight:800;letter-spacing:.05em;text-transform:uppercase;color:var(--muted);margin-top:5px;}
+
 </style>
 <!-- Supabase Client -->
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
@@ -6562,7 +6574,7 @@ function weatherCategory(icon){
 }
 function weatherWidgetHTML(w){
   if(!w)return "";
-  return `<div class="weather-widget" id="weatherWidgetBtn" style="display:flex;align-items:center;gap:10px;background:var(--surface);border:1px solid var(--line);border-radius:14px;padding:12px 16px;margin-top:10px;animation:cardIn .5s var(--ease) both;">
+  return `<div class="weather-widget" id="weatherWidgetBtn" style="display:flex;align-items:center;gap:10px;border-radius:14px;padding:12px 16px;margin-top:10px;animation:cardIn .5s var(--ease) both;">
     <span style="font-size:26px;">${weatherEmoji(w.icon)}</span>
     <div><div style="font-weight:800;font-size:16px;">${w.temp}°C</div><div style="font-size:12px;color:var(--muted);text-transform:capitalize;">${esc(w.desc)}</div></div>
   </div>`;
@@ -6611,9 +6623,19 @@ function routeDashboard(){
   const today=todayISO();
   const heuteCount=(DB.lessons||[]).filter(l=>l.date===today&&l.status!=="abgebrochen"&&l.status!=="nicht erschienen"&&["fahrstunde","sonder","nacht","schalt"].indexOf(l.art)>=0).length;
   const heuteTag=heuteCount? `${heuteCount} Fahrstunde${heuteCount===1?"":"n"} heute, alles auf Kurs` : "Heute keine Fahrstunde geplant";
+  // UE heute + Verdienst heute (Grenzbeitrag: Differenz aus Monatsgehalt mit/ohne heutige UE — korrekt beim Stufenmodell)
+  const ueHeute=ueRange(today,today).total;
+  const [mStart]=isoMonthRange(today);
+  const fcMitHeute=ueRange(mStart,today).fcCounted;
+  const fcOhneHeute=today>mStart?ueRange(mStart,addDays(today,-1)).fcCounted:0;
+  const verdienstHeute=gehaltAusUE(Math.round(fcMitHeute))-gehaltAusUE(Math.round(fcOhneHeute));
   view.innerHTML=`<div class="view-inner view-wide fade-up">
     <div class="hero compact"><div class="greet">Willkommen zurück</div><div class="hero-brand">Serband</div><div class="hero-tag">${esc(heuteTag)}</div></div>
     <div id="weatherSlot"></div>
+    <div class="heute-row">
+      <div class="heute-card"><div class="hc-n">${ueHeute}</div><div class="hc-l">UE heute</div></div>
+      <div class="heute-card"><div class="hc-n">${verdienstHeute}€</div><div class="hc-l">Verdienst heute</div></div>
+    </div>
     ${backupBannerHTML()}
     <div class="dash-quick-row">
       <button class="dq-btn" data-go="kalender">${ICN.cal}<span>Kalender</span></button>
