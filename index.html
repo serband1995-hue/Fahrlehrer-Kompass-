@@ -1571,6 +1571,44 @@ input,select,textarea{font-family:inherit;font-size:15px;color:var(--txt);}
 .rseg-unsicher.on{background:rgba(224,163,46,.16);color:var(--gelb);border-color:rgba(224,163,46,.4)}
 .rseg-sicher.on{background:rgba(63,174,107,.16);color:var(--gruen);border-color:rgba(63,174,107,.4)}
 
+/* ===== GROSSER WETTER-SCREEN (Phase 3 Design-Umbau) ===== */
+.weather-widget{cursor:pointer;transition:transform .15s var(--ease);}
+.weather-widget:active{transform:scale(.98);filter:brightness(.94);}
+.wx-screen{padding:0 var(--pad) 40px;min-height:100vh;}
+.wx-stage{position:relative;height:min(46vh,340px);border-radius:26px;overflow:hidden;margin:6px 0 22px;
+  background:linear-gradient(160deg,var(--surface),var(--surface-2));border:1px solid var(--line);}
+.wx-sun{position:absolute;top:50%;left:50%;width:120px;height:120px;transform:translate(-50%,-50%);animation:wxSpin 26s linear infinite;}
+.wx-sun-core{position:absolute;top:50%;left:50%;width:64px;height:64px;margin:-32px 0 0 -32px;border-radius:50%;
+  background:radial-gradient(circle at 35% 30%,#ffe9a8,var(--gold));box-shadow:0 0 50px 10px var(--gold-soft);animation:wxPulse 3.2s ease-in-out infinite;}
+.wx-ray{position:absolute;top:50%;left:50%;width:5px;height:56px;margin:-28px 0 0 -2.5px;border-radius:3px;
+  background:linear-gradient(var(--gold),transparent);transform-origin:50% 100%;translate:0 -50px;}
+@keyframes wxSpin{from{transform:translate(-50%,-50%) rotate(0deg)}to{transform:translate(-50%,-50%) rotate(360deg)}}
+@keyframes wxPulse{0%,100%{transform:scale(1)}50%{transform:scale(1.1)}}
+.wx-cloud{position:absolute;border-radius:50px;background:linear-gradient(160deg,#e9edf0,#c7cfd6);opacity:.92;
+  box-shadow:inset 0 -6px 10px rgba(0,0,0,.06);animation:wxDrift 22s linear infinite;}
+.wx-cloud.dark{background:linear-gradient(160deg,#7c8794,#565f6b);opacity:.95;}
+.wx-cloud.c1{width:150px;height:56px;top:22%;left:-20%;animation-duration:26s;}
+.wx-cloud.c2{width:110px;height:42px;top:48%;left:-30%;animation-duration:19s;animation-delay:-6s;}
+.wx-cloud.c3{width:90px;height:36px;top:14%;left:-25%;animation-duration:31s;animation-delay:-12s;}
+@keyframes wxDrift{from{transform:translateX(0)}to{transform:translateX(340%)}}
+.wx-drop{position:absolute;top:-10%;width:2.5px;height:22px;border-radius:2px;
+  background:linear-gradient(var(--blau),transparent);animation:wxFall 1s linear infinite;}
+@keyframes wxFall{from{transform:translateY(0) rotate(8deg)}to{transform:translateY(420px) rotate(8deg)}}
+.wx-flake{position:absolute;top:-8%;font-size:16px;color:#fff;animation:wxSnow linear infinite;}
+@keyframes wxSnow{from{transform:translateY(0) translateX(0) rotate(0deg);opacity:.95}to{transform:translateY(400px) translateX(24px) rotate(200deg);opacity:.4}}
+.wx-bolt{position:absolute;inset:0;background:#fff;opacity:0;animation:wxFlash 4.5s ease-in-out infinite;}
+@keyframes wxFlash{0%,92%,100%{opacity:0}94%{opacity:.55}96%{opacity:.05}98%{opacity:.35}}
+.wx-fogband{position:absolute;left:-30%;width:160%;height:34px;border-radius:20px;background:rgba(255,255,255,.16);
+  filter:blur(2px);animation:wxFog 12s ease-in-out infinite;}
+.wx-fogband.f1{top:24%;animation-duration:13s;}
+.wx-fogband.f2{top:48%;animation-duration:17s;animation-delay:-4s;}
+.wx-fogband.f3{top:70%;animation-duration:15s;animation-delay:-9s;}
+@keyframes wxFog{0%,100%{transform:translateX(0);opacity:.5}50%{transform:translateX(6%);opacity:.85}}
+.wx-info{text-align:center;}
+.wx-temp{font-family:'Anton',sans-serif;font-size:clamp(56px,16vw,84px);line-height:1;color:var(--txt);}
+.wx-desc{font-size:16px;font-weight:700;color:var(--muted);text-transform:capitalize;margin-top:4px;}
+.wx-city{font-family:'Kaushan Script',cursive;color:var(--brand-accent);font-size:18px;margin-top:8px;}
+
 </style>
 <!-- Supabase Client -->
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
@@ -3965,13 +4003,13 @@ const radSVG=`<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 52"><line 
 const pedSVG=(c)=>`<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 44 44"><path d="M7 41 a15 14 0 0 1 30 0 z" fill="${c}"/><ellipse cx="9" cy="30" rx="3.2" ry="5.5" fill="${c}" opacity="0.9"/><ellipse cx="35" cy="30" rx="3.2" ry="5.5" fill="${c}" opacity="0.9"/><circle cx="22" cy="15" r="9.5" fill="${c}"/><circle cx="22" cy="15" r="9.5" fill="#ffffff" opacity="0.12"/><ellipse cx="18.5" cy="12" rx="2" ry="1.4" fill="#ffffff" opacity="0.25"/></svg>`;
 const poliSVG=`<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 44 44"><path d="M7 41 a15 14 0 0 1 30 0 z" fill="#27406e"/><circle cx="22" cy="15" r="9.5" fill="#2F4D8A"/><rect x="12" y="9" width="20" height="5" rx="2.5" fill="#16223f"/><rect x="30" y="18" width="10" height="4.5" rx="2.2" fill="#f3efe4"/></svg>`;
 const ROAD={
- kreuzung:`<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 400"><defs><filter id="sf" x="-5%" y="-5%" width="110%" height="110%"><feDropShadow dx="0" dy="2" stdDeviation="4" flood-color="rgba(0,0,0,0.25)"/></filter></defs><rect width="800" height="400" fill="#7a9c6b"/><rect x="0" y="140" width="800" height="120" fill="${ASPH}"/><rect x="325" y="0" width="150" height="400" fill="${ASPH}"/><rect x="0" y="138" width="800" height="2" fill="rgba(255,255,255,0.08)"/><rect x="0" y="260" width="800" height="2" fill="rgba(255,255,255,0.08)"/><rect x="323" y="0" width="2" height="400" fill="rgba(255,255,255,0.08)"/><rect x="475" y="0" width="2" height="400" fill="rgba(255,255,255,0.08)"/><rect x="0" y="198" width="310" height="4" rx="2" fill="rgba(255,255,255,0.15)"/><rect x="490" y="198" width="310" height="4" rx="2" fill="rgba(255,255,255,0.15)"/><rect x="398" y="0" width="4" height="128" rx="2" fill="rgba(255,255,255,0.15)"/><rect x="398" y="272" width="4" height="128" rx="2" fill="rgba(255,255,255,0.15)"/></svg>`,
- kreuzung_30:`<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 400"><rect width="800" height="400" fill="#7a9c6b"/><rect x="0" y="140" width="800" height="120" fill="${ASPH}"/><rect x="325" y="0" width="150" height="400" fill="${ASPH}"/><rect x="0" y="138" width="800" height="2" fill="rgba(255,255,255,0.08)"/><rect x="0" y="260" width="800" height="2" fill="rgba(255,255,255,0.08)"/><rect x="323" y="0" width="2" height="400" fill="rgba(255,255,255,0.08)"/><rect x="475" y="0" width="2" height="400" fill="rgba(255,255,255,0.08)"/></svg>`,
- t_einmuendung:`<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 220 150"><rect x="0" y="0" width="220" height="76" fill="${ASPH}"/><rect x="72" y="68" width="76" height="82" fill="${ASPH}"/><g stroke="${LANE}" stroke-width="2.5"><line x1="0" y1="76" x2="72" y2="76"/><line x1="148" y1="76" x2="220" y2="76"/><line x1="72" y1="76" x2="72" y2="150"/><line x1="148" y1="76" x2="148" y2="150"/></g><g stroke="${LANE}" stroke-width="3" stroke-dasharray="11 10"><line x1="0" y1="38" x2="220" y2="38"/><line x1="110" y1="86" x2="110" y2="150"/></g></svg>`,
- kreisverkehr:`<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 320"><rect x="365" y="0" width="70" height="320" fill="${ASPH}"/><rect x="0" y="125" width="800" height="70" fill="${ASPH}"/><circle cx="400" cy="160" r="119" fill="${ASPH}"/><circle cx="400" cy="160" r="93" fill="none" stroke="${LANE}" stroke-width="3" stroke-dasharray="11 10"/><circle cx="400" cy="160" r="67" fill="#9ccf8e" stroke="${LANE}" stroke-width="3"/></svg>`,
- gerade:`<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 90 220"><rect x="7" y="0" width="76" height="220" fill="${ASPH}"/><g stroke="${LANE}" stroke-width="2.5"><line x1="7" y1="0" x2="7" y2="220"/><line x1="83" y1="0" x2="83" y2="220"/></g><line x1="45" y1="0" x2="45" y2="220" stroke="${LANE}" stroke-width="3" stroke-dasharray="13 12"/></svg>`,
- kurve:`<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 160 160"><path d="M80 0 V80 H160" fill="none" stroke="${ASPH}" stroke-width="76" stroke-linejoin="round" stroke-linecap="butt"/><path d="M80 0 V80 H160" fill="none" stroke="${LANE}" stroke-width="3" stroke-dasharray="12 11"/></svg>`,
- zebra:`<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 120 70"><rect x="0" y="14" width="120" height="42" fill="${ASPH}"/><g fill="${LANE}"><rect x="8" y="16" width="10" height="38"/><rect x="26" y="16" width="10" height="38"/><rect x="44" y="16" width="10" height="38"/><rect x="62" y="16" width="10" height="38"/><rect x="80" y="16" width="10" height="38"/><rect x="98" y="16" width="10" height="38"/></g></svg>`
+ kreuzung:`<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 400"><rect width="800" height="400" fill="#7a9c6b"/><rect x="0" y="140" width="800" height="120" fill="${ASPH}"/><rect x="325" y="0" width="150" height="400" fill="${ASPH}"/><path d="M325,140 L325,100 A40,40 0 0,0 285,140 Z" fill="${ASPH}"/><path d="M475,140 L475,100 A40,40 0 0,1 515,140 Z" fill="${ASPH}"/><path d="M325,260 L325,300 A40,40 0 0,1 285,260 Z" fill="${ASPH}"/><path d="M475,260 L475,300 A40,40 0 0,0 515,260 Z" fill="${ASPH}"/></svg>`,
+ t_einmuendung:`<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 220 150"><rect x="0" y="0" width="220" height="76" fill="${ASPH}"/><rect x="72" y="68" width="76" height="82" fill="${ASPH}"/><path d="M72,76 L72,98 A22,22 0 0,1 50,76 Z" fill="${ASPH}"/><path d="M148,76 L148,98 A22,22 0 0,0 170,76 Z" fill="${ASPH}"/></svg>`,
+ kreisverkehr:`<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 320"><rect x="365" y="0" width="70" height="320" fill="${ASPH}"/><rect x="0" y="125" width="800" height="70" fill="${ASPH}"/><circle cx="400" cy="160" r="119" fill="${ASPH}"/><circle cx="400" cy="160" r="67" fill="#9ccf8e"/></svg>`,
+ gerade:`<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 90 220"><rect x="7" y="0" width="76" height="220" fill="${ASPH}"/></svg>`,
+ kurve:`<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 160 160"><path d="M80 0 V80 H160" fill="none" stroke="${ASPH}" stroke-width="76" stroke-linejoin="round" stroke-linecap="butt"/></svg>`,
+ zebra:`<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 120 70"><g fill="${LANE}"><rect x="8" y="16" width="10" height="38"/><rect x="26" y="16" width="10" height="38"/><rect x="44" y="16" width="10" height="38"/><rect x="62" y="16" width="10" height="38"/><rect x="80" y="16" width="10" height="38"/><rect x="98" y="16" width="10" height="38"/></g></svg>`,
+ mittellinie:`<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 90 220"><line x1="45" y1="0" x2="45" y2="220" stroke="${LANE}" stroke-width="3" stroke-dasharray="13 12"/></svg>`
 };
 const SIGN={
  vz205:`<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 52 52"><polygon points="4,7 48,7 26,49" fill="#ffffff" stroke="#d8231a" stroke-width="6" stroke-linejoin="round"/></svg>`,
@@ -3999,15 +4037,15 @@ const EXTRA={
  haus_mittel:`<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><polygon points="50,10 85,40 85,90 15,90 15,40" fill="#cd853f" stroke="#654321" stroke-width="2"/><polygon points="50,10 85,40 85,40 50,10" fill="#b8860b"/><rect x="25" y="50" width="14" height="16" fill="#87ceeb" stroke="#333" stroke-width="1"/><rect x="61" y="50" width="14" height="16" fill="#87ceeb" stroke="#333" stroke-width="1"/><rect x="42" y="72" width="16" height="18" fill="#8b4513" stroke="#333" stroke-width="1"/></svg>`,
  baum:`<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 40 60"><rect x="16" y="40" width="8" height="20" fill="#8b4513"/><circle cx="20" cy="25" r="15" fill="#228b22"/><circle cx="12" cy="20" r="10" fill="#32cd32"/><circle cx="28" cy="20" r="10" fill="#32cd32"/></svg>`
 };
-const OBJ_CATS=[{key:"strassen",label:"Straßen"},{key:"fahrzeuge",label:"Fahrzeuge"},{key:"personen",label:"Personen"},{key:"schilder",label:"Schilder"},{key:"ampeln",label:"Ampeln"},{key:"umgebung",label:"Umgebung"}];
+const OBJ_CATS=[{key:"strassen",label:"Straßen"},{key:"markierungen",label:"Fahrbahnmarkierungen"},{key:"fahrzeuge",label:"Fahrzeuge"},{key:"personen",label:"Personen"},{key:"schilder",label:"Schilder"},{key:"ampeln",label:"Ampeln"},{key:"umgebung",label:"Umgebung"}];
 const OBJ=[
  {type:"kreuzung",cat:"strassen",label:"Kreuzung",kind:"road",layer:0,w:800,h:320,svg:ROAD.kreuzung},
- {type:"kreuzung_30",cat:"strassen",label:"Kreuzung (ohne Markierung)",kind:"road",layer:0,w:800,h:320,svg:ROAD.kreuzung_30},
  {type:"t_einmuendung",cat:"strassen",label:"T-Einmündung",kind:"road",layer:0,w:200,h:136,svg:ROAD.t_einmuendung},
  {type:"kreisverkehr",cat:"strassen",label:"Kreisverkehr",kind:"road",layer:0,w:800,h:320,svg:ROAD.kreisverkehr},
  {type:"gerade",cat:"strassen",label:"Gerade",kind:"road",layer:0,w:80,h:200,svg:ROAD.gerade},
  {type:"kurve",cat:"strassen",label:"Kurve",kind:"road",layer:0,w:150,h:150,svg:ROAD.kurve},
- {type:"zebra",cat:"strassen",label:"Zebrastreifen",kind:"road",layer:1,w:120,h:70,svg:ROAD.zebra},
+ {type:"zebra",cat:"markierungen",label:"Zebrastreifen",kind:"road",layer:1,w:120,h:70,svg:ROAD.zebra},
+ {type:"mittellinie",cat:"markierungen",label:"Mittellinie",kind:"road",layer:1,w:80,h:200,svg:ROAD.mittellinie},
  {type:"auto_o",cat:"fahrzeuge",label:"Dein Auto",kind:"vehicle",layer:3,w:40,h:76,svg:carTop("#E8451F")},
  {type:"auto_b",cat:"fahrzeuge",label:"Auto blau",kind:"vehicle",layer:3,w:40,h:76,svg:carTop("#2F7DD1")},
  {type:"auto_g",cat:"fahrzeuge",label:"Auto grau",kind:"vehicle",layer:3,w:40,h:76,svg:carTop("#9aa0a6")},
@@ -6507,12 +6545,57 @@ function weatherEmoji(icon){
   const m={"01":"☀️","02":"⛅","03":"☁️","04":"☁️","09":"🌧️","10":"🌦️","11":"⛈️","13":"❄️","50":"🌫️"};
   return m[(icon||"").slice(0,2)]||"🌤️";
 }
+function weatherCategory(icon){
+  const p=(icon||"").slice(0,2);
+  if(p==="01")return "sun";
+  if(p==="09"||p==="10")return "rain";
+  if(p==="11")return "storm";
+  if(p==="13")return "snow";
+  if(p==="50")return "fog";
+  return "clouds";
+}
 function weatherWidgetHTML(w){
   if(!w)return "";
-  return `<div class="weather-widget" style="display:flex;align-items:center;gap:10px;background:var(--surface);border:1px solid var(--line);border-radius:14px;padding:12px 16px;margin-top:10px;animation:cardIn .5s var(--ease) both;">
+  return `<div class="weather-widget" id="weatherWidgetBtn" style="display:flex;align-items:center;gap:10px;background:var(--surface);border:1px solid var(--line);border-radius:14px;padding:12px 16px;margin-top:10px;animation:cardIn .5s var(--ease) both;">
     <span style="font-size:26px;">${weatherEmoji(w.icon)}</span>
     <div><div style="font-weight:800;font-size:16px;">${w.temp}°C</div><div style="font-size:12px;color:var(--muted);text-transform:capitalize;">${esc(w.desc)}</div></div>
   </div>`;
+}
+function bindWeatherWidget(w){
+  const b=$("#weatherWidgetBtn"); if(b)b.addEventListener("click",()=>routeWetter(w));
+}
+/* Großer animierter Wetter-Screen — Phase 3 Design-Umbau. Kategorien: sun/clouds/rain/storm/snow/fog.
+   Bewusst ohne Personen-Illustration, nur Sonne/Wolken/Regen/Schnee/Nebel/Blitz-Deko. */
+function routeWetter(w){
+  ensureDB();
+  $("#tbTitle").textContent="Wetter"; setFab(false); view.scrollTop=0;
+  if(!w){ toast("Keine Wetterdaten verfügbar"); routeDashboard(); return; }
+  const cat=weatherCategory(w.icon);
+  const cityLabel=((DB.weatherCfg&&DB.weatherCfg.city)||"Offenbach,DE").split(",")[0];
+  let deco="";
+  if(cat==="sun"){
+    deco=`<div class="wx-sun">${Array.from({length:8}).map((_,i)=>`<div class="wx-ray" style="transform:rotate(${i*45}deg) translate(0,-50px)"></div>`).join("")}<div class="wx-sun-core"></div></div>`;
+  } else if(cat==="clouds"){
+    deco=`<div class="wx-cloud c1"></div><div class="wx-cloud c2"></div><div class="wx-cloud c3"></div>`;
+  } else if(cat==="rain"){
+    deco=`<div class="wx-cloud c1"></div><div class="wx-cloud c2"></div>`+Array.from({length:14}).map((_,i)=>`<div class="wx-drop" style="left:${(i*7+3)%100}%;animation-delay:${(i%5)*.18}s"></div>`).join("");
+  } else if(cat==="storm"){
+    deco=`<div class="wx-cloud c1 dark"></div><div class="wx-cloud c2 dark"></div><div class="wx-bolt"></div>`+Array.from({length:10}).map((_,i)=>`<div class="wx-drop" style="left:${(i*9+4)%100}%;animation-delay:${(i%4)*.22}s"></div>`).join("");
+  } else if(cat==="snow"){
+    deco=`<div class="wx-cloud c1"></div><div class="wx-cloud c2"></div>`+Array.from({length:16}).map((_,i)=>`<div class="wx-flake" style="left:${(i*6+2)%100}%;animation-delay:${(i%6)*.4}s;animation-duration:${5+(i%4)}s">❄</div>`).join("");
+  } else if(cat==="fog"){
+    deco=`<div class="wx-fogband f1"></div><div class="wx-fogband f2"></div><div class="wx-fogband f3"></div>`;
+  }
+  view.innerHTML=`<div class="view-inner fade-up wx-screen">
+    <div class="back-row"><button class="back-btn" id="backBtn">${ICN.back} Start</button></div>
+    <div class="wx-stage">${deco}</div>
+    <div class="wx-info">
+      <div class="wx-temp">${w.temp}°</div>
+      <div class="wx-desc">${esc(w.desc)}</div>
+      <div class="wx-city">${esc(cityLabel)}</div>
+    </div>
+  </div>`;
+  $("#backBtn").addEventListener("click",routeDashboard);
 }
 function routeDashboard(){
   ensureDB();
@@ -6553,7 +6636,7 @@ function routeDashboard(){
   bindFC();
   bindBackupBanner();
   if(DB.weatherCfg&&DB.weatherCfg.apiKey){
-    fetchWeather().then(w=>{ const slot=$("#weatherSlot"); if(slot&&w)slot.innerHTML=weatherWidgetHTML(w); });
+    fetchWeather().then(w=>{ const slot=$("#weatherSlot"); if(slot&&w){slot.innerHTML=weatherWidgetHTML(w);bindWeatherWidget(w);} });
   }
 }
 // Nächste Prüfung-Card: Student, Datum, geplante Fahrstunden bis dahin
@@ -6624,11 +6707,12 @@ function verdienstModulHTML(){
   const lockBtn=DB.verdienstPin?`<button onclick="sessionStorage.removeItem('vd_unlocked');routeStats(_curStatPeriod);" style="background:none;border:none;font-size:18px;cursor:pointer;opacity:.6;padding:4px;" title="Verdienst sperren">🔒</button>`:"";
   return `<div style="position:relative;">${lockBtn?`<div style="position:absolute;top:8px;right:8px;z-index:2;">${lockBtn}</div>`:""}${_verdienstModulHTMLContent()}</div>`;
 }
+let _vdJustUnlocked=false;
 function unlockVerdienst(){
   const pin=DB.verdienstPin||"";
   if(!pin){sessionStorage.setItem("vd_unlocked","1");routeStats(_curStatPeriod);return;}
   const entered=prompt("PIN eingeben:");
-  if(entered===pin){sessionStorage.setItem("vd_unlocked","1");routeStats(_curStatPeriod);}
+  if(entered===pin){sessionStorage.setItem("vd_unlocked","1");_vdJustUnlocked=true;routeStats(_curStatPeriod);}
   else if(entered!==null)toast("Falscher PIN");
 }
 function _verdienstModulHTMLContent(){
@@ -6703,8 +6787,9 @@ function maxISO(a,b){ return a>b?a:b; }
 
 function routeStats(period){
   ensureDB(); period=period||'cur'; _curStatPeriod=period;
-  // Beim Aufrufen der Statistik: Verdienst-PIN zurücksetzen (immer neu entsperren)
-  if(DB.verdienstPin) sessionStorage.removeItem("vd_unlocked");
+  // Beim Aufrufen der Statistik: Verdienst-PIN zurücksetzen (immer neu entsperren) —
+  // außer wir kommen gerade selbst aus einer erfolgreichen Entsperrung (sonst sperrt sich sofort wieder zu).
+  if(DB.verdienstPin){ if(_vdJustUnlocked){ _vdJustUnlocked=false; } else { sessionStorage.removeItem("vd_unlocked"); } }
   $("#tbTitle").textContent="Statistik"; setFab(false); view.scrollTop=0;
   const ex=examsIn(period);
   const q=quoteOf(ex), fq=firstAttemptQuote(ex), avgA=avgAttempts(ex), eq=eingriffQuote(ex);
