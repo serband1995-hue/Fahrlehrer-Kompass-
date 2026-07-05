@@ -3109,16 +3109,7 @@ function routeDetail(id){
       <div class="vb-body"><div class="vb-name">Vortest-Termin buchen</div><div class="vb-sub">Öffnet den Boost-Kalender</div></div>
       <div class="vb-arr">›</div>
     </a>`:""}
-    ${lagebildCard(s)}
     ${coachCard(s)}
-    <div class="tiles">
-      ${tileHTML("note","Notizen","Frei notieren",ICN.note)}
-    </div>
-    <button class="vortest-big" id="pdfGesamtBtn" style="background:#3a4a40;margin-top:14px;width:100%;border:none;">
-      <div class="vb-ic">📄</div>
-      <div class="vb-body"><div class="vb-name">Gesamtakte als PDF</div><div class="vb-sub">Profil, Plan, Fahrstunden, Prüfungen — alles</div></div>
-      <div class="vb-arr">›</div>
-    </button>
     <div class="btn-row" style="margin-top:18px;">
       <button class="btn btn-ghost" id="editBtn">Bearbeiten</button>
       <button class="btn btn-danger" id="delBtn">Löschen</button>
@@ -3128,7 +3119,6 @@ function routeDetail(id){
   if(done)setTimeout(()=>celebrate(),420);
   $("#backBtn").addEventListener("click",routeHome);
   $("#editBtn").addEventListener("click",()=>formView(s));
-  const _pdfG=$("#pdfGesamtBtn"); if(_pdfG)_pdfG.addEventListener("click",()=>printGesamtakte(s));
   $("#delBtn").addEventListener("click",()=>{
     if(confirm("Diesen Schüler wirklich löschen? Das kann nicht rückgängig gemacht werden.")){
       DB.students=DB.students.filter(x=>x.id!==id);save();toast("Schüler gelöscht");routeHome();}});
@@ -3170,8 +3160,6 @@ function routeDetail(id){
   }));
   const shareBtn=$("#shareStandBtn");
   if(shareBtn) shareBtn.addEventListener("click",()=>shareStandWhatsApp(s));
-  document.querySelectorAll(".tile").forEach(t=>t.addEventListener("click",()=>{
-    const k=t.dataset.tile;if(k==="note")routeNotes(id);}));
   bindExamReady(s,()=>routeDetail(id));
   const _rk=$("#riskEditBtn");if(_rk)_rk.addEventListener("click",()=>routeRisk(id));
 }
@@ -3182,11 +3170,26 @@ function routeHistorie(id){
   ensure(s);
   $("#tbTitle").textContent="Historie"; setFab(false); view.scrollTop=0;
   const list=histList(s);
+  const todayIso=todayISO();
+  const termine=(DB.lessons||[]).filter(l=>l.sid===s.id).sort((a,b)=>(a.date+a.von).localeCompare(b.date+b.von));
   let h=`<div class="view-inner view-read fade-up">
     <div class="back-row"><button class="back-btn" id="backBtn">${ICN.back} ${esc(s.name)}</button></div>
     <div class="sec-h" style="margin:4px 0 10px;">Histo<span class="o">rie</span></div>
     <p class="muted-p" style="font-size:13px;margin-bottom:16px;">Chronologie von ${esc(s.name)}. Wichtige Schritte werden automatisch festgehalten – eigene Notizen kannst du hier ergänzen.</p>
     <div class="hist-add"><input type="text" id="histInput" placeholder="Eigene Notiz hinzufügen …" maxlength="200"><button id="histAddBtn">+</button></div>`;
+  if(termine.length){
+    const artLab=l=>(CAL_ARTEN[l.art]||CAL_ARTEN.fahrstunde).lab;
+    h+=`<div class="acc open" data-acc="termine" style="margin-bottom:16px;">
+      <button class="acc-h"><span class="nr">·</span><span class="ti">Fahrstunden-Termine</span><span class="su">${termine.length} gesamt</span><span class="chev">${ICN.chev}</span></button>
+      <div class="acc-body"><div class="acc-inner">
+        <div class="htl">${termine.map(l=>{ const past=l.date<todayIso; const off=l.status&&l.status!=="geplant"; return `
+          <div class="htl-item" style="opacity:${past?'.5':'1'};">
+            <div class="htl-date">${isoDE(l.date)} · ${l.von}</div>
+            <div class="htl-text">${esc(artLab(l))}${off?` · ${esc(l.status)}`:""}${past?" · vergangen":" · geplant"}</div>
+          </div>`; }).join("")}</div>
+      </div></div>
+    </div>`;
+  }
   if(!list.length){
     h+=`<p class="muted-p" style="text-align:center;padding:24px 0;">Noch keine Einträge.</p>`;
   } else {
@@ -3209,6 +3212,7 @@ function routeHistorie(id){
   }
   h+=`</div>`; view.innerHTML=h;
   $("#backBtn").addEventListener("click",()=>routeDetail(id));
+  const termAcc=view.querySelector('[data-acc="termine"] > .acc-h'); if(termAcc)termAcc.addEventListener("click",()=>{ termAcc.closest(".acc").classList.toggle("open"); });
   const addBtn=$("#histAddBtn"), inp=$("#histInput");
   const doAdd=()=>{ const v=(inp.value||"").trim(); if(!v)return; logHist(s,"note",v,{manual:true}); save(); routeHistorie(id); };
   if(addBtn)addBtn.addEventListener("click",doAdd);
@@ -4775,11 +4779,33 @@ function openAssignSlotSheet(date,von,bis,art){
   openSheet(`<div class="sheet-h">Termin vergeben</div>
     <p class="muted-p" style="font-size:13px;margin:-4px 0 14px;">${deWeekdayLong(date)}, ${parseISO(date).getDate()}. ${deMonth(parseISO(date).getMonth())} · ${von}–${bis} · ${artLab}</p>
     <div class="field"><input type="text" id="asSearch" placeholder="Schüler suchen …" autocomplete="off"></div>
+    <button class="es-act primary" id="asNewStudent" style="margin-bottom:10px;">+ Neuer Schüler</button>
     <div class="as-list" id="asList">${cand.map(s=>`<button class="as-item" data-sid="${s.id}"><span class="as-nm">${esc(s.name)}</span><span class="as-cls">${esc(s.form||'')}</span></button>`).join("")}</div>`);
   const render=(q)=>{ const list=cand.filter(s=>matchStudent(s.name,q)); $("#asList").innerHTML=list.map(s=>`<button class="as-item" data-sid="${s.id}"><span class="as-nm">${esc(s.name)}</span><span class="as-cls">${esc(s.form||'')}</span></button>`).join("")||'<p class="muted-p" style="font-size:13px;">Kein Treffer</p>'; bindAs(); };
   const bindAs=()=>{ document.querySelectorAll("#asList .as-item").forEach(b=>b.addEventListener("click",()=>{ addLesson({date,von,bis,art,sid:b.dataset.sid}); closeSheet(); toast("Termin vergeben ✓"); routeKalender(); })); };
   $("#asSearch").addEventListener("input",e=>render(e.target.value));
+  $("#asNewStudent").addEventListener("click",()=>openQuickNewStudentSheet(newSid=>{ addLesson({date,von,bis,art,sid:newSid}); closeSheet(); toast("Schüler angelegt & Termin vergeben ✓"); routeKalender(); }));
   bindAs();
+}
+/* Schlanke Inline-Anlage eines neuen Schülers direkt aus einem Sheet heraus (z.B. Kalender-Terminvergabe),
+   ohne die aktuelle Ansicht zu verlassen. Ruft onCreated(newStudentId) nach dem Speichern auf. */
+function openQuickNewStudentSheet(onCreated){
+  openSheet(`<div class="sheet-h">Neuer Schüler</div>
+    <div class="field"><label>Vollständiger Name</label><input id="qnsName" type="text" placeholder="Vor- und Nachname" autocomplete="off" autofocus></div>
+    <div class="field"><label>Telefonnummer <span style="font-size:11.5px;font-weight:600;color:var(--faint);background:var(--surface-2);padding:2px 8px;border-radius:6px;">optional</span></label>
+      <input id="qnsTel" type="tel" placeholder="z.B. 0151 23456789" autocomplete="off"></div>
+    <div class="btn-row"><button class="btn btn-ghost" id="qnsCancel" style="flex:0;padding:13px 18px;">Abbrechen</button><button class="btn btn-primary" id="qnsSave">Anlegen</button></div>`);
+  $("#qnsCancel").addEventListener("click",closeSheet);
+  $("#qnsSave").addEventListener("click",()=>{
+    const name=$("#qnsName").value.trim();
+    if(!name){toast("Bitte einen Namen eingeben");$("#qnsName").focus();return;}
+    ensureAusbildungsplaene();
+    const chosenPlan=DB.ausbildungsplaene.find(p=>p.standard)||DB.ausbildungsplaene[0];
+    const nst={id:uid(),created:Date.now(),notiz:"",bogen:null,plan:newPlan(),profil:null,form:"B",beginn:"",
+      telefon:$("#qnsTel").value.trim(),planId:chosenPlan.id,planSnapshot:JSON.parse(JSON.stringify(chosenPlan.stufen)),name};
+    DB.students.push(nst); save();
+    onCreated(nst.id);
+  });
 }
 
 /* ===================== TO-DOS ===================== */
@@ -5458,7 +5484,12 @@ function removeSonderFromKalender(s,grp,idx){
   if(DB.lessons.length!==before)save();
 }
 function updateLesson(id,patch){ const l=(DB.lessons||[]).find(x=>x.id===id); if(l){ Object.assign(l,patch); save(); } return l; }
-function deleteLesson(id){ const l=(DB.lessons||[]).find(x=>x.id===id); if(l&&l.srcSonder){ const [sid,grp,idx]=l.srcSonder.split(":"); const s=DB.students.find(x=>x.id===sid); if(s&&s.plan&&s.plan.sonder&&s.plan.sonder[grp])s.plan.sonder[grp][+idx]=null; } DB.lessons=(DB.lessons||[]).filter(x=>x.id!==id); save(); }
+function deleteLesson(id){
+  const l=(DB.lessons||[]).find(x=>x.id===id); if(!l)return;
+  if(l.srcSonder){ const [sid,grp,idx]=l.srcSonder.split(":"); const s=DB.students.find(x=>x.id===sid); if(s&&s.plan&&s.plan.sonder&&s.plan.sonder[grp])s.plan.sonder[grp][+idx]=null; }
+  if(l.sid){ const artLab=(CAL_ARTEN[l.art]||CAL_ARTEN.fahrstunde).lab; logHist(l.sid,"del",`${artLab} gelöscht · ${isoDE(l.date)} ${l.von}`); }
+  DB.lessons=(DB.lessons||[]).filter(x=>x.id!==id); save();
+}
 // Nächster anstehender Schüler (heute/zukünftig, erstes geplantes Event)
 function nextLessonEvent(){
   const today=todayISO(); const now=new Date(); const nowMin=now.getHours()*60+now.getMinutes();
@@ -6247,7 +6278,7 @@ function openFCMenu(id){
     <p class="muted-p" style="font-size:12.5px;margin:-6px 0 14px;color:var(--faint);">Standard ist „2 FC erhalten“ – hier nur Ausnahmen vermerken.</p>
     <div class="es-actions">${acts}</div>`);
   document.querySelectorAll("[data-fcset]").forEach(b=>b.addEventListener("click",()=>{ closeSheet(); setFC(id,b.dataset.fcset); }));
-  document.querySelectorAll("[data-fcdel]").forEach(b=>b.addEventListener("click",()=>{ const sid=l.sid; deleteLesson(b.dataset.fcdel); if(sid)logHist(sid,"del","Fahrstunde gelöscht (nicht stattgefunden)"); save(); closeSheet(); toast("Termin gelöscht"); refreshCurrentView(); }));
+  document.querySelectorAll("[data-fcdel]").forEach(b=>b.addEventListener("click",()=>{ deleteLesson(b.dataset.fcdel); closeSheet(); toast("Termin gelöscht"); refreshCurrentView(); }));
 }
 
 /* Übersicht „FC vergessen“ – welche Schüler, wie oft, wie viel Geld entgeht */
