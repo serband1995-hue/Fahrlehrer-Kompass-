@@ -4593,10 +4593,12 @@ function openAddLessonSheet(art){
   // Schritt 1: Schüler wählen
   openSheet(`<div class="sheet-h">${lab} · mit wem?</div>
     <div class="field"><input type="text" id="alSearch" placeholder="Schüler suchen …" autocomplete="off"></div>
+    <button class="es-act primary" id="alNewStudent" style="margin-bottom:10px;">+ Neuer Schüler</button>
     <div class="as-list" id="alList">${cand.map(s=>`<button class="as-item" data-sid="${s.id}"><span class="as-nm">${esc(s.name)}</span><span class="as-cls">${esc(s.form||'')}</span></button>`).join("")}</div>`);
   const renderList=(q)=>{ const list=cand.filter(s=>matchStudent(s.name,q)); $("#alList").innerHTML=list.map(s=>`<button class="as-item" data-sid="${s.id}"><span class="as-nm">${esc(s.name)}</span><span class="as-cls">${esc(s.form||'')}</span></button>`).join("")||'<p class="muted-p" style="font-size:13px;">Kein Treffer</p>'; bindList(); };
   const bindList=()=>{ document.querySelectorAll("#alList .as-item").forEach(b=>b.addEventListener("click",()=>step2(b.dataset.sid))); };
   $("#alSearch").addEventListener("input",e=>renderList(e.target.value));
+  $("#alNewStudent").addEventListener("click",()=>openQuickNewStudentSheet(newSid=>step2(newSid)));
   bindList();
   // Schritt 2: Datum, Zeit, Dauer, Notiz
   function step2(sid){
