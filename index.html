@@ -3202,7 +3202,7 @@ function routeHistorie(id){
       if(typeof e.eur==="number"&&e.eur!==0){ const plus=e.eur>0; eurHtml=`<div class="htl-eur ${plus?'plus':'minus'}">${plus?'+':'−'}${eurFmt(Math.abs(e.eur))}</div>`; }
       const tag=histIcon(e.typ); const tagHtml=tag?`<span style="opacity:.6;font-weight:800;">${tag} · </span>`:"";
       h+=`<div class="htl-item ${cls}">
-        ${e.manual?`<button class="htl-del" data-hdel="${e.t}" aria-label="Notiz löschen">✕</button>`:""}
+        <button class="htl-del" data-hdel="${e.t}" aria-label="Eintrag löschen">✕</button>
         <div class="htl-date">${dstr}${time?` · ${time}`:""}</div>
         <div class="htl-text">${tagHtml}${esc(e.text)}</div>
         ${eurHtml}
@@ -3219,7 +3219,12 @@ function routeHistorie(id){
   if(inp)inp.addEventListener("keydown",e=>{ if(e.key==="Enter")doAdd(); });
   document.querySelectorAll("[data-hdel]").forEach(b=>b.addEventListener("click",()=>{
     const t=b.dataset.hdel;
-    if(Array.isArray(s.hist)){ const i=s.hist.findIndex(x=>x.t===t&&x.manual); if(i>=0){ s.hist.splice(i,1); save(); routeHistorie(id); } }
+    if(!Array.isArray(s.hist))return;
+    const i=s.hist.findIndex(x=>x.t===t);
+    if(i<0)return;
+    const entry=s.hist[i];
+    if(!entry.manual&&!confirm("Diesen automatischen Eintrag löschen? Das kann nicht rückgängig gemacht werden."))return;
+    s.hist.splice(i,1); save(); routeHistorie(id);
   }));
 }
 function tileHTML(key,name,sub,icon){
@@ -5489,7 +5494,6 @@ function updateLesson(id,patch){ const l=(DB.lessons||[]).find(x=>x.id===id); if
 function deleteLesson(id){
   const l=(DB.lessons||[]).find(x=>x.id===id); if(!l)return;
   if(l.srcSonder){ const [sid,grp,idx]=l.srcSonder.split(":"); const s=DB.students.find(x=>x.id===sid); if(s&&s.plan&&s.plan.sonder&&s.plan.sonder[grp])s.plan.sonder[grp][+idx]=null; }
-  if(l.sid){ const artLab=(CAL_ARTEN[l.art]||CAL_ARTEN.fahrstunde).lab; logHist(l.sid,"del",`${artLab} gelöscht · ${isoDE(l.date)} ${l.von}`); }
   DB.lessons=(DB.lessons||[]).filter(x=>x.id!==id); save();
 }
 // Nächster anstehender Schüler (heute/zukünftig, erstes geplantes Event)
