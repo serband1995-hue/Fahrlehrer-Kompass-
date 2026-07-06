@@ -4597,7 +4597,7 @@ function formView(existing){
       const chosenPlan=DB.ausbildungsplaene.find(p=>p.id===pick.planId)||DB.ausbildungsplaene.find(p=>p.standard)||DB.ausbildungsplaene[0];
       const nst={id:uid(),created:Date.now(),notiz:"",bogen:null,plan:newPlan(),profil:data.profil||null,
         planId:chosenPlan.id,planSnapshot:JSON.parse(JSON.stringify(chosenPlan.stufen)),...data};
-      DB.students.push(nst);save();routeBogen(nst.id,true);}
+      DB.students.push(nst);save();openBogenChoiceSheet(nst.id,nst.name,()=>routeDetail(nst.id));}
   });
 }
 function setVerdienstPin(){
@@ -4796,6 +4796,25 @@ function openBlockSheet(){
 }
 
 /* Fahrstunde/Theorie/Nacht hinzufügen */
+/* Gemeinsame Fahrzeug-Auswahl — von JEDEM Ort benutzt, der ein Fahrzeug braucht (keine eigenen Kopien mehr).
+   onPick(fahrzeugNameOderNull) wird nach der Wahl aufgerufen. Ohne konfigurierte Fahrzeuge: sofort null. */
+function openVehiclePicker(ctx,onPick){
+  ctx=ctx||{};
+  const fzList=DB.workCfg.fahrzeuge||[];
+  if(!fzList.length){ onPick(null); return; }
+  const fzSchalt=fzList.filter(f=>f.typ==="schalt");
+  const fzAuto=fzList.filter(f=>f.typ==="automatik");
+  const fzGroup=(grp,label,col)=>grp.length?`<div style="font-size:11px;font-weight:700;letter-spacing:.08em;color:${col};padding:10px 4px 4px;text-transform:uppercase;">${label}</div>${grp.map(fz=>`<button class="es-act fz-opt" data-fzid="${esc(fz.id)}" style="border-left:3px solid ${col};">${esc(fz.name)}</button>`).join("")}`:"";
+  openSheet(`<div class="sheet-h">Fahrzeug${ctx.title?` · ${esc(ctx.title)}`:""}</div>
+    ${ctx.sub?`<p class="muted-p" style="font-size:13px;margin:-4px 0 6px;">${esc(ctx.sub)}</p>`:""}
+    <div class="es-actions">
+      ${fzGroup(fzSchalt,`<span class="ic" style="font-size:11px;">${ICN.gear}</span> Schalter`,"#c4607d")}
+      ${fzGroup(fzAuto,"⚡ Automatik","#4a8b45")}
+      <button class="es-act" id="fzSkip" style="margin-top:8px;">Kein Fahrzeug (überspringen)</button>
+    </div>`);
+  document.querySelectorAll(".fz-opt").forEach(b=>b.addEventListener("click",()=>{ const fz=fzList.find(f=>f.id===b.dataset.fzid); onPick(fz?fz.name:null); }));
+  $("#fzSkip").addEventListener("click",()=>onPick(null));
+}
 function openAddLessonSheet(art){
   ensureDB();
   const cand=activeStudents().sort((a,b)=>a.name.localeCompare(b.name,'de'));
@@ -4831,33 +4850,14 @@ function openAddLessonSheet(art){
     $("#alSave").addEventListener("click",()=>{
       const date=$("#alDate").value, von=$("#alTime").value, note=$("#alNote").value.trim();
       if(!date||!von){toast("Datum & Zeit wählen");return;}
-      // Fahrzeug-Auswahl (Schritt 3)
-      const fzList=DB.workCfg.fahrzeuge||[];
-      const fzRelevant=["fahrstunde","sonder","nacht","schalt"].indexOf(art)>=0;
-      if(fzRelevant&&fzList.length){
-        const fzSchalt=fzList.filter(f=>f.typ==="schalt");
-        const fzAuto=fzList.filter(f=>f.typ==="automatik");
-        const fzGroup=(grp,label,col)=>grp.length?`<div style="font-size:11px;font-weight:700;letter-spacing:.08em;color:${col};padding:10px 4px 4px;text-transform:uppercase;">${label}</div>${grp.map(fz=>`<button class="es-act fz-opt" data-fzid="${esc(fz.id)}" style="border-left:3px solid ${col};">${esc(fz.name)}</button>`).join("")}`:"";
-        openSheet(`<div class="sheet-h">Fahrzeug · ${esc(st?st.name:"")}</div>
-          <p class="muted-p" style="font-size:13px;margin:-4px 0 6px;">${isoDE(date)} · ${von}</p>
-          <div class="es-actions">
-            ${fzGroup(fzSchalt,`<span class="ic" style="font-size:11px;">${ICN.gear}</span> Schalter`,"#c4607d")}
-            ${fzGroup(fzAuto,"⚡ Automatik","#4a8b45")}
-            <button class="es-act" id="fzSkip" style="margin-top:8px;">Kein Fahrzeug (überspringen)</button>
-          </div>`);
-        const doBook=(fzid)=>{
-          const fz=fzList.find(f=>f.id===fzid)||null;
-          if(isSchalt){ addLesson({date,von,bis:min2hm(hm2min(von)+15),art,sid,note,fahrzeug:fz?fz.name:null}); }
-          else { for(let i=0;i<dur;i++){ const v=min2hm(hm2min(von)+i*blockMin); addLesson({date,von:v,bis:min2hm(hm2min(v)+blockMin),art,sid,note:i===0?note:"",fahrzeug:fz?fz.name:null}); } }
-          closeSheet(); toast(lab+" eingetragen ✓"); routeKalender();
-        };
-        document.querySelectorAll(".fz-opt").forEach(b=>b.addEventListener("click",()=>doBook(b.dataset.fzid)));
-        $("#fzSkip").addEventListener("click",()=>doBook(null));
-      } else {
-        if(isSchalt){ addLesson({date,von,bis:min2hm(hm2min(von)+15),art,sid,note}); }
-        else { for(let i=0;i<dur;i++){ const v=min2hm(hm2min(von)+i*blockMin); addLesson({date,von:v,bis:min2hm(hm2min(v)+blockMin),art,sid,note:i===0?note:""}); } }
+      const doBook=(fzName)=>{
+        if(isSchalt){ addLesson({date,von,bis:min2hm(hm2min(von)+15),art,sid,note,fahrzeug:fzName}); }
+        else { for(let i=0;i<dur;i++){ const v=min2hm(hm2min(von)+i*blockMin); addLesson({date,von:v,bis:min2hm(hm2min(v)+blockMin),art,sid,note:i===0?note:"",fahrzeug:fzName}); } }
         closeSheet(); toast(lab+" eingetragen ✓"); routeKalender();
-      }
+      };
+      const fzRelevant=["fahrstunde","sonder","nacht","schalt"].indexOf(art)>=0;
+      if(fzRelevant) openVehiclePicker({title:st?st.name:"",sub:`${isoDE(date)} · ${von}`},doBook);
+      else doBook(null);
     });
   }
 }
@@ -5051,17 +5051,30 @@ function openEventEdit(id){
 /* Freien Slot an Schüler vergeben */
 function openAssignSlotSheet(date,von,bis,art){
   ensureDB();
+  let curArt=art||"fahrstunde";
   const cand=activeStudents().sort((a,b)=>a.name.localeCompare(b.name,'de'));
-  const artLab=(CAL_ARTEN[art]||CAL_ARTEN.fahrstunde).lab;
+  const artOpts=["fahrstunde","sonder","schalt"];
+  const artChips=artOpts.map(a=>`<button class="seg-i${a===curArt?' on':''}" data-art="${a}">${CAL_ARTEN[a].lab}</button>`).join("");
   openSheet(`<div class="sheet-h">Termin vergeben</div>
-    <p class="muted-p" style="font-size:13px;margin:-4px 0 14px;">${deWeekdayLong(date)}, ${parseISO(date).getDate()}. ${deMonth(parseISO(date).getMonth())} · ${von}–${bis} · ${artLab}</p>
+    <p class="muted-p" style="font-size:13px;margin:-4px 0 10px;">${deWeekdayLong(date)}, ${parseISO(date).getDate()}. ${deMonth(parseISO(date).getMonth())} · ${von}</p>
+    <div class="seg" style="margin-bottom:12px;">${artChips}</div>
     <div class="field"><input type="text" id="asSearch" placeholder="Schüler suchen …" autocomplete="off"></div>
     <button class="es-act primary" id="asNewStudent" style="margin-bottom:10px;">+ Neuer Schüler</button>
     <div class="as-list" id="asList">${cand.map(s=>`<button class="as-item" data-sid="${s.id}"><span class="as-nm">${esc(s.name)}</span><span class="as-cls">${esc(s.form||'')}</span></button>`).join("")}</div>`);
+  document.querySelectorAll(".seg-i[data-art]").forEach(b=>b.addEventListener("click",()=>{
+    curArt=b.dataset.art; document.querySelectorAll(".seg-i[data-art]").forEach(x=>x.classList.toggle("on",x===b));
+  }));
   const render=(q)=>{ const list=cand.filter(s=>matchStudent(s.name,q)); $("#asList").innerHTML=list.map(s=>`<button class="as-item" data-sid="${s.id}"><span class="as-nm">${esc(s.name)}</span><span class="as-cls">${esc(s.form||'')}</span></button>`).join("")||'<p class="muted-p" style="font-size:13px;">Kein Treffer</p>'; bindAs(); };
-  const bindAs=()=>{ document.querySelectorAll("#asList .as-item").forEach(b=>b.addEventListener("click",()=>{ addLesson({date,von,bis,art,sid:b.dataset.sid}); closeSheet(); toast("Termin vergeben ✓"); routeKalender(); })); };
+  const finishBooking=(sid)=>{
+    const effBis=curArt==="schalt"?min2hm(hm2min(von)+15):bis;
+    const fzRelevant=["fahrstunde","sonder","nacht","schalt"].indexOf(curArt)>=0;
+    const doBook=(fzName)=>{ addLesson({date,von,bis:effBis,art:curArt,sid,fahrzeug:fzName}); closeSheet(); toast("Termin vergeben ✓"); routeKalender(); };
+    if(fzRelevant) openVehiclePicker({sub:`${isoDE(date)} · ${von}`},doBook);
+    else doBook(null);
+  };
+  const bindAs=()=>{ document.querySelectorAll("#asList .as-item").forEach(b=>b.addEventListener("click",()=>finishBooking(b.dataset.sid))); };
   $("#asSearch").addEventListener("input",e=>render(e.target.value));
-  $("#asNewStudent").addEventListener("click",()=>openQuickNewStudentSheet(newSid=>{ addLesson({date,von,bis,art,sid:newSid}); closeSheet(); toast("Schüler angelegt & Termin vergeben ✓"); routeKalender(); }));
+  $("#asNewStudent").addEventListener("click",()=>openQuickNewStudentSheet(newSid=>finishBooking(newSid)));
   bindAs();
 }
 /* Schlanke Inline-Anlage eines neuen Schülers direkt aus einem Sheet heraus (z.B. Kalender-Terminvergabe),
@@ -5081,8 +5094,23 @@ function openQuickNewStudentSheet(onCreated){
     const nst={id:uid(),created:Date.now(),notiz:"",bogen:null,plan:newPlan(),profil:null,form:"B",beginn:"",
       telefon:$("#qnsTel").value.trim(),planId:chosenPlan.id,planSnapshot:JSON.parse(JSON.stringify(chosenPlan.stufen)),name};
     DB.students.push(nst); save();
-    onCreated(nst.id);
+    openBogenChoiceSheet(nst.id,nst.name,()=>onCreated(nst.id));
   });
+}
+/* Gemeinsame Fragebogen-Nachfrage — läuft NACH jeder Schüler-Neuanlage, egal von welcher Stelle aus,
+   damit das nie mehr an einem Ort gefragt wird und am anderen nicht. afterChoice() schließt die
+   eigentliche Aktion ab (z.B. den Termin, für den der Schüler gerade angelegt wurde). */
+function openBogenChoiceSheet(sid,name,afterChoice){
+  openSheet(`<div class="sheet-h">Fragebogen für ${esc(name)}?</div>
+    <p class="muted-p" style="font-size:13px;margin:-4px 0 14px;">Der Persönlichkeits-Bogen hilft dir, ${esc(name.split(" ")[0])} von Anfang an richtig einzuschätzen.</p>
+    <div class="btn-row" style="flex-direction:column;gap:8px;">
+      <button class="btn btn-primary" id="bgNow" style="width:100%;">Jetzt ausfüllen</button>
+      <button class="btn btn-ghost" id="bgLater" style="width:100%;">Später erinnern</button>
+      <button class="btn btn-ghost" id="bgSkip" style="width:100%;">Überspringen</button>
+    </div>`);
+  $("#bgNow").addEventListener("click",()=>{ afterChoice(); routeBogen(sid,true); });
+  $("#bgLater").addEventListener("click",()=>{ logHist(sid,"note","Fragebogen noch offen — später ausfüllen"); afterChoice(); });
+  $("#bgSkip").addEventListener("click",()=>{ afterChoice(); });
 }
 
 /* ===================== TO-DOS ===================== */
@@ -5745,7 +5773,7 @@ function syncSonderToKalender(s,grp,idx,iso){
   const ex=(DB.lessons||[]).find(l=>l.srcSonder===key);
   if(iso<todayISO()){
     // Historische/bereits absolvierte Sonderfahrt (z. B. Wechsler) -> kein automatischer Kalendereintrag
-    if(ex){ DB.lessons=(DB.lessons||[]).filter(l=>l.srcSonder!==key); save(); }
+    if(ex)deleteLesson(ex.id);
     return;
   }
   if(ex){ if(ex.date!==iso){ ex.date=iso; save(); } return; } // Datum aktualisieren falls geändert
@@ -5756,9 +5784,8 @@ function syncSonderToKalender(s,grp,idx,iso){
 }
 function removeSonderFromKalender(s,grp,idx){
   const key=s.id+":"+grp+":"+idx;
-  const before=(DB.lessons||[]).length;
-  DB.lessons=(DB.lessons||[]).filter(l=>l.srcSonder!==key);
-  if(DB.lessons.length!==before)save();
+  const ex=(DB.lessons||[]).find(l=>l.srcSonder===key);
+  if(ex)deleteLesson(ex.id);
 }
 function updateLesson(id,patch){ const l=(DB.lessons||[]).find(x=>x.id===id); if(l){ Object.assign(l,patch); save(); } return l; }
 function deleteLesson(id){
@@ -5818,36 +5845,8 @@ function ensureDB(){ let _ensureDirty=false; if(!Array.isArray(DB.exams))DB.exam
     DB.pruefer.sort((a,b)=>a.localeCompare(b,'de'));
     DB._prueferSeeded=true; _ensureDirty=true;
   }
-  // Reale Prüfung Aliah@Tiezel (eigener Stempel, greift auch nach früherem Seeding)
-  if(!DB._aliahTiezel){
-    const _aliah=DB.students.find(s=>s.name==="Aliah Diouf");
-    const _hasIt=DB.exams.some(e=>e.name==="Aliah Diouf"&&e.pruefer==="Michael Tiezel"&&e.date==="2026-06-19");
-    if(_aliah&&!_hasIt){
-      DB.exams.push({id:uid(),sid:_aliah.id,name:"Aliah Diouf",date:"2026-06-19",result:"pass",pruefer:"Michael Tiezel",note:"",attempt:1,faults:[],eingriff:false});
-      _aliah.passed="2026-06-19"; delete _aliah.ready; delete _aliah.waitOrder;
-      (DB.termine||[]).forEach(t=>{ if(t.slots)t.slots=t.slots.map(x=>x===_aliah.id?null:x); });
-    }
-    DB._aliahTiezel=true; _ensureDirty=true;
-  }
-  // Aktuelle Prüfungstermine durch die vier festen mit Uhrzeit ersetzen (einmalig)
-  if(!DB._pruefSeedV2){
-    const bm=(DB.workCfg&&DB.workCfg.blockMin)||90;
-    const bis=v=>min2hm(hm2min(v)+bm);
-    const find=nm=>{ const s=DB.students.find(x=>x.name===nm); return s?s.id:null; };
-    const plan=[
-      {date:"2026-06-22",von:"15:00",sid:find("Paula Meyer")},
-      {date:"2026-06-29",von:"10:30",sid:find("Maydaa Farghaly")},
-      {date:"2026-07-06",von:"15:30",sid:find("Mira-Lina Seidel")},
-      {date:"2026-07-06",von:"16:30",sid:find("Sarah Win")}
-    ];
-    // alte (zukünftige) Prüfungstermine raus, dann neu setzen
-    DB.termine=[];
-    plan.forEach(p=>{ if(!p.sid)return; DB.termine.push({id:uid(),date:p.date,plaetze:1,slots:[p.sid],von:p.von,bis:bis(p.von)}); });
-    // betroffene Schüler als prüfungsreif sicherstellen
-    plan.forEach(p=>{ if(!p.sid)return; const s=DB.students.find(x=>x.id===p.sid); if(s&&!s.passed&&!s.ready)s.ready=new Date().toISOString(); });
-    DB._pruefSeedV2=true; _ensureDirty=true;
-  }
-  // 168 bereits absolvierte UE als Monats-Sockel (einmalig)
+  // 168 bereits absolvierte UE als Monats-Sockel (einmalig, aber als Sicherheitsnetz stehen gelassen —
+  // genau das hat am 06.07. den Cache-Reset-Datenverlust zumindest teilweise abgefedert)
   if(!DB._startUE168){ if(!DB.verdienst.startUE)DB.verdienst.startUE=168; DB._startUE168=true; _ensureDirty=true; }
   if(!DB._nachtToFahrstunde){ (DB.lessons||[]).forEach(l=>{ if(l.art==="nacht")l.art="fahrstunde"; }); DB._nachtToFahrstunde=true; _ensureDirty=true; }
   // Orts- und Tag-Bibliothek aus vorhandenen Prüfern auffüllen
@@ -6157,14 +6156,16 @@ function openExamPlanSheet(s){
   openSheet(`<div class="sheet-h">Prüfungstermin planen</div>
     <p class="muted-p" style="margin:-4px 0 14px;font-size:13px;">${esc(s.name)} bekommt einen Termin. Der Schüler wird dabei automatisch auf die Warteliste gesetzt und dem Termin zugeteilt.</p>
     <div class="field"><label>Datum</label><input type="date" id="epDate" value="${cur?cur.date:todayISO()}"></div>
+    <div class="field"><label>Uhrzeit</label><input type="time" id="epTime" value="${cur&&cur.von?cur.von:'09:00'}"></div>
     <div class="btn-row"><button class="btn btn-ghost" id="epCancel" style="flex:0;padding:13px 18px;">Abbrechen</button><button class="btn btn-primary" id="epSave">Termin setzen</button></div>`);
   $("#epCancel").addEventListener("click",closeSheet);
   $("#epSave").addEventListener("click",()=>{
     const d=$("#epDate").value; if(!d){toast("Bitte Datum wählen");return;}
+    const von=$("#epTime").value||"09:00";
     if(!s.ready&&!s.passed){ setReady(s); }
     clearSlot(s.id);
     let t=DB.termine.find(x=>x.date===d);
-    if(!t){ t={id:uid(),date:d,plaetze:1,slots:[s.id]}; DB.termine.push(t); }
+    if(!t){ t={id:uid(),date:d,plaetze:1,slots:[s.id],von,bis:min2hm(hm2min(von)+(DB.workCfg.blockMin||90))}; DB.termine.push(t); }
     else { const free=t.slots.indexOf(null); if(free>=0)t.slots[free]=s.id; else {t.plaetze++;t.slots.push(s.id);} }
     save(); closeSheet(); toast("Prüfungstermin am "+isoDE(d)+" gesetzt"); routeDetail(s.id);
   });
@@ -7107,6 +7108,10 @@ function routeStats(period){
   // innerhalb der Statistik selbst (sonst sperrt sich der Verdienst-Bereich bei jedem Klick auf "Vormonat" neu zu).
   const _kamVonAnderswo=$("#tbTitle")?$("#tbTitle").textContent!=="Statistik":true;
   if(_kamVonAnderswo)_vdMonthOffset=0;
+  // Perioden-Tab und Verdienst-Karten-Pfeile IMMER synchron halten, damit nie zwei verschiedene
+  // Monate gleichzeitig angezeigt werden (das hat zu der ganzen Verwirrung mit den falschen UE geführt).
+  if(period==="cur")_vdMonthOffset=0;
+  else if(period==="last")_vdMonthOffset=-1;
   if(DB.verdienstPin){ if(_vdJustUnlocked){ _vdJustUnlocked=false; } else if(_kamVonAnderswo){ sessionStorage.removeItem("vd_unlocked"); } }
   $("#tbTitle").textContent="Statistik"; setFab(false); view.scrollTop=0;
   const ex=examsIn(period);
