@@ -1590,20 +1590,27 @@ input,select,textarea{font-family:inherit;font-size:15px;color:var(--txt);}
 .weather-widget:active{transform:scale(.98);filter:brightness(.94);}
 .wx-screen{padding:0 var(--pad) 40px;min-height:100vh;}
 .wx-stage{position:relative;height:min(46vh,340px);border-radius:26px;overflow:hidden;margin:6px 0 22px;
-  background:linear-gradient(160deg,var(--surface),var(--surface-2));border:1px solid var(--line);}
-.wx-sun{position:absolute;top:50%;left:50%;width:120px;height:120px;transform:translate(-50%,-50%);animation:wxSpin 26s linear infinite;}
+  background:linear-gradient(180deg,#6fa8dc 0%,#a8d4e8 45%,#dceef2 78%,#f0e2c0 100%);border:1px solid var(--line);}
+.wx-stage.wx-cat-rain,.wx-stage.wx-cat-storm{background:linear-gradient(180deg,#4a5568 0%,#6b7684 55%,#8b93a0 100%);}
+.wx-stage.wx-cat-snow{background:linear-gradient(180deg,#b8c8d8 0%,#d4e2ec 55%,#eef3f6 100%);}
+.wx-stage.wx-cat-fog{background:linear-gradient(180deg,#9aa5ac 0%,#b8c0c6 55%,#d4dade 100%);}
+.wx-skyline{position:absolute;bottom:0;left:0;width:100%;height:36%;display:block;}
+.wx-sun{position:absolute;top:38%;left:50%;width:120px;height:120px;transform:translate(-50%,-50%);animation:wxSpin 26s linear infinite;}
 .wx-sun-core{position:absolute;top:50%;left:50%;width:64px;height:64px;margin:-32px 0 0 -32px;border-radius:50%;
   background:radial-gradient(circle at 35% 30%,#ffe9a8,var(--gold));box-shadow:0 0 50px 10px var(--gold-soft);animation:wxPulse 3.2s ease-in-out infinite;}
 .wx-ray{position:absolute;top:50%;left:50%;width:5px;height:56px;margin:-28px 0 0 -2.5px;border-radius:3px;
   background:linear-gradient(var(--gold),transparent);transform-origin:50% 100%;translate:0 -50px;}
 @keyframes wxSpin{from{transform:translate(-50%,-50%) rotate(0deg)}to{transform:translate(-50%,-50%) rotate(360deg)}}
 @keyframes wxPulse{0%,100%{transform:scale(1)}50%{transform:scale(1.1)}}
-.wx-cloud{position:absolute;border-radius:50px;background:linear-gradient(160deg,#e9edf0,#c7cfd6);opacity:.92;
-  box-shadow:inset 0 -6px 10px rgba(0,0,0,.06);animation:wxDrift 22s linear infinite;}
-.wx-cloud.dark{background:linear-gradient(160deg,#7c8794,#565f6b);opacity:.95;}
-.wx-cloud.c1{width:150px;height:56px;top:22%;left:-20%;animation-duration:26s;}
-.wx-cloud.c2{width:110px;height:42px;top:48%;left:-30%;animation-duration:19s;animation-delay:-6s;}
-.wx-cloud.c3{width:90px;height:36px;top:14%;left:-25%;animation-duration:31s;animation-delay:-12s;}
+.wx-cloud{position:absolute;height:32px;border-radius:32px;background:linear-gradient(160deg,#ffffff,#dbe4ec);
+  box-shadow:0 10px 20px rgba(30,40,60,.18);animation:wxDrift 26s linear infinite;}
+.wx-cloud::before,.wx-cloud::after{content:"";position:absolute;border-radius:50%;background:inherit;}
+.wx-cloud::before{width:58%;height:190%;top:-95%;left:10%;}
+.wx-cloud::after{width:42%;height:150%;top:-75%;left:46%;}
+.wx-cloud.dark{background:linear-gradient(160deg,#828d9a,#525c69);box-shadow:0 10px 20px rgba(10,15,25,.28);}
+.wx-cloud.c1{width:150px;height:44px;top:16%;left:-20%;animation-duration:26s;}
+.wx-cloud.c2{width:110px;height:34px;top:38%;left:-30%;animation-duration:19s;animation-delay:-6s;}
+.wx-cloud.c3{width:90px;height:28px;top:8%;left:-25%;animation-duration:31s;animation-delay:-12s;}
 @keyframes wxDrift{from{transform:translateX(0)}to{transform:translateX(340%)}}
 .wx-drop{position:absolute;top:-10%;width:2.5px;height:22px;border-radius:2px;
   background:linear-gradient(var(--blau),transparent);animation:wxFall 1s linear infinite;}
@@ -6773,29 +6780,62 @@ function bindWeatherWidget(w){
 }
 /* Großer animierter Wetter-Screen — Phase 3 Design-Umbau. Kategorien: sun/clouds/rain/storm/snow/fog.
    Bewusst ohne Personen-Illustration, nur Sonne/Wolken/Regen/Schnee/Nebel/Blitz-Deko. */
+/* Offenbach-Skyline-Silhouette als Deko-Hintergrund im Wetter-Screen (eigene, einfache Illustration —
+   kein Foto/Stock, nur ein angedeuteter Turm als Nod an den Kaiserlei-Turm). */
+function wxSkylineSVG(){
+  return `<svg class="wx-skyline" viewBox="0 0 400 100" preserveAspectRatio="none">
+    <rect x="0" y="58" width="26" height="42" fill="#20303a"/>
+    <rect x="26" y="44" width="20" height="56" fill="#283944"/>
+    <rect x="48" y="62" width="24" height="38" fill="#20303a"/>
+    <rect x="74" y="66" width="16" height="34" fill="#283944"/>
+    <rect x="92" y="18" width="22" height="82" fill="#324450"/>
+    <rect x="118" y="48" width="18" height="52" fill="#20303a"/>
+    <rect x="138" y="60" width="26" height="40" fill="#283944"/>
+    <rect x="166" y="40" width="16" height="60" fill="#20303a"/>
+    <rect x="184" y="55" width="22" height="45" fill="#324450"/>
+    <rect x="208" y="65" width="18" height="35" fill="#283944"/>
+    <rect x="228" y="35" width="20" height="65" fill="#20303a"/>
+    <rect x="250" y="58" width="24" height="42" fill="#283944"/>
+    <rect x="276" y="46" width="16" height="54" fill="#324450"/>
+    <rect x="294" y="64" width="26" height="36" fill="#20303a"/>
+    <rect x="322" y="52" width="18" height="48" fill="#283944"/>
+    <rect x="342" y="68" width="22" height="32" fill="#20303a"/>
+    <rect x="366" y="58" width="34" height="42" fill="#283944"/>
+    <g fill="#f2c25c" opacity=".85">
+      <rect x="4" y="66" width="3" height="4"/><rect x="12" y="66" width="3" height="4"/><rect x="12" y="78" width="3" height="4"/>
+      <rect x="30" y="52" width="3" height="4"/><rect x="38" y="60" width="3" height="4"/><rect x="30" y="68" width="3" height="4"/>
+      <rect x="98" y="28" width="3" height="4"/><rect x="106" y="40" width="3" height="4"/><rect x="98" y="52" width="3" height="4"/><rect x="106" y="64" width="3" height="4"/><rect x="98" y="76" width="3" height="4"/>
+      <rect x="142" y="70" width="3" height="4"/><rect x="152" y="76" width="3" height="4"/>
+      <rect x="190" y="64" width="3" height="4"/><rect x="198" y="72" width="3" height="4"/>
+      <rect x="233" y="45" width="3" height="4"/><rect x="241" y="55" width="3" height="4"/><rect x="233" y="65" width="3" height="4"/><rect x="241" y="78" width="3" height="4"/>
+      <rect x="300" y="72" width="3" height="4"/><rect x="308" y="80" width="3" height="4"/>
+      <rect x="372" y="68" width="3" height="4"/><rect x="382" y="76" width="3" height="4"/><rect x="390" y="70" width="3" height="4"/>
+    </g>
+  </svg>`;
+}
 function routeWetter(w){
   ensureDB();
   $("#tbTitle").textContent="Wetter"; setFab(false); view.scrollTop=0;
   if(!w){ toast("Keine Wetterdaten verfügbar"); routeDashboard(); return; }
   const cat=weatherCategory(w.icon);
   const cityLabel=((DB.weatherCfg&&DB.weatherCfg.city)||"Offenbach,DE").split(",")[0];
-  let deco="";
+  let deco=wxSkylineSVG();
   if(cat==="sun"){
-    deco=`<div class="wx-sun">${Array.from({length:8}).map((_,i)=>`<div class="wx-ray" style="transform:rotate(${i*45}deg) translate(0,-50px)"></div>`).join("")}<div class="wx-sun-core"></div></div>`;
+    deco+=`<div class="wx-sun">${Array.from({length:8}).map((_,i)=>`<div class="wx-ray" style="transform:rotate(${i*45}deg) translate(0,-50px)"></div>`).join("")}<div class="wx-sun-core"></div></div>`;
   } else if(cat==="clouds"){
-    deco=`<div class="wx-cloud c1"></div><div class="wx-cloud c2"></div><div class="wx-cloud c3"></div>`;
+    deco+=`<div class="wx-cloud c1"></div><div class="wx-cloud c2"></div><div class="wx-cloud c3"></div>`;
   } else if(cat==="rain"){
-    deco=`<div class="wx-cloud c1"></div><div class="wx-cloud c2"></div>`+Array.from({length:14}).map((_,i)=>`<div class="wx-drop" style="left:${(i*7+3)%100}%;animation-delay:${(i%5)*.18}s"></div>`).join("");
+    deco+=`<div class="wx-cloud c1"></div><div class="wx-cloud c2"></div>`+Array.from({length:14}).map((_,i)=>`<div class="wx-drop" style="left:${(i*7+3)%100}%;animation-delay:${(i%5)*.18}s"></div>`).join("");
   } else if(cat==="storm"){
-    deco=`<div class="wx-cloud c1 dark"></div><div class="wx-cloud c2 dark"></div><div class="wx-bolt"></div>`+Array.from({length:10}).map((_,i)=>`<div class="wx-drop" style="left:${(i*9+4)%100}%;animation-delay:${(i%4)*.22}s"></div>`).join("");
+    deco+=`<div class="wx-cloud c1 dark"></div><div class="wx-cloud c2 dark"></div><div class="wx-bolt"></div>`+Array.from({length:10}).map((_,i)=>`<div class="wx-drop" style="left:${(i*9+4)%100}%;animation-delay:${(i%4)*.22}s"></div>`).join("");
   } else if(cat==="snow"){
-    deco=`<div class="wx-cloud c1"></div><div class="wx-cloud c2"></div>`+Array.from({length:16}).map((_,i)=>`<div class="wx-flake" style="left:${(i*6+2)%100}%;animation-delay:${(i%6)*.4}s;animation-duration:${5+(i%4)}s">❄</div>`).join("");
+    deco+=`<div class="wx-cloud c1"></div><div class="wx-cloud c2"></div>`+Array.from({length:16}).map((_,i)=>`<div class="wx-flake" style="left:${(i*6+2)%100}%;animation-delay:${(i%6)*.4}s;animation-duration:${5+(i%4)}s">❄</div>`).join("");
   } else if(cat==="fog"){
-    deco=`<div class="wx-fogband f1"></div><div class="wx-fogband f2"></div><div class="wx-fogband f3"></div>`;
+    deco+=`<div class="wx-fogband f1"></div><div class="wx-fogband f2"></div><div class="wx-fogband f3"></div>`;
   }
   view.innerHTML=`<div class="view-inner fade-up wx-screen">
     <div class="back-row"><button class="back-btn" id="backBtn">${ICN.back} Start</button></div>
-    <div class="wx-stage">${deco}</div>
+    <div class="wx-stage wx-cat-${cat}">${deco}</div>
     <div class="wx-info">
       <div class="wx-temp">${w.temp}°</div>
       <div class="wx-desc">${esc(w.desc)}</div>
