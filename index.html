@@ -276,7 +276,7 @@ input,select,textarea{font-family:inherit;font-size:15px;color:var(--txt);}
 .btn:active,.s-card:active,.tile:active,.pill:active,.d-tile:active,.nav-action:active,
 .fab:active,.theme-btn:active,.bell-btn:active,.icon-btn:active,.akte-btn:active,
 .vortest-big:active,.chip:active,.color-opt:active,.wait-card:active,.nav-item:active,
-.lo-btn:active,.tm-btn:active,.dq-btn:active,.nex-card:active,.acc-h:active,.as-item:active,
+.lo-btn:active,.tm-btn:active,.dq-btn:active,.nex-card:active,.acc-h:active,.as-item:active,.heute-card:active,
 .es-act:active,.dur-opt:active,.sf-opt:active,.form-pick .pill:active,.check-toggle:active,
 .amp:active,.sl-item:active,.mini-btn:active,.cw-ev:active,.ct-ev:active{
   filter:brightness(.92);
@@ -1636,8 +1636,8 @@ input,select,textarea{font-family:inherit;font-size:15px;color:var(--txt);}
   border:1px solid var(--glass-brd);
 }
 .heute-row{display:flex;gap:10px;margin-top:10px;}
-.heute-card{flex:1;border-radius:16px;padding:16px 14px;text-align:center;}
-.hc-n{font-family:'Anton',sans-serif;font-size:30px;color:var(--txt);line-height:1;}
+.heute-card{flex:1;border-radius:16px;padding:11px 14px;text-align:center;width:100%;border:none;cursor:pointer;font-family:inherit;}
+.hc-n{font-family:'Anton',sans-serif;font-size:24px;color:var(--txt);line-height:1;}
 .hc-l{font-size:11px;font-weight:800;letter-spacing:.05em;text-transform:uppercase;color:var(--muted);margin-top:5px;}
 
 </style>
@@ -4026,6 +4026,7 @@ const PEN_WIDTHS=[3,6,12];
 
 /* ===== Objekt-Bibliothek der Verkehrstafel ===== */
 const ASPH="#3b3e44", LANE="#f3efe4";
+function bush(cx,cy,s){s=s||1;return `<g transform="translate(${cx},${cy}) scale(${s})"><circle r="17" fill="#7ec24a"/><circle cx="12" cy="-6" r="12" fill="#8fd35e"/><circle cx="-10" cy="6" r="10" fill="#6bb63f"/><circle cx="-4" cy="-8" r="9" fill="#8fd35e"/><circle cx="3" cy="4" r="3.2" fill="#f2b632"/></g>`;}
 const carTop=(c)=>`<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 44 88"><defs><linearGradient id="cg${c.replace('#','')}" x1="0" y1="0" x2="1" y2="0"><stop offset="0%" stop-color="rgba(0,0,0,0.18)"/><stop offset="30%" stop-color="rgba(255,255,255,0.08)"/><stop offset="70%" stop-color="rgba(0,0,0,0.05)"/><stop offset="100%" stop-color="rgba(0,0,0,0.2)"/></linearGradient></defs><ellipse cx="7" cy="22" rx="5.5" ry="7.5" fill="#111315"/><ellipse cx="37" cy="22" rx="5.5" ry="7.5" fill="#111315"/><ellipse cx="7" cy="66" rx="5.5" ry="7.5" fill="#111315"/><ellipse cx="37" cy="66" rx="5.5" ry="7.5" fill="#111315"/><ellipse cx="7" cy="22" rx="3.5" ry="5.5" fill="#2a2d30"/><ellipse cx="37" cy="22" rx="3.5" ry="5.5" fill="#2a2d30"/><ellipse cx="7" cy="66" rx="3.5" ry="5.5" fill="#2a2d30"/><ellipse cx="37" cy="66" rx="3.5" ry="5.5" fill="#2a2d30"/><rect x="7" y="4" width="30" height="80" rx="12" fill="${c}"/><rect x="7" y="4" width="30" height="80" rx="12" fill="url(#cg${c.replace('#','')})"/><path d="M13 20 Q22 17 31 20 L29 32 Q22 30 15 32 Z" fill="#d8f0fa" opacity="0.92"/><rect x="14" y="35" width="16" height="18" rx="4" fill="#000" opacity="0.10"/><path d="M14 68 Q22 65 30 68 L28 78 Q22 76 16 78 Z" fill="#c8e8f8" opacity="0.85"/><rect x="12" y="5" width="6" height="4" rx="2" fill="#fffbe0"/><rect x="26" y="5" width="6" height="4" rx="2" fill="#fffbe0"/><rect x="13" y="80" width="6" height="3.5" rx="1.5" fill="#e23b2e"/><rect x="25" y="80" width="6" height="3.5" rx="1.5" fill="#e23b2e"/><rect x="9" y="42" width="4" height="4" rx="1" fill="rgba(255,255,255,0.15)"/><rect x="31" y="42" width="4" height="4" rx="1" fill="rgba(255,255,255,0.15)"/></svg>`;
 const lkwSVG=`<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 50 122"><rect x="2" y="20" width="8" height="16" rx="4" fill="#15171b"/><rect x="40" y="20" width="8" height="16" rx="4" fill="#15171b"/><rect x="2" y="58" width="8" height="16" rx="4" fill="#15171b"/><rect x="40" y="58" width="8" height="16" rx="4" fill="#15171b"/><rect x="2" y="92" width="8" height="16" rx="4" fill="#15171b"/><rect x="40" y="92" width="8" height="16" rx="4" fill="#15171b"/><rect x="8" y="40" width="34" height="80" rx="6" fill="#d9dde3"/><rect x="8" y="40" width="34" height="80" rx="6" fill="#000000" opacity="0.05"/><rect x="7" y="4" width="36" height="38" rx="9" fill="#2F7DD1"/><path d="M12 9 h26 v8 h-26 z" fill="#cfeaf7" opacity="0.9"/><rect x="11" y="6" width="6" height="3" rx="1.5" fill="#fff7d6"/><rect x="33" y="6" width="6" height="3" rx="1.5" fill="#fff7d6"/></svg>`;
 const busSVG=`<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 48 132"><rect x="1" y="22" width="7" height="16" rx="3.5" fill="#15171b"/><rect x="40" y="22" width="7" height="16" rx="3.5" fill="#15171b"/><rect x="1" y="94" width="7" height="16" rx="3.5" fill="#15171b"/><rect x="40" y="94" width="7" height="16" rx="3.5" fill="#15171b"/><rect x="6" y="3" width="36" height="126" rx="11" fill="#E0A32E"/><path d="M11 8 h26 v9 h-26 z" fill="#cfeaf7" opacity="0.92"/><g fill="#bfe0f2" opacity="0.85"><rect x="9" y="24" width="6" height="9" rx="1.5"/><rect x="9" y="40" width="6" height="9" rx="1.5"/><rect x="9" y="56" width="6" height="9" rx="1.5"/><rect x="9" y="72" width="6" height="9" rx="1.5"/><rect x="9" y="88" width="6" height="9" rx="1.5"/><rect x="33" y="24" width="6" height="9" rx="1.5"/><rect x="33" y="40" width="6" height="9" rx="1.5"/><rect x="33" y="56" width="6" height="9" rx="1.5"/><rect x="33" y="72" width="6" height="9" rx="1.5"/><rect x="33" y="88" width="6" height="9" rx="1.5"/></g></svg>`;
@@ -4034,7 +4035,30 @@ const radSVG=`<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 52"><defs>
 const pedSVG=(c)=>`<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 44 44"><defs><radialGradient id="pg${c.replace('#','')}" cx="35%" cy="25%" r="75%"><stop offset="0%" stop-color="#fff" stop-opacity=".35"/><stop offset="45%" stop-color="${c}" stop-opacity="0"/><stop offset="100%" stop-color="#000" stop-opacity=".18"/></radialGradient></defs><path d="M7 41 a15 14 0 0 1 30 0 z" fill="${c}"/><path d="M7 41 a15 14 0 0 1 30 0 z" fill="url(#pg${c.replace('#','')})"/><ellipse cx="9" cy="30" rx="3.2" ry="5.5" fill="${c}" opacity="0.9"/><ellipse cx="35" cy="30" rx="3.2" ry="5.5" fill="${c}" opacity="0.9"/><circle cx="22" cy="15" r="9.5" fill="${c}"/><circle cx="22" cy="15" r="9.5" fill="#ffffff" opacity="0.12"/><ellipse cx="18.5" cy="12" rx="2" ry="1.4" fill="#ffffff" opacity="0.25"/></svg>`;
 const poliSVG=`<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 44 44"><path d="M7 41 a15 14 0 0 1 30 0 z" fill="#27406e"/><circle cx="22" cy="15" r="9.5" fill="#2F4D8A"/><rect x="12" y="9" width="20" height="5" rx="2.5" fill="#16223f"/><rect x="30" y="18" width="10" height="4.5" rx="2.2" fill="#f3efe4"/></svg>`;
 const ROAD={
- kreuzung:`<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 400"><rect width="800" height="400" fill="#7a9c6b"/><rect x="0" y="140" width="800" height="120" fill="${ASPH}"/><rect x="325" y="0" width="150" height="400" fill="${ASPH}"/><path d="M325,140 L325,85 A55,55 0 0,0 270,140 Z" fill="${ASPH}"/><path d="M475,140 L475,85 A55,55 0 0,1 530,140 Z" fill="${ASPH}"/><path d="M325,260 L325,315 A55,55 0 0,1 270,260 Z" fill="${ASPH}"/><path d="M475,260 L475,315 A55,55 0 0,0 530,260 Z" fill="${ASPH}"/><rect x="0" y="140" width="800" height="4" fill="rgba(0,0,0,.10)"/><rect x="0" y="256" width="800" height="4" fill="rgba(0,0,0,.10)"/><rect x="325" y="0" width="4" height="400" fill="rgba(0,0,0,.10)"/><rect x="471" y="0" width="4" height="400" fill="rgba(0,0,0,.10)"/></svg>`,
+ kreuzung:`<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 600 600">
+  <rect x="0" y="230" width="600" height="140" fill="${ASPH}"/><rect x="230" y="0" width="140" height="600" fill="${ASPH}"/>
+  <path d="M0,0 L230,0 L230,170 A60,60 0 0,0 170,230 L0,230 Z" fill="#7ec24a" stroke="#f3efe4" stroke-width="5"/>
+  <path d="M600,0 L600,230 L430,230 A60,60 0 0,1 370,170 L370,0 Z" fill="#7ec24a" stroke="#f3efe4" stroke-width="5"/>
+  <path d="M0,600 L0,370 L170,370 A60,60 0 0,1 230,430 L230,600 Z" fill="#7ec24a" stroke="#f3efe4" stroke-width="5"/>
+  <path d="M600,600 L600,370 L430,370 A60,60 0 0,0 370,430 L370,600 Z" fill="#7ec24a" stroke="#f3efe4" stroke-width="5"/>
+  ${bush(60,55)}${bush(150,42,.8)}${bush(45,150,.75)}
+  ${bush(540,55)}${bush(455,40,.8)}${bush(555,150,.75)}${bush(480,140,.6)}
+  ${bush(60,545)}${bush(150,558,.8)}${bush(45,450,.75)}
+  ${bush(540,545)}${bush(455,558,.8)}${bush(555,450,.75)}
+  </svg>`,
+ kreuzung_markiert:`<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 600 600">
+  <rect x="0" y="230" width="600" height="140" fill="${ASPH}"/><rect x="230" y="0" width="140" height="600" fill="${ASPH}"/>
+  <path d="M0,0 L230,0 L230,170 A60,60 0 0,0 170,230 L0,230 Z" fill="#7ec24a" stroke="#f3efe4" stroke-width="5"/>
+  <path d="M600,0 L600,230 L430,230 A60,60 0 0,1 370,170 L370,0 Z" fill="#7ec24a" stroke="#f3efe4" stroke-width="5"/>
+  <path d="M0,600 L0,370 L170,370 A60,60 0 0,1 230,430 L230,600 Z" fill="#7ec24a" stroke="#f3efe4" stroke-width="5"/>
+  <path d="M600,600 L600,370 L430,370 A60,60 0 0,0 370,430 L370,600 Z" fill="#7ec24a" stroke="#f3efe4" stroke-width="5"/>
+  <line x1="0" y1="300" x2="600" y2="300" stroke="${LANE}" stroke-width="5" stroke-dasharray="36 28"/>
+  <line x1="300" y1="0" x2="300" y2="600" stroke="${LANE}" stroke-width="5" stroke-dasharray="36 28"/>
+  ${bush(60,55)}${bush(150,42,.8)}${bush(45,150,.75)}
+  ${bush(540,55)}${bush(455,40,.8)}${bush(555,150,.75)}${bush(480,140,.6)}
+  ${bush(60,545)}${bush(150,558,.8)}${bush(45,450,.75)}
+  ${bush(540,545)}${bush(455,558,.8)}${bush(555,450,.75)}
+  </svg>`,
  t_einmuendung:`<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 220 150"><rect x="0" y="0" width="220" height="76" fill="${ASPH}"/><rect x="72" y="68" width="76" height="82" fill="${ASPH}"/><path d="M72,76 L72,106 A30,30 0 0,1 42,76 Z" fill="${ASPH}"/><path d="M148,76 L148,106 A30,30 0 0,0 178,76 Z" fill="${ASPH}"/><rect x="0" y="72" width="220" height="4" fill="rgba(0,0,0,.10)"/><rect x="72" y="68" width="4" height="82" fill="rgba(0,0,0,.10)"/><rect x="144" y="68" width="4" height="82" fill="rgba(0,0,0,.10)"/></svg>`,
  kreisverkehr:`<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 320"><rect x="365" y="0" width="70" height="320" fill="${ASPH}"/><rect x="0" y="125" width="800" height="70" fill="${ASPH}"/><circle cx="400" cy="160" r="119" fill="${ASPH}"/><circle cx="400" cy="160" r="67" fill="#9ccf8e"/><circle cx="400" cy="160" r="119" fill="none" stroke="rgba(0,0,0,.08)" stroke-width="3"/></svg>`,
  gerade:`<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 140 900"><rect width="140" height="900" fill="#7a9c6b"/><rect x="10" y="0" width="120" height="900" fill="${ASPH}"/><rect x="10" y="0" width="4" height="900" fill="rgba(0,0,0,.10)"/><rect x="126" y="0" width="4" height="900" fill="rgba(0,0,0,.10)"/><rect x="10" y="0" width="120" height="6" fill="rgba(255,255,255,.06)"/></svg>`,
@@ -4071,7 +4095,8 @@ const EXTRA={
 };
 const OBJ_CATS=[{key:"strassen",label:"Straßen"},{key:"markierungen",label:"Fahrbahnmarkierungen"},{key:"fahrzeuge",label:"Fahrzeuge"},{key:"personen",label:"Personen"},{key:"schilder",label:"Schilder"},{key:"ampeln",label:"Ampeln"},{key:"umgebung",label:"Umgebung"}];
 const OBJ=[
- {type:"kreuzung",cat:"strassen",label:"Kreuzung",kind:"road",layer:0,w:800,h:320,svg:ROAD.kreuzung},
+ {type:"kreuzung",cat:"strassen",label:"Kreuzung (ohne Markierung)",kind:"road",layer:0,w:600,h:600,svg:ROAD.kreuzung},
+ {type:"kreuzung_markiert",cat:"strassen",label:"Kreuzung (mit Markierung)",kind:"road",layer:0,w:600,h:600,svg:ROAD.kreuzung_markiert},
  {type:"t_einmuendung",cat:"strassen",label:"T-Einmündung",kind:"road",layer:0,w:200,h:136,svg:ROAD.t_einmuendung},
  {type:"kreisverkehr",cat:"strassen",label:"Kreisverkehr",kind:"road",layer:0,w:800,h:320,svg:ROAD.kreisverkehr},
  {type:"gerade",cat:"strassen",label:"Gerade (ohne Markierung)",kind:"road_v",layer:0,w:140,h:900,svg:ROAD.gerade},
@@ -4330,7 +4355,7 @@ function onUp(){
   if(_drag){_drag=null;render();persistBoard();return;}
   if(_cur){DRAW.strokes.push(_cur);DRAW.history.push({t:"stroke"});_cur=null;persistBoard();}
 }
-function placeObject(type){const d=objDef(type);if(!d)return;const autoScale=(d.kind==="road")?(_W/d.w):(d.kind==="road_v"?(_H/d.h):1);
+function placeObject(type){const d=objDef(type);if(!d)return;const autoScale=(d.kind==="road")?((d.w===d.h)?(Math.min(_W,_H)/d.w):(_W/d.w)):(d.kind==="road_v"?(_H/d.h):1);
   // Straße/Kreuzung: alle bisherigen road-Objekte ersetzen
   if(d.kind==="road"||d.kind==="road_v"){ DRAW.objects=DRAW.objects.filter(o=>{ const od=objDef(o.type); return !od||(od.kind!=="road"&&od.kind!=="road_v"); }); DRAW.history=DRAW.history.filter(h=>{ const ho=DRAW.objects.find(o=>o.id===h.id); return h.t!=="object"||ho; }); }
   const o={id:DRAW.seq++,type,x:_W/2,y:_H/2,scale:autoScale,rot:0};DRAW.objects.push(o);DRAW.history.push({t:"object",id:o.id});DRAW.selId=o.id;DRAW.tool="select";setActiveTool();closeTafelDrawer();render();persistBoard();}
@@ -6743,7 +6768,7 @@ function routeDashboard(){
     <div class="hero compact"><div class="greet">Willkommen zurück</div><div class="hero-brand">Serband</div><div class="hero-tag">${esc(heuteTag)}</div></div>
     <div id="weatherSlot"></div>
     <div class="heute-row">
-      <div class="heute-card"><div class="hc-n">${ueHeute}</div><div class="hc-l">UE heute</div></div>
+      <button class="heute-card" data-go="kalender"><div class="hc-n">${ueHeute}</div><div class="hc-l">UE heute</div></button>
     </div>
     ${backupBannerHTML()}
     <div class="dash-quick-row">
