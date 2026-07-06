@@ -1603,15 +1603,16 @@ input,select,textarea{font-family:inherit;font-size:15px;color:var(--txt);}
 @keyframes wxSpin{from{transform:translate(-50%,-50%) rotate(0deg)}to{transform:translate(-50%,-50%) rotate(360deg)}}
 @keyframes wxPulse{0%,100%{transform:scale(1)}50%{transform:scale(1.1)}}
 .wx-cloud{position:absolute;height:32px;border-radius:32px;background:linear-gradient(160deg,#ffffff,#dbe4ec);
-  box-shadow:0 10px 20px rgba(30,40,60,.18);animation:wxDrift 26s linear infinite;}
+  box-shadow:0 10px 20px rgba(30,40,60,.18);}
 .wx-cloud::before,.wx-cloud::after{content:"";position:absolute;border-radius:50%;background:inherit;}
 .wx-cloud::before{width:58%;height:190%;top:-95%;left:10%;}
 .wx-cloud::after{width:42%;height:150%;top:-75%;left:46%;}
 .wx-cloud.dark{background:linear-gradient(160deg,#828d9a,#525c69);box-shadow:0 10px 20px rgba(10,15,25,.28);}
-.wx-cloud.c1{width:150px;height:44px;top:16%;left:-20%;animation-duration:26s;}
-.wx-cloud.c2{width:110px;height:34px;top:38%;left:-30%;animation-duration:19s;animation-delay:-6s;}
-.wx-cloud.c3{width:90px;height:28px;top:8%;left:-25%;animation-duration:31s;animation-delay:-12s;}
-@keyframes wxDrift{from{transform:translateX(0)}to{transform:translateX(340%)}}
+.wx-cloud.c1{width:150px;height:44px;top:16%;left:-30vw;animation:wxDriftR 26s linear infinite;}
+.wx-cloud.c2{width:110px;height:34px;top:38%;right:-32vw;left:auto;animation:wxDriftL 22s linear infinite;animation-delay:-6s;}
+.wx-cloud.c3{width:90px;height:28px;top:8%;left:-28vw;animation:wxDriftR 31s linear infinite;animation-delay:-14s;}
+@keyframes wxDriftR{from{transform:translateX(0)}to{transform:translateX(160vw)}}
+@keyframes wxDriftL{from{transform:translateX(0)}to{transform:translateX(-160vw)}}
 .wx-drop{position:absolute;top:-10%;width:2.5px;height:22px;border-radius:2px;
   background:linear-gradient(var(--blau),transparent);animation:wxFall 1s linear infinite;}
 @keyframes wxFall{from{transform:translateY(0) rotate(8deg)}to{transform:translateY(420px) rotate(8deg)}}
