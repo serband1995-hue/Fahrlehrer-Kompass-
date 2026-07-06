@@ -1452,7 +1452,11 @@ input,select,textarea{font-family:inherit;font-size:15px;color:var(--txt);}
 
 /* ===== Verdienst-Modul ===== */
 .vd-card{background:linear-gradient(160deg,var(--glass),var(--glass-2));border:1px solid var(--glass-brd);border-radius:var(--r-card);padding:18px;margin-bottom:18px;box-shadow:var(--elev-3),var(--inset-top);}
-.vd-head{display:flex;align-items:center;justify-content:space-between;margin-bottom:16px;}
+.vd-head{display:flex;align-items:center;gap:8px;margin-bottom:16px;}
+.vd-head .vd-title{flex:1;text-align:center;}
+.vd-nav{background:none;border:none;color:var(--muted);padding:4px;display:flex;}
+.vd-nav svg{width:18px;height:18px;}
+.vd-nav:disabled{cursor:default;}
 .vd-title{font-family:'Playfair Display',serif;font-size:20px;font-weight:600;}
 .vd-gear{width:34px;height:34px;border-radius:10px;display:flex;align-items:center;justify-content:center;background:var(--surface-2);border:1px solid var(--line);color:var(--muted);}
 .vd-gear svg{width:17px;height:17px;}
@@ -6996,6 +7000,11 @@ function verdienstModulHTML(){
   return `<div style="position:relative;">${lockBtn?`<div style="position:absolute;top:8px;right:8px;z-index:2;">${lockBtn}</div>`:""}${_verdienstModulHTMLContent()}</div>`;
 }
 let _vdJustUnlocked=false;
+let _vdMonthOffset=0; // Eigener Monats-Navigator für die Verdienst-Karte, unabhängig von den Statistik-Perioden-Tabs
+function vdShiftMonth(delta){
+  _vdMonthOffset+=delta;
+  const wrap=$("#vdModWrap"); if(wrap)wrap.innerHTML=verdienstModulHTML();
+}
 function unlockVerdienst(){
   const pin=DB.verdienstPin||"";
   if(!pin){sessionStorage.setItem("vd_unlocked","1");routeStats(_curStatPeriod);return;}
@@ -7004,7 +7013,11 @@ function unlockVerdienst(){
   else if(entered!==null)toast("Falscher PIN");
 }
 function _verdienstModulHTMLContent(){
-  const v=DB.verdienst; const today=todayISO();
+  const v=DB.verdienst;
+  const _base=parseISO(todayISO());
+  const _shifted=new Date(_base.getFullYear(),_base.getMonth()+_vdMonthOffset,1);
+  const today=dateISO(_shifted);
+  const isCurMonth=_vdMonthOffset===0;
   const [moStart,moEnd]=monthRangeOf(today);
   const moUE=ueRange(moStart,moEnd);
   const verdientUE=moUE.fcCounted;
@@ -7013,8 +7026,11 @@ function _verdienstModulHTMLContent(){
   // Gesamt Monat = alle gebuchten UE (inkl. Start, exkl. noch-nicht-stattgefunden ist egal — total deckt alles)
   const gesamtUE=Math.round(moUE.total);
   const gesamtEuro=gehaltAusUE(gesamtUE);
-  // Nur die echten Fahrstunden/Prüfungen (ohne StartUE) → damit Serband seine Termine zählen kann
-  const terminiertUE=Math.round(moUE.total-(v.startUE||0));
+  // Nur die echten Fahrstunden/Prüfungen (ohne StartUE) → damit Serband seine Termine zählen kann.
+  // Der Start-Sockel gilt NUR für den einen hinterlegten Startmonat — sonst würde er in jedem
+  // Folgemonat fälschlich abgezogen und die Terminierten-UE-Zahl verfälschen.
+  const _stM=(v&&v.startMonth)||"2026-06";
+  const terminiertUE=Math.round(moUE.total-(moStart===_stM+"-01"?(v.startUE||0):0));
   const offenUE=Math.max(0,moUE.done-verdientUE);
   const MAX=300;
   const TUBE=200;
@@ -7045,7 +7061,12 @@ function _verdienstModulHTMLContent(){
     bisHtml=`<div class="th-goal"><div class="thg-lab">Für den Bonus noch legen</div><div class="thg-val">${restUE} UE · ~${Math.ceil(restUE/2)} Fahrstd.</div></div>`;
   }
   return `<div class="vd-card">
-    <div class="vd-head"><div class="vd-title">Verdienst · ${deMonth(parseISO(today).getMonth())}</div><button class="vd-gear" id="vdGear" aria-label="Einstellungen">${ICN.gear||"⚙"}</button></div>
+    <div class="vd-head">
+      <button class="vd-nav" onclick="vdShiftMonth(-1)" aria-label="Vormonat">${ICN.back}</button>
+      <div class="vd-title">Verdienst · ${deMonth(_shifted.getMonth())}${isCurMonth?"":` ${_shifted.getFullYear()}`}</div>
+      <button class="vd-nav" onclick="vdShiftMonth(1)" aria-label="Nächster Monat" ${isCurMonth?'disabled style="opacity:.25;pointer-events:none;"':''}>${ICN.arrow}</button>
+      <button class="vd-gear" id="vdGear" aria-label="Einstellungen">${ICN.gear||"⚙"}</button>
+    </div>
     <div class="thermo-wrap">
       <div class="thermo-left">
         <div class="thermo-tube">
@@ -7076,8 +7097,11 @@ function maxISO(a,b){ return a>b?a:b; }
 function routeStats(period){
   ensureDB(); period=period||'cur'; _curStatPeriod=period;
   // Beim Aufrufen der Statistik: Verdienst-PIN zurücksetzen (immer neu entsperren) —
-  // außer wir kommen gerade selbst aus einer erfolgreichen Entsperrung (sonst sperrt sich sofort wieder zu).
-  if(DB.verdienstPin){ if(_vdJustUnlocked){ _vdJustUnlocked=false; } else { sessionStorage.removeItem("vd_unlocked"); } }
+  // aber NUR wenn wir wirklich von einem anderen Screen kommen, nicht bei Perioden-/Monatswechsel
+  // innerhalb der Statistik selbst (sonst sperrt sich der Verdienst-Bereich bei jedem Klick auf "Vormonat" neu zu).
+  const _kamVonAnderswo=$("#tbTitle")?$("#tbTitle").textContent!=="Statistik":true;
+  if(_kamVonAnderswo)_vdMonthOffset=0;
+  if(DB.verdienstPin){ if(_vdJustUnlocked){ _vdJustUnlocked=false; } else if(_kamVonAnderswo){ sessionStorage.removeItem("vd_unlocked"); } }
   $("#tbTitle").textContent="Statistik"; setFab(false); view.scrollTop=0;
   const ex=examsIn(period);
   const q=quoteOf(ex), fq=firstAttemptQuote(ex), avgA=avgAttempts(ex), eq=eingriffQuote(ex);
@@ -7102,7 +7126,7 @@ function routeStats(period){
   const avgAVal=avgA==null?"–":(""+avgA).replace(".",",");
   view.innerHTML=`<div class="view-inner view-read fade-up">
     <div class="row-between" style="margin-bottom:14px;"><div class="sec-h">Stat<span class="o">istik</span></div></div>
-    ${verdienstModulHTML()}
+    <div id="vdModWrap">${verdienstModulHTML()}</div>
     ${periodChips(period)}
     <div class="stat-grid4" style="margin-bottom:18px;">
       ${miniStatAnim("Quote",q.pct==null?"–":q.pct,"%",q.total?q.pass+"/"+q.total+" bestanden":"keine Prüfung")}
