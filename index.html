@@ -276,7 +276,7 @@ input,select,textarea{font-family:inherit;font-size:15px;color:var(--txt);}
 .btn:active,.s-card:active,.tile:active,.pill:active,.d-tile:active,.nav-action:active,
 .fab:active,.theme-btn:active,.bell-btn:active,.icon-btn:active,.akte-btn:active,
 .vortest-big:active,.chip:active,.color-opt:active,.wait-card:active,.nav-item:active,
-.lo-btn:active,.tm-btn:active,.dq-btn:active,.nex-card:active,.acc-h:active,.as-item:active,.heute-card:active,
+.lo-btn:active,.tm-btn:active,.dq-btn:active,.nex-card:active,.acc-h:active,.as-item:active,.hc-top:active,.hc-item:active,
 .es-act:active,.dur-opt:active,.sf-opt:active,.form-pick .pill:active,.check-toggle:active,
 .amp:active,.sl-item:active,.mini-btn:active,.cw-ev:active,.ct-ev:active{
   filter:brightness(.92);
@@ -1622,6 +1622,14 @@ input,select,textarea{font-family:inherit;font-size:15px;color:var(--txt);}
 .wx-temp{font-family:'Anton',sans-serif;font-size:clamp(56px,16vw,84px);line-height:1;color:var(--txt);}
 .wx-desc{font-size:16px;font-weight:700;color:var(--muted);text-transform:capitalize;margin-top:4px;}
 .wx-city{font-family:'Kaushan Script',cursive;color:var(--brand-accent);font-size:18px;margin-top:8px;}
+.wx-forecast{display:flex;gap:8px;margin-top:22px;overflow-x:auto;padding-bottom:4px;scrollbar-width:none;}
+.wx-forecast::-webkit-scrollbar{display:none;}
+.wx-fc-loading{font-size:13px;color:var(--muted);padding:10px;}
+.wx-fc-day{flex:1 0 76px;background:var(--surface);border:1px solid var(--line);border-radius:14px;padding:12px 8px;text-align:center;}
+.wx-fc-lbl{font-size:11px;font-weight:800;letter-spacing:.04em;text-transform:uppercase;color:var(--muted);}
+.wx-fc-ic{font-size:24px;margin:6px 0;}
+.wx-fc-t b{font-size:14px;color:var(--txt);}
+.wx-fc-t span{font-size:12px;color:var(--muted);margin-left:5px;}
 
 /* ===== Digitale Unterschrift ===== */
 .sig-pad-wrap{background:#fff;border:1px solid var(--line);border-radius:14px;overflow:hidden;touch-action:none;}
@@ -1635,10 +1643,15 @@ input,select,textarea{font-family:inherit;font-size:15px;color:var(--txt);}
   box-shadow:var(--elev-1),inset 0 1px 0 var(--glass-brd-top);
   border:1px solid var(--glass-brd);
 }
-.heute-row{display:flex;gap:10px;margin-top:10px;}
-.heute-card{flex:1;border-radius:16px;padding:11px 14px;text-align:center;width:100%;border:none;cursor:pointer;font-family:inherit;}
+.heute-card{margin-top:10px;margin-bottom:16px;border-radius:16px;padding:11px 14px 6px;}
+.hc-top{width:100%;text-align:center;background:none;border:none;padding:0 0 10px;cursor:pointer;font-family:inherit;}
 .hc-n{font-family:'Anton',sans-serif;font-size:24px;color:var(--txt);line-height:1;}
 .hc-l{font-size:11px;font-weight:800;letter-spacing:.05em;text-transform:uppercase;color:var(--muted);margin-top:5px;}
+.hc-list{border-top:1px solid var(--glass-brd);padding:4px 0 2px;}
+.hc-item{display:flex;align-items:center;gap:10px;padding:8px 2px;font-size:13.5px;}
+.hc-item+.hc-item{border-top:1px solid var(--glass-brd);}
+.hc-item .hc-time{font-weight:800;color:var(--brand-accent);min-width:44px;}
+.hc-item .hc-name{color:var(--txt);font-weight:600;}
 
 </style>
 <!-- Supabase Client -->
@@ -6698,6 +6711,43 @@ async function fetchWeather(){
     return result;
   }catch(e){ return null; }
 }
+/* 5-Tage-Vorhersage (3-Stunden-Schritte von OpenWeatherMap), zu Tageswerten zusammengefasst.
+   Gibt die kommenden Tage zurück (heute ausgeschlossen, das zeigt schon die große Ansicht). */
+async function fetchWeatherForecast(){
+  const cfg=DB.weatherCfg;
+  if(!cfg||!cfg.apiKey)return [];
+  try{
+    const cacheRaw=localStorage.getItem("serband-weather-forecast-cache");
+    if(cacheRaw){
+      const cache=JSON.parse(cacheRaw);
+      if(cache.city===cfg.city&&(Date.now()-cache.ts)<60*60*1000)return cache.data;
+    }
+  }catch(e){}
+  try{
+    const city=encodeURIComponent(cfg.city||"Offenbach,DE");
+    const res=await fetch(`https://api.openweathermap.org/data/2.5/forecast?q=${city}&appid=${cfg.apiKey}&units=metric&lang=de`);
+    if(!res.ok)return [];
+    const data=await res.json();
+    const todayISOStr=todayISO();
+    const byDay={};
+    (data.list||[]).forEach(item=>{
+      const dISO=item.dt_txt.slice(0,10);
+      if(dISO===todayISOStr)return; // heute zeigt schon die große Ansicht
+      if(!byDay[dISO])byDay[dISO]={min:item.main.temp_min,max:item.main.temp_max,icons:{}};
+      byDay[dISO].min=Math.min(byDay[dISO].min,item.main.temp_min);
+      byDay[dISO].max=Math.max(byDay[dISO].max,item.main.temp_max);
+      const ic=item.weather[0].icon.slice(0,2);
+      byDay[dISO].icons[ic]=(byDay[dISO].icons[ic]||0)+1;
+    });
+    const result=Object.keys(byDay).sort().slice(0,5).map(dISO=>{
+      const d=byDay[dISO];
+      const topIcon=Object.keys(d.icons).sort((a,b)=>d.icons[b]-d.icons[a])[0];
+      return {date:dISO,min:Math.round(d.min),max:Math.round(d.max),icon:topIcon};
+    });
+    localStorage.setItem("serband-weather-forecast-cache",JSON.stringify({ts:Date.now(),city:cfg.city,data:result}));
+    return result;
+  }catch(e){ return []; }
+}
 function weatherEmoji(icon){
   const m={"01":"☀️","02":"⛅","03":"☁️","04":"☁️","09":"🌧️","10":"🌦️","11":"⛈️","13":"❄️","50":"🌫️"};
   return m[(icon||"").slice(0,2)]||"🌤️";
@@ -6751,8 +6801,21 @@ function routeWetter(w){
       <div class="wx-desc">${esc(w.desc)}</div>
       <div class="wx-city">${esc(cityLabel)}</div>
     </div>
+    <div class="wx-forecast" id="wxForecast"><div class="wx-fc-loading">Vorschau lädt …</div></div>
   </div>`;
   $("#backBtn").addEventListener("click",routeDashboard);
+  fetchWeatherForecast().then(days=>{
+    const el=$("#wxForecast"); if(!el)return;
+    if(!days.length){ el.innerHTML=""; return; }
+    el.innerHTML=days.map(d=>{
+      const dayLabel=["Mo","Di","Mi","Do","Fr","Sa","So"][weekdayMon0(d.date)];
+      return `<div class="wx-fc-day">
+        <div class="wx-fc-lbl">${dayLabel}</div>
+        <div class="wx-fc-ic">${weatherEmoji(d.icon)}</div>
+        <div class="wx-fc-t"><b>${d.max}°</b><span>${d.min}°</span></div>
+      </div>`;
+    }).join("");
+  });
 }
 function routeDashboard(){
   ensureDB();
@@ -6764,11 +6827,16 @@ function routeDashboard(){
   const heuteTag=heuteCount? `${heuteCount} Fahrstunde${heuteCount===1?"":"n"} heute, alles auf Kurs` : "Heute keine Fahrstunde geplant";
   // UE heute + Verdienst heute (Grenzbeitrag: Differenz aus Monatsgehalt mit/ohne heutige UE — korrekt beim Stufenmodell)
   const ueHeute=ueRange(today,today).total;
+  const nowMin=(()=>{const n=new Date();return n.getHours()*60+n.getMinutes();})();
+  const next3Today=(DB.lessons||[]).filter(l=>l.date===today&&l.status!=="abgebrochen"&&l.status!=="nicht erschienen"&&hm2min(l.von)>=nowMin&&["fahrstunde","sonder","nacht","schalt","theorie"].indexOf(l.art)>=0)
+    .sort((a,b)=>a.von.localeCompare(b.von)).slice(0,3)
+    .map(l=>({id:l.id,von:l.von,name:l.sid?((DB.students.find(s=>s.id===l.sid)||{}).name||"—"):(CAL_ARTEN[l.art]||{lab:"Termin"}).lab}));
   view.innerHTML=`<div class="view-inner view-wide fade-up">
     <div class="hero compact"><div class="greet">Willkommen zurück</div><div class="hero-brand">Serband</div><div class="hero-tag">${esc(heuteTag)}</div></div>
     <div id="weatherSlot"></div>
-    <div class="heute-row">
-      <button class="heute-card" data-go="kalender"><div class="hc-n">${ueHeute}</div><div class="hc-l">UE heute</div></button>
+    <div class="heute-card">
+      <button class="hc-top" data-go="kalender"><div class="hc-n">${ueHeute}</div><div class="hc-l">UE heute</div></button>
+      ${next3Today.length?`<div class="hc-list">${next3Today.map(l=>`<div class="hc-item" data-hcopen="${l.id}"><span class="hc-time">${l.von}</span><span class="hc-name">${esc(l.name)}</span></div>`).join("")}</div>`:''}
     </div>
     ${backupBannerHTML()}
     <div class="dash-quick-row">
@@ -6794,6 +6862,7 @@ function routeDashboard(){
   document.querySelectorAll("[data-go]").forEach(b=>b.addEventListener("click",()=>go(b.dataset.go)));
   const na=$("#ndAdd"); if(na)na.addEventListener("click",e=>{e.stopPropagation();openTerminSheet();});
   const cap=$("#capCard"); if(cap)cap.addEventListener("click",openCapacitySheet);
+  document.querySelectorAll("[data-hcopen]").forEach(b=>b.addEventListener("click",()=>openEventEdit(b.dataset.hcopen)));
   bindNextStudent();
   bindFC();
   bindBackupBanner();
