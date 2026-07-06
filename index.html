@@ -4603,19 +4603,25 @@ function formView(existing){
 function setVerdienstPin(){
   const current=DB.verdienstPin||"";
   if(current){
-    const check=prompt("Aktuellen PIN eingeben:");
-    if(check!==current){if(check!==null)toast("Falscher PIN");return;}
+    const check=(prompt("Aktuellen PIN eingeben:")||"").trim();
+    if(check!==current){if(check!=="")toast("Falscher PIN");return;}
   }
-  const neu=prompt("Neuen PIN eingeben (4-6 Stellen):");
+  const neu=(prompt("Neuen PIN eingeben (4-6 Stellen):")||"").trim();
   if(!neu)return;
   if(neu.length<4||neu.length>6||!/^\d+$/.test(neu)){toast("PIN muss 4-6 Ziffern haben");return;}
-  const best=prompt("PIN bestätigen:");
+  const best=(prompt("PIN bestätigen:")||"").trim();
   if(best!==neu){toast("PINs stimmen nicht überein");return;}
   DB.verdienstPin=neu;sessionStorage.setItem("vd_unlocked","1");save();toast("PIN gesetzt ✓");routeSettings();
 }
 function deleteVerdienstPin(){
-  const check=prompt("Aktuellen PIN eingeben zum Entfernen:");
-  if(check!==DB.verdienstPin){if(check!==null)toast("Falscher PIN");return;}
+  const check=(prompt("Aktuellen PIN eingeben zum Entfernen:")||"").trim();
+  if(check!==(DB.verdienstPin||"")){
+    if(check==="")return;
+    if(confirm("PIN falsch — trotzdem zurücksetzen? Verdienst-Schutz wird dann komplett entfernt, bis du einen neuen PIN setzt.")){
+      delete DB.verdienstPin;sessionStorage.removeItem("vd_unlocked");save();toast("PIN entfernt (Notfall-Reset)");routeSettings();
+    }
+    return;
+  }
   delete DB.verdienstPin;sessionStorage.removeItem("vd_unlocked");save();toast("PIN entfernt");routeSettings();
 }
 function saveKapazitaet(){
@@ -7008,9 +7014,9 @@ function vdShiftMonth(delta){
 function unlockVerdienst(){
   const pin=DB.verdienstPin||"";
   if(!pin){sessionStorage.setItem("vd_unlocked","1");routeStats(_curStatPeriod);return;}
-  const entered=prompt("PIN eingeben:");
+  const entered=(prompt("PIN eingeben:")||"").trim();
   if(entered===pin){sessionStorage.setItem("vd_unlocked","1");_vdJustUnlocked=true;routeStats(_curStatPeriod);}
-  else if(entered!==null)toast("Falscher PIN");
+  else if(entered!=="")toast("Falscher PIN");
 }
 function _verdienstModulHTMLContent(){
   const v=DB.verdienst;
