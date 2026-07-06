@@ -1615,6 +1615,11 @@ input,select,textarea{font-family:inherit;font-size:15px;color:var(--txt);}
 .wx-desc{font-size:16px;font-weight:700;color:var(--muted);text-transform:capitalize;margin-top:4px;}
 .wx-city{font-family:'Kaushan Script',cursive;color:var(--brand-accent);font-size:18px;margin-top:8px;}
 
+/* ===== Digitale Unterschrift ===== */
+.sig-pad-wrap{background:#fff;border:1px solid var(--line);border-radius:14px;overflow:hidden;touch-action:none;}
+.sig-preview{background:#fff;border:1px solid var(--line);border-radius:14px;padding:8px;text-align:center;}
+.sig-preview img{max-width:100%;max-height:140px;}
+
 /* ===== Glas-Karten-Look (seriös, kein Spielzeug): leichte Transparenz, weicher Schatten, dezenter Lichtreflex oben ===== */
 .weather-widget,.heute-card,.cap-card{
   background:linear-gradient(165deg,var(--glass),var(--glass-2));
@@ -4788,6 +4793,7 @@ function openEventSheet(kind,id,sid){
     <div class="es-actions">
       ${st?`<button class="es-act primary" id="esAkte">Schülerakte öffnen</button>`:''}
       ${fcRelevant&&sichtbar("fahrcheck")?`<button class="es-act" id="esFC">Fahrcheck · <b>${fcLab}</b></button>`:''}
+      ${fcRelevant&&st?`<button class="es-act" id="esSig">Unterschrift · <b>${l.signed?'✓ vorhanden':'noch offen'}</b></button>`:''}
       <button class="es-act" id="esEdit">Bearbeiten / verschieben</button>
       <button class="es-act" id="esOther">Mit anderem Schüler gefahren</button>
       <button class="es-act" id="esNoshow">Nicht erschienen</button>
@@ -4797,12 +4803,73 @@ function openEventSheet(kind,id,sid){
     </div>`);
   const ak=$("#esAkte"); if(ak)ak.addEventListener("click",()=>{ closeSheet(); routeDetail(l.sid); });
   const fcb=$("#esFC"); if(fcb)fcb.addEventListener("click",()=>{ closeSheet(); openFCMenu(id); });
+  const sigb=$("#esSig"); if(sigb)sigb.addEventListener("click",()=>{ closeSheet(); openSignatureSheet(id); });
   $("#esEdit").addEventListener("click",()=>openEventEdit(id));
   $("#esOther").addEventListener("click",()=>{ closeSheet(); nsQuickAction("other",id,"lesson",routeKalender); });
   $("#esNoshow").addEventListener("click",()=>{ l.status="nicht erschienen"; save(); closeSheet(); toast("Als nicht erschienen vermerkt"); routeKalender(); });
   $("#esCancel").addEventListener("click",()=>{ l.status="abgebrochen"; save(); closeSheet(); toast("Als abgebrochen vermerkt"); routeKalender(); });
   const rs=$("#esReset"); if(rs)rs.addEventListener("click",()=>{ l.status="geplant"; save(); closeSheet(); toast("Status zurückgesetzt"); routeKalender(); });
   $("#esDelete").addEventListener("click",()=>{ if(confirm("Diesen Termin löschen?")){ deleteLesson(id); closeSheet(); toast("Termin gelöscht"); routeKalender(); } });
+}
+/* ===== Digitale Unterschrift für Fahrstundennachweis =====
+   Master-Unterschrift wird einmal pro Schüler gespeichert (s.signature).
+   Jede einzelne Fahrstunde bekommt beim Bestätigen ihren EIGENEN Abdruck (l.signatureSnap) —
+   rechtlich eine Momentaufnahme; ändert sich die Master-Signatur später (Korrektur),
+   bleiben bereits bestätigte Termine mit ihrem ursprünglichen Abdruck unangetastet. */
+function openSignatureSheet(lessonId){
+  const l=(DB.lessons||[]).find(x=>x.id===lessonId); if(!l)return;
+  const s=DB.students.find(x=>x.id===l.sid); if(!s)return;
+  if(l.signed&&l.signatureSnap){
+    openSheet(`<div class="sheet-h">Unterschrift</div>
+      <p class="muted-p" style="font-size:13px;margin:-4px 0 12px;">Bestätigt am ${isoDE(l.signedAt||l.date)} für ${esc(s.name)}</p>
+      <div class="sig-preview"><img src="${l.signatureSnap}" alt="Unterschrift"></div>
+      <div class="btn-row" style="margin-top:14px;"><button class="btn btn-ghost" id="sigUndo">Entfernen</button><button class="btn btn-primary" id="sigClose">Fertig</button></div>`);
+    $("#sigClose").addEventListener("click",closeSheet);
+    $("#sigUndo").addEventListener("click",()=>{ if(confirm("Unterschrift für diesen Termin entfernen?")){ l.signed=false; l.signatureSnap=null; l.signedAt=null; save(); toast("Entfernt"); closeSheet(); } });
+    return;
+  }
+  if(s.signature&&s.signature.dataUrl){
+    openSheet(`<div class="sheet-h">Unterschrift bestätigen</div>
+      <p class="muted-p" style="font-size:13px;margin:-4px 0 12px;">${esc(s.name)} hat bereits einmal unterschrieben (${isoDE(s.signature.date)}). Für diese Fahrstunde übernehmen?</p>
+      <div class="sig-preview"><img src="${s.signature.dataUrl}" alt="Unterschrift"></div>
+      <div class="btn-row" style="margin-top:14px;flex-wrap:wrap;">
+        <button class="btn btn-ghost" id="sigRedo" style="flex:1 1 100%;">Neu unterschreiben (Korrektur)</button>
+        <button class="btn btn-primary" id="sigUse" style="flex:1 1 100%;">Mit dieser Unterschrift bestätigen ✓</button>
+      </div>`);
+    $("#sigUse").addEventListener("click",()=>{ l.signed=true; l.signedAt=todayISO(); l.signatureSnap=s.signature.dataUrl; save(); toast("Bestätigt ✓"); closeSheet(); });
+    $("#sigRedo").addEventListener("click",()=>openSignaturePad(dataUrl=>{
+      s.signature={dataUrl,date:todayISO()}; l.signed=true; l.signedAt=todayISO(); l.signatureSnap=dataUrl; save(); toast("Neue Unterschrift gespeichert ✓"); closeSheet();
+    }));
+    return;
+  }
+  openSignaturePad(dataUrl=>{
+    s.signature={dataUrl,date:todayISO()}; l.signed=true; l.signedAt=todayISO(); l.signatureSnap=dataUrl; save(); toast("Unterschrift gespeichert ✓"); closeSheet();
+  });
+}
+/* Generisches Canvas-Unterschriftenfeld. Ruft onSave(dataUrl) auf, wenn gespeichert wird. */
+function openSignaturePad(onSave){
+  openSheet(`<div class="sheet-h">Bitte hier unterschreiben</div>
+    <div class="sig-pad-wrap"><canvas id="sigCanvas"></canvas></div>
+    <p class="muted-p" style="font-size:12px;text-align:center;margin:6px 0 12px;">Mit Finger oder Stift unterschreiben</p>
+    <div class="btn-row"><button class="btn btn-ghost" id="sigClear" style="flex:0 0 auto;">Löschen</button><button class="btn btn-primary" id="sigSave">Speichern</button></div>`);
+  const canvas=$("#sigCanvas");
+  const wrap=canvas.parentElement;
+  const ctx=canvas.getContext("2d");
+  const dpr=window.devicePixelRatio||1;
+  const resize=()=>{ const r=wrap.getBoundingClientRect(); canvas.width=r.width*dpr; canvas.height=180*dpr; canvas.style.width=r.width+"px"; canvas.style.height="180px"; ctx.scale(dpr,dpr); ctx.strokeStyle="#1a1a1a"; ctx.lineWidth=2.4; ctx.lineCap="round"; ctx.lineJoin="round"; };
+  resize();
+  let drawing=false,hasDrawn=false,lastX=0,lastY=0;
+  const pos=e=>{ const r=canvas.getBoundingClientRect(); const t=e.touches?e.touches[0]:e; return {x:t.clientX-r.left,y:t.clientY-r.top}; };
+  const start=e=>{ drawing=true; const p=pos(e); lastX=p.x; lastY=p.y; e.preventDefault(); };
+  const move=e=>{ if(!drawing)return; const p=pos(e); ctx.beginPath(); ctx.moveTo(lastX,lastY); ctx.lineTo(p.x,p.y); ctx.stroke(); lastX=p.x; lastY=p.y; hasDrawn=true; e.preventDefault(); };
+  const end=()=>{ drawing=false; };
+  canvas.addEventListener("mousedown",start); canvas.addEventListener("mousemove",move); window.addEventListener("mouseup",end);
+  canvas.addEventListener("touchstart",start,{passive:false}); canvas.addEventListener("touchmove",move,{passive:false}); canvas.addEventListener("touchend",end);
+  $("#sigClear").addEventListener("click",()=>{ ctx.clearRect(0,0,canvas.width,canvas.height); hasDrawn=false; });
+  $("#sigSave").addEventListener("click",()=>{
+    if(!hasDrawn){ toast("Bitte erst unterschreiben"); return; }
+    onSave(canvas.toDataURL("image/png"));
+  });
 }
 // SF-Picker: Welche Sonderfahrt wurde im Kalender gebucht?
 function openSFPickerForLesson(lessonId,sid,date,von,bis,note,newArt){
@@ -6625,16 +6692,11 @@ function routeDashboard(){
   const heuteTag=heuteCount? `${heuteCount} Fahrstunde${heuteCount===1?"":"n"} heute, alles auf Kurs` : "Heute keine Fahrstunde geplant";
   // UE heute + Verdienst heute (Grenzbeitrag: Differenz aus Monatsgehalt mit/ohne heutige UE — korrekt beim Stufenmodell)
   const ueHeute=ueRange(today,today).total;
-  const [mStart]=isoMonthRange(today);
-  const fcMitHeute=ueRange(mStart,today).fcCounted;
-  const fcOhneHeute=today>mStart?ueRange(mStart,addDays(today,-1)).fcCounted:0;
-  const verdienstHeute=gehaltAusUE(Math.round(fcMitHeute))-gehaltAusUE(Math.round(fcOhneHeute));
   view.innerHTML=`<div class="view-inner view-wide fade-up">
     <div class="hero compact"><div class="greet">Willkommen zurück</div><div class="hero-brand">Serband</div><div class="hero-tag">${esc(heuteTag)}</div></div>
     <div id="weatherSlot"></div>
     <div class="heute-row">
       <div class="heute-card"><div class="hc-n">${ueHeute}</div><div class="hc-l">UE heute</div></div>
-      <div class="heute-card"><div class="hc-n">${verdienstHeute}€</div><div class="hc-l">Verdienst heute</div></div>
     </div>
     ${backupBannerHTML()}
     <div class="dash-quick-row">
