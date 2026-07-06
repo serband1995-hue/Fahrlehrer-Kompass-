@@ -730,6 +730,11 @@ input,select,textarea{font-family:inherit;font-size:15px;color:var(--txt);}
 .db-handle{position:relative;}
 .db-handle.on{background:var(--orange);color:#fff;}
 .db-dot{width:5px;height:5px;border-radius:50%;background:var(--orange);position:absolute;top:6px;right:9px;}
+/* Icon-Akzentfarben — für die Symbol-Konsistenz-Überarbeitung */
+.ic-gold{color:var(--gold)}.ic-rot{color:var(--rot)}.ic-blau{color:var(--blau)}
+.ic-gruen{color:var(--gruen)}.ic-clay{color:var(--clay)}.ic-muted{color:var(--muted)}
+.ic{display:inline-flex;vertical-align:middle;}.ic svg{width:1em;height:1em;}
+.std-top .cal svg{width:15px;height:15px;}
 
 .tafel-drawer{position:absolute;top:14px;right:14px;bottom:calc(86px + env(safe-area-inset-bottom));z-index:7;
   width:min(320px,88vw);display:flex;flex-direction:column;background:rgba(26,27,31,.97);border:1px solid #393c44;
@@ -1867,7 +1872,7 @@ input,select,textarea{font-family:inherit;font-size:15px;color:var(--txt);}
     <div class="nav-sep"></div>
     <button class="nav-item" data-nav="settings" style="color:var(--akzent-bright)">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
-      ⚙ Einstellungen</button>
+      Einstellungen</button>
   </nav>
   <div class="drawer-foot">Fahrlehrer-Kompass · v1.0 · läuft offline auf deinem Gerät</div>
 </aside>
@@ -2730,7 +2735,7 @@ async function renderAdminPanel() {
     el.innerHTML = profiles.map(p => {
       const isMe = p.id === _authUser.id;
       const displayEmail = p.email || (isMe ? _authUser.email : '— E-Mail nicht bekannt —');
-      const rolleLabel = p.rolle === 'super_admin' ? '👑 Super-Admin' : (p.rolle === 'fahrlehrer' ? '🚗 Fahrlehrer' : p.rolle);
+      const rolleLabel = p.rolle === 'super_admin' ? '👑 Super-Admin' : (p.rolle === 'fahrlehrer' ? `<span class="ic ic-clay" style="font-size:12px;">${ICN.car}</span> Fahrlehrer` : p.rolle);
       return `<div class="ap-card">
         <div class="ap-email">${displayEmail}${isMe ? ' <span style="font-size:10px;color:#4a8b45;font-weight:700">(Du)</span>' : ''}</div>
         <div class="ap-role">${rolleLabel} &nbsp;<span class="${p.aktiv ? 'ap-status-on' : 'ap-status-off'}">${p.aktiv ? 'Aktiv' : 'GESPERRT'}</span></div>
@@ -2999,7 +3004,18 @@ const ICN={
   trophy:`<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M8 21h8M12 17v4M7 4h10v6a5 5 0 0 1-10 0z"/><path d="M7 6H4a3 3 0 0 0 3 5M17 6h3a3 3 0 0 1-3 5"/></svg>`,
   bolt:`<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M13 3 5 13h6l-1 8 8-10h-6z"/></svg>`,
   down:`<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 4v12M6 12l6 6 6-6M5 21h14"/></svg>`,
-  up:`<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20V8M6 12l6-6 6 6M5 21h14"/></svg>`
+  up:`<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20V8M6 12l6-6 6 6M5 21h14"/></svg>`,
+  gear:`<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.7 1.7 0 0 0 .3 1.9l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.7 1.7 0 0 0-1.9-.3 1.7 1.7 0 0 0-1 1.6V21a2 2 0 1 1-4 0v-.2a1.7 1.7 0 0 0-1-1.6 1.7 1.7 0 0 0-1.9.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.7 1.7 0 0 0 .3-1.9 1.7 1.7 0 0 0-1.6-1H3a2 2 0 1 1 0-4h.2a1.7 1.7 0 0 0 1.6-1 1.7 1.7 0 0 0-.3-1.9l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.7 1.7 0 0 0 1.9.3H9a1.7 1.7 0 0 0 1-1.6V3a2 2 0 1 1 4 0v.2a1.7 1.7 0 0 0 1 1.6 1.7 1.7 0 0 0 1.9-.3l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.7 1.7 0 0 0-.3 1.9V9a1.7 1.7 0 0 0 1.6 1H21a2 2 0 1 1 0 4h-.2a1.7 1.7 0 0 0-1.6 1z"/></svg>`,
+  car:`<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 11l1.5-4.5A2 2 0 0 1 8.4 5h7.2a2 2 0 0 1 1.9 1.5L19 11"/><rect x="3" y="11" width="18" height="6" rx="2"/><circle cx="7.5" cy="17" r="1.5"/><circle cx="16.5" cy="17" r="1.5"/></svg>`,
+  target:`<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="5"/><circle cx="12" cy="12" r="1.2"/></svg>`,
+  pin:`<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 21s7-6.5 7-12a7 7 0 1 0-14 0c0 5.5 7 12 7 12z"/><circle cx="12" cy="9" r="2.5"/></svg>`,
+  bell:`<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 9a6 6 0 0 1 12 0c0 5 2 6 2 6H4s2-1 2-6"/><path d="M9.5 20a2.5 2.5 0 0 0 5 0"/></svg>`,
+  trash:`<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 7h16M10 11v6M14 11v6M6 7l1 13a1 1 0 0 0 1 1h8a1 1 0 0 0 1-1l1-13M9 7V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v3"/></svg>`,
+  pencil:`<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20h9"/><path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4z"/></svg>`,
+  phone:`<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 16.9v3a2 2 0 0 1-2.2 2 19.8 19.8 0 0 1-8.6-3.1 19.5 19.5 0 0 1-6-6A19.8 19.8 0 0 1 2.1 4.2 2 2 0 0 1 4.1 2h3a2 2 0 0 1 2 1.7c.1 1 .4 2 .7 2.9a2 2 0 0 1-.5 2.1L8 10a16 16 0 0 0 6 6l1.3-1.3a2 2 0 0 1 2.1-.5c.9.3 1.9.6 2.9.7a2 2 0 0 1 1.7 2.1z"/></svg>`,
+  chart:`<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 20V10M10 20V4M16 20v-7M4 20h16"/></svg>`,
+  save:`<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/><path d="M17 21v-8H7v8M7 3v5h8"/></svg>`,
+  folder:`<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 7a2 2 0 0 1 2-2h4l2 2h8a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/></svg>`
 };
 /* ===== HELL/DUNKEL TOGGLE ===== */
 const THEME_KEY='serband-theme';
@@ -3112,7 +3128,7 @@ function routeHome(){
 }
 function backupBannerHTML(){
   const stamp=parseInt(localStorage.getItem("serband-backup-stamp")||"0");
-  if(!stamp)return `<div class="backup-banner" id="backupBanner"><div><div class="bb-txt">💾 Noch kein Backup erstellt</div><div class="bb-sub">Daten nur im Browser — jetzt sichern!</div></div><span class="bb-arr">›</span></div>`;
+  if(!stamp)return `<div class="backup-banner" id="backupBanner"><div><div class="bb-txt"><span class="ic ic-gold" style="font-size:13px;">${ICN.save}</span> Noch kein Backup erstellt</div><div class="bb-sub">Daten nur im Browser — jetzt sichern!</div></div><span class="bb-arr">›</span></div>`;
   const days=Math.floor((Date.now()-stamp)/(1000*60*60*24));
   if(days<7)return '';
   return `<div class="backup-banner" id="backupBanner"><div><div class="bb-txt">⚠ Backup vor ${days} Tagen</div><div class="bb-sub">Kurz sichern, bevor Daten verloren gehen</div></div><span class="bb-arr">›</span></div>`;
@@ -3197,10 +3213,10 @@ function routeDetail(id){
         <div class="detail-line">
           <span class="chip chip-form">${esc(s.form||"B")}</span>
           ${E?`<span class="chip"><span class="cdot" style="background:${PROFILE[E.top].hex}"></span>${profSub}</span>`:`<span class="chip" style="color:var(--muted)">Profil noch offen</span>`}
-          ${done?`<span class="chip chip-goal">🏁 Am Ziel</span>`:""}
+          ${done?`<span class="chip chip-goal"><span class="ic ic-gold" style="font-size:11px;">${ICN.flag}</span> Am Ziel</span>`:""}
           ${s.ready?`<span class="chip" style="border-color:var(--orange-line);color:var(--orange)">⏳ Warteliste</span>`:""}
           ${s.beginn?`<span class="chip" style="color:var(--muted)">seit ${esc(s.beginn)}</span>`:""}
-          ${s.telefon?`<a class="chip" href="tel:${esc(s.telefon.replace(/\s+/g,''))}" style="color:var(--gruen);text-decoration:none;">📞 ${esc(s.telefon)}</a>`:""}
+          ${s.telefon?`<a class="chip" href="tel:${esc(s.telefon.replace(/\s+/g,''))}" style="color:var(--gruen);text-decoration:none;"><span class="ic" style="font-size:12px;">${ICN.phone}</span> ${esc(s.telefon)}</a>`:""}
           <button class="chip sehhilfe${s.sehhilfe?' on':''}" id="sehhilfeBtn">👓 ${s.sehhilfe?'Sehhilfe':'keine'}</button>
         </div>
       </div>
@@ -3209,7 +3225,7 @@ function routeDetail(id){
       <div class="theo-label">📚 Theorie</div>
       <div class="theo-track"><div class="theo-fill" id="theoFill" style="width:${s.theoriePct||0}%"></div></div>
       <div class="theo-pct" id="theoPct">${s.theoriePct||0} %</div>
-      <button class="theo-edit-btn" id="theoEdit">✏️</button>
+      <button class="theo-edit-btn ic ic-blau" id="theoEdit">${ICN.pencil}</button>
     </div>
     <div class="akte-nav">
       <button class="akte-btn" data-go="plan"><div class="ab-ic">📋</div><div class="ab-lab">Plan</div></button>
@@ -3596,7 +3612,7 @@ function examPrognose(s){
   else if(pct>=70){label="Auf gutem Weg";color="#cf9a3e";hint=theorieOk?"Ausbildungsstand steigt, Theorie schon bestanden.":"Noch ein paar Themen offen, Theorie im Blick behalten.";}
   else{label="Noch Zeit nötig";color="#cf5a48";hint="Ausbildungsstand braucht noch Übung, bevor eine Prüfung Sinn ergibt.";}
   return `<div class="res-block prognose-card" style="animation:none;">
-    <h4>🎯 Prüfungs-Einschätzung</h4>
+    <h4><span class="ic ic-gold" style="font-size:14px;">${ICN.target}</span> Prüfungs-Einschätzung</h4>
     <div style="display:flex;align-items:center;gap:12px;margin:8px 0;">
       <div class="prog-badge" style="width:44px;height:44px;border-radius:50%;background:${color};display:flex;align-items:center;justify-content:center;color:#fff;font-weight:800;font-size:14px;flex:0 0 auto;">${pct}%</div>
       <div><div style="font-weight:800;font-size:14.5px;">${label}</div><div style="font-size:12.5px;color:var(--muted);margin-top:2px;">${hint}</div></div>
@@ -3636,7 +3652,7 @@ function routePlan(id){
     <div class="plan-actions" id="planActions"></div>
     <div class="plan-sec">
       <div class="acc open" data-acc="fahrstunden">
-        <button class="acc-h"><span class="nr">·</span><span class="ti">Fahrstunden</span><span class="su">Fläche = heute · 📅 = anderes Datum · FC = Fahrchecks</span><span class="chev">${ICN.chev}</span></button>
+        <button class="acc-h"><span class="nr">·</span><span class="ti">Fahrstunden</span><span class="su">Fläche = heute · <span class="ic ic-gold" style="font-size:11px;">${ICN.cal}</span> = anderes Datum · FC = Fahrchecks</span><span class="chev">${ICN.chev}</span></button>
         <div class="acc-body"><div class="acc-inner">
           <div class="std-grid" id="stdGrid"></div>
           <div class="legende">Antippen trägt das heutige Datum ein, nochmal antippen löscht es.</div>
@@ -3685,7 +3701,7 @@ function refreshPlanRing(s){
 }
 function stdCellHTML(n,o,fc){
   return `<div class="std${o?' filled':''}" data-std="${n}">
-    <div class="std-top"><span class="n">${pad2(n)}</span><button class="cal" title="Anderes Datum" aria-label="Datum wählen">📅</button></div>
+    <div class="std-top"><span class="n">${pad2(n)}</span><button class="cal ic-gold" title="Anderes Datum" aria-label="Datum wählen">${ICN.cal}</button></div>
     <span class="d">${o?esc(o.d):""}</span>
     <button class="fc${fc?' on':''}" title="Fahrchecks abgegeben">FC</button>
   </div>`;
@@ -3721,7 +3737,7 @@ function buildSonder(s){
     let html="";for(let i=0;i<sd.soll;i++){
       const o=arr[i]; const done=sfDone(o);
       html+=`<div class="std${done?' filled':''}" data-sn="${i}">
-        <div class="std-top"><span class="n">${pad2(i+1)}</span><button class="cal" title="Anderes Datum">📅</button></div>
+        <div class="std-top"><span class="n">${pad2(i+1)}</span><button class="cal ic-gold" title="Anderes Datum">${ICN.cal}</button></div>
         <span class="d">${done?esc(o.d):""}</span><span style="height:4px"></span></div>`;}
     g.innerHTML=html;
     const cnt=$("#c_"+sd.key);if(cnt)cnt.textContent=sfCount(arr);
@@ -3952,7 +3968,7 @@ function routePlanVorlageEdit(planId){
       <div class="btn-row" style="margin-top:8px;"><button class="btn btn-ghost" data-additem="${st.key}">+ Punkt hinzufügen</button></div>
     </div>`).join("");
   const fixedHtml=STUFEN.filter(st=>FIXED_STUFEN_KEYS.includes(st.key)).map(st=>
-    `<div class="res-block" style="animation:none;opacity:.55;"><h4>🔒 ${st.nr} · ${esc(st.titel)}</h4>
+    `<div class="res-block" style="animation:none;opacity:.55;"><h4><span class="ic ic-muted" style="font-size:14px;">${ICN.lock}</span> ${st.nr} · ${esc(st.titel)}</h4>
       <p>Gesetzlich vorgegeben — für alle Vorlagen gleich, nicht editierbar. ${st.items.length} Punkte.</p></div>`
   ).join("");
   view.innerHTML=`<div class="view-inner view-read fade-up">
@@ -3992,7 +4008,7 @@ function buildStufen(s){
         : `<div class="ampel">${["rot","gelb","gruen"].map(c=>`<button class="amp ${v===c?'on':''}" data-v="${c}" aria-label="${c}"></button>`).join("")}</div>`;
       return grpHtml+`<div class="skill-wrap">
         <div class="skill" data-skill="${it.id}">
-          <div style="flex:1"><div class="sk-head"><span class="sk-t">${esc(it.t)}</span>${iBtn}</div>${it.ort?`<div class="sk-ort">📍 ${esc(it.ort)}</div>`:""}</div>
+          <div style="flex:1"><div class="sk-head"><span class="sk-t">${esc(it.t)}</span>${iBtn}</div>${it.ort?`<div class="sk-ort"><span class="ic ic-rot" style="font-size:11px;">${ICN.pin}</span> ${esc(it.ort)}</div>`:""}</div>
           ${ampelHtml}
         </div>${panel}
       </div>`;}).join("");
@@ -4221,7 +4237,7 @@ function routeDraw(){
     <div class="mag-ctrl" id="objCtrl" hidden>
       <button data-mc="rot" aria-label="90 Grad drehen">⟳</button>
       <button data-mc="dup" aria-label="Duplizieren">⧉</button>
-      <button data-mc="del" aria-label="Löschen">🗑</button>
+      <button data-mc="del" aria-label="Löschen" class="ic ic-rot">${ICN.trash}</button>
       <button data-mc="done" class="mc-done" aria-label="Fertig">✓</button>
     </div>
     <div class="tafel-drawer" id="tafelDrawer">
@@ -4477,7 +4493,7 @@ function renderObjGrid(){
 }
 function renderLoadList(){
   const g=$("#loadList");if(!g)return;const bs=DB.boards||[];
-  g.innerHTML=bs.length?bs.map(b=>`<div class="tb-load-row"><button class="tb-load" data-load="${b.id}"><span class="tb-name">${esc(b.name)}</span><span class="tb-date">${esc(b.ts||"")}</span></button><button class="tb-del" data-del="${b.id}" aria-label="Löschen">🗑</button></div>`).join(""):`<div class="tb-empty">Noch keine Tafelbilder gespeichert.</div>`;
+  g.innerHTML=bs.length?bs.map(b=>`<div class="tb-load-row"><button class="tb-load" data-load="${b.id}"><span class="tb-name">${esc(b.name)}</span><span class="tb-date">${esc(b.ts||"")}</span></button><button class="tb-del ic ic-rot" data-del="${b.id}" aria-label="Löschen">${ICN.trash}</button></div>`).join(""):`<div class="tb-empty">Noch keine Tafelbilder gespeichert.</div>`;
   g.querySelectorAll(".tb-load").forEach(b=>b.addEventListener("click",()=>loadBoard(+b.dataset.load)));
   g.querySelectorAll(".tb-del").forEach(b=>b.addEventListener("click",()=>deleteBoard(+b.dataset.del)));
 }
@@ -4615,7 +4631,7 @@ function routeSettings(){
     <div class="res-block" style="animation:none;"><h4>📋 Ausbildungsplan-Vorlagen</h4>
       <p>Grundstufe, Aufbaustufe und Leistungsstufe individuell gestalten — z.B. eigene Prüfgebiete anlegen.</p>
       <div class="btn-row"><button class="btn btn-ghost" onclick="routePlanVorlagen()">Vorlagen verwalten</button></div></div>
-    <div class="res-block" style="animation:none;"><h4>🔧 Sichtbare Funktionen</h4>
+    <div class="res-block" style="animation:none;"><h4><span class="ic ic-muted" style="font-size:14px;">${ICN.gear}</span> Sichtbare Funktionen</h4>
       <p>Einzelne Funktionen ausblenden, die du nicht brauchst.</p>
       <div class="field"><div class="toggle-row"><div><div class="tc-name" style="font-weight:800;font-size:14px;">Vortest-Button</div><div class="tc-sub" style="font-size:12.5px;color:var(--muted);margin-top:2px;">Link zum Boost-Buchungskalender in der Schülerakte</div></div><button class="check-toggle${DB.sichtbarkeit.vortest?' on':''}" data-vis="vortest"></button></div></div>
       <div class="field"><div class="toggle-row"><div><div class="tc-name" style="font-weight:800;font-size:14px;">Fahrcheck</div><div class="tc-sub" style="font-size:12.5px;color:var(--muted);margin-top:2px;">FC-Auswahl beim Bearbeiten einer Fahrstunde</div></div><button class="check-toggle${DB.sichtbarkeit.fahrcheck?' on':''}" data-vis="fahrcheck"></button></div></div>
@@ -4627,23 +4643,23 @@ function routeSettings(){
       <div class="field"><label>Stadt</label><input id="weatherCityInput" type="text" placeholder="Offenbach,DE" value="${esc(DB.weatherCfg.city||"Offenbach,DE")}" autocomplete="off"></div>
       <div class="btn-row"><button class="btn btn-ghost" id="weatherSaveBtn">Speichern</button></div>
     </div>
-    <div class="res-block" style="animation:none;"><h4>⚙ Kapazität</h4>
+    <div class="res-block" style="animation:none;"><h4><span class="ic ic-muted" style="font-size:14px;">${ICN.gear}</span> Kapazität</h4>
       <p>Wöchentliche Slot-Kapazität für die Auslastungsanzeige.</p>
       <div style="display:flex;align-items:center;gap:12px;margin-top:10px;">
         <input type="number" id="kapInput" value="${kapWoche}" min="1" max="100" style="width:80px;padding:8px 12px;background:var(--surface-2);border:1px solid var(--line);border-radius:10px;color:var(--txt);font-size:15px;">
         <span style="color:var(--muted);font-size:13px;">Slots/Woche</span>
         <button class="btn btn-ghost" style="padding:8px 16px;" onclick="saveKapazitaet()">Speichern</button>
       </div></div>
-    <div class="res-block" style="animation:none;"><h4>🔒 Verdienst-PIN</h4>
+    <div class="res-block" style="animation:none;"><h4><span class="ic ic-muted" style="font-size:14px;">${ICN.lock}</span> Verdienst-PIN</h4>
       <p>${DB.verdienstPin?'PIN ist aktiv — Verdienst ist geschützt.':'Kein PIN gesetzt — Verdienst ist für alle sichtbar.'}</p>
       <div style="display:flex;gap:8px;margin-top:10px;flex-wrap:wrap;">
         <button class="btn btn-ghost" style="padding:8px 16px;" onclick="setVerdienstPin()">${DB.verdienstPin?'PIN ändern':'PIN setzen'}</button>
         ${DB.verdienstPin?`<button class="btn btn-ghost" style="padding:8px 16px;color:#f08080;border-color:rgba(200,60,60,.3);" onclick="deleteVerdienstPin()">PIN entfernen</button>`:''}
       </div></div>
-    <div class="res-block" style="animation:none;"><h4>💾 Sichern</h4>
+    <div class="res-block" style="animation:none;"><h4><span class="ic ic-gold" style="font-size:14px;">${ICN.save}</span> Sichern</h4>
       <p>Erstellt eine Datei mit allen Schülern, Plänen und Profilen.</p>
       <div class="btn-row"><button class="btn btn-primary" id="expBtn">${ICN.down} Backup herunterladen</button></div></div>
-    <div class="res-block" style="animation:none;"><h4>📂 Wiederherstellen</h4>
+    <div class="res-block" style="animation:none;"><h4><span class="ic ic-blau" style="font-size:14px;">${ICN.folder}</span> Wiederherstellen</h4>
       <p>Lädt ein Backup und ersetzt die aktuellen Daten.</p>
       <input type="file" id="impFile" accept="application/json" style="display:none">
       <div class="btn-row"><button class="btn btn-ghost" id="impBtn">${ICN.up} Backup einspielen</button></div></div>
@@ -4653,15 +4669,15 @@ function routeSettings(){
         <summary style="color:var(--muted);font-size:13px;cursor:pointer;padding:4px 0;">Anzeigen</summary>
         <div style="margin-top:12px;display:flex;flex-direction:column;gap:10px;font-size:13px;color:var(--txt);line-height:1.6;">
           <div><b style="color:#4a8b45">🏠 Dashboard</b><br>Übersicht: aktive Schüler, Kapazität, nächste Prüfungen. Kacheln antippen für Schnellzugriff.</div>
-          <div><b style="color:#4a8b45">👥 Schüler</b><br>Alle aktiven Schüler. + oben rechts = neuer Schüler. Schüler antippen = Detailansicht mit Plan, Bogen, Historie.</div>
+          <div><b style="color:#4a8b45"><span class="ic ic-gruen" style="font-size:14px;">${ICN.users}</span> Schüler</b><br>Alle aktiven Schüler. + oben rechts = neuer Schüler. Schüler antippen = Detailansicht mit Plan, Bogen, Historie.</div>
           <div><b style="color:#4a8b45">📋 Ausbildungsplan</b><br>Grüne Ampel = geschafft, Gelb = in Arbeit, Rot = fehlt noch. FC = Fahrcheck. Sonderfahrten einzeln abhaken.</div>
           <div><b style="color:#4a8b45">🧠 Persönlichkeitsbogen</b><br>65 Fragen → DISC-Profil (Rot/Gelb/Grün/Blau). Zeigt Coaching-Hinweise für den Umgang mit dem Schüler.</div>
-          <div><b style="color:#4a8b45">🏆 Prüfungen</b><br>Termin eintragen → Ergebnis eintragen. Bestandene Prüfungen verschwinden automatisch ins Archiv.</div>
-          <div><b style="color:#4a8b45">📅 Kalender</b><br>Fahrstunden planen, Fahrzeug zuweisen, Sonderfahrten eintragen. Feiertage (Hessen) automatisch markiert.</div>
+          <div><b style="color:#4a8b45"><span class="ic ic-gold" style="font-size:14px;">${ICN.trophy}</span> Prüfungen</b><br>Termin eintragen → Ergebnis eintragen. Bestandene Prüfungen verschwinden automatisch ins Archiv.</div>
+          <div><b style="color:#4a8b45"><span class="ic ic-gold" style="font-size:14px;">${ICN.cal}</span> Kalender</b><br>Fahrstunden planen, Fahrzeug zuweisen, Sonderfahrten eintragen. Feiertage (Hessen) automatisch markiert.</div>
           <div><b style="color:#4a8b45">⏳ Warteliste</b><br>Schüler landen hier ab 90 % Ausbildungsstand + bestandener Theorie. Reihenfolge = ältestes Datum zuerst.</div>
-          <div><b style="color:#4a8b45">📊 Statistik</b><br>Prüfungsquote, Durchfallanalyse, Prüfer-Statistik, monatlicher Verdienst (PIN-geschützt).</div>
-          <div><b style="color:#4a8b45">✏️ Zeichenfläche</b><br>Kreuzungen und Situationen zeichnen. Objekte aus dem Panel per Drag&Drop platzieren. Stift, Radierer, Undo.</div>
-          <div><b style="color:#4a8b45">💾 Backup</b><br>Daten werden automatisch in der Cloud gespeichert. Manuelles Backup zusätzlich empfohlen — z.B. einmal pro Woche.</div>
+          <div><b style="color:#4a8b45"><span class="ic ic-gold" style="font-size:14px;">${ICN.chart}</span> Statistik</b><br>Prüfungsquote, Durchfallanalyse, Prüfer-Statistik, monatlicher Verdienst (PIN-geschützt).</div>
+          <div><b style="color:#4a8b45"><span class="ic ic-blau" style="font-size:14px;">${ICN.pencil}</span> Zeichenfläche</b><br>Kreuzungen und Situationen zeichnen. Objekte aus dem Panel per Drag&amp;Drop platzieren. Stift, Radierer, Undo.</div>
+          <div><b style="color:#4a8b45"><span class="ic ic-gold" style="font-size:14px;">${ICN.save}</span> Backup</b><br>Daten werden automatisch in der Cloud gespeichert. Manuelles Backup zusätzlich empfohlen — z.B. einmal pro Woche.</div>
         </div>
       </details>
     </div>
@@ -4815,7 +4831,7 @@ function openAddLessonSheet(art){
         openSheet(`<div class="sheet-h">Fahrzeug · ${esc(st?st.name:"")}</div>
           <p class="muted-p" style="font-size:13px;margin:-4px 0 6px;">${isoDE(date)} · ${von}</p>
           <div class="es-actions">
-            ${fzGroup(fzSchalt,"⚙ Schalter","#c4607d")}
+            ${fzGroup(fzSchalt,`<span class="ic" style="font-size:11px;">${ICN.gear}</span> Schalter`,"#c4607d")}
             ${fzGroup(fzAuto,"⚡ Automatik","#4a8b45")}
             <button class="es-act" id="fzSkip" style="margin-top:8px;">Kein Fahrzeug (überspringen)</button>
           </div>`);
@@ -6022,7 +6038,7 @@ function showCalStudentDetail(sid){
   // Merge future: lessons + exam slots, sorted asc
   const futureItems=[
     ...futureL.map(l=>({ date:l.date, html:`<button class="cs-item future" data-date="${l.date}"><div class="csi-date">${deWeekday(l.date)} · ${isoDE(l.date)}</div><div class="csi-info">${l.von} · ${artLabel[l.art]||l.art}</div></button>` })),
-    ...futureEx.map(t=>({ date:t.date, html:`<button class="cs-item future" data-date="${t.date}"><div class="csi-date">${deWeekday(t.date)} · ${isoDE(t.date)}</div><div class="csi-info exam-future">🏆 Prüfung · ${t.von||"?"}</div></button>` }))
+    ...futureEx.map(t=>({ date:t.date, html:`<button class="cs-item future" data-date="${t.date}"><div class="csi-date">${deWeekday(t.date)} · ${isoDE(t.date)}</div><div class="csi-info exam-future"><span class="ic ic-gold" style="font-size:11px;">${ICN.trophy}</span> Prüfung · ${t.von||"?"}</div></button>` }))
   ].sort((a,b)=>a.date.localeCompare(b.date));
   // Merge past: lessons + done exams, sorted desc
   const pastItems=[
@@ -6241,7 +6257,7 @@ function renderExam(s){
       <div class="back-row"><button class="back-btn" id="backBtn">${ICN.back} ${esc(s.name)}</button></div>
       <div class="sec-h" style="margin:4px 0 6px;">Prüfung</div>
       <p style="color:var(--muted);font-size:13.5px;margin-bottom:18px;">${esc(s.name)}${t?` · Termin am ${isoDE(t.date)}`:""}</p>
-      <button class="exam-pick plan" id="pickPlan" style="width:100%;margin-bottom:14px;"><span class="ep-ic">📅</span><span>${t?"Termin ändern":"Prüfungstermin planen"}</span></button>
+      <button class="exam-pick plan" id="pickPlan" style="width:100%;margin-bottom:14px;"><span class="ep-ic ic-gold">${ICN.cal}</span><span>${t?"Termin ändern":"Prüfungstermin planen"}</span></button>
       <div class="muted-p" style="font-size:12px;letter-spacing:1px;text-transform:uppercase;margin:6px 2px 10px;color:var(--faint);">Nach der Prüfung</div>
       <div class="exam-choice">
         <button class="exam-pick pass" id="pickPass"><span class="ep-ic">✓</span><span>Bestanden</span></button>
@@ -6688,7 +6704,7 @@ function openCapacitySheet(){
     <p class="muted-p" style="font-size:12.5px;margin:14px 0 4px;">Theorie-Wartende und prüfungsreife Schüler werden nicht mitgezählt, da sie nicht regelmäßig fahren.</p>
     <div class="field" style="margin-top:14px;"><label>Slots pro Woche anpassen</label><input type="number" id="capWoche" value="${c.slotsPerWeek}" inputmode="numeric"></div>
     <div class="btn-row"><button class="btn btn-ghost" id="capCancel" style="flex:0;padding:13px 18px;">Schließen</button><button class="btn btn-primary" id="capSave">Speichern</button></div>
-    <div class="sheet-h" style="margin-top:20px;font-size:15px;">📅 Nächste freie Lücken</div>
+    <div class="sheet-h" style="margin-top:20px;font-size:15px;"><span class="ic ic-gold" style="font-size:15px;">${ICN.cal}</span> Nächste freie Lücken</div>
     <div class="es-actions">${lueckenHtml}</div>`);
   $("#capCancel").addEventListener("click",closeSheet);
   $("#capSave").addEventListener("click",()=>{ const v=+$("#capWoche").value; if(v>0){ DB.workCfg.kapazitaetWoche=v; save(); } closeSheet(); routeDashboard(); });
@@ -6971,12 +6987,12 @@ function _verdienstPinCheck(){
 function verdienstModulHTML(){
   if(!_verdienstPinCheck()){
     return `<div class="vd-card" style="display:flex;flex-direction:column;align-items:center;justify-content:center;min-height:180px;gap:16px;">
-      <div style="font-size:32px;">🔒</div>
+      <div class="ic ic-muted" style="font-size:32px;">${ICN.lock}</div>
       <div style="font-size:14px;color:var(--muted);text-align:center;">Verdienst ist geschützt</div>
       <button class="btn btn-ghost" style="padding:10px 24px;" onclick="unlockVerdienst()">Entsperren</button>
     </div>`;
   }
-  const lockBtn=DB.verdienstPin?`<button onclick="sessionStorage.removeItem('vd_unlocked');routeStats(_curStatPeriod);" style="background:none;border:none;font-size:18px;cursor:pointer;opacity:.6;padding:4px;" title="Verdienst sperren">🔒</button>`:"";
+  const lockBtn=DB.verdienstPin?`<button onclick="sessionStorage.removeItem('vd_unlocked');routeStats(_curStatPeriod);" class="ic ic-muted" style="background:none;border:none;font-size:16px;cursor:pointer;opacity:.7;padding:4px;" title="Verdienst sperren">${ICN.lock}</button>`:"";
   return `<div style="position:relative;">${lockBtn?`<div style="position:absolute;top:8px;right:8px;z-index:2;">${lockBtn}</div>`:""}${_verdienstModulHTMLContent()}</div>`;
 }
 let _vdJustUnlocked=false;
@@ -7043,11 +7059,11 @@ function _verdienstModulHTMLContent(){
     </div>
     <div class="thermo-info">
       <div class="thi-card"><div class="thi-k">✅ Verdient</div><div class="thi-v">${eur(verdientEuro)}</div><div class="thi-s">${Math.round(verdientUE)} UE abgerechnet</div></div>
-      <div class="thi-card future"><div class="thi-k">📅 Voraussichtlich</div><div class="thi-v">${eur(gesamtEuro)}</div><div class="thi-s">${gesamtUE} UE gesamt · ${Math.round(geplantUE)} noch offen</div></div>
+      <div class="thi-card future"><div class="thi-k"><span class="ic ic-gold" style="font-size:12px;">${ICN.cal}</span> Voraussichtlich</div><div class="thi-v">${eur(gesamtEuro)}</div><div class="thi-s">${gesamtUE} UE gesamt · ${Math.round(geplantUE)} noch offen</div></div>
     </div>
     ${offenUE>0.3?`<div class="vd-offen">⚠ ${fmtUE(offenUE)} UE gefahren, FC noch offen · <b>${eur(leistungAusUE(offenUE))}</b> stehen aus</div>`:''}
     <div class="th-goal" style="margin-bottom:8px;">
-      <div class="thg-lab">📊 Terminierte Fahrstunden diesen Monat</div>
+      <div class="thg-lab"><span class="ic ic-gold" style="font-size:11px;">${ICN.chart}</span> Terminierte Fahrstunden diesen Monat</div>
       <div class="thg-val">${terminiertUE} UE</div>
     </div>
     ${bisHtml}
