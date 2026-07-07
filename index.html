@@ -1603,6 +1603,16 @@ input,select,textarea{font-family:inherit;font-size:15px;color:var(--txt);}
 .wx-stage.wx-cat-rain,.wx-stage.wx-cat-storm{background:linear-gradient(180deg,#4a5568 0%,#6b7684 55%,#8b93a0 100%);}
 .wx-stage.wx-cat-snow{background:linear-gradient(180deg,#b8c8d8 0%,#d4e2ec 55%,#eef3f6 100%);}
 .wx-stage.wx-cat-fog{background:linear-gradient(180deg,#9aa5ac 0%,#b8c0c6 55%,#d4dade 100%);}
+/* Nacht überschreibt jeden Tages-Himmel — dunkel, unabhängig von der Wetterlage */
+.wx-stage.wx-night{background:linear-gradient(180deg,#070c16 0%,#111b2e 55%,#1c2840 100%)!important;}
+.wx-stage.wx-night.wx-cat-snow{background:linear-gradient(180deg,#0d1420 0%,#1a2333 55%,#28334a 100%)!important;}
+.wx-stage.wx-night.wx-cat-fog{background:linear-gradient(180deg,#161c26 0%,#232c38 55%,#333f4e 100%)!important;}
+.wx-star{position:absolute;width:2px;height:2px;border-radius:50%;background:#fff;animation:wxTwinkle 2.6s ease-in-out infinite;}
+@keyframes wxTwinkle{0%,100%{opacity:.2}50%{opacity:1}}
+.wx-moon{position:absolute;top:38%;left:50%;width:72px;height:72px;transform:translate(-50%,-50%);border-radius:50%;
+  background:radial-gradient(circle at 35% 30%,#f6f4e9,#cdc7ab);box-shadow:0 0 44px 9px rgba(220,215,190,.22);overflow:hidden;}
+.wx-moon::before{content:"";position:absolute;top:16%;left:56%;width:20px;height:20px;border-radius:50%;background:rgba(0,0,0,.09);}
+.wx-moon::after{content:"";position:absolute;top:58%;left:18%;width:14px;height:14px;border-radius:50%;background:rgba(0,0,0,.07);}
 .wx-skyline{position:absolute;bottom:0;left:0;width:100%;height:36%;display:block;}
 .wx-sun{position:absolute;top:38%;left:50%;width:120px;height:120px;transform:translate(-50%,-50%);animation:wxSpin 26s linear infinite;}
 .wx-sun-core{position:absolute;top:50%;left:50%;width:64px;height:64px;margin:-32px 0 0 -32px;border-radius:50%;
@@ -5435,9 +5445,15 @@ function wireCalendarDrag(){
             const lid=chip.dataset.dragid;
             const l=DB.lessons.find(x=>x.id===lid);
             if(l){
+              const prevDate=l.date,prevVon=l.von,prevBis=l.bis;
               const durMin=hm2min(l.bis)-hm2min(l.von);
               l.date=date;l.von=von;l.bis=min2hm(hm2min(von)+durMin);
-              save();toast("Fahrstunde verschoben ✓");
+              save();
+              toastUndo("Fahrstunde verschoben ✓",()=>{
+                const l2=DB.lessons.find(x=>x.id===lid);
+                if(l2){ l2.date=prevDate;l2.von=prevVon;l2.bis=prevBis; save(); }
+                routeKalender();
+              });
             }
           }
           routeKalender();
@@ -6784,9 +6800,11 @@ async function fetchWeatherForecast(){
   }catch(e){ return []; }
 }
 function weatherEmoji(icon){
-  const m={"01":"☀️","02":"⛅","03":"☁️","04":"☁️","09":"🌧️","10":"🌦️","11":"⛈️","13":"❄️","50":"🌫️"};
+  const night=isNightIcon(icon);
+  const m={"01":night?"🌙":"☀️","02":night?"☁️":"⛅","03":"☁️","04":"☁️","09":"🌧️","10":"🌦️","11":"⛈️","13":"❄️","50":"🌫️"};
   return m[(icon||"").slice(0,2)]||"🌤️";
 }
+function isNightIcon(icon){ return (icon||"").slice(-1)==="n"; }
 function weatherCategory(icon){
   const p=(icon||"").slice(0,2);
   if(p==="01")return "sun";
@@ -6846,24 +6864,28 @@ function routeWetter(w){
   $("#tbTitle").textContent="Wetter"; setFab(false); view.scrollTop=0;
   if(!w){ toast("Keine Wetterdaten verfügbar"); routeDashboard(); return; }
   const cat=weatherCategory(w.icon);
+  const night=isNightIcon(w.icon);
   const cityLabel=((DB.weatherCfg&&DB.weatherCfg.city)||"Offenbach,DE").split(",")[0];
+  const stars=(n)=>Array.from({length:n}).map((_,i)=>`<div class="wx-star" style="left:${(i*37+11)%100}%;top:${(i*23+7)%55}%;animation-delay:${(i%5)*.5}s"></div>`).join("");
   let deco=wxSkylineSVG();
   if(cat==="sun"){
-    deco+=`<div class="wx-sun">${Array.from({length:8}).map((_,i)=>`<div class="wx-ray" style="transform:rotate(${i*45}deg) translate(0,-50px)"></div>`).join("")}<div class="wx-sun-core"></div></div>`;
+    deco+= night
+      ? `${stars(18)}<div class="wx-moon"></div>`
+      : `<div class="wx-sun">${Array.from({length:8}).map((_,i)=>`<div class="wx-ray" style="transform:rotate(${i*45}deg) translate(0,-50px)"></div>`).join("")}<div class="wx-sun-core"></div></div>`;
   } else if(cat==="clouds"){
-    deco+=`<div class="wx-cloud c1"></div><div class="wx-cloud c2"></div><div class="wx-cloud c3"></div>`;
+    deco+=(night?stars(10):"")+`<div class="wx-cloud c1"></div><div class="wx-cloud c2"></div><div class="wx-cloud c3"></div>`;
   } else if(cat==="rain"){
     deco+=`<div class="wx-cloud c1"></div><div class="wx-cloud c2"></div>`+Array.from({length:14}).map((_,i)=>`<div class="wx-drop" style="left:${(i*7+3)%100}%;animation-delay:${(i%5)*.18}s"></div>`).join("");
   } else if(cat==="storm"){
     deco+=`<div class="wx-cloud c1 dark"></div><div class="wx-cloud c2 dark"></div><div class="wx-bolt"></div>`+Array.from({length:10}).map((_,i)=>`<div class="wx-drop" style="left:${(i*9+4)%100}%;animation-delay:${(i%4)*.22}s"></div>`).join("");
   } else if(cat==="snow"){
-    deco+=`<div class="wx-cloud c1"></div><div class="wx-cloud c2"></div>`+Array.from({length:16}).map((_,i)=>`<div class="wx-flake" style="left:${(i*6+2)%100}%;animation-delay:${(i%6)*.4}s;animation-duration:${5+(i%4)}s">❄</div>`).join("");
+    deco+=(night?stars(8):"")+`<div class="wx-cloud c1"></div><div class="wx-cloud c2"></div>`+Array.from({length:16}).map((_,i)=>`<div class="wx-flake" style="left:${(i*6+2)%100}%;animation-delay:${(i%6)*.4}s;animation-duration:${5+(i%4)}s">❄</div>`).join("");
   } else if(cat==="fog"){
     deco+=`<div class="wx-fogband f1"></div><div class="wx-fogband f2"></div><div class="wx-fogband f3"></div>`;
   }
   view.innerHTML=`<div class="view-inner fade-up wx-screen">
     <div class="back-row"><button class="back-btn" id="backBtn">${ICN.back} Start</button></div>
-    <div class="wx-stage wx-cat-${cat}">${deco}</div>
+    <div class="wx-stage wx-cat-${cat}${night?' wx-night':''}">${deco}</div>
     <div class="wx-info">
       <div class="wx-temp">${w.temp}°</div>
       <div class="wx-desc">${esc(w.desc)}</div>
@@ -7219,12 +7241,21 @@ function monthHasActivity(monthKey){
   const startMonth=(DB.verdienst&&DB.verdienst.startMonth)||"";
   return hasLesson||hasExam||hasTip||(monthKey===startMonth&&(DB.verdienst.startUE||0)>0);
 }
-function openSafeView(monat){
+function openSafeView(monat,jahr){
   ensureDB(); setFab(false); view.scrollTop=0;
   $("#tbTitle").textContent="";
   const MN=["Jan","Feb","Mär","Apr","Mai","Jun","Jul","Aug","Sep","Okt","Nov","Dez"];
-  const now=new Date(); const moList=[];
-  for(let i=0;i<4;i++){const d=new Date(now.getFullYear(),now.getMonth()-i,1);const key=d.getFullYear()+"-"+pad2(d.getMonth()+1);moList.push({key,label:MN[d.getMonth()]+" "+d.getFullYear()});}
+  const now=new Date();
+  jahr=jahr||now.getFullYear();
+  monat=monat||(now.getFullYear()+"-"+pad2(now.getMonth()+1));
+  // Verfügbare Jahre: von der frühesten Schüler-/Lesson-Aktivität bis heute
+  const allDates=[...(DB.lessons||[]).map(l=>l.date),...(DB.trinkgeld||[]).map(t=>t.date)].filter(Boolean);
+  const earliestYear=allDates.length?Math.min(...allDates.map(d=>+d.slice(0,4))):now.getFullYear();
+  const years=[]; for(let y=now.getFullYear();y>=earliestYear;y--)years.push(y);
+  const yearChips=years.map(y=>`<button class="seg-i${y===jahr?' on':''}" data-jahr="${y}">${y}</button>`).join('');
+  // Monats-Chips für das gewählte Jahr, chronologisch (Jan → Dez / bzw. bis heute im aktuellen Jahr)
+  const lastMonat=jahr===now.getFullYear()?now.getMonth()+1:12;
+  const moList=[]; for(let m=1;m<=lastMonat;m++){ const key=jahr+"-"+pad2(m); moList.push({key,label:MN[m-1]+" "+jahr}); }
   const chips=moList.map(m=>`<button class="seg-i${m.key===monat?' on':''}" data-smo="${m.key}">${m.label}</button>`).join('');
   const monatAktiv=monthHasActivity(monat);
   // Verdienst diesen Monat
@@ -7239,15 +7270,20 @@ function openSafeView(monat){
   const gesamt=verdientEuro+tipsSum;
   const tgPct=gesamt>0?Math.round(tipsSum/gesamt*100):0;
   const uePct=100-tgPct;
+  // ===== Fahrstunden diesen Monat, mit wem =====
+  const monatsLessons=(DB.lessons||[]).filter(l=>l.date>=moS&&l.date<=moE&&["fahrstunde","sonder","nacht","schalt"].indexOf(l.art)>=0)
+    .sort((a,b)=>a.date===b.date?a.von.localeCompare(b.von):a.date.localeCompare(b.date))
+    .map(l=>({date:l.date,von:l.von,name:l.sid?((DB.students.find(s=>s.id===l.sid)||{}).name||"—"):"—",art:(CAL_ARTEN[l.art]||{lab:""}).lab}));
+  const lessonsHTML=monatsLessons.length?monatsLessons.map(l=>`<div class="tg-item"><div><div class="tgi-name">${esc(l.name)}</div><div class="tgi-date">${isoDE(l.date)} · ${l.von} · ${esc(l.art)}</div></div></div>`).join(''):`<div class="muted-p" style="text-align:center;padding:12px 0;">Keine Fahrstunden in diesem Monat erfasst.</div>`;
   // ===== JAHRESEINKOMMEN — nur Monate mit echter Aktivität =====
-  const curYear=now.getFullYear()+"";
-  const curMonth=now.getMonth()+1;
+  const curYear=jahr+"";
+  const curMonth=lastMonat;
   let yearUE=0,yearEuro=0,yearTG=0,aktiveMonate=0;
   for(let m=1;m<=curMonth;m++){
     const moKey=`${curYear}-${pad2(m)}`;
     if(!monthHasActivity(moKey))continue; // leere Monate überspringen
     aktiveMonate++;
-    const rd=m===curMonth?todayISO():`${curYear}-${pad2(m)}-28`;
+    const rd=moKey===todayISO().slice(0,7)?todayISO():`${curYear}-${pad2(m)}-28`;
     const [ms,me]=monthRangeOf(rd);
     const mu=ueRange(ms,me);
     yearUE+=mu.fcCounted;
@@ -7285,8 +7321,12 @@ function openSafeView(monat){
     </div>`;
   view.innerHTML=`<div class="view-inner view-read fade-up">
     <div class="back-row"><button class="back-btn" id="safeBack">${ICN.back} Zurück</button></div>
-    <div class="seg" style="margin-bottom:18px;">${chips}</div>
+    <div class="blk-h" style="margin-bottom:8px;">Jahr</div>
+    <div class="seg" style="margin-bottom:14px;overflow-x:auto;">${yearChips}</div>
+    <div class="seg" style="margin-bottom:18px;overflow-x:auto;">${chips}</div>
     ${verdienstBlock}
+    <div class="blk-h">Fahrstunden · ${moLabel}</div>
+    <div style="margin-bottom:18px;">${lessonsHTML}</div>
     <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;">
       <div class="blk-h" style="margin-bottom:0;">Trinkgeld · ${moLabel}</div>
       <button class="icon-btn" id="addTGBtn" style="width:36px;height:36px;border-radius:10px;background:var(--akzent);color:#fff;border:none;font-size:22px;line-height:1;">+</button>
@@ -7309,11 +7349,14 @@ function openSafeView(monat){
     </div>
   </div>`;
   $("#safeBack").addEventListener("click",routeStats);
-  document.querySelectorAll("[data-smo]").forEach(b=>b.addEventListener("click",()=>openSafeView(b.dataset.smo)));
-  $("#addTGBtn").addEventListener("click",()=>openAddTrinkgeldSheet(monat,()=>openSafeView(monat)));
+  document.querySelectorAll("[data-jahr]").forEach(b=>b.addEventListener("click",()=>{
+    const y=+b.dataset.jahr; const firstMonat=y+"-01"; openSafeView(y===now.getFullYear()?(y+"-"+pad2(now.getMonth()+1)):firstMonat,y);
+  }));
+  document.querySelectorAll("[data-smo]").forEach(b=>b.addEventListener("click",()=>openSafeView(b.dataset.smo,jahr)));
+  $("#addTGBtn").addEventListener("click",()=>openAddTrinkgeldSheet(monat,()=>openSafeView(monat,jahr)));
   document.querySelectorAll(".tgi-del").forEach(b=>b.addEventListener("click",()=>{
     DB.trinkgeld=(DB.trinkgeld||[]).filter(t=>t.id!==b.dataset.tgid);
-    save(); openSafeView(monat);
+    save(); openSafeView(monat,jahr);
   }));
 }
 function openAddTrinkgeldSheet(monat,cb){
