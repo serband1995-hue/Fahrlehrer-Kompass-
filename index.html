@@ -1319,6 +1319,9 @@ input,select,textarea{font-family:inherit;font-size:15px;color:var(--txt);}
 .cm-cell{aspect-ratio:1;border-radius:12px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;background:var(--surface);border:1px solid var(--line-soft);position:relative;}
 .cm-cell.empty{background:transparent;border:none;}
 .cm-cell.today{background:var(--gruen-soft);border-color:var(--gruen-line);}
+/* Dunkel-Modus: Grün-Ton auf grünem Hintergrund kaum sichtbar -> Gold-Akzent statt Grün für "heute" */
+body:not(.light) .cm-cell.today{background:var(--gold-soft);border-color:var(--gold-line);box-shadow:inset 0 0 0 1px var(--gold-line);}
+body:not(.light) .cm-cell.today .cm-num{color:var(--gold);}
 .cm-num{font-size:15px;font-weight:700;font-family:'Playfair Display',serif;}
 .cm-cell.today .cm-num{color:var(--mint);}
 .cm-dot{width:6px;height:6px;border-radius:50%;background:var(--gruen-bright,#4a8b45);}
@@ -1333,6 +1336,8 @@ input,select,textarea{font-family:inherit;font-size:15px;color:var(--txt);}
 .cw-free-p{font-size:8.5px;font-weight:700;color:var(--gruen-bright,#4a8b45);}
 .cw-col{background:var(--surface);border:1px solid var(--line-soft);border-radius:10px;padding:6px;min-height:140px;}
 .cw-col.today{background:var(--gruen-soft);border-color:var(--gruen-line);}
+body:not(.light) .cw-col.today{background:var(--gold-soft);border-color:var(--gold-line);box-shadow:inset 0 0 0 1px var(--gold-line);}
+body:not(.light) .cw-col.today .cw-dnum{color:var(--gold);}
 .cw-dayhead{width:100%;display:flex;flex-direction:column;align-items:center;gap:1px;padding:5px 0 8px;border-bottom:1px solid var(--line-soft);margin-bottom:7px;}
 .cw-wd{font-size:11px;font-weight:800;color:var(--faint);text-transform:uppercase;}
 .cw-dnum{font-size:18px;font-weight:800;font-family:'Playfair Display',serif;}
@@ -3043,24 +3048,85 @@ const ICN={
   save:`<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/><path d="M17 21v-8H7v8M7 3v5h8"/></svg>`,
   folder:`<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 7a2 2 0 0 1 2-2h4l2 2h8a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/></svg>`
 };
-/* ===== HELL/DUNKEL TOGGLE ===== */
+/* ===== HELL/DUNKEL TOGGLE (inkl. Auto-Modus nach Sonnenstand) ===== */
 const THEME_KEY='serband-theme';
+const THEME_LOC_KEY='serband-theme-loc';
+// Offenbach am Main als Standard-Standort, falls Geolocation nicht verfügbar/erlaubt ist
+const THEME_FALLBACK_LOC={lat:50.1055,lon:8.7761};
+function _themeLoc(){
+  try{ const raw=localStorage.getItem(THEME_LOC_KEY); if(raw){ const p=JSON.parse(raw); if(p&&typeof p.lat==="number"&&typeof p.lon==="number")return p; } }catch(e){}
+  return THEME_FALLBACK_LOC;
+}
+function _refreshThemeLocation(){
+  if(!navigator.geolocation)return;
+  try{
+    navigator.geolocation.getCurrentPosition(pos=>{
+      try{localStorage.setItem(THEME_LOC_KEY,JSON.stringify({lat:pos.coords.latitude,lon:pos.coords.longitude,ts:Date.now()}));}catch(e){}
+      if((localStorage.getItem(THEME_KEY)||'dark')==='auto')applyTheme();
+    }, ()=>{}, {maximumAge:21600000,timeout:8000});
+  }catch(e){}
+}
+// Sonnenauf-/-untergang in UTC-Dezimalstunden (Standard-Sonnenuntergangsgleichung, NOAA-nah)
+function _sunTimesUTC(lat,lon,date){
+  const rad=Math.PI/180;
+  const start=Date.UTC(date.getUTCFullYear(),0,0);
+  const dayOfYear=Math.floor((date.getTime()-start)/86400000);
+  const zenith=90.833;
+  const lngHour=lon/15;
+  function calc(isSunrise){
+    const t=dayOfYear+((isSunrise?6:18)-lngHour)/24;
+    const M=(0.9856*t)-3.289;
+    let L=M+(1.916*Math.sin(rad*M))+(0.020*Math.sin(2*rad*M))+282.634;
+    L=(L+360)%360;
+    let RA=(180/Math.PI)*Math.atan(0.91764*Math.tan(rad*L));
+    RA=(RA+360)%360;
+    const Lq=Math.floor(L/90)*90, RAq=Math.floor(RA/90)*90;
+    RA=(RA+(Lq-RAq))/15;
+    const sinDec=0.39782*Math.sin(rad*L);
+    const cosDec=Math.cos(Math.asin(sinDec));
+    const cosH=(Math.cos(rad*zenith)-(sinDec*Math.sin(rad*lat)))/(cosDec*Math.cos(rad*lat));
+    if(cosH>1||cosH<-1)return null;
+    let H=isSunrise?360-(180/Math.PI)*Math.acos(cosH):(180/Math.PI)*Math.acos(cosH);
+    H=H/15;
+    const T=H+RA-(0.06571*t)-6.622;
+    let UT=T-lngHour;
+    UT=(UT+24)%24;
+    return UT;
+  }
+  return {sunriseUTC:calc(true),sunsetUTC:calc(false)};
+}
+function _isDaytimeNow(){
+  const loc=_themeLoc();
+  const now=new Date();
+  const {sunriseUTC,sunsetUTC}=_sunTimesUTC(loc.lat,loc.lon,now);
+  if(sunriseUTC==null||sunsetUTC==null)return true; // Polarnacht/Mitternachtssonne-Edge-Case: Standard hell
+  const nowUTC=now.getUTCHours()+now.getUTCMinutes()/60;
+  return nowUTC>=sunriseUTC&&nowUTC<sunsetUTC;
+}
 function applyTheme(){
-  const t=localStorage.getItem(THEME_KEY)||'dark';
-  document.body.classList.toggle('light',t==='light');
+  const pref=localStorage.getItem(THEME_KEY)||'dark';
+  const effective=pref==='auto'?(_isDaytimeNow()?'light':'dark'):pref;
+  document.body.classList.toggle('light',effective==='light');
   const ic=$("#themeIcon"); if(!ic)return;
-  if(t==='dark'){
+  if(pref==='auto'){
+    // Auto-Symbol: halb Sonne/halb Mond im Kreis
+    ic.innerHTML='<circle cx="12" cy="12" r="9"/><path d="M12 3a9 9 0 0 0 0 18z" fill="currentColor" stroke="none"/>';
+  } else if(pref==='dark'){
     // Sonne anzeigen (→ Wechsel zu hell)
     ic.innerHTML='<circle cx="12" cy="12" r="5"/><path d="M12 1v2M12 21v2M4.22 4.22l1.42 1.42M18.36 18.36l1.42 1.42M1 12h2M21 12h2M4.22 19.78l1.42-1.42M18.36 5.64l1.42-1.42"/>';
   } else {
-    // Mond anzeigen (→ Wechsel zu dunkel)
+    // Mond anzeigen (→ Wechsel zu Auto)
     ic.innerHTML='<path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/>';
   }
 }
 function toggleTheme(){
-  const next=(localStorage.getItem(THEME_KEY)||'dark')==='dark'?'light':'dark';
+  const cur=localStorage.getItem(THEME_KEY)||'dark';
+  const next=cur==='dark'?'light':(cur==='light'?'auto':'dark');
   localStorage.setItem(THEME_KEY,next);
+  if(next==='auto')_refreshThemeLocation();
   applyTheme();
+  const labels={dark:'Dunkel',light:'Hell',auto:'Automatisch (Sonnenstand)'};
+  toast('Design: '+labels[next]);
 }
 
 /* ============================================================
@@ -4163,8 +4229,8 @@ const OBJ=[
  {type:"gerade",cat:"strassen",label:"Gerade (ohne Markierung)",kind:"road_v",layer:0,w:140,h:900,svg:ROAD.gerade},
  {type:"gerade_markiert",cat:"strassen",label:"Gerade (mit Markierung)",kind:"road_v",layer:0,w:140,h:900,svg:ROAD.gerade_markiert},
  {type:"kurve",cat:"strassen",label:"Kurve",kind:"road",layer:0,w:150,h:150,svg:ROAD.kurve},
- {type:"zebra",cat:"markierungen",label:"Zebrastreifen",kind:"road",layer:1,w:120,h:70,svg:ROAD.zebra},
- {type:"mittellinie",cat:"markierungen",label:"Mittellinie",kind:"road",layer:1,w:80,h:200,svg:ROAD.mittellinie},
+ {type:"zebra",cat:"markierungen",label:"Zebrastreifen",kind:"marking",layer:1,w:120,h:70,svg:ROAD.zebra},
+ {type:"mittellinie",cat:"markierungen",label:"Mittellinie",kind:"marking",layer:1,w:80,h:200,svg:ROAD.mittellinie},
  {type:"auto_o",cat:"fahrzeuge",label:"Dein Auto",kind:"vehicle",layer:3,w:40,h:76,svg:carTop("#E8451F")},
  {type:"auto_b",cat:"fahrzeuge",label:"Auto blau",kind:"vehicle",layer:3,w:40,h:76,svg:carTop("#2F7DD1")},
  {type:"auto_g",cat:"fahrzeuge",label:"Auto grau",kind:"vehicle",layer:3,w:40,h:76,svg:carTop("#9aa0a6")},
@@ -5562,7 +5628,7 @@ function calEventChip(e,iso){
     const col=pass?"#4caf72":"#d94f4f";
     const icon=pass?"✓":"✕";
     const lbl=pass?"bestanden":"nicht bestanden";
-    return `<div class="cw-ev exam-done ${pass?'exam-pass':'exam-fail'}" style="border-left-color:${col}" data-evedit="${e.kind}|${e.id}|${e.sid||''}"><span class="cw-evt">${e.pruefTime||e.von} · Prüfung</span><span class="cw-evn"><span class="exd-strike">${esc(firstName(e.name))}</span> <span class="exd-mark" style="color:${col}">${icon} ${lbl}</span></span></div>`;
+    return `<div class="cw-ev exam-done ${pass?'exam-pass':'exam-fail'}" style="border-left-color:${col}" data-evedit="${e.kind}|${e.id}|${e.sid||''}"><span class="cw-evt">${e.pruefTime||e.von} · Prüfung</span><span class="cw-evn"><span class="exd-strike">${esc(e.name||"")}</span> <span class="exd-mark" style="color:${col}">${icon} ${lbl}</span></span></div>`;
   }
   const stat=e.status&&e.status!=="geplant"?` <span class="cw-evstat">${e.status}</span>`:"";
   const off=e.status&&e.status!=="geplant";
@@ -5571,7 +5637,7 @@ function calEventChip(e,iso){
   const fzTag=e.fahrzeug?`<span class="cw-fz">${esc(e.fahrzeug)}</span>`:'';
   const pruefLabel=e.pruefTime?`<span class="cw-fz" style="color:${c.col}">Prüfung ${e.pruefTime}</span>`:'';
   const draggable=e.kind==="lesson"&&e.status==="geplant";
-  const dispName=(e.art==="theorie"&&e.lektion)?("Lektion "+e.lektion):esc(firstName(e.name));
+  const dispName=(e.art==="theorie"&&e.lektion)?("Lektion "+e.lektion):esc(e.name||"");
   return `<div class="cw-ev${off?' off':''}${examSoon?' exam-soon':''}${draggable?' cw-draggable':''}" style="border-left-color:${c.col}" data-evedit="${e.kind}|${e.id}|${e.sid||''}"${draggable?` data-dragid="${e.id}"`:''}><span class="cw-evt">${e.von}</span><span class="cw-evn">${dispName}${sf}${stat}${fzTag}${pruefLabel}</span></div>`;
 }
 // TAGESANSICHT
@@ -7086,31 +7152,32 @@ function _verdienstModulHTMLContent(){
   const _stM=(v&&v.startMonth)||"2026-06";
   const terminiertUE=Math.round(moUE.total-(moStart===_stM+"-01"?(v.startUE||0):0));
   const offenUE=Math.max(0,moUE.done-verdientUE);
-  const MAX=300;
+  const MAX=Math.max(300,(v.bonusUE||250)+50);
   const TUBE=200;
   const toH=(ue)=>Math.round(Math.max(0,Math.min(ue,MAX))/MAX*TUBE);
-  const gruenH=toH(Math.min(verdientUE,140));
-  const orangeH=verdientUE>140?toH(Math.min(verdientUE,250))-toH(140):0;
-  const goldRaw=verdientUE>250?toH(Math.min(verdientUE,MAX))-toH(250):0;
+  const _fixUE=v.fixUE||140, _bonusUE=v.bonusUE||250;
+  const gruenH=toH(Math.min(verdientUE,_fixUE));
+  const orangeH=verdientUE>_fixUE?toH(Math.min(verdientUE,_bonusUE))-toH(_fixUE):0;
+  const goldRaw=verdientUE>_bonusUE?toH(Math.min(verdientUE,MAX))-toH(_bonusUE):0;
   const goldH=goldRaw>0?Math.max(goldRaw,8):0;
-  const marks=[0,70,140,200,250,300];
+  const marks=[0,Math.round(_fixUE/2/10)*10,_fixUE,Math.round((_fixUE+_bonusUE)/2/10)*10,_bonusUE,MAX];
   const curBot=Math.round(Math.min(verdientUE,MAX)/MAX*TUBE)+26;
   const marksHTML=marks.map(ue=>{
     const bot=Math.round(ue/MAX*TUBE)+26;
     const tooClose=Math.abs(ue-Math.min(verdientUE,MAX))<18&&ue!==0&&ue!==300;
     if(tooClose)return '';
-    const cls=ue===250?'t-bonus':ue===300?'t-gold':'';
+    const cls=ue===_bonusUE?'t-bonus':ue===MAX?'t-gold':'';
     return `<div class="th-mark ${cls}" style="bottom:${bot}px"><div class="th-tick"></div><div class="th-val">${ue} UE</div></div>`;
   }).join('');
   const curMarker=`<div class="th-mark t-cur" style="bottom:${curBot}px"><div class="th-tick"></div><div class="th-val">${Math.round(verdientUE)} UE ◄</div></div>`;
-  const restUE=Math.max(0,250-Math.round(verdientUE)-Math.round(geplantUE));
-  const bonusJetzt=verdientUE>=250;
-  const bonusMitPlan=(verdientUE+geplantUE)>=250;
+  const restUE=Math.max(0,_bonusUE-Math.round(verdientUE)-Math.round(geplantUE));
+  const bonusJetzt=verdientUE>=_bonusUE;
+  const bonusMitPlan=(verdientUE+geplantUE)>=_bonusUE;
   let bisHtml;
   if(bonusJetzt){
     bisHtml=`<div class="th-goal" style="border-color:rgba(207,154,62,.4);background:rgba(207,154,62,.1);"><div class="thg-lab">🥇 Bonus erreicht!</div><div class="thg-val" style="color:#cf9a3e;">+${eur(v.bonus)} dabei</div></div>`;
   }else if(bonusMitPlan){
-    bisHtml=`<div class="th-goal"><div class="thg-lab">✓ Mit geplanten Terminen → Bonus</div><div class="thg-val">250 UE</div></div>`;
+    bisHtml=`<div class="th-goal"><div class="thg-lab">✓ Mit geplanten Terminen → Bonus</div><div class="thg-val">${_bonusUE} UE</div></div>`;
   }else{
     bisHtml=`<div class="th-goal"><div class="thg-lab">Für den Bonus noch legen</div><div class="thg-val">${restUE} UE · ~${Math.ceil(restUE/2)} Fahrstd.</div></div>`;
   }
@@ -8090,6 +8157,8 @@ const SPLASH_QUOTES=[
 function setSplashQuote(){ const q=SPLASH_QUOTES[Math.floor(Math.random()*SPLASH_QUOTES.length)]; const el=$("#spQuote"); if(el)el.innerHTML=`${q[0]}<span class="sp-by"><b>${q[1]}</b> · ${q[2]}</span>`; }
 setSplashQuote();
 applyTheme();
+if((localStorage.getItem(THEME_KEY)||'dark')==='auto')_refreshThemeLocation();
+setInterval(()=>{ if((localStorage.getItem(THEME_KEY)||'dark')==='auto')applyTheme(); },300000);
 $("#themeBtn").addEventListener("click",toggleTheme);
 routeDashboard();
 (function(){
