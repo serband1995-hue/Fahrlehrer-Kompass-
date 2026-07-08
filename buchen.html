@@ -1,0 +1,176 @@
+<!doctype html><html lang="de"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Fahrstunde buchen</title>
+<style>
+  *{box-sizing:border-box;}
+  body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;background:#0c1410;color:#eaf1ec;margin:0;padding:0 0 40px;}
+  .wrap{max-width:480px;margin:0 auto;padding:20px 16px;}
+  .head{text-align:center;margin-bottom:18px;}
+  .head h1{font-size:20px;margin:0 0 4px;}
+  .meta{font-size:13px;color:#9db3a8;}
+  .fz-chip{display:inline-block;margin-top:10px;padding:6px 14px;border-radius:20px;background:rgba(74,139,69,.18);border:1px solid rgba(120,170,140,.34);font-size:13px;font-weight:700;}
+  .cal-grid{display:grid;grid-template-columns:repeat(7,1fr);gap:4px;margin:14px 0;}
+  .cal-wd{text-align:center;font-size:11px;color:#9db3a8;padding-bottom:4px;}
+  .cal-day{aspect-ratio:1;display:flex;align-items:center;justify-content:center;border-radius:10px;font-size:13.5px;background:#182b25;color:#5b6b63;}
+  .cal-day.frei{background:rgba(74,139,69,.22);color:#eaf1ec;cursor:pointer;font-weight:700;border:1px solid rgba(120,170,140,.4);}
+  .month-nav{display:flex;align-items:center;justify-content:space-between;margin-bottom:6px;}
+  .month-nav button{background:none;border:none;color:#eaf1ec;font-size:20px;padding:6px 12px;cursor:pointer;}
+  .slots{display:flex;flex-direction:column;gap:8px;margin-top:16px;}
+  .slot-btn{padding:13px 16px;border-radius:12px;background:#182b25;border:1px solid rgba(150,200,165,.18);color:#eaf1ec;font-size:14.5px;font-weight:600;text-align:left;cursor:pointer;width:100%;}
+  .slot-btn:active{transform:scale(.98);}
+  .form{display:flex;flex-direction:column;gap:10px;margin-top:16px;}
+  .form input,.form select{padding:12px 14px;border-radius:10px;border:1px solid rgba(150,200,165,.25);background:#182b25;color:#eaf1ec;font-size:14.5px;width:100%;}
+  .form label{font-size:12px;color:#9db3a8;margin-bottom:-4px;}
+  .btn{padding:14px;border-radius:12px;background:#4a8b45;color:#fff;border:none;font-size:15px;font-weight:700;cursor:pointer;width:100%;}
+  .btn:disabled{opacity:.5;}
+  .hint{font-size:12px;color:#9db3a8;text-align:center;margin-top:10px;}
+  .back{background:none;border:none;color:#9db3a8;font-size:13px;cursor:pointer;margin-bottom:10px;padding:0;}
+  .err{color:#e08a7a;font-size:13px;margin-top:6px;}
+  .spinner{text-align:center;padding:30px 0;color:#9db3a8;}
+</style></head><body><div class="wrap">
+  <div class="head">
+    <h1>Fahrstunde buchen</h1>
+    <div class="meta">Fahrlehrer Serband · 1,5 Std. (90 Min.) · Europe/Berlin</div>
+    <div class="fz-chip" id="fzChip">🚗 …</div>
+  </div>
+  <div id="step1">
+    <div class="month-nav"><button id="mPrev">‹</button><div id="mLabel" style="font-weight:700;"></div><button id="mNext">›</button></div>
+    <div class="cal-grid" id="calWd"></div>
+    <div class="cal-grid" id="calGrid"></div>
+    <div class="hint">Grün markierte Tage haben freie Termine.</div>
+  </div>
+  <div id="step2" style="display:none;">
+    <button class="back" id="backToCal">‹ Anderen Tag wählen</button>
+    <div id="dayLabel" style="font-weight:700;margin-bottom:10px;"></div>
+    <div class="slots" id="slotList"></div>
+  </div>
+  <div id="step3" style="display:none;">
+    <button class="back" id="backToSlots">‹ Andere Uhrzeit wählen</button>
+    <div id="chosenLabel" style="font-weight:700;margin-bottom:10px;"></div>
+    <div class="form">
+      <label>Dein Name</label>
+      <input id="fName" type="text" placeholder="Vor- und Nachname" autocomplete="name">
+      <label>Telefonnummer (optional)</label>
+      <input id="fTel" type="tel" placeholder="0151 23456789" autocomplete="tel">
+      <label>E-Mail (optional, für die Bestätigung)</label>
+      <input id="fEmail" type="email" placeholder="du@beispiel.de" autocomplete="email">
+      <label>Art der Fahrstunde</label>
+      <select id="fSubtyp">
+        <option value="uebung">Übungsfahrt</option>
+        <option value="sonder">Sonderfahrt (Überland/Autobahn)</option>
+      </select>
+      <button class="btn" id="bookBtn">Termin buchen</button>
+      <div class="err" id="bookErr"></div>
+    </div>
+  </div>
+  <div id="step4" style="display:none;text-align:center;">
+    <h2>Termin gebucht ✓</h2>
+    <p id="doneText" style="color:#c9d6cf;"></p>
+    <p class="hint">Diesen Link aufheben, um bis 24 Std. vorher zu stornieren:</p>
+    <p><a id="stornoLink" href="#" style="color:#8fc98a;word-break:break-all;font-size:13px;"></a></p>
+  </div>
+  <div id="stepErr" style="display:none;text-align:center;">
+    <p>Diesen Buchungslink gibt's nicht. Bitte den Link von deinem Fahrlehrer nochmal prüfen.</p>
+  </div>
+</div>
+<script>
+const API = "https://oectrvkjunntzsggyhxv.supabase.co/functions/v1/public-booking";
+const params = new URLSearchParams(window.location.search);
+const TYP = params.get("typ");
+if(TYP !== "schalt" && TYP !== "automatik"){
+  document.getElementById("step1").style.display="none";
+  document.getElementById("stepErr").style.display="block";
+  document.getElementById("fzChip").style.display="none";
+} else {
+  document.getElementById("fzChip").textContent = "🚗 " + (TYP==="schalt" ? "Schaltfahrzeug" : "Automatikfahrzeug");
+}
+
+let curMonth = new Date();
+let selDate = null, selSlot = null;
+const WD = ["Mo","Di","Mi","Do","Fr","Sa","So"];
+function monthKey(d){ return d.getFullYear()+"-"+String(d.getMonth()+1).padStart(2,"0"); }
+function pad(n){ return String(n).padStart(2,"0"); }
+
+async function loadMonth(){
+  document.getElementById("mLabel").textContent = curMonth.toLocaleDateString("de-DE",{month:"long",year:"numeric"});
+  document.getElementById("calWd").innerHTML = WD.map(w=>'<div class="cal-wd">'+w+'</div>').join("");
+  const res = await fetch(API+"?action=availability&typ="+TYP+"&month="+monthKey(curMonth));
+  const {days} = await res.json();
+  const y = curMonth.getFullYear(), m = curMonth.getMonth();
+  const dim = new Date(y,m+1,0).getDate();
+  const firstWd = (new Date(y,m,1).getDay()+6)%7;
+  let out = "";
+  for(let i=0;i<firstWd;i++) out += '<div></div>';
+  for(let d=1; d<=dim; d++){
+    const iso = y+"-"+pad(m+1)+"-"+pad(d);
+    const frei = !!(days && days[iso]);
+    out += '<div class="cal-day'+(frei?' frei':'')+'" data-iso="'+iso+'">'+d+'</div>';
+  }
+  document.getElementById("calGrid").innerHTML = out;
+  document.querySelectorAll(".cal-day.frei").forEach(el=>el.addEventListener("click",()=>openDay(el.dataset.iso)));
+}
+
+async function openDay(iso){
+  selDate = iso;
+  document.getElementById("step1").style.display="none";
+  document.getElementById("step2").style.display="block";
+  document.getElementById("slotList").innerHTML = '<div class="spinner">Lade …</div>';
+  const d = new Date(iso+"T00:00:00");
+  document.getElementById("dayLabel").textContent = d.toLocaleDateString("de-DE",{weekday:"long",day:"numeric",month:"long"});
+  const res = await fetch(API+"?action=slots&typ="+TYP+"&date="+iso);
+  const {slots} = await res.json();
+  document.getElementById("slotList").innerHTML = (slots||[]).map(s=>
+    '<button class="slot-btn" data-von="'+s.von+'" data-bis="'+s.bis+'">'+s.von+' – '+s.bis+' Uhr</button>'
+  ).join("") || '<p class="hint">Keine freien Termine an diesem Tag.</p>';
+  document.querySelectorAll(".slot-btn").forEach(b=>b.addEventListener("click",()=>chooseSlot(b.dataset.von,b.dataset.bis)));
+}
+
+function chooseSlot(von,bis){
+  selSlot = {von,bis};
+  document.getElementById("step2").style.display="none";
+  document.getElementById("step3").style.display="block";
+  const d = new Date(selDate+"T00:00:00");
+  document.getElementById("chosenLabel").textContent = d.toLocaleDateString("de-DE",{weekday:"short",day:"numeric",month:"long"})+" · "+von+" – "+bis+" Uhr";
+}
+
+if(TYP === "schalt" || TYP === "automatik"){
+  document.getElementById("mPrev").addEventListener("click",()=>{ curMonth.setMonth(curMonth.getMonth()-1); loadMonth(); });
+  document.getElementById("mNext").addEventListener("click",()=>{ curMonth.setMonth(curMonth.getMonth()+1); loadMonth(); });
+  document.getElementById("backToCal").addEventListener("click",()=>{ document.getElementById("step2").style.display="none"; document.getElementById("step1").style.display="block"; });
+  document.getElementById("backToSlots").addEventListener("click",()=>{ document.getElementById("step3").style.display="none"; document.getElementById("step2").style.display="block"; });
+
+  document.getElementById("bookBtn").addEventListener("click", async ()=>{
+    const name = document.getElementById("fName").value.trim();
+    const errEl = document.getElementById("bookErr");
+    errEl.textContent = "";
+    if(!name){ errEl.textContent = "Bitte gib deinen Namen ein."; return; }
+    const btn = document.getElementById("bookBtn");
+    btn.disabled = true; btn.textContent = "Buchen …";
+    try{
+      const res = await fetch(API+"?action=book", {
+        method:"POST", headers:{"Content-Type":"application/json"},
+        body: JSON.stringify({
+          typ: TYP, subtyp: document.getElementById("fSubtyp").value,
+          date: selDate, von: selSlot.von, bis: selSlot.bis,
+          name, telefon: document.getElementById("fTel").value.trim(),
+          email: document.getElementById("fEmail").value.trim()
+        })
+      });
+      const data = await res.json();
+      if(!res.ok){ errEl.textContent = data.error || "Fehler beim Buchen."; btn.disabled=false; btn.textContent="Termin buchen"; return; }
+      document.getElementById("step3").style.display="none";
+      document.getElementById("step4").style.display="block";
+      const d = new Date(selDate+"T00:00:00");
+      document.getElementById("doneText").textContent = d.toLocaleDateString("de-DE",{weekday:"long",day:"numeric",month:"long"})+" · "+selSlot.von+" – "+selSlot.bis+" Uhr";
+      const stornoUrl = window.location.origin + window.location.pathname.replace(/buchen\.html$/, "storno.html") + "?token=" + data.storno_token;
+      const link = document.getElementById("stornoLink");
+      link.href = stornoUrl; link.textContent = stornoUrl;
+    }catch(e){
+      errEl.textContent = "Netzwerkfehler, bitte nochmal versuchen.";
+      btn.disabled=false; btn.textContent="Termin buchen";
+    }
+  });
+  loadMonth();
+}
+</script>
+</body></html>
