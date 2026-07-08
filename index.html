@@ -1241,6 +1241,7 @@ input,select,textarea{font-family:inherit;font-size:15px;color:var(--txt);}
 .cal-gear svg{width:19px;height:19px;}
 /* Kalender-Such-Button */
 .cal-search-btn{width:40px;height:40px;border-radius:12px;display:flex;align-items:center;justify-content:center;background:var(--glass);border:1px solid var(--glass-brd);color:var(--muted);box-shadow:var(--inset-top);}
+.cal-filter-badge{position:absolute;top:6px;right:6px;width:8px;height:8px;border-radius:50%;background:#c4744f;box-shadow:0 0 0 2px var(--bg,#0a1210);}
 .cal-search-btn:active{transform:scale(.9);}
 .cal-search-btn svg{width:19px;height:19px;}
 /* Kalender-Suche Sheet */
@@ -1549,6 +1550,8 @@ body:not(.light) .cw-col.today .cw-dnum{color:var(--gold);}
 .thi-card.future{border-style:dashed;}
 .thi-k{font-size:10px;font-weight:800;text-transform:uppercase;letter-spacing:.05em;color:var(--faint);}
 .thi-v{font-family:'Playfair Display',serif;font-size:22px;font-weight:700;margin-top:5px;color:var(--txt);line-height:1;}
+.eur-locked{cursor:pointer;opacity:.55;letter-spacing:.03em;font-size:.85em;}
+.eur-locked:active{opacity:.8;}
 .thi-s{font-size:11px;color:var(--muted);margin-top:4px;}
 /* Bonus / Ziel Zeile */
 .th-goal{display:flex;align-items:center;gap:12px;padding:11px 14px;border-radius:11px;border:1px solid var(--line);background:var(--surface);margin-bottom:12px;}
@@ -4754,7 +4757,7 @@ function routeSettings(){
         <button class="btn btn-ghost" style="padding:8px 16px;" onclick="saveKapazitaet()">Speichern</button>
       </div></div>
     <div class="res-block" style="animation:none;"><h4><span class="ic ic-muted" style="font-size:14px;">${ICN.lock}</span> Verdienst-PIN</h4>
-      <p>${DB.verdienstPin?'PIN ist aktiv — Verdienst ist geschützt.':'Kein PIN gesetzt — Verdienst ist für alle sichtbar.'}</p>
+      <p>${DB.verdienstPin?'PIN ist aktiv — Euro-Beträge sind geschützt, UE-/Fahrstunden-Zahlen bleiben sichtbar.':'Kein PIN gesetzt — alles ist für alle sichtbar.'}</p>
       <div style="display:flex;gap:8px;margin-top:10px;flex-wrap:wrap;">
         <button class="btn btn-ghost" style="padding:8px 16px;" onclick="setVerdienstPin()">${DB.verdienstPin?'PIN ändern':'PIN setzen'}</button>
         ${DB.verdienstPin?`<button class="btn btn-ghost" style="padding:8px 16px;color:#f08080;border-color:rgba(200,60,60,.3);" onclick="deleteVerdienstPin()">PIN entfernen</button>`:''}
@@ -5084,7 +5087,7 @@ function openSignaturePad(onSave){
   });
 }
 // SF-Picker: Welche Sonderfahrt wurde im Kalender gebucht?
-function openSFPickerForLesson(lessonId,sid,date,von,bis,note,newArt){
+function openSFPickerForLesson(lessonId,sid,date,von,bis,note,newArt,fahrzeug){
   const s=DB.students.find(x=>x.id===sid); if(!s){save();closeSheet();toast("Gespeichert ✓");routeKalender();return;}
   ensure(s);
   const SF_LAB={ueberland:"Überlandfahrt",autobahn:"Autobahnfahrt",nacht:"Nachtfahrt"};
@@ -5106,38 +5109,51 @@ function openSFPickerForLesson(lessonId,sid,date,von,bis,note,newArt){
     ensure(s);
     const arr=s.plan.sonder[grp]||(s.plan.sonder[grp]=[]);
     arr[idx]={d:isoToShort(date),iso:date};
-    updateLesson(lessonId,{date,von,bis,art:'sonder',note,srcSonder:key});
+    updateLesson(lessonId,{date,von,bis,art:'sonder',note,srcSonder:key,fahrzeug:fahrzeug||null});
     save(); closeSheet(); toast('Sonderfahrt eingetragen ✓'); routeKalender();
   }));
   $('#sfSkip').addEventListener('click',()=>{
-    updateLesson(lessonId,{date,von,bis,art:'sonder',note});
+    updateLesson(lessonId,{date,von,bis,art:'sonder',note,fahrzeug:fahrzeug||null});
     save(); closeSheet(); toast('Gespeichert ✓'); routeKalender();
   });
 }
 // SCHRITT 2: Bearbeiten/Verschieben-Detail
-function openEventEdit(id){
+function openEventEdit(id,overrides){
   const l=(DB.lessons||[]).find(x=>x.id===id); if(!l)return;
+  const cur=Object.assign({date:l.date,von:l.von,art:l.art,note:l.note||"",fahrzeug:l.fahrzeug||null},overrides||{});
+  const FZ_ARTEN=["fahrstunde","sonder","schalt","nacht"];
+  const fzRelevant=FZ_ARTEN.indexOf(cur.art)>=0;
   openSheet(`<div class="sheet-h">Bearbeiten</div>
-    <div class="field"><label>Datum</label><input type="date" id="esDate" value="${l.date}"></div>
-    <div class="field"><label>Uhrzeit (Beginn)</label><input type="time" id="esTime" value="${l.von}"></div>
+    <div class="field"><label>Datum</label><input type="date" id="esDate" value="${cur.date}"></div>
+    <div class="field"><label>Uhrzeit (Beginn)</label><input type="time" id="esTime" value="${cur.von}"></div>
     <div class="field"><label>Art</label>
-      <div class="es-arten">${[["fahrstunde","Fahrstunde"],["sonder","Sonderfahrt"],["schalt","Schaltk."],["theorie","Theorie"]].map(([k,la])=>`<button class="es-art${l.art===k?' on':''}" data-art="${k}">${la}</button>`).join("")}</div>
+      <div class="es-arten">${[["fahrstunde","Fahrstunde"],["sonder","Sonderfahrt"],["schalt","Schaltk."],["theorie","Theorie"]].map(([k,la])=>`<button class="es-art${cur.art===k?' on':''}" data-art="${k}">${la}</button>`).join("")}</div>
     </div>
-    <div class="field"><label>Notiz</label><textarea id="esNote" rows="2" placeholder="Notiz zum Termin …">${esc(l.note||"")}</textarea></div>
+    <div class="field" id="esFzWrap" style="${fzRelevant?'':'display:none;'}"><label>Fahrzeug</label><button class="es-act" id="esFzBtn" type="button">${cur.fahrzeug?esc(cur.fahrzeug):'Kein Fahrzeug — antippen zum Zuweisen'} ›</button></div>
+    <div class="field"><label>Notiz</label><textarea id="esNote" rows="2" placeholder="Notiz zum Termin …">${esc(cur.note)}</textarea></div>
     <div class="btn-row" style="margin-top:6px;"><button class="btn btn-ghost" id="esBack" style="flex:0;padding:13px 16px;">Zurück</button><button class="btn btn-primary" id="esSave">Speichern</button></div>`);
-  let newArt=l.art;
-  document.querySelectorAll(".es-art").forEach(b=>b.addEventListener("click",()=>{ newArt=b.dataset.art; document.querySelectorAll(".es-art").forEach(x=>x.classList.toggle("on",x.dataset.art===newArt)); }));
+  let newArt=cur.art, newFahrzeug=cur.fahrzeug;
+  document.querySelectorAll(".es-art").forEach(b=>b.addEventListener("click",()=>{
+    newArt=b.dataset.art; document.querySelectorAll(".es-art").forEach(x=>x.classList.toggle("on",x.dataset.art===newArt));
+    const wrap=$("#esFzWrap"); if(wrap)wrap.style.display=FZ_ARTEN.indexOf(newArt)>=0?'':'none';
+  }));
+  const fzBtn=$("#esFzBtn");
+  if(fzBtn)fzBtn.addEventListener("click",()=>{
+    const snap={date:$("#esDate").value||cur.date,von:$("#esTime").value||cur.von,art:newArt,note:$("#esNote").value,fahrzeug:newFahrzeug};
+    const st=DB.students.find(s=>s.id===l.sid);
+    openVehiclePicker({title:st?st.name:"",sub:`${isoDE(snap.date)} · ${snap.von}`},fzName=>{ snap.fahrzeug=fzName; openEventEdit(id,snap); });
+  });
   $("#esBack").addEventListener("click",()=>openEventSheet("lesson",id,l.sid));
   $("#esSave").addEventListener("click",()=>{
-    const date=$("#esDate").value||l.date; const von=$("#esTime").value||l.von;
+    const date=$("#esDate").value||cur.date; const von=$("#esTime").value||cur.von;
     const dur=newArt==="schalt"?15:(DB.workCfg.blockMin||90);
     const bis=min2hm(hm2min(von)+dur);
     const note=$("#esNote").value.trim();
     if(newArt==="sonder"&&l.art!=="sonder"&&l.sid){
       // Art wird auf Sonderfahrt geändert → SF-Picker anzeigen
-      openSFPickerForLesson(id,l.sid,date,von,bis,note,"sonder");
+      openSFPickerForLesson(id,l.sid,date,von,bis,note,"sonder",newFahrzeug);
     } else {
-      updateLesson(id,{date,von,bis,art:newArt,note}); closeSheet(); toast("Gespeichert ✓"); routeKalender();
+      updateLesson(id,{date,von,bis,art:newArt,note,fahrzeug:newFahrzeug}); closeSheet(); toast("Gespeichert ✓"); routeKalender();
     }
   });
 }
@@ -5360,6 +5376,7 @@ function routeArbeitszeit(){
 
 /* ===================== KALENDER-ANSICHT ===================== */
 let _calView="woche", _calDate=null, _calFilter="alle";
+let _calFzFilter=null, _calNurFrei=false, _calFcOffen=false; // erweiterte Filter
 const CAL_ARTEN={ fahrstunde:{lab:"Fahrstunde",col:"var(--gruen-bright,#4a8b45)"}, nacht:{lab:"Nachtfahrt",col:"#5a7da8",hideleg:true}, sonder:{lab:"Sonderfahrt",col:"#5a7da8",sf:true}, pruefung:{lab:"Prüfung",col:"#c9a227"}, theorie:{lab:"Theorie",col:"#9b7dc4"}, schalt:{lab:"Schaltkompetenz",col:"#c4607d",min:15}, block:{lab:"Blockiert",col:"#88939a"} };
 /* Theorie-Lektionen 1-14 nach DEGENER-Ausbildungsplan (Marktstandard, den die meisten Fahrschulen
    nutzen): Grundstoff 1-12 nach Anlage 1 FahrschAusbO (alle Klassen), Zusatzstoff 13-14 nach
@@ -5382,7 +5399,50 @@ const LEKTIONEN=[
 ];
 function lektionLabel(n){ const l=LEKTIONEN.find(x=>x.n===+n); return l?("Lektion "+l.n):""; }
 function lektionTitel(n){ const l=LEKTIONEN.find(x=>x.n===+n); return l?l.t:""; }
-function eventMatchesFilter(art){ if(_calFilter==="alle")return true; return art===_calFilter; }
+function eventMatchesFilter(e,iso){
+  if(_calNurFrei)return false; // "Nur freie Slots" blendet alle Termine aus
+  if(_calFilter!=="alle"&&e.art!==_calFilter)return false;
+  if(_calFzFilter&&e.fahrzeug!==_calFzFilter)return false;
+  if(_calFcOffen){
+    if(["fahrstunde","sonder","nacht"].indexOf(e.art)<0)return false;
+    if(!(isAbsolved(iso,e.bis)&&(!e.fc||e.fc==="offen")))return false;
+  }
+  return true;
+}
+// Freie Slots: Fahrzeug/Fahrcheck-Filter gelten nur für echte Termine, nicht für unbelegte Zeit —
+// bei aktivem Fahrzeug- oder FC-Filter werden freie Slots daher ausgeblendet (kein Treffer möglich).
+function slotMatchesFilter(s){
+  if(_calFzFilter||_calFcOffen)return false;
+  if(_calFilter!=="alle"&&s.art!==_calFilter)return false;
+  return true;
+}
+function calFilterAktiv(){ return !!(_calFzFilter||_calNurFrei||_calFcOffen); }
+function openCalFilterSheet(){
+  const fzList=DB.workCfg.fahrzeuge||[];
+  const render=()=>`<div class="sheet-h">Filter</div>
+    <p class="muted-p" style="font-size:13px;margin:-4px 0 12px;">Zusätzlich zur Art-Auswahl oben.</p>
+    ${fzList.length?`<div style="font-size:11px;font-weight:700;letter-spacing:.06em;color:var(--faint);text-transform:uppercase;margin:0 0 6px;">Fahrzeug</div>
+    <div class="es-actions" style="margin-bottom:14px;">
+      <button class="es-act${!_calFzFilter?' primary':''}" data-fzf="">Alle Fahrzeuge</button>
+      ${fzList.map(fz=>`<button class="es-act${_calFzFilter===fz.name?' primary':''}" data-fzf="${esc(fz.name)}">${esc(fz.name)}</button>`).join("")}
+    </div>`:""}
+    <div class="es-actions">
+      <button class="es-act${_calNurFrei?' primary':''}" id="cfNurFrei">${_calNurFrei?'✓ ':''}Nur freie Slots</button>
+      <button class="es-act${_calFcOffen?' primary':''}" id="cfFcOffen">${_calFcOffen?'✓ ':''}Fahrcheck offen</button>
+    </div>
+    <div class="btn-row" style="margin-top:14px;">
+      <button class="btn btn-ghost" id="cfReset" style="flex:0;padding:13px 16px;">Zurücksetzen</button>
+      <button class="btn btn-primary" id="cfDone">Fertig</button>
+    </div>`;
+  const bind=()=>{
+    document.querySelectorAll("[data-fzf]").forEach(b=>b.addEventListener("click",()=>{ _calFzFilter=b.dataset.fzf||null; openSheet(render()); bind(); routeKalenderRefresh(); }));
+    $("#cfNurFrei").addEventListener("click",()=>{ _calNurFrei=!_calNurFrei; openSheet(render()); bind(); routeKalenderRefresh(); });
+    $("#cfFcOffen").addEventListener("click",()=>{ _calFcOffen=!_calFcOffen; openSheet(render()); bind(); routeKalenderRefresh(); });
+    $("#cfReset").addEventListener("click",()=>{ _calFzFilter=null; _calNurFrei=false; _calFcOffen=false; openSheet(render()); bind(); routeKalenderRefresh(); });
+    $("#cfDone").addEventListener("click",()=>{ closeSheet(); routeKalender(); });
+  };
+  openSheet(render()); bind();
+}
 function routeKalender(){
   ensureDB();
   if(!_calDate)_calDate=todayISO();
@@ -5393,6 +5453,7 @@ function routeKalender(){
       <button class="cal-viewbtn" id="calViewBtn">${viewLabels[_calView]} <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" style="width:14px;height:14px;"><path d="M6 9l6 6 6-6"/></svg></button>
       <div style="display:flex;gap:8px;align-items:center;">
         <button class="cal-search-btn" id="calSearch" aria-label="Schüler suchen"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="7"/><path d="M21 21l-4.3-4.3"/></svg></button>
+        <button class="cal-search-btn" id="calFilterBtn" aria-label="Filter" style="position:relative;"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 6h16M7 12h10M10 18h4"/></svg>${calFilterAktiv()?'<span class="cal-filter-badge"></span>':''}</button>
         <button class="cal-gear" id="calGear" aria-label="Arbeitszeiten"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M12 2v3M12 19v3M2 12h3M19 12h3M4.9 4.9l2.1 2.1M17 17l2.1 2.1M4.9 19.1L7 17M17 7l2.1-2.1"/></svg></button>
         <button class="cal-today" id="calToday">Heute</button>
       </div>
@@ -5444,6 +5505,7 @@ function bindCalControls(){
   $("#calToday").addEventListener("click",()=>{ _calDate=todayISO(); routeKalender(); });
   $("#calGear").addEventListener("click",routeArbeitszeit);
   $("#calSearch").addEventListener("click",openCalSearchSheet);
+  $("#calFilterBtn").addEventListener("click",openCalFilterSheet);
   $("#calFab").addEventListener("click",openAddSheet);
   $("#calViewBtn").addEventListener("click",openCalViewSheet);
   $("#calPrev").addEventListener("click",()=>{ _calDate=calShift(-1); routeKalender(); });
@@ -5581,7 +5643,7 @@ function calMonthHTML(){
   const firstWd=wdOf(1); const leadEmpty=firstWd===6?0:firstWd; // Sonntag existiert in diesem Raster nicht
   let cells=""; for(let i=0;i<leadEmpty;i++)cells+=`<div class="cm-cell empty"></div>`;
   for(let day=1;day<=dim;day++){ const w=wdOf(day); if(w===6)continue; // Sonntag überspringen – findet eh nichts statt
-    const iso=dateISO(new Date(y,m,day)); const has=dayEvents(iso).some(e=>eventMatchesFilter(e.art)); const isToday=iso===todayISO(); const hol=holidayName(iso);
+    const iso=dateISO(new Date(y,m,day)); const has=_calNurFrei?dayFreeSlots(iso).some(s=>slotMatchesFilter(s)):dayEvents(iso).some(e=>eventMatchesFilter(e,iso)); const isToday=iso===todayISO(); const hol=holidayName(iso);
     cells+=`<div class="cm-cell${isToday?' today':''}${hol?' holiday':''}" data-calday="${iso}"${hol?` title="${esc(hol)}"`:''}><span class="cm-num">${day}</span>${hol?'<span class="cm-hol"></span>':(has?'<span class="cm-dot"></span>':'')}</div>`; }
   return `<div class="cm-grid-h six">${["Mo","Di","Mi","Do","Fr","Sa"].map(w=>`<div>${w}</div>`).join("")}</div><div class="cm-grid six">${cells}</div>
     <div class="cm-legend">${Object.entries(CAL_ARTEN).filter(([k,v])=>!v.hideleg&&k!=='block').map(([k,v])=>`<span class="cm-leg"><i style="background:${v.col}"></i>${v.lab}</span>`).join("")}</div>`;
@@ -5599,7 +5661,7 @@ function calWeekHTML(){
 }
 // Kombinierte Zeilenliste für einen Tag in der Wochenansicht: Standard-Slots (frei→vergeben-Button, belegt→Chip) + Termine außerhalb des Rasters
 function weekDayRowsHTML(iso){
-  const slots=daySlots(iso); const evs=dayEvents(iso).filter(e=>eventMatchesFilter(e.art));
+  const slots=daySlots(iso).filter(s=>slotMatchesFilter(s)); const evs=dayEvents(iso).filter(e=>eventMatchesFilter(e,iso));
   if(!slots.length&&!evs.length)return `<div class="cw-empty">–</div>`;
   const used=new Set();
   // Alle Items: Slots + Events zusammenführen und nach Zeit sortieren
@@ -5643,8 +5705,8 @@ function calEventChip(e,iso){
 // TAGESANSICHT
 function calDayHTML(){
   const iso=_calDate;
-  const evs=dayEvents(iso).filter(e=>eventMatchesFilter(e.art));
-  const free=dayFreeSlots(iso).filter(s=>eventMatchesFilter(s.art));
+  const evs=dayEvents(iso).filter(e=>eventMatchesFilter(e,iso));
+  const free=dayFreeSlots(iso).filter(s=>slotMatchesFilter(s));
   // Alle Items mit Start/Ende in Minuten
   const items=[];
   evs.forEach(e=>items.push({type:"ev",von:hm2min(e.von),bis:hm2min(e.bis),e}));
@@ -7108,15 +7170,18 @@ function _verdienstPinCheck(){
   const stored=sessionStorage.getItem("vd_unlocked");
   return stored==="1";
 }
+// Euro-Beträge werden bei aktivem PIN maskiert — UE-/Fahrstunden-Zahlen bleiben immer sichtbar.
+function _eurMasked(n){
+  if(_verdienstPinCheck())return eur(n);
+  return `<span class="eur-locked" onclick="unlockVerdienst()" title="Antippen zum Entsperren">•••• € ${ICN.lock}</span>`;
+}
 function verdienstModulHTML(){
-  if(!_verdienstPinCheck()){
-    return `<div class="vd-card" style="display:flex;flex-direction:column;align-items:center;justify-content:center;min-height:180px;gap:16px;">
-      <div class="ic ic-muted" style="font-size:32px;">${ICN.lock}</div>
-      <div style="font-size:14px;color:var(--muted);text-align:center;">Verdienst ist geschützt</div>
-      <button class="btn btn-ghost" style="padding:10px 24px;" onclick="unlockVerdienst()">Entsperren</button>
-    </div>`;
-  }
-  const lockBtn=DB.verdienstPin?`<button onclick="sessionStorage.removeItem('vd_unlocked');routeStats(_curStatPeriod);" class="ic ic-muted" style="background:none;border:none;font-size:16px;cursor:pointer;opacity:.7;padding:4px;" title="Verdienst sperren">${ICN.lock}</button>`:"";
+  const pinAktiv=!!DB.verdienstPin;
+  const locked=pinAktiv&&!_verdienstPinCheck();
+  const lockBtn=pinAktiv?(locked
+    ?`<button onclick="unlockVerdienst()" class="ic ic-muted" style="background:none;border:none;font-size:16px;cursor:pointer;opacity:.7;padding:4px;" title="Beträge entsperren">${ICN.lock}</button>`
+    :`<button onclick="sessionStorage.removeItem('vd_unlocked');routeStats(_curStatPeriod);" class="ic ic-muted" style="background:none;border:none;font-size:16px;cursor:pointer;opacity:.7;padding:4px;" title="Beträge sperren">${ICN.lock}</button>`
+  ):"";
   return `<div style="position:relative;">${lockBtn?`<div style="position:absolute;top:8px;right:8px;z-index:2;">${lockBtn}</div>`:""}${_verdienstModulHTMLContent()}</div>`;
 }
 let _vdJustUnlocked=false;
@@ -7128,7 +7193,7 @@ function vdShiftMonth(delta){
 function unlockVerdienst(){
   const pin=DB.verdienstPin||"";
   if(!pin){sessionStorage.setItem("vd_unlocked","1");routeStats(_curStatPeriod);return;}
-  const entered=(prompt("PIN eingeben:")||"").trim();
+  const entered=(prompt("PIN eingeben, um Beträge zu sehen:")||"").trim();
   if(entered===pin){sessionStorage.setItem("vd_unlocked","1");_vdJustUnlocked=true;routeStats(_curStatPeriod);}
   else if(entered!=="")toast("Falscher PIN");
 }
@@ -7170,12 +7235,17 @@ function _verdienstModulHTMLContent(){
     return `<div class="th-mark ${cls}" style="bottom:${bot}px"><div class="th-tick"></div><div class="th-val">${ue} UE</div></div>`;
   }).join('');
   const curMarker=`<div class="th-mark t-cur" style="bottom:${curBot}px"><div class="th-tick"></div><div class="th-val">${Math.round(verdientUE)} UE ◄</div></div>`;
-  const restUE=Math.max(0,_bonusUE-Math.round(verdientUE)-Math.round(geplantUE));
-  const bonusJetzt=verdientUE>=_bonusUE;
-  const bonusMitPlan=(verdientUE+geplantUE)>=_bonusUE;
+  // WICHTIG: verdientUE (fcCounted) läuft in ueRange() unconditional über ALLE Termine des Monats
+  // (auch zukünftige, noch nicht stattgefundene — die bekommen mangels FC-Eintrag automatisch volle
+  // Gutschrift). D.h. verdientUE enthält die geplanten Termine BEREITS. geplantUE (= noch nicht
+  // absolvierte UE) darf hier NICHT nochmal draufaddiert werden, sonst zählen geplante Termine doppelt.
+  const verdientJetzt=Math.max(0,verdientUE-geplantUE); // nur wirklich schon absolvierte UE
+  const restUE=Math.max(0,_bonusUE-Math.round(verdientUE));
+  const bonusJetzt=verdientJetzt>=_bonusUE;
+  const bonusMitPlan=verdientUE>=_bonusUE;
   let bisHtml;
   if(bonusJetzt){
-    bisHtml=`<div class="th-goal" style="border-color:rgba(207,154,62,.4);background:rgba(207,154,62,.1);"><div class="thg-lab">🥇 Bonus erreicht!</div><div class="thg-val" style="color:#cf9a3e;">+${eur(v.bonus)} dabei</div></div>`;
+    bisHtml=`<div class="th-goal" style="border-color:rgba(207,154,62,.4);background:rgba(207,154,62,.1);"><div class="thg-lab">🥇 Bonus erreicht!</div><div class="thg-val" style="color:#cf9a3e;">+${_eurMasked(v.bonus)} dabei</div></div>`;
   }else if(bonusMitPlan){
     bisHtml=`<div class="th-goal"><div class="thg-lab">✓ Mit geplanten Terminen → Bonus</div><div class="thg-val">${_bonusUE} UE</div></div>`;
   }else{
@@ -7200,10 +7270,10 @@ function _verdienstModulHTMLContent(){
       <div class="thermo-right">${marksHTML}${curMarker}</div>
     </div>
     <div class="thermo-info">
-      <div class="thi-card"><div class="thi-k">✅ Verdient</div><div class="thi-v">${eur(verdientEuro)}</div><div class="thi-s">${Math.round(verdientUE)} UE abgerechnet</div></div>
-      <div class="thi-card future"><div class="thi-k"><span class="ic ic-gold" style="font-size:12px;">${ICN.cal}</span> Voraussichtlich</div><div class="thi-v">${eur(gesamtEuro)}</div><div class="thi-s">${gesamtUE} UE gesamt · ${Math.round(geplantUE)} noch offen</div></div>
+      <div class="thi-card"><div class="thi-k">✅ Verdient</div><div class="thi-v">${_eurMasked(verdientEuro)}</div><div class="thi-s">${Math.round(verdientUE)} UE abgerechnet</div></div>
+      <div class="thi-card future"><div class="thi-k"><span class="ic ic-gold" style="font-size:12px;">${ICN.cal}</span> Voraussichtlich</div><div class="thi-v">${_eurMasked(gesamtEuro)}</div><div class="thi-s">${gesamtUE} UE gesamt · ${Math.round(geplantUE)} noch offen</div></div>
     </div>
-    ${offenUE>0.3?`<div class="vd-offen">⚠ ${fmtUE(offenUE)} UE gefahren, FC noch offen · <b>${eur(leistungAusUE(offenUE))}</b> stehen aus</div>`:''}
+    ${offenUE>0.3?`<div class="vd-offen">⚠ ${fmtUE(offenUE)} UE gefahren, FC noch offen · <b>${_eurMasked(leistungAusUE(offenUE))}</b> stehen aus</div>`:''}
     <div class="th-goal" style="margin-bottom:8px;">
       <div class="thg-lab"><span class="ic ic-gold" style="font-size:11px;">${ICN.chart}</span> Terminierte Fahrstunden diesen Monat</div>
       <div class="thg-val">${terminiertUE} UE</div>
