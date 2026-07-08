@@ -1,0 +1,47 @@
+<!doctype html><html lang="de"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Termin stornieren</title>
+<style>
+  body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;background:#0c1410;color:#eaf1ec;margin:0;padding:24px 18px;line-height:1.5;}
+  .card{max-width:480px;margin:40px auto;background:#132420;border-radius:16px;padding:24px;border:1px solid rgba(150,200,165,.18);text-align:center;}
+  h1{font-size:19px;margin:0 0 12px;}
+  p{font-size:14.5px;color:#c9d6cf;}
+  .btn{padding:14px 24px;border-radius:12px;background:#c4744f;color:#fff;border:none;font-size:15px;font-weight:700;cursor:pointer;margin-top:14px;}
+  .ok{color:#7bc47f;}
+  .warn{color:#e0a97a;}
+</style></head><body>
+<div class="card" id="card"><p>Wird geprüft …</p></div>
+<script>
+const API = "https://oectrvkjunntzsggyhxv.supabase.co/functions/v1/public-booking";
+const token = new URLSearchParams(window.location.search).get("token");
+const card = document.getElementById("card");
+
+function fmt(datum, von){
+  const d = new Date(datum+"T00:00:00");
+  return d.toLocaleDateString("de-DE",{weekday:"long",day:"numeric",month:"long"}) + " · " + von + " Uhr";
+}
+
+async function run(){
+  if(!token){ card.innerHTML = "<h1>Ungültiger Link</h1><p>Dieser Storno-Link ist nicht vollständig.</p>"; return; }
+  card.innerHTML = "<p>Termin wird geprüft …</p>";
+  try{
+    const res = await fetch(API+"?action=cancel&token="+encodeURIComponent(token));
+    const data = await res.json();
+    if(data.error === "not_found"){ card.innerHTML = "<h1>Nicht gefunden</h1><p>Diesen Termin konnten wir nicht finden.</p>"; return; }
+    if(data.status === "already_cancelled"){ card.innerHTML = "<h1>Bereits storniert</h1><p>Dieser Termin ("+fmt(data.datum,data.von)+") wurde bereits storniert.</p>"; return; }
+    if(data.status === "too_late"){
+      card.innerHTML = "<h1 class='warn'>Zu kurzfristig</h1><p>Dein Termin am "+fmt(data.datum,data.von)+" ist weniger als 24 Stunden entfernt.</p><p>Eine Online-Stornierung ist jetzt nicht mehr möglich. Bitte melde dich direkt bei deinem Fahrlehrer.</p>";
+      return;
+    }
+    if(data.status === "cancelled"){
+      card.innerHTML = "<h1 class='ok'>Storniert ✓</h1><p>Dein Termin am "+fmt(data.datum,data.von)+" wurde storniert.</p><p>Der Platz ist jetzt wieder frei für andere.</p>";
+      return;
+    }
+    card.innerHTML = "<h1>Fehler</h1><p>Etwas ist schiefgelaufen. Bitte melde dich direkt bei deinem Fahrlehrer.</p>";
+  }catch(e){
+    card.innerHTML = "<h1>Netzwerkfehler</h1><p>Bitte nochmal versuchen oder direkt beim Fahrlehrer melden.</p>";
+  }
+}
+run();
+</script>
+</body></html>
