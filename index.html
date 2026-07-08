@@ -2658,11 +2658,15 @@ async function afterLogin(user) {
   }
   // Cloud-Daten laden (falls neuere als localStorage)
   await pullFromCloud();
+  // Online-Buchungen (Schalter-/Automatik-Link) abholen
+  await pullPublicBookings();
   // Login-Overlay verstecken
   document.getElementById("loginOverlay").classList.add("hidden");
   updateBell();
   // Periodischer Sync alle 2 Minuten
   _syncTimer = setInterval(() => pushToCloud(), 120000);
+  // Online-Buchungen alle 60 Sekunden neu abholen (schnellere Rückmeldung als der reguläre Sync)
+  setInterval(() => pullPublicBookings(), 60000);
   // Sofort einmal pushen (aktuellen Stand sichern)
   pushToCloud();
 }
@@ -2704,6 +2708,50 @@ async function pushToCloud() {
   } catch(e) { console.warn("[Kompass] Push fehlgeschlagen:", e.message); }
 }
 
+/* ---- Öffentliche Online-Buchungen (Schalter-/Automatik-Link) abholen ---- */
+async function pullPublicBookings() {
+  if (!_authUser) return;
+  try {
+    const supa = getSupa();
+    const { data: rows } = await supa.from("public_bookings").select("*").eq("fahrlehrer_id", _authUser.id)
+      .or("and(status.eq.bestaetigt,merged.eq.false),and(status.eq.storniert,merged.eq.true,cancel_synced.eq.false)");
+    if (!rows || !rows.length) return;
+    let neu = [];
+    let stornos = [];
+    for (const r of rows) {
+      if (r.status === "bestaetigt" && !r.merged) {
+        const art = r.subtyp === "sonder" ? "sonder" : "fahrstunde";
+        const fzLabel = r.fahrzeug_typ === "schalt" ? "Schaltfahrzeug" : "Automatikfahrzeug";
+        const noteParts = ["Online gebucht · " + fzLabel];
+        if (r.schueler_telefon) noteParts.push("Tel: " + r.schueler_telefon);
+        if (r.schueler_email) noteParts.push(r.schueler_email);
+        const l = addLesson({ date: r.datum, von: r.von, bis: r.bis, art, sid: null, name: r.schueler_name, note: noteParts.join(" · ") });
+        await supa.from("public_bookings").update({ merged: true, merged_lesson_id: l.id }).eq("id", r.id);
+        neu.push(r);
+      } else if (r.status === "storniert" && r.merged && !r.cancel_synced) {
+        if (r.merged_lesson_id) deleteLesson(r.merged_lesson_id);
+        await supa.from("public_bookings").update({ cancel_synced: true }).eq("id", r.id);
+        stornos.push(r);
+      }
+    }
+    if (neu.length) {
+      save();
+      const r0 = neu[0];
+      toast(neu.length === 1
+        ? `🔔 Neuer Termin: ${r0.schueler_name} · ${isoDE(r0.datum)} ${r0.von}`
+        : `🔔 ${neu.length} neue Online-Buchungen`);
+      if ($("#calBody")) routeKalender();
+    }
+    if (stornos.length) {
+      save();
+      const s0 = stornos[0];
+      toast(stornos.length === 1
+        ? `Storniert: ${s0.schueler_name} · ${isoDE(s0.datum)} ${s0.von}`
+        : `${stornos.length} Online-Termine storniert`);
+      if ($("#calBody")) routeKalender();
+    }
+  } catch (e) { console.warn("[Kompass] Buchungs-Abruf fehlgeschlagen:", e.message); }
+}
 /* ---- Logout ---- */
 async function doLogout() {
   if (_syncTimer) clearInterval(_syncTimer);
