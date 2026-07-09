@@ -43,3 +43,31 @@ self.addEventListener("fetch", (event) => {
       .catch(() => caches.match(event.request).then((cached) => cached || caches.match("./index.html")))
   );
 });
+
+/* Push-Benachrichtigungen (z.B. neue Online-Buchung, Stornierung).
+   Zeigt die Notification an, auch wenn die App/der Tab geschlossen ist. */
+self.addEventListener("push", (event) => {
+  let data = { title: "Fahrlehrer-Kompass", body: "Neue Nachricht" };
+  try { if (event.data) data = event.data.json(); } catch (e) {}
+  event.waitUntil(
+    self.registration.showNotification(data.title || "Fahrlehrer-Kompass", {
+      body: data.body || "",
+      icon: "./icon-192.png",
+      badge: "./icon-192.png",
+      tag: "kompass-buchung",
+      renotify: true
+    })
+  );
+});
+
+/* Tippt der Nutzer auf die Benachrichtigung: bestehendes App-Fenster fokussieren, sonst neu öffnen. */
+self.addEventListener("notificationclick", (event) => {
+  event.notification.close();
+  event.waitUntil(
+    self.clients.matchAll({ type: "window", includeUncontrolled: true }).then((clientsArr) => {
+      const hadWindow = clientsArr.find((c) => c.url.includes("index.html") || c.url.endsWith("/"));
+      if (hadWindow) return hadWindow.focus();
+      return self.clients.openWindow("./index.html");
+    })
+  );
+});
