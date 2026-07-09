@@ -2708,6 +2708,43 @@ async function pushToCloud() {
   } catch(e) { console.warn("[Kompass] Push fehlgeschlagen:", e.message); }
 }
 
+/* ---- Web-Push Benachrichtigungen (auch wenn App geschlossen ist) ---- */
+const VAPID_PUBLIC_KEY = "BKa4zTKUr2qcw6WzTuY936faKvjVRMnxrfbp4j0wr081yocJikP5gE5FtldfaggyIbIwPP4VPbYlZRitnr1UZws";
+function _urlBase64ToUint8Array(base64String) {
+  const padding = "=".repeat((4 - base64String.length % 4) % 4);
+  const base64 = (base64String + padding).replace(/-/g, "+").replace(/_/g, "/");
+  const rawData = atob(base64);
+  const out = new Uint8Array(rawData.length);
+  for (let i = 0; i < rawData.length; ++i) out[i] = rawData.charCodeAt(i);
+  return out;
+}
+async function pushNotificationStatus() {
+  if (!("serviceWorker" in navigator) || !("PushManager" in window)) return false;
+  try {
+    const reg = await navigator.serviceWorker.ready;
+    const sub = await reg.pushManager.getSubscription();
+    return !!sub;
+  } catch (e) { return false; }
+}
+async function enablePushNotifications() {
+  if (!("serviceWorker" in navigator) || !("PushManager" in window)) { toast("Push wird auf diesem Gerät/Browser nicht unterstützt"); return; }
+  if (!_authUser) { toast("Bitte zuerst anmelden"); return; }
+  try {
+    const reg = await navigator.serviceWorker.ready;
+    const perm = await Notification.requestPermission();
+    if (perm !== "granted") { toast("Berechtigung nicht erteilt"); return; }
+    let sub = await reg.pushManager.getSubscription();
+    if (!sub) sub = await reg.pushManager.subscribe({ userVisibleOnly: true, applicationServerKey: _urlBase64ToUint8Array(VAPID_PUBLIC_KEY) });
+    const raw = sub.toJSON();
+    const supa = getSupa();
+    await supa.from("push_subscriptions").upsert(
+      { user_id: _authUser.id, endpoint: raw.endpoint, p256dh: raw.keys.p256dh, auth: raw.keys.auth },
+      { onConflict: "endpoint" }
+    );
+    toast("Push-Benachrichtigungen aktiviert ✓");
+    routeSettings();
+  } catch (e) { toast("Fehler: " + e.message); }
+}
 /* ---- Öffentliche Online-Buchungen (Schalter-/Automatik-Link) abholen ---- */
 async function pullPublicBookings() {
   if (!_authUser) return;
@@ -2722,7 +2759,8 @@ async function pullPublicBookings() {
       if (r.status === "bestaetigt" && !r.merged) {
         const art = r.subtyp === "sonder" ? "sonder" : "fahrstunde";
         const fzLabel = r.fahrzeug_typ === "schalt" ? "Schaltfahrzeug" : "Automatikfahrzeug";
-        const noteParts = ["Online gebucht · " + fzLabel];
+        const gebuchtAm = r.created_at ? new Date(r.created_at).toLocaleString("de-DE",{dateStyle:"short",timeStyle:"short"}) : "";
+        const noteParts = ["Online gebucht · " + fzLabel + (gebuchtAm ? " · " + gebuchtAm + " Uhr gebucht" : "")];
         if (r.schueler_telefon) noteParts.push("Tel: " + r.schueler_telefon);
         if (r.schueler_email) noteParts.push(r.schueler_email);
         const l = addLesson({ date: r.datum, von: r.von, bis: r.bis, art, sid: null, name: r.schueler_name, note: noteParts.join(" · ") });
@@ -2880,6 +2918,14 @@ function save(){try{localStorage.setItem(STORE_KEY,JSON.stringify(DB));}catch(e)
   if(changed)save(); else save();
 }catch(e){}})();
 let _saveSyncDebounce=null;
+// Falls ein Push noch aussteht (4s-Debounce) und die App wird geschlossen/in den Hintergrund geschickt:
+// sofort pushen statt zu riskieren, dass der geplante Push nie mehr feuert.
+document.addEventListener("visibilitychange",()=>{
+  if(document.visibilityState==="hidden"&&_saveSyncDebounce){ clearTimeout(_saveSyncDebounce); _saveSyncDebounce=null; pushToCloud(); }
+});
+window.addEventListener("pagehide",()=>{
+  if(_saveSyncDebounce){ clearTimeout(_saveSyncDebounce); _saveSyncDebounce=null; pushToCloud(); }
+});
 /* Bittet den Browser, die Daten als dauerhaft/wichtig einzustufen, damit sie auch bei
    Speicherplatz-Engpässen oder langer Nichtnutzung nicht automatisch gelöscht werden. */
 if(navigator.storage&&navigator.storage.persist){ navigator.storage.persist().catch(()=>{}); }
@@ -4780,7 +4826,11 @@ function routeSettings(){
   const kapWoche=DB.workCfg?.kapazitaetWoche||32;
   view.innerHTML=`<div class="view-inner view-read fade-up">
     ${logoutBtn}
-    ${_authUser?`<div class="res-block" style="animation:none;background:rgba(74,139,69,.06);border-color:rgba(74,139,69,.2);"><h4 style="color:#4a8b45">☁ Cloud-Konto</h4><p style="color:#6a9b7a;font-size:13px;">${_authUser.email}</p><p style="color:var(--muted);font-size:12px;margin-top:4px;">Daten werden automatisch gesichert.</p></div>`:""}
+    ${_authUser?`<div class="res-block" style="animation:none;background:rgba(74,139,69,.06);border-color:rgba(74,139,69,.2);"><h4 style="color:#4a8b45">☁ Cloud-Konto</h4><p style="color:#6a9b7a;font-size:13px;">${_authUser.email}</p><p style="color:var(--muted);font-size:12px;margin-top:4px;">Daten werden automatisch gesichert.</p></div>
+    <div class="res-block" style="animation:none;"><h4>🔔 Push-Benachrichtigungen</h4>
+      <p id="pushStatusTxt" style="color:var(--muted);font-size:13px;">Wird geprüft …</p>
+      <div class="btn-row"><button class="btn btn-ghost" id="pushEnableBtn" onclick="enablePushNotifications()">Aktivieren</button></div>
+    </div>`:""}
     ${adminBtn}
     <div class="res-block" style="animation:none;"><h4>📋 Ausbildungsplan-Vorlagen</h4>
       <p>Grundstufe, Aufbaustufe und Leistungsstufe individuell gestalten — z.B. eigene Prüfgebiete anlegen.</p>
@@ -4868,6 +4918,15 @@ function routeSettings(){
     localStorage.removeItem("serband-weather-cache");
     save();toast("Wetter-Einstellungen gespeichert ✓");
   });
+  const pushTxt=$("#pushStatusTxt");
+  if(pushTxt){
+    pushNotificationStatus().then(active=>{
+      pushTxt.textContent = active
+        ? "Aktiviert ✓ — du bekommst eine Benachrichtigung bei neuen Online-Buchungen, auch wenn die App geschlossen ist."
+        : "Noch nicht aktiviert. Aktivieren, um bei neuen Online-Buchungen benachrichtigt zu werden, selbst wenn die App zu ist.";
+      const btn=$("#pushEnableBtn"); if(btn&&active)btn.textContent="Erneut aktivieren";
+    });
+  }
 }
 /* ===================== ERWEITERUNG: Dashboard · Prüfungen · Statistik · Archiv ===================== */
 const READY_MIN=90;
@@ -5070,7 +5129,7 @@ function openEventSheet(kind,id,sid){
   $("#esEdit").addEventListener("click",()=>openEventEdit(id));
   $("#esOther").addEventListener("click",()=>{ closeSheet(); nsQuickAction("other",id,"lesson",routeKalender); });
   $("#esNoshow").addEventListener("click",()=>{ l.status="nicht erschienen"; save(); closeSheet(); toast("Als nicht erschienen vermerkt"); routeKalender(); });
-  $("#esCancel").addEventListener("click",()=>{ l.status="abgebrochen"; save(); closeSheet(); toast("Als abgebrochen vermerkt"); routeKalender(); });
+  $("#esCancel").addEventListener("click",()=>{ l.status="abgebrochen"; save(); _notifyOnlineBookingChange(id,"cancelled"); closeSheet(); toast("Als abgebrochen vermerkt"); routeKalender(); });
   const rs=$("#esReset"); if(rs)rs.addEventListener("click",()=>{ l.status="geplant"; save(); closeSheet(); toast("Status zurückgesetzt"); routeKalender(); });
   $("#esDelete").addEventListener("click",()=>{ if(confirm("Diesen Termin löschen?")){ deleteLesson(id); closeSheet(); toast("Termin gelöscht"); routeKalender(); } });
 }
@@ -6004,11 +6063,32 @@ function removeSonderFromKalender(s,grp,idx){
   const ex=(DB.lessons||[]).find(l=>l.srcSonder===key);
   if(ex)deleteLesson(ex.id);
 }
-function updateLesson(id,patch){ const l=(DB.lessons||[]).find(x=>x.id===id); if(l){ Object.assign(l,patch); save(); } return l; }
+/* Benachrichtigt (per E-Mail) den Schüler, falls dieser Termin ursprünglich online gebucht wurde.
+   Läuft im Hintergrund (fire-and-forget), blockiert die eigentliche Aktion nicht. */
+function _notifyOnlineBookingChange(lessonId, type, patch) {
+  if (!_authUser || !lessonId) return;
+  try {
+    const supa = getSupa();
+    supa.from("public_bookings").select("id").eq("merged_lesson_id", lessonId).eq("status", "bestaetigt").maybeSingle().then(({ data }) => {
+      if (!data) return;
+      const body = { merged_lesson_id: lessonId, type };
+      if (type === "changed" && patch) {
+        if (patch.date) body.new_date = patch.date;
+        if (patch.von) body.new_von = patch.von;
+        if (patch.bis) body.new_bis = patch.bis;
+      }
+      fetch("https://oectrvkjunntzsggyhxv.supabase.co/functions/v1/public-booking?action=teacher_update", {
+        method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(body)
+      }).catch(() => {});
+    });
+  } catch (e) {}
+}
+function updateLesson(id,patch){ const l=(DB.lessons||[]).find(x=>x.id===id); if(l){ Object.assign(l,patch); save(); if(patch.date||patch.von||patch.bis) _notifyOnlineBookingChange(id,"changed",patch); } return l; }
 function deleteLesson(id){
   const l=(DB.lessons||[]).find(x=>x.id===id); if(!l)return;
   if(l.srcSonder){ const [sid,grp,idx]=l.srcSonder.split(":"); const s=DB.students.find(x=>x.id===sid); if(s&&s.plan&&s.plan.sonder&&s.plan.sonder[grp])s.plan.sonder[grp][+idx]=null; }
   DB.lessons=(DB.lessons||[]).filter(x=>x.id!==id); save();
+  _notifyOnlineBookingChange(id,"cancelled");
 }
 // Nächster anstehender Schüler (heute/zukünftig, erstes geplantes Event)
 function nextLessonEvent(){
