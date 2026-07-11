@@ -632,6 +632,11 @@ input,select,textarea{font-family:inherit;font-size:15px;color:var(--txt);}
   display:inline-flex;align-items:center;justify-content:center;transition:all .15s var(--pop);}
 .iBtn:active{transform:scale(.85);}
 .iBtn.on{background:var(--orange);color:#fff;border-color:var(--orange);}
+.vidBtn{width:23px;height:23px;flex:0 0 auto;border-radius:50%;background:var(--gruen-soft);
+  border:1.5px solid var(--gruen-line);color:var(--gruen-bright,#4a8b45);
+  display:inline-flex;align-items:center;justify-content:center;transition:all .15s var(--pop);}
+.vidBtn svg{width:12px;height:12px;}
+.vidBtn:active{transform:scale(.85);}
 .skill-info{display:grid;grid-template-rows:0fr;transition:grid-template-rows .28s var(--ease);background:var(--bg-soft);}
 .skill-info.open{grid-template-rows:1fr;}
 .skill-info .si-inner{overflow:hidden;}
@@ -2194,6 +2199,23 @@ const STUFEN = [
     { id:"t_schloss",t:"Lenkradschloss", group:"Bedienung" }
   ]}
 ];
+/* ===== Fahr-Akademie Deep-Link (Schnittstelle Kompass <-> Fahr-Akademie) =====
+   Fahr-Akademie ist noch nicht gehostet -> Platzhalter, sobald Serband die echte
+   URL liefert, HIER eintragen (siehe Projektwissen SCHNITTSTELLE_FAHR_AKADEMIE_KOMPASS.md). */
+const FAHR_AKADEMIE_BASE_URL = "https://fahr-akademie.example/";
+/* Zuordnung Kompass-Item-ID -> Fahr-Akademie-Stufe (nur Items, zu denen es laut
+   Schnittstellen-Doku vom 11.07.26 bereits ein Video gibt). Bewusst grob (Stufen-
+   Ebene, kein Einzelvideo-Link) - technische Einschränkung der aktuellen Fahr-
+   Akademie-Version. */
+const FA_VIDEO_MAP = {
+  a_30:"Grundstufe", l_stop:"Grundstufe", l_links:"Grundstufe",
+  a_doppel:"Aufbaustufe", l_eng:"Aufbaustufe", l_fahrrad:"Aufbaustufe",
+  l_kreisel:"Leistungsstufe",
+  s_ab_ein:"Sonderfahrten", s_ab_aus:"Sonderfahrten",
+  gf_wenden:"Grundfahraufgaben", gf_laengs:"Grundfahraufgaben", gf_quer:"Grundfahraufgaben",
+  t_profil:"Technik"
+};
+function faLink(stufe){ return FAHR_AKADEMIE_BASE_URL+"?stufe="+encodeURIComponent(stufe); }
 const INFO = {
   g_sitz:[
     "**Sitzabstand/Beine:** Kupplung einmal ganz durchtreten – das Knie bleibt dabei leicht gebeugt (nicht durchgestreckt). Gesäß bleibt an der Lehne.",
@@ -4192,12 +4214,14 @@ function buildStufen(s){
       const hasInfo=!!INFO[it.id];
       const iBtn=hasInfo?`<button class="iBtn" data-info="${it.id}" aria-label="Erklärung anzeigen">!</button>`:"";
       const panel=hasInfo?`<div class="skill-info" data-panel="${it.id}"><div class="si-inner">${renderInfoList(it.id)}</div></div>`:"";
+      const faStufe=FA_VIDEO_MAP[it.id];
+      const vidBtn=faStufe?`<button class="vidBtn" data-fa="${faStufe}" aria-label="Video in Fahr-Akademie ansehen">${ICN.video}</button>`:"";
       const ampelHtml=st.eval===false
         ? `<div class="ampel"><button class="amp chk ${v==='gruen'?'on':''}" data-v="gruen" aria-label="erledigt"></button></div>`
         : `<div class="ampel">${["rot","gelb","gruen"].map(c=>`<button class="amp ${v===c?'on':''}" data-v="${c}" aria-label="${c}"></button>`).join("")}</div>`;
       return grpHtml+`<div class="skill-wrap">
         <div class="skill" data-skill="${it.id}">
-          <div style="flex:1"><div class="sk-head"><span class="sk-t">${esc(it.t)}</span>${iBtn}</div>${it.ort?`<div class="sk-ort"><span class="ic ic-rot" style="font-size:11px;">${ICN.pin}</span> ${esc(it.ort)}</div>`:""}</div>
+          <div style="flex:1"><div class="sk-head"><span class="sk-t">${esc(it.t)}</span>${iBtn}${vidBtn}</div>${it.ort?`<div class="sk-ort"><span class="ic ic-rot" style="font-size:11px;">${ICN.pin}</span> ${esc(it.ort)}</div>`:""}</div>
           ${ampelHtml}
         </div>${panel}
       </div>`;}).join("");
@@ -4216,6 +4240,10 @@ function buildStufen(s){
     e.stopPropagation();
     const panel=wrap.querySelector(`[data-panel="${b.dataset.info}"]`);
     if(panel){const open=panel.classList.toggle("open");b.classList.toggle("on",open);}}));
+  wrap.querySelectorAll(".vidBtn").forEach(b=>b.addEventListener("click",e=>{
+    e.stopPropagation();
+    window.open(faLink(b.dataset.fa),"_blank");
+  }));
   wrap.querySelectorAll(".skill").forEach(row=>{
     const sid=row.dataset.skill;
     row.querySelectorAll(".amp").forEach(b=>b.addEventListener("click",()=>{
