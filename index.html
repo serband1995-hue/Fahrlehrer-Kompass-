@@ -2201,21 +2201,36 @@ const STUFEN = [
 ];
 /* ===== Fahr-Akademie Deep-Link (Schnittstelle Kompass <-> Fahr-Akademie) =====
    Fahr-Akademie ist noch nicht gehostet -> Platzhalter, sobald Serband die echte
-   URL liefert, HIER eintragen (siehe Projektwissen SCHNITTSTELLE_FAHR_AKADEMIE_KOMPASS.md). */
+   URL liefert, HIER eintragen (siehe Projektwissen SCHNITTSTELLE_FAHR_AKADEMIE_KOMPASS.md).
+   Alles hier ist BEWUSST eine einzige, zentrale Config-Stelle - nichts ist fest
+   verdrahtet, jede Zeile kann jederzeit angepasst werden ohne andere Stellen im
+   Code zu berühren. */
 const FAHR_AKADEMIE_BASE_URL = "https://fahr-akademie.example/";
-/* Zuordnung Kompass-Item-ID -> Fahr-Akademie-Stufe (nur Items, zu denen es laut
-   Schnittstellen-Doku vom 11.07.26 bereits ein Video gibt). Bewusst grob (Stufen-
-   Ebene, kein Einzelvideo-Link) - technische Einschränkung der aktuellen Fahr-
-   Akademie-Version. */
+/* Zuordnung Kompass-Item-ID -> { stufe, tag }. "tag" = exakte ID aus der
+   academy_tags-Tabelle in Supabase (Projekt fahr-akademie), Stand 15.07.26.
+   Fehlt "tag" (z.B. weil Fahr-Akademie den Punkt noch nicht hat), fällt der
+   Link automatisch auf reine Stufen-Ebene zurück - kein Fehler, kein Absturz. */
 const FA_VIDEO_MAP = {
-  a_30:"Grundstufe", l_stop:"Grundstufe", l_links:"Grundstufe",
-  a_doppel:"Aufbaustufe", l_eng:"Aufbaustufe", l_fahrrad:"Aufbaustufe",
-  l_kreisel:"Leistungsstufe",
-  s_ab_ein:"Sonderfahrten", s_ab_aus:"Sonderfahrten",
-  gf_wenden:"Grundfahraufgaben", gf_laengs:"Grundfahraufgaben", gf_quer:"Grundfahraufgaben",
-  t_profil:"Technik"
+  a_30:      { stufe:"Grundstufe",         tag:"t01_rechts_vor_links" },
+  l_links:   { stufe:"Grundstufe",         tag:"t02_vorfahrt_gewaehren" },
+  l_stop:    { stufe:"Grundstufe",         tag:"t03_stoppschilder" },
+  a_doppel:  { stufe:"Aufbaustufe",        tag:"t04_doppelspurig_abbiegen" },
+  l_eng:     { stufe:"Aufbaustufe",        tag:"t05_engstellen" },
+  l_fahrrad: { stufe:"Aufbaustufe",        tag:"t06_anlieger_frei" },
+  l_kreisel: { stufe:"Leistungsstufe",     tag:"t07_kreisverkehr" },
+  s_ab_ein:  { stufe:"Sonderfahrten",      tag:"t08_autobahn_auffahren" },
+  s_ab_aus:  { stufe:"Sonderfahrten",      tag:"t09_autobahn_ausfahren" },
+  gf_wenden: { stufe:"Grundfahraufgaben",  tag:"t10_wenden" },
+  gf_laengs: { stufe:"Grundfahraufgaben",  tag:"t11_parken" },
+  gf_quer:   { stufe:"Grundfahraufgaben",  tag:"t11_parken" },
+  t_profil:  { stufe:"Technik",            tag:"t12_technikwissen" }
 };
-function faLink(stufe){ return FAHR_AKADEMIE_BASE_URL+"?stufe="+encodeURIComponent(stufe); }
+function faLink(entry){
+  if(typeof entry==="string") entry={stufe:entry}; // Rückwärtskompatibel, falls stufe als reiner String übergeben wird
+  let url=FAHR_AKADEMIE_BASE_URL+"?stufe="+encodeURIComponent(entry.stufe);
+  if(entry.tag) url+="&tag="+encodeURIComponent(entry.tag);
+  return url;
+}
 const INFO = {
   g_sitz:[
     "**Sitzabstand/Beine:** Kupplung einmal ganz durchtreten – das Knie bleibt dabei leicht gebeugt (nicht durchgestreckt). Gesäß bleibt an der Lehne.",
@@ -4215,7 +4230,7 @@ function buildStufen(s){
       const iBtn=hasInfo?`<button class="iBtn" data-info="${it.id}" aria-label="Erklärung anzeigen">!</button>`:"";
       const panel=hasInfo?`<div class="skill-info" data-panel="${it.id}"><div class="si-inner">${renderInfoList(it.id)}</div></div>`:"";
       const faStufe=FA_VIDEO_MAP[it.id];
-      const vidBtn=faStufe?`<button class="vidBtn" data-fa="${faStufe}" aria-label="Video in Fahr-Akademie ansehen">${ICN.video}</button>`:"";
+      const vidBtn=faStufe?`<button class="vidBtn" data-faid="${it.id}" aria-label="Video in Fahr-Akademie ansehen">${ICN.video}</button>`:"";
       const ampelHtml=st.eval===false
         ? `<div class="ampel"><button class="amp chk ${v==='gruen'?'on':''}" data-v="gruen" aria-label="erledigt"></button></div>`
         : `<div class="ampel">${["rot","gelb","gruen"].map(c=>`<button class="amp ${v===c?'on':''}" data-v="${c}" aria-label="${c}"></button>`).join("")}</div>`;
@@ -4242,7 +4257,8 @@ function buildStufen(s){
     if(panel){const open=panel.classList.toggle("open");b.classList.toggle("on",open);}}));
   wrap.querySelectorAll(".vidBtn").forEach(b=>b.addEventListener("click",e=>{
     e.stopPropagation();
-    window.open(faLink(b.dataset.fa),"_blank");
+    const entry=FA_VIDEO_MAP[b.dataset.faid];
+    if(entry) window.open(faLink(entry),"_blank");
   }));
   wrap.querySelectorAll(".skill").forEach(row=>{
     const sid=row.dataset.skill;
