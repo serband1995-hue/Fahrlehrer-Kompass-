@@ -2716,6 +2716,7 @@ async function afterLogin(user) {
   // Online-Buchungen (Schalter-/Automatik-Link) abholen
   await pullPublicBookings();
   await pullSchuelerZuweisungen();
+  await pullTermineZuweisungen();
   // Login-Overlay verstecken
   document.getElementById("loginOverlay").classList.add("hidden");
   updateBell();
@@ -2724,6 +2725,7 @@ async function afterLogin(user) {
   // Online-Buchungen alle 60 Sekunden neu abholen (schnellere Rückmeldung als der reguläre Sync)
   setInterval(() => pullPublicBookings(), 60000);
   setInterval(() => pullSchuelerZuweisungen(), 60000);
+  setInterval(() => pullTermineZuweisungen(), 60000);
   // Sofort einmal pushen (aktuellen Stand sichern)
   pushToCloud();
 }
@@ -2890,6 +2892,39 @@ async function pullSchuelerZuweisungen() {
     }
   } catch (e) { console.warn("[Kompass] Schüler-Abgleich fehlgeschlagen:", e.message); }
 }
+/* Holt Kalender-Änderungen von der Fahrschule (neue/geänderte/gelöschte Termine) ab.
+   "Zuletzt geändert gewinnt" pro Termin, via aktualisiert_am - dein Kalender bleibt sonst unangetastet. */
+async function pullTermineZuweisungen() {
+  if (!_authUser || !_authProfile || !_authProfile.fahrschule_id || !DB.lessons) return;
+  try {
+    const supa = getSupa();
+    const { data: rows } = await supa.from("kalender_termine").select("*").eq("fahrlehrer_id", _authUser.id).eq("geloescht", false);
+    const localById = {};
+    DB.lessons.forEach(l => { localById[l.id] = l; });
+    let neu = 0, geaendert = 0;
+    for (const r of (rows||[])) {
+      const remoteTime = new Date(r.aktualisiert_am).getTime();
+      const local = localById[r.id];
+      const merged = Object.assign({ sid: r.schueler_id, date: r.datum, von: r.von, bis: r.bis, art: r.art, fahrzeug: r.fahrzeug, status: r.status }, r.payload || {});
+      if (!local) {
+        DB.lessons.push(Object.assign({ id: r.id }, merged, { _syncedAt: remoteTime }));
+        neu++;
+      } else if (!local._syncedAt || remoteTime > local._syncedAt) {
+        Object.assign(local, merged, { _syncedAt: remoteTime });
+        geaendert++;
+      }
+    }
+    const remoteIds = new Set((rows||[]).map(r => r.id));
+    const vorher = DB.lessons.length;
+    DB.lessons = DB.lessons.filter(l => remoteIds.has(l.id) || !l._syncedAt);
+    const entfernt = vorher - DB.lessons.length;
+    if (neu || geaendert || entfernt) {
+      save();
+      if (neu) toast(neu===1 ? "🔔 1 neuer Termin von der Fahrschule" : `🔔 ${neu} neue Termine von der Fahrschule`);
+      else toast("Kalender von der Fahrschule aktualisiert");
+    }
+  } catch (e) { console.warn("[Kompass] Kalender-Abgleich fehlgeschlagen:", e.message); }
+}
 /* ---- Logout ---- */
 async function doLogout() {
   if (_syncTimer) clearInterval(_syncTimer);
@@ -3006,6 +3041,13 @@ async function _callAdminFn(body){
   return data;
 }
 
+function fsFilterSchueler(q){
+  const query=(q||"").toLowerCase().trim();
+  document.querySelectorAll(".sch-acc").forEach(el=>{
+    el.style.display = el.dataset.name.includes(query) ? "" : "none";
+  });
+}
+
 async function routeFahrschulenListe(){
   if(!isSuperAdmin())return;
   $("#tbTitle").textContent="Fahrschulen";setFab(false);view.scrollTop=0;
@@ -3073,6 +3115,7 @@ async function routeFahrschuleDetail(fahrschuleId){
         ?`<button class="btn btn-ghost" style="color:#c83c3c;" onclick="toggleFahrschuleAktiv('${fs.id}',false)">Fahrschule sperren</button>`
         :`<button class="btn btn-primary" onclick="toggleFahrschuleAktiv('${fs.id}',true)">Fahrschule freischalten</button>`}</div>
     </div>` : `<div class="res-block" style="animation:none;"><h4>🏫 ${esc(fs.name)}</h4></div>`;
+  const kalenderBtn=`<div class="res-block" style="animation:none;"><h4>📅 Kalender</h4><p style="font-size:13px;color:var(--muted);">Alle Termine aller Fahrlehrer, filterbar, bearbeitbar.</p><div class="btn-row"><button class="btn btn-primary" onclick="routeFahrschuleKalender('${fahrschuleId}')">Kalender öffnen</button></div></div>`;
 
   const lehrerRows=lehrer.map(l=>{
     const istSuperAdmin=l.rolle==="super_admin";
@@ -3091,19 +3134,34 @@ async function routeFahrschuleDetail(fahrschuleId){
   const lehrerOptionsFor=(sel)=>`<option value="">— nicht zugeordnet —</option>`+lehrer.map(l=>`<option value="${l.id}" ${l.id===sel?"selected":""}>${esc(l.name||l.email)}</option>`).join("");
   const paketOptionsFor=(sel)=>`<option value="">— kein Paket —</option>`+pakete.map(p=>`<option value="${p.id}" ${p.id===sel?"selected":""}>${esc(p.name)}</option>`).join("");
 
-  const schuelerRows=schueler.map(s=>`
-    <div class="fs-card">
-      <div class="fs-name">${esc(s.name)} ${s.bogen_ausgefuellt?'<span style="color:#4a8b45;font-size:11px;">✓ Bogen</span>':'<span style="color:var(--muted);font-size:11px;">– kein Bogen</span>'}</div>
-      <div class="fs-sub">${esc(s.telefon||'')}</div>
-      <div class="field" style="margin-top:6px;"><label style="font-size:11px;">Fahrlehrer</label>
-        <select onchange="schuelerVerschieben('${s.id}',this.value,'${s.fahrlehrer_id||''}','${fahrschuleId}')" style="width:100%;">${lehrerOptionsFor(s.fahrlehrer_id)}</select></div>
-      <div class="field"><label style="font-size:11px;">Paket</label>
-        <select onchange="schuelerPaketSetzen('${s.id}',this.value)" style="width:100%;">${paketOptionsFor(s.paket_id)}</select></div>
-      <div class="toggle-row" style="margin-top:6px;"><div class="tc-name" style="font-size:13px;">Simulator gekauft</div>
-        <button class="check-toggle${s.hat_simulator?' on':''}" onclick="schuelerFlagToggle('${s.id}','hat_simulator',${!s.hat_simulator})"></button></div>
-      <div class="toggle-row"><div class="tc-name" style="font-size:13px;">Theorie-App gekauft</div>
-        <button class="check-toggle${s.hat_theorie_app?' on':''}" onclick="schuelerFlagToggle('${s.id}','hat_theorie_app',${!s.hat_theorie_app})"></button></div>
-    </div>`).join("")||'<p class="muted-p" style="font-size:13px;">Noch keine Schüler.</p>';
+  const schuelerRows=schueler.map(s=>{
+    const paketName=s.paket_id?esc((pakete.find(p=>p.id===s.paket_id)||{}).name||""):"";
+    const badges=[
+      s.bogen_ausgefuellt?'<span style="color:#4a8b45;">✓ Bogen</span>':'<span style="color:var(--muted);">– kein Bogen</span>',
+      paketName?`<span style="color:var(--muted);">${paketName}</span>`:"",
+      s.hat_simulator?"🎮":"", s.hat_theorie_app?"📘":""
+    ].filter(Boolean).join(" &nbsp;·&nbsp; ");
+    return `
+    <div class="acc sch-acc" data-name="${esc((s.name||"").toLowerCase())}">
+      <button class="acc-h" onclick="this.closest('.acc').classList.toggle('open')" style="cursor:pointer;">
+        <span style="flex:1;text-align:left;font-size:14px;font-weight:700;color:var(--txt);">${esc(s.name)}</span>
+        <span class="done" style="font-size:11px;">${badges}</span>
+        <span class="chev">${ICN.chev}</span>
+      </button>
+      <div class="acc-body"><div class="acc-inner" style="padding:0 16px 16px;">
+        <div class="fs-sub" style="margin-bottom:8px;">${esc(s.telefon||"– keine Telefonnummer –")}</div>
+        <div class="field"><label style="font-size:11px;">Fahrlehrer</label>
+          <select onchange="schuelerVerschieben('${s.id}',this.value,'${s.fahrlehrer_id||""}','${fahrschuleId}')" style="width:100%;">${lehrerOptionsFor(s.fahrlehrer_id)}</select></div>
+        <div class="field"><label style="font-size:11px;">Paket</label>
+          <select onchange="schuelerPaketSetzen('${s.id}',this.value)" style="width:100%;">${paketOptionsFor(s.paket_id)}</select></div>
+        <div class="toggle-row" style="margin-top:6px;"><div class="tc-name" style="font-size:13px;">Simulator gekauft</div>
+          <button class="check-toggle${s.hat_simulator?' on':''}" onclick="schuelerFlagToggle('${s.id}','hat_simulator',${!s.hat_simulator})"></button></div>
+        <div class="toggle-row"><div class="tc-name" style="font-size:13px;">Theorie-App gekauft</div>
+          <button class="check-toggle${s.hat_theorie_app?' on':''}" onclick="schuelerFlagToggle('${s.id}','hat_theorie_app',${!s.hat_theorie_app})"></button></div>
+      </div></div>
+    </div>`;
+  }).join("")||'<p class="muted-p" style="font-size:13px;">Noch keine Schüler.</p>';
+  const schuelerSuche=schueler.length?`<div class="field"><input type="text" id="fsSchuelerSuche" placeholder="🔍 Schüler suchen…" oninput="fsFilterSchueler(this.value)" style="width:100%;"></div>`:"";
 
   const paketeVerwaltung=pakete.map(p=>`
     <div class="field" style="display:flex;align-items:center;gap:8px;">
@@ -3121,6 +3179,7 @@ async function routeFahrschuleDetail(fahrschuleId){
   if(wrap)wrap.innerHTML=`
     ${backBtn}
     ${killSwitch}
+    ${kalenderBtn}
     <div class="res-block" style="animation:none;"><h4>👥 Fahrlehrer (${lehrer.length})</h4>
       ${lehrerRows}
       <div class="btn-row" style="margin-top:10px;"><button class="btn btn-primary" onclick="neuenFahrlehrerAnlegen('${fahrschuleId}')">+ Neuen Fahrlehrer anlegen</button></div>
@@ -3131,6 +3190,7 @@ async function routeFahrschuleDetail(fahrschuleId){
       <div class="btn-row" style="margin-top:10px;"><button class="btn btn-ghost" onclick="paketHinzufuegen('${fahrschuleId}')">+ Paket hinzufügen</button></div>
     </div>
     <div class="res-block" style="animation:none;"><h4>🎓 Schüler (${schueler.length})</h4>
+      ${schuelerSuche}
       ${schuelerRows}
       <div class="btn-row" style="margin-top:10px;"><button class="btn btn-primary" onclick="neuenSchuelerAnlegenFS('${fahrschuleId}')">+ Neuen Schüler anlegen</button></div>
     </div>`;
@@ -3241,6 +3301,147 @@ async function neuenSchuelerAnlegenFS(fahrschuleId){
   routeFahrschuleDetail(fahrschuleId);
 }
 
+/* ============================================================
+   FAHRSCHULE-KALENDER (Wochenansicht, alle Fahrlehrer, filterbar)
+   ============================================================ */
+const FS_KAL_FARBEN=["#3a7350","#4a8bd6","#cf9a3e","#b23a6b","#3aa7b2","#8a5fd6","#c85a3a","#5f9e3a"];
+function _fsKalFarbeFuer(fahrlehrerId,lehrerListe){
+  const idx=lehrerListe.findIndex(l=>l.id===fahrlehrerId);
+  return FS_KAL_FARBEN[(idx<0?0:idx)%FS_KAL_FARBEN.length];
+}
+function _fsMontagVon(d){ const dt=new Date(d); const tag=(dt.getDay()+6)%7; dt.setDate(dt.getDate()-tag); return dt; }
+function _fsFmtDate(d){ return d.toISOString().slice(0,10); }
+
+async function routeFahrschuleKalender(fahrschuleId,weekStart){
+  window._fsKalFahrschuleId=fahrschuleId;
+  const monday=weekStart?new Date(weekStart):_fsMontagVon(new Date());
+  window._fsKalWeekStart=monday;
+  $("#tbTitle").textContent="Kalender";setFab(false);view.scrollTop=0;
+  view.innerHTML=`<div class="view-inner view-read fade-up" id="fsKalWrap"><div class="res-block" style="animation:none;text-align:center;color:var(--muted);">Lade…</div></div>`;
+  const supa=getSupa();
+  const sonntag=new Date(monday); sonntag.setDate(sonntag.getDate()+6);
+  const [lehrerR,termineR,schuelerR]=await Promise.all([
+    supa.from("profiles").select("*").eq("fahrschule_id",fahrschuleId).in("rolle",["fahrlehrer","super_admin"]).order("email"),
+    supa.from("kalender_termine").select("*").eq("fahrschule_id",fahrschuleId).eq("geloescht",false)
+        .gte("datum",_fsFmtDate(monday)).lte("datum",_fsFmtDate(sonntag)).order("von"),
+    supa.from("schueler").select("id,name").eq("fahrschule_id",fahrschuleId)
+  ]);
+  const lehrer=lehrerR.data||[], termine=termineR.data||[];
+  const schuelerNamen={};
+  (schuelerR.data||[]).forEach(s=>{ schuelerNamen[s.id]=s.name; });
+  window._fsKalLehrer=lehrer;
+
+  const filterLehrer=window._fsKalFilterLehrer||"";
+  const filterFahrzeug=window._fsKalFilterFahrzeug||"";
+  const fahrzeuge=[...new Set(termine.map(t=>t.fahrzeug).filter(Boolean))];
+  const gefiltert=termine.filter(t=>(!filterLehrer||t.fahrlehrer_id===filterLehrer)&&(!filterFahrzeug||t.fahrzeug===filterFahrzeug));
+
+  const tage=["Montag","Dienstag","Mittwoch","Donnerstag","Freitag","Samstag","Sonntag"];
+  let tageHtml="";
+  for(let i=0;i<7;i++){
+    const tagDate=new Date(monday); tagDate.setDate(tagDate.getDate()+i);
+    const tagStr=_fsFmtDate(tagDate);
+    const tagTermine=gefiltert.filter(t=>t.datum===tagStr).sort((a,b)=>(a.von||"").localeCompare(b.von||""));
+    const rows=tagTermine.map(t=>{
+      const farbe=_fsKalFarbeFuer(t.fahrlehrer_id,lehrer);
+      const l=lehrer.find(x=>x.id===t.fahrlehrer_id);
+      const lehrerName=l?(l.name||l.email):"?";
+      const schuelerName=schuelerNamen[t.schueler_id]||(t.payload&&t.payload.name)||"–";
+      return `<button class="fs-card" style="width:100%;text-align:left;border:none;border-left:4px solid ${farbe};cursor:pointer;" onclick="fsTerminBearbeiten('${t.id}')">
+        <div class="fs-name">${esc(t.von||"")}–${esc(t.bis||"")} · ${esc(schuelerName)}</div>
+        <div class="fs-sub">${esc(lehrerName)} &nbsp;·&nbsp; ${esc(t.fahrzeug||"–")} &nbsp;·&nbsp; ${esc(t.art||"–")}</div>
+      </button>`;
+    }).join("")||'<p class="muted-p" style="font-size:12.5px;">Keine Termine.</p>';
+    tageHtml+=`<div class="res-block" style="animation:none;"><h4>${tage[i]} · ${tagDate.getDate()}.${tagDate.getMonth()+1}.</h4>${rows}</div>`;
+  }
+
+  const lehrerOptions=`<option value="">Alle Fahrlehrer</option>`+lehrer.map(l=>`<option value="${l.id}" ${l.id===filterLehrer?"selected":""}>${esc(l.name||l.email)}</option>`).join("");
+  const fahrzeugOptions=`<option value="">Alle Fahrzeuge</option>`+fahrzeuge.map(f=>`<option value="${esc(f)}" ${f===filterFahrzeug?"selected":""}>${esc(f)}</option>`).join("");
+
+  const wrap=$("#fsKalWrap");
+  if(wrap)wrap.innerHTML=`
+    <button class="btn btn-ghost" style="margin-bottom:10px;" onclick="routeFahrschuleDetail('${fahrschuleId}')">← Zurück zur Fahrschule</button>
+    <div class="res-block" style="animation:none;">
+      <div class="btn-row" style="margin-bottom:10px;">
+        <button class="btn btn-ghost" onclick="_fsKalWoche(-1)">← Woche</button>
+        <button class="btn btn-ghost" onclick="_fsKalWoche(0)">Heute</button>
+        <button class="btn btn-ghost" onclick="_fsKalWoche(1)">Woche →</button>
+      </div>
+      <div class="field"><label style="font-size:11px;">Fahrlehrer filtern</label><select onchange="_fsKalFilter('lehrer',this.value)" style="width:100%;">${lehrerOptions}</select></div>
+      <div class="field"><label style="font-size:11px;">Fahrzeug filtern</label><select onchange="_fsKalFilter('fahrzeug',this.value)" style="width:100%;">${fahrzeugOptions}</select></div>
+      <div class="btn-row" style="margin-top:10px;"><button class="btn btn-primary" onclick="fsTerminAnlegen('${fahrschuleId}')">+ Neuer Termin</button></div>
+    </div>
+    ${tageHtml}`;
+}
+
+function _fsKalWoche(delta){
+  const cur=window._fsKalWeekStart||_fsMontagVon(new Date());
+  let neu;
+  if(delta===0) neu=_fsMontagVon(new Date());
+  else { neu=new Date(cur); neu.setDate(neu.getDate()+delta*7); }
+  routeFahrschuleKalender(window._fsKalFahrschuleId,neu);
+}
+function _fsKalFilter(typ,wert){
+  if(typ==="lehrer")window._fsKalFilterLehrer=wert; else window._fsKalFilterFahrzeug=wert;
+  routeFahrschuleKalender(window._fsKalFahrschuleId,window._fsKalWeekStart);
+}
+
+async function fsTerminBearbeiten(terminId){
+  const supa=getSupa();
+  const {data:t}=await supa.from("kalender_termine").select("*").eq("id",terminId).single();
+  if(!t)return;
+  if(!confirm(`Termin ${t.von}–${t.bis} am ${t.datum}\n\nOK = bearbeiten, Abbrechen = zurück`))return;
+  const neuVon=(prompt("Von (HH:MM):",t.von||"")||"").trim();
+  if(!neuVon)return;
+  const neuBis=(prompt("Bis (HH:MM):",t.bis||"")||"").trim();
+  if(!neuBis)return;
+  const lehrer=window._fsKalLehrer||[];
+  let neuerLehrerId=t.fahrlehrer_id;
+  if(lehrer.length>1){
+    const auswahl=lehrer.map((l,i)=>`${i+1} = ${l.name||l.email}`).join("\n");
+    const wahl=prompt(`Fahrlehrer wechseln?\n${auswahl}\n\n(Zahl eingeben, oder leer lassen = unverändert)`);
+    const idx=parseInt(wahl)-1;
+    if(!isNaN(idx)&&lehrer[idx])neuerLehrerId=lehrer[idx].id;
+  }
+  const loeschen=confirm("Diesen Termin stattdessen LÖSCHEN? (Abbrechen = nur speichern)");
+  if(loeschen){
+    const {error}=await supa.from("kalender_termine").update({geloescht:true,aktualisiert_am:new Date().toISOString()}).eq("id",terminId);
+    if(error){toast("Fehler: "+error.message);return;}
+    toast("Termin gelöscht ✓");
+  }else{
+    const {error}=await supa.from("kalender_termine").update({von:neuVon,bis:neuBis,fahrlehrer_id:neuerLehrerId,aktualisiert_am:new Date().toISOString()}).eq("id",terminId);
+    if(error){toast("Fehler: "+error.message);return;}
+    toast("Termin aktualisiert ✓");
+  }
+  routeFahrschuleKalender(window._fsKalFahrschuleId,window._fsKalWeekStart);
+}
+
+async function fsTerminAnlegen(fahrschuleId){
+  const lehrer=window._fsKalLehrer||[];
+  if(!lehrer.length){toast("Erst einen Fahrlehrer anlegen.");return;}
+  let fahrlehrerId=lehrer[0].id;
+  if(lehrer.length>1){
+    const auswahl=lehrer.map((l,i)=>`${i+1} = ${l.name||l.email}`).join("\n");
+    const wahl=prompt(`Welchem Fahrlehrer zuordnen?\n${auswahl}`);
+    const idx=parseInt(wahl)-1;
+    if(!isNaN(idx)&&lehrer[idx])fahrlehrerId=lehrer[idx].id;
+  }
+  const datum=(prompt("Datum (JJJJ-MM-TT):",_fsFmtDate(new Date()))||"").trim();
+  if(!datum)return;
+  const von=(prompt("Von (HH:MM):","09:00")||"").trim();
+  const bis=(prompt("Bis (HH:MM):","10:00")||"").trim();
+  const fahrzeug=(prompt("Fahrzeug (optional):")||"").trim();
+  const supa=getSupa();
+  const {data:sessionData}=await supa.auth.getSession();
+  const {error}=await supa.from("kalender_termine").insert({
+    id:uid(), fahrschule_id:fahrschuleId, fahrlehrer_id:fahrlehrerId, datum, von, bis,
+    fahrzeug:fahrzeug||null, status:"geplant", erstellt_von:sessionData.session.user.id, aktualisiert_am:new Date().toISOString()
+  });
+  if(error){toast("Fehler: "+error.message);return;}
+  toast("Termin angelegt ✓");
+  routeFahrschuleKalender(fahrschuleId,window._fsKalWeekStart);
+}
+
 /* ---- Init ---- */
 window.addEventListener("load", () => {
   // Supabase warten
@@ -3285,7 +3486,7 @@ let DB=load();
   localStorage.setItem(STORE_KEY,JSON.stringify(DB));
   localStorage.setItem("serband-restore-stamp",RESTORE_STAMP);
 }catch(e){}})();
-function save(){try{localStorage.setItem(STORE_KEY,JSON.stringify(DB));}catch(e){}if(_authUser){clearTimeout(_saveSyncDebounce);_saveSyncDebounce=setTimeout(pushToCloud,4000);_syncSchuelerBridge();}}
+function save(){try{localStorage.setItem(STORE_KEY,JSON.stringify(DB));}catch(e){}if(_authUser){clearTimeout(_saveSyncDebounce);_saveSyncDebounce=setTimeout(pushToCloud,4000);_syncSchuelerBridge();_syncTermineBridge();}}
 
 /* ===== Fahrschule-Synchronisations-Brücke =====
    Spiegelt bei jeder lokalen Änderung die Schüler in die geteilte "schueler"-Tabelle -
@@ -3321,6 +3522,38 @@ function _syncSchuelerBridge(){
       const zuLoeschen=(meineRemote||[]).map(r=>r.id).filter(id=>!lokaleIds.includes(id));
       if(zuLoeschen.length) await supa.from("schueler").update({status:"geloescht"}).in("id",zuLoeschen);
     }catch(e){ console.warn("[Kompass] Fahrschul-Sync fehlgeschlagen:",e.message); }
+  },4000);
+}
+
+/* ===== Kalender-Synchronisations-Brücke (gleiches Prinzip wie bei Schülern) =====
+   Spiegelt DB.lessons bei jeder Änderung in die geteilte "kalender_termine"-Tabelle.
+   Dein Kalender-Code selbst bleibt komplett unverändert - liest/schreibt weiter DB.lessons
+   wie immer, die Brücke läuft nur zusätzlich unsichtbar im Hintergrund mit. */
+let _termineSyncDebounce=null;
+function _syncTermineBridge(){
+  if(!_authUser||!_authProfile||!_authProfile.fahrschule_id||!DB.lessons)return;
+  clearTimeout(_termineSyncDebounce);
+  _termineSyncDebounce=setTimeout(async()=>{
+    try{
+      const supa=getSupa();
+      const nowIso=new Date().toISOString();
+      const rows=DB.lessons.map(l=>{
+        const {id,sid,date,von,bis,art,fahrzeug,status,_syncedAt,...rest}=l;
+        return {
+          id:l.id, fahrschule_id:_authProfile.fahrschule_id, fahrlehrer_id:_authUser.id,
+          schueler_id:l.sid||null, datum:l.date, von:l.von||null, bis:l.bis||null,
+          art:l.art||null, fahrzeug:l.fahrzeug||null, status:l.status||null,
+          geloescht:false, payload:rest, aktualisiert_am:nowIso
+        };
+      });
+      for(let i=0;i<rows.length;i+=200){
+        await supa.from("kalender_termine").upsert(rows.slice(i,i+200),{onConflict:"id"});
+      }
+      const lokaleIds=DB.lessons.map(l=>l.id);
+      const {data:meineRemote}=await supa.from("kalender_termine").select("id").eq("fahrlehrer_id",_authUser.id).eq("geloescht",false);
+      const zuLoeschen=(meineRemote||[]).map(r=>r.id).filter(id=>!lokaleIds.includes(id));
+      if(zuLoeschen.length) await supa.from("kalender_termine").update({geloescht:true,aktualisiert_am:nowIso}).in("id",zuLoeschen);
+    }catch(e){ console.warn("[Kompass] Kalender-Sync fehlgeschlagen:",e.message); }
   },4000);
 }
 /* Einmalige Migration: entfernt Prüfungsplatz-Doppel-Einträge, die durch die frühere automatische
