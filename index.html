@@ -1784,6 +1784,16 @@ body:not(.light) .cw-col.today .cw-dnum{color:var(--gold);}
 .ap-card{background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.08);border-radius:16px;padding:16px;margin-bottom:12px;}
 .ap-email{font-size:14px;font-weight:700;color:#e8f0eb;}
 .ap-role{font-size:12px;color:#6a9b7a;margin-top:2px;}
+/* Theme-sichere Varianten für die Fahrschule-Ansichten (laufen im normalen, hell/dunkel-abhängigen View,
+   NICHT im fest-dunklen #adminPanel-Overlay - darum eigene Klassen statt ap-*). */
+.fs-card{background:var(--surface-2);border:1px solid var(--line);border-radius:14px;padding:14px;margin-bottom:10px;}
+.fs-name{font-size:14px;font-weight:700;color:var(--txt);}
+.fs-sub{font-size:12px;color:var(--muted);margin-top:2px;}
+.fs-status-on{color:#4a8b45;font-weight:700;}
+.fs-status-off{color:#c83c3c;font-weight:700;}
+.fs-actions{display:flex;gap:8px;margin-top:10px;flex-wrap:wrap;}
+.fs-btn-kill{background:rgba(200,60,60,.12);color:#c83c3c;border:1px solid rgba(200,60,60,.3);border-radius:10px;padding:7px 14px;font-size:12px;font-weight:700;cursor:pointer;}
+.fs-btn-activate{background:rgba(74,139,69,.12);color:#4a8b45;border:1px solid rgba(74,139,69,.3);border-radius:10px;padding:7px 14px;font-size:12px;font-weight:700;cursor:pointer;}
 .ap-actions{display:flex;gap:8px;margin-top:12px;}
 .ap-kill{background:rgba(200,60,60,.15);border:1px solid rgba(200,60,60,.3);color:#f08080;border-radius:8px;padding:7px 14px;font-size:12px;font-weight:700;cursor:pointer;}
 .ap-activate{background:rgba(63,174,107,.12);border:1px solid rgba(63,174,107,.25);color:#3fae6b;border-radius:8px;padding:7px 14px;font-size:12px;font-weight:700;cursor:pointer;}
@@ -3003,9 +3013,9 @@ async function routeFahrschulenListe(){
   const supa=getSupa();
   const {data:schulen}=await supa.from("fahrschulen").select("*").order("erstellt_am");
   const rows=(schulen||[]).map(f=>`
-    <button class="ap-card" style="width:100%;text-align:left;cursor:pointer;border:none;" onclick="routeFahrschuleDetail('${f.id}')">
-      <div class="ap-email">${esc(f.name)}</div>
-      <div class="ap-role">${f.aktiv?'<span class="ap-status-on">Aktiv</span>':'<span class="ap-status-off">GESPERRT</span>'}</div>
+    <button class="fs-card" style="width:100%;text-align:left;cursor:pointer;border:none;display:block;" onclick="routeFahrschuleDetail('${f.id}')">
+      <div class="fs-name">${esc(f.name)}</div>
+      <div class="fs-sub">${f.aktiv?'<span class="fs-status-on">Aktiv</span>':'<span class="fs-status-off">GESPERRT</span>'}</div>
     </button>`).join("")||'<p class="muted-p" style="font-size:13px;">Noch keine Fahrschulen.</p>';
   const el=$("#fsListWrap");
   if(el)el.innerHTML=`
@@ -3045,7 +3055,7 @@ async function routeFahrschuleDetail(fahrschuleId){
   const binSuper=isSuperAdmin();
   const [fsR,lehrerR,adminR,schuelerR,paketeR]=await Promise.all([
     supa.from("fahrschulen").select("*").eq("id",fahrschuleId).single(),
-    supa.from("profiles").select("*").eq("fahrschule_id",fahrschuleId).eq("rolle","fahrlehrer").order("email"),
+    supa.from("profiles").select("*").eq("fahrschule_id",fahrschuleId).in("rolle",["fahrlehrer","super_admin"]).order("email"),
     supa.from("profiles").select("*").eq("fahrschule_id",fahrschuleId).eq("rolle","fahrschule_admin"),
     supa.from("schueler").select("*").eq("fahrschule_id",fahrschuleId).neq("status","geloescht").order("name"),
     supa.from("fahrschule_pakete").select("*").eq("fahrschule_id",fahrschuleId).order("reihenfolge")
@@ -3064,25 +3074,27 @@ async function routeFahrschuleDetail(fahrschuleId){
         :`<button class="btn btn-primary" onclick="toggleFahrschuleAktiv('${fs.id}',true)">Fahrschule freischalten</button>`}</div>
     </div>` : `<div class="res-block" style="animation:none;"><h4>🏫 ${esc(fs.name)}</h4></div>`;
 
-  const lehrerRows=lehrer.map(l=>`
-    <div class="ap-card">
-      <div class="ap-email">${esc(l.name||l.email)}</div>
-      <div class="ap-role">${l.aktiv?'<span class="ap-status-on">Aktiv</span>':'<span class="ap-status-off">GESPERRT</span>'} &nbsp;·&nbsp; Auslastung: ${l.auslastung_pct!=null?l.auslastung_pct+'%':'—'} &nbsp;·&nbsp; ${l.aktive_schueler_anzahl||0} aktive Schüler</div>
-      <div class="ap-actions">
+  const lehrerRows=lehrer.map(l=>{
+    const istSuperAdmin=l.rolle==="super_admin";
+    return `
+    <div class="fs-card">
+      <div class="fs-name">${esc(l.name||l.email)}${istSuperAdmin?' <span style="color:var(--orange);font-size:11px;">(Super-Admin)</span>':''}</div>
+      <div class="fs-sub">${l.aktiv?'<span class="fs-status-on">Aktiv</span>':'<span class="fs-status-off">GESPERRT</span>'} &nbsp;·&nbsp; Auslastung: ${l.auslastung_pct!=null?l.auslastung_pct+'%':'—'} &nbsp;·&nbsp; ${l.aktive_schueler_anzahl||0} aktive Schüler</div>
+      ${istSuperAdmin?'':`<div class="fs-actions">
         ${l.aktiv
-          ?`<button class="ap-kill" onclick="toggleFahrlehrerAktiv('${l.id}',false,'${fahrschuleId}')">Sperren</button>`
-          :`<button class="ap-activate" onclick="toggleFahrlehrerAktiv('${l.id}',true,'${fahrschuleId}')">Freischalten</button>`}
-        <button class="ap-kill" style="background:rgba(74,139,69,.15);color:#4a8b45;" onclick="fahrlehrerPasswortZuruecksetzen('${l.id}')">Passwort zurücksetzen</button>
-      </div>
-    </div>`).join("")||'<p class="muted-p" style="font-size:13px;">Noch keine Fahrlehrer.</p>';
+          ?`<button class="fs-btn-kill" onclick="toggleFahrlehrerAktiv('${l.id}',false,'${fahrschuleId}')">Sperren</button>`
+          :`<button class="fs-btn-activate" onclick="toggleFahrlehrerAktiv('${l.id}',true,'${fahrschuleId}')">Freischalten</button>`}
+        <button class="fs-btn-activate" onclick="fahrlehrerPasswortZuruecksetzen('${l.id}')">Passwort zurücksetzen</button>
+      </div>`}
+    </div>`;}).join("")||'<p class="muted-p" style="font-size:13px;">Noch keine Fahrlehrer.</p>';
 
   const lehrerOptionsFor=(sel)=>`<option value="">— nicht zugeordnet —</option>`+lehrer.map(l=>`<option value="${l.id}" ${l.id===sel?"selected":""}>${esc(l.name||l.email)}</option>`).join("");
   const paketOptionsFor=(sel)=>`<option value="">— kein Paket —</option>`+pakete.map(p=>`<option value="${p.id}" ${p.id===sel?"selected":""}>${esc(p.name)}</option>`).join("");
 
   const schuelerRows=schueler.map(s=>`
-    <div class="ap-card">
-      <div class="ap-email">${esc(s.name)} ${s.bogen_ausgefuellt?'<span style="color:#4a8b45;font-size:11px;">✓ Bogen</span>':'<span style="color:var(--muted);font-size:11px;">– kein Bogen</span>'}</div>
-      <div class="ap-role" style="font-size:12px;color:var(--muted);">${esc(s.telefon||'')}</div>
+    <div class="fs-card">
+      <div class="fs-name">${esc(s.name)} ${s.bogen_ausgefuellt?'<span style="color:#4a8b45;font-size:11px;">✓ Bogen</span>':'<span style="color:var(--muted);font-size:11px;">– kein Bogen</span>'}</div>
+      <div class="fs-sub">${esc(s.telefon||'')}</div>
       <div class="field" style="margin-top:6px;"><label style="font-size:11px;">Fahrlehrer</label>
         <select onchange="schuelerVerschieben('${s.id}',this.value,'${s.fahrlehrer_id||''}','${fahrschuleId}')" style="width:100%;">${lehrerOptionsFor(s.fahrlehrer_id)}</select></div>
       <div class="field"><label style="font-size:11px;">Paket</label>
