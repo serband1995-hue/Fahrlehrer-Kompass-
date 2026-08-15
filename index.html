@@ -3115,7 +3115,7 @@ function _fsExitAggMode(){
     DB.students=_fsPersonalBackup.students; DB.lessons=_fsPersonalBackup.lessons; DB.exams=_fsPersonalBackup.exams;
     _fsPersonalBackup=null;
   }
-  _fsAgg=null; _fsBaseline=null; _fsCalFahrzeugFilter=[]; _fsCalLehrerFilter=[];
+  _fsAgg=null; _fsBaseline=null; _fsCalFahrzeugFilter=[]; _fsCalLehrerFilter=[]; _fsTileOpen={fahrzeug:false,lehrer:false};
   _fsSetDrawer(false);
   routeDashboard();
 }
@@ -3165,6 +3165,15 @@ function routeFahrschuleDashboard(){
     if(k==="schueler"){routeHome();} else if(k==="lehrer")routeFahrschuleLehrer();
     else if(k==="fahrzeuge")routeFahrschuleFahrzeuge(); else if(k==="stats")routeFahrschuleStatistik();
   }));
+}
+
+function _fsNachFahrlehrerAktion(fahrschuleId){
+  if(_fsAgg&&_fsAgg.fahrschuleId===fahrschuleId){
+    const zielRoute=window._fsAktuelleRoute||routeFahrschuleLehrer;
+    _fsRefreshAggData().then(()=>zielRoute());
+  }else{
+    routeFahrschuleDetail(fahrschuleId);
+  }
 }
 
 async function _callAdminFn(body){
@@ -3339,7 +3348,7 @@ async function neuenFahrlehrerAnlegen(fahrschuleId){
   try{
     const res=await _callAdminFn({action:"create_account",email,name,rolle:"fahrlehrer",fahrschule_id:fahrschuleId});
     alert(`Zugang angelegt ✓\n\nE-Mail: ${res.email}\nPasswort: ${res.passwort}\n\nBitte jetzt weitergeben - wird nur einmal angezeigt!`);
-    routeFahrschuleDetail(fahrschuleId);
+    _fsNachFahrlehrerAktion(fahrschuleId);
   }catch(e){toast("Fehler: "+e.message);}
 }
 
@@ -3350,7 +3359,7 @@ async function neuenFahrschuleAdminAnlegen(fahrschuleId){
   try{
     const res=await _callAdminFn({action:"create_account",email,name,rolle:"fahrschule_admin",fahrschule_id:fahrschuleId});
     alert(`Zugang angelegt ✓\n\nE-Mail: ${res.email}\nPasswort: ${res.passwort}\n\nBitte jetzt weitergeben - wird nur einmal angezeigt!`);
-    routeFahrschuleDetail(fahrschuleId);
+    _fsNachFahrlehrerAktion(fahrschuleId);
   }catch(e){toast("Fehler: "+e.message);}
 }
 
@@ -3366,7 +3375,7 @@ async function toggleFahrlehrerAktiv(userId,aktiv,fahrschuleId){
   const supa=getSupa();
   const {error}=await supa.from("profiles").update({aktiv}).eq("id",userId);
   if(error){toast("Fehler: "+error.message);return;}
-  routeFahrschuleDetail(fahrschuleId);
+  _fsNachFahrlehrerAktion(fahrschuleId);
 }
 
 async function schuelerVerschieben(schuelerId,neuerLehrerId,alterLehrerId,fahrschuleId){
@@ -3381,7 +3390,7 @@ async function schuelerVerschieben(schuelerId,neuerLehrerId,alterLehrerId,fahrsc
     });
   }
   toast("Schüler verschoben ✓");
-  routeFahrschuleDetail(fahrschuleId);
+  _fsNachFahrlehrerAktion(fahrschuleId);
 }
 
 async function schuelerPaketSetzen(schuelerId,paketId){
@@ -3403,7 +3412,7 @@ async function paketHinzufuegen(fahrschuleId){
   const supa=getSupa();
   const anzahl=(window._fsCache&&window._fsCache.pakete?window._fsCache.pakete.length:0);
   await supa.from("fahrschule_pakete").insert({fahrschule_id:fahrschuleId,name,reihenfolge:anzahl+1});
-  routeFahrschuleDetail(fahrschuleId);
+  _fsNachFahrlehrerAktion(fahrschuleId);
 }
 
 async function paketUmbenennen(paketId,fahrschuleId){
@@ -3411,11 +3420,12 @@ async function paketUmbenennen(paketId,fahrschuleId){
   if(!name)return;
   const supa=getSupa();
   await supa.from("fahrschule_pakete").update({name}).eq("id",paketId);
-  routeFahrschuleDetail(fahrschuleId);
+  _fsNachFahrlehrerAktion(fahrschuleId);
 }
 
 function routeFahrschuleLehrer(){
   if(!_fsAgg)return;
+  window._fsAktuelleRoute=routeFahrschuleLehrer;
   const lehrer=_fsAgg.lehrer||[];
   $("#tbTitle").textContent="Fahrlehrer"; setFab(false); view.scrollTop=0;
   const rows=lehrer.map(l=>{
@@ -3426,9 +3436,18 @@ function routeFahrschuleLehrer(){
     return `<div class="fs-card">
       <div class="fs-name">${esc(l.name||l.email)}${istSuperAdmin?' <span style="color:var(--orange);font-size:11px;">(Super-Admin)</span>':''}</div>
       <div class="fs-sub">${l.aktiv?'<span class="fs-status-on">Aktiv</span>':'<span class="fs-status-off">GESPERRT</span>'} &nbsp;·&nbsp; Auslastung ${l.auslastung_pct!=null?l.auslastung_pct+'%':'—'} &nbsp;·&nbsp; ${meineSchueler.length} Schüler &nbsp;·&nbsp; ${q.pct==null?'Quote —':'Quote '+q.pct+'%'}</div>
+      ${istSuperAdmin?'':`<div class="fs-actions">
+        ${l.aktiv
+          ?`<button class="fs-btn-kill" onclick="toggleFahrlehrerAktiv('${l.id}',false,'${_fsAgg.fahrschuleId}')">Sperren</button>`
+          :`<button class="fs-btn-activate" onclick="toggleFahrlehrerAktiv('${l.id}',true,'${_fsAgg.fahrschuleId}')">Freischalten</button>`}
+        <button class="fs-btn-activate" onclick="fahrlehrerPasswortZuruecksetzen('${l.id}')">Passwort zurücksetzen</button>
+      </div>`}
     </div>`;
   }).join("")||'<p class="muted-p">Noch keine Fahrlehrer.</p>';
-  view.innerHTML=`<div class="view-inner view-read fade-up"><div class="res-block" style="animation:none;"><h4>👥 Fahrlehrer (${lehrer.length})</h4>${rows}</div></div>`;
+  view.innerHTML=`<div class="view-inner view-read fade-up"><div class="res-block" style="animation:none;">
+    <h4>👥 Fahrlehrer (${lehrer.length})</h4>${rows}
+    <div class="btn-row" style="margin-top:10px;"><button class="btn btn-primary" onclick="neuenFahrlehrerAnlegen('${_fsAgg.fahrschuleId}')">+ Neuen Fahrlehrer anlegen</button></div>
+  </div></div>`;
 }
 
 function routeFahrschuleFahrzeuge(){
@@ -3513,13 +3532,13 @@ function routeFahrschuleStatistik(){
       </div>
     </div>
 
-    <button class="res-block" style="animation:none;width:100%;text-align:left;cursor:pointer;" onclick="routePruefer()">
+    <button class="res-block" style="animation:none;width:100%;text-align:left;cursor:pointer;" onclick="routeFahrschulePruefer()">
       <h4>🏆 Bestehensquote pro Fahrlehrer</h4>
       ${quoteProLehrer.length?quoteProLehrer.map(x=>`<div class="fs-sub" style="margin-bottom:4px;">${esc(x.name)}: <b style="color:var(--txt);">${x.q.pct}%</b> (${x.q.pass}/${x.q.total})</div>`).join(""):'<p class="muted-p" style="font-size:13px;">Noch keine Prüfungen erfasst.</p>'}
       <p style="font-size:11.5px;color:var(--muted);margin-top:6px;">Antippen für Prüfer-Statistik im Detail →</p>
     </button>
 
-    <button class="res-block" style="animation:none;width:100%;text-align:left;cursor:pointer;" onclick="routeNichtBesteher('cur')">
+    <button class="res-block" style="animation:none;width:100%;text-align:left;cursor:pointer;" onclick="routeFahrschuleFehleranalyse()">
       <h4>📉 Fehleranalyse (Pareto)</h4>
       <p style="font-size:13px;color:var(--muted);">Häufigste Durchfallgründe über alle Fahrlehrer — antippen für Details →</p>
     </button>
@@ -3557,6 +3576,7 @@ function routeFahrschuleStatistik(){
 /* ===== Stufe 3: Filter-Kacheln im Fahrschul-Kalender =====
    Mehrfach wählbar, ein-/ausklappbar, direkt auf der Kalenderseite verankert
    (nicht in einem Popup-Sheet) - hängt sich additiv an routeKalender() an. */
+let _fsTileOpen={fahrzeug:false,lehrer:false};
 function _fsInjectFilterTiles(){
   if(!_fsAgg)return;
   const wrap=document.querySelector(".cal-wrap");
@@ -3565,19 +3585,22 @@ function _fsInjectFilterTiles(){
   document.getElementById("fsCalTiles")?.remove();
   const fahrzeuge=(_fsAgg.fahrzeuge||[]).map(fz=>fz.name).sort();
   const lehrer=_fsAgg.lehrer||[];
-  const tileBlock=(id,titel,items,ausgewaehlt,datenAttr)=>`
-    <div class="acc" id="${id}" style="margin:10px 0;overflow:hidden;">
-      <button class="acc-h" onclick="this.closest('.acc').classList.toggle('open')" style="cursor:pointer;padding:12px 14px;">
+  const tileBlock=(key,id,titel,items,ausgewaehlt,datenAttr)=>{
+    const offen=!!_fsTileOpen[key];
+    return `
+    <div class="acc${offen?' open':''}" id="${id}" style="margin:10px 0;overflow:hidden;">
+      <button class="acc-h" onclick="_fsToggleTile('${key}')" style="cursor:pointer;padding:12px 14px;">
         <span style="flex:1;text-align:left;font-size:13.5px;font-weight:700;">${titel}${ausgewaehlt.length?` <span style="color:var(--orange);">(${ausgewaehlt.length})</span>`:''}</span>
         <span class="chev">${ICN.chev}</span>
       </button>
       <div class="acc-body" style="overflow:hidden;"><div class="acc-inner" style="overflow:hidden;padding:0 14px 14px;display:flex;flex-wrap:wrap;gap:8px;">
-        ${items.length?items.map(it=>`<button class="es-act${ausgewaehlt.includes(it.value)?' primary':''}" data-${datenAttr}="${esc(it.value)}">${esc(it.label)}</button>`).join(""):`<p class="muted-p" style="font-size:12px;">Keine Einträge.</p>`}
+        ${offen ? (items.length?items.map(it=>`<button class="es-act${ausgewaehlt.includes(it.value)?' primary':''}" data-${datenAttr}="${esc(it.value)}">${esc(it.label)}</button>`).join(""):`<p class="muted-p" style="font-size:12px;">Keine Einträge.</p>`) : '' }
       </div></div>
     </div>`;
+  };
   const html=`<div id="fsCalTiles">
-    ${tileBlock("fsFilterFahrzeug","🚗 Fahrzeuge",fahrzeuge.map(fz=>({value:fz,label:fz})),_fsCalFahrzeugFilter,"fsfz")}
-    ${tileBlock("fsFilterLehrer","👤 Fahrlehrer",lehrer.map(l=>({value:l.id,label:l.name||l.email})),_fsCalLehrerFilter,"fslehrer")}
+    ${tileBlock("fahrzeug","fsFilterFahrzeug","🚗 Fahrzeuge",fahrzeuge.map(fz=>({value:fz,label:fz})),_fsCalFahrzeugFilter,"fsfz")}
+    ${tileBlock("lehrer","fsFilterLehrer","👤 Fahrlehrer",lehrer.map(l=>({value:l.id,label:l.name||l.email})),_fsCalLehrerFilter,"fslehrer")}
     ${(_fsCalFahrzeugFilter.length||_fsCalLehrerFilter.length)?`<button class="btn btn-ghost" style="width:100%;margin-bottom:6px;" onclick="_fsResetKalFilter()">Filter zurücksetzen</button>`:''}
   </div>`;
   filtersEl.insertAdjacentHTML("afterend",html);
@@ -3592,7 +3615,48 @@ function _fsInjectFilterTiles(){
     routeKalender();
   }));
 }
+function _fsToggleTile(key){ _fsTileOpen[key]=!_fsTileOpen[key]; routeKalender(); }
 function _fsResetKalFilter(){ _fsCalFahrzeugFilter=[]; _fsCalLehrerFilter=[]; routeKalender(); }
+
+/* Eigene, abgegrenzte Fahrschule-Ansichten - bewusst NICHT routePruefer()/routeNichtBesteher()
+   wiederverwendet, weil deren "Zurück"-Buttons in die persönliche Fahrlehrer-Statistik (inkl.
+   Verdienst) führen und dort keinen Weg zurück in den Fahrschul-Modus haben. */
+function routeFahrschulePruefer(){
+  if(!_fsAgg)return;
+  const names=new Set();
+  (DB.exams||[]).forEach(e=>{ if(e.pruefer)names.add(e.pruefer); });
+  const arr=[...names].sort((a,b)=>a.localeCompare(b,'de'));
+  $("#tbTitle").textContent="Prüfer"; setFab(false); view.scrollTop=0;
+  const rows=arr.map(nm=>{
+    const st=prueferStats(nm);
+    const topFaults=(st.faults||[]).slice(0,2).map(([fid,n])=>`${FAULT_LABEL[fid]||fid} (${n}×)`).join(", ");
+    return `<div class="fs-card">
+      <div class="fs-name">${esc(nm)}</div>
+      <div class="fs-sub">${st.total} Prüfungen &nbsp;·&nbsp; ${st.quote.pct==null?'—':st.quote.pct+'% bestanden'}</div>
+      ${topFaults?`<div class="fs-sub" style="margin-top:4px;">Häufig: ${esc(topFaults)}</div>`:''}
+    </div>`;
+  }).join("")||'<p class="muted-p">Noch keine Prüfungen erfasst.</p>';
+  view.innerHTML=`<div class="view-inner view-read fade-up">
+    <button class="btn btn-ghost" style="margin-bottom:10px;" onclick="routeFahrschuleStatistik()">← Zurück zur Statistik</button>
+    <div class="res-block" style="animation:none;"><h4>🏆 Prüfer-Statistik — alle Fahrlehrer</h4>${rows}</div>
+  </div>`;
+}
+
+function routeFahrschuleFehleranalyse(){
+  if(!_fsAgg)return;
+  const fails=(DB.exams||[]).filter(e=>e.result==='fail');
+  const counts=faultCounts(fails);
+  $("#tbTitle").textContent="Fehleranalyse"; setFab(false); view.scrollTop=0;
+  const gesamt=counts.reduce((a,[,n])=>a+n,0)||1;
+  const rows=counts.map(([fid,n])=>barRowAnim(FAULT_LABEL[fid]||fid,Math.round(n/gesamt*100),`${n}×`,"var(--gruen)")).join("")||'<p class="muted-p">Noch keine Durchfälle erfasst.</p>';
+  view.innerHTML=`<div class="view-inner view-read fade-up">
+    <button class="btn btn-ghost" style="margin-bottom:10px;" onclick="routeFahrschuleStatistik()">← Zurück zur Statistik</button>
+    <div class="res-block" style="animation:none;"><h4>📉 Häufigste Durchfallgründe — alle Fahrlehrer</h4>${rows}</div>
+  </div>`;
+  requestAnimationFrame(()=>requestAnimationFrame(()=>{
+    document.querySelectorAll('.bar-fill[data-w]').forEach(el=>{ el.style.width=el.dataset.w+'%'; });
+  }));
+}
 
 function fsMonatsberichtPDF(){
   toast("PDF wird erstellt…");
@@ -3660,7 +3724,7 @@ async function neuenSchuelerAnlegenFS(fahrschuleId){
   });
   if(error){toast("Fehler: "+error.message);return;}
   toast("Schüler angelegt ✓");
-  routeFahrschuleDetail(fahrschuleId);
+  _fsNachFahrlehrerAktion(fahrschuleId);
 }
 
 /* ============================================================
