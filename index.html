@@ -2702,13 +2702,13 @@ async function afterLogin(user) {
   // Trinkgeld-Bereich verstecken wenn kein super_admin
   if (!isSuperAdmin()) {
     document.querySelectorAll(".safe-area, .tg-section, .trinkgeld-btn").forEach(el => el.style.display = "none");
+  } else {
+    _fsSetDrawer(false); // Umschalter "Admin-Gesamtübersicht" einblenden, nur für dich
   }
-  // Fahrschule-Admin: eigene, reduzierte Oberfläche statt normaler Fahrlehrer-App
+  // Fahrschule-Admin: exakt dieselbe App, nur mit den zusammengeführten Daten der ganzen Fahrschule
   if (prof && prof.rolle === "fahrschule_admin") {
     document.getElementById("loginOverlay").classList.add("hidden");
-    applyRoleBasedNav();
-    routeFahrschuleDetail(prof.fahrschule_id);
-    _syncTimer = setInterval(() => routeFahrschuleDetail(prof.fahrschule_id), 120000);
+    await _fsEnterAggMode(prof.fahrschule_id);
     return;
   }
   // Cloud-Daten laden (falls neuere als localStorage)
@@ -3014,21 +3014,158 @@ async function toggleUser(userId, aktiv) {
 /* ============================================================
    FAHRSCHULEN-VERWALTUNG (Super-Admin + Fahrschule-Admin)
    ============================================================ */
-function applyRoleBasedNav(){
-  if(!_authProfile||_authProfile.rolle!=="fahrschule_admin")return;
-  document.querySelectorAll('.drawer-nav .nav-item[data-nav]').forEach(b=>{
-    if(b.dataset.nav!=="settings") b.style.display="none";
+/* ============================================================
+   FAHRSCHULE-ANSICHTSMODUS — exakt dieselbe App, andere Daten.
+   Beim Betreten werden DB.students/DB.lessons/DB.exams durch die
+   zusammengeführten Daten der ganzen Fahrschule ersetzt (mit Sicherung
+   der eigenen Daten für die Rückkehr). Speichern ist in diesem Modus
+   vorerst schreibgeschützt (Stufe 2 baut die sichere Schreib-Umleitung).
+   ============================================================ */
+let _fsAgg=null; // {fahrschuleId, fahrschule, lehrer}
+let _fsPersonalBackup=null;
+let _fsBaseline=null; // letzter geladener Stand, für Diff-Erkennung beim Speichern
+let _normalDrawerNavHTML=null;
+
+function _fsDrawerNavHTML(zeigeZurueck){
+  return `
+    <button class="nav-item" data-nav="fs_dash">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="9" rx="1.5"/><rect x="14" y="3" width="7" height="5" rx="1.5"/><rect x="14" y="12" width="7" height="9" rx="1.5"/><rect x="3" y="16" width="7" height="5" rx="1.5"/></svg>
+      Dashboard</button>
+    <button class="nav-item" data-nav="fs_kalender">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2"/><path d="M16 2v4M8 2v4M3 10h18"/></svg>
+      Kalender</button>
+    <button class="nav-item" data-nav="fs_schueler">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 6h16M4 12h16M4 18h10"/></svg>
+      Alle Schüler</button>
+    <button class="nav-item" data-nav="fs_lehrer">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+      Alle Fahrlehrer</button>
+    <button class="nav-item" data-nav="fs_fahrzeuge">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 13l2-6a2 2 0 0 1 2-1h10a2 2 0 0 1 2 1l2 6"/><rect x="1" y="13" width="22" height="6" rx="1.5"/><circle cx="6" cy="19" r="1.5"/><circle cx="18" cy="19" r="1.5"/></svg>
+      Fahrzeugflotte</button>
+    <button class="nav-item" data-nav="fs_stats">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 20V10M10 20V4M16 20v-7M21 20H3"/></svg>
+      Statistiken</button>
+    <div class="nav-sep"></div>
+    ${zeigeZurueck?`<button class="nav-item primary" data-nav="fs_exit">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 12H5M12 19l-7-7 7-7"/></svg>
+      Zu meiner Fahrlehrer-Ansicht</button>`:`<button class="nav-item" data-nav="settings">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.7 1.7 0 0 0 .3 1.9l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.7 1.7 0 0 0-1.9-.3 1.7 1.7 0 0 0-1 1.5V21a2 2 0 0 1-4 0v-.1a1.7 1.7 0 0 0-1-1.6 1.7 1.7 0 0 0-1.9.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.7 1.7 0 0 0 .3-1.9 1.7 1.7 0 0 0-1.5-1H3a2 2 0 0 1 0-4h.1a1.7 1.7 0 0 0 1.6-1 1.7 1.7 0 0 0-.3-1.9l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.7 1.7 0 0 0 1.9.3H9a1.7 1.7 0 0 0 1-1.5V3a2 2 0 0 1 4 0v.1a1.7 1.7 0 0 0 1 1.5 1.7 1.7 0 0 0 1.9-.3l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.7 1.7 0 0 0-.3 1.9V9a1.7 1.7 0 0 0 1.5 1H21a2 2 0 0 1 0 4h-.1a1.7 1.7 0 0 0-1.5 1z"/></svg>
+      Einstellungen &amp; Abmelden</button>`}`;
+}
+
+function _fsSetDrawer(fahrschuleMode){
+  const navEl=document.querySelector(".drawer-nav");
+  if(!navEl)return;
+  if(_normalDrawerNavHTML===null) _normalDrawerNavHTML=navEl.innerHTML;
+  navEl.innerHTML = fahrschuleMode ? _fsDrawerNavHTML(isSuperAdmin()) : (_normalDrawerNavHTML+_fsSuperAdminToggleBtn());
+  const brandEye=document.querySelector(".brand-eye");
+  if(brandEye) brandEye.textContent = fahrschuleMode && _fsAgg ? (_fsAgg.fahrschule.name||"Fahrschule") : ("Fahrlehrer "+((_authProfile&&_authProfile.name)||"Serband"));
+}
+
+function _fsMapSchueler(row,lehrerName){
+  return Object.assign({id:row.id,name:row.name,telefon:row.telefon,bogen:null},row.ausbildung||{},{
+    _fahrlehrerId:row.fahrlehrer_id, _fahrlehrerName:lehrerName(row.fahrlehrer_id),
+    _paketId:row.paket_id, _hatSimulator:row.hat_simulator, _hatTheorieApp:row.hat_theorie_app,
+    _bogenAusgefuellt:row.bogen_ausgefuellt, id:row.id, name:row.name, telefon:row.telefon
   });
-  if(!document.getElementById("navFahrschule")){
-    const navEl=document.querySelector(".drawer-nav");
-    if(navEl){
-      const btn=document.createElement("button");
-      btn.className="nav-item primary"; btn.id="navFahrschule";
-      btn.innerHTML='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 21h18M5 21V7l7-4 7 4v14M9 9h1M9 13h1M14 9h1M14 13h1"/></svg> Fahrschule';
-      btn.addEventListener("click",()=>{closeDrawer();routeFahrschuleDetail(_authProfile.fahrschule_id);});
-      navEl.insertBefore(btn,navEl.firstChild);
-    }
+}
+function _fsMapTermin(row,lehrerName){
+  return Object.assign({id:row.id,sid:row.schueler_id,date:row.datum,von:row.von,bis:row.bis,art:row.art,fahrzeug:row.fahrzeug,status:row.status},row.payload||{},
+    {_fahrlehrerId:row.fahrlehrer_id,_fahrlehrerName:lehrerName(row.fahrlehrer_id),id:row.id,sid:row.schueler_id,date:row.datum,von:row.von,bis:row.bis,art:row.art,fahrzeug:row.fahrzeug,status:row.status});
+}
+function _fsMapPruefung(row,lehrerName){
+  return Object.assign({id:row.id,sid:row.schueler_id,date:row.datum,result:row.result,pruefer:row.pruefer,attempt:row.attempt},row.payload||{},
+    {_fahrlehrerId:row.fahrlehrer_id,_fahrlehrerName:lehrerName(row.fahrlehrer_id),id:row.id,sid:row.schueler_id,date:row.datum,result:row.result,pruefer:row.pruefer,attempt:row.attempt});
+}
+
+async function _fsLoadAggData(fahrschuleId){
+  const supa=getSupa();
+  const [fsR,lehrerR,schuelerR,termineR,pruefungenR]=await Promise.all([
+    supa.from("fahrschulen").select("*").eq("id",fahrschuleId).single(),
+    supa.from("profiles").select("*").eq("fahrschule_id",fahrschuleId).in("rolle",["fahrlehrer","super_admin"]).order("email"),
+    supa.from("schueler").select("*").eq("fahrschule_id",fahrschuleId).neq("status","geloescht"),
+    supa.from("kalender_termine").select("*").eq("fahrschule_id",fahrschuleId).eq("geloescht",false),
+    supa.from("kalender_pruefungen").select("*").eq("fahrschule_id",fahrschuleId).eq("geloescht",false)
+  ]);
+  const lehrer=lehrerR.data||[];
+  const lehrerName=id=>{ const l=lehrer.find(x=>x.id===id); return l?(l.name||l.email):"Unbekannt"; };
+  DB.students=(schuelerR.data||[]).map(r=>_fsMapSchueler(r,lehrerName));
+  DB.lessons=(termineR.data||[]).map(r=>_fsMapTermin(r,lehrerName));
+  DB.exams=(pruefungenR.data||[]).map(r=>_fsMapPruefung(r,lehrerName));
+  _fsAgg={fahrschuleId, fahrschule:fsR.data||{name:"Fahrschule"}, lehrer};
+  _fsBaseline={students:JSON.parse(JSON.stringify(DB.students)),lessons:JSON.parse(JSON.stringify(DB.lessons)),exams:JSON.parse(JSON.stringify(DB.exams))};
+}
+
+let _fsRefreshTimer=null;
+async function _fsEnterAggMode(fahrschuleId){
+  if(_fsPersonalBackup===null){
+    _fsPersonalBackup={students:DB.students,lessons:DB.lessons,exams:DB.exams};
   }
+  await _fsLoadAggData(fahrschuleId);
+  _fsSetDrawer(true);
+  routeFahrschuleDashboard();
+  clearInterval(_fsRefreshTimer);
+  _fsRefreshTimer=setInterval(()=>_fsRefreshAggData(),120000);
+}
+function _fsExitAggMode(){
+  clearInterval(_fsRefreshTimer);
+  if(_fsPersonalBackup){
+    DB.students=_fsPersonalBackup.students; DB.lessons=_fsPersonalBackup.lessons; DB.exams=_fsPersonalBackup.exams;
+    _fsPersonalBackup=null;
+  }
+  _fsAgg=null; _fsBaseline=null; _fsCalFahrzeugFilter=[]; _fsCalLehrerFilter=[];
+  _fsSetDrawer(false);
+  routeDashboard();
+}
+async function _fsRefreshAggData(){
+  if(!_fsAgg)return;
+  await _fsLoadAggData(_fsAgg.fahrschuleId);
+}
+function _fsSuperAdminToggleBtn(){
+  if(!isSuperAdmin())return "";
+  return `<button class="nav-item" data-nav="__fstoggle" onclick="${_fsAgg?'_fsExitAggMode()':`_fsEnterAggMode('${(_authProfile&&_authProfile.fahrschule_id)||''}')`}" style="border-top:1px solid var(--line);">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 21h18M5 21V7l7-4 7 4v14M9 9h1M9 13h1M14 9h1M14 13h1"/></svg>
+    ${_fsAgg?'Zu meiner Fahrlehrer-Ansicht':'Admin-Gesamtübersicht'}</button>`;
+}
+
+function routeFahrschuleDashboard(){
+  if(!_fsAgg)return;
+  const name=_fsAgg.fahrschule.name||"Fahrschule";
+  const lehrer=_fsAgg.lehrer||[];
+  const act=activeStudents().length;
+  const today=todayISO();
+  const heuteCount=(DB.lessons||[]).filter(l=>l.date===today&&l.status!=="abgebrochen"&&l.status!=="nicht erschienen").length;
+  const q=quoteOf(examsIn('cur'));
+  const poolAnzahl=(DB.students||[]).filter(s=>!s._fahrlehrerId).length;
+  $("#tbTitle").textContent="Start"; setFab(false); view.scrollTop=0;
+  view.innerHTML=`<div class="view-inner view-wide fade-up">
+    <div class="hero compact"><div class="greet">Guten Tag,</div><div class="hero-brand">${esc(name)}</div><div class="hero-tag">${lehrer.length} Fahrlehrer · ${act} aktive Schüler · ${heuteCount} Termine heute</div></div>
+    <button class="res-block" style="animation:none;width:100%;text-align:left;cursor:pointer;background:var(--surface);border:1.5px solid var(--akzent,var(--orange));" onclick="routeKalender()">
+      <h4 style="margin-bottom:4px;">📅 Kalender</h4>
+      <p style="font-size:13.5px;color:var(--muted);">Alle Termine aller Fahrlehrer — antippen zum Öffnen</p>
+    </button>
+    <div class="dash-tiles">
+      <button class="d-tile" data-fsgo="schueler"><div class="badge">${ICN.users}</div><div class="dt-n" data-count="${act}">0</div><div class="dt-l">Alle Schüler</div></button>
+      <button class="d-tile" data-fsgo="lehrer"><div class="badge">${ICN.profile}</div><div class="dt-n" data-count="${lehrer.length}">0</div><div class="dt-l">Fahrlehrer</div></button>
+      <button class="d-tile" data-fsgo="stats">${q.pct==null?'<div class="dt-n">–</div>':`<div class="dt-n" data-count="${q.pct}" data-suffix="%">0</div>`}<div class="dt-l">Quote · Monat</div></button>
+    </div>
+    ${poolAnzahl?`<div class="res-block" style="animation:none;background:rgba(207,154,62,.1);border-color:rgba(207,154,62,.35);">
+      <h4>⚠ ${poolAnzahl} Schüler ohne Fahrlehrer</h4>
+      <p style="font-size:13px;color:var(--muted);">Noch keinem Fahrlehrer zugeordnet — jetzt verteilen.</p>
+      <div class="btn-row"><button class="btn btn-ghost" data-fsgo="schueler">Ansehen</button></div>
+    </div>`:''}
+    <div class="dash-quick-row">
+      <button class="dq-btn" data-fsgo="fahrzeuge">${ICN.cal}<span>Fahrzeuge</span></button>
+      <button class="dq-btn" data-fsgo="stats">${ICN.bolt}<span>Statistik</span></button>
+    </div>
+  </div>`;
+  document.querySelectorAll(".d-tile .dt-n[data-count]").forEach(el=>countUp(el,+el.dataset.count,el.dataset.suffix||""));
+  document.querySelectorAll("[data-fsgo]").forEach(b=>b.addEventListener("click",()=>{
+    const k=b.dataset.fsgo;
+    if(k==="schueler"){routeHome();} else if(k==="lehrer")routeFahrschuleLehrer();
+    else if(k==="fahrzeuge")routeFahrschuleFahrzeuge(); else if(k==="stats")routeFahrschuleStatistik();
+  }));
 }
 
 async function _callAdminFn(body){
@@ -3278,6 +3415,206 @@ async function paketUmbenennen(paketId,fahrschuleId){
   routeFahrschuleDetail(fahrschuleId);
 }
 
+function routeFahrschuleLehrer(){
+  if(!_fsAgg)return;
+  const lehrer=_fsAgg.lehrer||[];
+  $("#tbTitle").textContent="Fahrlehrer"; setFab(false); view.scrollTop=0;
+  const rows=lehrer.map(l=>{
+    const meineSchueler=(DB.students||[]).filter(s=>s._fahrlehrerId===l.id);
+    const meineExams=(DB.exams||[]).filter(e=>e._fahrlehrerId===l.id);
+    const q=quoteOf(meineExams);
+    const istSuperAdmin=l.rolle==="super_admin";
+    return `<div class="fs-card">
+      <div class="fs-name">${esc(l.name||l.email)}${istSuperAdmin?' <span style="color:var(--orange);font-size:11px;">(Super-Admin)</span>':''}</div>
+      <div class="fs-sub">${l.aktiv?'<span class="fs-status-on">Aktiv</span>':'<span class="fs-status-off">GESPERRT</span>'} &nbsp;·&nbsp; Auslastung ${l.auslastung_pct!=null?l.auslastung_pct+'%':'—'} &nbsp;·&nbsp; ${meineSchueler.length} Schüler &nbsp;·&nbsp; ${q.pct==null?'Quote —':'Quote '+q.pct+'%'}</div>
+    </div>`;
+  }).join("")||'<p class="muted-p">Noch keine Fahrlehrer.</p>';
+  view.innerHTML=`<div class="view-inner view-read fade-up"><div class="res-block" style="animation:none;"><h4>👥 Fahrlehrer (${lehrer.length})</h4>${rows}</div></div>`;
+}
+
+function routeFahrschuleFahrzeuge(){
+  if(!_fsAgg)return;
+  $("#tbTitle").textContent="Fahrzeugflotte"; setFab(false); view.scrollTop=0;
+  const heute=todayISO();
+  const monatPrefix=heute.slice(0,7);
+  const fahrzeuge=[...new Set((DB.lessons||[]).map(l=>l.fahrzeug).filter(Boolean))];
+  const rows=fahrzeuge.map(fz=>{
+    const termineMonat=(DB.lessons||[]).filter(l=>l.fahrzeug===fz&&(l.date||"").startsWith(monatPrefix)&&l.status!=="abgebrochen");
+    const fahrer=[...new Set(termineMonat.map(l=>l._fahrlehrerName))];
+    return `<div class="fs-card">
+      <div class="fs-name">🚗 ${esc(fz)}</div>
+      <div class="fs-sub">${termineMonat.length} Termine diesen Monat &nbsp;·&nbsp; genutzt von: ${fahrer.map(esc).join(", ")||"–"}</div>
+    </div>`;
+  }).join("")||'<p class="muted-p">Noch keine Fahrzeuge in den Terminen hinterlegt.</p>';
+  view.innerHTML=`<div class="view-inner view-read fade-up"><div class="res-block" style="animation:none;"><h4>🚗 Fahrzeugflotte (${fahrzeuge.length})</h4>${rows}</div></div>`;
+}
+
+function routeFahrschuleStatistik(){
+  if(!_fsAgg)return;
+  $("#tbTitle").textContent="Statistiken"; setFab(false); view.scrollTop=0;
+  const lehrer=_fsAgg.lehrer||[];
+  const schueler=DB.students||[];
+  const act=activeStudents().length;
+  const q=quoteOf(examsIn('cur'));
+
+  const auslastungen=lehrer.map(l=>l.auslastung_pct).filter(v=>v!=null);
+  const oAuslastung=auslastungen.length?Math.round(auslastungen.reduce((a,b)=>a+b,0)/auslastungen.length):null;
+
+  const quoteProLehrer=lehrer.map(l=>{
+    const ex=(DB.exams||[]).filter(e=>e._fahrlehrerId===l.id);
+    return {name:l.name||l.email, q:quoteOf(ex)};
+  }).filter(x=>x.q.total>0).sort((a,b)=>(b.q.pct||0)-(a.q.pct||0));
+
+  const poolAnzahl=schueler.filter(s=>!s._fahrlehrerId).length;
+
+  const mitPaket=schueler.filter(s=>s._paketId).length;
+  const mitSimulator=schueler.filter(s=>s._hatSimulator).length;
+  const mitTheorieApp=schueler.filter(s=>s._hatTheorieApp).length;
+  const pct=n=>schueler.length?Math.round(n/schueler.length*100):0;
+
+  const vor28=new Date(); vor28.setDate(vor28.getDate()-28);
+  const vor28ISO=vor28.toISOString().slice(0,10);
+  const inaktiv=activeStudents().filter(s=>{
+    const letzte=(DB.lessons||[]).filter(l=>l.sid===s.id&&l.status!=="abgebrochen").map(l=>l.date).sort().pop();
+    return !letzte||letzte<vor28ISO;
+  });
+
+  view.innerHTML=`<div class="view-inner view-read fade-up">
+    <div class="res-block" style="animation:none;"><h4>📊 Kennzahlen im Überblick</h4>
+      <div class="dash-tiles">
+        <button class="d-tile" style="cursor:default;"><div class="dt-n" data-count="${act}">0</div><div class="dt-l">Aktive Schüler</div></button>
+        <button class="d-tile" style="cursor:default;"><div class="dt-n" data-count="${lehrer.length}">0</div><div class="dt-l">Fahrlehrer</div></button>
+        <button class="d-tile" style="cursor:default;">${oAuslastung==null?'<div class="dt-n">–</div>':`<div class="dt-n" data-count="${oAuslastung}" data-suffix="%">0</div>`}<div class="dt-l">Ø Auslastung</div></button>
+      </div>
+    </div>
+
+    <button class="res-block" style="animation:none;width:100%;text-align:left;cursor:pointer;" onclick="routePruefer()">
+      <h4>🏆 Bestehensquote pro Fahrlehrer</h4>
+      ${quoteProLehrer.length?quoteProLehrer.map(x=>`<div class="fs-sub" style="margin-bottom:4px;">${esc(x.name)}: <b style="color:var(--txt);">${x.q.pct}%</b> (${x.q.pass}/${x.q.total})</div>`).join(""):'<p class="muted-p" style="font-size:13px;">Noch keine Prüfungen erfasst.</p>'}
+      <p style="font-size:11.5px;color:var(--muted);margin-top:6px;">Antippen für Prüfer-Statistik im Detail →</p>
+    </button>
+
+    <button class="res-block" style="animation:none;width:100%;text-align:left;cursor:pointer;" onclick="routeNichtBesteher('cur')">
+      <h4>📉 Fehleranalyse (Pareto)</h4>
+      <p style="font-size:13px;color:var(--muted);">Häufigste Durchfallgründe über alle Fahrlehrer — antippen für Details →</p>
+    </button>
+
+    ${poolAnzahl?`<div class="res-block" style="animation:none;background:rgba(207,154,62,.1);border-color:rgba(207,154,62,.35);cursor:pointer;" onclick="routeHome();">
+      <h4>⚠ Nicht zugeordnete Schüler</h4>
+      <p style="font-size:13px;color:var(--muted);">${poolAnzahl} Schüler warten noch auf einen Fahrlehrer.</p>
+    </div>`:''}
+
+    ${inaktiv.length?`<div class="res-block" style="animation:none;background:rgba(200,60,60,.08);border-color:rgba(200,60,60,.3);">
+      <h4>💤 ${inaktiv.length} Schüler länger inaktiv</h4>
+      <p style="font-size:13px;color:var(--muted);">Seit über 4 Wochen keine Fahrstunde — Absprungrisiko:</p>
+      ${inaktiv.slice(0,8).map(s=>`<div class="fs-sub">${esc(s.name)} (${esc(s._fahrlehrerName||'–')})</div>`).join("")}
+      ${inaktiv.length>8?`<p style="font-size:11.5px;color:var(--muted);margin-top:4px;">+ ${inaktiv.length-8} weitere</p>`:''}
+    </div>`:''}
+
+    <div class="res-block" style="animation:none;"><h4>💰 Cross-Sell-Quote</h4>
+      ${barRowAnim("Paket gebucht",pct(mitPaket),`${mitPaket}/${schueler.length}`,"var(--gruen)")}
+      ${barRowAnim("Simulator gekauft",pct(mitSimulator),`${mitSimulator}/${schueler.length}`,"var(--gold)")}
+      ${barRowAnim("Theorie-App gekauft",pct(mitTheorieApp),`${mitTheorieApp}/${schueler.length}`,"var(--orange)")}
+      <p style="font-size:11.5px;color:var(--muted);margin-top:8px;">Ungenutztes Potenzial — direktes Verkaufsargument.</p>
+    </div>
+
+    <div class="res-block" style="animation:none;"><h4>📄 Monatsbericht</h4>
+      <p style="font-size:13px;color:var(--muted);">Alle Kennzahlen als PDF, zum Teilen oder Archivieren.</p>
+      <div class="btn-row"><button class="btn btn-primary" onclick="fsMonatsberichtPDF()">PDF erstellen</button></div>
+    </div>
+  </div>`;
+  requestAnimationFrame(()=>requestAnimationFrame(()=>{
+    document.querySelectorAll('.d-tile .dt-n[data-count]').forEach(el=>countUp(el,+el.dataset.count,el.dataset.suffix||''));
+    document.querySelectorAll('.bar-fill[data-w]').forEach(el=>{ el.style.width=el.dataset.w+'%'; });
+  }));
+}
+
+/* ===== Stufe 3: Filter-Kacheln im Fahrschul-Kalender =====
+   Mehrfach wählbar, ein-/ausklappbar, direkt auf der Kalenderseite verankert
+   (nicht in einem Popup-Sheet) - hängt sich additiv an routeKalender() an. */
+function _fsInjectFilterTiles(){
+  if(!_fsAgg)return;
+  const wrap=document.querySelector(".cal-wrap");
+  const filtersEl=document.getElementById("calFilters");
+  if(!wrap||!filtersEl)return;
+  document.getElementById("fsCalTiles")?.remove();
+  const fahrzeuge=[...new Set((DB.lessons||[]).map(l=>l.fahrzeug).filter(Boolean))].sort();
+  const lehrer=_fsAgg.lehrer||[];
+  const tileBlock=(id,titel,items,ausgewaehlt,datenAttr)=>`
+    <div class="acc" id="${id}" style="margin:10px 0;">
+      <button class="acc-h" onclick="this.closest('.acc').classList.toggle('open')" style="cursor:pointer;padding:12px 14px;">
+        <span style="flex:1;text-align:left;font-size:13.5px;font-weight:700;">${titel}${ausgewaehlt.length?` <span style="color:var(--orange);">(${ausgewaehlt.length})</span>`:''}</span>
+        <span class="chev">${ICN.chev}</span>
+      </button>
+      <div class="acc-body"><div class="acc-inner" style="padding:0 14px 14px;display:flex;flex-wrap:wrap;gap:8px;">
+        ${items.length?items.map(it=>`<button class="es-act${ausgewaehlt.includes(it.value)?' primary':''}" data-${datenAttr}="${esc(it.value)}">${esc(it.label)}</button>`).join(""):`<p class="muted-p" style="font-size:12px;">Keine Einträge.</p>`}
+      </div></div>
+    </div>`;
+  const html=`<div id="fsCalTiles">
+    ${tileBlock("fsFilterFahrzeug","🚗 Fahrzeuge",fahrzeuge.map(fz=>({value:fz,label:fz})),_fsCalFahrzeugFilter,"fsfz")}
+    ${tileBlock("fsFilterLehrer","👤 Fahrlehrer",lehrer.map(l=>({value:l.id,label:l.name||l.email})),_fsCalLehrerFilter,"fslehrer")}
+    ${(_fsCalFahrzeugFilter.length||_fsCalLehrerFilter.length)?`<button class="btn btn-ghost" style="width:100%;margin-bottom:6px;" onclick="_fsResetKalFilter()">Filter zurücksetzen</button>`:''}
+  </div>`;
+  filtersEl.insertAdjacentHTML("afterend",html);
+  document.querySelectorAll("[data-fsfz]").forEach(b=>b.addEventListener("click",()=>{
+    const v=b.dataset.fsfz; const i=_fsCalFahrzeugFilter.indexOf(v);
+    if(i>=0)_fsCalFahrzeugFilter.splice(i,1); else _fsCalFahrzeugFilter.push(v);
+    routeKalender();
+  }));
+  document.querySelectorAll("[data-fslehrer]").forEach(b=>b.addEventListener("click",()=>{
+    const v=b.dataset.fslehrer; const i=_fsCalLehrerFilter.indexOf(v);
+    if(i>=0)_fsCalLehrerFilter.splice(i,1); else _fsCalLehrerFilter.push(v);
+    routeKalender();
+  }));
+}
+function _fsResetKalFilter(){ _fsCalFahrzeugFilter=[]; _fsCalLehrerFilter=[]; routeKalender(); }
+
+function fsMonatsberichtPDF(){
+  toast("PDF wird erstellt…");
+  const name=_fsAgg.fahrschule.name||"Fahrschule";
+  const lehrer=_fsAgg.lehrer||[];
+  const schueler=DB.students||[];
+  const act=activeStudents().length;
+  const q=quoteOf(examsIn('cur'));
+  const heute=new Date().toLocaleDateString('de-DE');
+  const quoteProLehrer=lehrer.map(l=>{
+    const ex=(DB.exams||[]).filter(e=>e._fahrlehrerId===l.id);
+    return {name:l.name||l.email, q:quoteOf(ex)};
+  }).filter(x=>x.q.total>0);
+  const pct=n=>schueler.length?Math.round(n/schueler.length*100):0;
+  const mitPaket=schueler.filter(s=>s._paketId).length;
+  const mitSimulator=schueler.filter(s=>s._hatSimulator).length;
+  const mitTheorieApp=schueler.filter(s=>s._hatTheorieApp).length;
+
+  const win=window.open('','_blank');
+  win.document.write(`<html><head><title>Monatsbericht ${esc(name)}</title><meta charset="utf-8">
+  <style>body{font-family:-apple-system,Arial,sans-serif;padding:32px;color:#222;max-width:700px;margin:0 auto;}
+  h1{color:#20402c;font-size:22px;} h2{color:#3a7350;font-size:15px;margin-top:26px;border-bottom:1px solid #ddd;padding-bottom:4px;}
+  table{width:100%;border-collapse:collapse;margin-top:8px;} td{padding:6px 4px;border-bottom:1px solid #eee;font-size:13.5px;}
+  .kpi{display:inline-block;background:#f2f2ea;border-radius:10px;padding:12px 18px;margin:6px 10px 6px 0;}
+  .kpi b{display:block;font-size:22px;color:#20402c;} .kpi span{font-size:11.5px;color:#666;}</style></head>
+  <body>
+  <h1>Monatsbericht — ${esc(name)}</h1>
+  <p style="color:#666;font-size:12.5px;">Erstellt am ${heute} mit Fahrlehrer-Kompass</p>
+  <div>
+    <div class="kpi"><b>${act}</b><span>Aktive Schüler</span></div>
+    <div class="kpi"><b>${lehrer.length}</b><span>Fahrlehrer</span></div>
+    <div class="kpi"><b>${q.pct==null?'–':q.pct+'%'}</b><span>Bestehensquote Monat</span></div>
+  </div>
+  <h2>Bestehensquote pro Fahrlehrer</h2>
+  <table>${quoteProLehrer.map(x=>`<tr><td>${esc(x.name)}</td><td>${x.q.pct}% (${x.q.pass}/${x.q.total})</td></tr>`).join("")||'<tr><td>Keine Prüfungen im Zeitraum</td></tr>'}</table>
+  <h2>Cross-Sell-Quote</h2>
+  <table>
+    <tr><td>Paket gebucht</td><td>${pct(mitPaket)}% (${mitPaket}/${schueler.length})</td></tr>
+    <tr><td>Simulator gekauft</td><td>${pct(mitSimulator)}% (${mitSimulator}/${schueler.length})</td></tr>
+    <tr><td>Theorie-App gekauft</td><td>${pct(mitTheorieApp)}% (${mitTheorieApp}/${schueler.length})</td></tr>
+  </table>
+  <p style="margin-top:30px;color:#999;font-size:11px;">Fahrlehrer-Kompass · ${esc(name)}</p>
+  </body></html>`);
+  win.document.close();
+  setTimeout(()=>win.print(),400);
+}
+
 async function neuenSchuelerAnlegenFS(fahrschuleId){
   const name=(prompt("Name des neuen Schülers:")||"").trim();
   if(!name)return;
@@ -3486,7 +3823,98 @@ let DB=load();
   localStorage.setItem(STORE_KEY,JSON.stringify(DB));
   localStorage.setItem("serband-restore-stamp",RESTORE_STAMP);
 }catch(e){}})();
-function save(){try{localStorage.setItem(STORE_KEY,JSON.stringify(DB));}catch(e){}if(_authUser){clearTimeout(_saveSyncDebounce);_saveSyncDebounce=setTimeout(pushToCloud,4000);_syncSchuelerBridge();_syncTermineBridge();}}
+function save(){
+  if(_fsAgg){ _fsSyncAggChanges(); return; }
+  try{localStorage.setItem(STORE_KEY,JSON.stringify(DB));}catch(e){}
+  if(_authUser){clearTimeout(_saveSyncDebounce);_saveSyncDebounce=setTimeout(pushToCloud,4000);_syncSchuelerBridge();_syncTermineBridge();_syncPruefungenBridge();}
+}
+
+/* ===== Stufe 2: Schreib-Umleitung im Fahrschul-Modus =====
+   Vergleicht DB.students/lessons/exams gegen den zuletzt geladenen Stand (_fsBaseline) und
+   schreibt NUR echte Änderungen - jede beim ursprünglichen (oder neu gewählten) Fahrlehrer,
+   NIEMALS pauschal beim gerade eingeloggten Admin. Neue Einträge ohne Fahrlehrer-Zuordnung
+   landen automatisch im "nicht zugeordnet"-Pool statt bei irgendjemandem zu landen. */
+let _fsSyncDebounce=null;
+function _fsSyncAggChanges(){
+  if(!_fsAgg||!_fsBaseline)return;
+  clearTimeout(_fsSyncDebounce);
+  _fsSyncDebounce=setTimeout(async()=>{
+    try{
+      const supa=getSupa();
+      const nowIso=new Date().toISOString();
+      const {data:sessionData}=await supa.auth.getSession();
+      const meineId=sessionData&&sessionData.session?sessionData.session.user.id:null;
+
+      // ---- SCHÜLER ----
+      const baseS={}; (_fsBaseline.students||[]).forEach(s=>baseS[s.id]=s);
+      const curSIds=new Set((DB.students||[]).map(s=>s.id));
+      const schuelerUpserts=[];
+      (DB.students||[]).forEach(s=>{
+        const b=baseS[s.id];
+        if(!b||JSON.stringify(s)!==JSON.stringify(b)){
+          const {id,name,telefon,_fahrlehrerId,_fahrlehrerName,_paketId,_hatSimulator,_hatTheorieApp,_bogenAusgefuellt,...rest}=s;
+          schuelerUpserts.push({
+            id:s.id, fahrschule_id:_fsAgg.fahrschuleId, fahrlehrer_id:s._fahrlehrerId||null,
+            name:s.name||"(ohne Namen)", telefon:s.telefon||null, status:"aktiv",
+            paket_id:s._paketId||null, hat_simulator:!!s._hatSimulator, hat_theorie_app:!!s._hatTheorieApp,
+            bogen_ausgefuellt:!!s.bogen, ausbildung:rest, erstellt_von:b?undefined:meineId, aktualisiert_am:nowIso
+          });
+        }
+      });
+      const schuelerDeletes=(_fsBaseline.students||[]).filter(b=>!curSIds.has(b.id)).map(b=>b.id);
+      if(schuelerUpserts.length) await supa.from("schueler").upsert(schuelerUpserts,{onConflict:"id"});
+      if(schuelerDeletes.length) await supa.from("schueler").update({status:"geloescht",aktualisiert_am:nowIso}).in("id",schuelerDeletes);
+
+      // ---- TERMINE ----
+      const baseT={}; (_fsBaseline.lessons||[]).forEach(l=>baseT[l.id]=l);
+      const curTIds=new Set((DB.lessons||[]).map(l=>l.id));
+      const termineUpserts=[];
+      (DB.lessons||[]).forEach(l=>{
+        const b=baseT[l.id];
+        if(!b||JSON.stringify(l)!==JSON.stringify(b)){
+          const {id,sid,date,von,bis,art,fahrzeug,status,_fahrlehrerId,_fahrlehrerName,...rest}=l;
+          const zielLehrer=l._fahrlehrerId||(_fsAgg.lehrer.length===1?_fsAgg.lehrer[0].id:null);
+          if(!zielLehrer){ toast("⚠ Neuer Termin braucht einen Fahrlehrer — bitte über 'Alle Fahrlehrer' zuordnen."); return; }
+          termineUpserts.push({
+            id:l.id, fahrschule_id:_fsAgg.fahrschuleId, fahrlehrer_id:zielLehrer,
+            schueler_id:l.sid||null, datum:l.date, von:l.von||null, bis:l.bis||null,
+            art:l.art||null, fahrzeug:l.fahrzeug||null, status:l.status||null,
+            geloescht:false, payload:rest, erstellt_von:b?undefined:meineId, aktualisiert_am:nowIso
+          });
+        }
+      });
+      const termineDeletes=(_fsBaseline.lessons||[]).filter(b=>!curTIds.has(b.id)).map(b=>b.id);
+      if(termineUpserts.length) await supa.from("kalender_termine").upsert(termineUpserts,{onConflict:"id"});
+      if(termineDeletes.length) await supa.from("kalender_termine").update({geloescht:true,aktualisiert_am:nowIso}).in("id",termineDeletes);
+
+      // ---- PRÜFUNGEN ----
+      const baseP={}; (_fsBaseline.exams||[]).forEach(e=>baseP[e.id]=e);
+      const curPIds=new Set((DB.exams||[]).map(e=>e.id));
+      const pruefungenUpserts=[];
+      (DB.exams||[]).forEach(e=>{
+        const b=baseP[e.id];
+        if(!b||JSON.stringify(e)!==JSON.stringify(b)){
+          const {id,sid,date,result,pruefer,attempt,_fahrlehrerId,_fahrlehrerName,...rest}=e;
+          const zielLehrer=e._fahrlehrerId||(_fsAgg.lehrer.length===1?_fsAgg.lehrer[0].id:null);
+          if(!zielLehrer)return;
+          pruefungenUpserts.push({
+            id:e.id, fahrschule_id:_fsAgg.fahrschuleId, fahrlehrer_id:zielLehrer,
+            schueler_id:e.sid||null, datum:e.date||null, result:e.result||null, pruefer:e.pruefer||null,
+            attempt:typeof e.attempt==="number"?e.attempt:null, geloescht:false, payload:rest,
+            erstellt_von:b?undefined:meineId, aktualisiert_am:nowIso
+          });
+        }
+      });
+      const pruefungenDeletes=(_fsBaseline.exams||[]).filter(b=>!curPIds.has(b.id)).map(b=>b.id);
+      if(pruefungenUpserts.length) await supa.from("kalender_pruefungen").upsert(pruefungenUpserts,{onConflict:"id"});
+      if(pruefungenDeletes.length) await supa.from("kalender_pruefungen").update({geloescht:true,aktualisiert_am:nowIso}).in("id",pruefungenDeletes);
+
+      // Baseline auf den neuen Stand heben, damit der nächste Vergleich wieder stimmt
+      _fsBaseline={students:JSON.parse(JSON.stringify(DB.students)),lessons:JSON.parse(JSON.stringify(DB.lessons)),exams:JSON.parse(JSON.stringify(DB.exams))};
+      toast("Gespeichert ✓");
+    }catch(e){ console.warn("[Kompass] Fahrschul-Speichern fehlgeschlagen:",e.message); toast("Fehler beim Speichern: "+e.message); }
+  },1500);
+}
 
 /* ===== Fahrschule-Synchronisations-Brücke =====
    Spiegelt bei jeder lokalen Änderung die Schüler in die geteilte "schueler"-Tabelle -
@@ -3554,6 +3982,34 @@ function _syncTermineBridge(){
       const zuLoeschen=(meineRemote||[]).map(r=>r.id).filter(id=>!lokaleIds.includes(id));
       if(zuLoeschen.length) await supa.from("kalender_termine").update({geloescht:true,aktualisiert_am:nowIso}).in("id",zuLoeschen);
     }catch(e){ console.warn("[Kompass] Kalender-Sync fehlgeschlagen:",e.message); }
+  },4000);
+}
+
+/* ===== Prüfungen-Synchronisations-Brücke (gleiches Prinzip) ===== */
+let _pruefungenSyncDebounce=null;
+function _syncPruefungenBridge(){
+  if(!_authUser||!_authProfile||!_authProfile.fahrschule_id||!DB.exams)return;
+  clearTimeout(_pruefungenSyncDebounce);
+  _pruefungenSyncDebounce=setTimeout(async()=>{
+    try{
+      const supa=getSupa();
+      const nowIso=new Date().toISOString();
+      const rows=DB.exams.map(ex=>{
+        const {id,sid,date,result,pruefer,attempt,_syncedAt,...rest}=ex;
+        return {
+          id:ex.id, fahrschule_id:_authProfile.fahrschule_id, fahrlehrer_id:_authUser.id,
+          schueler_id:ex.sid||null, datum:ex.date||null, result:ex.result||null, pruefer:ex.pruefer||null,
+          attempt:typeof ex.attempt==="number"?ex.attempt:null, geloescht:false, payload:rest, aktualisiert_am:nowIso
+        };
+      });
+      for(let i=0;i<rows.length;i+=200){
+        await supa.from("kalender_pruefungen").upsert(rows.slice(i,i+200),{onConflict:"id"});
+      }
+      const lokaleIds=DB.exams.map(ex=>ex.id);
+      const {data:meineRemote}=await supa.from("kalender_pruefungen").select("id").eq("fahrlehrer_id",_authUser.id).eq("geloescht",false);
+      const zuLoeschen=(meineRemote||[]).map(r=>r.id).filter(id=>!lokaleIds.includes(id));
+      if(zuLoeschen.length) await supa.from("kalender_pruefungen").update({geloescht:true,aktualisiert_am:nowIso}).in("id",zuLoeschen);
+    }catch(e){ console.warn("[Kompass] Prüfungen-Sync fehlgeschlagen:",e.message); }
   },4000);
 }
 /* Einmalige Migration: entfernt Prüfungsplatz-Doppel-Einträge, die durch die frühere automatische
@@ -3892,7 +4348,9 @@ function replaySplash(){
   setTimeout(()=>sp.classList.add("hide"),3200);
 }
 $("#sheetScrim").addEventListener("click",closeSheet);
-document.querySelectorAll(".nav-item").forEach(b=>b.addEventListener("click",()=>{
+document.querySelector(".drawer-nav").addEventListener("click",(e)=>{
+  const b=e.target.closest(".nav-item[data-nav]");
+  if(!b)return;
   const nav=b.dataset.nav;closeDrawer();
   setTimeout(()=>{if(nav==="new")formView(null);else if(nav==="home")routeHome();
     else if(nav==="dash")routeDashboard();
@@ -3902,8 +4360,15 @@ document.querySelectorAll(".nav-item").forEach(b=>b.addEventListener("click",()=
     else if(nav==="stats")routeStats("cur");
     else if(nav==="archive")routeArchive();
     else if(nav==="draw")routeDraw();
-    else if(nav==="settings")routeSettings();},170);
-}));
+    else if(nav==="settings")routeSettings();
+    else if(nav==="fs_dash")routeFahrschuleDashboard();
+    else if(nav==="fs_schueler"){routeHome();}
+    else if(nav==="fs_lehrer")routeFahrschuleLehrer();
+    else if(nav==="fs_fahrzeuge")routeFahrschuleFahrzeuge();
+    else if(nav==="fs_stats")routeFahrschuleStatistik();
+    else if(nav==="fs_kalender"){routeKalender();if(_fsAgg)setFab(false);}
+    else if(nav==="fs_exit")_fsExitAggMode();},170);
+});
 function setFab(on){$("#fab").style.display=on?"flex":"none";}
 $("#fab").addEventListener("click",()=>formView(null));
 
@@ -6165,10 +6630,13 @@ const LEKTIONEN=[
 ];
 function lektionLabel(n){ const l=LEKTIONEN.find(x=>x.n===+n); return l?("Lektion "+l.n):""; }
 function lektionTitel(n){ const l=LEKTIONEN.find(x=>x.n===+n); return l?l.t:""; }
+let _fsCalFahrzeugFilter=[], _fsCalLehrerFilter=[];
 function eventMatchesFilter(e,iso){
   if(_calNurFrei)return false; // "Nur freie Slots" blendet alle Termine aus
   if(_calFilter!=="alle"&&e.art!==_calFilter)return false;
   if(_calFzFilter&&e.fahrzeug!==_calFzFilter)return false;
+  if(_fsAgg&&_fsCalFahrzeugFilter.length&&!_fsCalFahrzeugFilter.includes(e.fahrzeug))return false;
+  if(_fsAgg&&_fsCalLehrerFilter.length&&!_fsCalLehrerFilter.includes(e._fahrlehrerId))return false;
   if(_calFcOffen){
     if(["fahrstunde","sonder","nacht"].indexOf(e.art)<0)return false;
     if(!(isAbsolved(iso,e.bis)&&(!e.fc||e.fc==="offen")))return false;
@@ -6239,6 +6707,7 @@ function routeKalender(){
     <button class="cal-fab" id="calFab" aria-label="Hinzufügen"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg></button>`;
   view.innerHTML=html;
   bindCalControls();
+  if(_fsAgg)_fsInjectFilterTiles();
 }
 function calCounterHTML(){
   // Ab heute bis Ende der laufenden Woche (Sa, kein Sonntag) / des laufenden Monats
@@ -8144,7 +8613,7 @@ function routeStats(period){
       <span class="na-arrow">${ICN.arrow}</span>
     </button>
   </div>
-  <button class="ps-trigger" id="safeTrigger" aria-label=""></button>`;
+  ${isSuperAdmin()?`<button class="ps-trigger" id="safeTrigger" aria-label=""></button>`:''}`;
   // Balken + Thermometer animieren (double rAF damit transition greift)
   requestAnimationFrame(()=>requestAnimationFrame(()=>{
     document.querySelectorAll('.mb-fill[data-h]').forEach(el=>{el.style.height=el.dataset.h+'%';});
@@ -8161,6 +8630,7 @@ function routeStats(period){
 }
 /* ===== SAFE — privat ===== */
 function openSafePin(){
+  if(!isSuperAdmin())return;
   let entered='';
   const DOTS=6;
   const renderDots=()=>{
