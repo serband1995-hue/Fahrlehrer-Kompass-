@@ -3081,19 +3081,20 @@ function _fsMapPruefung(row,lehrerName){
 
 async function _fsLoadAggData(fahrschuleId){
   const supa=getSupa();
-  const [fsR,lehrerR,schuelerR,termineR,pruefungenR]=await Promise.all([
+  const [fsR,lehrerR,schuelerR,termineR,pruefungenR,fahrzeugeR]=await Promise.all([
     supa.from("fahrschulen").select("*").eq("id",fahrschuleId).single(),
     supa.from("profiles").select("*").eq("fahrschule_id",fahrschuleId).in("rolle",["fahrlehrer","super_admin"]).order("email"),
     supa.from("schueler").select("*").eq("fahrschule_id",fahrschuleId).neq("status","geloescht"),
     supa.from("kalender_termine").select("*").eq("fahrschule_id",fahrschuleId).eq("geloescht",false),
-    supa.from("kalender_pruefungen").select("*").eq("fahrschule_id",fahrschuleId).eq("geloescht",false)
+    supa.from("kalender_pruefungen").select("*").eq("fahrschule_id",fahrschuleId).eq("geloescht",false),
+    supa.from("fahrschule_fahrzeuge").select("*").eq("fahrschule_id",fahrschuleId).eq("aktiv",true).order("erstellt_am")
   ]);
   const lehrer=lehrerR.data||[];
   const lehrerName=id=>{ const l=lehrer.find(x=>x.id===id); return l?(l.name||l.email):"Unbekannt"; };
   DB.students=(schuelerR.data||[]).map(r=>_fsMapSchueler(r,lehrerName));
   DB.lessons=(termineR.data||[]).map(r=>_fsMapTermin(r,lehrerName));
   DB.exams=(pruefungenR.data||[]).map(r=>_fsMapPruefung(r,lehrerName));
-  _fsAgg={fahrschuleId, fahrschule:fsR.data||{name:"Fahrschule"}, lehrer};
+  _fsAgg={fahrschuleId, fahrschule:fsR.data||{name:"Fahrschule"}, lehrer, fahrzeuge:fahrzeugeR.data||[]};
   _fsBaseline={students:JSON.parse(JSON.stringify(DB.students)),lessons:JSON.parse(JSON.stringify(DB.lessons)),exams:JSON.parse(JSON.stringify(DB.exams))};
 }
 
@@ -3136,6 +3137,7 @@ function routeFahrschuleDashboard(){
   const act=activeStudents().length;
   const today=todayISO();
   const heuteCount=(DB.lessons||[]).filter(l=>l.date===today&&l.status!=="abgebrochen"&&l.status!=="nicht erschienen").length;
+  const fahrzeugAnzahl=((_fsAgg.fahrzeuge)||[]).length;
   const q=quoteOf(examsIn('cur'));
   const poolAnzahl=(DB.students||[]).filter(s=>!s._fahrlehrerId).length;
   $("#tbTitle").textContent="Start"; setFab(false); view.scrollTop=0;
@@ -3145,20 +3147,17 @@ function routeFahrschuleDashboard(){
       <h4 style="margin-bottom:4px;">📅 Kalender</h4>
       <p style="font-size:13.5px;color:var(--muted);">Alle Termine aller Fahrlehrer — antippen zum Öffnen</p>
     </button>
-    <div class="dash-tiles">
+    <div class="dash-tiles" style="grid-template-columns:repeat(2,1fr);">
       <button class="d-tile" data-fsgo="schueler"><div class="badge">${ICN.users}</div><div class="dt-n" data-count="${act}">0</div><div class="dt-l">Alle Schüler</div></button>
       <button class="d-tile" data-fsgo="lehrer"><div class="badge">${ICN.profile}</div><div class="dt-n" data-count="${lehrer.length}">0</div><div class="dt-l">Fahrlehrer</div></button>
-      <button class="d-tile" data-fsgo="stats">${q.pct==null?'<div class="dt-n">–</div>':`<div class="dt-n" data-count="${q.pct}" data-suffix="%">0</div>`}<div class="dt-l">Quote · Monat</div></button>
+      <button class="d-tile" data-fsgo="fahrzeuge"><div class="badge">${ICN.cal}</div><div class="dt-n" data-count="${fahrzeugAnzahl}">0</div><div class="dt-l">Fahrzeugflotte</div></button>
+      <button class="d-tile" data-fsgo="stats">${q.pct==null?'<div class="dt-n">–</div>':`<div class="dt-n" data-count="${q.pct}" data-suffix="%">0</div>`}<div class="dt-l">Statistik · Quote</div></button>
     </div>
     ${poolAnzahl?`<div class="res-block" style="animation:none;background:rgba(207,154,62,.1);border-color:rgba(207,154,62,.35);">
       <h4>⚠ ${poolAnzahl} Schüler ohne Fahrlehrer</h4>
       <p style="font-size:13px;color:var(--muted);">Noch keinem Fahrlehrer zugeordnet — jetzt verteilen.</p>
       <div class="btn-row"><button class="btn btn-ghost" data-fsgo="schueler">Ansehen</button></div>
     </div>`:''}
-    <div class="dash-quick-row">
-      <button class="dq-btn" data-fsgo="fahrzeuge">${ICN.cal}<span>Fahrzeuge</span></button>
-      <button class="dq-btn" data-fsgo="stats">${ICN.bolt}<span>Statistik</span></button>
-    </div>
   </div>`;
   document.querySelectorAll(".d-tile .dt-n[data-count]").forEach(el=>countUp(el,+el.dataset.count,el.dataset.suffix||""));
   document.querySelectorAll("[data-fsgo]").forEach(b=>b.addEventListener("click",()=>{
@@ -3437,16 +3436,42 @@ function routeFahrschuleFahrzeuge(){
   $("#tbTitle").textContent="Fahrzeugflotte"; setFab(false); view.scrollTop=0;
   const heute=todayISO();
   const monatPrefix=heute.slice(0,7);
-  const fahrzeuge=[...new Set((DB.lessons||[]).map(l=>l.fahrzeug).filter(Boolean))];
-  const rows=fahrzeuge.map(fz=>{
-    const termineMonat=(DB.lessons||[]).filter(l=>l.fahrzeug===fz&&(l.date||"").startsWith(monatPrefix)&&l.status!=="abgebrochen");
+  const flotte=_fsAgg.fahrzeuge||[];
+  const rows=flotte.map(fz=>{
+    const termineMonat=(DB.lessons||[]).filter(l=>l.fahrzeug===fz.name&&(l.date||"").startsWith(monatPrefix)&&l.status!=="abgebrochen");
     const fahrer=[...new Set(termineMonat.map(l=>l._fahrlehrerName))];
     return `<div class="fs-card">
-      <div class="fs-name">🚗 ${esc(fz)}</div>
+      <div class="fs-name">🚗 ${esc(fz.name)}${fz.typ?` <span style="font-size:11px;color:var(--muted);font-weight:400;">(${esc(fz.typ)})</span>`:''}</div>
       <div class="fs-sub">${termineMonat.length} Termine diesen Monat &nbsp;·&nbsp; genutzt von: ${fahrer.map(esc).join(", ")||"–"}</div>
+      <div class="fs-actions"><button class="fs-btn-kill" onclick="fsFahrzeugLoeschen('${fz.id}','${esc(fz.name).replace(/'/g,"\\'")}')">Entfernen</button></div>
     </div>`;
-  }).join("")||'<p class="muted-p">Noch keine Fahrzeuge in den Terminen hinterlegt.</p>';
-  view.innerHTML=`<div class="view-inner view-read fade-up"><div class="res-block" style="animation:none;"><h4>🚗 Fahrzeugflotte (${fahrzeuge.length})</h4>${rows}</div></div>`;
+  }).join("")||'<p class="muted-p">Noch keine Fahrzeuge in der Flotte.</p>';
+  view.innerHTML=`<div class="view-inner view-read fade-up"><div class="res-block" style="animation:none;">
+    <h4>🚗 Fahrzeugflotte (${flotte.length})</h4>
+    ${rows}
+    <div class="btn-row" style="margin-top:10px;"><button class="btn btn-primary" onclick="fsFahrzeugHinzufuegen()">+ Fahrzeug hinzufügen</button></div>
+  </div></div>`;
+}
+
+async function fsFahrzeugHinzufuegen(){
+  const name=(prompt("Name des neuen Fahrzeugs (z.B. \"VW Golf 2\"):")||"").trim();
+  if(!name)return;
+  const typ=(prompt("Typ (schalt/automatik, optional):")||"").trim();
+  const supa=getSupa();
+  const {error}=await supa.from("fahrschule_fahrzeuge").insert({fahrschule_id:_fsAgg.fahrschuleId,name,typ:typ||null});
+  if(error){toast("Fehler: "+error.message);return;}
+  toast("Fahrzeug hinzugefügt ✓");
+  await _fsRefreshAggData();
+  routeFahrschuleFahrzeuge();
+}
+async function fsFahrzeugLoeschen(id,name){
+  if(!confirm(`"${name}" wirklich aus der Flotte entfernen?`))return;
+  const supa=getSupa();
+  const {error}=await supa.from("fahrschule_fahrzeuge").update({aktiv:false}).eq("id",id);
+  if(error){toast("Fehler: "+error.message);return;}
+  toast("Fahrzeug entfernt ✓");
+  await _fsRefreshAggData();
+  routeFahrschuleFahrzeuge();
 }
 
 function routeFahrschuleStatistik(){
@@ -3538,15 +3563,15 @@ function _fsInjectFilterTiles(){
   const filtersEl=document.getElementById("calFilters");
   if(!wrap||!filtersEl)return;
   document.getElementById("fsCalTiles")?.remove();
-  const fahrzeuge=[...new Set((DB.lessons||[]).map(l=>l.fahrzeug).filter(Boolean))].sort();
+  const fahrzeuge=(_fsAgg.fahrzeuge||[]).map(fz=>fz.name).sort();
   const lehrer=_fsAgg.lehrer||[];
   const tileBlock=(id,titel,items,ausgewaehlt,datenAttr)=>`
-    <div class="acc" id="${id}" style="margin:10px 0;">
+    <div class="acc" id="${id}" style="margin:10px 0;overflow:hidden;">
       <button class="acc-h" onclick="this.closest('.acc').classList.toggle('open')" style="cursor:pointer;padding:12px 14px;">
         <span style="flex:1;text-align:left;font-size:13.5px;font-weight:700;">${titel}${ausgewaehlt.length?` <span style="color:var(--orange);">(${ausgewaehlt.length})</span>`:''}</span>
         <span class="chev">${ICN.chev}</span>
       </button>
-      <div class="acc-body"><div class="acc-inner" style="padding:0 14px 14px;display:flex;flex-wrap:wrap;gap:8px;">
+      <div class="acc-body" style="overflow:hidden;"><div class="acc-inner" style="overflow:hidden;padding:0 14px 14px;display:flex;flex-wrap:wrap;gap:8px;">
         ${items.length?items.map(it=>`<button class="es-act${ausgewaehlt.includes(it.value)?' primary':''}" data-${datenAttr}="${esc(it.value)}">${esc(it.label)}</button>`).join(""):`<p class="muted-p" style="font-size:12px;">Keine Einträge.</p>`}
       </div></div>
     </div>`;
