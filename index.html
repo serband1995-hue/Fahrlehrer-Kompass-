@@ -3049,9 +3049,9 @@ function _fsDrawerNavHTML(zeigeZurueck){
     <div class="nav-sep"></div>
     ${zeigeZurueck?`<button class="nav-item primary" data-nav="fs_exit">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 12H5M12 19l-7-7 7-7"/></svg>
-      Zu meiner Fahrlehrer-Ansicht</button>`:`<button class="nav-item" data-nav="settings">
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.7 1.7 0 0 0 .3 1.9l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.7 1.7 0 0 0-1.9-.3 1.7 1.7 0 0 0-1 1.5V21a2 2 0 0 1-4 0v-.1a1.7 1.7 0 0 0-1-1.6 1.7 1.7 0 0 0-1.9.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.7 1.7 0 0 0 .3-1.9 1.7 1.7 0 0 0-1.5-1H3a2 2 0 0 1 0-4h.1a1.7 1.7 0 0 0 1.6-1 1.7 1.7 0 0 0-.3-1.9l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.7 1.7 0 0 0 1.9.3H9a1.7 1.7 0 0 0 1-1.5V3a2 2 0 0 1 4 0v.1a1.7 1.7 0 0 0 1 1.5 1.7 1.7 0 0 0 1.9-.3l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.7 1.7 0 0 0-.3 1.9V9a1.7 1.7 0 0 0 1.5 1H21a2 2 0 0 1 0 4h-.1a1.7 1.7 0 0 0-1.5 1z"/></svg>
-      Einstellungen &amp; Abmelden</button>`}`;
+      Zu meiner Fahrlehrer-Ansicht</button>`:`<button class="nav-item" onclick="closeDrawer();if(confirm('Wirklich abmelden?'))doLogout();">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4M16 17l5-5-5-5M21 12H9"/></svg>
+      Abmelden</button>`}`;
 }
 
 function _fsSetDrawer(fahrschuleMode){
@@ -3452,6 +3452,7 @@ function routeFahrschuleLehrer(){
     const meineExams=(DB.exams||[]).filter(e=>e._fahrlehrerId===l.id);
     const q=quoteOf(meineExams);
     const istSuperAdmin=l.rolle==="super_admin";
+    const linksId="lehrerlinks_"+l.id.replace(/[^a-zA-Z0-9]/g,"");
     return `<div class="fs-card">
       <div class="fs-name">${esc(l.name||l.email)}${istSuperAdmin?' <span style="color:var(--orange);font-size:11px;">(Super-Admin)</span>':''}</div>
       <div class="fs-sub">${l.aktiv?'<span class="fs-status-on">Aktiv</span>':'<span class="fs-status-off">GESPERRT</span>'} &nbsp;·&nbsp; Auslastung ${l.auslastung_pct!=null?l.auslastung_pct+'%':'—'} &nbsp;·&nbsp; ${meineSchueler.length} Schüler &nbsp;·&nbsp; ${q.pct==null?'Quote —':'Quote '+q.pct+'%'}</div>
@@ -3461,6 +3462,8 @@ function routeFahrschuleLehrer(){
           :`<button class="fs-btn-activate" onclick="toggleFahrlehrerAktiv('${l.id}',true,'${_fsAgg.fahrschuleId}')">Freischalten</button>`}
         <button class="fs-btn-activate" onclick="fahrlehrerPasswortZuruecksetzen('${l.id}')">Passwort zurücksetzen</button>
       </div>`}
+      ${l.slug?`<div class="fs-actions"><button class="fs-btn-activate" onclick="document.getElementById('${linksId}').style.display=document.getElementById('${linksId}').style.display==='none'?'block':'none';">🔗 Buchungslinks</button></div>
+      <div id="${linksId}" style="display:none;margin-top:6px;">${_fsBuchungslinksHTML(l.slug,l.name||l.email)}</div>`:'<p class="muted-p" style="font-size:11.5px;margin-top:4px;">Kein Slug hinterlegt — Buchungslinks nicht verfügbar.</p>'}
     </div>`;
   }).join("")||'<p class="muted-p">Noch keine Fahrlehrer.</p>';
   view.innerHTML=`<div class="view-inner view-read fade-up">
@@ -3660,6 +3663,31 @@ function _fsInjectFilterTiles(){
 function _fsToggleTile(key){ _fsTileOpen[key]=!_fsTileOpen[key]; routeKalender(); }
 function _fsResetKalFilter(){ _fsCalFahrzeugFilter=[]; _fsCalLehrerFilter=[]; routeKalender(); }
 function _fsSetKalenderModus(modus){ _fsKalenderModus=modus; routeKalender(); }
+
+/* ===== Buchungslinks pro Fahrlehrer (Schalter/Automatik) ===== */
+const BUCHUNG_BASE_URL="https://serband1995-hue.github.io/Fahrlehrer-Kompass-/buchen.html";
+function _fsBuchungslinksHTML(slug,label){
+  if(!slug)return "";
+  const schaltLink=`${BUCHUNG_BASE_URL}?typ=schalt&lehrer=${encodeURIComponent(slug)}`;
+  const automatikLink=`${BUCHUNG_BASE_URL}?typ=automatik&lehrer=${encodeURIComponent(slug)}`;
+  const rid="bl_"+slug.replace(/[^a-zA-Z0-9]/g,"");
+  return `<div class="res-block" style="animation:none;"><h4>🔗 ${esc(label)} Buchungslinks</h4>
+    <div class="field"><label style="font-size:11px;">Schalter</label>
+      <div style="display:flex;gap:6px;"><input readonly id="${rid}_s" value="${esc(schaltLink)}" style="flex:1;font-size:11.5px;"><button class="btn btn-ghost" style="padding:8px 12px;" onclick="_fsKopieren('${rid}_s')">Kopieren</button></div></div>
+    <div class="field" style="margin-top:8px;"><label style="font-size:11px;">Automatik</label>
+      <div style="display:flex;gap:6px;"><input readonly id="${rid}_a" value="${esc(automatikLink)}" style="flex:1;font-size:11.5px;"><button class="btn btn-ghost" style="padding:8px 12px;" onclick="_fsKopieren('${rid}_a')">Kopieren</button></div></div>
+  </div>`;
+}
+function _fsKopieren(inputId){
+  const el=document.getElementById(inputId);
+  if(!el)return;
+  el.select(); el.setSelectionRange(0,99999);
+  try{
+    navigator.clipboard.writeText(el.value).then(()=>toast("Link kopiert ✓")).catch(()=>document.execCommand("copy")&&toast("Link kopiert ✓"));
+  }catch(e){
+    try{document.execCommand("copy");toast("Link kopiert ✓");}catch(e2){toast("Kopieren fehlgeschlagen — bitte manuell markieren");}
+  }
+}
 
 /* Eigene, abgegrenzte Fahrschule-Ansichten - bewusst NICHT routePruefer()/routeNichtBesteher()
    wiederverwendet, weil deren "Zurück"-Buttons in die persönliche Fahrlehrer-Statistik (inkl.
@@ -6418,6 +6446,8 @@ function routeSettings(){
   $("#tbTitle").textContent="Einstellungen";setFab(false);view.scrollTop=0;
   const adminBtn=isSuperAdmin()?`<div class="res-block" style="animation:none;"><h4>👑 Admin-Panel</h4><p>Nutzer verwalten, Kill-Switch und Sync-Status.</p><div class="btn-row"><button class="btn btn-ghost" onclick="openAdminPanel()">Admin öffnen</button></div></div>
   <div class="res-block" style="animation:none;"><h4>🏫 Fahrschulen</h4><p>Fahrschulen, Fahrlehrer, Schüler und Pakete verwalten.</p><div class="btn-row"><button class="btn btn-ghost" onclick="routeFahrschulenListe()">Fahrschulen verwalten</button></div></div>`:"";
+  const eigenerSlug=_authProfile&&_authProfile.slug;
+  const buchungslinksBtn=(eigenerSlug&&_authProfile&&(_authProfile.rolle==="fahrlehrer"||_authProfile.rolle==="super_admin"))?_fsBuchungslinksHTML(eigenerSlug,"Meine"):"";
   const logoutBtn=_authUser?`<div class="res-block" style="animation:none;background:rgba(200,60,60,.1);border-color:rgba(200,60,60,.3)"><h4 style="color:#f08080">🚪 Abmelden</h4><p style="color:var(--muted)">Meldet dich sicher aus der App ab.</p><div class="btn-row"><button class="btn" style="background:#c83c3c;color:#fff;border:none;padding:12px 24px;border-radius:12px;font-weight:700;font-size:14px;" onclick="doLogout()">Jetzt abmelden</button></div></div>`:"";
   const kapWoche=DB.workCfg?.kapazitaetWoche||32;
   view.innerHTML=`<div class="view-inner view-read fade-up">
@@ -6427,6 +6457,7 @@ function routeSettings(){
       <p id="pushStatusTxt" style="color:var(--muted);font-size:13px;">Wird geprüft …</p>
       <div class="btn-row"><button class="btn btn-ghost" id="pushEnableBtn" onclick="enablePushNotifications()">Aktivieren</button></div>
     </div>`:""}
+    ${buchungslinksBtn}
     ${adminBtn}
     <div class="res-block" style="animation:none;"><h4>📋 Ausbildungsplan-Vorlagen</h4>
       <p>Grundstufe, Aufbaustufe und Leistungsstufe individuell gestalten — z.B. eigene Prüfgebiete anlegen.</p>
@@ -6558,26 +6589,33 @@ function openAddSheet(){
     else if(t==="theorie"){ openTheorieSheet(); }
     else openAddLessonSheet(t); }));
 }
-/* Theorie hinzufügen – kein Schüler nötig, nur Datum + Uhrzeit (Anfang/Ende) */
+/* Theorie hinzufügen – kein Schüler nötig, nur Datum + Startzeit. Wird IMMER als zwei echte,
+   einzeln blockierte 90-Minuten-Termine angelegt (so wie Boost Theorie tatsächlich unterrichtet) -
+   nicht mehr als ein einzelner langer Zeitblock, der im Kalenderraster nicht sauber angezeigt wurde. */
 function openTheorieSheet(){
   ensureDB();
   const defDate=_calView==="tag"?_calDate:todayISO();
   const wd=weekdayMon0(defDate); const win=(wd<=4?DB.workCfg.theorieWoche:DB.workCfg.theorieSamstag)||{von:"18:00",bis:"21:00"};
+  const blk=DB.workCfg.blockMin||90;
   const lektOpts=`<option value="">– keine bestimmte –</option>`+LEKTIONEN.map(l=>`<option value="${l.n}">Lektion ${l.n} – ${esc(l.t)}</option>`).join("");
   openSheet(`<div class="sheet-h">Theorie</div>
+    <p class="muted-p" style="font-size:12.5px;margin:-4px 0 10px;">Wird immer als zwei einzelne 90-Minuten-Termine hintereinander eingetragen.</p>
     <div class="field"><label>Datum</label><input type="date" id="thDate" value="${defDate}"></div>
-    <div class="field"><label>Von</label><input type="time" id="thVon" value="${win.von}"></div>
-    <div class="field"><label>Bis</label><input type="time" id="thBis" value="${win.bis}"></div>
+    <div class="field"><label>Start (1. Block)</label><input type="time" id="thVon" value="${win.von}"></div>
     <div class="field"><label>Lektion (optional)</label><select id="thLektion">${lektOpts}</select></div>
     <div class="field"><label>Notiz (optional)</label><textarea id="thNote" rows="2" placeholder="z. B. Thema des Abends …"></textarea></div>
     <div class="btn-row"><button class="btn btn-ghost" id="thCancel" style="flex:0;padding:13px 18px;">Abbrechen</button><button class="btn btn-primary" id="thSave">Eintragen</button></div>`);
   $("#thCancel").addEventListener("click",closeSheet);
   $("#thSave").addEventListener("click",()=>{
-    const date=$("#thDate").value, von=$("#thVon").value, bis=$("#thBis").value||min2hm(hm2min(von)+(DB.workCfg.blockMin||90));
+    const date=$("#thDate").value, von=$("#thVon").value;
     if(!date||!von){toast("Datum & Zeit wählen");return;}
     const lektion=$("#thLektion").value?+$("#thLektion").value:null;
-    addLesson({date,von,bis,art:"theorie",sid:null,note:$("#thNote").value.trim(),lektion});
-    closeSheet(); toast(lektion?("Lektion "+lektion+" eingetragen ✓"):"Theorie eingetragen ✓"); routeKalender();
+    const note=$("#thNote").value.trim();
+    const b1Von=von, b1Bis=min2hm(hm2min(von)+blk);
+    const b2Von=b1Bis, b2Bis=min2hm(hm2min(von)+2*blk);
+    addLesson({date,von:b1Von,bis:b1Bis,art:"theorie",sid:null,note,lektion});
+    addLesson({date,von:b2Von,bis:b2Bis,art:"theorie",sid:null,note,lektion});
+    closeSheet(); toast(lektion?("Lektion "+lektion+" eingetragen ✓ (2 Blöcke)"):"Theorie eingetragen ✓ (2 Blöcke)"); routeKalender();
   });
 }
 /* Zeit blockieren (kein Schüler, belegt Slot) */
@@ -7479,11 +7517,11 @@ function calDayHTML(){
 // UE eines Tages (done=nur absolvierte)
 function dayUE(iso,doneOnly){
   let ue=0;
-  dayEvents(iso).forEach(e=>{ if(e.status==="abgebrochen"||e.status==="nicht erschienen")return; if(doneOnly&&!isAbsolved(iso,e.bis))return; ue+=ueOf(e.art); });
+  dayEvents(iso).forEach(e=>{ if(e.status==="abgebrochen"||e.status==="nicht erschienen")return; if(doneOnly&&!isAbsolved(iso,e.bis))return; ue+=ueOf(e.art,e.von,e.bis); });
   const th=dayTheorieWindow(iso); // Theorie-Fenster zählt nur wenn als Lesson erfasst – Fensteranzeige nicht
   return ue;
 }
-function ueOf(art){ if(art==="theorie")return 4; if(art==="schalt")return 0.33; if(art==="block")return 0; return 2; } // Fahrstunde/Prüfung/Nacht/Sonder=2, Theorie=4, Schalt=0,33, Block=0
+function ueOf(art,von,bis){ if(art==="theorie"){ if(von&&bis){ const dur=hm2min(bis)-hm2min(von); return Math.round((dur/90)*2*100)/100; } return 4; } if(art==="schalt")return 0.33; if(art==="block")return 0; return 2; } // Fahrstunde/Prüfung/Nacht/Sonder=2, Theorie=2 pro 90-Min-Block (mit Zeit) bzw. 4 als Fallback, Schalt=0,33, Block=0
 function isAbsolved(iso,bisHM){ const today=todayISO(); if(iso<today)return true; if(iso>today)return false; const now=new Date(); return hm2min(bisHM)<=now.getHours()*60+now.getMinutes(); }
 
 /* ===== Verdienst-Engine ===== */
@@ -7494,7 +7532,7 @@ function ueRange(fromISO,toISO){
   while(cur<=toISO && guard++<400){
     dayEvents(cur).forEach(e=>{
       if(e.status==="abgebrochen"||e.status==="nicht erschienen")return;
-      const ue=ueOf(e.art);
+      const ue=ueOf(e.art,e.von,e.bis);
       if(isAbsolved(cur,e.bis))done+=ue; else plan+=ue;
       // FC-abgerechnete UE (zählt fürs Gehalt):
       // Prüfungen immer voll. Fahrstunden NEU: Standard (kein fc-Vermerk) = voll bezahlt (Schüler bringt 2 FC).
@@ -7518,7 +7556,7 @@ function ueRange(fromISO,toISO){
   (DB.lessons||[]).forEach(l=>{
     if(l.fc==="nachgereicht"&&l.nachAm){
       const dm=(""+l.nachAm).slice(0,10);
-      if(dm>=fromISO&&dm<=toISO){ fcCounted+=ueOf(l.art); }
+      if(dm>=fromISO&&dm<=toISO){ fcCounted+=ueOf(l.art,l.von,l.bis); }
     }
   });
   // Stattgefundene Prüfungen: 46€ (=2 UE) pro Prüfung, gutgeschrieben am Tag des Eintragens (earnAt).
@@ -7653,9 +7691,8 @@ function dayFreeSlots(iso){
 // Zählung über einen Datumsbereich (inkl.)
 function countRange(fromISO,toISO){
   let planned=0, free=0, slots=0, plannedUE=0;
-  const ueOf=a=>a==='theorie'?4:a==='schalt'?0.33:a==='block'?0:2;
   let cur=fromISO;
-  while(cur<=toISO){ const ds=daySlots(cur); const ev=dayEvents(cur).filter(e=>e.status!=="abgesagt"&&e.status!=="geplatzt"); slots+=ds.length; planned+=ev.length; plannedUE+=ev.reduce((a,e)=>a+ueOf(e.art||'fahrstunde'),0); free+=dayFreeSlots(cur).length; cur=addDays(cur,1); }
+  while(cur<=toISO){ const ds=daySlots(cur); const ev=dayEvents(cur).filter(e=>e.status!=="abgesagt"&&e.status!=="geplatzt"); slots+=ds.length; planned+=ev.length; plannedUE+=ev.reduce((a,e)=>a+ueOf(e.art||'fahrstunde',e.von,e.bis),0); free+=dayFreeSlots(cur).length; cur=addDays(cur,1); }
   return {planned,free,slots,plannedUE};
 }
 // Lesson-CRUD
@@ -8418,7 +8455,7 @@ function fcForgottenLessons(){
   return (DB.lessons||[]).filter(l=>l.fc==="v1"||l.fc==="v2").sort((a,b)=>(""+b.date).localeCompare(""+a.date));
 }
 // entgangenes Geld gesamt (offene v1/v2, noch nicht nachgereicht)
-function fcForgottenEuro(){ let ue=0; fcForgottenLessons().forEach(l=>{ ue += (l.fc==="v1")? ueOf(l.art)/2 : ueOf(l.art); }); return Math.round(ue*DB.verdienst.proUE); }
+function fcForgottenEuro(){ let ue=0; fcForgottenLessons().forEach(l=>{ ue += (l.fc==="v1")? ueOf(l.art,l.von,l.bis)/2 : ueOf(l.art,l.von,l.bis); }); return Math.round(ue*DB.verdienst.proUE); }
 function eurFmt(n){ return (Math.round(n)).toLocaleString("de-DE")+" €"; }
 
 // Dashboard-Karte: zeigt NUR offene Ausnahmen (vergessene FC). Kein Bestätigen mehr im Normalfall.
@@ -8439,7 +8476,7 @@ function setFC(id,status){
   const l=fcLesson(id); if(!l)return;
   const st=DB.students.find(s=>s.id===l.sid);
   const prev=l.fc||null; const prevNachAm=l.nachAm||null;
-  const ueFull=ueOf(l.art); const eurFull=Math.round(ueFull*DB.verdienst.proUE);
+  const ueFull=ueOf(l.art,l.von,l.bis); const eurFull=Math.round(ueFull*DB.verdienst.proUE);
   let msg="", histTxt="", eurDelta=0;
   if(status==="v1"){ l.fc="v1"; delete l.nachAm; msg="1 FC vergessen vermerkt"; histTxt="1 Fahrcheck vergessen"; eurDelta=-Math.round(ueFull/2*DB.verdienst.proUE); }
   else if(status==="v2"){ l.fc="v2"; delete l.nachAm; msg="2 FC vergessen vermerkt"; histTxt="2 Fahrchecks vergessen"; eurDelta=-eurFull; }
@@ -8481,7 +8518,7 @@ function routeFCMissing(){
   const forg=fcForgottenLessons(); const eur=fcForgottenEuro();
   // Gruppieren pro Schüler
   const byStud={};
-  forg.forEach(l=>{ const k=l.sid||"?"; if(!byStud[k])byStud[k]={sid:l.sid,lessons:[],ue:0}; byStud[k].lessons.push(l); byStud[k].ue += (l.fc==="v1")?ueOf(l.art)/2:ueOf(l.art); });
+  forg.forEach(l=>{ const k=l.sid||"?"; if(!byStud[k])byStud[k]={sid:l.sid,lessons:[],ue:0}; byStud[k].lessons.push(l); byStud[k].ue += (l.fc==="v1")?ueOf(l.art,l.von,l.bis)/2:ueOf(l.art,l.von,l.bis); });
   const groups=Object.values(byStud).sort((a,b)=>b.ue-a.ue);
   let h=`<div class="view-inner view-read fade-up">
     <div class="back-row"><button class="back-btn" id="backBtn">${ICN.back} Start</button></div>
