@@ -3278,7 +3278,7 @@ async function routeFahrschuleDetail(fahrschuleId){
         ?`<button class="btn btn-ghost" style="color:#c83c3c;" onclick="toggleFahrschuleAktiv('${fs.id}',false)">Fahrschule sperren</button>`
         :`<button class="btn btn-primary" onclick="toggleFahrschuleAktiv('${fs.id}',true)">Fahrschule freischalten</button>`}</div>
     </div>` : `<div class="res-block" style="animation:none;"><h4>🏫 ${esc(fs.name)}</h4></div>`;
-  const kalenderBtn=`<div class="res-block" style="animation:none;"><h4>📅 Kalender</h4><p style="font-size:13px;color:var(--muted);">Alle Termine aller Fahrlehrer, filterbar, bearbeitbar.</p><div class="btn-row"><button class="btn btn-primary" onclick="routeFahrschuleKalender('${fahrschuleId}')">Kalender öffnen</button></div></div>`;
+  const kalenderBtn=`<div class="res-block" style="animation:none;"><h4>📅 Kalender</h4><p style="font-size:13px;color:var(--muted);">Alle Termine aller Fahrlehrer, filterbar, bearbeitbar.</p><div class="btn-row"><button class="btn btn-primary" onclick="_fsOpenEchterKalenderAusAdmin('${fahrschuleId}')">Kalender öffnen</button></div></div>`;
 
   const lehrerRows=lehrer.map(l=>{
     const istSuperAdmin=l.rolle==="super_admin";
@@ -4146,6 +4146,11 @@ function _fsKalFarbeFuer(fahrlehrerId,lehrerListe){
 }
 function _fsMontagVon(d){ const dt=new Date(d); const tag=(dt.getDay()+6)%7; dt.setDate(dt.getDate()-tag); return dt; }
 function _fsFmtDate(d){ return d.toISOString().slice(0,10); }
+
+async function _fsOpenEchterKalenderAusAdmin(fahrschuleId){
+  await _fsEnterAggMode(fahrschuleId);
+  routeKalender();
+}
 
 async function routeFahrschuleKalender(fahrschuleId,weekStart){
   window._fsKalFahrschuleId=fahrschuleId;
@@ -7222,7 +7227,7 @@ function routeKalender(){
         <button class="cal-today" id="calToday">Heute</button>
       </div>
     </div>
-    ${calCounterHTML()}
+    ${_fsAgg?'':calCounterHTML()}
     <div class="cal-filters" id="calFilters">
       ${[["alle","Alle"],["fahrstunde","Fahrstunden"],["pruefung","Prüfungen"],["theorie","Theorie"]].map(([k,l])=>`<button class="cal-fchip${_calFilter===k?' on':''}" data-f="${k}">${l}</button>`).join("")}
     </div>
@@ -7511,7 +7516,7 @@ function calDayHTML(){
   const cnt=countRange(iso,iso);
   const doneUE=dayUE(iso,true), planUE=dayUE(iso,false);
   const hol=holidayName(iso);
-  return `${hol?`<div class="cd-holiday">🎌 ${esc(hol)} · Feiertag in Hessen</div>`:''}<div class="cd-summary"><span><b>${evs.length}</b> belegt</span><span><b>${free.length}</b> frei</span><span><b>${doneUE+planUE}</b> UE</span></div>
+  return `${hol?`<div class="cd-holiday">🎌 ${esc(hol)} · Feiertag in Hessen</div>`:''}<div class="cd-summary"><span><b>${evs.length}</b> belegt</span><span><b>${free.length}</b> frei</span>${_fsAgg?'':`<span><b>${doneUE+planUE}</b> UE</span>`}</div>
     <div class="ct-wrap" style="height:${totalH}px">${hourLines}${nowLine}<div class="ct-events">${blocks}</div></div>`;
 }
 // UE eines Tages (done=nur absolvierte)
