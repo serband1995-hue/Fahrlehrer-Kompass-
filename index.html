@@ -1436,6 +1436,17 @@ body:not(.light) .cw-col.today .cw-dnum{color:var(--gold);}
 .cal-fab{position:fixed;right:18px;bottom:calc(96px + env(safe-area-inset-bottom));width:60px;height:60px;border-radius:50%;z-index:40;display:flex;align-items:center;justify-content:center;background:linear-gradient(160deg,var(--gruen-2,#3a7350),var(--gruen,#2f5d3f));border:1px solid rgba(150,200,165,.3);box-shadow:0 10px 28px rgba(0,0,0,.45),inset 0 1px 0 rgba(190,220,200,.25);color:#eaf1ec;}
 .cal-fab:active{transform:scale(.92);}
 .cal-fab svg{width:26px;height:26px;}
+.fs-filter-tab{position:fixed;right:0;top:50%;transform:translateY(-50%);z-index:39;background:linear-gradient(160deg,var(--gruen-2,#3a7350),var(--gruen,#2f5d3f));border:1px solid rgba(150,200,165,.35);border-right:none;border-radius:12px 0 0 12px;padding:14px 9px;color:#eaf1ec;box-shadow:-6px 0 18px rgba(0,0,0,.35);display:flex;flex-direction:column;align-items:center;gap:4px;}
+.fs-filter-tab.hide{display:none;}
+.fs-filter-tab svg{width:19px;height:19px;}
+.fs-filter-tab-badge{background:var(--orange);color:#fff;font-size:10.5px;font-weight:800;border-radius:50%;min-width:16px;height:16px;display:flex;align-items:center;justify-content:center;padding:0 3px;}
+.fs-filter-scrim{position:fixed;inset:0;background:rgba(0,0,0,.45);opacity:0;pointer-events:none;transition:opacity .22s var(--ease);z-index:61;}
+.fs-filter-scrim.open{opacity:1;pointer-events:auto;}
+.fs-filter-drawer{position:fixed;top:0;right:0;bottom:0;width:min(86vw,338px);background:var(--bg-soft);border-left:1px solid var(--line);z-index:62;transform:translateX(100%);transition:transform .28s var(--ease);overflow-y:auto;-webkit-overflow-scrolling:touch;padding:18px 16px calc(24px + env(safe-area-inset-bottom));box-shadow:-10px 0 30px rgba(0,0,0,.4);}
+.fs-filter-drawer.open{transform:translateX(0);}
+.fs-filter-drawer-head{display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;}
+.fs-filter-close{width:32px;height:32px;border-radius:50%;background:var(--surface);border:1px solid var(--line);color:var(--txt);font-size:15px;display:flex;align-items:center;justify-content:center;flex-shrink:0;}
+.fs-filter-close:active{transform:scale(.9);}
 /* Hinzufügen-Menü */
 .add-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;}
 .add-opt{display:flex;flex-direction:column;align-items:center;gap:10px;padding:22px 12px;border-radius:16px;background:var(--surface);border:1px solid var(--line);}
@@ -3277,7 +3288,8 @@ function _fsExitAggMode(){
     DB.students=_fsPersonalBackup.students; DB.lessons=_fsPersonalBackup.lessons; DB.exams=_fsPersonalBackup.exams;
     _fsPersonalBackup=null;
   }
-  _fsAgg=null; _fsBaseline=null; _fsCalFahrzeugFilter=[]; _fsCalLehrerFilter=[]; _fsTileOpen={fahrzeug:false,lehrer:false};
+  _fsAgg=null; _fsBaseline=null; _fsCalFahrzeugFilter=[]; _fsCalLehrerFilter=[]; _fsCalBueroFilter=[]; _fsFilterPanelOpen=false; _fsTileOpen={fahrzeug:false,lehrer:false};
+  document.getElementById("fsCalTiles")?.remove();
   _fsSetDrawer(false);
   routeDashboard();
 }
@@ -3776,40 +3788,57 @@ function routeFahrschuleStatistik(){
   }));
 }
 
-/* ===== Stufe 3: Filter-Kacheln im Fahrschul-Kalender =====
-   Mehrfach wählbar, ein-/ausklappbar, direkt auf der Kalenderseite verankert
-   (nicht in einem Popup-Sheet) - hängt sich additiv an routeKalender() an. */
-let _fsTileOpen={fahrzeug:false,lehrer:false};
+/* ===== Stufe 3: Filter-Seitenpanel im Fahrschul-Kalender =====
+   Rechte, ausklappbare Seitenleiste (Audamedia-Vorbild). Offen/Zu-Zustand
+   liegt in _fsFilterPanelOpen und bleibt über jedes routeKalender()-Rerendering
+   hinweg erhalten (wird NUR beim Ein-/Ausklappen selbst gesetzt, nicht beim
+   Anklicken einzelner Checkboxen) - hängt sich additiv an routeKalender() an. */
+let _fsFilterPanelOpen=false;
 function _fsInjectFilterTiles(){
   if(!_fsAgg)return;
-  const wrap=document.querySelector(".cal-wrap");
-  const filtersEl=document.getElementById("calFilters");
-  if(!wrap||!filtersEl)return;
   document.getElementById("fsCalTiles")?.remove();
   const fahrzeuge=(_fsAgg.fahrzeuge||[]).map(fz=>fz.name).sort();
   const lehrer=_fsAgg.lehrer||[];
+  const bueroLabels={vortest:"Vortest",simulator:"Simulator",beratung:"Beratung",ersthilfe:"Erste Hilfe"};
   const checkRow=(datenAttr,value,label,checked)=>`<label class="fs-check-row">
     <input type="checkbox" data-${datenAttr}="${esc(value)}" ${checked?'checked':''}>
     <span>${esc(label)}</span>
   </label>`;
-  const keinFilterAktiv=!_fsCalLehrerFilter.length&&!_fsCalFahrzeugFilter.length;
+  const isBuero=_fsKalenderModus==="buero";
+  const activeCount=_fsCalLehrerFilter.length+_fsCalFahrzeugFilter.length+(isBuero?_fsCalBueroFilter.length:0);
+  const keinFilterAktiv=!isBuero&&!_fsCalLehrerFilter.length&&!_fsCalFahrzeugFilter.length;
+  const open=_fsFilterPanelOpen;
   const html=`<div id="fsCalTiles">
-    <button class="btn btn-ghost" style="width:100%;margin-bottom:8px;" onclick="(window._fsAktuelleRoute||routeFahrschuleDashboard)()">← Zurück</button>
-    <div class="seg" style="margin-bottom:10px;">
-      <button class="seg-i${_fsKalenderModus==='fahrlehrer'?' on':''}" onclick="_fsSetKalenderModus('fahrlehrer')">Fahrlehrer-Kalender</button>
-      <button class="seg-i${_fsKalenderModus==='buero'?' on':''}" onclick="_fsSetKalenderModus('buero')">Büro-Kalender</button>
-    </div>
-    <div class="res-block" style="animation:none;">
-      <h4>Ansicht ${_fsCalLehrerFilter.length+_fsCalFahrzeugFilter.length?`<span style="color:var(--orange);">(${_fsCalLehrerFilter.length+_fsCalFahrzeugFilter.length})</span>`:''}</h4>
+    <button class="fs-filter-tab${open?' hide':''}" id="fsFilterTabBtn" aria-label="Filter öffnen">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 6h16M7 12h10M10 18h4"/></svg>
+      ${activeCount?`<span class="fs-filter-tab-badge">${activeCount}</span>`:''}
+    </button>
+    <div class="fs-filter-scrim${open?' open':''}" id="fsFilterScrim"></div>
+    <aside class="fs-filter-drawer${open?' open':''}" id="fsFilterDrawer">
+      <div class="fs-filter-drawer-head">
+        <h4 style="margin:0;">Ansicht ${activeCount?`<span style="color:var(--orange);">(${activeCount})</span>`:''}</h4>
+        <button class="fs-filter-close" id="fsFilterCloseBtn" aria-label="Schließen">✕</button>
+      </div>
+      <button class="btn btn-ghost" style="width:100%;margin-bottom:10px;" onclick="(window._fsAktuelleRoute||routeFahrschuleDashboard)()">← Zurück</button>
+      <div class="seg" style="margin-bottom:12px;">
+        <button class="seg-i${_fsKalenderModus==='fahrlehrer'?' on':''}" onclick="_fsSetKalenderModus('fahrlehrer')">Fahrlehrer-Kalender</button>
+        <button class="seg-i${isBuero?' on':''}" onclick="_fsSetKalenderModus('buero')">Büro-Kalender</button>
+      </div>
       <div class="fs-check-group-label">👤 Fahrlehrer</div>
       ${lehrer.length?lehrer.map(l=>checkRow("fslehrer",l.id,l.name||l.email,_fsCalLehrerFilter.includes(l.id))).join(""):'<p class="muted-p" style="font-size:12px;">Keine Fahrlehrer.</p>'}
       <div class="fs-check-group-label" style="margin-top:10px;">🚗 Fahrzeuge</div>
       ${fahrzeuge.length?fahrzeuge.map(fz=>checkRow("fsfz",fz,fz,_fsCalFahrzeugFilter.includes(fz))).join(""):'<p class="muted-p" style="font-size:12px;">Keine Fahrzeuge.</p>'}
-      ${(_fsCalFahrzeugFilter.length||_fsCalLehrerFilter.length)?`<button class="btn btn-ghost" style="width:100%;margin-top:10px;" onclick="_fsResetKalFilter()">Filter zurücksetzen</button>`:''}
-    </div>
-    ${keinFilterAktiv?`<div class="res-block" style="animation:none;background:rgba(207,154,62,.1);border-color:rgba(207,154,62,.35);text-align:center;"><p style="font-size:13px;color:var(--muted);margin:0;">👆 Wähle oben einen Fahrlehrer oder ein Fahrzeug, um Termine zu sehen.</p></div>`:''}
+      ${isBuero?`<div class="fs-check-group-label" style="margin-top:10px;">🏢 Kategorien</div>
+      <p class="muted-p" style="font-size:11.5px;margin:-2px 0 4px;">Leer = alle anzeigen</p>
+      ${FS_BUERO_ARTEN.map(a=>checkRow("fsbuero",a,bueroLabels[a]||a,_fsCalBueroFilter.includes(a))).join("")}`:''}
+      ${(_fsCalFahrzeugFilter.length||_fsCalLehrerFilter.length||(isBuero&&_fsCalBueroFilter.length))?`<button class="btn btn-ghost" style="width:100%;margin-top:12px;" onclick="_fsResetKalFilter()">Filter zurücksetzen</button>`:''}
+      ${keinFilterAktiv?`<div class="res-block" style="animation:none;background:rgba(207,154,62,.1);border-color:rgba(207,154,62,.35);text-align:center;margin-top:12px;"><p style="font-size:13px;color:var(--muted);margin:0;">👆 Wähle einen Fahrlehrer oder ein Fahrzeug, um Termine zu sehen.</p></div>`:''}
+    </aside>
   </div>`;
-  filtersEl.insertAdjacentHTML("afterend",html);
+  document.body.insertAdjacentHTML("beforeend",html);
+  $("#fsFilterTabBtn").addEventListener("click",_fsOpenFilterPanel);
+  $("#fsFilterCloseBtn").addEventListener("click",_fsCloseFilterPanel);
+  $("#fsFilterScrim").addEventListener("click",_fsCloseFilterPanel);
   document.querySelectorAll("[data-fsfz]").forEach(b=>b.addEventListener("change",()=>{
     const v=b.dataset.fsfz; const i=_fsCalFahrzeugFilter.indexOf(v);
     if(i>=0)_fsCalFahrzeugFilter.splice(i,1); else _fsCalFahrzeugFilter.push(v);
@@ -3820,9 +3849,27 @@ function _fsInjectFilterTiles(){
     if(i>=0)_fsCalLehrerFilter.splice(i,1); else _fsCalLehrerFilter.push(v);
     routeKalender();
   }));
+  document.querySelectorAll("[data-fsbuero]").forEach(b=>b.addEventListener("change",()=>{
+    const v=b.dataset.fsbuero; const i=_fsCalBueroFilter.indexOf(v);
+    if(i>=0)_fsCalBueroFilter.splice(i,1); else _fsCalBueroFilter.push(v);
+    routeKalender();
+  }));
 }
-function _fsToggleTile(key){ _fsTileOpen[key]=!_fsTileOpen[key]; routeKalender(); }
-function _fsResetKalFilter(){ _fsCalFahrzeugFilter=[]; _fsCalLehrerFilter=[]; routeKalender(); }
+// Öffnen/Schließen setzt NUR die Klassen direkt (kein routeKalender()-Rerendering nötig) -
+// dadurch bleibt der Panel-Zustand beim Filtern stabil, unabhängig vom Kalender-Body.
+function _fsOpenFilterPanel(){
+  _fsFilterPanelOpen=true;
+  $("#fsFilterDrawer")?.classList.add("open");
+  $("#fsFilterScrim")?.classList.add("open");
+  $("#fsFilterTabBtn")?.classList.add("hide");
+}
+function _fsCloseFilterPanel(){
+  _fsFilterPanelOpen=false;
+  $("#fsFilterDrawer")?.classList.remove("open");
+  $("#fsFilterScrim")?.classList.remove("open");
+  $("#fsFilterTabBtn")?.classList.remove("hide");
+}
+function _fsResetKalFilter(){ _fsCalFahrzeugFilter=[]; _fsCalLehrerFilter=[]; _fsCalBueroFilter=[]; routeKalender(); }
 function _fsSetKalenderModus(modus){ _fsKalenderModus=modus; routeKalender(); }
 
 /* ===== Buchungslinks pro Fahrlehrer (Schalter/Automatik) ===== */
@@ -4616,7 +4663,7 @@ window.addEventListener("load", () => {
 const STORE_KEY="serband-app-v1";
 /* Build-Version: bei jeder Auslieferung hier das Datum aktualisieren.
    Wird in den Einstellungen angezeigt + für den Update-Hinweis genutzt. */
-const APP_VERSION="2026.08.14";
+const APP_VERSION="2026.08.17";
 const RESTORE_STAMP="2026-06-23T16:54:19.419Z";
 const RESTORE_DATA=null;
 function load(){try{return JSON.parse(localStorage.getItem(STORE_KEY))||{students:[]};}catch(e){return {students:[]};}}
@@ -6795,6 +6842,14 @@ function saveKapazitaet(){
   if(!DB.workCfg)DB.workCfg={};
   DB.workCfg.kapazitaetWoche=v;save();toast("Kapazität gespeichert ✓");
 }
+// Persistenter Offen/Zu-Zustand der Settings-Kategorien (Bereich D) - bleibt über
+// routeSettings()-Rerendering hinweg erhalten (z.B. wenn ein Toggle innerhalb geklickt wird),
+// analog zum _fsFilterPanelOpen-Muster beim Kalender-Filterpanel.
+let _settingsAccOpen=null;
+function _settingsAccToggle(key){
+  _settingsAccOpen=(_settingsAccOpen===key)?null:key;
+  document.querySelectorAll(".set-acc").forEach(el=>{ el.classList.toggle("open",el.dataset.acckey===_settingsAccOpen); });
+}
 function routeSettings(){
   $("#tbTitle").textContent="Einstellungen";setFab(false);view.scrollTop=0;
   const adminBtn=isSuperAdmin()?`<div class="res-block" style="animation:none;"><h4>👑 Admin-Panel</h4><p>Nutzer verwalten, Kill-Switch und Sync-Status.</p><div class="btn-row"><button class="btn btn-ghost" onclick="openAdminPanel()">Admin öffnen</button></div></div>
@@ -6805,83 +6860,116 @@ function routeSettings(){
   const kapWoche=DB.workCfg?.kapazitaetWoche||32;
   view.innerHTML=`<div class="view-inner view-read fade-up">
     ${logoutBtn}
-    ${_authUser?`<div class="res-block" style="animation:none;background:rgba(74,139,69,.06);border-color:rgba(74,139,69,.2);"><h4 style="color:#4a8b45">☁ Cloud-Konto</h4><p style="color:#6a9b7a;font-size:13px;">${_authUser.email}</p><p style="color:var(--muted);font-size:12px;margin-top:4px;">Daten werden automatisch gesichert.</p></div>
-    <div class="res-block" style="animation:none;"><h4>🔔 Push-Benachrichtigungen</h4>
-      <p id="pushStatusTxt" style="color:var(--muted);font-size:13px;">Wird geprüft …</p>
-      <div class="btn-row"><button class="btn btn-ghost" id="pushEnableBtn" onclick="enablePushNotifications()">Aktivieren</button></div>
-    </div>`:""}
-    <div class="res-block" style="animation:none;"><h4>🔒 Sicherheit</h4>
-      <p style="font-size:13px;color:var(--muted);">Falls dein Handy mal verloren geht oder du dir unsicher bist, ob du irgendwo noch angemeldet bist.</p>
-      <div class="btn-row"><button class="btn btn-ghost" id="allDevicesLogoutBtn">Von allen Geräten abmelden</button></div>
-      <p style="font-size:13px;color:var(--muted);margin-top:12px;">Schnell-Entsperrung mit Fingerabdruck/Gesicht auf diesem Gerät (ersetzt nicht dein Passwort, ist nur ein schneller Riegel davor).</p>
-      <div class="btn-row">${_authUser&&_bioCredIdFor(_authUser.id)
-        ?`<button class="btn btn-ghost" onclick="bioDeaktivieren()">Schnell-Entsperrung ausschalten</button>`
-        :`<button class="btn btn-primary" onclick="bioRegistrieren()">Schnell-Entsperrung einrichten</button>`}</div>
-    </div>
-    ${buchungslinksBtn}
-    ${adminBtn}
-    <div class="res-block" style="animation:none;"><h4>📋 Ausbildungsplan-Vorlagen</h4>
-      <p>Grundstufe, Aufbaustufe und Leistungsstufe individuell gestalten — z.B. eigene Prüfgebiete anlegen.</p>
-      <div class="btn-row"><button class="btn btn-ghost" onclick="routePlanVorlagen()">Vorlagen verwalten</button></div></div>
-    <div class="res-block" style="animation:none;"><h4><span class="ic ic-muted" style="font-size:14px;">${ICN.gear}</span> Sichtbare Funktionen</h4>
-      <p>Einzelne Funktionen ausblenden, die du nicht brauchst.</p>
-      <div class="field"><div class="toggle-row"><div><div class="tc-name" style="font-weight:800;font-size:14px;">Vortest-Button</div><div class="tc-sub" style="font-size:12.5px;color:var(--muted);margin-top:2px;">Link zum Boost-Buchungskalender in der Schülerakte</div></div><button class="check-toggle${DB.sichtbarkeit.vortest?' on':''}" data-vis="vortest"></button></div></div>
-      <div class="field"><div class="toggle-row"><div><div class="tc-name" style="font-weight:800;font-size:14px;">Fahrcheck</div><div class="tc-sub" style="font-size:12.5px;color:var(--muted);margin-top:2px;">FC-Auswahl beim Bearbeiten einer Fahrstunde</div></div><button class="check-toggle${DB.sichtbarkeit.fahrcheck?' on':''}" data-vis="fahrcheck"></button></div></div>
-      <div class="field"><div class="toggle-row"><div><div class="tc-name" style="font-weight:800;font-size:14px;">Simulator-Empfehlung</div><div class="tc-sub" style="font-size:12.5px;color:var(--muted);margin-top:2px;">Karte in der Schülerakte</div></div><button class="check-toggle${DB.sichtbarkeit.simulator?' on':''}" data-vis="simulator"></button></div></div>
-    </div>
-    <div class="res-block" style="animation:none;"><h4><span class="ic ic-muted" style="font-size:14px;">${ICN.gear}</span> Dashboard anpassen</h4>
-      <p>Welche Kacheln auf deiner Startseite erscheinen sollen.</p>
-      <div class="field"><div class="toggle-row"><div><div class="tc-name" style="font-weight:800;font-size:14px;">Nächste-Prüfung-Karte</div></div><button class="check-toggle${sichtbar('dash_nextexam')?' on':''}" data-vis="dash_nextexam"></button></div></div>
-      <div class="field"><div class="toggle-row"><div><div class="tc-name" style="font-weight:800;font-size:14px;">Nächster-Schüler-Karte</div></div><button class="check-toggle${sichtbar('dash_nextstudent')?' on':''}" data-vis="dash_nextstudent"></button></div></div>
-      <div class="field"><div class="toggle-row"><div><div class="tc-name" style="font-weight:800;font-size:14px;">FC-vergessen-Karte</div></div><button class="check-toggle${sichtbar('dash_fcpending')?' on':''}" data-vis="dash_fcpending"></button></div></div>
-      <div class="field"><div class="toggle-row"><div><div class="tc-name" style="font-weight:800;font-size:14px;">Auslastungs-Karte</div></div><button class="check-toggle${sichtbar('dash_capacity')?' on':''}" data-vis="dash_capacity"></button></div></div>
-      <div class="field"><div class="toggle-row"><div><div class="tc-name" style="font-weight:800;font-size:14px;">Diese Woche verdient</div></div><button class="check-toggle${sichtbar('dash_wocheverdienst')?' on':''}" data-vis="dash_wocheverdienst"></button></div></div>
-      <div class="field"><div class="toggle-row"><div><div class="tc-name" style="font-weight:800;font-size:14px;">Nächste Theorie</div></div><button class="check-toggle${sichtbar('dash_naechstetheorie')?' on':''}" data-vis="dash_naechstetheorie"></button></div></div>
-    </div>
-    <div class="res-block" style="animation:none;"><h4>🌤 Wetter-Widget</h4>
-      <p>Kostenlosen API-Key auf <b>openweathermap.org</b> holen (Registrierung reicht), hier eintragen — dann erscheint das aktuelle Wetter oben im Dashboard.</p>
-      <div class="field" style="margin-top:8px;"><label>API-Key</label><input id="weatherKeyInput" type="text" placeholder="z.B. a1b2c3d4e5f6..." value="${esc(DB.weatherCfg.apiKey||"")}" autocomplete="off"></div>
-      <div class="field"><label>Stadt</label><input id="weatherCityInput" type="text" placeholder="Offenbach,DE" value="${esc(DB.weatherCfg.city||"Offenbach,DE")}" autocomplete="off"></div>
-      <div class="btn-row"><button class="btn btn-ghost" id="weatherSaveBtn">Speichern</button></div>
-    </div>
-    <div class="res-block" style="animation:none;"><h4><span class="ic ic-muted" style="font-size:14px;">${ICN.gear}</span> Kapazität</h4>
-      <p>Wöchentliche Slot-Kapazität für die Auslastungsanzeige.</p>
-      <div style="display:flex;align-items:center;gap:12px;margin-top:10px;">
-        <input type="number" id="kapInput" value="${kapWoche}" min="1" max="100" style="width:80px;padding:8px 12px;background:var(--surface-2);border:1px solid var(--line);border-radius:10px;color:var(--txt);font-size:15px;">
-        <span style="color:var(--muted);font-size:13px;">Slots/Woche</span>
-        <button class="btn btn-ghost" style="padding:8px 16px;" onclick="saveKapazitaet()">Speichern</button>
-      </div></div>
-    <div class="res-block" style="animation:none;"><h4><span class="ic ic-muted" style="font-size:14px;">${ICN.lock}</span> Verdienst-PIN</h4>
-      <p>${DB.verdienstPin?'PIN ist aktiv — Euro-Beträge sind geschützt, UE-/Fahrstunden-Zahlen bleiben sichtbar.':'Kein PIN gesetzt — alles ist für alle sichtbar.'}</p>
-      <div style="display:flex;gap:8px;margin-top:10px;flex-wrap:wrap;">
-        <button class="btn btn-ghost" style="padding:8px 16px;" onclick="setVerdienstPin()">${DB.verdienstPin?'PIN ändern':'PIN setzen'}</button>
-        ${DB.verdienstPin?`<button class="btn btn-ghost" style="padding:8px 16px;color:#f08080;border-color:rgba(200,60,60,.3);" onclick="deleteVerdienstPin()">PIN entfernen</button>`:''}
-      </div></div>
-    <div class="res-block" style="animation:none;"><h4><span class="ic ic-gold" style="font-size:14px;">${ICN.save}</span> Sichern</h4>
-      <p>Erstellt eine Datei mit allen Schülern, Plänen und Profilen.</p>
-      <div class="btn-row"><button class="btn btn-primary" id="expBtn">${ICN.down} Backup herunterladen</button></div></div>
-    <div class="res-block" style="animation:none;"><h4><span class="ic ic-blau" style="font-size:14px;">${ICN.folder}</span> Wiederherstellen</h4>
-      <p>Lädt ein Backup und ersetzt die aktuellen Daten.</p>
-      <input type="file" id="impFile" accept="application/json" style="display:none">
-      <div class="btn-row"><button class="btn btn-ghost" id="impBtn">${ICN.up} Backup einspielen</button></div></div>
-    <div class="res-block" style="animation:none;">
-      <h4>📖 Kurzanleitung</h4>
-      <details style="margin-top:4px;">
-        <summary style="color:var(--muted);font-size:13px;cursor:pointer;padding:4px 0;">Anzeigen</summary>
-        <div style="margin-top:12px;display:flex;flex-direction:column;gap:10px;font-size:13px;color:var(--txt);line-height:1.6;">
-          <div><b style="color:#4a8b45">🏠 Dashboard</b><br>Übersicht: aktive Schüler, Kapazität, nächste Prüfungen. Kacheln antippen für Schnellzugriff.</div>
-          <div><b style="color:#4a8b45"><span class="ic ic-gruen" style="font-size:14px;">${ICN.users}</span> Schüler</b><br>Alle aktiven Schüler. + oben rechts = neuer Schüler. Schüler antippen = Detailansicht mit Plan, Bogen, Historie.</div>
-          <div><b style="color:#4a8b45">📋 Ausbildungsplan</b><br>Grüne Ampel = geschafft, Gelb = in Arbeit, Rot = fehlt noch. FC = Fahrcheck. Sonderfahrten einzeln abhaken.</div>
-          <div><b style="color:#4a8b45">🧠 Persönlichkeitsbogen</b><br>65 Fragen → DISC-Profil (Rot/Gelb/Grün/Blau). Zeigt Coaching-Hinweise für den Umgang mit dem Schüler.</div>
-          <div><b style="color:#4a8b45"><span class="ic ic-gold" style="font-size:14px;">${ICN.trophy}</span> Prüfungen</b><br>Termin eintragen → Ergebnis eintragen. Bestandene Prüfungen verschwinden automatisch ins Archiv.</div>
-          <div><b style="color:#4a8b45"><span class="ic ic-gold" style="font-size:14px;">${ICN.cal}</span> Kalender</b><br>Fahrstunden planen, Fahrzeug zuweisen, Sonderfahrten eintragen. Feiertage (Hessen) automatisch markiert.</div>
-          <div><b style="color:#4a8b45">⏳ Warteliste</b><br>Schüler landen hier ab 90 % Ausbildungsstand + bestandener Theorie. Reihenfolge = ältestes Datum zuerst.</div>
-          <div><b style="color:#4a8b45"><span class="ic ic-gold" style="font-size:14px;">${ICN.chart}</span> Statistik</b><br>Prüfungsquote, Durchfallanalyse, Prüfer-Statistik, monatlicher Verdienst (PIN-geschützt).</div>
-          <div><b style="color:#4a8b45"><span class="ic ic-blau" style="font-size:14px;">${ICN.pencil}</span> Zeichenfläche</b><br>Kreuzungen und Situationen zeichnen. Objekte aus dem Panel per Drag&amp;Drop platzieren. Stift, Radierer, Undo.</div>
-          <div><b style="color:#4a8b45"><span class="ic ic-gold" style="font-size:14px;">${ICN.save}</span> Backup</b><br>Daten werden automatisch in der Cloud gespeichert. Manuelles Backup zusätzlich empfohlen — z.B. einmal pro Woche.</div>
+    ${_authUser?`<div class="res-block" style="animation:none;background:rgba(74,139,69,.06);border-color:rgba(74,139,69,.2);"><h4 style="color:#4a8b45">☁ Cloud-Konto</h4><p style="color:#6a9b7a;font-size:13px;">${_authUser.email}</p><p style="color:var(--muted);font-size:12px;margin-top:4px;">Daten werden automatisch gesichert.</p></div>`:""}
+
+    <div class="acc set-acc${_settingsAccOpen==='app'?' open':''}" data-acckey="app"><button class="acc-h" onclick="_settingsAccToggle('app')" style="cursor:pointer;"><span style="font-size:18px;width:30px;">📱</span><span style="flex:1;text-align:left;font-family:'Anton',sans-serif;text-transform:uppercase;font-size:15px;letter-spacing:.03em;">App anpassen</span><span class="chev">${ICN.chev}</span></button>
+      <div class="acc-body"><div class="acc-inner" style="padding:0 16px 16px;">
+        <div class="res-block" style="animation:none;"><h4><span class="ic ic-muted" style="font-size:14px;">${ICN.gear}</span> Dashboard anpassen</h4>
+          <p>Welche Kacheln auf deiner Startseite erscheinen sollen.</p>
+          <div class="field"><div class="toggle-row"><div><div class="tc-name" style="font-weight:800;font-size:14px;">Nächste-Prüfung-Karte</div></div><button class="check-toggle${sichtbar('dash_nextexam')?' on':''}" data-vis="dash_nextexam"></button></div></div>
+          <div class="field"><div class="toggle-row"><div><div class="tc-name" style="font-weight:800;font-size:14px;">Nächster-Schüler-Karte</div></div><button class="check-toggle${sichtbar('dash_nextstudent')?' on':''}" data-vis="dash_nextstudent"></button></div></div>
+          <div class="field"><div class="toggle-row"><div><div class="tc-name" style="font-weight:800;font-size:14px;">FC-vergessen-Karte</div></div><button class="check-toggle${sichtbar('dash_fcpending')?' on':''}" data-vis="dash_fcpending"></button></div></div>
+          <div class="field"><div class="toggle-row"><div><div class="tc-name" style="font-weight:800;font-size:14px;">Auslastungs-Karte</div></div><button class="check-toggle${sichtbar('dash_capacity')?' on':''}" data-vis="dash_capacity"></button></div></div>
+          <div class="field"><div class="toggle-row"><div><div class="tc-name" style="font-weight:800;font-size:14px;">Diese Woche verdient</div></div><button class="check-toggle${sichtbar('dash_wocheverdienst')?' on':''}" data-vis="dash_wocheverdienst"></button></div></div>
+          <div class="field"><div class="toggle-row"><div><div class="tc-name" style="font-weight:800;font-size:14px;">Nächste Theorie</div></div><button class="check-toggle${sichtbar('dash_naechstetheorie')?' on':''}" data-vis="dash_naechstetheorie"></button></div></div>
         </div>
-      </details>
+        <div class="res-block" style="animation:none;"><h4><span class="ic ic-muted" style="font-size:14px;">${ICN.gear}</span> Sichtbare Funktionen</h4>
+          <p>Einzelne Funktionen ausblenden, die du nicht brauchst.</p>
+          <div class="field"><div class="toggle-row"><div><div class="tc-name" style="font-weight:800;font-size:14px;">Vortest-Button</div><div class="tc-sub" style="font-size:12.5px;color:var(--muted);margin-top:2px;">Link zum Boost-Buchungskalender in der Schülerakte</div></div><button class="check-toggle${DB.sichtbarkeit.vortest?' on':''}" data-vis="vortest"></button></div></div>
+          <div class="field"><div class="toggle-row"><div><div class="tc-name" style="font-weight:800;font-size:14px;">Fahrcheck</div><div class="tc-sub" style="font-size:12.5px;color:var(--muted);margin-top:2px;">FC-Auswahl beim Bearbeiten einer Fahrstunde</div></div><button class="check-toggle${DB.sichtbarkeit.fahrcheck?' on':''}" data-vis="fahrcheck"></button></div></div>
+          <div class="field"><div class="toggle-row"><div><div class="tc-name" style="font-weight:800;font-size:14px;">Simulator-Empfehlung</div><div class="tc-sub" style="font-size:12.5px;color:var(--muted);margin-top:2px;">Karte in der Schülerakte</div></div><button class="check-toggle${DB.sichtbarkeit.simulator?' on':''}" data-vis="simulator"></button></div></div>
+        </div>
+        <div class="res-block" style="animation:none;"><h4>🌤 Wetter-Widget</h4>
+          <p>Kostenlosen API-Key auf <b>openweathermap.org</b> holen (Registrierung reicht), hier eintragen — dann erscheint das aktuelle Wetter oben im Dashboard.</p>
+          <div class="field" style="margin-top:8px;"><label>API-Key</label><input id="weatherKeyInput" type="text" placeholder="z.B. a1b2c3d4e5f6..." value="${esc(DB.weatherCfg.apiKey||"")}" autocomplete="off"></div>
+          <div class="field"><label>Stadt</label><input id="weatherCityInput" type="text" placeholder="Offenbach,DE" value="${esc(DB.weatherCfg.city||"Offenbach,DE")}" autocomplete="off"></div>
+          <div class="btn-row"><button class="btn btn-ghost" id="weatherSaveBtn">Speichern</button></div>
+        </div>
+      </div></div>
     </div>
+
+    <div class="acc set-acc${_settingsAccOpen==='kal'?' open':''}" data-acckey="kal"><button class="acc-h" onclick="_settingsAccToggle('kal')" style="cursor:pointer;"><span style="font-size:18px;width:30px;">📅</span><span style="flex:1;text-align:left;font-family:'Anton',sans-serif;text-transform:uppercase;font-size:15px;letter-spacing:.03em;">Kalender &amp; Arbeit</span><span class="chev">${ICN.chev}</span></button>
+      <div class="acc-body"><div class="acc-inner" style="padding:0 16px 16px;">
+        <div class="res-block" style="animation:none;"><h4><span class="ic ic-muted" style="font-size:14px;">${ICN.gear}</span> Kapazität</h4>
+          <p>Wöchentliche Slot-Kapazität für die Auslastungsanzeige.</p>
+          <div style="display:flex;align-items:center;gap:12px;margin-top:10px;">
+            <input type="number" id="kapInput" value="${kapWoche}" min="1" max="100" style="width:80px;padding:8px 12px;background:var(--surface-2);border:1px solid var(--line);border-radius:10px;color:var(--txt);font-size:15px;">
+            <span style="color:var(--muted);font-size:13px;">Slots/Woche</span>
+            <button class="btn btn-ghost" style="padding:8px 16px;" onclick="saveKapazitaet()">Speichern</button>
+          </div></div>
+        <div class="res-block" style="animation:none;"><h4>📋 Ausbildungsplan-Vorlagen</h4>
+          <p>Grundstufe, Aufbaustufe und Leistungsstufe individuell gestalten — z.B. eigene Prüfgebiete anlegen.</p>
+          <div class="btn-row"><button class="btn btn-ghost" onclick="routePlanVorlagen()">Vorlagen verwalten</button></div></div>
+      </div></div>
+    </div>
+
+    <div class="acc set-acc${_settingsAccOpen==='geld'?' open':''}" data-acckey="geld"><button class="acc-h" onclick="_settingsAccToggle('geld')" style="cursor:pointer;"><span style="font-size:18px;width:30px;">💰</span><span style="flex:1;text-align:left;font-family:'Anton',sans-serif;text-transform:uppercase;font-size:15px;letter-spacing:.03em;">Verdienst &amp; Sicherheit</span><span class="chev">${ICN.chev}</span></button>
+      <div class="acc-body"><div class="acc-inner" style="padding:0 16px 16px;">
+        <div class="res-block" style="animation:none;"><h4><span class="ic ic-muted" style="font-size:14px;">${ICN.lock}</span> Verdienst-PIN</h4>
+          <p>${DB.verdienstPin?'PIN ist aktiv — Euro-Beträge sind geschützt, UE-/Fahrstunden-Zahlen bleiben sichtbar.':'Kein PIN gesetzt — alles ist für alle sichtbar.'}</p>
+          <div style="display:flex;gap:8px;margin-top:10px;flex-wrap:wrap;">
+            <button class="btn btn-ghost" style="padding:8px 16px;" onclick="setVerdienstPin()">${DB.verdienstPin?'PIN ändern':'PIN setzen'}</button>
+            ${DB.verdienstPin?`<button class="btn btn-ghost" style="padding:8px 16px;color:#f08080;border-color:rgba(200,60,60,.3);" onclick="deleteVerdienstPin()">PIN entfernen</button>`:''}
+          </div>
+          ${DB.verdienstPin?`<div class="field" style="margin-top:12px;"><div class="toggle-row"><div><div class="tc-name" style="font-weight:800;font-size:14px;">Auto-Sperre nach Inaktivität</div><div class="tc-sub" style="font-size:12.5px;color:var(--muted);margin-top:2px;">Verdienst-Anzeige sperrt sich nach 3 Min. ohne Berührung von selbst wieder</div></div><button class="check-toggle${DB.verdienstAutoLock?' on':''}" id="vdAutoLockToggle"></button></div></div>`:''}
+        </div>
+        <div class="res-block" style="animation:none;"><h4>🔒 Sicherheit</h4>
+          <p style="font-size:13px;color:var(--muted);">Falls dein Handy mal verloren geht oder du dir unsicher bist, ob du irgendwo noch angemeldet bist.</p>
+          <div class="btn-row"><button class="btn btn-ghost" id="allDevicesLogoutBtn">Von allen Geräten abmelden</button></div>
+          <p style="font-size:13px;color:var(--muted);margin-top:12px;">Schnell-Entsperrung mit Fingerabdruck/Gesicht auf diesem Gerät (ersetzt nicht dein Passwort, ist nur ein schneller Riegel davor).</p>
+          <div class="btn-row">${_authUser&&_bioCredIdFor(_authUser.id)
+            ?`<button class="btn btn-ghost" onclick="bioDeaktivieren()">Schnell-Entsperrung ausschalten</button>`
+            :`<button class="btn btn-primary" onclick="bioRegistrieren()">Schnell-Entsperrung einrichten</button>`}</div>
+        </div>
+        ${buchungslinksBtn}
+      </div></div>
+    </div>
+
+    <div class="acc set-acc${_settingsAccOpen==='daten'?' open':''}" data-acckey="daten"><button class="acc-h" onclick="_settingsAccToggle('daten')" style="cursor:pointer;"><span style="font-size:18px;width:30px;">💾</span><span style="flex:1;text-align:left;font-family:'Anton',sans-serif;text-transform:uppercase;font-size:15px;letter-spacing:.03em;">Daten</span><span class="chev">${ICN.chev}</span></button>
+      <div class="acc-body"><div class="acc-inner" style="padding:0 16px 16px;">
+        <div class="res-block" style="animation:none;"><h4><span class="ic ic-gold" style="font-size:14px;">${ICN.save}</span> Sichern</h4>
+          <p>Erstellt eine Datei mit allen Schülern, Plänen und Profilen.</p>
+          <div class="btn-row"><button class="btn btn-primary" id="expBtn">${ICN.down} Backup herunterladen</button></div></div>
+        <div class="res-block" style="animation:none;"><h4><span class="ic ic-blau" style="font-size:14px;">${ICN.folder}</span> Wiederherstellen</h4>
+          <p>Lädt ein Backup und ersetzt die aktuellen Daten.</p>
+          <input type="file" id="impFile" accept="application/json" style="display:none">
+          <div class="btn-row"><button class="btn btn-ghost" id="impBtn">${ICN.up} Backup einspielen</button></div></div>
+      </div></div>
+    </div>
+
+    ${isSuperAdmin()?`<div class="acc set-acc${_settingsAccOpen==='fs'?' open':''}" data-acckey="fs"><button class="acc-h" onclick="_settingsAccToggle('fs')" style="cursor:pointer;"><span style="font-size:18px;width:30px;">🏫</span><span style="flex:1;text-align:left;font-family:'Anton',sans-serif;text-transform:uppercase;font-size:15px;letter-spacing:.03em;">Fahrschule-Verwaltung</span><span class="chev">${ICN.chev}</span></button>
+      <div class="acc-body"><div class="acc-inner" style="padding:0 16px 16px;">
+        ${adminBtn}
+      </div></div>
+    </div>`:''}
+
+    <div class="acc set-acc${_settingsAccOpen==='sonst'?' open':''}" data-acckey="sonst"><button class="acc-h" onclick="_settingsAccToggle('sonst')" style="cursor:pointer;"><span style="font-size:18px;width:30px;">ℹ️</span><span style="flex:1;text-align:left;font-family:'Anton',sans-serif;text-transform:uppercase;font-size:15px;letter-spacing:.03em;">Sonstiges</span><span class="chev">${ICN.chev}</span></button>
+      <div class="acc-body"><div class="acc-inner" style="padding:0 16px 16px;">
+        ${_authUser?`<div class="res-block" style="animation:none;"><h4>🔔 Push-Benachrichtigungen</h4>
+          <p id="pushStatusTxt" style="color:var(--muted);font-size:13px;">Wird geprüft …</p>
+          <div class="btn-row"><button class="btn btn-ghost" id="pushEnableBtn" onclick="enablePushNotifications()">Aktivieren</button></div>
+        </div>`:""}
+        <div class="res-block" style="animation:none;">
+          <h4>📖 Kurzanleitung</h4>
+          <details style="margin-top:4px;">
+            <summary style="color:var(--muted);font-size:13px;cursor:pointer;padding:4px 0;">Anzeigen</summary>
+            <div style="margin-top:12px;display:flex;flex-direction:column;gap:10px;font-size:13px;color:var(--txt);line-height:1.6;">
+              <div><b style="color:#4a8b45">🏠 Dashboard</b><br>Übersicht: aktive Schüler, Kapazität, nächste Prüfungen. Kacheln antippen für Schnellzugriff.</div>
+              <div><b style="color:#4a8b45"><span class="ic ic-gruen" style="font-size:14px;">${ICN.users}</span> Schüler</b><br>Alle aktiven Schüler. + oben rechts = neuer Schüler. Schüler antippen = Detailansicht mit Plan, Bogen, Historie.</div>
+              <div><b style="color:#4a8b45">📋 Ausbildungsplan</b><br>Grüne Ampel = geschafft, Gelb = in Arbeit, Rot = fehlt noch. FC = Fahrcheck. Sonderfahrten einzeln abhaken.</div>
+              <div><b style="color:#4a8b45">🧠 Persönlichkeitsbogen</b><br>65 Fragen → DISC-Profil (Rot/Gelb/Grün/Blau). Zeigt Coaching-Hinweise für den Umgang mit dem Schüler.</div>
+              <div><b style="color:#4a8b45"><span class="ic ic-gold" style="font-size:14px;">${ICN.trophy}</span> Prüfungen</b><br>Termin eintragen → Ergebnis eintragen. Bestandene Prüfungen verschwinden automatisch ins Archiv.</div>
+              <div><b style="color:#4a8b45"><span class="ic ic-gold" style="font-size:14px;">${ICN.cal}</span> Kalender</b><br>Fahrstunden planen, Fahrzeug zuweisen, Sonderfahrten eintragen. Feiertage (Hessen) automatisch markiert.</div>
+              <div><b style="color:#4a8b45">⏳ Warteliste</b><br>Schüler landen hier ab 90 % Ausbildungsstand + bestandener Theorie. Reihenfolge = ältestes Datum zuerst.</div>
+              <div><b style="color:#4a8b45"><span class="ic ic-gold" style="font-size:14px;">${ICN.chart}</span> Statistik</b><br>Prüfungsquote, Durchfallanalyse, Prüfer-Statistik, monatlicher Verdienst (PIN-geschützt).</div>
+              <div><b style="color:#4a8b45"><span class="ic ic-blau" style="font-size:14px;">${ICN.pencil}</span> Zeichenfläche</b><br>Kreuzungen und Situationen zeichnen. Objekte aus dem Panel per Drag&amp;Drop platzieren. Stift, Radierer, Undo.</div>
+              <div><b style="color:#4a8b45"><span class="ic ic-gold" style="font-size:14px;">${ICN.save}</span> Backup</b><br>Daten werden automatisch in der Cloud gespeichert. Manuelles Backup zusätzlich empfohlen — z.B. einmal pro Woche.</div>
+            </div>
+          </details>
+        </div>
+      </div></div>
+    </div>
+
     <div style="text-align:center;padding:14px 0 4px;color:var(--muted);font-size:11.5px;opacity:.6;">Kompass · Version ${APP_VERSION}</div>
   </div>`;
   $("#expBtn").addEventListener("click",()=>{
@@ -6909,6 +6997,12 @@ function routeSettings(){
     DB.sichtbarkeit[key]=!DB.sichtbarkeit[key];
     save();routeSettings();
   }));
+  const vdAutoLockT=$("#vdAutoLockToggle");
+  if(vdAutoLockT)vdAutoLockT.addEventListener("click",()=>{
+    DB.verdienstAutoLock=!DB.verdienstAutoLock;
+    save();routeSettings();
+    toast(DB.verdienstAutoLock?"Auto-Sperre aktiviert ✓":"Auto-Sperre deaktiviert");
+  });
   const wSave=$("#weatherSaveBtn");
   if(wSave)wSave.addEventListener("click",()=>{
     DB.weatherCfg.apiKey=$("#weatherKeyInput").value.trim();
@@ -7540,7 +7634,7 @@ const LEKTIONEN=[
 ];
 function lektionLabel(n){ const l=LEKTIONEN.find(x=>x.n===+n); return l?("Lektion "+l.n):""; }
 function lektionTitel(n){ const l=LEKTIONEN.find(x=>x.n===+n); return l?l.t:""; }
-let _fsCalFahrzeugFilter=[], _fsCalLehrerFilter=[];
+let _fsCalFahrzeugFilter=[], _fsCalLehrerFilter=[], _fsCalBueroFilter=[];
 const FS_BUERO_ARTEN=["beratung","ersthilfe","vortest","simulator"];
 let _fsKalenderModus="fahrlehrer"; // "fahrlehrer" | "buero"
 function eventMatchesFilter(e,iso){
@@ -7552,7 +7646,10 @@ function eventMatchesFilter(e,iso){
     if(!_fsCalLehrerFilter.length&&!_fsCalFahrzeugFilter.length)return false;
     if(_fsCalFahrzeugFilter.length&&!_fsCalFahrzeugFilter.includes(e.fahrzeug))return false;
     if(_fsCalLehrerFilter.length&&!_fsCalLehrerFilter.includes(e._fahrlehrerId))return false;
-    if(_fsKalenderModus==="buero"&&!FS_BUERO_ARTEN.includes(e.art))return false;
+    if(_fsKalenderModus==="buero"){
+      if(!FS_BUERO_ARTEN.includes(e.art))return false;
+      if(_fsCalBueroFilter.length&&!_fsCalBueroFilter.includes(e.art))return false;
+    }
     if(_fsKalenderModus==="fahrlehrer"&&FS_BUERO_ARTEN.includes(e.art))return false;
   }
   if(_calFcOffen){
@@ -8183,6 +8280,7 @@ function ensureDB(){ let _ensureDirty=false; if(!Array.isArray(DB.exams))DB.exam
   }; }
   if(typeof DB.verdienst.startUE!=="number")DB.verdienst.startUE=0;
   if(!DB.verdienst.startMonth)DB.verdienst.startMonth="2026-06";
+  if(typeof DB.verdienstAutoLock!=="boolean")DB.verdienstAutoLock=true;
   if(!DB.prueferData||typeof DB.prueferData!=="object")DB.prueferData={};
   if(!Array.isArray(DB.orte))DB.orte=[];
   if(!Array.isArray(DB.prueferTags))DB.prueferTags=[];
@@ -9412,9 +9510,28 @@ function unlockVerdienst(){
   const pin=DB.verdienstPin||"";
   if(!pin){sessionStorage.setItem("vd_unlocked","1");routeStats(_curStatPeriod);return;}
   const entered=(prompt("PIN eingeben, um Beträge zu sehen:")||"").trim();
-  if(entered===pin){sessionStorage.setItem("vd_unlocked","1");_vdJustUnlocked=true;routeStats(_curStatPeriod);}
+  if(entered===pin){sessionStorage.setItem("vd_unlocked","1");_vdJustUnlocked=true;routeStats(_curStatPeriod);_vdAutoLockArm();}
   else if(entered!=="")toast("Falscher PIN");
 }
+/* ===== Auto-Sperre der Verdienst-Anzeige nach Inaktivität (Bereich 7, Punkt 3) =====
+   Ein-/ausschaltbar über DB.verdienstAutoLock (Einstellungen). Läuft NUR während die
+   Statistik-Seite offen und aktuell entsperrt ist - jede Berührung der Seite setzt den
+   Timer zurück. Rein clientseitig (sessionStorage), keine zusätzliche Serverlast. */
+let _vdAutoLockTimer=null;
+const VD_AUTOLOCK_MS=3*60*1000; // 3 Minuten Inaktivität
+function _vdAutoLockArm(){
+  clearTimeout(_vdAutoLockTimer);
+  if(!DB.verdienstAutoLock)return;
+  if(!DB.verdienstPin)return;
+  if(!_verdienstPinCheck())return; // schon gesperrt -> nichts zu tun
+  if(($("#tbTitle")||{}).textContent!=="Statistik")return;
+  _vdAutoLockTimer=setTimeout(()=>{
+    sessionStorage.removeItem("vd_unlocked");
+    if(($("#tbTitle")||{}).textContent==="Statistik")routeStats(_curStatPeriod);
+  },VD_AUTOLOCK_MS);
+}
+function _vdAutoLockDisarm(){ clearTimeout(_vdAutoLockTimer); }
+view.addEventListener("pointerdown",()=>{ if((($("#tbTitle")||{}).textContent)==="Statistik")_vdAutoLockArm(); });
 function _verdienstModulHTMLContent(){
   const v=DB.verdienst;
   const _base=parseISO(todayISO());
@@ -9469,6 +9586,8 @@ function _verdienstModulHTMLContent(){
   }else{
     bisHtml=`<div class="th-goal"><div class="thg-lab">Für den Bonus noch legen</div><div class="thg-val">${restUE} UE · ~${Math.ceil(restUE/2)} Fahrstd.</div></div>`;
   }
+  const mk=monatsKennzahlen(moStart,moEnd);
+  const fcAusnahmenGesamt=mk.fcV1+mk.fcV2+mk.fcGeschenkt;
   return `<div class="vd-card">
     <div class="vd-head">
       <button class="vd-nav" onclick="vdShiftMonth(-1)" aria-label="Vormonat">${ICN.back}</button>
@@ -9497,9 +9616,76 @@ function _verdienstModulHTMLContent(){
       <div class="thg-val">${terminiertUE} UE</div>
     </div>
     ${bisHtml}
+  </div>
+  <div class="res-block" style="animation:none;margin-top:10px;">
+    <h4 style="margin-bottom:8px;">📊 Monats-Übersicht</h4>
+    <div class="stat-grid4">
+      ${miniStatAnim("Fahrstunden",mk.fahrstundenCount,"","diesen Monat")}
+      ${miniStatAnim("Prüfungen",mk.examCount,"",mk.examQuote==null?"–":mk.examQuote+"% Quote")}
+      ${miniStatAnim("UE gesamt",gesamtUE,"","Monat")}
+      ${miniStatAnim("Theorie",mk.theorieCount,"","Termine")}
+    </div>
+    ${fcAusnahmenGesamt?`<div class="vd-offen" style="margin-top:2px;">⚠ FC-Ausnahmen: ${mk.fcV1+mk.fcV2}× vergessen, ${mk.fcGeschenkt}× geschenkt · <b>${_eurMasked(mk.fcVerlust)}</b> entgangen</div>`:`<p class="muted-p" style="font-size:12.5px;margin-top:2px;">Keine FC-Ausnahmen diesen Monat ✓</p>`}
   </div>`;
 }
+// Kennzahlen für die erweiterte Monats-Statistik (Bereich 7, Punkt 2)
+function monatsKennzahlen(fromISO,toISO){
+  let fahrstundenCount=0, theorieCount=0, fcV1=0, fcV2=0, fcGeschenkt=0, fcVerlust=0;
+  let cur=fromISO, guard=0;
+  while(cur<=toISO && guard++<40){
+    (DB.lessons||[]).filter(l=>l.date===cur&&!l._synthetic).forEach(l=>{
+      if(l.status==="abgebrochen"||l.status==="nicht erschienen")return;
+      if(["fahrstunde","sonder","nacht"].indexOf(l.art)>=0){
+        fahrstundenCount++;
+        const ueFull=ueOf(l.art,l.von,l.bis,l.tatsaechlicheDauer);
+        if(l.fc==="v1"){ fcV1++; fcVerlust+=Math.round(ueFull/2*DB.verdienst.proUE); }
+        else if(l.fc==="v2"){ fcV2++; fcVerlust+=Math.round(ueFull*DB.verdienst.proUE); }
+        else if(l.fc==="geschenkt"){ fcGeschenkt++; fcVerlust+=Math.round(ueFull*DB.verdienst.proUE); }
+      }else if(l.art==="theorie"){ theorieCount++; }
+    });
+    cur=addDays(cur,1);
+  }
+  const ex=(DB.exams||[]).filter(e=>e.date&&e.date>=fromISO&&e.date<=toISO);
+  const examCount=ex.length, examPass=ex.filter(e=>e.result==="pass").length;
+  const examQuote=examCount?Math.round(examPass/examCount*100):null;
+  return {fahrstundenCount,theorieCount,examCount,examPass,examQuote,fcV1,fcV2,fcGeschenkt,fcVerlust};
+}
 function eur(n){ return (Math.round(n)).toLocaleString("de-DE")+" €"; }
+// Jahres-Rückblick (Bereich 7, Punkt 4): Gesamt-Verdienst, Ø/Monat, bester Monat.
+// Nur Monate bis einschließlich des aktuellen Monats zählen (keine Hochrechnung in die Zukunft).
+let _vdYearOffset=0;
+function vdShiftYear(delta){
+  _vdYearOffset+=delta;
+  const wrap=$("#vdYearWrap"); if(wrap)wrap.innerHTML=jahresRueckblickHTML();
+}
+function jahresRueckblickHTML(){
+  const now=new Date(); const curYear=now.getFullYear();
+  const year=curYear+_vdYearOffset;
+  const maxMonth=(year===curYear)?now.getMonth():11;
+  const monthsData=[];
+  for(let m=0;m<=maxMonth;m++){
+    const iso=year+"-"+pad2(m+1)+"-01";
+    const [ms,me]=isoMonthRange(iso);
+    const u=ueRange(ms,me);
+    monthsData.push({m,euro:gehaltAusUE(Math.round(u.total))});
+  }
+  const gesamtEuro=monthsData.reduce((a,x)=>a+x.euro,0);
+  const anzahlMonate=monthsData.length||1;
+  const avgEuro=Math.round(gesamtEuro/anzahlMonate);
+  let bester=monthsData[0]||{m:0,euro:0};
+  monthsData.forEach(x=>{ if(x.euro>bester.euro)bester=x; });
+  const MNL=["Januar","Februar","März","April","Mai","Juni","Juli","August","September","Oktober","November","Dezember"];
+  return `<div class="vd-head" style="margin-bottom:10px;">
+      <button class="vd-nav" onclick="vdShiftYear(-1)" aria-label="Vorjahr">${ICN.back}</button>
+      <div class="vd-title">Jahres-Rückblick · ${year}</div>
+      <button class="vd-nav" onclick="vdShiftYear(1)" aria-label="Nächstes Jahr" ${year>=curYear?'disabled style="opacity:.25;pointer-events:none;"':''}>${ICN.arrow}</button>
+    </div>
+    <div class="thermo-info">
+      <div class="thi-card"><div class="thi-k">💰 Gesamt ${year}</div><div class="thi-v">${_eurMasked(gesamtEuro)}</div><div class="thi-s">${anzahlMonate} Monat${anzahlMonate===1?'':'e'}</div></div>
+      <div class="thi-card"><div class="thi-k">Ø pro Monat</div><div class="thi-v">${_eurMasked(avgEuro)}</div><div class="thi-s">Schnitt</div></div>
+    </div>
+    <p style="font-size:13px;color:var(--txt);margin-top:8px;">🥇 Bester Monat: <b>${MNL[bester.m]}</b> · ${_eurMasked(bester.euro)}</p>`;
+}
 function fmtUE(n){ const r=Math.round(n*100)/100; return (r%1===0?r.toString():r.toFixed(2).replace(".",",")); }
 function maxISO(a,b){ return a>b?a:b; }
 
@@ -9540,6 +9726,7 @@ function routeStats(period){
   view.innerHTML=`<div class="view-inner view-read fade-up">
     <div class="row-between" style="margin-bottom:14px;"><div class="sec-h">Stat<span class="o">istik</span></div></div>
     <div id="vdModWrap">${verdienstModulHTML()}</div>
+    <div class="res-block" style="animation:none;margin-top:10px;"><div id="vdYearWrap">${jahresRueckblickHTML()}</div></div>
     ${periodChips(period)}
     <div class="stat-grid4" style="margin-bottom:18px;">
       ${miniStatAnim("Quote",q.pct==null?"–":q.pct,"%",q.total?q.pass+"/"+q.total+" bestanden":"keine Prüfung")}
@@ -9588,6 +9775,7 @@ function routeStats(period){
   $("#toPruefer").addEventListener("click",routePruefer);
   const _nb=$("#toNichtBesteher"); if(_nb)_nb.addEventListener("click",()=>routeNichtBesteher(period));
   const vg=$("#vdGear"); if(vg)vg.addEventListener("click",openVerdienstSheet);
+  _vdAutoLockArm(); // scharf, falls PIN aktiv + entsperrt + Auto-Sperre an; sonst no-op
 }
 /* ===== SAFE — privat ===== */
 /* ===== Nicht-Besteher-Statistik ===== */
