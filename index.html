@@ -3020,7 +3020,7 @@ async function bioRegistrieren(){
     const challenge=crypto.getRandomValues(new Uint8Array(32));
     const userIdBytes=new TextEncoder().encode(_authUser.id);
     const cred=await navigator.credentials.create({publicKey:{
-      challenge, rp:{name:"Fahrlehrer-Kompass"},
+      challenge, rp:{name:"Fahrlehrer-Kompass", id:window.location.hostname},
       user:{id:userIdBytes, name:_authUser.email||"Fahrlehrer", displayName:(_authProfile&&_authProfile.name)||_authUser.email||"Fahrlehrer"},
       pubKeyCredParams:[{type:"public-key",alg:-7},{type:"public-key",alg:-257}],
       authenticatorSelection:{authenticatorAttachment:"platform",userVerification:"required"},
@@ -3031,7 +3031,7 @@ async function bioRegistrieren(){
     localStorage.setItem(BIO_CRED_KEY+_authUser.id,credIdB64);
     toast("Schnell-Entsperrung aktiviert ✓");
     routeSettings();
-  }catch(e){ toast("Fehler: "+(e.message||"abgebrochen")); }
+  }catch(e){ toast("Fehler ("+(e.name||"?")+"): "+(e.message||"abgebrochen")); }
 }
 function bioDeaktivieren(){
   if(!_authUser)return;
@@ -3204,6 +3204,7 @@ function _fsMapSchueler(row,lehrerName){
     _fahrlehrerId:row.fahrlehrer_id, _fahrlehrerName:lehrerName(row.fahrlehrer_id),
     _paketId:row.paket_id, _hatSimulator:row.hat_simulator, _hatTheorieApp:row.hat_theorie_app,
     _bogenAusgefuellt:row.bogen_ausgefuellt, _buero_notiz:row.buero_notiz||"", _buero_todo:row.buero_todo||"",
+    _erstelltAm:row.erstellt_am||null,
     id:row.id, name:row.name, telefon:row.telefon
   });
 }
@@ -4179,17 +4180,31 @@ async function fsUrlaubLoeschen(id){
 }
 
 /* ===== Zusatzblock in der Schülerakte: Fahrlehrer verschieben + Büro-Notiz/To-do ===== */
-function _fsInjectDetailExtras(sid){
+async function _fsInjectDetailExtras(sid){
   document.getElementById("fsDetailExtras")?.remove();
   const s=DB.students.find(x=>x.id===sid);
   if(!s)return;
   const lehrer=_fsAgg.lehrer||[];
   const lehrerOptions=`<option value="">— nicht zugeordnet —</option>`+lehrer.map(l=>`<option value="${l.id}" ${l.id===s._fahrlehrerId?"selected":""}>${esc(l.name||l.email)}</option>`).join("");
   const istTurbo=s._paketId&&(_fsAgg.pakete||[]).some(pk=>pk.id===s._paketId&&pk.name==="Turboboost");
+  let anmeldeBlock="";
+  if(s._erstelltAm){
+    const erstellt=new Date(s._erstelltAm);
+    const ablauf=new Date(erstellt); ablauf.setFullYear(ablauf.getFullYear()+1);
+    const heute=new Date();
+    const tageBisAblauf=Math.round((ablauf-heute)/(1000*60*60*24));
+    const warnung=tageBisAblauf<60;
+    anmeldeBlock=`<div class="field" style="margin-top:8px;"><label style="font-size:11px;">Angemeldet seit</label>
+      <p style="margin:2px 0 0;font-size:13.5px;">${erstellt.toLocaleDateString('de-DE')}</p></div>
+      <div class="field" style="margin-top:6px;"><label style="font-size:11px;">Papiere laufen ab (1 Jahr nach Anmeldung)</label>
+      <p style="margin:2px 0 0;font-size:13.5px;${warnung?'color:#c83c3c;font-weight:700;':''}">${ablauf.toLocaleDateString('de-DE')}${warnung?(tageBisAblauf<0?' · ABGELAUFEN':` · noch ${tageBisAblauf} Tage`):''}</p></div>`;
+  }
   const html=`<div id="fsDetailExtras" class="res-block" style="animation:none;">
     <h4>🏫 Fahrschule</h4>
     <div class="field"><label style="font-size:11px;">Fahrlehrer</label>
       <select id="fsDetailLehrerSelect" style="width:100%;">${lehrerOptions}</select></div>
+    <div class="field" style="margin-top:8px;" id="fsBeiLehrerSeit"><label style="font-size:11px;">Bei diesem Fahrlehrer seit</label><p style="margin:2px 0 0;font-size:13.5px;color:var(--muted);">Lade…</p></div>
+    ${anmeldeBlock}
     <div class="field" style="margin-top:8px;"><label style="font-size:11px;">Büro-Notiz (nur fürs Büro, nicht der Fahrlehrer-Notiz)</label>
       <textarea id="fsDetailBueroNotiz" rows="2" style="width:100%;">${esc(s._buero_notiz||"")}</textarea></div>
     <div class="field" style="margin-top:8px;"><label style="font-size:11px;">To-do / aktueller Stand</label>
@@ -4201,6 +4216,14 @@ function _fsInjectDetailExtras(sid){
   if(anchor) anchor.insertAdjacentHTML("beforeend",html);
   const sel=document.getElementById("fsDetailLehrerSelect");
   if(sel) sel.addEventListener("change",()=>fsSchuelerVerschiebenAusAkte(sid,sel.value,s._fahrlehrerId||""));
+  // Seit wann beim aktuellen Fahrlehrer - letzte Verschiebung dorthin, sonst Anmeldedatum
+  try{
+    const supa=getSupa();
+    const {data}=await supa.from("schueler_verschiebungen").select("erstellt_am").eq("schueler_id",sid).eq("zu_fahrlehrer_id",s._fahrlehrerId||"").order("erstellt_am",{ascending:false}).limit(1);
+    const seitDatum=(data&&data[0])?new Date(data[0].erstellt_am):(s._erstelltAm?new Date(s._erstelltAm):null);
+    const zielEl=document.getElementById("fsBeiLehrerSeit");
+    if(zielEl)zielEl.innerHTML=`<label style="font-size:11px;">Bei diesem Fahrlehrer seit</label><p style="margin:2px 0 0;font-size:13.5px;">${seitDatum?seitDatum.toLocaleDateString('de-DE'):'unbekannt'}</p>`;
+  }catch(e){ /* still zeigen wir die Anmelde-Infos oben, hier still fehlschlagen */ }
 }
 async function fsSerientermineSheet(sid){
   const s=DB.students.find(x=>x.id===sid); if(!s)return;
@@ -8272,6 +8295,7 @@ function pruneEmptyTermine(){
 // Zentrale Ergebnis-Eintragung: setzt earnAt (Verdienst-Timing), entfernt leere Termine,
 // schreibt Historie, behandelt bestanden/durchgefallen, bietet Undo.
 function commitExamResult(s,opts){
+  if(opts.pruefer)_lastUsedPruefer=opts.pruefer;
   const id=s.id;
   const date=opts.date||todayISO();
   const attempt=DB.exams.filter(e=>e.sid===id).length+1;
@@ -8516,10 +8540,11 @@ function openExamPlanSheet(s){
   });
 }
 /* ---------- Prüfungstag: Ergebnis direkt eintragen ---------- */
+let _lastUsedPruefer=null;
 function openResultFlow(id){
   const s=DB.students.find(x=>x.id===id); if(!s)return;
   $("#tbTitle").textContent="Ergebnis eintragen"; setFab(false); view.scrollTop=0;
-  _examChoice=null; _examPr=null; _examFaults=[]; _examEingriff=false;
+  _examChoice=null; _examPr=(_lastUsedPruefer&&DB.pruefer.includes(_lastUsedPruefer))?_lastUsedPruefer:null; _examFaults=[]; _examEingriff=false;
   renderResultStep(s);
 }
 function prueferHintHTML(nm){
@@ -9696,6 +9721,7 @@ function routePrueferAkte(nm){
       <div class="pf-stat"><div class="ps-n">${st.quote.pct==null?'—':st.quote.pct+'%'}</div><div class="ps-l">bestanden</div></div>
       <div class="pf-stat"><div class="ps-n" style="font-size:18px;">${st.last?isoDE(st.last).slice(0,5):'—'}</div><div class="ps-l">zuletzt</div></div>
     </div>
+    ${exForPr.length?`<div style="text-align:center;margin:-4px 0 14px;font-size:13px;color:var(--muted);">Letzte ${Math.min(5,exForPr.length)}: ${exForPr.slice(0,5).reverse().map(e=>e.result==='pass'?'<span style="color:#4a8b45;">✓</span>':'<span style="color:#c83c3c;">✕</span>').join(" ")}</div>`:''}
     ${st.faults&&st.faults.length?`<div class="pf-block"><div class="pf-block-h">Häufigste Fehler bei ${esc(nm)}</div><div class="pf-tags">${st.faults.map(([fid,c])=>`<span class="pf-tag warn">${esc(FAULT_LABEL[fid]||fid)} · ${c}×</span>`).join("")}</div></div>`:''}
 
     <div class="pf-block">
