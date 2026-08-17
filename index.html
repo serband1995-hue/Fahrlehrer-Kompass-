@@ -673,7 +673,7 @@ input,select,textarea{font-family:inherit;font-size:15px;color:var(--txt);}
 @media(max-width:520px){.stats{grid-template-columns:1fr 1fr;}}
 .skill .sk-ort{font-size:11.5px;color:var(--muted);font-weight:600;margin-top:2px;}
 .ampel{display:flex;gap:7px;flex:0 0 auto;}
-.amp{width:26px;height:26px;border-radius:50%;border:2px solid var(--line);background:transparent;transition:all .15s var(--pop);}
+.amp{width:26px;height:26px;border-radius:50%;border:2px solid var(--line);background:transparent;transition:all .15s var(--pop);font-size:13px;line-height:1;font-weight:900;color:#fff;display:inline-flex;align-items:center;justify-content:center;padding:0;}
 .amp:active{transform:scale(.85);}
 .amp[data-v="rot"].on{background:var(--rot);border-color:var(--rot);}
 .amp[data-v="gelb"].on{background:var(--gelb);border-color:var(--gelb);}
@@ -1827,6 +1827,7 @@ body:not(.light) .cw-col.today .cw-dnum{color:var(--gold);}
       </div>
     </div>
     <button class="lo-btn" id="loBtn" onclick="doLogin()">Einloggen</button>
+    <button type="button" id="loForgotBtn" style="background:none;border:none;color:var(--muted);font-size:12.5px;margin-top:10px;text-decoration:underline;cursor:pointer;width:100%;">Passwort vergessen?</button>
     <div class="lo-err" id="loErr"></div>
   </div>
 </div>
@@ -2645,6 +2646,60 @@ function toggleLoPass() {
   }
 }
 
+async function doForgotPassword(){
+  const email=(document.getElementById("loEmail").value||"").trim();
+  if(!email){ showLoginErr("Erst deine E-Mail-Adresse oben eintragen, dann auf 'Passwort vergessen?' tippen."); return; }
+  const btn=document.getElementById("loForgotBtn");
+  btn.disabled=true; const altText=btn.textContent; btn.textContent="Wird gesendet…";
+  try{
+    const supa=getSupa();
+    const redirectTo=window.location.origin+window.location.pathname;
+    const {error}=await supa.auth.resetPasswordForEmail(email,{redirectTo});
+    if(error) throw error;
+    showLoginErr("E-Mail verschickt ✓ Schau in dein Postfach (auch Spam-Ordner) und folge dem Link.");
+  }catch(e){
+    showLoginErr("Konnte keine E-Mail senden: "+(e.message||"unbekannter Fehler"));
+  }finally{
+    btn.disabled=false; btn.textContent=altText;
+  }
+}
+const _lfBtn=document.getElementById("loForgotBtn"); if(_lfBtn)_lfBtn.addEventListener("click",doForgotPassword);
+
+/* Passwort-Reset-Link angeklickt? Supabase hängt #access_token=...&type=recovery an die URL */
+function _checkPasswordRecovery(){
+  const hash=window.location.hash||"";
+  if(!hash.includes("type=recovery"))return false;
+  const supa=getSupa();
+  supa.auth.onAuthStateChange((event)=>{
+    if(event==="PASSWORD_RECOVERY") _openNeuesPasswortSheet();
+  });
+  return true;
+}
+function _openNeuesPasswortSheet(){
+  document.getElementById("loginOverlay").classList.add("hidden");
+  openSheet(`<div class="sheet-h">Neues Passwort festlegen</div>
+    <div class="field"><label>Neues Passwort</label><input type="password" id="npwNeu" autocomplete="new-password" placeholder="mind. 6 Zeichen"></div>
+    <div class="field"><label>Wiederholen</label><input type="password" id="npwWdh" autocomplete="new-password" placeholder="nochmal eingeben"></div>
+    <div class="btn-row"><button class="btn btn-primary" id="npwSave">Speichern</button></div>`);
+  $("#npwSave").addEventListener("click",async()=>{
+    const a=$("#npwNeu").value, b=$("#npwWdh").value;
+    if(!a||a.length<6){toast("Mindestens 6 Zeichen");return;}
+    if(a!==b){toast("Passwörter stimmen nicht überein");return;}
+    try{
+      const supa=getSupa();
+      const {error}=await supa.auth.updateUser({password:a});
+      if(error)throw error;
+      closeSheet(); toast("Passwort geändert ✓ — du bist jetzt angemeldet.");
+      window.location.hash="";
+      const {data:sessionData}=await supa.auth.getSession();
+      if(sessionData&&sessionData.session) afterLogin(sessionData.session.user);
+    }catch(e){ toast("Fehler: "+(e.message||"unbekannt")); }
+  });
+}
+if(window.location.hash.includes("type=recovery")){
+  if(window.supabase) _checkPasswordRecovery();
+  else setTimeout(_checkPasswordRecovery,800);
+}
 async function doLogin() {
   const email = document.getElementById("loEmail").value.trim();
   const pass  = document.getElementById("loPass").value;
@@ -2691,19 +2746,29 @@ async function afterLogin(user) {
     await supa.from("profiles").update({ email: user.email }).eq("id", user.id);
     _authProfile = { ...prof, email: user.email };
   }
-  // Kill-Switch prüfen
+  // Kill-Switch prüfen (pro Person)
   if (prof && !prof.aktiv) {
     await supa.auth.signOut();
     document.getElementById("loBtn").disabled = false;
     document.getElementById("loBtn").innerHTML = "Einloggen";
-    showLoginErr("Zugriff gesperrt. Wende dich an den Administrator.");
+    showLoginErr("Dein Zugang ist aktuell gesperrt. Bitte wende dich an deinen Fahrschul-Inhaber oder Serband.");
     return;
   }
-  // Trinkgeld-Bereich verstecken wenn kein super_admin
-  if (!isSuperAdmin()) {
-    document.querySelectorAll(".safe-area, .tg-section, .trinkgeld-btn").forEach(el => el.style.display = "none");
-  } else {
-    _fsSetDrawer(false); // Umschalter "Admin-Gesamtübersicht" einblenden, nur für dich
+  // Kill-Switch prüfen (ganze Fahrschule) — fehlte bisher komplett, der Schalter im Admin-Panel
+  // hat bis eben niemanden wirklich am Einloggen gehindert.
+  if (prof && prof.fahrschule_id) {
+    const { data: fsRow } = await supa.from("fahrschulen").select("aktiv,name").eq("id", prof.fahrschule_id).maybeSingle();
+    if (fsRow && !fsRow.aktiv) {
+      await supa.auth.signOut();
+      document.getElementById("loBtn").disabled = false;
+      document.getElementById("loBtn").innerHTML = "Einloggen";
+      showLoginErr(`${fsRow.name||"Diese Fahrschule"} ist aktuell deaktiviert. Bitte wende dich an deinen Fahrschul-Inhaber.`);
+      return;
+    }
+  }
+  // Umschalter "Admin-Gesamtübersicht" einblenden, nur für dich
+  if (isSuperAdmin()) {
+    _fsSetDrawer(false);
   }
   // Fahrschule-Admin: exakt dieselbe App, nur mit den zusammengeführten Daten der ganzen Fahrschule
   if (prof && (prof.rolle === "fahrschule_admin" || prof.rolle === "buero")) {
@@ -2936,6 +3001,76 @@ async function doLogout() {
 }
 
 /* ---- Session wiederherstellen (nach PWA-Neustart) ---- */
+/* ===== Biometrische Schnell-Entsperrung (WebAuthn/Passkeys) =====
+   Ersetzt NICHT den echten Login (E-Mail+Passwort bleibt die eigentliche Anmeldung),
+   sondern ist ein zusätzlicher, schneller Riegel vor einer bereits gültigen, bestehenden
+   Sitzung - genau wie bei Banking-Apps. Rein geräte-lokal, nichts davon liegt auf dem Server. */
+const BIO_CRED_KEY="kompass-bio-cred-";
+function _bioSupported(){ return !!(window.PublicKeyCredential); }
+async function _bioIsAvailable(){
+  if(!_bioSupported())return false;
+  try{ return await PublicKeyCredential.isUserVerifyingPlatformAuthenticatorAvailable(); }catch(e){ return false; }
+}
+function _bioCredIdFor(userId){ return localStorage.getItem(BIO_CRED_KEY+userId); }
+async function bioRegistrieren(){
+  if(!_authUser){toast("Erst einloggen");return;}
+  const verfuegbar=await _bioIsAvailable();
+  if(!verfuegbar){toast("Dein Gerät/Browser unterstützt das leider nicht.");return;}
+  try{
+    const challenge=crypto.getRandomValues(new Uint8Array(32));
+    const userIdBytes=new TextEncoder().encode(_authUser.id);
+    const cred=await navigator.credentials.create({publicKey:{
+      challenge, rp:{name:"Fahrlehrer-Kompass"},
+      user:{id:userIdBytes, name:_authUser.email||"Fahrlehrer", displayName:(_authProfile&&_authProfile.name)||_authUser.email||"Fahrlehrer"},
+      pubKeyCredParams:[{type:"public-key",alg:-7},{type:"public-key",alg:-257}],
+      authenticatorSelection:{authenticatorAttachment:"platform",userVerification:"required"},
+      timeout:60000
+    }});
+    if(!cred){toast("Abgebrochen");return;}
+    const credIdB64=btoa(String.fromCharCode(...new Uint8Array(cred.rawId)));
+    localStorage.setItem(BIO_CRED_KEY+_authUser.id,credIdB64);
+    toast("Schnell-Entsperrung aktiviert ✓");
+    routeSettings();
+  }catch(e){ toast("Fehler: "+(e.message||"abgebrochen")); }
+}
+function bioDeaktivieren(){
+  if(!_authUser)return;
+  localStorage.removeItem(BIO_CRED_KEY+_authUser.id);
+  toast("Schnell-Entsperrung deaktiviert");
+  routeSettings();
+}
+async function _bioVerifyOnUnlock(userId){
+  const credIdB64=_bioCredIdFor(userId);
+  if(!credIdB64)return true; // nicht aktiviert -> kein Riegel, normal weiter
+  return new Promise((resolve)=>{
+    document.getElementById("bioLockOverlay")?.remove();
+    const ov=document.createElement("div");
+    ov.id="bioLockOverlay";
+    ov.style.cssText="position:fixed;inset:0;background:var(--bg);z-index:99999;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:18px;padding:20px;text-align:center;";
+    ov.innerHTML=`<div style="font-size:48px;">🔒</div><div style="font-size:15px;color:var(--txt);font-weight:700;">Kompass entsperren</div>
+      <button id="bioUnlockBtn" class="btn btn-primary" style="padding:14px 28px;">Mit Fingerabdruck/Gesicht entsperren</button>
+      <button id="bioFallbackBtn" style="background:none;border:none;color:var(--muted);font-size:12.5px;text-decoration:underline;margin-top:6px;">Stattdessen abmelden</button>`;
+    document.body.appendChild(ov);
+    const tryUnlock=async()=>{
+      try{
+        const credIdBytes=Uint8Array.from(atob(credIdB64),c=>c.charCodeAt(0));
+        const challenge=crypto.getRandomValues(new Uint8Array(32));
+        const assertion=await navigator.credentials.get({publicKey:{
+          challenge, allowCredentials:[{id:credIdBytes,type:"public-key"}], userVerification:"required", timeout:60000
+        }});
+        if(assertion){ ov.remove(); resolve(true); }
+      }catch(e){ /* abgebrochen/fehlgeschlagen - Overlay bleibt offen, nochmal versuchbar */ }
+    };
+    document.getElementById("bioUnlockBtn").addEventListener("click",tryUnlock);
+    document.getElementById("bioFallbackBtn").addEventListener("click",async()=>{
+      ov.remove();
+      await doLogout();
+      resolve(false);
+    });
+    tryUnlock();
+  });
+}
+
 async function checkSession() {
   const supa = getSupa();
   if (!supa) { showApp(); return; }
@@ -2943,7 +3078,8 @@ async function checkSession() {
     const { data: { session } } = await supa.auth.getSession();
     if (session && session.user) {
       localStorage.setItem("serband-session-cache", JSON.stringify({ email: session.user.email, id: session.user.id, ts: Date.now() }));
-      await afterLogin(session.user);
+      const darfRein = await _bioVerifyOnUnlock(session.user.id);
+      if (darfRein) await afterLogin(session.user);
     } else { _tryOfflineSession(); }
   } catch(e) { console.warn("[Kompass] getSession offline:", e.message); _tryOfflineSession(); }
   document.getElementById("loPass").addEventListener("keydown", e => { if (e.key === "Enter") doLogin(); });
@@ -3085,20 +3221,37 @@ function _fsMapPruefung(row,lehrerName){
 
 async function _fsLoadAggData(fahrschuleId){
   const supa=getSupa();
-  const [fsR,lehrerR,schuelerR,termineR,pruefungenR,fahrzeugeR,paketeR]=await Promise.all([
+  const [fsR,lehrerR,schuelerR,termineR,pruefungenR,fahrzeugeR,paketeR,urlaubR]=await Promise.all([
     supa.from("fahrschulen").select("*").eq("id",fahrschuleId).single(),
     supa.from("profiles").select("*").eq("fahrschule_id",fahrschuleId).in("rolle",["fahrlehrer","super_admin"]).order("email"),
     supa.from("schueler").select("*").eq("fahrschule_id",fahrschuleId).neq("status","geloescht"),
     supa.from("kalender_termine").select("*").eq("fahrschule_id",fahrschuleId).eq("geloescht",false),
     supa.from("kalender_pruefungen").select("*").eq("fahrschule_id",fahrschuleId).eq("geloescht",false),
     supa.from("fahrschule_fahrzeuge").select("*").eq("fahrschule_id",fahrschuleId).eq("aktiv",true).order("erstellt_am"),
-    supa.from("fahrschule_pakete").select("*").eq("fahrschule_id",fahrschuleId)
+    supa.from("fahrschule_pakete").select("*").eq("fahrschule_id",fahrschuleId),
+    supa.from("fahrschule_urlaub").select("*").eq("fahrschule_id",fahrschuleId).gte("bis",todayISO())
   ]);
   const lehrer=lehrerR.data||[];
   const lehrerName=id=>{ const l=lehrer.find(x=>x.id===id); return l?(l.name||l.email):"Unbekannt"; };
   DB.students=(schuelerR.data||[]).map(r=>_fsMapSchueler(r,lehrerName));
   DB.lessons=(termineR.data||[]).map(r=>_fsMapTermin(r,lehrerName));
   DB.exams=(pruefungenR.data||[]).map(r=>_fsMapPruefung(r,lehrerName));
+  // Urlaub als künstliche "Blockiert"-Termine einspeisen - Namensabgleich, da fahrschule_urlaub
+  // Namen als Freitext speichert statt als Fahrlehrer-ID. Bei keinem Treffer wird nichts blockiert
+  // (sicherer als fälschlich jemand anderen zu blockieren).
+  const urlaubBlocks=[];
+  (urlaubR.data||[]).forEach(u=>{
+    const passendeLehrer=lehrer.filter(x=>((x.name||x.email||"").trim().toLowerCase())===((u.mitarbeiter_name||"").trim().toLowerCase()));
+    passendeLehrer.forEach(lh=>{
+      let d=new Date(u.von+"T00:00:00"); const bisD=new Date(u.bis+"T00:00:00"); let guard=0;
+      while(d<=bisD&&guard++<60){
+        const iso=d.getFullYear()+"-"+String(d.getMonth()+1).padStart(2,"0")+"-"+String(d.getDate()).padStart(2,"0");
+        urlaubBlocks.push({id:"urlaub_"+u.id+"_"+iso,sid:null,date:iso,von:"06:00",bis:"23:00",art:"block",status:"geplant",note:"Urlaub",name:"Urlaub",fahrzeug:null,_fahrlehrerId:lh.id,_fahrlehrerName:lh.name||lh.email,_synthetic:true});
+        d.setDate(d.getDate()+1);
+      }
+    });
+  });
+  DB.lessons=[...DB.lessons,...urlaubBlocks];
   _fsAgg={fahrschuleId, fahrschule:fsR.data||{name:"Fahrschule"}, lehrer, fahrzeuge:fahrzeugeR.data||[], pakete:paketeR.data||[]};
   _fsBaseline={students:JSON.parse(JSON.stringify(DB.students)),lessons:JSON.parse(JSON.stringify(DB.lessons)),exams:JSON.parse(JSON.stringify(DB.exams))};
 }
@@ -3174,6 +3327,7 @@ function routeFahrschuleDashboard(){
         <button class="btn btn-ghost" onclick="routeFahrschuleSchichtplan()">🗓️ Schichtplan</button>
         <button class="btn btn-ghost" onclick="routeFahrschuleUrlaub()">🏖️ Urlaub</button>
         <button class="btn btn-ghost" onclick="routeFahrschuleProvisionen()">💰 Provisionen</button>
+        <button class="btn btn-ghost" onclick="routeFahrschuleBackups()">💾 Backups</button>
       </div>
     </div>
   </div>`;
@@ -3455,7 +3609,7 @@ function routeFahrschuleLehrer(){
     const linksId="lehrerlinks_"+l.id.replace(/[^a-zA-Z0-9]/g,"");
     return `<div class="fs-card">
       <div class="fs-name">${esc(l.name||l.email)}${istSuperAdmin?' <span style="color:var(--orange);font-size:11px;">(Super-Admin)</span>':''}</div>
-      <div class="fs-sub">${l.aktiv?'<span class="fs-status-on">Aktiv</span>':'<span class="fs-status-off">GESPERRT</span>'} &nbsp;·&nbsp; Auslastung ${l.auslastung_pct!=null?l.auslastung_pct+'%':'—'} &nbsp;·&nbsp; ${meineSchueler.length} Schüler &nbsp;·&nbsp; ${q.pct==null?'Quote —':'Quote '+q.pct+'%'}</div>
+      <div class="fs-sub">${l.aktiv?'<span class="fs-status-on">Aktiv</span>':'<span class="fs-status-off">GESPERRT</span>'} &nbsp;·&nbsp; Auslastung ${l.auslastung_pct!=null?`<span style="color:${l.auslastung_pct>=100?'#c83c3c':l.auslastung_pct>=85?'#cf9a3e':'inherit'};font-weight:${l.auslastung_pct>=85?'700':'400'};">${l.auslastung_pct}%</span>`:'—'} &nbsp;·&nbsp; ${meineSchueler.length} Schüler &nbsp;·&nbsp; ${q.pct==null?'Quote —':'Quote '+q.pct+'%'}</div>
       ${(istSuperAdmin||buero)?'':`<div class="fs-actions">
         ${l.aktiv
           ?`<button class="fs-btn-kill" onclick="toggleFahrlehrerAktiv('${l.id}',false,'${_fsAgg.fahrschuleId}')">Sperren</button>`
@@ -3568,7 +3722,7 @@ function routeFahrschuleStatistik(){
       <div class="dash-tiles">
         <button class="d-tile" style="cursor:default;"><div class="dt-n" data-count="${act}">0</div><div class="dt-l">Aktive Schüler</div></button>
         <button class="d-tile" style="cursor:default;"><div class="dt-n" data-count="${lehrer.length}">0</div><div class="dt-l">Fahrlehrer</div></button>
-        <button class="d-tile" style="cursor:default;">${oAuslastung==null?'<div class="dt-n">–</div>':`<div class="dt-n" data-count="${oAuslastung}" data-suffix="%">0</div>`}<div class="dt-l">Ø Auslastung</div></button>
+        <button class="d-tile" style="cursor:default;">${oAuslastung==null?'<div class="dt-n">–</div>':`<div class="dt-n" data-count="${oAuslastung}" data-suffix="%" style="color:${oAuslastung>=100?'#c83c3c':oAuslastung>=85?'#cf9a3e':'inherit'};">0</div>`}<div class="dt-l">Ø Auslastung</div></button>
       </div>
     </div>
 
@@ -3581,6 +3735,11 @@ function routeFahrschuleStatistik(){
     <button class="res-block" style="animation:none;width:100%;text-align:left;cursor:pointer;" onclick="routeFahrschuleFehleranalyse()">
       <h4>📉 Fehleranalyse (Pareto)</h4>
       <p style="font-size:13px;color:var(--muted);">Häufigste Durchfallgründe über alle Fahrlehrer — antippen für Details →</p>
+    </button>
+
+    <button class="res-block" style="animation:none;width:100%;text-align:left;cursor:pointer;" onclick="routeFahrschuleVerschiebungsverlauf()">
+      <h4>🔀 Verschiebungs-Verlauf</h4>
+      <p style="font-size:13px;color:var(--muted);">Wer hat wann welchen Schüler zu wem verschoben — antippen für Details →</p>
     </button>
 
     ${poolAnzahl?`<div class="res-block" style="animation:none;background:rgba(207,154,62,.1);border-color:rgba(207,154,62,.35);cursor:pointer;" onclick="routeHome();">
@@ -3713,6 +3872,79 @@ function routeFahrschulePruefer(){
   </div>`;
 }
 
+async function routeFahrschuleVerschiebungsverlauf(){
+  if(!_fsAgg)return;
+  window._fsAktuelleRoute=routeFahrschuleVerschiebungsverlauf;
+  $("#tbTitle").textContent="Verschiebungs-Verlauf"; setFab(false); view.scrollTop=0;
+  view.innerHTML=`<div class="view-inner view-read fade-up" id="fsVerlaufWrap">
+    <button class="btn btn-ghost" style="margin-bottom:10px;" onclick="routeFahrschuleStatistik()">← Zurück zur Statistik</button>
+    <div class="res-block" style="animation:none;text-align:center;color:var(--muted);">Lade…</div>
+  </div>`;
+  const supa=getSupa();
+  const {data}=await supa.from("schueler_verschiebungen").select("*").eq("fahrschule_id",_fsAgg.fahrschuleId).order("erstellt_am",{ascending:false}).limit(100);
+  const lehrer=_fsAgg.lehrer||[];
+  const lehrerName=id=>{ if(!id)return "— Pool —"; const l=lehrer.find(x=>x.id===id); return l?(l.name||l.email):"Unbekannt"; };
+  const schuelerName=id=>{ const s=(DB.students||[]).find(x=>x.id===id); return s?s.name:"(gelöschter Schüler)"; };
+  const rows=(data||[]).map(v=>`<div class="fs-card">
+    <div class="fs-name">${esc(schuelerName(v.schueler_id))}</div>
+    <div class="fs-sub">${esc(lehrerName(v.von_fahrlehrer_id))} → ${esc(lehrerName(v.zu_fahrlehrer_id))}</div>
+    <div class="fs-sub" style="opacity:.7;">${new Date(v.erstellt_am).toLocaleString("de-DE")}${v.verschoben_von?` · von ${esc(lehrerName(v.verschoben_von))}`:''}</div>
+  </div>`).join("")||'<p class="muted-p">Noch keine Verschiebungen.</p>';
+  const wrap=document.getElementById("fsVerlaufWrap");
+  if(wrap)wrap.innerHTML=`
+    <button class="btn btn-ghost" style="margin-bottom:10px;" onclick="routeFahrschuleStatistik()">← Zurück zur Statistik</button>
+    <div class="res-block" style="animation:none;"><h4>🔀 Verschiebungs-Verlauf (${(data||[]).length})</h4>${rows}</div>`;
+}
+
+/* ===== Backups (automatisch wöchentlich + manuell) ===== */
+async function routeFahrschuleBackups(){
+  if(!_fsAgg)return;
+  window._fsAktuelleRoute=routeFahrschuleBackups;
+  $("#tbTitle").textContent="Backups"; setFab(false); view.scrollTop=0;
+  view.innerHTML=`<div class="view-inner view-read fade-up" id="fsBackupWrap">
+    <button class="btn btn-ghost" style="margin-bottom:10px;" onclick="routeFahrschuleDashboard()">← Zurück zum Dashboard</button>
+    <div class="res-block" style="animation:none;text-align:center;color:var(--muted);">Lade…</div>
+  </div>`;
+  await _fsLadeBackups();
+}
+async function _fsLadeBackups(){
+  const supa=getSupa();
+  const {data}=await supa.from("fahrschule_backups").select("id,erstellt_am,automatisch").eq("fahrschule_id",_fsAgg.fahrschuleId).order("erstellt_am",{ascending:false}).limit(30);
+  const rows=(data||[]).map(b=>`<div class="fs-card">
+    <div class="fs-name">${new Date(b.erstellt_am).toLocaleString("de-DE")}</div>
+    <div class="fs-sub">${b.automatisch?'Automatisch (wöchentlich)':'Manuell erstellt'}</div>
+    <div class="fs-actions"><button class="fs-btn-activate" onclick="_fsBackupHerunterladen('${b.id}')">Herunterladen</button></div>
+  </div>`).join("")||'<p class="muted-p">Noch keine Backups vorhanden.</p>';
+  const wrap=document.getElementById("fsBackupWrap");
+  if(wrap)wrap.innerHTML=`
+    <button class="btn btn-ghost" style="margin-bottom:10px;" onclick="routeFahrschuleDashboard()">← Zurück zum Dashboard</button>
+    <div class="res-block" style="animation:none;">
+      <h4>💾 Backups</h4>
+      <p style="font-size:13px;color:var(--muted);">Läuft automatisch jeden Sonntag um 23 Uhr. Du kannst jederzeit zusätzlich manuell sichern.</p>
+      <div class="btn-row"><button class="btn btn-primary" onclick="_fsJetztSichern()">Jetzt alles sichern</button></div>
+    </div>
+    <div class="res-block" style="animation:none;"><h4>Verlauf (${(data||[]).length})</h4>${rows}</div>`;
+}
+async function _fsJetztSichern(){
+  toast("Backup wird erstellt…");
+  const supa=getSupa();
+  const {error}=await supa.rpc("fahrschule_backup_erstellen",{fs_id:_fsAgg.fahrschuleId,ist_automatisch:false});
+  if(error){toast("Fehler: "+error.message);return;}
+  toast("Backup erstellt ✓");
+  _fsLadeBackups();
+}
+async function _fsBackupHerunterladen(backupId){
+  const supa=getSupa();
+  const {data,error}=await supa.from("fahrschule_backups").select("*").eq("id",backupId).single();
+  if(error||!data){toast("Fehler beim Laden");return;}
+  const blob=new Blob([JSON.stringify(data.daten,null,2)],{type:"application/json"});
+  const url=URL.createObjectURL(blob);
+  const a=document.createElement("a");
+  a.href=url; a.download=`fahrschule-backup-${data.erstellt_am.slice(0,10)}.json`;
+  document.body.appendChild(a); a.click(); a.remove();
+  URL.revokeObjectURL(url);
+}
+
 function routeFahrschuleFehleranalyse(){
   if(!_fsAgg)return;
   const fails=(DB.exams||[]).filter(e=>e.result==='fail');
@@ -3803,7 +4035,7 @@ function routeFahrschuleFahrcheckKontrolle(){
     const st=t.sid?DB.students.find(s=>s.id===t.sid):null;
     const status=t.buero_fc_status||"offen";
     return `<div class="fs-card">
-      <div class="fs-name">${esc(st?st.name:"—")}</div>
+      <div class="fs-name">${esc(st?st.name:"—")}${t.status==='nicht erschienen'?' <span style="color:#cf9a3e;font-size:11px;font-weight:700;">· NICHT ERSCHIENEN</span>':''}</div>
       <div class="fs-sub">${isoDE(t.date)} · ${esc(t._fahrlehrerName||"")}${t.buero_fc_nachgereicht_am?` · nachgereicht am ${isoDE(t.buero_fc_nachgereicht_am)}`:''}</div>
       <div class="fs-actions">
         <button class="fs-btn-activate" style="${status==='abgegeben'?'':'opacity:.45;'}" onclick="fsFcStatus('${t.id}','abgegeben',false,true)">✅ Abgegeben</button>
@@ -3951,6 +4183,7 @@ function _fsInjectDetailExtras(sid){
   if(!s)return;
   const lehrer=_fsAgg.lehrer||[];
   const lehrerOptions=`<option value="">— nicht zugeordnet —</option>`+lehrer.map(l=>`<option value="${l.id}" ${l.id===s._fahrlehrerId?"selected":""}>${esc(l.name||l.email)}</option>`).join("");
+  const istTurbo=s._paketId&&(_fsAgg.pakete||[]).some(pk=>pk.id===s._paketId&&pk.name==="Turboboost");
   const html=`<div id="fsDetailExtras" class="res-block" style="animation:none;">
     <h4>🏫 Fahrschule</h4>
     <div class="field"><label style="font-size:11px;">Fahrlehrer</label>
@@ -3960,12 +4193,53 @@ function _fsInjectDetailExtras(sid){
     <div class="field" style="margin-top:8px;"><label style="font-size:11px;">To-do / aktueller Stand</label>
       <textarea id="fsDetailBueroTodo" rows="2" style="width:100%;">${esc(s._buero_todo||"")}</textarea></div>
     <div class="btn-row" style="margin-top:8px;"><button class="btn btn-primary" onclick="fsDetailExtrasSpeichern('${sid}')">Speichern</button></div>
+    ${istTurbo?`<div class="btn-row" style="margin-top:8px;"><button class="btn btn-ghost" onclick="fsSerientermineSheet('${sid}')">🔁 Serientermine anlegen (Turboboost)</button></div>`:''}
   </div>`;
   const anchor=document.querySelector(".view-inner");
   if(anchor) anchor.insertAdjacentHTML("beforeend",html);
   const sel=document.getElementById("fsDetailLehrerSelect");
   if(sel) sel.addEventListener("change",()=>fsSchuelerVerschiebenAusAkte(sid,sel.value,s._fahrlehrerId||""));
 }
+async function fsSerientermineSheet(sid){
+  const s=DB.students.find(x=>x.id===sid); if(!s)return;
+  const zielLehrer=s._fahrlehrerId;
+  if(!zielLehrer){toast("Erst einen Fahrlehrer zuweisen, bevor Serientermine angelegt werden können.");return;}
+  openSheet(`<div class="sheet-h">🔁 Serientermine — ${esc(s.name)}</div>
+    <p class="muted-p" style="font-size:12.5px;margin:-4px 0 10px;">Nur für Turboboost — mehrere Termine auf einmal anlegen.</p>
+    <div class="field"><label>Startdatum</label><input type="date" id="stDate" value="${todayISO()}"></div>
+    <div class="field"><label>Uhrzeit</label><input type="time" id="stVon" value="10:00"></div>
+    <div class="field"><label>Art</label>
+      <div class="es-arten"><button class="es-art on" data-art="fahrstunde">Fahrstunde</button><button class="es-art" data-art="sonder">Sonderfahrt</button></div>
+    </div>
+    <div class="field"><label>Intervall</label>
+      <div class="es-arten"><button class="es-art on" data-intervall="1">Täglich</button><button class="es-art" data-intervall="2">Jeden 2. Tag</button><button class="es-art" data-intervall="7">Wöchentlich</button></div>
+    </div>
+    <div class="field"><label>Anzahl Termine</label><input type="number" id="stAnzahl" value="5" min="1" max="20"></div>
+    <div class="btn-row"><button class="btn btn-ghost" id="stCancel" style="flex:0;padding:13px 16px;">Abbrechen</button><button class="btn btn-primary" id="stSave">Anlegen</button></div>`);
+  let art="fahrstunde", intervall=1;
+  document.querySelectorAll("[data-art]").forEach(b=>b.addEventListener("click",()=>{art=b.dataset.art;document.querySelectorAll("[data-art]").forEach(x=>x.classList.toggle("on",x.dataset.art===art));}));
+  document.querySelectorAll("[data-intervall]").forEach(b=>b.addEventListener("click",()=>{intervall=+b.dataset.intervall;document.querySelectorAll("[data-intervall]").forEach(x=>x.classList.toggle("on",+x.dataset.intervall===intervall));}));
+  $("#stCancel").addEventListener("click",closeSheet);
+  $("#stSave").addEventListener("click",async()=>{
+    const startDate=$("#stDate").value, von=$("#stVon").value, anzahl=Math.max(1,Math.min(20,+$("#stAnzahl").value||5));
+    if(!startDate||!von){toast("Datum & Zeit wählen");return;}
+    const bis=min2hm(hm2min(von)+90);
+    const supa=getSupa();
+    const {data:sessionData}=await supa.auth.getSession();
+    const rows=[]; let d=new Date(startDate+"T00:00:00");
+    for(let i=0;i<anzahl;i++){
+      const iso=d.getFullYear()+"-"+String(d.getMonth()+1).padStart(2,"0")+"-"+String(d.getDate()).padStart(2,"0");
+      rows.push({id:uid(),fahrschule_id:_fsAgg.fahrschuleId,fahrlehrer_id:zielLehrer,schueler_id:sid,datum:iso,von,bis,art,status:"geplant",geloescht:false,payload:{},erstellt_von:sessionData.session.user.id,aktualisiert_am:new Date().toISOString()});
+      d.setDate(d.getDate()+intervall);
+    }
+    const {error}=await supa.from("kalender_termine").insert(rows);
+    if(error){toast("Fehler: "+error.message);return;}
+    closeSheet(); toast(`${anzahl} Termine angelegt ✓`);
+    await _fsRefreshAggData();
+    routeDetail(sid);
+  });
+}
+
 async function fsSchuelerVerschiebenAusAkte(sid,neuerLehrerId,alterLehrerId){
   const supa=getSupa();
   const {error}=await supa.from("schueler").update({fahrlehrer_id:neuerLehrerId||null}).eq("id",sid);
@@ -4368,11 +4642,12 @@ function _fsSyncAggChanges(){
       if(schuelerUpserts.length) await supa.from("schueler").upsert(schuelerUpserts,{onConflict:"id"});
       if(schuelerDeletes.length) await supa.from("schueler").update({status:"geloescht",aktualisiert_am:nowIso}).in("id",schuelerDeletes);
 
-      // ---- TERMINE ----
-      const baseT={}; (_fsBaseline.lessons||[]).forEach(l=>baseT[l.id]=l);
-      const curTIds=new Set((DB.lessons||[]).map(l=>l.id));
+      // ---- TERMINE ---- (künstliche Einträge wie Urlaubs-Blöcke werden NIE zurückgeschrieben)
+      const baseT={}; (_fsBaseline.lessons||[]).forEach(l=>{ if(!l._synthetic) baseT[l.id]=l; });
+      const curTIds=new Set((DB.lessons||[]).filter(l=>!l._synthetic).map(l=>l.id));
       const termineUpserts=[];
       (DB.lessons||[]).forEach(l=>{
+        if(l._synthetic)return;
         const b=baseT[l.id];
         if(!b||JSON.stringify(l)!==JSON.stringify(b)){
           const {id,sid,date,von,bis,art,fahrzeug,status,_fahrlehrerId,_fahrlehrerName,...rest}=l;
@@ -5816,8 +6091,8 @@ function buildStufen(s){
       const faStufe=FA_VIDEO_MAP[it.id];
       const vidBtn=faStufe?`<button class="vidBtn" data-faid="${it.id}" aria-label="Video in Fahr-Akademie ansehen">${ICN.video}</button>`:"";
       const ampelHtml=st.eval===false
-        ? `<div class="ampel"><button class="amp chk ${v==='gruen'?'on':''}" data-v="gruen" aria-label="erledigt"></button></div>`
-        : `<div class="ampel">${["rot","gelb","gruen"].map(c=>`<button class="amp ${v===c?'on':''}" data-v="${c}" aria-label="${c}"></button>`).join("")}</div>`;
+        ? `<div class="ampel"><button class="amp chk ${v==='gruen'?'on':''}" data-v="gruen" aria-label="erledigt">${v==='gruen'?'✓':''}</button></div>`
+        : `<div class="ampel">${["rot","gelb","gruen"].map(c=>`<button class="amp ${v===c?'on':''}" data-v="${c}" aria-label="${c}">${v===c?({rot:'✕',gelb:'•',gruen:'✓'}[c]):''}</button>`).join("")}</div>`;
       return grpHtml+`<div class="skill-wrap">
         <div class="skill" data-skill="${it.id}">
           <div style="flex:1"><div class="sk-head"><span class="sk-t">${esc(it.t)}</span>${iBtn}${vidBtn}</div>${it.ort?`<div class="sk-ort"><span class="ic ic-rot" style="font-size:11px;">${ICN.pin}</span> ${esc(it.ort)}</div>`:""}</div>
@@ -6462,6 +6737,14 @@ function routeSettings(){
       <p id="pushStatusTxt" style="color:var(--muted);font-size:13px;">Wird geprüft …</p>
       <div class="btn-row"><button class="btn btn-ghost" id="pushEnableBtn" onclick="enablePushNotifications()">Aktivieren</button></div>
     </div>`:""}
+    <div class="res-block" style="animation:none;"><h4>🔒 Sicherheit</h4>
+      <p style="font-size:13px;color:var(--muted);">Falls dein Handy mal verloren geht oder du dir unsicher bist, ob du irgendwo noch angemeldet bist.</p>
+      <div class="btn-row"><button class="btn btn-ghost" id="allDevicesLogoutBtn">Von allen Geräten abmelden</button></div>
+      <p style="font-size:13px;color:var(--muted);margin-top:12px;">Schnell-Entsperrung mit Fingerabdruck/Gesicht auf diesem Gerät (ersetzt nicht dein Passwort, ist nur ein schneller Riegel davor).</p>
+      <div class="btn-row">${_authUser&&_bioCredIdFor(_authUser.id)
+        ?`<button class="btn btn-ghost" onclick="bioDeaktivieren()">Schnell-Entsperrung ausschalten</button>`
+        :`<button class="btn btn-primary" onclick="bioRegistrieren()">Schnell-Entsperrung einrichten</button>`}</div>
+    </div>
     ${buchungslinksBtn}
     ${adminBtn}
     <div class="res-block" style="animation:none;"><h4>📋 Ausbildungsplan-Vorlagen</h4>
@@ -6472,6 +6755,15 @@ function routeSettings(){
       <div class="field"><div class="toggle-row"><div><div class="tc-name" style="font-weight:800;font-size:14px;">Vortest-Button</div><div class="tc-sub" style="font-size:12.5px;color:var(--muted);margin-top:2px;">Link zum Boost-Buchungskalender in der Schülerakte</div></div><button class="check-toggle${DB.sichtbarkeit.vortest?' on':''}" data-vis="vortest"></button></div></div>
       <div class="field"><div class="toggle-row"><div><div class="tc-name" style="font-weight:800;font-size:14px;">Fahrcheck</div><div class="tc-sub" style="font-size:12.5px;color:var(--muted);margin-top:2px;">FC-Auswahl beim Bearbeiten einer Fahrstunde</div></div><button class="check-toggle${DB.sichtbarkeit.fahrcheck?' on':''}" data-vis="fahrcheck"></button></div></div>
       <div class="field"><div class="toggle-row"><div><div class="tc-name" style="font-weight:800;font-size:14px;">Simulator-Empfehlung</div><div class="tc-sub" style="font-size:12.5px;color:var(--muted);margin-top:2px;">Karte in der Schülerakte</div></div><button class="check-toggle${DB.sichtbarkeit.simulator?' on':''}" data-vis="simulator"></button></div></div>
+    </div>
+    <div class="res-block" style="animation:none;"><h4><span class="ic ic-muted" style="font-size:14px;">${ICN.gear}</span> Dashboard anpassen</h4>
+      <p>Welche Kacheln auf deiner Startseite erscheinen sollen.</p>
+      <div class="field"><div class="toggle-row"><div><div class="tc-name" style="font-weight:800;font-size:14px;">Nächste-Prüfung-Karte</div></div><button class="check-toggle${sichtbar('dash_nextexam')?' on':''}" data-vis="dash_nextexam"></button></div></div>
+      <div class="field"><div class="toggle-row"><div><div class="tc-name" style="font-weight:800;font-size:14px;">Nächster-Schüler-Karte</div></div><button class="check-toggle${sichtbar('dash_nextstudent')?' on':''}" data-vis="dash_nextstudent"></button></div></div>
+      <div class="field"><div class="toggle-row"><div><div class="tc-name" style="font-weight:800;font-size:14px;">FC-vergessen-Karte</div></div><button class="check-toggle${sichtbar('dash_fcpending')?' on':''}" data-vis="dash_fcpending"></button></div></div>
+      <div class="field"><div class="toggle-row"><div><div class="tc-name" style="font-weight:800;font-size:14px;">Auslastungs-Karte</div></div><button class="check-toggle${sichtbar('dash_capacity')?' on':''}" data-vis="dash_capacity"></button></div></div>
+      <div class="field"><div class="toggle-row"><div><div class="tc-name" style="font-weight:800;font-size:14px;">Diese Woche verdient</div></div><button class="check-toggle${sichtbar('dash_wocheverdienst')?' on':''}" data-vis="dash_wocheverdienst"></button></div></div>
+      <div class="field"><div class="toggle-row"><div><div class="tc-name" style="font-weight:800;font-size:14px;">Nächste Theorie</div></div><button class="check-toggle${sichtbar('dash_naechstetheorie')?' on':''}" data-vis="dash_naechstetheorie"></button></div></div>
     </div>
     <div class="res-block" style="animation:none;"><h4>🌤 Wetter-Widget</h4>
       <p>Kostenlosen API-Key auf <b>openweathermap.org</b> holen (Registrierung reicht), hier eintragen — dann erscheint das aktuelle Wetter oben im Dashboard.</p>
@@ -6560,6 +6852,16 @@ function routeSettings(){
       const btn=$("#pushEnableBtn"); if(btn&&active)btn.textContent="Erneut aktivieren";
     });
   }
+  const adLogout=$("#allDevicesLogoutBtn");
+  if(adLogout)adLogout.addEventListener("click",async()=>{
+    if(!confirm("Von ALLEN Geräten abmelden? Du musst dich überall neu anmelden, auch hier."))return;
+    try{
+      const supa=getSupa();
+      await supa.auth.signOut({scope:"global"});
+      toast("Von allen Geräten abgemeldet ✓");
+      window.location.reload();
+    }catch(e){ toast("Fehler: "+(e.message||"unbekannt")); }
+  });
 }
 /* ===================== ERWEITERUNG: Dashboard · Prüfungen · Statistik · Archiv ===================== */
 const READY_MIN=90;
@@ -6865,6 +7167,12 @@ function openSFPickerForLesson(lessonId,sid,date,von,bis,note,newArt,fahrzeug){
   });
 }
 // SCHRITT 2: Bearbeiten/Verschieben-Detail
+function _fsFahrzeugKonflikt(eigeneId,date,von,fahrzeug){
+  if(!fahrzeug)return null;
+  const eigenerLehrer=(DB.lessons.find(l=>l.id===eigeneId)||{})._fahrlehrerId;
+  const treffer=(DB.lessons||[]).find(l=>l.id!==eigeneId&&l.date===date&&l.von===von&&l.fahrzeug===fahrzeug&&l._fahrlehrerId!==eigenerLehrer&&l.status!=="abgebrochen");
+  return treffer?(treffer._fahrlehrerName||"einem anderen Fahrlehrer"):null;
+}
 function openEventEdit(id,overrides){
   const l=(DB.lessons||[]).find(x=>x.id===id); if(!l)return;
   const cur=Object.assign({date:l.date,von:l.von,art:l.art,note:l.note||"",fahrzeug:l.fahrzeug||null},overrides||{});
@@ -6879,6 +7187,10 @@ function openEventEdit(id,overrides){
     </div>
     ${l.buero_fc_nachgereicht_am?`<p class="muted-p" style="font-size:11.5px;margin-top:4px;">Nachgereicht am ${isoDE(l.buero_fc_nachgereicht_am)}</p>`:''}
   </div>`:'';
+  const konflikt=(_fsAgg&&cur.fahrzeug)?_fsFahrzeugKonflikt(id,cur.date,cur.von,cur.fahrzeug):null;
+  const konfliktBlock=konflikt?`<p class="muted-p" style="font-size:12px;color:#cf9a3e;margin:-4px 0 8px;">⚠ ${esc(cur.fahrzeug)} ist zu dieser Zeit schon bei ${esc(konflikt)} eingetragen — nur ein Hinweis, buchen geht trotzdem.</p>`:'';
+  const zeitRelevant=["fahrstunde","sonder","nacht","schalt"].indexOf(cur.art)>=0;
+  const tatsaechlichBlock=zeitRelevant?`<div class="field"><label>Tatsächlich gefahrene Zeit (Minuten, optional)</label><input type="number" id="esTatDauer" min="1" max="600" placeholder="leer = volle gebuchte Zeit" value="${l.tatsaechlicheDauer||''}"></div>`:'';
   openSheet(`<div class="sheet-h">Bearbeiten</div>
     <div class="field"><label>Datum</label><input type="date" id="esDate" value="${cur.date}"></div>
     <div class="field"><label>Uhrzeit (Beginn)</label><input type="time" id="esTime" value="${cur.von}"></div>
@@ -6886,6 +7198,8 @@ function openEventEdit(id,overrides){
       <div class="es-arten">${[["fahrstunde","Fahrstunde"],["sonder","Sonderfahrt"],["schalt","Schaltk."],["theorie","Theorie"]].map(([k,la])=>`<button class="es-art${cur.art===k?' on':''}" data-art="${k}">${la}</button>`).join("")}</div>
     </div>
     <div class="field" id="esFzWrap" style="${fzRelevant?'':'display:none;'}"><label>Fahrzeug</label><button class="es-act" id="esFzBtn" type="button">${cur.fahrzeug?esc(cur.fahrzeug):'Kein Fahrzeug — antippen zum Zuweisen'} ›</button></div>
+    ${konfliktBlock}
+    ${tatsaechlichBlock}
     <div class="field"><label>Notiz</label><textarea id="esNote" rows="2" placeholder="Notiz zum Termin …">${esc(cur.note)}</textarea></div>
     ${fcBlock}
     <div class="btn-row" style="margin-top:6px;"><button class="btn btn-ghost" id="esBack" style="flex:0;padding:13px 16px;">Zurück</button><button class="btn btn-primary" id="esSave">Speichern</button></div>`);
@@ -6911,11 +7225,13 @@ function openEventEdit(id,overrides){
     const dur=newArt==="schalt"?15:(DB.workCfg.blockMin||90);
     const bis=min2hm(hm2min(von)+dur);
     const note=$("#esNote").value.trim();
+    const tatEl=$("#esTatDauer");
+    const tatWert=tatEl?(parseInt(tatEl.value)||null):null;
     if(newArt==="sonder"&&l.art!=="sonder"&&l.sid){
       // Art wird auf Sonderfahrt geändert → SF-Picker anzeigen
       openSFPickerForLesson(id,l.sid,date,von,bis,note,"sonder",newFahrzeug);
     } else {
-      updateLesson(id,{date,von,bis,art:newArt,note,fahrzeug:newFahrzeug}); closeSheet(); toast("Gespeichert ✓"); routeKalender();
+      updateLesson(id,{date,von,bis,art:newArt,note,fahrzeug:newFahrzeug,tatsaechlicheDauer:tatWert}); closeSheet(); toast("Gespeichert ✓"); routeKalender();
     }
   });
 }
@@ -7522,11 +7838,17 @@ function calDayHTML(){
 // UE eines Tages (done=nur absolvierte)
 function dayUE(iso,doneOnly){
   let ue=0;
-  dayEvents(iso).forEach(e=>{ if(e.status==="abgebrochen"||e.status==="nicht erschienen")return; if(doneOnly&&!isAbsolved(iso,e.bis))return; ue+=ueOf(e.art,e.von,e.bis); });
+  dayEvents(iso).forEach(e=>{ if(e.status==="abgebrochen"||e.status==="nicht erschienen")return; if(doneOnly&&!isAbsolved(iso,e.bis))return; ue+=ueOf(e.art,e.von,e.bis,e.tatsaechlicheDauer); });
   const th=dayTheorieWindow(iso); // Theorie-Fenster zählt nur wenn als Lesson erfasst – Fensteranzeige nicht
   return ue;
 }
-function ueOf(art,von,bis){ if(art==="theorie"){ if(von&&bis){ const dur=hm2min(bis)-hm2min(von); return Math.round((dur/90)*2*100)/100; } return 4; } if(art==="schalt")return 0.33; if(art==="block")return 0; return 2; } // Fahrstunde/Prüfung/Nacht/Sonder=2, Theorie=2 pro 90-Min-Block (mit Zeit) bzw. 4 als Fallback, Schalt=0,33, Block=0
+function ueOf(art,von,bis,tatsaechlicheDauer){
+  if(art==="block")return 0;
+  if(art==="schalt")return 0.33;
+  if(tatsaechlicheDauer){ return Math.round((tatsaechlicheDauer/90)*2*100)/100; }
+  if(art==="theorie"){ if(von&&bis){ const dur=hm2min(bis)-hm2min(von); return Math.round((dur/90)*2*100)/100; } return 4; }
+  return 2;
+} // Fahrstunde/Prüfung/Nacht/Sonder=2 (oder tatsächliche Dauer, falls eingetragen), Theorie=2 pro 90-Min-Block, Schalt=0,33, Block=0
 function isAbsolved(iso,bisHM){ const today=todayISO(); if(iso<today)return true; if(iso>today)return false; const now=new Date(); return hm2min(bisHM)<=now.getHours()*60+now.getMinutes(); }
 
 /* ===== Verdienst-Engine ===== */
@@ -7537,7 +7859,7 @@ function ueRange(fromISO,toISO){
   while(cur<=toISO && guard++<400){
     dayEvents(cur).forEach(e=>{
       if(e.status==="abgebrochen"||e.status==="nicht erschienen")return;
-      const ue=ueOf(e.art,e.von,e.bis);
+      const ue=ueOf(e.art,e.von,e.bis,e.tatsaechlicheDauer);
       if(isAbsolved(cur,e.bis))done+=ue; else plan+=ue;
       // FC-abgerechnete UE (zählt fürs Gehalt):
       // Prüfungen immer voll. Fahrstunden NEU: Standard (kein fc-Vermerk) = voll bezahlt (Schüler bringt 2 FC).
@@ -7561,7 +7883,7 @@ function ueRange(fromISO,toISO){
   (DB.lessons||[]).forEach(l=>{
     if(l.fc==="nachgereicht"&&l.nachAm){
       const dm=(""+l.nachAm).slice(0,10);
-      if(dm>=fromISO&&dm<=toISO){ fcCounted+=ueOf(l.art,l.von,l.bis); }
+      if(dm>=fromISO&&dm<=toISO){ fcCounted+=ueOf(l.art,l.von,l.bis,l.tatsaechlicheDauer); }
     }
   });
   // Stattgefundene Prüfungen: 46€ (=2 UE) pro Prüfung, gutgeschrieben am Tag des Eintragens (earnAt).
@@ -7697,7 +8019,7 @@ function dayFreeSlots(iso){
 function countRange(fromISO,toISO){
   let planned=0, free=0, slots=0, plannedUE=0;
   let cur=fromISO;
-  while(cur<=toISO){ const ds=daySlots(cur); const ev=dayEvents(cur).filter(e=>e.status!=="abgesagt"&&e.status!=="geplatzt"); slots+=ds.length; planned+=ev.length; plannedUE+=ev.reduce((a,e)=>a+ueOf(e.art||'fahrstunde',e.von,e.bis),0); free+=dayFreeSlots(cur).length; cur=addDays(cur,1); }
+  while(cur<=toISO){ const ds=daySlots(cur); const ev=dayEvents(cur).filter(e=>e.status!=="abgesagt"&&e.status!=="geplatzt"); slots+=ds.length; planned+=ev.length; plannedUE+=ev.reduce((a,e)=>a+ueOf(e.art||'fahrstunde',e.von,e.bis,e.tatsaechlicheDauer),0); free+=dayFreeSlots(cur).length; cur=addDays(cur,1); }
   return {planned,free,slots,plannedUE};
 }
 // Lesson-CRUD
@@ -7768,6 +8090,9 @@ function sichtbar(key){ return !DB.sichtbarkeit || DB.sichtbarkeit[key]!==false;
 function ensureDB(){ let _ensureDirty=false; if(!Array.isArray(DB.exams))DB.exams=[]; if(!Array.isArray(DB.pruefer))DB.pruefer=[]; if(!Array.isArray(DB.termine))DB.termine=[];
   if(!Array.isArray(DB.lessons))DB.lessons=[];
   if(!DB.sichtbarkeit||typeof DB.sichtbarkeit!=="object"){ DB.sichtbarkeit={vortest:true,fahrcheck:true,simulator:true}; }
+  ["dash_nextexam","dash_nextstudent","dash_fcpending","dash_capacity","dash_wocheverdienst","dash_naechstetheorie"].forEach(k=>{
+    if(DB.sichtbarkeit[k]===undefined)DB.sichtbarkeit[k]=true;
+  });
   if(!DB.weatherCfg||typeof DB.weatherCfg!=="object"){ DB.weatherCfg={apiKey:"",city:"Offenbach,DE"}; }
   if(!DB.workCfg||typeof DB.workCfg!=="object"){ DB.workCfg={
     // Vormittags- und Nachmittagsblock, Pause dazwischen. Zeiten in "HH:MM".
@@ -7973,15 +8298,24 @@ function bindPeriod(fn){ document.querySelectorAll(".seg-i[data-period]").forEac
 function openCalSearchSheet(){
   const artLabel={fahrstunde:"Fahrstunde",nacht:"Nachtfahrt",sonder:"Sonderfahrt",schalt:"Schaltlektion",theorie:"Theorie",block:"Blockiert",pruefung:"Prüfung"};
   openSheet(`<div class="sheet-h">Schüler suchen</div>
-    <div class="search-wrap" style="margin-bottom:14px;"><span class="search-ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="11" cy="11" r="7"/><path d="M21 21l-4.3-4.3"/></svg></span><input id="csInput" type="search" placeholder="Name eingeben …" autocomplete="off"></div>
+    <div class="search-wrap" style="margin-bottom:10px;"><span class="search-ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="11" cy="11" r="7"/><path d="M21 21l-4.3-4.3"/></svg></span><input id="csInput" type="search" placeholder="Name eingeben …" autocomplete="off"></div>
+    <div style="display:flex;gap:8px;margin-bottom:14px;">
+      <div class="field" style="flex:1;margin-bottom:0;"><label style="font-size:11px;">Von (optional)</label><input type="date" id="csVon"></div>
+      <div class="field" style="flex:1;margin-bottom:0;"><label style="font-size:11px;">Bis (optional)</label><input type="date" id="csBis"></div>
+    </div>
     <div id="csList"></div>`);
-  const inp=$("#csInput"), list=$("#csList");
+  const inp=$("#csInput"), list=$("#csList"), vonI=$("#csVon"), bisI=$("#csBis");
   inp.focus();
-  inp.addEventListener("input",()=>{
+  const doSearch=()=>{
     const q=(inp.value||"").trim().toLowerCase();
-    if(q.length<1){ list.innerHTML=""; return; }
-    const matches=(DB.students||[]).filter(s=>(s.name||"").toLowerCase().includes(q)&&!isDummyStudent(s)).slice(0,8);
-    if(!matches.length){ list.innerHTML=`<div class="cs-empty">Kein Schüler gefunden</div>`; return; }
+    const von=vonI.value, bis=bisI.value;
+    if(q.length<1 && !von && !bis){ list.innerHTML=""; return; }
+    let matches=(DB.students||[]).filter(s=>!isDummyStudent(s)&&(q.length<1||(s.name||"").toLowerCase().includes(q)));
+    if(von||bis){
+      matches=matches.filter(s=>(DB.lessons||[]).some(l=>l.sid===s.id&&l.status!=="abgebrochen"&&(!von||l.date>=von)&&(!bis||l.date<=bis)));
+    }
+    matches=matches.slice(0,8);
+    if(!matches.length){ list.innerHTML=`<div class="cs-empty">Kein Schüler gefunden${von||bis?' in diesem Zeitraum':''}</div>`; return; }
     list.innerHTML=matches.map(s=>{
       const hasFuture=(DB.lessons||[]).some(l=>l.sid===s.id&&l.date>=todayISO()&&l.status!=="abgebrochen"&&l.status!=="nicht erschienen");
       const hasPast=(DB.lessons||[]).some(l=>l.sid===s.id&&l.date<todayISO());
@@ -7989,7 +8323,10 @@ function openCalSearchSheet(){
       return `<button class="cs-student" data-sid="${s.id}"><div><div class="cs-sname">${esc(s.name)}</div><div style="font-size:11.5px;color:var(--muted);margin-top:2px;">${meta}</div></div><span class="cs-form">${esc(s.form||"B")}</span></button>`;
     }).join("");
     document.querySelectorAll(".cs-student").forEach(b=>b.addEventListener("click",()=>showCalStudentDetail(b.dataset.sid)));
-  });
+  };
+  inp.addEventListener("input",doSearch);
+  vonI.addEventListener("change",doSearch);
+  bisI.addEventListener("change",doSearch);
 }
 function showCalStudentDetail(sid){
   const s=DB.students.find(x=>x.id===sid); if(!s)return;
@@ -8460,7 +8797,7 @@ function fcForgottenLessons(){
   return (DB.lessons||[]).filter(l=>l.fc==="v1"||l.fc==="v2").sort((a,b)=>(""+b.date).localeCompare(""+a.date));
 }
 // entgangenes Geld gesamt (offene v1/v2, noch nicht nachgereicht)
-function fcForgottenEuro(){ let ue=0; fcForgottenLessons().forEach(l=>{ ue += (l.fc==="v1")? ueOf(l.art,l.von,l.bis)/2 : ueOf(l.art,l.von,l.bis); }); return Math.round(ue*DB.verdienst.proUE); }
+function fcForgottenEuro(){ let ue=0; fcForgottenLessons().forEach(l=>{ ue += (l.fc==="v1")? ueOf(l.art,l.von,l.bis,l.tatsaechlicheDauer)/2 : ueOf(l.art,l.von,l.bis,l.tatsaechlicheDauer); }); return Math.round(ue*DB.verdienst.proUE); }
 function eurFmt(n){ return (Math.round(n)).toLocaleString("de-DE")+" €"; }
 
 // Dashboard-Karte: zeigt NUR offene Ausnahmen (vergessene FC). Kein Bestätigen mehr im Normalfall.
@@ -8481,7 +8818,7 @@ function setFC(id,status){
   const l=fcLesson(id); if(!l)return;
   const st=DB.students.find(s=>s.id===l.sid);
   const prev=l.fc||null; const prevNachAm=l.nachAm||null;
-  const ueFull=ueOf(l.art,l.von,l.bis); const eurFull=Math.round(ueFull*DB.verdienst.proUE);
+  const ueFull=ueOf(l.art,l.von,l.bis,l.tatsaechlicheDauer); const eurFull=Math.round(ueFull*DB.verdienst.proUE);
   let msg="", histTxt="", eurDelta=0;
   if(status==="v1"){ l.fc="v1"; delete l.nachAm; msg="1 FC vergessen vermerkt"; histTxt="1 Fahrcheck vergessen"; eurDelta=-Math.round(ueFull/2*DB.verdienst.proUE); }
   else if(status==="v2"){ l.fc="v2"; delete l.nachAm; msg="2 FC vergessen vermerkt"; histTxt="2 Fahrchecks vergessen"; eurDelta=-eurFull; }
@@ -8523,7 +8860,7 @@ function routeFCMissing(){
   const forg=fcForgottenLessons(); const eur=fcForgottenEuro();
   // Gruppieren pro Schüler
   const byStud={};
-  forg.forEach(l=>{ const k=l.sid||"?"; if(!byStud[k])byStud[k]={sid:l.sid,lessons:[],ue:0}; byStud[k].lessons.push(l); byStud[k].ue += (l.fc==="v1")?ueOf(l.art,l.von,l.bis)/2:ueOf(l.art,l.von,l.bis); });
+  forg.forEach(l=>{ const k=l.sid||"?"; if(!byStud[k])byStud[k]={sid:l.sid,lessons:[],ue:0}; byStud[k].lessons.push(l); byStud[k].ue += (l.fc==="v1")?ueOf(l.art,l.von,l.bis,l.tatsaechlicheDauer)/2:ueOf(l.art,l.von,l.bis,l.tatsaechlicheDauer); });
   const groups=Object.values(byStud).sort((a,b)=>b.ue-a.ue);
   let h=`<div class="view-inner view-read fade-up">
     <div class="back-row"><button class="back-btn" id="backBtn">${ICN.back} Start</button></div>
@@ -8864,8 +9201,14 @@ function routeDashboard(){
   const next3Today=(DB.lessons||[]).filter(l=>l.date===today&&l.status!=="abgebrochen"&&l.status!=="nicht erschienen"&&hm2min(l.von)>=nowMin&&["fahrstunde","sonder","nacht","schalt","theorie"].indexOf(l.art)>=0)
     .sort((a,b)=>a.von.localeCompare(b.von)).slice(0,3)
     .map(l=>({id:l.id,von:l.von,name:l.sid?((DB.students.find(s=>s.id===l.sid)||{}).name||"—"):(CAL_ARTEN[l.art]||{lab:"Termin"}).lab}));
+  // Neue Kachel: Verdienst diese Woche
+  const wk=_wocheVonBis();
+  const wocheUE=ueRange(wk.von,wk.bis).total;
+  const wocheEuro=Math.round(wocheUE*(DB.verdienst?.proUE||0));
+  // Neue Kachel: nächste Theorie
+  const naechsteTheorie=(DB.lessons||[]).filter(l=>l.art==="theorie"&&l.date>=today&&l.status!=="abgebrochen").sort((a,b)=>(a.date+a.von).localeCompare(b.date+b.von))[0]||null;
   view.innerHTML=`<div class="view-inner view-wide fade-up">
-    <div class="hero compact"><div class="greet">Willkommen zurück</div><div class="hero-brand">Serband</div><div class="hero-tag">${esc(heuteTag)}</div></div>
+    <div class="hero compact"><div class="greet">Willkommen zurück</div><div class="hero-brand">${esc((_authProfile&&_authProfile.name)||"Serband")}</div><div class="hero-tag">${esc(heuteTag)}</div></div>
     <div id="weatherSlot"></div>
     <div class="heute-card">
       <button class="hc-top" data-go="kalender"><div class="hc-n">${ueHeute}</div><div class="hc-l">UE heute</div></button>
@@ -8877,22 +9220,28 @@ function routeDashboard(){
       <button class="dq-btn" data-go="pruef">${ICN.trophy}<span>Prüfungen</span></button>
       <button class="dq-btn" data-go="stats">${ICN.bolt}<span>Statistik</span></button>
     </div>
-    ${nextExamDashCard()}
-    ${nextStudentCardHTML()}
-    ${fcPendingCardHTML()}
+    ${sichtbar('dash_nextexam')?nextExamDashCard():''}
+    ${sichtbar('dash_nextstudent')?nextStudentCardHTML():''}
+    ${sichtbar('dash_fcpending')?fcPendingCardHTML():''}
     <div class="dash-tiles">
       <button class="d-tile" data-go="home"><div class="badge">${ICN.users}</div><div class="dt-n" data-count="${act}">0</div><div class="dt-l">Meine Fahrschüler</div></button>
       <button class="d-tile" data-go="pruef"><div class="badge">${ICN.trophy}</div><div class="dt-n" data-count="${ready}">0</div><div class="dt-l">Prüfungsreif</div></button>
       <button class="d-tile" data-go="stats"><div class="badge">${ICN.bolt}</div>${q.pct==null?'<div class="dt-n">–</div>':`<div class="dt-n" data-count="${q.pct}" data-suffix="%">0</div>`}<div class="dt-l">Quote · Monat</div></button>
+      ${sichtbar('dash_wocheverdienst')?`<button class="d-tile" data-go="verdienstwoche"><div class="badge">💰</div><div class="dt-n" data-count="${wocheEuro}">0</div><div class="dt-l">Diese Woche verdient</div></button>`:''}
+      ${sichtbar('dash_naechstetheorie')?`<button class="d-tile" ${naechsteTheorie?`data-go="theorie" data-theoriedate="${naechsteTheorie.date}"`:''}><div class="badge">📘</div><div class="dt-n" style="font-size:15px;">${naechsteTheorie?isoDE(naechsteTheorie.date).slice(0,5):'–'}</div><div class="dt-l">Nächste Theorie</div></button>`:''}
     </div>
-    ${capacityCardHTML()}
+    ${sichtbar('dash_capacity')?capacityCardHTML():''}
   </div>`;
   document.querySelectorAll(".d-tile .dt-n[data-count]").forEach(el=>countUp(el,+el.dataset.count,el.dataset.suffix||""));
   requestAnimationFrame(()=>requestAnimationFrame(()=>{
     document.querySelectorAll('.th-seg[data-th]').forEach(el=>{el.style.flexBasis=el.dataset.th+'px';});
   }));
-  const go=k=>{ if(k==='home')routeHome(); else if(k==='pruef')routePruefungen(); else if(k==='stats')routeStats('cur'); else if(k==='kalender')routeKalender(); };
-  document.querySelectorAll("[data-go]").forEach(b=>b.addEventListener("click",()=>go(b.dataset.go)));
+  const go=k=>{ if(k==='home')routeHome(); else if(k==='pruef')routePruefungen(); else if(k==='stats')routeStats('cur'); else if(k==='kalender')routeKalender(); else if(k==='verdienstwoche')openVerdienstSheet(); };
+  document.querySelectorAll("[data-go]").forEach(b=>b.addEventListener("click",()=>{
+    const k=b.dataset.go;
+    if(k==='theorie'&&b.dataset.theoriedate){ _calView='tag'; _calDate=b.dataset.theoriedate; routeKalender(); return; }
+    go(k);
+  }));
   const na=$("#ndAdd"); if(na)na.addEventListener("click",e=>{e.stopPropagation();openTerminSheet();});
   const cap=$("#capCard"); if(cap)cap.addEventListener("click",openCapacitySheet);
   document.querySelectorAll("[data-hcopen]").forEach(b=>b.addEventListener("click",()=>openEventEdit(b.dataset.hcopen)));
@@ -8902,6 +9251,13 @@ function routeDashboard(){
   if(DB.weatherCfg&&DB.weatherCfg.apiKey){
     fetchWeather().then(w=>{ const slot=$("#weatherSlot"); if(slot&&w){slot.innerHTML=weatherWidgetHTML(w);bindWeatherWidget(w);} });
   }
+}
+function _wocheVonBis(){
+  const now=new Date(); const wd=(now.getDay()+6)%7;
+  const mon=new Date(now); mon.setDate(now.getDate()-wd);
+  const son=new Date(mon); son.setDate(mon.getDate()+6);
+  const f=d=>d.getFullYear()+"-"+String(d.getMonth()+1).padStart(2,"0")+"-"+String(d.getDate()).padStart(2,"0");
+  return {von:f(mon),bis:f(son)};
 }
 // Nächste Prüfung-Card: Student, Datum, geplante Fahrstunden bis dahin
 function nextExamDashCard(){
@@ -9147,7 +9503,7 @@ function routeStats(period){
       <span class="na-arrow">${ICN.arrow}</span>
     </button>
   </div>
-  ${isSuperAdmin()?`<button class="ps-trigger" id="safeTrigger" aria-label=""></button>`:''}`;
+  `;
   // Balken + Thermometer animieren (double rAF damit transition greift)
   requestAnimationFrame(()=>requestAnimationFrame(()=>{
     document.querySelectorAll('.mb-fill[data-h]').forEach(el=>{el.style.height=el.dataset.h+'%';});
@@ -9160,186 +9516,8 @@ function routeStats(period){
   $("#toPruefer").addEventListener("click",routePruefer);
   const _nb=$("#toNichtBesteher"); if(_nb)_nb.addEventListener("click",()=>routeNichtBesteher(period));
   const vg=$("#vdGear"); if(vg)vg.addEventListener("click",openVerdienstSheet);
-  const st=$("#safeTrigger"); if(st)st.addEventListener("click",openSafePin);
 }
 /* ===== SAFE — privat ===== */
-function openSafePin(){
-  if(!isSuperAdmin())return;
-  let entered='';
-  const DOTS=6;
-  const renderDots=()=>{
-    const d=document.querySelector('.ps-display'); if(!d)return;
-    d.innerHTML=Array(DOTS).fill(0).map((_,i)=>`<div class="ps-dot${i<entered.length?' filled':''}"></div>`).join('');
-  };
-  openSheet(`<div style="padding:8px 0 10px;"><div class="ps-display">${Array(DOTS).fill('<div class="ps-dot"></div>').join('')}</div><div class="ps-grid">${[1,2,3,4,5,6,7,8,9,"","0","⌫"].map(k=>k===""?`<div></div>`:`<button class="ps-key" data-k="${k}">${k}</button>`).join("")}</div></div>`);
-  document.querySelectorAll('.ps-key').forEach(b=>b.addEventListener('click',()=>{
-    const k=b.dataset.k;
-    if(k==='⌫'){entered=entered.slice(0,-1);}
-    else if(entered.length<DOTS){entered+=k;}
-    renderDots();
-    if(entered.length===DOTS){
-      if(entered===[2,2,1,2,2,0].join('')){ closeSheet(); openSafeView(todayISO().slice(0,7)); }
-      else{
-        const disp=document.querySelector('.ps-display');
-        if(disp){disp.classList.add('ps-shake');setTimeout(()=>{disp.classList.remove('ps-shake');entered='';renderDots();},550);}
-      }
-    }
-  }));
-}
-function monthHasActivity(monthKey){
-  const hasLesson=(DB.lessons||[]).some(l=>(l.date||'').slice(0,7)===monthKey);
-  const hasExam=(DB.exams||[]).some(e=>((e.earnAt||e.date)||'').slice(0,7)===monthKey);
-  const hasTip=(DB.trinkgeld||[]).some(t=>t.monat===monthKey);
-  // Der Startmonat (mit Startguthaben) gilt immer als aktiv
-  const startMonth=(DB.verdienst&&DB.verdienst.startMonth)||"";
-  return hasLesson||hasExam||hasTip||(monthKey===startMonth&&(DB.verdienst.startUE||0)>0);
-}
-function openSafeView(monat,jahr){
-  ensureDB(); setFab(false); view.scrollTop=0;
-  $("#tbTitle").textContent="";
-  const MN=["Jan","Feb","Mär","Apr","Mai","Jun","Jul","Aug","Sep","Okt","Nov","Dez"];
-  const now=new Date();
-  jahr=jahr||now.getFullYear();
-  monat=monat||(now.getFullYear()+"-"+pad2(now.getMonth()+1));
-  // Verfügbare Jahre: von der frühesten Schüler-/Lesson-Aktivität bis heute
-  const allDates=[...(DB.lessons||[]).map(l=>l.date),...(DB.trinkgeld||[]).map(t=>t.date)].filter(Boolean);
-  const earliestYear=allDates.length?Math.min(...allDates.map(d=>+d.slice(0,4))):now.getFullYear();
-  const years=[]; for(let y=now.getFullYear();y>=earliestYear;y--)years.push(y);
-  const yearChips=years.map(y=>`<button class="seg-i${y===jahr?' on':''}" data-jahr="${y}">${y}</button>`).join('');
-  // Monats-Chips für das gewählte Jahr, chronologisch (Jan → Dez / bzw. bis heute im aktuellen Jahr)
-  const lastMonat=jahr===now.getFullYear()?now.getMonth()+1:12;
-  const moList=[]; for(let m=1;m<=lastMonat;m++){ const key=jahr+"-"+pad2(m); moList.push({key,label:MN[m-1]+" "+jahr}); }
-  const chips=moList.map(m=>`<button class="seg-i${m.key===monat?' on':''}" data-smo="${m.key}">${m.label}</button>`).join('');
-  const monatAktiv=monthHasActivity(monat);
-  // Verdienst diesen Monat
-  const refDate=monat===todayISO().slice(0,7)?todayISO():monat+'-28';
-  const [moS,moE]=monthRangeOf(refDate);
-  const moUE=monatAktiv?ueRange(moS,moE):{fcCounted:0,total:0,done:0};
-  const verdientUE=Math.round(moUE.fcCounted);
-  const verdientEuro=monatAktiv?gehaltAusUE(verdientUE):0;
-  // Trinkgeld diesen Monat
-  const tips=(DB.trinkgeld||[]).filter(t=>t.monat===monat).sort((a,b)=>b.date.localeCompare(a.date));
-  const tipsSum=tips.reduce((a,t)=>a+(t.betrag||0),0);
-  const gesamt=verdientEuro+tipsSum;
-  const tgPct=gesamt>0?Math.round(tipsSum/gesamt*100):0;
-  const uePct=100-tgPct;
-  // ===== Fahrstunden diesen Monat, mit wem =====
-  const monatsLessons=(DB.lessons||[]).filter(l=>l.date>=moS&&l.date<=moE&&["fahrstunde","sonder","nacht","schalt"].indexOf(l.art)>=0)
-    .sort((a,b)=>a.date===b.date?a.von.localeCompare(b.von):a.date.localeCompare(b.date))
-    .map(l=>({date:l.date,von:l.von,name:l.sid?((DB.students.find(s=>s.id===l.sid)||{}).name||"—"):"—",art:(CAL_ARTEN[l.art]||{lab:""}).lab}));
-  const lessonsHTML=monatsLessons.length?monatsLessons.map(l=>`<div class="tg-item"><div><div class="tgi-name">${esc(l.name)}</div><div class="tgi-date">${isoDE(l.date)} · ${l.von} · ${esc(l.art)}</div></div></div>`).join(''):`<div class="muted-p" style="text-align:center;padding:12px 0;">Keine Fahrstunden in diesem Monat erfasst.</div>`;
-  // ===== JAHRESEINKOMMEN — nur Monate mit echter Aktivität =====
-  const curYear=jahr+"";
-  const curMonth=lastMonat;
-  let yearUE=0,yearEuro=0,yearTG=0,aktiveMonate=0;
-  for(let m=1;m<=curMonth;m++){
-    const moKey=`${curYear}-${pad2(m)}`;
-    if(!monthHasActivity(moKey))continue; // leere Monate überspringen
-    aktiveMonate++;
-    const rd=moKey===todayISO().slice(0,7)?todayISO():`${curYear}-${pad2(m)}-28`;
-    const [ms,me]=monthRangeOf(rd);
-    const mu=ueRange(ms,me);
-    yearUE+=mu.fcCounted;
-    yearEuro+=gehaltAusUE(Math.round(mu.fcCounted));
-    yearTG+=(DB.trinkgeld||[]).filter(t=>t.monat===moKey).reduce((a,t)=>a+(t.betrag||0),0);
-  }
-  const yearGesamt=yearEuro+yearTG;
-  const tgYearPct=yearGesamt>0?Math.round(yearTG/yearGesamt*100):0;
-  const ueYearPct=100-tgYearPct;
-  // Trinkgeld-Liste
-  const tgHTML=tips.length?tips.map(t=>`<div class="tg-item"><div><div class="tgi-name">${esc(t.name||'—')}</div><div class="tgi-date">${isoDE(t.date)}</div></div><div style="display:flex;align-items:center;gap:10px;"><div class="tgi-amt">+${t.betrag} €</div><button class="tgi-del" data-tgid="${t.id}">✕</button></div></div>`).join(''):`<div class="muted-p" style="text-align:center;padding:16px 0;">Noch kein Trinkgeld diesen Monat</div>`;
-  const moLabel=moList.find(m=>m.key===monat)?.label||monat;
-  const verdienstBlock=monatAktiv?`
-    <div class="blk-h">Verdienst UE</div>
-    <div class="mini-stat" style="margin-bottom:14px;">
-      <div class="ms-v">${eur(verdientEuro)}</div>
-      <div class="ms-l">UE Verdienst</div>
-      <div class="ms-s">${verdientUE} UE · ${moLabel}</div>
-    </div>
-    <div class="blk-h">Gesamt inkl. Trinkgeld</div>
-    <div class="vd-card" style="margin-bottom:18px;">
-      <div style="display:flex;justify-content:space-between;align-items:baseline;margin-bottom:12px;">
-        <div style="font-family:'Playfair Display',serif;font-size:30px;font-weight:700;">${eur(gesamt)}</div>
-        <div style="font-size:12px;color:var(--muted);">davon ${tgPct}% Trinkgeld</div>
-      </div>
-      <div class="tg-total-bar"><div class="tgb-ue" style="width:${uePct}%"></div><div class="tgb-tg" style="width:${tgPct}%"></div></div>
-      <div style="display:flex;gap:16px;font-size:11.5px;font-weight:800;margin-top:8px;">
-        <span style="color:var(--gruen);">■ UE ${eur(verdientEuro)}</span>
-        <span style="color:#c9a227;">■ TG ${eur(tipsSum)}</span>
-      </div>
-    </div>`:`
-    <div class="mini-stat" style="margin-bottom:18px;text-align:center;">
-      <div class="ms-l" style="margin-top:0;">Keine erfassten Daten für ${moLabel}</div>
-      <div class="ms-s" style="margin-top:6px;">${tipsSum>0?`Nur Trinkgeld: ${eur(tipsSum)}`:'In diesem Monat wurde nichts terminiert.'}</div>
-    </div>`;
-  view.innerHTML=`<div class="view-inner view-read fade-up">
-    <div class="back-row"><button class="back-btn" id="safeBack">${ICN.back} Zurück</button></div>
-    <div class="blk-h" style="margin-bottom:8px;">Jahr</div>
-    <div class="seg" style="margin-bottom:14px;overflow-x:auto;">${yearChips}</div>
-    <div class="seg" style="margin-bottom:18px;overflow-x:auto;">${chips}</div>
-    ${verdienstBlock}
-    <div class="blk-h">Fahrstunden · ${moLabel}</div>
-    <div style="margin-bottom:18px;">${lessonsHTML}</div>
-    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;">
-      <div class="blk-h" style="margin-bottom:0;">Trinkgeld · ${moLabel}</div>
-      <button class="icon-btn" id="addTGBtn" style="width:36px;height:36px;border-radius:10px;background:var(--akzent);color:#fff;border:none;font-size:22px;line-height:1;">+</button>
-    </div>
-    <div id="tgList">${tgHTML}</div>
-    <div class="blk-h" style="margin-top:24px;">Gesamteinkommen ${curYear}</div>
-    <div class="vd-card" style="margin-bottom:12px;">
-      <div style="display:flex;justify-content:space-between;align-items:baseline;margin-bottom:12px;">
-        <div>
-          <div style="font-size:10px;font-weight:800;text-transform:uppercase;letter-spacing:.06em;color:var(--faint);margin-bottom:4px;">${aktiveMonate} ${aktiveMonate===1?'Monat':'Monate'} erfasst · ${curYear}</div>
-          <div style="font-family:'Playfair Display',serif;font-size:28px;font-weight:700;">${eur(yearGesamt)}</div>
-        </div>
-        <div style="text-align:right;font-size:12px;color:var(--muted);">${Math.round(yearUE)} UE<br>+${eur(yearTG)} TG</div>
-      </div>
-      <div class="tg-total-bar"><div class="tgb-ue" style="width:${ueYearPct}%"></div><div class="tgb-tg" style="width:${tgYearPct}%"></div></div>
-      <div style="display:flex;gap:16px;font-size:11.5px;font-weight:800;margin-top:8px;">
-        <span style="color:var(--gruen);">■ UE ${eur(yearEuro)}</span>
-        <span style="color:#c9a227;">■ TG ${eur(yearTG)}</span>
-      </div>
-    </div>
-  </div>`;
-  $("#safeBack").addEventListener("click",routeStats);
-  document.querySelectorAll("[data-jahr]").forEach(b=>b.addEventListener("click",()=>{
-    const y=+b.dataset.jahr; const firstMonat=y+"-01"; openSafeView(y===now.getFullYear()?(y+"-"+pad2(now.getMonth()+1)):firstMonat,y);
-  }));
-  document.querySelectorAll("[data-smo]").forEach(b=>b.addEventListener("click",()=>openSafeView(b.dataset.smo,jahr)));
-  $("#addTGBtn").addEventListener("click",()=>openAddTrinkgeldSheet(monat,()=>openSafeView(monat,jahr)));
-  document.querySelectorAll(".tgi-del").forEach(b=>b.addEventListener("click",()=>{
-    DB.trinkgeld=(DB.trinkgeld||[]).filter(t=>t.id!==b.dataset.tgid);
-    save(); openSafeView(monat,jahr);
-  }));
-}
-function openAddTrinkgeldSheet(monat,cb){
-  const studs=(DB.students||[]).filter(s=>!s.passed&&!isDummyStudent(s)).sort((a,b)=>(a.name||'').localeCompare(b.name||''));
-  openSheet(`<div class="sheet-h">Trinkgeld</div>
-    <div class="field" style="margin-bottom:10px;"><label>Betrag (€)</label><input id="tgBetrag" type="number" min="1" max="500" placeholder="z. B. 20" inputmode="numeric" style="font-size:20px;text-align:center;padding:14px;"></div>
-    <div class="field" style="margin-bottom:10px;"><label>Von wem</label>
-      <select id="tgName" style="width:100%;padding:12px 14px;border-radius:12px;background:var(--surface);border:1px solid var(--line);color:var(--txt);font-size:15px;">
-        <option value="">Schüler wählen…</option>
-        ${studs.map(s=>`<option value="${esc(s.name)}">${esc(s.name)}</option>`).join('')}
-        <option value="__manual">Manuell eingeben…</option>
-      </select></div>
-    <div class="field" id="tgManualField" style="display:none;margin-bottom:10px;"><label>Name</label><input id="tgManualName" type="text" placeholder="Schülername" autocomplete="off"></div>
-    <div class="field" style="margin-bottom:16px;"><label>Datum</label><input id="tgDate" type="text" placeholder="TT.MM.JJJJ" value="${isoDE(todayISO())}"></div>
-    <div class="btn-row"><button class="btn btn-primary" id="tgSave">Speichern</button><button class="btn btn-ghost" id="tgCancel">Abbrechen</button></div>`);
-  $("#tgName").addEventListener("change",()=>{$("#tgManualField").style.display=$("#tgName").value==='__manual'?'':'none';});
-  $("#tgSave").addEventListener("click",()=>{
-    const betrag=parseInt($("#tgBetrag").value)||0;
-    if(betrag<1){toast("Betrag eingeben");return;}
-    const rawName=$("#tgName").value==='__manual'?($("#tgManualName").value.trim()):($("#tgName").value);
-    if(!rawName){toast("Name eingeben");return;}
-    const rawDate=($("#tgDate").value||"").trim();
-    const parts=rawDate.split('.');
-    const iso=parts.length===3?`${parts[2].length===2?"20"+parts[2]:parts[2]}-${pad2(parts[1])}-${pad2(parts[0])}`:todayISO();
-    if(!DB.trinkgeld)DB.trinkgeld=[];
-    DB.trinkgeld.push({id:uid(),name:rawName,betrag,date:iso,monat:iso.slice(0,7)});
-    save(); closeSheet(); cb();
-  });
-  $("#tgCancel").addEventListener("click",closeSheet);
-}
 /* ===== Nicht-Besteher-Statistik ===== */
 function routeNichtBesteher(period){
   ensureDB(); period=period||'cur';
@@ -9779,17 +9957,26 @@ function getMorgenTermine(){
   return (DB.lessons||[]).filter(l=>l.date===mi && l.status!=="abgebrochen" && l.sid)
     .sort((a,b)=>a.von.localeCompare(b.von));
 }
+function getMorgenPruefungen(){
+  const mi=morgenIso();
+  const out=[];
+  (DB.termine||[]).filter(t=>t.date===mi).forEach(t=>{
+    (t.slots||[]).filter(Boolean).forEach(sid=>out.push({sid,von:t.von||""}));
+  });
+  return out.sort((a,b)=>a.von.localeCompare(b.von));
+}
 
 function updateBell(){
   const btn=document.getElementById("bellBtn");
   if(!btn) return;
-  const list=getMorgenTermine();
+  const list=getMorgenTermine().length + getMorgenPruefungen().length;
   btn.classList.remove("bell-red","bell-green");
-  btn.classList.add(list.length?"bell-red":"bell-green");
+  btn.classList.add(list?"bell-red":"bell-green");
 }
 
 function openBellSheet(){
   const list=getMorgenTermine();
+  const pruefList=getMorgenPruefungen();
   const rows=list.length? list.map(l=>{
     const s=DB.students.find(x=>x.id===l.sid);
     if(!s) return "";
@@ -9799,9 +9986,20 @@ function openBellSheet(){
     return `<a class="es-act" href="${url}" target="_blank" rel="noopener" style="display:flex;justify-content:space-between;align-items:center;text-decoration:none;">
       <span>${esc(s.name)} · ${l.von} Uhr</span><span style="color:#25D366;">WhatsApp ›</span>
     </a>`;
-  }).join("") : `<p class="muted-p" style="text-align:center;padding:20px 0;">Keine Fahrstunden morgen — nichts zu erinnern 👍</p>`;
+  }).join("") : "";
+  const pruefRows=pruefList.length? pruefList.map(p=>{
+    const s=DB.students.find(x=>x.id===p.sid);
+    if(!s) return "";
+    const phone=formatPhoneForWa(s.telefon);
+    const msg=encodeURIComponent(`Hey ${s.name.split(" ")[0]}! Kurze Erinnerung: morgen um ${p.von} Uhr ist deine Prüfung. Viel Erfolg! 🍀🚗`);
+    const url=phone?`https://wa.me/${phone}?text=${msg}`:`https://wa.me/?text=${msg}`;
+    return `<a class="es-act" href="${url}" target="_blank" rel="noopener" style="display:flex;justify-content:space-between;align-items:center;text-decoration:none;">
+      <span>🏆 ${esc(s.name)} · ${p.von} Uhr</span><span style="color:#25D366;">WhatsApp ›</span>
+    </a>`;
+  }).join("") : "";
+  const alleRows=rows+pruefRows;
   openSheet(`<div class="sheet-h">🔔 Erinnerungen für morgen</div>
-    <div class="es-actions">${rows}</div>`);
+    <div class="es-actions">${alleRows||`<p class="muted-p" style="text-align:center;padding:20px 0;">Weder Fahrstunden noch Prüfungen morgen — nichts zu erinnern 👍</p>`}</div>`);
 }
 
 const bellBtn=document.getElementById("bellBtn");
