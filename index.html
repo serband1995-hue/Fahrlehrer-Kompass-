@@ -3797,6 +3797,7 @@ function _fsInjectFilterTiles(){
       </div></div>
     </div>`;
   };
+  const keinFilterAktiv=!_fsCalLehrerFilter.length&&!_fsCalFahrzeugFilter.length;
   const html=`<div id="fsCalTiles">
     <button class="btn btn-ghost" style="width:100%;margin-bottom:8px;" onclick="(window._fsAktuelleRoute||routeFahrschuleDashboard)()">← Zurück</button>
     <div class="seg" style="margin-bottom:10px;">
@@ -3806,6 +3807,7 @@ function _fsInjectFilterTiles(){
     ${tileBlock("fahrzeug","fsFilterFahrzeug","🚗 Fahrzeuge",fahrzeuge.map(fz=>({value:fz,label:fz})),_fsCalFahrzeugFilter,"fsfz")}
     ${tileBlock("lehrer","fsFilterLehrer","👤 Fahrlehrer",lehrer.map(l=>({value:l.id,label:l.name||l.email})),_fsCalLehrerFilter,"fslehrer")}
     ${(_fsCalFahrzeugFilter.length||_fsCalLehrerFilter.length)?`<button class="btn btn-ghost" style="width:100%;margin-bottom:6px;" onclick="_fsResetKalFilter()">Filter zurücksetzen</button>`:''}
+    ${keinFilterAktiv?`<div class="res-block" style="animation:none;background:rgba(207,154,62,.1);border-color:rgba(207,154,62,.35);text-align:center;"><p style="font-size:13px;color:var(--muted);margin:0;">👆 Wähle oben einen Fahrlehrer oder ein Fahrzeug, um Termine zu sehen.</p></div>`:''}
   </div>`;
   filtersEl.insertAdjacentHTML("afterend",html);
   document.querySelectorAll("[data-fsfz]").forEach(b=>b.addEventListener("click",()=>{
@@ -5153,9 +5155,17 @@ $("#fab").addEventListener("click",()=>formView(null));
 /* ============================================================
    HOME
    ============================================================ */
+function _letzteAktivitaet(s){
+  const l=(DB.lessons||[]).filter(x=>x.sid===s.id&&x.date).map(x=>x.date).sort();
+  return l.length?l[l.length-1]:"";
+}
+let _homeSortMode="az";
 function routeHome(){
   $("#tbTitle").textContent="Schüler";setFab(true);view.scrollTop=0;
-  const list=activeStudents().slice().sort((a,b)=>(a.name||"").localeCompare(b.name||"","de"));
+  let list=activeStudents().slice();
+  if(_homeSortMode==="stand") list.sort((a,b)=>stand(b)-stand(a));
+  else if(_homeSortMode==="aktiv") list.sort((a,b)=>(_letzteAktivitaet(b)||"").localeCompare(_letzteAktivitaet(a)||""));
+  else list.sort((a,b)=>(a.name||"").localeCompare(b.name||"","de"));
   if(!list.length){
     view.innerHTML=`<div class="empty fade-up">
       <img src="${LOGO}" alt="">
@@ -5165,25 +5175,37 @@ function routeHome(){
     </div>`;
     $("#emptyAdd").addEventListener("click",()=>formView(null));return;
   }
-  // Buchstaben ermitteln
-  const letters=[...new Set(list.map(s=>(s.name||"?")[0].toUpperCase()))].sort((a,b)=>a.localeCompare(b,"de"));
-  // Schüler nach Buchstabe gruppieren
+  const sortiertAlpha=_homeSortMode==="az";
+  // Buchstaben ermitteln (nur relevant bei A–Z-Sortierung)
+  const letters=sortiertAlpha?[...new Set(list.map(s=>(s.name||"?")[0].toUpperCase()))].sort((a,b)=>a.localeCompare(b,"de")):[];
+  // Schüler nach Buchstabe gruppieren, oder bei anderer Sortierung einfach flach durchreichen
   let gridHTML="";
-  letters.forEach(letter=>{
-    const group=list.filter(s=>(s.name||"?")[0].toUpperCase()===letter);
-    gridHTML+=`<div class="alpha-anchor" id="alpha-${letter}" style="font-size:11px;font-weight:800;color:var(--muted);letter-spacing:.1em;padding:14px 0 6px;text-transform:uppercase;">${letter}</div>`;
-    gridHTML+=group.map((s,i)=>cardHTML(s,i)).join("");
-  });
+  if(sortiertAlpha){
+    letters.forEach(letter=>{
+      const group=list.filter(s=>(s.name||"?")[0].toUpperCase()===letter);
+      gridHTML+=`<div class="alpha-anchor" id="alpha-${letter}" style="font-size:11px;font-weight:800;color:var(--muted);letter-spacing:.1em;padding:14px 0 6px;text-transform:uppercase;">${letter}</div>`;
+      gridHTML+=group.map((s,i)=>cardHTML(s,i)).join("");
+    });
+  } else {
+    gridHTML=list.map((s,i)=>cardHTML(s,i)).join("");
+  }
   const letterNav=letters.map(l=>`<button class="alpha-nav-btn" data-letter="${l}" style="display:block;font-size:11px;font-weight:800;color:var(--muted);padding:3px 0;background:none;border:none;cursor:pointer;line-height:1.4;">${l}</button>`).join("");
+  const sortBar=`<div class="seg" style="margin-bottom:12px;">
+    <button class="seg-i${_homeSortMode==='az'?' on':''}" data-sort="az">A–Z</button>
+    <button class="seg-i${_homeSortMode==='stand'?' on':''}" data-sort="stand">Fortschritt</button>
+    <button class="seg-i${_homeSortMode==='aktiv'?' on':''}" data-sort="aktiv">Zuletzt aktiv</button>
+  </div>`;
   view.innerHTML=`<div class="view-inner view-wide fade-up" style="position:relative;padding-right:32px;">
     <div class="row-between" style="margin-bottom:12px;"><div class="sec-h">Meine <span class="o">Schüler</span></div><div class="count-pill">${list.length}</div></div>
+    ${sortBar}
     <div class="search-wrap"><span class="search-ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="11" cy="11" r="7"/><path d="M21 21l-4.3-4.3"/></svg></span><input id="studentSearch" type="search" placeholder="Schüler suchen …" autocomplete="off"><button class="search-clear" id="searchClear" aria-label="Leeren" style="display:none;">✕</button></div>
     <div id="studentGrid">${gridHTML}</div>
     <div class="no-hit" id="noHit" style="display:none;">Kein Schüler gefunden.</div>
     </div>
-    <div style="position:fixed;right:6px;top:50%;transform:translateY(-50%);z-index:30;display:flex;flex-direction:column;align-items:center;background:var(--surface);border-radius:12px;padding:4px 3px;box-shadow:var(--elev-2);" id="alphaNav">${letterNav}</div>`;
+    <div style="position:fixed;right:6px;top:50%;transform:translateY(-50%);z-index:30;display:flex;flex-direction:column;align-items:center;background:var(--surface);border-radius:12px;padding:4px 3px;box-shadow:var(--elev-2);${sortiertAlpha?'':'display:none;'}" id="alphaNav">${letterNav}</div>`;
   animateRings();
   document.querySelectorAll(".s-card").forEach(c=>c.addEventListener("click",()=>routeDetail(c.dataset.id)));
+  document.querySelectorAll("[data-sort]").forEach(b=>b.addEventListener("click",()=>{ _homeSortMode=b.dataset.sort; routeHome(); }));
   // Buchstaben-Navigation
   document.querySelectorAll(".alpha-nav-btn").forEach(b=>b.addEventListener("click",()=>{
     const el=document.getElementById("alpha-"+b.dataset.letter);
@@ -5199,7 +5221,7 @@ function routeHome(){
       document.querySelectorAll("#studentGrid .s-card").forEach(c=>{const hit=(c.dataset.name||"").indexOf(q)>=0;c.style.display=hit?"":"none";if(hit)n++;});
       nh.style.display=n?"none":"block";sc.style.display="block";
     } else {
-      nav.style.display="flex";
+      if(sortiertAlpha)nav.style.display="flex";
       document.querySelectorAll(".alpha-anchor").forEach(a=>a.style.display="");
       document.querySelectorAll("#studentGrid .s-card").forEach(c=>c.style.display="");
       nh.style.display="none";sc.style.display="none";
@@ -5258,10 +5280,16 @@ function routeWaitlist(){
         <div class="wait-body"><div class="wait-name">${esc(s.name)}</div>
           <div class="wait-since">${esc(formLabel(s.form))}${s.theoryPassed?` · Theorie ${isoDE(s.theoryPassed)}`:""} · ${examReadiness(s).ready?"✓ bereit":"in Vorbereitung"}</div></div>
         <span class="na-arrow">${ICN.arrow}</span></button>
+      <button class="btn btn-ghost" data-examplan-id="${s.id}" style="padding:10px 12px;flex:0 0 auto;border-radius:12px;font-size:11px;font-weight:700;" title="Prüfung eintragen">🏆</button>
       <button class="btn btn-danger" data-remove-id="${s.id}" style="padding:10px 14px;flex:0 0 auto;border-radius:12px;font-size:12px;font-weight:700;" title="Von Warteliste entfernen">✕</button>
     </div>`;}).join("")}
   </div>`;
   document.querySelectorAll(".wait-card").forEach(c=>c.addEventListener("click",()=>routeDetail(c.dataset.id)));
+  document.querySelectorAll("[data-examplan-id]").forEach(btn=>btn.addEventListener("click",e=>{
+    e.stopPropagation();
+    const s=DB.students.find(x=>x.id===btn.dataset.examplanId);
+    if(s)openExamPlanSheet(s);
+  }));
   document.querySelectorAll("[data-remove-id]").forEach(btn=>btn.addEventListener("click",e=>{
     e.stopPropagation();
     const sid=btn.dataset.removeId;
@@ -5322,6 +5350,11 @@ function routeDetail(id){
       <div class="vb-body"><div class="vb-name">Stand teilen</div><div class="vb-sub">Aktuellen Ausbildungsstand per WhatsApp schicken</div></div>
       <div class="vb-arr">›</div>
     </button>
+    <button class="vortest-big" id="waKontaktBtn" style="background:#25D366;border:none;width:100%;cursor:pointer;">
+      <div class="vb-ic">💬</div>
+      <div class="vb-body"><div class="vb-name">WhatsApp öffnen</div><div class="vb-sub">Frei schreiben, ohne festen Text</div></div>
+      <div class="vb-arr">›</div>
+    </button>
     ${sichtbar("vortest")?`<a class="vortest-big" href="https://fahrschule-boost.de/kalender-vortest/" target="_blank" rel="noopener">
       <div class="vb-ic">🗓</div>
       <div class="vb-body"><div class="vb-name">Vortest-Termin buchen</div><div class="vb-sub">Öffnet den Boost-Kalender</div></div>
@@ -5378,6 +5411,12 @@ function routeDetail(id){
   }));
   const shareBtn=$("#shareStandBtn");
   if(shareBtn) shareBtn.addEventListener("click",()=>shareStandWhatsApp(s));
+  const waBtn=$("#waKontaktBtn");
+  if(waBtn) waBtn.addEventListener("click",()=>{
+    const phone=formatPhoneForWa(s.telefon);
+    const url=phone?`https://wa.me/${phone}`:`https://wa.me/`;
+    window.open(url,"_blank","noopener");
+  });
   bindExamReady(s,()=>routeDetail(id));
   const _rk=$("#riskEditBtn");if(_rk)_rk.addEventListener("click",()=>routeRisk(id));
   if(_fsAgg)_fsInjectDetailExtras(id);
@@ -5643,7 +5682,7 @@ function routeProfil(id,justDone){
     return null;}).filter(Boolean);
   const ow=OPEN_Q.filter(q=>(b.open[q.key]||"").length>0);
   view.innerHTML=`<div class="view-inner view-read fade-up">
-    <div class="back-row" style="justify-content:space-between"><button class="back-btn" id="backBtn">${ICN.back} ${esc(s.name)}</button><button class="mini-btn" id="pdfBogenBtn">📄 Als PDF</button></div>
+    <div class="back-row" style="justify-content:space-between"><button class="back-btn" id="backBtn">${ICN.back} ${esc(s.name)}</button><div class="btn-row" style="gap:6px;"><button class="mini-btn" id="pdfBogenBtn">📄 PDF</button><button class="mini-btn" id="bildTeilenBtn">🖼️ Bild teilen</button></div></div>
     <div class="res-hero">
       <div class="res-dot" style="background:${E.pure?PROFILE[E.top].hex:`linear-gradient(135deg,${PROFILE[E.top].hex},${PROFILE[E.second].hex})`}">
         <span class="inner">${PROFILE[E.top].word.charAt(0)}${E.pure?"":PROFILE[E.second].word.charAt(0)}</span></div>
@@ -5674,6 +5713,7 @@ function routeProfil(id,justDone){
   if(justDone){setTimeout(()=>celebrate(E.pure?[PROFILE[E.top].hex,"#f2efe9","#E8451F"]:[PROFILE[E.top].hex,PROFILE[E.second].hex,"#f2efe9"]),550);toast("Profil gespeichert");}
   $("#backBtn").addEventListener("click",()=>routeDetail(id));
   const _pb=$("#pdfBogenBtn");if(_pb)_pb.addEventListener("click",()=>printBogen(s));
+  const _bt=$("#bildTeilenBtn");if(_bt)_bt.addEventListener("click",()=>bogenAlsBild(s,E,I,headline,who));
   $("#copyBtn").addEventListener("click",()=>{
     const box=$("#sumBox");box.select();
     try{navigator.clipboard.writeText(box.value).then(()=>toast("Kopiert")).catch(()=>{document.execCommand("copy");toast("Kopiert");});}
@@ -7484,10 +7524,14 @@ function eventMatchesFilter(e,iso){
   if(_calNurFrei)return false; // "Nur freie Slots" blendet alle Termine aus
   if(_calFilter!=="alle"&&e.art!==_calFilter)return false;
   if(_calFzFilter&&e.fahrzeug!==_calFzFilter)return false;
-  if(_fsAgg&&_fsCalFahrzeugFilter.length&&!_fsCalFahrzeugFilter.includes(e.fahrzeug))return false;
-  if(_fsAgg&&_fsCalLehrerFilter.length&&!_fsCalLehrerFilter.includes(e._fahrlehrerId))return false;
-  if(_fsAgg&&_fsKalenderModus==="buero"&&!FS_BUERO_ARTEN.includes(e.art))return false;
-  if(_fsAgg&&_fsKalenderModus==="fahrlehrer"&&FS_BUERO_ARTEN.includes(e.art))return false;
+  // Fahrschul-Modus: standardmäßig LEER, erst nach aktiver Filter-Auswahl werden Termine gezeigt
+  if(_fsAgg){
+    if(!_fsCalLehrerFilter.length&&!_fsCalFahrzeugFilter.length)return false;
+    if(_fsCalFahrzeugFilter.length&&!_fsCalFahrzeugFilter.includes(e.fahrzeug))return false;
+    if(_fsCalLehrerFilter.length&&!_fsCalLehrerFilter.includes(e._fahrlehrerId))return false;
+    if(_fsKalenderModus==="buero"&&!FS_BUERO_ARTEN.includes(e.art))return false;
+    if(_fsKalenderModus==="fahrlehrer"&&FS_BUERO_ARTEN.includes(e.art))return false;
+  }
   if(_calFcOffen){
     if(["fahrstunde","sonder","nacht"].indexOf(e.art)<0)return false;
     if(!(isAbsolved(iso,e.bis)&&(!e.fc||e.fc==="offen")))return false;
@@ -9227,7 +9271,10 @@ function routeDashboard(){
       <button class="d-tile" data-go="home"><div class="badge">${ICN.users}</div><div class="dt-n" data-count="${act}">0</div><div class="dt-l">Meine Fahrschüler</div></button>
       <button class="d-tile" data-go="pruef"><div class="badge">${ICN.trophy}</div><div class="dt-n" data-count="${ready}">0</div><div class="dt-l">Prüfungsreif</div></button>
       <button class="d-tile" data-go="stats"><div class="badge">${ICN.bolt}</div>${q.pct==null?'<div class="dt-n">–</div>':`<div class="dt-n" data-count="${q.pct}" data-suffix="%">0</div>`}<div class="dt-l">Quote · Monat</div></button>
-      ${sichtbar('dash_wocheverdienst')?`<button class="d-tile" data-go="verdienstwoche"><div class="badge">💰</div><div class="dt-n" data-count="${wocheEuro}">0</div><div class="dt-l">Diese Woche verdient</div></button>`:''}
+      ${sichtbar('dash_wocheverdienst')?(()=>{
+        const sichtbarWert=sessionStorage.getItem('dashWocheSichtbar')==='1';
+        return `<button class="d-tile" data-go="verdienstwoche"><div class="badge" onclick="event.stopPropagation();sessionStorage.setItem('dashWocheSichtbar','${sichtbarWert?'0':'1'}');routeDashboard();" style="cursor:pointer;" title="${sichtbarWert?'Verbergen':'Anzeigen'}">${sichtbarWert?'👁️':'🙈'}</div>${sichtbarWert?`<div class="dt-n" data-count="${wocheEuro}">0</div>`:`<div class="dt-n" style="font-size:16px;letter-spacing:2px;">••••</div>`}<div class="dt-l">Diese Woche verdient</div></button>`;
+      })():''}
       ${sichtbar('dash_naechstetheorie')?`<button class="d-tile" ${naechsteTheorie?`data-go="theorie" data-theoriedate="${naechsteTheorie.date}"`:''}><div class="badge">📘</div><div class="dt-n" style="font-size:15px;">${naechsteTheorie?isoDE(naechsteTheorie.date).slice(0,5):'–'}</div><div class="dt-l">Nächste Theorie</div></button>`:''}
     </div>
     ${sichtbar('dash_capacity')?capacityCardHTML():''}
@@ -9840,6 +9887,52 @@ function printGesamtakte(s){
   printDoc("Schüler-Gesamtakte",body);
 }
 
+function _wrapCanvasText(ctx,text,x,y,maxWidth,lineHeight,maxLines){
+  const words=(text||"").split(" ");
+  let line="",lines=[];
+  words.forEach(word=>{
+    const test=line+word+" ";
+    if(ctx.measureText(test).width>maxWidth&&line){ lines.push(line); line=word+" "; }
+    else line=test;
+  });
+  lines.push(line);
+  lines.slice(0,maxLines||6).forEach((l,i)=>ctx.fillText(l.trim(),x,y+i*lineHeight));
+}
+function bogenAlsBild(s,E,I,headline,who){
+  const w=1080,h=1350;
+  const canvas=document.createElement("canvas");
+  canvas.width=w;canvas.height=h;
+  const ctx=canvas.getContext("2d");
+  const farbe=PROFILE[E.top].hex;
+  const grad=ctx.createLinearGradient(0,0,0,h);
+  grad.addColorStop(0,"#0c1410"); grad.addColorStop(1,"#1c2820");
+  ctx.fillStyle=grad; ctx.fillRect(0,0,w,h);
+  ctx.beginPath(); ctx.arc(w/2,340,140,0,Math.PI*2); ctx.fillStyle=farbe; ctx.fill();
+  ctx.fillStyle="#fff"; ctx.font="900 110px sans-serif"; ctx.textAlign="center"; ctx.textBaseline="middle";
+  ctx.fillText(PROFILE[E.top].word.charAt(0)+(E.pure?"":PROFILE[E.second].word.charAt(0)),w/2,350);
+  ctx.fillStyle="#fff"; ctx.font="700 52px sans-serif";
+  ctx.fillText(s.name||"",w/2,560);
+  ctx.fillStyle=farbe; ctx.font="900 42px sans-serif";
+  _wrapCanvasText(ctx,headline,w/2,630,w-120,52,2);
+  ctx.fillStyle="#d8d8d0"; ctx.font="400 30px sans-serif";
+  _wrapCanvasText(ctx,who,w/2,780,w-160,42,6);
+  ctx.fillStyle="#8a8a80"; ctx.font="600 26px sans-serif";
+  ctx.fillText("Fahrschule Boost · Fahrlehrer-Kompass",w/2,h-60);
+  canvas.toBlob(blob=>{
+    if(!blob){toast("Bild konnte nicht erstellt werden");return;}
+    const file=new File([blob],"mein-fahrtyp.png",{type:"image/png"});
+    if(navigator.share&&navigator.canShare&&navigator.canShare({files:[file]})){
+      navigator.share({files:[file],title:"Mein Fahrtyp"}).catch(()=>{});
+    } else {
+      const url=URL.createObjectURL(blob);
+      const a=document.createElement("a");
+      a.href=url; a.download="mein-fahrtyp.png";
+      document.body.appendChild(a); a.click(); a.remove();
+      URL.revokeObjectURL(url);
+      toast("Bild heruntergeladen ✓");
+    }
+  },"image/png");
+}
 function printBogen(s){
   if(!s.bogen){toast("Noch kein Profil vorhanden");return;}
   const E=evalBogen(s.bogen);
