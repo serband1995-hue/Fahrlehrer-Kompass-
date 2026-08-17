@@ -6164,7 +6164,12 @@ function buildStufen(s){
     row.querySelectorAll(".amp").forEach(b=>b.addEventListener("click",()=>{
       const v=b.dataset.v;
       if(pl.ampeln[sid]===v){delete pl.ampeln[sid];}else{pl.ampeln[sid]=v;}
-      row.querySelectorAll(".amp").forEach(x=>x.classList.toggle("on",x.dataset.v===pl.ampeln[sid]));
+      const SYM={rot:'✕',gelb:'•',gruen:'✓'};
+      row.querySelectorAll(".amp").forEach(x=>{
+        const istAn=x.dataset.v===pl.ampeln[sid];
+        x.classList.toggle("on",istAn);
+        x.textContent=istAn?(SYM[x.dataset.v]||''):'';
+      });
       const st=stufenFor(s).find(t=>t.items.some(i=>i.id===sid));
       const d=wrap.querySelector(`[data-done="${st.key}"]`);
       if(d){ const nDone=st.items.filter(i=>pl.ampeln[i.id]==="gruen").length; d.textContent=nDone+"/"+st.items.length; d.classList.toggle("complete",nDone===st.items.length); }
@@ -9272,8 +9277,8 @@ function routeDashboard(){
       <button class="d-tile" data-go="pruef"><div class="badge">${ICN.trophy}</div><div class="dt-n" data-count="${ready}">0</div><div class="dt-l">Prüfungsreif</div></button>
       <button class="d-tile" data-go="stats"><div class="badge">${ICN.bolt}</div>${q.pct==null?'<div class="dt-n">–</div>':`<div class="dt-n" data-count="${q.pct}" data-suffix="%">0</div>`}<div class="dt-l">Quote · Monat</div></button>
       ${sichtbar('dash_wocheverdienst')?(()=>{
-        const sichtbarWert=sessionStorage.getItem('dashWocheSichtbar')==='1';
-        return `<button class="d-tile" data-go="verdienstwoche"><div class="badge" onclick="event.stopPropagation();sessionStorage.setItem('dashWocheSichtbar','${sichtbarWert?'0':'1'}');routeDashboard();" style="cursor:pointer;" title="${sichtbarWert?'Verbergen':'Anzeigen'}">${sichtbarWert?'👁️':'🙈'}</div>${sichtbarWert?`<div class="dt-n" data-count="${wocheEuro}">0</div>`:`<div class="dt-n" style="font-size:16px;letter-spacing:2px;">••••</div>`}<div class="dt-l">Diese Woche verdient</div></button>`;
+        const sichtbarWert=_verdienstPinCheck();
+        return `<button class="d-tile" data-go="verdienstwoche"><div class="badge" onclick="event.stopPropagation();unlockVerdienst();" style="cursor:pointer;" title="${sichtbarWert?'Gesperrt: PIN in Verdienst-Statistik':'Entsperren'}">${sichtbarWert?'👁️':'🙈'}</div>${sichtbarWert?`<div class="dt-n" data-count="${wocheEuro}">0</div>`:`<div class="dt-n" style="font-size:16px;letter-spacing:2px;">••••</div>`}<div class="dt-l">Diese Woche verdient</div></button>`;
       })():''}
       ${sichtbar('dash_naechstetheorie')?`<button class="d-tile" ${naechsteTheorie?`data-go="theorie" data-theoriedate="${naechsteTheorie.date}"`:''}><div class="badge">📘</div><div class="dt-n" style="font-size:15px;">${naechsteTheorie?isoDE(naechsteTheorie.date).slice(0,5):'–'}</div><div class="dt-l">Nächste Theorie</div></button>`:''}
     </div>
@@ -9283,7 +9288,7 @@ function routeDashboard(){
   requestAnimationFrame(()=>requestAnimationFrame(()=>{
     document.querySelectorAll('.th-seg[data-th]').forEach(el=>{el.style.flexBasis=el.dataset.th+'px';});
   }));
-  const go=k=>{ if(k==='home')routeHome(); else if(k==='pruef')routePruefungen(); else if(k==='stats')routeStats('cur'); else if(k==='kalender')routeKalender(); else if(k==='verdienstwoche')openVerdienstSheet(); };
+  const go=k=>{ if(k==='home')routeHome(); else if(k==='pruef')routePruefungen(); else if(k==='stats')routeStats('cur'); else if(k==='kalender')routeKalender(); else if(k==='verdienstwoche')routeStats('cur'); };
   document.querySelectorAll("[data-go]").forEach(b=>b.addEventListener("click",()=>{
     const k=b.dataset.go;
     if(k==='theorie'&&b.dataset.theoriedate){ _calView='tag'; _calDate=b.dataset.theoriedate; routeKalender(); return; }
