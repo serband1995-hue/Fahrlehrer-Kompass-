@@ -7996,14 +7996,14 @@ function dayTheorieWindow(iso){
 // Alle Termine (Fahrstunden + Prüfungen) eines Tages, vereinheitlicht
 function dayEvents(iso){
   const ev=[];
-  (DB.lessons||[]).filter(l=>l.date===iso).forEach(l=>{ const st=DB.students.find(s=>s.id===l.sid); ev.push({kind:"lesson",id:l.id,von:l.von,bis:l.bis,art:l.art||"fahrstunde",sid:l.sid,name:st?st.name:(l.name||"—"),status:l.status||"geplant",fc:l.fc||null,note:l.note||"",srcSonder:l.srcSonder||null,fahrzeug:l.fahrzeug||null}); });
+  (DB.lessons||[]).filter(l=>l.date===iso).forEach(l=>{ const st=DB.students.find(s=>s.id===l.sid); ev.push({kind:"lesson",id:l.id,von:l.von,bis:l.bis,art:l.art||"fahrstunde",sid:l.sid,name:st?st.name:(l.name||"—"),status:l.status||"geplant",fc:l.fc||null,note:l.note||"",srcSonder:l.srcSonder||null,fahrzeug:l.fahrzeug||null,tatsaechlicheDauer:l.tatsaechlicheDauer||null,_fahrlehrerId:l._fahrlehrerId,_fahrlehrerName:l._fahrlehrerName}); });
   // Prüfungstermine: jeder belegte Slot = ein 90-Min-Event (Default 09:00, falls keine Zeit).
   // NUR solange noch kein Ergebnis eingetragen ist – sonst zählt die Prüfung über exams.earnAt (s. ueRange).
   // Prüfungstermine: Block beginnt 15 Min VOR der eingetragenen Prüfungszeit (Vorlauf).
   const doneOnDay=new Set((DB.exams||[]).filter(ex=>ex.date===iso).map(ex=>ex.sid));
-  (DB.termine||[]).filter(t=>t.date===iso).forEach(t=>{ (t.slots||[]).forEach(sid=>{ if(sid&&!doneOnDay.has(sid)){ const st=DB.students.find(s=>s.id===sid); const rawVon=t.von||"09:00"; const blockVon=min2hm(hm2min(rawVon)+15); const blockBis=t.bis||min2hm(hm2min(rawVon)+(DB.workCfg.blockMin||90)); ev.push({kind:"pruefung",id:t.id,von:blockVon,bis:blockBis,art:"pruefung",sid,name:st?st.name:"—",status:"geplant",pruefTime:rawVon}); } }); });
+  (DB.termine||[]).filter(t=>t.date===iso).forEach(t=>{ (t.slots||[]).forEach(sid=>{ if(sid&&!doneOnDay.has(sid)){ const st=DB.students.find(s=>s.id===sid); const rawVon=t.von||"09:00"; const blockVon=min2hm(hm2min(rawVon)+15); const blockBis=t.bis||min2hm(hm2min(rawVon)+(DB.workCfg.blockMin||90)); ev.push({kind:"pruefung",id:t.id,von:blockVon,bis:blockBis,art:"pruefung",sid,name:st?st.name:"—",status:"geplant",pruefTime:rawVon,_fahrlehrerId:t._fahrlehrerId,_fahrlehrerName:t._fahrlehrerName}); } }); });
   // Erledigte Prüfungen (Ergebnis liegt vor): bleiben dauerhaft im Kalender als Erfolgs-/Misserfolgs-Marker.
-  (DB.exams||[]).filter(ex=>ex.date===iso).forEach(ex=>{ const rawVon=ex.von||"09:00"; const blockVon=min2hm(hm2min(rawVon)+15); const blockBis=min2hm(hm2min(rawVon)+(DB.workCfg.blockMin||90)); ev.push({kind:"examDone",id:ex.id,von:blockVon,bis:blockBis,art:"pruefung",sid:ex.sid,name:ex.name||"—",status:"erledigt",result:ex.result,pruefTime:rawVon,pruefer:ex.pruefer||""}); });
+  (DB.exams||[]).filter(ex=>ex.date===iso).forEach(ex=>{ const rawVon=ex.von||"09:00"; const blockVon=min2hm(hm2min(rawVon)+15); const blockBis=min2hm(hm2min(rawVon)+(DB.workCfg.blockMin||90)); ev.push({kind:"examDone",id:ex.id,von:blockVon,bis:blockBis,art:"pruefung",sid:ex.sid,name:ex.name||"—",status:"erledigt",result:ex.result,pruefTime:rawVon,pruefer:ex.pruefer||"",_fahrlehrerId:ex._fahrlehrerId,_fahrlehrerName:ex._fahrlehrerName}); });
   return ev.sort((a,b)=>hm2min(a.von)-hm2min(b.von));
 }
 function dayHasEvents(iso){ return dayEvents(iso).length>0; }
