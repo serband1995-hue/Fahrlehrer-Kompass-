@@ -375,6 +375,9 @@ input,select,textarea{font-family:inherit;font-size:15px;color:var(--txt);}
 .wait-card:active{transform:translateY(2px);box-shadow:0 1px 6px rgba(0,0,0,.2);}
 
 /* Einstellungen-Blöcke */
+.fs-check-group-label{font-size:11px;font-weight:800;color:var(--muted);letter-spacing:.05em;text-transform:uppercase;margin:6px 0 4px;}
+.fs-check-row{display:flex;align-items:center;gap:10px;padding:8px 2px;font-size:14px;color:var(--txt);cursor:pointer;}
+.fs-check-row input[type="checkbox"]{width:19px;height:19px;accent-color:var(--akzent,#3a7350);cursor:pointer;flex-shrink:0;}
 .res-block{
   box-shadow:
     0 1px 0 rgba(190,220,200,.08) inset,
@@ -3785,19 +3788,10 @@ function _fsInjectFilterTiles(){
   document.getElementById("fsCalTiles")?.remove();
   const fahrzeuge=(_fsAgg.fahrzeuge||[]).map(fz=>fz.name).sort();
   const lehrer=_fsAgg.lehrer||[];
-  const tileBlock=(key,id,titel,items,ausgewaehlt,datenAttr)=>{
-    const offen=!!_fsTileOpen[key];
-    return `
-    <div class="acc${offen?' open':''}" id="${id}" style="margin:10px 0;overflow:hidden;">
-      <button class="acc-h" onclick="_fsToggleTile('${key}')" style="cursor:pointer;padding:12px 14px;">
-        <span style="flex:1;text-align:left;font-size:13.5px;font-weight:700;">${titel}${ausgewaehlt.length?` <span style="color:var(--orange);">(${ausgewaehlt.length})</span>`:''}</span>
-        <span class="chev">${ICN.chev}</span>
-      </button>
-      <div class="acc-body" style="overflow:hidden;"><div class="acc-inner" style="overflow:hidden;padding:0 14px 14px;display:flex;flex-wrap:wrap;gap:8px;">
-        ${offen ? (items.length?items.map(it=>`<button class="es-act${ausgewaehlt.includes(it.value)?' primary':''}" data-${datenAttr}="${esc(it.value)}">${esc(it.label)}</button>`).join(""):`<p class="muted-p" style="font-size:12px;">Keine Einträge.</p>`) : '' }
-      </div></div>
-    </div>`;
-  };
+  const checkRow=(datenAttr,value,label,checked)=>`<label class="fs-check-row">
+    <input type="checkbox" data-${datenAttr}="${esc(value)}" ${checked?'checked':''}>
+    <span>${esc(label)}</span>
+  </label>`;
   const keinFilterAktiv=!_fsCalLehrerFilter.length&&!_fsCalFahrzeugFilter.length;
   const html=`<div id="fsCalTiles">
     <button class="btn btn-ghost" style="width:100%;margin-bottom:8px;" onclick="(window._fsAktuelleRoute||routeFahrschuleDashboard)()">← Zurück</button>
@@ -3805,18 +3799,23 @@ function _fsInjectFilterTiles(){
       <button class="seg-i${_fsKalenderModus==='fahrlehrer'?' on':''}" onclick="_fsSetKalenderModus('fahrlehrer')">Fahrlehrer-Kalender</button>
       <button class="seg-i${_fsKalenderModus==='buero'?' on':''}" onclick="_fsSetKalenderModus('buero')">Büro-Kalender</button>
     </div>
-    ${tileBlock("fahrzeug","fsFilterFahrzeug","🚗 Fahrzeuge",fahrzeuge.map(fz=>({value:fz,label:fz})),_fsCalFahrzeugFilter,"fsfz")}
-    ${tileBlock("lehrer","fsFilterLehrer","👤 Fahrlehrer",lehrer.map(l=>({value:l.id,label:l.name||l.email})),_fsCalLehrerFilter,"fslehrer")}
-    ${(_fsCalFahrzeugFilter.length||_fsCalLehrerFilter.length)?`<button class="btn btn-ghost" style="width:100%;margin-bottom:6px;" onclick="_fsResetKalFilter()">Filter zurücksetzen</button>`:''}
+    <div class="res-block" style="animation:none;">
+      <h4>Ansicht ${_fsCalLehrerFilter.length+_fsCalFahrzeugFilter.length?`<span style="color:var(--orange);">(${_fsCalLehrerFilter.length+_fsCalFahrzeugFilter.length})</span>`:''}</h4>
+      <div class="fs-check-group-label">👤 Fahrlehrer</div>
+      ${lehrer.length?lehrer.map(l=>checkRow("fslehrer",l.id,l.name||l.email,_fsCalLehrerFilter.includes(l.id))).join(""):'<p class="muted-p" style="font-size:12px;">Keine Fahrlehrer.</p>'}
+      <div class="fs-check-group-label" style="margin-top:10px;">🚗 Fahrzeuge</div>
+      ${fahrzeuge.length?fahrzeuge.map(fz=>checkRow("fsfz",fz,fz,_fsCalFahrzeugFilter.includes(fz))).join(""):'<p class="muted-p" style="font-size:12px;">Keine Fahrzeuge.</p>'}
+      ${(_fsCalFahrzeugFilter.length||_fsCalLehrerFilter.length)?`<button class="btn btn-ghost" style="width:100%;margin-top:10px;" onclick="_fsResetKalFilter()">Filter zurücksetzen</button>`:''}
+    </div>
     ${keinFilterAktiv?`<div class="res-block" style="animation:none;background:rgba(207,154,62,.1);border-color:rgba(207,154,62,.35);text-align:center;"><p style="font-size:13px;color:var(--muted);margin:0;">👆 Wähle oben einen Fahrlehrer oder ein Fahrzeug, um Termine zu sehen.</p></div>`:''}
   </div>`;
   filtersEl.insertAdjacentHTML("afterend",html);
-  document.querySelectorAll("[data-fsfz]").forEach(b=>b.addEventListener("click",()=>{
+  document.querySelectorAll("[data-fsfz]").forEach(b=>b.addEventListener("change",()=>{
     const v=b.dataset.fsfz; const i=_fsCalFahrzeugFilter.indexOf(v);
     if(i>=0)_fsCalFahrzeugFilter.splice(i,1); else _fsCalFahrzeugFilter.push(v);
     routeKalender();
   }));
-  document.querySelectorAll("[data-fslehrer]").forEach(b=>b.addEventListener("click",()=>{
+  document.querySelectorAll("[data-fslehrer]").forEach(b=>b.addEventListener("change",()=>{
     const v=b.dataset.fslehrer; const i=_fsCalLehrerFilter.indexOf(v);
     if(i>=0)_fsCalLehrerFilter.splice(i,1); else _fsCalLehrerFilter.push(v);
     routeKalender();
@@ -4187,6 +4186,11 @@ async function _fsInjectDetailExtras(sid){
   const lehrer=_fsAgg.lehrer||[];
   const lehrerOptions=`<option value="">— nicht zugeordnet —</option>`+lehrer.map(l=>`<option value="${l.id}" ${l.id===s._fahrlehrerId?"selected":""}>${esc(l.name||l.email)}</option>`).join("");
   const istTurbo=s._paketId&&(_fsAgg.pakete||[]).some(pk=>pk.id===s._paketId&&pk.name==="Turboboost");
+  const zugewiesenesPaket=s._paketId?(_fsAgg.pakete||[]).find(pk=>pk.id===s._paketId):null;
+  const paketBlock=zugewiesenesPaket?`<div class="field" style="margin-top:8px;"><label style="font-size:11px;">Paket</label>
+    <p style="margin:2px 0 0;font-size:13.5px;font-weight:700;">${esc(zugewiesenesPaket.name)}</p>
+    ${zugewiesenesPaket.beschreibung?`<p style="margin:3px 0 0;font-size:12px;color:var(--muted);">${esc(zugewiesenesPaket.beschreibung)}</p>`:''}
+  </div>`:'';
   let anmeldeBlock="";
   if(s._erstelltAm){
     const erstellt=new Date(s._erstelltAm);
@@ -4205,6 +4209,7 @@ async function _fsInjectDetailExtras(sid){
       <select id="fsDetailLehrerSelect" style="width:100%;">${lehrerOptions}</select></div>
     <div class="field" style="margin-top:8px;" id="fsBeiLehrerSeit"><label style="font-size:11px;">Bei diesem Fahrlehrer seit</label><p style="margin:2px 0 0;font-size:13.5px;color:var(--muted);">Lade…</p></div>
     ${anmeldeBlock}
+    ${paketBlock}
     <div class="field" style="margin-top:8px;"><label style="font-size:11px;">Büro-Notiz (nur fürs Büro, nicht der Fahrlehrer-Notiz)</label>
       <textarea id="fsDetailBueroNotiz" rows="2" style="width:100%;">${esc(s._buero_notiz||"")}</textarea></div>
     <div class="field" style="margin-top:8px;"><label style="font-size:11px;">To-do / aktueller Stand</label>
