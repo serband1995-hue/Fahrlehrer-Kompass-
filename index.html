@@ -2790,6 +2790,16 @@ async function afterLogin(user) {
   if (isSuperAdmin()) {
     _fsSetDrawer(false);
   }
+  // AGB-Zustimmungssperre: muss vor jedem weiteren App-Zugriff erfolgen, sobald sich der
+  // Text inhaltlich ändert (AGB_VERSION hochzählen) müssen alle Nutzer erneut bestätigen.
+  if (prof && prof.agb_akzeptiert_version !== AGB_VERSION) {
+    document.getElementById("loginOverlay").classList.add("hidden");
+    showAgbGate(prof);
+    return;
+  }
+  await _continueLoginFlow(prof);
+}
+async function _continueLoginFlow(prof) {
   // Fahrschule-Admin: exakt dieselbe App, nur mit den zusammengeführten Daten der ganzen Fahrschule
   if (prof && (prof.rolle === "fahrschule_admin" || prof.rolle === "buero")) {
     document.getElementById("loginOverlay").classList.add("hidden");
@@ -2813,6 +2823,57 @@ async function afterLogin(user) {
   setInterval(() => pullTermineZuweisungen(), 60000);
   // Sofort einmal pushen (aktuellen Stand sichern)
   pushToCloud();
+}
+// Zeigt die Nutzungsbedingungen als blockierendes Overlay - erst nach Scrollen ans Ende UND
+// Checkbox wird "Bestätigen" aktiv. Erst danach geht der normale Login-Ablauf weiter.
+function showAgbGate(prof) {
+  const old = document.getElementById("agbGate"); if (old) old.remove();
+  const el = document.createElement("div");
+  el.id = "agbGate";
+  el.style.cssText = "position:fixed;inset:0;z-index:9999;background:var(--bg);display:flex;flex-direction:column;";
+  el.innerHTML = `
+    <div style="padding:20px 20px 12px;border-bottom:1px solid var(--line);">
+      <h2 style="margin:0;font-family:'Anton',sans-serif;text-transform:uppercase;font-size:19px;letter-spacing:.02em;">Nutzungsbedingungen</h2>
+      <p style="color:var(--muted);font-size:13px;margin:6px 0 0;">Bitte einmal lesen und bestätigen, bevor es losgeht.</p>
+    </div>
+    <div id="agbScrollBox" style="flex:1;overflow-y:auto;padding:16px 20px;font-size:13.5px;line-height:1.6;color:var(--txt);">${AGB_HTML}</div>
+    <div style="padding:14px 20px calc(16px + env(safe-area-inset-bottom));border-top:1px solid var(--line);background:var(--bg-soft);">
+      <label style="display:flex;align-items:flex-start;gap:10px;font-size:13px;color:var(--txt);margin-bottom:12px;">
+        <input type="checkbox" id="agbCheck" style="margin-top:3px;flex-shrink:0;">
+        <span>Ich habe die Nutzungsbedingungen &amp; den Haftungsausschluss gelesen und stimme zu.</span>
+      </label>
+      <button class="btn btn-primary" id="agbAcceptBtn" style="width:100%;" disabled>Bestätigen &amp; weiter</button>
+    </div>`;
+  document.body.appendChild(el);
+  const box = document.getElementById("agbScrollBox"), chk = document.getElementById("agbCheck"), btn = document.getElementById("agbAcceptBtn");
+  let scrolledToEnd = box.scrollHeight <= box.clientHeight + 8;
+  function updateBtn() { btn.disabled = !(chk.checked && scrolledToEnd); }
+  box.addEventListener("scroll", () => { if (box.scrollTop + box.clientHeight >= box.scrollHeight - 24) { scrolledToEnd = true; updateBtn(); } });
+  chk.addEventListener("change", updateBtn);
+  btn.addEventListener("click", async () => {
+    btn.disabled = true; btn.textContent = "…";
+    try {
+      const supa = getSupa();
+      const nowIso = new Date().toISOString();
+      await supa.from("profiles").update({ agb_akzeptiert_version: AGB_VERSION, agb_akzeptiert_am: nowIso }).eq("id", prof.id);
+      _authProfile = Object.assign({}, prof, { agb_akzeptiert_version: AGB_VERSION, agb_akzeptiert_am: nowIso });
+      el.remove();
+      await _continueLoginFlow(_authProfile);
+    } catch (e) {
+      toast("Fehler beim Speichern — bitte erneut versuchen");
+      btn.disabled = false; btn.textContent = "Bestätigen & weiter";
+    }
+  });
+}
+// Nutzungsbedingungen jederzeit ansehen (ohne Zustimmungssperre) - z.B. über Einstellungen
+function openAgbSheet() {
+  openSheet(`<div class="sheet-h">Nutzungsbedingungen</div>
+    <div style="max-height:60vh;overflow-y:auto;font-size:13px;line-height:1.6;color:var(--txt);margin:8px 0 14px;">${AGB_HTML}</div>
+    <div class="btn-row"><button class="btn btn-ghost" onclick="printAgb()">Als PDF</button><button class="btn btn-primary" id="agbSheetClose">Schließen</button></div>`);
+  $("#agbSheetClose").addEventListener("click", closeSheet);
+}
+function printAgb() {
+  printDoc("Nutzungsbedingungen & Haftungsausschluss", `<div class="pr-summary">${AGB_HTML.replace(/<h3>/g,'<h4 style="margin-top:14px;">').replace(/<\/h3>/g,'</h4>')}</div>`);
 }
 
 /* ---- Cloud Sync ---- */
@@ -3972,6 +4033,15 @@ function _fsSetKalenderModus(modus){ _fsKalenderModus=modus; routeKalender(); }
 
 /* ===== Buchungslinks pro Fahrlehrer (Schalter/Automatik) ===== */
 const BUCHUNG_BASE_URL="https://serband1995-hue.github.io/Fahrlehrer-Kompass-/buchen.html";
+// Ermittelt den EINEN für diesen Schüler relevanten Buchungslink (Bereich 13, Punkt 5):
+// B/BE = immer Schalter, "Automatik"-Form = immer Automatik, B197 wechselt je nach Phase
+// (vor Schaltkompetenz-Nachweis: Schalter, danach: Automatik) - der jeweils andere wird
+// bewusst nicht gezeigt, damit niemand aus Versehen den falschen Fahrzeugtyp bucht.
+function _buchungslinkFuerSchueler(s){
+  if(!_authProfile||!_authProfile.slug)return null;
+  const typ=(s.form==="Automatik")?"automatik":(s.form==="B197")?(s.b197nachweis?"automatik":"schalt"):"schalt";
+  return `${BUCHUNG_BASE_URL}?typ=${typ}&lehrer=${encodeURIComponent(_authProfile.slug)}`;
+}
 function _fsBuchungslinksHTML(slug,label){
   if(!slug)return "";
   const schaltLink=`${BUCHUNG_BASE_URL}?typ=schalt&lehrer=${encodeURIComponent(slug)}`;
@@ -3979,10 +4049,16 @@ function _fsBuchungslinksHTML(slug,label){
   const rid="bl_"+slug.replace(/[^a-zA-Z0-9]/g,"");
   return `<div class="res-block" style="animation:none;"><h4>🔗 ${esc(label)} Buchungslinks</h4>
     <div class="field"><label style="font-size:11px;">Schalter</label>
-      <div style="display:flex;gap:6px;"><input readonly id="${rid}_s" value="${esc(schaltLink)}" style="flex:1;font-size:11.5px;"><button class="btn btn-ghost" style="padding:8px 12px;" onclick="_fsKopieren('${rid}_s')">Kopieren</button></div></div>
+      <div style="display:flex;gap:6px;"><input readonly id="${rid}_s" value="${esc(schaltLink)}" style="flex:1;font-size:11.5px;"><button class="btn btn-ghost" style="padding:8px 12px;" onclick="_fsKopieren('${rid}_s')">Kopieren</button><button class="btn btn-ghost" style="padding:8px 12px;" onclick="_fsQrToggle('${rid}_s')">QR</button></div>
+      <div id="${rid}_s_qr" style="display:none;margin-top:8px;text-align:center;"><img src="https://api.qrserver.com/v1/create-qr-code/?size=180x180&data=${encodeURIComponent(schaltLink)}" alt="QR-Code Schalter" style="border-radius:8px;background:#fff;padding:8px;"></div></div>
     <div class="field" style="margin-top:8px;"><label style="font-size:11px;">Automatik</label>
-      <div style="display:flex;gap:6px;"><input readonly id="${rid}_a" value="${esc(automatikLink)}" style="flex:1;font-size:11.5px;"><button class="btn btn-ghost" style="padding:8px 12px;" onclick="_fsKopieren('${rid}_a')">Kopieren</button></div></div>
+      <div style="display:flex;gap:6px;"><input readonly id="${rid}_a" value="${esc(automatikLink)}" style="flex:1;font-size:11.5px;"><button class="btn btn-ghost" style="padding:8px 12px;" onclick="_fsKopieren('${rid}_a')">Kopieren</button><button class="btn btn-ghost" style="padding:8px 12px;" onclick="_fsQrToggle('${rid}_a')">QR</button></div>
+      <div id="${rid}_a_qr" style="display:none;margin-top:8px;text-align:center;"><img src="https://api.qrserver.com/v1/create-qr-code/?size=180x180&data=${encodeURIComponent(automatikLink)}" alt="QR-Code Automatik" style="border-radius:8px;background:#fff;padding:8px;"></div></div>
   </div>`;
+}
+function _fsQrToggle(inputId){
+  const el=document.getElementById(inputId+"_qr");
+  if(el)el.style.display=el.style.display==="none"?"block":"none";
 }
 function _fsKopieren(inputId){
   const el=document.getElementById(inputId);
@@ -4761,7 +4837,47 @@ window.addEventListener("load", () => {
 const STORE_KEY="serband-app-v1";
 /* Build-Version: bei jeder Auslieferung hier das Datum aktualisieren.
    Wird in den Einstellungen angezeigt + für den Update-Hinweis genutzt. */
-const APP_VERSION="2026.08.20";
+const APP_VERSION="2026.08.21";
+// Nutzungsbedingungen & Haftungsausschluss (Bereich: rechtliche Absicherung) - Version hochzählen
+// und alle Nutzer müssen erneut zustimmen, sobald sich der Text inhaltlich ändert.
+const AGB_VERSION="1.0";
+const AGB_HTML=`
+<p><i>Stand: 20.08.2026 · Version ${AGB_VERSION}</i></p>
+<h3>§1 Gegenstand und Charakter der App</h3>
+<p>Fahrlehrer-Kompass ("die App") ist ein digitales Hilfsmittel zur Organisation der Fahrschulausbildung, insbesondere zur Terminplanung, Dokumentation, statistischen Auswertung und Erstellung von Vorlagen. Die App ersetzt nicht die fachliche, pädagogische und rechtliche Verantwortung des jeweiligen Fahrlehrers gegenüber seinen Fahrschülern nach dem Fahrlehrergesetz (FahrlG), der Fahrschüler-Ausbildungsordnung (FahrschAusbO), der Fahrerlaubnis-Verordnung (FeV) und der Straßenverkehrs-Ordnung (StVO). Jeder Nutzer bleibt für Ausbildungsinhalte, die Beurteilung der Ausbildungs- und Prüfungsreife, die Aufsichtspflicht während der Fahrstunde sowie die Einhaltung sämtlicher gesetzlicher Vorgaben allein und persönlich verantwortlich. Die App stellt ausschließlich eine organisatorische Unterstützung dar.</p>
+<h3>§2 Unverbindlichkeit berechneter und vorgeschlagener Inhalte</h3>
+<p>Automatisch berechnete oder vorgeschlagene Inhalte — insbesondere Prognosen zu Unterrichtseinheiten, Kapazitätsanzeigen, Verdienstberechnungen, Prüfungseinschätzungen, Vorlagenvorschläge oder Erinnerungen — stellen unverbindliche Orientierungshilfen ohne Gewähr für Richtigkeit oder Vollständigkeit dar. Sie beruhen auf den durch den Nutzer eingegebenen sowie historischen Daten und ersetzen keinesfalls die eigenständige fachliche Prüfung durch den Fahrlehrer. Die Verantwortung für auf dieser Grundlage getroffene Entscheidungen (z. B. Zulassung zur Prüfung, Abrechnung) trägt ausschließlich der Nutzer.</p>
+<h3>§3 Keine Steuer- oder Rechtsberatung</h3>
+<p>Sämtliche in der App dargestellten finanziellen Berechnungen, einschließlich Verdienstübersichten, Pauschalen und Aufteilungsschlüssel im Rahmen von Vermittlungen, dienen ausschließlich der internen Orientierung und stellen keine steuerliche, rechtliche oder betriebswirtschaftliche Beratung dar. Der Nutzer ist verpflichtet, sämtliche steuerlich relevanten Angaben eigenständig mit seinem Steuerberater oder einer sonst hierzu befugten Person abzugleichen.</p>
+<h3>§4 Verfügbarkeit und höhere Gewalt</h3>
+<p>Die App wird "wie besehen" (as-is) bereitgestellt. Ein Anspruch auf ununterbrochene Verfügbarkeit besteht nicht. Für Störungen oder Ausfälle, die auf Umständen außerhalb des Einflussbereichs des Anbieters beruhen — insbesondere Ausfälle von Hosting- oder Datenbankdiensten Dritter, Internetstörungen, Cyberangriffe auf Drittsysteme oder Ereignisse höherer Gewalt — wird keine Haftung übernommen. Die Leistungspflichten des Anbieters ruhen für die Dauer und im Umfang solcher Ereignisse.</p>
+<h3>§5 Datensicherung</h3>
+<p>Trotz bestehender automatischer Sicherungsmechanismen wird dem Nutzer empfohlen, regelmäßig eigene Datensicherungen zu erstellen. Ein vollständiger Schutz vor Datenverlust in jedem denkbaren Szenario (z. B. Geräteverlust, Fehlbedienung, technisches Versagen, höhere Gewalt) kann nicht garantiert werden.</p>
+<h3>§6 Haftungsbeschränkung</h3>
+<p>Bei jeder Software können trotz sorgfältiger Entwicklung und Tests Fehler auftreten, insbesondere bei Berechnungen, Anzeigen oder der Datenverarbeitung. Ein vollständig fehlerfreier Betrieb wird nicht zugesichert. Der Anbieter haftet unbeschränkt bei Vorsatz und grober Fahrlässigkeit sowie bei der Verletzung von Leben, Körper oder Gesundheit. Bei leichter Fahrlässigkeit haftet der Anbieter nur bei der Verletzung wesentlicher Vertragspflichten (Kardinalpflichten, deren Erfüllung die ordnungsgemäße Nutzung der App überhaupt erst ermöglicht), und in diesem Fall der Höhe nach begrenzt auf den bei Vertragsschluss vorhersehbaren, vertragstypischen Schaden. Eine weitergehende Haftung des Anbieters ist ausgeschlossen, soweit gesetzlich zulässig.</p>
+<h3>§7 Eigenverantwortung für eingegebene Daten und Zugangsdaten</h3>
+<p>Die inhaltliche Richtigkeit der durch den Nutzer eingegebenen Daten (u. a. Ausbildungsstände, Notizen, Bewertungen) wird durch die App nicht überprüft; die Verantwortung hierfür liegt ausschließlich beim Nutzer. Gleiches gilt für den sorgfältigen Umgang mit den eigenen Zugangsdaten; Schäden, die aus einem fahrlässigen Umgang mit den Zugangsdaten entstehen (z. B. Weitergabe, unsichere Aufbewahrung), fallen in den Verantwortungsbereich des Nutzers.</p>
+<h3>§8 Nutzungsrecht und Weitergabeverbot</h3>
+<p>Dem Nutzer wird ein einfaches, nicht übertragbares Recht zur Nutzung der App im Rahmen seiner beruflichen Tätigkeit eingeräumt. Ein Eigentum an der Software wird nicht erworben. Die Weitergabe der App, der Programmdatei, der Zugangsdaten oder sonstiger Zugriffsmöglichkeiten an Dritte — auch an nicht autorisierte Personen innerhalb derselben Fahrschule — ist ohne vorherige Zustimmung des Anbieters nicht gestattet. Ein Verstoß gegen dieses Weitergabeverbot kann zivilrechtliche Ansprüche des Anbieters, insbesondere auf Unterlassung und Schadensersatz, sowie den Ausschluss von der weiteren Nutzung nach §9 zur Folge haben.</p>
+<h3>§9 Lizenz, Vergütung und Zugangssperre</h3>
+<p>Die Nutzung der App ist an eine gültige Lizenz gebunden, die — sofern kostenpflichtig — von der regelmäßigen Zahlung der vereinbarten Vergütung abhängt. Bei Zahlungsverzug kann der Zugang nach vorheriger Ankündigung eingeschränkt oder ausgesetzt werden, bis die Zahlung erfolgt. Der Anbieter behält sich vor, den Zugang einzelner Nutzer bei Verstoß gegen diese Nutzungsbedingungen, missbräuchlicher Nutzung oder sonstigem schwerwiegendem Fehlverhalten im Zusammenhang mit der App zeitweise oder dauerhaft zu sperren. Ein Anspruch auf dauerhaften, unveränderten Zugang besteht nicht.</p>
+<h3>§10 Rechtliche Konsequenzen bei Verstößen</h3>
+<p>Verstöße gegen diese Nutzungsbedingungen — insbesondere gegen das Weitergabeverbot nach §8, unbefugte Zugriffe, missbräuchliche Nutzung oder die schuldhafte Verletzung von Datenschutzpflichten — können rechtliche Konsequenzen nach sich ziehen, einschließlich zivilrechtlicher Unterlassungs- und Schadensersatzansprüche des Anbieters sowie gegebenenfalls Dritter. Bei Vorliegen strafrechtlich relevanter Sachverhalte (z. B. unbefugter Zugriff auf Daten, Geheimnisverrat) bleibt die Einleitung entsprechender rechtlicher Schritte ausdrücklich vorbehalten.</p>
+<h3>§11 Freistellung</h3>
+<p>Der Nutzer stellt den Anbieter von sämtlichen Ansprüchen Dritter frei, die aus einer rechtswidrigen, vertragswidrigen oder sonst fehlerhaften Nutzung der App durch den Nutzer resultieren — insbesondere aus der Eingabe unrichtiger Daten, der unbefugten Weitergabe von Zugangsdaten oder der Verletzung von Datenschutzpflichten gegenüber Fahrschülern. Dies umfasst auch die Erstattung angemessener Kosten einer erforderlichen Rechtsverteidigung.</p>
+<h3>§12 Kein Vertrag zugunsten Dritter</h3>
+<p>Diese Nutzungsbedingungen begründen ein Vertragsverhältnis ausschließlich zwischen dem Anbieter und dem jeweiligen Nutzer. Fahrschüler oder sonstige Dritte sind nicht Vertragspartei und können aus diesen Bedingungen keine eigenen Ansprüche gegen den Anbieter herleiten.</p>
+<h3>§13 Verantwortung bei mehreren Nutzern</h3>
+<p>Wird die App von mehreren Personen einer Fahrschule genutzt (Fahrlehrer, Büro-Mitarbeiter), handelt jede Person im Rahmen ihrer eigenen beruflichen und gesetzlichen Verantwortung. Der Anbieter übernimmt keine Verantwortung für das Verhalten einzelner Nutzer untereinander oder gegenüber Dritten.</p>
+<h3>§14 Datenschutz der Fahrschülerdaten</h3>
+<p>Alle in der App erfassten Schülerdaten werden ausschließlich innerhalb der App und der zugehörigen Datenbank verarbeitet und nicht an unbeteiligte Dritte weitergegeben. Für die datenschutzrechtliche Aufklärung der Fahrschüler ist die Datenschutzerklärung der jeweiligen Fahrschule maßgeblich; die App selbst stellt gegenüber den Fahrschülern keine eigene, gesonderte Datenschutzerklärung bereit. Der Nutzer versichert, personenbezogene Daten von Fahrschülern nur dann in die App einzugeben, wenn seine Fahrschule über eine gültige, den Einsatz digitaler Verwaltungssoftware abdeckende Datenschutzerklärung verfügt. Die Verantwortung hierfür liegt beim Nutzer bzw. dessen Fahrschule.</p>
+<h3>§15 Meldepflicht bei erkennbaren Fehlern</h3>
+<p>Erkennt der Nutzer offensichtliche Fehler oder Fehlfunktionen der App (z. B. erkennbar fehlerhafte Berechnungen), ist er gehalten, dies dem Anbieter zeitnah mitzuteilen. Die Fortsetzung der Nutzung in Kenntnis eines solchen Fehlers erfolgt auf eigenes Risiko des Nutzers.</p>
+<h3>§16 Änderungen</h3>
+<p>Diese Bedingungen können bei Weiterentwicklung der App angepasst werden. Bei wesentlichen Änderungen wird eine erneute Bestätigung des Nutzers eingeholt.</p>
+<h3>§17 Schlussbestimmungen</h3>
+<p>Es gilt deutsches Recht. Sollte eine Bestimmung dieser Nutzungsbedingungen unwirksam sein oder werden, bleiben die übrigen Bestimmungen hiervon unberührt.</p>
+`;
 const RESTORE_STAMP="2026-06-23T16:54:19.419Z";
 const RESTORE_DATA=null;
 function load(){try{return JSON.parse(localStorage.getItem(STORE_KEY))||{students:[]};}catch(e){return {students:[]};}}
@@ -5558,6 +5674,11 @@ function routeDetail(id){
       <div class="vb-body"><div class="vb-name">Vortest-Termin buchen</div><div class="vb-sub">Öffnet den Boost-Kalender</div></div>
       <div class="vb-arr">›</div>
     </a>`:""}
+    ${_buchungslinkFuerSchueler(s)?`<button class="vortest-big" id="schuelerBuchungslinkBtn" style="cursor:pointer;">
+      <div class="vb-ic">🔗</div>
+      <div class="vb-body"><div class="vb-name">Online-Buchungslink</div><div class="vb-sub">${s.form==="B197"?(s.b197nachweis?"Automatik (Schaltkompetenz bereits nachgewiesen)":"Schalter (Schaltkompetenz noch offen)"):formLabel(s.form||"B")} · kopieren &amp; an ${esc((s.name||"").split(" ")[0])} schicken</div></div>
+      <div class="vb-arr">›</div>
+    </button>`:""}
     ${coachCard(s)}
     <div class="btn-row" style="margin-top:18px;">
       <button class="btn btn-ghost" id="editBtn">Bearbeiten</button>
@@ -5614,6 +5735,13 @@ function routeDetail(id){
     const phone=formatPhoneForWa(s.telefon);
     const url=phone?`https://wa.me/${phone}`:`https://wa.me/`;
     window.open(url,"_blank","noopener");
+  });
+  const buchLinkBtn=$("#schuelerBuchungslinkBtn");
+  if(buchLinkBtn) buchLinkBtn.addEventListener("click",()=>{
+    const link=_buchungslinkFuerSchueler(s); if(!link)return;
+    const text=`Hey ${(s.name||"").split(" ")[0]}, hier kannst du dir eine Fahrstunde buchen: ${link}`;
+    if(navigator.share){ navigator.share({title:"Fahrstunde buchen",text,url:link}).catch(()=>{}); }
+    else { navigator.clipboard?.writeText(link).then(()=>toast("Link kopiert ✓")).catch(()=>toast("Kopieren fehlgeschlagen")); }
   });
   bindExamReady(s,()=>routeDetail(id));
   const _rk=$("#riskEditBtn");if(_rk)_rk.addEventListener("click",()=>routeRisk(id));
@@ -7422,6 +7550,11 @@ function routeSettings(){
             </div>
           </details>
         </div>
+        <div class="res-block" style="animation:none;">
+          <h4>📜 Nutzungsbedingungen</h4>
+          <p style="font-size:13px;color:var(--muted);">Zuletzt bestätigt: ${(_authProfile&&_authProfile.agb_akzeptiert_am)?isoDE((_authProfile.agb_akzeptiert_am||"").slice(0,10))+" · Version "+esc(_authProfile.agb_akzeptiert_version||"–"):"noch nicht"}</p>
+          <div class="btn-row"><button class="btn btn-ghost" onclick="openAgbSheet()">Ansehen</button><button class="btn btn-ghost" onclick="printAgb()">Als PDF</button></div>
+        </div>
       </div></div>
     </div>
 
@@ -8696,6 +8829,13 @@ function _notifyOnlineBookingChange(lessonId, type, patch) {
         if (patch.date) body.new_date = patch.date;
         if (patch.von) body.new_von = patch.von;
         if (patch.bis) body.new_bis = patch.bis;
+      }
+      // Bereich 13, Punkt 7: Büro hat 100%-Handlungsmöglichkeiten im Buchungssystem - ändert/storniert
+      // das Büro (nicht der Fahrlehrer selbst) einen online gebuchten Termin, wird zusätzlich der
+      // Fahrlehrer per Push informiert, damit jede Veränderung nachvollziehbar bleibt.
+      if (_authProfile && _authProfile.rolle === "buero") {
+        body.changed_by_buero = true;
+        body.changed_by_name = _authProfile.name || "Büro";
       }
       fetch("https://oectrvkjunntzsggyhxv.supabase.co/functions/v1/public-booking?action=teacher_update", {
         method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(body)
@@ -10535,15 +10675,72 @@ function renderRouteSheet(nm){
   $("#rSave").addEventListener("click",()=>{ if(!_routeBuild.length){toast("Noch keinen Ort gewählt");return;} const pd=ensurePruefer(nm); pd.routen.push(_routeBuild.slice()); save(); closeSheet(); routePrueferAkte(nm); });
 }
 /* ---------- Archiv ---------- */
+let _archFormFilter=[], _archColorFilter=[];
 function routeArchive(){
   $("#tbTitle").textContent="Archiv"; setFab(false); view.scrollTop=0;
-  const list=DB.students.filter(s=>s.passed).sort((a,b)=>(""+(b.passed||"")).localeCompare(""+(a.passed||"")));
-  let html=`<div class="view-inner view-read fade-up"><div class="row-between" style="margin-bottom:14px;"><div class="sec-h">Ar<span class="o">chiv</span></div><div class="count-pill">${list.length}</div></div>`;
-  if(!list.length){ html+=`<p class="muted-p">Noch keine bestandenen Schüler. Sobald du eine Prüfung als „bestanden“ einträgst, landet der Schüler hier – aus „Meine Schüler“ raus, aber in den Statistiken weiter mitgezählt.</p>`; }
-  else { list.forEach(s=>{ html+=`<button class="wait-card" data-id="${s.id}"><div class="wait-days" style="background:var(--gruen)"><div class="wd-n">✓</div><div class="wd-l">${isoDE(s.passed).slice(0,5)}</div></div>
-    <div class="wait-body"><div class="wait-name">${esc(s.name)}</div><div class="wait-since">bestanden am ${isoDE(s.passed)} · ${esc(s.form||'B')}</div></div><span class="na-arrow">${ICN.arrow}</span></button>`; }); }
-  html+=`</div>`; view.innerHTML=html;
+  let list=DB.students.filter(s=>s.passed).sort((a,b)=>(a.name||"").localeCompare(b.name||"","de"));
+  if(_archFormFilter.length) list=list.filter(s=>_archFormFilter.includes(s.form||"B"));
+  if(_archColorFilter.length) list=list.filter(s=>_archColorFilter.includes(s.profil));
+  const alle=DB.students.filter(s=>s.passed);
+  const formChips=FORMS.map(f=>`<button class="pday${_archFormFilter.includes(f)?' on':''}" data-archform="${f}" style="width:auto;padding:0 12px;">${formLabel(f)}</button>`).join("");
+  const colorChips=["rot","gelb","gruen","blau"].map(c=>`<button class="pday${_archColorFilter.includes(c)?' on':''}" data-archcolor="${c}" style="width:auto;padding:0 12px;"><span class="pc-dot" style="background:${PROFILE[c].hex};display:inline-block;width:8px;height:8px;border-radius:50%;margin-right:5px;"></span>${PROFILE[c].word}</button>`).join("");
+  const letters=[...new Set(list.map(s=>(s.name||"?")[0].toUpperCase()))].sort((a,b)=>a.localeCompare(b,"de"));
+  let gridHTML="";
+  if(!list.length){
+    gridHTML = alle.length ? `<p class="muted-p">Kein Treffer für diese Filter.</p>` : `<p class="muted-p">Noch keine bestandenen Schüler. Sobald du eine Prüfung als „bestanden“ einträgst, landet der Schüler hier – aus „Meine Schüler“ raus, aber in den Statistiken weiter mitgezählt.</p>`;
+  } else {
+    letters.forEach(letter=>{
+      const group=list.filter(s=>(s.name||"?")[0].toUpperCase()===letter);
+      gridHTML+=`<div class="alpha-anchor" id="alpha-arch-${letter}" style="font-size:11px;font-weight:800;color:var(--muted);letter-spacing:.1em;padding:14px 0 6px;text-transform:uppercase;">${letter}</div>`;
+      gridHTML+=group.map(s=>`<button class="wait-card" data-id="${s.id}" data-name="${esc((s.name||'').toLowerCase())}"><div class="wait-days" style="background:var(--gruen)"><div class="wd-n">✓</div><div class="wd-l">${isoDE(s.passed).slice(0,5)}</div></div>
+        <div class="wait-body"><div class="wait-name">${esc(s.name)}</div><div class="wait-since">bestanden am ${isoDE(s.passed)} · ${esc(formLabel(s.form||'B'))}</div></div><span class="na-arrow">${ICN.arrow}</span></button>`).join("");
+    });
+  }
+  const letterNav=letters.map(l=>`<button class="alpha-nav-btn" data-letter="${l}" style="display:block;font-size:11px;font-weight:800;color:var(--muted);padding:3px 0;background:none;border:none;cursor:pointer;line-height:1.4;">${l}</button>`).join("");
+  view.innerHTML=`<div class="view-inner view-read fade-up" style="position:relative;padding-right:32px;">
+    <div class="row-between" style="margin-bottom:14px;"><div class="sec-h">Ar<span class="o">chiv</span></div><div class="count-pill">${alle.length}</div></div>
+    <div class="search-wrap"><span class="search-ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="11" cy="11" r="7"/><path d="M21 21l-4.3-4.3"/></svg></span><input id="archSearch" type="search" placeholder="Ehemalige suchen …" autocomplete="off"><button class="search-clear" id="archSearchClear" aria-label="Leeren" style="display:none;">✕</button></div>
+    <div class="pause-days" style="margin:10px 0 4px;">${formChips}</div>
+    <div class="pause-days" style="margin:0 0 12px;">${colorChips}</div>
+    ${(_archFormFilter.length||_archColorFilter.length)?`<button class="btn btn-ghost" id="archFilterReset" style="width:100%;margin-bottom:10px;">Filter zurücksetzen</button>`:''}
+    <div id="archGrid">${gridHTML}</div>
+    <div class="no-hit" id="archNoHit" style="display:none;">Keine Treffer.</div>
+  </div>
+  <div style="position:fixed;right:6px;top:50%;transform:translateY(-50%);z-index:30;display:flex;flex-direction:column;align-items:center;background:var(--surface);border-radius:12px;padding:4px 3px;box-shadow:var(--elev-2);${list.length?'':'display:none;'}" id="archAlphaNav">${letterNav}</div>`;
   document.querySelectorAll(".wait-card").forEach(c=>c.addEventListener("click",()=>routeDetail(c.dataset.id)));
+  document.querySelectorAll("[data-archform]").forEach(b=>b.addEventListener("click",()=>{
+    const f=b.dataset.archform; const i=_archFormFilter.indexOf(f);
+    if(i>=0)_archFormFilter.splice(i,1); else _archFormFilter.push(f);
+    routeArchive();
+  }));
+  document.querySelectorAll("[data-archcolor]").forEach(b=>b.addEventListener("click",()=>{
+    const c=b.dataset.archcolor; const i=_archColorFilter.indexOf(c);
+    if(i>=0)_archColorFilter.splice(i,1); else _archColorFilter.push(c);
+    routeArchive();
+  }));
+  const resetBtn=$("#archFilterReset"); if(resetBtn)resetBtn.addEventListener("click",()=>{ _archFormFilter=[]; _archColorFilter=[]; routeArchive(); });
+  document.querySelectorAll("#archAlphaNav .alpha-nav-btn").forEach(b=>b.addEventListener("click",()=>{
+    const el=document.getElementById("alpha-arch-"+b.dataset.letter);
+    if(el)el.scrollIntoView({behavior:"smooth",block:"start"});
+  }));
+  const si=$("#archSearch"),nh=$("#archNoHit"),sc=$("#archSearchClear"),nav=$("#archAlphaNav");
+  function filt(){
+    const q=(si.value||"").trim().toLowerCase();
+    if(q){
+      if(nav)nav.style.display="none";
+      document.querySelectorAll("#archGrid .alpha-anchor").forEach(a=>a.style.display="none");
+      let n=0;
+      document.querySelectorAll("#archGrid .wait-card").forEach(c=>{const hit=(c.dataset.name||"").indexOf(q)>=0;c.style.display=hit?"":"none";if(hit)n++;});
+      nh.style.display=n?"none":"block";sc.style.display="block";
+    } else {
+      if(nav&&list.length)nav.style.display="flex";
+      document.querySelectorAll("#archGrid .alpha-anchor").forEach(a=>a.style.display="");
+      document.querySelectorAll("#archGrid .wait-card").forEach(c=>c.style.display="");
+      nh.style.display="none";sc.style.display="none";
+    }
+  }
+  si.addEventListener("input",filt);
+  sc.addEventListener("click",()=>{si.value="";filt();si.focus();});
 }
 
 /* ---------- PDF / Druck ---------- */
