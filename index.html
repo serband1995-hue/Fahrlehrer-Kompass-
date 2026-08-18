@@ -1576,6 +1576,7 @@ body:not(.light) .cw-col.today .cw-dnum{color:var(--gold);}
 .thi-k{font-size:10px;font-weight:800;text-transform:uppercase;letter-spacing:.05em;color:var(--faint);}
 .thi-v{font-family:'Playfair Display',serif;font-size:22px;font-weight:700;margin-top:5px;color:var(--txt);line-height:1;}
 .eur-locked{cursor:pointer;opacity:.55;letter-spacing:.03em;font-size:.85em;}
+.eur-locked svg{width:1em;height:1em;vertical-align:-2px;display:inline-block;}
 .eur-locked:active{opacity:.8;}
 .thi-s{font-size:11px;color:var(--muted);margin-top:4px;}
 /* Bonus / Ziel Zeile */
@@ -4853,7 +4854,7 @@ window.addEventListener("load", () => {
 const STORE_KEY="serband-app-v1";
 /* Build-Version: bei jeder Auslieferung hier das Datum aktualisieren.
    Wird in den Einstellungen angezeigt + für den Update-Hinweis genutzt. */
-const APP_VERSION="2026.08.25";
+const APP_VERSION="2026.08.26";
 // Nutzungsbedingungen & Haftungsausschluss (Bereich: rechtliche Absicherung) - Version hochzählen
 // und alle Nutzer müssen erneut zustimmen, sobald sich der Text inhaltlich ändert.
 const AGB_VERSION="1.0";
@@ -5712,7 +5713,6 @@ function routeDetail(id){
       <div class="vb-body"><div class="vb-name">Online-Buchungslink</div><div class="vb-sub">${s.form==="B197"?(s.b197nachweis?"Automatik (Schaltkompetenz bereits nachgewiesen)":"Schalter (Schaltkompetenz noch offen)"):formLabel(s.form||"B")} · kopieren &amp; an ${esc((s.name||"").split(" ")[0])} schicken</div></div>
       <div class="vb-arr">›</div>
     </button>`:""}
-    ${coachCard(s)}
     <div class="btn-row" style="margin-top:18px;">
       <button class="btn btn-ghost" id="editBtn">Bearbeiten</button>
       <button class="btn btn-danger" id="delBtn">Löschen</button>
@@ -11218,18 +11218,6 @@ function lagebildCard(s){
     <div class="lage-focus"><div class="lage-lab">Nächster Fokus</div><div class="lage-val">${esc(focus)}</div></div>
     ${missing.length?`<div class="lage-miss"><div class="lage-lab">Fehlt noch für die Prüfung</div><div class="lage-val">${missing.join(" · ")}</div></div>`:`<div class="lage-miss done"><div class="lage-lab">Prüfungs-Freigabe</div><div class="lage-val">Alle Punkte erfüllt ✓</div></div>`}
     ${stale}
-  </div>`;
-}
-
-function coachCard(s){
-  if(!s.bogen) return "";
-  const E=evalBogen(s.bogen), ci=COLOR_INFO[E.top], ce=COLOR_EXTRA[E.top], ln=LERN_INFO[E.lTop];
-  const vn=esc((s.name||"").split(" ")[0]||"ihn");
-  return `<div class="coach">
-    <div class="coach-h"><span class="cdot" style="background:${PROFILE[E.top].hex}"></span>So coachst du ${vn}</div>
-    <div class="coach-block"><div class="coach-lab">So führst du ihn</div><div class="coach-txt">${ci.talk}</div></div>
-    ${ln?`<div class="coach-block"><div class="coach-lab">Lernkanal · ${ln.name}</div><div class="coach-txt">${ln.tip}</div></div>`:""}
-    <div class="coach-block warn"><div class="coach-lab">Pass auf bei</div><div class="coach-txt">${ce.blind}</div></div>
   </div>`;
 }
 
