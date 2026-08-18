@@ -3338,20 +3338,13 @@ function routeFahrschuleDashboard(){
       <p style="font-size:13px;color:var(--muted);">Noch keinem Fahrlehrer zugeordnet — jetzt verteilen.</p>
       <div class="btn-row"><button class="btn btn-ghost" data-fsgo="schueler">Ansehen</button></div>
     </div>`:''}
-    <div class="res-block" style="animation:none;"><h4>📂 Weitere Kalender</h4>
-      <div class="btn-row" style="flex-wrap:wrap;">
-        <button class="btn btn-ghost" onclick="routeFahrschuleKategorie('vortest')">🎯 Vortest</button>
-        <button class="btn btn-ghost" onclick="routeFahrschuleKategorie('simulator')">🕹️ Simulator</button>
-        <button class="btn btn-ghost" onclick="routeFahrschuleKategorie('beratung')">💬 Beratung</button>
-        <button class="btn btn-ghost" onclick="routeFahrschuleKategorie('theorie_pruefung')">📘 Theorie-Prüfung</button>
-        <button class="btn btn-ghost" onclick="routeFahrschuleKategorie('ersthilfe')">🚑 Erste Hilfe</button>
-        <button class="btn btn-ghost" onclick="routeFahrschuleFahrcheckKontrolle()">🚗 Fahrcheck-Kontrolle</button>
-        <button class="btn btn-ghost" onclick="routeFahrschuleSchichtplan()">🗓️ Schichtplan</button>
-        <button class="btn btn-ghost" onclick="routeFahrschuleUrlaub()">🏖️ Urlaub</button>
-        <button class="btn btn-ghost" onclick="routeFahrschuleProvisionen()">💰 Provisionen</button>
-        <button class="btn btn-ghost" onclick="routeFahrschuleBackups()">💾 Backups</button>
-      </div>
+    <div class="res-block" style="animation:none;"><h4>📋 Empfehlungen (Simulator/Videoakademie)</h4>
+      <div id="fsEmpfList"><p class="muted-p" style="font-size:12.5px;">Lade …</p></div>
     </div>
+    <button class="res-block" style="animation:none;width:100%;text-align:left;cursor:pointer;" onclick="routeFahrschuleVerwaltung()">
+      <h4 style="margin-bottom:2px;">⚙️ Weitere Verwaltung</h4>
+      <p style="font-size:13px;color:var(--muted);">Theorie-Prüfung, Fahrcheck-Kontrolle, Schichtplan, Urlaub, Provisionen, Backups</p>
+    </button>
   </div>`;
   document.querySelectorAll(".d-tile .dt-n[data-count]").forEach(el=>countUp(el,+el.dataset.count,el.dataset.suffix||""));
   document.querySelectorAll("[data-fsgo]").forEach(b=>b.addEventListener("click",()=>{
@@ -3359,8 +3352,91 @@ function routeFahrschuleDashboard(){
     if(k==="schueler"){routeHome();} else if(k==="lehrer")routeFahrschuleLehrer();
     else if(k==="fahrzeuge")routeFahrschuleFahrzeuge(); else if(k==="stats")routeFahrschuleStatistik();
   }));
+  renderFsEmpfehlungenListe();
+}
+// Empfehlungen-Übersicht fürs Büro (Bug-Fix + neues Empfehlungs-Feature): zeigt, welcher
+// Fahrlehrer für welchen Schüler Simulator/Videoakademie empfohlen hat, mit Status-Pflege.
+async function renderFsEmpfehlungenListe(){
+  const el=document.getElementById("fsEmpfList");if(!el||!_fsAgg)return;
+  const supa=getSupa();
+  const{data,error}=await supa.from("fahrschule_empfehlungen").select("*").eq("fahrschule_id",_fsAgg.fahrschuleId).neq("status","storniert").order("erstellt_am",{ascending:false}).limit(40);
+  const el2=document.getElementById("fsEmpfList");if(!el2)return;
+  if(error){el2.innerHTML='<p class="muted-p" style="font-size:12.5px;">Konnte nicht geladen werden.</p>';return;}
+  if(!data||!data.length){el2.innerHTML='<p class="muted-p" style="font-size:12.5px;">Noch keine Empfehlungen.</p>';return;}
+  const STATUS_LABEL={empfohlen:"Empfohlen",zugangsdaten_ausgegeben:"Zugangsdaten ausgegeben",bezahlt:"Bezahlt ✓"};
+  el2.innerHTML=data.map(e=>`<div class="fs-card" data-empf="${e.id}">
+    <div class="fs-name">${e.typ==="simulator"?"🕹️":"🎓"} ${esc(e.schueler_name)} <span style="font-size:11px;color:var(--muted);font-weight:400;">· ${e.typ==="simulator"?"Simulator":"Videoakademie"}</span></div>
+    <div class="fs-sub">von ${esc(e.fahrlehrer_name)} · ${isoDE((e.erstellt_am||"").slice(0,10))} · <b>${STATUS_LABEL[e.status]||e.status}</b>${e.betrag!=null?` · ${eur(e.betrag)}`:''}</div>
+    ${e.status!=="bezahlt"?`<div class="fs-actions">
+      ${e.status==="empfohlen"?`<button class="fs-btn-kill" style="background:var(--surface-2);color:var(--txt);" data-empf-zugang="${e.id}">Zugangsdaten ausgegeben</button>`:''}
+      <button class="fs-btn-kill" style="background:#4a8b45;color:#fff;" data-empf-bezahlt="${e.id}">Bezahlt eintragen</button>
+    </div>`:''}
+  </div>`).join("");
+  el2.querySelectorAll("[data-empf-zugang]").forEach(b=>b.addEventListener("click",async()=>{
+    await supa.from("fahrschule_empfehlungen").update({status:"zugangsdaten_ausgegeben",aktualisiert_am:new Date().toISOString()}).eq("id",b.dataset.empfZugang);
+    renderFsEmpfehlungenListe();
+  }));
+  el2.querySelectorAll("[data-empf-bezahlt]").forEach(b=>b.addEventListener("click",()=>openEmpfehlungBezahltSheet(b.dataset.empfBezahlt,data.find(x=>x.id===b.dataset.empfBezahlt))));
+}
+// Betrag eintragen + automatische Aufteilung (nur wenn in den Einstellungen konfiguriert)
+async function openEmpfehlungBezahltSheet(id,empf){
+  if(!empf)return;
+  const supa=getSupa();
+  const{data:fs}=await supa.from("fahrschulen").select("konfiguration").eq("id",_fsAgg.fahrschuleId).single();
+  const cfg=(fs&&fs.konfiguration&&fs.konfiguration.akademieVermittlung)||{};
+  const vorschlag=empf.typ==="simulator"?cfg.betragSimulator:cfg.betragAkademie;
+  openSheet(`<div class="sheet-h">Bezahlt eintragen</div>
+    <p class="muted-p" style="font-size:13px;margin:-4px 0 12px;">${esc(empf.schueler_name)} · ${empf.typ==="simulator"?"Simulator":"Videoakademie"} · vermittelt von ${esc(empf.fahrlehrer_name)}</p>
+    <div class="field"><label>Betrag (€)</label><input type="number" id="empfBetrag" value="${vorschlag!=null?vorschlag:''}" min="0" placeholder="Betrag eingeben"></div>
+    <div id="empfSplitPreview" style="margin-top:10px;"></div>
+    <div class="btn-row"><button class="btn btn-ghost" id="empfCancel" style="flex:0;padding:13px 18px;">Abbrechen</button><button class="btn btn-primary" id="empfSave">Speichern</button></div>`);
+  const preview=()=>{
+    const betrag=+($("#empfBetrag").value||0);
+    const istEigen=empf.fahrlehrer_id===(_authUser&&_authUser.id);
+    const split=(istEigen?cfg.splitEigen:cfg.splitKollege)||{};
+    const box=$("#empfSplitPreview");
+    if(!betrag||split.akademie==null||split.fahrschule==null||split.fahrlehrer==null){
+      box.innerHTML=`<p class="muted-p" style="font-size:12px;">Aufteilung noch nicht konfiguriert (Einstellungen → Fahrschule-Verwaltung → Akademie-Vermittlung) — Betrag wird trotzdem gespeichert.</p>`;
+      return;
+    }
+    const akademieEuro=Math.round(betrag*split.akademie/100), fsEuro=Math.round(betrag*split.fahrschule/100), flEuro=Math.round(betrag*split.fahrlehrer/100);
+    box.innerHTML=`<div class="res-block" style="animation:none;padding:12px;"><div style="font-size:12.5px;display:flex;justify-content:space-between;"><span>Akademie</span><b>${eur(akademieEuro)}</b></div><div style="font-size:12.5px;display:flex;justify-content:space-between;"><span>Fahrschule</span><b>${eur(fsEuro)}</b></div><div style="font-size:12.5px;display:flex;justify-content:space-between;"><span>${esc(empf.fahrlehrer_name)}</span><b>${eur(flEuro)}</b></div></div>`;
+  };
+  $("#empfBetrag").addEventListener("input",preview); preview();
+  $("#empfCancel").addEventListener("click",closeSheet);
+  $("#empfSave").addEventListener("click",async()=>{
+    const betrag=+($("#empfBetrag").value||0);
+    if(!betrag){toast("Bitte einen Betrag eingeben");return;}
+    const istEigen=empf.fahrlehrer_id===(_authUser&&_authUser.id);
+    const split=(istEigen?cfg.splitEigen:cfg.splitKollege)||{};
+    let aufteilung=null;
+    if(split.akademie!=null&&split.fahrschule!=null&&split.fahrlehrer!=null){
+      aufteilung={akademie:Math.round(betrag*split.akademie/100),fahrschule:Math.round(betrag*split.fahrschule/100),fahrlehrer:Math.round(betrag*split.fahrlehrer/100)};
+    }
+    await supa.from("fahrschule_empfehlungen").update({status:"bezahlt",betrag,aufteilung,aktualisiert_am:new Date().toISOString()}).eq("id",id);
+    closeSheet(); toast("Eingetragen ✓"); renderFsEmpfehlungenListe();
+  });
 }
 
+// Sammelseite für Fahrschule-Funktionen, die NICHT über die Kalender-Filter erreichbar sind
+// (Bug-Fix: Dashboard-Leiste entrümpelt, Vortest/Simulator/Beratung/Erste-Hilfe sind jetzt
+// reine Kalender-Filter und brauchen hier keinen eigenen Button mehr).
+function routeFahrschuleVerwaltung(){
+  if(!_fsAgg)return;
+  $("#tbTitle").textContent="Verwaltung"; setFab(false); view.scrollTop=0;
+  view.innerHTML=`<div class="view-inner view-read fade-up">
+  <button class="btn btn-ghost" style="margin-bottom:10px;" onclick="routeFahrschuleDashboard()">← Zurück zum Dashboard</button>
+  <div class="res-block" style="animation:none;">
+    <div class="btn-row" style="flex-wrap:wrap;">
+      <button class="btn btn-ghost" onclick="routeFahrschuleKategorie('theorie_pruefung')">📘 Theorie-Prüfung</button>
+      <button class="btn btn-ghost" onclick="routeFahrschuleFahrcheckKontrolle()">🚗 Fahrcheck-Kontrolle</button>
+      <button class="btn btn-ghost" onclick="routeFahrschuleSchichtplan()">🗓️ Schichtplan</button>
+      <button class="btn btn-ghost" onclick="routeFahrschuleUrlaub()">🏖️ Urlaub</button>
+      <button class="btn btn-ghost" onclick="routeFahrschuleProvisionen()">💰 Provisionen</button>
+      <button class="btn btn-ghost" onclick="routeFahrschuleBackups()">💾 Backups</button>
+    </div>
+  </div></div>`;
+}
 function _fsNachFahrlehrerAktion(fahrschuleId){
   if(_fsAgg&&_fsAgg.fahrschuleId===fahrschuleId){
     const zielRoute=window._fsAktuelleRoute||routeFahrschuleLehrer;
@@ -4685,7 +4761,7 @@ window.addEventListener("load", () => {
 const STORE_KEY="serband-app-v1";
 /* Build-Version: bei jeder Auslieferung hier das Datum aktualisieren.
    Wird in den Einstellungen angezeigt + für den Update-Hinweis genutzt. */
-const APP_VERSION="2026.08.18";
+const APP_VERSION="2026.08.19";
 const RESTORE_STAMP="2026-06-23T16:54:19.419Z";
 const RESTORE_DATA=null;
 function load(){try{return JSON.parse(localStorage.getItem(STORE_KEY))||{students:[]};}catch(e){return {students:[]};}}
@@ -5240,7 +5316,7 @@ function openDrawer(){$("#drawer").classList.add("open");$("#scrim").classList.a
 function closeDrawer(){$("#drawer").classList.remove("open");$("#scrim").classList.remove("open");}
 $("#menuBtn").addEventListener("click",openDrawer);
 $("#scrim").addEventListener("click",closeDrawer);
-$("#homeBtn").addEventListener("click",()=>{ replaySplash(); routeDashboard(); });
+$("#homeBtn").addEventListener("click",()=>{ replaySplash(); document.getElementById("fsCalTiles")?.remove(); if(_fsAgg)routeFahrschuleDashboard(); else routeDashboard(); });
 function replaySplash(){
   const sp=$("#splash"); if(!sp)return;
   setSplashQuote();
@@ -5253,6 +5329,7 @@ document.querySelector(".drawer-nav").addEventListener("click",(e)=>{
   const b=e.target.closest(".nav-item[data-nav]");
   if(!b)return;
   const nav=b.dataset.nav;closeDrawer();
+  document.getElementById("fsCalTiles")?.remove();
   setTimeout(()=>{if(nav==="new")formView(null);else if(nav==="home")routeHome();
     else if(nav==="dash")routeDashboard();
     else if(nav==="pruef")routePruefungen();
@@ -5856,6 +5933,9 @@ function ueBisherFuerSchueler(s){
 }
 function ueBisBestehenFuerSchueler(s){
   if(!s.passed)return null;
+  // Manuell nachgetragene Schätzung hat Vorrang - für Schüler, die schon vor Einführung der
+  // App bestanden haben und deren echte Fahrstunden-Historie deshalb unvollständig ist.
+  if(typeof s.ueBisBestehenSchaetzung==="number"&&s.ueBisBestehenSchaetzung>0)return s.ueBisBestehenSchaetzung;
   const lessons=(DB.lessons||[]).filter(l=>l.sid===s.id&&l.date<=s.passed&&["fahrstunde","sonder"].includes(l.art)&&l.status!=="abgebrochen"&&l.status!=="nicht erschienen");
   const sum=lessons.reduce((a,l)=>a+ueOf(l.art,l.von,l.bis,l.tatsaechlicheDauer),0);
   return sum>0?sum:null;
@@ -6802,6 +6882,8 @@ function placeObject(type){const d=objDef(type);if(!d)return;const autoScale=(d.
   if(DRAW.uiTab==="objekte"&&DRAW.cat==="zuletzt")renderObjGrid();
   render();persistBoard();}
 function placePreset(key){const P=PRESETS[key];if(!P)return;const cx=_W/2,cy=_H/2;
+  // Bug-Fix: neue Szene ersetzt die alte komplett, statt sie zu überlagern
+  DRAW.objects=[]; DRAW.history=DRAW.history.filter(h=>h.t!=="object"); DRAW.selId=null;
   const anchor=P.items.find(it=>it.t==="kreuzung"||it.t==="kreisverkehr");
   const k=anchor?(_W/objDef(anchor.t).w):1;
   P.items.forEach(it=>{const o={id:DRAW.seq++,type:it.t,x:cx+(it.dx||0)*k,y:cy+(it.dy||0)*k,rot:it.rot||0,scale:(it.s||1)*k};DRAW.objects.push(o);DRAW.history.push({t:"object",id:o.id});});DRAW.selId=null;DRAW.tool="select";setActiveTool();closeTafelDrawer();render();persistBoard();toast(P.label+" gesetzt");}
@@ -7107,6 +7189,51 @@ function saveFeiertagsPauschale(){
   toast("Feiertagspauschale gespeichert ✓");
   routeSettings();
 }
+/* ===== Akademie-Vermittlung: Beträge/Split-Konfiguration =====
+   Bewusst leer/optional, bis Serband die echten Zahlen festlegt - siehe empfehlungAufteilung(). */
+async function renderAkademieVermittlungCfg(){
+  const el=document.getElementById("akadVermittlungCfg");if(!el)return;
+  if(!_authProfile||!_authProfile.fahrschule_id){el.innerHTML='<p class="muted-p" style="font-size:12.5px;">Nicht mit einer Fahrschule verbunden.</p>';return;}
+  const supa=getSupa();
+  const{data,error}=await supa.from("fahrschulen").select("konfiguration").eq("id",_authProfile.fahrschule_id).single();
+  const el2=document.getElementById("akadVermittlungCfg");if(!el2)return;
+  if(error){el2.innerHTML='<p class="muted-p" style="font-size:12.5px;">Konnte nicht geladen werden.</p>';return;}
+  const cfg=(data&&data.konfiguration&&data.konfiguration.akademieVermittlung)||{};
+  const v=k=>cfg[k]!=null?cfg[k]:"";
+  const sp=(k1,k2)=>((cfg[k1]||{})[k2]!=null?(cfg[k1]||{})[k2]:"");
+  el2.innerHTML=`
+    <div class="field"><label>Betrag pro Videoakademie-Vermittlung (€)</label><input type="number" id="cfgBetragAkademie" value="${v('betragAkademie')}" placeholder="noch offen" min="0"></div>
+    <div class="field"><label>Betrag pro Simulator-Vermittlung (€)</label><input type="number" id="cfgBetragSimulator" value="${v('betragSimulator')}" placeholder="noch offen" min="0"></div>
+    <p style="font-size:12.5px;color:var(--muted);margin:10px 0 4px;">Aufteilung, wenn <b>du selbst</b> vermittelt hast (in %):</p>
+    <div style="display:flex;gap:8px;">
+      <input type="number" id="cfgEigenAkademie" value="${sp('splitEigen','akademie')}" placeholder="Akademie %" min="0" max="100" style="flex:1;min-width:0;">
+      <input type="number" id="cfgEigenFahrschule" value="${sp('splitEigen','fahrschule')}" placeholder="Fahrschule %" min="0" max="100" style="flex:1;min-width:0;">
+      <input type="number" id="cfgEigenFahrlehrer" value="${sp('splitEigen','fahrlehrer')}" placeholder="Du %" min="0" max="100" style="flex:1;min-width:0;">
+    </div>
+    <p style="font-size:12.5px;color:var(--muted);margin:10px 0 4px;">Aufteilung, wenn <b>ein Kollege</b> vermittelt hat (in %):</p>
+    <div style="display:flex;gap:8px;">
+      <input type="number" id="cfgKollegeAkademie" value="${sp('splitKollege','akademie')}" placeholder="Akademie %" min="0" max="100" style="flex:1;min-width:0;">
+      <input type="number" id="cfgKollegeFahrschule" value="${sp('splitKollege','fahrschule')}" placeholder="Fahrschule %" min="0" max="100" style="flex:1;min-width:0;">
+      <input type="number" id="cfgKollegeFahrlehrer" value="${sp('splitKollege','fahrlehrer')}" placeholder="Kollege %" min="0" max="100" style="flex:1;min-width:0;">
+    </div>
+    <div class="btn-row" style="margin-top:10px;"><button class="btn btn-ghost" onclick="saveAkademieVermittlungCfg()">Speichern</button></div>`;
+}
+async function saveAkademieVermittlungCfg(){
+  if(!_authProfile||!_authProfile.fahrschule_id)return;
+  const num=sel=>{const el=$(sel);const v=el?el.value:"";return v===""?null:+v;};
+  const neu={
+    betragAkademie:num("#cfgBetragAkademie"),
+    betragSimulator:num("#cfgBetragSimulator"),
+    splitEigen:{akademie:num("#cfgEigenAkademie"),fahrschule:num("#cfgEigenFahrschule"),fahrlehrer:num("#cfgEigenFahrlehrer")},
+    splitKollege:{akademie:num("#cfgKollegeAkademie"),fahrschule:num("#cfgKollegeFahrschule"),fahrlehrer:num("#cfgKollegeFahrlehrer")}
+  };
+  const supa=getSupa();
+  const{data:cur}=await supa.from("fahrschulen").select("konfiguration").eq("id",_authProfile.fahrschule_id).single();
+  const konfiguration=Object.assign({},(cur&&cur.konfiguration)||{},{akademieVermittlung:neu});
+  const{error}=await supa.from("fahrschulen").update({konfiguration}).eq("id",_authProfile.fahrschule_id);
+  if(error){toast("Fehler: "+error.message);return;}
+  toast("Gespeichert ✓");
+}
 function setVerdienstPin(){
   const current=DB.verdienstPin||"";
   if(current){
@@ -7144,7 +7271,8 @@ function _settingsAccToggle(key){
 function routeSettings(){
   $("#tbTitle").textContent="Einstellungen";setFab(false);view.scrollTop=0;
   const adminBtn=isSuperAdmin()?`<div class="res-block" style="animation:none;"><h4>👑 Admin-Panel</h4><p>Nutzer verwalten, Kill-Switch und Sync-Status.</p><div class="btn-row"><button class="btn btn-ghost" onclick="openAdminPanel()">Admin öffnen</button></div></div>
-  <div class="res-block" style="animation:none;"><h4>🏫 Fahrschulen</h4><p>Fahrschulen, Fahrlehrer, Schüler und Pakete verwalten.</p><div class="btn-row"><button class="btn btn-ghost" onclick="routeFahrschulenListe()">Fahrschulen verwalten</button></div></div>`:"";
+  <div class="res-block" style="animation:none;"><h4>🏫 Fahrschulen</h4><p>Fahrschulen, Fahrlehrer, Schüler und Pakete verwalten.</p><div class="btn-row"><button class="btn btn-ghost" onclick="routeFahrschulenListe()">Fahrschulen verwalten</button></div></div>
+  <div class="res-block" style="animation:none;"><h4>🎓 Akademie-Vermittlung</h4><p style="font-size:13px;color:var(--muted);">Beträge & Aufteilung für Simulator-/Videoakademie-Empfehlungen. Solange leer, wird bei einer Auszahlung nur "noch nicht konfiguriert" angezeigt — nichts wird stillschweigend falsch berechnet.</p><div id="akadVermittlungCfg"><p class="muted-p" style="font-size:12.5px;">Lade …</p></div></div>`:"";
   const eigenerSlug=_authProfile&&_authProfile.slug;
   const buchungslinksBtn=(eigenerSlug&&_authProfile&&(_authProfile.rolle==="fahrlehrer"||_authProfile.rolle==="super_admin"))?_fsBuchungslinksHTML(eigenerSlug,"Meine"):"";
   const logoutBtn=_authUser?`<div class="res-block" style="animation:none;background:rgba(200,60,60,.1);border-color:rgba(200,60,60,.3)"><h4 style="color:#f08080">🚪 Abmelden</h4><p style="color:var(--muted)">Meldet dich sicher aus der App ab.</p><div class="btn-row"><button class="btn" style="background:#c83c3c;color:#fff;border:none;padding:12px 24px;border-radius:12px;font-weight:700;font-size:14px;" onclick="doLogout()">Jetzt abmelden</button></div></div>`:"";
@@ -7169,6 +7297,7 @@ function routeSettings(){
           <div class="field"><div class="toggle-row"><div><div class="tc-name" style="font-weight:800;font-size:14px;">Vortest-Button</div><div class="tc-sub" style="font-size:12.5px;color:var(--muted);margin-top:2px;">Link zum Boost-Buchungskalender in der Schülerakte</div></div><button class="check-toggle${DB.sichtbarkeit.vortest?' on':''}" data-vis="vortest"></button></div></div>
           <div class="field"><div class="toggle-row"><div><div class="tc-name" style="font-weight:800;font-size:14px;">Fahrcheck</div><div class="tc-sub" style="font-size:12.5px;color:var(--muted);margin-top:2px;">FC-Auswahl beim Bearbeiten einer Fahrstunde</div></div><button class="check-toggle${DB.sichtbarkeit.fahrcheck?' on':''}" data-vis="fahrcheck"></button></div></div>
           <div class="field"><div class="toggle-row"><div><div class="tc-name" style="font-weight:800;font-size:14px;">Simulator-Empfehlung</div><div class="tc-sub" style="font-size:12.5px;color:var(--muted);margin-top:2px;">Karte in der Schülerakte</div></div><button class="check-toggle${DB.sichtbarkeit.simulator?' on':''}" data-vis="simulator"></button></div></div>
+          <div class="field"><div class="toggle-row"><div><div class="tc-name" style="font-weight:800;font-size:14px;">Videoakademie-Empfehlung</div><div class="tc-sub" style="font-size:12.5px;color:var(--muted);margin-top:2px;">Karte in der Schülerakte</div></div><button class="check-toggle${DB.sichtbarkeit.akademie?' on':''}" data-vis="akademie"></button></div></div>
         </div>
         <div class="res-block" style="animation:none;"><h4>🌤 Wetter-Widget</h4>
           <p>Kostenlosen API-Key auf <b>openweathermap.org</b> holen (Registrierung reicht), hier eintragen — dann erscheint das aktuelle Wetter oben im Dashboard.</p>
@@ -7326,6 +7455,7 @@ function routeSettings(){
       window.location.reload();
     }catch(e){ toast("Fehler: "+(e.message||"unbekannt")); }
   });
+  if(isSuperAdmin())renderAkademieVermittlungCfg();
 }
 /* ===================== ERWEITERUNG: Dashboard · Prüfungen · Statistik · Archiv ===================== */
 const READY_MIN=90;
@@ -7335,14 +7465,22 @@ let _examChoice=null,_examPr=null,_examFaults=[],_examEingriff=false;
 const PRUEFER_SEED=null;
 /* Zentrales Hinzufügen-Menü */
 function openAddSheet(){
+  const buero=_fsKalenderModus==="buero";
   openSheet(`<div class="sheet-h">Hinzufügen</div>
     <div class="add-grid">
+      ${buero?`
+      <button class="add-opt" data-add="vortest"><span class="ao-ic" style="color:${CAL_ARTEN.vortest.col}">🎯</span><span class="ao-l">Vortest</span></button>
+      <button class="add-opt" data-add="simulator"><span class="ao-ic" style="color:${CAL_ARTEN.simulator.col}">🕹️</span><span class="ao-l">Simulator</span></button>
+      <button class="add-opt" data-add="beratung"><span class="ao-ic" style="color:${CAL_ARTEN.beratung.col}">💬</span><span class="ao-l">Beratung</span></button>
+      <button class="add-opt" data-add="ersthilfe"><span class="ao-ic" style="color:${CAL_ARTEN.ersthilfe.col}">🚑</span><span class="ao-l">Erste Hilfe</span></button>
+      `:`
       <button class="add-opt" data-add="fahrstunde"><span class="ao-ic" style="color:${CAL_ARTEN.fahrstunde.col}">${ICN.cal||"+"}</span><span class="ao-l">Fahrstunde</span></button>
       <button class="add-opt" data-add="sonder"><span class="ao-ic" style="color:${CAL_ARTEN.sonder.col}">${ICN.cal||"+"}</span><span class="ao-l">Sonderfahrt</span></button>
       <button class="add-opt" data-add="schalt"><span class="ao-ic" style="color:${CAL_ARTEN.schalt.col}">${ICN.cal||"+"}</span><span class="ao-l">Schaltkompetenz</span></button>
       <button class="add-opt" data-add="pruefung"><span class="ao-ic" style="color:${CAL_ARTEN.pruefung.col}">${ICN.trophy||"+"}</span><span class="ao-l">Prüfung</span></button>
       <button class="add-opt" data-add="theorie"><span class="ao-ic" style="color:${CAL_ARTEN.theorie.col}">${ICN.note||"+"}</span><span class="ao-l">Theorie</span></button>
       <button class="add-opt" data-add="block"><span class="ao-ic" style="color:#88939a">${ICN.lock||"✕"}</span><span class="ao-l">Zeit blockieren</span></button>
+      `}
     </div>`);
   document.querySelectorAll(".add-opt").forEach(b=>b.addEventListener("click",()=>{ const t=b.dataset.add; closeSheet();
     if(t==="pruefung"){ routePruefungen(); setTimeout(()=>{ const a=$("#addTermin"); if(a)a.click(); },120); }
@@ -8310,11 +8448,12 @@ function dayUE(iso,doneOnly){
 }
 function ueOf(art,von,bis,tatsaechlicheDauer){
   if(art==="block")return 0;
+  if(FS_BUERO_ARTEN.includes(art))return 0; // Vortest/Simulator/Beratung/Erste Hilfe sind keine bezahlten Fahrstunden-UE
   if(art==="schalt")return 0.33;
   if(tatsaechlicheDauer){ return Math.round((tatsaechlicheDauer/90)*2*100)/100; }
   if(art==="theorie"){ if(von&&bis){ const dur=hm2min(bis)-hm2min(von); return Math.round((dur/90)*2*100)/100; } return 4; }
   return 2;
-} // Fahrstunde/Prüfung/Nacht/Sonder=2 (oder tatsächliche Dauer, falls eingetragen), Theorie=2 pro 90-Min-Block, Schalt=0,33, Block=0
+} // Fahrstunde/Prüfung/Nacht/Sonder=2 (oder tatsächliche Dauer, falls eingetragen), Theorie=2 pro 90-Min-Block, Schalt=0,33, Block/Büro-Kategorien=0
 function isAbsolved(iso,bisHM){ const today=todayISO(); if(iso<today)return true; if(iso>today)return false; const now=new Date(); return hm2min(bisHM)<=now.getHours()*60+now.getMinutes(); }
 
 /* ===== Verdienst-Engine ===== */
@@ -8908,14 +9047,51 @@ function simCard(s){
     return `<div class="sim-card on"><div class="sim-body"><div class="sim-name">Simulator empfohlen</div><div class="sim-sub">am ${isoDE(d)}</div></div>
       <button class="sim-x" id="simOff" aria-label="Empfehlung entfernen">✕</button></div>`;
   }
-  return `<button class="sim-card" id="simOn"><div class="sim-body"><div class="sim-name">Simulator empfehlen</div><div class="sim-sub">Tippen trägt das heutige Datum ein</div></div>
+  return `<button class="sim-card" id="simOn"><div class="sim-body"><div class="sim-name">Simulator empfehlen</div><div class="sim-sub">Tippen trägt das heutige Datum ein · wird dem Büro gemeldet</div></div>
     <span class="sim-plus">+</span></button>`;
 }
 function bindSim(s,rerender){
-  const on=$("#simOn"); if(on)on.addEventListener("click",()=>{ s.simEmpf=todayISO(); save(); toast("Simulator empfohlen"); rerender(); });
+  const on=$("#simOn"); if(on)on.addEventListener("click",()=>{
+    if(!confirm("Simulator für "+s.name+" empfehlen? Das Büro sieht diese Empfehlung sofort.")) return;
+    s.simEmpf=todayISO(); save(); toast("Simulator empfohlen ✓"); rerender();
+    empfehlungAnlegen(s,"simulator");
+  });
   const off=$("#simOff"); if(off)off.addEventListener("click",()=>{ delete s.simEmpf; save(); rerender(); });
 }
-function renderPlanActions(s){ const pa=$("#planActions"); if(!pa)return; pa.innerHTML=simCard(s)+examReadyCard(s); bindSim(s,()=>routePlan(s.id)); bindExamReady(s,()=>routePlan(s.id)); }
+// Videoakademie-Pendant zu simCard/bindSim (neues Empfehlungs-Feature)
+function akademieCard(s){
+  if(!sichtbar("akademie"))return "";
+  const d=s.akademieEmpf;
+  if(d){
+    return `<div class="sim-card on"><div class="sim-body"><div class="sim-name">Videoakademie empfohlen</div><div class="sim-sub">am ${isoDE(d)}</div></div>
+      <button class="sim-x" id="akadOff" aria-label="Empfehlung entfernen">✕</button></div>`;
+  }
+  return `<button class="sim-card" id="akadOn"><div class="sim-body"><div class="sim-name">Videoakademie empfehlen</div><div class="sim-sub">Tippen trägt das heutige Datum ein · wird dem Büro gemeldet</div></div>
+    <span class="sim-plus">+</span></button>`;
+}
+function bindAkademie(s,rerender){
+  const on=$("#akadOn"); if(on)on.addEventListener("click",()=>{
+    if(!confirm("Videoakademie für "+s.name+" empfehlen? Das Büro sieht diese Empfehlung sofort.")) return;
+    s.akademieEmpf=todayISO(); save(); toast("Videoakademie empfohlen ✓"); rerender();
+    empfehlungAnlegen(s,"akademie");
+  });
+  const off=$("#akadOff"); if(off)off.addEventListener("click",()=>{ delete s.akademieEmpf; save(); rerender(); });
+}
+// Meldet eine Empfehlung dem Büro (fahrschulweit sichtbar) - rein additiv, bricht bei Fehler nicht ab
+async function empfehlungAnlegen(s,typ){
+  if(!_authUser||!_authProfile||!_authProfile.fahrschule_id)return;
+  try{
+    const supa=getSupa();
+    const{error}=await supa.from("fahrschule_empfehlungen").insert({
+      fahrschule_id:_authProfile.fahrschule_id,
+      schueler_id:s.id, schueler_name:s.name,
+      fahrlehrer_id:_authUser.id, fahrlehrer_name:_authProfile.name||_authUser.email||"Fahrlehrer",
+      typ
+    });
+    if(error)console.error("Empfehlung konnte nicht gemeldet werden:",error.message);
+  }catch(e){console.error(e);}
+}
+function renderPlanActions(s){ const pa=$("#planActions"); if(!pa)return; pa.innerHTML=simCard(s)+akademieCard(s)+examReadyCard(s); bindSim(s,()=>routePlan(s.id)); bindAkademie(s,()=>routePlan(s.id)); bindExamReady(s,()=>routePlan(s.id)); }
 
 /* ---------- Prüfung eintragen ---------- */
 function openExamPlanSheet(s){
