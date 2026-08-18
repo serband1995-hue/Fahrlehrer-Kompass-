@@ -4853,7 +4853,7 @@ window.addEventListener("load", () => {
 const STORE_KEY="serband-app-v1";
 /* Build-Version: bei jeder Auslieferung hier das Datum aktualisieren.
    Wird in den Einstellungen angezeigt + für den Update-Hinweis genutzt. */
-const APP_VERSION="2026.08.23";
+const APP_VERSION="2026.08.24";
 // Nutzungsbedingungen & Haftungsausschluss (Bereich: rechtliche Absicherung) - Version hochzählen
 // und alle Nutzer müssen erneut zustimmen, sobald sich der Text inhaltlich ändert.
 const AGB_VERSION="1.0";
@@ -5030,8 +5030,13 @@ function _syncSchuelerBridge(){
         await supa.from("profiles").update({auslastung_pct:cap.auslastung, aktive_schueler_anzahl:cap.fahrend}).eq("id",_authUser.id);
       }catch(e2){}
       // lokal gelöschte Schüler auch im geteilten Bereich als gelöscht markieren (Soft-Delete)
+      // Sicherheitssperre: bei leerem lokalem Schüler-Bestand wird nichts gelöscht (siehe Termine-Brücke).
       const lokaleIds=DB.students.map(s=>s.id);
       const {data:meineRemote}=await supa.from("schueler").select("id").eq("fahrlehrer_id",_authUser.id).neq("status","geloescht");
+      if(lokaleIds.length===0&&(meineRemote||[]).length>0){
+        console.warn("[Kompass] Schüler-Sync: lokaler Bestand leer, Server hat "+meineRemote.length+" Schüler - Löschung sicherheitshalber übersprungen.");
+        return;
+      }
       const zuLoeschen=(meineRemote||[]).map(r=>r.id).filter(id=>!lokaleIds.includes(id));
       if(zuLoeschen.length) await supa.from("schueler").update({status:"geloescht"}).in("id",zuLoeschen);
     }catch(e){ console.warn("[Kompass] Fahrschul-Sync fehlgeschlagen:",e.message); }
@@ -5062,8 +5067,16 @@ function _syncTermineBridge(){
       for(let i=0;i<rows.length;i+=200){
         await supa.from("kalender_termine").upsert(rows.slice(i,i+200),{onConflict:"id"});
       }
+      // Sicherheitssperre gegen versehentliche Massenlöschung: wenn der lokale Kalender leer
+      // ist, obwohl der Server noch Termine hat, wird NICHTS gelöscht - ein leerer lokaler
+      // Zustand ist viel wahrscheinlicher ein Lade-/Verbindungsfehler als eine echte Absicht,
+      // alles zu löschen. Genau das hat am 18.08.26 200 Fahrstunden fälschlich gelöscht.
       const lokaleIds=DB.lessons.map(l=>l.id);
       const {data:meineRemote}=await supa.from("kalender_termine").select("id").eq("fahrlehrer_id",_authUser.id).eq("geloescht",false);
+      if(lokaleIds.length===0&&(meineRemote||[]).length>0){
+        console.warn("[Kompass] Termine-Sync: lokaler Kalender leer, Server hat "+meineRemote.length+" Termine - Löschung sicherheitshalber übersprungen.");
+        return;
+      }
       const zuLoeschen=(meineRemote||[]).map(r=>r.id).filter(id=>!lokaleIds.includes(id));
       if(zuLoeschen.length) await supa.from("kalender_termine").update({geloescht:true,aktualisiert_am:nowIso}).in("id",zuLoeschen);
     }catch(e){ console.warn("[Kompass] Kalender-Sync fehlgeschlagen:",e.message); }
@@ -5092,6 +5105,10 @@ function _syncPruefungenBridge(){
       }
       const lokaleIds=DB.exams.map(ex=>ex.id);
       const {data:meineRemote}=await supa.from("kalender_pruefungen").select("id").eq("fahrlehrer_id",_authUser.id).eq("geloescht",false);
+      if(lokaleIds.length===0&&(meineRemote||[]).length>0){
+        console.warn("[Kompass] Prüfungen-Sync: lokaler Bestand leer, Server hat "+meineRemote.length+" Prüfungen - Löschung sicherheitshalber übersprungen.");
+        return;
+      }
       const zuLoeschen=(meineRemote||[]).map(r=>r.id).filter(id=>!lokaleIds.includes(id));
       if(zuLoeschen.length) await supa.from("kalender_pruefungen").update({geloescht:true,aktualisiert_am:nowIso}).in("id",zuLoeschen);
     }catch(e){ console.warn("[Kompass] Prüfungen-Sync fehlgeschlagen:",e.message); }
