@@ -4761,7 +4761,7 @@ window.addEventListener("load", () => {
 const STORE_KEY="serband-app-v1";
 /* Build-Version: bei jeder Auslieferung hier das Datum aktualisieren.
    Wird in den Einstellungen angezeigt + für den Update-Hinweis genutzt. */
-const APP_VERSION="2026.08.19";
+const APP_VERSION="2026.08.20";
 const RESTORE_STAMP="2026-06-23T16:54:19.419Z";
 const RESTORE_DATA=null;
 function load(){try{return JSON.parse(localStorage.getItem(STORE_KEY))||{students:[]};}catch(e){return {students:[]};}}
@@ -5996,9 +5996,24 @@ function examPrognose(s){
     ${passRate!==null?`<p style="font-size:11px;color:var(--faint);margin-top:4px;">Zum Vergleich: ${passRate}% deiner bisherigen Prüfungen insgesamt bestanden. Grober Anhaltspunkt aus dem Ausbildungsstand, keine echte Vorhersage.</p>`:''}
   </div>`;
 }
+// Persistenter Auf-/Zuklapp-Zustand des Ausbildungsplans pro Schüler (Bugfix: Fahrstunden/
+// Sonderfahrten waren fest auf "offen" verdrahtet und sind bei jedem Rerender wieder
+// aufgesprungen). Beim ersten Öffnen eines Schülers: alles zu, außer der ersten Stufe,
+// die noch nicht komplett grün ist - so sieht man sofort, wo man steht.
+let _planAccOpen={};
+function _planAccInit(s){
+  if(_planAccOpen[s.id])return;
+  const pl=s.plan;
+  const state={fahrstunden:false,sonderfahrten:false};
+  const ersteOffene=stufenFor(s).find(st=>st.items.filter(it=>pl.ampeln[it.id]==="gruen").length<st.items.length);
+  if(ersteOffene)state[ersteOffene.key]=true;
+  _planAccOpen[s.id]=state;
+}
 function routePlan(id){
   const s=DB.students.find(x=>x.id===id);if(!s)return routeHome();
   ensure(s);
+  _planAccInit(s);
+  const _pa=_planAccOpen[s.id];
   $("#tbTitle").textContent="Ausbildungsplan";setFab(false);view.scrollTop=0;
   const pl=s.plan;const pct=planProgress(pl,s.umschreiber,evalSkillsFor(s));
   const p=s.profil?PROFILE[s.profil]:null;const col=p?p.color:"var(--orange)";
@@ -6029,14 +6044,14 @@ function routePlan(id){
     </div>`:''}
     <div class="plan-actions" id="planActions"></div>
     <div class="plan-sec">
-      <div class="acc open" data-acc="fahrstunden">
+      <div class="acc${_pa.fahrstunden?' open':''}" data-acc="fahrstunden">
         <button class="acc-h"><span class="nr">·</span><span class="ti">Fahrstunden</span><span class="su">Fläche = heute · <span class="ic ic-gold" style="font-size:11px;">${ICN.cal}</span> = anderes Datum · FC = Fahrchecks</span><span class="chev">${ICN.chev}</span></button>
         <div class="acc-body"><div class="acc-inner">
           <div class="std-grid" id="stdGrid"></div>
           <div class="legende">Antippen trägt das heutige Datum ein, nochmal antippen löscht es.</div>
         </div></div>
       </div>
-      <div class="acc open" data-acc="sonderfahrten" style="margin-top:10px;">
+      <div class="acc${_pa.sonderfahrten?' open':''}" data-acc="sonderfahrten" style="margin-top:10px;">
         <button class="acc-h"><span class="nr">·</span><span class="ti">Sonderfahrten</span><span class="chev">${ICN.chev}</span></button>
         <div class="acc-body"><div class="acc-inner">
           <div class="sonder">${s.umschreiber?`<div style="padding:12px 14px;background:var(--surface);border:1px dashed var(--line);border-radius:12px;font-size:13px;color:var(--muted);font-weight:700;">✓ Umschreiber – Sonderfahrten nicht erforderlich</div>`:''}
@@ -6053,7 +6068,7 @@ function routePlan(id){
       <div id="stufenWrap"></div>
     </div>
   </div>`;
-  view.querySelectorAll('[data-acc="fahrstunden"] > .acc-h, [data-acc="sonderfahrten"] > .acc-h').forEach(h=>h.addEventListener("click",()=>{ h.closest(".acc").classList.toggle("open"); }));
+  view.querySelectorAll('[data-acc="fahrstunden"] > .acc-h, [data-acc="sonderfahrten"] > .acc-h').forEach(h=>h.addEventListener("click",()=>{ const el=h.closest(".acc"); const isOpen=el.classList.toggle("open"); _pa[el.dataset.acc]=isOpen; }));
   $("#backBtn").addEventListener("click",()=>routeDetail(id));
   $("#theoToggle").addEventListener("click",()=>{
     pl.theorie=!pl.theorie;$("#theoToggle").classList.toggle("on",pl.theorie); if(pl.theorie){ if(!s.theoryPassed)s.theoryPassed=new Date().toISOString(); logHist(s,"theorie","Theorieprüfung bestanden"); if(stand(s)>=90&&!s.ready&&!s.passed){ s.ready=s.theoryPassed; toast("Theorie bestanden – auf die Praxis-Warteliste gesetzt"); } else if(stand(s)<90&&!s.ready&&!s.passed){ toast("Theorie bestanden – erst ab 90 % kommt er auf die Warteliste"); } delete s.theorieWait; } else { delete s.theoryPassed; } save();refreshPlanRing(s);renderPlanActions(s);routePlan(id);});
@@ -6371,6 +6386,7 @@ function routePlanVorlageEdit(planId){
 
 function buildStufen(s){
   const pl=s.plan,wrap=$("#stufenWrap");
+  _planAccInit(s); const _pa=_planAccOpen[s.id];
   wrap.innerHTML=stufenFor(s).map((st,si)=>{
     const total=st.items.length;
     const done=st.items.filter(it=>pl.ampeln[it.id]==="gruen").length;
@@ -6393,7 +6409,7 @@ function buildStufen(s){
           ${ampelHtml}
         </div>${panel}
       </div>`;}).join("");
-    return `<div class="acc" data-acc="${st.key}">
+    return `<div class="acc${_pa[st.key]?' open':''}" data-acc="${st.key}">
       <button class="acc-h"><span class="nr">${st.nr}</span><span class="ti">${esc(st.titel)}</span>
         <span class="done${done===total?' complete':''}" data-done="${st.key}">${done}/${total}</span><span class="chev">${ICN.chev}</span></button>
       <div class="acc-body"><div class="acc-inner">
@@ -6403,7 +6419,7 @@ function buildStufen(s){
       </div></div></div>`;
   }).join("");
   wrap.querySelectorAll(".acc-h").forEach(h=>h.addEventListener("click",()=>{
-    h.closest(".acc").classList.toggle("open");}));
+    const el=h.closest(".acc"); const isOpen=el.classList.toggle("open"); _pa[el.dataset.acc]=isOpen;}));
   wrap.querySelectorAll(".iBtn").forEach(b=>b.addEventListener("click",e=>{
     e.stopPropagation();
     const panel=wrap.querySelector(`[data-panel="${b.dataset.info}"]`);
@@ -6426,7 +6442,20 @@ function buildStufen(s){
       });
       const st=stufenFor(s).find(t=>t.items.some(i=>i.id===sid));
       const d=wrap.querySelector(`[data-done="${st.key}"]`);
-      if(d){ const nDone=st.items.filter(i=>pl.ampeln[i.id]==="gruen").length; d.textContent=nDone+"/"+st.items.length; d.classList.toggle("complete",nDone===st.items.length); }
+      let nDone=0;
+      if(d){ nDone=st.items.filter(i=>pl.ampeln[i.id]==="gruen").length; d.textContent=nDone+"/"+st.items.length; d.classList.toggle("complete",nDone===st.items.length); }
+      // Stufe komplett grün und war die automatisch geöffnete -> schließen, nächste unfertige öffnen
+      if(nDone===st.items.length&&_pa[st.key]){
+        _pa[st.key]=false;
+        const alleStufen=stufenFor(s);
+        const naechste=alleStufen.find(t2=>t2.items.filter(i=>pl.ampeln[i.id]==="gruen").length<t2.items.length);
+        const curAcc=wrap.querySelector(`[data-acc="${st.key}"]`); if(curAcc)curAcc.classList.remove("open");
+        if(naechste){
+          _pa[naechste.key]=true;
+          const nextAcc=wrap.querySelector(`[data-acc="${naechste.key}"]`);
+          if(nextAcc){ nextAcc.classList.add("open"); setTimeout(()=>nextAcc.scrollIntoView({behavior:"smooth",block:"center"}),350); }
+        }
+      }
       save();refreshPlanRing(s);
     }));});
   wrap.querySelectorAll("[data-note]").forEach(t=>t.addEventListener("input",()=>{
