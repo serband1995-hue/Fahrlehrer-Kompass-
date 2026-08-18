@@ -2823,6 +2823,15 @@ async function _continueLoginFlow(prof) {
   setInterval(() => pullTermineZuweisungen(), 60000);
   // Sofort einmal pushen (aktuellen Stand sichern)
   pushToCloud();
+  // Backfill in die Fahrschul-Tabellen (kalender_termine, schueler, kalender_pruefungen):
+  // Die Sync-Brücken liefen bisher nur bei NEUEN Änderungen über save(), nie rückwirkend für
+  // bereits vorhandene Daten. Dadurch konnte ein voller persönlicher Kalender in der
+  // Fahrschul-Ansicht komplett leer erscheinen, wenn er länger nicht neu angefasst wurde.
+  if (prof && prof.fahrschule_id) {
+    _syncSchuelerBridge();
+    _syncTermineBridge();
+    _syncPruefungenBridge();
+  }
 }
 // Zeigt die Nutzungsbedingungen als blockierendes Overlay - erst nach Scrollen ans Ende UND
 // Checkbox wird "Bestätigen" aktiv. Erst danach geht der normale Login-Ablauf weiter.
@@ -3420,9 +3429,16 @@ function routeFahrschuleDashboard(){
 async function renderFsEmpfehlungenListe(){
   const el=document.getElementById("fsEmpfList");if(!el||!_fsAgg)return;
   const supa=getSupa();
-  const{data,error}=await supa.from("fahrschule_empfehlungen").select("*").eq("fahrschule_id",_fsAgg.fahrschuleId).neq("status","storniert").order("erstellt_am",{ascending:false}).limit(40);
+  let data,error;
+  try{
+    ({data,error}=await supa.from("fahrschule_empfehlungen").select("*").eq("fahrschule_id",_fsAgg.fahrschuleId).neq("status","storniert").order("erstellt_am",{ascending:false}).limit(40));
+  }catch(e){
+    const elErr=document.getElementById("fsEmpfList");
+    if(elErr)elErr.innerHTML='<p class="muted-p" style="font-size:12.5px;">Konnte nicht geladen werden. <button class="btn btn-ghost" style="padding:4px 10px;margin-left:6px;" onclick="renderFsEmpfehlungenListe()">Erneut versuchen</button></p>';
+    return;
+  }
   const el2=document.getElementById("fsEmpfList");if(!el2)return;
-  if(error){el2.innerHTML='<p class="muted-p" style="font-size:12.5px;">Konnte nicht geladen werden.</p>';return;}
+  if(error){el2.innerHTML='<p class="muted-p" style="font-size:12.5px;">Konnte nicht geladen werden. <button class="btn btn-ghost" style="padding:4px 10px;margin-left:6px;" onclick="renderFsEmpfehlungenListe()">Erneut versuchen</button></p>';return;}
   if(!data||!data.length){el2.innerHTML='<p class="muted-p" style="font-size:12.5px;">Noch keine Empfehlungen.</p>';return;}
   const STATUS_LABEL={empfohlen:"Empfohlen",zugangsdaten_ausgegeben:"Zugangsdaten ausgegeben",bezahlt:"Bezahlt ✓"};
   el2.innerHTML=data.map(e=>`<div class="fs-card" data-empf="${e.id}">
@@ -4837,7 +4853,7 @@ window.addEventListener("load", () => {
 const STORE_KEY="serband-app-v1";
 /* Build-Version: bei jeder Auslieferung hier das Datum aktualisieren.
    Wird in den Einstellungen angezeigt + für den Update-Hinweis genutzt. */
-const APP_VERSION="2026.08.21";
+const APP_VERSION="2026.08.23";
 // Nutzungsbedingungen & Haftungsausschluss (Bereich: rechtliche Absicherung) - Version hochzählen
 // und alle Nutzer müssen erneut zustimmen, sobald sich der Text inhaltlich ändert.
 const AGB_VERSION="1.0";
@@ -6090,20 +6106,22 @@ function uePrognoseKachel(s){
 async function _fillUEProgFahrschule(bisher){
   const el=document.getElementById("ueProgFahrschule");if(!el)return;
   if(!_authUser||!_authProfile||!_authProfile.fahrschule_id)return;
-  const supa=getSupa();
-  const{data:examsData,error:e1}=await supa.from("kalender_pruefungen").select("schueler_id,datum").eq("fahrschule_id",_authProfile.fahrschule_id).eq("result","pass").not("schueler_id","is",null);
-  if(e1||!examsData||!examsData.length)return;
-  const{data:termineData,error:e2}=await supa.from("kalender_termine").select("schueler_id,datum,von,bis,art").eq("fahrschule_id",_authProfile.fahrschule_id).in("art",["fahrstunde","sonder"]);
-  if(e2||!termineData)return;
-  const vals=[];
-  examsData.forEach(ex=>{
-    const sum=termineData.filter(t=>t.schueler_id===ex.schueler_id&&t.datum<=ex.datum).reduce((a,t)=>a+ueOf(t.art,t.von,t.bis,null),0);
-    if(sum>0)vals.push(sum);
-  });
-  if(!vals.length)return;
-  const avg=vals.reduce((a,b)=>a+b,0)/vals.length;
-  const el2=document.getElementById("ueProgFahrschule");if(!el2)return; // Ansicht evtl. inzwischen verlassen
-  el2.innerHTML=`<div style="display:flex;justify-content:space-between;align-items:center;margin:5px 0 0;padding-top:5px;border-top:1px solid var(--line-soft);font-size:13px;"><span style="color:var(--muted);">Ø fahrschulweit bis bestanden</span><b>${Math.round(avg)} UE</b></div>`;
+  try{
+    const supa=getSupa();
+    const{data:examsData,error:e1}=await supa.from("kalender_pruefungen").select("schueler_id,datum").eq("fahrschule_id",_authProfile.fahrschule_id).eq("result","pass").not("schueler_id","is",null);
+    if(e1||!examsData||!examsData.length)return;
+    const{data:termineData,error:e2}=await supa.from("kalender_termine").select("schueler_id,datum,von,bis,art").eq("fahrschule_id",_authProfile.fahrschule_id).in("art",["fahrstunde","sonder"]);
+    if(e2||!termineData)return;
+    const vals=[];
+    examsData.forEach(ex=>{
+      const sum=termineData.filter(t=>t.schueler_id===ex.schueler_id&&t.datum<=ex.datum).reduce((a,t)=>a+ueOf(t.art,t.von,t.bis,null),0);
+      if(sum>0)vals.push(sum);
+    });
+    if(!vals.length)return;
+    const avg=vals.reduce((a,b)=>a+b,0)/vals.length;
+    const el2=document.getElementById("ueProgFahrschule");if(!el2)return; // Ansicht evtl. inzwischen verlassen
+    el2.innerHTML=`<div style="display:flex;justify-content:space-between;align-items:center;margin:5px 0 0;padding-top:5px;border-top:1px solid var(--line-soft);font-size:13px;"><span style="color:var(--muted);">Ø fahrschulweit bis bestanden</span><b>${Math.round(avg)} UE</b></div>`;
+  }catch(e){ /* stiller Fallback: Zeile bleibt einfach leer, kein Absturz der Seite */ }
 }
 // Grobe Einschätzung aus Ausbildungsstand + Theorie — bewusst als Anhaltspunkt markiert, keine echte Vorhersage
 function examPrognose(s){
@@ -7119,9 +7137,16 @@ async function renderSharedBoardList(){
     return;
   }
   const supa=getSupa();
-  const {data,error}=await supa.from("fahrschule_tafelbilder").select("id,name,ersteller_name,erstellt_am,daten").eq("fahrschule_id",_authProfile.fahrschule_id).order("erstellt_am",{ascending:false}).limit(60);
+  let data,error;
+  try{
+    ({data,error}=await supa.from("fahrschule_tafelbilder").select("id,name,ersteller_name,erstellt_am,daten").eq("fahrschule_id",_authProfile.fahrschule_id).order("erstellt_am",{ascending:false}).limit(60));
+  }catch(e){
+    if(!DRAW.sharedView)return;
+    g.innerHTML=`<div class="tb-empty">Konnte nicht geladen werden. <button class="btn btn-ghost" style="padding:4px 10px;margin-left:6px;" onclick="renderSharedBoardList()">Erneut versuchen</button></div>`;
+    return;
+  }
   if(!DRAW.sharedView)return; // Nutzer hat inzwischen die Ansicht verlassen
-  if(error){g.innerHTML=`<div class="tb-empty">Konnte nicht geladen werden.</div>`;return;}
+  if(error){g.innerHTML=`<div class="tb-empty">Konnte nicht geladen werden. <button class="btn btn-ghost" style="padding:4px 10px;margin-left:6px;" onclick="renderSharedBoardList()">Erneut versuchen</button></div>`;return;}
   _sharedBoardsCache=data||[];
   g.innerHTML=`<button class="btn btn-primary" style="width:100%;margin-bottom:10px;" id="sharedPush">Aktuelle Tafel teilen</button>`+
     (_sharedBoardsCache.length?_sharedBoardsCache.map(b=>`<div class="tb-load-row"><button class="tb-load" data-sload="${b.id}"><span class="tb-name">${esc(b.name)}</span><span class="tb-date">von ${esc(b.ersteller_name||"?")}</span></button>${(b.erstellt_von===_authUser.id||isSuperAdmin())?`<button class="tb-del ic ic-rot" data-sdel="${b.id}" aria-label="Löschen">${ICN.trash}</button>`:''}</div>`).join(""):`<div class="tb-empty">Noch keine geteilten Tafelbilder in deiner Fahrschule.</div>`);
@@ -7352,9 +7377,16 @@ async function renderAkademieVermittlungCfg(){
   const el=document.getElementById("akadVermittlungCfg");if(!el)return;
   if(!_authProfile||!_authProfile.fahrschule_id){el.innerHTML='<p class="muted-p" style="font-size:12.5px;">Nicht mit einer Fahrschule verbunden.</p>';return;}
   const supa=getSupa();
-  const{data,error}=await supa.from("fahrschulen").select("konfiguration").eq("id",_authProfile.fahrschule_id).single();
+  let data,error;
+  try{
+    ({data,error}=await supa.from("fahrschulen").select("konfiguration").eq("id",_authProfile.fahrschule_id).single());
+  }catch(e){
+    const elErr=document.getElementById("akadVermittlungCfg");
+    if(elErr)elErr.innerHTML='<p class="muted-p" style="font-size:12.5px;">Konnte nicht geladen werden. <button class="btn btn-ghost" style="padding:4px 10px;margin-left:6px;" onclick="renderAkademieVermittlungCfg()">Erneut versuchen</button></p>';
+    return;
+  }
   const el2=document.getElementById("akadVermittlungCfg");if(!el2)return;
-  if(error){el2.innerHTML='<p class="muted-p" style="font-size:12.5px;">Konnte nicht geladen werden.</p>';return;}
+  if(error){el2.innerHTML='<p class="muted-p" style="font-size:12.5px;">Konnte nicht geladen werden. <button class="btn btn-ghost" style="padding:4px 10px;margin-left:6px;" onclick="renderAkademieVermittlungCfg()">Erneut versuchen</button></p>';return;}
   const cfg=(data&&data.konfiguration&&data.konfiguration.akademieVermittlung)||{};
   const v=k=>cfg[k]!=null?cfg[k]:"";
   const sp=(k1,k2)=>((cfg[k1]||{})[k2]!=null?(cfg[k1]||{})[k2]:"");
