@@ -4853,7 +4853,7 @@ window.addEventListener("load", () => {
 const STORE_KEY="serband-app-v1";
 /* Build-Version: bei jeder Auslieferung hier das Datum aktualisieren.
    Wird in den Einstellungen angezeigt + für den Update-Hinweis genutzt. */
-const APP_VERSION="2026.08.24";
+const APP_VERSION="2026.08.25";
 // Nutzungsbedingungen & Haftungsausschluss (Bereich: rechtliche Absicherung) - Version hochzählen
 // und alle Nutzer müssen erneut zustimmen, sobald sich der Text inhaltlich ändert.
 const AGB_VERSION="1.0";
@@ -7738,19 +7738,51 @@ function openTheorieSheet(){
     closeSheet(); toast(lektion?("Lektion "+lektion+" eingetragen ✓ (2 Blöcke)"):"Theorie eingetragen ✓ (2 Blöcke)"); routeKalender();
   });
 }
-/* Zeit blockieren (kein Schüler, belegt Slot) */
+/* Zeit blockieren (kein Schüler, belegt Slot) - jetzt mit Urlaub/Sonstiges-Auswahl und
+   Datumsbereich, damit mehrere Tage auf einmal geblockt werden können (z.B. Urlaub). */
 function openBlockSheet(){
   ensureDB();
   const defDate=_calView==="tag"?_calDate:todayISO();
   openSheet(`<div class="sheet-h">Zeit blockieren</div>
-    <p class="muted-p" style="font-size:13px;margin:-4px 0 14px;">Blockiert einen Slot (Urlaub, Termin, Pause). Zählt nicht zum Verdienst.</p>
-    <div class="field"><label>Datum</label><input type="date" id="blDate" value="${defDate}"></div>
-    <div class="field"><label>Von</label><input type="time" id="blVon" value="10:00"></div>
-    <div class="field"><label>Bis</label><input type="time" id="blBis" value="11:30"></div>
-    <div class="field"><label>Grund (optional)</label><input type="text" id="blGrund" placeholder="z. B. Arzttermin" autocomplete="off"></div>
+    <p class="muted-p" style="font-size:13px;margin:-4px 0 14px;">Blockiert einen oder mehrere Tage. Zählt nicht als Fahrstunde.</p>
+    <div class="field"><label>Was?</label>
+      <div class="seg">
+        <button class="seg-i on" id="blTypUrlaub" data-blocktyp="urlaub">🏖️ Urlaub</button>
+        <button class="seg-i" id="blTypSonstiges" data-blocktyp="sonstiges">Sonstiges</button>
+      </div>
+    </div>
+    <div class="field"><label>Von (Datum)</label><input type="date" id="blVonDatum" value="${defDate}"></div>
+    <div class="field"><label>Bis (Datum)</label><input type="date" id="blBisDatum" value="${defDate}"></div>
+    <div class="field"><label>Grund (optional)</label><input type="text" id="blGrund" placeholder="z. B. Arzttermin, Fortbildung …" autocomplete="off"></div>
+    <p class="muted-p" style="font-size:12px;margin-top:-4px;" id="blHinweis">Urlaub wird automatisch mit ${DB.verdienst.feiertagsUrlaubsPauschale||0}€ pro Tag in den Verdienst eingerechnet (wie Feiertage).</p>
     <div class="btn-row"><button class="btn btn-ghost" id="blCancel" style="flex:0;padding:13px 18px;">Abbrechen</button><button class="btn btn-primary" id="blSave">Blockieren</button></div>`);
+  let typ="urlaub";
+  const btnUrlaub=$("#blTypUrlaub"),btnSonst=$("#blTypSonstiges"),hinweis=$("#blHinweis");
+  function setTyp(t){
+    typ=t;
+    btnUrlaub.classList.toggle("on",t==="urlaub");
+    btnSonst.classList.toggle("on",t==="sonstiges");
+    hinweis.style.display=t==="urlaub"?"":"none";
+  }
+  btnUrlaub.addEventListener("click",()=>setTyp("urlaub"));
+  btnSonst.addEventListener("click",()=>setTyp("sonstiges"));
   $("#blCancel").addEventListener("click",closeSheet);
-  $("#blSave").addEventListener("click",()=>{ const date=$("#blDate").value, von=$("#blVon").value, bis=$("#blBis").value; if(!date||!von){toast("Datum & Zeit wählen");return;} const l=addLesson({date,von,bis,art:"block",sid:null}); l.name=$("#blGrund").value.trim()||"Blockiert"; save(); closeSheet(); toast("Zeit blockiert ✓"); routeKalender(); });
+  $("#blSave").addEventListener("click",()=>{
+    const vonDatum=$("#blVonDatum").value, bisDatum=$("#blBisDatum").value||vonDatum;
+    if(!vonDatum){toast("Bitte ein Datum wählen");return;}
+    if(bisDatum<vonDatum){toast("Bis-Datum liegt vor dem Von-Datum");return;}
+    const grund=$("#blGrund").value.trim()||(typ==="urlaub"?"Urlaub":"Sonstiges");
+    let cur=vonDatum,guard=0,anzahl=0;
+    while(cur<=bisDatum&&guard++<370){
+      const l=addLesson({date:cur,von:"00:00",bis:"23:59",art:"block",sid:null});
+      l.name=grund; l.blockTyp=typ;
+      anzahl++;
+      cur=addDays(cur,1);
+    }
+    save(); closeSheet();
+    toast((typ==="urlaub"?"Urlaub":"Zeit")+" für "+anzahl+" Tag"+(anzahl===1?"":"e")+" blockiert ✓");
+    routeKalender();
+  });
 }
 
 /* Fahrstunde/Theorie/Nacht hinzufügen */
@@ -10282,6 +10314,11 @@ function feiertagsTageInRange(fromISO,toISO){
   }
   return n;
 }
+// Urlaubstage im Zeitraum (Bereich: "Zeit blockieren" mit Urlaub/Sonstiges) - zählt genau wie
+// die Feiertage, gleiche Pauschale, aber aus den lokal geblockten Urlaubstagen statt Feiertagsformel.
+function urlaubsTageInRange(fromISO,toISO){
+  return (DB.lessons||[]).filter(l=>l.art==="block"&&l.blockTyp==="urlaub"&&l.date>=fromISO&&l.date<=toISO).length;
+}
 function _verdienstModulHTMLContent(){
   const v=DB.verdienst;
   const _base=parseISO(todayISO());
@@ -10340,7 +10377,8 @@ function _verdienstModulHTMLContent(){
   const fcAusnahmenGesamt=mk.fcV1+mk.fcV2+mk.fcGeschenkt;
   const feiertagsPauschale=(v&&v.feiertagsUrlaubsPauschale)||0;
   const feiertageMonat=feiertagsTageInRange(moStart,moEnd);
-  const feiertagsBonusEuro=feiertageMonat*feiertagsPauschale;
+  const urlaubMonat=urlaubsTageInRange(moStart,moEnd);
+  const feiertagsBonusEuro=(feiertageMonat+urlaubMonat)*feiertagsPauschale;
   return `<div class="vd-card">
     <div class="vd-head">
       <button class="vd-nav" onclick="vdShiftMonth(-1)" aria-label="Vormonat">${ICN.back}</button>
@@ -10364,7 +10402,7 @@ function _verdienstModulHTMLContent(){
       <div class="thi-card future"><div class="thi-k"><span class="ic ic-gold" style="font-size:12px;">${ICN.cal}</span> Voraussichtlich</div><div class="thi-v">${_eurMasked(gesamtEuro)}</div><div class="thi-s">${gesamtUE} UE gesamt · ${Math.round(geplantUE)} noch offen</div></div>
     </div>
     ${offenUE>0.3?`<div class="vd-offen">⚠ ${fmtUE(offenUE)} UE gefahren, FC noch offen · <b>${_eurMasked(leistungAusUE(offenUE))}</b> stehen aus</div>`:''}
-    ${feiertagsPauschale>0&&feiertageMonat>0?`<div class="th-goal" style="margin-bottom:8px;background:rgba(207,154,62,.08);border-color:rgba(207,154,62,.3);"><div class="thg-lab">🎉 Feiertage diesen Monat</div><div class="thg-val">${feiertageMonat} Tag${feiertageMonat===1?'':'e'} · +${_eurMasked(feiertagsBonusEuro)} extra</div></div>`:''}
+    ${feiertagsPauschale>0&&(feiertageMonat+urlaubMonat)>0?`<div class="th-goal" style="margin-bottom:8px;background:rgba(207,154,62,.08);border-color:rgba(207,154,62,.3);"><div class="thg-lab">🎉 Feiertage &amp; Urlaub diesen Monat</div><div class="thg-val">${feiertageMonat?feiertageMonat+" Feiertag"+(feiertageMonat===1?'':'e'):''}${feiertageMonat&&urlaubMonat?' · ':''}${urlaubMonat?urlaubMonat+" Urlaubstag"+(urlaubMonat===1?'':'e'):''} · +${_eurMasked(feiertagsBonusEuro)} extra</div></div>`:''}
     <div class="th-goal" style="margin-bottom:8px;">
       <div class="thg-lab"><span class="ic ic-gold" style="font-size:11px;">${ICN.chart}</span> Terminierte Fahrstunden diesen Monat</div>
       <div class="thg-val">${terminiertUE} UE</div>
