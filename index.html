@@ -4886,7 +4886,7 @@ window.addEventListener("load", () => {
 const STORE_KEY="serband-app-v1";
 /* Build-Version: bei jeder Auslieferung hier das Datum aktualisieren.
    Wird in den Einstellungen angezeigt + für den Update-Hinweis genutzt. */
-const APP_VERSION="2026.08.29";
+const APP_VERSION="2026.08.30";
 // Nutzungsbedingungen & Haftungsausschluss (Bereich: rechtliche Absicherung) - Version hochzählen
 // und alle Nutzer müssen erneut zustimmen, sobald sich der Text inhaltlich ändert.
 const AGB_VERSION="1.0";
@@ -8991,7 +8991,7 @@ function ensureDB(){ let _ensureDirty=false; if(!Array.isArray(DB.exams))DB.exam
   if(!Array.isArray(DB.workCfg.pausen))DB.workCfg.pausen=[];
   if(!DB.workCfg.axis||typeof DB.workCfg.axis!=="object"){ DB.workCfg.axis={von:"08:00",bis:"24:00"}; }
   if(!Array.isArray(DB.workCfg.fahrzeuge)||!DB.workCfg.fahrzeuge.length){
-    DB.workCfg.fahrzeuge=[{id:"fz1",name:"Cupra 1",typ:"automatik"},{id:"fz2",name:"Cupra 2",typ:"automatik"},{id:"fz3",name:"ID4",typ:"automatik"},{id:"fz4",name:"Audi A1",typ:"schalt"}];
+    DB.workCfg.fahrzeuge=[{id:"fz1",name:"Audi Q5",typ:"automatik"},{id:"fz2",name:"Cupra 2",typ:"automatik"},{id:"fz3",name:"ID4",typ:"automatik"},{id:"fz4",name:"Audi A1",typ:"schalt"}];
     _ensureDirty=true;
   }
   if(!DB.verdienst||typeof DB.verdienst!=="object"){ DB.verdienst={
