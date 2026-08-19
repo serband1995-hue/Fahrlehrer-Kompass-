@@ -2244,24 +2244,50 @@ const FAHR_AKADEMIE_BASE_URL = "https://serband1995-hue.github.io/Fahr-Akademie-
    Link automatisch auf reine Stufen-Ebene zurück - kein Fehler, kein Absturz. */
 const FA_VIDEO_MAP = {
   a_30:      { stufe:"Grundstufe",         tag:"t01_rechts_vor_links" },
-  l_links:   { stufe:"Grundstufe",         tag:"t02_vorfahrt_gewaehren" },
+  l_links:   { stufe:"Grundstufe",         tag:"t02_vorfahrt_gewaehren",     contentDa:false },
   l_stop:    { stufe:"Grundstufe",         tag:"t03_stoppschilder" },
   a_doppel:  { stufe:"Aufbaustufe",        tag:"t04_doppelspurig_abbiegen" },
-  l_eng:     { stufe:"Aufbaustufe",        tag:"t05_engstellen" },
-  l_fahrrad: { stufe:"Aufbaustufe",        tag:"t06_anlieger_frei" },
-  l_kreisel: { stufe:"Leistungsstufe",     tag:"t07_kreisverkehr" },
-  s_ab_ein:  { stufe:"Sonderfahrten",      tag:"t08_autobahn_auffahren" },
+  l_eng:     { stufe:"Aufbaustufe",        tag:"t05_engstellen",             contentDa:false },
+  l_fahrrad: { stufe:"Aufbaustufe",        tag:"t06_anlieger_frei",          contentDa:false },
+  l_kreisel: { stufe:"Leistungsstufe",     tag:"t07_kreisverkehr",           contentDa:false },
+  s_ab_ein:  { stufe:"Sonderfahrten",      tag:"t08_autobahn_auffahren",     contentDa:false },
   s_ab_aus:  { stufe:"Sonderfahrten",      tag:"t09_autobahn_ausfahren" },
   gf_wenden: { stufe:"Grundfahraufgaben",  tag:"t10_wenden" },
   gf_laengs: { stufe:"Grundfahraufgaben",  tag:"t11_parken" },
   gf_quer:   { stufe:"Grundfahraufgaben",  tag:"t11_parken" },
-  t_profil:  { stufe:"Technik",            tag:"t12_technikwissen" }
+  t_profil:  { stufe:"Technik",            tag:"t12_technikwissen" },
+  // Neu seit Akademie-Update 13.08.26 (SCHNITTSTELLE-Doku, 15 statt 12 Kategorien):
+  a_wechsel: { stufe:"Aufbaustufe",        tag:"t13_fahrstreifenwechsel" },
+  l_bahn:    { stufe:"Grundstufe",         tag:"t14_bahnuebergang" },
+  l_einfahrt:{ stufe:"Grundstufe",         tag:"t15_verbotsschilder" }
 };
 function faLink(entry){
   if(typeof entry==="string") entry={stufe:entry}; // Rückwärtskompatibel, falls stufe als reiner String übergeben wird
   let url=FAHR_AKADEMIE_BASE_URL+"?stufe="+encodeURIComponent(entry.stufe);
   if(entry.tag) url+="&tag="+encodeURIComponent(entry.tag);
   return url;
+}
+// Löst beim Video-Klick zusätzlich eine Push-Benachrichtigung beim Schüler aus (Fahr-Akademie-
+// Brücke). Läuft im Hintergrund, blockiert nie das Öffnen des Links, schlägt still fehl, falls
+// Akademie mal nicht erreichbar ist oder der Schüler noch keinen Zugang hat.
+async function _pushAkademieVideo(s,entry){
+  if(!entry||!s||!s.telefon)return;
+  try{
+    const supa=getSupa();
+    const{data,error}=await supa.functions.invoke("trigger-akademie-push",{
+      body:{ telefon:s.telefon, tag_id:entry.tag||undefined, stufe:entry.stufe||undefined }
+    });
+    if(error)return; // Netzwerk-/Serverfehler: still, Video-Link hat trotzdem funktioniert
+    if(!data)return;
+    if(data.ok&&data.push_gesendet_an>0){
+      toast("📲 Push an "+(s.name||"Schüler").split(" ")[0]+" gesendet ✓");
+    }else if(data.error==="schueler_nicht_gefunden"){
+      toast("Hinweis: "+(s.name||"Schüler").split(" ")[0]+" hat noch keinen Akademie-Zugang");
+    }else if(data.error==="zugang_gesperrt"||data.error==="zugang_abgelaufen"){
+      toast("Hinweis: Akademie-Zugang von "+(s.name||"Schüler").split(" ")[0]+" ist aktuell gesperrt/abgelaufen");
+    }
+    // cooldown_aktiv, kein_push_abo, sonstige: bewusst kein Toast, um nicht zu nerven
+  }catch(e){ /* still - Video-Link ist das Wichtigere, das hat schon funktioniert */ }
 }
 const INFO = {
   g_sitz:[
@@ -3471,8 +3497,12 @@ async function openEmpfehlungBezahltSheet(id,empf){
   const preview=()=>{
     const betrag=+($("#empfBetrag").value||0);
     const istEigen=empf.fahrlehrer_id===(_authUser&&_authUser.id);
-    const split=(istEigen?cfg.splitEigen:cfg.splitKollege)||{};
     const box=$("#empfSplitPreview");
+    if(istEigen){
+      box.innerHTML=`<p class="muted-p" style="font-size:12px;">Direktverkauf durch dich selbst — keine Aufteilung, das Geld bleibt komplett bei dir.</p>`;
+      return;
+    }
+    const split=cfg.splitKollege||{};
     if(!betrag||split.akademie==null||split.fahrschule==null||split.fahrlehrer==null){
       box.innerHTML=`<p class="muted-p" style="font-size:12px;">Aufteilung noch nicht konfiguriert (Einstellungen → Fahrschule-Verwaltung → Akademie-Vermittlung) — Betrag wird trotzdem gespeichert.</p>`;
       return;
@@ -3486,10 +3516,12 @@ async function openEmpfehlungBezahltSheet(id,empf){
     const betrag=+($("#empfBetrag").value||0);
     if(!betrag){toast("Bitte einen Betrag eingeben");return;}
     const istEigen=empf.fahrlehrer_id===(_authUser&&_authUser.id);
-    const split=(istEigen?cfg.splitEigen:cfg.splitKollege)||{};
     let aufteilung=null;
-    if(split.akademie!=null&&split.fahrschule!=null&&split.fahrlehrer!=null){
-      aufteilung={akademie:Math.round(betrag*split.akademie/100),fahrschule:Math.round(betrag*split.fahrschule/100),fahrlehrer:Math.round(betrag*split.fahrlehrer/100)};
+    if(!istEigen){
+      const split=cfg.splitKollege||{};
+      if(split.akademie!=null&&split.fahrschule!=null&&split.fahrlehrer!=null){
+        aufteilung={akademie:Math.round(betrag*split.akademie/100),fahrschule:Math.round(betrag*split.fahrschule/100),fahrlehrer:Math.round(betrag*split.fahrlehrer/100)};
+      }
     }
     await supa.from("fahrschule_empfehlungen").update({status:"bezahlt",betrag,aufteilung,aktualisiert_am:new Date().toISOString()}).eq("id",id);
     closeSheet(); toast("Eingetragen ✓"); renderFsEmpfehlungenListe();
@@ -4854,7 +4886,7 @@ window.addEventListener("load", () => {
 const STORE_KEY="serband-app-v1";
 /* Build-Version: bei jeder Auslieferung hier das Datum aktualisieren.
    Wird in den Einstellungen angezeigt + für den Update-Hinweis genutzt. */
-const APP_VERSION="2026.08.26";
+const APP_VERSION="2026.08.29";
 // Nutzungsbedingungen & Haftungsausschluss (Bereich: rechtliche Absicherung) - Version hochzählen
 // und alle Nutzer müssen erneut zustimmen, sobald sich der Text inhaltlich ändert.
 const AGB_VERSION="1.0";
@@ -6562,7 +6594,7 @@ function buildStufen(s){
       const iBtn=hasInfo?`<button class="iBtn" data-info="${it.id}" aria-label="Erklärung anzeigen">!</button>`:"";
       const panel=hasInfo?`<div class="skill-info" data-panel="${it.id}"><div class="si-inner">${renderInfoList(it.id)}</div></div>`:"";
       const faStufe=FA_VIDEO_MAP[it.id];
-      const vidBtn=faStufe?`<button class="vidBtn" data-faid="${it.id}" aria-label="Video in Fahr-Akademie ansehen">${ICN.video}</button>`:"";
+      const vidBtn=(faStufe&&faStufe.contentDa!==false)?`<button class="vidBtn" data-faid="${it.id}" aria-label="Video in Fahr-Akademie ansehen">${ICN.video}</button>`:"";
       const ampelHtml=st.eval===false
         ? `<div class="ampel"><button class="amp chk ${v==='gruen'?'on':''}" data-v="gruen" aria-label="erledigt">${v==='gruen'?'✓':''}</button></div>`
         : `<div class="ampel">${["rot","gelb","gruen"].map(c=>`<button class="amp ${v===c?'on':''}" data-v="${c}" aria-label="${c}">${v===c?({rot:'✕',gelb:'•',gruen:'✓'}[c]):''}</button>`).join("")}</div>`;
@@ -6591,6 +6623,7 @@ function buildStufen(s){
     e.stopPropagation();
     const entry=FA_VIDEO_MAP[b.dataset.faid];
     if(entry) window.open(faLink(entry),"_blank");
+    _pushAkademieVideo(s,entry);
   }));
   wrap.querySelectorAll(".skill").forEach(row=>{
     const sid=row.dataset.skill;
@@ -7410,12 +7443,7 @@ async function renderAkademieVermittlungCfg(){
   el2.innerHTML=`
     <div class="field"><label>Betrag pro Videoakademie-Vermittlung (€)</label><input type="number" id="cfgBetragAkademie" value="${v('betragAkademie')}" placeholder="noch offen" min="0"></div>
     <div class="field"><label>Betrag pro Simulator-Vermittlung (€)</label><input type="number" id="cfgBetragSimulator" value="${v('betragSimulator')}" placeholder="noch offen" min="0"></div>
-    <p style="font-size:12.5px;color:var(--muted);margin:10px 0 4px;">Aufteilung, wenn <b>du selbst</b> vermittelt hast (in %):</p>
-    <div style="display:flex;gap:8px;">
-      <input type="number" id="cfgEigenAkademie" value="${sp('splitEigen','akademie')}" placeholder="Akademie %" min="0" max="100" style="flex:1;min-width:0;">
-      <input type="number" id="cfgEigenFahrschule" value="${sp('splitEigen','fahrschule')}" placeholder="Fahrschule %" min="0" max="100" style="flex:1;min-width:0;">
-      <input type="number" id="cfgEigenFahrlehrer" value="${sp('splitEigen','fahrlehrer')}" placeholder="Du %" min="0" max="100" style="flex:1;min-width:0;">
-    </div>
+    <p class="muted-p" style="font-size:12px;margin:2px 0 4px;">Wenn du selbst vermittelst, ist das ein reiner Direktverkauf ohne Aufteilung — das Geld bleibt komplett bei dir. Die folgende Aufteilung gilt nur, wenn ein Kollege vermittelt hat.</p>
     <p style="font-size:12.5px;color:var(--muted);margin:10px 0 4px;">Aufteilung, wenn <b>ein Kollege</b> vermittelt hat (in %):</p>
     <div style="display:flex;gap:8px;">
       <input type="number" id="cfgKollegeAkademie" value="${sp('splitKollege','akademie')}" placeholder="Akademie %" min="0" max="100" style="flex:1;min-width:0;">
@@ -7430,7 +7458,6 @@ async function saveAkademieVermittlungCfg(){
   const neu={
     betragAkademie:num("#cfgBetragAkademie"),
     betragSimulator:num("#cfgBetragSimulator"),
-    splitEigen:{akademie:num("#cfgEigenAkademie"),fahrschule:num("#cfgEigenFahrschule"),fahrlehrer:num("#cfgEigenFahrlehrer")},
     splitKollege:{akademie:num("#cfgKollegeAkademie"),fahrschule:num("#cfgKollegeFahrschule"),fahrlehrer:num("#cfgKollegeFahrlehrer")}
   };
   const supa=getSupa();
