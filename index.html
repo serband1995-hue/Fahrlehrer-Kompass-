@@ -4886,7 +4886,7 @@ window.addEventListener("load", () => {
 const STORE_KEY="serband-app-v1";
 /* Build-Version: bei jeder Auslieferung hier das Datum aktualisieren.
    Wird in den Einstellungen angezeigt + für den Update-Hinweis genutzt. */
-const APP_VERSION="2026.08.30";
+const APP_VERSION="2026.08.31";
 // Nutzungsbedingungen & Haftungsausschluss (Bereich: rechtliche Absicherung) - Version hochzählen
 // und alle Nutzer müssen erneut zustimmen, sobald sich der Text inhaltlich ändert.
 const AGB_VERSION="1.0";
@@ -9003,6 +9003,16 @@ function ensureDB(){ let _ensureDirty=false; if(!Array.isArray(DB.exams))DB.exam
   if(!Array.isArray(DB.workCfg.fahrzeuge)||!DB.workCfg.fahrzeuge.length){
     DB.workCfg.fahrzeuge=[{id:"fz1",name:"Audi Q5",typ:"automatik"},{id:"fz2",name:"Cupra 2",typ:"automatik"},{id:"fz3",name:"ID4",typ:"automatik"},{id:"fz4",name:"Audi A1",typ:"schalt"}];
     _ensureDirty=true;
+  }
+  // Selbstheilende Korrektur: "Cupra 1" existiert nicht mehr, wurde durch "Audi Q5" ersetzt.
+  // Greift bei JEDEM App-Start direkt im Code, unabhängig davon, was lokal auf dem Gerät noch
+  // gespeichert ist - verhindert, dass ein alter lokaler Stand serverseitige Korrekturen wieder
+  // überschreibt (genau das ist am 19.08. passiert).
+  if(Array.isArray(DB.workCfg.fahrzeuge)){
+    DB.workCfg.fahrzeuge.forEach(fz=>{ if(fz&&fz.name==="Cupra 1"){ fz.name="Audi Q5"; _ensureDirty=true; } });
+  }
+  if(Array.isArray(DB.lessons)){
+    DB.lessons.forEach(l=>{ if(l&&l.fahrzeug==="Cupra 1"){ l.fahrzeug="Audi Q5"; _ensureDirty=true; } });
   }
   if(!DB.verdienst||typeof DB.verdienst!=="object"){ DB.verdienst={
     proUE:23, fixum:2100, fixUE:140, bonusUE:240, bonus:500, ziel:240,
