@@ -335,6 +335,12 @@ input,select,textarea{font-family:inherit;font-size:15px;color:var(--txt);}
   transform:translateY(2px);
   box-shadow:0 2px 8px rgba(0,0,0,.25),0 1px 3px rgba(0,0,0,.2);
 }
+.s-card-call{position:absolute;top:10px;right:10px;width:32px;height:32px;border-radius:50%;background:var(--gruen-soft,rgba(58,115,80,.18));border:1px solid var(--gruen-line);display:flex;align-items:center;justify-content:center;font-size:14px;z-index:2;}
+.s-card-call:active{transform:scale(.9);}
+.mini-dash{background:linear-gradient(160deg,var(--glass),var(--glass-2));border:1px solid var(--glass-brd);border-radius:var(--r-card);padding:14px 16px;margin:14px 0;box-shadow:var(--elev-2),var(--inset-top);}
+.mini-dash-row{display:flex;justify-content:space-between;align-items:center;padding:6px 0;font-size:13px;color:var(--muted);border-top:1px solid var(--line-soft);}
+.mini-dash-row:first-child{border-top:none;padding-top:0;}
+.mini-dash-row b{color:var(--txt);font-weight:700;}
 
 /* Dashboard-Kacheln */
 .d-tile{
@@ -838,6 +844,10 @@ input,select,textarea{font-family:inherit;font-size:15px;color:var(--txt);}
 .next-exam.none{box-shadow:var(--elev-2),var(--inset-top)}
 /* Nächster Schüler */
 .next-stud{position:relative;overflow:hidden;background:linear-gradient(160deg,var(--gruen-soft),var(--glass-2));border:1px solid var(--gruen-line);border-radius:var(--r-card);padding:17px 18px;margin-bottom:18px;box-shadow:var(--elev-3),var(--inset-top);cursor:pointer;}
+.ns-wetter{font-size:12px;color:var(--muted);margin-top:4px;}
+.ns-next-list{margin-top:12px;padding-top:10px;border-top:1px solid var(--gruen-line);display:flex;flex-direction:column;gap:6px;}
+.ns-next-row{display:flex;justify-content:space-between;align-items:center;font-size:12.5px;color:var(--muted);padding:2px 0;}
+.ns-next-name{color:var(--txt);font-weight:600;}
 /* Fahrcheck-Karte */
 .fc-card{background:linear-gradient(160deg,var(--glass),var(--glass-2));border:1px solid var(--glass-brd);border-radius:var(--r-card);padding:15px 16px;margin-bottom:18px;box-shadow:var(--elev-2),var(--inset-top);}
 .fc-h{font-size:12px;letter-spacing:.05em;text-transform:uppercase;color:var(--faint);font-weight:800;margin-bottom:12px;display:flex;align-items:center;gap:8px;}
@@ -931,6 +941,14 @@ input,select,textarea{font-family:inherit;font-size:15px;color:var(--txt);}
 .nex-lessons.warn{color:#e0843a;font-weight:800;}
 .nex-empty{font-size:14px;color:var(--faint);}
 .dash-tiles{display:grid;grid-template-columns:repeat(3,1fr);gap:11px;margin-bottom:16px}
+.dash-tiles-head{display:flex;justify-content:space-between;align-items:center;margin:18px 0 8px;font-size:11px;letter-spacing:.06em;text-transform:uppercase;color:var(--faint);font-weight:800;}
+.d-tile-editwrap{position:relative;}
+.d-tile-editwrap .d-tile{pointer-events:none;opacity:.85;}
+.d-tile-arrows{position:absolute;top:4px;right:4px;display:flex;flex-direction:column;gap:2px;z-index:2;}
+.d-tile-arrow{width:22px;height:18px;border-radius:5px;background:var(--surface-2);border:1px solid var(--line);color:var(--muted);font-size:9px;line-height:1;display:flex;align-items:center;justify-content:center;}
+.d-tile-arrow:disabled{opacity:.25;}
+.was-neu-banner{display:flex;align-items:center;justify-content:space-between;gap:10px;background:linear-gradient(160deg,rgba(207,154,62,.14),rgba(207,154,62,.06));border:1px solid rgba(207,154,62,.35);border-radius:12px;padding:11px 13px;margin-bottom:14px;font-size:12.5px;color:var(--txt);}
+.was-neu-banner button{background:none;border:none;color:var(--muted);font-size:14px;flex-shrink:0;}
 /* Auslastungs-Card (dezent) */
 .cap-card{display:block;width:100%;text-align:left;background:var(--surface);border:1px solid var(--line-soft);border-radius:14px;padding:14px 16px;margin-bottom:8px;position:relative;overflow:hidden;}
 .cap-card::before{content:"";position:absolute;top:0;left:0;width:3px;height:100%;background:linear-gradient(180deg,var(--brand-accent),transparent);}
@@ -954,6 +972,7 @@ input,select,textarea{font-family:inherit;font-size:15px;color:var(--txt);}
 .d-tile:active{transform:translateY(-3px)}
 .dt-n{font-family:'Playfair Display',serif;font-weight:600;font-size:32px;line-height:1;position:relative;z-index:1;
   background:linear-gradient(160deg,#fff 10%,var(--mint) 90%);-webkit-background-clip:text;background-clip:text;color:transparent}
+body.light .dt-n{background:linear-gradient(160deg,#1d3324 10%,#2f5d3f 90%);-webkit-background-clip:text;background-clip:text;color:transparent}
 .dt-l{font-size:10.5px;color:var(--muted);font-weight:600;position:relative;z-index:1}
 .dash-nav{display:flex;flex-direction:column;gap:11px}
 /* ===== Dashboard-Kalender-Shortcut (Haupt-Einstieg) ===== */
@@ -3471,16 +3490,25 @@ async function renderFsEmpfehlungenListe(){
   el2.innerHTML=data.map(e=>`<div class="fs-card" data-empf="${e.id}">
     <div class="fs-name">${e.typ==="simulator"?"🕹️":"🎓"} ${esc(e.schueler_name)} <span style="font-size:11px;color:var(--muted);font-weight:400;">· ${e.typ==="simulator"?"Simulator":"Videoakademie"}</span></div>
     <div class="fs-sub">von ${esc(e.fahrlehrer_name)} · ${isoDE((e.erstellt_am||"").slice(0,10))} · <b>${STATUS_LABEL[e.status]||e.status}</b>${e.betrag!=null?` · ${eur(e.betrag)}`:''}</div>
-    ${e.status!=="bezahlt"?`<div class="fs-actions">
+    <div class="fs-actions">
       ${e.status==="empfohlen"?`<button class="fs-btn-kill" style="background:var(--surface-2);color:var(--txt);" data-empf-zugang="${e.id}">Zugangsdaten ausgegeben</button>`:''}
-      <button class="fs-btn-kill" style="background:#4a8b45;color:#fff;" data-empf-bezahlt="${e.id}">Bezahlt eintragen</button>
-    </div>`:''}
+      ${e.status!=="bezahlt"?`<button class="fs-btn-kill" style="background:#4a8b45;color:#fff;" data-empf-bezahlt="${e.id}">Bezahlt eintragen</button>`:''}
+      <button class="fs-btn-kill" style="background:none;border:1px solid rgba(216,35,26,.4);color:#d8231a;" data-empf-storno="${e.id}">${e.status==="bezahlt"?"Zurücknehmen":"Stornieren"}</button>
+    </div>
   </div>`).join("");
   el2.querySelectorAll("[data-empf-zugang]").forEach(b=>b.addEventListener("click",async()=>{
     await supa.from("fahrschule_empfehlungen").update({status:"zugangsdaten_ausgegeben",aktualisiert_am:new Date().toISOString()}).eq("id",b.dataset.empfZugang);
     renderFsEmpfehlungenListe();
   }));
   el2.querySelectorAll("[data-empf-bezahlt]").forEach(b=>b.addEventListener("click",()=>openEmpfehlungBezahltSheet(b.dataset.empfBezahlt,data.find(x=>x.id===b.dataset.empfBezahlt))));
+  el2.querySelectorAll("[data-empf-storno]").forEach(b=>b.addEventListener("click",async()=>{
+    const empf=data.find(x=>x.id===b.dataset.empfStorno);
+    const warBezahlt=empf&&empf.status==="bezahlt";
+    if(!confirm(warBezahlt?"Diese Empfehlung war schon als bezahlt eingetragen (inkl. Aufteilung). Wirklich zurücknehmen? Betrag und Aufteilung werden zurückgesetzt.":"Diese Empfehlung wirklich stornieren?"))return;
+    await supa.from("fahrschule_empfehlungen").update({status:"storniert",betrag:null,aufteilung:null,aktualisiert_am:new Date().toISOString()}).eq("id",b.dataset.empfStorno);
+    toast("Zurückgenommen ✓");
+    renderFsEmpfehlungenListe();
+  }));
 }
 // Betrag eintragen + automatische Aufteilung (nur wenn in den Einstellungen konfiguriert)
 async function openEmpfehlungBezahltSheet(id,empf){
@@ -4886,7 +4914,7 @@ window.addEventListener("load", () => {
 const STORE_KEY="serband-app-v1";
 /* Build-Version: bei jeder Auslieferung hier das Datum aktualisieren.
    Wird in den Einstellungen angezeigt + für den Update-Hinweis genutzt. */
-const APP_VERSION="2026.08.31";
+const APP_VERSION="2026.09.02";
 // Nutzungsbedingungen & Haftungsausschluss (Bereich: rechtliche Absicherung) - Version hochzählen
 // und alle Nutzer müssen erneut zustimmen, sobald sich der Text inhaltlich ändert.
 const AGB_VERSION="1.0";
@@ -5540,13 +5568,19 @@ function _letzteAktivitaet(s){
   return l.length?l[l.length-1]:"";
 }
 let _homeSortMode="az";
+let _homeFormFilter=[], _homeColorFilter=[];
 function routeHome(){
   $("#tbTitle").textContent="Schüler";setFab(true);view.scrollTop=0;
   let list=activeStudents().slice();
+  if(_homeFormFilter.length) list=list.filter(s=>_homeFormFilter.includes(s.form||"B"));
+  if(_homeColorFilter.length) list=list.filter(s=>_homeColorFilter.includes(s.profil));
+  const alle=activeStudents();
   if(_homeSortMode==="stand") list.sort((a,b)=>stand(b)-stand(a));
-  else if(_homeSortMode==="aktiv") list.sort((a,b)=>(_letzteAktivitaet(b)||"").localeCompare(_letzteAktivitaet(a)||""));
   else list.sort((a,b)=>(a.name||"").localeCompare(b.name||"","de"));
-  if(!list.length){
+  const formChips=FORMS.map(f=>`<button class="pday${_homeFormFilter.includes(f)?' on':''}" data-homeform="${f}" style="width:auto;padding:0 12px;">${formLabel(f)}</button>`).join("");
+  const colorChips=["rot","gelb","gruen","blau"].map(c=>`<button class="pday${_homeColorFilter.includes(c)?' on':''}" data-homecolor="${c}" style="width:auto;padding:0 12px;"><span class="pc-dot" style="background:${PROFILE[c].hex};display:inline-block;width:8px;height:8px;border-radius:50%;margin-right:5px;"></span>${PROFILE[c].word}</button>`).join("");
+  const filterAktiv=_homeFormFilter.length||_homeColorFilter.length;
+  if(!alle.length){
     view.innerHTML=`<div class="empty fade-up">
       <img src="${LOGO}" alt="">
       <h2>Noch keine <span class="o">Schüler</span></h2>
@@ -5556,37 +5590,59 @@ function routeHome(){
     $("#emptyAdd").addEventListener("click",()=>formView(null));return;
   }
   const sortiertAlpha=_homeSortMode==="az";
-  // Buchstaben ermitteln (nur relevant bei A–Z-Sortierung)
-  const letters=sortiertAlpha?[...new Set(list.map(s=>(s.name||"?")[0].toUpperCase()))].sort((a,b)=>a.localeCompare(b,"de")):[];
-  // Schüler nach Buchstabe gruppieren, oder bei anderer Sortierung einfach flach durchreichen
-  let gridHTML="";
-  if(sortiertAlpha){
+  const gruppiertNachFahrlehrer=!!_fsAgg&&sortiertAlpha;
+  let gridHTML="", letters=[], letterNav="";
+  if(gruppiertNachFahrlehrer){
+    // Fahrschul-Modus: nach Fahrlehrer gruppiert statt einer langen gemischten Liste (Bereich 2, Punkt 7)
+    const byLehrer={};
+    list.forEach(s=>{ const key=s._fahrlehrerName||"Ohne Zuordnung"; if(!byLehrer[key])byLehrer[key]=[]; byLehrer[key].push(s); });
+    Object.keys(byLehrer).sort((a,b)=>a.localeCompare(b,"de")).forEach(name=>{
+      const gruppe=byLehrer[name].sort((a,b)=>(a.name||"").localeCompare(b.name||"","de"));
+      gridHTML+=`<div class="alpha-anchor" style="font-size:12px;font-weight:800;color:var(--txt);padding:16px 0 6px;">${esc(name)} <span style="color:var(--muted);font-weight:600;">(${gruppe.length})</span></div>`;
+      gridHTML+=gruppe.map((s,i)=>cardHTML(s,i)).join("");
+    });
+  } else if(sortiertAlpha){
+    letters=[...new Set(list.map(s=>(s.name||"?")[0].toUpperCase()))].sort((a,b)=>a.localeCompare(b,"de"));
     letters.forEach(letter=>{
       const group=list.filter(s=>(s.name||"?")[0].toUpperCase()===letter);
       gridHTML+=`<div class="alpha-anchor" id="alpha-${letter}" style="font-size:11px;font-weight:800;color:var(--muted);letter-spacing:.1em;padding:14px 0 6px;text-transform:uppercase;">${letter}</div>`;
       gridHTML+=group.map((s,i)=>cardHTML(s,i)).join("");
     });
+    letterNav=letters.map(l=>`<button class="alpha-nav-btn" data-letter="${l}" style="display:block;font-size:11px;font-weight:800;color:var(--muted);padding:3px 0;background:none;border:none;cursor:pointer;line-height:1.4;">${l}</button>`).join("");
   } else {
     gridHTML=list.map((s,i)=>cardHTML(s,i)).join("");
   }
-  const letterNav=letters.map(l=>`<button class="alpha-nav-btn" data-letter="${l}" style="display:block;font-size:11px;font-weight:800;color:var(--muted);padding:3px 0;background:none;border:none;cursor:pointer;line-height:1.4;">${l}</button>`).join("");
+  if(!list.length)gridHTML=`<p class="muted-p" style="text-align:center;padding:20px;">Kein Treffer für diese Filter.</p>`;
   const sortBar=`<div class="seg" style="margin-bottom:12px;">
     <button class="seg-i${_homeSortMode==='az'?' on':''}" data-sort="az">A–Z</button>
     <button class="seg-i${_homeSortMode==='stand'?' on':''}" data-sort="stand">Fortschritt</button>
-    <button class="seg-i${_homeSortMode==='aktiv'?' on':''}" data-sort="aktiv">Zuletzt aktiv</button>
   </div>`;
   view.innerHTML=`<div class="view-inner view-wide fade-up" style="position:relative;padding-right:32px;">
-    <div class="row-between" style="margin-bottom:12px;"><div class="sec-h">Meine <span class="o">Schüler</span></div><div class="count-pill">${list.length}</div></div>
+    <div class="row-between" style="margin-bottom:12px;"><div class="sec-h">Meine <span class="o">Schüler</span></div><div class="count-pill">${alle.length}</div></div>
     ${sortBar}
     <div class="search-wrap"><span class="search-ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="11" cy="11" r="7"/><path d="M21 21l-4.3-4.3"/></svg></span><input id="studentSearch" type="search" placeholder="Schüler suchen …" autocomplete="off"><button class="search-clear" id="searchClear" aria-label="Leeren" style="display:none;">✕</button></div>
+    <div class="pause-days" style="margin:10px 0 4px;">${formChips}</div>
+    <div class="pause-days" style="margin:0 0 12px;">${colorChips}</div>
+    ${filterAktiv?`<button class="btn btn-ghost" id="homeFilterReset" style="width:100%;margin-bottom:10px;">Filter zurücksetzen</button>`:''}
     <div id="studentGrid">${gridHTML}</div>
     <div class="no-hit" id="noHit" style="display:none;">Kein Schüler gefunden.</div>
     </div>
-    <div style="position:fixed;right:6px;top:50%;transform:translateY(-50%);z-index:30;display:flex;flex-direction:column;align-items:center;background:var(--surface);border-radius:12px;padding:4px 3px;box-shadow:var(--elev-2);${sortiertAlpha?'':'display:none;'}" id="alphaNav">${letterNav}</div>`;
+    <div style="position:fixed;right:6px;top:50%;transform:translateY(-50%);z-index:30;display:flex;flex-direction:column;align-items:center;background:var(--surface);border-radius:12px;padding:4px 3px;box-shadow:var(--elev-2);${(sortiertAlpha&&!gruppiertNachFahrlehrer&&list.length)?'':'display:none;'}" id="alphaNav">${letterNav}</div>`;
   animateRings();
-  document.querySelectorAll(".s-card").forEach(c=>c.addEventListener("click",()=>routeDetail(c.dataset.id)));
+  document.querySelectorAll(".s-card").forEach(c=>c.addEventListener("click",e=>{ if(e.target.closest("[data-anruf]"))return; routeDetail(c.dataset.id); }));
+  document.querySelectorAll("[data-anruf]").forEach(a=>a.addEventListener("click",e=>{ e.stopPropagation(); window.location.href="tel:"+a.dataset.anruf; }));
   document.querySelectorAll("[data-sort]").forEach(b=>b.addEventListener("click",()=>{ _homeSortMode=b.dataset.sort; routeHome(); }));
-  // Buchstaben-Navigation
+  document.querySelectorAll("[data-homeform]").forEach(b=>b.addEventListener("click",()=>{
+    const f=b.dataset.homeform; const i=_homeFormFilter.indexOf(f);
+    if(i>=0)_homeFormFilter.splice(i,1); else _homeFormFilter.push(f);
+    routeHome();
+  }));
+  document.querySelectorAll("[data-homecolor]").forEach(b=>b.addEventListener("click",()=>{
+    const c=b.dataset.homecolor; const i=_homeColorFilter.indexOf(c);
+    if(i>=0)_homeColorFilter.splice(i,1); else _homeColorFilter.push(c);
+    routeHome();
+  }));
+  const resetBtn=$("#homeFilterReset"); if(resetBtn)resetBtn.addEventListener("click",()=>{ _homeFormFilter=[]; _homeColorFilter=[]; routeHome(); });
   document.querySelectorAll(".alpha-nav-btn").forEach(b=>b.addEventListener("click",()=>{
     const el=document.getElementById("alpha-"+b.dataset.letter);
     if(el)el.scrollIntoView({behavior:"smooth",block:"start"});
@@ -5595,13 +5651,13 @@ function routeHome(){
   function filt(){
     const q=(si.value||"").trim().toLowerCase();
     if(q){
-      nav.style.display="none";
+      if(nav)nav.style.display="none";
       document.querySelectorAll(".alpha-anchor").forEach(a=>a.style.display="none");
       let n=0;
       document.querySelectorAll("#studentGrid .s-card").forEach(c=>{const hit=(c.dataset.name||"").indexOf(q)>=0;c.style.display=hit?"":"none";if(hit)n++;});
       nh.style.display=n?"none":"block";sc.style.display="block";
     } else {
-      if(sortiertAlpha)nav.style.display="flex";
+      if(sortiertAlpha&&!gruppiertNachFahrlehrer&&nav)nav.style.display="flex";
       document.querySelectorAll(".alpha-anchor").forEach(a=>a.style.display="");
       document.querySelectorAll("#studentGrid .s-card").forEach(c=>c.style.display="");
       nh.style.display="none";sc.style.display="none";
@@ -5626,14 +5682,15 @@ function cardHTML(s,i){
   const p=s.profil?PROFILE[s.profil]:null;const col=p?p.color:"var(--orange)";
   const pct=s.theoriePct||0;
   const istTurbo=_fsAgg&&s._paketId&&(_fsAgg.pakete||[]).some(pk=>pk.id===s._paketId&&pk.name==="Turboboost");
+  const anrufBtn=s.telefon?`<span class="s-card-call" data-anruf="${esc(s.telefon)}" role="button" aria-label="Anrufen">${ICN.phone||"📞"}</span>`:"";
   return `<button class="s-card" data-id="${s.id}" data-name="${esc((s.name||'').toLowerCase())}" data-turbo="${istTurbo?'1':'0'}" style="animation-delay:${Math.min(i*45,360)}ms">
     <div>${ring(stand(s),50,3,col)}</div>
     <div class="s-body">
-      <div class="s-name">${esc(s.name)}${s.sehhilfe?` <span class="s-sehhilfe">👓</span>`:''}${istTurbo?' <span title="Turboboost" style="color:#d68a3e;">⚡</span>':''}</div>
+      <div class="s-name">${esc(s.name)}${s.sehhilfe?` <span class="s-sehhilfe">👓</span>`:''}${s.pruefungsreifManuell?' <span title="Prüfungsreif" style="color:var(--gruen);">🏁</span>':''}${istTurbo?' <span title="Turboboost" style="color:#d68a3e;">⚡</span>':''}</div>
       <div class="s-meta"><span class="s-form-chip">${esc(s.form||"B")}</span>
         ${p?`<span class="s-dot" style="background:${p.color}"></span><span>${p.word}</span>`:`<span>Profil offen</span>`}</div>
       ${pct>0?`<div style="margin-top:6px;height:3px;background:var(--surface-2);border-radius:2px;overflow:hidden;"><div style="height:100%;width:${pct}%;background:var(--gruen);border-radius:2px;"></div></div>`:''}
-    </div></button>`;
+    </div>${anrufBtn}</button>`;
 }
 
 /* ============================================================
@@ -5684,6 +5741,20 @@ function routeWaitlist(){
 /* ============================================================
    DETAIL (Schülerdatei)
    ============================================================ */
+// Fahr-Akademie-Fortschritt direkt in der Schülerakte (Bereich 3, Punkt 7) - nutzt dieselbe
+// Telefonnummer-Brücke wie die Push-Funktion, aber eine reine Leseabfrage ohne Push.
+// Läuft still im Hintergrund; zeigt nichts an, falls der Schüler noch keinen Akademie-Zugang
+// hat oder keine Telefonnummer hinterlegt ist.
+async function _fillAkademieFortschritt(s){
+  const box=document.getElementById("akademieFortschrittSlot"); if(!box||!s.telefon)return;
+  try{
+    const supa=getSupa();
+    const{data,error}=await supa.functions.invoke("trigger-akademie-fortschritt",{body:{telefon:s.telefon}});
+    if(error||!data||!data.ok||!data.fortschritt)return;
+    const box2=document.getElementById("akademieFortschrittSlot"); if(!box2)return;
+    box2.innerHTML=`<div class="mini-dash-row"><span>🎓 Fahr-Akademie</span><b>${data.fortschritt.gesehen} von ${data.fortschritt.gesamt} Videos gesehen</b></div>`;
+  }catch(e){ /* still - Akademie-Fortschritt ist ein Bonus, kein Muss */ }
+}
 function routeDetail(id){
   const s=DB.students.find(x=>x.id===id);if(!s){routeHome();return;}
   ensure(s);
@@ -5696,6 +5767,9 @@ function routeDetail(id){
   const rc=examReadyCard(s);
   const E=s.bogen?evalBogen(s.bogen):null;
   const profSub=E?(E.pure?`${PROFILE[E.top].word} · ${COLOR_INFO[E.top].label}`:`${PROFILE[E.top].word}-${PROFILE[E.second].word} · ${E.blend.label}`):"Bogen ausfüllen";
+  // Letzte Fahrstunde direkt oben zusammengefasst (Bereich 3, Punkt 5)
+  const {last:letzteStunde}=findLastNextLesson(s.id);
+  const letzteStundeHTML=letzteStunde?`<div class="mini-dash-row"><span>🚗 Letzte Fahrstunde</span><b>${isoDE(letzteStunde.date)} · ${letzteStunde.von} Uhr</b></div>`:"";
   view.innerHTML=`<div class="view-inner view-wide fade-up">
     <div class="back-row"><button class="back-btn" id="backBtn">${ICN.back} Alle Schüler</button></div>
     <div class="detail-hero">
@@ -5710,8 +5784,18 @@ function routeDetail(id){
           ${s.beginn?`<span class="chip" style="color:var(--muted)">seit ${esc(s.beginn)}</span>`:""}
           ${s.telefon?`<a class="chip" href="tel:${esc(s.telefon.replace(/\s+/g,''))}" style="color:var(--gruen);text-decoration:none;"><span class="ic" style="font-size:12px;">${ICN.phone}</span> ${esc(s.telefon)}</a>`:""}
           <button class="chip sehhilfe${s.sehhilfe?' on':''}" id="sehhilfeBtn">👓 ${s.sehhilfe?'Sehhilfe':'keine'}</button>
+          <button class="chip sehhilfe${s.pruefungsreifManuell?' on':''}" id="pruefReifBtn" style="${s.pruefungsreifManuell?'border-color:var(--gruen-line);color:var(--gruen);':''}">🏁 ${s.pruefungsreifManuell?'Prüfungsreif':'Prüfungsreif markieren'}</button>
         </div>
       </div>
+    </div>
+    <!-- Mini-Dashboard: alles Wichtige auf einen Blick (Bereich 3, Punkt 8) -->
+    <div class="mini-dash">
+      <div class="mini-dash-row"><span>📊 Ausbildungsstand</span><b>${pct}%</b></div>
+      ${letzteStundeHTML}
+      ${ns?`<div class="mini-dash-row"><span>📅 Nächster Termin</span><b>${isoDE(ns.date)} · ${ns.von} Uhr</b></div>`:""}
+      ${s.email?`<div class="mini-dash-row"><span>✉️ E-Mail</span><b>${esc(s.email)}</b></div>`:""}
+      ${s.geburtsdatum?`<div class="mini-dash-row"><span>🎂 Geburtstag</span><b>${isoDE(s.geburtsdatum).slice(0,5)}</b></div>`:""}
+      <div id="akademieFortschrittSlot"></div>
     </div>
     <div class="theo-row">
       <div class="theo-label">📚 Theorie</div>
@@ -5754,6 +5838,8 @@ function routeDetail(id){
   if(done)setTimeout(()=>celebrate(),420);
   $("#backBtn").addEventListener("click",routeHome);
   $("#editBtn").addEventListener("click",()=>formView(s));
+  const prb=$("#pruefReifBtn"); if(prb)prb.addEventListener("click",()=>{ s.pruefungsreifManuell=!s.pruefungsreifManuell; save(); routeDetail(id); });
+  _fillAkademieFortschritt(s);
   $("#delBtn").addEventListener("click",()=>{
     if(confirm("Diesen Schüler wirklich löschen? Das kann nicht rückgängig gemacht werden.")){
       DB.students=DB.students.filter(x=>x.id!==id);save();toast("Schüler gelöscht");routeHome();}});
@@ -7378,8 +7464,12 @@ function formView(existing){
         <div class="pills" id="formPills">${FORMS.map(f=>`<button class="pill ${s.form===f?'sel':''}" data-form="${f}">${formLabel(f)}</button>`).join("")}</div></div>
       <div class="field"><label>Beginn der Ausbildung <span style="font-size:11.5px;font-weight:600;color:var(--faint);background:var(--surface-2);padding:2px 8px;border-radius:6px;">optional</span></label>
         <input id="f_beginn" type="text" placeholder="TT.MM.JJJJ" value="${esc(s.beginn||"")}" autocomplete="off"></div>
+      <div class="field"><label>Geburtsdatum <span style="font-size:11.5px;font-weight:600;color:var(--faint);background:var(--surface-2);padding:2px 8px;border-radius:6px;">optional</span></label>
+        <input id="f_geburtsdatum" type="date" value="${esc(s.geburtsdatum||"")}"></div>
       <div class="field"><label style="display:flex;align-items:center;gap:8px;">Telefonnummer <span style="font-size:11.5px;font-weight:600;color:var(--faint);background:var(--surface-2);padding:2px 8px;border-radius:6px;">optional</span></label>
         <input id="f_telefon" type="tel" placeholder="z.B. 0151 23456789" value="${esc(s.telefon||"")}" autocomplete="off"></div>
+      <div class="field"><label>E-Mail <span style="font-size:11.5px;font-weight:600;color:var(--faint);background:var(--surface-2);padding:2px 8px;border-radius:6px;">optional</span></label>
+        <input id="f_email" type="email" placeholder="z.B. sara@beispiel.de" value="${esc(s.email||"")}" autocomplete="off"></div>
       ${showPlanPicker?`<div class="field"><label>Prüfungsgebiet</label>
         <div class="pills" id="planPills">${DB.ausbildungsplaene.map(p=>`<button class="pill ${p.standard?'sel':''}" data-plan="${p.id}">${esc(p.name)}</button>`).join("")}</div></div>`:""}
       ${hasBogen?profCard:""}
@@ -7404,7 +7494,7 @@ function formView(existing){
   $("#saveBtn").addEventListener("click",()=>{
     const name=$("#f_name").value.trim();
     if(!name){toast("Bitte einen Namen eingeben");$("#f_name").focus();return;}
-    const data={name,form:pick.form||"B",beginn:$("#f_beginn").value.trim(),telefon:$("#f_telefon").value.trim()};
+    const data={name,form:pick.form||"B",beginn:$("#f_beginn").value.trim(),telefon:$("#f_telefon").value.trim(),geburtsdatum:$("#f_geburtsdatum").value||"",email:$("#f_email").value.trim()};
     if(!hasBogen)data.profil=pick.profil||null;
     if(isEdit){Object.assign(existing,data);save();toast("Gespeichert");routeDetail(existing.id);}
     else{
@@ -8422,7 +8512,7 @@ function routeKalender(){
       <button class="cal-viewbtn" id="calViewBtn">${viewLabels[_calView]} <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" style="width:14px;height:14px;"><path d="M6 9l6 6 6-6"/></svg></button>
       <div style="display:flex;gap:8px;align-items:center;">
         <button class="cal-search-btn" id="calSearch" aria-label="Schüler suchen"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="7"/><path d="M21 21l-4.3-4.3"/></svg></button>
-        <button class="cal-search-btn" id="calFilterBtn" aria-label="Filter" style="position:relative;"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 6h16M7 12h10M10 18h4"/></svg>${calFilterAktiv()?'<span class="cal-filter-badge"></span>':''}</button>
+        ${_fsAgg?'':`<button class="cal-search-btn" id="calFilterBtn" aria-label="Filter" style="position:relative;"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 6h16M7 12h10M10 18h4"/></svg>${calFilterAktiv()?'<span class="cal-filter-badge"></span>':''}</button>`}
         <button class="cal-gear" id="calGear" aria-label="Arbeitszeiten"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M12 2v3M12 19v3M2 12h3M19 12h3M4.9 4.9l2.1 2.1M17 17l2.1 2.1M4.9 19.1L7 17M17 7l2.1-2.1"/></svg></button>
         <button class="cal-today" id="calToday">Heute</button>
       </div>
@@ -8475,7 +8565,7 @@ function bindCalControls(){
   $("#calToday").addEventListener("click",()=>{ _calDate=todayISO(); routeKalender(); });
   $("#calGear").addEventListener("click",routeArbeitszeit);
   $("#calSearch").addEventListener("click",openCalSearchSheet);
-  $("#calFilterBtn").addEventListener("click",openCalFilterSheet);
+  const _cfb=$("#calFilterBtn"); if(_cfb)_cfb.addEventListener("click",openCalFilterSheet);
   $("#calFab").addEventListener("click",openAddSheet);
   $("#calViewBtn").addEventListener("click",openCalViewSheet);
   $("#calPrev").addEventListener("click",()=>{ _calDate=calShift(-1); routeKalender(); });
@@ -8752,7 +8842,7 @@ function ueRange(fromISO,toISO){
       // nachgereicht = wieder voll, wird aber dem AKTUELLEN Monat gutgeschrieben (s.u., nicht hier).
       if(e.kind==="pruefung"){ fcCounted+=ue; }
       else if(["fahrstunde","sonder","nacht"].indexOf(e.art)>=0){
-        if(e.fc==="v1")fcCounted+=ue/2;
+        if(e.fc==="v1"||e.fc==="halb_bewusst")fcCounted+=ue/2;
         else if(e.fc==="v2"||e.fc==="geschenkt")fcCounted+=0;
         else if(e.fc==="nachgereicht")fcCounted+=0;
         else fcCounted+=ue; // Standard (null) oder eins_ok: voll
@@ -8970,14 +9060,18 @@ function deleteLesson(id){
 }
 // Nächster anstehender Schüler (heute/zukünftig, erstes geplantes Event)
 function nextLessonEvent(){
+  return nextLessonEvents(1)[0]||null;
+}
+// Die nächsten N anstehenden Termine (Bereich 1, Punkt 2/3: Fahrzeug + Vorschau)
+function nextLessonEvents(n){
   const today=todayISO(); const now=new Date(); const nowMin=now.getHours()*60+now.getMinutes();
-  let cur=today, guard=0;
-  while(guard++<120){
-    const ev=dayEvents(cur).filter(e=>e.status==="geplant"||e.status==="geplant");
-    for(const e of ev){ if(cur>today || hm2min(e.bis)>=nowMin){ if(e.sid) return {date:cur,...e}; } }
+  let cur=today, guard=0; const out=[];
+  while(guard++<120&&out.length<n){
+    const ev=dayEvents(cur).filter(e=>e.status==="geplant");
+    for(const e of ev){ if(out.length>=n)break; if(cur>today || hm2min(e.bis)>=nowMin){ if(e.sid) out.push({date:cur,...e}); } }
     cur=addDays(cur,1);
   }
-  return null;
+  return out;
 }
 
 function sichtbar(key){ return !DB.sichtbarkeit || DB.sichtbarkeit[key]!==false; }
@@ -9766,9 +9860,10 @@ function setFC(id,status){
   const ueFull=ueOf(l.art,l.von,l.bis,l.tatsaechlicheDauer); const eurFull=Math.round(ueFull*DB.verdienst.proUE);
   let msg="", histTxt="", eurDelta=0;
   if(status==="v1"){ l.fc="v1"; delete l.nachAm; msg="1 FC vergessen vermerkt"; histTxt="1 Fahrcheck vergessen"; eurDelta=-Math.round(ueFull/2*DB.verdienst.proUE); }
+  else if(status==="halb_bewusst"){ l.fc="halb_bewusst"; delete l.nachAm; msg="1 FC bewusst erhalten vermerkt"; histTxt="1 Fahrcheck bewusst erhalten (kein Fehler)"; eurDelta=-Math.round(ueFull/2*DB.verdienst.proUE); }
   else if(status==="v2"){ l.fc="v2"; delete l.nachAm; msg="2 FC vergessen vermerkt"; histTxt="2 Fahrchecks vergessen"; eurDelta=-eurFull; }
   else if(status==="geschenkt"){ l.fc="geschenkt"; delete l.nachAm; msg="45 Min geschenkt"; histTxt="Fahrstunde geschenkt"; eurDelta=-eurFull; }
-  else if(status==="nachgereicht"){ l.fc="nachgereicht"; l.nachAm=new Date().toISOString(); msg="FC nachgereicht – Verdienst gutgeschrieben"; histTxt="FC nachgereicht"; const back=(prev==="v1")?Math.round(ueFull/2*DB.verdienst.proUE):eurFull; eurDelta=back; }
+  else if(status==="nachgereicht"){ l.fc="nachgereicht"; l.nachAm=new Date().toISOString(); msg="FC nachgereicht – Verdienst gutgeschrieben"; histTxt="FC nachgereicht"; const back=(prev==="v1"||prev==="halb_bewusst")?Math.round(ueFull/2*DB.verdienst.proUE):eurFull; eurDelta=back; }
   else if(status==="normal"){ delete l.fc; delete l.nachAm; msg="Auf Normal gesetzt"; histTxt="FC auf Normal gesetzt"; }
   if(st&&histTxt)logHist(st,"fc",histTxt+(l.date?` · ${isoDE(l.date)}`:""),eurDelta?{eur:eurDelta}:null);
   save();
@@ -9785,11 +9880,12 @@ function openFCMenu(id){
   const tag=(v,lab,sub,cls)=>`<button class="es-act${cls?(' '+cls):''}${cur===v?' on':''}" data-fcset="${v}">${lab}${sub?`<span style="display:block;font-size:12px;opacity:.7;font-weight:600;margin-top:2px;">${sub}</span>`:""}</button>`;
   let acts="";
   acts+=tag("normal","Normal · 2 FC erhalten","voller Verdienst","primary");
+  acts+=tag("halb_bewusst","Nur 1 FC · bewusst","halber Verdienst · kein Fehler, war geplant so");
   acts+=tag("v1","1 FC vergessen","nur 1 × "+DB.verdienst.proUE+" €");
   acts+=tag("eins_ok","1 FC – als abgeschlossen","voller Verdienst (Einigung)","good");
   acts+=tag("v2","2 FC vergessen","0 €");
   acts+=tag("geschenkt","45 Min geschenkt","0 €");
-  if(cur==="v1"||cur==="v2"){ acts+=tag("nachgereicht","FC nachgereicht","Verdienst kommt zurück (akt. Monat)","good"); }
+  if(cur==="v1"||cur==="v2"||cur==="halb_bewusst"){ acts+=tag("nachgereicht","FC nachgereicht","Verdienst kommt zurück (akt. Monat)","good"); }
   acts+=`<button class="es-act danger" data-fcdel="${id}">Hat nicht stattgefunden (löschen)</button>`;
   openSheet(`<div class="sheet-h">Fahrcheck · ${esc(st?st.name:"")}</div>
     <p class="muted-p" style="font-size:13px;margin:-4px 0 14px;">${isoDE(l.date)} · ${l.von} · ${(CAL_ARTEN[l.art]||CAL_ARTEN.fahrstunde).lab}</p>
@@ -9837,30 +9933,61 @@ function refreshCurrentView(){
 }
 
 function nextStudentCardHTML(){
-  const e=nextLessonEvent();
+  const events=nextLessonEvents(4);
+  const e=events[0];
   if(!e)return `<div class="next-stud none"><div class="ns-ic">${ICN.cal||""}</div><div class="ns-body"><div class="ns-label">Nächster Schüler</div><div class="ns-empty">Keine Fahrstunde geplant</div></div></div>`;
   const isToday=e.date===todayISO();
   const d=parseISO(e.date);
   const dlabel=(isToday?"Heute":deWeekdayLong(e.date))+", "+d.getDate()+". "+deMonth(d.getMonth());
   const artLab=(CAL_ARTEN[e.art]||{lab:"Fahrstunde"}).lab;
+  const fzName=e.fahrzeug?esc(e.fahrzeug):null;
+  const weiterehtml=events.slice(1).map(ev2=>{
+    const isT2=ev2.date===todayISO();
+    const dl2=isT2?"heute":deWeekday(ev2.date);
+    return `<div class="ns-next-row" data-nsopen2="${ev2.sid}"><span>${dl2} ${ev2.von}</span><span class="ns-next-name">${esc(ev2.name)}</span></div>`;
+  }).join("");
   return `<div class="next-stud" data-nsopen="${e.sid}">
     <div class="ns-top">
       <div class="ns-label">Nächster Schüler${isToday?' · heute':''}</div>
       <div class="ns-time">${e.von}<span>–${e.bis}</span></div>
     </div>
     <div class="ns-name">${esc(e.name)}</div>
-    <div class="ns-meta">${dlabel} · ${artLab}</div>
+    <div class="ns-meta">${dlabel} · ${artLab}${fzName?` · 🚗 ${fzName}`:''}</div>
+    <div id="nsWetterHinweis"></div>
     <div class="ns-actions">
       <button class="ns-act" data-nsact="other" data-lid="${e.id}" data-kind="${e.kind}">Anderer Schüler</button>
       <button class="ns-act" data-nsact="noshow" data-lid="${e.id}" data-kind="${e.kind}">Nicht erschienen</button>
       <button class="ns-act" data-nsact="cancel" data-lid="${e.id}" data-kind="${e.kind}">Abgebrochen</button>
     </div>
+    ${weiterehtml?`<div class="ns-next-list">${weiterehtml}</div>`:''}
   </div>`;
+}
+// Kurzer Wetter-Hinweis direkt am nächsten Termin (Bereich 1, Punkt 3) - lädt still nach,
+// damit das Dashboard nicht auf die Wetter-API warten muss.
+async function _fillNsWetterHinweis(){
+  const box=document.getElementById("nsWetterHinweis"); if(!box)return;
+  if(!DB.weatherCfg||!DB.weatherCfg.apiKey)return;
+  const e=nextLessonEvent(); if(!e)return;
+  try{
+    let text=null;
+    if(e.date===todayISO()){
+      const heute=await fetchWeather();
+      if(heute)text=`${weatherEmoji(heute.icon)} ${heute.temp}°C · ${esc(heute.desc||"")}`;
+    } else {
+      const tage=await fetchWeatherForecast();
+      const treffer=(tage||[]).find(t=>t.date===e.date);
+      if(treffer)text=`${weatherEmoji(treffer.icon)} ${treffer.min}–${treffer.max}°C am ${deWeekday(e.date)}`;
+    }
+    const box2=document.getElementById("nsWetterHinweis"); if(!box2||!text)return;
+    box2.innerHTML=`<div class="ns-wetter">${text}</div>`;
+  }catch(err){ /* still - Wetter ist ein Bonus, kein Muss */ }
 }
 function bindNextStudent(){
   const card=document.querySelector("[data-nsopen]");
-  if(card)card.addEventListener("click",e=>{ if(e.target.closest(".ns-act"))return; routeDetail(card.dataset.nsopen); });
+  if(card)card.addEventListener("click",e=>{ if(e.target.closest(".ns-act")||e.target.closest("[data-nsopen2]"))return; routeDetail(card.dataset.nsopen); });
   document.querySelectorAll(".ns-act").forEach(b=>b.addEventListener("click",e=>{ e.stopPropagation(); nsQuickAction(b.dataset.nsact,b.dataset.lid,b.dataset.kind); }));
+  document.querySelectorAll("[data-nsopen2]").forEach(row=>row.addEventListener("click",e=>{ e.stopPropagation(); routeDetail(row.dataset.nsopen2); }));
+  _fillNsWetterHinweis();
 }
 function nsQuickAction(act,lid,kind,retFn){
   retFn=retFn||routeDashboard;
@@ -10161,6 +10288,66 @@ function routeWetter(w){
     }).join("");
   });
 }
+// Dashboard-Kacheln in eigener Reihenfolge (Bereich 1, Punkt 9) - Pfeile statt echtem Ziehen,
+// weil das auf einem Touchscreen zuverlässiger funktioniert als Drag & Drop.
+const DASH_TILE_DEFS={
+  fahrschueler:()=>true, pruefungsreif:()=>true, quote:()=>true,
+  wocheverdienst:()=>sichtbar('dash_wocheverdienst'), naechstetheorie:()=>sichtbar('dash_naechstetheorie')
+};
+function _dashTileOrder(){
+  const def=["fahrschueler","pruefungsreif","quote","wocheverdienst","naechstetheorie"];
+  let order=Array.isArray(DB.dashTileOrder)?DB.dashTileOrder.slice():def;
+  def.forEach(k=>{ if(!order.includes(k))order.push(k); });
+  order=order.filter(k=>def.includes(k));
+  return order;
+}
+function _dashTilesHTML(act,ready,q,wocheEuro,naechsteTheorie){
+  const edit=!!DB.dashTilesEdit;
+  const tileHTML={
+    fahrschueler:`<button class="d-tile" ${edit?'':'data-go="home"'}><div class="badge">${ICN.users}</div><div class="dt-n" data-count="${act}">0</div><div class="dt-l">Meine Fahrschüler</div></button>`,
+    pruefungsreif:`<button class="d-tile" ${edit?'':'data-go="pruef"'}><div class="badge">${ICN.trophy}</div><div class="dt-n" data-count="${ready}">0</div><div class="dt-l">Prüfungsreif</div></button>`,
+    quote:`<button class="d-tile" ${edit?'':'data-go="stats"'}><div class="badge">${ICN.bolt}</div>${q.pct==null?'<div class="dt-n">–</div>':`<div class="dt-n" data-count="${q.pct}" data-suffix="%">0</div>`}<div class="dt-l">Quote · Monat</div></button>`,
+    wocheverdienst:(()=>{
+      const sichtbarWert=_verdienstPinCheck();
+      return `<button class="d-tile" ${edit?'':'data-go="verdienstwoche"'}><div class="badge" ${edit?'':'onclick="event.stopPropagation();unlockVerdienst();"'} style="cursor:pointer;" title="${sichtbarWert?'Gesperrt: PIN in Verdienst-Statistik':'Entsperren'}">${sichtbarWert?'👁️':'🙈'}</div>${sichtbarWert?`<div class="dt-n" data-count="${wocheEuro}">0</div>`:`<div class="dt-n" style="font-size:16px;letter-spacing:2px;">••••</div>`}<div class="dt-l">Diese Woche verdient</div></button>`;
+    })(),
+    naechstetheorie:`<button class="d-tile" ${edit?'':(naechsteTheorie?`data-go="theorie" data-theoriedate="${naechsteTheorie.date}"`:'')}><div class="badge">📘</div><div class="dt-n" style="font-size:15px;">${naechsteTheorie?isoDE(naechsteTheorie.date).slice(0,5):'–'}</div><div class="dt-l">Nächste Theorie</div></button>`
+  };
+  const order=_dashTileOrder().filter(k=>DASH_TILE_DEFS[k]());
+  return order.map((k,i)=>{
+    const html=tileHTML[k];
+    if(!edit)return html;
+    return `<div class="d-tile-editwrap" data-tilekey="${k}">${html}<div class="d-tile-arrows">
+      <button class="d-tile-arrow" data-tilemove="up" data-key="${k}" ${i===0?'disabled':''} aria-label="nach oben">▲</button>
+      <button class="d-tile-arrow" data-tilemove="down" data-key="${k}" ${i===order.length-1?'disabled':''} aria-label="nach unten">▼</button>
+    </div></div>`;
+  }).join("");
+}
+function _bindDashTiles(act,ready,q,wocheEuro,naechsteTheorie){
+  const editBtn=$("#dashTilesEditBtn");
+  if(editBtn)editBtn.addEventListener("click",()=>{ DB.dashTilesEdit=!DB.dashTilesEdit; save(); routeDashboard(); });
+  document.querySelectorAll("[data-tilemove]").forEach(b=>b.addEventListener("click",()=>{
+    const order=_dashTileOrder(); const key=b.dataset.key; const dir=b.dataset.tilemove;
+    const i=order.indexOf(key); const j=dir==="up"?i-1:i+1;
+    if(j<0||j>=order.length)return;
+    [order[i],order[j]]=[order[j],order[i]];
+    DB.dashTileOrder=order; save();
+    const wrap=$("#dashTilesWrap"); if(wrap)wrap.innerHTML=_dashTilesHTML(act,ready,q,wocheEuro,naechsteTheorie);
+    _bindDashTiles(act,ready,q,wocheEuro,naechsteTheorie);
+    document.querySelectorAll(".d-tile .dt-n[data-count]").forEach(el=>countUp(el,+el.dataset.count,el.dataset.suffix||""));
+  }));
+}
+// Kurzer "Was ist neu"-Hinweis nach App-Updates (Bereich 1, Punkt 10) - einmalig pro Version,
+// verschwindet danach von selbst und kommt erst beim nächsten echten Update wieder.
+const DASH_WAS_NEU_TEXT="Neu: Urlaub blockieren mit automatischer Pauschale, Video-Push zur Fahr-Akademie.";
+function _whatsNewBannerHTML(){
+  if(!DASH_WAS_NEU_TEXT||DB.dashWasNeuGesehen===APP_VERSION)return "";
+  return `<div class="was-neu-banner" id="wasNeuBanner"><span>✨ ${esc(DASH_WAS_NEU_TEXT)}</span><button id="wasNeuSchliessen" aria-label="Schließen">✕</button></div>`;
+}
+function _bindWasNeuBanner(){
+  const btn=$("#wasNeuSchliessen"); if(!btn)return;
+  btn.addEventListener("click",()=>{ DB.dashWasNeuGesehen=APP_VERSION; save(); const el=$("#wasNeuBanner"); if(el)el.remove(); });
+}
 function routeDashboard(){
   ensureDB();
   // KAPAZITÄTS-RECHNUNG vorbereiten (wird unten als Card gerendert)
@@ -10197,16 +10384,9 @@ function routeDashboard(){
     ${sichtbar('dash_nextexam')?nextExamDashCard():''}
     ${sichtbar('dash_nextstudent')?nextStudentCardHTML():''}
     ${sichtbar('dash_fcpending')?fcPendingCardHTML():''}
-    <div class="dash-tiles">
-      <button class="d-tile" data-go="home"><div class="badge">${ICN.users}</div><div class="dt-n" data-count="${act}">0</div><div class="dt-l">Meine Fahrschüler</div></button>
-      <button class="d-tile" data-go="pruef"><div class="badge">${ICN.trophy}</div><div class="dt-n" data-count="${ready}">0</div><div class="dt-l">Prüfungsreif</div></button>
-      <button class="d-tile" data-go="stats"><div class="badge">${ICN.bolt}</div>${q.pct==null?'<div class="dt-n">–</div>':`<div class="dt-n" data-count="${q.pct}" data-suffix="%">0</div>`}<div class="dt-l">Quote · Monat</div></button>
-      ${sichtbar('dash_wocheverdienst')?(()=>{
-        const sichtbarWert=_verdienstPinCheck();
-        return `<button class="d-tile" data-go="verdienstwoche"><div class="badge" onclick="event.stopPropagation();unlockVerdienst();" style="cursor:pointer;" title="${sichtbarWert?'Gesperrt: PIN in Verdienst-Statistik':'Entsperren'}">${sichtbarWert?'👁️':'🙈'}</div>${sichtbarWert?`<div class="dt-n" data-count="${wocheEuro}">0</div>`:`<div class="dt-n" style="font-size:16px;letter-spacing:2px;">••••</div>`}<div class="dt-l">Diese Woche verdient</div></button>`;
-      })():''}
-      ${sichtbar('dash_naechstetheorie')?`<button class="d-tile" ${naechsteTheorie?`data-go="theorie" data-theoriedate="${naechsteTheorie.date}"`:''}><div class="badge">📘</div><div class="dt-n" style="font-size:15px;">${naechsteTheorie?isoDE(naechsteTheorie.date).slice(0,5):'–'}</div><div class="dt-l">Nächste Theorie</div></button>`:''}
-    </div>
+    ${_whatsNewBannerHTML()}
+    <div class="dash-tiles-head"><span>Kacheln</span><button class="mini-btn" id="dashTilesEditBtn">${DB.dashTilesEdit?'Fertig':'Anordnen'}</button></div>
+    <div class="dash-tiles" id="dashTilesWrap">${_dashTilesHTML(act,ready,q,wocheEuro,naechsteTheorie)}</div>
     ${sichtbar('dash_capacity')?capacityCardHTML():''}
   </div>`;
   document.querySelectorAll(".d-tile .dt-n[data-count]").forEach(el=>countUp(el,+el.dataset.count,el.dataset.suffix||""));
@@ -10225,6 +10405,8 @@ function routeDashboard(){
   bindNextStudent();
   bindFC();
   bindBackupBanner();
+  _bindDashTiles(act,ready,q,wocheEuro,naechsteTheorie);
+  _bindWasNeuBanner();
   if(DB.weatherCfg&&DB.weatherCfg.apiKey){
     fetchWeather().then(w=>{ const slot=$("#weatherSlot"); if(slot&&w){slot.innerHTML=weatherWidgetHTML(w);bindWeatherWidget(w);} });
   }
@@ -10411,7 +10593,7 @@ function _verdienstModulHTMLContent(){
     bisHtml=`<div class="th-goal"><div class="thg-lab">Für den Bonus noch legen</div><div class="thg-val">${restUE} UE · ~${Math.ceil(restUE/2)} Fahrstd.</div></div>`;
   }
   const mk=monatsKennzahlen(moStart,moEnd);
-  const fcAusnahmenGesamt=mk.fcV1+mk.fcV2+mk.fcGeschenkt;
+  const fcAusnahmenGesamt=mk.fcV1+mk.fcV2+mk.fcGeschenkt+mk.fcBewusst;
   const feiertagsPauschale=(v&&v.feiertagsUrlaubsPauschale)||0;
   const feiertageMonat=feiertagsTageInRange(moStart,moEnd);
   const urlaubMonat=urlaubsTageInRange(moStart,moEnd);
@@ -10454,12 +10636,12 @@ function _verdienstModulHTMLContent(){
       ${miniStatAnim("UE gesamt",gesamtUE,"","Monat")}
       ${miniStatAnim("Theorie",mk.theorieCount,"","Termine")}
     </div>
-    ${fcAusnahmenGesamt?`<div class="vd-offen" style="margin-top:2px;">⚠ FC-Ausnahmen: ${mk.fcV1+mk.fcV2}× vergessen, ${mk.fcGeschenkt}× geschenkt · <b>${_eurMasked(mk.fcVerlust)}</b> entgangen</div>`:`<p class="muted-p" style="font-size:12.5px;margin-top:2px;">Keine FC-Ausnahmen diesen Monat ✓</p>`}
+    ${fcAusnahmenGesamt?`<div class="vd-offen" style="margin-top:2px;">⚠ FC-Ausnahmen: ${mk.fcV1+mk.fcV2}× vergessen${mk.fcBewusst?`, ${mk.fcBewusst}× bewusst nur 1`:''}, ${mk.fcGeschenkt}× geschenkt · <b>${_eurMasked(mk.fcVerlust)}</b> entgangen</div>`:`<p class="muted-p" style="font-size:12.5px;margin-top:2px;">Keine FC-Ausnahmen diesen Monat ✓</p>`}
   </div>`;
 }
 // Kennzahlen für die erweiterte Monats-Statistik (Bereich 7, Punkt 2)
 function monatsKennzahlen(fromISO,toISO){
-  let fahrstundenCount=0, theorieCount=0, fcV1=0, fcV2=0, fcGeschenkt=0, fcVerlust=0;
+  let fahrstundenCount=0, theorieCount=0, fcV1=0, fcV2=0, fcGeschenkt=0, fcBewusst=0, fcVerlust=0;
   let cur=fromISO, guard=0;
   while(cur<=toISO && guard++<40){
     (DB.lessons||[]).filter(l=>l.date===cur&&!l._synthetic).forEach(l=>{
@@ -10468,6 +10650,7 @@ function monatsKennzahlen(fromISO,toISO){
         fahrstundenCount++;
         const ueFull=ueOf(l.art,l.von,l.bis,l.tatsaechlicheDauer);
         if(l.fc==="v1"){ fcV1++; fcVerlust+=Math.round(ueFull/2*DB.verdienst.proUE); }
+        else if(l.fc==="halb_bewusst"){ fcBewusst++; fcVerlust+=Math.round(ueFull/2*DB.verdienst.proUE); }
         else if(l.fc==="v2"){ fcV2++; fcVerlust+=Math.round(ueFull*DB.verdienst.proUE); }
         else if(l.fc==="geschenkt"){ fcGeschenkt++; fcVerlust+=Math.round(ueFull*DB.verdienst.proUE); }
       }else if(l.art==="theorie"){ theorieCount++; }
@@ -10477,7 +10660,7 @@ function monatsKennzahlen(fromISO,toISO){
   const ex=(DB.exams||[]).filter(e=>e.date&&e.date>=fromISO&&e.date<=toISO);
   const examCount=ex.length, examPass=ex.filter(e=>e.result==="pass").length;
   const examQuote=examCount?Math.round(examPass/examCount*100):null;
-  return {fahrstundenCount,theorieCount,examCount,examPass,examQuote,fcV1,fcV2,fcGeschenkt,fcVerlust};
+  return {fahrstundenCount,theorieCount,examCount,examPass,examQuote,fcV1,fcV2,fcGeschenkt,fcBewusst,fcVerlust};
 }
 function eur(n){ return (Math.round(n)).toLocaleString("de-DE")+" €"; }
 // Jahres-Rückblick (Bereich 7, Punkt 4): Gesamt-Verdienst, Ø/Monat, bester Monat.
@@ -11158,11 +11341,16 @@ function getMorgenPruefungen(){
   });
   return out.sort((a,b)=>a.von.localeCompare(b.von));
 }
+// Schüler, die heute Geburtstag haben (Bereich 3, Punkt 6) - Tag+Monat verglichen, Jahr egal
+function getGeburtstageHeute(){
+  const heute=todayISO(); const md=heute.slice(5); // "MM-DD"
+  return (DB.students||[]).filter(s=>s.geburtsdatum&&s.geburtsdatum.slice(5)===md);
+}
 
 function updateBell(){
   const btn=document.getElementById("bellBtn");
   if(!btn) return;
-  const list=getMorgenTermine().length + getMorgenPruefungen().length;
+  const list=getMorgenTermine().length + getMorgenPruefungen().length + getGeburtstageHeute().length;
   btn.classList.remove("bell-red","bell-green");
   btn.classList.add(list?"bell-red":"bell-green");
 }
@@ -11170,6 +11358,10 @@ function updateBell(){
 function openBellSheet(){
   const list=getMorgenTermine();
   const pruefList=getMorgenPruefungen();
+  const geburtstage=getGeburtstageHeute();
+  const geburtstagRows=geburtstage.map(s=>`<div class="es-act" style="display:flex;justify-content:space-between;align-items:center;">
+    <span>🎂 ${esc(s.name)} hat heute Geburtstag</span>
+  </div>`).join("");
   const rows=list.length? list.map(l=>{
     const s=DB.students.find(x=>x.id===l.sid);
     if(!s) return "";
@@ -11190,9 +11382,9 @@ function openBellSheet(){
       <span>🏆 ${esc(s.name)} · ${p.von} Uhr</span><span style="color:#25D366;">WhatsApp ›</span>
     </a>`;
   }).join("") : "";
-  const alleRows=rows+pruefRows;
-  openSheet(`<div class="sheet-h">🔔 Erinnerungen für morgen</div>
-    <div class="es-actions">${alleRows||`<p class="muted-p" style="text-align:center;padding:20px 0;">Weder Fahrstunden noch Prüfungen morgen — nichts zu erinnern 👍</p>`}</div>`);
+  const alleRows=geburtstagRows+rows+pruefRows;
+  openSheet(`<div class="sheet-h">🔔 Erinnerungen</div>
+    <div class="es-actions">${alleRows||`<p class="muted-p" style="text-align:center;padding:20px 0;">Nichts anstehend — weder heute noch morgen 👍</p>`}</div>`);
 }
 
 const bellBtn=document.getElementById("bellBtn");
