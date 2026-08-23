@@ -3487,7 +3487,14 @@ async function renderFsEmpfehlungenListe(){
   if(error){el2.innerHTML='<p class="muted-p" style="font-size:12.5px;">Konnte nicht geladen werden. <button class="btn btn-ghost" style="padding:4px 10px;margin-left:6px;" onclick="renderFsEmpfehlungenListe()">Erneut versuchen</button></p>';return;}
   if(!data||!data.length){el2.innerHTML='<p class="muted-p" style="font-size:12.5px;">Noch keine Empfehlungen.</p>';return;}
   const STATUS_LABEL={empfohlen:"Empfohlen",zugangsdaten_ausgegeben:"Zugangsdaten ausgegeben",bezahlt:"Bezahlt ✓"};
-  el2.innerHTML=data.map(e=>`<div class="fs-card" data-empf="${e.id}">
+  // Plattform-Einnahmen-Summe: bewusst nur für dich sichtbar (super_admin), nicht für Büro/andere Fahrlehrer.
+  const platSummeHTML=(()=>{
+    if(!isSuperAdmin())return "";
+    const summe=data.filter(e=>e.status==="bezahlt"&&e.aufteilung&&e.aufteilung.plattform!=null).reduce((a,e)=>a+e.aufteilung.plattform,0);
+    if(!summe)return "";
+    return `<div class="fs-card" style="background:rgba(58,115,80,.12);border-color:rgba(58,115,80,.35);margin-bottom:8px;"><div class="fs-name">💰 Deine Plattform-Einnahmen</div><div class="fs-sub">${eur(summe)} aus bezahlten Vermittlungen insgesamt — nur für dich sichtbar.</div></div>`;
+  })();
+  el2.innerHTML=platSummeHTML+data.map(e=>`<div class="fs-card" data-empf="${e.id}">
     <div class="fs-name">${e.typ==="simulator"?"🕹️":"🎓"} ${esc(e.schueler_name)} <span style="font-size:11px;color:var(--muted);font-weight:400;">· ${e.typ==="simulator"?"Simulator":"Videoakademie"}</span></div>
     <div class="fs-sub">von ${esc(e.fahrlehrer_name)} · ${isoDE((e.erstellt_am||"").slice(0,10))} · <b>${STATUS_LABEL[e.status]||e.status}</b>${e.betrag!=null?` · ${eur(e.betrag)}`:''}</div>
     <div class="fs-actions">
@@ -3531,12 +3538,17 @@ async function openEmpfehlungBezahltSheet(id,empf){
       return;
     }
     const split=cfg.splitKollege||{};
-    if(!betrag||split.akademie==null||split.fahrschule==null||split.fahrlehrer==null){
+    if(!betrag||split.akademie==null||split.fahrschule==null||split.fahrlehrer==null||split.plattform==null){
       box.innerHTML=`<p class="muted-p" style="font-size:12px;">Aufteilung noch nicht konfiguriert (Einstellungen → Fahrschule-Verwaltung → Akademie-Vermittlung) — Betrag wird trotzdem gespeichert.</p>`;
       return;
     }
-    const akademieEuro=Math.round(betrag*split.akademie/100), fsEuro=Math.round(betrag*split.fahrschule/100), flEuro=Math.round(betrag*split.fahrlehrer/100);
-    box.innerHTML=`<div class="res-block" style="animation:none;padding:12px;"><div style="font-size:12.5px;display:flex;justify-content:space-between;"><span>Akademie</span><b>${eur(akademieEuro)}</b></div><div style="font-size:12.5px;display:flex;justify-content:space-between;"><span>Fahrschule</span><b>${eur(fsEuro)}</b></div><div style="font-size:12.5px;display:flex;justify-content:space-between;"><span>${esc(empf.fahrlehrer_name)}</span><b>${eur(flEuro)}</b></div></div>`;
+    const akademieEuro=Math.round(betrag*split.akademie/100), fsEuro=Math.round(betrag*split.fahrschule/100),
+      flEuro=Math.round(betrag*split.fahrlehrer/100), platEuro=Math.round(betrag*split.plattform/100);
+    box.innerHTML=`<div class="res-block" style="animation:none;padding:12px;">
+      <div style="font-size:12.5px;display:flex;justify-content:space-between;"><span>${esc(empf.fahrlehrer_name)}</span><b>${eur(flEuro)}</b></div>
+      <div style="font-size:12.5px;display:flex;justify-content:space-between;"><span>Fahrschule</span><b>${eur(fsEuro)}</b></div>
+      <div style="font-size:12.5px;display:flex;justify-content:space-between;"><span>Plattform</span><b>${eur(platEuro)}</b></div>
+      <div style="font-size:12.5px;display:flex;justify-content:space-between;"><span>Akademie</span><b>${eur(akademieEuro)}</b></div></div>`;
   };
   $("#empfBetrag").addEventListener("input",preview); preview();
   $("#empfCancel").addEventListener("click",closeSheet);
@@ -3547,8 +3559,8 @@ async function openEmpfehlungBezahltSheet(id,empf){
     let aufteilung=null;
     if(!istEigen){
       const split=cfg.splitKollege||{};
-      if(split.akademie!=null&&split.fahrschule!=null&&split.fahrlehrer!=null){
-        aufteilung={akademie:Math.round(betrag*split.akademie/100),fahrschule:Math.round(betrag*split.fahrschule/100),fahrlehrer:Math.round(betrag*split.fahrlehrer/100)};
+      if(split.akademie!=null&&split.fahrschule!=null&&split.fahrlehrer!=null&&split.plattform!=null){
+        aufteilung={akademie:Math.round(betrag*split.akademie/100),fahrschule:Math.round(betrag*split.fahrschule/100),fahrlehrer:Math.round(betrag*split.fahrlehrer/100),plattform:Math.round(betrag*split.plattform/100)};
       }
     }
     await supa.from("fahrschule_empfehlungen").update({status:"bezahlt",betrag,aufteilung,aktualisiert_am:new Date().toISOString()}).eq("id",id);
@@ -4914,7 +4926,7 @@ window.addEventListener("load", () => {
 const STORE_KEY="serband-app-v1";
 /* Build-Version: bei jeder Auslieferung hier das Datum aktualisieren.
    Wird in den Einstellungen angezeigt + für den Update-Hinweis genutzt. */
-const APP_VERSION="2026.09.02";
+const APP_VERSION="2026.09.03";
 // Nutzungsbedingungen & Haftungsausschluss (Bereich: rechtliche Absicherung) - Version hochzählen
 // und alle Nutzer müssen erneut zustimmen, sobald sich der Text inhaltlich ändert.
 const AGB_VERSION="1.0";
@@ -6042,6 +6054,37 @@ function buildSummary(s,E){
   return lines.join("\n");
 }
 
+/* Team-Ansicht (Bereich 4, Punkt 5): Vertretungs-Fahrlehrer sehen bei fremden Schülern
+   nur eine reduzierte Kurzinfo statt des vollen Persönlichkeitsprofils. */
+function istFremderSchuelerFuerMich(s){
+  return !!(_authProfile && _authProfile.rolle==="fahrlehrer" && s._fahrlehrerId && _authProfile.id && s._fahrlehrerId!==_authProfile.id);
+}
+function renderTeamKurzinfo(s,E,I,EX){
+  const vorname=(s.name||"").split(" ")[0]||"ihm/ihr";
+  return `<div class="view-inner view-read fade-up">
+    <div class="back-row"><button class="back-btn" id="backBtn">${ICN.back} ${esc(s.name)}</button></div>
+    <div class="res-hero">
+      <div class="res-dot" style="background:${PROFILE[E.top].hex}"><span class="inner">${PROFILE[E.top].word.charAt(0)}</span></div>
+      <div class="res-main">${esc(I.name)} – ${esc(I.label)}</div>
+      <div class="res-sub">Team-Kurzinfo${s._fahrlehrerName?` · Schüler von ${esc(s._fahrlehrerName)}`:""}</div>
+    </div>
+    <div class="res-block" style="animation-delay:.4s"><h4>Wichtig für diese Stunde</h4><p>${esc(EX.druck)}</p></div>
+    <div class="res-block" style="animation-delay:.5s"><h4>So sprichst du ${esc(vorname)} an</h4><p>${esc(firstSentence(I.talk))}</p></div>
+    <div class="res-block" style="animation-delay:.6s"><h4>Lieber vermeiden</h4><ul>${I.stress.slice(0,2).map(x=>`<li>${esc(x)}</li>`).join("")}</ul></div>
+    <p style="font-size:12px;color:var(--faint);margin-top:4px;padding:0 4px;">Reduzierte Ansicht für Vertretungsstunden. Das volle Profil sieht nur ${esc(s._fahrlehrerName||"der zuständige Fahrlehrer")}.</p>
+  </div>`;
+}
+/* Musterabgleich (Bereich 4, Punkt 9): grobe Orientierung anhand der eigenen Schülerbasis.
+   Erst ab 3 anderen ausgefüllten Bögen sinnvoll — sonst irreführende Prozentzahl. */
+function musterabgleichBlock(s,E){
+  const andere=(DB.students||[]).filter(x=>x.id!==s.id&&x.bogen&&x.bogen.colorPct);
+  if(andere.length<3)return "";
+  const gleich=andere.filter(x=>evalBogen(x.bogen).top===E.top).length;
+  const pct=Math.round((gleich/andere.length)*100);
+  return `<div class="res-block" style="animation-delay:.42s"><h4>Muster</h4>
+    <p>Ähnliches Profil wie bei ${pct} % deiner Schüler mit ausgefülltem Bogen (${esc(PROFILE[E.top].word)}-geprägt) – grobe Orientierung, kein Ersatz für den Blick aufs Individuum.</p></div>`;
+}
+
 /* ============================================================
    BOGEN: Wizard
    ============================================================ */
@@ -6142,6 +6185,11 @@ function routeProfil(id,justDone){
   const b=s.bogen,E=evalBogen(b);
   const I=COLOR_INFO[E.top],I2=COLOR_INFO[E.second];
   const EX=COLOR_EXTRA[E.top],EX2=COLOR_EXTRA[E.second];
+  if(istFremderSchuelerFuerMich(s)){
+    view.innerHTML=renderTeamKurzinfo(s,E,I,EX);
+    $("#backBtn").addEventListener("click",()=>routeDetail(id));
+    return;
+  }
   const L=LERN_INFO[E.lTop];
   const cp=b.colorPct;
   const headline=E.pure?`${I.name} – ${I.label}`:`${I.name}-${I2.name} · ${E.blend.label}`;
@@ -6167,6 +6215,7 @@ function routeProfil(id,justDone){
       <div class="res-sub">${esc(prop)}<br><span style="color:var(--faint)">Grundausrichtung: ${esc(axisDesc(E.extra,AXES.extra))}; ${esc(axisDesc(E.bez,AXES.bez))}. · Bogen vom ${esc(b.date||"—")}</span></div>
     </div>
     ${colorChartBlock(cp,(s.name||"").split(" ")[0]||"ihm/ihr")}
+    ${musterabgleichBlock(s,E)}
     <div class="res-block" style="animation-delay:.45s"><h4>Wer dieser Mensch ist</h4><p>${esc(who)}</p></div>
     <div class="res-block" style="animation-delay:.5s"><h4>Stärken &amp; Wachstum</h4>
       <div class="sub-h">Das kann er gut</div><ul>${staerken.map(x=>`<li>${esc(x)}</li>`).join("")}</ul>
@@ -6429,8 +6478,79 @@ function buildSonder(s){
         const c=$("#c_"+sd.key);if(c)c.textContent=sfCount(arr);
         save();refreshPlanRing(s);});
       cell.querySelector(".cal").addEventListener("click",e=>{e.stopPropagation();
-        _cal={sid:s.id,kind:"sonder",n:null,grp:sd.key,idx:i};openPicker(arr[i]);});
+        openSonderKalenderSheet(s.id,sd.key,i);});
     });
+  });
+}
+/* Bereich 5, Punkt 1 (Option c): reines Abhaken im Ausbildungsplan legt KEINEN Kalendertermin an.
+   Nur über das Kalender-Symbol wird zusätzlich nach der Uhrzeit gefragt und ein echter Termin
+   angelegt/aktualisiert. Findet sich am gewählten Tag bereits ein unverknüpfter Termin dieses
+   Schülers (z. B. eine normale Übungsfahrt), wird dieser in die Sonderfahrt umgewandelt statt
+   einen Duplikat-Termin zu erzeugen — inkl. Undo-Toast, falls das versehentlich passiert. */
+function openSonderKalenderSheet(sid,grp,idx){
+  const s=DB.students.find(x=>x.id===sid);if(!s)return;
+  ensure(s);
+  const arr=s.plan.sonder[grp]||(s.plan.sonder[grp]=[]);
+  const cur=arr[idx];
+  const label=SF_LABEL[grp]||"Sonderfahrt";
+  const key=sid+":"+grp+":"+idx;
+  const ex=(DB.lessons||[]).find(l=>l.srcSonder===key);
+  const defDate=(ex&&ex.date)||(cur&&cur.iso)||todayISO();
+  const defTime=(ex&&ex.von)||(grp==="nacht"?"19:30":"10:00");
+  const kandidat=!ex&&(DB.lessons||[]).find(l=>l.sid===sid&&l.date===defDate&&!l.srcSonder&&["fahrstunde","sonder"].includes(l.art)&&l.status!=="abgebrochen"&&l.status!=="nicht erschienen");
+  openSheet(`<div class="sheet-h">${esc(label)} — Kalendertermin</div>
+    <p class="muted-p" style="margin:-4px 0 14px;font-size:13px;">${ex?"Termin verschieben oder Uhrzeit ändern.":kandidat?`Am ${esc(isoDE(defDate))} steht bereits ein Termin (${esc(kandidat.note||"Übungsfahrt")}) — der wird bei Bestätigung zu „${esc(label)}" umgewandelt.`:"Datum und Uhrzeit für den neuen Kalendereintrag."}</p>
+    <div class="field"><label>Datum</label><input type="date" id="sfkDate" value="${esc(defDate)}"></div>
+    <div class="field"><label>Uhrzeit</label><input type="time" id="sfkTime" value="${esc(defTime)}"></div>
+    <div class="btn-row"><button class="btn btn-ghost" id="sfkCancel" style="flex:0;padding:13px 18px;">Abbrechen</button>
+      <button class="btn btn-primary" id="sfkSave">${ex?"Aktualisieren":"Übernehmen"}</button></div>
+    ${ex?`<button class="btn btn-ghost btn-full" id="sfkRemove" style="margin-top:8px;color:var(--rot);">Kalendereintrag entfernen</button>`:""}`);
+  $("#sfkCancel").addEventListener("click",closeSheet);
+  $("#sfkSave").addEventListener("click",()=>{
+    const date=$("#sfkDate").value,von=$("#sfkTime").value;
+    if(!date||!von){toast("Bitte Datum und Uhrzeit angeben");return;}
+    closeSheet();
+    commitSonderZeit(s,grp,idx,date,von);
+  });
+  const rmBtn=$("#sfkRemove");
+  if(rmBtn)rmBtn.addEventListener("click",()=>{
+    removeSonderFromKalender(s,grp,idx);
+    closeSheet();toast("Kalendereintrag entfernt");buildSonder(s);
+  });
+}
+function commitSonderZeit(s,grp,idx,date,von){
+  ensure(s);
+  const arr=s.plan.sonder[grp]||(s.plan.sonder[grp]=[]);
+  const vorherPlan=arr[idx]?Object.assign({},arr[idx]):null;
+  arr[idx]={d:isoToShort(date),iso:date};
+  const key=s.id+":"+grp+":"+idx;
+  const label=SF_LABEL[grp]||"Sonderfahrt",kuerzel=SF_KUERZEL[grp]||"SF";
+  const bis=min2hm(hm2min(von)+(DB.workCfg.blockMin||90));
+  const ex=(DB.lessons||[]).find(l=>l.srcSonder===key);
+  if(ex){
+    ex.date=date;ex.von=von;ex.bis=bis;ex.art="sonder";ex.note=label;
+    save();refreshPlanRing(s);buildSonder(s);
+    toast(`${label}-Termin aktualisiert`);
+    return;
+  }
+  const kandidat=(DB.lessons||[]).find(l=>l.sid===s.id&&l.date===date&&!l.srcSonder&&["fahrstunde","sonder"].includes(l.art)&&l.status!=="abgebrochen"&&l.status!=="nicht erschienen");
+  if(kandidat){
+    const vorherLesson={art:kandidat.art,note:kandidat.note,von:kandidat.von,bis:kandidat.bis};
+    kandidat.art="sonder";kandidat.note=label;kandidat.von=von;kandidat.bis=bis;kandidat.srcSonder=key;
+    save();refreshPlanRing(s);buildSonder(s);
+    toastUndo(`Termin zu ${label} (${kuerzel}) umgewandelt`,()=>{
+      Object.assign(kandidat,vorherLesson);delete kandidat.srcSonder;
+      arr[idx]=vorherPlan;
+      save();refreshPlanRing(s);buildSonder(s);
+    });
+    return;
+  }
+  addLesson({date,von,bis,art:"sonder",sid:s.id,note:label,srcSonder:key});
+  refreshPlanRing(s);buildSonder(s);
+  toastUndo(`${label} für ${isoDE(date)} in den Kalender übernommen`,()=>{
+    const l=(DB.lessons||[]).find(x=>x.srcSonder===key);if(l)deleteLesson(l.id);
+    arr[idx]=vorherPlan;
+    save();refreshPlanRing(s);buildSonder(s);
   });
 }
 function openPicker(cur){
@@ -7533,14 +7653,26 @@ async function renderAkademieVermittlungCfg(){
   el2.innerHTML=`
     <div class="field"><label>Betrag pro Videoakademie-Vermittlung (€)</label><input type="number" id="cfgBetragAkademie" value="${v('betragAkademie')}" placeholder="noch offen" min="0"></div>
     <div class="field"><label>Betrag pro Simulator-Vermittlung (€)</label><input type="number" id="cfgBetragSimulator" value="${v('betragSimulator')}" placeholder="noch offen" min="0"></div>
-    <p class="muted-p" style="font-size:12px;margin:2px 0 4px;">Wenn du selbst vermittelst, ist das ein reiner Direktverkauf ohne Aufteilung — das Geld bleibt komplett bei dir. Die folgende Aufteilung gilt nur, wenn ein Kollege vermittelt hat.</p>
-    <p style="font-size:12.5px;color:var(--muted);margin:10px 0 4px;">Aufteilung, wenn <b>ein Kollege</b> vermittelt hat (in %):</p>
-    <div style="display:flex;gap:8px;">
-      <input type="number" id="cfgKollegeAkademie" value="${sp('splitKollege','akademie')}" placeholder="Akademie %" min="0" max="100" style="flex:1;min-width:0;">
-      <input type="number" id="cfgKollegeFahrschule" value="${sp('splitKollege','fahrschule')}" placeholder="Fahrschule %" min="0" max="100" style="flex:1;min-width:0;">
+    <p class="muted-p" style="font-size:12px;margin:2px 0 4px;">Wenn du selbst vermittelst, ist das ein reiner Direktverkauf ohne Aufteilung — das Geld bleibt komplett bei dir. Die folgende Aufteilung gilt, wenn ein Kollege vermittelt hat.</p>
+    <p style="font-size:12.5px;color:var(--muted);margin:10px 0 4px;">Aufteilung, wenn <b>ein Kollege</b> vermittelt hat (in %, sollte in Summe 100 ergeben):</p>
+    <div style="display:flex;gap:8px;flex-wrap:wrap;">
       <input type="number" id="cfgKollegeFahrlehrer" value="${sp('splitKollege','fahrlehrer')}" placeholder="Kollege %" min="0" max="100" style="flex:1;min-width:0;">
+      <input type="number" id="cfgKollegeFahrschule" value="${sp('splitKollege','fahrschule')}" placeholder="Fahrschule %" min="0" max="100" style="flex:1;min-width:0;">
+      <input type="number" id="cfgKollegePlattform" value="${sp('splitKollege','plattform')}" placeholder="Plattform %" min="0" max="100" style="flex:1;min-width:0;">
+      <input type="number" id="cfgKollegeAkademie" value="${sp('splitKollege','akademie')}" placeholder="Akademie %" min="0" max="100" style="flex:1;min-width:0;">
     </div>
+    <p class="muted-p" style="font-size:11.5px;margin:4px 0 0;">Plattform = dein Anteil als Betreiber von Fahrlehrer-Kompass, unabhängig davon wer vermittelt hat. Nur hier sichtbar, nicht in der Fahrlehrer-Akte.</p>
+    <div id="cfgKollegeSumWarn" style="font-size:11.5px;color:var(--rot);margin-top:4px;"></div>
     <div class="btn-row" style="margin-top:10px;"><button class="btn btn-ghost" onclick="saveAkademieVermittlungCfg()">Speichern</button></div>`;
+  const checkSum=()=>{
+    const ids=["cfgKollegeFahrlehrer","cfgKollegeFahrschule","cfgKollegePlattform","cfgKollegeAkademie"];
+    const sum=ids.reduce((a,id)=>{const el=$("#"+id);return a+(el&&el.value!==""?+el.value:0);},0);
+    const w=$("#cfgKollegeSumWarn");if(!w)return;
+    w.textContent=(sum>0&&sum!==100)?`Summe aktuell ${sum} % — sollte 100 % ergeben.`:"";
+  };
+  ["cfgKollegeFahrlehrer","cfgKollegeFahrschule","cfgKollegePlattform","cfgKollegeAkademie"].forEach(id=>{
+    const el=$("#"+id);if(el)el.addEventListener("input",checkSum);
+  });
 }
 async function saveAkademieVermittlungCfg(){
   if(!_authProfile||!_authProfile.fahrschule_id)return;
@@ -7548,7 +7680,7 @@ async function saveAkademieVermittlungCfg(){
   const neu={
     betragAkademie:num("#cfgBetragAkademie"),
     betragSimulator:num("#cfgBetragSimulator"),
-    splitKollege:{akademie:num("#cfgKollegeAkademie"),fahrschule:num("#cfgKollegeFahrschule"),fahrlehrer:num("#cfgKollegeFahrlehrer")}
+    splitKollege:{akademie:num("#cfgKollegeAkademie"),fahrschule:num("#cfgKollegeFahrschule"),fahrlehrer:num("#cfgKollegeFahrlehrer"),plattform:num("#cfgKollegePlattform")}
   };
   const supa=getSupa();
   const{data:cur}=await supa.from("fahrschulen").select("konfiguration").eq("id",_authProfile.fahrschule_id).single();
