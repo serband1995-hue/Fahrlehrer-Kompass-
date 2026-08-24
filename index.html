@@ -4926,7 +4926,7 @@ window.addEventListener("load", () => {
 const STORE_KEY="serband-app-v1";
 /* Build-Version: bei jeder Auslieferung hier das Datum aktualisieren.
    Wird in den Einstellungen angezeigt + für den Update-Hinweis genutzt. */
-const APP_VERSION="2026.09.04";
+const APP_VERSION="2026.09.05";
 // Nutzungsbedingungen & Haftungsausschluss (Bereich: rechtliche Absicherung) - Version hochzählen
 // und alle Nutzer müssen erneut zustimmen, sobald sich der Text inhaltlich ändert.
 const AGB_VERSION="1.0";
@@ -6386,6 +6386,7 @@ function routePlan(id){
         <button class="acc-h"><span class="nr">·</span><span class="ti">Sonderfahrten</span><span class="chev">${ICN.chev}</span></button>
         <div class="acc-body"><div class="acc-inner">
           <div class="sonder">${s.umschreiber?`<div style="padding:12px 14px;background:var(--surface);border:1px dashed var(--line);border-radius:12px;font-size:13px;color:var(--muted);font-weight:700;">✓ Umschreiber – Sonderfahrten nicht erforderlich</div>`:''}
+          ${spaetOffenWarnung(s)}
           ${SONDER_DEF.map(sd=>`
             <div class="sonder-row"${s.umschreiber?' style="opacity:.4;pointer-events:none;"':''}>
               <div class="top"><span>${sd.label}</span><span class="soll"><b id="c_${sd.key}">0</b> / ${sd.soll} Std.</span></div>
@@ -6453,6 +6454,17 @@ function paintStd(cell,o,fc){
   cell.querySelector(".d").textContent=o?o.d:"";
   const f=cell.querySelector(".fc");if(f)f.classList.toggle("on",!!fc);
   cell.classList.remove("pop");void cell.offsetWidth;cell.classList.add("pop");
+}
+/* Bereich 6, Punkt 5: Warnhinweis, wenn Sonderfahrten sehr spät in der Ausbildung noch offen sind.
+   "Spät" = Warteliste, manuell prüfungsreif markiert, oder Ausbildungsstand ≥85%. */
+function spaetOffenWarnung(s){
+  if(s.umschreiber)return "";
+  const spaet=!!(s.ready||s.pruefungsreifManuell||stand(s)>=85);
+  if(!spaet)return "";
+  const offen=SONDER_DEF.filter(sd=>(s.plan.sonder[sd.key]||[]).some(o=>!sfDone(o)));
+  if(!offen.length)return "";
+  const namen=offen.map(sd=>sd.label).join(", ");
+  return `<div style="padding:10px 14px;background:rgba(216,35,26,.08);border:1px solid rgba(216,35,26,.25);border-radius:12px;font-size:12.5px;color:#d8231a;font-weight:600;margin-bottom:2px;">⚠ ${esc(namen)} noch offen – Ausbildungsstand aber schon weit fortgeschritten.</div>`;
 }
 function buildSonder(s){
   const pl=s.plan;
