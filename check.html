@@ -3,6 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta http-equiv="Cache-Control" content="no-store">
 <meta name="theme-color" content="#0a1210">
 <title>Lerntyp-Kurzcheck</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -125,6 +126,9 @@ input::placeholder{color:var(--faint);font-weight:400;}
 </style>
 </head>
 <body>
+<div id="errBox" style="display:none;position:fixed;top:0;left:0;right:0;z-index:9999;
+  background:#cf5a48;color:#fff;padding:14px 16px;font:600 13px/1.5 system-ui,sans-serif;">
+</div>
 <div class="wrap">
 
   <div class="prog-bar"><div class="prog-fill" id="progFill"></div></div>
@@ -174,6 +178,12 @@ input::placeholder{color:var(--faint);font-weight:400;}
 </div>
 
 <script>
+/* Zeigt Fehler sichtbar an, statt still zu scheitern */
+window.onerror = function(msg, src, line){
+  var b = document.getElementById("errBox");
+  if(b){ b.style.display="block"; b.textContent = "Fehler: " + msg + " (Zeile " + line + ")"; }
+  return false;
+};
 /* ======================================================================
    Lerntyp-Kurzcheck · eigenständige Datei, kein Backend, kein Speichern.
    Drei unabhängige Dimensionen:
@@ -386,6 +396,15 @@ $("againBtn").addEventListener("click",function(){
   $("nameInput").value=teilnehmer;
   show("scStart");
 });
+
+/* Service Worker der Kompass-PWA hier gezielt deaktivieren */
+if("serviceWorker" in navigator){
+  navigator.serviceWorker.getRegistrations().then(function(rs){
+    for(var i=0;i<rs.length;i++){
+      if(rs[i].active && location.pathname.indexOf("check.html")>-1) rs[i].unregister();
+    }
+  }).catch(function(){});
+}
 </script>
 </body>
 </html>
