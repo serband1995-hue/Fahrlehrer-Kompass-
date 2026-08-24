@@ -4926,7 +4926,7 @@ window.addEventListener("load", () => {
 const STORE_KEY="serband-app-v1";
 /* Build-Version: bei jeder Auslieferung hier das Datum aktualisieren.
    Wird in den Einstellungen angezeigt + für den Update-Hinweis genutzt. */
-const APP_VERSION="2026.09.03";
+const APP_VERSION="2026.09.04";
 // Nutzungsbedingungen & Haftungsausschluss (Bereich: rechtliche Absicherung) - Version hochzählen
 // und alle Nutzer müssen erneut zustimmen, sobald sich der Text inhaltlich ändert.
 const AGB_VERSION="1.0";
@@ -5271,7 +5271,7 @@ function ensureStudentPlan(s){
   }
 }
 
-function ensure(s){ if(!s.plan) s.plan=newPlan(); if(!s.plan.sonder) s.plan.sonder={ueberland:[],autobahn:[],nacht:[]}; if(!s.plan.notes) s.plan.notes={}; if(!s.plan.fahrcheck) s.plan.fahrcheck={}; if(s.bogen&&!s.bogen.colorPct) s.bogen=null; if(!s.risk) s.risk={};
+function ensure(s){ if(!s.plan) s.plan=newPlan(); if(!s.plan.sonder) s.plan.sonder={ueberland:[],autobahn:[],nacht:[]}; if(!s.plan.notes) s.plan.notes={}; if(!s.plan.fahrcheck) s.plan.fahrcheck={}; if(!s.plan.ampelnZeit) s.plan.ampelnZeit={}; if(s.bogen&&!s.bogen.colorPct) s.bogen=null; if(!s.risk) s.risk={};
   ensureStudentPlan(s);
   // Alteinträge ohne echtes Datum ({d:"",iso:""}) sind keine erledigten Sonderfahrten -> auf null normalisieren
   const sd=s.plan.sonder; if(sd){ ["ueberland","autobahn","nacht"].forEach(k=>{ if(Array.isArray(sd[k])) sd[k]=sd[k].map(o=>(o&&o.iso)?o:null); }); }
@@ -6368,6 +6368,7 @@ function routePlan(id){
     ${examPrognose(s)}
     ${uePrognoseKachel(s)}
     <button class="btn btn-ghost" style="width:100%;margin:8px 0 2px;" onclick="routeDraw('${s.id}')">✏️ Zur Verkehrstafel</button>
+    <button class="btn btn-ghost" style="width:100%;margin:8px 0 2px;" onclick="openMultiTerminSheet('${s.id}')">🗓️ Mehrere Termine planen</button>
     ${!pl.theorie?`<div class="theorie-card" id="theorieWaitCard" style="margin-top:9px;">
       <div class="tc-body"><div class="tc-name">Pausiert – wartet auf Theorie</div><div class="tc-sub">Keine Fahrstunden, bis die Theorie bestanden ist</div></div>
       <button class="check-toggle ${s.theorieWait?'on':''}" id="theorieWaitToggle" aria-label="Wartet auf Theorie"></button>
@@ -6550,6 +6551,161 @@ function commitSonderZeit(s,grp,idx,date,von){
   toastUndo(`${label} für ${isoDE(date)} in den Kalender übernommen`,()=>{
     const l=(DB.lessons||[]).find(x=>x.srcSonder===key);if(l)deleteLesson(l.id);
     arr[idx]=vorherPlan;
+    save();refreshPlanRing(s);buildSonder(s);
+  });
+}
+
+/* ===== Multi-Terminvergabe (Bereich 6, Punkt 10 – erweitert) =====
+   Ein Zeitraum + Uhrzeitfenster + Häufigkeit pro Woche wird vorgegeben, die App sucht alle
+   dazu passenden freien Slots (respektiert Arbeitszeiten/Pausen/Feiertage/Fahrzeug-Kollisionen
+   über die bestehenden dayFreeSlots()/daySlots()-Regeln) und listet sie zum Abhaken auf.
+   Bei Sonderfahrten wird automatisch auf die Zahl noch offener Punkte gedeckelt. */
+function _mtFahrzeugFrei(typ,date,von,bis){
+  const fzList=(DB.workCfg.fahrzeuge||[]).filter(f=>!typ||typ==="egal"||f.typ===typ);
+  if(!fzList.length)return typ&&typ!=="egal"?null:"—";
+  const sv=hm2min(von),sb=hm2min(bis);
+  const belegt=(DB.lessons||[]).filter(l=>l.date===date&&l.status!=="abgebrochen"&&l.status!=="nicht erschienen"&&l.fahrzeug)
+    .filter(l=>{const lv=hm2min(l.von),lb=hm2min(l.bis);return sv<lb&&sb>lv;}).map(l=>l.fahrzeug);
+  const frei=fzList.find(f=>!belegt.includes(f.name));
+  return frei?frei.name:null;
+}
+function findeMultiSlots(sid,cfg){
+  const s=DB.students.find(x=>x.id===sid);if(!s)return [];
+  let maxAnzahl=Infinity;
+  if(cfg.art==="sonder"){
+    const arr=s.plan.sonder[cfg.grp]||[];
+    maxAnzahl=arr.filter(o=>!sfDone(o)).length;
+    if(!maxAnzahl)return [];
+  }
+  const zv=hm2min(cfg.zeitVon),zb=hm2min(cfg.zeitBis);
+  const treffer=[];
+  const proWoche=Math.max(1,cfg.proWoche||2);
+  let woche=0,inDieserWoche=0,wochenStart=cfg.von;
+  let cur=cfg.von;
+  while(cur<=cfg.bis&&treffer.length<maxAnzahl){
+    if(addDays(wochenStart,7)<=cur){wochenStart=cur;inDieserWoche=0;}
+    if(inDieserWoche<proWoche){
+      const frei=dayFreeSlots(cur).filter(sl=>hm2min(sl.von)>=zv&&hm2min(sl.bis)<=zb);
+      for(const sl of frei){
+        if(treffer.length>=maxAnzahl||inDieserWoche>=proWoche)break;
+        if(treffer.some(t=>t.date===cur))continue; // max 1 Vorschlag pro Tag, bleibt übersichtlich
+        const fz=cfg.fahrzeugTyp&&cfg.fahrzeugTyp!=="egal"?_mtFahrzeugFrei(cfg.fahrzeugTyp,cur,sl.von,sl.bis):null;
+        if(cfg.fahrzeugTyp&&cfg.fahrzeugTyp!=="egal"&&!fz)continue;
+        treffer.push({date:cur,von:sl.von,bis:sl.bis,fahrzeug:fz});
+        inDieserWoche++;
+      }
+    }
+    cur=addDays(cur,1);
+  }
+  return treffer;
+}
+function openMultiTerminSheet(sid){
+  const s=DB.students.find(x=>x.id===sid);if(!s)return;
+  ensure(s);
+  const offeneGruppen=SONDER_DEF.filter(sd=>!s.umschreiber&&(s.plan.sonder[sd.key]||[]).some(o=>!sfDone(o)));
+  let art=offeneGruppen.length?"sonder":"fahrstunde", grp=offeneGruppen[0]?offeneGruppen[0].key:null, fzTyp="egal";
+  const heute=todayISO();
+  openSheet(`<div class="sheet-h">Mehrere Termine planen</div>
+    <p class="muted-p" style="font-size:12.5px;margin:-4px 0 12px;">${esc(s.name)}</p>
+    <div class="field"><label>Art</label><div class="pills" id="mtArtPills">
+      <button class="pill${art==='fahrstunde'?' sel':''}" data-art="fahrstunde">Übungsfahrt</button>
+      <button class="pill${art==='sonder'?' sel':''}" data-art="sonder"${offeneGruppen.length?'':' disabled style="opacity:.4;"'}>Sonderfahrt</button>
+    </div></div>
+    <div class="field" id="mtGrpField" style="${art==='sonder'?'':'display:none;'}"><label>Kategorie</label><div class="pills" id="mtGrpPills">
+      ${offeneGruppen.map(sd=>`<button class="pill${sd.key===grp?' sel':''}" data-grp="${sd.key}">${sd.label} <span style="opacity:.6;">(${(s.plan.sonder[sd.key]||[]).filter(o=>!sfDone(o)).length} offen)</span></button>`).join("")}
+    </div></div>
+    <div class="field"><label>Fahrzeug</label><div class="pills" id="mtFzPills">
+      <button class="pill sel" data-fz="egal">Egal</button>
+      <button class="pill" data-fz="schalt">Schalter</button>
+      <button class="pill" data-fz="automatik">Automatik</button>
+    </div></div>
+    <div class="field"><label>Zeitraum</label><div style="display:flex;gap:8px;">
+      <input type="date" id="mtVon" value="${heute}" style="flex:1;">
+      <input type="date" id="mtBis" value="${addDays(heute,35)}" style="flex:1;">
+    </div></div>
+    <div class="field"><label>Uhrzeitfenster</label><div style="display:flex;gap:8px;">
+      <input type="time" id="mtZeitVon" value="09:00" style="flex:1;">
+      <input type="time" id="mtZeitBis" value="18:00" style="flex:1;">
+    </div></div>
+    <div class="field"><label>Termine pro Woche</label><input type="number" id="mtProWoche" value="2" min="1" max="7" style="width:80px;"></div>
+    <div class="btn-row"><button class="btn btn-primary btn-full" id="mtSuchen">Freie Slots suchen</button></div>`);
+  $("#mtArtPills").addEventListener("click",e=>{const b=e.target.closest("[data-art]");if(!b||b.disabled)return;art=b.dataset.art;
+    document.querySelectorAll("#mtArtPills .pill").forEach(x=>x.classList.toggle("sel",x===b));
+    $("#mtGrpField").style.display=art==="sonder"?"":"none";});
+  $("#mtGrpPills").addEventListener("click",e=>{const b=e.target.closest("[data-grp]");if(!b)return;grp=b.dataset.grp;
+    document.querySelectorAll("#mtGrpPills .pill").forEach(x=>x.classList.toggle("sel",x===b));});
+  $("#mtFzPills").addEventListener("click",e=>{const b=e.target.closest("[data-fz]");if(!b)return;fzTyp=b.dataset.fz;
+    document.querySelectorAll("#mtFzPills .pill").forEach(x=>x.classList.toggle("sel",x===b));});
+  $("#mtSuchen").addEventListener("click",()=>{
+    const von=$("#mtVon").value,bis=$("#mtBis").value,zeitVon=$("#mtZeitVon").value,zeitBis=$("#mtZeitBis").value,proWoche=+$("#mtProWoche").value||2;
+    if(!von||!bis||von>bis){toast("Bitte gültigen Zeitraum wählen");return;}
+    if(!zeitVon||!zeitBis||zeitVon>=zeitBis){toast("Bitte gültiges Uhrzeitfenster wählen");return;}
+    const cfg={art,grp,fahrzeugTyp:fzTyp,von,bis,zeitVon,zeitBis,proWoche};
+    const treffer=findeMultiSlots(sid,cfg);
+    openMultiTerminErgebnis(sid,cfg,treffer);
+  });
+}
+function openMultiTerminErgebnis(sid,cfg,treffer){
+  const s=DB.students.find(x=>x.id===sid);if(!s)return;
+  const gewuenscht=cfg.art==="sonder"?(s.plan.sonder[cfg.grp]||[]).filter(o=>!sfDone(o)).length:null;
+  const hinweis=cfg.art==="sonder"&&gewuenscht!=null?`<p class="muted-p" style="font-size:12px;margin:-4px 0 10px;">Automatisch gedeckelt auf ${gewuenscht} noch offene ${SF_LABEL[cfg.grp]||"Sonderfahrt"}${gewuenscht===1?'':'en'}.</p>`:'';
+  if(!treffer.length){
+    openSheet(`<div class="sheet-h">Keine freien Slots gefunden</div>
+      <p class="muted-p" style="font-size:13px;">Im gewählten Zeitraum/Uhrzeitfenster war nichts frei — Zeitraum oder Fenster erweitern und nochmal versuchen.</p>
+      <div class="btn-row"><button class="btn btn-ghost btn-full" id="mtZurueck">Zurück</button></div>`);
+    $("#mtZurueck").addEventListener("click",()=>openMultiTerminSheet(sid));
+    return;
+  }
+  const label=cfg.art==="sonder"?(SF_LABEL[cfg.grp]||"Sonderfahrt"):"Übungsfahrt";
+  const renderList=()=>treffer.map((t,i)=>`<label class="es-act" style="display:flex;align-items:center;gap:10px;cursor:pointer;">
+    <input type="checkbox" class="mtChk" data-i="${i}" checked style="width:18px;height:18px;flex:0;">
+    <span style="flex:1;">${deWeekday(t.date)}. ${isoDE(t.date)} · ${t.von}–${t.bis}${t.fahrzeug&&t.fahrzeug!=='—'?` · 🚗 ${esc(t.fahrzeug)}`:''}</span>
+  </label>`).join("");
+  openSheet(`<div class="sheet-h">${treffer.length} Termine gefunden</div>
+    ${hinweis}
+    <div id="mtListe" style="max-height:44vh;overflow-y:auto;display:flex;flex-direction:column;gap:6px;">${renderList()}</div>
+    <div class="btn-row" style="margin-top:12px;"><button class="btn btn-primary btn-full" id="mtBuchen">${treffer.length} ${label}${treffer.length===1?'':'en'} buchen</button></div>`);
+  const updateCount=()=>{
+    const n=document.querySelectorAll(".mtChk:checked").length;
+    const btn=$("#mtBuchen");if(btn)btn.textContent=n?`${n} ${label}${n===1?'':'en'} buchen`:"Nichts ausgewählt";
+    if(btn)btn.disabled=!n;
+  };
+  document.querySelectorAll(".mtChk").forEach(c=>c.addEventListener("change",updateCount));
+  $("#mtBuchen").addEventListener("click",()=>{
+    const ausgewaehlt=[...document.querySelectorAll(".mtChk:checked")].map(c=>treffer[+c.dataset.i]);
+    if(!ausgewaehlt.length)return;
+    closeSheet();
+    buchMultiTermine(sid,cfg,ausgewaehlt);
+  });
+}
+function buchMultiTermine(sid,cfg,ausgewaehlt){
+  const s=DB.students.find(x=>x.id===sid);if(!s)return;
+  ensure(s);
+  const erstellteIds=[];
+  const vorherPlan=[];
+  let idxCursor=0;
+  const arr=cfg.art==="sonder"?(s.plan.sonder[cfg.grp]||(s.plan.sonder[cfg.grp]=[])):null;
+  const label=cfg.art==="sonder"?(SF_LABEL[cfg.grp]||"Sonderfahrt"):"Übungsfahrt";
+  ausgewaehlt.forEach(t=>{
+    if(cfg.art==="sonder"){
+      while(idxCursor<arr.length&&sfDone(arr[idxCursor]))idxCursor++;
+      if(idxCursor>=arr.length)return;
+      vorherPlan.push({idx:idxCursor,vorher:arr[idxCursor]?Object.assign({},arr[idxCursor]):null});
+      arr[idxCursor]={d:isoToShort(t.date),iso:t.date};
+      const key=s.id+":"+cfg.grp+":"+idxCursor;
+      const l=addLesson({date:t.date,von:t.von,bis:t.bis,art:"sonder",sid:s.id,note:label,srcSonder:key,fahrzeug:t.fahrzeug&&t.fahrzeug!=='—'?t.fahrzeug:null});
+      erstellteIds.push(l.id);
+      idxCursor++;
+    }else{
+      const l=addLesson({date:t.date,von:t.von,bis:t.bis,art:"fahrstunde",sid:s.id,fahrzeug:t.fahrzeug&&t.fahrzeug!=='—'?t.fahrzeug:null});
+      erstellteIds.push(l.id);
+    }
+  });
+  save();refreshPlanRing(s);
+  const cur=$("#stdGrid")?buildSonder(s):null;
+  toastUndo(`${ausgewaehlt.length} ${label}${ausgewaehlt.length===1?'':'en'} gebucht`,()=>{
+    erstellteIds.forEach(id=>deleteLesson(id));
+    vorherPlan.forEach(vp=>{arr[vp.idx]=vp.vorher;});
     save();refreshPlanRing(s);buildSonder(s);
   });
 }
@@ -6806,7 +6962,7 @@ function buildStufen(s){
         : `<div class="ampel">${["rot","gelb","gruen"].map(c=>`<button class="amp ${v===c?'on':''}" data-v="${c}" aria-label="${c}">${v===c?({rot:'✕',gelb:'•',gruen:'✓'}[c]):''}</button>`).join("")}</div>`;
       return grpHtml+`<div class="skill-wrap">
         <div class="skill" data-skill="${it.id}">
-          <div style="flex:1"><div class="sk-head"><span class="sk-t">${esc(it.t)}</span>${iBtn}${vidBtn}</div>${it.ort?`<div class="sk-ort"><span class="ic ic-rot" style="font-size:11px;">${ICN.pin}</span> ${esc(it.ort)}</div>`:""}</div>
+          <div style="flex:1"><div class="sk-head"><span class="sk-t">${esc(it.t)}</span>${iBtn}${vidBtn}</div>${it.ort?`<div class="sk-ort"><span class="ic ic-rot" style="font-size:11px;">${ICN.pin}</span> ${esc(it.ort)}</div>`:""}${(v==='gruen'&&pl.ampelnZeit&&pl.ampelnZeit[it.id])?`<div class="sk-ort" style="opacity:.6;" data-zeit="${it.id}">${isoDE(pl.ampelnZeit[it.id].slice(0,10))} · ${pl.ampelnZeit[it.id].slice(11,16)}</div>`:""}</div>
           ${ampelHtml}
         </div>${panel}
       </div>`;}).join("");
@@ -6835,7 +6991,7 @@ function buildStufen(s){
     const sid=row.dataset.skill;
     row.querySelectorAll(".amp").forEach(b=>b.addEventListener("click",()=>{
       const v=b.dataset.v;
-      if(pl.ampeln[sid]===v){delete pl.ampeln[sid];}else{pl.ampeln[sid]=v;}
+      if(pl.ampeln[sid]===v){delete pl.ampeln[sid];if(pl.ampelnZeit)delete pl.ampelnZeit[sid];}else{pl.ampeln[sid]=v;if(!pl.ampelnZeit)pl.ampelnZeit={};if(v==="gruen")pl.ampelnZeit[sid]=new Date().toISOString();else delete pl.ampelnZeit[sid];}
       const SYM={rot:'✕',gelb:'•',gruen:'✓'};
       row.querySelectorAll(".amp").forEach(x=>{
         const istAn=x.dataset.v===pl.ampeln[sid];
