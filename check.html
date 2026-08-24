@@ -23,7 +23,7 @@ html,body{margin:0;padding:0;height:100%;}
 body{
   background:var(--bg);color:var(--txt);
   font-family:'Barlow',system-ui,-apple-system,sans-serif;
-  min-height:100dvh;display:flex;flex-direction:column;
+  min-height:100vh;
   overflow-x:hidden;
 }
 body::before{
@@ -32,21 +32,21 @@ body::before{
     radial-gradient(ellipse 70% 50% at 50% -10%,rgba(58,115,80,.20),transparent 70%),
     radial-gradient(ellipse 60% 40% at 100% 100%,rgba(201,162,39,.07),transparent 70%);
 }
-.wrap{position:relative;z-index:1;flex:1;display:flex;flex-direction:column;
-  width:100%;max-width:520px;margin:0 auto;padding:22px 20px 32px;}
+.wrap{position:relative;z-index:1;
+  width:100%;max-width:520px;margin:0 auto;padding:22px 20px 40px;}
 
 /* ---------- Fortschritt ---------- */
-.prog-bar{height:3px;background:rgba(255,255,255,.07);border-radius:99px;overflow:hidden;margin-bottom:26px;flex-shrink:0;}
+.prog-bar{height:4px;background:rgba(255,255,255,.07);border-radius:99px;overflow:hidden;margin-bottom:26px;}
 .prog-fill{height:100%;background:linear-gradient(90deg,var(--akzent),var(--akzent-bright));
   border-radius:99px;transition:width .4s var(--ease);width:0;}
 
 /* ---------- Screens ---------- */
-.screen{display:none;flex:1;flex-direction:column;animation:in .38s var(--ease);}
-.screen.on{display:flex;}
-@keyframes in{from{opacity:0;transform:translateY(10px);}to{opacity:1;transform:none;}}
+.screen{display:none;}
+.screen.on{display:block;animation:fadein .38s var(--ease);}
+@keyframes fadein{from{opacity:0;transform:translateY(10px);}to{opacity:1;transform:none;}}
 
 /* ---------- Start ---------- */
-.hero{flex:1;display:flex;flex-direction:column;justify-content:center;text-align:center;padding:10px 0 20px;}
+.hero{text-align:center;padding:24px 0 20px;}
 .hero-kicker{font-family:'Kaushan Script',cursive;font-size:20px;color:var(--gold);margin-bottom:4px;}
 .hero-t{font-family:'Anton',sans-serif;font-size:clamp(34px,10vw,46px);line-height:1.02;
   letter-spacing:.01em;text-transform:uppercase;margin:0 0 14px;}
@@ -78,12 +78,12 @@ input::placeholder{color:var(--faint);font-weight:400;}
 .btn:disabled{opacity:.35;pointer-events:none;}
 
 /* ---------- Frage ---------- */
-.q-top{display:flex;justify-content:space-between;align-items:center;margin-bottom:20px;flex-shrink:0;}
+.q-top{display:flex;justify-content:space-between;align-items:center;margin-bottom:20px;}
 .q-nr{font-size:12px;font-weight:800;letter-spacing:.1em;color:var(--faint);text-transform:uppercase;}
 .q-back{background:none;border:none;color:var(--muted);font-family:inherit;
   font-size:13.5px;font-weight:700;cursor:pointer;padding:6px 2px;}
 .q-back:disabled{opacity:.25;pointer-events:none;}
-.q-body{flex:1;display:flex;flex-direction:column;justify-content:center;padding-bottom:14px;}
+.q-body{padding:10px 0 14px;}
 .q-text{font-size:clamp(21px,5.4vw,25px);font-weight:700;line-height:1.32;margin:0 0 26px;}
 .opts{display:flex;flex-direction:column;gap:10px;}
 .opt{
@@ -143,7 +143,7 @@ input::placeholder{color:var(--faint);font-weight:400;}
       <div style="margin-bottom:12px;">
         <input type="text" id="nameInput" placeholder="Dein Vorname" autocomplete="given-name" enterkeyhint="go">
       </div>
-      <button class="btn btn-primary" id="startBtn">Los geht's</button>
+      <button class="btn btn-primary" id="startBtn" onclick="starten()">Los geht's</button>
     </div>
   </div>
 
@@ -151,7 +151,7 @@ input::placeholder{color:var(--faint);font-weight:400;}
   <div class="screen" id="scQuiz">
     <div class="q-top">
       <span class="q-nr" id="qNr">Frage 1 von 18</span>
-      <button class="q-back" id="backBtn">← zurück</button>
+      <button class="q-back" id="backBtn" onclick="zurueck()">← zurück</button>
     </div>
     <div class="q-body">
       <p class="q-text" id="qText"></p>
@@ -171,7 +171,7 @@ input::placeholder{color:var(--faint);font-weight:400;}
     <div class="card"><h3>Wann du am aufnahmefähigsten bist</h3><p id="resWann"></p></div>
     <p class="foot">Das ist die Kurzfassung.<br>Die ausführliche Version macht dein Fahrlehrer mit dir.</p>
     <div class="res-actions">
-      <button class="btn btn-ghost" id="againBtn">Nochmal machen</button>
+      <button class="btn btn-ghost" id="againBtn" onclick="nochmal()">Nochmal machen</button>
     </div>
   </div>
 
@@ -328,7 +328,8 @@ function renderFrage(){
       var b=document.createElement("button");
       b.className="opt"+(antworten[idx]&&antworten[idx].i===i?" sel":"");
       b.textContent=opt[0];
-      b.addEventListener("click",function(){ waehle(i,opt[1],opt[2]); });
+      b.type="button";
+      b.onclick=function(){ waehle(i,opt[1],opt[2]); };
       box.appendChild(b);
     })(f.o[i],i);
   }
@@ -354,8 +355,8 @@ function auswerten(){
     if(!scores[a.dim]) scores[a.dim]={};
     scores[a.dim][a.wert]=(scores[a.dim][a.wert]||0)+1;
   }
-  var wie=top(scores.wie,"praktisch");
-  var wo=top(scores.wo,"umgebung");
+  var wie=hoechster(scores.wie,"praktisch");
+  var wo=hoechster(scores.wo,"umgebung");
 
   /* wann: zwei unabhängige Achsen (früh/spät und kurz/lang) getrennt auswerten */
   var w=scores.wann||{};
@@ -374,7 +375,7 @@ function auswerten(){
   $("progFill").style.width="100%";
   show("scRes");
 }
-function top(obj,fallback){
+function hoechster(obj,fallback){
   if(!obj) return fallback;
   var best=null,bv=-1;
   for(var k in obj){ if(obj[k]>bv){ bv=obj[k]; best=k; } }
@@ -387,15 +388,15 @@ function starten(){
   renderFrage();
 }
 
-$("startBtn").addEventListener("click",starten);
-$("nameInput").addEventListener("keydown",function(e){ if(e.key==="Enter") starten(); });
-$("backBtn").addEventListener("click",zurueck);
-$("againBtn").addEventListener("click",function(){
+function nochmal(){
   idx=0; antworten=[]; scores={};
   $("progFill").style.width="0%";
   $("nameInput").value=teilnehmer;
   show("scStart");
-});
+}
+/* Global verfügbar machen, damit die onclick-Attribute sie sicher finden */
+window.starten=starten; window.zurueck=zurueck; window.nochmal=nochmal;
+$("nameInput").addEventListener("keydown",function(e){ if(e.key==="Enter") starten(); });
 
 /* Service Worker der Kompass-PWA hier gezielt deaktivieren */
 if("serviceWorker" in navigator){
