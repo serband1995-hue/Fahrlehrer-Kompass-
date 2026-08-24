@@ -1,0 +1,391 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#0a1210">
+<title>Lerntyp-Kurzcheck</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Anton&family=Barlow:wght@400;600;700;800&family=Kaushan+Script&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#0a1210; --surface:#132420; --surface-2:#1a2f28;
+  --line:#24413a; --txt:#eef3ef; --muted:#8fada2; --faint:#5c766c;
+  --akzent:#3a7350; --akzent-bright:#4a8b5c; --mint:#bcd6c5;
+  --gold:#c9a227;
+  --glass:rgba(28,48,37,.55); --glass-brd:rgba(120,170,140,.16);
+  --ease:cubic-bezier(.4,0,.2,1); --pop:cubic-bezier(.34,1.56,.64,1);
+}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent;}
+html,body{margin:0;padding:0;height:100%;}
+body{
+  background:var(--bg);color:var(--txt);
+  font-family:'Barlow',system-ui,-apple-system,sans-serif;
+  min-height:100dvh;display:flex;flex-direction:column;
+  overflow-x:hidden;
+}
+body::before{
+  content:"";position:fixed;inset:0;z-index:0;pointer-events:none;
+  background:
+    radial-gradient(ellipse 70% 50% at 50% -10%,rgba(58,115,80,.20),transparent 70%),
+    radial-gradient(ellipse 60% 40% at 100% 100%,rgba(201,162,39,.07),transparent 70%);
+}
+.wrap{position:relative;z-index:1;flex:1;display:flex;flex-direction:column;
+  width:100%;max-width:520px;margin:0 auto;padding:22px 20px 32px;}
+
+/* ---------- Fortschritt ---------- */
+.prog-bar{height:3px;background:rgba(255,255,255,.07);border-radius:99px;overflow:hidden;margin-bottom:26px;flex-shrink:0;}
+.prog-fill{height:100%;background:linear-gradient(90deg,var(--akzent),var(--akzent-bright));
+  border-radius:99px;transition:width .4s var(--ease);width:0;}
+
+/* ---------- Screens ---------- */
+.screen{display:none;flex:1;flex-direction:column;animation:in .38s var(--ease);}
+.screen.on{display:flex;}
+@keyframes in{from{opacity:0;transform:translateY(10px);}to{opacity:1;transform:none;}}
+
+/* ---------- Start ---------- */
+.hero{flex:1;display:flex;flex-direction:column;justify-content:center;text-align:center;padding:10px 0 20px;}
+.hero-kicker{font-family:'Kaushan Script',cursive;font-size:20px;color:var(--gold);margin-bottom:4px;}
+.hero-t{font-family:'Anton',sans-serif;font-size:clamp(34px,10vw,46px);line-height:1.02;
+  letter-spacing:.01em;text-transform:uppercase;margin:0 0 14px;}
+.hero-t span{color:var(--akzent-bright);}
+.hero-p{color:var(--muted);font-size:15.5px;line-height:1.55;margin:0 auto 28px;max-width:330px;}
+.meta{display:flex;gap:8px;justify-content:center;flex-wrap:wrap;margin-bottom:26px;}
+.meta span{font-size:12px;font-weight:700;letter-spacing:.03em;color:var(--mint);
+  background:var(--glass);border:1px solid var(--glass-brd);padding:7px 13px;border-radius:99px;}
+
+/* ---------- Felder ---------- */
+input[type=text]{
+  width:100%;padding:15px 17px;border-radius:14px;font-size:16px;
+  background:var(--surface);border:1px solid var(--line);color:var(--txt);
+  font-family:inherit;font-weight:600;outline:none;transition:border-color .2s;
+}
+input[type=text]:focus{border-color:var(--akzent-bright);}
+input::placeholder{color:var(--faint);font-weight:400;}
+
+/* ---------- Buttons ---------- */
+.btn{
+  width:100%;padding:16px 20px;border:none;border-radius:15px;cursor:pointer;
+  font-family:inherit;font-size:15.5px;font-weight:800;letter-spacing:.01em;
+  transition:transform .16s var(--pop),filter .2s;
+}
+.btn:active{transform:scale(.975);}
+.btn-primary{background:linear-gradient(135deg,var(--akzent),var(--akzent-bright));color:#fff;
+  box-shadow:0 8px 22px rgba(58,115,80,.32);}
+.btn-ghost{background:var(--surface);color:var(--mint);border:1px solid var(--line);}
+.btn:disabled{opacity:.35;pointer-events:none;}
+
+/* ---------- Frage ---------- */
+.q-top{display:flex;justify-content:space-between;align-items:center;margin-bottom:20px;flex-shrink:0;}
+.q-nr{font-size:12px;font-weight:800;letter-spacing:.1em;color:var(--faint);text-transform:uppercase;}
+.q-back{background:none;border:none;color:var(--muted);font-family:inherit;
+  font-size:13.5px;font-weight:700;cursor:pointer;padding:6px 2px;}
+.q-back:disabled{opacity:.25;pointer-events:none;}
+.q-body{flex:1;display:flex;flex-direction:column;justify-content:center;padding-bottom:14px;}
+.q-text{font-size:clamp(21px,5.4vw,25px);font-weight:700;line-height:1.32;margin:0 0 26px;}
+.opts{display:flex;flex-direction:column;gap:10px;}
+.opt{
+  width:100%;text-align:left;padding:17px 19px;border-radius:15px;cursor:pointer;
+  background:var(--glass);border:1px solid var(--glass-brd);color:var(--txt);
+  font-family:inherit;font-size:15.5px;font-weight:600;line-height:1.4;
+  transition:transform .16s var(--pop),border-color .2s,background .2s;
+  backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px);
+}
+.opt:active{transform:scale(.98);}
+.opt.sel{border-color:var(--akzent-bright);background:rgba(58,115,80,.22);}
+
+/* ---------- Ergebnis ---------- */
+.res-head{text-align:center;padding:14px 0 4px;}
+.res-kicker{font-family:'Kaushan Script',cursive;font-size:19px;color:var(--gold);margin-bottom:2px;}
+.res-name{font-family:'Anton',sans-serif;font-size:clamp(30px,8.6vw,40px);line-height:1.05;
+  text-transform:uppercase;margin:0 0 8px;color:var(--akzent-bright);}
+.res-sub{color:var(--muted);font-size:14.5px;margin:0 0 22px;}
+.card{
+  background:var(--glass);border:1px solid var(--glass-brd);border-radius:18px;
+  padding:18px 19px;margin-bottom:11px;
+  backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px);
+  animation:in .5s var(--ease) backwards;
+}
+.card:nth-of-type(1){animation-delay:.08s;}
+.card:nth-of-type(2){animation-delay:.18s;}
+.card:nth-of-type(3){animation-delay:.28s;}
+.card h3{
+  font-size:11.5px;font-weight:800;letter-spacing:.13em;text-transform:uppercase;
+  color:var(--gold);margin:0 0 9px;
+}
+.card p{margin:0;font-size:15px;line-height:1.62;color:var(--txt);}
+.card p+p{margin-top:9px;}
+.tipp{margin-top:11px;padding-top:11px;border-top:1px solid rgba(255,255,255,.07);
+  font-size:14px;line-height:1.55;color:var(--mint);}
+.tipp b{color:var(--txt);font-weight:800;}
+.foot{text-align:center;color:var(--faint);font-size:12.5px;line-height:1.6;
+  margin:20px 0 14px;padding:0 10px;}
+.res-actions{display:flex;flex-direction:column;gap:9px;margin-top:2px;}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <div class="prog-bar"><div class="prog-fill" id="progFill"></div></div>
+
+  <!-- ============ START ============ -->
+  <div class="screen on" id="scStart">
+    <div class="hero">
+      <div class="hero-kicker">Fahrschule Boost</div>
+      <h1 class="hero-t">Wie lernst<br><span>du</span> am besten?</h1>
+      <p class="hero-p">18 kurze Fragen. Danach weißt du, wie, wo und wann du am schnellsten vorankommst.</p>
+      <div class="meta"><span>ca. 2 Minuten</span><span>nichts wird gespeichert</span></div>
+      <div style="margin-bottom:12px;">
+        <input type="text" id="nameInput" placeholder="Dein Vorname" autocomplete="given-name" enterkeyhint="go">
+      </div>
+      <button class="btn btn-primary" id="startBtn">Los geht's</button>
+    </div>
+  </div>
+
+  <!-- ============ FRAGE ============ -->
+  <div class="screen" id="scQuiz">
+    <div class="q-top">
+      <span class="q-nr" id="qNr">Frage 1 von 18</span>
+      <button class="q-back" id="backBtn">← zurück</button>
+    </div>
+    <div class="q-body">
+      <p class="q-text" id="qText"></p>
+      <div class="opts" id="qOpts"></div>
+    </div>
+  </div>
+
+  <!-- ============ ERGEBNIS ============ -->
+  <div class="screen" id="scRes">
+    <div class="res-head">
+      <div class="res-kicker" id="resHi">Dein Ergebnis</div>
+      <h2 class="res-name" id="resName"></h2>
+      <p class="res-sub" id="resSub"></p>
+    </div>
+    <div class="card"><h3>So lernst du</h3><p id="resWie"></p><div class="tipp" id="resWieTipp"></div></div>
+    <div class="card"><h3>Wo es bei dir klappt</h3><p id="resWo"></p></div>
+    <div class="card"><h3>Wann du am aufnahmefähigsten bist</h3><p id="resWann"></p></div>
+    <p class="foot">Das ist die Kurzfassung.<br>Die ausführliche Version macht dein Fahrlehrer mit dir.</p>
+    <div class="res-actions">
+      <button class="btn btn-ghost" id="againBtn">Nochmal machen</button>
+    </div>
+  </div>
+
+</div>
+
+<script>
+/* ======================================================================
+   Lerntyp-Kurzcheck · eigenständige Datei, kein Backend, kein Speichern.
+   Drei unabhängige Dimensionen:
+     wie   → visuell | auditiv | praktisch   (Lernkanal, 9 Fragen)
+     wo    → ruhe | umgebung | sozial        (Umgebung, 4 Fragen)
+     wann  → frueh | spaet  +  kurz | lang   (Timing, 5 Fragen)
+   Auswertung rein clientseitig, Höchstwert je Dimension gewinnt.
+   ====================================================================== */
+
+var FRAGEN = [
+  /* ---- Block A: Lernkanal (9) ---- */
+  {t:"Jemand erklärt dir eine neue Kreuzung. Was hilft dir am meisten?",
+   o:[["Eine Skizze oder ein Bild davon sehen","wie","visuell"],
+      ["Wenn es mir jemand in Ruhe erklärt","wie","auditiv"],
+      ["Einmal selbst durchfahren","wie","praktisch"]]},
+  {t:"Du sollst dir einen neuen Weg merken. Wie gehst du vor?",
+   o:[["Karte anschauen und einprägen","wie","visuell"],
+      ["Mir die Route laut vorsagen","wie","auditiv"],
+      ["Einfach losfahren und unterwegs merken","wie","praktisch"]]},
+  {t:"Beim Theorielernen bleibt bei dir am ehesten hängen …",
+   o:[["was ich auf Bildern gesehen habe","wie","visuell"],
+      ["was ich gehört oder besprochen habe","wie","auditiv"],
+      ["was ich beim Fahren tatsächlich erlebt habe","wie","praktisch"]]},
+  {t:"Dein Fahrlehrer erklärt dir das Einparken. Was wäre dir am liebsten?",
+   o:[["Er macht es einmal vor, ich schaue zu","wie","visuell"],
+      ["Er sagt mir Schritt für Schritt an, was ich tun soll","wie","auditiv"],
+      ["Kurz erklären, dann lass mich einfach machen","wie","praktisch"]]},
+  {t:"Du hast einen Fehler gemacht. Was bringt dich am schnellsten weiter?",
+   o:[["Zeigen, wie es richtig aussieht","wie","visuell"],
+      ["Erklären, warum es falsch war","wie","auditiv"],
+      ["Nochmal probieren, bis es sitzt","wie","praktisch"]]},
+  {t:"Wenn du etwas erklärst, merkst du selbst …",
+   o:[["ich male oder zeige dabei gern","wie","visuell"],
+      ["ich verstehe es beim Reden erst richtig","wie","auditiv"],
+      ["ich zeige es lieber, als darüber zu reden","wie","praktisch"]]},
+  {t:"Ein Verkehrsschild, das du nicht kennst. Dein erster Impuls?",
+   o:[["Das Bild einprägen","wie","visuell"],
+      ["Jemanden fragen","wie","auditiv"],
+      ["Schauen, wie andere reagieren, und mitmachen","wie","praktisch"]]},
+  {t:"In der Theoriestunde …",
+   o:[["schaue ich viel auf die Folien","wie","visuell"],
+      ["höre ich hauptsächlich zu","wie","auditiv"],
+      ["werde ich unruhig, wenn zu lange nur geredet wird","wie","praktisch"]]},
+  {t:"Nach einer Fahrstunde erinnerst du dich am besten an …",
+   o:[["die Situationen, die ich vor mir sehe","wie","visuell"],
+      ["das, was mein Fahrlehrer gesagt hat","wie","auditiv"],
+      ["das Gefühl beim Fahren selbst","wie","praktisch"]]},
+
+  /* ---- Block B: Umgebung (4) ---- */
+  {t:"Du lernst Theorie. Was ist um dich herum?",
+   o:[["Komplett still, sonst kann ich nicht","wo","ruhe"],
+      ["Musik oder Hintergrundgeräusch stört mich nicht","wo","umgebung"],
+      ["Am liebsten mit jemandem zusammen","wo","sozial"]]},
+  {t:"Wo lernst du normalerweise?",
+   o:[["An einem festen Platz zu Hause","wo","ruhe"],
+      ["Unterwegs am Handy, wo ich gerade bin","wo","umgebung"],
+      ["Wo andere sind – Café, Schule, bei Freunden","wo","sozial"]]},
+  {t:"Wenn jemand dazukommt, während du lernst …",
+   o:[["bin ich raus, ich brauche meine Ruhe","wo","ruhe"],
+      ["stört mich nicht weiter","wo","umgebung"],
+      ["gut, dann können wir zusammen lernen","wo","sozial"]]},
+  {t:"Schwieriger Stoff, den du nicht verstehst. Was tust du?",
+   o:[["Mich zurückziehen und in Ruhe durchgehen","wo","ruhe"],
+      ["Weitermachen und später nochmal drübergehen","wo","umgebung"],
+      ["Jemanden fragen und gemeinsam durchgehen","wo","sozial"]]},
+
+  /* ---- Block C: Timing (5) ---- */
+  {t:"Wann bist du am klarsten im Kopf?",
+   o:[["Morgens, da läuft es am besten","wann","frueh"],
+      ["Eher abends, morgens brauche ich lange","wann","spaet"]]},
+  {t:"Du hast eine Stunde Zeit zum Lernen. Was passt besser?",
+   o:[["Am Stück durchziehen","wann","lang"],
+      ["Lieber in kleinen Häppchen über den Tag","wann","kurz"]]},
+  {t:"Eine Fahrstunde um 7:30 Uhr morgens …",
+   o:[["kein Problem, da bin ich fit","wann","frueh"],
+      ["schwierig, da bin ich noch nicht wach","wann","spaet"]]},
+  {t:"Nach 20 Minuten Lernen merkst du …",
+   o:[["ich bin drin und könnte noch lange weitermachen","wann","lang"],
+      ["meine Konzentration lässt nach, ich brauche Pause","wann","kurz"]]},
+  {t:"Die Fahrstunde nachbereiten würdest du am ehesten …",
+   o:[["direkt danach, solange es frisch ist","wann","frueh"],
+      ["später am Abend in Ruhe","wann","spaet"]]}
+];
+
+var TEXTE = {
+  wie:{
+    visuell:{
+      name:"Der Seher",
+      sub:"Du nimmst am meisten über die Augen auf.",
+      p:"Du verstehst Dinge am schnellsten, wenn du sie siehst. Eine Skizze, ein kurzes Video oder eine Strecke vorab auf der Karte bringen dir mehr als jede lange Erklärung. Was du einmal vor dir gesehen hast, bleibt bei dir hängen.",
+      tipp:"<b>Konkret:</b> Lass dir schwierige Situationen aufzeichnen, statt sie dir nur erklären zu lassen. Schau dir die Strecke vor der Fahrstunde kurz auf der Karte an."
+    },
+    auditiv:{
+      name:"Der Denker",
+      sub:"Du verstehst über Sprache und Erklärung.",
+      p:"Bei dir festigt sich das Wissen übers Reden und Zuhören. Wenn dir jemand ruhig erklärt, warum etwas so ist, klickt es. Und wenn du es selbst laut aussprichst, sitzt es endgültig.",
+      tipp:"<b>Konkret:</b> Sag beim Fahren laut mit, was du als Nächstes tust. Frag ruhig nach dem Warum – bei dir ist das kein Aufhalten, sondern genau der Weg, wie du lernst."
+    },
+    praktisch:{
+      name:"Der Macher",
+      sub:"Du lernst im Tun, nicht in der Theorie.",
+      p:"Lange Erklärungen bringen dir wenig – du verstehst es, sobald du selbst am Steuer sitzt. Wiederholen und Ausprobieren ist bei dir der schnellste Weg, und Fehler sind für dich eher Übung als Rückschlag.",
+      tipp:"<b>Konkret:</b> Bitte um kurze Erklärung und dann sofort ans Machen. Bei schwierigen Sachen lieber öfter kurz üben als einmal lange darüber reden."
+    }
+  },
+  wo:{
+    ruhe:"Du brauchst deine Ruhe. Ein fester Platz, keine Ablenkung, Handy weg – dann läuft es. In lauter Umgebung verlierst du schnell den Faden, das ist keine Schwäche, sondern einfach deine Art zu arbeiten. Sag Bescheid, wenn du beim Lernen nicht gestört werden willst.",
+    umgebung:"Du bist flexibel. Ob zu Hause, in der Bahn oder zwischendurch am Handy – du kriegst deinen Kopf überall auf den Stoff. Nutz das: kurze Einheiten unterwegs summieren sich bei dir richtig gut.",
+    sozial:"Du lernst besser mit anderen zusammen. Erklären, nachfragen, gemeinsam durchgehen – so bleibt es hängen. Such dir jemanden zum Lernen, allein am Schreibtisch verlierst du schneller die Lust."
+  },
+  wann:{
+    frueh_kurz:"Morgens bist du am klarsten, aber deine Konzentration hält nicht ewig. Nimm dir früh am Tag zwei, drei kurze Einheiten von 15–20 Minuten – das bringt dir mehr als ein langer Block.",
+    frueh_lang:"Morgens läuft es bei dir am besten, und du bleibst gut dran, wenn du einmal drin bist. Nutz den Vormittag für längere Einheiten und leg dir schwierigen Stoff bewusst früh.",
+    spaet_kurz:"Du kommst abends erst richtig in Fahrt, brauchst aber Pausen. Kurze Einheiten am späten Nachmittag oder Abend passen zu dir – nicht länger als 20 Minuten am Stück.",
+    spaet_lang:"Abends bist du am aufnahmefähigsten und bleibst dann auch länger dran. Plan dir am späten Tag einen festen Block ein, statt tagsüber immer wieder kurz anzufangen."
+  }
+};
+
+var idx=0, antworten=[], scores={}, teilnehmer="";
+
+var $=function(id){return document.getElementById(id);};
+
+function setProg(){
+  var p = idx/FRAGEN.length*100;
+  $("progFill").style.width = p + "%";
+}
+function show(id){
+  var s=document.querySelectorAll(".screen");
+  for(var i=0;i<s.length;i++) s[i].classList.remove("on");
+  $(id).classList.add("on");
+  window.scrollTo(0,0);
+}
+function renderFrage(){
+  var f=FRAGEN[idx];
+  $("qNr").textContent="Frage "+(idx+1)+" von "+FRAGEN.length;
+  $("qText").textContent=f.t;
+  $("backBtn").disabled = (idx===0);
+  var box=$("qOpts");
+  box.innerHTML="";
+  for(var i=0;i<f.o.length;i++){
+    (function(opt,i){
+      var b=document.createElement("button");
+      b.className="opt"+(antworten[idx]&&antworten[idx].i===i?" sel":"");
+      b.textContent=opt[0];
+      b.addEventListener("click",function(){ waehle(i,opt[1],opt[2]); });
+      box.appendChild(b);
+    })(f.o[i],i);
+  }
+  setProg();
+}
+function waehle(i,dim,wert){
+  antworten[idx]={i:i,dim:dim,wert:wert};
+  var opts=document.querySelectorAll(".opt");
+  for(var k=0;k<opts.length;k++) opts[k].classList.toggle("sel",k===i);
+  setTimeout(function(){
+    if(idx<FRAGEN.length-1){ idx++; renderFrage(); }
+    else { auswerten(); }
+  },210);
+}
+function zurueck(){
+  if(idx>0){ idx--; renderFrage(); }
+}
+function auswerten(){
+  scores={};
+  for(var i=0;i<antworten.length;i++){
+    var a=antworten[i];
+    if(!a) continue;
+    if(!scores[a.dim]) scores[a.dim]={};
+    scores[a.dim][a.wert]=(scores[a.dim][a.wert]||0)+1;
+  }
+  var wie=top(scores.wie,"praktisch");
+  var wo=top(scores.wo,"umgebung");
+
+  /* wann: zwei unabhängige Achsen (früh/spät und kurz/lang) getrennt auswerten */
+  var w=scores.wann||{};
+  var tageszeit=(w.frueh||0)>=(w.spaet||0)?"frueh":"spaet";
+  var laenge=(w.lang||0)>(w.kurz||0)?"lang":"kurz";
+
+  var T=TEXTE.wie[wie];
+  $("resHi").textContent = teilnehmer ? teilnehmer + ", das bist du" : "Dein Ergebnis";
+  $("resName").textContent = T.name;
+  $("resSub").textContent = T.sub;
+  $("resWie").textContent = T.p;
+  $("resWieTipp").innerHTML = T.tipp;
+  $("resWo").textContent = TEXTE.wo[wo];
+  $("resWann").textContent = TEXTE.wann[tageszeit+"_"+laenge];
+
+  $("progFill").style.width="100%";
+  show("scRes");
+}
+function top(obj,fallback){
+  if(!obj) return fallback;
+  var best=null,bv=-1;
+  for(var k in obj){ if(obj[k]>bv){ bv=obj[k]; best=k; } }
+  return best||fallback;
+}
+function starten(){
+  teilnehmer=$("nameInput").value.trim().split(" ")[0];
+  idx=0; antworten=[];
+  show("scQuiz");
+  renderFrage();
+}
+
+$("startBtn").addEventListener("click",starten);
+$("nameInput").addEventListener("keydown",function(e){ if(e.key==="Enter") starten(); });
+$("backBtn").addEventListener("click",zurueck);
+$("againBtn").addEventListener("click",function(){
+  idx=0; antworten=[]; scores={};
+  $("progFill").style.width="0%";
+  $("nameInput").value=teilnehmer;
+  show("scStart");
+});
+</script>
+</body>
+</html>
