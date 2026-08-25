@@ -335,8 +335,6 @@ input,select,textarea{font-family:inherit;font-size:15px;color:var(--txt);}
   transform:translateY(2px);
   box-shadow:0 2px 8px rgba(0,0,0,.25),0 1px 3px rgba(0,0,0,.2);
 }
-.s-card-call{position:absolute;top:10px;right:10px;width:32px;height:32px;border-radius:50%;background:var(--gruen-soft,rgba(58,115,80,.18));border:1px solid var(--gruen-line);display:flex;align-items:center;justify-content:center;font-size:14px;z-index:2;}
-.s-card-call:active{transform:scale(.9);}
 .mini-dash{background:linear-gradient(160deg,var(--glass),var(--glass-2));border:1px solid var(--glass-brd);border-radius:var(--r-card);padding:14px 16px;margin:14px 0;box-shadow:var(--elev-2),var(--inset-top);}
 .mini-dash-row{display:flex;justify-content:space-between;align-items:center;padding:6px 0;font-size:13px;color:var(--muted);border-top:1px solid var(--line-soft);}
 .mini-dash-row:first-child{border-top:none;padding-top:0;}
@@ -1538,7 +1536,7 @@ body:not(.light) .cw-col.today .cw-dnum{color:var(--gold);}
 .vd-offen{font-size:12.5px;color:#e3a294;background:rgba(207,90,72,.1);border:1px solid rgba(207,90,72,.25);border-radius:10px;padding:9px 12px;margin-bottom:12px;text-align:center;}
 .vd-offen b{color:#f0b5a8;}
 /* ===== AKTE-NAV (Icon-Leiste Schülerakte) ===== */
-.akte-nav{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin-bottom:12px;}
+.akte-nav{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-bottom:12px;}
 .akte-btn{display:flex;flex-direction:column;align-items:center;gap:5px;padding:12px 6px;background:var(--surface);border:1px solid var(--line);border-radius:13px;transition:transform .12s var(--pop);}
 .akte-btn:active{background:var(--surface-2);transform:scale(.94);}
 .ab-ic{font-size:21px;line-height:1;}
@@ -4608,7 +4606,7 @@ async function fsDetailExtrasSpeichern(sid){
 /* ===== Turboboost-Filter in der Schülerliste ===== */
 function _fsInjectTurboFilter(){
   document.getElementById("fsTurboFilter")?.remove();
-  const searchWrap=document.querySelector(".search-wrap");
+  const searchWrap=document.getElementById("homeSearchRow")||document.querySelector(".search-wrap");
   if(!searchWrap)return;
   searchWrap.insertAdjacentHTML("afterend",`<div id="fsTurboFilter" style="margin:8px 0 4px;">
     <button class="es-act" id="fsTurboToggleBtn">⚡ Nur Turboboost anzeigen</button>
@@ -4926,7 +4924,7 @@ window.addEventListener("load", () => {
 const STORE_KEY="serband-app-v1";
 /* Build-Version: bei jeder Auslieferung hier das Datum aktualisieren.
    Wird in den Einstellungen angezeigt + für den Update-Hinweis genutzt. */
-const APP_VERSION="2026.09.06";
+const APP_VERSION="2026.09.07";
 // Nutzungsbedingungen & Haftungsausschluss (Bereich: rechtliche Absicherung) - Version hochzählen
 // und alle Nutzer müssen erneut zustimmen, sobald sich der Text inhaltlich ändert.
 const AGB_VERSION="1.0";
@@ -5589,8 +5587,6 @@ function routeHome(){
   const alle=activeStudents();
   if(_homeSortMode==="stand") list.sort((a,b)=>stand(b)-stand(a));
   else list.sort((a,b)=>(a.name||"").localeCompare(b.name||"","de"));
-  const formChips=FORMS.map(f=>`<button class="pday${_homeFormFilter.includes(f)?' on':''}" data-homeform="${f}" style="width:auto;padding:0 12px;">${formLabel(f)}</button>`).join("");
-  const colorChips=["rot","gelb","gruen","blau"].map(c=>`<button class="pday${_homeColorFilter.includes(c)?' on':''}" data-homecolor="${c}" style="width:auto;padding:0 12px;"><span class="pc-dot" style="background:${PROFILE[c].hex};display:inline-block;width:8px;height:8px;border-radius:50%;margin-right:5px;"></span>${PROFILE[c].word}</button>`).join("");
   const filterAktiv=_homeFormFilter.length||_homeColorFilter.length;
   if(!alle.length){
     view.innerHTML=`<div class="empty fade-up">
@@ -5632,29 +5628,18 @@ function routeHome(){
   view.innerHTML=`<div class="view-inner view-wide fade-up" style="position:relative;padding-right:32px;">
     <div class="row-between" style="margin-bottom:12px;"><div class="sec-h">Meine <span class="o">Schüler</span></div><div class="count-pill">${alle.length}</div></div>
     ${sortBar}
-    <div class="search-wrap"><span class="search-ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="11" cy="11" r="7"/><path d="M21 21l-4.3-4.3"/></svg></span><input id="studentSearch" type="search" placeholder="Schüler suchen …" autocomplete="off"><button class="search-clear" id="searchClear" aria-label="Leeren" style="display:none;">✕</button></div>
-    <div class="pause-days" style="margin:10px 0 4px;">${formChips}</div>
-    <div class="pause-days" style="margin:0 0 12px;">${colorChips}</div>
-    ${filterAktiv?`<button class="btn btn-ghost" id="homeFilterReset" style="width:100%;margin-bottom:10px;">Filter zurücksetzen</button>`:''}
+    <div id="homeSearchRow" style="display:flex;gap:8px;align-items:center;margin-bottom:12px;">
+      <div class="search-wrap" style="flex:1;margin:0;"><span class="search-ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="11" cy="11" r="7"/><path d="M21 21l-4.3-4.3"/></svg></span><input id="studentSearch" type="search" placeholder="Schüler suchen …" autocomplete="off"><button class="search-clear" id="searchClear" aria-label="Leeren" style="display:none;">✕</button></div>
+      <button class="cal-search-btn" id="homeFilterBtn" aria-label="Filter" style="position:relative;flex:0 0 auto;"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 6h16M7 12h10M10 18h4"/></svg>${filterAktiv?'<span class="cal-filter-badge"></span>':''}</button>
+    </div>
     <div id="studentGrid">${gridHTML}</div>
     <div class="no-hit" id="noHit" style="display:none;">Kein Schüler gefunden.</div>
     </div>
     <div style="position:fixed;right:6px;top:50%;transform:translateY(-50%);z-index:30;display:flex;flex-direction:column;align-items:center;background:var(--surface);border-radius:12px;padding:4px 3px;box-shadow:var(--elev-2);${(sortiertAlpha&&!gruppiertNachFahrlehrer&&list.length)?'':'display:none;'}" id="alphaNav">${letterNav}</div>`;
   animateRings();
-  document.querySelectorAll(".s-card").forEach(c=>c.addEventListener("click",e=>{ if(e.target.closest("[data-anruf]"))return; routeDetail(c.dataset.id); }));
-  document.querySelectorAll("[data-anruf]").forEach(a=>a.addEventListener("click",e=>{ e.stopPropagation(); window.location.href="tel:"+a.dataset.anruf; }));
+  document.querySelectorAll(".s-card").forEach(c=>c.addEventListener("click",()=>routeDetail(c.dataset.id)));
   document.querySelectorAll("[data-sort]").forEach(b=>b.addEventListener("click",()=>{ _homeSortMode=b.dataset.sort; routeHome(); }));
-  document.querySelectorAll("[data-homeform]").forEach(b=>b.addEventListener("click",()=>{
-    const f=b.dataset.homeform; const i=_homeFormFilter.indexOf(f);
-    if(i>=0)_homeFormFilter.splice(i,1); else _homeFormFilter.push(f);
-    routeHome();
-  }));
-  document.querySelectorAll("[data-homecolor]").forEach(b=>b.addEventListener("click",()=>{
-    const c=b.dataset.homecolor; const i=_homeColorFilter.indexOf(c);
-    if(i>=0)_homeColorFilter.splice(i,1); else _homeColorFilter.push(c);
-    routeHome();
-  }));
-  const resetBtn=$("#homeFilterReset"); if(resetBtn)resetBtn.addEventListener("click",()=>{ _homeFormFilter=[]; _homeColorFilter=[]; routeHome(); });
+  const _hfb=$("#homeFilterBtn"); if(_hfb)_hfb.addEventListener("click",openHomeFilterSheet);
   document.querySelectorAll(".alpha-nav-btn").forEach(b=>b.addEventListener("click",()=>{
     const el=document.getElementById("alpha-"+b.dataset.letter);
     if(el)el.scrollIntoView({behavior:"smooth",block:"start"});
@@ -5679,6 +5664,45 @@ function routeHome(){
   sc.addEventListener("click",()=>{si.value="";filt();si.focus();});
   if(_fsAgg)_fsInjectTurboFilter();
 }
+/* Schülerliste-Filter im Sheet statt als Chip-Leiste (spart zwei volle Zeilen auf dem Schirm).
+   Klasse und Farbe wirken zusammen: innerhalb einer Gruppe ODER, zwischen den Gruppen UND. */
+function openHomeFilterSheet(){
+  const render=()=>{
+    let treffer=activeStudents().slice();
+    if(_homeFormFilter.length) treffer=treffer.filter(s=>_homeFormFilter.includes(s.form||"B"));
+    if(_homeColorFilter.length) treffer=treffer.filter(s=>_homeColorFilter.includes(s.profil));
+    const aktiv=_homeFormFilter.length||_homeColorFilter.length;
+    return `<div class="sheet-h">Filter</div>
+    <p class="muted-p" style="font-size:13px;margin:-4px 0 12px;">${aktiv?`${treffer.length} von ${activeStudents().length} Schülern`:"Mehrfachauswahl möglich"}</p>
+    <div style="font-size:11px;font-weight:700;letter-spacing:.06em;color:var(--faint);text-transform:uppercase;margin:0 0 6px;">Klasse</div>
+    <div class="es-actions" style="margin-bottom:14px;">
+      ${FORMS.map(f=>`<button class="es-act${_homeFormFilter.includes(f)?' primary':''}" data-hff="${f}">${_homeFormFilter.includes(f)?'✓ ':''}${formLabel(f)}</button>`).join("")}
+    </div>
+    <div style="font-size:11px;font-weight:700;letter-spacing:.06em;color:var(--faint);text-transform:uppercase;margin:0 0 6px;">Farbtyp</div>
+    <div class="es-actions">
+      ${["rot","gelb","gruen","blau"].map(c=>`<button class="es-act${_homeColorFilter.includes(c)?' primary':''}" data-hcf="${c}"><span style="display:inline-block;width:8px;height:8px;border-radius:50%;background:${PROFILE[c].hex};margin-right:5px;"></span>${_homeColorFilter.includes(c)?'✓ ':''}${PROFILE[c].word}</button>`).join("")}
+    </div>
+    <div class="btn-row" style="margin-top:14px;">
+      <button class="btn btn-ghost" id="hfReset" style="flex:0;padding:13px 16px;">Zurücksetzen</button>
+      <button class="btn btn-primary" id="hfDone">Fertig</button>
+    </div>`;
+  };
+  const bind=()=>{
+    document.querySelectorAll("[data-hff]").forEach(b=>b.addEventListener("click",()=>{
+      const f=b.dataset.hff; const i=_homeFormFilter.indexOf(f);
+      if(i>=0)_homeFormFilter.splice(i,1); else _homeFormFilter.push(f);
+      openSheet(render()); bind();
+    }));
+    document.querySelectorAll("[data-hcf]").forEach(b=>b.addEventListener("click",()=>{
+      const c=b.dataset.hcf; const i=_homeColorFilter.indexOf(c);
+      if(i>=0)_homeColorFilter.splice(i,1); else _homeColorFilter.push(c);
+      openSheet(render()); bind();
+    }));
+    $("#hfReset").addEventListener("click",()=>{ _homeFormFilter=[]; _homeColorFilter=[]; openSheet(render()); bind(); });
+    $("#hfDone").addEventListener("click",()=>{ closeSheet(); routeHome(); });
+  };
+  openSheet(render()); bind();
+}
 function backupBannerHTML(){
   const stamp=parseInt(localStorage.getItem("serband-backup-stamp")||"0");
   if(!stamp)return `<div class="backup-banner" id="backupBanner"><div><div class="bb-txt"><span class="ic ic-gold" style="font-size:13px;">${ICN.save}</span> Noch kein Backup erstellt</div><div class="bb-sub">Daten nur im Browser — jetzt sichern!</div></div><span class="bb-arr">›</span></div>`;
@@ -5694,7 +5718,6 @@ function cardHTML(s,i){
   const p=s.profil?PROFILE[s.profil]:null;const col=p?p.color:"var(--orange)";
   const pct=s.theoriePct||0;
   const istTurbo=_fsAgg&&s._paketId&&(_fsAgg.pakete||[]).some(pk=>pk.id===s._paketId&&pk.name==="Turboboost");
-  const anrufBtn=s.telefon?`<span class="s-card-call" data-anruf="${esc(s.telefon)}" role="button" aria-label="Anrufen">${ICN.phone||"📞"}</span>`:"";
   return `<button class="s-card" data-id="${s.id}" data-name="${esc((s.name||'').toLowerCase())}" data-turbo="${istTurbo?'1':'0'}" style="animation-delay:${Math.min(i*45,360)}ms">
     <div>${ring(stand(s),50,3,col)}</div>
     <div class="s-body">
@@ -5702,7 +5725,7 @@ function cardHTML(s,i){
       <div class="s-meta"><span class="s-form-chip">${esc(s.form||"B")}</span>
         ${p?`<span class="s-dot" style="background:${p.color}"></span><span>${p.word}</span>`:`<span>Profil offen</span>`}</div>
       ${pct>0?`<div style="margin-top:6px;height:3px;background:var(--surface-2);border-radius:2px;overflow:hidden;"><div style="height:100%;width:${pct}%;background:var(--gruen);border-radius:2px;"></div></div>`:''}
-    </div>${anrufBtn}</button>`;
+    </div></button>`;
 }
 
 /* ============================================================
