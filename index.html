@@ -4926,7 +4926,7 @@ window.addEventListener("load", () => {
 const STORE_KEY="serband-app-v1";
 /* Build-Version: bei jeder Auslieferung hier das Datum aktualisieren.
    Wird in den Einstellungen angezeigt + für den Update-Hinweis genutzt. */
-const APP_VERSION="2026.09.05";
+const APP_VERSION="2026.09.06";
 // Nutzungsbedingungen & Haftungsausschluss (Bereich: rechtliche Absicherung) - Version hochzählen
 // und alle Nutzer müssen erneut zustimmen, sobald sich der Text inhaltlich ändert.
 const AGB_VERSION="1.0";
@@ -5764,24 +5764,39 @@ async function _fillAkademieFortschritt(s){
     const{data,error}=await supa.functions.invoke("trigger-akademie-fortschritt",{body:{telefon:s.telefon}});
     if(error||!data||!data.ok||!data.fortschritt)return;
     const box2=document.getElementById("akademieFortschrittSlot"); if(!box2)return;
-    box2.innerHTML=`<div class="mini-dash-row"><span>🎓 Fahr-Akademie</span><b>${data.fortschritt.gesehen} von ${data.fortschritt.gesamt} Videos gesehen</b></div>`;
+    const {gesehen,gesamt}=data.fortschritt;
+    // Defensive Klemme: gesehen darf gesamt nie übersteigen. Falls doch (Datenfehler auf
+    // Akademie-Seite, z.B. gelöschte Videos noch in der Verlauf-Historie), lieber eine plausible
+    // Meldung zeigen als eine unmögliche Zahl. Die eigentliche Ursache liegt außerhalb dieser Datei.
+    const gesehenSafe=Math.min(gesehen,gesamt);
+    const txt=gesehenSafe>=gesamt&&gesamt>0?`Alle ${gesamt} Videos gesehen ✓`:`${gesehenSafe} von ${gesamt} Videos gesehen`;
+    box2.innerHTML=`<div class="mini-dash-row"><span>🎓 Fahr-Akademie</span><b>${txt}</b></div>`;
   }catch(e){ /* still - Akademie-Fortschritt ist ein Bonus, kein Muss */ }
 }
 function routeDetail(id){
   const s=DB.students.find(x=>x.id===id);if(!s){routeHome();return;}
   ensure(s);
+  const pl=s.plan;
   $("#tbTitle").textContent="Schülerdatei";setFab(false);view.scrollTop=0;
   const p=s.profil?PROFILE[s.profil]:null;const col=p?p.color:"var(--orange)";
   const pct=stand(s);const done=pct>=100;
-  const last=planLastDate(s.plan);
   const ns=autoNext(s);
-  const riskSicher=RISK_THEMES.filter(t=>riskStatus(s,t.id)==="sicher").length;
-  const rc=examReadyCard(s);
   const E=s.bogen?evalBogen(s.bogen):null;
   const profSub=E?(E.pure?`${PROFILE[E.top].word} · ${COLOR_INFO[E.top].label}`:`${PROFILE[E.top].word}-${PROFILE[E.second].word} · ${E.blend.label}`):"Bogen ausfüllen";
-  // Letzte Fahrstunde direkt oben zusammengefasst (Bereich 3, Punkt 5)
-  const {last:letzteStunde}=findLastNextLesson(s.id);
+  // Letzte/nächste Fahrstunde direkt oben zusammengefasst (Bereich 3, Punkt 5)
+  const {last:letzteStunde,next:naechsteStunde}=findLastNextLesson(s.id);
   const letzteStundeHTML=letzteStunde?`<div class="mini-dash-row"><span>🚗 Letzte Fahrstunde</span><b>${isoDE(letzteStunde.date)} · ${letzteStunde.von} Uhr</b></div>`:"";
+  // Standort-Satz: ein Satz statt Zahlensalat (Schülermaske-Umbau, Abschnitt E)
+  let sonderDoneD=0,sonderTotD=0;
+  SONDER_DEF.forEach(d=>{ sonderTotD+=d.soll; sonderDoneD+=Math.min(sfCount(pl.sonder[d.key]),d.soll); });
+  const sonderOffenD=sonderTotD-sonderDoneD;
+  const standortSatz=s.umschreiber
+    ?`${pct}% Ausbildungsstand · Umschreiber – Sonderfahrten entfallen`
+    :`${pct}% Ausbildungsstand${sonderOffenD>0?` · ${sonderOffenD} Sonderfahrt${sonderOffenD===1?'':'en'} offen`:' · Sonderfahrten komplett'}`;
+  // Warteliste-Leiste: Platz + Tage, schmal, tippt zur Warteliste (Umbau Abschnitt C/E)
+  const wlIdx=s.ready?waitlist().findIndex(x=>x.id===s.id):-1;
+  const wlPos=wlIdx>=0?wlIdx+1:null;
+  const wlTage=s.ready?daysSince(s.ready):null;
   view.innerHTML=`<div class="view-inner view-wide fade-up">
     <div class="back-row"><button class="back-btn" id="backBtn">${ICN.back} Alle Schüler</button></div>
     <div class="detail-hero">
@@ -5792,7 +5807,6 @@ function routeDetail(id){
           <span class="chip chip-form">${esc(s.form||"B")}</span>
           ${E?`<span class="chip"><span class="cdot" style="background:${PROFILE[E.top].hex}"></span>${profSub}</span>`:`<span class="chip" style="color:var(--muted)">Profil noch offen</span>`}
           ${done?`<span class="chip chip-goal"><span class="ic ic-gold" style="font-size:11px;">${ICN.flag}</span> Am Ziel</span>`:""}
-          ${s.ready?`<span class="chip" style="border-color:var(--orange-line);color:var(--orange)">⏳ Warteliste</span>`:""}
           ${s.beginn?`<span class="chip" style="color:var(--muted)">seit ${esc(s.beginn)}</span>`:""}
           ${s.telefon?`<a class="chip" href="tel:${esc(s.telefon.replace(/\s+/g,''))}" style="color:var(--gruen);text-decoration:none;"><span class="ic" style="font-size:12px;">${ICN.phone}</span> ${esc(s.telefon)}</a>`:""}
           <button class="chip sehhilfe${s.sehhilfe?' on':''}" id="sehhilfeBtn">👓 ${s.sehhilfe?'Sehhilfe':'keine'}</button>
@@ -5800,11 +5814,31 @@ function routeDetail(id){
         </div>
       </div>
     </div>
+    <div class="lage-focus" style="margin-top:10px;"><div class="lage-lab">Stand</div><div class="lage-val">${esc(standortSatz)}</div></div>
+    <div class="lage-focus" style="margin-top:8px;"><div class="lage-lab">Nächster Fokus</div><div class="lage-val">${esc(ns.text)}</div></div>
+    ${wlPos?`<button class="wait-card-wrap" id="wlLeiste" style="display:flex;align-items:center;gap:10px;width:100%;text-align:left;background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:10px 14px;margin-top:8px;cursor:pointer;">
+      <span style="font-size:13px;color:var(--orange);font-weight:700;">⏳ Warteliste</span>
+      <span style="font-size:12.5px;color:var(--muted);">Platz ${wlPos} · seit ${wlTage} ${wlTage===1?'Tag':'Tagen'}</span>
+    </button>`:""}
+    <div class="form-pick" style="margin-top:10px;"><div class="fpc-label">Fährt</div><div class="pills" id="dashFormPills">${FORMS.map(f=>`<button class="pill ${s.form===f?'sel':''}" data-form="${f}">${formLabel(f)}</button>`).join("")}</div></div>
+    <div class="theorie-card" style="margin-top:9px;">
+      <div class="tc-body"><div class="tc-name">Theorieprüfung</div><div class="tc-sub">bestanden – einfach umschalten</div></div>
+      <button class="check-toggle ${pl.theorie?'on':''}" id="dashTheoToggle" aria-label="Theorie bestanden"></button>
+    </div>
+    <div class="theorie-card" style="margin-top:9px;">
+      <div class="tc-body"><div class="tc-name">Umschreiber</div><div class="tc-sub">Sonderfahrten zählen nicht zur %-Wertung</div></div>
+      <button class="check-toggle ${s.umschreiber?'on':''}" id="dashUmschreiberToggle" aria-label="Umschreiber"></button>
+    </div>
+    ${!pl.theorie?`<div class="theorie-card" id="dashTheorieWaitCard" style="margin-top:9px;">
+      <div class="tc-body"><div class="tc-name">Pausiert – wartet auf Theorie</div><div class="tc-sub">Keine Fahrstunden, bis die Theorie bestanden ist</div></div>
+      <button class="check-toggle ${s.theorieWait?'on':''}" id="dashTheorieWaitToggle" aria-label="Wartet auf Theorie"></button>
+    </div>`:''}
+    <div id="dashEmpfehlungen" style="margin-top:9px;">${simCard(s)}${akademieCard(s)}</div>
     <!-- Mini-Dashboard: alles Wichtige auf einen Blick (Bereich 3, Punkt 8) -->
     <div class="mini-dash">
       <div class="mini-dash-row"><span>📊 Ausbildungsstand</span><b>${pct}%</b></div>
       ${letzteStundeHTML}
-      ${ns?`<div class="mini-dash-row"><span>📅 Nächster Termin</span><b>${isoDE(ns.date)} · ${ns.von} Uhr</b></div>`:""}
+      ${naechsteStunde?`<div class="mini-dash-row"><span>📅 Nächster Termin</span><b>${isoDE(naechsteStunde.date)} · ${naechsteStunde.von} Uhr</b></div>`:""}
       ${s.email?`<div class="mini-dash-row"><span>✉️ E-Mail</span><b>${esc(s.email)}</b></div>`:""}
       ${s.geburtsdatum?`<div class="mini-dash-row"><span>🎂 Geburtstag</span><b>${isoDE(s.geburtsdatum).slice(0,5)}</b></div>`:""}
       <div id="akademieFortschrittSlot"></div>
@@ -5818,7 +5852,6 @@ function routeDetail(id){
     <div class="akte-nav">
       <button class="akte-btn" data-go="plan"><div class="ab-ic">📋</div><div class="ab-lab">Plan</div></button>
       <button class="akte-btn" data-go="profil"><div class="ab-ic">🧠</div><div class="ab-lab">Bogen</div></button>
-      <button class="akte-btn" data-go="risk"><div class="ab-ic">⚡</div><div class="ab-lab">Risiko</div></button>
       <button class="akte-btn" data-go="hist"><div class="ab-ic">🕐</div><div class="ab-lab">Historie</div></button>
     </div>
     <button class="vortest-big" id="shareStandBtn" style="background:#25D366;border:none;width:100%;cursor:pointer;">
@@ -5836,11 +5869,6 @@ function routeDetail(id){
       <div class="vb-body"><div class="vb-name">Vortest-Termin buchen</div><div class="vb-sub">Öffnet den Boost-Kalender</div></div>
       <div class="vb-arr">›</div>
     </a>`:""}
-    ${_buchungslinkFuerSchueler(s)?`<button class="vortest-big" id="schuelerBuchungslinkBtn" style="cursor:pointer;">
-      <div class="vb-ic">🔗</div>
-      <div class="vb-body"><div class="vb-name">Online-Buchungslink</div><div class="vb-sub">${s.form==="B197"?(s.b197nachweis?"Automatik (Schaltkompetenz bereits nachgewiesen)":"Schalter (Schaltkompetenz noch offen)"):formLabel(s.form||"B")} · kopieren &amp; an ${esc((s.name||"").split(" ")[0])} schicken</div></div>
-      <div class="vb-arr">›</div>
-    </button>`:""}
     <div class="btn-row" style="margin-top:18px;">
       <button class="btn btn-ghost" id="editBtn">Bearbeiten</button>
       <button class="btn btn-danger" id="delBtn">Löschen</button>
@@ -5863,6 +5891,23 @@ function routeDetail(id){
     b.textContent="👓 "+(s.sehhilfe?"Sehhilfe":"keine");
     toast(s.sehhilfe?"Sehhilfe eingetragen ✓":"Sehhilfe entfernt");
   });
+  const wl=$("#wlLeiste"); if(wl)wl.addEventListener("click",routeWaitlist);
+  // Fährt/Klasse
+  document.querySelectorAll("#dashFormPills .pill").forEach(b=>b.addEventListener("click",()=>{ s.form=b.dataset.form; save(); toast("Klasse: "+formLabel(s.form)); routeDetail(id); }));
+  // Theorie-/Umschreiber-/Pausiert-Toggles (aus dem Ausbildungsplan hierher verschoben)
+  const dtt=$("#dashTheoToggle"); if(dtt)dtt.addEventListener("click",()=>{
+    pl.theorie=!pl.theorie; if(pl.theorie){ if(!s.theoryPassed)s.theoryPassed=new Date().toISOString(); logHist(s,"theorie","Theorieprüfung bestanden"); if(stand(s)>=90&&!s.ready&&!s.passed){ s.ready=s.theoryPassed; toast("Theorie bestanden – auf die Praxis-Warteliste gesetzt"); } else if(stand(s)<90&&!s.ready&&!s.passed){ toast("Theorie bestanden – erst ab 90 % kommt er auf die Warteliste"); } delete s.theorieWait; } else { delete s.theoryPassed; } save(); routeDetail(id);
+  });
+  const dwt=$("#dashTheorieWaitToggle"); if(dwt)dwt.addEventListener("click",()=>{
+    if(s.theorieWait){ delete s.theorieWait; toast("Fahrstunden wieder aufgenommen"); } else { s.theorieWait=new Date().toISOString(); toast("Pausiert – wartet auf Theorie"); }
+    save(); routeDetail(id);
+  });
+  const dut=$("#dashUmschreiberToggle"); if(dut)dut.addEventListener("click",()=>{
+    s.umschreiber=!s.umschreiber; save();
+    toast(s.umschreiber?"Umschreiber aktiv – SF zählen nicht":"Umschreiber deaktiviert");
+    routeDetail(id);
+  });
+  bindSim(s,()=>routeDetail(id)); bindAkademie(s,()=>routeDetail(id));
   // Theorie-Fortschritt bearbeiten
   $("#theoEdit").addEventListener("click",()=>{
     openSheet(`<div class="sheet-h">Theorie-Fortschritt</div>
@@ -5887,7 +5932,6 @@ function routeDetail(id){
   document.querySelectorAll(".akte-btn").forEach(b=>b.addEventListener("click",()=>{
     const go=b.dataset.go;
     if(go==="plan")routePlan(id);
-    else if(go==="risk")routeRisk(id);
     else if(go==="hist")routeHistorie(id);
     else routeProfil(id);
   }));
@@ -5899,15 +5943,7 @@ function routeDetail(id){
     const url=phone?`https://wa.me/${phone}`:`https://wa.me/`;
     window.open(url,"_blank","noopener");
   });
-  const buchLinkBtn=$("#schuelerBuchungslinkBtn");
-  if(buchLinkBtn) buchLinkBtn.addEventListener("click",()=>{
-    const link=_buchungslinkFuerSchueler(s); if(!link)return;
-    const text=`Hey ${(s.name||"").split(" ")[0]}, hier kannst du dir eine Fahrstunde buchen: ${link}`;
-    if(navigator.share){ navigator.share({title:"Fahrstunde buchen",text,url:link}).catch(()=>{}); }
-    else { navigator.clipboard?.writeText(link).then(()=>toast("Link kopiert ✓")).catch(()=>toast("Kopieren fehlgeschlagen")); }
-  });
   bindExamReady(s,()=>routeDetail(id));
-  const _rk=$("#riskEditBtn");if(_rk)_rk.addEventListener("click",()=>routeRisk(id));
   if(_fsAgg)_fsInjectDetailExtras(id);
 }
 /* ===== Schüler-Historie (Zeitleiste) ===== */
@@ -6356,23 +6392,8 @@ function routePlan(id){
         <div class="plan-sub">${esc(s.name)} · ${esc(formLabel(s.form||"B"))} · Fortschritt fließt automatisch in die Schülerdatei</div>
       </div>
     </div>
-    <div class="form-pick"><div class="fpc-label">Fährt</div><div class="pills" id="planFormPills">${FORMS.map(f=>`<button class="pill ${s.form===f?'sel':''}" data-form="${f}">${formLabel(f)}</button>`).join("")}</div></div>
-    <div class="theorie-card">
-      <div class="tc-body"><div class="tc-name">Theorieprüfung</div><div class="tc-sub">bestanden – einfach umschalten</div></div>
-      <button class="check-toggle ${pl.theorie?'on':''}" id="theoToggle" aria-label="Theorie bestanden"></button>
-    </div>
-    <div class="theorie-card" style="margin-top:9px;">
-      <div class="tc-body"><div class="tc-name">Umschreiber</div><div class="tc-sub">Sonderfahrten zählen nicht zur %-Wertung</div></div>
-      <button class="check-toggle ${s.umschreiber?'on':''}" id="umschreiberToggle" aria-label="Umschreiber"></button>
-    </div>
     ${examPrognose(s)}
-    ${uePrognoseKachel(s)}
     <button class="btn btn-ghost" style="width:100%;margin:8px 0 2px;" onclick="routeDraw('${s.id}')">✏️ Zur Verkehrstafel</button>
-    <button class="btn btn-ghost" style="width:100%;margin:8px 0 2px;" onclick="openMultiTerminSheet('${s.id}')">🗓️ Mehrere Termine planen</button>
-    ${!pl.theorie?`<div class="theorie-card" id="theorieWaitCard" style="margin-top:9px;">
-      <div class="tc-body"><div class="tc-name">Pausiert – wartet auf Theorie</div><div class="tc-sub">Keine Fahrstunden, bis die Theorie bestanden ist</div></div>
-      <button class="check-toggle ${s.theorieWait?'on':''}" id="theorieWaitToggle" aria-label="Wartet auf Theorie"></button>
-    </div>`:''}
     <div class="plan-actions" id="planActions"></div>
     <div class="plan-sec">
       <div class="acc${_pa.fahrstunden?' open':''}" data-acc="fahrstunden">
@@ -6402,19 +6423,6 @@ function routePlan(id){
   </div>`;
   view.querySelectorAll('[data-acc="fahrstunden"] > .acc-h, [data-acc="sonderfahrten"] > .acc-h').forEach(h=>h.addEventListener("click",()=>{ const el=h.closest(".acc"); const isOpen=el.classList.toggle("open"); _pa[el.dataset.acc]=isOpen; }));
   $("#backBtn").addEventListener("click",()=>routeDetail(id));
-  $("#theoToggle").addEventListener("click",()=>{
-    pl.theorie=!pl.theorie;$("#theoToggle").classList.toggle("on",pl.theorie); if(pl.theorie){ if(!s.theoryPassed)s.theoryPassed=new Date().toISOString(); logHist(s,"theorie","Theorieprüfung bestanden"); if(stand(s)>=90&&!s.ready&&!s.passed){ s.ready=s.theoryPassed; toast("Theorie bestanden – auf die Praxis-Warteliste gesetzt"); } else if(stand(s)<90&&!s.ready&&!s.passed){ toast("Theorie bestanden – erst ab 90 % kommt er auf die Warteliste"); } delete s.theorieWait; } else { delete s.theoryPassed; } save();refreshPlanRing(s);renderPlanActions(s);routePlan(id);});
-  const twt=$("#theorieWaitToggle"); if(twt)twt.addEventListener("click",()=>{
-    if(s.theorieWait){ delete s.theorieWait; toast("Fahrstunden wieder aufgenommen"); } else { s.theorieWait=new Date().toISOString(); toast("Pausiert – wartet auf Theorie"); }
-    save(); twt.classList.toggle("on",!!s.theorieWait);
-  });
-  const umt=$("#umschreiberToggle"); if(umt)umt.addEventListener("click",()=>{
-    s.umschreiber=!s.umschreiber; save();
-    umt.classList.toggle("on",s.umschreiber);
-    toast(s.umschreiber?"Umschreiber aktiv – SF zählen nicht":"Umschreiber deaktiviert");
-    refreshPlanRing(s);
-  });
-  document.querySelectorAll("#planFormPills .pill").forEach(b=>b.addEventListener("click",()=>{ s.form=b.dataset.form; save(); document.querySelectorAll("#planFormPills .pill").forEach(x=>x.classList.toggle("sel",x===b)); const sub=document.querySelector(".plan-sub"); if(sub)sub.innerHTML=esc(s.name)+" · "+esc(formLabel(s.form))+" · Fortschritt fließt automatisch in die Schülerdatei"; toast("Klasse: "+formLabel(s.form)); }));
   const _pp=$("#pdfPlanBtn");if(_pp)_pp.addEventListener("click",()=>printPlan(s));buildStunden(s);buildSonder(s);buildStufen(s);renderPlanActions(s);
   _fillUEProgFahrschule(ueBisherFuerSchueler(s));
   animateRings();
@@ -8117,6 +8125,7 @@ function openAddSheet(){
       <button class="add-opt" data-add="schalt"><span class="ao-ic" style="color:${CAL_ARTEN.schalt.col}">${ICN.cal||"+"}</span><span class="ao-l">Schaltkompetenz</span></button>
       <button class="add-opt" data-add="pruefung"><span class="ao-ic" style="color:${CAL_ARTEN.pruefung.col}">${ICN.trophy||"+"}</span><span class="ao-l">Prüfung</span></button>
       <button class="add-opt" data-add="theorie"><span class="ao-ic" style="color:${CAL_ARTEN.theorie.col}">${ICN.note||"+"}</span><span class="ao-l">Theorie</span></button>
+      <button class="add-opt" data-add="multi"><span class="ao-ic" style="color:var(--akzent)">🗓️</span><span class="ao-l">Mehrere Termine</span></button>
       <button class="add-opt" data-add="block"><span class="ao-ic" style="color:#88939a">${ICN.lock||"✕"}</span><span class="ao-l">Zeit blockieren</span></button>
       `}
     </div>`);
@@ -8124,7 +8133,27 @@ function openAddSheet(){
     if(t==="pruefung"){ routePruefungen(); setTimeout(()=>{ const a=$("#addTermin"); if(a)a.click(); },120); }
     else if(t==="block"){ openBlockSheet(); }
     else if(t==="theorie"){ openTheorieSheet(); }
+    else if(t==="multi"){ openMultiTerminMitWem(); }
     else openAddLessonSheet(t); }));
+}
+/* 'Mehrere Termine planen' fragt zuerst mit wem, bevor der eigentliche Multi-Termin-Dialog
+   (Art, Fahrzeug, Zeitraum) öffnet - Bereich C des Schülermaske-Umbaus: aus dem Ausbildungsplan
+   in den Kalender verschoben, da es ein Kalender-Vorgang ist, kein Ausbildungsinhalt. */
+function openMultiTerminMitWem(){
+  const cand=activeStudents().sort((a,b)=>a.name.localeCompare(b.name,'de'));
+  openSheet(`<div class="sheet-h">Mehrere Termine planen</div>
+    <p class="muted-p" style="font-size:12.5px;margin:-4px 0 10px;">Mit wem?</p>
+    <div class="field"><input type="text" id="mtwSearch" placeholder="Schüler suchen …" autocomplete="off"></div>
+    <div class="as-list" id="mtwList">${cand.map(s=>`<button class="as-item" data-sid="${s.id}"><span class="as-nm">${esc(s.name)}</span><span class="as-cls">${esc(s.form||'')}</span></button>`).join("")}</div>
+    <div class="btn-row"><button class="btn btn-ghost" id="mtwCancel" style="flex:0;padding:13px 18px;">Abbrechen</button></div>`);
+  const bind=()=>document.querySelectorAll("#mtwList .as-item").forEach(b=>b.addEventListener("click",()=>{ closeSheet(); openMultiTerminSheet(b.dataset.sid); }));
+  $("#mtwSearch").addEventListener("input",e=>{
+    const list=cand.filter(s=>matchStudent(s.name,e.target.value));
+    $("#mtwList").innerHTML=list.map(s=>`<button class="as-item" data-sid="${s.id}"><span class="as-nm">${esc(s.name)}</span><span class="as-cls">${esc(s.form||'')}</span></button>`).join("")||'<p class="muted-p" style="font-size:13px;">Kein Treffer</p>';
+    bind();
+  });
+  $("#mtwCancel").addEventListener("click",closeSheet);
+  bind();
 }
 /* Theorie hinzufügen – kein Schüler nötig, nur Datum + Startzeit. Wird IMMER als zwei echte,
    einzeln blockierte 90-Minuten-Termine angelegt (so wie Boost Theorie tatsächlich unterrichtet) -
@@ -8557,9 +8586,9 @@ function openBogenChoiceSheet(sid,name,afterChoice){
       <button class="btn btn-ghost" id="bgLater" style="width:100%;">Später erinnern</button>
       <button class="btn btn-ghost" id="bgSkip" style="width:100%;">Überspringen</button>
     </div>`);
-  $("#bgNow").addEventListener("click",()=>{ afterChoice(); routeBogen(sid,true); });
-  $("#bgLater").addEventListener("click",()=>{ logHist(sid,"note","Fragebogen noch offen — später ausfüllen"); afterChoice(); });
-  $("#bgSkip").addEventListener("click",()=>{ afterChoice(); });
+  $("#bgNow").addEventListener("click",()=>{ closeSheet(); afterChoice(); routeBogen(sid,true); });
+  $("#bgLater").addEventListener("click",()=>{ closeSheet(); logHist(sid,"note","Fragebogen noch offen — später ausfüllen"); afterChoice(); });
+  $("#bgSkip").addEventListener("click",()=>{ closeSheet(); afterChoice(); });
 }
 
 /* ===================== TO-DOS ===================== */
@@ -9684,7 +9713,6 @@ function examReadyCard(s){
           <div class="rc-sub">${t?`am ${isoDE(t.date)}`:`seit ${fmtDateDE(s.ready)} · ${waitText(s.ready)}`}${s.theoryPassed?` · Theorie ${isoDE(s.theoryPassed)}`:""}${s.attempts?` · ${s.attempts+1}. Versuch`:""}</div></div>
       </div>
       <div style="margin-top:11px;">${badge}</div>
-      <button class="fcheck-edit" id="riskEditBtn" style="margin-top:11px;">Checkliste / Risiko-Themen durchgehen ${ICN.arrow}</button>
       <div class="btn-row" style="margin-top:13px;">
         <button class="btn btn-primary" id="examBtn" style="flex:1;">Prüfung eintragen</button>
         <button class="btn btn-ghost" id="readyOff" style="flex:0;padding:11px 16px;">Entfernen</button>
@@ -9697,7 +9725,6 @@ function bindExamReady(s,rerender){
   const off=$("#readyOff"); if(off)off.addEventListener("click",()=>{ delete s.ready; delete s.waitOrder; clearSlot(s.id); save(); toast("Von der Warteliste genommen"); rerender(); });
   const force=$("#readyForce"); if(force)force.addEventListener("click",()=>{ if(confirm("Diesen Schüler trotz offener Punkte manuell auf die Warteliste setzen?")){ setReady(s); save(); toast("Manuell auf die Warteliste gesetzt"); rerender(); } });
   const ex=$("#examBtn"); if(ex)ex.addEventListener("click",()=>routeExam(s.id));
-  const rb=$("#riskEditBtn"); if(rb)rb.addEventListener("click",()=>routeRisk(s.id));
   const re=$("#reactBtn"); if(re)re.addEventListener("click",()=>openReactivateSheet(s,rerender));
 }
 /* Reaktivieren – mit optionalem B197-Schaltkompetenz-Nachweis + Prüfer */
@@ -9782,7 +9809,7 @@ async function empfehlungAnlegen(s,typ){
     if(error)console.error("Empfehlung konnte nicht gemeldet werden:",error.message);
   }catch(e){console.error(e);}
 }
-function renderPlanActions(s){ const pa=$("#planActions"); if(!pa)return; pa.innerHTML=simCard(s)+akademieCard(s)+examReadyCard(s); bindSim(s,()=>routePlan(s.id)); bindAkademie(s,()=>routePlan(s.id)); bindExamReady(s,()=>routePlan(s.id)); }
+function renderPlanActions(s){ const pa=$("#planActions"); if(!pa)return; pa.innerHTML=examReadyCard(s); bindExamReady(s,()=>routePlan(s.id)); }
 
 /* ---------- Prüfung eintragen ---------- */
 function openExamPlanSheet(s){
@@ -11576,21 +11603,19 @@ function examReadiness(s){
   let sonderDone=0,sonderTot=0;
   SONDER_DEF.forEach(d=>{ sonderTot+=d.soll; sonderDone+=Math.min(sfCount(s.plan.sonder[d.key]),d.soll); });
   const sonderOk=sonderDone>=sonderTot, theoOk=!!s.plan.theorie;
-  const riskOpenList=RISK_THEMES.filter(t=>riskStatus(s,t.id)!=="sicher");
-  const riskOk=riskOpenList.length===0, skillOk=pct>=READY_MIN;
+  const skillOk=pct>=READY_MIN;
   const items=[
     {label:`Ausbildungsstand ${pct} % (Ziel ≥ ${READY_MIN} %)`, ok:skillOk, detail:skillOk?null:`Noch ${skillOpen} ${skillOpen===1?"Thema":"Themen"} nicht auf Grün.`},
     {label:`Sonderfahrten ${sonderDone}/${sonderTot}`, ok:sonderOk, detail:sonderOk?null:"Pflichtfahrten noch nicht komplett."},
-    {label:"Theorieprüfung bestanden", ok:theoOk, detail:theoOk?null:"Im Ausbildungsplan noch nicht abgehakt."},
-    {label:`Risiko-Themen sicher (${RISK_THEMES.length-riskOpenList.length}/${RISK_THEMES.length})`, ok:riskOk, detail:riskOk?null:`Noch offen: ${riskOpenList.slice(0,3).map(t=>t.t).join(", ")}${riskOpenList.length>3?" …":""}`}
+    {label:"Theorieprüfung bestanden", ok:theoOk, detail:theoOk?null:"Im Ausbildungsplan noch nicht abgehakt."}
   ];
   if(s.attempts>0){
     const fset=new Set();
     (DB.exams||[]).forEach(e=>{ if(e.sid===s.id&&e.result==="fail"&&Array.isArray(e.faults)) e.faults.forEach(fc=>fset.add(FAULT_LABEL[fc]||fc)); });
     if(fset.size) items.push({label:"Aus früherem Versuch beachten", ok:null, detail:[...fset].slice(0,4).join(", ")});
   }
-  const ready=skillOk&&sonderOk&&theoOk&&riskOk;
-  return {ready, items, openCount:items.filter(it=>it.ok===false).length, skillOpen, riskOpen:riskOpenList.length};
+  const ready=skillOk&&sonderOk&&theoOk;
+  return {ready, items, openCount:items.filter(it=>it.ok===false).length, skillOpen};
 }
 
 function freigabeCard(s){
@@ -11610,7 +11635,6 @@ function freigabeCard(s){
     <div class="ready-head"><div class="rc-ic"${R.ready?"":' style="background:var(--surface-2);color:var(--faint)"'}>${ICN.trophy}</div>
       <div class="rc-body">${head}</div></div>
     <div class="fcheck-list">${rows}</div>
-    <button class="fcheck-edit" id="riskEditBtn">Risiko-Themen durchgehen ${ICN.arrow}</button>
     ${btn}
   </div>`;
 }
@@ -11704,11 +11728,30 @@ function shareStandWhatsApp(s){
   stufenFor(s).forEach(st=>st.items.forEach(it=>{const v=amp[it.id];if(v==="gruen")greens.push(it.t);else if(v==="gelb")yellows.push(it.t);else if(v==="rot")reds.push(it.t);}));
   const weak=[...reds,...yellows].slice(0,3);
   const {last,next}=findLastNextLesson(s.id);
-  let msg=`Hey ${s.name?s.name.split(" ")[0]:""}! 👋\n\n`;
-  if(last) msg+=`Letzte Fahrstunde: ${isoDE(last.date)} um ${last.von} Uhr\n`;
-  msg+=`\nDein aktueller Ausbildungsstand:\n✅ ${greens.length} von ${allSkillsFor(s).length} Themen sicher\n`;
-  if(weak.length){
-    msg+=`\nDas übst du als Nächstes:\n`+weak.map(w=>`• ${w}`).join("\n")+"\n";
+  const pct=stand(s);
+  const vorname=s.name?s.name.split(" ")[0]:"";
+  let msg=`Hey ${vorname}! 👋\n\n`;
+  if(last) msg+=`Letzte Fahrstunde: ${isoDE(last.date)} um ${last.von} Uhr\n\n`;
+  if(pct>=100){
+    // 100%: kein Themen-Zähler mehr - der ist an dieser Stelle bedeutungslos.
+    msg+=`Bei dir sitzt inzwischen alles ✅\nJetzt geht's nicht mehr ums Neu-Lernen, sondern um Ruhe und Routine – dranbleiben, damit es sich am Prüfungstag genauso sicher anfühlt wie heute.\n`;
+  } else if(pct>=70){
+    // Kurz vor der Prüfung: jetzt dürfen Sonderfahrten & Theorie mit rein, plus die echten Lücken beim Namen.
+    let sonderDoneS=0,sonderTotS=0;
+    SONDER_DEF.forEach(d=>{ sonderTotS+=d.soll; sonderDoneS+=Math.min(sfCount(s.plan.sonder[d.key]),d.soll); });
+    msg+=`Du bist schon richtig weit – ${pct}% sitzen sicher.\n`;
+    if(weak.length) msg+=`\nDas ist noch offen:\n`+weak.map(w=>`• ${w}`).join("\n")+"\n";
+    if(!s.umschreiber) msg+=`\n🛣️ Sonderfahrten: ${sonderDoneS}/${sonderTotS}\n`;
+    msg+=`📚 Theorie: ${s.plan.theorie?"bestanden ✓":"noch offen"}\n`;
+  } else if(pct>=25){
+    // Mitte der Ausbildung: Stärke spiegeln + nächstes Thema + sanfter Videohinweis, noch ohne Prüfungsdruck.
+    msg+=`Du machst gute Fortschritte (${pct}%).\n`;
+    if(weak.length) msg+=`\nDas übst du als Nächstes:\n`+weak.map(w=>`• ${w}`).join("\n")+"\n";
+    msg+=`\nTipp: Schau dir das Thema gerne nochmal in der Videoakademie an, dann sitzt es beim nächsten Mal noch besser.\n`;
+  } else {
+    // Ganz am Anfang: normalisieren statt Zahlen zeigen - alles gleichzeitig zu sehen wäre nur Druck ohne Nutzen.
+    msg+=`Am Anfang ist erstmal alles neu – das ist völlig normal und wird mit jeder Stunde automatisch weniger.\n`;
+    if(weak.length) msg+=`\nAls Erstes schauen wir uns an:\n• ${weak[0]}\n`;
   }
   if(next) msg+=`\n📅 Nächster Termin: ${isoDE(next.date)} um ${next.von} Uhr\n`;
   msg+=`\nBis zur nächsten Fahrstunde! 🚗`;
