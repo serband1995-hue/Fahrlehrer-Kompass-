@@ -4924,7 +4924,7 @@ window.addEventListener("load", () => {
 const STORE_KEY="serband-app-v1";
 /* Build-Version: bei jeder Auslieferung hier das Datum aktualisieren.
    Wird in den Einstellungen angezeigt + für den Update-Hinweis genutzt. */
-const APP_VERSION="2026.09.07";
+const APP_VERSION="2026.09.10";
 // Nutzungsbedingungen & Haftungsausschluss (Bereich: rechtliche Absicherung) - Version hochzählen
 // und alle Nutzer müssen erneut zustimmen, sobald sich der Text inhaltlich ändert.
 const AGB_VERSION="1.0";
@@ -5578,16 +5578,20 @@ function _letzteAktivitaet(s){
   return l.length?l[l.length-1]:"";
 }
 let _homeSortMode="az";
-let _homeFormFilter=[], _homeColorFilter=[];
+let _homeFormFilter=[], _homeColorFilter=[], _homeOhneTelefon=false;
+// Telefonnummer ist in der Fahr-Akademie der Login. Fehlt sie, kann dort kein Zugang
+// angelegt werden - deshalb gilt auch eine leere Zeichenkette als "fehlt".
+function telefonFehlt(s){ return !((s.telefon||"").trim()); }
 function routeHome(){
   $("#tbTitle").textContent="Schüler";setFab(true);view.scrollTop=0;
   let list=activeStudents().slice();
   if(_homeFormFilter.length) list=list.filter(s=>_homeFormFilter.includes(s.form||"B"));
   if(_homeColorFilter.length) list=list.filter(s=>_homeColorFilter.includes(s.profil));
+  if(_homeOhneTelefon) list=list.filter(telefonFehlt);
   const alle=activeStudents();
   if(_homeSortMode==="stand") list.sort((a,b)=>stand(b)-stand(a));
   else list.sort((a,b)=>(a.name||"").localeCompare(b.name||"","de"));
-  const filterAktiv=_homeFormFilter.length||_homeColorFilter.length;
+  const filterAktiv=_homeFormFilter.length||_homeColorFilter.length||_homeOhneTelefon;
   if(!alle.length){
     view.innerHTML=`<div class="empty fade-up">
       <img src="${LOGO}" alt="">
@@ -5671,7 +5675,9 @@ function openHomeFilterSheet(){
     let treffer=activeStudents().slice();
     if(_homeFormFilter.length) treffer=treffer.filter(s=>_homeFormFilter.includes(s.form||"B"));
     if(_homeColorFilter.length) treffer=treffer.filter(s=>_homeColorFilter.includes(s.profil));
-    const aktiv=_homeFormFilter.length||_homeColorFilter.length;
+    if(_homeOhneTelefon) treffer=treffer.filter(telefonFehlt);
+    const aktiv=_homeFormFilter.length||_homeColorFilter.length||_homeOhneTelefon;
+    const ohneTelAnzahl=activeStudents().filter(telefonFehlt).length;
     return `<div class="sheet-h">Filter</div>
     <p class="muted-p" style="font-size:13px;margin:-4px 0 12px;">${aktiv?`${treffer.length} von ${activeStudents().length} Schülern`:"Mehrfachauswahl möglich"}</p>
     <div style="font-size:11px;font-weight:700;letter-spacing:.06em;color:var(--faint);text-transform:uppercase;margin:0 0 6px;">Klasse</div>
@@ -5679,9 +5685,13 @@ function openHomeFilterSheet(){
       ${FORMS.map(f=>`<button class="es-act${_homeFormFilter.includes(f)?' primary':''}" data-hff="${f}">${_homeFormFilter.includes(f)?'✓ ':''}${formLabel(f)}</button>`).join("")}
     </div>
     <div style="font-size:11px;font-weight:700;letter-spacing:.06em;color:var(--faint);text-transform:uppercase;margin:0 0 6px;">Farbtyp</div>
-    <div class="es-actions">
+    <div class="es-actions" style="margin-bottom:14px;">
       ${["rot","gelb","gruen","blau"].map(c=>`<button class="es-act${_homeColorFilter.includes(c)?' primary':''}" data-hcf="${c}"><span style="display:inline-block;width:8px;height:8px;border-radius:50%;background:${PROFILE[c].hex};margin-right:5px;"></span>${_homeColorFilter.includes(c)?'✓ ':''}${PROFILE[c].word}</button>`).join("")}
     </div>
+    ${ohneTelAnzahl?`<div style="font-size:11px;font-weight:700;letter-spacing:.06em;color:var(--faint);text-transform:uppercase;margin:0 0 6px;">Zu klären</div>
+    <div class="es-actions">
+      <button class="es-act${_homeOhneTelefon?' primary':''}" data-hnotel="1">${_homeOhneTelefon?'✓ ':''}📵 Telefonnummer fehlt · <b>${ohneTelAnzahl}</b></button>
+    </div>`:''}
     <div class="btn-row" style="margin-top:14px;">
       <button class="btn btn-ghost" id="hfReset" style="flex:0;padding:13px 16px;">Zurücksetzen</button>
       <button class="btn btn-primary" id="hfDone">Fertig</button>
@@ -5698,7 +5708,9 @@ function openHomeFilterSheet(){
       if(i>=0)_homeColorFilter.splice(i,1); else _homeColorFilter.push(c);
       openSheet(render()); bind();
     }));
-    $("#hfReset").addEventListener("click",()=>{ _homeFormFilter=[]; _homeColorFilter=[]; openSheet(render()); bind(); });
+    const nt=document.querySelector("[data-hnotel]");
+    if(nt)nt.addEventListener("click",()=>{ _homeOhneTelefon=!_homeOhneTelefon; openSheet(render()); bind(); });
+    $("#hfReset").addEventListener("click",()=>{ _homeFormFilter=[]; _homeColorFilter=[]; _homeOhneTelefon=false; openSheet(render()); bind(); });
     $("#hfDone").addEventListener("click",()=>{ closeSheet(); routeHome(); });
   };
   openSheet(render()); bind();
@@ -5721,7 +5733,7 @@ function cardHTML(s,i){
   return `<button class="s-card" data-id="${s.id}" data-name="${esc((s.name||'').toLowerCase())}" data-turbo="${istTurbo?'1':'0'}" style="animation-delay:${Math.min(i*45,360)}ms">
     <div>${ring(stand(s),50,3,col)}</div>
     <div class="s-body">
-      <div class="s-name">${esc(s.name)}${s.sehhilfe?` <span class="s-sehhilfe">👓</span>`:''}${s.pruefungsreifManuell?' <span title="Prüfungsreif" style="color:var(--gruen);">🏁</span>':''}${istTurbo?' <span title="Turboboost" style="color:#d68a3e;">⚡</span>':''}</div>
+      <div class="s-name">${esc(s.name)}${s.sehhilfe?` <span class="s-sehhilfe">👓</span>`:''}${s.pruefungsreifManuell?' <span title="Prüfungsreif" style="color:var(--gruen);">🏁</span>':''}${istTurbo?' <span title="Turboboost" style="color:#d68a3e;">⚡</span>':''}${telefonFehlt(s)?' <span title="Telefonnummer fehlt – kein Akademie-Zugang möglich" style="color:var(--orange);">📵</span>':''}</div>
       <div class="s-meta"><span class="s-form-chip">${esc(s.form||"B")}</span>
         ${p?`<span class="s-dot" style="background:${p.color}"></span><span>${p.word}</span>`:`<span>Profil offen</span>`}</div>
       ${pct>0?`<div style="margin-top:6px;height:3px;background:var(--surface-2);border-radius:2px;overflow:hidden;"><div style="height:100%;width:${pct}%;background:var(--gruen);border-radius:2px;"></div></div>`:''}
@@ -5831,7 +5843,7 @@ function routeDetail(id){
           ${E?`<span class="chip"><span class="cdot" style="background:${PROFILE[E.top].hex}"></span>${profSub}</span>`:`<span class="chip" style="color:var(--muted)">Profil noch offen</span>`}
           ${done?`<span class="chip chip-goal"><span class="ic ic-gold" style="font-size:11px;">${ICN.flag}</span> Am Ziel</span>`:""}
           ${s.beginn?`<span class="chip" style="color:var(--muted)">seit ${esc(s.beginn)}</span>`:""}
-          ${s.telefon?`<a class="chip" href="tel:${esc(s.telefon.replace(/\s+/g,''))}" style="color:var(--gruen);text-decoration:none;"><span class="ic" style="font-size:12px;">${ICN.phone}</span> ${esc(s.telefon)}</a>`:""}
+          ${s.telefon?`<a class="chip" href="tel:${esc(s.telefon.replace(/\s+/g,''))}" style="color:var(--gruen);text-decoration:none;"><span class="ic" style="font-size:12px;">${ICN.phone}</span> ${esc(s.telefon)}</a>`:`<button class="chip" id="telFehltBtn" style="border-color:var(--orange-line);color:var(--orange);">📵 Nummer fehlt – eintragen</button>`}
           <button class="chip sehhilfe${s.sehhilfe?' on':''}" id="sehhilfeBtn">👓 ${s.sehhilfe?'Sehhilfe':'keine'}</button>
           <button class="chip sehhilfe${s.pruefungsreifManuell?' on':''}" id="pruefReifBtn" style="${s.pruefungsreifManuell?'border-color:var(--gruen-line);color:var(--gruen);':''}">🏁 ${s.pruefungsreifManuell?'Prüfungsreif':'Prüfungsreif markieren'}</button>
         </div>
@@ -5902,6 +5914,7 @@ function routeDetail(id){
   $("#backBtn").addEventListener("click",routeHome);
   $("#editBtn").addEventListener("click",()=>formView(s));
   const prb=$("#pruefReifBtn"); if(prb)prb.addEventListener("click",()=>{ s.pruefungsreifManuell=!s.pruefungsreifManuell; save(); routeDetail(id); });
+  const tfb=$("#telFehltBtn"); if(tfb)tfb.addEventListener("click",()=>formView(s));
   _fillAkademieFortschritt(s);
   $("#delBtn").addEventListener("click",()=>{
     if(confirm("Diesen Schüler wirklich löschen? Das kann nicht rückgängig gemacht werden.")){
@@ -8376,6 +8389,7 @@ function openEventSheet(kind,id,sid){
       <button class="es-act" id="esOther">Mit anderem Schüler gefahren</button>
       <button class="es-act" id="esNoshow">Nicht erschienen</button>
       <button class="es-act" id="esCancel">Abgebrochen</button>
+      ${fcRelevant?`<button class="es-act" id="esGift">🎁 Zeit verschenkt${l.tatsaechlicheDauer?` · <b>${l.tatsaechlicheDauer} Min berechnet</b>`:''}</button>`:''}
       ${l.status&&l.status!=="geplant"?`<button class="es-act" id="esReset">Status zurücksetzen</button>`:''}
       <button class="es-act danger" id="esDelete">Termin löschen</button>
     </div>`);
@@ -8384,8 +8398,9 @@ function openEventSheet(kind,id,sid){
   const sigb=$("#esSig"); if(sigb)sigb.addEventListener("click",()=>{ closeSheet(); openSignatureSheet(id); });
   $("#esEdit").addEventListener("click",()=>openEventEdit(id));
   $("#esOther").addEventListener("click",()=>{ closeSheet(); nsQuickAction("other",id,"lesson",routeKalender); });
-  $("#esNoshow").addEventListener("click",()=>{ l.status="nicht erschienen"; save(); closeSheet(); toast("Als nicht erschienen vermerkt"); routeKalender(); });
+  $("#esNoshow").addEventListener("click",()=>openNoshowChoice(id,routeKalender));
   $("#esCancel").addEventListener("click",()=>{ l.status="abgebrochen"; save(); _notifyOnlineBookingChange(id,"cancelled"); closeSheet(); toast("Als abgebrochen vermerkt"); routeKalender(); });
+  const gb=$("#esGift"); if(gb)gb.addEventListener("click",()=>openGiftTimeSheet(id,routeKalender));
   const rs=$("#esReset"); if(rs)rs.addEventListener("click",()=>{ l.status="geplant"; save(); closeSheet(); toast("Status zurückgesetzt"); routeKalender(); });
   $("#esDelete").addEventListener("click",()=>{ if(confirm("Diesen Termin löschen?")){ deleteLesson(id); closeSheet(); toast("Termin gelöscht"); routeKalender(); } });
 }
@@ -8487,6 +8502,72 @@ function _fsFahrzeugKonflikt(eigeneId,date,von,fahrzeug){
   const treffer=(DB.lessons||[]).find(l=>l.id!==eigeneId&&l.date===date&&l.von===von&&l.fahrzeug===fahrzeug&&l._fahrlehrerId!==eigenerLehrer&&l.status!=="abgebrochen");
   return treffer?(treffer._fahrlehrerName||"einem anderen Fahrlehrer"):null;
 }
+/* No-Show-Entscheidung (Umbau nach Serbands Ablauf-Beschreibung, 27.08.):
+   Vorher zählte 'Nicht erschienen' IMMER als 0€ - unabhängig davon, ob die Zeit blockiert war.
+   Jetzt fragt die App sofort: 1 Einheit oder beide Einheiten berechnen? Gleiche Rechnung wie beim
+   FC-System (halbe/volle UE), nur mit eigener, klarer Bezeichnung in der Historie. */
+function openNoshowChoice(id,retFn){
+  const l=(DB.lessons||[]).find(x=>x.id===id); if(!l)return;
+  const st=DB.students.find(s=>s.id===l.sid);
+  const ueFull=ueOf(l.art,l.von,l.bis,l.tatsaechlicheDauer);
+  const eur1=Math.round(ueFull/2*DB.verdienst.proUE), eur2=Math.round(ueFull*DB.verdienst.proUE);
+  openSheet(`<div class="sheet-h">Nicht erschienen</div>
+    <p class="muted-p" style="font-size:13px;margin:-4px 0 14px;">${st?esc(st.name)+' · ':''}${isoDE(l.date)} · ${l.von}–${l.bis}<br>Die Zeit war blockiert – wie viel berechnest du?</p>
+    <div class="es-actions">
+      <button class="es-act" id="ns1">1 Einheit berechnen · <b>${eur1} €</b></button>
+      <button class="es-act" id="ns2">Beide Einheiten berechnen · <b>${eur2} €</b></button>
+      <button class="es-act" id="ns0" style="color:var(--muted);">Nichts berechnen (kulant)</button>
+    </div>`);
+  const commit=(units,eurVal,label)=>{
+    l.status="nicht erschienen"; if(units)l.noshow=units; else delete l.noshow;
+    save();
+    if(st)logHist(st,"noshow",`Nicht erschienen – ${label}`,{eur:eurVal});
+    closeSheet(); toast("Vermerkt ✓"); retFn();
+  };
+  $("#ns1").addEventListener("click",()=>commit("1",eur1,"1 Einheit berechnet"));
+  $("#ns2").addEventListener("click",()=>commit("2",eur2,"beide Einheiten berechnet"));
+  $("#ns0").addEventListener("click",()=>commit(null,0,"nichts berechnet"));
+}
+/* Zeit verschenkt (Umbau nach Serbands Ablauf-Beschreibung, 27.08.):
+   Ersetzt das unauffällige 'Tatsächlich gefahrene Zeit'-Feld durch einen eigenen, klaren Button.
+   Nutzt intern weiterhin l.tatsaechlicheDauer (ueOf() rechnet damit bereits korrekt), schreibt aber
+   zusätzlich einen sprechenden Historien-Eintrag statt nur eine nackte Zahl zu speichern. */
+function openGiftTimeSheet(id,retFn){
+  const l=(DB.lessons||[]).find(x=>x.id===id); if(!l)return;
+  const st=DB.students.find(s=>s.id===l.sid);
+  const bookedMin=hm2min(l.bis)-hm2min(l.von);
+  const already=l.tatsaechlicheDauer||null;
+  openSheet(`<div class="sheet-h">Zeit verschenkt</div>
+    <p class="muted-p" style="font-size:13px;margin:-4px 0 14px;">${st?esc(st.name)+' · ':''}Gebucht: ${bookedMin} Min${already?` · aktuell ${already} Min berechnet`:''}</p>
+    <div class="es-actions">
+      <button class="es-act" id="giftAll">Ganze Stunde geschenkt · <b>0 Min berechnet</b></button>
+      <button class="es-act" id="giftHalf">Hälfte geschenkt · <b>${Math.round(bookedMin/2)} Min berechnet</b></button>
+    </div>
+    <div class="field" style="margin-top:12px;"><label>Oder: wie viele Minuten berechnest du?</label><input type="number" id="giftCustom" min="0" max="${bookedMin}" placeholder="z.B. 30" value="${already||''}"></div>
+    <div class="btn-row" style="margin-top:12px;">
+      <button class="btn btn-primary" id="giftSave">Speichern</button>
+      ${already?`<button class="btn btn-ghost" id="giftReset" style="flex:0;padding:13px 16px;">Zurücksetzen</button>`:''}
+    </div>`);
+  const ueVoll=ueOf(l.art,l.von,l.bis,null);
+  const commit=(berechnetMin)=>{
+    const geschenkt=bookedMin-berechnetMin;
+    l.tatsaechlicheDauer=berechnetMin>0?berechnetMin:null; if(!l.tatsaechlicheDauer)delete l.tatsaechlicheDauer;
+    const ueNeu=ueOf(l.art,l.von,l.bis,l.tatsaechlicheDauer);
+    const eurDelta=Math.round((ueVoll-ueNeu)*DB.verdienst.proUE);
+    save();
+    if(st&&geschenkt>0)logHist(st,"geschenkt",`${geschenkt} Min geschenkt (Termin lief zu lange)`,{eur:-eurDelta});
+    else if(st&&geschenkt<=0&&already)logHist(st,"geschenkt","Zeit-Geschenk zurückgesetzt – volle Zeit berechnet",{eur:eurDelta});
+    closeSheet(); toast("Gespeichert ✓"); retFn();
+  };
+  $("#giftAll").addEventListener("click",()=>commit(0));
+  $("#giftHalf").addEventListener("click",()=>commit(Math.round(bookedMin/2)));
+  $("#giftSave").addEventListener("click",()=>{
+    const v=parseInt($("#giftCustom").value,10);
+    if(isNaN(v)||v<0||v>bookedMin){ toast("Bitte Minuten zwischen 0 und "+bookedMin+" eingeben"); return; }
+    commit(v);
+  });
+  const gr=$("#giftReset"); if(gr)gr.addEventListener("click",()=>commit(bookedMin));
+}
 function openEventEdit(id,overrides){
   const l=(DB.lessons||[]).find(x=>x.id===id); if(!l)return;
   const cur=Object.assign({date:l.date,von:l.von,art:l.art,note:l.note||"",fahrzeug:l.fahrzeug||null},overrides||{});
@@ -8503,8 +8584,6 @@ function openEventEdit(id,overrides){
   </div>`:'';
   const konflikt=(_fsAgg&&cur.fahrzeug)?_fsFahrzeugKonflikt(id,cur.date,cur.von,cur.fahrzeug):null;
   const konfliktBlock=konflikt?`<p class="muted-p" style="font-size:12px;color:#cf9a3e;margin:-4px 0 8px;">⚠ ${esc(cur.fahrzeug)} ist zu dieser Zeit schon bei ${esc(konflikt)} eingetragen — nur ein Hinweis, buchen geht trotzdem.</p>`:'';
-  const zeitRelevant=["fahrstunde","sonder","nacht","schalt"].indexOf(cur.art)>=0;
-  const tatsaechlichBlock=zeitRelevant?`<div class="field"><label>Tatsächlich gefahrene Zeit (Minuten, optional)</label><input type="number" id="esTatDauer" min="1" max="600" placeholder="leer = volle gebuchte Zeit" value="${l.tatsaechlicheDauer||''}"></div>`:'';
   openSheet(`<div class="sheet-h">Bearbeiten</div>
     <div class="field"><label>Datum</label><input type="date" id="esDate" value="${cur.date}"></div>
     <div class="field"><label>Uhrzeit (Beginn)</label><input type="time" id="esTime" value="${cur.von}"></div>
@@ -8513,7 +8592,6 @@ function openEventEdit(id,overrides){
     </div>
     <div class="field" id="esFzWrap" style="${fzRelevant?'':'display:none;'}"><label>Fahrzeug</label><button class="es-act" id="esFzBtn" type="button">${cur.fahrzeug?esc(cur.fahrzeug):'Kein Fahrzeug — antippen zum Zuweisen'} ›</button></div>
     ${konfliktBlock}
-    ${tatsaechlichBlock}
     <div class="field"><label>Notiz</label><textarea id="esNote" rows="2" placeholder="Notiz zum Termin …">${esc(cur.note)}</textarea></div>
     ${fcBlock}
     <div class="btn-row" style="margin-top:6px;"><button class="btn btn-ghost" id="esBack" style="flex:0;padding:13px 16px;">Zurück</button><button class="btn btn-primary" id="esSave">Speichern</button></div>`);
@@ -8539,13 +8617,11 @@ function openEventEdit(id,overrides){
     const dur=newArt==="schalt"?15:(DB.workCfg.blockMin||90);
     const bis=min2hm(hm2min(von)+dur);
     const note=$("#esNote").value.trim();
-    const tatEl=$("#esTatDauer");
-    const tatWert=tatEl?(parseInt(tatEl.value)||null):null;
     if(newArt==="sonder"&&l.art!=="sonder"&&l.sid){
       // Art wird auf Sonderfahrt geändert → SF-Picker anzeigen
       openSFPickerForLesson(id,l.sid,date,von,bis,note,"sonder",newFahrzeug);
     } else {
-      updateLesson(id,{date,von,bis,art:newArt,note,fahrzeug:newFahrzeug,tatsaechlicheDauer:tatWert}); closeSheet(); toast("Gespeichert ✓"); routeKalender();
+      updateLesson(id,{date,von,bis,art:newArt,note,fahrzeug:newFahrzeug}); closeSheet(); toast("Gespeichert ✓"); routeKalender();
     }
   });
 }
@@ -9164,7 +9240,14 @@ function calDayHTML(){
 // UE eines Tages (done=nur absolvierte)
 function dayUE(iso,doneOnly){
   let ue=0;
-  dayEvents(iso).forEach(e=>{ if(e.status==="abgebrochen"||e.status==="nicht erschienen")return; if(doneOnly&&!isAbsolved(iso,e.bis))return; ue+=ueOf(e.art,e.von,e.bis,e.tatsaechlicheDauer); });
+  dayEvents(iso).forEach(e=>{
+    if(e.status==="abgebrochen")return;
+    if(e.status==="nicht erschienen"){
+      if(doneOnly){ if(e.noshow==="1")ue+=ueOf(e.art,e.von,e.bis,e.tatsaechlicheDauer)/2; else if(e.noshow==="2")ue+=ueOf(e.art,e.von,e.bis,e.tatsaechlicheDauer); }
+      return;
+    }
+    if(doneOnly&&!isAbsolved(iso,e.bis))return; ue+=ueOf(e.art,e.von,e.bis,e.tatsaechlicheDauer);
+  });
   const th=dayTheorieWindow(iso); // Theorie-Fenster zählt nur wenn als Lesson erfasst – Fensteranzeige nicht
   return ue;
 }
@@ -9185,8 +9268,16 @@ function ueRange(fromISO,toISO){
   let cur=fromISO, guard=0;
   while(cur<=toISO && guard++<400){
     dayEvents(cur).forEach(e=>{
-      if(e.status==="abgebrochen"||e.status==="nicht erschienen")return;
+      if(e.status==="abgebrochen")return;
       const ue=ueOf(e.art,e.von,e.bis,e.tatsaechlicheDauer);
+      if(e.status==="nicht erschienen"){
+        // No-Show: zählt nie als 'absolviert' (Schüler war nicht da), aber die Zeit war blockiert.
+        // Serband entscheidet je Fall: 1 Einheit (halbe UE) oder beide Einheiten (volle UE).
+        if(e.noshow==="1"){ plan+=0; done+=ue/2; fcCounted+=ue/2; }
+        else if(e.noshow==="2"){ done+=ue; fcCounted+=ue; }
+        // kein noshow-Feld gesetzt (Altdaten vor diesem Feature) → wie bisher 0€, nichts erfinden
+        return;
+      }
       if(isAbsolved(cur,e.bis))done+=ue; else plan+=ue;
       // FC-abgerechnete UE (zählt fürs Gehalt):
       // Prüfungen immer voll. Fahrstunden NEU: Standard (kein fc-Vermerk) = voll bezahlt (Schüler bringt 2 FC).
@@ -9608,6 +9699,26 @@ function commitExamResult(s,opts){
     toastUndo("Eingetragen · zurück in Warteliste",()=>undoExam(s,snap,()=>routePruefungen()));
     routePruefungen();
   }
+  setTimeout(()=>offerNextExam(date,id),450);
+}
+/* Alle Schüler, die an einem bestimmten Tag noch in einem Prüfungs-Slot stehen (Ergebnis noch offen).
+   Nach commitExamResult ist der gerade bearbeitete Slot bereits geleert, taucht hier also nicht mehr auf. */
+function pendingExamsForDate(date){
+  const out=[];
+  (DB.termine||[]).filter(t=>t.date===date).forEach(t=>{ (t.slots||[]).forEach(sid=>{ if(sid){ const st=DB.students.find(x=>x.id===sid); if(st)out.push(st); } }); });
+  return out;
+}
+// Mehrfach-Ergebnis-Eintragung (Bereich 7, Punkt 3): direkt zum nächsten Schüler desselben Prüfungstags,
+// ohne den Umweg über die volle Prüfungsübersicht.
+function offerNextExam(date,excludeId){
+  const weitere=pendingExamsForDate(date).filter(st=>st.id!==excludeId);
+  if(!weitere.length)return;
+  openSheet(`<div class="sheet-h">Weiter geht's</div>
+    <p class="muted-p" style="font-size:13px;margin:-4px 0 12px;">Heute noch ${weitere.length} Prüfung${weitere.length===1?'':'en'} offen.</p>
+    <div class="as-list">${weitere.map(st=>`<button class="as-item" data-nid="${st.id}"><span class="as-nm">${esc(st.name)}</span></button>`).join("")}</div>
+    <div class="btn-row" style="margin-top:12px;"><button class="btn btn-ghost" id="neDone" style="flex:1;">Fertig für heute</button></div>`);
+  document.querySelectorAll("#sheet [data-nid]").forEach(b=>b.addEventListener("click",()=>{ closeSheet(); openResultFlow(b.dataset.nid); }));
+  $("#neDone").addEventListener("click",closeSheet);
 }
 function undoExam(s,snap,after){
   DB.exams.length=snap.exLen;            // letzten Prüfungseintrag entfernen
@@ -10016,7 +10127,7 @@ function routePruefungen(){
   const theorieList=theorieBestanden(); const praxisList=bereitFuerPraxis(); const waitList=theorieAusstehend();
   let html=`<div class="view-inner view-read fade-up">
     <div class="row-between" style="margin-bottom:14px;"><div class="sec-h">Prüf<span class="o">ungen</span></div>
-      <div style="display:flex;gap:8px;"><button class="mini-btn ghost" id="openPruefer">Prüfer</button><button class="mini-btn" id="addTermin">+ Termin</button></div></div>
+      <div style="display:flex;gap:8px;"><button class="mini-btn ghost" id="openPruefWoche">Diese Woche</button><button class="mini-btn ghost" id="openPruefer">Prüfer</button><button class="mini-btn" id="addTermin">+ Termin</button></div></div>
     <div class="pruef-tabs">
       <button class="pt-tab${_pruefTab==='termine'?' on':''}" data-pt="termine">Termine</button>
       <button class="pt-tab${_pruefTab==='wait'?' on':''}" data-pt="wait">Wartet auf Theorie <span class="pt-cnt">${waitList.length}</span></button>
@@ -10080,6 +10191,7 @@ function routePruefungen(){
   html+=`</div>`; view.innerHTML=html;
   document.querySelectorAll(".pt-tab").forEach(t=>t.addEventListener("click",()=>{ _pruefTab=t.dataset.pt; routePruefungen(); }));
   $("#addTermin").addEventListener("click",openTerminSheet);
+  $("#openPruefWoche").addEventListener("click",routePruefungenWoche);
   $("#openPruefer").addEventListener("click",routePrueferListe);
   document.querySelectorAll(".wait-card").forEach(c=>c.addEventListener("click",()=>routeDetail(c.dataset.id)));
   document.querySelectorAll(".tb-del").forEach(b=>b.addEventListener("click",()=>{ if(confirm("Termin löschen? Die Einteilung wird aufgehoben.")){ DB.termine=DB.termine.filter(x=>x.id!==b.dataset.del); save(); routePruefungen(); } }));
@@ -10088,7 +10200,36 @@ function routePruefungen(){
   document.querySelectorAll(".slot-result").forEach(b=>b.addEventListener("click",e=>{ e.stopPropagation(); openResultFlow(b.dataset.result); }));
   document.querySelectorAll(".slot.free").forEach(sl=>sl.addEventListener("click",()=>openSlotSheet(sl.dataset.tid,+sl.dataset.slot)));
 }
-// Schüler mit bestandener Theorie, aber <90% (noch nicht bereit)
+// Serien-Ansicht 'Alle Prüfungen diese Woche' (Bereich 7, Punkt 7): kompakter Überblick für die
+// Wochenplanung, tagesweise gruppiert. Tage mit mehreren Prüfungen werden hervorgehoben.
+function routePruefungenWoche(){
+  const wk=_wocheVonBis();
+  const tage=[]; let cur=wk.von;
+  while(cur<=wk.bis){ tage.push(cur); cur=addDays(cur,1); }
+  const byTag={};
+  (DB.termine||[]).forEach(t=>{ if(t.date>=wk.von&&t.date<=wk.bis){ (t.slots||[]).forEach(sid=>{ if(sid){ const s=DB.students.find(x=>x.id===sid); if(s){ if(!byTag[t.date])byTag[t.date]=[]; byTag[t.date].push({s,von:t.von||"—"}); } } }); } });
+  Object.values(byTag).forEach(list=>list.sort((a,b)=>(a.von||"").localeCompare(b.von||"")));
+  const gesamt=Object.values(byTag).reduce((n,l)=>n+l.length,0);
+  let html=`<div class="view-inner view-read fade-up">
+    <div class="back-row"><button class="back-btn" id="backBtn">${ICN.back} Prüfungen</button></div>
+    <div class="row-between" style="margin-bottom:14px;"><div class="sec-h">Diese <span class="o">Woche</span></div><div class="count-pill">${gesamt}</div></div>`;
+  if(!gesamt){
+    html+=`<p class="muted-p" style="text-align:center;padding:20px;">Diese Woche sind keine Prüfungen eingetragen.</p>`;
+  } else {
+    tage.forEach(d=>{
+      const list=byTag[d]; if(!list||!list.length)return;
+      const mehrere=list.length>1;
+      html+=`<div class="termin-blk"${mehrere?' style="border-color:var(--orange-line);"':''}>
+        <div class="tb-row"><div class="tb-date">${deWeekday(d)} · ${isoDE(d)}</div><div class="tb-meta"${mehrere?' style="color:var(--orange);font-weight:800;"':''}>${list.length} Prüfung${list.length===1?'':'en'}</div></div>
+        <div class="slots">${list.map(({s,von})=>`<div class="slot" data-id="${s.id}"><span class="slot-name">${von} · ${esc(s.name)}</span></div>`).join("")}</div>
+      </div>`;
+    });
+  }
+  html+=`</div>`; view.innerHTML=html;
+  $("#backBtn").addEventListener("click",routePruefungen);
+  document.querySelectorAll(".slot[data-id]").forEach(el=>el.addEventListener("click",()=>routeDetail(el.dataset.id)));
+}
+
 function theorieBestanden(){ return activeStudents().filter(s=>s.theoryPassed&&stand(s)<90).sort((a,b)=>stand(b)-stand(a)); }
 // Pausiert: wartet auf die Theorieprüfung, keine Fahrstunden bis dahin
 function theorieAusstehend(){ return activeStudents().filter(s=>s.theorieWait&&!s.theoryPassed).sort((a,b)=>Date.parse(a.theorieWait)-Date.parse(b.theorieWait)); }
@@ -10355,7 +10496,7 @@ function nsQuickAction(act,lid,kind,retFn){
     $("#nsoSearch").addEventListener("input",ev=>{ const q=ev.target.value.toLowerCase(); const list=cand.filter(s=>matchStudent(s.name,q)); $("#nsoList").innerHTML=list.map(s=>`<button class="as-item" data-sid="${s.id}"><span class="as-nm">${esc(s.name)}</span><span class="as-cls">${esc(s.form||'')}</span></button>`).join("")||'<p class="muted-p" style="font-size:13px;">Kein Treffer</p>'; bind(); });
     bind();
   } else if(act==="noshow"){
-    l.status="nicht erschienen"; save(); toast("Als nicht erschienen vermerkt"); retFn();
+    openNoshowChoice(lid,retFn);
   } else if(act==="cancel"){
     l.status="abgebrochen"; save(); toast("Als abgebrochen vermerkt"); retFn();
   }
@@ -10768,27 +10909,34 @@ function _wocheVonBis(){
   const f=d=>d.getFullYear()+"-"+String(d.getMonth()+1).padStart(2,"0")+"-"+String(d.getDate()).padStart(2,"0");
   return {von:f(mon),bis:f(son)};
 }
-// Nächste Prüfung-Card: Student, Datum, geplante Fahrstunden bis dahin
+// Nächste Prüfung-Card: Student(en), Datum, geplante Fahrstunden bis dahin.
+// Zieht ALLE Termin-Blöcke desselben Tages zusammen (nicht nur den ersten gefundenen), damit
+// mehrere Schüler am gleichen Tag sichtbar werden - inkl. deutlichem Hinweis bei Mehrfachbelegung.
 function nextExamDashCard(){
   const ts=futureTermine().sort((a,b)=>a.date<b.date?-1:1);
   if(!ts.length){
     return `<div class="nex-card none"><div class="nex-ic">${ICN.trophy}</div><div class="nex-body"><div class="nex-label">Nächste Prüfung</div><div class="nex-empty">Kein Termin geplant</div></div><button class="mini-btn" id="ndAdd">+ Termin</button></div>`;
   }
-  const t=ts[0]; const today=todayISO();
-  const daysLeft=Math.max(0,Math.round((new Date(t.date)-new Date(today))/(1000*60*60*24)));
-  const studentIds=(t.slots||[]).filter(Boolean);
-  const students=studentIds.map(sid=>DB.students.find(s=>s.id===sid)).filter(Boolean);
+  const naechstesDatum=ts[0].date;
+  const heuteBlocks=ts.filter(t=>t.date===naechstesDatum);
+  const eintraege=[];
+  heuteBlocks.forEach(t=>{ (t.slots||[]).forEach(sid=>{ if(sid&&!eintraege.some(e=>e.sid===sid)){ const st=DB.students.find(x=>x.id===sid); if(st)eintraege.push({sid,student:st,von:t.von||null}); } }); });
+  eintraege.sort((a,b)=>(a.von||"").localeCompare(b.von||""));
+  const today=todayISO();
+  const daysLeft=Math.max(0,Math.round((new Date(naechstesDatum)-new Date(today))/(1000*60*60*24)));
+  const mehrfach=eintraege.length>1;
   let html=`<div class="nex-card" data-go="pruef">
     <div class="nex-top">
-      <div><div class="nex-label">Nächste Prüfung</div><div class="nex-date">${isoDE(t.date)}${t.von?` · ${t.von}`:""}</div></div>
+      <div><div class="nex-label">Nächste Prüfung${mehrfach?` · ${eintraege.length} Schüler`:""}</div><div class="nex-date">${isoDE(naechstesDatum)}${eintraege.length===1&&eintraege[0].von?` · ${eintraege[0].von}`:""}</div></div>
       <div class="nex-days"><span class="nex-dn">${daysLeft}</span><span class="nex-dl">${daysLeft===1?"Tag":"Tage"}</span></div>
-    </div>`;
-  students.forEach(s=>{
+    </div>
+    ${mehrfach?`<div class="lage-warn" style="margin:2px 0 8px;">${ICN.bolt||"⚠"}<span>${eintraege.length} Prüfungen am selben Tag – Fahrten/Zeiten früh genug einplanen.</span></div>`:""}`;
+  eintraege.forEach(({student:s,von})=>{
     // Geplante Fahrstunden zwischen heute und Prüfungsdatum (exklusiv)
-    const geplant=(DB.lessons||[]).filter(l=>l.sid===s.id&&l.date>today&&l.date<t.date&&l.status!=="abgebrochen"&&l.status!=="nicht erschienen"&&["fahrstunde","sonder","nacht"].indexOf(l.art)>=0).sort((a,b)=>a.date.localeCompare(b.date));
+    const geplant=(DB.lessons||[]).filter(l=>l.sid===s.id&&l.date>today&&l.date<naechstesDatum&&l.status!=="abgebrochen"&&l.status!=="nicht erschienen"&&["fahrstunde","sonder","nacht"].indexOf(l.art)>=0).sort((a,b)=>a.date.localeCompare(b.date));
     const gDates=geplant.map(l=>`${deWeekday(l.date)} ${isoDE(l.date).slice(0,5)}`);
     html+=`<div class="nex-student">
-      <div class="nex-name">${esc(s.name)}</div>
+      <div class="nex-name">${mehrfach&&von?`${von} · `:""}${esc(s.name)}</div>
       ${geplant.length?`<div class="nex-lessons"><b>${geplant.length}</b> Fahrstunde${geplant.length===1?"":"n"} geplant: ${gDates.slice(0,4).join(" · ")}${gDates.length>4?` +${gDates.length-4}`:""}</div>`:`<div class="nex-lessons warn">Noch keine Fahrstunden geplant!</div>`}
     </div>`;
   });
@@ -10987,15 +11135,24 @@ function _verdienstModulHTMLContent(){
       ${miniStatAnim("Theorie",mk.theorieCount,"","Termine")}
     </div>
     ${fcAusnahmenGesamt?`<div class="vd-offen" style="margin-top:2px;">⚠ FC-Ausnahmen: ${mk.fcV1+mk.fcV2}× vergessen${mk.fcBewusst?`, ${mk.fcBewusst}× bewusst nur 1`:''}, ${mk.fcGeschenkt}× geschenkt · <b>${_eurMasked(mk.fcVerlust)}</b> entgangen</div>`:`<p class="muted-p" style="font-size:12.5px;margin-top:2px;">Keine FC-Ausnahmen diesen Monat ✓</p>`}
+    ${(mk.noshow1+mk.noshow2)?`<div class="vd-offen" style="margin-top:6px;border-color:var(--gruen-line);background:rgba(58,115,80,.08);">✓ No-Shows berechnet: ${mk.noshow1}× 1 Einheit, ${mk.noshow2}× beide Einheiten · <b>${_eurMasked(mk.noshowEuro)}</b> gutgeschrieben</div>`:''}
   </div>`;
 }
 // Kennzahlen für die erweiterte Monats-Statistik (Bereich 7, Punkt 2)
 function monatsKennzahlen(fromISO,toISO){
-  let fahrstundenCount=0, theorieCount=0, fcV1=0, fcV2=0, fcGeschenkt=0, fcBewusst=0, fcVerlust=0;
+  let fahrstundenCount=0, theorieCount=0, fcV1=0, fcV2=0, fcGeschenkt=0, fcBewusst=0, fcVerlust=0, noshow1=0, noshow2=0, noshowUE=0;
   let cur=fromISO, guard=0;
   while(cur<=toISO && guard++<40){
     (DB.lessons||[]).filter(l=>l.date===cur&&!l._synthetic).forEach(l=>{
-      if(l.status==="abgebrochen"||l.status==="nicht erschienen")return;
+      if(l.status==="abgebrochen")return;
+      if(l.status==="nicht erschienen"){
+        if(["fahrstunde","sonder","nacht"].indexOf(l.art)>=0){
+          const ueFull=ueOf(l.art,l.von,l.bis,l.tatsaechlicheDauer);
+          if(l.noshow==="1"){ noshow1++; noshowUE+=ueFull/2; }
+          else if(l.noshow==="2"){ noshow2++; noshowUE+=ueFull; }
+        }
+        return;
+      }
       if(["fahrstunde","sonder","nacht"].indexOf(l.art)>=0){
         fahrstundenCount++;
         const ueFull=ueOf(l.art,l.von,l.bis,l.tatsaechlicheDauer);
@@ -11010,7 +11167,8 @@ function monatsKennzahlen(fromISO,toISO){
   const ex=(DB.exams||[]).filter(e=>e.date&&e.date>=fromISO&&e.date<=toISO);
   const examCount=ex.length, examPass=ex.filter(e=>e.result==="pass").length;
   const examQuote=examCount?Math.round(examPass/examCount*100):null;
-  return {fahrstundenCount,theorieCount,examCount,examPass,examQuote,fcV1,fcV2,fcGeschenkt,fcBewusst,fcVerlust};
+  const noshowEuro=Math.round(noshowUE*DB.verdienst.proUE);
+  return {fahrstundenCount,theorieCount,examCount,examPass,examQuote,fcV1,fcV2,fcGeschenkt,fcBewusst,fcVerlust,noshow1,noshow2,noshowEuro};
 }
 function eur(n){ return (Math.round(n)).toLocaleString("de-DE")+" €"; }
 // Jahres-Rückblick (Bereich 7, Punkt 4): Gesamt-Verdienst, Ø/Monat, bester Monat.

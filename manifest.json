@@ -1,0 +1,40 @@
+{
+  "id": "/Fahrlehrer-Kompass-/",
+  "name": "Fahrlehrer-Kompass",
+  "short_name": "Kompass",
+  "description": "Schüler- und Prüfungsverwaltung für Fahrlehrer",
+  "start_url": "/Fahrlehrer-Kompass-/index.html",
+  "scope": "/Fahrlehrer-Kompass-/",
+  "display": "standalone",
+  "orientation": "portrait",
+  "background_color": "#0a1210",
+  "theme_color": "#0c1410",
+  "lang": "de",
+  "dir": "ltr",
+  "icons": [
+    {
+      "src": "icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "icon-192-maskable.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "maskable"
+    },
+    {
+      "src": "icon-512-maskable.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "maskable"
+    }
+  ]
+}
