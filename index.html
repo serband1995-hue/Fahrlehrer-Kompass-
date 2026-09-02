@@ -4924,7 +4924,7 @@ window.addEventListener("load", () => {
 const STORE_KEY="serband-app-v1";
 /* Build-Version: bei jeder Auslieferung hier das Datum aktualisieren.
    Wird in den Einstellungen angezeigt + für den Update-Hinweis genutzt. */
-const APP_VERSION="2026.09.10";
+const APP_VERSION="2026.09.13";
 // Nutzungsbedingungen & Haftungsausschluss (Bereich: rechtliche Absicherung) - Version hochzählen
 // und alle Nutzer müssen erneut zustimmen, sobald sich der Text inhaltlich ändert.
 const AGB_VERSION="1.0";
@@ -5306,7 +5306,7 @@ function planLastDate(plan){
 }
 function autoNext(s){
   if(s.next) return {text:s.next,auto:false};
-  if(s.plan){ for(const st of STUFEN){ for(const it of st.items){ if(s.plan.ampeln[it.id]!=="gruen") return {text:it.t+" · "+st.titel,auto:true}; } } }
+  if(s.plan){ for(const st of stufenFor(s)){ for(const it of st.items){ if(s.plan.ampeln[it.id]!=="gruen") return {text:it.t+" · "+st.titel,auto:true}; } } }
   return {text:"Alles grün – Generalprobe!",auto:true};
 }
 
@@ -6428,7 +6428,7 @@ function routePlan(id){
         <div class="plan-sub">${esc(s.name)} · ${esc(formLabel(s.form||"B"))} · Fortschritt fließt automatisch in die Schülerdatei</div>
       </div>
     </div>
-    ${examPrognose(s)}
+    <div id="planPrognose">${examPrognose(s)}</div>
     <button class="btn btn-ghost" style="width:100%;margin:8px 0 2px;" onclick="routeDraw('${s.id}')">✏️ Zur Verkehrstafel</button>
     <div class="plan-actions" id="planActions"></div>
     <div class="plan-sec">
@@ -6467,7 +6467,11 @@ function refreshPlanRing(s){
   const pct=planProgress(s.plan, s.umschreiber, evalSkillsFor(s));
   const p=s.profil?PROFILE[s.profil]:null;const col=p?p.color:"var(--orange)";
   const holder=$("#planRing");if(!holder)return;
-  holder.innerHTML=ring(pct,108,4,col);animateRings();renderPlanActions(s);
+  holder.innerHTML=ring(pct,108,4,col);animateRings();
+  // Die Prüfungs-Einschätzung rechnet mit derselben Zahl und muss deshalb
+  // hier mitlaufen - sonst zeigt der Ring 100% und die Einschätzung noch den alten Wert.
+  const prog=$("#planPrognose"); if(prog)prog.innerHTML=examPrognose(s);
+  renderPlanActions(s);
 }
 function stdCellHTML(n,o,fc){
   return `<div class="std${o?' filled':''}" data-std="${n}">
@@ -9010,18 +9014,30 @@ function bindCalControls(){
   wireCalendarDrag();
   bindCalSwipe();
 }
-let _calDragHappened=false;
+let _calDragHappened=false, _calDragHappenedT=null;
+// Nur ein Ziehvorgang gleichzeitig. Ohne diese Sperre starten bei zwei Fingern zwei
+// unabhaengige Vorgaenge, die beide auf dasselbe freie Feld ablegen koennen - dabei
+// landen zwei Fahrstunden uebereinander.
+let _calDragActive=false;
 // Fahrstunden per Finger auf einen freien Slot ziehen — auch spaltenübergreifend (anderer Tag).
 // Nur "geplant"-Fahrstunden sind ziehbar; Prüfungstermine (mehrere Schüler pro Slot-Block) bewusst ausgenommen.
 function wireCalendarDrag(){
   document.querySelectorAll(".cw-draggable").forEach(chip=>{
     chip.addEventListener("pointerdown",e=>{
+      if(_calDragActive)return;
+      if(e.pointerType==="mouse"&&e.button!==0)return;
+      _calDragActive=true;
       const startX=e.clientX,startY=e.clientY;
       let dragging=false,clone=null,curTarget=null;
       const THRESH=9,SCROLL_ZONE=60,SCROLL_SPEED=10;
       let scrollRAF=null,lastX=startX,lastY=startY;
       const startDrag=()=>{
-        dragging=true;_calDragHappened=true;
+        dragging=true;_calDragHappened=true;_calDragBlockSwipe=true;
+        // Sicherheitsnetz: die Flagge wird sonst nur vom Klick-Handler geleert. Nach einem
+        // Ziehen folgt aber kein Klick auf einen Termin - sie bliebe stehen und wuerde den
+        // naechsten Antipper auf einen beliebigen Termin verschlucken.
+        clearTimeout(_calDragHappenedT);
+        _calDragHappenedT=setTimeout(()=>{_calDragHappened=false;},600);
         chip.classList.add("cw-dragging-src");
         const r=chip.getBoundingClientRect();
         clone=chip.cloneNode(true);
@@ -9044,10 +9060,12 @@ function wireCalendarDrag(){
         if(curTarget)curTarget.classList.add("cw-drop-target");
       };
       const scrollLoop=()=>{
-        const vr=view.getBoundingClientRect();
-        if(lastY<vr.top+SCROLL_ZONE&&view.scrollTop>0){view.scrollTop-=SCROLL_SPEED;}
-        else if(lastY>vr.bottom-SCROLL_ZONE&&view.scrollTop<view.scrollHeight-view.clientHeight){view.scrollTop+=SCROLL_SPEED;}
-        if(dragging)updateTarget();
+        if(dragging){
+          const vr=view.getBoundingClientRect();
+          if(lastY<vr.top+SCROLL_ZONE&&view.scrollTop>0){view.scrollTop-=SCROLL_SPEED;}
+          else if(lastY>vr.bottom-SCROLL_ZONE&&view.scrollTop<view.scrollHeight-view.clientHeight){view.scrollTop+=SCROLL_SPEED;}
+          updateTarget();
+        }
         scrollRAF=requestAnimationFrame(scrollLoop);
       };
       scrollRAF=requestAnimationFrame(scrollLoop);
@@ -9064,45 +9082,69 @@ function wireCalendarDrag(){
         moveClone();
         updateTarget();
       };
-      const onUp=()=>{
+      const cleanupDrag=()=>{
         try{chip.releasePointerCapture(e.pointerId);}catch(err){}
         if(scrollRAF)cancelAnimationFrame(scrollRAF);
         window.removeEventListener("pointermove",onMove);
         window.removeEventListener("pointerup",onUp);
+        window.removeEventListener("pointercancel",onCancel);
+        _calDragActive=false;
         if(dragging){
+          _calDragBlockSwipe=true;
+          setTimeout(()=>{_calDragBlockSwipe=false;},400);
           chip.classList.remove("cw-dragging-src");
           if(curTarget)curTarget.classList.remove("cw-drop-target");
           if(clone)clone.remove();
-          if(curTarget){
-            const[date,von]=curTarget.dataset.freeslot.split("|");
-            const lid=chip.dataset.dragid;
-            const l=DB.lessons.find(x=>x.id===lid);
-            if(l){
-              const prevDate=l.date,prevVon=l.von,prevBis=l.bis;
-              const durMin=hm2min(l.bis)-hm2min(l.von);
-              l.date=date;l.von=von;l.bis=min2hm(hm2min(von)+durMin);
-              save();
-              toastUndo("Fahrstunde verschoben ✓",()=>{
-                const l2=DB.lessons.find(x=>x.id===lid);
-                if(l2){ l2.date=prevDate;l2.von=prevVon;l2.bis=prevBis; save(); }
-                routeKalender();
-              });
-            }
-          }
-          routeKalender();
         }
+      };
+      // Abbruch durch das System (Systemgeste vom Rand, eingehender Anruf, Browser
+      // übernimmt die Geste). Hier darf NICHTS verschoben werden - nur aufräumen.
+      const onCancel=()=>{
+        const war=dragging;
+        cleanupDrag();
+        if(war){ _calDragHappened=false; routeKalender(); }
+      };
+      const onUp=()=>{
+        const war=dragging;
+        const ziel=curTarget;
+        cleanupDrag();
+        if(!war)return;
+        if(ziel){
+          const[date,von]=ziel.dataset.freeslot.split("|");
+          const lid=chip.dataset.dragid;
+          const l=DB.lessons.find(x=>x.id===lid);
+          if(l){
+            const prevDate=l.date,prevVon=l.von,prevBis=l.bis;
+            // Nichts tun, wenn der Termin dort schon liegt - sonst entsteht ein
+            // sinnloser Rückgängig-Eintrag für eine Verschiebung, die keine war.
+            if(prevDate===date&&prevVon===von){ routeKalender(); return; }
+            const durMin=hm2min(l.bis)-hm2min(l.von);
+            l.date=date;l.von=von;l.bis=min2hm(hm2min(von)+durMin);
+            save();
+            toastUndo("Fahrstunde verschoben ✓",()=>{
+              const l2=DB.lessons.find(x=>x.id===lid);
+              if(l2){ l2.date=prevDate;l2.von=prevVon;l2.bis=prevBis; save(); }
+              routeKalender();
+            });
+          }
+        }
+        routeKalender();
       };
       window.addEventListener("pointermove",onMove);
       window.addEventListener("pointerup",onUp);
+      window.addEventListener("pointercancel",onCancel);
     });
   });
 }
 // Swipe nach links/rechts -> vor/zurück (Tag/Woche/Monat)
+// _calDragBlockSwipe verhindert, dass ein Verschieben per Drag zusätzlich als Wisch zählt.
+let _calDragBlockSwipe=false;
 function bindCalSwipe(){
   const wrap=document.querySelector(".cal-wrap"); if(!wrap)return;
   let x0=null,y0=null;
   wrap.addEventListener("touchstart",e=>{ const t=e.touches[0]; x0=t.clientX; y0=t.clientY; },{passive:true});
   wrap.addEventListener("touchend",e=>{
+    if(_calDragBlockSwipe){ x0=null; return; }
     if(x0==null)return; const t=e.changedTouches[0]; const dx=t.clientX-x0, dy=t.clientY-y0;
     x0=null; if(Math.abs(dx)<55||Math.abs(dx)<Math.abs(dy)*1.3)return;
     _calDate=calShift(dx<0?1:-1); routeKalender();
@@ -9848,15 +9890,20 @@ function examReadyCard(s){
       </div>
       <div style="margin-top:11px;">${badge}</div>
       <div class="btn-row" style="margin-top:13px;">
-        <button class="btn btn-primary" id="examBtn" style="flex:1;">Prüfung eintragen</button>
-        <button class="btn btn-ghost" id="readyOff" style="flex:0;padding:11px 16px;">Entfernen</button>
+        <button class="btn btn-primary" id="examBtn" style="flex:1;">${t?"Ergebnis eintragen":"Prüfung eintragen"}</button>
+        <button class="btn btn-ghost" id="readyOff" style="flex:0;padding:11px 16px;">${t?"Termin lösen":"Entfernen"}</button>
       </div></div>`;
   }
   return freigabeCard(s);
 }
 function bindExamReady(s,rerender){
   const on=$("#readyOn"); if(on)on.addEventListener("click",()=>{ setReady(s); logHist(s,"ready","Auf die Praxis-Warteliste gesetzt"); save(); toast("Auf die Warteliste gesetzt"); celebrate(); rerender(); });
-  const off=$("#readyOff"); if(off)off.addEventListener("click",()=>{ delete s.ready; delete s.waitOrder; clearSlot(s.id); save(); toast("Von der Warteliste genommen"); rerender(); });
+  const off=$("#readyOff"); if(off)off.addEventListener("click",()=>{
+    const hatTermin=!!terminFor(s.id);
+    if(hatTermin&&!confirm("Der geplante Prüfungstermin wird dabei mit gelöscht. Fortfahren?"))return;
+    delete s.ready; delete s.waitOrder; clearSlot(s.id); save();
+    toast(hatTermin?"Termin gelöst":"Von der Warteliste genommen"); rerender();
+  });
   const force=$("#readyForce"); if(force)force.addEventListener("click",()=>{ if(confirm("Diesen Schüler trotz offener Punkte manuell auf die Warteliste setzen?")){ setReady(s); save(); toast("Manuell auf die Warteliste gesetzt"); rerender(); } });
   const ex=$("#examBtn"); if(ex)ex.addEventListener("click",()=>routeExam(s.id));
   const re=$("#reactBtn"); if(re)re.addEventListener("click",()=>openReactivateSheet(s,rerender));
