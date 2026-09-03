@@ -2259,6 +2259,117 @@ const FAHR_AKADEMIE_BASE_URL = "https://serband1995-hue.github.io/Fahr-Akademie-
    academy_tags-Tabelle in Supabase (Projekt fahr-akademie), Stand 15.07.26.
    Fehlt "tag" (z.B. weil Fahr-Akademie den Punkt noch nicht hat), fällt der
    Link automatisch auf reine Stufen-Ebene zurück - kein Fehler, kein Absturz. */
+/* ===== Texte für die Nachricht an den Schüler nach der Fahrstunde =====
+   Zwei Varianten je Thema:
+     gut   = wurde grün geklickt -> bestätigen UND kurz festhalten, warum es richtig war
+     ueben = rot/gelb            -> konkrete Handlungsanweisung für das nächste Mal
+   Bewusst in einfacher Sprache, respektvoll geduzt (Lehrer zu Schüler), nicht kumpelhaft.
+   Die gesetzlich genauen Fassungen stehen weiterhin in INFO und bleiben unverändert -
+   die sind für den Fahrlehrer gedacht, nicht für die WhatsApp an den Schüler.
+   Jeder Fahrlehrer kann jeden Text in den Einstellungen überschreiben; Überschreibungen
+   liegen in DB.schuelerTexte und gewinnen immer gegen die Vorgabe hier. */
+const SCHUELER_TEXTE_STANDARD = {
+  g_sitz:{gut:"Sitzposition und Spiegel hast du sauber eingestellt. Das ist die Grundlage für alles andere — wer richtig sitzt, lenkt ruhiger und sieht mehr.",ueben:"Nimm dir vor dem Losfahren bewusst Zeit für Sitz und Spiegel: Rücken anliegend, Handgelenk soll aufs Lenkrad oben reichen, in den Außenspiegeln ein schmaler Streifen vom eigenen Auto."},
+  g_start:{gut:"Motor starten und Blinker bedienen läuft flüssig, ohne hinzuschauen. Genau so soll es sein.",ueben:"Übe den Blinker so, dass du ihn ohne Hinsehen findest. Der Blick gehört auf die Straße, nicht auf den Hebel."},
+  g_anfahr:{gut:"Anfahren und gezieltes Anhalten klappt weich. Du hast den Schleifpunkt gefunden — das merkt man am ruhigen Losrollen.",ueben:"Beim Anfahren: Kupplung langsam bis zum Schleifpunkt, kurz halten, dann Gas. Zum Anhalten früher vom Gas gehen, damit du nicht am Schluss stark bremsen musst."},
+  g_anhalt:{gut:"Anfahren und gezieltes Anhalten sitzt. Du triffst den Punkt, an dem du stehen willst.",ueben:"Such dir beim Anhalten früh einen Zielpunkt und bremse gleichmäßig darauf zu, statt erst spät stark zu bremsen."},
+  g_brems:{gut:"Dein Bremsen war gleichmäßig und gut dosiert. Die Mitfahrer merken den Unterschied sofort.",ueben:"Bremse in einem Zug weicher aus: früh anfangen, gegen Ende Druck wegnehmen. Dann nickt das Auto am Schluss nicht."},
+  g_schalt:{gut:"Schalten vom 1. bis 3. Gang läuft sauber, ohne Ruckeln.",ueben:"Beim Schalten Gas ganz weg, zügig kuppeln, Gang einlegen, Kupplung gleichmäßig kommen lassen. Blick bleibt dabei auf der Straße."},
+  g_spur:{gut:"Du hältst die Spur ruhig und fährst sicher durch den Stadtverkehr.",ueben:"Schau beim Fahren weit nach vorne, nicht direkt vor die Motorhaube. Je weiter der Blick, desto ruhiger die Spur."},
+  g_abb1:{gut:"Abbiegen rechts und links hat gut geklappt — Blinker, Blick und Einordnen kamen in der richtigen Reihenfolge.",ueben:"Denk beim Abbiegen an die feste Reihenfolge: Spiegel, Blinker, Einordnen, Schulterblick, dann abbiegen. Rechts eng, links weit."},
+  g_abb2:{gut:"Abbiegen ohne meine Ansage hast du selbstständig gelöst. Das zeigt, dass der Ablauf wirklich sitzt.",ueben:"Wir üben das Abbiegen weiter ohne meine Vorsage, damit du den Ablauf von allein abrufst und nicht auf mein Kommando wartest."},
+  a_stadt:{gut:"Spurhalten, Abbiegen und Bremsen im Stadtverkehr hast du gut zusammengebracht — auch wenn viel gleichzeitig passiert.",ueben:"Im Stadtverkehr früher schauen: Was passiert in zwei, drei Kreuzungen? Dann hast du mehr Zeit für Blinker und Einordnen."},
+  a_30:{gut:"30er-Zone, rechts vor links und Abbiegen sitzen. Du hast die Vorfahrt richtig erkannt.",ueben:"In der 30er-Zone gilt fast überall rechts vor links, auch ohne Schild. Fahr so langsam heran, dass du notfalls anhalten kannst."},
+  a_pfeil:{gut:"Du unterscheidest Pfeil-Ampel und Grünpfeil-Schild sicher. Das verwechseln viele.",ueben:"Merke: Grüner Pfeil in der Ampel heißt freie Fahrt. Grünpfeil-Schild neben der roten Ampel heißt erst anhalten, dann vorsichtig rechts."},
+  a_einbahn:{gut:"Einbahnstraßen erkennst du und ordnest dich richtig ein.",ueben:"In der Einbahnstraße darfst du dich frei einordnen. Zum Linksabbiegen also ganz nach links, nicht in der Mitte bleiben."},
+  a_berg:{gut:"Berganfahren ohne Zurückrollen klappt. Der Übergang von Bremse zu Gas sitzt.",ueben:"Am Berg: Kupplung bis zum Schleifpunkt, Auto wird spürbar leichter, erst dann die Bremse lösen. Sonst rollst du zurück."},
+  a_wechsel:{gut:"Fahrstreifenwechsel mit Schulterblick war richtig — und dein Blick ging danach sofort wieder nach vorne. Genau die Reihenfolge macht es sicher.",ueben:"Beim Spurwechsel: Innenspiegel, Außenspiegel, Blinker, Schulterblick, dann rüber. Der Schulterblick ist kurz — danach gehört der Blick sofort wieder nach vorne."},
+  a_doppel:{gut:"Doppelspuriges Abbiegen hast du sauber gefahren und die Spur gehalten.",ueben:"Beim doppelspurigen Abbiegen bleibst du in deiner Spur — links bleibt links, rechts bleibt rechts. Nicht in die Nachbarspur ziehen."},
+  l_kreisel:{gut:"Kreisverkehr passt: beim Einfahren nicht geblinkt, beim Ausfahren geblinkt. Genau richtig.",ueben:"Im Kreisverkehr wird beim Einfahren nicht geblinkt, beim Ausfahren schon. Vor dem Ausfahren nochmal nach rechts schauen — Radfahrer werden leicht übersehen."},
+  l_zebra:{gut:"Am Zebrastreifen warst du vorausschauend und bremsbereit unterwegs.",ueben:"Am Zebrastreifen früh vom Gas und den Gehweg beobachten. Wer erkennbar rüber will, hat Vorrang. Überholen ist dort verboten."},
+  l_eng:{gut:"Bei Engstellen hast du den Vorrang richtig eingeschätzt.",ueben:"An Engstellen zuerst schauen, wer Vorrang hat. Ohne Schild gilt: wer auf seiner Seite frei durchkommt, fährt zuerst. Im Zweifel lieber warten."},
+  l_links:{gut:"Linksabbiegen mit Vorrang des Gegenverkehrs hast du korrekt gelöst — du hast gewartet, bis es wirklich frei war.",ueben:"Beim Linksabbiegen hat der Gegenverkehr Vorrang, auch bei Grün ohne Pfeil. Vor dem Abbiegen nochmal beobachten und an querende Fußgänger denken."},
+  l_stop:{gut:"Am Stoppschild bist du vollständig zum Stehen gekommen. Das sehen Prüfer sofort.",ueben:"Am Stoppschild muss das Auto wirklich komplett stehen — alle Räder still. Langsam ausrollen zählt nicht, auch wenn frei ist. Mit Haltelinie vor der Linie halten, dann bis zur Sichtlinie vortasten."},
+  l_bahn:{gut:"Am Bahnübergang hast du richtig reagiert und die Blickführung stimmte.",ueben:"Am Andreaskreuz langsam und bremsbereit heranfahren, nach links und rechts schauen und hören. Bei Rotlicht, sich senkender Schranke oder nahendem Zug wird gewartet. Nie auf die Gleise fahren, wenn es dahinter steht."},
+  l_fahrrad:{gut:"Fahrradstraße und „Anlieger frei“ hast du richtig eingeordnet.",ueben:"In der Fahrradstraße haben Radfahrer Vorrang, du bist Gast: höchstens 30, kein Drängeln, nicht überholen wenn es eng wird."},
+  l_einfahrt:{gut:"Das „Verbot der Einfahrt“ hast du rechtzeitig erkannt.",ueben:"Das runde rote Schild mit dem weißen Balken bedeutet: hier nicht hinein. Achte auf das Schild, bevor du in eine Straße einbiegst, nicht erst danach."},
+  l_beruhigt:{gut:"Im verkehrsberuhigten Bereich hast du dich richtig verhalten.",ueben:"Im verkehrsberuhigten Bereich gilt Schrittgeschwindigkeit, Fußgänger dürfen die ganze Straße nutzen und haben Vorrang. Parken nur auf markierten Flächen."},
+  s_ueb_tempo:{gut:"Du hast das erlaubte Tempo rechtzeitig erkannt und eingehalten.",ueben:"Achte überland früh auf Ortstafeln und Tempo-Schilder. Gelbe Ortstafel heißt sofort 50, auch ohne extra Schild."},
+  s_ueb_abstand:{gut:"Der Sicherheitsabstand war konstant und passend.",ueben:"Halte überland etwa den halben Tacho als Abstand in Metern — bei 100 also rund 50 Meter. Nutz dazu einen festen Punkt am Straßenrand und zähl zwei Sekunden."},
+  s_ueb_rechts:{gut:"Das Rechtsfahrgebot hast du sauber umgesetzt.",ueben:"Bleib überland so weit rechts, wie es sicher geht — aber nicht in den Randstreifen. Nach dem Überholen zügig wieder einordnen."},
+  s_ueb_voraus:{gut:"Deine Verkehrsbeobachtung war vorausschauend, du hast Situationen früh erkannt.",ueben:"Schau überland weit voraus und an Kuppen und Kurven besonders früh. Wer erst reagiert, wenn es passiert, reagiert zu spät."},
+  s_ueb_ueber:{gut:"Überholen mit korrekter Beobachtung hat gepasst.",ueben:"Vor dem Überholen: Abstand verkürzen ist falsch — erst Gegenverkehr prüfen, Spiegel, Blinker, Schulterblick, dann zügig vorbei und rechtzeitig wieder rein."},
+  s_ab_ein:{gut:"Das Einfahren auf die Autobahn war gut — du hast auf dem Beschleunigungsstreifen richtig Tempo aufgebaut.",ueben:"Auf dem Beschleunigungsstreifen wird beschleunigt, nicht gewartet. Ziel ist die Geschwindigkeit des fließenden Verkehrs, dann Blinker, Schulterblick, einfädeln. Der Verkehr auf der Autobahn hat Vorrang."},
+  s_ab_rechts:{gut:"Rechtsfahrgebot auf der Autobahn eingehalten — du bist nicht unnötig links geblieben.",ueben:"Nach dem Überholen zügig wieder nach rechts. Die linke Spur ist zum Überholen da, nicht zum Dauerfahren."},
+  s_ab_ueber:{gut:"Überholen auf der Autobahn hast du sicher gelöst.",ueben:"Vor dem Ausscheren immer Innenspiegel, Außenspiegel und Schulterblick — von hinten kommen Autos schneller, als es aussieht. Rechts überholen ist verboten."},
+  s_ab_tempo:{gut:"Tempolimits hast du erkannt und eingehalten.",ueben:"Auf der Autobahn wechseln die Limits oft. Achte auf Schilderbrücken und darauf, wann ein Limit wieder aufgehoben wird."},
+  s_ab_voraus:{gut:"Vorausschauende Verkehrsbeobachtung auf der Autobahn war gut.",ueben:"Schau auf der Autobahn weit nach vorne, mehrere Autos voraus. Bremslichter in der Ferne sind dein frühester Hinweis auf Stau."},
+  s_ab_abst:{gut:"Sicherheitsabstand auf der Autobahn hat gepasst.",ueben:"Halte den halben Tacho in Metern. Bei 120 sind das 60 Meter — das sind mehr als drei Leitpfosten."},
+  s_ab_aus:{gut:"Ausfahren von der Autobahn hast du richtig gemacht: erst raus, dann bremsen.",ueben:"Zum Ausfahren rechtzeitig blinken, auf den Ausfädelungsstreifen wechseln und erst dort bremsen — nicht schon auf der Fahrbahn."},
+  s_n_licht:{gut:"Die Beleuchtung hast du richtig eingesetzt.",ueben:"Fernlicht nutzen, wenn niemand entgegenkommt oder vorausfährt — und sofort abblenden, sobald jemand auftaucht. Nebelschlussleuchte nur unter 50 Metern Sicht."},
+  s_n_orient:{gut:"Orientierung bei Dunkelheit hat gut geklappt.",ueben:"Bei Dunkelheit an Leitpfosten und Fahrbahnmarkierungen orientieren, nicht nur an den Rücklichtern des Vordermanns."},
+  s_n_tempo:{gut:"Du hast dein Tempo an die Sichtweite angepasst.",ueben:"Nachts gilt: nur so schnell, dass du innerhalb der beleuchteten Strecke anhalten kannst. Bei Abblendlicht sind das oft deutlich weniger als 100."},
+  s_n_land:{gut:"Überland und Autobahn bei Nacht hast du sicher gefahren.",ueben:"Nachts überland besonders auf Wild und schlecht sichtbare Radfahrer achten. Bei Gegenverkehr nicht ins Licht schauen, sondern an den rechten Fahrbahnrand."},
+  gf_rueck:{gut:"Rückwärtsfahren um die Ecke war kontrolliert und in ruhigem Tempo.",ueben:"Beim Rückwärtsfahren langsam bleiben und den Blick hauptsächlich nach hinten. Vor jeder Lenkbewegung einmal rundum schauen."},
+  gf_laengs:{gut:"Längsparken hat gepasst — Bezugspunkte stimmten und du bist am Ende sauber am Bordstein gestanden.",ueben:"Beim Längsparken: auf Höhe des vorderen Autos halten, etwa 1 Meter Abstand, dann rückwärts einlenken. Beim Einlenken immer wieder nach vorne schauen, das Heck schwenkt aus."},
+  gf_quer:{gut:"Querparken hast du sicher gelöst.",ueben:"Beim Querparken rückwärts einparken, wo es geht — beim Herausfahren siehst du dann deutlich mehr. Vor dem Lenken Rundumblick."},
+  gf_wenden:{gut:"Wenden in der Straße hast du in wenigen Zügen und sicher geschafft.",ueben:"Beim Wenden zählt nicht die Anzahl der Züge, sondern die Beobachtung. Vor jedem Richtungswechsel komplett rundum schauen."},
+  gf_gefahr:{gut:"Die Gefahrenbremsung war richtig: schlagartig, mit voller Kraft, das Auto kam schnell zum Stehen.",ueben:"Bei der Gefahrenbremsung gilt: sofort mit voller Kraft auf die Bremse und Kupplung treten. Das ABS rattert — das ist richtig so, nicht loslassen."},
+  gf_sicht:{gut:"Rundumsicht beim Rangieren war gut, du hast wirklich den Kopf gedreht.",ueben:"Beim Rangieren reicht der Spiegel nicht. Kopf drehen und auch nach vorne schauen — das Heck schwenkt zur Seite aus."},
+  t_profil:{gut:"Die Profiltiefe konntest du richtig prüfen und erklären.",ueben:"Die Profiltiefe muss mindestens 1,6 mm betragen. Prüfen kannst du das mit dem Verschleißanzeiger in der Rille oder dem Rand einer 1-Euro-Münze."},
+  t_schaden:{gut:"Beschädigungen am Reifen hast du richtig geprüft.",ueben:"Schau die Reifen rundum an: Risse, Beulen oder eingefahrene Fremdkörper. Beulen an der Flanke sind immer ein Fall für die Werkstatt."},
+  t_druck:{gut:"Du weißt, wo der richtige Reifendruck steht und wie er geprüft wird.",ueben:"Der vorgeschriebene Reifendruck steht im Tankdeckel oder in der Türsäule. Geprüft wird am kalten Reifen."},
+  t_abblend:{gut:"Abblend- und Fernlicht konntest du zeigen und erklären.",ueben:"Zeig beim Prüfen beides einzeln und erklär, wann du was benutzt: Abblendlicht immer bei Dunkelheit, Fernlicht nur wenn niemand geblendet wird."},
+  t_blinker:{gut:"Blinker vorne und hinten hast du korrekt geprüft.",ueben:"Prüf den Blinker auf beiden Seiten und geh dabei einmal ums Auto — vorne und hinten müssen beide arbeiten."},
+  t_brems:{gut:"Bremslicht inklusive dritter Bremsleuchte hast du richtig kontrolliert.",ueben:"Für das Bremslicht brauchst du Hilfe oder eine spiegelnde Fläche hinter dem Auto. Die dritte Bremsleuchte oben in der Heckscheibe gehört dazu."},
+  t_nebel:{gut:"Du weißt, wann die Nebelschlussleuchte benutzt werden darf.",ueben:"Die Nebelschlussleuchte darf nur bei Nebel und weniger als 50 Metern Sicht an — und dann höchstens 50 fahren. Bei Regen oder Schneefall ist sie verboten."},
+  t_oel:{gut:"Motoröl prüfen hast du sicher gezeigt.",ueben:"Öl wird bei stehendem Motor auf ebener Fläche geprüft: Stab ziehen, abwischen, ganz reinstecken, nochmal ziehen. Der Stand muss zwischen Min und Max liegen."},
+  t_kuehl:{gut:"Den Kühlmittelstand konntest du richtig ablesen.",ueben:"Der Kühlmittelstand wird am Ausgleichsbehälter zwischen Min und Max abgelesen — nur bei kaltem Motor, sonst steht das System unter Druck."},
+  t_wasch:{gut:"Scheibenwaschwasser prüfen und nachfüllen hast du gezeigt.",ueben:"Das Waschwasser prüfst du am Behälter mit dem Scheibensymbol. Im Winter gehört Frostschutz hinein, sonst friert die Anlage ein."},
+  t_bremsfl:{gut:"Bei der Bremsflüssigkeit hast du richtig erklärt, dass du sie nur prüfst, aber nicht nachfüllst.",ueben:"Die Bremsflüssigkeit wird nur zwischen Min und Max abgelesen. Nachfüllen ist Sache der Werkstatt — ein fallender Stand ist immer ein Warnzeichen."},
+  t_fest:{gut:"Feststellbremse und Anfahrversuch hast du korrekt vorgeführt.",ueben:"Zum Prüfen der Feststellbremse anziehen und im ersten Gang vorsichtig anfahren. Das Auto darf sich nicht bewegen."},
+  t_betrieb:{gut:"Den Druckpunkt der Betriebsbremse konntest du zeigen und erklären.",ueben:"Bei stehendem Motor mehrfach auf die Bremse treten, dann Motor starten: das Pedal muss spürbar nachgeben. Danach muss der Druckpunkt fest bleiben."},
+  t_schloss:{gut:"Das Lenkradschloss konntest du richtig vorführen.",ueben:"Zum Prüfen den Schlüssel abziehen und das Lenkrad leicht drehen, bis es hörbar einrastet."},
+};
+
+/* Aufgelöster Text: eigene Fassung schlägt Vorgabe. Gibt es zu einem Thema nichts,
+   kommt bewusst NICHTS zurück - dann steht in der Nachricht nur der Themenname.
+   Lieber knapp als erfunden: das hier sind Fahranweisungen. */
+function schuelerText(skillId,art){
+  const eigen=(DB.schuelerTexte||{})[skillId];
+  if(eigen&&typeof eigen[art]==="string"&&eigen[art].trim())return eigen[art].trim();
+  if(eigen&&eigen[art]==="")return "";           // bewusst geleert
+  const vor=SCHUELER_TEXTE_STANDARD[skillId];
+  return (vor&&vor[art])?vor[art]:"";
+}
+function schuelerTextIstEigen(skillId,art){
+  const e=(DB.schuelerTexte||{})[skillId];
+  return !!(e&&typeof e[art]==="string");
+}
+function setSchuelerText(skillId,art,wert){
+  if(!DB.schuelerTexte)DB.schuelerTexte={};
+  if(!DB.schuelerTexte[skillId])DB.schuelerTexte[skillId]={};
+  DB.schuelerTexte[skillId][art]=wert;
+  save();
+}
+function resetSchuelerText(skillId,art){
+  if(DB.schuelerTexte&&DB.schuelerTexte[skillId]){
+    delete DB.schuelerTexte[skillId][art];
+    if(!Object.keys(DB.schuelerTexte[skillId]).length)delete DB.schuelerTexte[skillId];
+    save();
+  }
+}
+// Alle Themen quer über alle Stufen, inkl. der gesetzlich festen - die Texte sollen
+// auch dort bearbeitbar sein, obwohl die Punkte selbst nicht verändert werden dürfen.
+function alleSkillsFlach(){
+  const out=[];const gesehen=new Set();
+  STUFEN.forEach(st=>st.items.forEach(it=>{ if(!gesehen.has(it.id)){gesehen.add(it.id);out.push({stufe:st.titel,stKey:st.key,id:it.id,t:it.t});} }));
+  (DB.ausbildungsplaene||[]).forEach(p=>(p.stufen||[]).forEach(st=>(st.items||[]).forEach(it=>{
+    if(!gesehen.has(it.id)){gesehen.add(it.id);out.push({stufe:st.titel,stKey:st.key,id:it.id,t:it.t});}
+  })));
+  return out;
+}
+
 const FA_VIDEO_MAP = {
   a_30:      { stufe:"Grundstufe",         tag:"t01_rechts_vor_links" },
   l_links:   { stufe:"Grundstufe",         tag:"t02_vorfahrt_gewaehren",     contentDa:false },
@@ -4924,7 +5035,7 @@ window.addEventListener("load", () => {
 const STORE_KEY="serband-app-v1";
 /* Build-Version: bei jeder Auslieferung hier das Datum aktualisieren.
    Wird in den Einstellungen angezeigt + für den Update-Hinweis genutzt. */
-const APP_VERSION="2026.09.13";
+const APP_VERSION="2026.09.15";
 // Nutzungsbedingungen & Haftungsausschluss (Bereich: rechtliche Absicherung) - Version hochzählen
 // und alle Nutzer müssen erneut zustimmen, sobald sich der Text inhaltlich ändert.
 const AGB_VERSION="1.0";
@@ -5889,6 +6000,11 @@ function routeDetail(id){
       <button class="akte-btn" data-go="profil"><div class="ab-ic">🧠</div><div class="ab-lab">Bogen</div></button>
       <button class="akte-btn" data-go="hist"><div class="ab-ic">🕐</div><div class="ab-lab">Historie</div></button>
     </div>
+    ${(letzteStunde&&themenDesTages(s,letzteStunde.date).gut.length+themenDesTages(s,letzteStunde.date).ueben.length>0)?`<button class="vortest-big" id="protokollBtn" style="background:#25D366;border:none;width:100%;cursor:pointer;">
+      <div class="vb-ic">📤</div>
+      <div class="vb-body"><div class="vb-name">Protokoll der letzten Stunde</div><div class="vb-sub">${isoDE(letzteStunde.date)} · was lief gut, was üben wir weiter</div></div>
+      <div class="vb-arr">›</div>
+    </button>`:""}
     <button class="vortest-big" id="shareStandBtn" style="background:#25D366;border:none;width:100%;cursor:pointer;">
       <div class="vb-ic">📤</div>
       <div class="vb-body"><div class="vb-name">Stand teilen</div><div class="vb-sub">Aktuellen Ausbildungsstand per WhatsApp schicken</div></div>
@@ -5971,6 +6087,8 @@ function routeDetail(id){
     else if(go==="hist")routeHistorie(id);
     else routeProfil(id);
   }));
+  const protB=$("#protokollBtn");
+  if(protB&&letzteStunde) protB.addEventListener("click",()=>sendeStundenProtokoll(s,letzteStunde.date));
   const shareBtn=$("#shareStandBtn");
   if(shareBtn) shareBtn.addEventListener("click",()=>shareStandWhatsApp(s));
   const waBtn=$("#waKontaktBtn");
@@ -6795,6 +6913,69 @@ $("#calPick").addEventListener("change",e=>{
 /* ============================================================
    AUSBILDUNGSPLAN-VORLAGEN (Prüfgebiete)
    ============================================================ */
+/* Texte für die Schüler-Nachricht bearbeiten.
+   Bewusst nach Stufe gruppiert und eingeklappt: 60 Themen auf einmal wären auf dem
+   Handy unbrauchbar. Auch die gesetzlich festen Stufen sind hier bearbeitbar - fest
+   sind dort die Ausbildungspunkte, nicht die Formulierung an den Schüler. */
+let _stOffen={};
+function routeSchuelerTexte(){
+  $("#tbTitle").textContent="Schüler-Texte";setFab(false);view.scrollTop=0;
+  const alle=alleSkillsFlach();
+  const gruppen=[];
+  alle.forEach(sk=>{
+    let g=gruppen.find(x=>x.stufe===sk.stufe);
+    if(!g){g={stufe:sk.stufe,items:[]};gruppen.push(g);}
+    g.items.push(sk);
+  });
+  const eigene=Object.keys(DB.schuelerTexte||{}).length;
+  const bloecke=gruppen.map((g,gi)=>{
+    const offen=!!_stOffen[g.stufe];
+    const angepasst=g.items.filter(sk=>schuelerTextIstEigen(sk.id,"gut")||schuelerTextIstEigen(sk.id,"ueben")).length;
+    const rows=offen?g.items.map(sk=>`
+      <div class="res-block" style="animation:none;margin:8px 0;">
+        <h4 style="font-size:14px;">${esc(sk.t)}</h4>
+        <label style="display:block;font-size:11px;font-weight:700;letter-spacing:.05em;color:var(--gruen);text-transform:uppercase;margin:8px 0 4px;">✅ Lief gut</label>
+        <textarea class="stx" data-sk="${sk.id}" data-art="gut" rows="3" placeholder="Kein Text — dann steht nur der Themenname in der Nachricht." style="width:100%;background:var(--surface-2);border:1px solid var(--line);border-radius:8px;padding:8px 10px;color:var(--txt);font-size:13px;line-height:1.45;">${esc(schuelerText(sk.id,"gut"))}</textarea>
+        <label style="display:block;font-size:11px;font-weight:700;letter-spacing:.05em;color:var(--orange);text-transform:uppercase;margin:10px 0 4px;">🔸 Üben wir weiter</label>
+        <textarea class="stx" data-sk="${sk.id}" data-art="ueben" rows="3" placeholder="Kein Text — dann steht nur der Themenname in der Nachricht." style="width:100%;background:var(--surface-2);border:1px solid var(--line);border-radius:8px;padding:8px 10px;color:var(--txt);font-size:13px;line-height:1.45;">${esc(schuelerText(sk.id,"ueben"))}</textarea>
+        ${(schuelerTextIstEigen(sk.id,"gut")||schuelerTextIstEigen(sk.id,"ueben"))?`<button class="mini-btn ghost" data-stxreset="${sk.id}" style="margin-top:8px;">↺ Auf Vorgabe zurücksetzen</button>`:""}
+      </div>`).join(""):"";
+    return `<div class="res-block" style="animation:none;">
+      <div style="display:flex;align-items:center;justify-content:space-between;cursor:pointer;" data-stufetoggle="${esc(g.stufe)}">
+        <h4 style="margin:0;">${esc(g.stufe)}</h4>
+        <span style="font-size:12px;color:var(--muted);">${g.items.length} Themen${angepasst?` · ${angepasst} angepasst`:""} ${offen?"▾":"▸"}</span>
+      </div>
+      ${rows}
+    </div>`;
+  }).join("");
+  view.innerHTML=`<div class="view-inner view-read fade-up">
+    <div class="back-row"><button class="back-btn" id="backBtn">${ICN.back} Vorlagen</button></div>
+    <div class="sec-h" style="margin-bottom:8px;">Schüler-<span class="o">Texte</span></div>
+    <p style="color:var(--muted);font-size:13px;margin-bottom:6px;">Diese Sätze bekommt der Schüler nach der Fahrstunde per WhatsApp — je nachdem, ob du bei einem Thema grün oder rot/gelb geklickt hast.</p>
+    <p style="color:var(--muted);font-size:12.5px;margin-bottom:14px;">Alle Texte sind vorgeschrieben. Änderungen speichern sich sofort. Leerst du ein Feld komplett, steht in der Nachricht nur der Themenname.${eigene?` <b style="color:var(--gruen);">${eigene} Thema${eigene===1?"":"en"} angepasst.</b>`:""}</p>
+    ${bloecke}
+    <div class="res-block" style="animation:none;"><h4>Alles zurücksetzen</h4>
+      <p>Setzt sämtliche eigenen Texte zurück auf die Vorgabe. Kann nicht rückgängig gemacht werden.</p>
+      <div class="btn-row"><button class="btn btn-ghost" style="color:#f08080;border-color:rgba(200,60,60,.3);" id="stxResetAll">Alle eigenen Texte verwerfen</button></div></div>
+  </div>`;
+  $("#backBtn").addEventListener("click",routePlanVorlagen);
+  view.querySelectorAll("[data-stufetoggle]").forEach(h=>h.addEventListener("click",()=>{
+    const k=h.dataset.stufetoggle; _stOffen[k]=!_stOffen[k]; routeSchuelerTexte();
+  }));
+  view.querySelectorAll(".stx").forEach(t=>t.addEventListener("change",e=>{
+    setSchuelerText(e.target.dataset.sk,e.target.dataset.art,e.target.value.trim());
+    toast("Gespeichert ✓");
+  }));
+  view.querySelectorAll("[data-stxreset]").forEach(b=>b.addEventListener("click",()=>{
+    const id=b.dataset.stxreset;
+    resetSchuelerText(id,"gut"); resetSchuelerText(id,"ueben");
+    toast("Auf Vorgabe zurückgesetzt"); routeSchuelerTexte();
+  }));
+  $("#stxResetAll").addEventListener("click",()=>{
+    if(!confirm("Wirklich ALLE eigenen Texte verwerfen und auf die Vorgabe zurücksetzen?"))return;
+    DB.schuelerTexte={}; save(); toast("Zurückgesetzt"); routeSchuelerTexte();
+  });
+}
 function routePlanVorlagen(){
   ensureAusbildungsplaene();
   $("#tbTitle").textContent="Vorlagen";setFab(false);view.scrollTop=0;
@@ -6814,11 +6995,15 @@ function routePlanVorlagen(){
     <div class="back-row"><button class="back-btn" id="backBtn">${ICN.back} Einstellungen</button></div>
     <p style="color:var(--muted);font-size:13px;margin-bottom:12px;">Grundstufe, Aufbaustufe und Leistungsstufe sind pro Vorlage frei gestaltbar. Sonderfahrten, Grundfahraufgaben und Technik sind für alle Vorlagen gleich (gesetzlich vorgegeben).</p>
     ${rows}
+    <div class="res-block" style="animation:none;"><h4>💬 Texte für die Schüler-Nachricht</h4>
+      <p>Was der Schüler nach der Fahrstunde per WhatsApp bekommt — je Thema ein Text für „lief gut" und einen für „üben wir weiter". Alle Texte sind vorgeschrieben und können hier geändert werden.</p>
+      <div class="btn-row"><button class="btn btn-ghost" id="openSchuelerTexte">Texte bearbeiten</button></div></div>
     <div class="res-block" style="animation:none;"><h4>+ Neues Prüfgebiet</h4>
       <p>Startet als Kopie einer bestehenden Vorlage — du musst nicht bei null anfangen.</p>
       <div class="btn-row"><button class="btn btn-primary" id="newPlanBtn">Neues Prüfgebiet anlegen</button></div></div>
   </div>`;
   $("#backBtn").addEventListener("click",routeSettings);
+  $("#openSchuelerTexte").addEventListener("click",routeSchuelerTexte);
   view.querySelectorAll("[data-editplan]").forEach(b=>b.addEventListener("click",()=>routePlanVorlageEdit(b.dataset.editplan)));
   view.querySelectorAll("[data-stdplan]").forEach(b=>b.addEventListener("click",()=>{
     DB.ausbildungsplaene.forEach(p=>p.standard=(p.id===b.dataset.stdplan));
@@ -7051,7 +7236,7 @@ function buildStufen(s){
     const sid=row.dataset.skill;
     row.querySelectorAll(".amp").forEach(b=>b.addEventListener("click",()=>{
       const v=b.dataset.v;
-      if(pl.ampeln[sid]===v){delete pl.ampeln[sid];if(pl.ampelnZeit)delete pl.ampelnZeit[sid];}else{pl.ampeln[sid]=v;if(!pl.ampelnZeit)pl.ampelnZeit={};if(v==="gruen")pl.ampelnZeit[sid]=new Date().toISOString();else delete pl.ampelnZeit[sid];}
+      if(pl.ampeln[sid]===v){delete pl.ampeln[sid];if(pl.ampelnZeit)delete pl.ampelnZeit[sid];}else{pl.ampeln[sid]=v;if(!pl.ampelnZeit)pl.ampelnZeit={};pl.ampelnZeit[sid]=new Date().toISOString();}
       const SYM={rot:'✕',gelb:'•',gruen:'✓'};
       row.querySelectorAll(".amp").forEach(x=>{
         const istAn=x.dataset.v===pl.ampeln[sid];
@@ -8386,6 +8571,11 @@ function openEventSheet(kind,id,sid){
     <p class="muted-p" style="font-size:13.5px;margin:-4px 0 ${l.note?'8px':'16px'};">${isoDE(l.date)} · ${l.von}–${l.bis} · ${l.lektion?lektionTitel(l.lektion):artLab} ${statusInfo}</p>
     ${l.note?`<div class="es-note">${esc(l.note)}</div>`:''}
     <div class="es-actions">
+      ${(fcRelevant&&st&&l.date<=todayISO())?(()=>{
+        const tg=themenDesTages(st,l.date);
+        const n=tg.gut.length+tg.ueben.length;
+        return `<button class="es-act primary" id="esProtokoll" style="background:#25D366;border-color:#25D366;color:#fff;">📤 Stunde abschließen · Protokoll schicken${n?` <b>(${n} Thema${n===1?"":"en"})</b>`:""}</button>`;
+      })():''}
       ${st?`<button class="es-act primary" id="esAkte">Schülerakte öffnen</button>`:''}
       ${fcRelevant&&sichtbar("fahrcheck")?`<button class="es-act" id="esFC">Fahrcheck · <b>${fcLab}</b></button>`:''}
       ${fcRelevant&&st?`<button class="es-act" id="esSig">Unterschrift · <b>${l.signed?'✓ vorhanden':'noch offen'}</b></button>`:''}
@@ -8397,6 +8587,7 @@ function openEventSheet(kind,id,sid){
       ${l.status&&l.status!=="geplant"?`<button class="es-act" id="esReset">Status zurücksetzen</button>`:''}
       <button class="es-act danger" id="esDelete">Termin löschen</button>
     </div>`);
+  const prot=$("#esProtokoll"); if(prot)prot.addEventListener("click",()=>{ closeSheet(); sendeStundenProtokoll(st,l.date); });
   const ak=$("#esAkte"); if(ak)ak.addEventListener("click",()=>{ closeSheet(); routeDetail(l.sid); });
   const fcb=$("#esFC"); if(fcb)fcb.addEventListener("click",()=>{ closeSheet(); openFCMenu(id); });
   const sigb=$("#esSig"); if(sigb)sigb.addEventListener("click",()=>{ closeSheet(); openSignatureSheet(id); });
@@ -11950,6 +12141,67 @@ function findLastNextLesson(sid){
   return { last: past[0]||null, next: future[0]||null };
 }
 
+/* Protokoll nach der Fahrstunde.
+   Grundlage sind die Zeitstempel aus pl.ampelnZeit: was an diesem Tag bewertet wurde,
+   war Inhalt dieser Stunde. Serband muss dafür nichts zusätzlich eintippen.
+   Aufbau bewusst in dieser Reihenfolge: erst was saß (Kompetenzerleben trägt die
+   Motivation), dann das Offene als Handlungsanweisung, dann der nächste Schritt. */
+function themenDesTages(s,iso){
+  const pl=s.plan; if(!pl||!pl.ampelnZeit)return {gut:[],ueben:[]};
+  const gut=[],ueben=[];
+  stufenFor(s).forEach(st=>st.items.forEach(it=>{
+    const z=pl.ampelnZeit[it.id];
+    if(!z||z.slice(0,10)!==iso)return;
+    const v=pl.ampeln[it.id];
+    if(v==="gruen")gut.push(it); else if(v==="gelb"||v==="rot")ueben.push(it);
+  }));
+  return {gut,ueben};
+}
+function stundenProtokollText(s,iso){
+  const {gut,ueben}=themenDesTages(s,iso);
+  if(!gut.length&&!ueben.length)return null;
+  const vorname=s.name?s.name.split(" ")[0]:"";
+  const l=(DB.lessons||[]).find(x=>x.sid===s.id&&x.date===iso&&["fahrstunde","sonder","nacht"].indexOf(x.art)>=0);
+  let msg=`Hey ${vorname}! 👋\n`;
+  msg+=`Fahrstunde vom ${isoDE(iso)}${l&&l.von?` um ${l.von} Uhr`:""}\n`;
+  if(gut.length){
+    msg+=`\n*Das lief heute gut:*\n`;
+    gut.forEach(it=>{
+      const t=schuelerText(it.id,"gut");
+      msg+=`✅ ${it.t}${t?`\n${t}`:""}\n`;
+    });
+  }
+  if(ueben.length){
+    msg+=`\n*Das nehmen wir uns nochmal vor:*\n`;
+    ueben.forEach(it=>{
+      const t=schuelerText(it.id,"ueben");
+      msg+=`🔸 ${it.t}${t?`\n${t}`:""}\n`;
+      const v=FA_VIDEO_MAP[it.id];
+      if(v&&v.contentDa!==false)msg+=`🎥 Dazu passt das Video in der Stufe „${v.stufe}“.\n`;
+    });
+  }
+  // Nächster Schritt: offene Themen zuerst wiederholen, sonst das nächste neue Thema.
+  const naechstes=ueben.length?null:autoNext(s);
+  msg+=`\n*Nächste Stunde:*\n`;
+  if(ueben.length)msg+=`Wir wiederholen ${ueben.length===1?"das Thema":"die Themen"} von oben, bis es sicher sitzt.\n`;
+  else if(naechstes&&naechstes.text)msg+=`${naechstes.text}\n`;
+  const {next}=findLastNextLesson(s.id);
+  if(next)msg+=`\n📅 Termin: ${isoDE(next.date)} um ${next.von} Uhr\n`;
+  msg+=`\nBis dann! 🚗`;
+  return msg;
+}
+function sendeStundenProtokoll(s,iso){
+  const msg=stundenProtokollText(s,iso);
+  if(!msg){
+    // An diesem Tag wurde nichts bewertet - dann gibt es kein Protokoll. Statt einer
+    // leeren Nachricht der bisherige Stand-Text, damit der Knopf nie ins Leere läuft.
+    if(confirm("Für diesen Tag ist noch kein Thema bewertet.\n\nStattdessen den allgemeinen Ausbildungsstand schicken?"))shareStandWhatsApp(s);
+    return;
+  }
+  const phone=formatPhoneForWa(s.telefon);
+  const url=(phone?`https://wa.me/${phone}`:`https://wa.me/`)+`?text=${encodeURIComponent(msg)}`;
+  window.open(url,"_blank");
+}
 function shareStandWhatsApp(s){
   const amp=(s.plan&&s.plan.ampeln)||{};
   const reds=[],yellows=[],greens=[];
