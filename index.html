@@ -159,7 +159,7 @@ input,select,textarea{font-family:inherit;font-size:15px;color:var(--txt);}
   padding:calc(12px + env(safe-area-inset-top)) var(--pad) 12px;
   border-bottom:1px solid var(--line-soft);position:relative;z-index:5;flex:0 0 auto;
   background:linear-gradient(180deg,rgba(12,20,16,.92),rgba(12,20,16,.55));backdrop-filter:blur(8px);}
-.tb-side{display:flex;align-items:center;min-width:0;}
+.tb-side{display:flex;align-items:center;min-width:0;gap:2px;}
 .tb-left{justify-content:flex-start;}
 .tb-right{justify-content:flex-end;}
 /* Zentrales Logo als Home-Button */
@@ -1895,6 +1895,9 @@ body:not(.light) .cw-col.today .cw-dnum{color:var(--gold);}
       <button class="icon-btn" id="menuBtn" aria-label="Menü">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M4 7h16M4 12h16M4 17h16"/></svg>
       </button>
+      <button class="icon-btn" id="navBackBtn" aria-label="Zurück" hidden>
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M15 18l-6-6 6-6"/></svg>
+      </button>
     </div>
     <button class="tb-logo-btn" id="homeBtn" aria-label="Zum Dashboard">
       <span class="tb-logo-wrap"><img id="brandLogo" alt="Fahrlehrer-Kompass"></span>
@@ -2368,6 +2371,190 @@ function alleSkillsFlach(){
     if(!gesehen.has(it.id)){gesehen.add(it.id);out.push({stufe:st.titel,stKey:st.key,id:it.id,t:it.t});}
   })));
   return out;
+}
+
+/* ===== QR-Erzeugung im Geraet =====
+   Ersetzt den frueheren Fremddienst api.qrserver.com. Grund: der Dienst ist
+   kostenpflichtig geworden, und bei jedem Aufruf wanderte der Buchungslink samt
+   Fahrlehrer-Kennung an einen fremden Server. Jetzt entsteht der Code im Geraet -
+   keine Kosten, kein Datenabfluss, funktioniert auch offline. */
+/* Eigener QR-Erzeuger — ersetzt api.qrserver.com.
+   Byte-Modus, Fehlerkorrektur L oder M, Versionen 1–10 (bis ~270 Zeichen).
+   Reicht für Buchungslinks und Seitenadressen deutlich aus. */
+
+  var GESAMT=[0,26,44,70,100,134,172,196,242,292,346];
+  var AUSR=[[],[],[6,18],[6,22],[6,26],[6,30],[6,34],[6,22,38],[6,24,42],[6,26,46],[6,28,50]];
+  // je Version: [EC-Woerter je Block, [[Anzahl,Datenwoerter],...]]
+  var BLOCKS={
+    L:{1:[7,[[1,19]]],2:[10,[[1,34]]],3:[15,[[1,55]]],4:[20,[[1,80]]],5:[26,[[1,108]]],
+       6:[18,[[2,68]]],7:[20,[[2,78]]],8:[24,[[2,97]]],9:[30,[[2,116]]],10:[18,[[2,68],[2,69]]]},
+    M:{1:[10,[[1,16]]],2:[16,[[1,28]]],3:[26,[[1,44]]],4:[18,[[2,32]]],5:[24,[[2,43]]],
+       6:[16,[[4,27]]],7:[18,[[4,31]]],8:[22,[[2,38],[2,39]]],9:[22,[[3,36],[2,37]]],10:[26,[[4,43],[1,44]]]}
+  }
+  var EXP=new Array(512),LOG=new Array(256);
+  (function(){var x=1;for(var i=0;i<255;i++){EXP[i]=x;LOG[x]=i;x<<=1;if(x&256)x^=0x11d;}
+   for(i=255;i<512;i++)EXP[i]=EXP[i-255];})();
+  function mul(a,b){return (a===0||b===0)?0:EXP[LOG[a]+LOG[b]];}
+  function genPoly(n){var p=[1];for(var i=0;i<n;i++){var np=new Array(p.length+1).fill(0);
+    for(var j=0;j<p.length;j++){np[j]^=mul(p[j],1);np[j+1]^=mul(p[j],EXP[i]);}p=np;}return p;}
+  function ecWoerter(daten,n){var gen=genPoly(n),rest=daten.concat(new Array(n).fill(0));
+    for(var i=0;i<daten.length;i++){var f=rest[i];if(f!==0)for(var j=0;j<gen.length;j++)rest[i+j]^=mul(gen[j],f);}
+    return rest.slice(daten.length);}
+
+  function bits(wert,laenge,ziel){for(var i=laenge-1;i>=0;i--)ziel.push((wert>>i)&1);}
+
+  function baueDaten(text,version,stufe){
+    var bytes=[],i;
+    for(i=0;i<text.length;i++){var c=text.charCodeAt(i);
+      if(c<128)bytes.push(c);
+      else if(c<2048){bytes.push(192|(c>>6),128|(c&63));}
+      else {bytes.push(224|(c>>12),128|((c>>6)&63),128|(c&63));}}
+    var info=BLOCKS[stufe][version],ecN=info[0],gruppen=info[1];
+    var datenWoerter=0;gruppen.forEach(function(gr){datenWoerter+=gr[0]*gr[1];});
+    var bs=[];
+    bits(4,4,bs);                                  // Byte-Modus
+    bits(bytes.length,version<10?8:16,bs);         // Laengenangabe
+    for(i=0;i<bytes.length;i++)bits(bytes[i],8,bs);
+    if(bs.length+4<=datenWoerter*8)bits(0,4,bs); else while(bs.length<datenWoerter*8&&bs.length%8!==0)bs.push(0);
+    while(bs.length%8!==0)bs.push(0);
+    var woerter=[];for(i=0;i<bs.length;i+=8){var v=0;for(var j=0;j<8;j++)v=(v<<1)|bs[i+j];woerter.push(v);}
+    var fuell=[236,17],k=0;while(woerter.length<datenWoerter)woerter.push(fuell[k++%2]);
+    // in Bloecke teilen
+    var bloecke=[],ecs=[],pos=0;
+    gruppen.forEach(function(gr){for(var b=0;b<gr[0];b++){var d=woerter.slice(pos,pos+gr[1]);pos+=gr[1];
+      bloecke.push(d);ecs.push(ecWoerter(d,ecN));}});
+    // verschraenken
+    var ergebnis=[],maxD=0;bloecke.forEach(function(b){if(b.length>maxD)maxD=b.length;});
+    for(i=0;i<maxD;i++)bloecke.forEach(function(b){if(i<b.length)ergebnis.push(b[i]);});
+    for(i=0;i<ecN;i++)ecs.forEach(function(e){ergebnis.push(e[i]);});
+    return ergebnis;
+  }
+
+  function passtVersion(text,stufe){
+    var laenge=0,i;
+    for(i=0;i<text.length;i++){var c=text.charCodeAt(i);laenge+=c<128?1:(c<2048?2:3);}
+    for(var v=1;v<=10;v++){
+      var info=BLOCKS[stufe][v],dw=0;info[1].forEach(function(gr){dw+=gr[0]*gr[1];});
+      var kopf=4+(v<10?8:16);
+      if(kopf+laenge*8<=dw*8)return v;
+    }
+    return null;
+  }
+
+  function bauMatrix(version){
+    var n=version*4+17,m=[],res=[],i,j;
+    for(i=0;i<n;i++){m.push(new Array(n).fill(null));res.push(new Array(n).fill(false));}
+    function finder(r,c){for(var y=-1;y<=7;y++)for(var x=-1;x<=7;x++){
+      var rr=r+y,cc=c+x;if(rr<0||cc<0||rr>=n||cc>=n)continue;
+      var an=(x>=0&&x<=6&&(y===0||y===6))||(y>=0&&y<=6&&(x===0||x===6))||(x>=2&&x<=4&&y>=2&&y<=4);
+      m[rr][cc]=an?1:0;res[rr][cc]=true;}}
+    finder(0,0);finder(0,n-7);finder(n-7,0);
+    for(i=8;i<n-8;i++){var b=(i%2===0)?1:0;m[6][i]=b;res[6][i]=true;m[i][6]=b;res[i][6]=true;}
+    var ap=AUSR[version];
+    for(i=0;i<ap.length;i++)for(j=0;j<ap.length;j++){
+      var r=ap[i],c=ap[j];
+      if((r<=7&&c<=7)||(r<=7&&c>=n-8)||(r>=n-8&&c<=7))continue;
+      for(var y=-2;y<=2;y++)for(var x=-2;x<=2;x++){
+        var on=Math.max(Math.abs(x),Math.abs(y))!==1;
+        m[r+y][c+x]=on?1:0;res[r+y][c+x]=true;}}
+    m[n-8][8]=1;res[n-8][8]=true;                       // dunkles Modul
+    for(i=0;i<9;i++){if(m[8][i]===null){m[8][i]=0;res[8][i]=true;}
+                     if(m[i][8]===null){m[i][8]=0;res[i][8]=true;}}
+    for(i=0;i<8;i++){if(m[8][n-1-i]===null){m[8][n-1-i]=0;res[8][n-1-i]=true;}
+                     if(m[n-1-i][8]===null){m[n-1-i][8]=0;res[n-1-i][8]=true;}}
+    if(version>=7){for(i=0;i<6;i++)for(j=0;j<3;j++){
+      res[n-11+j][i]=true;m[n-11+j][i]=0;res[i][n-11+j]=true;m[i][n-11+j]=0;}}
+    return {m:m,res:res,n:n}
+  }
+
+  function setzeDaten(mm,daten){
+    var m=mm.m,res=mm.res,n=mm.n,bitIdx=0,auf=true;
+    for(var c=n-1;c>0;c-=2){
+      if(c===6)c=5;
+      for(var k=0;k<n;k++){
+        var r=auf?(n-1-k):k;
+        for(var s=0;s<2;s++){
+          var cc=c-s;
+          if(res[r][cc])continue;
+          var bit=0;
+          if(bitIdx<daten.length*8)bit=(daten[bitIdx>>3]>>(7-(bitIdx&7)))&1;
+          bitIdx++;m[r][cc]=bit;}}
+      auf=!auf;}
+  }
+  function maske(r,c,k){
+    switch(k){case 0:return (r+c)%2===0;case 1:return r%2===0;case 2:return c%3===0;
+      case 3:return (r+c)%3===0;case 4:return (Math.floor(r/2)+Math.floor(c/3))%2===0;
+      case 5:return ((r*c)%2)+((r*c)%3)===0;case 6:return (((r*c)%2)+((r*c)%3))%2===0;
+      default:return (((r+c)%2)+((r*c)%3))%2===0;}}
+  function formatBits(stufe,k){
+    var ind={L:1,M:0,Q:3,H:2}[stufe];
+    var d=(ind<<3)|k,v=d<<10;
+    for(var i=4;i>=0;i--)if((v>>(i+10))&1)v^=0x537<<i;
+    return ((d<<10)|v)^0x5412;
+  }
+  function versionBits(v){
+    var x=v<<12;
+    for(var i=5;i>=0;i--)if((x>>(i+12))&1)x^=0x1f25<<i;
+    return (v<<12)|x;
+  }
+  function strafe(m,n){
+    var p=0,i,j,k;
+    for(i=0;i<n;i++)for(k=0;k<2;k++){var lauf=1,vor=k?m[0][i]:m[i][0];
+      for(j=1;j<n;j++){var cur=k?m[j][i]:m[i][j];
+        if(cur===vor)lauf++;else{if(lauf>=5)p+=3+(lauf-5);lauf=1;vor=cur;}}
+      if(lauf>=5)p+=3+(lauf-5);}
+    for(i=0;i<n-1;i++)for(j=0;j<n-1;j++){var a=m[i][j];
+      if(a===m[i][j+1]&&a===m[i+1][j]&&a===m[i+1][j+1])p+=3;}
+    var muster=[1,0,1,1,1,0,1,0,0,0,0],m2=[0,0,0,0,1,0,1,1,1,0,1];
+    function passt(arr,st,mu){for(var q=0;q<11;q++)if(arr[st+q]!==mu[q])return false;return true;}
+    for(i=0;i<n;i++){var zeile=m[i],spalte=[];for(j=0;j<n;j++)spalte.push(m[j][i]);
+      for(j=0;j<=n-11;j++){if(passt(zeile,j,muster)||passt(zeile,j,m2))p+=40;
+                           if(passt(spalte,j,muster)||passt(spalte,j,m2))p+=40;}}
+    var dunkel=0;for(i=0;i<n;i++)for(j=0;j<n;j++)if(m[i][j])dunkel++;
+    p+=Math.floor(Math.abs(dunkel*100/(n*n)-50)/5)*10;
+    return p;
+  }
+
+  function erzeugeQR(text,stufe){
+    stufe=stufe||"M";
+    var version=passtVersion(text,stufe);
+    if(!version)throw new Error("Text zu lang für QR (max. ~270 Zeichen)");
+    var daten=baueDaten(text,version,stufe);
+    var beste=null,besteStrafe=Infinity,besteMaske=0;
+    for(var k=0;k<8;k++){
+      var mm=bauMatrix(version);
+      setzeDaten(mm,daten);
+      var n=mm.n,m=[],i,j;
+      for(i=0;i<n;i++){m.push(mm.m[i].slice());}
+      for(i=0;i<n;i++)for(j=0;j<n;j++)if(!mm.res[i][j]&&maske(i,j,k))m[i][j]^=1;
+      var fb=formatBits(stufe,k);
+      for(i=0;i<15;i++){var b=(fb>>i)&1;
+        if(i<6)m[8][i]=b; else if(i<8)m[8][i+1]=b; else if(i===8)m[7][8]=b; else m[14-i][8]=b;
+        if(i<8)m[n-1-i][8]=b; else m[8][n-15+i]=b;}
+      m[n-8][8]=1;
+      if(version>=7){var vb=versionBits(version);
+        for(i=0;i<18;i++){var bb=(vb>>i)&1,r=Math.floor(i/3),c=i%3;
+          m[n-11+c][r]=bb;m[r][n-11+c]=bb;}}
+      var s=strafe(m,n);
+      if(s<besteStrafe){besteStrafe=s;beste=m;besteMaske=k;}
+    }
+    return {module:beste,groesse:beste.length,version:version,maske:besteMaske}
+  }
+
+/* Zeichnet den QR als PNG-Datenadresse. Bewusst als Bild und nicht als SVG:
+   nur so kann man auf dem Handy lange darauf tippen und "Bild speichern" waehlen -
+   genau das braucht man, um den Code in eine Praesentation zu ziehen. */
+function qrBild(text,pixel,rand){
+  pixel=pixel||512; rand=(rand===undefined)?4:rand;
+  var q=erzeugeQR(text,"M"), n=q.groesse, gesamt=n+rand*2;
+  var skal=Math.max(1,Math.floor(pixel/gesamt)), px=gesamt*skal;
+  var c=document.createElement("canvas"); c.width=px; c.height=px;
+  var x=c.getContext("2d");
+  x.fillStyle="#ffffff"; x.fillRect(0,0,px,px);   // heller Rand ist Pflicht, sonst scannt es nicht
+  x.fillStyle="#000000";
+  for(var i=0;i<n;i++)for(var j=0;j<n;j++)
+    if(q.module[i][j])x.fillRect((j+rand)*skal,(i+rand)*skal,skal,skal);
+  return c.toDataURL("image/png");
 }
 
 const FA_VIDEO_MAP = {
@@ -4248,10 +4435,10 @@ function _fsBuchungslinksHTML(slug,label){
   return `<div class="res-block" style="animation:none;"><h4>🔗 ${esc(label)} Buchungslinks</h4>
     <div class="field"><label style="font-size:11px;">Schalter</label>
       <div style="display:flex;gap:6px;"><input readonly id="${rid}_s" value="${esc(schaltLink)}" style="flex:1;font-size:11.5px;"><button class="btn btn-ghost" style="padding:8px 12px;" onclick="_fsKopieren('${rid}_s')">Kopieren</button><button class="btn btn-ghost" style="padding:8px 12px;" onclick="_fsQrToggle('${rid}_s')">QR</button></div>
-      <div id="${rid}_s_qr" style="display:none;margin-top:8px;text-align:center;"><img src="https://api.qrserver.com/v1/create-qr-code/?size=180x180&data=${encodeURIComponent(schaltLink)}" alt="QR-Code Schalter" style="border-radius:8px;background:#fff;padding:8px;"></div></div>
+      <div id="${rid}_s_qr" style="display:none;margin-top:8px;text-align:center;"><img src="${qrBild(schaltLink,360)}" alt="QR-Code Schalter" style="border-radius:8px;background:#fff;padding:8px;width:180px;height:180px;"></div></div>
     <div class="field" style="margin-top:8px;"><label style="font-size:11px;">Automatik</label>
       <div style="display:flex;gap:6px;"><input readonly id="${rid}_a" value="${esc(automatikLink)}" style="flex:1;font-size:11.5px;"><button class="btn btn-ghost" style="padding:8px 12px;" onclick="_fsKopieren('${rid}_a')">Kopieren</button><button class="btn btn-ghost" style="padding:8px 12px;" onclick="_fsQrToggle('${rid}_a')">QR</button></div>
-      <div id="${rid}_a_qr" style="display:none;margin-top:8px;text-align:center;"><img src="https://api.qrserver.com/v1/create-qr-code/?size=180x180&data=${encodeURIComponent(automatikLink)}" alt="QR-Code Automatik" style="border-radius:8px;background:#fff;padding:8px;"></div></div>
+      <div id="${rid}_a_qr" style="display:none;margin-top:8px;text-align:center;"><img src="${qrBild(automatikLink,360)}" alt="QR-Code Automatik" style="border-radius:8px;background:#fff;padding:8px;width:180px;height:180px;"></div></div>
   </div>`;
 }
 function _fsQrToggle(inputId){
@@ -5035,7 +5222,7 @@ window.addEventListener("load", () => {
 const STORE_KEY="serband-app-v1";
 /* Build-Version: bei jeder Auslieferung hier das Datum aktualisieren.
    Wird in den Einstellungen angezeigt + für den Update-Hinweis genutzt. */
-const APP_VERSION="2026.09.15";
+const APP_VERSION="2026.09.18";
 // Nutzungsbedingungen & Haftungsausschluss (Bereich: rechtliche Absicherung) - Version hochzählen
 // und alle Nutzer müssen erneut zustimmen, sobald sich der Text inhaltlich ändert.
 const AGB_VERSION="1.0";
@@ -8174,6 +8361,11 @@ function routeSettings(){
         <div class="res-block" style="animation:none;"><h4>📋 Ausbildungsplan-Vorlagen</h4>
           <p>Grundstufe, Aufbaustufe und Leistungsstufe individuell gestalten — z.B. eigene Prüfgebiete anlegen.</p>
           <div class="btn-row"><button class="btn btn-ghost" onclick="routePlanVorlagen()">Vorlagen verwalten</button></div></div>
+        <div class="res-block" style="animation:none;"><h4>⬛ QR-Code erzeugen</h4>
+          <p>Für Präsentationen, Aushänge oder Flyer. Der Code entsteht im Gerät — kein fremder Dienst, keine Kosten, funktioniert auch offline.</p>
+          <div class="field"><input type="text" id="qrEingabe" placeholder="https://…" autocomplete="off" value="https://serband1995-hue.github.io/Fahrlehrer-Kompass-/check.html"></div>
+          <div class="btn-row"><button class="btn btn-ghost" id="qrErzeugen">Code erzeugen</button></div>
+          <div id="qrAusgabe" style="margin-top:12px;text-align:center;"></div></div>
       </div></div>
     </div>
 
@@ -8306,6 +8498,18 @@ function routeSettings(){
       const btn=$("#pushEnableBtn"); if(btn&&active)btn.textContent="Erneut aktivieren";
     });
   }
+  const qrBtn=$("#qrErzeugen");
+  if(qrBtn)qrBtn.addEventListener("click",()=>{
+    const txt=($("#qrEingabe").value||"").trim();
+    const raus=$("#qrAusgabe");
+    if(!txt){ raus.innerHTML='<p class="muted-p" style="font-size:13px;">Bitte erst eine Adresse eintragen.</p>'; return; }
+    try{
+      raus.innerHTML=`<img src="${qrBild(txt,640)}" alt="QR-Code" style="width:100%;max-width:280px;border-radius:10px;">
+        <p class="muted-p" style="font-size:12.5px;margin-top:8px;">Lange auf das Bild tippen → „Bild speichern“. Danach in die Präsentation einfügen.<br>Vorher selbst einmal scannen — und nie auf dunklen Hintergrund legen.</p>`;
+    }catch(e){
+      raus.innerHTML=`<p class="muted-p" style="font-size:13px;color:var(--orange);">${esc(e.message)}</p>`;
+    }
+  });
   const adLogout=$("#allDevicesLogoutBtn");
   if(adLogout)adLogout.addEventListener("click",async()=>{
     if(!confirm("Von ALLEN Geräten abmelden? Du musst dich überall neu anmelden, auch hier."))return;
@@ -8355,7 +8559,7 @@ function openAddSheet(){
       `}
     </div>`);
   document.querySelectorAll(".add-opt").forEach(b=>b.addEventListener("click",()=>{ const t=b.dataset.add; closeSheet();
-    if(t==="pruefung"){ routePruefungen(); setTimeout(()=>{ const a=$("#addTermin"); if(a)a.click(); },120); }
+    if(t==="pruefung"){ _pruefTab="termine"; routePruefungen(); setTimeout(()=>{ const a=$("#addTermin"); if(a)a.click(); },120); }
     else if(t==="block"){ openBlockSheet(); }
     else if(t==="theorie"){ openTheorieSheet(); }
     else if(t==="multi"){ openMultiTerminMitWem(); }
@@ -8364,6 +8568,26 @@ function openAddSheet(){
 /* 'Mehrere Termine planen' fragt zuerst mit wem, bevor der eigentliche Multi-Termin-Dialog
    (Art, Fahrzeug, Zeitraum) öffnet - Bereich C des Schülermaske-Umbaus: aus dem Ausbildungsplan
    in den Kalender verschoben, da es ein Kalender-Vorgang ist, kein Ausbildungsinhalt. */
+function openTheorieWaitHinzufuegen(){
+  const cand=activeStudents().filter(s=>!s.theorieWait&&!(s.plan&&s.plan.theorie)).sort((a,b)=>a.name.localeCompare(b.name,'de'));
+  openSheet(`<div class="sheet-h">Wartet auf Theorie</div>
+    <p class="muted-p" style="font-size:12.5px;margin:-4px 0 10px;">Wer soll pausiert werden, bis die Theorie bestanden ist?</p>
+    <div class="field"><input type="text" id="twhSearch" placeholder="Schüler suchen …" autocomplete="off"></div>
+    <div class="as-list" id="twhList">${cand.map(s=>`<button class="as-item" data-sid="${s.id}"><span class="as-nm">${esc(s.name)}</span><span class="as-cls">${esc(s.form||'')}</span></button>`).join("")||'<p class="muted-p" style="font-size:13px;">Alle aktiven Schüler haben die Theorie schon bestanden.</p>'}</div>
+    <div class="btn-row"><button class="btn btn-ghost" id="twhCancel" style="flex:0;padding:13px 18px;">Abbrechen</button></div>`);
+  const bind=()=>document.querySelectorAll("#twhList .as-item").forEach(b=>b.addEventListener("click",()=>{
+    const s=DB.students.find(x=>x.id===b.dataset.sid); if(!s)return;
+    s.theorieWait=new Date().toISOString(); save();
+    closeSheet(); toast("Pausiert – wartet auf Theorie"); routePruefungen();
+  }));
+  $("#twhSearch").addEventListener("input",e=>{
+    const list=cand.filter(s=>matchStudent(s.name,e.target.value));
+    $("#twhList").innerHTML=list.map(s=>`<button class="as-item" data-sid="${s.id}"><span class="as-nm">${esc(s.name)}</span><span class="as-cls">${esc(s.form||'')}</span></button>`).join("")||'<p class="muted-p" style="font-size:13px;">Kein Treffer</p>';
+    bind();
+  });
+  $("#twhCancel").addEventListener("click",closeSheet);
+  bind();
+}
 function openMultiTerminMitWem(){
   const cand=activeStudents().sort((a,b)=>a.name.localeCompare(b.name,'de'));
   openSheet(`<div class="sheet-h">Mehrere Termine planen</div>
@@ -10224,7 +10448,7 @@ function prueferHintHTML(nm){
   h+=`</div>`; return h;
 }
 function renderResultStep(s){
-  const id=s.id; const t=terminFor(id);
+  const id=s.id; const t=pruefungsTerminFuer(id);
   const prChips=DB.pruefer.map(p=>`<button class="pr-chip${p===_examPr?' on':''}" data-pr="${esc(p)}">${esc(p)}</button>`).join("");
   // Schritt 1: Prüfer (obligatorisch) + Ergebnis-Wahl auf einer einfachen Seite
   if(!_examChoice){
@@ -10260,6 +10484,7 @@ function renderResultStep(s){
     <div class="sec-h" style="margin:4px 0 6px;">${pass?'<span class="o">Bestanden</span>':'Nicht <span class="o">bestanden</span>'}</div>
     <p style="color:var(--muted);font-size:13.5px;margin-bottom:16px;">${esc(s.name)} · Prüfer: <b style="color:var(--txt)">${esc(_examPr)}</b></p>
     <div class="field"><label>Datum</label><input type="date" id="exDate" value="${defDate}"></div>
+    ${t?`<p class="muted-p" style="font-size:12px;margin:-6px 0 12px;">Übernommen vom Prüfungstermin am ${isoDE(t.date)}${t.date<todayISO()?" (vergangen)":""} — bei Bedarf ändern.</p>`:`<p class="muted-p" style="font-size:12px;margin:-6px 0 12px;">Kein Prüfungstermin gefunden — heutiges Datum eingesetzt. <b>Bitte prüfen.</b></p>`}
     ${pass?`<div class="field"><label>Notiz (optional)</label><div class="mic-wrap"><textarea id="exNote" rows="3" placeholder="Worauf hat der Prüfer geachtet?"></textarea>${micIcon()}</div></div>`
     :`<div class="field"><label>Fehler (Mehrfachauswahl)</label><div class="facc" id="faultAcc">${FAULTS.map((g,gi)=>{const cnt=g.items.filter(([fid])=>_examFaults.indexOf(fid)>=0).length;return `
       <div class="facc-sec${cnt?' open':''}">
@@ -10288,6 +10513,18 @@ function renderResultStep(s){
       faults:_examFaults, eingriff:_examEingriff, eingNote:en?en.value.trim():"" });
   });
 }
+/* Prüfungstermin für die Ergebnis-Eingabe suchen — anders als terminFor() auch in der
+   Vergangenheit. Grund: Wird ein Ergebnis erst Tage später eingetragen, ist der Termin
+   längst vorbei und terminFor() findet nichts mehr. Das Datum fiel dann still auf HEUTE
+   zurück, und die Prüfung landete am falschen Tag (passiert am 16.09.2026). */
+function pruefungsTerminFuer(sid){
+  const kommend=terminFor(sid); if(kommend)return kommend;
+  const heute=todayISO();
+  const vergangen=(DB.termine||[])
+    .filter(t=>Array.isArray(t.slots)&&t.slots.indexOf(sid)>=0&&t.date<heute)
+    .sort((a,b)=>(b.date||"").localeCompare(a.date||""));
+  return vergangen[0]||null;
+}
 function routeExam(id){
   const s=DB.students.find(x=>x.id===id); if(!s)return routeHome();
   $("#tbTitle").textContent="Prüfung eintragen"; setFab(false); view.scrollTop=0;
@@ -10314,14 +10551,18 @@ function renderExam(s){
     $("#pickFail").addEventListener("click",()=>{_examChoice='fail';renderExam(s);});
     return;
   }
-  const t=terminFor(id);
+  const t=pruefungsTerminFuer(id);
   const defDate=t?t.date:todayISO();
+  const datumHinweis=t
+    ? `<p class="muted-p" style="font-size:12px;margin:-6px 0 12px;">Übernommen vom Prüfungstermin am ${isoDE(t.date)}${t.date<todayISO()?" (vergangen)":""} — bei Bedarf ändern.</p>`
+    : `<p class="muted-p" style="font-size:12px;margin:-6px 0 12px;">Kein Prüfungstermin gefunden — heutiges Datum eingesetzt. <b>Bitte prüfen.</b></p>`;
   const pass=_examChoice==='pass';
   const prChips=DB.pruefer.map(p=>`<button class="pr-chip${p===_examPr?' on':''}" data-pr="${esc(p)}">${esc(p)}</button>`).join("");
   view.innerHTML=`<div class="view-inner view-read fade-up">
     <div class="back-row"><button class="back-btn" id="backBtn">${ICN.back} Zurück</button></div>
     <div class="sec-h" style="margin:4px 0 16px;">${pass?'<span class="o">Bestanden</span>':'Nicht <span class="o">bestanden</span>'}</div>
     <div class="field"><label>Datum</label><input type="date" id="exDate" value="${defDate}"></div>
+    ${datumHinweis}
     <div class="field"><label>Prüfer</label>
       <div class="pr-wrap" id="prWrap">${prChips}<button class="pr-chip add" id="prAdd">+ Neuer Prüfer</button></div></div>
     ${pass?`<div class="field"><label>Notiz (optional)</label><div class="mic-wrap"><textarea id="exNote" rows="3" placeholder="Worauf hat der Prüfer geachtet?"></textarea>${micIcon()}</div></div>`
@@ -10365,7 +10606,7 @@ function routePruefungen(){
   const theorieList=theorieBestanden(); const praxisList=bereitFuerPraxis(); const waitList=theorieAusstehend();
   let html=`<div class="view-inner view-read fade-up">
     <div class="row-between" style="margin-bottom:14px;"><div class="sec-h">Prüf<span class="o">ungen</span></div>
-      <div style="display:flex;gap:8px;"><button class="mini-btn ghost" id="openPruefWoche">Diese Woche</button><button class="mini-btn ghost" id="openPruefer">Prüfer</button><button class="mini-btn" id="addTermin">+ Termin</button></div></div>
+      <div style="display:flex;gap:8px;"><button class="mini-btn ghost" id="openPruefWoche">Diese Woche</button><button class="mini-btn ghost" id="openPruefer">Prüfer</button>${_pruefTab==='wait'?'<button class="mini-btn" id="addTheorieWait">+ Schüler</button>':'<button class="mini-btn" id="addTermin">+ Termin</button>'}</div></div>
     <div class="pruef-tabs">
       <button class="pt-tab${_pruefTab==='termine'?' on':''}" data-pt="termine">Termine</button>
       <button class="pt-tab${_pruefTab==='wait'?' on':''}" data-pt="wait">Wartet auf Theorie <span class="pt-cnt">${waitList.length}</span></button>
@@ -10428,7 +10669,8 @@ function routePruefungen(){
   }
   html+=`</div>`; view.innerHTML=html;
   document.querySelectorAll(".pt-tab").forEach(t=>t.addEventListener("click",()=>{ _pruefTab=t.dataset.pt; routePruefungen(); }));
-  $("#addTermin").addEventListener("click",openTerminSheet);
+  const _at=$("#addTermin"); if(_at)_at.addEventListener("click",openTerminSheet);
+  const _atw=$("#addTheorieWait"); if(_atw)_atw.addEventListener("click",openTheorieWaitHinzufuegen);
   $("#openPruefWoche").addEventListener("click",routePruefungenWoche);
   $("#openPruefer").addEventListener("click",routePrueferListe);
   document.querySelectorAll(".wait-card").forEach(c=>c.addEventListener("click",()=>routeDetail(c.dataset.id)));
@@ -12410,6 +12652,63 @@ const SPLASH_QUOTES=[
   ["Das Tragen von Hausschuhen oder ungeeignetem Schuhwerk ist nicht verboten, kann aber als Mitverschulden gewertet werden.","Allgemeine Sorgfaltspflicht","Sicherheit"]
 ];
 function setSplashQuote(){ const q=SPLASH_QUOTES[Math.floor(Math.random()*SPLASH_QUOTES.length)]; const el=$("#spQuote"); if(el)el.innerHTML=`${q[0]}<span class="sp-by"><b>${q[1]}</b> · ${q[2]}</span>`; }
+/* ===== Navigations-Historie =====
+   Legt sich nachträglich um alle route*-Funktionen, statt in 40 Ansichten je einen
+   eigenen Zurück-Knopf einzubauen. Jede Navigation wird mit ihren Argumenten gemerkt,
+   sodass "Zurück" die Vorgängerseite exakt wiederherstellt - auch bei Ansichten, die
+   eine Schüler- oder Prüfer-Kennung brauchen.
+   Die vorhandenen Zurück-Knöpfe innerhalb einzelner Ansichten bleiben unangetastet;
+   dieser hier sitzt fest oben links in der Kopfleiste und gilt überall. */
+let _navStack=[];
+let _navFahrt=false;   // true, solange ein Zurueck-Sprung laeuft (verhindert Endlosschleife)
+const _NAV_MAX=25;
+
+function _navAktualisiereKnopf(){
+  const b=document.getElementById("navBackBtn");
+  if(b)b.hidden=_navStack.length<2;
+}
+function navZurueck(){
+  if(_navStack.length<2)return;
+  _navStack.pop();
+  const ziel=_navStack[_navStack.length-1];
+  if(!ziel)return;
+  _navFahrt=true;
+  try{ ziel.fn.apply(null,ziel.args); }
+  catch(e){ console.warn("[Kompass] Zurueck fehlgeschlagen:",e.message); }
+  _navFahrt=false;
+  _navAktualisiereKnopf();
+}
+(function navInstallieren(){
+  const ueberspringen=new Set(["routeKalenderRefresh"]);
+  Object.getOwnPropertyNames(window)
+    .filter(n=>/^route[A-Z]/.test(n)&&typeof window[n]==="function"&&!ueberspringen.has(n))
+    .forEach(name=>{
+      const orig=window[name];
+      window[name]=function(){
+        const args=Array.prototype.slice.call(arguments);
+        if(!_navFahrt){
+          const letzte=_navStack[_navStack.length-1];
+          let gleich=false;
+          try{ gleich=!!letzte&&letzte.name===name&&JSON.stringify(letzte.args)===JSON.stringify(args); }catch(e){}
+          // Dieselbe Ansicht erneut aufrufen (z.B. nach dem Speichern) erzeugt keinen
+          // neuen Eintrag - sonst muesste man mehrfach zurueck fuer einen Schritt.
+          if(gleich)_navStack[_navStack.length-1]={name,fn:orig,args};
+          else{ _navStack.push({name,fn:orig,args}); if(_navStack.length>_NAV_MAX)_navStack.shift(); }
+        }
+        const r=orig.apply(this,arguments);
+        _navAktualisiereKnopf();
+        return r;
+      };
+    });
+  const b=document.getElementById("navBackBtn");
+  if(b)b.addEventListener("click",navZurueck);
+  // Android-Zuruecktaste ebenfalls bedienen
+  window.addEventListener("popstate",()=>{
+    if(_navStack.length>1){ navZurueck(); try{history.pushState(null,"",location.href);}catch(e){} }
+  });
+  try{ history.pushState(null,"",location.href); }catch(e){}
+})();
+
 setSplashQuote();
 applyTheme();
 if((localStorage.getItem(THEME_KEY)||'dark')==='auto')_refreshThemeLocation();
