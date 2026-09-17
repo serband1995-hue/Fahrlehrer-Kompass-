@@ -4433,7 +4433,7 @@ function routeFahrschuleStatistik(){
   const pct=n=>schueler.length?Math.round(n/schueler.length*100):0;
 
   const vor28=new Date(); vor28.setDate(vor28.getDate()-28);
-  const vor28ISO=vor28.toISOString().slice(0,10);
+  const vor28ISO=dateISO(vor28);
   const inaktiv=activeStudents().filter(s=>{
     const letzte=(DB.lessons||[]).filter(l=>l.sid===s.id&&l.status!=="abgebrochen").map(l=>l.date).sort().pop();
     return !letzte||letzte<vor28ISO;
@@ -4772,7 +4772,7 @@ async function fsTheorieErgebnis(terminId,bestanden){
   const updates={theorie_bestanden:bestanden,aktualisiert_am:new Date().toISOString()};
   if(!bestanden){
     const sperr=new Date(); sperr.setDate(sperr.getDate()+14);
-    updates.theorie_gesperrt_bis=sperr.toISOString().slice(0,10);
+    updates.theorie_gesperrt_bis=dateISO(sperr);
   }else{
     updates.theorie_gesperrt_bis=null;
   }
@@ -4799,7 +4799,7 @@ function routeFahrschuleFahrcheckKontrolle(){
   window._fsAktuelleRoute=routeFahrschuleFahrcheckKontrolle;
   $("#tbTitle").textContent="Fahrcheck-Kontrolle"; setFab(false); view.scrollTop=0;
   const vor14=new Date(); vor14.setDate(vor14.getDate()-14);
-  const vor14ISO=vor14.toISOString().slice(0,10);
+  const vor14ISO=dateISO(vor14);
   const relevant=(DB.lessons||[]).filter(l=>l.date>=vor14ISO&&["fahrstunde","sonder","nacht"].includes(l.art)).sort((a,b)=>(""+b.date).localeCompare(""+a.date));
   const fehlt=(DB.lessons||[]).filter(l=>l.buero_fc_status==="fehlt"&&["fahrstunde","sonder","nacht"].includes(l.art)).sort((a,b)=>(""+b.date).localeCompare(""+a.date));
   const zeile=(t,mitNachreichen)=>{
@@ -5218,7 +5218,7 @@ function _fsKalFarbeFuer(fahrlehrerId,lehrerListe){
   return FS_KAL_FARBEN[(idx<0?0:idx)%FS_KAL_FARBEN.length];
 }
 function _fsMontagVon(d){ const dt=new Date(d); const tag=(dt.getDay()+6)%7; dt.setDate(dt.getDate()-tag); return dt; }
-function _fsFmtDate(d){ return d.toISOString().slice(0,10); }
+function _fsFmtDate(d){ return dateISO(d); } // lokales Datum (toISOString war UTC -> zwischen 0 und 2 Uhr ein Tag daneben)
 
 async function _fsOpenEchterKalenderAusAdmin(fahrschuleId){
   await _fsEnterAggMode(fahrschuleId);
@@ -5385,7 +5385,7 @@ window.addEventListener("load", () => {
 const STORE_KEY="serband-app-v1";
 /* Build-Version: bei jeder Auslieferung hier das Datum aktualisieren.
    Wird in den Einstellungen angezeigt + für den Update-Hinweis genutzt. */
-const APP_VERSION="2026.09.20";
+const APP_VERSION="2026.09.21";
 // Nutzungsbedingungen & Haftungsausschluss (Bereich: rechtliche Absicherung) - Version hochzählen
 // und alle Nutzer müssen erneut zustimmen, sobald sich der Text inhaltlich ändert.
 const AGB_VERSION="1.0";
@@ -9885,20 +9885,28 @@ function isAbsolved(iso,bisHM){ const today=todayISO(); if(iso<today)return true
 // UE über einen Zeitraum: {done, plan, total} (done=absolviert, plan=zukünftig geplant)
 function ueRange(fromISO,toISO){
   let done=0, plan=0, fcCounted=0;
+  // fcDone = abgerechnete UE NUR aus Terminen, die schon stattgefunden haben (fürs "Verdient").
+  // fcCounted bleibt wie bisher inkl. geplanter Termine (fürs "Voraussichtlich"/Bonus-Prognose).
+  // fcOffen = gefahren, aber FC ausdrücklich als "offen" markiert.
+  let fcDone=0, fcOffen=0;
   let cur=fromISO, guard=0;
   while(cur<=toISO && guard++<400){
     dayEvents(cur).forEach(e=>{
       if(e.status==="abgebrochen")return;
+      // Erledigte Prüfungen zählen unten über DB.exams. Hier nicht nochmal, sonst doppelt.
+      if(e.kind==="examDone")return;
       const ue=ueOf(e.art,e.von,e.bis,e.tatsaechlicheDauer);
       if(e.status==="nicht erschienen"){
         // No-Show: zählt nie als 'absolviert' (Schüler war nicht da), aber die Zeit war blockiert.
         // Serband entscheidet je Fall: 1 Einheit (halbe UE) oder beide Einheiten (volle UE).
-        if(e.noshow==="1"){ plan+=0; done+=ue/2; fcCounted+=ue/2; }
-        else if(e.noshow==="2"){ done+=ue; fcCounted+=ue; }
+        if(e.noshow==="1"){ plan+=0; done+=ue/2; fcCounted+=ue/2; fcDone+=ue/2; }
+        else if(e.noshow==="2"){ done+=ue; fcCounted+=ue; fcDone+=ue; }
         // kein noshow-Feld gesetzt (Altdaten vor diesem Feature) → wie bisher 0€, nichts erfinden
         return;
       }
-      if(isAbsolved(cur,e.bis))done+=ue; else plan+=ue;
+      const _abs=isAbsolved(cur,e.bis);
+      if(_abs)done+=ue; else plan+=ue;
+      const _fc0=fcCounted;
       // FC-abgerechnete UE (zählt fürs Gehalt):
       // Prüfungen immer voll. Fahrstunden NEU: Standard (kein fc-Vermerk) = voll bezahlt (Schüler bringt 2 FC).
       // Ausnahmen werden abgehakt: v1 = nur 1 FC (halbe UE), v2/geschenkt = 0.
@@ -9909,19 +9917,21 @@ function ueRange(fromISO,toISO){
         else if(e.fc==="v2"||e.fc==="geschenkt")fcCounted+=0;
         else if(e.fc==="nachgereicht")fcCounted+=0;
         else fcCounted+=ue; // Standard (null) oder eins_ok: voll
+        if(_abs&&e.fc==="offen")fcOffen+=ue;
       }
+      if(_abs)fcDone+=fcCounted-_fc0;
     });
     cur=addDays(cur,1);
   }
   // Bereits absolvierte/abgerechnete UE als Sockel – nur für den spezifischen Startmonat
   const su=(DB.verdienst&&DB.verdienst.startUE)||0;
   const startMonth=(DB.verdienst&&DB.verdienst.startMonth)||"2026-06";
-  if(su>0){ const [smStart,smEnd]=isoMonthRange(startMonth+"-01"); if(fromISO<=smEnd&&toISO>=smStart){done+=su;fcCounted+=su;} }
+  if(su>0){ const [smStart,smEnd]=isoMonthRange(startMonth+"-01"); if(fromISO<=smEnd&&toISO>=smStart){done+=su;fcCounted+=su;fcDone+=su;} }
   // Nachgereichte FCs: zählen fürs Gehalt im Monat, in dem sie nachgereicht wurden (nachAm), nicht rückwirkend.
   (DB.lessons||[]).forEach(l=>{
     if(l.fc==="nachgereicht"&&l.nachAm){
       const dm=(""+l.nachAm).slice(0,10);
-      if(dm>=fromISO&&dm<=toISO){ fcCounted+=ueOf(l.art,l.von,l.bis,l.tatsaechlicheDauer); }
+      if(dm>=fromISO&&dm<=toISO){ const _u=ueOf(l.art,l.von,l.bis,l.tatsaechlicheDauer); fcCounted+=_u; if(dm<=todayISO())fcDone+=_u; }
     }
   });
   // Stattgefundene Prüfungen: 46€ (=2 UE) pro Prüfung, gutgeschrieben am Tag der PRÜFUNG.
@@ -9930,9 +9940,9 @@ function ueRange(fromISO,toISO){
   // sie eingetippt wurde. earnAt nur noch als Rückfall für Altdaten ohne Datum.
   (DB.exams||[]).forEach(ex=>{
     const dm=(""+(ex.date||ex.earnAt||"")).slice(0,10);
-    if(dm&&dm>=fromISO&&dm<=toISO){ const u=ueOf("pruefung"); done+=u; fcCounted+=u; }
+    if(dm&&dm>=fromISO&&dm<=toISO){ const u=ueOf("pruefung"); done+=u; fcCounted+=u; if(dm<=todayISO())fcDone+=u; }
   });
-  return {done,plan,total:done+plan,fcCounted};
+  return {done,plan,total:done+plan,fcCounted,fcDone,fcOffen};
 }
 // Offene FCs (gefahren, nicht abgegeben) in einem Zeitraum
 function offeneFCs(fromISO,toISO){
@@ -10036,7 +10046,7 @@ function dayTheorieWindow(iso){
 // Alle Termine (Fahrstunden + Prüfungen) eines Tages, vereinheitlicht
 function dayEvents(iso){
   const ev=[];
-  (DB.lessons||[]).filter(l=>l.date===iso).forEach(l=>{ const st=DB.students.find(s=>s.id===l.sid); ev.push({kind:"lesson",id:l.id,von:l.von,bis:l.bis,art:l.art||"fahrstunde",sid:l.sid,name:st?st.name:(l.name||"—"),status:l.status||"geplant",fc:l.fc||null,note:l.note||"",srcSonder:l.srcSonder||null,fahrzeug:l.fahrzeug||null,tatsaechlicheDauer:l.tatsaechlicheDauer||null,_fahrlehrerId:l._fahrlehrerId,_fahrlehrerName:l._fahrlehrerName}); });
+  (DB.lessons||[]).filter(l=>l.date===iso).forEach(l=>{ const st=DB.students.find(s=>s.id===l.sid); ev.push({kind:"lesson",id:l.id,von:l.von,bis:l.bis,art:l.art||"fahrstunde",sid:l.sid,name:st?st.name:(l.name||"—"),status:l.status||"geplant",fc:l.fc||null,note:l.note||"",srcSonder:l.srcSonder||null,fahrzeug:l.fahrzeug||null,tatsaechlicheDauer:l.tatsaechlicheDauer||null,noshow:l.noshow||null,_fahrlehrerId:l._fahrlehrerId,_fahrlehrerName:l._fahrlehrerName}); });
   // Prüfungstermine: jeder belegte Slot = ein 90-Min-Event (Default 09:00, falls keine Zeit).
   // NUR solange noch kein Ergebnis eingetragen ist – sonst zählt die Prüfung über exams.earnAt (s. ueRange).
   // Prüfungstermine: Block beginnt 15 Min VOR der eingetragenen Prüfungszeit (Vorlauf).
@@ -10999,7 +11009,7 @@ function setFC(id,status){
   else if(status==="halb_bewusst"){ l.fc="halb_bewusst"; delete l.nachAm; msg="1 FC bewusst erhalten vermerkt"; histTxt="1 Fahrcheck bewusst erhalten (kein Fehler)"; eurDelta=-Math.round(ueFull/2*DB.verdienst.proUE); }
   else if(status==="v2"){ l.fc="v2"; delete l.nachAm; msg="2 FC vergessen vermerkt"; histTxt="2 Fahrchecks vergessen"; eurDelta=-eurFull; }
   else if(status==="geschenkt"){ l.fc="geschenkt"; delete l.nachAm; msg="45 Min geschenkt"; histTxt="Fahrstunde geschenkt"; eurDelta=-eurFull; }
-  else if(status==="nachgereicht"){ l.fc="nachgereicht"; l.nachAm=new Date().toISOString(); msg="FC nachgereicht – Verdienst gutgeschrieben"; histTxt="FC nachgereicht"; const back=(prev==="v1"||prev==="halb_bewusst")?Math.round(ueFull/2*DB.verdienst.proUE):eurFull; eurDelta=back; }
+  else if(status==="nachgereicht"){ l.fc="nachgereicht"; l.nachAm=todayISO(); msg="FC nachgereicht – Verdienst gutgeschrieben"; histTxt="FC nachgereicht"; const back=(prev==="v1"||prev==="halb_bewusst")?Math.round(ueFull/2*DB.verdienst.proUE):eurFull; eurDelta=back; }
   else if(status==="normal"){ delete l.fc; delete l.nachAm; msg="Auf Normal gesetzt"; histTxt="FC auf Normal gesetzt"; }
   if(st&&histTxt)logHist(st,"fc",histTxt+(l.date?` · ${isoDE(l.date)}`:""),eurDelta?{eur:eurDelta}:null);
   save();
@@ -11689,18 +11699,20 @@ function _verdienstModulHTMLContent(){
   const isCurMonth=_vdMonthOffset===0;
   const [moStart,moEnd]=monthRangeOf(today);
   const moUE=ueRange(moStart,moEnd);
-  const verdientUE=moUE.fcCounted;
+  // Verdient = nur was schon stattgefunden hat. Prognose = inkl. geplanter Termine.
+  const verdientUE=moUE.fcDone;
+  const prognoseUE=moUE.fcCounted;
   const geplantUE=Math.max(0,moUE.total-moUE.done);
   const verdientEuro=gehaltAusUE(verdientUE);
   // Gesamt Monat = alle gebuchten UE (inkl. Start, exkl. noch-nicht-stattgefunden ist egal — total deckt alles)
   const gesamtUE=Math.round(moUE.total);
-  const gesamtEuro=gehaltAusUE(gesamtUE);
+  const gesamtEuro=gehaltAusUE(prognoseUE);
   // Nur die echten Fahrstunden/Prüfungen (ohne StartUE) → damit Serband seine Termine zählen kann.
   // Der Start-Sockel gilt NUR für den einen hinterlegten Startmonat — sonst würde er in jedem
   // Folgemonat fälschlich abgezogen und die Terminierten-UE-Zahl verfälschen.
   const _stM=(v&&v.startMonth)||"2026-06";
   const terminiertUE=Math.round(moUE.total-(moStart===_stM+"-01"?(v.startUE||0):0));
-  const offenUE=Math.max(0,moUE.done-verdientUE);
+  const offenUE=moUE.fcOffen||0;
   const MAX=Math.max(300,(v.bonusUE||250)+50);
   const TUBE=200;
   const toH=(ue)=>Math.round(Math.max(0,Math.min(ue,MAX))/MAX*TUBE);
@@ -11723,10 +11735,11 @@ function _verdienstModulHTMLContent(){
   // (auch zukünftige, noch nicht stattgefundene — die bekommen mangels FC-Eintrag automatisch volle
   // Gutschrift). D.h. verdientUE enthält die geplanten Termine BEREITS. geplantUE (= noch nicht
   // absolvierte UE) darf hier NICHT nochmal draufaddiert werden, sonst zählen geplante Termine doppelt.
-  const verdientJetzt=Math.max(0,verdientUE-geplantUE); // nur wirklich schon absolvierte UE
-  const restUE=Math.max(0,_bonusUE-Math.round(verdientUE));
+  // Seit 2026.09.21: verdientUE enthält nur Stattgefundenes, prognoseUE auch die geplanten Termine.
+  const verdientJetzt=verdientUE;
+  const restUE=Math.max(0,_bonusUE-Math.round(prognoseUE));
   const bonusJetzt=verdientJetzt>=_bonusUE;
-  const bonusMitPlan=verdientUE>=_bonusUE;
+  const bonusMitPlan=prognoseUE>=_bonusUE;
   let bisHtml;
   if(bonusJetzt){
     bisHtml=`<div class="th-goal" style="border-color:rgba(207,154,62,.4);background:rgba(207,154,62,.1);"><div class="thg-lab">🥇 Bonus erreicht!</div><div class="thg-val" style="color:#cf9a3e;">+${_eurMasked(v.bonus)} dabei</div></div>`;
@@ -11761,7 +11774,7 @@ function _verdienstModulHTMLContent(){
     </div>
     <div class="thermo-info">
       <div class="thi-card"><div class="thi-k">✅ Verdient</div><div class="thi-v">${_eurMasked(verdientEuro)}</div><div class="thi-s">${Math.round(verdientUE)} UE abgerechnet</div></div>
-      <div class="thi-card future"><div class="thi-k"><span class="ic ic-gold" style="font-size:12px;">${ICN.cal}</span> Voraussichtlich</div><div class="thi-v">${_eurMasked(gesamtEuro)}</div><div class="thi-s">${gesamtUE} UE gesamt · ${Math.round(geplantUE)} noch offen</div></div>
+      <div class="thi-card future"><div class="thi-k"><span class="ic ic-gold" style="font-size:12px;">${ICN.cal}</span> Voraussichtlich</div><div class="thi-v">${_eurMasked(gesamtEuro)}</div><div class="thi-s">${Math.round(prognoseUE)} UE gesamt · ${Math.round(Math.max(0,prognoseUE-verdientUE))} noch offen</div></div>
     </div>
     ${offenUE>0.3?`<div class="vd-offen">⚠ ${fmtUE(offenUE)} UE gefahren, FC noch offen · <b>${_eurMasked(leistungAusUE(offenUE))}</b> stehen aus</div>`:''}
     ${feiertagsPauschale>0&&(feiertageMonat+urlaubMonat)>0?`<div class="th-goal" style="margin-bottom:8px;background:rgba(207,154,62,.08);border-color:rgba(207,154,62,.3);"><div class="thg-lab">🎉 Feiertage &amp; Urlaub diesen Monat</div><div class="thg-val">${feiertageMonat?feiertageMonat+" Feiertag"+(feiertageMonat===1?'':'e'):''}${feiertageMonat&&urlaubMonat?' · ':''}${urlaubMonat?urlaubMonat+" Urlaubstag"+(urlaubMonat===1?'':'e'):''} · +${_eurMasked(feiertagsBonusEuro)} extra</div></div>`:''}
@@ -11832,7 +11845,7 @@ function jahresRueckblickHTML(){
     const iso=year+"-"+pad2(m+1)+"-01";
     const [ms,me]=isoMonthRange(iso);
     const u=ueRange(ms,me);
-    monthsData.push({m,euro:gehaltAusUE(Math.round(u.total))});
+    monthsData.push({m,euro:gehaltAusUE(Math.round(u.fcDone))});
   }
   const gesamtEuro=monthsData.reduce((a,x)=>a+x.euro,0);
   const anzahlMonate=monthsData.length||1;
