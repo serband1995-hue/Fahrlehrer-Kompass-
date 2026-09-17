@@ -1996,6 +1996,15 @@ body:not(.light) .lo-logo span{color:var(--akzent-bright) !important;}
 .lo-eye{color:var(--faint) !important;}
 .lo-btn{background:var(--akzent) !important;color:#fff !important;border-radius:999px !important;box-shadow:none !important;font-weight:600 !important;}
 .lo-err{border-radius:16px !important;}
+/* Zustands-Farben, die der Design-Hintergrund sonst verschluckt (Weiß auf Weiß) */
+.pill.sel{background:var(--orange-soft) !important;border-color:var(--orange-line) !important;color:var(--akzent-dark) !important;}
+.chip.chip-goal{background:var(--orange-soft) !important;border-color:var(--orange-line) !important;color:var(--akzent-dark) !important;}
+body:not(.light) .pill.sel,body:not(.light) .chip.chip-goal{color:var(--akzent-bright) !important;}
+.std.filled{background:var(--orange-soft) !important;border-color:var(--akzent) !important;}
+.sonder-row .std.filled{background:var(--clay-soft) !important;border-color:var(--clay) !important;}
+.wait-card .wait-days[style*="--gruen"] .wd-n,.wait-card .wait-days[style*="--gruen"] .wd-l{color:#fff !important;opacity:.95;}
+body.light .fc-miss-sum{color:#8f3a2c !important;}
+body.light .fc-miss-sum b{color:#7a2a1e !important;}
 </style>
 </head>
 <body>
@@ -5397,7 +5406,7 @@ window.addEventListener("load", () => {
 const STORE_KEY="serband-app-v1";
 /* Build-Version: bei jeder Auslieferung hier das Datum aktualisieren.
    Wird in den Einstellungen angezeigt + für den Update-Hinweis genutzt. */
-const APP_VERSION="2026.09.23";
+const APP_VERSION="2026.09.24";
 // Nutzungsbedingungen & Haftungsausschluss (Bereich: rechtliche Absicherung) - Version hochzählen
 // und alle Nutzer müssen erneut zustimmen, sobald sich der Text inhaltlich ändert.
 const AGB_VERSION="1.0";
@@ -6318,7 +6327,7 @@ function routeDetail(id){
           ${s.beginn?`<span class="chip" style="color:var(--muted)">seit ${esc(s.beginn)}</span>`:""}
           ${s.telefon?`<a class="chip" href="tel:${esc(s.telefon.replace(/\s+/g,''))}" style="color:var(--gruen);text-decoration:none;"><span class="ic" style="font-size:12px;">${ICN.phone}</span> ${esc(s.telefon)}</a>`:`<button class="chip" id="telFehltBtn" style="border-color:var(--orange-line);color:var(--orange);">📵 Nummer fehlt – eintragen</button>`}
           <button class="chip sehhilfe${s.sehhilfe?' on':''}" id="sehhilfeBtn">👓 ${s.sehhilfe?'Sehhilfe':'keine'}</button>
-          <button class="chip sehhilfe${s.pruefungsreifManuell?' on':''}" id="pruefReifBtn" style="${s.pruefungsreifManuell?'border-color:var(--gruen-line);color:var(--gruen);':''}">🏁 ${s.pruefungsreifManuell?'Prüfungsreif':'Prüfungsreif markieren'}</button>
+          ${(s.ready&&!s.pruefungsreifManuell)?'':`<button class="chip sehhilfe${s.pruefungsreifManuell?' on':''}" id="pruefReifBtn" style="${s.pruefungsreifManuell?'border-color:var(--gruen-line);color:var(--gruen);':''}">🏁 ${s.pruefungsreifManuell?'Prüfungsreif':'Prüfungsreif markieren'}</button>`}<!-- auf der Warteliste ausgeblendet -->
         </div>
       </div>
     </div>
