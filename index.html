@@ -3422,13 +3422,16 @@ async function pushToCloud() {
   try {
     const supa = getSupa();
     const now = new Date().toISOString();
-    const { error } = await supa.from("snapshots").upsert({
+    // updated_at setzt der Server selbst (Trigger trg_snapshots_server_zeit). Wir merken uns genau diese
+    // Server-Zeit, damit die Geräte-Uhr beim Vergleich "wer ist neuer" keine Rolle mehr spielt.
+    const { data: saved, error } = await supa.from("snapshots").upsert({
       user_id: _authUser.id,
       data: DB,
       updated_at: now
-    }, { onConflict: "user_id" });
+    }, { onConflict: "user_id" }).select("updated_at").single();
     if (error) { console.warn("[Kompass] Push fehlgeschlagen:", error.message); return; }
-    localStorage.setItem("serband-sync-stamp", Date.now() + "");
+    const serverStamp = saved && saved.updated_at ? new Date(saved.updated_at).getTime() : NaN;
+    localStorage.setItem("serband-sync-stamp", (isFinite(serverStamp) ? serverStamp : Date.now()) + "");
     // Sync-Status im Admin-Panel aktualisieren
     const el = document.getElementById("apSyncStatus");
     if (el) el.textContent = new Date().toLocaleTimeString("de");
@@ -5394,7 +5397,7 @@ window.addEventListener("load", () => {
 const STORE_KEY="serband-app-v1";
 /* Build-Version: bei jeder Auslieferung hier das Datum aktualisieren.
    Wird in den Einstellungen angezeigt + für den Update-Hinweis genutzt. */
-const APP_VERSION="2026.09.22";
+const APP_VERSION="2026.09.23";
 // Nutzungsbedingungen & Haftungsausschluss (Bereich: rechtliche Absicherung) - Version hochzählen
 // und alle Nutzer müssen erneut zustimmen, sobald sich der Text inhaltlich ändert.
 const AGB_VERSION="1.0";
@@ -8892,7 +8895,7 @@ function openAddLessonSheet(art){
   // Schritt 2: Datum, Zeit, Dauer, Notiz
   function step2(sid){
     const st=DB.students.find(s=>s.id===sid);
-    const durOpts=isSchalt?"":`<div class="field"><label>Dauer</label><div class="dur-row">${[[1,"1× (90 Min)"],[2,"2× (3 Std)"],[3,"3× (4,5 Std)"]].map(([n,l])=>`<button class="dur-opt${n===1?' on':''}" data-dur="${n}">${l}</button>`).join("")}</div></div>`;
+    const durOpts=isSchalt?"":`<div class="field"><label>Dauer</label><div class="dur-row">${[[0.5,"½ (45 Min)"],[1,"1× (90 Min)"],[2,"2× (3 Std)"],[3,"3× (4,5 Std)"]].map(([n,l])=>`<button class="dur-opt${n===1?' on':''}" data-dur="${n}">${l}</button>`).join("")}</div></div>`;
     openSheet(`<div class="sheet-h">${lab}</div>
       <p class="muted-p" style="font-size:13.5px;margin:-4px 0 14px;">${esc(st?st.name:"")}</p>
       <div class="field"><label>Datum</label><input type="date" id="alDate" value="${defDate}"></div>
@@ -8909,6 +8912,7 @@ function openAddLessonSheet(art){
       if(!date||!von){toast("Datum & Zeit wählen");return;}
       const doBook=(fzName)=>{
         if(isSchalt){ addLesson({date,von,bis:min2hm(hm2min(von)+15),art,sid,note,fahrzeug:fzName}); }
+        else if(dur===0.5){ addLesson({date,von,bis:min2hm(hm2min(von)+45),art,sid,note,fahrzeug:fzName}); }
         else { for(let i=0;i<dur;i++){ const v=min2hm(hm2min(von)+i*blockMin); addLesson({date,von:v,bis:min2hm(hm2min(v)+blockMin),art,sid,note:i===0?note:"",fahrzeug:fzName}); } }
         closeSheet(); toast(lab+" eingetragen ✓"); routeKalender();
       };
@@ -9226,6 +9230,7 @@ function openAssignSlotSheet(date,von,bis,art){
   openSheet(`<div class="sheet-h">Termin vergeben</div>
     <p class="muted-p" style="font-size:13px;margin:-4px 0 10px;">${deWeekdayLong(date)}, ${parseISO(date).getDate()}. ${deMonth(parseISO(date).getMonth())} · ${von}</p>
     <div class="seg" style="margin-bottom:12px;">${artChips}</div>
+    <div class="dur-row" id="asDur" style="margin-bottom:12px;"><button class="dur-opt on" data-half="0">90 Min · 2 UE</button><button class="dur-opt" data-half="1">45 Min · 1 UE</button></div>
     <div class="field"><input type="text" id="asSearch" placeholder="Schüler suchen …" autocomplete="off"></div>
     <button class="es-act primary" id="asNewStudent" style="margin-bottom:10px;">+ Neuer Schüler</button>
     <div class="as-list" id="asList">${cand.map(s=>`<button class="as-item" data-sid="${s.id}"><span class="as-nm">${esc(s.name)}</span><span class="as-cls">${esc(s.form||'')}</span></button>`).join("")}</div>`);
@@ -9233,8 +9238,10 @@ function openAssignSlotSheet(date,von,bis,art){
     curArt=b.dataset.art; document.querySelectorAll(".seg-i[data-art]").forEach(x=>x.classList.toggle("on",x===b));
   }));
   const render=(q)=>{ const list=cand.filter(s=>matchStudent(s.name,q)); $("#asList").innerHTML=list.map(s=>`<button class="as-item" data-sid="${s.id}"><span class="as-nm">${esc(s.name)}</span><span class="as-cls">${esc(s.form||'')}</span></button>`).join("")||'<p class="muted-p" style="font-size:13px;">Kein Treffer</p>'; bindAs(); };
+  let asHalf=false;
+  document.querySelectorAll("#asDur .dur-opt").forEach(b=>b.addEventListener("click",()=>{ asHalf=b.dataset.half==="1"; document.querySelectorAll("#asDur .dur-opt").forEach(x=>x.classList.toggle("on",x===b)); }));
   const finishBooking=(sid)=>{
-    const effBis=curArt==="schalt"?min2hm(hm2min(von)+15):bis;
+    const effBis=curArt==="schalt"?min2hm(hm2min(von)+15):(asHalf?min2hm(hm2min(von)+45):bis);
     const fzRelevant=["fahrstunde","sonder","nacht","schalt"].indexOf(curArt)>=0;
     const doBook=(fzName)=>{ addLesson({date,von,bis:effBis,art:curArt,sid,fahrzeug:fzName}); closeSheet(); toast("Termin vergeben ✓"); routeKalender(); };
     if(fzRelevant) openVehiclePicker({sub:`${isoDE(date)} · ${von}`},doBook);
@@ -9762,8 +9769,7 @@ function calMonthHTML(){
   for(let day=1;day<=dim;day++){ const w=wdOf(day); if(w===6)continue; // Sonntag überspringen – findet eh nichts statt
     const iso=dateISO(new Date(y,m,day)); const has=_calNurFrei?dayFreeSlots(iso).some(s=>slotMatchesFilter(s)):dayEvents(iso).some(e=>eventMatchesFilter(e,iso)); const isToday=iso===todayISO(); const hol=holidayName(iso);
     cells+=`<div class="cm-cell${isToday?' today':''}${hol?' holiday':''}" data-calday="${iso}"${hol?` title="${esc(hol)}"`:''}><span class="cm-num">${day}</span>${hol?'<span class="cm-hol"></span>':(has?'<span class="cm-dot"></span>':'')}</div>`; }
-  return `<div class="cm-grid-h six">${["Mo","Di","Mi","Do","Fr","Sa"].map(w=>`<div>${w}</div>`).join("")}</div><div class="cm-grid six">${cells}</div>
-    <div class="cm-legend">${Object.entries(CAL_ARTEN).filter(([k,v])=>!v.hideleg&&k!=='block').map(([k,v])=>`<span class="cm-leg"><i style="background:${v.col}"></i>${v.lab}</span>`).join("")}</div>`;
+  return `<div class="cm-grid-h six">${["Mo","Di","Mi","Do","Fr","Sa"].map(w=>`<div>${w}</div>`).join("")}</div><div class="cm-grid six">${cells}</div>`; // Legende steht schon oben im Kalender – unten nicht doppelt
 }
 // WOCHENANSICHT – einheitliche Kacheln: alle Standard-Slots (frei + belegt) je Tag, Sonntag entfällt
 function calWeekHTML(){
@@ -9884,8 +9890,11 @@ function ueOf(art,von,bis,tatsaechlicheDauer){
   if(art==="block")return 0;
   if(FS_BUERO_ARTEN.includes(art))return 0; // Vortest/Simulator/Beratung/Erste Hilfe sind keine bezahlten Fahrstunden-UE
   if(art==="schalt")return 0.33;
+  if(art==="pruefung")return 2; // Prüfung immer 2 UE (46 €), egal wie lang der Kalenderblock ist
   if(tatsaechlicheDauer){ return Math.round((tatsaechlicheDauer/90)*2*100)/100; }
   if(art==="theorie"){ if(von&&bis){ const dur=hm2min(bis)-hm2min(von); return Math.round((dur/90)*2*100)/100; } return 4; }
+  // Fahrstunde/Sonder/Nacht nach echter Dauer: 45 Min = 1 UE, 90 Min = 2 UE, 135 Min = 3 UE
+  if((art==="fahrstunde"||art==="sonder"||art==="nacht")&&von&&bis){ const dur=hm2min(bis)-hm2min(von); if(dur>0)return Math.round((dur/45)*100)/100; }
   return 2;
 } // Fahrstunde/Prüfung/Nacht/Sonder=2 (oder tatsächliche Dauer, falls eingetragen), Theorie=2 pro 90-Min-Block, Schalt=0,33, Block/Büro-Kategorien=0
 function isAbsolved(iso,bisHM){ const today=todayISO(); if(iso<today)return true; if(iso>today)return false; const now=new Date(); return hm2min(bisHM)<=now.getHours()*60+now.getMinutes(); }
@@ -10058,11 +10067,11 @@ function dayEvents(iso){
   (DB.lessons||[]).filter(l=>l.date===iso).forEach(l=>{ const st=DB.students.find(s=>s.id===l.sid); ev.push({kind:"lesson",id:l.id,von:l.von,bis:l.bis,art:l.art||"fahrstunde",sid:l.sid,name:st?st.name:(l.name||"—"),status:l.status||"geplant",fc:l.fc||null,note:l.note||"",srcSonder:l.srcSonder||null,fahrzeug:l.fahrzeug||null,tatsaechlicheDauer:l.tatsaechlicheDauer||null,noshow:l.noshow||null,_fahrlehrerId:l._fahrlehrerId,_fahrlehrerName:l._fahrlehrerName}); });
   // Prüfungstermine: jeder belegte Slot = ein 90-Min-Event (Default 09:00, falls keine Zeit).
   // NUR solange noch kein Ergebnis eingetragen ist – sonst zählt die Prüfung über exams.earnAt (s. ueRange).
-  // Prüfungstermine: Block beginnt 15 Min VOR der eingetragenen Prüfungszeit (Vorlauf).
+  // Prüfungstermine: Block beginnt genau zur eingetragenen Prüfungszeit und dauert PRUEF_MIN (55) Minuten.
   const doneOnDay=new Set((DB.exams||[]).filter(ex=>ex.date===iso).map(ex=>ex.sid));
-  (DB.termine||[]).filter(t=>t.date===iso).forEach(t=>{ (t.slots||[]).forEach(sid=>{ if(sid&&!doneOnDay.has(sid)){ const st=DB.students.find(s=>s.id===sid); const rawVon=t.von||"09:00"; const blockVon=min2hm(hm2min(rawVon)+15); const blockBis=t.bis||min2hm(hm2min(rawVon)+(DB.workCfg.blockMin||90)); ev.push({kind:"pruefung",id:t.id,von:blockVon,bis:blockBis,art:"pruefung",sid,name:st?st.name:"—",status:"geplant",pruefTime:rawVon,_fahrlehrerId:t._fahrlehrerId,_fahrlehrerName:t._fahrlehrerName}); } }); });
+  (DB.termine||[]).filter(t=>t.date===iso).forEach(t=>{ (t.slots||[]).forEach(sid=>{ if(sid&&!doneOnDay.has(sid)){ const st=DB.students.find(s=>s.id===sid); const rawVon=t.von||"09:00"; const blockVon=rawVon; const blockBis=min2hm(hm2min(rawVon)+PRUEF_MIN); ev.push({kind:"pruefung",id:t.id,von:blockVon,bis:blockBis,art:"pruefung",sid,name:st?st.name:"—",status:"geplant",pruefTime:rawVon,_fahrlehrerId:t._fahrlehrerId,_fahrlehrerName:t._fahrlehrerName}); } }); });
   // Erledigte Prüfungen (Ergebnis liegt vor): bleiben dauerhaft im Kalender als Erfolgs-/Misserfolgs-Marker.
-  (DB.exams||[]).filter(ex=>ex.date===iso).forEach(ex=>{ const rawVon=ex.von||"09:00"; const blockVon=min2hm(hm2min(rawVon)+15); const blockBis=min2hm(hm2min(rawVon)+(DB.workCfg.blockMin||90)); ev.push({kind:"examDone",id:ex.id,von:blockVon,bis:blockBis,art:"pruefung",sid:ex.sid,name:ex.name||"—",status:"erledigt",result:ex.result,pruefTime:rawVon,pruefer:ex.pruefer||"",_fahrlehrerId:ex._fahrlehrerId,_fahrlehrerName:ex._fahrlehrerName}); });
+  (DB.exams||[]).filter(ex=>ex.date===iso).forEach(ex=>{ const rawVon=ex.von||"09:00"; const blockVon=rawVon; const blockBis=min2hm(hm2min(rawVon)+PRUEF_MIN); ev.push({kind:"examDone",id:ex.id,von:blockVon,bis:blockBis,art:"pruefung",sid:ex.sid,name:ex.name||"—",status:"erledigt",result:ex.result,pruefTime:rawVon,pruefer:ex.pruefer||"",_fahrlehrerId:ex._fahrlehrerId,_fahrlehrerName:ex._fahrlehrerName}); });
   return ev.sort((a,b)=>hm2min(a.von)-hm2min(b.von));
 }
 function dayHasEvents(iso){ return dayEvents(iso).length>0; }
@@ -10084,6 +10093,7 @@ function countRange(fromISO,toISO){
   return {planned,free,slots,plannedUE};
 }
 // Lesson-CRUD
+var PRUEF_MIN=55; // Prüfung steht ab der eingetragenen Uhrzeit 55 Min im Kalender (bezahlt bleibt sie mit 2 UE)
 function addLesson(o){ ensureDB(); const l={id:uid(),date:o.date,von:o.von,bis:o.bis||min2hm(hm2min(o.von)+(DB.workCfg.blockMin||90)),art:o.art||"fahrstunde",sid:o.sid||null,name:o.name||"",status:o.status||"geplant",note:o.note||"",fc:o.fc||null}; if(o.srcSonder)l.srcSonder=o.srcSonder; if(o.fahrzeug)l.fahrzeug=o.fahrzeug; if(o.lektion)l.lektion=o.lektion; DB.lessons.push(l); save(); return l; }
 // Verknüpfung: Sonderfahrt aus Ausbildungsplan -> Kalender-Termin (ÜL/AB/NF)
 const SF_KUERZEL={ueberland:"ÜL",autobahn:"AB",nacht:"NF"};
@@ -10375,7 +10385,7 @@ function undoExam(s,snap,after){
 function futureTermine(){ const t=todayISO(); return DB.termine.filter(x=>x.date>=t).sort((a,b)=>a.date<b.date?-1:1); }
 function terminFor(sid){ for(const t of futureTermine()){ if(t.slots&&t.slots.indexOf(sid)>=0)return t; } return null; }
 function assignedSet(){ const set=new Set(); futureTermine().forEach(t=>(t.slots||[]).forEach(x=>{if(x)set.add(x);})); return set; }
-function createTermin(date,plaetze,von){ const slots=new Array(plaetze).fill(null); const t={id:uid(),date,plaetze,slots}; if(von){ t.von=von; t.bis=min2hm(hm2min(von)+(DB.workCfg.blockMin||90)); } DB.termine.push(t); save(); return t; }
+function createTermin(date,plaetze,von){ const slots=new Array(plaetze).fill(null); const t={id:uid(),date,plaetze,slots}; if(von){ t.von=von; t.bis=min2hm(hm2min(von)+PRUEF_MIN); } DB.termine.push(t); save(); return t; }
 function clearSlot(sid){ DB.termine.forEach(t=>{ if(t.slots)t.slots=t.slots.map(x=>x===sid?null:x); }); }
 function nextTermin(){ for(const t of futureTermine()){ const names=(t.slots||[]).filter(Boolean).map(id=>{const st=DB.students.find(x=>x.id===id);return st?st.name:null;}).filter(Boolean); if(names.length)return {date:t.date,names}; } return null; }
 
@@ -10606,7 +10616,7 @@ function openExamPlanSheet(s){
     if(!s.ready&&!s.passed){ setReady(s); }
     clearSlot(s.id);
     let t=DB.termine.find(x=>x.date===d);
-    if(!t){ t={id:uid(),date:d,plaetze:1,slots:[s.id],von,bis:min2hm(hm2min(von)+(DB.workCfg.blockMin||90))}; DB.termine.push(t); }
+    if(!t){ t={id:uid(),date:d,plaetze:1,slots:[s.id],von,bis:min2hm(hm2min(von)+PRUEF_MIN)}; DB.termine.push(t); }
     else { const free=t.slots.indexOf(null); if(free>=0)t.slots[free]=s.id; else {t.plaetze++;t.slots.push(s.id);} }
     save(); closeSheet(); toast("Prüfungstermin am "+isoDE(d)+" gesetzt"); routeDetail(s.id);
   });
@@ -10709,6 +10719,41 @@ function pruefungsTerminFuer(sid){
     .sort((a,b)=>(b.date||"").localeCompare(a.date||""));
   return vergangen[0]||null;
 }
+// Bestandene Schüler: Bestehens-Daten pflegen. Legt NIE einen neuen Prüfungseintrag an
+// (sonst würde eine alte Prüfung nochmal mit 46 € gezählt). Vorhandener Eintrag wird bearbeitet.
+function renderPassedEdit(s){
+  const id=s.id;
+  const ex=(DB.exams||[]).filter(e=>e.sid===id&&e.result==="pass").sort((a,b)=>(""+b.date).localeCompare(""+a.date))[0]||null;
+  const passedISO=(typeof s.passed==="string"&&/^\d{4}-\d{2}-\d{2}/.test(s.passed))?s.passed.slice(0,10):"";
+  const curDate=(ex&&ex.date)||passedISO||todayISO();
+  $("#tbTitle").textContent="Bestehens-Daten";
+  let curPr=(ex?ex.pruefer:s.passedPruefer)||"";
+  const curStrecke=(ex?ex.note:s.passedStrecke)||"";
+  const chips=()=>DB.pruefer.map(p=>`<button class="pr-chip${p===curPr?' on':''}" data-pr="${esc(p)}">${esc(p)}</button>`).join("")+`<button class="pr-chip add" id="prAdd">+ Neuer Prüfer</button>`;
+  view.innerHTML=`<div class="view-inner view-read fade-up">
+    <div class="back-row"><button class="back-btn" id="backBtn">${ICN.back} ${esc(s.name)}</button></div>
+    <div class="sec-h" style="margin:4px 0 6px;"><span class="o">Bestanden</span></div>
+    <p class="muted-p" style="font-size:13px;margin-bottom:16px;">Bestehens-Daten von ${esc(s.name)}</p>
+    <div class="field"><label>Datum des Bestehens</label><input type="date" id="bdDate" value="${curDate}"></div>
+    <div class="field"><label>Prüfer</label><div class="pr-wrap" id="prWrap">${chips()}</div></div>
+    <div class="field"><label>Gefahrene Strecke</label><div class="mic-wrap"><textarea id="bdStrecke" rows="3" placeholder="z. B. vom TÜV Richtung Bieber, Autobahn …">${esc(curStrecke)}</textarea>${micIcon()}</div></div>
+    <button class="btn btn-primary" id="bdSave" style="width:100%;">Speichern</button></div>`;
+  const bind=()=>{
+    document.querySelectorAll("#prWrap .pr-chip[data-pr]").forEach(b=>b.addEventListener("click",()=>{ curPr=(curPr===b.dataset.pr)?"":b.dataset.pr; $("#prWrap").innerHTML=chips(); bind(); }));
+    const add=$("#prAdd"); if(add)add.addEventListener("click",()=>{ const name=(prompt("Name des Prüfers")||"").trim(); if(!name)return; if(!DB.pruefer.includes(name)){DB.pruefer.push(name);DB.pruefer.sort((a,b)=>a.localeCompare(b,'de'));} curPr=name; $("#prWrap").innerHTML=chips(); bind(); });
+  };
+  bind();
+  $("#backBtn").addEventListener("click",()=>routeDetail(id));
+  $("#bdSave").addEventListener("click",()=>{
+    const d=$("#bdDate").value; if(!d){ toast("Datum wählen"); return; }
+    const strecke=$("#bdStrecke").value.trim();
+    if(ex){ ex.date=d; ex.earnAt=d; ex.pruefer=curPr; ex.note=strecke; }
+    else { s.passedPruefer=curPr; s.passedStrecke=strecke; }
+    s.passed=d;
+    logHist(s,"note",`Bestehens-Daten aktualisiert: ${isoDE(d)}${curPr?` · ${curPr}`:""}`);
+    save(); toast("Gespeichert ✓"); routeDetail(id);
+  });
+}
 function routeExam(id){
   const s=DB.students.find(x=>x.id===id); if(!s)return routeHome();
   $("#tbTitle").textContent="Prüfung eintragen"; setFab(false); view.scrollTop=0;
@@ -10717,6 +10762,7 @@ function routeExam(id){
 }
 function renderExam(s){
   const id=s.id;
+  if(s.passed){ renderPassedEdit(s); return; } // Bestanden: nur noch Prüfer, Strecke, Datum pflegen
   if(!_examChoice){
     const t=terminFor(id);
     view.innerHTML=`<div class="view-inner view-read fade-up">
@@ -10930,7 +10976,7 @@ function openTerminSheet(){
     const times=[...document.querySelectorAll(".nt-time")].map(i=>i.value||"09:00");
     // Plätze starten IMMER leer — Zuweisung erfolgt ausschließlich manuell (siehe Regel Prüfungs-Exklusivität)
     times.forEach((von,i)=>{
-      const t={id:uid(),date:d,plaetze:1,slots:[null],von,bis:min2hm(hm2min(von)+(DB.workCfg.blockMin||90))};
+      const t={id:uid(),date:d,plaetze:1,slots:[null],von,bis:min2hm(hm2min(von)+PRUEF_MIN)};
       DB.termine.push(t);
     });
     save(); closeSheet(); toast(`${p} Prüfungstermin${p>1?'e':''} eingetragen – im Kalender sichtbar ✓`); routePruefungen();
@@ -10946,7 +10992,7 @@ function openTerminEdit(tid,retFn){
   $("#teSave").addEventListener("click",()=>{
     const d=$("#teDate").value; if(!d){toast("Bitte Datum wählen");return;}
     const von=$("#teTime").value||"09:00";
-    t.date=d; t.von=von; t.bis=min2hm(hm2min(von)+(DB.workCfg.blockMin||90));
+    t.date=d; t.von=von; t.bis=min2hm(hm2min(von)+PRUEF_MIN);
     save(); closeSheet(); toast("Termin aktualisiert ✓"); retFn();
   });
   $("#teDel").addEventListener("click",()=>{ if(confirm("Termin löschen? Die Einteilung wird aufgehoben.")){ DB.termine=DB.termine.filter(x=>x.id!==tid); save(); closeSheet(); toast("Termin gelöscht"); retFn(); } });
@@ -12916,7 +12962,7 @@ routeDashboard();
 <script>
 /* Redesign v2: markiert nur den aktiven Tab anhand des Seitentitels — reine Anzeige, keine Logik. */
 (function(){
-  const map={"Start":"heute","Schüler":"schueler","Kalender":"kalender","Warteliste":"schueler","Ausbildungsplan":"schueler","Notizen":"schueler","Persönlichkeitsbogen":"schueler","Persönlichkeitsprofil":"schueler","Prüfung eintragen":"schueler","Risiko-Themen":"schueler","Schülerdatei":"schueler","Historie":"schueler","Ergebnis eintragen":"schueler","Neuer Schüler":"schueler","Schüler bearbeiten":"schueler"};
+  const map={"Start":"heute","Schüler":"schueler","Kalender":"kalender","Warteliste":"schueler","Ausbildungsplan":"schueler","Notizen":"schueler","Persönlichkeitsbogen":"schueler","Persönlichkeitsprofil":"schueler","Prüfung eintragen":"schueler","Risiko-Themen":"schueler","Schülerdatei":"schueler","Historie":"schueler","Ergebnis eintragen":"schueler","Neuer Schüler":"schueler","Schüler bearbeiten":"schueler","Bestehens-Daten":"schueler"};
   const t=document.getElementById("tbTitle"); if(!t)return;
   const paint=()=>{ const k=map[(t.textContent||"").trim()]||"mehr"; document.querySelectorAll(".tab-i").forEach(b=>b.classList.toggle("on",b.dataset.tab===k)); };
   new MutationObserver(paint).observe(t,{childList:true,characterData:true,subtree:true});
