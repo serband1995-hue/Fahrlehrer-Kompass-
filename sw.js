@@ -1,9 +1,8 @@
-/* S.A. Akademie – Service Worker
-   Cached die App-Hülle (HTML, Icons, Manifest) für Offline-Nutzung und macht die App installierbar.
-   WICHTIG: Deine Schülerdaten liegen NICHT hier, sondern in localStorage im Browser –
-   der Service Worker betrifft nur Dateien, niemals deine eingetragenen Daten. */
+/* Fahrlehrer-Kompass – Service Worker
+   Cached nur die App-Hülle (HTML, Icons, Manifest) plus Schriften und die Supabase-Bibliothek.
+   Antworten von Supabase (Schülerdaten) und anderen Diensten werden NIE gespeichert. */
 
-const CACHE_VERSION = "sa-akademie-v1";
+const CACHE_VERSION = "kompass-v2";
 const CORE_FILES = [
   "./index.html",
   "./manifest.json",
@@ -13,6 +12,18 @@ const CORE_FILES = [
   "./icon-512-maskable.png"
 ];
 
+/* Fremde Adressen, die gecacht werden dürfen (keine personenbezogenen Daten). */
+const ERLAUBTE_FREMDE = [
+  "https://fonts.googleapis.com",
+  "https://fonts.gstatic.com",
+  "https://cdn.jsdelivr.net"
+];
+
+function darfCachen(url) {
+  if (url.origin === self.location.origin) return true;
+  return ERLAUBTE_FREMDE.indexOf(url.origin) !== -1;
+}
+
 self.addEventListener("install", (event) => {
   event.waitUntil(
     caches.open(CACHE_VERSION).then((cache) => cache.addAll(CORE_FILES))
@@ -20,6 +31,7 @@ self.addEventListener("install", (event) => {
   self.skipWaiting();
 });
 
+/* Löscht jeden alten Cache, also auch kompass-v1 mit den früher gespeicherten Supabase-Antworten. */
 self.addEventListener("activate", (event) => {
   event.waitUntil(
     caches.keys().then((names) =>
@@ -29,22 +41,35 @@ self.addEventListener("activate", (event) => {
   self.clients.claim();
 });
 
-/* Strategie: Netzwerk zuerst (damit du bei Updates immer die neueste Version siehst),
-   bei fehlender Verbindung Fallback auf den Cache -> App funktioniert auch offline. */
+/* Netzwerk zuerst, offline Fallback auf den Cache.
+   Alles außerhalb von darfCachen() geht unberührt am Service Worker vorbei. */
 self.addEventListener("fetch", (event) => {
-  if (event.request.method !== "GET") return;
+  const req = event.request;
+  if (req.method !== "GET") return;
+  let url;
+  try { url = new URL(req.url); } catch (e) { return; }
+  if (!darfCachen(url)) return;
+
   event.respondWith(
-    fetch(event.request)
+    fetch(req)
       .then((response) => {
-        const copy = response.clone();
-        caches.open(CACHE_VERSION).then((cache) => cache.put(event.request, copy));
+        if (response && (response.ok || response.type === "opaque")) {
+          const copy = response.clone();
+          caches.open(CACHE_VERSION).then((cache) => cache.put(req, copy)).catch(() => {});
+        }
         return response;
       })
-      .catch(() => caches.match(event.request).then((cached) => cached || caches.match("./index.html")))
+      .catch(() =>
+        caches.match(req).then((cached) => {
+          if (cached) return cached;
+          if (req.mode === "navigate") return caches.match("./index.html");
+          return Response.error();
+        })
+      )
   );
 });
 
-/* Push-Benachrichtigungen (z.B. neue Online-Buchung, Stornierung).
+/* Push-Benachrichtigungen (z.B. neue Online-Buchung, Stornierung, Büro-Änderung).
    Zeigt die Notification an, auch wenn die App/der Tab geschlossen ist. */
 self.addEventListener("push", (event) => {
   let data = { title: "Fahrlehrer-Kompass", body: "Neue Nachricht" };
