@@ -738,7 +738,7 @@ input,select,textarea{font-family:inherit;font-size:15px;color:var(--txt);}
   transition:opacity .15s var(--ease),transform .15s var(--pop);}
 .draw-fab-menu.open{opacity:1;transform:scale(1);pointer-events:auto;}
 .draw-fab-menu .db-btn{flex-direction:row;justify-content:flex-start;min-width:auto;width:100%;padding:9px 10px;}
-.anim-bar{position:fixed;left:8px;right:66px;bottom:calc(84px + env(safe-area-inset-bottom,0px));z-index:8;display:none;align-items:center;gap:6px;
+.anim-bar{position:absolute;left:8px;right:8px;top:8px;z-index:8;display:none;align-items:center;gap:6px;
   background:rgba(20,22,28,.93);border:1px solid rgba(255,255,255,.12);border-radius:16px;padding:7px 8px;
   overflow-x:auto;-webkit-overflow-scrolling:touch;}
 .anim-bar.on{display:flex;}
@@ -5425,7 +5425,7 @@ window.addEventListener("load", () => {
 const STORE_KEY="serband-app-v1";
 /* Build-Version: bei jeder Auslieferung hier das Datum aktualisieren.
    Wird in den Einstellungen angezeigt + für den Update-Hinweis genutzt. */
-const APP_VERSION="2026.09.30";
+const APP_VERSION="2026.10.02";
 // Nutzungsbedingungen & Haftungsausschluss (Bereich: rechtliche Absicherung) - Version hochzählen
 // und alle Nutzer müssen erneut zustimmen, sobald sich der Text inhaltlich ändert.
 const AGB_VERSION="1.0";
@@ -7748,12 +7748,20 @@ const EXTRA={
 };
 const OBJ_CATS=[{key:"strassen",label:"Straßen"},{key:"markierungen",label:"Fahrbahnmarkierungen"},{key:"fahrzeuge",label:"Fahrzeuge"},{key:"personen",label:"Personen"},{key:"schilder",label:"Schilder"},{key:"ampeln",label:"Ampeln"},{key:"umgebung",label:"Umgebung"}];
 const OBJ=[
- {type:"kreuzung",cat:"strassen",label:"Kreuzung (ohne Markierung)",kind:"road",layer:0,w:600,h:600,svg:ROAD.kreuzung},
- {type:"kreuzung_markiert",cat:"strassen",label:"Kreuzung (mit Markierung)",kind:"road",layer:0,w:600,h:600,svg:ROAD.kreuzung_markiert},
- {type:"t_einmuendung",cat:"strassen",label:"T-Einmündung",kind:"road",layer:0,w:200,h:136,svg:ROAD.t_einmuendung},
+ {type:"band_h",cat:"strassen",label:"Straße quer",kind:"band",layer:0,w:60,h:60,dir:"h",cfg:{spurL:1,spurR:1,mitte:'gestrichelt'},svg:`<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><rect width="100" height="100" fill="#59a63f"/><rect x="0" y="34" width="100" height="32" fill="#4a4e57"/><rect x="6" y="49" width="14" height="2.4" fill="#f2f2ee"/><rect x="30" y="49" width="14" height="2.4" fill="#f2f2ee"/><rect x="54" y="49" width="14" height="2.4" fill="#f2f2ee"/><rect x="78" y="49" width="14" height="2.4" fill="#f2f2ee"/></svg>`},
+ {type:"band_h_breit",cat:"strassen",label:"Straße quer, vierspurig",kind:"band",layer:0,w:60,h:60,dir:"h",cfg:{spurL:2,spurR:2,mitte:'durchgezogen'},svg:`<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><rect width="100" height="100" fill="#59a63f"/><rect x="0" y="34" width="100" height="32" fill="#4a4e57"/><rect x="0" y="49" width="100" height="2.4" fill="#f2f2ee"/></svg>`},
+ {type:"band_h_rad",cat:"strassen",label:"Straße quer mit Radweg",kind:"band",layer:0,w:60,h:60,dir:"h",cfg:{spurL:1,spurR:1,mitte:'gestrichelt',radL:'baulich',radR:'baulich'},svg:`<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><rect width="100" height="100" fill="#59a63f"/><rect x="0" y="34" width="100" height="32" fill="#4a4e57"/><rect x="6" y="49" width="14" height="2.4" fill="#f2f2ee"/><rect x="30" y="49" width="14" height="2.4" fill="#f2f2ee"/><rect x="54" y="49" width="14" height="2.4" fill="#f2f2ee"/><rect x="78" y="49" width="14" height="2.4" fill="#f2f2ee"/><rect x="0" y="27" width="100" height="7" fill="#b2573c"/></svg>`},
+ {type:"band_h_geh",cat:"strassen",label:"Straße quer mit Gehweg",kind:"band",layer:0,w:60,h:60,dir:"h",cfg:{spurL:1,spurR:1,mitte:'gestrichelt',gehL:true,gehR:true},svg:`<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><rect width="100" height="100" fill="#59a63f"/><rect x="0" y="34" width="100" height="32" fill="#4a4e57"/><rect x="6" y="49" width="14" height="2.4" fill="#f2f2ee"/><rect x="30" y="49" width="14" height="2.4" fill="#f2f2ee"/><rect x="54" y="49" width="14" height="2.4" fill="#f2f2ee"/><rect x="78" y="49" width="14" height="2.4" fill="#f2f2ee"/><rect x="0" y="66" width="100" height="7" fill="#d9d5cc"/></svg>`},
+ {type:"band_v",cat:"strassen",label:"Straße längs",kind:"band",layer:0,w:60,h:60,dir:"v",cfg:{spurL:1,spurR:1,mitte:'gestrichelt'},svg:`<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><rect width="100" height="100" fill="#59a63f"/><rect x="34" y="0" width="32" height="100" fill="#4a4e57"/><rect x="49" y="6" width="2.4" height="14" fill="#f2f2ee"/><rect x="49" y="30" width="2.4" height="14" fill="#f2f2ee"/><rect x="49" y="54" width="2.4" height="14" fill="#f2f2ee"/><rect x="49" y="78" width="2.4" height="14" fill="#f2f2ee"/></svg>`},
+ {type:"band_v_breit",cat:"strassen",label:"Straße längs, vierspurig",kind:"band",layer:0,w:60,h:60,dir:"v",cfg:{spurL:2,spurR:2,mitte:'durchgezogen'},svg:`<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><rect width="100" height="100" fill="#59a63f"/><rect x="34" y="0" width="32" height="100" fill="#4a4e57"/><rect x="49" y="0" width="2.4" height="100" fill="#f2f2ee"/></svg>`},
+ {type:"band_v_rad",cat:"strassen",label:"Straße längs mit Radweg",kind:"band",layer:0,w:60,h:60,dir:"v",cfg:{spurL:1,spurR:1,mitte:'gestrichelt',radL:'baulich',radR:'baulich'},svg:`<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><rect width="100" height="100" fill="#59a63f"/><rect x="34" y="0" width="32" height="100" fill="#4a4e57"/><rect x="49" y="6" width="2.4" height="14" fill="#f2f2ee"/><rect x="49" y="30" width="2.4" height="14" fill="#f2f2ee"/><rect x="49" y="54" width="2.4" height="14" fill="#f2f2ee"/><rect x="49" y="78" width="2.4" height="14" fill="#f2f2ee"/><rect x="27" y="0" width="7" height="100" fill="#b2573c"/></svg>`},
+ {type:"band_v_geh",cat:"strassen",label:"Straße längs mit Gehweg",kind:"band",layer:0,w:60,h:60,dir:"v",cfg:{spurL:1,spurR:1,mitte:'gestrichelt',gehL:true,gehR:true},svg:`<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><rect width="100" height="100" fill="#59a63f"/><rect x="34" y="0" width="32" height="100" fill="#4a4e57"/><rect x="49" y="6" width="2.4" height="14" fill="#f2f2ee"/><rect x="49" y="30" width="2.4" height="14" fill="#f2f2ee"/><rect x="49" y="54" width="2.4" height="14" fill="#f2f2ee"/><rect x="49" y="78" width="2.4" height="14" fill="#f2f2ee"/><rect x="66" y="0" width="7" height="100" fill="#d9d5cc"/></svg>`},
+ {type:"kreuzung",cat:"strassen",alt:true,label:"Kreuzung (ohne Markierung)",kind:"road",layer:0,w:600,h:600,svg:ROAD.kreuzung},
+ {type:"kreuzung_markiert",cat:"strassen",alt:true,label:"Kreuzung (mit Markierung)",kind:"road",layer:0,w:600,h:600,svg:ROAD.kreuzung_markiert},
+ {type:"t_einmuendung",cat:"strassen",alt:true,label:"T-Einmündung",kind:"road",layer:0,w:200,h:136,svg:ROAD.t_einmuendung},
  {type:"kreisverkehr",cat:"strassen",label:"Kreisverkehr",kind:"road",layer:0,w:800,h:320,svg:ROAD.kreisverkehr},
- {type:"gerade",cat:"strassen",label:"Gerade (ohne Markierung)",kind:"road_v",layer:0,w:140,h:900,svg:ROAD.gerade},
- {type:"gerade_markiert",cat:"strassen",label:"Gerade (mit Markierung)",kind:"road_v",layer:0,w:140,h:900,svg:ROAD.gerade_markiert},
+ {type:"gerade",cat:"strassen",alt:true,label:"Gerade (ohne Markierung)",kind:"road_v",layer:0,w:140,h:900,svg:ROAD.gerade},
+ {type:"gerade_markiert",cat:"strassen",alt:true,label:"Gerade (mit Markierung)",kind:"road_v",layer:0,w:140,h:900,svg:ROAD.gerade_markiert},
  {type:"kurve",cat:"strassen",label:"Kurve",kind:"road",layer:0,w:150,h:150,svg:ROAD.kurve},
  {type:"zebra",cat:"markierungen",label:"Zebrastreifen",kind:"marking",layer:1,w:120,h:70,svg:ROAD.zebra},
  {type:"mittellinie",cat:"markierungen",label:"Mittellinie",kind:"marking",layer:1,w:80,h:200,svg:ROAD.mittellinie},
@@ -7961,7 +7969,9 @@ function fitCanvas(){
   rebuildStrokes();
 }
 function sel(){return DRAW.objects.find(o=>o.id===DRAW.selId)||null;}
-function objWH(o){const d=objDef(o.type);const s=o.scale||1;return {w:d.w*s,h:d.h*s};}
+function objWH(o){const d=objDef(o.type);
+  if(d&&d.kind==="band"){const w=bandBreite(o);return bandDir(o)==="h"?{w:_W,h:w}:{w:w,h:_H};}
+  const s=o.scale||1;return {w:d.w*s,h:d.h*s};}
 function toLocal(o,x,y){const dx=x-o.x,dy=y-o.y,c=Math.cos(-(o.rot||0)),s=Math.sin(-(o.rot||0));return [dx*c-dy*s,dx*s+dy*c];}
 function worldOf(o,lx,ly){const c=Math.cos(o.rot||0),s=Math.sin(o.rot||0);return [o.x+lx*c-ly*s,o.y+lx*s+ly*c];}
 function rebuildStrokes(){
@@ -8045,6 +8055,184 @@ function drawMark(c,m){
     c.fillStyle=m.color||"#E8451F";c.fillText(lab,mx,my);
   }
   c.restore();}
+/* ---- Straßen als durchgehende Bänder ----
+   Ein Band läuft immer von Rand zu Rand. Quer und längs zusammen ergeben die Kreuzung. */
+const SPUR=62, GEHW=26, RADW=30, ECKE=30;
+function istBand(o){const d=objDef(o.type);return !!d&&d.kind==="band";}
+function bandDir(o){const d=objDef(o.type);return (o.cfg&&o.cfg.dir)||d.dir||"h";}
+function bandCfg(o){ if(!o.cfg){const d=objDef(o.type);o.cfg=Object.assign({spurL:1,spurR:1,mitte:"gestrichelt",halt:false,pfeile:false},d.cfg||{});}
+  return o.cfg;}
+/* Aufbau quer zur Fahrtrichtung, von der linken Außenkante aus gerechnet */
+function bandBahnen(o){
+  const c=bandCfg(o),b=[];
+  if(c.gehL)b.push({t:"geh",w:GEHW});
+  if(c.radL&&c.radL!=="keiner")b.push({t:"rad",w:RADW,art:c.radL});
+  b.push({t:"fahr",w:SPUR*Math.max(1,c.spurL|| 1),n:Math.max(1,c.spurL||1),seite:"L"});
+  b.push({t:"mitte",w:0});
+  b.push({t:"fahr",w:SPUR*Math.max(1,c.spurR||1),n:Math.max(1,c.spurR||1),seite:"R"});
+  if(c.radR&&c.radR!=="keiner")b.push({t:"rad",w:RADW,art:c.radR});
+  if(c.gehR)b.push({t:"geh",w:GEHW});
+  return b;}
+function bandBreite(o){return bandBahnen(o).reduce((s,b)=>s+b.w,0);}
+function bandAsphalt(o){ // nur Fahrbahn plus Schutzstreifen (Gehweg und baulicher Radweg zählen nicht dazu)
+  let von=0,bis=0,acc=0,gefunden=false;
+  bandBahnen(o).forEach(b=>{
+    const zaehlt=(b.t==="fahr"||b.t==="mitte"||(b.t==="rad"&&b.art==="schutz"));
+    if(zaehlt){ if(!gefunden){von=acc;gefunden=true;} bis=acc+b.w; }
+    acc+=b.w;});
+  return {von,bis};}
+function bandMitte(o){return bandDir(o)==="h"?o.y:o.x;}
+function bandKante(o){const w=bandBreite(o);return [bandMitte(o)-w/2,bandMitte(o)+w/2];}
+function bandRect(o){ // Trefferfläche
+  const w=bandBreite(o);
+  return bandDir(o)==="h"?{x:0,y:o.y-w/2,w:_W,h:w}:{x:o.x-w/2,y:0,w:w,h:_H};}
+function baender(){return DRAW.objects.filter(istBand);}
+function rasenFarbe(){return DRAW.night?"#2f4a2a":"#59a63f";}
+function asphaltFarbe(){return DRAW.night?"#33363d":"#4a4e57";}
+/* Querbänder, die dieses Band schneiden - dort werden Markierungen unterbrochen */
+function kreuzSpannen(o){
+  const dir=bandDir(o);
+  return baender().filter(b=>b!==o&&bandDir(b)!==dir).map(b=>{
+    const a=bandAsphalt(b),m=bandMitte(b),w=bandBreite(b);
+    return [m-w/2+a.von,m-w/2+a.bis];}).sort((p,q)=>p[0]-q[0]);}
+function inSpanne(v,spannen,luft){return spannen.some(sp=>v>=sp[0]-(luft||0)&&v<=sp[1]+(luft||0));}
+/* Gestrichelte oder durchgezogene Linie entlang des Bandes, mit Lücken an den Kreuzungen */
+function bandLinie(c,o,quer,art){
+  const dir=bandDir(o),L=dir==="h"?_W:_H,spannen=kreuzSpannen(o);
+  c.save();c.strokeStyle="#f2f2ee";c.lineWidth=art==="dick"?5:3.4;
+  const strich=art==="gestrichelt"?[26,22]:[];
+  c.setLineDash(strich);
+  let start=0;
+  const zeichne=(a,b)=>{ if(b-a<6)return; c.beginPath();
+    if(dir==="h"){c.moveTo(a,quer);c.lineTo(b,quer);} else {c.moveTo(quer,a);c.lineTo(quer,b);} c.stroke();};
+  spannen.forEach(sp=>{ zeichne(start,sp[0]-2); start=sp[1]+2; });
+  zeichne(start,L);
+  c.restore();}
+/* ---- Abbiegespuren, Haltelinien und Pfeile auf der Fahrbahn ----
+   Eine Zufahrt ist die Seite einer Kreuzung, auf der ein Fahrzeug ankommt. */
+const ABB_LEN=180, ABB_KEIL=70;
+function bandPunkt(dir,laengs,quer){return dir==="h"?[laengs,quer]:[quer,laengs];}
+/* Fahrstreifen-Gruppe einer Fahrtrichtung: [von,bis] quer zum Band */
+function bandGruppe(o,vor){ // vor=true: Fahrtrichtung +x (quer) bzw. +y (längs)
+  const c=bandCfg(o),k=bandKante(o)[0];let acc=0,res=null;
+  bandBahnen(o).forEach(b=>{
+    if(b.t==="fahr"){
+      const istRechtsGruppe=(b.seite==="R");
+      const passt=(bandDir(o)==="h")? (vor?istRechtsGruppe:!istRechtsGruppe)
+                                    : (vor?!istRechtsGruppe:istRechtsGruppe);
+      if(passt)res={von:k+acc,bis:k+acc+b.w,n:b.n,aussenUnten:istRechtsGruppe};
+    }
+    acc+=b.w;});
+  return res;}
+function zufahrten(o){ // je Kreuzung zwei Zufahrten
+  const dir=bandDir(o),res=[];
+  kreuzSpannen(o).forEach(sp=>{
+    res.push({stop:sp[0],vor:true, spanne:sp});   // kommt von vorne, fährt in +Richtung
+    res.push({stop:sp[1],vor:false,spanne:sp});
+  });
+  return res;}
+function drawZufahrt(c,o,z){
+  const cf=bandCfg(o),dir=bandDir(o);
+  const g=bandGruppe(o,z.vor); if(!g)return;
+  const extra=(cf.abbL?1:0)+(cf.abbR?1:0);
+  const ri=z.vor?1:-1;                 // Fahrtrichtung entlang des Bandes
+  const aussen=g.aussenUnten?1:-1;     // von der Bandmitte weg
+  const innen=g.aussenUnten?g.von:g.bis;   // Kante an der Mittellinie
+  const stop=z.stop-ri*8;              // Haltelinie kurz vor der Kreuzung
+  const P=(l,q)=>bandPunkt(dir,l,q);
+  const spuren=g.n+extra;              // so viele Spuren hat die Zufahrt
+  const q=(i)=>innen+aussen*(i+0.5)*SPUR;  // Mitte der Spur i, von innen gezählt
+  const l0=stop, l1=stop-ri*ABB_LEN, l2=stop-ri*(ABB_LEN+ABB_KEIL);
+  // 1. Aufweitung für die zusätzlichen Spuren
+  if(extra){
+    const qa=innen+aussen*g.n*SPUR, qb=innen+aussen*spuren*SPUR;
+    c.fillStyle=asphaltFarbe();c.beginPath();
+    const pts=[P(l0,qa),P(l0,qb),P(l1,qb),P(l2,qa)];
+    c.moveTo(pts[0][0],pts[0][1]);pts.slice(1).forEach(pp=>c.lineTo(pp[0],pp[1]));c.closePath();c.fill();
+  }
+  // 2. Spurtrennlinien in der Zufahrt
+  if(spuren>1){
+    c.save();c.strokeStyle="#f2f2ee";c.lineWidth=3;c.setLineDash([16,14]);
+    for(let i=1;i<spuren;i++){const qq=innen+aussen*i*SPUR;
+      const a=P(l1,qq),b2=P(l0,qq);c.beginPath();c.moveTo(a[0],a[1]);c.lineTo(b2[0],b2[1]);c.stroke();}
+    c.restore();
+  }
+  // 3. Haltelinie über alle Spuren der Zufahrt
+  if(cf.halt!==false){
+    const p1=P(stop,innen),p2=P(stop,innen+aussen*spuren*SPUR);
+    c.save();c.strokeStyle="#f2f2ee";c.lineWidth=7;c.beginPath();c.moveTo(p1[0],p1[1]);c.lineTo(p2[0],p2[1]);c.stroke();c.restore();
+  }
+  // 4. Pfeile: innen links, außen rechts, dazwischen geradeaus
+  if(cf.pfeile!==false){
+    for(let i=0;i<spuren;i++){
+      let art="gerade";
+      if(cf.abbL&&i===0)art="links";
+      else if(cf.abbR&&i===spuren-1)art="rechts";
+      drawFahrbahnPfeil(c,dir,stop-ri*(ABB_LEN*0.55),q(i),ri,art,aussen);
+    }
+  }}
+function drawFahrbahnPfeil(c,dir,laengs,quer,ri,art,aussen){
+  const P=(l,q)=>bandPunkt(dir,l,q);
+  c.save();c.strokeStyle="#f2f2ee";c.fillStyle="#f2f2ee";c.lineWidth=7;c.lineCap="round";c.lineJoin="round";
+  const L=46;
+  const schaft0=P(laengs-ri*L,quer), schaftM=P(laengs+ri*L*0.15,quer);
+  c.beginPath();c.moveTo(schaft0[0],schaft0[1]);c.lineTo(schaftM[0],schaftM[1]);c.stroke();
+  let spitze,vonPunkt;
+  if(art==="gerade"){ spitze=P(laengs+ri*L*0.75,quer); vonPunkt=schaftM; }
+  else{
+    const seite=(art==="rechts")?aussen:-aussen;
+    const knick=P(laengs+ri*L*0.15,quer);
+    const ziel=P(laengs+ri*L*0.15,quer+seite*SPUR*0.42);
+    c.beginPath();c.moveTo(knick[0],knick[1]);c.lineTo(ziel[0],ziel[1]);c.stroke();
+    spitze=P(laengs+ri*L*0.15,quer+seite*SPUR*0.62); vonPunkt=ziel;
+  }
+  const dx=spitze[0]-vonPunkt[0],dy=spitze[1]-vonPunkt[1],w=Math.atan2(dy,dx),h=17;
+  c.beginPath();c.moveTo(spitze[0],spitze[1]);
+  c.lineTo(spitze[0]-Math.cos(w-0.45)*h,spitze[1]-Math.sin(w-0.45)*h);
+  c.lineTo(spitze[0]-Math.cos(w+0.45)*h,spitze[1]-Math.sin(w+0.45)*h);
+  c.closePath();c.fill();
+  c.restore();}
+function drawBaender(c){
+  const B=baender(); if(!B.length)return;
+  c.save();
+  c.fillStyle=rasenFarbe();c.fillRect(0,0,_W,_H);
+  // 1. Gehwege und bauliche Radwege
+  B.forEach(o=>{const dir=bandDir(o),k=bandKante(o)[0];let acc=0;
+    bandBahnen(o).forEach(b=>{
+      if(b.t==="geh"||(b.t==="rad"&&b.art==="baulich")){
+        c.fillStyle=b.t==="geh"?(DRAW.night?"#5c5f66":"#d9d5cc"):(DRAW.night?"#7a4436":"#b2573c");
+        if(dir==="h")c.fillRect(0,k+acc,_W,b.w); else c.fillRect(k+acc,0,b.w,_H);}
+      acc+=b.w;});});
+  // 2. Fahrbahn
+  B.forEach(o=>{const dir=bandDir(o),k=bandKante(o)[0],a=bandAsphalt(o);
+    c.fillStyle=asphaltFarbe();
+    if(dir==="h")c.fillRect(0,k+a.von,_W,a.bis-a.von); else c.fillRect(k+a.von,0,a.bis-a.von,_H);});
+  // 3. Ecken an den Kreuzungen ausrunden (Asphalt läuft im Bogen in die Wiese)
+  const H=B.filter(o=>bandDir(o)==="h"),V=B.filter(o=>bandDir(o)==="v");
+  c.fillStyle=asphaltFarbe();
+  H.forEach(h=>{const ha=bandAsphalt(h),hk=bandKante(h)[0],y1=hk+ha.von,y2=hk+ha.bis;
+    V.forEach(v=>{const va=bandAsphalt(v),vk=bandKante(v)[0],x1=vk+va.von,x2=vk+va.bis;
+      [[x1,y1,-1,-1],[x2,y1,1,-1],[x1,y2,-1,1],[x2,y2,1,1]].forEach(([ex,ey,sx,sy])=>{
+        c.beginPath();c.moveTo(ex,ey);
+        c.lineTo(ex+sx*ECKE,ey);
+        c.arc(ex+sx*ECKE,ey+sy*ECKE,ECKE,sy>0?-Math.PI/2:Math.PI/2,sx>0?Math.PI:0,sx*sy>0);
+        c.lineTo(ex,ey+sy*ECKE);c.closePath();c.fill();});});});
+  // 4. Markierungen
+  B.forEach(o=>{const c2=bandCfg(o),k=bandKante(o)[0];let acc=0;
+    bandBahnen(o).forEach(b=>{
+      if(b.t==="fahr"&&b.n>1){ for(let i=1;i<b.n;i++)bandLinie(c,o,k+acc+i*SPUR,"gestrichelt"); }
+      if(b.t==="mitte"){
+        if(c2.mitte==="gestrichelt")bandLinie(c,o,k+acc,"gestrichelt");
+        else if(c2.mitte==="durchgezogen")bandLinie(c,o,k+acc,"voll");
+        else if(c2.mitte==="doppelt"){bandLinie(c,o,k+acc-4,"voll");bandLinie(c,o,k+acc+4,"voll");}
+      }
+      if(b.t==="rad"&&b.art==="schutz")bandLinie(c,o,k+acc+(b.w/2),"gestrichelt");
+      acc+=b.w;});});
+  // 5. Zufahrten: Abbiegespuren, Haltelinien, Pfeile
+  B.forEach(o=>{const cf=bandCfg(o);
+    if(cf.halt===false&&cf.pfeile===false&&!cf.abbL&&!cf.abbR)return;
+    zufahrten(o).forEach(z=>drawZufahrt(c,o,z));});
+  c.restore();}
 function drawOrder(){return DRAW.objects.map((o,i)=>[o,i]).sort((a,b)=>(objDef(a[0].type).layer-objDef(b[0].type).layer)||(a[1]-b[1])).map(p=>p[0]);}
 function render(){
   if(!_ctx)return;
@@ -8055,7 +8243,8 @@ function render(){
   _ctx.strokeStyle=grid;_ctx.lineWidth=1/_view.scale;
   for(let x=40;x<_W;x+=40){_ctx.beginPath();_ctx.moveTo(x,0);_ctx.lineTo(x,_H);_ctx.stroke();}
   for(let y=40;y<_H;y+=40){_ctx.beginPath();_ctx.moveTo(0,y);_ctx.lineTo(_W,y);_ctx.stroke();}
-  drawOrder().forEach(o=>{const img=OBJ_IMG[o.type];if(!img||!img.complete)return;const wh=objWH(o);
+  drawBaender(_ctx);
+  drawOrder().forEach(o=>{if(istBand(o))return;const img=OBJ_IMG[o.type];if(!img||!img.complete)return;const wh=objWH(o);
     _ctx.save();_ctx.translate(o.x,o.y);_ctx.rotate(o.rot||0);_ctx.drawImage(img,-wh.w/2,-wh.h/2,wh.w,wh.h);_ctx.restore();
     drawProps(_ctx,o);});
   _ctx.drawImage(_sCanvas,0,0,_W,_H);
@@ -8064,7 +8253,7 @@ function render(){
   DRAW.objects.forEach(o=>{if(!o.order)return;_ctx.save();_ctx.fillStyle="#E8451F";_ctx.beginPath();_ctx.arc(o.x,o.y,13,0,7);_ctx.fill();
     _ctx.fillStyle="#fff";_ctx.font="bold 16px Arial,sans-serif";_ctx.textAlign="center";_ctx.textBaseline="middle";_ctx.fillText(String(o.order),o.x,o.y+1);_ctx.restore();});
   const m=sel();
-  if(m){const wh=objWH(m),hw=wh.w/2,hh=wh.h/2;const mRoad=objDef(m.type).kind==="road"||objDef(m.type).kind==="road_v";_ctx.save();_ctx.translate(m.x,m.y);_ctx.rotate(m.rot||0);
+  if(m){const wh=objWH(m),hw=wh.w/2,hh=wh.h/2;const mRoad=objDef(m.type).kind==="road"||objDef(m.type).kind==="road_v"||istBand(m);_ctx.save();_ctx.translate(m.x,m.y);_ctx.rotate(m.rot||0);
     _ctx.strokeStyle="#E8451F";_ctx.lineWidth=2;_ctx.setLineDash([6,5]);_ctx.strokeRect(-hw-4,-hh-4,wh.w+8,wh.h+8);_ctx.setLineDash([]);
     if(!mRoad){
       _ctx.beginPath();_ctx.moveTo(0,-hh-4);_ctx.lineTo(0,-hh-24);_ctx.stroke();
@@ -8120,7 +8309,7 @@ function onDown(e){
     const isRoadKind=t=>{const od=objDef(t);return od&&(od.kind==="road"||od.kind==="road_v");};
     _dragSnap=boardSnap();
     const m=sel();
-    if(m&&!isRoadKind(m.type)){const wh=objWH(m);
+    if(m&&!isRoadKind(m.type)&&!istBand(m)){const wh=objWH(m);
       const rh=worldOf(m,0,-(wh.h/2+24));if(dist(x,y,rh[0],rh[1])<=20){_drag={mode:"rotate",o:m};return;}
       const sh=worldOf(m,wh.w/2+4,wh.h/2+4);if(dist(x,y,sh[0],sh[1])<=20){_drag={mode:"resize",o:m,d0:Math.max(8,dist(x,y,m.x,m.y)),sc0:m.scale||1};return;}
     }
@@ -8175,7 +8364,12 @@ function onMove(e){
   }
   if(_pinchStart)return; // ein Finger vom Pinch noch unten - warten bis beide los sind
   if(_drag){const a=pos(e),x=a[0],y=a[1];const o=_drag.o;
-    if(_drag.mode==="move"){o.x=x-_drag.ox;o.y=y-_drag.oy;if(isRoadType(o.type))snapRoad(o);}
+    if(_drag.mode==="move"){
+      if(istBand(o)){ const w=bandBreite(o)/2;
+        if(bandDir(o)==="h")o.y=Math.max(w*0.2,Math.min(_H-w*0.2,y-_drag.oy));
+        else o.x=Math.max(w*0.2,Math.min(_W-w*0.2,x-_drag.ox));
+      } else { o.x=x-_drag.ox;o.y=y-_drag.oy;if(isRoadType(o.type))snapRoad(o); }
+    }
     else if(_drag.mode==="steer"){steerTo(o,x,y);}
     else if(_drag.mode==="rotate"){o.rot=Math.atan2(x-o.x,-(y-o.y));}
     else if(_drag.mode==="resize"){const d=dist(x,y,o.x,o.y);o.scale=Math.max(0.35,Math.min(4,_drag.sc0*(d/_drag.d0)));}
@@ -8208,6 +8402,14 @@ function placeObject(type){const d=objDef(type);if(!d)return;let autoScale=(d.ki
     }
   }
   const vc=viewCenter();
+  if(d.kind==="band"){
+    const o2={id:DRAW.seq++,type,x:_W/2,y:_H/2,scale:1,rot:0,cfg:Object.assign({},d.cfg||{})};
+    DRAW.objects.push(o2);DRAW.selId=o2.id;DRAW.tool="select";setActiveTool();
+    if(DRAW.anim&&!DRAW.steps.length)animNeustart();
+    DRAW.recentTypes=[type,...(DRAW.recentTypes||[]).filter(t=>t!==type)].slice(0,12);
+    try{localStorage.setItem("serband-tafel-recent",JSON.stringify(DRAW.recentTypes));}catch(e){}
+    render();persistBoard();closeTafelDrawer();return;
+  }
   const o={id:DRAW.seq++,type,x:vc[0],y:vc[1],scale:autoScale,rot:0};DRAW.objects.push(o);DRAW.selId=o.id;DRAW.tool="select";setActiveTool();
   DRAW.recentTypes=[type,...(DRAW.recentTypes||[]).filter(t=>t!==type)].slice(0,12);
   try{localStorage.setItem("serband-tafel-recent",JSON.stringify(DRAW.recentTypes));}catch(e){}
@@ -8405,9 +8607,43 @@ function animBarUI(){
   const sp=$("#anSpeed");if(sp)sp.textContent=DRAW.animMs===2000?"0,5×":(DRAW.animMs===1200?"1×":"2×");
   const cv=$("#anCurve");if(cv)cv.classList.toggle("on",!!DRAW.animKurve);
 }
+/* Straße frei einstellen: Fahrstreifen, Mittellinie, Radweg, Gehweg */
+function openBandSheet(o){
+  const c=bandCfg(o);
+  const quer=bandDir(o)==="h";
+  const sw=(wert,akt,attr,lab)=>`<button class="pr-sw${wert===akt?' on':''}" data-${attr}="${wert}">${lab}</button>`;
+  const seiteL=quer?"oben":"links", seiteR=quer?"unten":"rechts";
+  openSheet(`<div class="sheet-h">Straße einstellen</div>
+    <div class="pp-lab">Fahrstreifen ${seiteL}</div>
+    <div class="pr-row">${[1,2,3].map(n=>sw(n,c.spurL||1,"sl",n)).join("")}</div>
+    <div class="pp-lab" style="margin-top:14px;">Fahrstreifen ${seiteR}</div>
+    <div class="pr-row">${[1,2,3].map(n=>sw(n,c.spurR||1,"sr",n)).join("")}</div>
+    <div class="pp-lab" style="margin-top:14px;">Mittellinie</div>
+    <div class="pr-row">${sw("keine",c.mitte,"mi","Keine")}${sw("gestrichelt",c.mitte,"mi","Gestrichelt")}</div>
+    <div class="pr-row">${sw("durchgezogen",c.mitte,"mi","Durchgezogen")}${sw("doppelt",c.mitte,"mi","Doppelt")}</div>
+    <div class="pp-lab" style="margin-top:14px;">Radweg ${seiteL}</div>
+    <div class="pr-row">${sw("keiner",c.radL||"keiner","rl","Keiner")}${sw("schutz",c.radL||"keiner","rl","Schutzstreifen")}${sw("baulich",c.radL||"keiner","rl","Baulich")}</div>
+    <div class="pp-lab" style="margin-top:14px;">Radweg ${seiteR}</div>
+    <div class="pr-row">${sw("keiner",c.radR||"keiner","rr","Keiner")}${sw("schutz",c.radR||"keiner","rr","Schutzstreifen")}${sw("baulich",c.radR||"keiner","rr","Baulich")}</div>
+    <div class="pp-lab" style="margin-top:14px;">Gehweg</div>
+    <div class="pr-row">${sw(true,!!c.gehL,"gl",seiteL)}${sw(true,!!c.gehR,"gr",seiteR)}</div>
+    <div class="pp-lab" style="margin-top:14px;">An der Kreuzung</div>
+    <div class="pr-row">${sw(true,!!c.abbL,"al","Linksabbiegespur")}${sw(true,!!c.abbR,"ar","Rechtsabbiegespur")}</div>
+    <div class="pr-row">${sw(true,c.halt!==false,"ha","Haltelinie")}${sw(true,c.pfeile!==false,"pf","Pfeile")}</div>
+    <div class="es-actions" style="margin-top:14px;"><button class="es-act" id="bdOk">Fertig</button></div>`);
+  const setz=(fn)=>{pushUndo();fn();if(DRAW.anim)animSaveCurrent();render();persistBoard();openBandSheet(o);};
+  const bind=(attr,fn)=>$("#sheet").querySelectorAll("[data-"+attr+"]").forEach(b=>b.addEventListener("click",()=>setz(()=>fn(b.dataset[attr]))));
+  bind("sl",v=>c.spurL=+v); bind("sr",v=>c.spurR=+v); bind("mi",v=>c.mitte=v);
+  bind("rl",v=>c.radL=v); bind("rr",v=>c.radR=v);
+  bind("gl",()=>c.gehL=!c.gehL); bind("gr",()=>c.gehR=!c.gehR);
+  bind("al",()=>c.abbL=!c.abbL); bind("ar",()=>c.abbR=!c.abbR);
+  bind("ha",()=>c.halt=(c.halt===false)); bind("pf",()=>c.pfeile=(c.pfeile===false));
+  $("#bdOk").addEventListener("click",closeSheet);
+}
 /* Lichter, toter Winkel und Ampelphase für das gewählte Objekt */
 function openObjPropsSheet(o){
   const d=objDef(o.type); if(!d)return;
+  if(d.kind==="band"){openBandSheet(o);return;}
   const pr=o.props||{};
   const istAmpel=!!AMPEL_LAMPEN[o.type], istFz=d.kind==="vehicle";
   if(!istAmpel&&!istFz){toast("Für dieses Objekt gibt es keine Lichter");return;}
@@ -8650,7 +8886,7 @@ function renderObjGrid(){
     g.innerHTML=Object.keys(PRESETS).map(k=>{const p=PRESETS[k];const th=OBJ_BY_TYPE[p.thumb]?OBJ_BY_TYPE[p.thumb].svg:"";return `<button class="mag-item" data-preset="${k}"><img src="data:image/svg+xml;utf8,${encodeURIComponent(th)}" alt=""><span>${p.label}</span></button>`;}).join("");
     g.querySelectorAll(".mag-item").forEach(b=>b.addEventListener("click",()=>placePreset(b.dataset.preset)));
   }else{
-    const items=OBJ.filter(d=>d.cat===DRAW.cat);
+    const items=OBJ.filter(d=>d.cat===DRAW.cat&&!d.alt);
     g.innerHTML=items.map(d=>`<button class="mag-item" data-obj="${d.type}"><img src="data:image/svg+xml;utf8,${encodeURIComponent(d.svg)}" alt=""><span>${d.label}</span></button>`).join("");
     g.querySelectorAll(".mag-item").forEach(b=>b.addEventListener("click",()=>placeObject(b.dataset.obj)));
   }
