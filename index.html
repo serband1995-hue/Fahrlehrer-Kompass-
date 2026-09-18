@@ -738,6 +738,25 @@ input,select,textarea{font-family:inherit;font-size:15px;color:var(--txt);}
   transition:opacity .15s var(--ease),transform .15s var(--pop);}
 .draw-fab-menu.open{opacity:1;transform:scale(1);pointer-events:auto;}
 .draw-fab-menu .db-btn{flex-direction:row;justify-content:flex-start;min-width:auto;width:100%;padding:9px 10px;}
+.anim-bar{position:fixed;left:8px;right:66px;bottom:calc(84px + env(safe-area-inset-bottom,0px));z-index:8;display:none;align-items:center;gap:6px;
+  background:rgba(20,22,28,.93);border:1px solid rgba(255,255,255,.12);border-radius:16px;padding:7px 8px;
+  overflow-x:auto;-webkit-overflow-scrolling:touch;}
+.anim-bar.on{display:flex;}
+.an-btn{flex:0 0 auto;min-width:46px;height:42px;padding:0 10px;border-radius:12px;border:1px solid rgba(255,255,255,.14);
+  background:rgba(255,255,255,.07);color:#eaf1ec;font-size:15px;font-weight:700;}
+.an-btn.an-play{background:var(--orange);border-color:var(--orange);color:#fff;min-width:54px;font-size:17px;}
+.an-btn.an-add{background:rgba(255,255,255,.14);min-width:88px;font-size:13.5px;}
+.an-btn.an-curve{min-width:62px;font-size:13px;}
+.pr-row{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:8px;}
+.pr-sw{padding:13px 10px;border-radius:12px;border:1px solid var(--line);background:var(--surface);color:var(--txt);font-size:14px;font-weight:700;}
+.pr-sw.on{background:var(--orange);border-color:var(--orange);color:#fff;}
+.an-btn.an-curve.on{background:rgba(74,139,69,.85);border-color:rgba(74,139,69,.9);color:#fff;}
+.an-step{flex:0 0 auto;color:#cfd8d2;font-size:13px;font-weight:700;padding:0 6px;white-space:nowrap;}
+.pp-tools{display:grid;grid-template-columns:1fr 1fr;gap:6px;}
+.tl-btn{padding:12px 8px;border-radius:12px;border:1px solid var(--line);background:var(--surface);color:var(--txt);font-size:13px;font-weight:700;}
+.tl-btn.on{background:var(--orange);border-color:var(--orange);color:#fff;}
+.db-ic.db-flip svg{transform:scaleX(-1);}
+.draw-fab-menu .db-btn.db-off{opacity:.38;}
 .draw-fab-menu .db-sep{width:auto;height:1px;align-self:stretch;margin:3px 0;}
 .db-btn{display:flex;flex-direction:column;align-items:center;gap:4px;padding:8px 9px;border-radius:12px;color:#cfcabf;
   font-size:10px;font-weight:700;min-width:50px;transition:background .15s var(--ease),color .15s var(--ease),transform .12s var(--pop);}
@@ -5406,7 +5425,7 @@ window.addEventListener("load", () => {
 const STORE_KEY="serband-app-v1";
 /* Build-Version: bei jeder Auslieferung hier das Datum aktualisieren.
    Wird in den Einstellungen angezeigt + für den Update-Hinweis genutzt. */
-const APP_VERSION="2026.09.24";
+const APP_VERSION="2026.09.30";
 // Nutzungsbedingungen & Haftungsausschluss (Bereich: rechtliche Absicherung) - Version hochzählen
 // und alle Nutzer müssen erneut zustimmen, sobald sich der Text inhaltlich ändert.
 const AGB_VERSION="1.0";
@@ -7778,7 +7797,7 @@ const OBJ_BY_TYPE={};OBJ.forEach(d=>OBJ_BY_TYPE[d.type]=d);
 const OBJ_IMG={};
 function preloadObjects(cb){let left=OBJ.length;if(!left){if(cb)cb();return;}OBJ.forEach(d=>{const img=new Image();img.onload=img.onerror=()=>{if(--left<=0&&cb)cb();};img.src="data:image/svg+xml;utf8,"+encodeURIComponent(d.svg);OBJ_IMG[d.type]=img;});}
 
-let DRAW=null;
+let DRAW=null;let _dragSnap=null;let _curMark=null;let _playing=false,_playRaf=0,_playT0=0,_playFrom=0;let _blinkIv=0;
 let _board,_ctx,_sCanvas,_sCtx,_W,_H,_dpr,_drag,_cur,_moved,_raf,_drawResize;
 // Pinch-to-Zoom & Verschieben der Tafel (Bereich 9, Punkt 2) - reines "Reinzoomen" in
 // die feste Tafelfläche (kein unendliches Canvas), daher wird der Ausschnitt an den
@@ -7812,8 +7831,10 @@ const PRESETS={
 };
 function initDraw(){
   // Immer frisch starten — keine gespeicherte Tafel laden
-  DRAW={tool:"select",color:"#E8451F",width:6,eraseSize:2,eraseStroke:false,strokes:[],objects:[],history:[],selId:null,seq:1,cat:"strassen",orderMode:false,night:false,uiTab:"objekte",drawerOpen:false,loadView:false,sharedView:false,fabX:null,fabY:null,fabOpen:false,recentTypes:[]};
+  DRAW={tool:"select",color:"#E8451F",width:6,eraseSize:2,eraseStroke:false,strokes:[],objects:[],history:[],past:[],future:[],marks:[],pxPerM:76/4.5,steps:[],stepIdx:0,anim:false,animMs:1200,animKurve:true,selId:null,seq:1,cat:"strassen",orderMode:false,night:false,uiTab:"objekte",drawerOpen:false,loadView:false,sharedView:false,fabX:null,fabY:null,fabOpen:false,recentTypes:[]};
   if(!DRAW.objects)DRAW.objects=[];
+  if(!DRAW.marks)DRAW.marks=[];
+  if(!DRAW.steps)DRAW.steps=[];
   if(!DRAW.uiTab)DRAW.uiTab="objekte";
   if(DRAW.drawerOpen==null)DRAW.drawerOpen=false;
   if(DRAW.loadView==null)DRAW.loadView=false;
@@ -7881,6 +7902,7 @@ function routeDraw(sid){
     </div>`:''}
     <div class="mag-ctrl" id="objCtrl" hidden>
       <button data-mc="rot" aria-label="90 Grad drehen">⟳</button>
+      <button data-mc="props" aria-label="Lichter und Phasen">⚙</button>
       <button data-mc="dup" aria-label="Duplizieren">⧉</button>
       <button data-mc="del" aria-label="Löschen" class="ic ic-rot">${ICN.trash}</button>
       <button data-mc="done" class="mc-done" aria-label="Fertig">✓</button>
@@ -7896,11 +7918,23 @@ function routeDraw(sid){
       </div>
       <div class="td-body" id="tdBody"></div>
     </div>
+    <div class="anim-bar" id="animBar">
+      <button class="an-btn" id="anPrev" aria-label="Schritt zurück">◀</button>
+      <button class="an-btn an-play" id="anPlay" aria-label="Abspielen">▶</button>
+      <button class="an-btn" id="anNext" aria-label="Schritt vor">▶|</button>
+      <span class="an-step" id="anStep">—</span>
+      <button class="an-btn an-add" id="anAdd">+ Schritt</button>
+      <button class="an-btn" id="anSpeed">1×</button>
+      <button class="an-btn an-curve" id="anCurve">Kurve</button>
+      <button class="an-btn" id="anDel" aria-label="Schritt löschen">🗑</button>
+      <button class="an-btn an-x" id="anOff" aria-label="Animation beenden">✕</button>
+    </div>
     <div class="draw-fab-menu" id="drawFabMenu">
       <button class="db-btn" id="dbSelect"><span class="db-ic">${DBIC.cursor}</span><span>Auswahl</span></button>
       <button class="db-btn" id="dbPen"><span class="db-ic">${DBIC.pen}</span><span>Stift</span></button>
       <button class="db-btn" id="dbErase"><span class="db-ic">${DBIC.erase}</span><span>Radierer</span></button>
       <button class="db-btn" id="dbUndo"><span class="db-ic">${DBIC.undo}</span><span>Zurück</span></button>
+      <button class="db-btn" id="dbRedo"><span class="db-ic db-flip">${DBIC.undo}</span><span>Vor</span></button>
       <div class="db-sep"></div>
       <button class="db-btn db-handle" id="dbHandle" aria-label="Werkzeuge öffnen"><span class="db-ic">${DBIC.more}</span><span>Werkzeuge</span></button>
     </div>
@@ -7908,7 +7942,7 @@ function routeDraw(sid){
   </div>`;
   _board=$("#board");fitCanvas();
   preloadObjects(()=>render());
-  bindDraw();bindDrawFab();setActiveTool();updateDrawerUI();render();
+  bindDraw();bindDrawFab();setActiveTool();updateDrawerUI();updateUndoUI();animBarUI();blinkTicker();render();
   if(_drawSuggest){
     const dsg=$("#drawSuggestGo"),dsx=$("#drawSuggestX");
     if(dsg)dsg.addEventListener("click",()=>{placePreset(_drawSuggest.presetKey);const el=$("#drawSuggest");if(el)el.remove();});
@@ -7949,6 +7983,68 @@ function drawSeg(st){
   else{const a=p[n-2],b=p[n-1];_sCtx.beginPath();_sCtx.moveTo(a[0],a[1]);_sCtx.lineTo(b[0],b[1]);_sCtx.stroke();}
   _sCtx.globalCompositeOperation="source-over";
 }
+/* Andockpunkte einer Straße: die Mitten der Kanten (Fahrbahn-Enden) */
+function roadAnchors(o){const d=objDef(o.type);if(!d)return[];const wh=objWH(o);
+  const loc=(d.kind==="road_v")?[[0,-wh.h/2],[0,wh.h/2]]:[[0,-wh.h/2],[0,wh.h/2],[-wh.w/2,0],[wh.w/2,0]];
+  return loc.map(l=>worldOf(o,l[0],l[1]));}
+/* Beim Verschieben einer Straße das nächste freie Ende an ein anderes Straßenende ziehen */
+function snapRoad(o){
+  if(!isRoadType(o.type))return false;
+  const tol=34/(_view.scale||1);
+  const mine=roadAnchors(o);let best=null;
+  DRAW.objects.forEach(t=>{ if(t.id===o.id||!isRoadType(t.type))return;
+    roadAnchors(t).forEach(tp=>{ mine.forEach(mp=>{ const dd=dist(mp[0],mp[1],tp[0],tp[1]);
+      if(dd<=tol&&(!best||dd<best.d))best={d:dd,dx:tp[0]-mp[0],dy:tp[1]-mp[1]}; }); }); });
+  if(!best)return false;
+  o.x+=best.dx;o.y+=best.dy;return true;}
+/* Pfeile, Texte und Maßband: eigene Ebene über Objekten und Strichen */
+function markMeter(px){const k=DRAW.pxPerM||(76/4.5);return px/k;}
+function distSeg(px,py,x1,y1,x2,y2){const dx=x2-x1,dy=y2-y1,l2=dx*dx+dy*dy;
+  if(!l2)return dist(px,py,x1,y1);
+  let t=((px-x1)*dx+(py-y1)*dy)/l2;t=Math.max(0,Math.min(1,t));
+  return dist(px,py,x1+t*dx,y1+t*dy);}
+function hitMark(x,y){const tol=16/(_view.scale||1);const M=DRAW.marks||[];
+  for(let i=M.length-1;i>=0;i--){const m=M[i];
+    if(m.t==="text"){const w=(m.text||"").length*(m.size||20)*0.6,h=(m.size||20);
+      if(Math.abs(x-m.x)<=w/2+tol&&Math.abs(y-m.y)<=h/2+tol)return m;}
+    else if(distSeg(x,y,m.x1,m.y1,m.x2,m.y2)<=tol)return m;}
+  return null;}
+function drawMark(c,m){
+  c.save();c.lineCap="round";c.lineJoin="round";
+  if(m.t==="text"){
+    c.font="700 "+(m.size||20)+"px 'Source Serif 4',Georgia,serif";
+    c.textAlign="center";c.textBaseline="middle";
+    const w=c.measureText(m.text||"").width+14,h=(m.size||20)+10;
+    c.fillStyle=DRAW.night?"rgba(20,22,28,.82)":"rgba(255,255,255,.86)";
+    c.beginPath();c.rect(m.x-w/2,m.y-h/2,w,h);c.fill();
+    c.fillStyle=m.color||"#E8451F";c.fillText(m.text||"",m.x,m.y);
+    c.restore();return;}
+  const wd=m.width||6;c.strokeStyle=m.color||"#E8451F";c.fillStyle=m.color||"#E8451F";c.lineWidth=wd;
+  const ang=Math.atan2(m.y2-m.y1,m.x2-m.x1),len=dist(m.x1,m.y1,m.x2,m.y2);
+  if(m.t==="arrow"){
+    const head=Math.min(26,Math.max(12,wd*3.2));
+    const ex=m.x2-Math.cos(ang)*head*0.6, ey=m.y2-Math.sin(ang)*head*0.6;
+    c.beginPath();c.moveTo(m.x1,m.y1);c.lineTo(ex,ey);c.stroke();
+    c.beginPath();c.moveTo(m.x2,m.y2);
+    c.lineTo(m.x2-Math.cos(ang-0.42)*head,m.y2-Math.sin(ang-0.42)*head);
+    c.lineTo(m.x2-Math.cos(ang+0.42)*head,m.y2-Math.sin(ang+0.42)*head);
+    c.closePath();c.fill();
+  }else{ // Maßband
+    c.setLineDash([]);c.lineWidth=Math.max(3,wd*0.7);
+    c.beginPath();c.moveTo(m.x1,m.y1);c.lineTo(m.x2,m.y2);c.stroke();
+    const t=12;
+    [[m.x1,m.y1],[m.x2,m.y2]].forEach(pt=>{c.beginPath();
+      c.moveTo(pt[0]-Math.sin(ang)*t,pt[1]+Math.cos(ang)*t);
+      c.lineTo(pt[0]+Math.sin(ang)*t,pt[1]-Math.cos(ang)*t);c.stroke();});
+    const mx=(m.x1+m.x2)/2,my=(m.y1+m.y2)/2;
+    const lab=markMeter(len).toFixed(1).replace(".",",")+" m";
+    c.font="700 17px 'Source Serif 4',Georgia,serif";c.textAlign="center";c.textBaseline="middle";
+    const w=c.measureText(lab).width+14;
+    c.fillStyle=DRAW.night?"rgba(20,22,28,.86)":"rgba(255,255,255,.9)";
+    c.beginPath();c.rect(mx-w/2,my-14,w,26);c.fill();
+    c.fillStyle=m.color||"#E8451F";c.fillText(lab,mx,my);
+  }
+  c.restore();}
 function drawOrder(){return DRAW.objects.map((o,i)=>[o,i]).sort((a,b)=>(objDef(a[0].type).layer-objDef(b[0].type).layer)||(a[1]-b[1])).map(p=>p[0]);}
 function render(){
   if(!_ctx)return;
@@ -7960,8 +8056,11 @@ function render(){
   for(let x=40;x<_W;x+=40){_ctx.beginPath();_ctx.moveTo(x,0);_ctx.lineTo(x,_H);_ctx.stroke();}
   for(let y=40;y<_H;y+=40){_ctx.beginPath();_ctx.moveTo(0,y);_ctx.lineTo(_W,y);_ctx.stroke();}
   drawOrder().forEach(o=>{const img=OBJ_IMG[o.type];if(!img||!img.complete)return;const wh=objWH(o);
-    _ctx.save();_ctx.translate(o.x,o.y);_ctx.rotate(o.rot||0);_ctx.drawImage(img,-wh.w/2,-wh.h/2,wh.w,wh.h);_ctx.restore();});
+    _ctx.save();_ctx.translate(o.x,o.y);_ctx.rotate(o.rot||0);_ctx.drawImage(img,-wh.w/2,-wh.h/2,wh.w,wh.h);_ctx.restore();
+    drawProps(_ctx,o);});
   _ctx.drawImage(_sCanvas,0,0,_W,_H);
+  (DRAW.marks||[]).forEach(m=>drawMark(_ctx,m));
+  if(_curMark)drawMark(_ctx,_curMark);
   DRAW.objects.forEach(o=>{if(!o.order)return;_ctx.save();_ctx.fillStyle="#E8451F";_ctx.beginPath();_ctx.arc(o.x,o.y,13,0,7);_ctx.fill();
     _ctx.fillStyle="#fff";_ctx.font="bold 16px Arial,sans-serif";_ctx.textAlign="center";_ctx.textBaseline="middle";_ctx.fillText(String(o.order),o.x,o.y+1);_ctx.restore();});
   const m=sel();
@@ -7990,11 +8089,13 @@ function steerTo(o,px,py){
   o.rot=Math.atan2(px-nrx,-(py-nry));
 }
 function toggleOrder(o){
+  pushUndo();
   if(o.order){delete o.order;const list=DRAW.objects.filter(x=>x.order).sort((a,b)=>a.order-b.order);list.forEach((x,i)=>x.order=i+1);}
   else{const mx=DRAW.objects.reduce((m,x)=>Math.max(m,x.order||0),0);o.order=mx+1;}
 }
 function onDown(e){
   e.preventDefault();
+  if(_playing)return;
   if(DRAW.drawerOpen){closeTafelDrawer();return;}
   try{_board.setPointerCapture(e.pointerId);}catch(_){}
   _pointers.set(e.pointerId,{x:e.clientX,y:e.clientY});
@@ -8017,6 +8118,7 @@ function onDown(e){
   if(DRAW.tool==="select"){
     if(DRAW.orderMode){const o=hitObject(x,y);if(o&&objDef(o.type).kind==="vehicle"){toggleOrder(o);persistBoard();render();}return;}
     const isRoadKind=t=>{const od=objDef(t);return od&&(od.kind==="road"||od.kind==="road_v");};
+    _dragSnap=boardSnap();
     const m=sel();
     if(m&&!isRoadKind(m.type)){const wh=objWH(m);
       const rh=worldOf(m,0,-(wh.h/2+24));if(dist(x,y,rh[0],rh[1])<=20){_drag={mode:"rotate",o:m};return;}
@@ -8024,7 +8126,7 @@ function onDown(e){
     }
     const o=hitObject(x,y);
     if(o){DRAW.selId=o.id;
-      if(isRoadKind(o.type)){render();return;} // Straßen: nur auswählbar (zum Löschen), nicht verschiebbar
+      if(isRoadKind(o.type)){_drag={mode:"move",o,ox:x-o.x,oy:y-o.y};render();return;} // Straßen lassen sich verschieben und rasten aneinander ein
       if(objDef(o.type).kind==="vehicle"){const lp=toLocal(o,x,y),wh=objWH(o);
         if(lp[1]<-wh.h*0.18){_drag={mode:"steer",o};}else{_drag={mode:"move",o,ox:x-o.x,oy:y-o.y};}
       }else{_drag={mode:"move",o,ox:x-o.x,oy:y-o.y};}
@@ -8034,14 +8136,25 @@ function onDown(e){
     return;
   }
   if(DRAW.tool==="erase"&&DRAW.eraseStroke){
-    // Ganzen Strich entfernen, der angetippt wurde
+    // Angetippten Strich ganz entfernen, sonst das angetippte Objekt
     const hitR=Math.max(14,DRAW.width*3*(DRAW.eraseSize||2));
     let removed=false;
     for(let i=DRAW.strokes.length-1;i>=0;i--){ const st=DRAW.strokes[i]; if(st.erase)continue;
-      if((st.pts||[]).some(pt=>dist(pt[0],pt[1],x,y)<=hitR)){ DRAW.strokes.splice(i,1); removed=true; break; }
+      if((st.pts||[]).some(pt=>dist(pt[0],pt[1],x,y)<=hitR)){ pushUndo(); DRAW.strokes.splice(i,1); removed=true; break; }
+    }
+    if(!removed){ const hm=hitMark(x,y);
+      if(hm){ pushUndo(); DRAW.marks=DRAW.marks.filter(m=>m!==hm); removed=true; }
+    }
+    if(!removed){ const ho=hitObject(x,y);
+      if(ho){ pushUndo(); DRAW.objects=DRAW.objects.filter(o=>o.id!==ho.id); if(DRAW.selId===ho.id)DRAW.selId=null; removed=true; }
     }
     if(removed){ rebuildStrokes(); render(); persistBoard(); }
     return;
+  }
+  if(DRAW.tool==="text"){ openTextMarkSheet(x,y); return; }
+  if(DRAW.tool==="arrow"||DRAW.tool==="mass"){
+    _curMark={t:DRAW.tool==="arrow"?"arrow":"mass",x1:x,y1:y,x2:x,y2:y,color:DRAW.color,width:DRAW.width};
+    render();return;
   }
   _cur={color:DRAW.color,width:DRAW.tool==="erase"?Math.max(12,DRAW.width*3*(DRAW.eraseSize||2)):DRAW.width,erase:DRAW.tool==="erase",pts:[[x,y]]};
   drawSeg(_cur);render();
@@ -8062,57 +8175,303 @@ function onMove(e){
   }
   if(_pinchStart)return; // ein Finger vom Pinch noch unten - warten bis beide los sind
   if(_drag){const a=pos(e),x=a[0],y=a[1];const o=_drag.o;
-    if(_drag.mode==="move"){o.x=x-_drag.ox;o.y=y-_drag.oy;}
+    if(_drag.mode==="move"){o.x=x-_drag.ox;o.y=y-_drag.oy;if(isRoadType(o.type))snapRoad(o);}
     else if(_drag.mode==="steer"){steerTo(o,x,y);}
     else if(_drag.mode==="rotate"){o.rot=Math.atan2(x-o.x,-(y-o.y));}
     else if(_drag.mode==="resize"){const d=dist(x,y,o.x,o.y);o.scale=Math.max(0.35,Math.min(4,_drag.sc0*(d/_drag.d0)));}
     _moved=true;scheduleRender();return;}
+  if(_curMark){const a=pos(e);_curMark.x2=a[0];_curMark.y2=a[1];_moved=true;scheduleRender();return;}
   if(_cur){const a=pos(e),x=a[0],y=a[1],l=_cur.pts[_cur.pts.length-1];
     if(Math.abs(x-l[0])<1&&Math.abs(y-l[1])<1)return;_cur.pts.push([x,y]);drawSeg(_cur);scheduleRender();}
 }
 function onUp(e){
   if(e&&_pointers.has(e.pointerId)){_pointers.delete(e.pointerId);try{_board.releasePointerCapture(e.pointerId);}catch(_){}}
   if(_pinchStart){ if(_pointers.size<2){_pinchStart=null;render();} return; }
-  if(_drag){_drag=null;render();persistBoard();return;}
-  if(_cur){DRAW.strokes.push(_cur);DRAW.history.push({t:"stroke"});_cur=null;persistBoard();}
+  if(_drag){if(_moved&&_dragSnap)pushPast(_dragSnap);_dragSnap=null;_drag=null;if(DRAW.anim)animSaveCurrent();render();persistBoard();return;}
+  if(_curMark){
+    if(dist(_curMark.x1,_curMark.y1,_curMark.x2,_curMark.y2)>14){pushUndo();DRAW.marks.push(Object.assign({id:DRAW.seq++},_curMark));persistBoard();}
+    _curMark=null;render();return;
+  }
+  if(_cur){pushUndo();DRAW.strokes.push(_cur);_cur=null;persistBoard();}
 }
-function placeObject(type){const d=objDef(type);if(!d)return;const autoScale=(d.kind==="road")?((d.w===d.h)?(Math.min(_W,_H)/d.w):(_W/d.w)):(d.kind==="road_v"?(_H/d.h):1);
-  // Straße/Kreuzung: alle bisherigen road-Objekte ersetzen
-  if(d.kind==="road"||d.kind==="road_v"){ DRAW.objects=DRAW.objects.filter(o=>{ const od=objDef(o.type); return !od||(od.kind!=="road"&&od.kind!=="road_v"); }); DRAW.history=DRAW.history.filter(h=>{ const ho=DRAW.objects.find(o=>o.id===h.id); return h.t!=="object"||ho; }); }
-  const o={id:DRAW.seq++,type,x:_W/2,y:_H/2,scale:autoScale,rot:0};DRAW.objects.push(o);DRAW.history.push({t:"object",id:o.id});DRAW.selId=o.id;DRAW.tool="select";setActiveTool();
+function isRoadType(t){const od=objDef(t);return !!od&&(od.kind==="road"||od.kind==="road_v");}
+/* Mitte des gerade sichtbaren Ausschnitts - damit Neues auch im Zoom dort landet, wo man hinschaut */
+function viewCenter(){return [(_W/2-_view.x)/_view.scale,(_H/2-_view.y)/_view.scale];}
+function placeObject(type){const d=objDef(type);if(!d)return;let autoScale=(d.kind==="road")?((d.w===d.h)?(Math.min(_W,_H)/d.w):(_W/d.w)):(d.kind==="road_v"?(_H/d.h):1);
+  pushUndo();
+  // Weitere Straßenteile bekommen den Maßstab der ersten Straße, damit die Module zusammenpassen
+  if(isRoadType(type)){
+    const first=DRAW.objects.find(o=>isRoadType(o.type));
+    if(first){ const fd=objDef(first.type);
+      const fBase=(fd.kind==="road")?((fd.w===fd.h)?(Math.min(_W,_H)/fd.w):(_W/fd.w)):(_H/fd.h);
+      if(fBase>0)autoScale=autoScale*((first.scale||1)/fBase);
+    }
+  }
+  const vc=viewCenter();
+  const o={id:DRAW.seq++,type,x:vc[0],y:vc[1],scale:autoScale,rot:0};DRAW.objects.push(o);DRAW.selId=o.id;DRAW.tool="select";setActiveTool();
   DRAW.recentTypes=[type,...(DRAW.recentTypes||[]).filter(t=>t!==type)].slice(0,12);
   try{localStorage.setItem("serband-tafel-recent",JSON.stringify(DRAW.recentTypes));}catch(e){}
   if(DRAW.uiTab==="objekte"&&DRAW.cat==="zuletzt")renderObjGrid();
   render();persistBoard();}
-function placePreset(key){const P=PRESETS[key];if(!P)return;const cx=_W/2,cy=_H/2;
+function placePreset(key){const P=PRESETS[key];if(!P)return;pushUndo();const vc=viewCenter(),cx=vc[0],cy=vc[1];
   // Bug-Fix: neue Szene ersetzt die alte komplett, statt sie zu überlagern
-  DRAW.objects=[]; DRAW.history=DRAW.history.filter(h=>h.t!=="object"); DRAW.selId=null;
+  DRAW.objects=[]; DRAW.marks=[]; DRAW.steps=[]; DRAW.stepIdx=0; animStop(); DRAW.history=DRAW.history.filter(h=>h.t!=="object"); DRAW.selId=null;
   const anchor=P.items.find(it=>it.t==="kreuzung"||it.t==="kreisverkehr");
   const k=anchor?(_W/objDef(anchor.t).w):1;
-  P.items.forEach(it=>{const o={id:DRAW.seq++,type:it.t,x:cx+(it.dx||0)*k,y:cy+(it.dy||0)*k,rot:it.rot||0,scale:(it.s||1)*k};DRAW.objects.push(o);DRAW.history.push({t:"object",id:o.id});});DRAW.selId=null;DRAW.tool="select";setActiveTool();closeTafelDrawer();render();persistBoard();toast(P.label+" gesetzt");}
-function dupSel(){const m=sel();if(!m)return;const n=Object.assign({},m,{id:DRAW.seq++,x:m.x+26,y:m.y+26});delete n.order;DRAW.objects.push(n);DRAW.history.push({t:"object",id:n.id});DRAW.selId=n.id;render();persistBoard();}
-function undo(){const op=DRAW.history.pop();if(!op)return;if(op.t==="stroke"){DRAW.strokes.pop();rebuildStrokes();}else{DRAW.objects=DRAW.objects.filter(o=>o.id!==op.id);if(DRAW.selId===op.id)DRAW.selId=null;}render();persistBoard();}
-function clearBoard(){if(!DRAW.strokes.length&&!DRAW.objects.length)return;if(!confirm("Tafel komplett leeren?"))return;DRAW.strokes=[];DRAW.objects=[];DRAW.history=[];DRAW.selId=null;rebuildStrokes();render();persistBoard();toast("Tafel geleert");}
+  P.items.forEach(it=>{const o={id:DRAW.seq++,type:it.t,x:cx+(it.dx||0)*k,y:cy+(it.dy||0)*k,rot:it.rot||0,scale:(it.s||1)*k};DRAW.objects.push(o);DRAW.history.push({t:"object",id:o.id});});animNeustart();DRAW.selId=null;DRAW.tool="select";setActiveTool();closeTafelDrawer();render();persistBoard();toast(P.label+" gesetzt");}
+function dupSel(){const m=sel();if(!m)return;pushUndo();const n=Object.assign({},m,{id:DRAW.seq++,x:m.x+26,y:m.y+26});delete n.order;DRAW.objects.push(n);DRAW.history.push({t:"object",id:n.id});DRAW.selId=n.id;render();persistBoard();}
+/* Zurueck/Vor arbeiten mit Schnappschuessen der ganzen Tafel.
+   Damit lassen sich auch Verschieben, Drehen und Loeschen rueckgaengig machen. */
+function boardSnap(){try{return JSON.stringify({o:DRAW.objects,s:DRAW.strokes,m:DRAW.marks,st:DRAW.steps,si:DRAW.stepIdx,q:DRAW.seq});}catch(e){return null;}}
+function pushPast(js){if(!js)return;DRAW.past.push(js);if(DRAW.past.length>40)DRAW.past.shift();DRAW.future.length=0;updateUndoUI();}
+function pushUndo(){pushPast(boardSnap());}
+function applySnap(js){try{const d=JSON.parse(js);DRAW.objects=d.o||[];DRAW.strokes=d.s||[];DRAW.marks=d.m||[];DRAW.steps=d.st||[];DRAW.stepIdx=Math.min(d.si||0,Math.max(0,(d.st||[]).length-1));DRAW.seq=d.q||1;}catch(e){return;}
+  animBarUI();
+  if(!DRAW.objects.some(o=>o.id===DRAW.selId))DRAW.selId=null;
+  rebuildStrokes();render();persistBoard();updateUndoUI();}
+function undo(){if(_playing)animStop();if(!DRAW.past.length){toast("Nichts zum Zurücknehmen");return;}const now=boardSnap();const js=DRAW.past.pop();if(now)DRAW.future.push(now);applySnap(js);}
+function redo(){if(_playing)animStop();if(!DRAW.future.length){toast("Nichts zum Wiederholen");return;}const now=boardSnap();const js=DRAW.future.pop();if(now)DRAW.past.push(now);applySnap(js);}
+function updateUndoUI(){const u=$("#dbUndo"),r=$("#dbRedo");
+  if(u)u.classList.toggle("db-off",!DRAW.past.length);
+  if(r)r.classList.toggle("db-off",!DRAW.future.length);}
+function clearBoard(){if(!DRAW.strokes.length&&!DRAW.objects.length&&!(DRAW.marks||[]).length)return;if(!confirm("Tafel komplett leeren?"))return;pushUndo();DRAW.strokes=[];DRAW.objects=[];DRAW.marks=[];DRAW.steps=[];DRAW.stepIdx=0;animStop();DRAW.anim=false;animBarUI();DRAW.history=[];DRAW.selId=null;rebuildStrokes();render();persistBoard();toast("Tafel geleert");}
+/* Blinker, Bremslicht, toter Winkel und Ampelphase über dem Objekt */
+const AMPEL_LAMPEN={ampel:{vw:34,vh:78,cx:17,r:9.3,cy:[18,39,60]},fussampel:{vw:30,vh:56,cx:15,r:9,cy:[16,40]}};
+const AMPEL_PHASEN={rot:[0],rotgelb:[0,1],gelb:[1],gruen:[2]};
+function blinkAn(){return Math.floor(Date.now()/450)%2===0;}
+function drawProps(c,o){
+  const pr=o.props||{}; if(!pr.bl&&!pr.br&&!pr.bk&&!pr.tw&&!pr.ph)return;
+  const d=objDef(o.type),wh=objWH(o); if(!d)return;
+  c.save();c.translate(o.x,o.y);c.rotate(o.rot||0);
+  const hw=wh.w/2,hh=wh.h/2,k=(o.scale||1);
+  if(pr.ph&&AMPEL_LAMPEN[o.type]){
+    const L=AMPEL_LAMPEN[o.type],an=AMPEL_PHASEN[pr.ph]||[],
+      farbe=["#ff4530","#f5c518","#3ecf6a"];
+    L.cy.forEach((cy,i)=>{
+      const x=(L.cx-L.vw/2)*(wh.w/L.vw), y=(cy-L.vh/2)*(wh.h/L.vh), r=L.r*(wh.w/L.vw);
+      c.beginPath();c.arc(x,y,r,0,7);c.fillStyle=an.indexOf(i)>=0?farbe[i]:"#181a1d";c.fill();});
+  }
+  if(d.kind==="vehicle"){
+    if(pr.tw){ // toter Winkel: die Bereiche schräg hinter dem Fahrzeug
+      c.fillStyle="rgba(232,69,31,.16)";c.strokeStyle="rgba(232,69,31,.5)";c.lineWidth=1.5;
+      [-1,1].forEach(sx=>{c.beginPath();
+        c.moveTo(sx*hw,hh*0.1);c.lineTo(sx*hw*4.6,hh*1.5);c.lineTo(sx*hw*1.1,hh*2.6);c.closePath();
+        c.fill();c.stroke();});
+    }
+    if(pr.bk){ // Bremslicht
+      c.fillStyle="rgba(255,45,30,.95)";
+      [-1,1].forEach(sx=>{c.beginPath();c.ellipse(sx*hw*0.55,hh*0.88,Math.max(3,4*k),Math.max(2,2.6*k),0,0,7);c.fill();});
+    }
+    if((pr.bl||pr.br)&&blinkAn()){
+      const sx=pr.bl?-1:1;c.fillStyle="#ffb300";
+      [[sx*hw*0.78,-hh*0.86],[sx*hw*0.78,hh*0.86]].forEach(pt=>{
+        c.beginPath();c.arc(pt[0],pt[1],Math.max(3,4.2*k),0,7);c.fill();});
+    }
+  }
+  c.restore();}
+function blinkerAktiv(){return (DRAW.objects||[]).some(o=>o.props&&(o.props.bl||o.props.br));}
+function blinkTicker(){
+  if(_blinkIv)clearInterval(_blinkIv);
+  _blinkIv=setInterval(()=>{
+    if(!document.getElementById("board")){clearInterval(_blinkIv);_blinkIv=0;return;}
+    if(blinkerAktiv())render();
+  },450);}
+/* ---- Animation: Schritte aufnehmen und abspielen ----
+   Ein Schritt merkt sich Position, Drehung und Größe aller Objekte.
+   Beim Abspielen rechnet die App die Zwischenbilder selbst aus. */
+function stepState(){const st={};DRAW.objects.forEach(o=>{st[o.id]={x:o.x,y:o.y,rot:o.rot||0,scale:o.scale||1,p:Object.assign({},o.props||{})};});return st;}
+function applyStepState(st){if(!st)return;DRAW.objects.forEach(o=>{const s=st[o.id];if(!s)return;o.x=s.x;o.y=s.y;o.rot=s.rot||0;o.scale=s.scale||1;if(s.p)o.props=Object.assign({},s.p);});}
+function animOn(){
+  if(!DRAW.objects.length){toast("Erst Objekte auf die Tafel setzen");return;}
+  DRAW.anim=true;DRAW.tool="select";DRAW.selId=null;setActiveTool();
+  if(!DRAW.steps.length){DRAW.steps=[{id:DRAW.seq++,states:stepState()}];DRAW.stepIdx=0;}
+  closeTafelDrawer();animBarUI();render();persistBoard();
+  toast("Schritt 1 aufgenommen · Objekte schieben, dann + Schritt");
+}
+function animOff(){animStop();DRAW.anim=false;animBarUI();render();}
+function animAddStep(){
+  if(!DRAW.anim)return;pushUndo();
+  if(!DRAW.steps.length){DRAW.steps=[{id:DRAW.seq++,states:stepState()}];DRAW.stepIdx=0;}
+  else{DRAW.steps.splice(DRAW.stepIdx+1,0,{id:DRAW.seq++,states:stepState()});DRAW.stepIdx++;}animBarUI();persistBoard();toast("Schritt "+(DRAW.stepIdx+1)+" aufgenommen");
+}
+function animGoto(i){
+  if(!DRAW.steps.length)return;
+  DRAW.stepIdx=Math.max(0,Math.min(DRAW.steps.length-1,i));
+  applyStepState(DRAW.steps[DRAW.stepIdx].states);
+  animBarUI();render();
+}
+function animSaveCurrent(){ // laufende Korrektur: der gezeigte Schritt übernimmt die neue Lage
+  if(!DRAW.anim||_playing||!DRAW.steps[DRAW.stepIdx])return;
+  DRAW.steps[DRAW.stepIdx].states=stepState();persistBoard();
+}
+function animDelStep(){
+  if(!DRAW.anim||DRAW.steps.length<2){toast("Mindestens ein Schritt bleibt");return;}
+  pushUndo();DRAW.steps.splice(DRAW.stepIdx,1);
+  DRAW.stepIdx=Math.min(DRAW.stepIdx,DRAW.steps.length-1);
+  applyStepState(DRAW.steps[DRAW.stepIdx].states);animBarUI();render();persistBoard();toast("Schritt gelöscht");
+}
+function animSpeed(){
+  const stufen=[2000,1200,700],alt=DRAW.animMs;
+  DRAW.animMs=stufen[(stufen.indexOf(DRAW.animMs)+1)%stufen.length]||1200;
+  if(_playing&&_playT0){ // im Lauf umschalten, ohne dass das Fahrzeug springt
+    const jetzt=performance.now(),fort=Math.max(0,Math.min(1,(jetzt-_playT0)/alt));
+    _playT0=jetzt-fort*DRAW.animMs;}
+  animBarUI();toast(DRAW.animMs===2000?"Langsam":(DRAW.animMs===1200?"Normal":"Schnell"));
+}
+/* Weiche Fahrlinie durch die Schritt-Positionen (Catmull-Rom, zentripetal).
+   Zentripetal heißt: keine Schleifen und kein Überschwingen in engen Kurven. */
+function crEval(p0,p1,p2,p3,t){
+  const kn=(ti,a,b)=>ti+Math.pow(Math.max(1e-6,Math.hypot(b[0]-a[0],b[1]-a[1])),0.5);
+  const t0=0,t1=kn(t0,p0,p1),t2=kn(t1,p1,p2),t3=kn(t2,p2,p3);
+  const tt=t1+(t2-t1)*t;
+  const mix=(a,b,ta,tb)=>{const d=(tb-ta)||1e-6,w=(tb-tt)/d,v=(tt-ta)/d;return [a[0]*w+b[0]*v,a[1]*w+b[1]*v];};
+  const A1=mix(p0,p1,t0,t1),A2=mix(p1,p2,t1,t2),A3=mix(p2,p3,t2,t3);
+  const B1=mix(A1,A2,t0,t2),B2=mix(A2,A3,t1,t3);
+  return mix(B1,B2,t1,t2);}
+function segPunkte(id,i){ // Stützpunkte für das Segment von Schritt i nach i+1
+  const S=DRAW.steps,g=k=>{const st=S[k]&&S[k].states[id];return st?[st.x,st.y]:null;};
+  const p1=g(i),p2=g(i+1); if(!p1||!p2)return null;
+  const p0=g(i-1)||[p1[0]*2-p2[0],p1[1]*2-p2[1]];
+  const p3=g(i+2)||[p2[0]*2-p1[0],p2[1]*2-p1[1]];
+  return [p0,p1,p2,p3];}
+function segTabelle(id,i){ // Bogenlängen-Tabelle für gleichmäßiges Tempo
+  const P=segPunkte(id,i); if(!P)return null;
+  const N=24,pts=[],cum=[0];
+  for(let k=0;k<=N;k++)pts.push(crEval(P[0],P[1],P[2],P[3],k/N));
+  for(let k=1;k<=N;k++)cum.push(cum[k-1]+Math.hypot(pts[k][0]-pts[k-1][0],pts[k][1]-pts[k-1][1]));
+  return {pts,cum,len:cum[N]};}
+function segPos(id,i,e){ // Position und Richtung bei Fortschritt e (0..1)
+  const T=segTabelle(id,i); if(!T)return null;
+  if(T.len<0.001)return {x:T.pts[0][0],y:T.pts[0][1],ang:null};
+  const ziel=T.len*Math.max(0,Math.min(1,e));
+  let k=1; while(k<T.cum.length-1&&T.cum[k]<ziel)k++;
+  const a=T.pts[k-1],b=T.pts[k],sp=T.cum[k]-T.cum[k-1];
+  const f=sp>0?(ziel-T.cum[k-1])/sp:0;
+  const x=a[0]+(b[0]-a[0])*f,y=a[1]+(b[1]-a[1])*f;
+  return {x,y,ang:Math.atan2(b[1]-a[1],b[0]-a[0])};}
+function istFahrzeug(o){const d=objDef(o.type);return !!d&&d.kind==="vehicle";}
+function lerpAng(a,b,t){let d=b-a;while(d>Math.PI)d-=Math.PI*2;while(d<-Math.PI)d+=Math.PI*2;return a+d*t;}
+function animFrame(ts){
+  if(!_playing)return;
+  if(!document.getElementById("board")){_playing=false;_playRaf=0;return;} // Seite verlassen
+  if(!_playT0)_playT0=ts;
+  const von=DRAW.steps[_playFrom],bis=DRAW.steps[_playFrom+1];
+  if(!bis){animStop(true);return;}
+  let t=(ts-_playT0)/DRAW.animMs; if(t>1)t=1;
+  const e=t<.5?2*t*t:1-Math.pow(-2*t+2,2)/2; // weich anfahren und ausrollen
+  DRAW.objects.forEach(o=>{const a=von.states[o.id],b=bis.states[o.id];if(!a||!b)return;
+    o.scale=(a.scale||1)+((b.scale||1)-(a.scale||1))*e;
+    o.props=Object.assign({},(e<0.5?a.p:b.p)||{});
+    const weg=dist(a.x,a.y,b.x,b.y);
+    const sp=DRAW.animKurve?segPos(o.id,_playFrom,e):null;
+    if(sp){o.x=sp.x;o.y=sp.y;}else{o.x=a.x+(b.x-a.x)*e;o.y=a.y+(b.y-a.y)*e;}
+    // Fahrzeuge drehen sich in die Fahrtrichtung, alles andere behält die eingestellte Drehung
+    if(DRAW.animKurve&&sp&&sp.ang!==null&&weg>10&&istFahrzeug(o))o.rot=sp.ang+Math.PI/2;
+    else o.rot=lerpAng(a.rot||0,b.rot||0,e);});
+  render();
+  if(t>=1){ _playFrom++; _playT0=0;
+    DRAW.stepIdx=_playFrom;animBarUI();
+    if(_playFrom>=DRAW.steps.length-1){animStop(true);return;} }
+  _playRaf=requestAnimationFrame(animFrame);
+}
+function animPlay(){
+  if(!DRAW.anim)return;
+  if(_playing){animStop(true);return;}
+  if(DRAW.steps.length<2){toast("Mindestens zwei Schritte nötig");return;}
+  DRAW.selId=null;
+  _playFrom=(DRAW.stepIdx>=DRAW.steps.length-1)?0:DRAW.stepIdx;
+  applyStepState(DRAW.steps[_playFrom].states);
+  _playing=true;_playT0=0;animBarUI();
+  _playRaf=requestAnimationFrame(animFrame);
+}
+/* Nach neuer Vorlage: Schritt 1 aus dem neuen Bild aufnehmen */
+function animNeustart(){
+  if(!DRAW.anim)return;
+  if(!DRAW.objects.length){DRAW.anim=false;animBarUI();return;}
+  DRAW.steps=[{id:DRAW.seq++,states:stepState()}];DRAW.stepIdx=0;animBarUI();}
+function animStop(endeZeigen){
+  if(_playRaf)cancelAnimationFrame(_playRaf);
+  _playRaf=0;_playT0=0;
+  if(_playing){_playing=false;
+    if(endeZeigen){DRAW.stepIdx=Math.min(_playFrom+1,DRAW.steps.length-1);applyStepState((DRAW.steps[DRAW.stepIdx]||{}).states);}
+  }
+  animBarUI();render();
+}
+function animBarUI(){
+  const bar=$("#animBar");if(!bar)return;
+  bar.classList.toggle("on",!!DRAW.anim);
+  const lab=$("#anStep");if(lab)lab.textContent=DRAW.steps.length?("Schritt "+(DRAW.stepIdx+1)+" / "+DRAW.steps.length):"—";
+  const pl=$("#anPlay");if(pl)pl.textContent=_playing?"⏸":"▶";
+  const sp=$("#anSpeed");if(sp)sp.textContent=DRAW.animMs===2000?"0,5×":(DRAW.animMs===1200?"1×":"2×");
+  const cv=$("#anCurve");if(cv)cv.classList.toggle("on",!!DRAW.animKurve);
+}
+/* Lichter, toter Winkel und Ampelphase für das gewählte Objekt */
+function openObjPropsSheet(o){
+  const d=objDef(o.type); if(!d)return;
+  const pr=o.props||{};
+  const istAmpel=!!AMPEL_LAMPEN[o.type], istFz=d.kind==="vehicle";
+  if(!istAmpel&&!istFz){toast("Für dieses Objekt gibt es keine Lichter");return;}
+  const sw=(k,l)=>`<button class="pr-sw${pr[k]?' on':''}" data-pk="${k}">${l}</button>`;
+  const ph=(k,l)=>`<button class="pr-sw${pr.ph===k?' on':''}" data-ph="${k}">${l}</button>`;
+  openSheet(`<div class="sheet-h">${esc(d.label)}</div>
+    ${istFz?`<div class="pp-lab">Lichter</div>
+      <div class="pr-row">${sw("bl","Blinker links")}${sw("br","Blinker rechts")}</div>
+      <div class="pr-row">${sw("bk","Bremslicht")}${sw("tw","Toter Winkel")}</div>`:""}
+    ${istAmpel?`<div class="pp-lab">Ampelphase</div>
+      <div class="pr-row">${ph("rot","Rot")}${ph("rotgelb","Rot-Gelb")}</div>
+      <div class="pr-row">${ph("gelb","Gelb")}${ph("gruen","Grün")}</div>
+      <div class="pr-row">${ph("","Aus")}</div>`:""}
+    <div class="es-actions" style="margin-top:12px;"><button class="es-act" id="prOk">Fertig</button></div>`);
+  const anwenden=()=>{ if(DRAW.anim)animSaveCurrent(); render(); persistBoard(); };
+  $("#sheet").querySelectorAll("[data-pk]").forEach(b=>b.addEventListener("click",()=>{
+    pushUndo(); o.props=Object.assign({},o.props||{});
+    const k=b.dataset.pk;
+    o.props[k]=!o.props[k];
+    if(k==="bl"&&o.props.bl)o.props.br=false;
+    if(k==="br"&&o.props.br)o.props.bl=false;
+    openObjPropsSheet(o); anwenden();}));
+  $("#sheet").querySelectorAll("[data-ph]").forEach(b=>b.addEventListener("click",()=>{
+    pushUndo(); o.props=Object.assign({},o.props||{});
+    o.props.ph=b.dataset.ph||null;
+    openObjPropsSheet(o); anwenden();}));
+  $("#prOk").addEventListener("click",closeSheet);
+}
+/* Text auf die Tafel setzen */
+function openTextMarkSheet(x,y){
+  openSheet(`<div class="sheet-h">Text</div>
+    <div class="field"><input id="tmIn" placeholder="Kurzer Text, z.B. Schulterblick" maxlength="34"></div>
+    <div class="es-actions" style="margin-top:6px;"><button class="es-act" id="tmOk">Auf die Tafel setzen</button></div>`);
+  const inp=$("#tmIn"); if(inp)setTimeout(()=>inp.focus(),120);
+  const setzen=()=>{const t=((inp&&inp.value)||"").trim(); closeSheet(); if(!t)return;
+    pushUndo();
+    DRAW.marks.push({id:DRAW.seq++,t:"text",x,y,text:t,color:DRAW.color,size:Math.max(18,DRAW.width*3)});
+    render();persistBoard();};
+  $("#tmOk").addEventListener("click",setzen);
+  if(inp)inp.addEventListener("keydown",ev=>{if(ev.key==="Enter")setzen();});
+}
 /* Radierer-Optionen */
 function openEraseSheet(){
   const sizes=[["1","Fein"],["2","Mittel"],["4","Grob"]];
   openSheet(`<div class="sheet-h">Radierer</div>
     <div class="field"><label>Größe</label><div class="er-sizes">${sizes.map(([v,l])=>`<button class="er-size${(""+DRAW.eraseSize)===v?' on':''}" data-ersize="${v}">${l}</button>`).join("")}</div></div>
-    <div class="field"><div class="toggle-row"><div><div class="tc-name" style="font-weight:800;font-size:14px;">Ganze Striche entfernen</div><div class="tc-sub" style="font-size:12.5px;color:var(--muted);margin-top:2px;">Tippe einen Strich an, er verschwindet ganz</div></div><button class="check-toggle${DRAW.eraseStroke?' on':''}" id="erStroke"></button></div></div>
+    <div class="field"><div class="toggle-row"><div><div class="tc-name" style="font-weight:800;font-size:14px;">Ganze Striche und Objekte entfernen</div><div class="tc-sub" style="font-size:12.5px;color:var(--muted);margin-top:2px;">Tippe einen Strich oder ein Objekt an, es verschwindet ganz</div></div><button class="check-toggle${DRAW.eraseStroke?' on':''}" id="erStroke"></button></div></div>
     <div class="es-actions" style="margin-top:6px;">
       <button class="es-act" id="erClearStrokes">Nur Zeichnungen löschen</button>
       <button class="es-act danger" id="erClearAll">Alles löschen (auch Objekte)</button>
     </div>`);
   document.querySelectorAll(".er-size").forEach(b=>b.addEventListener("click",()=>{ DRAW.eraseSize=+b.dataset.ersize; document.querySelectorAll(".er-size").forEach(x=>x.classList.toggle("on",x===b)); }));
   $("#erStroke").addEventListener("click",()=>{ DRAW.eraseStroke=!DRAW.eraseStroke; $("#erStroke").classList.toggle("on",DRAW.eraseStroke); });
-  $("#erClearStrokes").addEventListener("click",()=>{ if(DRAW.strokes.length){ DRAW.strokes=[]; rebuildStrokes(); render(); persistBoard(); toast("Zeichnungen gelöscht"); } closeSheet(); });
-  $("#erClearAll").addEventListener("click",()=>{ DRAW.strokes=[];DRAW.objects=[];DRAW.history=[];DRAW.selId=null;rebuildStrokes();render();persistBoard();toast("Tafel geleert"); closeSheet(); });
+  $("#erClearStrokes").addEventListener("click",()=>{ if(DRAW.strokes.length){ pushUndo(); DRAW.strokes=[]; rebuildStrokes(); render(); persistBoard(); toast("Zeichnungen gelöscht"); } closeSheet(); });
+  $("#erClearAll").addEventListener("click",()=>{ pushUndo(); DRAW.strokes=[];DRAW.objects=[];DRAW.marks=[];DRAW.steps=[];DRAW.stepIdx=0;animStop();DRAW.anim=false;animBarUI();DRAW.history=[];DRAW.selId=null;rebuildStrokes();render();persistBoard();toast("Tafel geleert"); closeSheet(); });
 }
 function transformSel(act){const m=sel();if(!m)return;
+  if(act!=="done"&&act!=="dup"&&act!=="props")pushUndo();
   if(act==="rot")m.rot=((m.rot||0)+Math.PI/2)%(Math.PI*2);
   else if(act==="dup"){dupSel();return;}
   else if(act==="del"){DRAW.objects=DRAW.objects.filter(x=>x.id!==m.id);DRAW.history=DRAW.history.filter(o=>!(o.t==="object"&&o.id===m.id));DRAW.selId=null;}
+  else if(act==="props"){openObjPropsSheet(m);return;}
   else if(act==="done"){DRAW.selId=null;}
+  if(DRAW.anim)animSaveCurrent();
   render();persistBoard();
 }
 function exportBoard(){DRAW.selId=null;const _savedView=_view;_view={scale:1,x:0,y:0};render();try{const url=_board.toDataURL("image/png");const a=document.createElement("a");a.href=url;a.download="Tafel_"+heute().d.replace(/\./g,"-")+".png";a.click();toast("Als Bild exportiert");}catch(e){toast("Export nicht möglich");}finally{_view=_savedView;render();}}
@@ -8148,9 +8507,9 @@ function _doShareBoard(note){
     },"image/png");
   }catch(e){_view=_savedView;render();toast("Teilen nicht möglich");}
 }
-function persistBoard(){try{DB.boardCurrent={objects:DRAW.objects,strokes:DRAW.strokes,seq:DRAW.seq,night:!!DRAW.night};save();}catch(_){}}
-function saveBoard(){const name=((typeof prompt==="function"?prompt("Name für das Tafelbild:"):"")||"").trim();if(!name)return;if(!DB.boards)DB.boards=[];DB.boards.push({id:Date.now(),name,ts:heute().d,objects:JSON.parse(JSON.stringify(DRAW.objects)),strokes:JSON.parse(JSON.stringify(DRAW.strokes))});save();toast("Tafelbild gespeichert");}
-function loadBoard(id){const b=(DB.boards||[]).find(x=>x.id===id);if(!b)return;DRAW.objects=JSON.parse(JSON.stringify(b.objects||[]));DRAW.strokes=JSON.parse(JSON.stringify(b.strokes||[]));DRAW.selId=null;DRAW.seq=(DRAW.objects.reduce((m,o)=>Math.max(m,o.id||0),0)||0)+1;rebuildStrokes();render();persistBoard();closeTafelDrawer();toast("Tafelbild geladen");}
+function persistBoard(){try{DB.boardCurrent={objects:DRAW.objects,strokes:DRAW.strokes,marks:DRAW.marks,steps:DRAW.steps,kurve:!!DRAW.animKurve,seq:DRAW.seq,night:!!DRAW.night};save();}catch(_){}}
+function saveBoard(){const name=((typeof prompt==="function"?prompt("Name für das Tafelbild:"):"")||"").trim();if(!name)return;if(!DB.boards)DB.boards=[];DB.boards.push({id:Date.now(),name,ts:heute().d,objects:JSON.parse(JSON.stringify(DRAW.objects)),strokes:JSON.parse(JSON.stringify(DRAW.strokes)),marks:JSON.parse(JSON.stringify(DRAW.marks||[])),steps:JSON.parse(JSON.stringify(DRAW.steps||[]))});save();toast("Tafelbild gespeichert");}
+function loadBoard(id){const b=(DB.boards||[]).find(x=>x.id===id);if(!b)return;DRAW.objects=JSON.parse(JSON.stringify(b.objects||[]));DRAW.strokes=JSON.parse(JSON.stringify(b.strokes||[]));DRAW.marks=JSON.parse(JSON.stringify(b.marks||[]));DRAW.steps=JSON.parse(JSON.stringify(b.steps||[]));DRAW.stepIdx=0;DRAW.anim=DRAW.anim&&!!DRAW.steps.length;animBarUI();DRAW.selId=null;DRAW.seq=(DRAW.objects.reduce((m,o)=>Math.max(m,o.id||0),0)||0)+1;rebuildStrokes();render();persistBoard();closeTafelDrawer();toast("Tafelbild geladen");}
 function deleteBoard(id){if(!confirm("Dieses Tafelbild löschen?"))return;DB.boards=(DB.boards||[]).filter(x=>x.id!==id);save();renderDrawerBody();}
 
 /* ===== Fahrschulweite Tafelbild-Bibliothek (Bereich 9, Punkt 5) =====
@@ -8187,6 +8546,8 @@ function loadSharedBoard(id){
   const daten=b.daten||{};
   DRAW.objects=JSON.parse(JSON.stringify(daten.objects||[]));
   DRAW.strokes=JSON.parse(JSON.stringify(daten.strokes||[]));
+  DRAW.marks=JSON.parse(JSON.stringify(daten.marks||[]));
+  DRAW.steps=JSON.parse(JSON.stringify(daten.steps||[]));DRAW.stepIdx=0;DRAW.anim=DRAW.anim&&!!DRAW.steps.length;animBarUI();
   DRAW.selId=null;DRAW.seq=(DRAW.objects.reduce((m,o)=>Math.max(m,o.id||0),0)||0)+1;
   rebuildStrokes();render();persistBoard();closeTafelDrawer();toast("Tafelbild von "+(b.ersteller_name||"Kollege")+" geladen");
 }
@@ -8200,7 +8561,7 @@ async function shareBoardToLibrary(){
     name,
     ersteller_name:_authProfile.name||_authUser.email||"Fahrlehrer",
     erstellt_von:_authUser.id,
-    daten:{objects:DRAW.objects,strokes:DRAW.strokes}
+    daten:{objects:DRAW.objects,strokes:DRAW.strokes,marks:DRAW.marks||[],steps:DRAW.steps||[]}
   });
   if(error){toast("Fehler: "+error.message);return;}
   toast("Mit der Fahrschule geteilt ✓");
@@ -8220,7 +8581,7 @@ function openTafelDrawer(tab){DRAW.selId=null;DRAW.drawerOpen=true;if(tab)DRAW.u
 function closeTafelDrawer(){DRAW.drawerOpen=false;updateDrawerUI();}
 function toggleTafelDrawer(tab){if(DRAW.drawerOpen&&DRAW.uiTab===tab)closeTafelDrawer();else openTafelDrawer(tab);}
 function updateObjCtrl(){const c=$("#objCtrl");if(c)c.hidden=!DRAW.selId;}
-function setActiveTool(){const s=$("#dbSelect"),p=$("#dbPen"),e=$("#dbErase");if(s)s.classList.toggle("on",DRAW.tool==="select");if(p)p.classList.toggle("on",DRAW.tool==="pen");if(e)e.classList.toggle("on",DRAW.tool==="erase");}
+function setActiveTool(){const s=$("#dbSelect"),p=$("#dbPen"),e=$("#dbErase");if(s)s.classList.toggle("on",DRAW.tool==="select");if(p)p.classList.toggle("on",DRAW.tool==="pen"||DRAW.tool==="arrow"||DRAW.tool==="text"||DRAW.tool==="mass");if(e)e.classList.toggle("on",DRAW.tool==="erase");}
 function updateDrawerUI(){
   const d=$("#tafelDrawer");if(d)d.classList.toggle("open",!!DRAW.drawerOpen);
   const h=$("#dbHandle");if(h)h.classList.toggle("on",!!DRAW.drawerOpen);
@@ -8230,12 +8591,17 @@ function updateDrawerUI(){
 function renderDrawerBody(){
   const b=$("#tdBody");if(!b)return;
   if(DRAW.uiTab==="stift"){
-    b.innerHTML=`<div class="pp-lab">Farbe</div>
+    const TOOLS=[["pen","Stift"],["arrow","Pfeil"],["text","Text"],["mass","Maßband"]];
+    b.innerHTML=`<div class="pp-lab">Werkzeug</div>
+      <div class="pp-tools">${TOOLS.map(([k,l])=>`<button class="tl-btn${DRAW.tool===k?' on':''}" data-tool="${k}">${l}</button>`).join("")}</div>
+      <div class="pp-lab" style="margin-top:18px;">Farbe</div>
       <div class="pp-row">${PEN_COLORS.map(c=>`<button class="sw${DRAW.color===c?' on':''}" data-col="${c}" style="background:${c}"></button>`).join("")}</div>
       <div class="pp-lab" style="margin-top:18px;">Stärke</div>
       <div class="pp-row pp-w">${PEN_WIDTHS.map(w=>`<button class="ws${DRAW.width===w?' on':''}" data-w="${w}"><span style="width:${w+4}px;height:${w+4}px"></span></button>`).join("")}</div>`;
-    b.querySelectorAll(".sw").forEach(s=>s.addEventListener("click",()=>{DRAW.color=s.dataset.col;DRAW.tool="pen";setActiveTool();renderDrawerBody();}));
-    b.querySelectorAll(".ws").forEach(s=>s.addEventListener("click",()=>{DRAW.width=+s.dataset.w;DRAW.tool="pen";setActiveTool();renderDrawerBody();}));
+    b.querySelectorAll(".tl-btn").forEach(t=>t.addEventListener("click",()=>{DRAW.tool=t.dataset.tool;DRAW.selId=null;DRAW.orderMode=false;setActiveTool();renderDrawerBody();render();
+      toast(t.dataset.tool==="text"?"Tippe auf die Stelle für den Text":(t.dataset.tool==="mass"?"Strecke ziehen, Länge in Metern":(t.dataset.tool==="arrow"?"Pfeil ziehen":"Stift")));}));
+    b.querySelectorAll(".sw").forEach(s=>s.addEventListener("click",()=>{DRAW.color=s.dataset.col;if(DRAW.tool!=="arrow"&&DRAW.tool!=="text"&&DRAW.tool!=="mass")DRAW.tool="pen";setActiveTool();renderDrawerBody();}));
+    b.querySelectorAll(".ws").forEach(s=>s.addEventListener("click",()=>{DRAW.width=+s.dataset.w;if(DRAW.tool!=="arrow"&&DRAW.tool!=="text"&&DRAW.tool!=="mass")DRAW.tool="pen";setActiveTool();renderDrawerBody();}));
   }else if(DRAW.uiTab==="objekte"){
     b.innerHTML=`<div class="obj-tabs" id="objTabs">${(DRAW.recentTypes||[]).length?`<button class="obj-tab${DRAW.cat==='zuletzt'?' on':''}" data-cat="zuletzt">★ Zuletzt</button>`:''}<button class="obj-tab${DRAW.cat==='szenen'?' on':''}" data-cat="szenen">Szenen</button>${OBJ_CATS.map(c=>`<button class="obj-tab${c.key===DRAW.cat?' on':''}" data-cat="${c.key}">${c.label}</button>`).join("")}</div>
       <div class="obj-grid" id="objGrid"></div>`;
@@ -8252,6 +8618,7 @@ function renderDrawerBody(){
       renderSharedBoardList();
     }else{
       b.innerHTML=`<div class="more-list">
+        <button class="more-btn${DRAW.anim?' on':''}" id="mAnim">🎬 Animation${DRAW.steps.length?" ("+DRAW.steps.length+" Schritte)":""}</button>
         <button class="more-btn${DRAW.orderMode?' on':''}" id="mReihen">Reihenfolge 1·2·3</button>
         <button class="more-btn${DRAW.night?' on':''}" id="mNight">Tag / Nacht</button>
         <button class="more-btn" id="mSave">Tafelbild speichern</button>
@@ -8261,6 +8628,7 @@ function renderDrawerBody(){
         <button class="more-btn" id="mShare">Teilen (WhatsApp etc.)</button>
         <button class="more-btn more-danger" id="mClear">Tafel leeren</button>
       </div>`;
+      $("#mAnim").addEventListener("click",()=>{ if(DRAW.anim){animOff();toast("Animation beendet");}else{animOn();} });
       $("#mReihen").addEventListener("click",()=>{DRAW.orderMode=!DRAW.orderMode;DRAW.tool="select";DRAW.selId=null;setActiveTool();render();closeTafelDrawer();toast(DRAW.orderMode?"Reihenfolge-Modus an – Autos antippen":"Reihenfolge-Modus aus");});
       $("#mNight").addEventListener("click",()=>{DRAW.night=!DRAW.night;render();persistBoard();closeTafelDrawer();toast(DRAW.night?"Nacht-Modus":"Tag-Modus");});
       $("#mSave").addEventListener("click",()=>{saveBoard();closeTafelDrawer();});
@@ -8294,7 +8662,7 @@ function renderLoadList(){
   g.querySelectorAll(".tb-del").forEach(b=>b.addEventListener("click",()=>deleteBoard(+b.dataset.del)));
 }
 function bindDraw(){
-  $("#drawBack").addEventListener("click",routeHome);
+  $("#drawBack").addEventListener("click",()=>{animStop();routeHome();});
   _board.addEventListener("pointerdown",onDown);
   _board.addEventListener("pointermove",onMove);
   _board.addEventListener("pointerup",onUp);
@@ -8303,6 +8671,16 @@ function bindDraw(){
   $("#dbPen").addEventListener("click",()=>{if(DRAW.tool!=="pen"){DRAW.tool="pen";setActiveTool();closeTafelDrawer();render();}else{toggleTafelDrawer("stift");}});
   $("#dbErase").addEventListener("click",()=>{ if(DRAW.tool==="erase"){ openEraseSheet(); return; } DRAW.tool="erase";DRAW.selId=null;DRAW.orderMode=false;setActiveTool();closeTafelDrawer();render();});
   $("#dbUndo").addEventListener("click",undo);
+  $("#dbRedo").addEventListener("click",redo);
+  $("#anPlay").addEventListener("click",animPlay);
+  $("#anPrev").addEventListener("click",()=>{animStop();animGoto(DRAW.stepIdx-1);});
+  $("#anNext").addEventListener("click",()=>{animStop();animGoto(DRAW.stepIdx+1);});
+  $("#anAdd").addEventListener("click",()=>{animStop();animAddStep();});
+  $("#anSpeed").addEventListener("click",animSpeed);
+  $("#anCurve").addEventListener("click",()=>{DRAW.animKurve=!DRAW.animKurve;animBarUI();persistBoard();
+    toast(DRAW.animKurve?"Kurvenfahrt an":"Gerade Linien");});
+  $("#anDel").addEventListener("click",()=>{animStop();animDelStep();});
+  $("#anOff").addEventListener("click",animOff);
   $("#dbHandle").addEventListener("click",()=>toggleTafelDrawer(DRAW.uiTab||"objekte"));
   $("#tdClose").addEventListener("click",closeTafelDrawer);
   document.querySelectorAll("#tdTabs .td-tab").forEach(t=>t.addEventListener("click",()=>{DRAW.uiTab=t.dataset.tab;DRAW.loadView=false;updateDrawerUI();}));
