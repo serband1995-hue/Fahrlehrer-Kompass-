@@ -746,7 +746,15 @@ input,select,textarea{font-family:inherit;font-size:15px;color:var(--txt);}
   background:rgba(255,255,255,.07);color:#eaf1ec;font-size:15px;font-weight:700;}
 .an-btn.an-play{background:var(--orange);border-color:var(--orange);color:#fff;min-width:54px;font-size:17px;}
 .an-btn.an-add{background:rgba(255,255,255,.14);min-width:88px;font-size:13.5px;}
-.an-btn.an-curve{min-width:62px;font-size:13px;}
+.an-btn.an-rec{min-width:104px;font-size:13.5px;}
+.an-btn.an-rec.laeuft{background:#d94f4f;border-color:#d94f4f;color:#fff;}
+.fm-row{display:flex;align-items:center;gap:10px;padding:10px 0;border-bottom:1px solid var(--line);}
+.fm-play{width:44px;height:44px;border-radius:12px;border:none;background:var(--orange);color:#fff;font-size:16px;}
+.fm-del{width:44px;height:44px;border-radius:12px;border:1px solid var(--line);background:var(--surface);}
+.fm-txt{flex:1;min-width:0;}
+.fm-name{font-weight:700;font-size:15px;}
+.fm-sub{font-size:12.5px;color:var(--faint);}
+.empty-min{padding:18px 4px;color:var(--faint);font-size:14px;}
 .pr-row{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:8px;}
 .pr-sw{padding:13px 10px;border-radius:12px;border:1px solid var(--line);background:var(--surface);color:var(--txt);font-size:14px;font-weight:700;}
 .pr-sw.on{background:var(--orange);border-color:var(--orange);color:#fff;}
@@ -5425,7 +5433,7 @@ window.addEventListener("load", () => {
 const STORE_KEY="serband-app-v1";
 /* Build-Version: bei jeder Auslieferung hier das Datum aktualisieren.
    Wird in den Einstellungen angezeigt + für den Update-Hinweis genutzt. */
-const APP_VERSION="2026.10.02";
+const APP_VERSION="2026.10.03";
 // Nutzungsbedingungen & Haftungsausschluss (Bereich: rechtliche Absicherung) - Version hochzählen
 // und alle Nutzer müssen erneut zustimmen, sobald sich der Text inhaltlich ändert.
 const AGB_VERSION="1.0";
@@ -7805,7 +7813,7 @@ const OBJ_BY_TYPE={};OBJ.forEach(d=>OBJ_BY_TYPE[d.type]=d);
 const OBJ_IMG={};
 function preloadObjects(cb){let left=OBJ.length;if(!left){if(cb)cb();return;}OBJ.forEach(d=>{const img=new Image();img.onload=img.onerror=()=>{if(--left<=0&&cb)cb();};img.src="data:image/svg+xml;utf8,"+encodeURIComponent(d.svg);OBJ_IMG[d.type]=img;});}
 
-let DRAW=null;let _dragSnap=null;let _curMark=null;let _playing=false,_playRaf=0,_playT0=0,_playFrom=0;let _blinkIv=0;
+let DRAW=null;let _dragSnap=null;let _curMark=null;let _playing=false,_playRaf=0,_playT0=0,_playFrom=0;let _blinkIv=0;let _recIv=0,_recFrames=[],_recT0=0,_recLetzt="",_recBase=null,_recBaseSn=0,_filmBaseStrokes=null,_filmAktiv=null,_filmRueck=null,_filmTempo=1;
 let _board,_ctx,_sCanvas,_sCtx,_W,_H,_dpr,_drag,_cur,_moved,_raf,_drawResize;
 // Pinch-to-Zoom & Verschieben der Tafel (Bereich 9, Punkt 2) - reines "Reinzoomen" in
 // die feste Tafelfläche (kein unendliches Canvas), daher wird der Ausschnitt an den
@@ -7839,10 +7847,10 @@ const PRESETS={
 };
 function initDraw(){
   // Immer frisch starten — keine gespeicherte Tafel laden
-  DRAW={tool:"select",color:"#E8451F",width:6,eraseSize:2,eraseStroke:false,strokes:[],objects:[],history:[],past:[],future:[],marks:[],pxPerM:76/4.5,steps:[],stepIdx:0,anim:false,animMs:1200,animKurve:true,selId:null,seq:1,cat:"strassen",orderMode:false,night:false,uiTab:"objekte",drawerOpen:false,loadView:false,sharedView:false,fabX:null,fabY:null,fabOpen:false,recentTypes:[]};
+  DRAW={tool:"select",color:"#E8451F",width:6,eraseSize:2,eraseStroke:false,strokes:[],objects:[],history:[],past:[],future:[],marks:[],pxPerM:76/4.5,film:null,recAn:false,selId:null,seq:1,cat:"strassen",orderMode:false,night:false,uiTab:"objekte",drawerOpen:false,loadView:false,sharedView:false,fabX:null,fabY:null,fabOpen:false,recentTypes:[]};
   if(!DRAW.objects)DRAW.objects=[];
   if(!DRAW.marks)DRAW.marks=[];
-  if(!DRAW.steps)DRAW.steps=[];
+
   if(!DRAW.uiTab)DRAW.uiTab="objekte";
   if(DRAW.drawerOpen==null)DRAW.drawerOpen=false;
   if(DRAW.loadView==null)DRAW.loadView=false;
@@ -7911,6 +7919,7 @@ function routeDraw(sid){
     <div class="mag-ctrl" id="objCtrl" hidden>
       <button data-mc="rot" aria-label="90 Grad drehen">⟳</button>
       <button data-mc="props" aria-label="Lichter und Phasen">⚙</button>
+      <button data-mc="film" aria-label="Aufnahme">🎬</button>
       <button data-mc="dup" aria-label="Duplizieren">⧉</button>
       <button data-mc="del" aria-label="Löschen" class="ic ic-rot">${ICN.trash}</button>
       <button data-mc="done" class="mc-done" aria-label="Fertig">✓</button>
@@ -7926,16 +7935,13 @@ function routeDraw(sid){
       </div>
       <div class="td-body" id="tdBody"></div>
     </div>
-    <div class="anim-bar" id="animBar">
-      <button class="an-btn" id="anPrev" aria-label="Schritt zurück">◀</button>
-      <button class="an-btn an-play" id="anPlay" aria-label="Abspielen">▶</button>
-      <button class="an-btn" id="anNext" aria-label="Schritt vor">▶|</button>
-      <span class="an-step" id="anStep">—</span>
-      <button class="an-btn an-add" id="anAdd">+ Schritt</button>
-      <button class="an-btn" id="anSpeed">1×</button>
-      <button class="an-btn an-curve" id="anCurve">Kurve</button>
-      <button class="an-btn" id="anDel" aria-label="Schritt löschen">🗑</button>
-      <button class="an-btn an-x" id="anOff" aria-label="Animation beenden">✕</button>
+    <div class="anim-bar" id="filmBar">
+      <button class="an-btn an-rec" id="fmRec">● Aufnahme</button>
+      <button class="an-btn an-play" id="fmPlay">▶</button>
+      <span class="an-step" id="fmInfo">—</span>
+      <button class="an-btn" id="fmSave">💾</button>
+      <button class="an-btn" id="fmDel">🗑</button>
+      <button class="an-btn an-x" id="fmOff">✕</button>
     </div>
     <div class="draw-fab-menu" id="drawFabMenu">
       <button class="db-btn" id="dbSelect"><span class="db-ic">${DBIC.cursor}</span><span>Auswahl</span></button>
@@ -7950,7 +7956,7 @@ function routeDraw(sid){
   </div>`;
   _board=$("#board");fitCanvas();
   preloadObjects(()=>render());
-  bindDraw();bindDrawFab();setActiveTool();updateDrawerUI();updateUndoUI();animBarUI();blinkTicker();render();
+  bindDraw();bindDrawFab();setActiveTool();updateDrawerUI();updateUndoUI();filmBarUI();blinkTicker();render();
   if(_drawSuggest){
     const dsg=$("#drawSuggestGo"),dsx=$("#drawSuggestX");
     if(dsg)dsg.addEventListener("click",()=>{placePreset(_drawSuggest.presetKey);const el=$("#drawSuggest");if(el)el.remove();});
@@ -8381,7 +8387,7 @@ function onMove(e){
 function onUp(e){
   if(e&&_pointers.has(e.pointerId)){_pointers.delete(e.pointerId);try{_board.releasePointerCapture(e.pointerId);}catch(_){}}
   if(_pinchStart){ if(_pointers.size<2){_pinchStart=null;render();} return; }
-  if(_drag){if(_moved&&_dragSnap)pushPast(_dragSnap);_dragSnap=null;_drag=null;if(DRAW.anim)animSaveCurrent();render();persistBoard();return;}
+  if(_drag){if(_moved&&_dragSnap)pushPast(_dragSnap);_dragSnap=null;_drag=null;render();persistBoard();return;}
   if(_curMark){
     if(dist(_curMark.x1,_curMark.y1,_curMark.x2,_curMark.y2)>14){pushUndo();DRAW.marks.push(Object.assign({id:DRAW.seq++},_curMark));persistBoard();}
     _curMark=null;render();return;
@@ -8403,9 +8409,8 @@ function placeObject(type){const d=objDef(type);if(!d)return;let autoScale=(d.ki
   }
   const vc=viewCenter();
   if(d.kind==="band"){
-    const o2={id:DRAW.seq++,type,x:_W/2,y:_H/2,scale:1,rot:0,cfg:Object.assign({},d.cfg||{})};
+    const o2={id:DRAW.seq++,type,x:_W/2,y:_H/2,scale:1,rot:0,cfg:Object.assign({spurL:1,spurR:1,mitte:"gestrichelt",halt:false,pfeile:false},d.cfg||{})};
     DRAW.objects.push(o2);DRAW.selId=o2.id;DRAW.tool="select";setActiveTool();
-    if(DRAW.anim&&!DRAW.steps.length)animNeustart();
     DRAW.recentTypes=[type,...(DRAW.recentTypes||[]).filter(t=>t!==type)].slice(0,12);
     try{localStorage.setItem("serband-tafel-recent",JSON.stringify(DRAW.recentTypes));}catch(e){}
     render();persistBoard();closeTafelDrawer();return;
@@ -8417,26 +8422,26 @@ function placeObject(type){const d=objDef(type);if(!d)return;let autoScale=(d.ki
   render();persistBoard();}
 function placePreset(key){const P=PRESETS[key];if(!P)return;pushUndo();const vc=viewCenter(),cx=vc[0],cy=vc[1];
   // Bug-Fix: neue Szene ersetzt die alte komplett, statt sie zu überlagern
-  DRAW.objects=[]; DRAW.marks=[]; DRAW.steps=[]; DRAW.stepIdx=0; animStop(); DRAW.history=DRAW.history.filter(h=>h.t!=="object"); DRAW.selId=null;
+  DRAW.objects=[]; DRAW.marks=[]; filmStop(); DRAW.history=DRAW.history.filter(h=>h.t!=="object"); DRAW.selId=null;
   const anchor=P.items.find(it=>it.t==="kreuzung"||it.t==="kreisverkehr");
   const k=anchor?(_W/objDef(anchor.t).w):1;
-  P.items.forEach(it=>{const o={id:DRAW.seq++,type:it.t,x:cx+(it.dx||0)*k,y:cy+(it.dy||0)*k,rot:it.rot||0,scale:(it.s||1)*k};DRAW.objects.push(o);DRAW.history.push({t:"object",id:o.id});});animNeustart();DRAW.selId=null;DRAW.tool="select";setActiveTool();closeTafelDrawer();render();persistBoard();toast(P.label+" gesetzt");}
+  P.items.forEach(it=>{const o={id:DRAW.seq++,type:it.t,x:cx+(it.dx||0)*k,y:cy+(it.dy||0)*k,rot:it.rot||0,scale:(it.s||1)*k};DRAW.objects.push(o);DRAW.history.push({t:"object",id:o.id});});DRAW.selId=null;DRAW.tool="select";setActiveTool();closeTafelDrawer();render();persistBoard();toast(P.label+" gesetzt");}
 function dupSel(){const m=sel();if(!m)return;pushUndo();const n=Object.assign({},m,{id:DRAW.seq++,x:m.x+26,y:m.y+26});delete n.order;DRAW.objects.push(n);DRAW.history.push({t:"object",id:n.id});DRAW.selId=n.id;render();persistBoard();}
 /* Zurueck/Vor arbeiten mit Schnappschuessen der ganzen Tafel.
    Damit lassen sich auch Verschieben, Drehen und Loeschen rueckgaengig machen. */
-function boardSnap(){try{return JSON.stringify({o:DRAW.objects,s:DRAW.strokes,m:DRAW.marks,st:DRAW.steps,si:DRAW.stepIdx,q:DRAW.seq});}catch(e){return null;}}
-function pushPast(js){if(!js)return;DRAW.past.push(js);if(DRAW.past.length>40)DRAW.past.shift();DRAW.future.length=0;updateUndoUI();}
+function boardSnap(){try{return JSON.stringify({o:DRAW.objects,s:DRAW.strokes,m:DRAW.marks,q:DRAW.seq});}catch(e){return null;}}
+function pushPast(js){if(!js)return;if(!_playing)_filmRueck=null; // eigene Änderung: Film-Rückweg gilt nicht mehr
+  DRAW.past.push(js);if(DRAW.past.length>40)DRAW.past.shift();DRAW.future.length=0;updateUndoUI();}
 function pushUndo(){pushPast(boardSnap());}
-function applySnap(js){try{const d=JSON.parse(js);DRAW.objects=d.o||[];DRAW.strokes=d.s||[];DRAW.marks=d.m||[];DRAW.steps=d.st||[];DRAW.stepIdx=Math.min(d.si||0,Math.max(0,(d.st||[]).length-1));DRAW.seq=d.q||1;}catch(e){return;}
-  animBarUI();
+function applySnap(js){try{const d=JSON.parse(js);DRAW.objects=d.o||[];DRAW.strokes=d.s||[];DRAW.marks=d.m||[];DRAW.seq=d.q||1;}catch(e){return;}
   if(!DRAW.objects.some(o=>o.id===DRAW.selId))DRAW.selId=null;
   rebuildStrokes();render();persistBoard();updateUndoUI();}
-function undo(){if(_playing)animStop();if(!DRAW.past.length){toast("Nichts zum Zurücknehmen");return;}const now=boardSnap();const js=DRAW.past.pop();if(now)DRAW.future.push(now);applySnap(js);}
-function redo(){if(_playing)animStop();if(!DRAW.future.length){toast("Nichts zum Wiederholen");return;}const now=boardSnap();const js=DRAW.future.pop();if(now)DRAW.past.push(now);applySnap(js);}
+function undo(){if(_playing||DRAW.recAn)filmStop();if(!DRAW.past.length){toast("Nichts zum Zurücknehmen");return;}const now=boardSnap();const js=DRAW.past.pop();if(now)DRAW.future.push(now);applySnap(js);}
+function redo(){if(_playing||DRAW.recAn)filmStop();if(!DRAW.future.length){toast("Nichts zum Wiederholen");return;}const now=boardSnap();const js=DRAW.future.pop();if(now)DRAW.past.push(now);applySnap(js);}
 function updateUndoUI(){const u=$("#dbUndo"),r=$("#dbRedo");
   if(u)u.classList.toggle("db-off",!DRAW.past.length);
   if(r)r.classList.toggle("db-off",!DRAW.future.length);}
-function clearBoard(){if(!DRAW.strokes.length&&!DRAW.objects.length&&!(DRAW.marks||[]).length)return;if(!confirm("Tafel komplett leeren?"))return;pushUndo();DRAW.strokes=[];DRAW.objects=[];DRAW.marks=[];DRAW.steps=[];DRAW.stepIdx=0;animStop();DRAW.anim=false;animBarUI();DRAW.history=[];DRAW.selId=null;rebuildStrokes();render();persistBoard();toast("Tafel geleert");}
+function clearBoard(){if(!DRAW.strokes.length&&!DRAW.objects.length&&!(DRAW.marks||[]).length)return;if(!confirm("Tafel komplett leeren?"))return;pushUndo();DRAW.strokes=[];DRAW.objects=[];DRAW.marks=[];filmStop();DRAW.history=[];DRAW.selId=null;rebuildStrokes();render();persistBoard();toast("Tafel geleert");}
 /* Blinker, Bremslicht, toter Winkel und Ampelphase über dem Objekt */
 const AMPEL_LAMPEN={ampel:{vw:34,vh:78,cx:17,r:9.3,cy:[18,39,60]},fussampel:{vw:30,vh:56,cx:15,r:9,cy:[16,40]}};
 const AMPEL_PHASEN={rot:[0],rotgelb:[0,1],gelb:[1],gruen:[2]};
@@ -8478,134 +8483,148 @@ function blinkTicker(){
     if(!document.getElementById("board")){clearInterval(_blinkIv);_blinkIv=0;return;}
     if(blinkerAktiv())render();
   },450);}
-/* ---- Animation: Schritte aufnehmen und abspielen ----
-   Ein Schritt merkt sich Position, Drehung und Größe aller Objekte.
-   Beim Abspielen rechnet die App die Zwischenbilder selbst aus. */
-function stepState(){const st={};DRAW.objects.forEach(o=>{st[o.id]={x:o.x,y:o.y,rot:o.rot||0,scale:o.scale||1,p:Object.assign({},o.props||{})};});return st;}
-function applyStepState(st){if(!st)return;DRAW.objects.forEach(o=>{const s=st[o.id];if(!s)return;o.x=s.x;o.y=s.y;o.rot=s.rot||0;o.scale=s.scale||1;if(s.p)o.props=Object.assign({},s.p);});}
-function animOn(){
-  if(!DRAW.objects.length){toast("Erst Objekte auf die Tafel setzen");return;}
-  DRAW.anim=true;DRAW.tool="select";DRAW.selId=null;setActiveTool();
-  if(!DRAW.steps.length){DRAW.steps=[{id:DRAW.seq++,states:stepState()}];DRAW.stepIdx=0;}
-  closeTafelDrawer();animBarUI();render();persistBoard();
-  toast("Schritt 1 aufgenommen · Objekte schieben, dann + Schritt");
+/* ---- Aufnahme: alles mitschreiben, was auf der Tafel passiert ----
+   Fahrzeuge, Blinker, Ampelphasen, Striche, Pfeile, Texte. */
+const REC_MS=70;
+function filmZustand(){
+  return {o:DRAW.objects.map(o=>[o.id,Math.round(o.x*10)/10,Math.round(o.y*10)/10,Math.round((o.rot||0)*1000)/1000,o.scale||1,o.props?Object.assign({},o.props):null]),
+          m:JSON.parse(JSON.stringify(DRAW.marks||[])),
+          sn:DRAW.strokes.length+(_cur?1:0),
+          sp:_cur?(_cur.pts||[]).length:(DRAW.strokes.length?(DRAW.strokes[DRAW.strokes.length-1].pts||[]).length:0)};}
+function filmRecStart(){
+  if(_playing)filmStop();
+  if(!DRAW.objects.length&&!DRAW.strokes.length){toast("Erst etwas auf die Tafel legen");return;}
+  DRAW.recAn=true;DRAW.filmBar=true;
+  _recBase=JSON.stringify({o:DRAW.objects,m:DRAW.marks,s:DRAW.strokes,q:DRAW.seq});
+  _recBaseSn=DRAW.strokes.length;
+  _recFrames=[{t:0,z:filmZustand()}];
+  _recT0=performance.now();_recLetzt=JSON.stringify(_recFrames[0].z);
+  if(_recIv)clearInterval(_recIv);
+  _recIv=setInterval(()=>{
+    if(!DRAW.recAn||!document.getElementById("board")){filmRecStop();return;}
+    const z=filmZustand(),js=JSON.stringify(z);
+    if(js===_recLetzt)return;
+    _recLetzt=js;_recFrames.push({t:Math.round(performance.now()-_recT0),z});
+    if(_recFrames.length>1500){toast("Aufnahme voll, gestoppt");filmRecStop();}
+    filmBarUI();
+  },REC_MS);
+  filmBarUI();toast("Aufnahme läuft");
 }
-function animOff(){animStop();DRAW.anim=false;animBarUI();render();}
-function animAddStep(){
-  if(!DRAW.anim)return;pushUndo();
-  if(!DRAW.steps.length){DRAW.steps=[{id:DRAW.seq++,states:stepState()}];DRAW.stepIdx=0;}
-  else{DRAW.steps.splice(DRAW.stepIdx+1,0,{id:DRAW.seq++,states:stepState()});DRAW.stepIdx++;}animBarUI();persistBoard();toast("Schritt "+(DRAW.stepIdx+1)+" aufgenommen");
+function filmRecStop(){
+  if(_recIv){clearInterval(_recIv);_recIv=0;}
+  if(!DRAW.recAn)return;
+  DRAW.recAn=false;
+  // Schlusszustand sichern, sonst fehlt der letzte Strich oder die letzte Bewegung
+  const zEnd=filmZustand();
+  if(JSON.stringify(zEnd)!==_recLetzt)_recFrames.push({t:Math.round(performance.now()-_recT0),z:zEnd});
+  const dauer=_recFrames.length?_recFrames[_recFrames.length-1].t:0;
+  const neu=JSON.parse(JSON.stringify(DRAW.strokes.slice(_recBaseSn)));
+  if(_recFrames.length<2||dauer<200){DRAW.film=null;toast("Zu kurz, nichts aufgenommen");}
+  else{DRAW.film={base:_recBase,baseSn:_recBaseSn,neu,frames:_recFrames,dauer};toast("Aufnahme fertig · "+(dauer/1000).toFixed(1)+" s");}
+  filmBarUI();persistBoard();
 }
-function animGoto(i){
-  if(!DRAW.steps.length)return;
-  DRAW.stepIdx=Math.max(0,Math.min(DRAW.steps.length-1,i));
-  applyStepState(DRAW.steps[DRAW.stepIdx].states);
-  animBarUI();render();
+function filmAnwenden(z,zNext,f){
+  const map={};(z.o||[]).forEach(a=>map[a[0]]=a);
+  const mapN={};if(zNext)(zNext.o||[]).forEach(a=>mapN[a[0]]=a);
+  DRAW.objects=DRAW.objects.filter(o=>map[o.id]);
+  DRAW.objects.forEach(o=>{const a=map[o.id],b=mapN[o.id];
+    if(b&&f>0){o.x=a[1]+(b[1]-a[1])*f;o.y=a[2]+(b[2]-a[2])*f;
+      let d=b[3]-a[3];while(d>Math.PI)d-=Math.PI*2;while(d<-Math.PI)d+=Math.PI*2;
+      o.rot=a[3]+d*f;o.scale=a[4]+(b[4]-a[4])*f;}
+    else{o.x=a[1];o.y=a[2];o.rot=a[3];o.scale=a[4];}
+    o.props=a[5]?Object.assign({},a[5]):{};});
+  DRAW.marks=JSON.parse(JSON.stringify(z.m||[]));
+  const bs=_filmBaseStrokes||[], neu=(_filmAktiv&&_filmAktiv.neu)||[];
+  const arr=bs.slice(0,Math.min(bs.length,z.sn));
+  for(let i=0;i<z.sn-bs.length&&i<neu.length;i++)arr.push(JSON.parse(JSON.stringify(neu[i])));
+  if(arr.length){const st=arr[arr.length-1];if((st.pts||[]).length>z.sp)st.pts=st.pts.slice(0,Math.max(1,z.sp));}
+  DRAW.strokes=arr;
+  rebuildStrokes();render();
 }
-function animSaveCurrent(){ // laufende Korrektur: der gezeigte Schritt übernimmt die neue Lage
-  if(!DRAW.anim||_playing||!DRAW.steps[DRAW.stepIdx])return;
-  DRAW.steps[DRAW.stepIdx].states=stepState();persistBoard();
-}
-function animDelStep(){
-  if(!DRAW.anim||DRAW.steps.length<2){toast("Mindestens ein Schritt bleibt");return;}
-  pushUndo();DRAW.steps.splice(DRAW.stepIdx,1);
-  DRAW.stepIdx=Math.min(DRAW.stepIdx,DRAW.steps.length-1);
-  applyStepState(DRAW.steps[DRAW.stepIdx].states);animBarUI();render();persistBoard();toast("Schritt gelöscht");
-}
-function animSpeed(){
-  const stufen=[2000,1200,700],alt=DRAW.animMs;
-  DRAW.animMs=stufen[(stufen.indexOf(DRAW.animMs)+1)%stufen.length]||1200;
-  if(_playing&&_playT0){ // im Lauf umschalten, ohne dass das Fahrzeug springt
-    const jetzt=performance.now(),fort=Math.max(0,Math.min(1,(jetzt-_playT0)/alt));
-    _playT0=jetzt-fort*DRAW.animMs;}
-  animBarUI();toast(DRAW.animMs===2000?"Langsam":(DRAW.animMs===1200?"Normal":"Schnell"));
-}
-/* Weiche Fahrlinie durch die Schritt-Positionen (Catmull-Rom, zentripetal).
-   Zentripetal heißt: keine Schleifen und kein Überschwingen in engen Kurven. */
-function crEval(p0,p1,p2,p3,t){
-  const kn=(ti,a,b)=>ti+Math.pow(Math.max(1e-6,Math.hypot(b[0]-a[0],b[1]-a[1])),0.5);
-  const t0=0,t1=kn(t0,p0,p1),t2=kn(t1,p1,p2),t3=kn(t2,p2,p3);
-  const tt=t1+(t2-t1)*t;
-  const mix=(a,b,ta,tb)=>{const d=(tb-ta)||1e-6,w=(tb-tt)/d,v=(tt-ta)/d;return [a[0]*w+b[0]*v,a[1]*w+b[1]*v];};
-  const A1=mix(p0,p1,t0,t1),A2=mix(p1,p2,t1,t2),A3=mix(p2,p3,t2,t3);
-  const B1=mix(A1,A2,t0,t2),B2=mix(A2,A3,t1,t3);
-  return mix(B1,B2,t1,t2);}
-function segPunkte(id,i){ // Stützpunkte für das Segment von Schritt i nach i+1
-  const S=DRAW.steps,g=k=>{const st=S[k]&&S[k].states[id];return st?[st.x,st.y]:null;};
-  const p1=g(i),p2=g(i+1); if(!p1||!p2)return null;
-  const p0=g(i-1)||[p1[0]*2-p2[0],p1[1]*2-p2[1]];
-  const p3=g(i+2)||[p2[0]*2-p1[0],p2[1]*2-p1[1]];
-  return [p0,p1,p2,p3];}
-function segTabelle(id,i){ // Bogenlängen-Tabelle für gleichmäßiges Tempo
-  const P=segPunkte(id,i); if(!P)return null;
-  const N=24,pts=[],cum=[0];
-  for(let k=0;k<=N;k++)pts.push(crEval(P[0],P[1],P[2],P[3],k/N));
-  for(let k=1;k<=N;k++)cum.push(cum[k-1]+Math.hypot(pts[k][0]-pts[k-1][0],pts[k][1]-pts[k-1][1]));
-  return {pts,cum,len:cum[N]};}
-function segPos(id,i,e){ // Position und Richtung bei Fortschritt e (0..1)
-  const T=segTabelle(id,i); if(!T)return null;
-  if(T.len<0.001)return {x:T.pts[0][0],y:T.pts[0][1],ang:null};
-  const ziel=T.len*Math.max(0,Math.min(1,e));
-  let k=1; while(k<T.cum.length-1&&T.cum[k]<ziel)k++;
-  const a=T.pts[k-1],b=T.pts[k],sp=T.cum[k]-T.cum[k-1];
-  const f=sp>0?(ziel-T.cum[k-1])/sp:0;
-  const x=a[0]+(b[0]-a[0])*f,y=a[1]+(b[1]-a[1])*f;
-  return {x,y,ang:Math.atan2(b[1]-a[1],b[0]-a[0])};}
-function istFahrzeug(o){const d=objDef(o.type);return !!d&&d.kind==="vehicle";}
-function lerpAng(a,b,t){let d=b-a;while(d>Math.PI)d-=Math.PI*2;while(d<-Math.PI)d+=Math.PI*2;return a+d*t;}
-function animFrame(ts){
+function filmFrame(ts){
   if(!_playing)return;
-  if(!document.getElementById("board")){_playing=false;_playRaf=0;return;} // Seite verlassen
+  if(!document.getElementById("board")){_playing=false;_playRaf=0;return;}
   if(!_playT0)_playT0=ts;
-  const von=DRAW.steps[_playFrom],bis=DRAW.steps[_playFrom+1];
-  if(!bis){animStop(true);return;}
-  let t=(ts-_playT0)/DRAW.animMs; if(t>1)t=1;
-  const e=t<.5?2*t*t:1-Math.pow(-2*t+2,2)/2; // weich anfahren und ausrollen
-  DRAW.objects.forEach(o=>{const a=von.states[o.id],b=bis.states[o.id];if(!a||!b)return;
-    o.scale=(a.scale||1)+((b.scale||1)-(a.scale||1))*e;
-    o.props=Object.assign({},(e<0.5?a.p:b.p)||{});
-    const weg=dist(a.x,a.y,b.x,b.y);
-    const sp=DRAW.animKurve?segPos(o.id,_playFrom,e):null;
-    if(sp){o.x=sp.x;o.y=sp.y;}else{o.x=a.x+(b.x-a.x)*e;o.y=a.y+(b.y-a.y)*e;}
-    // Fahrzeuge drehen sich in die Fahrtrichtung, alles andere behält die eingestellte Drehung
-    if(DRAW.animKurve&&sp&&sp.ang!==null&&weg>10&&istFahrzeug(o))o.rot=sp.ang+Math.PI/2;
-    else o.rot=lerpAng(a.rot||0,b.rot||0,e);});
-  render();
-  if(t>=1){ _playFrom++; _playT0=0;
-    DRAW.stepIdx=_playFrom;animBarUI();
-    if(_playFrom>=DRAW.steps.length-1){animStop(true);return;} }
-  _playRaf=requestAnimationFrame(animFrame);
+  const F=_filmAktiv.frames, ms=(ts-_playT0)*_filmTempo;
+  while(_playFrom<F.length-1&&F[_playFrom+1].t<=ms)_playFrom++;
+  const a=F[_playFrom],b=F[_playFrom+1];
+  let f=0; if(b&&b.t>a.t)f=Math.max(0,Math.min(1,(ms-a.t)/(b.t-a.t)));
+  filmAnwenden(a.z,b?b.z:null,f);
+  filmBarUI();
+  if(!b&&ms>=a.t){filmStop(true);return;}
+  _playRaf=requestAnimationFrame(filmFrame);
 }
-function animPlay(){
-  if(!DRAW.anim)return;
-  if(_playing){animStop(true);return;}
-  if(DRAW.steps.length<2){toast("Mindestens zwei Schritte nötig");return;}
-  DRAW.selId=null;
-  _playFrom=(DRAW.stepIdx>=DRAW.steps.length-1)?0:DRAW.stepIdx;
-  applyStepState(DRAW.steps[_playFrom].states);
-  _playing=true;_playT0=0;animBarUI();
-  _playRaf=requestAnimationFrame(animFrame);
+function filmPlayFilm(film,titel){
+  if(!film||!film.frames||film.frames.length<2){toast("Kein Film vorhanden");return;}
+  if(DRAW.recAn)filmRecStop();
+  if(_playing){filmStop();return;}
+  filmZurueck(); // erst zurück zur eigenen Tafel, dann diesen Film zeigen
+  _filmRueck=JSON.stringify({o:DRAW.objects,m:DRAW.marks,s:DRAW.strokes,q:DRAW.seq});
+  _filmAktiv=film;
+  try{const b=JSON.parse(film.base);DRAW.objects=JSON.parse(JSON.stringify(b.o||[]));
+    DRAW.marks=JSON.parse(JSON.stringify(b.m||[]));DRAW.strokes=JSON.parse(JSON.stringify(b.s||[]));
+    _filmBaseStrokes=JSON.parse(JSON.stringify(b.s||[]));}catch(e){_filmBaseStrokes=[];}
+  DRAW.selId=null;DRAW.filmBar=true;_playing=true;_playT0=0;_playFrom=0;
+  rebuildStrokes();filmBarUI();
+  if(titel)toast("▶ "+titel);
+  _playRaf=requestAnimationFrame(filmFrame);
 }
-/* Nach neuer Vorlage: Schritt 1 aus dem neuen Bild aufnehmen */
-function animNeustart(){
-  if(!DRAW.anim)return;
-  if(!DRAW.objects.length){DRAW.anim=false;animBarUI();return;}
-  DRAW.steps=[{id:DRAW.seq++,states:stepState()}];DRAW.stepIdx=0;animBarUI();}
-function animStop(endeZeigen){
+function filmPlay(){ filmPlayFilm(DRAW.film); }
+function filmStop(fertig){
+  if(_recIv&&DRAW.recAn)filmRecStop();
   if(_playRaf)cancelAnimationFrame(_playRaf);
   _playRaf=0;_playT0=0;
   if(_playing){_playing=false;
-    if(endeZeigen){DRAW.stepIdx=Math.min(_playFrom+1,DRAW.steps.length-1);applyStepState((DRAW.steps[DRAW.stepIdx]||{}).states);}
+    // Beim Anhalten sofort zurück zur eigenen Tafel, beim Durchlaufen bleibt das Schlussbild stehen
+    if(!fertig)filmZurueck();
+    else if(_filmRueck)toast("Film zu Ende · ✕ holt deine Tafel zurück");
   }
-  animBarUI();render();
+  filmBarUI();render();
 }
-function animBarUI(){
-  const bar=$("#animBar");if(!bar)return;
-  bar.classList.toggle("on",!!DRAW.anim);
-  const lab=$("#anStep");if(lab)lab.textContent=DRAW.steps.length?("Schritt "+(DRAW.stepIdx+1)+" / "+DRAW.steps.length):"—";
-  const pl=$("#anPlay");if(pl)pl.textContent=_playing?"⏸":"▶";
-  const sp=$("#anSpeed");if(sp)sp.textContent=DRAW.animMs===2000?"0,5×":(DRAW.animMs===1200?"1×":"2×");
-  const cv=$("#anCurve");if(cv)cv.classList.toggle("on",!!DRAW.animKurve);
+function filmZurueck(){
+  if(!_filmRueck)return;
+  try{const b=JSON.parse(_filmRueck);DRAW.objects=b.o||[];DRAW.marks=b.m||[];DRAW.strokes=b.s||[];DRAW.seq=b.q||DRAW.seq;rebuildStrokes();}catch(e){}
+  _filmRueck=null;render();persistBoard();}
+function filmDelete(){
+  if(DRAW.recAn){filmRecStop();return;}
+  if(!DRAW.film){toast("Keine Aufnahme da");return;}
+  if(!confirm("Aufnahme verwerfen?"))return;
+  DRAW.film=null;filmBarUI();persistBoard();toast("Aufnahme verworfen");
+}
+function filmSaveNamed(){
+  if(!DRAW.film){toast("Erst aufnehmen");return;}
+  const name=((typeof prompt==="function"?prompt("Name für den Film:"):"")||"").trim();
+  if(!name)return;
+  if(!DB.films)DB.films=[];
+  DB.films.push({id:uid(),name,ts:todayISO(),dauer:DRAW.film.dauer,base:DRAW.film.base,baseSn:DRAW.film.baseSn,neu:DRAW.film.neu,frames:DRAW.film.frames});
+  save();filmBarUI();toast("Film gespeichert: "+name);
+}
+function openFilmListe(){
+  const F=DB.films||[];
+  openSheet(`<div class="sheet-h">Meine Filme</div>
+    ${F.length?F.map(f=>`<div class="fm-row"><button class="fm-play" data-fp="${f.id}">▶</button>
+      <div class="fm-txt"><div class="fm-name">${esc(f.name)}</div><div class="fm-sub">${(f.dauer/1000).toFixed(1)} s · ${esc(f.ts||"")}</div></div>
+      <button class="fm-del" data-fd="${f.id}">🗑</button></div>`).join("")
+      :`<div class="empty-min">Noch kein Film. Nimm einen auf und tippe auf 💾.</div>`}
+    <div class="es-actions" style="margin-top:12px;"><button class="es-act" id="fmListOk">Fertig</button></div>`);
+  $("#sheet").querySelectorAll("[data-fp]").forEach(b=>b.addEventListener("click",()=>{
+    const f=(DB.films||[]).find(x=>x.id===b.dataset.fp);closeSheet();closeTafelDrawer();filmPlayFilm(f,f&&f.name);}));
+  $("#sheet").querySelectorAll("[data-fd]").forEach(b=>b.addEventListener("click",()=>{
+    if(!confirm("Film löschen?"))return;
+    DB.films=(DB.films||[]).filter(x=>x.id!==b.dataset.fd);save();openFilmListe();}));
+  $("#fmListOk").addEventListener("click",closeSheet);
+}
+function filmBarUI(){
+  const bar=$("#filmBar");if(!bar)return;
+  bar.classList.toggle("on",!!DRAW.filmBar);
+  const rec=$("#fmRec"),pl=$("#fmPlay"),inf=$("#fmInfo");
+  if(rec){rec.textContent=DRAW.recAn?"⏹ Stopp":"● Aufnahme";rec.classList.toggle("laeuft",!!DRAW.recAn);}
+  if(pl)pl.textContent=_playing?"⏸":"▶";
+  if(inf){
+    if(DRAW.recAn)inf.textContent="Aufnahme "+(((_recFrames.length?_recFrames[_recFrames.length-1].t:0)/1000).toFixed(1))+" s";
+    else if(_playing)inf.textContent="läuft …";
+    else inf.textContent=DRAW.film?("Film "+(DRAW.film.dauer/1000).toFixed(1)+" s"):"noch nichts aufgenommen";
+  }
 }
 /* Straße frei einstellen: Fahrstreifen, Mittellinie, Radweg, Gehweg */
 function openBandSheet(o){
@@ -8631,7 +8650,7 @@ function openBandSheet(o){
     <div class="pr-row">${sw(true,!!c.abbL,"al","Linksabbiegespur")}${sw(true,!!c.abbR,"ar","Rechtsabbiegespur")}</div>
     <div class="pr-row">${sw(true,c.halt!==false,"ha","Haltelinie")}${sw(true,c.pfeile!==false,"pf","Pfeile")}</div>
     <div class="es-actions" style="margin-top:14px;"><button class="es-act" id="bdOk">Fertig</button></div>`);
-  const setz=(fn)=>{pushUndo();fn();if(DRAW.anim)animSaveCurrent();render();persistBoard();openBandSheet(o);};
+  const setz=(fn)=>{pushUndo();fn();render();persistBoard();openBandSheet(o);};
   const bind=(attr,fn)=>$("#sheet").querySelectorAll("[data-"+attr+"]").forEach(b=>b.addEventListener("click",()=>setz(()=>fn(b.dataset[attr]))));
   bind("sl",v=>c.spurL=+v); bind("sr",v=>c.spurR=+v); bind("mi",v=>c.mitte=v);
   bind("rl",v=>c.radL=v); bind("rr",v=>c.radR=v);
@@ -8658,7 +8677,7 @@ function openObjPropsSheet(o){
       <div class="pr-row">${ph("gelb","Gelb")}${ph("gruen","Grün")}</div>
       <div class="pr-row">${ph("","Aus")}</div>`:""}
     <div class="es-actions" style="margin-top:12px;"><button class="es-act" id="prOk">Fertig</button></div>`);
-  const anwenden=()=>{ if(DRAW.anim)animSaveCurrent(); render(); persistBoard(); };
+  const anwenden=()=>{ render(); persistBoard(); };
   $("#sheet").querySelectorAll("[data-pk]").forEach(b=>b.addEventListener("click",()=>{
     pushUndo(); o.props=Object.assign({},o.props||{});
     const k=b.dataset.pk;
@@ -8698,16 +8717,16 @@ function openEraseSheet(){
   document.querySelectorAll(".er-size").forEach(b=>b.addEventListener("click",()=>{ DRAW.eraseSize=+b.dataset.ersize; document.querySelectorAll(".er-size").forEach(x=>x.classList.toggle("on",x===b)); }));
   $("#erStroke").addEventListener("click",()=>{ DRAW.eraseStroke=!DRAW.eraseStroke; $("#erStroke").classList.toggle("on",DRAW.eraseStroke); });
   $("#erClearStrokes").addEventListener("click",()=>{ if(DRAW.strokes.length){ pushUndo(); DRAW.strokes=[]; rebuildStrokes(); render(); persistBoard(); toast("Zeichnungen gelöscht"); } closeSheet(); });
-  $("#erClearAll").addEventListener("click",()=>{ pushUndo(); DRAW.strokes=[];DRAW.objects=[];DRAW.marks=[];DRAW.steps=[];DRAW.stepIdx=0;animStop();DRAW.anim=false;animBarUI();DRAW.history=[];DRAW.selId=null;rebuildStrokes();render();persistBoard();toast("Tafel geleert"); closeSheet(); });
+  $("#erClearAll").addEventListener("click",()=>{ pushUndo(); DRAW.strokes=[];DRAW.objects=[];DRAW.marks=[];filmStop();DRAW.history=[];DRAW.selId=null;rebuildStrokes();render();persistBoard();toast("Tafel geleert"); closeSheet(); });
 }
 function transformSel(act){const m=sel();if(!m)return;
-  if(act!=="done"&&act!=="dup"&&act!=="props")pushUndo();
+  if(act!=="done"&&act!=="dup"&&act!=="props"&&act!=="film")pushUndo();
   if(act==="rot")m.rot=((m.rot||0)+Math.PI/2)%(Math.PI*2);
   else if(act==="dup"){dupSel();return;}
   else if(act==="del"){DRAW.objects=DRAW.objects.filter(x=>x.id!==m.id);DRAW.history=DRAW.history.filter(o=>!(o.t==="object"&&o.id===m.id));DRAW.selId=null;}
   else if(act==="props"){openObjPropsSheet(m);return;}
+  else if(act==="film"){DRAW.filmBar=true;filmBarUI();if(!DRAW.recAn)filmRecStart();return;}
   else if(act==="done"){DRAW.selId=null;}
-  if(DRAW.anim)animSaveCurrent();
   render();persistBoard();
 }
 function exportBoard(){DRAW.selId=null;const _savedView=_view;_view={scale:1,x:0,y:0};render();try{const url=_board.toDataURL("image/png");const a=document.createElement("a");a.href=url;a.download="Tafel_"+heute().d.replace(/\./g,"-")+".png";a.click();toast("Als Bild exportiert");}catch(e){toast("Export nicht möglich");}finally{_view=_savedView;render();}}
@@ -8743,9 +8762,9 @@ function _doShareBoard(note){
     },"image/png");
   }catch(e){_view=_savedView;render();toast("Teilen nicht möglich");}
 }
-function persistBoard(){try{DB.boardCurrent={objects:DRAW.objects,strokes:DRAW.strokes,marks:DRAW.marks,steps:DRAW.steps,kurve:!!DRAW.animKurve,seq:DRAW.seq,night:!!DRAW.night};save();}catch(_){}}
-function saveBoard(){const name=((typeof prompt==="function"?prompt("Name für das Tafelbild:"):"")||"").trim();if(!name)return;if(!DB.boards)DB.boards=[];DB.boards.push({id:Date.now(),name,ts:heute().d,objects:JSON.parse(JSON.stringify(DRAW.objects)),strokes:JSON.parse(JSON.stringify(DRAW.strokes)),marks:JSON.parse(JSON.stringify(DRAW.marks||[])),steps:JSON.parse(JSON.stringify(DRAW.steps||[]))});save();toast("Tafelbild gespeichert");}
-function loadBoard(id){const b=(DB.boards||[]).find(x=>x.id===id);if(!b)return;DRAW.objects=JSON.parse(JSON.stringify(b.objects||[]));DRAW.strokes=JSON.parse(JSON.stringify(b.strokes||[]));DRAW.marks=JSON.parse(JSON.stringify(b.marks||[]));DRAW.steps=JSON.parse(JSON.stringify(b.steps||[]));DRAW.stepIdx=0;DRAW.anim=DRAW.anim&&!!DRAW.steps.length;animBarUI();DRAW.selId=null;DRAW.seq=(DRAW.objects.reduce((m,o)=>Math.max(m,o.id||0),0)||0)+1;rebuildStrokes();render();persistBoard();closeTafelDrawer();toast("Tafelbild geladen");}
+function persistBoard(){try{DB.boardCurrent={objects:DRAW.objects,strokes:DRAW.strokes,marks:DRAW.marks,seq:DRAW.seq,night:!!DRAW.night};save();}catch(_){}}
+function saveBoard(){const name=((typeof prompt==="function"?prompt("Name für das Tafelbild:"):"")||"").trim();if(!name)return;if(!DB.boards)DB.boards=[];DB.boards.push({id:Date.now(),name,ts:heute().d,objects:JSON.parse(JSON.stringify(DRAW.objects)),strokes:JSON.parse(JSON.stringify(DRAW.strokes)),marks:JSON.parse(JSON.stringify(DRAW.marks||[]))});save();toast("Tafelbild gespeichert");}
+function loadBoard(id){const b=(DB.boards||[]).find(x=>x.id===id);if(!b)return;DRAW.objects=JSON.parse(JSON.stringify(b.objects||[]));DRAW.strokes=JSON.parse(JSON.stringify(b.strokes||[]));DRAW.marks=JSON.parse(JSON.stringify(b.marks||[]));DRAW.selId=null;DRAW.seq=(DRAW.objects.reduce((m,o)=>Math.max(m,o.id||0),0)||0)+1;rebuildStrokes();render();persistBoard();closeTafelDrawer();toast("Tafelbild geladen");}
 function deleteBoard(id){if(!confirm("Dieses Tafelbild löschen?"))return;DB.boards=(DB.boards||[]).filter(x=>x.id!==id);save();renderDrawerBody();}
 
 /* ===== Fahrschulweite Tafelbild-Bibliothek (Bereich 9, Punkt 5) =====
@@ -8783,7 +8802,6 @@ function loadSharedBoard(id){
   DRAW.objects=JSON.parse(JSON.stringify(daten.objects||[]));
   DRAW.strokes=JSON.parse(JSON.stringify(daten.strokes||[]));
   DRAW.marks=JSON.parse(JSON.stringify(daten.marks||[]));
-  DRAW.steps=JSON.parse(JSON.stringify(daten.steps||[]));DRAW.stepIdx=0;DRAW.anim=DRAW.anim&&!!DRAW.steps.length;animBarUI();
   DRAW.selId=null;DRAW.seq=(DRAW.objects.reduce((m,o)=>Math.max(m,o.id||0),0)||0)+1;
   rebuildStrokes();render();persistBoard();closeTafelDrawer();toast("Tafelbild von "+(b.ersteller_name||"Kollege")+" geladen");
 }
@@ -8797,7 +8815,7 @@ async function shareBoardToLibrary(){
     name,
     ersteller_name:_authProfile.name||_authUser.email||"Fahrlehrer",
     erstellt_von:_authUser.id,
-    daten:{objects:DRAW.objects,strokes:DRAW.strokes,marks:DRAW.marks||[],steps:DRAW.steps||[]}
+    daten:{objects:DRAW.objects,strokes:DRAW.strokes,marks:DRAW.marks||[]}
   });
   if(error){toast("Fehler: "+error.message);return;}
   toast("Mit der Fahrschule geteilt ✓");
@@ -8854,7 +8872,8 @@ function renderDrawerBody(){
       renderSharedBoardList();
     }else{
       b.innerHTML=`<div class="more-list">
-        <button class="more-btn${DRAW.anim?' on':''}" id="mAnim">🎬 Animation${DRAW.steps.length?" ("+DRAW.steps.length+" Schritte)":""}</button>
+        <button class="more-btn${DRAW.filmBar?' on':''}" id="mAnim">🎬 Aufnahme${DRAW.film?" (fertig)":""}</button>
+        <button class="more-btn" id="mFilme">🎞 Meine Filme${(DB.films||[]).length?" ("+(DB.films||[]).length+")":""}</button>
         <button class="more-btn${DRAW.orderMode?' on':''}" id="mReihen">Reihenfolge 1·2·3</button>
         <button class="more-btn${DRAW.night?' on':''}" id="mNight">Tag / Nacht</button>
         <button class="more-btn" id="mSave">Tafelbild speichern</button>
@@ -8864,7 +8883,8 @@ function renderDrawerBody(){
         <button class="more-btn" id="mShare">Teilen (WhatsApp etc.)</button>
         <button class="more-btn more-danger" id="mClear">Tafel leeren</button>
       </div>`;
-      $("#mAnim").addEventListener("click",()=>{ if(DRAW.anim){animOff();toast("Animation beendet");}else{animOn();} });
+      $("#mAnim").addEventListener("click",()=>{ DRAW.filmBar=true;filmBarUI();closeTafelDrawer();toast("Aufnahme bereit · auf ● tippen"); });
+      $("#mFilme").addEventListener("click",openFilmListe);
       $("#mReihen").addEventListener("click",()=>{DRAW.orderMode=!DRAW.orderMode;DRAW.tool="select";DRAW.selId=null;setActiveTool();render();closeTafelDrawer();toast(DRAW.orderMode?"Reihenfolge-Modus an – Autos antippen":"Reihenfolge-Modus aus");});
       $("#mNight").addEventListener("click",()=>{DRAW.night=!DRAW.night;render();persistBoard();closeTafelDrawer();toast(DRAW.night?"Nacht-Modus":"Tag-Modus");});
       $("#mSave").addEventListener("click",()=>{saveBoard();closeTafelDrawer();});
@@ -8898,7 +8918,10 @@ function renderLoadList(){
   g.querySelectorAll(".tb-del").forEach(b=>b.addEventListener("click",()=>deleteBoard(+b.dataset.del)));
 }
 function bindDraw(){
-  $("#drawBack").addEventListener("click",()=>{animStop();routeHome();});
+  $("#drawBack").addEventListener("click",()=>{
+    if(DRAW.recAn)filmRecStop();
+    if(DRAW.film&&!confirm("Die Aufnahme ist noch nicht gespeichert. Trotzdem raus?"))return;
+    filmStop();filmZurueck();routeHome();});
   _board.addEventListener("pointerdown",onDown);
   _board.addEventListener("pointermove",onMove);
   _board.addEventListener("pointerup",onUp);
@@ -8908,15 +8931,11 @@ function bindDraw(){
   $("#dbErase").addEventListener("click",()=>{ if(DRAW.tool==="erase"){ openEraseSheet(); return; } DRAW.tool="erase";DRAW.selId=null;DRAW.orderMode=false;setActiveTool();closeTafelDrawer();render();});
   $("#dbUndo").addEventListener("click",undo);
   $("#dbRedo").addEventListener("click",redo);
-  $("#anPlay").addEventListener("click",animPlay);
-  $("#anPrev").addEventListener("click",()=>{animStop();animGoto(DRAW.stepIdx-1);});
-  $("#anNext").addEventListener("click",()=>{animStop();animGoto(DRAW.stepIdx+1);});
-  $("#anAdd").addEventListener("click",()=>{animStop();animAddStep();});
-  $("#anSpeed").addEventListener("click",animSpeed);
-  $("#anCurve").addEventListener("click",()=>{DRAW.animKurve=!DRAW.animKurve;animBarUI();persistBoard();
-    toast(DRAW.animKurve?"Kurvenfahrt an":"Gerade Linien");});
-  $("#anDel").addEventListener("click",()=>{animStop();animDelStep();});
-  $("#anOff").addEventListener("click",animOff);
+  $("#fmRec").addEventListener("click",()=>DRAW.recAn?filmRecStop():filmRecStart());
+  $("#fmPlay").addEventListener("click",filmPlay);
+  $("#fmSave").addEventListener("click",filmSaveNamed);
+  $("#fmDel").addEventListener("click",filmDelete);
+  $("#fmOff").addEventListener("click",()=>{filmStop();filmZurueck();DRAW.filmBar=false;filmBarUI();});
   $("#dbHandle").addEventListener("click",()=>toggleTafelDrawer(DRAW.uiTab||"objekte"));
   $("#tdClose").addEventListener("click",closeTafelDrawer);
   document.querySelectorAll("#tdTabs .td-tab").forEach(t=>t.addEventListener("click",()=>{DRAW.uiTab=t.dataset.tab;DRAW.loadView=false;updateDrawerUI();}));
