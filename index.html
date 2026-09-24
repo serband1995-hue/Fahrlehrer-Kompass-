@@ -3194,6 +3194,58 @@ function isSuperAdmin() {
   return _authProfile && _authProfile.rolle === "super_admin";
 }
 
+/* ---- Lokale Daten gehören genau einem Konto ----
+   Auf einem Gerät können sich nacheinander verschiedene Personen anmelden. Das Gerät merkt sich,
+   wem die lokal gespeicherten Daten gehören. Passt das nicht zum angemeldeten Konto, werden die
+   lokalen Daten vor jedem Abgleich gelöscht - sonst landeten sie im Konto der nächsten Person. */
+const OWNER_KEY = "serband-data-owner";
+function _lokalerDatenEigentuemer() {
+  try {
+    const o = localStorage.getItem(OWNER_KEY);
+    if (o) return o;
+    // Altbestand von vor diesem Update: der zuletzt angemeldete Nutzer gilt als Eigentümer.
+    const c = JSON.parse(localStorage.getItem("serband-session-cache") || "null");
+    if (c && c.id) return c.id;
+  } catch (e) {}
+  return null;
+}
+// Entfernt alle personenbezogenen App-Daten vom Gerät (nicht die App-Version und Geräte-Einstellungen).
+function _lokaleNutzerdatenLoeschen() {
+  ["serband-app-v1", "serband-sync-stamp", "serband-restore-stamp", "serband-session-cache", "serband-backup-stamp",
+   "serband-weather-cache", "serband-weather-forecast-cache", OWNER_KEY].forEach(k => {
+    try { localStorage.removeItem(k); } catch (e) {}
+  });
+  try { sessionStorage.removeItem("vd_unlocked"); } catch (e) {}
+}
+// Hat das Gerät überhaupt eigene Einträge, die beim Abmelden verloren gehen könnten?
+function _lokaleDatenVorhanden() {
+  const d = _persoenlicheDaten() || {};
+  return !!((d.students || []).length || (d.lessons || []).length || (d.exams || []).length);
+}
+/* Die von supabase-js lokal gespeicherte Sitzung (ohne Netz lesbar). Sie besteht nur, solange sich auf
+   diesem Gerät niemand abgemeldet hat - daran hängt der Offline-Zugang, nie an einem eingetippten Passwort. */
+function _gespeicherteSupabaseSitzung() {
+  try {
+    for (let i = 0; i < localStorage.length; i++) {
+      const k = localStorage.key(i);
+      if (!/^sb-.+-auth-token$/.test(k || "")) continue;
+      const j = JSON.parse(localStorage.getItem(k) || "null");
+      const s = j && (j.currentSession || j);
+      let u = s && s.user;
+      if (!(u && u.id)) { const ju = JSON.parse(localStorage.getItem(k + "-user") || "null"); u = ju && (ju.user || ju); }
+      if (s && s.refresh_token && u && u.id) return { id: u.id, email: u.email || "" };
+    }
+  } catch (e) {}
+  return null;
+}
+function _supabaseSitzungEntfernen() {
+  try {
+    const weg = [];
+    for (let i = 0; i < localStorage.length; i++) { const k = localStorage.key(i); if (/^sb-.+-auth-token/.test(k || "")) weg.push(k); }
+    weg.forEach(k => localStorage.removeItem(k));
+  } catch (e) {}
+}
+
 /* ---- Login ---- */
 function toggleLoPass() {
   const inp = document.getElementById('loPass');
@@ -3279,10 +3331,10 @@ async function doLogin() {
     const msg = (e && e.message) || "";
     const isNetworkError = /fetch|network|Failed to fetch/i.test(msg);
     if (isNetworkError) {
-      const offlineOk = _tryOfflineSession();
-      if (offlineOk) { return; } // erfolgreich offline rein, kein Fehler anzeigen
+      // Kein Offline-Zugang über das Formular: das Passwort lässt sich ohne Server nicht prüfen.
+      // Wer angemeldet bleibt (nicht abmeldet), kommt beim nächsten Öffnen auch offline in die App.
       btn.disabled = false; btn.innerHTML = "Einloggen";
-      showLoginErr("Kein Internet und kein gespeicherter Zugang gefunden. Bitte einmal mit Internet einloggen, danach geht's auch offline.");
+      showLoginErr("Keine Internetverbindung. Zum Anmelden wird Internet gebraucht. Wer auf diesem Gerät angemeldet bleibt, kann die App danach auch offline öffnen.");
       return;
     }
     btn.disabled = false; btn.innerHTML = "Einloggen";
@@ -3296,8 +3348,19 @@ function showLoginErr(msg) {
 }
 
 async function afterLogin(user) {
+  // Lokale Daten eines anderen (oder unbekannten) Kontos werden vor jedem Abgleich vom Gerät entfernt,
+  // danach startet die App sauber neu - nichts davon darf in dieses Konto hochgeladen werden.
+  try {
+    if (_lokalerDatenEigentuemer() !== user.id) {
+      const hatteDaten = localStorage.getItem(STORE_KEY) !== null;
+      _lokaleNutzerdatenLoeschen();
+      localStorage.setItem(OWNER_KEY, user.id);
+      if (hatteDaten) { location.reload(); return; }
+    }
+    localStorage.setItem(OWNER_KEY, user.id);
+    localStorage.removeItem("serband-session-cache");
+  } catch (e) {}
   _authUser = user;
-  localStorage.setItem("serband-session-cache", JSON.stringify({ email: user.email, id: user.id, ts: Date.now() }));
   const supa = getSupa();
   // Profil laden
   const { data: prof } = await supa.from("profiles").select("*").eq("id", user.id).single();
@@ -3432,6 +3495,9 @@ function printAgb() {
 // den Server überschreiben. var statt let, damit save() beim Start nie an der TDZ scheitert.
 var _pullOk = false;
 async function pullFromCloud() {
+  // In der Fahrschul-Gesamtansicht steht in DB der Bestand aller Fahrlehrer - ein Pull würde ihn
+  // mit dem eigenen Snapshot vermischen. Der nächste Timer-Lauf nach dem Verlassen holt es nach.
+  if (_fsAgg) return;
   try {
     const supa = getSupa();
     const { data, error } = await supa.from("snapshots").select("data, updated_at").eq("user_id", _authUser.id).single();
@@ -3452,9 +3518,22 @@ async function pullFromCloud() {
   } catch(e) { _pullOk = false; console.warn("[Kompass] Pull fehlgeschlagen:", e.message); }
 }
 
+/* Persönlicher Datenstand des eingeloggten Fahrlehrers. In der Fahrschul-Gesamtansicht enthält DB die
+   Schüler, Termine und Prüfungen ALLER Fahrlehrer - dann gilt der beim Umschalten gesicherte eigene Stand.
+   Nur dieser darf in den eigenen Snapshot und in die Sync-Brücken. */
+function _persoenlicheDaten() {
+  if (!_fsAgg) return DB;
+  if (!_fsPersonalBackup) return null;
+  return Object.assign({}, DB, _fsPersonalBackup);
+}
+// Liefert true, wenn der Stand gesichert ist (oder es nichts zu sichern gibt), sonst false.
 async function pushToCloud() {
-  if (!_authUser) return;
-  if (!_pullOk) { console.warn("[Kompass] Push übersprungen: Cloud-Stand noch nicht gelesen."); return; }
+  if (!_authUser) return false;
+  // Büro und Fahrschul-Admin arbeiten nur auf den Fahrschul-Tabellen, einen persönlichen Snapshot gibt es nicht.
+  if (_authProfile && (_authProfile.rolle === "buero" || _authProfile.rolle === "fahrschule_admin")) return true;
+  if (!_pullOk) { console.warn("[Kompass] Push übersprungen: Cloud-Stand noch nicht gelesen."); return false; }
+  const daten = _persoenlicheDaten();
+  if (!daten) { console.warn("[Kompass] Push übersprungen: persönlicher Stand nicht verfügbar."); return false; }
   try {
     const supa = getSupa();
     const now = new Date().toISOString();
@@ -3462,16 +3541,17 @@ async function pushToCloud() {
     // Server-Zeit, damit die Geräte-Uhr beim Vergleich "wer ist neuer" keine Rolle mehr spielt.
     const { data: saved, error } = await supa.from("snapshots").upsert({
       user_id: _authUser.id,
-      data: DB,
+      data: daten,
       updated_at: now
     }, { onConflict: "user_id" }).select("updated_at").single();
-    if (error) { console.warn("[Kompass] Push fehlgeschlagen:", error.message); return; }
+    if (error) { console.warn("[Kompass] Push fehlgeschlagen:", error.message); return false; }
     const serverStamp = saved && saved.updated_at ? new Date(saved.updated_at).getTime() : NaN;
     localStorage.setItem("serband-sync-stamp", (isFinite(serverStamp) ? serverStamp : Date.now()) + "");
     // Sync-Status im Admin-Panel aktualisieren
     const el = document.getElementById("apSyncStatus");
     if (el) el.textContent = new Date().toLocaleTimeString("de");
-  } catch(e) { console.warn("[Kompass] Push fehlgeschlagen:", e.message); }
+    return true;
+  } catch(e) { console.warn("[Kompass] Push fehlgeschlagen:", e.message); return false; }
 }
 
 /* ---- Web-Push Benachrichtigungen (auch wenn App geschlossen ist) ---- */
@@ -3513,7 +3593,8 @@ async function enablePushNotifications() {
 }
 /* ---- Öffentliche Online-Buchungen (Schalter-/Automatik-Link) abholen ---- */
 async function pullPublicBookings() {
-  if (!_authUser) return;
+  // Nicht in der Gesamtansicht: neue Termine landeten sonst im Fahrschul-Bestand statt im eigenen Kalender.
+  if (!_authUser || _fsAgg) return;
   try {
     const supa = getSupa();
     const { data: rows } = await supa.from("public_bookings").select("*").eq("fahrlehrer_id", _authUser.id)
@@ -3559,7 +3640,7 @@ async function pullPublicBookings() {
 /* Holt neue oder zu mir verschobene Schüler von der Fahrschule ab, und entfernt lokal Schüler,
    die zu einem anderen Fahrlehrer verschoben wurden - mit Hinweis-Toast in beide Richtungen. */
 async function pullSchuelerZuweisungen() {
-  if (!_authUser || !_authProfile || !_authProfile.fahrschule_id) return;
+  if (!_authUser || !_authProfile || !_authProfile.fahrschule_id || _fsAgg) return;
   try {
     const supa = getSupa();
     const { data: rows } = await supa.from("schueler").select("*").eq("fahrlehrer_id", _authUser.id).eq("status", "aktiv");
@@ -3602,7 +3683,7 @@ async function pullSchuelerZuweisungen() {
 /* Holt Kalender-Änderungen von der Fahrschule (neue/geänderte/gelöschte Termine) ab.
    "Zuletzt geändert gewinnt" pro Termin, via aktualisiert_am - dein Kalender bleibt sonst unangetastet. */
 async function pullTermineZuweisungen() {
-  if (!_authUser || !_authProfile || !_authProfile.fahrschule_id || !DB.lessons) return;
+  if (!_authUser || !_authProfile || !_authProfile.fahrschule_id || !DB.lessons || _fsAgg) return;
   try {
     const supa = getSupa();
     const { data: rows } = await supa.from("kalender_termine").select("*").eq("fahrlehrer_id", _authUser.id).eq("geloescht", false);
@@ -3634,13 +3715,24 @@ async function pullTermineZuweisungen() {
 }
 /* ---- Logout ---- */
 async function doLogout() {
+  // Letzten Stand sichern. Beim Abmelden werden alle Daten dieses Kontos vom Gerät gelöscht, damit
+  // die nächste Person nichts davon sieht - klappt das Sichern nicht, wird vorher gewarnt.
+  let gesichert = false;
+  try { gesichert = await pushToCloud(); } catch (e) {}
+  if (!gesichert && _lokaleDatenVorhanden() && !confirm("Dein aktueller Stand konnte gerade nicht in der Cloud gesichert werden (keine Verbindung?).\n\nBeim Abmelden werden alle Daten von diesem Gerät gelöscht. Nicht gesicherte Änderungen gehen dabei verloren.\n\nTrotzdem abmelden?")) return;
   if (_syncTimer) clearInterval(_syncTimer);
-  await pushToCloud(); // letzten Stand sichern
   _pullOk = false;
-  const supa = getSupa();
-  await supa.auth.signOut();
+  try {
+    const supa = getSupa();
+    if (supa) await Promise.race([supa.auth.signOut(), new Promise(r => setTimeout(r, 4000))]);
+  } catch (e) {}
+  // supabase-js behält die Sitzung, wenn der Server nicht erreichbar ist - hier wird sie in jedem Fall entfernt,
+  // sonst wäre das Gerät offline weiterhin "angemeldet".
+  _supabaseSitzungEntfernen();
+  _lokaleNutzerdatenLoeschen();
   _authUser = null; _authProfile = null;
-  document.getElementById("loginOverlay").classList.remove("hidden");
+  // Neu laden setzt Speicher, Timer und Ansicht vollständig zurück.
+  location.reload();
 }
 
 /* ---- Session wiederherstellen (nach PWA-Neustart) ---- */
@@ -3715,35 +3807,45 @@ async function _bioVerifyOnUnlock(userId){
 }
 
 async function checkSession() {
-  const supa = getSupa();
-  if (!supa) { showApp(); return; }
-  try {
-    const { data: { session } } = await supa.auth.getSession();
-    if (session && session.user) {
-      localStorage.setItem("serband-session-cache", JSON.stringify({ email: session.user.email, id: session.user.id, ts: Date.now() }));
-      const darfRein = await _bioVerifyOnUnlock(session.user.id);
-      if (darfRein) await afterLogin(session.user);
-    } else { _tryOfflineSession(); }
-  } catch(e) { console.warn("[Kompass] getSession offline:", e.message); _tryOfflineSession(); }
   document.getElementById("loPass").addEventListener("keydown", e => { if (e.key === "Enter") doLogin(); });
   document.getElementById("loEmail").addEventListener("keydown", e => { if (e.key === "Enter") document.getElementById("loPass").focus(); });
+  const supa = getSupa();
+  if (!supa) {
+    // Anmeldedienst nicht geladen (z.B. offline ohne Cache): nur mit bestehender Sitzung weiter.
+    if (!(await _tryOfflineSession())) showLoginErr("Anmeldedienst gerade nicht erreichbar. Bitte Internetverbindung prüfen und die App neu laden.");
+    return;
+  }
+  // Ohne Netz versucht supabase-js ein abgelaufenes Token rund 25 s lang zu erneuern. Ist das Gerät
+  // offline, geht es deshalb gleich weiter - und bei hängender Verbindung nach spätestens 10 s.
+  let session = null;
+  if (navigator.onLine !== false) {
+    try {
+      const r = await Promise.race([supa.auth.getSession(), new Promise(res => setTimeout(() => res(null), 10000))]);
+      session = r && r.data && r.data.session;
+    } catch(e) { console.warn("[Kompass] getSession fehlgeschlagen:", e.message); }
+  }
+  if (session && session.user) {
+    const darfRein = await _bioVerifyOnUnlock(session.user.id);
+    if (darfRein) await afterLogin(session.user);
+    return;
+  }
+  // Keine abrufbare Sitzung. Ist trotzdem noch eine gespeichert (die Erneuerung scheitert nur am Netz),
+  // geht es offline weiter - sonst bleibt der Login sichtbar.
+  await _tryOfflineSession();
 }
-function _tryOfflineSession() {
-  try {
-    const cached = localStorage.getItem("serband-session-cache");
-    if (cached) {
-      const c = JSON.parse(cached);
-      if (c && c.id && (Date.now() - c.ts) < 30 * 24 * 60 * 60 * 1000) {
-        _authUser = { id: c.id, email: c.email };
-        _authProfile = { id: c.id, email: c.email, role: "fahrlehrer", aktiv: true };
-        document.getElementById("loginOverlay").classList.add("hidden");
-        updateBell();
-        toast("Offline-Modus · Daten werden beim nächsten Start synchronisiert");
-        return true;
-      }
-    }
-  } catch(e) { /* ignore */ }
-  return false;
+/* Offline-Zugang nur mit einer auf diesem Gerät noch bestehenden, nicht abgemeldeten Sitzung, deren Konto
+   auch die lokalen Daten gehören. Die Biometrie-Sperre gilt hier genauso. */
+async function _tryOfflineSession() {
+  const u = _gespeicherteSupabaseSitzung();
+  if (!u || _lokalerDatenEigentuemer() !== u.id) return false;
+  const darfRein = await _bioVerifyOnUnlock(u.id);
+  if (!darfRein) return false;
+  _authUser = { id: u.id, email: u.email };
+  _authProfile = { id: u.id, email: u.email, aktiv: true };
+  document.getElementById("loginOverlay").classList.add("hidden");
+  updateBell();
+  toast("Offline-Modus · Daten werden beim nächsten Start synchronisiert");
+  return true;
 }
 
 /* ---- Admin Panel ---- */
@@ -5474,19 +5576,8 @@ const AGB_HTML=`
 <h3>§17 Schlussbestimmungen</h3>
 <p>Es gilt deutsches Recht. Sollte eine Bestimmung dieser Nutzungsbedingungen unwirksam sein oder werden, bleiben die übrigen Bestimmungen hiervon unberührt.</p>
 `;
-const RESTORE_STAMP="2026-06-23T16:54:19.419Z";
-const RESTORE_DATA=null;
 function load(){try{return JSON.parse(localStorage.getItem(STORE_KEY))||{students:[]};}catch(e){return {students:[]};}}
 let DB=load();
-/* Einmaliges Einspielen der Ausgangsdaten – greift NUR, wenn wirklich noch nie Daten gespeichert wurden.
-   Sobald einmal echte Daten existieren, wird hier nie wieder etwas überschrieben – auch nicht bei
-   künftigen App-Updates mit neuem RESTORE_STAMP. Das schützt deine eingetragenen Fortschritte dauerhaft. */
-(function autoRestore(){try{
-  if(localStorage.getItem(STORE_KEY)!==null) return; // es existieren bereits Daten -> nie anfassen
-  DB=JSON.parse(JSON.stringify(RESTORE_DATA));
-  localStorage.setItem(STORE_KEY,JSON.stringify(DB));
-  localStorage.setItem("serband-restore-stamp",RESTORE_STAMP);
-}catch(e){}})();
 function save(){
   if(_fsAgg){ _fsSyncAggChanges(); return; }
   try{localStorage.setItem(STORE_KEY,JSON.stringify(DB));}catch(e){}
@@ -5593,9 +5684,11 @@ function _syncSchuelerBridge(){
   if(!_authUser||!_pullOk||!_authProfile||!_authProfile.fahrschule_id||!DB.students)return;
   clearTimeout(_schuelerSyncDebounce);
   _schuelerSyncDebounce=setTimeout(async()=>{
+    // Stand erst beim Auslösen lesen - und nie den Fahrschul-Bestand der Gesamtansicht.
+    const P=_persoenlicheDaten(); if(!P||!Array.isArray(P.students))return;
     try{
       const supa=getSupa();
-      const rows=DB.students.map(s=>{
+      const rows=P.students.map(s=>{
         const {id,name,telefon,...rest}=s;
         return {
           id:s.id, fahrschule_id:_authProfile.fahrschule_id, fahrlehrer_id:_authUser.id,
@@ -5605,13 +5698,14 @@ function _syncSchuelerBridge(){
       });
       if(rows.length) await supa.from("schueler").upsert(rows,{onConflict:"id"});
       // Auslastung fürs Fahrschule-Dashboard mitschicken (keine privaten Kalenderdaten, nur die Kennzahl)
-      try{
+      // capacityStats() rechnet auf DB - in der Gesamtansicht wäre das der Bestand aller Fahrlehrer.
+      if(!_fsAgg) try{
         const cap=capacityStats();
         await supa.from("profiles").update({auslastung_pct:cap.auslastung, aktive_schueler_anzahl:cap.fahrend}).eq("id",_authUser.id);
       }catch(e2){}
       // lokal gelöschte Schüler auch im geteilten Bereich als gelöscht markieren (Soft-Delete)
       // Sicherheitssperre: bei leerem lokalem Schüler-Bestand wird nichts gelöscht (siehe Termine-Brücke).
-      const lokaleIds=DB.students.map(s=>s.id);
+      const lokaleIds=P.students.map(s=>s.id);
       const {data:meineRemote}=await supa.from("schueler").select("id").eq("fahrlehrer_id",_authUser.id).neq("status","geloescht");
       if(lokaleIds.length===0&&(meineRemote||[]).length>0){
         console.warn("[Kompass] Schüler-Sync: lokaler Bestand leer, Server hat "+meineRemote.length+" Schüler - Löschung sicherheitshalber übersprungen.");
@@ -5632,10 +5726,11 @@ function _syncTermineBridge(){
   if(!_authUser||!_pullOk||!_authProfile||!_authProfile.fahrschule_id||!DB.lessons)return;
   clearTimeout(_termineSyncDebounce);
   _termineSyncDebounce=setTimeout(async()=>{
+    const P=_persoenlicheDaten(); if(!P||!Array.isArray(P.lessons))return;
     try{
       const supa=getSupa();
       const nowIso=new Date().toISOString();
-      const rows=DB.lessons.map(l=>{
+      const rows=P.lessons.map(l=>{
         const {id,sid,date,von,bis,art,fahrzeug,status,_syncedAt,...rest}=l;
         return {
           id:l.id, fahrschule_id:_authProfile.fahrschule_id, fahrlehrer_id:_authUser.id,
@@ -5651,7 +5746,7 @@ function _syncTermineBridge(){
       // ist, obwohl der Server noch Termine hat, wird NICHTS gelöscht - ein leerer lokaler
       // Zustand ist viel wahrscheinlicher ein Lade-/Verbindungsfehler als eine echte Absicht,
       // alles zu löschen. Genau das hat am 18.08.26 200 Fahrstunden fälschlich gelöscht.
-      const lokaleIds=DB.lessons.map(l=>l.id);
+      const lokaleIds=P.lessons.map(l=>l.id);
       const {data:meineRemote}=await supa.from("kalender_termine").select("id").eq("fahrlehrer_id",_authUser.id).eq("geloescht",false);
       if(lokaleIds.length===0&&(meineRemote||[]).length>0){
         console.warn("[Kompass] Termine-Sync: lokaler Kalender leer, Server hat "+meineRemote.length+" Termine - Löschung sicherheitshalber übersprungen.");
@@ -5669,10 +5764,11 @@ function _syncPruefungenBridge(){
   if(!_authUser||!_pullOk||!_authProfile||!_authProfile.fahrschule_id||!DB.exams)return;
   clearTimeout(_pruefungenSyncDebounce);
   _pruefungenSyncDebounce=setTimeout(async()=>{
+    const P=_persoenlicheDaten(); if(!P||!Array.isArray(P.exams))return;
     try{
       const supa=getSupa();
       const nowIso=new Date().toISOString();
-      const rows=DB.exams.map(ex=>{
+      const rows=P.exams.map(ex=>{
         const {id,sid,date,result,pruefer,attempt,_syncedAt,...rest}=ex;
         return {
           id:ex.id, fahrschule_id:_authProfile.fahrschule_id, fahrlehrer_id:_authUser.id,
@@ -5683,7 +5779,7 @@ function _syncPruefungenBridge(){
       for(let i=0;i<rows.length;i+=200){
         await supa.from("kalender_pruefungen").upsert(rows.slice(i,i+200),{onConflict:"id"});
       }
-      const lokaleIds=DB.exams.map(ex=>ex.id);
+      const lokaleIds=P.exams.map(ex=>ex.id);
       const {data:meineRemote}=await supa.from("kalender_pruefungen").select("id").eq("fahrlehrer_id",_authUser.id).eq("geloescht",false);
       if(lokaleIds.length===0&&(meineRemote||[]).length>0){
         console.warn("[Kompass] Prüfungen-Sync: lokaler Bestand leer, Server hat "+meineRemote.length+" Prüfungen - Löschung sicherheitshalber übersprungen.");
@@ -9343,8 +9439,6 @@ function routeSettings(){
 const READY_MIN=90;
 let _examChoice=null,_examPr=null,_examFaults=[],_examEingriff=false;
 
-/* ---- Prüfer-Akte: bekannte Prüfer aus Offenbach (einmalig eingespielt) ---- */
-const PRUEFER_SEED=null;
 /* Zentrales Hinzufügen-Menü */
 function openAddSheet(){
   const buero=_fsKalenderModus==="buero";
@@ -10756,7 +10850,7 @@ function _notifyOnlineBookingChange(lessonId, type, patch) {
   if (!_authUser || !lessonId) return;
   try {
     const supa = getSupa();
-    supa.from("public_bookings").select("id").eq("merged_lesson_id", lessonId).eq("status", "bestaetigt").maybeSingle().then(({ data }) => {
+    supa.from("public_bookings").select("id").eq("merged_lesson_id", lessonId).eq("status", "bestaetigt").maybeSingle().then(async ({ data }) => {
       if (!data) return;
       const body = { merged_lesson_id: lessonId, type };
       if (type === "changed" && patch) {
@@ -10764,17 +10858,15 @@ function _notifyOnlineBookingChange(lessonId, type, patch) {
         if (patch.von) body.new_von = patch.von;
         if (patch.bis) body.new_bis = patch.bis;
       }
-      // Bereich 13, Punkt 7: Büro hat 100%-Handlungsmöglichkeiten im Buchungssystem - ändert/storniert
-      // das Büro (nicht der Fahrlehrer selbst) einen online gebuchten Termin, wird zusätzlich der
-      // Fahrlehrer per Push informiert, damit jede Veränderung nachvollziehbar bleibt.
-      if (_authProfile && _authProfile.rolle === "buero") {
-        body.changed_by_buero = true;
-        body.changed_by_name = _authProfile.name || "Büro";
-      }
-      fetch("https://oectrvkjunntzsggyhxv.supabase.co/functions/v1/public-booking?action=teacher_update", {
-        method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(body)
+      // Der Server prüft über das Anmelde-Token, wer ändert und ob er das darf. Ändert jemand anderes
+      // als der Fahrlehrer selbst (Büro, Admin), informiert er den Fahrlehrer zusätzlich per Push.
+      const { data: sessionData } = await supa.auth.getSession();
+      const token = sessionData && sessionData.session && sessionData.session.access_token;
+      if (!token) return;
+      fetch(SUPA_URL + "/functions/v1/public-booking?action=teacher_update", {
+        method: "POST", headers: { "Content-Type": "application/json", "Authorization": "Bearer " + token }, body: JSON.stringify(body)
       }).catch(() => {});
-    });
+    }).catch(() => {});
   } catch (e) {}
 }
 function updateLesson(id,patch){ const l=(DB.lessons||[]).find(x=>x.id===id); if(l){ Object.assign(l,patch); save(); if(patch.date||patch.von||patch.bis) _notifyOnlineBookingChange(id,"changed",patch); } return l; }
@@ -10846,15 +10938,6 @@ function ensureDB(){ let _ensureDirty=false; if(!Array.isArray(DB.exams))DB.exam
   if(!Array.isArray(DB.orte))DB.orte=[];
   if(!Array.isArray(DB.prueferTags))DB.prueferTags=[];
   if(!Array.isArray(DB.trinkgeld))DB.trinkgeld=[];
-  // Einmaliges Seeding der bekannten Prüfer
-  if(!DB._prueferSeeded){
-    Object.keys(PRUEFER_SEED).forEach(nm=>{
-      if(!DB.pruefer.includes(nm))DB.pruefer.push(nm);
-      if(!DB.prueferData[nm]){ const s=PRUEFER_SEED[nm]; DB.prueferData[nm]={behoerde:"",tags:(s.tags||[]).slice(),routen:(s.routen||[]).map(r=>r.slice()),notiz:s.notiz||"",created:Date.now()}; }
-    });
-    DB.pruefer.sort((a,b)=>a.localeCompare(b,'de'));
-    DB._prueferSeeded=true; _ensureDirty=true;
-  }
   // 168 bereits absolvierte UE als Monats-Sockel (einmalig, aber als Sicherheitsnetz stehen gelassen —
   // genau das hat am 06.07. den Cache-Reset-Datenverlust zumindest teilweise abgefedert)
   if(!DB._startUE168){ if(!DB.verdienst.startUE)DB.verdienst.startUE=168; DB._startUE168=true; _ensureDirty=true; }
