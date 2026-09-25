@@ -3252,6 +3252,9 @@ window.addEventListener("storage", (e) => {
   if (e.key !== OWNER_KEY && e.key !== null) return;
   if (_lokalerSpeicherGehoertAnderem()) location.reload();
 });
+// Eingefrorene oder aus dem Browser-Cache zurückgeholte Tabs bekommen keine storage-Ereignisse.
+window.addEventListener("pageshow", () => { if (_lokalerSpeicherGehoertAnderem()) location.reload(); });
+document.addEventListener("visibilitychange", () => { if (document.visibilityState === "visible" && _lokalerSpeicherGehoertAnderem()) location.reload(); });
 function _supabaseSitzungEntfernen() {
   try {
     const weg = [];
@@ -3325,6 +3328,7 @@ function _openNeuesPasswortSheet(){
 }
 // Beim Start merken: supabase-js entfernt den Link-Teil der Adresse, sobald es die Sitzung übernommen hat.
 const _PW_RESET_LINK = window.location.hash.includes("type=recovery");
+let _pwResetAusstehend = _PW_RESET_LINK; // gilt nur für die erste Anmeldung auf dieser Seite
 if(_PW_RESET_LINK){
   if(window.supabase) _checkPasswordRecovery();
   else setTimeout(_checkPasswordRecovery,800);
@@ -3364,6 +3368,7 @@ function showLoginErr(msg) {
 }
 
 async function afterLogin(user) {
+  const pwReset = _pwResetAusstehend; _pwResetAusstehend = false;
   // Lokale Daten eines anderen (oder unbekannten) Kontos werden vor jedem Abgleich vom Gerät entfernt,
   // danach startet die App sauber neu - nichts davon darf in dieses Konto hochgeladen werden.
   try {
@@ -3374,14 +3379,16 @@ async function afterLogin(user) {
       if (hatteDaten) {
         // Nach dem Neustart direkt weiter (die Anmeldung ist gerade erst passiert, kein zweites Entsperren),
         // und ein angefangener Passwort-Reset öffnet sich wieder.
-        try { sessionStorage.setItem("kompass-nach-anmeldung", JSON.stringify({ uid: user.id, pwReset: _PW_RESET_LINK })); } catch (e) {}
+        try { sessionStorage.setItem("kompass-nach-anmeldung", JSON.stringify({ uid: user.id, pwReset })); } catch (e) {}
         location.reload(); return;
       }
     }
     localStorage.setItem(OWNER_KEY, user.id);
     localStorage.removeItem("serband-session-cache");
   } catch (e) {}
-  _dbEigentuemer = user.id;
+  // Aus dem Speicher zurücklesen: schlug das Schreiben fehl (Speicher voll), bleibt beides gleich
+  // und die App startet nicht in einer Schleife neu.
+  try { _dbEigentuemer = localStorage.getItem(OWNER_KEY); } catch (e) { _dbEigentuemer = null; }
   _authUser = user;
   const supa = getSupa();
   // Profil laden
@@ -3395,6 +3402,7 @@ async function afterLogin(user) {
   // Kill-Switch prüfen (pro Person)
   if (prof && !prof.aktiv) {
     await supa.auth.signOut();
+    _authUser = null; _authProfile = null;
     document.getElementById("loBtn").disabled = false;
     document.getElementById("loBtn").innerHTML = "Einloggen";
     showLoginErr("Dein Zugang ist aktuell gesperrt. Bitte wende dich an deinen Fahrschul-Inhaber oder Serband.");
@@ -3406,6 +3414,7 @@ async function afterLogin(user) {
     const { data: fsRow } = await supa.from("fahrschulen").select("aktiv,name").eq("id", prof.fahrschule_id).maybeSingle();
     if (fsRow && !fsRow.aktiv) {
       await supa.auth.signOut();
+      _authUser = null; _authProfile = null;
       document.getElementById("loBtn").disabled = false;
       document.getElementById("loBtn").innerHTML = "Einloggen";
       showLoginErr(`${fsRow.name||"Diese Fahrschule"} ist aktuell deaktiviert. Bitte wende dich an deinen Fahrschul-Inhaber.`);
@@ -3743,8 +3752,16 @@ async function pullTermineZuweisungen() {
    Gibt false zurück, wenn abgebrochen wurde; sonst startet die App neu. */
 async function doLogout(opts) {
   opts = opts || {};
-  // Noch offene Büro-/Admin-Änderungen der Gesamtansicht jetzt schreiben statt sie mit dem Neustart zu verlieren.
-  if (_fsSyncDebounce && _fsAgg) { clearTimeout(_fsSyncDebounce); try { await _fsSyncAggJetzt(); } catch (e) {} }
+  // Veralteter Tab (anderes Konto inzwischen angemeldet oder abgemeldet): nur neu starten, nichts löschen.
+  if (_lokalerSpeicherGehoertAnderem()) { location.reload(); return false; }
+  // Noch offene (auch zuvor fehlgeschlagene) Änderungen der Gesamtansicht jetzt schreiben statt sie mit dem
+  // Neustart zu verlieren - klappt das nicht, vorher fragen.
+  if (_fsAgg && _fsBaseline) {
+    clearTimeout(_fsSyncDebounce);
+    let ok = false;
+    try { ok = await _fsSyncAggJetzt(); } catch (e) {}
+    if (!ok && !confirm("Deine letzten Änderungen in der Fahrschul-Ansicht konnten nicht gespeichert werden (keine Verbindung?).\n\nBeim Abmelden gehen sie verloren. Trotzdem abmelden?")) return false;
+  }
   // Letzten Stand sichern. Beim Abmelden werden alle Daten dieses Kontos vom Gerät gelöscht, damit
   // die nächste Person nichts davon sieht - klappt das Sichern nicht, wird vorher gewarnt.
   let gesichert = false;
@@ -5648,9 +5665,13 @@ function _fsSyncAggChanges(){
   clearTimeout(_fsSyncDebounce);
   _fsSyncDebounce=setTimeout(_fsSyncAggJetzt,1500);
 }
+// supabase-js wirft bei Fehlern nicht, sondern liefert {error} - hier wird daraus ein echter Fehler,
+// damit weder "Gespeichert ✓" erscheint noch die Vergleichsbasis weiterrückt.
+function _fsPruefe(r){ if(r&&r.error) throw r.error; return r; }
+// Liefert true, wenn alles geschrieben ist (oder nichts zu schreiben war), sonst false.
 async function _fsSyncAggJetzt(){
     _fsSyncDebounce=null;
-    if(!_fsAgg||!_fsBaseline)return;
+    if(!_fsAgg||!_fsBaseline)return true;
     try{
       const supa=getSupa();
       const nowIso=new Date().toISOString();
@@ -5674,8 +5695,8 @@ async function _fsSyncAggJetzt(){
         }
       });
       const schuelerDeletes=(_fsBaseline.students||[]).filter(b=>!curSIds.has(b.id)).map(b=>b.id);
-      if(schuelerUpserts.length) await supa.from("schueler").upsert(schuelerUpserts,{onConflict:"id"});
-      if(schuelerDeletes.length) await supa.from("schueler").update({status:"geloescht",aktualisiert_am:nowIso}).in("id",schuelerDeletes);
+      if(schuelerUpserts.length) _fsPruefe(await supa.from("schueler").upsert(schuelerUpserts,{onConflict:"id"}));
+      if(schuelerDeletes.length) _fsPruefe(await supa.from("schueler").update({status:"geloescht",aktualisiert_am:nowIso}).in("id",schuelerDeletes));
 
       // ---- TERMINE ---- (künstliche Einträge wie Urlaubs-Blöcke werden NIE zurückgeschrieben)
       const baseT={}; (_fsBaseline.lessons||[]).forEach(l=>{ if(!l._synthetic) baseT[l.id]=l; });
@@ -5697,8 +5718,8 @@ async function _fsSyncAggJetzt(){
         }
       });
       const termineDeletes=(_fsBaseline.lessons||[]).filter(b=>!curTIds.has(b.id)).map(b=>b.id);
-      if(termineUpserts.length) await supa.from("kalender_termine").upsert(termineUpserts,{onConflict:"id"});
-      if(termineDeletes.length) await supa.from("kalender_termine").update({geloescht:true,aktualisiert_am:nowIso}).in("id",termineDeletes);
+      if(termineUpserts.length) _fsPruefe(await supa.from("kalender_termine").upsert(termineUpserts,{onConflict:"id"}));
+      if(termineDeletes.length) _fsPruefe(await supa.from("kalender_termine").update({geloescht:true,aktualisiert_am:nowIso}).in("id",termineDeletes));
 
       // ---- PRÜFUNGEN ----
       const baseP={}; (_fsBaseline.exams||[]).forEach(e=>baseP[e.id]=e);
@@ -5719,13 +5740,14 @@ async function _fsSyncAggJetzt(){
         }
       });
       const pruefungenDeletes=(_fsBaseline.exams||[]).filter(b=>!curPIds.has(b.id)).map(b=>b.id);
-      if(pruefungenUpserts.length) await supa.from("kalender_pruefungen").upsert(pruefungenUpserts,{onConflict:"id"});
-      if(pruefungenDeletes.length) await supa.from("kalender_pruefungen").update({geloescht:true,aktualisiert_am:nowIso}).in("id",pruefungenDeletes);
+      if(pruefungenUpserts.length) _fsPruefe(await supa.from("kalender_pruefungen").upsert(pruefungenUpserts,{onConflict:"id"}));
+      if(pruefungenDeletes.length) _fsPruefe(await supa.from("kalender_pruefungen").update({geloescht:true,aktualisiert_am:nowIso}).in("id",pruefungenDeletes));
 
       // Baseline auf den neuen Stand heben, damit der nächste Vergleich wieder stimmt
       _fsBaseline={students:JSON.parse(JSON.stringify(DB.students)),lessons:JSON.parse(JSON.stringify(DB.lessons)),exams:JSON.parse(JSON.stringify(DB.exams))};
       toast("Gespeichert ✓");
-    }catch(e){ console.warn("[Kompass] Fahrschul-Speichern fehlgeschlagen:",e.message); toast("Fehler beim Speichern: "+e.message); }
+      return true;
+    }catch(e){ console.warn("[Kompass] Fahrschul-Speichern fehlgeschlagen:",e.message); toast("Fehler beim Speichern: "+e.message); return false; }
 }
 
 /* ===== Fahrschule-Synchronisations-Brücke =====
