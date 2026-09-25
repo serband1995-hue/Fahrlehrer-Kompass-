@@ -1774,6 +1774,7 @@ body:not(.light) .cw-col.today .cw-dnum{color:var(--gold);}
 </style>
 <!-- Supabase Client -->
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="lernszenen.js" defer></script>
 <style>
 /* ===== LOGIN OVERLAY ===== */
 #loginOverlay{
@@ -8207,6 +8208,11 @@ function bestFehlerPreset(sid){
   const P=PRESETS[best.presetKey];if(!P)return null;
   return {presetKey:best.presetKey,label:P.label,status:best.status,studentName:s.name};
 }
+function oeffneLernszenen(){
+  if(!window.Lernszenen){toast("Lernszenen werden geladen – bitte kurz warten");return;}
+  try{closeTafelDrawer();}catch(e){}
+  window.Lernszenen.open({onClose:()=>{try{if(document.querySelector("#board"))render();}catch(e){}}});
+}
 function routeDraw(sid){
   _drawSuggest=sid?bestFehlerPreset(sid):null;
   initDraw();$("#tbTitle").textContent="Verkehrstafel";setFab(false);view.scrollTop=0;
@@ -8251,6 +8257,7 @@ function routeDraw(sid){
       <button class="db-btn" id="dbErase"><span class="db-ic">${DBIC.erase}</span><span>Radierer</span></button>
       <button class="db-btn" id="dbUndo"><span class="db-ic">${DBIC.undo}</span><span>Zurück</span></button>
       <button class="db-btn" id="dbRedo"><span class="db-ic db-flip">${DBIC.undo}</span><span>Vor</span></button>
+      <button class="db-btn" id="dbLern" aria-label="Lernszenen öffnen"><span class="db-ic" style="font-size:18px;line-height:1">🎬</span><span>Lernszenen</span></button>
       <div class="db-sep"></div>
       <button class="db-btn db-handle" id="dbHandle" aria-label="Werkzeuge öffnen"><span class="db-ic">${DBIC.more}</span><span>Werkzeuge</span></button>
     </div>
@@ -9174,6 +9181,7 @@ function renderDrawerBody(){
       renderSharedBoardList();
     }else{
       b.innerHTML=`<div class="more-list">
+        <button class="more-btn" id="mLern">🚗 Lernszenen (Autobahn &amp; mehr)</button>
         <button class="more-btn${DRAW.filmBar?' on':''}" id="mAnim">🎬 Aufnahme${DRAW.film?" (fertig)":""}</button>
         <button class="more-btn" id="mFilme">🎞 Meine Filme${(DB.films||[]).length?" ("+(DB.films||[]).length+")":""}</button>
         <button class="more-btn${DRAW.orderMode?' on':''}" id="mReihen">Reihenfolge 1·2·3</button>
@@ -9185,6 +9193,7 @@ function renderDrawerBody(){
         <button class="more-btn" id="mShare">Teilen (WhatsApp etc.)</button>
         <button class="more-btn more-danger" id="mClear">Tafel leeren</button>
       </div>`;
+      $("#mLern").addEventListener("click",oeffneLernszenen);
       $("#mAnim").addEventListener("click",()=>{ DRAW.filmBar=true;filmBarUI();closeTafelDrawer();toast("Aufnahme bereit · auf ● tippen"); });
       $("#mFilme").addEventListener("click",openFilmListe);
       $("#mReihen").addEventListener("click",()=>{DRAW.orderMode=!DRAW.orderMode;DRAW.tool="select";DRAW.selId=null;setActiveTool();render();closeTafelDrawer();toast(DRAW.orderMode?"Reihenfolge-Modus an – Autos antippen":"Reihenfolge-Modus aus");});
@@ -9239,6 +9248,7 @@ function bindDraw(){
   $("#fmDel").addEventListener("click",filmDelete);
   $("#fmOff").addEventListener("click",()=>{filmStop();filmZurueck();DRAW.filmBar=false;filmBarUI();});
   $("#dbHandle").addEventListener("click",()=>toggleTafelDrawer(DRAW.uiTab||"objekte"));
+  $("#dbLern").addEventListener("click",oeffneLernszenen);
   $("#tdClose").addEventListener("click",closeTafelDrawer);
   document.querySelectorAll("#tdTabs .td-tab").forEach(t=>t.addEventListener("click",()=>{DRAW.uiTab=t.dataset.tab;DRAW.loadView=false;updateDrawerUI();}));
   document.querySelectorAll("#objCtrl button").forEach(b=>b.addEventListener("click",()=>transformSel(b.dataset.mc)));
