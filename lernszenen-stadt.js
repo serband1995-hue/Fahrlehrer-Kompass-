@@ -332,8 +332,8 @@
       dauer: Math.ceil(tV + 4), strasse: { flaechen: fl, linien: li, objekte: obj, schilder, bereich: [X0, X1], boden: "#6a9a52", boden3d: "#6f9a55" }, kamera: { fokus: "fs", zoom: 5, vor: 0.25 },
       fahrzeuge: [fs, lkw, g1, g2],
       phasen: [
-        { t: 0.2, titel: "Langsamer Lkw vorne", text: "Außerorts, erlaubt sind 100 km/h, vorne fährt ein Lkw mit 60. Genug Abstand halten – so sieht man an ihm vorbei und kann Anlauf nehmen.", regel: "§ 4 Abs. 1 · § 5 Abs. 2 StVO", frage: { text: "Wann darf ich überholen?", optionen: ["Immer, wenn ich schneller bin", "Nur wenn übersehbar ist, dass niemand gefährdet wird, und ich wesentlich schneller bin", "Nur rechts"], richtig: 1, erklaerung: "§ 5 Abs. 2 StVO: Überholen nur, wenn eine Behinderung des Gegenverkehrs ausgeschlossen ist und mit wesentlich höherer Geschwindigkeit." } },
-        { t: 2.2, titel: "Gegenverkehr", text: "Ein Auto kommt entgegen. Jetzt nicht ausscheren – abwarten.", regel: "§ 5 Abs. 2 StVO", frage: { text: "Wie viel freie Strecke brauche ich ungefähr, um einen Lkw mit 60 bei 100 km/h zu überholen?", optionen: ["Etwa 100 m", "Etwa 250 m – und der Gegenverkehr kommt noch einmal so weit entgegen, also rund 500 m Sicht", "Etwa 50 m"], richtig: 1, erklaerung: "Überholweg ≈ (Länge beider + Abstände) × v₁ ÷ (v₁ − v₂) ≈ 60 m × 100 ÷ 40 ≈ 150–250 m. In derselben Zeit legt der Gegenverkehr die gleiche Strecke zurück." } },
+        { t: 0.2, titel: "Langsamer Lkw vorne", text: "Außerorts, erlaubt sind 100 km/h, vorne fährt ein Lkw mit 60. Genug Abstand halten – so sieht man an ihm vorbei und kann Anlauf nehmen.", regel: "§ 4 Abs. 1 · § 5 Abs. 2 StVO", frage: { text: "Wann darf ich überholen?", optionen: ["Immer, wenn ich schneller bin", "Nur wenn übersehbar ist, dass der Gegenverkehr während des ganzen Überholens nicht behindert wird, und ich wesentlich schneller bin", "Nur rechts"], richtig: 1, erklaerung: "§ 5 Abs. 2 StVO: Überholen nur, wenn eine Behinderung des Gegenverkehrs ausgeschlossen ist und mit wesentlich höherer Geschwindigkeit." } },
+        { t: 2.2, titel: "Gegenverkehr", text: "Ein Auto kommt entgegen. Jetzt nicht ausscheren – abwarten.", regel: "§ 5 Abs. 2 StVO", frage: { text: "Wie viel freie Strecke brauche ich ungefähr, um einen Lkw mit 60 bei 100 km/h zu überholen?", optionen: ["Etwa 100 m", "Etwa 250 m – und der Gegenverkehr kommt noch einmal so weit entgegen, also rund 500 m Sicht", "Etwa 50 m"], richtig: 1, erklaerung: "Überholweg ≈ (beide Fahrzeuglängen + Abstand davor und danach) × v₁ ÷ (v₁ − v₂) ≈ 100 m × 100 ÷ 40 ≈ 250 m. In derselben Zeit kommt der Gegenverkehr noch einmal so weit entgegen." } },
         { t: tA - 1.8, titel: "Spiegel, Schulterblick, Blinker", text: "Frei, übersichtlich, keine durchgezogene Linie: Innen- und Außenspiegel, Schulterblick links, dann links blinken.", regel: "§ 5 Abs. 4 · § 5 Abs. 4a StVO" },
         { t: tA, titel: "Zügig vorbei", text: "Ausscheren und zügig beschleunigen – die Höchstgeschwindigkeit bleibt die Grenze. Ausreichend Seitenabstand zum Lkw halten.", regel: "§ 5 Abs. 2 · § 5 Abs. 4 · § 3 Abs. 3 StVO", frage: { text: "Der Lkw wird beim Überholen schneller. Darf er das?", optionen: ["Ja", "Nein – wer überholt wird, darf seine Geschwindigkeit nicht erhöhen"], richtig: 1, erklaerung: "§ 5 Abs. 6 StVO: Wer überholt wird, darf seine Geschwindigkeit nicht erhöhen." } },
         { t: tB - 0.8, titel: "Blinker rechts, wieder einordnen", text: "Wieder einordnen, sobald der Lkw im Innenspiegel vollständig zu sehen ist – nicht knapp vor ihm einscheren.", regel: "§ 5 Abs. 4 · § 5 Abs. 4a StVO" },
@@ -356,21 +356,21 @@
 
   // ---- Schulbus mit Warnblinklicht an der Haltestelle
   (function () {
-    const st = wohnstrasse(3.6, -3.6, -80, 140); st.linien.push({ art: "leit_io", b: 0.12, pts: [[-80, 0], [140, 0]] });
+    const st = wohnstrasse(3.6, -3.6, -80, 140);                                  // Tempo-30-Zone: keine Leitlinie (§ 45 Abs. 1c StVO)
     st.schilder = [{ typ: "z224", x: 55, y: 5.2, seite: 1 }, { typ: "zone30", x: -60, y: 5.2, seite: 1 }];
     const yR = 1.8, yL = -1.8, xBus = 46;                                      // Bus hält mit der Mitte bei x = 46 (Front bei 52)
     // Bus: Ankunft ermitteln, dann alle Zeiten daran ausrichten
-    let busPlan = fahrplan({ vMax: 35, halte: [{ s: 120 + xBus, bis: 999 }], dauer: 70, s0: 120 - 40 });
+    let busPlan = fahrplan({ vMax: 30, halte: [{ s: 120 + xBus, bis: 999 }], dauer: 70, s0: 120 - 40 });
     let bus = fahrt("bus", "bus", "#f2c230", [[-120, yR], [300, yR]], busPlan, 120 - 40, 0);
     const tBus = tBeiS(bus, 120 + xBus - 0.4), tAb = tBus + 43;
-    busPlan = fahrplan({ vMax: 35, halte: [{ s: 120 + xBus, bis: tAb }], dauer: 80, s0: 120 - 40 });
+    busPlan = fahrplan({ vMax: 30, halte: [{ s: 120 + xBus, bis: tAb }], dauer: 80, s0: 120 - 40 });
     bus = fahrt("bus", "bus", "#f2c230", [[-120, yR], [300, yR]], busPlan, 120 - 40, 0, { schulbus: true, warnblink: [{ von: 1.2, bis: tAb - 1.5 }], blinker: [{ von: tAb - 1.5, bis: tAb + 3, seite: "links" }] });
     // Fahrschule: bleibt hinter dem Bus, hält, fährt dann mit Schrittgeschwindigkeit vorbei und wartet auf das Kind
     const halt1 = xBus - 6 - 8 - 2.25, xAus = halt1 + 1.5;
     const fsWeg = [[-120, yR], [xAus, yR], [xAus + 7, yL + 0.1], [xBus + 12, yL + 0.1], [xBus + 19, yR], [300, yR]];
     const sBei = x => sNahe(fsWeg, x, x < xAus + 7 || x > xBus + 19 ? yR : yL + 0.1);
     const t1 = tBus + 13, t2 = tBus + 31.8;
-    const fs = fahrt("fs", "fahrschule", "#f2f2ee", fsWeg, fahrplan({ vMax: 32, grenzen: [{ von: sBei(xAus) - 2, bis: sBei(xBus + 16), v: 6 }], halte: [{ s: sBei(halt1), bis: t1 }, { s: sBei(xBus + 7.5 - 2.25 - 2.5), bis: t2 }], dauer: 90, s0: 120 - 62 }), 120 - 62, 0, { fokus: true, bremsStand: true,
+    const fs = fahrt("fs", "fahrschule", "#f2f2ee", fsWeg, fahrplan({ vMax: 28, grenzen: [{ von: sBei(xAus) - 2, bis: sBei(xBus + 16), v: 6 }], halte: [{ s: sBei(halt1), bis: t1 }, { s: sBei(xBus + 7.5 - 2.25 - 2.5), bis: t2 }], dauer: 90, s0: 120 - 62 }), 120 - 62, 0, { fokus: true, bremsStand: true,
       blinker: [{ von: t1 - 1.8, bis: t1 + 3.5, seite: "links" }] });
     { const tR = tBeiS(fs, sBei(xBus + 12)); fs.blinker.push({ von: tR - 1.5, bis: tR + 3, seite: "rechts" }); }
     // Gegenverkehr: ebenfalls nur Schrittgeschwindigkeit am haltenden Schulbus – vorbei, bevor die Fahrschule ausschert
@@ -387,7 +387,7 @@
       fahrzeuge: [fs, bus, g, renner].concat(kinder),
       phasen: [
         { t: 0.2, titel: "Schulbus mit Warnblinklicht", text: "Der Schulbus nähert sich mit eingeschaltetem Warnblinklicht der Haltestelle. Er darf jetzt nicht überholt werden.", regel: "§ 20 Abs. 3 StVO", frage: { text: "Darf ich den Bus überholen, solange er mit Warnblinklicht auf die Haltestelle zufährt?", optionen: ["Ja, wenn frei ist", "Nein", "Nur mit Hupe"], richtig: 1, erklaerung: "§ 20 Abs. 3 StVO: Linien- und Schulbusse, die sich mit Warnblinklicht einer Haltestelle nähern, dürfen nicht überholt werden." } },
-        { t: tBus, titel: "Bus hält – Kinder steigen aus", text: "Mit Abstand hinter dem Bus halten. Kinder sind unberechenbar und können hinter oder vor dem Bus auf die Fahrbahn laufen.", regel: "§ 20 Abs. 4 · § 3 Abs. 2a StVO" },
+        { t: tBus, titel: "Bus hält – Kinder steigen aus", text: "Am besten zunächst mit Abstand hinter dem Bus halten. Kinder sind unberechenbar und können hinter oder vor dem Bus auf die Fahrbahn laufen.", regel: "§ 20 Abs. 4 · § 3 Abs. 2a StVO" },
         { t: t1 - 1.8, titel: "Schrittgeschwindigkeit", text: "Vorbeifahren nur mit Schrittgeschwindigkeit (etwa 4–7 km/h) und so viel Abstand, dass niemand gefährdet wird. Das gilt auch für den Gegenverkehr!", regel: "§ 20 Abs. 4 StVO", frage: { text: "Gilt die Schrittgeschwindigkeit auch für den Gegenverkehr?", optionen: ["Nein, nur für die gleiche Richtung", "Ja – auch der Gegenverkehr auf derselben Fahrbahn fährt nur Schritt", "Nur an Schultagen"], richtig: 1, erklaerung: "§ 20 Abs. 4 StVO: Die Schrittgeschwindigkeit gilt auch für den Gegenverkehr auf derselben Fahrbahn." } },
         { t: tBus + 26.4, titel: "Kind läuft auf die Straße!", text: "Vor dem Bus läuft ein Kind über die Fahrbahn. Sofort anhalten – wenn nötig, muss gewartet werden.", regel: "§ 20 Abs. 4 StVO", frage: { text: "Was tue ich?", optionen: ["Ausweichen und weiterfahren", "Anhalten und warten, bis das Kind sicher drüben ist", "Hupen"], richtig: 1, erklaerung: "Wenn nötig, muss gewartet werden – eine Gefährdung der Fahrgäste muss ausgeschlossen sein." } },
         { t: tAb - 1.5, titel: "Bus fährt ab", text: "Der Bus blinkt links, um von der Haltestelle abzufahren. Dem Bus ist das Abfahren zu ermöglichen – wenn nötig, warten.", regel: "§ 20 Abs. 5 StVO" }
