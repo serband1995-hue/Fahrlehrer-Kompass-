@@ -3654,6 +3654,31 @@ async function enablePushNotifications() {
 }
 /* ---- Öffentliche Online-Buchungen (Schalter-/Automatik-Link) abholen ---- */
 let _buchungsAbrufLaeuft = false;
+// Telefonnummern vergleichbar machen: nur Ziffern, +49/0049/0 am Anfang weg ("0176 123" = "+49176123").
+function telVergleich(t) {
+  const d = String(t || "").replace(/\D/g, "").replace(/^(0049|49|0)/, "");
+  return d.length >= 7 ? d : "";
+}
+// Namen vergleichbar machen, auch bei vertauschter Reihenfolge ("Bilgin Semra" = "Semra Bilgin").
+function nameVergleich(n) {
+  return String(n || "").toLowerCase().normalize("NFD").replace(/[̀-ͯ]/g, "")
+    .replace(/[^a-z\s-]/g, " ").split(/[\s-]+/).filter(Boolean).sort().join(" ");
+}
+// Findet zu einer Online-Buchung den Schüler - nur bei eindeutigem Treffer, sonst bleibt es beim Namen.
+function schuelerZuBuchung(r) {
+  const liste = DB.students || [];
+  const tel = telVergleich(r.schueler_telefon);
+  if (tel) {
+    const t = liste.filter(s => telVergleich(s.telefon) === tel);
+    if (t.length === 1) return t[0];
+  }
+  const nm = nameVergleich(r.schueler_name);
+  if (nm && nm.includes(" ")) {
+    const n = liste.filter(s => nameVergleich(s.name) === nm);
+    if (n.length === 1) return n[0];
+  }
+  return null;
+}
 async function pullPublicBookings() {
   // Nicht in der Gesamtansicht: neue Termine landeten sonst im Fahrschul-Bestand statt im eigenen Kalender.
   if (!_authUser || _fsAgg || _buchungsAbrufLaeuft) return;
@@ -3676,13 +3701,32 @@ async function pullPublicBookings() {
         if (r.schueler_email) noteParts.push(r.schueler_email);
         // Termin trägt die Buchungs-ID: ein erneuter Abruf (z.B. nach Netzfehler beim Vermerken) legt ihn nicht doppelt an.
         let l = (DB.lessons || []).find(x => x.onlineBookingId === r.id);
-        const warSchonDa = !!l;
-        if (!l) l = addLesson({ date: r.datum, von: r.von, bis: r.bis, art, sid: null, name: r.schueler_name, note: noteParts.join(" · "), onlineBookingId: r.id });
+        let warSchonDa = !!l;
+        if (!l) {
+          // Steht zur selben Zeit schon ein (von Hand eingetragener) Termin, wird die Buchung daran gehängt statt
+          // einen zweiten anzulegen - Absage oder Verschiebung wirken dann auf diesen Termin.
+          l = (DB.lessons || []).find(x => x.date === r.datum && x.von === r.von && !x.onlineBookingId
+            && x.status !== "abgebrochen" && x.status !== "nicht erschienen");
+          if (l) {
+            l.onlineBookingId = r.id;
+            l.onlineVerknuepft = true; // eigener Termin - darf beim Zurücknehmen der Buchung nicht gelöscht werden
+            if (!l.fahrzeug && r.fahrzeug) l.fahrzeug = r.fahrzeug;
+            warSchonDa = true;
+          }
+        }
+        if (!l) {
+          const s = schuelerZuBuchung(r);
+          l = addLesson({ date: r.datum, von: r.von, bis: r.bis, art, sid: s ? s.id : null, name: s ? "" : r.schueler_name,
+            note: noteParts.join(" · "), onlineBookingId: r.id, fahrzeug: r.fahrzeug || null });
+        }
         const { data: vermerkt, error: mErr } = await supa.from("public_bookings").update({ merged: true, merged_lesson_id: l.id }).eq("id", r.id).eq("merged", false).select("id");
         if (mErr) continue; // unklar, ob es geklappt hat: Termin behalten, beim nächsten Abruf wird erneut vermerkt
         if (!vermerkt || !vermerkt.length) {
           // Ein anderes Gerät hat die Buchung schon übernommen - eigene Kopie wieder entfernen.
-          DB.lessons = (DB.lessons || []).filter(x => x.id !== l.id); save(); continue;
+          // Ein verknüpfter, schon vorher vorhandener Termin bleibt stehen und verliert nur die Verknüpfung.
+          if (l.onlineVerknuepft) { delete l.onlineBookingId; delete l.onlineVerknuepft; }
+          else DB.lessons = (DB.lessons || []).filter(x => x.id !== l.id);
+          save(); continue;
         }
         if (!warSchonDa) neu.push(r);
       } else if (r.status === "storniert" && r.merged && !r.cancel_synced) {
@@ -11125,8 +11169,13 @@ function _notifyOnlineBookingChange(lessonId, type, patch) {
   if (!_authUser || !lessonId) return;
   try {
     const supa = getSupa();
-    supa.from("public_bookings").select("id").eq("merged_lesson_id", lessonId).eq("status", "bestaetigt").maybeSingle().then(async ({ data }) => {
+    supa.from("public_bookings").select("id, lc_termin_id").eq("merged_lesson_id", lessonId).eq("status", "bestaetigt").maybeSingle().then(async ({ data }) => {
       if (!data) return;
+      // LeadConnector-Termine werden in LeadConnector verwaltet: keine Mail vom Kompass an den Schüler.
+      if (data.lc_termin_id) {
+        toast("Hinweis: Termin stammt aus LeadConnector – bitte dort ebenfalls absagen bzw. verschieben.");
+        return;
+      }
       const body = { merged_lesson_id: lessonId, type };
       if (type === "changed" && patch) {
         if (patch.date) body.new_date = patch.date;
