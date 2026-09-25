@@ -5645,6 +5645,14 @@ const AGB_HTML=`
 <h3>§17 Schlussbestimmungen</h3>
 <p>Es gilt deutsches Recht. Sollte eine Bestimmung dieser Nutzungsbedingungen unwirksam sein oder werden, bleiben die übrigen Bestimmungen hiervon unberührt.</p>
 `;
+/* Aufräumen: Wer die App früher nur geöffnet hat, ohne sich je anzumelden, bekam die damals eingebetteten
+   Ausgangsdaten in den Browser geschrieben. Gehören lokale Daten niemandem (kein Eigentümer, keine Sitzung),
+   werden sie hier entfernt. Daten angemeldeter Nutzer bleiben unberührt. */
+(function verwaisteDatenEntfernen(){try{
+  if(localStorage.getItem(STORE_KEY)===null||localStorage.getItem("serband-restore-stamp")===null)return;
+  if(_lokalerDatenEigentuemer()||_gespeicherteSupabaseSitzung())return;
+  _lokaleNutzerdatenLoeschen();
+}catch(e){}})();
 function load(){try{return JSON.parse(localStorage.getItem(STORE_KEY))||{students:[]};}catch(e){return {students:[]};}}
 let DB=load();
 function save(){
