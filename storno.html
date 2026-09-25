@@ -20,27 +20,40 @@ function fmt(datum, von){
   const d = new Date(datum+"T00:00:00");
   return d.toLocaleDateString("de-DE",{weekday:"long",day:"numeric",month:"long"}) + " · " + von + " Uhr";
 }
-
+// Inhalt der Karte sicher (ohne innerHTML für Serverdaten) aufbauen
+function zeige(titel, klasse, absaetze, knopf){
+  card.textContent = "";
+  const h = document.createElement("h1"); h.textContent = titel; if(klasse) h.className = klasse; card.appendChild(h);
+  (absaetze||[]).forEach(t => { const p = document.createElement("p"); p.textContent = t; card.appendChild(p); });
+  if(knopf){ const b = document.createElement("button"); b.className = "btn"; b.textContent = knopf.text; b.addEventListener("click", knopf.klick); card.appendChild(b); }
+}
+function fehler(){ zeige("Fehler", "", ["Etwas ist schiefgelaufen. Bitte melde dich direkt bei deinem Fahrlehrer."]); }
+function ergebnis(data){
+  if(data.error === "not_found"){ zeige("Nicht gefunden", "", ["Diesen Termin konnten wir nicht finden."]); return; }
+  if(data.status === "already_cancelled"){ zeige("Bereits storniert", "", ["Dieser Termin ("+fmt(data.datum,data.von)+") wurde bereits storniert."]); return; }
+  if(data.status === "too_late"){ zeige("Zu kurzfristig", "warn", ["Dein Termin am "+fmt(data.datum,data.von)+" ist weniger als 24 Stunden entfernt.", "Eine Online-Stornierung ist jetzt nicht mehr möglich. Bitte melde dich direkt bei deinem Fahrlehrer."]); return; }
+  if(data.status === "cancelled"){ zeige("Storniert ✓", "ok", ["Dein Termin am "+fmt(data.datum,data.von)+" wurde storniert.", "Der Platz ist jetzt wieder frei für andere."]); return; }
+  if(data.status === "cancellable"){
+    // Erst auf Knopfdruck stornieren: Link-Vorschauen und E-Mail-Scanner öffnen Links sonst unbemerkt.
+    zeige("Termin stornieren?", "", ["Dein Termin: "+fmt(data.datum,data.von)+".", "Möchtest du diesen Termin wirklich absagen?"], { text: "Ja, Termin stornieren", klick: stornieren });
+    return;
+  }
+  fehler();
+}
+async function stornieren(){
+  const b = card.querySelector("button"); if(b){ b.disabled = true; b.textContent = "Wird storniert …"; }
+  try{
+    const res = await fetch(API+"?action=cancel&token="+encodeURIComponent(token), { method: "POST" });
+    ergebnis(await res.json());
+  }catch(e){ zeige("Netzwerkfehler", "", ["Bitte nochmal versuchen oder direkt beim Fahrlehrer melden."]); }
+}
 async function run(){
-  if(!token){ card.innerHTML = "<h1>Ungültiger Link</h1><p>Dieser Storno-Link ist nicht vollständig.</p>"; return; }
-  card.innerHTML = "<p>Termin wird geprüft …</p>";
+  if(!token){ zeige("Ungültiger Link", "", ["Dieser Storno-Link ist nicht vollständig."]); return; }
+  card.textContent = "Termin wird geprüft …";
   try{
     const res = await fetch(API+"?action=cancel&token="+encodeURIComponent(token));
-    const data = await res.json();
-    if(data.error === "not_found"){ card.innerHTML = "<h1>Nicht gefunden</h1><p>Diesen Termin konnten wir nicht finden.</p>"; return; }
-    if(data.status === "already_cancelled"){ card.innerHTML = "<h1>Bereits storniert</h1><p>Dieser Termin ("+fmt(data.datum,data.von)+") wurde bereits storniert.</p>"; return; }
-    if(data.status === "too_late"){
-      card.innerHTML = "<h1 class='warn'>Zu kurzfristig</h1><p>Dein Termin am "+fmt(data.datum,data.von)+" ist weniger als 24 Stunden entfernt.</p><p>Eine Online-Stornierung ist jetzt nicht mehr möglich. Bitte melde dich direkt bei deinem Fahrlehrer.</p>";
-      return;
-    }
-    if(data.status === "cancelled"){
-      card.innerHTML = "<h1 class='ok'>Storniert ✓</h1><p>Dein Termin am "+fmt(data.datum,data.von)+" wurde storniert.</p><p>Der Platz ist jetzt wieder frei für andere.</p>";
-      return;
-    }
-    card.innerHTML = "<h1>Fehler</h1><p>Etwas ist schiefgelaufen. Bitte melde dich direkt bei deinem Fahrlehrer.</p>";
-  }catch(e){
-    card.innerHTML = "<h1>Netzwerkfehler</h1><p>Bitte nochmal versuchen oder direkt beim Fahrlehrer melden.</p>";
-  }
+    ergebnis(await res.json());
+  }catch(e){ zeige("Netzwerkfehler", "", ["Bitte nochmal versuchen oder direkt beim Fahrlehrer melden."]); }
 }
 run();
 </script>

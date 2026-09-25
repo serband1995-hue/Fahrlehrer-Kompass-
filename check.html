@@ -398,14 +398,9 @@ function nochmal(){
 window.starten=starten; window.zurueck=zurueck; window.nochmal=nochmal;
 $("nameInput").addEventListener("keydown",function(e){ if(e.key==="Enter") starten(); });
 
-/* Service Worker der Kompass-PWA hier gezielt deaktivieren */
-if("serviceWorker" in navigator){
-  navigator.serviceWorker.getRegistrations().then(function(rs){
-    for(var i=0;i<rs.length;i++){
-      if(rs[i].active && location.pathname.indexOf("check.html")>-1) rs[i].unregister();
-    }
-  }).catch(function(){});
-}
+/* Hinweis: Der Service Worker der Kompass-App wird hier bewusst NICHT abgemeldet - er gilt für die ganze
+   App (gleicher Bereich) und ist für Push-Benachrichtigungen und den Offline-Modus nötig. Er speichert nur
+   die App-Hülle, diese Seite speichert ohnehin nichts. */
 </script>
 </body>
 </html>
