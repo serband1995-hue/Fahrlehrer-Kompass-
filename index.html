@@ -3691,28 +3691,39 @@ async function pullPublicBookings() {
     if (!rows || !rows.length) return;
     let neu = [];
     let stornos = [];
+    let sperrenNeu = 0, sperrenWeg = 0;
     for (const r of rows) {
+      // Sperrzeit (Urlaub, Theorie, Blockiert) aus dem Google-Kalender statt einer Schülerbuchung
+      const istSperre = r.art === "block" || r.art === "theorie";
       if (r.status === "bestaetigt" && !r.merged) {
-        const art = r.subtyp === "sonder" ? "sonder" : "fahrstunde";
+        const art = istSperre ? r.art : r.subtyp === "sonder" ? "sonder" : "fahrstunde";
         const fzLabel = r.fahrzeug_typ === "schalt" ? "Schaltfahrzeug" : "Automatikfahrzeug";
         const gebuchtAm = r.created_at ? new Date(r.created_at).toLocaleString("de-DE",{dateStyle:"short",timeStyle:"short"}) : "";
-        const noteParts = ["Online gebucht · " + fzLabel + (gebuchtAm ? " · " + gebuchtAm + " Uhr gebucht" : "")];
-        if (r.schueler_telefon) noteParts.push("Tel: " + r.schueler_telefon);
-        if (r.schueler_email) noteParts.push(r.schueler_email);
+        const noteParts = istSperre ? ["Aus dem Google-Kalender „Fahrschule Boost“"]
+          : ["Online gebucht · " + fzLabel + (gebuchtAm ? " · " + gebuchtAm + " Uhr gebucht" : "")];
+        if (!istSperre && r.schueler_telefon) noteParts.push("Tel: " + r.schueler_telefon);
+        if (!istSperre && r.schueler_email) noteParts.push(r.schueler_email);
         // Termin trägt die Buchungs-ID: ein erneuter Abruf (z.B. nach Netzfehler beim Vermerken) legt ihn nicht doppelt an.
         let l = (DB.lessons || []).find(x => x.onlineBookingId === r.id);
         let warSchonDa = !!l;
         if (!l) {
           // Steht zur selben Zeit schon ein (von Hand eingetragener) Termin, wird die Buchung daran gehängt statt
           // einen zweiten anzulegen - Absage oder Verschiebung wirken dann auf diesen Termin.
+          // Nur Gleichartiges verknüpfen: eine Sperrzeit nie an eine Fahrstunde hängen und umgekehrt.
           l = (DB.lessons || []).find(x => x.date === r.datum && x.von === r.von && !x.onlineBookingId
-            && x.status !== "abgebrochen" && x.status !== "nicht erschienen");
+            && x.status !== "abgebrochen" && x.status !== "nicht erschienen"
+            && (istSperre ? x.art === art : x.art !== "block" && x.art !== "theorie"));
           if (l) {
             l.onlineBookingId = r.id;
             l.onlineVerknuepft = true; // eigener Termin - darf beim Zurücknehmen der Buchung nicht gelöscht werden
             if (!l.fahrzeug && r.fahrzeug) l.fahrzeug = r.fahrzeug;
             warSchonDa = true;
           }
+        }
+        if (!l && istSperre) {
+          l = addLesson({ date: r.datum, von: r.von, bis: r.bis, art, sid: null, name: r.schueler_name,
+            note: noteParts.join(" · "), onlineBookingId: r.id });
+          if (art === "block") l.blockTyp = r.block_typ || "sonstiges";
         }
         if (!l) {
           const s = schuelerZuBuchung(r);
@@ -3728,11 +3739,11 @@ async function pullPublicBookings() {
           else DB.lessons = (DB.lessons || []).filter(x => x.id !== l.id);
           save(); continue;
         }
-        if (!warSchonDa) neu.push(r);
+        if (!warSchonDa) { if (istSperre) sperrenNeu++; else neu.push(r); }
       } else if (r.status === "storniert" && r.merged && !r.cancel_synced) {
         if (r.merged_lesson_id) deleteLesson(r.merged_lesson_id);
         await supa.from("public_bookings").update({ cancel_synced: true }).eq("id", r.id);
-        stornos.push(r);
+        if (istSperre) sperrenWeg++; else stornos.push(r);
       }
     }
     if (neu.length) {
@@ -3741,6 +3752,12 @@ async function pullPublicBookings() {
       toast(neu.length === 1
         ? `🔔 Neuer Termin: ${r0.schueler_name} · ${isoDE(r0.datum)} ${r0.von}`
         : `🔔 ${neu.length} neue Online-Buchungen`);
+      if ($("#calBody")) routeKalender();
+    }
+    if (sperrenNeu || sperrenWeg) {
+      save();
+      toast([sperrenNeu ? `${sperrenNeu} Sperrzeit${sperrenNeu === 1 ? "" : "en"} übernommen` : "",
+        sperrenWeg ? `${sperrenWeg} Sperrzeit${sperrenWeg === 1 ? "" : "en"} entfernt` : ""].filter(Boolean).join(" · ") + " (Google-Kalender)");
       if ($("#calBody")) routeKalender();
     }
     if (stornos.length) {
@@ -11169,9 +11186,13 @@ function _notifyOnlineBookingChange(lessonId, type, patch) {
   if (!_authUser || !lessonId) return;
   try {
     const supa = getSupa();
-    supa.from("public_bookings").select("id, lc_termin_id").eq("merged_lesson_id", lessonId).eq("status", "bestaetigt").maybeSingle().then(async ({ data }) => {
+    supa.from("public_bookings").select("id, lc_termin_id, art").eq("merged_lesson_id", lessonId).eq("status", "bestaetigt").maybeSingle().then(async ({ data }) => {
       if (!data) return;
-      // LeadConnector-Termine werden in LeadConnector verwaltet: keine Mail vom Kompass an den Schüler.
+      // LeadConnector-Termine und Sperrzeiten aus dem Google-Kalender werden dort verwaltet: keine Mail vom Kompass.
+      if (data.art) {
+        toast("Hinweis: Eintrag stammt aus dem Google-Kalender „Fahrschule Boost“ – bitte dort ebenfalls ändern.");
+        return;
+      }
       if (data.lc_termin_id) {
         toast("Hinweis: Termin stammt aus LeadConnector – bitte dort ebenfalls absagen bzw. verschieben.");
         return;
