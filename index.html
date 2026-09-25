@@ -3573,6 +3573,8 @@ async function _upsertRobust(tabelle, rows, konflikt) {
     const block = rows.slice(i, i + 200);
     const { error } = await supa.from(tabelle).upsert(block, { onConflict: konflikt });
     if (!error) { block.forEach(r => ok.push(r[konflikt])); continue; }
+    const rechteFehler = error.code === "42501" || error.code === "P0001" || /row-level security|Nur Fahrschule-Admin/i.test(error.message || "");
+    if (!rechteFehler) { console.warn("[Kompass] " + tabelle + " nicht gespeichert:", error.message); continue; }
     for (const r of block) {
       const { error: e1 } = await supa.from(tabelle).upsert([r], { onConflict: konflikt });
       if (!e1) ok.push(r[konflikt]); else console.warn("[Kompass] " + tabelle + " " + r[konflikt] + " übersprungen:", e1.message);
@@ -3706,8 +3708,10 @@ async function pullPublicBookings() {
 }
 /* Holt neue oder zu mir verschobene Schüler von der Fahrschule ab, und entfernt lokal Schüler,
    die zu einem anderen Fahrlehrer verschoben wurden - mit Hinweis-Toast in beide Richtungen. */
+let _schuelerAbrufLaeuft = false;
 async function pullSchuelerZuweisungen() {
-  if (!_authUser || !_authProfile || !_authProfile.fahrschule_id || _fsAgg) return;
+  if (!_authUser || !_authProfile || !_authProfile.fahrschule_id || _fsAgg || _schuelerAbrufLaeuft) return;
+  _schuelerAbrufLaeuft = true;
   try {
     const supa = getSupa();
     const { data: rows, error: schErr } = await supa.from("schueler").select("*").eq("fahrlehrer_id", _authUser.id).eq("status", "aktiv");
@@ -3728,11 +3732,13 @@ async function pullSchuelerZuweisungen() {
           const { data: priv } = await supa.from("schueler_privat").select("bogen").eq("schueler_id", r.id).maybeSingle();
           if (priv && priv.bogen) nst.bogen = priv.bogen;
           const { data: hist, error: hErr } = await supa.rpc("schueler_uebergabe_historie", { p_schueler_id: r.id });
-          if (!hErr && hist && ((hist.fahrstunden || []).length || (hist.pruefungen || []).length)) {
-            const vorher = (hist.fahrstunden || []).map(f => f.fahrlehrer).concat((hist.pruefungen || []).map(x => x.fahrlehrer)).filter(Boolean);
-            nst.uebernahme = { am: new Date().toISOString(), von: [...new Set(vorher)].join(", "), fahrstunden: hist.fahrstunden || [], pruefungen: hist.pruefungen || [] };
+          // Nur schon gefahrene Stunden übernehmen - künftige Termine kommen (falls umverteilt) als echte Termine.
+          const gefahren = hist ? (hist.fahrstunden || []).filter(f => f.datum && f.bis && isAbsolved(f.datum, f.bis)) : [];
+          if (!hErr && hist && (gefahren.length || (hist.pruefungen || []).length)) {
+            const vorher = gefahren.map(f => f.fahrlehrer).concat((hist.pruefungen || []).map(x => x.fahrlehrer)).filter(Boolean);
+            nst.uebernahme = { am: new Date().toISOString(), von: [...new Set(vorher)].join(", "), fahrstunden: gefahren, pruefungen: hist.pruefungen || [] };
             logHist(nst, "uebernahme", "Übernommen" + (nst.uebernahme.von ? " von " + nst.uebernahme.von : "") + ` · ${nst.uebernahme.fahrstunden.length} Termine, ${nst.uebernahme.pruefungen.filter(x => !x.b197).length} Prüfungen`);
-          } else if (nst.uebernahme && hErr) { /* ältere Übernahme-Daten aus der Ausbildung behalten */ }
+          } else if (!hErr) { delete nst.uebernahme; } // z.B. Rückübertragung: eigene Stunden stehen schon im eigenen Kalender
         } catch (e) { console.warn("[Kompass] Übergabe-Daten nicht geladen:", e.message); }
         DB.students.push(nst);
         neu.push(r);
@@ -3764,6 +3770,7 @@ async function pullSchuelerZuweisungen() {
       toast(entfernt.length===1 ? `${entfernt[0]} wurde umverteilt` : `${entfernt.length} Schüler wurden umverteilt`);
     }
   } catch (e) { console.warn("[Kompass] Schüler-Abgleich fehlgeschlagen:", e.message); }
+  finally { _schuelerAbrufLaeuft = false; }
 }
 /* Holt Kalender-Änderungen von der Fahrschule (neue/geänderte/gelöschte Termine) ab.
    "Zuletzt geändert gewinnt" pro Termin, via aktualisiert_am - dein Kalender bleibt sonst unangetastet. */
@@ -3790,8 +3797,16 @@ async function pullTermineZuweisungen() {
       }
     }
     const remoteIds = new Set((rows||[]).map(r => r.id));
+    // Termine, die das Büro einem anderen Fahrlehrer gegeben hat, sieht man selbst nicht mehr (RLS) -
+    // die Datenbank sagt, welche der eigenen IDs inzwischen jemand anderem gehören.
+    const unklar = DB.lessons.filter(l => !remoteIds.has(l.id) && !l._syncedAt && l.id).map(l => l.id);
+    let weggegeben = new Set();
+    if (unklar.length) {
+      const { data: fremd, error: fErr } = await supa.rpc("termine_nicht_mehr_meine", { p_ids: unklar });
+      if (!fErr && Array.isArray(fremd)) weggegeben = new Set(fremd);
+    }
     const vorher = DB.lessons.length;
-    DB.lessons = DB.lessons.filter(l => remoteIds.has(l.id) || !l._syncedAt);
+    DB.lessons = DB.lessons.filter(l => !weggegeben.has(l.id) && (remoteIds.has(l.id) || !l._syncedAt));
     const entfernt = vorher - DB.lessons.length;
     if (neu || geaendert || entfernt) {
       save();
@@ -4534,17 +4549,21 @@ async function toggleFahrlehrerAktiv(userId,aktiv,fahrschuleId){
 async function _fsKuenftigeTermineMitnehmen(schuelerId,neuerLehrerId,alterLehrerId){
   if(!neuerLehrerId||!alterLehrerId||neuerLehrerId===alterLehrerId)return;
   const supa=getSupa();
-  const {data:kt,error}=await supa.from("kalender_termine").select("id").eq("schueler_id",schuelerId).eq("fahrlehrer_id",alterLehrerId).eq("geloescht",false).gte("datum",todayISO());
-  if(error||!kt||!kt.length)return;
+  const {data:ktRoh,error}=await supa.from("kalender_termine").select("id,datum,bis").eq("schueler_id",schuelerId).eq("fahrlehrer_id",alterLehrerId).eq("geloescht",false).gte("datum",todayISO());
+  if(error||!ktRoh)return;
+  const kt=ktRoh.filter(t=>t.datum&&t.bis&&!isAbsolved(t.datum,t.bis)); // heute schon Gefahrenes bleibt beim bisherigen Fahrlehrer
+  if(!kt.length)return;
   if(!confirm(`${kt.length} künftige${kt.length===1?"r":""} Termin${kt.length===1?"":"e"} dieses Schülers liegen noch beim bisherigen Fahrlehrer.\n\nMit zum neuen Fahrlehrer übertragen?`))return;
-  const {error:e2}=await supa.from("kalender_termine").update({fahrlehrer_id:neuerLehrerId,aktualisiert_am:new Date().toISOString()}).in("id",kt.map(t=>t.id));
-  toast(e2?"Termine konnten nicht übertragen werden: "+e2.message:`${kt.length} Termin${kt.length===1?"":"e"} übertragen ✓`);
+  const {data:uebertragen,error:e2}=await supa.from("kalender_termine").update({fahrlehrer_id:neuerLehrerId,aktualisiert_am:new Date().toISOString()}).in("id",kt.map(t=>t.id)).select("id");
+  const n=(uebertragen||[]).length;
+  toast(e2?"Termine konnten nicht übertragen werden: "+e2.message:(n===kt.length?`${n} Termin${n===1?"":"e"} übertragen ✓`:`Nur ${n} von ${kt.length} Terminen übertragen`));
 }
 async function schuelerVerschieben(schuelerId,neuerLehrerId,alterLehrerId,fahrschuleId){
   const supa=getSupa();
+  // Erst die künftigen Termine, dann den Schüler: so landet nichts Ungefahrenes in der Übergabe-Historie.
+  await _fsKuenftigeTermineMitnehmen(schuelerId,neuerLehrerId,alterLehrerId);
   const {error}=await supa.from("schueler").update({fahrlehrer_id:neuerLehrerId||null}).eq("id",schuelerId);
   if(error){toast("Fehler: "+error.message);return;}
-  await _fsKuenftigeTermineMitnehmen(schuelerId,neuerLehrerId,alterLehrerId);
   if(alterLehrerId!==neuerLehrerId){
     const {data:sessionData}=await supa.auth.getSession();
     await supa.from("schueler_verschiebungen").insert({
@@ -5325,9 +5344,10 @@ async function fsSerientermineSheet(sid){
 
 async function fsSchuelerVerschiebenAusAkte(sid,neuerLehrerId,alterLehrerId){
   const supa=getSupa();
+  // Erst die künftigen Termine, dann den Schüler: so landet nichts Ungefahrenes in der Übergabe-Historie.
+  await _fsKuenftigeTermineMitnehmen(sid,neuerLehrerId,alterLehrerId);
   const {error}=await supa.from("schueler").update({fahrlehrer_id:neuerLehrerId||null}).eq("id",sid);
   if(error){toast("Fehler: "+error.message);return;}
-  await _fsKuenftigeTermineMitnehmen(sid,neuerLehrerId,alterLehrerId);
   if(alterLehrerId!==neuerLehrerId){
     const {data:sessionData}=await supa.auth.getSession();
     await supa.from("schueler_verschiebungen").insert({
@@ -5852,7 +5872,7 @@ function _syncSchuelerBridge(){
       });
       const geschrieben=rows.length?await _upsertRobust("schueler",rows,"id"):[];
       // Fragebogen privat, aber mit dem Schüler übertragbar: nur der aktuell zugeordnete Fahrlehrer kann ihn lesen.
-      const boegen=P.students.filter(s=>geschrieben.includes(s.id)&&s.bogen).map(s=>({schueler_id:s.id,bogen:s.bogen,aktualisiert_am:new Date().toISOString()}));
+      const boegen=P.students.filter(s=>geschrieben.includes(s.id)).map(s=>({schueler_id:s.id,bogen:s.bogen||null,aktualisiert_am:new Date().toISOString()}));
       if(boegen.length) await _upsertRobust("schueler_privat",boegen,"schueler_id");
       // Auslastung fürs Fahrschule-Dashboard mitschicken (keine privaten Kalenderdaten, nur die Kennzahl)
       // capacityStats() rechnet auf DB - in der Gesamtansicht wäre das der Bestand aller Fahrlehrer.
@@ -7118,12 +7138,11 @@ function pruefungenUebernommen(s){ return ((s&&s.uebernahme&&s.uebernahme.pruefu
 function uebernahmeCard(s){
   const u=s.uebernahme; if(!u)return "";
   const f=(u.fahrstunden||[]).filter(t=>t.datum&&t.bis&&isAbsolved(t.datum,t.bis)&&!["abgebrochen","nicht erschienen"].includes(t.status));
-  const kuenftig=(u.fahrstunden||[]).filter(t=>t.datum&&t.bis&&!isAbsolved(t.datum,t.bis)&&!["abgebrochen","nicht erschienen"].includes(t.status));
   const pr=pruefungenUebernommen(s);
   const prTxt=pr.length?pr.map(x=>`${isoDE(x.datum)} ${x.result==="pass"?"bestanden":"nicht bestanden"}${x.pruefer?" ("+esc(x.pruefer)+")":""}`).join(" · "):"keine";
   return `<div class="res-block" style="animation:none;margin-top:9px;">
     <h4>🔁 Übernommen${u.von?" von "+esc(u.von):""}</h4>
-    <p class="muted-p" style="font-size:13px;">Am ${isoDE(dateISO(new Date(u.am)))} · ${f.length} Fahrstunde${f.length===1?"":"n"} bisher (${Math.round(ueUebernommen(s)*10)/10} UE) · Prüfungen: ${prTxt}${kuenftig.length?` · ${kuenftig.length} Termin${kuenftig.length===1?"":"e"} noch beim bisherigen Fahrlehrer geplant`:""}</p>
+    <p class="muted-p" style="font-size:13px;">Am ${isoDE(dateISO(new Date(u.am)))} · ${f.length} Fahrstunde${f.length===1?"":"n"} bisher (${Math.round(ueUebernommen(s)*10)/10} UE) · Prüfungen: ${prTxt}</p>
   </div>`;
 }
 function ueBisBestehenFuerSchueler(s){
