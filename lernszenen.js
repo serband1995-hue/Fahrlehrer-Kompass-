@@ -884,6 +884,9 @@
   }
   function objekt3d(c, o) {
     if (o.art === "haus") {
+      // steht die Kamera im oder direkt über dem Haus (z. B. bei starkem Lenkeinschlag), das Haus weglassen – sonst verdeckt es alles
+      const hh = o.h || 0, dx = c.e[0] - o.x, dy = c.e[1] - o.y, lx = dx * Math.cos(hh) + dy * Math.sin(hh), ly = -dx * Math.sin(hh) + dy * Math.cos(hh);
+      if (Math.abs(lx) < o.l / 2 + 3 && Math.abs(ly) < o.b / 2 + 3) return;
       quader(c, o.x, o.y, o.h || 0, o.l, o.b, 0, o.hoehe || 7, o.farbe || "#d9cfbf", 1, (fl, v) => {
         if (!fl.name) return; const i = fl.i.map(j => v[j]), n = Math.max(1, Math.round((fl.name === "vorn" || fl.name === "hinten" ? o.b : o.l) / 3.2));
         for (let k = 0; k < n; k++) for (let st2 = 0; st2 < Math.max(1, Math.floor((o.hoehe || 7) / 3)); st2++) {
@@ -946,7 +949,7 @@
       gas: false, bremse: false, log: [], ende: false, kollision: false, tippIdx: 0, maxV: 0,
       gebremstAufHaupt: false, minVHaupt: Infinity, blinkerVergessen: false, steht: 0,
       verkehr: F.verkehr.map((q, i) => ({ id: "v" + i, typ: q.typ, farbe: q.farbe, x: q.x0, y: q.y, v: q.v / KMH, v0: q.v / KMH, a: 0, gegen: !!q.gegen })),
-      minFolge: Infinity, minZeitGegen: Infinity, maxVLinks: 0, verbot: false, ueberholt: false,
+      minFolge: Infinity, minZeitGegen: Infinity, maxVLinks: 0, maxV: 0, verbot: false, ueberholt: false, abgebrochen: 0, kollisionGegen: false,
       behinderung: 0,
       liste() {
         const pos = this.pos();
@@ -1019,13 +1022,22 @@
     }
     if (F.bewerten === "ueberholen") {
       const vor = st.verkehr.filter(q => !q.gegen && Math.abs(q.y - spurY("rechts")) < 1 && q.x > p.x).sort((a, b) => a.x - b.x)[0];
+      st.maxV = Math.max(st.maxV, st.v * KMH);
+      if (st.wechsel && st.wechsel.nach === "links" && st.wechsel.ziel === undefined) st.wechsel.ziel = vor || null;   // wer soll überholt werden?
       if (vor && !st.ueberholt && p.y > 0.5 && st.v > 30 / KMH) st.minFolge = Math.min(st.minFolge, vor.x - p.x - (TYPEN[vor.typ].l + TYPEN.fahrschule.l) / 2);
       if (p.y < 0.9) {                                               // (teilweise) auf der Gegenfahrbahn
         st.maxVLinks = Math.max(st.maxVLinks, st.v * KMH);
-        st.verkehr.filter(q => q.gegen && q.x > p.x).forEach(q => { const d = q.x - p.x - (TYPEN[q.typ].l + TYPEN.fahrschule.l) / 2; st.minZeitGegen = Math.min(st.minZeitGegen, d / (st.v + q.v0)); });
+        st.verkehr.filter(q => q.gegen && q.x > p.x).forEach(q => { const d = q.x - p.x - (TYPEN[q.typ].l + TYPEN.fahrschule.l) / 2; if (d > 0) st.minZeitGegen = Math.min(st.minZeitGegen, d / (st.v + q.v0)); });
         if (p.x >= F.verbotVon && p.x <= F.verbotBis) st.verbot = true;
       }
-      if (st.spur === "rechts" && st.log.some(l => l.typ === "fertig" && l.nach === "links")) st.ueberholt = true;
+      // zurück rechts: vor dem Überholten eingeschert (= überholt) oder wieder dahinter (= abgebrochen, weiterfahren)
+      const zw = st.letzterWechsel;
+      if (zw && !st.wechsel && zw.nach === "rechts" && !zw.geprueft) {
+        zw.geprueft = true;
+        const lz = st.log.filter(l => l.typ === "wechsel" && l.nach === "links" && l.t < zw.t).pop(), z = lz && lz.ziel;
+        if (!z || p.x - z.x > (TYPEN[z.typ].l + TYPEN.fahrschule.l) / 2) { st.ueberholt = true; zw.ueberholt = true; }
+        else { st.abgebrochen++; zw.abbruch = true; }
+      }
     }
     // Verkehr: jedes Fahrzeug folgt seinem Vordermann (auch dem Fahrschulauto, sobald es in den Fahrstreifen ragt)
     const T = TYPEN;
@@ -1041,7 +1053,7 @@
       if (istFs && aq < -1.5) st.behinderung = Math.max(st.behinderung, -aq);
     });
     // Kollision
-    st.verkehr.forEach(q => { if (Math.abs(q.x - p.x) < (T[q.typ].l + T.fahrschule.l) / 2 - 0.3 && Math.abs(q.y - p.y) < (T[q.typ].b + T.fahrschule.b) / 2 - 0.15) { st.kollision = true; st.ende = true; } });
+    st.verkehr.forEach(q => { if (Math.abs(q.x - p.x) < (T[q.typ].l + T.fahrschule.l) / 2 - 0.3 && Math.abs(q.y - p.y) < (T[q.typ].b + T.fahrschule.b) / 2 - 0.15) { st.kollision = true; if (q.gegen) st.kollisionGegen = true; st.ende = true; } });
     // Tipps
     if (F.tipps[st.tippIdx] && p.x >= F.tipps[st.tippIdx].x) { zeigeCoach(F.tipps[st.tippIdx].text); st.tippIdx++; }
     // Ende-Bedingungen (ein laufender Fahrstreifenwechsel wird immer erst zu Ende gefahren)
@@ -1052,7 +1064,7 @@
         if (st.spur !== "einf" && lw && st.t - lw.fertig > 4) st.ende = true;
       } else if (F.bewerten === "ueberholen") {
         if (st.ueberholt && lw && lw.nach === "rechts" && st.t - lw.fertig > 5) st.ende = true;
-        if (p.x > F.verbotBis + 60) st.ende = true;
+        if (p.x > F.verbotBis + 60 && st.spur === "rechts") st.ende = true;
       } else {
         if (st.s >= st.pfad.laenge - 1 || (st.spur === "aus" && p.x >= F.rampeAb + 90)) st.ende = true;
         if (st.spur !== "aus" && p.x > szene.strasse.bereich[1] - 40) { st.ende = true; st.endeGrund = "verpasst"; }
@@ -1073,17 +1085,23 @@
     const wechsel = st.log.filter(l => l.typ === "wechsel");
     const blinkerOk = !st.blinkerVergessen && !(st.blinker && st.letzterWechsel && !st.wechsel && st.blinkerSeit <= st.letzterWechsel.t);
     if (F.bewerten === "ueberholen") {
-      const w1 = wechsel.find(x => x.nach === "links"), w2 = wechsel.find(x => x.nach === "rechts" && w1 && x.t > w1.t);
+      // bewertet wird der letzte Überholvorgang (abgebrochene Versuche zählen nur mit, wenn danach keiner mehr kam)
+      const w2 = wechsel.filter(x => x.nach === "rechts" && x.ueberholt).pop() || wechsel.filter(x => x.nach === "rechts").pop();
+      const w1 = wechsel.filter(x => x.nach === "links" && (!w2 || x.t < w2.t)).pop() || wechsel.filter(x => x.nach === "links").pop();
+      const folgeOk = st.minFolge >= 25;
+      ok(folgeOk, "Abstand zum Lkw", st.minFolge >= 999 ? "Abstand gehalten." : `Kleinster Abstand zum Lkw ${Math.round(st.minFolge)} m.` + (folgeOk ? "" : " Zu dicht – bei 60 km/h mindestens halber Tacho (30 m). Mit Abstand sieht man mehr und kann Anlauf nehmen."), "§ 4 Abs. 1 · § 5 Abs. 2 StVO");
+      ok(st.maxV <= 103, "Höchstgeschwindigkeit", `Höchstens ${Math.round(st.maxV)} km/h gefahren (erlaubt 100).`, "§ 3 Abs. 3 · § 5 Abs. 2 StVO");
       if (!w1) { if (!st.kollision) P.push({ ok: true, titel: "Nicht überholt", text: "Kein Überholvorgang – das ist richtig, wenn es nicht sicher war. Zum Üben: Lücke im Gegenverkehr abwarten, dann zügig überholen.", regel: "§ 5 Abs. 2 StVO" }); return P; }
-      ok(st.minFolge >= 15, "Abstand vor dem Überholen", st.minFolge >= 999 ? "Abstand gehalten." : `Kleinster Abstand zum Lkw ${Math.round(st.minFolge)} m.` + (st.minFolge < 15 ? " Zu dicht – mit Abstand sieht man mehr und kann besser beschleunigen." : ""), "§ 4 Abs. 1 · § 5 Abs. 2 StVO");
       ok(w1.blinkerDauer >= 1.5, "Blinker links", w1.blinkerDauer >= 1.5 ? "Ausscheren rechtzeitig angekündigt." : "Ausscheren nicht oder zu spät angekündigt.", "§ 5 Abs. 4a StVO");
       ok(w1.schulter, "Schulterblick links", w1.schulter ? "Vor dem Ausscheren nach hinten links gesichert." : "Schulterblick links fehlte – vielleicht überholt dich gerade jemand.", "§ 5 Abs. 4 StVO");
-      ok(!st.kollision && st.minZeitGegen >= 4, "Gegenverkehr", st.minZeitGegen <= 0.05 ? "Zusammenstoß mit dem Gegenverkehr – die Lücke war viel zu klein." : st.minZeitGegen >= 999 ? "Die Gegenfahrbahn war frei." : `Knappste Zeitlücke zum Gegenverkehr: ${st.minZeitGegen.toFixed(1)} s.` + (st.minZeitGegen < 4 ? " Viel zu knapp – das war eine Gefährdung." : ""), "§ 5 Abs. 2 StVO");
-      ok(st.maxVLinks <= 103, "Höchstgeschwindigkeit", `Beim Überholen höchstens ${Math.round(st.maxVLinks)} km/h (erlaubt 100).`, "§ 3 Abs. 3 · § 5 Abs. 2 StVO");
+      ok(!st.kollisionGegen && st.minZeitGegen >= 4, "Gegenverkehr", st.kollisionGegen ? "Zusammenstoß mit dem Gegenverkehr – die Lücke war viel zu klein." : st.minZeitGegen >= 999 ? "Die Gegenfahrbahn war frei." : `Knappste Zeitlücke zum Gegenverkehr: ${st.minZeitGegen.toFixed(1)} s.` + (st.minZeitGegen < 4 ? " Viel zu knapp – das war eine Gefährdung." : ""), "§ 5 Abs. 2 StVO");
       ok(!st.verbot, "Überholverbot beachtet", st.verbot ? "Im Bereich des Überholverbots (Zeichen 276 / durchgezogene Linie) auf der Gegenfahrbahn gewesen." : "Das Überholverbot wurde beachtet.", "Zeichen 276 · Zeichen 295");
-      if (w2) {
-        ok(w2.blinkerDauer >= 0.5, "Blinker rechts beim Einordnen", w2.blinkerDauer >= 0.5 ? "Wiedereinordnen angekündigt." : "Beim Wiedereinordnen rechts blinken.", "§ 5 Abs. 4a StVO");
-        ok(w2.lueckeHinten >= 15 && st.behinderung < 2, "Mit Abstand eingeschert", `Abstand zum Überholten beim Einscheren ${Math.round(Math.min(w2.lueckeHinten, 999))} m.` + (st.behinderung >= 2 ? " Der Lkw musste bremsen – zu früh eingeschert." : w2.lueckeHinten < 15 ? " Zu knapp – erst einscheren, wenn der Überholte im Innenspiegel ganz zu sehen ist." : ""), "§ 5 Abs. 4 StVO");
+      if (w2 && w2.abbruch) {
+        ok(true, "Überholen abgebrochen", "Wieder hinter dem Lkw eingeordnet – richtig, wenn die Lücke nicht reicht. Besser: gar nicht erst ausscheren, solange die Strecke nicht sicher frei ist.", "§ 5 Abs. 2 StVO");
+        ok(blinkerOk, "Blinker aus", blinkerOk ? "Nach dem Einordnen Blinker aus." : "Blinker nach dem Wechsel ausschalten.", "§ 5 Abs. 4a StVO");
+      } else if (w2) {
+        ok(w2.blinkerDauer >= 1.5, "Blinker rechts beim Einordnen", w2.blinkerDauer >= 1.5 ? "Wiedereinordnen rechtzeitig angekündigt." : "Beim Wiedereinordnen rechtzeitig rechts blinken.", "§ 5 Abs. 4a StVO");
+        ok(w2.lueckeHinten >= 20 && st.behinderung < 2, "Mit Abstand eingeschert", `Abstand zum Überholten beim Einscheren ${Math.round(Math.min(w2.lueckeHinten, 999))} m.` + (st.behinderung >= 2 ? " Der Lkw musste bremsen – zu früh eingeschert." : w2.lueckeHinten < 20 ? " Zu knapp – erst einscheren, wenn der Überholte im Innenspiegel ganz zu sehen ist." : ""), "§ 5 Abs. 4 StVO");
         ok(blinkerOk, "Blinker aus", blinkerOk ? "Nach dem Einordnen Blinker aus." : "Blinker nach dem Wechsel ausschalten.", "§ 5 Abs. 4a StVO");
       } else ok(false, "Wieder eingeordnet", "Nicht auf den rechten Fahrstreifen zurückgekehrt.", "§ 5 Abs. 4 · § 2 Abs. 2 StVO");
       return P;
