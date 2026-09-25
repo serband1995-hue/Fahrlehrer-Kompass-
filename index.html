@@ -651,6 +651,8 @@ input,select,textarea{font-family:inherit;font-size:15px;color:var(--txt);}
   display:inline-flex;align-items:center;justify-content:center;transition:all .15s var(--pop);}
 .vidBtn svg{width:12px;height:12px;}
 .vidBtn:active{transform:scale(.85);}
+.szBtn{width:23px;height:23px;flex:0 0 auto;border-radius:50%;background:var(--gruen-soft);border:0;font-size:12px;line-height:23px;padding:0;margin-left:6px;cursor:pointer;}
+.szBtn:active{transform:scale(.85);}
 .skill-info{display:grid;grid-template-rows:0fr;transition:grid-template-rows .28s var(--ease);background:var(--bg-soft);}
 .skill-info.open{grid-template-rows:1fr;}
 .skill-info .si-inner{overflow:hidden;}
@@ -1775,6 +1777,7 @@ body:not(.light) .cw-col.today .cw-dnum{color:var(--gold);}
 <!-- Supabase Client -->
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script src="lernszenen.js" defer></script>
+<script src="lernszenen-stadt.js" defer></script>
 <style>
 /* ===== LOGIN OVERLAY ===== */
 #loginOverlay{
@@ -7903,12 +7906,14 @@ function buildStufen(s){
       const panel=hasInfo?`<div class="skill-info" data-panel="${it.id}"><div class="si-inner">${renderInfoList(it.id)}</div></div>`:"";
       const faStufe=FA_VIDEO_MAP[it.id];
       const vidBtn=(faStufe&&faStufe.contentDa!==false)?`<button class="vidBtn" data-faid="${it.id}" aria-label="Video in Fahr-Akademie ansehen">${ICN.video}</button>`:"";
+      const lzListe=(window.Lernszenen&&window.Lernszenen.szenenFuerPlan)?window.Lernszenen.szenenFuerPlan(it.id):[];
+      const szBtn=lzListe.length?`<button class="szBtn" data-lz="${esc(lzListe[0].id)}" aria-label="Lernszene ansehen: ${esc(lzListe[0].titel)}" title="Lernszene: ${esc(lzListe[0].titel)}">🎬</button>`:"";
       const ampelHtml=st.eval===false
         ? `<div class="ampel"><button class="amp chk ${v==='gruen'?'on':''}" data-v="gruen" aria-label="erledigt">${v==='gruen'?'✓':''}</button></div>`
         : `<div class="ampel">${["rot","gelb","gruen"].map(c=>`<button class="amp ${v===c?'on':''}" data-v="${c}" aria-label="${c}">${v===c?({rot:'✕',gelb:'•',gruen:'✓'}[c]):''}</button>`).join("")}</div>`;
       return grpHtml+`<div class="skill-wrap">
         <div class="skill" data-skill="${it.id}">
-          <div style="flex:1"><div class="sk-head"><span class="sk-t">${esc(it.t)}</span>${iBtn}${vidBtn}</div>${it.ort?`<div class="sk-ort"><span class="ic ic-rot" style="font-size:11px;">${ICN.pin}</span> ${esc(it.ort)}</div>`:""}${(v==='gruen'&&pl.ampelnZeit&&pl.ampelnZeit[it.id])?`<div class="sk-ort" style="opacity:.6;" data-zeit="${it.id}">${isoDE(pl.ampelnZeit[it.id].slice(0,10))} · ${pl.ampelnZeit[it.id].slice(11,16)}</div>`:""}</div>
+          <div style="flex:1"><div class="sk-head"><span class="sk-t">${esc(it.t)}</span>${iBtn}${vidBtn}${szBtn}</div>${it.ort?`<div class="sk-ort"><span class="ic ic-rot" style="font-size:11px;">${ICN.pin}</span> ${esc(it.ort)}</div>`:""}${(v==='gruen'&&pl.ampelnZeit&&pl.ampelnZeit[it.id])?`<div class="sk-ort" style="opacity:.6;" data-zeit="${it.id}">${isoDE(pl.ampelnZeit[it.id].slice(0,10))} · ${pl.ampelnZeit[it.id].slice(11,16)}</div>`:""}</div>
           ${ampelHtml}
         </div>${panel}
       </div>`;}).join("");
@@ -7927,6 +7932,10 @@ function buildStufen(s){
     e.stopPropagation();
     const panel=wrap.querySelector(`[data-panel="${b.dataset.info}"]`);
     if(panel){const open=panel.classList.toggle("open");b.classList.toggle("on",open);}}));
+  wrap.querySelectorAll(".szBtn").forEach(b=>b.addEventListener("click",e=>{
+    e.stopPropagation();
+    if(window.Lernszenen)window.Lernszenen.open({szene:b.dataset.lz});
+  }));
   wrap.querySelectorAll(".vidBtn").forEach(b=>b.addEventListener("click",e=>{
     e.stopPropagation();
     const entry=FA_VIDEO_MAP[b.dataset.faid];
