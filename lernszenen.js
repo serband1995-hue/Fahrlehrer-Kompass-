@@ -141,7 +141,7 @@
   const SCHILD_NAME = {
     z330: "Zeichen 330.1 · Autobahn", z332: "Zeichen 332 · Ausfahrttafel", z333: "Zeichen 333 · Pfeilzeichen Ausfahrt",
     z450_3: "Zeichen 450 · Ankündigungsbake 300 m", z450_2: "Zeichen 450 · Ankündigungsbake 200 m", z450_1: "Zeichen 450 · Ankündigungsbake 100 m",
-    vorweg: "Vorwegweiser 1000 m", weg: "Wegweiser 500 m", z531: "Zeichen 531 · Einengungstafel"
+    vorweg: "Zeichen 449 · Vorwegweiser 1000 m", weg: "Zeichen 449 · Vorwegweiser 500 m", z531: "Zeichen 531 · Einengungstafel"
   };
 
   // ---------------------------------------------------------------- Fahrzeuge
@@ -262,10 +262,10 @@
       phasen: [
         { t: 0.2, titel: "Anschlussstelle", text: "Die Auffahrt führt in einem eigenen Bogen zur Autobahn. Schon hier den Verkehr auf der Autobahn beobachten: Wie schnell ist er, wo sind Lücken?", regel: "Zeichen 330.1 · § 18 Abs. 2 StVO", frage: { text: "Wer hat gleich beim Einfädeln Vorfahrt?", optionen: ["Ich – ich bin auf dem Beschleunigungsstreifen", "Der Verkehr auf der durchgehenden Fahrbahn", "Wer schneller ist"], richtig: 1, erklaerung: "§ 18 Abs. 3 StVO: Der Verkehr auf der durchgehenden Fahrbahn hat Vorfahrt." } },
         { t: tx(-12), titel: "Einfädelungsstreifen: beschleunigen", text: "Auf dem Einfädelungsstreifen zügig auf das Tempo des Verkehrs beschleunigen. Hier darf man schneller fahren als auf den durchgehenden Fahrstreifen – das ist gewollt.", regel: "§ 7a Abs. 2 StVO", frage: { text: "Was ist jetzt die wichtigste Aufgabe?", optionen: ["Langsam fahren und abwarten", "Zügig auf die Geschwindigkeit des Verkehrs beschleunigen", "Sofort nach links ziehen"], richtig: 1, erklaerung: "Mit ähnlichem Tempo wie der Verkehr lässt es sich sicher einfädeln. Zu langsames Einfädeln zwingt andere zum Bremsen." } },
-        { t: tx(15), titel: "Blinker links", text: "Den Fahrstreifenwechsel rechtzeitig und deutlich ankündigen – Blinker links setzen.", regel: "§ 7 Abs. 5 · § 10 StVO", frage: { text: "Wann blinke ich?", optionen: ["Erst wenn ich schon wechsle", "Rechtzeitig vorher", "Gar nicht, es ist ja klar"], richtig: 1, erklaerung: "Jeder Fahrstreifenwechsel ist rechtzeitig und deutlich anzukündigen (§ 7 Abs. 5 StVO)." } },
+        { t: tx(15), titel: "Blinker links", text: "Den Fahrstreifenwechsel rechtzeitig und deutlich ankündigen – Blinker links setzen.", regel: "§ 7 Abs. 5 StVO", frage: { text: "Wann blinke ich?", optionen: ["Erst wenn ich schon wechsle", "Rechtzeitig vorher", "Gar nicht, es ist ja klar"], richtig: 1, erklaerung: "Jeder Fahrstreifenwechsel ist rechtzeitig und deutlich anzukündigen (§ 7 Abs. 5 StVO)." } },
         { t: tx(50), titel: "Lücke wählen", text: "Der Lkw fährt rechts vorne, der rote Pkw hat großen Abstand. Die Lücke dahinter passt: Tempo angleichen und genug Abstand halten (Faustregel: halber Tacho in Metern).", regel: "§ 18 Abs. 3 · § 4 Abs. 1 StVO", frage: { text: "Wo fädle ich ein?", optionen: ["Neben dem Lkw", "In die Lücke hinter dem Lkw", "Vor den Lkw, ich gebe Gas"], richtig: 1, erklaerung: "Die Lücke hinter dem Lkw ist groß genug. Vor ihm würde es knapp, und er hat Vorfahrt." } },
         { t: tx(86), titel: "Spiegel und Schulterblick", text: "Kurz vor dem Wechsel: Innen- und Außenspiegel, dann Schulterblick nach links – der tote Winkel ist sonst unsichtbar.", regel: "§ 7 Abs. 5 StVO: Gefährdung ausschließen", frage: { text: "Was kommt direkt vor dem Spurwechsel?", optionen: ["Radio leiser machen", "Spiegel und Schulterblick links", "Hupen"], richtig: 1, erklaerung: "Nur mit Schulterblick siehst du ein Fahrzeug im toten Winkel." } },
-        { t: tx(110), titel: "Einfädeln", text: "Wechseln, wo der Breitstrich unterbrochen ist – nie über die Sperrfläche. Zügig und gleichmäßig hinüberfahren, nicht bis zum Ende des Streifens warten.", regel: "Zeichen 340 · Zeichen 298 · § 7 Abs. 5 StVO" },
+        { t: tx(110), titel: "Einfädeln", text: "Über die breite Leitlinie wechseln – nicht über die durchgehende Linie oder die Sperrfläche. Zügig und gleichmäßig hinüberfahren, nicht bis zum Ende des Streifens warten.", regel: "Zeichen 340 · Zeichen 295 · Zeichen 298 · § 7 Abs. 5 StVO" },
         { t: tx(178), titel: "Blinker aus, Abstand halten", text: "Nach dem Wechsel Blinker aus und rechts weiterfahren. Abstand zum Lkw vorne: mindestens halber Tacho in Metern.", regel: "§ 2 Abs. 2 · § 4 Abs. 1 StVO", frage: { text: "Und jetzt?", optionen: ["Gleich links überholen", "Blinker aus, rechts fahren, Abstand halten", "Auf dem Seitenstreifen weiter"], richtig: 1, erklaerung: "Rechtsfahrgebot (§ 2 Abs. 2 StVO) und ausreichender Abstand (§ 4 Abs. 1 StVO)." } },
         { t: tx(178) + 3, titel: "Merke", text: "Beim Auffahren gilt kein Reißverschluss: Wer auffährt, muss die Vorfahrt beachten. Findet sich keine Lücke, notfalls am Ende des Streifens anhalten – nie auf den Seitenstreifen ausweichen.", regel: "§ 18 Abs. 3 StVO · § 7 Abs. 4 gilt hier nicht" }
       ],
@@ -273,14 +273,16 @@
         // Selbst fahren: Start auf der Rampe, Ziel rechter Fahrstreifen
         start: { pfad: pfad(rampeMitte.concat(spurPfad(EIN + 2, SPITZE + 2, yE))), s: pfad(rampeMitte).laenge * 0.35, v: 55 },
         spuren: { einf: yE, rechts: yR, links: yLi }, spurStart: "einf",
-        wechselErlaubt: (x, von, nach) => (von === "einf" && nach === "rechts") ? x >= EIN && x <= ENDE : (von === "rechts" && nach === "links") || (von === "links" && nach === "rechts"),
-        wechselBis: { einf: SPITZE - 5 },
-        grenzeEnde: ENDE + 20, ziel: "rechts",
+        wechselErlaubt: (x, von, nach) => (von === "einf" && nach === "rechts") ? x >= EIN && x <= ENDE + 10 : (von === "rechts" && nach === "links") || (von === "links" && nach === "rechts"),
+        wechselHinweis: (x, von) => von === "einf" ? (x < EIN ? "Noch nicht: erst ab der breiten Leitlinie (Zeichen 340) wechseln – nicht über die Sperrfläche." : "Zu spät: Der Streifen ist zu Ende. Anhalten und auf eine große Lücke warten.") : "Hier ist kein Fahrstreifenwechsel möglich.",
+        wechselBis: { "einf>rechts": ENDE + 20 },
+        grenzeEnde: ENDE + 25, ziel: "rechts",
+        // Rechts eine große Lücke, die bei etwa 90 km/h zwischen x = 80 und 200 liegt; dahinter weitere Fahrzeuge
         verkehr: [
-          { typ: "lkw", y: yR, x0: 170, v: 85, farbe: "#c9ced6" }, { typ: "pkw", y: yR, x0: -10, v: 90, farbe: "#b3322c" },
-          { typ: "lkw", y: yR, x0: -170, v: 84, farbe: "#d9d2c3" }, { typ: "pkw", y: yR, x0: -330, v: 92, farbe: "#5f6f3a" },
-          { typ: "pkw", y: yR, x0: -520, v: 90, farbe: "#8e4b8a" },
-          { typ: "pkw", y: yLi, x0: 60, v: 128, farbe: "#2c5aa0" }, { typ: "pkw", y: yLi, x0: -150, v: 132, farbe: "#3a3f45" }
+          { typ: "lkw", y: yR, x0: 110, v: 84, farbe: "#d9d2c3" }, { typ: "lkw", y: yR, x0: -80, v: 86, farbe: "#c9ced6" },
+          { typ: "pkw", y: yR, x0: -228, v: 88, farbe: "#b3322c" }, { typ: "pkw", y: yR, x0: -360, v: 89, farbe: "#5f6f3a" },
+          { typ: "transporter", y: yR, x0: -500, v: 88, farbe: "#e7e3d6" },
+          { typ: "pkw", y: yLi, x0: 40, v: 128, farbe: "#2c5aa0" }, { typ: "pkw", y: yLi, x0: -170, v: 132, farbe: "#3a3f45" }
         ],
         tipps: [
           { x: -150, text: "Auf der Rampe: Verkehr links beobachten. Wo sind Lücken?" },
@@ -334,20 +336,21 @@
         { t: 0.3, titel: "Ausfahrt angekündigt", text: "Der Vorwegweiser kündigt die Ausfahrt 1000 m vorher an. Jetzt planen: frühzeitig auf den rechten Fahrstreifen – nicht erst in letzter Sekunde von links.", regel: "Zeichen 449 · § 7 Abs. 5 StVO", frage: { text: "Wann wechsle ich nach rechts?", optionen: ["Direkt an der Ausfahrt", "Frühzeitig, spätestens vor den Baken", "Egal, notfalls über die Sperrfläche"], richtig: 1, erklaerung: "Rechtzeitig einordnen, damit der Wechsel ohne Hektik und Gefährdung klappt." } },
         { t: tx(-870), titel: "Blinker, Spiegel, Schulterblick", text: "Blinker rechts, Innen- und Außenspiegel, Schulterblick rechts – dann zügig auf den rechten Fahrstreifen.", regel: "§ 7 Abs. 5 StVO" },
         { t: tx(-690), titel: "Rechts einordnen", text: "Auf dem rechten Fahrstreifen bleiben und Tempo halten. Blinker wieder aus.", regel: "§ 2 Abs. 2 StVO (Rechtsfahrgebot)" },
-        { t: tx(-395), titel: "Vorwegweiser 500 m", text: "Die Ausfahrt wird 500 m vorher noch einmal angekündigt. Ab jetzt nicht mehr überholen.", regel: "Zeichen 449" },
+        { t: tx(-395), titel: "Vorwegweiser 500 m", text: "Die Ausfahrt wird 500 m vorher noch einmal angekündigt. Ab jetzt möglichst nicht mehr überholen.", regel: "Zeichen 449" },
         { t: tx(-305), titel: "Ankündigungsbaken", text: "Baken mit 3, 2, 1 Streifen: noch 300, 200, 100 m bis zum Beginn des Ausfädelungsstreifens.", regel: "Zeichen 450", frage: { text: "Was bedeutet die Bake mit zwei Streifen?", optionen: ["Noch 200 m bis zur Ausfahrt", "Tempo 200", "Zwei Fahrstreifen frei"], richtig: 0, erklaerung: "Zeichen 450: 3 Streifen = 300 m, 2 = 200 m, 1 = 100 m." } },
         { t: tx(-150), titel: "Blinker rechts", text: "Rechtzeitig vor dem Ausfädelungsstreifen rechts blinken – der Verkehr hinter dir muss es früh sehen.", regel: "§ 7 Abs. 5 StVO" },
-        { t: tx(-30), titel: "Spiegel, Schulterblick, rüber", text: "Spiegel und Schulterblick rechts, dann auf den Ausfädelungsstreifen wechseln – dort, wo der Breitstrich beginnt.", regel: "Zeichen 340 · § 7 Abs. 5 StVO" },
+        { t: tx(-30), titel: "Spiegel, Schulterblick, rüber", text: "Spiegel und Schulterblick rechts, dann über die breite Leitlinie auf den Ausfädelungsstreifen wechseln.", regel: "Zeichen 340 · § 7 Abs. 5 StVO" },
         { t: tx(66), titel: "Erst jetzt bremsen", text: "Die Geschwindigkeit erst auf dem Ausfädelungsstreifen abbauen, nicht vorher auf der Autobahn. Dort darf man nicht schneller fahren als auf den durchgehenden Fahrstreifen.", regel: "§ 7a Abs. 3 StVO", frage: { text: "Wo baue ich die Geschwindigkeit ab?", optionen: ["Schon auf dem rechten Fahrstreifen", "Auf dem Ausfädelungsstreifen", "Erst in der Kurve"], richtig: 1, erklaerung: "Auf der Autobahn bremsen gefährdet die Nachfolgenden – erst auf dem Ausfädelungsstreifen verzögern, vor der Kurve auf die angezeigte Geschwindigkeit." } },
-        { t: tx(190), titel: "Kurve und Tacho", text: "Auf die angezeigte Höchstgeschwindigkeit (hier 60 km/h) herunterbremsen, bevor die Kurve beginnt. Nach langer Autobahnfahrt fühlt sich Tempo 60 sehr langsam an – Tacho kontrollieren!", regel: "Zeichen 274 · § 3 Abs. 1 StVO", frage: { text: "Warum auf den Tacho schauen?", optionen: ["Weil man sich nach schnellem Fahren beim Tempo verschätzt", "Wegen der Tankanzeige", "Muss man nicht"], richtig: 0, erklaerung: "Nach Autobahnfahrt unterschätzt man die eigene Geschwindigkeit (Gewöhnung)." } },
+        { t: tx(190), titel: "Kurve und Tacho", text: "Bis zum Zeichen auf die angezeigte Höchstgeschwindigkeit (hier 60 km/h) herunterbremsen, bevor die Kurve enger wird. Nach langer Autobahnfahrt fühlt sich Tempo 60 sehr langsam an – Tacho kontrollieren!", regel: "Zeichen 274 · § 3 Abs. 1 StVO", frage: { text: "Warum auf den Tacho schauen?", optionen: ["Weil man sich nach schnellem Fahren beim Tempo verschätzt", "Wegen der Tankanzeige", "Muss man nicht"], richtig: 0, erklaerung: "Nach Autobahnfahrt unterschätzt man die eigene Geschwindigkeit (Gewöhnung)." } },
         { t: tx(AE + 70), titel: "Merke", text: "Ausfahrt verpasst? Weiterfahren bis zur nächsten. Auf der Autobahn nie rückwärtsfahren oder wenden – auch nicht auf dem Seitenstreifen.", regel: "§ 18 Abs. 7 StVO" }
       ],
       fahren: {
         start: { pfad: pfad(spurPfad(-1100, X1 + 600, yLi)), s: 200, v: 120 },
         spuren: { links: yLi, rechts: yR, aus: yA }, spurStart: "links",
         wechselErlaubt: (x, von, nach) => (von === "rechts" && nach === "aus") ? x >= -60 && x <= AE - 40 : (von === "links" && nach === "rechts") || (von === "rechts" && nach === "links"),
-        wechselBis: { rechts: AE - 5 },
-        rampe: rampeMitte, rampeAb: AE, ziel: "aus",
+        wechselHinweis: (x, von, nach) => nach === "aus" ? (x < -60 ? "Noch nicht: Der Ausfädelungsstreifen beginnt an der breiten Leitlinie." : "Zu spät für diese Ausfahrt – weiterfahren bis zur nächsten.") : "Hier ist kein Fahrstreifenwechsel möglich.",
+        wechselBis: { "rechts>aus": AE - 5 },
+        rampe: rampeMitte, rampeAb: AE, kurveX: p60[0], ziel: "aus",
         verkehr: [
           { typ: "lkw", y: yR, x0: -620, v: 85, farbe: "#c9ced6" }, { typ: "transporter", y: yR, x0: -380, v: 100, farbe: "#e7e3d6" },
           { typ: "pkw", y: yLi, x0: -1100, v: 138, farbe: "#2c5aa0" }
@@ -357,7 +360,7 @@
           { x: -300, text: "Baken: noch 300 m. Rechts bleiben, Tempo halten." },
           { x: -150, text: "Blinker rechts – gleich beginnt der Ausfädelungsstreifen." },
           { x: -40, text: "Schulterblick rechts und rüber. Erst dort bremsen!" },
-          { x: 150, text: "Vor der Kurve auf 60 km/h." }
+          { x: 150, text: "Bis zum Schild „60“ auf 60 km/h herunterbremsen." }
         ],
         bewerten: "abfahren"
       }
@@ -457,7 +460,7 @@
   let versatzFz = {};                  // im Pause-Modus verschobene Fahrzeuge: id -> {dx, dy, frei:true}
   let ansicht = { zoom: 5, px: 0, py: 0, folgen: true };
   let fahr = null;                     // Zustand im Selbst-fahren-Modus
-  let onCloseCb = null;
+  let onCloseCb = null, beob = null;
 
   // Position eines Fahrzeugs zur Zeit t (Vorführen/Mitdenken)
   function rohPos(f, t) {
@@ -739,11 +742,10 @@
   // ---------------------------------------------------------------- Selbst fahren
   function starteFahren() {
     const F = szene.fahren;
-    const T0 = performance.now();
     const st = {
-      t: 0, v: F.start.v / KMH, pfad: F.start.pfad, s: F.start.s || 0, spur: F.spurStart, blinker: null, blinkerSeit: -99, schulter: [], wechsel: null,
-      gas: false, bremse: false, log: [], ende: false, ergebnis: null, kollision: false, tippIdx: 0, maxV: 0,
-      vAufHauptVorAus: null, gebremstAufHaupt: false,
+      t: 0, v: F.start.v / KMH, pfad: F.start.pfad, s: F.start.s || 0, spur: F.spurStart, blinker: null, blinkerSeit: -99, blinkerAusT: null, schulter: [], wechsel: null,
+      gas: false, bremse: false, log: [], ende: false, kollision: false, tippIdx: 0, maxV: 0,
+      gebremstAufHaupt: false, minVHaupt: Infinity, blinkerVergessen: false, steht: 0,
       verkehr: F.verkehr.map((q, i) => ({ id: "v" + i, typ: q.typ, farbe: q.farbe, x: q.x0, y: q.y, v: q.v / KMH, v0: q.v / KMH, a: 0 })),
       behinderung: 0,
       liste() {
@@ -754,33 +756,42 @@
       },
       pos() { const p = this.pfad.an(this.s); return { x: p.x, y: p.y, h: p.h, v: this.v }; }
     };
-    fahr = st; zeit = 0;
+    fahr = st; zeit = 0; _hGlatt = null;
   }
   function spurY(n) { return szene.fahren.spuren[n]; }
+  // Nächste Fahrzeuge vor und hinter der Stelle x im Fahrstreifen y: Lücke (Stoßstange zu Stoßstange) und Tempo
+  function luecken(st, y, x) {
+    let vorne = null, hinten = null; const T = TYPEN;
+    st.verkehr.forEach(q => { if (Math.abs(q.y - y) > 1.2) return; const d = q.x - x; if (d >= 0 && (!vorne || d < vorne.d)) vorne = { d, q }; if (d < 0 && (!hinten || -d < hinten.d)) hinten = { d: -d, q }; });
+    return {
+      vorn: vorne ? vorne.d - (T[vorne.q.typ].l + T.fahrschule.l) / 2 : 999, hinten: hinten ? hinten.d - (T[hinten.q.typ].l + T.fahrschule.l) / 2 : 999,
+      vVorn: vorne ? vorne.q.v * KMH : 0, vHinten: hinten ? hinten.q.v * KMH : 0
+    };
+  }
   function wechsleSpur(richtung) {
-    const F = szene.fahren, st = fahr; if (!st || st.ende || st.wechsel) return;
+    const F = szene.fahren, st = fahr; if (!st || st.ende || st.wechsel || !laeuft) return;
     const namen = Object.keys(F.spuren).sort((a, b) => F.spuren[a] - F.spuren[b]);
     const i = namen.indexOf(st.spur), ziel = namen[i + (richtung === "links" ? -1 : 1)];
     if (!ziel) return;
     const p = st.pos();
-    if (!F.wechselErlaubt(p.x, st.spur, ziel)) { st.log.push({ t: st.t, typ: "hinweis", text: richtung === "links" && st.spur === "einf" ? "Noch nicht: erst dort wechseln, wo die Linie unterbrochen ist." : "Hier ist kein Fahrstreifenwechsel möglich." }); zeigeToast(st.log[st.log.length - 1].text); return; }
+    if (!F.wechselErlaubt(p.x, st.spur, ziel)) {
+      const text = F.wechselHinweis ? F.wechselHinweis(p.x, st.spur, ziel) : "Hier ist kein Fahrstreifenwechsel möglich.";
+      st.log.push({ t: st.t, typ: "hinweis", text }); zeigeToast(text); return;
+    }
     let L = Math.max(40, st.v * 3.2);
-    if (F.wechselBis && F.wechselBis[st.spur] !== undefined) L = clamp(F.wechselBis[st.spur] - p.x, 25, L);
+    const grenze = F.wechselBis && F.wechselBis[st.spur + ">" + ziel];
+    if (grenze !== undefined) L = clamp(grenze - p.x, 25, L);
     const pts = [[p.x, p.y]].concat(spurPfad(p.x + 2, p.x + L, p.y, [{ x: p.x + 2, y: spurY(ziel), laenge: L - 2 }]).slice(1));
     // danach Zielfahrstreifen bis zum Ende bzw. auf die Rampe
-    const xEnde = szene.strasse.bereich[1] + 400;
-    let rest = spurPfad(p.x + L + 2, xEnde, spurY(ziel));
+    let rest = spurPfad(p.x + L + 2, szene.strasse.bereich[1] + 400, spurY(ziel));
     if (ziel === "aus" && F.rampe) rest = spurPfad(p.x + L + 2, F.rampeAb, spurY(ziel)).concat(F.rampe.slice(1));
     st.pfad = pfad(pts.concat(rest)); st.s = 0;
-    st.wechsel = { von: st.spur, nach: ziel, t: st.t, x: p.x, blinkerDauer: st.blinker === richtung ? st.t - st.blinkerSeit : -1, schulter: st.schulter.some(s => s.seite === richtung && st.t - s.von <= 3.5 && st.t >= s.von), v: st.v * KMH };
-    // Lücke prüfen im Zielfahrstreifen
-    const ziely = spurY(ziel); let vorne = null, hinten = null;
-    st.verkehr.forEach(q => { if (Math.abs(q.y - ziely) > 1.2) return; const d = q.x - p.x; if (d >= 0 && (!vorne || d < vorne.d)) vorne = { d, q }; if (d < 0 && (!hinten || -d < hinten.d)) hinten = { d: -d, q }; });
-    const T = TYPEN;
-    st.wechsel.lueckeVorn = vorne ? vorne.d - (T[vorne.q.typ].l + T.fahrschule.l) / 2 : 999;
-    st.wechsel.lueckeHinten = hinten ? hinten.d - (T[hinten.q.typ].l + T.fahrschule.l) / 2 : 999;
-    st.wechsel.vHinten = hinten ? hinten.q.v * KMH : 0; st.wechsel.vVorn = vorne ? vorne.q.v * KMH : 0;
-    st.log.push(Object.assign({ t: st.t, typ: "wechsel" }, st.wechsel));
+    const lk = luecken(st, spurY(ziel), p.x);
+    st.wechsel = { typ: "wechsel", t: st.t, von: st.spur, nach: ziel, x: p.x, v: st.v * KMH,
+      blinkerDauer: st.blinker === richtung ? st.t - st.blinkerSeit : -1,
+      schulter: st.schulter.some(s => s.seite === richtung && st.t - s.von <= 3.5 && st.t >= s.von),
+      lueckeVorn: lk.vorn, lueckeHinten: lk.hinten, vVorn: lk.vVorn, vHinten: lk.vHinten };
+    st.log.push(st.wechsel);                                      // derselbe Eintrag wird am Ende des Wechsels ergänzt
   }
   function fahrSchritt(dt) {
     const st = fahr, F = szene.fahren; if (!st || st.ende) return;
@@ -789,10 +800,21 @@
     st.v = clamp(st.v + a * dt, 0, 150 / KMH);
     st.s += st.v * dt; st.maxV = Math.max(st.maxV, st.v * KMH);
     const p = st.pos();
-    if (st.wechsel && !st.wechsel.fertig && Math.abs(p.y - spurY(st.wechsel.nach)) < 0.15) { st.wechsel.fertig = st.t; st.spur = st.wechsel.nach; st.wechsel = Object.assign({}, st.wechsel); st.log.push({ t: st.t, typ: "fertig", nach: st.spur }); st.letzterWechsel = st.wechsel; st.wechsel = null; }
-    if (F.rampe && st.vKurve === undefined && st.spur === "aus" && p.x >= F.rampeAb) st.vKurve = st.v * KMH;
-    // Bremsen auf dem Hauptfahrstreifen vor dem Abfahren merken
-    if (F.bewerten === "abfahren" && st.bremse && st.spur !== "aus" && p.y < W && p.x > -300 && st.v > 70 / KMH) st.gebremstAufHaupt = true;
+    if (st.wechsel && Math.abs(p.y - spurY(st.wechsel.nach)) < 0.15) {
+      // Wechsel abgeschlossen: Abstände jetzt noch einmal messen (vorn zählt der Abstand nach dem Einscheren)
+      const w = st.wechsel, lk = luecken(st, spurY(w.nach), p.x);
+      w.fertig = st.t; w.lueckeVornEnde = lk.vorn; w.lueckeHinten = Math.min(w.lueckeHinten, lk.hinten); w.vHinten = Math.max(w.vHinten, lk.vHinten); if (lk.vVorn) w.vVorn = lk.vVorn;
+      st.spur = w.nach; st.letzterWechsel = w; st.wechsel = null; st.log.push({ t: st.t, typ: "fertig", nach: st.spur });
+    }
+    // Blinker nach einem Wechsel stehen gelassen?
+    const lw = st.letzterWechsel;
+    if (lw && !st.wechsel && st.blinker && st.t - lw.fertig > 5 && st.blinkerSeit <= lw.t && !(F.bewerten === "abfahren" && st.spur === "rechts" && p.x > -200)) st.blinkerVergessen = true;
+    if (F.kurveX !== undefined && st.vKurve === undefined && st.spur === "aus" && p.x >= F.kurveX) st.vKurve = st.v * KMH;
+    // Abfahren: auf der durchgehenden Fahrbahn nicht bremsen und nicht unnötig langsam fahren
+    if (F.bewerten === "abfahren" && st.spur !== "aus" && p.y < W) {
+      if (st.bremse && st.v > 70 / KMH) st.gebremstAufHaupt = true;
+      if (p.x > (F.start.pfad.an(F.start.s || 0).x + 60) && p.x < 0) st.minVHaupt = Math.min(st.minVHaupt, st.v * KMH);
+    }
     // Verkehr: jedes Fahrzeug folgt seinem Vordermann (auch dem Fahrschulauto, sobald es in den Fahrstreifen ragt)
     const T = TYPEN;
     st.verkehr.forEach(q => {
@@ -801,60 +823,68 @@
       if (imStreifen && p.x > q.x) { gap = p.x - q.x - (T.fahrschule.l + T[q.typ].l) / 2; vVor = st.v; istFs = true; }
       st.verkehr.forEach(o => { if (o === q || Math.abs(o.y - q.y) > 1 || o.x <= q.x) return; const d = o.x - q.x - (T[o.typ].l + T[q.typ].l) / 2; if (d < gap) { gap = d; vVor = o.v; istFs = false; } });
       const soll = 4 + q.v * 1.1;                                  // gewünschter Abstand: 1,1 s + 4 m
-      let a = gap === Infinity ? 0.8 * (q.v0 - q.v) : Math.min(0.8 * (q.v0 - q.v), 0.6 * (gap - soll) + 1.2 * (vVor - q.v));
-      a = clamp(a, -8, 1.5); q.v = clamp(q.v + a * dt, 0, q.v0 * 1.02); q.x += q.v * dt; q.a = a;
-      if (istFs && a < -1.5) st.behinderung = Math.max(st.behinderung, -a);
+      let aq = gap === Infinity ? 0.8 * (q.v0 - q.v) : Math.min(0.8 * (q.v0 - q.v), 0.6 * (gap - soll) + 1.2 * (vVor - q.v));
+      aq = clamp(aq, -8, 1.5); q.v = clamp(q.v + aq * dt, 0, q.v0 * 1.02); q.x += q.v * dt; q.a = aq;
+      if (istFs && aq < -1.5) st.behinderung = Math.max(st.behinderung, -aq);
     });
     // Kollision
     st.verkehr.forEach(q => { if (Math.abs(q.x - p.x) < (T[q.typ].l + T.fahrschule.l) / 2 - 0.3 && Math.abs(q.y - p.y) < (T[q.typ].b + T.fahrschule.b) / 2 - 0.15) { st.kollision = true; st.ende = true; } });
     // Tipps
     if (F.tipps[st.tippIdx] && p.x >= F.tipps[st.tippIdx].x) { zeigeCoach(F.tipps[st.tippIdx].text); st.tippIdx++; }
-    // Ende-Bedingungen
-    if (F.bewerten === "auffahren") {
-      if (st.spur === "einf" && p.x >= F.grenzeEnde) { st.ende = true; st.endeGrund = "streifenende"; }
-      if (st.spur !== "einf" && st.letzterWechsel && st.t - st.letzterWechsel.fertig > 4) st.ende = true;
-    } else {
-      if (st.s >= st.pfad.laenge - 1 || (st.spur === "aus" && F.rampe && p.x >= F.rampeAb + 90)) st.ende = true;
-      if (st.spur !== "aus" && p.x > szene.strasse.bereich[1] - 40) { st.ende = true; st.endeGrund = "verpasst"; }
-      // Anhalten auf der durchgehenden Fahrbahn: nach 4 s Stillstand ist die Fahrt vorbei
-      st.steht = st.v < 0.5 && st.spur !== "aus" ? (st.steht || 0) + dt : 0;
-      if (st.steht > 4) { st.ende = true; st.endeGrund = "angehalten"; }
+    // Ende-Bedingungen (ein laufender Fahrstreifenwechsel wird immer erst zu Ende gefahren)
+    st.steht = st.v < 0.5 ? st.steht + dt : 0;
+    if (!st.wechsel) {
+      if (F.bewerten === "auffahren") {
+        if (st.spur === "einf" && p.x >= F.grenzeEnde) { st.ende = true; st.endeGrund = "streifenende"; }
+        if (st.spur !== "einf" && lw && st.t - lw.fertig > 4) st.ende = true;
+      } else {
+        if (st.s >= st.pfad.laenge - 1 || (st.spur === "aus" && p.x >= F.rampeAb + 90)) st.ende = true;
+        if (st.spur !== "aus" && p.x > szene.strasse.bereich[1] - 40) { st.ende = true; st.endeGrund = "verpasst"; }
+        if (st.spur !== "aus" && st.steht > 4) { st.ende = true; st.endeGrund = "angehalten"; }   // Halten auf der Autobahn
+      }
     }
+    // Sicherheitsnetz: nach 40 s Stillstand oder 3 Minuten endet jede Fahrt
+    if (!st.ende && (st.steht > 40 || st.t > 180)) { st.ende = true; st.endeGrund = "abgebrochen"; }
     if (st.ende) { laeuft = false; zeigeAuswertung(bewerte()); }
   }
   function bewerte() {
     const st = fahr, F = szene.fahren, P = [];
     const ok = (bed, titel, text, regel) => P.push({ ok: !!bed, titel, text, regel });
-    if (st.kollision) ok(false, "Kollision", "Es hat gekracht: Die Lücke war zu klein oder der Fahrstreifen nicht frei.", "§ 7 Abs. 5 · § 18 Abs. 3 StVO");
+    if (st.kollision) ok(false, "Kollision", F.bewerten === "auffahren" ? "Es hat gekracht: Die Lücke war zu klein oder der Fahrstreifen nicht frei." : "Es hat gekracht: zu dicht aufgefahren oder ohne freien Fahrstreifen gewechselt.", F.bewerten === "auffahren" ? "§ 18 Abs. 3 · § 7 Abs. 5 StVO" : "§ 4 Abs. 1 · § 7 Abs. 5 · § 1 Abs. 2 StVO");
+    if (st.endeGrund === "abgebrochen") ok(false, "Fahrt nicht beendet", "Die Fahrt hat zu lange gedauert oder das Auto stand zu lange. Einfach noch einmal versuchen.", "§ 18 StVO");
     const wechsel = st.log.filter(l => l.typ === "wechsel");
+    const blinkerOk = !st.blinkerVergessen && !(st.blinker && st.letzterWechsel && !st.wechsel && st.blinkerSeit <= st.letzterWechsel.t);
     if (F.bewerten === "auffahren") {
-      const w = wechsel.find(x => x.von === "einf" && x.nach === "rechts");
+      const w = wechsel.find(x => x.von === "einf" && x.nach === "rechts" && x.fertig);
       if (!w) { ok(false, "Nicht eingefädelt", st.endeGrund === "streifenende" ? "Ende des Einfädelungsstreifens erreicht. Richtig wäre: früher Gas geben und eine Lücke nutzen – notfalls am Ende anhalten und warten." : "Der Wechsel auf die Autobahn hat nicht stattgefunden.", "§ 18 Abs. 3 StVO"); }
       else {
         ok(w.blinkerDauer >= 2, "Blinker links", w.blinkerDauer >= 2 ? `Rechtzeitig geblinkt (${w.blinkerDauer.toFixed(1)} s vorher).` : w.blinkerDauer >= 0 ? "Zu spät geblinkt – mindestens 2–3 Sekunden vor dem Wechsel." : "Nicht geblinkt.", "§ 7 Abs. 5 StVO");
         ok(w.schulter, "Schulterblick links", w.schulter ? "Schulterblick kurz vor dem Wechsel – sehr gut." : "Kein Schulterblick direkt vor dem Wechsel. Der tote Winkel bleibt sonst unsichtbar.", "§ 7 Abs. 5 StVO");
+        const ausStand = w.v < 15;                                    // angehalten und gewartet: richtig, wenn keine Lücke da war
         const vRef = w.vVorn || w.vHinten || 90;
-        ok(Math.abs(w.v - vRef) <= 20 && w.v >= 70, "Geschwindigkeit angepasst", `Beim Einfädeln ${Math.round(w.v)} km/h, Verkehr rechts ca. ${Math.round(vRef)} km/h.` + (w.v < 70 ? " Zu langsam – andere müssen bremsen." : ""), "§ 7a Abs. 2 · § 18 Abs. 3 StVO");
-        const halbV = w.v / 2, halbH = w.vHinten / 2;
-        ok(w.lueckeVorn >= halbV * 0.6, "Abstand nach vorn", `Lücke nach vorn ${Math.round(Math.min(w.lueckeVorn, 999))} m (Faustregel halber Tacho: ${Math.round(halbV)} m).`, "§ 4 Abs. 1 StVO");
+        if (ausStand) ok(true, "Angehalten und gewartet", "Keine passende Lücke – angehalten und gewartet. Das ist richtig, wenn es anders nicht geht. Aus dem Stand nur in eine sehr große Lücke einfädeln." + (w.x < F.grenzeEnde - 80 ? " Tipp: dafür bis ans Ende des Streifens vorfahren." : ""), "§ 18 Abs. 3 StVO");
+        else ok(Math.abs(w.v - vRef) <= 20 && w.v >= 70, "Geschwindigkeit angepasst", `Beim Einfädeln ${Math.round(w.v)} km/h, Verkehr rechts ca. ${Math.round(vRef)} km/h.` + (w.v < 70 ? " Zu langsam – andere müssen bremsen." : Math.abs(w.v - vRef) > 20 ? " Tempo besser an den Verkehr angleichen." : ""), "§ 7a Abs. 2 · § 18 Abs. 3 StVO");
+        const vorn = Math.min(w.lueckeVorn, w.lueckeVornEnde ?? w.lueckeVorn), halbV = Math.max(20, w.v / 2);
+        ok(vorn >= halbV * 0.6, "Abstand nach vorn", vorn >= 999 ? "Vor dir war frei." : `Lücke nach vorn ${Math.round(vorn)} m (Faustregel halber Tacho: ${Math.round(halbV)} m).`, "§ 4 Abs. 1 StVO");
+        const halbH = w.vHinten / 2;
         const hintenOk = w.lueckeHinten >= Math.max(12, halbH * 0.5) && st.behinderung < 3;
         ok(hintenOk, "Vorfahrt beachtet", (w.lueckeHinten >= 999 ? "Hinter dir war frei." : `Abstand zum Fahrzeug dahinter ${Math.round(w.lueckeHinten)} m bei ${Math.round(w.vHinten)} km/h.`) + (st.behinderung >= 3 ? ` Der Verkehr hinter dir musste stark bremsen (${st.behinderung.toFixed(1)} m/s²) – er hat Vorfahrt.` : hintenOk ? "" : " Zu knapp – er muss bremsen, er hat Vorfahrt."), "§ 18 Abs. 3 StVO");
-        const f = st.log.find(l => l.typ === "fertig" && l.nach === "rechts");
-        const blinkerAus = !st.blinker && (!f || !st.blinkerAusT || st.blinkerAusT - f.t <= 5);
-        ok(blinkerAus, "Blinker aus", blinkerAus ? "Nach dem Einfädeln Blinker aus." : "Blinker nach dem Wechsel ausschalten.", "§ 7 Abs. 5 StVO");
+        ok(blinkerOk, "Blinker aus", blinkerOk ? "Nach dem Einfädeln Blinker aus." : "Blinker nach dem Wechsel ausschalten.", "§ 7 Abs. 5 StVO");
       }
     } else {
       const w1 = wechsel.find(x => x.von === "links" && x.nach === "rechts");
       const w2 = wechsel.find(x => x.von === "rechts" && x.nach === "aus");
       ok(w1 && w1.x <= -300, "Früh eingeordnet", w1 ? (w1.x <= -300 ? "Rechtzeitig vor den Baken rechts eingeordnet." : "Sehr spät nach rechts gewechselt – besser vor der 300-m-Bake.") : "Nicht nach rechts gewechselt.", "§ 7 Abs. 5 StVO");
       if (w1) { ok(w1.blinkerDauer >= 2, "Blinker beim Wechsel nach rechts", w1.blinkerDauer >= 2 ? "Rechtzeitig geblinkt." : "Nicht oder zu spät geblinkt.", "§ 7 Abs. 5 StVO"); ok(w1.schulter, "Schulterblick rechts", w1.schulter ? "Schulterblick gemacht." : "Schulterblick fehlte.", "§ 7 Abs. 5 StVO"); }
+      if (w1) ok(!st.blinkerVergessen, "Blinker wieder aus", !st.blinkerVergessen ? "Nach dem Wechsel Blinker aus – erst vor der Ausfahrt wieder setzen." : "Der Blinker blieb nach dem Wechsel an. Andere wissen dann nicht, was du vorhast.", "§ 7 Abs. 5 StVO");
+      if (st.minVHaupt < Infinity) ok(st.minVHaupt >= 80, "Tempo gehalten", st.minVHaupt >= 80 ? "Bis zur Ausfahrt zügig weitergefahren." : `Auf der Autobahn bis auf ${Math.round(st.minVHaupt)} km/h verlangsamt. Ohne Grund nicht so langsam fahren – erst auf dem Ausfädelungsstreifen bremsen.`, "§ 3 Abs. 2 · § 7a Abs. 3 StVO");
       if (st.endeGrund === "angehalten") ok(false, "Nicht auf der Autobahn anhalten", "Auf der Autobahn ist Halten verboten – auch auf dem Seitenstreifen nur im Notfall. Gleichmäßig weiterfahren.", "§ 18 Abs. 8 StVO");
       if (!w2) ok(false, "Ausfahrt genommen", st.endeGrund === "verpasst" ? "Ausfahrt verpasst. Richtig: weiterfahren bis zur nächsten Ausfahrt – nie zurücksetzen." : "Nicht auf den Ausfädelungsstreifen gewechselt.", "§ 18 Abs. 7 StVO");
       else {
         ok(w2.blinkerDauer >= 2, "Blinker vor der Ausfahrt", w2.blinkerDauer >= 2 ? "Rechtzeitig rechts geblinkt." : "Blinker zu spät oder nicht gesetzt.", "§ 7 Abs. 5 StVO");
         ok(w2.schulter, "Schulterblick vor der Ausfahrt", w2.schulter ? "Gut gesichert." : "Schulterblick rechts fehlte.", "§ 7 Abs. 5 StVO");
         ok(!st.gebremstAufHaupt, "Erst auf dem Ausfädelungsstreifen gebremst", !st.gebremstAufHaupt ? "Richtig: Geschwindigkeit erst auf dem Ausfädelungsstreifen abgebaut." : "Schon auf der Autobahn gebremst – das gefährdet den Verkehr dahinter.", "§ 7a Abs. 3 StVO");
-        ok(st.vKurve !== undefined && st.vKurve <= 65, "Tempo vor der Kurve", st.vKurve !== undefined ? `Kurvenbeginn mit ${Math.round(st.vKurve)} km/h (erlaubt 60).` : "Kurve nicht erreicht.", "Zeichen 274 · § 3 Abs. 1 StVO");
+        ok(st.vKurve !== undefined && st.vKurve <= 65, "Tempo am Zeichen 274", st.vKurve !== undefined ? `Am Zeichen „60“ mit ${Math.round(st.vKurve)} km/h.` + (st.vKurve > 65 ? " Zu schnell – vorher auf dem Ausfädelungsstreifen herunterbremsen." : "") : "Das Zeichen wurde nicht erreicht.", "Zeichen 274 · § 3 Abs. 1 StVO");
       }
     }
     return P;
@@ -869,8 +899,10 @@
       if (modus === "fahren") { const n = Math.ceil(dt * tempoFaktor / 0.04) || 1; for (let i = 0; i < n && laeuft; i++) fahrSchritt(dt * tempoFaktor / n); }
       else {
         const vorher = zeit; zeit = Math.min(szene.dauer, zeit + dt * tempoFaktor);
-        const ph = szene.phasen.find(p => p.t > vorher && p.t <= zeit);
-        if (ph) { zeigePhase(ph); if (modus === "mitdenken" && ph.frage && !beantwortet.has(ph.t)) { laeuft = false; zeigeFrage(ph); } }
+        for (const ph of szene.phasen.filter(p => p.t > vorher && p.t <= zeit)) {
+          zeigePhase(ph);
+          if (modus === "mitdenken" && ph.frage && !beantwortet.has(ph.t)) { zeit = ph.t; laeuft = false; zeigeFrage(ph); break; }
+        }
         if (zeit >= szene.dauer) { laeuft = false; if (modus === "mitdenken") zeigeErgebnisMitdenken(); }
       }
     }
@@ -885,6 +917,7 @@
   const CSS = `
   .lz-root{position:fixed;inset:0;z-index:99990;background:#0c1410;color:#eef3ef;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;display:flex;flex-direction:column;user-select:none;-webkit-user-select:none;}
   .lz-root *{box-sizing:border-box;}
+  .lz-root [hidden]{display:none!important;}
   .lz-top{display:flex;align-items:center;gap:8px;padding:10px 12px calc(10px) 12px;padding-top:max(10px,env(safe-area-inset-top));background:rgba(12,20,16,.92);border-bottom:1px solid #24413a;z-index:2;}
   .lz-title{font-family:'Anton',sans-serif;text-transform:uppercase;letter-spacing:.02em;font-size:17px;flex:1;min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
   .lz-btn{background:#1a2f28;border:1px solid #2e4a40;color:#eef3ef;border-radius:10px;padding:8px 11px;font-size:13.5px;font-weight:600;cursor:pointer;min-height:40px;}
@@ -910,7 +943,7 @@
   .lz-drive{display:grid;grid-template-columns:repeat(6,1fr);gap:6px;grid-template-areas:"bl sl br2 gas sr br" "wl wl wl wr wr wr";}
   .lz-drive #dBL{grid-area:bl;} .lz-drive #dSL{grid-area:sl;} .lz-drive #dBrems{grid-area:br2;} .lz-drive #dGas{grid-area:gas;} .lz-drive #dSR{grid-area:sr;} .lz-drive #dBR{grid-area:br;} .lz-drive #dWL{grid-area:wl;} .lz-drive #dWR{grid-area:wr;}
   .lz-drive[hidden]{display:none;}
-  .lz-drive .lz-btn{min-height:52px;font-size:14px;padding:6px 4px;}
+  .lz-drive .lz-btn{min-height:52px;font-size:14px;padding:6px 4px;touch-action:none;-webkit-touch-callout:none;}
   .lz-pedal{font-size:16px!important;}
   .lz-pedal.gas{background:#2f6a44;} .lz-pedal.brems{background:#7a2c28;}
   .lz-sheet{position:absolute;inset:0;background:rgba(0,0,0,.55);display:flex;align-items:flex-end;justify-content:center;z-index:5;}
@@ -922,13 +955,14 @@
   .lz-list{list-style:none;padding:0;margin:8px 0;}
   .lz-list li{padding:9px 0;border-bottom:1px solid #24413a;font-size:13.5px;line-height:1.45;}
   .lz-list .ok{color:#7bd49a;font-weight:700;} .lz-list .no{color:#ff8a80;font-weight:700;}
-  .lz-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(250px,1fr));gap:12px;padding:14px;overflow:auto;}
+  .lz-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(min(250px,100%),1fr));gap:12px;padding:14px;overflow:auto;}
   .lz-tile{background:#132420;border:1px solid #2e4a40;border-radius:16px;padding:12px;cursor:pointer;text-align:left;color:#eef3ef;}
   .lz-tile canvas{width:100%;height:130px;border-radius:10px;display:block;background:#5f8a45;margin-bottom:10px;}
   .lz-tile h3{margin:0 0 4px;font-size:16px;} .lz-tile p{margin:0;font-size:13px;color:#b1bfb5;line-height:1.4;}
   .lz-chips{display:flex;gap:6px;flex-wrap:wrap;margin-top:8px;} .lz-chip{font-size:11px;padding:3px 8px;border-radius:20px;background:#1f3a31;color:#b9d9c5;}
   .lz-toast{position:absolute;left:50%;bottom:16px;transform:translateX(-50%);background:rgba(20,30,26,.95);border:1px solid #4f7a63;border-radius:10px;padding:9px 14px;font-size:13.5px;max-width:90%;z-index:4;pointer-events:none;}
   .lz-coach{position:absolute;left:12px;bottom:12px;max-width:min(62%,420px);background:rgba(224,184,74,.95);color:#1b1b12;border-radius:12px;padding:9px 12px;font-size:13.5px;font-weight:600;pointer-events:none;}
+  @media (max-height:520px){ .lz-top{padding-top:6px;padding-bottom:6px;} .lz-btn{min-height:34px;padding:5px 9px;font-size:12.5px;} .lz-bar{padding:5px 8px;gap:5px;} .lz-drive{grid-template-columns:repeat(8,1fr);grid-template-areas:"bl sl br2 br2 gas gas sr br" "wl wl wl wl wr wr wr wr";} .lz-drive .lz-btn{min-height:38px;font-size:12.5px;} .lz-caption{max-width:min(380px,calc(100% - 140px));padding:7px 10px;} .lz-caption p{font-size:12px;} .lz-coach{font-size:12px;max-width:45%;padding:6px 9px;} .lz-hud{padding:5px 9px;} .lz-hud b{font-size:19px;} }
   @media (max-width:560px){ .lz-caption p{font-size:12.8px;} .lz-title{font-size:15px;} .lz-drive{grid-template-columns:repeat(4,1fr);grid-template-areas:"bl sl sr br" "br2 br2 gas gas" "wl wl wr wr";} .lz-drive .lz-btn{min-height:48px;font-size:13px;} }
   `;
 
@@ -943,15 +977,28 @@
     document.body.appendChild(root);
     zeigeAuswahl();
     window.addEventListener("resize", beiResize);
+    window.addEventListener("popstate", beiZurueck, true);
+  }
+  // Zurücktaste (Android) schließt zuerst ein offenes Fenster, dann die Szene, dann die Lernszenen –
+  // die App darunter bekommt das Ereignis nicht (sie würde sonst selbst zurücknavigieren).
+  function beiZurueck(e) {
+    if (!root) return;
+    e.stopImmediatePropagation();
+    try { history.pushState(null, "", location.href); } catch (err) {}
+    if (root.querySelector(".lz-sheet")) { schliesseSheet(); return; }
+    if (szene) zeigeAuswahl(); else schliessen();
   }
   function schliessen() {
     cancelAnimationFrame(raf); raf = 0; laeuft = false; fahr = null; szene = null;
     window.removeEventListener("resize", beiResize);
+    window.removeEventListener("popstate", beiZurueck, true);
+    if (beob) { beob.disconnect(); beob = null; }
     if (root) root.remove(); root = null;
     if (onCloseCb) try { onCloseCb(); } catch (e) {}
   }
   function zeigeAuswahl() {
-    cancelAnimationFrame(raf); raf = 0; laeuft = false; szene = null; fahr = null;
+    cancelAnimationFrame(raf); raf = 0; laeuft = false; szene = null; fahr = null; versatzFz = {};
+    if (beob) { beob.disconnect(); beob = null; }
     root.innerHTML = `
       <div class="lz-top"><button class="lz-btn" id="lzZu" aria-label="Schließen">✕</button><div class="lz-title">🎬 Lernszenen</div></div>
       <div class="lz-grid" id="lzGrid">${SZENEN.map(s => `
@@ -1011,13 +1058,16 @@
         </div>
       </div>`;
     cv = $("#lzCanvas"); ctx = cv.getContext("2d"); beiResize(); ansicht.zoom = grundZoom();
+    if (window.ResizeObserver) { beob = new ResizeObserver(() => beiResize()); beob.observe($("#lzStage")); }   // z. B. wenn die Fahrleiste erscheint
     const marks = $("#lzTime"); szene.phasen.forEach(p => { const m = document.createElement("span"); m.className = "lz-mark"; m.style.left = `calc(${(p.t / szene.dauer) * 100}% - 1px)`; marks.appendChild(m); });
     $("#lzZu").onclick = schliessen; $("#lzZurueck").onclick = zeigeAuswahl; $("#lzRegeln").onclick = zeigeRegeln;
-    $("#lzPlay").onclick = () => { if (modus === "fahren" && fahr && fahr.ende) { starteFahren(); } if (!laeuft && zeit >= szene.dauer && modus !== "fahren") { zeit = 0; beantwortet = new Set(); } laeuft = !laeuft; if (laeuft) { schliesseSheet(); ansicht.folgen = true; } };
+    $("#lzPlay").onclick = () => { if (root.querySelector(".lz-sheet .lz-opt") && !root.querySelector("#lzWeiter")) return;
+      if (modus === "fahren") { const c = $("#lzCap"); if (c) c.hidden = true; }
+      if (modus === "fahren" && fahr && fahr.ende) { starteFahren(); } if (!laeuft && zeit >= szene.dauer && modus !== "fahren") { zeit = 0; beantwortet = new Set(); } laeuft = !laeuft; if (laeuft) { schliesseSheet(); ansicht.folgen = true; } };
     $("#lzSlider").oninput = e => { zeit = +e.target.value; laeuft = false; const ph = aktuellePhase(); if (ph) zeigePhase(ph); };
     $("#lzPrev").onclick = () => springe(-1); $("#lzNext").onclick = () => springe(1);
     $("#lzTempo").onclick = () => { tempoFaktor = tempoFaktor === 1 ? 0.5 : tempoFaktor === 0.5 ? 2 : 1; $("#lzTempo").textContent = (tempoFaktor === 0.5 ? "½" : tempoFaktor) + "×"; };
-    $("#lzReset").onclick = () => { versatzFz = {}; zeit = 0; laeuft = false; beantwortet = new Set(); punkte = { richtig: 0, gesamt: 0 }; if (modus === "fahren") starteFahren(); zeigePhase(szene.phasen[0]); ansicht.folgen = true; };
+    $("#lzReset").onclick = () => { schliesseSheet(); _hGlatt = null; versatzFz = {}; zeit = 0; laeuft = false; beantwortet = new Set(); punkte = { richtig: 0, gesamt: 0 }; if (modus === "fahren") starteFahren(); zeigePhase(szene.phasen[0]); ansicht.folgen = true; };
     root.querySelectorAll("[data-kam]").forEach(b => b.onclick = () => { kameraModus = b.dataset.kam; _hGlatt = null; root.querySelectorAll("[data-kam]").forEach(x => x.classList.toggle("on", x === b)); });
     root.querySelectorAll("[data-modus]").forEach(b => b.onclick = () => setzeModus(b.dataset.modus));
     bindeFahren(); bindeZiehen();
@@ -1026,6 +1076,7 @@
   function grundZoom() { const b = cv ? cv.getBoundingClientRect().width : window.innerWidth; return szene.kamera.zoom * clamp(b / 1000, 0.55, 1.6); }
   function setzeModus(m) {
     modus = m; laeuft = false; versatzFz = {}; zeit = 0; beantwortet = new Set(); punkte = { richtig: 0, gesamt: 0 }; schliesseSheet(); _hGlatt = null;
+    { const c = $("#lzCap"); if (c) c.hidden = false; }
     root.querySelectorAll("[data-modus]").forEach(x => x.classList.toggle("on", x.dataset.modus === m));
     $("#lzDrive").hidden = m !== "fahren"; $("#lzPrev").hidden = $("#lzNext").hidden = $("#lzTime").hidden = m === "fahren";
     if (m === "fahren") { starteFahren(); kameraModus = kameraModus === "oben" ? "3d" : kameraModus; root.querySelectorAll("[data-kam]").forEach(x => x.classList.toggle("on", x.dataset.kam === kameraModus)); zeigeCap("Selbst fahren", "Du steuerst das Fahrschulauto: Gas und Bremse halten, Blinker und Schulterblick antippen, dann den Fahrstreifen wechseln. Am Ende gibt es die Auswertung.", "Tippe auf ▶ zum Starten"); }
@@ -1057,8 +1108,8 @@
     });
   }
   function zeigeErgebnisMitdenken() {
-    const q = punkte.gesamt ? Math.round(punkte.richtig / punkte.gesamt * 100) : 0;
-    const d = sheet(`<h2>${q >= 80 ? "Stark!" : q >= 50 ? "Gut – fast!" : "Nochmal üben"}</h2><p class="lz-erkl">${punkte.richtig} von ${punkte.gesamt} Fragen richtig (${q} %).</p>
+    const n = szene.phasen.filter(p => p.frage).length, q = n ? Math.round(punkte.richtig / n * 100) : 0;
+    const d = sheet(`<h2>${q >= 80 ? "Stark!" : q >= 50 ? "Gut – fast!" : "Nochmal üben"}</h2><p class="lz-erkl">${punkte.richtig} von ${n} Fragen richtig (${q} %).${punkte.gesamt < n ? ` ${n - punkte.gesamt} Frage(n) übersprungen.` : ""}</p>
       <div class="lz-row" style="margin-top:12px;"><button class="lz-btn" id="lzNochmal">↺ Nochmal</button>${szene.fahren ? '<button class="lz-btn on" id="lzSelbst">Jetzt selbst fahren</button>' : ""}<button class="lz-btn" id="lzRegelnB">§ Alle Regeln</button></div>`);
     d.querySelector("#lzNochmal").onclick = () => setzeModus("mitdenken");
     const sf = d.querySelector("#lzSelbst"); if (sf) sf.onclick = () => setzeModus("fahren");
@@ -1090,12 +1141,12 @@
     if (modus === "fahren" && fahr) { const a = $("#dBL"), b = $("#dBR"); if (a) a.classList.toggle("on", fahr.blinker === "links"); if (b) b.classList.toggle("on", fahr.blinker === "rechts"); }
   }
   function bindeFahren() {
-    const halt = (id, an, aus) => { const b = $(id); if (!b) return; b.addEventListener("pointerdown", e => { e.preventDefault(); an(); b.classList.add("on"); }); ["pointerup", "pointerleave", "pointercancel"].forEach(ev => b.addEventListener(ev, () => { aus(); b.classList.remove("on"); })); };
+    const halt = (id, an, aus) => { const b = $(id); if (!b) return; b.addEventListener("contextmenu", e => e.preventDefault()); b.addEventListener("pointerdown", e => { e.preventDefault(); try { b.setPointerCapture(e.pointerId); } catch (err) {} an(); b.classList.add("on"); }); ["pointerup", "pointerleave", "pointercancel"].forEach(ev => b.addEventListener(ev, () => { aus(); b.classList.remove("on"); })); };
     halt("#dGas", () => { if (fahr) { fahr.gas = true; if (!laeuft && !fahr.ende) laeuft = true; } }, () => { if (fahr) fahr.gas = false; });
     halt("#dBrems", () => { if (fahr) fahr.bremse = true; }, () => { if (fahr) fahr.bremse = false; });
     const blink = seite => () => { if (!fahr) return; if (fahr.blinker === seite) { fahr.blinker = null; fahr.blinkerAusT = fahr.t; } else { fahr.blinker = seite; fahr.blinkerSeit = fahr.t; } };
     $("#dBL").onclick = blink("links"); $("#dBR").onclick = blink("rechts");
-    const blick = seite => () => { if (!fahr) return; fahr.schulter.push({ von: fahr.t, bis: fahr.t + 1, seite }); };
+    const blick = seite => () => { if (!fahr || !laeuft) return; fahr.schulter.push({ von: fahr.t, bis: fahr.t + 1, seite }); };
     $("#dSL").onclick = blick("links"); $("#dSR").onclick = blick("rechts");
     $("#dWL").onclick = () => wechsleSpur("links"); $("#dWR").onclick = () => wechsleSpur("rechts");
   }
@@ -1105,7 +1156,7 @@
     const welt = (cx, cy) => { const r = cv.getBoundingClientRect(); const s = ansicht.zoom; return { x: (cx - r.left - r.width / 2) / s + ansicht.px, y: (cy - r.top - r.height / 2) / s + ansicht.py }; };
     stage.addEventListener("pointerdown", e => {
       if (e.target !== cv) return; zeiger.set(e.pointerId, { x: e.clientX, y: e.clientY }); cv.setPointerCapture(e.pointerId);
-      if (zeiger.size === 2) { const [a, b] = [...zeiger.values()]; pinch = { d: Math.hypot(a.x - b.x, a.y - b.y), z: ansicht.zoom }; zug = null; return; }
+      if (zeiger.size === 2) { const [a, b] = [...zeiger.values()]; pinch = { d: Math.hypot(a.x - b.x, a.y - b.y) || 1, z: ansicht.zoom }; zug = null; return; }
       if (kameraModus !== "oben") return;
       const w = welt(e.clientX, e.clientY);
       if (!laeuft && modus !== "fahren") {
