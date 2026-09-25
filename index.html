@@ -3652,11 +3652,17 @@ async function pullPublicBookings() {
         const noteParts = ["Online gebucht · " + fzLabel + (gebuchtAm ? " · " + gebuchtAm + " Uhr gebucht" : "")];
         if (r.schueler_telefon) noteParts.push("Tel: " + r.schueler_telefon);
         if (r.schueler_email) noteParts.push(r.schueler_email);
-        const l = addLesson({ date: r.datum, von: r.von, bis: r.bis, art, sid: null, name: r.schueler_name, note: noteParts.join(" · ") });
-        const { error: mErr } = await supa.from("public_bookings").update({ merged: true, merged_lesson_id: l.id }).eq("id", r.id).eq("merged", false);
-        // Konnte die Übernahme nicht vermerkt werden, würde der Termin beim nächsten Abruf doppelt angelegt.
-        if (mErr) { DB.lessons = (DB.lessons || []).filter(x => x.id !== l.id); save(); continue; }
-        neu.push(r);
+        // Termin trägt die Buchungs-ID: ein erneuter Abruf (z.B. nach Netzfehler beim Vermerken) legt ihn nicht doppelt an.
+        let l = (DB.lessons || []).find(x => x.onlineBookingId === r.id);
+        const warSchonDa = !!l;
+        if (!l) l = addLesson({ date: r.datum, von: r.von, bis: r.bis, art, sid: null, name: r.schueler_name, note: noteParts.join(" · "), onlineBookingId: r.id });
+        const { data: vermerkt, error: mErr } = await supa.from("public_bookings").update({ merged: true, merged_lesson_id: l.id }).eq("id", r.id).eq("merged", false).select("id");
+        if (mErr) continue; // unklar, ob es geklappt hat: Termin behalten, beim nächsten Abruf wird erneut vermerkt
+        if (!vermerkt || !vermerkt.length) {
+          // Ein anderes Gerät hat die Buchung schon übernommen - eigene Kopie wieder entfernen.
+          DB.lessons = (DB.lessons || []).filter(x => x.id !== l.id); save(); continue;
+        }
+        if (!warSchonDa) neu.push(r);
       } else if (r.status === "storniert" && r.merged && !r.cancel_synced) {
         if (r.merged_lesson_id) deleteLesson(r.merged_lesson_id);
         await supa.from("public_bookings").update({ cancel_synced: true }).eq("id", r.id);
@@ -7089,8 +7095,10 @@ async function _fillUEProgFahrschule(bisher){
   if(!_authUser||!_authProfile||!_authProfile.fahrschule_id)return;
   try{
     const supa=getSupa();
-    const{data:examsData,error:e1}=await supa.from("kalender_pruefungen").select("schueler_id,datum").eq("fahrschule_id",_authProfile.fahrschule_id).eq("result","pass").not("schueler_id","is",null);
-    if(e1||!examsData||!examsData.length)return;
+    const{data:examsRoh,error:e1}=await supa.from("kalender_pruefungen").select("schueler_id,datum,payload").eq("fahrschule_id",_authProfile.fahrschule_id).eq("result","pass").eq("geloescht",false).not("schueler_id","is",null);
+    if(e1||!examsRoh)return;
+    const examsData=examsRoh.filter(x=>!(x.payload&&x.payload.b197));
+    if(!examsData.length)return;
     const{data:termineRoh,error:e2}=await supa.from("kalender_termine").select("schueler_id,datum,von,bis,art,status").eq("fahrschule_id",_authProfile.fahrschule_id).eq("geloescht",false).in("art",["fahrstunde","sonder"]).limit(10000);
     if(e2||!termineRoh)return;
     const termineData=termineRoh.filter(t=>!["abgebrochen","nicht erschienen"].includes(t.status));
@@ -10908,7 +10916,7 @@ function dayTheorieWindow(iso){
 // Alle Termine (Fahrstunden + Prüfungen) eines Tages, vereinheitlicht
 function dayEvents(iso){
   const ev=[];
-  (DB.lessons||[]).filter(l=>l.date===iso).forEach(l=>{ const st=DB.students.find(s=>s.id===l.sid); ev.push({kind:"lesson",id:l.id,von:l.von,bis:l.bis,art:l.art||"fahrstunde",sid:l.sid,name:st?st.name:(l.name||"—"),status:l.status||"geplant",fc:l.fc||null,note:l.note||"",srcSonder:l.srcSonder||null,fahrzeug:l.fahrzeug||null,tatsaechlicheDauer:l.tatsaechlicheDauer||null,noshow:l.noshow||null,_fahrlehrerId:l._fahrlehrerId,_fahrlehrerName:l._fahrlehrerName}); });
+  (DB.lessons||[]).filter(l=>l.date===iso).forEach(l=>{ const st=DB.students.find(s=>s.id===l.sid); ev.push({kind:"lesson",id:l.id,von:l.von,bis:l.bis,art:l.art||"fahrstunde",sid:l.sid,name:st?st.name:(l.name||"—"),status:l.status||"geplant",fc:l.fc||null,note:l.note||"",srcSonder:l.srcSonder||null,fahrzeug:l.fahrzeug||null,tatsaechlicheDauer:l.tatsaechlicheDauer??null,noshow:l.noshow||null,_fahrlehrerId:l._fahrlehrerId,_fahrlehrerName:l._fahrlehrerName}); });
   // Prüfungstermine: jeder belegte Slot = ein 90-Min-Event (Default 09:00, falls keine Zeit).
   // NUR solange noch kein Ergebnis eingetragen ist – sonst zählt die Prüfung über exams.earnAt (s. ueRange).
   // Prüfungstermine: Block beginnt genau zur eingetragenen Prüfungszeit und dauert PRUEF_MIN (55) Minuten.
@@ -10938,7 +10946,7 @@ function countRange(fromISO,toISO){
 }
 // Lesson-CRUD
 var PRUEF_MIN=55; // Prüfung steht ab der eingetragenen Uhrzeit 55 Min im Kalender (bezahlt bleibt sie mit 2 UE)
-function addLesson(o){ ensureDB(); const l={id:uid(),date:o.date,von:o.von,bis:o.bis||min2hm(hm2min(o.von)+(DB.workCfg.blockMin||90)),art:o.art||"fahrstunde",sid:o.sid||null,name:o.name||"",status:o.status||"geplant",note:o.note||"",fc:o.fc||null}; if(o.srcSonder)l.srcSonder=o.srcSonder; if(o.fahrzeug)l.fahrzeug=o.fahrzeug; if(o.lektion)l.lektion=o.lektion; DB.lessons.push(l); save(); return l; }
+function addLesson(o){ ensureDB(); const l={id:uid(),date:o.date,von:o.von,bis:o.bis||min2hm(hm2min(o.von)+(DB.workCfg.blockMin||90)),art:o.art||"fahrstunde",sid:o.sid||null,name:o.name||"",status:o.status||"geplant",note:o.note||"",fc:o.fc||null}; if(o.srcSonder)l.srcSonder=o.srcSonder; if(o.onlineBookingId)l.onlineBookingId=o.onlineBookingId; if(o.fahrzeug)l.fahrzeug=o.fahrzeug; if(o.lektion)l.lektion=o.lektion; DB.lessons.push(l); save(); return l; }
 // Verknüpfung: Sonderfahrt aus Ausbildungsplan -> Kalender-Termin (ÜL/AB/NF)
 const SF_KUERZEL={ueberland:"ÜL",autobahn:"AB",nacht:"NF"};
 const SF_LABEL={ueberland:"Überlandfahrt",autobahn:"Autobahnfahrt",nacht:"Nachtfahrt"};
@@ -11073,7 +11081,7 @@ function ensureDB(){ let _ensureDirty=false; if(!Array.isArray(DB.exams))DB.exam
 }
 function ensurePruefer(nm){ if(!DB.prueferData[nm])DB.prueferData[nm]={behoerde:"",tags:[],routen:[],notiz:"",created:Date.now()}; return DB.prueferData[nm]; }
 /* Statistik pro Prüfer aus den Prüfungen ableiten */
-function prueferStats(nm){ const ex=DB.exams.filter(e=>e.pruefer===nm); const q=quoteOf(ex); const dates=ex.map(e=>e.date).filter(Boolean).sort(); const last=dates.length?dates[dates.length-1]:null; return {total:ex.length,last,quote:q,faults:faultCounts(ex).slice(0,3),eingriff:eingriffQuote(ex)}; }
+function prueferStats(nm){ const ex=DB.exams.filter(e=>e.pruefer===nm); const q=quoteOf(ex); const dates=ex.map(e=>e.date).filter(Boolean).sort(); const last=dates.length?dates[dates.length-1]:null; return {total:ex.filter(istPruefung).length,last,quote:q,faults:faultCounts(ex).slice(0,3),eingriff:eingriffQuote(ex)}; }
 ensureDB();
 
 const FAULTS=[
@@ -11227,6 +11235,7 @@ function nextTermin(){ for(const t of futureTermine()){ const names=(t.slots||[]
 
 // B197-Einträge (Schaltkompetenz) stehen nur für die Prüfer-Historie in DB.exams - sie sind keine Prüfung.
 function istPruefung(e){ return !!e&&!e.b197; }
+let _b197PrVorwahl=null; // eben neu angelegter Prüfer im B197-Dialog (nur für das erneute Öffnen)
 function examsIn(p){ return DB.exams.filter(e=>istPruefung(e)&&inPeriod(e.date,p)); }
 function quoteOf(ex){ ex=(ex||[]).filter(istPruefung); const pass=ex.filter(e=>e.result==='pass').length; const total=ex.length; return {pass,total,pct: total?Math.round(pass/total*100):null}; }
 function firstAttemptQuote(ex){ return quoteOf(ex.filter(e=>e.attempt===1)); }
@@ -11372,10 +11381,10 @@ function openReactivateSheet(s,rerender){
       <div class="field"><label>Datum</label><input type="date" id="b197Date" value="${todayISO()}"></div>
       <div class="field"><label>Prüfer</label><div class="pr-wrap" id="b197Pr">${prChips}<button class="pr-chip add" id="b197PrAdd">+ Neuer Prüfer</button></div></div>
       <div class="btn-row"><button class="btn btn-ghost" id="b197Cancel" style="flex:0;padding:13px 16px;">Zurück</button><button class="btn btn-primary" id="b197Save">Eintragen</button></div>`);
-    let prSel=(s._b197PrVorwahl&&DB.pruefer.includes(s._b197PrVorwahl))?s._b197PrVorwahl:null; delete s._b197PrVorwahl;
-    if(prSel)document.querySelectorAll("#b197Pr .pr-chip[data-pr]").forEach(x=>x.classList.toggle("sel",x.dataset.pr===prSel));
+    let prSel=(_b197PrVorwahl&&DB.pruefer.includes(_b197PrVorwahl))?_b197PrVorwahl:null; _b197PrVorwahl=null;
+    if(prSel)document.querySelectorAll("#b197Pr .pr-chip[data-pr]").forEach(x=>x.classList.toggle("on",x.dataset.pr===prSel));
     document.querySelectorAll("#b197Pr .pr-chip[data-pr]").forEach(c=>c.addEventListener("click",()=>{ prSel=(prSel===c.dataset.pr)?null:c.dataset.pr; document.querySelectorAll("#b197Pr .pr-chip[data-pr]").forEach(x=>x.classList.toggle("on",x.dataset.pr===prSel)); }));
-    $("#b197PrAdd").addEventListener("click",()=>{ const nm=(prompt("Name des Prüfers:")||"").trim(); if(nm){ ensurePruefer(nm); if(!DB.pruefer.includes(nm))DB.pruefer.push(nm); prSel=nm; s._b197PrVorwahl=nm; save(); openReactivateSheet(s,rerender); /* neu rendern */ setTimeout(()=>$("#reactSchalt")&&$("#reactSchalt").click(),50); } });
+    $("#b197PrAdd").addEventListener("click",()=>{ const nm=(prompt("Name des Prüfers:")||"").trim(); if(nm){ ensurePruefer(nm); if(!DB.pruefer.includes(nm))DB.pruefer.push(nm); prSel=nm; _b197PrVorwahl=nm; save(); openReactivateSheet(s,rerender); /* neu rendern */ setTimeout(()=>$("#reactSchalt")&&$("#reactSchalt").click(),50); } });
     $("#b197Cancel").addEventListener("click",()=>openReactivateSheet(s,rerender));
     $("#b197Save").addEventListener("click",()=>{
       const date=$("#b197Date").value||todayISO();
@@ -11562,7 +11571,7 @@ function pruefungsTerminFuer(sid){
 // (sonst würde eine alte Prüfung nochmal mit 46 € gezählt). Vorhandener Eintrag wird bearbeitet.
 function renderPassedEdit(s){
   const id=s.id;
-  const ex=(DB.exams||[]).filter(e=>e.sid===id&&e.result==="pass").sort((a,b)=>(""+b.date).localeCompare(""+a.date))[0]||null;
+  const ex=(DB.exams||[]).filter(e=>e.sid===id&&e.result==="pass"&&istPruefung(e)).sort((a,b)=>(""+b.date).localeCompare(""+a.date))[0]||null;
   const passedISO=(typeof s.passed==="string"&&/^\d{4}-\d{2}-\d{2}/.test(s.passed))?s.passed.slice(0,10):"";
   const curDate=(ex&&ex.date)||passedISO||todayISO();
   $("#tbTitle").textContent="Bestehens-Daten";
@@ -12750,8 +12759,8 @@ function jahresRueckblickHTML(){
     monthsData.push({m,euro:gehaltAusUE(Math.round(u.fcDone))});
   }
   const gesamtEuro=monthsData.reduce((a,x)=>a+x.euro,0);
-  const anzahlMonate=monthsData.length||1;
-  const avgEuro=Math.round(gesamtEuro/anzahlMonate);
+  const anzahlMonate=monthsData.length;
+  const avgEuro=anzahlMonate?Math.round(gesamtEuro/anzahlMonate):0;
   let bester=monthsData[0]||{m:0,euro:0};
   monthsData.forEach(x=>{ if(x.euro>bester.euro)bester=x; });
   const MNL=["Januar","Februar","März","April","Mai","Juni","Juli","August","September","Oktober","November","Dezember"];
@@ -12764,7 +12773,7 @@ function jahresRueckblickHTML(){
       <div class="thi-card"><div class="thi-k">💰 Gesamt ${year}</div><div class="thi-v">${_eurMasked(gesamtEuro)}</div><div class="thi-s">${anzahlMonate} Monat${anzahlMonate===1?'':'e'}</div></div>
       <div class="thi-card"><div class="thi-k">Ø pro Monat</div><div class="thi-v">${_eurMasked(avgEuro)}</div><div class="thi-s">Schnitt</div></div>
     </div>
-    <p style="font-size:13px;color:var(--txt);margin-top:8px;">🥇 Bester Monat: <b>${MNL[bester.m]}</b> · ${_eurMasked(bester.euro)}</p>`;
+    <p style="font-size:13px;color:var(--txt);margin-top:8px;">${anzahlMonate?`🥇 Bester Monat: <b>${MNL[bester.m]}</b> · ${_eurMasked(bester.euro)}`:"Noch keine Daten für dieses Jahr."}</p>`;
 }
 function fmtUE(n){ const r=Math.round(n*100)/100; return (r%1===0?r.toString():r.toFixed(2).replace(".",",")); }
 function maxISO(a,b){ return a>b?a:b; }
