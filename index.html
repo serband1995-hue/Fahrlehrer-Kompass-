@@ -3238,6 +3238,20 @@ function _gespeicherteSupabaseSitzung() {
   } catch (e) {}
   return null;
 }
+/* DB im Arbeitsspeicher gehört dem Konto, dem der Gerätespeicher beim Laden gehörte (bzw. das ihn seither
+   übernommen hat). Hat ein anderer Tab inzwischen abgemeldet oder ein anderes Konto angemeldet, passt das
+   nicht mehr - dann darf dieser Tab nichts mehr in den Gerätespeicher schreiben. */
+let _dbEigentuemer = null;
+try { _dbEigentuemer = localStorage.getItem(OWNER_KEY); } catch (e) {}
+function _lokalerSpeicherGehoertAnderem() {
+  try { return (localStorage.getItem(OWNER_KEY) || null) !== (_dbEigentuemer || null); } catch (e) { return false; }
+}
+// Meldet sich in einem anderen Tab jemand ab oder ein anderes Konto an, startet dieser Tab neu,
+// statt mit veraltetem Konto weiterzuarbeiten.
+window.addEventListener("storage", (e) => {
+  if (e.key !== OWNER_KEY && e.key !== null) return;
+  if (_lokalerSpeicherGehoertAnderem()) location.reload();
+});
 function _supabaseSitzungEntfernen() {
   try {
     const weg = [];
@@ -3305,11 +3319,13 @@ function _openNeuesPasswortSheet(){
       closeSheet(); toast("Passwort geändert ✓ — du bist jetzt angemeldet.");
       window.location.hash="";
       const {data:sessionData}=await supa.auth.getSession();
-      if(sessionData&&sessionData.session) afterLogin(sessionData.session.user);
+      if(sessionData&&sessionData.session&&!_authUser) afterLogin(sessionData.session.user);
     }catch(e){ toast("Fehler: "+(e.message||"unbekannt")); }
   });
 }
-if(window.location.hash.includes("type=recovery")){
+// Beim Start merken: supabase-js entfernt den Link-Teil der Adresse, sobald es die Sitzung übernommen hat.
+const _PW_RESET_LINK = window.location.hash.includes("type=recovery");
+if(_PW_RESET_LINK){
   if(window.supabase) _checkPasswordRecovery();
   else setTimeout(_checkPasswordRecovery,800);
 }
@@ -3355,11 +3371,17 @@ async function afterLogin(user) {
       const hatteDaten = localStorage.getItem(STORE_KEY) !== null;
       _lokaleNutzerdatenLoeschen();
       localStorage.setItem(OWNER_KEY, user.id);
-      if (hatteDaten) { location.reload(); return; }
+      if (hatteDaten) {
+        // Nach dem Neustart direkt weiter (die Anmeldung ist gerade erst passiert, kein zweites Entsperren),
+        // und ein angefangener Passwort-Reset öffnet sich wieder.
+        try { sessionStorage.setItem("kompass-nach-anmeldung", JSON.stringify({ uid: user.id, pwReset: _PW_RESET_LINK })); } catch (e) {}
+        location.reload(); return;
+      }
     }
     localStorage.setItem(OWNER_KEY, user.id);
     localStorage.removeItem("serband-session-cache");
   } catch (e) {}
+  _dbEigentuemer = user.id;
   _authUser = user;
   const supa = getSupa();
   // Profil laden
@@ -3505,6 +3527,7 @@ async function pullFromCloud() {
     if (data && data.data) {
       const cloudUpdated = new Date(data.updated_at).getTime();
       const localStamp = parseInt(localStorage.getItem("serband-sync-stamp") || "0");
+      if (_lokalerSpeicherGehoertAnderem()) { location.reload(); return; } // anderer Tab hat anderes Konto angemeldet
       if (cloudUpdated > localStamp) {
         // Cloud ist neuer → lokal überschreiben
         const cloudDB = data.data;
@@ -3534,6 +3557,7 @@ async function pushToCloud() {
   if (!_pullOk) { console.warn("[Kompass] Push übersprungen: Cloud-Stand noch nicht gelesen."); return false; }
   const daten = _persoenlicheDaten();
   if (!daten) { console.warn("[Kompass] Push übersprungen: persönlicher Stand nicht verfügbar."); return false; }
+  if (_lokalerSpeicherGehoertAnderem()) { console.warn("[Kompass] Push übersprungen: anderer Tab hat das Konto gewechselt."); return false; }
   try {
     const supa = getSupa();
     const now = new Date().toISOString();
@@ -3714,18 +3738,34 @@ async function pullTermineZuweisungen() {
   } catch (e) { console.warn("[Kompass] Kalender-Abgleich fehlgeschlagen:", e.message); }
 }
 /* ---- Logout ---- */
-async function doLogout() {
+/* opts.alleGeraete: Sitzung überall beenden (muss dann auch klappen).
+   opts.gesperrt: Aufruf von der Biometrie-Sperre - die App ist nicht entsperrt, gesichert werden kann nichts.
+   Gibt false zurück, wenn abgebrochen wurde; sonst startet die App neu. */
+async function doLogout(opts) {
+  opts = opts || {};
+  // Noch offene Büro-/Admin-Änderungen der Gesamtansicht jetzt schreiben statt sie mit dem Neustart zu verlieren.
+  if (_fsSyncDebounce && _fsAgg) { clearTimeout(_fsSyncDebounce); try { await _fsSyncAggJetzt(); } catch (e) {} }
   // Letzten Stand sichern. Beim Abmelden werden alle Daten dieses Kontos vom Gerät gelöscht, damit
   // die nächste Person nichts davon sieht - klappt das Sichern nicht, wird vorher gewarnt.
   let gesichert = false;
-  try { gesichert = await pushToCloud(); } catch (e) {}
-  if (!gesichert && _lokaleDatenVorhanden() && !confirm("Dein aktueller Stand konnte gerade nicht in der Cloud gesichert werden (keine Verbindung?).\n\nBeim Abmelden werden alle Daten von diesem Gerät gelöscht. Nicht gesicherte Änderungen gehen dabei verloren.\n\nTrotzdem abmelden?")) return;
+  if (!opts.gesperrt) { try { gesichert = await pushToCloud(); } catch (e) {} }
+  if (!gesichert && _lokaleDatenVorhanden()) {
+    const frage = opts.gesperrt
+      ? "Abmelden löscht alle Daten dieses Kontos von diesem Gerät. Änderungen, die noch nicht in der Cloud gesichert sind, gehen dabei verloren.\n\nWirklich abmelden?"
+      : "Dein aktueller Stand konnte gerade nicht in der Cloud gesichert werden (keine Verbindung?).\n\nBeim Abmelden werden alle Daten von diesem Gerät gelöscht. Nicht gesicherte Änderungen gehen dabei verloren.\n\nTrotzdem abmelden?";
+    if (!confirm(frage)) return false;
+  }
+  const supa = getSupa();
+  if (opts.alleGeraete) {
+    let fehler = null;
+    try { const r = supa ? await supa.auth.signOut({ scope: "global" }) : { error: { message: "Anmeldedienst nicht erreichbar" } }; fehler = r && r.error; } catch (e) { fehler = e; }
+    if (fehler) { toast("Abmelden auf allen Geräten fehlgeschlagen: " + (fehler.message || "unbekannt")); return false; }
+  }
   if (_syncTimer) clearInterval(_syncTimer);
   _pullOk = false;
-  try {
-    const supa = getSupa();
-    if (supa) await Promise.race([supa.auth.signOut(), new Promise(r => setTimeout(r, 4000))]);
-  } catch (e) {}
+  if (!opts.alleGeraete) {
+    try { if (supa) await Promise.race([supa.auth.signOut(), new Promise(r => setTimeout(r, 4000))]); } catch (e) {}
+  }
   // supabase-js behält die Sitzung, wenn der Server nicht erreichbar ist - hier wird sie in jedem Fall entfernt,
   // sonst wäre das Gerät offline weiterhin "angemeldet".
   _supabaseSitzungEntfernen();
@@ -3797,10 +3837,9 @@ async function _bioVerifyOnUnlock(userId){
       }catch(e){ /* abgebrochen/fehlgeschlagen - Overlay bleibt offen, nochmal versuchbar */ }
     };
     document.getElementById("bioUnlockBtn").addEventListener("click",tryUnlock);
+    // Abmelden statt entsperren: bei Abbruch bleibt die Sperre einfach stehen, sonst startet die App neu.
     document.getElementById("bioFallbackBtn").addEventListener("click",async()=>{
-      ov.remove();
-      await doLogout();
-      resolve(false);
+      await doLogout({ gesperrt: true });
     });
     tryUnlock();
   });
@@ -3809,6 +3848,9 @@ async function _bioVerifyOnUnlock(userId){
 async function checkSession() {
   document.getElementById("loPass").addEventListener("keydown", e => { if (e.key === "Enter") doLogin(); });
   document.getElementById("loEmail").addEventListener("keydown", e => { if (e.key === "Enter") document.getElementById("loPass").focus(); });
+  // Merker aus afterLogin(), falls die App direkt nach einer Anmeldung neu gestartet wurde.
+  let nachAnmeldung = null;
+  try { nachAnmeldung = JSON.parse(sessionStorage.getItem("kompass-nach-anmeldung") || "null"); sessionStorage.removeItem("kompass-nach-anmeldung"); } catch (e) {}
   const supa = getSupa();
   if (!supa) {
     // Anmeldedienst nicht geladen (z.B. offline ohne Cache): nur mit bestehender Sitzung weiter.
@@ -3825,8 +3867,10 @@ async function checkSession() {
     } catch(e) { console.warn("[Kompass] getSession fehlgeschlagen:", e.message); }
   }
   if (session && session.user) {
-    const darfRein = await _bioVerifyOnUnlock(session.user.id);
+    const direkt = !!(nachAnmeldung && nachAnmeldung.uid === session.user.id);
+    const darfRein = direkt || await _bioVerifyOnUnlock(session.user.id);
     if (darfRein) await afterLogin(session.user);
+    if (direkt && nachAnmeldung.pwReset && _authUser) _openNeuesPasswortSheet();
     return;
   }
   // Keine abrufbare Sitzung. Ist trotzdem noch eine gespeichert (die Erneuerung scheitert nur am Netz),
@@ -3965,7 +4009,11 @@ function _fsMapPruefung(row,lehrerName){
     {_fahrlehrerId:row.fahrlehrer_id,_fahrlehrerName:lehrerName(row.fahrlehrer_id),id:row.id,sid:row.schueler_id,date:row.datum,result:row.result,pruefer:row.pruefer,attempt:row.attempt});
 }
 
+// Zählt jedes Betreten/Verlassen der Gesamtansicht. Ein Ladevorgang, der erst nach dem Verlassen
+// fertig wird, darf DB nicht mehr mit dem Fahrschul-Bestand überschreiben.
+let _fsAggGen=0;
 async function _fsLoadAggData(fahrschuleId){
+  const gen=_fsAggGen;
   const supa=getSupa();
   const [fsR,lehrerR,schuelerR,termineR,pruefungenR,fahrzeugeR,paketeR,urlaubR]=await Promise.all([
     supa.from("fahrschulen").select("*").eq("id",fahrschuleId).single(),
@@ -3977,6 +4025,7 @@ async function _fsLoadAggData(fahrschuleId){
     supa.from("fahrschule_pakete").select("*").eq("fahrschule_id",fahrschuleId),
     supa.from("fahrschule_urlaub").select("*").eq("fahrschule_id",fahrschuleId).gte("bis",todayISO())
   ]);
+  if(gen!==_fsAggGen)return false;
   const lehrer=lehrerR.data||[];
   const lehrerName=id=>{ const l=lehrer.find(x=>x.id===id); return l?(l.name||l.email):"Unbekannt"; };
   DB.students=(schuelerR.data||[]).map(r=>_fsMapSchueler(r,lehrerName));
@@ -4000,20 +4049,23 @@ async function _fsLoadAggData(fahrschuleId){
   DB.lessons=[...DB.lessons,...urlaubBlocks];
   _fsAgg={fahrschuleId, fahrschule:fsR.data||{name:"Fahrschule"}, lehrer, fahrzeuge:fahrzeugeR.data||[], pakete:paketeR.data||[]};
   _fsBaseline={students:JSON.parse(JSON.stringify(DB.students)),lessons:JSON.parse(JSON.stringify(DB.lessons)),exams:JSON.parse(JSON.stringify(DB.exams))};
+  return true;
 }
 
 let _fsRefreshTimer=null;
 async function _fsEnterAggMode(fahrschuleId){
+  _fsAggGen++;
   if(_fsPersonalBackup===null){
     _fsPersonalBackup={students:DB.students,lessons:DB.lessons,exams:DB.exams};
   }
-  await _fsLoadAggData(fahrschuleId);
+  if(!(await _fsLoadAggData(fahrschuleId)))return; // inzwischen wieder verlassen
   _fsSetDrawer(true);
   routeFahrschuleDashboard();
   clearInterval(_fsRefreshTimer);
   _fsRefreshTimer=setInterval(()=>_fsRefreshAggData(),120000);
 }
 function _fsExitAggMode(){
+  _fsAggGen++;
   clearInterval(_fsRefreshTimer);
   if(_fsPersonalBackup){
     DB.students=_fsPersonalBackup.students; DB.lessons=_fsPersonalBackup.lessons; DB.exams=_fsPersonalBackup.exams;
@@ -5580,6 +5632,7 @@ function load(){try{return JSON.parse(localStorage.getItem(STORE_KEY))||{student
 let DB=load();
 function save(){
   if(_fsAgg){ _fsSyncAggChanges(); return; }
+  if(_lokalerSpeicherGehoertAnderem()){ location.reload(); return; } // anderer Tab hat anderes Konto angemeldet
   try{localStorage.setItem(STORE_KEY,JSON.stringify(DB));}catch(e){}
   if(_authUser&&_pullOk){clearTimeout(_saveSyncDebounce);_saveSyncDebounce=setTimeout(pushToCloud,4000);_syncSchuelerBridge();_syncTermineBridge();_syncPruefungenBridge();}
 }
@@ -5593,7 +5646,11 @@ let _fsSyncDebounce=null;
 function _fsSyncAggChanges(){
   if(!_fsAgg||!_fsBaseline)return;
   clearTimeout(_fsSyncDebounce);
-  _fsSyncDebounce=setTimeout(async()=>{
+  _fsSyncDebounce=setTimeout(_fsSyncAggJetzt,1500);
+}
+async function _fsSyncAggJetzt(){
+    _fsSyncDebounce=null;
+    if(!_fsAgg||!_fsBaseline)return;
     try{
       const supa=getSupa();
       const nowIso=new Date().toISOString();
@@ -5669,7 +5726,6 @@ function _fsSyncAggChanges(){
       _fsBaseline={students:JSON.parse(JSON.stringify(DB.students)),lessons:JSON.parse(JSON.stringify(DB.lessons)),exams:JSON.parse(JSON.stringify(DB.exams))};
       toast("Gespeichert ✓");
     }catch(e){ console.warn("[Kompass] Fahrschul-Speichern fehlgeschlagen:",e.message); toast("Fehler beim Speichern: "+e.message); }
-  },1500);
 }
 
 /* ===== Fahrschule-Synchronisations-Brücke =====
@@ -5685,7 +5741,7 @@ function _syncSchuelerBridge(){
   clearTimeout(_schuelerSyncDebounce);
   _schuelerSyncDebounce=setTimeout(async()=>{
     // Stand erst beim Auslösen lesen - und nie den Fahrschul-Bestand der Gesamtansicht.
-    const P=_persoenlicheDaten(); if(!P||!Array.isArray(P.students))return;
+    const P=_persoenlicheDaten(); if(!P||!Array.isArray(P.students)||_lokalerSpeicherGehoertAnderem())return;
     try{
       const supa=getSupa();
       const rows=P.students.map(s=>{
@@ -5726,7 +5782,7 @@ function _syncTermineBridge(){
   if(!_authUser||!_pullOk||!_authProfile||!_authProfile.fahrschule_id||!DB.lessons)return;
   clearTimeout(_termineSyncDebounce);
   _termineSyncDebounce=setTimeout(async()=>{
-    const P=_persoenlicheDaten(); if(!P||!Array.isArray(P.lessons))return;
+    const P=_persoenlicheDaten(); if(!P||!Array.isArray(P.lessons)||_lokalerSpeicherGehoertAnderem())return;
     try{
       const supa=getSupa();
       const nowIso=new Date().toISOString();
@@ -5764,7 +5820,7 @@ function _syncPruefungenBridge(){
   if(!_authUser||!_pullOk||!_authProfile||!_authProfile.fahrschule_id||!DB.exams)return;
   clearTimeout(_pruefungenSyncDebounce);
   _pruefungenSyncDebounce=setTimeout(async()=>{
-    const P=_persoenlicheDaten(); if(!P||!Array.isArray(P.exams))return;
+    const P=_persoenlicheDaten(); if(!P||!Array.isArray(P.exams)||_lokalerSpeicherGehoertAnderem())return;
     try{
       const supa=getSupa();
       const nowIso=new Date().toISOString();
@@ -9426,12 +9482,8 @@ function routeSettings(){
   const adLogout=$("#allDevicesLogoutBtn");
   if(adLogout)adLogout.addEventListener("click",async()=>{
     if(!confirm("Von ALLEN Geräten abmelden? Du musst dich überall neu anmelden, auch hier."))return;
-    try{
-      const supa=getSupa();
-      await supa.auth.signOut({scope:"global"});
-      toast("Von allen Geräten abgemeldet ✓");
-      window.location.reload();
-    }catch(e){ toast("Fehler: "+(e.message||"unbekannt")); }
+    // Wie beim normalen Abmelden: Stand sichern, Daten dieses Kontos vom Gerät entfernen, neu starten.
+    await doLogout({ alleGeraete: true });
   });
   if(isSuperAdmin())renderAkademieVermittlungCfg();
 }
