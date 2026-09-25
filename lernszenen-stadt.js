@@ -133,18 +133,18 @@
     const m = r.marken.map(x => x.t);                               // Beginn der einzelnen Schritte
     const fs = { id: "fs", typ: "fahrschule", farbe: "#f2f2ee", fokus: true, bahn: r.bahn,
       blinker: [{ von: 0.5, bis: m[8], seite: "rechts" }], schulter: [{ von: m[1] + 0.3, bis: m[1] + 1.8, seite: "rundum" }, { von: m[2] + 0.2, bis: m[2] + 1.5, seite: "hinten" }, { von: m[4] - 0.4, bis: m[4] + 0.6, seite: "rundum" }, { von: m[6] + 0.1, bis: m[6] + 1.1, seite: "rundum" }] };
-    const hind = pk.map(([id, x]) => ({ name: "das parkende Auto", x, y: PY, h: 0, l: 4.5, b: 1.8 }));
+    const hind = pk.map(([id, x]) => ({ name: "das parkende Auto", x, y: PY, h: 0, l: TYPEN.pkw.l, b: TYPEN.pkw.b }));
     grundfahrSzene({
       id: "laengs", plan: ["gf_laengs"], titel: "Rückwärts einparken (längs)", kurz: "Seitlich in eine Parklücke am Fahrbahnrand",
       dauer: Math.ceil(r.dauer + 1), strasse: Object.assign(st, { schilder: [], bereich: [-60, 60] }), kamera: { fest: [3, 2], zoom: 16 },
       fahrzeuge: [fs].concat(pk.map(([id, x, f]) => parkt(id, "pkw", f, x, PY, 0))),
       phasen: [
-        { t: 0.2, titel: "Lücke prüfen", text: "Passt die Lücke? Faustregel: mindestens eine gute Fahrzeuglänge plus etwa 1,5 m. Frühzeitig rechts blinken, damit der nachfolgende Verkehr Bescheid weiß.", regel: "§ 10 · § 12 StVO", frage: { text: "Wann setze ich den Blinker?", optionen: ["Erst beim Rückwärtsfahren", "Schon beim Heranfahren an die Lücke", "Gar nicht, ich parke ja nur"], richtig: 1, erklaerung: "Früh rechts blinken – so versteht der Verkehr hinter dir, warum du anhältst." } },
+        { t: 0.2, titel: "Lücke prüfen", text: "Passt die Lücke? Faustregel: mindestens eine gute Fahrzeuglänge plus etwa 1,5 m. Frühzeitig rechts blinken, damit der nachfolgende Verkehr Bescheid weiß.", regel: "§ 1 Abs. 2 · § 12 StVO", frage: { text: "Wann setze ich den Blinker?", optionen: ["Erst beim Rückwärtsfahren", "Schon beim Heranfahren an die Lücke", "Gar nicht, ich parke ja nur"], richtig: 1, erklaerung: "Früh rechts blinken – so versteht der Verkehr hinter dir, warum du anhältst." } },
         { t: m[1], titel: "Neben dem Vordermann halten", text: "Parallel neben dem vorderen Auto anhalten, etwa 50 cm bis 1 m Seitenabstand. Das Heck steht etwa auf Höhe seines Hecks.", regel: "Grundfahraufgabe Längsparken", frage: { text: "Was kommt vor dem Rückwärtsfahren?", optionen: ["Sofort zurücksetzen", "Rundumblick – besonders nach hinten", "Hupen"], richtig: 1, erklaerung: "Vor jeder Bewegung rundum schauen, beim Rückwärtsfahren den Körper drehen und durch die Heckscheibe schauen." } },
         { t: m[2], titel: "Voll rechts einschlagen", text: "Langsam zurückrollen und dabei voll nach rechts lenken. Das Heck schwenkt in die Lücke. Den Blick nach hinten richten, die Front schwenkt links in die Fahrbahn – vorher nochmals schauen!", regel: "§ 9 Abs. 5 · § 1 Abs. 2 StVO" },
         { t: m[3], titel: "Gerade zurück", text: "Lenkrad gerade, ein Stück gerade zurückrollen – so kommt das Auto näher an den Bordstein.", regel: "Grundfahraufgabe Längsparken" },
         { t: m[4], titel: "Gegenlenken", text: "Wenn die rechte vordere Ecke am Heck des Vordermanns vorbei ist: voll nach links lenken. Das Auto dreht sich parallel zum Bordstein.", regel: "Grundfahraufgabe Längsparken", frage: { text: "Wann lenke ich nach links?", optionen: ["Sofort am Anfang", "Wenn die Front am Vordermann vorbei ist", "Gar nicht"], richtig: 1, erklaerung: "Zu frühes Gegenlenken stößt vorn an – zu spätes bringt das Heck an den Bordstein." } },
-        { t: m[7], titel: "Ausrichten", text: "Ein kleines Stück vor, bis vorn und hinten ähnlich viel Platz ist. Ziel: parallel, höchstens 30 cm vom Bordstein, ohne ihn zu berühren.", regel: "Prüfungsrichtlinie · Grundfahraufgaben", frage: { text: "Wie weit darf das Auto vom Bordstein entfernt sein?", optionen: ["Egal", "Etwa bis 30 cm", "Mindestens 1 m"], richtig: 1, erklaerung: "Gut eingeparkt: parallel und nah am Bordstein – aber ohne Berührung." } }
+        { t: m[7], titel: "Ausrichten", text: "Ein kleines Stück vor, bis vorn und hinten ähnlich viel Platz ist. Ziel: parallel und nah am Bordstein (Richtwert: bis etwa 30 cm), ohne ihn zu berühren.", regel: "Grundfahraufgabe Längsparken", frage: { text: "Wie weit darf das Auto vom Bordstein entfernt sein?", optionen: ["Egal", "Nah dran – Richtwert bis etwa 30 cm", "Mindestens 1 m"], richtig: 1, erklaerung: "Gut eingeparkt: parallel und nah am Bordstein – aber ohne Berührung." } }
       ],
       rangieren: { start: poseBei(fs, m[1]), ziel: { x: 3.5, y: 4.3, h: 0, tolL: 0.9, tolQ: 0.35, tolH: 0.1, titel: "In der Lücke", gut: "Das Auto steht parallel in der Lücke." },
         bordAbstand: 0.3, maxZuege: 4, blinker: "rechts", hindernisse: hind, bordsteine: st.bordsteine, zoomFaktor: 1,
@@ -170,17 +170,17 @@
     const m = r.marken.map(x => x.t);
     const fs = { id: "fs", typ: "fahrschule", farbe: "#f2f2ee", fokus: true, bahn: r.bahn,
       blinker: [{ von: 0.5, bis: m[vorwaerts ? 4 : 3], seite: "rechts" }], schulter: vorwaerts ? [{ von: m[1] + 0.2, bis: m[1] + 1.6, seite: "rundum" }, { von: m[3] - 0.3, bis: m[3] + 0.7, seite: "rechts" }] : [{ von: m[1] + 0.2, bis: m[1] + 1.8, seite: "rundum" }, { von: m[2] + 0.2, bis: m[2] + 1.6, seite: "hinten" }] };
-    const hind = belegt.map(([x]) => ({ name: "das parkende Auto", x, y: 6.6, h: S, l: 4.5, b: 1.8 }));
+    const hind = belegt.map(([x]) => ({ name: "das parkende Auto", x, y: 6.6, h: S, l: TYPEN.pkw.l, b: TYPEN.pkw.b }));
     grundfahrSzene({
       id, plan: ["gf_quer"], titel: vorwaerts ? "Vorwärts einparken (quer)" : "Rückwärts einparken (quer)", kurz: vorwaerts ? "Vorwärts in eine Querparklücke – mit Ausholen" : "Rückwärts in eine Querparklücke – später vorwärts mit guter Sicht hinaus",
       dauer: Math.ceil(r.dauer + 1), strasse: Object.assign(st, { schilder: [], bereich: [-45, 45] }), kamera: { fest: [0, 3.5], zoom: 15 },
       fahrzeuge: [fs].concat(belegt.map(([x, f, h], i) => parkt("q" + i, "pkw", f, x, 6.6, h))),
       phasen: vorwaerts ? [
-        { t: 0.2, titel: "Vorbeifahren und ausholen", text: "Auf der Fahrgasse langsam an die Lücke heranfahren, rechts blinken. Etwas nach links ausholen, damit der Bogen in die Lücke passt.", regel: "§ 10 · § 1 Abs. 2 StVO", frage: { text: "Warum hole ich vor dem vorwärts Einparken aus?", optionen: ["Damit der Bogen in die schmale Lücke passt", "Weil es schneller geht", "Muss man nicht"], richtig: 0, erklaerung: "Vorwärts ist der Wendekreis größer als rückwärts – Ausholen verschafft Platz." } },
+        { t: 0.2, titel: "Vorbeifahren und ausholen", text: "Auf der Fahrgasse langsam an die Lücke heranfahren, rechts blinken. Etwas nach links ausholen, damit der Bogen in die Lücke passt.", regel: "§ 1 Abs. 2 StVO", frage: { text: "Warum hole ich vor dem vorwärts Einparken aus?", optionen: ["Damit der Bogen in die schmale Lücke passt", "Weil es schneller geht", "Muss man nicht"], richtig: 0, erklaerung: "Beim Vorwärtsfahren schneiden die Hinterräder die Kurve nach innen – Ausholen verhindert, dass das Heck das Nachbarauto streift." } },
         { t: m[3], titel: "Voll einschlagen", text: "Wenn die Mitte der Lücke etwa auf Höhe des Außenspiegels ist: voll nach rechts lenken. Auf die Ecken der Nachbarautos achten (Schulterblick rechts).", regel: "Grundfahraufgabe Querparken" },
         { t: m[4], titel: "Gerade hinein", text: "Lenkrad gerade und mittig in die Lücke rollen, bis die Front kurz vor dem Ende steht. Beidseitig muss man aussteigen können.", regel: "Prüfungsrichtlinie · Grundfahraufgaben", frage: { text: "Was ist beim späteren Ausparken der Nachteil?", optionen: ["Keiner", "Rückwärts heraus – schlechte Sicht auf den Verkehr", "Man braucht mehr Benzin"], richtig: 1, erklaerung: "Deshalb wird rückwärts einparken empfohlen: hinaus geht es dann vorwärts mit guter Sicht." } }
       ] : [
-        { t: 0.2, titel: "An der Lücke vorbei", text: "Langsam auf der Fahrgasse fahren, rechts blinken und an der Lücke vorbeifahren, bis das Heck etwa 1–2 m hinter ihr ist.", regel: "§ 10 · § 1 Abs. 2 StVO" },
+        { t: 0.2, titel: "An der Lücke vorbei", text: "Langsam auf der Fahrgasse fahren, rechts blinken und an der Lücke vorbeifahren, bis das Heck etwa 1–2 m hinter ihr ist.", regel: "§ 1 Abs. 2 StVO" },
         { t: m[1], titel: "Rundumblick", text: "Vor dem Rückwärtsfahren rundum schauen – Fußgänger und Autos auf der Fahrgasse!", regel: "§ 9 Abs. 5 StVO", frage: { text: "Warum rückwärts in die Querlücke?", optionen: ["Beim Herausfahren später gute Sicht nach vorn", "Es ist vorgeschrieben", "Weil es schneller geht"], richtig: 0, erklaerung: "Rückwärts hinein ist enger lenkbar und beim Ausparken sieht man den Querverkehr." } },
         { t: m[2], titel: "Voll einschlagen", text: "Langsam zurück und voll nach rechts lenken. Blick nach hinten und zu den Ecken der Nachbarautos.", regel: "Grundfahraufgabe Querparken" },
         { t: m[3], titel: "Gerade zurück", text: "Wenn das Auto parallel zu den Nachbarn steht: Lenkrad gerade und mittig bis zum Ende der Lücke zurückrollen.", regel: "Prüfungsrichtlinie · Grundfahraufgaben", frage: { text: "Wann ist die Lenkung gerade?", optionen: ["Sobald ich in der Lücke bin", "Wenn das Auto parallel zu den Nachbarautos steht", "Nie"], richtig: 1, erklaerung: "Dann gerade weiter – sonst steht das Auto schräg." } }
@@ -272,7 +272,7 @@
       const f = fahrt(id, fokus ? "fahrschule" : "pkw", farbe, [[-200, y], [200, y]], [[0, kmh], [tb, kmh], [tStop, 0], [60, 0]], 200 + (xG - abst - 2.25), t0, { fokus });
       f.kmh = kmh; f.tb = tb; f.tStop = tStop; return f;
     }
-    const A = wagen("fs", "#f2f2ee", Y, 50, true), B = wagen("v30", "#2c5aa0", Y2, 30, false);
+    const A = wagen("fs", "#f2f2ee", Y, 50, true), B = wagen("v30", "#2c5aa0", Y, 30, false); B.geist = true;   // gleiche Spur, halbtransparent
     const pos = (f, t) => LZ.bau.rohPos(f, t).x;
     const kind = person("kind", "kind", "#f28c28", [[xG - 1.5, 6.4], [xG - 1.5, 4.4]], [[0, 0], [t0 + 0.6, 0], [t0 + 0.7, 7], [t0 + 1.6, 7], [t0 + 1.8, 0]]);
     const vRest = Math.sqrt(Math.max(0, (50 / KMH) ** 2 - 2 * VZ * Math.max(0, abst - 50 / KMH * tr))) * KMH;
@@ -292,7 +292,7 @@
       fahrzeuge: [A, B, kind, ball].concat(verd),
       overlayUnten: zeigeWege,
       phasen: [
-        { t: 0.2, titel: "Zwei Autos, gleiche Reaktion", text: "Links fährt ein Auto mit 30 km/h, rechts die Fahrschule mit 50 km/h. Gleich rollt zwischen den parkenden Autos ein Ball auf die Straße – ein Kind läuft hinterher.", regel: "§ 3 Abs. 1 · § 3 Abs. 2a StVO" },
+        { t: 0.2, titel: "Zwei Autos, gleiche Reaktion", text: "Zwei Fahrten im Vergleich auf derselben Spur: die Fahrschule mit 50 km/h und – halbtransparent – dasselbe Auto mit 30 km/h. Gleich rollt zwischen den parkenden Autos ein Ball auf die Straße, ein Kind läuft hinterher.", regel: "§ 3 Abs. 1 · § 3 Abs. 2a StVO" },
         { t: t0, titel: "Gefahr! Reaktionszeit", text: "Etwa 1 Sekunde vergeht, bis der Fuß auf der Bremse ist. In dieser Zeit fährt das Auto ungebremst weiter: bei 50 km/h fast 14 m, bei 30 km/h gut 8 m.", regel: "Faustformel Reaktionsweg: (km/h ÷ 10) · 3", frage: { text: "Wie lang ist der Reaktionsweg bei 50 km/h (Faustformel)?", optionen: ["5 m", "15 m", "25 m"], richtig: 1, erklaerung: "(50 ÷ 10) · 3 = 15 m. Die genaue Rechnung ergibt etwa 14 m pro Sekunde." } },
         { t: t0 + tr, titel: "Vollbremsung", text: "Bremse und Kupplung gleichzeitig voll durchtreten, Druck halten. Das ABS rattert – das ist gewollt. Locker am Lenkrad bleiben, um ausweichen zu können.", regel: "Faustformel Gefahrbremsung: (km/h ÷ 10)² ÷ 2", frage: { text: "Wie lang ist der Bremsweg bei einer Gefahrbremsung aus 50 km/h (Faustformel)?", optionen: ["12,5 m", "25 m", "50 m"], richtig: 0, erklaerung: "(50 ÷ 10)² ÷ 2 = 12,5 m. Normaler Bremsweg (ohne Gefahr): (50 ÷ 10)² = 25 m." } },
         { t: 7.5, titel: "Das Ergebnis", text: `Das 30er-Auto steht rechtzeitig. Mit 50 km/h reicht der Weg nicht – an der Stelle des Balls wäre das Auto noch etwa ${Math.round(vRest / 5) * 5} km/h schnell. Tempo 30 rettet Leben.`, regel: "§ 3 Abs. 1 · § 3 Abs. 2a StVO", frage: { text: "Warum ist Tempo 30 vor Schulen so wichtig?", optionen: ["Wegen der Lautstärke", "Der Anhalteweg ist viel kürzer – bei 50 bin ich an der Stelle, wo ich mit 30 schon stehe, noch fast so schnell wie beim Start", "Das ist nur eine Empfehlung"], richtig: 1, erklaerung: "Der Bremsweg wächst mit dem Quadrat der Geschwindigkeit." } }
@@ -312,7 +312,7 @@
         [d + 4, -e - 3, 11, 9, 8, "#e3d7c3"], [d + 18, -e - 4, 10, 10, 10, "#d4c7b6", "#6d5a4a"], [-d - 4, -e - 3, 11, 9, 7, "#d9cfbf", "#8a4a36"], [-d - 18, -e - 3, 10, 9, 9, "#cdd3d8"],
         [d + 3, e + 18, 10, 10, 8, "#dadcd6"], [-d - 3, e + 18, 10, 10, 7, "#e3d7c3"], [d + 3, -e - 18, 10, 10, 9, "#d9cfbf"], [-d - 3, -e - 18, 10, 10, 8, "#cdd3d8"]].filter(h => {
           if (!(o.arme || {}).N && o.arme && h[1] < 0 && Math.abs(h[0]) < 20) return true; return true; }));
-      baeume(K.objekte, [[K.bN + 1.3, e + 6, 1.6], [-K.bN - 1.3, -e - 6, 1.6], [d + 10, K.bO + 1.3, 1.6], [-d - 10, K.bO + 1.3, 1.6]]);
+      baeume(K.objekte, [[K.bN + K.g - 0.7, e + 6, 1.6], [-K.bN - K.g + 0.7, -e - 6, 1.6], [d + 10, K.bO + K.g - 0.7, 1.6], [-d - 10, K.bO + K.g - 0.7, 1.6]]);
     }
     return Object.assign(K, { schilder: [], bereich: [-K.L, K.L], boden: "#6a9a52", boden3d: "#6f9a55" });
   }
@@ -320,7 +320,7 @@
   // ---- Rechts vor links in der Tempo-30-Zone
   (function () {
     const K = stadtKreuzung({ b: 3.0, R: 5 });
-    K.schilder.push({ typ: "z274_30", x: 4.8, y: 38, seite: 1 });
+    K.schilder.push({ typ: "zone30", x: 4.8, y: 38, seite: 1 });
     // Ankunft: alle drei halten an der Kreuzung. Reihenfolge: B (von Osten, hat niemanden rechts) → Fahrschule (von Süden) → C (von Westen)
     const e = 8.2;
     const fs = fahrt("fs", "fahrschule", "#f2f2ee", route("S", "N", { q: 1.5, e }), [[0, 30], [2.5, 22], [4.2, 0], [7.8, 0], [10, 25], [20, 30]], 70 - e, 4.2, { fokus: true, bremsStand: true });
@@ -346,21 +346,21 @@
     const K = stadtKreuzung({ b: 3.25, R: 6 });
     K.linien.push({ art: "leit_io", b: 0.12, pts: [[0, 70], [0, 12]] }, { art: "leit_io", b: 0.12, pts: [[0, -12], [0, -70]] }, { art: "leit_io", b: 0.12, pts: [[-70, 0], [-12, 0]] }, { art: "leit_io", b: 0.12, pts: [[12, 0], [70, 0]] });
     const e = 9;
-    const fs = fahrt("fs", "fahrschule", "#f2f2ee", route("S", "W", { q: 1.2, e: 2.2, e2: 7, k: 0.62 }), [[0, 35], [3, 18], [5.2, 0], [13.2, 0], [15.1, 18], [23, 30]], 70 - 2.2, 5.2, { fokus: true, bremsStand: true, blinker: [{ von: 0.8, bis: 17.3, seite: "links" }], schulter: [{ von: 12.3, bis: 13.1, seite: "links" }] });
+    const fs = fahrt("fs", "fahrschule", "#f2f2ee", route("S", "W", { q: 1.2, e: 2.2, e2: 7, k: 0.62 }), [[0, 35], [3, 18], [5.2, 0], [16.8, 0], [18.7, 18], [26, 30]], 70 - 2.2, 5.2, { fokus: true, bremsStand: true, blinker: [{ von: 0.8, bis: 21, seite: "links" }], schulter: [{ von: 15.9, bis: 16.7, seite: "links" }] });
     const g1 = fahrt("g1", "pkw", "#2c5aa0", route("N", "S", { q: 1.625, e }), [[0, 40]], 70, 6.0);
     const g3 = fahrt("g3", "pkw", "#b3322c", route("N", "W", { q: 1.625, e: 7, e2: 7, k: 0.5 }), [[0, 30], [6, 30], [8.6, 16], [11, 20], [20, 25]], 70 - 7, 9.4, { blinker: [{ von: 0, bis: 11, seite: "rechts" }] });
     const g2 = fahrt("g2", "transporter", "#e7e3d6", route("N", "S", { q: 1.625, e }), [[0, 38]], 70, 12.0);
-    const fg = person("fg1", "fussgaenger", "#3a6ea5", [[-9.5, 9], [-9.5, -9]], [[0, 0], [5.6, 0], [5.8, 4.6], [40, 4.6]]);
+    const fg = person("fg1", "fussgaenger", "#3a6ea5", [[-9.5, 9], [-9.5, -9]], [[0, 0], [7.6, 0], [7.8, 4.6], [40, 4.6]]);
     innerortsSzene({
       id: "links_gegen", plan: ["l_links", "g_abb1"], titel: "Linksabbiegen mit Gegenverkehr", kurz: "Gegenverkehr und entgegenkommende Rechtsabbieger haben Vorrang",
-      dauer: 21, strasse: K, kamera: { fest: [-2, 2], zoom: 9 },
+      dauer: 24, strasse: K, kamera: { fest: [-2, 2], zoom: 9 },
       fahrzeuge: [fs, g1, g2, g3, fg],
       phasen: [
         { t: 0.2, titel: "Einordnen", text: "Spiegel, Blinker links, zur Mitte einordnen. Vor dem Einordnen auf den nachfolgenden Verkehr achten.", regel: "§ 9 Abs. 1 StVO", frage: { text: "Wo ordne ich mich zum Linksabbiegen ein?", optionen: ["Ganz rechts", "Bis zur Mitte der Fahrbahn", "Auf der Gegenfahrbahn"], richtig: 1, erklaerung: "Links abbiegen: bis zur Mitte einordnen (in Einbahnstraßen möglichst weit links)." } },
         { t: 5.3, titel: "In der Kreuzung warten", text: "Bis in die Kreuzung vorfahren und warten. Die Räder stehen gerade – wird man von hinten angestoßen, rollt man nicht in den Gegenverkehr.", regel: "§ 9 Abs. 3 StVO", frage: { art: "reihenfolge", text: "Tippe an, in welcher Reihenfolge die Fahrzeuge fahren dürfen.", ids: ["g1", "g3", "g2", "fs"], namen: { g1: "Blau (geradeaus)", g3: "Rot (biegt rechts ab)", g2: "Transporter (geradeaus)", fs: "Fahrschule (links)" }, erklaerung: "Wer links abbiegt, lässt den Gegenverkehr durchfahren – auch den Rechtsabbieger von gegenüber. Die Fahrschule fährt zuletzt." } },
         { t: 6.5, titel: "Gegenverkehr durchlassen", text: "Geradeaus Fahrende und Rechtsabbieger von gegenüber haben Vorrang. Erst wenn alles frei ist und auch keine Fußgänger mehr queren, abbiegen.", regel: "§ 9 Abs. 3 · § 9 Abs. 4 StVO" },
-        { t: 11, titel: "Fußgänger beachten", text: "In der Straße, in die ich abbiege, geht ein Fußgänger über die Fahrbahn. Besondere Rücksicht – warten, bis er drüben ist.", regel: "§ 9 Abs. 3 StVO", frage: { text: "Der Fußgänger ist noch auf der Fahrbahn. Was tun?", optionen: ["Hupen", "Warten, bis er vorbei ist", "Knapp hinter ihm durchfahren"], richtig: 1, erklaerung: "Beim Abbiegen auf Fußgänger besondere Rücksicht nehmen – wenn nötig, warten." } },
-        { t: 12.3, titel: "Schulterblick links", text: "Unmittelbar vor dem Abbiegen: Schulterblick links (Radfahrer, Überholende), dann zügig in weitem Bogen abbiegen.", regel: "§ 9 Abs. 1 StVO" }
+        { t: 12.6, titel: "Fußgänger beachten", text: "In der Straße, in die ich abbiege, geht ein Fußgänger über die Fahrbahn. Besondere Rücksicht – warten, bis er drüben ist.", regel: "§ 9 Abs. 3 StVO", frage: { text: "Der Fußgänger ist noch auf der Fahrbahn. Was tun?", optionen: ["Hupen", "Warten, bis er vorbei ist", "Knapp hinter ihm durchfahren"], richtig: 1, erklaerung: "Beim Abbiegen auf Fußgänger besondere Rücksicht nehmen – wenn nötig, warten." } },
+        { t: 15.9, titel: "Schulterblick links", text: "Unmittelbar vor dem Abbiegen: Schulterblick links (Radfahrer, Überholende), dann zügig in weitem Bogen abbiegen.", regel: "§ 9 Abs. 1 StVO" }
 
       ]
     });
@@ -380,7 +380,7 @@
       fahrzeuge: [fs, g],
       phasen: [
         { t: 0.2, titel: "Zwei Linksabbieger", text: "Die Fahrschule und das rote Auto wollen beide nach links abbiegen und stehen sich gegenüber.", regel: "§ 9 Abs. 4 StVO", frage: { text: "Wie biegen die beiden ab?", optionen: ["Voreinander – jeder biegt vor dem anderen ab", "Umeinander herum", "Wer zuerst da ist, zuerst"], richtig: 0, erklaerung: "§ 9 Abs. 4 StVO: Einander entgegenkommende Linksabbieger biegen voreinander ab – es sei denn, Verkehrslage oder Kreuzung erfordern etwas anderes." } },
-        { t: 6, titel: "Voreinander abbiegen", text: "Beide fahren gleichzeitig los und biegen vor dem anderen ab – die Autos begegnen sich rechts an rechts. Das spart Zeit und man sieht den Gegenverkehr.", regel: "§ 9 Abs. 4 StVO" },
+        { t: 6, titel: "Voreinander abbiegen", text: "Beide fahren gleichzeitig los und biegen vor dem anderen ab – die Autos begegnen sich rechts an rechts. Das spart Zeit – aber der andere Linksabbieger verdeckt die Sicht auf den nachfolgenden Gegenverkehr, deshalb besonders aufmerksam.", regel: "§ 9 Abs. 4 StVO" },
         { t: 10.5, titel: "Merke", text: "Umeinander (hintereinander herum) nur, wenn Markierungen, Ampelregelung oder die Gestaltung der Kreuzung das verlangen.", regel: "§ 9 Abs. 4 StVO" }
       ]
     });
@@ -392,7 +392,7 @@
     // Radweg (rot) entlang der Nord-Süd-Straße, rechts neben der Fahrbahn
     K.flaechen.push({ art: "rad", poly: rect(3.6, 11, 5.4, 90) }, { art: "rad", poly: rect(3.6, -90, 5.4, -11) }, { art: "rad", poly: rect(3.6, -11, 5.4, 11), farbe: "#b2573c" });
     for (let y = -10.5; y < 11; y += 1) K.flaechen.push({ art: "weiss", poly: rect(3.6, y, 3.75, y + 0.5) }, { art: "weiss", poly: rect(5.25, y, 5.4, y + 0.5) });
-    K.linien.push({ art: "leit_io", b: 0.12, pts: [[0, 70], [0, 12]] }, { art: "voll", b: 0.5, pts: [[0.1, 12.5], [3.2, 12.5]] });
+    K.linien.push({ art: "leit_io", b: 0.12, pts: [[0, 70], [0, 12]] });
     const fs = fahrt("fs", "fahrschule", "#f2f2ee", route("S", "O", { q: 1.9, e: 8.5, e2: 8.5, k: 0.5 }), [[0, 30], [3, 15], [5, 5], [5.8, 0], [7.8, 0], [9.5, 12], [15, 25]], 70 - 8.5, 5.8, { fokus: true, bremsStand: true, blinker: [{ von: 0.5, bis: 11, seite: "rechts" }], schulter: [{ von: 4.4, bis: 5.3, seite: "rechts" }] });
     const rad = fahrt("rad", "rad", "#2c5aa0", [[4.5, 60], [4.5, -60]], [[0, 18]], 60 - 8, 6.2, {});
     const rad2 = fahrt("rad2", "rad", "#7b8a52", [[4.5, 80], [4.5, -60]], [[0, 16]], 80 - 8, 13, {});
@@ -416,7 +416,8 @@
     K.linien.push({ art: "voll", b: 0.12, pts: [[0, 90], [0, 7]] }, { art: "voll", b: 0.12, pts: [[3.25, 30], [3.25, 7]] }, { art: "leit_io", b: 0.12, pts: [[3.25, 90], [3.25, 30]] });
     K.linien.push({ art: "voll", b: 0.12, pts: [[0, -7], [0, -90]] }, { art: "leit_io", b: 0.12, pts: [[-3.25, -7], [-3.25, -90]] });
     K.linien.push({ art: "voll", b: 0.12, pts: [[-90, 0], [-7, 0]] }, { art: "leit_io", b: 0.12, pts: [[-90, -3.25], [-7, -3.25]] }, { art: "voll", b: 0.12, pts: [[7, 0], [90, 0]] }, { art: "leit_io", b: 0.12, pts: [[7, 3.25], [90, 3.25]] });
-    K.linien.push({ art: "voll", b: 0.5, pts: [[0.2, 7.5], [6.3, 7.5]] });
+    K.linien.push({ art: "voll", b: 0.5, pts: [[0.2, 12.2], [6.3, 12.2]] });
+    K.objekte.push({ art: "ampel", x: 7.4, y: 12.6, h: PI / 2, phasen: [[99, "gruen"]] }, { art: "ampel", x: -7.4, y: -12.6, h: -PI / 2, phasen: [[99, "rot"]] }, { art: "ampel", x: -12.6, y: 7.4, h: PI, phasen: [[99, "rot"]] }, { art: "ampel", x: 12.6, y: -7.4, h: 0, phasen: [[99, "rot"]] });
     // Leitlinien im Knoten für die beiden Abbiegespuren
     const kn = bezier([3.25, 7], [3.25, 0], [0, -3.25], [-7, -3.25], 20); K.linien.push({ art: "leit_io", b: 0.12, pts: kn });
     // Pfeile (Zeichen 297) als weiße Flächen
@@ -432,7 +433,7 @@
       dauer: 14, strasse: K, kamera: { fest: [0, 2], zoom: 8 },
       fahrzeuge: [fs, n, h1],
       phasen: [
-        { t: 0.2, titel: "Zwei Linksabbiegestreifen", text: "Beide Fahrstreifen führen nach links (Pfeile, Zeichen 297). Rechtzeitig einordnen, blinken – und die gewählte Spur beibehalten.", regel: "Zeichen 297 · § 9 Abs. 1 StVO", frage: { text: "Die Fahrschule ist auf dem rechten der beiden Linksabbiegestreifen. In welche Spur biegt sie ein?", optionen: ["In die rechte Spur der Zielstraße", "In die linke Spur", "Egal"], richtig: 0, erklaerung: "Links bleibt links, rechts bleibt rechts – so gibt es keinen Konflikt mit dem Nachbarn." } },
+        { t: 0.2, titel: "Zwei Linksabbiegestreifen", text: "Beide Fahrstreifen führen nach links (Pfeile, Zeichen 297), die Ampel zeigt Grün. Rechtzeitig einordnen, blinken – und die gewählte Spur beibehalten.", regel: "Zeichen 297 · § 9 Abs. 1 StVO", frage: { text: "Die Fahrschule ist auf dem rechten der beiden Linksabbiegestreifen. In welche Spur biegt sie ein?", optionen: ["In die rechte Spur der Zielstraße", "In die linke Spur", "Egal"], richtig: 0, erklaerung: "Links bleibt links, rechts bleibt rechts – so gibt es keinen Konflikt mit dem Nachbarn." } },
         { t: 5, titel: "Im Bogen die Spur halten", text: "Gleichmäßig nebeneinander abbiegen. Die gestrichelten Leitlinien im Knoten zeigen den Weg. Kein Fahrstreifenwechsel in der Kreuzung!", regel: "§ 7 Abs. 5 · § 9 Abs. 1 StVO" },
         { t: 9, titel: "Nach dem Abbiegen", text: "Erst hinter der Kreuzung – mit Blinker, Spiegel und Schulterblick – bei Bedarf die Spur wechseln.", regel: "§ 7 Abs. 5 StVO" }
       ]
@@ -453,10 +454,10 @@
     // Wartelinien (Zeichen 341) auf der Zufahrtseite
     li.push({ art: "warte", b: 0.4, pts: [[0.4, RA + 0.9], [b - 0.1, RA + 0.9]] }, { art: "warte", b: 0.4, pts: [[-0.4, -RA - 0.9], [-b + 0.1, -RA - 0.9]] }, { art: "warte", b: 0.4, pts: [[RA + 0.9, -0.4], [RA + 0.9, -b + 0.1]] }, { art: "warte", b: 0.4, pts: [[-RA - 0.9, 0.4], [-RA - 0.9, b - 0.1]] });
     // Zebrastreifen an der Westausfahrt
-    for (let y = -3; y < 3.2; y += 1) fl.push({ art: "weiss", poly: rect(-RA - 7.5, y, -RA - 4, y + 0.5) });
+    for (let y = -3; y < 3.2; y += 1) fl.push({ art: "weiss", poly: rect(-RA - 12, y, -RA - 8.5, y + 0.5) });
     haeuser(obj, [[32, 30, 12, 10, 9], [-32, 30, 12, 10, 8, "#cdd3d8"], [32, -30, 12, 10, 10, "#e3d7c3"], [-32, -30, 12, 10, 7, "#d9cfbf", "#6d5a4a"]]);
     baeume(obj, [[0, 0, 3], [3.5, -3, 1.8], [-3, 2.8, 1.6]]);
-    const schilder = [{ typ: "z215", x: 5.4, y: RA + 7.5, seite: 1 }, { typ: "z205", x: 5.4, y: RA + 9.5, seite: 1 }, { typ: "z205", x: -5.4, y: -RA - 9.5, seite: 1 }, { typ: "z205", x: RA + 9.5, y: -5.4, seite: 1 }, { typ: "z205", x: -RA - 9.5, y: 5.4, seite: 1 }, { typ: "z350", x: -RA - 8.5, y: -5.4, seite: 1 }];
+    const schilder = [{ typ: "z215", x: 5.4, y: RA + 7.5, seite: 1 }, { typ: "z205", x: 5.4, y: RA + 9.5, seite: 1 }, { typ: "z205", x: -5.4, y: -RA - 9.5, seite: 1 }, { typ: "z205", x: RA + 9.5, y: -5.4, seite: 1 }, { typ: "z205", x: -RA - 9.5, y: 5.4, seite: 1 }, { typ: "z350", x: -RA - 13, y: -5.4, seite: 1 }];
     // Kreisfahrbahn gegen den Uhrzeigersinn (von oben gesehen) = im Bild mit abnehmendem Winkel. Armachsen: S +π/2, O 0, N −π/2, W π.
     const rk = (RA + RI + 1.3) / 2 + 0.4, AX = { S: PI / 2, O: 0, N: -PI / 2, W: PI };
     const ringPt = a => [rk * Math.cos(a), rk * Math.sin(a)];
@@ -471,21 +472,21 @@
     }
     const wegFS = kreisWeg("S", "W"), wegK = kreisWeg("W", "N");
     const sWarte = L - RA - 2.2 - 2.25;                                          // Front an der Wartelinie
-    const sZebra = sNahe(wegFS, -RA - 2.4, -1.6) - 2.25;                       // Front vor dem Zebrastreifen
+    const sZebra = sNahe(wegFS, -RA - 7.9, -1.6) - 2.25;                       // Front vor dem Zebrastreifen (Heck außerhalb der Kreisfahrbahn)
     const plan = (b1, b2) => fahrplan({ vMax: 30, grenzen: [{ von: sWarte - 5, bis: sZebra + 20, v: 22 }], halte: [{ s: sWarte, bis: b1 }, { s: sZebra, bis: b2 }], dauer: 40, s0: 8 });
     let fs = fahrt("fs", "fahrschule", "#f2f2ee", wegFS, plan(99, 99), 8, 0);
     const tA = tBeiS(fs, sWarte - 0.4);                                        // Ankunft an der Wartelinie
     fs = fahrt("fs", "fahrschule", "#f2f2ee", wegFS, plan(tA + 2.4, 99), 8, 0);
     const tZ0 = tBeiS(fs, sZebra - 0.4);                                       // Ankunft vor dem Zebrastreifen
-    fs = fahrt("fs", "fahrschule", "#f2f2ee", wegFS, plan(tA + 2.4, tZ0 + 4.2), 8, 0, { fokus: true, bremsStand: true });
+    fs = fahrt("fs", "fahrschule", "#f2f2ee", wegFS, plan(tA + 2.4, tZ0 + 7.2), 8, 0, { fokus: true, bremsStand: true });
     // Blinker rechts ab der Ausfahrt Norden (vorletzte Ausfahrt)
     const tBl = tBeiS(fs, sNahe(wegFS, ringPt(-PI / 2)[0], ringPt(-PI / 2)[1]));
-    fs.blinker = [{ von: tBl, bis: tBeiS(fs, sZebra + 10), seite: "rechts" }];
+    fs.blinker = [{ von: tBl, bis: tBeiS(fs, sNahe(wegFS, -RA - 3, -1.6)), seite: "rechts" }];
     const sKs = sNahe(wegK, ringPt(PI / 2)[0], ringPt(PI / 2)[1]);           // Kreis-Pkw an der Einfahrt Süd, während die Fahrschule wartet
     const k = fahrt("k", "pkw", "#2c5aa0", wegK, fahrplan({ vMax: 28, grenzen: [{ von: 50, bis: 200, v: 24 }], dauer: 40 }), sKs, tA + 1.1, { blinker: [] });
     k.blinker = [{ von: tBeiS(k, sNahe(wegK, ringPt(0)[0], ringPt(0)[1])), bis: 40, seite: "rechts" }];
     const tZ = tZ0;
-    const fg = person("fg", "fussgaenger", "#8e4b8a", [[-RA - 5.7, -6.8], [-RA - 5.7, 8]], [[0, 0], [tZ - 1.7, 0], [tZ - 1.5, 4.5], [60, 4.5]]);
+    const fg = person("fg", "fussgaenger", "#8e4b8a", [[-RA - 10.25, -6.8], [-RA - 10.25, 8]], [[0, 0], [tZ - 1.7, 0], [tZ - 1.5, 4.5], [60, 4.5]]);
     innerortsSzene({
       id: "kreisel", plan: ["l_kreisel"], titel: "Kreisverkehr", kurz: "Einfahren ohne Blinker, im Kreis Vorfahrt, beim Ausfahren blinken",
       dauer: Math.ceil(tBeiS(fs, sZebra + 25)), strasse: { flaechen: fl, linien: li, objekte: obj, schilder, bereich: [-L, L], boden: "#6a9a52", boden3d: "#6f9a55" }, kamera: { fest: [-2, 2], zoom: 6.5 },
@@ -507,8 +508,8 @@
     st.schilder = [{ typ: "z350", x: -3, y: 5.6, seite: 1 }, { typ: "z350", x: 3, y: -5.6, seite: 1 }];
     const vor = fahrt("v", "pkw", "#2c5aa0", [[-150, 2.2], [150, 2.2]], [[0, 40], [3, 30], [5.3, 12], [6.5, 0], [12.3, 0], [14.8, 25], [22, 40]], 150 - 4.8, 6.5, { bremsStand: true });
     const fs = fahrt("fs", "fahrschule", "#f2f2ee", [[-150, 2.2], [150, 2.2]], [[0, 40], [3, 30], [5.8, 12], [7.2, 0], [12.9, 0], [15.5, 25], [22, 40]], 150 - 11.5, 7.2, { fokus: true, bremsStand: true });
-    const fg = person("fg", "fussgaenger", "#b3322c", [[0.5, 9], [0.5, 5.2], [0.5, -5.2], [0.5, -9]], [[0, 4.5], [3.8, 4.5], [4, 0], [4.8, 0], [5, 4.5], [12, 4.5], [12.5, 0]]);
-    const kind = person("kd", "kind", "#e0b84a", [[-0.6, 9.5], [-0.6, 5.2], [-0.6, -5.2]], [[0, 5], [4.1, 5], [4.3, 0], [5, 0], [5.2, 5], [12, 5]]);
+    const fg = person("fg", "fussgaenger", "#b3322c", [[0.5, 9], [0.5, -9]], [[0, 4.5], [2.95, 4.5], [3.05, 0], [4.8, 0], [5, 4.5], [40, 4.5]]);
+    const kind = person("kd", "kind", "#e0b84a", [[-0.6, 9.5], [-0.6, -9]], [[0, 5], [2.95, 5], [3.05, 0], [5, 0], [5.2, 5], [40, 5]]);
     const gg = fahrt("gg", "pkw", "#7b8a52", [[150, -2.2], [-150, -2.2]], [[0, 40], [3.5, 25], [5.4, 0], [12.4, 0], [14.5, 30], [22, 40]], 150 - 5, 5.4, { bremsStand: true });
     innerortsSzene({
       id: "zebra", plan: ["l_zebra"], titel: "Fußgängerüberweg (Zebrastreifen)", kurz: "Vorausschauen, bremsbereit – wer rüber will, hat Vorrang",
@@ -526,7 +527,8 @@
   // ---- Engstelle: Hindernis auf der eigenen Seite
   (function () {
     const st = wohnstrasse(3.3, -3.3, -80, 80);
-    const fs = fahrt("fs", "fahrschule", "#f2f2ee", [[-150, 1.65], [-13, 1.65], [-7.5, -0.7], [12, -0.7], [17, 1.65], [150, 1.65]], [[0, 30], [3, 20], [5.2, 0], [9.3, 0], [11.5, 18], [20, 30]], 150 - 14, 5.2, { fokus: true, bremsStand: true, blinker: [{ von: 9.2, bis: 11, seite: "links" }, { von: 12.5, bis: 13.8, seite: "rechts" }], schulter: [{ von: 8.6, bis: 9.3, seite: "links" }] });
+    const fs = fahrt("fs", "fahrschule", "#f2f2ee", [[-150, 1.65], [-13, 1.65], [-7.5, -1.3], [12.5, -1.3], [18, 1.65], [150, 1.65]], [[0, 30], [3, 20], [5.2, 0], [9.3, 0], [11.5, 18], [22, 30]], 150 - 14, 5.2, { fokus: true, bremsStand: true, schulter: [{ von: 8.6, bis: 9.3, seite: "links" }] });
+    { const tE = tBeiS(fs, 150 + 12); fs.blinker = [{ von: 9.2, bis: 11.2, seite: "links" }, { von: tE - 0.6, bis: tE + 1.4, seite: "rechts" }]; fs._tE = tE; }
     const lkw = parkt("lkw", "lkw", "#c9ced6", 2.5, 1.9, 0, { warnblink: [{ von: 0, bis: 99 }] });
     const g1 = fahrt("g1", "pkw", "#b3322c", [[150, -1.65], [-150, -1.65]], [[0, 30]], 150 - 30, 3);
     const g2 = fahrt("g2", "pkw", "#2c5aa0", [[150, -1.65], [-150, -1.65]], [[0, 30]], 150 - 5, 6.8);
@@ -538,7 +540,7 @@
         { t: 0.2, titel: "Hindernis voraus", text: "Ein Lkw steht mit Warnblinklicht auf meiner Seite. Die Straße ist zu schmal für zwei Fahrzeuge nebeneinander.", regel: "§ 6 StVO", frage: { text: "Wer darf zuerst durch die Engstelle?", optionen: ["Ich – ich war zuerst da", "Der Gegenverkehr – das Hindernis ist auf meiner Seite", "Wer schneller ist"], richtig: 1, erklaerung: "§ 6 StVO: Wer an einem Hindernis links vorbeifahren will, muss entgegenkommende Fahrzeuge durchfahren lassen." } },
         { t: 5.2, titel: "Mit Abstand warten", text: "Rechtzeitig und mit Abstand zum Hindernis halten – so bleibt Platz zum Vorbeifahren und man sieht den Gegenverkehr besser.", regel: "§ 6 StVO" },
         { t: 8.6, titel: "Ausscheren ankündigen", text: "Wenn frei ist: Spiegel, Schulterblick links, links blinken und mit genügend Seitenabstand am Lkw vorbei – auf Personen achten, die aussteigen.", regel: "§ 6 · § 7 Abs. 5 StVO" },
-        { t: 12.5, titel: "Wieder einordnen", text: "Nach dem Hindernis rechts blinken und wieder rechts einordnen.", regel: "§ 6 · § 2 Abs. 2 StVO" }
+        { t: fs._tE - 0.6, titel: "Wieder einordnen", text: "Hinter dem Hindernis rechts blinken und wieder rechts einordnen.", regel: "§ 6 · § 2 Abs. 2 StVO" }
       ]
     });
   })();
@@ -548,7 +550,7 @@
     const K = stadtKreuzung({ b: 3.25, R: 6, arme: { N: 0, S: 1, O: 1, W: 1 } });
     K.linien.push({ art: "voll", b: 0.5, pts: [[0.1, 9.8], [3.2, 9.8]] }, { art: "leit_io", b: 0.12, pts: [[-90, 0], [-11, 0]] }, { art: "leit_io", b: 0.12, pts: [[11, 0], [90, 0]] }, { art: "leit_io", b: 0.12, pts: [[0, 90], [0, 12]] });
     K.schilder.push({ typ: "z206", x: 4.8, y: 11, seite: 1 }, { typ: "z306", x: -12, y: 4.8, seite: 1 });
-    const fs = fahrt("fs", "fahrschule", "#f2f2ee", route("S", "O", { q: 1.625, e: 10.3, e2: 8, k: 0.5 }), [[0, 30], [3, 12], [4.8, 0], [6.5, 0], [7.3, 4], [8.2, 0], [11.6, 0], [13.5, 15], [20, 30]], 70 - 10.3, 4.8, { fokus: true, bremsStand: true, blinker: [{ von: 0.5, bis: 15, seite: "rechts" }] });
+    const fs = fahrt("fs", "fahrschule", "#f2f2ee", route("S", "O", { q: 1.625, e: 12.1, e2: 8, k: 0.5 }), [[0, 30], [3, 12], [4.8, 0], [6.5, 0], [7.3, 4], [8.2, 0], [11.6, 0], [13.5, 15], [20, 30]], 70 - 12.1, 4.8, { fokus: true, bremsStand: true, blinker: [{ von: 0.5, bis: 15, seite: "rechts" }] });
     const q1 = fahrt("q1", "pkw", "#2c5aa0", route("W", "O", { q: 1.625, e: 10 }), [[0, 45]], 70, 9.5);
     const q2 = fahrt("q2", "transporter", "#e7e3d6", route("O", "W", { q: 1.625, e: 10 }), [[0, 42]], 70, 10.3);
     innerortsSzene({
@@ -572,24 +574,26 @@
     // Fußgängerfurt über die Zufahrt Süd (zwischen Haltlinie und Kreuzung)
     for (let x = -3.2; x < 3.2; x += 1) K.flaechen.push({ art: "weiss", poly: rect(x, 11.3, x + 0.5, 11.6) }, { art: "weiss", poly: rect(x, 14.6, x + 0.5, 14.9) });
     const rot = [[99, "rot"]], gruen = [[99, "gruen"]];
-    K.objekte.push({ art: "ampel", x: 4.2, y: HL + 0.3, h: -PI / 2, phasen: rot, gruenpfeil: true }, { art: "ampel", x: -4.2, y: -HL, h: PI / 2, phasen: rot },
-      { art: "ampel", x: -12.8, y: 4.2, h: 0, phasen: gruen }, { art: "ampel", x: 12.8, y: -4.2, h: PI, phasen: gruen },
+    // h = Richtung, in die die Lampen leuchten (zum ankommenden Verkehr hin)
+    K.objekte.push({ art: "ampel", x: 4.2, y: HL + 0.3, h: PI / 2, phasen: rot, gruenpfeil: true }, { art: "ampel", x: -4.2, y: -HL, h: -PI / 2, phasen: rot },
+      { art: "ampel", x: -12.8, y: 4.2, h: PI, phasen: gruen }, { art: "ampel", x: 12.8, y: -4.2, h: 0, phasen: gruen },
       { art: "ampel", fuss: true, x: -4.5, y: 13.9, h: 0, phasen: gruen }, { art: "ampel", fuss: true, x: 4.5, y: 12.1, h: PI, phasen: gruen });
     const weg = route("S", "O", { q: 1.625, e: 10.2, e2: 9, k: 0.45 });
     const sHalt = 70 - HL - 2.4, sSicht = 70 - 10.4;
-    const fs = fahrt("fs", "fahrschule", "#f2f2ee", weg, fahrplan({ vMax: 30, grenzen: [{ von: sHalt - 1, bis: sSicht + 1, v: 6 }], halte: [{ s: sHalt, bis: 11.3 }, { s: sSicht, bis: 13.6 }], dauer: 30 }), 0, 0, { fokus: true, bremsStand: true, blinker: [{ von: 0.5, bis: 18, seite: "rechts" }], schulter: [{ von: 12.6, bis: 13.5, seite: "rechts" }] });
-    const q1 = fahrt("q1", "pkw", "#2c5aa0", route("W", "O", { q: 1.625, e: 10 }), [[0, 40]], 70, 12.8);
+    const fs = fahrt("fs", "fahrschule", "#f2f2ee", weg, fahrplan({ vMax: 30, grenzen: [{ von: sHalt - 1, bis: sSicht + 1, v: 10 }], halte: [{ s: sHalt, bis: 12.9 }, { s: sSicht, bis: 18.8 }], dauer: 40 }), 0, 0, { fokus: true, bremsStand: true, blinker: [{ von: 0.5, bis: 24, seite: "rechts" }], schulter: [{ von: 17.9, bis: 18.8, seite: "rechts" }] });
+    const q1 = fahrt("q1", "pkw", "#2c5aa0", route("W", "O", { q: 1.625, e: 10 }), [[0, 40]], 70, 17.6);
     const fg = person("fg", "fussgaenger", "#8e4b8a", [[-7, 13], [9, 13]], [[0, 0], [3.2, 0], [3.4, 4.5], [40, 4.5]]);
     innerortsSzene({
       id: "gruenpfeil", plan: ["a_pfeil"], titel: "Grünpfeil bei Rot", kurz: "Erst anhalten, dann vorsichtig rechts – der freigegebene Verkehr geht vor",
-      dauer: 19, strasse: K, kamera: { fest: [4, 8], zoom: 9 },
+      dauer: 26, strasse: K, kamera: { fest: [4, 8], zoom: 9 },
       fahrzeuge: [fs, q1, fg],
       phasen: [
         { t: 0.2, titel: "Rot – mit Grünpfeil-Schild", text: "Die Ampel zeigt Rot. Rechts daneben hängt ein grüner Pfeil auf schwarzem Blechschild (Zeichen 720) – kein Lichtpfeil!", regel: "§ 37 Abs. 2 Nr. 1 StVO · Zeichen 720", frage: { text: "Was verlangt der Grünpfeil zuerst?", optionen: ["Langsam durchrollen", "An der Haltlinie vollständig anhalten", "Nichts, er zeigt Grün"], richtig: 1, erklaerung: "Nach dem Anhalten ist das Rechtsabbiegen bei Rot erlaubt – Anhalten ist Pflicht." } },
         { t: 5.5, titel: "Anhalten an der Haltlinie", text: "Vollständig anhalten. Vor mir überquert eine Fußgängerin bei Grün die Fahrbahn.", regel: "§ 37 Abs. 2 Nr. 1 StVO", frage: { text: "Wer darf zuerst?", optionen: ["Ich, ich habe den Pfeil", "Fußgänger und Querverkehr mit Grün", "Wer zuerst da war"], richtig: 1, erklaerung: "Behinderung oder Gefährdung – insbesondere des Fußgänger- und Fahrzeugverkehrs der freigegebenen Richtung – muss ausgeschlossen sein." } },
-        { t: 11.4, titel: "Vortasten bis zur Sichtlinie", text: "Die Furt ist frei. Langsam bis zur Sichtlinie vortasten und erneut halten: Der Querverkehr hat Grün.", regel: "§ 37 Abs. 2 Nr. 1 StVO" },
-        { t: 12.6, titel: "Abbiegen", text: "Das blaue Auto ist vorbei. Schulterblick rechts und langsam abbiegen – nur aus dem rechten Fahrstreifen!", regel: "§ 37 Abs. 2 Nr. 1 StVO" },
-        { t: 16.5, titel: "Merke", text: "Leuchtender grüner Pfeil in der Ampel = eigene Grünphase fürs Abbiegen. Grünes Blechschild = Abbiegen erst nach dem Anhalten, mit größter Vorsicht.", regel: "§ 37 Abs. 2 StVO" }
+        { t: 13, titel: "Vortasten bis zur Sichtlinie", text: "Die Furt ist frei. Langsam bis zur Sichtlinie vortasten und erneut halten.", regel: "§ 37 Abs. 2 Nr. 1 StVO" },
+        { t: 16.8, titel: "Querverkehr hat Grün", text: "Von links kommt ein Auto mit Grün – es darf weder behindert noch gefährdet werden. Warten.", regel: "§ 37 Abs. 2 Nr. 1 StVO" },
+        { t: 18.8, titel: "Abbiegen", text: "Das blaue Auto ist vorbei. Schulterblick rechts und langsam abbiegen – nur aus dem rechten Fahrstreifen!", regel: "§ 37 Abs. 2 Nr. 1 StVO" },
+        { t: 23, titel: "Merke", text: "Leuchtender grüner Pfeil in der Ampel = eigene Grünphase fürs Abbiegen. Grünes Blechschild = Abbiegen erst nach dem Anhalten, mit größter Vorsicht.", regel: "§ 37 Abs. 2 StVO" }
       ]
     });
   })();

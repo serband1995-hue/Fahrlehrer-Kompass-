@@ -7907,7 +7907,7 @@ function buildStufen(s){
       const faStufe=FA_VIDEO_MAP[it.id];
       const vidBtn=(faStufe&&faStufe.contentDa!==false)?`<button class="vidBtn" data-faid="${it.id}" aria-label="Video in Fahr-Akademie ansehen">${ICN.video}</button>`:"";
       const lzListe=(window.Lernszenen&&window.Lernszenen.szenenFuerPlan)?window.Lernszenen.szenenFuerPlan(it.id):[];
-      const szBtn=lzListe.length?`<button class="szBtn" data-lz="${esc(lzListe[0].id)}" aria-label="Lernszene ansehen: ${esc(lzListe[0].titel)}" title="Lernszene: ${esc(lzListe[0].titel)}">🎬</button>`:"";
+      const szBtn=lzListe.length?`<button class="szBtn" data-lz="${esc(lzListe[0].id)}" data-lzalle="${esc(lzListe.map(x=>x.id).join(","))}" aria-label="Lernszene ansehen: ${esc(lzListe[0].titel)}" title="Lernszene: ${esc(lzListe[0].titel)}">🎬</button>`:"";
       const ampelHtml=st.eval===false
         ? `<div class="ampel"><button class="amp chk ${v==='gruen'?'on':''}" data-v="gruen" aria-label="erledigt">${v==='gruen'?'✓':''}</button></div>`
         : `<div class="ampel">${["rot","gelb","gruen"].map(c=>`<button class="amp ${v===c?'on':''}" data-v="${c}" aria-label="${c}">${v===c?({rot:'✕',gelb:'•',gruen:'✓'}[c]):''}</button>`).join("")}</div>`;
@@ -7934,7 +7934,9 @@ function buildStufen(s){
     if(panel){const open=panel.classList.toggle("open");b.classList.toggle("on",open);}}));
   wrap.querySelectorAll(".szBtn").forEach(b=>b.addEventListener("click",e=>{
     e.stopPropagation();
-    if(window.Lernszenen)window.Lernszenen.open({szene:b.dataset.lz});
+    if(!window.Lernszenen)return;
+    const ids=(b.dataset.lzalle||b.dataset.lz).split(",");
+    if(ids.length>1)window.Lernszenen.open({nur:ids});else window.Lernszenen.open({szene:ids[0]});
   }));
   wrap.querySelectorAll(".vidBtn").forEach(b=>b.addEventListener("click",e=>{
     e.stopPropagation();
