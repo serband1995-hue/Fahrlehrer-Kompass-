@@ -132,6 +132,15 @@
     } else if (typ.startsWith("z274_")) { // zulässige Höchstgeschwindigkeit
       g.beginPath(); g.arc(64, 64, 58, 0, 7); g.fillStyle = "#fff"; g.fill(); g.lineWidth = 14; g.strokeStyle = "#d4202a"; g.stroke();
       g.fillStyle = "#111"; g.font = "bold 46px sans-serif"; g.fillText(typ.slice(5), 64, 67);
+    } else if (typ === "z224") {                                   // Haltestelle
+      g.beginPath(); g.arc(64, 64, 58, 0, 7); g.fillStyle = "#f4c800"; g.fill(); g.lineWidth = 10; g.strokeStyle = "#1f8a4c"; g.stroke();
+      g.fillStyle = "#1f8a4c"; g.font = "bold 64px sans-serif"; g.fillText("H", 64, 68);
+    } else if (typ === "z276" || typ === "z280") {                 // Überholverbot / Ende
+      const ende = typ === "z280";
+      g.beginPath(); g.arc(64, 64, 58, 0, 7); g.fillStyle = "#fff"; g.fill(); g.lineWidth = ende ? 4 : 14; g.strokeStyle = ende ? "#333" : "#d4202a"; g.stroke();
+      const auto = (x, farbe) => { g.fillStyle = farbe; rund(x - 13, 40, 26, 50, 7); g.fill(); g.fillStyle = "#fff"; g.fillRect(x - 9, 48, 18, 10); g.fillStyle = farbe; g.fillRect(x - 15, 60, 3, 10); g.fillRect(x + 12, 60, 3, 10); };
+      auto(46, ende ? "#8a8a8a" : "#d4202a"); auto(82, ende ? "#8a8a8a" : "#111");
+      if (ende) { g.strokeStyle = "#333"; g.lineWidth = 3; for (let i = -2; i <= 2; i++) { g.beginPath(); g.moveTo(26 + i * 6, 108 + i * 6); g.lineTo(102 + i * 6, 20 + i * 6); g.stroke(); } }
     } else if (typ === "zone30") {                                  // Zeichen 274.1 Tempo-30-Zone
       rund(10, 4, 108, 120, 8); g.fillStyle = "#fff"; g.fill(); g.lineWidth = 3; g.strokeStyle = "#222"; g.stroke();
       g.beginPath(); g.arc(64, 52, 36, 0, 7); g.fillStyle = "#fff"; g.fill(); g.lineWidth = 9; g.strokeStyle = "#d4202a"; g.stroke();
@@ -164,7 +173,7 @@
   const SCHILD_NAME = {
     z330: "Zeichen 330.1 · Autobahn", z332: "Zeichen 332 · Ausfahrttafel", z333: "Zeichen 333 · Pfeilzeichen Ausfahrt",
     z450_3: "Zeichen 450 · Ankündigungsbake 300 m", z450_2: "Zeichen 450 · Ankündigungsbake 200 m", z450_1: "Zeichen 450 · Ankündigungsbake 100 m",
-    z205: "Zeichen 205 · Vorfahrt gewähren", z206: "Zeichen 206 · Halt. Vorfahrt gewähren", z215: "Zeichen 215 · Kreisverkehr", z306: "Zeichen 306 · Vorfahrtstraße", z350: "Zeichen 350 · Fußgängerüberweg", z274_30: "Zeichen 274 · 30 km/h", zone30: "Zeichen 274.1 · Tempo-30-Zone",
+    z205: "Zeichen 205 · Vorfahrt gewähren", z206: "Zeichen 206 · Halt. Vorfahrt gewähren", z215: "Zeichen 215 · Kreisverkehr", z306: "Zeichen 306 · Vorfahrtstraße", z350: "Zeichen 350 · Fußgängerüberweg", z274_30: "Zeichen 274 · 30 km/h", zone30: "Zeichen 274.1 · Tempo-30-Zone", z224: "Zeichen 224 · Haltestelle", z276: "Zeichen 276 · Überholverbot für Kraftfahrzeuge aller Art", z280: "Zeichen 280 · Ende des Überholverbots", z274_100: "Zeichen 274 · 100 km/h",
     vorweg: "Zeichen 449 · Vorwegweiser 1000 m", weg: "Zeichen 449 · Vorwegweiser 500 m", z531: "Zeichen 531 · Einengungstafel"
   };
 
@@ -490,7 +499,7 @@
   let ansicht = { zoom: 5, px: 0, py: 0, folgen: true };
   let fahr = null;                     // Zustand im Selbst-fahren-Modus
   let onCloseCb = null, beob = null, tippFrage = null;
-  const KATEGORIEN = [["innerorts", "Innerorts"], ["grundfahr", "Grundfahraufgaben"], ["autobahn", "Autobahn"]];
+  const KATEGORIEN = [["innerorts", "Innerorts"], ["ueberland", "Überland"], ["grundfahr", "Grundfahraufgaben"], ["autobahn", "Autobahn"]];
   let katAktiv = "innerorts", nurListe = null;
 
   // Position eines Fahrzeugs zur Zeit t (Vorführen/Mitdenken)
@@ -875,6 +884,9 @@
   }
   function objekt3d(c, o) {
     if (o.art === "haus") {
+      // steht die Kamera im oder direkt über dem Haus (z. B. bei starkem Lenkeinschlag), das Haus weglassen – sonst verdeckt es alles
+      const hh = o.h || 0, dx = c.e[0] - o.x, dy = c.e[1] - o.y, lx = dx * Math.cos(hh) + dy * Math.sin(hh), ly = -dx * Math.sin(hh) + dy * Math.cos(hh);
+      if (Math.abs(lx) < o.l / 2 + 3 && Math.abs(ly) < o.b / 2 + 3) return;
       quader(c, o.x, o.y, o.h || 0, o.l, o.b, 0, o.hoehe || 7, o.farbe || "#d9cfbf", 1, (fl, v) => {
         if (!fl.name) return; const i = fl.i.map(j => v[j]), n = Math.max(1, Math.round((fl.name === "vorn" || fl.name === "hinten" ? o.b : o.l) / 3.2));
         for (let k = 0; k < n; k++) for (let st2 = 0; st2 < Math.max(1, Math.floor((o.hoehe || 7) / 3)); st2++) {
@@ -936,12 +948,13 @@
       t: 0, v: F.start.v / KMH, pfad: F.start.pfad, s: F.start.s || 0, spur: F.spurStart, blinker: null, blinkerSeit: -99, blinkerAusT: null, schulter: [], wechsel: null,
       gas: false, bremse: false, log: [], ende: false, kollision: false, tippIdx: 0, maxV: 0,
       gebremstAufHaupt: false, minVHaupt: Infinity, blinkerVergessen: false, steht: 0,
-      verkehr: F.verkehr.map((q, i) => ({ id: "v" + i, typ: q.typ, farbe: q.farbe, x: q.x0, y: q.y, v: q.v / KMH, v0: q.v / KMH, a: 0 })),
+      verkehr: F.verkehr.map((q, i) => ({ id: "v" + i, typ: q.typ, farbe: q.farbe, x: q.x0, y: q.y, v: q.v / KMH, v0: q.v / KMH, a: 0, gegen: !!q.gegen })),
+      minFolge: Infinity, minZeitGegen: Infinity, maxVLinks: 0, maxV: 0, verbot: false, ueberholt: false, abgebrochen: 0, kollisionGegen: false,
       behinderung: 0,
       liste() {
         const pos = this.pos();
         const out = [{ f: { id: "fs", typ: "fahrschule", farbe: "#f2f2ee", fokus: true }, p: pos, sig: { blinker: this.blinker, bremse: this.bremse, schulter: this.schulter.find(s => this.t >= s.von && this.t < s.bis) || null } }];
-        this.verkehr.forEach(q => out.push({ f: { id: q.id, typ: q.typ, farbe: q.farbe }, p: { x: q.x, y: q.y, h: 0, v: q.v }, sig: { blinker: null, bremse: q.a < -0.8 } }));
+        this.verkehr.forEach(q => out.push({ f: { id: q.id, typ: q.typ, farbe: q.farbe }, p: { x: q.x, y: q.y, h: q.gegen ? Math.PI : 0, v: q.v }, sig: { blinker: null, bremse: q.a < -0.8 } }));
         return out;
       },
       pos() { const p = this.pfad.an(this.s); return { x: p.x, y: p.y, h: p.h, v: this.v }; }
@@ -952,7 +965,7 @@
   // Nächste Fahrzeuge vor und hinter der Stelle x im Fahrstreifen y: Lücke (Stoßstange zu Stoßstange) und Tempo
   function luecken(st, y, x) {
     let vorne = null, hinten = null; const T = TYPEN;
-    st.verkehr.forEach(q => { if (Math.abs(q.y - y) > 1.2) return; const d = q.x - x; if (d >= 0 && (!vorne || d < vorne.d)) vorne = { d, q }; if (d < 0 && (!hinten || -d < hinten.d)) hinten = { d: -d, q }; });
+    st.verkehr.forEach(q => { if (q.gegen || Math.abs(q.y - y) > 1.2) return; const d = q.x - x; if (d >= 0 && (!vorne || d < vorne.d)) vorne = { d, q }; if (d < 0 && (!hinten || -d < hinten.d)) hinten = { d: -d, q }; });
     return {
       vorn: vorne ? vorne.d - (T[vorne.q.typ].l + T.fahrschule.l) / 2 : 999, hinten: hinten ? hinten.d - (T[hinten.q.typ].l + T.fahrschule.l) / 2 : 999,
       vVorn: vorne ? vorne.q.v * KMH : 0, vHinten: hinten ? hinten.q.v * KMH : 0
@@ -968,7 +981,7 @@
       const text = F.wechselHinweis ? F.wechselHinweis(p.x, st.spur, ziel) : "Hier ist kein Fahrstreifenwechsel möglich.";
       st.log.push({ t: st.t, typ: "hinweis", text }); zeigeToast(text); return;
     }
-    let L = Math.max(40, st.v * 3.2);
+    let L = F.wechselFaktor ? Math.max(25, st.v * F.wechselFaktor) : Math.max(40, st.v * 3.2);
     const grenze = F.wechselBis && F.wechselBis[st.spur + ">" + ziel];
     if (grenze !== undefined) L = clamp(grenze - p.x, 25, L);
     const pts = [[p.x, p.y]].concat(spurPfad(p.x + 2, p.x + L, p.y, [{ x: p.x + 2, y: spurY(ziel), laenge: L - 2 }]).slice(1));
@@ -1007,20 +1020,40 @@
       if (st.bremse && st.v > 70 / KMH) st.gebremstAufHaupt = true;
       if (p.x > (F.start.pfad.an(F.start.s || 0).x + 60) && p.x < 0) st.minVHaupt = Math.min(st.minVHaupt, st.v * KMH);
     }
+    if (F.bewerten === "ueberholen") {
+      const vor = st.verkehr.filter(q => !q.gegen && Math.abs(q.y - spurY("rechts")) < 1 && q.x > p.x).sort((a, b) => a.x - b.x)[0];
+      st.maxV = Math.max(st.maxV, st.v * KMH);
+      if (st.wechsel && st.wechsel.nach === "links" && st.wechsel.ziel === undefined) st.wechsel.ziel = vor || null;   // wer soll überholt werden?
+      if (vor && !st.ueberholt && p.y > 0.5 && st.v > 30 / KMH) st.minFolge = Math.min(st.minFolge, vor.x - p.x - (TYPEN[vor.typ].l + TYPEN.fahrschule.l) / 2);
+      if (p.y < 0.9) {                                               // (teilweise) auf der Gegenfahrbahn
+        st.maxVLinks = Math.max(st.maxVLinks, st.v * KMH);
+        st.verkehr.filter(q => q.gegen && q.x > p.x).forEach(q => { const d = q.x - p.x - (TYPEN[q.typ].l + TYPEN.fahrschule.l) / 2; if (d > 0) st.minZeitGegen = Math.min(st.minZeitGegen, d / (st.v + q.v0)); });
+        if (p.x >= F.verbotVon && p.x <= F.verbotBis) st.verbot = true;
+      }
+      // zurück rechts: vor dem Überholten eingeschert (= überholt) oder wieder dahinter (= abgebrochen, weiterfahren)
+      const zw = st.letzterWechsel;
+      if (zw && !st.wechsel && zw.nach === "rechts" && !zw.geprueft) {
+        zw.geprueft = true;
+        const lz = st.log.filter(l => l.typ === "wechsel" && l.nach === "links" && l.t < zw.t).pop(), z = lz && lz.ziel;
+        if (!z || p.x - z.x > (TYPEN[z.typ].l + TYPEN.fahrschule.l) / 2) { st.ueberholt = true; zw.ueberholt = true; }
+        else { st.abgebrochen++; zw.abbruch = true; }
+      }
+    }
     // Verkehr: jedes Fahrzeug folgt seinem Vordermann (auch dem Fahrschulauto, sobald es in den Fahrstreifen ragt)
     const T = TYPEN;
     st.verkehr.forEach(q => {
+      if (q.gegen) { q.x -= q.v0 * dt; q.v = q.v0; return; }        // Gegenverkehr fährt gleichmäßig entgegen
       let gap = Infinity, vVor = q.v0, istFs = false;
       const imStreifen = Math.abs(p.y - q.y) < (T.fahrschule.b + T[q.typ].b) / 2 + 0.3;
       if (imStreifen && p.x > q.x) { gap = p.x - q.x - (T.fahrschule.l + T[q.typ].l) / 2; vVor = st.v; istFs = true; }
-      st.verkehr.forEach(o => { if (o === q || Math.abs(o.y - q.y) > 1 || o.x <= q.x) return; const d = o.x - q.x - (T[o.typ].l + T[q.typ].l) / 2; if (d < gap) { gap = d; vVor = o.v; istFs = false; } });
+      st.verkehr.forEach(o => { if (o === q || o.gegen || Math.abs(o.y - q.y) > 1 || o.x <= q.x) return; const d = o.x - q.x - (T[o.typ].l + T[q.typ].l) / 2; if (d < gap) { gap = d; vVor = o.v; istFs = false; } });
       const soll = 4 + q.v * 1.1;                                  // gewünschter Abstand: 1,1 s + 4 m
       let aq = gap === Infinity ? 0.8 * (q.v0 - q.v) : Math.min(0.8 * (q.v0 - q.v), 0.6 * (gap - soll) + 1.2 * (vVor - q.v));
       aq = clamp(aq, -8, 1.5); q.v = clamp(q.v + aq * dt, 0, q.v0 * 1.02); q.x += q.v * dt; q.a = aq;
       if (istFs && aq < -1.5) st.behinderung = Math.max(st.behinderung, -aq);
     });
     // Kollision
-    st.verkehr.forEach(q => { if (Math.abs(q.x - p.x) < (T[q.typ].l + T.fahrschule.l) / 2 - 0.3 && Math.abs(q.y - p.y) < (T[q.typ].b + T.fahrschule.b) / 2 - 0.15) { st.kollision = true; st.ende = true; } });
+    st.verkehr.forEach(q => { if (Math.abs(q.x - p.x) < (T[q.typ].l + T.fahrschule.l) / 2 - 0.3 && Math.abs(q.y - p.y) < (T[q.typ].b + T.fahrschule.b) / 2 - 0.15) { st.kollision = true; if (q.gegen) st.kollisionGegen = true; st.ende = true; } });
     // Tipps
     if (F.tipps[st.tippIdx] && p.x >= F.tipps[st.tippIdx].x) { zeigeCoach(F.tipps[st.tippIdx].text); st.tippIdx++; }
     // Ende-Bedingungen (ein laufender Fahrstreifenwechsel wird immer erst zu Ende gefahren)
@@ -1029,6 +1062,9 @@
       if (F.bewerten === "auffahren") {
         if (st.spur === "einf" && p.x >= F.grenzeEnde) { st.ende = true; st.endeGrund = "streifenende"; }
         if (st.spur !== "einf" && lw && st.t - lw.fertig > 4) st.ende = true;
+      } else if (F.bewerten === "ueberholen") {
+        if (st.ueberholt && lw && lw.nach === "rechts" && st.t - lw.fertig > 5) st.ende = true;
+        if (p.x > F.verbotBis + 60 && st.spur === "rechts") st.ende = true;
       } else {
         if (st.s >= st.pfad.laenge - 1 || (st.spur === "aus" && p.x >= F.rampeAb + 90)) st.ende = true;
         if (st.spur !== "aus" && p.x > szene.strasse.bereich[1] - 40) { st.ende = true; st.endeGrund = "verpasst"; }
@@ -1048,6 +1084,28 @@
     if (st.endeGrund === "abgebrochen") ok(false, "Fahrt nicht beendet", "Die Fahrt hat zu lange gedauert oder das Auto stand zu lange. Einfach noch einmal versuchen.", "§ 18 StVO");
     const wechsel = st.log.filter(l => l.typ === "wechsel");
     const blinkerOk = !st.blinkerVergessen && !(st.blinker && st.letzterWechsel && !st.wechsel && st.blinkerSeit <= st.letzterWechsel.t);
+    if (F.bewerten === "ueberholen") {
+      // bewertet wird der letzte Überholvorgang (abgebrochene Versuche zählen nur mit, wenn danach keiner mehr kam)
+      const w2 = wechsel.filter(x => x.nach === "rechts" && x.ueberholt).pop() || wechsel.filter(x => x.nach === "rechts").pop();
+      const w1 = wechsel.filter(x => x.nach === "links" && (!w2 || x.t < w2.t)).pop() || wechsel.filter(x => x.nach === "links").pop();
+      const folgeOk = st.minFolge >= 25;
+      ok(folgeOk, "Abstand zum Lkw", st.minFolge >= 999 ? "Abstand gehalten." : `Kleinster Abstand zum Lkw ${Math.round(st.minFolge)} m.` + (folgeOk ? "" : " Zu dicht – bei 60 km/h mindestens halber Tacho (30 m). Mit Abstand sieht man mehr und kann Anlauf nehmen."), "§ 4 Abs. 1 · § 5 Abs. 2 StVO");
+      ok(st.maxV <= 103, "Höchstgeschwindigkeit", `Höchstens ${Math.round(st.maxV)} km/h gefahren (erlaubt 100).`, "§ 3 Abs. 3 · § 5 Abs. 2 StVO");
+      if (!w1) { if (!st.kollision) P.push({ ok: true, titel: "Nicht überholt", text: "Kein Überholvorgang – das ist richtig, wenn es nicht sicher war. Zum Üben: Lücke im Gegenverkehr abwarten, dann zügig überholen.", regel: "§ 5 Abs. 2 StVO" }); return P; }
+      ok(w1.blinkerDauer >= 1.5, "Blinker links", w1.blinkerDauer >= 1.5 ? "Ausscheren rechtzeitig angekündigt." : "Ausscheren nicht oder zu spät angekündigt.", "§ 5 Abs. 4a StVO");
+      ok(w1.schulter, "Schulterblick links", w1.schulter ? "Vor dem Ausscheren nach hinten links gesichert." : "Schulterblick links fehlte – vielleicht überholt dich gerade jemand.", "§ 5 Abs. 4 StVO");
+      ok(!st.kollisionGegen && st.minZeitGegen >= 4, "Gegenverkehr", st.kollisionGegen ? "Zusammenstoß mit dem Gegenverkehr – die Lücke war viel zu klein." : st.minZeitGegen >= 999 ? "Die Gegenfahrbahn war frei." : `Knappste Zeitlücke zum Gegenverkehr: ${st.minZeitGegen.toFixed(1)} s.` + (st.minZeitGegen < 4 ? " Viel zu knapp – das war eine Gefährdung." : ""), "§ 5 Abs. 2 StVO");
+      ok(!st.verbot, "Überholverbot beachtet", st.verbot ? "Im Bereich des Überholverbots (Zeichen 276 / durchgezogene Linie) auf der Gegenfahrbahn gewesen." : "Das Überholverbot wurde beachtet.", "Zeichen 276 · Zeichen 295");
+      if (w2 && w2.abbruch) {
+        ok(true, "Überholen abgebrochen", "Wieder hinter dem Lkw eingeordnet – richtig, wenn die Lücke nicht reicht. Besser: gar nicht erst ausscheren, solange die Strecke nicht sicher frei ist.", "§ 5 Abs. 2 StVO");
+        ok(blinkerOk, "Blinker aus", blinkerOk ? "Nach dem Einordnen Blinker aus." : "Blinker nach dem Wechsel ausschalten.", "§ 5 Abs. 4a StVO");
+      } else if (w2) {
+        ok(w2.blinkerDauer >= 1.5, "Blinker rechts beim Einordnen", w2.blinkerDauer >= 1.5 ? "Wiedereinordnen rechtzeitig angekündigt." : "Beim Wiedereinordnen rechtzeitig rechts blinken.", "§ 5 Abs. 4a StVO");
+        ok(w2.lueckeHinten >= 20 && st.behinderung < 2, "Mit Abstand eingeschert", `Abstand zum Überholten beim Einscheren ${Math.round(Math.min(w2.lueckeHinten, 999))} m.` + (st.behinderung >= 2 ? " Der Lkw musste bremsen – zu früh eingeschert." : w2.lueckeHinten < 20 ? " Zu knapp – erst einscheren, wenn der Überholte im Innenspiegel ganz zu sehen ist." : ""), "§ 5 Abs. 4 StVO");
+        ok(blinkerOk, "Blinker aus", blinkerOk ? "Nach dem Einordnen Blinker aus." : "Blinker nach dem Wechsel ausschalten.", "§ 5 Abs. 4a StVO");
+      } else ok(false, "Wieder eingeordnet", "Nicht auf den rechten Fahrstreifen zurückgekehrt.", "§ 5 Abs. 4 · § 2 Abs. 2 StVO");
+      return P;
+    }
     if (F.bewerten === "auffahren") {
       const w = wechsel.find(x => x.von === "einf" && x.nach === "rechts" && x.fertig);
       if (!w) { ok(false, "Nicht eingefädelt", st.endeGrund === "streifenende" ? "Ende des Einfädelungsstreifens erreicht. Richtig wäre: früher Gas geben und eine Lücke nutzen – notfalls am Ende anhalten und warten." : "Der Wechsel auf die Autobahn hat nicht stattgefunden.", "§ 18 Abs. 3 StVO"); }
