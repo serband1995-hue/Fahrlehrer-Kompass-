@@ -7,7 +7,7 @@
 (function () {
   "use strict";
   const LZ = window.Lernszenen; if (!LZ || !LZ.bau) return;
-  const { KMH, clamp, lerp, pfad, bezier, tempoProfil, rangierBahn, achseAus, ecken, TYPEN, wegeOben } = LZ.bau;
+  const { KMH, clamp, lerp, pfad, bezier, tempoProfil, rangierBahn, achseAus, ecken, TYPEN, wegeOben } = LZ.bau, spurPfad2 = LZ.bau.spurPfad;
   const PI = Math.PI, N = -PI / 2, S = PI / 2, O = 0, WE = PI;
 
   // ------------------------------------------------------------ Bausteine
@@ -298,6 +298,100 @@
         { t: 7.5, titel: "Das Ergebnis", text: `Das 30er-Auto steht rechtzeitig. Mit 50 km/h reicht der Weg nicht – an der Stelle des Balls wäre das Auto noch etwa ${Math.round(vRest / 5) * 5} km/h schnell. Tempo 30 rettet Leben.`, regel: "§ 3 Abs. 1 · § 3 Abs. 2a StVO", frage: { text: "Warum ist Tempo 30 vor Schulen so wichtig?", optionen: ["Wegen der Lautstärke", "Der Anhalteweg ist viel kürzer – bei 50 bin ich an der Stelle, wo ich mit 30 schon stehe, noch fast so schnell wie beim Start", "Das ist nur eine Empfehlung"], richtig: 1, erklaerung: "Der Bremsweg wächst mit dem Quadrat der Geschwindigkeit." } }
       ],
       reaktion: { start: { x: -40, y: Y }, v: 50, abstand: abst, verz: VZ, gefahrY0: 6.4, gefahrY1: -3, kindY: 4.4 }
+    });
+  })();
+
+
+  // ============================================================ ÜBERLAND
+  // ---- Überholen auf der Landstraße
+  (function () {
+    const X0 = -400, X1 = 1900, b = 3.5, fl = [], li = [], obj = [];
+    fl.push({ art: "asphalt", poly: rect(X0, -b - 0.3, X1, b + 0.3) });
+    li.push({ art: "voll", b: 0.15, pts: [[X0, b - 0.1], [X1, b - 0.1]] }, { art: "voll", b: 0.15, pts: [[X0, -b + 0.1], [X1, -b + 0.1]] });
+    // Vorführung: Fahrschule hinter einem Lkw (60 km/h), Gegenverkehr mit 100 km/h
+    const yR = b / 2, yL = -b / 2, vL = 60 / KMH, vG = 100 / KMH;
+    const lkwX = t => 30 + vL * t;
+    const keys = [[0, 60], [6.2, 60], [10.8, 100], [60, 100]];
+    const tp = tempoProfil(keys), fx = t => -10.5 + tp.s(t);            // Fahrschule (Weg ≈ x, Querversatz vernachlässigbar)
+    const tA = 6.0, xA = fx(tA);                                         // Beginn Ausscheren
+    let tB = tA; while (fx(tB) - lkwX(tB) < 20 + (4.6 + 16.5) / 2 + 12) tB += 0.05;   // Einscheren, wenn der Lkw weit genug zurück ist
+    const xB = fx(tB), tE = tB + 1.6;
+    const xV0 = Math.round(fx(tE + 5) + 400), xV1 = xV0 + 320;             // Überholverbot danach
+    li.push({ art: "leit", b: 0.15, pts: [[X0, 0], [xV0 - 150, 0]] }, { art: "voll", b: 0.15, pts: [[xV0 - 150, 0], [xV1, 0]] }, { art: "leit", b: 0.15, pts: [[xV1, 0], [X1, 0]] });
+    for (let x = X0 + 20; x < X1; x += 50) { obj.push({ art: "poller", x, y: b + 1.2 }, { art: "poller", x: x + 25, y: -b - 1.2 }); }
+    for (let x = X0 + 40; x < X1; x += 37) { if ((x / 37 | 0) % 3) obj.push({ art: "baum", x, y: (x / 37 | 0) % 2 ? b + 7 : -b - 7, r: 2.4 }); }
+    const schilder = [{ typ: "z274_100", x: -60, y: b + 2.5, seite: 1 }, { typ: "z276", x: xV0 - 150, y: b + 2.5, seite: 1 }, { typ: "z280", x: xV1, y: b + 2.5, seite: 1 }];
+    const fs = fahrt("fs", "fahrschule", "#f2f2ee", spurPfad2(-400, X1 + 300, yR, [{ x: xA, y: yL, laenge: 38 }, { x: xB, y: yR, laenge: 38 }]), keys, 400 - 10.5, 0, { fokus: true,
+      blinker: [{ von: tA - 1.8, bis: tA + 1.6, seite: "links" }, { von: tB - 0.8, bis: tE, seite: "rechts" }], schulter: [{ von: tA - 1.1, bis: tA - 0.3, seite: "links" }] });
+    const lkw = fahrt("lkw", "lkw", "#c9ced6", [[-400, yR], [X1 + 500, yR]], [[0, 60]], 430, 0);
+    const g1 = fahrt("g1", "pkw", "#2c5aa0", [[X1 + 500, yL], [-900, yL]], [[0, 100]], X1 + 500 - (fx(3.8) + vG * 3.8), 0);
+    const g2 = fahrt("g2", "transporter", "#e7e3d6", [[X1 + 900, yL], [-900, yL]], [[0, 95]], X1 + 900 - (fx(tE + 3.5) + 95 / KMH * (tE + 3.5)), 0);
+    const tV = (() => { let t = tE; while (fx(t) < xV0 - 150 && t < 60) t += 0.1; return t; })();
+    LZ.registriere({
+      id: "ueberholen", kategorie: "ueberland", plan: ["s_ueb_ueber", "s_ueb_voraus"], titel: "Überholen auf der Landstraße", kurz: "Sicht prüfen, Gegenverkehr abwarten, zügig überholen, mit Abstand einscheren",
+      dauer: Math.ceil(tV + 4), strasse: { flaechen: fl, linien: li, objekte: obj, schilder, bereich: [X0, X1], boden: "#6a9a52", boden3d: "#6f9a55" }, kamera: { fokus: "fs", zoom: 5, vor: 0.25 },
+      fahrzeuge: [fs, lkw, g1, g2],
+      phasen: [
+        { t: 0.2, titel: "Langsamer Lkw vorne", text: "Außerorts, erlaubt sind 100 km/h, vorne fährt ein Lkw mit 60. Genug Abstand halten – so sieht man an ihm vorbei und kann Anlauf nehmen.", regel: "§ 4 Abs. 1 · § 5 Abs. 2 StVO", frage: { text: "Wann darf ich überholen?", optionen: ["Immer, wenn ich schneller bin", "Nur wenn übersehbar ist, dass niemand gefährdet wird, und ich wesentlich schneller bin", "Nur rechts"], richtig: 1, erklaerung: "§ 5 Abs. 2 StVO: Überholen nur, wenn eine Behinderung des Gegenverkehrs ausgeschlossen ist und mit wesentlich höherer Geschwindigkeit." } },
+        { t: 2.2, titel: "Gegenverkehr", text: "Ein Auto kommt entgegen. Jetzt nicht ausscheren – abwarten.", regel: "§ 5 Abs. 2 StVO", frage: { text: "Wie viel freie Strecke brauche ich ungefähr, um einen Lkw mit 60 bei 100 km/h zu überholen?", optionen: ["Etwa 100 m", "Etwa 250 m – und der Gegenverkehr kommt noch einmal so weit entgegen, also rund 500 m Sicht", "Etwa 50 m"], richtig: 1, erklaerung: "Überholweg ≈ (Länge beider + Abstände) × v₁ ÷ (v₁ − v₂) ≈ 60 m × 100 ÷ 40 ≈ 150–250 m. In derselben Zeit legt der Gegenverkehr die gleiche Strecke zurück." } },
+        { t: tA - 1.8, titel: "Spiegel, Schulterblick, Blinker", text: "Frei, übersichtlich, keine durchgezogene Linie: Innen- und Außenspiegel, Schulterblick links, dann links blinken.", regel: "§ 5 Abs. 4 · § 5 Abs. 4a StVO" },
+        { t: tA, titel: "Zügig vorbei", text: "Ausscheren und zügig beschleunigen – die Höchstgeschwindigkeit bleibt die Grenze. Ausreichend Seitenabstand zum Lkw halten.", regel: "§ 5 Abs. 2 · § 5 Abs. 4 · § 3 Abs. 3 StVO", frage: { text: "Der Lkw wird beim Überholen schneller. Darf er das?", optionen: ["Ja", "Nein – wer überholt wird, darf seine Geschwindigkeit nicht erhöhen"], richtig: 1, erklaerung: "§ 5 Abs. 6 StVO: Wer überholt wird, darf seine Geschwindigkeit nicht erhöhen." } },
+        { t: tB - 0.8, titel: "Blinker rechts, wieder einordnen", text: "Wieder einordnen, sobald der Lkw im Innenspiegel vollständig zu sehen ist – nicht knapp vor ihm einscheren.", regel: "§ 5 Abs. 4 · § 5 Abs. 4a StVO" },
+        { t: Math.min(tV - 1, tE + 3), titel: "Überholverbot voraus", text: "Zeichen 276 und durchgezogene Linie: Hier ist Überholen verboten – etwa vor Kuppen und Kurven. Ein begonnenes Überholen muss vorher abgeschlossen sein.", regel: "Zeichen 276 · Zeichen 295", frage: { text: "Darf ich die durchgezogene Mittellinie zum Überholen überfahren?", optionen: ["Ja, kurz", "Nein", "Nur bei Traktoren"], richtig: 1, erklaerung: "Die Fahrstreifenbegrenzung (Zeichen 295) darf nicht überfahren werden." } }
+      ].sort((a, b2) => a.t - b2.t),
+      fahren: {
+        start: { pfad: pfad(spurPfad2(-400, X1 + 400, yR)), s: 400 - 10.5, v: 60 },
+        spuren: { links: yL, rechts: yR }, spurStart: "rechts", wechselFaktor: 1.4, verbotVon: xV0 - 150, verbotBis: xV1, bewerten: "ueberholen",
+        wechselErlaubt: (x, von, nach) => nach === "rechts" || x < xV0 - 150 || x > xV1,
+        wechselHinweis: () => "Hier ist Überholen verboten (durchgezogene Linie).",
+        verkehr: [
+          { typ: "lkw", y: yR, x0: 30, v: 60, farbe: "#c9ced6" },
+          { typ: "pkw", y: yL, x0: 170, v: 100, farbe: "#2c5aa0", gegen: true }, { typ: "pkw", y: yL, x0: 470, v: 100, farbe: "#b3322c", gegen: true },
+          { typ: "transporter", y: yL, x0: 1550, v: 95, farbe: "#e7e3d6", gegen: true }, { typ: "pkw", y: yL, x0: 2200, v: 100, farbe: "#3a3f45", gegen: true }
+        ],
+        tipps: [{ x: -5, text: "Abstand zum Lkw halten. Gegenverkehr beobachten – wo ist eine große Lücke?" }, { x: 130, text: "Das zweite Auto ist nah – die Lücke ist zu klein. Warten!" }]
+      }
+    });
+  })();
+
+  // ---- Schulbus mit Warnblinklicht an der Haltestelle
+  (function () {
+    const st = wohnstrasse(3.6, -3.6, -80, 140); st.linien.push({ art: "leit_io", b: 0.12, pts: [[-80, 0], [140, 0]] });
+    st.schilder = [{ typ: "z224", x: 55, y: 5.2, seite: 1 }, { typ: "zone30", x: -60, y: 5.2, seite: 1 }];
+    const yR = 1.8, yL = -1.8, xBus = 46;                                      // Bus hält mit der Mitte bei x = 46 (Front bei 52)
+    // Bus: Ankunft ermitteln, dann alle Zeiten daran ausrichten
+    let busPlan = fahrplan({ vMax: 35, halte: [{ s: 120 + xBus, bis: 999 }], dauer: 70, s0: 120 - 40 });
+    let bus = fahrt("bus", "bus", "#f2c230", [[-120, yR], [300, yR]], busPlan, 120 - 40, 0);
+    const tBus = tBeiS(bus, 120 + xBus - 0.4), tAb = tBus + 43;
+    busPlan = fahrplan({ vMax: 35, halte: [{ s: 120 + xBus, bis: tAb }], dauer: 80, s0: 120 - 40 });
+    bus = fahrt("bus", "bus", "#f2c230", [[-120, yR], [300, yR]], busPlan, 120 - 40, 0, { schulbus: true, warnblink: [{ von: 1.2, bis: tAb - 1.5 }], blinker: [{ von: tAb - 1.5, bis: tAb + 3, seite: "links" }] });
+    // Fahrschule: bleibt hinter dem Bus, hält, fährt dann mit Schrittgeschwindigkeit vorbei und wartet auf das Kind
+    const halt1 = xBus - 6 - 8 - 2.25, xAus = halt1 + 1.5;
+    const fsWeg = [[-120, yR], [xAus, yR], [xAus + 7, yL + 0.1], [xBus + 12, yL + 0.1], [xBus + 19, yR], [300, yR]];
+    const sBei = x => sNahe(fsWeg, x, x < xAus + 7 || x > xBus + 19 ? yR : yL + 0.1);
+    const t1 = tBus + 13, t2 = tBus + 31.8;
+    const fs = fahrt("fs", "fahrschule", "#f2f2ee", fsWeg, fahrplan({ vMax: 32, grenzen: [{ von: sBei(xAus) - 2, bis: sBei(xBus + 16), v: 6 }], halte: [{ s: sBei(halt1), bis: t1 }, { s: sBei(xBus + 7.5 - 2.25 - 2.5), bis: t2 }], dauer: 90, s0: 120 - 62 }), 120 - 62, 0, { fokus: true, bremsStand: true,
+      blinker: [{ von: t1 - 1.8, bis: t1 + 3.5, seite: "links" }] });
+    { const tR = tBeiS(fs, sBei(xBus + 12)); fs.blinker.push({ von: tR - 1.5, bis: tR + 3, seite: "rechts" }); }
+    // Gegenverkehr: ebenfalls nur Schrittgeschwindigkeit am haltenden Schulbus – vorbei, bevor die Fahrschule ausschert
+    const gS0 = 260 - (xBus + 10);                                                // Zonenbeginn auf dem Weg des Gegenverkehrs
+    const gS00 = gS0 - 30 / KMH * (tBus + 1);                                    // so, dass der Zonenbeginn um tBus + 1 erreicht wird
+    const g = fahrt("g", "pkw", "#2c5aa0", [[260, yL], [-200, yL]], fahrplan({ vMax: 30, grenzen: [{ von: gS0, bis: gS0 + 20, v: 7 }], dauer: 90, s0: gS00 }), gS00, 0, { bremsStand: true });
+    const imBus = t0 => t => t < t0;                                               // Kinder sind bis zum Aussteigen im Bus
+    const kinder = [0, 1, 2].map(i => person("k" + i, "kind", ["#e53935", "#1e88e5", "#43a047"][i], [[xBus + 3 - i * 1.2, 3.3], [xBus + 3 - i * 1.2, 6.2 - i * 0.7], [xBus - 8 - i * 3, 6.2 - i * 0.7]], [[0, 0], [tBus + 1.5 + i * 0.9, 0], [tBus + 1.7 + i * 0.9, 3.5], [90, 3.5]], { unsichtbar: imBus(tBus + 1.2 + i * 0.9) }));
+    // ein Kind läuft vor dem Bus über die Straße
+    const renner = person("k3", "kind", "#f28c28", [[xBus + 4.5, 3.9], [xBus + 7.5, 3.9], [xBus + 7.5, -7]], [[0, 0], [tBus + 25.2, 0], [tBus + 25.4, 6.5], [90, 6.5]], { unsichtbar: imBus(tBus + 2) });
+    innerortsSzene({
+      id: "schulbus", plan: ["a_stadt"], titel: "Schulbus mit Warnblinklicht", kurz: "Nicht überholen, Schrittgeschwindigkeit – auch im Gegenverkehr – und mit Kindern rechnen",
+      dauer: Math.ceil(tAb + 5), strasse: Object.assign(st, { bereich: [-80, 140] }), kamera: { fest: [40, 1], zoom: 9 },
+      fahrzeuge: [fs, bus, g, renner].concat(kinder),
+      phasen: [
+        { t: 0.2, titel: "Schulbus mit Warnblinklicht", text: "Der Schulbus nähert sich mit eingeschaltetem Warnblinklicht der Haltestelle. Er darf jetzt nicht überholt werden.", regel: "§ 20 Abs. 3 StVO", frage: { text: "Darf ich den Bus überholen, solange er mit Warnblinklicht auf die Haltestelle zufährt?", optionen: ["Ja, wenn frei ist", "Nein", "Nur mit Hupe"], richtig: 1, erklaerung: "§ 20 Abs. 3 StVO: Linien- und Schulbusse, die sich mit Warnblinklicht einer Haltestelle nähern, dürfen nicht überholt werden." } },
+        { t: tBus, titel: "Bus hält – Kinder steigen aus", text: "Mit Abstand hinter dem Bus halten. Kinder sind unberechenbar und können hinter oder vor dem Bus auf die Fahrbahn laufen.", regel: "§ 20 Abs. 4 · § 3 Abs. 2a StVO" },
+        { t: t1 - 1.8, titel: "Schrittgeschwindigkeit", text: "Vorbeifahren nur mit Schrittgeschwindigkeit (etwa 4–7 km/h) und so viel Abstand, dass niemand gefährdet wird. Das gilt auch für den Gegenverkehr!", regel: "§ 20 Abs. 4 StVO", frage: { text: "Gilt die Schrittgeschwindigkeit auch für den Gegenverkehr?", optionen: ["Nein, nur für die gleiche Richtung", "Ja – auch der Gegenverkehr auf derselben Fahrbahn fährt nur Schritt", "Nur an Schultagen"], richtig: 1, erklaerung: "§ 20 Abs. 4 StVO: Die Schrittgeschwindigkeit gilt auch für den Gegenverkehr auf derselben Fahrbahn." } },
+        { t: tBus + 26.4, titel: "Kind läuft auf die Straße!", text: "Vor dem Bus läuft ein Kind über die Fahrbahn. Sofort anhalten – wenn nötig, muss gewartet werden.", regel: "§ 20 Abs. 4 StVO", frage: { text: "Was tue ich?", optionen: ["Ausweichen und weiterfahren", "Anhalten und warten, bis das Kind sicher drüben ist", "Hupen"], richtig: 1, erklaerung: "Wenn nötig, muss gewartet werden – eine Gefährdung der Fahrgäste muss ausgeschlossen sein." } },
+        { t: tAb - 1.5, titel: "Bus fährt ab", text: "Der Bus blinkt links, um von der Haltestelle abzufahren. Dem Bus ist das Abfahren zu ermöglichen – wenn nötig, warten.", regel: "§ 20 Abs. 5 StVO" }
+      ]
     });
   })();
 
