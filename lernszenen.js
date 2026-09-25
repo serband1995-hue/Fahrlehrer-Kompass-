@@ -132,6 +132,10 @@
     } else if (typ.startsWith("z274_")) { // zulässige Höchstgeschwindigkeit
       g.beginPath(); g.arc(64, 64, 58, 0, 7); g.fillStyle = "#fff"; g.fill(); g.lineWidth = 14; g.strokeStyle = "#d4202a"; g.stroke();
       g.fillStyle = "#111"; g.font = "bold 46px sans-serif"; g.fillText(typ.slice(5), 64, 67);
+    } else if (typ === "zone30") {                                  // Zeichen 274.1 Tempo-30-Zone
+      rund(10, 4, 108, 120, 8); g.fillStyle = "#fff"; g.fill(); g.lineWidth = 3; g.strokeStyle = "#222"; g.stroke();
+      g.beginPath(); g.arc(64, 52, 36, 0, 7); g.fillStyle = "#fff"; g.fill(); g.lineWidth = 9; g.strokeStyle = "#d4202a"; g.stroke();
+      g.fillStyle = "#111"; g.font = "bold 32px sans-serif"; g.fillText("30", 64, 54); g.font = "bold 22px sans-serif"; g.fillText("ZONE", 64, 108);
     } else if (typ === "z205") {                                   // Vorfahrt gewähren
       g.beginPath(); g.moveTo(8, 14); g.lineTo(120, 14); g.lineTo(64, 118); g.closePath(); g.fillStyle = "#d4202a"; g.fill();
       g.beginPath(); g.moveTo(28, 26); g.lineTo(100, 26); g.lineTo(64, 94); g.closePath(); g.fillStyle = "#fff"; g.fill();
@@ -160,7 +164,7 @@
   const SCHILD_NAME = {
     z330: "Zeichen 330.1 · Autobahn", z332: "Zeichen 332 · Ausfahrttafel", z333: "Zeichen 333 · Pfeilzeichen Ausfahrt",
     z450_3: "Zeichen 450 · Ankündigungsbake 300 m", z450_2: "Zeichen 450 · Ankündigungsbake 200 m", z450_1: "Zeichen 450 · Ankündigungsbake 100 m",
-    z205: "Zeichen 205 · Vorfahrt gewähren", z206: "Zeichen 206 · Halt. Vorfahrt gewähren", z215: "Zeichen 215 · Kreisverkehr", z306: "Zeichen 306 · Vorfahrtstraße", z350: "Zeichen 350 · Fußgängerüberweg", z274_30: "Zeichen 274 · 30 km/h",
+    z205: "Zeichen 205 · Vorfahrt gewähren", z206: "Zeichen 206 · Halt. Vorfahrt gewähren", z215: "Zeichen 215 · Kreisverkehr", z306: "Zeichen 306 · Vorfahrtstraße", z350: "Zeichen 350 · Fußgängerüberweg", z274_30: "Zeichen 274 · 30 km/h", zone30: "Zeichen 274.1 · Tempo-30-Zone",
     vorweg: "Zeichen 449 · Vorwegweiser 1000 m", weg: "Zeichen 449 · Vorwegweiser 500 m", z531: "Zeichen 531 · Einengungstafel"
   };
 
@@ -487,7 +491,7 @@
   let fahr = null;                     // Zustand im Selbst-fahren-Modus
   let onCloseCb = null, beob = null, tippFrage = null;
   const KATEGORIEN = [["innerorts", "Innerorts"], ["grundfahr", "Grundfahraufgaben"], ["autobahn", "Autobahn"]];
-  let katAktiv = "innerorts";
+  let katAktiv = "innerorts", nurListe = null;
 
   // Position eines Fahrzeugs zur Zeit t (Vorführen/Mitdenken)
   function rohPos(f, t) {
@@ -567,7 +571,10 @@
       ctx.fillStyle = "#1c1e21"; rundRect(-w / 2, -hgt / 2, w, hgt, 0.15 * s); ctx.fill();
       const farben = o.fuss ? [f[0], f[2]] : f, leer = o.fuss ? ["#4a1512", "#12401f"] : ["#4a1512", "#4a3a10", "#12401f"];
       for (let i = 0; i < n; i++) { ctx.fillStyle = farben[i] || leer[i]; ctx.beginPath(); ctx.arc(0, -hgt / 2 + 0.38 * s + i * 0.55 * s, 0.2 * s, 0, 7); ctx.fill(); }
-      if (o.gruenpfeil) { ctx.fillStyle = "#1c1e21"; ctx.fillRect(0.4 * s, -0.25 * s, 0.6 * s, 0.5 * s); ctx.fillStyle = "#2fbf5a"; ctx.font = `bold ${Math.max(8, 0.5 * s)}px sans-serif`; ctx.textAlign = "center"; ctx.textBaseline = "middle"; ctx.fillText("➜", 0.7 * s, 0); }
+      if (o.gruenpfeil) {                                         // Zeichen 720 rechts neben dem Rotlicht (aus Sicht der Ankommenden)
+        ctx.rotate(-(o.h || 0)); const rx = Math.sin(o.h || 0), ry = -Math.cos(o.h || 0), gx = rx * 0.75 * s, gy = ry * 0.75 * s;
+        ctx.fillStyle = "#1c1e21"; ctx.fillRect(gx - 0.3 * s, gy - 0.25 * s, 0.6 * s, 0.5 * s); ctx.fillStyle = "#2fbf5a"; ctx.font = `bold ${Math.max(8, 0.45 * s)}px sans-serif`; ctx.textAlign = "center"; ctx.textBaseline = "middle"; ctx.fillText("➜", gx, gy);
+      }
     } else if (o.art === "poller" || o.art === "bake") {
       ctx.fillStyle = o.art === "bake" ? "#d4202a" : "#6d7176"; ctx.beginPath(); ctx.arc(0, 0, 0.25 * s, 0, 7); ctx.fill();
       if (o.art === "bake") { ctx.fillStyle = "#fff"; ctx.fillRect(-0.25 * s, -0.06 * s, 0.5 * s, 0.12 * s); }
@@ -600,7 +607,7 @@
   function zeichneFahrzeugOben(e, X, Y, s) {
     const { f, p, sig } = e, T = TYPEN[f.typ];
     if (f.unsichtbar && f.unsichtbar(zeit)) return;
-    ctx.save(); ctx.translate(X(p.x), Y(p.y)); ctx.rotate(p.h);
+    ctx.save(); if (f.geist) ctx.globalAlpha = 0.45; ctx.translate(X(p.x), Y(p.y)); ctx.rotate(p.h);
     const L = T.l * s, B = T.b * s;
     if (T.person) {
       if (f.typ === "ball") { ctx.fillStyle = f.farbe || "#e53935"; ctx.beginPath(); ctx.arc(0, 0, Math.max(2, 0.18 * s), 0, 7); ctx.fill(); ctx.fillStyle = "#fff"; ctx.beginPath(); ctx.arc(-0.05 * s, -0.05 * s, Math.max(1, 0.06 * s), 0, 7); ctx.fill(); ctx.restore(); return; }
@@ -760,7 +767,7 @@
     // Objekte nach Tiefe sortiert: Fahrzeuge, Schilder, Pfosten, Häuser, Bäume, Ampeln
     const obj = [];
     const nah = (x, y) => { const dx = x - c.e[0], dy = y - c.e[1]; return dx * dx + dy * dy < SICHT * SICHT; };
-    liste.forEach(e => { if (nah(e.p.x, e.p.y)) obj.push({ d: zuCam(c, e.p.x, e.p.y, 0.8)[2], z: () => fahrzeug3d(c, e, e === fokus) }); });
+    liste.forEach(e => { if (nah(e.p.x, e.p.y)) obj.push({ d: zuCam(c, e.p.x, e.p.y, 0.8)[2] - (e.f.geist ? 0.01 : 0), z: () => { if (e.f.geist) ctx.globalAlpha = 0.45; fahrzeug3d(c, e, e === fokus); ctx.globalAlpha = 1; } }); });
     (st.schilder || []).forEach(sc => { if (nah(sc.x, sc.y)) obj.push({ d: zuCam(c, sc.x, sc.y, 2)[2], z: () => schild3d(c, sc) }); });
     (st.objekte || []).forEach(o => { if (nah(o.x, o.y)) obj.push({ d: zuCam(c, o.x, o.y, 1)[2] + (o.art === "haus" ? Math.max(o.l, o.b) * 0.35 : 0), z: () => objekt3d(c, o) }); });
     st.linien.filter(l => l.art === "planke").forEach(l => entlang(l.pts, 8, (x, y) => { if (!nah(x, y)) return; const q = zuCam(c, x, y, 0.4); if (q[2] < c.near) return; obj.push({ d: q[2], z: () => poly3d(c, [[x, y, 0], [x + 0.2, y, 0], [x + 0.2, y, 0.75], [x, y, 0.75]], "#8d9296") }); }));
@@ -830,9 +837,9 @@
       // Leuchten als kleine Flächen an den Ecken der Front-/Heckfläche
       const ecke = (links) => { const a = v[fl.i[links ? 0 : 1]], bb = v[fl.i[links ? 3 : 2]]; return [lerp(a[0], bb[0], 0.3), lerp(a[1], bb[1], 0.3)]; };
       [true, false].forEach(links => {
-        const idxBase = hinten ? (links ? 3 : 0) : (links ? 1 : 2);
+        const idxBase = hinten ? (links ? 0 : 3) : (links ? 1 : 2);
         const q = v[idxBase]; const z = T.h * 0.38;
-        const seiteBlink = (sig.warn || sig.blinker) && blinkAn() && (sig.warn || (sig.blinker === "links") === (hinten ? links : !links));
+        const seiteBlink = (sig.warn || sig.blinker) && blinkAn() && (sig.warn || (sig.blinker === "links") === links);
         const farbe = seiteBlink ? "#ffb21e" : hinten ? (sig.bremse ? "#ff2020" : sig.rueck && !links ? "#ffffff" : "#8a1616") : "#f4f1dd";
         const off = 0.28;
         const dirL = hinten ? [-ch, -sh] : [ch, sh];
@@ -888,6 +895,11 @@
       // Lampen auf der Seite, die dem Verkehr zugewandt ist (o.h = Blickrichtung der Ampel)
       const ch = Math.cos(o.h || 0), sh = Math.sin(o.h || 0), fx = o.x + ch * 0.17, fy = o.y + sh * 0.17;
       for (let i = 0; i < n; i++) { const z = z0 + hk - 0.2 - i * 0.33; poly3d(c, [[fx - sh * 0.1, fy + ch * 0.1, z - 0.1], [fx + sh * 0.1, fy - ch * 0.1, z - 0.1], [fx + sh * 0.1, fy - ch * 0.1, z + 0.1], [fx - sh * 0.1, fy + ch * 0.1, z + 0.1]], farben[i] || leer[i]); }
+      if (o.gruenpfeil) {                                         // Grünpfeil-Blechschild rechts neben dem Rotlicht
+        const rx = sh, ry = -ch, gx = o.x + rx * 0.45 + ch * 0.18, gy = o.y + ry * 0.45 + sh * 0.18, zg = z0 + hk - 0.34;
+        poly3d(c, [[gx - rx * 0.18, gy - ry * 0.18, zg - 0.15], [gx + rx * 0.18, gy + ry * 0.18, zg - 0.15], [gx + rx * 0.18, gy + ry * 0.18, zg + 0.15], [gx - rx * 0.18, gy - ry * 0.18, zg + 0.15]], "#111316");
+        poly3d(c, [[gx - rx * 0.12, gy - ry * 0.12, zg - 0.03], [gx + rx * 0.06, gy + ry * 0.06, zg - 0.03], [gx + rx * 0.06, gy + ry * 0.06, zg - 0.08], [gx + rx * 0.14, gy + ry * 0.14, zg], [gx + rx * 0.06, gy + ry * 0.06, zg + 0.08], [gx + rx * 0.06, gy + ry * 0.06, zg + 0.03], [gx - rx * 0.12, gy - ry * 0.12, zg + 0.03]], "#2fbf5a");
+      }
     } else if (o.art === "poller" || o.art === "bake") {
       quader(c, o.x, o.y, 0, 0.25, 0.25, 0, o.art === "bake" ? 1.0 : 0.9, o.art === "bake" ? "#d4202a" : "#6d7176");
     } else if (o.art === "kegel") { quader(c, o.x, o.y, 0, 0.35, 0.35, 0, 0.5, "#f07a1a"); }
@@ -1145,6 +1157,7 @@
       }
     };
     zeit = 0; _hGlatt = null;
+    { const l = $("#rLenk"), r = $("#rRad"); if (l) l.value = 0; if (r) r.style.transform = "rotate(0deg)"; }
     aktualisiereRangUI();
   }
   function rangierSchritt(dt) {
@@ -1195,7 +1208,7 @@
       if (R.bordAbstand) {
         const rechts = raeder(st.x, st.y, st.h).filter((_, i) => i % 2 === 1);
         const d = Math.min(...rechts.map(rp => Math.min(...R.bordsteine.map(b => bordAbstand(rp, b))))) - 0.1;
-        ok(d <= R.bordAbstand && lage, "Abstand zum Bordstein", `Rechte Räder ${Math.max(0, Math.round(d * 100))} cm vom Bordstein (Ziel: höchstens ${Math.round(R.bordAbstand * 100)} cm).`, "Prüfungsrichtlinie · Grundfahraufgaben");
+        ok(d <= R.bordAbstand && lage, "Abstand zum Bordstein", `Rechte Räder ${Math.max(0, Math.round(d * 100))} cm vom Bordstein (Richtwert: höchstens ${Math.round(R.bordAbstand * 100)} cm).`, "Grundfahraufgaben · Richtwert");
       }
     }
     if (R.zielPruef) R.zielPruef(st, ok, p);
@@ -1203,7 +1216,7 @@
     ok(st.starts.length && !ohne, "Rundumblick vor jedem Anfahren", !st.starts.length ? "Das Auto hat sich nicht bewegt." : !ohne ? `Vor allen ${st.starts.length} Anfahrvorgängen rundum geschaut – sehr gut.` : `${ohne} von ${st.starts.length} Mal ohne Rundumblick angefahren. Vor jeder Bewegung (besonders rückwärts) rundum schauen.`, "§ 9 Abs. 5 · § 1 Abs. 2 StVO");
     ok(!st.kontakte.length, "Kein Kontakt", !st.kontakte.length ? "Weder Bordstein noch andere Fahrzeuge berührt." : `${st.kontakte.length}× Kontakt (${[...new Set(st.kontakte.map(k => k.was))].join(", ")}). In der Prüfung ist das ein Fehler.`, "§ 1 Abs. 2 StVO");
     if (R.maxZuege) ok(st.zuege <= R.maxZuege, "Anzahl der Züge", `${st.zuege} Züge (Richtwert: höchstens ${R.maxZuege}).` + (st.zuege > R.maxZuege ? " Weniger Korrekturen – dafür früher und genauer lenken." : ""), "Prüfungsrichtlinie · Grundfahraufgaben");
-    if (R.blinker) { const bl = st.log.some(l => l.typ === "blink" && l.seite === R.blinker && l.t <= (st.starts[0] ? st.starts[0].t : Infinity)); ok(bl, "Blinker", bl ? `Vor dem Manöver ${R.blinker} geblinkt.` : `Vor dem Manöver ${R.blinker} blinken – andere müssen wissen, was du vorhast.`, "§ 10 · § 9 Abs. 1 StVO"); }
+    if (R.blinker) { const bl = st.log.some(l => l.typ === "blink" && l.seite === R.blinker && l.t <= (st.starts[0] ? st.starts[0].t : Infinity)); ok(bl, "Blinker", bl ? `Vor dem Manöver ${R.blinker} geblinkt.` : `Vor dem Manöver ${R.blinker} blinken – andere müssen wissen, was du vorhast.`, "§ 1 Abs. 2 StVO"); }
     if (st.standLenk > RAD.dMax * 1.5) P.push({ ok: true, titel: "Tipp: im Rollen lenken", text: "Viel im Stand gelenkt. Das belastet Reifen und Lenkung – besser lenken, während das Auto langsam rollt.", regel: "Tipp" });
     if (st.endeGrund === "zeit") ok(false, "Zeit", "Die Übung hat sehr lange gedauert.", "Tipp");
     return P;
@@ -1238,13 +1251,16 @@
     const st = fahr; if (!st || !st.rang || !root) return;
     const g = $("#rGang"); if (g) { g.textContent = st.gang > 0 ? "Gang: V" : "Gang: R"; g.classList.toggle("on", st.gang < 0); }
     const hl = $("#rHilf"); if (hl) hl.classList.toggle("on", st.hilfslinien);
+    const bl = $("#rBL"), br = $("#rBR"); if (bl) bl.classList.toggle("on", st.blinker === "links"); if (br) br.classList.toggle("on", st.blinker === "rechts");
   }
 
   // ---------------------------------------------------------------- Reaktion (Gefahrbremsung)
   function starteReaktion(kmh) {
     const R = szene.reaktion, v = (kmh || (fahr && fahr.vWahl) || R.v) / KMH;
+    const tGefahr = 2.8 + Math.random() * 3.2, hindPlan = R.start.x + v * tGefahr + 2.25 + R.abstand;
+    const sicht = [{ f: { id: "pk1", typ: "transporter", farbe: "#e7e3d6", parkt: true }, p: { x: hindPlan - 5, y: R.gefahrY0 - 2.3, h: 0, v: 0 }, sig: {} }, { f: { id: "pk2", typ: "pkw", farbe: "#6a7d8f", parkt: true }, p: { x: hindPlan + 3.4, y: R.gefahrY0 - 2.2, h: 0, v: 0 }, sig: {} }];
     fahr = {
-      reak: true, t: 0, x: R.start.x, y: R.start.y, h: 0, v, vWahl: v * KMH, phase: "fahrt", tGefahr: 2.8 + Math.random() * 3.2, ende: false, log: [],
+      reak: true, t: 0, x: R.start.x, y: R.start.y, h: 0, v, vWahl: v * KMH, phase: "fahrt", tGefahr, hindPlan, ende: false, log: [],
       pos() { return { x: this.x, y: this.y, h: 0, v: this.v }; },
       gefahr() { if (this.tG === undefined) return []; const dtg = this.t - this.tG, bx = this.hindX, out = [];
         out.push({ f: { id: "ball", typ: "ball", farbe: "#e53935" }, p: { x: bx, y: R.gefahrY0 - Math.min(dtg * 3.2, R.gefahrY0 - R.gefahrY1), h: -Math.PI / 2, v: 3 }, sig: {} });
@@ -1252,8 +1268,7 @@
         return out; },
       liste() {
         const out = [{ f: { id: "fs", typ: "fahrschule", farbe: "#f2f2ee", fokus: true }, p: this.pos(), sig: { bremse: this.phase === "bremsen" || this.phase === "steht" } }];
-        szene.fahrzeuge.filter(f => !f.fokus && f.parkt).forEach(f => out.push({ f, p: rohPos(f, 0), sig: {} }));
-        return out.concat(this.gefahr());
+        return out.concat(sicht, this.gefahr());
       }
     };
     zeit = 0; _hGlatt = null;
@@ -1262,12 +1277,12 @@
   function reaktionSchritt(dt) {
     const st = fahr, R = szene.reaktion; if (!st || st.ende) return;
     st.t += dt;
-    if (st.phase === "fahrt" && st.t >= st.tGefahr) { st.phase = "gefahr"; st.tG = st.t; st.xGefahr = st.x; st.hindX = st.x + 2.25 + R.abstand; }
+    if (st.phase === "fahrt" && st.t >= st.tGefahr) { st.phase = "gefahr"; st.tG = st.t; st.xGefahr = st.x; st.hindX = st.hindPlan; }
     if (st.phase === "gefahr" && st.t - st.tG > 3) { st.phase = "bremsen"; st.tDruck = st.t; st.xDruck = st.x; st.keine = true; }
     if (st.phase === "bremsen") st.v = Math.max(0, st.v - R.verz * dt);
     st.x += st.v * dt;
     if (st.hindX !== undefined && st.aufprall === undefined && st.x + 2.25 >= st.hindX - 0.3 && st.v > 0.05) { st.aufprall = st.v * KMH; }
-    if (st.phase === "bremsen" && st.v <= 0) { st.phase = "steht"; st.xStop = st.x; st.ende = true; laeuft = false; setTimeout(() => zeigeAuswertung(bewerteReaktion()), 600); }
+    if (st.phase === "bremsen" && st.v <= 0) { st.phase = "steht"; st.xStop = st.x; st.ende = true; laeuft = false; setTimeout(() => { if (fahr === st && modus === "fahren" && root && $("#lzStage")) zeigeAuswertung(bewerteReaktion()); }, 600); }
   }
   function reaktionBremse() {
     const st = fahr; if (!st || !st.reak || st.ende) return;
@@ -1401,6 +1416,7 @@
     if (root) root.remove();
     root = el(`<div class="lz-root" role="dialog" aria-label="Lernszenen"></div>`);
     document.body.appendChild(root);
+    nurListe = opts && opts.nur ? opts.nur.filter(id => SZENEN.some(x => x.id === id)) : null;
     const ziel = opts && opts.szene && SZENEN.find(x => x.id === opts.szene);
     if (ziel) { katAktiv = ziel.kategorie || "autobahn"; starteSzene(ziel.id); } else zeigeAuswahl();
     window.addEventListener("resize", beiResize);
@@ -1428,10 +1444,10 @@
     if (beob) { beob.disconnect(); beob = null; }
     const kats = KATEGORIEN.filter(k => SZENEN.some(s => (s.kategorie || "autobahn") === k[0]));
     if (!kats.some(k => k[0] === katAktiv)) katAktiv = kats.length ? kats[0][0] : "autobahn";
-    const liste = SZENEN.filter(s => (s.kategorie || "autobahn") === katAktiv);
+    const liste = nurListe && nurListe.length ? SZENEN.filter(s => nurListe.includes(s.id)) : SZENEN.filter(s => (s.kategorie || "autobahn") === katAktiv);
     root.innerHTML = `
       <div class="lz-top"><button class="lz-btn" id="lzZu" aria-label="Schließen">✕</button><div class="lz-title">🎬 Lernszenen</div></div>
-      <div class="lz-tabs">${kats.map(k => `<button class="lz-btn${k[0] === katAktiv ? " on" : ""}" data-kat="${k[0]}">${esc(k[1])} <span class="lz-anz">${SZENEN.filter(s => (s.kategorie || "autobahn") === k[0]).length}</span></button>`).join("")}</div>
+      <div class="lz-tabs">${nurListe && nurListe.length ? `<span style="font-size:13px;color:#b1bfb5;padding:8px 2px;">Passend zum Ausbildungspunkt</span><button class="lz-btn" id="lzAlle">Alle Szenen</button>` : ""}${(nurListe && nurListe.length ? [] : kats).map(k => `<button class="lz-btn${k[0] === katAktiv ? " on" : ""}" data-kat="${k[0]}">${esc(k[1])} <span class="lz-anz">${SZENEN.filter(s => (s.kategorie || "autobahn") === k[0]).length}</span></button>`).join("")}</div>
       <div class="lz-grid" id="lzGrid">${liste.map(s => `
         <button class="lz-tile" data-szene="${s.id}"><canvas data-vorschau="${s.id}"></canvas>
           <h3>${esc(s.titel)}</h3><p>${esc(s.kurz)}</p>
@@ -1439,6 +1455,7 @@
         </button>`).join("")}</div>`;
     $("#lzZu").onclick = schliessen;
     root.querySelectorAll("[data-kat]").forEach(b => b.onclick = () => { katAktiv = b.dataset.kat; zeigeAuswahl(); });
+    { const a = root.querySelector("#lzAlle"); if (a) a.onclick = () => { nurListe = null; zeigeAuswahl(); }; }
     root.querySelectorAll("[data-szene]").forEach(b => b.onclick = () => starteSzene(b.dataset.szene));
     // Vorschaubilder
     root.querySelectorAll("canvas[data-vorschau]").forEach(c => {
@@ -1505,11 +1522,12 @@
     $("#lzPlay").onclick = () => { if ((root.querySelector(".lz-sheet .lz-opt") && !root.querySelector("#lzWeiter")) || tippFrage) return;
       if (modus === "fahren") { const c = $("#lzCap"); if (c) c.hidden = true; }
       if (modus === "fahren" && fahr && fahr.ende) { schliesseSheet(); if (szene.reaktion) starteReaktion(fahr.vWahl); else starteFahren(); } if (!laeuft && zeit >= szene.dauer && modus !== "fahren") { zeit = 0; beantwortet = new Set(); } laeuft = !laeuft; if (laeuft) { schliesseSheet(); ansicht.folgen = true; } };
-    $("#lzSlider").oninput = e => { zeit = +e.target.value; laeuft = false; const ph = aktuellePhase(); if (ph) zeigePhase(ph); };
-    $("#lzPrev").onclick = () => springe(-1); $("#lzNext").onclick = () => springe(1);
+    const tippZu = () => { if (!tippFrage) return; tippFrage = null; const b = root.querySelector("#lzTipp"); if (b) b.remove(); ansicht.folgen = true; ansicht.zoom = grundZoom(); };
+    $("#lzSlider").oninput = e => { tippZu(); zeit = +e.target.value; laeuft = false; const ph = aktuellePhase(); if (ph) zeigePhase(ph); };
+    $("#lzPrev").onclick = () => { tippZu(); springe(-1); }; $("#lzNext").onclick = () => { tippZu(); springe(1); };
     $("#lzTempo").onclick = () => { tempoFaktor = tempoFaktor === 1 ? 0.5 : tempoFaktor === 0.5 ? 2 : 1; $("#lzTempo").textContent = (tempoFaktor === 0.5 ? "½" : tempoFaktor) + "×"; };
-    $("#lzReset").onclick = () => { schliesseSheet(); tippFrage = null; { const b = root.querySelector("#lzTipp"); if (b) b.remove(); } _hGlatt = null; versatzFz = {}; zeit = 0; laeuft = false; beantwortet = new Set(); punkte = { richtig: 0, gesamt: 0 }; if (modus === "fahren") starteFahren(); zeigePhase(szene.phasen[0]); ansicht.folgen = true; };
-    root.querySelectorAll("[data-kam]").forEach(b => b.onclick = () => { kameraModus = b.dataset.kam; _hGlatt = null; root.querySelectorAll("[data-kam]").forEach(x => x.classList.toggle("on", x === b)); });
+    $("#lzReset").onclick = () => { schliesseSheet(); tippFrage = null; { const b = root.querySelector("#lzTipp"); if (b) b.remove(); } _hGlatt = null; versatzFz = {}; zeit = 0; laeuft = false; beantwortet = new Set(); punkte = { richtig: 0, gesamt: 0 }; if (modus === "fahren") { starteFahren(); const c = $("#lzCap"); if (c) c.hidden = false; setzeModus("fahren"); } else zeigePhase(szene.phasen[0]); ansicht.folgen = true; };
+    root.querySelectorAll("[data-kam]").forEach(b => b.onclick = () => { if (tippFrage) { zeigeToast("Zum Antippen bleibt die Ansicht von oben."); return; } kameraModus = b.dataset.kam; _hGlatt = null; root.querySelectorAll("[data-kam]").forEach(x => x.classList.toggle("on", x === b)); });
     root.querySelectorAll("[data-modus]").forEach(b => b.onclick = () => setzeModus(b.dataset.modus));
     bindeFahren(); bindeZiehen();
     letzterFrame = 0; cancelAnimationFrame(raf); raf = requestAnimationFrame(frame);
@@ -1585,7 +1603,7 @@
   function zeigeErgebnisMitdenken() {
     const n = szene.phasen.filter(p => p.frage).length, q = n ? Math.round(punkte.richtig / n * 100) : 0;
     const d = sheet(`<h2>${q >= 80 ? "Stark!" : q >= 50 ? "Gut – fast!" : "Nochmal üben"}</h2><p class="lz-erkl">${punkte.richtig} von ${n} Fragen richtig (${q} %).${punkte.gesamt < n ? ` ${n - punkte.gesamt} Frage(n) übersprungen.` : ""}</p>
-      <div class="lz-row" style="margin-top:12px;"><button class="lz-btn" id="lzNochmal">↺ Nochmal</button>${szene.fahren ? '<button class="lz-btn on" id="lzSelbst">Jetzt selbst fahren</button>' : ""}<button class="lz-btn" id="lzRegelnB">§ Alle Regeln</button></div>`);
+      <div class="lz-row" style="margin-top:12px;"><button class="lz-btn" id="lzNochmal">↺ Nochmal</button>${szene.fahren || szene.rangieren || szene.reaktion ? `<button class="lz-btn on" id="lzSelbst">${szene.rangieren ? "Jetzt selbst rangieren" : szene.reaktion ? "Reaktionstest starten" : "Jetzt selbst fahren"}</button>` : ""}<button class="lz-btn" id="lzRegelnB">§ Alle Regeln</button></div>`);
     d.querySelector("#lzNochmal").onclick = () => setzeModus("mitdenken");
     const sf = d.querySelector("#lzSelbst"); if (sf) sf.onclick = () => setzeModus("fahren");
     d.querySelector("#lzRegelnB").onclick = zeigeRegeln;
@@ -1624,7 +1642,7 @@
     halt("#rBrems", () => { if (fahr) fahr.bremse = true; }, () => { if (fahr) fahr.bremse = false; });
     $("#rGang").onclick = () => { if (!fahr || !fahr.rang) return; if (fahr.v > 0.03) { zeigeToast("Gang nur im Stand wechseln."); return; } fahr.gang = -fahr.gang; fahr.sperre = 0; aktualisiereRangUI(); };
     $("#rBlick").onclick = () => { if (!fahr || !fahr.rang) return; if (!laeuft && !fahr.ende) laeuft = true; fahr.blickT = fahr.t; fahr.schulter.push({ von: fahr.t, bis: fahr.t + 1.2, seite: "rundum" }); };
-    const blink = seite => () => { if (!fahr || !fahr.rang) return; if (!laeuft && !fahr.ende) laeuft = true; fahr.blinker = fahr.blinker === seite ? null : seite; fahr.log.push({ t: fahr.t, typ: "blink", seite: fahr.blinker }); };
+    const blink = seite => () => { if (!fahr || !fahr.rang) return; if (!laeuft && !fahr.ende) laeuft = true; fahr.blinker = fahr.blinker === seite ? null : seite; fahr.log.push({ t: fahr.t, typ: "blink", seite: fahr.blinker }); aktualisiereRangUI(); };
     $("#rBL").onclick = blink("links"); $("#rBR").onclick = blink("rechts");
     $("#rHilf").onclick = () => { if (!fahr || !fahr.rang) return; fahr.hilfslinien = !fahr.hilfslinien; aktualisiereRangUI(); };
     $("#rFertig").onclick = rangierFertig;
