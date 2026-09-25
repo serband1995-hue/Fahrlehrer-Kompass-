@@ -4244,7 +4244,7 @@ function routeFahrschuleDashboard(){
   const lehrer=_fsAgg.lehrer||[];
   const act=activeStudents().length;
   const today=todayISO();
-  const heuteCount=(DB.lessons||[]).filter(l=>l.date===today&&l.status!=="abgebrochen"&&l.status!=="nicht erschienen").length;
+  const heuteCount=(DB.lessons||[]).filter(l=>l.date===today&&l.art!=="block"&&l.status!=="abgebrochen"&&l.status!=="nicht erschienen").length;
   const fahrzeugAnzahl=((_fsAgg.fahrzeuge)||[]).length;
   const q=quoteOf(examsIn('cur'));
   const poolAnzahl=(DB.students||[]).filter(s=>!s._fahrlehrerId).length;
@@ -11151,7 +11151,7 @@ function dayFreeSlots(iso){
 function countRange(fromISO,toISO){
   let planned=0, free=0, slots=0, plannedUE=0;
   let cur=fromISO;
-  while(cur<=toISO){ const ds=daySlots(cur); const ev=dayEvents(cur).filter(e=>!["abgebrochen","nicht erschienen","abgesagt","geplatzt"].includes(e.status)); slots+=ds.length; planned+=ev.length; plannedUE+=ev.reduce((a,e)=>a+ueOf(e.art||'fahrstunde',e.von,e.bis,e.tatsaechlicheDauer),0); free+=dayFreeSlots(cur).length; cur=addDays(cur,1); }
+  while(cur<=toISO){ const ds=daySlots(cur); const ev=dayEvents(cur).filter(e=>!["abgebrochen","nicht erschienen","abgesagt","geplatzt"].includes(e.status)&&e.art!=="block"); slots+=ds.length; planned+=ev.length; plannedUE+=ev.reduce((a,e)=>a+ueOf(e.art||'fahrstunde',e.von,e.bis,e.tatsaechlicheDauer),0); free+=dayFreeSlots(cur).length; cur=addDays(cur,1); }
   return {planned,free,slots,plannedUE};
 }
 // Lesson-CRUD
@@ -12302,8 +12302,23 @@ function kapazitaetAutoWoche(){
   for(let i=0;i<6;i++){ total+=daySlots(addDays(montag,i)).length; }
   return total||32;
 }
+// Fahrstunden-Slots eines Tages, die nicht durch Blockiert (Urlaub, Weiterbildung …) oder Theorie belegt sind.
+function daySlotsVerfuegbar(iso){
+  const sperren=(DB.lessons||[]).filter(l=>l.date===iso&&(l.art==="block"||l.art==="theorie")&&l.status!=="abgebrochen");
+  return daySlots(iso).filter(s=>{ const sv=hm2min(s.von), sb=hm2min(s.bis); return !sperren.some(b=>sv<hm2min(b.bis)&&sb>hm2min(b.von)); });
+}
+// Tatsächlich verfügbare Slots einer Woche (Mo–Sa) - ohne Arbeitszeiten in den Einstellungen wie bisher 32.
+function kapazitaetWoche(montag){
+  let konfig=0, frei=0;
+  for(let i=0;i<6;i++){ const d=addDays(montag,i); konfig+=daySlots(d).length; frei+=daySlotsVerfuegbar(d).length; }
+  return konfig?frei:32;
+}
 function capacityStats(){
-  const slotsPerWeek=kapazitaetAutoWoche();
+  // Schnitt aus dieser und den nächsten 3 Wochen, Sperrzeiten abgezogen: eine einzelne Urlaubswoche kippt die
+  // Empfehlung nicht, eine längere Weiterbildung (Vormittage weg) senkt die Kapazität spürbar.
+  const montag0=addDays(todayISO(),-weekdayMon0(todayISO()));
+  let summe=0; for(let w=0;w<4;w++) summe+=kapazitaetWoche(addDays(montag0,7*w));
+  const slotsPerWeek=Math.round(summe/4);
   const avgPerStudent=1.5; // Schnitt 1-2× pro Woche
   // Aktiv fahrende Schüler: nicht passed, kein Theorie-Wait, nicht prüfungsreif/Warteliste, >=1%, kein Dummy
   const fahrend=DB.students.filter(s=>{
@@ -12315,12 +12330,13 @@ function capacityStats(){
     return true;
   });
   const bedarf=Math.round(fahrend.length*avgPerStudent);
-  const auslastung=slotsPerWeek>0?Math.round(bedarf/slotsPerWeek*100):0;
+  const auslastung=slotsPerWeek>0?Math.round(bedarf/slotsPerWeek*100):(bedarf>0?100:0);
   // Wie viele Neue noch? Ein neuer Schüler braucht anfangs ~2 Slots/Woche
   const freieSlots=Math.max(0,slotsPerWeek-bedarf);
   const platzNeu=Math.floor(freieSlots/2);
   let ampel="gruen", text="";
-  if(auslastung>=100){ ampel="rot"; text="Voll ausgelastet – aktuell keine neuen Schüler aufnehmen."; }
+  if(slotsPerWeek===0){ ampel="rot"; text="In den nächsten Wochen keine freien Fahrzeiten (Urlaub/Blockiert)."; }
+  else if(auslastung>=100){ ampel="rot"; text="Voll ausgelastet – aktuell keine neuen Schüler aufnehmen."; }
   else if(auslastung>=85){ ampel="gelb"; text=`Fast voll – höchstens ${platzNeu} neue${platzNeu===1?'r':''} Schüler möglich.`; }
   else { ampel="gruen"; text=`Du hast Luft für ca. ${platzNeu} neue Schüler.`; }
   return {slotsPerWeek,fahrend:fahrend.length,bedarf,auslastung,platzNeu,ampel,text};
@@ -12331,11 +12347,11 @@ function auslastungsTrend(wochenAnzahl){
   wochenAnzahl=wochenAnzahl||4;
   const heute=todayISO();
   const dieseWocheMontag=addDays(heute,-weekdayMon0(heute));
-  const slotsPerWeek=kapazitaetAutoWoche();
   const out=[];
   for(let w=wochenAnzahl-1;w>=0;w--){
     const montag=addDays(dieseWocheMontag,-7*w);
     const sonntag=addDays(montag,6);
+    const slotsPerWeek=kapazitaetWoche(montag); // je Woche, Urlaub/Blockiert abgezogen
     const count=(DB.lessons||[]).filter(l=>l.date>=montag&&l.date<=sonntag&&["fahrstunde","sonder"].includes(l.art)&&l.status!=="abgebrochen"&&l.status!=="nicht erschienen").length;
     out.push({montag,pct:slotsPerWeek>0?Math.round(count/slotsPerWeek*100):0});
   }

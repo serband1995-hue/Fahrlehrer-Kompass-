@@ -2,7 +2,7 @@
    Cached nur die App-Hülle (HTML, Icons, Manifest) plus Schriften und die Supabase-Bibliothek.
    Antworten von Supabase (Schülerdaten) und anderen Diensten werden NIE gespeichert. */
 
-const CACHE_VERSION = "kompass-v8";
+const CACHE_VERSION = "kompass-v9";
 const CORE_FILES = [
   "./index.html",
   "./lernszenen.js",
