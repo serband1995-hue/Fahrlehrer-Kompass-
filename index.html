@@ -3190,6 +3190,12 @@ function getSupa() {
   return _supaClient;
 }
 
+// Nutzer-ID aus getSession(); ist die Sitzung abgelaufen, klare Meldung statt eines Absturzes mitten im Speichern.
+function _uidAus(sessionData) {
+  const id = sessionData && sessionData.session && sessionData.session.user && sessionData.session.user.id;
+  if (!id) { toast("Sitzung abgelaufen – bitte neu anmelden"); throw new Error("Sitzung abgelaufen"); }
+  return id;
+}
 function isSuperAdmin() {
   return _authProfile && _authProfile.rolle === "super_admin";
 }
@@ -3625,13 +3631,16 @@ async function enablePushNotifications() {
   } catch (e) { toast("Fehler: " + e.message); }
 }
 /* ---- Öffentliche Online-Buchungen (Schalter-/Automatik-Link) abholen ---- */
+let _buchungsAbrufLaeuft = false;
 async function pullPublicBookings() {
   // Nicht in der Gesamtansicht: neue Termine landeten sonst im Fahrschul-Bestand statt im eigenen Kalender.
-  if (!_authUser || _fsAgg) return;
+  if (!_authUser || _fsAgg || _buchungsAbrufLaeuft) return;
+  _buchungsAbrufLaeuft = true;
   try {
     const supa = getSupa();
-    const { data: rows } = await supa.from("public_bookings").select("*").eq("fahrlehrer_id", _authUser.id)
+    const { data: rows, error: pbErr } = await supa.from("public_bookings").select("*").eq("fahrlehrer_id", _authUser.id)
       .or("and(status.eq.bestaetigt,merged.eq.false),and(status.eq.storniert,merged.eq.true,cancel_synced.eq.false)");
+    if (pbErr) throw pbErr;
     if (!rows || !rows.length) return;
     let neu = [];
     let stornos = [];
@@ -3643,9 +3652,17 @@ async function pullPublicBookings() {
         const noteParts = ["Online gebucht · " + fzLabel + (gebuchtAm ? " · " + gebuchtAm + " Uhr gebucht" : "")];
         if (r.schueler_telefon) noteParts.push("Tel: " + r.schueler_telefon);
         if (r.schueler_email) noteParts.push(r.schueler_email);
-        const l = addLesson({ date: r.datum, von: r.von, bis: r.bis, art, sid: null, name: r.schueler_name, note: noteParts.join(" · ") });
-        await supa.from("public_bookings").update({ merged: true, merged_lesson_id: l.id }).eq("id", r.id);
-        neu.push(r);
+        // Termin trägt die Buchungs-ID: ein erneuter Abruf (z.B. nach Netzfehler beim Vermerken) legt ihn nicht doppelt an.
+        let l = (DB.lessons || []).find(x => x.onlineBookingId === r.id);
+        const warSchonDa = !!l;
+        if (!l) l = addLesson({ date: r.datum, von: r.von, bis: r.bis, art, sid: null, name: r.schueler_name, note: noteParts.join(" · "), onlineBookingId: r.id });
+        const { data: vermerkt, error: mErr } = await supa.from("public_bookings").update({ merged: true, merged_lesson_id: l.id }).eq("id", r.id).eq("merged", false).select("id");
+        if (mErr) continue; // unklar, ob es geklappt hat: Termin behalten, beim nächsten Abruf wird erneut vermerkt
+        if (!vermerkt || !vermerkt.length) {
+          // Ein anderes Gerät hat die Buchung schon übernommen - eigene Kopie wieder entfernen.
+          DB.lessons = (DB.lessons || []).filter(x => x.id !== l.id); save(); continue;
+        }
+        if (!warSchonDa) neu.push(r);
       } else if (r.status === "storniert" && r.merged && !r.cancel_synced) {
         if (r.merged_lesson_id) deleteLesson(r.merged_lesson_id);
         await supa.from("public_bookings").update({ cancel_synced: true }).eq("id", r.id);
@@ -3669,6 +3686,7 @@ async function pullPublicBookings() {
       if ($("#calBody")) routeKalender();
     }
   } catch (e) { console.warn("[Kompass] Buchungs-Abruf fehlgeschlagen:", e.message); }
+  finally { _buchungsAbrufLaeuft = false; }
 }
 /* Holt neue oder zu mir verschobene Schüler von der Fahrschule ab, und entfernt lokal Schüler,
    die zu einem anderen Fahrlehrer verschoben wurden - mit Hinweis-Toast in beide Richtungen. */
@@ -3676,7 +3694,8 @@ async function pullSchuelerZuweisungen() {
   if (!_authUser || !_authProfile || !_authProfile.fahrschule_id || _fsAgg) return;
   try {
     const supa = getSupa();
-    const { data: rows } = await supa.from("schueler").select("*").eq("fahrlehrer_id", _authUser.id).eq("status", "aktiv");
+    const { data: rows, error: schErr } = await supa.from("schueler").select("*").eq("fahrlehrer_id", _authUser.id).eq("status", "aktiv");
+    if (schErr) throw schErr;
     const lokaleIds = new Set((DB.students||[]).map(s=>s.id));
     let neu = [];
     ensureAusbildungsplaene();
@@ -3692,7 +3711,8 @@ async function pullSchuelerZuweisungen() {
         neu.push(r);
       }
     }
-    const { data: weg } = await supa.from("schueler_verschiebungen").select("*").eq("von_fahrlehrer_id", _authUser.id).eq("gesehen_von_alt", false);
+    const { data: weg, error: wegErr } = await supa.from("schueler_verschiebungen").select("*").eq("von_fahrlehrer_id", _authUser.id).eq("gesehen_von_alt", false);
+    if (wegErr) throw wegErr;
     let entfernt = [];
     for (const v of (weg||[])) {
       const idx = (DB.students||[]).findIndex(s=>s.id===v.schueler_id);
@@ -3719,7 +3739,9 @@ async function pullTermineZuweisungen() {
   if (!_authUser || !_authProfile || !_authProfile.fahrschule_id || !DB.lessons || _fsAgg) return;
   try {
     const supa = getSupa();
-    const { data: rows } = await supa.from("kalender_termine").select("*").eq("fahrlehrer_id", _authUser.id).eq("geloescht", false);
+    // Fehler abbrechen lassen: sonst gälte eine leere Antwort als "alles gelöscht" und der Kalender würde geleert.
+    const { data: rows, error: termErr } = await supa.from("kalender_termine").select("*").eq("fahrlehrer_id", _authUser.id).eq("geloescht", false);
+    if (termErr || !Array.isArray(rows)) throw (termErr || new Error("keine Antwort"));
     const localById = {};
     DB.lessons.forEach(l => { localById[l.id] = l; });
     let neu = 0, geaendert = 0;
@@ -3932,19 +3954,19 @@ async function renderAdminPanel() {
     el.innerHTML = profiles.map(p => {
       const isMe = p.id === _authUser.id;
       const displayEmail = p.email || (isMe ? _authUser.email : '— E-Mail nicht bekannt —');
-      const rolleLabel = p.rolle === 'super_admin' ? '👑 Super-Admin' : (p.rolle === 'fahrlehrer' ? `<span class="ic ic-clay" style="font-size:12px;">${ICN.car}</span> Fahrlehrer` : p.rolle);
+      const rolleLabel = p.rolle === 'super_admin' ? '👑 Super-Admin' : (p.rolle === 'fahrlehrer' ? `<span class="ic ic-clay" style="font-size:12px;">${ICN.car}</span> Fahrlehrer` : esc(p.rolle));
       return `<div class="ap-card">
-        <div class="ap-email">${displayEmail}${isMe ? ' <span style="font-size:10px;color:#4a8b45;font-weight:700">(Du)</span>' : ''}</div>
+        <div class="ap-email">${esc(displayEmail)}${isMe ? ' <span style="font-size:10px;color:#4a8b45;font-weight:700">(Du)</span>' : ''}</div>
         <div class="ap-role">${rolleLabel} &nbsp;<span class="${p.aktiv ? 'ap-status-on' : 'ap-status-off'}">${p.aktiv ? 'Aktiv' : 'GESPERRT'}</span></div>
         ${!isMe ? `<div class="ap-actions">
           ${p.aktiv
-            ? `<button class="ap-kill" onclick="toggleUser('${p.id}', false)">Sperren</button>`
-            : `<button class="ap-activate" onclick="toggleUser('${p.id}', true)">Freischalten</button>`
+            ? `<button class="ap-kill" onclick="toggleUser(${_jsArg(p.id)}, false)">Sperren</button>`
+            : `<button class="ap-activate" onclick="toggleUser(${_jsArg(p.id)}, true)">Freischalten</button>`
           }
         </div>` : ''}
       </div>`;
     }).join("");
-  } catch(e) { el.innerHTML = `<div style="color:#f08080;font-size:13px">Fehler: ${e.message}</div>`; }
+  } catch(e) { el.innerHTML = `<div style="color:#f08080;font-size:13px">Fehler: ${esc(e.message)}</div>`; }
 }
 
 async function toggleUser(userId, aktiv) {
@@ -4056,7 +4078,7 @@ async function _fsLoadAggData(fahrschuleId){
     const passendeLehrer=lehrer.filter(x=>((x.name||x.email||"").trim().toLowerCase())===((u.mitarbeiter_name||"").trim().toLowerCase()));
     passendeLehrer.forEach(lh=>{
       let d=new Date(u.von+"T00:00:00"); const bisD=new Date(u.bis+"T00:00:00"); let guard=0;
-      while(d<=bisD&&guard++<60){
+      while(d<=bisD&&guard++<400){
         const iso=d.getFullYear()+"-"+String(d.getMonth()+1).padStart(2,"0")+"-"+String(d.getDate()).padStart(2,"0");
         urlaubBlocks.push({id:"urlaub_"+u.id+"_"+iso,sid:null,date:iso,von:"06:00",bis:"23:00",art:"block",status:"geplant",note:"Urlaub",name:"Urlaub",fahrzeug:null,_fahrlehrerId:lh.id,_fahrlehrerName:lh.name||lh.email,_synthetic:true});
         d.setDate(d.getDate()+1);
@@ -4099,7 +4121,7 @@ async function _fsRefreshAggData(){
 }
 function _fsSuperAdminToggleBtn(){
   if(!isSuperAdmin())return "";
-  return `<button class="nav-item" data-nav="__fstoggle" onclick="${_fsAgg?'_fsExitAggMode()':`_fsEnterAggMode('${(_authProfile&&_authProfile.fahrschule_id)||''}')`}" style="border-top:1px solid var(--line);">
+  return `<button class="nav-item" data-nav="__fstoggle" onclick="${_fsAgg?'_fsExitAggMode()':`_fsEnterAggMode(${_jsArg((_authProfile&&_authProfile.fahrschule_id)||'')})`}" style="border-top:1px solid var(--line);">
     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 21h18M5 21V7l7-4 7 4v14M9 9h1M9 13h1M14 9h1M14 13h1"/></svg>
     ${_fsAgg?'Zu meiner Fahrlehrer-Ansicht':'Admin-Gesamtübersicht'}</button>`;
 }
@@ -4298,7 +4320,7 @@ async function routeFahrschulenListe(){
   const supa=getSupa();
   const {data:schulen}=await supa.from("fahrschulen").select("*").order("erstellt_am");
   const rows=(schulen||[]).map(f=>`
-    <button class="fs-card" style="width:100%;text-align:left;cursor:pointer;border:none;display:block;" onclick="routeFahrschuleDetail('${f.id}')">
+    <button class="fs-card" style="width:100%;text-align:left;cursor:pointer;border:none;display:block;" onclick="routeFahrschuleDetail(${_jsArg(f.id)})">
       <div class="fs-name">${esc(f.name)}</div>
       <div class="fs-sub">${f.aktiv?'<span class="fs-status-on">Aktiv</span>':'<span class="fs-status-off">GESPERRT</span>'}</div>
     </button>`).join("")||'<p class="muted-p" style="font-size:13px;">Noch keine Fahrschulen.</p>';
@@ -4355,10 +4377,10 @@ async function routeFahrschuleDetail(fahrschuleId){
       <h4>🏫 ${esc(fs.name)}</h4>
       <p style="color:var(--muted);font-size:13px;">${fs.aktiv?'Aktiv':'GESPERRT'}</p>
       <div class="btn-row">${fs.aktiv
-        ?`<button class="btn btn-ghost" style="color:#c83c3c;" onclick="toggleFahrschuleAktiv('${fs.id}',false)">Fahrschule sperren</button>`
-        :`<button class="btn btn-primary" onclick="toggleFahrschuleAktiv('${fs.id}',true)">Fahrschule freischalten</button>`}</div>
+        ?`<button class="btn btn-ghost" style="color:#c83c3c;" onclick="toggleFahrschuleAktiv(${_jsArg(fs.id)},false)">Fahrschule sperren</button>`
+        :`<button class="btn btn-primary" onclick="toggleFahrschuleAktiv(${_jsArg(fs.id)},true)">Fahrschule freischalten</button>`}</div>
     </div>` : `<div class="res-block" style="animation:none;"><h4>🏫 ${esc(fs.name)}</h4></div>`;
-  const kalenderBtn=`<div class="res-block" style="animation:none;"><h4>📅 Kalender</h4><p style="font-size:13px;color:var(--muted);">Alle Termine aller Fahrlehrer, filterbar, bearbeitbar.</p><div class="btn-row"><button class="btn btn-primary" onclick="_fsOpenEchterKalenderAusAdmin('${fahrschuleId}')">Kalender öffnen</button></div></div>`;
+  const kalenderBtn=`<div class="res-block" style="animation:none;"><h4>📅 Kalender</h4><p style="font-size:13px;color:var(--muted);">Alle Termine aller Fahrlehrer, filterbar, bearbeitbar.</p><div class="btn-row"><button class="btn btn-primary" onclick="_fsOpenEchterKalenderAusAdmin(${_jsArg(fahrschuleId)})">Kalender öffnen</button></div></div>`;
 
   const lehrerRows=lehrer.map(l=>{
     const istSuperAdmin=l.rolle==="super_admin";
@@ -4368,9 +4390,9 @@ async function routeFahrschuleDetail(fahrschuleId){
       <div class="fs-sub">${l.aktiv?'<span class="fs-status-on">Aktiv</span>':'<span class="fs-status-off">GESPERRT</span>'} &nbsp;·&nbsp; Auslastung: ${l.auslastung_pct!=null?l.auslastung_pct+'%':'—'} &nbsp;·&nbsp; ${l.aktive_schueler_anzahl||0} aktive Schüler</div>
       ${istSuperAdmin?'':`<div class="fs-actions">
         ${l.aktiv
-          ?`<button class="fs-btn-kill" onclick="toggleFahrlehrerAktiv('${l.id}',false,'${fahrschuleId}')">Sperren</button>`
-          :`<button class="fs-btn-activate" onclick="toggleFahrlehrerAktiv('${l.id}',true,'${fahrschuleId}')">Freischalten</button>`}
-        <button class="fs-btn-activate" onclick="fahrlehrerPasswortZuruecksetzen('${l.id}')">Passwort zurücksetzen</button>
+          ?`<button class="fs-btn-kill" onclick="toggleFahrlehrerAktiv(${_jsArg(l.id)},false,${_jsArg(fahrschuleId)})">Sperren</button>`
+          :`<button class="fs-btn-activate" onclick="toggleFahrlehrerAktiv(${_jsArg(l.id)},true,${_jsArg(fahrschuleId)})">Freischalten</button>`}
+        <button class="fs-btn-activate" onclick="fahrlehrerPasswortZuruecksetzen(${_jsArg(l.id)})">Passwort zurücksetzen</button>
       </div>`}
     </div>`;}).join("")||'<p class="muted-p" style="font-size:13px;">Noch keine Fahrlehrer.</p>';
 
@@ -4394,13 +4416,13 @@ async function routeFahrschuleDetail(fahrschuleId){
       <div class="acc-body"><div class="acc-inner" style="padding:0 16px 16px;">
         <div class="fs-sub" style="margin-bottom:8px;">${esc(s.telefon||"– keine Telefonnummer –")}</div>
         <div class="field"><label style="font-size:11px;">Fahrlehrer</label>
-          <select onchange="schuelerVerschieben('${s.id}',this.value,'${s.fahrlehrer_id||""}','${fahrschuleId}')" style="width:100%;">${lehrerOptionsFor(s.fahrlehrer_id)}</select></div>
+          <select onchange="schuelerVerschieben(${_jsArg(s.id)},this.value,${_jsArg(s.fahrlehrer_id||"")},${_jsArg(fahrschuleId)})" style="width:100%;">${lehrerOptionsFor(s.fahrlehrer_id)}</select></div>
         <div class="field"><label style="font-size:11px;">Paket</label>
-          <select onchange="schuelerPaketSetzen('${s.id}',this.value)" style="width:100%;">${paketOptionsFor(s.paket_id)}</select></div>
+          <select onchange="schuelerPaketSetzen(${_jsArg(s.id)},this.value)" style="width:100%;">${paketOptionsFor(s.paket_id)}</select></div>
         <div class="toggle-row" style="margin-top:6px;"><div class="tc-name" style="font-size:13px;">Simulator gekauft</div>
-          <button class="check-toggle${s.hat_simulator?' on':''}" onclick="schuelerFlagToggle('${s.id}','hat_simulator',${!s.hat_simulator})"></button></div>
+          <button class="check-toggle${s.hat_simulator?' on':''}" onclick="schuelerFlagToggle(${_jsArg(s.id)},'hat_simulator',${!s.hat_simulator})"></button></div>
         <div class="toggle-row"><div class="tc-name" style="font-size:13px;">Theorie-App gekauft</div>
-          <button class="check-toggle${s.hat_theorie_app?' on':''}" onclick="schuelerFlagToggle('${s.id}','hat_theorie_app',${!s.hat_theorie_app})"></button></div>
+          <button class="check-toggle${s.hat_theorie_app?' on':''}" onclick="schuelerFlagToggle(${_jsArg(s.id)},'hat_theorie_app',${!s.hat_theorie_app})"></button></div>
       </div></div>
     </div>`;
   }).join("")||'<p class="muted-p" style="font-size:13px;">Noch keine Schüler.</p>';
@@ -4409,14 +4431,14 @@ async function routeFahrschuleDetail(fahrschuleId){
   const paketeVerwaltung=pakete.map(p=>`
     <div class="field" style="display:flex;align-items:center;gap:8px;">
       <span style="flex:1;">${esc(p.name)}</span>
-      <button class="btn btn-ghost" style="padding:6px 12px;font-size:12px;" onclick="paketUmbenennen('${p.id}','${fahrschuleId}')">Umbenennen</button>
+      <button class="btn btn-ghost" style="padding:6px 12px;font-size:12px;" onclick="paketUmbenennen(${_jsArg(p.id)},${_jsArg(fahrschuleId)})">Umbenennen</button>
     </div>`).join("");
 
   const adminZugang=binSuper?(admins.length
     ?`<div class="res-block" style="animation:none;"><h4>🔑 Fahrschule-Admin-Zugang</h4><p style="font-size:13px;color:var(--muted);">${admins.map(a=>esc(a.name||a.email)).join(", ")}</p></div>`
     :`<div class="res-block" style="animation:none;"><h4>🔑 Fahrschule-Admin-Zugang</h4>
         <p style="font-size:13px;color:var(--muted);">Noch kein eigener Zugang für den Fahrschul-Inhaber.</p>
-        <div class="btn-row"><button class="btn btn-primary" onclick="neuenFahrschuleAdminAnlegen('${fahrschuleId}')">+ Fahrschule-Admin-Zugang anlegen</button></div>
+        <div class="btn-row"><button class="btn btn-primary" onclick="neuenFahrschuleAdminAnlegen(${_jsArg(fahrschuleId)})">+ Fahrschule-Admin-Zugang anlegen</button></div>
       </div>`):"";
 
   if(wrap)wrap.innerHTML=`
@@ -4425,17 +4447,17 @@ async function routeFahrschuleDetail(fahrschuleId){
     ${kalenderBtn}
     <div class="res-block" style="animation:none;"><h4>👥 Fahrlehrer (${lehrer.length})</h4>
       ${lehrerRows}
-      <div class="btn-row" style="margin-top:10px;"><button class="btn btn-primary" onclick="neuenFahrlehrerAnlegen('${fahrschuleId}')">+ Neuen Fahrlehrer anlegen</button></div>
+      <div class="btn-row" style="margin-top:10px;"><button class="btn btn-primary" onclick="neuenFahrlehrerAnlegen(${_jsArg(fahrschuleId)})">+ Neuen Fahrlehrer anlegen</button></div>
     </div>
     ${adminZugang}
     <div class="res-block" style="animation:none;"><h4>📦 Pakete</h4>
       ${paketeVerwaltung}
-      <div class="btn-row" style="margin-top:10px;"><button class="btn btn-ghost" onclick="paketHinzufuegen('${fahrschuleId}')">+ Paket hinzufügen</button></div>
+      <div class="btn-row" style="margin-top:10px;"><button class="btn btn-ghost" onclick="paketHinzufuegen(${_jsArg(fahrschuleId)})">+ Paket hinzufügen</button></div>
     </div>
     <div class="res-block" style="animation:none;"><h4>🎓 Schüler (${schueler.length})</h4>
       ${schuelerSuche}
       ${schuelerRows}
-      <div class="btn-row" style="margin-top:10px;"><button class="btn btn-primary" onclick="neuenSchuelerAnlegenFS('${fahrschuleId}')">+ Neuen Schüler anlegen</button></div>
+      <div class="btn-row" style="margin-top:10px;"><button class="btn btn-primary" onclick="neuenSchuelerAnlegenFS(${_jsArg(fahrschuleId)})">+ Neuen Schüler anlegen</button></div>
     </div>`;
 }
 
@@ -4484,7 +4506,7 @@ async function schuelerVerschieben(schuelerId,neuerLehrerId,alterLehrerId,fahrsc
     const {data:sessionData}=await supa.auth.getSession();
     await supa.from("schueler_verschiebungen").insert({
       schueler_id:schuelerId, von_fahrlehrer_id:alterLehrerId||null, zu_fahrlehrer_id:neuerLehrerId||null,
-      verschoben_von:sessionData.session.user.id, fahrschule_id:fahrschuleId
+      verschoben_von:_uidAus(sessionData), fahrschule_id:fahrschuleId
     });
   }
   toast("Schüler verschoben ✓");
@@ -4538,11 +4560,11 @@ function routeFahrschuleLehrer(){
       <div class="fs-sub">${l.aktiv?'<span class="fs-status-on">Aktiv</span>':'<span class="fs-status-off">GESPERRT</span>'} &nbsp;·&nbsp; Auslastung ${l.auslastung_pct!=null?`<span style="color:${l.auslastung_pct>=100?'#c83c3c':l.auslastung_pct>=85?'#cf9a3e':'inherit'};font-weight:${l.auslastung_pct>=85?'700':'400'};">${l.auslastung_pct}%</span>`:'—'} &nbsp;·&nbsp; ${meineSchueler.length} Schüler &nbsp;·&nbsp; ${q.pct==null?'Quote —':'Quote '+q.pct+'%'}</div>
       ${(istSuperAdmin||buero)?'':`<div class="fs-actions">
         ${l.aktiv
-          ?`<button class="fs-btn-kill" onclick="toggleFahrlehrerAktiv('${l.id}',false,'${_fsAgg.fahrschuleId}')">Sperren</button>`
-          :`<button class="fs-btn-activate" onclick="toggleFahrlehrerAktiv('${l.id}',true,'${_fsAgg.fahrschuleId}')">Freischalten</button>`}
-        <button class="fs-btn-activate" onclick="fahrlehrerPasswortZuruecksetzen('${l.id}')">Passwort zurücksetzen</button>
+          ?`<button class="fs-btn-kill" onclick="toggleFahrlehrerAktiv(${_jsArg(l.id)},false,${_jsArg(_fsAgg.fahrschuleId)})">Sperren</button>`
+          :`<button class="fs-btn-activate" onclick="toggleFahrlehrerAktiv(${_jsArg(l.id)},true,${_jsArg(_fsAgg.fahrschuleId)})">Freischalten</button>`}
+        <button class="fs-btn-activate" onclick="fahrlehrerPasswortZuruecksetzen(${_jsArg(l.id)})">Passwort zurücksetzen</button>
       </div>`}
-      ${l.slug?`<div class="fs-actions"><button class="fs-btn-activate" onclick="document.getElementById('${linksId}').style.display=document.getElementById('${linksId}').style.display==='none'?'block':'none';">🔗 Buchungslinks</button></div>
+      ${l.slug?`<div class="fs-actions"><button class="fs-btn-activate" onclick="document.getElementById(${_jsArg(linksId)}).style.display=document.getElementById(${_jsArg(linksId)}).style.display==='none'?'block':'none';">🔗 Buchungslinks</button></div>
       <div id="${linksId}" style="display:none;margin-top:6px;">${_fsBuchungslinksHTML(l.slug,l.name||l.email)}</div>`:'<p class="muted-p" style="font-size:11.5px;margin-top:4px;">Kein Slug hinterlegt — Buchungslinks nicht verfügbar.</p>'}
     </div>`;
   }).join("")||'<p class="muted-p">Noch keine Fahrlehrer.</p>';
@@ -4550,11 +4572,11 @@ function routeFahrschuleLehrer(){
   <button class="btn btn-ghost" style="margin-bottom:10px;" onclick="routeFahrschuleDashboard()">← Zurück zum Dashboard</button>
   <div class="res-block" style="animation:none;">
     <h4>👥 Fahrlehrer (${lehrer.length})</h4>${rows}
-    ${buero?'':`<div class="btn-row" style="margin-top:10px;"><button class="btn btn-primary" onclick="neuenFahrlehrerAnlegen('${_fsAgg.fahrschuleId}')">+ Neuen Fahrlehrer anlegen</button></div>`}
+    ${buero?'':`<div class="btn-row" style="margin-top:10px;"><button class="btn btn-primary" onclick="neuenFahrlehrerAnlegen(${_jsArg(_fsAgg.fahrschuleId)})">+ Neuen Fahrlehrer anlegen</button></div>`}
   </div>
   ${buero?'':`<div class="res-block" style="animation:none;"><h4>🗂️ Büro-Zugänge</h4>
     <p style="font-size:13px;color:var(--muted);">Für Mitarbeiterinnen wie Christina — sehen Kalender-Kategorien, Fahrcheck-Kontrolle, Schichtplan, Notizen. Kein Zugriff auf Fahrlehrer-Konten oder Kill-Switch.</p>
-    <div class="btn-row" style="margin-top:8px;"><button class="btn btn-primary" onclick="neuenBueroZugangAnlegen('${_fsAgg.fahrschuleId}')">+ Büro-Zugang anlegen</button></div>
+    <div class="btn-row" style="margin-top:8px;"><button class="btn btn-primary" onclick="neuenBueroZugangAnlegen(${_jsArg(_fsAgg.fahrschuleId)})">+ Büro-Zugang anlegen</button></div>
   </div>`}</div>`;
 }
 async function neuenBueroZugangAnlegen(fahrschuleId){
@@ -4594,7 +4616,7 @@ function routeFahrschuleFahrzeuge(){
     return `<div class="fs-card">
       <div class="fs-name">🚗 ${esc(fz.name)}${fz.typ?` <span style="font-size:11px;color:var(--muted);font-weight:400;">(${esc(fz.typ)})</span>`:''}</div>
       <div class="fs-sub">${termineMonat.length} Termine diesen Monat &nbsp;·&nbsp; genutzt von: ${fahrer.map(esc).join(", ")||"–"}</div>
-      <div class="fs-actions"><button class="fs-btn-kill" onclick="fsFahrzeugLoeschen('${fz.id}','${esc(fz.name).replace(/'/g,"\\'")}')">Entfernen</button></div>
+      <div class="fs-actions"><button class="fs-btn-kill" onclick="fsFahrzeugLoeschen(${_jsArg(fz.id)},${_jsArg(fz.name)})">Entfernen</button></div>
     </div>`;
   }).join("")||'<p class="muted-p">Noch keine Fahrzeuge in der Flotte.</p>';
   view.innerHTML=`<div class="view-inner view-read fade-up">
@@ -4903,7 +4925,7 @@ async function _fsLadeBackups(){
   const rows=(data||[]).map(b=>`<div class="fs-card">
     <div class="fs-name">${new Date(b.erstellt_am).toLocaleString("de-DE")}</div>
     <div class="fs-sub">${b.automatisch?'Automatisch (wöchentlich)':'Manuell erstellt'}</div>
-    <div class="fs-actions"><button class="fs-btn-activate" onclick="_fsBackupHerunterladen('${b.id}')">Herunterladen</button></div>
+    <div class="fs-actions"><button class="fs-btn-activate" onclick="_fsBackupHerunterladen(${_jsArg(b.id)})">Herunterladen</button></div>
   </div>`).join("")||'<p class="muted-p">Noch keine Backups vorhanden.</p>';
   const wrap=document.getElementById("fsBackupWrap");
   if(wrap)wrap.innerHTML=`
@@ -4973,8 +4995,8 @@ function routeFahrschuleKategorie(key){
     if(key==="simulator") extra=`<div class="fs-sub">Zeitraum: ${esc(t.von||"")}–${esc(t.bis||"")}</div>`;
     if(key==="beratung"&&!t.sid) extra=`<div class="fs-sub">Interessent (noch kein Schüler) &nbsp;·&nbsp; ${esc(t.interessent_telefon||"– keine Nummer –")}</div>`;
     if(key==="theorie_pruefung") extra=`<div class="fs-sub" style="margin-top:4px;">${t.theorie_bestanden==null?"Noch offen":(t.theorie_bestanden?'<span style="color:#4a8b45;">✅ Bestanden</span>':'<span style="color:#c83c3c;">❌ Nicht bestanden</span>'+(t.theorie_gesperrt_bis?` · Sperre bis ${isoDE(t.theorie_gesperrt_bis)}`:''))}</div>
-      <div class="fs-actions"><button class="fs-btn-activate" onclick="fsTheorieErgebnis('${t.id}',true)">Bestanden</button><button class="fs-btn-kill" onclick="fsTheorieErgebnis('${t.id}',false)">Nicht bestanden</button></div>`;
-    if(key==="ersthilfe") extra=`<div class="toggle-row" style="margin-top:6px;"><div class="tc-name" style="font-size:13px;">Bezahlt</div><button class="check-toggle${t.kurs_bezahlt?' on':''}" onclick="fsKursBezahltToggle('${t.id}',${!t.kurs_bezahlt})"></button></div>`;
+      <div class="fs-actions"><button class="fs-btn-activate" onclick="fsTheorieErgebnis(${_jsArg(t.id)},true)">Bestanden</button><button class="fs-btn-kill" onclick="fsTheorieErgebnis(${_jsArg(t.id)},false)">Nicht bestanden</button></div>`;
+    if(key==="ersthilfe") extra=`<div class="toggle-row" style="margin-top:6px;"><div class="tc-name" style="font-size:13px;">Bezahlt</div><button class="check-toggle${t.kurs_bezahlt?' on':''}" onclick="fsKursBezahltToggle(${_jsArg(t.id)},${!t.kurs_bezahlt})"></button></div>`;
     return `<div class="fs-card">
       <div class="fs-name">${esc(name)}</div>
       <div class="fs-sub">${isoDE(t.date)} · ${esc(t.von||"")}–${esc(t.bis||"")} · ${esc(t._fahrlehrerName||"")}</div>
@@ -5028,14 +5050,14 @@ function routeFahrschuleFahrcheckKontrolle(){
       <div class="fs-name">${esc(st?st.name:"—")}${t.status==='nicht erschienen'?' <span style="color:#cf9a3e;font-size:11px;font-weight:700;">· NICHT ERSCHIENEN</span>':''}</div>
       <div class="fs-sub">${isoDE(t.date)} · ${esc(t._fahrlehrerName||"")}${t.buero_fc_nachgereicht_am?` · nachgereicht am ${isoDE(t.buero_fc_nachgereicht_am)}`:''}</div>
       <div class="fs-actions">
-        <button class="fs-btn-activate" style="${status==='abgegeben'?'':'opacity:.45;'}" onclick="fsFcStatus('${t.id}','abgegeben',false,true)">✅ Abgegeben</button>
-        <button class="fs-btn-kill" style="${status==='fehlt'?'':'opacity:.45;'}" onclick="fsFcStatus('${t.id}','fehlt',false,true)">❌ Fehlt</button>
-        ${mitNachreichen?`<button class="fs-btn-activate" onclick="fsFcStatus('${t.id}','abgegeben',true,true)">✓ Nachträglich abgegeben</button>`:''}
+        <button class="fs-btn-activate" style="${status==='abgegeben'?'':'opacity:.45;'}" onclick="fsFcStatus(${_jsArg(t.id)},'abgegeben',false,true)">✅ Abgegeben</button>
+        <button class="fs-btn-kill" style="${status==='fehlt'?'':'opacity:.45;'}" onclick="fsFcStatus(${_jsArg(t.id)},'fehlt',false,true)">❌ Fehlt</button>
+        ${mitNachreichen?`<button class="fs-btn-activate" onclick="fsFcStatus(${_jsArg(t.id)},'abgegeben',true,true)">✓ Nachträglich abgegeben</button>`:''}
       </div>
     </div>`;
   };
   const lehrer=_fsAgg.lehrer||[];
-  const lehrerRows=lehrer.map(l=>`<button class="fs-card" style="width:100%;text-align:left;border:none;cursor:pointer;" onclick="fsFahrcheckLehrerWaehlen('${l.id}')">
+  const lehrerRows=lehrer.map(l=>`<button class="fs-card" style="width:100%;text-align:left;border:none;cursor:pointer;" onclick="fsFahrcheckLehrerWaehlen(${_jsArg(l.id)})">
     <div class="fs-name">${esc(l.name||l.email)} →</div>
     <div class="fs-sub">Echten Kalender öffnen — dort direkt am Termin abhaken, bearbeiten, neu anlegen</div>
   </button>`).join("")||'<p class="muted-p">Noch keine Fahrlehrer.</p>';
@@ -5089,8 +5111,8 @@ async function _fsLadeSchichtplan(){
     const statusFarbe={arbeitet:"#4a8b45",frei:"var(--muted)",krank:"#c83c3c"};
     html+=`<div class="fs-card">
       <div class="fs-name">${tage[(d.getDay()+6)%7]} · ${d.getDate()}.${d.getMonth()+1}.</div>
-      ${eintraege.map(e=>`<div class="fs-sub" style="color:${statusFarbe[e.status]||'var(--muted)'};">${esc(e.mitarbeiter_name)} — ${esc(e.status)}${e.notiz?` (${esc(e.notiz)})`:''} <span onclick="fsSchichtLoeschen('${e.id}')" style="cursor:pointer;color:#c83c3c;">✕</span></div>`).join("")||'<div class="fs-sub" style="opacity:.5;">Keine Einträge</div>'}
-      <div class="btn-row" style="margin-top:6px;"><button class="btn btn-ghost" style="padding:6px 12px;font-size:12px;" onclick="fsSchichtHinzufuegen('${dStr}')">+ Eintrag</button></div>
+      ${eintraege.map(e=>`<div class="fs-sub" style="color:${statusFarbe[e.status]||'var(--muted)'};">${esc(e.mitarbeiter_name)} — ${esc(e.status)}${e.notiz?` (${esc(e.notiz)})`:''} <span onclick="fsSchichtLoeschen(${_jsArg(e.id)})" style="cursor:pointer;color:#c83c3c;">✕</span></div>`).join("")||'<div class="fs-sub" style="opacity:.5;">Keine Einträge</div>'}
+      <div class="btn-row" style="margin-top:6px;"><button class="btn btn-ghost" style="padding:6px 12px;font-size:12px;" onclick="fsSchichtHinzufuegen(${_jsArg(dStr)})">+ Eintrag</button></div>
     </div>`;
   }
   const wrap=$("#fsSchichtWrap");
@@ -5105,7 +5127,7 @@ async function fsSchichtHinzufuegen(datum){
   const {data:sessionData}=await supa.auth.getSession();
   const {error}=await supa.from("fahrschule_schichten").insert({
     fahrschule_id:_fsAgg.fahrschuleId, mitarbeiter_name:name, datum, status:["arbeitet","frei","krank"].includes(status)?status:"arbeitet",
-    notiz:notiz||null, erstellt_von:sessionData.session.user.id
+    notiz:notiz||null, erstellt_von:_uidAus(sessionData)
   });
   if(error){toast("Fehler: "+error.message);return;}
   toast("Eingetragen ✓");
@@ -5135,7 +5157,7 @@ async function _fsLadeUrlaub(){
   const rows=(data||[]).map(u=>`<div class="fs-card">
     <div class="fs-name">${esc(u.mitarbeiter_name)}</div>
     <div class="fs-sub">${isoDE(u.von)} – ${isoDE(u.bis)}${u.notiz?` · ${esc(u.notiz)}`:''}</div>
-    <div class="fs-actions"><button class="fs-btn-kill" onclick="fsUrlaubLoeschen('${u.id}')">Löschen</button></div>
+    <div class="fs-actions"><button class="fs-btn-kill" onclick="fsUrlaubLoeschen(${_jsArg(u.id)})">Löschen</button></div>
   </div>`).join("")||'<p class="muted-p">Aktuell kein eingetragener Urlaub.</p>';
   const wrap=$("#fsUrlaubWrap");
   if(wrap)wrap.innerHTML=`<button class="btn btn-ghost" style="margin-bottom:10px;" onclick="routeFahrschuleDashboard()">← Zurück zum Dashboard</button><div class="res-block" style="animation:none;"><h4>🏖️ Urlaub (anstehend)</h4>${rows}
@@ -5151,7 +5173,7 @@ async function fsUrlaubHinzufuegen(){
   const supa=getSupa();
   const {data:sessionData}=await supa.auth.getSession();
   const {error}=await supa.from("fahrschule_urlaub").insert({
-    fahrschule_id:_fsAgg.fahrschuleId, mitarbeiter_name:name, von, bis, erstellt_von:sessionData.session.user.id
+    fahrschule_id:_fsAgg.fahrschuleId, mitarbeiter_name:name, von, bis, erstellt_von:_uidAus(sessionData)
   });
   if(error){toast("Fehler: "+error.message);return;}
   toast("Urlaub eingetragen ✓");
@@ -5202,8 +5224,8 @@ async function _fsInjectDetailExtras(sid){
       <textarea id="fsDetailBueroNotiz" rows="2" style="width:100%;">${esc(s._buero_notiz||"")}</textarea></div>
     <div class="field" style="margin-top:8px;"><label style="font-size:11px;">To-do / aktueller Stand</label>
       <textarea id="fsDetailBueroTodo" rows="2" style="width:100%;">${esc(s._buero_todo||"")}</textarea></div>
-    <div class="btn-row" style="margin-top:8px;"><button class="btn btn-primary" onclick="fsDetailExtrasSpeichern('${sid}')">Speichern</button></div>
-    ${istTurbo?`<div class="btn-row" style="margin-top:8px;"><button class="btn btn-ghost" onclick="fsSerientermineSheet('${sid}')">🔁 Serientermine anlegen (Turboboost)</button></div>`:''}
+    <div class="btn-row" style="margin-top:8px;"><button class="btn btn-primary" onclick="fsDetailExtrasSpeichern(${_jsArg(sid)})">Speichern</button></div>
+    ${istTurbo?`<div class="btn-row" style="margin-top:8px;"><button class="btn btn-ghost" onclick="fsSerientermineSheet(${_jsArg(sid)})">🔁 Serientermine anlegen (Turboboost)</button></div>`:''}
   </div>`;
   const anchor=document.querySelector(".view-inner");
   if(anchor) anchor.insertAdjacentHTML("beforeend",html);
@@ -5247,7 +5269,7 @@ async function fsSerientermineSheet(sid){
     const rows=[]; let d=new Date(startDate+"T00:00:00");
     for(let i=0;i<anzahl;i++){
       const iso=d.getFullYear()+"-"+String(d.getMonth()+1).padStart(2,"0")+"-"+String(d.getDate()).padStart(2,"0");
-      rows.push({id:uid(),fahrschule_id:_fsAgg.fahrschuleId,fahrlehrer_id:zielLehrer,schueler_id:sid,datum:iso,von,bis,art,status:"geplant",geloescht:false,payload:{},erstellt_von:sessionData.session.user.id,aktualisiert_am:new Date().toISOString()});
+      rows.push({id:uid(),fahrschule_id:_fsAgg.fahrschuleId,fahrlehrer_id:zielLehrer,schueler_id:sid,datum:iso,von,bis,art,status:"geplant",geloescht:false,payload:{},erstellt_von:_uidAus(sessionData),aktualisiert_am:new Date().toISOString()});
       d.setDate(d.getDate()+intervall);
     }
     const {error}=await supa.from("kalender_termine").insert(rows);
@@ -5266,7 +5288,7 @@ async function fsSchuelerVerschiebenAusAkte(sid,neuerLehrerId,alterLehrerId){
     const {data:sessionData}=await supa.auth.getSession();
     await supa.from("schueler_verschiebungen").insert({
       schueler_id:sid, von_fahrlehrer_id:alterLehrerId||null, zu_fahrlehrer_id:neuerLehrerId||null,
-      verschoben_von:sessionData.session.user.id, fahrschule_id:_fsAgg.fahrschuleId
+      verschoben_von:_uidAus(sessionData), fahrschule_id:_fsAgg.fahrschuleId
     });
   }
   toast("Schüler verschoben ✓");
@@ -5313,12 +5335,13 @@ async function routeFahrschuleProvisionen(){
   const lehrer=_fsAgg.lehrer||[];
   const lehrerName=id=>{const l=lehrer.find(x=>x.id===id);return l?(l.name||l.email):"—";};
   const gesamt={};
-  (data||[]).forEach(p=>{gesamt[p.fahrlehrer_id]=(gesamt[p.fahrlehrer_id]||0)+Number(p.betrag||0);});
-  const uebersicht=Object.entries(gesamt).map(([id,sum])=>`<div class="fs-sub">${esc(lehrerName(id))}: <b style="color:var(--txt);">${eur(sum)}</b></div>`).join("")||'<p class="muted-p" style="font-size:13px;">Noch keine Provisionen erfasst.</p>';
+  (data||[]).filter(p=>p.status!=='ausgezahlt').forEach(p=>{gesamt[p.fahrlehrer_id]=(gesamt[p.fahrlehrer_id]||0)+Number(p.betrag||0);});
+  const eurCent=v=>Number(v||0).toLocaleString("de-DE",{style:"currency",currency:"EUR"});
+  const uebersicht=Object.entries(gesamt).map(([id,sum])=>`<div class="fs-sub">${esc(lehrerName(id))}: <b style="color:var(--txt);">${eurCent(sum)}</b></div>`).join("")||'<p class="muted-p" style="font-size:13px;">Noch keine Provisionen erfasst.</p>';
   const liste=(data||[]).map(p=>`<div class="fs-card">
-    <div class="fs-name">${esc(lehrerName(p.fahrlehrer_id))} — ${eur(Number(p.betrag||0))}</div>
+    <div class="fs-name">${esc(lehrerName(p.fahrlehrer_id))} — ${eurCent(p.betrag)}</div>
     <div class="fs-sub">${esc(p.typ||"")} · ${isoDE(p.erstellt_am.slice(0,10))} · ${p.status==='ausgezahlt'?'<span class="fs-status-on">Ausgezahlt</span>':'<span style="color:var(--orange);">Offen</span>'}</div>
-    ${p.status==='offen'?`<div class="fs-actions"><button class="fs-btn-activate" onclick="fsProvisionAuszahlen('${p.id}')">Als ausgezahlt markieren</button></div>`:''}
+    ${p.status==='offen'?`<div class="fs-actions"><button class="fs-btn-activate" onclick="fsProvisionAuszahlen(${_jsArg(p.id)})">Als ausgezahlt markieren</button></div>`:''}
   </div>`).join("")||'';
   const wrap=$("#fsProvWrap");
   if(wrap)wrap.innerHTML=`
@@ -5421,7 +5444,7 @@ async function neuenSchuelerAnlegenFS(fahrschuleId){
   const {data:sessionData}=await supa.auth.getSession();
   const {error}=await supa.from("schueler").insert({
     id: uid(), fahrschule_id:fahrschuleId, fahrlehrer_id:fahrlehrerId, name, telefon:telefon||null,
-    status:"aktiv", erstellt_von:sessionData.session.user.id
+    status:"aktiv", erstellt_von:_uidAus(sessionData)
   });
   if(error){toast("Fehler: "+error.message);return;}
   toast("Schüler angelegt ✓");
@@ -5479,7 +5502,7 @@ async function routeFahrschuleKalender(fahrschuleId,weekStart){
       const l=lehrer.find(x=>x.id===t.fahrlehrer_id);
       const lehrerName=l?(l.name||l.email):"?";
       const schuelerName=schuelerNamen[t.schueler_id]||(t.payload&&t.payload.name)||"–";
-      return `<button class="fs-card" style="width:100%;text-align:left;border:none;border-left:4px solid ${farbe};cursor:pointer;" onclick="fsTerminBearbeiten('${t.id}')">
+      return `<button class="fs-card" style="width:100%;text-align:left;border:none;border-left:4px solid ${farbe};cursor:pointer;" onclick="fsTerminBearbeiten(${_jsArg(t.id)})">
         <div class="fs-name">${esc(t.von||"")}–${esc(t.bis||"")} · ${esc(schuelerName)}</div>
         <div class="fs-sub">${esc(lehrerName)} &nbsp;·&nbsp; ${esc(t.fahrzeug||"–")} &nbsp;·&nbsp; ${esc(t.art||"–")}</div>
       </button>`;
@@ -5492,7 +5515,7 @@ async function routeFahrschuleKalender(fahrschuleId,weekStart){
 
   const wrap=$("#fsKalWrap");
   if(wrap)wrap.innerHTML=`
-    <button class="btn btn-ghost" style="margin-bottom:10px;" onclick="routeFahrschuleDetail('${fahrschuleId}')">← Zurück zur Fahrschule</button>
+    <button class="btn btn-ghost" style="margin-bottom:10px;" onclick="routeFahrschuleDetail(${_jsArg(fahrschuleId)})">← Zurück zur Fahrschule</button>
     <div class="res-block" style="animation:none;">
       <div class="btn-row" style="margin-bottom:10px;">
         <button class="btn btn-ghost" onclick="_fsKalWoche(-1)">← Woche</button>
@@ -5501,7 +5524,7 @@ async function routeFahrschuleKalender(fahrschuleId,weekStart){
       </div>
       <div class="field"><label style="font-size:11px;">Fahrlehrer filtern</label><select onchange="_fsKalFilter('lehrer',this.value)" style="width:100%;">${lehrerOptions}</select></div>
       <div class="field"><label style="font-size:11px;">Fahrzeug filtern</label><select onchange="_fsKalFilter('fahrzeug',this.value)" style="width:100%;">${fahrzeugOptions}</select></div>
-      <div class="btn-row" style="margin-top:10px;"><button class="btn btn-primary" onclick="fsTerminAnlegen('${fahrschuleId}')">+ Neuer Termin</button></div>
+      <div class="btn-row" style="margin-top:10px;"><button class="btn btn-primary" onclick="fsTerminAnlegen(${_jsArg(fahrschuleId)})">+ Neuer Termin</button></div>
     </div>
     ${tageHtml}`;
 }
@@ -5567,7 +5590,7 @@ async function fsTerminAnlegen(fahrschuleId){
   const {data:sessionData}=await supa.auth.getSession();
   const {error}=await supa.from("kalender_termine").insert({
     id:uid(), fahrschule_id:fahrschuleId, fahrlehrer_id:fahrlehrerId, datum, von, bis,
-    fahrzeug:fahrzeug||null, status:"geplant", erstellt_von:sessionData.session.user.id, aktualisiert_am:new Date().toISOString()
+    fahrzeug:fahrzeug||null, status:"geplant", erstellt_von:_uidAus(sessionData), aktualisiert_am:new Date().toISOString()
   });
   if(error){toast("Fehler: "+error.message);return;}
   toast("Termin angelegt ✓");
@@ -5693,12 +5716,12 @@ async function _fsSyncAggJetzt(){
       (DB.students||[]).forEach(s=>{
         const b=baseS[s.id];
         if(!b||JSON.stringify(s)!==JSON.stringify(b)){
-          const {id,name,telefon,_fahrlehrerId,_fahrlehrerName,_paketId,_hatSimulator,_hatTheorieApp,_bogenAusgefuellt,...rest}=s;
+          const {id,name,telefon,_fahrlehrerId,_fahrlehrerName,_paketId,_hatSimulator,_hatTheorieApp,_bogenAusgefuellt,bogen,...rest}=s;
           schuelerUpserts.push({
             id:s.id, fahrschule_id:_fsAgg.fahrschuleId, fahrlehrer_id:s._fahrlehrerId||null,
             name:s.name||"(ohne Namen)", telefon:s.telefon||null, status:"aktiv",
             paket_id:s._paketId||null, hat_simulator:!!s._hatSimulator, hat_theorie_app:!!s._hatTheorieApp,
-            bogen_ausgefuellt:!!s.bogen, ausbildung:rest, erstellt_von:b?undefined:meineId, aktualisiert_am:nowIso
+            bogen_ausgefuellt:!!(s.bogen||s._bogenAusgefuellt), ausbildung:rest, erstellt_von:b?undefined:meineId, aktualisiert_am:nowIso
           });
         }
       });
@@ -5775,7 +5798,8 @@ function _syncSchuelerBridge(){
     try{
       const supa=getSupa();
       const rows=P.students.map(s=>{
-        const {id,name,telefon,...rest}=s;
+        // Die Antworten des Fragebogens (bogen) bleiben privat beim eigenen Fahrlehrer - geteilt wird nur das Häkchen.
+        const {id,name,telefon,bogen,...rest}=s;
         return {
           id:s.id, fahrschule_id:_authProfile.fahrschule_id, fahrlehrer_id:_authUser.id,
           name:s.name||"(ohne Namen)", telefon:s.telefon||null,
@@ -6006,7 +6030,12 @@ function autoNext(s){
    ============================================================ */
 const $=s=>document.querySelector(s);
 const view=$("#view");
-function esc(s){return (s||"").replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));}
+function esc(s){return String(s??"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));}
+// Wert als JavaScript-String für on…="…"-Attribute: erst JS-kodieren, dann HTML-kodieren.
+// (Der Browser löst HTML-Escapes im Attribut vor dem Ausführen auf - esc() allein schützt dort nicht.)
+function _jsArg(v){return esc(JSON.stringify(String(v??"")));}
+// Unterschriften sind gespeicherte Bilder (data:image/…) - alles andere wird nicht als Bildquelle eingesetzt.
+function _sichereBildUrl(u){ const s=String(u||""); return /^data:image\/(png|jpeg|webp|gif);base64,[A-Za-z0-9+\/=]+$/.test(s)?s:""; }
 // Sprachnotiz-Mikrofon für die wichtigsten Notizfelder (Bereich 10, Punkt 2) - nutzt die
 // browsereigene Web Speech API (kostenlos, auf Android/Chrome nativ vorhanden), kein
 // zusätzlicher Server nötig. Terminnotizen (1-2 Zeilen) bekommen bewusst kein Mikro.
@@ -6039,6 +6068,8 @@ function heute(){const d=new Date();return {d:pad2(d.getDate())+"."+pad2(d.getMo
 // Alteinträge {d:"",iso:""} oder null dürfen NICHT mitzählen.
 function sfDone(o){return !!(o&&o.iso);}
 function sfCount(arr){return (arr||[]).filter(sfDone).length;}
+function sfSoll(key){ const d=SONDER_DEF.find(x=>x.key===key); return d?d.soll:0; }
+function sfOffen(s,key){ return Math.max(0,sfSoll(key)-sfCount(s&&s.plan&&s.plan.sonder&&s.plan.sonder[key])); }
 function isoToShort(iso){const p=iso.split("-");return p[2]+"."+p[1]+"."+p[0].slice(2);}
 function fmtDateDE(iso){const d=new Date(iso);if(isNaN(d.getTime()))return "—";return pad2(d.getDate())+"."+pad2(d.getMonth()+1)+"."+d.getFullYear();}
 /* daysSince() ist weiter unten einmal zentral definiert (Mitternachts-normalisiert) – Duplikat hier entfernt. */
@@ -6628,7 +6659,7 @@ function routeDetail(id){
   document.querySelectorAll("#dashFormPills .pill").forEach(b=>b.addEventListener("click",()=>{ s.form=b.dataset.form; save(); toast("Klasse: "+formLabel(s.form)); routeDetail(id); }));
   // Theorie-/Umschreiber-/Pausiert-Toggles (aus dem Ausbildungsplan hierher verschoben)
   const dtt=$("#dashTheoToggle"); if(dtt)dtt.addEventListener("click",()=>{
-    pl.theorie=!pl.theorie; if(pl.theorie){ if(!s.theoryPassed)s.theoryPassed=new Date().toISOString(); logHist(s,"theorie","Theorieprüfung bestanden"); if(stand(s)>=90&&!s.ready&&!s.passed){ s.ready=s.theoryPassed; toast("Theorie bestanden – auf die Praxis-Warteliste gesetzt"); } else if(stand(s)<90&&!s.ready&&!s.passed){ toast("Theorie bestanden – erst ab 90 % kommt er auf die Warteliste"); } delete s.theorieWait; } else { delete s.theoryPassed; } save(); routeDetail(id);
+    pl.theorie=!pl.theorie; if(pl.theorie){ if(!s.theoryPassed)s.theoryPassed=new Date().toISOString(); logHist(s,"theorie","Theorieprüfung bestanden"); if(stand(s)>=90&&!s.ready&&!s.passed){ s.ready=s.theoryPassed; toast("Theorie bestanden – auf die Praxis-Warteliste gesetzt"); } else if(stand(s)<90&&!s.ready&&!s.passed){ toast("Theorie bestanden – erst ab 90 % kommt er auf die Warteliste"); } delete s.theorieWait; } else { if(s.ready&&s.ready===s.theoryPassed&&!s.pruefungsreifManuell)delete s.ready; delete s.theoryPassed; } save(); routeDetail(id);
   });
   const dwt=$("#dashTheorieWaitToggle"); if(dwt)dwt.addEventListener("click",()=>{
     if(s.theorieWait){ delete s.theorieWait; toast("Fahrstunden wieder aufgenommen"); } else { s.theorieWait=new Date().toISOString(); toast("Pausiert – wartet auf Theorie"); }
@@ -6713,13 +6744,15 @@ function routeHistorie(id){
     h+=`<div class="htl">`;
     list.forEach(e=>{
       const cls=e.manual?"manual":(e.typ||"");
-      const dstr=isoDE((""+e.t).slice(0,10));
-      const time=(""+e.t).slice(11,16);
+      // e.t ist ein UTC-Zeitstempel - in Ortszeit anzeigen (sonst 1-2 Std. und nachts den Vortag daneben)
+      const _dt=new Date(e.t); const _ok=!isNaN(_dt.getTime())&&(""+e.t).length>10;
+      const dstr=_ok?isoDE(dateISO(_dt)):isoDE((""+e.t).slice(0,10));
+      const time=_ok?pad2(_dt.getHours())+":"+pad2(_dt.getMinutes()):"";
       let eurHtml="";
       if(typeof e.eur==="number"&&e.eur!==0){ const plus=e.eur>0; eurHtml=`<div class="htl-eur ${plus?'plus':'minus'}">${plus?'+':'−'}${eurFmt(Math.abs(e.eur))}</div>`; }
       const tag=histIcon(e.typ); const tagHtml=tag?`<span style="opacity:.6;font-weight:800;">${tag} · </span>`:"";
       h+=`<div class="htl-item ${cls}">
-        <button class="htl-del" data-hdel="${e.t}" aria-label="Eintrag löschen">✕</button>
+        <button class="htl-del" data-hdel="${esc(e.t)}" aria-label="Eintrag löschen">✕</button>
         <div class="htl-date">${dstr}${time?` · ${time}`:""}</div>
         <div class="htl-text">${tagHtml}${esc(e.text)}</div>
         ${eurHtml}
@@ -7062,10 +7095,13 @@ async function _fillUEProgFahrschule(bisher){
   if(!_authUser||!_authProfile||!_authProfile.fahrschule_id)return;
   try{
     const supa=getSupa();
-    const{data:examsData,error:e1}=await supa.from("kalender_pruefungen").select("schueler_id,datum").eq("fahrschule_id",_authProfile.fahrschule_id).eq("result","pass").not("schueler_id","is",null);
-    if(e1||!examsData||!examsData.length)return;
-    const{data:termineData,error:e2}=await supa.from("kalender_termine").select("schueler_id,datum,von,bis,art").eq("fahrschule_id",_authProfile.fahrschule_id).in("art",["fahrstunde","sonder"]);
-    if(e2||!termineData)return;
+    const{data:examsRoh,error:e1}=await supa.from("kalender_pruefungen").select("schueler_id,datum,payload").eq("fahrschule_id",_authProfile.fahrschule_id).eq("result","pass").eq("geloescht",false).not("schueler_id","is",null);
+    if(e1||!examsRoh)return;
+    const examsData=examsRoh.filter(x=>!(x.payload&&x.payload.b197));
+    if(!examsData.length)return;
+    const{data:termineRoh,error:e2}=await supa.from("kalender_termine").select("schueler_id,datum,von,bis,art,status").eq("fahrschule_id",_authProfile.fahrschule_id).eq("geloescht",false).in("art",["fahrstunde","sonder"]).limit(10000);
+    if(e2||!termineRoh)return;
+    const termineData=termineRoh.filter(t=>!["abgebrochen","nicht erschienen"].includes(t.status));
     const vals=[];
     examsData.forEach(ex=>{
       const sum=termineData.filter(t=>t.schueler_id===ex.schueler_id&&t.datum<=ex.datum).reduce((a,t)=>a+ueOf(t.art,t.von,t.bis,null),0);
@@ -7081,7 +7117,7 @@ async function _fillUEProgFahrschule(bisher){
 function examPrognose(s){
   const pct=planProgress(s.plan,s.umschreiber,evalSkillsFor(s));
   const theorieOk=!!(s.plan&&s.plan.theorie);
-  const allExams=DB.exams||[];
+  const allExams=(DB.exams||[]).filter(istPruefung);
   const passRate=allExams.length?Math.round(allExams.filter(e=>e.result==="pass").length/allExams.length*100):null;
   let label,color,hint;
   if(pct>=90&&theorieOk){label="Sehr gut vorbereitet";color="var(--gruen)";hint="Ausbildungsstand und Theorie passen — bereit für die Prüfungsanmeldung.";}
@@ -7127,7 +7163,7 @@ function routePlan(id){
       </div>
     </div>
     <div id="planPrognose">${examPrognose(s)}</div>
-    <button class="btn btn-ghost" style="width:100%;margin:8px 0 2px;" onclick="routeDraw('${s.id}')">✏️ Zur Verkehrstafel</button>
+    <button class="btn btn-ghost" style="width:100%;margin:8px 0 2px;" onclick="routeDraw(${_jsArg(s.id)})">✏️ Zur Verkehrstafel</button>
     <div class="plan-actions" id="planActions"></div>
     <div class="plan-sec">
       <div class="acc${_pa.fahrstunden?' open':''}" data-acc="fahrstunden">
@@ -7207,7 +7243,7 @@ function spaetOffenWarnung(s){
   if(s.umschreiber)return "";
   const spaet=!!(s.ready||s.pruefungsreifManuell||stand(s)>=85);
   if(!spaet)return "";
-  const offen=SONDER_DEF.filter(sd=>(s.plan.sonder[sd.key]||[]).some(o=>!sfDone(o)));
+  const offen=SONDER_DEF.filter(sd=>sfOffen(s,sd.key)>0);
   if(!offen.length)return "";
   const namen=offen.map(sd=>sd.label).join(", ");
   return `<div style="padding:10px 14px;background:rgba(216,35,26,.08);border:1px solid rgba(216,35,26,.25);border-radius:12px;font-size:12.5px;color:#d8231a;font-weight:600;margin-bottom:2px;">⚠ ${esc(namen)} noch offen – Ausbildungsstand aber schon weit fortgeschritten.</div>`;
@@ -7332,7 +7368,7 @@ function findeMultiSlots(sid,cfg){
   let maxAnzahl=Infinity;
   if(cfg.art==="sonder"){
     const arr=s.plan.sonder[cfg.grp]||[];
-    maxAnzahl=arr.filter(o=>!sfDone(o)).length;
+    maxAnzahl=sfOffen(s,cfg.grp);
     if(!maxAnzahl)return [];
   }
   const zv=hm2min(cfg.zeitVon),zb=hm2min(cfg.zeitBis);
@@ -7360,7 +7396,7 @@ function findeMultiSlots(sid,cfg){
 function openMultiTerminSheet(sid){
   const s=DB.students.find(x=>x.id===sid);if(!s)return;
   ensure(s);
-  const offeneGruppen=SONDER_DEF.filter(sd=>!s.umschreiber&&(s.plan.sonder[sd.key]||[]).some(o=>!sfDone(o)));
+  const offeneGruppen=SONDER_DEF.filter(sd=>!s.umschreiber&&sfOffen(s,sd.key)>0);
   let art=offeneGruppen.length?"sonder":"fahrstunde", grp=offeneGruppen[0]?offeneGruppen[0].key:null, fzTyp="egal";
   const heute=todayISO();
   openSheet(`<div class="sheet-h">Mehrere Termine planen</div>
@@ -7370,7 +7406,7 @@ function openMultiTerminSheet(sid){
       <button class="pill${art==='sonder'?' sel':''}" data-art="sonder"${offeneGruppen.length?'':' disabled style="opacity:.4;"'}>Sonderfahrt</button>
     </div></div>
     <div class="field" id="mtGrpField" style="${art==='sonder'?'':'display:none;'}"><label>Kategorie</label><div class="pills" id="mtGrpPills">
-      ${offeneGruppen.map(sd=>`<button class="pill${sd.key===grp?' sel':''}" data-grp="${sd.key}">${sd.label} <span style="opacity:.6;">(${(s.plan.sonder[sd.key]||[]).filter(o=>!sfDone(o)).length} offen)</span></button>`).join("")}
+      ${offeneGruppen.map(sd=>`<button class="pill${sd.key===grp?' sel':''}" data-grp="${sd.key}">${sd.label} <span style="opacity:.6;">(${sfOffen(s,sd.key)} offen)</span></button>`).join("")}
     </div></div>
     <div class="field"><label>Fahrzeug</label><div class="pills" id="mtFzPills">
       <button class="pill sel" data-fz="egal">Egal</button>
@@ -7405,7 +7441,7 @@ function openMultiTerminSheet(sid){
 }
 function openMultiTerminErgebnis(sid,cfg,treffer){
   const s=DB.students.find(x=>x.id===sid);if(!s)return;
-  const gewuenscht=cfg.art==="sonder"?(s.plan.sonder[cfg.grp]||[]).filter(o=>!sfDone(o)).length:null;
+  const gewuenscht=cfg.art==="sonder"?sfOffen(s,cfg.grp):null;
   const hinweis=cfg.art==="sonder"&&gewuenscht!=null?`<p class="muted-p" style="font-size:12px;margin:-4px 0 10px;">Automatisch gedeckelt auf ${gewuenscht} noch offene ${SF_LABEL[cfg.grp]||"Sonderfahrt"}${gewuenscht===1?'':'en'}.</p>`:'';
   if(!treffer.length){
     openSheet(`<div class="sheet-h">Keine freien Slots gefunden</div>
@@ -7446,8 +7482,9 @@ function buchMultiTermine(sid,cfg,ausgewaehlt){
   const label=cfg.art==="sonder"?(SF_LABEL[cfg.grp]||"Sonderfahrt"):"Übungsfahrt";
   ausgewaehlt.forEach(t=>{
     if(cfg.art==="sonder"){
-      while(idxCursor<arr.length&&sfDone(arr[idxCursor]))idxCursor++;
-      if(idxCursor>=arr.length)return;
+      const soll=sfSoll(cfg.grp)||arr.length;
+      while(idxCursor<soll&&sfDone(arr[idxCursor]))idxCursor++;
+      if(idxCursor>=soll)return;
       vorherPlan.push({idx:idxCursor,vorher:arr[idxCursor]?Object.assign({},arr[idxCursor]):null});
       arr[idxCursor]={d:isoToShort(t.date),iso:t.date};
       const key=s.id+":"+cfg.grp+":"+idxCursor;
@@ -7461,7 +7498,7 @@ function buchMultiTermine(sid,cfg,ausgewaehlt){
   });
   save();refreshPlanRing(s);
   const cur=$("#stdGrid")?buildSonder(s):null;
-  toastUndo(`${ausgewaehlt.length} ${label}${ausgewaehlt.length===1?'':'en'} gebucht`,()=>{
+  toastUndo(`${erstellteIds.length} ${label}${erstellteIds.length===1?'':'en'} gebucht`,()=>{
     erstellteIds.forEach(id=>deleteLesson(id));
     vorherPlan.forEach(vp=>{arr[vp.idx]=vp.vorher;});
     save();refreshPlanRing(s);buildSonder(s);
@@ -8963,7 +9000,7 @@ async function renderSharedBoardList(){
   const supa=getSupa();
   let data,error;
   try{
-    ({data,error}=await supa.from("fahrschule_tafelbilder").select("id,name,ersteller_name,erstellt_am,daten").eq("fahrschule_id",_authProfile.fahrschule_id).order("erstellt_am",{ascending:false}).limit(60));
+    ({data,error}=await supa.from("fahrschule_tafelbilder").select("id,name,ersteller_name,erstellt_am,erstellt_von,daten").eq("fahrschule_id",_authProfile.fahrschule_id).order("erstellt_am",{ascending:false}).limit(60));
   }catch(e){
     if(!DRAW.sharedView)return;
     g.innerHTML=`<div class="tb-empty">Konnte nicht geladen werden. <button class="btn btn-ghost" style="padding:4px 10px;margin-left:6px;" onclick="renderSharedBoardList()">Erneut versuchen</button></div>`;
@@ -9270,7 +9307,8 @@ async function saveAkademieVermittlungCfg(){
     splitKollege:{akademie:num("#cfgKollegeAkademie"),fahrschule:num("#cfgKollegeFahrschule"),fahrlehrer:num("#cfgKollegeFahrlehrer"),plattform:num("#cfgKollegePlattform")}
   };
   const supa=getSupa();
-  const{data:cur}=await supa.from("fahrschulen").select("konfiguration").eq("id",_authProfile.fahrschule_id).single();
+  const{data:cur,error:curErr}=await supa.from("fahrschulen").select("konfiguration").eq("id",_authProfile.fahrschule_id).single();
+  if(curErr||!cur){toast("Fehler: Einstellungen konnten nicht geladen werden – nichts gespeichert");return;} // sonst würde die ganze Konfiguration überschrieben
   const konfiguration=Object.assign({},(cur&&cur.konfiguration)||{},{akademieVermittlung:neu});
   const{error}=await supa.from("fahrschulen").update({konfiguration}).eq("id",_authProfile.fahrschule_id);
   if(error){toast("Fehler: "+error.message);return;}
@@ -9321,7 +9359,7 @@ function routeSettings(){
   const kapWoche=kapazitaetAutoWoche();
   view.innerHTML=`<div class="view-inner view-read fade-up">
     ${logoutBtn}
-    ${_authUser?`<div class="res-block" style="animation:none;background:rgba(74,139,69,.06);border-color:rgba(74,139,69,.2);"><h4 style="color:#4a8b45">☁ Cloud-Konto</h4><p style="color:#6a9b7a;font-size:13px;">${_authUser.email}</p><p style="color:var(--muted);font-size:12px;margin-top:4px;">Daten werden automatisch gesichert.</p></div>`:""}
+    ${_authUser?`<div class="res-block" style="animation:none;background:rgba(74,139,69,.06);border-color:rgba(74,139,69,.2);"><h4 style="color:#4a8b45">☁ Cloud-Konto</h4><p style="color:#6a9b7a;font-size:13px;">${esc(_authUser.email)}</p><p style="color:var(--muted);font-size:12px;margin-top:4px;">Daten werden automatisch gesichert.</p></div>`:""}
 
     <div class="acc set-acc${_settingsAccOpen==='app'?' open':''}" data-acckey="app"><button class="acc-h" onclick="_settingsAccToggle('app')" style="cursor:pointer;"><span style="font-size:18px;width:30px;">📱</span><span style="flex:1;text-align:left;font-family:'Anton',sans-serif;text-transform:uppercase;font-size:15px;letter-spacing:.03em;">App anpassen</span><span class="chev">${ICN.chev}</span></button>
       <div class="acc-body"><div class="acc-inner" style="padding:0 16px 16px;">
@@ -9465,7 +9503,9 @@ function routeSettings(){
     const r=new FileReader();
     r.onload=()=>{try{
       const j=JSON.parse(r.result);
-      if(!j||j.app!=="serband"||!j.data||!Array.isArray(j.data.students))throw 0;
+      if(!j||j.app!=="serband"||!j.data||typeof j.data!=="object"||!Array.isArray(j.data.students))throw 0;
+      if(["lessons","exams","termine"].some(k=>k in j.data&&!Array.isArray(j.data[k])))throw 0;
+      if(j.data.students.some(s=>!s||typeof s!=="object"||typeof s.id!=="string"||!/^[A-Za-z0-9_-]{1,64}$/.test(s.id)))throw 0;
       if(confirm("Backup einspielen? Die aktuellen Daten werden ersetzt.")){
         DB=j.data;ensureDB();save();toast("Backup eingespielt");routeDashboard();}
     }catch(_){toast("Keine gültige Backup-Datei");}};
@@ -9791,7 +9831,7 @@ function openEventSheet(kind,id,sid){
       <button class="es-act" id="esOther">Mit anderem Schüler gefahren</button>
       <button class="es-act" id="esNoshow">Nicht erschienen</button>
       <button class="es-act" id="esCancel">Abgebrochen</button>
-      ${fcRelevant?`<button class="es-act" id="esGift">🎁 Zeit verschenkt${l.tatsaechlicheDauer?` · <b>${l.tatsaechlicheDauer} Min berechnet</b>`:''}</button>`:''}
+      ${fcRelevant?`<button class="es-act" id="esGift">🎁 Zeit verschenkt${typeof l.tatsaechlicheDauer==="number"?` · <b>${l.tatsaechlicheDauer} Min berechnet</b>`:''}</button>`:''}
       ${l.status&&l.status!=="geplant"?`<button class="es-act" id="esReset">Status zurücksetzen</button>`:''}
       <button class="es-act danger" id="esDelete">Termin löschen</button>
     </div>`);
@@ -9818,7 +9858,7 @@ function openSignatureSheet(lessonId){
   if(l.signed&&l.signatureSnap){
     openSheet(`<div class="sheet-h">Unterschrift</div>
       <p class="muted-p" style="font-size:13px;margin:-4px 0 12px;">Bestätigt am ${isoDE(l.signedAt||l.date)} für ${esc(s.name)}</p>
-      <div class="sig-preview"><img src="${l.signatureSnap}" alt="Unterschrift"></div>
+      <div class="sig-preview"><img src="${_sichereBildUrl(l.signatureSnap)}" alt="Unterschrift"></div>
       <div class="btn-row" style="margin-top:14px;"><button class="btn btn-ghost" id="sigUndo">Entfernen</button><button class="btn btn-primary" id="sigClose">Fertig</button></div>`);
     $("#sigClose").addEventListener("click",closeSheet);
     $("#sigUndo").addEventListener("click",()=>{ if(confirm("Unterschrift für diesen Termin entfernen?")){ l.signed=false; l.signatureSnap=null; l.signedAt=null; save(); toast("Entfernt"); closeSheet(); } });
@@ -9827,7 +9867,7 @@ function openSignatureSheet(lessonId){
   if(s.signature&&s.signature.dataUrl){
     openSheet(`<div class="sheet-h">Unterschrift bestätigen</div>
       <p class="muted-p" style="font-size:13px;margin:-4px 0 12px;">${esc(s.name)} hat bereits einmal unterschrieben (${isoDE(s.signature.date)}). Für diese Fahrstunde übernehmen?</p>
-      <div class="sig-preview"><img src="${s.signature.dataUrl}" alt="Unterschrift"></div>
+      <div class="sig-preview"><img src="${_sichereBildUrl(s.signature.dataUrl)}" alt="Unterschrift"></div>
       <div class="btn-row" style="margin-top:14px;flex-wrap:wrap;">
         <button class="btn btn-ghost" id="sigRedo" style="flex:1 1 100%;">Neu unterschreiben (Korrektur)</button>
         <button class="btn btn-primary" id="sigUse" style="flex:1 1 100%;">Mit dieser Unterschrift bestätigen ✓</button>
@@ -9939,27 +9979,27 @@ function openGiftTimeSheet(id,retFn){
   const l=(DB.lessons||[]).find(x=>x.id===id); if(!l)return;
   const st=DB.students.find(s=>s.id===l.sid);
   const bookedMin=hm2min(l.bis)-hm2min(l.von);
-  const already=l.tatsaechlicheDauer||null;
+  const already=(typeof l.tatsaechlicheDauer==="number")?l.tatsaechlicheDauer:null;
   openSheet(`<div class="sheet-h">Zeit verschenkt</div>
-    <p class="muted-p" style="font-size:13px;margin:-4px 0 14px;">${st?esc(st.name)+' · ':''}Gebucht: ${bookedMin} Min${already?` · aktuell ${already} Min berechnet`:''}</p>
+    <p class="muted-p" style="font-size:13px;margin:-4px 0 14px;">${st?esc(st.name)+' · ':''}Gebucht: ${bookedMin} Min${already!==null?` · aktuell ${already} Min berechnet`:''}</p>
     <div class="es-actions">
       <button class="es-act" id="giftAll">Ganze Stunde geschenkt · <b>0 Min berechnet</b></button>
       <button class="es-act" id="giftHalf">Hälfte geschenkt · <b>${Math.round(bookedMin/2)} Min berechnet</b></button>
     </div>
-    <div class="field" style="margin-top:12px;"><label>Oder: wie viele Minuten berechnest du?</label><input type="number" id="giftCustom" min="0" max="${bookedMin}" placeholder="z.B. 30" value="${already||''}"></div>
+    <div class="field" style="margin-top:12px;"><label>Oder: wie viele Minuten berechnest du?</label><input type="number" id="giftCustom" min="0" max="${bookedMin}" placeholder="z.B. 30" value="${already!==null?already:''}"></div>
     <div class="btn-row" style="margin-top:12px;">
       <button class="btn btn-primary" id="giftSave">Speichern</button>
-      ${already?`<button class="btn btn-ghost" id="giftReset" style="flex:0;padding:13px 16px;">Zurücksetzen</button>`:''}
+      ${already!==null?`<button class="btn btn-ghost" id="giftReset" style="flex:0;padding:13px 16px;">Zurücksetzen</button>`:''}
     </div>`);
   const ueVoll=ueOf(l.art,l.von,l.bis,null);
   const commit=(berechnetMin)=>{
     const geschenkt=bookedMin-berechnetMin;
-    l.tatsaechlicheDauer=berechnetMin>0?berechnetMin:null; if(!l.tatsaechlicheDauer)delete l.tatsaechlicheDauer;
+    if(berechnetMin>=bookedMin)delete l.tatsaechlicheDauer; else l.tatsaechlicheDauer=Math.max(0,berechnetMin);
     const ueNeu=ueOf(l.art,l.von,l.bis,l.tatsaechlicheDauer);
     const eurDelta=Math.round((ueVoll-ueNeu)*DB.verdienst.proUE);
     save();
     if(st&&geschenkt>0)logHist(st,"geschenkt",`${geschenkt} Min geschenkt (Termin lief zu lange)`,{eur:-eurDelta});
-    else if(st&&geschenkt<=0&&already)logHist(st,"geschenkt","Zeit-Geschenk zurückgesetzt – volle Zeit berechnet",{eur:eurDelta});
+    else if(st&&geschenkt<=0&&already!==null)logHist(st,"geschenkt","Zeit-Geschenk zurückgesetzt – volle Zeit berechnet",{eur:eurDelta});
     closeSheet(); toast("Gespeichert ✓"); retFn();
   };
   $("#giftAll").addEventListener("click",()=>commit(0));
@@ -10017,7 +10057,9 @@ function openEventEdit(id,overrides){
   $("#esBack").addEventListener("click",()=>openEventSheet("lesson",id,l.sid));
   $("#esSave").addEventListener("click",()=>{
     const date=$("#esDate").value||cur.date; const von=$("#esTime").value||cur.von;
-    const dur=newArt==="schalt"?15:(DB.workCfg.blockMin||90);
+    // Bisherige Dauer behalten (45 Min, 3 Std, Theorie …); Standardlänge nur, wenn die Art wechselt.
+    const altDauer=(l.von&&l.bis)?hm2min(l.bis)-hm2min(l.von):0;
+    const dur=(newArt===l.art&&altDauer>0)?altDauer:(newArt==="schalt"?15:(DB.workCfg.blockMin||90));
     const bis=min2hm(hm2min(von)+dur);
     const note=$("#esNote").value.trim();
     if(newArt==="sonder"&&l.art!=="sonder"&&l.sid){
@@ -10623,7 +10665,7 @@ function calEventChip(e,iso){
     const lbl=pass?"bestanden":"nicht bestanden";
     return `<div class="cw-ev exam-done ${pass?'exam-pass':'exam-fail'}" style="border-left-color:${col}" data-evedit="${e.kind}|${e.id}|${e.sid||''}"><span class="cw-evt">${e.pruefTime||e.von} · Prüfung</span><span class="cw-evn"><span class="exd-strike">${esc(e.name||"")}</span> <span class="exd-mark" style="color:${col}">${icon} ${lbl}</span></span></div>`;
   }
-  const stat=e.status&&e.status!=="geplant"?` <span class="cw-evstat">${e.status}</span>`:"";
+  const stat=e.status&&e.status!=="geplant"?` <span class="cw-evstat">${esc(e.status)}</span>`:"";
   const off=e.status&&e.status!=="geplant";
   const sf=c.sf?`<span class="cw-sf">${sfKuerzel(e)}</span>`:'';
   const examSoon=e.sid&&!!terminFor(e.sid);
@@ -10663,7 +10705,7 @@ function calDayHTML(){
         blocks+=`<div class="ct-ev exam-done ${pass?'exam-pass':'exam-fail'}" style="top:${top}px;height:${h}px;border-left-color:${col}" data-evedit="${e.kind}|${e.id}|${e.sid||''}"><div class="ct-ev-t">${e.pruefTime||min2hm(it.von)}</div><div class="ct-ev-n"><span class="exd-strike">${esc(e.name)}</span></div><div class="ct-ev-a" style="color:${col};font-weight:800">${icon} Prüfung ${lbl}</div></div>`;
         return;
       }
-      const off=e.status&&e.status!=="geplant"; const stat=off?`<span class="cd-stat">${e.status}</span>`:"";
+      const off=e.status&&e.status!=="geplant"; const stat=off?`<span class="cd-stat">${esc(e.status)}</span>`:"";
       const sf=c.sf?`<span class="ct-sf">${sfKuerzel(e)}</span>`:'';
       const examSoon=e.sid&&!!terminFor(e.sid);
       const dispNameDay=(e.art==="theorie"&&e.lektion)?("Lektion "+e.lektion):esc(e.name);
@@ -10677,7 +10719,7 @@ function calDayHTML(){
   const cnt=countRange(iso,iso);
   const doneUE=dayUE(iso,true), planUE=dayUE(iso,false);
   const hol=holidayName(iso);
-  return `${hol?`<div class="cd-holiday">🎌 ${esc(hol)} · Feiertag in Hessen</div>`:''}<div class="cd-summary"><span><b>${evs.length}</b> belegt</span><span><b>${free.length}</b> frei</span>${_fsAgg?'':`<span><b>${doneUE+planUE}</b> UE</span>`}</div>
+  return `${hol?`<div class="cd-holiday">🎌 ${esc(hol)} · Feiertag in Hessen</div>`:''}<div class="cd-summary"><span><b>${evs.length}</b> belegt</span><span><b>${free.length}</b> frei</span>${_fsAgg?'':`<span><b>${planUE}</b> UE</span>`}</div>
     <div class="ct-wrap" style="height:${totalH}px">${hourLines}${nowLine}<div class="ct-events">${blocks}</div></div>`;
 }
 // UE eines Tages (done=nur absolvierte)
@@ -10699,7 +10741,8 @@ function ueOf(art,von,bis,tatsaechlicheDauer){
   if(FS_BUERO_ARTEN.includes(art))return 0; // Vortest/Simulator/Beratung/Erste Hilfe sind keine bezahlten Fahrstunden-UE
   if(art==="schalt")return 0.33;
   if(art==="pruefung")return 2; // Prüfung immer 2 UE (46 €), egal wie lang der Kalenderblock ist
-  if(tatsaechlicheDauer){ return Math.round((tatsaechlicheDauer/90)*2*100)/100; }
+  // Auch 0 ist ein gültiger Wert ("ganze Stunde geschenkt" = nichts berechnet).
+  if(typeof tatsaechlicheDauer==="number"&&tatsaechlicheDauer>=0){ return Math.round((tatsaechlicheDauer/90)*2*100)/100; }
   if(art==="theorie"){ if(von&&bis){ const dur=hm2min(bis)-hm2min(von); return Math.round((dur/90)*2*100)/100; } return 4; }
   // Fahrstunde/Sonder/Nacht nach echter Dauer: 45 Min = 1 UE, 90 Min = 2 UE, 135 Min = 3 UE
   if((art==="fahrstunde"||art==="sonder"||art==="nacht")&&von&&bis){ const dur=hm2min(bis)-hm2min(von); if(dur>0)return Math.round((dur/45)*100)/100; }
@@ -10765,6 +10808,7 @@ function ueRange(fromISO,toISO){
   // Prüfung soll an dem Tag stehen, an dem sie stattgefunden hat - nicht an dem, an dem
   // sie eingetippt wurde. earnAt nur noch als Rückfall für Altdaten ohne Datum.
   (DB.exams||[]).forEach(ex=>{
+    if(!istPruefung(ex))return;
     const dm=(""+(ex.date||ex.earnAt||"")).slice(0,10);
     if(dm&&dm>=fromISO&&dm<=toISO){ const u=ueOf("pruefung"); done+=u; fcCounted+=u; if(dm<=todayISO())fcDone+=u; }
   });
@@ -10872,7 +10916,7 @@ function dayTheorieWindow(iso){
 // Alle Termine (Fahrstunden + Prüfungen) eines Tages, vereinheitlicht
 function dayEvents(iso){
   const ev=[];
-  (DB.lessons||[]).filter(l=>l.date===iso).forEach(l=>{ const st=DB.students.find(s=>s.id===l.sid); ev.push({kind:"lesson",id:l.id,von:l.von,bis:l.bis,art:l.art||"fahrstunde",sid:l.sid,name:st?st.name:(l.name||"—"),status:l.status||"geplant",fc:l.fc||null,note:l.note||"",srcSonder:l.srcSonder||null,fahrzeug:l.fahrzeug||null,tatsaechlicheDauer:l.tatsaechlicheDauer||null,noshow:l.noshow||null,_fahrlehrerId:l._fahrlehrerId,_fahrlehrerName:l._fahrlehrerName}); });
+  (DB.lessons||[]).filter(l=>l.date===iso).forEach(l=>{ const st=DB.students.find(s=>s.id===l.sid); ev.push({kind:"lesson",id:l.id,von:l.von,bis:l.bis,art:l.art||"fahrstunde",sid:l.sid,name:st?st.name:(l.name||"—"),status:l.status||"geplant",fc:l.fc||null,note:l.note||"",srcSonder:l.srcSonder||null,fahrzeug:l.fahrzeug||null,tatsaechlicheDauer:l.tatsaechlicheDauer??null,noshow:l.noshow||null,_fahrlehrerId:l._fahrlehrerId,_fahrlehrerName:l._fahrlehrerName}); });
   // Prüfungstermine: jeder belegte Slot = ein 90-Min-Event (Default 09:00, falls keine Zeit).
   // NUR solange noch kein Ergebnis eingetragen ist – sonst zählt die Prüfung über exams.earnAt (s. ueRange).
   // Prüfungstermine: Block beginnt genau zur eingetragenen Prüfungszeit und dauert PRUEF_MIN (55) Minuten.
@@ -10897,12 +10941,12 @@ function dayFreeSlots(iso){
 function countRange(fromISO,toISO){
   let planned=0, free=0, slots=0, plannedUE=0;
   let cur=fromISO;
-  while(cur<=toISO){ const ds=daySlots(cur); const ev=dayEvents(cur).filter(e=>e.status!=="abgesagt"&&e.status!=="geplatzt"); slots+=ds.length; planned+=ev.length; plannedUE+=ev.reduce((a,e)=>a+ueOf(e.art||'fahrstunde',e.von,e.bis,e.tatsaechlicheDauer),0); free+=dayFreeSlots(cur).length; cur=addDays(cur,1); }
+  while(cur<=toISO){ const ds=daySlots(cur); const ev=dayEvents(cur).filter(e=>!["abgebrochen","nicht erschienen","abgesagt","geplatzt"].includes(e.status)); slots+=ds.length; planned+=ev.length; plannedUE+=ev.reduce((a,e)=>a+ueOf(e.art||'fahrstunde',e.von,e.bis,e.tatsaechlicheDauer),0); free+=dayFreeSlots(cur).length; cur=addDays(cur,1); }
   return {planned,free,slots,plannedUE};
 }
 // Lesson-CRUD
 var PRUEF_MIN=55; // Prüfung steht ab der eingetragenen Uhrzeit 55 Min im Kalender (bezahlt bleibt sie mit 2 UE)
-function addLesson(o){ ensureDB(); const l={id:uid(),date:o.date,von:o.von,bis:o.bis||min2hm(hm2min(o.von)+(DB.workCfg.blockMin||90)),art:o.art||"fahrstunde",sid:o.sid||null,name:o.name||"",status:o.status||"geplant",note:o.note||"",fc:o.fc||null}; if(o.srcSonder)l.srcSonder=o.srcSonder; if(o.fahrzeug)l.fahrzeug=o.fahrzeug; if(o.lektion)l.lektion=o.lektion; DB.lessons.push(l); save(); return l; }
+function addLesson(o){ ensureDB(); const l={id:uid(),date:o.date,von:o.von,bis:o.bis||min2hm(hm2min(o.von)+(DB.workCfg.blockMin||90)),art:o.art||"fahrstunde",sid:o.sid||null,name:o.name||"",status:o.status||"geplant",note:o.note||"",fc:o.fc||null}; if(o.srcSonder)l.srcSonder=o.srcSonder; if(o.onlineBookingId)l.onlineBookingId=o.onlineBookingId; if(o.fahrzeug)l.fahrzeug=o.fahrzeug; if(o.lektion)l.lektion=o.lektion; DB.lessons.push(l); save(); return l; }
 // Verknüpfung: Sonderfahrt aus Ausbildungsplan -> Kalender-Termin (ÜL/AB/NF)
 const SF_KUERZEL={ueberland:"ÜL",autobahn:"AB",nacht:"NF"};
 const SF_LABEL={ueberland:"Überlandfahrt",autobahn:"Autobahnfahrt",nacht:"Nachtfahrt"};
@@ -10951,7 +10995,10 @@ function _notifyOnlineBookingChange(lessonId, type, patch) {
     }).catch(() => {});
   } catch (e) {}
 }
-function updateLesson(id,patch){ const l=(DB.lessons||[]).find(x=>x.id===id); if(l){ Object.assign(l,patch); save(); if(patch.date||patch.von||patch.bis) _notifyOnlineBookingChange(id,"changed",patch); } return l; }
+function updateLesson(id,patch){ const l=(DB.lessons||[]).find(x=>x.id===id); if(l){
+  // Den Schüler nur benachrichtigen, wenn sich Datum oder Uhrzeit wirklich ändern (nicht bei Notiz, Fahrzeug …).
+  const zeit={}; ["date","von","bis"].forEach(k=>{ if(k in patch&&patch[k]&&patch[k]!==l[k])zeit[k]=patch[k]; });
+  Object.assign(l,patch); save(); if(Object.keys(zeit).length) _notifyOnlineBookingChange(id,"changed",zeit); } return l; }
 function deleteLesson(id){
   const l=(DB.lessons||[]).find(x=>x.id===id); if(!l)return;
   if(l.srcSonder){ const [sid,grp,idx]=l.srcSonder.split(":"); const s=DB.students.find(x=>x.id===sid); if(s&&s.plan&&s.plan.sonder&&s.plan.sonder[grp])s.plan.sonder[grp][+idx]=null; }
@@ -11022,7 +11069,7 @@ function ensureDB(){ let _ensureDirty=false; if(!Array.isArray(DB.exams))DB.exam
   if(!Array.isArray(DB.trinkgeld))DB.trinkgeld=[];
   // 168 bereits absolvierte UE als Monats-Sockel (einmalig, aber als Sicherheitsnetz stehen gelassen —
   // genau das hat am 06.07. den Cache-Reset-Datenverlust zumindest teilweise abgefedert)
-  if(!DB._startUE168){ if(!DB.verdienst.startUE)DB.verdienst.startUE=168; DB._startUE168=true; _ensureDirty=true; }
+  if(!DB._startUE168){ const altbestand=(DB.lessons||[]).some(l=>l.date&&l.date<"2026-07-01"); if(altbestand&&!DB.verdienst.startUE)DB.verdienst.startUE=168; DB._startUE168=true; _ensureDirty=true; }
   if(!DB._nachtToFahrstunde){ (DB.lessons||[]).forEach(l=>{ if(l.art==="nacht")l.art="fahrstunde"; }); DB._nachtToFahrstunde=true; _ensureDirty=true; }
   // Orts- und Tag-Bibliothek aus vorhandenen Prüfern auffüllen
   Object.values(DB.prueferData).forEach(pd=>{
@@ -11034,7 +11081,7 @@ function ensureDB(){ let _ensureDirty=false; if(!Array.isArray(DB.exams))DB.exam
 }
 function ensurePruefer(nm){ if(!DB.prueferData[nm])DB.prueferData[nm]={behoerde:"",tags:[],routen:[],notiz:"",created:Date.now()}; return DB.prueferData[nm]; }
 /* Statistik pro Prüfer aus den Prüfungen ableiten */
-function prueferStats(nm){ const ex=DB.exams.filter(e=>e.pruefer===nm); const q=quoteOf(ex); const dates=ex.map(e=>e.date).filter(Boolean).sort(); const last=dates.length?dates[dates.length-1]:null; return {total:ex.length,last,quote:q,faults:faultCounts(ex).slice(0,3),eingriff:eingriffQuote(ex)}; }
+function prueferStats(nm){ const ex=DB.exams.filter(e=>e.pruefer===nm); const q=quoteOf(ex); const dates=ex.map(e=>e.date).filter(Boolean).sort(); const last=dates.length?dates[dates.length-1]:null; return {total:ex.filter(istPruefung).length,last,quote:q,faults:faultCounts(ex).slice(0,3),eingriff:eingriffQuote(ex)}; }
 ensureDB();
 
 const FAULTS=[
@@ -11117,7 +11164,7 @@ function commitExamResult(s,opts){
   if(opts.pruefer)_lastUsedPruefer=opts.pruefer;
   const id=s.id;
   const date=opts.date||todayISO();
-  const attempt=DB.exams.filter(e=>e.sid===id).length+1;
+  const attempt=DB.exams.filter(e=>e.sid===id&&istPruefung(e)).length+1;
   // Uhrzeit der Prüfung sichern (für die dauerhafte Kalender-Markierung), bevor der Termin entfernt wird
   const _t=terminFor(id);
   const von=opts.von||(_t?_t.von:null)||null;
@@ -11126,7 +11173,7 @@ function commitExamResult(s,opts){
   if(opts.result==='fail'){ ex.faults=(opts.faults||[]).slice(); ex.eingriff=!!opts.eingriff; ex.eingNote=opts.eingNote||""; }
   else { ex.faults=[]; ex.eingriff=false; }
   // Snapshot für Undo
-  const snap={ exLen:DB.exams.length, termine:JSON.parse(JSON.stringify(DB.termine||[])),
+  const snap={ exLen:DB.exams.length, exId:ex.id, termine:JSON.parse(JSON.stringify(DB.termine||[])),
     passed:s.passed, ready:s.ready, waitOrder:s.waitOrder, attempts:s.attempts, histLen:Array.isArray(s.hist)?s.hist.length:0 };
   DB.exams.push(ex);
   clearSlot(id);
@@ -11169,7 +11216,7 @@ function offerNextExam(date,excludeId){
   $("#neDone").addEventListener("click",closeSheet);
 }
 function undoExam(s,snap,after){
-  DB.exams.length=snap.exLen;            // letzten Prüfungseintrag entfernen
+  if(snap.exId)DB.exams=DB.exams.filter(e=>e.id!==snap.exId); else DB.exams.length=snap.exLen; // genau diesen Prüfungseintrag entfernen
   DB.termine=snap.termine;                // Termine (inkl. evtl. entfernter) wiederherstellen
   if(snap.passed)s.passed=snap.passed; else delete s.passed;
   if(snap.ready)s.ready=snap.ready; else delete s.ready;
@@ -11186,8 +11233,11 @@ function createTermin(date,plaetze,von){ const slots=new Array(plaetze).fill(nul
 function clearSlot(sid){ DB.termine.forEach(t=>{ if(t.slots)t.slots=t.slots.map(x=>x===sid?null:x); }); }
 function nextTermin(){ for(const t of futureTermine()){ const names=(t.slots||[]).filter(Boolean).map(id=>{const st=DB.students.find(x=>x.id===id);return st?st.name:null;}).filter(Boolean); if(names.length)return {date:t.date,names}; } return null; }
 
-function examsIn(p){ return DB.exams.filter(e=>inPeriod(e.date,p)); }
-function quoteOf(ex){ const pass=ex.filter(e=>e.result==='pass').length; const total=ex.length; return {pass,total,pct: total?Math.round(pass/total*100):null}; }
+// B197-Einträge (Schaltkompetenz) stehen nur für die Prüfer-Historie in DB.exams - sie sind keine Prüfung.
+function istPruefung(e){ return !!e&&!e.b197; }
+let _b197PrVorwahl=null; // eben neu angelegter Prüfer im B197-Dialog (nur für das erneute Öffnen)
+function examsIn(p){ return DB.exams.filter(e=>istPruefung(e)&&inPeriod(e.date,p)); }
+function quoteOf(ex){ ex=(ex||[]).filter(istPruefung); const pass=ex.filter(e=>e.result==='pass').length; const total=ex.length; return {pass,total,pct: total?Math.round(pass/total*100):null}; }
 function firstAttemptQuote(ex){ return quoteOf(ex.filter(e=>e.attempt===1)); }
 function avgAttempts(ex){ const p=ex.filter(e=>e.result==='pass'); if(!p.length)return null; return Math.round(p.reduce((a,e)=>a+(e.attempt||1),0)/p.length*10)/10; }
 function eingriffQuote(ex){ const f=ex.filter(e=>e.result==='fail'); if(!f.length)return null; return Math.round(f.filter(e=>e.eingriff).length/f.length*100); }
@@ -11331,9 +11381,10 @@ function openReactivateSheet(s,rerender){
       <div class="field"><label>Datum</label><input type="date" id="b197Date" value="${todayISO()}"></div>
       <div class="field"><label>Prüfer</label><div class="pr-wrap" id="b197Pr">${prChips}<button class="pr-chip add" id="b197PrAdd">+ Neuer Prüfer</button></div></div>
       <div class="btn-row"><button class="btn btn-ghost" id="b197Cancel" style="flex:0;padding:13px 16px;">Zurück</button><button class="btn btn-primary" id="b197Save">Eintragen</button></div>`);
-    let prSel=null;
+    let prSel=(_b197PrVorwahl&&DB.pruefer.includes(_b197PrVorwahl))?_b197PrVorwahl:null; _b197PrVorwahl=null;
+    if(prSel)document.querySelectorAll("#b197Pr .pr-chip[data-pr]").forEach(x=>x.classList.toggle("on",x.dataset.pr===prSel));
     document.querySelectorAll("#b197Pr .pr-chip[data-pr]").forEach(c=>c.addEventListener("click",()=>{ prSel=(prSel===c.dataset.pr)?null:c.dataset.pr; document.querySelectorAll("#b197Pr .pr-chip[data-pr]").forEach(x=>x.classList.toggle("on",x.dataset.pr===prSel)); }));
-    $("#b197PrAdd").addEventListener("click",()=>{ const nm=(prompt("Name des Prüfers:")||"").trim(); if(nm){ ensurePruefer(nm); if(!DB.pruefer.includes(nm))DB.pruefer.push(nm); save(); prSel=nm; openReactivateSheet(s,rerender); /* neu rendern */ setTimeout(()=>$("#reactSchalt")&&$("#reactSchalt").click(),50); } });
+    $("#b197PrAdd").addEventListener("click",()=>{ const nm=(prompt("Name des Prüfers:")||"").trim(); if(nm){ ensurePruefer(nm); if(!DB.pruefer.includes(nm))DB.pruefer.push(nm); prSel=nm; _b197PrVorwahl=nm; save(); openReactivateSheet(s,rerender); /* neu rendern */ setTimeout(()=>$("#reactSchalt")&&$("#reactSchalt").click(),50); } });
     $("#b197Cancel").addEventListener("click",()=>openReactivateSheet(s,rerender));
     $("#b197Save").addEventListener("click",()=>{
       const date=$("#b197Date").value||todayISO();
@@ -11520,7 +11571,7 @@ function pruefungsTerminFuer(sid){
 // (sonst würde eine alte Prüfung nochmal mit 46 € gezählt). Vorhandener Eintrag wird bearbeitet.
 function renderPassedEdit(s){
   const id=s.id;
-  const ex=(DB.exams||[]).filter(e=>e.sid===id&&e.result==="pass").sort((a,b)=>(""+b.date).localeCompare(""+a.date))[0]||null;
+  const ex=(DB.exams||[]).filter(e=>e.sid===id&&e.result==="pass"&&istPruefung(e)).sort((a,b)=>(""+b.date).localeCompare(""+a.date))[0]||null;
   const passedISO=(typeof s.passed==="string"&&/^\d{4}-\d{2}-\d{2}/.test(s.passed))?s.passed.slice(0,10):"";
   const curDate=(ex&&ex.date)||passedISO||todayISO();
   $("#tbTitle").textContent="Bestehens-Daten";
@@ -11862,11 +11913,14 @@ function setFC(id,status){
   else if(status==="v2"){ l.fc="v2"; delete l.nachAm; msg="2 FC vergessen vermerkt"; histTxt="2 Fahrchecks vergessen"; eurDelta=-eurFull; }
   else if(status==="geschenkt"){ l.fc="geschenkt"; delete l.nachAm; msg="45 Min geschenkt"; histTxt="Fahrstunde geschenkt"; eurDelta=-eurFull; }
   else if(status==="nachgereicht"){ l.fc="nachgereicht"; l.nachAm=todayISO(); msg="FC nachgereicht – Verdienst gutgeschrieben"; histTxt="FC nachgereicht"; const back=(prev==="v1"||prev==="halb_bewusst")?Math.round(ueFull/2*DB.verdienst.proUE):eurFull; eurDelta=back; }
+  else if(status==="eins_ok"){ l.fc="eins_ok"; delete l.nachAm; msg="1 FC – als abgeschlossen vermerkt"; histTxt="1 Fahrcheck, als abgeschlossen vereinbart (voller Verdienst)";
+    if(prev==="v1"||prev==="halb_bewusst")eurDelta=Math.round(ueFull/2*DB.verdienst.proUE); else if(prev==="v2"||prev==="geschenkt")eurDelta=eurFull; }
   else if(status==="normal"){ delete l.fc; delete l.nachAm; msg="Auf Normal gesetzt"; histTxt="FC auf Normal gesetzt"; }
-  if(st&&histTxt)logHist(st,"fc",histTxt+(l.date?` · ${isoDE(l.date)}`:""),eurDelta?{eur:eurDelta}:null);
+  let histEintrag=null;
+  if(st&&histTxt){ logHist(st,"fc",histTxt+(l.date?` · ${isoDE(l.date)}`:""),eurDelta?{eur:eurDelta}:null); histEintrag=st.hist[st.hist.length-1]; }
   save();
   toastUndo(msg,()=>{ if(prev===null)delete l.fc; else l.fc=prev; if(prevNachAm)l.nachAm=prevNachAm; else delete l.nachAm;
-    if(st&&Array.isArray(st.hist))st.hist.pop(); save(); if($("#view"))refreshCurrentView(); });
+    if(st&&histEintrag&&Array.isArray(st.hist)){ const i=st.hist.indexOf(histEintrag); if(i>=0)st.hist.splice(i,1); } save(); if($("#view"))refreshCurrentView(); });
   refreshCurrentView();
 }
 
@@ -12674,7 +12728,7 @@ function monatsKennzahlen(fromISO,toISO){
     });
     cur=addDays(cur,1);
   }
-  const ex=(DB.exams||[]).filter(e=>e.date&&e.date>=fromISO&&e.date<=toISO);
+  const ex=(DB.exams||[]).filter(e=>istPruefung(e)&&e.date&&e.date>=fromISO&&e.date<=toISO);
   const examCount=ex.length, examPass=ex.filter(e=>e.result==="pass").length;
   const examQuote=examCount?Math.round(examPass/examCount*100):null;
   const noshowEuro=Math.round(noshowUE*DB.verdienst.proUE);
@@ -12693,15 +12747,20 @@ function jahresRueckblickHTML(){
   const year=curYear+_vdYearOffset;
   const maxMonth=(year===curYear)?now.getMonth():11;
   const monthsData=[];
+  // Erster Monat mit Daten (Termine, Prüfungen oder Start-Sockel) - davor gibt es kein Gehalt zu zählen.
+  const _ersteMonate=[...(DB.lessons||[]).map(l=>l.date),...(DB.exams||[]).map(e=>e.date)].filter(Boolean).map(d=>(""+d).slice(0,7));
+  if((DB.verdienst&&DB.verdienst.startUE)>0)_ersteMonate.push((DB.verdienst.startMonth)||"2026-06");
+  const ersterMonat=_ersteMonate.length?_ersteMonate.sort()[0]:null;
   for(let m=0;m<=maxMonth;m++){
     const iso=year+"-"+pad2(m+1)+"-01";
+    if(!ersterMonat||iso.slice(0,7)<ersterMonat)continue;
     const [ms,me]=isoMonthRange(iso);
     const u=ueRange(ms,me);
     monthsData.push({m,euro:gehaltAusUE(Math.round(u.fcDone))});
   }
   const gesamtEuro=monthsData.reduce((a,x)=>a+x.euro,0);
-  const anzahlMonate=monthsData.length||1;
-  const avgEuro=Math.round(gesamtEuro/anzahlMonate);
+  const anzahlMonate=monthsData.length;
+  const avgEuro=anzahlMonate?Math.round(gesamtEuro/anzahlMonate):0;
   let bester=monthsData[0]||{m:0,euro:0};
   monthsData.forEach(x=>{ if(x.euro>bester.euro)bester=x; });
   const MNL=["Januar","Februar","März","April","Mai","Juni","Juli","August","September","Oktober","November","Dezember"];
@@ -12714,7 +12773,7 @@ function jahresRueckblickHTML(){
       <div class="thi-card"><div class="thi-k">💰 Gesamt ${year}</div><div class="thi-v">${_eurMasked(gesamtEuro)}</div><div class="thi-s">${anzahlMonate} Monat${anzahlMonate===1?'':'e'}</div></div>
       <div class="thi-card"><div class="thi-k">Ø pro Monat</div><div class="thi-v">${_eurMasked(avgEuro)}</div><div class="thi-s">Schnitt</div></div>
     </div>
-    <p style="font-size:13px;color:var(--txt);margin-top:8px;">🥇 Bester Monat: <b>${MNL[bester.m]}</b> · ${_eurMasked(bester.euro)}</p>`;
+    <p style="font-size:13px;color:var(--txt);margin-top:8px;">${anzahlMonate?`🥇 Bester Monat: <b>${MNL[bester.m]}</b> · ${_eurMasked(bester.euro)}`:"Noch keine Daten für dieses Jahr."}</p>`;
 }
 function fmtUE(n){ const r=Math.round(n*100)/100; return (r%1===0?r.toString():r.toFixed(2).replace(".",",")); }
 function maxISO(a,b){ return a>b?a:b; }
@@ -13284,7 +13343,7 @@ const RISK_THEMES=[
 ];
 const RISK_LABEL={offen:"Offen",unsicher:"Unsicher",sicher:"Sicher"};
 function riskStatus(s,id){ return (s.risk&&s.risk[id])||"offen"; }
-function daysSince(iso){ if(!iso)return 0; const s=(""+iso).slice(0,10); const d=new Date(s+"T00:00:00"); if(isNaN(d.getTime()))return 0; const n=new Date(); n.setHours(0,0,0,0); return Math.max(0,Math.round((n-d)/86400000)); }
+function daysSince(iso){ if(!iso)return 0; const _v=new Date(iso); const s=((""+iso).length>10&&!isNaN(_v.getTime()))?dateISO(_v):(""+iso).slice(0,10); const d=new Date(s+"T00:00:00"); if(isNaN(d.getTime()))return 0; const n=new Date(); n.setHours(0,0,0,0); return Math.max(0,Math.round((n-d)/86400000)); }
 
 /* Prüfungs-Freigabe (Poka-Yoke-Checkliste vor dem kritischen Moment) */
 function examReadiness(s){
@@ -13334,7 +13393,8 @@ function formatPhoneForWa(tel){
   if(!tel) return null;
   let digits=String(tel).replace(/[^\d]/g,"");
   if(!digits) return null;
-  if(digits.startsWith("0")) digits="49"+digits.slice(1);
+  if(digits.startsWith("00")) digits=digits.slice(2);        // 0049… → 49…
+  else if(digits.startsWith("0")) digits="49"+digits.slice(1); // 0171… → 49171…
   return digits;
 }
 
@@ -13423,7 +13483,8 @@ function themenDesTages(s,iso){
   const gut=[],ueben=[];
   stufenFor(s).forEach(st=>st.items.forEach(it=>{
     const z=pl.ampelnZeit[it.id];
-    if(!z||z.slice(0,10)!==iso)return;
+    const _zd=z?new Date(z):null; const zIso=(_zd&&!isNaN(_zd.getTime())&&(""+z).length>10)?dateISO(_zd):(""+(z||"")).slice(0,10);
+    if(!z||zIso!==iso)return;
     const v=pl.ampeln[it.id];
     if(v==="gruen")gut.push(it); else if(v==="gelb"||v==="rot")ueben.push(it);
   }));
@@ -13585,10 +13646,10 @@ const SPLASH_QUOTES=[
   ["Bei Nebel mit Sicht unter 50 m gilt Tempo 50 als Höchstgeschwindigkeit.","§ 3 Abs. 1 StVO","Geschwindigkeit"],
   ["Es darf nur so schnell gefahren werden, wie das Fahrzeug ständig beherrscht werden kann.","§ 3 Abs. 1 StVO","Geschwindigkeit"],
   ["Innerorts gilt ohne andere Beschilderung Tempo 50.","§ 3 StVO","Geschwindigkeit"],
-  ["Außerorts gilt für Pkw ohne Anhänger keine allgemeine Höchstgeschwindigkeit, Richtwert ist Tempo 130.","§ 3 StVO","Geschwindigkeit"],
+  ["Außerorts gilt für Pkw ohne andere Beschilderung Tempo 100. Auf Autobahnen gibt es keine allgemeine Höchstgeschwindigkeit, die Richtgeschwindigkeit ist 130.","§ 3 StVO","Geschwindigkeit"],
   ["Auf Autobahnen und Kraftfahrstraßen gilt eine Mindestgeschwindigkeit – zu langsames Fahren ist untersagt.","§ 18 Abs. 1 StVO","Autobahn"],
   ["Auf der Autobahn darf nicht gewendet, rückwärtsgefahren oder entgegen der Fahrtrichtung gefahren werden.","§ 18 Abs. 8 StVO","Autobahn"],
-  ["Auf Autobahnen darf links nur überholen, wer selbst nicht mit Tempo 60 oder schneller unterwegs ist – Rechtsfahrgebot gilt strikt.","§ 7 Abs. 3a StVO","Autobahn"],
+  ["Stehen links Fahrzeuge oder fahren sie langsam, darf man sie rechts mit nur geringfügig höherer Geschwindigkeit und äußerster Vorsicht überholen – Faustregel: höchstens 20 km/h schneller und nur, solange links nicht schneller als 60 km/h gefahren wird.","§ 7 Abs. 2a StVO","Autobahn"],
   ["Bei stockendem Verkehr auf der Autobahn muss sofort eine Rettungsgasse gebildet werden.","§ 11 Abs. 2 StVO","Autobahn"],
   ["Die Rettungsgasse entsteht zwischen dem äußersten linken und dem nächsten Fahrstreifen.","§ 11 Abs. 2 StVO","Autobahn"],
   ["Grundregel der Vorfahrt ohne Beschilderung: rechts vor links.","§ 8 Abs. 1 StVO","Vorfahrt"],
