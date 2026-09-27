@@ -91,7 +91,7 @@ Hintergrund: 2024 waren es 45.489 solcher Fehler (Destatis, Unfälle mit Persone
 Das Rätsel des Abends. Nur zeigen, NICHT auflösen. Die Auflösung kommt ganz am Ende.
 ▶ Blaues Auto A kommt von unten und will der Vorfahrtstraße nach links folgen. Rotes Auto B kommt von oben und will geradeaus. Grünes Auto C kommt von rechts und will geradeaus.
 🖱 Klick 1: Abstimmen lassen, Ergebnis an die Tafel schreiben (z. B. „A–B–C: 7 Stimmen“).
-➜ Sagen: Am Ende des Abends schauen wir, wer recht hatte.
+➜ Sagen: Am Ende der Lektion schauen wir, wer recht hatte.
 (Lösung für dich: A, dann B, dann C. A ist auf der Vorfahrtstraße. B und C sind auf Nebenstraßen, untereinander gilt rechts vor links: B kommt für C von rechts.)` });
     footer(s);
     kicker(s, 'Das Rätsel des Abends', 0.8, 0.9);
@@ -99,7 +99,7 @@ Das Rätsel des Abends. Nur zeigen, NICHT auflösen. Die Auflösung kommt ganz a
     body(s, 'A folgt der Vorfahrtstraße nach links.\nB und C wollen geradeaus.', 0.8, 3.45, 4.9, 0.9, { size: 19 });
     raetsel(s, false);
     ['A · B · C ?', 'Stimmt ab!'].forEach((t, i) => chip(s, t, 0.8, 4.7 + i * 0.7, 3.2, { size: 20, fill: i ? COL.orange : COL.card2, color: i ? '0A0C10' : COL.txt, line: i ? undefined : '3A4455' }, { fx: 'rise', c: i === 0, a: i > 0, dur: 500 }));
-    body(s, 'Die Auflösung gibt es am Ende des Abends.', 0.8, 6.25, 5, 0.4, { size: 16, italic: true }, { fx: 'fade', a: true });
+    body(s, 'Die Auflösung gibt es am Ende der Lektion.', 0.8, 6.25, 5, 0.4, { size: 16, italic: true }, { fx: 'fade', a: true });
   }
 
   // ================= AKT 1 · GRUNDREGEL (kurz) =================
@@ -165,10 +165,12 @@ Zwei Begriffe, die oft verwechselt werden.
 
   // Rest in Teil 2
   await require('./build5b')(H5);
+  // Lektion 6 nach der Pause
+  if (!process.env.NUR5) await require('./build6')(H5);
 
   if (process.env.KEYS) deck.slides.forEach((c, i) => console.log(i + 1, '|', c.key, '|', (c.tkey || '').replace(/\n/g, ' ')));
   require('./trans5')(deck);
-  const out = path.join(__dirname, 'Lektion05_Vorfahrt_und_Verkehrsregelungen.pptx');
+  const out = path.join(__dirname, process.env.NUR5 ? 'Lektion05_Vorfahrt_und_Verkehrsregelungen.pptx' : 'Abend_Lektion05_06.pptx');
   await finalize(deck, out);
   console.log('Folien:', deck.slides.length, '·', (fs.statSync(out).size / 1e6).toFixed(2), 'MB');
   if (process.env.SB) { await storyboard(deck, path.join(__dirname, 'sb')); console.log('Storyboard fertig'); }
