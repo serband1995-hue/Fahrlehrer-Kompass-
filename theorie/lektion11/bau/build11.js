@@ -19,6 +19,7 @@ function chip(s, t, x, y, w, o = {}, anim) {
   return s.text(t, { x, y, w, h: o.h || 0.5, size: o.size || 16, bold: o.bold ?? true, color: o.color || COL.txt, fill: o.fill || COL.card2, ft: o.ft, shape: s.pres.shapes.ROUNDED_RECTANGLE, rr: 0.25, align: 'center', valign: 'middle', line: o.line, lw: o.lw, name: o.name }, anim);
 }
 const BLUE = '4A8BFF', GREEN = '3FD17A';
+COL.muted = 'CDD3DC'; // heller für das Smartboard
 
 // Quiz: Frage steht, Antwort erst auf Klick
 function quiz(s, items, col = COL.orange) {
@@ -62,6 +63,7 @@ async function build() {
   // ============ 1 · TITEL ============
   {
     const s = deck.add({ bg: 'bg_bokeh.jpg', transition: 'fade', footer: false, notes: `
+⏱ 0. Minute
 ▶ Begrüßen. Heute geht es um drei Situationen, in denen Sekunden zählen: nachts und bei Nebel, wenn Blaulicht kommt, und im Tunnel.
 🖱 Alles baut sich von selbst auf.` });
     s.img('boost_logo.png', { x: 0.8, y: 0.7, w: 2.6, h: 2.6 * 203 / 517, name: '!!logo' }, { fx: 'fade', auto: true, dur: 900 });
@@ -82,6 +84,7 @@ async function build() {
   // ============ 2 · HOOK: SIEHST DU IHN? ============
   {
     const s = deck.add({ bg: 'sc_side.jpg', transition: 'black', notes: `
+⏱ ca. 2. Minute
 ▶ Licht aus im Raum, wenn möglich. Situation schildern: Landstraße, 22 Uhr, du fährst 80 km/h mit Abblendlicht.
 ❓ Frage: Seht ihr etwas auf der Straße?
 🖱 Klick 1: Ein Fußgänger in dunkler Kleidung taucht auf. Viele sehen ihn erst jetzt.
@@ -110,9 +113,9 @@ async function build() {
     ped(s, 'ped_dark.png', 25, '!!p25');
     chip(s, '25 m', xAt(25) - 0.5, 5.9, 1.0, { size: 16, fill: '1A202B', line: '3A4455', name: '!!l25' });
     s.rect(X0, 6.55, SC * 24, 0.32, { fill: COL.amber }, { fx: 'wipeR', c: true, dur: 900 });
-    s.text('Reaktion 24 m', { x: X0, y: 6.95, w: 2.4, h: 0.35, size: 15, bold: true, color: COL.amber }, { fx: 'fade', dur: 400 });
+    s.text('Reaktion 24 m', { x: X0, y: 6.93, w: 2.4, h: 0.4, size: 18, bold: true, color: COL.amber }, { fx: 'fade', dur: 400 });
     s.rect(xAt(24), 6.55, SC * 32, 0.32, { fill: COL.red }, { fx: 'wipeR', c: true, dur: 900 });
-    s.text('+ Gefahrbremsung 32 m = 56 m', { x: xAt(24) + 0.1, y: 6.95, w: 4.2, h: 0.35, size: 15, bold: true, color: COL.red }, { fx: 'fade', dur: 400 });
+    s.text('+ Gefahrbremsung 32 m = 56 m', { x: xAt(24) + 0.1, y: 6.93, w: 4.8, h: 0.4, size: 18, bold: true, color: COL.red }, { fx: 'fade', dur: 400 });
     s.text('KEINE CHANCE', { x: 8.3, y: 6.2, w: 4.2, h: 0.85, size: 34, bold: true, cs: 3, color: 'FFFFFF', fill: COL.red, shape: pres.shapes.ROUNDED_RECTANGLE, rr: 0.2, align: 'center', valign: 'middle', rotate: -4, glow: 16, glowColor: COL.red, glowOp: 0.45 }, { fx: 'stamp', c: true, dur: 420 });
   }
 
@@ -139,6 +142,7 @@ async function build() {
 
   // ============ 5 · KAPITEL 1 ============
   opener(deck, 'bg_night.jpg', '01', 'Licht & Sicht', 'Sehen und gesehen werden', `
+⏱ ca. 6. Minute
 ▶ Kapitel 1. Erst die Lichter am Auto, dann Blendung, Nebel und Wild.`);
 
   // ============ 6 · SYMBOL-QUIZ: WELCHES LICHT WANN? ============
@@ -156,9 +160,9 @@ async function build() {
     kicker(s, 'Cockpit-Check', 0.8, 0.9);
     title(s, 'Welche Leuchte ist das? Und wann?', 0.75, 1.3, 12, 1.0, { size: 40 });
     const sy = [['sym_stand.png', 'Standlicht', 'Nur Halten oder Parken. Nie zum Fahren.'],
-      ['sym_abblend.png', 'Abblendlicht', 'Dämmerung, Dunkelheit, schlechte Sicht, Tunnel'],
-      ['sym_fern.png', 'Fernlicht', 'Dunkle Straße ohne Beleuchtung, niemand wird geblendet'],
-      ['sym_nebelv.png', 'Nebel­scheinwerfer', 'Nebel, Schnee oder Regen mit starker Sichtbehinderung'],
+      ['sym_abblend.png', 'Abblendlicht', 'Dunkel, schlechte Sicht, Tunnel'],
+      ['sym_fern.png', 'Fernlicht', 'Unbeleuchtete Straße, niemand wird geblendet'],
+      ['sym_nebelv.png', 'Nebel­scheinwerfer', 'Nebel, Schnee, Regen: starke Sichtbehinderung'],
       ['sym_nebelh.png', 'Nebel­schlussleuchte', 'Nur bei Nebel und Sicht unter 50 m']];
     const cw = 2.25, gap = 0.18, x0 = (W - (5 * cw + 4 * gap)) / 2;
     sy.forEach(([f, t, d], i) => {
@@ -166,7 +170,7 @@ async function build() {
       s.rrect(x, 2.6, cw, 4.2, { fill: COL.card, line: COL.line, rr: 0.12 });
       s.img(f, { x: x + 0.43, y: 2.85, w: 1.39, h: 1.26 });
       s.text(t, { x: x + 0.15, y: 4.35, w: cw - 0.3, h: 0.8, font: SERIF, size: 20, bold: true, align: 'center', valign: 'middle' }, { fx: 'rise', c: true, dur: 500 });
-      s.text(d, { x: x + 0.15, y: 5.2, w: cw - 0.3, h: 1.45, size: 15, color: COL.muted, align: 'center' }, { fx: 'fade', dur: 500 });
+      s.text(d, { x: x + 0.1, y: 5.15, w: cw - 0.2, h: 1.55, size: 17, color: COL.muted, align: 'center' }, { fx: 'fade', dur: 500 });
     });
   }
 
@@ -196,11 +200,11 @@ async function build() {
     title(s, 'Abblendlicht: rund 50–60 m', 0.75, 1.3, 11, 1.2, { size: 48, name: '!!t' });
     scene(s, 'low');
     ped(s, 'ped_dark.png', 25, '!!p25', { fx: 'fade', c: true, dur: 900 });
-    chip(s, 'dunkel: 25 m', xAt(25) - 0.85, 5.9, 1.7, { size: 15, fill: '1A202B', line: '3A4455', name: '!!l25' }, { fx: 'rise' });
+    chip(s, 'dunkel: 25 m', xAt(25) - 1.0, 5.9, 2.0, { size: 18, fill: '1A202B', line: '3A4455', name: '!!l25' }, { fx: 'rise' });
     ped(s, 'ped_light.png', 40, '!!p40', { fx: 'fade', c: true, dur: 900 });
-    chip(s, 'hell: 40 m', xAt(40) - 0.75, 6.5, 1.5, { size: 15, fill: '1A202B', line: '3A4455', name: '!!l40' }, { fx: 'rise' });
+    chip(s, 'hell: 40 m', xAt(40) - 0.85, 6.55, 1.7, { size: 18, fill: '1A202B', line: '3A4455', name: '!!l40' }, { fx: 'rise' });
     ped(s, 'ped_refl.png', 140, '!!p140', { fx: 'fade', c: true, dur: 900 });
-    chip(s, 'Reflektoren: 140 m', 10.2, 5.9, 2.35, { size: 15, fill: '2A2A14', line: 'F7FF9A', color: 'F7FF9A', name: '!!l140' }, { fx: 'rise' });
+    chip(s, 'Reflektoren: 140 m', 9.75, 5.9, 2.8, { size: 18, fill: '2A2A14', line: 'F7FF9A', color: 'F7FF9A', name: '!!l140' }, { fx: 'rise' });
   }
 
   // ============ 9 · LICHTKEGEL: FERNLICHT (Morph) ============
@@ -250,7 +254,8 @@ async function build() {
 50 km/h: 15 + 25 = 40 m. Passt.
 80 km/h: 24 + 64 = 88 m. Deutlich zu lang.
 100 km/h: 30 + 100 = 130 m. Mehr als doppelt so weit wie dein Licht.
-🖱 Klick 4: Merksatz.` });
+🖱 Klick 4: Die rote Linie: Dunkel gekleidete Menschen siehst du erst bei 25 m. Selbst bei 50 km/h (40 m) wird es dann knapp. Zurück zu Folie 2!
+🖱 Klick 5: Merksatz.` });
     footer(s);
     kicker(s, 'Fahren auf Sicht · § 3 Abs. 1 StVO', 0.8, 0.9);
     title(s, 'Reicht dein Licht für deinen Anhalteweg?', 0.75, 1.3, 12, 1.0, { size: 40 });
@@ -259,7 +264,8 @@ async function build() {
     s.rect(bx, 2.75, 50 * sc, 3.05, { fill: 'FFE8B0', ft: 90 });
     s.rect(bx + 50 * sc, 2.75, 10 * sc, 3.05, { fill: 'FFE8B0', ft: 94 });
     s.lineS(lx, 2.6, lx, 5.95, { color: 'FFE8B0', lw: 2, dash: 'dash' });
-    s.text('Abblendlicht ≈ 50–60 m', { x: lx - 1.6, y: 2.25, w: 3.2, h: 0.35, size: 15, bold: true, color: 'FFE8B0', align: 'center' });
+    s.text('Abblendlicht ≈ 50–60 m', { x: lx - 1.9, y: 2.2, w: 3.8, h: 0.4, size: 18, bold: true, color: 'FFE8B0', align: 'center' });
+    const dx = bx + 25 * sc;
     const rows = [[50, 15, 25], [80, 24, 64], [100, 30, 100]];
     rows.forEach(([v, r, b], i) => {
       const y = 3.0 + i * 0.95;
@@ -268,16 +274,18 @@ async function build() {
       s.rect(bx + r * sc, y + 0.08, b * sc, 0.44, { fill: r + b > 60 ? COL.red : GREEN }, { fx: 'wipeR', a: true, dur: 700 });
       s.text(`${r + b} m`, { x: bx + (r + b) * sc + 0.12, y, w: 1.2, h: 0.6, size: 20, bold: true, color: r + b > 60 ? COL.red : GREEN, valign: 'middle' }, { fx: 'fade', dur: 300 });
     });
-    s.rect(bx, 6.12, 0.3, 0.2, { fill: COL.amber }); s.text('Reaktionsweg', { x: bx + 0.4, y: 6.05, w: 2, h: 0.35, size: 14, color: COL.muted });
-    s.rect(bx + 2.3, 6.12, 0.3, 0.2, { fill: GREEN }); s.rect(bx + 2.6, 6.12, 0.3, 0.2, { fill: COL.red }); s.text('Bremsweg (normal): passt / zu lang', { x: bx + 3.0, y: 6.05, w: 4, h: 0.35, size: 14, color: COL.muted });
-    s.text([run('Nachts gilt: '), run('Tempo runter, bis du im Licht anhalten kannst.', { color: COL.orange })], { x: 0.8, y: 6.55, w: 11.7, h: 0.55, font: SERIF, size: 24, italic: true }, { fx: 'rise', c: true });
+    s.lineS(dx, 2.7, dx, 5.95, { color: COL.red, lw: 2.5, dash: 'sysDash' }, { fx: 'wipeD', c: true, dur: 600 });
+    s.text('dunkel gekleidet: 25 m', { x: dx - 2.9, y: 2.2, w: 2.8, h: 0.4, size: 18, bold: true, color: COL.red, align: 'right' }, { fx: 'fade', dur: 400 });
+    s.rect(bx, 6.12, 0.3, 0.2, { fill: COL.amber }); s.text('Reaktionsweg', { x: bx + 0.4, y: 6.03, w: 2, h: 0.4, size: 16, color: COL.muted });
+    s.rect(bx + 2.3, 6.12, 0.3, 0.2, { fill: GREEN }); s.rect(bx + 2.6, 6.12, 0.3, 0.2, { fill: COL.red }); s.text('Bremsweg (normal): passt / zu lang', { x: bx + 3.0, y: 6.03, w: 5, h: 0.4, size: 16, color: COL.muted });
+    s.text([run('Nachts gilt: '), run('So langsam, dass du im Licht anhalten kannst.', { color: COL.orange })], { x: 0.8, y: 6.55, w: 11.7, h: 0.55, font: SERIF, size: 24, italic: true }, { fx: 'rise', c: true });
   }
 
   // ============ 12 · NEBEL-REGLER ============
   {
     const s = deck.add({ bg: 'sc_fog.jpg', transition: 'fade', notes: `
 ▶ Klare Nacht. Vor dir ein Auto, rechts und links die Leitpfosten.
-🖱 Klick 1: Nebel zieht auf. Behindert er die Sicht erheblich: Abblendlicht, auch am Tag. Dann sind auch Nebelscheinwerfer erlaubt (§ 17 Abs. 3 StVO).
+🖱 Klick 1: Nebel zieht auf. Behindert er die Sicht erheblich: Abblendlicht, auch am Tag. Dann sind auch Nebelscheinwerfer erlaubt (§ 17 Abs. 3 StVO). Kein Fernlicht: Der Nebel wirft das Licht zurück und blendet dich selbst.
 🖱 Klick 2: Dichter Nebel. Das Auto vor dir ist weg. Sicht unter 50 m: höchstens 50 km/h (§ 3 Abs. 1 StVO, gilt auch bei Schnee und Regen). Nur bei Nebel darf jetzt die Nebelschlussleuchte an.
 🖱 Klick 3: Trick: Leitpfosten stehen auf gerader Strecke alle 50 m (in Kurven dichter). Siehst du nur noch den nächsten, hast du etwa 50 m Sicht.
 Wichtig: Nebelschlussleuchte wieder aus, wenn die Sicht besser wird. Sie blendet den Hintermann.` });
@@ -287,17 +295,17 @@ Wichtig: Nebelschlussleuchte wieder aus, wenn die Sicht besser wird. Sie blendet
     const car = s.rrect(6.98, 3.62, 0.58, 0.3, { fill: '0E1116', rr: 0.08 });
     const l1 = s.img('glow_red.png', { x: 6.86, y: 3.6, w: 0.3, h: 0.3 }), l2 = s.img('glow_red.png', { x: 7.38, y: 3.6, w: 0.3, h: 0.3 });
     s.rrect(0.6, 0.55, 7.2, 1.35, { fill: '07080B', ft: 25, rr: 0.12 });
-    kicker(s, 'Nebel-Regler', 0.9, 0.72);
+    kicker(s, 'Nebel', 0.9, 0.72);
     title(s, 'Wie viel siehst du noch?', 0.85, 1.1, 6.8, 0.9, { size: 40 });
     
     const card = (x, col, t, d) => {
       const a = s.rrect(x, 5.95, 3.8, 1.05, { fill: '0B0D11', ft: 8, line: col, lw: 1.5, rr: 0.12 });
       const b = s.text(t, { x: x + 0.2, y: 6.02, w: 3.4, h: 0.4, size: 17, bold: true, color: col });
-      const c = s.text(d, { x: x + 0.2, y: 6.4, w: 3.4, h: 0.55, size: 14, color: COL.txt });
+      const c = s.text(d, { x: x + 0.2, y: 6.38, w: 3.5, h: 0.6, size: 16, color: COL.txt });
       return [a, b, c];
     };
     card(0.6, COL.muted, 'Klare Nacht', 'Abblendlicht, Fernlicht wenn frei');
-    const c2 = card(4.77, COL.amber, 'Starke Sichtbehinderung', 'Abblendlicht auch am Tag, Nebelscheinwerfer erlaubt');
+    const c2 = card(4.77, COL.amber, 'Starke Sichtbehinderung', 'Abblendlicht, kein Fernlicht! Nebelscheinwerfer erlaubt');
     const c3 = card(8.93, COL.red, 'Nebel, Sicht unter 50 m', 'Max. 50 km/h + Nebelschlussleuchte');
     const tip = chip(s, 'Trick: Leitpfosten alle 50 m (gerade Strecke)', 8.53, 0.75, 4.2, { size: 16, h: 0.6, fill: '07080B', ft: 15, line: COL.orange });
     // Reihenfolge der Animationen
@@ -316,16 +324,17 @@ Wichtig: Nebelschlussleuchte wieder aus, wenn die Sicht besser wird. Sie blendet
 ▶ Eine Zahl für alles: 50.
 🖱 3 Klicks: Sicht unter 50 Meter. Dann höchstens 50 km/h (auch bei Schnee oder Regen). Und erst dann darf die Nebelschlussleuchte an, aber nur bei Nebel, nicht bei Regen oder Schnee.
 ❓ Frage: Gilt das auch auf der Autobahn? ✅ Ja, überall.
+❓ Frage: Reicht 50 km/h bei 50 m Sicht? ✅ Knapp: 40 m Anhalteweg auf trockener Straße. Im Nebel ist die Straße meist nass, also langsamer.
 🖱 Klick 4: Merksatz.` });
     kicker(s, 'Merk dir eine Zahl', 0.8, 1.0, { w: 11.7, align: 'center' });
     const items = [['50', 'm', 'Sicht unter'], ['50', 'km/h', 'höchstens'], ['DARF AN', '', 'Nebelschlussleuchte']];
     items.forEach(([n, u, t], i) => {
       const x = 1.15 + i * 3.9;
       s.oval(x, 1.9, 3.1, 3.1, { fill: '12161E', line: i === 2 ? COL.red : COL.orange, lw: 4, glow: 12, glowColor: i === 2 ? COL.red : COL.orange, glowOp: 0.3 }, { fx: 'zoom', c: true, dur: 500 });
-      s.text(t, { x: x + 0.2, y: 2.35, w: 2.7, h: 0.5, size: 16, bold: true, color: COL.muted, align: 'center' }, { fx: 'fade', dur: 300 });
+      s.text(t, { x: x + 0.1, y: 2.3, w: 2.9, h: 0.5, size: 17, bold: true, color: COL.muted, align: 'center' }, { fx: 'fade', dur: 300 });
       s.text([run(n, { fontFace: SERIF, fontSize: n.length > 2 ? 44 : 80, bold: true }), run(u ? ' ' + u : '', { fontSize: 26, bold: true })], { x, y: 2.85, w: 3.1, h: 1.5, align: 'center', valign: 'middle', color: i === 2 ? COL.red : COL.txt }, { fx: 'fade', dur: 300 });
     });
-    s.text('Gilt überall. Nebelschlussleuchte nur bei Nebel.', { x: 0.8, y: 5.6, w: 11.7, h: 0.7, font: SERIF, size: 30, italic: true, color: COL.orange, align: 'center' }, { fx: 'rise', c: true });
+    s.text('Höchstens heißt: oft langsamer. Nebelschlussleuchte nur bei Nebel.', { x: 0.8, y: 5.6, w: 11.7, h: 0.7, font: SERIF, size: 28, italic: true, color: COL.orange, align: 'center' }, { fx: 'rise', c: true });
   }
 
   // ============ 14 · WILDWECHSEL ============
@@ -335,17 +344,19 @@ Wichtig: Nebelschlussleuchte wieder aus, wenn die Sicht besser wird. Sie blendet
 ❓ Frage: Ein Reh steht im Licht. Was tust du?
 🖱 3 Klicks: Abblenden (Fernlicht macht Tiere orientierungslos). Bremsen. Hupen.
 🖱 Klick 4: Stempel. Nicht ausweichen! Wer ausweicht, landet oft am Baum oder im Gegenverkehr. Lenkrad festhalten.
-🖱 Klick 5: Wild kommt selten allein. Mit Nachzüglern rechnen.` });
+🖱 Klick 5: Wild kommt selten allein. Mit Nachzüglern rechnen.
+🖱 Klick 6: Gekracht? Warnblinker, Unfallstelle sichern, Polizei 110 rufen. Tier nicht anfassen. Wildunfallbescheinigung für die Versicherung holen. Tier nie mitnehmen, das ist Wilderei.` });
     footer(s);
-    s.img('vz_142_10.png', { x: 0.9, y: 1.4, w: 3.6, h: 3.6 * 347 / 400 }, { fx: 'zoom', auto: true, dur: 600 });
+    s.img('vz_142_10.png', { x: 0.9, y: 1.2, w: 3.6, h: 3.6 * 347 / 400 }, { fx: 'zoom', auto: true, dur: 600 });
     kicker(s, 'Zeichen 142-10 · Wildwechsel', 5.2, 1.2);
     title(s, 'Reh im Licht. Was tust du?', 5.15, 1.6, 7.4, 1.0, { size: 40 });
     ['Abblenden', 'Bremsen', 'Hupen'].forEach((t, i) => {
       s.text(`${i + 1}`, { x: 5.2, y: 2.85 + i * 0.85, w: 0.6, h: 0.7, font: SERIF, size: 34, bold: true, color: COL.orange, valign: 'middle' }, { fx: 'flyR', c: true, dur: 600 });
       s.text(t, { x: 5.85, y: 2.85 + i * 0.85, w: 4, h: 0.7, font: SERIF, size: 32, bold: true, valign: 'middle' }, { fx: 'flyR', dur: 600 });
     });
-    s.text('NICHT AUSWEICHEN!', { x: 1.0, y: 5.45, w: 5.2, h: 0.95, size: 34, bold: true, cs: 2, color: 'FFFFFF', fill: COL.red, shape: pres.shapes.ROUNDED_RECTANGLE, rr: 0.2, align: 'center', valign: 'middle', rotate: -3, glow: 16, glowColor: COL.red, glowOp: 0.45 }, { fx: 'stamp', c: true, dur: 420 });
-    s.text('Wild kommt selten allein.\nMit Nachzüglern rechnen.', { x: 6.7, y: 5.45, w: 5.8, h: 1.0, size: 20, bold: true, color: COL.amber, valign: 'middle' }, { fx: 'rise', c: true });
+    s.text('NICHT AUSWEICHEN!', { x: 1.0, y: 5.2, w: 5.2, h: 0.95, size: 34, bold: true, cs: 2, color: 'FFFFFF', fill: COL.red, shape: pres.shapes.ROUNDED_RECTANGLE, rr: 0.2, align: 'center', valign: 'middle', rotate: -3, glow: 16, glowColor: COL.red, glowOp: 0.45 }, { fx: 'stamp', c: true, dur: 420 });
+    s.text('Wild kommt selten allein.\nMit Nachzüglern rechnen.', { x: 6.7, y: 5.2, w: 5.8, h: 1.0, size: 20, bold: true, color: COL.amber, valign: 'middle' }, { fx: 'rise', c: true });
+    s.text([run('Gekracht? ', { color: COL.red }), run('Warnblinker, absichern, Polizei 110. Tier nicht anfassen.')], { x: 1.0, y: 6.55, w: 11.5, h: 0.5, size: 20, bold: true }, { fx: 'rise', c: true });
   }
 
   // ============ 15 · QUIZ KAPITEL 1 ============
@@ -364,6 +375,7 @@ Wichtig: Nebelschlussleuchte wieder aus, wenn die Sicht besser wird. Sie blendet
   // ============ 16 · KAPITEL 2 ============
   {
     const s = deck.add({ bg: 'bg_black.jpg', transition: 'black', footer: false, notes: `
+⏱ ca. 35. Minute
 ▶ Kapitel 2. Stell dir vor, im Rückspiegel blinkt es blau und du hörst das Horn.
 ❓ Frage: Was ist euer erster Gedanke? Viele sagen: Panik. Genau das wollen wir heute abstellen.` });
     const g1 = s.img('glow_blue.png', { x: 8.4, y: 0.4, w: 3.8, h: 3.8 });
@@ -412,7 +424,7 @@ Wichtig: Nebelschlussleuchte wieder aus, wenn die Sicht besser wird. Sie blendet
     const box = (x, head, law, t, d, col) => {
       s.rrect(x, 2.6, 5.7, 2.7, { fill: COL.card, line: col, lw: 1.5, rr: 0.14 }, { fx: 'flyL', c: true, dur: 650 });
       s.text(head, { x: x + 0.35, y: 2.8, w: 3.6, h: 0.6, font: SERIF, size: 30, bold: true, color: col }, { fx: 'fade', dur: 300 });
-      s.text(law, { x: x + 3.9, y: 2.88, w: 1.55, h: 0.5, size: 15, bold: true, color: COL.muted, align: 'right' }, { fx: 'fade', dur: 300 });
+      s.text(law, { x: x + 3.7, y: 2.86, w: 1.75, h: 0.5, size: 17, bold: true, color: COL.muted, align: 'right' }, { fx: 'fade', dur: 300 });
       s.text(t, { x: x + 0.35, y: 3.5, w: 5.1, h: 0.6, size: 21, bold: true }, { fx: 'fade', dur: 300 });
       s.text(d, { x: x + 0.35, y: 4.1, w: 5.0, h: 1.0, size: 17, color: COL.muted }, { fx: 'fade', dur: 300 });
     };
@@ -465,7 +477,8 @@ Wichtig: Nebelschlussleuchte wieder aus, wenn die Sicht besser wird. Sie blendet
 ▶ Stau auf der Autobahn, drei Fahrstreifen. Noch ist kein Blaulicht zu sehen.
 ❓ Frage: Wann bildest du die Rettungsgasse? Erst wenn du das Horn hörst?
 🖱 Klick: ✅ Nein! Sobald der Verkehr nur noch Schritttempo fährt oder steht (§ 11 Abs. 2 StVO). Gilt auf Autobahnen und auf Außerortsstraßen mit mindestens zwei Fahrstreifen pro Richtung.
-➜ Weiter: Und wohin fährst du?` });
+❓ Frage vor dem Weiterklicken: Du bist ganz links, ich bin in der Mitte, er ist rechts. Wer fährt wohin? Mit den Händen zeigen lassen.
+➜ Weiterklicken: Die Autos weichen aus.` });
     
     kicker(s, 'Stau · § 11 Abs. 2 StVO', 0.8, 0.9, { color: BLUE, w: 5.8, name: '!!k' });
     title(s, 'Wann bildest du die Rettungsgasse?', 0.75, 1.3, 5.8, 1.9, { size: 40, name: '!!t' });
@@ -478,8 +491,10 @@ Wichtig: Nebelschlussleuchte wieder aus, wenn die Sicht besser wird. Sie blendet
   {
     const s = deck.add({ bg: 'sc_highway.jpg', transition: 'morph', dur: 1600, notes: `
 ▶ Die Autos weichen aus. Regel: Wer ganz links fährt, fährt nach links. Alle anderen fahren nach rechts. Die Gasse ist also zwischen der linken Spur und der daneben.
-❓ Frage: Wo ist die Gasse bei zwei Spuren? ✅ Genau in der Mitte.
-🖱 Klick: Der Rettungswagen fährt durch.
+❓ Frage: Wo ist die Gasse bei zwei Spuren? Erst raten lassen.
+🖱 Klick 1: Die Regel erscheint.
+🖱 Klick 2: Der Rettungswagen fährt durch.
+🖱 Klick 3: Bei zwei Spuren liegt die Gasse genau in der Mitte.
 Tipp: Nicht in die Gasse nachrücken und nicht hinterherfahren.` });
     
     kicker(s, 'Stau · § 11 Abs. 2 StVO', 0.8, 0.9, { color: BLUE, w: 5.8, name: '!!k' });
@@ -489,15 +504,25 @@ Tipp: Nicht in die Gasse nachrücken und nicht hinterherfahren.` });
     const rtw = s.img('rtw.png', { x: rx, y: ry, w: 1.056, h: 2.3 });
     const b1 = s.img('glow_blue.png', { x: rx - 0.1, y: ry + 0.05, w: 0.6, h: 0.6 });
     const b2 = s.img('glow_blue.png', { x: rx + 0.56, y: ry + 0.05, w: 0.6, h: 0.6 });
-    s.rrect(0.8, 2.6, 5.6, 1.35, { fill: COL.card, line: COL.line, rr: 0.14 });
-    s.text([run('Ganz links  ', { bold: true, color: BLUE }), run('→ nach links', { bold: true })], { x: 1.1, y: 2.7, w: 5.1, h: 0.55, size: 24, valign: 'middle' });
-    s.text([run('Alle anderen  ', { bold: true, color: COL.amber }), run('→ nach rechts', { bold: true })], { x: 1.1, y: 3.25, w: 5.1, h: 0.55, size: 24, valign: 'middle' });
-    s.text('Nicht nachrücken. Nicht hinterherfahren.', { x: 0.8, y: 4.25, w: 5.6, h: 0.5, size: 19, color: COL.muted });
+    const rb = [s.rrect(0.8, 2.6, 5.6, 1.35, { fill: COL.card, line: COL.line, rr: 0.14 }),
+      s.text([run('Ganz links  ', { bold: true, color: BLUE }), run('→ nach links', { bold: true })], { x: 1.1, y: 2.7, w: 5.1, h: 0.55, size: 24, valign: 'middle' }),
+      s.text([run('Alle anderen  ', { bold: true, color: COL.amber }), run('→ nach rechts', { bold: true })], { x: 1.1, y: 3.25, w: 5.1, h: 0.55, size: 24, valign: 'middle' }),
+      s.text('Nicht nachrücken. Nicht hinterherfahren.', { x: 0.8, y: 4.25, w: 5.6, h: 0.5, size: 19, color: COL.muted })];
+    rb.forEach((n, i) => s.reg(n, { fx: i === 0 ? 'rise' : 'fade', c: i === 0, dur: 500 }, 'sp'));
+    // Mini-Schema: bei 2 Spuren liegt die Gasse in der Mitte
+    const m = [];
+    m.push(s.text('BEI 2 SPUREN', { x: 0.8, y: 5.25, w: 2.4, h: 0.35, size: 13, bold: true, cs: 3, color: COL.muted }));
+    m.push(s.text('Gasse in der Mitte', { x: 0.8, y: 5.6, w: 2.6, h: 0.9, font: SERIF, size: 24, bold: true }));
+    m.push(s.rect(3.6, 5.0, 2.2, 2.0, { fill: '161C25', line: '3A4252' }));
+    m.push(s.lineS(4.7, 5.0, 4.7, 7.0, { color: 'D9DEE5', lw: 1.25, dash: 'dash' }));
+    for (const yy of [5.2, 6.1]) { m.push(s.rrect(3.72, yy, 0.42, 0.72, { fill: '8A9BB0', rr: 0.08 })); m.push(s.rrect(5.26, yy, 0.42, 0.72, { fill: '4F78A8', rr: 0.08 })); }
+    m.push(s.lineS(4.7, 6.9, 4.7, 5.15, { color: BLUE, lw: 3, endArrow: 'triangle' }));
     s.reg(b1, { fx: 'blink', auto: true, dur: 600 }, 'pic');
     s.reg(b2, { fx: 'blink', auto: true, dur: 600, d: 300 }, 'pic');
     const mv = { fx: 'move', path: 'M 0 0 L 0 -1.05 E', dur: 2600 };
     s.reg(rtw, { ...mv, c: true }, 'pic');
     s.reg(b1, { ...mv }, 'pic'); s.reg(b2, { ...mv }, 'pic');
+    m.forEach((n, i) => s.reg(n, { fx: 'fade', c: i === 0, dur: 500 }, 'sp'));
   }
 
   // ============ 22 · WAS ES KOSTET ============
@@ -536,11 +561,12 @@ Tipp: Nicht in die Gasse nachrücken und nicht hinterherfahren.` });
     title(s, 'Drei Fragen, drei Antworten', 0.75, 1.3, 12, 1.0, { size: 40 });
     quiz(s, [['Gelbes Blinklicht: Musst du Platz machen?', 'Nein. Es warnt nur vor einer Gefahr.'],
       ['Stau, 3 Spuren, du bist ganz links. Wohin?', 'Nach links. Alle anderen nach rechts.'],
-      ['Wann bildest du die Rettungsgasse?', 'Schon bei Schritttempo oder Stillstand.']], BLUE);
+      ['Rot an der Ampel, hinter dir Blau + Horn?', 'Ruhig bleiben. Nur vorrollen, wenn niemand gefährdet wird.']], BLUE);
   }
 
   // ============ 24 · KAPITEL 3 ============
   opener(deck, 'sc_portal.jpg', '03', 'Tunnel', 'Licht an, Abstand, im Notfall raus', `
+⏱ ca. 52. Minute
 ▶ Kapitel 3. Der Tunnel ist eng, dunkel und man kann nicht einfach ausweichen. Deshalb gelten besondere Regeln.
 ❓ Frage: Wer fährt ungern durch Tunnel? Kurz Hände heben lassen.`, COL.amber);
 
@@ -552,13 +578,13 @@ Tipp: Nicht in die Gasse nachrücken und nicht hinterherfahren.` });
 1. Abblendlicht an, auch wenn der Tunnel beleuchtet ist (Zeichen 327). Tagfahrlicht reicht nicht.
 2. Sonnenbrille ab. Die Augen brauchen Zeit, sich an das Dunkel zu gewöhnen.
 3. Radio an: Viele Tunnel senden Durchsagen über den Verkehrsfunk.
-4. Genug Abstand halten.
+4. Genug Abstand halten. Faustregel: halber Tacho in Metern, also bei 80 km/h 40 m.
 5. Wenden ist verboten (Zeichen 327). Nicht rückwärts fahren, nur im Notfall halten, am besten in der Pannenbucht.` });
     footer(s);
     kicker(s, 'Vor und im Tunnel', 0.8, 0.9, { color: COL.amber });
     title(s, 'Fünf Regeln, bevor es dunkel wird', 0.75, 1.3, 12, 1.0, { size: 40 });
     const r = [[I.bulb, 'Abblendlicht an', 'auch wenn es hell ist'], [I.glasses, 'Sonnenbrille ab', 'Augen brauchen Zeit'], [I.radio, 'Radio an', 'Durchsagen hören'],
-      [I.timer, 'Abstand halten', 'auch im Stau'], [I.undo, 'Nicht wenden', 'nicht rückwärts, nur im Notfall halten']];
+      [I.timer, 'Abstand halten', 'halber Tacho, 80 km/h = 40 m'], [I.undo, 'Nicht wenden', 'nicht rückwärts, nur im Notfall halten']];
     const cw = 2.2, gap = 0.175, x0 = 0.8;
     r.forEach(([ic, t, d], i) => {
       const x = x0 + i * (cw + gap);
@@ -566,7 +592,7 @@ Tipp: Nicht in die Gasse nachrücken und nicht hinterherfahren.` });
       s.oval(x + 0.6, 3.0, 1.0, 1.0, { fill: '2A2114' }, { fx: 'fade', dur: 300 });
       s.img(ic, { x: x + 0.82, y: 3.22, w: 0.56, h: 0.56 }, { fx: 'fade', dur: 300 });
       s.text(t, { x: x + 0.08, y: 4.25, w: cw - 0.16, h: 0.9, font: SERIF, size: 18, bold: true, align: 'center', valign: 'middle' }, { fx: 'fade', dur: 300 });
-      s.text(d, { x: x + 0.12, y: 5.15, w: cw - 0.24, h: 0.9, size: 16, color: COL.muted, align: 'center' }, { fx: 'fade', dur: 300 });
+      s.text(d, { x: x + 0.1, y: 5.1, w: cw - 0.2, h: 1.0, size: 17, color: COL.muted, align: 'center' }, { fx: 'fade', dur: 300 });
     });
   }
 
@@ -577,46 +603,46 @@ Tipp: Nicht in die Gasse nachrücken und nicht hinterherfahren.` });
 ❓ Frage: A, B oder C? Abstimmen lassen, Hände hoch.
 🖱 Klick 1: A ist falsch. Wenden ist im Tunnel verboten und blockiert die Feuerwehr.
 🖱 Klick 2: B ist falsch. Rauch ist die größte Gefahr, das Auto schützt dich nicht.
-🖱 Klick 3: C ist richtig. Warnblinker, rechts ran, Motor aus, Schlüssel stecken lassen (die Feuerwehr muss das Auto wegfahren können), Tür nicht abschließen. Dann zu Fuß zum nächsten Notausgang, weg vom Rauch. Notausgänge sind grün beleuchtet.` });
+🖱 Klick 3: C ist richtig. Darunter erscheint, wie genau: Warnblinker, rechts ran, Motor aus, Schlüssel stecken lassen (die Feuerwehr muss das Auto wegfahren können), Tür nicht abschließen. Dann zu Fuß zum nächsten Notausgang, weg vom Rauch. Notausgänge sind grün beleuchtet.` });
     const smoke = s.img('smoke.png', { x: 0, y: 0, w: W, h: H });
     s.reg(smoke, { fx: 'fade', auto: true, dur: 2500 }, 'pic');
     s.rrect(0.6, 0.55, 7.0, 1.35, { fill: '07080B', ft: 20, rr: 0.12 });
     kicker(s, 'Tunnel · Es brennt', 0.9, 0.72, { color: COL.red });
     title(s, 'Vorne raucht es. Was tust du?', 0.85, 1.1, 6.6, 0.9, { size: 34 });
     footer(s);
-    const opts = [['A', 'Wenden und zurück raus'], ['B', 'Sitzen bleiben, Fenster zu'], ['C', 'Rechts ran, Motor aus, Schlüssel stecken, zu Fuß zum Notausgang']];
-    const ox = [0.6, 4.6, 8.6], ow = [3.8, 3.8, 4.15];
+    const opts = [['A', 'Wenden und zurückfahren'], ['B', 'Im Auto warten'], ['C', 'Anhalten und zu Fuß raus']];
+    const ox = [0.6, 4.72, 8.84], ow = [3.9, 3.9, 3.9];
     opts.forEach(([l, t], i) => {
-      s.rrect(ox[i], 5.35, ow[i], 1.6, { fill: '0B0D11', ft: 10, line: COL.line, rr: 0.14 });
-      s.text(l, { x: ox[i] + 0.2, y: 5.45, w: 0.7, h: 0.7, font: SERIF, size: 36, bold: true, color: COL.amber });
-      s.text(t, { x: ox[i] + 0.9, y: 5.45, w: ow[i] - 1.2, h: 1.4, size: 17, bold: true, valign: 'middle' });
+      s.rrect(ox[i], 4.55, ow[i], 1.25, { fill: '0B0D11', ft: 10, line: COL.line, rr: 0.14 });
+      s.text(l, { x: ox[i] + 0.2, y: 4.8, w: 0.7, h: 0.75, font: SERIF, size: 36, bold: true, color: COL.amber });
+      s.text(t, { x: ox[i] + 0.85, y: 4.6, w: ow[i] - 1.05, h: 1.15, size: 20, bold: true, valign: 'middle' });
     });
-    s.img(I.x, { x: ox[0] + ow[0] - 0.75, y: 4.95, w: 0.8, h: 0.8 }, { fx: 'stamp', c: true, dur: 380 });
-    s.img(I.x, { x: ox[1] + ow[1] - 0.75, y: 4.95, w: 0.8, h: 0.8 }, { fx: 'stamp', c: true, dur: 380 });
-    s.img(I.check, { x: ox[2] + ow[2] - 0.75, y: 4.95, w: 0.8, h: 0.8 }, { fx: 'stamp', c: true, dur: 380 });
-    s.rrect(ox[2] - 0.05, 5.3, ow[2] + 0.1, 1.7, { line: GREEN, lw: 3, rr: 0.14, glow: 10, glowColor: GREEN, glowOp: 0.4 }, { fx: 'fade', dur: 400 });
+    s.img(I.x, { x: ox[0] + ow[0] - 0.75, y: 4.15, w: 0.8, h: 0.8 }, { fx: 'stamp', c: true, dur: 380 });
+    s.img(I.x, { x: ox[1] + ow[1] - 0.75, y: 4.15, w: 0.8, h: 0.8 }, { fx: 'stamp', c: true, dur: 380 });
+    s.img(I.check, { x: ox[2] + ow[2] - 0.75, y: 4.15, w: 0.8, h: 0.8 }, { fx: 'stamp', c: true, dur: 380 });
+    s.rrect(ox[2] - 0.05, 4.5, ow[2] + 0.1, 1.35, { line: GREEN, lw: 3, rr: 0.14, glow: 10, glowColor: GREEN, glowOp: 0.4 }, { fx: 'fade', dur: 400 });
+    s.rrect(0.6, 6.05, 12.14, 0.95, { fill: '0B1A12', ft: 5, line: GREEN, lw: 1.5, rr: 0.14 }, { fx: 'rise', a: true, dur: 600 });
+    s.text('Warnblinker · rechts ran · Motor aus · Schlüssel stecken · Tür offen · zum grünen Notausgang', { x: 0.85, y: 6.05, w: 11.7, h: 0.95, size: 20, bold: true, align: 'center', valign: 'middle' }, { fx: 'fade', dur: 400 });
   }
 
   // ============ 27 · STAU, PANNE, BRAND ============
   {
     const s = deck.add({ bg: 'bg_amber.jpg', transition: 'fade', notes: `
-▶ Drei Notfälle im Tunnel im Überblick.
+▶ Zwei weitere Notfälle im Tunnel. Brand hatten wir gerade.
 ▶ Das sind Empfehlungen von ADAC und Autobahn GmbH.
-🖱 Klick 1: Stau: Warnblinker, mindestens 5 m Abstand zum Vordermann, Rettungsgasse, bei längerem Stillstand Motor aus.
-🖱 Klick 2: Panne: Warnblinker, möglichst in die Pannenbucht, Warnweste, Hilfe über die Notrufstation rufen.
-🖱 Klick 3: Brand: Motor aus, Schlüssel stecken lassen, Tür nicht abschließen, weg vom Rauch zum grünen Notausgang.` });
+🖱 Klick 1: Stau: Warnblinker, mindestens 5 m Abstand zum Vordermann, bei längerem Stillstand Motor aus. Rettungsgasse gilt natürlich auch hier.
+🖱 Klick 2: Panne: Warnblinker, möglichst in die Pannenbucht, Warnweste, Hilfe über die Notrufstation rufen.` });
     footer(s);
     kicker(s, 'Notfall im Tunnel', 0.8, 0.9, { color: COL.amber });
-    title(s, 'Stau, Panne, Brand', 0.75, 1.3, 12, 1.0, { size: 44 });
-    const colz = [[I.alert, 'Stau', COL.amber, ['Warnblinker an', 'Mind. 5 m Abstand', 'Rettungsgasse bilden', 'Längerer Stillstand: Motor aus']],
-      [I.wrench, 'Panne', COL.orange, ['Warnblinker an', 'In die Pannenbucht', 'Warnweste an', 'Notrufstation nutzen']],
-      [I.flame, 'Brand', COL.red, ['Motor aus', 'Schlüssel stecken lassen', 'Tür nicht abschließen', 'Weg vom Rauch zum Notausgang']]];
+    title(s, 'Stau und Panne', 0.75, 1.3, 12, 1.0, { size: 44 });
+    const colz = [[I.alert, 'Stau', COL.amber, ['Warnblinker an', 'Mind. 5 m Abstand', 'Langer Stillstand: Motor aus']],
+      [I.wrench, 'Panne', COL.orange, ['Warnblinker, Warnweste', 'Ab in die Pannenbucht', 'Notrufstation nutzen']]];
     colz.forEach(([ic, t, col, li], i) => {
-      const x = 0.8 + i * 3.97;
-      s.rrect(x, 2.6, 3.75, 3.6, { fill: COL.card, line: col, lw: 1.5, rr: 0.14 }, { fx: 'rise', c: true, dur: 650 });
+      const x = 0.8 + i * 5.95;
+      s.rrect(x, 2.6, 5.75, 2.9, { fill: COL.card, line: col, lw: 1.5, rr: 0.14 }, { fx: 'rise', c: true, dur: 650 });
       s.img(ic, { x: x + 0.3, y: 2.85, w: 0.6, h: 0.6 }, { fx: 'zoom', dur: 400 });
-      s.text(t, { x: x + 1.05, y: 2.82, w: 2.5, h: 0.66, font: SERIF, size: 30, bold: true, color: col, valign: 'middle' }, { fx: 'fade', dur: 400 });
-      s.text(li.map((l, j) => ({ text: l, options: { bullet: true, breakLine: j < li.length - 1 } })), { x: x + 0.3, y: 3.75, w: 3.25, h: 2.9, size: 18, psa: 10 }, { fx: 'fade', dur: 400 });
+      s.text(t, { x: x + 1.05, y: 2.82, w: 4.4, h: 0.66, font: SERIF, size: 32, bold: true, color: col, valign: 'middle' }, { fx: 'fade', dur: 400 });
+      s.text(li.map((l, j) => ({ text: l, options: { bullet: true, breakLine: j < li.length - 1 } })), { x: x + 0.4, y: 3.75, w: 5.1, h: 2.2, size: 24, psa: 12 }, { fx: 'fade', dur: 400 });
     });
   }
 
@@ -643,9 +669,24 @@ Tipp: Nicht in die Gasse nachrücken und nicht hinterherfahren.` });
       ['Stau im Tunnel: Wie viel Abstand?', 'Mindestens 5 Meter, Warnblinker an.']], COL.amber);
   }
 
+  // ============ 32 · AUSBLICK ============
+  {
+    const s = deck.add({ bg: 'bg_red.jpg', transition: 'fade', notes: `
+▶ Zur Lektion 11 gehört laut Rahmenplan noch mehr. Das machen wir in einer eigenen Einheit.
+🖱 Klick: Die Themen erscheinen: Verhalten nach einem Unfall, Bußgeld und Fahrverbot, Punkte in Flensburg, Entzug der Fahrerlaubnis, Versicherung und Regress, MPU.
+Probezeit und Seminare kommen gleich nach der Pause in Lektion 12.` });
+    footer(s);
+    kicker(s, 'Das kommt noch', 0.8, 0.9, { color: COL.red });
+    title(s, 'Das gehört auch zu Lektion 11', 0.75, 1.3, 12, 1.0, { size: 44 });
+    const t = ['Nach dem Unfall', 'Bußgeld, Fahrverbot, Strafe', 'Punkte in Flensburg', 'Entzug der Fahrerlaubnis', 'Versicherung und Regress', 'MPU'];
+    t.forEach((x, i) => chip(s, x, 0.8 + (i % 3) * 3.97, 2.9 + Math.floor(i / 3) * 1.1, 3.75, { size: 19, h: 0.8, fill: COL.card, line: COL.line }, { fx: 'rise', c: i === 0, d: i * 120 }));
+    s.text('Probezeit und Seminare: gleich in Lektion 12.', { x: 0.8, y: 5.4, w: 11, h: 0.5, size: 19, italic: true, color: COL.muted }, { fx: 'fade', a: true });
+  }
+
   // ============ 30 · GRUPPENARBEIT ============
   {
     const s = deck.add({ bg: 'bg_orange.jpg', transition: 'fade', notes: `
+⏱ ca. 65. Minute (15 Min. Arbeit + 5 Min. Vorstellen)
 ▶ Drei Gruppen, drei Themen. Jede Gruppe bekommt ein Arbeitsblatt.
 🖱 Klick 1–3: Die drei Gruppen.
 🖱 Klick 4: 15 Minuten. Danach stellt jede Gruppe ihr Plakat in 1 Minute vor. Nur zwei Personen kommen nach vorne.` });
@@ -667,6 +708,7 @@ Tipp: Nicht in die Gasse nachrücken und nicht hinterherfahren.` });
   // ============ 31 · MERKSÄTZE ============
   {
     const s = deck.add({ bg: 'bg_center.jpg', transition: 'fade', notes: `
+⏱ ca. 86. Minute
 ▶ Drei Sätze, die ihr mitnehmt. Gemeinsam laut vorlesen lassen.
 🖱 3 Klicks.` });
     footer(s);
@@ -681,27 +723,18 @@ Tipp: Nicht in die Gasse nachrücken und nicht hinterherfahren.` });
     });
   }
 
-  // ============ 32 · AUSBLICK ============
-  {
-    const s = deck.add({ bg: 'bg_red.jpg', transition: 'fade', notes: `
-▶ Zur Lektion 11 gehört laut Rahmenplan noch mehr. Das machen wir in einer eigenen Einheit.
-🖱 Klick: Die Themen erscheinen: Verhalten nach einem Unfall, Bußgeld und Fahrverbot, Punkte in Flensburg, Entzug der Fahrerlaubnis, Versicherung und Regress, MPU.
-Probezeit und Seminare kennt ihr aus Lektion 12.` });
-    footer(s);
-    kicker(s, 'Das kommt noch', 0.8, 0.9, { color: COL.red });
-    title(s, 'Das gehört auch zu Lektion 11', 0.75, 1.3, 12, 1.0, { size: 44 });
-    const t = ['Nach dem Unfall', 'Bußgeld, Fahrverbot, Strafe', 'Punkte in Flensburg', 'Entzug der Fahrerlaubnis', 'Versicherung und Regress', 'MPU'];
-    t.forEach((x, i) => chip(s, x, 0.8 + (i % 3) * 3.97, 2.9 + Math.floor(i / 3) * 1.1, 3.75, { size: 19, h: 0.8, fill: COL.card, line: COL.line }, { fx: 'rise', c: i === 0, d: i * 120 }));
-    s.text('Probezeit und Seminare: siehe Lektion 12.', { x: 0.8, y: 5.4, w: 11, h: 0.5, size: 19, italic: true, color: COL.muted }, { fx: 'fade', a: true });
-  }
-
   // ============ 33 · PAUSE ============
   {
     const s = deck.add({ bg: 'bg_bokeh.jpg', transition: 'black', footer: false, notes: `
-▶ Halbzeit. Pause. Danach geht es weiter mit Lektion 12.` });
-    s.img(I.coffee, { x: 6.07, y: 1.5, w: 1.2, h: 1.2 }, { fx: 'zoom', auto: true, dur: 600 });
-    title(s, 'Pause', 0.8, 2.9, 11.7, 1.6, { size: 110, align: 'center' }, { fx: 'fade', auto: true, a: true, dur: 1000 });
-    s.text('Danach: Lektion 12', { x: 0.8, y: 4.7, w: 11.7, h: 0.7, size: 26, color: COL.muted, align: 'center' }, { fx: 'fade', auto: true, a: true });
+⏱ ca. 90. Minute. Ende Lektion 11.
+▶ Pause! Die Frage für nach der Pause schon mal mitgeben. Nicht auflösen, sie wird in Lektion 12 aufgelöst.
+➜ Nach der Pause: weiter mit Lektion 12.` });
+    s.img(I.coffee, { x: 6.07, y: 0.9, w: 1.2, h: 1.2 }, { fx: 'zoom', auto: true, dur: 600 });
+    title(s, 'Pause', 0.8, 2.15, 11.7, 1.6, { size: 110, align: 'center' }, { fx: 'fade', auto: true, a: true, dur: 1000 });
+    s.text('Gleich geht es weiter mit Lektion 12: Lebenslanges Lernen', { x: 0.8, y: 3.85, w: 11.7, h: 0.6, size: 24, color: COL.muted, align: 'center' }, { fx: 'fade', auto: true, a: true });
+    s.rrect(2.4, 4.9, 8.53, 1.5, { fill: '07080B', ft: 30, line: COL.orange, lw: 1.25, rr: 0.16 }, { fx: 'rise', c: true, dur: 700 });
+    s.text('DENK MAL DRÜBER NACH', { x: 2.4, y: 5.05, w: 8.53, h: 0.35, size: 13, bold: true, cs: 5, color: COL.orange, align: 'center' }, { fx: 'fade', dur: 400 });
+    s.text('Wann hört man auf, Auto fahren zu lernen?', { x: 2.4, y: 5.45, w: 8.53, h: 0.8, font: SERIF, size: 32, italic: true, align: 'center', valign: 'middle' }, { fx: 'fade', dur: 400 });
   }
 
   const out = path.join(__dirname, 'out', 'Lektion11_Besondere_Situationen.pptx');
