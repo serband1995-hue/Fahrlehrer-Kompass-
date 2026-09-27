@@ -371,59 +371,7 @@ Was tun? Blinken, rechts ran, anhalten, Anweisungen befolgen. Führerschein und 
     src(s, '§ 36 Abs. 5 StVO', { y: 6.85 });
   }
 
-  // ================= AKT 10 · GRUPPENARBEIT =================
-  {
-    const s = add({ bg: 'bg_center.jpg', transition: 'zoom', notes: `
-Gruppenarbeit. Arbeitsblätter austeilen, drei Gruppen bilden.
-Gruppe 1 · Abknickende Vorfahrt · Gruppe 2 · Kreisverkehr · Gruppe 3 · Ampel, Grünpfeil und Polizei.
-🖱 Klick 1: Der Auftrag. 🖱 Klick 2: Timer 15 Minuten.
-Auftrag: Zeichnet eure Kreuzung groß von oben, stellt 3 Autos auf (Klebezettel) und baut ein Rätsel „Wer fährt zuerst?“. Dazu 3 Regeln und ein Merksatz. Bei der Vorstellung rät zuerst die Klasse, dann löst ihr mit den Klebezetteln auf.
-Material: Plakat, dicke Stifte in Grün, Rot, Schwarz, Klebezettel, Lineal.
-Du gehst herum. Hängt eine Gruppe, stell eine Frage von ihrem Blatt, gib keine Lösung.` });
-    footer(s);
-    kicker(s, 'Gruppenarbeit', 0.8, 0.9);
-    title(s, 'Ihr baut das Rätsel.', 0.75, 1.3, 12, 1.0, { size: 46 });
-    const G = [['1', 'Abknickende Vorfahrt', 'Zusatzzeichen, Blinken, rechts vor links auf den Nebenstraßen'], ['2', 'Kreisverkehr', 'Rein ohne, raus mit, Fußgänger, Mittelinsel'], ['3', 'Ampel, Grünpfeil, Polizei', 'Grünpfeil-Test, Stromausfall, Handzeichen']];
-    G.forEach(([n, t, d], i) => {
-      const x = 0.8 + i * 3.97;
-      s.rrect(x, 2.5, 3.75, 2.3, { fill: COL.card, line: '2A3342', rr: 0.14, shadow: true }, { fx: 'rise', auto: true, a: i > 0, dur: 550 });
-      s.text('Gruppe ' + n, { x: x + 0.3, y: 2.7, w: 3.2, h: 0.4, size: 15, bold: true, cs: 3, color: COL.orange }, { fx: 'fade', auto: true, dur: 300 });
-      s.text(t, { x: x + 0.3, y: 3.1, w: 3.2, h: 0.9, font: SERIF, size: 23, bold: true }, { fx: 'fade', auto: true, dur: 300 });
-      s.text(d, { x: x + 0.3, y: 3.95, w: 3.2, h: 0.8, size: 16, color: COL.muted }, { fx: 'fade', auto: true, dur: 300 });
-    });
-    s.text([run('Auftrag: '), run('Kreuzung von oben, 3 Autos, eure Frage „Wer fährt zuerst?“', { color: COL.orange, bold: true }), run(' Dazu 3 Regeln und 1 Merksatz.')], { x: 0.8, y: 5.05, w: 8.4, h: 0.9, size: 20 }, { fx: 'fade', c: true });
-    s.img(I.timer, { x: 9.6, y: 5.25, w: 0.8, h: 0.8 }, { fx: 'zoom', c: true, dur: 400 });
-    s.text('15 MIN', { x: 10.5, y: 5.05, w: 2.2, h: 1.1, font: SERIF, size: 50, bold: true, color: COL.orange, glow: 12, glowOp: 0.4 }, { fx: 'stamp', a: true, dur: 420 });
-    body(s, 'Dann 2 Minuten pro Gruppe: Die Klasse rät zuerst, ihr löst auf.', 0.8, 6.35, 11.7, 0.45, { size: 17, italic: true }, { fx: 'fade', a: true });
-  }
-  {
-    const s = add({ bg: 'bg_center.jpg', transition: 'fade', notes: `
-So baut ihr das Plakat. Einmal kurz durchgehen, dann starten.
-🖱 4 Klicks, je ein Schritt.
-Tipp: Klebezettel als Autos kann man bei der Vorstellung verschieben. So „fahren“ die Autos live.
-Farbcode für alle gleich: Grün = fährt zuerst, Rot = muss warten, Schwarz = Straße und Schilder.` });
-    footer(s);
-    kicker(s, 'So geht euer Plakat', 0.8, 0.9);
-    title(s, '4 Schritte zum Plakat', 0.75, 1.3, 6.3, 1.0, { size: 42 });
-    const st = [[I.ruler, 'Kreuzung groß zeichnen', 'Von oben, mit Lineal. Schilder dazu.'], [I.note, 'Autos als Klebezettel', 'A, B, C drauf. So könnt ihr sie verschieben.'], [I.palette, 'Pfeile in Farbe', 'Grün fährt zuerst, Rot wartet. 1, 2, 3 nummerieren.'], [I.pres, 'Merksatz unten', 'Höchstens 8 Wörter. Groß.']];
-    st.forEach(([ic, t, d], i) => {
-      const y = 2.5 + i * 1.08;
-      s.oval(0.8, y, 0.8, 0.8, { fill: '241A12', line: COL.orange, lw: 2 }, { fx: 'zoom', c: true, dur: 350 });
-      s.img(ic, { x: 0.98, y: y + 0.18, w: 0.44, h: 0.44 }, { fx: 'fade', dur: 250 });
-      s.text(t, { x: 1.8, y: y - 0.02, w: 5.0, h: 0.45, size: 21, bold: true }, { fx: 'fade', dur: 250 });
-      s.text(d, { x: 1.8, y: y + 0.42, w: 5.0, h: 0.42, size: 16, color: COL.muted }, { fx: 'fade', dur: 250 });
-    });
-    // Plakat-Skizze
-    const px = 7.45, py = 1.35, pw = 5.1, ph = 5.35;
-    s.rrect(px, py, pw, ph, { fill: 'F4EFE6', rr: 0.05, shadow: true }, { fx: 'rise', auto: true, dur: 800 });
-    s.text('WER FÄHRT ZUERST?', { x: px + 0.2, y: py + 0.15, w: pw - 0.4, h: 0.5, size: 20, bold: true, color: '1F2A3A', align: 'center' }, { fx: 'fade', auto: true });
-    s.rect(px + 2.1, py + 0.8, 1.0, 3.3, { fill: '9AA3AE' }, { fx: 'fade', auto: true }); s.rect(px + 0.4, py + 1.95, 4.4, 1.0, { fill: '9AA3AE' }, { fx: 'fade', auto: true });
-    [['A', px + 2.62, py + 3.45, 'FFE066'], ['B', px + 3.9, py + 2.0, 'A5D8FF'], ['C', px + 2.12, py + 0.95, 'FFB3C1']].forEach(([t, x, y, c]) => s.text(t, { x, y, w: 0.42, h: 0.42, size: 16, bold: true, color: '1F2A3A', fill: c, align: 'center', valign: 'middle', rotate: -4 }, { fx: 'zoom', auto: true, a: true, dur: 300 }));
-    s.lineS(px + 4.1, py + 2.25, px + 2.4, py + 2.25, { color: '2E9E5B', lw: 3, endArrow: 'triangle' }, { fx: 'wipeL', auto: true, a: true });
-    s.text('Regeln: 1 · 2 · 3', { x: px + 0.3, y: py + 4.25, w: pw - 0.6, h: 0.4, size: 15, color: '3A4455' }, { fx: 'fade', auto: true });
-    s.text('MERKSATZ: ______________', { x: px + 0.3, y: py + 4.75, w: pw - 0.6, h: 0.45, size: 16, bold: true, color: 'C0501A' }, { fx: 'fade', auto: true });
-  }
-
+  // Gruppenarbeit: am Abend 5+6 in Lektion 6 (siehe build6.js)
   // ================= AKT 11 · FINALE =================
   {
     const s = add({ bg: 'sc_x.jpg', transition: 'fade', notes: `
@@ -475,11 +423,12 @@ Schlusssatz. Langsam, dann Pause.
   }
   {
     const s = add({ bg: 'bg_bokeh.jpg', transition: 'fade', footer: false, notes: `
-Pause nach 90 Minuten. Danach geht es weiter mit Lektion 6 (Verkehrszeichen und Verkehrseinrichtungen).
-Plakate hängen lassen, sie passen gut zu Lektion 6.` });
-    s.img(I.coffee, { x: W / 2 - 0.6, y: 1.5, w: 1.2, h: 1.2 }, { fx: 'zoom', auto: true, dur: 700 });
-    title(s, 'Pause', 0.8, 2.85, 11.7, 1.4, { size: 96, align: 'center' }, { fx: 'rise', auto: true, a: true, dur: 900 });
-    s.text('15 Minuten', { x: 0.8, y: 4.3, w: 11.7, h: 0.7, font: SERIF, size: 36, italic: true, color: COL.orange, align: 'center' }, { fx: 'fade', auto: true, a: true });
-    s.text('Danach: Lektion 6 · Verkehrszeichen und Verkehrseinrichtungen', { x: 0.8, y: 5.4, w: 11.7, h: 0.5, size: 20, color: COL.muted, align: 'center' }, { fx: 'fade', auto: true, a: true });
+Pause nach 90 Minuten. Fenster auf, kurz bewegen, Handys dürfen raus.
+Tipp: Die Pausenfolie stehen lassen, dann sehen alle, wann es weitergeht.
+Nach der Pause geht es direkt weiter mit Lektion 6 (Verkehrszeichen, Verkehrseinrichtungen und Bahnübergänge).` });
+    s.img(I.coffee, { x: W / 2 - 0.6, y: 1.3, w: 1.2, h: 1.2 }, { fx: 'zoom', auto: true, dur: 700 });
+    title(s, '15 Minuten Pause', 0.8, 2.65, 11.7, 1.4, { size: 80, align: 'center' }, { fx: 'rise', auto: true, a: true, dur: 900 });
+    s.text('Es geht gleich weiter.', { x: 0.8, y: 4.15, w: 11.7, h: 0.8, font: SERIF, size: 40, italic: true, color: COL.orange, align: 'center', glow: 10, glowOp: 0.3 }, { fx: 'fade', auto: true, a: true, dur: 900 });
+    s.text('Danach: Lektion 6 · Verkehrszeichen, Verkehrseinrichtungen und Bahnübergänge', { x: 0.8, y: 5.35, w: 11.7, h: 0.5, size: 20, color: COL.muted, align: 'center' }, { fx: 'fade', auto: true, a: true });
   }
 };
