@@ -28,6 +28,17 @@ export const CONFIG = {
     datenschutz: "https://fahrschule-boost.de/datenschutz/"
   },
 
+  // Das große Kinobild im Hintergrund.
+  // TODO: Bild in voller Größe ohne Schrift (Querformat) und optional eine Hochformat-Version fürs Handy.
+  // scheinwerfer: Position der Scheinwerfer im Bild (0 = links/oben, 1 = rechts/unten) für das Aufblenden.
+  kino: {
+    bild: "img/hero.jpg",
+    bildHandy: "",
+    scheinwerfer: [[0.67, 0.617], [0.445, 0.612]],
+    strasse: [0.8, 1.0], // Bereich (von oben nach unten), in dem die Lichtstreifen über die Straße ziehen
+    regen: true
+  },
+
   // TODO: eigene Fotos in den Ordner serband/img legen und hier eintragen,
   // z. B. "img/serband-portrait.jpg". Leer = eleganter Platzhalter.
   fotos: {

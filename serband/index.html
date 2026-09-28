@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>Serband · Fahrlehrer Offenbach</title>
 <meta name="description" content="Fahrstunden in Offenbach am Main – Schaltung oder Automatik. In Ruhe lernen und gut vorbereitet in die Prüfung.">
-<meta name="theme-color" content="#050d09">
+<meta name="theme-color" content="#04080b">
 <meta property="og:type" content="website">
 <meta property="og:title" content="Serband · Fahrlehrer in Offenbach">
 <meta property="og:description" content="Fahrstunden buchen – Schaltung oder Automatik. In Ruhe lernen, gut vorbereitet in die Prüfung.">
@@ -17,12 +17,7 @@
 <link rel="preload" href="fonts/archivo.woff2" as="font" type="font/woff2" crossorigin>
 <link rel="preload" href="fonts/inter.woff2" as="font" type="font/woff2" crossorigin>
 <link rel="stylesheet" href="css/style.css">
-<script type="importmap">
-{ "imports": {
-    "three": "./vendor/three/three.module.min.js",
-    "three/addons/": "./vendor/three/addons/"
-} }
-</script>
+<link rel="preload" href="img/hero.jpg" as="image">
 </head>
 <body class="is-loading">
 <svg width="0" height="0" style="position:absolute" aria-hidden="true"><symbol id="logo" viewBox="0 0 120 120"><circle class="mk-ring" cx="60" cy="60" r="50" pathLength="1"/><circle class="mk-ring mk-ring--in" cx="60" cy="60" r="43" pathLength="1"/><path class="mk-pts" d="M60 2l4.5 16h-9zM60 118l4.5-16h-9zM2 60l16-4.5v9zM118 60l-16-4.5v9z"/><path class="mk-shield" pathLength="1" d="M33 46V41c11-1 20-5 27-14 7 9 16 13 27 14v5 16c0 17-11 28-27 36-16-8-27-19-27-36z"/><circle class="mk-wheel" cx="60" cy="46" r="6.5" pathLength="1"/><path class="mk-wheel" pathLength="1" d="M53.5 46h13M60 46v6.5"/><path class="mk-road" pathLength="1" d="M74 64c-12 0-24 3-24 10s14 8 14 14-6 7-8 9"/><path class="mk-line" d="M74 64c-12 0-24 3-24 10s14 8 14 14-6 7-8 9"/></symbol></svg>
@@ -46,7 +41,15 @@
   <div class="intro__curtain intro__curtain--bottom"></div>
 </div>
 
-<canvas id="world" aria-hidden="true"></canvas>
+<div class="cinema" aria-hidden="true">
+  <div class="cinema__stage" id="stage">
+    <img class="cinema__img" id="stageImg" src="img/hero.jpg" alt="">
+    <div class="cinema__flares" id="flares"></div>
+  </div>
+  <canvas class="cinema__fx" id="fx"></canvas>
+  <div class="cinema__shade" id="shade"></div>
+</div>
+<div class="bars" aria-hidden="true"><i></i><i></i></div>
 <div class="vignette" aria-hidden="true"></div>
 <div class="grain" aria-hidden="true"></div>
 <div class="cursor" aria-hidden="true"><span></span></div>
@@ -110,13 +113,6 @@
         <a class="btn magnetic" href="#buchen"><span>Fahrstunde buchen</span><i class="arrow"></i></a>
         <a class="btn btn--ghost magnetic" href="#akademie"><span>Zur Fahr-Akademie</span></a>
       </div>
-    </div>
-    <div class="paint reveal-up" role="group" aria-label="Wagenfarbe wählen">
-      <span class="paint__label">Wähl deine Farbe</span>
-      <button type="button" class="paint__dot is-active" data-paint="perlweiss" style="--c:#e8ece9" aria-label="Perlweiß"></button>
-      <button type="button" class="paint__dot" data-paint="smaragd" style="--c:#0f5a3d" aria-label="Smaragd"></button>
-      <button type="button" class="paint__dot" data-paint="nachtschwarz" style="--c:#15191a" aria-label="Nachtschwarz"></button>
-      <button type="button" class="paint__dot" data-paint="champagner" style="--c:#c9a560" aria-label="Champagner"></button>
     </div>
     <a class="scroll-cue" href="#ich"><span>Scrollen &amp; losfahren</span><i></i></a>
   </section>
