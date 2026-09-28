@@ -29,13 +29,14 @@ export const CONFIG = {
   },
 
   // Das große Kinobild im Hintergrund.
-  // TODO: Bild in voller Größe ohne Schrift (Querformat) und optional eine Hochformat-Version fürs Handy.
   // scheinwerfer: Position der Scheinwerfer im Bild (0 = links/oben, 1 = rechts/unten) für das Aufblenden.
   kino: {
     bild: "img/hero.jpg",
-    bildHandy: "",
-    scheinwerfer: [[0.67, 0.617], [0.445, 0.612]],
-    strasse: [0.8, 1.0], // Bereich (von oben nach unten), in dem die Lichtstreifen über die Straße ziehen
+    bildHandy: "img/hero-mobile.jpg",
+    scheinwerfer: [[0.441, 0.617], [0.67, 0.617]],
+    scheinwerferHandy: [[0.24, 0.72], [0.537, 0.72]],
+    strasse: [0.78, 1.0], // Bereich (von oben nach unten), in dem die Lichtstreifen über die Straße ziehen
+    strasseHandy: [0.8, 1.0],
     regen: true
   },
 
