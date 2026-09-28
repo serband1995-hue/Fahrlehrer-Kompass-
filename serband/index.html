@@ -17,7 +17,8 @@
 <link rel="preload" href="fonts/archivo.woff2" as="font" type="font/woff2" crossorigin>
 <link rel="preload" href="fonts/inter.woff2" as="font" type="font/woff2" crossorigin>
 <link rel="stylesheet" href="css/style.css">
-<link rel="preload" href="img/hero.jpg" as="image">
+<link rel="preload" href="img/hero.jpg" as="image" media="(min-aspect-ratio: 9/10)">
+<link rel="preload" href="img/hero-mobile.jpg" as="image" media="(max-aspect-ratio: 9/10)">
 </head>
 <body class="is-loading">
 <svg width="0" height="0" style="position:absolute" aria-hidden="true"><symbol id="logo" viewBox="0 0 120 120"><circle class="mk-ring" cx="60" cy="60" r="50" pathLength="1"/><circle class="mk-ring mk-ring--in" cx="60" cy="60" r="43" pathLength="1"/><path class="mk-pts" d="M60 2l4.5 16h-9zM60 118l4.5-16h-9zM2 60l16-4.5v9zM118 60l-16-4.5v9z"/><path class="mk-shield" pathLength="1" d="M33 46V41c11-1 20-5 27-14 7 9 16 13 27 14v5 16c0 17-11 28-27 36-16-8-27-19-27-36z"/><circle class="mk-wheel" cx="60" cy="46" r="6.5" pathLength="1"/><path class="mk-wheel" pathLength="1" d="M53.5 46h13M60 46v6.5"/><path class="mk-road" pathLength="1" d="M74 64c-12 0-24 3-24 10s14 8 14 14-6 7-8 9"/><path class="mk-line" d="M74 64c-12 0-24 3-24 10s14 8 14 14-6 7-8 9"/></symbol></svg>
@@ -43,7 +44,7 @@
 
 <div class="cinema" aria-hidden="true">
   <div class="cinema__stage" id="stage">
-    <img class="cinema__img" id="stageImg" src="img/hero.jpg" alt="">
+    <img class="cinema__img" id="stageImg" alt="">
     <div class="cinema__flares" id="flares"></div>
   </div>
   <canvas class="cinema__fx" id="fx"></canvas>

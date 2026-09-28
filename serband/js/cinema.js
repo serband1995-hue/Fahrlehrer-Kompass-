@@ -26,6 +26,21 @@ const SHOTS = [
   { s: 1.04, u: 0.5, v: 0.5, px: 0.5, py: 0.5, dark: 0.15, fx: 1, m: { u: 0.7, v: 0.6, py: 0.3 } } // Ziel
 ];
 
+// Eigene Kamerafahrten für das Hochformat-Bild
+const SHOTS_PORTRAIT = [
+  { s: 1.0, u: 0.4, v: 0.72, px: 0.5, py: 0.72, dark: 0, fx: 1 },
+  { s: 1.2, u: 0.6, v: 0.45, px: 0.5, py: 0.4, dark: 0.5, fx: 0.2 },
+  { s: 1.4, u: 0.5, v: 0.9, px: 0.5, py: 0.5, dark: 0.55, fx: 0.9 },
+  { s: 1.1, u: 0.5, v: 0.3, px: 0.5, py: 0.5, dark: 0.6, fx: 0.3 },
+  { s: 1.4, u: 0.55, v: 0.55, px: 0.5, py: 0.45, dark: 0.55, fx: 0.2 },
+  { s: 1.8, u: 0.54, v: 0.72, px: 0.5, py: 0.35, dark: 0.4, fx: 0.7 },
+  { s: 1.6, u: 0.63, v: 0.64, px: 0.5, py: 0.35, dark: 0.5, fx: 0.3 },
+  { s: 1.3, u: 0.45, v: 0.75, px: 0.5, py: 0.45, dark: 0.5, fx: 0.8 },
+  { s: 1.7, u: 0.92, v: 0.5, px: 0.6, py: 0.4, dark: 0.5, fx: 0.2 },
+  { s: 1.1, u: 0.5, v: 0.25, px: 0.5, py: 0.5, dark: 0.7, fx: 0.3 },
+  { s: 1.0, u: 0.4, v: 0.72, px: 0.5, py: 0.72, dark: 0.25, fx: 1 }
+];
+
 export async function createCinema({ reducedMotion = false } = {}) {
   const K = CONFIG.kino;
   const stage = document.getElementById("stage");
@@ -36,17 +51,25 @@ export async function createCinema({ reducedMotion = false } = {}) {
   const ctx = fx.getContext("2d");
 
   const portraitMQ = matchMedia("(max-aspect-ratio: 9/10)");
-  if (K.bildHandy && portraitMQ.matches) img.src = K.bildHandy;
-  else img.src = K.bild;
-  try { await img.decode(); } catch (e) {}
-
-  const flares = K.scheinwerfer.map(([x, y]) => {
-    const i = document.createElement("i");
-    i.style.left = x * 100 + "%";
-    i.style.top = y * 100 + "%";
-    flareBox.append(i);
-    return i;
-  });
+  let usePortrait = false;
+  let flares = [];
+  async function chooseImage() {
+    usePortrait = !!K.bildHandy && portraitMQ.matches;
+    const src = usePortrait ? K.bildHandy : K.bild;
+    if (!img.src.endsWith(src)) {
+      img.src = src;
+      try { await img.decode(); } catch (e) {}
+    }
+    flareBox.innerHTML = "";
+    flares = (usePortrait ? K.scheinwerferHandy : K.scheinwerfer).map(([x, y]) => {
+      const i = document.createElement("i");
+      i.style.left = x * 100 + "%";
+      i.style.top = y * 100 + "%";
+      flareBox.append(i);
+      return i;
+    });
+  }
+  await chooseImage();
 
   const state = { target: 0, p: 0, speedKmh: 0, lights: 0, lightsTarget: 0, mx: 0, my: 0, smx: 0, smy: 0, running: true, fxAmt: 1 };
   let W = 0, H = 0, iw = 1, ih = 1, cover = 1, dpr = 1;
@@ -72,8 +95,9 @@ export async function createCinema({ reducedMotion = false } = {}) {
     const i = Math.min(n - 1, Math.floor(f));
     const t = smooth(f - i);
     const portrait = W / H < 0.9;
-    const get = (sh) => (portrait && sh.m ? { ...sh, ...sh.m } : sh);
-    const a = get(SHOTS[i]), b = get(SHOTS[i + 1]);
+    const list = usePortrait ? SHOTS_PORTRAIT : SHOTS;
+    const get = (sh) => (portrait && !usePortrait && sh.m ? { ...sh, ...sh.m } : sh);
+    const a = get(list[i]), b = get(list[i + 1]);
     const o = {};
     ["s", "u", "v", "px", "py", "dark", "fx"].forEach((k) => (o[k] = lerp(a[k], b[k], t)));
     return o;
@@ -92,7 +116,7 @@ export async function createCinema({ reducedMotion = false } = {}) {
     shade.style.setProperty("--dark", sh.dark.toFixed(3));
     state.fxAmt = sh.fx;
     // Sichtbarkeit des Straßenbereichs (für die Lichtstreifen) in Bildschirmkoordinaten
-    const road = K.strasse;
+    const road = usePortrait ? K.strasseHandy : K.strasse;
     state.roadTop = clamp(ty + s * road[0] * h, 0, H);
     state.roadBot = clamp(ty + s * road[1] * h, 0, H);
   }
@@ -202,7 +226,10 @@ export async function createCinema({ reducedMotion = false } = {}) {
     requestAnimationFrame(tick);
   }
 
-  window.addEventListener("resize", layout);
+  window.addEventListener("resize", async () => {
+    if (!!K.bildHandy && portraitMQ.matches !== usePortrait) await chooseImage();
+    layout();
+  });
   layout();
   applyShot(shotAt(0), 0);
   requestAnimationFrame(tick);

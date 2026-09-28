@@ -69,7 +69,7 @@ img { max-width: 100%; display: block; }
   box-shadow: inset 0 0 0 100vmax rgba(4, 8, 11, var(--dark, 0));
 }
 @media (max-width: 760px) {
-  .cinema__shade { background: linear-gradient(0deg, rgba(4,8,11,.95) 0%, rgba(4,8,11,.8) 38%, rgba(4,8,11,.1) 62%, rgba(4,8,11,0) 75%), linear-gradient(180deg, rgba(4,8,11,.6), rgba(4,8,11,0) 20%); }
+  .cinema__shade { background: linear-gradient(180deg, rgba(4,8,11,.88) 0%, rgba(4,8,11,.55) 38%, rgba(4,8,11,0) 58%, rgba(4,8,11,0) 80%, rgba(4,8,11,.6) 100%); }
 }
 .bars i { position: fixed; left: 0; right: 0; height: 12vh; background: #000; z-index: 60; pointer-events: none; transform-origin: top; }
 .bars i:first-child { top: 0; }
@@ -284,7 +284,7 @@ body.is-driving .hud, body.is-driving .route { opacity: 1; }
 /* ---------- Hero ---------- */
 .hero { position: relative; min-height: 100vh; min-height: 100svh; display: flex; align-items: flex-end; padding: 0 var(--gutter) clamp(90px, 14vh, 150px); }
 .hero__content { max-width: 720px; }
-.hero__title { margin: 0; font-family: var(--display); font-weight: 800; font-stretch: 112%; font-size: clamp(52px, 8.4vw, 136px); line-height: .88; letter-spacing: -0.045em; }
+.hero__title { margin: 0; font-family: var(--display); font-weight: 800; font-stretch: 112%; font-size: clamp(52px, 6.6vw, 112px); line-height: .9; letter-spacing: -0.045em; }
 .hero__title .line { display: block; overflow: hidden; padding-bottom: .06em; }
 .hero__title .split { display: inline-block; }
 .hero__title em { font-size: 1.12em; font-stretch: 100%; color: var(--gold-soft); padding-right: .08em; letter-spacing: -0.03em; }
@@ -295,7 +295,10 @@ body.is-driving .hud, body.is-driving .route { opacity: 1; }
 .scroll-cue i::after { content: ""; position: absolute; left: 0; top: -40%; width: 100%; height: 40%; background: var(--cream); animation: cue 1.8s var(--ease) infinite; }
 @keyframes cue { to { top: 110%; } }
 @media (max-width: 760px) {
-  .hero { align-items: flex-end; padding-bottom: 60px; }
+  .hero { align-items: flex-start; padding-top: 104px; padding-bottom: 40px; }
+  .hero__title { font-size: clamp(44px, 12.5vw, 64px); }
+  .hero__lead { margin: 18px 0 22px; font-size: 16px; }
+  .hero__cta .btn { height: 48px; padding: 0 18px; font-size: 14px; }
       .scroll-cue { display: none; }
 }
 
