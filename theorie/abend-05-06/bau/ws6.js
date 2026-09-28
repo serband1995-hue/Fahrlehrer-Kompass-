@@ -126,11 +126,11 @@ function teacher() {
       <li>Pro Gruppe 1 Plakat (A2 oder Flipchart), Lineal, Schere, Kleber</li>
       <li>Dicke Stifte: Schwarz, Rot, Grün, Gelb, Blau</li>
       <li>Klebezettel (Autos), Klebeband</li></ul></div>
-    <div class="box"><div class="kick">Ablauf (ca. 25 Minuten)</div><ul>
+    <div class="box"><div class="kick">Ablauf (ca. 35 Minuten)</div><ul>
       <li>3 Gruppen, 3–5 Personen</li>
       <li>15 Minuten Arbeit (Timer auf der Folie)</li>
-      <li>Je Gruppe 2 Minuten: Klasse rät, Gruppe löst auf</li>
-      <li>Danach Folie „Sechs Sätze“</li></ul></div>
+      <li>Je Gruppe 2 Minuten: Klasse rät, Gruppe löst auf. Im Hintergrund Folie „Gruppe X ist dran“, Fakten per Klick</li>
+      <li>Danach je Gruppe 2 Folien Musterlösung + Fehler-Check (ca. 4 Min.)</li></ul></div>
   </div>
   <div class="box"><div class="kick">Deine Rolle</div>Herumgehen, <b>keine Lösungen geben</b>. Hängt eine Gruppe, stell eine Frage aus „Wenn ihr hängt“. Achte darauf, dass jede Gruppe ein <b>eindeutiges Rätsel</b> baut.</div>
   <div class="kick" style="margin:4px 0 4px">Das muss rein (Erwartungshorizont)</div>

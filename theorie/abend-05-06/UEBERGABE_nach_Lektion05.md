@@ -1,14 +1,16 @@
 # Übergabe-Protokoll: nach Abend Lektion 5 + 6
 
-Stand: 27.09.2026. Gilt zusätzlich zum Protokoll aus Lektion 12 (Design-Regeln, Nutzer, Stil bleiben gleich).
+Stand: 28.09.2026. Gilt zusätzlich zum Protokoll aus Lektion 12 (Design-Regeln, Nutzer, Stil bleiben gleich).
 
 ## Was fertig ist
-- `Abend_Lektion05_06.pptx`: 83 Folien für den ganzen Abend (180 Min.)
-  - Folien 1–52: Lektion 5 (ohne Gruppenarbeit, auf Wunsch)
-  - Folie 53: „15 Minuten Pause – es geht gleich weiter“
-  - Folien 54–83: Lektion 6 (Verkehrszeichen, Markierungen, Verkehrseinrichtungen, Bahnübergang) mit Gruppenarbeit
+- `Abend_Lektion05_06.pptx`: 93 Folien für den ganzen Abend (180 Min.)
+  - Folien 1–53: Lektion 5 (ohne Gruppenarbeit, auf Wunsch). Abknickende Vorfahrt mit großem Zusatzzeichen, Morph auf die Kreuzung, Lichtspur und Regel-Skizzen.
+  - Folie 54: „15 Minuten Pause – es geht gleich weiter“
+  - Folien 55–93: Lektion 6 (Verkehrszeichen, Markierungen, Verkehrseinrichtungen, Bahnübergang) mit Gruppenarbeit
+  - Nach der Gruppenarbeit je Gruppe: Bühnen-Folie „Gruppe X ist dran“ (Fakten fliegen per Klick herein) + Musterlösung + Fehler-Check (RICHTIG/FALSCH-Stempel)
 - `Lektion06_Gruppenarbeit_Arbeitsblaetter.pdf`: Lehrerseite (inkl. Lösungen L5-Quiz) + 3 Gruppenblätter mit Schilder-Streifen zum Ausschneiden
 - Wunsch: Gruppenarbeit nur in der zweiten Lektion des Abends.
+- **Wunsch für alle künftigen Gruppenarbeiten:** Während eine Gruppe präsentiert, läuft im Hintergrund „Gruppe X ist dran“, und Kern-Fakten fliegen per Klick herein. Danach pro Gruppe 1–4 Folien Musterlösung (was vergessen wurde, typische Fehler korrigieren).
 - Wunsch von Serband für L5: Fokus Vorfahrt, Kreisverkehr, Ampel, Grünpfeil, Polizei. Grundregel § 1 nur kurz. **Keine App-Vorstellung.** Viele Animationsszenen, alles „cineastisch“.
 
 ## Neue Technik (im Ordner `bau/`)
@@ -21,10 +23,11 @@ Stand: 27.09.2026. Gilt zusätzlich zum Protokoll aus Lektion 12 (Design-Regeln,
 | `h5.js` | Folien-Bausteine (kicker, title, banner, stampNum, smallLight, carAt, go, vanish) |
 | `build5.js`, `turm5.js`, `build5b/c/d.js` | die Folien |
 | `art6.js`, `build6.js` | Grafiken und Folien Lektion 6 (Schilderwald, Nebel-Perspektive, Bahnübergang mit Zug/Schranken, Markierungen, Baustelle) |
+| `artx.js` | Zusatzgrafiken: Lichtspur abknickende Vorfahrt, großes Zusatzzeichen mit Leucht-Ebenen, Regel-Skizzen, Bühne |
 | `trans5.js` | Überleitungen (➜) für alle Folien, prüft die Reihenfolge |
 | `ws6.js` | Arbeitsblätter Lektion 6 → PDF |
 
-Bauen: `node art5.js && node art6.js && SB=1 node build5.js && node ws6.js` (nur Lektion 5: `NUR5=1`) (SB=1 erzeugt Storyboard-Bilder in `sb/` zur Kontrolle der Fahrwege).
+Bauen: `node art5.js && node art6.js && node artx.js && SB=1 node build5.js && node ws6.js` (nur Lektion 5: `NUR5=1`) (SB=1 erzeugt Storyboard-Bilder in `sb/` zur Kontrolle der Fahrwege).
 
 Wichtig:
 - Motion-Paths sind **absolut ab der Startposition** des Objekts (nicht kumulativ).
