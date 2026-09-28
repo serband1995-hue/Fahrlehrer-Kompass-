@@ -25,9 +25,9 @@ COL.muted = 'CDD3DC'; // heller für das Smartboard
 function quiz(s, items, col = COL.orange) {
   items.forEach(([q, a], i) => {
     const y = 2.45 + i * 1.5;
-    s.oval(0.8, y + 0.12, 0.72, 0.72, { fill: '1A202B', line: col, lw: 2 });
-    s.text(String(i + 1), { x: 0.8, y: y + 0.12, w: 0.72, h: 0.72, font: SERIF, size: 26, bold: true, color: col, align: 'center', valign: 'middle' });
-    s.text(q, { x: 1.8, y, w: 5.55, h: 0.96, size: 20, bold: true, valign: 'middle' });
+    s.oval(0.8, y + 0.12, 0.72, 0.72, { fill: '1A202B', line: col, lw: 2 }, { fx: 'flyL', c: true, dur: 600 });
+    s.text(String(i + 1), { x: 0.8, y: y + 0.12, w: 0.72, h: 0.72, font: SERIF, size: 26, bold: true, color: col, align: 'center', valign: 'middle' }, { fx: 'flyL', dur: 600 });
+    s.text(q, { x: 1.8, y, w: 5.55, h: 0.96, size: 20, bold: true, valign: 'middle' }, { fx: 'flyL', dur: 600 });
     s.rrect(7.55, y + 0.03, 5.0, 0.9, { fill: col, rr: 0.14 }, { fx: 'rise', c: true, dur: 600 });
     s.text(a, { x: 7.8, y: y + 0.03, w: 4.6, h: 0.9, size: 18, bold: true, color: '0B0D10', valign: 'middle' }, { fx: 'rise', dur: 600 });
   });
@@ -149,8 +149,7 @@ async function build() {
   {
     const s = deck.add({ bg: 'bg_night.jpg', transition: 'fade', notes: `
 ▶ Diese Symbole seht ihr im Cockpit.
-❓ Frage vor jedem Klick: Welche Leuchte ist das, und wann benutzt man sie?
-🖱 5 Klicks, je Symbol die Auflösung:
+🖱 Immer im Wechsel, 10 Klicks: Symbol fliegt ein → ❓ Welche Leuchte ist das, wann benutzt man sie? → Klick: Auflösung darunter.
 1. Standlicht: nur zum Halten oder Parken. Mit Standlicht allein darf man nicht fahren (§ 17 Abs. 2 StVO).
 2. Abblendlicht: bei Dämmerung, Dunkelheit, erheblicher Sichtbehinderung und im Tunnel (Zeichen 327).
 3. Fernlicht: bei Dunkelheit auf Straßen ohne durchgehende Beleuchtung, wenn du niemanden blendest (auch innerorts erlaubt).
@@ -168,7 +167,7 @@ async function build() {
     sy.forEach(([f, t, d], i) => {
       const x = x0 + i * (cw + gap);
       s.rrect(x, 2.6, cw, 4.2, { fill: COL.card, line: COL.line, rr: 0.12 });
-      s.img(f, { x: x + 0.43, y: 2.85, w: 1.39, h: 1.26 });
+      s.img(f, { x: x + 0.43, y: 2.85, w: 1.39, h: 1.26 }, { fx: 'zoom', c: true, dur: 500 });
       s.text(t, { x: x + 0.15, y: 4.35, w: cw - 0.3, h: 0.8, font: SERIF, size: 20, bold: true, align: 'center', valign: 'middle' }, { fx: 'rise', c: true, dur: 500 });
       s.text(d, { x: x + 0.1, y: 5.15, w: cw - 0.2, h: 1.55, size: 17, color: COL.muted, align: 'center' }, { fx: 'fade', dur: 500 });
     });
@@ -178,11 +177,12 @@ async function build() {
   {
     const s = deck.add({ bg: 'bg_black.jpg', transition: 'black', footer: false, notes: `
 ▶ Häufiger Fehler: Das Auto ist vorne hell, also denkt man, das Licht ist an.
-🖱 Klick 1: Bei vielen Autos bleiben mit Tagfahrlicht die Rückleuchten aus. Von hinten bist du in der Dämmerung, im Regen oder im Tunnel fast unsichtbar.
-🖱 Klick 2: Merksatz: Sobald es dunkler wird: Abblendlicht an. Lichtschalter auf AUTO ist gut, aber im Nebel oft nicht genug, dann selbst einschalten.` });
+🖱 Klick 1: Vorne hell.
+🖱 Klick 2: ❓ Und hinten? ✅ Bei vielen Autos bleiben mit Tagfahrlicht die Rückleuchten aus. Von hinten bist du in der Dämmerung, im Regen oder im Tunnel fast unsichtbar.
+🖱 Klick 3: Merksatz: Sobald es dunkler wird: Abblendlicht an. Lichtschalter auf AUTO ist gut, aber im Nebel oft nicht genug, dann selbst einschalten.` });
     title(s, 'Tagfahrlicht ist kein Abblendlicht.', 0.8, 1.4, 11.7, 1.3, { size: 58, align: 'center' }, { fx: 'fade', auto: true, dur: 1200 });
     chip(s, 'Vorne hell  ✓', 2.6, 3.9, 3.7, { size: 24, h: 0.8, fill: '12161E', line: GREEN, color: GREEN }, { fx: 'rise', c: true });
-    chip(s, 'Hinten oft dunkel  ✗', 7.0, 3.9, 3.7, { size: 24, h: 0.8, fill: '12161E', line: COL.red, color: COL.red }, { fx: 'rise', a: true });
+    chip(s, 'Hinten oft dunkel  ✗', 7.0, 3.9, 3.7, { size: 24, h: 0.8, fill: '12161E', line: COL.red, color: COL.red }, { fx: 'rise', c: true });
     s.text([run('Wird es dunkler: '), run('Abblendlicht an.', { color: COL.orange })], { x: 0.8, y: 5.25, w: 11.7, h: 0.9, font: SERIF, size: 36, italic: true, align: 'center' }, { fx: 'rise', c: true, dur: 900 });
   }
 
@@ -190,9 +190,10 @@ async function build() {
   {
     const s = deck.add({ bg: 'sc_side.jpg', transition: 'fade', notes: `
 ▶ Das Abblendlicht leuchtet etwa 50 bis 60 Meter weit. Aber wann siehst du einen Menschen darin?
-🖱 Klick 1: Dunkle Kleidung: erst bei etwa 25 Metern.
-🖱 Klick 2: Helle Kleidung: etwa 40 Meter.
-🖱 Klick 3: Mit Reflektoren: bis zu 140 Meter. Also mehr als das Fünffache.
+🖱 Immer im Wechsel, 6 Klicks: Person erscheint → ❓ Ab wie viel Metern siehst du sie? → Klick: Entfernung.
+1. Dunkle Kleidung: erst bei etwa 25 Metern.
+2. Helle Kleidung: etwa 40 Meter.
+3. Mit Reflektoren: bis zu 140 Meter. Also mehr als das Fünffache.
 ❓ Frage: Was heißt das für euch als Fußgänger oder Radfahrer? ✅ Helle Kleidung und Reflektoren. Gesehen werden ist genauso wichtig wie sehen.
 ➜ Weiter: Und mit Fernlicht?` });
     footer(s);
@@ -200,11 +201,11 @@ async function build() {
     title(s, 'Abblendlicht: rund 50–60 m', 0.75, 1.3, 11, 1.2, { size: 48, name: '!!t' });
     scene(s, 'low');
     ped(s, 'ped_dark.png', 25, '!!p25', { fx: 'fade', c: true, dur: 900 });
-    chip(s, 'dunkel: 25 m', xAt(25) - 1.0, 5.9, 2.0, { size: 18, fill: '1A202B', line: '3A4455', name: '!!l25' }, { fx: 'rise' });
+    chip(s, 'dunkel: 25 m', xAt(25) - 1.0, 5.9, 2.0, { size: 18, fill: '1A202B', line: '3A4455', name: '!!l25' }, { fx: 'rise', c: true });
     ped(s, 'ped_light.png', 40, '!!p40', { fx: 'fade', c: true, dur: 900 });
-    chip(s, 'hell: 40 m', xAt(40) - 0.85, 6.55, 1.7, { size: 18, fill: '1A202B', line: '3A4455', name: '!!l40' }, { fx: 'rise' });
+    chip(s, 'hell: 40 m', xAt(40) - 0.85, 6.55, 1.7, { size: 18, fill: '1A202B', line: '3A4455', name: '!!l40' }, { fx: 'rise', c: true });
     ped(s, 'ped_refl.png', 140, '!!p140', { fx: 'fade', c: true, dur: 900 });
-    chip(s, 'Reflektoren: 140 m', 9.75, 5.9, 2.8, { size: 18, fill: '2A2A14', line: 'F7FF9A', color: 'F7FF9A', name: '!!l140' }, { fx: 'rise' });
+    chip(s, 'Reflektoren: 140 m', 9.75, 5.9, 2.8, { size: 18, fill: '2A2A14', line: 'F7FF9A', color: 'F7FF9A', name: '!!l140' }, { fx: 'rise', c: true });
   }
 
   // ============ 9 · LICHTKEGEL: FERNLICHT (Morph) ============
@@ -227,7 +228,7 @@ async function build() {
   {
     const s = deck.add({ bg: 'bg_night.jpg', transition: 'fade', notes: `
 ▶ Jemand blendet dich. Für einige Sekunden bist du praktisch blind.
-🖱 3 Klicks:
+🖱 Immer im Wechsel, 6 Klicks: Schritt erscheint → kurz fragen, warum → Klick: Erklärung.
 1. Nicht in die Scheinwerfer schauen, sondern an den rechten Fahrbahnrand.
 2. Tempo runter.
 3. Wenn nötig anhalten. Nicht zurückblenden, sonst sind zwei Fahrer blind.` });
@@ -241,7 +242,7 @@ async function build() {
       s.text(String(i + 1), { x: 1.05, y: y + 0.15, w: 0.8, h: 0.8, font: SERIF, size: 40, bold: true, color: COL.orange, valign: 'middle' }, { fx: 'fade', dur: 300 });
       s.img(ic, { x: 1.9, y: y + 0.3, w: 0.5, h: 0.5 }, { fx: 'fade', dur: 300 });
       s.text(t, { x: 2.7, y: y + 0.15, w: 3.9, h: 0.8, font: SERIF, size: 26, bold: true, valign: 'middle' }, { fx: 'fade', dur: 300 });
-      s.text(d, { x: 6.6, y: y + 0.15, w: 5.7, h: 0.8, size: 18, color: COL.muted, valign: 'middle' }, { fx: 'fade', dur: 300 });
+      s.text(d, { x: 6.6, y: y + 0.15, w: 5.7, h: 0.8, size: 18, color: COL.muted, valign: 'middle' }, { fx: 'fade', c: true, dur: 400 });
     });
   }
 
@@ -250,12 +251,12 @@ async function build() {
     const s = deck.add({ bg: 'bg_night.jpg', transition: 'fade', notes: `
 ▶ Die wichtigste Regel für die Nacht: Du musst innerhalb der Strecke anhalten können, die du überblickst (§ 3 Abs. 1 StVO). Man sagt: Fahren auf Sicht.
 ▶ Die gestrichelte Linie ist die Reichweite des Abblendlichts, rund 50 bis 60 Meter.
-🖱 3 Klicks: Anhalteweg mit normaler Bremsung (Faustformel).
+🖱 Immer im Wechsel, 6 Klicks: Tempo erscheint → ❓ Wie lang ist der Anhalteweg? Rechnen lassen → Klick: Balken (normale Bremsung, Faustformel).
 50 km/h: 15 + 25 = 40 m. Passt.
 80 km/h: 24 + 64 = 88 m. Deutlich zu lang.
 100 km/h: 30 + 100 = 130 m. Mehr als doppelt so weit wie dein Licht.
-🖱 Klick 4: Die rote Linie: Dunkel gekleidete Menschen siehst du erst bei 25 m. Selbst bei 50 km/h (40 m) wird es dann knapp. Zurück zu Folie 2!
-🖱 Klick 5: Merksatz.` });
+🖱 Klick 7: Die rote Linie: Dunkel gekleidete Menschen siehst du erst bei 25 m. Selbst bei 50 km/h (40 m) wird es dann knapp. Zurück zu Folie 2!
+🖱 Klick 8: Merksatz.` });
     footer(s);
     kicker(s, 'Fahren auf Sicht · § 3 Abs. 1 StVO', 0.8, 0.9);
     title(s, 'Reicht dein Licht für deinen Anhalteweg?', 0.75, 1.3, 12, 1.0, { size: 40 });
@@ -270,7 +271,7 @@ async function build() {
     rows.forEach(([v, r, b], i) => {
       const y = 3.0 + i * 0.95;
       s.text(`${v} km/h`, { x: 0.8, y, w: 1.55, h: 0.6, size: 20, bold: true, valign: 'middle' }, { fx: 'fade', c: true, dur: 300 });
-      s.rect(bx, y + 0.08, r * sc, 0.44, { fill: COL.amber }, { fx: 'wipeR', dur: 500 });
+      s.rect(bx, y + 0.08, r * sc, 0.44, { fill: COL.amber }, { fx: 'wipeR', c: true, dur: 500 });
       s.rect(bx + r * sc, y + 0.08, b * sc, 0.44, { fill: r + b > 60 ? COL.red : GREEN }, { fx: 'wipeR', a: true, dur: 700 });
       s.text(`${r + b} m`, { x: bx + (r + b) * sc + 0.12, y, w: 1.2, h: 0.6, size: 20, bold: true, color: r + b > 60 ? COL.red : GREEN, valign: 'middle' }, { fx: 'fade', dur: 300 });
     });
@@ -322,17 +323,18 @@ Wichtig: Nebelschlussleuchte wieder aus, wenn die Sicht besser wird. Sie blendet
   {
     const s = deck.add({ bg: 'bg_black.jpg', transition: 'black', footer: false, notes: `
 ▶ Eine Zahl für alles: 50.
-🖱 3 Klicks: Sicht unter 50 Meter. Dann höchstens 50 km/h (auch bei Schnee oder Regen). Und erst dann darf die Nebelschlussleuchte an, aber nur bei Nebel, nicht bei Regen oder Schnee.
+🖱 Immer im Wechsel, 6 Klicks: Kreis mit Frage erscheint → raten lassen → Klick: Zahl.
+Sicht unter 50 Meter. Dann höchstens 50 km/h (auch bei Schnee oder Regen). Und erst dann darf die Nebelschlussleuchte an, aber nur bei Nebel, nicht bei Regen oder Schnee.
 ❓ Frage: Gilt das auch auf der Autobahn? ✅ Ja, überall.
 ❓ Frage: Reicht 50 km/h bei 50 m Sicht? ✅ Knapp: 40 m Anhalteweg auf trockener Straße. Im Nebel ist die Straße meist nass, also langsamer.
-🖱 Klick 4: Merksatz.` });
+🖱 Klick 7: Merksatz.` });
     kicker(s, 'Merk dir eine Zahl', 0.8, 1.0, { w: 11.7, align: 'center' });
     const items = [['50', 'm', 'Sicht unter'], ['50', 'km/h', 'höchstens'], ['DARF AN', '', 'Nebelschlussleuchte']];
     items.forEach(([n, u, t], i) => {
       const x = 1.15 + i * 3.9;
       s.oval(x, 1.9, 3.1, 3.1, { fill: '12161E', line: i === 2 ? COL.red : COL.orange, lw: 4, glow: 12, glowColor: i === 2 ? COL.red : COL.orange, glowOp: 0.3 }, { fx: 'zoom', c: true, dur: 500 });
       s.text(t, { x: x + 0.1, y: 2.3, w: 2.9, h: 0.5, size: 17, bold: true, color: COL.muted, align: 'center' }, { fx: 'fade', dur: 300 });
-      s.text([run(n, { fontFace: SERIF, fontSize: n.length > 2 ? 44 : 80, bold: true }), run(u ? ' ' + u : '', { fontSize: 26, bold: true })], { x, y: 2.85, w: 3.1, h: 1.5, align: 'center', valign: 'middle', color: i === 2 ? COL.red : COL.txt }, { fx: 'fade', dur: 300 });
+      s.text([run(n, { fontFace: SERIF, fontSize: n.length > 2 ? 44 : 80, bold: true }), run(u ? ' ' + u : '', { fontSize: 26, bold: true })], { x, y: 2.85, w: 3.1, h: 1.5, align: 'center', valign: 'middle', color: i === 2 ? COL.red : COL.txt }, { fx: 'stamp', c: true, dur: 380 });
     });
     s.text('Höchstens heißt: oft langsamer. Nebelschlussleuchte nur bei Nebel.', { x: 0.8, y: 5.6, w: 11.7, h: 0.7, font: SERIF, size: 28, italic: true, color: COL.orange, align: 'center' }, { fx: 'rise', c: true });
   }
@@ -363,7 +365,7 @@ Wichtig: Nebelschlussleuchte wieder aus, wenn die Sicht besser wird. Sie blendet
   {
     const s = deck.add({ bg: 'bg_night.jpg', transition: 'fade', notes: `
 ▶ Kurzer Check. Frage vorlesen, Klasse antworten lassen, dann klicken.
-🖱 3 Klicks, je eine Antwort.` });
+🖱 Immer im Wechsel, 6 Klicks: Frage fliegt ein → antworten lassen → Klick: Antwort.` });
     footer(s);
     kicker(s, 'Quiz · Licht & Sicht', 0.8, 0.9);
     title(s, 'Drei Fragen, drei Antworten', 0.75, 1.3, 12, 1.0, { size: 40 });
@@ -391,9 +393,10 @@ Wichtig: Nebelschlussleuchte wieder aus, wenn die Sicht besser wird. Sie blendet
   {
     const s = deck.add({ bg: 'bg_blue.jpg', transition: 'fade', notes: `
 ▶ Drei Signale, drei Bedeutungen (§ 38 StVO).
-🖱 Klick 1: Blaulicht und Einsatzhorn zusammen: Alle müssen sofort freie Bahn schaffen. Das ist das Wegerecht.
-🖱 Klick 2: Blaulicht allein: Warnung, z. B. an einer Unfallstelle oder bei einer Kolonne. Kein Platzmachen vorgeschrieben, aber aufpassen.
-🖱 Klick 3: Gelbes Blinklicht: warnt vor Gefahren, z. B. Pannenhilfe, Müllabfuhr, Winterdienst. Kein Vorrecht.` });
+🖱 Immer im Wechsel, 6 Klicks: Signal erscheint → ❓ Was will es von dir? → Klick: Bedeutung.
+1. Blaulicht und Einsatzhorn zusammen: Alle müssen sofort freie Bahn schaffen. Das ist das Wegerecht.
+2. Blaulicht allein: Warnung, z. B. an einer Unfallstelle oder bei einer Kolonne. Kein Platzmachen vorgeschrieben, aber aufpassen.
+3. Gelbes Blinklicht: warnt vor Gefahren, z. B. Pannenhilfe, Müllabfuhr, Winterdienst. Kein Vorrecht.` });
     footer(s);
     kicker(s, '§ 38 StVO', 0.8, 0.9, { color: BLUE });
     title(s, 'Welches Licht will was von dir?', 0.75, 1.3, 12, 1.0, { size: 40 });
@@ -406,7 +409,7 @@ Wichtig: Nebelschlussleuchte wieder aus, wenn die Sicht besser wird. Sie blendet
       s.img(g, { x: x + 0.95, y: 2.6, w: 1.85, h: 1.85 }, { fx: 'zoom', dur: 450 });
       if (horn) s.img(I.horn, { x: x + 2.85, y: 2.85, w: 0.55, h: 0.55 }, { fx: 'zoom', dur: 450 });
       s.text(t, { x: x + 0.25, y: 4.5, w: 3.25, h: 0.6, font: SERIF, size: 24, bold: true, align: 'center' }, { fx: 'fade', dur: 400 });
-      s.text(d, { x: x + 0.25, y: 5.1, w: 3.25, h: 0.7, size: 17, color: COL.muted, align: 'center' }, { fx: 'fade', dur: 400 });
+      s.text(d, { x: x + 0.25, y: 5.1, w: 3.25, h: 0.7, size: 17, color: COL.muted, align: 'center' }, { fx: 'fade', c: true, dur: 400 });
       chip(s, tag, x + 0.7, 5.95, 2.35, { size: 17, h: 0.5, fill: col, color: '0B0D10' }, { fx: 'fade', dur: 400 });
     });
   }
@@ -415,9 +418,12 @@ Wichtig: Nebelschlussleuchte wieder aus, wenn die Sicht besser wird. Sie blendet
   {
     const s = deck.add({ bg: 'bg_blue2.jpg', transition: 'fade', notes: `
 ▶ Zwei Begriffe, die oft verwechselt werden.
-🖱 Klick 1: Sonderrechte (§ 35 StVO): Polizei, Feuerwehr, Rettungsdienst usw. dürfen im Einsatz von Regeln abweichen, z. B. bei Rot fahren oder schneller fahren. Aber nur mit Rücksicht.
-🖱 Klick 2: Wegerecht (§ 38 StVO): Nur mit Blaulicht UND Horn. Dann musst DU Platz machen.
-🖱 Klick 3: ❓ Frage: Ein Polizeiauto fährt nur mit Blaulicht, ohne Horn. Musst du Platz machen? ✅ Nein, kein Wegerecht. Aber aufmerksam bleiben und nicht behindern.` });
+🖱 Klick 1: Begriff „Sonderrecht“. ❓ Was könnte das heißen?
+🖱 Klick 2: ✅ Sonderrechte (§ 35 StVO): Polizei, Feuerwehr, Rettungsdienst usw. dürfen im Einsatz von Regeln abweichen, z. B. bei Rot fahren oder schneller fahren. Aber nur mit Rücksicht.
+🖱 Klick 3: Begriff „Wegerecht“. ❓ Und das?
+🖱 Klick 4: ✅ Wegerecht (§ 38 StVO): Nur mit Blaulicht UND Horn. Dann musst DU Platz machen.
+🖱 Klick 5: ❓ Ein Polizeiauto fährt nur mit Blaulicht, ohne Horn. Musst du Platz machen?
+🖱 Klick 6: ✅ Nein, kein Wegerecht. Aber aufmerksam bleiben und nicht behindern.` });
     footer(s);
     kicker(s, 'Oft verwechselt', 0.8, 0.9, { color: BLUE });
     title(s, 'Sonderrecht oder Wegerecht?', 0.75, 1.3, 12, 1.0, { size: 40 });
@@ -425,20 +431,21 @@ Wichtig: Nebelschlussleuchte wieder aus, wenn die Sicht besser wird. Sie blendet
       s.rrect(x, 2.6, 5.7, 2.7, { fill: COL.card, line: col, lw: 1.5, rr: 0.14 }, { fx: 'flyL', c: true, dur: 650 });
       s.text(head, { x: x + 0.35, y: 2.8, w: 3.6, h: 0.6, font: SERIF, size: 30, bold: true, color: col }, { fx: 'fade', dur: 300 });
       s.text(law, { x: x + 3.7, y: 2.86, w: 1.75, h: 0.5, size: 17, bold: true, color: COL.muted, align: 'right' }, { fx: 'fade', dur: 300 });
-      s.text(t, { x: x + 0.35, y: 3.5, w: 5.1, h: 0.6, size: 21, bold: true }, { fx: 'fade', dur: 300 });
+      s.text(t, { x: x + 0.35, y: 3.5, w: 5.1, h: 0.6, size: 21, bold: true }, { fx: 'fade', c: true, dur: 400 });
       s.text(d, { x: x + 0.35, y: 4.1, w: 5.0, h: 1.0, size: 17, color: COL.muted }, { fx: 'fade', dur: 300 });
     };
     box(0.8, 'Sonderrecht', '§ 35 StVO', 'Einsatzfahrzeug darf Regeln brechen.', 'z. B. bei Rot fahren, schneller fahren. Nur mit Rücksicht auf andere.', COL.amber);
     box(6.8, 'Wegerecht', '§ 38 StVO', 'DU musst Platz machen.', 'Nur bei Blaulicht UND Einsatzhorn.', BLUE);
     s.rrect(0.8, 5.6, 11.7, 1.2, { fill: '0F1830', line: '2A3F6B', rr: 0.14 }, { fx: 'rise', c: true });
-    s.text([run('Nur Blaulicht, kein Horn? ', { bold: true }), run('Kein Wegerecht. Aber aufmerksam bleiben und nicht behindern.', { color: COL.muted })], { x: 1.1, y: 5.7, w: 11.2, h: 1.0, size: 20, valign: 'middle' }, { fx: 'fade', dur: 400 });
+    s.text('Nur Blaulicht, kein Horn?', { x: 1.1, y: 5.7, w: 3.5, h: 1.0, size: 20, bold: true, valign: 'middle' }, { fx: 'fade', dur: 400 });
+    s.text('Kein Wegerecht. Aber aufmerksam bleiben und nicht behindern.', { x: 4.55, y: 5.7, w: 7.8, h: 1.0, size: 20, color: COL.muted, valign: 'middle' }, { fx: 'fade', c: true, dur: 400 });
   }
 
   // ============ 19 · SO MACHST DU PLATZ ============
   {
     const s = deck.add({ bg: 'bg_blue.jpg', transition: 'fade', notes: `
 ▶ Blaulicht und Horn hinter dir. So geht es ruhig und sicher.
-🖱 4 Klicks:
+🖱 Immer im Wechsel, 8 Klicks: Schritt erscheint → ❓ Wie genau? → Klick: Erklärung.
 1. Ruhe bewahren, Spiegel checken: Woher kommt es?
 2. Rechts ran, langsamer werden, notfalls anhalten. Blinker setzen, damit der Fahrer weiß, was du vorhast.
 3. An der roten Ampel: nicht in Panik über die Kreuzung. Nur wenn es gar nicht anders geht, vorsichtig vorrollen, ohne jemanden zu gefährden.
@@ -456,7 +463,7 @@ Wichtig: Nebelschlussleuchte wieder aus, wenn die Sicht besser wird. Sie blendet
       s.oval(x + 0.3, y + 0.3, 0.9, 0.9, { fill: '16203A' }, { fx: 'fade', dur: 300 });
       s.img(ic, { x: x + 0.5, y: y + 0.5, w: 0.5, h: 0.5 }, { fx: 'fade', dur: 300 });
       s.text(t, { x: x + 1.45, y: y + 0.25, w: 4.1, h: 0.6, font: SERIF, size: 26, bold: true }, { fx: 'fade', dur: 300 });
-      s.text(d, { x: x + 1.45, y: y + 0.85, w: 4.1, h: 0.85, size: 17, color: COL.muted }, { fx: 'fade', dur: 300 });
+      s.text(d, { x: x + 1.45, y: y + 0.85, w: 4.1, h: 0.85, size: 17, color: COL.muted }, { fx: 'fade', c: true, dur: 400 });
     });
   }
 
@@ -529,7 +536,7 @@ Tipp: Nicht in die Gasse nachrücken und nicht hinterherfahren.` });
   {
     const s = deck.add({ bg: 'bg_red.jpg', transition: 'fade', notes: `
 ▶ Kein Kavaliersdelikt. Regelsätze laut Bußgeldkatalog.
-🖱 4 Klicks:
+🖱 Immer im Wechsel, 8 Klicks: Verstoß erscheint → ❓ Was schätzt ihr, was kostet das? → Klick: Strafe.
 1. Keine Rettungsgasse gebildet: 200 € und 2 Punkte.
 2. Dadurch ein Einsatzfahrzeug behindert: 240 €, 2 Punkte und 1 Monat Fahrverbot.
 3. Selbst durch die Rettungsgasse fahren: 240 €, 2 Punkte, 1 Monat Fahrverbot.
@@ -546,7 +553,7 @@ Tipp: Nicht in die Gasse nachrücken und nicht hinterherfahren.` });
     rows.forEach((r, i) => {
       const y = 2.95 + i * 0.95;
       s.rrect(0.8, y, 11.7, 0.8, { fill: COL.card, line: COL.line, rr: 0.1 }, { fx: 'flyL', c: true, dur: 600 });
-      r.forEach((t, j) => s.text(t, { x: cx[j] + (j ? 0 : 0.3), y, w: cw[j] - (j ? 0 : 0.3), h: 0.8, size: j ? 22 : 20, bold: j > 0, color: j === 3 && t !== '–' ? COL.red : COL.txt, font: j ? SERIF : undefined, align: j ? 'center' : 'left', valign: 'middle' }, { fx: 'fade', dur: 300 }));
+      r.forEach((t, j) => s.text(t, { x: cx[j] + (j ? 0 : 0.3), y, w: cw[j] - (j ? 0 : 0.3), h: 0.8, size: j ? 22 : 20, bold: j > 0, color: j === 3 && t !== '–' ? COL.red : COL.txt, font: j ? SERIF : undefined, align: j ? 'center' : 'left', valign: 'middle' }, j === 1 ? { fx: 'stamp', c: true, dur: 380 } : j > 1 ? { fx: 'stamp', dur: 380 } : { fx: 'fade', dur: 300 }));
     });
     s.text('Regelsätze Bußgeldkatalog (BKatV), Stand 2026', { x: 0.8, y: 6.9, w: 8, h: 0.3, size: 12, color: '9AA3AE' });
   }
@@ -555,7 +562,7 @@ Tipp: Nicht in die Gasse nachrücken und nicht hinterherfahren.` });
   {
     const s = deck.add({ bg: 'bg_blue2.jpg', transition: 'fade', notes: `
 ▶ Kurzer Check zu Blaulicht.
-🖱 3 Klicks, je eine Antwort.` });
+🖱 Immer im Wechsel, 6 Klicks: Frage fliegt ein → antworten lassen → Klick: Antwort.` });
     footer(s);
     kicker(s, 'Quiz · Blaulicht', 0.8, 0.9, { color: BLUE });
     title(s, 'Drei Fragen, drei Antworten', 0.75, 1.3, 12, 1.0, { size: 40 });
@@ -574,7 +581,7 @@ Tipp: Nicht in die Gasse nachrücken und nicht hinterherfahren.` });
   {
     const s = deck.add({ bg: 'bg_amber.jpg', transition: 'fade', notes: `
 ▶ Fünf Dinge vor und im Tunnel.
-🖱 5 Klicks:
+🖱 Immer im Wechsel, 10 Klicks: Regel erscheint → ❓ Warum? → Klick: Erklärung.
 1. Abblendlicht an, auch wenn der Tunnel beleuchtet ist (Zeichen 327). Tagfahrlicht reicht nicht.
 2. Sonnenbrille ab. Die Augen brauchen Zeit, sich an das Dunkel zu gewöhnen.
 3. Radio an: Viele Tunnel senden Durchsagen über den Verkehrsfunk.
@@ -592,7 +599,7 @@ Tipp: Nicht in die Gasse nachrücken und nicht hinterherfahren.` });
       s.oval(x + 0.6, 3.0, 1.0, 1.0, { fill: '2A2114' }, { fx: 'fade', dur: 300 });
       s.img(ic, { x: x + 0.82, y: 3.22, w: 0.56, h: 0.56 }, { fx: 'fade', dur: 300 });
       s.text(t, { x: x + 0.08, y: 4.25, w: cw - 0.16, h: 0.9, font: SERIF, size: 18, bold: true, align: 'center', valign: 'middle' }, { fx: 'fade', dur: 300 });
-      s.text(d, { x: x + 0.1, y: 5.1, w: cw - 0.2, h: 1.0, size: 17, color: COL.muted, align: 'center' }, { fx: 'fade', dur: 300 });
+      s.text(d, { x: x + 0.1, y: 5.1, w: cw - 0.2, h: 1.0, size: 17, color: COL.muted, align: 'center' }, { fx: 'fade', c: true, dur: 400 });
     });
   }
 
@@ -601,9 +608,10 @@ Tipp: Nicht in die Gasse nachrücken und nicht hinterherfahren.` });
     const s = deck.add({ bg: 'sc_tunnel.jpg', transition: 'black', notes: `
 ▶ Du fährst im Tunnel. Vorne raucht es. Der Rauch kommt auf dich zu.
 ❓ Frage: A, B oder C? Abstimmen lassen, Hände hoch.
-🖱 Klick 1: A ist falsch. Wenden ist im Tunnel verboten und blockiert die Feuerwehr.
-🖱 Klick 2: B ist falsch. Rauch ist die größte Gefahr, das Auto schützt dich nicht.
-🖱 Klick 3: C ist richtig. Darunter erscheint, wie genau: Warnblinker, rechts ran, Motor aus, Schlüssel stecken lassen (die Feuerwehr muss das Auto wegfahren können), Tür nicht abschließen. Dann zu Fuß zum nächsten Notausgang, weg vom Rauch. Notausgänge sind grün beleuchtet.` });
+🖱 Klick 1–3: Die Antworten A, B, C fliegen einzeln ein. Dann abstimmen lassen.
+🖱 Klick 4: A ist falsch. Wenden ist im Tunnel verboten und blockiert die Feuerwehr.
+🖱 Klick 5: B ist falsch. Rauch ist die größte Gefahr, das Auto schützt dich nicht.
+🖱 Klick 6: C ist richtig. Darunter erscheint, wie genau: Warnblinker, rechts ran, Motor aus, Schlüssel stecken lassen (die Feuerwehr muss das Auto wegfahren können), Tür nicht abschließen. Dann zu Fuß zum nächsten Notausgang, weg vom Rauch. Notausgänge sind grün beleuchtet.` });
     const smoke = s.img('smoke.png', { x: 0, y: 0, w: W, h: H });
     s.reg(smoke, { fx: 'fade', auto: true, dur: 2500 }, 'pic');
     s.rrect(0.6, 0.55, 7.0, 1.35, { fill: '07080B', ft: 20, rr: 0.12 });
@@ -613,9 +621,9 @@ Tipp: Nicht in die Gasse nachrücken und nicht hinterherfahren.` });
     const opts = [['A', 'Wenden und zurückfahren'], ['B', 'Im Auto warten'], ['C', 'Anhalten und zu Fuß raus']];
     const ox = [0.6, 4.72, 8.84], ow = [3.9, 3.9, 3.9];
     opts.forEach(([l, t], i) => {
-      s.rrect(ox[i], 4.55, ow[i], 1.25, { fill: '0B0D11', ft: 10, line: COL.line, rr: 0.14 });
-      s.text(l, { x: ox[i] + 0.2, y: 4.8, w: 0.7, h: 0.75, font: SERIF, size: 36, bold: true, color: COL.amber });
-      s.text(t, { x: ox[i] + 0.85, y: 4.6, w: ow[i] - 1.05, h: 1.15, size: 20, bold: true, valign: 'middle' });
+      s.rrect(ox[i], 4.55, ow[i], 1.25, { fill: '0B0D11', ft: 10, line: COL.line, rr: 0.14 }, { fx: 'rise', c: true, dur: 600 });
+      s.text(l, { x: ox[i] + 0.2, y: 4.8, w: 0.7, h: 0.75, font: SERIF, size: 36, bold: true, color: COL.amber }, { fx: 'rise', dur: 600 });
+      s.text(t, { x: ox[i] + 0.85, y: 4.6, w: ow[i] - 1.05, h: 1.15, size: 20, bold: true, valign: 'middle' }, { fx: 'rise', dur: 600 });
     });
     s.img(I.x, { x: ox[0] + ow[0] - 0.75, y: 4.15, w: 0.8, h: 0.8 }, { fx: 'stamp', c: true, dur: 380 });
     s.img(I.x, { x: ox[1] + ow[1] - 0.75, y: 4.15, w: 0.8, h: 0.8 }, { fx: 'stamp', c: true, dur: 380 });
@@ -630,8 +638,10 @@ Tipp: Nicht in die Gasse nachrücken und nicht hinterherfahren.` });
     const s = deck.add({ bg: 'bg_amber.jpg', transition: 'fade', notes: `
 ▶ Zwei weitere Notfälle im Tunnel. Brand hatten wir gerade.
 ▶ Das sind Empfehlungen von ADAC und Autobahn GmbH.
-🖱 Klick 1: Stau: Warnblinker, mindestens 5 m Abstand zum Vordermann, bei längerem Stillstand Motor aus. Rettungsgasse gilt natürlich auch hier.
-🖱 Klick 2: Panne: Warnblinker, möglichst in die Pannenbucht, Warnweste, Hilfe über die Notrufstation rufen.` });
+🖱 Klick 1: Stau. ❓ Was tust du?
+🖱 Klick 2: ✅ Warnblinker, mindestens 5 m Abstand zum Vordermann, bei längerem Stillstand Motor aus. Rettungsgasse gilt natürlich auch hier.
+🖱 Klick 3: Panne. ❓ Und jetzt?
+🖱 Klick 4: ✅ Warnblinker, möglichst in die Pannenbucht, Warnweste, Hilfe über die Notrufstation rufen.` });
     footer(s);
     kicker(s, 'Notfall im Tunnel', 0.8, 0.9, { color: COL.amber });
     title(s, 'Stau und Panne', 0.75, 1.3, 12, 1.0, { size: 44 });
@@ -642,7 +652,7 @@ Tipp: Nicht in die Gasse nachrücken und nicht hinterherfahren.` });
       s.rrect(x, 2.6, 5.75, 2.9, { fill: COL.card, line: col, lw: 1.5, rr: 0.14 }, { fx: 'rise', c: true, dur: 650 });
       s.img(ic, { x: x + 0.3, y: 2.85, w: 0.6, h: 0.6 }, { fx: 'zoom', dur: 400 });
       s.text(t, { x: x + 1.05, y: 2.82, w: 4.4, h: 0.66, font: SERIF, size: 32, bold: true, color: col, valign: 'middle' }, { fx: 'fade', dur: 400 });
-      s.text(li.map((l, j) => ({ text: l, options: { bullet: true, breakLine: j < li.length - 1 } })), { x: x + 0.4, y: 3.75, w: 5.1, h: 2.2, size: 24, psa: 12 }, { fx: 'fade', dur: 400 });
+      s.text(li.map((l, j) => ({ text: l, options: { bullet: true, breakLine: j < li.length - 1 } })), { x: x + 0.4, y: 3.75, w: 5.1, h: 2.2, size: 24, psa: 12 }, { fx: 'fade', c: true, dur: 400 });
     });
   }
 
@@ -660,7 +670,7 @@ Tipp: Nicht in die Gasse nachrücken und nicht hinterherfahren.` });
   {
     const s = deck.add({ bg: 'bg_amber.jpg', transition: 'fade', notes: `
 ▶ Letzter Check.
-🖱 3 Klicks, je eine Antwort.` });
+🖱 Immer im Wechsel, 6 Klicks: Frage fliegt ein → antworten lassen → Klick: Antwort.` });
     footer(s);
     kicker(s, 'Quiz · Tunnel', 0.8, 0.9, { color: COL.amber });
     title(s, 'Drei Fragen, drei Antworten', 0.75, 1.3, 12, 1.0, { size: 40 });
