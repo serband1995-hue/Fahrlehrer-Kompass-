@@ -14,6 +14,7 @@ Dort ist alles, was noch fehlt, mit `TODO` markiert:
 - `videos.*` – Videos aus der Ausbildung (leer = Animation)
 - `zahlen` – echte Zahlen; `wert: null` wird ausgeblendet
 - `bewertungen` – echte Bewertungen; `platzhalter: true` entfernen
+- `impressum.html` und `datenschutz.html` – gelb markierte Stellen ausfüllen
 
 ## Aufbau
 
