@@ -248,6 +248,13 @@ function ignite(withSound) {
     setSound(true);
   }
   scene && scene.lightsOn(true);
+  if (scene && scene.hasVideo) {
+    // Stadt und Scheinwerfer „gehen an“
+    gsap.timeline()
+      .fromTo("#heroVideo", { filter: "brightness(0.2)" }, { filter: "brightness(0.9)", duration: 0.08 }, 0.3)
+      .to("#heroVideo", { filter: "brightness(0.35)", duration: 0.07 })
+      .to("#heroVideo", { filter: "brightness(1)", duration: 1.6, ease: "power2.out", clearProps: "filter" });
+  }
   const tl = gsap.timeline();
   tl.to(".intro__inner", { opacity: 0, scale: 0.96, duration: 0.5, ease: "power2.in" }, 0.35)
     .set(".intro", { background: "transparent" })

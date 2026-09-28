@@ -59,6 +59,7 @@ img { max-width: 100%; display: block; }
 .cinema__flares i::before, .cinema__flares i::after { content: ""; position: absolute; left: 0; top: 0; transform: translate(-50%, -50%); mix-blend-mode: screen; pointer-events: none; }
 .cinema__flares i::before { width: 150px; height: 150px; border-radius: 50%; background: radial-gradient(circle, rgba(255,255,255,.95) 0, rgba(220,238,255,.6) 7%, rgba(170,210,255,.16) 28%, transparent 64%); }
 .cinema__flares i::after { width: 520px; height: 3px; border-radius: 3px; background: linear-gradient(90deg, transparent, rgba(160,205,255,.55) 35%, rgba(255,255,255,.9) 50%, rgba(160,205,255,.55) 65%, transparent); filter: blur(1px); }
+.cinema__video { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; object-position: 80% 50%; opacity: 0; pointer-events: none; }
 .cinema__fx { position: absolute; inset: 0; width: 100%; height: 100%; mix-blend-mode: screen; pointer-events: none; }
 .cinema__shade {
   position: absolute; inset: 0; pointer-events: none;
