@@ -10,7 +10,7 @@ module.exports = async function (H5) {
   const SGN = { S: (w, h) => [X.x1 + 0.64, X.y1 + 0.2], N: (w, h) => [X.x0 - 0.12 - w, X.y0 - 0.2 - h], E: (w, h) => [X.x1 + 0.2, X.y0 - 0.12 - h], W: (w, h) => [X.x0 - 0.2 - w, X.y1 + 0.12] };
   const signAt = (s, arm, id, h = 0.5, anim) => { const w = signW(id, h); const [x, y] = SGN[arm](w, h); return sign(s, id, x, y, h, anim); };
   const abkSigns = (s) => {
-    s.img('ov_abk.png', { x: 0, y: 0, w: W, h: H });
+    s.img('ov_trail_v.png', { x: 0, y: 0, w: W, h: H }); s.img('ov_trail_h.png', { x: 0, y: 0, w: W, h: H });
     sign(s, '306', X.x1 + 0.64, X.y1 + 0.2, 0.5); s.img('zz_SW.png', { x: X.x1 + 0.61, y: X.y1 + 0.74, w: 0.65, h: 0.5, alt: 'Zusatzzeichen Verlauf der Vorfahrtstraße' });
     sign(s, '306', X.x0 - 0.2 - signW('306', 0.5), X.y1 + 0.12, 0.5); s.img('zz_SW.png', { x: X.x0 - 0.2 - 0.65, y: X.y1 + 0.66, w: 0.65, h: 0.5 });
     signAt(s, 'N', '205'); signAt(s, 'E', '205');
@@ -119,43 +119,78 @@ Und: Mit Vorfahrt fährt man trotzdem bremsbereit. Du darfst dich auf andere ver
   }
 
   // ================= AKT 6 · ABKNICKENDE VORFAHRT =================
+  // Zusatzzeichen groß (zz_big hat 0,15 Rand: Platte = 1,3/1,6 der Bildbreite)
+  const ZZ = (x, y, pw) => ({ x: x - pw * 0.15 / 1.3, y: y - pw * 0.15 / 1.3, w: pw * 1.6 / 1.3, h: pw * 1.3 / 1.3 });
   {
-    const s = add({ bg: 'sc_x.jpg', transition: 'fade', notes: `
-Kapitel: Abknickende Vorfahrt. Die Vorfahrtstraße macht an der Kreuzung einen Knick.
-▶ Das Zusatzzeichen unter dem Schild zeigt den Verlauf von oben: Die dicke Linie ist die Vorfahrtstraße, die dünnen Linien sind die Nebenstraßen. Du kommst immer von unten.
-🖱 Klick 1: Das Zusatzzeichen groß. ❓ Frage: Was bedeuten die dicke und die dünnen Linien?
-🖱 Klick 2: ✅ Dick = Vorfahrtstraße, dünn = Nebenstraßen, du kommst von unten.
-🖱 Klick 3: Die Vorfahrtstraße leuchtet in der Kreuzung auf.
-Hinweis: Das Zusatzzeichen (Nr. 1002) ist hier nachgezeichnet.` });
+    const s = add({ bg: 'bg_black.jpg', transition: 'fade', notes: `
+Kapitel 4: Abknickende Vorfahrt. Die Vorfahrtstraße macht an der Kreuzung einen Knick.
+▶ Unter dem Schild 306 hängt ein Zusatzzeichen (Nr. 1002). Es zeigt die Kreuzung von oben, wie eine kleine Landkarte.
+❓ Frage: Was bedeuten die dicke und die dünnen Linien? Erst raten lassen.
+🖱 Klick 1: Die dicke Linie leuchtet. ✅ Dick = der Verlauf der Vorfahrtstraße.
+🖱 Klick 2: Die dünnen Linien leuchten. ✅ Dünn = die Nebenstraßen, hier musst du nicht warten, die anderen warten.
+❓ Frage: Und wo bist du auf der Karte? 🖱 Klick 3: ✅ Du kommst immer von unten.
+Hinweis: Das Zusatzzeichen ist hier nachgezeichnet.` });
     footer(s);
-    kicker(s, 'Kapitel 4', 0.8, 0.9);
-    title(s, 'Abknickende\nVorfahrt', 0.75, 1.3, 5.2, 2.0, { size: 52 });
-    sign(s, '306', 0.8, 3.55, 1.2, { fx: 'zoom', auto: true, dur: 500 });
-    s.img('zz_SW.png', { x: 0.8, y: 4.85, w: 1.56, h: 1.2, alt: 'Zusatzzeichen Verlauf der Vorfahrtstraße, nachgezeichnet' }, { fx: 'zoom', c: true, dur: 500 });
-    s.text([run('Dick', { bold: true, color: COL.txt }), run(' = Vorfahrtstraße\n'), run('Dünn', { bold: true, color: COL.txt }), run(' = Nebenstraßen\n'), run('Du', { bold: true, color: COL.orange }), run(' kommst immer von unten.')], { x: 2.6, y: 4.8, w: 3.4, h: 1.3, size: 17, color: COL.muted, lsm: 1.15 }, { fx: 'rise', c: true });
-    s.img('ov_abk.png', { x: 0, y: 0, w: W, h: H }, { fx: 'wipeU', c: true, dur: 1200 });
+    kicker(s, 'Kapitel 4', 0.8, 0.9, { name: '!!k' });
+    title(s, 'Abknickende\nVorfahrt', 0.75, 1.3, 5.2, 2.0, { size: 52, name: '!!t' });
+    body(s, 'Unter dem Schild hängt eine kleine Landkarte.\nKannst du sie lesen?', 0.8, 3.45, 4.8, 1.0, { size: 19 });
+    const pw = 2.6, zx = 9.25 - pw / 2, zy = 3.25;
+    sign(s, '306', 9.25 - 0.95, 1.05, 1.9, { fx: 'zoom', auto: true, a: true, dur: 700 }, { name: '!!s306' });
+    s.img('zz_big.png', { ...ZZ(zx, zy, pw), name: '!!zz', alt: 'Zusatzzeichen Verlauf der Vorfahrtstraße, nachgezeichnet' }, { fx: 'rise', auto: true, a: true, dur: 700 });
+    // Klick 1: dick
+    s.img('zz_thick_glow.png', ZZ(zx, zy, pw), { fx: 'fade', c: true, dur: 700 });
+    s.text([run('Dick', { bold: true, color: COL.orange }), run('\n= Vorfahrtstraße')], { x: 10.95, y: 3.35, w: 2.2, h: 0.85, size: 20, bold: true, color: COL.txt, lsm: 1.0 }, { fx: 'flyR', a: true, dur: 600 });
+    // Klick 2: dünn
+    s.img('zz_thin_glow.png', ZZ(zx, zy, pw), { fx: 'fade', c: true, dur: 700 });
+    s.text([run('Dünn', { bold: true, color: '8FB3FF' }), run('\n= Nebenstraßen')], { x: 10.95, y: 4.4, w: 2.2, h: 0.85, size: 20, bold: true, color: COL.txt, lsm: 1.0 }, { fx: 'flyR', a: true, dur: 600 });
+    // Klick 3: du
+    s.shape(pres.shapes.UP_ARROW, { x: 9.25 - 0.22, y: zy + 2.1, w: 0.44, h: 0.6, fill: COL.orange, glow: 10, glowColor: COL.orange, glowOp: 0.6 }, { fx: 'rise', c: true, dur: 600 });
+    s.text('Du kommst immer von unten.', { x: 6.9, y: zy + 2.78, w: 4.7, h: 0.5, font: SERIF, size: 24, bold: true, italic: true, color: COL.orange, align: 'center' }, { fx: 'fade', a: true });
+  }
+  {
+    const s = add({ bg: 'sc_x.jpg', transition: 'morph', dur: 1400, notes: `
+Morph: Das Schild wandert an seinen Platz an der Kreuzung. Jetzt legen wir die Karte auf die Straße.
+❓ Frage vorher: Wie verläuft hier die Vorfahrtstraße? ✅ Von unten nach links.
+🖱 Klick 1: Die Vorfahrtstraße leuchtet auf, von unten bis nach links.
+🖱 Klick 2: Die Schilder der anderen Zufahrten erscheinen. ✅ Links steht auch 306 mit Zusatzzeichen, oben und rechts steht 205 „Vorfahrt gewähren“.
+▶ Merke: Wer auf der dicken Linie fährt, hat Vorfahrt, auch um die Ecke.` });
+    footer(s);
+    kicker(s, 'Kapitel 4', 0.8, 0.9, { name: '!!k' });
+    title(s, 'Abknickende\nVorfahrt', 0.75, 1.3, 5.2, 2.0, { size: 52, name: '!!t' });
+    sign(s, '306', X.x1 + 0.64, X.y1 + 0.2, 0.5, undefined, { name: '!!s306' });
+    s.img('zz_big.png', { ...ZZ(X.x1 + 0.61, X.y1 + 0.74, 0.65), name: '!!zz', alt: 'Zusatzzeichen Verlauf der Vorfahrtstraße' });
+    s.img('ov_trail_v.png', { x: 0, y: 0, w: W, h: H }, { fx: 'wipeU', c: true, dur: 1300 });
+    s.img('ov_trail_h.png', { x: 0, y: 0, w: W, h: H }, { fx: 'wipeL', a: true, dur: 900 });
+    body(s, 'Die Vorfahrtstraße knickt\nnach links ab.', 0.8, 3.45, 4.6, 0.9, { size: 21, bold: true, color: COL.amber }, { fx: 'fade', a: true });
+    const wx = X.x0 - 0.2 - signW('306', 0.5);
+    sign(s, '306', wx, X.y1 + 0.12, 0.5, { fx: 'zoom', c: true, dur: 400 });
+    s.img('zz_SW.png', { x: X.x0 - 0.2 - 0.65, y: X.y1 + 0.66, w: 0.65, h: 0.5 }, { fx: 'zoom', dur: 400 });
+    signAt(s, 'N', '205', 0.5, { fx: 'zoom', a: true, dur: 400 }); signAt(s, 'E', '205', 0.5, { fx: 'zoom', dur: 400 });
+    body(s, 'Oben und rechts: Vorfahrt gewähren.', 0.8, 4.4, 4.6, 0.5, { size: 19 }, { fx: 'fade', a: true });
   }
   {
     const s = add({ bg: 'bg_amber.jpg', transition: 'fade', notes: `
-Die Regeln. Nur drei, aber die sitzen. Vor jedem Klick fragen: ❓ Was glaubt ihr?
-🖱 Klick 1 · Blinken: Wer dem Knick folgt, ändert die Richtung und muss blinken.
-🖱 Klick 2 · Auf der Vorfahrtstraße untereinander gelten die Abbiegeregeln (§ 9 StVO): z. B. Gegenverkehr beachten.
-🖱 Klick 3 · Auf den Nebenstraßen untereinander gilt rechts vor links.
+Die Regeln. Nur drei, aber die sitzen. Vor jedem Klick die Skizze kurz beschreiben und fragen: ❓ Was gilt hier?
+🖱 Klick 1 · ✅ Wer dem Knick folgt, ändert die Richtung und muss blinken. Hier: Du folgst nach links, also links blinken.
+🖱 Klick 2 · ✅ Auf der Vorfahrtstraße gelten untereinander die Abbiegeregeln (§ 9 StVO). In der Skizze folgen beide dem Knick, ihre Wege kreuzen sich nicht: Sie fahren gleichzeitig.
+🖱 Klick 3 · ✅ Auf den Nebenstraßen gilt untereinander rechts vor links. 1 kommt für 2 von rechts, also fährt 1 zuerst.
 🖱 Klick 4 · ❓ Und wer geradeaus fährt und damit die Vorfahrtstraße verlässt? ✅ Blinkt nicht, er lenkt ja nicht.` });
     footer(s);
     kicker(s, 'Drei Regeln', 0.8, 0.9, { color: COL.amber });
     title(s, 'So klappt der Knick', 0.75, 1.3, 12, 1.0, { size: 46 });
-    const r = [['1', 'Dem Knick folgen = blinken', 'Du änderst die Richtung. Also Blinker setzen.'],
-      ['2', 'Auf der Vorfahrtstraße untereinander', 'Es gelten die Abbiegeregeln, z. B. Gegenverkehr beachten.'],
-      ['3', 'Auf den Nebenstraßen untereinander', 'Es gilt rechts vor links.']];
-    r.forEach(([n, t, d], i) => {
-      const y = 2.6 + i * 1.3;
-      s.rrect(0.8, y, 11.7, 1.1, { fill: COL.card, line: '2A3342', rr: 0.12 }, { fx: 'flyL', c: true, dur: 600 });
-      s.text(n, { x: 1.05, y: y + 0.2, w: 0.7, h: 0.7, font: SERIF, size: 28, bold: true, color: '1A0E05', fill: COL.orange, shape: pres.shapes.OVAL, align: 'center', valign: 'middle' }, { fx: 'zoom', dur: 300 });
-      s.text(t, { x: 2.05, y: y + 0.1, w: 10.2, h: 0.5, font: SERIF, size: 23, bold: true }, { fx: 'fade', dur: 300 });
-      s.text(d, { x: 2.05, y: y + 0.58, w: 10.2, h: 0.42, size: 17, color: COL.muted }, { fx: 'fade', dur: 300 });
+    const r = [['rule_1', 'Knick folgen: blinken', 'Du änderst die Richtung. Also Blinker setzen.'],
+      ['rule_2', 'Auf der Vorfahrtstraße', 'Untereinander gelten die Abbiegeregeln. Hier: gleichzeitig.'],
+      ['rule_3', 'Auf den Nebenstraßen', 'Untereinander gilt rechts vor links. 1 vor 2.']];
+    const cw = 3.75, gap = 0.225, x0 = (W - (3 * cw + 2 * gap)) / 2, y = 2.4;
+    r.forEach(([img, t, d], i) => {
+      const x = x0 + i * (cw + gap);
+      s.rrect(x, y, cw, 3.95, { fill: COL.card, line: '3A3322', rr: 0.12, shadow: true }, { fx: 'rise', c: true, dur: 600 });
+      s.img(img + '.png', { x: x + 0.2, y: y + 0.2, w: cw - 0.4, h: (cw - 0.4) * 2.1 / 3.4 }, { fx: 'fade', dur: 500 });
+      s.text(String(i + 1), { x: x + 0.05, y: y + 0.05, w: 0.6, h: 0.6, font: SERIF, size: 24, bold: true, color: '1A0E05', fill: COL.orange, shape: pres.shapes.OVAL, align: 'center', valign: 'middle', glow: 10, glowColor: COL.orange, glowOp: 0.5 }, { fx: 'stamp', dur: 380 });
+      s.text(t, { x: x + 0.25, y: y + 2.4, w: cw - 0.5, h: 0.5, font: SERIF, size: 21, bold: true }, { fx: 'fade', dur: 350 });
+      s.text(d, { x: x + 0.25, y: y + 2.9, w: cw - 0.5, h: 0.9, size: 16, color: COL.muted }, { fx: 'fade', dur: 350 });
     });
-    body(s, 'Geradeaus aus der Vorfahrtstraße raus? Nicht blinken, du lenkst ja nicht.', 0.8, 6.6, 11.7, 0.4, { size: 17, italic: true, align: 'center' }, { fx: 'fade', c: true });
+    body(s, 'Geradeaus aus der Vorfahrtstraße raus? Nicht blinken, du lenkst ja nicht.', 0.8, 6.6, 11.7, 0.4, { size: 17, italic: true, align: 'center', color: COL.amber }, { fx: 'fade', c: true });
   }
   {
     const s = add({ bg: 'sc_x.jpg', transition: 'fade', notes: `

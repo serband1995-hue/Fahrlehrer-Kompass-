@@ -1,5 +1,5 @@
 // Überleitungen (➜) für die Sprechernotizen, je Folie. Prüft, dass die Reihenfolge noch stimmt.
-const T = [
+const TT = [
   ['Wer fährt', 'Bevor wir anfangen, eine Zahl, die euch überraschen wird.'],
   ['Jeden Tag', ''],
   ['Jeden Tag', ''],
@@ -30,6 +30,7 @@ const T = [
   ['Vorfahrt haben, Vorfahrt geben', 'Das strengste davon: das Stoppschild. Was heißt hier Anhalten?'],
   ['Stopp heißt Stopp', 'Und was passiert, wenn einer das Schild übersieht?'],
   ['Was passiert dann', 'Kapitel 4: Wenn die Vorfahrtstraße einen Knick macht.'],
+  ['Abknickende', 'Jetzt legen wir die Karte auf die Straße.'],
   ['Abknickende', 'Drei Regeln, dann klappt jeder Knick.'],
   ['So klappt der Knick', 'Schauen wir uns das in Bewegung an.'],
   ['Dem Knick folgen', 'Und jetzt kommt Runde 5 im Kreuzungs-Duell.'],
@@ -81,11 +82,21 @@ const T = [
   ['Auf den Gleisen', 'Wer trotzdem rüberfährt, zahlt teuer.'],
   ['Was es kostet', 'Jetzt seid ihr dran: Ihr baut selbst ein Rätsel.'],
   ['Ihr baut das Rätsel', 'So baut ihr euer Plakat.'],
-  ['4 Schritte zum Plakat', 'Nach den Vorstellungen: Was nehmt ihr heute mit?'],
+  ['4 Schritte zum Plakat', 'Die Zeit ist um. Gruppe 1, ihr seid dran!'],
+  ['Gruppe 1 ist dran', 'Danke, Gruppe 1! Jetzt die Musterlösung: Wohin gehört welches Schild?'],
+  ['So wird sortiert', 'Und jetzt die typischen Fehler: Stimmt das?'],
+  ['Stimmt das? Schilder', 'Gruppe 2, ihr seid dran!'],
+  ['Gruppe 2 ist dran', 'Danke, Gruppe 2! Die Musterlösung: Darf ich rüber?'],
+  ['Darf ich rüber', 'Und die typischen Fehler bei Linien und Helfern.'],
+  ['Stimmt das? Linien', 'Gruppe 3, ihr seid dran!'],
+  ['Gruppe 3 ist dran', 'Danke, Gruppe 3! Die Musterlösung in drei Schritten.'],
+  ['Ankündigen, warten, retten', 'Und die typischen Fehler am Bahnübergang.'],
+  ['Stimmt das? Bahn', 'Alle Gruppen waren dran. Was nehmt ihr heute mit?'],
   ['Sechs Sätze zum Lesen', 'Ein letzter Satz für heute.'],
   ['Wer lesen kann', 'Ende des Abends. Nächstes Mal: Lektion 7 und 8.'],
 ];
 module.exports = function (deck) {
+  const T = process.env.NUR5 ? TT.slice(0, TT.findIndex(t => t[0] === '15 Minuten Pause') + 1) : TT;
   if (deck.slides.length !== T.length) throw new Error(`Überleitungen: ${T.length} Einträge, aber ${deck.slides.length} Folien`);
   deck.slides.forEach((c, i) => {
     const k = (c.tkey || '') + ' ' + (c.key || '');

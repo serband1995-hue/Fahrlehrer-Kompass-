@@ -646,6 +646,166 @@ Farbcode für alle gleich: Grün = darf, Rot = verboten.` });
     s.text('MERKSATZ: ______________', { x: px + 0.3, y: py + 4.55, w: pw - 0.6, h: 0.45, size: 16, bold: true, color: 'C0501A' }, { fx: 'fade', auto: true });
   }
 
+  // ================= VORSTELLUNG + MUSTERLÖSUNG =================
+  // Bühne: „Gruppe X ist dran“, Fakten fliegen per Klick herein
+  const stage = (n, name, ic, facts, notes) => {
+    const s = add({ bg: 'bg_stage.jpg', transition: 'black', footer: false, notes });
+    kicker(s, 'Vorstellung', 0.8, 0.55, { w: 11.7, align: 'center' }, { fx: 'fade', auto: true });
+    title(s, `Gruppe ${n} ist dran!`, 0.8, 0.9, 11.7, 1.1, { size: 58, align: 'center' }, { fx: 'rise', auto: true, a: true, dur: 1000 });
+    s.text(name, { x: 0.8, y: 1.95, w: 11.7, h: 0.6, font: SERIF, size: 28, italic: true, bold: true, color: COL.orange, align: 'center' }, { fx: 'fade', auto: true, a: true });
+    s.oval(W / 2 - 0.75, 3.3, 1.5, 1.5, { fill: '1A120A', line: COL.orange, lw: 2.5, glow: 22, glowColor: COL.orange, glowOp: 0.45 }, { fx: 'zoom', auto: true, a: true, dur: 700 });
+    s.img(ic, { x: W / 2 - 0.42, y: 3.63, w: 0.84, h: 0.84 }, { fx: 'fade', auto: true });
+    s.text('2 Minuten · Erst rät die Klasse, dann löst ihr auf.', { x: 0.8, y: 6.7, w: 11.7, h: 0.4, size: 16, italic: true, color: COL.muted, align: 'center' }, { fx: 'fade', auto: true, a: true });
+    const pos = [[0.6, 2.95, -2, 'flyL'], [9.13, 2.95, 2, 'flyR'], [0.6, 4.75, 1.5, 'flyL'], [9.13, 4.75, -1.5, 'flyR']];
+    facts.forEach((f, i) => {
+      const [x, y, rot, fx] = pos[i];
+      s.text(f, { x, y, w: 3.6, h: 1.35, size: 19, bold: true, color: COL.txt, fill: '15110D', line: COL.orange, lw: 1.5, shape: pres.shapes.ROUNDED_RECTANGLE, rr: 0.12, align: 'center', valign: 'middle', margin: 10, rotate: rot, glow: 10, glowColor: COL.orange, glowOp: 0.25, lsm: 1.0 }, { fx, c: true, dur: 700 });
+    });
+  };
+  // Fehler-Check: Aussage per Klick, dann Stempel RICHTIG/FALSCH mit Begründung
+  const check = (n, t, rows, notes) => {
+    const s = add({ bg: 'bg_center.jpg', transition: 'fade', notes });
+    footer(s);
+    kicker(s, `Fehler-Check · Gruppe ${n}`, 0.8, 0.9);
+    title(s, t, 0.75, 1.3, 12, 1.0, { size: 42 });
+    rows.forEach(([st, ok, why], i) => {
+      const y = 2.4 + i * 1.12;
+      s.rrect(0.8, y, 8.75, 0.98, { fill: COL.card, line: '2A3342', rr: 0.12 }, { fx: 'flyL', c: true, dur: 600 });
+      s.text(st, { x: 1.05, y: y + 0.06, w: 8.3, h: 0.48, size: 19, bold: true, valign: 'middle' }, { fx: 'fade', dur: 300 });
+      s.text(why, { x: 1.05, y: y + 0.52, w: 8.3, h: 0.4, size: 15, color: ok ? '7FD1A3' : 'F29A9A', valign: 'middle' }, { fx: 'fade', c: true, dur: 400 });
+      chip(s, ok ? 'RICHTIG' : 'FALSCH', 9.85, y + 0.2, 2.6, { h: 0.6, size: 22, fill: ok ? COL.green : COL.red, color: '0A0C10', rotate: -3, glow: 12, glowColor: ok ? COL.green : COL.red, glowOp: 0.45 }, { fx: 'stamp', a: true, dur: 380 });
+    });
+  };
+  const fnotes = (rows) => rows.map(([st, ok, why], i) => `🖱 Klick ${2 * i + 1}: „${st}“ ❓ Stimmt das? Abstimmen lassen.\n🖱 Klick ${2 * i + 2}: ✅ ${ok ? 'RICHTIG' : 'FALSCH'}. ${why}`).join('\n');
+
+  // ---------- Gruppe 1 ----------
+  stage(1, 'Schilder-Detektive', I6.sign, ['Dreieck:\nGefahrzeichen', 'Kreis: Vorschrift\nblau Gebot, rot Verbot', 'Rechteck:\nRichtzeichen', 'Zusatzzeichen gilt nur\nfür das Zeichen darüber'], `
+Gruppe 1 stellt vor: Schilder-Detektive. Die Gruppe steht vorne, die Folie läuft im Hintergrund.
+▶ Erst rät die Klasse das Rätsel der Gruppe, dann löst die Gruppe auf (2 Minuten).
+🖱 Klick 1–4: Während oder nach der Vorstellung fliegen die Kern-Fakten herein. Gemeinsam abhaken: Was hat die Gruppe genannt, was fehlt?
+✅ Das sollte drin sein: Dreieck = Gefahrzeichen (§ 40) · Kreis = Vorschriftzeichen (§ 41), blau Gebot, rot umrandet Verbot · Rechteck = Richtzeichen (§ 42) · Zusatzzeichen gilt nur für das Zeichen darüber.
+Typische Fehler: Radweg (blau, rund) als Richtzeichen · Fußgängerüberweg 350 als Gefahrzeichen.
+Applaus für die Gruppe, dann die Musterlösung.`);
+  {
+    const s = add({ bg: 'bg_amber.jpg', transition: 'fade', notes: `
+Musterlösung Gruppe 1: So werden die Schilder vom Arbeitsblatt sortiert.
+Vor jedem Klick fragen: ❓ Welche Schilder vom Streifen gehören in diese Spalte?
+🖱 Klick 1: ✅ Gefahrzeichen: Gefahrstelle (101), Kinder (136), Wildwechsel (142).
+🖱 Klick 2: ✅ Vorschriftzeichen: Höchstgeschwindigkeit 70 (274), Verbot der Einfahrt (267), Überholverbot (276), Radweg (237, blaues Gebot).
+🖱 Klick 3: ✅ Richtzeichen: Autobahn (330.1), Fußgängerüberweg (350), Einbahnstraße (220).
+▶ Mit dem Plakat vergleichen: Was lag in der falschen Spalte? Meist sind es der Radweg und der Fußgängerüberweg.` });
+    footer(s);
+    kicker(s, 'Musterlösung · Gruppe 1', 0.8, 0.9, { color: COL.amber });
+    title(s, 'So wird sortiert', 0.75, 1.3, 12, 1.0, { size: 44 });
+    const COLS = [['Gefahrzeichen', COL.red, 'F29A9A', [['101', 'Gefahrstelle'], ['136_10', 'Kinder'], ['142_10', 'Wildwechsel']]],
+      ['Vorschriftzeichen', COL.blue, '8FB3FF', [['274_70', 'Höchstens 70'], ['267', 'Verbot der Einfahrt'], ['276', 'Überholverbot'], ['237', 'Radweg (Gebot)']]],
+      ['Richtzeichen', '4A9B6E', '7FD1A3', [['330_1', 'Autobahn'], ['350_10', 'Fußgängerüberweg'], ['220_10', 'Einbahnstraße']]]];
+    const bw = 3.75, bg = 0.225, bx0 = (W - (3 * bw + 2 * bg)) / 2, by = 2.4;
+    COLS.forEach(([t, lc, tc, L], i) => {
+      const x = bx0 + i * (bw + bg);
+      s.rrect(x, by, bw, 4.4, { fill: '10141B', line: lc, lw: 2, rr: 0.12 });
+      s.text(t, { x, y: by + 0.12, w: bw, h: 0.45, font: SERIF, size: 21, bold: true, align: 'center', color: tc });
+      L.forEach(([id, nm], j) => {
+        const y = by + 0.72 + j * 0.9, h = id === '220_10' ? 0.34 : 0.72, w = signW(id, h);
+        const a0 = j === 0 ? { c: true } : { d: j * 120 };
+        sign(s, id, x + 0.3 + (1.0 - w) / 2 + (id === '220_10' ? 0.1 : 0), y + (0.72 - h) / 2, h, { fx: 'zoom', dur: 400, ...a0 });
+        s.text(nm, { x: x + 1.45, y, w: bw - 1.6, h: 0.72, size: 17, bold: true, valign: 'middle' }, { fx: 'fade', dur: 400, d: j * 120 + 100 });
+      });
+    });
+  }
+  const F1 = [['Blau heißt immer Richtzeichen.', false, 'Rund und blau ist ein Gebot, z. B. Radweg: ein Vorschriftzeichen.'],
+    ['Ein Zusatzzeichen gilt nur für das Zeichen darüber.', true, 'Genau. Es schränkt ein oder ergänzt, z. B. „bei Nässe“.'],
+    ['„Vorfahrt gewähren“ ist ein Gefahrzeichen.', false, 'Es ist ein Vorschriftzeichen. Die Form mit der Spitze nach unten gibt es nur einmal.'],
+    ['Das blaue Schild „Fußgängerüberweg“ ist ein Richtzeichen.', true, 'Es zeigt dir: Hier ist ein Zebrastreifen. Fußgänger haben Vorrang.']];
+  check(1, 'Stimmt das? Schilder', F1, `
+Fehler-Check zu Gruppe 1. Hier werden die typischen Fehler geklärt.
+${fnotes(F1)}
+Quellen: Anlage 1–3 zur StVO (Gefahr-, Vorschrift-, Richtzeichen), § 26 StVO.`);
+
+  // ---------- Gruppe 2 ----------
+  stage(2, 'Linien und Helfer', I6.bar, ['Gestrichelt:\ndarfst du drüber', 'Durchgezogen:\nniemals drüber', 'Gelb schlägt Weiß', 'Leitpfosten: rechts Rechteck,\nlinks zwei Punkte'], `
+Gruppe 2 stellt vor: Linien und Helfer.
+▶ Erst rät die Klasse („Darf ich hier rüber?“), dann löst die Gruppe auf (2 Minuten).
+🖱 Klick 1–4: Kern-Fakten fliegen herein. Gemeinsam abhaken, was genannt wurde.
+✅ Das sollte drin sein: Leitlinie (gestrichelt) darf überfahren werden · Fahrstreifenbegrenzung (durchgezogen) nicht · einseitige nur von der gestrichelten Seite · Gelb schlägt Weiß (§ 39 Abs. 5) · Leitbake: Streifen fallen zur Vorbeifahr-Seite · Leitpfosten rechts Rechteck, links zwei Punkte, meist alle 50 m.
+Typische Fehler: einseitige Linie falsch herum gelesen · „Weiß gilt immer“.`);
+  {
+    const s = add({ bg: 'bg_blue.jpg', transition: 'fade', notes: `
+Musterlösung Gruppe 2: vier Linien. Du fährst immer auf dem unteren Fahrstreifen (orange).
+Vor jedem Klick fragen: ❓ Darfst du hier rüber?
+🖱 Klick 1: ✅ Leitlinie (Zeichen 340): Ja, darfst du überfahren, z. B. zum Überholen.
+🖱 Klick 2: ✅ Fahrstreifenbegrenzung (Zeichen 295): Nein, nicht überfahren.
+🖱 Klick 3: ✅ Einseitige Fahrstreifenbegrenzung (Zeichen 296): Die gestrichelte Linie ist auf deiner Seite, also darfst du rüber. Von der anderen Seite nicht.
+🖱 Klick 4: ✅ Baustelle: Die gelbe Linie gilt, die weiße nicht mehr (§ 39 Abs. 5 StVO). Gelb ist hier gestrichelt, also darfst du rüber.` });
+    footer(s);
+    kicker(s, 'Musterlösung · Gruppe 2', 0.8, 0.9, { color: COL.blue });
+    title(s, 'Darf ich rüber?', 0.75, 1.3, 12, 1.0, { size: 44 });
+    const Lc = [['Leitlinie', [['dash', 'D9DEE5', 0]], true, 'Ja'], ['Fahrstreifen-\nbegrenzung', [['solid', 'D9DEE5', 0]], false, 'Nein'],
+      ['Einseitige\nBegrenzung', [['solid', 'D9DEE5', -0.05], ['dash', 'D9DEE5', 0.05]], true, 'Von hier: Ja'], ['Baustelle:\nWeiß und Gelb', [['solid', 'D9DEE5', -0.07], ['dash', 'F2C230', 0.07]], true, 'Gelb gilt: Ja']];
+    const cw = 2.8, gx = 0.2, x0 = (W - (4 * cw + 3 * gx)) / 2, y = 2.45;
+    Lc.forEach(([t, lines, ok, v], i) => {
+      const x = x0 + i * (cw + gx);
+      s.rrect(x, y, cw, 4.1, { fill: COL.card, line: '2A3342', rr: 0.12 });
+      s.rect(x + 0.2, y + 0.25, cw - 0.4, 1.3, { fill: '1A222D' });
+      lines.forEach(([k, c, dy]) => s.lineS(x + 0.2, y + 0.9 + dy, x + cw - 0.2, y + 0.9 + dy, { color: c, lw: 3, dash: k === 'dash' ? 'dash' : undefined }));
+      s.img('car_du.png', { x: x + cw / 2 - 0.3, y: y + 1.25 - 0.15, w: 0.3, h: 0.6, rotate: 90 });
+      s.text(t, { x, y: y + 1.75, w: cw, h: 0.85, font: SERIF, size: 20, bold: true, align: 'center', valign: 'middle', lsm: 0.95 });
+      chip(s, v, x + 0.3, y + 2.95, cw - 0.6, { h: 0.62, size: 21, fill: ok ? COL.green : COL.red, color: '0A0C10', rotate: -2, glow: 12, glowColor: ok ? COL.green : COL.red, glowOp: 0.45 }, { fx: 'stamp', c: true, dur: 380 });
+    });
+  }
+  const F2 = [['In der Baustelle gelten die weißen Linien weiter.', false, 'Gibt es gelbe Linien, gelten nur die gelben. Gelb schlägt Weiß.'],
+    ['An der Leitbake fahre ich dort vorbei, wohin die Streifen fallen.', true, 'Die Streifen zeigen nach unten zur Seite, auf der du vorbeifährst.'],
+    ['Leitpfosten mit zwei runden Punkten stehen rechts.', false, 'Rechts steht das Rechteck, links die zwei Punkte. Rechts = Rechteck.'],
+    ['Im Nebel nur noch ein Leitpfosten zu sehen? Höchstens 50 km/h.', true, 'Sicht unter 50 m: höchstens 50 km/h, auch auf der Autobahn.']];
+  check(2, 'Stimmt das? Linien und Helfer', F2, `
+Fehler-Check zu Gruppe 2.
+${fnotes(F2)}
+Quellen: § 39 Abs. 5, § 3 Abs. 1 StVO, Anlage 2 und 4 zur StVO.`);
+
+  // ---------- Gruppe 3 ----------
+  stage(3, 'Bahnübergang', I6.train, ['Baken:\n240 · 160 · 80 m', 'Kraftfahrzeuge\nnicht überholen', 'Stau hinter den Gleisen?\nVor dem Kreuz warten', 'Notfall:\nraus, weg, 112'], `
+Gruppe 3 stellt vor: Bahnübergang.
+▶ Erst rät die Klasse („Wann darf A fahren?“), dann löst die Gruppe auf (2 Minuten).
+🖱 Klick 1–4: Kern-Fakten fliegen herein. Gemeinsam abhaken, was genannt wurde.
+✅ Das sollte drin sein: Baken 3 / 2 / 1 Streifen ≈ 240 / 160 / 80 m · ab Zeichen 151 bzw. 156 bis über den Übergang keine Kraftfahrzeuge überholen · die 5 Wartefälle (§ 19 Abs. 2) · Stau: vor dem Andreaskreuz warten (§ 19 Abs. 3) · Notfall: raus, weg von den Gleisen, 112.
+Typische Fehler: „Bei offener Schranke darf ich immer fahren“ · im Notfall zuerst das Auto retten wollen.`);
+  {
+    const s = add({ bg: 'bg_red.jpg', transition: 'fade', notes: `
+Musterlösung Gruppe 3 in drei Schritten. Vor jedem Klick fragen.
+❓ Woran erkenne ich, dass ein Bahnübergang kommt? 🖱 Klick 1: ✅ Baken mit 3, 2, 1 Streifen, etwa 240, 160, 80 m vorher. Ab hier Kraftfahrzeuge nicht überholen.
+❓ Wann muss ich warten? 🖱 Klick 2: ✅ Zug kommt · rotes Blinklicht oder gelbes/rotes Licht · Schranke senkt sich oder ist zu · Bahnmitarbeiter zeigt Halt · Pfeifsignal. Und: Stau hinter den Gleisen.
+❓ Was tue ich, wenn ich auf den Gleisen liegen bleibe? 🖱 Klick 3: ✅ Alle raus, weg von den Gleisen, 112 oder 110. Auto nur schieben, wenn kein Zug in Sicht ist. Zwischen Vollschranken gefangen: durchfahren.` });
+    footer(s);
+    kicker(s, 'Musterlösung · Gruppe 3', 0.8, 0.9, { color: COL.red });
+    title(s, 'Ankündigen, warten, retten', 0.75, 1.3, 12, 1.0, { size: 44 });
+    const cw = 3.75, gap = 0.225, x0 = (W - (3 * cw + 2 * gap)) / 2, y = 2.4, ch = 4.3;
+    const heads = ['1 · Ankündigung', '2 · Warten, wenn …', '3 · Notfall'];
+    heads.forEach((t, i) => {
+      const x = x0 + i * (cw + gap);
+      s.rrect(x, y, cw, ch, { fill: COL.card, line: '3A2A2A', rr: 0.12, shadow: true }, { fx: 'rise', c: true, dur: 600 });
+      s.text(t, { x: x + 0.25, y: y + 0.15, w: cw - 0.5, h: 0.5, font: SERIF, size: 22, bold: true, color: COL.orange }, { fx: 'fade', dur: 300 });
+      if (i === 0) {
+        [['bb3', '240 m'], ['bb2', '160 m'], ['bb1', '80 m']].forEach(([f, d], j) => {
+          const bx = x + 0.45 + j * 1.05;
+          vimg(s, f, bx, y + 0.85, 1.7, { fx: 'rise', dur: 400, d: 200 + j * 150 });
+          s.text(d, { x: bx - 0.3, y: y + 2.6, w: 0.95, h: 0.4, size: 17, bold: true, align: 'center' }, { fx: 'fade', dur: 300, d: 300 + j * 150 });
+        });
+        s.text('Kraftfahrzeuge nicht überholen', { x: x + 0.25, y: y + 3.2, w: cw - 0.5, h: 0.8, size: 18, bold: true, color: 'F29A9A', align: 'center', valign: 'middle' }, { fx: 'fade', dur: 400, d: 800 });
+      } else {
+        const L = i === 1 ? ['Zug kommt', 'Blinklicht oder Lichtzeichen', 'Schranke senkt sich oder ist zu', 'Bahnmitarbeiter zeigt Halt', 'Pfeifsignal', 'Stau hinter den Gleisen'] : ['Alle raus', 'Weg von den Gleisen', 'Notruf 112 oder 110', 'Kein Zug in Sicht? Auto schieben', 'Zwischen Vollschranken? Durchfahren'];
+        s.text(L.map(l => ({ text: l, options: { bullet: true, breakLine: true } })), { x: x + 0.25, y: y + 0.8, w: cw - 0.45, h: ch - 1.0, size: 17, bold: true, color: COL.txt, valign: 'top', psa: 6 }, { fx: 'fade', dur: 400, d: 200 });
+      }
+    });
+  }
+  const F3 = [['Die Schranke ist offen, also darf ich immer rüber.', false, 'Staut es sich hinter den Gleisen, wartest du vor dem Andreaskreuz.'],
+    ['Rotes Blinklicht, aber kein Zug zu sehen: Ich darf fahren.', false, 'Blinklicht heißt warten. Sonst 240 €, 2 Punkte, 1 Monat Fahrverbot.'],
+    ['Bleibe ich auf den Gleisen stehen, müssen zuerst alle raus.', true, 'Menschen zuerst: raus, weg von den Gleisen, dann Notruf.'],
+    ['Vor dem Bahnübergang darf ich Autos noch schnell überholen.', false, 'Ab den Baken bis über die Gleise: Kraftfahrzeuge nicht überholen.']];
+  check(3, 'Stimmt das? Bahnübergang', F3, `
+Fehler-Check zu Gruppe 3.
+${fnotes(F3)}
+Quellen: § 19 StVO, Bußgeldkatalog (BKatV), Deutsche Bahn / „Runter vom Gas“.`);
+
   // ================= FINALE =================
   {
     const s = add({ bg: 'bg_bokeh.jpg', transition: 'fade', notes: `
