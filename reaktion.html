@@ -1,0 +1,178 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta http-equiv="Cache-Control" content="no-store">
+<meta name="theme-color" content="#0a1210">
+<title>Reaktionstest</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Anton&family=Barlow:wght@400;600;700;800&family=Kaushan+Script&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#0a1210; --surface:#132420; --line:#24413a; --txt:#eef3ef; --muted:#8fada2; --faint:#5c766c;
+  --akzent:#3a7350; --akzent-bright:#4a8b5c; --mint:#bcd6c5; --gold:#c9a227; --rot:#e0533f;
+  --glass:rgba(28,48,37,.55); --glass-brd:rgba(120,170,140,.16);
+  --ease:cubic-bezier(.4,0,.2,1); --pop:cubic-bezier(.34,1.56,.64,1);
+}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent;}
+html,body{margin:0;padding:0;height:100%;}
+body{background:var(--bg);color:var(--txt);font-family:'Barlow',system-ui,-apple-system,sans-serif;min-height:100vh;overflow-x:hidden;
+  -webkit-user-select:none;user-select:none;touch-action:manipulation;}
+body::before{content:"";position:fixed;inset:0;z-index:0;pointer-events:none;
+  background:radial-gradient(ellipse 70% 50% at 50% -10%,rgba(58,115,80,.20),transparent 70%),
+             radial-gradient(ellipse 60% 40% at 100% 100%,rgba(201,162,39,.07),transparent 70%);}
+.wrap{position:relative;z-index:1;width:100%;max-width:520px;margin:0 auto;padding:22px 20px 40px;}
+.screen{display:none;}
+.screen.on{display:block;animation:fadein .38s var(--ease);}
+@keyframes fadein{from{opacity:0;transform:translateY(10px);}to{opacity:1;transform:none;}}
+.hero{text-align:center;padding:24px 0 20px;}
+.hero-kicker{font-family:'Kaushan Script',cursive;font-size:20px;color:var(--gold);margin-bottom:4px;}
+.hero-t{font-family:'Anton',sans-serif;font-size:clamp(34px,10vw,46px);line-height:1.02;text-transform:uppercase;margin:0 0 14px;}
+.hero-t span{color:var(--akzent-bright);}
+.hero-p{color:var(--muted);font-size:15.5px;line-height:1.55;margin:0 auto 26px;max-width:340px;}
+.meta{display:flex;gap:8px;justify-content:center;flex-wrap:wrap;margin-bottom:26px;}
+.meta span{font-size:12px;font-weight:700;color:var(--mint);background:var(--glass);border:1px solid var(--glass-brd);padding:7px 13px;border-radius:99px;}
+.btn{width:100%;padding:16px 20px;border:none;border-radius:15px;cursor:pointer;font-family:inherit;font-size:15.5px;font-weight:800;transition:transform .16s var(--pop);}
+.btn:active{transform:scale(.975);}
+.btn-primary{background:linear-gradient(135deg,var(--akzent),var(--akzent-bright));color:#fff;box-shadow:0 8px 22px rgba(58,115,80,.32);}
+.btn-ghost{background:var(--surface);color:var(--mint);border:1px solid var(--line);margin-top:9px;}
+
+/* Testfläche */
+.pad{height:62vh;min-height:320px;border-radius:24px;display:flex;flex-direction:column;align-items:center;justify-content:center;
+  text-align:center;cursor:pointer;border:1px solid var(--glass-brd);background:var(--surface);transition:background .08s;padding:20px;}
+.pad .big{font-family:'Anton',sans-serif;font-size:clamp(40px,13vw,64px);text-transform:uppercase;line-height:1;}
+.pad .small{color:var(--muted);font-size:15px;margin-top:12px;}
+.pad.wait{background:#1a1d22;}
+.pad.go{background:var(--rot);border-color:var(--rot);}
+.pad.go .small{color:#fff;}
+.pad.early{background:#3a2a12;}
+.dots{display:flex;gap:8px;justify-content:center;margin:16px 0 4px;}
+.dots i{width:10px;height:10px;border-radius:50%;background:var(--line);}
+.dots i.done{background:var(--akzent-bright);}
+
+/* Ergebnis */
+.res-kicker{font-family:'Kaushan Script',cursive;font-size:19px;color:var(--gold);text-align:center;}
+.res-ms{font-family:'Anton',sans-serif;font-size:clamp(56px,18vw,86px);text-align:center;color:var(--akzent-bright);line-height:1.05;margin:4px 0 2px;}
+.res-sub{color:var(--muted);font-size:14.5px;text-align:center;margin:0 0 20px;}
+.card{background:var(--glass);border:1px solid var(--glass-brd);border-radius:18px;padding:18px 19px;margin-bottom:11px;}
+.card h3{font-size:11.5px;font-weight:800;letter-spacing:.13em;text-transform:uppercase;color:var(--gold);margin:0 0 9px;}
+.card p{margin:0;font-size:15px;line-height:1.6;}
+.row{display:flex;justify-content:space-between;padding:7px 0;border-bottom:1px solid rgba(255,255,255,.06);font-size:15px;}
+.row:last-child{border-bottom:none;}
+.row b{font-weight:800;}
+.warn{color:var(--mint);font-size:14px;line-height:1.55;margin-top:10px;}
+.foot{text-align:center;color:var(--faint);font-size:12.5px;line-height:1.6;margin:20px 0 14px;}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <!-- START -->
+  <div class="screen on" id="scStart">
+    <div class="hero">
+      <div class="hero-kicker">Fahrschule Boost</div>
+      <h1 class="hero-t">Wie schnell<br>reagierst <span>du?</span></h1>
+      <p class="hero-p">Tippe so schnell wie möglich, sobald die Fläche <b>rot</b> wird. Fünf Runden, dann siehst du, wie weit du bei 50 km/h gefahren wärst.</p>
+      <div class="meta"><span>5 Runden</span><span>1 Minute</span><span>Nichts wird gespeichert</span></div>
+      <button class="btn btn-primary" id="btnStart">Los geht's</button>
+    </div>
+  </div>
+
+  <!-- TEST -->
+  <div class="screen" id="scTest">
+    <div class="pad wait" id="pad"><div class="big" id="padBig">Warte …</div><div class="small" id="padSmall">Tippe, sobald es rot wird</div></div>
+    <div class="dots" id="dots"></div>
+  </div>
+
+  <!-- ERGEBNIS -->
+  <div class="screen" id="scRes">
+    <div class="res-kicker">Dein Ergebnis</div>
+    <div class="res-ms" id="resMs">0,00 s</div>
+    <p class="res-sub">Durchschnitt aus 5 Runden</p>
+    <div class="card">
+      <h3>So weit bist du „blind“ gefahren</h3>
+      <div id="resRows"></div>
+      <p class="warn">Hier wusstest du, dass gleich etwas kommt. Im echten Verkehr musst du die Gefahr erst sehen, erkennen und dich entscheiden. Deshalb rechnet man mit <b>rund 1 Sekunde</b> Reaktionszeit, bei Ablenkung oder Müdigkeit mit deutlich mehr.</p>
+    </div>
+    <div class="card">
+      <h3>Zum Vergleich: 1 Sekunde</h3>
+      <div class="row"><span>30 km/h</span><b>8,3 m</b></div>
+      <div class="row"><span>50 km/h</span><b>13,9 m</b></div>
+      <div class="row"><span>100 km/h</span><b>27,8 m</b></div>
+    </div>
+    <button class="btn btn-primary" id="btnAgain">Nochmal testen</button>
+    <div class="foot">Fahrschule Boost · Fahrlehrer Serband<br>Das Handy kann ein paar Millisekunden Verzögerung haben.</div>
+  </div>
+</div>
+
+<script>
+(function () {
+  var ROUNDS = 5;
+  var $ = function (id) { return document.getElementById(id); };
+  var pad = $('pad'), big = $('padBig'), small = $('padSmall');
+  var state = 'idle', timer = null, t0 = 0, times = [];
+
+  function show(id) {
+    ['scStart', 'scTest', 'scRes'].forEach(function (s) { $(s).classList.toggle('on', s === id); });
+  }
+  function dots() {
+    var h = '';
+    for (var i = 0; i < ROUNDS; i++) h += '<i class="' + (i < times.length ? 'done' : '') + '"></i>';
+    $('dots').innerHTML = h;
+  }
+  function fmt(sec, d) { return sec.toFixed(d).replace('.', ','); }
+  function arm() {
+    state = 'wait';
+    pad.className = 'pad wait';
+    big.textContent = 'Warte …';
+    small.textContent = 'Runde ' + (times.length + 1) + ' von ' + ROUNDS + ' · Tippe, sobald es rot wird';
+    clearTimeout(timer);
+    timer = setTimeout(function () {
+      state = 'go';
+      pad.className = 'pad go';
+      big.textContent = 'Jetzt!';
+      small.textContent = '';
+      t0 = performance.now();
+    }, 1500 + Math.random() * 2500);
+  }
+  function tap(e) {
+    if (e) e.preventDefault();
+    if (state === 'wait') {
+      clearTimeout(timer);
+      state = 'early';
+      pad.className = 'pad early';
+      big.textContent = 'Zu früh!';
+      small.textContent = 'Tippe, um die Runde zu wiederholen';
+    } else if (state === 'early') {
+      arm();
+    } else if (state === 'go') {
+      var ms = performance.now() - t0;
+      times.push(ms);
+      dots();
+      state = 'shown';
+      pad.className = 'pad';
+      big.textContent = fmt(ms / 1000, 2) + ' s';
+      small.textContent = times.length < ROUNDS ? 'Tippe für die nächste Runde' : 'Tippe für dein Ergebnis';
+    } else if (state === 'shown') {
+      if (times.length < ROUNDS) arm(); else result();
+    }
+  }
+  function result() {
+    var avg = times.reduce(function (a, b) { return a + b; }, 0) / times.length / 1000;
+    $('resMs').textContent = fmt(avg, 2) + ' s';
+    $('resRows').innerHTML = [30, 50, 100].map(function (v) {
+      return '<div class="row"><span>' + v + ' km/h</span><b>' + fmt(v / 3.6 * avg, 1) + ' m</b></div>';
+    }).join('');
+    show('scRes');
+  }
+  function start() { times = []; dots(); show('scTest'); arm(); }
+
+  pad.addEventListener('pointerdown', tap);
+  $('btnStart').addEventListener('click', start);
+  $('btnAgain').addEventListener('click', start);
+})();
+</script>
+</body>
+</html>
