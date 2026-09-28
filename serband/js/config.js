@@ -33,6 +33,9 @@ export const CONFIG = {
   kino: {
     bild: "img/hero.jpg",
     bildHandy: "img/hero-mobile.jpg",
+    // Eröffnungsvideo (nur Querformat). Läuft nach „Motor starten“ und am Ende noch einmal.
+    video: ["img/hero-drive.webm", "img/hero-drive.mp4"],
+    videoBild: "img/hero-drive-poster.jpg",
     scheinwerfer: [[0.441, 0.617], [0.67, 0.617]],
     scheinwerferHandy: [[0.24, 0.72], [0.537, 0.72]],
     strasse: [0.78, 1.0], // Bereich (von oben nach unten), in dem die Lichtstreifen über die Straße ziehen

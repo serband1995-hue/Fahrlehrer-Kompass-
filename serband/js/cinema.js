@@ -49,6 +49,28 @@ export async function createCinema({ reducedMotion = false } = {}) {
   const fx = document.getElementById("fx");
   const flareBox = document.getElementById("flares");
   const ctx = fx.getContext("2d");
+  const video = document.getElementById("heroVideo");
+  let videoOn = false, inVideoZone = true;
+  function setupVideo() {
+    videoOn = !!K.video && !usePortrait && !reducedMotion;
+    if (videoOn && !video.dataset.ready) {
+      video.dataset.ready = "1";
+      video.poster = K.videoBild || "";
+      [].concat(K.video).forEach((src) => {
+        const so = document.createElement("source");
+        so.src = src;
+        so.type = src.endsWith(".webm") ? 'video/webm; codecs="vp9"' : "video/mp4";
+        video.append(so);
+      });
+      // Kann der Browser das Video nicht abspielen, bleibt einfach das Standbild
+      // (nur wenn auch die letzte Quelle scheitert, vorher probiert der Browser die nächste)
+      const fail = () => { videoOn = false; video.style.opacity = 0; };
+      const all = video.querySelectorAll("source");
+      all[all.length - 1].addEventListener("error", fail);
+      video.load();
+    }
+    if (!videoOn) { video.pause(); video.style.opacity = 0; }
+  }
 
   const portraitMQ = matchMedia("(max-aspect-ratio: 9/10)");
   let usePortrait = false;
@@ -70,8 +92,9 @@ export async function createCinema({ reducedMotion = false } = {}) {
     });
   }
   await chooseImage();
+  setupVideo();
 
-  const state = { target: 0, p: 0, speedKmh: 0, lights: 0, lightsTarget: 0, mx: 0, my: 0, smx: 0, smy: 0, running: true, fxAmt: 1 };
+  const state = { vOp: 1, target: 0, p: 0, speedKmh: 0, lights: 0, lightsTarget: 0, mx: 0, my: 0, smx: 0, smy: 0, running: true, fxAmt: 1 };
   let W = 0, H = 0, iw = 1, ih = 1, cover = 1, dpr = 1;
   const listeners = [];
 
@@ -217,7 +240,15 @@ export async function createCinema({ reducedMotion = false } = {}) {
     state.lights += (state.lightsTarget - state.lights) * (1 - Math.exp(-dt * 4));
     const flick = state.lights < 0.97 && state.lightsTarget > 0 ? (Math.sin(time * 55) > 0.1 ? 1 : 0.3) : 1;
     const pulse = 0.85 + 0.15 * Math.sin(time * 1.6);
-    flares.forEach((f) => (f.style.opacity = (state.lights * flick * pulse * (state.fxAmt > 0.5 ? 1 : 0.4)).toFixed(3)));
+    // Eröffnungsvideo oben und am Ende einblenden, beim Hineinscrollen neu starten
+    if (videoOn) {
+      const zone = state.p < 0.05 || state.p > 0.965;
+      if (zone && !inVideoZone && state.lights > 0.5) { video.currentTime = 0; video.play().catch(() => {}); }
+      inVideoZone = zone;
+      state.vOp += ((zone ? 1 : 0) - state.vOp) * (1 - Math.exp(-dt * 3));
+      video.style.opacity = state.vOp.toFixed(3);
+    } else state.vOp = 0;
+    flares.forEach((f) => (f.style.opacity = (state.lights * flick * pulse * (state.fxAmt > 0.5 ? 1 : 0.4) * (1 - state.vOp)).toFixed(3)));
 
     const sh = shotAt(state.p);
     applyShot(sh, time);
@@ -227,7 +258,7 @@ export async function createCinema({ reducedMotion = false } = {}) {
   }
 
   window.addEventListener("resize", async () => {
-    if (!!K.bildHandy && portraitMQ.matches !== usePortrait) await chooseImage();
+    if (!!K.bildHandy && portraitMQ.matches !== usePortrait) { await chooseImage(); setupVideo(); }
     layout();
   });
   layout();
@@ -238,7 +269,11 @@ export async function createCinema({ reducedMotion = false } = {}) {
     setProgress(p) { state.target = clamp(p, 0, 1); },
     jump(p) { state.target = state.p = clamp(p, 0, 1); state.speedKmh = 0; },
     setPointer(x, y) { state.mx = x; state.my = y; },
-    lightsOn(on = true) { state.lightsTarget = on ? 1 : 0; },
+    lightsOn(on = true) {
+      state.lightsTarget = on ? 1 : 0;
+      if (on && videoOn) { video.currentTime = 0; video.play().catch(() => {}); }
+    },
+    get hasVideo() { return videoOn; },
     onFrame(fn) { listeners.push(fn); },
     pause(v) {
       const was = state.running;

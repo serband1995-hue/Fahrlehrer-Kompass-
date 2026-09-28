@@ -8,6 +8,7 @@ Alle Texte, Links, Fotos, Zahlen und Bewertungen stehen in **`js/config.js`**.
 Dort ist alles, was noch fehlt, mit `TODO` markiert:
 
 - `kino.bild` / `kino.bildHandy` – Hintergrundbild quer und hoch (ohne Schrift, möglichst groß)
+- `kino.video` – Eröffnungsvideo (WebM + MP4), läuft nach „Motor starten“ und am Ende
 - `links.bewerten` – direkter Google-Link „Rezension schreiben“ (wird auch als QR-Code gezeigt)
 - `fotos.portrait` – dein Foto (z. B. `img/serband-portrait.jpg`)
 - `videos.*` – Videos aus der Ausbildung (leer = Animation)
