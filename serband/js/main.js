@@ -217,15 +217,11 @@ let scene = null;
 let lenis = null;
 
 async function boot() {
-  // Schriften abwarten, damit das Dachschild richtig beschriftet wird
-  await Promise.race([document.fonts.ready, new Promise((r) => setTimeout(r, 1500))]);
-  const lowPower = (navigator.hardwareConcurrency || 8) <= 4 || (navigator.deviceMemory || 8) < 4;
   try {
-    const { createScene } = await import("./scene.js");
-    scene = createScene($("#world"), { lowPower, reducedMotion });
+    const { createCinema } = await import("./cinema.js");
+    scene = await createCinema({ reducedMotion });
   } catch (err) {
-    console.warn("3D nicht verfügbar:", err);
-    document.body.classList.add("no-webgl");
+    console.warn("Kinoleinwand nicht verfügbar:", err);
   }
 }
 
@@ -256,6 +252,8 @@ function ignite(withSound) {
   tl.to(".intro__inner", { opacity: 0, scale: 0.96, duration: 0.5, ease: "power2.in" }, 0.35)
     .set(".intro", { background: "transparent" })
     .fromTo(".intro__curtain", { scaleY: 1 }, { scaleY: 0, duration: 1.3, ease: "expo.inOut" })
+    .fromTo(".cinema", { scale: 1.18 }, { scale: 1, duration: 2.8, ease: "expo.out", clearProps: "transform" }, "<")
+    .to(".bars i", { scaleY: 0, duration: 1.6, ease: "expo.inOut" }, "-=1.2")
     .add(() => {
       $("#intro").remove();
       document.body.classList.remove("is-loading");
@@ -311,7 +309,6 @@ function startPage() {
   setupGame();
   setupPhone();
   setupSheets();
-  setupPaint();
   setupPointer();
   ScrollTrigger.refresh();
 }
@@ -535,16 +532,6 @@ function setupProgress(scrollTo) {
       if (gearEl.textContent !== g) gearEl.textContent = g;
       engine.speed(s);
     });
-    // Leistung prüfen: ruckelt es, wird das Glühen abgeschaltet
-    let frames = 0;
-    const t0 = performance.now();
-    const probe = () => {
-      frames++;
-      const dt = performance.now() - t0;
-      if (dt < 2500) return requestAnimationFrame(probe);
-      if (frames / (dt / 1000) < 38) scene.degrade && scene.degrade();
-    };
-    requestAnimationFrame(probe);
   }
 }
 
@@ -774,14 +761,6 @@ function closeMenu() {
   m.setAttribute("aria-hidden", "true");
   $("#menuBtn").setAttribute("aria-expanded", "false");
   lenis && lenis.start();
-}
-
-/* ---------- Lackfarbe ---------- */
-function setupPaint() {
-  $$(".paint__dot").forEach((d) => d.addEventListener("click", () => {
-    $$(".paint__dot").forEach((x) => x.classList.toggle("is-active", x === d));
-    scene && scene.setPaint(d.dataset.paint);
-  }));
 }
 
 /* ---------- Maus bewegt die Kamera leicht ---------- */
