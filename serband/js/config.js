@@ -24,8 +24,8 @@ export const CONFIG = {
     whatsapp: "https://wa.me/496936605670",
     instagram: "", // TODO: z. B. "https://instagram.com/deinname"
     tiktok: "",    // TODO
-    impressum: "https://fahrschule-boost.de/impressum/",   // TODO: eigenes Impressum klären
-    datenschutz: "https://fahrschule-boost.de/datenschutz/"
+    impressum: "impressum.html",     // TODO: markierte Stellen in impressum.html ausfüllen
+    datenschutz: "datenschutz.html"  // TODO: markierte Stellen in datenschutz.html ausfüllen
   },
 
   // Das große Kinobild im Hintergrund.

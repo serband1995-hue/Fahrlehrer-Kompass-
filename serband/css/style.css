@@ -608,3 +608,17 @@ body.is-driving .hud, body.is-driving .route { opacity: 1; }
   *, *::before, *::after { animation-duration: .001s !important; animation-iteration-count: 1 !important; transition-duration: .001s !important; }
   .grain { display: none; }
 }
+
+/* ---------- Impressum & Datenschutz ---------- */
+.legal-page { background: radial-gradient(120% 60% at 70% 0%, #10212b 0%, var(--night) 60%); min-height: 100vh; }
+.legal-nav { position: sticky; top: 0; z-index: 10; display: flex; align-items: center; justify-content: space-between; padding: max(14px, env(safe-area-inset-top)) var(--gutter) 14px; background: linear-gradient(rgba(4,8,11,.92), rgba(4,8,11,.6)); backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px); }
+.legal-nav .brand img { border-radius: 8px; }
+.legal { width: min(820px, 100%); margin: 0 auto; padding: clamp(40px, 8vh, 90px) var(--gutter) 80px; }
+.legal .h2 { font-size: clamp(38px, 6vw, 64px); margin-bottom: 28px; }
+.legal h2 { font-family: var(--display); font-size: 20px; font-weight: 700; margin: 38px 0 10px; color: var(--gold-soft); }
+.legal p, .legal li { color: var(--muted); }
+.legal strong { color: var(--text); }
+.legal a { color: var(--gold-soft); }
+.legal ul { padding-left: 20px; }
+.legal__note { margin-top: 48px; padding: 16px 18px; border-radius: 14px; border: 1px solid var(--line); background: var(--glass); font-size: 13px; }
+mark.todo { background: rgba(217,181,107,.18); color: var(--gold-soft); border: 1px dashed rgba(217,181,107,.6); border-radius: 6px; padding: 0 6px; }
