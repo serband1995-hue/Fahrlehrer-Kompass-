@@ -1,21 +1,42 @@
 /* ============================================================
-   SERBAND – Steuerung der Seite
+   SERBAND – „Es geht auch anders.“  Steuerung des Films.
    ============================================================ */
 import { CONFIG } from "./config.js";
+import { createStage } from "./stage.js";
 
 const $ = (s, r = document) => r.querySelector(s);
 const $$ = (s, r = document) => Array.from(r.querySelectorAll(s));
 const clamp = (v, a, b) => Math.min(b, Math.max(a, v));
 const reducedMotion = matchMedia("(prefers-reduced-motion: reduce)").matches;
 const finePointer = matchMedia("(hover: hover) and (pointer: fine)").matches;
-const isDesktop = () => matchMedia("(min-width: 900px)").matches;
 const store = {
   get(k) { try { return localStorage.getItem(k); } catch (e) { return null; } },
   set(k, v) { try { localStorage.setItem(k, v); } catch (e) {} }
 };
-
 const { gsap, ScrollTrigger } = window;
 gsap.registerPlugin(ScrollTrigger);
+
+/* ---------- Farbtypen (angelehnt an Thomas Erikson) ---------- */
+const FRAGEN = [
+  { q: "Du sitzt zum ersten Mal am Steuer. Was geht dir durch den Kopf?",
+    a: { r: "Los geht's. Wann darf ich schneller?", y: "Wie cool ist das denn!", g: "Hoffentlich mache ich nichts falsch.", b: "Erst mal: Wofür ist welcher Hebel?" } },
+  { q: "Du hast einen Fehler gemacht. Was brauchst du jetzt?",
+    a: { r: "Kurz sagen, was falsch war. Weiter.", y: "Ein aufmunterndes Wort.", g: "Einen Moment Ruhe.", b: "Eine genaue Erklärung, warum." } },
+  { q: "Wie lernst du am liebsten?",
+    a: { r: "Machen, machen, machen.", y: "Mit Spaß und Abwechslung.", g: "In meinem Tempo, Schritt für Schritt.", b: "Mit System und Hintergrundwissen." } },
+  { q: "Wann war eine Fahrstunde für dich richtig gut?",
+    a: { r: "Wenn ich etwas Neues geschafft habe.", y: "Wenn wir zwischendurch gelacht haben.", g: "Wenn ich mich sicher gefühlt habe.", b: "Wenn ich alles verstanden habe." } }
+];
+const TYPEN = {
+  r: { name: "Rot", titel: "Die Macherin, der Macher", farbe: "var(--red)",
+       text: "Du willst vorankommen. Wir setzen klare Ziele für jede Stunde, ich rede nicht drumherum, und du bekommst Tempo, sobald es sicher ist." },
+  y: { name: "Gelb", titel: "Mit Herz und Begeisterung", farbe: "var(--yellow)",
+       text: "Du lernst mit Freude. Wir halten die Stunden abwechslungsreich, feiern jeden Fortschritt, und ich sorge dafür, dass trotzdem nichts untergeht." },
+  g: { name: "Grün", titel: "Ruhig und gründlich", farbe: "var(--green)",
+       text: "Du brauchst Sicherheit. Wir fangen dort an, wo du dich wohlfühlst, ohne Druck und ohne Überraschungen. Schritt für Schritt, bis es sitzt." },
+  b: { name: "Blau", titel: "Erst verstehen, dann fahren", farbe: "var(--blue)",
+       text: "Du willst wissen, warum. Ich erkläre dir den Grund hinter jeder Regel, und in der Fahr-Akademie kannst du alles in Ruhe nachschauen." }
+};
 
 /* ---------- Inhalte aus der Konfiguration ---------- */
 function fillContent() {
@@ -25,12 +46,9 @@ function fillContent() {
   setHref("rateLink", L.bewerten);
   setHref("priceLink", L.preise);
   setHref("waLink", L.whatsapp);
-  setHref("impLink", L.impressum);
-  setHref("dsLink", L.datenschutz);
   const tel = $("#telLink");
   tel.href = "tel:" + L.telefon;
   tel.textContent = L.telefonAnzeige;
-
   const social = $("#socialLinks");
   [["Instagram", L.instagram], ["TikTok", L.tiktok]].forEach(([n, u]) => {
     if (!u) return;
@@ -38,67 +56,32 @@ function fillContent() {
     a.href = u; a.target = "_blank"; a.rel = "noopener"; a.textContent = n;
     social.prepend(a);
   });
-
   if (CONFIG.fotos.portrait) {
     const img = new Image();
     img.src = CONFIG.fotos.portrait;
     img.alt = `${CONFIG.name}, ${CONFIG.rolle}`;
     img.loading = "lazy";
-    const frame = $(".portrait__frame");
-    $(".portrait__ph", frame).remove();
-    frame.prepend(img);
+    $("#portrait").replaceChildren(img);
   }
-
-  // Videos in den Ausbildungs-Schritten
-  $$(".step[data-video]").forEach((step) => {
-    const src = CONFIG.videos[step.dataset.video];
+  // echte Screenshots der Apps statt Beispielansichten
+  const shots = CONFIG.screenshots || {};
+  $$("[data-shot]").forEach((d) => {
+    const src = shots[d.dataset.shot];
     if (!src) return;
-    const v = document.createElement("video");
-    Object.assign(v, { src, muted: true, loop: true, playsInline: true, autoplay: true, preload: "metadata" });
-    v.setAttribute("muted", "");
-    v.setAttribute("playsinline", "");
-    $(".step__media", step).append(v);
+    const img = new Image();
+    img.src = src; img.alt = ""; img.loading = "lazy";
+    $(".device__screen", d).replaceChildren(img);
   });
-
-  // Zahlen
-  const stats = $("#stats");
-  CONFIG.zahlen.filter((z) => z.wert !== null && z.wert !== undefined).forEach((z) => {
-    const d = document.createElement("div");
-    d.className = "stat reveal-up";
-    d.innerHTML = `<b data-count="${Number(z.wert)}" data-dec="${z.dezimal || 0}">0</b><span></span>`;
-    $("b", d).dataset.suffix = z.suffix || "";
-    $("span", d).textContent = (z.stern ? "★ " : "") + z.label;
-    stats.append(d);
-  });
-  if (stats.children.length < 2) stats.remove();
-
-  // Bewertungen: Platzhalter nur in der Entwurfsansicht (?entwurf), live wird der Abschnitt
-  // ausgeblendet, solange es keine echten Bewertungen gibt
-  const rail = $("#reviewsRail");
+  // Bewertungen: Platzhalter nur unter ?entwurf, sonst Block ausblenden
   const entwurf = /[?&]entwurf\b/.test(location.search);
   const reviews = CONFIG.bewertungen.filter((b) => entwurf || !b.platzhalter);
-  if (!reviews.length) {
-    const sec = $("#stimmen");
-    sec.remove();
-    const li = $('.menu a[href="#stimmen"]');
-    if (li) li.parentElement.remove();
-  }
-  // Nummern der Abschnitte fortlaufend halten (auch wenn einer ausgeblendet ist)
-  let nr = 0;
-  $$("main section[data-stop]").forEach((sec) => {
-    const tag = sec.querySelector(".kicker span, .glass-panel__no");
-    if (!tag || sec.id === "start" || sec.id === "ziel") return;
-    const txt = String(++nr).padStart(2, "0");
-    sec.querySelectorAll(".kicker span, .glass-panel__no").forEach((t) => (t.textContent = txt));
-    const m = $(`.menu a[href="#${sec.id}"] small`);
-    if (m) m.textContent = txt;
-  });
+  if (!reviews.length) $("#stimmen").remove();
+  const rail = $("#reviewsRail");
   reviews.forEach((b) => {
     const el = document.createElement("article");
     el.className = "review" + (b.platzhalter ? " is-placeholder" : "");
     const sterne = Math.max(1, Math.min(5, parseInt(b.sterne, 10) || 5));
-    el.innerHTML = `
-      ${b.platzhalter ? '<span class="ph-tag">Platzhalter</span>' : ""}
+    el.innerHTML = `${b.platzhalter ? '<span class="ph-tag">Platzhalter</span>' : ""}
       <div class="review__stars" role="img" aria-label="${sterne} von 5 Sternen">${"★".repeat(sterne)}</div>
       <p class="review__text"></p>
       <div class="review__who"><i></i><div><span></span><small></small></div></div>`;
@@ -106,45 +89,15 @@ function fillContent() {
     $(".review__who span", el).textContent = b.name;
     $(".review__who i", el).textContent = (b.name || "?").trim().charAt(0).toUpperCase();
     $(".review__who small", el).textContent = (b.quelle || "Google") + "-Bewertung";
-    rail.append(el);
+    rail && rail.append(el);
   });
-
-  // QR-Code zum Bewerten
   try {
     const qr = window.qrcode(0, "M");
     qr.addData(L.bewerten);
     qr.make();
     $("#qrCode").innerHTML = qr.createSvgTag({ cellSize: 4, margin: 0, scalable: true });
-    const svg = $("#qrCode svg");
-    svg.querySelectorAll("path").forEach((p) => p.setAttribute("fill", "#0b2419"));
-  } catch (e) {
-    $("#qrCode").textContent = "QR-Code konnte nicht erzeugt werden.";
-  }
-}
-
-/* ---------- Text in Wörter zerlegen ---------- */
-function splitWords(el) {
-  const walk = (node) => {
-    Array.from(node.childNodes).forEach((child) => {
-      if (child.nodeType === 3) {
-        const frag = document.createDocumentFragment();
-        child.textContent.split(/(\s+)/).forEach((part) => {
-          if (!part) return;
-          if (/^\s+$/.test(part)) { frag.append(document.createTextNode(" ")); return; }
-          const w = document.createElement("span");
-          w.className = "w";
-          const i = document.createElement("span");
-          i.textContent = part;
-          w.append(i);
-          frag.append(w);
-        });
-        child.replaceWith(frag);
-      } else if (child.nodeType === 1 && child.tagName !== "BR") {
-        walk(child);
-      }
-    });
-  };
-  walk(el);
+    $$("#qrCode path").forEach((p) => p.setAttribute("fill", "#0b1115"));
+  } catch (e) {}
 }
 
 /* ---------- Motorsound (wird im Browser erzeugt) ---------- */
@@ -230,451 +183,6 @@ const engine = (() => {
     suspend(v) { if (ctx) v ? ctx.suspend() : on && ctx.resume(); }
   };
 })();
-
-/* ---------- Start ---------- */
-// Während des Vorspanns ist die Seite dahinter nicht bedienbar (auch nicht per Tab-Taste)
-$$(".nav, main").forEach((el) => el.setAttribute("inert", ""));
-fillContent();
-$$(".split-words").forEach(splitWords);
-$$(".menu li").forEach((li, i) => li.style.setProperty("--i", i));
-
-let scene = null;
-let lenis = null;
-
-async function boot() {
-  try {
-    const { createCinema } = await import("./cinema.js");
-    scene = await createCinema({ reducedMotion });
-  } catch (err) {
-    console.warn("Kinoleinwand nicht verfügbar:", err);
-  }
-}
-
-/* Vorspann: Zähler, dann „Motor starten“ */
-const counter = { v: 0 };
-const bootPromise = boot();
-gsap.to(counter, {
-  v: 100,
-  duration: reducedMotion ? 0.2 : 2.2,
-  ease: "power2.inOut",
-  onUpdate: () => ($("#introCount").textContent = Math.round(counter.v)),
-  onComplete: async () => {
-    await bootPromise;
-    $(".intro__count").style.opacity = 0;
-    const actions = $("#introActions");
-    actions.hidden = false;
-    gsap.from(actions.children, { y: 20, opacity: 0, duration: 0.8, stagger: 0.12, ease: "power3.out" });
-  }
-});
-
-let ignited = false;
-function ignite(withSound) {
-  if (ignited) return;
-  ignited = true;
-  if (withSound) {
-    engine.start();
-    setSound(true);
-  }
-  scene && scene.lightsOn(true);
-  if (scene && scene.hasVideo) {
-    // Stadt und Scheinwerfer „gehen an“
-    gsap.timeline()
-      .fromTo("#heroVideo", { filter: "brightness(0.2)" }, { filter: "brightness(0.9)", duration: 0.08 }, 0.3)
-      .to("#heroVideo", { filter: "brightness(0.35)", duration: 0.07 })
-      .to("#heroVideo", { filter: "brightness(1)", duration: 1.6, ease: "power2.out", clearProps: "filter" });
-  }
-  const tl = gsap.timeline();
-  tl.to(".intro__inner", { opacity: 0, scale: 0.96, duration: 0.5, ease: "power2.in" }, 0.35)
-    .set(".intro", { background: "transparent" })
-    .fromTo(".intro__curtain", { scaleY: 1 }, { scaleY: 0, duration: 1.3, ease: "expo.inOut" })
-    .fromTo(".cinema", { scale: 1.18 }, { scale: 1, duration: 2.8, ease: "expo.out", clearProps: "transform" }, "<")
-    .to(".bars i", { scaleY: 0, duration: 1.6, ease: "expo.inOut" }, "-=1.2")
-    .add(() => {
-      $("#intro").remove();
-      document.body.classList.remove("is-loading");
-      $$("[inert]").forEach((el) => el.removeAttribute("inert"));
-      startPage();
-    }, "-=0.6");
-}
-$("#ignite").addEventListener("click", () => ignite(true));
-$("#igniteMute").addEventListener("click", () => ignite(false));
-
-/* ---------- Ton-Schalter ---------- */
-const soundBtn = $("#soundBtn");
-function setSound(on) {
-  soundBtn.setAttribute("aria-pressed", on ? "true" : "false");
-}
-soundBtn.addEventListener("click", () => {
-  if (engine.on) { engine.stop(); setSound(false); }
-  else { engine.start(); setSound(true); }
-});
-document.addEventListener("visibilitychange", () => {
-  engine.suspend(document.hidden);
-  scene && scene.pause(document.hidden, "tab");
-});
-
-/* ---------- Seite nach dem Vorspann ---------- */
-function startPage() {
-  // Weiches Scrollen
-  if (!reducedMotion) {
-    lenis = new window.Lenis({ lerp: 0.085, smoothWheel: true, wheelMultiplier: 0.9 });
-    lenis.on("scroll", ScrollTrigger.update);
-    gsap.ticker.add((t) => lenis.raf(t * 1000));
-    gsap.ticker.lagSmoothing(0);
-  }
-  const scrollTo = (target) => {
-    if (lenis) lenis.scrollTo(target, { duration: 1.8, easing: (t) => 1 - Math.pow(1 - t, 4) });
-    else (typeof target === "number" ? window.scrollTo(0, target) : document.querySelector(target).scrollIntoView());
-  };
-  $$('a[href^="#"]').forEach((a) => a.addEventListener("click", (e) => {
-    const id = a.getAttribute("href");
-    if (id.length < 2 || !document.querySelector(id)) return;
-    e.preventDefault();
-    closeMenu();
-    scrollTo(id);
-  }));
-
-  heroIntro();
-  setupReveals();
-  setupJourney();
-  setupProgress(scrollTo);
-  setupMarquee();
-  setupTilt();
-  setupMagnetic();
-  setupReviews();
-  setupGame();
-  setupPhone();
-  setupSheets();
-  setupBooking();
-  setupBigWords();
-  setupPointer();
-  ScrollTrigger.refresh();
-}
-
-function heroIntro() {
-  const tl = gsap.timeline({ defaults: { ease: "expo.out" } });
-  tl.from(".nav", { y: -30, opacity: 0, duration: 1.2 }, 0)
-    .from(".hero__title .split", { yPercent: 115, duration: 1.6, stagger: 0.12 }, 0.1)
-    .from(".hero .reveal-up", { y: 30, opacity: 0, duration: 1.2, stagger: 0.1 }, 0.5)
-    .from(".scroll-cue", { opacity: 0, duration: 1 }, 1.2);
-}
-
-/* ---------- Einblendungen beim Scrollen ---------- */
-function setupReveals() {
-  $$(".split-words").forEach((el) => {
-    gsap.from($$(".w > span", el), {
-      yPercent: 110,
-      rotate: 4,
-      duration: 1.2,
-      ease: "expo.out",
-      stagger: 0.04,
-      scrollTrigger: { trigger: el, start: "top 85%" }
-    });
-  });
-  $$("main .reveal-up").forEach((el) => {
-    if (el.closest(".hero")) return;
-    gsap.from(el, {
-      y: 36,
-      opacity: 0,
-      duration: 1.1,
-      ease: "power3.out",
-      scrollTrigger: { trigger: el, start: "top 90%" }
-    });
-  });
-  $$(".reveal-card").forEach((el) => {
-    gsap.from(el, {
-      y: 80, rotateX: 12, rotateZ: -3, opacity: 0, scale: 0.94,
-      duration: 1.4, ease: "expo.out",
-      scrollTrigger: { trigger: el, start: "top 85%" }
-    });
-  });
-  // Porträt: leichte Parallaxe
-  const img = $(".portrait__frame img");
-  if (img) gsap.to(img, { yPercent: -8, ease: "none", scrollTrigger: { trigger: "#ich", scrub: true } });
-
-  gsap.from(".promise", {
-    y: 90, opacity: 0, rotateX: -14, duration: 1.3, ease: "expo.out", stagger: 0.12,
-    scrollTrigger: { trigger: ".promises", start: "top 82%" }
-  });
-  $$(".promise__icon path, .promise__icon circle, .promise__icon rect").forEach((p) => {
-    const len = p.getTotalLength ? p.getTotalLength() : 200;
-    gsap.fromTo(p, { strokeDasharray: len, strokeDashoffset: len }, {
-      strokeDashoffset: 0, duration: 1.6, ease: "power2.inOut",
-      scrollTrigger: { trigger: p.closest(".promise"), start: "top 80%" }
-    });
-  });
-  gsap.from(".faq details", {
-    y: 30, opacity: 0, duration: 0.9, ease: "power3.out", stagger: 0.07,
-    scrollTrigger: { trigger: ".faq", start: "top 85%" }
-  });
-  gsap.from(".qr__stars i", {
-    scale: 0, rotate: -90, duration: 0.8, ease: "back.out(3)", stagger: 0.08,
-    scrollTrigger: { trigger: ".qr", start: "top 75%" }
-  });
-  gsap.from(".finale__title .split", {
-    yPercent: 115, duration: 1.6, ease: "expo.out", stagger: 0.12,
-    scrollTrigger: { trigger: ".finale", start: "top 60%" }
-  });
-  // Zahlen hochzählen
-  $$("[data-count]").forEach((el) => {
-    const end = parseFloat(el.dataset.count);
-    const dec = parseInt(el.dataset.dec, 10) || 0;
-    const o = { v: 0 };
-    gsap.to(o, {
-      v: end, duration: 2.2, ease: "power3.out",
-      scrollTrigger: { trigger: el, start: "top 88%" },
-      onUpdate: () => (el.textContent = o.v.toFixed(dec).replace(".", ",") + el.dataset.suffix)
-    });
-  });
-}
-
-/* ---------- Dein Weg: horizontale Fahrt ---------- */
-function setupJourney() {
-  const track = $("#journeyTrack");
-  const svg = $("#journeyRoad");
-  const path = $("#journeyPath");
-  const steps = $$(".step", track);
-  const ns = "http://www.w3.org/2000/svg";
-  const glowPath = document.createElementNS(ns, "path");
-  glowPath.setAttribute("style", "stroke:#d9b56b;stroke-width:3;stroke-dasharray:none;fill:none;filter:drop-shadow(0 0 6px rgba(217,181,107,.8))");
-  svg.append(glowPath);
-
-  const drawRoad = () => {
-    const tb = track.getBoundingClientRect();
-    svg.setAttribute("viewBox", `0 0 ${tb.width} ${tb.height}`);
-    const pts = steps.map((s) => {
-      const b = s.getBoundingClientRect();
-      return [b.left - tb.left + b.width / 2, b.top - tb.top + (s.matches(":nth-child(odd)") ? -14 : b.height + 14)];
-    });
-    let d = `M ${pts[0][0] - 200} ${pts[0][1]}`;
-    pts.forEach((p, i) => {
-      const prev = i ? pts[i - 1] : [p[0] - 200, p[1]];
-      const mx = (prev[0] + p[0]) / 2;
-      d += ` C ${mx} ${prev[1]}, ${mx} ${p[1]}, ${p[0]} ${p[1]}`;
-    });
-    path.setAttribute("d", d);
-    glowPath.setAttribute("d", d);
-    const len = glowPath.getTotalLength();
-    glowPath.style.strokeDasharray = `${len}`;
-    glowPath.dataset.len = len;
-  };
-
-  const mm = gsap.matchMedia();
-  mm.add("(min-width: 900px)", () => {
-    drawRoad();
-    const dist = () => track.scrollWidth - window.innerWidth;
-    const st = gsap.to(track, {
-      x: () => -dist(),
-      ease: "none",
-      scrollTrigger: {
-        trigger: ".journey",
-        start: "top top",
-        end: () => "+=" + dist(),
-        pin: true,
-        scrub: 1,
-        invalidateOnRefresh: true,
-        onRefresh: drawRoad,
-        onUpdate: (self) => {
-          const len = +glowPath.dataset.len || 0;
-          glowPath.style.strokeDashoffset = len * (1 - self.progress);
-        }
-      }
-    });
-    steps.forEach((s, i) => {
-      gsap.from(s, {
-        y: i % 2 ? 60 : -60, opacity: 0, rotate: i % 2 ? 3 : -3, duration: 1,
-        ease: "power3.out",
-        scrollTrigger: { trigger: s, containerAnimation: st, start: "left 92%" }
-      });
-    });
-    return () => { gsap.set(track, { x: 0 }); };
-  });
-  mm.add("(max-width: 899px)", () => {
-    ScrollTrigger.create({
-      trigger: track, start: "top 70%", end: "bottom 60%", scrub: true,
-      onUpdate: (self) => track.style.setProperty("--prog", self.progress)
-    });
-    steps.forEach((s) => gsap.from(s, { x: 40, opacity: 0, duration: 1, ease: "power3.out", scrollTrigger: { trigger: s, start: "top 85%" } }));
-  });
-}
-
-/* ---------- Fortschritt: Auto, Tacho, Route ---------- */
-function setupProgress(scrollTo) {
-  const sections = $$("[data-stop]");
-  const n = sections.length;
-  scene && scene.setStops(sections.map((s) => s.id));
-  // Die Kinoleinwand ist nur hinter Start, Reaktionstest und Schluss sichtbar.
-  // Ist sie ganz verdeckt, pausiert sie (spart Akku auf dem Handy).
-  if (scene && "IntersectionObserver" in window) {
-    const seen = new Set();
-    const io = new IntersectionObserver((entries) => {
-      entries.forEach((e) => (e.isIntersecting ? seen.add(e.target) : seen.delete(e.target)));
-      scene.pause(seen.size === 0, "cover");
-    }, { rootMargin: "25% 0px" });
-    $$(".hero, .chapter--window, .finale").forEach((el) => io.observe(el));
-  }
-  const stopsEl = $("#routeStops");
-  sections.forEach((sec, i) => {
-    const li = document.createElement("li");
-    li.style.top = (i / (n - 1)) * 100 + "%";
-    li.innerHTML = `<span>${sec.dataset.stop}</span>`;
-    li.addEventListener("click", () => scrollTo("#" + sec.id));
-    stopsEl.append(li);
-  });
-  const lis = $$("li", stopsEl);
-  let tops = [];
-  const measure = () => {
-    tops = sections.map((s) => s.getBoundingClientRect().top + window.scrollY);
-  };
-  ScrollTrigger.addEventListener("refresh", measure);
-  measure();
-
-  // Scrollposition -> virtueller Fortschritt: jeder Abschnitt bekommt den gleichen Anteil
-  const virtual = () => {
-    const y = window.scrollY + Math.min(window.scrollY, window.innerHeight * 0.35);
-    const maxY = document.documentElement.scrollHeight - window.innerHeight;
-    if (window.scrollY >= maxY - 2) return 1;
-    let i = 0;
-    while (i < n - 1 && y >= tops[i + 1]) i++;
-    if (i >= n - 1) return 1;
-    const f = clamp((y - tops[i]) / (tops[i + 1] - tops[i]), 0, 1);
-    return (i + f) / (n - 1);
-  };
-
-  const fill = $("#routeFill"), car = $("#routeCar");
-  const speedEl = $("#hudSpeed"), gearEl = $("#hudGear"), gauge = $("#hudFill");
-  let current = -1, lastSpeedTxt = "";
-  const update = () => {
-    const v = virtual();
-    scene && scene.setProgress(v);
-    fill.style.height = v * 100 + "%";
-    car.style.top = v * 100 + "%";
-    const idx = Math.min(n - 1, Math.floor(v * (n - 1) + 0.2));
-    if (idx !== current) {
-      current = idx;
-      lis.forEach((li, i) => {
-        li.classList.toggle("is-past", i < idx);
-        li.classList.toggle("is-current", i === idx);
-      });
-    }
-    document.body.classList.toggle("is-driving", v > 0.02 && v < 0.985);
-    // Liegt das Menü über einem hellen Bereich? Dann dunkle Schrift
-    // Punkt links neben der Menü-Pille prüfen (die Pille selbst würde den Treffer verdecken)
-    const el = document.elementFromPoint(3, 36);
-    const onLight = !!(el && el.closest(".light, .footer"));
-    document.body.classList.toggle("on-light", onLight);
-  };
-  window.__snap = () => { update(); scene && scene.jump(virtual()); };
-  if (lenis) lenis.on("scroll", update);
-  window.addEventListener("scroll", update, { passive: true });
-  update();
-
-  if (scene) {
-    scene.onFrame((st) => {
-      const s = st.speedKmh;
-      const txt = String(Math.round(s));
-      if (txt !== lastSpeedTxt) {
-        speedEl.textContent = txt;
-        lastSpeedTxt = txt;
-      }
-      gauge.style.strokeDasharray = `${(clamp(s / 140, 0, 1) * 235.6).toFixed(1)} 314.2`;
-      const g = s < 1.5 ? (st.p < 0.05 ? "P" : "N") : s < 18 ? "1" : s < 34 ? "2" : s < 52 ? "3" : s < 75 ? "4" : "5";
-      if (gearEl.textContent !== g) gearEl.textContent = g;
-      engine.speed(s);
-    });
-  }
-}
-
-/* ---------- Laufband ---------- */
-function setupMarquee() {
-  const track = $(".marquee__track");
-  if (!track) return;
-  const half = () => track.scrollWidth / 2;
-  let x = 0, boost = 0;
-  if (lenis) lenis.on("scroll", (e) => (boost = clamp(Math.abs(e.velocity) * 0.6, 0, 18)));
-  gsap.ticker.add((t, dt) => {
-    x -= (0.6 + boost) * (dt / 16);
-    boost *= 0.92;
-    if (-x >= half()) x += half();
-    track.style.transform = `translate3d(${x}px,0,0)`;
-  });
-}
-
-/* ---------- 3D-Kippen der Karten ---------- */
-function setupTilt() {
-  if (!finePointer) return;
-  $$(".tilt").forEach((card) => {
-    const glow = $(".promise__glow", card);
-    card.addEventListener("pointermove", (e) => {
-      const r = card.getBoundingClientRect();
-      const px = (e.clientX - r.left) / r.width;
-      const py = (e.clientY - r.top) / r.height;
-      gsap.to(card, { rotateY: (px - 0.5) * 12, rotateX: (0.5 - py) * 10, duration: 0.6, ease: "power3.out" });
-      if (glow) { card.style.setProperty("--gx", px * 100 + "%"); card.style.setProperty("--gy", py * 100 + "%"); }
-    });
-    card.addEventListener("pointerleave", () => gsap.to(card, { rotateY: 0, rotateX: 0, duration: 0.9, ease: "elastic.out(1, .5)" }));
-  });
-}
-
-/* ---------- Magnetische Knöpfe & Cursor ---------- */
-function setupMagnetic() {
-  if (!finePointer) return;
-  const cursor = $(".cursor");
-  const xTo = gsap.quickTo(cursor, "x", { duration: 0.35, ease: "power3" });
-  const yTo = gsap.quickTo(cursor, "y", { duration: 0.35, ease: "power3" });
-  window.addEventListener("pointermove", (e) => { cursor.classList.add("is-on"); xTo(e.clientX); yTo(e.clientY); });
-  $$("a, button, summary, .reviews").forEach((el) => {
-    el.addEventListener("pointerenter", () => cursor.classList.add("is-hover"));
-    el.addEventListener("pointerleave", () => cursor.classList.remove("is-hover"));
-  });
-  $$(".magnetic").forEach((el) => {
-    el.addEventListener("pointermove", (e) => {
-      const r = el.getBoundingClientRect();
-      gsap.to(el, { x: (e.clientX - r.left - r.width / 2) * 0.25, y: (e.clientY - r.top - r.height / 2) * 0.35, duration: 0.5, ease: "power3.out" });
-    });
-    el.addEventListener("pointerleave", () => gsap.to(el, { x: 0, y: 0, duration: 0.8, ease: "elastic.out(1, .4)" }));
-  });
-}
-
-/* ---------- Bewertungen: ziehen & wischen ---------- */
-function setupReviews() {
-  const box = $("#reviews"), rail = $("#reviewsRail");
-  if (!box || !rail.children.length) return;
-  let x = 0, vx = 0, dragging = false, startX = 0, startPos = 0, lastX = 0, moved = 0;
-  const min = () => Math.min(0, box.clientWidth - rail.scrollWidth);
-  box.addEventListener("pointerdown", (e) => {
-    dragging = true; moved = 0;
-    startX = lastX = e.clientX; startPos = x;
-    box.classList.add("is-drag");
-    box.setPointerCapture(e.pointerId);
-  });
-  box.addEventListener("pointermove", (e) => {
-    if (!dragging) return;
-    vx = e.clientX - lastX; lastX = e.clientX;
-    moved += Math.abs(vx);
-    x = startPos + (e.clientX - startX);
-  });
-  const up = () => { dragging = false; box.classList.remove("is-drag"); };
-  box.addEventListener("pointerup", up);
-  box.addEventListener("pointercancel", up);
-  gsap.from(".review", { x: 120, opacity: 0, duration: 1.2, ease: "expo.out", stagger: 0.08, scrollTrigger: { trigger: box, start: "top 85%" } });
-  let back = null;
-  gsap.ticker.add(() => {
-    if (!dragging && !back) {
-      x += vx;
-      vx *= 0.94;
-      if (Math.abs(vx) < 0.05 && !reducedMotion) x -= 0.3; // langsames Treiben
-      if (x > 0) x += (0 - x) * 0.15;
-      if (x < min()) {
-        x = min();
-        // am Ende sanft zurück an den Anfang
-        back = gsap.to({ v: x }, { v: 0, duration: 2.4, delay: 2, ease: "power3.inOut", onUpdate() { x = this.targets()[0].v; }, onComplete: () => (back = null) });
-      }
-    }
-    if (dragging && back) { back.kill(); back = null; }
-    rail.style.transform = `translate3d(${x}px,0,0)`;
-  });
-}
 
 /* ---------- Bestenliste (Supabase, nur zwei öffentliche Funktionen) ---------- */
 const board = (() => {
@@ -816,84 +324,44 @@ function setupGame() {
   btn.addEventListener("click", (e) => e.preventDefault());
 }
 
-/* ---------- Handy der Fahr-Akademie ---------- */
-function setupPhone() {
-  const phone = $("#phone");
-  gsap.fromTo(phone, { rotateY: -32, rotateX: 14, y: 80 }, {
-    rotateY: 14, rotateX: -4, y: -40, ease: "none",
-    scrollTrigger: { trigger: "#akademie", start: "top bottom", end: "bottom top", scrub: 1 }
+/* ---------- Bewertungen: ziehen & wischen ---------- */
+function setupReviews() {
+  const box = $("#reviews"), rail = $("#reviewsRail");
+  if (!box || !rail.children.length) return;
+  let x = 0, vx = 0, dragging = false, startX = 0, startPos = 0, lastX = 0, moved = 0;
+  const min = () => Math.min(0, box.clientWidth - rail.scrollWidth);
+  box.addEventListener("pointerdown", (e) => {
+    dragging = true; moved = 0;
+    startX = lastX = e.clientX; startPos = x;
+    box.classList.add("is-drag");
+    box.setPointerCapture(e.pointerId);
   });
-  $$(".float-chip").forEach((c, i) => {
-    gsap.fromTo(c, { y: 60 + i * 30, opacity: 0 }, {
-      y: -40 - i * 20, opacity: 1, ease: "none",
-      scrollTrigger: { trigger: "#akademie", start: "top 80%", end: "bottom 20%", scrub: 1 }
-    });
+  box.addEventListener("pointermove", (e) => {
+    if (!dragging) return;
+    vx = e.clientX - lastX; lastX = e.clientX;
+    moved += Math.abs(vx);
+    x = startPos + (e.clientX - startX);
   });
-  gsap.from(".ui__path li", { x: 30, opacity: 0, stagger: 0.08, duration: 0.8, ease: "power3.out", scrollTrigger: { trigger: phone, start: "top 70%" } });
-}
-
-/* ---------- Kalender- und Hinweisfenster ---------- */
-function setupSheets() {
-  const sheet = $("#sheet"), frame = $("#sheetFrame"), consent = $("#sheetConsent");
-  let lastFocus = null, currentUrl = "";
-  const open = (el) => {
-    lastFocus = document.activeElement;
-    el.hidden = false;
-    lenis && lenis.stop();
-    document.body.style.overflow = "hidden";
-    setTimeout(() => $(".sheet__close", el).focus(), 50);
-  };
-  const close = (el) => {
-    el.hidden = true;
-    lenis && lenis.start();
-    document.body.style.overflow = "";
-    lastFocus && lastFocus.focus();
-  };
-  const loadFrame = () => {
-    consent.hidden = true;
-    frame.hidden = false;
-    frame.src = currentUrl;
-    try { sessionStorage.setItem("serband-cal-ok", "1"); } catch (e) {}
-  };
-  $$("[data-cal]").forEach((b) => b.addEventListener("click", () => {
-    const auto = b.dataset.cal === "automatik";
-    currentUrl = auto ? CONFIG.links.kalenderAutomatik : CONFIG.links.kalenderSchalter;
-    $("#sheetKind").textContent = auto ? "Automatik" : "Schaltwagen";
-    $("#sheetTitle").textContent = "Fahrstunde buchen";
-    $("#sheetExt").href = currentUrl;
-    let ok = false;
-    try { ok = sessionStorage.getItem("serband-cal-ok") === "1"; } catch (e) {}
-    if (ok) loadFrame();
-    else { consent.hidden = false; frame.hidden = true; frame.removeAttribute("src"); }
-    open(sheet);
-  }));
-  $("#sheetLoad").addEventListener("click", loadFrame);
-  $("#installBtn").addEventListener("click", () => open($("#installSheet")));
-  $$(".sheet").forEach((s) => {
-    $$("[data-close]", s).forEach((c) => c.addEventListener("click", () => close(s)));
+  const up = () => { dragging = false; box.classList.remove("is-drag"); };
+  box.addEventListener("pointerup", up);
+  box.addEventListener("pointercancel", up);
+  gsap.from(".review", { x: 120, opacity: 0, duration: 1.2, ease: "expo.out", stagger: 0.08, scrollTrigger: { trigger: box, start: "top 85%" } });
+  let back = null;
+  gsap.ticker.add(() => {
+    if (!dragging && !back) {
+      x += vx;
+      vx *= 0.94;
+      if (Math.abs(vx) < 0.05 && !reducedMotion) x -= 0.3; // langsames Treiben
+      if (x > 0) x += (0 - x) * 0.15;
+      if (x < min()) {
+        x = min();
+        // am Ende sanft zurück an den Anfang
+        back = gsap.to({ v: x }, { v: 0, duration: 2.4, delay: 2, ease: "power3.inOut", onUpdate() { x = this.targets()[0].v; }, onComplete: () => (back = null) });
+      }
+    }
+    if (dragging && back) { back.kill(); back = null; }
+    rail.style.transform = `translate3d(${x}px,0,0)`;
   });
-  document.addEventListener("keydown", (e) => {
-    if (e.key !== "Escape") return;
-    $$(".sheet").forEach((s) => { if (!s.hidden) close(s); });
-    closeMenu();
-  });
-
-  // Menü
-  $("#menuBtn").addEventListener("click", () => {
-    const openNow = !$("#menu").classList.contains("is-open");
-    $("#menu").classList.toggle("is-open", openNow);
-    $("#menu").setAttribute("aria-hidden", openNow ? "false" : "true");
-    $("#menuBtn").setAttribute("aria-expanded", openNow ? "true" : "false");
-    openNow ? lenis && lenis.stop() : lenis && lenis.start();
-  });
-}
-function closeMenu() {
-  const m = $("#menu");
-  if (!m || !m.classList.contains("is-open")) return;
-  m.classList.remove("is-open");
-  m.setAttribute("aria-hidden", "true");
-  $("#menuBtn").setAttribute("aria-expanded", "false");
-  lenis && lenis.start();
 }
 
 /* ---------- Buchen: Umschalter Schaltung / Automatik ---------- */
@@ -915,29 +383,282 @@ function setupBooking() {
     });
     $("#gearSchalter").toggleAttribute("hidden", auto);
     $("#gearAutomatik").toggleAttribute("hidden", !auto);
-    $(".book__stage").classList.toggle("is-auto", auto);
     $("#bookBtn").dataset.cal = mode;
-    gsap.fromTo("#bookWord", { opacity: 0, y: 30 }, { opacity: 1, y: 0, duration: 0.8, ease: "power3.out", onStart: () => ($("#bookWord").textContent = t.word) });
     gsap.fromTo([$("#bookTitle"), $("#bookText")], { opacity: 0, y: 12 }, { opacity: 1, y: 0, duration: 0.5, stagger: 0.06, ease: "power2.out", onStart: () => { $("#bookTitle").textContent = t.title; $("#bookText").textContent = t.text; } });
   };
   $$(".switch__opt", sw).forEach((b) => b.addEventListener("click", () => setMode(b.dataset.mode)));
 }
 
-/* ---------- Große Hintergrund-Schriftzüge wandern beim Scrollen ---------- */
-function setupBigWords() {
-  const jw = $(".journey__bgword");
-  if (jw) gsap.fromTo(jw, { xPercent: 5 }, { xPercent: -45, ease: "none", scrollTrigger: { trigger: "#weg", start: "top bottom", end: "bottom top", scrub: true } });
-  const bw = $("#bookWord");
-  if (bw) gsap.fromTo(bw, { yPercent: 30 }, { yPercent: -30, ease: "none", scrollTrigger: { trigger: "#buchen", start: "top bottom", end: "bottom top", scrub: true } });
-  // Strive-Karten fliegen gestaffelt ein
-  gsap.from(".band", { y: 80, opacity: 0, duration: 1.3, ease: "expo.out", scrollTrigger: { trigger: ".band", start: "top 85%" } });
-  gsap.from(".bubble", { scale: 0, duration: 1, ease: "back.out(2)", stagger: 0.12, scrollTrigger: { trigger: ".orbit", start: "top 75%" } });
+
+/* ---------- Start ---------- */
+$$(".top, main").forEach((el) => el.setAttribute("inert", ""));
+fillContent();
+const chapters = $$("main section[data-kapitel]");
+const ids = chapters.map((c) => c.id);
+const stage = createStage(ids);
+stage.show("prolog");
+let lenis = null;
+
+// Inhaltsverzeichnis
+chapters.forEach((c, i) => {
+  const li = document.createElement("li");
+  li.innerHTML = `<a href="#${c.id}" style="--i:${i}"><small></small><span></span></a>`;
+  $("small", li).textContent = c.dataset.kapitel;
+  $("span", li).textContent = c.dataset.titel;
+  $("#menuList").append(li);
+});
+
+// Vorspann
+const counter = { v: 0 };
+gsap.to(counter, {
+  v: 100, duration: reducedMotion ? 0.2 : 1.8, ease: "power2.inOut",
+  onUpdate: () => ($("#introCount").textContent = Math.round(counter.v)),
+  onComplete: () => {
+    $(".intro__count").style.opacity = 0;
+    const actions = $("#introActions");
+    actions.hidden = false;
+    gsap.from(actions.children, { y: 20, opacity: 0, duration: 0.8, stagger: 0.12, ease: "power3.out" });
+  }
+});
+let started = false;
+function ignite(withSound) {
+  if (started) return;
+  started = true;
+  if (withSound) { engine.start(); setSound(true); }
+  gsap.timeline()
+    .to(".intro__inner", { opacity: 0, scale: 0.96, duration: 0.5, ease: "power2.in" }, 0.3)
+    .set(".intro", { background: "transparent" })
+    .fromTo(".intro__curtain", { scaleY: 1 }, { scaleY: 0, duration: 1.2, ease: "expo.inOut" })
+    .to(".bars i", { scaleY: 0, duration: 1.4, ease: "expo.inOut" }, "-=0.9")
+    .add(() => {
+      $("#intro").remove();
+      document.body.classList.remove("is-loading");
+      $$("[inert]").forEach((el) => el.removeAttribute("inert"));
+      startFilm();
+    }, "-=0.8");
+}
+$("#ignite").addEventListener("click", () => ignite(true));
+$("#igniteMute").addEventListener("click", () => ignite(false));
+
+// Ton
+const soundBtn = $("#soundBtn");
+function setSound(on) {
+  soundBtn.setAttribute("aria-pressed", on ? "true" : "false");
+  $("b", soundBtn).textContent = on ? "an" : "aus";
+}
+soundBtn.addEventListener("click", () => { if (engine.on) { engine.stop(); setSound(false); } else { engine.start(); setSound(true); } });
+document.addEventListener("visibilitychange", () => { engine.suspend(document.hidden); stage.pause(document.hidden); });
+
+/* ---------- Der Film ---------- */
+function startFilm() {
+  if (!reducedMotion && finePointer) {
+    lenis = new window.Lenis({ lerp: 0.1, smoothWheel: true });
+    lenis.on("scroll", ScrollTrigger.update);
+    gsap.ticker.add((t) => lenis.raf(t * 1000));
+    gsap.ticker.lagSmoothing(0);
+  }
+  const scrollTo = (target) => {
+    if (lenis) lenis.scrollTo(target, { duration: 1.6 });
+    else document.querySelector(target).scrollIntoView({ behavior: reducedMotion ? "auto" : "smooth" });
+  };
+  $$('a[href^="#"]').forEach((a) => a.addEventListener("click", (e) => {
+    const id = a.getAttribute("href");
+    if (id.length < 2 || !document.querySelector(id)) return;
+    e.preventDefault();
+    closeMenu();
+    scrollTo(id);
+  }));
+
+  setupChapters();
+  setupProlog();
+  setupTitles();
+  setupFloats();
+  setupQuiz();
+  setupPromise();
+  setupRoad();
+  setupGame();
+  setupReviews();
+  setupSheets();
+  setupBooking();
+  ScrollTrigger.refresh();
 }
 
-/* ---------- Maus bewegt die Kamera leicht ---------- */
-function setupPointer() {
-  if (!scene || !finePointer) return;
-  window.addEventListener("pointermove", (e) => {
-    scene.setPointer((e.clientX / window.innerWidth - 0.5) * 2, (e.clientY / window.innerHeight - 0.5) * -2);
+/* Kapitel: Bühne, Kopfzeile, Fortschritt */
+function setupChapters() {
+  const num = $("#topNum"), name = $("#topName"), bar = $("#topBar");
+  const links = $$("#menuList a");
+  chapters.forEach((c, i) => {
+    ScrollTrigger.create({
+      trigger: c, start: "top 55%", end: "bottom 55%",
+      onToggle: (self) => {
+        if (!self.isActive) return;
+        stage.show(c.id);
+        num.textContent = c.dataset.kapitel;
+        name.textContent = c.dataset.titel;
+        links.forEach((l, k) => l.classList.toggle("is-current", k === i));
+        gsap.fromTo([num, name], { y: 8, opacity: 0 }, { y: 0, opacity: 1, duration: 0.5, stagger: 0.05, ease: "power2.out" });
+      }
+    });
+    ScrollTrigger.create({
+      trigger: c, start: i === 0 ? "top top" : "top bottom", end: "bottom top",
+      onUpdate: (self) => stage.progress(c.id, self.progress)
+    });
+  });
+  ScrollTrigger.create({ start: 0, end: "max", onUpdate: (self) => (bar.style.transform = `scaleX(${self.progress.toFixed(4)})`) });
+}
+
+/* Prolog: Satz für Satz, dann Licht */
+function setupProlog() {
+  const lines = $$(".prolog .prolog__line");
+  const shade = $("#stageShade");
+  const setDim = (v) => shade.style.setProperty("--dim", v.toFixed(3));
+  if (reducedMotion) { lines.forEach((l) => (l.style.opacity = 1)); return; }
+  const tl = gsap.timeline({
+    scrollTrigger: { trigger: ".chapter--prolog", start: "top top", end: () => "+=" + window.innerHeight * 1.5, scrub: 0.6 }
+  });
+  lines.forEach((l, i) => {
+    tl.fromTo(l, { opacity: 0, y: 24 }, { opacity: 1, y: 0, duration: 0.5 }, i)
+      .to(l, { opacity: 0, y: -18, duration: 0.4 }, i + 0.75);
+  });
+  // Bühne im Prolog fast schwarz, beim „Ist es nicht.“ geht das Licht an
+  setDim(0.9);
+  ScrollTrigger.create({
+    trigger: ".prolog__turn", start: "top 90%", end: "top 20%", scrub: true,
+    onUpdate: (self) => setDim(0.9 - 0.75 * self.progress)
+  });
+  gsap.from(".prolog__turn > *", { y: 40, opacity: 0, duration: 1.4, stagger: 0.15, ease: "expo.out", scrollTrigger: { trigger: ".prolog__turn", start: "top 45%" } });
+  // Für die übrigen Kapitel: leichte Abdunklung für Lesbarkeit
+  ScrollTrigger.create({ trigger: "#ruhe", start: "top 80%", endTrigger: "#los", end: "bottom top", onToggle: (s) => s.isActive && setDim(0.45) });
+  ScrollTrigger.create({ trigger: "#epilog", start: "top 60%", onEnter: () => setDim(0.25), onLeaveBack: () => setDim(0.45) });
+}
+
+/* Kapitelüberschriften fliegen herein */
+function setupTitles() {
+  $$(".chapter:not(.chapter--prolog) .chead").forEach((h) => {
+    gsap.from($(".chead__num", h), { opacity: 0, letterSpacing: "0.6em", duration: 1.2, ease: "power3.out", scrollTrigger: { trigger: h, start: "top 80%" } });
+    gsap.from($$(".line > *", h), { yPercent: 110, duration: 1.3, ease: "expo.out", stagger: 0.1, scrollTrigger: { trigger: h, start: "top 80%" } });
+  });
+  $$(".story p, .story .trio li, .tool__text > *, .parts li, .faq details, .road__step, .book, .rate, .pause, .quiz, .epilog > *").forEach((el) => {
+    gsap.from(el, { y: 30, opacity: 0, duration: 1, ease: "power3.out", scrollTrigger: { trigger: el, start: "top 88%" } });
   });
 }
+
+/* Schwebende 3D-Elemente: kippen beim Vorbeiscrollen, folgen der Maus */
+function setupFloats() {
+  if (reducedMotion) return;
+  $$(".float3d").forEach((el) => {
+    const wrap = document.createElement("div");
+    wrap.className = "float3d__wrap";
+    wrap.style.cssText = "transform-style:preserve-3d;will-change:transform";
+    el.parentNode.insertBefore(wrap, el);
+    wrap.append(el);
+    gsap.fromTo(wrap, { rotateX: 16, y: 70, z: -60 }, {
+      rotateX: -8, y: -50, z: 0, ease: "none",
+      scrollTrigger: { trigger: wrap, start: "top bottom", end: "bottom top", scrub: 0.8 }
+    });
+  });
+  if (finePointer) {
+    let mx = 0, my = 0;
+    window.addEventListener("pointermove", (e) => { mx = e.clientX / innerWidth - 0.5; my = e.clientY / innerHeight - 0.5; });
+    const floats = $$(".float3d");
+    gsap.ticker.add(() => floats.forEach((f) => gsap.set(f, { rotateY: mx * 10, rotateX: -my * 6 })));
+  }
+}
+
+/* Farbtypen-Quiz */
+function setupQuiz() {
+  const body = $("#quizBody"), step = $("#quizStep");
+  let i = 0;
+  const score = { r: 0, y: 0, g: 0, b: 0 };
+  const render = () => {
+    const f = FRAGEN[i];
+    step.textContent = `Frage ${i + 1} von ${FRAGEN.length}`;
+    body.innerHTML = '<p class="quiz__q"></p><div class="quiz__opts"></div>';
+    $(".quiz__q", body).textContent = f.q;
+    // Reihenfolge der Antworten mischen, damit keine Farbe immer oben steht
+    const keys = Object.keys(f.a).sort(() => Math.random() - 0.5);
+    keys.forEach((k) => {
+      const b = document.createElement("button");
+      b.type = "button";
+      b.className = "quiz__opt";
+      b.textContent = f.a[k];
+      b.addEventListener("click", () => { score[k]++; i++; i < FRAGEN.length ? render() : result(); });
+      $(".quiz__opts", body).append(b);
+    });
+    gsap.from($$(".quiz__q, .quiz__opt", body), { y: 14, opacity: 0, duration: 0.5, stagger: 0.05, ease: "power2.out" });
+  };
+  const result = () => {
+    const top = Object.keys(score).sort((a, b) => score[b] - score[a])[0];
+    const t = TYPEN[top];
+    step.textContent = "Dein Ergebnis";
+    body.innerHTML = `<div class="quiz__result" style="--col:${t.farbe}"><div class="quiz__orb"></div><div><h4><small></small><span></span></h4><p></p><p class="quiz__so">So fahren wir zusammen. Den Rest besprechen wir in der ersten Stunde.</p><button class="quiz__again" type="button">Nochmal machen</button></div></div>`;
+    $("h4 small", body).textContent = "Du bist eher " + t.name;
+    $("h4 span", body).textContent = t.titel;
+    $(".quiz__result p", body).textContent = t.text;
+    $(".quiz__again", body).addEventListener("click", () => { i = 0; Object.keys(score).forEach((k) => (score[k] = 0)); render(); });
+    gsap.from(".quiz__orb", { scale: 0, duration: 1, ease: "back.out(2)" });
+    gsap.from($$(".quiz__result h4, .quiz__result p, .quiz__again", body), { y: 14, opacity: 0, duration: 0.6, stagger: 0.08 });
+    try { sessionStorage.setItem("serband-farbe", t.name); } catch (e) {}
+  };
+  render();
+}
+
+/* Versprechen: Wörter leuchten beim Scrollen auf */
+function setupPromise() {
+  const p = $("#promiseText");
+  const words = p.textContent.trim().split(/\s+/);
+  p.innerHTML = words.map((w) => `<span class="w">${w.replace(/[<>&]/g, "")}</span>`).join(" ");
+  const spans = $$(".w", p);
+  if (reducedMotion) { spans.forEach((s) => s.classList.add("is-lit")); return; }
+  ScrollTrigger.create({
+    trigger: p, start: "top 80%", end: "bottom 40%", scrub: true,
+    onUpdate: (self) => { const n = Math.round(self.progress * spans.length); spans.forEach((s, k) => s.classList.toggle("is-lit", k < n)); }
+  });
+  gsap.from(".promise__sig", { opacity: 0, y: 20, duration: 1.4, ease: "power3.out", scrollTrigger: { trigger: ".promise__sig", start: "top 85%" } });
+}
+
+/* Dein Weg: goldene Linie wächst mit */
+function setupRoad() {
+  const road = $("#road");
+  ScrollTrigger.create({ trigger: road, start: "top 70%", end: "bottom 60%", scrub: true, onUpdate: (s) => road.style.setProperty("--prog", s.progress.toFixed(3)) });
+}
+
+/* Kalender- und Hinweisfenster, Menü */
+function setupSheets() {
+  const sheet = $("#sheet"), frame = $("#sheetFrame"), consent = $("#sheetConsent");
+  let lastFocus = null, currentUrl = "";
+  const open = (el) => { lastFocus = document.activeElement; el.hidden = false; lenis && lenis.stop(); document.body.style.overflow = "hidden"; setTimeout(() => $(".sheet__close", el).focus(), 50); };
+  const close = (el) => { el.hidden = true; lenis && lenis.start(); document.body.style.overflow = ""; lastFocus && lastFocus.focus(); };
+  const loadFrame = () => { consent.hidden = true; frame.hidden = false; frame.src = currentUrl; try { sessionStorage.setItem("serband-cal-ok", "1"); } catch (e) {} };
+  $$("[data-cal]").forEach((b) => b.addEventListener("click", () => {
+    const auto = b.dataset.cal === "automatik";
+    currentUrl = auto ? CONFIG.links.kalenderAutomatik : CONFIG.links.kalenderSchalter;
+    $("#sheetKind").textContent = auto ? "Automatik" : "Schaltwagen";
+    $("#sheetTitle").textContent = "Fahrstunde buchen";
+    $("#sheetExt").href = currentUrl;
+    let ok = false;
+    try { ok = sessionStorage.getItem("serband-cal-ok") === "1"; } catch (e) {}
+    if (ok) loadFrame(); else { consent.hidden = false; frame.hidden = true; frame.removeAttribute("src"); }
+    open(sheet);
+  }));
+  $("#sheetLoad").addEventListener("click", loadFrame);
+  $("#installBtn").addEventListener("click", () => open($("#installSheet")));
+  $$(".sheet").forEach((s) => $$("[data-close]", s).forEach((c) => c.addEventListener("click", () => close(s))));
+  document.addEventListener("keydown", (e) => { if (e.key !== "Escape") return; $$(".sheet").forEach((s) => { if (!s.hidden) close(s); }); closeMenu(); });
+  $("#menuBtn").addEventListener("click", () => {
+    const openNow = !$("#menu").classList.contains("is-open");
+    $("#menu").classList.toggle("is-open", openNow);
+    $("#menu").setAttribute("aria-hidden", openNow ? "false" : "true");
+    $("#menuBtn").setAttribute("aria-expanded", openNow ? "true" : "false");
+    openNow ? lenis && lenis.stop() : lenis && lenis.start();
+  });
+}
+function closeMenu() {
+  const m = $("#menu");
+  if (!m || !m.classList.contains("is-open")) return;
+  m.classList.remove("is-open");
+  m.setAttribute("aria-hidden", "true");
+  $("#menuBtn").setAttribute("aria-expanded", "false");
+  lenis && lenis.start();
+}
+
