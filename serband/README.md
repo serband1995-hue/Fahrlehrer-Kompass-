@@ -13,7 +13,7 @@ Dort ist alles, was noch fehlt, mit `TODO` markiert:
 - `fotos.portrait` – dein Foto (z. B. `img/serband-portrait.jpg`)
 - `videos.*` – Videos aus der Ausbildung (leer = Animation)
 - `zahlen` – echte Zahlen; `wert: null` wird ausgeblendet
-- `bewertungen` – echte Bewertungen; `platzhalter: true` entfernen
+- `bewertungen` – echte Bewertungen; Platzhalter sind nur unter `?entwurf` sichtbar, live wird der Abschnitt ohne echte Bewertungen ausgeblendet
 - `impressum.html` und `datenschutz.html` – gelb markierte Stellen ausfüllen
 
 ## Aufbau

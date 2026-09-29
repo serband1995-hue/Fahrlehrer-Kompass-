@@ -41,6 +41,8 @@ const SHOTS_PORTRAIT = [
   { s: 1.0, u: 0.4, v: 0.72, px: 0.5, py: 0.72, dark: 0.25, fx: 1 }
 ];
 
+const STOP_IDS = ["start", "ich", "warum", "weg", "test", "stimmen", "akademie", "buchen", "bewerten", "fragen", "ziel"];
+
 export async function createCinema({ reducedMotion = false } = {}) {
   const K = CONFIG.kino;
   const stage = document.getElementById("stage");
@@ -97,6 +99,7 @@ export async function createCinema({ reducedMotion = false } = {}) {
   const state = { vOp: 1, target: 0, p: 0, speedKmh: 0, lights: 0, lightsTarget: 0, mx: 0, my: 0, smx: 0, smy: 0, running: true, fxAmt: 1 };
   let W = 0, H = 0, iw = 1, ih = 1, cover = 1, dpr = 1;
   const listeners = [];
+  const paused = { tab: false, cover: false };
 
   function layout() {
     W = window.innerWidth;
@@ -112,15 +115,16 @@ export async function createCinema({ reducedMotion = false } = {}) {
     initParticles();
   }
 
+  let stopIdx = STOP_IDS.map((_, i) => i);
   function shotAt(p) {
-    const n = SHOTS.length - 1;
+    const n = stopIdx.length - 1;
     const f = clamp(p, 0, 1) * n;
     const i = Math.min(n - 1, Math.floor(f));
     const t = smooth(f - i);
     const portrait = W / H < 0.9;
-    const list = usePortrait ? SHOTS_PORTRAIT : SHOTS;
+    const all = usePortrait ? SHOTS_PORTRAIT : SHOTS;
     const get = (sh) => (portrait && !usePortrait && sh.m ? { ...sh, ...sh.m } : sh);
-    const a = get(list[i]), b = get(list[i + 1]);
+    const a = get(all[stopIdx[i]]), b = get(all[stopIdx[i + 1]]);
     const o = {};
     ["s", "u", "v", "px", "py", "dark", "fx"].forEach((k) => (o[k] = lerp(a[k], b[k], t)));
     return o;
@@ -258,7 +262,9 @@ export async function createCinema({ reducedMotion = false } = {}) {
   }
 
   window.addEventListener("resize", async () => {
-    if (!!K.bildHandy && portraitMQ.matches !== usePortrait) { await chooseImage(); setupVideo(); }
+    if (!!K.bildHandy && portraitMQ.matches !== usePortrait) { await chooseImage(); setupVideo(); layout(); return; }
+    // Auf dem Handy ändert sich beim Scrollen die Höhe (Adressleiste). Das ignorieren wir.
+    if (window.innerWidth === W && Math.abs(window.innerHeight - H) < 160) return;
     layout();
   });
   layout();
@@ -275,10 +281,16 @@ export async function createCinema({ reducedMotion = false } = {}) {
     },
     get hasVideo() { return videoOn; },
     onFrame(fn) { listeners.push(fn); },
-    pause(v) {
+    pause(v, reason = "tab") {
+      paused[reason] = v;
       const was = state.running;
-      state.running = !v;
+      state.running = !paused.tab && !paused.cover;
+      if (!state.running && videoOn && !video.paused) video.pause();
       if (!was && state.running) { last = performance.now(); requestAnimationFrame(tick); }
+    },
+    setStops(ids) {
+      const idx = ids.map((id) => STOP_IDS.indexOf(id)).filter((i) => i >= 0);
+      if (idx.length > 1) stopIdx = idx;
     },
     get speed() { return state.speedKmh; }
   };

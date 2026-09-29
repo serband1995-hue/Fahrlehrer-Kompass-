@@ -710,3 +710,36 @@ mark.todo { background: rgba(217,181,107,.18); color: var(--gold-soft); border: 
 .float-chip.c2 { right: -2%; top: 50%; }
 .float-chip.c3 { left: 0; bottom: 6%; }
 .rate__script { right: 40%; top: 6%; }
+
+/* ---------- Korrekturen nach dem Test ---------- */
+.intro { overflow-y: auto; }
+@media (max-height: 560px) {
+  .intro__inner { gap: 2px; padding: 14px; }
+  .intro__mark { width: 58px; height: 58px; margin-bottom: 6px; }
+  .intro__name { font-size: 30px; }
+  .intro__count { margin-top: 10px; }
+  .intro__actions { margin-top: 10px; gap: 8px; }
+  .ignite { width: 92px; height: 92px; }
+}
+@media (max-width: 360px) {
+  .nav .sound { display: none; }
+  .brand span { letter-spacing: .12em; }
+  .nav { padding-left: 12px; }
+}
+.footer nav a { padding: 6px 0; }
+.footer nav { gap: 2px; }
+.footer p a { display: inline-block; padding: 6px 0; }
+.portrait__ph .mk { width: 46%; height: auto; stroke: none; fill: none; }
+.portrait__ph .mk-shield { fill: rgba(255,255,255,.04); }
+.review__stars[aria-hidden] { color: var(--gold); }
+/* Handy quer: wenig Höhe */
+@media (max-height: 520px) and (orientation: landscape) {
+  .hero { align-items: flex-start; min-height: auto; padding-top: 86px; padding-bottom: 36px; }
+  .hero__title { font-size: clamp(34px, 6vw, 52px); }
+  .hero__script { display: none; }
+  .hero__lead { margin: 12px 0 16px; font-size: 15px; max-width: 46ch; }
+  .hero__cta .btn { height: 44px; padding: 0 16px; font-size: 13px; }
+  .hero__glass, .scroll-cue { display: none; }
+  .nav { top: 8px; padding-top: 4px; padding-bottom: 4px; }
+  .journey { height: auto !important; }
+}
