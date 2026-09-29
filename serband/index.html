@@ -1,0 +1,542 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Serband · Fahrlehrer Offenbach</title>
+<meta name="description" content="Fahrstunden in Offenbach am Main – Schaltung oder Automatik. In Ruhe lernen und gut vorbereitet in die Prüfung.">
+<meta name="theme-color" content="#04080b">
+<meta property="og:type" content="website">
+<meta property="og:title" content="Serband · Fahrlehrer in Offenbach">
+<meta property="og:description" content="Fahrstunden buchen – Schaltung oder Automatik. In Ruhe lernen, gut vorbereitet in die Prüfung.">
+<meta property="og:image" content="https://serband1995-hue.github.io/Fahrlehrer-Kompass-/serband/img/og.jpg">
+<meta property="og:locale" content="de_DE">
+<meta name="twitter:card" content="summary_large_image">
+<link rel="icon" href="img/icon-192.png" type="image/png">
+<link rel="apple-touch-icon" href="img/apple-touch-icon.png">
+<link rel="preload" href="fonts/archivo.woff2" as="font" type="font/woff2" crossorigin>
+<link rel="preload" href="fonts/inter.woff2" as="font" type="font/woff2" crossorigin>
+<link rel="stylesheet" href="css/style.css">
+<link rel="preload" href="img/hero.jpg" as="image" media="(min-aspect-ratio: 9/10)">
+<link rel="preload" href="img/hero-mobile.jpg" as="image" media="(max-aspect-ratio: 9/10)">
+</head>
+<body class="is-loading">
+<svg width="0" height="0" style="position:absolute" aria-hidden="true"><symbol id="logo" viewBox="0 0 120 120"><circle class="mk-ring" cx="60" cy="60" r="50" pathLength="1"/><circle class="mk-ring mk-ring--in" cx="60" cy="60" r="43" pathLength="1"/><path class="mk-pts" d="M60 2l4.5 16h-9zM60 118l4.5-16h-9zM2 60l16-4.5v9zM118 60l-16-4.5v9z"/><path class="mk-shield" pathLength="1" d="M33 46V41c11-1 20-5 27-14 7 9 16 13 27 14v5 16c0 17-11 28-27 36-16-8-27-19-27-36z"/><circle class="mk-wheel" cx="60" cy="46" r="6.5" pathLength="1"/><path class="mk-wheel" pathLength="1" d="M53.5 46h13M60 46v6.5"/><path class="mk-road" pathLength="1" d="M74 64c-12 0-24 3-24 10s14 8 14 14-6 7-8 9"/><path class="mk-line" d="M74 64c-12 0-24 3-24 10s14 8 14 14-6 7-8 9"/></symbol></svg>
+
+<!-- ============ Vorspann ============ -->
+<div class="intro" id="intro" aria-live="polite">
+  <div class="intro__inner">
+    <svg class="intro__mark mk" viewBox="0 0 120 120" aria-hidden="true"><circle class="mk-ring" cx="60" cy="60" r="50" pathLength="1"/><circle class="mk-ring mk-ring--in" cx="60" cy="60" r="43" pathLength="1"/><path class="mk-pts" d="M60 2l4.5 16h-9zM60 118l4.5-16h-9zM2 60l16-4.5v9zM118 60l-16-4.5v9z"/><path class="mk-shield" pathLength="1" d="M33 46V41c11-1 20-5 27-14 7 9 16 13 27 14v5 16c0 17-11 28-27 36-16-8-27-19-27-36z"/><circle class="mk-wheel" cx="60" cy="46" r="6.5" pathLength="1"/><path class="mk-wheel" pathLength="1" d="M53.5 46h13M60 46v6.5"/><path class="mk-road" pathLength="1" d="M74 64c-12 0-24 3-24 10s14 8 14 14-6 7-8 9"/><path class="mk-line" d="M74 64c-12 0-24 3-24 10s14 8 14 14-6 7-8 9"/></svg>
+    <p class="intro__name">SERBAND</p>
+    <p class="intro__sub">Fahrlehrer · Offenbach am Main</p>
+    <div class="intro__count"><span id="introCount">0</span><small>%</small></div>
+    <div class="intro__actions" id="introActions" hidden>
+      <button class="ignite" id="ignite" type="button">
+        <span class="ignite__ring"></span>
+        <span class="ignite__label">Motor<br>starten</span>
+      </button>
+      <button class="intro__mute" id="igniteMute" type="button">ohne Ton weiter</button>
+    </div>
+  </div>
+  <div class="intro__curtain intro__curtain--top"></div>
+  <div class="intro__curtain intro__curtain--bottom"></div>
+</div>
+
+<div class="cinema" aria-hidden="true">
+  <div class="cinema__stage" id="stage">
+    <img class="cinema__img" id="stageImg" alt="">
+    <div class="cinema__flares" id="flares"></div>
+  </div>
+  <video class="cinema__video" id="heroVideo" muted playsinline preload="auto"></video>
+  <canvas class="cinema__fx" id="fx"></canvas>
+  <div class="cinema__shade" id="shade"></div>
+</div>
+<div class="bars" aria-hidden="true"><i></i><i></i></div>
+<div class="vignette" aria-hidden="true"></div>
+<div class="grain" aria-hidden="true"></div>
+<div class="cursor" aria-hidden="true"><span></span></div>
+
+<!-- ============ Navigation ============ -->
+<header class="nav">
+  <a class="brand" href="#start" aria-label="Serband – nach oben">
+    <svg class="mk" viewBox="0 0 120 120" aria-hidden="true"><use href="#logo"/></svg>
+    <span>SERBAND</span>
+  </a>
+  <div class="nav__right">
+    <button class="sound" id="soundBtn" type="button" aria-pressed="false" aria-label="Motorsound an/aus">
+      <span></span><span></span><span></span><span></span>
+    </button>
+    <a class="btn btn--small magnetic" href="#buchen">Buchen</a>
+    <button class="menu-btn" id="menuBtn" type="button" aria-expanded="false" aria-controls="menu"><span></span><span></span><em>Menü</em></button>
+  </div>
+</header>
+
+<nav class="menu" id="menu" aria-hidden="true">
+  <ol>
+    <li><a href="#ich"><small>01</small>Kurz zu mir</a></li>
+    <li><a href="#warum"><small>02</small>So läuft's</a></li>
+    <li><a href="#weg"><small>03</small>Dein Weg</a></li>
+    <li><a href="#test"><small>04</small>Reaktionstest</a></li>
+    <li><a href="#stimmen"><small>05</small>Stimmen</a></li>
+    <li><a href="#akademie"><small>06</small>Fahr-Akademie</a></li>
+    <li><a href="#buchen"><small>07</small>Termin buchen</a></li>
+    <li><a href="#bewerten"><small>08</small>Bewerten</a></li>
+    <li><a href="#fragen"><small>09</small>Fragen</a></li>
+  </ol>
+</nav>
+
+<!-- Tacho & Streckenfortschritt -->
+<div class="hud" aria-hidden="true">
+  <svg class="hud__gauge" viewBox="0 0 120 120">
+    <circle class="hud__track" cx="60" cy="60" r="50"/>
+    <circle class="hud__fill" id="hudFill" cx="60" cy="60" r="50"/>
+  </svg>
+  <div class="hud__num"><b id="hudSpeed">0</b><small>km/h</small></div>
+  <div class="hud__gear" id="hudGear">P</div>
+</div>
+<div class="route" aria-hidden="true">
+  <div class="route__line"><div class="route__fill" id="routeFill"></div></div>
+  <div class="route__car" id="routeCar"></div>
+  <ul class="route__stops" id="routeStops"></ul>
+</div>
+
+<main id="scroll">
+
+  <!-- ============ Start (Kinobild + Glas) ============ -->
+  <section class="hero" id="start" data-stop="Start">
+    <div class="hero__content">
+      <p class="eyebrow reveal-up">Fahrlehrer · Offenbach am Main</p>
+      <h1 class="hero__title">
+        <span class="line"><span class="split">Sicher zum</span></span>
+        <span class="line"><em class="split serif">Führerschein.</em></span>
+      </h1>
+      <p class="script hero__script reveal-up" aria-hidden="true">Ruhig ans Ziel</p>
+      <p class="hero__lead reveal-up">Fahrstunden in Offenbach, mit Schaltung oder Automatik. In Ruhe lernen und gut vorbereitet in die Prüfung.</p>
+      <div class="hero__cta reveal-up">
+        <a class="btn magnetic" href="#buchen"><span>Fahrstunde buchen</span><i class="arrow"></i></a>
+        <a class="btn btn--glass magnetic" href="#akademie"><span>Zur Fahr-Akademie</span></a>
+      </div>
+    </div>
+    <div class="hero__glass reveal-up">
+      <a class="glass-tile" href="#buchen"><span class="glass-tile__ico">⚙</span><b>Schaltung &amp; Automatik</b><small>2 Kalender, direkt buchen</small></a>
+      <a class="glass-tile" href="#akademie"><span class="glass-tile__ico">▶</span><b>Fahr-Akademie</b><small>Lern-App mit Videos</small></a>
+      <a class="glass-tile" href="#test"><span class="glass-tile__ico">◉</span><b>Reaktionstest</b><small>Wie schnell bist du?</small></a>
+    </div>
+    <a class="scroll-cue" href="#ich"><span>Scrollen</span><i></i></a>
+  </section>
+
+  <div class="light">
+
+  <!-- ============ 01 Kurz zu mir (Strive + E-Learning) ============ -->
+  <section class="chapter chapter--about" id="ich" data-stop="Kurz zu mir">
+    <div class="wrap about">
+      <div class="orbit reveal-card" id="portrait">
+        <div class="orbit__blob"></div>
+        <div class="orbit__ring"></div>
+        <div class="portrait">
+          <div class="portrait__frame">
+            <div class="portrait__ph">
+              <svg class="mk" viewBox="0 0 120 120" aria-hidden="true"><use href="#logo"/></svg>
+            </div>
+          </div>
+        </div>
+        <div class="orbit__track">
+          <span class="bubble" style="--a:0deg">
+            <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="2.5"/><path d="M3.5 10h6M14.5 10h6M12 14.5V21"/></svg>
+          </span>
+          <span class="bubble" style="--a:90deg">
+            <svg viewBox="0 0 24 24"><path d="M4 18h4l3-6 3 3 6-9"/></svg>
+          </span>
+          <span class="bubble" style="--a:180deg">
+            <svg viewBox="0 0 24 24"><path d="M12 20s-7-4.4-7-10a4 4 0 0 1 7-2.6A4 4 0 0 1 19 10c0 5.6-7 10-7 10z"/></svg>
+          </span>
+          <span class="bubble" style="--a:270deg">
+            <svg viewBox="0 0 24 24"><path d="M8 4h8v4a4 4 0 0 1-8 0zM6 5H4v2a3 3 0 0 0 3 3M18 5h2v2a3 3 0 0 1-3 3M12 12v4M8 20h8M9 16h6v4H9z"/></svg>
+          </span>
+        </div>
+      </div>
+      <div class="about__text">
+        <p class="kicker"><span>01</span>Kurz zu mir</p>
+        <h2 class="h2 split-words">Ruhig bleiben. <em class="serif">Klar erklären.</em></h2>
+        <p class="lead reveal-up">Hi, ich bin Serband, Fahrlehrer in Offenbach. In den Fahrstunden geht es entspannt zu: Wir üben in deinem Tempo, und du weißt immer, woran du bist.</p>
+        <p class="reveal-up">Fehler gehören dazu. Wir sprechen sie an, üben die Situation noch einmal und machen dann weiter.</p>
+        <p class="script signature reveal-up">Serband</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============ 02 So läuft's (Strive-Karten) ============ -->
+  <section class="chapter" id="warum" data-stop="So läuft's">
+    <div class="wrap solutions">
+      <div class="solutions__head">
+        <p class="kicker"><span>02</span>So läuft's</p>
+        <h2 class="h2 split-words">Worauf du dich <em class="serif">verlassen kannst.</em></h2>
+        <p class="reveal-up">Vom ersten Anfahren bis zur Prüfung: Du lernst Schritt für Schritt, ohne Druck und mit ehrlicher Rückmeldung.</p>
+        <a class="link reveal-up" href="#weg">Dein Weg zum Führerschein →</a>
+      </div>
+      <div class="promises">
+        <article class="promise tilt" style="--tile:#efe6d4">
+          <span class="promise__ico"><svg class="promise__icon" viewBox="0 0 64 64" aria-hidden="true"><path d="M8 40c8-10 16-10 24 0s16 10 24 0"/><path d="M8 28c8-10 16-10 24 0s16 10 24 0" opacity=".45"/></svg></span>
+          <h3>In Ruhe lernen</h3>
+          <p>Kein Druck und kein Anschreien. Du lernst in deinem Tempo.</p>
+          <span class="promise__no">01</span>
+        </article>
+        <article class="promise tilt" style="--tile:#dfe9f2">
+          <span class="promise__ico"><svg class="promise__icon" viewBox="0 0 64 64" aria-hidden="true"><path d="M10 50h10l8-14 8 8 18-28"/><circle cx="54" cy="16" r="4"/></svg></span>
+          <h3>Mit Plan</h3>
+          <p>Wir arbeiten nach Ausbildungsplan. Du weißt vorher, was wir üben, und danach, was schon sitzt.</p>
+          <span class="promise__no">02</span>
+        </article>
+        <article class="promise tilt" style="--tile:#e1ece2">
+          <span class="promise__ico"><svg class="promise__icon" viewBox="0 0 64 64" aria-hidden="true"><rect x="10" y="14" width="44" height="30" rx="5"/><path d="M28 23l10 6-10 6z"/><path d="M22 52h20"/></svg></span>
+          <h3>Strecken vorher sehen</h3>
+          <p>In der Fahr-Akademie gibt es Videos von Strecken aus Offenbach und Umgebung.</p>
+          <span class="promise__no">03</span>
+        </article>
+        <article class="promise tilt" style="--tile:#f3e1dc">
+          <span class="promise__ico"><svg class="promise__icon" viewBox="0 0 64 64" aria-hidden="true"><circle cx="32" cy="32" r="22"/><path d="M22 33l7 7 14-15"/></svg></span>
+          <h3>Ehrliche Rückmeldung</h3>
+          <p>Du erfährst offen, wo du stehst und was noch fehlt.</p>
+          <span class="promise__no">04</span>
+        </article>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============ Zitat-Band (Strive, dunkelgrün) ============ -->
+  <section class="band">
+    <div class="band__media reveal-card"><img src="img/hero.jpg" alt="" loading="lazy"></div>
+    <blockquote class="band__quote">
+      <p class="split-words">„Fehler gehören dazu. Wir üben so lange, bis es sitzt.“</p>
+      <footer><span class="band__avatar">S</span><span><b>Serband</b><small>Fahrlehrer, Offenbach</small></span></footer>
+    </blockquote>
+    <div class="band__side">
+      <p class="kicker kicker--light">Worauf es ankommt</p>
+      <h3>Sicher fahren, <em class="serif">nicht nur bestehen.</em></h3>
+      <p>Die Prüfung ist ein Etappenziel. Das eigentliche Ziel ist, dass du danach sicher und entspannt allein unterwegs bist.</p>
+      <svg class="ring" viewBox="0 0 200 200" aria-hidden="true">
+        <defs><path id="ringPath" d="M100 100m-78 0a78 78 0 1 1 156 0a78 78 0 1 1-156 0"/></defs>
+        <text><textPath href="#ringPath">RUHE · PLAN · SICHERHEIT · PRÜFUNG · RUHE · PLAN · SICHERHEIT · PRÜFUNG ·</textPath></text>
+        <circle cx="100" cy="100" r="4"/>
+      </svg>
+    </div>
+  </section>
+
+  <!-- ============ 03 Dein Weg (Range-Rover-Nummern) ============ -->
+  <section class="chapter chapter--journey" id="weg" data-stop="Dein Weg">
+    <div class="journey">
+      <div class="journey__bgword" aria-hidden="true">FÜHRERSCHEIN</div>
+      <div class="journey__head">
+        <p class="kicker"><span>03</span>Dein Weg</p>
+        <h2 class="h2 split-words">Vom ersten Anschnallen bis zur <em class="serif">Plastikkarte.</em></h2>
+      </div>
+      <div class="journey__track" id="journeyTrack">
+        <svg class="journey__road" id="journeyRoad" preserveAspectRatio="none" aria-hidden="true"><path id="journeyPath"/></svg>
+        <article class="step" data-video="">
+          <span class="step__big">01</span>
+          <div class="step__media"><div class="anim anim--doc"><i></i><i></i><i></i><b></b></div></div>
+          <h3>Anmelden</h3>
+          <p>Anmelden und Unterlagen klären: Sehtest, Erste-Hilfe-Kurs, Passbild.</p>
+        </article>
+        <article class="step" data-video="theorie">
+          <span class="step__big">02</span>
+          <div class="step__media"><div class="anim anim--book"><i></i><i></i><b></b></div></div>
+          <h3>Theorie</h3>
+          <p>Theorieunterricht und Lernen am Handy. In der Fahr-Akademie siehst du vieles vorher im Video.</p>
+        </article>
+        <article class="step" data-video="fahrstunde">
+          <span class="step__big">03</span>
+          <div class="step__media"><div class="anim anim--wheel"><i></i><b></b></div></div>
+          <h3>Erste Fahrstunden</h3>
+          <p>Anfahren, lenken, schalten, bremsen. Erst auf ruhigen Straßen, in deinem Tempo.</p>
+        </article>
+        <article class="step">
+          <span class="step__big">04</span>
+          <div class="step__media"><div class="anim anim--round"><i></i><b></b></div></div>
+          <h3>Stadtverkehr</h3>
+          <p>Kreuzungen, Kreisverkehre, Vorfahrt, Spurwechsel. Wir üben, bis es sicher klappt.</p>
+        </article>
+        <article class="step">
+          <span class="step__big">05</span>
+          <div class="step__media"><div class="anim anim--night"><i></i><i></i><b></b></div></div>
+          <h3>Sonderfahrten</h3>
+          <p>Die Pflichtfahrten: Überland, Autobahn und bei Dunkelheit.</p>
+        </article>
+        <article class="step step--goal" data-video="pruefung">
+          <span class="step__big">06</span>
+          <div class="step__media"><div class="anim anim--card"><i></i><b></b></div></div>
+          <h3>Prüfung &amp; Führerschein</h3>
+          <p>Wir fahren typische Prüfungsstrecken vorher. So kennst du am Prüfungstag die wichtigen Stellen schon.</p>
+        </article>
+      </div>
+    </div>
+  </section>
+
+  </div><!-- /light -->
+
+  <!-- ============ 05 Reaktionstest (Glas über Foto, O2) ============ -->
+  <section class="chapter chapter--window" id="test" data-stop="Reaktionstest">
+    <div class="wrap">
+      <div class="glass-panel game">
+        <span class="glass-panel__no">04</span>
+        <div class="game__text">
+          <p class="kicker kicker--light">Kurze Pause</p>
+          <h2 class="h2 split-words">Wie schnell <em class="serif">reagierst du?</em></h2>
+          <p class="reveal-up">Tippe auf die Ampel. Sobald sie grün wird, tippst du so schnell du kannst. Wer zu früh drückt, fährt über Rot.</p>
+          <dl class="game__facts">
+            <div><dt>Deine Zeit</dt><dd id="gameTime">–</dd></div>
+            <div><dt>Bestzeit</dt><dd id="gameBest">–</dd></div>
+            <div><dt>Reaktionsweg bei 50 km/h</dt><dd id="gameDist">–</dd></div>
+          </dl>
+        </div>
+        <button class="light-btn" id="light" type="button" aria-label="Reaktionstest starten">
+          <span class="light__lamp" data-l="0"></span>
+          <span class="light__lamp" data-l="1"></span>
+          <span class="light__lamp" data-l="2"></span>
+          <span class="light__msg" id="lightMsg">Tippen zum Starten</span>
+        </button>
+      </div>
+    </div>
+  </section>
+
+  <div class="light">
+
+  <!-- ============ 04 Stimmen (Strive-Karten) ============ -->
+  <section class="chapter" id="stimmen" data-stop="Stimmen">
+    <div class="wrap">
+      <div class="section-head">
+        <div>
+          <p class="kicker"><span>05</span>Stimmen</p>
+          <h2 class="h2 split-words">Was Fahrschüler <em class="serif">sagen.</em></h2>
+        </div>
+        <a class="link reveal-up" href="#bewerten">Selbst bewerten →</a>
+      </div>
+      <div class="stats" id="stats"></div>
+    </div>
+    <div class="reviews" id="reviews">
+      <div class="reviews__rail" id="reviewsRail"></div>
+    </div>
+    <div class="wrap reviews__foot">
+      <p class="hint"><i></i>Ziehen oder wischen</p>
+    </div>
+  </section>
+
+  <!-- ============ 06 Fahr-Akademie (E-Learning, Salbeigrün) ============ -->
+  <section class="chapter" id="akademie" data-stop="Fahr-Akademie">
+    <div class="wrap">
+      <div class="sage app">
+        <div class="app__text">
+          <p class="kicker"><span>06</span>Die Fahr-Akademie</p>
+          <h2 class="h2 split-words">Lernen, auch <em class="serif">zwischen den Stunden.</em></h2>
+          <p class="lead reveal-up">Die Fahr-Akademie ist eine Lern-App mit Videos aus echten Fahrten. Damit kannst du dich auf die nächste Fahrstunde vorbereiten.</p>
+          <ul class="features">
+            <li class="reveal-up"><span>▶</span><b>Prüfungsstrecken</b><small>als Video, Knackpunkte markiert</small></li>
+            <li class="reveal-up"><span>◎</span><b>Lernpfad in Stufen</b><small>passend zu deinem Stand</small></li>
+            <li class="reveal-up"><span>✓</span><b>Kostenlos testen</b><small>Vollzugang jederzeit</small></li>
+            <li class="reveal-up"><span>⌂</span><b>Daten in Deutschland</b><small>Server in Frankfurt</small></li>
+          </ul>
+          <div class="app__cta reveal-up">
+            <a class="btn btn--dark magnetic" id="akademieLink" href="#" target="_blank" rel="noopener"><span>Jetzt registrieren</span><i class="arrow"></i></a>
+            <button class="btn btn--line magnetic" type="button" id="installBtn"><span>Als App speichern</span></button>
+          </div>
+        </div>
+        <div class="phone-stage">
+          <div class="phone" id="phone">
+            <div class="phone__notch"></div>
+            <div class="phone__screen">
+              <div class="ui">
+                <div class="ui__top"><span class="ui__logo"></span><b>Fahr-Akademie</b><span class="ui__avatar"></span></div>
+                <div class="ui__hello">Weiter geht's 👋</div>
+                <div class="ui__video">
+                  <div class="ui__play"></div>
+                  <span class="ui__tag">Prüfungsstrecke</span>
+                  <div class="ui__bar"><i></i><em style="left:22%"></em><em style="left:48%"></em><em style="left:71%"></em></div>
+                </div>
+                <div class="ui__label">Dein Lernpfad</div>
+                <ul class="ui__path">
+                  <li class="done"><i></i>Grundfahraufgaben</li>
+                  <li class="done"><i></i>Kreuzungen &amp; Vorfahrt</li>
+                  <li class="now"><i></i>Kreisverkehre</li>
+                  <li><i></i>Überlandfahrt</li>
+                  <li><i></i>Autobahn</li>
+                  <li><i></i>Prüfungsvorbereitung</li>
+                </ul>
+              </div>
+            </div>
+            <div class="phone__glare"></div>
+          </div>
+          <span class="float-chip c1">▶ Kapitel &amp; Knackpunkte</span>
+          <span class="float-chip c2">✓ Stufe geschafft</span>
+          <span class="float-chip c3">🔒 Server in Deutschland</span>
+          <p class="phone-note">Beispielansicht</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============ 07 Buchen (Range-Rover-Auswahl) ============ -->
+  <section class="chapter chapter--book" id="buchen" data-stop="Termin buchen">
+    <div class="book__bgword" id="bookWord" aria-hidden="true">SCHALTUNG</div>
+    <div class="wrap book">
+      <div class="book__head">
+        <p class="kicker"><span>07</span>Termin buchen</p>
+        <h2 class="h2 split-words">Schaltung oder Automatik? <em class="serif">Du entscheidest.</em></h2>
+      </div>
+      <div class="book__stage reveal-card">
+        <img src="img/hero.jpg" alt="Fahrschul-SUV bei Nacht vor der Frankfurter Skyline" loading="lazy">
+      </div>
+      <div class="book__panel">
+        <div class="switch" role="tablist" aria-label="Getriebe wählen">
+          <button class="switch__opt is-active" type="button" role="tab" aria-selected="true" data-mode="schalter">Schaltung</button>
+          <button class="switch__opt" type="button" role="tab" aria-selected="false" data-mode="automatik">Automatik</button>
+          <span class="switch__pill"></span>
+        </div>
+        <div class="book__info">
+          <svg class="shifter" id="gearSchalter" viewBox="0 0 160 160" aria-hidden="true">
+            <g class="shifter__gate"><path d="M40 40v80M80 40v80M120 40v80M40 80h80"/>
+              <text x="40" y="30">1</text><text x="80" y="30">3</text><text x="120" y="30">5</text>
+              <text x="40" y="142">2</text><text x="80" y="142">4</text><text x="120" y="142">R</text></g>
+            <g class="shifter__knob"><circle cx="80" cy="80" r="14"/></g>
+          </svg>
+          <svg class="selector" id="gearAutomatik" viewBox="0 0 160 160" aria-hidden="true" hidden>
+            <rect x="62" y="22" width="36" height="116" rx="18"/>
+            <text x="112" y="44">P</text><text x="112" y="72">R</text><text x="112" y="100">N</text><text x="112" y="128">D</text>
+            <g class="selector__knob"><circle cx="80" cy="40" r="12"/></g>
+          </svg>
+          <div>
+            <h3 id="bookTitle">Schaltwagen</h3>
+            <p id="bookText">Du lernst kuppeln und schalten und darfst später Schalt- und Automatikwagen fahren.</p>
+          </div>
+        </div>
+        <button class="btn magnetic" type="button" data-cal="schalter" id="bookBtn"><span>Kalender öffnen</span><i class="arrow"></i></button>
+        <p class="tip"><b>Tipp:</b> Mit der Schlüsselzahl B197 machst du die Prüfung auf Automatik und darfst nach zusätzlichen Schaltstunden trotzdem Schaltwagen fahren.</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============ 08 Bewerten (Strive-Newsletter-Band) ============ -->
+  <section class="chapter" id="bewerten" data-stop="Bewerten">
+    <div class="wrap">
+      <div class="rate">
+        <div class="rate__text">
+          <p class="kicker"><span>08</span>Danke sagen</p>
+          <h2 class="h2 split-words">Schon bestanden? <em class="serif">Erzähl's weiter.</em></h2>
+          <p class="reveal-up">Über eine kurze Bewertung freue ich mich. Sie hilft auch anderen Fahrschülern bei der Suche. Scann den Code oder tipp auf den Button.</p>
+          <a class="btn btn--dark magnetic reveal-up" id="rateLink" href="#" target="_blank" rel="noopener"><span>Bewertung schreiben</span><i class="arrow"></i></a>
+        </div>
+        <p class="script rate__script" aria-hidden="true">Danke!</p>
+        <div class="qr reveal-card">
+          <div class="qr__stars" aria-hidden="true"><i>★</i><i>★</i><i>★</i><i>★</i><i>★</i></div>
+          <div class="qr__code" id="qrCode"></div>
+          <p>Mit der Handykamera scannen</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============ 09 Fragen ============ -->
+  <section class="chapter" id="fragen" data-stop="Fragen">
+    <div class="wrap faq-wrap">
+      <div>
+        <p class="kicker"><span>09</span>Fragen</p>
+        <h2 class="h2 split-words">Häufige <em class="serif">Fragen.</em></h2>
+      </div>
+      <div class="faq">
+        <details><summary>Was kostet der Führerschein?</summary><div><p>Das hängt vor allem davon ab, wie viele Fahrstunden du brauchst. Aktuelle Preise und Pakete findest du bei der <a id="priceLink" href="#" target="_blank" rel="noopener">Fahrschule, über die ich ausbilde</a>.</p></div></details>
+        <details><summary>Schaltung oder Automatik – was ist besser?</summary><div><p>Automatik ist einfacher zum Start, Schaltung macht dich flexibler. Mit der Schlüsselzahl B197 bekommst du beides: Prüfung auf Automatik, dazu ein paar Schaltstunden, und du darfst auch Schaltwagen fahren.</p></div></details>
+        <details><summary>Wie lange dauert es bis zum Führerschein?</summary><div><p>Das ist bei jedem anders. Die Theorie geht im Intensivkurs recht schnell. Bei der Praxis kommt es darauf an, wie oft du fahren kannst und wie schnell du sicher wirst.</p></div></details>
+        <details><summary>Was brauche ich für die Anmeldung?</summary><div><p>Einen Sehtest, einen Erste-Hilfe-Kurs, ein biometrisches Passbild und deinen Ausweis. Den Antrag bei der Führerscheinstelle besprechen wir gemeinsam.</p></div></details>
+        <details><summary>Ab wann kann ich anfangen?</summary><div><p>Du kannst schon vor deinem 17. Geburtstag mit der Ausbildung beginnen. Die Theorieprüfung ist frühestens 3 Monate, die praktische Prüfung frühestens 1 Monat vorher möglich. Ab 17 fährst du dann mit Begleitung (BF17), ab 18 allein.</p></div></details>
+        <details><summary>Was ist die Fahr-Akademie?</summary><div><p>Eine Lern-App mit Videos aus echten Fahrten, zum Beispiel Prüfungsstrecken und Sonderfahrten. Du kannst kostenlos reinschnuppern und bei Bedarf den Vollzugang freischalten.</p></div></details>
+      </div>
+    </div>
+  </section>
+
+  </div><!-- /light -->
+
+  <!-- ============ Finale (Kinobild) ============ -->
+  <section class="finale" id="ziel" data-stop="Ziel">
+    <div class="finale__inner">
+      <p class="eyebrow reveal-up">Die Straße ist frei</p>
+      <h2 class="finale__title"><span class="line"><span class="split">Bereit,</span></span><span class="line"><em class="split serif">loszufahren?</em></span></h2>
+      <div class="hero__cta reveal-up">
+        <a class="btn magnetic" href="#buchen"><span>Fahrstunde buchen</span><i class="arrow"></i></a>
+        <a class="btn btn--glass magnetic" id="waLink" href="#" target="_blank" rel="noopener"><span>WhatsApp ans Büro</span></a>
+      </div>
+    </div>
+  </section>
+
+  <footer class="footer" id="kontakt">
+    <div class="wrap footer__grid">
+      <div class="footer__brand">
+        <svg class="mk" viewBox="0 0 120 120" aria-hidden="true"><use href="#logo"/></svg>
+        <div><b>SERBAND</b><span class="script">Ruhig ans Ziel</span></div>
+      </div>
+      <nav>
+        <h4>Seite</h4>
+        <a href="#buchen">Termin buchen</a>
+        <a href="#akademie">Fahr-Akademie</a>
+        <a href="#bewerten">Bewerten</a>
+        <a href="#fragen">Fragen</a>
+      </nav>
+      <div>
+        <h4>Kontakt</h4>
+        <p>Ausbildung über die Fahrschule Boost<br>Berliner Straße 2<br>63065 Offenbach am Main</p>
+        <p><a id="telLink" href="#"></a></p>
+      </div>
+      <nav id="socialLinks">
+        <h4>Rechtliches</h4>
+        <a id="impLink" href="impressum.html">Impressum</a>
+        <a id="dsLink" href="datenschutz.html">Datenschutz</a>
+      </nav>
+    </div>
+    <div class="wrap footer__bottom">
+      <span>© Serband · Fahrlehrer in Offenbach am Main</span>
+      <span>Keine Cookies, kein Tracking.</span>
+    </div>
+  </footer>
+</main>
+
+<!-- Kalender-Fenster -->
+<div class="sheet" id="sheet" role="dialog" aria-modal="true" aria-labelledby="sheetTitle" hidden>
+  <div class="sheet__backdrop" data-close></div>
+  <div class="sheet__panel">
+    <div class="sheet__head">
+      <div><small id="sheetKind">Kalender</small><h3 id="sheetTitle">Termin buchen</h3></div>
+      <a class="sheet__ext" id="sheetExt" href="#" target="_blank" rel="noopener">In neuem Tab ↗</a>
+      <button class="sheet__close" type="button" data-close aria-label="Schließen">×</button>
+    </div>
+    <div class="sheet__body">
+      <div class="sheet__consent" id="sheetConsent">
+        <p>Der Buchungskalender wird von einem externen Buchungsdienst geladen. Dabei wird deine IP-Adresse an diesen Dienst übertragen.</p>
+        <button class="btn" type="button" id="sheetLoad"><span>Kalender laden</span></button>
+      </div>
+      <iframe id="sheetFrame" title="Buchungskalender" loading="lazy" hidden></iframe>
+    </div>
+  </div>
+</div>
+
+<!-- Als-App-speichern-Hinweis -->
+<div class="sheet sheet--small" id="installSheet" role="dialog" aria-modal="true" aria-labelledby="installTitle" hidden>
+  <div class="sheet__backdrop" data-close></div>
+  <div class="sheet__panel">
+    <div class="sheet__head"><div><small>Fahr-Akademie</small><h3 id="installTitle">Als App speichern</h3></div><button class="sheet__close" type="button" data-close aria-label="Schließen">×</button></div>
+    <div class="sheet__body sheet__body--text">
+      <ol class="install">
+        <li><b>Öffne die Fahr-Akademie</b> über „Jetzt registrieren“.</li>
+        <li><b>iPhone (Safari):</b> Tippe auf <span class="kbd">Teilen</span> und dann auf <span class="kbd">Zum Home-Bildschirm</span>.</li>
+        <li><b>Android (Chrome):</b> Tippe auf <span class="kbd">⋮</span> und dann auf <span class="kbd">App installieren</span>.</li>
+      </ol>
+      <p class="muted">Danach startet die Fahr-Akademie wie eine richtige App von deinem Startbildschirm.</p>
+    </div>
+  </div>
+</div>
+
+<noscript><style>.intro{display:none}body.is-loading{overflow:auto}.cinema{background:url(img/hero.jpg) 70% 50%/cover}</style></noscript>
+<script src="vendor/gsap.min.js"></script>
+<script src="vendor/ScrollTrigger.min.js"></script>
+<script src="vendor/lenis.min.js"></script>
+<script src="vendor/qrcode.js"></script>
+<script type="module" src="js/main.js"></script>
+</body>
+</html>
