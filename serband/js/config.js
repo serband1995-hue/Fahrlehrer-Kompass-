@@ -28,20 +28,23 @@ export const CONFIG = {
     datenschutz: "datenschutz.html"  // TODO: markierte Stellen in datenschutz.html ausfüllen
   },
 
-  // Hintergrund pro Kapitel. Sobald die neuen Videos da sind, hier eintragen:
-  //   video: ["img/szene-….mp4", "img/szene-….webm"]  (wird beim Scrollen gespult)
-  //   bild / bildHandy: Standbild (Quer / Hoch), fokus: Bildausschnitt
-  //   fahrt: seitliche Kamerabewegung (-1 … 1)
+  // Hintergrund pro Kapitel: ein Video quer (Computer, Tablet quer) und eins hoch (Handy).
+  // Die Videos werden beim Scrollen gespult, deshalb kurzer Keyframe-Abstand (ffmpeg -g 4).
+  //   video / videoHandy: [MP4, WebM]
+  //   bild / bildHandy: Standbild = erstes Bild des Videos (wird gezeigt, bis das Video geladen ist)
+  //   fokus / fokusHandy: Bildausschnitt, wenn das Seitenverhältnis nicht genau passt
+  //   weich / weichHandy: unscharfe Fassung für den Tiefeneffekt (nur „Mein Versprechen“)
+  //   fahrt: zusätzliche seitliche Bewegung (-1 … 1), bei Videos meist 0
   szenen: {
     standard: { bild: "img/hero.jpg", bildHandy: "img/hero-mobile.jpg", fokus: "70% 50%" },
-    prolog: { video: ["img/szene-prolog.mp4", "img/szene-prolog.webm"], bild: "img/hero-drive-poster.jpg", bildHandy: "img/hero-mobile.jpg", fokus: "72% 50%", fokusHandy: "62% 50%" },
-    ruhe: { bild: "img/hero.jpg", bildHandy: "img/hero-mobile.jpg", fokus: "30% 40%", fokusHandy: "50% 30%", fahrt: 0.4 },
-    typ: { bild: "img/hero.jpg", bildHandy: "img/hero-mobile.jpg", fokus: "85% 20%", fokusHandy: "80% 40%", fahrt: -0.4 },
-    versprechen: { bild: "img/hero.jpg", bildHandy: "img/hero-mobile.jpg", fokus: "60% 30%", fokusHandy: "55% 45%", fahrt: 0.3 },
-    werkzeuge: { bild: "img/hero.jpg", bildHandy: "img/hero-mobile.jpg", fokus: "72% 70%", fokusHandy: "45% 75%", fahrt: -0.3 },
-    weg: { bild: "img/hero.jpg", bildHandy: "img/hero-mobile.jpg", fokus: "40% 95%", fokusHandy: "50% 95%", fahrt: 0.5 },
-    los: { bild: "img/hero.jpg", bildHandy: "img/hero-mobile.jpg", fokus: "70% 55%", fokusHandy: "45% 70%", fahrt: -0.2 },
-    epilog: { video: ["img/szene-prolog.mp4", "img/szene-prolog.webm"], bild: "img/hero-drive-poster.jpg", bildHandy: "img/hero-mobile.jpg", fokus: "72% 50%", fokusHandy: "62% 50%" }
+    prolog: { video: ["img/szene-prolog.mp4", "img/szene-prolog.webm"], videoHandy: ["img/szene-prolog-hoch.mp4", "img/szene-prolog-hoch.webm"], bild: "img/szene-prolog.jpg", bildHandy: "img/szene-prolog-hoch.jpg", fokus: "68% 50%", fokusHandy: "50% 50%" },
+    ruhe: { video: ["img/szene-ruhe.mp4", "img/szene-ruhe.webm"], videoHandy: ["img/szene-ruhe-hoch.mp4", "img/szene-ruhe-hoch.webm"], bild: "img/szene-ruhe.jpg", bildHandy: "img/szene-ruhe-hoch.jpg", fokus: "68% 50%", fokusHandy: "50% 50%" },
+    typ: { video: ["img/szene-typ.mp4", "img/szene-typ.webm"], videoHandy: ["img/szene-typ-hoch.mp4", "img/szene-typ-hoch.webm"], bild: "img/szene-typ.jpg", bildHandy: "img/szene-typ-hoch.jpg", fokus: "60% 50%", fokusHandy: "40% 50%" },
+    versprechen: { video: ["img/szene-versprechen.mp4", "img/szene-versprechen.webm"], videoHandy: ["img/szene-versprechen-hoch.mp4", "img/szene-versprechen-hoch.webm"], bild: "img/szene-versprechen.jpg", bildHandy: "img/szene-versprechen-hoch.jpg", weich: "img/szene-versprechen-weich.jpg", weichHandy: "img/szene-versprechen-hoch-weich.jpg", fokus: "68% 50%", fokusHandy: "50% 50%" },
+    werkzeuge: { video: ["img/szene-werkzeuge.mp4", "img/szene-werkzeuge.webm"], videoHandy: ["img/szene-werkzeuge-hoch.mp4", "img/szene-werkzeuge-hoch.webm"], bild: "img/szene-werkzeuge.jpg", bildHandy: "img/szene-werkzeuge-hoch.jpg", fokus: "50% 50%", fokusHandy: "50% 50%" },
+    weg: { video: ["img/szene-weg.mp4", "img/szene-weg.webm"], videoHandy: ["img/szene-weg-hoch.mp4", "img/szene-weg-hoch.webm"], bild: "img/szene-weg.jpg", bildHandy: "img/szene-weg-hoch.jpg", fokus: "58% 50%", fokusHandy: "50% 50%" },
+    los: { video: ["img/szene-los.mp4", "img/szene-los.webm"], videoHandy: ["img/szene-los-hoch.mp4", "img/szene-los-hoch.webm"], bild: "img/szene-los.jpg", bildHandy: "img/szene-los-hoch.jpg", fokus: "65% 50%", fokusHandy: "50% 50%" },
+    epilog: { video: ["img/szene-prolog.mp4", "img/szene-prolog.webm"], videoHandy: ["img/szene-prolog-hoch.mp4", "img/szene-prolog-hoch.webm"], bild: "img/szene-prolog.jpg", bildHandy: "img/szene-prolog-hoch.jpg", fokus: "68% 50%", fokusHandy: "50% 50%" }
   },
 
   // TODO: echte Screenshots (Schülernamen unkenntlich!). Leer = Beispielansicht.
@@ -60,11 +63,12 @@ export const CONFIG = {
     key: "sb_publishable_XiBZufRB7XMpxhJwfWxKFA_PmtFC6ly"
   },
 
-  // TODO: eigene Fotos in den Ordner serband/img legen und hier eintragen,
-  // z. B. "img/serband-portrait.jpg". Leer = eleganter Platzhalter.
+  // Fotos: jeweils groß (src) und klein fürs Handy. Leer ("") = Foto wird ausgeblendet.
+  //   portrait:   „Mein Versprechen“ (Kapitel III)
+  //   unterricht: Theorieunterricht (Kapitel I) – alle erkennbaren Personen haben eingewilligt
   fotos: {
-    portrait: "",
-    imAuto: ""
+    portrait: { src: "img/serband-portrait-1000.jpg", klein: "img/serband-portrait-640.jpg", breite: 1000, kleinBreite: 640 },
+    unterricht: { src: "img/serband-unterricht-1600.jpg", klein: "img/serband-unterricht-900.jpg", breite: 1600, kleinBreite: 900 }
   },
 
   // TODO: Videos aus der Ausbildung (mp4 in serband/img oder leer lassen).

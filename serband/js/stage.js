@@ -40,8 +40,20 @@ export function createStage(ids) {
       video.style.opacity = 0;
       el.append(video);
     }
+    // unscharfe Fassung darüber (Tiefeneffekt), vorab berechnet – kein Filter im Browser
+    let soft = null;
+    const wsrc = (portrait && cfg.weichHandy) || cfg.weich;
+    if (wsrc) {
+      soft = document.createElement("img");
+      soft.alt = "";
+      soft.className = "scene__soft";
+      soft.decoding = "async";
+      soft.dataset.src = wsrc;
+      if (cfg.fokus) soft.style.objectPosition = img.style.objectPosition;
+      el.append(soft);
+    }
     root.append(el);
-    scenes[id] = { el, img, video, cfg, p: 0, t: 0, loaded: false, ready: false };
+    scenes[id] = { el, img, video, soft, cfg, p: 0, t: 0, loaded: false, ready: false };
   });
 
   function load(id) {
@@ -49,6 +61,7 @@ export function createStage(ids) {
     if (!s || s.loaded) return;
     s.loaded = true;
     s.img.src = s.img.dataset.src;
+    if (s.soft) s.soft.src = s.soft.dataset.src;
     if (s.video) {
       const srcs = s.video.dataset.src.split("|");
       const ok = srcs.find((u) => s.video.canPlayType(u.endsWith(".webm") ? 'video/webm; codecs="vp9"' : 'video/mp4; codecs="avc1.640028"'));
@@ -97,6 +110,7 @@ export function createStage(ids) {
       const tr = `translate3d(${x.toFixed(2)}%,0,0) scale(${z.toFixed(4)})`;
       s.img.style.transform = tr;
       if (s.video) s.video.style.transform = tr;
+      if (s.soft) s.soft.style.transform = tr;
     }
     requestAnimationFrame(tick);
   }
@@ -107,6 +121,11 @@ export function createStage(ids) {
     show,
     progress,
     load,
+    // Hintergrund weichzeichnen (0 … 1), z. B. wenn vorne etwas scharf gestellt wird
+    soft(id, v) {
+      const s = scenes[id];
+      if (s && s.soft) s.soft.style.opacity = clamp(v, 0, 1).toFixed(3);
+    },
     pause(v) {
       const was = running;
       running = !v;

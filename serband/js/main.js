@@ -56,13 +56,18 @@ function fillContent() {
     a.href = u; a.target = "_blank"; a.rel = "noopener"; a.textContent = n;
     social.prepend(a);
   });
-  if (CONFIG.fotos.portrait) {
-    const img = new Image();
-    img.src = CONFIG.fotos.portrait;
-    img.alt = `${CONFIG.name}, ${CONFIG.rolle}`;
-    img.loading = "lazy";
-    $("#portrait").replaceChildren(img);
-  }
+  // Fotos: groß und klein (Handy), leer = Foto ausblenden
+  $$("[data-foto]").forEach((img) => {
+    const f = (CONFIG.fotos || {})[img.dataset.foto];
+    if (!f) { img.closest("figure").remove(); return; }
+    const src = typeof f === "string" ? f : f.src;
+    if (f.klein) {
+      img.srcset = `${f.klein} ${f.kleinBreite}w, ${src} ${f.breite}w`;
+      img.sizes = img.dataset.foto === "portrait" ? "(max-width: 900px) 62vw, 34vw" : "(max-width: 860px) 92vw, 50vw";
+    }
+    img.src = f.klein || src;
+  });
+  if (!$("#vowPhoto")) $("#vow").classList.add("vow--text");
   // echte Screenshots der Apps statt Beispielansichten
   const shots = CONFIG.screenshots || {};
   $$("[data-shot]").forEach((d) => {
@@ -474,7 +479,9 @@ function startFilm() {
   setupTitles();
   setupFloats();
   setupQuiz();
-  setupPromise();
+  setupVow();
+  setupShot();
+  setupDepth();
   setupRoad();
   setupGame();
   setupReviews();
@@ -537,8 +544,9 @@ function setupTitles() {
   $$(".chapter:not(.chapter--prolog) .chead").forEach((h) => {
     gsap.from($(".chead__num", h), { opacity: 0, letterSpacing: "0.6em", duration: 1.2, ease: "power3.out", scrollTrigger: { trigger: h, start: "top 80%" } });
     gsap.from($$(".line > *", h), { yPercent: 110, duration: 1.3, ease: "expo.out", stagger: 0.1, scrollTrigger: { trigger: h, start: "top 80%" } });
+    gsap.from($(".title", h), { scale: 0.9, filter: "blur(10px)", duration: 1.4, ease: "expo.out", clearProps: "filter,scale", scrollTrigger: { trigger: h, start: "top 80%" } });
   });
-  $$(".story p, .story .trio li, .tool__text > *, .parts li, .faq details, .road__step, .book, .rate, .pause, .quiz, .epilog > *").forEach((el) => {
+  $$(".story p, .story .trio li, .shot .card__cap, .promise__honest, .tool__text > *, .parts li, .faq details, .road__step, .book, .rate, .pause, .quiz, .epilog > *").forEach((el) => {
     gsap.from(el, { y: 30, opacity: 0, duration: 1, ease: "power3.out", scrollTrigger: { trigger: el, start: "top 88%" } });
   });
 }
@@ -603,18 +611,87 @@ function setupQuiz() {
   render();
 }
 
-/* Versprechen: Wörter leuchten beim Scrollen auf */
-function setupPromise() {
-  const p = $("#promiseText");
+/* Versprechen als Szene: die Stelle bleibt stehen, Serband kommt aus der Tiefe
+   und wird scharf (der Hintergrund dafür unscharf), der Satz leuchtet Wort für Wort
+   auf, dann schreibt sich die Unterschrift. Beim Weiterscrollen tritt er zurück. */
+function setupVow() {
+  const vow = $("#vow"), p = $("#promiseText");
   const words = p.textContent.trim().split(/\s+/);
   p.innerHTML = words.map((w) => `<span class="w">${w.replace(/[<>&]/g, "")}</span>`).join(" ");
   const spans = $$(".w", p);
-  if (reducedMotion) { spans.forEach((s) => s.classList.add("is-lit")); return; }
-  ScrollTrigger.create({
-    trigger: p, start: "top 80%", end: "bottom 40%", scrub: true,
-    onUpdate: (self) => { const n = Math.round(self.progress * spans.length); spans.forEach((s, k) => s.classList.toggle("is-lit", k < n)); }
+  const photo = $("#vowPhoto");
+  const frame = photo && $(".vow__frame", photo);
+  const sig = $(".promise__sig span", vow);
+  // stehen bleiben nur, wenn genug Höhe da ist (nicht bei Handy quer)
+  if (reducedMotion || window.innerHeight < 520) { spans.forEach((s) => s.classList.add("is-lit")); return; }
+  vow.classList.add("is-pinned");
+  const smooth = (a, b, x) => { const t = clamp((x - a) / (b - a), 0, 1); return t * t * (3 - 2 * t); };
+  const tl = gsap.timeline({
+    defaults: { ease: "none" },
+    scrollTrigger: {
+      trigger: vow, start: "top top", end: "bottom bottom", scrub: 0.6,
+      onUpdate: (self) => {
+        const k = self.progress;
+        const n = Math.round(smooth(0.2, 0.7, k) * spans.length);
+        spans.forEach((s, i) => s.classList.toggle("is-lit", i < n));
+        if (photo) stage.soft("versprechen", 0.85 * smooth(0.04, 0.3, k) * (1 - smooth(0.9, 1, k)));
+      }
+    }
   });
-  gsap.from(".promise__sig", { opacity: 0, y: 20, duration: 1.4, ease: "power3.out", scrollTrigger: { trigger: ".promise__sig", start: "top 85%" } });
+  if (frame) {
+    tl.fromTo(frame, { scale: 0.7, yPercent: 10, rotateY: -16, rotateX: 7, opacity: 0, filter: "blur(18px)" },
+      { scale: 1, yPercent: 0, rotateY: 0, rotateX: 0, opacity: 1, filter: "blur(0px)", duration: 0.32, ease: "power2.out" }, 0)
+      .fromTo(".vow__glow", { opacity: 0, scale: 0.55 }, { opacity: 1, scale: 1, duration: 0.3, ease: "power1.out" }, 0.08)
+      .fromTo(".vow__sheen", { xPercent: -70 }, { xPercent: 70, duration: 0.16, ease: "power1.inOut" }, 0.34)
+      .to(frame, { scale: 0.9, yPercent: -4, opacity: 0.55, filter: "blur(6px)", duration: 0.1 }, 0.9)
+      .to(".vow__glow", { opacity: 0.2, duration: 0.1 }, 0.9);
+  }
+  tl.fromTo(sig, { clipPath: "inset(-20% 100% -20% 0%)", opacity: 0.4 }, { clipPath: "inset(-20% 0% -20% 0%)", opacity: 1, duration: 0.14, ease: "power1.inOut" }, 0.72)
+    .to({}, { duration: 0.02 }, 0.98); // Zeitleiste endet genau bei 1
+  // am Computer folgt das Foto leicht der Maus
+  if (photo && finePointer) {
+    const rx = gsap.quickTo(photo, "rotateX", { duration: 0.8, ease: "power3.out" });
+    const ry = gsap.quickTo(photo, "rotateY", { duration: 0.8, ease: "power3.out" });
+    window.addEventListener("pointermove", (e) => { ry((e.clientX / innerWidth - 0.5) * 12); rx(-(e.clientY / innerHeight - 0.5) * 8); });
+  }
+}
+
+/* Kapitel I: das Foto öffnet sich wie eine Blende und schwebt beim Scrollen */
+function setupShot() {
+  const shot = $("#shot");
+  if (!shot || reducedMotion) return;
+  const frame = $(".shot__frame", shot), img = $("img", shot);
+  gsap.fromTo(frame, { clipPath: "inset(16% 12% 16% 12% round 30px)", filter: "blur(10px)" },
+    { clipPath: "inset(0% 0% 0% 0% round 18px)", filter: "blur(0px)", ease: "none",
+      scrollTrigger: { trigger: shot, start: "top 96%", end: "top 45%", scrub: 0.6 } });
+  gsap.fromTo(img, { scale: 1.3, yPercent: -5 }, { scale: 1.04, yPercent: 3, ease: "none",
+    scrollTrigger: { trigger: shot, start: "top bottom", end: "bottom top", scrub: true } });
+}
+
+/* Was nach oben weggeschoben wird, tritt zurück und verschwimmt.
+   Am Handy nur bei wenigen Elementen, damit nichts ruckelt. */
+function setupDepth() {
+  if (reducedMotion) return;
+  const max = finePointer ? 8 : 5;
+  const sel = finePointer
+    ? ".chead, .story, .tool, .deal, .promise__honest, .road, .faq-wrap, .stimmen"
+    : ".chead, .shot, .promise__honest";
+  const items = $$(sel).map((el) => [el, el]);
+  items.push([$("#vow"), $("#vow .vow__pin")]);
+  items.forEach(([trigger, el]) => {
+    const reset = () => { el.style.filter = ""; el.style.opacity = ""; el.style.scale = ""; };
+    ScrollTrigger.create({
+      trigger, start: "bottom 38%", end: "bottom top", scrub: true,
+      onUpdate: (s) => {
+        const k = s.progress;
+        if (k < 0.01) return reset();
+        el.style.filter = `blur(${(k * max).toFixed(2)}px)`;
+        el.style.opacity = (1 - k * 0.75).toFixed(3);
+        el.style.scale = (1 - k * 0.06).toFixed(4);
+      },
+      onLeaveBack: reset
+    });
+  });
 }
 
 /* Dein Weg: goldene Linie wächst mit */
