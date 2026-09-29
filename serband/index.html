@@ -100,11 +100,11 @@
       <span class="chead__num">I</span>
       <h2 class="title"><span class="line"><span>Ruhe statt</span></span><span class="line"><em>Geschrei.</em></span></h2>
     </header>
-    <div class="story">
-      <div class="card card--portrait float3d">
-        <div class="portrait" id="portrait"><svg class="mk" viewBox="0 0 120 120" aria-hidden="true"><use href="#logo"/></svg></div>
-        <p class="card__cap">Serband · Fahrlehrer in Offenbach</p>
-      </div>
+    <div class="story story--shot">
+      <figure class="shot" id="shot">
+        <div class="shot__frame"><img data-foto="unterricht" src="img/serband-unterricht-900.jpg" alt="Serband im Theorieunterricht in Offenbach" width="1600" height="1067" loading="lazy" decoding="async"></div>
+        <figcaption class="card__cap">Theorieunterricht in Offenbach</figcaption>
+      </figure>
       <div class="story__text">
         <p class="lead">Ich bin Serband. Und bei mir wird nicht geschrien.</p>
         <p>Nicht, weil ich mich zusammenreiße. Sondern weil es nichts bringt. Wer Angst hat, lernt nicht. Wer ruhig ist, schon.</p>
@@ -145,10 +145,22 @@
       <span class="chead__num">III</span>
       <h2 class="title"><span class="line"><span>Mein</span></span><span class="line"><em>Versprechen.</em></span></h2>
     </header>
-    <blockquote class="promise">
-      <p class="promise__text" id="promiseText">Ich tue alles dafür, dass du deinen Führerschein so schnell und so günstig wie möglich bekommst.</p>
-      <footer class="promise__sig">Serband</footer>
-    </blockquote>
+    <!-- Szene: Serband kommt aus der Tiefe, der Satz leuchtet Wort für Wort auf, dann die Unterschrift -->
+    <div class="vow" id="vow">
+      <div class="vow__pin">
+        <figure class="vow__photo" id="vowPhoto">
+          <div class="vow__glow" aria-hidden="true"></div>
+          <div class="vow__frame">
+            <img data-foto="portrait" src="img/serband-portrait-640.jpg" alt="Serband, Fahrlehrer in Offenbach" width="1000" height="1498" loading="lazy" decoding="async">
+            <i class="vow__sheen" aria-hidden="true"></i>
+          </div>
+        </figure>
+        <blockquote class="promise">
+          <p class="promise__text" id="promiseText">Ich tue alles dafür, dass du deinen Führerschein so schnell und so günstig wie möglich bekommst.</p>
+          <footer class="promise__sig"><span>Serband</span></footer>
+        </blockquote>
+      </div>
+    </div>
     <p class="promise__honest">Wie schnell und wie günstig, liegt am Ende auch ein Stück bei dir.<br><em>Aber du gehst diesen Weg nicht allein.</em></p>
     <div class="deal">
       <div class="deal__col card float3d">
