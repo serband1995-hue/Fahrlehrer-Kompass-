@@ -325,11 +325,6 @@
       <p class="tip"><b>Tipp:</b> Mit der Schlüsselzahl B197 machst du die Prüfung auf Automatik und darfst nach mindestens 10 Schaltstunden und einer kurzen Testfahrt trotzdem Schaltwagen fahren.</p>
     </div>
 
-    <div class="stimmen" id="stimmen">
-      <p class="quiz__kicker">Was Fahrschüler sagen</p>
-      <div class="reviews" id="reviews"><div class="reviews__rail" id="reviewsRail"></div></div>
-    </div>
-
     <div class="faq-wrap">
       <h3 class="faq__title">Häufige Fragen</h3>
       <div class="faq">
@@ -340,6 +335,15 @@
         <details><summary>Ab wann kann ich anfangen?</summary><div><p>Du kannst schon vor deinem 17. Geburtstag mit der Ausbildung beginnen. Die Theorieprüfung ist frühestens 3 Monate, die praktische Prüfung frühestens 1 Monat vorher möglich. Ab 17 fährst du mit Begleitung (BF17), ab 18 allein.</p></div></details>
         <details><summary>Was ist, wenn ich sehr nervös bin?</summary><div><p>Dann bist du hier richtig. Wir fangen dort an, wo du dich sicher fühlst, und gehen erst weiter, wenn du bereit bist. Nervosität ist normal und geht vorbei.</p></div></details>
       </div>
+    </div>
+
+    <div class="stimmen" id="stimmen">
+      <header class="stimmen__head">
+        <p class="quiz__kicker">Google-Bewertungen · Wort für Wort</p>
+        <h3 class="stimmen__title">Frag nicht mich.<br><em>Frag meine Fahrschüler.</em></h3>
+      </header>
+      <div class="reviews" id="reviews" role="region" aria-label="Bewertungen von Fahrschülern"></div>
+      <div class="row row--center"><a class="btn btn--ghost" id="reviewsLink" href="#" target="_blank" rel="noopener"><span>Alle Bewertungen auf Google</span><i class="arrow"></i></a></div>
     </div>
 
     <div class="rate card">
@@ -388,6 +392,15 @@
       </div>
       <iframe id="sheetFrame" title="Buchungskalender" loading="lazy" hidden></iframe>
     </div>
+  </div>
+</div>
+
+<!-- Ganze Bewertung -->
+<div class="sheet sheet--small sheet--review" id="reviewSheet" role="dialog" aria-modal="true" aria-labelledby="reviewTitle" hidden>
+  <div class="sheet__backdrop" data-close></div>
+  <div class="sheet__panel">
+    <div class="sheet__head"><div><small>Google-Bewertung · ★★★★★</small><h3 id="reviewTitle"></h3></div><button class="sheet__close" type="button" data-close aria-label="Schließen">×</button></div>
+    <div class="sheet__body sheet__body--text"><p class="review-full" id="reviewFull"></p></div>
   </div>
 </div>
 

@@ -44,6 +44,7 @@ function fillContent() {
   const setHref = (id, url) => { const el = document.getElementById(id); if (el && url) el.href = url; };
   setHref("akademieLink", L.akademie);
   setHref("rateLink", L.bewerten);
+  setHref("reviewsLink", L.bewertungen || L.bewerten);
   setHref("priceLink", L.preise);
   setHref("waLink", L.whatsapp);
   // Links ohne Ziel (leer in der Konfiguration) nicht zeigen – sonst öffnet sich die Seite selbst
@@ -85,25 +86,7 @@ function fillContent() {
     img.src = src; img.alt = ""; img.loading = "lazy";
     $(".device__screen", d).replaceChildren(img);
   });
-  // Bewertungen: Platzhalter nur unter ?entwurf, sonst Block ausblenden
-  const entwurf = /[?&]entwurf\b/.test(location.search);
-  const reviews = CONFIG.bewertungen.filter((b) => entwurf || !b.platzhalter);
-  if (!reviews.length) $("#stimmen").remove();
-  const rail = $("#reviewsRail");
-  reviews.forEach((b) => {
-    const el = document.createElement("article");
-    el.className = "review" + (b.platzhalter ? " is-placeholder" : "");
-    const sterne = Math.max(1, Math.min(5, parseInt(b.sterne, 10) || 5));
-    el.innerHTML = `${b.platzhalter ? '<span class="ph-tag">Platzhalter</span>' : ""}
-      <div class="review__stars" role="img" aria-label="${sterne} von 5 Sternen">${"★".repeat(sterne)}</div>
-      <p class="review__text"></p>
-      <div class="review__who"><i></i><div><span></span><small></small></div></div>`;
-    $(".review__text", el).textContent = b.text;
-    $(".review__who span", el).textContent = b.name;
-    $(".review__who i", el).textContent = (b.name || "?").trim().charAt(0).toUpperCase();
-    $(".review__who small", el).textContent = (b.quelle || "Google") + "-Bewertung";
-    rail && rail.append(el);
-  });
+  if (!CONFIG.bewertungen.some((b) => !b.platzhalter)) $("#stimmen").remove();
   try {
     const qr = window.qrcode(0, "M");
     qr.addData(L.bewerten);
@@ -382,45 +365,154 @@ function setupGame() {
   });
 }
 
-/* ---------- Bewertungen: ziehen & wischen ---------- */
+/* ---------- Bewertungen: Laufband ----------
+   Zwei Reihen gegenläufig (am Handy eine). Jede Reihe enthält die Karten doppelt,
+   damit sie ohne Sprung endlos läuft. Anfassen, Maus darüber oder Tastatur-Fokus
+   hält sie an; ziehen/wischen geht auch. Bei „Bewegung reduzieren“: normale Wischliste. */
 function setupReviews() {
-  const box = $("#reviews"), rail = $("#reviewsRail");
-  if (!box || !rail.children.length) return;
-  let x = 0, vx = 0, dragging = false, startX = 0, startPos = 0, lastX = 0, moved = 0;
-  const min = () => Math.min(0, box.clientWidth - rail.scrollWidth);
-  box.addEventListener("pointerdown", (e) => {
-    dragging = true; moved = 0;
-    startX = lastX = e.clientX; startPos = x;
-    box.classList.add("is-drag");
-    box.setPointerCapture(e.pointerId);
-  });
-  box.addEventListener("pointermove", (e) => {
-    if (!dragging) return;
-    vx = e.clientX - lastX; lastX = e.clientX;
-    moved += Math.abs(vx);
-    x = startPos + (e.clientX - startX);
-  });
-  const up = () => { dragging = false; box.classList.remove("is-drag"); };
-  box.addEventListener("pointerup", up);
-  box.addEventListener("pointercancel", up);
-  gsap.from(".review", { x: 120, opacity: 0, duration: 1.2, ease: "expo.out", stagger: 0.08, scrollTrigger: { trigger: box, start: "top 85%" } });
-  let back = null;
-  gsap.ticker.add(() => {
-    if (!dragging && !back) {
-      x += vx;
-      vx *= 0.94;
-      if (Math.abs(vx) < 0.05 && !reducedMotion) x -= 0.3; // langsames Treiben
-      if (x > 0) x += (0 - x) * 0.15;
-      if (x < min()) {
-        x = min();
-        vx = 0;
-        // am Ende sanft zurück an den Anfang
-        back = gsap.to({ v: x }, { v: 0, duration: 2.4, delay: 2, ease: "power3.inOut", onUpdate() { x = this.targets()[0].v; }, onComplete: () => (back = null) });
+  const box = $("#reviews");
+  const list = CONFIG.bewertungen.filter((b) => !b.platzhalter && b.text);
+  if (!box || !list.length) return;
+  const card = (b, i) => {
+    const el = document.createElement("article");
+    el.className = "review";
+    el.innerHTML = `<div class="review__stars" role="img" aria-label="5 von 5 Sternen">★★★★★</div>
+      <p class="review__text"></p>
+      <button class="review__more" type="button">Ganze Bewertung lesen</button>
+      <div class="review__who"><i aria-hidden="true"></i><div><span></span><small>Google-Bewertung</small></div></div>`;
+    // auf der Karte als Fließtext (spart Zeilen), im Fenster mit Absätzen
+    $(".review__text", el).textContent = b.text.replace(/\s*\n\s*/g, " ");
+    $(".review__who span", el).textContent = b.name;
+    $(".review__who i", el).textContent = (b.name || "?").trim().charAt(0).toUpperCase();
+    el.dataset.i = i;
+    return el;
+  };
+  const wide = matchMedia("(min-width: 760px)");
+  let rows = [];
+
+  function build() {
+    rows = [];
+    box.replaceChildren();
+    const n = wide.matches && list.length > 5 ? 2 : 1;
+    for (let r = 0; r < n; r++) {
+      const items = list.map((b, i) => [b, i]).filter((_, i) => i % n === r);
+      const row = document.createElement("div");
+      row.className = "reviews__row";
+      const rail = document.createElement("div");
+      rail.className = "reviews__rail";
+      items.forEach(([b, i]) => rail.append(card(b, i)));
+      if (!reducedMotion) {
+        // zweite Hälfte nur fürs endlose Laufen: unsichtbar für Vorleser und Tab-Taste
+        items.forEach(([b, i]) => { const c = card(b, i); c.setAttribute("aria-hidden", "true"); c.inert = true; c.classList.add("is-copy"); rail.append(c); });
       }
+      row.append(rail);
+      // Fokus darf die Reihe nicht selbst verschieben – das macht die Laufband-Position
+      if (!reducedMotion) row.addEventListener("scroll", () => (row.scrollLeft = 0));
+      box.append(row);
+      rows.push({ row, rail, x: 0, vx: 0, dir: r % 2 ? 1 : -1, w: 0, hover: false, focus: false, until: 0, drag: null });
     }
-    if (dragging && back) { back.kill(); back = null; }
-    rail.style.transform = `translate3d(${x}px,0,0)`;
+    measure();
+  }
+
+  // Breite einer Hälfte; lange Texte bekommen „Ganze Bewertung lesen“
+  function measure() {
+    rows.forEach((o) => {
+      const cards = $$(".review", o.rail), half = cards.length / 2;
+      o.w = reducedMotion || !half ? 0 : cards[half].offsetLeft - cards[0].offsetLeft;
+      if (o.dir > 0 && o.w && o.x === 0) o.x = -o.w; // rechtslaufende Reihe startet versetzt
+    });
+    $$(".review", box).forEach((c) => {
+      const t = $(".review__text", c);
+      c.classList.toggle("is-long", t.scrollHeight > t.clientHeight + 2);
+    });
+  }
+
+  // Tippen auf eine Karte öffnet die ganze Bewertung (nicht nach dem Ziehen)
+  box.addEventListener("click", (e) => {
+    const c = e.target.closest(".review");
+    if (!c || !c.classList.contains("is-long")) return;
+    const o = rows.find((r) => r.row.contains(c));
+    if (o && o.moved > 6) return;
+    const b = list[+c.dataset.i];
+    $("#reviewTitle").textContent = b.name;
+    $("#reviewFull").textContent = b.text;
+    $("#reviewSheet .sheet__body").scrollTop = 0;
+    openSheet($("#reviewSheet"));
   });
+
+  if (!reducedMotion) {
+    const rowOf = (el) => rows.find((r) => r.row.contains(el));
+    box.addEventListener("pointerover", (e) => { const o = rowOf(e.target); if (o && e.pointerType === "mouse") o.hover = true; });
+    box.addEventListener("pointerout", (e) => { const o = rowOf(e.target); if (o && e.pointerType === "mouse" && !o.row.contains(e.relatedTarget)) o.hover = false; });
+    box.addEventListener("pointerdown", (e) => {
+      const o = rowOf(e.target);
+      if (!o || e.button > 0) return;
+      o.drag = { id: e.pointerId, x0: e.clientX, y0: e.clientY, pos: o.x, last: e.clientX, on: false };
+      o.moved = 0; o.vx = 0;
+    });
+    box.addEventListener("pointermove", (e) => {
+      const o = rows.find((r) => r.drag && r.drag.id === e.pointerId);
+      if (!o) return;
+      const d = o.drag, dx = e.clientX - d.x0;
+      if (!d.on) {
+        // erst waagerecht ziehen, dann festhalten – senkrecht bleibt normales Scrollen
+        if (Math.abs(dx) < 8 || Math.abs(dx) < Math.abs(e.clientY - d.y0)) return;
+        d.on = true;
+        try { o.row.setPointerCapture(e.pointerId); } catch (err) {}
+        o.row.classList.add("is-drag");
+      }
+      o.vx = e.clientX - d.last; d.last = e.clientX;
+      o.moved = Math.abs(dx);
+      o.x = d.pos + dx;
+    });
+    const up = (e) => {
+      const o = rows.find((r) => r.drag && r.drag.id === e.pointerId);
+      if (!o) return;
+      o.drag = null;
+      o.row.classList.remove("is-drag");
+      o.until = performance.now() + (e.pointerType === "mouse" ? 0 : 1800); // nach dem Wischen kurz stehen lassen
+      setTimeout(() => (o.moved = 0), 0);
+    };
+    box.addEventListener("pointerup", up);
+    box.addEventListener("pointercancel", up);
+    // Tastatur: fokussierte Karte ins Bild holen und die Reihe anhalten
+    box.addEventListener("focusin", (e) => {
+      const o = rowOf(e.target), c = e.target.closest(".review");
+      if (!o || !c) return;
+      o.focus = true;
+      o.row.scrollLeft = 0;
+      const left = c.offsetLeft + o.x, room = o.row.clientWidth - c.offsetWidth;
+      if (left < 16 || left > room - 16) o.x = -c.offsetLeft + Math.max(16, room / 2);
+    });
+    box.addEventListener("focusout", (e) => { const o = rowOf(e.target); if (o && !o.row.contains(e.relatedTarget)) o.focus = false; });
+
+    let visible = false, last = 0;
+    new IntersectionObserver((en) => (visible = en[0].isIntersecting)).observe(box);
+    gsap.ticker.add(() => {
+      const now = performance.now(), dt = Math.min(64, now - (last || now)); last = now;
+      if (!visible) return;
+      const halt = !$("#reviewSheet").hidden;
+      rows.forEach((o) => {
+        if (!o.w) return;
+        if (!o.drag) {
+          o.x += o.vx; o.vx *= 0.92;
+          if (!o.hover && !o.focus && !halt && now > o.until && Math.abs(o.vx) < 0.3) o.x += o.dir * 0.028 * dt; // rund 28 px pro Sekunde
+        }
+        // endlos: immer innerhalb einer Hälfte bleiben
+        while (o.x > 0) o.x -= o.w;
+        while (o.x <= -o.w) o.x += o.w;
+        if (o.drag && o.drag.on) o.drag.pos = o.x - (o.drag.last - o.drag.x0);
+        o.rail.style.transform = `translate3d(${o.x.toFixed(2)}px,0,0)`;
+      });
+    });
+  }
+
+  build();
+  let rt = 0;
+  addEventListener("resize", () => { clearTimeout(rt); rt = setTimeout(measure, 150); });
+  wide.addEventListener ? wide.addEventListener("change", build) : wide.addListener(build);
+  if (document.fonts && document.fonts.ready) document.fonts.ready.then(measure);
+  gsap.from(box, { opacity: 0, y: 40, duration: 1.2, ease: "expo.out", scrollTrigger: { trigger: box, start: "top 90%" } });
 }
 
 /* ---------- Buchen: Umschalter Schaltung / Automatik ---------- */
@@ -789,6 +881,7 @@ function setupRoad() {
 }
 
 /* Kalender- und Hinweisfenster, Menü */
+let openSheet = () => {};
 function setupSheets() {
   const sheet = $("#sheet"), frame = $("#sheetFrame"), consent = $("#sheetConsent");
   let lastFocus = null, currentUrl = "";
@@ -807,6 +900,7 @@ function setupSheets() {
     if (ok) loadFrame(); else { consent.hidden = false; frame.hidden = true; frame.removeAttribute("src"); }
     open(sheet);
   }));
+  openSheet = open;
   $("#sheetLoad").addEventListener("click", loadFrame);
   $("#installBtn").addEventListener("click", () => open($("#installSheet")));
   $$(".sheet").forEach((s) => $$("[data-close]", s).forEach((c) => c.addEventListener("click", () => close(s))));
