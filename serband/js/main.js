@@ -65,24 +65,47 @@ function fillContent() {
   CONFIG.zahlen.filter((z) => z.wert !== null && z.wert !== undefined).forEach((z) => {
     const d = document.createElement("div");
     d.className = "stat reveal-up";
-    d.innerHTML = `<b data-count="${z.wert}" data-dec="${z.dezimal || 0}" data-suffix="${z.suffix || ""}">0</b><span>${z.stern ? "★ " : ""}${z.label}</span>`;
+    d.innerHTML = `<b data-count="${Number(z.wert)}" data-dec="${z.dezimal || 0}">0</b><span></span>`;
+    $("b", d).dataset.suffix = z.suffix || "";
+    $("span", d).textContent = (z.stern ? "★ " : "") + z.label;
     stats.append(d);
   });
   if (stats.children.length < 2) stats.remove();
 
-  // Bewertungen
+  // Bewertungen: Platzhalter nur in der Entwurfsansicht (?entwurf), live wird der Abschnitt
+  // ausgeblendet, solange es keine echten Bewertungen gibt
   const rail = $("#reviewsRail");
-  CONFIG.bewertungen.forEach((b) => {
+  const entwurf = /[?&]entwurf\b/.test(location.search);
+  const reviews = CONFIG.bewertungen.filter((b) => entwurf || !b.platzhalter);
+  if (!reviews.length) {
+    const sec = $("#stimmen");
+    sec.remove();
+    const li = $('.menu a[href="#stimmen"]');
+    if (li) li.parentElement.remove();
+  }
+  // Nummern der Abschnitte fortlaufend halten (auch wenn einer ausgeblendet ist)
+  let nr = 0;
+  $$("main section[data-stop]").forEach((sec) => {
+    const tag = sec.querySelector(".kicker span, .glass-panel__no");
+    if (!tag || sec.id === "start" || sec.id === "ziel") return;
+    const txt = String(++nr).padStart(2, "0");
+    sec.querySelectorAll(".kicker span, .glass-panel__no").forEach((t) => (t.textContent = txt));
+    const m = $(`.menu a[href="#${sec.id}"] small`);
+    if (m) m.textContent = txt;
+  });
+  reviews.forEach((b) => {
     const el = document.createElement("article");
     el.className = "review" + (b.platzhalter ? " is-placeholder" : "");
-    const initial = (b.name || "?").trim().charAt(0).toUpperCase();
+    const sterne = Math.max(1, Math.min(5, parseInt(b.sterne, 10) || 5));
     el.innerHTML = `
       ${b.platzhalter ? '<span class="ph-tag">Platzhalter</span>' : ""}
-      <div class="review__stars" aria-label="${b.sterne} von 5 Sternen">${"★".repeat(b.sterne || 5)}</div>
+      <div class="review__stars" role="img" aria-label="${sterne} von 5 Sternen">${"★".repeat(sterne)}</div>
       <p class="review__text"></p>
-      <div class="review__who"><i>${initial}</i><div><span></span><small>${b.quelle || "Google"}-Bewertung</small></div></div>`;
+      <div class="review__who"><i></i><div><span></span><small></small></div></div>`;
     $(".review__text", el).textContent = b.text;
     $(".review__who span", el).textContent = b.name;
+    $(".review__who i", el).textContent = (b.name || "?").trim().charAt(0).toUpperCase();
+    $(".review__who small", el).textContent = (b.quelle || "Google") + "-Bewertung";
     rail.append(el);
   });
 
@@ -209,6 +232,8 @@ const engine = (() => {
 })();
 
 /* ---------- Start ---------- */
+// Während des Vorspanns ist die Seite dahinter nicht bedienbar (auch nicht per Tab-Taste)
+$$(".nav, main").forEach((el) => el.setAttribute("inert", ""));
 fillContent();
 $$(".split-words").forEach(splitWords);
 $$(".menu li").forEach((li, i) => li.style.setProperty("--i", i));
@@ -242,7 +267,10 @@ gsap.to(counter, {
   }
 });
 
+let ignited = false;
 function ignite(withSound) {
+  if (ignited) return;
+  ignited = true;
   if (withSound) {
     engine.start();
     setSound(true);
@@ -264,6 +292,7 @@ function ignite(withSound) {
     .add(() => {
       $("#intro").remove();
       document.body.classList.remove("is-loading");
+      $$("[inert]").forEach((el) => el.removeAttribute("inert"));
       startPage();
     }, "-=0.6");
 }
@@ -281,7 +310,7 @@ soundBtn.addEventListener("click", () => {
 });
 document.addEventListener("visibilitychange", () => {
   engine.suspend(document.hidden);
-  scene && scene.pause(document.hidden);
+  scene && scene.pause(document.hidden, "tab");
 });
 
 /* ---------- Seite nach dem Vorspann ---------- */
@@ -373,10 +402,6 @@ function setupReveals() {
       strokeDashoffset: 0, duration: 1.6, ease: "power2.inOut",
       scrollTrigger: { trigger: p.closest(".promise"), start: "top 80%" }
     });
-  });
-  gsap.from(".gear-card", {
-    y: 80, opacity: 0, duration: 1.3, ease: "expo.out", stagger: 0.15,
-    scrollTrigger: { trigger: ".gears", start: "top 85%" }
   });
   gsap.from(".faq details", {
     y: 30, opacity: 0, duration: 0.9, ease: "power3.out", stagger: 0.07,
@@ -477,6 +502,17 @@ function setupJourney() {
 function setupProgress(scrollTo) {
   const sections = $$("[data-stop]");
   const n = sections.length;
+  scene && scene.setStops(sections.map((s) => s.id));
+  // Die Kinoleinwand ist nur hinter Start, Reaktionstest und Schluss sichtbar.
+  // Ist sie ganz verdeckt, pausiert sie (spart Akku auf dem Handy).
+  if (scene && "IntersectionObserver" in window) {
+    const seen = new Set();
+    const io = new IntersectionObserver((entries) => {
+      entries.forEach((e) => (e.isIntersecting ? seen.add(e.target) : seen.delete(e.target)));
+      scene.pause(seen.size === 0, "cover");
+    }, { rootMargin: "25% 0px" });
+    $$(".hero, .chapter--window, .finale").forEach((el) => io.observe(el));
+  }
   const stopsEl = $("#routeStops");
   sections.forEach((sec, i) => {
     const li = document.createElement("li");
@@ -603,6 +639,7 @@ function setupMagnetic() {
 /* ---------- Bewertungen: ziehen & wischen ---------- */
 function setupReviews() {
   const box = $("#reviews"), rail = $("#reviewsRail");
+  if (!box || !rail.children.length) return;
   let x = 0, vx = 0, dragging = false, startX = 0, startPos = 0, lastX = 0, moved = 0;
   const min = () => Math.min(0, box.clientWidth - rail.scrollWidth);
   box.addEventListener("pointerdown", (e) => {
@@ -795,8 +832,8 @@ function setupBooking() {
       b.classList.toggle("is-active", on);
       b.setAttribute("aria-selected", on ? "true" : "false");
     });
-    $("#gearSchalter").hidden = auto;
-    $("#gearAutomatik").hidden = !auto;
+    $("#gearSchalter").toggleAttribute("hidden", auto);
+    $("#gearAutomatik").toggleAttribute("hidden", !auto);
     $(".book__stage").classList.toggle("is-auto", auto);
     $("#bookBtn").dataset.cal = mode;
     gsap.fromTo("#bookWord", { opacity: 0, y: 30 }, { opacity: 1, y: 0, duration: 0.8, ease: "power3.out", onStart: () => ($("#bookWord").textContent = t.word) });
