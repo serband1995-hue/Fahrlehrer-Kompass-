@@ -43,6 +43,14 @@ export const CONFIG = {
     regen: true
   },
 
+  // Bestenliste des Reaktionstests (Supabase-Projekt „fahr-akademie“, getrennte Tabelle).
+  // Öffentlicher Schlüssel (für Webseiten gedacht). Was er darf, regeln die Datenbankregeln:
+  // Besucher können nur die Top 5 lesen und eine Zeit eintragen, sonst nichts.
+  bestenliste: {
+    url: "https://fxgljvhpikjcejhghgbp.supabase.co",
+    key: "sb_publishable_XiBZufRB7XMpxhJwfWxKFA_PmtFC6ly"
+  },
+
   // TODO: eigene Fotos in den Ordner serband/img legen und hier eintragen,
   // z. B. "img/serband-portrait.jpg". Leer = eleganter Platzhalter.
   fotos: {
