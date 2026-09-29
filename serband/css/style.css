@@ -229,7 +229,7 @@ main { position: relative; z-index: 2; }
 }
 
 /* Menü = Inhaltsverzeichnis */
-.menu { position: fixed; inset: 0; z-index: 45; background: rgba(4,6,8,.97); display: grid; align-items: center; padding: 100px var(--gutter) 40px; opacity: 0; visibility: hidden; transition: opacity .5s, visibility .5s; overflow-y: auto; }
+.menu { position: fixed; inset: 0; z-index: 45; background: rgba(4,6,8,.97); display: grid; align-items: center; padding: 100px var(--gutter) 40px; opacity: 0; visibility: hidden; transition: opacity .5s, visibility .5s; overflow-y: auto; overscroll-behavior: contain; }
 .menu.is-open { opacity: 1; visibility: visible; }
 .menu__inner { width: min(760px, 100%); margin: 0 auto; }
 .menu__label { margin: 0 0 20px; letter-spacing: .24em; text-transform: uppercase; font-size: 11px; color: var(--muted); }
@@ -522,7 +522,7 @@ svg[hidden] { display: none !important; }
 }
 @media (prefers-reduced-motion: reduce) {
   *, *::before, *::after { animation-duration: .001s !important; animation-iteration-count: 1 !important; transition-duration: .001s !important; }
-  .prolog__line { opacity: 1; position: static; }
+  .prolog__line { opacity: 1; position: static; grid-area: auto; }
 }
 /* Handy: Kopfzeile darf nie breiter als der Bildschirm sein */
 @media (max-width: 760px) {

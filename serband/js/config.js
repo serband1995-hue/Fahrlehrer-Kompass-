@@ -33,14 +33,15 @@ export const CONFIG = {
   //   video / videoHandy: [MP4, WebM]
   //   bild / bildHandy: Standbild = erstes Bild des Videos (wird gezeigt, bis das Video geladen ist)
   //   fokus / fokusHandy: Bildausschnitt, wenn das Seitenverhältnis nicht genau passt
-  //   weich / weichHandy: unscharfe Fassung für den Tiefeneffekt (nur „Mein Versprechen“)
+  //   weich / weichHandy: unscharfe Fassung für den Tiefeneffekt (nur „Mein Versprechen“),
+  //   weichZeit / weichZeitHandy: Videostelle (s), aus der sie gerechnet ist
   //   fahrt: zusätzliche seitliche Bewegung (-1 … 1), bei Videos meist 0
   szenen: {
     standard: { bild: "img/hero.jpg", bildHandy: "img/hero-mobile.jpg", fokus: "70% 50%" },
     prolog: { video: ["img/szene-prolog.mp4", "img/szene-prolog.webm"], videoHandy: ["img/szene-prolog-hoch.mp4", "img/szene-prolog-hoch.webm"], bild: "img/szene-prolog.jpg", bildHandy: "img/szene-prolog-hoch.jpg", fokus: "68% 50%", fokusHandy: "50% 50%" },
     ruhe: { video: ["img/szene-ruhe.mp4", "img/szene-ruhe.webm"], videoHandy: ["img/szene-ruhe-hoch.mp4", "img/szene-ruhe-hoch.webm"], bild: "img/szene-ruhe.jpg", bildHandy: "img/szene-ruhe-hoch.jpg", fokus: "68% 50%", fokusHandy: "50% 50%" },
     typ: { video: ["img/szene-typ.mp4", "img/szene-typ.webm"], videoHandy: ["img/szene-typ-hoch.mp4", "img/szene-typ-hoch.webm"], bild: "img/szene-typ.jpg", bildHandy: "img/szene-typ-hoch.jpg", fokus: "60% 30%", fokusHandy: "22% 50%" },
-    versprechen: { video: ["img/szene-versprechen.mp4", "img/szene-versprechen.webm"], videoHandy: ["img/szene-versprechen-hoch.mp4", "img/szene-versprechen-hoch.webm"], bild: "img/szene-versprechen.jpg", bildHandy: "img/szene-versprechen-hoch.jpg", weich: "img/szene-versprechen-weich.jpg", weichHandy: "img/szene-versprechen-hoch-weich.jpg", fokus: "68% 50%", fokusHandy: "50% 50%" },
+    versprechen: { video: ["img/szene-versprechen.mp4", "img/szene-versprechen.webm"], videoHandy: ["img/szene-versprechen-hoch.mp4", "img/szene-versprechen-hoch.webm"], bild: "img/szene-versprechen.jpg", bildHandy: "img/szene-versprechen-hoch.jpg", weich: "img/szene-versprechen-weich.jpg", weichHandy: "img/szene-versprechen-hoch-weich.jpg", weichZeit: 2.6, weichZeitHandy: 1.55, fokus: "68% 50%", fokusHandy: "50% 50%" },
     werkzeuge: { video: ["img/szene-werkzeuge.mp4", "img/szene-werkzeuge.webm"], videoHandy: ["img/szene-werkzeuge-hoch.mp4", "img/szene-werkzeuge-hoch.webm"], bild: "img/szene-werkzeuge.jpg", bildHandy: "img/szene-werkzeuge-hoch.jpg", fokus: "50% 50%", fokusHandy: "50% 50%" },
     weg: { video: ["img/szene-weg.mp4", "img/szene-weg.webm"], videoHandy: ["img/szene-weg-hoch.mp4", "img/szene-weg-hoch.webm"], bild: "img/szene-weg.jpg", bildHandy: "img/szene-weg-hoch.jpg", fokus: "58% 50%", fokusHandy: "50% 50%" },
     los: { video: ["img/szene-los.mp4", "img/szene-los.webm"], videoHandy: ["img/szene-los-hoch.mp4", "img/szene-los-hoch.webm"], bild: "img/szene-los.jpg", bildHandy: "img/szene-los-hoch.jpg", fokus: "65% 50%", fokusHandy: "50% 50%" },

@@ -58,12 +58,20 @@ export function createStage(ids) {
     scenes[id] = { el, img, video, soft, cfg, p: 0, t: 0, loaded: false, ready: false };
   });
 
+  // Standbild (und weiche Fassung) laden – klein, darf sofort passieren
+  function loadStill(id) {
+    const s = scenes[id];
+    if (!s || s.still) return;
+    s.still = true;
+    s.img.src = s.img.dataset.src;
+    if (s.soft) s.soft.src = s.soft.dataset.src;
+  }
+
   function load(id) {
     const s = scenes[id];
     if (!s || s.loaded) return;
     s.loaded = true;
-    s.img.src = s.img.dataset.src;
-    if (s.soft) s.soft.src = s.soft.dataset.src;
+    loadStill(id);
     if (s.video) {
       const srcs = s.video.dataset.src.split("|");
       const ok = srcs.find((u) => s.video.canPlayType(u.endsWith(".webm") ? 'video/webm; codecs="vp9"' : 'video/mp4; codecs="avc1.640028"'));
@@ -82,14 +90,25 @@ export function createStage(ids) {
     }
   }
 
-  let active = null;
+  let active = null, loadTimer = 0;
   function show(id) {
     if (active === id) return;
+    const first = active === null;
     active = id;
     const i = ids.indexOf(id);
-    load(id);
-    load(ids[i + 1]); // nächstes Kapitel schon vorladen
-    Object.values(scenes).forEach((s) => s.el.classList.toggle("is-on", s.el.dataset.id === id));
+    const s = scenes[id];
+    if (s) s.t = s.p; // direkt an der richtigen Stelle beginnen, nicht vom alten Stand nachspulen
+    // Standbild sofort; Videos erst, wenn das Kapitel kurz stehen bleibt –
+    // sonst lädt ein Sprung per Menü unterwegs alle Videos.
+    loadStill(id);
+    clearTimeout(loadTimer);
+    const go = () => {
+      if (active !== id) return;
+      load(id);
+      load(ids[i + 1]); // nächstes Kapitel schon vorladen
+    };
+    if (first) go(); else loadTimer = setTimeout(go, 350);
+    Object.values(scenes).forEach((x) => x.el.classList.toggle("is-on", x.el.dataset.id === id));
   }
 
   function progress(id, p) {
@@ -97,9 +116,10 @@ export function createStage(ids) {
     if (s) s.p = clamp(p, 0, 1);
   }
 
-  // Schleife: nur die aktive Szene wird bewegt
-  let running = true;
+  // Schleife: nur die aktive Szene wird bewegt (immer nur eine Schleife gleichzeitig)
+  let running = true, raf = 0;
   function tick() {
+    raf = 0;
     if (!running) return;
     const s = scenes[active];
     if (s) {
@@ -107,8 +127,14 @@ export function createStage(ids) {
       s.t += (s.p - s.t) * 0.12;
       const k = s.t;
       if (s.video && s.ready && s.video.duration) {
-        const target = k * (s.video.duration - 0.05);
-        if (Math.abs(s.video.currentTime - target) > 1 / 30) s.video.currentTime = target;
+        const end = s.video.duration - 0.05;
+        let target = k * end;
+        // während die weiche Fassung darüber liegt, hält das Video genau deren Bild –
+        // so passen beide beim Ein- und Ausblenden zusammen
+        const hold = portrait && s.cfg.weichZeitHandy != null ? s.cfg.weichZeitHandy : s.cfg.weichZeit;
+        if (s.softV > 0 && hold != null) target += (Math.min(hold, end) - target) * Math.min(1, s.softV * 1.25);
+        // nicht neu suchen, solange der letzte Sprung noch läuft (schwache Handys)
+        if (!s.video.seeking && Math.abs(s.video.currentTime - target) > 1 / 30) s.video.currentTime = target;
       }
       // langsame Kamerafahrt (Bild und Video)
       const z = 1.12 - 0.1 * k;
@@ -118,9 +144,9 @@ export function createStage(ids) {
       if (s.video) s.video.style.transform = tr;
       if (s.soft) s.soft.style.transform = tr;
     }
-    requestAnimationFrame(tick);
+    raf = requestAnimationFrame(tick);
   }
-  requestAnimationFrame(tick);
+  raf = requestAnimationFrame(tick);
 
   if (/[?&]debug\b/.test(location.search)) window.__stage = { scenes, get active() { return active; } };
   return {
@@ -130,12 +156,13 @@ export function createStage(ids) {
     // Hintergrund weichzeichnen (0 … 1), z. B. wenn vorne etwas scharf gestellt wird
     soft(id, v) {
       const s = scenes[id];
-      if (s && s.soft) s.soft.style.opacity = clamp(v, 0, 1).toFixed(3);
+      if (!s || !s.soft) return;
+      s.softV = clamp(v, 0, 1);
+      s.soft.style.opacity = s.softV.toFixed(3);
     },
     pause(v) {
-      const was = running;
       running = !v;
-      if (!was && running) requestAnimationFrame(tick);
+      if (running && !raf) raf = requestAnimationFrame(tick);
     }
   };
 }

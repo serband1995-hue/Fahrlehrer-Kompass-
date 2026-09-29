@@ -46,6 +46,8 @@ function fillContent() {
   setHref("rateLink", L.bewerten);
   setHref("priceLink", L.preise);
   setHref("waLink", L.whatsapp);
+  // Links ohne Ziel (leer in der Konfiguration) nicht zeigen – sonst öffnet sich die Seite selbst
+  $$('a[target="_blank"][href="#"]:not(#sheetExt)').forEach((a) => (a.hidden = true));
   const tel = $("#telLink");
   tel.href = "tel:" + L.telefon;
   tel.textContent = L.telefonAnzeige;
@@ -67,8 +69,9 @@ function fillContent() {
       return;
     }
     const src = typeof f === "string" ? f : f.src;
-    if (img.getAttribute("src") === (f.klein || src)) return;
-    if (f.klein) img.srcset = `${f.klein} ${f.kleinBreite}w, ${src} ${f.breite}w`;
+    const set = f.klein ? `${f.klein} ${f.kleinBreite}w, ${src} ${f.breite}w` : null;
+    if (img.getAttribute("src") === (f.klein || src) && img.getAttribute("srcset") === set) return;
+    if (set) img.srcset = set;
     else img.removeAttribute("srcset");
     img.src = f.klein || src;
   });
@@ -175,6 +178,7 @@ const engine = (() => {
       if (!ctx) return;
       on = false;
       master.gain.setTargetAtTime(0, ctx.currentTime, 0.15);
+      setTimeout(() => { if (!on) ctx.suspend(); }, 800); // stumm heißt auch: nichts rechnen
     },
     speed(kmh) {
       if (!ctx || !on) return;
@@ -253,13 +257,17 @@ function setupGame() {
   const btn = $("#light"), msg = $("#lightMsg");
   const lamps = $$(".light__lamp", btn);
   const tEl = $("#gameTime"), bEl = $("#gameBest"), dEl = $("#gameDist");
-  let state = "idle", timer = null, t0 = 0;
+  // gleiche Grenzen wie die Bestenliste auf dem Server: darunter geraten, darüber abgelenkt
+  const MIN_MS = 100, MAX_MS = 1500;
+  let state = "idle", timer = null, t0 = 0, swallow = false;
   const best = parseInt(store.get("serband-best") || "", 10);
-  if (best) bEl.textContent = best + " ms";
+  if (best >= MIN_MS && best <= MAX_MS) bEl.textContent = best + " ms";
   const reset = () => lamps.forEach((l) => (l.className = "light__lamp"));
   const verdict = (ms) => ms < 230 ? "Blitzreflex!" : ms < 300 ? "Sehr stark!" : ms < 400 ? "Solide!" : "Nochmal, ganz ruhig";
+  const shake = () => gsap.fromTo(btn, { x: -10 }, { x: 0, duration: 0.5, ease: "elastic.out(1, .3)" });
   const go = () => {
     state = "wait";
+    hideEntry();
     reset();
     msg.textContent = "Warte auf Grün …";
     lamps[0].classList.add("red");
@@ -269,14 +277,15 @@ function setupGame() {
         reset();
         lamps[2].classList.add("green");
         state = "go";
-        t0 = performance.now();
         msg.textContent = "JETZT!";
+        t0 = performance.now();
+        // gemessen wird ab dem Bild, in dem das Grün wirklich zu sehen ist
+        const armed = t0;
+        requestAnimationFrame(() => requestAnimationFrame(() => { if (state === "go" && t0 === armed) t0 = performance.now(); }));
       }, 600 + Math.random() * 2200);
     }, 900);
   };
-  const press = (e) => {
-    e.preventDefault();
-    if (state === "idle" || state === "done") return go();
+  const press = (at) => {
     if (state === "wait") {
       clearTimeout(timer);
       reset();
@@ -284,54 +293,93 @@ function setupGame() {
       state = "done";
       msg.textContent = "Zu früh! Nochmal?";
       tEl.textContent = "Rot!";
-      gsap.fromTo(btn, { x: -10 }, { x: 0, duration: 0.5, ease: "elastic.out(1, .3)" });
+      dEl.textContent = "–";
+      shake();
       return;
     }
-    if (state === "go") {
-      const ms = Math.round(performance.now() - t0);
-      state = "done";
-      tEl.textContent = ms + " ms";
-      const dist = (50 / 3.6) * (ms / 1000);
-      dEl.textContent = dist.toFixed(1).replace(".", ",") + " m";
-      msg.textContent = verdict(ms) + " Nochmal?";
-      showEntry(ms);
-      const prev = parseInt(store.get("serband-best") || "", 10);
-      if (!prev || ms < prev) {
-        store.set("serband-best", ms);
-        bEl.textContent = ms + " ms";
-        gsap.fromTo(bEl, { scale: 1.4, color: "#8fe6bf" }, { scale: 1, color: "#f1dca6", duration: 0.8, ease: "back.out(2)" });
-      }
+    if (state !== "go") return;
+    const ms = Math.round(at - t0);
+    state = "done";
+    if (ms < MIN_MS) {
+      // schneller als ein Mensch reagieren kann: das war geraten
+      reset();
+      lamps[0].classList.add("red");
+      msg.textContent = "Geraten! Nochmal?";
+      tEl.textContent = "Rot!";
+      dEl.textContent = "–";
+      shake();
+      return;
+    }
+    tEl.textContent = ms + " ms";
+    const dist = (50 / 3.6) * (ms / 1000);
+    dEl.textContent = dist.toFixed(1).replace(".", ",") + " m";
+    if (ms > MAX_MS) { msg.textContent = "Abgelenkt? Nochmal!"; return; }
+    msg.textContent = verdict(ms) + " Nochmal?";
+    showEntry(ms);
+    const prev = parseInt(store.get("serband-best") || "", 10);
+    if (!(prev >= MIN_MS && prev <= MAX_MS) || ms < prev) {
+      store.set("serband-best", ms);
+      bEl.textContent = ms + " ms";
+      gsap.fromTo(bEl, { scale: 1.4, color: "#8fe6bf" }, { scale: 1, color: "#f1dca6", duration: 0.8, ease: "back.out(2)" });
     }
   };
   // Eintragen in die Bestenliste
-  const form = $("#entry"), input = $("#entryName"), note = $("#entryMsg");
-  let lastMs = 0;
+  const form = $("#entry"), input = $("#entryName"), note = $("#entryMsg"), sendBtn = $("button", form);
+  let lastMs = 0, hideTimer = 0;
   input.value = board.me;
+  function hideEntry() { clearTimeout(hideTimer); form.hidden = true; lastMs = 0; }
   function showEntry(ms) {
+    clearTimeout(hideTimer);
     lastMs = ms;
     note.textContent = "";
+    sendBtn.disabled = false;
     form.hidden = false;
-    $("label", form).textContent = ms < 400 ? `${ms} ms – starke Zeit! Trag dich in die Bestenliste ein:` : `${ms} ms. Trag dich in die Bestenliste ein:`;
+    $("label", form).textContent = `${ms} ms – ${verdict(ms)} Trag dich in die Bestenliste ein:`;
   }
   form.addEventListener("submit", async (e) => {
     e.preventDefault();
-    const name = input.value.trim();
-    const sendBtn = $("button", form);
+    if (!lastMs || sendBtn.disabled) return;
+    const name = input.value.trim(), ms = lastMs;
     sendBtn.disabled = true;
     try {
-      const platz = await board.submit(name, lastMs);
+      const platz = await board.submit(name, ms);
+      lastMs = 0; // diese Zeit ist eingetragen – kein zweites Mal
       note.textContent = platz <= 5 ? `Du bist auf Platz ${platz}!` : `Eingetragen – dein Platz: ${platz}. Für die Top 5 geht noch was.`;
-      setTimeout(() => (form.hidden = true), 2600);
+      hideTimer = setTimeout(() => (form.hidden = true), 2600);
     } catch (err) {
       note.textContent = board.texte[err.message] || "Das hat nicht geklappt. Bitte später nochmal.";
+      sendBtn.disabled = false;
     }
-    sendBtn.disabled = false;
   });
   ScrollTrigger.create({ trigger: "#test", start: "top bottom", once: true, onEnter: () => board.load() });
 
-  btn.addEventListener("pointerdown", press);
-  btn.addEventListener("keydown", (e) => { if (e.key === " " || e.key === "Enter") press(e); });
-  btn.addEventListener("click", (e) => e.preventDefault());
+  // Messen beim Aufsetzen des Fingers (genau), Starten erst beim Tippen (click) –
+  // so startet ein Wischen über die Ampel beim Scrollen keinen Test.
+  // swallow: dieser Tipp wurde schon beim Aufsetzen gewertet, sein click startet nicht neu
+  btn.addEventListener("pointerdown", (e) => {
+    swallow = false;
+    if (e.button !== 0 || (state !== "wait" && state !== "go")) return;
+    e.preventDefault();
+    swallow = true;
+    press(e.timeStamp || performance.now());
+  });
+  btn.addEventListener("click", (e) => {
+    e.preventDefault();
+    if (swallow) { swallow = false; return; }
+    if (state === "idle" || state === "done") go();
+    else press(e.timeStamp || performance.now());
+  });
+  // Tastatur: sofort beim Drücken werten; gehaltene Taste zählt nicht als neue Eingabe
+  btn.addEventListener("keydown", (e) => {
+    if (e.repeat) { e.preventDefault(); return; }
+    if (e.key !== " " && e.key !== "Enter") return;
+    swallow = false;
+    if (state === "wait" || state === "go") {
+      e.preventDefault();
+      swallow = true;
+      press(e.timeStamp || performance.now());
+    }
+  });
 }
 
 /* ---------- Bewertungen: ziehen & wischen ---------- */
@@ -365,6 +413,7 @@ function setupReviews() {
       if (x > 0) x += (0 - x) * 0.15;
       if (x < min()) {
         x = min();
+        vx = 0;
         // am Ende sanft zurück an den Anfang
         back = gsap.to({ v: x }, { v: 0, duration: 2.4, delay: 2, ease: "power3.inOut", onUpdate() { x = this.targets()[0].v; }, onComplete: () => (back = null) });
       }
@@ -434,7 +483,7 @@ let started = false;
 function ignite(withSound) {
   if (started) return;
   started = true;
-  if (withSound) { engine.start(); setSound(true); }
+  if (withSound) { try { engine.start(); setSound(true); } catch (e) {} }
   gsap.timeline()
     .to(".intro__inner", { opacity: 0, scale: 0.96, duration: 0.5, ease: "power2.in" }, 0.3)
     .set(".intro", { background: "transparent" })
@@ -472,8 +521,11 @@ function startFilm() {
     else document.querySelector(target).scrollIntoView({ behavior: reducedMotion ? "auto" : "smooth" });
   };
   $$('a[href^="#"]').forEach((a) => a.addEventListener("click", (e) => {
-    const id = a.getAttribute("href");
-    if (id.length < 2 || !document.querySelector(id)) return;
+    const id = a.getAttribute("href") || "";
+    if (id[0] !== "#" || id.length < 2) return; // z. B. „In neuem Tab“ zeigt inzwischen auf eine Adresse
+    let target = null;
+    try { target = document.querySelector(id); } catch (err) {}
+    if (!target) return;
     e.preventDefault();
     closeMenu();
     scrollTo(id);
@@ -511,9 +563,11 @@ function setupChapters() {
         gsap.fromTo([num, name], { y: 8, opacity: 0 }, { y: 0, opacity: 1, duration: 0.5, stagger: 0.05, ease: "power2.out" });
       }
     });
+    // gleicher Bereich wie oben: Anfang und Ende jedes Videos sind so auch zu sehen
     ScrollTrigger.create({
-      trigger: c, start: i === 0 ? "top top" : "top bottom", end: "bottom top",
-      onUpdate: (self) => stage.progress(c.id, self.progress)
+      trigger: c, start: i === 0 ? "top top" : "top 55%", end: i === chapters.length - 1 ? "bottom bottom" : "bottom 55%",
+      onUpdate: (self) => stage.progress(c.id, self.progress),
+      onRefresh: (self) => stage.progress(c.id, self.progress)
     });
   });
   ScrollTrigger.create({ start: 0, end: "max", onUpdate: (self) => (bar.style.transform = `scaleX(${self.progress.toFixed(4)})`) });
@@ -524,24 +578,30 @@ function setupProlog() {
   const lines = $$(".prolog .prolog__line");
   const shade = $("#stageShade");
   const setDim = (v) => shade.style.setProperty("--dim", v.toFixed(3));
+  // Abdunklung der Bühne aus der Scrollposition berechnet – stimmt auch nach Neuladen,
+  // bei Direktlinks und in beide Richtungen: Prolog fast schwarz, bei „Ist es nicht.“
+  // geht das Licht an, in den Kapiteln leicht abgedunkelt, im Epilog heller.
+  const turn = $(".prolog__turn"), ruhe = $("#ruhe"), epilog = $("#epilog");
+  const dim = () => {
+    const vh = window.innerHeight;
+    if (epilog.getBoundingClientRect().top <= vh * 0.6) return 0.25;
+    if (ruhe.getBoundingClientRect().top <= vh * 0.8) return 0.45;
+    return 0.9 - 0.75 * clamp((vh * 0.9 - turn.getBoundingClientRect().top) / (vh * 0.7), 0, 1);
+  };
+  const update = () => setDim(dim());
+  update();
+  ScrollTrigger.create({ start: 0, end: "max", onUpdate: update, onRefresh: update });
   if (reducedMotion) { lines.forEach((l) => (l.style.opacity = 1)); return; }
   const tl = gsap.timeline({
     scrollTrigger: { trigger: ".chapter--prolog", start: "top top", end: () => "+=" + window.innerHeight * 1.5, scrub: 0.6 }
   });
   lines.forEach((l, i) => {
-    tl.fromTo(l, { opacity: 0, y: 24 }, { opacity: 1, y: 0, duration: 0.5 }, i)
-      .to(l, { opacity: 0, y: -18, duration: 0.4 }, i + 0.75);
-  });
-  // Bühne im Prolog fast schwarz, beim „Ist es nicht.“ geht das Licht an
-  setDim(0.9);
-  ScrollTrigger.create({
-    trigger: ".prolog__turn", start: "top 90%", end: "top 20%", scrub: true,
-    onUpdate: (self) => setDim(0.9 - 0.75 * self.progress)
+    // die erste Zeile steht schon da, wenn sich der Vorhang öffnet
+    if (i === 0) gsap.set(l, { opacity: 1, y: 0 });
+    else tl.fromTo(l, { opacity: 0, y: 24 }, { opacity: 1, y: 0, duration: 0.5 }, i);
+    tl.to(l, { opacity: 0, y: -18, duration: 0.4 }, i + 0.75);
   });
   gsap.from(".prolog__turn > *", { y: 40, opacity: 0, duration: 1.4, stagger: 0.15, ease: "expo.out", scrollTrigger: { trigger: ".prolog__turn", start: "top 45%" } });
-  // Für die übrigen Kapitel: leichte Abdunklung für Lesbarkeit
-  ScrollTrigger.create({ trigger: "#ruhe", start: "top 80%", endTrigger: "#los", end: "bottom top", onToggle: (s) => s.isActive && setDim(0.45) });
-  ScrollTrigger.create({ trigger: "#epilog", start: "top 60%", onEnter: () => setDim(0.25), onLeaveBack: () => setDim(0.45) });
 }
 
 /* Kapitelüberschriften fliegen herein */
@@ -581,37 +641,47 @@ function setupFloats() {
 /* Farbtypen-Quiz */
 function setupQuiz() {
   const body = $("#quizBody"), step = $("#quizStep");
-  let i = 0;
+  let i = 0, last = null, lockUntil = 0;
   const score = { r: 0, y: 0, g: 0, b: 0 };
+  // gleichmäßig mischen (Fisher-Yates) – sort(Math.random) bevorzugt bestimmte Plätze
+  const shuffle = (a) => { for (let j = a.length - 1; j > 0; j--) { const r = Math.floor(Math.random() * (j + 1)); [a[j], a[r]] = [a[r], a[j]]; } return a; };
   const render = () => {
+    lockUntil = performance.now() + 350; // ein Doppeltipp überspringt keine Frage
     const f = FRAGEN[i];
     step.textContent = `Frage ${i + 1} von ${FRAGEN.length}`;
     body.innerHTML = '<p class="quiz__q"></p><div class="quiz__opts"></div>';
     $(".quiz__q", body).textContent = f.q;
     // Reihenfolge der Antworten mischen, damit keine Farbe immer oben steht
-    const keys = Object.keys(f.a).sort(() => Math.random() - 0.5);
+    const keys = shuffle(Object.keys(f.a));
     keys.forEach((k) => {
       const b = document.createElement("button");
       b.type = "button";
       b.className = "quiz__opt";
       b.textContent = f.a[k];
-      b.addEventListener("click", () => { score[k]++; i++; i < FRAGEN.length ? render() : result(); });
+      b.addEventListener("click", () => {
+        if (performance.now() < lockUntil) return;
+        lockUntil = Infinity;
+        score[k]++; last = k; i++;
+        i < FRAGEN.length ? render() : result();
+      });
       $(".quiz__opts", body).append(b);
     });
     gsap.from($$(".quiz__q, .quiz__opt", body), { y: 14, opacity: 0, duration: 0.5, stagger: 0.05, ease: "power2.out" });
   };
   const result = () => {
-    const top = Object.keys(score).sort((a, b) => score[b] - score[a])[0];
+    // Gleichstand: die zuletzt gewählte der gleichauf liegenden Farben (nicht immer Rot)
+    const max = Math.max(...Object.values(score));
+    const tied = Object.keys(score).filter((k) => score[k] === max);
+    const top = tied.length === 1 ? tied[0] : tied.includes(last) ? last : tied[Math.floor(Math.random() * tied.length)];
     const t = TYPEN[top];
     step.textContent = "Dein Ergebnis";
     body.innerHTML = `<div class="quiz__result" style="--col:${t.farbe}"><div class="quiz__orb"></div><div><h4><small></small><span></span></h4><p></p><p class="quiz__so">So fahren wir zusammen. Den Rest besprechen wir in der ersten Stunde.</p><button class="quiz__again" type="button">Nochmal machen</button></div></div>`;
     $("h4 small", body).textContent = "Du bist eher " + t.name;
     $("h4 span", body).textContent = t.titel;
     $(".quiz__result p", body).textContent = t.text;
-    $(".quiz__again", body).addEventListener("click", () => { i = 0; Object.keys(score).forEach((k) => (score[k] = 0)); render(); });
+    $(".quiz__again", body).addEventListener("click", () => { i = 0; last = null; Object.keys(score).forEach((k) => (score[k] = 0)); render(); });
     gsap.from(".quiz__orb", { scale: 0, duration: 1, ease: "back.out(2)" });
     gsap.from($$(".quiz__result h4, .quiz__result p, .quiz__again", body), { y: 14, opacity: 0, duration: 0.6, stagger: 0.08 });
-    try { sessionStorage.setItem("serband-farbe", t.name); } catch (e) {}
   };
   render();
 }
@@ -653,6 +723,18 @@ function setupVow() {
   }
   tl.fromTo(sig, { clipPath: "inset(-30% 110% -30% -10%)", opacity: 0.4 }, { clipPath: "inset(-30% -30% -30% -10%)", opacity: 1, duration: 0.14, ease: "power1.inOut" }, 0.72)
     .to({}, { duration: 0.02 }, 0.98); // Zeitleiste endet genau bei 1
+  // wird das Handy nach dem Laden quer gedreht, entfällt das Stehenbleiben (CSS);
+  // dann die Szene fertig zeigen statt halb eingeblendet
+  const flach = matchMedia("(max-height: 519px)");
+  const onFlach = () => {
+    if (flach.matches) {
+      tl.scrollTrigger.disable(false);
+      tl.progress(0.86);
+      spans.forEach((s) => s.classList.add("is-lit"));
+      if (photo) stage.soft("versprechen", 0);
+    } else tl.scrollTrigger.enable();
+  };
+  flach.addEventListener("change", onFlach);
   // am Computer folgt das Foto leicht der Maus
   if (photo && finePointer) {
     const rx = gsap.quickTo(photo, "rotateX", { duration: 0.8, ease: "power3.out" });
@@ -710,9 +792,10 @@ function setupRoad() {
 function setupSheets() {
   const sheet = $("#sheet"), frame = $("#sheetFrame"), consent = $("#sheetConsent");
   let lastFocus = null, currentUrl = "";
-  const open = (el) => { lastFocus = document.activeElement; el.hidden = false; lenis && lenis.stop(); document.body.style.overflow = "hidden"; setTimeout(() => $(".sheet__close", el).focus(), 50); };
-  const close = (el) => { el.hidden = true; lenis && lenis.start(); document.body.style.overflow = ""; lastFocus && lastFocus.focus(); };
-  const loadFrame = () => { consent.hidden = true; frame.hidden = false; frame.src = currentUrl; try { sessionStorage.setItem("serband-cal-ok", "1"); } catch (e) {} };
+  const open = (el) => { lastFocus = document.activeElement; el.hidden = false; lockScroll(true); setTimeout(() => $(".sheet__close", el).focus(), 50); };
+  const close = (el) => { el.hidden = true; lockScroll(menuOpen()); lastFocus && lastFocus.focus(); };
+  // gleiche Adresse nicht neu laden – ein angefangener Buchungsvorgang bleibt erhalten
+  const loadFrame = () => { consent.hidden = true; frame.hidden = false; if (frame.getAttribute("src") !== currentUrl) frame.src = currentUrl; try { sessionStorage.setItem("serband-cal-ok", "1"); } catch (e) {} };
   $$("[data-cal]").forEach((b) => b.addEventListener("click", () => {
     const auto = b.dataset.cal === "automatik";
     currentUrl = auto ? CONFIG.links.kalenderAutomatik : CONFIG.links.kalenderSchalter;
@@ -728,20 +811,25 @@ function setupSheets() {
   $("#installBtn").addEventListener("click", () => open($("#installSheet")));
   $$(".sheet").forEach((s) => $$("[data-close]", s).forEach((c) => c.addEventListener("click", () => close(s))));
   document.addEventListener("keydown", (e) => { if (e.key !== "Escape") return; $$(".sheet").forEach((s) => { if (!s.hidden) close(s); }); closeMenu(); });
-  $("#menuBtn").addEventListener("click", () => {
-    const openNow = !$("#menu").classList.contains("is-open");
-    $("#menu").classList.toggle("is-open", openNow);
-    $("#menu").setAttribute("aria-hidden", openNow ? "false" : "true");
-    $("#menuBtn").setAttribute("aria-expanded", openNow ? "true" : "false");
-    openNow ? lenis && lenis.stop() : lenis && lenis.start();
-  });
+  $("#menuBtn").addEventListener("click", () => setMenu(!menuOpen()));
+}
+const menuOpen = () => $("#menu").classList.contains("is-open");
+const sheetOpen = () => $$(".sheet").some((s) => !s.hidden);
+// Seite hinter Menü oder Fenster festhalten (auch am Handy ohne Lenis)
+function lockScroll(on) {
+  document.body.style.overflow = on ? "hidden" : "";
+  if (lenis) on ? lenis.stop() : lenis.start();
+}
+function setMenu(openNow) {
+  const m = $("#menu");
+  m.classList.toggle("is-open", openNow);
+  m.setAttribute("aria-hidden", openNow ? "false" : "true");
+  $("#menuBtn").setAttribute("aria-expanded", openNow ? "true" : "false");
+  // Tab-Taste bleibt im Menü statt im verdeckten Inhalt
+  $("main").toggleAttribute("inert", openNow);
+  lockScroll(openNow || sheetOpen());
 }
 function closeMenu() {
-  const m = $("#menu");
-  if (!m || !m.classList.contains("is-open")) return;
-  m.classList.remove("is-open");
-  m.setAttribute("aria-hidden", "true");
-  $("#menuBtn").setAttribute("aria-expanded", "false");
-  lenis && lenis.start();
+  if (menuOpen()) setMenu(false);
 }
 
