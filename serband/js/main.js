@@ -676,6 +676,60 @@ function setupReviews() {
   });
 }
 
+/* ---------- Bestenliste (Supabase, nur zwei öffentliche Funktionen) ---------- */
+const board = (() => {
+  const B = CONFIG.bestenliste;
+  const call = async (fn, body) => {
+    const r = await fetch(`${B.url}/rest/v1/rpc/${fn}`, {
+      method: "POST",
+      headers: { apikey: B.key, "Content-Type": "application/json" },
+      body: JSON.stringify(body || {})
+    });
+    const data = await r.json().catch(() => null);
+    if (!r.ok) throw new Error((data && data.message) || "fehler");
+    return data;
+  };
+  const list = $("#board");
+  let me = store.get("serband-name") || "";
+  async function load() {
+    if (!list) return;
+    try {
+      const rows = await call("website_reaktion_top");
+      list.innerHTML = "";
+      if (!rows.length) {
+        list.innerHTML = '<li class="board__empty">Noch leer – sei die oder der Erste!</li>';
+        return;
+      }
+      rows.forEach((r) => {
+        const li = document.createElement("li");
+        li.innerHTML = "<b></b><span></span><em></em>";
+        $("b", li).textContent = r.platz + ".";
+        $("span", li).textContent = r.name;
+        $("em", li).textContent = r.ms + " ms";
+        if (me && r.name.toLowerCase() === me.toLowerCase()) li.classList.add("is-me");
+        list.append(li);
+      });
+    } catch (e) {
+      list.innerHTML = '<li class="board__empty">Bestenliste gerade nicht erreichbar.</li>';
+    }
+  }
+  const texte = {
+    name_laenge: "Bitte 2 bis 15 Zeichen.",
+    name_zeichen: "Bitte nur Buchstaben, Zahlen, Leerzeichen, Punkt oder Bindestrich.",
+    name_unzulaessig: "Dieser Name geht leider nicht.",
+    zeit_ungueltig: "Diese Zeit können wir nicht eintragen.",
+    zu_viele_versuche: "Viele Versuche – probier es später noch einmal."
+  };
+  async function submit(name, ms) {
+    const platz = await call("website_reaktion_eintragen", { p_name: name, p_ms: ms });
+    me = name;
+    store.set("serband-name", name);
+    await load();
+    return platz;
+  }
+  return { load, submit, texte, get me() { return me; } };
+})();
+
 /* ---------- Reaktionstest ---------- */
 function setupGame() {
   const btn = $("#light"), msg = $("#lightMsg");
@@ -722,6 +776,7 @@ function setupGame() {
       const dist = (50 / 3.6) * (ms / 1000);
       dEl.textContent = dist.toFixed(1).replace(".", ",") + " m";
       msg.textContent = verdict(ms) + " Nochmal?";
+      showEntry(ms);
       const prev = parseInt(store.get("serband-best") || "", 10);
       if (!prev || ms < prev) {
         store.set("serband-best", ms);
@@ -730,6 +785,32 @@ function setupGame() {
       }
     }
   };
+  // Eintragen in die Bestenliste
+  const form = $("#entry"), input = $("#entryName"), note = $("#entryMsg");
+  let lastMs = 0;
+  input.value = board.me;
+  function showEntry(ms) {
+    lastMs = ms;
+    note.textContent = "";
+    form.hidden = false;
+    $("label", form).textContent = ms < 400 ? `${ms} ms – starke Zeit! Trag dich in die Bestenliste ein:` : `${ms} ms. Trag dich in die Bestenliste ein:`;
+  }
+  form.addEventListener("submit", async (e) => {
+    e.preventDefault();
+    const name = input.value.trim();
+    const sendBtn = $("button", form);
+    sendBtn.disabled = true;
+    try {
+      const platz = await board.submit(name, lastMs);
+      note.textContent = platz <= 5 ? `Du bist auf Platz ${platz}!` : `Eingetragen – dein Platz: ${platz}. Für die Top 5 geht noch was.`;
+      setTimeout(() => (form.hidden = true), 2600);
+    } catch (err) {
+      note.textContent = board.texte[err.message] || "Das hat nicht geklappt. Bitte später nochmal.";
+    }
+    sendBtn.disabled = false;
+  });
+  ScrollTrigger.create({ trigger: "#test", start: "top bottom", once: true, onEnter: () => board.load() });
+
   btn.addEventListener("pointerdown", press);
   btn.addEventListener("keydown", (e) => { if (e.key === " " || e.key === "Enter") press(e); });
   btn.addEventListener("click", (e) => e.preventDefault());

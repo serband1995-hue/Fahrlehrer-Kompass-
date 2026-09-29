@@ -288,6 +288,18 @@
             <div><dt>Bestzeit</dt><dd id="gameBest">–</dd></div>
             <div><dt>Reaktionsweg bei 50 km/h</dt><dd id="gameDist">–</dd></div>
           </dl>
+          <form class="entry" id="entry" hidden autocomplete="off">
+            <label for="entryName">Starke Zeit! Trag dich in die Bestenliste ein:</label>
+            <div class="entry__row">
+              <input id="entryName" name="name" maxlength="15" minlength="2" placeholder="Vorname oder Spitzname" required>
+              <button class="btn btn--small" type="submit"><span>Eintragen</span></button>
+            </div>
+            <p class="entry__msg" id="entryMsg" aria-live="polite"></p>
+          </form>
+          <div class="board">
+            <p class="board__title">Bestenliste · Top 5</p>
+            <ol class="board__list" id="board"><li class="board__empty">Wird geladen …</li></ol>
+          </div>
         </div>
         <button class="light-btn" id="light" type="button" aria-label="Reaktionstest starten">
           <span class="light__lamp" data-l="0"></span>
