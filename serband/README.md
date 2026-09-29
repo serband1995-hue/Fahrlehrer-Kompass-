@@ -6,9 +6,12 @@ Jedes Kapitel hat einen eigenen Hintergrund (`js/config.js` → `szenen`): ein V
 
 Die Szenen (Higgsfield, Kling 3.0, je 5 s) erzählen eine Fahrt von der Nacht in den Morgen: Tiefgarage → Stadtstraße → Kreuzung → Landstraße → Innenraum → Autobahn → Frankfurter Skyline. Der Epilog nutzt das Prolog-Video. Besonderheiten:
 
-- **Kreuzung (Kapitel II):** Die KI konnte die deutsche Ampelfolge nicht zuverlässig darstellen. Das Video ist deshalb mit fester Kamera und roter Ampel erzeugt; Rot → Rot-Gelb → Grün samt Spiegelung auf der Straße ist nachträglich Bild für Bild eingesetzt.
+- **Kreuzung (Kapitel II):** Die KI konnte die deutsche Ampelfolge nicht zuverlässig darstellen. Das Video ist deshalb mit fester Kamera und roter Ampel erzeugt; Rot → Rot-Gelb → Grün samt Spiegelung auf der Straße ist nachträglich Bild für Bild eingesetzt. In der Hochformat-Fassung driftete die Kamera, sie ist stabilisiert (4 % Zoom); das Auto rollt erst bei Grün an.
 - **Landstraße hoch (Kapitel III):** auf 3,3 s gekürzt, danach tauchte ein Fehler im Bild auf.
-- **„Mein Versprechen“:** `weich`/`weichHandy` ist eine vorab unscharf gerechnete Fassung, die eingeblendet wird, während das Foto scharf gestellt wird.
+- **Skyline quer (Kapitel VI):** auf 4,5 s gekürzt, danach verzog sich die Schrift auf dem Dachschild.
+- Die WebM-Dateien enthalten das maschinenlesbare KI-Kennzeichen von Kling (AIGC), das bewusst nicht entfernt wird.
+- **„Mein Versprechen“:** `weich`/`weichHandy` ist eine vorab unscharf gerechnete Fassung (aus dem Videobild, an dem die Szene steht: quer 2,6 s, hoch 1,55 s), die eingeblendet wird, während das Foto scharf gestellt wird.
+- **Datensparmodus:** Ist am Handy „Datensparen“ an, zeigt die Seite nur die Standbilder.
 
 Fotos stehen unter `fotos`: `portrait` (Kapitel III, „Mein Versprechen“) und `unterricht` (Kapitel I, alle erkennbaren Personen haben eingewilligt), je groß + klein fürs Handy; leer = Foto ausblenden.
 
@@ -19,8 +22,7 @@ Dort ist alles, was noch fehlt, mit `TODO` markiert:
 
 - `screenshots` – echte App-Screenshots für Kompass und Fahr-Akademie (ersetzen die Beispielansichten)
 - `links.bewerten` – direkter Google-Link „Rezension schreiben“ (wird auch als QR-Code gezeigt)
-- `videos.*` – Videos aus der Ausbildung (leer = Animation)
-- `zahlen` – echte Zahlen; `wert: null` wird ausgeblendet
+- `videos.*` und `zahlen` stehen noch in der Konfiguration, werden von der Seite aber derzeit nicht angezeigt
 - `bewertungen` – echte Bewertungen; Platzhalter sind nur unter `?entwurf` sichtbar, live wird der Abschnitt ohne echte Bewertungen ausgeblendet
 - `impressum.html` und `datenschutz.html` – gelb markierte Stellen ausfüllen
 

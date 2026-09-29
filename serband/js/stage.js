@@ -12,6 +12,8 @@ const clamp = (v, a, b) => Math.min(b, Math.max(a, v));
 export function createStage(ids) {
   const root = document.getElementById("stage");
   const portrait = matchMedia("(max-aspect-ratio: 9/10)").matches;
+  // Datensparmodus am Handy: nur Standbilder, keine Videos
+  const sparen = !!(navigator.connection && navigator.connection.saveData);
   const scenes = {};
 
   ids.forEach((id) => {
@@ -26,7 +28,7 @@ export function createStage(ids) {
     if (cfg.fokus) img.style.objectPosition = portrait ? cfg.fokusHandy || cfg.fokus : cfg.fokus;
     el.append(img);
     let video = null;
-    const vsrc = (portrait && cfg.videoHandy) || cfg.video;
+    const vsrc = !sparen && ((portrait && cfg.videoHandy) || cfg.video);
     if (vsrc) {
       video = document.createElement("video");
       video.muted = true;
@@ -73,6 +75,10 @@ export function createStage(ids) {
         s.ready = true;
         s.video.style.opacity = 1;
       }, { once: true });
+      // iPhone lädt ohne Abspielen oft nichts: kurz stumm anspielen und sofort anhalten.
+      // Klappt das nicht (z. B. Stromsparmodus), bleibt einfach das Standbild stehen.
+      const v = s.video, p = v.play();
+      if (p && p.then) p.then(() => v.pause()).catch(() => {});
     }
   }
 
