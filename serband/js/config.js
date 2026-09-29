@@ -28,19 +28,28 @@ export const CONFIG = {
     datenschutz: "datenschutz.html"  // TODO: markierte Stellen in datenschutz.html ausfüllen
   },
 
-  // Das große Kinobild im Hintergrund.
-  // scheinwerfer: Position der Scheinwerfer im Bild (0 = links/oben, 1 = rechts/unten) für das Aufblenden.
-  kino: {
-    bild: "img/hero.jpg",
-    bildHandy: "img/hero-mobile.jpg",
-    // Eröffnungsvideo (nur Querformat). Läuft nach „Motor starten“ und am Ende noch einmal.
-    video: ["img/hero-drive.webm", "img/hero-drive.mp4"],
-    videoBild: "img/hero-drive-poster.jpg",
-    scheinwerfer: [[0.441, 0.617], [0.67, 0.617]],
-    scheinwerferHandy: [[0.24, 0.72], [0.537, 0.72]],
-    strasse: [0.78, 1.0], // Bereich (von oben nach unten), in dem die Lichtstreifen über die Straße ziehen
-    strasseHandy: [0.8, 1.0],
-    regen: true
+  // Hintergrund pro Kapitel. Sobald die neuen Videos da sind, hier eintragen:
+  //   video: ["img/szene-….mp4", "img/szene-….webm"]  (wird beim Scrollen gespult)
+  //   bild / bildHandy: Standbild (Quer / Hoch), fokus: Bildausschnitt
+  //   fahrt: seitliche Kamerabewegung (-1 … 1)
+  szenen: {
+    standard: { bild: "img/hero.jpg", bildHandy: "img/hero-mobile.jpg", fokus: "70% 50%" },
+    prolog: { video: ["img/szene-prolog.mp4", "img/szene-prolog.webm"], bild: "img/hero-drive-poster.jpg", bildHandy: "img/hero-mobile.jpg", fokus: "72% 50%", fokusHandy: "62% 50%" },
+    ruhe: { bild: "img/hero.jpg", bildHandy: "img/hero-mobile.jpg", fokus: "30% 40%", fokusHandy: "50% 30%", fahrt: 0.4 },
+    typ: { bild: "img/hero.jpg", bildHandy: "img/hero-mobile.jpg", fokus: "85% 20%", fokusHandy: "80% 40%", fahrt: -0.4 },
+    versprechen: { bild: "img/hero.jpg", bildHandy: "img/hero-mobile.jpg", fokus: "60% 30%", fokusHandy: "55% 45%", fahrt: 0.3 },
+    werkzeuge: { bild: "img/hero.jpg", bildHandy: "img/hero-mobile.jpg", fokus: "72% 70%", fokusHandy: "45% 75%", fahrt: -0.3 },
+    weg: { bild: "img/hero.jpg", bildHandy: "img/hero-mobile.jpg", fokus: "40% 95%", fokusHandy: "50% 95%", fahrt: 0.5 },
+    los: { bild: "img/hero.jpg", bildHandy: "img/hero-mobile.jpg", fokus: "70% 55%", fokusHandy: "45% 70%", fahrt: -0.2 },
+    epilog: { video: ["img/szene-prolog.mp4", "img/szene-prolog.webm"], bild: "img/hero-drive-poster.jpg", bildHandy: "img/hero-mobile.jpg", fokus: "72% 50%", fokusHandy: "62% 50%" }
+  },
+
+  // TODO: echte Screenshots (Schülernamen unkenntlich!). Leer = Beispielansicht.
+  screenshots: {
+    kompass: "",          // z. B. "img/app-kompass.jpg" (Querformat)
+    "akademie-lernen": "",
+    "akademie-video": "",
+    "akademie-szenen": ""
   },
 
   // Bestenliste des Reaktionstests (Supabase-Projekt „fahr-akademie“, getrennte Tabelle).
