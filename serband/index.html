@@ -22,7 +22,7 @@
 <svg width="0" height="0" style="position:absolute" aria-hidden="true"><symbol id="logo" viewBox="0 0 120 120"><circle class="mk-ring" cx="60" cy="60" r="50" pathLength="1"/><circle class="mk-ring mk-ring--in" cx="60" cy="60" r="43" pathLength="1"/><path class="mk-pts" d="M60 2l4.5 16h-9zM60 118l4.5-16h-9zM2 60l16-4.5v9zM118 60l-16-4.5v9z"/><path class="mk-shield" pathLength="1" d="M33 46V41c11-1 20-5 27-14 7 9 16 13 27 14v5 16c0 17-11 28-27 36-16-8-27-19-27-36z"/><circle class="mk-wheel" cx="60" cy="46" r="6.5" pathLength="1"/><path class="mk-wheel" pathLength="1" d="M53.5 46h13M60 46v6.5"/><path class="mk-road" pathLength="1" d="M74 64c-12 0-24 3-24 10s14 8 14 14-6 7-8 9"/><path class="mk-line" d="M74 64c-12 0-24 3-24 10s14 8 14 14-6 7-8 9"/></symbol></svg>
 
 <!-- ============ Vorspann ============ -->
-<div class="intro" id="intro" aria-live="polite">
+<div class="intro" id="intro">
   <div class="intro__inner">
     <svg class="intro__mark mk" viewBox="0 0 120 120" aria-hidden="true"><circle class="mk-ring" cx="60" cy="60" r="50" pathLength="1"/><circle class="mk-ring mk-ring--in" cx="60" cy="60" r="43" pathLength="1"/><path class="mk-pts" d="M60 2l4.5 16h-9zM60 118l4.5-16h-9zM2 60l16-4.5v9zM118 60l-16-4.5v9z"/><path class="mk-shield" pathLength="1" d="M33 46V41c11-1 20-5 27-14 7 9 16 13 27 14v5 16c0 17-11 28-27 36-16-8-27-19-27-36z"/><circle class="mk-wheel" cx="60" cy="46" r="6.5" pathLength="1"/><path class="mk-wheel" pathLength="1" d="M53.5 46h13M60 46v6.5"/><path class="mk-road" pathLength="1" d="M74 64c-12 0-24 3-24 10s14 8 14 14-6 7-8 9"/><path class="mk-line" d="M74 64c-12 0-24 3-24 10s14 8 14 14-6 7-8 9"/></svg>
     <p class="intro__name">SERBAND</p>
@@ -41,7 +41,7 @@
 </div>
 
 <div class="stage" id="stage" aria-hidden="true"></div>
-<div class="stage__shade" id="stageShade" aria-hidden="true"></div>
+<div class="stage__shade" id="stageShade" aria-hidden="true" style="--dim:.9"></div>
 <div class="bars" aria-hidden="true"><i></i><i></i></div>
 
 <!-- ============ Kopfzeile ============ -->
@@ -398,7 +398,7 @@
     <div class="sheet__head"><div><small>Fahr-Akademie</small><h3 id="installTitle">Als App speichern</h3></div><button class="sheet__close" type="button" data-close aria-label="Schließen">×</button></div>
     <div class="sheet__body sheet__body--text">
       <ol class="install">
-        <li><b>Öffne die Fahr-Akademie</b> über „Jetzt registrieren“.</li>
+        <li><b>Öffne die Fahr-Akademie</b> über „Startzugang sichern“.</li>
         <li><b>iPhone (Safari):</b> Tippe auf <span class="kbd">Teilen</span> und dann auf <span class="kbd">Zum Home-Bildschirm</span>.</li>
         <li><b>Android (Chrome):</b> Tippe auf <span class="kbd">⋮</span> und dann auf <span class="kbd">App installieren</span>.</li>
       </ol>
@@ -407,7 +407,7 @@
   </div>
 </div>
 
-<noscript><style>.intro{display:none}body.is-loading{overflow:auto}.stage{background:url(img/hero.jpg) 70% 50%/cover}.chapter{opacity:1!important}</style></noscript>
+<noscript><style>.intro{display:none}body.is-loading{overflow:auto}.stage{background:url(img/hero.jpg) 70% 50%/cover}.chapter{opacity:1!important}.prolog__line{opacity:1;grid-area:auto}</style></noscript>
 <script src="vendor/gsap.min.js"></script>
 <script src="vendor/ScrollTrigger.min.js"></script>
 <script src="vendor/lenis.min.js"></script>
