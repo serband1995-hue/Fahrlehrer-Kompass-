@@ -14,15 +14,15 @@ const smooth = (t) => t * t * (3 - 2 * t);
    dark = Abdunklung für Lesbarkeit, fx = Stärke der Lichtstreifen */
 const SHOTS = [
   { s: 1.0, u: 0.5, v: 0.5, px: 0.5, py: 0.5, dark: 0, fx: 1, m: { u: 0.7, v: 0.6, py: 0.3 } }, // Start
-  { s: 1.35, u: 0.8, v: 0.3, px: 0.62, py: 0.42, dark: 0.45, fx: 0.2 },  // Kurz zu mir: Skyline
-  { s: 1.5, u: 0.62, v: 0.86, px: 0.5, py: 0.55, dark: 0.5, fx: 0.9 },   // So läuft's: Straße
-  { s: 1.12, u: 0.5, v: 0.5, px: 0.5, py: 0.5, dark: 0.62, fx: 0.6 },    // Dein Weg
-  { s: 1.6, u: 0.7, v: 0.42, px: 0.5, py: 0.45, dark: 0.55, fx: 0.2 },   // Stimmen: Brücke & Lichter
-  { s: 1.7, u: 0.67, v: 0.62, px: 0.74, py: 0.5, dark: 0.35, fx: 0.7 },  // Test: Scheinwerfer
-  { s: 1.7, u: 0.74, v: 0.4, px: 0.7, py: 0.42, dark: 0.45, fx: 0.3 },   // Akademie: Dachschild
+  { s: 1.35, u: 0.8, v: 0.3, px: 0.62, py: 0.42, dark: 0.45, fx: 0.2 }, // Kurz zu mir: Skyline
+  { s: 1.5, u: 0.62, v: 0.86, px: 0.5, py: 0.55, dark: 0.5, fx: 0.9 }, // So läuft's: Straße
+  { s: 1.12, u: 0.5, v: 0.5, px: 0.5, py: 0.5, dark: 0.62, fx: 0.6 }, // Dein Weg
+  { s: 1.7, u: 0.67, v: 0.62, px: 0.74, py: 0.5, dark: 0.35, fx: 0.7 }, // Test: Scheinwerfer
+  { s: 1.6, u: 0.7, v: 0.42, px: 0.5, py: 0.45, dark: 0.55, fx: 0.2 }, // Stimmen: Brücke & Lichter
+  { s: 1.7, u: 0.74, v: 0.4, px: 0.7, py: 0.42, dark: 0.45, fx: 0.3 }, // Akademie: Dachschild
   { s: 1.35, u: 0.72, v: 0.66, px: 0.62, py: 0.55, dark: 0.5, fx: 0.8 }, // Buchen
-  { s: 1.6, u: 0.93, v: 0.3, px: 0.72, py: 0.42, dark: 0.45, fx: 0.2 },  // Bewerten: Dom
-  { s: 1.2, u: 0.5, v: 0.5, px: 0.5, py: 0.5, dark: 0.7, fx: 0.4 },      // Fragen
+  { s: 1.6, u: 0.93, v: 0.3, px: 0.72, py: 0.42, dark: 0.45, fx: 0.2 }, // Bewerten: Dom
+  { s: 1.2, u: 0.5, v: 0.5, px: 0.5, py: 0.5, dark: 0.7, fx: 0.4 }, // Fragen
   { s: 1.04, u: 0.5, v: 0.5, px: 0.5, py: 0.5, dark: 0.15, fx: 1, m: { u: 0.7, v: 0.6, py: 0.3 } } // Ziel
 ];
 
@@ -32,8 +32,8 @@ const SHOTS_PORTRAIT = [
   { s: 1.2, u: 0.6, v: 0.45, px: 0.5, py: 0.4, dark: 0.5, fx: 0.2 },
   { s: 1.4, u: 0.5, v: 0.9, px: 0.5, py: 0.5, dark: 0.55, fx: 0.9 },
   { s: 1.1, u: 0.5, v: 0.3, px: 0.5, py: 0.5, dark: 0.6, fx: 0.3 },
-  { s: 1.4, u: 0.55, v: 0.55, px: 0.5, py: 0.45, dark: 0.55, fx: 0.2 },
   { s: 1.8, u: 0.54, v: 0.72, px: 0.5, py: 0.35, dark: 0.4, fx: 0.7 },
+  { s: 1.4, u: 0.55, v: 0.55, px: 0.5, py: 0.45, dark: 0.55, fx: 0.2 },
   { s: 1.6, u: 0.63, v: 0.64, px: 0.5, py: 0.35, dark: 0.5, fx: 0.3 },
   { s: 1.3, u: 0.45, v: 0.75, px: 0.5, py: 0.45, dark: 0.5, fx: 0.8 },
   { s: 1.7, u: 0.92, v: 0.5, px: 0.6, py: 0.4, dark: 0.5, fx: 0.2 },
