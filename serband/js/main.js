@@ -316,6 +316,8 @@ function startPage() {
   setupGame();
   setupPhone();
   setupSheets();
+  setupBooking();
+  setupBigWords();
   setupPointer();
   ScrollTrigger.refresh();
 }
@@ -520,6 +522,11 @@ function setupProgress(scrollTo) {
       });
     }
     document.body.classList.toggle("is-driving", v > 0.02 && v < 0.985);
+    // Liegt das Menü über einem hellen Bereich? Dann dunkle Schrift
+    // Punkt links neben der Menü-Pille prüfen (die Pille selbst würde den Treffer verdecken)
+    const el = document.elementFromPoint(3, 36);
+    const onLight = !!(el && el.closest(".light, .footer"));
+    document.body.classList.toggle("on-light", onLight);
   };
   window.__snap = () => { update(); scene && scene.jump(virtual()); };
   if (lenis) lenis.on("scroll", update);
@@ -545,6 +552,7 @@ function setupProgress(scrollTo) {
 /* ---------- Laufband ---------- */
 function setupMarquee() {
   const track = $(".marquee__track");
+  if (!track) return;
   const half = () => track.scrollWidth / 2;
   let x = 0, boost = 0;
   if (lenis) lenis.on("scroll", (e) => (boost = clamp(Math.abs(e.velocity) * 0.6, 0, 18)));
@@ -768,6 +776,44 @@ function closeMenu() {
   m.setAttribute("aria-hidden", "true");
   $("#menuBtn").setAttribute("aria-expanded", "false");
   lenis && lenis.start();
+}
+
+/* ---------- Buchen: Umschalter Schaltung / Automatik ---------- */
+function setupBooking() {
+  const sw = $(".switch");
+  if (!sw) return;
+  const texts = {
+    schalter: { word: "SCHALTUNG", title: "Schaltwagen", text: "Du lernst kuppeln und schalten und darfst später Schalt- und Automatikwagen fahren." },
+    automatik: { word: "AUTOMATIK", title: "Automatik", text: "Kein Kuppeln, kein Abwürgen. Du konzentrierst dich ganz auf den Verkehr." }
+  };
+  const setMode = (mode) => {
+    const t = texts[mode];
+    const auto = mode === "automatik";
+    sw.classList.toggle("is-auto", auto);
+    $$(".switch__opt", sw).forEach((b) => {
+      const on = b.dataset.mode === mode;
+      b.classList.toggle("is-active", on);
+      b.setAttribute("aria-selected", on ? "true" : "false");
+    });
+    $("#gearSchalter").hidden = auto;
+    $("#gearAutomatik").hidden = !auto;
+    $(".book__stage").classList.toggle("is-auto", auto);
+    $("#bookBtn").dataset.cal = mode;
+    gsap.fromTo("#bookWord", { opacity: 0, y: 30 }, { opacity: 1, y: 0, duration: 0.8, ease: "power3.out", onStart: () => ($("#bookWord").textContent = t.word) });
+    gsap.fromTo([$("#bookTitle"), $("#bookText")], { opacity: 0, y: 12 }, { opacity: 1, y: 0, duration: 0.5, stagger: 0.06, ease: "power2.out", onStart: () => { $("#bookTitle").textContent = t.title; $("#bookText").textContent = t.text; } });
+  };
+  $$(".switch__opt", sw).forEach((b) => b.addEventListener("click", () => setMode(b.dataset.mode)));
+}
+
+/* ---------- Große Hintergrund-Schriftzüge wandern beim Scrollen ---------- */
+function setupBigWords() {
+  const jw = $(".journey__bgword");
+  if (jw) gsap.fromTo(jw, { xPercent: 5 }, { xPercent: -45, ease: "none", scrollTrigger: { trigger: "#weg", start: "top bottom", end: "bottom top", scrub: true } });
+  const bw = $("#bookWord");
+  if (bw) gsap.fromTo(bw, { yPercent: 30 }, { yPercent: -30, ease: "none", scrollTrigger: { trigger: "#buchen", start: "top bottom", end: "bottom top", scrub: true } });
+  // Strive-Karten fliegen gestaffelt ein
+  gsap.from(".band", { y: 80, opacity: 0, duration: 1.3, ease: "expo.out", scrollTrigger: { trigger: ".band", start: "top 85%" } });
+  gsap.from(".bubble", { scale: 0, duration: 1, ease: "back.out(2)", stagger: 0.12, scrollTrigger: { trigger: ".orbit", start: "top 75%" } });
 }
 
 /* ---------- Maus bewegt die Kamera leicht ---------- */
