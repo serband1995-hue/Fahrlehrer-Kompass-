@@ -57,14 +57,19 @@ function fillContent() {
     social.prepend(a);
   });
   // Fotos: groß und klein (Handy), leer = Foto ausblenden
+  // (srcset/sizes stehen schon im HTML, damit nichts doppelt lädt; hier nur bei anderer Konfiguration)
   $$("[data-foto]").forEach((img) => {
     const f = (CONFIG.fotos || {})[img.dataset.foto];
-    if (!f) { img.closest("figure").remove(); return; }
-    const src = typeof f === "string" ? f : f.src;
-    if (f.klein) {
-      img.srcset = `${f.klein} ${f.kleinBreite}w, ${src} ${f.breite}w`;
-      img.sizes = img.dataset.foto === "portrait" ? "(max-width: 900px) 62vw, 34vw" : "(max-width: 860px) 92vw, 50vw";
+    if (!f) {
+      const story = img.closest(".story");
+      if (story) story.classList.replace("story--shot", "story--solo");
+      img.closest("figure").remove();
+      return;
     }
+    const src = typeof f === "string" ? f : f.src;
+    if (img.getAttribute("src") === (f.klein || src)) return;
+    if (f.klein) img.srcset = `${f.klein} ${f.kleinBreite}w, ${src} ${f.breite}w`;
+    else img.removeAttribute("srcset");
     img.src = f.klein || src;
   });
   if (!$("#vowPhoto")) $("#vow").classList.add("vow--text");
@@ -544,7 +549,7 @@ function setupTitles() {
   $$(".chapter:not(.chapter--prolog) .chead").forEach((h) => {
     gsap.from($(".chead__num", h), { opacity: 0, letterSpacing: "0.6em", duration: 1.2, ease: "power3.out", scrollTrigger: { trigger: h, start: "top 80%" } });
     gsap.from($$(".line > *", h), { yPercent: 110, duration: 1.3, ease: "expo.out", stagger: 0.1, scrollTrigger: { trigger: h, start: "top 80%" } });
-    gsap.from($(".title", h), { scale: 0.9, filter: "blur(10px)", duration: 1.4, ease: "expo.out", clearProps: "filter,scale", scrollTrigger: { trigger: h, start: "top 80%" } });
+    if (!reducedMotion) gsap.from($(".title", h), { scale: 0.9, filter: finePointer ? "blur(10px)" : "blur(6px)", duration: 1.4, ease: "expo.out", clearProps: "filter,scale", scrollTrigger: { trigger: h, start: "top 80%" } });
   });
   $$(".story p, .story .trio li, .shot .card__cap, .promise__honest, .tool__text > *, .parts li, .faq details, .road__step, .book, .rate, .pause, .quiz, .epilog > *").forEach((el) => {
     gsap.from(el, { y: 30, opacity: 0, duration: 1, ease: "power3.out", scrollTrigger: { trigger: el, start: "top 88%" } });
@@ -634,19 +639,19 @@ function setupVow() {
         const k = self.progress;
         const n = Math.round(smooth(0.2, 0.7, k) * spans.length);
         spans.forEach((s, i) => s.classList.toggle("is-lit", i < n));
-        if (photo) stage.soft("versprechen", 0.85 * smooth(0.04, 0.3, k) * (1 - smooth(0.9, 1, k)));
+        if (photo) stage.soft("versprechen", smooth(0.04, 0.3, k) * (1 - smooth(0.9, 1, k)));
       }
     }
   });
   if (frame) {
-    tl.fromTo(frame, { scale: 0.7, yPercent: 10, rotateY: -16, rotateX: 7, opacity: 0, filter: "blur(18px)" },
+    tl.fromTo(frame, { scale: 0.7, yPercent: 10, rotateY: -16, rotateX: 7, opacity: 0, filter: finePointer ? "blur(18px)" : "blur(8px)" },
       { scale: 1, yPercent: 0, rotateY: 0, rotateX: 0, opacity: 1, filter: "blur(0px)", duration: 0.32, ease: "power2.out" }, 0)
       .fromTo(".vow__glow", { opacity: 0, scale: 0.55 }, { opacity: 1, scale: 1, duration: 0.3, ease: "power1.out" }, 0.08)
-      .fromTo(".vow__sheen", { xPercent: -70 }, { xPercent: 70, duration: 0.16, ease: "power1.inOut" }, 0.34)
-      .to(frame, { scale: 0.9, yPercent: -4, opacity: 0.55, filter: "blur(6px)", duration: 0.1 }, 0.9)
+      .fromTo(".vow__sheen", { x: 0, xPercent: -70 }, { x: 0, xPercent: 70, duration: 0.16, ease: "power1.inOut" }, 0.34)
+      .to(frame, { scale: 0.9, yPercent: -4, opacity: 0.55, filter: finePointer ? "blur(6px)" : "blur(4px)", duration: 0.1 }, 0.9)
       .to(".vow__glow", { opacity: 0.2, duration: 0.1 }, 0.9);
   }
-  tl.fromTo(sig, { clipPath: "inset(-20% 100% -20% 0%)", opacity: 0.4 }, { clipPath: "inset(-20% 0% -20% 0%)", opacity: 1, duration: 0.14, ease: "power1.inOut" }, 0.72)
+  tl.fromTo(sig, { clipPath: "inset(-30% 110% -30% -10%)", opacity: 0.4 }, { clipPath: "inset(-30% -30% -30% -10%)", opacity: 1, duration: 0.14, ease: "power1.inOut" }, 0.72)
     .to({}, { duration: 0.02 }, 0.98); // Zeitleiste endet genau bei 1
   // am Computer folgt das Foto leicht der Maus
   if (photo && finePointer) {
@@ -661,8 +666,8 @@ function setupShot() {
   const shot = $("#shot");
   if (!shot || reducedMotion) return;
   const frame = $(".shot__frame", shot), img = $("img", shot);
-  gsap.fromTo(frame, { clipPath: "inset(16% 12% 16% 12% round 30px)", filter: "blur(10px)" },
-    { clipPath: "inset(0% 0% 0% 0% round 18px)", filter: "blur(0px)", ease: "none",
+  gsap.fromTo(frame, { clipPath: "inset(16% 12% 16% 12% round 30px)", filter: finePointer ? "blur(10px)" : "blur(6px)" },
+    { clipPath: "inset(-40% -30% -40% -30% round 18px)", filter: "blur(0px)", ease: "none",
       scrollTrigger: { trigger: shot, start: "top 96%", end: "top 45%", scrub: 0.6 } });
   gsap.fromTo(img, { scale: 1.3, yPercent: -5 }, { scale: 1.04, yPercent: 3, ease: "none",
     scrollTrigger: { trigger: shot, start: "top bottom", end: "bottom top", scrub: true } });
@@ -674,18 +679,19 @@ function setupDepth() {
   if (reducedMotion) return;
   const max = finePointer ? 8 : 5;
   const sel = finePointer
-    ? ".chead, .story, .tool, .deal, .promise__honest, .road, .faq-wrap, .stimmen"
-    : ".chead, .shot, .promise__honest";
-  const items = $$(sel).map((el) => [el, el]);
-  items.push([$("#vow"), $("#vow .vow__pin")]);
-  items.forEach(([trigger, el]) => {
+    ? ".chead, .story, .tool, .deal, .road, .faq-wrap, .stimmen"
+    : ".chead, .shot";
+  const items = $$(sel).map((el) => [el, el, max]);
+  // die bildschirmhohe Versprechen-Fläche am Handy nur ausblenden, nicht weichzeichnen
+  items.push([$("#vow"), $("#vow .vow__pin"), finePointer ? max : 0]);
+  items.forEach(([trigger, el, blur]) => {
     const reset = () => { el.style.filter = ""; el.style.opacity = ""; el.style.scale = ""; };
     ScrollTrigger.create({
       trigger, start: "bottom 38%", end: "bottom top", scrub: true,
       onUpdate: (s) => {
         const k = s.progress;
         if (k < 0.01) return reset();
-        el.style.filter = `blur(${(k * max).toFixed(2)}px)`;
+        if (blur) el.style.filter = `blur(${(k * blur).toFixed(2)}px)`;
         el.style.opacity = (1 - k * 0.75).toFixed(3);
         el.style.scale = (1 - k * 0.06).toFixed(4);
       },
