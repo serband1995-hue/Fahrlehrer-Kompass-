@@ -37,7 +37,7 @@
   form .knopf { font-size: 1.25em; padding: .9em; margin-top: .4em; }
 
   /* Warten */
-  .gross-emoji { font-size: 4.5em; line-height: 1; animation: reinpoppen .5s cubic-bezier(.2,1.4,.4,1) both; }
+  .gross-emoji { font-size: 4.5em; line-height: 1.2; margin-bottom: .05em; animation: reinpoppen .5s cubic-bezier(.2,1.4,.4,1) both; }
   .gross { font-size: 1.7em; font-weight: 900; line-height: 1.2; }
   .leise-text { color: var(--muted); font-size: 1.05em; line-height: 1.45; }
   .puls { animation: pulsieren 2s infinite; }
@@ -74,11 +74,34 @@
   .ergebnis.no .gross-emoji { animation: wackeln .5s; }
 
   .platzkarte { padding: 1.4em; width: 100%; max-width: 380px; }
-  .platzkarte .nr { font-size: 4.5em; font-weight: 900; line-height: 1; color: var(--gold); }
+  .platzkarte .nr { font-size: 4.5em; font-weight: 900; line-height: 1.1; margin-bottom: .12em; color: var(--gold); }
   .platzkarte .von { color: var(--muted); font-weight: 700; }
   .platzkarte .punkte { font-size: 1.6em; font-weight: 900; margin-top: .4em; }
   .abstand { color: var(--muted); margin-top: .6em; line-height: 1.4; }
   .abstand b { color: var(--txt); }
+
+  /* Wenig Höhe (Handy quer, offene Tastatur): kompakter, damit ohne Scrollen alles erreichbar ist */
+  @media (max-height: 520px) {
+    .logo, .unter { display: none; }
+    h1 { font-size: 1.4em; margin-bottom: .3em; }
+    form { gap: .45em; max-width: 520px; }
+    input { padding: .5em .8em; font-size: 1.1em; }
+    #code { font-size: 1.3em; }
+    form .knopf { padding: .6em; margin-top: .1em; }
+    .fnr { margin: 0 0 .2em; }
+    .ftext { font-size: 1.1em; margin-bottom: .5em; }
+    .zeitbalken { margin-bottom: 8px; }
+    .ant { min-height: 46px; padding: .5em .8em; font-size: 1em; }
+    .gross-emoji { font-size: 3em; }
+    .ergebnis .gross-emoji { font-size: 3.2em; }
+    .ergebnis .titel { font-size: 1.8em; }
+    .ergebnis .plus { font-size: 2em; }
+    .platzkarte { padding: .8em 1.2em; }
+    .platzkarte .nr { font-size: 3em; }
+  }
+  @media (max-height: 520px) and (min-width: 560px) {
+    .knoepfe { grid-template-columns: 1fr 1fr; grid-template-rows: none; grid-auto-rows: 1fr; }
+  }
 </style>
 </head>
 <body>
@@ -249,6 +272,11 @@
         ${f.antworten.map((a, i) => `<button class="ant f${i}" data-i="${i}"><span class="form">${FORMEN[i]}</span><span>${trennen(esc(a))}</span></button>`).join("")}
       </div>`;
       bereich.querySelectorAll(".ant").forEach((b) => b.addEventListener("click", () => antworten_(Number(b.dataset.i))));
+      // Sehr kleine Handys: lange Antworten etwas kleiner schreiben, statt sie abzuschneiden
+      bereich.querySelectorAll(".ant").forEach((b) => {
+        let g = 1;
+        while ((b.scrollHeight > b.clientHeight + 1 || b.scrollWidth > b.clientWidth + 1) && g > 0.7) { g -= 0.05; b.style.fontSize = g + "em"; }
+      });
     };
     const schritt = () => {
       const t = Quiz.jetzt();
