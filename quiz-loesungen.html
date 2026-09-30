@@ -23,6 +23,7 @@
   h2 { font-size: 1.45em; margin: 0 0 .1em; }
   h2 span { color: var(--gold); }
   .ut { color: var(--muted); margin-bottom: .8em; }
+  .direkt { font-size: .9em; } .direkt a { color: var(--gold); word-break: break-all; }
   .q { padding: 14px 16px; margin-bottom: 10px; break-inside: avoid; }
   .q .f { font-weight: 800; margin-bottom: .5em; line-height: 1.3; }
   .q ol { margin: 0 0 .5em; padding-left: 0; list-style: none; display: grid; gap: 4px; }
@@ -63,7 +64,7 @@
   document.getElementById("inhalt").innerHTML = L.map((l) => `
     <section id="l${l.lektion}">
       <h2><span>Lektion ${l.lektion}</span> · ${esc(l.titel)}</h2>
-      <div class="ut">${esc(l.untertitel || "")}</div>
+      <div class="ut">${esc(l.untertitel || "")} · <span class="direkt">Direktlink für die PowerPoint: <a href="quiz-tafel.html?l=${l.lektion}" target="_blank">${esc(new URL("quiz-tafel.html?l=" + l.lektion, location.href).href)}</a></span></div>
       ${l.lektion >= 13 ? '<div class="hinweis13">Für diese Lektion lag noch keine Präsentation vor. Die Fragen folgen dem amtlichen Rahmenplan – bitte einmal gegenlesen.</div>' : ""}
       ${l.fragen.map((f, i) => `
         <div class="karte q">
