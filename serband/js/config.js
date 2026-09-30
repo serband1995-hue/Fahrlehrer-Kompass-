@@ -50,13 +50,8 @@ export const CONFIG = {
     epilog: { video: ["img/szene-prolog.mp4", "img/szene-prolog.webm"], videoHandy: ["img/szene-prolog-hoch.mp4", "img/szene-prolog-hoch.webm"], bild: "img/szene-prolog.jpg", bildHandy: "img/szene-prolog-hoch.jpg", fokus: "68% 50%", fokusHandy: "50% 50%" }
   },
 
-  // TODO: echte Screenshots (Schülernamen unkenntlich!). Leer = Beispielansicht.
-  screenshots: {
-    kompass: "",          // z. B. "img/app-kompass.jpg" (Querformat)
-    "akademie-lernen": "",
-    "akademie-video": "",
-    "akademie-szenen": ""
-  },
+  // Sprachen der Fahr-Akademie (App-Tour, Kapitel IV). Neue Sprache einfach anhängen.
+  sprachen: ["Deutsch", "Türkçe", "English", "العربية", "Español"],
 
   // Bestenliste des Reaktionstests (Supabase-Projekt „fahr-akademie“, getrennte Tabelle).
   // Öffentlicher Schlüssel (für Webseiten gedacht). Was er darf, regeln die Datenbankregeln:

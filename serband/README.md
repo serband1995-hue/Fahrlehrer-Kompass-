@@ -20,7 +20,7 @@ Fotos stehen unter `fotos`: `portrait` (Kapitel III, „Mein Versprechen“) und
 Alle Texte, Links, Fotos, Zahlen und Bewertungen stehen in **`js/config.js`**.
 Dort ist alles, was noch fehlt, mit `TODO` markiert:
 
-- `screenshots` – echte App-Screenshots für Kompass und Fahr-Akademie (ersetzen die Beispielansichten)
+- `sprachen` – Sprachen der Fahr-Akademie, erscheinen in der App-Tour (Kapitel IV). App-Bilder: `img/app-*.jpg` (Beispieldaten „Lea Beispiel“, keine echten Schüler, keine Bestehensquote)
 - `links.bewerten` – direkter Google-Link „Rezension schreiben“ (wird auch als QR-Code gezeigt)
 - `videos.*` und `zahlen` stehen noch in der Konfiguration, werden von der Seite aber derzeit nicht angezeigt
 - `bewertungen` – echte Google-Bewertungen im Wortlaut (Name gekürzt, ohne Datum). Laufband „Frag nicht mich. Frag meine Fahrschüler.“ über dem Epilog; lange Texte öffnen sich per „Ganze Bewertung lesen“. Ohne Einträge wird der Abschnitt ausgeblendet. `links.bewertungen` = Knopf „Alle Bewertungen auf Google“

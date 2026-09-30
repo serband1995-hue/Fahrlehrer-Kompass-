@@ -192,53 +192,91 @@
       <p class="lead">Ein Versprechen braucht mehr als gute Absichten. Deshalb habe ich mich hingesetzt und mir die Werkzeuge gebaut, die ich selbst immer vermisst habe.</p>
     </div>
 
-    <article class="tool">
-      <div class="tool__text">
-        <p class="tool__kicker">Werkzeug 1</p>
-        <h3>Der Fahrlehrer-Kompass</h3>
-        <p>Mein Kompass für deine Ausbildung. Er zeigt mir auf einen Blick, was du schon sicher kannst und was noch fehlt. So wird nichts vergessen, und keine Stunde ist zu viel oder zu wenig.</p>
+    <div class="tour" id="tour">
+      <div class="tour__stage" aria-hidden="true">
+        <div class="tour__phonewrap">
+          <p class="tour__label" id="tourLabel">Fahrlehrer-Kompass</p>
+          <div class="device device--phone tour__phone"><div class="device__screen">
+          <img class="tour__shot is-on" data-step="0" src="img/app-kompass-ampel.jpg" alt="" width="600" height="1298" loading="lazy" decoding="async">
+          <img class="tour__shot" data-step="1" src="img/app-kompass-lerntyp.jpg" alt="" width="600" height="1298" loading="lazy" decoding="async">
+          <img class="tour__shot" data-step="2" src="img/app-kompass-freigabe.jpg" alt="" width="600" height="1298" loading="lazy" decoding="async">
+          <img class="tour__shot" data-step="3" src="img/app-kompass-lernszene.jpg" alt="" width="600" height="1298" loading="lazy" decoding="async">
+          <img class="tour__shot" data-step="4" src="img/app-akademie-3d.jpg" alt="" width="600" height="1298" loading="lazy" decoding="async">
+          <img class="tour__shot" data-step="5" src="img/app-akademie-strecken.jpg" alt="" width="600" height="1298" loading="lazy" decoding="async">
+          <img class="tour__shot" data-step="6" src="img/app-akademie-fehler.jpg" alt="" width="600" height="1298" loading="lazy" decoding="async">
+          <img class="tour__shot" data-step="7" src="img/app-akademie-sprachen.jpg" alt="" width="600" height="1298" loading="lazy" decoding="async">
+          </div></div>
+          <div class="tour__dots" id="tourDots"><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i></div>
+        </div>
       </div>
-      <div class="device device--tablet float3d" data-shot="kompass">
-        <div class="device__screen">
-          <div class="mock mock--kompass">
-            <div class="mock__bar"><b>Ausbildungsstand</b><span>Beispiel</span></div>
-            <div class="mock__ring"><svg viewBox="0 0 100 100"><circle cx="50" cy="50" r="42"/><circle class="mock__ringfill" cx="50" cy="50" r="42"/></svg><b>68%</b></div>
-            <ul class="mock__list">
-              <li class="ok">Grundfahraufgaben</li><li class="ok">Kreuzungen &amp; Vorfahrt</li><li class="ok">Kreisverkehre</li>
-              <li class="now">Überlandfahrt</li><li>Autobahn</li><li>Dunkelheit</li><li>Prüfungsstrecken</li>
-            </ul>
+      <div class="tour__steps">
+        <header class="tour__intro">
+          <p class="tool__kicker">Werkzeug 1</p>
+          <h3>Der Fahrlehrer-Kompass</h3>
+          <p>Mein Kompass für deine Ausbildung. Ich arbeite in jeder Stunde damit – du merkst es daran, dass nichts vergessen wird und keine Stunde zu viel oder zu wenig ist.</p>
+        </header>
+        <div class="tour__step" data-step="0" data-app="kompass">
+          <figure class="tour__inline"><div class="device device--phone"><div class="device__screen"><img src="img/app-kompass-ampel.jpg" alt="Ausbildungsplan im Fahrlehrer-Kompass: Themen mit roter, gelber und grüner Ampel und Übungsort" width="600" height="1298" loading="lazy" decoding="async"></div></div></figure>
+          <p class="tour__app">Fahrlehrer-Kompass</p>
+          <h4>Eine Ampel für jedes Thema</h4>
+          <p>60 Ausbildungsthemen, jedes mit eigener Ampel – geübt an echten Stellen in Offenbach, vom Schlachthof bis Bieber. So sehe ich sofort, was sitzt und was wir noch einmal fahren.</p>
+        </div>
+        <div class="tour__step" data-step="1" data-app="kompass">
+          <figure class="tour__inline"><div class="device device--phone"><div class="device__screen"><img src="img/app-kompass-lerntyp.jpg" alt="Ergebnis des Lerntyp-Checks: So lernst du, wo es bei dir klappt, wann du am aufnahmefähigsten bist" width="600" height="1298" loading="lazy" decoding="async"></div></div></figure>
+          <p class="tour__app">Fahrlehrer-Kompass</p>
+          <h4>Ich weiß, wie du lernst</h4>
+          <p>Vor dem Start beantwortest du ein paar kurze Fragen. Danach weiß ich, wie du am besten lernst – und erkläre dir alles so, dass es bei dir ankommt.</p>
+        </div>
+        <div class="tour__step" data-step="2" data-app="kompass">
+          <figure class="tour__inline"><div class="device device--phone"><div class="device__screen"><img src="img/app-kompass-freigabe.jpg" alt="Freigabe-Check: Ausbildungsstand, Sonderfahrten und Theorieprüfung" width="600" height="1298" loading="lazy" decoding="async"></div></div></figure>
+          <p class="tour__app">Fahrlehrer-Kompass</p>
+          <h4>Zur Prüfung, wenn es sitzt</h4>
+          <p>Bevor ich dich anmelde, schaut der Kompass auf drei Dinge: mindestens 90&nbsp;% Ausbildungsstand, alle Sonderfahrten, bestandene Theorie. Kein Bauchgefühl – und keine Stunde zu viel.</p>
+        </div>
+        <div class="tour__step" data-step="3" data-app="kompass">
+          <figure class="tour__inline"><div class="device device--phone"><div class="device__screen"><img src="img/app-kompass-lernszene.jpg" alt="Lernszene Kreisverkehr mit Frage und Antwort samt Paragraf" width="600" height="1298" loading="lazy" decoding="async"></div></div></figure>
+          <p class="tour__app">Fahrlehrer-Kompass</p>
+          <h4>Schwierige Stellen zum Mitdenken</h4>
+          <p>22 knifflige Situationen – Kreisverkehr, Vorfahrt, Grünpfeil – zeige ich dir als Animation. Du entscheidest, was richtig ist, der passende Paragraf steht gleich dabei.</p>
+        </div>
+        <header class="tour__intro">
+          <p class="tool__kicker">Werkzeug 2</p>
+          <h3>Die Fahr-Akademie</h3>
+          <p>Deine Lern-App für zwischen den Stunden. Damit kommst du vorbereitet ins Auto und sparst Zeit am Steuer.</p>
+        </header>
+        <div class="tour__step" data-step="4" data-app="akademie">
+          <figure class="tour__inline"><div class="device device--phone"><div class="device__screen"><img src="img/app-akademie-3d.jpg" alt="3D-Szene Überholen: typischer Fehler, Gegenverkehr nicht frei, mit StVO-Paragraf" width="600" height="1298" loading="lazy" decoding="async"></div></div></figure>
+          <p class="tour__app">Fahr-Akademie</p>
+          <h4>Richtig und falsch im direkten Vergleich</h4>
+          <p>„Verkehr verstehen“ zeigt jede Situation in 3D: einmal so, wie es richtig ist, einmal mit dem typischen Fehler. Die Gefahr wird rot, der StVO-Paragraf steht dabei.</p>
+        </div>
+        <div class="tour__step" data-step="5" data-app="akademie">
+          <figure class="tour__inline"><div class="device device--phone"><div class="device__screen"><img src="img/app-akademie-strecken.jpg" alt="Prüfungsstrecken nach Prüfer sortiert, mit Inhalt jeder Fahrt" width="600" height="1298" loading="lazy" decoding="async"></div></div></figure>
+          <p class="tour__app">Fahr-Akademie</p>
+          <h4>Echte Prüfungsstrecken, sortiert nach Prüfer</h4>
+          <p>Über 7 Stunden kommentierte Fahrten auf echten Prüfungsstrecken. Ich bin sie selbst gefahren und erkläre jede wichtige Stelle – sortiert nach Prüfer.</p>
+        </div>
+        <div class="tour__step" data-step="6" data-app="akademie">
+          <figure class="tour__inline"><div class="device device--phone"><div class="device__screen"><img src="img/app-akademie-fehler.jpg" alt="Video mit Kapiteln, Fehlerstellen und Weiterschauen" width="600" height="1298" loading="lazy" decoding="async"></div></div></figure>
+          <p class="tour__app">Fahr-Akademie</p>
+          <h4>„Hier lag der Fehler“</h4>
+          <p>Bei Fahrten mit Fehlern springst du mit einem Tipp genau an die Stelle, an der es passiert ist. Und die App merkt sich, wo du aufgehört hast.</p>
+        </div>
+        <div class="tour__step" data-step="7" data-app="akademie">
+          <figure class="tour__inline"><div class="device device--phone"><div class="device__screen"><img src="img/app-akademie-sprachen.jpg" alt="3D-Szene Zebrastreifen mit spanischen Erklärungen" width="600" height="1298" loading="lazy" decoding="async"></div></div></figure>
+          <p class="tour__app">Fahr-Akademie</p>
+          <h4>In deiner Sprache</h4>
+          <p>Erklärungen und 3D-Szenen gibt es auf <span data-sprachen>Deutsch, Türkçe, English, <bdi>العربية</bdi> und Español</span>. Die Videos selbst sind auf Deutsch.</p>
+        </div>
+        <div class="tour__cta">
+          <div class="row">
+            <a class="btn" id="akademieLink" href="#" target="_blank" rel="noopener"><span>Zur Fahr-Akademie</span><i class="arrow"></i></a>
+            <button class="btn btn--ghost" type="button" id="installBtn"><span>Als App speichern</span></button>
           </div>
+          <p class="tour__note">Alle App-Bilder mit Beispieldaten – keine echten Schüler.</p>
         </div>
       </div>
-    </article>
-
-    <article class="tool tool--flip">
-      <div class="tool__text">
-        <p class="tool__kicker">Werkzeug 2</p>
-        <h3>Die Fahr-Akademie</h3>
-        <p>Deine Lern-App für zwischen den Stunden. Damit kommst du vorbereitet ins Auto und sparst Zeit am Steuer.</p>
-        <ol class="parts">
-          <li><b>Lernbereich</b><span>Alles, was du wissen musst, kurz und verständlich erklärt.</span></li>
-          <li><b>Verkehr verstehen</b><span>Schwierige Situationen als 3D-Szene, bevor du sie auf der Straße erlebst.</span></li>
-          <li><b>Video-Akademie</b><span>Über 7 Stunden kommentierte Fahrten auf echten Prüfungsstrecken. Ich bin die Strecken gefahren und erkläre jede wichtige Stelle.</span></li>
-        </ol>
-        <div class="row">
-          <a class="btn" id="akademieLink" href="#" target="_blank" rel="noopener"><span>Zur Fahr-Akademie</span><i class="arrow"></i></a>
-          <button class="btn btn--ghost" type="button" id="installBtn"><span>Als App speichern</span></button>
-        </div>
-      </div>
-      <div class="phones">
-        <div class="device device--phone float3d" data-shot="akademie-lernen">
-          <div class="device__screen"><div class="mock mock--learn"><div class="mock__bar"><b>Lernbereich</b></div><ul class="mock__cards"><li>Vorfahrt</li><li>Kreisverkehr</li><li>Überholen</li><li>Autobahn</li></ul></div></div>
-        </div>
-        <div class="device device--phone device--mid float3d" data-shot="akademie-video">
-          <div class="device__screen"><div class="mock mock--video"><div class="mock__bar"><b>Video-Akademie</b></div><div class="mock__player"><i></i><span>Prüfungsstrecke</span><div class="mock__timeline"><em style="left:18%"></em><em style="left:44%"></em><em style="left:70%"></em></div></div><p class="mock__big">7+ Std.</p><p class="mock__small">kommentierte Fahrten</p></div></div>
-        </div>
-        <div class="device device--phone float3d" data-shot="akademie-szenen">
-          <div class="device__screen"><div class="mock mock--scene"><div class="mock__bar"><b>Verkehr verstehen</b></div><div class="mock__iso"><i></i><i></i><i></i><b></b></div><p class="mock__small">3D-Szene</p></div></div>
-        </div>
-      </div>
-    </article>
+    </div>
   </section>
 
   <!-- ============ KAPITEL V ============ -->

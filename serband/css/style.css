@@ -370,62 +370,49 @@ main { position: relative; z-index: 2; }
 @media (max-width: 700px) { .deal { grid-template-columns: 1fr; } }
 
 /* Kapitel IV – Werkzeuge */
-.tool { width: min(1180px, 100%); margin: clamp(60px, 10vh, 120px) auto 0; display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1.1fr); gap: clamp(30px, 6vw, 90px); align-items: center; perspective: 1400px; }
-.tool--flip .tool__text { order: 2; }
 .tool__kicker { margin: 0 0 8px; letter-spacing: .22em; text-transform: uppercase; font-size: 11px; color: var(--gold); }
-.tool h3 { margin: 0 0 14px; font-family: var(--display); font-weight: 800; font-size: clamp(30px, 3.4vw, 50px); line-height: 1; letter-spacing: -0.03em; }
-.tool__text > p { color: rgba(238,241,242,.86); }
-.parts { list-style: none; margin: 22px 0 0; padding: 0; display: grid; gap: 10px; counter-reset: p; }
-.parts li { position: relative; padding: 14px 16px 14px 56px; border-radius: 16px; background: rgba(12,18,22,.8); border: 1px solid var(--line); }
-.parts li::before { counter-increment: p; content: counter(p); position: absolute; left: 16px; top: 14px; width: 26px; height: 26px; border-radius: 50%; display: grid; place-items: center; background: var(--gold); color: #16110a; font-family: var(--display); font-weight: 800; font-size: 13px; }
-.parts b { display: block; font-family: var(--display); }
-.parts span { font-size: 14px; color: var(--muted); }
+/* App-Tour: Handy bleibt stehen, der Bildschirm wechselt mit dem Text (ab 900 px); am Handy Bild je Schritt */
+.tour { --ph: min(640px, calc(100vh - 230px)); width: min(1180px, 100%); margin: clamp(60px, 10vh, 120px) auto 0; display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: clamp(30px, 6vw, 90px); }
+@supports (height: 100svh) { .tour { --ph: min(640px, calc(100svh - 230px)); } }
+.tour__stage { order: 2; }
+.tour__phonewrap { position: sticky; top: 84px; height: calc(100vh - 100px); display: grid; place-content: center; justify-items: center; gap: 14px; }
+@supports (height: 100svh) { .tour__phonewrap { height: calc(100svh - 100px); } }
+.tour__label { margin: 0; letter-spacing: .22em; text-transform: uppercase; font-size: 11px; color: var(--gold); transition: opacity .3s; }
 .device { position: relative; border-radius: 30px; padding: 10px; background: linear-gradient(145deg, #2a3035, #0b0f11); box-shadow: 0 50px 110px rgba(0,0,0,.55), inset 0 0 0 1.5px rgba(255,255,255,.08); }
-.device__screen { border-radius: 22px; overflow: hidden; background: #0c1418; height: 100%; }
-.device__screen > img { width: 100%; height: 100%; object-fit: cover; object-position: top; }
-.device--tablet { aspect-ratio: 4 / 3; width: min(560px, 100%); justify-self: center; }
-.phones { position: relative; display: flex; justify-content: center; align-items: center; gap: 0; min-height: 520px; }
-.device--phone { width: min(210px, 30vw); aspect-ratio: 9 / 19; border-radius: 34px; }
-.device--phone .device__screen { border-radius: 26px; }
-.phones { perspective: 1200px; }
-.phones > :first-child { transform: translateX(30px) rotateY(20deg) scale(.86); z-index: 1; }
-.phones > :nth-child(2) { z-index: 2; }
-.phones > :last-child { transform: translateX(-30px) rotateY(-20deg) scale(.86); z-index: 1; }
-@media (max-width: 900px) { .tool, .tool--flip { grid-template-columns: 1fr; } .tool--flip .tool__text { order: 0; } .phones { min-height: 420px; } .device--phone { width: min(170px, 34vw); } }
-/* Beispiel-Oberflächen (bis echte Screenshots da sind) */
-.mock { height: 100%; padding: 14px; font-size: 12px; color: var(--text); display: flex; flex-direction: column; gap: 12px; }
-.mock__bar { display: flex; justify-content: space-between; align-items: center; padding-bottom: 8px; border-bottom: 1px solid var(--line); }
-.mock__bar b { font-family: var(--display); font-size: 13px; }
-.mock__bar span { font-size: 10px; color: var(--muted); letter-spacing: .1em; text-transform: uppercase; }
-.mock--kompass { display: grid; grid-template-columns: 1fr 1.3fr; grid-template-rows: auto 1fr; gap: 14px; }
-.mock--kompass .mock__bar { grid-column: 1 / -1; }
-.mock__ring { position: relative; display: grid; place-items: center; }
-.mock__ring svg { width: 100%; max-width: 170px; transform: rotate(-90deg); }
-.mock__ring circle { fill: none; stroke: rgba(255,255,255,.08); stroke-width: 9; }
-.mock__ring .mock__ringfill { stroke: var(--gold); stroke-linecap: round; stroke-dasharray: 264; stroke-dashoffset: 85; }
-.mock__ring b { position: absolute; font-family: var(--display); font-size: 26px; }
-.mock__list { list-style: none; margin: 0; padding: 0; display: grid; gap: 6px; align-content: center; }
-.mock__list li { padding: 7px 10px 7px 28px; border-radius: 9px; background: rgba(255,255,255,.04); position: relative; color: var(--muted); }
-.mock__list li::before { content: ""; position: absolute; left: 10px; top: 50%; width: 9px; height: 9px; margin-top: -4.5px; border-radius: 50%; border: 1.5px solid rgba(255,255,255,.3); }
-.mock__list li.ok { color: var(--text); }
-.mock__list li.ok::before { background: var(--green); border-color: var(--green); }
-.mock__list li.now { color: #16110a; background: var(--gold-soft); }
-.mock__list li.now::before { border-color: #16110a; }
-.mock__cards { list-style: none; margin: 0; padding: 0; display: grid; gap: 8px; }
-.mock__cards li { padding: 14px 12px; border-radius: 12px; background: linear-gradient(135deg, rgba(217,181,107,.18), rgba(255,255,255,.03)); font-family: var(--display); }
-.mock__player { position: relative; aspect-ratio: 16 / 11; border-radius: 12px; background: linear-gradient(160deg, #2b4a5e, #0e1c24); }
-.mock__player i { position: absolute; left: 50%; top: 42%; width: 38px; height: 38px; margin: -19px 0 0 -19px; border-radius: 50%; background: rgba(244,239,230,.92); }
-.mock__player i::after { content: ""; position: absolute; left: 15px; top: 11px; border-left: 12px solid var(--night); border-top: 8px solid transparent; border-bottom: 8px solid transparent; }
-.mock__player span { position: absolute; left: 8px; top: 8px; font-size: 9px; padding: 2px 7px; border-radius: 999px; background: rgba(0,0,0,.5); color: var(--gold-soft); }
-.mock__timeline { position: absolute; left: 8px; right: 8px; bottom: 8px; height: 3px; border-radius: 3px; background: rgba(255,255,255,.2); }
-.mock__timeline em { position: absolute; top: -3px; width: 2px; height: 9px; background: var(--gold); }
-.mock__big { margin: 8px 0 0; font-family: var(--display); font-weight: 800; font-size: 34px; color: var(--gold-soft); line-height: 1; }
-.mock__small { margin: 0; color: var(--muted); }
-.mock__iso { position: relative; flex: 1; border-radius: 12px; background: #0f1d24; overflow: hidden; }
-.mock__iso i { position: absolute; left: 50%; top: 50%; width: 140%; height: 22px; background: #26343b; transform: translate(-50%, -50%) rotate(30deg); }
-.mock__iso i:nth-child(2) { transform: translate(-50%, -50%) rotate(-30deg); }
-.mock__iso i:nth-child(3) { width: 60px; height: 60px; border-radius: 50%; background: #1f5a3a; transform: translate(-50%, -50%); }
-.mock__iso b { position: absolute; left: 30%; top: 38%; width: 18px; height: 10px; border-radius: 3px; background: var(--gold); box-shadow: 0 0 12px var(--gold); }
+.device--phone { border-radius: 34px; }
+.device__screen { position: relative; border-radius: 26px; overflow: hidden; background: #f6f1e7; }
+.tour__phone { height: var(--ph); width: calc((var(--ph) - 20px) * 0.4622 + 20px); }
+.tour__phone .device__screen { height: 100%; }
+.tour__shot { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; object-position: top; opacity: 0; transform: scale(1.04); transition: opacity .6s var(--ease), transform .9s var(--ease); }
+.tour__shot.is-on { opacity: 1; transform: none; }
+.tour__dots { display: flex; gap: 6px; }
+.tour__dots i { width: 6px; height: 6px; border-radius: 3px; background: rgba(238,241,242,.25); transition: width .4s var(--ease), background .4s; }
+.tour__dots i.is-on { width: 20px; background: var(--gold); }
+.tour__intro { padding-top: 12vh; }
+.tour__intro:first-child { padding-top: 0; }
+.tour__intro h3 { margin: 0 0 14px; font-family: var(--display); font-weight: 800; font-size: clamp(30px, 3.4vw, 50px); line-height: 1; letter-spacing: -0.03em; }
+.tour__intro > p:last-child { color: rgba(238,241,242,.86); margin: 0; }
+.tour__step { min-height: 62vh; display: flex; flex-direction: column; justify-content: center; opacity: .32; transition: opacity .5s var(--ease); }
+.tour__step.is-active { opacity: 1; }
+.tour__app { margin: 0 0 6px; font-size: 12px; letter-spacing: .14em; text-transform: uppercase; color: var(--muted); }
+.tour__step h4 { margin: 0 0 10px; font-family: var(--display); font-weight: 700; font-size: clamp(24px, 2.4vw, 32px); line-height: 1.1; }
+.tour__step > p:last-child { margin: 0; color: rgba(238,241,242,.86); font-size: 17px; }
+.tour__inline { display: none; margin: 0 0 22px; }
+.tour__cta { padding: 4vh 0 10vh; }
+.tour__cta .row { margin-top: 0; }
+.tour__note { margin: 16px 0 0; font-size: 13px; color: var(--muted); }
+@media (max-width: 899px) {
+  .tour { grid-template-columns: minmax(0, 1fr); gap: 0; }
+  .tour__stage { display: none; }
+  .tour__intro, .tour__intro:first-child { padding-top: 0; margin-top: 64px; }
+  .tour__intro:first-child { margin-top: 0; }
+  .tour__step { min-height: 0; opacity: 1; margin-top: 56px; }
+  .tour__inline { display: block; order: 9; margin: 22px 0 0; }
+  .tour__inline .device { width: min(250px, 66vw); margin: 0 auto; padding: 8px; border-radius: 30px; }
+  .tour__inline .device__screen { border-radius: 23px; }
+  .tour__inline img { display: block; width: 100%; height: auto; }
+  .tour__cta { padding: 48px 0 0; }
+}
 
 /* Kapitel V – Weg */
 .road { position: relative; list-style: none; width: min(760px, 100%); margin: 0 auto; padding: 0 0 0 60px; display: grid; gap: 22px; }
@@ -549,6 +536,5 @@ svg[hidden] { display: none !important; }
 }
 @media (max-width: 400px) { .top .btn--small span { font-size: 12px; } .top .btn--small { padding: 0 12px; } .top__name { display: none; } }
 .prolog__line { text-shadow: 0 2px 30px rgba(0,0,0,.8); }
-.tool > *, .story > *, .pause > *, .rate > * { min-width: 0; }
+.tour > *, .story > *, .pause > *, .rate > * { min-width: 0; }
 @media (max-width: 480px) { .row .btn { white-space: normal; text-align: center; flex: 1 1 100%; } }
-@media (min-width: 901px) and (max-width: 1200px) { .device--phone { width: min(180px, 17vw); } }
