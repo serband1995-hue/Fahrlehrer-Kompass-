@@ -182,7 +182,7 @@
 
   /* ---------- Overlay (Lehrer-Handy) ---------- */
   .overlay { position: fixed; inset: 0; background: rgba(4, 10, 8, .82); display: grid; place-items: center; z-index: 50; }
-  .overlay .karte { padding: 1.8em; text-align: center; max-width: 30em; }
+  .overlay .karte { padding: 1.8em; text-align: center; max-width: 30em; display: flex; flex-direction: column; gap: .8em; align-items: center; }
   .overlay .qr { width: 16em; margin: 1em auto; }
   .overlay p { color: var(--muted); line-height: 1.5; }
 
@@ -331,7 +331,6 @@
     Ton.wecken();
     L = Quiz.lektion(nr);
     try {
-      await Quiz.uhrAbgleichen();
       const r = await Quiz.rpc("quiz_erstellen", {
         p_lektion: L.lektion, p_titel: L.titel,
         p_fragen: L.fragen.map((f) => ({ frage: f.frage, antworten: f.antworten })),
@@ -787,6 +786,7 @@
         Zeig ihn nur, wenn die Klasse gerade nicht auf die Tafel schaut.</p>
       <div class="qr" id="lehrerQr" hidden>${Quiz.qrSvg(url, "#0a1210")}</div>
       <button class="knopf" id="zeigen">QR-Code jetzt zeigen</button>
+      <button class="knopf leise" id="fenster">Auf diesem Laptop in eigenem Fenster öffnen</button>
       <button class="knopf leise" id="zu">Schließen</button></div>`;
     document.body.appendChild(o);
     let zu = null;
@@ -796,6 +796,7 @@
       zu = setTimeout(schliessen, 30000);
     };
     o.querySelector("#zu").onclick = schliessen;
+    o.querySelector("#fenster").onclick = () => { window.open(url, "lehreransicht", "width=480,height=900"); schliessen(); };
     o.addEventListener("click", (e) => { if (e.target === o) schliessen(); });
   });
 
@@ -821,6 +822,13 @@
   });
 
   zeigeAuswahl();
+
+  /* Direktlink aus der PowerPoint: quiz-tafel.html?l=5 legt sofort den Raum für Lektion 5 an */
+  const direkt = Number(new URLSearchParams(location.search).get("l"));
+  if (Quiz.lektion(direkt)) {
+    history.replaceState(null, "", location.pathname);   // Neuladen soll keinen zweiten Raum anlegen
+    raumAnlegen(direkt);
+  }
 })();
 </script>
 </body>
