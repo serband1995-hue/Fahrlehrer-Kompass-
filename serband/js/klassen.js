@@ -114,7 +114,8 @@ export function klassenZeichnen() {
   const kl = (CONFIG.klassen || []).filter((k) => SKIZZEN[k.skizze]);
   document.querySelectorAll("[data-klassen-text]").forEach((el) => { if (kl.length) el.textContent = liste(kl.map((k) => k.klasse)); });
   const boxen = document.querySelectorAll("[data-klassen]");
-  if (!kl.length) { boxen.forEach((b) => b.remove()); return; }
+  // ohne Klassen: ganzen Block samt Überschrift entfernen (im Impressum bleibt der Text)
+  if (!kl.length) { boxen.forEach((b) => (b.closest(".klassen-wrap") || b).remove()); return; }
   const ruhig = matchMedia("(prefers-reduced-motion: reduce)").matches;
   boxen.forEach((box) => {
     box.innerHTML = kl.map((k) => `<figure class="klasse klasse--${k.skizze}">
