@@ -121,14 +121,14 @@
       const fertig = d.spieler.filter((s) => s.beantwortet_nr >= r.frage_nr).length;
       html += `<div class="karte" style="display:flex;align-items:center;gap:1em"><div class="gross" id="rest">–</div>
         <div><b>${fertig} / ${d.spieler.length}</b> haben geantwortet</div></div>` + frageKarte(r.frage_nr, "Läuft gerade") + alleFragen(r.frage_nr);
-      knopf("Jetzt auflösen", !vorLesezeit);
-      if (vorLesezeit) setTimeout(() => { if (daten && daten.raum.status === "frage") $("#weiter").disabled = false; }, new Date(r.frage_start).getTime() - Quiz.jetzt() + 50);
+      knopf(fertig < d.spieler.length ? `Warte auf alle Antworten (${fertig}/${d.spieler.length})` : "Gleich kommt die Auflösung …", false);
     } else if (r.status === "aufloesung") {
       const letzte = r.frage_nr >= r.anzahl - 1;
       const richtig = d.spieler.filter((s) => s.ausgewertet_nr === r.frage_nr && s.letzte_richtig).length;
       html += `<div class="karte"><b class="ok-mark">${richtig}</b> von ${d.spieler.length} richtig</div>` + frageKarte(r.frage_nr, "Aufgelöst", true) + rangKarte("Aktueller Stand")
         + (letzte ? "" : frageKarte(r.frage_nr + 1, "Als Nächstes")) + alleFragen(r.frage_nr);
-      knopf(letzte ? "Zur Siegerehrung 🏆" : "Zwischenstand ▶", true);
+      const geheim = r.frage_nr >= r.anzahl - 3;
+      knopf(letzte ? "Zur Siegerehrung 🏆" : geheim ? "Nächste Frage ▶ (Rangliste geheim)" : "Zwischenstand ▶", true);
     } else if (r.status === "zwischenstand") {
       html += rangKarte("Zwischenstand") + frageKarte(r.frage_nr + 1, "Als Nächstes") + alleFragen(r.frage_nr + 1);
       knopf("Nächste Frage ▶", true);
@@ -161,7 +161,7 @@
       const el = $("#rest"); if (!el) return;
       el.textContent = t < start ? "👀" : Math.max(0, Math.ceil((ende - t) / 1000)) + " s";
       // Falls die Tafel mal nicht läuft: nach Ablauf auch von hier auflösen (doppelt schadet nicht)
-      if (t > ende + 2500 && aufgeloest !== r.frage_nr) { aufgeloest = r.frage_nr; steuern("aufloesen", r.frage_nr, true); }
+      if (t > ende + 2500 && aufgeloest !== r.frage_nr) { aufgeloest = r.frage_nr; steuern("aufloesen", r.frage_nr, true); setTimeout(() => { aufgeloest = -1; }, 3000); }
     };
     s(); takt = setInterval(s, 250);
   }
@@ -172,8 +172,11 @@
     setTimeout(() => { beschaeftigt = false; }, 4000);
     const r = daten.raum;
     if (r.status === "lobby") await steuern("frage", 0);
-    else if (r.status === "frage") { aufgeloest = r.frage_nr; await steuern("aufloesen", r.frage_nr); }
-    else if (r.status === "aufloesung") await steuern(r.frage_nr >= r.anzahl - 1 ? "ende" : "zwischenstand", r.frage_nr);
+    else if (r.status === "aufloesung") {
+      if (r.frage_nr >= r.anzahl - 1) await steuern("ende", r.frage_nr);
+      else if (r.frage_nr >= r.anzahl - 3) await steuern("frage", r.frage_nr + 1);
+      else await steuern("zwischenstand", r.frage_nr);
+    }
     else if (r.status === "zwischenstand") await steuern("frage", r.frage_nr + 1);
   });
 

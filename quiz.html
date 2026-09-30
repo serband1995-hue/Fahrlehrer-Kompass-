@@ -324,6 +324,10 @@
     const liste = Quiz.rangliste(daten.spieler);
     const platz = liste.findIndex((s) => s.id === mich.id) + 1;
     const richtigText = r.aufloesung != null ? f.antworten[r.aufloesung] : "";
+    // Die letzten 3 Fragen: Rangliste bleibt bis zur Siegerehrung geheim
+    const geheim = nr >= r.anzahl - 3;
+    const platzText = geheim ? `<div class="platz">🤫 Dein Platz bleibt bis zur Siegerehrung geheim</div>`
+                             : `<div class="platz">Platz ${platz} von ${liste.length}</div>`;
     let html;
     if (mich.letzte_richtig === true) {
       vibrieren([40, 60, 40]);
@@ -332,18 +336,18 @@
         <div class="gross-emoji">🎉</div><div class="titel">${lob}</div>
         <div class="plus">+${zahl(mich.letzte_punkte)}</div>
         ${mich.letzte_bonus ? `<div class="serie">🔥 ${mich.serie}er-Serie · +${mich.letzte_bonus} Bonus</div>` : ""}
-        <div class="platz">Platz ${platz} von ${liste.length}</div></div>`;
+        ${platzText}</div>`;
     } else if (mich.letzte_richtig === false) {
       vibrieren([120, 80, 120]);
       html = `<div class="ergebnis no">
         <div class="gross-emoji">😬</div><div class="titel">Leider falsch</div>
         <div class="war">Richtig war: <b>${esc(richtigText)}</b></div>
-        <div class="platz">Platz ${platz} von ${liste.length}</div></div>`;
+        ${platzText}</div>`;
     } else {
       html = `<div class="ergebnis nix">
         <div class="gross-emoji">💤</div><div class="titel">Keine Antwort</div>
         <div class="war">Richtig war: <b>${esc(richtigText)}</b></div>
-        <div class="platz">Platz ${platz} von ${liste.length}</div></div>`;
+        ${platzText}</div>`;
     }
     zeige(html);
   }
