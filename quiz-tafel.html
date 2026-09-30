@@ -1,0 +1,835 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="robots" content="noindex">
+<title>Lernzielkontrolle – Tafel</title>
+<link rel="icon" href="icon-192.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="quiz.css">
+<style>
+  html, body { height: 100%; overflow: hidden; }
+  body { font-size: clamp(14px, 1.15vw, 22px); display: flex; flex-direction: column; }
+
+  /* Kopfleiste */
+  .leiste { display: flex; align-items: center; gap: 1em; padding: .8em 1.4em; flex: none; }
+  .marke { display: flex; align-items: center; gap: .6em; font-weight: 800; letter-spacing: .02em; }
+  .marke i { width: 2.1em; height: 2.1em; border-radius: 10px; display: grid; place-items: center; font-style: normal;
+    background: var(--gold); color: #1d1703; font-weight: 900; }
+  .marke small { display: block; font-weight: 500; color: var(--muted); font-size: .8em; letter-spacing: 0; }
+  .leiste .platz { flex: 1; }
+  .code-pille { background: var(--surface); border: 1px solid var(--line); border-radius: 999px; padding: .35em 1em;
+    font-weight: 700; color: var(--muted); }
+  .code-pille b { color: var(--txt); letter-spacing: .12em; font-size: 1.15em; margin-left: .3em; }
+  .rund { width: 2.6em; height: 2.6em; border-radius: 50%; border: 1px solid var(--line); background: var(--surface);
+    display: grid; place-items: center; font-size: 1em; }
+
+  main { flex: 1; position: relative; min-height: 0; }
+  .schirm { position: absolute; inset: 0; padding: 0 2.2em 1.2em; display: flex; flex-direction: column; min-height: 0; overflow: hidden; }
+  .schirm.rein { animation: hochgleiten .45s ease both; }
+
+  /* Fußleiste */
+  .steuerung { flex: none; display: flex; align-items: center; gap: 1em; padding: .8em 1.4em 1.1em; }
+  .steuerung .info { flex: 1; color: var(--muted); font-weight: 500; }
+  .steuerung .knopf { font-size: 1.15em; padding: .75em 1.8em; }
+  .taste { display: inline-block; border: 1px solid var(--line); border-radius: 6px; padding: 0 .4em; font-size: .85em; color: var(--faint); margin-left: .4em; }
+
+  /* ---------- Auswahl ---------- */
+  .auswahl h1 { font-size: 3.1em; margin: .2em 0 .1em; font-weight: 900; letter-spacing: -.02em; }
+  .auswahl h1 span { color: var(--gold); }
+  .auswahl p.unter { color: var(--muted); margin: 0 0 1.3em; font-size: 1.15em; }
+  .lektionen { display: grid; grid-template-columns: repeat(7, minmax(0, 1fr)); gap: .9em; overflow: auto; padding-bottom: .5em; }
+  .lek { text-align: left; background: var(--surface); border: 1px solid var(--line); border-radius: 16px; padding: 1em;
+    min-height: 9.5em; display: flex; flex-direction: column; gap: .35em; transition: transform .15s, border-color .15s, background .15s; }
+  .lek:hover, .lek:focus-visible { transform: translateY(-4px); border-color: var(--gold); background: var(--surface-2); outline: none; }
+  .lek .nr { font-size: 2.2em; font-weight: 900; color: var(--gold); line-height: 1; }
+  .lek .t { font-weight: 700; line-height: 1.2; hyphens: auto; -webkit-hyphens: auto; overflow-wrap: break-word; }
+  .lek .u { color: var(--muted); font-size: .85em; line-height: 1.3; margin-top: auto; hyphens: auto; -webkit-hyphens: auto; overflow-wrap: break-word; }
+  .fortsetzen { display: flex; align-items: center; gap: 1em; padding: 1em 1.3em; margin-bottom: 1.2em; }
+  .fortsetzen div { flex: 1; }
+  .links { margin-top: auto; padding-top: 1em; color: var(--muted); display: flex; gap: 1.6em; flex-wrap: wrap; }
+  .links a { color: var(--muted); }
+
+  /* ---------- Warteraum ---------- */
+  .lobby { display: grid; grid-template-columns: minmax(0, 34em) 1fr; gap: 2em; align-items: stretch; min-height: 0; flex: 1; }
+  .beitreten { padding: 1.6em; display: flex; flex-direction: column; align-items: center; text-align: center; }
+  .beitreten .titel { font-size: 1.3em; font-weight: 700; color: var(--muted); }
+  .qr { background: #fff; padding: 1.1em; border-radius: 18px; width: min(22em, 42vh); aspect-ratio: 1; margin: 1em 0; }
+  .qr svg { width: 100%; height: 100%; display: block; }
+  .adresse { color: var(--muted); font-size: .95em; word-break: break-all; }
+  .grosscode { font-size: 4.2em; font-weight: 900; letter-spacing: .18em; line-height: 1; margin: .25em 0 0; color: var(--gold); }
+  .spielerfeld { display: flex; flex-direction: column; min-height: 0; }
+  .spielerfeld h2 { font-size: 2.2em; margin: .2em 0 .5em; font-weight: 900; display: flex; align-items: baseline; gap: .4em; }
+  .spielerfeld h2 .anz { background: var(--gold); color: #1d1703; border-radius: 999px; padding: 0 .55em; font-size: .75em; }
+  .lek-name { color: var(--muted); font-weight: 600; font-size: 1.1em; margin-top: -.3em; margin-bottom: 1em; }
+  .chips { display: flex; flex-wrap: wrap; gap: .7em; align-content: flex-start; overflow: auto; }
+  .chip { background: var(--surface-2); border: 1px solid var(--line); border-radius: 999px; padding: .5em 1.1em;
+    font-weight: 700; font-size: 1.35em; animation: reinpoppen .45s cubic-bezier(.2,1.4,.4,1) both; }
+  @media (hover: hover) { .chip:hover { border-color: var(--no); text-decoration: line-through; } }
+  .leer { color: var(--faint); font-size: 1.4em; font-weight: 600; animation: pulsieren 2.4s infinite; }
+
+  /* ---------- Frage ---------- */
+  .fkopf { display: flex; align-items: center; gap: 1em; color: var(--muted); font-weight: 700; font-size: 1.1em; }
+  .punkte-reihe { display: flex; gap: .35em; }
+  .punkte-reihe i { width: .8em; height: .8em; border-radius: 50%; background: var(--line); }
+  .punkte-reihe i.fertig { background: var(--gold); opacity: .55; }
+  .punkte-reihe i.jetzt { background: var(--gold); box-shadow: 0 0 0 4px var(--gold-soft); }
+  .frage-text { font-size: 3.1em; font-weight: 800; line-height: 1.15; margin: .45em 0 .5em; letter-spacing: -.01em; text-wrap: balance; }
+  .frage-mitte { display: flex; align-items: center; gap: 2em; margin-bottom: 1.2em; }
+  .uhr { width: 7.5em; height: 7.5em; flex: none; position: relative; }
+  .uhr svg { width: 100%; height: 100%; transform: rotate(-90deg); }
+  .uhr circle { fill: none; stroke-width: 9; }
+  .uhr .spur { stroke: var(--surface-2); }
+  .uhr .bogen { stroke: var(--gold); stroke-linecap: round; transition: stroke .3s; }
+  .uhr.knapp .bogen { stroke: var(--no); }
+  .uhr b { position: absolute; inset: 0; display: grid; place-items: center; font-size: 2.8em; font-weight: 900; }
+  .uhr.knapp b { color: var(--no); animation: pulsieren .5s infinite; }
+  .zaehler { font-size: 1.4em; font-weight: 700; color: var(--muted); }
+  .zaehler b { font-size: 2.2em; color: var(--txt); display: block; line-height: 1; }
+  .lesen { flex: 1; }
+  .lesen .balken { height: 12px; border-radius: 999px; background: var(--surface-2); overflow: hidden; }
+  .lesen .balken i { display: block; height: 100%; width: 0; background: var(--gold); border-radius: inherit; }
+  .lesen p { color: var(--muted); font-weight: 600; font-size: 1.3em; margin: .6em 0 0; }
+  .antworten { display: grid; grid-template-columns: 1fr 1fr; gap: 1em; flex: 1; min-height: 0; }
+  .antwort { background: var(--f); border-radius: 18px; display: flex; align-items: center; gap: .8em; padding: .6em 1.2em;
+    font-size: 1.9em; font-weight: 800; color: #fff; text-shadow: 0 2px 6px rgba(0,0,0,.25);
+    box-shadow: inset 0 -8px 0 rgba(0,0,0,.18), 0 10px 26px rgba(0,0,0,.35); animation: reinpoppen .4s cubic-bezier(.2,1.3,.4,1) both; min-height: 0; }
+  .antwort .form { font-size: 1.2em; flex: none; opacity: .92; }
+  .antwort:nth-child(2) { animation-delay: .06s; } .antwort:nth-child(3) { animation-delay: .12s; } .antwort:nth-child(4) { animation-delay: .18s; }
+  .antworten.drei { grid-template-columns: 1fr 1fr 1fr; }
+
+  /* ---------- Auflösung ---------- */
+  .aufl-frage { font-size: 1.9em; font-weight: 800; line-height: 1.2; margin: .4em 0 .8em; text-wrap: balance; }
+  .aufl { display: grid; grid-template-columns: 1.35fr 1fr; gap: 2em; flex: 1; min-height: 0; }
+  /* Säulen als Raster: Zahl, Säule und Beschriftung liegen je Zeile auf einer Linie */
+  .saeulen { display: grid; grid-auto-flow: column; grid-auto-columns: minmax(0, 1fr); grid-template-rows: auto minmax(0, 1fr) auto;
+    column-gap: 1.2em; min-height: 0; }
+  .saeule { display: contents; }
+  .saeule .zahl { text-align: center; font-size: 2.1em; font-weight: 900; margin-bottom: .2em; }
+  .saeule .stab-raum { display: flex; align-items: flex-end; min-height: 0; }
+  .saeule .stab { width: 100%; background: var(--f); border-radius: 12px 12px 4px 4px; height: 0; min-height: 8px;
+    transition: height 1s cubic-bezier(.2,.9,.3,1.1); box-shadow: inset 0 -6px 0 rgba(0,0,0,.15); }
+  .saeule .fuss { margin-top: .6em; background: var(--f); border-radius: 12px; padding: .55em .7em; color: #fff; font-weight: 700;
+    display: flex; align-items: center; gap: .5em; font-size: 1.05em; line-height: 1.2; min-height: 3.6em; min-width: 0; }
+  .saeule .fuss .form { flex: none; }
+  .saeule .fuss .txt { flex: 1; min-width: 0; }
+  .saeule .fuss .haken { flex: none; font-size: 1.5em; }
+  .saeule.falsch > * { opacity: .3; filter: grayscale(.4); transition: opacity .6s .9s; }
+  .saeule.richtig .fuss { box-shadow: 0 0 0 4px #fff, 0 0 32px var(--f); animation: pulsieren 1.2s 1.1s 2; }
+  .erkl { padding: 1.4em 1.6em; display: flex; flex-direction: column; gap: .8em; align-self: start; animation: hochgleiten .5s .6s both; }
+  .erkl .kopf { color: var(--ok); font-weight: 800; text-transform: uppercase; letter-spacing: .08em; font-size: .9em; }
+  .erkl .loesung { font-size: 1.7em; font-weight: 800; line-height: 1.2; }
+  .erkl .text { font-size: 1.25em; line-height: 1.45; color: #d9e6df; }
+  .erkl .schnell { border-top: 1px solid var(--line); padding-top: .8em; color: var(--muted); font-weight: 600; font-size: 1.1em; }
+  .erkl .schnell b { color: var(--gold); }
+  .quote { color: var(--muted); font-weight: 600; }
+
+  /* ---------- Zwischenstand / Rangliste ---------- */
+  .rang-titel { font-size: 2.6em; font-weight: 900; margin: .2em 0 .6em; }
+  .rang-titel small { display: block; font-size: .42em; color: var(--muted); font-weight: 600; margin-top: .2em; }
+  .rangliste { position: relative; flex: 1; min-height: 0; pointer-events: none; }
+  .zeile { position: absolute; left: 0; right: 0; height: var(--h); display: flex; align-items: center; gap: 1em;
+    transition: transform 1s cubic-bezier(.3,.9,.3,1); }
+  .zeile .platz { width: 2.2em; font-size: 1.8em; font-weight: 900; text-align: right; color: var(--muted); flex: none; }
+  .zeile .spur { flex: 1; height: 78%; position: relative; }
+  .zeile .balken { position: absolute; left: 0; top: 0; bottom: 0; border-radius: 12px; min-width: 14em;
+    background: linear-gradient(90deg, #26473b, #2f5d4b); border: 1px solid #3b6b58;
+    transition: width 1.2s cubic-bezier(.25,.9,.3,1), min-width 1.2s cubic-bezier(.25,.9,.3,1); display: flex; align-items: center; padding: 0 1em; gap: .7em; overflow: hidden; }
+  .zeile.p1 .balken { background: linear-gradient(90deg, #8a6a12, #e0b43a); border-color: #f3d27a; color: #1d1703; }
+  .zeile.p2 .balken { background: linear-gradient(90deg, #5d6b72, #aab8bf); border-color: #d2dde2; color: #111; }
+  .zeile.p3 .balken { background: linear-gradient(90deg, #6b3f22, #c07a47); border-color: #e3a577; color: #1a0e05; }
+  .zeile .name { font-weight: 800; font-size: 1.6em; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .zeile .pkt { margin-left: auto; font-weight: 900; font-size: 1.6em; font-variant-numeric: tabular-nums; white-space: nowrap; }
+  .zeile .plus { font-weight: 800; color: var(--ok); font-size: 1.2em; white-space: nowrap; width: 4.8em; flex: none; opacity: 0; transition: opacity .4s 1.2s; }
+  .zeile.an .plus { opacity: 1; }
+  .zeile .flamme { font-size: 1.1em; white-space: nowrap; }
+  .zeile .gleich { font-size: .85em; font-weight: 700; opacity: .8; white-space: nowrap; }
+
+  /* ---------- Siegerehrung ---------- */
+  .sieger-ansage { text-align: center; font-size: 2.6em; font-weight: 900; margin: .3em 0 .2em; }
+    .zeile.aus { opacity: 0; transform: translateX(-60px) !important; }
+  .zeile { transition: transform 1s cubic-bezier(.3,.9,.3,1), opacity .5s; }
+  .podest-buehne { position: absolute; inset: 0; display: flex; flex-direction: column; align-items: center; justify-content: flex-end; padding-bottom: 1em; }
+  .podest { display: flex; align-items: flex-end; justify-content: center; gap: 1.2em; width: min(100%, 60em); }
+  .stufe { flex: 1; display: flex; flex-direction: column; align-items: center; text-align: center; }
+  .stufe .wer { font-weight: 900; font-size: 1.9em; line-height: 1.1; opacity: 0; transform: translateY(20px); transition: all .6s; word-break: break-word; }
+  .stufe .wer small { display: block; font-size: .55em; color: var(--muted); font-weight: 700; margin-top: .2em; }
+  .stufe .block { width: 100%; height: 0; border-radius: 16px 16px 0 0; margin-top: .6em; display: flex; justify-content: center;
+    padding-top: .3em; font-size: 4em; font-weight: 900; transition: height 1.1s cubic-bezier(.2,1.1,.3,1); overflow: hidden; }
+  .stufe.s1 .block { background: linear-gradient(180deg, #f3d27a, #b8901f); color: #3a2c05; }
+  .stufe.s2 .block { background: linear-gradient(180deg, #d9e2e6, #8e9ca3); color: #243036; }
+  .stufe.s3 .block { background: linear-gradient(180deg, #e7ae80, #9b5c33); color: #3a1d08; }
+  .stufe.an .wer { opacity: 1; transform: none; }
+  .stufe.s1 .wer { font-size: 3em; color: var(--gold); }
+  .stufe.s1.an .wer { animation: pulsieren 1.4s .6s infinite; }
+  .krone { font-size: 3.2em; opacity: 0; transform: scale(.3) rotate(-20deg); transition: all .6s cubic-bezier(.2,1.5,.4,1); }
+  .stufe.s1.an .krone { opacity: 1; transform: none; }
+  .gleichstand-hinweis { margin-top: .8em; color: var(--gold); font-weight: 700; font-size: 1.2em; text-align: center; min-height: 1.4em; }
+
+  /* Geheime Runde, Kommentar im Rennen */
+  .geheim { background: var(--gold-soft); color: var(--gold); border: 1px solid rgba(224,180,58,.45); border-radius: 999px;
+    padding: .15em .8em; font-size: .9em; margin-left: .4em; }
+  .geheim-hinweis { text-align: center; color: var(--gold); font-weight: 800; font-size: 1.35em; margin: -.2em 0 .6em;
+    animation: hochgleiten .5s .8s both; }
+  .kommentar { text-align: center; font-size: 1.55em; font-weight: 800; color: var(--gold); min-height: 1.5em; margin: -.1em 0 .5em; }
+  .kommentar.neu { animation: reinpoppen .45s cubic-bezier(.2,1.4,.4,1) both; }
+  .rennen .zeile .balken { min-width: 11em; }
+  .rennen .zeile .plus { transition-delay: .3s; }
+  .zeile.sieger .balken { box-shadow: 0 0 0 3px #fff, 0 0 40px var(--gold); animation: pulsieren 1.2s 3; }
+
+  /* ---------- Overlay (Lehrer-Handy) ---------- */
+  .overlay { position: fixed; inset: 0; background: rgba(4, 10, 8, .82); display: grid; place-items: center; z-index: 50; }
+  .overlay .karte { padding: 1.8em; text-align: center; max-width: 30em; display: flex; flex-direction: column; gap: .8em; align-items: center; }
+  .overlay .qr { width: 16em; margin: 1em auto; }
+  .overlay p { color: var(--muted); line-height: 1.5; }
+
+  @media (max-width: 900px) {
+    body { font-size: 14px; overflow: auto; }
+    html, body { overflow: auto; }
+    .lektionen { grid-template-columns: repeat(2, 1fr); }
+    .lobby, .aufl { grid-template-columns: 1fr; }
+    .schirm { position: relative; min-height: 70vh; padding: 0 16px 16px; }
+    .frage-text { font-size: 2em; }
+    .antworten, .antworten.drei { grid-template-columns: 1fr; }
+  }
+</style>
+</head>
+<body>
+<header class="leiste">
+  <div class="marke"><i>?!</i><div>Lernzielkontrolle<small id="kopfLektion">Fahrlehrer-Kompass</small></div></div>
+  <div class="platz"></div>
+  <div class="code-pille" id="kopfCode" hidden>Code<b></b></div>
+  <button class="rund" id="lehrerKnopf" title="Lehrer-Handy koppeln" hidden>📱</button>
+  <button class="rund" id="tonKnopf" title="Ton an/aus (M)">🔊</button>
+  <button class="rund" id="vollKnopf" title="Vollbild (F)">⛶</button>
+</header>
+
+<main id="buehne"></main>
+
+<footer class="steuerung" id="steuerung" hidden>
+  <div class="info" id="info"></div>
+  <button class="knopf leise" id="nebenKnopf" hidden></button>
+  <button class="knopf" id="weiterKnopf">Weiter</button>
+</footer>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="quiz-qrcode.js"></script>
+<script src="quiz-fragen.js"></script>
+<script src="quiz-gemeinsam.js"></script>
+<script>
+(() => {
+  const $ = (s, r) => (r || document).querySelector(s);
+  const { esc, zahl, sek, FORMEN, BUCHSTABEN, Ton, trennen } = Quiz;
+  const buehne = $("#buehne");
+  const SPEICHER = "quiz_host";
+
+  let host = null;          // { id, code, key, lektion }
+  let L = null;             // Lektion mit Lösungen
+  let daten = null;         // { raum, spieler }
+  let beob = null;
+  let ansicht = "";         // aktuell gezeigter Bildschirm (status:frage_nr)
+  let takt = null;          // Intervall für Countdown
+  let aufgeloestFuer = -1;  // Schutz gegen doppeltes Auflösen
+  let bekannteSpieler = new Set();
+  let letzterStand = {};    // id -> { punkte, rang } für die Animation im Zwischenstand
+  let beschaeftigt = false;
+  let generation = 0;       // steigt bei jedem Bildschirmwechsel; alte Animations-Timer laufen dann ins Leere
+  const spaeter = (fn, ms) => { const g = generation; setTimeout(() => { if (g === generation) fn(); }, ms); };
+
+  /* ---------- Hilfen ---------- */
+  function hinweis(text) {
+    const d = document.createElement("div"); d.className = "hinweis"; d.textContent = text;
+    document.body.appendChild(d); setTimeout(() => d.remove(), 3500);
+  }
+  /* Schrift verkleinern, bis auch das längste Wort ganz hineinpasst (statt es mitten im Wort zu trennen) */
+  function einpassen(el) {
+    let g = 1;
+    el.style.fontSize = "1em";
+    while (el.scrollWidth > el.clientWidth + 1 && g > 0.6) { g -= 0.05; el.style.fontSize = g + "em"; }
+  }
+  function schirm(html, klasse) {
+    generation++;
+    buehne.innerHTML = `<section class="schirm rein ${klasse || ""}">${html}</section>`;
+    return buehne.firstElementChild;
+  }
+  function fuss(info, weiterText, weiterAn, neben) {
+    $("#steuerung").hidden = false;
+    $("#info").innerHTML = info || "";
+    const w = $("#weiterKnopf");
+    if (weiterText) { w.hidden = false; w.innerHTML = weiterText + '<span class="taste">Leertaste</span>'; w.disabled = !weiterAn; }
+    else w.hidden = true;
+    const n = $("#nebenKnopf");
+    if (neben) { n.hidden = false; n.textContent = neben.text; n.onclick = neben.klick; } else n.hidden = true;
+  }
+  function speichern() { try { localStorage.setItem(SPEICHER, JSON.stringify({ ...host, t: Date.now() })); } catch (e) {} }
+  function vergessen() { try { localStorage.removeItem(SPEICHER); } catch (e) {} }
+  const rangliste = () => Quiz.rangliste(daten ? daten.spieler : []);
+  /* Die letzten 3 Fragen laufen ohne Rangliste – die Spannung bleibt bis zur Siegerehrung */
+  const GEHEIM = 3;
+  const istGeheim = (nr) => nr >= L.fragen.length - GEHEIM;
+
+  async function steuern(aktion, frage) {
+    if (!host) return;
+    try {
+      const res = await Quiz.rpc("quiz_steuern", { p_raum: host.id, p_key: host.key, p_aktion: aktion, p_frage: frage == null ? null : frage });
+      beob && beob.jetzt();
+      return res || {};
+    } catch (e) { hinweis(Quiz.fehlertext(e)); throw e; }
+  }
+
+  /* ---------- 1. Lektion auswählen ---------- */
+  function zeigeAuswahl() {
+    stopTakt();
+    document.querySelectorAll(".konfetti").forEach((k) => k.remove());
+    ansicht = "auswahl";
+    $("#kopfLektion").textContent = "Fahrlehrer-Kompass";
+    $("#kopfCode").hidden = true; $("#lehrerKnopf").hidden = true;
+    const karten = (window.QUIZ_LEKTIONEN || []).map((l) => `
+      <button class="lek" data-l="${l.lektion}">
+        <span class="nr">${l.lektion}</span>
+        <span class="t">${trennen(esc(l.titel))}</span>
+        <span class="u">${esc(l.untertitel || "")}</span>
+      </button>`).join("");
+    const s = schirm(`
+      <div class="auswahl" style="display:flex;flex-direction:column;min-height:0;flex:1">
+        <div id="fortsetzen"></div>
+        <h1>Welche Lektion <span>prüfen</span> wir?</h1>
+        <p class="unter">8 Fragen · 15 Sekunden pro Frage · schneller = mehr Punkte · am Ende gibt es genau einen Sieger</p>
+        <div class="lektionen">${karten}</div>
+        <div class="links"><a href="quiz-loesungen.html" target="_blank">📄 Alle Fragen mit Musterlösungen</a>
+          <span>Tipp: Taste <b>F</b> = Vollbild · <b>M</b> = Ton aus</span></div>
+      </div>`);
+    s.querySelectorAll(".lek").forEach((b) => b.addEventListener("click", () => raumAnlegen(Number(b.dataset.l))));
+    $("#steuerung").hidden = true;
+    fortsetzenAnbieten();
+  }
+
+  async function fortsetzenAnbieten() {
+    let alt = null;
+    try { alt = JSON.parse(localStorage.getItem(SPEICHER) || "null"); } catch (e) {}
+    if (!alt || Date.now() - alt.t > 12 * 3600e3) return;
+    try {
+      const d = await Quiz.laden(alt.id);
+      if (!d.raum || d.raum.status === "ende") { vergessen(); return; }
+      const l = Quiz.lektion(alt.lektion);
+      if (!l) { vergessen(); return; }
+      const box = $("#fortsetzen"); if (!box) return;
+      box.innerHTML = `<div class="karte fortsetzen"><div><b>Laufendes Quiz:</b> Lektion ${alt.lektion} ${esc(l ? l.titel : "")}
+        · Code ${esc(alt.code)} · ${d.spieler.length} Mitspieler</div>
+        <button class="knopf leise" id="verwerfen">Verwerfen</button><button class="knopf" id="weitermachen">Fortsetzen</button></div>`;
+      $("#verwerfen").onclick = () => { vergessen(); box.innerHTML = ""; };
+      $("#weitermachen").onclick = () => { Ton.wecken(); host = alt; L = l; verbinden(); };
+    } catch (e) {}
+  }
+
+  async function raumAnlegen(nr) {
+    if (beschaeftigt) return;
+    beschaeftigt = true;
+    Ton.wecken();
+    L = Quiz.lektion(nr);
+    try {
+      const r = await Quiz.rpc("quiz_erstellen", {
+        p_lektion: L.lektion, p_titel: L.titel,
+        p_fragen: L.fragen.map((f) => ({ frage: f.frage, antworten: f.antworten })),
+        p_loesungen: L.fragen.map((f) => f.richtig), p_dauer_s: 15
+      });
+      host = { id: r.id, code: r.code, key: r.host_key, lektion: L.lektion };
+      speichern();
+      verbinden();
+    } catch (e) { hinweis(Quiz.fehlertext(e)); }
+    beschaeftigt = false;
+  }
+
+  function verbinden() {
+    if (beob) beob.stop();
+    bekannteSpieler = new Set(); letzterStand = {}; ansicht = ""; aufgeloestFuer = -1;
+    $("#kopfLektion").textContent = `Lektion ${L.lektion} · ${L.titel}`;
+    $("#kopfCode").hidden = false; $("#kopfCode b").textContent = host.code;
+    $("#lehrerKnopf").hidden = false;
+    Quiz.uhrAbgleichen();
+    beob = Quiz.beobachten(host.id, neueDaten, 2000);
+  }
+
+  /* ---------- Daten kommen rein ---------- */
+  function neueDaten(d) {
+    if (!d.raum) { hinweis("Der Raum existiert nicht mehr."); vergessen(); host = null; if (beob) beob.stop(); zeigeAuswahl(); return; }
+    daten = d;
+    const r = d.raum;
+    let key = r.status + ":" + r.frage_nr + ":" + (r.frage_start || "");
+    if (r.status === "aufloesung" && d.spieler.some((s) => s.ausgewertet_nr < r.frage_nr)) key += ":unvollstaendig";
+    if (key !== ansicht) {
+      const vorher = ansicht;
+      ansicht = key;
+      beschaeftigt = false;
+      if (r.status === "lobby") zeigeLobby();
+      else if (r.status === "frage") zeigeFrage();
+      else if (r.status === "aufloesung") zeigeAufloesung(vorher.startsWith("aufloesung:" + r.frage_nr + ":"));
+      else if (r.status === "zwischenstand") zeigeZwischenstand();
+      else if (r.status === "ende") { zeigeEnde(vorher !== ""); if (beob) beob.stop(); }
+    } else {
+      if (r.status === "lobby") lobbyAktualisieren();
+      else if (r.status === "frage") frageAktualisieren();
+    }
+  }
+
+  /* ---------- 2. Warteraum ---------- */
+  function zeigeLobby() {
+    stopTakt();
+    const url = Quiz.seite("quiz.html") + "?c=" + host.code;
+    const kurz = url.replace(/^https?:\/\//, "").replace(/\?c=.*$/, "");
+    schirm(`
+      <div class="lobby">
+        <div class="karte beitreten">
+          <div class="titel">Handy-Kamera draufhalten</div>
+          <div class="qr">${Quiz.qrSvg(url, "#0a1210")}</div>
+          <div class="adresse">oder <b>${esc(kurz)}</b> öffnen, Code:</div>
+          <div class="grosscode">${esc(host.code)}</div>
+        </div>
+        <div class="spielerfeld">
+          <h2>Wer ist dabei? <span class="anz" id="anz">0</span></h2>
+          <div class="lek-name">Lektion ${L.lektion}: ${esc(L.titel)} · ${L.fragen.length} Fragen</div>
+          <div class="chips" id="chips"></div>
+        </div>
+      </div>`);
+    bekannteSpieler = new Set();
+    lobbyAktualisieren();
+  }
+  function lobbyAktualisieren() {
+    const chips = $("#chips"); if (!chips) return;
+    const liste = daten.spieler.slice().sort((a, b) => new Date(a.beigetreten) - new Date(b.beigetreten));
+    const ids = new Set(liste.map((s) => s.id));
+    chips.querySelectorAll(".chip").forEach((c) => { if (!ids.has(c.dataset.id)) { c.remove(); bekannteSpieler.delete(c.dataset.id); } });
+    let neu = false;
+    liste.forEach((s) => {
+      if (bekannteSpieler.has(s.id)) return;
+      bekannteSpieler.add(s.id); neu = true;
+      const c = document.createElement("button");
+      c.className = "chip"; c.dataset.id = s.id; c.textContent = s.name; c.title = "Antippen zum Entfernen";
+      c.onclick = () => entfernen(s);
+      chips.appendChild(c);
+    });
+    if (neu) Ton.beitritt();
+    const leer = chips.querySelector(".leer");
+    if (!liste.length && !leer) chips.innerHTML = '<div class="leer">Warte auf die ersten Mitspieler …</div>';
+    if (liste.length && leer) leer.remove();
+    $("#anz").textContent = liste.length;
+    fuss(liste.length ? `${liste.length} ${liste.length === 1 ? "Person ist" : "Personen sind"} drin. Los geht's, wenn alle da sind.`
+                      : "Die Leute scannen den QR-Code und geben ihren Namen ein.",
+         "Quiz starten ▶", liste.length > 0);
+  }
+  async function entfernen(s) {
+    if (!confirm(`„${s.name}“ aus dem Quiz entfernen?`)) return;
+    try { await Quiz.rpc("quiz_entfernen", { p_raum: host.id, p_key: host.key, p_spieler: s.id }); beob.jetzt(); }
+    catch (e) { hinweis(Quiz.fehlertext(e)); }
+  }
+
+  /* ---------- 3. Frage ---------- */
+  function zeigeFrage() {
+    stopTakt();
+    const r = daten.raum, nr = r.frage_nr, f = L.fragen[nr];
+    const reihe = L.fragen.map((_, i) => `<i class="${i < nr ? "fertig" : i === nr ? "jetzt" : ""}"></i>`).join("");
+    schirm(`
+      <div class="fkopf"><span>Frage ${nr + 1} von ${L.fragen.length}</span><span class="punkte-reihe">${reihe}</span>
+        ${istGeheim(nr) ? '<span class="geheim">🤫 Geheime Runde – Rangliste erst bei der Siegerehrung</span>' : ""}</div>
+      <div class="frage-text">${esc(f.frage)}</div>
+      <div class="frage-mitte">
+        <div class="lesen" id="lesen"><div class="balken"><i id="lesebalken"></i></div><p>Lies die Frage … gleich kommen die Antworten!</p></div>
+        <div class="uhr" id="uhr" hidden><svg viewBox="0 0 100 100"><circle class="spur" cx="50" cy="50" r="44"/><circle class="bogen" id="bogen" cx="50" cy="50" r="44"/></svg><b id="uhrzahl"></b></div>
+        <div class="zaehler" id="zaehler" hidden><b id="antwortzahl">0</b>Antworten</div>
+      </div>
+      <div class="antworten ${f.antworten.length === 3 ? "drei" : ""}" id="antworten" hidden>
+        ${f.antworten.map((a, i) => `<div class="antwort f${i}"><span class="form">${FORMEN[i]}</span><span>${trennen(esc(a))}</span></div>`).join("")}
+      </div>`);
+    const umfang = 2 * Math.PI * 44;
+    $("#bogen").style.strokeDasharray = umfang;
+    let letzteSek = null, phaseAntworten = false;
+    const start = new Date(r.frage_start).getTime(), ende = new Date(r.frage_ende).getTime();
+    const lesedauer = (r.lesezeit_s || 4) * 1000;
+    fuss("", "", false);   // aufgelöst wird automatisch: wenn alle geantwortet haben oder die Zeit um ist
+    const schritt = () => {
+      const t = Quiz.jetzt();
+      if (t < start) {
+        $("#lesebalken").style.width = Math.min(100, 100 - (start - t) / lesedauer * 100) + "%";
+        $("#info").textContent = "Die Antworten erscheinen gleich auf allen Handys.";
+        return;
+      }
+      if (!phaseAntworten) {
+        phaseAntworten = true;
+        $("#lesen").hidden = true; $("#uhr").hidden = false; $("#zaehler").hidden = false; $("#antworten").hidden = false;
+        Ton.start();
+      }
+      const rest = Math.max(0, ende - t);
+      const s = Math.ceil(rest / 1000);
+      $("#uhrzahl").textContent = s;
+      $("#bogen").style.strokeDashoffset = umfang * (1 - rest / (ende - start));
+      $("#uhr").classList.toggle("knapp", s <= 5);
+      if (s !== letzteSek) { if (s <= 5 && s > 0) Ton.tick(s <= 3); letzteSek = s; }
+      frageAktualisieren();
+      if (t > ende + 1200) autoAufloesen();
+    };
+    schritt();
+    takt = setInterval(schritt, 100);
+  }
+  function frageAktualisieren() {
+    if (!daten || daten.raum.status !== "frage") return;
+    const nr = daten.raum.frage_nr;
+    const alle = daten.spieler.length;
+    const fertig = daten.spieler.filter((s) => s.beantwortet_nr >= nr).length;
+    const el = $("#antwortzahl"); if (el) el.textContent = `${fertig} / ${alle}`;
+    if (Quiz.jetzt() >= new Date(daten.raum.frage_start).getTime()) {
+      $("#info").textContent = fertig === alle && alle > 0 ? "Alle haben geantwortet – gleich kommt die Auflösung!"
+        : `Warte auf alle Antworten … noch ${alle - fertig} ${alle - fertig === 1 ? "Person" : "Personen"}`;
+      if (alle > 0 && fertig === alle && aufgeloestFuer !== nr) spaeter(autoAufloesen, 700);
+    }
+  }
+  async function autoAufloesen() {
+    if (!daten || daten.raum.status !== "frage") return;
+    const nr = daten.raum.frage_nr;
+    if (aufgeloestFuer === nr) return;
+    aufgeloestFuer = nr;
+    let ok = false;
+    try { ok = (await steuern("aufloesen", nr)).ok; } catch (e) {}
+    // abgelehnt (z. B. noch nicht alle fertig laut Server): später erneut versuchen
+    if (!ok) setTimeout(() => { if (aufgeloestFuer === nr) aufgeloestFuer = -1; }, 1000);
+  }
+  function stopTakt() { if (takt) clearInterval(takt); takt = null; }
+
+  /* ---------- 4. Auflösung ---------- */
+  function zeigeAufloesung(nachgereicht) {
+    stopTakt();
+    if (!nachgereicht) Ton.aufloesung();
+    const r = daten.raum, nr = r.frage_nr, f = L.fragen[nr];
+    const richtig = r.aufloesung != null ? r.aufloesung : f.richtig;
+    const vert = r.verteilung || {};
+    const zahlen = f.antworten.map((_, i) => vert[i] || 0);
+    const max = Math.max(1, ...zahlen);
+    const summe = zahlen.reduce((a, b) => a + b, 0);
+    const quote = daten.spieler.length ? Math.min(100, Math.round(zahlen[richtig] / daten.spieler.length * 100)) : 0;
+    const schnell = daten.spieler.filter((s) => s.ausgewertet_nr === nr && s.letzte_richtig)
+      .sort((a, b) => (b.letzte_punkte - b.letzte_bonus) - (a.letzte_punkte - a.letzte_bonus))[0];
+    schirm(`
+      <div class="fkopf"><span>Frage ${nr + 1} von ${L.fragen.length}</span><span class="quote">· ${zahlen[richtig]} von ${daten.spieler.length} richtig (${quote} %)</span></div>
+      <div class="aufl-frage">${esc(f.frage)}</div>
+      <div class="aufl">
+        <div class="saeulen">
+          ${f.antworten.map((a, i) => `
+            <div class="saeule f${i} ${i === richtig ? "richtig" : "falsch"}">
+              <div class="zahl">${zahlen[i]}</div>
+              <div class="stab-raum"><div class="stab" data-h="${zahlen[i] / max * 100}"></div></div>
+              <div class="fuss"><span class="form">${FORMEN[i]}</span><span class="txt">${trennen(esc(a))}</span>${i === richtig ? '<span class="haken">✓</span>' : ""}</div>
+            </div>`).join("")}
+        </div>
+        <div class="karte erkl">
+          <div class="kopf">✓ Richtige Antwort</div>
+          <div class="loesung">${esc(f.antworten[richtig])}</div>
+          <div class="text">${esc(f.erklaerung || "")}</div>
+          ${schnell ? `<div class="schnell">🚀 Am schnellsten richtig: <b>${esc(schnell.name)}</b> (+${zahl(schnell.letzte_punkte)})</div>`
+                    : summe ? `<div class="schnell">Diesmal hat's keiner gewusst – merkt euch das! 😉</div>` : ""}
+        </div>
+      </div>`);
+    buehne.querySelectorAll(".saeule .txt").forEach(einpassen);
+    requestAnimationFrame(() => requestAnimationFrame(() =>
+      buehne.querySelectorAll(".stab").forEach((s) => { s.style.height = s.dataset.h + "%"; })));
+    const letzte = nr === L.fragen.length - 1;
+    fuss(istGeheim(nr) && !letzte ? "🤫 Die Rangliste bleibt geheim – weiter geht's!" : "",
+         letzte ? "Zur Siegerehrung 🏆" : istGeheim(nr) ? "Nächste Frage ▶" : "Zwischenstand ▶", true);
+  }
+
+  /* Zeilenhöhe der Rangliste: füllt den Platz, bei wenigen Spielern größer und senkrecht mittig */
+  function ranglistenHoehe(rl, n) {
+    const verfuegbar = rl.clientHeight;
+    const hoehe = Math.max(34, Math.min(verfuegbar / Math.max(n, 1), verfuegbar / 5, 120));
+    rl.style.setProperty("--h", hoehe + "px");
+    rl.style.fontSize = Math.max(.75, Math.min(1.25, hoehe / 80)) + "em";
+    rl.style.marginTop = Math.max(0, (verfuegbar - n * hoehe) / 2.5) + "px";
+    return hoehe;
+  }
+
+  /* ---------- 5. Zwischenstand ---------- */
+  function zeigeZwischenstand() {
+    stopTakt();
+    const r = daten.raum, nr = r.frage_nr;
+    const liste = rangliste();
+    const zeigen = liste.slice(0, 8);
+    const s = schirm(`
+      <div class="rang-titel">Zwischenstand<small>nach Frage ${nr + 1} von ${L.fragen.length} · ${liste.length} Mitspieler</small></div>
+      ${istGeheim(nr + 1) ? `<div class="geheim-hinweis">🤫 Letzter Blick auf die Rangliste! Die letzten ${GEHEIM} Fragen laufen geheim – alles ist noch drin.</div>` : ""}
+      <div class="rangliste" id="rl"></div>`);
+    const rl = $("#rl");
+    const hoehe = ranglistenHoehe(rl, zeigen.length);
+    const maxP = Math.max(1, ...zeigen.map((x) => x.punkte));
+    const breite = (p) => 30 + 70 * (p / maxP);
+    zeigen.forEach((sp, i) => {
+      const alt = letzterStand[sp.id];
+      const altRang = alt && alt.rang < 8 ? alt.rang : zeigen.length + 1;
+      const z = document.createElement("div");
+      z.className = "zeile" + (i < 3 ? " p" + (i + 1) : "");
+      z.style.transform = `translateY(${altRang * hoehe}px)`;
+      const grund = Quiz.gleichstandGrund(sp, zeigen[i + 1]);
+      z.innerHTML = `<div class="platz">${i + 1}.</div>
+        <div class="spur"><div class="balken" style="width:${alt ? breite(alt.punkte) : 30}%">
+          <span class="name">${esc(sp.name)}</span>
+          ${sp.serie >= 3 ? `<span class="flamme">🔥${sp.serie}</span>` : ""}
+          ${grund ? `<span class="gleich">⏱ ${esc(grund)}</span>` : ""}
+          <span class="pkt">0</span></div></div>
+        <div class="plus">${sp.ausgewertet_nr === nr && sp.letzte_punkte ? "+" + zahl(sp.letzte_punkte) : ""}</div>`;
+      rl.appendChild(z);
+      requestAnimationFrame(() => requestAnimationFrame(() => {
+        z.style.transform = `translateY(${i * hoehe}px)`;
+        z.querySelector(".balken").style.width = breite(sp.punkte) + "%";
+        z.classList.add("an");
+        Quiz.zaehlen(z.querySelector(".pkt"), alt ? alt.punkte : 0, sp.punkte, 1200);
+      }));
+    });
+    letzterStand = {};
+    liste.forEach((sp, i) => { letzterStand[sp.id] = { punkte: sp.punkte, rang: i }; });
+    fuss(liste.length > 8 ? `… und ${liste.length - 8} weitere` : "", "Nächste Frage ▶", true);
+  }
+
+  /* ---------- 6. Siegerehrung: das Rennen Frage für Frage ---------- */
+  async function zeigeEnde(animiert) {
+    stopTakt();
+    vergessen();
+    const liste = rangliste();
+    schirm(`
+      <div class="sieger-ansage" id="ansage">Die Siegerehrung 🏆</div>
+      <div class="kommentar" id="kommentar">Wie ist das Rennen gelaufen?</div>
+      <div class="rangliste rennen" id="rl"></div>`);
+    fuss(`${liste.length} Mitspieler · Lektion ${L.lektion}`, "", false,
+         { text: "Neues Quiz", klick: () => { if (beob) beob.stop(); host = null; zeigeAuswahl(); } });
+    $("#weiterKnopf").hidden = true;
+    if (!liste.length) { $("#ansage").textContent = "Niemand hat mitgespielt 🙈"; $("#kommentar").textContent = ""; return; }
+    if (!animiert) { spaeter(() => podest(liste, false), 50); return; }
+    const gen = generation;
+    let verlauf = null;
+    try { verlauf = await Quiz.rpc("quiz_verlauf", { p_raum: host.id }); } catch (e) {}
+    if (gen !== generation) return;
+    rennen(liste, verlauf || {});
+  }
+
+  function rennen(liste, verlauf) {
+    const n = L.fragen.length, MAX = 8;
+    const endIdx = new Map(liste.map((s, i) => [s.id, i]));
+    // Punktestand jedes Spielers nach jeder Frage
+    const kum = {};
+    liste.forEach((sp) => {
+      const pro = verlauf[sp.id] || [];
+      let summe = 0;
+      kum[sp.id] = Array.from({ length: n }, (_, k) => (summe += pro[k] || 0));
+      kum[sp.id][n - 1] = sp.punkte;            // Endstand immer exakt wie in der Rangliste
+    });
+    const rl = $("#rl");
+    const hoehe = ranglistenHoehe(rl, Math.min(MAX, liste.length));
+    const maxP = Math.max(1, ...liste.map((x) => Math.max(...kum[x.id])));   // Skala = höchster Stand im ganzen Rennen
+    const zeilen = new Map();
+    liste.forEach((sp, i) => {
+      const z = document.createElement("div");
+      z.className = "zeile";
+      z.style.transform = `translateY(${Math.min(i, MAX) * hoehe}px)`;
+      z.style.opacity = i < MAX ? 1 : 0;
+      z.innerHTML = `<div class="platz">–</div>
+        <div class="spur"><div class="balken" style="width:11em">
+          <span class="name">${esc(sp.name)}</span><span class="gleich"></span><span class="pkt">0</span></div></div>
+        <div class="plus"></div>`;
+      rl.appendChild(z);
+      zeilen.set(sp.id, z);
+    });
+    const ordnung = (k) => liste.slice().sort((a, b) => (kum[b.id][k] - kum[a.id][k]) || (endIdx.get(a.id) - endIdx.get(b.id)));
+    const fuehrende = [];
+    let vorher = null;
+
+    const kommentar = (text) => {
+      const el = $("#kommentar"); if (!el) return;
+      el.classList.remove("neu"); void el.offsetWidth; el.classList.add("neu");
+      el.textContent = text;
+    };
+    const kommentiere = (k, jetzt) => {
+      const f = jetzt[0], rang = (liste_, id) => liste_.findIndex((x) => x.id === id);
+      const t = [];
+      if (!vorher) t.push(`🚀 ${f.name} startet am stärksten!`);
+      else if (vorher[0].id !== f.id) t.push(`🔝 ${f.name} übernimmt die Führung!`);
+      else {
+        const abgerutscht = vorher.slice(0, 3).find((x) => rang(jetzt, x.id) >= 3);
+        const aufgestiegen = jetzt.slice(0, 3).find((x) => rang(vorher, x.id) >= 3);
+        let bester = null, plaetze = 1;
+        jetzt.forEach((x, i) => { const d = rang(vorher, x.id) - i; if (d > plaetze) { plaetze = d; bester = x; } });
+        if (abgerutscht) t.push(`📉 ${abgerutscht.name} rutscht auf Platz ${rang(jetzt, abgerutscht.id) + 1} ab`);
+        else if (aufgestiegen) t.push(`📈 ${aufgestiegen.name} springt auf Platz ${rang(jetzt, aufgestiegen.id) + 1}!`);
+        else if (bester) t.push(`⬆️ ${bester.name} macht ${plaetze} Plätze gut`);
+        else t.push(`${f.name} bleibt vorne`);
+      }
+      if (jetzt.length > 1 && k > 0) {
+        const abstand = kum[f.id][k] - kum[jetzt[1].id][k];
+        if (abstand < 400) t.push(`⚔️ Kopf an Kopf mit ${jetzt[1].name} – nur ${zahl(abstand)} ${abstand === 1 ? "Punkt" : "Punkte"}!`);
+      }
+      kommentar(t.join("  ·  "));
+    };
+    const schritt = (k, ms) => {
+      const jetzt = ordnung(k);
+      jetzt.forEach((sp, r) => {
+        const z = zeilen.get(sp.id), v = kum[sp.id][k], alt = k > 0 ? kum[sp.id][k - 1] : 0;
+        z.style.transform = `translateY(${Math.min(r, MAX) * hoehe}px)`;
+        z.style.opacity = r < MAX ? 1 : 0;
+        z.classList.remove("p1", "p2", "p3");
+        if (r < 3) z.classList.add("p" + (r + 1));
+        z.querySelector(".platz").textContent = (r + 1) + ".";
+        z.querySelector(".balken").style.width = `calc(11em + (100% - 11em) * ${Math.min(1, v / maxP)})`;
+        Quiz.zaehlen(z.querySelector(".pkt"), alt, v, ms);
+        const plus = z.querySelector(".plus");
+        plus.textContent = v > alt ? "+" + zahl(v - alt) : "";
+        z.classList.remove("an"); void z.offsetWidth; z.classList.add("an");
+      });
+      if (!fuehrende.includes(jetzt[0].name)) fuehrende.push(jetzt[0].name);
+      kommentiere(k, jetzt);
+      vorher = jetzt;
+      Ton.tick(k >= n - GEHEIM);
+    };
+
+    let t = 900;
+    for (let k = 0; k < n - 1; k++) {
+      const geheim = k >= n - GEHEIM;
+      spaeter(() => {
+        $("#ansage").textContent = geheim ? `🤫 Frage ${k + 1} – die geheime Runde` : `Nach Frage ${k + 1} von ${n}`;
+        schritt(k, geheim ? 1800 : 1000);
+      }, t);
+      t += geheim ? 3400 : 1900;
+    }
+    spaeter(() => { $("#ansage").textContent = "Die letzte Frage entscheidet …"; kommentar("🥁"); Ton.trommel(2.8); }, t);
+    t += 3100;
+    spaeter(() => { $("#ansage").textContent = `Frage ${n} – das Finale`; schritt(n - 1, 2200); }, t);
+    t += 2700;
+    spaeter(() => {
+      const sieger = liste[0];
+      $("#ansage").textContent = `🏆 ${sieger.name} gewinnt!`;
+      zeilen.get(sieger.id).classList.add("sieger");
+      const andere = fuehrende.filter((x) => x !== sieger.name);
+      const g = Quiz.gleichstandGrund(liste[0], liste[1]);
+      kommentar(g ? `Punktgleich mit ${liste[1].name} – entschieden, weil ${sieger.name} ${g} war!`
+              : andere.length ? `Zwischendurch vorne: ${andere.join(", ")} – aber am Ende holt ${sieger.name} das Ding!`
+              : liste.length > 1 ? `Von Anfang bis Ende vorne – stark, ${sieger.name}!` : "");
+      Ton.fanfare();
+      Quiz.konfetti(6000);
+    }, t);
+    spaeter(() => podest(liste, true, true), t + 6500);
+  }
+
+  function podest(liste, animiert, ohneFanfare) {
+    const top = liste.slice(0, 3);
+    const s = buehne.querySelector(".schirm");
+    s.innerHTML = `
+      <div class="sieger-ansage" id="ansage">Und gewonnen hat …</div>
+      <div style="position:relative;flex:1;min-height:0">
+        <div class="podest-buehne">
+          <div class="podest">
+            ${[1, 0, 2].map((i) => top[i] ? `
+              <div class="stufe s${i + 1}" id="st${i + 1}">
+                ${i === 0 ? '<div class="krone">👑</div>' : ""}
+                <div class="wer">${esc(top[i].name)}<small>${zahl(top[i].punkte)} Punkte · ${top[i].richtige}/${L.fragen.length} richtig</small></div>
+                <div class="block" data-h="${[34, 24, 16][i]}">${i + 1}</div>
+              </div>` : `<div class="stufe"></div>`).join("")}
+          </div>
+          <div class="gleichstand-hinweis" id="gleich"></div>
+        </div>
+      </div>`;
+    const hoch = (n) => {
+      const st = $("#st" + n); if (!st) return;
+      const b = st.querySelector(".block");
+      b.style.height = b.dataset.h + "vh";
+      spaeter(() => st.classList.add("an"), 500);
+    };
+    const w = animiert ? 1 : 0;
+    $("#ansage").textContent = "Das Siegertreppchen";
+    spaeter(() => hoch(3), 200 * w);
+    spaeter(() => hoch(2), 900 * w);
+    spaeter(() => {
+      hoch(1);
+      $("#ansage").textContent = `🏆 ${top[0].name} gewinnt!`;
+      const g = Quiz.gleichstandGrund(top[0], top[1]);
+      if (g) $("#gleich").textContent = `Punktgleich mit ${top[1].name} – entschieden, weil ${top[0].name} ${g} war.`;
+      if (animiert && !ohneFanfare) Ton.fanfare();
+      if (animiert) Quiz.konfetti(7000);
+    }, 1700 * w + 50);
+  }
+
+  /* ---------- Weiter-Knopf ---------- */
+  async function weiter() {
+    if (!host || !daten || beschaeftigt) return;
+    Ton.wecken();
+    const r = daten.raum;
+    beschaeftigt = true;                       // wird frei, sobald der neue Zustand angekommen ist
+    const frei = setTimeout(() => { beschaeftigt = false; }, 4000);
+    try {
+      if (r.status === "lobby") { if (daten.spieler.length) await steuern("frage", 0); else { beschaeftigt = false; } }
+      else if (r.status === "aufloesung") {
+        if (r.frage_nr >= r.anzahl - 1) await steuern("ende", r.frage_nr);
+        else if (istGeheim(r.frage_nr)) await steuern("frage", r.frage_nr + 1);
+        else await steuern("zwischenstand", r.frage_nr);
+      }
+      else if (r.status === "zwischenstand") await steuern("frage", r.frage_nr + 1);
+      else beschaeftigt = false;
+    } catch (e) { beschaeftigt = false; clearTimeout(frei); }
+  }
+  $("#weiterKnopf").addEventListener("click", weiter);
+
+  /* ---------- Lehrer-Handy ---------- */
+  $("#lehrerKnopf").addEventListener("click", () => {
+    if (!host) return;
+    const url = Quiz.seite("quiz-lehrer.html") + "#r=" + host.id + "&k=" + host.key;
+    const o = document.createElement("div");
+    o.className = "overlay";
+    o.innerHTML = `<div class="karte">
+      <h2 style="margin:0">📱 Lehrer-Handy koppeln</h2>
+      <p><b>Achtung:</b> Mit diesem Code sieht man alle Lösungen und kann das Quiz steuern.
+        Zeig ihn nur, wenn die Klasse gerade nicht auf die Tafel schaut.</p>
+      <div class="qr" id="lehrerQr" hidden>${Quiz.qrSvg(url, "#0a1210")}</div>
+      <button class="knopf" id="zeigen">QR-Code jetzt zeigen</button>
+      <button class="knopf leise" id="fenster">Auf diesem Laptop in eigenem Fenster öffnen</button>
+      <button class="knopf leise" id="zu">Schließen</button></div>`;
+    document.body.appendChild(o);
+    let zu = null;
+    const schliessen = () => { clearTimeout(zu); o.remove(); };
+    o.querySelector("#zeigen").onclick = () => {
+      o.querySelector("#lehrerQr").hidden = false; o.querySelector("#zeigen").hidden = true;
+      zu = setTimeout(schliessen, 30000);
+    };
+    o.querySelector("#zu").onclick = schliessen;
+    o.querySelector("#fenster").onclick = () => { window.open(url, "lehreransicht", "width=480,height=900"); schliessen(); };
+    o.addEventListener("click", (e) => { if (e.target === o) schliessen(); });
+  });
+
+  /* ---------- Ton, Vollbild, Tastatur ---------- */
+  document.querySelectorAll(".rund").forEach((b) => b.addEventListener("click", () => b.blur()));
+  const tonAnzeige = () => { $("#tonKnopf").textContent = Ton.an ? "🔊" : "🔇"; };
+  $("#tonKnopf").addEventListener("click", () => { Ton.umschalten(); tonAnzeige(); });
+  tonAnzeige();
+  const vollbild = () => {
+    if (document.fullscreenElement) document.exitFullscreen();
+    else document.documentElement.requestFullscreen && document.documentElement.requestFullscreen().catch(() => {});
+  };
+  $("#vollKnopf").addEventListener("click", vollbild);
+  document.addEventListener("keydown", (e) => {
+    if (e.target.closest && e.target.closest("input, textarea")) return;
+    if (document.querySelector(".overlay")) { if (e.key === "Escape") document.querySelector(".overlay").remove(); return; }
+    if (e.key === " " || e.key === "Enter" || e.key === "ArrowRight" || e.key === "PageDown") {
+      if (e.target.tagName === "BUTTON" && e.key !== "ArrowRight" && e.target.id !== "weiterKnopf") return;
+      e.preventDefault(); weiter();
+    }
+    else if (e.key === "f" || e.key === "F") vollbild();
+    else if (e.key === "m" || e.key === "M") { Ton.umschalten(); tonAnzeige(); }
+  });
+
+  zeigeAuswahl();
+
+  /* Direktlink aus der PowerPoint: quiz-tafel.html?l=5 legt sofort den Raum für Lektion 5 an */
+  const direkt = Number(new URLSearchParams(location.search).get("l"));
+  if (Quiz.lektion(direkt)) {
+    history.replaceState(null, "", location.pathname);   // Neuladen soll keinen zweiten Raum anlegen
+    raumAnlegen(direkt);
+  }
+})();
+</script>
+</body>
+</html>
