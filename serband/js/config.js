@@ -50,6 +50,13 @@ export const CONFIG = {
     epilog: { video: ["img/szene-prolog.mp4", "img/szene-prolog.webm"], videoHandy: ["img/szene-prolog-hoch.mp4", "img/szene-prolog-hoch.webm"], bild: "img/szene-prolog.jpg", bildHandy: "img/szene-prolog-hoch.jpg", fokus: "68% 50%", fokusHandy: "50% 50%" }
   },
 
+  // Fahrlehrerlaubnis: jede Klasse mit Bleistift-Skizze (js/klassen.js → SKIZZEN).
+  // Neue Klasse = neue Zeile; für eine neue Fahrzeugart muss die Skizze erst gezeichnet werden.
+  klassen: [
+    { klasse: "B", name: "Auto", skizze: "auto" },
+    { klasse: "BE", name: "Auto mit Anhänger", skizze: "anhaenger" }
+  ],
+
   // Sprachen der Fahr-Akademie (App-Tour, Kapitel IV). Neue Sprache einfach anhängen.
   sprachen: ["Deutsch", "Türkçe", "English", "العربية", "Español"],
 

@@ -96,7 +96,9 @@
 /* ---------- Impressum & Datenschutz ---------- */
 .legal-page { background: radial-gradient(120% 60% at 70% 0%, #10212b 0%, var(--night) 60%); min-height: 100vh; }
 .legal-nav { position: sticky; top: 0; z-index: 10; display: flex; align-items: center; justify-content: space-between; padding: max(14px, env(safe-area-inset-top)) var(--gutter) 14px; background: linear-gradient(rgba(4,8,11,.92), rgba(4,8,11,.6)); backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px); }
+.legal-nav .brand { display: flex; align-items: center; gap: 10px; text-decoration: none; color: var(--text); }
 .legal-nav .brand img { border-radius: 8px; }
+.legal-nav .brand span { font-family: var(--display); font-weight: 800; font-stretch: 125%; letter-spacing: .2em; font-size: 13px; }
 .legal { width: min(820px, 100%); margin: 0 auto; padding: clamp(40px, 8vh, 90px) var(--gutter) 80px; }
 .legal .h2 { font-size: clamp(38px, 6vw, 64px); margin-bottom: 28px; }
 .legal h2 { font-family: var(--display); font-size: 20px; font-weight: 700; margin: 38px 0 10px; color: var(--gold-soft); }
@@ -454,6 +456,37 @@ svg[hidden] { display: none !important; }
 .book .btn { justify-self: start; }
 .tip { margin: 0; padding: 14px 16px; border-radius: 14px; background: rgba(217,181,107,.08); border: 1px solid rgba(217,181,107,.22); color: var(--muted); font-size: 14px; }
 .tip b { color: var(--gold-soft); }
+/* Fahrlehrerlaubnis-Klassen: Bleistift-Skizzen auf Papier (js/klassen.js) */
+.klassen-wrap { width: min(900px, 100%); margin: clamp(50px, 9vh, 90px) auto clamp(40px, 7vh, 70px); text-align: center; }
+.klassen__title { margin: 0 0 26px; font-family: var(--display); font-weight: 800; font-size: clamp(26px, 3.4vw, 40px); letter-spacing: -.02em; }
+.klassen { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 280px), 1fr)); gap: 26px 30px; align-items: end; }
+.klasse { position: relative; margin: 0; padding: 22px 18px 14px; border-radius: 4px; color: #33312d;
+  background: radial-gradient(120% 90% at 30% 20%, #faf6ec 0%, #f1ebdc 60%, #e9e1cf 100%);
+  box-shadow: 0 1px 0 rgba(255,255,255,.6) inset, 0 22px 44px rgba(0,0,0,.45); transform: rotate(-1.3deg); transition: transform .5s var(--ease); }
+.klasse:nth-child(even) { transform: rotate(1.1deg); }
+.klasse:hover { transform: rotate(0deg) translateY(-4px); }
+/* Klebestreifen */
+.klasse::before { content: ""; position: absolute; top: -10px; left: 50%; width: 74px; height: 22px; margin-left: -37px; background: rgba(241,220,166,.55); transform: rotate(-3deg); box-shadow: 0 1px 2px rgba(0,0,0,.15); }
+.klasse svg { display: block; width: 100%; height: auto; overflow: visible; }
+.klasse svg path, .klasse svg circle { fill: none; stroke: #3b3934; stroke-linecap: round; stroke-linejoin: round; }
+.skizze__linien path, .skizze__linien circle { stroke-width: 1.5; stroke-dasharray: 1; stroke-dashoffset: 1; }
+.skizze__linien--zwei { opacity: .45; }
+.skizze__linien--zwei path, .skizze__linien--zwei circle { stroke-width: 1.1; }
+.skizze__boden path { stroke-width: 1.2; opacity: .6; stroke-dasharray: 1; stroke-dashoffset: 1; }
+.skizze__schraffur path { stroke-width: .7; opacity: 0; transition: opacity 1.2s ease 1.3s; }
+.skizze__text text { font-family: var(--display); font-weight: 700; font-size: 6px; letter-spacing: .06em; fill: #3b3934; opacity: 0; transition: opacity .8s ease 1.2s; }
+.is-gezeichnet .skizze__linien path, .is-gezeichnet .skizze__linien circle, .is-gezeichnet .skizze__boden path {
+  stroke-dashoffset: 0; transition: stroke-dashoffset .9s cubic-bezier(.45,.05,.3,1) calc(var(--i) * 45ms); }
+.is-gezeichnet .skizze__schraffur path { opacity: .5; }
+.is-gezeichnet .skizze__text text { opacity: .85; }
+.klasse figcaption { display: flex; align-items: baseline; justify-content: center; gap: 12px; margin-top: 6px; }
+.klasse figcaption b { font-family: var(--display); font-weight: 800; font-size: 15px; letter-spacing: .04em; color: #2c2a26; }
+.klasse figcaption span { font-family: "Allura", var(--serif); font-size: 28px; line-height: 1; color: #4a463f; }
+.klassen--klein { margin: 30px 0 10px; gap: 22px; }
+.klassen--klein .klasse { padding: 16px 14px 10px; }
+.klassen--klein .klasse figcaption span { font-size: 24px; }
+@media (prefers-reduced-motion: reduce) { .klasse, .klasse:hover { transition: none; } }
+
 .stimmen { margin: clamp(70px, 12vh, 120px) calc(var(--gutter) * -1) 0; display: grid; gap: 26px; }
 .stimmen__head { text-align: center; padding: 0 var(--gutter); }
 .stimmen__title { margin: 0; font-family: var(--display); font-weight: 700; font-size: clamp(30px, 5.4vw, 60px); line-height: 1.05; letter-spacing: -.01em; }

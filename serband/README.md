@@ -20,6 +20,7 @@ Fotos stehen unter `fotos`: `portrait` (Kapitel III, „Mein Versprechen“) und
 Alle Texte, Links, Fotos, Zahlen und Bewertungen stehen in **`js/config.js`**.
 Dort ist alles, was noch fehlt, mit `TODO` markiert:
 
+- `klassen` – Fahrlehrerlaubnis-Klassen mit Bleistift-Skizze (Kapitel VI und Impressum, Zeichnungen in `js/klassen.js`)
 - `sprachen` – Sprachen der Fahr-Akademie, erscheinen in der App-Tour (Kapitel IV). App-Bilder: `img/app-*.jpg` (Beispieldaten „Lea Beispiel“, keine echten Schüler, keine Bestehensquote)
 - `links.bewerten` – direkter Google-Link „Rezension schreiben“ (wird auch als QR-Code gezeigt)
 - `videos.*` und `zahlen` stehen noch in der Konfiguration, werden von der Seite aber derzeit nicht angezeigt
