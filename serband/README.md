@@ -1,3 +1,9 @@
+# www.fahrlehrer-serband.de
+
+Webseite von Serband, Fahrlehrer in Offenbach am Main (Ausbildung über die Fahrschule Boost).
+Statische Seite, veröffentlicht mit GitHub Pages aus `main` (Ordner `/`), eigene Domain über die Datei `CNAME`.
+Bis Ende September 2026 lag die Seite im Ordner `serband/` des Repositorys Fahrlehrer-Kompass-.
+
 # Serband – Landingpage
 
 Landingpage als Film in Kapiteln: Prolog → I Ruhe statt Geschrei → II Du bist nicht wie alle (Farbtypen-Quiz) → III Mein Versprechen → IV Die Werkzeuge dahinter → V Dein Weg (mit Reaktionstest + Bestenliste) → VI Los geht's (Buchen, Fragen, Bewerten) → Epilog.
