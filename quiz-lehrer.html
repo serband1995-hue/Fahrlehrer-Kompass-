@@ -1,0 +1,185 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="robots" content="noindex">
+<meta name="theme-color" content="#0a1210">
+<title>Lernzielkontrolle – Lehrer</title>
+<link rel="icon" href="icon-192.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="quiz.css">
+<style>
+  body { font-size: 16px; padding: max(12px, env(safe-area-inset-top)) 16px calc(96px + env(safe-area-inset-bottom)); }
+  .kopf { display: flex; align-items: center; gap: .6em; margin-bottom: 12px; }
+  .kopf .t { flex: 1; min-width: 0; }
+  .kopf b { display: block; font-size: 1.1em; }
+  .kopf small { color: var(--muted); }
+  .pille { background: var(--surface); border: 1px solid var(--line); border-radius: 999px; padding: .3em .8em; font-weight: 700; white-space: nowrap; }
+  .karte { padding: 16px; margin-bottom: 12px; box-shadow: none; }
+  .status { font-weight: 800; color: var(--gold); text-transform: uppercase; letter-spacing: .06em; font-size: .8em; margin-bottom: .4em; display: flex; justify-content: space-between; }
+  .frage { font-weight: 800; font-size: 1.2em; line-height: 1.25; margin-bottom: .7em; }
+  .aw { display: flex; align-items: center; gap: .6em; padding: .55em .7em; border-radius: 12px; margin-bottom: 6px; background: var(--surface-2);
+    border-left: 6px solid var(--f); font-weight: 600; }
+  .aw .form { color: var(--f); flex: none; }
+  .aw .n { margin-left: auto; font-weight: 800; color: var(--muted); }
+  .aw.ok { background: var(--ok-soft); outline: 2px solid var(--ok); }
+  .aw.ok::after { content: "✓"; color: var(--ok); font-weight: 900; font-size: 1.2em; }
+  .erkl { margin-top: .6em; color: #d6e4dd; line-height: 1.45; background: rgba(0,0,0,.18); border-radius: 12px; padding: .7em .8em; }
+  .erkl b { color: var(--ok); }
+  .gross { font-size: 2.2em; font-weight: 900; }
+  .zeile { display: flex; align-items: center; gap: .6em; padding: .5em 0; border-bottom: 1px solid var(--line); }
+  .zeile:last-child { border-bottom: 0; }
+  .zeile .p { width: 2em; font-weight: 800; color: var(--muted); }
+  .zeile .n { flex: 1; font-weight: 700; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .zeile .pk { font-weight: 800; font-variant-numeric: tabular-nums; }
+  .zeile .x { background: none; border: 1px solid var(--line); border-radius: 10px; color: var(--no); width: 2.6em; height: 2.6em; flex: none; }
+  .ok-mark { color: var(--ok); } .no-mark { color: var(--no); }
+  .unten { position: fixed; left: 0; right: 0; bottom: 0; padding: 12px 16px max(14px, env(safe-area-inset-bottom));
+    background: linear-gradient(180deg, transparent, var(--bg) 30%); display: flex; gap: 10px; }
+  .unten .knopf { flex: 1; font-size: 1.15em; padding: .9em; }
+  details { margin-top: 8px; }
+  summary { cursor: pointer; font-weight: 700; color: var(--muted); padding: .4em 0; }
+  .alle .q { padding: .6em 0; border-bottom: 1px solid var(--line); }
+  .alle .q.jetzt { background: var(--gold-soft); border-radius: 10px; padding: .6em; }
+  .alle .q b { display: block; }
+  .alle .q span { color: var(--ok); font-weight: 700; }
+  .fehlt { text-align: center; padding: 3em 1em; color: var(--muted); }
+</style>
+</head>
+<body>
+<div id="app"><div class="fehlt">Verbinde …</div></div>
+<div class="unten" id="unten" hidden><button class="knopf" id="weiter">Weiter</button></div>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="quiz-fragen.js"></script>
+<script src="quiz-gemeinsam.js"></script>
+<script>
+(() => {
+  const $ = (s, r) => (r || document).querySelector(s);
+  const { esc, zahl, sek, FORMEN } = Quiz;
+  const h = new URLSearchParams(location.hash.slice(1));
+  const host = { id: h.get("r"), key: h.get("k") };
+  let L = null, daten = null, beob = null, takt = null, aufgeloest = -1, beschaeftigt = false;
+
+  if (!host.id || !host.key) { $("#app").innerHTML = '<div class="fehlt">Bitte den QR-Code „Lehrer-Handy“ an der Tafel scannen.</div>'; return; }
+
+  async function steuern(aktion, frage, still) {
+    try { await Quiz.rpc("quiz_steuern", { p_raum: host.id, p_key: host.key, p_aktion: aktion, p_frage: frage == null ? null : frage }); beob.jetzt(); }
+    catch (e) { if (!still) alert(Quiz.fehlertext(e)); }
+  }
+
+  function frageKarte(nr, titel, mitZahlen) {
+    const f = L.fragen[nr]; if (!f) return "";
+    const v = (mitZahlen && daten.raum.verteilung) || {};
+    return `<div class="karte">
+      <div class="status"><span>${titel}</span><span>${nr + 1} / ${L.fragen.length}</span></div>
+      <div class="frage">${esc(f.frage)}</div>
+      ${f.antworten.map((a, i) => `<div class="aw f${i} ${i === f.richtig ? "ok" : ""}"><span class="form">${FORMEN[i]}</span><span>${esc(a)}</span>${mitZahlen ? `<span class="n">${v[i] || 0}</span>` : ""}</div>`).join("")}
+      <div class="erkl"><b>Musterantwort:</b> ${esc(f.erklaerung || "")}</div>
+    </div>`;
+  }
+  function rangKarte(titel, alle) {
+    const liste = Quiz.rangliste(daten.spieler);
+    const zeigen = alle ? liste : liste.slice(0, 10);
+    return `<div class="karte"><div class="status"><span>${titel}</span><span>${liste.length} Mitspieler</span></div>
+      ${zeigen.map((s, i) => `<div class="zeile"><span class="p">${i + 1}.</span><span class="n">${esc(s.name)}</span>
+        <span class="pk">${zahl(s.punkte)}</span><span style="color:var(--muted);font-size:.9em">${s.richtige}✓</span>
+        ${alle ? "" : `<button class="x" data-id="${s.id}" title="Entfernen">✕</button>`}</div>`).join("") || '<div style="color:var(--muted)">Noch niemand da.</div>'}
+    </div>`;
+  }
+  function alleFragen(aktiv) {
+    return `<details><summary>Alle Fragen mit Lösungen</summary><div class="karte alle">
+      ${L.fragen.map((f, i) => `<div class="q ${i === aktiv ? "jetzt" : ""}"><b>${i + 1}. ${esc(f.frage)}</b><span>✓ ${esc(f.antworten[f.richtig])}</span></div>`).join("")}
+    </div></details>`;
+  }
+  function knopf(text, an) {
+    $("#unten").hidden = !text;
+    $("#weiter").textContent = text || "";
+    $("#weiter").disabled = !an;
+  }
+
+  let ansicht = "";
+  function neueDaten(d) {
+    if (!d.raum) { $("#app").innerHTML = '<div class="fehlt">Dieses Quiz gibt es nicht mehr.</div>'; knopf(""); beob.stop(); return; }
+    daten = d;
+    if (!L) L = Quiz.lektion(d.raum.lektion);
+    if (!L) { $("#app").innerHTML = '<div class="fehlt">Die Fragen dieser Lektion fehlen – Seite neu laden.</div>'; return; }
+    const r = d.raum;
+    const kopf = `<div class="kopf"><div class="t"><b>Lektion ${L.lektion}: ${esc(L.titel)}</b><small>Lehrer-Ansicht · nur für dich</small></div>
+      <span class="pille">Code ${esc(r.code)}</span></div>`;
+    let html = kopf;
+    if (r.status === "lobby") {
+      html += `<div class="karte"><div class="status"><span>Warteraum</span><span>${d.spieler.length} drin</span></div>
+        ${d.spieler.map((s) => `<div class="zeile"><span class="n">${esc(s.name)}</span><button class="x" data-id="${s.id}" title="Entfernen">✕</button></div>`).join("") || '<div style="color:var(--muted)">Noch niemand da – QR-Code an der Tafel zeigen.</div>'}
+      </div>` + frageKarte(0, "Erste Frage (Vorschau)") + alleFragen(-1);
+      knopf("Quiz starten ▶", d.spieler.length > 0);
+    } else if (r.status === "frage") {
+      const vorLesezeit = Quiz.jetzt() < new Date(r.frage_start).getTime();
+      const fertig = d.spieler.filter((s) => s.beantwortet_nr >= r.frage_nr).length;
+      html += `<div class="karte" style="display:flex;align-items:center;gap:1em"><div class="gross" id="rest">–</div>
+        <div><b>${fertig} / ${d.spieler.length}</b> haben geantwortet</div></div>` + frageKarte(r.frage_nr, "Läuft gerade") + alleFragen(r.frage_nr);
+      knopf("Jetzt auflösen", !vorLesezeit);
+      if (vorLesezeit) setTimeout(() => { if (daten && daten.raum.status === "frage") $("#weiter").disabled = false; }, new Date(r.frage_start).getTime() - Quiz.jetzt() + 50);
+    } else if (r.status === "aufloesung") {
+      const letzte = r.frage_nr >= r.anzahl - 1;
+      const richtig = d.spieler.filter((s) => s.ausgewertet_nr === r.frage_nr && s.letzte_richtig).length;
+      html += `<div class="karte"><b class="ok-mark">${richtig}</b> von ${d.spieler.length} richtig</div>` + frageKarte(r.frage_nr, "Aufgelöst", true) + rangKarte("Aktueller Stand")
+        + (letzte ? "" : frageKarte(r.frage_nr + 1, "Als Nächstes")) + alleFragen(r.frage_nr);
+      knopf(letzte ? "Zur Siegerehrung 🏆" : "Zwischenstand ▶", true);
+    } else if (r.status === "zwischenstand") {
+      html += rangKarte("Zwischenstand") + frageKarte(r.frage_nr + 1, "Als Nächstes") + alleFragen(r.frage_nr + 1);
+      knopf("Nächste Frage ▶", true);
+    } else {
+      html += rangKarte("Endstand", true) + alleFragen(-1);
+      knopf("");
+    }
+    const neu = r.status + ":" + r.frage_nr + ":" + (r.frage_start || "");
+    if (neu !== ansicht) beschaeftigt = false;
+    const scroll = neu === ansicht ? window.scrollY : 0;
+    ansicht = neu;
+    const offen = !!($("details") && $("details").open);
+    $("#app").innerHTML = html;
+    if (offen && $("details")) $("details").open = true;
+    window.scrollTo(0, scroll);
+    document.querySelectorAll(".x").forEach((b) => b.onclick = async () => {
+      const s = d.spieler.find((x) => x.id === b.dataset.id);
+      if (!s || !confirm(`„${s.name}“ entfernen?`)) return;
+      try { await Quiz.rpc("quiz_entfernen", { p_raum: host.id, p_key: host.key, p_spieler: s.id }); beob.jetzt(); } catch (e) { alert(Quiz.fehlertext(e)); }
+    });
+    uhr();
+  }
+
+  function uhr() {
+    if (takt) clearInterval(takt); takt = null;
+    if (!daten || daten.raum.status !== "frage") return;
+    const r = daten.raum;
+    const s = () => {
+      const t = Quiz.jetzt(), start = new Date(r.frage_start).getTime(), ende = new Date(r.frage_ende).getTime();
+      const el = $("#rest"); if (!el) return;
+      el.textContent = t < start ? "👀" : Math.max(0, Math.ceil((ende - t) / 1000)) + " s";
+      // Falls die Tafel mal nicht läuft: nach Ablauf auch von hier auflösen (doppelt schadet nicht)
+      if (t > ende + 2500 && aufgeloest !== r.frage_nr) { aufgeloest = r.frage_nr; steuern("aufloesen", r.frage_nr, true); }
+    };
+    s(); takt = setInterval(s, 250);
+  }
+
+  $("#weiter").addEventListener("click", async () => {
+    if (!daten || beschaeftigt) return;
+    beschaeftigt = true;                       // frei, sobald der neue Zustand da ist (oder nach 4 s)
+    setTimeout(() => { beschaeftigt = false; }, 4000);
+    const r = daten.raum;
+    if (r.status === "lobby") await steuern("frage", 0);
+    else if (r.status === "frage") { aufgeloest = r.frage_nr; await steuern("aufloesen", r.frage_nr); }
+    else if (r.status === "aufloesung") await steuern(r.frage_nr >= r.anzahl - 1 ? "ende" : "zwischenstand", r.frage_nr);
+    else if (r.status === "zwischenstand") await steuern("frage", r.frage_nr + 1);
+  });
+
+  Quiz.uhrAbgleichen();
+  beob = Quiz.beobachten(host.id, neueDaten, 2500);
+})();
+</script>
+</body>
+</html>
