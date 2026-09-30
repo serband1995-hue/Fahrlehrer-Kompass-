@@ -365,7 +365,9 @@ function setupGame() {
    hält sie an; ziehen/wischen geht auch. Bei „Bewegung reduzieren“: normale Wischliste. */
 function setupReviews() {
   const box = $("#reviews");
-  const list = CONFIG.bewertungen.filter((b) => !b.platzhalter && b.text);
+  // Startbestand aus der Konfiguration; die aktuellen Bewertungen kommen aus der
+  // Verwaltung der Fahr-Akademie (Supabase), sobald man in die Nähe scrollt
+  let list = CONFIG.bewertungen.filter((b) => !b.platzhalter && b.text);
   if (!box || !list.length) return;
   const card = (b, i) => {
     const el = document.createElement("article");
@@ -502,6 +504,28 @@ function setupReviews() {
   }
 
   build();
+  const B = CONFIG.bestenliste;
+  if (B && B.url && "IntersectionObserver" in window) {
+    const io = new IntersectionObserver(async (en) => {
+      if (!en[0].isIntersecting) return;
+      io.disconnect();
+      try {
+        const ctl = new AbortController(), t = setTimeout(() => ctl.abort(), 8000);
+        const r = await fetch(`${B.url}/rest/v1/rpc/website_bewertungen_liste`, {
+          method: "POST", headers: { apikey: B.key, "Content-Type": "application/json" }, body: "{}", signal: ctl.signal
+        });
+        clearTimeout(t);
+        if (!r.ok) return;
+        const d = await r.json();
+        const neu = (Array.isArray(d) ? d : []).filter((b) => b && b.name && b.text);
+        // leer oder unverändert: Startbestand bleibt stehen
+        if (!neu.length || JSON.stringify(neu.map((b) => [b.name, b.text])) === JSON.stringify(list.map((b) => [b.name, b.text]))) return;
+        list = neu;
+        build();
+      } catch (e) { /* ohne Verbindung bleibt der Startbestand */ }
+    }, { rootMargin: "1500px 0px" });
+    io.observe(box);
+  }
   let rt = 0;
   addEventListener("resize", () => { clearTimeout(rt); rt = setTimeout(measure, 150); });
   wide.addEventListener ? wide.addEventListener("change", build) : wide.addListener(build);
