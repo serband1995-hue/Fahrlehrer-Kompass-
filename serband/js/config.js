@@ -15,10 +15,10 @@ export const CONFIG = {
     kalenderAutomatik: "https://service.fahrschule-boost.de/widget/bookings/geteilter-kalender-1",
     // Die Fahr-Akademie (Lern-App mit Videos)
     akademie: "https://serband1995-hue.github.io/Fahr-Akademie-/",
-    // TODO: direkter Link "Rezension schreiben" aus deinem Google-Profil
-    bewerten: "https://www.google.com/maps/search/?api=1&query=Fahrschule+Boost+Offenbach",
-    // Alle Bewertungen lesen (Google Maps)
-    bewertungen: "https://www.google.com/maps/search/?api=1&query=Fahrschule+Boost+Offenbach",
+    // Google-Profil der Fahrschule Boost: direkt „Rezension schreiben“ (auch der QR-Code)
+    bewerten: "https://search.google.com/local/writereview?placeid=ChIJ0UPFLoIPvUcREq2efNEsxEg",
+    // Alle Bewertungen lesen (Profil in Google Maps)
+    bewertungen: "https://maps.app.goo.gl/aHvbCk1vxRKHfqxP9",
     schule: "https://fahrschule-boost.de/",
     preise: "https://fahrschule-boost.de/",
     telefon: "+496936605670",
