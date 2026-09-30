@@ -369,10 +369,12 @@ function setupReviews() {
   // Verwaltung der Fahr-Akademie (Supabase), sobald man in die Nähe scrollt
   let list = CONFIG.bewertungen.filter((b) => !b.platzhalter && b.text);
   if (!box || !list.length) return;
+  const sterne = (b) => Math.max(1, Math.min(5, parseInt(b.sterne, 10) || 5));
   const card = (b, i) => {
     const el = document.createElement("article");
     el.className = "review";
-    el.innerHTML = `<div class="review__stars" role="img" aria-label="5 von 5 Sternen">★★★★★</div>
+    const n = sterne(b);
+    el.innerHTML = `<div class="review__stars" role="img" aria-label="${n} von 5 Sternen">${"★".repeat(n)}</div>
       <p class="review__text"></p>
       <button class="review__more" type="button">Ganze Bewertung lesen</button>
       <div class="review__who"><i aria-hidden="true"></i><div><span></span><small>Google-Bewertung</small></div></div>`;
@@ -432,6 +434,8 @@ function setupReviews() {
     const b = list[+c.dataset.i];
     $("#reviewTitle").textContent = b.name;
     $("#reviewFull").textContent = b.text;
+    $("#reviewStars").textContent = "★".repeat(sterne(b));
+    $("#reviewStars").setAttribute("aria-label", sterne(b) + " von 5 Sternen");
     $("#reviewSheet .sheet__body").scrollTop = 0;
     openSheet($("#reviewSheet"));
   });
@@ -519,7 +523,7 @@ function setupReviews() {
         const d = await r.json();
         const neu = (Array.isArray(d) ? d : []).filter((b) => b && b.name && b.text);
         // leer oder unverändert: Startbestand bleibt stehen
-        if (!neu.length || JSON.stringify(neu.map((b) => [b.name, b.text])) === JSON.stringify(list.map((b) => [b.name, b.text]))) return;
+        if (!neu.length || JSON.stringify(neu.map((b) => [b.name, b.text, sterne(b)])) === JSON.stringify(list.map((b) => [b.name, b.text, sterne(b)]))) return;
         list = neu;
         build();
       } catch (e) { /* ohne Verbindung bleibt der Startbestand */ }
@@ -766,11 +770,17 @@ function setupTour() {
     // nächstes Bild schon laden, damit der Wechsel ohne Lücke klappt
     [shots[i], shots[i + 1]].forEach((s) => { if (s) s.loading = "eager"; });
   };
+  // Aktiver Schritt = der letzte, dessen Oberkante die Bildschirmmitte überschritten hat.
+  // Aus der Position berechnet statt aus Ein-/Austritt je Schritt – bei schnellem
+  // Scrollen oder Sprüngen feuern diese sonst in beliebiger Reihenfolge.
+  const aktuell = () => {
+    const linie = innerHeight * 0.55;
+    let i = 0;
+    steps.forEach((s, k) => { if (s.getBoundingClientRect().top < linie) i = k; });
+    set(i);
+  };
   set(0);
-  steps.forEach((s, i) => ScrollTrigger.create({
-    trigger: s, start: "top 55%", end: "bottom 55%",
-    onToggle: (st) => st.isActive && set(i)
-  }));
+  ScrollTrigger.create({ trigger: tour, start: "top bottom", end: "bottom top", onUpdate: aktuell, onRefresh: aktuell });
   // am Handy: Bild je Schritt kommt leicht vergrößert herein
   if (!reducedMotion) $$(".tour__inline .device", tour).forEach((d) => {
     gsap.fromTo(d, { scale: 0.9, rotateX: 10, opacity: 0.4 }, { scale: 1, rotateX: 0, opacity: 1, ease: "none", scrollTrigger: { trigger: d, start: "top bottom", end: "top 45%", scrub: 0.6 } });
