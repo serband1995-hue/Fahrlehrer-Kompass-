@@ -474,17 +474,14 @@ svg[hidden] { display: none !important; }
 .skizze__linien--zwei path, .skizze__linien--zwei circle { stroke-width: 1.1; }
 .skizze__boden path { stroke-width: 1.2; opacity: .6; stroke-dasharray: 1; stroke-dashoffset: 1; }
 .skizze__schraffur path { stroke-width: .7; opacity: 0; transition: opacity 1.2s ease 1.3s; }
-.skizze__text text { font-family: var(--display); font-weight: 700; font-size: 6px; letter-spacing: .06em; fill: #3b3934; opacity: 0; transition: opacity .8s ease 1.2s; }
 .is-gezeichnet .skizze__linien path, .is-gezeichnet .skizze__linien circle, .is-gezeichnet .skizze__boden path {
   stroke-dashoffset: 0; transition: stroke-dashoffset .9s cubic-bezier(.45,.05,.3,1) calc(var(--i) * 45ms); }
 .is-gezeichnet .skizze__schraffur path { opacity: .5; }
-.is-gezeichnet .skizze__text text { opacity: .85; }
 .klasse figcaption { display: flex; align-items: baseline; justify-content: center; gap: 12px; margin-top: 6px; }
-.klasse figcaption b { font-family: var(--display); font-weight: 800; font-size: 15px; letter-spacing: .04em; color: #2c2a26; }
-.klasse figcaption span { font-family: "Allura", var(--serif); font-size: 28px; line-height: 1; color: #4a463f; }
+.klasse figcaption b { font-family: var(--display); font-weight: 800; font-size: 19px; letter-spacing: .04em; color: #2c2a26; }
+.sr-only { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
 .klassen--klein { margin: 30px 0 10px; gap: 22px; }
 .klassen--klein .klasse { padding: 16px 14px 10px; }
-.klassen--klein .klasse figcaption span { font-size: 24px; }
 @media (prefers-reduced-motion: reduce) { .klasse, .klasse:hover { transition: none; } }
 
 .stimmen { margin: clamp(70px, 12vh, 120px) calc(var(--gutter) * -1) 0; display: grid; gap: 26px; }

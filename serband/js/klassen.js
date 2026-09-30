@@ -23,13 +23,10 @@ const AUTO = (dx = 0) => ({
     // Scheinwerfer, Rücklicht, Spiegel
     `M${218 + dx},63 L${231 + dx},66 L${232 + dx},70 L${220 + dx},68 Z`,
     `M${21 + dx},57 L${28 + dx},55 L${28 + dx},64 L${21 + dx},65`,
-    `M${166 + dx},48 L${175 + dx},46 L${176 + dx},52 L${168 + dx},53`,
-    // Fahrschul-Schild auf dem Dach
-    `M${82 + dx},33 L${84 + dx},21.5 L${132 + dx},21.5 L${134 + dx},33`
+    `M${166 + dx},48 L${175 + dx},46 L${176 + dx},52 L${168 + dx},53`
   ],
   kreise: [[60 + dx, 92, 14], [60 + dx, 92, 6], [192 + dx, 92, 14], [192 + dx, 92, 6]],
   speichen: [[60 + dx, 92], [192 + dx, 92]],
-  text: [[108 + dx, 30.5, "FAHRSCHULE"]],
   schraffur: [
     `M${50 + dx},52 L${62 + dx},40 Q${66 + dx},38 ${72 + dx},38 L${104 + dx},38 L${104 + dx},52 Z`,
     `M${110 + dx},38 L${148 + dx},38 Q${154 + dx},38 ${158 + dx},42 L${170 + dx},52 L${110 + dx},52 Z`
@@ -82,7 +79,7 @@ function svg(name) {
     for (let x = cx - rx; x <= cx + rx; x += 3) { const k = 1 - ((x - cx) / rx) ** 2; d += `M${x},${cy - ry * Math.sqrt(k)} L${x + 3},${cy + ry * Math.sqrt(k)}`; }
     return d;
   }).join("");
-  return `<svg viewBox="0 0 ${s.w} ${s.h}" role="img" aria-hidden="true" focusable="false">
+  return `<svg viewBox="0 26 ${s.w} ${s.h - 26}" role="img" aria-hidden="true" focusable="false">
     <defs>
       <filter id="${id}f1" x="-4%" y="-8%" width="108%" height="116%">
         <feTurbulence type="fractalNoise" baseFrequency="0.035" numOctaves="2" seed="3" result="w"/>
@@ -107,7 +104,6 @@ function svg(name) {
     <g class="skizze__boden" filter="url(#${id}f2)"><path d="${boden}" pathLength="1" style="--i:0"/></g>
     <g class="skizze__linien" filter="url(#${id}f1)">${linien}</g>
     <g class="skizze__linien skizze__linien--zwei" filter="url(#${id}f2)" transform="translate(.7 -.5)">${linien}</g>
-    <g class="skizze__text">${t.text.map(([x, y, w]) => `<text x="${x}" y="${y}" text-anchor="middle">${w}</text>`).join("")}</g>
   </svg>`;
 }
 
@@ -123,7 +119,7 @@ export function klassenZeichnen() {
   boxen.forEach((box) => {
     box.innerHTML = kl.map((k) => `<figure class="klasse klasse--${k.skizze}">
       ${svg(k.skizze)}
-      <figcaption><b>Klasse ${k.klasse}</b><span>${k.name}</span></figcaption>
+      <figcaption><b>Klasse ${k.klasse}</b><span class="sr-only"> – ${k.name}</span></figcaption>
     </figure>`).join("");
     const karten = box.querySelectorAll(".klasse");
     if (ruhig || !("IntersectionObserver" in window)) { karten.forEach((k) => k.classList.add("is-gezeichnet")); return; }
