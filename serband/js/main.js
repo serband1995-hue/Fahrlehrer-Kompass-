@@ -380,8 +380,12 @@ function setupReviews() {
       <p class="review__text"></p>
       <button class="review__more" type="button">Ganze Bewertung lesen</button>
       <div class="review__who"><i aria-hidden="true"></i><div><span></span><small>Google-Bewertung</small></div></div>`;
-    // auf der Karte als Fließtext (spart Zeilen), im Fenster mit Absätzen
-    $(".review__text", el).textContent = b.text.replace(/\s*\n\s*/g, " ");
+    // auf der Karte als Fließtext (spart Zeilen), im Fenster mit Absätzen. Nur der Anfang:
+    // sichtbar sind ohnehin höchstens 8 Zeilen, den ganzen Text zu setzen kostet spürbar Zeit
+    const fliess = b.text.replace(/\s*\n\s*/g, " ");
+    const kurz = fliess.length > 420 ? fliess.slice(0, fliess.lastIndexOf(" ", 420)) + " …" : fliess;
+    $(".review__text", el).textContent = kurz;
+    if (kurz !== fliess) el.dataset.gekuerzt = "1";
     $(".review__who span", el).textContent = b.name;
     $(".review__who i", el).textContent = (b.name || "?").trim().charAt(0).toUpperCase();
     el.dataset.i = i;
@@ -390,39 +394,58 @@ function setupReviews() {
   const wide = matchMedia("(min-width: 760px)");
   let rows = [];
 
-  let spaeter = false;
-  function build() {
+  let spaeter = false, bauNr = 0;
+  // Karten in kleinen Portionen zwischen zwei Bildern anlegen – alle auf einmal
+  // blockierten auf schwächeren Handys spürbar das Scrollen
+  const pause = () => new Promise((r) => requestAnimationFrame(() => setTimeout(r, 0)));
+  async function build() {
     if (rows.some((r) => r.drag)) { spaeter = true; return; }
     spaeter = false;
+    const nr = ++bauNr;
     rows = [];
     box.replaceChildren();
     const n = wide.matches && list.length > 5 ? 2 : 1;
+    const neu = [];
     for (let r = 0; r < n; r++) {
-      const items = list.map((b, i) => [b, i]).filter((_, i) => i % n === r);
       const row = document.createElement("div");
       row.className = "reviews__row";
       const rail = document.createElement("div");
       rail.className = "reviews__rail";
-      items.forEach(([b, i]) => rail.append(card(b, i)));
       row.append(rail);
       box.append(row);
-      if (!reducedMotion) {
-        // Kopien nur fürs endlose Laufen: für Vorleser und Tab-Taste unsichtbar, antippen geht
-        const kopie = () => items.forEach(([b, i]) => {
+      neu.push({ row, rail, items: list.map((b, i) => [b, i]).filter((_, i) => i % n === r) });
+    }
+    const portion = async (rail, items, kopie) => {
+      for (let k = 0; k < items.length; k += 8) {
+        const f = document.createDocumentFragment();
+        items.slice(k, k + 8).forEach(([b, i]) => {
           const c = card(b, i);
-          c.setAttribute("aria-hidden", "true"); c.classList.add("is-copy");
-          $(".review__more", c).tabIndex = -1;
-          rail.append(c);
+          if (kopie) {
+            // Kopien nur fürs endlose Laufen: für Vorleser und Tab-Taste unsichtbar, antippen geht
+            c.setAttribute("aria-hidden", "true"); c.classList.add("is-copy");
+            $(".review__more", c).tabIndex = -1;
+          }
+          f.append(c);
         });
+        rail.append(f);
+        await pause();
+        if (nr !== bauNr) return false;
+      }
+      return true;
+    };
+    for (const { row, rail, items } of neu) {
+      if (!(await portion(rail, items, false))) return;
+      if (!reducedMotion) {
         // eine Hälfte muss breiter sein als die Reihe, sonst läuft eine Lücke mit
         const satz = rail.scrollWidth + 16;
         const mal = Math.max(1, Math.ceil(row.clientWidth / satz));
-        for (let k = 1; k < mal * 2; k++) kopie();
+        for (let k = 1; k < mal * 2; k++) if (!(await portion(rail, items, true))) return;
         // Fokus darf die Reihe nicht selbst verschieben – das macht die Laufband-Position
         row.addEventListener("scroll", () => (row.scrollLeft = 0));
       }
-      rows.push({ row, rail, x: 0, vx: 0, dir: r % 2 ? 1 : -1, w: 0, hover: false, focus: false, until: 0, drag: null });
     }
+    if (nr !== bauNr) return;
+    rows = neu.map(({ row, rail }, r) => ({ row, rail, x: 0, vx: 0, dir: r % 2 ? 1 : -1, w: 0, hover: false, focus: false, until: 0, drag: null }));
     measure();
   }
 
@@ -435,10 +458,11 @@ function setupReviews() {
       if (o.w && o.w < o.row.clientWidth) zuSchmal = true;
       if (o.dir > 0 && o.w && o.x === 0) o.x = -o.w; // rechtslaufende Reihe startet versetzt
     });
-    $$(".review", box).forEach((c) => {
-      const t = $(".review__text", c);
-      c.classList.toggle("is-long", t.scrollHeight > t.clientHeight + 2);
-    });
+    // erst alles messen, dann alles ändern – abwechselnd messen/ändern zwingt den
+    // Browser bei jeder Karte zu einem neuen Seitenlayout (bei 74 Karten spürbar)
+    const karten = $$(".review", box), orig = karten.filter((c) => !c.classList.contains("is-copy"));
+    const lang = new Map(orig.map((c) => { const t = $(".review__text", c); return [c.dataset.i, !!c.dataset.gekuerzt || t.scrollHeight > t.clientHeight + 2]; }));
+    karten.forEach((c) => c.classList.toggle("is-long", !!lang.get(c.dataset.i)));
     if (zuSchmal) build();
   }
 
@@ -541,7 +565,7 @@ function setupReviews() {
       const d = await r.json();
       list = (Array.isArray(d) ? d : []).filter((b) => b && b.name && b.text);
       if (!list.length) return weg(); // alles ausgeblendet
-      build();
+      await build();
       if (document.fonts && document.fonts.ready) document.fonts.ready.then(measure);
       ScrollTrigger.refresh();
     } catch (e) { weg(); }
