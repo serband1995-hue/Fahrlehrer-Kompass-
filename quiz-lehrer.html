@@ -12,7 +12,8 @@
 <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="quiz.css">
 <style>
-  body { font-size: 16px; padding: max(12px, env(safe-area-inset-top)) 16px calc(96px + env(safe-area-inset-bottom)); }
+  body { font-size: 16px; padding: max(12px, env(safe-area-inset-top)) 16px calc(120px + env(safe-area-inset-bottom)); }
+  body:has(#unten[hidden]) { padding-bottom: calc(24px + env(safe-area-inset-bottom)); }
   .kopf { display: flex; align-items: center; gap: .6em; margin-bottom: 12px; }
   .kopf .t { flex: 1; min-width: 0; }
   .kopf b { display: block; font-size: 1.1em; }
@@ -38,8 +39,9 @@
   .zeile .x { background: none; border: 1px solid var(--line); border-radius: 10px; color: var(--no); width: 2.6em; height: 2.6em; flex: none; }
   .ok-mark { color: var(--ok); } .no-mark { color: var(--no); }
   .unten { position: fixed; left: 0; right: 0; bottom: 0; padding: 12px 16px max(14px, env(safe-area-inset-bottom));
-    background: linear-gradient(180deg, transparent, var(--bg) 30%); display: flex; gap: 10px; }
+    background: var(--bg); border-top: 1px solid var(--line); box-shadow: 0 -10px 24px rgba(0,0,0,.45); display: flex; gap: 10px; z-index: 5; }
   .unten .knopf { flex: 1; font-size: 1.15em; padding: .9em; }
+  .unten .knopf:disabled { opacity: .7; font-size: 1em; }
   details { margin-top: 8px; }
   summary { cursor: pointer; font-weight: 700; color: var(--muted); padding: .4em 0; }
   .alle .q { padding: .6em 0; border-bottom: 1px solid var(--line); }

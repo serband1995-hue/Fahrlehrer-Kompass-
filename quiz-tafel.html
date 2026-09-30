@@ -156,6 +156,7 @@
   .podest { display: flex; align-items: flex-end; justify-content: center; gap: 1.2em; width: min(100%, 60em); }
   .stufe { flex: 1; display: flex; flex-direction: column; align-items: center; text-align: center; }
   .stufe .wer { font-weight: 900; font-size: 1.9em; line-height: 1.1; opacity: 0; transform: translateY(20px); transition: all .6s; word-break: break-word; }
+  .stufe .wer .wname { display: block; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
   .stufe .wer small { display: block; font-size: .55em; color: var(--muted); font-weight: 700; margin-top: .2em; }
   .stufe .block { width: 100%; height: 0; border-radius: 16px 16px 0 0; margin-top: .6em; display: flex; justify-content: center;
     padding-top: .3em; font-size: 4em; font-weight: 900; transition: height 1.1s cubic-bezier(.2,1.1,.3,1); overflow: hidden; }
@@ -165,7 +166,7 @@
   .stufe.an .wer { opacity: 1; transform: none; }
   .stufe.s1 .wer { font-size: 3em; color: var(--gold); }
   .stufe.s1.an .wer { animation: pulsieren 1.4s .6s infinite; }
-  .krone { font-size: 3.2em; opacity: 0; transform: scale(.3) rotate(-20deg); transition: all .6s cubic-bezier(.2,1.5,.4,1); }
+  .krone { font-size: 2.6em; line-height: 1.15; margin-bottom: .4em; opacity: 0; transform: scale(.3) rotate(-20deg); transition: all .6s cubic-bezier(.2,1.5,.4,1); }
   .stufe.s1.an .krone { opacity: 1; transform: none; }
   .gleichstand-hinweis { margin-top: .8em; color: var(--gold); font-weight: 700; font-size: 1.2em; text-align: center; min-height: 1.4em; }
 
@@ -186,14 +187,55 @@
   .overlay .qr { width: 16em; margin: 1em auto; }
   .overlay p { color: var(--muted); line-height: 1.5; }
 
+  /* Schmale Bildschirme (Handy, Tablet hochkant, kleines Fenster): alles untereinander, Seite darf scrollen,
+     Knopfleiste bleibt unten sichtbar und überdeckt nichts */
   @media (max-width: 900px) {
-    body { font-size: 14px; overflow: auto; }
-    html, body { overflow: auto; }
-    .lektionen { grid-template-columns: repeat(2, 1fr); }
-    .lobby, .aufl { grid-template-columns: 1fr; }
-    .schirm { position: relative; min-height: 70vh; padding: 0 16px 16px; }
-    .frage-text { font-size: 2em; }
+    html { height: auto; overflow: auto; }
+    body { height: auto; overflow: visible; font-size: 14px; display: block; min-height: 100vh; min-height: 100dvh; }
+    .leiste { flex-wrap: wrap; padding: 10px 16px; gap: .5em; }
+    .marke { flex: 1 1 100%; }
+    .leiste .platz { display: none; }
+    .code-pille { margin-right: auto; }
+    main { display: block; }
+    .schirm { position: relative; inset: auto; min-height: 0; padding: 0 16px 20px; overflow: visible; }
+    .steuerung { position: sticky; bottom: 0; z-index: 5; flex-wrap: wrap; gap: 8px; padding: 14px 16px 16px;
+      background: var(--bg); border-top: 1px solid var(--line); box-shadow: 0 -10px 24px rgba(0,0,0,.45); }
+    .steuerung .info { flex: 1 1 100%; }
+    .steuerung .knopf { flex: 1; }
+    .taste { display: none; }
+    .auswahl h1 { font-size: 2.1em; }
+    .lektionen { grid-template-columns: repeat(2, minmax(0, 1fr)); overflow: visible; }
+    .lobby, .aufl { grid-template-columns: 1fr; gap: 1.2em; }
+    .qr { width: min(72vw, 20em); }
+    .grosscode { font-size: 3.2em; }
+    .spielerfeld h2 { font-size: 1.7em; }
+    .chip { font-size: 1.15em; }
+    .frage-text { font-size: 1.8em; }
+    .frage-mitte { gap: 1em; }
+    .uhr { width: 5.5em; height: 5.5em; }
     .antworten, .antworten.drei { grid-template-columns: 1fr; }
+    .antwort { font-size: 1.35em; min-height: 3.4em; }
+    .aufl-frage { font-size: 1.4em; }
+    .saeulen { display: flex; flex-direction: column; gap: .7em; height: auto; }
+    .saeule { display: grid; grid-template-columns: minmax(0, 1fr) 2.6em; grid-template-areas: "fuss zahl" "stab stab";
+      column-gap: .5em; row-gap: .3em; align-items: center; }
+    .saeule .fuss { grid-area: fuss; margin: 0; font-size: 1em; min-height: 2.8em; }
+    .saeule .zahl { grid-area: zahl; margin: 0; font-size: 1.5em; }
+    .saeule .stab-raum { grid-area: stab; display: block; height: 10px; background: var(--surface-2); border-radius: 999px; }
+    .saeule .stab { height: 100% !important; min-height: 0; width: var(--p, 0%); border-radius: 999px; transition: width 1s cubic-bezier(.2,.9,.3,1.1); }
+    .saeule.falsch > * { opacity: 1; filter: none; }
+    .saeule.falsch { opacity: .35; filter: grayscale(.4); }
+    .rang-titel { font-size: 2em; }
+    .rangliste { flex: none; height: 62vh; }
+    .zeile .platz { font-size: 1.3em; width: 1.8em; }
+    .zeile .plus { display: none; }
+    .sieger-ansage { font-size: 1.8em; }
+    .kommentar { font-size: 1.15em; }
+    .podest-raum { height: auto; flex: none; }
+    .podest-buehne { position: relative; inset: auto; padding: 1em 0; }
+    .schirm { --podest: .5; }
+    .stufe .wer { font-size: 1.3em; }
+    .stufe.s1 .wer { font-size: 1.8em; }
   }
 </style>
 </head>
@@ -532,7 +574,7 @@
       </div>`);
     buehne.querySelectorAll(".saeule .txt").forEach(einpassen);
     requestAnimationFrame(() => requestAnimationFrame(() =>
-      buehne.querySelectorAll(".stab").forEach((s) => { s.style.height = s.dataset.h + "%"; })));
+      buehne.querySelectorAll(".stab").forEach((s) => { s.style.height = s.dataset.h + "%"; s.style.setProperty("--p", s.dataset.h + "%"); })));
     const letzte = nr === L.fragen.length - 1;
     fuss(istGeheim(nr) && !letzte ? "🤫 Die Rangliste bleibt geheim – weiter geht's!" : "",
          letzte ? "Zur Siegerehrung 🏆" : istGeheim(nr) ? "Nächste Frage ▶" : "Zwischenstand ▶", true);
@@ -721,14 +763,14 @@
     const s = buehne.querySelector(".schirm");
     s.innerHTML = `
       <div class="sieger-ansage" id="ansage">Und gewonnen hat …</div>
-      <div style="position:relative;flex:1;min-height:0">
+      <div class="podest-raum" style="position:relative;flex:1;min-height:0">
         <div class="podest-buehne">
           <div class="podest">
             ${[1, 0, 2].map((i) => top[i] ? `
               <div class="stufe s${i + 1}" id="st${i + 1}">
                 ${i === 0 ? '<div class="krone">👑</div>' : ""}
-                <div class="wer">${esc(top[i].name)}<small>${zahl(top[i].punkte)} Punkte · ${top[i].richtige}/${L.fragen.length} richtig</small></div>
-                <div class="block" data-h="${[34, 24, 16][i]}">${i + 1}</div>
+                <div class="wer"><span class="wname">${esc(top[i].name)}</span><small>${zahl(top[i].punkte)} Punkte · ${top[i].richtige}/${L.fragen.length} richtig</small></div>
+                <div class="block" data-h="${[30, 21, 14][i]}">${i + 1}</div>
               </div>` : `<div class="stufe"></div>`).join("")}
           </div>
           <div class="gleichstand-hinweis" id="gleich"></div>
@@ -737,10 +779,11 @@
     const hoch = (n) => {
       const st = $("#st" + n); if (!st) return;
       const b = st.querySelector(".block");
-      b.style.height = b.dataset.h + "vh";
+      b.style.height = `calc(${b.dataset.h}vh * var(--podest, 1))`;
       spaeter(() => st.classList.add("an"), 500);
     };
     const w = animiert ? 1 : 0;
+    s.querySelectorAll(".wname").forEach(einpassen);
     $("#ansage").textContent = "Das Siegertreppchen";
     spaeter(() => hoch(3), 200 * w);
     spaeter(() => hoch(2), 900 * w);
