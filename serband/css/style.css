@@ -491,6 +491,7 @@ svg[hidden] { display: none !important; }
 .stimmen__title em { font-family: var(--serif); font-weight: 400; color: var(--gold-soft); }
 .stimmen .row { padding: 0 var(--gutter); margin-top: 0; }
 .reviews { display: grid; gap: 16px; }
+.reviews__laden { margin: 0; min-height: 120px; display: grid; place-items: center; color: var(--muted); font-size: 14px; }
 .reviews__row { overflow: hidden; padding: 4px 0; touch-action: pan-y; cursor: grab;
   -webkit-mask-image: linear-gradient(90deg, transparent, #000 6%, #000 94%, transparent); mask-image: linear-gradient(90deg, transparent, #000 6%, #000 94%, transparent); }
 .reviews__row.is-drag { cursor: grabbing; }
