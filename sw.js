@@ -2,7 +2,7 @@
    Cached nur die App-Hülle (HTML, Icons, Manifest) plus Schriften und die Supabase-Bibliothek.
    Antworten von Supabase (Schülerdaten) und anderen Diensten werden NIE gespeichert. */
 
-const CACHE_VERSION = "kompass-v9";
+const CACHE_VERSION = "kompass-v10";
 const CORE_FILES = [
   "./index.html",
   "./lernszenen.js",
@@ -22,6 +22,9 @@ const ERLAUBTE_FREMDE = [
 ];
 
 function darfCachen(url) {
+  // Die Landingpage im Unterordner serband/ gehört nicht zur App: nicht zwischenspeichern
+  // (sonst landen ihre großen Hintergrundvideos im Speicher des Kompass)
+  if (url.origin === self.location.origin && url.pathname.indexOf("/serband/") !== -1) return false;
   if (url.origin === self.location.origin) return true;
   return ERLAUBTE_FREMDE.indexOf(url.origin) !== -1;
 }
