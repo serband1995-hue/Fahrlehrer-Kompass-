@@ -77,15 +77,9 @@ function fillContent() {
     img.src = f.klein || src;
   });
   if (!$("#vowPhoto")) $("#vow").classList.add("vow--text");
-  // echte Screenshots der Apps statt Beispielansichten
-  const shots = CONFIG.screenshots || {};
-  $$("[data-shot]").forEach((d) => {
-    const src = shots[d.dataset.shot];
-    if (!src) return;
-    const img = new Image();
-    img.src = src; img.alt = ""; img.loading = "lazy";
-    $(".device__screen", d).replaceChildren(img);
-  });
+  // Sprachen der Fahr-Akademie aus der Konfiguration („A, B und C“)
+  const sp = CONFIG.sprachen || [];
+  if (sp.length) $$("[data-sprachen]").forEach((el) => { const w = sp.map((x) => "\u2068" + x + "\u2069"); el.textContent = w.length > 1 ? w.slice(0, -1).join(", ") + " und " + w[w.length - 1] : w[0]; });
   if (!CONFIG.bewertungen.some((b) => !b.platzhalter)) $("#stimmen").remove();
   try {
     const qr = window.qrcode(0, "M");
@@ -627,6 +621,7 @@ function startFilm() {
   setupProlog();
   setupTitles();
   setupFloats();
+  setupTour();
   setupQuiz();
   setupVow();
   setupShot();
@@ -703,7 +698,7 @@ function setupTitles() {
     gsap.from($$(".line > *", h), { yPercent: 110, duration: 1.3, ease: "expo.out", stagger: 0.1, scrollTrigger: { trigger: h, start: "top 80%" } });
     if (!reducedMotion) gsap.from($(".title", h), { scale: 0.9, filter: finePointer ? "blur(10px)" : "blur(6px)", duration: 1.4, ease: "expo.out", clearProps: "filter,scale", scrollTrigger: { trigger: h, start: "top 80%" } });
   });
-  $$(".story p, .story .trio li, .shot .card__cap, .promise__honest, .tool__text > *, .parts li, .faq details, .road__step, .book, .rate, .pause, .quiz, .epilog > *").forEach((el) => {
+  $$(".story p, .story .trio li, .shot .card__cap, .promise__honest, .tour__intro > *, .tour__cta, .faq details, .road__step, .book, .rate, .pause, .quiz, .epilog > *").forEach((el) => {
     gsap.from(el, { y: 30, opacity: 0, duration: 1, ease: "power3.out", scrollTrigger: { trigger: el, start: "top 88%" } });
   });
 }
@@ -728,6 +723,34 @@ function setupFloats() {
     const floats = $$(".float3d");
     gsap.ticker.add(() => floats.forEach((f) => gsap.set(f, { rotateY: mx * 10, rotateX: -my * 6 })));
   }
+}
+
+/* App-Tour (Kapitel IV): der Schritt in der Bildschirmmitte bestimmt das Bild im Handy */
+function setupTour() {
+  const tour = $("#tour");
+  if (!tour) return;
+  const steps = $$(".tour__step", tour), shots = $$(".tour__shot", tour), dots = $$("#tourDots i"), label = $("#tourLabel");
+  const names = { kompass: "Fahrlehrer-Kompass", akademie: "Fahr-Akademie" };
+  let cur = -1;
+  const set = (i) => {
+    if (i === cur) return;
+    cur = i;
+    shots.forEach((s, k) => s.classList.toggle("is-on", k === i));
+    dots.forEach((d, k) => d.classList.toggle("is-on", k === i));
+    steps.forEach((s, k) => s.classList.toggle("is-active", k === i));
+    label.textContent = names[steps[i].dataset.app] || "";
+    // nächstes Bild schon laden, damit der Wechsel ohne Lücke klappt
+    [shots[i], shots[i + 1]].forEach((s) => { if (s) s.loading = "eager"; });
+  };
+  set(0);
+  steps.forEach((s, i) => ScrollTrigger.create({
+    trigger: s, start: "top 55%", end: "bottom 55%",
+    onToggle: (st) => st.isActive && set(i)
+  }));
+  // am Handy: Bild je Schritt kommt leicht vergrößert herein
+  if (!reducedMotion) $$(".tour__inline .device", tour).forEach((d) => {
+    gsap.fromTo(d, { scale: 0.9, rotateX: 10, opacity: 0.4 }, { scale: 1, rotateX: 0, opacity: 1, ease: "none", scrollTrigger: { trigger: d, start: "top bottom", end: "top 45%", scrub: 0.6 } });
+  });
 }
 
 /* Farbtypen-Quiz */
@@ -853,7 +876,7 @@ function setupDepth() {
   if (reducedMotion) return;
   const max = finePointer ? 8 : 5;
   const sel = finePointer
-    ? ".chead, .story, .tool, .deal, .road, .faq-wrap, .stimmen"
+    ? ".chead, .story, .tour__intro, .deal, .road, .faq-wrap, .stimmen"
     : ".chead, .shot";
   const items = $$(sel).map((el) => [el, el, max]);
   // die bildschirmhohe Versprechen-Fläche am Handy nur ausblenden, nicht weichzeichnen
