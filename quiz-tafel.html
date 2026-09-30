@@ -169,6 +169,17 @@
   .stufe.s1.an .krone { opacity: 1; transform: none; }
   .gleichstand-hinweis { margin-top: .8em; color: var(--gold); font-weight: 700; font-size: 1.2em; text-align: center; min-height: 1.4em; }
 
+  /* Geheime Runde, Kommentar im Rennen */
+  .geheim { background: var(--gold-soft); color: var(--gold); border: 1px solid rgba(224,180,58,.45); border-radius: 999px;
+    padding: .15em .8em; font-size: .9em; margin-left: .4em; }
+  .geheim-hinweis { text-align: center; color: var(--gold); font-weight: 800; font-size: 1.35em; margin: -.2em 0 .6em;
+    animation: hochgleiten .5s .8s both; }
+  .kommentar { text-align: center; font-size: 1.55em; font-weight: 800; color: var(--gold); min-height: 1.5em; margin: -.1em 0 .5em; }
+  .kommentar.neu { animation: reinpoppen .45s cubic-bezier(.2,1.4,.4,1) both; }
+  .rennen .zeile .balken { min-width: 11em; }
+  .rennen .zeile .plus { transition-delay: .3s; }
+  .zeile.sieger .balken { box-shadow: 0 0 0 3px #fff, 0 0 40px var(--gold); animation: pulsieren 1.2s 3; }
+
   /* ---------- Overlay (Lehrer-Handy) ---------- */
   .overlay { position: fixed; inset: 0; background: rgba(4, 10, 8, .82); display: grid; place-items: center; z-index: 50; }
   .overlay .karte { padding: 1.8em; text-align: center; max-width: 30em; }
@@ -256,12 +267,16 @@
   function speichern() { try { localStorage.setItem(SPEICHER, JSON.stringify({ ...host, t: Date.now() })); } catch (e) {} }
   function vergessen() { try { localStorage.removeItem(SPEICHER); } catch (e) {} }
   const rangliste = () => Quiz.rangliste(daten ? daten.spieler : []);
+  /* Die letzten 3 Fragen laufen ohne Rangliste – die Spannung bleibt bis zur Siegerehrung */
+  const GEHEIM = 3;
+  const istGeheim = (nr) => nr >= L.fragen.length - GEHEIM;
 
   async function steuern(aktion, frage) {
     if (!host) return;
     try {
-      await Quiz.rpc("quiz_steuern", { p_raum: host.id, p_key: host.key, p_aktion: aktion, p_frage: frage == null ? null : frage });
+      const res = await Quiz.rpc("quiz_steuern", { p_raum: host.id, p_key: host.key, p_aktion: aktion, p_frage: frage == null ? null : frage });
       beob && beob.jetzt();
+      return res || {};
     } catch (e) { hinweis(Quiz.fehlertext(e)); throw e; }
   }
 
@@ -418,7 +433,8 @@
     const r = daten.raum, nr = r.frage_nr, f = L.fragen[nr];
     const reihe = L.fragen.map((_, i) => `<i class="${i < nr ? "fertig" : i === nr ? "jetzt" : ""}"></i>`).join("");
     schirm(`
-      <div class="fkopf"><span>Frage ${nr + 1} von ${L.fragen.length}</span><span class="punkte-reihe">${reihe}</span></div>
+      <div class="fkopf"><span>Frage ${nr + 1} von ${L.fragen.length}</span><span class="punkte-reihe">${reihe}</span>
+        ${istGeheim(nr) ? '<span class="geheim">🤫 Geheime Runde – Rangliste erst bei der Siegerehrung</span>' : ""}</div>
       <div class="frage-text">${esc(f.frage)}</div>
       <div class="frage-mitte">
         <div class="lesen" id="lesen"><div class="balken"><i id="lesebalken"></i></div><p>Lies die Frage … gleich kommen die Antworten!</p></div>
@@ -433,7 +449,7 @@
     let letzteSek = null, phaseAntworten = false;
     const start = new Date(r.frage_start).getTime(), ende = new Date(r.frage_ende).getTime();
     const lesedauer = (r.lesezeit_s || 4) * 1000;
-    fuss("", "Jetzt auflösen", false);
+    fuss("", "", false);   // aufgelöst wird automatisch: wenn alle geantwortet haben oder die Zeit um ist
     const schritt = () => {
       const t = Quiz.jetzt();
       if (t < start) {
@@ -443,7 +459,6 @@
       }
       if (!phaseAntworten) {
         phaseAntworten = true;
-        $("#weiterKnopf").disabled = false;
         $("#lesen").hidden = true; $("#uhr").hidden = false; $("#zaehler").hidden = false; $("#antworten").hidden = false;
         Ton.start();
       }
@@ -466,7 +481,8 @@
     const fertig = daten.spieler.filter((s) => s.beantwortet_nr >= nr).length;
     const el = $("#antwortzahl"); if (el) el.textContent = `${fertig} / ${alle}`;
     if (Quiz.jetzt() >= new Date(daten.raum.frage_start).getTime()) {
-      $("#info").textContent = fertig === alle && alle > 0 ? "Alle haben geantwortet!" : "Antworten laufen ein …";
+      $("#info").textContent = fertig === alle && alle > 0 ? "Alle haben geantwortet – gleich kommt die Auflösung!"
+        : `Warte auf alle Antworten … noch ${alle - fertig} ${alle - fertig === 1 ? "Person" : "Personen"}`;
       if (alle > 0 && fertig === alle && aufgeloestFuer !== nr) spaeter(autoAufloesen, 700);
     }
   }
@@ -475,8 +491,10 @@
     const nr = daten.raum.frage_nr;
     if (aufgeloestFuer === nr) return;
     aufgeloestFuer = nr;
-    try { await steuern("aufloesen", nr); }
-    catch (e) { setTimeout(() => { if (aufgeloestFuer === nr) aufgeloestFuer = -1; }, 1500); }
+    let ok = false;
+    try { ok = (await steuern("aufloesen", nr)).ok; } catch (e) {}
+    // abgelehnt (z. B. noch nicht alle fertig laut Server): später erneut versuchen
+    if (!ok) setTimeout(() => { if (aufgeloestFuer === nr) aufgeloestFuer = -1; }, 1000);
   }
   function stopTakt() { if (takt) clearInterval(takt); takt = null; }
 
@@ -517,7 +535,8 @@
     requestAnimationFrame(() => requestAnimationFrame(() =>
       buehne.querySelectorAll(".stab").forEach((s) => { s.style.height = s.dataset.h + "%"; })));
     const letzte = nr === L.fragen.length - 1;
-    fuss("", letzte ? "Zur Siegerehrung 🏆" : "Zwischenstand ▶", true);
+    fuss(istGeheim(nr) && !letzte ? "🤫 Die Rangliste bleibt geheim – weiter geht's!" : "",
+         letzte ? "Zur Siegerehrung 🏆" : istGeheim(nr) ? "Nächste Frage ▶" : "Zwischenstand ▶", true);
   }
 
   /* Zeilenhöhe der Rangliste: füllt den Platz, bei wenigen Spielern größer und senkrecht mittig */
@@ -538,6 +557,7 @@
     const zeigen = liste.slice(0, 8);
     const s = schirm(`
       <div class="rang-titel">Zwischenstand<small>nach Frage ${nr + 1} von ${L.fragen.length} · ${liste.length} Mitspieler</small></div>
+      ${istGeheim(nr + 1) ? `<div class="geheim-hinweis">🤫 Letzter Blick auf die Rangliste! Die letzten ${GEHEIM} Fragen laufen geheim – alles ist noch drin.</div>` : ""}
       <div class="rangliste" id="rl"></div>`);
     const rl = $("#rl");
     const hoehe = ranglistenHoehe(rl, zeigen.length);
@@ -570,65 +590,134 @@
     fuss(liste.length > 8 ? `… und ${liste.length - 8} weitere` : "", "Nächste Frage ▶", true);
   }
 
-  /* ---------- 6. Siegerehrung ---------- */
-  function zeigeEnde(animiert) {
+  /* ---------- 6. Siegerehrung: das Rennen Frage für Frage ---------- */
+  async function zeigeEnde(animiert) {
     stopTakt();
     vergessen();
     const liste = rangliste();
-    const zeigen = liste.slice(0, 10);
     schirm(`
       <div class="sieger-ansage" id="ansage">Die Siegerehrung 🏆</div>
-      <div class="rangliste" id="rl"></div>`);
-    const rl = $("#rl");
-    const hoehe = ranglistenHoehe(rl, zeigen.length);
-    const maxP = Math.max(1, ...zeigen.map((x) => x.punkte));
-    const zeilen = zeigen.map((sp, i) => {
-      const z = document.createElement("div");
-      z.className = "zeile aus" + (i < 3 ? " p" + (i + 1) : "");
-      z.style.transform = `translateY(${i * hoehe}px)`;
-      const grund = Quiz.gleichstandGrund(sp, zeigen[i + 1]);
-      z.innerHTML = `<div class="platz">${i + 1}.</div>
-        <div class="spur"><div class="balken" style="width:0;min-width:0">
-          <span class="name">${esc(sp.name)}</span>
-          ${grund ? `<span class="gleich">⏱ ${esc(grund)}</span>` : ""}
-          <span class="pkt">0</span></div></div>
-        <div class="plus">${sp.richtige}/${L.fragen.length} ✓</div>`;
-      rl.appendChild(z);
-      return z;
-    });
+      <div class="kommentar" id="kommentar">Wie ist das Rennen gelaufen?</div>
+      <div class="rangliste rennen" id="rl"></div>`);
     fuss(`${liste.length} Mitspieler · Lektion ${L.lektion}`, "", false,
          { text: "Neues Quiz", klick: () => { if (beob) beob.stop(); host = null; zeigeAuswahl(); } });
     $("#weiterKnopf").hidden = true;
-    if (!zeigen.length) { $("#ansage").textContent = "Niemand hat mitgespielt 🙈"; return; }
-
-    // Balken fahren von hinten nach vorne aus, Platz 1 kommt zuletzt mit Trommelwirbel
-    const zeige = (i, ms) => {
-      const z = zeilen[i], sp = zeigen[i], b = z.querySelector(".balken");
-      z.classList.remove("aus");
-      b.style.minWidth = "14em";
-      b.style.width = (30 + 70 * sp.punkte / maxP) + "%";
-      Quiz.zaehlen(z.querySelector(".pkt"), 0, sp.punkte, ms);
-      z.classList.add("an");
-    };
-    if (!animiert) { zeilen.forEach((_, i) => zeige(i, 0)); spaeter(() => podest(liste, false), 50); return; }
-    let t = 600;
-    for (let i = zeilen.length - 1; i >= 1; i--) {
-      const j = i;
-      spaeter(() => { $("#ansage").textContent = `Platz ${j + 1}`; zeige(j, 1000); Ton.tick(j <= 2); }, t);
-      t += j <= 2 ? 1600 : 1000;
-    }
-    spaeter(() => { $("#ansage").textContent = "Und Platz 1 geht an …"; Ton.trommel(2.6); }, t);
-    t += 2800;
-    spaeter(() => {
-      zeige(0, 1200);
-      $("#ansage").textContent = `🏆 ${zeigen[0].name} gewinnt!`;
-      Ton.fanfare();
-      Quiz.konfetti(5000);
-    }, t);
-    spaeter(() => podest(liste, true), t + 5000);
+    if (!liste.length) { $("#ansage").textContent = "Niemand hat mitgespielt 🙈"; $("#kommentar").textContent = ""; return; }
+    if (!animiert) { spaeter(() => podest(liste, false), 50); return; }
+    const gen = generation;
+    let verlauf = null;
+    try { verlauf = await Quiz.rpc("quiz_verlauf", { p_raum: host.id }); } catch (e) {}
+    if (gen !== generation) return;
+    rennen(liste, verlauf || {});
   }
 
-  function podest(liste, animiert) {
+  function rennen(liste, verlauf) {
+    const n = L.fragen.length, MAX = 8;
+    const endIdx = new Map(liste.map((s, i) => [s.id, i]));
+    // Punktestand jedes Spielers nach jeder Frage
+    const kum = {};
+    liste.forEach((sp) => {
+      const pro = verlauf[sp.id] || [];
+      let summe = 0;
+      kum[sp.id] = Array.from({ length: n }, (_, k) => (summe += pro[k] || 0));
+      kum[sp.id][n - 1] = sp.punkte;            // Endstand immer exakt wie in der Rangliste
+    });
+    const rl = $("#rl");
+    const hoehe = ranglistenHoehe(rl, Math.min(MAX, liste.length));
+    const maxP = Math.max(1, ...liste.map((x) => Math.max(...kum[x.id])));   // Skala = höchster Stand im ganzen Rennen
+    const zeilen = new Map();
+    liste.forEach((sp, i) => {
+      const z = document.createElement("div");
+      z.className = "zeile";
+      z.style.transform = `translateY(${Math.min(i, MAX) * hoehe}px)`;
+      z.style.opacity = i < MAX ? 1 : 0;
+      z.innerHTML = `<div class="platz">–</div>
+        <div class="spur"><div class="balken" style="width:11em">
+          <span class="name">${esc(sp.name)}</span><span class="gleich"></span><span class="pkt">0</span></div></div>
+        <div class="plus"></div>`;
+      rl.appendChild(z);
+      zeilen.set(sp.id, z);
+    });
+    const ordnung = (k) => liste.slice().sort((a, b) => (kum[b.id][k] - kum[a.id][k]) || (endIdx.get(a.id) - endIdx.get(b.id)));
+    const fuehrende = [];
+    let vorher = null;
+
+    const kommentar = (text) => {
+      const el = $("#kommentar"); if (!el) return;
+      el.classList.remove("neu"); void el.offsetWidth; el.classList.add("neu");
+      el.textContent = text;
+    };
+    const kommentiere = (k, jetzt) => {
+      const f = jetzt[0], rang = (liste_, id) => liste_.findIndex((x) => x.id === id);
+      const t = [];
+      if (!vorher) t.push(`🚀 ${f.name} startet am stärksten!`);
+      else if (vorher[0].id !== f.id) t.push(`🔝 ${f.name} übernimmt die Führung!`);
+      else {
+        const abgerutscht = vorher.slice(0, 3).find((x) => rang(jetzt, x.id) >= 3);
+        const aufgestiegen = jetzt.slice(0, 3).find((x) => rang(vorher, x.id) >= 3);
+        let bester = null, plaetze = 1;
+        jetzt.forEach((x, i) => { const d = rang(vorher, x.id) - i; if (d > plaetze) { plaetze = d; bester = x; } });
+        if (abgerutscht) t.push(`📉 ${abgerutscht.name} rutscht auf Platz ${rang(jetzt, abgerutscht.id) + 1} ab`);
+        else if (aufgestiegen) t.push(`📈 ${aufgestiegen.name} springt auf Platz ${rang(jetzt, aufgestiegen.id) + 1}!`);
+        else if (bester) t.push(`⬆️ ${bester.name} macht ${plaetze} Plätze gut`);
+        else t.push(`${f.name} bleibt vorne`);
+      }
+      if (jetzt.length > 1 && k > 0) {
+        const abstand = kum[f.id][k] - kum[jetzt[1].id][k];
+        if (abstand < 400) t.push(`⚔️ Kopf an Kopf mit ${jetzt[1].name} – nur ${zahl(abstand)} ${abstand === 1 ? "Punkt" : "Punkte"}!`);
+      }
+      kommentar(t.join("  ·  "));
+    };
+    const schritt = (k, ms) => {
+      const jetzt = ordnung(k);
+      jetzt.forEach((sp, r) => {
+        const z = zeilen.get(sp.id), v = kum[sp.id][k], alt = k > 0 ? kum[sp.id][k - 1] : 0;
+        z.style.transform = `translateY(${Math.min(r, MAX) * hoehe}px)`;
+        z.style.opacity = r < MAX ? 1 : 0;
+        z.classList.remove("p1", "p2", "p3");
+        if (r < 3) z.classList.add("p" + (r + 1));
+        z.querySelector(".platz").textContent = (r + 1) + ".";
+        z.querySelector(".balken").style.width = `calc(11em + (100% - 11em) * ${Math.min(1, v / maxP)})`;
+        Quiz.zaehlen(z.querySelector(".pkt"), alt, v, ms);
+        const plus = z.querySelector(".plus");
+        plus.textContent = v > alt ? "+" + zahl(v - alt) : "";
+        z.classList.remove("an"); void z.offsetWidth; z.classList.add("an");
+      });
+      if (!fuehrende.includes(jetzt[0].name)) fuehrende.push(jetzt[0].name);
+      kommentiere(k, jetzt);
+      vorher = jetzt;
+      Ton.tick(k >= n - GEHEIM);
+    };
+
+    let t = 900;
+    for (let k = 0; k < n - 1; k++) {
+      const geheim = k >= n - GEHEIM;
+      spaeter(() => {
+        $("#ansage").textContent = geheim ? `🤫 Frage ${k + 1} – die geheime Runde` : `Nach Frage ${k + 1} von ${n}`;
+        schritt(k, geheim ? 1800 : 1000);
+      }, t);
+      t += geheim ? 3400 : 1900;
+    }
+    spaeter(() => { $("#ansage").textContent = "Die letzte Frage entscheidet …"; kommentar("🥁"); Ton.trommel(2.8); }, t);
+    t += 3100;
+    spaeter(() => { $("#ansage").textContent = `Frage ${n} – das Finale`; schritt(n - 1, 2200); }, t);
+    t += 2700;
+    spaeter(() => {
+      const sieger = liste[0];
+      $("#ansage").textContent = `🏆 ${sieger.name} gewinnt!`;
+      zeilen.get(sieger.id).classList.add("sieger");
+      const andere = fuehrende.filter((x) => x !== sieger.name);
+      const g = Quiz.gleichstandGrund(liste[0], liste[1]);
+      kommentar(g ? `Punktgleich mit ${liste[1].name} – entschieden, weil ${sieger.name} ${g} war!`
+              : andere.length ? `Zwischendurch vorne: ${andere.join(", ")} – aber am Ende holt ${sieger.name} das Ding!`
+              : liste.length > 1 ? `Von Anfang bis Ende vorne – stark, ${sieger.name}!` : "");
+      Ton.fanfare();
+      Quiz.konfetti(6000);
+    }, t);
+    spaeter(() => podest(liste, true, true), t + 6500);
+  }
+
+  function podest(liste, animiert, ohneFanfare) {
     const top = liste.slice(0, 3);
     const s = buehne.querySelector(".schirm");
     s.innerHTML = `
@@ -661,7 +750,8 @@
       $("#ansage").textContent = `🏆 ${top[0].name} gewinnt!`;
       const g = Quiz.gleichstandGrund(top[0], top[1]);
       if (g) $("#gleich").textContent = `Punktgleich mit ${top[1].name} – entschieden, weil ${top[0].name} ${g} war.`;
-      if (animiert) { Ton.fanfare(); Quiz.konfetti(7000); }
+      if (animiert && !ohneFanfare) Ton.fanfare();
+      if (animiert) Quiz.konfetti(7000);
     }, 1700 * w + 50);
   }
 
@@ -674,11 +764,11 @@
     const frei = setTimeout(() => { beschaeftigt = false; }, 4000);
     try {
       if (r.status === "lobby") { if (daten.spieler.length) await steuern("frage", 0); else { beschaeftigt = false; } }
-      else if (r.status === "frage") {
-        if (Quiz.jetzt() >= new Date(r.frage_start).getTime()) { aufgeloestFuer = r.frage_nr; await steuern("aufloesen", r.frage_nr); }
-        else beschaeftigt = false;
+      else if (r.status === "aufloesung") {
+        if (r.frage_nr >= r.anzahl - 1) await steuern("ende", r.frage_nr);
+        else if (istGeheim(r.frage_nr)) await steuern("frage", r.frage_nr + 1);
+        else await steuern("zwischenstand", r.frage_nr);
       }
-      else if (r.status === "aufloesung") await steuern(r.frage_nr >= r.anzahl - 1 ? "ende" : "zwischenstand", r.frage_nr);
       else if (r.status === "zwischenstand") await steuern("frage", r.frage_nr + 1);
       else beschaeftigt = false;
     } catch (e) { beschaeftigt = false; clearTimeout(frei); }

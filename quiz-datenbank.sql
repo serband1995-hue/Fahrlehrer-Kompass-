@@ -1,5 +1,6 @@
 -- Fahrlehrer-Kompass – Live-Quiz „Lernzielkontrolle“: Datenbank (Supabase-Projekt „Fahrlehrer-Kompass“)
--- Stand dieser Datei = eingespielte Migrationen „quiz_lernzielkontrolle“ und „quiz_steuern_absichern“.
+-- Stand dieser Datei = eingespielte Migrationen „quiz_lernzielkontrolle“, „quiz_steuern_absichern“
+-- und „quiz_geheime_runde_und_verlauf“.
 -- Nur zur Dokumentation bzw. zum Neuaufsetzen; im Projekt ist alles bereits vorhanden.
 --
 -- Prinzip: Die Tafel legt einen Raum an, Handys treten per 4-stelligem Code bei. Lösungen, Host-Schlüssel und
@@ -63,6 +64,7 @@ create table public.quiz_antworten (
   richtig boolean not null,
   zeit_ms int not null,
   punkte int not null,
+  bonus int not null default 0,          -- Serienbonus, beim Auflösen vermerkt (für das Rennen in der Siegerehrung)
   primary key (spieler_id, frage_nr)
 );
 create index quiz_antworten_raum_idx on public.quiz_antworten (raum_id, frage_nr);
@@ -181,10 +183,12 @@ $$;
 
 -- Steuerung (Tafel oder Lehrer-Handy). Jeder Übergang nur aus dem erwarteten Zustand und für die erwartete Frage:
 -- doppelte oder veraltete Klicks bewirken nichts ({ok:false}).
+-- Auflösen erst, wenn alle Mitspieler geantwortet haben oder die Zeit abgelaufen ist.
+-- Die letzten 3 Fragen laufen ohne Zwischenstand (Rangliste bleibt bis zur Siegerehrung geheim).
 create or replace function public.quiz_steuern(p_raum uuid, p_key uuid, p_aktion text, p_frage int default null)
 returns jsonb language plpgsql security definer set search_path = public, pg_temp as $$
 declare
-  r quiz_raeume; g quiz_geheim; v_dauer int; v_loes int;
+  r quiz_raeume; g quiz_geheim; v_dauer int; v_loes int; v_alle int; v_fertig int;
   nein constant jsonb := jsonb_build_object('ok', false);
 begin
   select * into g from quiz_geheim where raum_id = p_raum and host_key = p_key;
@@ -193,7 +197,9 @@ begin
   v_dauer := r.dauer_s * 1000;
 
   if p_aktion = 'frage' then
-    if p_frage is distinct from r.frage_nr + 1 or p_frage >= r.anzahl or r.status not in ('lobby', 'zwischenstand') then
+    -- nach dem Zwischenstand, oder direkt nach der Auflösung der geheimen Fragen (drittletzte und vorletzte)
+    if p_frage is distinct from r.frage_nr + 1 or p_frage >= r.anzahl
+       or not (r.status in ('lobby', 'zwischenstand') or (r.status = 'aufloesung' and r.frage_nr >= r.anzahl - 3)) then
       return nein || jsonb_build_object('jetzt', now());
     end if;
     update quiz_raeume set status = 'frage', frage_nr = p_frage,
@@ -206,28 +212,30 @@ begin
     if r.status <> 'frage' or p_frage is distinct from r.frage_nr or now() < r.frage_start then
       return nein || jsonb_build_object('jetzt', now());
     end if;
+    select count(*) into v_alle from quiz_spieler where raum_id = p_raum;
+    select count(*) into v_fertig from quiz_antworten where raum_id = p_raum and frage_nr = r.frage_nr;
+    if v_fertig < v_alle and now() <= r.frage_ende + interval '1 second' then
+      return nein || jsonb_build_object('grund', 'NICHT_ALLE', 'jetzt', now());
+    end if;
     v_loes := g.loesungen[r.frage_nr + 1];
-    -- Punkte, Serien (Bonus = min(bisherige Serie, 3) × 100) und Zeiten der Spieler fortschreiben
-    with a as (
-      select sp.id, an.richtig, an.zeit_ms, an.punkte
+    -- Serienbonus (min(bisherige Serie, 3) × 100) an der Antwort vermerken
+    update quiz_antworten an set bonus = case when an.richtig then least(sp.serie, 3) * 100 else 0 end
       from quiz_spieler sp
-      left join quiz_antworten an on an.spieler_id = sp.id and an.frage_nr = r.frage_nr
-      where sp.raum_id = p_raum and sp.ausgewertet_nr < r.frage_nr
-    ), b as (
-      select a.*, case when a.richtig then least(sp.serie, 3) * 100 else 0 end as bonus
-      from a join quiz_spieler sp on sp.id = a.id
-    )
+      where sp.id = an.spieler_id and an.raum_id = p_raum and an.frage_nr = r.frage_nr and sp.ausgewertet_nr < r.frage_nr;
+    -- Punkte, Serien und Zeiten der Spieler fortschreiben
     update quiz_spieler sp set
-      punkte = sp.punkte + coalesce(b.punkte, 0) + b.bonus,
-      richtige = sp.richtige + case when b.richtig then 1 else 0 end,
-      serie = case when b.richtig then sp.serie + 1 else 0 end,
-      zeit_richtig_ms = sp.zeit_richtig_ms + case when b.richtig then b.zeit_ms else 0 end,
-      zeit_gesamt_ms = sp.zeit_gesamt_ms + coalesce(b.zeit_ms, v_dauer),
+      punkte = sp.punkte + coalesce(an.punkte, 0) + coalesce(an.bonus, 0),
+      richtige = sp.richtige + case when an.richtig then 1 else 0 end,
+      serie = case when an.richtig then sp.serie + 1 else 0 end,
+      zeit_richtig_ms = sp.zeit_richtig_ms + case when an.richtig then an.zeit_ms else 0 end,
+      zeit_gesamt_ms = sp.zeit_gesamt_ms + coalesce(an.zeit_ms, v_dauer),
       ausgewertet_nr = r.frage_nr,
-      letzte_richtig = b.richtig,
-      letzte_punkte = coalesce(b.punkte, 0) + b.bonus,
-      letzte_bonus = b.bonus
-    from b where sp.id = b.id;
+      letzte_richtig = an.richtig,
+      letzte_punkte = coalesce(an.punkte, 0) + coalesce(an.bonus, 0),
+      letzte_bonus = coalesce(an.bonus, 0)
+    from quiz_spieler x
+    left join quiz_antworten an on an.spieler_id = x.id and an.frage_nr = r.frage_nr
+    where sp.id = x.id and x.raum_id = p_raum and x.ausgewertet_nr < r.frage_nr;
     update quiz_raeume set status = 'aufloesung', aufloesung = v_loes,
       verteilung = (select coalesce(jsonb_object_agg(antwort::text, n), '{}'::jsonb)
                     from (select antwort, count(*) n from quiz_antworten
@@ -235,7 +243,7 @@ begin
       where id = p_raum;
 
   elsif p_aktion = 'zwischenstand' then
-    if r.status <> 'aufloesung' or p_frage is distinct from r.frage_nr or r.frage_nr >= r.anzahl - 1 then
+    if r.status <> 'aufloesung' or p_frage is distinct from r.frage_nr or r.frage_nr >= r.anzahl - 3 then
       return nein || jsonb_build_object('jetzt', now());
     end if;
     update quiz_raeume set status = 'zwischenstand' where id = p_raum;
@@ -252,6 +260,17 @@ begin
   return jsonb_build_object('ok', true, 'jetzt', now());
 end $$;
 
+-- Punkte je Spieler und Frage (inkl. Bonus) für das Rennen in der Siegerehrung – erst wenn das Quiz vorbei ist
+create or replace function public.quiz_verlauf(p_raum uuid)
+returns jsonb language sql stable security definer set search_path = public, pg_temp as $$
+  select coalesce(jsonb_object_agg(sp.id, (
+      select jsonb_agg(coalesce((select an.punkte + an.bonus from quiz_antworten an
+                                  where an.spieler_id = sp.id and an.frage_nr = i), 0) order by i)
+      from generate_series(0, r.anzahl - 1) i)), '{}'::jsonb)
+  from quiz_raeume r join quiz_spieler sp on sp.raum_id = r.id
+  where r.id = p_raum and r.status = 'ende'
+$$;
+
 -- Spieler entfernen (z. B. unpassender Name)
 create or replace function public.quiz_entfernen(p_raum uuid, p_key uuid, p_spieler uuid)
 returns void language plpgsql security definer set search_path = public, pg_temp as $$
@@ -264,10 +283,12 @@ end $$;
 
 revoke all on function public.quiz_erstellen(int, text, jsonb, int[], int), public.quiz_beitreten(text, text),
   public.quiz_antworten_senden(uuid, uuid, int, int), public.quiz_ich(uuid, uuid),
-  public.quiz_steuern(uuid, uuid, text, int), public.quiz_entfernen(uuid, uuid, uuid), public.quiz_zeit() from public;
+  public.quiz_steuern(uuid, uuid, text, int), public.quiz_entfernen(uuid, uuid, uuid), public.quiz_zeit(),
+  public.quiz_verlauf(uuid) from public;
 grant execute on function public.quiz_erstellen(int, text, jsonb, int[], int), public.quiz_beitreten(text, text),
   public.quiz_antworten_senden(uuid, uuid, int, int), public.quiz_ich(uuid, uuid),
-  public.quiz_steuern(uuid, uuid, text, int), public.quiz_entfernen(uuid, uuid, uuid), public.quiz_zeit() to anon, authenticated;
+  public.quiz_steuern(uuid, uuid, text, int), public.quiz_entfernen(uuid, uuid, uuid), public.quiz_zeit(),
+  public.quiz_verlauf(uuid) to anon, authenticated;
 
 -- Datensparsam: Quiz-Räume samt Namen und Antworten nach einem Tag löschen
 select cron.schedule('quiz-aufraeumen', '17 * * * *', $$delete from public.quiz_raeume where erstellt < now() - interval '1 day'$$);
