@@ -24,7 +24,7 @@ Dort ist alles, was noch fehlt, mit `TODO` markiert:
 - `sprachen` – Sprachen der Fahr-Akademie, erscheinen in der App-Tour (Kapitel IV). App-Bilder: `img/app-*.jpg` (Beispieldaten „Lea Beispiel“, keine echten Schüler, keine Bestehensquote)
 - `links.bewerten` – direkter Google-Link „Rezension schreiben“ (wird auch als QR-Code gezeigt)
 - `videos.*` und `zahlen` stehen noch in der Konfiguration, werden von der Seite aber derzeit nicht angezeigt
-- `bewertungen` – echte Google-Bewertungen im Wortlaut (Name gekürzt, ohne Datum). Laufband „Frag nicht mich. Frag meine Fahrschüler.“ über dem Epilog; lange Texte öffnen sich per „Ganze Bewertung lesen“. Ohne Einträge wird der Abschnitt ausgeblendet. `links.bewertungen` = Knopf „Alle Bewertungen auf Google“
+- Bewertungen – werden in der Verwaltung der Fahr-Akademie gepflegt (Reiter „Bewertungen“, nur Super-Admin) und beim Heranscrollen über `website_bewertungen_liste()` geladen. Laufband „Frag nicht mich. Frag meine Fahrschüler.“ über dem Epilog. Kommt keine Antwort oder ist alles ausgeblendet, verschwindet der Bereich. `links.bewertungen` = Knopf „Alle Bewertungen auf Google“
 - `impressum.html` und `datenschutz.html` – gelb markierte Stellen ausfüllen
 
 ## Aufbau

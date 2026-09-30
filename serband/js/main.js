@@ -80,7 +80,6 @@ function fillContent() {
   // Sprachen der Fahr-Akademie aus der Konfiguration („A, B und C“)
   const sp = CONFIG.sprachen || [];
   if (sp.length) $$("[data-sprachen]").forEach((el) => { const w = sp.map((x) => "\u2068" + x + "\u2069"); el.textContent = w.length > 1 ? w.slice(0, -1).join(", ") + " und " + w[w.length - 1] : w[0]; });
-  if (!CONFIG.bewertungen.some((b) => !b.platzhalter)) $("#stimmen").remove();
   try {
     const qr = window.qrcode(0, "M");
     qr.addData(L.bewerten);
@@ -365,10 +364,13 @@ function setupGame() {
    hält sie an; ziehen/wischen geht auch. Bei „Bewegung reduzieren“: normale Wischliste. */
 function setupReviews() {
   const box = $("#reviews");
-  // Startbestand aus der Konfiguration; die aktuellen Bewertungen kommen aus der
-  // Verwaltung der Fahr-Akademie (Supabase), sobald man in die Nähe scrollt
-  let list = CONFIG.bewertungen.filter((b) => !b.platzhalter && b.text);
-  if (!box || !list.length) return;
+  // Einzige Quelle ist die Verwaltung der Fahr-Akademie (Supabase): nur dort sichtbare
+  // Bewertungen erscheinen. Geladen wird, sobald man in die Nähe scrollt. Ohne Antwort
+  // verschwindet der Bereich – lieber keine Bewertungen als ausgeblendete.
+  let list = [];
+  const B = CONFIG.bestenliste;
+  if (!box) return;
+  if (!B || !B.url) { $("#stimmen").remove(); return; }
   const sterne = (b) => Math.max(1, Math.min(5, parseInt(b.sterne, 10) || 5));
   const card = (b, i) => {
     const el = document.createElement("article");
@@ -388,7 +390,10 @@ function setupReviews() {
   const wide = matchMedia("(min-width: 760px)");
   let rows = [];
 
+  let spaeter = false;
   function build() {
+    if (rows.some((r) => r.drag)) { spaeter = true; return; }
+    spaeter = false;
     rows = [];
     box.replaceChildren();
     const n = wide.matches && list.length > 5 ? 2 : 1;
@@ -399,14 +404,23 @@ function setupReviews() {
       const rail = document.createElement("div");
       rail.className = "reviews__rail";
       items.forEach(([b, i]) => rail.append(card(b, i)));
-      if (!reducedMotion) {
-        // zweite Hälfte nur fürs endlose Laufen: unsichtbar für Vorleser und Tab-Taste
-        items.forEach(([b, i]) => { const c = card(b, i); c.setAttribute("aria-hidden", "true"); c.inert = true; c.classList.add("is-copy"); rail.append(c); });
-      }
       row.append(rail);
-      // Fokus darf die Reihe nicht selbst verschieben – das macht die Laufband-Position
-      if (!reducedMotion) row.addEventListener("scroll", () => (row.scrollLeft = 0));
       box.append(row);
+      if (!reducedMotion) {
+        // Kopien nur fürs endlose Laufen: für Vorleser und Tab-Taste unsichtbar, antippen geht
+        const kopie = () => items.forEach(([b, i]) => {
+          const c = card(b, i);
+          c.setAttribute("aria-hidden", "true"); c.classList.add("is-copy");
+          $(".review__more", c).tabIndex = -1;
+          rail.append(c);
+        });
+        // eine Hälfte muss breiter sein als die Reihe, sonst läuft eine Lücke mit
+        const satz = rail.scrollWidth + 16;
+        const mal = Math.max(1, Math.ceil(row.clientWidth / satz));
+        for (let k = 1; k < mal * 2; k++) kopie();
+        // Fokus darf die Reihe nicht selbst verschieben – das macht die Laufband-Position
+        row.addEventListener("scroll", () => (row.scrollLeft = 0));
+      }
       rows.push({ row, rail, x: 0, vx: 0, dir: r % 2 ? 1 : -1, w: 0, hover: false, focus: false, until: 0, drag: null });
     }
     measure();
@@ -414,15 +428,18 @@ function setupReviews() {
 
   // Breite einer Hälfte; lange Texte bekommen „Ganze Bewertung lesen“
   function measure() {
+    let zuSchmal = false;
     rows.forEach((o) => {
       const cards = $$(".review", o.rail), half = cards.length / 2;
       o.w = reducedMotion || !half ? 0 : cards[half].offsetLeft - cards[0].offsetLeft;
+      if (o.w && o.w < o.row.clientWidth) zuSchmal = true;
       if (o.dir > 0 && o.w && o.x === 0) o.x = -o.w; // rechtslaufende Reihe startet versetzt
     });
     $$(".review", box).forEach((c) => {
       const t = $(".review__text", c);
       c.classList.toggle("is-long", t.scrollHeight > t.clientHeight + 2);
     });
+    if (zuSchmal) build();
   }
 
   // Tippen auf eine Karte öffnet die ganze Bewertung (nicht nach dem Ziehen)
@@ -453,6 +470,7 @@ function setupReviews() {
     box.addEventListener("pointermove", (e) => {
       const o = rows.find((r) => r.drag && r.drag.id === e.pointerId);
       if (!o) return;
+      if (e.pointerType === "mouse" && e.buttons === 0) return up(e); // außerhalb losgelassen
       const d = o.drag, dx = e.clientX - d.x0;
       if (!d.on) {
         // erst waagerecht ziehen, dann festhalten – senkrecht bleibt normales Scrollen
@@ -472,9 +490,11 @@ function setupReviews() {
       o.row.classList.remove("is-drag");
       o.until = performance.now() + (e.pointerType === "mouse" ? 0 : 1800); // nach dem Wischen kurz stehen lassen
       setTimeout(() => (o.moved = 0), 0);
+      if (spaeter) build();
     };
-    box.addEventListener("pointerup", up);
-    box.addEventListener("pointercancel", up);
+    // auf dem ganzen Fenster hören: Loslassen außerhalb der Reihe beendet das Ziehen auch
+    addEventListener("pointerup", up);
+    addEventListener("pointercancel", up);
     // Tastatur: fokussierte Karte ins Bild holen und die Reihe anhalten
     box.addEventListener("focusin", (e) => {
       const o = rowOf(e.target), c = e.target.closest(".review");
@@ -507,33 +527,33 @@ function setupReviews() {
     });
   }
 
-  build();
-  const B = CONFIG.bestenliste;
-  if (B && B.url && "IntersectionObserver" in window) {
-    const io = new IntersectionObserver(async (en) => {
-      if (!en[0].isIntersecting) return;
-      io.disconnect();
-      try {
-        const ctl = new AbortController(), t = setTimeout(() => ctl.abort(), 8000);
-        const r = await fetch(`${B.url}/rest/v1/rpc/website_bewertungen_liste`, {
-          method: "POST", headers: { apikey: B.key, "Content-Type": "application/json" }, body: "{}", signal: ctl.signal
-        });
-        clearTimeout(t);
-        if (!r.ok) return;
-        const d = await r.json();
-        const neu = (Array.isArray(d) ? d : []).filter((b) => b && b.name && b.text);
-        // leer oder unverändert: Startbestand bleibt stehen
-        if (!neu.length || JSON.stringify(neu.map((b) => [b.name, b.text, sterne(b)])) === JSON.stringify(list.map((b) => [b.name, b.text, sterne(b)]))) return;
-        list = neu;
-        build();
-      } catch (e) { /* ohne Verbindung bleibt der Startbestand */ }
-    }, { rootMargin: "1500px 0px" });
+  box.innerHTML = '<p class="reviews__laden">Bewertungen werden geladen …</p>';
+  // Bereich entfernen; die Seite wird kürzer, also Scroll-Auslöser neu berechnen
+  const weg = () => { if ($("#stimmen")) { $("#stimmen").remove(); ScrollTrigger.refresh(); } };
+  const laden = async () => {
+    try {
+      const ctl = new AbortController(), t = setTimeout(() => ctl.abort(), 10000);
+      const r = await fetch(`${B.url}/rest/v1/rpc/website_bewertungen_liste`, {
+        method: "POST", headers: { apikey: B.key, "Content-Type": "application/json" }, body: "{}", signal: ctl.signal
+      });
+      clearTimeout(t);
+      if (!r.ok) return weg();
+      const d = await r.json();
+      list = (Array.isArray(d) ? d : []).filter((b) => b && b.name && b.text);
+      if (!list.length) return weg(); // alles ausgeblendet
+      build();
+      if (document.fonts && document.fonts.ready) document.fonts.ready.then(measure);
+      ScrollTrigger.refresh();
+    } catch (e) { weg(); }
+  };
+  if ("IntersectionObserver" in window) {
+    const io = new IntersectionObserver((en) => { if (en[0].isIntersecting) { io.disconnect(); laden(); } }, { rootMargin: "1500px 0px" });
     io.observe(box);
-  }
+  } else laden();
   let rt = 0;
   addEventListener("resize", () => { clearTimeout(rt); rt = setTimeout(measure, 150); });
-  wide.addEventListener ? wide.addEventListener("change", build) : wide.addListener(build);
-  if (document.fonts && document.fonts.ready) document.fonts.ready.then(measure);
+  const neu = () => list.length && build();
+  wide.addEventListener ? wide.addEventListener("change", neu) : wide.addListener(neu);
   gsap.from(box, { opacity: 0, y: 40, duration: 1.2, ease: "expo.out", scrollTrigger: { trigger: box, start: "top 90%" } });
 }
 
@@ -942,8 +962,10 @@ let openSheet = () => {};
 function setupSheets() {
   const sheet = $("#sheet"), frame = $("#sheetFrame"), consent = $("#sheetConsent");
   let lastFocus = null, currentUrl = "";
-  const open = (el) => { lastFocus = document.activeElement; el.hidden = false; lockScroll(true); setTimeout(() => $(".sheet__close", el).focus(), 50); };
-  const close = (el) => { el.hidden = true; lockScroll(menuOpen()); lastFocus && lastFocus.focus(); };
+  // Hinter dem Fenster ist nichts bedienbar (Tab-Taste bleibt im Fenster)
+  const hinten = (an) => { $$(".top, main").forEach((x) => (x.inert = an)); if (!an && menuOpen()) $("main").inert = true; };
+  const open = (el) => { lastFocus = document.activeElement; el.hidden = false; el._offenSeit = performance.now(); hinten(true); lockScroll(true); setTimeout(() => $(".sheet__close", el).focus(), 50); };
+  const close = (el) => { el.hidden = true; if (!sheetOpen()) hinten(false); lockScroll(menuOpen()); lastFocus && lastFocus.focus(); };
   // gleiche Adresse nicht neu laden – ein angefangener Buchungsvorgang bleibt erhalten
   const loadFrame = () => { consent.hidden = true; frame.hidden = false; if (frame.getAttribute("src") !== currentUrl) frame.src = currentUrl; try { sessionStorage.setItem("serband-cal-ok", "1"); } catch (e) {} };
   $$("[data-cal]").forEach((b) => b.addEventListener("click", () => {
@@ -960,7 +982,11 @@ function setupSheets() {
   openSheet = open;
   $("#sheetLoad").addEventListener("click", loadFrame);
   $("#installBtn").addEventListener("click", () => open($("#installSheet")));
-  $$(".sheet").forEach((s) => $$("[data-close]", s).forEach((c) => c.addEventListener("click", () => close(s))));
+  $$(".sheet").forEach((s) => $$("[data-close]", s).forEach((c) => c.addEventListener("click", () => {
+    // Doppeltipp: der zweite Tipp landet auf dem Hintergrund und würde sofort wieder schließen
+    if (c.classList.contains("sheet__backdrop") && performance.now() - (s._offenSeit || 0) < 450) return;
+    close(s);
+  })));
   document.addEventListener("keydown", (e) => { if (e.key !== "Escape") return; $$(".sheet").forEach((s) => { if (!s.hidden) close(s); }); closeMenu(); });
   $("#menuBtn").addEventListener("click", () => setMenu(!menuOpen()));
 }
