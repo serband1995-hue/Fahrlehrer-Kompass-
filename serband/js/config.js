@@ -24,8 +24,8 @@ export const CONFIG = {
     telefon: "+496936605670",
     telefonAnzeige: "069 · 36 60 56 70",
     whatsapp: "https://wa.me/496936605670",
-    instagram: "", // TODO: z. B. "https://instagram.com/deinname"
-    tiktok: "",    // TODO
+    instagram: "https://www.instagram.com/fahrlehrerserband/",
+    tiktok: "",    // noch keins – leer = Knopf wird nicht gezeigt
     impressum: "impressum.html",     // TODO: markierte Stellen in impressum.html ausfüllen
     datenschutz: "datenschutz.html"  // TODO: markierte Stellen in datenschutz.html ausfüllen
   },
