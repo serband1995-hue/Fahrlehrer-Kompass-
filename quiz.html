@@ -1,0 +1,393 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="robots" content="noindex">
+<meta name="theme-color" content="#0a1210">
+<title>Lernzielkontrolle</title>
+<link rel="icon" href="icon-192.png">
+<link rel="apple-touch-icon" href="apple-touch-icon.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="quiz.css">
+<style>
+  html, body { height: 100%; }
+  body { font-size: 17px; display: flex; flex-direction: column; min-height: 100dvh; overscroll-behavior: none; }
+  .kopf { display: flex; align-items: center; gap: .6em; padding: max(12px, env(safe-area-inset-top)) 16px 10px; font-weight: 700; }
+  .kopf .ich { flex: 1; min-width: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .kopf .pkt { background: var(--surface); border: 1px solid var(--line); border-radius: 999px; padding: .25em .8em; font-variant-numeric: tabular-nums; }
+  main { flex: 1; display: flex; flex-direction: column; padding: 0 16px max(16px, env(safe-area-inset-bottom)); min-height: 0; }
+  .ansicht { flex: 1; display: flex; flex-direction: column; animation: hochgleiten .35s ease both; min-height: 0; }
+  .mitte { flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center; gap: .6em; }
+
+  /* Beitreten */
+  .logo { width: 72px; height: 72px; border-radius: 20px; background: var(--gold); color: #1d1703; display: grid; place-items: center;
+    font-size: 2em; font-weight: 900; margin: 0 auto .4em; box-shadow: 0 10px 30px rgba(224,180,58,.3); }
+  h1 { font-size: 2em; font-weight: 900; margin: 0; letter-spacing: -.01em; }
+  .unter { color: var(--muted); margin: 0 0 1.2em; }
+  form { width: 100%; max-width: 380px; display: flex; flex-direction: column; gap: .8em; }
+  label { text-align: left; font-weight: 700; color: var(--muted); font-size: .9em; }
+  input { width: 100%; padding: .85em 1em; font-size: 1.25em; font-weight: 700; border-radius: 14px; border: 2px solid var(--line);
+    background: var(--surface); color: var(--txt); outline: none; }
+  input:focus { border-color: var(--gold); }
+  #code { letter-spacing: .3em; text-align: center; font-size: 1.6em; }
+  .fehler { color: var(--no); font-weight: 700; min-height: 1.3em; }
+  form .knopf { font-size: 1.25em; padding: .9em; margin-top: .4em; }
+
+  /* Warten */
+  .gross-emoji { font-size: 4.5em; line-height: 1; animation: reinpoppen .5s cubic-bezier(.2,1.4,.4,1) both; }
+  .gross { font-size: 1.7em; font-weight: 900; line-height: 1.2; }
+  .leise-text { color: var(--muted); font-size: 1.05em; line-height: 1.45; }
+  .puls { animation: pulsieren 2s infinite; }
+
+  /* Frage */
+  .fnr { color: var(--muted); font-weight: 700; margin: .2em 0 .4em; display: flex; justify-content: space-between; }
+  .ftext { font-size: 1.35em; font-weight: 800; line-height: 1.25; margin-bottom: .8em; }
+  .ftext.lang { font-size: 1.15em; }
+  .zeitbalken { height: 10px; border-radius: 999px; background: var(--surface-2); overflow: hidden; margin-bottom: 14px; flex: none; }
+  .zeitbalken i { display: block; height: 100%; width: 100%; background: var(--gold); border-radius: inherit; transition: background .3s; }
+  .zeitbalken.knapp i { background: var(--no); }
+  .knoepfe { flex: 1; display: grid; grid-template-rows: repeat(var(--n), 1fr); gap: 10px; min-height: 0; }
+  .ant { background: var(--f); border: 0; border-radius: 16px; color: #fff; display: flex; align-items: center; gap: .7em; padding: .7em 1em;
+    text-align: left; font-weight: 800; font-size: 1.15em; line-height: 1.2; text-shadow: 0 1px 4px rgba(0,0,0,.25);
+    box-shadow: inset 0 -6px 0 rgba(0,0,0,.2); min-height: 64px; transition: transform .08s, opacity .2s; animation: reinpoppen .35s cubic-bezier(.2,1.3,.4,1) both; }
+  .ant:active { transform: scale(.97); }
+  .ant .form { font-size: 1.5em; flex: none; }
+  .ant:nth-child(2) { animation-delay: .05s; } .ant:nth-child(3) { animation-delay: .1s; } .ant:nth-child(4) { animation-delay: .15s; }
+  .knoepfe.gesperrt .ant { opacity: .35; }
+  .knoepfe.gesperrt .ant.gewaehlt { opacity: 1; box-shadow: 0 0 0 4px #fff inset, inset 0 -6px 0 rgba(0,0,0,.2); }
+
+  /* Ergebnis */
+  .ergebnis { flex: 1; margin: 0 -16px calc(-1 * max(16px, env(safe-area-inset-bottom))); display: flex; flex-direction: column;
+    align-items: center; justify-content: center; text-align: center; gap: .5em; padding: 24px; }
+  .ergebnis.ok { background: radial-gradient(circle at 50% 35%, #2f9a5a, #16432a); }
+  .ergebnis.no { background: radial-gradient(circle at 50% 35%, #b8463c, #4a1712); }
+  .ergebnis.nix { background: radial-gradient(circle at 50% 35%, #4a5a54, #1a2622); }
+  .ergebnis .gross-emoji { font-size: 5em; }
+  .ergebnis .titel { font-size: 2.3em; font-weight: 900; }
+  .ergebnis .plus { font-size: 2.6em; font-weight: 900; color: #fff; background: rgba(0,0,0,.25); border-radius: 16px; padding: .1em .6em; animation: reinpoppen .5s .2s both; }
+  .ergebnis .serie { font-weight: 800; font-size: 1.15em; }
+  .ergebnis .war { background: rgba(0,0,0,.22); border-radius: 14px; padding: .7em 1em; font-weight: 600; max-width: 26em; }
+  .ergebnis .platz { margin-top: .6em; font-weight: 800; font-size: 1.2em; opacity: .95; }
+  .ergebnis.no .gross-emoji { animation: wackeln .5s; }
+
+  .platzkarte { padding: 1.4em; width: 100%; max-width: 380px; }
+  .platzkarte .nr { font-size: 4.5em; font-weight: 900; line-height: 1; color: var(--gold); }
+  .platzkarte .von { color: var(--muted); font-weight: 700; }
+  .platzkarte .punkte { font-size: 1.6em; font-weight: 900; margin-top: .4em; }
+  .abstand { color: var(--muted); margin-top: .6em; line-height: 1.4; }
+  .abstand b { color: var(--txt); }
+</style>
+</head>
+<body>
+<div class="kopf" id="kopf" hidden><span class="ich" id="ichName"></span><span class="pkt" id="ichPunkte">0</span></div>
+<main id="main"></main>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="quiz-gemeinsam.js"></script>
+<script>
+(() => {
+  const $ = (s, r) => (r || document).querySelector(s);
+  const { esc, zahl, sek, FORMEN, trennen } = Quiz;
+  const main = $("#main");
+  const SPEICHER = "quiz_ich";
+
+  let ich = null;            // { code, raum_id, spieler_id, token, name }
+  let daten = null;
+  let beob = null;
+  let ansicht = "";
+  let takt = null;
+  let antworten = {};        // frage_nr -> { antwort, zeit_ms }
+  let wachhalten = null;
+
+  const params = new URLSearchParams(location.search);
+  const codeAusLink = (params.get("c") || "").replace(/\D/g, "").slice(0, 4);
+
+  function zeige(html, klasse) {
+    main.innerHTML = `<div class="ansicht ${klasse || ""}">${html}</div>`;
+    return main.firstElementChild;
+  }
+  function vibrieren(muster) { try { navigator.vibrate && navigator.vibrate(muster); } catch (e) {} }
+  async function wachBleiben() {
+    try { if ("wakeLock" in navigator && !wachhalten) { wachhalten = await navigator.wakeLock.request("screen"); wachhalten.addEventListener("release", () => { wachhalten = null; }); } } catch (e) {}
+  }
+  document.addEventListener("visibilitychange", () => { if (!document.hidden && ich) wachBleiben(); });
+
+  /* ---------- Beitreten ---------- */
+  function zeigeBeitreten(fehler) {
+    stopTakt();
+    ansicht = "beitreten";
+    $("#kopf").hidden = true;
+    let letzterName = "";
+    try { letzterName = localStorage.getItem("quiz_name") || ""; } catch (e) {}
+    zeige(`
+      <div class="mitte">
+        <div class="logo">?!</div>
+        <h1>Lernzielkontrolle</h1>
+        <p class="unter">Mach mit und zeig, was du draufhast!</p>
+        <form id="form" autocomplete="off">
+          <label for="code">Code von der Tafel</label>
+          <input id="code" inputmode="numeric" pattern="[0-9]*" maxlength="4" placeholder="0000" value="${esc(codeAusLink)}">
+          <label for="name">Dein Name</label>
+          <input id="name" maxlength="18" placeholder="z. B. Lena" value="${esc(letzterName)}" autocapitalize="words" enterkeyhint="go">
+          <div class="fehler" id="fehler">${esc(fehler || "")}</div>
+          <button class="knopf" id="los">Los geht's!</button>
+        </form>
+      </div>`);
+    const code = $("#code"), name = $("#name");
+    (code.value.length === 4 ? name : code).focus();
+    code.addEventListener("input", () => { code.value = code.value.replace(/\D/g, "").slice(0, 4); if (code.value.length === 4) name.focus(); });
+    $("#form").addEventListener("submit", async (e) => {
+      e.preventDefault();
+      const c = code.value.trim(), n = name.value.trim();
+      if (c.length !== 4) { $("#fehler").textContent = "Der Code hat 4 Ziffern."; return; }
+      if (!n) { $("#fehler").textContent = "Bitte gib deinen Namen ein."; name.focus(); return; }
+      $("#los").disabled = true; $("#fehler").textContent = "";
+      wachBleiben();
+      try {
+        const r = await Quiz.rpc("quiz_beitreten", { p_code: c, p_name: n });
+        ich = { code: c, raum_id: r.raum_id, spieler_id: r.spieler_id, token: r.token, name: r.name };
+        try { localStorage.setItem(SPEICHER, JSON.stringify(ich)); localStorage.setItem("quiz_name", n); } catch (e) {}
+        antworten = {};
+        verbinden();
+      } catch (err) {
+        $("#fehler").textContent = Quiz.fehlertext(err);
+        $("#los").disabled = false;
+      }
+    });
+  }
+
+  function verbinden() {
+    if (beob) beob.stop();
+    ansicht = "";
+    $("#kopf").hidden = false;
+    $("#ichName").textContent = ich.name;
+    Quiz.uhrAbgleichen();
+    beob = Quiz.beobachten(ich.raum_id, neueDaten, 2500, false);
+  }
+
+  /* Nach Neuladen wieder in denselben Raum. Netzfehler → erneut versuchen, statt einen zweiten Spieler anzulegen. */
+  async function wiederEinsteigen(versuch) {
+    let alt = null;
+    try { alt = JSON.parse(localStorage.getItem(SPEICHER) || "null"); } catch (e) {}
+    if (!alt || (codeAusLink && alt.code !== codeAusLink)) return zeigeBeitreten();
+    let r, d;
+    try {
+      r = await Quiz.rpc("quiz_ich", { p_spieler: alt.spieler_id, p_token: alt.token });
+      if (r) d = await Quiz.laden(alt.raum_id);
+    } catch (e) {
+      versuch = (versuch || 0) + 1;
+      zeige(`<div class="mitte"><div class="gross-emoji puls">📶</div><div class="gross">Verbinde …</div>
+        <p class="leise-text">Das WLAN hakt gerade. Du bleibst im Spiel.</p></div>`);
+      if (versuch < 20) { setTimeout(() => wiederEinsteigen(versuch), 1500); return; }
+      return zeigeBeitreten("Keine Verbindung. Bitte WLAN prüfen und neu beitreten.");
+    }
+    if (!r || !d || !d.raum) { try { localStorage.removeItem(SPEICHER); } catch (e) {} return zeigeBeitreten(); }
+    ich = alt;
+    antworten = {};
+    if (r.antwort != null) antworten[d.raum.frage_nr] = { antwort: r.antwort };
+    verbinden();
+  }
+
+  /* ---------- Daten ---------- */
+  function neueDaten(d) {
+    if (!d.raum) { raus("Das Quiz ist vorbei."); return; }
+    const mich = d.spieler.find((s) => s.id === ich.spieler_id);
+    if (!mich) { raus("Du wurdest aus dem Quiz entfernt."); return; }
+    daten = d;
+    $("#ichPunkte").textContent = zahl(mich.punkte);
+    const r = d.raum;
+    // Auflösung erst zeigen, wenn meine Auswertung da ist
+    let key = r.status + ":" + r.frage_nr + ":" + (r.frage_start || "");
+    if (r.status === "aufloesung" && mich.ausgewertet_nr < r.frage_nr) key = "warte-auswertung:" + r.frage_nr;
+    if (key === ansicht) return;
+    ansicht = key;
+    if (r.status === "lobby") zeigeWarten();
+    else if (r.status === "frage") zeigeFrage();
+    else if (r.status === "aufloesung" && key.startsWith("warte")) {
+      stopTakt();
+      zeige(`<div class="mitte"><div class="gross-emoji puls">⏳</div><div class="gross">Gleich siehst du dein Ergebnis …</div></div>`);
+    }
+    else if (r.status === "aufloesung") zeigeErgebnis(mich);
+    else if (r.status === "zwischenstand") zeigePlatz(mich, false);
+    else if (r.status === "ende") zeigePlatz(mich, true);
+  }
+  function raus(text) {
+    if (beob) beob.stop();
+    try { localStorage.removeItem(SPEICHER); } catch (e) {}
+    ich = null;
+    zeigeBeitreten(text);
+  }
+
+  function zeigeWarten() {
+    stopTakt();
+    zeige(`<div class="mitte">
+      <div class="gross-emoji">✅</div>
+      <div class="gross">Du bist drin, ${esc(ich.name)}!</div>
+      <p class="leise-text puls">Schau zur Tafel –<br>gleich geht's los.</p>
+      <p class="leise-text" style="margin-top:2em;font-size:.95em">Je schneller du richtig antwortest,<br>desto mehr Punkte bekommst du. 🚀</p>
+    </div>`);
+  }
+
+  /* ---------- Frage ---------- */
+  function zeigeFrage() {
+    stopTakt();
+    const r = daten.raum, nr = r.frage_nr, f = r.fragen[nr];
+    const start = new Date(r.frage_start).getTime(), ende = new Date(r.frage_ende).getTime();
+    const schon = antworten[nr];
+    zeige(`
+      <div class="fnr"><span>Frage ${nr + 1} von ${r.anzahl}</span><span id="rest"></span></div>
+      <div class="ftext ${f.frage.length > 90 ? "lang" : ""}">${esc(f.frage)}</div>
+      <div class="zeitbalken" id="zb"><i id="zbi"></i></div>
+      <div id="bereich" style="flex:1;display:flex;flex-direction:column;min-height:0"></div>`);
+    const bereich = $("#bereich");
+    let phase = "";
+    const knoepfe = () => {
+      bereich.innerHTML = `<div class="knoepfe" style="--n:${f.antworten.length}" id="kn">
+        ${f.antworten.map((a, i) => `<button class="ant f${i}" data-i="${i}"><span class="form">${FORMEN[i]}</span><span>${trennen(esc(a))}</span></button>`).join("")}
+      </div>`;
+      bereich.querySelectorAll(".ant").forEach((b) => b.addEventListener("click", () => antworten_(Number(b.dataset.i))));
+    };
+    const schritt = () => {
+      const t = Quiz.jetzt();
+      if (t >= start) {
+        const rest = Math.max(0, ende - t);
+        $("#zbi").style.width = (rest / (ende - start) * 100) + "%";
+        $("#zb").classList.toggle("knapp", rest < 5000);
+        $("#rest").textContent = rest > 0 ? Math.ceil(rest / 1000) + " s" : "";
+      }
+      if (antworten[nr]) {
+        if (phase !== "gesendet") { phase = "gesendet"; gesendet(nr); }
+      } else if (t < start) {
+        if (phase !== "lesen") { phase = "lesen"; bereich.innerHTML = `<div class="mitte"><div class="gross-emoji puls">👀</div><p class="leise-text">Lies die Frage …<br>gleich kommen die Antworten!</p></div>`; }
+        $("#zbi").style.width = Math.max(0, 100 - (start - t) / ((r.lesezeit_s || 4) * 10)) + "%";
+      } else if (t < ende) {
+        if (phase !== "antworten") { phase = "antworten"; knoepfe(); vibrieren(30); }
+      } else if (phase !== "vorbei") {
+        phase = "vorbei";
+        bereich.innerHTML = `<div class="mitte"><div class="gross-emoji">⏰</div><div class="gross">Zeit ist um!</div><p class="leise-text">Schau zur Tafel.</p></div>`;
+      }
+    };
+    schritt();
+    takt = setInterval(schritt, 100);
+    if (schon) gesendet(nr);
+  }
+
+  async function antworten_(i) {
+    const r = daten.raum, nr = r.frage_nr;
+    if (antworten[nr]) return;
+    antworten[nr] = { antwort: i, lokal: Quiz.jetzt() - new Date(r.frage_start).getTime() };
+    vibrieren(20);
+    const kn = $("#kn");
+    if (kn) { kn.classList.add("gesperrt"); kn.querySelector(`[data-i="${i}"]`).classList.add("gewaehlt"); }
+    const entsperren = () => {
+      delete antworten[nr];
+      if (kn) { kn.classList.remove("gesperrt"); kn.querySelectorAll(".gewaehlt").forEach((x) => x.classList.remove("gewaehlt")); }
+    };
+    for (let versuch = 0; versuch < 3; versuch++) {
+      try {
+        const res = await Quiz.rpc("quiz_antworten_senden", { p_spieler: ich.spieler_id, p_token: ich.token, p_frage: nr, p_antwort: i });
+        if (res && res.zeit_ms != null) antworten[nr].zeit_ms = res.zeit_ms;
+        setTimeout(() => gesendet(nr), 250);
+        return;
+      } catch (e) {
+        if (e.code === "ZU_FRUEH") { entsperren(); return; }
+        if (e.code === "ZU_SPAET" || e.code === "SPIELER_UNBEKANNT") { antworten[nr].fehler = Quiz.fehlertext(e); gesendet(nr); return; }
+        await new Promise((ok) => setTimeout(ok, 400));   // Netz hakt: kurz warten, nochmal senden
+      }
+    }
+    entsperren();   // nach 3 Fehlversuchen: Knöpfe wieder freigeben, damit man erneut tippen kann
+  }
+
+  function gesendet(nr) {
+    const b = $("#bereich"); if (!b || !daten || daten.raum.frage_nr !== nr) return;
+    const a = antworten[nr]; if (!a) return;
+    const f = daten.raum.fragen[nr];
+    if (a.fehler) {
+      b.innerHTML = `<div class="mitte"><div class="gross-emoji">⏰</div><div class="gross">${esc(a.fehler)}</div></div>`;
+      return;
+    }
+    const ms = a.zeit_ms != null ? a.zeit_ms : a.lokal;
+    b.innerHTML = `<div class="mitte">
+      <div class="ant f${a.antwort}" style="width:100%;max-width:360px;pointer-events:none"><span class="form">${FORMEN[a.antwort]}</span><span>${esc(f.antworten[a.antwort])}</span></div>
+      <div class="gross" style="margin-top:.6em">Antwort ist drin!</div>
+      ${ms != null ? `<p class="leise-text">⏱ nach ${sek(ms)} Sekunden</p>` : ""}
+      <p class="leise-text puls">Warte auf die anderen …</p></div>`;
+  }
+
+  /* ---------- Ergebnis nach jeder Frage ---------- */
+  function zeigeErgebnis(mich) {
+    stopTakt();
+    const r = daten.raum, nr = r.frage_nr, f = r.fragen[nr];
+    const liste = Quiz.rangliste(daten.spieler);
+    const platz = liste.findIndex((s) => s.id === mich.id) + 1;
+    const richtigText = r.aufloesung != null ? f.antworten[r.aufloesung] : "";
+    let html;
+    if (mich.letzte_richtig === true) {
+      vibrieren([40, 60, 40]);
+      const lob = ["Richtig!", "Stark!", "Genau so!", "Volltreffer!", "Sauber!"][(nr + mich.richtige) % 5];
+      html = `<div class="ergebnis ok">
+        <div class="gross-emoji">🎉</div><div class="titel">${lob}</div>
+        <div class="plus">+${zahl(mich.letzte_punkte)}</div>
+        ${mich.letzte_bonus ? `<div class="serie">🔥 ${mich.serie}er-Serie · +${mich.letzte_bonus} Bonus</div>` : ""}
+        <div class="platz">Platz ${platz} von ${liste.length}</div></div>`;
+    } else if (mich.letzte_richtig === false) {
+      vibrieren([120, 80, 120]);
+      html = `<div class="ergebnis no">
+        <div class="gross-emoji">😬</div><div class="titel">Leider falsch</div>
+        <div class="war">Richtig war: <b>${esc(richtigText)}</b></div>
+        <div class="platz">Platz ${platz} von ${liste.length}</div></div>`;
+    } else {
+      html = `<div class="ergebnis nix">
+        <div class="gross-emoji">💤</div><div class="titel">Keine Antwort</div>
+        <div class="war">Richtig war: <b>${esc(richtigText)}</b></div>
+        <div class="platz">Platz ${platz} von ${liste.length}</div></div>`;
+    }
+    zeige(html);
+  }
+
+  /* ---------- Platz (Zwischenstand und Ende) ---------- */
+  function zeigePlatz(mich, ende) {
+    stopTakt();
+    const liste = Quiz.rangliste(daten.spieler);
+    const i = liste.findIndex((s) => s.id === mich.id);
+    const platz = i + 1;
+    const medaille = ["🥇", "🥈", "🥉"][i] || "";
+    const vorne = i > 0 ? liste[i - 1] : null;
+    let abstand = "";
+    if (!ende && vorne) {
+      const diff = vorne.punkte - mich.punkte;
+      abstand = diff > 0 ? `Nur <b>${zahl(diff)} ${diff === 1 ? "Punkt" : "Punkte"}</b> bis Platz ${i} (${esc(vorne.name)}) – gib Gas!`
+                         : `Punktgleich mit ${esc(vorne.name)} – ${esc(vorne.name)} war ${esc(Quiz.gleichstandGrund(vorne, mich))}.`;
+    } else if (!ende && liste.length > 1) abstand = "Du führst! Halte die Spitze! 💪";
+    if (ende) {
+      const titel = platz === 1 ? "Du hast gewonnen! 🏆" : platz <= 3 ? "Aufs Treppchen geschafft!" : "Gut gekämpft!";
+      zeige(`<div class="mitte">
+        <div class="gross-emoji">${medaille || "🏁"}</div>
+        <div class="gross">${titel}</div>
+        <div class="karte platzkarte"><div class="nr">${platz}.</div><div class="von">von ${liste.length}</div>
+          <div class="punkte">${zahl(mich.punkte)} Punkte</div>
+          <div class="abstand">${mich.richtige} von ${daten.raum.anzahl} Fragen richtig</div></div>
+        <p class="leise-text">Danke fürs Mitmachen! 🚗</p></div>`);
+      if (platz === 1) { Quiz.konfetti(8000); vibrieren([80, 60, 80, 60, 200]); }
+      try { localStorage.removeItem(SPEICHER); } catch (e) {}
+      if (beob) { setTimeout(() => beob && beob.stop(), 1000); }
+    } else {
+      zeige(`<div class="mitte">
+        <p class="leise-text">Zwischenstand</p>
+        <div class="karte platzkarte"><div class="nr">${medaille} ${platz}.</div><div class="von">von ${liste.length}</div>
+          <div class="punkte">${zahl(mich.punkte)} Punkte</div>
+          ${abstand ? `<div class="abstand">${abstand}</div>` : ""}</div>
+        <p class="leise-text puls">Gleich kommt die nächste Frage …</p></div>`);
+    }
+  }
+
+  function stopTakt() { if (takt) clearInterval(takt); takt = null; }
+
+  wiederEinsteigen();
+})();
+</script>
+</body>
+</html>

@@ -1,0 +1,59 @@
+/* Fahrlehrer-Kompass – Live-Quiz: gemeinsames Design (Tafel, Handy, Lehrer-Handy, Lösungsblatt) */
+:root {
+  --bg: #0a1210; --bg-2: #0f1c17; --surface: #14261f; --surface-2: #1b3129;
+  --line: #28463d; --txt: #f2f6f3; --muted: #94b2a6; --faint: #5f7b70;
+  --gold: #e0b43a; --gold-soft: rgba(224, 180, 58, .16);
+  --ok: #3fbf6f; --ok-soft: rgba(63, 191, 111, .16); --no: #e2574c; --no-soft: rgba(226, 87, 76, .16);
+  --a0: #e2574c; --a1: #2f7dd1; --a2: #c68a0b; --a3: #3f9c5a;
+  --radius: 18px;
+  --schatten: 0 18px 44px rgba(0, 0, 0, .42);
+  color-scheme: dark;
+}
+* { box-sizing: border-box; }
+html, body { margin: 0; min-height: 100%; }
+body {
+  background: radial-gradient(1200px 700px at 15% -10%, #173b2c 0%, transparent 60%),
+              radial-gradient(900px 600px at 110% 110%, #2a2610 0%, transparent 55%), var(--bg);
+  background-attachment: fixed;
+  color: var(--txt);
+  font-family: "Outfit", system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+  -webkit-font-smoothing: antialiased;
+  -webkit-tap-highlight-color: transparent;
+}
+button { font: inherit; color: inherit; cursor: pointer; }
+input { font: inherit; }
+[hidden] { display: none !important; }
+
+.knopf {
+  display: inline-flex; align-items: center; justify-content: center; gap: .5em;
+  border: 0; border-radius: 14px; padding: .8em 1.4em; font-weight: 700; font-size: 1.05rem;
+  background: var(--gold); color: #1d1703; box-shadow: 0 6px 0 #9c7a17, 0 12px 24px rgba(0,0,0,.35);
+  transition: transform .08s, box-shadow .08s, opacity .2s;
+}
+.knopf:active { transform: translateY(4px); box-shadow: 0 2px 0 #9c7a17, 0 6px 14px rgba(0,0,0,.35); }
+.knopf:disabled { opacity: .45; cursor: default; }
+.knopf.leise { background: var(--surface-2); color: var(--txt); box-shadow: 0 5px 0 #0c1a15, 0 10px 20px rgba(0,0,0,.3); }
+.knopf.leise:active { box-shadow: 0 1px 0 #0c1a15; }
+.knopf.rot { background: var(--no); color: #fff; box-shadow: 0 6px 0 #97342b; }
+
+.karte { background: linear-gradient(180deg, rgba(255,255,255,.04), rgba(255,255,255,.01)), var(--surface);
+  border: 1px solid var(--line); border-radius: var(--radius); box-shadow: var(--schatten); }
+
+/* Antwortfarben */
+.f0 { --f: var(--a0); } .f1 { --f: var(--a1); } .f2 { --f: var(--a2); } .f3 { --f: var(--a3); }
+.form svg { width: 1em; height: 1em; fill: currentColor; display: block; }
+
+.konfetti { position: fixed; inset: 0; width: 100vw; height: 100vh; pointer-events: none; z-index: 999; }
+
+.hinweis { position: fixed; left: 50%; bottom: 24px; transform: translateX(-50%); z-index: 1000;
+  background: #22382f; border: 1px solid var(--line); padding: .7em 1.1em; border-radius: 12px;
+  box-shadow: var(--schatten); font-weight: 600; max-width: calc(100vw - 32px); text-align: center; }
+
+@keyframes reinpoppen { 0% { transform: scale(.4); opacity: 0; } 70% { transform: scale(1.08); opacity: 1; } 100% { transform: scale(1); } }
+@keyframes hochgleiten { from { transform: translateY(24px); opacity: 0; } to { transform: none; opacity: 1; } }
+@keyframes pulsieren { 0%,100% { transform: scale(1); } 50% { transform: scale(1.06); } }
+@keyframes wackeln { 0%,100% { transform: translateX(0); } 20%,60% { transform: translateX(-8px); } 40%,80% { transform: translateX(8px); } }
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after { animation-duration: .01ms !important; animation-iteration-count: 1 !important; transition-duration: .01ms !important; }
+}
