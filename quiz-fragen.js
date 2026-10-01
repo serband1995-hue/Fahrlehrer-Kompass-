@@ -1228,191 +1228,203 @@ window.QUIZ_LEKTIONEN = [
  },
  {
   "lektion": 13,
-  "titel": "Technik und Beförderung",
-  "untertitel": "Sicheres Auto, sichere Ladung, sichere Mitfahrer",
+  "titel": "Technik, die dich schützt",
+  "untertitel": "Vor jeder Fahrt: der WOLKEN-Check",
   "fragen": [
    {
-    "frage": "Wie tief muss das Profil deiner Pkw-Reifen gesetzlich mindestens sein?",
+    "frage": "WOLKEN-Check vor der Fahrt: Wofür steht das „L“?",
     "antworten": [
-     "1,0 mm",
-     "1,6 mm",
-     "3,0 mm",
-     "So tief wie ein Gummibärchen"
+     "Licht",
+     "Luft: Reifendruck und Profil",
+     "Ladung",
+     "Lieblingsmusik"
     ],
     "richtig": 1,
-    "erklaerung": "Gesetzlich vorgeschrieben sind mindestens 1,6 mm Profiltiefe. Empfohlen werden deutlich mehr: ca. 3 mm im Sommer, 4 mm im Winter."
+    "erklaerung": "WOLKEN = Wasser, Öl, Luft, Kraftstoff, Elektrik, Notfallausrüstung. L steht für Luft: Reifendruck und Profil.",
+    "folie": 6
    },
    {
-    "frage": "Dein Auto ist ganz neu zugelassen. Wann muss es zur ersten Hauptuntersuchung (HU)?",
+    "frage": "Wann misst du den Ölstand richtig?",
     "antworten": [
-     "Nach 1 Jahr",
-     "Nach 2 Jahren",
-     "Nach 3 Jahren",
-     "Erst nach 5 Jahren"
+     "Direkt nach der Fahrt, Motor läuft noch",
+     "Am Berg, damit sich das Öl vorne sammelt",
+     "Auto eben, Motor aus, ein paar Minuten warten"
     ],
     "richtig": 2,
-    "erklaerung": "Neue Pkw müssen erstmals nach 3 Jahren zur HU, danach alle 2 Jahre. Den Termin zeigt die Prüfplakette am hinteren Kennzeichen."
+    "erklaerung": "Eben abstellen, Motor aus, ein paar Minuten warten, damit das Öl zurückläuft. Dann ziehen, abwischen, einstecken, ablesen: zwischen MIN und MAX.",
+    "folie": 15
    },
    {
-    "frage": "Welche Ausrüstung musst du im Pkw immer dabeihaben?",
+    "frage": "Wie viel Profil müssen deine Reifen laut Gesetz mindestens haben?",
     "antworten": [
-     "Warndreieck, Verbandkasten, Warnweste",
-     "Warndreieck, Feuerlöscher, Warnweste",
-     "Verbandkasten, Abschleppseil, Warnweste",
-     "Warndreieck, Verbandkasten, Picknickdecke"
-    ],
-    "richtig": 0,
-    "erklaerung": "Pflicht im Pkw sind Warndreieck, Verbandkasten und mindestens eine Warnweste. Feuerlöscher und Abschleppseil sind im Pkw nicht vorgeschrieben."
-   },
-   {
-    "frage": "Du packst schwere Koffer in den Kofferraum. Wohin gehören sie?",
-    "antworten": [
-     "Oben auf die leichten Taschen",
-     "Ganz hinten an die Heckklappe",
-     "Egal, Hauptsache die Klappe geht noch zu",
-     "Unten und direkt an die Rücksitzlehne"
+     "1 mm",
+     "3 mm",
+     "4 mm",
+     "1,6 mm"
     ],
     "richtig": 3,
-    "erklaerung": "Schweres gehört nach unten und formschlüssig an die Rücksitzlehne. So bleibt der Schwerpunkt tief und die Ladung kann bei einer Vollbremsung nicht nach vorn schießen."
+    "erklaerung": "Gesetzlich mindestens 1,6 mm (§ 36 StVZO), auch im Winter. Der ADAC empfiehlt im Sommer 3 mm, im Winter 4 mm.",
+    "folie": 24
    },
    {
-    "frage": "Deine Ladung ragt mehr als 1 m über die Rückstrahler nach hinten hinaus. Was musst du tun?",
+    "frage": "Wann darfst du die Nebelschlussleuchte einschalten?",
     "antworten": [
-     "Nichts, bis 2 m ist alles frei",
-     "Das Ende deutlich kenntlich machen",
-     "Warnblinker einschalten",
-     "Laut Musik machen, damit alle es hören"
+     "Bei Nebel mit Sicht unter 50 m",
+     "Bei starkem Regen auf der Autobahn",
+     "Immer in der Dämmerung",
+     "Wenn es draußen gruselig aussieht"
+    ],
+    "richtig": 0,
+    "erklaerung": "Nur wenn Nebel die Sicht unter 50 m drückt, nicht bei Regen oder Schnee. Bei Sicht unter 50 m höchstens 50 km/h.",
+    "folie": 45
+   },
+   {
+    "frage": "Während der Fahrt leuchtet die Öldruck-Leuchte rot. Was tust du?",
+    "antworten": [
+     "Bis zur nächsten Werkstatt weiterfahren",
+     "Gelb abwarten, dann reagieren",
+     "Radio lauter, dann hört man nichts",
+     "Sicher anhalten, Motor sofort aus"
+    ],
+    "richtig": 3,
+    "erklaerung": "Rot heißt: sicher anhalten. Bei Öldruck den Motor sofort ausmachen, Weiterfahren ruiniert den Motor.",
+    "folie": 49
+   },
+   {
+    "frage": "Schneematsch auf der Straße: Welche Reifen brauchst du seit 01.10.2024?",
+    "antworten": [
+     "Mit Alpine-Symbol (Berg + Flocke)",
+     "M+S-Reifen reichen aus",
+     "Sommerreifen mit 4 mm Profil"
+    ],
+    "richtig": 0,
+    "erklaerung": "Bei Glatteis, Schnee, Schneematsch, Eis- oder Reifglätte nur Reifen mit Alpine-Symbol. M+S allein reicht seit 01.10.2024 nicht mehr.",
+    "folie": 26
+   },
+   {
+    "frage": "Dein Auto ist ganz neu. Wann muss es zur ersten Hauptuntersuchung (HU)?",
+    "antworten": [
+     "Nach 12 Monaten",
+     "Nach 24 Monaten",
+     "Nach 36 Monaten",
+     "Erst wenn es quietscht"
+    ],
+    "richtig": 2,
+    "erklaerung": "Neuwagen: erste HU nach 36 Monaten, danach alle 24 Monate (§ 29 StVZO). Die AU ist seit 2010 Teil der HU.",
+    "folie": 60
+   },
+   {
+    "frage": "Starthilfe: Wo klemmst du das letzte, schwarze Kabel am Pannenauto an?",
+    "antworten": [
+     "Am Minuspol der leeren Batterie",
+     "An Masse: blankes Metall am Motorblock",
+     "Am Pluspol der leeren Batterie",
+     "Am Auspuff, da ist es schön warm"
     ],
     "richtig": 1,
-    "erklaerung": "Das Ende muss kenntlich gemacht werden, z. B. mit hellroter Fahne (mind. 30 × 30 cm). Wenn nötig, etwa bei Dunkelheit, mit roter Leuchte und rotem Rückstrahler (§ 22 Abs. 4 StVO)."
-   },
-   {
-    "frage": "Bis wann braucht ein Kind im Auto einen passenden Kindersitz?",
-    "antworten": [
-     "Bis es 6 Jahre alt ist",
-     "Nur auf dem Beifahrersitz",
-     "Bis es sich alleine anschnallen kann",
-     "Bis 12 Jahre oder 150 cm – was zuerst kommt"
-    ],
-    "richtig": 3,
-    "erklaerung": "Kinder unter 12 Jahren, die kleiner als 150 cm sind, brauchen eine passende Kinderrückhalteeinrichtung. Für die Sicherung der Kinder ist der Fahrer verantwortlich."
-   },
-   {
-    "frage": "Mit voller Dachbox unterwegs: Was ändert sich am Fahrverhalten?",
-    "antworten": [
-     "Das Auto liegt ruhiger in Kurven",
-     "Nichts, solange die Dachbox richtig abgeschlossen ist",
-     "Höherer Schwerpunkt, empfindlicher bei Seitenwind",
-     "Es fährt sich wie ein Rennwagen"
-    ],
-    "richtig": 2,
-    "erklaerung": "Dachlast hebt den Schwerpunkt an: Das Auto neigt sich stärker in Kurven und reagiert empfindlicher auf Seitenwind. Die zulässige Dachlast darf nicht überschritten werden."
-   },
-   {
-    "frage": "Du willst eine Babyschale rückwärtsgerichtet auf den Beifahrersitz mit Airbag stellen. Was ist Pflicht?",
-    "antworten": [
-     "Beifahrerairbag abschalten",
-     "Sitz ganz nach hinten schieben",
-     "Nur mit Warnblinker fahren",
-     "Den Beifahrerairbag eingeschaltet lassen"
-    ],
-    "richtig": 0,
-    "erklaerung": "Bei rückwärtsgerichteten Kindersitzen auf dem Beifahrersitz muss der Beifahrerairbag deaktiviert sein. Löst er aus, kann er das Kind schwer verletzen."
+    "erklaerung": "Erst Rot, dann Schwarz: Rot an Plus (leer), Rot an Plus (Spender), Schwarz an Minus (Spender), Schwarz an Masse des Pannenautos, nicht an Minus (Funken).",
+    "folie": 52
    }
   ]
  },
  {
   "lektion": 14,
-  "titel": "Solokraftfahrzeuge und Züge",
-  "untertitel": "Mit Anhänger sicher unterwegs",
+  "titel": "Ladung, Leute, Anhänger",
+  "untertitel": "Was darf rein ins Auto, und was darf dran?",
   "fragen": [
    {
-    "frage": "Pkw mit Anhänger ohne Tempo-100-Zulassung: Wie schnell darfst du auf der Autobahn höchstens?",
+    "frage": "Klasse B, Auto ohne Anhänger: Wie schwer darf es laut Papieren (zGM) höchstens sein?",
     "antworten": [
-     "60 km/h",
+     "2.800 kg",
+     "3.500 kg",
+     "4.250 kg",
+     "7.500 kg"
+    ],
+    "richtig": 1,
+    "erklaerung": "Mit Klasse B: Auto bis 3.500 kg zulässige Gesamtmasse (Feld F.2) und höchstens 8 Mitfahrer plus Fahrer.",
+    "folie": 66
+   },
+   {
+    "frage": "Bis zu welcher zGM darfst du mit Klasse B einen Anhänger immer ziehen?",
+    "antworten": [
+     "500 kg",
+     "1.000 kg",
+     "So schwer wie ein Pony",
+     "750 kg"
+    ],
+    "richtig": 3,
+    "erklaerung": "Anhänger bis 750 kg sind mit B immer erlaubt. Darüber nur, wenn Auto + Anhänger laut Papieren höchstens 3.500 kg haben.",
+    "folie": 67
+   },
+   {
+    "frage": "Pkw mit Anhänger, ohne Tempo-100-Plakette: Wie schnell darfst du auf der Autobahn?",
+    "antworten": [
+     "80 km/h",
      "100 km/h",
      "130 km/h",
-     "80 km/h"
-    ],
-    "richtig": 3,
-    "erklaerung": "Pkw mit Anhänger dürfen außerorts höchstens 80 km/h fahren. Mit Tempo-100-Zulassung (Plakette am Anhänger) sind auf Autobahn und Kraftfahrstraße 100 km/h erlaubt."
-   },
-   {
-    "frage": "Wie schwer darf ein Anhänger mit Klasse B immer sein, egal wie schwer dein Klasse-B-Auto ist?",
-    "antworten": [
-     "Bis 500 kg zulässige Gesamtmasse",
-     "Bis 750 kg zulässige Gesamtmasse",
-     "Bis 1.000 kg zulässige Gesamtmasse",
-     "Bis 3.500 kg zulässige Gesamtmasse"
-    ],
-    "richtig": 1,
-    "erklaerung": "Mit Klasse B darfst du Anhänger bis 750 kg zulässige Gesamtmasse (zGM) ziehen, sofern das Zugfahrzeug selbst höchstens 3.500 kg zGM hat."
-   },
-   {
-    "frage": "Dein Anhänger hat mehr als 750 kg zGM. Wann reicht trotzdem Klasse B?",
-    "antworten": [
-     "Wenn der ganze Zug max. 3.500 kg zGM hat",
-     "Wenn der Anhänger leer ist",
-     "Wenn du nur im Ort fährst",
-     "Wenn du an der Tankstelle ganz lieb „Bitte“ sagst"
+     "60 km/h"
     ],
     "richtig": 0,
-    "erklaerung": "Schwerere Anhänger sind mit Klasse B erlaubt, wenn die zulässigen Gesamtmassen von Zugfahrzeug und Anhänger zusammen 3.500 kg nicht übersteigen. Maßgeblich ist die zGM, nicht das Ist-Gewicht."
+    "erklaerung": "Mit Anhänger außerorts und auf der Autobahn 80 km/h. 100 km/h nur auf Autobahn und Kraftfahrstraße mit Plakette.",
+    "folie": 72
    },
    {
-    "frage": "Mit der Schlüsselzahl B96 darf dein Zug insgesamt wie schwer sein?",
+    "frage": "Was passiert, wenn die Stützlast deines Anhängers zu gering ist?",
     "antworten": [
-     "Bis 3.500 kg zGM",
-     "Bis 4.250 kg zGM",
-     "Bis 7.000 kg zGM",
-     "So schwer, wie der Motor schafft"
-    ],
-    "richtig": 1,
-    "erklaerung": "B96 erlaubt Züge bis 4.250 kg zGM (Anhänger über 750 kg). Dafür ist eine Fahrerschulung in der Fahrschule nötig, aber keine Prüfung."
-   },
-   {
-    "frage": "Mit Klasse BE darf der Anhänger eine zulässige Gesamtmasse haben von …",
-    "antworten": [
-     "bis 750 kg",
-     "bis 2.000 kg",
-     "bis 3.500 kg",
-     "unbegrenzt"
-    ],
-    "richtig": 2,
-    "erklaerung": "Mit Klasse BE darfst du hinter einem Klasse-B-Fahrzeug Anhänger bis 3.500 kg zulässige Gesamtmasse ziehen."
-   },
-   {
-    "frage": "Wofür ist das Abreißseil am gebremsten Anhänger da?",
-    "antworten": [
-     "Es bremst den Anhänger, wenn er sich löst",
-     "Zum Abschleppen im Notfall",
-     "Es hält das Stromkabel fest",
-     "Zum Wäscheaufhängen auf dem Campingplatz am See"
+     "Der Anhänger fängt an zu pendeln",
+     "Das Auto verbraucht weniger Sprit",
+     "Der Anhänger bremst stärker mit"
     ],
     "richtig": 0,
-    "erklaerung": "Löst sich der Anhänger vom Zugfahrzeug, zieht das Abreißseil die Handbremse des Anhängers an. Deshalb muss es vor jeder Fahrt richtig eingehängt sein."
+    "erklaerung": "Zu wenig Stützlast lässt den Anhänger pendeln. Mindestens 4 % des Anhängergewichts; zulässige Stützlast ausnutzen, nie überschreiten.",
+    "folie": 70
    },
    {
-    "frage": "Dein Anhänger fängt bei hoher Geschwindigkeit an zu pendeln. Was ist richtig?",
+    "frage": "Mia ist 11 Jahre alt und 152 cm groß. Braucht sie einen Kindersitz?",
     "antworten": [
-     "Kräftig Gas geben",
-     "Stark gegenlenken",
-     "Vom Gas gehen und abbremsen",
-     "Hupen, damit er sich beruhigt"
+     "Ja, sie ist noch unter 12",
+     "Nein, sie ist schon über 150 cm",
+     "Nur auf dem Beifahrersitz"
+    ],
+    "richtig": 1,
+    "erklaerung": "Kindersitz-Pflicht nur, wenn beides zutrifft: unter 12 Jahren UND unter 150 cm. Der normale Gurt muss aber gut sitzen.",
+    "folie": 79
+   },
+   {
+    "frage": "Dein Anhänger fängt an zu pendeln. Was ist richtig?",
+    "antworten": [
+     "Kurz Gas geben, damit sich alles streckt",
+     "Kräftig gegenlenken",
+     "Lenkrad gerade, Tempo runter, bremsen",
+     "Fenster auf und laut mitsingen"
     ],
     "richtig": 2,
-    "erklaerung": "Bei Pendeln sofort vom Gas gehen und möglichst zügig abbremsen, das Lenkrad dabei ruhig und gerade halten. Gas geben oder Gegenlenken verstärkt das Schlingern."
+    "erklaerung": "Lenkrad gerade halten, nicht gegenlenken, Tempo verringern und bremsen. Die Auflaufbremse des Anhängers streckt dann das Gespann.",
+    "folie": 75
    },
    {
-    "frage": "Beim Rückwärtsfahren soll der Anhänger nach rechts. Wohin drehst du das Lenkrad zuerst?",
+    "frage": "Ein Brett ragt 1,2 m über die Rückstrahler hinaus. Was brauchst du?",
     "antworten": [
-     "Nach rechts",
-     "Gar nicht, er folgt von allein",
-     "Abwechselnd hin und her",
-     "Nach links"
+     "Nichts, bis 1,50 m ist alles frei",
+     "Eine Sondergenehmigung",
+     "Hellrote Fahne, mind. 30 × 30 cm",
+     "Eine Hupe am Brettende"
+    ],
+    "richtig": 2,
+    "erklaerung": "Mehr als 1 m über die Rückstrahler: hellrote Fahne, mind. 30 × 30 cm, nachts zusätzlich rote Leuchte und Rückstrahler (§ 22 Abs. 4 StVO).",
+    "folie": 101
+   },
+   {
+    "frage": "Q5 mit 2.520 kg zGM plus Anhänger mit 1.000 kg zGM: Was brauchst du mindestens?",
+    "antworten": [
+     "Klasse B",
+     "Klasse BE",
+     "B, wenn der Anhänger leer ist",
+     "B96"
     ],
     "richtig": 3,
-    "erklaerung": "Beim Rückwärtsfahren lenkt man zunächst entgegengesetzt: Lenkrad nach links, dann schwenkt der Anhänger nach rechts. Tipp: Lenkrad unten anfassen, Hand in Zielrichtung bewegen."
+    "erklaerung": "2.520 + 1.000 = 3.520 kg, also 20 kg zu viel für B. Bis 4.250 kg reicht B96 (Schulung, keine Prüfung). Es zählen die Papiere.",
+    "folie": 69
    }
   ]
  }
