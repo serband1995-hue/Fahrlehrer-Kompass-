@@ -9299,6 +9299,7 @@ function renderDrawerBody(){
     }else{
       b.innerHTML=`<div class="more-list">
         <button class="more-btn" id="mLern">🚗 Lernszenen (Autobahn &amp; mehr)</button>
+        <button class="more-btn" id="mQuiz">🎯 Lernzielkontrolle (Quiz)</button>
         <button class="more-btn${DRAW.filmBar?' on':''}" id="mAnim">🎬 Aufnahme${DRAW.film?" (fertig)":""}</button>
         <button class="more-btn" id="mFilme">🎞 Meine Filme${(DB.films||[]).length?" ("+(DB.films||[]).length+")":""}</button>
         <button class="more-btn${DRAW.orderMode?' on':''}" id="mReihen">Reihenfolge 1·2·3</button>
@@ -9311,6 +9312,8 @@ function renderDrawerBody(){
         <button class="more-btn more-danger" id="mClear">Tafel leeren</button>
       </div>`;
       $("#mLern").addEventListener("click",oeffneLernszenen);
+      // Live-Quiz für den Theorieunterricht: öffnet die Tafel-Ansicht (Lektion wählen, QR-Code) in einem eigenen Fenster
+      $("#mQuiz").addEventListener("click",()=>window.open("quiz-tafel.html","lernzielkontrolle"));
       $("#mAnim").addEventListener("click",()=>{ DRAW.filmBar=true;filmBarUI();closeTafelDrawer();toast("Aufnahme bereit · auf ● tippen"); });
       $("#mFilme").addEventListener("click",openFilmListe);
       $("#mReihen").addEventListener("click",()=>{DRAW.orderMode=!DRAW.orderMode;DRAW.tool="select";DRAW.selId=null;setActiveTool();render();closeTafelDrawer();toast(DRAW.orderMode?"Reihenfolge-Modus an – Autos antippen":"Reihenfolge-Modus aus");});
