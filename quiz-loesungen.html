@@ -33,7 +33,6 @@
   .q li b { color: var(--muted); margin-right: .4em; }
   .q .e { color: #d4e2db; line-height: 1.45; font-size: .95em; }
   .q .e small { color: var(--faint); }
-  .hinweis13 { background: var(--gold-soft); border: 1px solid rgba(224,180,58,.4); border-radius: 12px; padding: .6em .9em; margin-bottom: .8em; color: #f0dca0; }
   @media print {
     :root { --bg: #fff; --txt: #111; --muted: #555; --surface: #fff; --surface-2: #f3f3f3; --line: #ccc; --faint: #777; }
     body { background: #fff; color: #111; font-size: 11pt; }
@@ -44,7 +43,6 @@
     section { page-break-before: always; }
     section:first-of-type { page-break-before: auto; }
     h2 span { color: #8a6a12; }
-    .hinweis13 { background: #fff6dc; color: #5a4300; border-color: #d9b64a; }
   }
 </style>
 </head>
@@ -65,7 +63,6 @@
     <section id="l${l.lektion}">
       <h2><span>Lektion ${l.lektion}</span> · ${esc(l.titel)}</h2>
       <div class="ut">${esc(l.untertitel || "")} · <span class="direkt">Direktlink für die PowerPoint: <a href="quiz-tafel.html?l=${l.lektion}" target="_blank">${esc(new URL("quiz-tafel.html?l=" + l.lektion, location.href).href)}</a></span></div>
-      ${l.lektion >= 13 ? '<div class="hinweis13">Für diese Lektion lag noch keine Präsentation vor. Die Fragen folgen dem amtlichen Rahmenplan – bitte einmal gegenlesen.</div>' : ""}
       ${l.fragen.map((f, i) => `
         <div class="karte q">
           <div class="f">${i + 1}. ${esc(f.frage)}</div>
