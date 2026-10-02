@@ -1,0 +1,1053 @@
+=== FOLIE 1 ===
+AUF DER FOLIE: KLASSE C  ·  THEORIE  ·  ABEND 2 | Technik, die man versteht | C3  Kraftstrang / C4  Fahrwerk / Elektrische Anlagen | Fahrschule Boost  ·  Offenbach am Main
+NOTIZEN:
+FOLIE 1 VON 101 · keine Klicks, läuft von selbst
+
+▶ Sagen: „Willkommen zu Abend 2 von 5 für Klasse C. Heute geht es um die Technik: Wie kommt die Kraft vom Motor auf die Straße – und worauf rollt, federt und leuchtet ein Lkw?“
+💡 Vorher: Anwesenheit eintragen, Ausbildungsnachweis abzeichnen.
+🖱 Keine Klicks, alles läuft von selbst.
+➜ „So läuft der Abend.“
+
+=== FOLIE 2 ===
+AUF DER FOLIE: KLASSE C  ·  ABEND 2  ·  LEKTION C3 | 2 | HEUTE ABEND | Zwei Lektionen, eine Pause | 18:00 – 19:30 | Lektion C3  Kraftstrang / Weg der Kraft · Motor und Abgas · Kupplung und Getriebe · Differenzial, Sperre, ASR | 19:30 – 19:45 | Pause  15 Minuten | 19:45 – 21:15 | Lektion C4  Fahrwerk / Elektrische Anlagen / Federung · Räder, Reifen, Schneeketten · Aufbauten · Batterie · Licht und Warnleuchten
+NOTIZEN:
+FOLIE 2 VON 101 · 3 Klicks
+
+▶ Sagen: „Zwei Lektionen: zuerst C3 – Motor, Kupplung, Getriebe, Differenzial. Nach der Pause C4 – Federung, Reifen, Aufbauten, Elektrik und Licht.“
+🖱 Klick 1: Lektion C3 · Klick 2: Pause · Klick 3: Lektion C4.
+💡 Zeiten für einen Beginn um 18:00 Uhr.
+➜ „Erst ein kurzer Blick zurück auf Abend 1.“
+
+=== FOLIE 3 ===
+AUF DER FOLIE: KLASSE C  ·  ABEND 2  ·  LEKTION C3 | 3 | WIEDERHOLUNG ABEND 1 | Drei Fragen von letztem Mal – wer weiß es noch? | Wie lange am Stück fahren?  4,5 h Lenkzeit, dann 45 Minuten Pause – oder erst 15, dann 30 Minuten. | Rechtsabbiegen innerorts über 3,5 t?  Schrittgeschwindigkeit – Radfahrer und Fußgänger im toten Winkel. | Sonntagsfahrverbot?  0 bis 22 Uhr für Lkw über 7,5 t und jeden Lkw mit Anhänger – auch leer.
+NOTIZEN:
+FOLIE 3 VON 101 · 3 Klicks
+
+▶ Sagen: „Bevor wir anfangen: drei Fragen zu Abend 1.“
+❓ Jede Frage vorlesen, Antworten sammeln, dann klicken.
+🖱 Klick 1–3: je eine Frage mit Antwort.
+✅ Art. 7 VO 561/2006 · § 9 Abs. 6 StVO (70 €, 1 Punkt) · § 30 Abs. 3 StVO.
+➜ „Gut. Jetzt zur Technik: Was lernt ihr heute in C3?“
+
+=== FOLIE 4 ===
+AUF DER FOLIE: KLASSE C  ·  ABEND 2  ·  LEKTION C3 | 4 | LEKTION C3 · KRAFTSTRANG | Das lernt ihr in C3 | 01 | Der Weg der Kraft / vom Motor bis zum Rad | 10 Min | 02 | Motor und Abgas / Diesel, Turbo, Drehzahl, AdBlue, Partikelfilter, Kontrollen | 30 Min | 03 | Kupplung und Getriebe / schonend fahren, 12 Gänge, Automatik, Wandler | 20 Min | 04 | Differenzial und Achsen / Sperre, Achsformeln, Antriebs-Schlupf-Regelung | 25 Min | + 5 Min Abschluss: Quiz und „Das nimmst du mit“
+NOTIZEN:
+FOLIE 4 VON 101 · 4 Klicks
+
+▶ Sagen: „In C3 geht es um den Kraftstrang – alles, was die Kraft vom Motor zu den Rädern bringt. Ihr müsst nicht reparieren können. Aber ihr müsst verstehen, bedienen, kontrollieren – und merken, wenn etwas nicht stimmt.“
+🖱 Klick 1–4: je ein Kapitel.
+💡 Zeiten sind Richtwerte für 90 Minuten.
+➜ „Kapitel 1: der Weg der Kraft.“
+
+=== FOLIE 5 ===
+AUF DER FOLIE: KLASSE C  ·  ABEND 2  ·  C3  ·  KRAFTSTRANG | 5 | 01 | Der Weg der Kraft | Vom Diesel im Tank bis zum Reifen auf der Straße.
+NOTIZEN:
+FOLIE 5 VON 101 · keine Klicks, läuft von selbst
+
+▶ Sagen: „Kapitel 1: Wie kommt die Kraft auf die Straße?“
+🖱 Keine Klicks.
+➜ „Wir schauen von oben auf das Fahrgestell.“
+
+=== FOLIE 6 ===
+AUF DER FOLIE: KLASSE C  ·  ABEND 2  ·  C3  ·  KRAFTSTRANG | 6 | KRAFTSTRANG | Der Weg der Kraft | 1 | Motor | 2 | Kupplung | 3 | Getriebe | 4 | Gelenkwelle | 5 | Differenzial | 6 | Achswellen und Räder | Der Dieselmotor erzeugt die Kraft. Er sitzt unter dem Fahrerhaus – darum lässt sich das Fahrerhaus nach vorn kippen. | Fahrgestell von oben · Front links · schematisch | Motor | Kupplung | Getriebe | Gelenkwelle | Differenzial | Achswellen | vorn
+NOTIZEN:
+FOLIE 6 VON 101 · keine Klicks, läuft von selbst
+
+▶ Sagen: „Wie kommt die Kraft vom Motor auf die Straße? Wir gehen den Weg Schritt für Schritt ab. Das ist das Fahrgestell von oben, vorn ist links.“
+❓ „Wer kann die Reihenfolge schon nennen?“
+✅ Motor → Kupplung → Getriebe → Gelenkwelle → Differenzial (Achsgetriebe) → Achswellen → Räder.
+🖱 Keine Animation auf dieser Folie – nächster Klick = nächster Schritt (Morph).
+➜ „Zwischen Motor und Getriebe sitzt …“
+
+=== FOLIE 7 ===
+AUF DER FOLIE: KLASSE C  ·  ABEND 2  ·  C3  ·  KRAFTSTRANG | 7 | KRAFTSTRANG | Der Weg der Kraft | 1 | Motor | 2 | Kupplung | 3 | Getriebe | 4 | Gelenkwelle | 5 | Differenzial | 6 | Achswellen und Räder | Die Kupplung trennt den Motor vom Getriebe – zum Anfahren und Schalten. | Fahrgestell von oben · Front links · schematisch | Motor | Kupplung | Getriebe | Gelenkwelle | Differenzial | Achswellen | vorn
+NOTIZEN:
+FOLIE 7 VON 101 · keine Klicks, läuft von selbst
+
+▶ „… die Kupplung. Sie trennt den Motor vom Getriebe – sonst würde der Motor beim Anhalten absterben.“
+💡 Bei automatisierten Getrieben macht das die Technik; ein Kupplungspedal gibt es oft nur noch zum Rangieren oder gar nicht.
+🖱 Keine Animation auf dieser Folie – nächster Klick = nächster Schritt (Morph).
+➜ „Danach das Getriebe.“
+
+=== FOLIE 8 ===
+AUF DER FOLIE: KLASSE C  ·  ABEND 2  ·  C3  ·  KRAFTSTRANG | 8 | KRAFTSTRANG | Der Weg der Kraft | 1 | Motor | 2 | Kupplung | 3 | Getriebe | 4 | Gelenkwelle | 5 | Differenzial | 6 | Achswellen und Räder | Das Getriebe übersetzt: viel Kraft beim Anfahren, hohes Tempo auf der Autobahn. Lkw haben 12 und mehr Gänge. | Fahrgestell von oben · Front links · schematisch | Motor | Kupplung | Getriebe | Gelenkwelle | Differenzial | Achswellen | vorn
+NOTIZEN:
+FOLIE 8 VON 101 · keine Klicks, läuft von selbst
+
+▶ „Das Getriebe ist der Übersetzer: kleiner Gang = viel Kraft, großer Gang = viel Tempo.“
+✅ Lkw-Getriebe haben meist 12 Gänge (früher auch 16), aufgebaut aus Grundgetriebe, Split- und Bereichsgruppe.
+🖱 Keine Animation auf dieser Folie – nächster Klick = nächster Schritt (Morph).
+➜ „Und dann geht es nach hinten.“
+
+=== FOLIE 9 ===
+AUF DER FOLIE: KLASSE C  ·  ABEND 2  ·  C3  ·  KRAFTSTRANG | 9 | KRAFTSTRANG | Der Weg der Kraft | 1 | Motor | 2 | Kupplung | 3 | Getriebe | 4 | Gelenkwelle | 5 | Differenzial | 6 | Achswellen und Räder | Die Gelenkwelle bringt die Kraft nach hinten. Gelenke gleichen das Federn der Achse aus. | Fahrgestell von oben · Front links · schematisch | Motor | Kupplung | Getriebe | Gelenkwelle | Differenzial | Achswellen | vorn
+NOTIZEN:
+FOLIE 9 VON 101 · keine Klicks, läuft von selbst
+
+▶ „Die Gelenkwelle überträgt die Kraft zur Hinterachse. Die Gelenke sind nötig, weil die Achse beim Federn auf und ab geht.“
+💡 Bei der Abfahrtkontrolle: auf Geräusche, Schläge oder Ölverlust achten – ausschlagende Gelenke hört man beim Anfahren.
+🖱 Keine Animation auf dieser Folie – nächster Klick = nächster Schritt (Morph).
+➜ „Am Ende sitzt ein wichtiges Bauteil.“
+
+=== FOLIE 10 ===
+AUF DER FOLIE: KLASSE C  ·  ABEND 2  ·  C3  ·  KRAFTSTRANG | 10 | KRAFTSTRANG | Der Weg der Kraft | 1 | Motor | 2 | Kupplung | 3 | Getriebe | 4 | Gelenkwelle | 5 | Differenzial | 6 | Achswellen und Räder | Das Differenzial verteilt die Kraft auf das linke und rechte Rad – und lässt sie in der Kurve verschieden schnell drehen. | Fahrgestell von oben · Front links · schematisch | Motor | Kupplung | Getriebe | Gelenkwelle | Differenzial | Achswellen | vorn
+NOTIZEN:
+FOLIE 10 VON 101 · keine Klicks, läuft von selbst
+
+▶ „Das Differenzial, auch Ausgleichsgetriebe. Es teilt die Kraft auf links und rechts auf.“
+❓ „Warum müssen die Räder in der Kurve verschieden schnell drehen?“ ✅ Das äußere Rad fährt einen größeren Bogen als das innere – es muss sich schneller drehen.
+🖱 Keine Animation auf dieser Folie – nächster Klick = nächster Schritt (Morph).
+➜ „Und zuletzt …“
+
+=== FOLIE 11 ===
+AUF DER FOLIE: KLASSE C  ·  ABEND 2  ·  C3  ·  KRAFTSTRANG | 11 | KRAFTSTRANG | Der Weg der Kraft | 1 | Motor | 2 | Kupplung | 3 | Getriebe | 4 | Gelenkwelle | 5 | Differenzial | 6 | Achswellen und Räder | Über die Achswellen kommt die Kraft an die Antriebsräder. Bei schweren Lkw meist Zwillingsreifen. | Fahrgestell von oben · Front links · schematisch | Motor | Kupplung | Getriebe | Gelenkwelle | Differenzial | Achswellen | vorn
+NOTIZEN:
+FOLIE 11 VON 101 · keine Klicks, läuft von selbst
+
+▶ „Über die Achswellen kommt die Kraft an die Räder. Fertig ist der Weg der Kraft.“
+💡 Merksatz: Motor – Kupplung – Getriebe – Welle – Differenzial – Rad.
+🖱 Keine Animation auf dieser Folie – nächster Klick = nächster Schritt (Morph).
+➜ „Schauen wir uns die einzelnen Teile genauer an. Zuerst der Motor.“
+
+=== FOLIE 12 ===
+AUF DER FOLIE: KLASSE C  ·  ABEND 2  ·  C3  ·  MOTOR | 12 | 02 | Motor und Abgas | Diesel, Turbo, Drehzahl, AdBlue, Partikelfilter – und was ihr kontrolliert.
+NOTIZEN:
+FOLIE 12 VON 101 · keine Klicks, läuft von selbst
+
+▶ Sagen: „Kapitel 2: der Motor. Ihr müsst ihn nicht reparieren – aber verstehen, richtig bedienen und merken, wenn etwas nicht stimmt.“
+🖱 Keine Klicks.
+➜ „Zuerst: Wie funktioniert ein Diesel?“
+
+=== FOLIE 13 ===
+AUF DER FOLIE: KLASSE C  ·  ABEND 2  ·  C3  ·  MOTOR | 13 | DIESELMOTOR | Der Selbstzünder | 1 | Ansaugen | 2 | Verdichten | 3 | Einspritzen und Zünden | 4 | Ausstoßen | Der Kolben geht nach unten und saugt nur Luft an – kein Kraftstoff. | Ein Zylinder im Schnitt · schematisch | Luft | Abgas | Diesel | 1  Ansaugen | Einlass offen | Kolben ↓
+NOTIZEN:
+FOLIE 13 VON 101 · keine Klicks, läuft von selbst
+
+▶ Sagen: „Ein Lkw-Motor ist ein Dieselmotor. Wir schauen in einen Zylinder. Erster Schritt: Der Kolben geht nach unten, das Einlassventil ist offen, es kommt nur Luft hinein.“
+❓ „Was fehlt beim Diesel im Vergleich zum Benziner?“
+✅ Die Zündkerze. Der Diesel zündet von selbst.
+🖱 Keine Animation auf dieser Folie – nächster Klick = nächster Schritt (Morph).
+➜ „Dann wird verdichtet.“
+
+=== FOLIE 14 ===
+AUF DER FOLIE: KLASSE C  ·  ABEND 2  ·  C3  ·  MOTOR | 14 | DIESELMOTOR | Der Selbstzünder | 1 | Ansaugen | 2 | Verdichten | 3 | Einspritzen und Zünden | 4 | Ausstoßen | Der Kolben drückt die Luft stark zusammen. Dabei wird sie sehr heiß. | Ein Zylinder im Schnitt · schematisch | Luft | Abgas | Diesel | 2  Verdichten | beide Ventile zu | Kolben ↑
+NOTIZEN:
+FOLIE 14 VON 101 · keine Klicks, läuft von selbst
+
+▶ „Beide Ventile zu, der Kolben fährt hoch. Die Luft wird stark zusammengedrückt – und dabei sehr heiß.“
+💡 Vergleich: Eine Fahrradpumpe wird beim Pumpen auch warm.
+🖱 Keine Animation auf dieser Folie – nächster Klick = nächster Schritt (Morph).
+➜ „Jetzt kommt der Diesel dazu.“
+
+=== FOLIE 15 ===
+AUF DER FOLIE: KLASSE C  ·  ABEND 2  ·  C3  ·  MOTOR | 15 | DIESELMOTOR | Der Selbstzünder | 1 | Ansaugen | 2 | Verdichten | 3 | Einspritzen und Zünden | 4 | Ausstoßen | Diesel wird eingespritzt und entzündet sich in der heißen Luft von selbst. Der Druck treibt den Kolben nach unten – das ist die Kraft. | Ein Zylinder im Schnitt · schematisch | Luft | Abgas | Diesel | 3  Arbeiten | beide Ventile zu | Kolben ↓
+NOTIZEN:
+FOLIE 15 VON 101 · keine Klicks, läuft von selbst
+
+▶ „Kurz vor dem oberen Punkt spritzt die Düse Diesel ein. In der heißen Luft entzündet er sich von selbst. Der Druck drückt den Kolben nach unten – das ist der Arbeitstakt.“
+✅ Darum heißt der Diesel Selbstzündungsmotor (Prüfungsfrage 2.7.03-201).
+🖱 Keine Animation auf dieser Folie – nächster Klick = nächster Schritt (Morph).
+➜ „Und dann muss das Abgas raus.“
+
+=== FOLIE 16 ===
+AUF DER FOLIE: KLASSE C  ·  ABEND 2  ·  C3  ·  MOTOR | 16 | DIESELMOTOR | Der Selbstzünder | 1 | Ansaugen | 2 | Verdichten | 3 | Einspritzen und Zünden | 4 | Ausstoßen | Der Kolben schiebt das Abgas hinaus. Danach beginnt alles von vorn. | Ein Zylinder im Schnitt · schematisch | Luft | Abgas | Diesel | 4  Ausstoßen | Auslass offen | Kolben ↑
+NOTIZEN:
+FOLIE 16 VON 101 · keine Klicks, läuft von selbst
+
+▶ „Das Auslassventil öffnet, der Kolben schiebt das Abgas hinaus – weiter zum Turbo und zur Abgasreinigung.“
+💡 Merksatz: Ansaugen – Verdichten – Arbeiten – Ausstoßen.
+🖱 Keine Animation auf dieser Folie – nächster Klick = nächster Schritt (Morph).
+➜ „Wie bekommt man mehr Luft in den Zylinder? Mit dem Turbo.“
+
+=== FOLIE 17 ===
+AUF DER FOLIE: KLASSE C  ·  ABEND 2  ·  C3  ·  MOTOR | 17 | TURBOLADER | Abgas pustet Luft in den Motor | Motor | Turbine | Abgas | zum Auspuff und zur Abgasreinigung | Verdichter | gleiche Welle | Frischluft | heiße, verdichtete Luft | Ladeluftkühler | kühle Luft = mehr Sauerstoff = mehr Kraft | Praxis: / nach Bergfahrt oder Vollgas den Motor kurz im Leerlauf nachlaufen lassen – der Lader ist sehr heiß. Viele Lkw regeln das selbst: Betriebsanleitung.
+NOTIZEN:
+FOLIE 17 VON 101 · 5 Klicks
+
+▶ Sagen: „Mehr Luft im Zylinder heißt: mehr Diesel kann verbrennen, mehr Kraft. Dafür sorgt der Turbolader.“
+🖱 Klick 1: Abgas treibt die Turbine · Klick 2: der Verdichter drückt Luft · Klick 3: Ladeluftkühler · Klick 4: in den Motor · Klick 5: Tipp für die Praxis.
+✅ Das Abgas dreht ein Turbinenrad. Auf derselben Welle sitzt das Verdichterrad, es drückt Frischluft in den Motor. Der Ladeluftkühler kühlt die dabei heiß gewordene Luft – kalte Luft enthält mehr Sauerstoff.
+❓ „Woran merkt ihr, dass mit dem Turbo etwas nicht stimmt?“
+✅ Weniger Leistung, Pfeifen, blauer oder schwarzer Rauch, Öl am Ladeluftschlauch → Werkstatt.
+➜ „Wie fahre ich den Motor richtig? Ein Blick auf den Drehzahlmesser.“
+
+=== FOLIE 18 ===
+AUF DER FOLIE: KLASSE C  ·  ABEND 2  ·  C3  ·  MOTOR | 18 | DREHZAHL | Im grünen Bereich | 1 | Leerlauf | 2 | Grüner Bereich | 3 | Zu hoch gedreht | 4 | Wirtschaftlich fahren | Im Leerlauf dreht der Motor langsam. Unnötig laufen lassen ist verboten. | Drehzahlmesser · Werte sind Beispiele, maßgeblich ist euer Fahrzeug | 0 | 5 | 10 | 15 | 20 | 25 | × 100 /min | Leerlauf
+NOTIZEN:
+FOLIE 18 VON 101 · keine Klicks, läuft von selbst
+
+▶ Sagen: „Der Drehzahlmesser ist euer Spar-Instrument. Hier: Leerlauf.“
+❓ „Was steht im Drehzahlmesser eines Lkw, was im Pkw fehlt?“
+✅ Ein grüner Bereich (je nach Hersteller auch markiert oder im Display angezeigt).
+🖱 Keine Animation auf dieser Folie – nächster Klick = nächster Schritt (Morph).
+➜ „Wofür steht Grün?“
+
+=== FOLIE 19 ===
+AUF DER FOLIE: KLASSE C  ·  ABEND 2  ·  C3  ·  MOTOR | 19 | DREHZAHL | Im grünen Bereich | 1 | Leerlauf | 2 | Grüner Bereich | 3 | Zu hoch gedreht | 4 | Wirtschaftlich fahren | Im grünen Bereich hat der Motor viel Kraft und braucht wenig Diesel – grob 1.000 bis 1.400 /min, je nach Motor. | Drehzahlmesser · Werte sind Beispiele, maßgeblich ist euer Fahrzeug | 0 | 5 | 10 | 15 | 20 | 25 | × 100 /min | grün: Kraft und sparen
+NOTIZEN:
+FOLIE 19 VON 101 · keine Klicks, läuft von selbst
+
+▶ „Im grünen Bereich hat der Motor viel Drehmoment bei wenig Verbrauch. Bei modernen Lkw grob 1.000 bis 1.400 Umdrehungen – schaut immer auf euer Instrument, jeder Motor ist anders.“
+✅ Herstellerangaben; Lehrbuchwissen zum wirtschaftlichen Fahren.
+🖱 Keine Animation auf dieser Folie – nächster Klick = nächster Schritt (Morph).
+➜ „Und wenn ich zu hoch drehe?“
+
+=== FOLIE 20 ===
+AUF DER FOLIE: KLASSE C  ·  ABEND 2  ·  C3  ·  MOTOR | 20 | DREHZAHL | Im grünen Bereich | 1 | Leerlauf | 2 | Grüner Bereich | 3 | Zu hoch gedreht | 4 | Wirtschaftlich fahren | Zu hohe Drehzahl kostet Diesel, macht Lärm und verschleißt den Motor. Früher hochschalten. | Drehzahlmesser · Werte sind Beispiele, maßgeblich ist euer Fahrzeug | 0 | 5 | 10 | 15 | 20 | 25 | × 100 /min | zu hoch
+NOTIZEN:
+FOLIE 20 VON 101 · keine Klicks, läuft von selbst
+
+▶ „Zu hoch: mehr Verbrauch, mehr Lärm, mehr Verschleiß. Mit dem automatisierten Getriebe schaltet der Lkw meist selbst richtig – aber nur, wenn ihr nicht dauernd Vollgas gebt.“
+🖱 Keine Animation auf dieser Folie – nächster Klick = nächster Schritt (Morph).
+➜ „Was heißt wirtschaftlich fahren noch?“
+
+=== FOLIE 21 ===
+AUF DER FOLIE: KLASSE C  ·  ABEND 2  ·  C3  ·  MOTOR | 21 | DREHZAHL | Im grünen Bereich | 1 | Leerlauf | 2 | Grüner Bereich | 3 | Zu hoch gedreht | 4 | Wirtschaftlich fahren | Vorausschauend rollen lassen, Tempomat nutzen, mit Motorbremse und Retarder verzögern. | Drehzahlmesser · Werte sind Beispiele, maßgeblich ist euer Fahrzeug | 0 | 5 | 10 | 15 | 20 | 25 | × 100 /min | grün halten
+NOTIZEN:
+FOLIE 21 VON 101 · keine Klicks, läuft von selbst
+
+▶ „Vorausschauend fahren: früh vom Gas, rollen lassen, Tempomat und vorausschauenden Tempomat nutzen. Verzögern mit Motorbremse und Retarder – das schont die Betriebsbremse.“
+💡 Details zu den Dauerbremsen kommen in der Bremsen-Lektion.
+🖱 Keine Animation auf dieser Folie – nächster Klick = nächster Schritt (Morph).
+➜ „Jetzt zur Abgasreinigung: AdBlue.“
+
+=== FOLIE 22 ===
+AUF DER FOLIE: KLASSE C  ·  ABEND 2  ·  C3  ·  MOTOR | 22 | ABGAS · ADBLUE | Zwei Tanks, zwei Deckel | Diesel | großer Stutzen | AdBlue | klein, blauer Deckel | Einfüllstutzen · schematisch | Was ist AdBlue? / 32,5 % Harnstoff in Wasser. Im Abgas macht es aus Stickoxiden Stickstoff und Wasser. | Eigener Tank, beheizt / Verbrauch etwa 4–6 % vom Diesel. Gefriert bei etwa −11 °C. | Nie verwechseln! / AdBlue nie in den Dieseltank – und umgekehrt. Falsch getankt: Motor nicht starten.
+NOTIZEN:
+FOLIE 22 VON 101 · 4 Klicks
+
+▶ Sagen: „Moderne Lkw erfüllen die Abgasnorm Euro VI. Dafür brauchen sie AdBlue – eine Harnstoff-Lösung, die im Abgas die Stickoxide unschädlich macht.“
+❓ „Am Lkw sind zwei Einfüllstutzen. Welcher ist für AdBlue?“
+🖱 Klick 1: Beschriftung der Stutzen · Klick 2–4: je ein Punkt.
+✅ AdBlue: 32,5 % Harnstoff in Wasser (ISO 22241), eigener Tank, kleiner Stutzen mit blauem Deckel. Verbrauch etwa 4–6 % des Diesels. Gefriert bei etwa −11 °C, darum ist der Tank beheizt. Nie verwechseln – bei falsch getankt: Motor nicht starten, Werkstatt (Herstellerangaben).
+✅ Euro VI für neue schwere Lkw seit 31.12.2013 (VO (EG) 595/2009).
+➜ „Was passiert, wenn der AdBlue-Tank leer ist?“
+
+=== FOLIE 23 ===
+AUF DER FOLIE: KLASSE C  ·  ABEND 2  ·  C3  ·  MOTOR | 23 | ABGAS · ADBLUE | AdBlue leer – was passiert? | Warnung | Anzeige im Display: AdBlue nachfüllen. | ➜ | Weniger Leistung | Der Motor wird gedrosselt. | ➜ | Kriechmodus | höchstens 20 km/h | Abgasanlage manipulieren ist verboten  – z. B. mit einem AdBlue-Emulator. Die Betriebserlaubnis erlischt.
+NOTIZEN:
+FOLIE 23 VON 101 · 4 Klicks
+
+▶ Sagen: „Der AdBlue-Tank ist fast leer – und ihr fahrt einfach weiter. Was macht der Lkw?“
+❓ Antworten sammeln.
+🖱 Klick 1: Warnung · Klick 2: weniger Leistung · Klick 3: Kriechmodus · Klick 4: Manipulation.
+✅ Das EU-Recht schreibt dieses „Aufforderungssystem“ vor: erst Warnung, dann Leistungsdrosselung, zuletzt höchstens 20 km/h (VO (EU) 582/2011 Anhang XIII).
+✅ Manipulation (z. B. AdBlue-Emulator) ist verboten: Die Betriebserlaubnis erlischt.
+➜ „Der zweite Abgasreiniger: der Partikelfilter.“
+
+=== FOLIE 24 ===
+AUF DER FOLIE: KLASSE C  ·  ABEND 2  ·  C3  ·  MOTOR | 24 | ABGAS · PARTIKELFILTER | Die Leuchte fordert eine Standregeneration. Worauf achtest du? | Normalfall  Der Filter sammelt Ruß und brennt ihn bei längerer Fahrt selbst frei – automatisch. | Sehr heißes Abgas  Nicht über trockenem Gras oder anderem Brennbaren abstellen, nicht in einer Halle. | So wie in der Betriebsanleitung  starten, meist per Taste – und nicht unnötig abbrechen.
+NOTIZEN:
+FOLIE 24 VON 101 · 3 Klicks
+
+▶ Sagen: „Der Dieselpartikelfilter fängt den Ruß. Er muss ab und zu freigebrannt werden – das heißt Regeneration.“
+❓ „Ihr fahrt viel Kurzstrecke im Verteilerverkehr. Plötzlich fordert die Leuchte eine Standregeneration. Worauf achtet ihr?“
+🖱 Klick 1–3: je eine Antwort.
+✅ Bei langer Fahrt regeneriert der Filter von selbst. Bei viel Kurzstrecke kann eine Standregeneration nötig werden. Dabei tritt sehr heißes Abgas aus: nicht über brennbarem Untergrund, nicht in Hallen. Nach Betriebsanleitung starten, nicht unnötig abbrechen (Herstellerangaben, z. B. DAF, Mercedes-Benz).
+➜ „Jetzt zu dem, was ihr selbst kontrolliert: Öl und Kühlmittel.“
+
+=== FOLIE 25 ===
+AUF DER FOLIE: KLASSE C  ·  ABEND 2  ·  C3  ·  MOTOR | 25 | KONTROLLE | Öl und Kühlmittel | Ölstand / Lkw steht eben. Messstab oder Anzeige im Display. Nur Öl mit Freigabe des Herstellers nachfüllen. | Kühlmittel nur kalt öffnen / Heißes Kühlmittel steht unter Druck – Verbrühungsgefahr! | Frostschutz vor dem Winter / Gefrierendes Wasser dehnt sich aus und kann Kühler oder Motor sprengen. | Rote Temperatur-Warnung / So schnell wie möglich an geeigneter Stelle anhalten. Betriebsanleitung beachten.
+NOTIZEN:
+FOLIE 25 VON 101 · 4 Klicks
+
+▶ Sagen: „Vor der Fahrt kontrolliert ihr Öl und Kühlmittel. Das gehört auch zur Abfahrtkontrolle in der Prüfung.“
+❓ „Wann darf ich den Kühlmittel-Behälter öffnen?“
+✅ Nur bei kaltem Motor – heißes Kühlmittel steht unter Druck, Verbrühungsgefahr.
+🖱 Klick 1–4: je ein Punkt.
+✅ Ölstand auf ebener Fläche, Messstab oder Anzeige im Display. Nur Öl mit Freigabe des Herstellers (Prüfungsfragen 2.7.04-206, 2.7.03-207: Mehrbereichsöl deckt den größten Temperaturbereich ab). Frostschutz vor dem Winter prüfen – gefrierendes Wasser kann Kühler und Motorblock sprengen (2.7.03-206). Rote Temperaturwarnung: so schnell wie möglich an geeigneter Stelle anhalten, nach Betriebsanleitung handeln (2.7.02-216).
+➜ „Und was kommt in den Tank, wenn es kalt wird?“
+
+=== FOLIE 26 ===
+AUF DER FOLIE: KLASSE C  ·  ABEND 2  ·  C3  ·  MOTOR | 26 | KRAFTSTOFF | Winterdiesel – ab wann? | Sep | Okt | Nov | Dez | Jan | Feb | Mär | Sommer | Übergang / bis −10 °C | ab 1.10. | Winterdiesel  bis −20 °C | 16.11. – 28.2. | Übergang | Springt nicht an? / Paraffin-Kristalle können den Filter verstopfen. | Kein Benzin beimischen! / Das schadet modernen Dieselmotoren. | Zeiträume nach DIN EN 590 · Grenzwerte: Filtrierbarkeit (CFPP)
+NOTIZEN:
+FOLIE 26 VON 101 · 3 Klicks
+
+▶ Sagen: „Diesel enthält Paraffin. Bei Kälte bildet es Kristalle und verstopft den Filter – der Motor bekommt keinen Kraftstoff mehr.“
+❓ „Ab wann gibt es an der Tankstelle Winterdiesel?“
+🖱 Klick 1: Übergangsdiesel · Klick 2: Winterdiesel · Klick 3: Praxis.
+✅ Nach DIN EN 590: ab 1. Oktober Übergangsdiesel (bis −10 °C filtrierbar), vom 16. November bis 28. Februar Winterdiesel (bis −20 °C). Im Frühjahr wieder Übergangsware.
+✅ Springt der Diesel im Winter nicht an, kann ausgeschiedenes Paraffin den Filter verstopft haben (Prüfungsfrage 2.7.03-208).
+💡 Kein Benzin beimischen – das schadet modernen Motoren. Vor Fahrten nach Skandinavien oder in die Alpen rechtzeitig Winterdiesel tanken.
+➜ „Noch eine Frage zum Leerlauf.“
+
+=== FOLIE 27 ===
+AUF DER FOLIE: KLASSE C  ·  ABEND 2  ·  C3  ·  MOTOR | 27 | MOTOR · LEERLAUF | Morgens bei −5 °C: den Motor erst 10 Minuten warmlaufen lassen? | Nein!  Sofort losfahren – die ersten Kilometer ohne Vollgas und ohne hohe Drehzahl. | Verboten:  Motor unnötig laufen lassen (§ 30 Abs. 1 StVO) – 80 € Verwarnungsgeld. | Zum Heizen oder Kühlen in der Pause  gibt es Standheizung und Standklimaanlage – auch beim Be- und Entladen Motor aus.
+NOTIZEN:
+FOLIE 27 VON 101 · 3 Klicks
+
+▶ Sagen: „Viele glauben: Diesel muss warmlaufen. Stimmt das?“
+❓ Abstimmen lassen: Wer würde warmlaufen lassen?
+🖱 Klick 1–3: je eine Antwort.
+✅ Nein. Warmlaufen im Stand verschleißt den Motor und kostet Diesel. § 30 Abs. 1 StVO: unnötiger Lärm und vermeidbare Abgasbelästigungen sind verboten, insbesondere Motoren unnötig laufen lassen. BKat Nr. 117: 80 €, kein Punkt.
+💡 Bei längerem Stillstand (Bahnübergang, Stau, Laderampe) Motor aus. Viele Lkw haben dafür Start-Stopp oder Leerlaufabschaltung.
+➜ „Kurzes Quiz zum Motor.“
+
+=== FOLIE 28 ===
+AUF DER FOLIE: KLASSE C  ·  ABEND 2  ·  C3  ·  MOTOR | 28 | QUIZ MOTOR | Warum nennt man den Dieselmotor auch Selbstzündungsmotor? | A | Weil eine Zündkerze den Diesel entzündet | B | Weil sich der Diesel in der stark verdichteten, heißen Luft selbst entzündet | C | Weil der Motor ohne Anlasser startet | ✓  RICHTIG | Die Luft wird beim Verdichten so heiß, dass sich der eingespritzte Diesel von selbst entzündet (Prüfungsfrage 2.7.03-201).
+NOTIZEN:
+FOLIE 28 VON 101 · 2 Klicks
+
+▶ Frage vorlesen, abstimmen.
+🖱 Klick 1: Antworten · Klick 2: Lösung.
+✅ B.
+💡 Vorglühen hilft nur beim Kaltstart – es zündet den Diesel nicht.
+➜ „Weiter zu Kapitel 3: Kupplung und Getriebe.“
+
+=== FOLIE 29 ===
+AUF DER FOLIE: KLASSE C  ·  ABEND 2  ·  C3  ·  KUPPLUNG UND GETRIEBE | 29 | 03 | Kupplung und Getriebe | Schonend anfahren, 12 Gänge verstehen, die Automatik richtig bedienen.
+NOTIZEN:
+FOLIE 29 VON 101 · keine Klicks, läuft von selbst
+
+▶ Sagen: „Kapitel 3: Kupplung und Getriebe. Fast alle neuen Lkw haben heute ein automatisiertes Getriebe – trotzdem müsst ihr wissen, was darin passiert.“
+🖱 Keine Klicks.
+➜ „Erst eine Prüfungsfrage zur Kupplung.“
+
+=== FOLIE 30 ===
+AUF DER FOLIE: KLASSE C  ·  ABEND 2  ·  C3  ·  KUPPLUNG UND GETRIEBE | 30 | KUPPLUNG | Was erhöht den Verschleiß der Kupplung? | A | Anfahren in einem hohen Gang | B | Anfahren im kleinsten Gang | C | Rangieren mit erhöhter Motordrehzahl | ✓  RICHTIG | ✓  RICHTIG | Verschleiß entsteht durch Schleifen. Hoher Gang oder hohe Drehzahl beim Rangieren lassen die Kupplung lange schleifen (Prüfungsfrage 2.7.03-214).
+NOTIZEN:
+FOLIE 30 VON 101 · 2 Klicks
+
+▶ Sagen: „Hier können mehrere Antworten richtig sein – wie in der Prüfung.“
+❓ Abstimmen lassen.
+🖱 Klick 1: Antworten · Klick 2: Lösung (A und C).
+✅ A und C. Je länger die Kupplung schleift, desto mehr verschleißt sie.
+➜ „Wie schont ihr die Kupplung also?“
+
+=== FOLIE 31 ===
+AUF DER FOLIE: KLASSE C  ·  ABEND 2  ·  C3  ·  KUPPLUNG UND GETRIEBE | 31 | KUPPLUNG | So schont ihr die Kupplung | Im kleinen Gang anfahren | Nicht schleifen lassen | Fuß weg vom Pedal  während der Fahrt | Beim Warten: Leerlauf  statt ausgekuppelt stehen | Warnzeichen: Die Kupplung rutscht  – der Motor dreht hoch, aber der Lkw wird nicht schneller. Oder es riecht verbrannt. → Werkstatt.
+NOTIZEN:
+FOLIE 31 VON 101 · 5 Klicks
+
+▶ Sagen: „Die Kupplung ist ein Verschleißteil. Ein Wechsel kostet beim Lkw schnell mehrere tausend Euro und einen Tag Stillstand.“
+🖱 Klick 1–4: je ein Tipp · Klick 5: Warnzeichen.
+✅ Prüfungsfrage 2.7.03-215 „Wie können Sie die Kupplungsbauteile schonen?“: im kleinen Gang anfahren, nicht schleifen lassen, Fuß nicht auf dem Pedal lassen, beim Warten in den Leerlauf statt ausgekuppelt stehen.
+✅ Rutscht die Kupplung (Drehzahl steigt, Lkw wird nicht schneller) oder riecht es verbrannt: Werkstatt.
+➜ „Jetzt zum Getriebe: Warum hat ein Lkw 12 Gänge?“
+
+=== FOLIE 32 ===
+AUF DER FOLIE: KLASSE C  ·  ABEND 2  ·  C3  ·  KUPPLUNG UND GETRIEBE | 32 | GETRIEBE | Warum 12 Gänge? | 1 | Grundgetriebe: 3 Gänge | 2 | Splitgruppe: × 2 | 3 | Bereichsgruppe: × 2 | 4 | Ergebnis: kleine Sprünge | Das Grundgetriebe hat nur wenige Gänge – hier 3. Die Sprünge dazwischen sind groß. | Gänge über der Geschwindigkeit · Beispiel 12-Gang-Getriebe · schematisch | langsam | schnell | Fahrgeschwindigkeit | 1 | 2 | 3 | 3 Gänge
+NOTIZEN:
+FOLIE 32 VON 101 · keine Klicks, läuft von selbst
+
+▶ Sagen: „Ein Lkw wiegt bis zu 40 Tonnen. Damit der Motor immer im grünen Bereich bleibt, braucht er viele Gänge. Gebaut wird das aus drei Teilen. Teil 1: das Grundgetriebe, hier mit 3 Gängen.“
+🖱 Keine Animation auf dieser Folie – nächster Klick = nächster Schritt (Morph).
+➜ „Teil 2 …“
+
+=== FOLIE 33 ===
+AUF DER FOLIE: KLASSE C  ·  ABEND 2  ·  C3  ·  KUPPLUNG UND GETRIEBE | 33 | GETRIEBE | Warum 12 Gänge? | 1 | Grundgetriebe: 3 Gänge | 2 | Splitgruppe: × 2 | 3 | Bereichsgruppe: × 2 | 4 | Ergebnis: kleine Sprünge | Die Splitgruppe teilt jeden Gang in zwei Halbgänge. Aus 3 werden 6. | Gänge über der Geschwindigkeit · Beispiel 12-Gang-Getriebe · schematisch | langsam | schnell | Fahrgeschwindigkeit | 1 | 2 | 3 | 4 | 5 | 6 | Halbgänge durch die Splitgruppe | 3 × 2 = 6 Gänge
+NOTIZEN:
+FOLIE 33 VON 101 · keine Klicks, läuft von selbst
+
+▶ „… die Splitgruppe. Sie halbiert jeden Gangsprung. Aus 3 werden 6 Gänge.“
+🖱 Keine Animation auf dieser Folie – nächster Klick = nächster Schritt (Morph).
+➜ „Und Teil 3?“
+
+=== FOLIE 34 ===
+AUF DER FOLIE: KLASSE C  ·  ABEND 2  ·  C3  ·  KUPPLUNG UND GETRIEBE | 34 | GETRIEBE | Warum 12 Gänge? | 1 | Grundgetriebe: 3 Gänge | 2 | Splitgruppe: × 2 | 3 | Bereichsgruppe: × 2 | 4 | Ergebnis: kleine Sprünge | Die Bereichsgruppe schaltet von „langsam“ auf „schnell“ um. Die 6 Gänge gibt es zweimal: 12. | Gänge über der Geschwindigkeit · Beispiel 12-Gang-Getriebe · schematisch | langsam | schnell | Fahrgeschwindigkeit | 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8 | 9 | 10 | 11 | 12 | Bereich „langsam“ | Bereich „schnell“ | 3 × 2 × 2 = 12 Gänge
+NOTIZEN:
+FOLIE 34 VON 101 · keine Klicks, läuft von selbst
+
+▶ „Die Bereichsgruppe – auch Rangegruppe. Sie schaltet zwischen langsamem und schnellem Bereich um. Die 6 Gänge gibt es also zweimal: 3 × 2 × 2 = 12.“
+✅ Aufbau z. B. bei 12-Gang-Getrieben von ZF; Lehrbuchwissen. Früher gab es auch 16 Gänge (4 × 2 × 2).
+🖱 Keine Animation auf dieser Folie – nächster Klick = nächster Schritt (Morph).
+➜ „Wozu der Aufwand?“
+
+=== FOLIE 35 ===
+AUF DER FOLIE: KLASSE C  ·  ABEND 2  ·  C3  ·  KUPPLUNG UND GETRIEBE | 35 | GETRIEBE | Warum 12 Gänge? | 1 | Grundgetriebe: 3 Gänge | 2 | Splitgruppe: × 2 | 3 | Bereichsgruppe: × 2 | 4 | Ergebnis: kleine Sprünge | Kleine Gangsprünge halten den Motor immer im grünen Bereich – das spart Diesel. Meist schaltet die Automatik. | Gänge über der Geschwindigkeit · Beispiel 12-Gang-Getriebe · schematisch | langsam | schnell | Fahrgeschwindigkeit | 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8 | 9 | 10 | 11 | 12 | Bereich „langsam“ | Bereich „schnell“ | 3 × 2 × 2 = 12 Gänge | kleine Sprünge = Motor bleibt im grünen Bereich
+NOTIZEN:
+FOLIE 35 VON 101 · keine Klicks, läuft von selbst
+
+▶ „Kleine Sprünge: Beim Hochschalten fällt die Drehzahl nur wenig. Der Motor bleibt im grünen Bereich.“
+❓ „Wer schaltet heute meistens?“
+✅ Das automatisierte Getriebe – die Technik dahinter bleibt gleich.
+🖱 Keine Animation auf dieser Folie – nächster Klick = nächster Schritt (Morph).
+➜ „Wie bedient man so eine Automatik?“
+
+=== FOLIE 36 ===
+AUF DER FOLIE: KLASSE C  ·  ABEND 2  ·  C3  ·  KUPPLUNG UND GETRIEBE | 36 | AUTOMATISIERTES GETRIEBE | Ihr wählt – das Getriebe schaltet | D | Fahren vorwärts  Das Getriebe wählt den Gang selbst. | N | Neutral  Motor starten meist nur in N – je nach Lkw mit getretener Bremse. | R | Rückwärts  im Stand einlegen. | M | Manuell  selbst schalten: vor dem Gefälle, am Berg, auf der Baustelle, bei Schnee. | Rangiermodus / Kriechgang  ganz langsam und feinfühlig – an der Rampe und beim Ankuppeln. | Bedienung je nach Hersteller verschieden – Betriebsanleitung beachten
+NOTIZEN:
+FOLIE 36 VON 101 · 5 Klicks
+
+▶ Sagen: „Fast alle neuen schweren Lkw haben ein automatisiertes Schaltgetriebe. Es schaltet selbst – ihr wählt nur die Fahrstufe. Wo der Wählhebel sitzt, ist je nach Hersteller verschieden: am Lenkrad, als Drehknopf oder Tasten.“
+🖱 Klick 1–5: je eine Fahrstufe oder Funktion.
+✅ Herstellerangaben (z. B. Mercedes PowerShift, MAN TipMatic, Volvo I-Shift, ZF TraXon). Starten meist in N, je nach Hersteller mit getretener Bremse. Manuell: selbst schalten, z. B. vor Gefälle, bei Bergfahrt, Baustelle, Schnee. Rangiermodus: begrenzte Geschwindigkeit, sehr feinfühlig.
+💡 Immer die Betriebsanleitung des Fahrzeugs lesen – die Bedienung ist nicht einheitlich.
+➜ „Für schwere Arbeit gibt es noch eine besondere Kupplung: den Wandler.“
+
+=== FOLIE 37 ===
+AUF DER FOLIE: KLASSE C  ·  ABEND 2  ·  C3  ·  KUPPLUNG UND GETRIEBE | 37 | WANDLERSCHALTKUPPLUNG | Anfahren über Öl | 1 | Anfahren: Wandler | 2 | Fahren: Kupplung zu | 3 | Wo man sie findet | Beim Anfahren überträgt Öl im Wandler die Kraft – ohne Reibung, ohne Verschleiß, sehr feinfühlig. | Schematisch | Motor | Wandler (Öl) | Kupplung offen | Getriebe
+NOTIZEN:
+FOLIE 37 VON 101 · keine Klicks, läuft von selbst
+
+▶ Sagen: „Schwertransporter fahren mit 100 Tonnen und mehr an. Eine normale Kupplung würde dabei glühen. Darum gibt es die Wandlerschaltkupplung. Beim Anfahren arbeitet ein Wandler: Ein Rad pumpt Öl auf ein zweites Rad – die Kraft geht über das Öl.“
+🖱 Keine Animation auf dieser Folie – nächster Klick = nächster Schritt (Morph).
+➜ „Und wenn der Lkw rollt?“
+
+=== FOLIE 38 ===
+AUF DER FOLIE: KLASSE C  ·  ABEND 2  ·  C3  ·  KUPPLUNG UND GETRIEBE | 38 | WANDLERSCHALTKUPPLUNG | Anfahren über Öl | 1 | Anfahren: Wandler | 2 | Fahren: Kupplung zu | 3 | Wo man sie findet | Danach schließt eine Kupplung und überbrückt den Wandler – die Kraft geht direkt ins Getriebe. | Schematisch | Motor | Wandler (Öl) | Kupplung zu | Getriebe
+NOTIZEN:
+FOLIE 38 VON 101 · keine Klicks, läuft von selbst
+
+▶ „Dann schließt eine Kupplung und verbindet Motor und Getriebe direkt. Der Wandler ist überbrückt – kein Verlust mehr.“
+✅ Wandlerschaltkupplung = Drehmomentwandler + Überbrückungskupplung vor dem Getriebe (z. B. ZF TraXon Torque, Mercedes Turbo-Retarder-Kupplung).
+🖱 Keine Animation auf dieser Folie – nächster Klick = nächster Schritt (Morph).
+➜ „Wo findet ihr so etwas?“
+
+=== FOLIE 39 ===
+AUF DER FOLIE: KLASSE C  ·  ABEND 2  ·  C3  ·  KUPPLUNG UND GETRIEBE | 39 | WANDLERSCHALTKUPPLUNG | Anfahren über Öl | 1 | Anfahren: Wandler | 2 | Fahren: Kupplung zu | 3 | Wo man sie findet | Bei schweren Fahrzeugen, die oft langsam anfahren und rangieren: Schwertransport, Baustelle, Feuerwehr. | Schematisch | Motor | Wandler (Öl) | Kupplung zu | Getriebe | Schwertransport | Baustelle | Feuerwehr
+NOTIZEN:
+FOLIE 39 VON 101 · keine Klicks, läuft von selbst
+
+▶ „Schwertransport, Baustelle, Feuerwehr – überall, wo oft schwer und langsam angefahren wird.“
+💡 Vorteil: Anfahren und Rangieren ohne Kupplungsverschleiß.
+🖱 Keine Animation auf dieser Folie – nächster Klick = nächster Schritt (Morph).
+➜ „Zum Schluss des Kapitels: das Gefälle.“
+
+=== FOLIE 40 ===
+AUF DER FOLIE: KLASSE C  ·  ABEND 2  ·  C3  ·  KUPPLUNG UND GETRIEBE | 40 | GETRIEBE AM BERG | Langes Gefälle voraus – wann zurückschalten? | Vor dem Gefälle  in einen kleineren Gang schalten – unten am Berg ist es zu spät. | Motorbremse und Retarder  halten das Tempo – sie wirken im kleinen Gang am stärksten. | Betriebsbremse bleibt kühl  – für den Notfall. Bei der Automatik: Manuell-Modus oder Bergab-Funktion.
+NOTIZEN:
+FOLIE 40 VON 101 · 3 Klicks
+
+▶ Sagen: „Vor euch dieses Zeichen: 10 % Gefälle, und ihr habt 40 Tonnen hinter euch.“
+❓ „Wann schaltet ihr zurück – oben oder unten am Berg?“
+🖱 Klick 1–3: je eine Antwort.
+✅ Vor dem Gefälle in einen kleineren Gang schalten. Dann wirken Motorbremse und Retarder stark, die Betriebsbremse bleibt kühl für den Notfall (Prüfungsfrage 2.7.01-257: rechtzeitig zurückschalten, Dauerbremse nutzen). Beim automatisierten Getriebe: Manuell-Modus oder Bergab-Funktion nach Betriebsanleitung.
+💡 Mehr zu Dauerbremsen in der Bremsen-Lektion.
+➜ „Kurzes Quiz zum Getriebe.“
+
+=== FOLIE 41 ===
+AUF DER FOLIE: KLASSE C  ·  ABEND 2  ·  C3  ·  KUPPLUNG UND GETRIEBE | 41 | QUIZ GETRIEBE | Wozu dient die Splitgruppe im Lkw-Getriebe? | A | Sie schaltet den Rückwärtsgang | B | Sie halbiert die Gangsprünge – der Motor bleibt im grünen Bereich | C | Sie verteilt die Kraft auf die Vorderachse | ✓  RICHTIG | Die Splitgruppe macht aus jedem Gang zwei Halbgänge. Die Bereichsgruppe verdoppelt die Gänge noch einmal: 3 × 2 × 2 = 12.
+NOTIZEN:
+FOLIE 41 VON 101 · 2 Klicks
+
+▶ Frage vorlesen, abstimmen.
+🖱 Klick 1: Antworten · Klick 2: Lösung.
+✅ B. Lehrbuchwissen, Herstellerangaben.
+➜ „Weiter zu Kapitel 4: Differenzial und Achsen.“
+
+=== FOLIE 42 ===
+AUF DER FOLIE: KLASSE C  ·  ABEND 2  ·  C3  ·  DIFFERENZIAL UND ACHSEN | 42 | 04 | Differenzial und Achsen | Warum die Räder verschieden schnell drehen – und wann man sperrt.
+NOTIZEN:
+FOLIE 42 VON 101 · keine Klicks, läuft von selbst
+
+▶ Sagen: „Letztes Kapitel von C3: das Differenzial, die Sperre und die Achsformeln wie 6×4 oder 8×4. Auf dem Bild: ein Baustellen-Kipper mit vier Achsen.“
+🖱 Keine Klicks.
+➜ „Erst die Frage: Warum braucht man überhaupt ein Differenzial?“
+
+=== FOLIE 43 ===
+AUF DER FOLIE: KLASSE C  ·  ABEND 2  ·  C3  ·  DIFFERENZIAL UND ACHSEN | 43 | DIFFERENZIAL | Kurve: zwei Wege | 1 | Geradeaus: gleich schnell | 2 | Kurve: innen kurzer Weg | 3 | Außen langer Weg | 4 | Differenzial gleicht aus | Geradeaus legen beide Antriebsräder den gleichen Weg zurück – sie drehen gleich schnell. | Draufsicht · schematisch | innen: gleich | außen: gleich
+NOTIZEN:
+FOLIE 43 VON 101 · keine Klicks, läuft von selbst
+
+▶ Sagen: „Stellt euch die Hinterachse von oben vor. Geradeaus: beide Räder gleich schnell.“
+❓ „Was passiert in der Kurve?“
+🖱 Keine Animation auf dieser Folie – nächster Klick = nächster Schritt (Morph).
+➜ „Schauen wir genau hin.“
+
+=== FOLIE 44 ===
+AUF DER FOLIE: KLASSE C  ·  ABEND 2  ·  C3  ·  DIFFERENZIAL UND ACHSEN | 44 | DIFFERENZIAL | Kurve: zwei Wege | 1 | Geradeaus: gleich schnell | 2 | Kurve: innen kurzer Weg | 3 | Außen langer Weg | 4 | Differenzial gleicht aus | In der Kurve fährt das innere Rad einen kleinen Bogen … | Draufsicht · schematisch | innen: langsam | außen: 
+NOTIZEN:
+FOLIE 44 VON 101 · keine Klicks, läuft von selbst
+
+▶ „Das innere Rad fährt einen kleinen Bogen.“
+🖱 Keine Animation auf dieser Folie – nächster Klick = nächster Schritt (Morph).
+➜ „Und das äußere?“
+
+=== FOLIE 45 ===
+AUF DER FOLIE: KLASSE C  ·  ABEND 2  ·  C3  ·  DIFFERENZIAL UND ACHSEN | 45 | DIFFERENZIAL | Kurve: zwei Wege | 1 | Geradeaus: gleich schnell | 2 | Kurve: innen kurzer Weg | 3 | Außen langer Weg | 4 | Differenzial gleicht aus | … das äußere Rad einen großen Bogen. Es muss in derselben Zeit mehr Weg schaffen. | Draufsicht · schematisch | innen: langsam | außen: schnell
+NOTIZEN:
+FOLIE 45 VON 101 · keine Klicks, läuft von selbst
+
+▶ „Das äußere Rad einen viel größeren. In derselben Zeit – also muss es schneller drehen.“
+🖱 Keine Animation auf dieser Folie – nächster Klick = nächster Schritt (Morph).
+➜ „Wer sorgt dafür?“
+
+=== FOLIE 46 ===
+AUF DER FOLIE: KLASSE C  ·  ABEND 2  ·  C3  ·  DIFFERENZIAL UND ACHSEN | 46 | DIFFERENZIAL | Kurve: zwei Wege | 1 | Geradeaus: gleich schnell | 2 | Kurve: innen kurzer Weg | 3 | Außen langer Weg | 4 | Differenzial gleicht aus | Das Differenzial lässt die Räder verschieden schnell drehen. Ohne es würden die Reifen radieren und die Achse verspannen. | Draufsicht · schematisch | innen: langsam | außen: schnell
+NOTIZEN:
+FOLIE 46 VON 101 · keine Klicks, läuft von selbst
+
+▶ „Das Differenzial, auch Ausgleichsgetriebe. Es verteilt die Kraft und erlaubt verschiedene Drehzahlen.“
+💡 Der Nachteil kommt gleich: Dreht ein Rad auf Eis durch, bekommt das andere kaum noch Kraft.
+🖱 Keine Animation auf dieser Folie – nächster Klick = nächster Schritt (Morph).
+➜ „Und genau dafür gibt es die Differenzialsperre.“
+
+=== FOLIE 47 ===
+AUF DER FOLIE: KLASSE C  ·  ABEND 2  ·  C3  ·  DIFFERENZIAL UND ACHSEN | 47 | DIFFERENZIALSPERRE | Festgefahren – was tun? | Problem / Ein Rad auf Eis dreht durch – das andere bekommt kaum Kraft. | Sperre / verbindet beide Räder fest – die Kraft geht auch an das Rad mit Grip. | Nur im Stand oder im Schritttempo einlegen  – nicht, wenn ein Rad schon durchdreht. | Nicht auf griffiger Straße, nicht in Kurven  – der Lkw lässt sich kaum lenken, die Achse wird überlastet. | Sofort wieder ausschalten,  wenn ihr frei seid. Kontrollleuchte beachten.
+NOTIZEN:
+FOLIE 47 VON 101 · 5 Klicks
+
+▶ Sagen: „Der Nachteil des Differenzials: Steht ein Rad auf Eis oder im Schlamm, dreht es durch – und das andere Rad mit Grip bekommt kaum Kraft. Ihr steckt fest.“
+❓ „Was hilft?“
+🖱 Klick 1: Problem · Klick 2: Lösung Sperre · Klick 3–5: die Regeln.
+✅ Die Differenzialsperre verbindet beide Räder fest – sie drehen gleich schnell, die Kraft geht auch an das Rad mit Grip. Es gibt Quersperren (zwischen links und rechts) und Längssperren (zwischen Achsen bei mehreren Antriebsachsen).
+✅ Regeln aus den Betriebsanleitungen: nur bei Bedarf (lockerer, rutschiger Untergrund), nur im Stand oder in Schrittgeschwindigkeit einlegen, nicht mit durchdrehendem Rad einlegen, nicht auf griffiger Straße und nicht in Kurven fahren (der Lkw lässt sich kaum lenken, Achse und Reifen werden überlastet), sofort wieder ausschalten.
+💡 Kontrollleuchte im Cockpit zeigt: Sperre ist drin.
+➜ „Damit zu den Bezeichnungen wie 6×4.“
+
+=== FOLIE 48 ===
+AUF DER FOLIE: KLASSE C  ·  ABEND 2  ·  C3  ·  DIFFERENZIAL UND ACHSEN | 48 | ACHSFORMELN | Was heißt 6 × 4? | Radstellen  ×  davon angetrieben | 4 × 2 | 6 × 2 | 6 × 4 | 8 × 4 | 6 × 6 | Orange = angetriebene Achse · Zwillingsräder zählen als eine Radstelle · schematisch
+NOTIZEN:
+FOLIE 48 VON 101 · 5 Klicks
+
+▶ Sagen: „Im Fahrzeugschein oder im Gespräch hört ihr: 4×2, 6×4, 8×4. Was heißt das?“
+❓ „Wer weiß es?“
+🖱 Klick 1–5: je eine Achsformel.
+✅ Erste Zahl: Anzahl der Radstellen (Räder von außen gezählt, Zwillingsräder zählen als eine). Zweite Zahl: davon angetrieben. Also: 4×2 = zwei Achsen, eine angetrieben · 6×2 = drei Achsen, eine angetrieben (dazu Nachlauf- oder Vorlaufachse) · 6×4 = drei Achsen, zwei angetrieben · 8×4 = vier Achsen, zwei angetrieben, meist zwei Lenkachsen vorn (Baustelle) · 6×6 = Allrad.
+💡 Mehr angetriebene Achsen = mehr Zugkraft im Gelände, aber mehr Gewicht und Verbrauch.
+➜ „Und noch ein Helfer beim Anfahren: die ASR.“
+
+=== FOLIE 49 ===
+AUF DER FOLIE: KLASSE C  ·  ABEND 2  ·  C3  ·  DIFFERENZIAL UND ACHSEN | 49 | ANTRIEBS-SCHLUPF-REGELUNG (ASR) | Der automatische Helfer beim Anfahren | ASR | Kontrollleuchte | Aussehen je nach Hersteller | blinkt = ASR regelt gerade | Was macht ASR?  bremst das durchdrehende Rad und nimmt Gas weg – automatisch. | Leuchte blinkt:  die Straße ist glatt – Gas zurücknehmen. | ASR-Taste nur bei Tiefschnee, Ketten, losem Boden –  langsamer als etwa 25–30 km/h. Danach wieder an. | Nicht verwechseln:  ASR regelt von selbst – die Sperre verriegelt fest.
+NOTIZEN:
+FOLIE 49 VON 101 · 4 Klicks
+
+▶ Sagen: „Die ASR – Antriebs-Schlupf-Regelung – verhindert, dass die Antriebsräder beim Anfahren durchdrehen. Sie arbeitet automatisch mit den Sensoren des ABS.“
+❓ „Beim Anfahren blinkt die ASR-Leuchte. Was heißt das für euch?“
+🖱 Klick 1: was ASR macht · Klick 2: Leuchte blinkt · Klick 3: ASR-Taste · Klick 4: Unterschied zur Sperre.
+✅ ASR bremst das durchdrehende Rad und/oder nimmt Motorleistung zurück. Blinkt die Leuchte, regelt die ASR gerade: Die Straße ist glatt – Gas zurück. Leuchtet sie dauernd: ASR aus oder gestört (je nach Hersteller).
+✅ ASR-Taste (Offroad- oder Tiefschnee-Funktion): nur bei Tiefschnee, losem Untergrund, mit Schneeketten oder zum Freifahren – am Berg erst, wenn ihr langsamer als etwa 25–30 km/h seid. Bei höherem Tempo nicht: Die Antriebsachse kann ausbrechen. Danach wieder einschalten (Quelle: eurotransport, Lkw-Fahren im Winter; Betriebsanleitung).
+➜ „Damit ist Kapitel 4 geschafft. Zeit zum Mitschreiben.“
+
+=== FOLIE 50 ===
+AUF DER FOLIE: KLASSE C  ·  ABEND 2  ·  C3  ·  ABSCHLUSS | 50 | ZUM MITSCHREIBEN | Kraftstrang | ✎ | Diesel | Selbstzünder: heiße, verdichtete Luft entzündet den Diesel | AdBlue | eigener Tank, blauer Deckel – leer: Kriechmodus höchstens 20 km/h | Partikelfilter | Standregeneration nicht über trockenem Gras, nicht in der Halle | Leerlauf | Motor unnötig laufen lassen verboten (§ 30 StVO) – 80 € | Winterdiesel | 16.11. – 28.2. (bis −20 °C), Übergang ab 1.10. | Kupplung | im kleinen Gang anfahren, nicht schleifen lassen | Differenzialsperre | nur bei Bedarf, im Stand einlegen, sofort wieder raus | 6 × 4 | 6 Radstellen (3 Achsen), davon 4 angetrieben (2 Achsen)
+NOTIZEN:
+FOLIE 50 VON 101 · 8 Klicks
+
+▶ Sagen: „Schreibt euch das auf – das sind die Kernpunkte aus C3.“
+❓ Vor jedem Klick fragen: „Was gehört hier hin?“
+🖱 Klick 1–8: je eine Lösung.
+✅ Quellen: Prüfungsfragen 2.7.03-201, -211 bis -215; VO (EU) 582/2011 Anhang XIII; § 30 Abs. 1 StVO, BKat Nr. 117; DIN EN 590; Herstellerangaben.
+➜ „Jetzt testen wir C3.“
+
+=== FOLIE 51 ===
+AUF DER FOLIE: KLASSE C  ·  ABEND 2  ·  C3  ·  ABSCHLUSS | 51 | QUIZ C3 · 1 | Wann dürfen Sie die Differenzialsperre einlegen? | A | Wenn das Fahrzeug steht | B | Mit Schrittgeschwindigkeit | C | In einer Kurve, wenn der Lkw über die Vorderachse schiebt | ✓  RICHTIG | ✓  RICHTIG | Nur im Stand oder in Schrittgeschwindigkeit – und nie in Kurven (Prüfungsfrage 2.7.03-213, Betriebsanleitung).
+NOTIZEN:
+FOLIE 51 VON 101 · 2 Klicks
+
+▶ Frage vorlesen, abstimmen. Mehrere Antworten können richtig sein.
+🖱 Klick 1: Antworten · Klick 2: Lösung.
+✅ A und B.
+➜ „Nächste Frage.“
+
+=== FOLIE 52 ===
+AUF DER FOLIE: KLASSE C  ·  ABEND 2  ·  C3  ·  ABSCHLUSS | 52 | QUIZ C3 · 2 | Ein Lkw hat die Achsformel 6 × 4. Was heißt das? | A | 6 Räder, davon 4 Zwillingsräder | B | 3 Achsen, davon 2 angetrieben | C | 6 Gänge vorwärts, 4 rückwärts | ✓  RICHTIG | Erste Zahl: Radstellen (Zwillingsräder zählen als eine). Zweite Zahl: davon angetrieben. 6 Radstellen = 3 Achsen, 4 angetrieben = 2 Achsen.
+NOTIZEN:
+FOLIE 52 VON 101 · 2 Klicks
+
+▶ Frage vorlesen, abstimmen.
+🖱 Klick 1: Antworten · Klick 2: Lösung.
+✅ B.
+➜ „Und noch eine.“
+
+=== FOLIE 53 ===
+AUF DER FOLIE: KLASSE C  ·  ABEND 2  ·  C3  ·  ABSCHLUSS | 53 | QUIZ C3 · 3 | Im Display steht: AdBlue-Tank leer. Was passiert, wenn Sie nicht nachfüllen? | A | Nichts – AdBlue ist nur für die Umwelt | B | Erst weniger Leistung, zuletzt höchstens 20 km/h | C | Der Motor geht sofort aus | ✓  RICHTIG | Das EU-Recht schreibt die Stufen vor: Warnung, Leistungsdrosselung, zuletzt Kriechmodus mit höchstens 20 km/h (VO (EU) 582/2011 Anhang XIII).
+NOTIZEN:
+FOLIE 53 VON 101 · 2 Klicks
+
+▶ Frage vorlesen, abstimmen.
+🖱 Klick 1: Antworten · Klick 2: Lösung.
+✅ B.
+➜ „Zum Schluss von C3: Das nehmt ihr mit.“
+
+=== FOLIE 54 ===
+AUF DER FOLIE: KLASSE C  ·  ABEND 2  ·  C3  ·  ABSCHLUSS | 54 | ZUSAMMENFASSUNG | Das nimmst du mit | Weg der Kraft:  Motor – Kupplung – Getriebe – Gelenkwelle – Differenzial – Räder. | Im grünen Bereich fahren,  vorausschauend rollen lassen, nicht im Stand warmlaufen lassen. | AdBlue und Partikelfilter  gehören zur Abgasreinigung – nie verwechseln, nie manipulieren. | Kupplung schonen,  Automatik nach Anleitung bedienen, vor dem Gefälle zurückschalten. | Sperre nur bei Bedarf  – im Stand rein, sofort wieder raus. ASR-Taste nur bei Tiefschnee und Ketten.
+NOTIZEN:
+FOLIE 54 VON 101 · 5 Klicks
+
+▶ Sagen: „Das sind die fünf Punkte aus C3, die ihr auf jeden Fall wissen müsst.“
+🖱 Klick 1–5: je ein Punkt. Gern die Klasse den Satz vervollständigen lassen.
+➜ „Jetzt 15 Minuten Pause. Danach Lektion C4.“
+
+=== FOLIE 55 ===
+AUF DER FOLIE: PAUSE | 15 Minuten | Kurz raus, frische Luft. | Danach: Lektion C4 · Fahrwerk / Elektrische Anlagen
+NOTIZEN:
+FOLIE 55 VON 101 · keine Klicks, läuft von selbst
+
+▶ Sagen: „15 Minuten Pause. Kurz raus, frische Luft, Wasser trinken.“
+💡 Pausenende ansagen (z. B. 19:45 Uhr).
+🖱 Keine Klicks.
+➜ „Willkommen zurück. Lektion C4: Worauf rollt, federt und leuchtet ein Lkw?“
+
+=== FOLIE 56 ===
+AUF DER FOLIE: KLASSE C  ·  ABEND 2  ·  LEKTION C4 | 56 | LEKTION C4 · FAHRWERK / ELEKTRISCHE ANLAGEN | Das lernt ihr in C4 | 01 | Federung  Blattfeder, Luftfeder, Heben und Senken, Liftachse | 15 Min | 02 | Räder und Reifen  Bezeichnung, Profil, Winterreifen, Zwillinge, Radmuttern, Ketten | 30 Min | 03 | Aufbauten  Plane, Koffer, Kipper, Wechselbrücke, Ladebordwand | 10 Min | 04 | Batterie und Bordnetz  24 Volt, Lichtmaschine, Starthilfe, Hauptschalter | 15 Min | 05 | Licht und Warnleuchten  Umriss, Seite, Kontur, Rundumlicht, Kontrollleuchten, Assistenten | 15 Min | + 5 Min Abschluss: Quiz und „Das nimmst du mit“
+NOTIZEN:
+FOLIE 56 VON 101 · 5 Klicks
+
+▶ Sagen: „Willkommen zurück. In C4 geht es um alles, worauf der Lkw steht, rollt und leuchtet: Federung, Räder und Reifen, Aufbauten, Batterie und Licht.“
+🖱 Klick 1–5: je ein Kapitel.
+💡 Zeiten sind Richtwerte für 90 Minuten.
+➜ „Kapitel 1: die Federung.“
+
+=== FOLIE 57 ===
+AUF DER FOLIE: KLASSE C  ·  ABEND 2  ·  C4  ·  FEDERUNG | 57 | 01 | Federung | Blattfeder, Luftfeder – und warum man den Lkw heben und senken kann.
+NOTIZEN:
+FOLIE 57 VON 101 · keine Klicks, läuft von selbst
+
+▶ Sagen: „Kapitel 1: die Federung. Auf dem Bild steht ein Lkw an der Rampe – die Ladefläche ist genau auf Rampenhöhe. Das macht die Luftfederung möglich.“
+🖱 Keine Klicks.
+➜ „Welche Federn gibt es am Lkw?“
+
+=== FOLIE 58 ===
+AUF DER FOLIE: KLASSE C  ·  ABEND 2  ·  C4  ·  FEDERUNG | 58 | FEDERUNG | Blattfeder und Luftfeder | Blattfeder | Stahl-Lagen, sehr robust – oft vorn und an Baustellen-Lkw. | Kontrolle: gebrochene oder verschobene Lagen, schiefer Stand. | Luftfeder | Bälge mit Druckluft – gleiche Höhe bei jeder Beladung, schont Ladung und Straße. | Kontrolle: Risse, Zischen, Lkw steht schief.
+NOTIZEN:
+FOLIE 58 VON 101 · 2 Klicks
+
+▶ Sagen: „Am Lkw gibt es zwei Arten von Federn: die Blattfeder und die Luftfeder.“
+❓ „Welche Feder hält den Lkw leer und voll auf gleicher Höhe?“
+✅ Die Luftfeder – die Bälge werden mit Druckluft aus der Bremsanlage mehr oder weniger gefüllt.
+🖱 Klick 1: Blattfeder · Klick 2: Luftfeder.
+💡 Bei der Abfahrtkontrolle: Blattfeder auf gebrochene oder verschobene Lagen ansehen; Luftbälge auf Risse, Zischen und schiefen Stand.
+➜ „Mit der Luftfeder kann man den Lkw auch heben und senken.“
+
+=== FOLIE 59 ===
+AUF DER FOLIE: KLASSE C  ·  ABEND 2  ·  C4  ·  FEDERUNG | 59 | LUFTFEDERUNG | Heben und Senken | 1 | Fahrniveau | 2 | An der Rampe anheben | 3 | Danach: zurück aufs Fahrniveau | Die Luftfeder hält den Aufbau bei jeder Beladung auf der gleichen Höhe: dem Fahrniveau. | Seitenansicht · schematisch | Rampe | Ladefläche | zu tief | Luftbalg
+NOTIZEN:
+FOLIE 59 VON 101 · keine Klicks, läuft von selbst
+
+▶ Sagen: „Seitenansicht: Lkw mit Koffer, hinten die Laderampe. Die Ladefläche steht tiefer als die Rampe.“
+❓ „Wie bekommt ihr die Ladefläche auf Rampenhöhe?“
+✅ Mit der Niveauregulierung der Luftfederung (Heben/Senken per Bedienteil oder Fernbedienung).
+🖱 Keine Animation auf dieser Folie – nächster Klick = nächster Schritt (Morph).
+➜ „Wir heben an.“
+
+=== FOLIE 60 ===
+AUF DER FOLIE: KLASSE C  ·  ABEND 2  ·  C4  ·  FEDERUNG | 60 | LUFTFEDERUNG | Heben und Senken | 1 | Fahrniveau | 2 | An der Rampe anheben | 3 | Danach: zurück aufs Fahrniveau | Mit dem Bedienteil hebt ihr die Ladefläche auf Rampenhöhe. Nur im Stand – niemand unter oder neben dem Lkw: Quetschgefahr! | Seitenansicht · schematisch | Rampe | Ladefläche | passt! | ↑ angehoben | Luftbalg | Nur im Stand – Quetschgefahr!
+NOTIZEN:
+FOLIE 60 VON 101 · keine Klicks, läuft von selbst
+
+▶ „Die Bälge werden mit mehr Luft gefüllt, der Aufbau geht hoch. Jetzt passt die Ladefläche zur Rampe.“
+✅ Bedienung nur im Stand; auf Personen und Gegenstände unter und neben dem Fahrzeug achten – Quetschgefahr (Herstellerangaben, z. B. ECAS).
+💡 Gleiches Prinzip beim Auf- und Absatteln einer Wechselbrücke.
+🖱 Keine Animation auf dieser Folie – nächster Klick = nächster Schritt (Morph).
+➜ „Und nach dem Laden?“
+
+=== FOLIE 61 ===
+AUF DER FOLIE: KLASSE C  ·  ABEND 2  ·  C4  ·  FEDERUNG | 61 | LUFTFEDERUNG | Heben und Senken | 1 | Fahrniveau | 2 | An der Rampe anheben | 3 | Danach: zurück aufs Fahrniveau | Nach dem Laden zurück aufs Fahrniveau. Sonst stößt der Aufbau an Brücken oder Tore, und der Lkw fährt schlechter. | Seitenansicht · schematisch | Rampe | Ladefläche | ↓ Fahrniveau | Luftbalg
+NOTIZEN:
+FOLIE 61 VON 101 · keine Klicks, läuft von selbst
+
+▶ „Taste für das Fahrniveau drücken. Viele Systeme regeln ab einer bestimmten Geschwindigkeit selbst zurück – verlassen dürft ihr euch darauf nicht.“
+✅ Sonst: Anstoß an Brücken oder Toren, Aufsetzen, schlechteres Fahrverhalten.
+🖱 Keine Animation auf dieser Folie – nächster Klick = nächster Schritt (Morph).
+➜ „Noch eine Besonderheit: die Liftachse.“
+
+=== FOLIE 62 ===
+AUF DER FOLIE: KLASSE C  ·  ABEND 2  ·  C4  ·  FEDERUNG | 62 | LIFTACHSE | Leer unterwegs: Die Liftachse ist oben. Was müsst ihr wissen? | Vorteil  weniger Reifenverschleiß, weniger Diesel, kleinerer Wendekreis. | Achslast beachten  – die Antriebsachse trägt mehr. Beladen senkt sich die Liftachse meist selbst ab. | Anfahrhilfe auf Glätte  Liftachse kurz anheben: mehr Druck auf die Antriebsachse. Spätestens vor 30 km/h senkt sie sich wieder ab. | Reifenschaden an der Liftachse, Lkw voll?  Nicht anheben und weiterfahren – Rad wechseln oder Pannendienst.
+NOTIZEN:
+FOLIE 62 VON 101 · 4 Klicks
+
+▶ Sagen: „Viele Lkw haben eine Liftachse. Leer wird sie hochgezogen.“
+❓ „Was bringt das? Und worauf müsst ihr achten?“
+🖱 Klick 1–4: je eine Antwort.
+✅ Anfahrhilfe: Die Antriebsachse darf dabei bis zu 30 % über der zulässigen Achslast liegen (höchstens Herstellerwert); spätestens vor 30 km/h muss die Liftachse automatisch wieder absenken (VO (EU) 1230/2012 Anhang IV).
+✅ Prüfungsfrage 2.7.01-247 (Reifenschaden an der Liftachse, voll beladen): Rad nach Bedienungsanleitung wechseln oder Lkw-Pannendienst – nicht anheben und weiterfahren, das überlastet die anderen Achsen.
+➜ „Kurze Prüfungsfrage zur Luftfederung.“
+
+=== FOLIE 63 ===
+AUF DER FOLIE: KLASSE C  ·  ABEND 2  ·  C4  ·  FEDERUNG | 63 | QUIZ FEDERUNG | Ein Luftfederbalg ist stark undicht. Was kann passieren? | A | Das Fahrzeug neigt sich zu einer Seite | B | Die Bremswirkung kann sich verändern | C | Der Motor verliert Leistung | ✓  RICHTIG | ✓  RICHTIG | Der Lkw sackt auf der Seite ab. Und: Der automatische Bremskraftregler bekommt seinen Steuerdruck oft vom Luftbalg – stimmt der nicht, stimmt die Bremskraft nicht (Prüfungsfrage 2.7.02-211).
+NOTIZEN:
+FOLIE 63 VON 101 · 2 Klicks
+
+▶ Frage vorlesen, abstimmen. Mehrere Antworten können richtig sein.
+🖱 Klick 1: Antworten · Klick 2: Lösung.
+✅ A und B.
+💡 Den Bremskraftregler (ALB) besprechen wir in der Bremsen-Lektion C5.
+➜ „Weiter zu Kapitel 2: Räder und Reifen.“
+
+=== FOLIE 64 ===
+AUF DER FOLIE: KLASSE C  ·  ABEND 2  ·  C4  ·  RÄDER UND REIFEN | 64 | 02 | Räder und Reifen | Bezeichnung lesen, Profil, Winterreifen, Zwillinge, Radmuttern, Schneeketten.
+NOTIZEN:
+FOLIE 64 VON 101 · keine Klicks, läuft von selbst
+
+▶ Sagen: „Kapitel 2: Räder und Reifen. Der Reifen ist die einzige Verbindung zur Straße – pro Rad etwa so groß wie eine Postkarte.“
+🖱 Keine Klicks.
+➜ „Erst lesen wir einen Reifen.“
+
+=== FOLIE 65 ===
+AUF DER FOLIE: KLASSE C  ·  ABEND 2  ·  C4  ·  RÄDER UND REIFEN | 65 | REIFEN LESEN | Was steht auf dem Reifen? | 1 | Breite | 2 | Höhe | 3 | Bauart | 4 | Felge | 5 | Tragfähigkeit | 6 | Höchstgeschwindigkeit | 315: Der Reifen ist 315 mm breit. | Beispiel einer Reifenbezeichnung | 315 | / | 70 | R | 22,5 | 154/150 | L | 315 mm breit | Breite | Höhe | Felge | Querschnitt
+NOTIZEN:
+FOLIE 65 VON 101 · keine Klicks, läuft von selbst
+
+▶ Sagen: „So steht es auf einem typischen Lkw-Reifen: 315/70 R 22,5 154/150 L. Wir lesen von links. 315 ist die Breite in Millimetern.“
+🖱 Keine Animation auf dieser Folie – nächster Klick = nächster Schritt (Morph).
+➜ „Dann die 70.“
+
+=== FOLIE 66 ===
+AUF DER FOLIE: KLASSE C  ·  ABEND 2  ·  C4  ·  RÄDER UND REIFEN | 66 | REIFEN LESEN | Was steht auf dem Reifen? | 1 | Breite | 2 | Höhe | 3 | Bauart | 4 | Felge | 5 | Tragfähigkeit | 6 | Höchstgeschwindigkeit | 70: Die Flanke ist 70 % so hoch wie der Reifen breit ist. | Beispiel einer Reifenbezeichnung | 315 | / | 70 | R | 22,5 | 154/150 | L | Flanke = 70 % der Breite | Breite | Höhe | Felge | Querschnitt
+NOTIZEN:
+FOLIE 66 VON 101 · keine Klicks, läuft von selbst
+
+▶ „70 heißt: Die Höhe der Flanke ist 70 % der Breite. Man sagt Querschnittsverhältnis.“
+🖱 Keine Animation auf dieser Folie – nächster Klick = nächster Schritt (Morph).
+➜ „Das R?“
+
+=== FOLIE 67 ===
+AUF DER FOLIE: KLASSE C  ·  ABEND 2  ·  C4  ·  RÄDER UND REIFEN | 67 | REIFEN LESEN | Was steht auf dem Reifen? | 1 | Breite | 2 | Höhe | 3 | Bauart | 4 | Felge | 5 | Tragfähigkeit | 6 | Höchstgeschwindigkeit | R: Radialreifen – heute üblich. | Beispiel einer Reifenbezeichnung | 315 | / | 70 | R | 22,5 | 154/150 | L | Radialreifen | Breite | Höhe | Felge | Querschnitt
+NOTIZEN:
+FOLIE 67 VON 101 · keine Klicks, läuft von selbst
+
+▶ „R steht für Radialbauart. Wichtig: Über 3,5 t müssen an einer Achse alle Reifen die gleiche Bauart haben – nur Radial oder nur Diagonal (§ 36 Abs. 6 StVZO).“
+🖱 Keine Animation auf dieser Folie – nächster Klick = nächster Schritt (Morph).
+➜ „Dann die Felge.“
+
+=== FOLIE 68 ===
+AUF DER FOLIE: KLASSE C  ·  ABEND 2  ·  C4  ·  RÄDER UND REIFEN | 68 | REIFEN LESEN | Was steht auf dem Reifen? | 1 | Breite | 2 | Höhe | 3 | Bauart | 4 | Felge | 5 | Tragfähigkeit | 6 | Höchstgeschwindigkeit | 22,5: passt auf eine Felge mit 22,5 Zoll Durchmesser. | Beispiel einer Reifenbezeichnung | 315 | / | 70 | R | 22,5 | 154/150 | L | Felge 22,5 Zoll | Breite | Höhe | Felge | Querschnitt
+NOTIZEN:
+FOLIE 68 VON 101 · keine Klicks, läuft von selbst
+
+▶ „22,5 ist der Felgendurchmesser in Zoll.“
+🖱 Keine Animation auf dieser Folie – nächster Klick = nächster Schritt (Morph).
+➜ „Jetzt kommt das Wichtigste für den Lkw.“
+
+=== FOLIE 69 ===
+AUF DER FOLIE: KLASSE C  ·  ABEND 2  ·  C4  ·  RÄDER UND REIFEN | 69 | REIFEN LESEN | Was steht auf dem Reifen? | 1 | Breite | 2 | Höhe | 3 | Bauart | 4 | Felge | 5 | Tragfähigkeit | 6 | Höchstgeschwindigkeit | 154/150: Tragfähigkeit. 154 = 3.750 kg als Einzelreifen, 150 = 3.350 kg je Reifen als Zwilling. | Beispiel einer Reifenbezeichnung | 315 | / | 70 | R | 22,5 | 154/150 | L | einzeln 3.750 kg · Zwilling je 3.350 kg | Breite | Höhe | Felge | Querschnitt
+NOTIZEN:
+FOLIE 69 VON 101 · keine Klicks, läuft von selbst
+
+▶ „154/150 ist die Tragfähigkeit. Die erste Zahl gilt für einen Einzelreifen, die zweite für jeden Reifen am Zwilling. 154 heißt 3.750 kg, 150 heißt 3.350 kg je Reifen.“
+✅ Prüfungsfrage 2.7.05-221 (Tragfähigkeitskennzahl Einzel/Zwilling); Werte aus den Lastindex-Tabellen der Reifenhersteller.
+🖱 Keine Animation auf dieser Folie – nächster Klick = nächster Schritt (Morph).
+➜ „Und der letzte Buchstabe?“
+
+=== FOLIE 70 ===
+AUF DER FOLIE: KLASSE C  ·  ABEND 2  ·  C4  ·  RÄDER UND REIFEN | 70 | REIFEN LESEN | Was steht auf dem Reifen? | 1 | Breite | 2 | Höhe | 3 | Bauart | 4 | Felge | 5 | Tragfähigkeit | 6 | Höchstgeschwindigkeit | L: Höchstgeschwindigkeit des Reifens – L = 120 km/h. | Beispiel einer Reifenbezeichnung | 315 | / | 70 | R | 22,5 | 154/150 | L | bis 120 km/h | Breite | Höhe | Felge | Querschnitt
+NOTIZEN:
+FOLIE 70 VON 101 · keine Klicks, läuft von selbst
+
+▶ „L ist der Geschwindigkeitsindex: L heißt bis 120 km/h.“
+✅ Prüfungsfrage 2.7.05-220. Zum Vergleich: K = 110, M = 130 km/h.
+💡 Herstellungsdatum: DOT-Nummer, die letzten vier Ziffern, z. B. 2324 = 23. Woche 2024.
+🖱 Keine Animation auf dieser Folie – nächster Klick = nächster Schritt (Morph).
+➜ „Wie viel Profil muss mindestens drauf sein?“
+
+=== FOLIE 71 ===
+AUF DER FOLIE: KLASSE C  ·  ABEND 2  ·  C4  ·  RÄDER UND REIFEN | 71 | PROFIL | Wie viel Profil muss sein? | Profiltiefe: mind. 1,6 mm | Hauptprofil: die breiten Rillen in der Mitte der Lauffläche | 1,6 mm – auch beim Lkw / auf dem ganzen Umfang. Mehr ist besser, besonders im Winter. | Zu wenig Profil: / Fahrer 60 €, 1 Punkt – Halter 75 €, 1 Punkt. | Gleiche Bauart je Achse / Über 3,5 t an einer Achse nur Radial- oder nur Diagonalreifen.
+NOTIZEN:
+FOLIE 71 VON 101 · 3 Klicks
+
+▶ Sagen: „Wie viel Profil braucht ein Lkw-Reifen mindestens?“
+❓ Antworten sammeln – oft hört man 2 oder 3 mm.
+✅ Gesetzlich 1,6 mm im Hauptprofil – auf dem ganzen Umfang (§ 36 Abs. 3 StVZO). Für Lkw gilt kein höherer Wert. Mehr ist eine Empfehlung, besonders im Winter.
+🖱 Klick 1: Mindestprofil · Klick 2: Bußgeld · Klick 3: gleiche Bauart.
+✅ BKat Nr. 212 (Fahrer): 60 €, 1 Punkt · Nr. 213 (Halter): 75 €, 1 Punkt. Bauart gemischt: BKat 208, 15 €.
+➜ „Und wann brauche ich Winterreifen?“
+
+=== FOLIE 72 ===
+AUF DER FOLIE: KLASSE C  ·  ABEND 2  ·  C4  ·  RÄDER UND REIFEN | 72 | WINTERREIFEN | Welche Achsen brauchen Winterreifen? | vorn | Lenkachse | Antrieb | Nachlauf | Lkw 6 × 2 von oben · blau = Winterreifen Pflicht | Kein festes Datum / Pflicht bei Glätte, Schnee, Schneematsch, Eis oder Reif. | Nur mit Alpine-Symbol / Berg mit Schneeflocke. M+S allein reicht seit 1.10.2024 nicht mehr. | Ohne Winterreifen: / Fahrer 60 €, 1 Punkt (mit Behinderung 80 €) – Halter 75 €, 1 Punkt.
+NOTIZEN:
+FOLIE 72 VON 101 · 5 Klicks
+
+▶ Sagen: „Winterreifen: Es gibt kein festes Datum. Die Pflicht gilt bei Glatteis, Schneeglätte, Schneematsch, Eis- oder Reifglätte (§ 2 Abs. 3a StVO).“
+❓ „Brauchen beim Lkw alle Räder Winterreifen?“
+🖱 Klick 1: Lenkachse vorn · Klick 2: Antriebsachse · Klick 3–5: die Regeln.
+✅ Grundsätzlich alle Räder. Bei Lkw über 3,5 t (N2, N3) genügt: mindestens die Räder der permanent angetriebenen Achsen und der vorderen Lenkachsen – die Lenkachse seit 1.7.2020.
+✅ Als Winterreifen zählt nur ein Reifen mit Alpine-Symbol (Berg mit Schneeflocke, § 36 Abs. 4 StVZO). Reine M+S-Reifen gelten seit 1.10.2024 nicht mehr.
+✅ BKat Nr. 5a: 60 €, 1 Punkt · mit Behinderung (5a.1) 80 €, 1 Punkt · Halter (213a) 75 €, 1 Punkt.
+➜ „Beim Lkw gibt es oft zwei Reifen nebeneinander. Was ist da wichtig?“
+
+=== FOLIE 73 ===
+AUF DER FOLIE: KLASSE C  ·  ABEND 2  ·  C4  ·  RÄDER UND REIFEN | 73 | ZWILLINGSREIFEN | Zwei Reifen – ein Team | Zwillingsreifen von hinten · schematisch | Stein! | Druck am kalten Reifen prüfen / Werte aus Betriebsanleitung oder Tabelle. Zu wenig Druck: Hitze, Platzen, Brand. | Beide gleich: / gleiche Größe, gleiche Bauart, gleicher Druck. Steine dazwischen entfernen. | Druckverlust gemeldet? / An der nächsten geeigneten Stelle anhalten und nachsehen – der Partner wird überlastet.
+NOTIZEN:
+FOLIE 73 VON 101 · 4 Klicks
+
+▶ Sagen: „An der Antriebsachse sitzen meist Zwillingsreifen – zwei Reifen nebeneinander. Sie tragen gemeinsam.“
+❓ „Was passiert, wenn einer davon Luft verliert?“
+✅ Der andere Reifen muss allein tragen – er wird überlastet und kann platzen.
+🖱 Klick 1: Stein zwischen den Reifen · Klick 2–4: Regeln.
+✅ Druck am kalten Reifen prüfen, Werte aus der Betriebsanleitung bzw. Tabelle (2.7.05-216). Zu wenig Druck: Walken, Überhitzung, Platzen, Reifenbrand (2.7.05-203, -205). Zwillinge: gleiche Größe, Bauart und Druck. Steine dazwischen entfernen – sie beschädigen die Flanken und können als Geschoss nach hinten fliegen.
+✅ Prüfungsfrage 2.7.05-222: Die Reifendruck-Kontrolle meldet Druckverlust an einem Zwilling → an der nächsten geeigneten Stelle anhalten und nachsehen.
+💡 Auch prüfen: Kotflügel und Schmutzfänger vorhanden und fest (§ 36a StVZO).
+➜ „Und was hält das Rad am Lkw? Die Radmuttern.“
+
+=== FOLIE 74 ===
+AUF DER FOLIE: KLASSE C  ·  ABEND 2  ·  C4  ·  RÄDER UND REIFEN | 74 | RADMUTTERN | Hält das Rad? | lose? | Rad mit Radmutter-Anzeigern · schematisch | Drehmomentschlüssel / Radmuttern nach Wert des Herstellers anziehen – nicht nach Gefühl. | Nach 50 bis 100 km nachziehen / Die Teile setzen sich – sonst kann sich das Rad lösen. | Anzeiger-Pfeile / Einer zeigt aus der Reihe? Mutter hat sich gedreht – sofort prüfen lassen.
+NOTIZEN:
+FOLIE 74 VON 101 · 3 Klicks
+
+▶ Sagen: „Ein Lkw-Rad wiegt mit Reifen rund 100 kg. Löst es sich, wird es zum Geschoss.“
+❓ „Nach einem Radwechsel – was müsst ihr noch tun?“
+✅ Mit dem Drehmomentschlüssel nach Herstellerwert anziehen und nach kurzer Strecke nachziehen – Empfehlung: nach 50 bis 100 km (Prüfungsfragen 2.7.01-242 und 2.7.05-217; Räderhersteller-Verband EUWA).
+🖱 Klick 1: lose Mutter am Anzeiger erkennen · Klick 2–3: Regeln.
+💡 Radmutter-Anzeiger: kleine Kunststoffpfeile. Zeigt einer aus der Reihe, hat sich die Mutter gedreht. Das ist eine schnelle Sichtkontrolle – ersetzt aber nicht das Nachziehen.
+➜ „Zum Schluss des Kapitels: Schneeketten.“
+
+=== FOLIE 75 ===
+AUF DER FOLIE: KLASSE C  ·  ABEND 2  ·  C4  ·  RÄDER UND REIFEN | 75 | SCHNEEKETTEN | Dieses Zeichen steht vor dem Pass. Was gilt? | Nur mit Schneeketten weiter / auf den Rädern der Antriebsachse. | Höchstens 50 km/h / mit Ketten – auch auf guter Strecke. | Vorher üben, nachspannen / nach 50–100 m anhalten und nachspannen. Auf freier Straße abnehmen.
+NOTIZEN:
+FOLIE 75 VON 101 · 3 Klicks
+
+▶ Sagen: „Ihr fahrt im Winter in die Alpen. Vor dem Pass steht dieses Zeichen.“
+❓ „Was bedeutet es – und wie schnell dürft ihr dann fahren?“
+🖱 Klick 1–3: je eine Antwort.
+✅ Zeichen 268 „Schneeketten vorgeschrieben“ (StVO Anlage 2 lfd. Nr. 42). Mit Schneeketten höchstens 50 km/h, auch unter günstigsten Umständen (§ 3 Abs. 4 StVO).
+✅ Ketten auf die Antriebsachse, bei Zwillingen nach Herstellerangabe. Nach 50–100 m nachspannen. Im Herbst auf dem Hof üben – nicht erst im Schneesturm.
+💡 Mit Ketten kann die ASR-Taste nötig sein (siehe C3) – nach Betriebsanleitung.
+➜ „Kurzes Quiz zu den Reifen.“
+
+=== FOLIE 76 ===
+AUF DER FOLIE: KLASSE C  ·  ABEND 2  ·  C4  ·  RÄDER UND REIFEN | 76 | QUIZ REIFEN | Auf dem Reifen steht 315/80 R 22,5 156/150 L. Was bedeutet das „L“? | A | Leichtlaufreifen | B | Zulässige Höchstgeschwindigkeit des Reifens: 120 km/h | C | Lastindex für Lenkachsen | ✓  RICHTIG | Der letzte Buchstabe ist der Geschwindigkeitsindex. L = 120 km/h (Prüfungsfrage 2.7.05-220). 156/150 ist die Tragfähigkeit einzeln/Zwilling.
+NOTIZEN:
+FOLIE 76 VON 101 · 2 Klicks
+
+▶ Frage vorlesen, abstimmen.
+🖱 Klick 1: Antworten · Klick 2: Lösung.
+✅ B.
+➜ „Weiter zu Kapitel 3: die Aufbauten.“
+
+=== FOLIE 77 ===
+AUF DER FOLIE: KLASSE C  ·  ABEND 2  ·  C4  ·  AUFBAUTEN | 77 | 03 | Aufbauten | Was hinten drauf ist – und was ihr vor der Fahrt kontrolliert.
+NOTIZEN:
+FOLIE 77 VON 101 · keine Klicks, läuft von selbst
+
+▶ Sagen: „Kapitel 3: Aufbauten. Ganz kurz – wie man Ladung sichert, kommt ausführlich in C8.“
+🖱 Keine Klicks.
+➜ „Welche Aufbauten kennt ihr?“
+
+=== FOLIE 78 ===
+AUF DER FOLIE: KLASSE C  ·  ABEND 2  ·  C4  ·  AUFBAUTEN | 78 | AUFBAUTEN | Was ist hinten drauf? | Plane / Pritsche | Plane, Spriegel, Bordwände zu und fest? | Koffer | Türen geschlossen und verriegelt? | Kühlkoffer | Kühlgerät an, Temperatur richtig? | Kipper | nur auf festem, ebenem Boden kippen – Mulde vor der Fahrt ganz unten | Wechselbrücke | Verriegelungen zu, Stützbeine hoch und gesichert? | Maße:  Breite höchstens 2,55 m (Kühlaufbau 2,60 m) · Höhe höchstens 4,00 m
+NOTIZEN:
+FOLIE 78 VON 101 · 6 Klicks
+
+▶ Sagen: „Welche Aufbauten kennt ihr?“
+❓ Sammeln lassen, dann klicken.
+🖱 Klick 1–5: je ein Aufbau · Klick 6: Maße.
+✅ Kontrolle vor der Fahrt: Verschlüsse, Plane und Spriegel, Bordwände, Türen und Verriegelungen. Wechselbrücke: Verriegelungen zu, Stützbeine hochgeklappt und gesichert. Kipper: nur auf festem, ebenem Boden kippen, vor der Fahrt Mulde ganz absenken.
+✅ Maße nach § 32 StVZO: Breite 2,55 m, Kühlaufbau (Wände mind. 45 mm dick) 2,60 m, Höhe 4,00 m.
+➜ „Ein Aufbau-Teil verdient eine eigene Folie: die Ladebordwand.“
+
+=== FOLIE 79 ===
+AUF DER FOLIE: KLASSE C  ·  ABEND 2  ·  C4  ·  AUFBAUTEN | 79 | LADEBORDWAND | Die Hebebühne am Heck | gelbe Blinkleuchte | rot-weiße Markierung | Seitenansicht · schematisch | Im Betrieb gesichert / durch zwei gelbe Blinkleuchten und rot-weiße Warnmarkierungen. | Quetschgefahr! / Nicht im Bewegungsbereich stehen, Füße weg von der Plattformkante. | Vor der Fahrt / hochklappen und verriegeln – die Kontrollleuchte muss aus sein.
+NOTIZEN:
+FOLIE 79 VON 101 · 3 Klicks
+
+▶ Sagen: „Viele Verteiler-Lkw haben eine Ladebordwand – eine Hebebühne hinten. Damit passieren schwere Unfälle: Füße werden gequetscht, Fußgänger und Radfahrer übersehen die Plattform.“
+❓ „Wie wird eine heruntergeklappte Ladebordwand im Verkehr gesichert?“
+✅ Zwei gelbe Blinkleuchten und rot-weiße Warnmarkierungen, die bei Betrieb selbsttätig wirken (§ 53b Abs. 5 StVZO).
+🖱 Klick 1: Blinkleuchten und Warnmarkierung · Klick 2–4: Regeln.
+✅ Nicht im Bewegungsbereich stehen, Füße weg von der Plattformkante. Vor der Fahrt hochklappen und verriegeln – Kontrollleuchte im Fahrerhaus muss aus sein (BG Verkehr, Herstellerangaben).
+➜ „Weiter zu Kapitel 4: Batterie und Bordnetz.“
+
+=== FOLIE 80 ===
+AUF DER FOLIE: KLASSE C  ·  ABEND 2  ·  C4  ·  BATTERIE UND BORDNETZ | 80 | 04 | Batterie und Bordnetz | 24 Volt, Lichtmaschine, Starthilfe und Hauptschalter.
+NOTIZEN:
+FOLIE 80 VON 101 · keine Klicks, läuft von selbst
+
+▶ Sagen: „Kapitel 4: Strom. Beim Lkw ist einiges anders als beim Pkw – vor allem die Spannung.“
+🖱 Keine Klicks.
+➜ „Wie viel Volt hat ein Lkw?“
+
+=== FOLIE 81 ===
+AUF DER FOLIE: KLASSE C  ·  ABEND 2  ·  C4  ·  BATTERIE UND BORDNETZ | 81 | BORDNETZ | 24 Volt im Lkw | 1 | Eine Batterie: 12 V | 2 | Zwei in Reihe: 24 V | 3 | Lichtmaschine lädt | 4 | Ladekontrolle leuchtet rot | Eine Lkw-Batterie hat 12 Volt – wie im Pkw, nur größer. | Schematisch | + | − | 12 V
+NOTIZEN:
+FOLIE 81 VON 101 · keine Klicks, läuft von selbst
+
+▶ Sagen: „Wie viel Volt hat ein Pkw? 12. Und ein Lkw?“
+❓ Antworten sammeln.
+✅ 24 Volt.
+🖱 Keine Animation auf dieser Folie – nächster Klick = nächster Schritt (Morph).
+➜ „Wie kommt man auf 24?“
+
+=== FOLIE 82 ===
+AUF DER FOLIE: KLASSE C  ·  ABEND 2  ·  C4  ·  BATTERIE UND BORDNETZ | 82 | BORDNETZ | 24 Volt im Lkw | 1 | Eine Batterie: 12 V | 2 | Zwei in Reihe: 24 V | 3 | Lichtmaschine lädt | 4 | Ladekontrolle leuchtet rot | Zwei Batterien in Reihe: Plus der einen an Minus der anderen. Zusammen 24 Volt. | Schematisch | + | − | 12 V | + | − | 12 V | 24 V
+NOTIZEN:
+FOLIE 82 VON 101 · keine Klicks, läuft von selbst
+
+▶ „Zwei 12-Volt-Batterien in Reihe – Plus der einen an Minus der anderen. Das ergibt 24 Volt.“
+💡 Darum: Nie einen 12-Volt-Pkw direkt an einen 24-Volt-Lkw anschließen.
+🖱 Keine Animation auf dieser Folie – nächster Klick = nächster Schritt (Morph).
+➜ „Wer lädt die Batterien?“
+
+=== FOLIE 83 ===
+AUF DER FOLIE: KLASSE C  ·  ABEND 2  ·  C4  ·  BATTERIE UND BORDNETZ | 83 | BORDNETZ | 24 Volt im Lkw | 1 | Eine Batterie: 12 V | 2 | Zwei in Reihe: 24 V | 3 | Lichtmaschine lädt | 4 | Ladekontrolle leuchtet rot | Läuft der Motor, lädt die Lichtmaschine die Batterien. Sie wird über einen Riemen angetrieben. | Schematisch | + | − | 12 V | + | − | 12 V | 24 V | Motor | Lichtmaschine | Riemen
+NOTIZEN:
+FOLIE 83 VON 101 · keine Klicks, läuft von selbst
+
+▶ „Die Lichtmaschine, angetrieben vom Motor über einen Riemen. Sie lädt, solange der Motor läuft.“
+🖱 Keine Animation auf dieser Folie – nächster Klick = nächster Schritt (Morph).
+➜ „Und wenn diese Leuchte angeht?“
+
+=== FOLIE 84 ===
+AUF DER FOLIE: KLASSE C  ·  ABEND 2  ·  C4  ·  BATTERIE UND BORDNETZ | 84 | BORDNETZ | 24 Volt im Lkw | 1 | Eine Batterie: 12 V | 2 | Zwei in Reihe: 24 V | 3 | Lichtmaschine lädt | 4 | Ladekontrolle leuchtet rot | Rote Ladekontrolle während der Fahrt: Die Batterien werden nicht geladen. Oft ist der Riemen gerissen – dann laufen auch Wasserpumpe oder Lüfter nicht. Anhalten! | Schematisch | + | − | 12 V | + | − | 12 V | 24 V | Motor | Lichtmaschine | Riemen gerissen?
+NOTIZEN:
+FOLIE 84 VON 101 · keine Klicks, läuft von selbst
+
+▶ „Die rote Ladekontrolle leuchtet während der Fahrt: Die Batterie wird nicht geladen. Häufige Ursache: Der Keilrippenriemen ist gerissen. Über ihn laufen oft auch Wasserpumpe und Lüfter – dann wird der Motor heiß.“
+✅ Rote Warnleuchte = anhalten, nachsehen, Werkstatt (Lehrbuchwissen, Betriebsanleitung).
+🖱 Keine Animation auf dieser Folie – nächster Klick = nächster Schritt (Morph).
+➜ „Was tun, wenn die Batterie leer ist? Starthilfe.“
+
+=== FOLIE 85 ===
+AUF DER FOLIE: KLASSE C  ·  ABEND 2  ·  C4  ·  BATTERIE UND BORDNETZ | 85 | STARTHILFE | Die richtige Reihenfolge | 1 | Nur 24 V an 24 V | 2 | Rot an Plus – Pannen-Lkw | 3 | Rot an Plus – Spender | 4 | Schwarz an Minus – Spender | 5 | Schwarz an Masse – Pannen-Lkw | Nur gleiche Spannung verbinden: 24 V an 24 V. Hat der Lkw einen eigenen Starthilfe-Anschluss, diesen nach Betriebsanleitung nutzen. | Schematisch · Batterie jeweils 24 V | Pannen-Lkw | + | − | 24 V | Spender | + | − | 24 V | Motorblock (Masse)
+NOTIZEN:
+FOLIE 85 VON 101 · keine Klicks, läuft von selbst
+
+▶ Sagen: „Batterie leer – ein Kollege hilft. Erste Regel: Nur gleiche Spannung, also 24 Volt an 24 Volt.“
+✅ ADAC, Starthilfe; Betriebsanleitung. Viele Lkw haben einen Fremdstartstecker.
+🖱 Keine Animation auf dieser Folie – nächster Klick = nächster Schritt (Morph).
+➜ „Jetzt die Reihenfolge. Zuerst das rote Kabel.“
+
+=== FOLIE 86 ===
+AUF DER FOLIE: KLASSE C  ·  ABEND 2  ·  C4  ·  BATTERIE UND BORDNETZ | 86 | STARTHILFE | Die richtige Reihenfolge | 1 | Nur 24 V an 24 V | 2 | Rot an Plus – Pannen-Lkw | 3 | Rot an Plus – Spender | 4 | Schwarz an Minus – Spender | 5 | Schwarz an Masse – Pannen-Lkw | 1. Rotes Kabel an Plus des Pannen-Lkw. | Schematisch · Batterie jeweils 24 V | Pannen-Lkw | + | − | 24 V | Spender | + | − | 24 V | Motorblock (Masse) | 1
+NOTIZEN:
+FOLIE 86 VON 101 · keine Klicks, läuft von selbst
+
+▶ „Rot an Plus der leeren Batterie.“
+🖱 Keine Animation auf dieser Folie – nächster Klick = nächster Schritt (Morph).
+➜ „Dann …“
+
+=== FOLIE 87 ===
+AUF DER FOLIE: KLASSE C  ·  ABEND 2  ·  C4  ·  BATTERIE UND BORDNETZ | 87 | STARTHILFE | Die richtige Reihenfolge | 1 | Nur 24 V an 24 V | 2 | Rot an Plus – Pannen-Lkw | 3 | Rot an Plus – Spender | 4 | Schwarz an Minus – Spender | 5 | Schwarz an Masse – Pannen-Lkw | 2. Das andere Ende des roten Kabels an Plus des Spenders. | Schematisch · Batterie jeweils 24 V | Pannen-Lkw | + | − | 24 V | Spender | + | − | 24 V | Motorblock (Masse) | 1 | 2
+NOTIZEN:
+FOLIE 87 VON 101 · keine Klicks, läuft von selbst
+
+▶ „… das andere rote Ende an Plus des Spenders.“
+🖱 Keine Animation auf dieser Folie – nächster Klick = nächster Schritt (Morph).
+➜ „Dann das schwarze Kabel.“
+
+=== FOLIE 88 ===
+AUF DER FOLIE: KLASSE C  ·  ABEND 2  ·  C4  ·  BATTERIE UND BORDNETZ | 88 | STARTHILFE | Die richtige Reihenfolge | 1 | Nur 24 V an 24 V | 2 | Rot an Plus – Pannen-Lkw | 3 | Rot an Plus – Spender | 4 | Schwarz an Minus – Spender | 5 | Schwarz an Masse – Pannen-Lkw | 3. Schwarzes Kabel an Minus des Spenders. | Schematisch · Batterie jeweils 24 V | Pannen-Lkw | + | − | 24 V | Spender | + | − | 24 V | Motorblock (Masse) | 1 | 2 | 3
+NOTIZEN:
+FOLIE 88 VON 101 · keine Klicks, läuft von selbst
+
+▶ „Schwarz an Minus des Spenders.“
+🖱 Keine Animation auf dieser Folie – nächster Klick = nächster Schritt (Morph).
+➜ „Und das letzte Ende?“
+
+=== FOLIE 89 ===
+AUF DER FOLIE: KLASSE C  ·  ABEND 2  ·  C4  ·  BATTERIE UND BORDNETZ | 89 | STARTHILFE | Die richtige Reihenfolge | 1 | Nur 24 V an 24 V | 2 | Rot an Plus – Pannen-Lkw | 3 | Rot an Plus – Spender | 4 | Schwarz an Minus – Spender | 5 | Schwarz an Masse – Pannen-Lkw | 4. Das andere Ende an Masse am Motorblock des Pannen-Lkw – nicht an die Batterie: Funken! Abklemmen in umgekehrter Reihenfolge. | Schematisch · Batterie jeweils 24 V | Pannen-Lkw | + | − | 24 V | Spender | + | − | 24 V | Motorblock (Masse) | 1 | 2 | 3 | 4 | nicht an Minus der leeren Batterie!
+NOTIZEN:
+FOLIE 89 VON 101 · keine Klicks, läuft von selbst
+
+▶ „Nicht an Minus der leeren Batterie – sondern an Masse, also blankes Metall am Motorblock, mit Abstand zur Batterie. Beim Laden entsteht Knallgas, ein Funke kann es entzünden.“
+✅ Reihenfolge laut ADAC. Spendermotor laufen lassen, starten. Vor dem Abklemmen Verbraucher einschalten (Gebläse, Licht). Abklemmen in umgekehrter Reihenfolge: erst Schwarz, dann Rot.
+🖱 Keine Animation auf dieser Folie – nächster Klick = nächster Schritt (Morph).
+➜ „Noch drei Dinge zur Batterie.“
+
+=== FOLIE 90 ===
+AUF DER FOLIE: KLASSE C  ·  ABEND 2  ·  C4  ·  BATTERIE UND BORDNETZ | 90 | ELEKTRIK | Hauptschalter, Batterie, Sicherung | Batteriehauptschalter:  nie bei laufendem Motor. Nach „Zündung aus“ die Nachlaufzeit abwarten – das AdBlue-System muss seine Leitungen leer pumpen. | Batterie gast Knallgas aus:  kein Feuer, nicht rauchen, keine Funken. Säure ätzt – Schutzbrille und Handschuhe. | Sicherung kaputt?  Nur durch eine mit gleicher Amperezahl ersetzen – nie überbrücken. Brennt sie wieder durch: Werkstatt.
+NOTIZEN:
+FOLIE 90 VON 101 · 3 Klicks
+
+▶ Sagen: „Noch drei Dinge zur Elektrik.“
+🖱 Klick 1–3: je ein Punkt.
+✅ Batteriehauptschalter: trennt das Bordnetz – beim Abstellen über längere Zeit, für Arbeiten an der Elektrik, nach Unfall oder Brand. Nicht bei laufendem Motor. Nach „Zündung aus“ die Nachlaufzeit abwarten: Das AdBlue-System pumpt seine Leitungen leer, Steuergeräte speichern Daten (Herstellerangaben, z. B. E-T-A).
+✅ Beim Laden entsteht Knallgas: kein Feuer, nicht rauchen, für Lüftung sorgen. Batteriesäure ätzt: Schutzbrille und Handschuhe (ADAC).
+✅ Sicherung nur durch eine mit gleicher Amperezahl ersetzen, nie überbrücken – Brandgefahr. Brennt sie wieder durch: Werkstatt.
+➜ „Weiter zu Kapitel 5: Licht und Warnleuchten.“
+
+=== FOLIE 91 ===
+AUF DER FOLIE: KLASSE C  ·  ABEND 2  ·  C4  ·  LICHT UND WARNLEUCHTEN | 91 | 05 | Licht und Warnleuchten | Gesehen werden, richtig warnen – und verstehen, was im Cockpit leuchtet.
+NOTIZEN:
+FOLIE 91 VON 101 · keine Klicks, läuft von selbst
+
+▶ Sagen: „Letztes Kapitel: Licht. Ein Lkw ist nachts 16 Meter dunkle Wand – er muss gut zu sehen sein.“
+🖱 Keine Klicks.
+➜ „Welche Leuchten hat ein Lkw, die ein Pkw nicht hat?“
+
+=== FOLIE 92 ===
+AUF DER FOLIE: KLASSE C  ·  ABEND 2  ·  C4  ·  LICHT UND WARNLEUCHTEN | 92 | BELEUCHTUNG | Damit man den Lkw nachts sieht | Seitenansicht | Umrissleuchten | Seitenmarkierungsleuchten (gelb) | Konturmarkierung seitlich: gelb oder weiß | Rückansicht | volle Kontur hinten: rot oder gelb | Umrissleuchten: breiter als 2,10 m  ·  Seitenmarkierung: länger als 6 m  ·  Kontur: neue Lkw über 7,5 t seit 2011
+NOTIZEN:
+FOLIE 92 VON 101 · 4 Klicks
+
+▶ Sagen: „Welche Leuchten hat ein Lkw, die ein Pkw nicht hat?“
+❓ Sammeln lassen, dann klicken.
+🖱 Klick 1: Umrissleuchten · Klick 2: Seitenmarkierungsleuchten · Klick 3: Konturmarkierung seitlich · Klick 4: Konturmarkierung hinten.
+✅ Umrissleuchten: Pflicht bei mehr als 2,10 m Breite – vorn weiß, hinten rot (§ 51b StVZO). Seitenmarkierungsleuchten: gelb, Pflicht bei mehr als 6 m Länge (§ 51a Abs. 6 StVZO; Ausnahme u. a. Fahrgestelle mit Fahrerhaus).
+✅ Konturmarkierung: rückstrahlende Streifen – seitlich weiß oder gelb, hinten rot oder gelb (§ 53 Abs. 10 StVZO). Pflicht für neue Lkw über 7,5 t und neue Anhänger über 3,5 t seit 10.7.2011, ohne Nachrüstpflicht. Hinten die volle Kontur, seitlich mindestens Linie unten und Ecken oben.
+💡 Bei der Abfahrtkontrolle: alle Leuchten an und sauber, Konturmarkierung sauber und vollständig. Verschmutzte Beleuchtung: 20 € (BKat 73).
+➜ „Darf ein Lkw auch gelbes Rundumlicht haben?“
+
+=== FOLIE 93 ===
+AUF DER FOLIE: KLASSE C  ·  ABEND 2  ·  C4  ·  LICHT UND WARNLEUCHTEN | 93 | RUNDUMLICHT | Panne auf dem Standstreifen. Darf ich das gelbe Rundumlicht einschalten? | Nein – nur berechtigte Fahrzeuge  z. B. Straßendienst, Müllabfuhr, Pannenhilfe, Begleitfahrzeuge bei Überbreite – und nur zur Warnung vor Gefahren. | Bei einer Panne:  Warnblinklicht an, Warnweste anziehen, Warndreieck aufstellen. | Arbeitsscheinwerfer nie während der Fahrt  – und keine zusätzlichen Deko-Leuchten: nur genehmigte Leuchten sind erlaubt.
+NOTIZEN:
+FOLIE 93 VON 101 · 3 Klicks
+
+▶ Sagen: „Manche Lkw haben ein gelbes Rundumlicht auf dem Dach.“
+❓ „Darf ich es bei einer Panne einschalten?“
+🖱 Klick 1–3: je eine Antwort.
+✅ Gelbes Rundumlicht nur an berechtigten Fahrzeugen (§ 52 Abs. 4 StVZO) – z. B. Straßenbau, -unterhaltung und -reinigung, Müllabfuhr, Pannenhilfsfahrzeuge, Fahrzeuge mit Überbreite oder Überlänge nach Anordnung, Begleitfahrzeuge. Einschalten nur zur Warnung vor Arbeits- oder Unfallstellen, vor ungewöhnlich langsamen oder breiten Fahrzeugen (§ 38 Abs. 3 StVO).
+✅ Arbeitsscheinwerfer nicht während der Fahrt (Ausnahme: Arbeitsfahrten von Straßendienst und Müllabfuhr) – § 52 Abs. 7 StVZO. Nicht genehmigte Zusatzleuchten (§ 49a StVZO): 20 € (BKat 221.2).
+➜ „Jetzt ins Cockpit: Was bedeuten die Farben der Warnleuchten?“
+
+=== FOLIE 94 ===
+AUF DER FOLIE: KLASSE C  ·  ABEND 2  ·  C4  ·  LICHT UND WARNLEUCHTEN | 94 | KONTROLLLEUCHTEN | Die Farbe sagt, was zu tun ist | Rot = Gefahr! | An sicherer Stelle anhalten, Motor aus. | Öldruck · Kühlmittel · Bremsdruck · Ladekontrolle · STOP | Gelb = Störung | Bald in die Werkstatt. | ABS / EBS · Motor · AdBlue · Partikelfilter | Grün = Ist an | Alles in Ordnung. | Blinker · Abblendlicht | Blau = Fernlicht | Gegenverkehr? Abblenden!
+NOTIZEN:
+FOLIE 94 VON 101 · 4 Klicks
+
+▶ Sagen: „Im Cockpit leuchten viele Symbole. Wichtig ist vor allem die Farbe.“
+❓ „Was bedeutet Rot?“
+🖱 Klick 1: Rot · Klick 2: Gelb · Klick 3: Grün · Klick 4: Blau.
+✅ Rot = Gefahr: an sicherer Stelle anhalten, Motor aus bzw. Betriebsanleitung – z. B. Öldruck, Kühlmitteltemperatur (2.7.02-216), Bremsdruck/Druckwarnung (2.7.02-203), Ladekontrolle, oft ein großes rotes STOP. Gelb = Störung: bald in die Werkstatt – z. B. ABS/EBS, Motorstörung, AdBlue, Partikelfilter. Grün = eingeschaltet. Blau = Fernlicht (Farben nach ISO 2575, Lehrbuchwissen).
+➜ „Zum Schluss: die elektronischen Helfer.“
+
+=== FOLIE 95 ===
+AUF DER FOLIE: KLASSE C  ·  ABEND 2  ·  C4  ·  LICHT UND WARNLEUCHTEN | 95 | FAHRERASSISTENZ | Elektronische Helfer | Notbremsassistent / warnt und bremst selbst, wenn ein Auffahrunfall droht. | Spurhaltewarner / warnt, wenn der Lkw ohne Blinker die Spur verlässt. | Abbiegeassistent / warnt vor Radfahrern rechts – Pflicht für alle neuen Lkw seit Juli 2024. | Anfahr-Informationssystem / warnt vor Menschen direkt vor dem Lkw. | Die Helfer unterstützen – die Verantwortung bleibt bei dir. / Spiegel, Schulterblick und Schritttempo beim Rechtsabbiegen bleiben Pflicht – auch wenn nichts piept.
+NOTIZEN:
+FOLIE 95 VON 101 · 5 Klicks
+
+▶ Sagen: „Neue Lkw haben viele elektronische Helfer – einige schreibt die EU vor.“
+🖱 Klick 1–4: je ein System · Klick 5: die wichtigste Regel.
+✅ Notbremsassistent: warnt und bremst selbst, wenn ein Aufprall droht – nicht dauerhaft abschalten. Spurhaltewarner: warnt, wenn der Lkw ohne Blinker die Spur verlässt. Abbiegeassistent: warnt vor Radfahrern und Fußgängern rechts neben dem Lkw – Pflicht für alle neuen Lkw seit 7.7.2024 (VO (EU) 2019/2144). Anfahr-Informationssystem: warnt vor Personen direkt vor dem Lkw beim Anfahren.
+✅ Prüfungsfragen 2.7.01-202 und 2.7.01-206: Assistenzsysteme unterstützen – die Verantwortung bleibt beim Fahrer.
+➜ „Damit ist C4 geschafft. Zeit zum Mitschreiben.“
+
+=== FOLIE 96 ===
+AUF DER FOLIE: KLASSE C  ·  ABEND 2  ·  C4  ·  LICHT UND WARNLEUCHTEN | 96 | QUIZ LICHT | Die Blinker-Kontrollleuchte blinkt plötzlich viel schneller als sonst. Warum? | A | Der Warnblinker ist an | B | Eine Blinkleuchte ist ausgefallen | C | Die Batterie ist voll geladen | ✓  RICHTIG | Schnelles Blinken der Kontrolle zeigt: Eine Blinkleuchte am Lkw oder Anhänger ist ausgefallen (Prüfungsfrage 2.7.02-202).
+NOTIZEN:
+FOLIE 96 VON 101 · 2 Klicks
+
+▶ Frage vorlesen, abstimmen.
+🖱 Klick 1: Antworten · Klick 2: Lösung.
+✅ B.
+➜ „Zum Abschluss von C4: Mitschreiben.“
+
+=== FOLIE 97 ===
+AUF DER FOLIE: KLASSE C  ·  ABEND 2  ·  C4  ·  ABSCHLUSS | 97 | ZUM MITSCHREIBEN | Fahrwerk und Elektrik | ✎ | Luftfeder | Heben und Senken nur im Stand – danach zurück aufs Fahrniveau | Profil | mindestens 1,6 mm – auch beim Lkw (Fahrer 60 €, 1 Punkt) | Winterreifen | bei Glätte, Alpine-Symbol – Antriebsachsen und vordere Lenkachsen | Schneeketten | Zeichen 268 – höchstens 50 km/h | Radmuttern | nach 50–100 km nachziehen | Bordnetz | 24 V: zwei 12-V-Batterien in Reihe | Starthilfe | Rot + Panne, Rot + Spender, Schwarz − Spender, Schwarz an Masse | Warnleuchte rot | sofort an sicherer Stelle anhalten
+NOTIZEN:
+FOLIE 97 VON 101 · 8 Klicks
+
+▶ Sagen: „Schreibt euch das auf – das sind die Kernpunkte aus C4.“
+❓ Vor jedem Klick fragen: „Was gehört hier hin?“
+🖱 Klick 1–8: je eine Lösung.
+✅ Quellen: § 36 Abs. 3 StVZO, BKat 212; § 2 Abs. 3a StVO; § 3 Abs. 4 StVO, Zeichen 268; ADAC Starthilfe; Prüfungsfragen 2.7.01-242, 2.7.02-216.
+➜ „Jetzt testen wir C4.“
+
+=== FOLIE 98 ===
+AUF DER FOLIE: KLASSE C  ·  ABEND 2  ·  C4  ·  ABSCHLUSS | 98 | QUIZ C4 · 1 | Schneematsch auf der Straße. Wo braucht Ihr Lkw mindestens Winterreifen? | A | Nur auf der Antriebsachse | B | Auf den Antriebsachsen und den vorderen Lenkachsen | C | Keine Pflicht – Winterreifen sind nur für Pkw | ✓  RICHTIG | § 2 Abs. 3a StVO: Bei Lkw über 3,5 t genügen Winterreifen auf den permanent angetriebenen Achsen und den vorderen Lenkachsen – mit Alpine-Symbol.
+NOTIZEN:
+FOLIE 98 VON 101 · 2 Klicks
+
+▶ Frage vorlesen, abstimmen.
+🖱 Klick 1: Antworten · Klick 2: Lösung.
+✅ B. Die Lenkachse ist seit 1.7.2020 dabei.
+➜ „Nächste Frage.“
+
+=== FOLIE 99 ===
+AUF DER FOLIE: KLASSE C  ·  ABEND 2  ·  C4  ·  ABSCHLUSS | 99 | QUIZ C4 · 2 | Starthilfe: Wo kommt das letzte Ende des schwarzen Kabels hin? | A | An Minus der leeren Batterie | B | An Masse am Motorblock des Pannen-Lkw | C | An Plus des Spenders | ✓  RICHTIG | An blankes Metall am Motorblock, mit Abstand zur Batterie – sonst können Funken das Knallgas der Batterie entzünden (ADAC).
+NOTIZEN:
+FOLIE 99 VON 101 · 2 Klicks
+
+▶ Frage vorlesen, abstimmen.
+🖱 Klick 1: Antworten · Klick 2: Lösung.
+✅ B.
+➜ „Zum Schluss: Das nehmt ihr mit.“
+
+=== FOLIE 100 ===
+AUF DER FOLIE: KLASSE C  ·  ABEND 2  ·  C4  ·  ABSCHLUSS | 100 | ZUSAMMENFASSUNG | Das nimmst du mit | Luftfeder:  heben und senken nur im Stand – danach zurück aufs Fahrniveau. | Reifen:  1,6 mm Profil, Druck kalt prüfen, Steine aus den Zwillingen, Radmuttern nachziehen. | Winter:  Alpine-Symbol auf Antriebs- und Lenkachse – mit Ketten höchstens 50 km/h. | 24 Volt:  Starthilfe nur 24 an 24 – Schwarz zuletzt an Masse. | Licht:  alle Leuchten und Kontur sauber – rote Warnleuchte heißt anhalten.
+NOTIZEN:
+FOLIE 100 VON 101 · 5 Klicks
+
+▶ Sagen: „Das sind die fünf Punkte aus C4, die ihr auf jeden Fall wissen müsst.“
+🖱 Klick 1–5: je ein Punkt. Gern die Klasse den Satz vervollständigen lassen.
+➜ „Das war Abend 2.“
+
+=== FOLIE 101 ===
+AUF DER FOLIE: Gute Heimfahrt! | Abend 2 geschafft: C3 + C4 | Nächstes Mal: / C5  Bremsen – Druckluftbremse / C6  Dauerbremsen, Untersuchungen, Begrenzer
+NOTIZEN:
+FOLIE 101 VON 101 · keine Klicks, läuft von selbst
+
+▶ Sagen: „Das war Abend 2. Beim nächsten Mal geht es um die Bremsen: C5 – wie eine Druckluftbremse funktioniert – und C6 – Dauerbremsen, ABS, Prüfungen am Fahrzeug und der Geschwindigkeitsbegrenzer. Danke fürs Mitmachen, kommt gut nach Hause.“
+💡 Ausbildungsnachweis abzeichnen lassen.
+🖱 Keine Klicks.
