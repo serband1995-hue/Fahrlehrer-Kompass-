@@ -62,16 +62,16 @@ module.exports = async (deck) => {
   }
   // ===== FOTO: SPIEGEL =====
   await photoAsk(deck, 'ap', {
-    bg: 'f_spiegel.jpg', kicker: 'Spiegel am Lkw', q: 'Wie viele Spiegel seht ihr – und wozu?', qsize: 34, w: 5.4, ov: 7.4, asize: 15,
+    bg: 'f_spiegel.jpg', kicker: 'Spiegel am Lkw', q: 'Welche Spiegel hat ein Lkw – und wozu?', qsize: 34, w: 5.4, ov: 7.4, asize: 15,
     answers: [
       ['LuEye', 'Hauptspiegel', 'nach hinten, entlang der Seite'],
       ['LuEye', 'Weitwinkelspiegel', 'der kleine darunter: breiter, neben dem Lkw'],
-      ['LuEye', 'Rampenspiegel', 'oben an der Tür: direkt neben dem Fahrerhaus'],
+      ['LuEye', 'Rampenspiegel', 'über der Beifahrertür: direkt neben dem Fahrerhaus'],
       ['LuEye', 'Frontspiegel', 'über der Scheibe: direkt vor der Stoßstange'],
     ],
     notes:
-      '▶ Sagen: „Schaut euch das Foto an. Zählt die Spiegel auf dieser Seite.“\n' +
-      '❓ „Wie viele seht ihr? Wofür ist welcher?“\n' +
+      '▶ Sagen: „Schaut euch das Foto an: die Beifahrerseite eines Lkw. Neben der Tür zwei Spiegel übereinander, über der Tür noch einer.“\n' +
+      '❓ „Welche Spiegel hat ein Lkw, und wofür ist welcher?“\n' +
       '🖱 Klick 1: Hauptspiegel · Klick 2: Weitwinkelspiegel · Klick 3: Rampenspiegel · Klick 4: Frontspiegel.\n' +
       '✅ Nach UN-Regelung 46 (gilt über § 56 StVZO): Hauptaußenspiegel (Klasse II), Weitwinkelspiegel (IV), Nahbereichs-/Rampenspiegel (V, Beifahrerseite), Frontspiegel (VI). Für schwere Lkw über 7,5 t sind alle vier vorgeschrieben; bei leichteren hängt es von Bauart und Einbauhöhe ab.\n' +
       '💡 Statt Spiegeln gibt es heute auch Kamera-Monitor-Systeme – die Regeln für die Sichtfelder sind dieselben.\n' +
