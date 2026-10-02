@@ -30,7 +30,7 @@ module.exports = async (deck) => {
     ],
     notes: [
       '▶ Sagen: „Von oben: Das Bremsventil – auch Motorwagenbremsventil – sitzt am Pedal. Es hat zwei Teile: einen für vorn, einen für hinten.“\n✅ Zweikreis-Druckluftbremse, achsweise aufgeteilt (eurotransport, „Die Bremsanlage: Retter in der Not“). Mehr Pedal = mehr Druck.\n➜ „Was passiert bei einem Leck?“',
-      '▶ „Kreis 2 verliert Luft. Das Vierkreisschutzventil sperrt ihn ab.“\n✅ Prüfungsfrage 2.7.02-304: Luft des Kreises entweicht, die Bremswirkung kann erheblich nachlassen; das Vierkreisschutzventil sichert die intakten Kreise.\n➜ „Wie bremst der Lkw jetzt?“',
+      '▶ „Kreis 2 verliert Luft. Das Vierkreisschutzventil sperrt ihn ab.“\n✅ Prüfungsfrage 2.7.02-304 (CE-Teil): Luft des Kreises entweicht, die Bremswirkung kann erheblich nachlassen; das Vierkreisschutzventil sichert die intakten Kreise.\n➜ „Wie bremst der Lkw jetzt?“',
       '▶ „Nur noch mit der Vorderachse. Weil die Kreise achsweise getrennt sind, bremsen links und rechts gleich – der Lkw bleibt in der Spur.“\n💡 Darum ist die Aufteilung nach Achsen gewählt – nicht nach Seiten.\n➜ „Was sitzt an den Rädern? Die Bremszylinder.“',
     ],
     legend: 'Draufsicht · Front links · schematisch',
@@ -228,7 +228,7 @@ module.exports = async (deck) => {
     notes: [
       '▶ Sagen: „Im Fahrerhaus sitzt das Handbremsventil – ein Hebel mit mehreren Stellungen. Bei manchen neuen Lkw ist es ein elektrischer Schalter.“\n➜ „Hebel nach hinten ziehen …“',
       '▶ „… die Federspeicher werden entlüftet, die Federn bremsen. Ihr könnt den Hebel auch stufenweise ziehen – das ist im Notfall eine Hilfsbremse.“\n✅ Die Feststellbremse muss den beladenen Lkw auf 18 % Steigung oder Gefälle halten (EU-Bremsenrecht). § 41 Abs. 5 StVZO: rein mechanisch wirkend.\n➜ „Und ganz durchziehen?“',
-      '▶ „Die Kontrollstellung braucht ihr mit Anhänger: Der Anhänger wird gelöst, nur der Lkw hält. So seht ihr, ob die Feststellbremse des Lkw den ganzen Zug allein hält – das muss sie auf 12 %.“\n✅ Prüfungsfrage 2.7.06-320: In Kontrollstellung bremst das Zugfahrzeug über den Federspeicher, die Betriebsbremse des Anhängers wird gelöst. Mehr dazu in CE.\n💡 Bedienung je nach Hersteller – Betriebsanleitung.\n➜ „Und wie stellt ihr den Lkw am Berg sicher ab?“',
+      '▶ „Die Kontrollstellung braucht ihr mit Anhänger: Der Anhänger wird gelöst, nur der Lkw hält. So seht ihr, ob die Feststellbremse des Lkw den ganzen Zug allein hält – das muss sie auf 12 %.“\n✅ Prüfungsfrage 2.7.06-320 (CE-Teil): In Kontrollstellung bremst das Zugfahrzeug über den Federspeicher, die Betriebsbremse des Anhängers wird gelöst. Mehr dazu in CE.\n💡 Bedienung je nach Hersteller – Betriebsanleitung.\n➜ „Und wie stellt ihr den Lkw am Berg sicher ab?“',
     ],
     legend: 'Handbremsventil · schematisch · je nach Hersteller',
     scene: async (s, i) => {
@@ -301,7 +301,7 @@ module.exports = async (deck) => {
     items: [
       ['LuWind', 'Ohne Luft keine Betriebsbremse –', 'losfahren erst, wenn die Druckwarnung aus ist.'],
       ['LuSplit', 'Mehrere Kreise:', 'fällt einer aus, sperrt das Ventil ihn ab – die anderen bremsen weiter.'],
-      ['LuDroplets', 'Wasser im Luftbehälter', 'heißt: Lufttrockner defekt – kein Frostschutz in die Anlage.'],
+      ['LuDroplets', 'Wasser im Luftbehälter', 'heißt: Lufttrockner defekt – bei Lufttrockner kein Frostschutzmittel.'],
       ['LuWeight', 'ALB oder EBS', 'passen die Bremskraft der Beladung an.'],
       ['LuSquareParking', 'Feder bremst, Luft löst –', 'vor dem Notlösen den Lkw mit Keilen sichern.'],
     ],

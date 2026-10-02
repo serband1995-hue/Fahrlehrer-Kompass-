@@ -33,7 +33,7 @@ module.exports = async (deck) => {
     const s = base(deck, 'c6d', { notes:
       '▶ Sagen: „Jeder Lkw über 9 Tonnen zulässiger Gesamtmasse muss eine Dauerbremse haben. Was muss sie können?“\n' +
       '🖱 Klick 1: die Prüfstrecke · Klick 2–4: die Punkte.\n' +
-      '✅ § 41 Abs. 15 StVZO: Lkw über 9 t zGM. Voll beladen auf einem Gefälle von 7 % und 6 km Länge 30 km/h halten – nur mit der Dauerbremse. Lkw zwischen 7,5 und 9 t brauchen keine.\n' +
+      '✅ § 41 Abs. 15 StVZO: Lkw über 9 t zGM. Voll beladen auf einem Gefälle von 7 % und 6 km Länge 30 km/h halten – nur mit der Dauerbremse. Lkw zwischen 7,5 und 9 t brauchen keine.\n💡 Genau genommen verweist § 41 Abs. 18 bei Lkw über 25 km/h auf das EU-/UN-Bremsenrecht; dort ist die Dauerbremsprüfung für schwere Lkw vorgeschrieben, die schwere Anhänger ziehen dürfen. Für den Unterricht gilt die einfache Regel: über 9 t Dauerbremse.\n' +
       '✅ Prüfungsfrage 2.7.06-234: Motorbremse und Retarder arbeiten ohne nennenswerten Verschleiß. 2.7.06-239: Dauerbremse nutzen, weil verschleißfrei und weil sie die Betriebsbremse entlastet – sie bremst aber NICHT bis zum Stillstand.\n' +
       '➜ „Welche Dauerbremsen gibt es? Zuerst die Motorbremse.“' });
     kick(s, 'Dauerbremsen'); title(s, 'Pflicht über 9 Tonnen');
@@ -163,7 +163,7 @@ module.exports = async (deck) => {
         fr(28.5, 80, { cap: 'Die Druckluft braucht bis zu 0,6 Sekunden, bis sie in den Zylindern wirkt.' }),
         fr(35, 80, { hold: true, note: '▶ „… die Druckluft muss erst in die Bremszylinder strömen. Bis zu 0,6 Sekunden – noch einmal 13 Meter.“\n✅ § 41 Abs. 12 StVZO: Ansprech- und Schwellzeit höchstens 0,6 s.\n🖱 Klick: Der Lkw bremst.\n➜ „Und jetzt bremst er.“' }),
         fr(tau[0], 60, { cap: 'Jetzt bremst der Lkw – erst schnell, dann immer langsamer.' }), fr(tau[1], 40), fr(tau[2], 20),
-        fr(84, 0, { hold: true, answer: true, cap: 'Bremsweg rund 49 Meter. Zusammen: etwa 85 Meter Anhalteweg.', note: '▶ „Bremsweg rund 49 Meter. Zusammen etwa 85 Meter – fast ein Fußballfeld. Und das mit guter Bremse auf trockener Straße.“\n✅ Eigene Rechnung: 80 km/h = 22,2 m/s; Reaktion 1 s = 22 m; 0,6 s = 13 m; Bremsweg v²/(2 · 5,0 m/s²) = 49 m.\n🖱 Keine Animation mehr – nächster Klick: Vergleich mit Gefälle und halbem Tempo.\n➜ „Was ändert sich im Gefälle – und bei halbem Tempo?“' }),
+        fr(84, 0, { hold: true, answer: true, cap: 'Bremsweg rund 49 Meter. Zusammen: etwa 85 Meter Anhalteweg.', note: '▶ „Bremsweg rund 49 Meter. Zusammen etwa 85 Meter – fast ein Fußballfeld. Und das mit einer Bremse, die gerade das gesetzliche Minimum schafft, auf trockener Straße.“\n✅ Eigene Rechnung: 80 km/h = 22,2 m/s; Reaktion 1 s = 22 m; 0,6 s = 13 m; Bremsweg v²/(2 · 5,0 m/s²) = 49 m.\n🖱 Keine Animation mehr – nächster Klick: Vergleich mit Gefälle und halbem Tempo.\n➜ „Was ändert sich im Gefälle – und bei halbem Tempo?“' }),
       ],
       scene: async (s, { d, v }) => {
         // Straße
@@ -202,7 +202,7 @@ module.exports = async (deck) => {
       'Halbes Tempo – nur ein Viertel Bremsweg. Der Anhalteweg schrumpft auf etwa 30 Meter.',
     ],
     notes: [
-      '▶ Sagen: „Noch einmal als Balken zum Vergleich: Erst die Reaktionszeit – rund 1 Sekunde, das sind 22 Meter. Dann braucht die Druckluft Zeit, bis sie bremst – bis zu 0,6 Sekunden, noch einmal 13 Meter. Dann erst bremst der Lkw – bei guter Bremse etwa 49 Meter.“\n✅ Eigene Rechnung mit 5,0 m/s² (Mindestwert nach § 41 Abs. 4 StVZO) und 0,6 s Ansprech- und Schwellzeit (§ 41 Abs. 12). Ergebnis: rund 85 m.\n➜ „Und bergab?“',
+      '▶ Sagen: „Noch einmal als Balken zum Vergleich: Erst die Reaktionszeit – rund 1 Sekunde, das sind 22 Meter. Dann braucht die Druckluft Zeit, bis sie bremst – bis zu 0,6 Sekunden, noch einmal 13 Meter. Dann erst bremst der Lkw – mit der gesetzlichen Mindest-Bremswirkung etwa 49 Meter.“\n✅ Eigene Rechnung mit 5,0 m/s² (Mindestwert nach § 41 Abs. 4 StVZO) und 0,6 s Ansprech- und Schwellzeit (§ 41 Abs. 12). Ergebnis: rund 85 m.\n➜ „Und bergab?“',
       '▶ „Im Gefälle schiebt die Hangabtriebskraft mit. Bei 8 % Gefälle fehlen etwa 0,8 m/s² Verzögerung – aus 49 Metern Bremsweg werden etwa 59.“\n✅ Prüfungsfrage 2.7.01-042: Der Bremsweg verlängert sich im Gefälle und mit schwerer Last – NICHT bei Gegenwind. Eigene Rechnung.\n➜ „Was bringt es, langsamer zu fahren?“',
       '▶ „Der Bremsweg wächst mit dem Quadrat der Geschwindigkeit. Halbes Tempo – ein Viertel Bremsweg.“\n✅ Physik: Bremsweg = v² / (2 · a). Bei 40 km/h: 11 + 7 + 12 = rund 30 m.\n💡 Nasse Bremsen nach langer Standzeit bei Feuchtigkeit: Erste Bremsungen können schwächer sein oder blockieren (2.7.01-040).\n➜ „Und was passiert mit der Bremse auf einer langen Abfahrt?“',
     ],
@@ -245,7 +245,7 @@ module.exports = async (deck) => {
         fr(0.15, { cap: 'Langes Gefälle, nur Betriebsbremse: Die Scheibe wird immer heißer …' }), fr(0.3), fr(0.45),
         fr(0.6, { hold: true, note: '▶ „Die ganze Bewegungsenergie wird an der Bremse zu Wärme. Ohne Dauerbremse wird sie immer heißer.“\n🖱 Klick: weiter.\n➜ „Und dann?“' }),
         fr(0.75, { cap: 'Sehr heiß: Belag und Scheibe greifen schlechter – die Wirkung lässt nach.' }), fr(0.88),
-        fr(1, { hold: true, answer: true, cap: 'Fading! Gegenmittel: vor dem Gefälle zurückschalten und die Dauerbremse arbeiten lassen.', note: '▶ „Die Reibung zwischen Belag und Scheibe sinkt, Trommeln dehnen sich aus – die Bremse wird schwach. Das heißt Fading.“\n✅ Prüfungsfrage 2.7.06-310: Wird im langen Gefälle ständig nur mit der Betriebsbremse gebremst, werden die Radbremsen so heiß, dass die Bremswirkung gefährlich nachlässt.\n💡 Nach Fading: anhalten, abkühlen lassen, Lkw mit Keilen sichern.\n🖱 Keine Animation mehr – nächster Klick: nächste Folie.\n➜ „Wie fahrt ihr bergab richtig?“' }),
+        fr(1, { hold: true, answer: true, cap: 'Fading! Gegenmittel: vor dem Gefälle zurückschalten und die Dauerbremse arbeiten lassen.', note: '▶ „Die Reibung zwischen Belag und Scheibe sinkt, Trommeln dehnen sich aus – die Bremse wird schwach. Das heißt Fading.“\n✅ Prüfungsfrage 2.7.06-310 (Lastzug-Frage, gilt sinngemäß auch für C): Wird im langen Gefälle ständig nur mit der Betriebsbremse gebremst, werden die Radbremsen so heiß, dass die Bremswirkung gefährlich nachlässt.\n💡 Nach Fading: anhalten, abkühlen lassen, Lkw mit Keilen sichern.\n🖱 Keine Animation mehr – nächster Klick: nächste Folie.\n➜ „Wie fahrt ihr bergab richtig?“' }),
       ],
       scene: async (s, t) => {
         const heat = ['6E7888', 'B9772F', 'E0702A', 'FF5A2A', 'FF3B30'][Math.min(4, Math.round(t * 4))];

@@ -77,7 +77,7 @@ module.exports = async (deck) => {
       '✅ Rechtsprechung (OLG Düsseldorf, 28.01.2014): Bei der Abfahrtkontrolle genügt eine Bremsprobe – Risse in den Bremsscheiben durch die Felgen suchen muss der Fahrer nicht.\n' +
       '➜ „Wie prüft ihr die Dichtheit genau?“' });
     kick(s, 'Kontrolle'); title(s, 'Vor jeder Schicht: Bremse prüfen');
-    const P = [['LuDroplets', C.bl, 'Entwässern', 'wenn keine automatischen Ventile – kommt Wasser, ist der Trockner defekt'], ['LuGauge', C.or, 'Druck aufbauen', 'der volle Vorratsdruck wird erreicht'], ['LuEar', C.pu, 'Dicht?', 'kein Zischen, Druck fällt nicht ab'], ['LuSiren', C.red, 'Druckwarnung', 'leuchtet nach dem Start, geht bei genug Druck aus'], ['LuFootprints', C.gr, 'Bremsprobe', 'gleich nach dem Losfahren – wirkt sie gleichmäßig?']];
+    const P = [['LuDroplets', C.bl, 'Entwässern', 'wenn keine automatischen Ventile – kommt Wasser, ist der Trockner defekt'], ['LuGauge', C.or, 'Druck aufbauen', 'der volle Vorratsdruck wird erreicht'], ['LuEar', C.pu, 'Dicht?', 'kein Zischen, Druck fällt nicht ab'], ['LuSiren', C.red, 'Druckwarnung', 'funktioniert – Prüfung nach Betriebsanleitung'], ['LuFootprints', C.gr, 'Bremsprobe', 'gleich nach dem Losfahren – wirkt sie gleichmäßig?']];
     for (let k = 0; k < 5; k++) {
       const y = 2.0 + k * 0.92;
       await point(s, 0.7, y, 11.93, 0.8, P[k][0], P[k][1], P[k][2] + ':', P[k][3], CLICK, { size: 17 });
@@ -242,9 +242,9 @@ module.exports = async (deck) => {
       '✅ § 57b StVZO: Fahrtenschreiber mindestens alle 24 Monate prüfen lassen (Halterpflicht), außerdem sofort nach Reparatur, Änderung der Reifengröße, Plombentausch, Kennzeichenwechsel oder wenn die Uhrzeit mehr als 20 Minuten abweicht. § 57d: Begrenzer prüfen nach Einbau, Reparatur, Änderung der Reifengröße oder der Kraftstoffzufuhr – eine feste Frist gibt es nicht; die HU prüft ihn mit. Einbauschild plombiert an der B-Säule.\n' +
       '➜ „Damit ist C6 geschafft. Zeit zum Mitschreiben.“' });
     kick(s, 'Prüfungen'); title(s, 'Fahrtenschreiber und Begrenzer prüfen');
-    await point(s, 0.7, 2.05, 11.93, 1.35, 'LuCalendarClock', C.bl, 'Fahrtenschreiber:', 'mindestens alle 24 Monate prüfen – und sofort nach Reparatur, neuer Reifengröße, neuem Kennzeichen oder falscher Uhrzeit (über 20 Minuten).', CLICK, { size: 17 });
+    await point(s, 0.7, 2.05, 11.93, 1.35, 'LuCalendarClock', C.bl, 'Fahrtenschreiber:', 'mindestens alle 24 Monate prüfen – und sofort nach Reparatur, neuer Reifengröße, beim digitalen Gerät auch nach neuem Kennzeichen oder falscher Uhrzeit (über 20 Minuten).', CLICK, { size: 17 });
     await point(s, 0.7, 3.6, 11.93, 1.35, 'LuGauge', C.gr, 'Begrenzer:', 'Prüfung nach Einbau, Reparatur oder neuer Reifengröße – die HU kontrolliert ihn mit.', CLICK, { size: 17 });
-    await point(s, 0.7, 5.15, 11.93, 1.35, 'LuTag', 'C9A227', 'Einbauschild:', 'plombiert an der B-Säule auf der Fahrerseite – zeigt die letzte Prüfung.', CLICK, { size: 17 });
+    await point(s, 0.7, 5.15, 11.93, 1.35, 'LuTag', 'C9A227', 'Einbauschild:', 'plombiert am Gerät oder an der B-Säule auf der Fahrerseite – zeigt die letzte Prüfung.', CLICK, { size: 17 });
   }
 
   // ===== ABSCHLUSS C6 =====
@@ -256,7 +256,7 @@ module.exports = async (deck) => {
       ['Glätte', 'Dauerbremse klein oder aus – sie bremst nur die Antriebsachse'],
       ['ABS-Bremsung', 'schlagartig, voll treten und halten – nicht pumpen'],
       ['Dichtheit', 'eine Vollbremsung: höchstens 0,7 bar Druckabfall'],
-      ['HU / SP', 'HU jedes Jahr – SP alle 6 Monate (über 12 t ab dem 3. Jahr)'],
+      ['HU / SP', 'HU jedes Jahr – über 7,5 t dazu SP alle 6 Monate (ab 3. bzw. 4. Jahr)'],
       ['Begrenzer', '90 km/h – erlaubt sind auf der Autobahn 80 km/h'],
       ['Fahrtenschreiber', 'Prüfung mindestens alle 24 Monate'],
     ],
@@ -270,7 +270,7 @@ module.exports = async (deck) => {
   });
   quiz(deck, 'c6e', {
     kicker: 'Quiz C6 · 2', q: 'Sie treten bei voll gefülltem Luftbehälter einmal das Bremspedal voll durch. Welcher Druckabfall ist unbedenklich?', size: 28,
-    opts: ['Bis 0,7 bar', 'Bis 2 bar', 'Bis 3,5 bar'], ok: 0,
+    opts: ['Bis 0,7 bar', 'Bis 1,2 bar', 'Bis 1,5 bar'], ok: 0,
     why: 'Höchstens 0,7 bar je Vollbremsung. Mehr heißt: Der Luftvorrat fällt zu schnell ab (Prüfungsfragen 2.7.06-231, -232).',
     notes: '▶ Frage vorlesen, abstimmen.\n🖱 Klick 1: Antworten · Klick 2: Lösung.\n✅ A.\n➜ „Und noch eine.“',
   });
@@ -286,7 +286,7 @@ module.exports = async (deck) => {
       ['LuSnowflake', 'Auf Glätte', 'Dauerbremse klein oder aus – nie voll in der Kurve.'],
       ['LuCircleDot', 'ABS:', 'voll treten und halten – bleibt die Leuchte an, ab in die Werkstatt.'],
       ['LuListChecks', 'Vor jeder Schicht:', 'Druck, Dichtheit, Druckwarnung, Bremsprobe.'],
-      ['LuClipboardCheck', 'HU jedes Jahr, SP alle 6 Monate –', 'Begrenzer 90 km/h, erlaubt 80.'],
+      ['LuClipboardCheck', 'HU jedes Jahr, über 7,5 t auch SP –', 'Begrenzer 90 km/h, erlaubt 80.'],
     ],
     notes: '▶ Sagen: „Das sind die fünf Punkte aus C6, die ihr auf jeden Fall wissen müsst.“\n🖱 Klick 1–5: je ein Punkt.\n➜ „Das war Abend 3.“',
   });
