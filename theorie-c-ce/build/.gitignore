@@ -1,0 +1,8 @@
+node_modules
+*.pptx
+r/
+render/
+files/
+*.pdf
+anchors.json
+marks.json
