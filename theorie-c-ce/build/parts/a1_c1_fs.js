@@ -53,7 +53,7 @@ module.exports = async (deck) => {
       const inside = R[i][2] - R[i][1] > 10;
       s.text(R[i][4], { x: inside ? X0 + R[i][1] * k + 0.15 : X0 + R[i][2] * k + 0.15, y: y + 0.1, w: 6.5, h: 0.5, size: 16, bold: true, color: inside ? C.dark : R[i][3], valign: 'middle' }, { fx: 'fade', dur: 200 });
     }
-    s.text([{ text: 'Anhänger:  ', options: { bold: true, color: C.bl } }, { text: 'Mit C1 und C bis 750 kg. Schwerer → C1E oder CE.  ·  Höchstens 8 Mitfahrer außer dem Fahrer.', options: { color: C.txt } }],
+    s.text([{ text: 'Anhänger:  ', options: { bold: true, color: C.bl } }, { text: 'Mit C1 und C bis 750 kg. Schwerer → C1E oder CE.  ·  Gebaut für höchstens 8 Personen außer dem Fahrer.', options: { color: C.txt } }],
       { x: 0.7, y: 5.95, w: 11.93, h: 0.7, size: 17, valign: 'middle', fill: C.card2, line: C.bl, shape: deck.pres.shapes.ROUNDED_RECTANGLE, rr: 0.1, margin: [8, 14, 8, 14] }, { fx: 'rise', c: true, dur: 400 });
   }
   // ===== MINDESTALTER =====
@@ -61,8 +61,8 @@ module.exports = async (deck) => {
     kicker: 'Mindestalter · § 10 FeV', q: 'Ab wann dürft ihr Klasse C fahren?', ico: 'LuCalendar',
     answers: [
       ['LuIdCard', 'Mit 21 Jahren', '– der Normalfall.'],
-      ['LuGraduationCap', 'Mit 18 Jahren', 'mit Grundqualifikation als Berufskraftfahrer (Prüfung bei der IHK).'],
-      ['LuBriefcase', 'Mit 18 Jahren in der Ausbildung', 'zum Berufskraftfahrer – dann nur im Inland und nur für die Ausbildung, bis 21 oder bis zum Abschluss.'],
+      ['LuGraduationCap', 'Mit 18 Jahren', 'mit Grundqualifikation als Berufskraftfahrer (Prüfung bei der IHK) – vorher MPU.'],
+      ['LuBriefcase', 'Mit 18 Jahren in der Ausbildung', 'zum Berufskraftfahrer – vorher MPU; nur im Inland und nur für die Ausbildung, bis 21 oder Abschluss.'],
       ['LuTruck', 'Vorbesitz:', 'Klasse B muss da sein (oder gleichzeitig erworben werden). Für CE braucht ihr vorher C.'],
     ],
     notes:
@@ -70,6 +70,7 @@ module.exports = async (deck) => {
       '❓ „Ab wann dürft ihr Klasse C fahren?“ Antworten sammeln, dann klicken.\n' +
       '🖱 Klick 1: 21 · Klick 2: 18 mit Grundqualifikation · Klick 3: 18 in der Ausbildung · Klick 4: Vorbesitz.\n' +
       '✅ § 10 Abs. 1 FeV: C/CE ab 21; ab 18 nach Grundqualifikation nach § 2 Abs. 1 Nr. 1 BKrFQG oder während bzw. nach einer Ausbildung zum Berufskraftfahrer/Fachkraft im Fahrbetrieb. In der Ausbildungsvariante gelten Auflagen (nur Inland, nur Ausbildung) bis 21 oder Abschluss (§ 10 Abs. 1 Nr. 7).\n' +
+      '✅ Wichtig für alle unter 21: Wer C mit 18 erwirbt (Grundqualifikation oder Ausbildung), muss vor der ersten Erteilung ein medizinisch-psychologisches Gutachten (MPU) vorlegen (§ 10 Abs. 2 FeV).\n' +
       '✅ C1/C1E ab 18. C setzt B voraus (§ 9 Abs. 1), CE setzt C voraus (§ 9 Abs. 2).\n' +
       '➜ „Und wie lange gilt der Führerschein dann?“',
   });
@@ -115,7 +116,7 @@ module.exports = async (deck) => {
     kick(s, 'Abgrenzung · Berufskraftfahrer'); title(s, 'Beruflich fahren: die „95“');
     await point(s, 0.7, 2.05, 11.93, 1.2, 'LuBriefcase', C.bl, 'Wer braucht sie?', 'Alle, die mit Klasse C beruflich Güter befördern – Spedition, Paketdienst, Baustoffhandel …', CLICK, { br: true, size: 18 });
     await point(s, 0.7, 3.4, 11.93, 1.2, 'LuWrench', C.gr, 'Wer nicht?', 'Handwerker mit eigenem Material (Fahren ist nicht die Hauptarbeit), private Fahrten, Fahrschule und Prüfung, Feuerwehr …', CLICK, { br: true, size: 18 });
-    await point(s, 0.7, 4.75, 11.93, 1.2, 'LuIdCard', C.or, 'Nachweis', 'Schlüsselzahl 95 im Führerschein – bei jeder Fahrt dabei. Weiterbildung alle 5 Jahre.', CLICK, { br: true, size: 18 });
+    await point(s, 0.7, 4.75, 11.93, 1.2, 'LuIdCard', C.or, 'Nachweis', 'Fahrerqualifizierungsnachweis (Karte) oder „95“ im Führerschein – bei jeder Fahrt dabei. Weiterbildung alle 5 Jahre.', CLICK, { br: true, size: 18 });
     foot(s, 'Berufskraftfahrerqualifikationsgesetz (BKrFQG) §§ 1, 5, 7, 8 – eigener Kurs, nicht Teil des Fahrschulunterrichts');
   }
   // ===== PAPIERE =====

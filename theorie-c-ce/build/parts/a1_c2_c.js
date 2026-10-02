@@ -14,7 +14,7 @@ module.exports = async (deck) => {
     const s = base(deck, 'fv', { notes:
       '▶ Sagen: „An Sonn- und Feiertagen gilt ein Fahrverbot für Lkw.“\n' +
       '❓ „Für welche Lkw? Und von wann bis wann?“\n' +
-      '🖱 Klick 1: Zeitleiste 0–22 Uhr · Klick 2: für wen · Klick 3: auch leer · Klick 4: Ausnahmen.\n' +
+      '🖱 Klick 1: Zeitleiste 0–22 Uhr · Klick 2: für wen · Klick 3: auch leer · Klick 4: Ausnahmen. (Die Bußgeldzeile unten steht von Anfang an.)\n' +
       '✅ § 30 Abs. 3 StVO: An Sonn- und Feiertagen von 0 bis 22 Uhr dürfen Lkw über 7,5 t zGM sowie Anhänger hinter Lkw (jeder Masse!) zur geschäftsmäßigen oder entgeltlichen Güterbeförderung einschließlich Leerfahrten nicht verkehren.\n' +
       '✅ Ausnahmen u. a.: kombinierter Verkehr Schiene–Straße (bis 200 km) und Hafen–Straße (bis 150 km), frische Milch, frisches Fleisch und Fisch, leicht verderbliches Obst und Gemüse, Pannenhilfe und Abschleppen.\n' +
       '✅ Verstoß: Fahrer 120 € (BKat Nr. 119), Halter 570 € (Nr. 120). Keine Punkte.\n' +
@@ -56,7 +56,7 @@ module.exports = async (deck) => {
         else s.text(String(d), { x, y, w: 0.5, h: 0.45, size: 13, color: C.mut, align: 'center', valign: 'middle' }, { fx: 'fade', dur: 100 });
       }
     }
-    await point(s, 9.15, 2.05, 3.48, 1.85, 'LuClock', C.am, '7 – 20 Uhr', 'an allen Samstagen vom 1.7. bis 31.8.', CLICK, { br: true, size: 16 });
+    await point(s, 9.15, 2.05, 3.48, 1.85, 'LuClock', C.am, '7 – 20 Uhr', 'Samstage 1.7.–31.8., gewerblich – auch leer', CLICK, { br: true, size: 16 });
     await point(s, 9.15, 4.1, 3.48, 1.9, 'LuRoute', C.am, 'Nur bestimmte Strecken', 'Abschnitte z. B. von A 1, A 3, A 5, A 7, A 8, A 9', { fx: 'flyL', dur: 450 }, { br: true, size: 16 });
     foot(s, 'Kalender schematisch – die Wochentage ändern sich jedes Jahr · Lkw über 7,5 t und Lkw mit Anhänger · 60 €, keine Punkte');
   }
@@ -85,7 +85,7 @@ module.exports = async (deck) => {
       '❓ Antworten sammeln.\n' +
       '🖱 Klick 1: Nein · Klick 2: Sitzplätze · Klick 3: Ausnahme.\n' +
       '✅ § 21 Abs. 1 StVO: Nicht mehr Personen als Sitzplätze mit Sicherheitsgurt. § 21 Abs. 2: Auf der Ladefläche oder im Laderaum dürfen keine Personen mitgenommen werden – außer für notwendige Arbeiten dort oder Baustellenpersonal innerhalb von Baustellen. Auf Anhängern: nur auf geeigneten Sitzen in der Land- und Forstwirtschaft.\n' +
-      '✅ Verstoß: 5 € (BKat Nr. 97) – lächerlich wenig, aber bei einer Vollbremsung lebensgefährlich, und die Versicherung zahlt dann oft nicht voll.\n' +
+      '✅ Verstoß: 5 € (BKat Nr. 97) – lächerlich wenig, aber bei einer Vollbremsung lebensgefährlich, und es kann Ärger mit der Versicherung geben.\n' +
       '➜ „Ein Bauteil am Lkw schützt die anderen: der Unterfahrschutz.“',
   });
   // ===== UNTERFAHRSCHUTZ (Seitenansicht) =====
@@ -192,17 +192,17 @@ module.exports = async (deck) => {
       ['Abstand Autobahn', 'mindestens 50 m (über 3,5 t, schneller als 50 km/h)'],
       ['Linke Spur', 'bei 3 Fahrstreifen: über 3,5 t und mit Anhänger tabu'],
       ['Bahnübergang', 'kein Platz hinter dem Gleis → vor dem Andreaskreuz warten'],
-      ['Parken Wohngebiet', 'über 7,5 t: nicht regelmäßig 22–6 Uhr und sonntags'],
+      ['Parken Wohngebiet', 'über 7,5 t / Anhänger über 2 t: nicht regelmäßig 22–6 Uhr, sonn- und feiertags'],
       ['Sonntagsfahrverbot', '0–22 Uhr: über 7,5 t und jeder Lkw mit Anhänger'],
       ['Ferienreise-VO', '1.7.–31.8., samstags 7–20 Uhr, bestimmte Strecken'],
     ],
     notes: '▶ Sagen: „Das sind die sieben Regeln aus C2, die ihr sicher können müsst. Schreibt mit.“\n❓ Vor jedem Klick fragen.\n🖱 Klick 1–7: je eine Lösung.\n✅ § 3 Abs. 3, § 18 Abs. 5, § 4 Abs. 3, § 7 Abs. 3c, § 19 Abs. 3, § 12 Abs. 3a, § 30 Abs. 3 StVO, Ferienreiseverordnung.\n➜ „Und jetzt das Abschluss-Quiz.“',
   });
   quiz(deck, 'c2e', {
-    kicker: 'Quiz C2 · 1', q: 'Autobahn, 85 km/h vor dir ein Lkw. Wie viel Abstand musst du mit deinem 12-t-Lkw mindestens halten?', size: 28,
+    kicker: 'Quiz C2 · 1', q: 'Du fährst mit deinem 12-t-Lkw auf der Autobahn 80 km/h hinter einem anderen Lkw. Wie viel Abstand musst du mindestens halten?', size: 28,
     opts: ['25 m', '50 m', 'halber Tacho = 40 m'], ok: 1,
-    why: '§ 4 Abs. 3 StVO: Lkw über 3,5 t auf Autobahnen bei mehr als 50 km/h mindestens 50 m. Übrigens: 85 km/h wäre für dich schon zu schnell – erlaubt sind 80.',
-    notes: '▶ Frage vorlesen, abstimmen.\n🖱 Klick 1: Antworten · Klick 2: Lösung.\n✅ B.\n💡 Zusatzfrage an die Klasse: „Was fällt euch an der Geschwindigkeit auf?“ – 85 km/h ist für Lkw auf der Autobahn zu schnell (§ 18 Abs. 5).\n➜ „Nächste Frage.“',
+    why: '§ 4 Abs. 3 StVO: Lkw über 3,5 t auf Autobahnen bei mehr als 50 km/h mindestens 50 m Abstand. Halber Tacho wären hier nur 40 m – zu wenig.',
+    notes: '▶ Frage vorlesen, abstimmen.\n🖱 Klick 1: Antworten · Klick 2: Lösung.\n✅ B.\n💡 Zusatzfrage an die Klasse: „Und wenn ihr 85 fahrt?“ – Zu schnell: Lkw dürfen auf der Autobahn höchstens 80 km/h (§ 18 Abs. 5).\n➜ „Nächste Frage.“',
   });
   quiz(deck, 'c2e', {
     kicker: 'Quiz C2 · 2', q: 'Vor dem Bahnübergang staut sich der Verkehr bis hinter das Gleis. Was tust du?', size: 30,
@@ -212,9 +212,9 @@ module.exports = async (deck) => {
   });
   quiz(deck, 'c2e', {
     kicker: 'Quiz C2 · 3', q: 'Für welche Fahrzeuge gilt das Überholverbot dieses Zeichens?', size: 32,
-    opts: ['Nur für Lkw über 7,5 t', 'Für Kfz über 3,5 t zulässiger Gesamtmasse, auch Pkw mit Anhänger und Busse', 'Für alle Fahrzeuge'], ok: 1,
-    why: 'Zeichen 277: Überholverbot für Kraftfahrzeuge über 3,5 t zulässiger Gesamtmasse, einschließlich ihrer Anhänger, sowie für Pkw mit Anhänger und Kraftomnibusse. Verstoß: 70 €, 1 Punkt.',
-    notes: '▶ Auf das Schild zeigen, Frage vorlesen, abstimmen.\n🖱 Klick 1: Antworten · Klick 2: Lösung.\n✅ B. (StVO Anlage 2 zu Zeichen 277; BKat Nr. 153a).\n➜ „Zum Schluss: Das nehmt ihr aus C2 mit.“',
+    opts: ['Nur für Lkw über 7,5 t', 'Für Kfz über 3,5 t (auch mit Anhänger) und Zugmaschinen – nicht für Pkw und Busse', 'Für alle Fahrzeuge'], ok: 1,
+    why: 'Zeichen 277: Überholverbot für Kfz über 3,5 t zulässiger Gesamtmasse einschließlich ihrer Anhänger und für Zugmaschinen. Pkw und Busse sind ausgenommen (nur mit Zusatzzeichen betroffen). Verstoß: 70 €, 1 Punkt.',
+    notes: '▶ Auf das Schild zeigen, Frage vorlesen, abstimmen.\n🖱 Klick 1: Antworten · Klick 2: Lösung.\n✅ B. (StVO Anlage 2 lfd. Nr. 54; BKat Nr. 153a).\n💡 Mit Zusatzzeichen kann das Verbot auch für Busse und Pkw mit Anhänger gelten – ohne Zusatzzeichen nicht.\n➜ „Zum Schluss: Das nehmt ihr aus C2 mit.“',
   });
   // Schild zur letzten Quizfrage
   await sign(deck.slides[deck.slides.length - 1], '277', 11.25, 2.65, 1.35, 1.35);
@@ -224,7 +224,7 @@ module.exports = async (deck) => {
       ['LuMoveHorizontal', 'Abstand und Spur:', '50 m auf der Autobahn · bei 3 Fahrstreifen nicht links · Überholen nur deutlich schneller.'],
       ['LuTrainFront', 'Bahnübergang:', 'kein Platz für den ganzen Lkw → vor dem Andreaskreuz warten.'],
       ['LuCalendarX', 'Fahrverbote:', 'Sonn- und Feiertage 0–22 Uhr · Sommer samstags 7–20 Uhr – auch leer, auch jeder Zug.'],
-      ['LuFileText', 'Papiere und Maut:', 'Begleitpapier / Frachtbrief, Lizenz-Kopie · Maut ab 3,5 t auf Autobahn und Bundesstraße.'],
+      ['LuFileText', 'Papiere und Maut:', 'Begleitpapier / Frachtbrief, Lizenz-Kopie · Maut über 3,5 t auf Autobahn und Bundesstraße.'],
     ],
     notes: '▶ Sagen: „Fünf Punkte aus C2. Wer kann sie mit eigenen Worten sagen?“\n🖱 Klick 1–5: je ein Punkt.\n➜ „Das war Abend 1. Beim nächsten Mal geht es um die Technik.“',
   });
