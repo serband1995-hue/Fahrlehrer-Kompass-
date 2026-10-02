@@ -33,7 +33,7 @@ module.exports = async (deck) => {
   quiz(deck, 'c3e', {
     kicker: 'Quiz C3 · 3', q: 'Im Display steht: AdBlue-Tank leer. Was passiert, wenn Sie nicht nachfüllen?', size: 32,
     opts: ['Nichts – AdBlue ist nur für die Umwelt', 'Erst weniger Leistung, zuletzt höchstens 20 km/h', 'Der Motor geht sofort aus'], ok: 1,
-    why: 'Das EU-Recht schreibt die Stufen vor: Warnung, Leistungsdrosselung, zuletzt Kriechmodus mit höchstens 20 km/h (VO (EU) 582/2011 Anhang XIII).',
+    why: 'Das EU-Recht schreibt die Stufen vor: Warnung, Leistungsdrosselung, zuletzt Kriechmodus mit höchstens 20 km/h (VO (EU) 582/2011 Anhang XIII mit UN-Regelung Nr. 49).',
     notes: '▶ Frage vorlesen, abstimmen.\n🖱 Klick 1: Antworten · Klick 2: Lösung.\n✅ B.\n➜ „Zum Schluss von C3: Das nehmt ihr mit.“',
   });
   await takeaway(deck, 'c3e', {

@@ -362,7 +362,7 @@ Quelle: https://autovio.de/fuer-fahrschueler/fuehrerschein-theorie-lernen/2-7/
 - **Nur genehmigte Leuchten:** Zusätzliche, nicht zulässige Leuchten (Deko-LED, blaue Lampen) sind verboten (§ 49a Abs. 1). **BKat 221.2:** 20 €.
 - **Abfahrtkontrolle:** Alle Leuchten auf Funktion und Sauberkeit prüfen: Abblend- und Fernlicht, Blinker inkl. Seitenblinker, Brems-, Schluss- und Nebelschlussleuchte, Umriss- und Seitenmarkierungsleuchten, Kennzeichenleuchte, Rückfahrscheinwerfer. Außerdem **Konturmarkierung sauber und vollständig**.
   - Verschmutzte Beleuchtung benutzen: BKat 73, 20 €.
-  - Prüfungsfrage **2.7.02-202**: Die Blinkerkontrolle blinkt schneller als üblich → **eine Blinkleuchte ist ausgefallen**.
+  - Prüfungsfrage **2.7.02-134**: Die Blinkerkontrolle blinkt schneller als üblich → **eine Blinkleuchte ist ausgefallen**.
 
 ## C4-f) Sonstige elektrische Einrichtungen
 
@@ -394,7 +394,7 @@ Quelle: https://autovio.de/fuer-fahrschueler/fuehrerschein-theorie-lernen/2-7/
 
 - Quellen: Bundesregierung, Abbiegeassistenten Pflicht – https://www.bundesregierung.de/breg-de/aktuelles/abbiegeassistenten-pflicht-2060086 · WKO, Verpflichtende Assistenzsysteme 2024 – https://www.wko.at/sbg/transport-verkehr/fahrschulen-allgemeiner-verkehr/verpflichtende-neue-assistenzsysteme-2024.pdf
 - Die Daten 1.11.2015 für AEBS/LDWS und die genaue Zuordnung von MOIS, TPMS und EDR zu N2/N3: siehe UNSICHER.
-- Prüfungsfragen **2.7.01-202** „Welches Fahrerassistenzsystem bietet ein hohes Verkehrssicherheitspotenzial?“ und **2.7.01-206** „Wie können Fahrerassistenzsysteme Sie unterstützen?“ Kernaussage: Sie **unterstützen**, die Verantwortung bleibt beim Fahrer.
+- Prüfungsfragen **2.7.01-148** „Welches Fahrerassistenzsystem bietet ein hohes Verkehrssicherheitspotenzial?“ und **2.7.01-149** „Wie können Fahrerassistenzsysteme Sie unterstützen?“ Kernaussage: Sie **unterstützen**, die Verantwortung bleibt beim Fahrer.
 
 ### Typische Irrtümer C4
 - „Rundumleuchte darf ich bei Panne oder Stau einschalten.“ → Falsch. Nur an berechtigten Fahrzeugen und nur in den Fällen des § 38 Abs. 3 StVO. Bei Panne: Warnblinker und Warndreieck.

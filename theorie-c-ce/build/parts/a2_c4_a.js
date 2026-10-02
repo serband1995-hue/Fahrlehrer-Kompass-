@@ -1,5 +1,5 @@
 // Abend 2 · C4: Lernziele, Kapitel 1 Federung, Kapitel 2 Räder und Reifen
-const { C, sec, base, kick, title, card, point, CLICK, ask, quiz, steps, foot, svgImg, chapter, photoAsk, sign } = require('../gs');
+const { C, sec, base, kick, title, card, point, CLICK, ask, quiz, steps, foot, svgImg, chapter, photoAsk, sign, lkw } = require('../gs');
 const { icon } = require('../lib');
 
 sec('c4', 'LEKTION C4', C.bl, 'bg_kap.jpg');
@@ -75,32 +75,25 @@ module.exports = async (deck) => {
     ],
     legend: 'Seitenansicht · schematisch',
     scene: async (s, i) => {
-      const FR = i === 1 ? 4.0 : 4.4;                     // Oberkante Rahmen = Ladeboden
-      // Rampe
-      s.rect(RX, 4.0, 13.2 - RX, GY - 4.0, { fill: '3C4656', name: '!!rampe' });
-      s.rect(RX, 3.94, 13.2 - RX, 0.06, { fill: C.am, name: '!!rkante' });
-      s.text('Rampe', { x: RX + 0.1, y: 4.6, w: 1.6, h: 0.4, size: 15, bold: true, color: C.mut, name: '!!trampe' });
+      // Detaillierter Lkw (Front links), Aufbau hebt sich per Morph; Räder bleiben stehen
+      const K = 1.3, XF = 5.85, F = 0.72, LIFT = i === 1 ? 0.28 : 0;
+      const floorY = GY - (F + 0.07 + LIFT) * K, rampY = GY - (F + 0.07 + 0.28) * K;
+      s.rect(RX, rampY, 13.2 - RX, GY - rampY, { fill: '3C4656', name: '!!rampe' });
+      s.rect(RX, rampY - 0.06, 13.2 - RX, 0.06, { fill: C.am, name: '!!rkante' });
+      s.text('Rampe', { x: RX + 0.1, y: rampY + 0.3, w: 1.6, h: 0.4, size: 15, bold: true, color: C.mut, name: '!!trampe' });
       s.rect(5.7, GY, 7.5, 0.05, { fill: '55606F', name: '!!boden' });
-      // Räder
-      for (const [k, x] of [[0, 6.75], [1, 10.15]]) {
-        s.oval(x - 0.45, GY - 0.9, 0.9, 0.9, { fill: '1B1F26', line: '6E7888', lw: 2, name: '!!rad' + k });
-        s.oval(x - 0.17, GY - 0.62, 0.34, 0.34, { fill: '9AA6B5', name: '!!nabe' + k });
-      }
-      // Federn: vorn Blattfeder (fest), hinten Luftbalg (Höhe ändert sich)
-      s.rrect(6.2, FR + 0.18, 1.1, 0.12, { fill: 'A9B6C6', rr: 0.5, name: '!!blatt' });
-      s.rect(10.15, GY - 0.6, 0.95, 0.12, { fill: '8A96A6', name: '!!lenker' });
-      s.rrect(10.62, FR + 0.18, 0.5, GY - 0.6 - FR - 0.18, { fill: '1B1F26', line: C.bl, lw: 2.5, rr: 0.25, name: '!!balg', glow: i === 1 ? 8 : undefined, glowColor: C.bl });
-      // Rahmen, Fahrerhaus, Koffer
-      s.rect(5.95, FR, 5.45, 0.18, { fill: '55606F', name: '!!rahmen' });
-      s.rrect(5.9, FR - 1.95, 1.45, 1.95, { fill: 'D9DEE6', rr: 0.12, name: '!!kab' });
-      s.rect(6.0, FR - 1.65, 0.6, 0.7, { fill: '23304A', name: '!!fenster' });
-      s.rect(7.5, FR - 2.35, 3.9, 2.35, { fill: 'C6CDD8', line: '9AA6B5', name: '!!koffer' });
-      s.text('Ladefläche', { x: 8.0, y: FR - 0.45, w: 2.9, h: 0.35, size: 14, bold: true, color: C.dark, align: 'center', name: '!!tlade' });
+      // Luftbalg hinter der Hinterachse + Längslenker
+      const bx = XF + 3.62 * K, top = GY - (F - 0.13 + LIFT) * K, bot = GY - 0.36 * K;
+      s.rect(XF + 3.25 * K, GY - 0.3 * K - 0.05, 0.61 * K, 0.1, { fill: '8A96A6', name: '!!lenker' });
+      s.rrect(bx, top, 0.26 * K, bot - top, { fill: '1B1F26', line: C.bl, lw: 2.5, rr: 0.25, name: '!!balg', glow: i === 1 ? 8 : undefined, glowColor: C.bl });
+      await lkw(s, { L: 4.2, axles: [0.62, 3.25], floor: F, boxH: 1.5, top: F + 1.5 + 0.25 }, { x: XF, gy: GY, k: K, name: 'lkw', split: true, lift: LIFT });
+      s.text('Ladefläche', { x: XF + 1.6 * K, y: floorY - 0.42, w: 2.3 * K, h: 0.35, size: 14, bold: true, color: '3C4656', align: 'center', name: '!!tlade' });
+      s.rect(XF + 1.47 * K, floorY - 0.03, (4.2 - 1.52) * K, 0.06, { fill: i === 1 ? C.gr : C.or, name: '!!boden2' });
       // Höhenhinweis
       const ok = i === 1;
-      s.text(ok ? 'passt!' : (i === 0 ? 'zu tief' : ''), { x: 11.45, y: 3.2, w: 1.7, h: 0.4, size: 17, bold: true, color: ok ? C.gr : (i === 0 ? C.or : C.dim), align: 'center', name: '!!thoehe' });
-      s.text(i === 2 ? '↓ Fahrniveau' : (i === 1 ? '↑ angehoben' : ''), { x: 11.45, y: 2.7, w: 1.75, h: 0.4, size: 17, bold: true, color: i === 2 ? C.gr : C.bl, name: '!!tniv' });
-      s.text('Luftbalg', { x: 10.0, y: GY + 0.12, w: 1.7, h: 0.35, size: 13, color: C.bl, align: 'center', name: '!!tbalg' });
+      s.text(ok ? 'passt!' : (i === 0 ? 'zu tief' : ''), { x: 11.45, y: 3.9, w: 1.7, h: 0.4, size: 17, bold: true, color: ok ? C.gr : (i === 0 ? C.or : C.dim), align: 'center', name: '!!thoehe' });
+      s.text(i === 2 ? '↓ Fahrniveau' : (i === 1 ? '↑ angehoben' : ''), { x: 11.45, y: 3.4, w: 1.75, h: 0.4, size: 17, bold: true, color: i === 2 ? C.gr : C.bl, name: '!!tniv' });
+      s.text('Luftbalg', { x: 10.1, y: GY + 0.12, w: 1.7, h: 0.35, size: 13, color: C.bl, align: 'center', name: '!!tbalg' });
       if (i === 1) {
         s.img(await icon('LuTriangleAlert', C.red), { x: 0.7, y: 3.95, w: 0.45, h: 0.45, name: '!!warn' });
         s.text('Nur im Stand – Quetschgefahr!', { x: 1.25, y: 3.95, w: 3.9, h: 0.45, size: 15, bold: true, color: C.red, valign: 'middle', name: '!!twarn' });
@@ -135,7 +128,7 @@ module.exports = async (deck) => {
 
   // ===== KAPITEL 2 RÄDER UND REIFEN =====
   await chapter(deck, 'c4r', { num: 2, ttl: 'Räder und Reifen', sub: 'Bezeichnung lesen, Profil, Winterreifen, Zwillinge, Radmuttern, Schneeketten.', ico: 'LuCircleDot', notes:
-    '▶ Sagen: „Kapitel 2: Räder und Reifen. Der Reifen ist die einzige Verbindung zur Straße – pro Rad etwa so groß wie eine Postkarte.“\n🖱 Keine Klicks.\n➜ „Erst lesen wir einen Reifen.“' });
+    '▶ Sagen: „Kapitel 2: Räder und Reifen. Der Reifen ist die einzige Verbindung zur Straße – beim Lkw pro Reifen etwa so groß wie ein Blatt DIN A5.“\n🖱 Keine Klicks.\n➜ „Erst lesen wir einen Reifen.“' });
 
   // ===== REIFENBEZEICHNUNG (Morph) =====
   const SEG = [['315', 0.95], ['/', 0.22], ['70', 0.62], ['R', 0.42], ['22,5', 1.0], ['154/150', 1.95], ['L', 0.42]];
@@ -158,7 +151,7 @@ module.exports = async (deck) => {
       '▶ „R steht für Radialbauart. Wichtig: Über 3,5 t müssen an einer Achse alle Reifen die gleiche Bauart haben – nur Radial oder nur Diagonal (§ 36 Abs. 6 StVZO).“\n➜ „Dann die Felge.“',
       '▶ „22,5 ist der Felgendurchmesser in Zoll.“\n➜ „Jetzt kommt das Wichtigste für den Lkw.“',
       '▶ „154/150 ist die Tragfähigkeit. Die erste Zahl gilt für einen Einzelreifen, die zweite für jeden Reifen am Zwilling. 154 heißt 3.750 kg, 150 heißt 3.350 kg je Reifen.“\n✅ Prüfungsfrage 2.7.05-221 (Tragfähigkeitskennzahl Einzel/Zwilling); Werte aus den Lastindex-Tabellen der Reifenhersteller.\n➜ „Und der letzte Buchstabe?“',
-      '▶ „L ist der Geschwindigkeitsindex: L heißt bis 120 km/h.“\n✅ Prüfungsfrage 2.7.05-220. Zum Vergleich: K = 110, M = 130 km/h.\n💡 Herstellungsdatum: DOT-Nummer, die letzten vier Ziffern, z. B. 2324 = 23. Woche 2024.\n➜ „Wie viel Profil muss mindestens drauf sein?“',
+      '▶ „L ist der Geschwindigkeitsindex: L heißt bis 120 km/h.“\n✅ Prüfungsfrage 2.7.05-220. Zum Vergleich: K = 110, M = 130 km/h.\n➜ „Und jetzt an einem echten Reifen: Findet ihr alles wieder?“',
     ],
     legend: 'Beispiel einer Reifenbezeichnung',
     scene: async (s, i) => {
@@ -181,6 +174,29 @@ module.exports = async (deck) => {
       s.text('Querschnitt', { x: 6.0, y: ty + 0.2, w: 1.8, h: 0.32, size: 13, italic: true, color: C.dim, name: '!!tq' });
     },
   });
+
+  // ===== ECHTER REIFEN (Foto mit Markierungen) =====
+  {
+    const s = base(deck, 'c4r', { bg: 'g_flanke.jpg', notes:
+      '▶ Sagen: „Ein echter Lkw-Reifen. Wer findet die Größe, die Tragfähigkeit und das Wintersymbol?“\n' +
+      '❓ Die Klasse suchen lassen, dann klicken.\n' +
+      '🖱 Klick 1: Größe · Klick 2: Tragfähigkeit und Tempo · Klick 3: Alpine-Symbol · Klick 4: M+S.\n' +
+      '✅ 315/70 R22.5 = Breite 315 mm, Flanke 70 %, Radial, Felge 22,5 Zoll. 154/150 L = Tragfähigkeit einzeln/Zwilling, bis 120 km/h (Prüfungsfragen 2.7.05-220, -221). Alpine-Symbol (Berg mit Schneeflocke) = Winterreifen nach § 36 Abs. 4 StVZO. M+S allein reicht seit 1.10.2024 nicht mehr.\n' +
+      '💡 Auf der Flanke steht auch die DOT-Nummer: Die letzten vier Ziffern sind Woche und Jahr der Herstellung, z. B. 2324 = 23. Woche 2024. Runderneuerte Reifen tragen „Runderneuert“ oder „Retread“ und ein Prüfzeichen (Prüfungsfrage 2.7.05-212).\n' +
+      '➜ „Wie viel Profil muss mindestens drauf sein?“' });
+    s.rrect(9.55, 0.45, 3.4, 1.35, { fill: '070B12', ft: 15, rr: 0.08 });
+    s.text('REIFEN LESEN', { x: 9.75, y: 0.55, w: 3.1, h: 0.35, size: 13, bold: true, color: C.or, cs: 3 });
+    s.text('Findet die Angaben!', { x: 9.75, y: 0.9, w: 3.1, h: 0.8, size: 26, bold: true, color: C.txt });
+    const tag = (x, y, w, txt, col, tx, ty, anim) => {
+      s.lineS(tx, ty, x + w / 2, y, { color: col, lw: 2.5 }, anim);
+      s.oval(tx - 0.08, ty - 0.08, 0.16, 0.16, { fill: col }, { fx: 'zoom', dur: 200 });
+      s.text(txt, { x, y, w, h: 0.95, size: 15, bold: true, color: C.txt, fill: '0A0F16', ft: 8, line: col, lw: 2, shape: deck.pres.shapes.ROUNDED_RECTANGLE, rr: 0.12, align: 'center', valign: 'middle', margin: [6, 8, 6, 8] }, { fx: 'fade', dur: 250 });
+    };
+    tag(0.6, 3.35, 3.9, 'Größe: 315 mm breit · Flanke 70 % · Radial · Felge 22,5 Zoll', C.or, 3.4, 2.35, CLICK);
+    tag(4.4, 5.55, 3.6, 'Tragfähigkeit 154 einzeln / 150 Zwilling · L = bis 120 km/h', C.bl, 7.1, 4.2, CLICK);
+    tag(10.15, 2.9, 2.85, 'Alpine-Symbol: gilt als Winterreifen', C.gr, 9.35, 4.95, CLICK);
+    tag(10.15, 5.75, 2.85, 'M+S allein reicht seit 1.10.2024 nicht mehr', C.red, 9.9, 5.8, CLICK);
+  }
 
   // ===== PROFIL =====
   {
@@ -235,7 +251,7 @@ module.exports = async (deck) => {
       } else s.text(lab, { x: x - 0.55, y: 5.85, w: 1.3, h: 0.35, size: 13, color: C.dim, align: 'center' });
     }
     s.text('Lkw 6 × 2 von oben · blau = Winterreifen Pflicht', { x: 0.8, y: 6.15, w: 5.4, h: 0.3, size: 11, italic: true, color: C.dim, align: 'center' });
-    await point(s, 6.55, 2.05, 6.08, 1.4, 'LuSnowflake', C.bl, 'Kein festes Datum', 'Pflicht bei Glätte, Schnee, Schneematsch, Eis oder Reif.', CLICK, { br: true, size: 17 });
+    await point(s, 6.55, 2.05, 6.08, 1.4, 'LuSnowflake', C.bl, 'Kein festes Datum', 'Pflicht bei Glatteis, Schneeglätte, Schneematsch, Eis- oder Reifglätte.', CLICK, { br: true, size: 17 });
     await point(s, 6.55, 3.58, 6.08, 1.4, 'LuMountainSnow', C.gr, 'Nur mit Alpine-Symbol', 'Berg mit Schneeflocke. M+S allein reicht seit 1.10.2024 nicht mehr.', CLICK, { br: true, size: 17 });
     await point(s, 6.55, 5.11, 6.08, 1.4, 'LuCircleAlert', C.red, 'Ohne Winterreifen:', 'Fahrer 60 €, 1 Punkt (mit Behinderung 80 €) – Halter 75 €, 1 Punkt.', CLICK, { br: true, size: 17 });
   }
@@ -284,9 +300,12 @@ module.exports = async (deck) => {
     s.oval(CX - 2.0, CY - 2.0, 4.0, 4.0, { fill: '1B1F26', line: '3C4656', lw: 3 });
     s.oval(CX - 1.45, CY - 1.45, 2.9, 2.9, { fill: '6E7888' });
     s.oval(CX - 0.55, CY - 0.55, 1.1, 1.1, { fill: '3C4656' });
+    for (let k = 0; k < 5; k++) { const a = k * 2 * Math.PI / 5 + 0.3; s.oval(CX + 1.22 * Math.cos(a) - 0.13, CY + 1.22 * Math.sin(a) - 0.1, 0.26, 0.2, { fill: '2A3342' }); }
+    s.oval(CX - 0.3, CY - 0.3, 0.6, 0.6, { fill: '55606F', line: '7D8898', lw: 1 });
     for (let k = 0; k < 10; k++) {
       const a = k * Math.PI / 5, nx = CX + 0.95 * Math.cos(a), ny = CY + 0.95 * Math.sin(a);
-      s.oval(nx - 0.15, ny - 0.15, 0.3, 0.3, { fill: 'B8C2CF' });
+      s.shape(deck.pres.shapes.HEXAGON, { x: nx - 0.16, y: ny - 0.14, w: 0.32, h: 0.28, fill: 'B8C2CF', line: '7D8898', lw: 1 });
+      s.oval(nx - 0.06, ny - 0.06, 0.12, 0.12, { fill: '8A96A6' });
       // Anzeiger: zeigt im Uhrzeigersinn zur nächsten Mutter, einer ist verdreht
       const bad = k === 3, rot = (a * 180 / Math.PI) + (bad ? 90 + 55 : 90);
       const px = CX + 0.95 * Math.cos(a + 0.24), py = CY + 0.95 * Math.sin(a + 0.24);

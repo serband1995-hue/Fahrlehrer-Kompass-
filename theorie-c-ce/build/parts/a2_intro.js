@@ -55,7 +55,7 @@ module.exports = async (deck) => {
     answers: [
       ['LuClock', 'Wie lange am Stück fahren?', '4,5 h Lenkzeit, dann 45 Minuten Pause – oder erst 15, dann 30 Minuten.'],
       ['LuEyeOff', 'Rechtsabbiegen innerorts über 3,5 t?', 'Schrittgeschwindigkeit – Radfahrer und Fußgänger im toten Winkel.'],
-      ['LuCalendarX', 'Sonntagsfahrverbot?', '0 bis 22 Uhr für Lkw über 7,5 t und jeden Lkw mit Anhänger – auch leer.'],
+      ['LuCalendarX', 'Sonntagsfahrverbot?', '0 bis 22 Uhr im gewerblichen Güterverkehr: Lkw über 7,5 t und Lkw mit Anhänger – auch Leerfahrten.'],
     ],
     notes:
       '▶ Sagen: „Bevor wir anfangen: drei Fragen zu Abend 1.“\n' +

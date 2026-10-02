@@ -147,7 +147,7 @@ async function chapter(deck, key, { num, ttl, sub, bg, notes, ico = 'LuTruck', b
   if (!bg) { s.oval(8.3, 1.4, 4.4, 4.4, { fill: col, ft: 90, line: col, lt: 60, lw: 2 }, { fx: 'zoom', auto: true, dur: 900 }); s.img(await icon(ico, col), { x: 9.4, y: 2.5, w: 2.2, h: 2.2 }, { fx: 'fade', auto: true, dur: 900, d: 200 }); }
   s.text(String(num).padStart(2, '0'), { x: 0.6, y: 1.2, w: 5, h: 2.2, size: 150, bold: true, color: col, name: 'chN' }, { fx: 'rise', auto: true, dur: 900 });
   s.rect(0.75, 3.55, 1.4, 0.07, { fill: col }, { fx: 'wipeR', auto: true, dur: 600, d: 300 });
-  s.text(ttl, { x: 0.7, y: 3.8, w: 6.3, h: 1.6, size: 44, bold: true, color: C.txt, lsm: 0.92 }, { fx: 'float', auto: true, dur: 700, d: 350 });
+  s.text(ttl, { x: 0.7, y: 3.8, w: bgX ? bgX - 0.9 : 6.3, h: 1.6, size: 44, bold: true, color: C.txt, lsm: 0.92 }, { fx: 'float', auto: true, dur: 700, d: 350 });
   if (sub) s.text(sub, { x: 0.7, y: 5.45, w: 5.6, h: 0.9, size: 19, color: C.mut }, { fx: 'fade', auto: true, dur: 700, d: 650 });
   return s;
 }
@@ -187,10 +187,28 @@ async function photoAsk(deck, key, o) {
 module.exports = { C, SEC, sec, P, base, kick, title, card, badge, quiz, ask, steps, roadH, roadV, veh, foot, point, chapter, write, takeaway, photoAsk, sign, signImg, CLICK };
 // Eigene Symbole als SVG → PNG (z. B. Fahrtenschreiber-Symbole)
 const svgCache = {};
-async function svgImg(svg, w = 512, h = 512) {
-  if (svgCache[svg]) return svgCache[svg];
-  const buf = await sharp(Buffer.from(`<svg xmlns="http://www.w3.org/2000/svg" width="${w}" height="${h}" viewBox="0 0 ${w} ${h}">${svg}</svg>`)).png().toBuffer();
-  return (svgCache[svg] = 'image/png;base64,' + buf.toString('base64'));
+async function svgImg(svg, w = 512, h = 512, sc = 1) {
+  const key = svg + '|' + sc;
+  if (svgCache[key]) return svgCache[key];
+  const buf = await sharp(Buffer.from(`<svg xmlns="http://www.w3.org/2000/svg" width="${w * sc}" height="${h * sc}" viewBox="0 0 ${w} ${h}">${svg}</svg>`)).png().toBuffer();
+  return (svgCache[key] = 'image/png;base64,' + buf.toString('base64'));
+}
+// Detaillierter Lkw (Seitenansicht, Front links) auf die Folie: x = Front, gy = Boden, k = Maßstab.
+// split: Aufbau und Räder getrennt (für Morph beim Heben/Senken), lift = Aufbau um so viel (Zoll, unskaliert) angehoben
+async function lkw(s, o = {}, { x, gy, k = 1, name = 'lkw', split = false, lift = 0, anim } = {}) {
+  const { lkwSide } = require('./lkw');
+  const r = lkwSide(o), w = r.W / 100 * k, h = r.H / 100 * k, X0 = x - r.pad * k, Y0 = gy - r.Ht * k;
+  if (split) {
+    s.img(await svgImg(r.wheels, r.W, r.H, 2.5), { x: X0, y: Y0, w, h, name: '!!' + name + 'W' }, anim);
+    s.img(await svgImg(r.upper, r.W, r.H, 2.5), { x: X0, y: Y0 - lift * k, w, h, name: '!!' + name + 'U' }, anim);
+  } else s.img(await svgImg(r.upper + r.wheels, r.W, r.H, 2.5), { x: X0, y: Y0, w, h, name: name.startsWith('!!') ? name : undefined }, anim);
+  return { pt: (nx, ny) => [x + nx * k, gy - ny * k], r };
+}
+async function lkwHeck(s, o = {}, { x, gy, k = 1, anim } = {}) {
+  const { lkwRear } = require('./lkw');
+  const r = lkwRear(o), w = r.W / 100 * k, h = r.H / 100 * k;
+  s.img(await svgImg(r.svg, r.W, r.H, 2.5), { x: x - r.pad * k, y: gy - r.Ht * k, w, h }, anim);
+  return { pt: (nx, ny) => [x + nx * k, gy - ny * k], r };
 }
 // Die vier Symbole des Fahrtenschreibers (Lenken, andere Arbeit, Bereitschaft, Ruhe)
 function tachoSym(kind, col = '#F3F5F8') {
@@ -200,4 +218,4 @@ function tachoSym(kind, col = '#F3F5F8') {
   if (kind === 'bereit') return `<rect x="96" y="96" width="320" height="320" ${st}/><path d="M96 416 L416 96" ${st}/>`;
   if (kind === 'ruhe') return `<path d="M70 120 L70 420 M70 330 L442 330 L442 420" ${st}/><circle cx="150" cy="260" r="42" fill="${col}"/><path d="M210 300 L210 230 Q210 210 230 210 L400 210 Q442 210 442 252 L442 300" ${st}/>`;
 }
-module.exports.svgImg = svgImg; module.exports.tachoSym = tachoSym;
+module.exports.svgImg = svgImg; module.exports.lkw = lkw; module.exports.lkwHeck = lkwHeck; module.exports.tachoSym = tachoSym;
