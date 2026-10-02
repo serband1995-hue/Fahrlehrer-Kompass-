@@ -134,14 +134,14 @@ module.exports = async (deck) => {
       '▶ Sagen: „Alles, was ihr heute gelernt habt, kontrolliert ihr vor jeder Fahrt. In der praktischen Prüfung gehört die Abfahrtkontrolle dazu.“\n' +
       '❓ „Wo fangt ihr an?“\n' +
       '🖱 Klick 1: Motorraum · Klick 2: Räder · Klick 3: Licht · Klick 4: Aufbau.\n' +
-      '✅ Motorraum: Motoröl, Kühlmittel (nur kalt öffnen), Scheibenwaschwasser, Keilrippenriemen, AdBlue-Stand. Räder: Profil (mind. 1,6 mm), Schäden, Steine zwischen den Zwillingen, Luftdruck, Radmuttern und Anzeiger, Kotflügel und Schmutzfänger. Licht: alle Leuchten an und sauber, Kontur und Rückstrahler. Aufbau: Türen, Plane, Bordwände zu, Ladebordwand verriegelt.\n' +
+      '✅ Motorraum: Motoröl, Kühlmittel (nur kalt öffnen), Scheibenwaschwasser, Keilrippenriemen. Räder: Profil (mind. 1,6 mm), Schäden, Steine zwischen den Zwillingen, Luftdruck, Radmuttern und Anzeiger, Kotflügel und Schmutzfänger. Licht: alle Leuchten an und sauber, Kontur und Rückstrahler. Am Rahmen: Diesel- und AdBlue-Stand, Tankdeckel zu. Aufbau: Türen, Plane, Bordwände zu, Ladebordwand verriegelt.\n' +
       '💡 Ausführlich mit Bremsen und Ladung in C9 (Abfahrtkontrolle).\n' +
       '➜ „Jetzt schreiben wir die wichtigsten Punkte auf.“' });
     kick(s, 'Abfahrtkontrolle'); title(s, 'Vor jeder Fahrt: einmal rundherum');
     const GL = 4.0, XF = 3.95, K = 0.75;
     const g = await lkw(s, { L: 7.2, axles: [0.82, 5.25, 5.85], floor: 0.78, boxH: 1.75 }, { x: XF, gy: GL, k: K });
     const M = [[0.55, 1.1, C.red], [5.55, 0.3, C.or], [7.15, 0.6, C.am], [4.0, 1.7, C.pu]];
-    const P = [['LuDroplet', 'Motorraum', 'Öl · Kühlmittel (nur kalt!) · Waschwasser · Keilriemen · AdBlue'], ['LuCircleDot', 'Räder', 'Profil · Schäden · Steine zwischen Zwillingen · Luftdruck · Radmuttern'], ['LuLightbulb', 'Licht', 'alle Leuchten an und sauber · Kontur · Rückstrahler'], ['LuPackage', 'Aufbau', 'Türen, Plane, Bordwände zu · Ladebordwand verriegelt']];
+    const P = [['LuDroplet', 'Motorraum', 'Öl · Kühlmittel (nur kalt!) · Waschwasser · Keilriemen'], ['LuCircleDot', 'Räder', 'Profil · Schäden · Steine zwischen Zwillingen · Luftdruck · Radmuttern'], ['LuLightbulb', 'Licht', 'alle Leuchten an und sauber · Kontur · Rückstrahler'], ['LuPackage', 'Aufbau', 'Türen, Plane, Bordwände zu · Ladebordwand verriegelt']];
     for (let k = 0; k < 4; k++) {
       const [px, py] = g.pt(M[k][0], M[k][1]);
       s.text(String(k + 1), { x: px - 0.22, y: py - 0.22, w: 0.44, h: 0.44, size: 16, bold: true, color: C.dark, fill: M[k][2], shape: deck.pres.shapes.OVAL, align: 'center', valign: 'middle', glow: 8, glowColor: M[k][2] }, { fx: 'zoom', c: true, dur: 300 });
