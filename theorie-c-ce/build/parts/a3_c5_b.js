@@ -21,6 +21,7 @@ module.exports = async (deck) => {
   const FY = 3.75;
   await steps(deck, 'c5z', {
     kicker: 'Zweikreis-Bremse', ttl: 'Vorn und hinten getrennt',
+    ask: { q: 'Kreis 2 fällt aus – zieht der Lkw dann zur Seite?', a: 'Nein. Die Kreise sind nach Achsen getrennt – links und rechts bremsen gleich.', at: 2 },
     list: ['Zwei Kreise', 'Kreis 2 fällt aus', 'Vorn wird weiter gebremst'],
     caps: [
       'Das Bremsventil am Pedal steuert zwei Kreise: Kreis 1 bremst die Vorderachse, Kreis 2 die Hinterachse.',
@@ -95,6 +96,7 @@ module.exports = async (deck) => {
   const GY = 5.6, XF = 5.9, K = 1.15;
   await steps(deck, 'c5l', {
     kicker: 'ALB', ttl: 'Bremskraft nach Beladung',
+    ask: { q: 'Warum bekommt die Hinterachse leer weniger Bremsdruck?', a: 'Wenig Last hinten – mit vollem Druck würden die Räder blockieren.', at: 1 },
     list: ['Leer: wenig Last hinten', 'Voll: viel Last hinten', 'ALB defekt'],
     caps: [
       'Leer drückt wenig Gewicht auf die Hinterachse. Die ALB gibt wenig Bremsdruck nach hinten – sonst blockieren die Räder.',
@@ -155,6 +157,7 @@ module.exports = async (deck) => {
   const CY = 3.75;
   await steps(deck, 'c5f', {
     kicker: 'Feststellbremse', ttl: 'Feder bremst, Luft löst',
+    ask: { q: 'Wer bremst bei der Feststellbremse – die Luft oder die Feder?', a: 'Die Feder! Luft hält sie gespannt und löst die Bremse.', at: 2 },
     list: ['Fahren', 'Betriebsbremse', 'Feststellbremse', 'Notlösen'],
     caps: [
       'Beim Fahren drückt Luft den Kolben nach rechts und spannt die starke Feder. Die Bremse ist gelöst.',
@@ -171,7 +174,7 @@ module.exports = async (deck) => {
     legend: 'Kombizylinder im Schnitt · schematisch',
     scene: async (s, i) => {
       const betr = i === 1, fsAir = i <= 1, applied = i === 1 || i === 2;
-      const mem = applied ? 7.7 : 8.6, px = (i === 2) ? 9.3 : 11.2, tip = mem - 2.5;
+      const mem = applied ? 7.7 : 8.6, px = (i === 2) ? 9.3 : 11.2, tip = mem - 2.0;
       // Gehäuse
       s.rrect(7.2, CY - 1.0, 1.7, 2.0, { fill: '1A212C', line: '6E7888', lw: 2, rr: 0.25, name: '!!g1' });
       s.rrect(8.95, CY - 1.0, 3.5, 2.0, { fill: '1A212C', line: '6E7888', lw: 2, rr: 0.2, name: '!!g2' });
@@ -188,12 +191,18 @@ module.exports = async (deck) => {
       s.rect(mem, CY - 0.88, 0.07, 1.76, { fill: '2E3A4A', line: C.bl, lw: 1, name: '!!mem' });
       s.rect(tip, CY - 0.07, mem - tip, 0.14, { fill: '9AA6B5', name: '!!stange' });
       s.rrect(tip - 0.12, CY - 0.75, 0.16, 1.1, { fill: applied ? C.or : '6E7888', rr: 0.3, name: '!!hebel' });
-      s.text(applied ? 'bremst' : 'gelöst', { x: tip - 0.8, y: CY + 0.45, w: 1.4, h: 0.35, size: 15, bold: true, color: applied ? C.or : C.gr, align: 'center', name: '!!tzust' });
+      s.text(applied ? 'bremst' : 'gelöst', { x: tip - 0.35, y: CY - 1.2, w: 1.2, h: 0.35, size: 15, bold: true, color: applied ? C.or : C.gr, align: 'center', name: '!!tzust' });
       // Federspeicher: Kolben, Kolbenstange nach links, Feder rechts
       s.rect(px, CY - 0.85, 0.18, 1.7, { fill: '8A96A6', name: '!!kolben' });
       s.rect(px - 1.62, CY - 0.06, 1.62, 0.12, { fill: '6E7888', name: '!!kst' });
-      const fw = 12.38 - (px + 0.18), fz = feder(fw);
-      s.img(await svgImg(fz.svg, fz.W, fz.H, 1.5), { x: px + 0.18, y: CY - 0.7, w: fw, h: 1.4, name: '!!feder' });
+      // Feder aus einzelnen Windungen – beim Morph wird sie sichtbar zusammengedrückt bzw. entspannt
+      const fx0 = px + 0.2, fx1 = 12.36, nW = 16, top = CY - 0.66, bot = CY + 0.66;
+      for (let k = 0; k < nW; k++) {
+        const xa = fx0 + (fx1 - fx0) * k / nW, xb = fx0 + (fx1 - fx0) * (k + 1) / nW;
+        const ya = k % 2 ? bot : top, yb = k % 2 ? top : bot;
+        const len = Math.hypot(xb - xa, yb - ya), ang = Math.atan2(yb - ya, xb - xa) * 180 / Math.PI;
+        s.rrect((xa + xb) / 2 - len / 2, (ya + yb) / 2 - 0.035, len, 0.07, { fill: 'D4AF37', rr: 0.5, rotate: ang, name: '!!fw' + k });
+      }
       // Löseschraube
       const out = i === 3;
       s.rect(12.45, CY - 0.05, out ? 0.5 : 0.12, 0.1, { fill: '9AA6B5', name: '!!schr' });
@@ -209,6 +218,7 @@ module.exports = async (deck) => {
   const ANG = [-35, 25, 50];
   await steps(deck, 'c5f', {
     kicker: 'Feststellbremse', ttl: 'Das Handbremsventil',
+    ask: { q: 'Wozu gibt es die Kontrollstellung?', a: 'Mit Anhänger: prüfen, ob der Lkw den ganzen Zug allein hält.', at: 2 },
     list: ['Fahrstellung', 'Feststellbremse', 'Kontrollstellung'],
     caps: [
       'Fahrstellung: Der Federspeicher ist belüftet, die Feststellbremse ist gelöst.',

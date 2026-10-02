@@ -1,5 +1,5 @@
 // Abend 3 · C5 Kapitel 1 Bremsanlagen, Kapitel 2 Druckluft
-const { C, base, kick, title, card, point, CLICK, ask, quiz, steps, foot, svgImg, chapter } = require('../gs');
+const { C, base, kick, title, card, point, CLICK, ask, quiz, steps, foot, svgImg, chapter, motion } = require('../gs');
 const { icon } = require('../lib');
 const { warnSym } = require('../sym');
 
@@ -94,7 +94,7 @@ module.exports = async (deck) => {
       s.lineS(5.95, 1.68, 6.25, 2.0, { color: C.bl, lw: 2.5, endArrow: 'triangle', name: '!!pluft' });
       s.text('vom Motor angetrieben', { x: 5.6, y: 3.25, w: 1.9, h: 0.3, size: 11, italic: true, color: C.dim, name: '!!tmot' });
       // Leitungen
-      const pipe = (nm, x1, y1, x2, y2, k) => s.lineS(x1, y1, x2, y2, { color: on(k) ? C.bl : '3C4656', lw: 5, name: '!!' + nm });
+      const pipe = (nm, x1, y1, x2, y2, k) => { const v = Math.abs(x2 - x1) < 0.01, th = 0.09; s.rrect(Math.min(x1, x2) - (v ? th / 2 : 0.03), Math.min(y1, y2) - (v ? 0.03 : th / 2), v ? th : Math.abs(x2 - x1) + 0.06, v ? Math.abs(y2 - y1) + 0.06 : th, { fill: on(k) ? C.bl : '3C4656', rr: 0.5, name: '!!' + nm }); };
       pipe('p1', 7.1, YL, 7.4, YL, 1); pipe('p2', 8.7, YL, 9.0, YL, 2); pipe('p3', 9.95, YL, 10.25, YL, 3);
       pipe('p4', 11.05, 3.2, 11.05, MY2, 4); pipe('p5', TX[0] + TW / 2, MY2, TX[3] + TW / 2, MY2, 4);
       TX.forEach((x, k) => pipe('pd' + k, x + TW / 2, MY2, x + TW / 2, TY, 4));
@@ -127,79 +127,78 @@ module.exports = async (deck) => {
   for (let b = 0; b <= MAXB; b++) { const [a, c] = mPt(b, MR - (b % 2 ? 0.12 : 0.22)), [d, e] = mPt(b, MR + 0.04); dial += `<line x1="${P(a, c).split(' ')[0]}" y1="${P(a, c).split(' ')[1]}" x2="${P(d, e).split(' ')[0]}" y2="${P(d, e).split(' ')[1]}" stroke="#A9B6C6" stroke-width="${b % 2 ? 3 : 6}"/>`; }
   const dialImg = await svgImg(dial, (MR + 0.3) * 200, (MR + 0.3) * 200, 2);
   const warnOn = await svgImg(warnSym('brems', '#FF5C5C'), 512, 512, 0.5), warnOff = await svgImg(warnSym('brems', '#3C4656'), 512, 512, 0.5);
-  const BAR = [0, 6, 8.6, 12];
-  await steps(deck, 'c5d', {
-    kicker: 'Druckluft', ttl: 'Wann darf ich losfahren?',
-    list: ['Kein Druck', 'Feststellbremse lösbar', 'Warnung aus: losfahren', 'Abschaltdruck erreicht'],
-    caps: [
-      'Nach langer Standzeit ist kaum Druck da. Die Druckwarnung leuchtet und summt. Die Federspeicher halten den Lkw fest.',
-      'Der Druck steigt. Die Feststellbremse lässt sich schon lösen – aber die Warnung ist noch an: noch nicht losfahren!',
-      'Die Druckwarnung geht aus: Jetzt ist genug Luft für sicheres Bremsen da. Erst jetzt losfahren.',
-      'Abschaltdruck erreicht: Der Druckregler schaltet ab und bläst kurz ab. Das Zischen ist normal.',
-    ],
-    notes: [
-      '▶ Sagen: „Der Lkw stand übers Wochenende. Ihr startet den Motor. Das Manometer zeigt den Vorratsdruck.“\n❓ „Wann dürft ihr losfahren?“ – Antworten sammeln, noch nicht auflösen.\n➜ „Der Kompressor arbeitet …“',
-      '▶ „Der Druck steigt. Ab einem gewissen Druck lassen sich die Federspeicher lösen – das heißt aber nicht, dass genug Luft zum Bremsen da ist!“\n✅ Federspeicher lösen je nach Fahrzeug bei etwa 5–7 bar (Fachquelle, herstellerabhängig).\n➜ „Wann also?“',
-      '▶ „Erst wenn die Druckwarnung aus ist. Das ist die amtliche Antwort.“\n✅ Prüfungsfrage 2.7.01-238: Frühestens losfahren, wenn die Signale der Druckwarneinrichtung aufgehört haben. FALSCH: sobald sich der Federspeicher löst; bei 3 bar.\n✅ Die Warnung muss kommen, solange nach vier Vollbremsungen eine fünfte nicht mehr die Hilfsbremswirkung bringen würde (EU-Bremsenrecht). Einen festen bar-Wert gibt es nicht.\n➜ „Und wenn der Kompressor weiterfüllt?“',
-      '▶ „Bis zum Abschaltdruck – etwa 10 bis 13 bar. Dann schaltet der Regler ab, es zischt kurz.“\n✅ 2.7.06-232 (amtlicher Fragetext). Füllzeit nach EU-Recht: 65 % des Betriebsdrucks in höchstens 3 Minuten, mit Anhängeranschluss 6 Minuten. Dauert es länger: undicht oder Förderleistung zu gering (2.7.02-202).\n➜ „Was passiert, wenn ein Kreis undicht wird?“',
-    ],
+  const cap0 = 'Nach langer Standzeit ist kaum Druck da. Die Druckwarnung leuchtet und summt. Die Federspeicher halten den Lkw fest.';
+  const F = [
+    { t: 0, hold: true, cap: cap0, note: '▶ Sagen: „Der Lkw stand übers Wochenende. Ihr startet den Motor. Das Manometer zeigt den Vorratsdruck.“\n❓ Frage auf der Folie vorlesen: „Ab wann dürft ihr losfahren?“ – Antworten sammeln, noch nicht auflösen.\n🖱 Klick: Der Druck steigt (läuft von selbst bis zum nächsten Halt).\n➜ „Der Kompressor arbeitet …“' },
+    { t: 1.5 }, { t: 3 }, { t: 4.5 },
+    { t: 6, hold: true, cap: 'Der Druck steigt. Die Feststellbremse lässt sich schon lösen – aber die Warnung ist noch an: noch nicht losfahren!', note: '▶ „Der Druck steigt. Ab einem gewissen Druck lassen sich die Federspeicher lösen – das heißt aber nicht, dass genug Luft zum Bremsen da ist!“\n✅ Federspeicher lösen je nach Fahrzeug bei etwa 5–7 bar (Fachquelle, herstellerabhängig).\n🖱 Klick: Der Druck steigt weiter.\n➜ „Wann also?“' },
+    { t: 7 }, { t: 8 },
+    { t: 8.6, hold: true, answer: true, cap: 'Die Druckwarnung geht aus: Jetzt ist genug Luft für sicheres Bremsen da. Erst jetzt losfahren.', note: '▶ „Erst wenn die Druckwarnung aus ist. Das ist die amtliche Antwort – jetzt steht sie auch auf der Folie.“\n✅ Prüfungsfrage 2.7.01-238: Frühestens losfahren, wenn die Signale der Druckwarneinrichtung aufgehört haben. FALSCH: sobald sich der Federspeicher löst; bei 3 bar.\n✅ Die Warnung muss kommen, solange nach vier Vollbremsungen eine fünfte nicht mehr die Hilfsbremswirkung bringen würde (EU-Bremsenrecht). Einen festen bar-Wert gibt es nicht.\n🖱 Klick: Der Kompressor füllt weiter.\n➜ „Und wenn der Kompressor weiterfüllt?“' },
+    { t: 9.6 }, { t: 10.6 }, { t: 11.4 },
+    { t: 12, hold: true, cap: 'Abschaltdruck erreicht: Der Druckregler schaltet ab und bläst kurz ab. Das Zischen ist normal.', note: '▶ „Bis zum Abschaltdruck – etwa 10 bis 13 bar. Dann schaltet der Regler ab, es zischt kurz.“\n✅ 2.7.06-232 (amtlicher Fragetext). Füllzeit nach EU-Recht: 65 % des Betriebsdrucks in höchstens 3 Minuten, mit Anhängeranschluss 6 Minuten. Dauert es länger: undicht oder Förderleistung zu gering (2.7.02-202).\n🖱 Keine Animation mehr – nächster Klick: nächste Folie.\n➜ „Was passiert, wenn ein Kreis undicht wird?“' },
+  ];
+  await motion(deck, 'c5d', {
+    kicker: 'Druckluft', ttl: 'Wann darf ich losfahren?', frames: F, dur: 380,
+    question: 'Der Motor läuft, der Druck steigt. Ab wann dürft ihr losfahren?',
+    answer: 'Erst wenn die Druckwarnung aus ist – nicht schon, wenn sich die Feststellbremse lösen lässt.',
     legend: 'Vorratsdruck · Werte je nach Fahrzeug',
-    scene: async (s, i) => {
+    scene: async (s, bar) => {
       s.oval(MX - MR - 0.4, MY - MR - 0.4, (MR + 0.4) * 2, (MR + 0.4) * 2, { fill: '0D141E', line: '2A3B52', lw: 2, name: '!!mface' });
       s.img(dialImg, { x: MX - MR - 0.3, y: MY - MR - 0.3, w: (MR + 0.3) * 2, h: (MR + 0.3) * 2, name: '!!mdial' });
       for (let b = 0; b <= MAXB; b += 2) { const [x, y] = mPt(b, MR - 0.5); s.text(String(b), { x: x - 0.25, y: y - 0.17, w: 0.5, h: 0.34, size: 14, bold: true, color: C.mut, align: 'center', valign: 'middle', name: '!!mz' + b }); }
       s.text('bar', { x: MX - 0.4, y: MY + 0.55, w: 0.8, h: 0.3, size: 13, color: C.dim, align: 'center', name: '!!mbar' });
-      const a = mAng(BAR[i]), L = MR - 0.25;
-      s.rect(MX - L / 2 + (L / 2) * Math.cos(a), MY - 0.035 - (L / 2) * Math.sin(a), L, 0.07, { fill: C.or, rotate: -a * 180 / Math.PI, name: '!!mzeiger', glow: 6, glowColor: C.or });
+      const a = mAng(bar), L = MR - 0.25;
+      s.rrect(MX - L / 2 + (L / 2) * Math.cos(a), MY - 0.04 - (L / 2) * Math.sin(a), L, 0.08, { fill: C.or, rr: 0.5, rotate: -a * 180 / Math.PI, name: '!!mzeiger', glow: 6, glowColor: C.or });
       s.oval(MX - 0.17, MY - 0.17, 0.34, 0.34, { fill: '55606F', name: '!!mnabe' });
-      if (i === 3) s.text('10–13 bar: Abschaltdruck', { x: MX - 1.4, y: MY + 1.0, w: 2.8, h: 0.35, size: 14, bold: true, color: C.bl, align: 'center', name: '!!tab' });
-      // Anzeigen rechts
-      const warn = i <= 1;
-      s.rrect(11.5, 2.0, 1.5, 1.5, { fill: '0A0F16', line: warn ? C.red : '2A3B52', lw: 2, rr: 0.12, name: '!!wbox', glow: warn ? 10 : undefined, glowColor: C.red });
+      s.text(bar.toFixed(1).replace('.', ',') + ' bar', { x: MX - 1.0, y: MY + 0.95, w: 2.0, h: 0.45, size: 22, bold: true, color: C.txt, align: 'center', name: '!!digi' });
+      if (bar >= 12) s.text('zisch – Abschaltdruck', { x: MX - 1.4, y: MY + 1.45, w: 2.8, h: 0.35, size: 14, bold: true, color: C.bl, align: 'center', name: '!!tab' });
+      const warn = bar < 8.6, fest = bar < 5.5, go = !warn;
+      s.rrect(11.5, 2.0, 1.5, 1.5, { fill: '0A0F16', line: warn ? C.red : '2A3B52', lw: 2, rr: 0.2, name: '!!wbox', glow: warn ? 10 : undefined, glowColor: C.red });
       s.img(warn ? warnOn : warnOff, { x: 11.75, y: 2.12, w: 1.0, h: 1.0, name: '!!wsym' });
       s.text(warn ? 'Druckwarnung!' : 'Warnung aus', { x: 11.3, y: 3.55, w: 1.9, h: 0.35, size: 14, bold: true, color: warn ? C.red : C.gr, align: 'center', name: '!!twarn' });
-      const fest = i === 0;
       s.text(fest ? 'Feststellbremse: lässt sich nicht lösen' : 'Feststellbremse: lässt sich lösen', { x: 11.2, y: 4.15, w: 2.0, h: 0.75, size: 13, color: fest ? C.mut : C.txt, align: 'center', name: '!!tfest' });
-      const go = i >= 2;
       s.rrect(11.35, 5.05, 1.8, 0.6, { fill: go ? C.gr : '2A1A1E', line: go ? C.gr : C.red, lw: 2, rr: 0.3, name: '!!go' });
       s.text(go ? 'losfahren' : 'warten', { x: 11.35, y: 5.05, w: 1.8, h: 0.6, size: 17, bold: true, color: go ? C.dark : C.red, align: 'center', valign: 'middle', name: '!!tgo' });
     },
   });
 
-  // ===== VIERKREISSCHUTZVENTIL (Morph: Kreis undicht) =====
-  await steps(deck, 'c5d', {
-    kicker: 'Druckluft', ttl: 'Ein Kreis wird undicht',
-    list: ['Alle Kreise voll', 'Kreis 2 wird undicht', 'Ventil sperrt Kreis 2 ab'],
-    caps: [
-      'Alle Kreise sind gefüllt. Das Vierkreisschutzventil hält die Kreise voneinander getrennt.',
-      'Eine Leitung im Kreis 2 platzt. Die Luft zischt heraus, die Druckwarnung geht an.',
-      'Das Ventil sperrt den undichten Kreis ab. Die anderen Kreise behalten ihren Sicherungsdruck – vorn wird weiter gebremst.',
-    ],
-    notes: [
-      '▶ Sagen: „Hier die vier Kreise mit ihrem Druck. Alle voll.“\n❓ „Was passiert, wenn eine Leitung platzt?“\n➜ „Schauen wir.“',
-      '▶ „Kreis 2 – die Hinterachse – verliert Luft. Ihr hört es zischen, die Druckwarnung geht an.“\n✅ Prüfungsfrage 2.7.02-213: Undichte Bremsleitung erkennt man am Zischen, an der Druckwarnung und an geringerer Bremswirkung.\n➜ „Verlieren jetzt alle Kreise ihre Luft?“',
-      '▶ „Nein. Das Vierkreisschutzventil sperrt den kaputten Kreis ab. Die anderen behalten genug Druck – der Lkw bremst weiter, aber schwächer. Sofort gefahrlos anhalten.“\n✅ Prüfungsfragen 2.7.06-223 und 2.7.02-304. Sicherungsdruck nach Fachquelle etwa 6–7 bar (herstellerabhängig).\n✅ 2.7.02-203: Druckwarnung während der Fahrt = Vorratsdruck nicht mehr ausreichend, Bremse wahrscheinlich defekt → sofort gefahrlos anhalten.\n➜ „Und noch etwas sammelt sich in den Behältern: Wasser.“',
-    ],
+  // ===== VIERKREISSCHUTZVENTIL (fließend: Kreis 2 läuft leer, Ventil sperrt ab) =====
+  await motion(deck, 'c5d', {
+    kicker: 'Druckluft', ttl: 'Ein Kreis wird undicht', dur: 450,
+    question: 'Eine Leitung im Kreis 2 platzt. Verliert jetzt die ganze Anlage ihre Luft?',
+    answer: 'Nein. Das Vierkreisschutzventil sperrt den undichten Kreis ab – die anderen behalten ihren Druck und bremsen weiter.',
     legend: 'Schematisch · Füllstand = Druck im Kreis',
-    scene: async (s, i) => {
-      // Ventil
-      s.rrect(8.6, 1.9, 1.8, 0.95, { fill: '173048', line: C.bl, lw: 2, rr: 0.1, name: '!!vks2' });
+    frames: [
+      { t: 0, hold: true, cap: 'Alle Kreise sind gefüllt. Das Vierkreisschutzventil hält die Kreise voneinander getrennt.', note: '▶ Sagen: „Hier die vier Kreise mit ihrem Druck. Alle voll.“\n❓ Frage auf der Folie: „Verliert jetzt die ganze Anlage ihre Luft?“ – abstimmen lassen.\n🖱 Klick: Die Leitung platzt (läuft von selbst).\n➜ „Schauen wir.“' },
+      { t: 0.25, cap: 'Eine Leitung im Kreis 2 platzt. Die Luft zischt heraus, die Druckwarnung geht an.' }, { t: 0.5 },
+      { t: 0.75, hold: true, note: '▶ „Kreis 2 – die Hinterachse – verliert Luft. Ihr hört es zischen, die Druckwarnung geht an. Auch die anderen Kreise verlieren kurz etwas Druck.“\n✅ Prüfungsfrage 2.7.02-213: Undichte Bremsleitung erkennt man am Zischen, an der Druckwarnung und an geringerer Bremswirkung.\n🖱 Klick: Das Ventil sperrt ab.\n➜ „Und jetzt?“' },
+      { t: 0.88, cap: 'Das Ventil sperrt den undichten Kreis ab. Die anderen Kreise behalten ihren Sicherungsdruck – vorn wird weiter gebremst.' },
+      { t: 1, hold: true, answer: true, note: '▶ „Das Vierkreisschutzventil sperrt den kaputten Kreis ab. Die anderen behalten genug Druck – der Lkw bremst weiter, aber schwächer. Sofort gefahrlos anhalten.“\n✅ Prüfungsfragen 2.7.06-223 und 2.7.02-304. Sicherungsdruck nach Fachquelle etwa 6–7 bar (herstellerabhängig).\n✅ 2.7.02-203: Druckwarnung während der Fahrt = Vorratsdruck nicht mehr ausreichend, Bremse wahrscheinlich defekt → sofort gefahrlos anhalten.\n🖱 Keine Animation mehr – nächster Klick: nächste Folie.\n➜ „Und noch etwas sammelt sich in den Behältern: Wasser.“' },
+    ],
+    scene: async (s, t) => {
+      const lk = t > 0.01, closed = t >= 0.88;
+      const lev2 = t <= 0.75 ? 1 - (t / 0.75) * 0.95 : 0.05;
+      const levO = t <= 0.75 ? 1 - (t / 0.75) * 0.3 : Math.min(0.9, 0.7 + (t - 0.75) / 0.25 * 0.2);
+      s.rrect(8.6, 1.9, 1.8, 0.95, { fill: '173048', line: C.bl, lw: 2, rr: 0.2, name: '!!vks2' });
       s.text('Vierkreis-schutzventil', { x: 8.6, y: 1.9, w: 1.8, h: 0.95, size: 13, bold: true, color: C.txt, align: 'center', valign: 'middle', name: '!!tvks2' });
       s.lineS(6.0, 2.37, 8.6, 2.37, { color: C.bl, lw: 5, name: '!!zul' });
       s.text('vom Trockner', { x: 6.0, y: 2.0, w: 1.8, h: 0.3, size: 12, italic: true, color: C.dim, name: '!!tzul' });
-      const lev = [[1, 1, 1, 1], [0.7, 0.25, 0.7, 0.7], [0.9, 0.05, 0.9, 0.9]][i];
       for (let k = 0; k < 4; k++) {
-        const x = 5.85 + k * 1.8, cx = x + 0.8, bad = k === 1 && i >= 1;
-        s.lineS(9.5, 2.85, cx, 3.75, { color: bad && i === 2 ? '3C4656' : C.bl, lw: 4, name: '!!lt' + k });
-        s.rrect(x, 3.75, 1.6, 1.7, { fill: '1A212C', line: bad ? C.red : C.bl, lw: 2, rr: 0.15, name: '!!bh' + k });
-        const hh = 1.5 * lev[k];
-        s.rect(x + 0.1, 3.85 + 1.5 - hh, 1.4, Math.max(hh, 0.02), { fill: bad ? C.red : C.bl, ft: 40, name: '!!lv' + k });
+        const x = 5.85 + k * 1.8, cx = x + 0.8, bad = k === 1 && lk, lev = k === 1 ? lev2 : levO;
+        s.lineS(9.5, 2.85, cx, 3.75, { color: bad && closed ? '3C4656' : C.bl, lw: 4, name: '!!lt' + k });
+        s.rrect(x, 3.75, 1.6, 1.7, { fill: '1A212C', line: bad ? C.red : C.bl, lw: 2, rr: 0.25, name: '!!bh' + k });
+        const hh = 1.5 * lev;
+        s.rrect(x + 0.1, 3.85 + 1.5 - hh, 1.4, Math.max(hh, 0.04), { fill: bad ? C.red : C.bl, ft: 40, rr: 0.15, name: '!!lv' + k });
         s.text(KL[k][0], { x, y: 5.5, w: 1.6, h: 0.3, size: 13, bold: true, color: bad ? C.red : C.txt, align: 'center', name: '!!tbk' + k });
         s.text(KL[k][1], { x: x - 0.05, y: 5.8, w: 1.7, h: 0.5, size: 11, color: C.mut, align: 'center', name: '!!tbv' + k });
       }
-      if (i >= 1) { s.img(await icon('LuWind', C.red), { x: 8.05, y: 4.0, w: 0.5, h: 0.5, name: '!!leck' }); s.text('zisch!', { x: 7.9, y: 4.5, w: 0.9, h: 0.3, size: 13, bold: true, color: C.red, align: 'center', name: '!!tleck' }); }
-      if (i === 2) { s.oval(8.88, 3.0, 0.42, 0.42, { fill: C.red, name: '!!zu' }); s.text('×', { x: 8.88, y: 2.98, w: 0.42, h: 0.42, size: 20, bold: true, color: C.white, align: 'center', valign: 'middle', name: '!!tzu' }); s.text('abgesperrt', { x: 6.9, y: 2.48, w: 1.85, h: 0.32, size: 14, bold: true, color: C.red, align: 'right', name: '!!tabg' }); }
-      if (i >= 1) { s.rrect(11.65, 1.95, 1.4, 0.85, { fill: '0A0F16', line: C.red, lw: 2, rr: 0.1, name: '!!wb2', glow: 8, glowColor: C.red }); s.img(warnOn, { x: 11.95, y: 2.0, w: 0.75, h: 0.75, name: '!!ws2' }); }
+      s.img(await icon('LuWind', C.red), { x: 8.05, y: 4.0, w: 0.5, h: 0.5, name: '!!leck', transparency: lk ? 0 : 100 });
+      s.text(lk ? 'zisch!' : '', { x: 7.9, y: 4.5, w: 0.9, h: 0.3, size: 13, bold: true, color: C.red, align: 'center', name: '!!tleck' });
+      s.oval(8.88, 3.0, 0.42, 0.42, { fill: C.red, ft: closed ? 0 : 100, name: '!!zu' });
+      s.text(closed ? '×' : '', { x: 8.88, y: 2.98, w: 0.42, h: 0.42, size: 20, bold: true, color: C.white, align: 'center', valign: 'middle', name: '!!tzu' });
+      s.text(closed ? 'abgesperrt' : '', { x: 6.9, y: 2.48, w: 1.85, h: 0.32, size: 14, bold: true, color: C.red, align: 'right', name: '!!tabg' });
+      s.rrect(11.65, 1.95, 1.4, 0.85, { fill: '0A0F16', line: lk ? C.red : '2A3B52', lw: 2, rr: 0.15, name: '!!wb2', glow: lk ? 8 : undefined, glowColor: C.red });
+      s.img(lk ? warnOn : warnOff, { x: 11.95, y: 2.0, w: 0.75, h: 0.75, name: '!!ws2' });
     },
   });
 
