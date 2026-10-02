@@ -1,0 +1,15 @@
+{
+  "name": "theorie-kit",
+  "private": true,
+  "description": "Bauwerkzeug für Theorie-Präsentationen (Fahrschule Boost, Fahrlehrer Serband)",
+  "dependencies": {
+    "@osm-traffic-signs/converter": "^0.6.0",
+    "jszip": "^3.10.2",
+    "pptxgenjs": "^4.0.1",
+    "qrcode": "^1.5.4",
+    "react": "^19.3.0",
+    "react-dom": "^19.3.0",
+    "react-icons": "^5.7.0",
+    "sharp": "^0.35.5"
+  }
+}
