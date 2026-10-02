@@ -1,5 +1,5 @@
 // Abend 2 · C4: Kapitel 3 Aufbauten, Kapitel 4 Batterie und Bordnetz
-const { C, sec, base, kick, title, card, point, CLICK, steps, foot, chapter } = require('../gs');
+const { C, sec, base, kick, title, card, point, CLICK, steps, foot, chapter, lkw } = require('../gs');
 const { icon } = require('../lib');
 
 sec('c4a', 'C4  ·  AUFBAUTEN', C.pu, 'bg_pu.jpg');
@@ -43,19 +43,19 @@ module.exports = async (deck) => {
       '➜ „Weiter zu Kapitel 4: Batterie und Bordnetz.“' });
     kick(s, 'Ladebordwand'); title(s, 'Die Hebebühne am Heck');
     card(s, 0.7, 2.05, 5.6, 4.45, {});
-    // Seitenansicht: Koffer-Heck rechts, Plattform unten waagerecht
-    s.rect(1.0, 2.5, 3.2, 2.5, { fill: 'C6CDD8', line: '9AA6B5' });
-    s.rect(1.0, 5.0, 3.3, 0.16, { fill: '55606F' });
-    s.oval(1.5, 5.15, 0.75, 0.75, { fill: '1B1F26', line: '6E7888', lw: 2 });
-    s.rect(4.3, 5.3, 0.12, 0.55, { fill: '6E7888' });
-    s.rect(4.25, 5.82, 1.75, 0.12, { fill: '8A96A6' });
-    s.rect(0.9, 5.96, 5.3, 0.04, { fill: '55606F' });
-    // Warnmarkierung rot-weiß auf der Plattform + Blinkleuchte
-    for (let k = 0; k < 7; k++) s.rect(4.27 + k * 0.25, 5.84, 0.125, 0.08, { fill: C.red }, k === 0 ? CLICK : { fx: 'fade', dur: 100 });
-    s.oval(5.78, 5.45, 0.28, 0.28, { fill: C.am, glow: 10, glowColor: C.am }, { fx: 'zoom', dur: 300 });
-    s.text('gelbe Blinkleuchte', { x: 4.2, y: 5.05, w: 2.0, h: 0.35, size: 13, bold: true, color: C.am, align: 'right' }, { fx: 'fade', dur: 200 });
-    s.text('rot-weiße Markierung', { x: 4.0, y: 6.05, w: 2.2, h: 0.32, size: 13, bold: true, color: C.red, align: 'right' }, { fx: 'fade', dur: 200 });
-    s.text('Seitenansicht · schematisch', { x: 0.9, y: 2.15, w: 3.0, h: 0.3, size: 11, italic: true, color: C.dim });
+    // Seitenansicht: detaillierter Lkw, Ladebordwand hinten auf den Boden abgesenkt
+    const GL = 6.05, XF = 0.85, K = 1.15, LL = 3.8, XR = XF + LL * K;
+    await lkw(s, { L: LL, axles: [0.62, 2.78], floor: 0.72, boxH: 1.5 }, { x: XF, gy: GL, k: K });
+    s.rect(0.85, GL, 5.35, 0.04, { fill: '55606F' });
+    s.lineS(XR - 0.08, GL - 0.62, XR + 0.08, GL - 0.1, { color: '6E7888', lw: 5 });           // Hubarm
+    s.rect(XR - 0.02, GL - 0.09, 0.95, 0.07, { fill: '9AA6B5' });                                  // Plattform
+    for (let k = 0; k < 7; k++) s.rect(XR + k * 0.125, GL - 0.09, 0.0625, 0.07, { fill: C.red }, k === 0 ? CLICK : { fx: 'fade', dur: 80 });
+    s.rect(XR + 0.85, GL - 0.42, 0.04, 0.33, { fill: '6E7888' }, { fx: 'fade', dur: 150 });          // Halter
+    s.oval(XR + 0.77, GL - 0.6, 0.2, 0.2, { fill: C.am, glow: 10, glowColor: C.am }, { fx: 'zoom', dur: 300 });
+    s.text([{ text: 'gelbe', options: { breakLine: true } }, { text: 'Blinkleuchte' }], { x: XR + 0.05, y: GL - 1.55, w: 1.1, h: 0.6, size: 12, bold: true, color: C.am, align: 'center' }, { fx: 'fade', dur: 200 });
+    s.lineS(XR + 0.6, GL - 0.95, XR + 0.85, GL - 0.6, { color: C.am, lw: 1.5 }, { fx: 'fade', dur: 200 });
+    s.text('rot-weiße Markierung', { x: XR - 1.3, y: GL + 0.08, w: 2.3, h: 0.32, size: 13, bold: true, color: C.red, align: 'right' }, { fx: 'fade', dur: 200 });
+    s.text('Seitenansicht · schematisch', { x: 0.9, y: 2.12, w: 3.0, h: 0.3, size: 11, italic: true, color: C.dim });
     await point(s, 6.55, 2.05, 6.08, 1.4, 'LuSiren', C.am, 'Im Betrieb gesichert', 'durch zwei gelbe Blinkleuchten und rot-weiße Warnmarkierungen.', { fx: 'flyL', dur: 450 }, { br: true, size: 17 });
     await point(s, 6.55, 3.58, 6.08, 1.4, 'LuFootprints', C.red, 'Quetschgefahr!', 'Nicht im Bewegungsbereich stehen, Füße weg von der Plattformkante.', CLICK, { br: true, size: 17 });
     await point(s, 6.55, 5.11, 6.08, 1.4, 'LuLock', C.gr, 'Vor der Fahrt', 'hochklappen und verriegeln – die Kontrollleuchte muss aus sein.', CLICK, { br: true, size: 17 });

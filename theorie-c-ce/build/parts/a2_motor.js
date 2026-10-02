@@ -29,9 +29,13 @@ module.exports = async (deck) => {
     scene: async (s, i) => {
       const col = gas[i], kp = kpos(i);
       // Zylinderkopf und Wände
-      s.rect(ZX - 0.25, ZT - 0.3, ZW + 0.5, 0.3, { fill: '55606F', name: '!!kopf' });
-      s.rect(ZX - 0.25, ZT, 0.25, ZH, { fill: '55606F', name: '!!wl' });
-      s.rect(ZX + ZW, ZT, 0.25, ZH, { fill: '55606F', name: '!!wr' });
+      s.rect(ZX - 0.3, ZT - 0.55, ZW + 0.6, 0.55, { fill: '55606F', name: '!!kopf' });
+      s.rect(ZX - 0.3, ZT - 0.48, 0.75, 0.2, { fill: '0E1520', name: '!!kanal1' });
+      s.rect(ZX + ZW - 0.45, ZT - 0.48, 0.75, 0.2, { fill: '0E1520', name: '!!kanal2' });
+      s.rect(ZX - 0.3, ZT, 0.3, ZH, { fill: '55606F', name: '!!wl' });
+      s.rect(ZX + ZW, ZT, 0.3, ZH, { fill: '55606F', name: '!!wr' });
+      s.rect(ZX - 0.22, ZT + 0.12, 0.12, ZH - 0.35, { fill: '1D3B57', name: '!!kw1' });
+      s.rect(ZX + ZW + 0.1, ZT + 0.12, 0.12, ZH - 0.35, { fill: '1D3B57', name: '!!kw2' });
       // Brennraum (Gas) über dem Kolben
       s.rect(ZX, ZT, ZW, kp - ZT, { fill: col, ft: i === 2 ? 15 : 55, name: '!!gas', glow: i === 2 ? 14 : undefined, glowColor: C.red });
       // Ventile: links Einlass, rechts Auslass (offen = abgesenkt)
@@ -42,17 +46,21 @@ module.exports = async (deck) => {
       s.rect(ZX + ZW - 0.65, ZT - 0.15 + (vout ? 0.22 : 0), 0.5, 0.1, { fill: vout ? C.dim : 'A9B6C6', name: '!!vt2' });
       // Einspritzdüse Mitte
       s.rect(ZX + ZW / 2 - 0.07, ZT - 0.8, 0.14, 0.62, { fill: i === 2 ? C.or : '8A96A6', name: '!!duese' });
-      s.oval(ZX + ZW / 2 - 0.35, ZT - 0.05, 0.7, 0.45, { fill: C.or, ft: i === 2 ? 10 : 100, name: '!!strahl' });
+      s.shape(deck.pres.shapes.ISOSCELES_TRIANGLE, { x: ZX + ZW / 2 - 0.45, y: ZT - 0.18, w: 0.9, h: 0.55, fill: C.or, ft: i === 2 ? 15 : 100, name: '!!strahl' });
       // Kolben + Pleuel + Kurbel
       s.rrect(ZX + 0.04, kp, ZW - 0.08, 0.7, { fill: 'B8C2CF', line: '8A96A6', rr: 0.04, name: '!!kolben' });
       s.rect(ZX + 0.04, kp + 0.12, ZW - 0.08, 0.05, { fill: '6E7888', name: '!!ring1' });
       s.rect(ZX + 0.04, kp + 0.25, ZW - 0.08, 0.05, { fill: '6E7888', name: '!!ring2' });
-      const KX = ZX + ZW / 2, KY = ZT + ZH + 0.95, R = 0.55;
-      const ang = [Math.PI / 2, -Math.PI / 2, Math.PI / 2, -Math.PI / 2][i]; // unten / oben
-      const zx = KX + 0.001, zy = KY + R * Math.sin(ang);
-      s.oval(KX - 0.85, KY - 0.85, 1.7, 1.7, { line: '3C4656', lw: 3, name: '!!kurb' });
-      s.lineS(KX, kp + 0.55, zx, zy, { color: '9AA6B5', lw: 9, name: '!!pleuel' });
-      s.oval(zx - 0.12, zy - 0.12, 0.24, 0.24, { fill: '9AA6B5', name: '!!zapfen' });
+      // Kurbeltrieb: Hub 1,55 = 2 × Kurbelradius → Pleuel bleibt gleich lang
+      const KX = ZX + ZW / 2, KY = 5.6, R = 0.775;
+      const down = i === 0 || i === 2, zx = KX + 0.001, zy = down ? KY + R : KY - R;
+      s.oval(KX - 0.95, KY - 0.95, 1.9, 1.9, { fill: '1A212C', line: '3C4656', lw: 2, name: '!!kurb' });
+      s.oval(KX - 0.55, (down ? KY - R : KY + R) - 0.3, 1.1, 0.6, { fill: '3C4656', name: '!!gegen' });
+      s.oval(KX - 0.15, KY - 0.15, 0.3, 0.3, { fill: '55606F', name: '!!welle' });
+      s.lineS(KX, kp + 0.45, zx, zy, { color: '8A96A6', lw: 14, name: '!!pleuel' });
+      s.oval(zx - 0.2, zy - 0.2, 0.4, 0.4, { fill: '9AA6B5', line: '6E7888', lw: 2, name: '!!zapfen' });
+      s.oval(KX - 0.1, kp + 0.35, 0.2, 0.2, { fill: '6E7888', name: '!!bolzen' });
+      s.text('Kurbelwelle', { x: KX + 0.95, y: KY - 0.18, w: 1.6, h: 0.35, size: 13, color: C.dim, name: '!!tkw' });
       // Pfeile Luft rein / Abgas raus
       s.text('Luft', { x: ZX - 1.45, y: ZT - 0.85, w: 1.1, h: 0.4, size: 16, bold: vin, color: vin ? C.bl : C.dim, align: 'right', name: '!!tluft' });
       s.lineS(ZX - 0.85, ZT - 0.4, ZX + 0.2, ZT - 0.4, { color: vin ? C.bl : C.line, lw: 3, endArrow: 'triangle', name: '!!pluft' });
@@ -173,23 +181,20 @@ module.exports = async (deck) => {
       '▶ Sagen: „Moderne Lkw erfüllen die Abgasnorm Euro VI. Dafür brauchen sie AdBlue – eine Harnstoff-Lösung, die im Abgas die Stickoxide unschädlich macht.“\n' +
       '❓ „Am Lkw sind zwei Einfüllstutzen. Welcher ist für AdBlue?“\n' +
       '🖱 Klick 1: Beschriftung der Stutzen · Klick 2–4: je ein Punkt.\n' +
-      '✅ AdBlue: 32,5 % Harnstoff in Wasser (ISO 22241), eigener Tank, kleiner Stutzen mit blauem Deckel. Verbrauch etwa 4–6 % des Diesels. Gefriert bei etwa −11 °C, darum ist der Tank beheizt. Nie verwechseln – bei falsch getankt: Motor nicht starten, Werkstatt (Herstellerangaben).\n' +
+      '✅ AdBlue: 32,5 % Harnstoff in Wasser (ISO 22241), eigener Tank, kleiner Stutzen mit blauem Deckel. Verbrauch etwa 3–6 % des Diesels (je nach Motor). Gefriert bei etwa −11 °C, darum ist der Tank beheizt. Nie verwechseln – bei falsch getankt: Motor nicht starten, Werkstatt (Herstellerangaben).\n' +
       '✅ Euro VI für neue schwere Lkw seit 31.12.2013 (VO (EG) 595/2009).\n' +
       '➜ „Was passiert, wenn der AdBlue-Tank leer ist?“' });
     kick(s, 'Abgas · AdBlue'); title(s, 'Zwei Tanks, zwei Deckel');
-    // Zwei Stutzen von außen
-    card(s, 0.7, 2.05, 5.3, 4.45, {});
-    s.oval(1.25, 2.85, 2.0, 2.0, { fill: '1B1F26', line: '6E7888', lw: 4 });
-    s.oval(1.55, 3.15, 1.4, 1.4, { fill: '2A3342', line: '9AA6B5', lw: 2 });
-    s.oval(4.0, 3.35, 1.3, 1.3, { fill: '1B4FA0', line: '6FA8FF', lw: 4 });
-    s.oval(4.22, 3.57, 0.86, 0.86, { fill: '2563C7', line: '9CC3FF', lw: 2 });
-    s.text('Diesel', { x: 0.95, y: 5.05, w: 2.6, h: 0.45, size: 20, bold: true, color: C.txt, align: 'center' }, CLICK);
-    s.text('großer Stutzen', { x: 0.95, y: 5.5, w: 2.6, h: 0.35, size: 14, color: C.mut, align: 'center' }, { fx: 'fade', dur: 200 });
-    s.text('AdBlue', { x: 3.55, y: 5.05, w: 2.2, h: 0.45, size: 20, bold: true, color: '6FA8FF', align: 'center' }, { fx: 'fade', dur: 200 });
-    s.text('klein, blauer Deckel', { x: 3.45, y: 5.5, w: 2.4, h: 0.35, size: 14, color: C.mut, align: 'center' }, { fx: 'fade', dur: 200 });
-    s.text('Einfüllstutzen · schematisch', { x: 0.7, y: 6.55, w: 5.3, h: 0.3, size: 11, italic: true, color: C.dim, align: 'center' });
+    // Foto: Dieseltank und AdBlue-Tank am Rahmen
+    s.img('g_tank_c.jpg', { x: 0.7, y: 2.05, w: 5.3, h: 3.23 });
+    s.rrect(0.7, 2.05, 5.3, 3.23, { line: C.line, lw: 1, rr: 0.04 });
+    s.lineS(1.95, 3.35, 2.69, 2.82, { color: C.txt, lw: 2 }, CLICK);
+    s.text('Diesel', { x: 1.0, y: 3.35, w: 1.3, h: 0.42, size: 17, bold: true, color: C.dark, fill: C.txt, shape: deck.pres.shapes.ROUNDED_RECTANGLE, rr: 0.2, align: 'center', valign: 'middle' }, { fx: 'zoom', dur: 250 });
+    s.lineS(5.0, 3.75, 5.36, 3.1, { color: '6FA8FF', lw: 2 }, { fx: 'fade', dur: 200 });
+    s.text('AdBlue', { x: 4.35, y: 3.75, w: 1.3, h: 0.42, size: 17, bold: true, color: C.white, fill: '2563C7', shape: deck.pres.shapes.ROUNDED_RECTANGLE, rr: 0.2, align: 'center', valign: 'middle' }, { fx: 'zoom', dur: 250 });
+    s.text([{ text: 'Diesel: ', options: { bold: true, color: C.txt } }, { text: 'großer Tank, schwarzer Deckel', options: { color: C.mut, breakLine: true } }, { text: 'AdBlue: ', options: { bold: true, color: '6FA8FF' } }, { text: 'eigener Tank, kleiner Stutzen, blauer Deckel', options: { color: C.mut } }], { x: 0.75, y: 5.4, w: 5.25, h: 0.95, size: 15 }, { fx: 'fade', dur: 200 });
     await point(s, 6.3, 2.05, 6.33, 1.38, 'LuDroplet', C.bl, 'Was ist AdBlue?', '32,5 % Harnstoff in Wasser. Im Abgas macht es aus Stickoxiden Stickstoff und Wasser.', CLICK, { br: true, size: 16 });
-    await point(s, 6.3, 3.58, 6.33, 1.38, 'LuSnowflake', C.pu, 'Eigener Tank, beheizt', 'Verbrauch etwa 4–6 % vom Diesel. Gefriert bei etwa −11 °C.', CLICK, { br: true, size: 16 });
+    await point(s, 6.3, 3.58, 6.33, 1.38, 'LuSnowflake', C.pu, 'Eigener Tank, beheizt', 'Verbrauch etwa 3–6 % vom Diesel. Gefriert bei etwa −11 °C.', CLICK, { br: true, size: 16 });
     await point(s, 6.3, 5.11, 6.33, 1.38, 'LuBan', C.red, 'Nie verwechseln!', 'AdBlue nie in den Dieseltank – und umgekehrt. Falsch getankt: Motor nicht starten.', CLICK, { br: true, size: 16 });
   }
 
@@ -199,11 +204,11 @@ module.exports = async (deck) => {
       '▶ Sagen: „Der AdBlue-Tank ist fast leer – und ihr fahrt einfach weiter. Was macht der Lkw?“\n' +
       '❓ Antworten sammeln.\n' +
       '🖱 Klick 1: Warnung · Klick 2: weniger Leistung · Klick 3: Kriechmodus · Klick 4: Manipulation.\n' +
-      '✅ Das EU-Recht schreibt dieses „Aufforderungssystem“ vor: erst Warnung, dann Leistungsdrosselung, zuletzt höchstens 20 km/h (VO (EU) 582/2011 Anhang XIII).\n' +
+      '✅ Das EU-Recht schreibt dieses „Aufforderungssystem“ vor: erst Warnung, dann Leistungsdrosselung, zuletzt höchstens 20 km/h (VO (EU) 582/2011 Anhang XIII i. V. m. UN-Regelung Nr. 49 Anhang 11). Die Drosselstufe davor: Drehmoment −25 %.\n' +
       '✅ Manipulation (z. B. AdBlue-Emulator) ist verboten: Die Betriebserlaubnis erlischt.\n' +
       '➜ „Der zweite Abgasreiniger: der Partikelfilter.“' });
     kick(s, 'Abgas · AdBlue'); title(s, 'AdBlue leer – was passiert?');
-    const St = [['LuTriangleAlert', C.am, 'Warnung', 'Anzeige im Display: AdBlue nachfüllen.'], ['LuTrendingDown', C.or, 'Weniger Leistung', 'Der Motor wird gedrosselt.'], ['LuSnail', C.red, 'Kriechmodus', 'höchstens 20 km/h']];
+    const St = [['LuTriangleAlert', C.am, 'Warnung', 'Anzeige im Display: AdBlue nachfüllen.'], ['LuTrendingDown', C.or, 'Weniger Leistung', 'Der Motor wird gedrosselt: 25 % weniger Drehmoment.'], ['LuSnail', C.red, 'Kriechmodus', 'höchstens 20 km/h']];
     for (let k = 0; k < 3; k++) {
       const x = 0.7 + k * 4.13;
       card(s, x, 2.15, 3.7, 3.0, { line: St[k][1] }, CLICK);
@@ -255,7 +260,7 @@ module.exports = async (deck) => {
       '❓ „Ab wann gibt es an der Tankstelle Winterdiesel?“\n' +
       '🖱 Klick 1: Übergangsdiesel · Klick 2: Winterdiesel · Klick 3: Praxis.\n' +
       '✅ Nach DIN EN 590: ab 1. Oktober Übergangsdiesel (bis −10 °C filtrierbar), vom 16. November bis 28. Februar Winterdiesel (bis −20 °C). Im Frühjahr wieder Übergangsware.\n' +
-      '✅ Springt der Diesel im Winter nicht an, kann ausgeschiedenes Paraffin den Filter verstopft haben (Prüfungsfrage 2.7.03-208).\n' +
+      '✅ Springt der Diesel im Winter nicht an, kann ausgeschiedenes Paraffin den Filter verstopft haben (Prüfungsfrage 2.7.03-208 – amtliche Antwort: „Es befindet sich noch Sommerdieselkraftstoff im Tank“).\n' +
       '💡 Kein Benzin beimischen – das schadet modernen Motoren. Vor Fahrten nach Skandinavien oder in die Alpen rechtzeitig Winterdiesel tanken.\n' +
       '➜ „Noch eine Frage zum Leerlauf.“' });
     kick(s, 'Kraftstoff'); title(s, 'Winterdiesel – ab wann?');
@@ -290,8 +295,8 @@ module.exports = async (deck) => {
     kicker: 'Motor · Leerlauf', q: 'Morgens bei −5 °C: den Motor erst 10 Minuten warmlaufen lassen?', qsize: 30, ico: 'LuThermometer',
     answers: [
       ['LuX', 'Nein!', 'Sofort losfahren – die ersten Kilometer ohne Vollgas und ohne hohe Drehzahl.', C.red],
-      ['LuScale', 'Verboten:', 'Motor unnötig laufen lassen (§ 30 Abs. 1 StVO) – 80 € Verwarnungsgeld.'],
-      ['LuHeater', 'Zum Heizen oder Kühlen in der Pause', 'gibt es Standheizung und Standklimaanlage – auch beim Be- und Entladen Motor aus.', C.gr],
+      ['LuScale', 'Verboten:', 'Motor unnötig laufen lassen (§ 30 Abs. 1 StVO) – 80 € Bußgeld.'],
+      ['LuHeater', 'Zum Heizen oder Kühlen in der Pause', 'gibt es Standheizung und Standklimaanlage. Beim Be- und Entladen Motor aus – außer er treibt Kran, Kipper oder Pumpe an.', C.gr],
     ],
     notes:
       '▶ Sagen: „Viele glauben: Diesel muss warmlaufen. Stimmt das?“\n' +

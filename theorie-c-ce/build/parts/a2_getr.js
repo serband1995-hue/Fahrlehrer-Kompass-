@@ -3,7 +3,7 @@ const { C, base, kick, title, card, point, CLICK, quiz, steps, foot, sign, chapt
 const { icon } = require('../lib');
 
 module.exports = async (deck) => {
-  await chapter(deck, 'c3g', { num: 3, ttl: 'Kupplung und Getriebe', sub: 'Schonend anfahren, 12 Gänge verstehen, die Automatik richtig bedienen.', ico: 'LuSettings2', notes:
+  await chapter(deck, 'c3g', { num: 3, ttl: 'Kupplung und Getriebe', sub: 'Schonend anfahren, 12 Gänge verstehen, die Automatik richtig bedienen.', ico: 'LuCog', notes:
     '▶ Sagen: „Kapitel 3: Kupplung und Getriebe. Fast alle neuen Lkw haben heute ein automatisiertes Getriebe – trotzdem müsst ihr wissen, was darin passiert.“\n🖱 Keine Klicks.\n➜ „Erst eine Prüfungsfrage zur Kupplung.“' });
 
   // ===== KUPPLUNG: PRÜFUNGSFRAGE =====
@@ -19,7 +19,7 @@ module.exports = async (deck) => {
     const s = base(deck, 'c3g', { notes:
       '▶ Sagen: „Die Kupplung ist ein Verschleißteil. Ein Wechsel kostet beim Lkw schnell mehrere tausend Euro und einen Tag Stillstand.“\n' +
       '🖱 Klick 1–4: je ein Tipp · Klick 5: Warnzeichen.\n' +
-      '✅ Prüfungsfrage 2.7.03-215 „Wie können Sie die Kupplungsbauteile schonen?“: im kleinen Gang anfahren, nicht schleifen lassen, Fuß nicht auf dem Pedal lassen, beim Warten in den Leerlauf statt ausgekuppelt stehen.\n' +
+      '✅ Prüfungsfrage 2.7.03-215 „Wie können Sie die Kupplungsbauteile schonen?“: im kleinen Gang anfahren, nicht schleifen lassen, Fuß nicht auf dem Pedal lassen, beim Warten in den Leerlauf statt ausgekuppelt stehen. Amtliche Antworten: „Beim Warten Leerlauf einlegen und Fuß vom Kupplungspedal“ und „mit geringer Motordrehzahl rangieren“.\n' +
       '✅ Rutscht die Kupplung (Drehzahl steigt, Lkw wird nicht schneller) oder riecht es verbrannt: Werkstatt.\n' +
       '➜ „Jetzt zum Getriebe: Warum hat ein Lkw 12 Gänge?“' });
     kick(s, 'Kupplung'); title(s, 'So schont ihr die Kupplung');
@@ -43,9 +43,9 @@ module.exports = async (deck) => {
       'Kleine Gangsprünge halten den Motor immer im grünen Bereich – das spart Diesel. Meist schaltet die Automatik.',
     ],
     notes: [
-      '▶ Sagen: „Ein Lkw wiegt bis zu 40 Tonnen. Damit der Motor immer im grünen Bereich bleibt, braucht er viele Gänge. Gebaut wird das aus drei Teilen. Teil 1: das Grundgetriebe, hier mit 3 Gängen.“\n➜ „Teil 2 …“',
+      '▶ Sagen: „Ein Lkw der Klasse C wiegt bis zu 32 Tonnen, ein Lastzug bis zu 40. Damit der Motor immer im grünen Bereich bleibt, braucht er viele Gänge. Gebaut wird das aus drei Teilen. Teil 1: das Grundgetriebe, hier mit 3 Gängen.“\n➜ „Teil 2 …“',
       '▶ „… die Splitgruppe. Sie halbiert jeden Gangsprung. Aus 3 werden 6 Gänge.“\n➜ „Und Teil 3?“',
-      '▶ „Die Bereichsgruppe – auch Rangegruppe. Sie schaltet zwischen langsamem und schnellem Bereich um. Die 6 Gänge gibt es also zweimal: 3 × 2 × 2 = 12.“\n✅ Aufbau z. B. bei 12-Gang-Getrieben von ZF; Lehrbuchwissen. Früher gab es auch 16 Gänge (4 × 2 × 2).\n➜ „Wozu der Aufwand?“',
+      '▶ „Die Bereichsgruppe – auch Rangegruppe. Sie schaltet zwischen langsamem und schnellem Bereich um. Die 6 Gänge gibt es also zweimal: 3 × 2 × 2 = 12.“\n✅ Aufbau z. B. bei 12-Gang-Getrieben von ZF; Lehrbuchwissen. Es gibt auch 16 Gänge (4 × 2 × 2), heute seltener. Leichte Lkw (z. B. 7,5 t) haben oft nur 6 bis 9 Gänge.\n➜ „Wozu der Aufwand?“',
       '▶ „Kleine Sprünge: Beim Hochschalten fällt die Drehzahl nur wenig. Der Motor bleibt im grünen Bereich.“\n❓ „Wer schaltet heute meistens?“\n✅ Das automatisierte Getriebe – die Technik dahinter bleibt gleich.\n➜ „Wie bedient man so eine Automatik?“',
     ],
     legend: 'Gänge über der Geschwindigkeit · Beispiel 12-Gang-Getriebe · schematisch',
@@ -149,7 +149,7 @@ module.exports = async (deck) => {
   // ===== GEFÄLLE =====
   {
     const s = base(deck, 'c3g', { notes:
-      '▶ Sagen: „Vor euch dieses Zeichen: 10 % Gefälle, und ihr habt 40 Tonnen hinter euch.“\n' +
+      '▶ Sagen: „Vor euch dieses Zeichen: 10 % Gefälle, und euer Lkw ist voll beladen.“\n' +
       '❓ „Wann schaltet ihr zurück – oben oder unten am Berg?“\n' +
       '🖱 Klick 1–3: je eine Antwort.\n' +
       '✅ Vor dem Gefälle in einen kleineren Gang schalten. Dann wirken Motorbremse und Retarder stark, die Betriebsbremse bleibt kühl für den Notfall (Prüfungsfrage 2.7.01-257: rechtzeitig zurückschalten, Dauerbremse nutzen). Beim automatisierten Getriebe: Manuell-Modus oder Bergab-Funktion nach Betriebsanleitung.\n' +
