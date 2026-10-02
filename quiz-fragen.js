@@ -753,7 +753,7 @@ window.QUIZ_LEKTIONEN = [
     ],
     "richtig": 3,
     "erklaerung": "Bei Sichtweite unter 50 m durch Nebel, Schnee oder Regen gilt höchstens 50 km/h, auch auf der Autobahn (§ 3 Abs. 1 StVO).",
-    "folie": 14
+    "folie": 46
    },
    {
     "frage": "Probezeit: innerorts 21 km/h zu schnell. Was kommt zu 115 € und 1 Punkt dazu?",
@@ -777,7 +777,7 @@ window.QUIZ_LEKTIONEN = [
     ],
     "richtig": 1,
     "erklaerung": "Der Bremsweg wächst im Quadrat: (v : 10) × (v : 10). Bei 50 km/h 25 m, bei 100 km/h 100 m, also viermal so lang.",
-    "folie": 25
+    "folie": 36
    },
    {
     "frage": "Außerorts mit 80 km/h: Wie viel Abstand brauchst du nach der Faustregel?",
