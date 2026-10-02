@@ -82,7 +82,9 @@ async function ask(deck, key, { kicker, q, answers, notes, ico = 'LuMessageCircl
 async function steps(deck, key, { kicker, ttl, list, caps, scene, notes, legend, listY = 1.7, dur }) {
   const out = [];
   for (let i = 0; i < caps.length; i++) {
-    const s = base(deck, key, { notes: notes[i], transition: i ? 'morph' : 'fade', noGlide: true, dur });
+    const ML = '🖱 Keine Animation auf dieser Folie – nächster Klick = nächster Schritt (Morph).';
+    const nt = /🖱/.test(notes[i]) ? notes[i] : (notes[i].includes('\n➜') ? notes[i].replace('\n➜', '\n' + ML + '\n➜') : notes[i] + '\n' + ML);
+    const s = base(deck, key, { notes: nt, transition: i ? 'morph' : 'fade', noGlide: true, dur });
     const col = s.sec.col;
     s.text(kicker.toUpperCase(), { x: 0.7, y: 0.55, w: 5.2, h: 0.35, size: 13, bold: true, color: col, cs: 3, name: '!!k' });
     s.text(ttl, { x: 0.7, y: 0.88, w: 5.2, h: 0.6, size: 30, bold: true, color: C.txt, name: '!!t' });
