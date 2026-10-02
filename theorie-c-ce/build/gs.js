@@ -9,10 +9,11 @@ const SEC = {};
 function sec(key, name, col, bg) { SEC[key] = { name, col, bg }; }
 const P = { car: [0.594, 1.188], bike: [0.3575, 0.6875], ped: [0.58, 0.5], truck: [0.78, 2.86] };
 
-function base(deck, key, { notes = '', bg, transition = 'fade', noGlide = false, footer = true, ov = false, dur } = {}) {
+function base(deck, key, { notes = '', bg, transition = 'fade', noGlide = false, footer = true, ov = false, dur, bgX = 0 } = {}) {
   const S = SEC[key];
   const s = deck.add({ transition, notes, footer: false, noGlide, dur });
-  s.img(bg || S.bg, { x: 0, y: 0, w: W, h: H, name: '!!bg' });
+  if (bgX) s.img(SEC[key].bg, { x: 0, y: 0, w: W, h: H, name: '!!bg0' });
+  s.img(bg || S.bg, { x: bgX, y: 0, w: bgX ? W - bgX : W, h: H, name: '!!bg' });
   if (ov) s.img('ov_left.png', { x: 0, y: 0, w: ov === true ? W : ov, h: H, name: '!!ov' });
   if (footer) {
     s.text(deck.ftLabel + '  ·  ' + S.name, { x: 0.6, y: 7.02, w: 9, h: 0.28, size: 10, color: C.dim, cs: 2, name: '!!ftL' });
@@ -139,8 +140,8 @@ async function point(s, x, y, w, h, ico, col, head, body, anim = CLICK, o = {}) 
 function foot(s, t) { s.text(t, { x: 0.7, y: 6.62, w: 11.9, h: 0.3, size: 11, italic: true, color: C.dim }); }
 
 // Kapitel-Trennfolie: große Nummer, Titel, Unterzeile, Foto rechts mit Verlauf
-async function chapter(deck, key, { num, ttl, sub, bg, notes, ico = 'LuTruck' }) {
-  const s = base(deck, key, { notes, bg, ov: bg ? 9.5 : false, transition: 'black', footer: true });
+async function chapter(deck, key, { num, ttl, sub, bg, notes, ico = 'LuTruck', bgX = 0 }) {
+  const s = base(deck, key, { notes, bg, bgX, ov: bg ? 9.5 : false, transition: 'black', footer: true });
   const col = s.sec.col;
   if (bg) s.img('ov_left.png', { x: 0, y: 0, w: 8.0, h: H, name: '!!ov2' });
   else { s.oval(8.3, 1.4, 4.4, 4.4, { fill: col, ft: 90, line: col, lt: 60, lw: 2 }, { fx: 'zoom', auto: true, dur: 900 }); s.img(await icon(ico, col), { x: 9.4, y: 2.5, w: 2.2, h: 2.2 }, { fx: 'fade', auto: true, dur: 900, d: 200 }); }
@@ -174,8 +175,8 @@ async function takeaway(deck, key, { ttl = 'Das nimmst du mit', items, notes }) 
 }
 // Foto-Folie mit Frage links, Auflösung auf Klick
 async function photoAsk(deck, key, o) {
-  const { bg, kicker, q, answers, notes, ov = 7.2, w = 5.9, qsize = 38 } = o;
-  const s = base(deck, key, { bg, ov, notes });
+  const { bg, kicker, q, answers, notes, ov = 7.2, w = 5.9, qsize = 38, bgX = 0 } = o;
+  const s = base(deck, key, { bg, ov, notes, bgX });
   s.img('ov_left.png', { x: 0, y: 0, w: ov, h: H, name: '!!ov2' });
   kick(s, kicker);
   title(s, q, { w, h: 2.0, size: qsize });

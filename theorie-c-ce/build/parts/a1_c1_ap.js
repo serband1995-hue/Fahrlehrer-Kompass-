@@ -40,7 +40,7 @@ const FIELDS = {
 const TX = 10.2, TY = 4.95; // Lkw-Mitte (rechter Fahrstreifen)
 
 module.exports = async (deck) => {
-  await chapter(deck, 'ap', { num: 4, ttl: 'Arbeitsplatz und toter Winkel', sub: 'Hoch oben sitzen heißt nicht, alles zu sehen.', bg: 'f_spiegel.jpg', notes:
+  await chapter(deck, 'ap', { num: 4, ttl: 'Arbeitsplatz und toter Winkel', sub: 'Hoch oben sitzen heißt nicht, alles zu sehen.', bg: 'f_spiegel.jpg', bgX: 7.0, notes:
     '▶ Sagen: „Letztes Kapitel von C1: euer Arbeitsplatz. Ihr sitzt fast zwei Meter höher als im Auto. Man denkt: Ich sehe alles. Das stimmt leider nicht.“\n🖱 Keine Klicks.\n➜ „Bevor ihr losfahrt, stellt ihr alles ein.“' });
   // ===== EINSTELLEN =====
   {
@@ -62,15 +62,15 @@ module.exports = async (deck) => {
   }
   // ===== FOTO: SPIEGEL =====
   await photoAsk(deck, 'ap', {
-    bg: 'f_spiegel.jpg', kicker: 'Spiegel am Lkw', q: 'Welche Spiegel hat ein Lkw – und wozu?', qsize: 34, w: 5.4, ov: 7.4, asize: 15,
+    bg: 'f_spiegel.jpg', kicker: 'Spiegel am Lkw', q: 'Welche Spiegel hat ein Lkw – und wozu?', qsize: 34, w: 5.4, ov: 7.4, asize: 15, bgX: 7.0,
     answers: [
       ['LuEye', 'Hauptspiegel', 'nach hinten, entlang der Seite'],
       ['LuEye', 'Weitwinkelspiegel', 'der kleine darunter: breiter, neben dem Lkw'],
-      ['LuEye', 'Rampenspiegel', 'über der Beifahrertür: direkt neben dem Fahrerhaus'],
+      ['LuEye', 'Rampenspiegel', 'über der Tür: direkt neben dem Fahrerhaus'],
       ['LuEye', 'Frontspiegel', 'über der Scheibe: direkt vor der Stoßstange'],
     ],
     notes:
-      '▶ Sagen: „Schaut euch das Foto an: die Beifahrerseite eines Lkw. Neben der Tür zwei Spiegel übereinander, über der Tür noch einer.“\n' +
+      '▶ Sagen: „Schaut euch das Foto an: die Beifahrerseite eines Lkw. Vorn an der Fahrerhaus-Ecke hängen zwei Spiegel übereinander, oben an der Scheibe sitzt der Frontspiegel.“\n' +
       '❓ „Welche Spiegel hat ein Lkw, und wofür ist welcher?“\n' +
       '🖱 Klick 1: Hauptspiegel · Klick 2: Weitwinkelspiegel · Klick 3: Rampenspiegel · Klick 4: Frontspiegel.\n' +
       '✅ Nach UN-Regelung 46 (gilt über § 56 StVZO): Hauptaußenspiegel (Klasse II), Weitwinkelspiegel (IV), Nahbereichs-/Rampenspiegel (V, Beifahrerseite), Frontspiegel (VI). Für schwere Lkw über 7,5 t sind alle vier vorgeschrieben; bei leichteren hängt es von Bauart und Einbauhöhe ab.\n' +
