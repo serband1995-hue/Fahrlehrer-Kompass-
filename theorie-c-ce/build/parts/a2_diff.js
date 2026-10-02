@@ -1,5 +1,5 @@
 // Abend 2 · C3: Differenzial in der Kurve, Differenzialsperre, Achsformeln, ASR
-const { C, base, kick, title, card, point, CLICK, ask, quiz, steps, foot, svgImg, chapter } = require('../gs');
+const { C, base, kick, title, card, point, CLICK, ask, quiz, steps, foot, svgImg, chapter, motion } = require('../gs');
 const { icon } = require('../lib');
 
 // Draufsicht einer Antriebsachse in der Kurve: Kurvenmittelpunkt links unten
@@ -7,51 +7,48 @@ const CX = 6.0, CY = 6.6;
 module.exports = async (deck) => {
   await chapter(deck, 'c3d', { num: 4, ttl: 'Differenzial und Achsen', sub: 'Warum die Räder verschieden schnell drehen – und wann man sperrt.', bg: 'g_bau_r.jpg', bgX: 6.2, notes:
     '▶ Sagen: „Letztes Kapitel von C3: das Differenzial, die Sperre und die Achsformeln wie 6×4 oder 8×4. Auf dem Bild: ein Baustellen-Kipper mit vier Achsen.“\n🖱 Keine Klicks.\n➜ „Erst die Frage: Warum braucht man überhaupt ein Differenzial?“' });
-  // ===== DIFFERENZIAL IN DER KURVE (Morph) =====
-  const R1 = 3.2, R2 = 4.35; // innerer / äußerer Radius (Zoll)
-  await steps(deck, 'c3d', {
-    kicker: 'Differenzial', ttl: 'Kurve: zwei Wege',
-    list: ['Geradeaus: gleich schnell', 'Kurve: innen kurzer Weg', 'Außen langer Weg', 'Differenzial gleicht aus'],
-    caps: [
-      'Geradeaus legen beide Antriebsräder den gleichen Weg zurück – sie drehen gleich schnell.',
-      'In der Kurve fährt das innere Rad einen kleinen Bogen …',
-      '… das äußere Rad einen großen Bogen. Es muss in derselben Zeit mehr Weg schaffen.',
-      'Das Differenzial lässt die Räder verschieden schnell drehen. Ohne es würden die Reifen radieren und die Achse verspannen.',
-    ],
-    notes: [
-      '▶ Sagen: „Stellt euch die Hinterachse von oben vor. Geradeaus: beide Räder gleich schnell.“\n❓ „Was passiert in der Kurve?“\n➜ „Schauen wir genau hin.“',
-      '▶ „Das innere Rad fährt einen kleinen Bogen.“\n➜ „Und das äußere?“',
-      '▶ „Das äußere Rad einen viel größeren. In derselben Zeit – also muss es schneller drehen.“\n➜ „Wer sorgt dafür?“',
-      '▶ „Das Differenzial, auch Ausgleichsgetriebe. Es verteilt die Kraft und erlaubt verschiedene Drehzahlen.“\n💡 Der Nachteil kommt gleich: Dreht ein Rad auf Eis durch, bekommt das andere kaum noch Kraft.\n➜ „Und genau dafür gibt es die Differenzialsperre.“',
-    ],
-    legend: 'Draufsicht · schematisch',
-    scene: async (s, i) => {
-      const curve = i >= 1;
-      // Fahrbahn: gerade oder gebogen (als Bild)
-      const W = 7.4, Hh = 5.4, px = 100;
-      let svg = '';
-      if (!curve) svg = `<rect x="${(CX + R1 - 0.4 - 5.6) * px}" y="0" width="${(R2 - R1 + 0.8) * px}" height="${Hh * px}" fill="#232A35"/>`;
-      else {
-        const cx = (CX - 5.6) * px, cy = (CY - 1.25) * px;
-        svg = `<path d="M ${cx + (R1 - 0.4) * px} ${cy} A ${(R1 - 0.4) * px} ${(R1 - 0.4) * px} 0 0 0 ${cx} ${cy - (R1 - 0.4) * px} L ${cx} ${cy - (R2 + 0.4) * px} A ${(R2 + 0.4) * px} ${(R2 + 0.4) * px} 0 0 1 ${cx + (R2 + 0.4) * px} ${cy} Z" fill="#232A35"/>`;
-        if (i >= 1) svg += `<path d="M ${cx + R1 * px} ${cy} A ${R1 * px} ${R1 * px} 0 0 0 ${cx + R1 * px * Math.cos(1.2)} ${cy - R1 * px * Math.sin(1.2)}" fill="none" stroke="#4CC9F0" stroke-width="10" stroke-dasharray="20 12"/>`;
-        if (i >= 2) svg += `<path d="M ${cx + R2 * px} ${cy} A ${R2 * px} ${R2 * px} 0 0 0 ${cx + R2 * px * Math.cos(1.2)} ${cy - R2 * px * Math.sin(1.2)}" fill="none" stroke="#FFB547" stroke-width="10" stroke-dasharray="20 12"/>`;
-      }
-      s.img(await svgImg(svg, W * px, Hh * px), { x: 5.6, y: 1.25, w: W, h: Hh, name: '!!bahn' });
-      // Achse mit zwei Rädern
-      const ax = CX + R1 - 0.05;
-      const y0 = CY - 0.35;
-      const len = R2 - R1;
-      s.rect(ax, y0, len, 0.1, { fill: '9AA6B5', name: '!!achse' });
-      s.rrect(ax - 0.2, y0 - 0.32, 0.4, 0.74, { fill: '1B1F26', line: C.bl, lw: 2, rr: 0.2, name: '!!rad1' });
-      s.rrect(ax + len - 0.2, y0 - 0.32, 0.4, 0.74, { fill: '1B1F26', line: C.or, lw: 2, rr: 0.2, name: '!!rad2' });
-      s.rrect(ax + len / 2 - 0.22, y0 - 0.22, 0.44, 0.54, { fill: i === 3 ? 'C9A227' : '55606F', line: i === 3 ? C.white : '55606F', lw: 2, rr: 0.1, name: '!!diffk', glow: i === 3 ? 10 : undefined, glowColor: 'C9A227' });
-      // Tachowerte
-      const v1 = curve ? (i >= 1 ? 'langsam' : '') : 'gleich', v2 = curve ? (i >= 2 ? 'schnell' : '') : 'gleich';
-      s.text('innen: ' + v1, { x: 10.9, y: 1.6, w: 2.4, h: 0.4, size: 17, bold: true, color: C.bl, name: '!!v1' });
-      s.text('außen: ' + v2, { x: 10.9, y: 2.05, w: 2.4, h: 0.4, size: 17, bold: true, color: C.or, name: '!!v2' });
-    },
-  });
+  // ===== DIFFERENZIAL IN DER KURVE (fließend: Achse fährt durch die Kurve) =====
+  {
+    const R1 = 3.2, R2 = 4.35, px = 100, IW = 7.4, IH = 5.4, OX = 5.6, OY = 1.25; // Radien innen/außen, Bildfläche
+    const cx = (CX - OX) * px, cy = (CY - OY) * px;
+    const road = `<path d="M ${cx + (R1 - 0.4) * px} ${cy} A ${(R1 - 0.4) * px} ${(R1 - 0.4) * px} 0 0 0 ${cx} ${cy - (R1 - 0.4) * px} L ${cx} ${cy - (R2 + 0.4) * px} A ${(R2 + 0.4) * px} ${(R2 + 0.4) * px} 0 0 1 ${cx + (R2 + 0.4) * px} ${cy} Z" fill="#232A35"/>` +
+      `<path d="M ${cx + ((R1 + R2) / 2) * px} ${cy} A ${((R1 + R2) / 2) * px} ${((R1 + R2) / 2) * px} 0 0 0 ${cx} ${cy - ((R1 + R2) / 2) * px}" fill="none" stroke="#3C4656" stroke-width="4" stroke-dasharray="24 18"/>`;
+    const roadImg = await svgImg(road, IW * px, IH * px, 1);
+    const arc = (r, a1, col) => `<path d="M ${cx + r * px} ${cy} A ${r * px} ${r * px} 0 0 0 ${cx + r * px * Math.cos(a1)} ${cy - r * px * Math.sin(a1)}" fill="none" stroke="${col}" stroke-width="12" stroke-linecap="round"/>`;
+    const PH = [0, 0.14, 0.28, 0.42, 0.56, 0.7, 0.84, 0.98, 1.12];
+    const frames = PH.map((f, k) => ({ t: f, hold: k === 0 || k === PH.length - 1, answer: k === PH.length - 1 }));
+    frames[0].cap = 'Die Antriebsachse fährt in eine Linkskurve. Achtet auf die beiden Spuren.';
+    frames[0].note = '▶ Sagen: „Wir schauen von oben auf die Hinterachse. Sie fährt gleich durch eine Linkskurve.“\n❓ Frage auf der Folie: „Welches Rad muss sich schneller drehen?“ – abstimmen lassen.\n🖱 Klick: Die Achse fährt durch die Kurve (läuft von selbst).\n➜ „Schaut auf die Spuren.“';
+    frames[1].cap = 'Das innere Rad (blau) fährt einen kleinen Bogen, das äußere (orange) einen großen.';
+    frames[8].cap = 'Gleiche Zeit, aber außen mehr Weg: Das äußere Rad muss schneller drehen. Das Differenzial macht es möglich.';
+    frames[8].note = '▶ „In derselben Zeit legt das äußere Rad deutlich mehr Weg zurück – es muss schneller drehen. Das Differenzial, auch Ausgleichsgetriebe, lässt das zu und verteilt trotzdem die Kraft auf beide Räder.“\n💡 Ohne Differenzial würden die Reifen radieren und die Achse verspannen. Der Nachteil kommt gleich: Dreht ein Rad auf Eis durch, bekommt das andere kaum noch Kraft.\n🖱 Keine Animation mehr – nächster Klick: nächste Folie.\n➜ „Und genau dafür gibt es die Differenzialsperre.“';
+    await motion(deck, 'c3d', {
+      kicker: 'Differenzial', ttl: 'Kurve: zwei Wege', frames, dur: 380, holdDur: 600,
+      question: 'Linkskurve: Welches Antriebsrad muss sich schneller drehen?',
+      answer: 'Das äußere Rad – es fährt den längeren Weg. Das Differenzial gleicht das aus.',
+      legend: 'Draufsicht · schematisch',
+      scene: async (s, f) => {
+        s.img(roadImg, { x: OX, y: OY, w: IW, h: IH, name: '!!bahn' });
+        s.img(await svgImg((f > 0.01 ? arc(R1, f, '#4CC9F0') + arc(R2, f, '#FFB547') : '<rect width="1" height="1" fill="none"/>'), IW * px, IH * px, 1), { x: OX, y: OY, w: IW, h: IH, name: '!!spur' });
+        const ca = Math.cos(f), sa = Math.sin(f), rot = Math.round(-f * 180 / Math.PI * 10) / 10;
+        const P = r => [CX + r * ca, CY - r * sa];
+        const [ax, ay] = P((R1 + R2) / 2), len = R2 - R1;
+        s.rrect(ax - len / 2, ay - 0.05, len, 0.1, { fill: '9AA6B5', rr: 0.5, rotate: rot, name: '!!achse' });
+        const [x1, y1] = P(R1), [x2, y2] = P(R2);
+        s.rrect(x1 - 0.2, y1 - 0.37, 0.4, 0.74, { fill: '1B1F26', line: C.bl, lw: 2.5, rr: 0.3, rotate: rot, name: '!!rad1' });
+        s.rrect(x2 - 0.2, y2 - 0.37, 0.4, 0.74, { fill: '1B1F26', line: C.or, lw: 2.5, rr: 0.3, rotate: rot, name: '!!rad2' });
+        s.rrect(ax - 0.24, ay - 0.27, 0.48, 0.54, { fill: f > 0.5 ? 'C9A227' : '55606F', line: f > 0.5 ? C.white : '55606F', lw: 2, rr: 0.2, rotate: rot, name: '!!diffk', glow: f > 0.5 ? 10 : undefined, glowColor: 'C9A227' });
+        // Wegbalken
+        const sc = 1.3;
+        s.text('Weg innen', { x: 10.6, y: 1.45, w: 2.5, h: 0.3, size: 13, bold: true, color: C.bl, name: '!!tw1' });
+        s.rrect(10.6, 1.8, Math.max(0.05, R1 * f * 0.51), 0.24, { fill: C.bl, rr: 0.5, name: '!!w1' });
+        s.text('Weg außen', { x: 10.6, y: 2.2, w: 2.5, h: 0.3, size: 13, bold: true, color: C.or, name: '!!tw2' });
+        s.rrect(10.6, 2.55, Math.max(0.05, R2 * f * 0.51), 0.24, { fill: C.or, rr: 0.5, name: '!!w2' });
+        s.text(f > 0.9 ? 'außen schneller!' : '', { x: 10.6, y: 2.95, w: 2.5, h: 0.4, size: 16, bold: true, color: C.or, name: '!!tsch' });
+      },
+    });
+  }
+
   // ===== DIFFERENZIALSPERRE =====
   {
     const s = base(deck, 'c3d', { notes:

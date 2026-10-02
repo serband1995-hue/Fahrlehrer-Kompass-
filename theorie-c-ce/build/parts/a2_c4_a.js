@@ -62,6 +62,7 @@ module.exports = async (deck) => {
   const GY = 6.1, RX = 11.45;           // Boden, Rampenkante
   await steps(deck, 'c4f', {
     kicker: 'Luftfederung', ttl: 'Heben und Senken',
+    ask: { q: 'Was müsst ihr nach dem Laden tun?', a: 'Zurück aufs Fahrniveau – sonst Anstoß an Brücken und Toren.', at: 2 },
     list: ['Fahrniveau', 'An der Rampe anheben', 'Danach: zurück aufs Fahrniveau'],
     caps: [
       'Die Luftfeder hält den Aufbau bei jeder Beladung auf der gleichen Höhe: dem Fahrniveau.',

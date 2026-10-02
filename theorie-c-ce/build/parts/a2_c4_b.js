@@ -77,6 +77,7 @@ module.exports = async (deck) => {
   };
   await steps(deck, 'c4e', {
     kicker: 'Bordnetz', ttl: '24 Volt im Lkw',
+    ask: { q: 'Wie kommt man auf 24 Volt?', a: 'Zwei 12-Volt-Batterien in Reihe: Plus an Minus.', at: 1 },
     list: ['Eine Batterie: 12 V', 'Zwei in Reihe: 24 V', 'Lichtmaschine lädt', 'Ladekontrolle leuchtet rot'],
     caps: [
       'Eine Lkw-Batterie hat 12 Volt – wie im Pkw, nur größer.',
@@ -122,6 +123,7 @@ module.exports = async (deck) => {
   const PX = 6.1, SX = 10.4, TY = 2.9;   // Pannen-Lkw links, Spender rechts
   await steps(deck, 'c4e', {
     kicker: 'Starthilfe', ttl: 'Die richtige Reihenfolge',
+    ask: { q: 'Wohin kommt das letzte Ende des schwarzen Kabels?', a: 'An Masse am Motorblock – nicht an die Batterie.', at: 4 },
     list: ['Nur 24 V an 24 V', 'Rot an Plus – Pannen-Lkw', 'Rot an Plus – Spender', 'Schwarz an Minus – Spender', 'Schwarz an Masse – Pannen-Lkw'],
     caps: [
       'Nur gleiche Spannung verbinden: 24 V an 24 V. Hat der Lkw einen eigenen Starthilfe-Anschluss, diesen nach Betriebsanleitung nutzen.',

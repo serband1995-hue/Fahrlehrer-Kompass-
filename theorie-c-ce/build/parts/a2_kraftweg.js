@@ -71,6 +71,7 @@ module.exports = async (deck) => {
   const J1 = [7.05, 3.85];
   await steps(deck, 'c3k', {
     kicker: 'Kraftstrang', ttl: 'Die Gelenkwelle',
+    ask: { q: 'Warum braucht die Gelenkwelle Gelenke?', a: 'Weil die Achse beim Federn auf und ab geht.', at: 1 },
     list: ['Aufbau', 'Die Achse federt ein', 'Abschleppen: abflanschen'],
     caps: [
       'Die Gelenkwelle verbindet Getriebe und Hinterachse. Kreuzgelenke gleichen Winkel aus, das Schiebestück die Länge.',

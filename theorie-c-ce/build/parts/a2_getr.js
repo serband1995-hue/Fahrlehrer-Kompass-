@@ -35,6 +35,7 @@ module.exports = async (deck) => {
   const bw = AW / 12; // ein Gang im fertigen 12-Gang-Bild
   await steps(deck, 'c3g', {
     kicker: 'Getriebe', ttl: 'Warum 12 Gänge?',
+    ask: { q: 'Warum hat ein Lkw so viele Gänge?', a: 'Kleine Sprünge – der Motor bleibt immer im grünen Bereich.', at: 3 },
     list: ['Grundgetriebe: 3 Gänge', 'Splitgruppe: × 2', 'Bereichsgruppe: × 2', 'Ergebnis: kleine Sprünge'],
     caps: [
       'Das Grundgetriebe hat nur wenige Gänge – hier 3. Die Sprünge dazwischen sind groß.',
@@ -98,6 +99,7 @@ module.exports = async (deck) => {
   // ===== WANDLERSCHALTKUPPLUNG (Morph) =====
   await steps(deck, 'c3g', {
     kicker: 'Wandlerschaltkupplung', ttl: 'Anfahren über Öl',
+    ask: { q: 'Warum verschleißt diese Kupplung beim Anfahren nicht?', a: 'Die Kraft geht über Öl im Wandler – ohne Reibung.', at: 1 },
     list: ['Anfahren: Wandler', 'Fahren: Kupplung zu', 'Wo man sie findet'],
     caps: [
       'Beim Anfahren überträgt Öl im Wandler die Kraft – ohne Reibung, ohne Verschleiß, sehr feinfühlig.',
