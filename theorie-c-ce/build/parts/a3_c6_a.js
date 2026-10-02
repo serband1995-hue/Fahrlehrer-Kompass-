@@ -1,5 +1,5 @@
 // Abend 3 · C6: Lernziele, Kapitel 1 Dauerbremsen, Kapitel 2 Bremsweg und Fading
-const { C, sec, base, kick, title, card, point, CLICK, ask, quiz, steps, svgImg, chapter, lkw } = require('../gs');
+const { C, sec, base, kick, title, card, point, CLICK, ask, quiz, steps, svgImg, chapter, lkw, motion } = require('../gs');
 const { icon } = require('../lib');
 
 sec('c6', 'LEKTION C6', C.bl, 'bg_kap.jpg');
@@ -54,6 +54,7 @@ module.exports = async (deck) => {
   const PY = 3.4;
   await steps(deck, 'c6d', {
     kicker: 'Dauerbremsen', ttl: 'Die Motorbremse',
+    ask: { q: 'Warum schaltet man vor dem Gefälle zurück?', a: 'Die Motorbremse wirkt bei hoher Drehzahl am stärksten.', at: 3 },
     list: ['Fahren: Klappe offen', 'Auspuffklappe zu', 'Konstantdrossel dazu', 'Drehzahl hoch halten'],
     caps: [
       'Beim normalen Fahren strömt das Abgas frei durch den Auspuff.',
@@ -80,7 +81,7 @@ module.exports = async (deck) => {
       // Auspuff mit Klappe
       s.rect(8.0, PY - 0.25, 4.9, 0.5, { fill: '3C4656', name: '!!rohr' });
       const zu = i >= 1;
-      s.rect(10.2, PY - (zu ? 0.24 : 0.04), zu ? 0.08 : 0.6, zu ? 0.48 : 0.08, { fill: zu ? C.or : '9AA6B5', name: '!!klappe', glow: zu ? 8 : undefined, glowColor: C.or });
+      s.rrect(10.2, PY - 0.045, 0.5, 0.09, { fill: zu ? C.or : '9AA6B5', rr: 0.5, rotate: zu ? 90 : 0, name: '!!klappe', glow: zu ? 8 : undefined, glowColor: C.or });
       s.text('Auspuffklappe', { x: 9.6, y: PY + 0.35, w: 1.9, h: 0.35, size: 13, bold: true, color: zu ? C.or : C.dim, align: 'center', name: '!!tkl' });
       // Abgasströmung
       if (!zu) for (let k = 0; k < 3; k++) s.lineS(8.3 + k * 1.5, PY, 9.1 + k * 1.5, PY, { color: C.mut, lw: 3, endArrow: 'triangle', name: '!!g' + k });
@@ -145,11 +146,55 @@ module.exports = async (deck) => {
   // ===== KAPITEL 2 BREMSWEG UND FADING =====
   await chapter(deck, 'c6w', { num: 2, ttl: 'Bremsweg und Fading', sub: 'Wie lang der Anhalteweg wirklich ist – und warum heiße Bremsen nachlassen.', ico: 'LuThermometer', notes:
     '▶ Sagen: „Kapitel 2: Wie weit fährt ein Lkw, bis er steht?“\n🖱 Keine Klicks.\n➜ „Rechnen wir es aus.“' });
+  // ===== ANHALTEWEG ALS FAHRT (fließend) =====
+  {
+    const SCm = 0.06, XS = 11.25, RY = 3.05; // Start der Front rechts, Fahrt nach links
+    const fr = (d, v, o = {}) => ({ t: { d, v }, ...o });
+    const tau = [0.25, 0.5, 0.75, 1].map(x => 35 + 49 * (1 - (1 - x) * (1 - x)));
+    await motion(deck, 'c6w', {
+      kicker: 'Bremsweg', ttl: 'Bis der Lkw steht', dur: 520, holdDur: 700,
+      question: 'Ihr fahrt 80 km/h und seht eine Gefahr. Wie weit fährt der Lkw noch, bis er steht?',
+      answer: 'Etwa 85 Meter – fast eine ganze Fußballfeld-Länge.',
+      legend: 'Mindest-Bremsverzögerung 5,0 m/s² · gerundet · eigene Rechnung',
+      frames: [
+        fr(0, 80, { hold: true, cap: 'Gefahr erkannt! Jetzt beginnt die Reaktionszeit.', note: '▶ Sagen: „Ein Lkw mit 80 km/h, vorn eine Gefahr.“\n❓ Frage auf der Folie: „Wie weit fährt er noch, bis er steht?“ – Schätzungen sammeln und an die Tafel schreiben.\n🖱 Klick: Die Fahrt beginnt (läuft von selbst bis zum nächsten Halt).\n➜ „Erst reagiert ihr …“' }),
+        fr(11, 80, { cap: 'Reaktion: rund 1 Sekunde – der Lkw fährt ungebremst weiter.' }),
+        fr(22, 80, { hold: true, note: '▶ „1 Sekunde Reaktion – bei 80 km/h sind das 22 Meter, ohne dass irgendetwas bremst.“\n🖱 Klick: weiter.\n➜ „Jetzt tretet ihr auf die Bremse – aber …“' }),
+        fr(28.5, 80, { cap: 'Die Druckluft braucht bis zu 0,6 Sekunden, bis sie in den Zylindern wirkt.' }),
+        fr(35, 80, { hold: true, note: '▶ „… die Druckluft muss erst in die Bremszylinder strömen. Bis zu 0,6 Sekunden – noch einmal 13 Meter.“\n✅ § 41 Abs. 12 StVZO: Ansprech- und Schwellzeit höchstens 0,6 s.\n🖱 Klick: Der Lkw bremst.\n➜ „Und jetzt bremst er.“' }),
+        fr(tau[0], 60, { cap: 'Jetzt bremst der Lkw – erst schnell, dann immer langsamer.' }), fr(tau[1], 40), fr(tau[2], 20),
+        fr(84, 0, { hold: true, answer: true, cap: 'Bremsweg rund 49 Meter. Zusammen: etwa 85 Meter Anhalteweg.', note: '▶ „Bremsweg rund 49 Meter. Zusammen etwa 85 Meter – fast ein Fußballfeld. Und das mit guter Bremse auf trockener Straße.“\n✅ Eigene Rechnung: 80 km/h = 22,2 m/s; Reaktion 1 s = 22 m; 0,6 s = 13 m; Bremsweg v²/(2 · 5,0 m/s²) = 49 m.\n🖱 Keine Animation mehr – nächster Klick: Vergleich mit Gefälle und halbem Tempo.\n➜ „Was ändert sich im Gefälle – und bei halbem Tempo?“' }),
+      ],
+      scene: async (s, { d, v }) => {
+        // Straße
+        s.rrect(5.75, RY - 1.35, 7.35, 1.55, { fill: C.road, rr: 0.12, name: '!!road' });
+        for (let k = 0; k < 9; k++) s.rrect(5.95 + k * 0.82, RY - 0.6, 0.45, 0.05, { fill: C.mark, rr: 0.5, name: '!!rm' + k });
+        // Gefahr links
+        s.oval(5.8, RY - 1.2, 0.55, 0.55, { fill: C.red, glow: 8, glowColor: C.red, name: '!!gef' });
+        s.text('!', { x: 5.8, y: RY - 1.2, w: 0.55, h: 0.55, size: 22, bold: true, color: C.white, align: 'center', valign: 'middle', name: '!!tgef' });
+        // Lkw (Front links) fährt nach links
+        const xf = XS - d * SCm;
+        await lkw(s, { L: 4.4, axles: [0.62, 3.3], floor: 0.62, boxH: 1.2 }, { x: xf, gy: RY + 0.05, k: 0.42, name: '!!lkwA' });
+        // Weg-Balken unter der Straße (von rechts nach links)
+        const seg = (nm, from, to, col) => { const a = Math.min(d, to), w = Math.max(0, a - from) * SCm; s.rrect(XS - from * SCm - Math.max(w, 0.02), RY + 0.45, Math.max(w, 0.02), 0.42, { fill: col, ft: w < 0.02 ? 100 : 0, rr: 0.5, name: '!!' + nm }); };
+        seg('br', 0, 22, '6E7888'); seg('bs', 22, 35, C.am); seg('bb', 35, 84, C.red);
+        const lab = (nm, from, to, txt, col) => s.text(d >= to ? txt : '', { x: XS - to * SCm, y: RY + 0.95, w: (to - from) * SCm, h: 0.35, size: 13, bold: true, color: col, align: 'center', name: '!!' + nm });
+        lab('lr', 0, 22, '22 m', C.mut); lab('ls', 22, 35, '13 m', C.am); lab('lb', 35, 84, '49 m', C.red);
+        // Tacho und Summe
+        s.text(String(v), { x: 11.1, y: 4.55, w: 1.2, h: 0.75, size: 40, bold: true, color: v ? C.txt : C.gr, align: 'right', name: '!!kmh' });
+        s.text('km/h', { x: 12.35, y: 4.85, w: 0.8, h: 0.4, size: 15, color: C.mut, name: '!!kmhl' });
+        s.text([{ text: 'gefahren: ', options: { color: C.mut } }, { text: Math.round(d) + ' m', options: { bold: true, color: C.txt } }], { x: 5.8, y: 4.65, w: 4.5, h: 0.6, size: 24, name: '!!dist' });
+        const L = [['6E7888', 'Reaktion'], [C.am, 'Druckluft wirkt'], [C.red, 'Bremsen']];
+        L.forEach(([c, tx], k) => { s.rrect(5.8 + k * 2.1, 5.55, 0.28, 0.28, { fill: c, rr: 0.3, name: '!!lg' + k }); s.text(tx, { x: 6.15 + k * 2.1, y: 5.52, w: 1.8, h: 0.34, size: 13, color: C.mut, name: '!!lgt' + k }); });
+      },
+    });
+  }
+
   // Anhalteweg (Morph, Balken in Metern)
   const SC = 0.075, X0 = 5.9; // Zoll je Meter
   const CASES = [[22, 13, 49, 'eben, 80 km/h'], [22, 13, 59, '8 % Gefälle, 80 km/h'], [11, 7, 12, 'eben, 40 km/h']];
   await steps(deck, 'c6w', {
-    kicker: 'Bremsweg', ttl: 'Der Anhalteweg',
+    kicker: 'Bremsweg', ttl: 'Drei Fälle im Vergleich',
     list: ['Eben, 80 km/h', 'Im Gefälle', 'Halbes Tempo'],
     caps: [
       'Reaktion 1 Sekunde, dazu braucht die Druckluft bis zu 0,6 Sekunden, bis sie wirkt. Zusammen etwa 85 Meter.',
@@ -157,7 +202,7 @@ module.exports = async (deck) => {
       'Halbes Tempo – nur ein Viertel Bremsweg. Der Anhalteweg schrumpft auf etwa 30 Meter.',
     ],
     notes: [
-      '▶ Sagen: „Ein Lkw mit 80 km/h, ihr seht eine Gefahr. Erst die Reaktionszeit – rund 1 Sekunde, das sind 22 Meter. Dann braucht die Druckluft Zeit, bis sie bremst – bis zu 0,6 Sekunden, noch einmal 13 Meter. Dann erst bremst der Lkw – bei guter Bremse etwa 49 Meter.“\n✅ Eigene Rechnung mit 5,0 m/s² (Mindestwert nach § 41 Abs. 4 StVZO) und 0,6 s Ansprech- und Schwellzeit (§ 41 Abs. 12). Ergebnis: rund 85 m.\n➜ „Und bergab?“',
+      '▶ Sagen: „Noch einmal als Balken zum Vergleich: Erst die Reaktionszeit – rund 1 Sekunde, das sind 22 Meter. Dann braucht die Druckluft Zeit, bis sie bremst – bis zu 0,6 Sekunden, noch einmal 13 Meter. Dann erst bremst der Lkw – bei guter Bremse etwa 49 Meter.“\n✅ Eigene Rechnung mit 5,0 m/s² (Mindestwert nach § 41 Abs. 4 StVZO) und 0,6 s Ansprech- und Schwellzeit (§ 41 Abs. 12). Ergebnis: rund 85 m.\n➜ „Und bergab?“',
       '▶ „Im Gefälle schiebt die Hangabtriebskraft mit. Bei 8 % Gefälle fehlen etwa 0,8 m/s² Verzögerung – aus 49 Metern Bremsweg werden etwa 59.“\n✅ Prüfungsfrage 2.7.01-042: Der Bremsweg verlängert sich im Gefälle und mit schwerer Last – NICHT bei Gegenwind. Eigene Rechnung.\n➜ „Was bringt es, langsamer zu fahren?“',
       '▶ „Der Bremsweg wächst mit dem Quadrat der Geschwindigkeit. Halbes Tempo – ein Viertel Bremsweg.“\n✅ Physik: Bremsweg = v² / (2 · a). Bei 40 km/h: 11 + 7 + 12 = rund 30 m.\n💡 Nasse Bremsen nach langer Standzeit bei Feuchtigkeit: Erste Bremsungen können schwächer sein oder blockieren (2.7.01-040).\n➜ „Und was passiert mit der Bremse auf einer langen Abfahrt?“',
     ],
@@ -182,39 +227,44 @@ module.exports = async (deck) => {
     },
   });
 
-  // ===== FADING (Morph) =====
-  const DX = 7.9, DY = 3.75;
-  await steps(deck, 'c6w', {
-    kicker: 'Fading', ttl: 'Wenn die Bremse nachlässt',
-    list: ['Bremse kalt', 'Langes Gefälle, nur Fußbremse', 'Fading'],
-    caps: [
-      'Kalte Bremse: Die Beläge greifen voll. Die Bremse wirkt wie sie soll.',
-      'Ein langes Gefälle nur mit der Betriebsbremse: Scheiben und Trommeln werden immer heißer.',
-      'Sehr heiße Bremsen greifen schlechter – die Wirkung lässt gefährlich nach. Das heißt Fading.',
-    ],
-    notes: [
-      '▶ Sagen: „Hier eine Bremsscheibe. Kalt bremst sie mit voller Kraft.“\n➜ „Jetzt fahrt ihr einen langen Pass hinunter – nur mit dem Fuß auf der Bremse.“',
-      '▶ „Die ganze Bewegungsenergie wird an der Bremse zu Wärme. Ohne Dauerbremse wird sie immer heißer.“\n➜ „Und dann?“',
-      '▶ „Die Reibung zwischen Belag und Scheibe sinkt, Trommeln dehnen sich aus – die Bremse wird schwach. Fading.“\n✅ Prüfungsfrage 2.7.06-310: Wird im langen Gefälle ständig nur mit der Betriebsbremse gebremst, werden die Radbremsen so heiß, dass die Bremswirkung gefährlich nachlässt.\n💡 Nach Fading: anhalten, abkühlen lassen, Lkw mit Keilen sichern.\n➜ „Wie fahrt ihr bergab richtig?“',
-    ],
-    legend: 'Schematisch',
-    scene: async (s, i) => {
-      const col = ['6E7888', 'E0702A', 'FF3B30'][i];
-      s.oval(DX - 1.5, DY - 1.5, 3.0, 3.0, { fill: col, line: '3C4656', lw: 3, name: '!!disc', glow: i ? 18 : undefined, glowColor: col });
-      s.oval(DX - 0.65, DY - 0.65, 1.3, 1.3, { fill: '2A3342', name: '!!nabe' });
-      for (let k = 0; k < 10; k++) { const a = k * Math.PI / 5; s.oval(DX + 1.05 * Math.cos(a) - 0.06, DY + 1.05 * Math.sin(a) - 0.06, 0.12, 0.12, { fill: '1A1A1A', ft: 40, name: '!!loch' + k }); }
-      s.rrect(DX + 1.1, DY - 1.0, 0.55, 2.0, { fill: '3C4656', line: '6E7888', rr: 0.15, name: '!!sattel' });
-      // Thermometer + Bremswirkung
-      const T = [0.15, 0.6, 0.95][i], W = [1.0, 0.85, 0.35][i];
-      s.text('Temperatur', { x: 10.4, y: 1.7, w: 2.6, h: 0.32, size: 14, bold: true, color: C.txt, name: '!!tt' });
-      s.rrect(10.4, 2.05, 2.6, 0.32, { fill: '1A212C', line: C.line, rr: 0.15, name: '!!tbg' });
-      s.rrect(10.43, 2.08, 2.54 * T, 0.26, { fill: col === '6E7888' ? C.bl : col, rr: 0.15, name: '!!tv' });
-      s.text('Bremswirkung', { x: 10.4, y: 2.65, w: 2.6, h: 0.32, size: 14, bold: true, color: C.txt, name: '!!wt' });
-      s.rrect(10.4, 3.0, 2.6, 0.32, { fill: '1A212C', line: C.line, rr: 0.15, name: '!!wbg' });
-      s.rrect(10.43, 3.03, 2.54 * W, 0.26, { fill: W > 0.6 ? C.gr : C.red, rr: 0.15, name: '!!wv' });
-      if (i === 2) s.text('Fading!', { x: 10.4, y: 3.6, w: 2.6, h: 0.6, size: 30, bold: true, color: C.red, name: '!!fad' });
-    },
-  });
+  // ===== FADING (fließend: Scheibe dreht sich und wird heiß) =====
+  {
+    const DX = 8.2, DY = 3.9, R = 1.65;
+    let disc = `<defs><radialGradient id="g" cx="50%" cy="50%" r="50%"><stop offset="40%" stop-color="#8E99A8"/><stop offset="100%" stop-color="#5F6A79"/></radialGradient></defs><circle cx="200" cy="200" r="196" fill="url(#g)" stroke="#3C4656" stroke-width="6"/><circle cx="200" cy="200" r="86" fill="#2A3342"/>`;
+    for (let k = 0; k < 24; k++) { const a = k * Math.PI / 12; disc += `<circle cx="${200 + 140 * Math.cos(a)}" cy="${200 + 140 * Math.sin(a)}" r="9" fill="#2C3440"/>`; }
+    for (let k = 0; k < 10; k++) { const a = k * Math.PI / 5 + 0.15; disc += `<circle cx="${200 + 60 * Math.cos(a)}" cy="${200 + 60 * Math.sin(a)}" r="11" fill="#9AA6B5"/>`; }
+    const discImg = await svgImg(disc, 400, 400, 1.2);
+    const fr = (t, o = {}) => ({ t, ...o });
+    await motion(deck, 'c6w', {
+      kicker: 'Fading', ttl: 'Wenn die Bremse nachlässt', dur: 500, holdDur: 700,
+      question: 'Ein langer Pass, die ganze Zeit nur die Fußbremse. Was passiert mit der Bremse?',
+      answer: 'Sie wird so heiß, dass sie schlechter greift – die Bremswirkung lässt gefährlich nach (Fading).',
+      legend: 'Bremsscheibe · schematisch',
+      frames: [
+        fr(0, { hold: true, cap: 'Kalte Bremse: Die Beläge greifen voll. Die Bremse wirkt wie sie soll.', note: '▶ Sagen: „Hier eine Bremsscheibe. Kalt bremst sie mit voller Kraft.“\n❓ Frage auf der Folie vorlesen, Antworten sammeln.\n🖱 Klick: Die Abfahrt beginnt (läuft von selbst).\n➜ „Jetzt fahrt ihr einen langen Pass hinunter – nur mit dem Fuß auf der Bremse.“' }),
+        fr(0.15, { cap: 'Langes Gefälle, nur Betriebsbremse: Die Scheibe wird immer heißer …' }), fr(0.3), fr(0.45),
+        fr(0.6, { hold: true, note: '▶ „Die ganze Bewegungsenergie wird an der Bremse zu Wärme. Ohne Dauerbremse wird sie immer heißer.“\n🖱 Klick: weiter.\n➜ „Und dann?“' }),
+        fr(0.75, { cap: 'Sehr heiß: Belag und Scheibe greifen schlechter – die Wirkung lässt nach.' }), fr(0.88),
+        fr(1, { hold: true, answer: true, cap: 'Fading! Gegenmittel: vor dem Gefälle zurückschalten und die Dauerbremse arbeiten lassen.', note: '▶ „Die Reibung zwischen Belag und Scheibe sinkt, Trommeln dehnen sich aus – die Bremse wird schwach. Das heißt Fading.“\n✅ Prüfungsfrage 2.7.06-310: Wird im langen Gefälle ständig nur mit der Betriebsbremse gebremst, werden die Radbremsen so heiß, dass die Bremswirkung gefährlich nachlässt.\n💡 Nach Fading: anhalten, abkühlen lassen, Lkw mit Keilen sichern.\n🖱 Keine Animation mehr – nächster Klick: nächste Folie.\n➜ „Wie fahrt ihr bergab richtig?“' }),
+      ],
+      scene: async (s, t) => {
+        const heat = ['6E7888', 'B9772F', 'E0702A', 'FF5A2A', 'FF3B30'][Math.min(4, Math.round(t * 4))];
+        s.oval(DX - R - 0.08, DY - R - 0.08, (R + 0.08) * 2, (R + 0.08) * 2, { fill: heat, ft: 100 - Math.round(t * 70), name: '!!glut', glow: t > 0.2 ? Math.round(6 + t * 18) : undefined, glowColor: heat });
+        s.img(discImg, { x: DX - R, y: DY - R, w: R * 2, h: R * 2, rotate: Math.round(t * 1080) % 360, name: '!!disc' });
+        s.oval(DX - R, DY - R, R * 2, R * 2, { fill: heat, ft: 100 - Math.round(t * 62), name: '!!heiss' });
+        s.rrect(DX + R - 0.55, DY - 1.0, 0.75, 2.0, { fill: '3C4656', line: '6E7888', rr: 0.3, name: '!!sattel' });
+        s.text('Bremssattel', { x: DX + R - 0.6, y: DY + 1.05, w: 1.6, h: 0.3, size: 12, color: C.dim, name: '!!tsat' });
+        const W = 1 - Math.max(0, t - 0.45) * 1.18;
+        s.text('Temperatur', { x: 10.6, y: 1.75, w: 2.5, h: 0.32, size: 14, bold: true, color: C.txt, name: '!!tt' });
+        s.rrect(10.6, 2.1, 2.5, 0.32, { fill: '1A212C', line: C.line, rr: 0.5, name: '!!tbg' });
+        s.rrect(10.63, 2.13, Math.max(0.1, 2.44 * (0.1 + t * 0.9)), 0.26, { fill: t < 0.2 ? C.bl : heat, rr: 0.5, name: '!!tv' });
+        s.text('Bremswirkung', { x: 10.6, y: 2.7, w: 2.5, h: 0.32, size: 14, bold: true, color: C.txt, name: '!!wt' });
+        s.rrect(10.6, 3.05, 2.5, 0.32, { fill: '1A212C', line: C.line, rr: 0.5, name: '!!wbg' });
+        s.rrect(10.63, 3.08, 2.44 * W, 0.26, { fill: W > 0.65 ? C.gr : (W > 0.45 ? C.or : C.red), rr: 0.5, name: '!!wv' });
+        s.text(t >= 1 ? 'Fading!' : '', { x: 10.6, y: 3.6, w: 2.5, h: 0.6, size: 30, bold: true, color: C.red, name: '!!fad' });
+      },
+    });
+  }
   {
     const s = base(deck, 'c6w', { notes:
       '▶ Sagen: „So fahrt ihr ein langes Gefälle richtig.“\n' +

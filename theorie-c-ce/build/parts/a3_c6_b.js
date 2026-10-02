@@ -1,5 +1,5 @@
 // Abend 3 · C6 Kapitel 3 ABS, 4 Kontrolle, 5 HU/SP, 6 Begrenzer/Fahrtenschreiber, Abschluss, Ende
-const { C, sec, base, kick, title, card, point, CLICK, ask, quiz, steps, write, takeaway, foot, svgImg, chapter, roadV, veh } = require('../gs');
+const { C, sec, base, kick, title, card, point, CLICK, ask, quiz, steps, write, takeaway, foot, svgImg, chapter, roadV, veh, motion } = require('../gs');
 const { icon } = require('../lib');
 const { warnSym } = require('../sym');
 
@@ -18,28 +18,33 @@ module.exports = async (deck) => {
   // ===== KAPITEL 3 ABS =====
   await chapter(deck, 'c6a', { num: 3, ttl: 'ABS', sub: 'Die Räder blockieren nicht – der Lkw bleibt lenkbar.', ico: 'LuCircleDot', notes:
     '▶ Sagen: „Kapitel 3: das ABS – im Gesetz heißt es Automatischer Blockierverhinderer, ABV.“\n🖱 Keine Klicks.\n➜ „Was bringt es in der Gefahr?“' });
-  await steps(deck, 'c6a', {
-    kicker: 'ABS', ttl: 'Bremsen und lenken',
-    list: ['Gefahr voraus', 'Ohne ABS', 'Mit ABS'],
-    caps: [
-      'Vor euch steht plötzlich ein Auto. Vollbremsung!',
-      'Ohne ABS blockieren die Räder. Der Lkw rutscht geradeaus – lenken geht nicht mehr.',
-      'Mit ABS drehen die Räder weiter. Ihr könnt bremsen und gleichzeitig ausweichen.',
-    ],
-    notes: [
-      '▶ Sagen: „Ein Auto steht plötzlich auf eurer Spur. Ihr macht eine Vollbremsung.“\n❓ „Was passiert mit und ohne ABS?“\n➜ „Zuerst ohne.“',
-      '▶ „Blockierte Räder können keine Seitenkraft übertragen – der Lkw rutscht geradeaus, egal wie ihr lenkt.“\n➜ „Und mit ABS?“',
-      '▶ „Das ABS regelt den Schlupf: Die Räder drehen knapp vor dem Blockieren weiter. Der Lkw bleibt lenkbar – ihr könnt ausweichen.“\n✅ Prüfungsfrage 2.7.06-101: bestmögliche Bremsung auch bei Glätte, Lenkfähigkeit bleibt weitgehend erhalten – NICHT: verhindert Aquaplaning. 2.7.06-103/-104: kein Blockieren, lenkbar, Bremsen und Ausweichen möglich – NICHT: schneller durch Kurven, weniger Kippgefahr.\n💡 Auf Schnee oder Schotter kann der Bremsweg mit ABS sogar länger sein – der Gewinn ist die Lenkbarkeit.\n➜ „Wie bremst ihr richtig mit ABS?“',
-    ],
+  // ===== ABS (fließend: ohne und mit ABS) =====
+  const SK = (on, len) => ({ on, len });
+  const AF = [
+    { t: { x: 10.0, y: 5.6, r: 0, sk: 0, mode: 0 }, hold: true, cap: 'Vor euch steht plötzlich ein Auto. Vollbremsung!', note: '▶ Sagen: „Ein Auto steht plötzlich auf eurer Spur. Ihr macht eine Vollbremsung und wollt links vorbei.“\n❓ Frage auf der Folie: „Kann der Lkw noch ausweichen?“ – abstimmen lassen.\n🖱 Klick: Bremsung ohne ABS (läuft von selbst).\n➜ „Zuerst ohne ABS.“' },
+    { t: { x: 10.0, y: 5.15, r: 0, sk: 0.45, mode: 1 }, cap: 'Ohne ABS blockieren die Räder. Der Lkw rutscht geradeaus – lenken bringt nichts.' },
+    { t: { x: 10.0, y: 4.72, r: 0, sk: 0.88, mode: 1 } }, { t: { x: 10.0, y: 4.38, r: 0, sk: 1.22, mode: 1 } },
+    { t: { x: 10.0, y: 4.12, r: 0, sk: 1.48, mode: 1 }, hold: true, note: '▶ „Blockierte Räder übertragen keine Seitenkraft – der Lkw rutscht geradeaus, auch wenn ihr lenkt. Er trifft das Auto.“\n🖱 Klick: noch einmal – jetzt mit ABS.\n➜ „Und mit ABS?“' },
+    { t: { x: 10.0, y: 5.6, r: 0, sk: 0, mode: 2 }, hold: true, cap: 'Noch einmal – jetzt mit ABS.', note: '▶ „Gleiche Lage, jetzt mit ABS.“\n🖱 Klick: Bremsung mit ABS (läuft von selbst).\n➜ „Schaut auf die Räder.“' },
+    { t: { x: 9.92, y: 5.05, r: -4, sk: 0, mode: 2 }, cap: 'Mit ABS drehen die Räder weiter. Ihr könnt bremsen und gleichzeitig ausweichen.' },
+    { t: { x: 9.6, y: 4.45, r: -11, sk: 0, mode: 2 } }, { t: { x: 9.05, y: 3.75, r: -15, sk: 0, mode: 2 } }, { t: { x: 8.5, y: 3.05, r: -10, sk: 0, mode: 2 } },
+    { t: { x: 8.25, y: 2.55, r: -3, sk: 0, mode: 2 }, hold: true, answer: true, note: '▶ „Das ABS regelt den Schlupf: Die Räder drehen knapp vor dem Blockieren weiter. Der Lkw bleibt lenkbar – ihr kommt am Auto vorbei.“\n✅ Prüfungsfrage 2.7.06-101: bestmögliche Bremsung auch bei Glätte, Lenkfähigkeit bleibt weitgehend erhalten – NICHT: verhindert Aquaplaning. 2.7.06-103/-104: kein Blockieren, lenkbar, Bremsen und Ausweichen möglich – NICHT: schneller durch Kurven, weniger Kippgefahr.\n💡 Auf Schnee oder Schotter kann der Bremsweg mit ABS sogar länger sein – der Gewinn ist die Lenkbarkeit.\n🖱 Keine Animation mehr – nächster Klick: nächste Folie.\n➜ „Wie bremst ihr richtig mit ABS?“' },
+  ];
+  await motion(deck, 'c6a', {
+    kicker: 'ABS', ttl: 'Bremsen und lenken', frames: AF, dur: 480, holdDur: 800,
+    question: 'Vollbremsung – kann der Lkw noch am Auto vorbei?',
+    answer: 'Nur mit ABS: Die Räder drehen weiter, der Lkw bleibt lenkbar. Ohne ABS rutscht er geradeaus.',
     legend: 'Draufsicht · schematisch',
-    scene: async (s, i) => {
+    scene: async (s, f) => {
       roadV(s, 7.3, 1.5, 3.6, 5.1, { name: 'str' });
       veh(s, 'car_r.png', 10.0, 2.4, 0, '!!auto');
-      if (i === 1) { s.lineS(9.75, 5.9, 9.75, 3.9, { color: '0A0A0A', lw: 5, name: '!!sp1' }); s.lineS(10.25, 5.9, 10.25, 3.9, { color: '0A0A0A', lw: 5, name: '!!sp2' }); }
-      const P = [[10.0, 5.6, 0], [10.0, 3.95, 0], [8.35, 3.0, -14]][i];
-      veh(s, 'truck.png', P[0], P[1], P[2], '!!lkw', { scale: 0.85 });
-      if (i === 1) { s.text('blockiert – nicht lenkbar', { x: 11.0, y: 3.3, w: 2.1, h: 0.7, size: 15, bold: true, color: C.red, name: '!!t1' }); s.oval(9.65, 2.75, 0.7, 0.7, { line: C.red, lw: 3, name: '!!knall' }); }
-      if (i === 2) s.text('lenkbar – ausweichen', { x: 11.0, y: 3.3, w: 2.1, h: 0.7, size: 15, bold: true, color: C.gr, name: '!!t1' });
+      const on = f.mode === 1;
+      for (const [k, dx] of [[1, -0.25], [2, 0.25]]) s.rrect(10.0 + dx - 0.05, 5.95 - f.sk, 0.1, Math.max(f.sk, 0.02), { fill: '050505', ft: on ? 10 : 100, rr: 0.5, name: '!!sp' + k });
+      veh(s, 'truck.png', f.x, f.y, f.r, '!!lkw', { scale: 0.85 });
+      const hit = f.mode === 1 && f.sk > 1.4;
+      s.oval(9.6, 2.65, 0.8, 0.8, { line: C.red, lw: 3, lt: hit ? 0 : 100, name: '!!knall' });
+      const lab = f.mode === 0 ? '' : (f.mode === 1 ? 'ohne ABS: blockiert – nicht lenkbar' : 'mit ABS: lenkbar – ausweichen');
+      s.text(lab, { x: 11.05, y: 3.3, w: 2.1, h: 0.9, size: 15, bold: true, color: f.mode === 1 ? C.red : C.gr, name: '!!t1' });
     },
   });
   {
@@ -87,6 +92,7 @@ module.exports = async (deck) => {
   const BAR = [12.0, 11.4, 10.8];
   await steps(deck, 'c6k', {
     kicker: 'Kontrolle', ttl: 'Ist die Anlage dicht?',
+    ask: { q: 'Wie viel Druck darf bei einer Vollbremsung verloren gehen?', a: 'Höchstens 0,7 bar. Mehr heißt: undicht oder zu großer Zylinderhub.', at: 1 },
     list: ['Voll füllen, Motor aus', 'Einmal voll bremsen', 'Mehr als 0,7 bar weg?'],
     caps: [
       'Lkw mit Keilen sichern, bis zum Abschaltdruck füllen, Motor aus. Hören: zischt es irgendwo?',

@@ -9,9 +9,9 @@ const SEC = {};
 function sec(key, name, col, bg) { SEC[key] = { name, col, bg }; }
 const P = { car: [0.594, 1.188], bike: [0.3575, 0.6875], ped: [0.58, 0.5], truck: [0.78, 2.86] };
 
-function base(deck, key, { notes = '', bg, transition = 'fade', noGlide = false, footer = true, ov = false, dur, bgX = 0 } = {}) {
+function base(deck, key, { notes = '', bg, transition = 'fade', noGlide = false, footer = true, ov = false, dur, bgX = 0, adv } = {}) {
   const S = SEC[key];
-  const s = deck.add({ transition, notes, footer: false, noGlide, dur });
+  const s = deck.add({ transition, notes, footer: false, noGlide, dur, adv });
   if (bgX) s.img(SEC[key].bg, { x: 0, y: 0, w: W, h: H, name: '!!bg0' });
   s.img(bg || S.bg, { x: bgX, y: 0, w: bgX ? W - bgX : W, h: H, name: '!!bg' });
   if (ov) s.img('ov_left.png', { x: 0, y: 0, w: ov === true ? W : ov, h: H, name: '!!ov' });
@@ -24,7 +24,7 @@ function base(deck, key, { notes = '', bg, transition = 'fade', noGlide = false,
 }
 const kick = (s, t, o = {}) => s.text(t.toUpperCase(), { x: o.x ?? 0.7, y: o.y ?? 0.6, w: o.w ?? 11, h: 0.35, size: 13, bold: true, color: o.col || s.sec.col, cs: 3, name: o.name }, o.anim);
 const title = (s, t, o = {}) => s.text(t, { x: o.x ?? 0.7, y: o.y ?? 0.95, w: o.w ?? 12, h: o.h ?? 0.8, size: o.size ?? 40, bold: true, color: o.col || C.txt, name: o.name, lsm: 0.95 }, o.anim);
-const card = (s, x, y, w, h, o = {}, anim) => s.rrect(x, y, w, h, { fill: o.fill || C.card, line: o.line || C.line, lw: o.lw || 1, rr: o.rr ?? 0.1, name: o.name }, anim);
+const card = (s, x, y, w, h, o = {}, anim) => s.rrect(x, y, w, h, { fill: o.fill || C.card, line: o.line || C.line, lw: o.lw || 1, rr: o.rr ?? 0.16, name: o.name }, anim);
 const CLICK = { fx: 'flyL', c: true, dur: 450 };
 async function badge(s, x, y, d, col, ico, anim) {
   s.oval(x, y, d, d, { fill: col, line: col }, anim);
@@ -80,7 +80,7 @@ async function ask(deck, key, { kicker, q, answers, notes, ico = 'LuMessageCircl
   return s;
 }
 // Morph-Schrittfolge: links Schrittliste, unten Erklärung, rechts Szene (Objekte mit festen !!-Namen)
-async function steps(deck, key, { kicker, ttl, list, caps, scene, notes, legend, listY = 1.7, dur }) {
+async function steps(deck, key, { kicker, ttl, list, caps, scene, notes, legend, listY = 1.7, dur, ask }) {
   const out = [];
   for (let i = 0; i < caps.length; i++) {
     const ML = '🖱 Keine Animation auf dieser Folie – nächster Klick = nächster Schritt (Morph).';
@@ -96,13 +96,47 @@ async function steps(deck, key, { kicker, ttl, list, caps, scene, notes, legend,
       s.text(String(k + 1), { x: 0.7, y: listY + k * 0.5, w: 0.34, h: 0.34, size: 12, bold: true, color: on ? C.dark : (done ? C.dark : C.mut), fill: on ? col : (done ? C.mut : C.line), shape: deck.pres.shapes.OVAL, align: 'center', valign: 'middle', name: '!!b' + k });
       s.text(l, { x: 1.2, y: listY - 0.04 + k * 0.5, w: 3.95, h: 0.4, size: 16, bold: on, color: on ? C.dark : (done ? C.mut : C.dim), valign: 'middle', name: '!!l' + k });
     });
-    s.rrect(0.62, 5.15, 4.6, 1.65, { fill: C.card2, line: C.line, rr: 0.08, name: '!!capbox' });
+    if (ask) {
+      const ans = i >= ask.at, top = listY + list.length * 0.5 + 0.12, hq = 5.05 - top;
+      s.rrect(0.62, top, 4.6, hq, { fill: ans ? '12301F' : '1F1A33', line: ans ? C.gr : C.pu, lw: 1.5, rr: 0.12, name: '!!askbox' });
+      s.text([{ text: ans ? '✓ Antwort  ' : '❓ Frage an die Klasse  ', options: { bold: true, color: ans ? C.gr : C.pu, breakLine: true } }, { text: ans ? ask.a : ask.q, options: { color: C.txt } }], { x: 0.8, y: top + 0.05, w: 4.3, h: hq - 0.1, size: 14, valign: 'middle', name: '!!asktxt' });
+    }
+    s.rrect(0.62, 5.15, 4.6, 1.65, { fill: C.card2, line: C.line, rr: 0.12, name: '!!capbox' });
     s.text(caps[i], { x: 0.82, y: 5.2, w: 4.25, h: 1.55, size: 15, color: C.txt, valign: 'middle', name: '!!cap' });
     if (legend) s.text(legend, { x: 5.6, y: 6.72, w: 7, h: 0.28, size: 10, italic: true, color: C.dim, name: '!!leg' });
     await scene(s, i);
     out.push(s);
   }
   return out;
+}
+// Fließende Bewegung: viele Bilder, die per Morph ineinander gleiten. frames: [{ t, hold, cap, note, answer }]
+// Bilder ohne hold laufen von selbst weiter (advTm=0). Links: Frage-Karte, die bei answer:true zur Antwort wird.
+async function motion(deck, key, { kicker, ttl, frames, scene, question, answer, legend, dur = 420, holdDur = 900 }) {
+  let cap = '', ans = false;
+  for (let k = 0; k < frames.length; k++) {
+    const f = frames[k], last = k === frames.length - 1;
+    if (f.cap) cap = f.cap;
+    if (f.answer) ans = true;
+    const auto = !f.hold && !last;
+    const autoNote = '▶ Die Bewegung läuft – zuschauen lassen.\n🖱 Kein Klick – die Folie läuft von selbst weiter.\n➜ (läuft weiter)';
+    let nt = f.note || autoNote;
+    if (!/🖱/.test(nt)) nt = nt.includes('\n➜') ? nt.replace('\n➜', '\n🖱 Klick: Die Bewegung läuft weiter.\n➜') : nt + '\n🖱 Klick: Die Bewegung läuft weiter.';
+    const prevHold = k > 0 && (frames[k - 1].hold);
+    const s = base(deck, key, { notes: nt, transition: k ? 'morph' : 'fade', noGlide: true, dur: k ? (prevHold ? holdDur : dur) : undefined, adv: auto ? 0 : undefined });
+    const col = s.sec.col;
+    s.text(kicker.toUpperCase(), { x: 0.7, y: 0.55, w: 5.2, h: 0.35, size: 13, bold: true, color: col, cs: 3, name: '!!k' });
+    s.text(ttl, { x: 0.7, y: 0.88, w: 5.0, h: 0.6, size: 30, bold: true, color: C.txt, name: '!!t' });
+    if (question) {
+      s.rrect(0.62, 1.75, 4.6, 1.5, { fill: '1F1A33', line: C.pu, lw: 1.5, rr: 0.12, name: '!!qbox' });
+      s.text([{ text: '❓ Frage an die Klasse', options: { bold: true, color: C.pu, breakLine: true } }, { text: question, options: { color: C.txt } }], { x: 0.8, y: 1.8, w: 4.3, h: 1.4, size: 15, valign: 'middle', name: '!!qtxt' });
+      s.rrect(0.62, 3.4, 4.6, 1.6, { fill: ans ? '12301F' : '0D141E', line: ans ? C.gr : C.line, lw: 1.5, rr: 0.12, name: '!!abox' });
+      s.text(ans ? [{ text: '✓ Antwort', options: { bold: true, color: C.gr, breakLine: true } }, { text: answer, options: { color: C.txt } }] : [{ text: 'Antwort folgt …', options: { italic: true, color: C.dim } }], { x: 0.8, y: 3.45, w: 4.3, h: 1.5, size: 15, valign: 'middle', name: '!!atxt' });
+    }
+    s.rrect(0.62, 5.15, 4.6, 1.65, { fill: C.card2, line: C.line, rr: 0.12, name: '!!capbox' });
+    s.text(cap, { x: 0.82, y: 5.2, w: 4.25, h: 1.55, size: 15, color: C.txt, valign: 'middle', name: '!!cap' });
+    if (legend) s.text(legend, { x: 5.6, y: 6.72, w: 7, h: 0.28, size: 10, italic: true, color: C.dim, name: '!!leg' });
+    await scene(s, f.t, k);
+  }
 }
 // Straßen-Bausteine (Draufsicht). Alle Teile bekommen feste Namen, damit Morph sie wiedererkennt.
 function roadH(s, x, y, w, h, o = {}) {
@@ -184,7 +218,7 @@ async function photoAsk(deck, key, o) {
   for (let i = 0; i < n; i++) await point(s, 0.7, top + i * (h + gap), w, h, answers[i][0], answers[i][3] || s.sec.col, answers[i][1], answers[i][2], CLICK, { br: true, size: o.asize || 16 });
   return s;
 }
-module.exports = { C, SEC, sec, P, base, kick, title, card, badge, quiz, ask, steps, roadH, roadV, veh, foot, point, chapter, write, takeaway, photoAsk, sign, signImg, CLICK };
+module.exports = { motion, C, SEC, sec, P, base, kick, title, card, badge, quiz, ask, steps, roadH, roadV, veh, foot, point, chapter, write, takeaway, photoAsk, sign, signImg, CLICK };
 // Eigene Symbole als SVG → PNG (z. B. Fahrtenschreiber-Symbole)
 const svgCache = {};
 async function svgImg(svg, w = 512, h = 512, sc = 1) {

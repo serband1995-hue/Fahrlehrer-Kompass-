@@ -1,79 +1,104 @@
 // Abend 2 · C3 Kapitel 2: Motor und Abgas
-const { C, base, kick, title, card, point, CLICK, ask, quiz, steps, foot, svgImg, chapter } = require('../gs');
+const { C, base, kick, title, card, point, CLICK, ask, quiz, steps, foot, svgImg, chapter, motion } = require('../gs');
 const { icon } = require('../lib');
 
 module.exports = async (deck) => {
   await chapter(deck, 'c3m', { num: 2, ttl: 'Motor und Abgas', sub: 'Diesel, Turbo, Drehzahl, AdBlue, Partikelfilter – und was ihr kontrolliert.', ico: 'LuFlame', notes:
     '▶ Sagen: „Kapitel 2: der Motor. Ihr müsst ihn nicht reparieren – aber verstehen, richtig bedienen und merken, wenn etwas nicht stimmt.“\n🖱 Keine Klicks.\n➜ „Zuerst: Wie funktioniert ein Diesel?“' });
 
-  // ===== VIERTAKT-DIESEL (Morph) =====
-  const ZX = 7.6, ZW = 2.2, ZT = 1.9, ZH = 2.9; // Zylinder: x, Breite, oben, Höhe
-  const gas = ['4CC9F0', 'FFB547', 'FF5C5C', '738296'];
-  const kpos = i => [ZT + 0.35 + 1.55, ZT + 0.35, ZT + 0.35 + 1.55, ZT + 0.35][i]; // Ansaugen: unten, Verdichten: oben, Arbeiten: unten, Ausstoßen: oben
-  await steps(deck, 'c3m', {
-    kicker: 'Dieselmotor', ttl: 'Der Selbstzünder',
-    list: ['Ansaugen', 'Verdichten', 'Einspritzen und Zünden', 'Ausstoßen'],
-    caps: [
-      'Der Kolben geht nach unten und saugt nur Luft an – kein Kraftstoff.',
-      'Der Kolben drückt die Luft stark zusammen. Dabei wird sie sehr heiß.',
-      'Diesel wird eingespritzt und entzündet sich in der heißen Luft von selbst. Der Druck treibt den Kolben nach unten – das ist die Kraft.',
-      'Der Kolben schiebt das Abgas hinaus. Danach beginnt alles von vorn.',
-    ],
-    notes: [
-      '▶ Sagen: „Ein Lkw-Motor ist ein Dieselmotor. Wir schauen in einen Zylinder. Erster Schritt: Der Kolben geht nach unten, das Einlassventil ist offen, es kommt nur Luft hinein.“\n❓ „Was fehlt beim Diesel im Vergleich zum Benziner?“\n✅ Die Zündkerze. Der Diesel zündet von selbst.\n➜ „Dann wird verdichtet.“',
-      '▶ „Beide Ventile zu, der Kolben fährt hoch. Die Luft wird stark zusammengedrückt – und dabei sehr heiß.“\n💡 Vergleich: Eine Fahrradpumpe wird beim Pumpen auch warm.\n➜ „Jetzt kommt der Diesel dazu.“',
-      '▶ „Kurz vor dem oberen Punkt spritzt die Düse Diesel ein. In der heißen Luft entzündet er sich von selbst. Der Druck drückt den Kolben nach unten – das ist der Arbeitstakt.“\n✅ Darum heißt der Diesel Selbstzündungsmotor (Prüfungsfrage 2.7.03-201).\n➜ „Und dann muss das Abgas raus.“',
-      '▶ „Das Auslassventil öffnet, der Kolben schiebt das Abgas hinaus – weiter zum Turbo und zur Abgasreinigung.“\n💡 Merksatz: Ansaugen – Verdichten – Arbeiten – Ausstoßen.\n➜ „Wie bekommt man mehr Luft in den Zylinder? Mit dem Turbo.“',
-    ],
-    legend: 'Ein Zylinder im Schnitt · schematisch',
-    scene: async (s, i) => {
-      const col = gas[i], kp = kpos(i);
-      // Zylinderkopf und Wände
-      s.rect(ZX - 0.3, ZT - 0.55, ZW + 0.6, 0.55, { fill: '55606F', name: '!!kopf' });
-      s.rect(ZX - 0.3, ZT - 0.48, 0.75, 0.2, { fill: '0E1520', name: '!!kanal1' });
-      s.rect(ZX + ZW - 0.45, ZT - 0.48, 0.75, 0.2, { fill: '0E1520', name: '!!kanal2' });
-      s.rect(ZX - 0.3, ZT, 0.3, ZH, { fill: '55606F', name: '!!wl' });
-      s.rect(ZX + ZW, ZT, 0.3, ZH, { fill: '55606F', name: '!!wr' });
-      s.rect(ZX - 0.22, ZT + 0.12, 0.12, ZH - 0.35, { fill: '1D3B57', name: '!!kw1' });
-      s.rect(ZX + ZW + 0.1, ZT + 0.12, 0.12, ZH - 0.35, { fill: '1D3B57', name: '!!kw2' });
-      // Brennraum (Gas) über dem Kolben
-      s.rect(ZX, ZT, ZW, kp - ZT, { fill: col, ft: i === 2 ? 15 : 55, name: '!!gas', glow: i === 2 ? 14 : undefined, glowColor: C.red });
-      // Ventile: links Einlass, rechts Auslass (offen = abgesenkt)
-      const vin = i === 0, vout = i === 3;
-      s.rect(ZX + 0.35, ZT - 0.75 + (vin ? 0.22 : 0), 0.08, 0.6, { fill: 'A9B6C6', name: '!!vs1' });
-      s.rect(ZX + 0.15, ZT - 0.15 + (vin ? 0.22 : 0), 0.5, 0.1, { fill: vin ? C.bl : 'A9B6C6', name: '!!vt1' });
-      s.rect(ZX + ZW - 0.43, ZT - 0.75 + (vout ? 0.22 : 0), 0.08, 0.6, { fill: 'A9B6C6', name: '!!vs2' });
-      s.rect(ZX + ZW - 0.65, ZT - 0.15 + (vout ? 0.22 : 0), 0.5, 0.1, { fill: vout ? C.dim : 'A9B6C6', name: '!!vt2' });
-      // Einspritzdüse Mitte
-      s.rect(ZX + ZW / 2 - 0.07, ZT - 0.8, 0.14, 0.62, { fill: i === 2 ? C.or : '8A96A6', name: '!!duese' });
-      s.shape(deck.pres.shapes.ISOSCELES_TRIANGLE, { x: ZX + ZW / 2 - 0.45, y: ZT - 0.18, w: 0.9, h: 0.55, fill: C.or, ft: i === 2 ? 15 : 100, name: '!!strahl' });
-      // Kolben + Pleuel + Kurbel
-      s.rrect(ZX + 0.04, kp, ZW - 0.08, 0.7, { fill: 'B8C2CF', line: '8A96A6', rr: 0.04, name: '!!kolben' });
-      s.rect(ZX + 0.04, kp + 0.12, ZW - 0.08, 0.05, { fill: '6E7888', name: '!!ring1' });
-      s.rect(ZX + 0.04, kp + 0.25, ZW - 0.08, 0.05, { fill: '6E7888', name: '!!ring2' });
-      // Kurbeltrieb: Hub 1,55 = 2 × Kurbelradius → Pleuel bleibt gleich lang
-      const KX = ZX + ZW / 2, KY = 5.6, R = 0.775;
-      const down = i === 0 || i === 2, zx = KX + 0.001, zy = down ? KY + R : KY - R;
-      s.oval(KX - 0.95, KY - 0.95, 1.9, 1.9, { fill: '1A212C', line: '3C4656', lw: 2, name: '!!kurb' });
-      s.oval(KX - 0.55, (down ? KY - R : KY + R) - 0.3, 1.1, 0.6, { fill: '3C4656', name: '!!gegen' });
-      s.oval(KX - 0.15, KY - 0.15, 0.3, 0.3, { fill: '55606F', name: '!!welle' });
-      s.lineS(KX, kp + 0.45, zx, zy, { color: '8A96A6', lw: 14, name: '!!pleuel' });
-      s.oval(zx - 0.2, zy - 0.2, 0.4, 0.4, { fill: '9AA6B5', line: '6E7888', lw: 2, name: '!!zapfen' });
-      s.oval(KX - 0.1, kp + 0.35, 0.2, 0.2, { fill: '6E7888', name: '!!bolzen' });
-      s.text('Kurbelwelle', { x: KX + 0.95, y: KY - 0.18, w: 1.6, h: 0.35, size: 13, color: C.dim, name: '!!tkw' });
-      // Pfeile Luft rein / Abgas raus
-      s.text('Luft', { x: ZX - 1.45, y: ZT - 0.85, w: 1.1, h: 0.4, size: 16, bold: vin, color: vin ? C.bl : C.dim, align: 'right', name: '!!tluft' });
-      s.lineS(ZX - 0.85, ZT - 0.4, ZX + 0.2, ZT - 0.4, { color: vin ? C.bl : C.line, lw: 3, endArrow: 'triangle', name: '!!pluft' });
-      s.text('Abgas', { x: ZX + ZW + 0.45, y: ZT - 0.85, w: 1.3, h: 0.4, size: 16, bold: vout, color: vout ? C.txt : C.dim, name: '!!tab' });
-      s.lineS(ZX + ZW - 0.2, ZT - 0.4, ZX + ZW + 0.85, ZT - 0.4, { color: vout ? C.mut : C.line, lw: 3, endArrow: 'triangle', name: '!!pab' });
-      s.text('Diesel', { x: ZX + ZW / 2 + 0.15, y: ZT - 1.25, w: 1.2, h: 0.35, size: 14, bold: i === 2, color: i === 2 ? C.or : C.dim, name: '!!tdiesel' });
-      // Takt-Name groß rechts
-      const tn = ['1  Ansaugen', '2  Verdichten', '3  Arbeiten', '4  Ausstoßen'][i];
-      s.text(tn, { x: 10.55, y: 2.6, w: 2.6, h: 0.5, size: 20, bold: true, color: i === 2 ? C.red : C.txt, name: '!!takt' });
-      s.text(['Einlass offen', 'beide Ventile zu', 'beide Ventile zu', 'Auslass offen'][i], { x: 10.55, y: 3.1, w: 2.6, h: 0.4, size: 15, color: C.mut, name: '!!vent' });
-      s.text(['Kolben ↓', 'Kolben ↑', 'Kolben ↓', 'Kolben ↑'][i], { x: 10.55, y: 3.5, w: 2.6, h: 0.4, size: 15, color: C.mut, name: '!!kdir' });
-    },
-  });
+  // ===== VIERTAKT-DIESEL (fließend: Kurbelwelle dreht, Nockenwelle öffnet die Ventile) =====
+  {
+    const ZX = 7.55, ZW = 2.3, ZT = 2.55, ZB = 4.75;           // Zylinder (Brennraum oben bei ZT)
+    const KX = ZX + ZW / 2, KY = 5.75, R = 0.62, LR = 1.95;    // Kurbelwelle, Pleuellänge
+    const PTOP = 0.12, PIN = 0.45, PH = 0.72;                   // Kolben: Abstand OT, Bolzen, Höhe
+    const sOT = R + LR;
+    const kin = th => { const a = th * Math.PI / 180, sx = R * Math.sin(a), sy = R * Math.cos(a), s = sy + Math.sqrt(LR * LR - sx * sx); const pin = KY - s; return { pinY: pin, top: pin - PIN, cx: KX + sx, cy: KY - sy }; };
+    const top0 = kin(0).top, shift = (ZT + PTOP) - top0;      // Kolben im OT knapp unter dem Kopf
+    // Nocken (Ei-Form, Spitze zeigt nach oben bei Drehung 0)
+    const camImg = await svgImg('<path d="M 100 18 C 140 18 165 70 165 110 C 165 150 135 180 100 180 C 65 180 35 150 35 110 C 35 70 60 18 100 18 Z" fill="#8E99A8" stroke="#55606F" stroke-width="6"/><circle cx="100" cy="115" r="16" fill="#3C4656"/>', 200, 200, 1);
+    const phase = th => th < 180 ? 0 : th < 360 ? 1 : th < 540 ? 2 : 3;
+    const gasCol = th => th < 180 ? '4CC9F0' : th < 330 ? 'FFB547' : th < 480 ? 'FF5C5C' : th < 540 ? 'B9772F' : '738296';
+    const TN = ['1  Ansaugen', '2  Verdichten', '3  Arbeiten', '4  Ausstoßen'];
+    const VN = ['Einlass offen', 'beide Ventile zu', 'beide Ventile zu', 'Auslass offen'];
+    const CAP = [
+      'Ansaugen: Der Kolben geht nach unten, das Einlassventil ist offen – es kommt nur Luft hinein, kein Kraftstoff.',
+      'Verdichten: Beide Ventile zu, der Kolben drückt die Luft stark zusammen. Dabei wird sie sehr heiß.',
+      'Arbeiten: Diesel wird eingespritzt und entzündet sich in der heißen Luft von selbst. Der Druck treibt den Kolben nach unten.',
+      'Ausstoßen: Das Auslassventil öffnet, der Kolben schiebt das Abgas hinaus. Danach beginnt alles von vorn.',
+    ];
+    const NOTE = {
+      0: '▶ Sagen: „Ein Lkw-Motor ist ein Dieselmotor. Wir schauen in einen Zylinder – oben die Nockenwelle, sie öffnet die Ventile. Unten die Kurbelwelle.“\n❓ Frage auf der Folie: „Was fehlt beim Diesel im Vergleich zum Benziner?“ – Antworten sammeln.\n🖱 Klick: Die Kurbelwelle dreht sich – Ansaugen (läuft von selbst bis zum nächsten Halt).\n➜ „Erster Takt: Ansaugen.“',
+      180: '▶ „Der Kolben war unten, der Zylinder ist voll Luft. Seht ihr: Die Nocke hat das Einlassventil aufgedrückt – jetzt schließt es.“\n🖱 Klick: Verdichten.\n➜ „Jetzt wird es eng.“',
+      360: '▶ „Oben angekommen: Die Luft ist stark verdichtet und sehr heiß. Jetzt spritzt die Düse Diesel ein – er entzündet sich von selbst. Darum heißt der Diesel Selbstzünder.“\n✅ Prüfungsfrage 2.7.03-201. Die Antwort auf die Frage steht jetzt auf der Folie: Es gibt keine Zündkerze.\n🖱 Klick: Arbeitstakt.\n➜ „Der Druck treibt den Kolben nach unten.“',
+      540: '▶ „Das war der Arbeitstakt – nur er liefert Kraft. Jetzt öffnet das Auslassventil.“\n🖱 Klick: Ausstoßen.\n➜ „Das Abgas muss raus.“',
+      720: '▶ „Der Kolben schiebt das Abgas hinaus. Zwei Umdrehungen der Kurbelwelle, eine Umdrehung der Nockenwelle – und alles beginnt von vorn.“\n💡 Merksatz: Ansaugen – Verdichten – Arbeiten – Ausstoßen. Die Nockenwelle dreht halb so schnell wie die Kurbelwelle.\n🖱 Keine Animation mehr – nächster Klick: nächste Folie.\n➜ „Wie bekommt man mehr Luft in den Zylinder? Mit dem Turbo.“',
+    };
+    const frames = [];
+    for (let th = 0; th <= 720; th += 30) {
+      const hold = th % 180 === 0;
+      frames.push({ t: th, hold, cap: CAP[Math.min(3, phase(th === 720 ? 719 : th))], note: hold ? NOTE[th] : undefined, answer: th >= 360 });
+    }
+    await motion(deck, 'c3m', {
+      kicker: 'Dieselmotor', ttl: 'Der Selbstzünder', frames, dur: 300, holdDur: 600,
+      question: 'Was fehlt beim Diesel im Vergleich zum Benziner?',
+      answer: 'Die Zündkerze. Der Diesel entzündet sich in der heißen, verdichteten Luft von selbst.',
+      legend: 'Ein Zylinder im Schnitt · schematisch',
+      scene: async (s, th) => {
+        const k = kin(th), ph = phase(th === 720 ? 719 : th);
+        const ptop = k.top + shift, pin = k.pinY + shift, cpx = k.cx, cpy = k.cy;
+        const vin = th > 0 && th < 180 ? Math.sin(th * Math.PI / 180) : 0;
+        const vex = th > 540 && th < 720 ? Math.sin((th - 540) * Math.PI / 180) : 0;
+        // Zylinderkopf mit Kanälen, Wände mit Kühlmantel
+        s.rrect(ZX - 0.35, ZT - 0.6, ZW + 0.7, 0.6, { fill: '55606F', rr: 0.15, name: '!!kopf' });
+        s.rrect(ZX - 0.35, ZT - 0.5, 0.75, 0.22, { fill: '0E1520', rr: 0.4, name: '!!kanal1' });
+        s.rrect(ZX + ZW - 0.4, ZT - 0.5, 0.75, 0.22, { fill: '0E1520', rr: 0.4, name: '!!kanal2' });
+        s.rrect(ZX - 0.32, ZT, 0.32, ZB - ZT, { fill: '55606F', rr: 0.1, name: '!!wl' });
+        s.rrect(ZX + ZW, ZT, 0.32, ZB - ZT, { fill: '55606F', rr: 0.1, name: '!!wr' });
+        s.rrect(ZX - 0.23, ZT + 0.12, 0.13, ZB - ZT - 0.35, { fill: '1D3B57', rr: 0.4, name: '!!kw1' });
+        s.rrect(ZX + ZW + 0.1, ZT + 0.12, 0.13, ZB - ZT - 0.35, { fill: '1D3B57', rr: 0.4, name: '!!kw2' });
+        // Gas über dem Kolben
+        const burn = th >= 360 && th < 450;
+        s.rect(ZX, ZT, ZW, Math.max(ptop - ZT, 0.02), { fill: gasCol(th), ft: burn ? 12 : 50, name: '!!gas', glow: burn ? 16 : undefined, glowColor: C.red });
+        // Nockenwelle (dreht halb so schnell) und Ventile
+        const camR = th / 2;
+        const cams = [[ZX + 0.42, (camR + 135) % 360, vin, C.bl, 'ein'], [ZX + ZW - 0.42, ((camR - 135) % 360 + 360) % 360, vex, C.mut, 'aus']];
+        for (const [cx, rot, lift, col, nm] of cams) {
+          s.img(camImg, { x: cx - 0.28, y: ZT - 1.42, w: 0.56, h: 0.56, rotate: Math.round(rot), name: '!!cam' + nm });
+          const d = lift * 0.24;
+          s.rrect(cx - 0.05, ZT - 0.88 + d, 0.1, 0.78, { fill: 'A9B6C6', rr: 0.4, name: '!!vs' + nm });
+          s.rrect(cx - 0.27, ZT - 0.13 + d, 0.54, 0.11, { fill: lift > 0.05 ? col : 'A9B6C6', rr: 0.4, name: '!!vt' + nm });
+        }
+        s.text('Nockenwelle', { x: ZX + ZW / 2 - 0.8, y: ZT - 1.35, w: 1.6, h: 0.3, size: 11, italic: true, color: C.dim, align: 'center', name: '!!tnw' });
+        // Einspritzdüse und Strahl
+        const inj = th >= 345 && th <= 390;
+        s.rrect(ZX + ZW / 2 - 0.08, ZT - 0.75, 0.16, 0.7, { fill: inj ? C.or : '8A96A6', rr: 0.4, name: '!!duese' });
+        s.shape(deck.pres.shapes.ISOSCELES_TRIANGLE, { x: ZX + ZW / 2 - 0.5, y: ZT - 0.05, w: 1.0, h: 0.55, fill: C.or, ft: inj ? 10 : 100, name: '!!strahl' });
+        // Kolben mit Ringen und Bolzen
+        s.rrect(ZX + 0.04, ptop, ZW - 0.08, PH, { fill: 'B8C2CF', line: '8A96A6', rr: 0.08, name: '!!kolben' });
+        s.rect(ZX + 0.04, ptop + 0.11, ZW - 0.08, 0.05, { fill: '6E7888', name: '!!ring1' });
+        s.rect(ZX + 0.04, ptop + 0.22, ZW - 0.08, 0.05, { fill: '6E7888', name: '!!ring2' });
+        // Kurbelwelle mit Gegengewicht, Pleuel
+        s.oval(KX - 0.95, KY - 0.95, 1.9, 1.9, { fill: '1A212C', line: '3C4656', lw: 2, name: '!!kurb' });
+        const ga = (th + 180) * Math.PI / 180;
+        s.oval(KX + 0.55 * Math.sin(ga) - 0.5, KY - 0.55 * Math.cos(ga) - 0.3, 1.0, 0.6, { fill: '3C4656', rotate: Math.round(th % 180), name: '!!gegen' });
+        s.oval(KX - 0.14, KY - 0.14, 0.28, 0.28, { fill: '55606F', name: '!!welle' });
+        const rl = Math.hypot(cpx - KX, cpy - pin), ra = Math.atan2(cpy - pin, cpx - KX) * 180 / Math.PI;
+        s.rrect((KX + cpx) / 2 - rl / 2, (pin + cpy) / 2 - 0.09, rl, 0.18, { fill: '8A96A6', rr: 0.5, rotate: Math.round(ra * 10) / 10, name: '!!pleuel' });
+        s.oval(cpx - 0.2, cpy - 0.2, 0.4, 0.4, { fill: '9AA6B5', line: '6E7888', lw: 2, name: '!!zapfen' });
+        s.oval(KX - 0.11, pin - 0.11, 0.22, 0.22, { fill: '6E7888', name: '!!bolzen' });
+        s.text('Kurbelwelle', { x: KX + 0.95, y: KY - 0.18, w: 1.6, h: 0.35, size: 12, italic: true, color: C.dim, name: '!!tkw' });
+        // Pfeile Luft rein / Abgas raus
+        s.text('Luft', { x: ZX - 1.55, y: ZT - 0.8, w: 1.1, h: 0.35, size: 15, bold: vin > 0, color: vin > 0 ? C.bl : C.dim, align: 'right', name: '!!tluft' });
+        s.rrect(ZX - 1.0, ZT - 0.42, 0.85, 0.06, { fill: vin > 0 ? C.bl : C.line, rr: 0.5, name: '!!pluft' });
+        s.text('Abgas', { x: ZX + ZW + 0.5, y: ZT - 0.8, w: 1.2, h: 0.35, size: 15, bold: vex > 0, color: vex > 0 ? C.txt : C.dim, name: '!!tab' });
+        s.rrect(ZX + ZW + 0.4, ZT - 0.42, 0.85, 0.06, { fill: vex > 0 ? C.mut : C.line, rr: 0.5, name: '!!pab' });
+        // Takt rechts
+        s.text(TN[ph], { x: 10.75, y: 2.75, w: 2.4, h: 0.5, size: 20, bold: true, color: ph === 2 ? C.red : C.txt, name: '!!takt' });
+        s.text(VN[ph], { x: 10.75, y: 3.25, w: 2.4, h: 0.4, size: 15, color: C.mut, name: '!!vent' });
+        s.text('Kurbelwelle: ' + th + '°', { x: 10.75, y: 3.7, w: 2.4, h: 0.4, size: 14, color: C.dim, name: '!!grad' });
+      },
+    });
+  }
 
   // ===== TURBO UND LADELUFTKÜHLER (Aufbau per Klick) =====
   {

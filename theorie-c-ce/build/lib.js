@@ -33,12 +33,12 @@ class Deck {
   }
   // Sprungziele: Name → Foliennummer (zweiter Durchlauf nutzt die Nummern aus dem ersten)
   res(link) { return typeof link === 'number' ? link : (this.prevAnchors[link] || 1); }
-  add({ transition = 'fade', dur, notes = '', bg = null, footer = true, hidden = false, noGlide = false, anchor } = {}) {
+  add({ transition = 'fade', dur, notes = '', bg = null, footer = true, hidden = false, noGlide = false, anchor, adv } = {}) {
     if (anchor) this.anchors[anchor] = this.slides.length + 1;
     const s = this.pres.addSlide();
     s.background = { color: COL.bg };
     if (hidden) s.hidden = true;
-    const ctx = new Ctx(this, s, this.slides.length + 1, { transition, dur, noGlide });
+    const ctx = new Ctx(this, s, this.slides.length + 1, { transition, dur, noGlide, adv });
     this.slides.push(ctx);
     if (bg) ctx.img(bg, { x: 0, y: 0, w: W, h: H, name: '!!bg', alt: 'Hintergrund' });
     ctx.notes = (notes || '').trim(); // Notizen werden in finalize() geschrieben (mit Kopfzeile + Ergänzungen)
@@ -225,10 +225,11 @@ function buildTiming(anims, media, spidOf) {
   return `<p:timing><p:tnLst><p:par><p:cTn id="1" dur="indefinite" restart="never" nodeType="tmRoot"><p:childTnLst><p:seq concurrent="1" nextAc="seek"><p:cTn id="2" dur="indefinite" nodeType="mainSeq"><p:childTnLst>${seq}</p:childTnLst></p:cTn><p:prevCondLst><p:cond evt="onPrev" delay="0"><p:tgtEl><p:sldTgt/></p:tgtEl></p:cond></p:prevCondLst><p:nextCondLst><p:cond evt="onNext" delay="0"><p:tgtEl><p:sldTgt/></p:tgtEl></p:cond></p:nextCondLst></p:seq>${vids}</p:childTnLst></p:cTn></p:par></p:tnLst>${bld.length ? `<p:bldLst>${bld.join('')}</p:bldLst>` : ''}</p:timing>`;
 }
 
-function transitionXml(kind, dur) {
-  if (kind === 'morph') return `<mc:AlternateContent xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"><mc:Choice xmlns:p159="http://schemas.microsoft.com/office/powerpoint/2015/09/main" xmlns:p14="http://schemas.microsoft.com/office/powerpoint/2010/main" Requires="p159"><p:transition spd="slow" p14:dur="${dur || 1200}"><p159:morph option="byObject"/></p:transition></mc:Choice><mc:Fallback><p:transition spd="slow"><p:fade/></p:transition></mc:Fallback></mc:AlternateContent>`;
-  if (kind === 'black') return `<p:transition spd="slow"><p:fade thruBlk="1"/></p:transition>`;
-  if (kind === 'fade') return `<p:transition spd="med"><p:fade/></p:transition>`;
+function transitionXml(kind, dur, adv) {
+  const a = adv !== undefined && adv !== null ? ` advTm="${adv}"` : '';
+  if (kind === 'morph') return `<mc:AlternateContent xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"><mc:Choice xmlns:p159="http://schemas.microsoft.com/office/powerpoint/2015/09/main" xmlns:p14="http://schemas.microsoft.com/office/powerpoint/2010/main" Requires="p159"><p:transition spd="slow" p14:dur="${dur || 1200}"${a}><p159:morph option="byObject"/></p:transition></mc:Choice><mc:Fallback><p:transition spd="slow"${a}><p:fade/></p:transition></mc:Fallback></mc:AlternateContent>`;
+  if (kind === 'black') return `<p:transition spd="slow"${a}><p:fade thruBlk="1"/></p:transition>`;
+  if (kind === 'fade') return `<p:transition spd="med"${a}><p:fade/></p:transition>`;
   if (kind === 'zoom') return `<mc:AlternateContent xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"><mc:Choice xmlns:p14="http://schemas.microsoft.com/office/powerpoint/2010/main" Requires="p14"><p:transition spd="slow" p14:dur="1000"><p14:warp dir="in"/></p:transition></mc:Choice><mc:Fallback><p:transition spd="slow"><p:fade/></p:transition></mc:Fallback></mc:AlternateContent>`;
   return '';
 }
@@ -265,7 +266,7 @@ async function finalize(deck, outFile) {
       ctx.anims.unshift(...glide.map(e => ({ name: e.name, kind: e.kind, fx: 'float', auto: true, dur: 420, d: Math.min(k++ * step, 700) })));
     }
     const timing = buildTiming(ctx.anims, ctx.media, spidOf);
-    const tr = transitionXml(ctx.meta.transition, ctx.meta.dur);
+    const tr = transitionXml(ctx.meta.transition, ctx.meta.dur, ctx.meta.adv);
     xml = xml.replace('</p:clrMapOvr>', '</p:clrMapOvr>' + tr + timing);
     zip.file(f, xml);
   }
