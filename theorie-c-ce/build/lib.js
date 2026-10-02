@@ -61,7 +61,7 @@ class Ctx {
   }
   text(t, o = {}, anim) {
     // geschützte Leerzeichen: Zahl + Einheit, Z/§ + Nummer bleiben zusammen
-    const nb = x => x.replace(/(\d) (kg|t\b|Std\.|Punkte?|Min\b|km\/h|€|m\b|Mio\.|Monate?|Jahre?|%|ng)/g, '$1\u00A0$2').replace(/(Z|§|Abs\.|Nr\.) (\d)/g, '$1\u00A0$2');
+    const nb = x => x.replace(/(\d) (kg|t\b|Std\.|Punkte?|Min\b|km\/h|€|m\b|Mio\.|Monate?|Jahre?|%|ng|°C)/g, '$1\u00A0$2').replace(/(Z|§|Abs\.|Nr\.) (\d)/g, '$1\u00A0$2');
     t = typeof t === 'string' ? nb(t) : t.map(r => ({ ...r, text: nb(r.text) }));
     const name = this.nm(o.name);
     const opt = {

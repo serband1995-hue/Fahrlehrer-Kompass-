@@ -141,10 +141,10 @@ function foot(s, t) { s.text(t, { x: 0.7, y: 6.62, w: 11.9, h: 0.3, size: 11, it
 
 // Kapitel-Trennfolie: große Nummer, Titel, Unterzeile, Foto rechts mit Verlauf
 async function chapter(deck, key, { num, ttl, sub, bg, notes, ico = 'LuTruck', bgX = 0 }) {
-  const s = base(deck, key, { notes, bg, bgX, ov: bg ? 9.5 : false, transition: 'black', footer: true });
+  const s = base(deck, key, { notes, bg, bgX, ov: bg && !bgX ? 9.5 : false, transition: 'black', footer: true });
   const col = s.sec.col;
-  if (bg) s.img('ov_left.png', { x: 0, y: 0, w: 8.0, h: H, name: '!!ov2' });
-  else { s.oval(8.3, 1.4, 4.4, 4.4, { fill: col, ft: 90, line: col, lt: 60, lw: 2 }, { fx: 'zoom', auto: true, dur: 900 }); s.img(await icon(ico, col), { x: 9.4, y: 2.5, w: 2.2, h: 2.2 }, { fx: 'fade', auto: true, dur: 900, d: 200 }); }
+  if (bg && !bgX) s.img('ov_left.png', { x: 0, y: 0, w: 8.0, h: H, name: '!!ov2' });
+  if (!bg) { s.oval(8.3, 1.4, 4.4, 4.4, { fill: col, ft: 90, line: col, lt: 60, lw: 2 }, { fx: 'zoom', auto: true, dur: 900 }); s.img(await icon(ico, col), { x: 9.4, y: 2.5, w: 2.2, h: 2.2 }, { fx: 'fade', auto: true, dur: 900, d: 200 }); }
   s.text(String(num).padStart(2, '0'), { x: 0.6, y: 1.2, w: 5, h: 2.2, size: 150, bold: true, color: col, name: 'chN' }, { fx: 'rise', auto: true, dur: 900 });
   s.rect(0.75, 3.55, 1.4, 0.07, { fill: col }, { fx: 'wipeR', auto: true, dur: 600, d: 300 });
   s.text(ttl, { x: 0.7, y: 3.8, w: 6.3, h: 1.6, size: 44, bold: true, color: C.txt, lsm: 0.92 }, { fx: 'float', auto: true, dur: 700, d: 350 });
