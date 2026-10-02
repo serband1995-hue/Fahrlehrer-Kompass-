@@ -30,7 +30,7 @@ module.exports = async (deck) => {
   });
   quiz(deck, 'c1e', {
     kicker: 'Quiz C1 · 3', q: 'Was brauchst du, um die Klasse C nach 5 Jahren zu verlängern?', size: 32,
-    opts: ['Einen einfachen Sehtest beim Optiker', 'Ärztliche Untersuchung und Augen-Untersuchung nach Anlage 6 Nr. 2 FeV', 'Eine Fahrstunde mit dem Fahrlehrer'], ok: 1,
+    opts: ['Nur den einfachen Sehtest wie für Klasse B', 'Ärztliche Untersuchung und Augen-Untersuchung nach Anlage 6 Nr. 2 FeV', 'Eine Fahrstunde mit dem Fahrlehrer'], ok: 1,
     why: '§ 24 FeV mit Anlage 5 und Anlage 6 Nr. 2. Der einfache Sehtest reicht für C nicht.',
     notes: '▶ Frage vorlesen, abstimmen.\n🖱 Klick 1: Antworten · Klick 2: Lösung.\n✅ B.\n➜ „Zum Schluss von C1: Das nehmt ihr mit.“',
   });

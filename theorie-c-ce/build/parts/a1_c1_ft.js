@@ -32,7 +32,7 @@ module.exports = async (deck) => {
     const s = base(deck, 'ft', { notes:
       '▶ Sagen: „Die Fahrerkarte ist euer persönlicher Ausweis für den Fahrtenschreiber. Sie gehört euch, nicht dem Chef.“\n' +
       '🖱 Klick 1–4: je eine Regel.\n' +
-      '✅ Nur eine einzige gültige Fahrerkarte pro Person (Art. 27 VO 165/2014). Gültig höchstens 5 Jahre (Art. 26 Abs. 6). Ausgestellt vom Staat, in dem ihr wohnt.\n' +
+      '✅ Nur eine einzige gültige Fahrerkarte pro Person (Art. 27 VO 165/2014). Gültig höchstens 5 Jahre (Art. 26 Abs. 6). Ausgestellt vom Staat, in dem ihr wohnt. Erneuerung spätestens 15 Arbeitstage vor Ablauf beantragen (Art. 28 Abs. 1).\n' +
       '✅ Persönlich: Niemand anderes darf mit eurer Karte fahren, ihr nicht mit fremder. Das ist verboten und wird hart bestraft.\n' +
       '✅ Beim Fahren muss die Karte im Gerät stecken – ab Arbeitsbeginn bis Arbeitsende.\n' +
       '✅ Nach Ablauf muss die alte Karte noch mindestens 28 Kalendertage im Fahrzeug mitgeführt werden (§ 6 FPersV).\n' +
@@ -46,7 +46,7 @@ module.exports = async (deck) => {
     s.text('D', { x: 11.55, y: 2.3, w: 0.6, h: 0.5, size: 22, bold: true, color: C.am, align: 'center', fill: '1E2E5A', shape: deck.pres.shapes.OVAL });
     s.rect(9.5, 3.15, 2.6, 0.08, { fill: '6B7FB5' }); s.rect(9.5, 3.4, 2.0, 0.08, { fill: '6B7FB5' });
     s.rect(8.55, 4.0, 3.5, 0.08, { fill: '6B7FB5' }); s.rect(8.55, 4.25, 2.8, 0.08, { fill: '6B7FB5' });
-    const T = [['LuLock', 'Persönlich', 'Nur ihr fahrt damit. Nie fremde Karte benutzen.'], ['LuCircleAlert', 'Nur eine', 'Jeder darf nur eine gültige Fahrerkarte haben.'], ['LuCalendar', 'Höchstens 5 Jahre', 'gültig. Rechtzeitig neu beantragen.'], ['LuCreditCard', 'Immer stecken', 'von Arbeitsbeginn bis Arbeitsende.']];
+    const T = [['LuLock', 'Persönlich', 'Nur ihr fahrt damit. Nie fremde Karte benutzen.'], ['LuCircleAlert', 'Nur eine', 'Jeder darf nur eine gültige Fahrerkarte haben.'], ['LuCalendar', 'Höchstens 5 Jahre', 'gültig. Neue Karte spätestens 15 Arbeitstage vorher beantragen.'], ['LuCreditCard', 'Immer stecken', 'von Arbeitsbeginn bis Arbeitsende.']];
     for (let i = 0; i < 4; i++) await point(s, 0.7, 2.05 + i * 1.12, 7.1, 0.98, T[i][0], C.pu, T[i][1], T[i][2], CLICK, { size: 17 });
   }
   // ===== 56 TAGE (Kalender-Diagramm) =====
@@ -76,12 +76,12 @@ module.exports = async (deck) => {
       '▶ Sagen: „Die Karte ist kaputt, verloren oder gestohlen. Was jetzt?“\n' +
       '❓ Erst sammeln, dann klicken.\n' +
       '🖱 Klick 1: melden · Klick 2: Ersatz beantragen · Klick 3: weiterfahren mit Ausdrucken · Klick 4: Grenze 15 Tage.\n' +
-      '✅ Art. 29 VO (EU) 165/2014: Diebstahl bei der Behörde vor Ort anzeigen, Verlust beim Ausstellerstaat melden. Ersatzkarte binnen 7 Kalendertagen beantragen.\n' +
+      '✅ Art. 29 VO (EU) 165/2014: Diebstahl bei der Behörde vor Ort anzeigen, Verlust beim Ausstellerstaat melden, eine beschädigte oder defekte Karte bei der ausstellenden Behörde zurückgeben (Art. 29 Abs. 2). Ersatzkarte binnen 7 Kalendertagen beantragen.\n' +
       '✅ Weiterfahren ohne Karte höchstens 15 Kalendertage (länger nur, um zum Standort zurückzukommen). Dabei bei Beginn und Ende der Fahrt einen Ausdruck machen, darauf Name, Kartennummer bzw. Führerscheinnummer und Unterschrift; manuell auch Zeiten anderer Arbeit, Bereitschaft und Pausen (Art. 35).\n' +
       '💡 Ohne Ausdrucke wirkt das bei der Kontrolle wie Fahren ohne Karte – das ist teuer.\n' +
       '➜ „Und wenn ihr ins Ausland fahrt?“' });
     kick(s, 'Karte verloren oder defekt'); title(s, 'Was tun – und wie schnell?');
-    const T = [['LuPhone', 'Melden', 'Diebstahl bei der Polizei vor Ort, Verlust bei der Behörde, die die Karte ausgestellt hat.'], ['LuFileText', 'Ersatz beantragen', 'innerhalb von 7 Kalendertagen.'], ['LuReceipt', 'Ausdrucke machen', 'bei Fahrtbeginn und Fahrtende – Name, Kartennummer, Unterschrift drauf.'], ['LuTimer', 'Höchstens 15 Tage', 'ohne Karte fahren. Danach nur noch zurück zum Standort.']];
+    const T = [['LuPhone', 'Melden', 'Diebstahl der Polizei, Verlust der ausstellenden Behörde – defekte Karte dort zurückgeben.'], ['LuFileText', 'Ersatz beantragen', 'innerhalb von 7 Kalendertagen.'], ['LuReceipt', 'Ausdrucke machen', 'bei Fahrtbeginn und Fahrtende – Name, Kartennummer, Unterschrift drauf.'], ['LuTimer', 'Höchstens 15 Tage', 'ohne Karte fahren. Danach nur noch zurück zum Standort.']];
     for (let i = 0; i < 4; i++) {
       const y = 2.05 + i * 1.13;
       s.text(String(i + 1), { x: 0.7, y: y + 0.2, w: 0.55, h: 0.55, size: 18, bold: true, color: C.dark, fill: C.pu, shape: deck.pres.shapes.OVAL, align: 'center', valign: 'middle' }, { fx: 'zoom', c: true, dur: 250 });

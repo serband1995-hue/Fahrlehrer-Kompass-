@@ -34,16 +34,17 @@ module.exports = async (deck) => {
   {
     const s = base(deck, 'lz', { notes:
       '▶ Sagen: „Die Regeln stehen in einer EU-Verordnung, der 561 von 2006. Sie gilt in der ganzen EU, also auch, wenn ihr nach Polen oder Frankreich fahrt.“\n' +
-      '🖱 Klick 1: Güterverkehr über 3,5 t · Klick 2: Anhänger zählt mit · Klick 3: auch privat und im Werkverkehr.\n' +
+      '🖱 Klick 1: Güterverkehr über 3,5 t · Klick 2: Anhänger zählt mit · Klick 3: wer ausgenommen ist.\n' +
       '✅ Art. 2 VO (EG) 561/2006: Güterbeförderung mit Fahrzeugen, deren zulässige Höchstmasse einschließlich Anhänger 3,5 t übersteigt.\n' +
       '✅ Es kommt auf die zulässige Gesamtmasse an, nicht darauf, wie viel gerade geladen ist. Auch eine Leerfahrt zählt.\n' +
+      '✅ Art. 3 Buchst. h und aa: ausgenommen u. a. nichtgewerbliche Güterbeförderung bis 7,5 t und Material/Maschinen des eigenen Handwerks bis 7,5 t im Umkreis von 100 km, wenn Fahren nicht die Haupttätigkeit ist. Werkverkehr (eigene Güter, eigener Betrieb) ist sonst erfasst.\n' +
       '💡 Ausnahmen gibt es z. B. für Fahrschulfahrzeuge bei Ausbildung und Prüfung (§ 18 Abs. 1 Nr. 7 FPersV). Eure Fahrstunden zählen also noch nicht – im Beruf dann schon.\n' +
       '💡 Auch Transporter 2,8–3,5 t: In Deutschland gelten die Lenk- und Ruhezeiten dort ebenfalls (§ 1 FPersV), aufgeschrieben wird von Hand statt mit Fahrtenschreiber. Und seit 1.7.2026 gilt die EU-Verordnung im grenzüberschreitenden Verkehr schon ab 2,5 t.\n' +
       '➜ „Der Fahrtenschreiber unterscheidet vier Tätigkeiten.“' });
     kick(s, 'Wer muss sich daran halten?'); title(s, 'EU-Verordnung 561/2006');
     await point(s, 0.7, 2.1, 11.93, 1.05, 'LuTruck', C.or, 'Güterverkehr über 3,5 t', 'zulässige Gesamtmasse – nicht das, was gerade geladen ist.', CLICK, { size: 20 });
     await point(s, 0.7, 3.35, 11.93, 1.05, 'LuContainer', C.or, 'Anhänger zählt mit', 'Transporter 3,2 t + Anhänger 1 t = über 3,5 t → die Regeln gelten.', CLICK, { size: 20 });
-    await point(s, 0.7, 4.6, 11.93, 1.05, 'LuGlobe', C.or, 'In der ganzen EU gleich', 'egal ob ihr für eine Spedition oder für den eigenen Betrieb fahrt.', CLICK, { size: 20 });
+    await point(s, 0.7, 4.6, 11.93, 1.05, 'LuGlobe', C.or, 'Gewerblich und Werkverkehr', 'gilt in der ganzen EU. Ausgenommen u. a.: private Fahrten und Handwerker-Material bis 7,5 t.', CLICK, { size: 20 });
     foot(s, 'Quelle: VO (EG) Nr. 561/2006, Art. 2 und 3');
   }
   // ===== VIER TÄTIGKEITEN =====
@@ -65,7 +66,7 @@ module.exports = async (deck) => {
       s.text(T[i][1], { x: x + 0.15, y: 4.3, w: 2.54, h: 0.5, size: 22, bold: true, color: C.or, align: 'center' }, { fx: 'fade', dur: 200 });
       s.text(T[i][2], { x: x + 0.2, y: 4.85, w: 2.44, h: 0.95, size: 15, color: C.txt, align: 'center' }, { fx: 'fade', dur: 200 });
     }
-    foot(s, 'Symbole wie auf dem Fahrtenschreiber (VO (EU) Nr. 165/2014, Anhang IC)');
+    foot(s, 'Symbole wie auf dem Fahrtenschreiber (VO (EU) Nr. 165/2014, Art. 34 Abs. 5)');
   }
   // ===== EIN ARBEITSTAG (MORPH-ZEITLEISTE) =====
   // Blöcke: [Name, Start-h, Dauer-h, Farbe, Beschriftung]; sichtbar ab Schritt
@@ -89,12 +90,12 @@ module.exports = async (deck) => {
       'Danach braucht ihr eine tägliche Ruhezeit von 11 Stunden am Stück. Erst dann beginnt ein neuer Tag.',
     ],
     notes: [
-      '▶ Sagen: „Wir planen jetzt einen Arbeitstag. Ihr fahrt um 6 Uhr morgens los.“\n❓ „Wie lange dürft ihr am Stück fahren?“ – erst raten lassen.\n🖱 Jeder Klick = nächster Schritt (Folienwechsel mit Morph, die Balken wachsen).\n➜ „Erster Block.“',
+      '▶ Sagen: „Wir planen jetzt einen Arbeitstag. Ihr fahrt um 6 Uhr morgens los.“\n❓ „Wie lange dürft ihr am Stück fahren?“ – erst raten lassen.\n🖱 Keine Animation auf dieser Folie – nächster Klick = nächster Schritt (Morph).\n➜ „Erster Block.“',
       '▶ „4 Stunden 30 Minuten. Dann muss eine Pause kommen – die Verordnung sagt dazu Fahrtunterbrechung.“\n✅ Art. 7 VO (EG) 561/2006: Nach einer Lenkdauer von 4,5 h ist eine ununterbrochene Fahrtunterbrechung von mindestens 45 Minuten einzulegen.\n➜ „Wie lange muss die Pause sein?“',
       '▶ „45 Minuten. In der Zeit dürft ihr nicht arbeiten – kein Entladen, kein Tanken.“\n💡 Die Pause darf auch länger sein. Und sie darf geteilt werden – das zeige ich gleich.\n➜ „Und dann geht es weiter.“',
       '▶ „Noch einmal 4,5 Stunden, jetzt habt ihr 9 Stunden Lenkzeit. Das ist die tägliche Lenkzeit.“\n✅ Art. 6 Abs. 1: Tageslenkzeit höchstens 9 h.\n💡 Arbeitszeit ist mehr als Lenkzeit: Laden, Kontrollen usw. kommen dazu. Dafür gilt das Arbeitszeitgesetz.\n➜ „Manchmal reicht das nicht …“',
       '▶ „Zweimal in der Woche dürft ihr bis zu 10 Stunden fahren. Vorher kommt aber wieder eine Pause von 45 Minuten – ihr seid ja schon wieder 4,5 Stunden am Stück gefahren.“\n✅ Art. 6 Abs. 1 Satz 2: höchstens zweimal in der Woche auf 10 h verlängern.\n❓ „Wie oft? Und was heißt Woche?“ ✅ Woche = Montag 0 Uhr bis Sonntag 24 Uhr (Art. 4 i).\n➜ „Und dann?“',
-      '▶ „Jetzt braucht ihr eure tägliche Ruhezeit: 11 Stunden. Erst danach beginnt ein neuer Arbeitstag.“\n✅ Art. 8 Abs. 2: innerhalb von 24 h nach dem Ende der vorigen Ruhezeit eine neue tägliche Ruhezeit. Regelmäßig mindestens 11 h.\n💡 Kontrollfrage: Um 6 Uhr losgefahren, wann muss die Ruhezeit spätestens beginnen? ✅ So, dass 11 h Ruhe noch vor 6 Uhr am nächsten Morgen vorbei sind – also spätestens um 19 Uhr.\n➜ „Jetzt zur Pause: Darf man sie teilen?“',
+      '▶ „Jetzt braucht ihr eure tägliche Ruhezeit: 11 Stunden. Erst danach beginnt ein neuer Arbeitstag.“\n✅ Art. 8 Abs. 2: innerhalb von 24 h nach dem Ende der vorigen Ruhezeit eine neue tägliche Ruhezeit. Regelmäßig mindestens 11 h.\n💡 Kontrollfrage: Um 6 Uhr losgefahren, wann muss die Ruhezeit spätestens beginnen? ✅ Für 11 h Ruhe spätestens um 19 Uhr (dann ist sie vor 6 Uhr vorbei). Mit verkürzter Ruhezeit (9 h, höchstens 3 ×) spätestens um 21 Uhr.\n➜ „Jetzt zur Pause: Darf man sie teilen?“',
     ],
     legend: 'Lenkzeit (orange) · Fahrtunterbrechung (grün) · Ruhezeit (blau) – Zeitachse 0–24 Uhr, schematisch',
     scene: async (s, i) => {
@@ -134,7 +135,7 @@ module.exports = async (deck) => {
     const s = base(deck, 'lz', { notes:
       '▶ Sagen: „Die 45 Minuten Pause dürft ihr teilen. Aber nur in einer Reihenfolge.“\n' +
       '❓ „Was meint ihr: 30 und dann 15 – geht das?“ Abstimmen lassen, dann klicken.\n' +
-      '🖱 Klick 1: richtige Teilung 15 + 30 · Klick 2: falsche Teilung 30 + 15 · Klick 3: Merksatz.\n' +
+      '🖱 Klick 1: richtige Teilung 15 + 30 · Klick 2: falsche Teilung 30 + 15 · Klick 3: Regelzeile 15 + 30.\n' +
       '✅ Art. 7 Unterabs. 2: Die Unterbrechung kann ersetzt werden durch eine Unterbrechung von mindestens 15 Minuten, gefolgt von einer Unterbrechung von mindestens 30 Minuten. Beide innerhalb der 4,5 h.\n' +
       '✅ 30 + 15 zählt nicht als vollständige Unterbrechung: Die 30 Minuten zuerst gelten nur als erster Teil (Mindestteil 15). Danach fehlen noch 30.\n' +
       '💡 Merksatz: „Erst die kleine, dann die große.“\n' +

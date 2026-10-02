@@ -51,7 +51,7 @@ module.exports = async (deck) => {
       'Erst wenn ihr ohne Halt ganz hinüberkommt: zügig überqueren – nicht auf dem Gleis anhalten.',
     ],
     notes: [
-      '▶ Sagen: „Ihr nähert euch einem Bahnübergang. Was macht ihr?“\n✅ § 19 Abs. 1 StVO: Annäherung nur mit mäßiger Geschwindigkeit. Schienenfahrzeuge haben Vorrang.\n🖱 Jeder Klick = nächster Schritt (Morph).\n➜ „Darf man vor dem Übergang überholen?“',
+      '▶ Sagen: „Ihr nähert euch einem Bahnübergang. Was macht ihr?“\n✅ § 19 Abs. 1 StVO: Annäherung nur mit mäßiger Geschwindigkeit. Schienenfahrzeuge haben Vorrang.\n🖱 Keine Animation auf dieser Folie – nächster Klick = nächster Schritt (Morph).\n➜ „Darf man vor dem Übergang überholen?“',
       '▶ „Nein. Vom Warnschild (Zeichen 151 bzw. erste Bake 156) bis einschließlich Übergang dürft ihr keine Kraftfahrzeuge überholen.“\n✅ § 19 Abs. 1 StVO. Verstoß: 70 €, 1 Punkt (BKat Nr. 89a).\n➜ „Jetzt wird es kritisch.“',
       '▶ „Hinter dem Gleis staut es sich. Euer Lkw ist 10, 12 Meter lang – mit Anhänger über 18 Meter. Passt das?“\n❓ „Was tut ihr?“\n✅ § 19 Abs. 3 StVO: Kann der Bahnübergang wegen des Straßenverkehrs nicht zügig und ohne Aufenthalt überquert werden, ist vor dem Andreaskreuz zu warten.\n💡 Das ist DIE Lkw-Regel am Bahnübergang. Ein Lkw, der mit dem Heck auf dem Gleis im Stau steht, ist der häufigste schwere Unfall.\n➜ „Und dann geht das Blinklicht an …“',
       '▶ „Rotes Blinklicht – oder die Schranke senkt sich. Ihr wartet vor dem Andreaskreuz.“\n✅ § 19 Abs. 2 StVO. Blinklicht oder senkende Schranke missachtet: 240 €, 1 Monat Fahrverbot, 2 Punkte (BKat 89b.2). Bei geschlossener Schranke durchfahren: 700 €, 3 Monate Fahrverbot, 2 Punkte (BKat 244).\n➜ „Wann dürft ihr fahren?“',

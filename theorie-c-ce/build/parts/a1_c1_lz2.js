@@ -79,7 +79,7 @@ module.exports = async (deck) => {
       }
       s.text(R[i][2], { x: x0, y: y + 0.66, w: 8.2, h: 0.35, size: 14, color: C.mut }, { fx: 'fade', dur: 200 });
     }
-    s.text([{ text: '24-Stunden-Regel:  ', options: { bold: true, color: C.bl } }, { text: 'Spätestens 24 Stunden nach Ende der letzten Ruhezeit muss die neue tägliche Ruhezeit vorbei sein.', options: { color: C.txt } }],
+    s.text([{ text: '24-Stunden-Regel:  ', options: { bold: true, color: C.bl } }, { text: 'Innerhalb von 24 Stunden nach Ende der letzten Ruhezeit muss die neue tägliche Ruhezeit genommen sein (mindestens 9 h davon in diesen 24 h).', options: { color: C.txt } }],
       { x: 0.7, y: 5.85, w: 11.93, h: 0.75, size: 17, valign: 'middle', fill: C.card2, line: C.bl, shape: deck.pres.shapes.ROUNDED_RECTANGLE, rr: 0.1, margin: [8, 14, 8, 14] }, { fx: 'rise', c: true, dur: 400 });
   }
   // ===== WÖCHENTLICHE RUHEZEIT =====
@@ -91,7 +91,7 @@ module.exports = async (deck) => {
       '✅ Die Verkürzung muss bis zum Ende der dritten Woche danach am Stück ausgeglichen werden, angehängt an eine Ruhezeit von mindestens 9 h (Art. 8 Abs. 6b, 7).\n' +
       '✅ Regelmäßige wöchentliche Ruhezeiten (und Ausgleich ab 45 h) nicht im Fahrzeug, sondern in einer geeigneten Unterkunft – auf Kosten des Arbeitgebers (Art. 8 Abs. 8).\n' +
       '✅ Der Arbeitgeber plant so, dass ihr spätestens alle 4 Wochen nach Hause oder zum Betrieb zurückkehren könnt (Art. 8 Abs. 8a).\n' +
-      '💡 Die verkürzte (24 h) darf in der Kabine verbracht werden, wenn das Fahrzeug eine geeignete Schlafmöglichkeit hat und steht.\n' +
+      '💡 Die verkürzte Wochenruhe (24 h) darf im Fahrzeug verbracht werden – praktisch nur mit Schlafkabine und im Stand.\n' +
       '➜ „Was kostet es, wenn man sich nicht daran hält?“' });
     kick(s, 'Wöchentliche Ruhezeit'); title(s, 'Das Wochenende des Fahrers');
     await point(s, 0.7, 2.05, 11.93, 0.98, 'LuBed', C.bl, '45 h regelmäßig', 'spätestens nach sechs Tagen (sechs 24-Stunden-Zeiträumen).', CLICK, { size: 19 });
@@ -105,7 +105,7 @@ module.exports = async (deck) => {
       '▶ Sagen: „Bei einer Kontrolle liest die Polizei oder das Bundesamt eure Fahrerkarte aus. Jeder Verstoß kostet – den Fahrer und den Chef.“\n' +
       '❓ Vor dem Klick: „Was schätzt ihr, wer zahlt mehr – Fahrer oder Unternehmer?“\n' +
       '🖱 Klick 1–3: je eine Zeile (Fahrer und Unternehmer) · Klick 4: Hinweis Punkte.\n' +
-      '✅ Regelsätze nach dem Buß- und Verwarnungsgeldkatalog Fahrpersonalrecht (LASI): Lenkzeit über 2 h überschritten: 60 € je angefangene halbe Stunde (Unternehmer 180 €). Fahrtunterbrechung mehr als 15 Min zu kurz: 60 € je angefangene Viertelstunde (Unternehmer 180 €). Tägliche Ruhezeit mehr als 3 h zu kurz: 60 € je angefangene halbe Stunde (Unternehmer 180 €).\n' +
+      '✅ Regelsätze nach dem Buß- und Verwarnungsgeldkatalog Fahrpersonalrecht (LASI): Lenkzeit über 2 h überschritten: 60 € je angefangene halbe Stunde (Unternehmer 180 €). Fahrtunterbrechung mehr als 15 Min zu kurz: 60 € je angefangene Viertelstunde (Unternehmer 180 €). Tägliche Ruhezeit mehr als 3 h zu kurz: 60 € je angefangene Stunde (Unternehmer 180 €).\n' +
       '✅ Punkte gibt es dafür keine – diese Verstöße stehen nicht in FeV Anlage 13. Aber die Summen werden schnell hoch, und die Polizei kann die Weiterfahrt untersagen, bis die Ruhezeit nachgeholt ist.\n' +
       '💡 Hinweis: Die Beträge können je Bundesland leicht abweichen; Rahmen bis 5.000 € (Fahrer) bzw. 15.000 € (Unternehmer).\n' +
       '➜ „Schreibt euch die Zahlen auf.“' });
@@ -113,7 +113,7 @@ module.exports = async (deck) => {
     s.text('Verstoß', { x: 0.95, y: 2.0, w: 6, h: 0.4, size: 14, bold: true, color: C.dim, cs: 2 });
     s.text('FAHRER', { x: 7.3, y: 2.0, w: 2.4, h: 0.4, size: 14, bold: true, color: C.dim, cs: 2, align: 'center' });
     s.text('UNTERNEHMER', { x: 9.9, y: 2.0, w: 2.6, h: 0.4, size: 14, bold: true, color: C.dim, cs: 2, align: 'center' });
-    const T = [['Lenkzeit mehr als 2 h zu lang', 'je angefangene ½ Stunde', '60 €', '180 €'], ['Pause mehr als 15 Min zu kurz', 'je angefangene ¼ Stunde', '60 €', '180 €'], ['Tägliche Ruhezeit mehr als 3 h zu kurz', 'je angefangene ½ Stunde', '60 €', '180 €']];
+    const T = [['Lenkzeit mehr als 2 h zu lang', 'je angefangene ½ Stunde', '60 €', '180 €'], ['Pause mehr als 15 Min zu kurz', 'je angefangene ¼ Stunde', '60 €', '180 €'], ['Tägliche Ruhezeit mehr als 3 h zu kurz', 'je angefangene Stunde', '60 €', '180 €']];
     for (let i = 0; i < 3; i++) {
       const y = 2.5 + i * 1.08;
       card(s, 0.7, y, 11.93, 0.92, {}, CLICK);
@@ -135,7 +135,8 @@ module.exports = async (deck) => {
       ['Tägliche Ruhezeit', '11 h (aufgeteilt 3 + 9, verkürzt 9 h höchstens 3 ×)'],
       ['Wöchentliche Ruhezeit', '45 h (verkürzt 24 h, mit Ausgleich)'],
       ['Wochenruhe nicht …', '… in der Kabine (die regelmäßige) · alle 4 Wochen heim'],
+      ['Arbeitszeit (ArbZG)', 'Pause 30 Min nach 6 h, 45 Min nach 9 h Arbeit'],
     ],
-    notes: '▶ Sagen: „Schreibt das ab. Das sind die Zahlen, die ihr in der Prüfung und im Beruf jeden Tag braucht.“\n❓ Vor jedem Klick die Klasse fragen: „Was gehört hier hin?“\n🖱 Klick 1–6: je eine Lösung (das Fragezeichen verschwindet).\n✅ Alle Werte aus VO (EG) 561/2006, Art. 6, 7, 8.\n➜ „Wer kontrolliert das alles? Der Fahrtenschreiber.“',
+    notes: '▶ Sagen: „Schreibt das ab. Das sind die Zahlen, die ihr in der Prüfung und im Beruf jeden Tag braucht.“\n❓ Vor jedem Klick die Klasse fragen: „Was gehört hier hin?“\n🖱 Klick 1–7: je eine Lösung.\n✅ Werte aus VO (EG) 561/2006, Art. 6, 7, 8. Arbeitszeit: § 4 ArbZG (Ruhepause 30 Min bei mehr als 6 h, 45 Min bei mehr als 9 h Arbeitszeit) und § 21a ArbZG (48 h pro Woche, bis 60 h mit Ausgleich).\n💡 Falle: Wer 2 h lädt und dann 4 h fährt, hat 6 h gearbeitet → nach dem Arbeitszeitgesetz ist eine Pause fällig, obwohl die 4,5 h Lenkzeit noch nicht erreicht sind.\n➜ „Wer kontrolliert das alles? Der Fahrtenschreiber.“',
   });
 };

@@ -12,7 +12,7 @@ module.exports = async (deck) => {
   // ===== TITEL C2 =====
   {
     const s = base(deck, 'c2', { bg: 'f_land.jpg', ov: 9.5, footer: false, transition: 'black', notes:
-      '▶ Sagen: „Willkommen zurück. Lektion C2: Welche Verkehrsregeln sind für Lkw anders als für Pkw? Tempo, Abstand, Überholen, Bahnübergang, Parken, Fahrverbote – und zum Schluss Papiere und Maut.“\n' +
+      '▶ Sagen: „Lektion C2: Welche Verkehrsregeln sind für Lkw anders als für Pkw? Tempo, Abstand, Überholen, Bahnübergang, Parken, Fahrverbote – und zum Schluss Papiere und Maut.“\n' +
       '🖱 Keine Klicks.\n' +
       '➜ „Hier der Plan für die nächsten 90 Minuten.“' });
     s.img('ov_left.png', { x: 0, y: 0, w: 8.0, h: 7.5, name: '!!ov2' });
@@ -47,12 +47,12 @@ module.exports = async (deck) => {
       '▶ Sagen: „Die Höchstgeschwindigkeit hängt davon ab, wie schwer der Lkw ist und ob ein Anhänger dran ist.“\n' +
       '❓ Vor jeder Zeile fragen: „Wie schnell innerorts? Außerorts? Autobahn?“\n' +
       '🖱 Klick 1: Zeile 3,5–7,5 t · Klick 2: Zeile über 7,5 t · Klick 3: Zeile mit Anhänger · Klick 4: Begrenzer.\n' +
-      '✅ § 3 Abs. 3 Nr. 2 StVO: Kfz über 3,5 t bis 7,5 t außerorts 80 km/h; Kfz über 7,5 t und Kfz mit Anhänger (außer Pkw und Lkw bis 3,5 t) außerorts 60 km/h. § 18 Abs. 5 StVO: auf Autobahnen und Kraftfahrstraßen 80 km/h.\n' +
+      '✅ § 3 Abs. 3 Nr. 2 StVO: Kfz über 3,5 t bis 7,5 t außerorts 80 km/h; Kfz über 7,5 t und Kfz mit Anhänger (außer Pkw und Lkw bis 3,5 t) außerorts 60 km/h. § 18 Abs. 5 StVO: auf Autobahnen und auf Kraftfahrstraßen mit baulich getrennten Richtungsfahrbahnen 80 km/h. Auf einer Kraftfahrstraße ohne Mitteltrennung gilt § 3 Abs. 3 (über 7,5 t oder mit Anhänger: 60) – typische Prüfungsfalle.\n' +
       '✅ Innerorts 50 km/h für alle (§ 3 Abs. 3 Nr. 1).\n' +
       '✅ Geschwindigkeitsbegrenzer: Lkw über 3,5 t auf 90 km/h begrenzt (§ 57c StVZO). Er schützt euch nicht davor, 80 zu überschreiten!\n' +
       '💡 Häufiger Irrtum: „Lkw außerorts immer 60.“ Bis 7,5 t ohne Anhänger sind es 80.\n' +
       '💡 Mit Schneeketten höchstens 50; Sichtweite unter 50 m höchstens 50 (§ 3 Abs. 1).\n' +
-      '➜ „Was kostet es, wenn ihr zu schnell seid?“' });
+      '➜ „Warum sind die Grenzen für Lkw so niedrig?“' });
     kick(s, 'Höchstgeschwindigkeit · § 3 und § 18 StVO'); title(s, 'Wie schnell darf ein Lkw?');
     const cx = [5.3, 7.75, 10.2], hy = 2.05;
     s.text('innerorts', { x: cx[0], y: hy, w: 2.2, h: 0.4, size: 15, bold: true, color: C.dim, align: 'center', cs: 1 });
@@ -80,7 +80,7 @@ module.exports = async (deck) => {
       '🖱 Klick 1: Pkw 80 km/h · Klick 2: Lkw 18 t mit 80 km/h · Klick 3: Auflösung.\n' +
       '✅ Bewegungsenergie = ½ · Masse · Geschwindigkeit². Lkw 18 t ist 12-mal so schwer wie ein Pkw mit 1,5 t → 12-fache Energie bei gleichem Tempo. Ein Pkw bräuchte dafür 80 · √12 ≈ 277 km/h.\n' +
       '💡 Diese Energie muss beim Bremsen in Wärme umgewandelt werden – mehr dazu in C7 (Physik) und C5/C6 (Bremsen).\n' +
-      '➜ „Darum braucht ihr auch mehr Abstand.“' });
+      '➜ „Und was kostet es, wenn ihr zu schnell seid?“' });
     kick(s, 'Warum langsamer?'); title(s, 'Masse macht Wucht');
     const x0 = 3.6, k = 0.68; // 1 Einheit Energie = k Zoll
     s.text('Pkw 1,5 t · 80 km/h', { x: 0.7, y: 2.35, w: 2.8, h: 0.7, size: 17, bold: true, color: C.txt, valign: 'middle' }, { fx: 'fade', c: true, dur: 200 });
@@ -128,7 +128,7 @@ module.exports = async (deck) => {
       '✅ § 4 Abs. 3 StVO: Lkw über 3,5 t zGM und Busse müssen auf Autobahnen bei mehr als 50 km/h mindestens 50 m Abstand halten. Verstoß: 80 €, 1 Punkt (BKat Nr. 15).\n' +
       '✅ Außerorts allgemein (§ 4 Abs. 2): Lkw und Züge über 7 m lassen so viel Platz, dass ein Überholer davor einscheren kann.\n' +
       '💡 Bei 80 km/h sind 50 m nur gut 2 Sekunden. Bei Nässe oder schwerer Ladung lieber mehr.\n' +
-      '➜ „Damit zum Überholen.“' });
+      '➜ „Kurze Frage zum Tempo.“' });
     kick(s, 'Abstand · § 4 Abs. 3 StVO'); title(s, 'Autobahn: mindestens 50 m');
     const ry = 2.35, rh = 2.0;
     s.rect(0, ry, W, rh, { fill: C.road });
@@ -172,7 +172,7 @@ module.exports = async (deck) => {
       '❓ Sammeln lassen.\n' +
       '🖱 Klick 1: Elefantenrennen · Klick 2: zu lange nebeneinander · Klick 3: Bußgeld.\n' +
       '✅ § 5 Abs. 2 Satz 2 StVO: Überholen darf nur, wer mit wesentlich höherer Geschwindigkeit als der zu Überholende fährt. Verstoß: 80 €, 1 Punkt (BKat Nr. 18).\n' +
-      '💡 Faustregel aus der Rechtsprechung: Ein Überholvorgang sollte nicht länger als etwa 45 Sekunden dauern. Ist der Unterschied nur 2–3 km/h, wird es nichts – dann lieber hinten bleiben.\n' +
+      '💡 Gerichte haben Überholvorgänge von deutlich über 45 Sekunden als unzulässig angesehen – keine feste Gesetzeszahl, aber ein guter Anhaltspunkt. Ist der Unterschied nur 2–3 km/h, wird es nichts – dann lieber hinten bleiben.\n' +
       '➜ „Rechnen wir mal: Wie lange dauert so ein Überholvorgang?“',
   });
   // ===== WIE LANGE DAUERT ÜBERHOLEN? (Diagramm) =====
@@ -204,14 +204,14 @@ module.exports = async (deck) => {
       '▶ Sagen: „Diese Schilder betreffen euch als Lkw-Fahrer besonders. Was bedeuten sie?“\n' +
       '❓ Vor jedem Klick auf das nächste Schild zeigen und fragen.\n' +
       '🖱 Klick 1–7: je ein Schild mit Bedeutung.\n' +
-      '✅ Zeichen 277: Überholverbot für Kfz über 3,5 t (auch Pkw mit Anhänger, Busse). Verstoß 70 €, 1 Punkt (BKat Nr. 153a).\n' +
+      '✅ Zeichen 277: Überholverbot für Kfz über 3,5 t zulässiger Gesamtmasse (einschließlich ihrer Anhänger) und für Zugmaschinen – ausgenommen Pkw und Busse. Nur mit Zusatzzeichen gilt es auch für Busse und Pkw mit Anhänger. Verstoß 70 €, 1 Punkt (BKat Nr. 153a).\n' +
       '✅ Zeichen 253: Verbot für Kfz über 3,5 t zulässiger Gesamtmasse (inkl. Anhänger). Verstoß 100 € (BKat 141.1), laut FeV Anlage 13 kein Punkt.\n' +
       '✅ Zeichen 262: tatsächliche Masse über Angabe · 263: tatsächliche Achslast · 264: Breite · 265: Höhe · 266: Länge (jeweils einschließlich Ladung). Verstoß 40 € (BKat Nr. 142).\n' +
       '💡 Wichtig: Bei 253 zählt die ZULÄSSIGE Gesamtmasse, bei 262 und 263 die TATSÄCHLICHE (was wirklich drauf ist).\n' +
       '💡 Höhe ist der Klassiker: Brücke 3,8 m, euer Koffer 4 m – das endet mit abgerissenem Dach.\n' +
       '➜ „Was ändert sich, wenn ein Zusatzzeichen darunter hängt?“' });
     kick(s, 'Verkehrszeichen für Lkw'); title(s, 'Was bedeuten diese Schilder?');
-    const S = [['277', 'Überholverbot für Kfz über 3,5 t'], ['253', 'Verbot für Kfz über 3,5 t (zulässige Gesamtmasse)'], ['262__5_5__', 'tatsächliche Masse über 5,5 t verboten'], ['263__8__', 'Achslast über 8 t verboten'], ['264__2__', 'breiter als 2 m verboten'], ['265__3_8__', 'höher als 3,8 m verboten'], ['266__10__', 'länger als 10 m verboten']];
+    const S = [['277', 'Überholverbot für Kfz über 3,5 t (nicht Pkw, Busse)'], ['253', 'Verbot für Kfz über 3,5 t (zulässige Gesamtmasse)'], ['262__5_5__', 'tatsächliche Masse über 5,5 t verboten'], ['263__8__', 'Achslast über 8 t verboten'], ['264__2__', 'breiter als 2 m verboten'], ['265__3_8__', 'höher als 3,8 m verboten'], ['266__10__', 'länger als 10 m verboten']];
     for (let i = 0; i < 7; i++) {
       const col = i < 4 ? 0 : 1, row = i < 4 ? i : i - 4;
       const x = col ? 6.85 : 0.7, y = (col ? 2.6 : 2.05) + row * 1.12;
@@ -246,12 +246,12 @@ module.exports = async (deck) => {
     const s = base(deck, 'ueb', { notes:
       '▶ Sagen: „Auf einer Autobahn mit drei Fahrstreifen: Welche Spuren dürft ihr mit dem Lkw benutzen?“\n' +
       '❓ Abstimmen lassen.\n' +
-      '🖱 Klick 1: rechte und mittlere Spur erlaubt · Klick 2: linke Spur verboten · Klick 3: Schnee und Glätte · Klick 4: Sicht unter 50 m.\n' +
+      '🖱 Klick 1: rechte und mittlere Spur erlaubt · Klick 2: linke Spur verboten · Klick 3: Sicht bis 50 m und Glätte · Klick 4: Überholverbot bei Sicht unter 50 m.\n' +
       '✅ § 7 Abs. 3c Satz 3 StVO: Bei drei markierten Fahrstreifen je Richtung dürfen Lkw über 3,5 t zGM und alle Kfz mit Anhänger den linken Fahrstreifen nicht benutzen (außer zum Linksabbiegen). 15 € (BKat Nr. 31b), mit Behinderung 20 €.\n' +
-      '✅ § 18 Abs. 11 StVO: Lkw über 7,5 t (auch mit Anhänger) und Zugmaschinen dürfen bei Sichtweite unter 50 m durch Schnee oder Regen sowie bei Schneeglätte oder Glatteis den äußerst linken Fahrstreifen nicht benutzen. 80 €, 1 Punkt (BKat Nr. 87a).\n' +
+      '✅ § 18 Abs. 11 StVO: Lkw über 7,5 t (auch mit Anhänger) und Zugmaschinen dürfen, wenn die Sicht durch erheblichen Schneefall oder Regen auf 50 m oder weniger eingeschränkt ist, sowie bei Schneeglätte oder Glatteis den äußerst linken Fahrstreifen nicht benutzen. 80 €, 1 Punkt (BKat Nr. 87a).\n' +
       '✅ § 5 Abs. 3a StVO: Kfz über 7,5 t dürfen bei Sichtweite unter 50 m nicht überholen. 120 €, 1 Punkt (BKat Nr. 21).\n' +
       '💡 Merke: Die Spur-Regel bei drei Streifen gilt schon ab 3,5 t – nicht erst ab 7,5 t.\n' +
-      '➜ „Testen wir das.“' });
+      '➜ „Testen wir das Überholen.“' });
     kick(s, 'Fahrstreifen · § 7 und § 18 StVO'); title(s, 'Drei Spuren – zwei für euch');
     const x0 = 0.7, w = 7.0, y0 = 2.1, lw = 1.05;
     s.rect(x0, y0, w, lw * 3, { fill: C.road });
@@ -265,7 +265,7 @@ module.exports = async (deck) => {
     veh(s, 'truck.png', x0 + 4.8, y0 + 1.5 * lw, 90, undefined, { scale: 0.9, anim: { fx: 'flyL', dur: 600 } });
     s.rect(x0, y0 + 0.05, w, lw - 0.1, { fill: C.red, ft: 65 }, { fx: 'fade', c: true, dur: 400 });
     s.text('✗  Lkw über 3,5 t und Kfz mit Anhänger: nicht links', { x: x0 + 0.2, y: y0 + 0.05, w: w - 0.4, h: lw - 0.1, size: 16, bold: true, color: C.txt, valign: 'middle' }, { fx: 'fade', dur: 200 });
-    await point(s, 8.7, 2.05, 3.93, 1.55, 'LuSnowflake', C.bl, 'Schnee, Glätte', 'über 7,5 t: äußerst linke Spur tabu (80 €, 1 Punkt)', CLICK, { br: true, size: 15 });
+    await point(s, 8.7, 2.05, 3.93, 1.55, 'LuSnowflake', C.bl, 'Sicht bis 50 m, Glätte', 'über 7,5 t: äußerst linke Spur tabu (80 €, 1 Punkt)', CLICK, { br: true, size: 15 });
     await point(s, 8.7, 3.75, 3.93, 1.55, 'LuEyeOff', C.or, 'Sicht unter 50 m', 'über 7,5 t: Überholverbot (120 €, 1 Punkt)', CLICK, { br: true, size: 15 });
     foot(s, '§ 7 Abs. 3c (15 €) · § 18 Abs. 11 (BKat 87a) · § 5 Abs. 3a (BKat 21)');
   }
@@ -273,6 +273,6 @@ module.exports = async (deck) => {
     kicker: 'Frage · Überholen', q: 'Du fährst 80 km/h, der Lkw vor dir 78 km/h. Darfst du überholen?', size: 32,
     opts: ['Ja, ich bin ja schneller', 'Nein – Überholen nur mit wesentlich höherer Geschwindigkeit', 'Ja, wenn ich den Blinker lange genug setze'], ok: 1,
     why: '§ 5 Abs. 2 StVO. 2 km/h Unterschied ist kein „wesentlich höher“ – das wird ein Elefantenrennen (80 €, 1 Punkt).',
-    notes: '▶ Frage vorlesen, abstimmen.\n🖱 Klick 1: Antworten · Klick 2: Lösung.\n✅ B.\n💡 Rechnung zum Staunen: Bei 2 km/h Unterschied dauert es fast eine Minute, um einen 16,5-m-Sattelzug plus Sicherheitsabstände zu überholen.\n➜ „Kapitel 3: der Bahnübergang – hier geht es um Leben und Tod.“',
+    notes: '▶ Frage vorlesen, abstimmen.\n🖱 Klick 1: Antworten · Klick 2: Lösung.\n✅ B.\n💡 Rechnung zum Staunen: Bei 2 km/h Unterschied dauert das Überholen eines Sattelzugs mit Abständen rund zweieinhalb Minuten (siehe Rechenbeispiel).\n➜ „Kapitel 3: der Bahnübergang – hier geht es um Leben und Tod.“',
   });
 };
