@@ -45,6 +45,10 @@ function lkwSide(o = {}) {
       for (let x = bx + 0.42; x < bx + bw - 0.2; x += 0.42) u += line(x, f + 0.1, x, f + boxH - 0.04, `stroke="#B3BBC6" stroke-width="2"`);
       u += rect(bx, f + boxH - 0.07, bw, 0.07, `fill="#A9B2BE"`);
       u += rect(bx + bw - 0.06, f + 0.07, 0.06, boxH - 0.07, `fill="#9AA4B1"`);  // Türrahmen hinten
+    } else if (box === 'pritsche') {
+      u += rect(bx, f + 0.07, bw, boxH - 0.07, `fill="#8C96A4" stroke="#6E7886" stroke-width="2"`);
+      for (let x = bx + 0.6; x < bx + bw - 0.2; x += 0.6) u += line(x, f + 0.09, x, f + boxH - 0.02, `stroke="#6E7886" stroke-width="3"`);
+      u += rect(bx, f + boxH - 0.05, bw, 0.05, `fill="#A9B2BE"`);
     } else {
       u += rect(bx, f + 0.07, bw, boxH - 0.07, `fill="#5B7BA6" stroke="#46658F" stroke-width="2"`);
       for (let x = bx + 0.5; x < bx + bw - 0.2; x += 0.5) u += line(x, f + 0.1, x, f + boxH - 0.04, `stroke="#4D6D97" stroke-width="2"`);

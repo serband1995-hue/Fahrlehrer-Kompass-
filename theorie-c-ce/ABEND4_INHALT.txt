@@ -1,0 +1,1575 @@
+=== FOLIE 1 ===
+AUF DER FOLIE: KLASSE C  ·  THEORIE  ·  ABEND 4 | Kräfte, die am Lkw ziehen | C7  Wirkung von Kräften beim Fahren / C8  Ausrüstung, Beförderung, Sicherheit | Fahrschule Boost  ·  Offenbach am Main
+NOTIZEN:
+FOLIE 1 VON 162 · keine Klicks, läuft von selbst
+
+▶ Sagen: „Willkommen zu Abend 4. Heute geht es um Physik – aber keine Angst, ohne Formeln zum Auswendiglernen. Ihr lernt, welche Kräfte an einem Lkw ziehen und drücken: in der Kurve, beim Bremsen, bei Wind. Nach der Pause: Was muss an Bord sein, wie schwer und wie groß darf ein Lkw sein – und wie arbeitet ihr sicher.“
+💡 Vorher: Anwesenheit eintragen, Ausbildungsnachweis abzeichnen.
+🖱 Keine Klicks, alles läuft von selbst.
+➜ „So läuft der Abend.“
+
+=== FOLIE 2 ===
+AUF DER FOLIE: KLASSE C  ·  ABEND 4  ·  LEKTION C7 | 2 | HEUTE ABEND | Zwei Lektionen, eine Pause | 18:00 – 19:30 | Lektion C7  Wirkung von Kräften beim Fahren / Haftung · Widerstände und Energie · Fliehkraft und Kippen · Wind und Wasser · Ladung | 19:30 – 19:45 | Pause  15 Minuten | 19:45 – 21:15 | Lektion C8  Ausrüstung, Beförderung, Sicherheit / Pflichtausrüstung · Abschleppen · Maße und Gewichte · Ladung · Gefahrgut · Arbeitssicherheit
+NOTIZEN:
+FOLIE 2 VON 162 · 3 Klicks
+
+▶ Sagen: „Zwei Lektionen: zuerst C7 – welche Kräfte beim Fahren wirken. Nach der Pause C8 – Pflichtausrüstung, Maße und Gewichte, Gefahrgut und Arbeitssicherheit.“
+🖱 Klick 1: Lektion C7 · Klick 2: Pause · Klick 3: Lektion C8.
+💡 Zeiten für einen Beginn um 18:00 Uhr.
+➜ „Erst ein kurzer Blick zurück auf Abend 3.“
+
+=== FOLIE 3 ===
+AUF DER FOLIE: KLASSE C  ·  ABEND 4  ·  LEKTION C7 | 3 | WIEDERHOLUNG ABEND 3 | Drei Fragen von letztem Mal – wer weiß es noch? | Der Lkw stand übers Wochenende. Wann losfahren?  Erst wenn genug Luft im System ist – die Druckwarnung muss aus sein. | Was ist Fading?  Die Bremse wird zu heiß und lässt nach. Dagegen: zurückschalten, Dauerbremse nutzen. | Ab wann ist eine Dauerbremse Pflicht?  Bei Lkw über 9 t zulässiger Gesamtmasse.
+NOTIZEN:
+FOLIE 3 VON 162 · 3 Klicks
+
+▶ Sagen: „Bevor wir anfangen: drei Fragen zu Abend 3.“
+❓ Jede Frage vorlesen, Antworten sammeln, dann klicken.
+🖱 Klick 1–3: je eine Frage mit Antwort.
+✅ Prüfungsfrage 2.7.01-238 (losfahren erst, wenn die Druckwarnung aufgehört hat) · 2.7.06-310 (Fading) · § 41 Abs. 15 StVZO (Dauerbremse über 9 t).
+➜ „Gut. Heute geht es um die Kräfte, die dabei wirken. Was lernt ihr in C7?“
+
+=== FOLIE 4 ===
+AUF DER FOLIE: KLASSE C  ·  ABEND 4  ·  LEKTION C7 | 4 | LEKTION C7 · WIRKUNG VON KRÄFTEN BEIM FAHREN | Das lernt ihr in C7 | 01 | Haftung  Reifen und Straße, Bremsen und Lenken zugleich | 20 Min | 02 | Widerstände und Energie  Rollen, Luft, Steigung – und die Wucht der Masse | 20 Min | 03 | Fliehkraft und Kippen  Kurve, Schwerpunkt, Kippgefahr | 25 Min | 04 | Wind und Wasser  Seitenwind und Aquaplaning | 10 Min | 05 | Leer oder beladen  Was die Ladung am Fahrverhalten ändert | 10 Min | + 5 Min Abschluss: Quiz und „Das nimmst du mit“
+NOTIZEN:
+FOLIE 4 VON 162 · 5 Klicks
+
+▶ Sagen: „In C7 versteht ihr, warum ein Lkw anders fährt als ein Auto: Er ist schwer, hoch und groß. Das merkt man beim Bremsen, in der Kurve und bei Wind.“
+🖱 Klick 1–5: je ein Kapitel.
+💡 Zeiten sind Richtwerte für 90 Minuten.
+➜ „Kapitel 1: Wie hält ein Lkw überhaupt auf der Straße?“
+
+=== FOLIE 5 ===
+AUF DER FOLIE: KLASSE C  ·  ABEND 4  ·  C7  ·  HAFTUNG | 5 | 01 | Haftung | Alles, was der Lkw tut, geht über die Reifen – und die Haftung ist begrenzt.
+NOTIZEN:
+FOLIE 5 VON 162 · keine Klicks, läuft von selbst
+
+▶ Sagen: „Kapitel 1: Haftung. Bremsen, Lenken, Antreiben – alles muss durch ein paar handflächengroße Stellen, wo die Reifen die Straße berühren.“
+🖱 Keine Klicks.
+➜ „Schauen wir uns ein einzelnes Rad an.“
+
+=== FOLIE 6 ===
+AUF DER FOLIE: KLASSE C  ·  ABEND 4  ·  C7  ·  HAFTUNG | 6 | HAFTUNG | Rollen oder rutschen | ❓ Frage an die Klasse / Was bremst stärker: ein Rad, das gerade noch rollt – oder ein blockiertes Rad? | Antwort folgt … | Das Rad rollt. Wo der Reifen die Straße berührt, steht er kurz still – er haftet. | Schematisch · rote Markierung zeigt die Drehung des Rads | Bremskraft | Rad rollt frei | Lenkbar? | ✓  ja
+NOTIZEN:
+FOLIE 6 VON 162 · keine Klicks, läuft von selbst
+
+▶ Sagen: „Ein Lkw-Rad. Achtet auf den roten Punkt.“
+❓ Frage auf der Folie vorlesen und abstimmen lassen: Wer meint „rollendes Rad“, wer „blockiertes Rad“?
+🖱 Klick: Das Rad rollt los (läuft von selbst).
+➜ „Schaut, was passiert.“
+
+=== FOLIE 7 ===
+AUF DER FOLIE: KLASSE C  ·  ABEND 4  ·  C7  ·  HAFTUNG | 7 | HAFTUNG | Rollen oder rutschen | ❓ Frage an die Klasse / Was bremst stärker: ein Rad, das gerade noch rollt – oder ein blockiertes Rad? | Antwort folgt … | Das Rad rollt. Wo der Reifen die Straße berührt, steht er kurz still – er haftet. | Schematisch · rote Markierung zeigt die Drehung des Rads | Bremskraft | Haftreibung – am größten | Lenkbar? | ✓  ja
+NOTIZEN:
+FOLIE 7 VON 162 · keine Klicks, läuft von selbst
+
+▶ Die Bewegung läuft – zuschauen lassen.
+🖱 Kein Klick – die Folie läuft von selbst weiter.
+➜ (läuft weiter)
+
+=== FOLIE 8 ===
+AUF DER FOLIE: KLASSE C  ·  ABEND 4  ·  C7  ·  HAFTUNG | 8 | HAFTUNG | Rollen oder rutschen | ❓ Frage an die Klasse / Was bremst stärker: ein Rad, das gerade noch rollt – oder ein blockiertes Rad? | Antwort folgt … | Das Rad rollt. Wo der Reifen die Straße berührt, steht er kurz still – er haftet. | Schematisch · rote Markierung zeigt die Drehung des Rads | Bremskraft | Haftreibung – am größten | Lenkbar? | ✓  ja
+NOTIZEN:
+FOLIE 8 VON 162 · keine Klicks, läuft von selbst
+
+▶ Die Bewegung läuft – zuschauen lassen.
+🖱 Kein Klick – die Folie läuft von selbst weiter.
+➜ (läuft weiter)
+
+=== FOLIE 9 ===
+AUF DER FOLIE: KLASSE C  ·  ABEND 4  ·  C7  ·  HAFTUNG | 9 | HAFTUNG | Rollen oder rutschen | ❓ Frage an die Klasse / Was bremst stärker: ein Rad, das gerade noch rollt – oder ein blockiertes Rad? | Antwort folgt … | Das Rad rollt. Wo der Reifen die Straße berührt, steht er kurz still – er haftet. | Schematisch · rote Markierung zeigt die Drehung des Rads | Bremskraft | Haftreibung – am größten | Lenkbar? | ✓  ja
+NOTIZEN:
+FOLIE 9 VON 162 · keine Klicks, läuft von selbst
+
+▶ Die Bewegung läuft – zuschauen lassen.
+🖱 Kein Klick – die Folie läuft von selbst weiter.
+➜ (läuft weiter)
+
+=== FOLIE 10 ===
+AUF DER FOLIE: KLASSE C  ·  ABEND 4  ·  C7  ·  HAFTUNG | 10 | HAFTUNG | Rollen oder rutschen | ❓ Frage an die Klasse / Was bremst stärker: ein Rad, das gerade noch rollt – oder ein blockiertes Rad? | Antwort folgt … | Bremsen bis kurz vor dem Blockieren: Haftreibung – hier ist die Bremskraft am größten. | Schematisch · rote Markierung zeigt die Drehung des Rads | Bremskraft | Haftreibung – am größten | Lenkbar? | ✓  ja
+NOTIZEN:
+FOLIE 10 VON 162 · keine Klicks, läuft von selbst
+
+▶ „Solange das Rad rollt, haftet der Reifen an der Straße. Das heißt Haftreibung. Wenn ich kräftig bremse, aber das Rad gerade noch dreht, ist die Bremskraft am größten.“
+✅ Lehrbuchwissen: Haftreibung ist größer als Gleitreibung.
+🖱 Klick: Jetzt blockiert das Rad (läuft von selbst).
+➜ „Und jetzt tritt jemand zu fest drauf …“
+
+=== FOLIE 11 ===
+AUF DER FOLIE: KLASSE C  ·  ABEND 4  ·  C7  ·  HAFTUNG | 11 | HAFTUNG | Rollen oder rutschen | ❓ Frage an die Klasse / Was bremst stärker: ein Rad, das gerade noch rollt – oder ein blockiertes Rad? | Antwort folgt … | Rad blockiert: Es dreht sich nicht mehr und rutscht über die Straße – Gleitreibung. | Schematisch · rote Markierung zeigt die Drehung des Rads | Bremskraft | Gleitreibung – kleiner | Lenkbar? | ✗  nein
+NOTIZEN:
+FOLIE 11 VON 162 · keine Klicks, läuft von selbst
+
+▶ Die Bewegung läuft – zuschauen lassen.
+🖱 Kein Klick – die Folie läuft von selbst weiter.
+➜ (läuft weiter)
+
+=== FOLIE 12 ===
+AUF DER FOLIE: KLASSE C  ·  ABEND 4  ·  C7  ·  HAFTUNG | 12 | HAFTUNG | Rollen oder rutschen | ❓ Frage an die Klasse / Was bremst stärker: ein Rad, das gerade noch rollt – oder ein blockiertes Rad? | Antwort folgt … | Rad blockiert: Es dreht sich nicht mehr und rutscht über die Straße – Gleitreibung. | Schematisch · rote Markierung zeigt die Drehung des Rads | Bremskraft | Gleitreibung – kleiner | Lenkbar? | ✗  nein
+NOTIZEN:
+FOLIE 12 VON 162 · keine Klicks, läuft von selbst
+
+▶ Die Bewegung läuft – zuschauen lassen.
+🖱 Kein Klick – die Folie läuft von selbst weiter.
+➜ (läuft weiter)
+
+=== FOLIE 13 ===
+AUF DER FOLIE: KLASSE C  ·  ABEND 4  ·  C7  ·  HAFTUNG | 13 | HAFTUNG | Rollen oder rutschen | ❓ Frage an die Klasse / Was bremst stärker: ein Rad, das gerade noch rollt – oder ein blockiertes Rad? | Antwort folgt … | Rad blockiert: Es dreht sich nicht mehr und rutscht über die Straße – Gleitreibung. | Schematisch · rote Markierung zeigt die Drehung des Rads | Bremskraft | Gleitreibung – kleiner | Lenkbar? | ✗  nein
+NOTIZEN:
+FOLIE 13 VON 162 · keine Klicks, läuft von selbst
+
+▶ Die Bewegung läuft – zuschauen lassen.
+🖱 Kein Klick – die Folie läuft von selbst weiter.
+➜ (läuft weiter)
+
+=== FOLIE 14 ===
+AUF DER FOLIE: KLASSE C  ·  ABEND 4  ·  C7  ·  HAFTUNG | 14 | HAFTUNG | Rollen oder rutschen | ❓ Frage an die Klasse / Was bremst stärker: ein Rad, das gerade noch rollt – oder ein blockiertes Rad? | Antwort folgt … | Rad blockiert: Es dreht sich nicht mehr und rutscht über die Straße – Gleitreibung. | Schematisch · rote Markierung zeigt die Drehung des Rads | Bremskraft | Gleitreibung – kleiner | Lenkbar? | ✗  nein
+NOTIZEN:
+FOLIE 14 VON 162 · keine Klicks, läuft von selbst
+
+▶ Die Bewegung läuft – zuschauen lassen.
+🖱 Kein Klick – die Folie läuft von selbst weiter.
+➜ (läuft weiter)
+
+=== FOLIE 15 ===
+AUF DER FOLIE: KLASSE C  ·  ABEND 4  ·  C7  ·  HAFTUNG | 15 | HAFTUNG | Rollen oder rutschen | ❓ Frage an die Klasse / Was bremst stärker: ein Rad, das gerade noch rollt – oder ein blockiertes Rad? | ✓ Antwort / Das Rad, das noch rollt. Haftreibung ist größer als Gleitreibung – und nur ein rollendes Rad lässt sich lenken. | Gleitreibung bremst schwächer, der Reifen radiert – und ein rutschendes Rad lässt sich nicht lenken. | Schematisch · rote Markierung zeigt die Drehung des Rads | Bremskraft | Gleitreibung – kleiner | Lenkbar? | ✗  nein
+NOTIZEN:
+FOLIE 15 VON 162 · keine Klicks, läuft von selbst
+
+▶ „Das Rad steht, der Reifen rutscht. Jetzt wirkt nur noch Gleitreibung – die ist kleiner. Der Bremsweg wird länger, und vor allem: Ein rutschendes Rad hat keine Seitenführung, der Lkw lässt sich nicht mehr lenken.“
+✅ Lehrbuchwissen. Deshalb haben Lkw ABS: Es hält die Räder an der Grenze zum Blockieren (siehe Abend 3, C6).
+🖱 Keine Animation mehr – nächster Klick: nächste Folie.
+➜ „Wie viel Haftung gibt es überhaupt? Das hängt von der Straße ab.“
+
+=== FOLIE 16 ===
+AUF DER FOLIE: KLASSE C  ·  ABEND 4  ·  C7  ·  HAFTUNG | 16 | HAFTUNG | Die Straße entscheidet | 1 | Trockener Asphalt | 2 | Nasse Straße | 3 | Schnee | 4 | Eis | ❓ Frage an die Klasse   / Bremsweg aus 50 km/h: Wie viel länger ist er auf Eis als auf trockener Straße? | Trockener Asphalt: Der Reifen haftet sehr gut. Aus 50 km/h steht der Lkw nach etwa 12 Metern Bremsweg. | Richtwerte · Bremsweg aus 50 km/h, nur Haftung gerechnet, ohne Reaktionszeit | Trocken | Haftung 0,8 | Haftung | Bremsweg aus 50 km/h | ≈ 12 m | Bremsbeginn
+NOTIZEN:
+FOLIE 16 VON 162 · keine Klicks, läuft von selbst
+
+▶ Sagen: „Wie viel Haftung ein Reifen hat, hängt vor allem von der Straße ab. Fachleute sagen Haftreibungszahl – wir sagen einfach Haftung.“
+❓ Frage auf der Folie vorlesen, schätzen lassen.
+✅ Richtwerte Haftreibungszahl: trocken etwa 0,8 · nass 0,5 · Schnee 0,2 · Eis 0,1 (Lehrbuchwerte). Bremsweg nur durch Haftung begrenzt: v² / (2 · Haftung · 9,81 m/s²). 50 km/h = 13,9 m/s → trocken etwa 12 m.
+💡 Vereinfachte Rechnung ohne Reaktions- und Ansprechzeit. Echte Lkw-Bremswege sind länger (siehe Abend 3).
+🖱 Keine Animation auf dieser Folie – nächster Klick = nächster Schritt (Morph).
+➜ „Jetzt regnet es.“
+
+=== FOLIE 17 ===
+AUF DER FOLIE: KLASSE C  ·  ABEND 4  ·  C7  ·  HAFTUNG | 17 | HAFTUNG | Die Straße entscheidet | 1 | Trockener Asphalt | 2 | Nasse Straße | 3 | Schnee | 4 | Eis | ❓ Frage an die Klasse   / Bremsweg aus 50 km/h: Wie viel länger ist er auf Eis als auf trockener Straße? | Nasse Straße: Ein Wasserfilm zwischen Reifen und Straße. Etwa 20 Meter. | Richtwerte · Bremsweg aus 50 km/h, nur Haftung gerechnet, ohne Reaktionszeit | Nass | Haftung 0,5 | Haftung | Bremsweg aus 50 km/h | ≈ 20 m | Bremsbeginn
+NOTIZEN:
+FOLIE 17 VON 162 · keine Klicks, läuft von selbst
+
+▶ „Nasse Straße: etwa 20 Meter. Besonders glatt ist es beim ersten Regen nach langer Trockenheit – Staub, Öl und Gummi machen einen Schmierfilm.“
+✅ Haftung etwa 0,5 → 13,9² / (2 · 0,5 · 9,81) ≈ 20 m.
+🖱 Keine Animation auf dieser Folie – nächster Klick = nächster Schritt (Morph).
+➜ „Und im Winter?“
+
+=== FOLIE 18 ===
+AUF DER FOLIE: KLASSE C  ·  ABEND 4  ·  C7  ·  HAFTUNG | 18 | HAFTUNG | Die Straße entscheidet | 1 | Trockener Asphalt | 2 | Nasse Straße | 3 | Schnee | 4 | Eis | ❓ Frage an die Klasse   / Bremsweg aus 50 km/h: Wie viel länger ist er auf Eis als auf trockener Straße? | Schnee: Nur noch ein Viertel der Haftung. Etwa 50 Meter. | Richtwerte · Bremsweg aus 50 km/h, nur Haftung gerechnet, ohne Reaktionszeit | Schnee | Haftung 0,2 | Haftung | Bremsweg aus 50 km/h | ≈ 49 m | Bremsbeginn
+NOTIZEN:
+FOLIE 18 VON 162 · keine Klicks, läuft von selbst
+
+▶ „Schnee: etwa 50 Meter.“
+✅ Haftung etwa 0,2 → rund 49 m.
+🖱 Keine Animation auf dieser Folie – nächster Klick = nächster Schritt (Morph).
+➜ „Und auf Eis?“
+
+=== FOLIE 19 ===
+AUF DER FOLIE: KLASSE C  ·  ABEND 4  ·  C7  ·  HAFTUNG | 19 | HAFTUNG | Die Straße entscheidet | 1 | Trockener Asphalt | 2 | Nasse Straße | 3 | Schnee | 4 | Eis | ✓ Antwort   / Etwa achtmal so lang – rund 100 statt 12 Meter. | Eis: Fast keine Haftung. Rund 100 Meter – achtmal so lang wie trocken. | Richtwerte · Bremsweg aus 50 km/h, nur Haftung gerechnet, ohne Reaktionszeit | Eis | Haftung 0,1 | Haftung | Bremsweg aus 50 km/h | ≈ 98 m | Bremsbeginn
+NOTIZEN:
+FOLIE 19 VON 162 · keine Klicks, läuft von selbst
+
+▶ „Auf Eis: rund 100 Meter – achtmal so weit wie auf trockener Straße. Deshalb: Bei Glätte Tempo runter und viel Abstand.“
+✅ Haftung etwa 0,1 → rund 98 m. Achtmal so lang, weil die Haftung nur ein Achtel ist.
+🖱 Keine Animation auf dieser Folie – nächster Klick = nächster Schritt (Morph).
+➜ „Die Haftung muss für alles reichen – Bremsen UND Lenken. Wie das zusammenhängt, zeigt der Haftungskreis.“
+
+=== FOLIE 20 ===
+AUF DER FOLIE: KLASSE C  ·  ABEND 4  ·  C7  ·  HAFTUNG | 20 | HAFTUNG | Der Haftungskreis | ❓ Frage an die Klasse / Könnt ihr gleichzeitig voll bremsen und kräftig lenken? | Antwort folgt … | Der Kreis ist die ganze Haftung, die die Reifen haben. Mehr geht nicht. | Kreis = Haftung zwischen Reifen und Straße · Punkt = was ihr gerade verlangt | Antreiben | Bremsen | Lenken | Lenken | Trockene Straße | haftet
+NOTIZEN:
+FOLIE 20 VON 162 · keine Klicks, läuft von selbst
+
+▶ Sagen: „Stellt euch die Haftung als Kreis vor. Der Punkt zeigt, was ihr gerade von den Reifen verlangt. Bleibt der Punkt im Kreis, haftet der Lkw. Geht er raus, rutscht er.“
+❓ Frage auf der Folie stellen.
+✅ Lehrbuchwissen: Haftungskreis („Kammscher Kreis“). Längskraft (Bremsen, Antreiben) und Seitenkraft (Lenken) teilen sich die Haftung.
+🖱 Klick: Der Lkw bremst (läuft von selbst).
+➜ „Erst bremsen wir.“
+
+=== FOLIE 21 ===
+AUF DER FOLIE: KLASSE C  ·  ABEND 4  ·  C7  ·  HAFTUNG | 21 | HAFTUNG | Der Haftungskreis | ❓ Frage an die Klasse / Könnt ihr gleichzeitig voll bremsen und kräftig lenken? | Antwort folgt … | Bremsen: Der Punkt wandert nach unten. | Kreis = Haftung zwischen Reifen und Straße · Punkt = was ihr gerade verlangt | Antreiben | Bremsen | Lenken | Lenken | Trockene Straße | haftet
+NOTIZEN:
+FOLIE 21 VON 162 · keine Klicks, läuft von selbst
+
+▶ Die Bewegung läuft – zuschauen lassen.
+🖱 Kein Klick – die Folie läuft von selbst weiter.
+➜ (läuft weiter)
+
+=== FOLIE 22 ===
+AUF DER FOLIE: KLASSE C  ·  ABEND 4  ·  C7  ·  HAFTUNG | 22 | HAFTUNG | Der Haftungskreis | ❓ Frage an die Klasse / Könnt ihr gleichzeitig voll bremsen und kräftig lenken? | Antwort folgt … | Bremsen: Der Punkt wandert nach unten. | Kreis = Haftung zwischen Reifen und Straße · Punkt = was ihr gerade verlangt | Antreiben | Bremsen | Lenken | Lenken | Trockene Straße | haftet
+NOTIZEN:
+FOLIE 22 VON 162 · keine Klicks, läuft von selbst
+
+▶ Die Bewegung läuft – zuschauen lassen.
+🖱 Kein Klick – die Folie läuft von selbst weiter.
+➜ (läuft weiter)
+
+=== FOLIE 23 ===
+AUF DER FOLIE: KLASSE C  ·  ABEND 4  ·  C7  ·  HAFTUNG | 23 | HAFTUNG | Der Haftungskreis | ❓ Frage an die Klasse / Könnt ihr gleichzeitig voll bremsen und kräftig lenken? | Antwort folgt … | Starke Bremsung: Die Haftung ist fast ganz ausgenutzt. | Kreis = Haftung zwischen Reifen und Straße · Punkt = was ihr gerade verlangt | Antreiben | Bremsen | Lenken | Lenken | Trockene Straße | haftet
+NOTIZEN:
+FOLIE 23 VON 162 · keine Klicks, läuft von selbst
+
+▶ „Starke Bremsung – fast die ganze Haftung ist weg. Für das Lenken bleibt kaum noch etwas übrig.“
+🖱 Klick: Jetzt wird zusätzlich gelenkt (läuft von selbst).
+➜ „Und jetzt lenkt ihr dazu – zum Beispiel um einem Hindernis auszuweichen.“
+
+=== FOLIE 24 ===
+AUF DER FOLIE: KLASSE C  ·  ABEND 4  ·  C7  ·  HAFTUNG | 24 | HAFTUNG | Der Haftungskreis | ❓ Frage an die Klasse / Könnt ihr gleichzeitig voll bremsen und kräftig lenken? | Antwort folgt … | Dazu lenken: Der Punkt geht nach rechts … | Kreis = Haftung zwischen Reifen und Straße · Punkt = was ihr gerade verlangt | Antreiben | Bremsen | Lenken | Lenken | Trockene Straße | haftet
+NOTIZEN:
+FOLIE 24 VON 162 · keine Klicks, läuft von selbst
+
+▶ Die Bewegung läuft – zuschauen lassen.
+🖱 Kein Klick – die Folie läuft von selbst weiter.
+➜ (läuft weiter)
+
+=== FOLIE 25 ===
+AUF DER FOLIE: KLASSE C  ·  ABEND 4  ·  C7  ·  HAFTUNG | 25 | HAFTUNG | Der Haftungskreis | ❓ Frage an die Klasse / Könnt ihr gleichzeitig voll bremsen und kräftig lenken? | Antwort folgt … | Dazu lenken: Der Punkt geht nach rechts … | Kreis = Haftung zwischen Reifen und Straße · Punkt = was ihr gerade verlangt | Antreiben | Bremsen | Lenken | Lenken | Trockene Straße | haftet
+NOTIZEN:
+FOLIE 25 VON 162 · keine Klicks, läuft von selbst
+
+▶ Die Bewegung läuft – zuschauen lassen.
+🖱 Kein Klick – die Folie läuft von selbst weiter.
+➜ (läuft weiter)
+
+=== FOLIE 26 ===
+AUF DER FOLIE: KLASSE C  ·  ABEND 4  ·  C7  ·  HAFTUNG | 26 | HAFTUNG | Der Haftungskreis | ❓ Frage an die Klasse / Könnt ihr gleichzeitig voll bremsen und kräftig lenken? | ✓ Antwort / Nein. Die Haftung reicht nur einmal: Bremsen und Lenken teilen sie sich. Wird es zu viel, rutscht der Lkw. | Zu viel: Der Punkt ist außerhalb des Kreises. Die Reifen rutschen – der Lkw schiebt geradeaus oder bricht aus. | Kreis = Haftung zwischen Reifen und Straße · Punkt = was ihr gerade verlangt | Antreiben | Bremsen | Lenken | Lenken | Trockene Straße | RUTSCHT!
+NOTIZEN:
+FOLIE 26 VON 162 · keine Klicks, läuft von selbst
+
+▶ „Bremsen plus Lenken ist mehr, als die Reifen hergeben. Der Lkw rutscht – über die Vorderräder schiebt er geradeaus, über die Hinterräder bricht er aus.“
+✅ Lehrbuchwissen. ABS hilft, weil es die Räder nicht blockieren lässt – aber auch ABS kann die Haftung nicht vergrößern.
+🖱 Klick: Nächster Fall – die Straße wird nass (läuft von selbst).
+➜ „Jetzt dasselbe mit einer normalen Bremsung – aber das Wetter ändert sich.“
+
+=== FOLIE 27 ===
+AUF DER FOLIE: KLASSE C  ·  ABEND 4  ·  C7  ·  HAFTUNG | 27 | HAFTUNG | Der Haftungskreis | ❓ Frage an die Klasse / Könnt ihr gleichzeitig voll bremsen und kräftig lenken? | ✓ Antwort / Nein. Die Haftung reicht nur einmal: Bremsen und Lenken teilen sie sich. Wird es zu viel, rutscht der Lkw. | Nur eine mittlere Bremsung auf trockener Straße – kein Problem. | Kreis = Haftung zwischen Reifen und Straße · Punkt = was ihr gerade verlangt | Antreiben | Bremsen | Lenken | Lenken | Trockene Straße | haftet
+NOTIZEN:
+FOLIE 27 VON 162 · keine Klicks, läuft von selbst
+
+▶ Die Bewegung läuft – zuschauen lassen.
+🖱 Kein Klick – die Folie läuft von selbst weiter.
+➜ (läuft weiter)
+
+=== FOLIE 28 ===
+AUF DER FOLIE: KLASSE C  ·  ABEND 4  ·  C7  ·  HAFTUNG | 28 | HAFTUNG | Der Haftungskreis | ❓ Frage an die Klasse / Könnt ihr gleichzeitig voll bremsen und kräftig lenken? | ✓ Antwort / Nein. Die Haftung reicht nur einmal: Bremsen und Lenken teilen sie sich. Wird es zu viel, rutscht der Lkw. | Es regnet: Der Kreis wird kleiner … | Kreis = Haftung zwischen Reifen und Straße · Punkt = was ihr gerade verlangt | Antreiben | Bremsen | Lenken | Lenken | Nasse Straße | haftet
+NOTIZEN:
+FOLIE 28 VON 162 · keine Klicks, läuft von selbst
+
+▶ Die Bewegung läuft – zuschauen lassen.
+🖱 Kein Klick – die Folie läuft von selbst weiter.
+➜ (läuft weiter)
+
+=== FOLIE 29 ===
+AUF DER FOLIE: KLASSE C  ·  ABEND 4  ·  C7  ·  HAFTUNG | 29 | HAFTUNG | Der Haftungskreis | ❓ Frage an die Klasse / Könnt ihr gleichzeitig voll bremsen und kräftig lenken? | ✓ Antwort / Nein. Die Haftung reicht nur einmal: Bremsen und Lenken teilen sie sich. Wird es zu viel, rutscht der Lkw. | Matsch: noch kleiner … | Kreis = Haftung zwischen Reifen und Straße · Punkt = was ihr gerade verlangt | Antreiben | Bremsen | Lenken | Lenken | Matsch | haftet
+NOTIZEN:
+FOLIE 29 VON 162 · keine Klicks, läuft von selbst
+
+▶ Die Bewegung läuft – zuschauen lassen.
+🖱 Kein Klick – die Folie läuft von selbst weiter.
+➜ (läuft weiter)
+
+=== FOLIE 30 ===
+AUF DER FOLIE: KLASSE C  ·  ABEND 4  ·  C7  ·  HAFTUNG | 30 | HAFTUNG | Der Haftungskreis | ❓ Frage an die Klasse / Könnt ihr gleichzeitig voll bremsen und kräftig lenken? | ✓ Antwort / Nein. Die Haftung reicht nur einmal: Bremsen und Lenken teilen sie sich. Wird es zu viel, rutscht der Lkw. | Schnee: Schon die mittlere Bremsung ist zu viel – der Lkw rutscht. | Kreis = Haftung zwischen Reifen und Straße · Punkt = was ihr gerade verlangt | Antreiben | Bremsen | Lenken | Lenken | Schnee | RUTSCHT!
+NOTIZEN:
+FOLIE 30 VON 162 · keine Klicks, läuft von selbst
+
+▶ „Auf nasser Straße wird der Kreis kleiner, auf Schnee winzig. Dieselbe Bremsung, die eben noch harmlos war, ist jetzt zu viel.“
+💡 Merksatz: Bei Nässe und Glätte alles sanfter – bremsen, lenken, Gas geben. Und nie zugleich stark bremsen und stark lenken.
+🖱 Keine Animation mehr – nächster Klick: nächste Folie.
+➜ „Prüfen wir das mit einer Prüfungsfrage.“
+
+=== FOLIE 31 ===
+AUF DER FOLIE: KLASSE C  ·  ABEND 4  ·  C7  ·  WIDERSTÄNDE UND ENERGIE | 31 | 02 | Widerstände und Energie | Was den Lkw bremst, ohne dass ihr bremst – und wie viel Wucht in 18 Tonnen steckt.
+NOTIZEN:
+FOLIE 31 VON 162 · keine Klicks, läuft von selbst
+
+▶ Sagen: „Kapitel 2: Gegen welche Kräfte muss der Motor ankämpfen – und wie viel Energie steckt in einem fahrenden Lkw?“
+🖱 Keine Klicks.
+➜ „Drei Widerstände.“
+
+=== FOLIE 32 ===
+AUF DER FOLIE: KLASSE C  ·  ABEND 4  ·  C7  ·  WIDERSTÄNDE UND ENERGIE | 32 | WIDERSTÄNDE | Was den Lkw bremst – ohne Bremse | Rollwiderstand –  der Reifen verformt sich beim Rollen. Mehr Gewicht und zu wenig Luftdruck = mehr Widerstand. | Luftwiderstand –  die große Stirnfläche drückt gegen die Luft. Er wächst mit dem Quadrat der Geschwindigkeit. | Steigungswiderstand –  bergauf zieht die Masse den Lkw zurück. Je schwerer und je steiler, desto mehr. | Im Gefälle dreht sich das um: Dann schiebt die Masse den Lkw nach vorn.
+NOTIZEN:
+FOLIE 32 VON 162 · 3 Klicks
+
+▶ Sagen: „Drei Widerstände bremsen den Lkw, auch ohne Bremse. Gegen alle drei muss der Motor arbeiten – das kostet Diesel.“
+❓ „Was bremst einen Lkw, wenn ihr vom Gas geht?“ – sammeln.
+🖱 Klick 1: Rollwiderstand · Klick 2: Luftwiderstand · Klick 3: Steigungswiderstand.
+✅ Lehrbuchwissen (Fahrwiderstände). Zu wenig Reifendruck erhöht den Rollwiderstand und den Verbrauch, der Reifen walkt und wird heiß (siehe Abend 2).
+➜ „Der Luftwiderstand hat eine Besonderheit – schauen wir ihn genauer an.“
+
+=== FOLIE 33 ===
+AUF DER FOLIE: KLASSE C  ·  ABEND 4  ·  C7  ·  WIDERSTÄNDE UND ENERGIE | 33 | LUFTWIDERSTAND | Schneller kostet viel mehr | 1 | 60 km/h | 2 | 80 km/h | 3 | 90 km/h | ❓ Frage an die Klasse   / Von 80 auf 90 km/h – um wie viel wächst der Luftwiderstand? | Bei 60 km/h ist der Luftwiderstand nur gut halb so groß wie bei 80 km/h. | Schematisch · Werte im Verhältnis zu 80 km/h | 60 km/h | Luftwiderstand | × 0,56
+NOTIZEN:
+FOLIE 33 VON 162 · keine Klicks, läuft von selbst
+
+▶ Sagen: „Die Luft muss um den großen Lkw herum. Das Fahrerhaus ist wie eine Wand von gut 2,5 Metern Breite und fast 4 Metern Höhe.“
+✅ Physik: Luftwiderstand wächst mit dem Quadrat der Geschwindigkeit. (60/80)² = 0,56.
+🖱 Keine Animation auf dieser Folie – nächster Klick = nächster Schritt (Morph).
+➜ „Jetzt 80 km/h.“
+
+=== FOLIE 34 ===
+AUF DER FOLIE: KLASSE C  ·  ABEND 4  ·  C7  ·  WIDERSTÄNDE UND ENERGIE | 34 | LUFTWIDERSTAND | Schneller kostet viel mehr | 1 | 60 km/h | 2 | 80 km/h | 3 | 90 km/h | ❓ Frage an die Klasse   / Von 80 auf 90 km/h – um wie viel wächst der Luftwiderstand? | 80 km/h – das ist unser Vergleichswert. | Schematisch · Werte im Verhältnis zu 80 km/h | 80 km/h | Luftwiderstand | × 1
+NOTIZEN:
+FOLIE 34 VON 162 · keine Klicks, läuft von selbst
+
+▶ „80 km/h – das nehmen wir als Vergleich. Dachspoiler und Seitenverkleidungen lenken die Luft um den Aufbau herum und sparen so Diesel.“
+💡 Spoiler richtig einstellen: Er soll die Luft auf Höhe der Aufbau-Oberkante führen.
+🖱 Keine Animation auf dieser Folie – nächster Klick = nächster Schritt (Morph).
+➜ „Und bei 90?“
+
+=== FOLIE 35 ===
+AUF DER FOLIE: KLASSE C  ·  ABEND 4  ·  C7  ·  WIDERSTÄNDE UND ENERGIE | 35 | LUFTWIDERSTAND | Schneller kostet viel mehr | 1 | 60 km/h | 2 | 80 km/h | 3 | 90 km/h | ✓ Antwort   / Um etwa ein Viertel. Er wächst mit dem Quadrat der Geschwindigkeit. | 90 km/h: nur gut 10 Prozent schneller, aber etwa 27 Prozent mehr Luftwiderstand. Das kostet Diesel. | Schematisch · Werte im Verhältnis zu 80 km/h | 90 km/h | Luftwiderstand | × 1,27
+NOTIZEN:
+FOLIE 35 VON 162 · keine Klicks, läuft von selbst
+
+▶ „90 km/h: Ihr seid nur gut 10 Prozent schneller, aber der Luftwiderstand ist um 27 Prozent größer. Und Lkw über 3,5 t dürfen auf der Autobahn ohnehin nur 80 fahren.“
+❓ Frage auf der Folie auflösen.
+✅ Eigene Rechnung: (90/80)² = 1,27. § 3 Abs. 3 und § 18 Abs. 5 StVO: Lkw über 3,5 t höchstens 80 km/h auf der Autobahn.
+🖱 Keine Animation auf dieser Folie – nächster Klick = nächster Schritt (Morph).
+➜ „Noch stärker bremst den Lkw nur eins: der Berg.“
+
+=== FOLIE 36 ===
+AUF DER FOLIE: KLASSE C  ·  ABEND 4  ·  C7  ·  WIDERSTÄNDE UND ENERGIE | 36 | STEIGUNGSWIDERSTAND | Der Berg zieht mit | 1 | Ebene Straße | 2 | 5 % Steigung | 3 | 10 % Steigung | ❓ Frage an die Klasse   / 18-t-Lkw, 10 % Steigung: Wie stark zieht der Berg ihn zurück? | Auf der Ebene zieht nichts nach hinten. Der Motor muss nur Roll- und Luftwiderstand überwinden. | Neigung überzeichnet · Rechnung für 18 t | Ebene | Zug nach hinten: 0 kN
+NOTIZEN:
+FOLIE 36 VON 162 · keine Klicks, läuft von selbst
+
+▶ Sagen: „Ein voller 18-Tonner auf der Ebene.“
+🖱 Keine Animation auf dieser Folie – nächster Klick = nächster Schritt (Morph).
+➜ „Jetzt geht es bergauf.“
+
+=== FOLIE 37 ===
+AUF DER FOLIE: KLASSE C  ·  ABEND 4  ·  C7  ·  WIDERSTÄNDE UND ENERGIE | 37 | STEIGUNGSWIDERSTAND | Der Berg zieht mit | 1 | Ebene Straße | 2 | 5 % Steigung | 3 | 10 % Steigung | ❓ Frage an die Klasse   / 18-t-Lkw, 10 % Steigung: Wie stark zieht der Berg ihn zurück? | 5 % Steigung: Die Masse zieht mit etwa 9 Kilonewton nach hinten – wie 900 Kilo am Seil. | Neigung überzeichnet · Rechnung für 18 t | 5 % Steigung | Zug nach hinten: ≈ 9 kN | wie 900 kg am Seil
+NOTIZEN:
+FOLIE 37 VON 162 · keine Klicks, läuft von selbst
+
+▶ „5 Prozent Steigung – 5 Meter Höhe auf 100 Meter Strecke. Schon zieht der Berg mit rund 9 Kilonewton nach hinten. Das ist, als würde hinten ein Gewicht von 900 Kilo am Seil hängen.“
+✅ Eigene Rechnung: 18.000 kg · 9,81 m/s² · 0,05 ≈ 8,8 kN.
+🖱 Keine Animation auf dieser Folie – nächster Klick = nächster Schritt (Morph).
+➜ „Und bei 10 Prozent?“
+
+=== FOLIE 38 ===
+AUF DER FOLIE: KLASSE C  ·  ABEND 4  ·  C7  ·  WIDERSTÄNDE UND ENERGIE | 38 | STEIGUNGSWIDERSTAND | Der Berg zieht mit | 1 | Ebene Straße | 2 | 5 % Steigung | 3 | 10 % Steigung | ✓ Antwort   / So stark, als hingen 1,8 Tonnen hinten am Seil. | 10 % Steigung: doppelt so viel – wie 1,8 Tonnen am Seil. Früh zurückschalten! | Neigung überzeichnet · Rechnung für 18 t | 10 % Steigung | Zug nach hinten: ≈ 18 kN | wie 1,8 t am Seil
+NOTIZEN:
+FOLIE 38 VON 162 · keine Klicks, läuft von selbst
+
+▶ „10 Prozent: doppelt so viel, rund 18 Kilonewton – wie 1,8 Tonnen am Seil. Deshalb vor der Steigung zurückschalten, damit der Lkw nicht ins Stocken kommt. Und bergab dreht sich das um: Dann schiebt die Masse mit dieser Kraft nach vorn – darum Dauerbremse.“
+✅ Eigene Rechnung: 18.000 kg · 9,81 m/s² · 0,10 ≈ 17,6 kN. Steigung hier überzeichnet dargestellt.
+🖱 Keine Animation auf dieser Folie – nächster Klick = nächster Schritt (Morph).
+➜ „Und jetzt: Wie viel Wucht steckt in einem fahrenden Lkw?“
+
+=== FOLIE 39 ===
+AUF DER FOLIE: KLASSE C  ·  ABEND 4  ·  C7  ·  WIDERSTÄNDE UND ENERGIE | 39 | BEWEGUNGSENERGIE | Die Wucht der Masse | ❓ Frage an die Klasse / Doppelt so schnell – wie viel mehr Energie steckt im Lkw? | Antwort folgt … | Ein voller 18-Tonner steht. Keine Bewegungsenergie. | Jedes Kästchen = gleich viel Bewegungsenergie · voller 18-Tonner | 0 | km/h | Bewegungsenergie  0 Kästchen
+NOTIZEN:
+FOLIE 39 VON 162 · keine Klicks, läuft von selbst
+
+▶ Sagen: „Ein 18-Tonner fährt los. Jedes orange Kästchen ist eine Portion Bewegungsenergie.“
+❓ Frage auf der Folie: „Doppelt so schnell – wie viel mehr Energie?“ – Tipps sammeln.
+🖱 Klick: Der Lkw beschleunigt bis 40 km/h (läuft von selbst).
+➜ „Los geht’s.“
+
+=== FOLIE 40 ===
+AUF DER FOLIE: KLASSE C  ·  ABEND 4  ·  C7  ·  WIDERSTÄNDE UND ENERGIE | 40 | BEWEGUNGSENERGIE | Die Wucht der Masse | ❓ Frage an die Klasse / Doppelt so schnell – wie viel mehr Energie steckt im Lkw? | Antwort folgt … | Der Lkw beschleunigt … | Jedes Kästchen = gleich viel Bewegungsenergie · voller 18-Tonner | 10 | km/h | Bewegungsenergie  0 Kästchen
+NOTIZEN:
+FOLIE 40 VON 162 · keine Klicks, läuft von selbst
+
+▶ Die Bewegung läuft – zuschauen lassen.
+🖱 Kein Klick – die Folie läuft von selbst weiter.
+➜ (läuft weiter)
+
+=== FOLIE 41 ===
+AUF DER FOLIE: KLASSE C  ·  ABEND 4  ·  C7  ·  WIDERSTÄNDE UND ENERGIE | 41 | BEWEGUNGSENERGIE | Die Wucht der Masse | ❓ Frage an die Klasse / Doppelt so schnell – wie viel mehr Energie steckt im Lkw? | Antwort folgt … | Der Lkw beschleunigt … | Jedes Kästchen = gleich viel Bewegungsenergie · voller 18-Tonner | 20 | km/h | Bewegungsenergie  1 Kästchen
+NOTIZEN:
+FOLIE 41 VON 162 · keine Klicks, läuft von selbst
+
+▶ Die Bewegung läuft – zuschauen lassen.
+🖱 Kein Klick – die Folie läuft von selbst weiter.
+➜ (läuft weiter)
+
+=== FOLIE 42 ===
+AUF DER FOLIE: KLASSE C  ·  ABEND 4  ·  C7  ·  WIDERSTÄNDE UND ENERGIE | 42 | BEWEGUNGSENERGIE | Die Wucht der Masse | ❓ Frage an die Klasse / Doppelt so schnell – wie viel mehr Energie steckt im Lkw? | Antwort folgt … | Der Lkw beschleunigt … | Jedes Kästchen = gleich viel Bewegungsenergie · voller 18-Tonner | 30 | km/h | Bewegungsenergie  2 Kästchen
+NOTIZEN:
+FOLIE 42 VON 162 · keine Klicks, läuft von selbst
+
+▶ Die Bewegung läuft – zuschauen lassen.
+🖱 Kein Klick – die Folie läuft von selbst weiter.
+➜ (läuft weiter)
+
+=== FOLIE 43 ===
+AUF DER FOLIE: KLASSE C  ·  ABEND 4  ·  C7  ·  WIDERSTÄNDE UND ENERGIE | 43 | BEWEGUNGSENERGIE | Die Wucht der Masse | ❓ Frage an die Klasse / Doppelt so schnell – wie viel mehr Energie steckt im Lkw? | Antwort folgt … | 40 km/h: 4 Kästchen Energie. | Jedes Kästchen = gleich viel Bewegungsenergie · voller 18-Tonner | 40 | km/h | Bewegungsenergie  4 Kästchen
+NOTIZEN:
+FOLIE 43 VON 162 · keine Klicks, läuft von selbst
+
+▶ „40 km/h – vier Kästchen.“
+🖱 Klick: weiter bis 80 km/h (läuft von selbst).
+➜ „Jetzt verdoppeln wir das Tempo.“
+
+=== FOLIE 44 ===
+AUF DER FOLIE: KLASSE C  ·  ABEND 4  ·  C7  ·  WIDERSTÄNDE UND ENERGIE | 44 | BEWEGUNGSENERGIE | Die Wucht der Masse | ❓ Frage an die Klasse / Doppelt so schnell – wie viel mehr Energie steckt im Lkw? | Antwort folgt … | Weiter bis 80 km/h – doppelt so schnell … | Jedes Kästchen = gleich viel Bewegungsenergie · voller 18-Tonner | 50 | km/h | Bewegungsenergie  6 Kästchen
+NOTIZEN:
+FOLIE 44 VON 162 · keine Klicks, läuft von selbst
+
+▶ Die Bewegung läuft – zuschauen lassen.
+🖱 Kein Klick – die Folie läuft von selbst weiter.
+➜ (läuft weiter)
+
+=== FOLIE 45 ===
+AUF DER FOLIE: KLASSE C  ·  ABEND 4  ·  C7  ·  WIDERSTÄNDE UND ENERGIE | 45 | BEWEGUNGSENERGIE | Die Wucht der Masse | ❓ Frage an die Klasse / Doppelt so schnell – wie viel mehr Energie steckt im Lkw? | Antwort folgt … | Weiter bis 80 km/h – doppelt so schnell … | Jedes Kästchen = gleich viel Bewegungsenergie · voller 18-Tonner | 60 | km/h | Bewegungsenergie  9 Kästchen
+NOTIZEN:
+FOLIE 45 VON 162 · keine Klicks, läuft von selbst
+
+▶ Die Bewegung läuft – zuschauen lassen.
+🖱 Kein Klick – die Folie läuft von selbst weiter.
+➜ (läuft weiter)
+
+=== FOLIE 46 ===
+AUF DER FOLIE: KLASSE C  ·  ABEND 4  ·  C7  ·  WIDERSTÄNDE UND ENERGIE | 46 | BEWEGUNGSENERGIE | Die Wucht der Masse | ❓ Frage an die Klasse / Doppelt so schnell – wie viel mehr Energie steckt im Lkw? | Antwort folgt … | Weiter bis 80 km/h – doppelt so schnell … | Jedes Kästchen = gleich viel Bewegungsenergie · voller 18-Tonner | 70 | km/h | Bewegungsenergie  12 Kästchen
+NOTIZEN:
+FOLIE 46 VON 162 · keine Klicks, läuft von selbst
+
+▶ Die Bewegung läuft – zuschauen lassen.
+🖱 Kein Klick – die Folie läuft von selbst weiter.
+➜ (läuft weiter)
+
+=== FOLIE 47 ===
+AUF DER FOLIE: KLASSE C  ·  ABEND 4  ·  C7  ·  WIDERSTÄNDE UND ENERGIE | 47 | BEWEGUNGSENERGIE | Die Wucht der Masse | ❓ Frage an die Klasse / Doppelt so schnell – wie viel mehr Energie steckt im Lkw? | ✓ Antwort / Viermal so viel. Die Energie wächst mit dem Quadrat der Geschwindigkeit – der Bremsweg auch. | 80 km/h: 16 Kästchen – viermal so viel Energie wie bei 40 km/h. | Jedes Kästchen = gleich viel Bewegungsenergie · voller 18-Tonner | 80 | km/h | Bewegungsenergie  16 Kästchen
+NOTIZEN:
+FOLIE 47 VON 162 · keine Klicks, läuft von selbst
+
+▶ „80 km/h: 16 Kästchen. Doppelt so schnell – viermal so viel Energie. Die muss beim Bremsen komplett in Wärme umgewandelt werden, deshalb ist auch der Bremsweg viermal so lang.“
+✅ Physik: Bewegungsenergie = ½ · m · v². (80/40)² = 4.
+🖱 Klick: Vergleich mit einem Auto.
+➜ „Wie viel ist das im Vergleich zu einem Auto?“
+
+=== FOLIE 48 ===
+AUF DER FOLIE: KLASSE C  ·  ABEND 4  ·  C7  ·  WIDERSTÄNDE UND ENERGIE | 48 | BEWEGUNGSENERGIE | Die Wucht der Masse | ❓ Frage an die Klasse / Doppelt so schnell – wie viel mehr Energie steckt im Lkw? | ✓ Antwort / Viermal so viel. Die Energie wächst mit dem Quadrat der Geschwindigkeit – der Bremsweg auch. | So viel Wucht wie ein Auto mit fast 280 km/h. Und doppelte Masse heißt doppelte Energie. | Jedes Kästchen = gleich viel Bewegungsenergie · voller 18-Tonner | 80 | km/h | Bewegungsenergie  16 Kästchen | = Auto (1,5 t) / mit 277 km/h
+NOTIZEN:
+FOLIE 48 VON 162 · keine Klicks, läuft von selbst
+
+▶ „Ein voller 18-Tonner mit 80 km/h hat so viel Bewegungsenergie wie ein Auto mit 1,5 Tonnen bei fast 280 km/h. Und: Doppelte Masse bedeutet doppelte Energie – ein voller Lkw braucht mehr Weg zum Bremsen als ein leerer.“
+✅ Eigene Rechnung: ½ · 18.000 kg · (22,2 m/s)² ≈ 4,4 MJ. Auto 1.500 kg: v = √(2 · 4,4 MJ / 1.500 kg) ≈ 77 m/s ≈ 277 km/h.
+🖱 Keine Animation mehr – nächster Klick: nächste Folie.
+➜ „Kapitel 3: Was passiert mit dieser Wucht in der Kurve?“
+
+=== FOLIE 49 ===
+AUF DER FOLIE: KLASSE C  ·  ABEND 4  ·  C7  ·  FLIEHKRAFT UND KIPPEN | 49 | 03 | Fliehkraft und Kippen | Warum ein Lkw in der Kurve viel früher an seine Grenze kommt als ein Auto.
+NOTIZEN:
+FOLIE 49 VON 162 · keine Klicks, läuft von selbst
+
+▶ Sagen: „Kapitel 3: die Kurve. Hier passieren die meisten Lkw-Unfälle ohne fremde Beteiligung – der Lkw rutscht oder kippt.“
+🖱 Keine Klicks.
+➜ „Was drückt den Lkw in der Kurve nach außen?“
+
+=== FOLIE 50 ===
+AUF DER FOLIE: KLASSE C  ·  ABEND 4  ·  C7  ·  FLIEHKRAFT UND KIPPEN | 50 | FLIEHKRAFT | Die Kurve drückt nach außen | ❓ Frage an die Klasse / Ihr fahrt doppelt so schnell durch dieselbe Kurve. Wie viel stärker drückt es den Lkw nach außen? | Antwort folgt … | 30 km/h in eine Rechtskurve. | Draufsicht · schematisch · Pfeil = Fliehkraft | 30 km/h | Fliehkraft  × 1
+NOTIZEN:
+FOLIE 50 VON 162 · keine Klicks, läuft von selbst
+
+▶ Sagen: „Ein Lkw fährt mit 30 km/h in eine Rechtskurve. Der rote Pfeil ist die Fliehkraft – sie drückt den Lkw nach außen.“
+❓ Frage auf der Folie stellen, Tipps sammeln („doppelt so stark?“).
+🖱 Klick: Der Lkw fährt durch die Kurve (läuft von selbst).
+➜ „Schauen wir zu.“
+
+=== FOLIE 51 ===
+AUF DER FOLIE: KLASSE C  ·  ABEND 4  ·  C7  ·  FLIEHKRAFT UND KIPPEN | 51 | FLIEHKRAFT | Die Kurve drückt nach außen | ❓ Frage an die Klasse / Ihr fahrt doppelt so schnell durch dieselbe Kurve. Wie viel stärker drückt es den Lkw nach außen? | Antwort folgt … | Die Reifen halten dagegen – die Seitenführungskraft. | Draufsicht · schematisch · Pfeil = Fliehkraft | 30 km/h | Fliehkraft  × 1
+NOTIZEN:
+FOLIE 51 VON 162 · keine Klicks, läuft von selbst
+
+▶ Die Bewegung läuft – zuschauen lassen.
+🖱 Kein Klick – die Folie läuft von selbst weiter.
+➜ (läuft weiter)
+
+=== FOLIE 52 ===
+AUF DER FOLIE: KLASSE C  ·  ABEND 4  ·  C7  ·  FLIEHKRAFT UND KIPPEN | 52 | FLIEHKRAFT | Die Kurve drückt nach außen | ❓ Frage an die Klasse / Ihr fahrt doppelt so schnell durch dieselbe Kurve. Wie viel stärker drückt es den Lkw nach außen? | Antwort folgt … | Die Reifen halten dagegen – die Seitenführungskraft. | Draufsicht · schematisch · Pfeil = Fliehkraft | 30 km/h | Fliehkraft  × 1
+NOTIZEN:
+FOLIE 52 VON 162 · keine Klicks, läuft von selbst
+
+▶ Die Bewegung läuft – zuschauen lassen.
+🖱 Kein Klick – die Folie läuft von selbst weiter.
+➜ (läuft weiter)
+
+=== FOLIE 53 ===
+AUF DER FOLIE: KLASSE C  ·  ABEND 4  ·  C7  ·  FLIEHKRAFT UND KIPPEN | 53 | FLIEHKRAFT | Die Kurve drückt nach außen | ❓ Frage an die Klasse / Ihr fahrt doppelt so schnell durch dieselbe Kurve. Wie viel stärker drückt es den Lkw nach außen? | Antwort folgt … | Die Reifen halten dagegen – die Seitenführungskraft. | Draufsicht · schematisch · Pfeil = Fliehkraft | 30 km/h | Fliehkraft  × 1
+NOTIZEN:
+FOLIE 53 VON 162 · keine Klicks, läuft von selbst
+
+▶ Die Bewegung läuft – zuschauen lassen.
+🖱 Kein Klick – die Folie läuft von selbst weiter.
+➜ (läuft weiter)
+
+=== FOLIE 54 ===
+AUF DER FOLIE: KLASSE C  ·  ABEND 4  ·  C7  ·  FLIEHKRAFT UND KIPPEN | 54 | FLIEHKRAFT | Die Kurve drückt nach außen | ❓ Frage an die Klasse / Ihr fahrt doppelt so schnell durch dieselbe Kurve. Wie viel stärker drückt es den Lkw nach außen? | Antwort folgt … | Kleiner Pfeil: Die Reifen halten den Lkw locker in der Spur. | Draufsicht · schematisch · Pfeil = Fliehkraft | 30 km/h | Fliehkraft  × 1
+NOTIZEN:
+FOLIE 54 VON 162 · keine Klicks, läuft von selbst
+
+▶ „Die Fliehkraft will den Lkw geradeaus weiterschieben. Die Reifen halten dagegen – das nennt man Seitenführungskraft. Bei 30 km/h kein Problem.“
+🖱 Klick: weiter.
+➜ „Durch.“
+
+=== FOLIE 55 ===
+AUF DER FOLIE: KLASSE C  ·  ABEND 4  ·  C7  ·  FLIEHKRAFT UND KIPPEN | 55 | FLIEHKRAFT | Die Kurve drückt nach außen | ❓ Frage an die Klasse / Ihr fahrt doppelt so schnell durch dieselbe Kurve. Wie viel stärker drückt es den Lkw nach außen? | Antwort folgt … | Kleiner Pfeil: Die Reifen halten den Lkw locker in der Spur. | Draufsicht · schematisch · Pfeil = Fliehkraft | 30 km/h | Fliehkraft  × 1
+NOTIZEN:
+FOLIE 55 VON 162 · keine Klicks, läuft von selbst
+
+▶ Die Bewegung läuft – zuschauen lassen.
+🖱 Kein Klick – die Folie läuft von selbst weiter.
+➜ (läuft weiter)
+
+=== FOLIE 56 ===
+AUF DER FOLIE: KLASSE C  ·  ABEND 4  ·  C7  ·  FLIEHKRAFT UND KIPPEN | 56 | FLIEHKRAFT | Die Kurve drückt nach außen | ❓ Frage an die Klasse / Ihr fahrt doppelt so schnell durch dieselbe Kurve. Wie viel stärker drückt es den Lkw nach außen? | Antwort folgt … | Kleiner Pfeil: Die Reifen halten den Lkw locker in der Spur. | Draufsicht · schematisch · Pfeil = Fliehkraft | 30 km/h | Fliehkraft  × 1
+NOTIZEN:
+FOLIE 56 VON 162 · keine Klicks, läuft von selbst
+
+▶ Die Bewegung läuft – zuschauen lassen.
+🖱 Kein Klick – die Folie läuft von selbst weiter.
+➜ (läuft weiter)
+
+=== FOLIE 57 ===
+AUF DER FOLIE: KLASSE C  ·  ABEND 4  ·  C7  ·  FLIEHKRAFT UND KIPPEN | 57 | FLIEHKRAFT | Die Kurve drückt nach außen | ❓ Frage an die Klasse / Ihr fahrt doppelt so schnell durch dieselbe Kurve. Wie viel stärker drückt es den Lkw nach außen? | Antwort folgt … | Sauber durch die Kurve. | Draufsicht · schematisch · Pfeil = Fliehkraft | 30 km/h | Fliehkraft  × 1
+NOTIZEN:
+FOLIE 57 VON 162 · keine Klicks, läuft von selbst
+
+▶ „Sauber durch. Jetzt dieselbe Kurve mit 60 km/h – doppelt so schnell.“
+🖱 Keine Animation mehr – nächster Klick: die zweite Durchfahrt.
+➜ „Doppelt so schnell.“
+
+=== FOLIE 58 ===
+AUF DER FOLIE: KLASSE C  ·  ABEND 4  ·  C7  ·  FLIEHKRAFT UND KIPPEN | 58 | FLIEHKRAFT | Die Kurve drückt nach außen | ❓ Frage an die Klasse / Ihr fahrt doppelt so schnell durch dieselbe Kurve. Wie viel stärker drückt es den Lkw nach außen? | Antwort folgt … | Dieselbe Kurve mit 60 km/h – doppelt so schnell. | Draufsicht · schematisch · Pfeil = Fliehkraft | 60 km/h | Fliehkraft  × 4
+NOTIZEN:
+FOLIE 58 VON 162 · keine Klicks, läuft von selbst
+
+▶ Sagen: „Jetzt mit 60 km/h. Schaut auf den Pfeil.“
+🖱 Klick: Die Durchfahrt beginnt (läuft von selbst – schneller als eben).
+➜ „Los.“
+
+=== FOLIE 59 ===
+AUF DER FOLIE: KLASSE C  ·  ABEND 4  ·  C7  ·  FLIEHKRAFT UND KIPPEN | 59 | FLIEHKRAFT | Die Kurve drückt nach außen | ❓ Frage an die Klasse / Ihr fahrt doppelt so schnell durch dieselbe Kurve. Wie viel stärker drückt es den Lkw nach außen? | Antwort folgt … | Der Pfeil ist viermal so lang … | Draufsicht · schematisch · Pfeil = Fliehkraft | 60 km/h | Fliehkraft  × 4
+NOTIZEN:
+FOLIE 59 VON 162 · keine Klicks, läuft von selbst
+
+▶ Die Bewegung läuft – zuschauen lassen.
+🖱 Kein Klick – die Folie läuft von selbst weiter.
+➜ (läuft weiter)
+
+=== FOLIE 60 ===
+AUF DER FOLIE: KLASSE C  ·  ABEND 4  ·  C7  ·  FLIEHKRAFT UND KIPPEN | 60 | FLIEHKRAFT | Die Kurve drückt nach außen | ❓ Frage an die Klasse / Ihr fahrt doppelt so schnell durch dieselbe Kurve. Wie viel stärker drückt es den Lkw nach außen? | Antwort folgt … | Der Pfeil ist viermal so lang … | Draufsicht · schematisch · Pfeil = Fliehkraft | 60 km/h | Fliehkraft  × 4
+NOTIZEN:
+FOLIE 60 VON 162 · keine Klicks, läuft von selbst
+
+▶ Die Bewegung läuft – zuschauen lassen.
+🖱 Kein Klick – die Folie läuft von selbst weiter.
+➜ (läuft weiter)
+
+=== FOLIE 61 ===
+AUF DER FOLIE: KLASSE C  ·  ABEND 4  ·  C7  ·  FLIEHKRAFT UND KIPPEN | 61 | FLIEHKRAFT | Die Kurve drückt nach außen | ❓ Frage an die Klasse / Ihr fahrt doppelt so schnell durch dieselbe Kurve. Wie viel stärker drückt es den Lkw nach außen? | Antwort folgt … | Der Pfeil ist viermal so lang … | Draufsicht · schematisch · Pfeil = Fliehkraft | 60 km/h | Fliehkraft  × 4
+NOTIZEN:
+FOLIE 61 VON 162 · keine Klicks, läuft von selbst
+
+▶ Die Bewegung läuft – zuschauen lassen.
+🖱 Kein Klick – die Folie läuft von selbst weiter.
+➜ (läuft weiter)
+
+=== FOLIE 62 ===
+AUF DER FOLIE: KLASSE C  ·  ABEND 4  ·  C7  ·  FLIEHKRAFT UND KIPPEN | 62 | FLIEHKRAFT | Die Kurve drückt nach außen | ❓ Frage an die Klasse / Ihr fahrt doppelt so schnell durch dieselbe Kurve. Wie viel stärker drückt es den Lkw nach außen? | ✓ Antwort / Viermal so stark. Die Fliehkraft wächst mit dem Quadrat der Geschwindigkeit. | Viermal so viel Fliehkraft. Der Lkw drängt nach außen. | Draufsicht · schematisch · Pfeil = Fliehkraft | 60 km/h | Fliehkraft  × 4
+NOTIZEN:
+FOLIE 62 VON 162 · keine Klicks, läuft von selbst
+
+▶ „Doppelt so schnell – viermal so viel Fliehkraft. Der Lkw drängt nach außen, Richtung Gegenverkehr.“
+✅ Physik: Fliehkraft = Masse · Geschwindigkeit² / Radius. (60/30)² = 4. Beispiel Radius 50 m: 30 km/h → etwa 1,4 m/s² Querbeschleunigung, 60 km/h → etwa 5,6 m/s².
+🖱 Klick: weiter.
+➜ „Und wenn die Reifen das nicht mehr halten?“
+
+=== FOLIE 63 ===
+AUF DER FOLIE: KLASSE C  ·  ABEND 4  ·  C7  ·  FLIEHKRAFT UND KIPPEN | 63 | FLIEHKRAFT | Die Kurve drückt nach außen | ❓ Frage an die Klasse / Ihr fahrt doppelt so schnell durch dieselbe Kurve. Wie viel stärker drückt es den Lkw nach außen? | ✓ Antwort / Viermal so stark. Die Fliehkraft wächst mit dem Quadrat der Geschwindigkeit. | Reicht die Haftung nicht, wird der Lkw aus der Kurve getragen. | Draufsicht · schematisch · Pfeil = Fliehkraft | 60 km/h | Fliehkraft  × 4
+NOTIZEN:
+FOLIE 63 VON 162 · keine Klicks, läuft von selbst
+
+▶ Die Bewegung läuft – zuschauen lassen.
+🖱 Kein Klick – die Folie läuft von selbst weiter.
+➜ (läuft weiter)
+
+=== FOLIE 64 ===
+AUF DER FOLIE: KLASSE C  ·  ABEND 4  ·  C7  ·  FLIEHKRAFT UND KIPPEN | 64 | FLIEHKRAFT | Die Kurve drückt nach außen | ❓ Frage an die Klasse / Ihr fahrt doppelt so schnell durch dieselbe Kurve. Wie viel stärker drückt es den Lkw nach außen? | ✓ Antwort / Viermal so stark. Die Fliehkraft wächst mit dem Quadrat der Geschwindigkeit. | Reicht die Haftung nicht, wird der Lkw aus der Kurve getragen. | Draufsicht · schematisch · Pfeil = Fliehkraft | 60 km/h | Fliehkraft  × 4
+NOTIZEN:
+FOLIE 64 VON 162 · keine Klicks, läuft von selbst
+
+▶ Die Bewegung läuft – zuschauen lassen.
+🖱 Kein Klick – die Folie läuft von selbst weiter.
+➜ (läuft weiter)
+
+=== FOLIE 65 ===
+AUF DER FOLIE: KLASSE C  ·  ABEND 4  ·  C7  ·  FLIEHKRAFT UND KIPPEN | 65 | FLIEHKRAFT | Die Kurve drückt nach außen | ❓ Frage an die Klasse / Ihr fahrt doppelt so schnell durch dieselbe Kurve. Wie viel stärker drückt es den Lkw nach außen? | ✓ Antwort / Viermal so stark. Die Fliehkraft wächst mit dem Quadrat der Geschwindigkeit. | Aus der Kurve getragen – oder, bei hohem Schwerpunkt, vorher umgekippt. | Draufsicht · schematisch · Pfeil = Fliehkraft | 60 km/h | Fliehkraft  × 4
+NOTIZEN:
+FOLIE 65 VON 162 · keine Klicks, läuft von selbst
+
+▶ „Reicht die Haftung nicht, rutscht der Lkw nach außen – in den Gegenverkehr oder in den Graben. Ein hoch beladener Lkw kippt oft schon, bevor er rutscht. Das schauen wir uns gleich an.“
+💡 Merksatz: Vor der Kurve bremsen, in der Kurve nicht mehr stark bremsen, am Kurvenausgang wieder Gas.
+🖱 Keine Animation mehr – nächster Klick: nächste Folie.
+➜ „Wovon hängt die Fliehkraft noch ab?“
+
+=== FOLIE 66 ===
+AUF DER FOLIE: KLASSE C  ·  ABEND 4  ·  C7  ·  FLIEHKRAFT UND KIPPEN | 66 | FLIEHKRAFT | Wovon die Fliehkraft abhängt | Doppeltes Tempo – vierfache Kraft.  Das Tempo zählt im Quadrat. Hier habt ihr den größten Hebel. | Doppelte Masse – doppelte Kraft.  Ein voller Lkw drückt doppelt so stark nach außen wie ein halb so schwerer. | Halber Kurvenradius – doppelte Kraft.  Enge Kurven, Kreisverkehre und Abfahrten sind besonders gefährlich. | Fliehkraft = Masse · Geschwindigkeit² ÷ Kurvenradius
+NOTIZEN:
+FOLIE 66 VON 162 · 3 Klicks
+
+▶ Sagen: „Die Fliehkraft hängt von drei Dingen ab: Tempo, Masse und Kurvenradius.“
+❓ „Was davon könnt ihr als Fahrer beeinflussen?“ – Antwort: vor allem das Tempo.
+🖱 Klick 1: Tempo · Klick 2: Masse · Klick 3: Kurve.
+✅ Physik: Fliehkraft = m · v² / r. Doppelte Geschwindigkeit → vierfache Kraft. Doppelte Masse → doppelte Kraft. Halber Radius (engere Kurve) → doppelte Kraft.
+➜ „Und warum kippt ein Lkw, ein Auto aber nicht?“
+
+=== FOLIE 67 ===
+AUF DER FOLIE: KLASSE C  ·  ABEND 4  ·  C7  ·  FLIEHKRAFT UND KIPPEN | 67 | KIPPEN | Hoch oder tief geladen | ❓ Frage an die Klasse / Gleiche Kurve, gleiches Tempo: Welcher Lkw kippt zuerst? | Antwort folgt … | Zwei gleiche Lkw, gleich schwer. Links Kisten bis unters Dach, rechts schwere Platten unten. | Ansicht von hinten in einer Rechtskurve · schematisch · Punkt = Schwerpunkt | Hoher Schwerpunkt | Kisten bis unters Dach | Niedriger Schwerpunkt | schwere Platten unten
+NOTIZEN:
+FOLIE 67 VON 162 · keine Klicks, läuft von selbst
+
+▶ Sagen: „Zwei Lkw, von hinten gesehen, gleich schwer. Links ist die Ladung bis unters Dach gestapelt, rechts liegen schwere Stahlplatten unten. Der Punkt ist jeweils der Schwerpunkt.“
+❓ Frage auf der Folie: „Welcher kippt zuerst?“
+🖱 Klick: Beide fahren in die Rechtskurve (läuft von selbst).
+➜ „Jetzt in die Kurve.“
+
+=== FOLIE 68 ===
+AUF DER FOLIE: KLASSE C  ·  ABEND 4  ·  C7  ·  FLIEHKRAFT UND KIPPEN | 68 | KIPPEN | Hoch oder tief geladen | ❓ Frage an die Klasse / Gleiche Kurve, gleiches Tempo: Welcher Lkw kippt zuerst? | Antwort folgt … | Rechtskurve: Die Fliehkraft drückt beide nach links, nach außen. | Ansicht von hinten in einer Rechtskurve · schematisch · Punkt = Schwerpunkt | Hoher Schwerpunkt | Kisten bis unters Dach | Niedriger Schwerpunkt | schwere Platten unten
+NOTIZEN:
+FOLIE 68 VON 162 · keine Klicks, läuft von selbst
+
+▶ Die Bewegung läuft – zuschauen lassen.
+🖱 Kein Klick – die Folie läuft von selbst weiter.
+➜ (läuft weiter)
+
+=== FOLIE 69 ===
+AUF DER FOLIE: KLASSE C  ·  ABEND 4  ·  C7  ·  FLIEHKRAFT UND KIPPEN | 69 | KIPPEN | Hoch oder tief geladen | ❓ Frage an die Klasse / Gleiche Kurve, gleiches Tempo: Welcher Lkw kippt zuerst? | Antwort folgt … | Rechtskurve: Die Fliehkraft drückt beide nach links, nach außen. | Ansicht von hinten in einer Rechtskurve · schematisch · Punkt = Schwerpunkt | Hoher Schwerpunkt | Kisten bis unters Dach | Niedriger Schwerpunkt | schwere Platten unten
+NOTIZEN:
+FOLIE 69 VON 162 · keine Klicks, läuft von selbst
+
+▶ Die Bewegung läuft – zuschauen lassen.
+🖱 Kein Klick – die Folie läuft von selbst weiter.
+➜ (läuft weiter)
+
+=== FOLIE 70 ===
+AUF DER FOLIE: KLASSE C  ·  ABEND 4  ·  C7  ·  FLIEHKRAFT UND KIPPEN | 70 | KIPPEN | Hoch oder tief geladen | ❓ Frage an die Klasse / Gleiche Kurve, gleiches Tempo: Welcher Lkw kippt zuerst? | Antwort folgt … | Die schwarze Linie zeigt, wohin die Kraft drückt. Solange sie zwischen den Rädern landet, bleibt der Lkw stehen. | Ansicht von hinten in einer Rechtskurve · schematisch · Punkt = Schwerpunkt | Hoher Schwerpunkt | Kisten bis unters Dach | Niedriger Schwerpunkt | schwere Platten unten
+NOTIZEN:
+FOLIE 70 VON 162 · keine Klicks, läuft von selbst
+
+▶ „Die Fliehkraft drückt zur Seite, das Gewicht nach unten. Zusammen ergibt das die schräge Linie. Solange sie zwischen den Rädern auf die Straße trifft, bleibt der Lkw auf allen Rädern.“
+🖱 Klick: Etwas schneller (läuft von selbst).
+➜ „Jetzt etwas schneller.“
+
+=== FOLIE 71 ===
+AUF DER FOLIE: KLASSE C  ·  ABEND 4  ·  C7  ·  FLIEHKRAFT UND KIPPEN | 71 | KIPPEN | Hoch oder tief geladen | ❓ Frage an die Klasse / Gleiche Kurve, gleiches Tempo: Welcher Lkw kippt zuerst? | Antwort folgt … | Links trifft die Linie das äußere Rad – die Kippgrenze. | Ansicht von hinten in einer Rechtskurve · schematisch · Punkt = Schwerpunkt | Hoher Schwerpunkt | Kisten bis unters Dach | Niedriger Schwerpunkt | schwere Platten unten
+NOTIZEN:
+FOLIE 71 VON 162 · keine Klicks, läuft von selbst
+
+▶ Die Bewegung läuft – zuschauen lassen.
+🖱 Kein Klick – die Folie läuft von selbst weiter.
+➜ (läuft weiter)
+
+=== FOLIE 72 ===
+AUF DER FOLIE: KLASSE C  ·  ABEND 4  ·  C7  ·  FLIEHKRAFT UND KIPPEN | 72 | KIPPEN | Hoch oder tief geladen | ❓ Frage an die Klasse / Gleiche Kurve, gleiches Tempo: Welcher Lkw kippt zuerst? | Antwort folgt … | Links trifft die Linie das äußere Rad – die Kippgrenze. | Ansicht von hinten in einer Rechtskurve · schematisch · Punkt = Schwerpunkt | Hoher Schwerpunkt | Kisten bis unters Dach | Niedriger Schwerpunkt | schwere Platten unten
+NOTIZEN:
+FOLIE 72 VON 162 · keine Klicks, läuft von selbst
+
+▶ Die Bewegung läuft – zuschauen lassen.
+🖱 Kein Klick – die Folie läuft von selbst weiter.
+➜ (läuft weiter)
+
+=== FOLIE 73 ===
+AUF DER FOLIE: KLASSE C  ·  ABEND 4  ·  C7  ·  FLIEHKRAFT UND KIPPEN | 73 | KIPPEN | Hoch oder tief geladen | ❓ Frage an die Klasse / Gleiche Kurve, gleiches Tempo: Welcher Lkw kippt zuerst? | Antwort folgt … | Links trifft die Linie das äußere Rad – die Kippgrenze. | Ansicht von hinten in einer Rechtskurve · schematisch · Punkt = Schwerpunkt | Hoher Schwerpunkt | Kisten bis unters Dach | Niedriger Schwerpunkt | schwere Platten unten
+NOTIZEN:
+FOLIE 73 VON 162 · keine Klicks, läuft von selbst
+
+▶ Die Bewegung läuft – zuschauen lassen.
+🖱 Kein Klick – die Folie läuft von selbst weiter.
+➜ (läuft weiter)
+
+=== FOLIE 74 ===
+AUF DER FOLIE: KLASSE C  ·  ABEND 4  ·  C7  ·  FLIEHKRAFT UND KIPPEN | 74 | KIPPEN | Hoch oder tief geladen | ❓ Frage an die Klasse / Gleiche Kurve, gleiches Tempo: Welcher Lkw kippt zuerst? | Antwort folgt … | Links trifft die Linie das äußere Rad – die Kippgrenze. | Ansicht von hinten in einer Rechtskurve · schematisch · Punkt = Schwerpunkt | Hoher Schwerpunkt | Kisten bis unters Dach | Niedriger Schwerpunkt | schwere Platten unten | KIPPT!
+NOTIZEN:
+FOLIE 74 VON 162 · keine Klicks, läuft von selbst
+
+▶ Die Bewegung läuft – zuschauen lassen.
+🖱 Kein Klick – die Folie läuft von selbst weiter.
+➜ (läuft weiter)
+
+=== FOLIE 75 ===
+AUF DER FOLIE: KLASSE C  ·  ABEND 4  ·  C7  ·  FLIEHKRAFT UND KIPPEN | 75 | KIPPEN | Hoch oder tief geladen | ❓ Frage an die Klasse / Gleiche Kurve, gleiches Tempo: Welcher Lkw kippt zuerst? | ✓ Antwort / Der mit dem hohen Schwerpunkt. Seine Kraftlinie zeigt schon früh über das äußere Rad hinaus. | Der hohe Lkw kippt. Der niedrige steht noch sicher – bei gleichem Tempo. | Ansicht von hinten in einer Rechtskurve · schematisch · Punkt = Schwerpunkt | Hoher Schwerpunkt | Kisten bis unters Dach | Niedriger Schwerpunkt | schwere Platten unten | KIPPT!
+NOTIZEN:
+FOLIE 75 VON 162 · keine Klicks, läuft von selbst
+
+▶ „Beim hohen Lkw zeigt die Linie über das Rad hinaus – er kippt. Der niedrige steht noch sicher, obwohl beide genau gleich schnell sind.“
+✅ Physik: Ein Fahrzeug kippt, wenn die Querbeschleunigung im Verhältnis zur Erdbeschleunigung größer wird als halbe Spurweite ÷ Schwerpunkthöhe. Hoher Schwerpunkt → kleinere Kippgrenze. Lehrbuchwissen; echte Lkw kippen wegen Federung und Reifen noch früher als in diesem einfachen Modell.
+💡 Gefährlich: schwere Ladung oben, hoch gestapelte Ladung, hängende Lasten (z. B. Fleischhälften), Flüssigkeiten in teilgefüllten Tanks.
+🖱 Keine Animation mehr – nächster Klick: nächste Folie.
+➜ „Was heißt das für die Fahrpraxis?“
+
+=== FOLIE 76 ===
+AUF DER FOLIE: KLASSE C  ·  ABEND 4  ·  C7  ·  FLIEHKRAFT UND KIPPEN | 76 | FLIEHKRAFT UND KIPPEN | So bleibt der Lkw auf den Rädern | Vor der Kurve bremsen / nicht in der Kurve. Am Kurvenausgang wieder Gas geben. | Kreisverkehr und Abfahrt / langsam: enger Radius, große Fliehkraft. | Hohe Ladung = langsamer / schwere Teile immer nach unten laden. | Ruckartiges Ausweichen vermeiden / Der Lkw schaukelt sich auf – beim Zurücklenken kippt er leicht.
+NOTIZEN:
+FOLIE 76 VON 162 · 4 Klicks
+
+▶ Sagen: „Was heißt das für euch am Steuer?“
+🖱 Klick 1–4: je ein Punkt.
+✅ Lehrbuchwissen. Kreisverkehre und Autobahnabfahrten mit engem Radius sind typische Kipp-Stellen. Plötzliche Ausweichmanöver bringen den Lkw ins Schaukeln – erst nach links, dann nach rechts: Beim Zurücklenken kippt er besonders leicht.
+💡 Flüssigkeiten in teilgefüllten Tanks schwappen nach außen und verstärken das Kippen.
+➜ „Kapitel 4: Wind und Wasser.“
+
+=== FOLIE 77 ===
+AUF DER FOLIE: KLASSE C  ·  ABEND 4  ·  C7  ·  WIND UND WASSER | 77 | 04 | Wind und Wasser | Ein hoher Aufbau ist ein Segel – und Wasser kann die Reifen von der Straße heben.
+NOTIZEN:
+FOLIE 77 VON 162 · keine Klicks, läuft von selbst
+
+▶ Sagen: „Kapitel 4: zwei Kräfte von außen – Wind und Wasser.“
+🖱 Keine Klicks.
+➜ „Zuerst der Seitenwind.“
+
+=== FOLIE 78 ===
+AUF DER FOLIE: KLASSE C  ·  ABEND 4  ·  C7  ·  WIND UND WASSER | 78 | SEITENWIND | Die Böe auf der Brücke | ❓ Frage an die Klasse / Wo erwischt euch Seitenwind besonders – und was tut ihr dann? | Antwort folgt … | Ein leerer Koffer-Lkw auf der Landstraße. Links und rechts Wald – der schützt vor Wind. | Draufsicht · schematisch · Pfeile = Windböe
+NOTIZEN:
+FOLIE 78 VON 162 · keine Klicks, läuft von selbst
+
+▶ Sagen: „Ein leerer Lkw mit hohem Kofferaufbau. Der Aufbau ist wie ein Segel – fast 20 Quadratmeter Seitenfläche. Links und rechts Wald, der bremst den Wind.“
+❓ Frage auf der Folie stellen.
+🖱 Klick: Der Lkw fährt los (läuft von selbst).
+➜ „Gleich kommt eine Brücke.“
+
+=== FOLIE 79 ===
+AUF DER FOLIE: KLASSE C  ·  ABEND 4  ·  C7  ·  WIND UND WASSER | 79 | SEITENWIND | Die Böe auf der Brücke | ❓ Frage an die Klasse / Wo erwischt euch Seitenwind besonders – und was tut ihr dann? | Antwort folgt … | Ein leerer Koffer-Lkw auf der Landstraße. Links und rechts Wald – der schützt vor Wind. | Draufsicht · schematisch · Pfeile = Windböe
+NOTIZEN:
+FOLIE 79 VON 162 · keine Klicks, läuft von selbst
+
+▶ Die Bewegung läuft – zuschauen lassen.
+🖱 Kein Klick – die Folie läuft von selbst weiter.
+➜ (läuft weiter)
+
+=== FOLIE 80 ===
+AUF DER FOLIE: KLASSE C  ·  ABEND 4  ·  C7  ·  WIND UND WASSER | 80 | SEITENWIND | Die Böe auf der Brücke | ❓ Frage an die Klasse / Wo erwischt euch Seitenwind besonders – und was tut ihr dann? | Antwort folgt … | Ein leerer Koffer-Lkw auf der Landstraße. Links und rechts Wald – der schützt vor Wind. | Draufsicht · schematisch · Pfeile = Windböe
+NOTIZEN:
+FOLIE 80 VON 162 · keine Klicks, läuft von selbst
+
+▶ Die Bewegung läuft – zuschauen lassen.
+🖱 Kein Klick – die Folie läuft von selbst weiter.
+➜ (läuft weiter)
+
+=== FOLIE 81 ===
+AUF DER FOLIE: KLASSE C  ·  ABEND 4  ·  C7  ·  WIND UND WASSER | 81 | SEITENWIND | Die Böe auf der Brücke | ❓ Frage an die Klasse / Wo erwischt euch Seitenwind besonders – und was tut ihr dann? | Antwort folgt … | Auf der Brücke fehlt der Schutz – eine Böe trifft den Lkw von links. | Draufsicht · schematisch · Pfeile = Windböe
+NOTIZEN:
+FOLIE 81 VON 162 · keine Klicks, läuft von selbst
+
+▶ Die Bewegung läuft – zuschauen lassen.
+🖱 Kein Klick – die Folie läuft von selbst weiter.
+➜ (läuft weiter)
+
+=== FOLIE 82 ===
+AUF DER FOLIE: KLASSE C  ·  ABEND 4  ·  C7  ·  WIND UND WASSER | 82 | SEITENWIND | Die Böe auf der Brücke | ❓ Frage an die Klasse / Wo erwischt euch Seitenwind besonders – und was tut ihr dann? | Antwort folgt … | Auf der Brücke fehlt der Schutz – eine Böe trifft den Lkw von links. | Draufsicht · schematisch · Pfeile = Windböe
+NOTIZEN:
+FOLIE 82 VON 162 · keine Klicks, läuft von selbst
+
+▶ Die Bewegung läuft – zuschauen lassen.
+🖱 Kein Klick – die Folie läuft von selbst weiter.
+➜ (läuft weiter)
+
+=== FOLIE 83 ===
+AUF DER FOLIE: KLASSE C  ·  ABEND 4  ·  C7  ·  WIND UND WASSER | 83 | SEITENWIND | Die Böe auf der Brücke | ❓ Frage an die Klasse / Wo erwischt euch Seitenwind besonders – und was tut ihr dann? | Antwort folgt … | Die Böe drückt den Lkw nach rechts, Richtung Geländer. | Draufsicht · schematisch · Pfeile = Windböe
+NOTIZEN:
+FOLIE 83 VON 162 · keine Klicks, läuft von selbst
+
+▶ „Auf der Brücke ist kein Wald mehr. Die Böe trifft den Lkw voll und schiebt ihn zur Seite.“
+🖱 Klick: Der Fahrer reagiert (läuft von selbst).
+➜ „Was macht der Fahrer?“
+
+=== FOLIE 84 ===
+AUF DER FOLIE: KLASSE C  ·  ABEND 4  ·  C7  ·  WIND UND WASSER | 84 | SEITENWIND | Die Böe auf der Brücke | ❓ Frage an die Klasse / Wo erwischt euch Seitenwind besonders – und was tut ihr dann? | Antwort folgt … | Gegenlenken – ruhig, nicht hektisch – und Gas weg. | Draufsicht · schematisch · Pfeile = Windböe
+NOTIZEN:
+FOLIE 84 VON 162 · keine Klicks, läuft von selbst
+
+▶ Die Bewegung läuft – zuschauen lassen.
+🖱 Kein Klick – die Folie läuft von selbst weiter.
+➜ (läuft weiter)
+
+=== FOLIE 85 ===
+AUF DER FOLIE: KLASSE C  ·  ABEND 4  ·  C7  ·  WIND UND WASSER | 85 | SEITENWIND | Die Böe auf der Brücke | ❓ Frage an die Klasse / Wo erwischt euch Seitenwind besonders – und was tut ihr dann? | Antwort folgt … | Gegenlenken – ruhig, nicht hektisch – und Gas weg. | Draufsicht · schematisch · Pfeile = Windböe
+NOTIZEN:
+FOLIE 85 VON 162 · keine Klicks, läuft von selbst
+
+▶ Die Bewegung läuft – zuschauen lassen.
+🖱 Kein Klick – die Folie läuft von selbst weiter.
+➜ (läuft weiter)
+
+=== FOLIE 86 ===
+AUF DER FOLIE: KLASSE C  ·  ABEND 4  ·  C7  ·  WIND UND WASSER | 86 | SEITENWIND | Die Böe auf der Brücke | ❓ Frage an die Klasse / Wo erwischt euch Seitenwind besonders – und was tut ihr dann? | Antwort folgt … | Gegenlenken – ruhig, nicht hektisch – und Gas weg. | Draufsicht · schematisch · Pfeile = Windböe
+NOTIZEN:
+FOLIE 86 VON 162 · keine Klicks, läuft von selbst
+
+▶ Die Bewegung läuft – zuschauen lassen.
+🖱 Kein Klick – die Folie läuft von selbst weiter.
+➜ (läuft weiter)
+
+=== FOLIE 87 ===
+AUF DER FOLIE: KLASSE C  ·  ABEND 4  ·  C7  ·  WIND UND WASSER | 87 | SEITENWIND | Die Böe auf der Brücke | ❓ Frage an die Klasse / Wo erwischt euch Seitenwind besonders – und was tut ihr dann? | ✓ Antwort / Auf Brücken, an Waldschneisen, beim Überholen von Lastzügen. Langsamer fahren und gegenlenken. | Geschafft. Bei Sturm gilt: langsamer fahren, beide Hände ans Lenkrad, auf Böen gefasst sein. | Draufsicht · schematisch · Pfeile = Windböe
+NOTIZEN:
+FOLIE 87 VON 162 · keine Klicks, läuft von selbst
+
+▶ „Gefährlich sind Stellen, an denen der Schutz plötzlich wegfällt: Brücken, Waldschneisen, Lücken in Lärmschutzwänden, Tunnelausfahrten – und beim Überholen, wenn ihr aus dem Windschatten des anderen Lkw kommt.“
+✅ Prüfungsfragen 2.1.03-018 (gegenlenken, Geschwindigkeit herabsetzen – nicht stark beschleunigen) und 2.1.03-020 (Überholen von Lastzügen, Brücken, Waldschneisen). 2.1.07-209: Windböen können ein Fahrzeug auch auf trockener, gerader Straße plötzlich ausbrechen lassen.
+💡 Leerer Lkw mit hoher Plane oder Koffer ist am empfindlichsten. Bei Sturmwarnung Fahrt verschieben oder Strecke ändern.
+🖱 Keine Animation mehr – nächster Klick: nächste Folie.
+➜ „Und das zweite Problem: Wasser auf der Straße.“
+
+=== FOLIE 88 ===
+AUF DER FOLIE: KLASSE C  ·  ABEND 4  ·  C7  ·  WIND UND WASSER | 88 | AQUAPLANING | Der Reifen schwimmt auf | 1 | Profil verdrängt Wasser | 2 | Wasserkeil wächst | 3 | Reifen schwimmt | ❓ Frage an die Klasse   / Der Lkw schwimmt auf. Was tut ihr? | Das Profil leitet das Wasser zur Seite. Der Reifen hat vollen Kontakt zur Straße. | Seitenansicht · schematisch | 60 km/h, gutes Profil | Fahrtrichtung ← | Kontakt zur Straße: voll
+NOTIZEN:
+FOLIE 88 VON 162 · keine Klicks, läuft von selbst
+
+▶ Sagen: „Bei Regen muss der Reifen das Wasser zur Seite wegdrücken. Das schafft das Profil – wenn es tief genug ist und ihr nicht zu schnell seid.“
+✅ Prüfungsfrage 2.1.03-015: Aquaplaning entsteht durch hohe Geschwindigkeit, abgefahrene Reifen und Spurrillen.
+🖱 Keine Animation auf dieser Folie – nächster Klick = nächster Schritt (Morph).
+➜ „Jetzt schneller, und das Profil ist abgefahren.“
+
+=== FOLIE 89 ===
+AUF DER FOLIE: KLASSE C  ·  ABEND 4  ·  C7  ·  WIND UND WASSER | 89 | AQUAPLANING | Der Reifen schwimmt auf | 1 | Profil verdrängt Wasser | 2 | Wasserkeil wächst | 3 | Reifen schwimmt | ❓ Frage an die Klasse   / Der Lkw schwimmt auf. Was tut ihr? | Schneller und abgefahrenes Profil: Das Wasser kommt nicht mehr schnell genug weg. Vor dem Reifen staut sich ein Wasserkeil. | Seitenansicht · schematisch | Schneller, Profil abgefahren | Fahrtrichtung ← | Kontakt zur Straße: weniger
+NOTIZEN:
+FOLIE 89 VON 162 · keine Klicks, läuft von selbst
+
+▶ „Das Wasser kommt nicht mehr weg. Vor dem Reifen staut sich ein Keil aus Wasser.“
+✅ Prüfungsfrage 2.1.03-101: besonders häufig in Fahrbahnsenken und in Spurrillen.
+💡 Lkw sind schwer und haben einen hohen Reifendruck – sie schwimmen später auf als Autos. In tiefen Spurrillen kann es trotzdem passieren.
+🖱 Keine Animation auf dieser Folie – nächster Klick = nächster Schritt (Morph).
+➜ „Und dann?“
+
+=== FOLIE 90 ===
+AUF DER FOLIE: KLASSE C  ·  ABEND 4  ·  C7  ·  WIND UND WASSER | 90 | AQUAPLANING | Der Reifen schwimmt auf | 1 | Profil verdrängt Wasser | 2 | Wasserkeil wächst | 3 | Reifen schwimmt | ✓ Antwort   / Gas weg, nicht bremsen, Lenkrad gerade halten – bis die Reifen wieder greifen. | Der Keil schiebt sich unter den Reifen. Er schwimmt – Lenken und Bremsen wirken nicht mehr. | Seitenansicht · schematisch | Aquaplaning! | Fahrtrichtung ← | Kontakt zur Straße: keiner
+NOTIZEN:
+FOLIE 90 VON 162 · keine Klicks, läuft von selbst
+
+▶ „Der Reifen schwimmt auf. Kein Kontakt mehr zur Straße – Lenken und Bremsen wirken nicht.“
+❓ Frage auf der Folie: „Was tut ihr?“
+✅ Prüfungsfrage 2.1.03-034: eingeschränkte Lenkfähigkeit, verringerte Bremsfähigkeit. Verhalten (Lehrbuchwissen): Gas weg, nicht bremsen, Lenkrad gerade halten, bis die Reifen wieder greifen. Vorbeugen: Tempo runter bei starkem Regen, Profil prüfen.
+🖱 Keine Animation auf dieser Folie – nächster Klick = nächster Schritt (Morph).
+➜ „Kapitel 5: Leer oder beladen – was ändert sich?“
+
+=== FOLIE 91 ===
+AUF DER FOLIE: KLASSE C  ·  ABEND 4  ·  C7  ·  LEER ODER BELADEN | 91 | 05 | Leer oder beladen | Derselbe Lkw fährt sich leer ganz anders als voll.
+NOTIZEN:
+FOLIE 91 VON 162 · keine Klicks, läuft von selbst
+
+▶ Sagen: „Kapitel 5: Leer oder beladen. Derselbe Lkw – aber ein ganz anderes Fahrzeug.“
+🖱 Keine Klicks.
+➜ „Vergleichen wir.“
+
+=== FOLIE 92 ===
+AUF DER FOLIE: KLASSE C  ·  ABEND 4  ·  C7  ·  LEER ODER BELADEN | 92 | LEER ODER BELADEN | Derselbe Lkw, drei Gesichter | 1 | Leer | 2 | Voll, schwer unten | 3 | Schwer oben geladen | ❓ Frage an die Klasse   / Leer oder voll: Wann drehen die Antriebsräder eher durch? | Leer: wenig Gewicht auf den Antriebsrädern – sie drehen leicht durch und blockieren leicht. Der hohe Aufbau fängt viel Wind. | Blick in den Aufbau · grau = schwer, braun = leicht · Balken zeigen die Tendenz, keine Messwerte | leer | Haftung Antriebsachse | Bremsweg | Seitenwind-Empfindlichkeit | Kippgefahr in der Kurve
+NOTIZEN:
+FOLIE 92 VON 162 · keine Klicks, läuft von selbst
+
+▶ Sagen: „Der leere Lkw: Auf der Antriebsachse liegt kaum Gewicht. Im Winter drehen die Räder leicht durch, beim Bremsen blockieren sie schneller. Und der leere Aufbau ist ein Segel.“
+❓ Frage auf der Folie stellen.
+✅ Lehrbuchwissen. ALB/EBS passen die Bremskraft an die Beladung an (siehe C5).
+🖱 Keine Animation auf dieser Folie – nächster Klick = nächster Schritt (Morph).
+➜ „Jetzt voll beladen.“
+
+=== FOLIE 93 ===
+AUF DER FOLIE: KLASSE C  ·  ABEND 4  ·  C7  ·  LEER ODER BELADEN | 93 | LEER ODER BELADEN | Derselbe Lkw, drei Gesichter | 1 | Leer | 2 | Voll, schwer unten | 3 | Schwer oben geladen | ✓ Antwort   / Leer – auf der Antriebsachse liegt wenig Gewicht, also wenig Haftung. | Voll, schwere Teile unten: gute Haftung, liegt satt. Aber: mehr Wucht, längerer Bremsweg, mehr Fliehkraft. | Blick in den Aufbau · grau = schwer, braun = leicht · Balken zeigen die Tendenz, keine Messwerte | schwer | leicht | Haftung Antriebsachse | Bremsweg | Seitenwind-Empfindlichkeit | Kippgefahr in der Kurve
+NOTIZEN:
+FOLIE 93 VON 162 · keine Klicks, läuft von selbst
+
+▶ „Voll beladen und die schweren Teile unten: Der Lkw liegt satt, die Räder haben Haftung. Aber er hat viel mehr Bewegungsenergie – längerer Bremsweg, mehr Fliehkraft in der Kurve.“
+✅ Prüfungsfrage 2.2.22-305: Mit beladenem Fahrzeug muss ich die Geschwindigkeit dem Beladungszustand anpassen und bin verantwortlich, dass die Ladung die Verkehrssicherheit nicht beeinträchtigt.
+🖱 Keine Animation auf dieser Folie – nächster Klick = nächster Schritt (Morph).
+➜ „Und wenn falsch geladen ist?“
+
+=== FOLIE 94 ===
+AUF DER FOLIE: KLASSE C  ·  ABEND 4  ·  C7  ·  LEER ODER BELADEN | 94 | LEER ODER BELADEN | Derselbe Lkw, drei Gesichter | 1 | Leer | 2 | Voll, schwer unten | 3 | Schwer oben geladen | ✓ Antwort   / Leer – auf der Antriebsachse liegt wenig Gewicht, also wenig Haftung. | Schwere Teile oben: Der Schwerpunkt wandert nach oben – in der Kurve kippt der Lkw viel früher. | Blick in den Aufbau · grau = schwer, braun = leicht · Balken zeigen die Tendenz, keine Messwerte | leicht | schwer | Haftung Antriebsachse | Bremsweg | Seitenwind-Empfindlichkeit | Kippgefahr in der Kurve
+NOTIZEN:
+FOLIE 94 VON 162 · keine Klicks, läuft von selbst
+
+▶ „Schwere Teile oben auf leichten: Der Schwerpunkt geht hoch, der Lkw kippt in der Kurve viel früher. Deshalb: Schweres immer nach unten und in die Mitte.“
+💡 Auch die Achslasten beachten: Steht alles Schwere vorn oder hinten, kann eine Achse überladen sein, obwohl das Gesamtgewicht stimmt (C8).
+🖱 Keine Animation auf dieser Folie – nächster Klick = nächster Schritt (Morph).
+➜ „Schreiben wir das Wichtigste aus C7 auf.“
+
+=== FOLIE 95 ===
+AUF DER FOLIE: KLASSE C  ·  ABEND 4  ·  C7  ·  ABSCHLUSS | 95 | ZUM MITSCHREIBEN | Kräfte beim Fahren | ✎ | Haftung | Rollendes Rad bremst stärker als blockiertes – und bleibt lenkbar. | Haftungskreis | Bremsen und Lenken teilen sich die Haftung. | Doppeltes Tempo | 4 × Energie · 4 × Bremsweg · 4 × Fliehkraft | Fliehkraft größer | durch Tempo, Masse und enge Kurven. | Kippen | Hoher Schwerpunkt kippt früher – Schweres nach unten. | Seitenwind | Brücken, Waldschneisen, Überholen: langsamer, gegenlenken. | Aquaplaning | Tempo, abgefahrenes Profil, Spurrillen – Gas weg, nicht bremsen.
+NOTIZEN:
+FOLIE 95 VON 162 · 7 Klicks
+
+▶ Sagen: „Schreibt euch diese sieben Punkte auf.“
+❓ Vor jedem Klick fragen: „Was gehört hierhin?“
+🖱 Klick 1–7: je eine Antwort.
+✅ Zusammenfassung von C7 (Quellen auf den Folien davor).
+➜ „Und jetzt testen wir das mit drei Prüfungsfragen.“
+
+=== FOLIE 96 ===
+AUF DER FOLIE: KLASSE C  ·  ABEND 4  ·  C7  ·  ABSCHLUSS | 96 | QUIZ C7 · 1 | Sie befahren eine Kurve einmal mit 30 km/h und einmal mit 60 km/h. Wie ändert sich die Fliehkraft? Sie ist bei 60 km/h … | A | … doppelt so groß | B | … gleich groß | C | … viermal so groß | ✓  RICHTIG | Die Fliehkraft wächst mit dem Quadrat der Geschwindigkeit: doppelt so schnell – viermal so groß (Prüfungsfrage 2.7.01-046).
+NOTIZEN:
+FOLIE 96 VON 162 · 2 Klicks
+
+▶ Frage vorlesen, abstimmen lassen.
+🖱 Klick 1: Antworten · Klick 2: Lösung.
+✅ C.
+➜ „Nächste Frage.“
+
+=== FOLIE 97 ===
+AUF DER FOLIE: KLASSE C  ·  ABEND 4  ·  C7  ·  ABSCHLUSS | 97 | QUIZ C7 · 2 | Wodurch wird die Fliehkraft bei Kurvenfahrt vergrößert? | A | Durch höhere Geschwindigkeit | B | Durch höheren Reifenluftdruck | C | Durch kleineren Kurvenradius | ✓  RICHTIG | ✓  RICHTIG | Mehr Tempo und engere Kurven vergrößern die Fliehkraft. Der Reifendruck ändert sie nicht (Prüfungsfrage 2.7.01-047).
+NOTIZEN:
+FOLIE 97 VON 162 · 2 Klicks
+
+▶ Frage vorlesen. Mehrere Antworten können richtig sein.
+🖱 Klick 1: Antworten · Klick 2: Lösung.
+✅ A und C.
+➜ „Letzte Frage.“
+
+=== FOLIE 98 ===
+AUF DER FOLIE: KLASSE C  ·  ABEND 4  ·  C7  ·  ABSCHLUSS | 98 | QUIZ C7 · 3 | Ihr Fahrzeug wird von starkem Seitenwind erfasst. Wie verhalten Sie sich? | A | Gegenlenken | B | Stark beschleunigen | C | Geschwindigkeit herabsetzen | ✓  RICHTIG | ✓  RICHTIG | Ruhig gegenlenken und langsamer fahren. Beschleunigen macht es nur gefährlicher (Prüfungsfrage 2.1.03-018).
+NOTIZEN:
+FOLIE 98 VON 162 · 2 Klicks
+
+▶ Frage vorlesen, abstimmen.
+🖱 Klick 1: Antworten · Klick 2: Lösung.
+✅ A und C.
+➜ „Das nimmst du aus C7 mit.“
+
+=== FOLIE 99 ===
+AUF DER FOLIE: KLASSE C  ·  ABEND 4  ·  C7  ·  ABSCHLUSS | 99 | ZUSAMMENFASSUNG | Das nimmst du mit | Die Haftung ist begrenzt –  Bremsen und Lenken teilen sie sich. Bei Nässe und Glätte alles sanfter. | Doppeltes Tempo heißt  vierfache Energie, vierfacher Bremsweg, vierfache Fliehkraft. | Vor der Kurve bremsen,  nicht in der Kurve. Kreisverkehr und Abfahrten langsam. | Schweres nach unten –  ein hoher Schwerpunkt kippt früher. | Wind und Wasser:  auf Brücken gegenlenken, bei Starkregen Tempo runter.
+NOTIZEN:
+FOLIE 99 VON 162 · 5 Klicks
+
+▶ Sagen: „Das sind die fünf Punkte aus C7, die ihr sicher wissen müsst.“
+🖱 Klick 1–5: je ein Punkt.
+➜ „Jetzt 15 Minuten Pause. Danach Lektion C8: Ausrüstung, Gewichte, Sicherheit.“
+
+=== FOLIE 100 ===
+AUF DER FOLIE: PAUSE | 15 Minuten | Kurz raus, frische Luft. | Danach: Lektion C8 · Ausrüstung, Beförderung, Sicherheit
+NOTIZEN:
+FOLIE 100 VON 162 · keine Klicks, läuft von selbst
+
+▶ Sagen: „15 Minuten Pause. Kurz raus, frische Luft.“
+💡 Pausenende ansagen (z. B. 19:45 Uhr).
+🖱 Keine Klicks.
+➜ „Willkommen zurück. Lektion C8: Was muss an Bord sein – und wie schwer und groß darf ein Lkw sein?“
+
+=== FOLIE 101 ===
+AUF DER FOLIE: KLASSE C  ·  ABEND 4  ·  LEKTION C8 | 101 | LEKTION C8 · AUSRÜSTUNG, BEFÖRDERUNG, SICHERHEIT | Das lernt ihr in C8 | 01 | Pflichtausrüstung  Warndreieck, Warnleuchte, Warnweste, Verbandkasten, Keile, Abschleppen | 20 Min | 02 | Maße und Gewichte  Breite, Höhe, Länge, Achslasten, Überladung | 20 Min | 03 | Ladung  Was herausragen darf, wer verantwortlich ist | 15 Min | 04 | Besondere Güter  Gefahrgut, Abfall, Tiere | 15 Min | 05 | Arbeitssicherheit  Aussteigen, Einweiser, Schutzkleidung | 15 Min | + 5 Min Abschluss: Quiz und „Das nimmst du mit“
+NOTIZEN:
+FOLIE 101 VON 162 · 5 Klicks
+
+▶ Sagen: „Willkommen zurück. In C8 geht es um Regeln, die ihr bei jeder Fahrt erfüllen müsst: Was an Bord sein muss, wie groß und schwer ein Lkw sein darf, wie Ladung herausragen darf, was bei Gefahrgut und Abfall gilt – und wie ihr bei der Arbeit am Lkw gesund bleibt.“
+🖱 Klick 1–5: je ein Kapitel.
+💡 Zeiten sind Richtwerte für 90 Minuten.
+➜ „Kapitel 1: Was muss an Bord sein?“
+
+=== FOLIE 102 ===
+AUF DER FOLIE: KLASSE C  ·  ABEND 4  ·  C8  ·  PFLICHTAUSRÜSTUNG | 102 | 01 | Pflichtausrüstung | Was in jedem Lkw an Bord sein muss – und wie ihr es richtig benutzt.
+NOTIZEN:
+FOLIE 102 VON 162 · keine Klicks, läuft von selbst
+
+▶ Sagen: „Kapitel 1: Pflichtausrüstung. Auf dem Bild seht ihr schon fast alles.“
+🖱 Keine Klicks.
+➜ „Was genau muss an Bord sein?“
+
+=== FOLIE 103 ===
+AUF DER FOLIE: KLASSE C  ·  ABEND 4  ·  C8  ·  PFLICHTAUSRÜSTUNG | 103 | PFLICHTAUSRÜSTUNG | Was muss in jedem Lkw über 3,5 t an Bord sein? | Warndreieck und Warnleuchte / getrennt voneinander – die Leuchte mit gelbem Blinklicht, unabhängig vom Bordnetz. | Warnweste / nach EN ISO 20471 – griffbereit in der Kabine. | Verbandkasten / nach DIN 13164, geschützt vor Staub und Feuchtigkeit. | Unterlegkeile / über 4 t mindestens einer, ab drei Achsen zwei – fest in einer Halterung.
+NOTIZEN:
+FOLIE 103 VON 162 · 4 Klicks
+
+▶ Sagen: „Was muss an Bord sein?“
+❓ Erst sammeln lassen, dann je Klick auflösen.
+🖱 Klick 1–4: je ein Teil.
+✅ § 53a Abs. 2 StVZO: Kfz über 3,5 t: Warndreieck und getrennt davon eine Warnleuchte; in Lkw eine Warnweste. § 35h Abs. 3 StVZO: Erste-Hilfe-Material nach DIN 13164. § 41 Abs. 14 StVZO: Unterlegkeile – mindestens einer bei Kfz über 4 t, zwei bei drei- und mehrachsigen Fahrzeugen; Halterung gegen Verlieren und Klappern, keine Haken oder Ketten.
+💡 Feuerlöscher ist beim normalen Lkw nicht vorgeschrieben (nur in Bussen und bei Gefahrgut – Kapitel 4). Empfehlenswert ist er trotzdem.
+➜ „Und wie benutzt ihr das bei einer Panne?“
+
+=== FOLIE 104 ===
+AUF DER FOLIE: KLASSE C  ·  ABEND 4  ·  C8  ·  PFLICHTAUSRÜSTUNG | 104 | PANNE | Panne – was jetzt? | ❓ Frage an die Klasse / Der Lkw bleibt auf der Landstraße liegen. Was macht ihr – und wie weit muss das Warndreieck weg? | Antwort folgt … | Landstraße, 80 km/h erlaubt. Plötzlich verliert der Motor Leistung … | Draufsicht · schematisch · Verkehr kommt von links | Verkehr →
+NOTIZEN:
+FOLIE 104 VON 162 · keine Klicks, läuft von selbst
+
+▶ Sagen: „Ihr fahrt auf der Landstraße, der Motor geht in Notlauf. Ihr müsst anhalten.“
+❓ Frage auf der Folie stellen: Was macht ihr zuerst?
+🖱 Klick: Der Lkw rollt an den Rand (läuft von selbst).
+➜ „Ihr rollt rechts ran.“
+
+=== FOLIE 105 ===
+AUF DER FOLIE: KLASSE C  ·  ABEND 4  ·  C8  ·  PFLICHTAUSRÜSTUNG | 105 | PANNE | Panne – was jetzt? | ❓ Frage an die Klasse / Der Lkw bleibt auf der Landstraße liegen. Was macht ihr – und wie weit muss das Warndreieck weg? | Antwort folgt … | Landstraße, 80 km/h erlaubt. Plötzlich verliert der Motor Leistung … | Draufsicht · schematisch · Verkehr kommt von links | Verkehr →
+NOTIZEN:
+FOLIE 105 VON 162 · keine Klicks, läuft von selbst
+
+▶ Die Bewegung läuft – zuschauen lassen.
+🖱 Kein Klick – die Folie läuft von selbst weiter.
+➜ (läuft weiter)
+
+=== FOLIE 106 ===
+AUF DER FOLIE: KLASSE C  ·  ABEND 4  ·  C8  ·  PFLICHTAUSRÜSTUNG | 106 | PANNE | Panne – was jetzt? | ❓ Frage an die Klasse / Der Lkw bleibt auf der Landstraße liegen. Was macht ihr – und wie weit muss das Warndreieck weg? | Antwort folgt … | So weit rechts wie möglich anhalten – sofort Warnblinklicht an. | Draufsicht · schematisch · Verkehr kommt von links | Verkehr →
+NOTIZEN:
+FOLIE 106 VON 162 · keine Klicks, läuft von selbst
+
+▶ Die Bewegung läuft – zuschauen lassen.
+🖱 Kein Klick – die Folie läuft von selbst weiter.
+➜ (läuft weiter)
+
+=== FOLIE 107 ===
+AUF DER FOLIE: KLASSE C  ·  ABEND 4  ·  C8  ·  PFLICHTAUSRÜSTUNG | 107 | PANNE | Panne – was jetzt? | ❓ Frage an die Klasse / Der Lkw bleibt auf der Landstraße liegen. Was macht ihr – und wie weit muss das Warndreieck weg? | Antwort folgt … | So weit rechts wie möglich anhalten – sofort Warnblinklicht an. | Draufsicht · schematisch · Verkehr kommt von links | Verkehr →
+NOTIZEN:
+FOLIE 107 VON 162 · keine Klicks, läuft von selbst
+
+▶ Die Bewegung läuft – zuschauen lassen.
+🖱 Kein Klick – die Folie läuft von selbst weiter.
+➜ (läuft weiter)
+
+=== FOLIE 108 ===
+AUF DER FOLIE: KLASSE C  ·  ABEND 4  ·  C8  ·  PFLICHTAUSRÜSTUNG | 108 | PANNE | Panne – was jetzt? | ❓ Frage an die Klasse / Der Lkw bleibt auf der Landstraße liegen. Was macht ihr – und wie weit muss das Warndreieck weg? | Antwort folgt … | Warnweste anziehen, bevor ihr aussteigt – rechts aussteigen, wenn möglich. | Draufsicht · schematisch · Verkehr kommt von links | Warnweste an | Verkehr →
+NOTIZEN:
+FOLIE 108 VON 162 · keine Klicks, läuft von selbst
+
+▶ „Zuerst Warnblinklicht. Dann Warnweste anziehen – noch in der Kabine – und möglichst auf der rechten Seite aussteigen.“
+✅ § 15 StVO: sofort Warnblinklicht einschalten. Warnweste: § 53a Abs. 2 Nr. 3 StVZO (mitführen).
+🖱 Klick: Das Warndreieck wird aufgestellt (läuft von selbst).
+➜ „Jetzt das Warndreieck.“
+
+=== FOLIE 109 ===
+AUF DER FOLIE: KLASSE C  ·  ABEND 4  ·  C8  ·  PFLICHTAUSRÜSTUNG | 109 | PANNE | Panne – was jetzt? | ❓ Frage an die Klasse / Der Lkw bleibt auf der Landstraße liegen. Was macht ihr – und wie weit muss das Warndreieck weg? | Antwort folgt … | Das Warndreieck wandert nach hinten – gegen die Fahrtrichtung … | Draufsicht · schematisch · Verkehr kommt von links | Warnweste an | Verkehr →
+NOTIZEN:
+FOLIE 109 VON 162 · keine Klicks, läuft von selbst
+
+▶ Die Bewegung läuft – zuschauen lassen.
+🖱 Kein Klick – die Folie läuft von selbst weiter.
+➜ (läuft weiter)
+
+=== FOLIE 110 ===
+AUF DER FOLIE: KLASSE C  ·  ABEND 4  ·  C8  ·  PFLICHTAUSRÜSTUNG | 110 | PANNE | Panne – was jetzt? | ❓ Frage an die Klasse / Der Lkw bleibt auf der Landstraße liegen. Was macht ihr – und wie weit muss das Warndreieck weg? | Antwort folgt … | Das Warndreieck wandert nach hinten – gegen die Fahrtrichtung … | Draufsicht · schematisch · Verkehr kommt von links | Warnweste an | 20 m | Verkehr →
+NOTIZEN:
+FOLIE 110 VON 162 · keine Klicks, läuft von selbst
+
+▶ Die Bewegung läuft – zuschauen lassen.
+🖱 Kein Klick – die Folie läuft von selbst weiter.
+➜ (läuft weiter)
+
+=== FOLIE 111 ===
+AUF DER FOLIE: KLASSE C  ·  ABEND 4  ·  C8  ·  PFLICHTAUSRÜSTUNG | 111 | PANNE | Panne – was jetzt? | ❓ Frage an die Klasse / Der Lkw bleibt auf der Landstraße liegen. Was macht ihr – und wie weit muss das Warndreieck weg? | Antwort folgt … | Das Warndreieck wandert nach hinten – gegen die Fahrtrichtung … | Draufsicht · schematisch · Verkehr kommt von links | Warnweste an | 40 m | Verkehr →
+NOTIZEN:
+FOLIE 111 VON 162 · keine Klicks, läuft von selbst
+
+▶ Die Bewegung läuft – zuschauen lassen.
+🖱 Kein Klick – die Folie läuft von selbst weiter.
+➜ (läuft weiter)
+
+=== FOLIE 112 ===
+AUF DER FOLIE: KLASSE C  ·  ABEND 4  ·  C8  ·  PFLICHTAUSRÜSTUNG | 112 | PANNE | Panne – was jetzt? | ❓ Frage an die Klasse / Der Lkw bleibt auf der Landstraße liegen. Was macht ihr – und wie weit muss das Warndreieck weg? | Antwort folgt … | Das Warndreieck wandert nach hinten – gegen die Fahrtrichtung … | Draufsicht · schematisch · Verkehr kommt von links | Warnweste an | 60 m | Verkehr →
+NOTIZEN:
+FOLIE 112 VON 162 · keine Klicks, läuft von selbst
+
+▶ Die Bewegung läuft – zuschauen lassen.
+🖱 Kein Klick – die Folie läuft von selbst weiter.
+➜ (läuft weiter)
+
+=== FOLIE 113 ===
+AUF DER FOLIE: KLASSE C  ·  ABEND 4  ·  C8  ·  PFLICHTAUSRÜSTUNG | 113 | PANNE | Panne – was jetzt? | ❓ Frage an die Klasse / Der Lkw bleibt auf der Landstraße liegen. Was macht ihr – und wie weit muss das Warndreieck weg? | Antwort folgt … | Das Warndreieck wandert nach hinten – gegen die Fahrtrichtung … | Draufsicht · schematisch · Verkehr kommt von links | Warnweste an | 80 m | Verkehr →
+NOTIZEN:
+FOLIE 113 VON 162 · keine Klicks, läuft von selbst
+
+▶ Die Bewegung läuft – zuschauen lassen.
+🖱 Kein Klick – die Folie läuft von selbst weiter.
+➜ (läuft weiter)
+
+=== FOLIE 114 ===
+AUF DER FOLIE: KLASSE C  ·  ABEND 4  ·  C8  ·  PFLICHTAUSRÜSTUNG | 114 | PANNE | Panne – was jetzt? | ❓ Frage an die Klasse / Der Lkw bleibt auf der Landstraße liegen. Was macht ihr – und wie weit muss das Warndreieck weg? | ✓ Antwort / Warnblinker an, Warnweste an, Warndreieck bei schnellem Verkehr etwa 100 m hinter den Lkw – und die Warnleuchte dazu. | Etwa 100 m bei schnellem Verkehr. Vor Kurven und Kuppen so weit, dass man es rechtzeitig sieht. | Draufsicht · schematisch · Verkehr kommt von links | Warnweste an | 100 m | Verkehr →
+NOTIZEN:
+FOLIE 114 VON 162 · keine Klicks, läuft von selbst
+
+▶ „Das Warndreieck kommt bei schnellem Verkehr etwa 100 Meter hinter den Lkw. Vor einer Kurve oder Kuppe so, dass es rechtzeitig vor der Gefahr zu sehen ist.“
+✅ § 15 StVO: Warnzeichen gut sichtbar in ausreichender Entfernung, bei schnellem Verkehr in etwa 100 m. Prüfungsfrage 2.2.15-201 (Seitenstreifen der Autobahn): Warndreieck etwa 100 m am rechten Fahrbahnrand, Warnleuchte in ausreichender Entfernung, Warnweste tragen.
+💡 Faustregel aus der Fahrschule: innerorts etwa 50 m, Autobahn deutlich weiter – lieber zu weit als zu nah. Beim Gehen am Fahrbahnrand das Dreieck vor sich halten.
+🖱 Klick: die Warnleuchte (läuft von selbst).
+➜ „Und die Warnleuchte?“
+
+=== FOLIE 115 ===
+AUF DER FOLIE: KLASSE C  ·  ABEND 4  ·  C8  ·  PFLICHTAUSRÜSTUNG | 115 | PANNE | Panne – was jetzt? | ❓ Frage an die Klasse / Der Lkw bleibt auf der Landstraße liegen. Was macht ihr – und wie weit muss das Warndreieck weg? | ✓ Antwort / Warnblinker an, Warnweste an, Warndreieck bei schnellem Verkehr etwa 100 m hinter den Lkw – und die Warnleuchte dazu. | Etwa 100 m bei schnellem Verkehr. Vor Kurven und Kuppen so weit, dass man es rechtzeitig sieht. | Draufsicht · schematisch · Verkehr kommt von links | Warnweste an | 100 m | Warnleuchte | Verkehr →
+NOTIZEN:
+FOLIE 115 VON 162 · keine Klicks, läuft von selbst
+
+▶ Die Bewegung läuft – zuschauen lassen.
+🖱 Kein Klick – die Folie läuft von selbst weiter.
+➜ (läuft weiter)
+
+=== FOLIE 116 ===
+AUF DER FOLIE: KLASSE C  ·  ABEND 4  ·  C8  ·  PFLICHTAUSRÜSTUNG | 116 | PANNE | Panne – was jetzt? | ❓ Frage an die Klasse / Der Lkw bleibt auf der Landstraße liegen. Was macht ihr – und wie weit muss das Warndreieck weg? | ✓ Antwort / Warnblinker an, Warnweste an, Warndreieck bei schnellem Verkehr etwa 100 m hinter den Lkw – und die Warnleuchte dazu. | Dazu die Warnleuchte mit gelbem Blinklicht – zusätzlich, gut sichtbar am Fahrbahnrand. | Draufsicht · schematisch · Verkehr kommt von links | Warnweste an | 100 m | Warnleuchte | Verkehr →
+NOTIZEN:
+FOLIE 116 VON 162 · keine Klicks, läuft von selbst
+
+▶ „Ab 3,5 t habt ihr zusätzlich eine Warnleuchte mit gelbem Blinklicht. Die stellt ihr zusätzlich am Fahrbahnrand auf, gut sichtbar – das Warndreieck bleibt Pflicht. Danach hinter die Schutzplanke oder weit weg vom Verkehr warten.“
+✅ § 53a Abs. 1 und 2 StVZO (Warnleuchte: gelbes Blinklicht, unabhängig von der Lichtanlage). Prüfungsfrage 2.2.15-201: Warnleuchte in ausreichender Entfernung aufstellen.
+🖱 Keine Animation mehr – nächster Klick: nächste Folie.
+➜ „Und wenn der Lkw im Gefälle steht?“
+
+=== FOLIE 117 ===
+AUF DER FOLIE: KLASSE C  ·  ABEND 4  ·  C8  ·  PFLICHTAUSRÜSTUNG | 117 | UNTERLEGKEILE | Sicher abstellen im Gefälle | 1 | Feststellbremse anziehen | 2 | Keil vor ein Hinterrad | 3 | Talseite beachten | ❓ Frage an die Klasse   / Wohin kommt der Keil, wenn der Lkw bergab steht? | Erst die Feststellbremse. Die Dauerbremse hält den Lkw nicht fest. | Neigung überzeichnet · Front zeigt bergab | P | Feststellbremse
+NOTIZEN:
+FOLIE 117 VON 162 · keine Klicks, läuft von selbst
+
+▶ Sagen: „Ein Lkw steht im starken Gefälle, die Front zeigt nach unten. Zuerst: Feststellbremse.“
+✅ Prüfungsfrage 2.2.23-201: Feststellbremse anziehen und Unterlegkeil vor ein Hinterrad legen – NICHT die Dauerbremse betätigen.
+🖱 Keine Animation auf dieser Folie – nächster Klick = nächster Schritt (Morph).
+➜ „Dann der Keil.“
+
+=== FOLIE 118 ===
+AUF DER FOLIE: KLASSE C  ·  ABEND 4  ·  C8  ·  PFLICHTAUSRÜSTUNG | 118 | UNTERLEGKEILE | Sicher abstellen im Gefälle | 1 | Feststellbremse anziehen | 2 | Keil vor ein Hinterrad | 3 | Talseite beachten | ❓ Frage an die Klasse   / Wohin kommt der Keil, wenn der Lkw bergab steht? | Dann den Unterlegkeil vor ein Hinterrad legen. | Neigung überzeichnet · Front zeigt bergab | P | Keil talseitig
+NOTIZEN:
+FOLIE 118 VON 162 · keine Klicks, läuft von selbst
+
+▶ „Dann den Keil vor ein Hinterrad.“
+💡 Hinterrad, weil dort die Feststellbremse (Federspeicher) wirkt und das Rad sich nicht lenken lässt.
+🖱 Keine Animation auf dieser Folie – nächster Klick = nächster Schritt (Morph).
+➜ „Aber auf welche Seite?“
+
+=== FOLIE 119 ===
+AUF DER FOLIE: KLASSE C  ·  ABEND 4  ·  C8  ·  PFLICHTAUSRÜSTUNG | 119 | UNTERLEGKEILE | Sicher abstellen im Gefälle | 1 | Feststellbremse anziehen | 2 | Keil vor ein Hinterrad | 3 | Talseite beachten | ✓ Antwort   / Talseitig vor ein Hinterrad – dorthin, wohin der Lkw rollen würde. | Der Keil gehört auf die Talseite des Rads – dorthin, wohin der Lkw rollen würde. | Neigung überzeichnet · Front zeigt bergab | P | Talseite = Rollrichtung | ← bergab
+NOTIZEN:
+FOLIE 119 VON 162 · keine Klicks, läuft von selbst
+
+▶ „Talseitig – dorthin, wohin der Lkw rollen würde. Hier zeigt die Front bergab, also kommt der Keil vor das Hinterrad, auf die Seite zur Front hin.“
+❓ Frage auf der Folie auflösen.
+✅ § 41 Abs. 14 StVZO: Keile müssen leicht zugänglich in einer Halterung sein.
+🖱 Keine Animation auf dieser Folie – nächster Klick = nächster Schritt (Morph).
+➜ „Und wenn der Lkw gar nicht mehr fährt – abschleppen.“
+
+=== FOLIE 120 ===
+AUF DER FOLIE: KLASSE C  ·  ABEND 4  ·  C8  ·  PFLICHTAUSRÜSTUNG | 120 | ABSCHLEPPEN | Euer Lkw muss abgeschleppt werden. Was gilt? | Warnblinklicht an beiden Fahrzeugen  während des ganzen Abschleppens. | Auf der Autobahn liegen geblieben?  Bei der nächsten Ausfahrt runter. Außerhalb liegen geblieben: nicht auf die Autobahn. | Beim schweren Lkw: Abschleppstange  statt Seil – und am besten ein Abschleppdienst. | Keine Luft mehr in der Anlage?  Federspeicher erst nach dem Sichern mit Keilen lösen (siehe C5).
+NOTIZEN:
+FOLIE 120 VON 162 · 4 Klicks
+
+▶ Sagen: „Ein Lkw ist schwer. Abschleppen ist Sache von Profis – aber die Regeln müsst ihr kennen.“
+❓ Antworten sammeln, dann je Klick auflösen.
+🖱 Klick 1–4: je ein Punkt.
+✅ § 15a StVO: Abs. 1 Autobahn bei der nächsten Ausfahrt verlassen; Abs. 2 nicht in die Autobahn einfahren; Abs. 3 beide Fahrzeuge Warnblinklicht.
+💡 Abschleppstange und Federspeicher lösen: Lehrbuchwissen. Ohne Luft wirkt beim geschleppten Lkw die Betriebsbremse nicht – mit Seil gibt es dann keine Möglichkeit zu bremsen. Prüfungsfrage 2.7.06-215: Federspeicher zum Abschleppen mit der Hilfslöseeinrichtung lösen.
+➜ „Kapitel 2: Wie groß und wie schwer darf ein Lkw sein?“
+
+=== FOLIE 121 ===
+AUF DER FOLIE: KLASSE C  ·  ABEND 4  ·  C8  ·  MASSE UND GEWICHTE | 121 | 02 | Maße und Gewichte | Wie breit, hoch, lang und schwer ein Lkw sein darf.
+NOTIZEN:
+FOLIE 121 VON 162 · keine Klicks, läuft von selbst
+
+▶ Sagen: „Kapitel 2: Maße und Gewichte. Wer das nicht kennt, bleibt unter einer Brücke hängen – oder zahlt bei der Waage.“
+🖱 Keine Klicks.
+➜ „Erst die Maße.“
+
+=== FOLIE 122 ===
+AUF DER FOLIE: KLASSE C  ·  ABEND 4  ·  C8  ·  MASSE UND GEWICHTE | 122 | ABMESSUNGEN | So groß darf ein Lkw sein | 1 | Breite 2,55 m | 2 | Kühlaufbau 2,60 m | 3 | Höhe 4,00 m | 4 | Länge 12,00 m | ❓ Frage an die Klasse   / Zählen die Außenspiegel zu den 2,55 m Breite? | Breite höchstens 2,55 m – Fahrzeug und Ladung zusammen. | Nicht maßstäblich | 2,55 m | 4,00 m | 12,00 m | Von hinten | Von der Seite
+NOTIZEN:
+FOLIE 122 VON 162 · keine Klicks, läuft von selbst
+
+▶ Sagen: „Ein Lkw darf höchstens 2,55 Meter breit sein – mit Ladung.“
+✅ § 32 Abs. 1 StVZO; § 22 Abs. 2 StVO (Fahrzeug und Ladung zusammen 2,55 m). Prüfungsfrage 2.7.09-202 (Zahleneingabe).
+🖱 Keine Animation auf dieser Folie – nächster Klick = nächster Schritt (Morph).
+➜ „Es gibt eine Ausnahme.“
+
+=== FOLIE 123 ===
+AUF DER FOLIE: KLASSE C  ·  ABEND 4  ·  C8  ·  MASSE UND GEWICHTE | 123 | ABMESSUNGEN | So groß darf ein Lkw sein | 1 | Breite 2,55 m | 2 | Kühlaufbau 2,60 m | 3 | Höhe 4,00 m | 4 | Länge 12,00 m | ✓ Antwort   / Nein – sie ragen darüber hinaus. An engen Stellen daran denken! | Kühlaufbauten mit dicken Wänden dürfen 2,60 m breit sein. Spiegel zählen nicht mit – sie stehen noch weiter raus. | Nicht maßstäblich | 2,60 m | 4,00 m | 12,00 m | Von hinten | Von der Seite
+NOTIZEN:
+FOLIE 123 VON 162 · keine Klicks, läuft von selbst
+
+▶ „Kühlfahrzeuge mit dick isolierten Wänden dürfen 2,60 m breit sein. Und Achtung: Die Außenspiegel zählen nicht zur Breite – sie stehen noch weiter raus.“
+❓ Frage auf der Folie auflösen.
+✅ § 32 Abs. 1 Nr. 4 StVZO (2,60 m bei mindestens 45 mm Wanddicke); Einrichtungen für indirekte Sicht werden nicht mitgemessen. Prüfungsfrage 2.6.06-211: An engen Durchfahrten ragen die Spiegel über die angegebene Breite hinaus, und Aufbauten schwanken auf unebener Fahrbahn.
+🖱 Keine Animation auf dieser Folie – nächster Klick = nächster Schritt (Morph).
+➜ „Und nach oben?“
+
+=== FOLIE 124 ===
+AUF DER FOLIE: KLASSE C  ·  ABEND 4  ·  C8  ·  MASSE UND GEWICHTE | 124 | ABMESSUNGEN | So groß darf ein Lkw sein | 1 | Breite 2,55 m | 2 | Kühlaufbau 2,60 m | 3 | Höhe 4,00 m | 4 | Länge 12,00 m | ✓ Antwort   / Nein – sie ragen darüber hinaus. An engen Stellen daran denken! | Höhe höchstens 4,00 m – mit Ladung. Die eigene Höhe muss man kennen: Brücken, Tankstellen, Tore. | Nicht maßstäblich | 2,55 m | 4,00 m | 12,00 m | Von hinten | Von der Seite
+NOTIZEN:
+FOLIE 124 VON 162 · keine Klicks, läuft von selbst
+
+▶ „Höhe: höchstens 4 Meter, mit Ladung. Kennt die Höhe eures Lkw – sie steht oft an einem Schild im Fahrerhaus. Brücken mit Höhenbeschränkung, Tankstellendächer, Hallentore.“
+✅ § 32 Abs. 2 StVZO; § 22 Abs. 2 StVO. Prüfungsfrage 2.7.09-210: 4,0 m.
+🖱 Keine Animation auf dieser Folie – nächster Klick = nächster Schritt (Morph).
+➜ „Und die Länge?“
+
+=== FOLIE 125 ===
+AUF DER FOLIE: KLASSE C  ·  ABEND 4  ·  C8  ·  MASSE UND GEWICHTE | 125 | ABMESSUNGEN | So groß darf ein Lkw sein | 1 | Breite 2,55 m | 2 | Kühlaufbau 2,60 m | 3 | Höhe 4,00 m | 4 | Länge 12,00 m | ✓ Antwort   / Nein – sie ragen darüber hinaus. An engen Stellen daran denken! | Länge: Einzelfahrzeug höchstens 12 m. Mit Anhänger samt Ladung höchstens 20,75 m (CE). | Nicht maßstäblich | 2,55 m | 4,00 m | 12,00 m | Von hinten | Von der Seite
+NOTIZEN:
+FOLIE 125 VON 162 · keine Klicks, läuft von selbst
+
+▶ „Ein einzelner Lkw darf höchstens 12 Meter lang sein. Mit Anhänger und Ladung höchstens 20,75 Meter – das kommt in CE.“
+✅ § 32 Abs. 3 Nr. 1 StVZO (12,00 m). § 22 Abs. 4 StVO und Prüfungsfrage 2.6.06-201: Zug samt Ladung höchstens 20,75 m.
+🖱 Keine Animation auf dieser Folie – nächster Klick = nächster Schritt (Morph).
+➜ „Jetzt die Gewichte.“
+
+=== FOLIE 126 ===
+AUF DER FOLIE: KLASSE C  ·  ABEND 4  ·  C8  ·  MASSE UND GEWICHTE | 126 | GEWICHTE | So schwer darf ein Lkw sein | 1 | 2 Achsen: 18 t | 2 | 3 Achsen: 25 / 26 t | 3 | 4 Achsen: 32 t | 4 | Je Achse: 10 / 11,5 t | ❓ Frage an die Klasse   / Das Gesamtgewicht stimmt, aber alles steht hinten. Geht das? | Zweiachser: höchstens 18 t zulässige Gesamtmasse. | Nach § 34 StVZO · eure Fahrzeugpapiere können niedrigere Werte nennen | 2 Achsen | 18 t | zulässige Gesamtmasse
+NOTIZEN:
+FOLIE 126 VON 162 · keine Klicks, läuft von selbst
+
+▶ Sagen: „Wie schwer ein Lkw sein darf, hängt von der Zahl der Achsen ab. Zweiachser: 18 Tonnen.“
+✅ § 34 Abs. 5 Nr. 1a StVZO.
+💡 Das genaue Höchstgewicht eures Lkw steht in der Zulassungsbescheinigung Teil I (Feld F.2) – es kann niedriger sein.
+🖱 Keine Animation auf dieser Folie – nächster Klick = nächster Schritt (Morph).
+➜ „Drei Achsen.“
+
+=== FOLIE 127 ===
+AUF DER FOLIE: KLASSE C  ·  ABEND 4  ·  C8  ·  MASSE UND GEWICHTE | 127 | GEWICHTE | So schwer darf ein Lkw sein | 1 | 2 Achsen: 18 t | 2 | 3 Achsen: 25 / 26 t | 3 | 4 Achsen: 32 t | 4 | Je Achse: 10 / 11,5 t | ❓ Frage an die Klasse   / Das Gesamtgewicht stimmt, aber alles steht hinten. Geht das? | Dreiachser: 25 t, mit Luftfederung und Zwillingsreifen an der Antriebsachse 26 t. | Nach § 34 StVZO · eure Fahrzeugpapiere können niedrigere Werte nennen | 3 Achsen | 25 t / 26 t | zulässige Gesamtmasse
+NOTIZEN:
+FOLIE 127 VON 162 · keine Klicks, läuft von selbst
+
+▶ „Dreiachser: 25 Tonnen – 26 Tonnen, wenn die Antriebsachse Zwillingsreifen und Luftfederung hat.“
+✅ § 34 Abs. 5 Nr. 2a und 2b StVZO (mit Doppelachslast nach Abs. 4 Nr. 2d).
+🖱 Keine Animation auf dieser Folie – nächster Klick = nächster Schritt (Morph).
+➜ „Vier Achsen.“
+
+=== FOLIE 128 ===
+AUF DER FOLIE: KLASSE C  ·  ABEND 4  ·  C8  ·  MASSE UND GEWICHTE | 128 | GEWICHTE | So schwer darf ein Lkw sein | 1 | 2 Achsen: 18 t | 2 | 3 Achsen: 25 / 26 t | 3 | 4 Achsen: 32 t | 4 | Je Achse: 10 / 11,5 t | ❓ Frage an die Klasse   / Das Gesamtgewicht stimmt, aber alles steht hinten. Geht das? | Vierachser: höchstens 32 t. | Nach § 34 StVZO · eure Fahrzeugpapiere können niedrigere Werte nennen | 4 Achsen | 32 t | zulässige Gesamtmasse
+NOTIZEN:
+FOLIE 128 VON 162 · keine Klicks, läuft von selbst
+
+▶ „Vierachser – zum Beispiel Baustellenkipper: 32 Tonnen.“
+✅ § 34 Abs. 5 Nr. 3 StVZO (mit Bedingungen an Achsabstand und Lenkachsen).
+🖱 Keine Animation auf dieser Folie – nächster Klick = nächster Schritt (Morph).
+➜ „Und jede Achse für sich?“
+
+=== FOLIE 129 ===
+AUF DER FOLIE: KLASSE C  ·  ABEND 4  ·  C8  ·  MASSE UND GEWICHTE | 129 | GEWICHTE | So schwer darf ein Lkw sein | 1 | 2 Achsen: 18 t | 2 | 3 Achsen: 25 / 26 t | 3 | 4 Achsen: 32 t | 4 | Je Achse: 10 / 11,5 t | ✓ Antwort   / Nein – dann ist die Hinterachse überladen. Achslast UND Gesamtgewicht müssen stimmen. | Zusätzlich jede Achse: Einzelachse 10 t, Antriebsachse 11,5 t. Beides muss eingehalten werden. | Nach § 34 StVZO · eure Fahrzeugpapiere können niedrigere Werte nennen | Achslast | 18 t | zulässige Gesamtmasse – trotzdem! | höchstens 10 t | höchstens 11,5 t | Vorderachse | Antriebsachse
+NOTIZEN:
+FOLIE 129 VON 162 · keine Klicks, läuft von selbst
+
+▶ „Jede Achse hat ihre eigene Grenze: Einzelachse 10 Tonnen, angetriebene Achse 11,5 Tonnen. Zusammen wären das 21,5 – aber das Gesamtgewicht bleibt bei 18. Beides muss stimmen.“
+❓ Frage auf der Folie auflösen.
+✅ § 34 Abs. 4 Nr. 1 StVZO. Prüfungsfrage 2.7.09-222: zulässige Gesamtmasse, zulässige Achslasten sowie Höhe, Breite, Lage und Sicherung der Ladung beachten.
+💡 Beim Teilentladen kann sich die Achslast verschieben: Wird hinten abgeladen, wird vorn manchmal mehr belastet.
+🖱 Keine Animation auf dieser Folie – nächster Klick = nächster Schritt (Morph).
+➜ „Was passiert, wenn der Lkw zu schwer ist?“
+
+=== FOLIE 130 ===
+AUF DER FOLIE: KLASSE C  ·  ABEND 4  ·  C8  ·  MASSE UND GEWICHTE | 130 | ÜBERLADUNG | Ab auf die Waage | ❓ Frage an die Klasse / Euer 18-Tonner wiegt auf der Waage fast 20 Tonnen. Wer zahlt – und wie viel? | Antwort folgt … | Ein 18-Tonner wird beladen. Die Waage zeigt das tatsächliche Gewicht. | Bußgelder für Kfz über 7,5 t (bussgeldkatalog.de, Stand 07/2026) · P = Punkt in Flensburg | 14,2 t | erlaubt: 18,0 t | Überladung | Fahrer | Halter | 2–5 % | 30 € | 35 € | über 5 % | 80 € + 1 P | 140 € + 1 P | über 10 % | 110 € + 1 P | 235 € + 1 P | über 20 % | 190 € + 1 P | 380 € + 1 P | über 30 % | 380 € + 1 P | 425 € + 1 P
+NOTIZEN:
+FOLIE 130 VON 162 · keine Klicks, läuft von selbst
+
+▶ Sagen: „Ein 18-Tonner wird beladen. Die Polizei kann ihn jederzeit auf die Waage holen.“
+❓ Frage auf der Folie stellen: Wer zahlt bei Überladung?
+🖱 Klick: Es wird weiter geladen (läuft von selbst).
+➜ „Weiter laden.“
+
+=== FOLIE 131 ===
+AUF DER FOLIE: KLASSE C  ·  ABEND 4  ·  C8  ·  MASSE UND GEWICHTE | 131 | ÜBERLADUNG | Ab auf die Waage | ❓ Frage an die Klasse / Euer 18-Tonner wiegt auf der Waage fast 20 Tonnen. Wer zahlt – und wie viel? | Antwort folgt … | Ein 18-Tonner wird beladen. Die Waage zeigt das tatsächliche Gewicht. | Bußgelder für Kfz über 7,5 t (bussgeldkatalog.de, Stand 07/2026) · P = Punkt in Flensburg | 15,5 t | erlaubt: 18,0 t | Überladung | Fahrer | Halter | 2–5 % | 30 € | 35 € | über 5 % | 80 € + 1 P | 140 € + 1 P | über 10 % | 110 € + 1 P | 235 € + 1 P | über 20 % | 190 € + 1 P | 380 € + 1 P | über 30 % | 380 € + 1 P | 425 € + 1 P
+NOTIZEN:
+FOLIE 131 VON 162 · keine Klicks, läuft von selbst
+
+▶ Die Bewegung läuft – zuschauen lassen.
+🖱 Kein Klick – die Folie läuft von selbst weiter.
+➜ (läuft weiter)
+
+=== FOLIE 132 ===
+AUF DER FOLIE: KLASSE C  ·  ABEND 4  ·  C8  ·  MASSE UND GEWICHTE | 132 | ÜBERLADUNG | Ab auf die Waage | ❓ Frage an die Klasse / Euer 18-Tonner wiegt auf der Waage fast 20 Tonnen. Wer zahlt – und wie viel? | Antwort folgt … | Ein 18-Tonner wird beladen. Die Waage zeigt das tatsächliche Gewicht. | Bußgelder für Kfz über 7,5 t (bussgeldkatalog.de, Stand 07/2026) · P = Punkt in Flensburg | 16,8 t | erlaubt: 18,0 t | Überladung | Fahrer | Halter | 2–5 % | 30 € | 35 € | über 5 % | 80 € + 1 P | 140 € + 1 P | über 10 % | 110 € + 1 P | 235 € + 1 P | über 20 % | 190 € + 1 P | 380 € + 1 P | über 30 % | 380 € + 1 P | 425 € + 1 P
+NOTIZEN:
+FOLIE 132 VON 162 · keine Klicks, läuft von selbst
+
+▶ Die Bewegung läuft – zuschauen lassen.
+🖱 Kein Klick – die Folie läuft von selbst weiter.
+➜ (läuft weiter)
+
+=== FOLIE 133 ===
+AUF DER FOLIE: KLASSE C  ·  ABEND 4  ·  C8  ·  MASSE UND GEWICHTE | 133 | ÜBERLADUNG | Ab auf die Waage | ❓ Frage an die Klasse / Euer 18-Tonner wiegt auf der Waage fast 20 Tonnen. Wer zahlt – und wie viel? | Antwort folgt … | Genau 18 t – voll, aber erlaubt. | Bußgelder für Kfz über 7,5 t (bussgeldkatalog.de, Stand 07/2026) · P = Punkt in Flensburg | 18,0 t | erlaubt: 18,0 t | Überladung | Fahrer | Halter | 2–5 % | 30 € | 35 € | über 5 % | 80 € + 1 P | 140 € + 1 P | über 10 % | 110 € + 1 P | 235 € + 1 P | über 20 % | 190 € + 1 P | 380 € + 1 P | über 30 % | 380 € + 1 P | 425 € + 1 P
+NOTIZEN:
+FOLIE 133 VON 162 · keine Klicks, läuft von selbst
+
+▶ „Genau 18 Tonnen – erlaubt. Jetzt sagt der Disponent: Die zwei Paletten passen doch noch drauf …“
+🖱 Klick: weiter (läuft von selbst).
+➜ „Noch zwei Paletten.“
+
+=== FOLIE 134 ===
+AUF DER FOLIE: KLASSE C  ·  ABEND 4  ·  C8  ·  MASSE UND GEWICHTE | 134 | ÜBERLADUNG | Ab auf die Waage | ❓ Frage an die Klasse / Euer 18-Tonner wiegt auf der Waage fast 20 Tonnen. Wer zahlt – und wie viel? | Antwort folgt … | Mehr als 2 % zu viel: Ab hier wird es teuer. | Bußgelder für Kfz über 7,5 t (bussgeldkatalog.de, Stand 07/2026) · P = Punkt in Flensburg | 18,6 t | +3,3 % | Überladung | Fahrer | Halter | 2–5 % | 30 € | 35 € | über 5 % | 80 € + 1 P | 140 € + 1 P | über 10 % | 110 € + 1 P | 235 € + 1 P | über 20 % | 190 € + 1 P | 380 € + 1 P | über 30 % | 380 € + 1 P | 425 € + 1 P
+NOTIZEN:
+FOLIE 134 VON 162 · keine Klicks, läuft von selbst
+
+▶ Die Bewegung läuft – zuschauen lassen.
+🖱 Kein Klick – die Folie läuft von selbst weiter.
+➜ (läuft weiter)
+
+=== FOLIE 135 ===
+AUF DER FOLIE: KLASSE C  ·  ABEND 4  ·  C8  ·  MASSE UND GEWICHTE | 135 | ÜBERLADUNG | Ab auf die Waage | ❓ Frage an die Klasse / Euer 18-Tonner wiegt auf der Waage fast 20 Tonnen. Wer zahlt – und wie viel? | Antwort folgt … | Mehr als 2 % zu viel: Ab hier wird es teuer. | Bußgelder für Kfz über 7,5 t (bussgeldkatalog.de, Stand 07/2026) · P = Punkt in Flensburg | 19,3 t | +7,2 % | Überladung | Fahrer | Halter | 2–5 % | 30 € | 35 € | über 5 % | 80 € + 1 P | 140 € + 1 P | über 10 % | 110 € + 1 P | 235 € + 1 P | über 20 % | 190 € + 1 P | 380 € + 1 P | über 30 % | 380 € + 1 P | 425 € + 1 P
+NOTIZEN:
+FOLIE 135 VON 162 · keine Klicks, läuft von selbst
+
+▶ Die Bewegung läuft – zuschauen lassen.
+🖱 Kein Klick – die Folie läuft von selbst weiter.
+➜ (läuft weiter)
+
+=== FOLIE 136 ===
+AUF DER FOLIE: KLASSE C  ·  ABEND 4  ·  C8  ·  MASSE UND GEWICHTE | 136 | ÜBERLADUNG | Ab auf die Waage | ❓ Frage an die Klasse / Euer 18-Tonner wiegt auf der Waage fast 20 Tonnen. Wer zahlt – und wie viel? | ✓ Antwort / Fahrer UND Halter. Über 10 %: Fahrer 110 €, Halter 235 €, je 1 Punkt. Weiter geht es erst nach dem Abladen. | Über 10 % zu schwer: Bußgeld und Punkt für Fahrer und Halter – und Abladen, bevor es weitergeht. | Bußgelder für Kfz über 7,5 t (bussgeldkatalog.de, Stand 07/2026) · P = Punkt in Flensburg | 19,9 t | +10,6 % | Überladung | Fahrer | Halter | 2–5 % | 30 € | 35 € | über 5 % | 80 € + 1 P | 140 € + 1 P | über 10 % | 110 € + 1 P | 235 € + 1 P | über 20 % | 190 € + 1 P | 380 € + 1 P | über 30 % | 380 € + 1 P | 425 € + 1 P
+NOTIZEN:
+FOLIE 136 VON 162 · keine Klicks, läuft von selbst
+
+▶ „19,9 Tonnen – mehr als 10 Prozent zu viel. Ihr als Fahrer zahlt 110 Euro und bekommt einen Punkt. Der Halter zahlt sogar 235 Euro und bekommt auch einen Punkt. Und weiterfahren dürft ihr erst, wenn abgeladen ist.“
+✅ bussgeldkatalog.de „Überladung Lkw“ (Stand 12.07.2026), Kfz über 7,5 t. Überladung gilt ab mehr als 2 %.
+✅ Prüfungsfrage 2.2.22-203: Überladung feststellen durch Nachwiegen oder eingebaute Achslastmessgeräte – nicht durch eine Bremsprobe.
+💡 Überladung ist gefährlich: längerer Bremsweg, überlastete Reifen und Bremsen, mehr Fliehkraft. Ihr seid verantwortlich – auch wenn der Disponent drängt.
+🖱 Keine Animation mehr – nächster Klick: nächste Folie.
+➜ „Kapitel 3: Ladung, die herausragt.“
+
+=== FOLIE 137 ===
+AUF DER FOLIE: KLASSE C  ·  ABEND 4  ·  C8  ·  LADUNG | 137 | 03 | Ladung | Wie weit Ladung herausragen darf – und wer für sie geradesteht.
+NOTIZEN:
+FOLIE 137 VON 162 · keine Klicks, läuft von selbst
+
+▶ Sagen: „Kapitel 3: Ladung. Wie man sie richtig sichert, kommt ausführlich in C9. Heute: Was darf herausragen, und wer ist verantwortlich?“
+🖱 Keine Klicks.
+➜ „Eine Pritsche mit langen Rohren.“
+
+=== FOLIE 138 ===
+AUF DER FOLIE: KLASSE C  ·  ABEND 4  ·  C8  ·  LADUNG | 138 | LADUNG | Was hinten herausragen darf | 1 | Bis 1 m: ohne Kennzeichnung | 2 | Mehr als 1 m: rote Fahne | 3 | Höchstens 1,50 m – kurz 3 m | 4 | Im Dunkeln: rotes Licht | ❓ Frage an die Klasse   / Ab wann muss hinten eine rote Fahne an die Ladung? | Ragt die Ladung höchstens 1 m über die Rückstrahler hinaus, muss sie nicht gekennzeichnet werden. | Schematisch · nicht maßstäblich | 0,9 m | Rückstrahler | ohne Kennzeichnung
+NOTIZEN:
+FOLIE 138 VON 162 · keine Klicks, läuft von selbst
+
+▶ Sagen: „Lange Rohre auf der Pritsche. Wie weit dürfen sie hinten raus?“
+✅ § 22 Abs. 4 StVO: Kennzeichnung erst, wenn das äußerste Ende mehr als 1 m über die Rückstrahler hinausragt.
+🖱 Keine Animation auf dieser Folie – nächster Klick = nächster Schritt (Morph).
+➜ „Jetzt etwas mehr.“
+
+=== FOLIE 139 ===
+AUF DER FOLIE: KLASSE C  ·  ABEND 4  ·  C8  ·  LADUNG | 139 | LADUNG | Was hinten herausragen darf | 1 | Bis 1 m: ohne Kennzeichnung | 2 | Mehr als 1 m: rote Fahne | 3 | Höchstens 1,50 m – kurz 3 m | 4 | Im Dunkeln: rotes Licht | ✓ Antwort   / Wenn sie mehr als 1 m über die Rückstrahler hinausragt. | Mehr als 1 m: hellrote Fahne oder Schild, mindestens 30 × 30 cm, höchstens 1,50 m über der Straße. | Schematisch · nicht maßstäblich | 1,5 m | Rückstrahler | Fahne oder Schild
+NOTIZEN:
+FOLIE 139 VON 162 · keine Klicks, läuft von selbst
+
+▶ „Mehr als 1 Meter: Dann muss eine hellrote Fahne dran – mindestens 30 mal 30 Zentimeter, mit Querstange, oder ein gleich großes, pendelnd aufgehängtes Schild. Nicht höher als 1,50 Meter über der Straße.“
+❓ Frage auf der Folie auflösen.
+✅ § 22 Abs. 4 StVO. Prüfungsfrage 2.7.09-204: Fahne mit Querstange oder pendelndes Schild – NICHT eine orangefarbene Warntafel.
+🖱 Keine Animation auf dieser Folie – nächster Klick = nächster Schritt (Morph).
+➜ „Wie weit darf es höchstens sein?“
+
+=== FOLIE 140 ===
+AUF DER FOLIE: KLASSE C  ·  ABEND 4  ·  C8  ·  LADUNG | 140 | LADUNG | Was hinten herausragen darf | 1 | Bis 1 m: ohne Kennzeichnung | 2 | Mehr als 1 m: rote Fahne | 3 | Höchstens 1,50 m – kurz 3 m | 4 | Im Dunkeln: rotes Licht | ✓ Antwort   / Wenn sie mehr als 1 m über die Rückstrahler hinausragt. | Erlaubt sind höchstens 1,50 m nach hinten. Nur bei einer Fahrt bis 100 km: bis zu 3 m. | Schematisch · nicht maßstäblich | 3 m | Rückstrahler | nur bis 100 km Fahrt
+NOTIZEN:
+FOLIE 140 VON 162 · keine Klicks, läuft von selbst
+
+▶ „Nach hinten höchstens 1,50 Meter. Ausnahme: Wenn die ganze Fahrt höchstens 100 Kilometer lang ist, dürfen es bis zu 3 Meter sein.“
+✅ § 22 Abs. 4 StVO. Zug samt Ladung höchstens 20,75 m.
+💡 Nach vorn: bis 2,50 m Höhe darf gar nichts über das Fahrzeug hinausragen, darüber höchstens 50 cm (§ 22 Abs. 3 StVO). Seitlich: Ragt Ladung mehr als 40 cm über die Leuchten hinaus, vorn weißes und hinten rotes Licht (§ 22 Abs. 5; Prüfungsfrage 2.7.09-221).
+🖱 Keine Animation auf dieser Folie – nächster Klick = nächster Schritt (Morph).
+➜ „Und nachts?“
+
+=== FOLIE 141 ===
+AUF DER FOLIE: KLASSE C  ·  ABEND 4  ·  C8  ·  LADUNG | 141 | LADUNG | Was hinten herausragen darf | 1 | Bis 1 m: ohne Kennzeichnung | 2 | Mehr als 1 m: rote Fahne | 3 | Höchstens 1,50 m – kurz 3 m | 4 | Im Dunkeln: rotes Licht | ✓ Antwort   / Wenn sie mehr als 1 m über die Rückstrahler hinausragt. | Bei Dunkelheit zusätzlich eine rote Leuchte und einen roten Rückstrahler (höchstens 90 cm hoch). | Schematisch · nicht maßstäblich | 3 m | Rückstrahler | rotes Licht + Rückstrahler
+NOTIZEN:
+FOLIE 141 VON 162 · keine Klicks, läuft von selbst
+
+▶ „Wenn es dunkel ist oder die Sicht schlecht: zusätzlich eine Leuchte mit rotem Licht an gleicher Stelle und ein roter Rückstrahler, nicht höher als 90 cm.“
+✅ § 22 Abs. 4 StVO (wenn nötig nach § 17 Abs. 1).
+🖱 Keine Animation auf dieser Folie – nächster Klick = nächster Schritt (Morph).
+➜ „Und wer ist für die Ladung verantwortlich?“
+
+=== FOLIE 142 ===
+AUF DER FOLIE: KLASSE C  ·  ABEND 4  ·  C8  ·  LADUNG | 142 | LADUNG | Wer ist verantwortlich, dass die Ladung sicher ist? | Ihr als Fahrer  Ihr prüft vor der Abfahrt. Ist die Ladung nicht sicher: nicht losfahren. | Der Verlader  lädt und sichert die Ladung – zusammen mit euch. | Der Halter  stellt ein geeignetes Fahrzeug und Sicherungsmittel bereit. | Nicht der Empfänger  Und: Ungesicherte Ladung kostet beim Lkw 60 € und einen Punkt.
+NOTIZEN:
+FOLIE 142 VON 162 · 4 Klicks
+
+▶ Sagen: „Bei einer Kontrolle zählt: Wer fährt, ist dran. Aber ihr seid nicht allein verantwortlich.“
+❓ Erst sammeln lassen, dann je Klick auflösen.
+🖱 Klick 1–4: je eine Karte.
+✅ Prüfungsfrage 2.2.22-221: Fahrer und Verlader sind für die Ladungssicherung verantwortlich – nicht der Empfänger. Prüfungsfrage 2.2.22-214: Fahrer und Halter sind hinsichtlich der Ladung für den Betrieb verantwortlich. § 22 Abs. 1 StVO: Ladung so sichern, dass sie selbst bei Vollbremsung oder plötzlicher Ausweichbewegung nicht verrutscht. Bußgeld Lkw 60 € + 1 Punkt (bussgeldkatalog.de).
+💡 Wie man richtig sichert (Zurrgurte, Formschluss, Lastverteilungsplan), kommt in C9.
+➜ „Kapitel 4: Besondere Güter.“
+
+=== FOLIE 143 ===
+AUF DER FOLIE: KLASSE C  ·  ABEND 4  ·  C8  ·  BESONDERE GÜTER | 143 | 04 | Besondere Güter | Gefahrgut, Abfall und Tiere haben eigene Regeln.
+NOTIZEN:
+FOLIE 143 VON 162 · keine Klicks, läuft von selbst
+
+▶ Sagen: „Kapitel 4: Besondere Güter. Auf dem Bild: ein Tankfahrzeug mit orangefarbener Warntafel.“
+🖱 Keine Klicks.
+➜ „Was bedeutet diese Tafel?“
+
+=== FOLIE 144 ===
+AUF DER FOLIE: KLASSE C  ·  ABEND 4  ·  C8  ·  BESONDERE GÜTER | 144 | GEFAHRGUT | Orange Tafel am Lkw – was bedeutet das? | Gefahrgut über der Freigrenze / Der Fahrer braucht dann eine ADR-Schulungsbescheinigung. | Kleine Mengen (1000-Punkte-Regel) / keine orange Tafel, kein ADR-Schein – aber Feuerlöscher (2 kg), Begleitpapier, Unterweisung. | Bei einem Unfall / Abstand halten, Nummern auf der Tafel der Feuerwehr nennen.
+NOTIZEN:
+FOLIE 144 VON 162 · 3 Klicks
+
+▶ Sagen: „Die orangefarbene Tafel heißt: Hier wird Gefahrgut transportiert – in einer Menge, für die die vollen Gefahrgutregeln gelten.“
+❓ „Darf ich mit meinem C-Führerschein Gefahrgut fahren?“ – Antwort: kleine Mengen ja, darüber nur mit ADR-Schulung.
+🖱 Klick 1–3: je eine Karte.
+✅ ADR 1.1.3.6 (1000-Punkte-Regel): unterhalb der Grenze keine orangefarbenen Tafeln, keine ADR-Schulungsbescheinigung; mitzuführen sind ein Feuerlöscher (2 kg) und das Beförderungspapier; der Fahrer braucht eine Unterweisung nach 1.3 ADR. Quellen: WEKA „1000-Punkte-Regel“, IHK Frankfurt „Feuerlöscher für Gefahrgutfahrzeuge“.
+💡 Auf der Tafel stehen oft zwei Zahlen: oben die Nummer zur Gefahr, unten die UN-Nummer des Stoffs. Die helfen der Feuerwehr.
+➜ „Es gibt noch mehr Güter mit eigenen Regeln.“
+
+=== FOLIE 145 ===
+AUF DER FOLIE: KLASSE C  ·  ABEND 4  ·  C8  ·  BESONDERE GÜTER | 145 | BESONDERE GÜTER | Eigene Regeln für besondere Güter | Gefahrgut | Orange Tafeln, ADR-Schein, Ausrüstung – unter der Freigrenze nur Feuerlöscher, Papier, Unterweisung. | Abfall | Wer gewerblich Abfall sammelt oder befördert: vorn und hinten ein weißes A-Schild. | Lebende Tiere | Eigene Tierschutz-Vorschriften: genug Platz, Versorgung, Fahrzeiten. | A
+NOTIZEN:
+FOLIE 145 VON 162 · 3 Klicks
+
+▶ Sagen: „Drei Arten von Gütern haben eigene Vorschriften: Gefahrgut, Abfall und lebende Tiere.“
+🖱 Klick 1–3: je ein Gut.
+✅ Prüfungsfrage 2.7.09-220: besondere Vorschriften für gefährliche Güter, Abfall und lebende Tiere (alle drei richtig). § 55 KrWG: Sammler und Beförderer von Abfällen versehen ihre Fahrzeuge mit zwei weißen, rückstrahlenden Warntafeln (A-Schilder). Prüfungsfrage 2.7.09-231: Das A-Schild weist auf Abfalltransporte hin.
+💡 Die Ausnahme in § 55 KrWG (Unternehmen, die Abfälle nur nebenbei im Rahmen ihres Betriebs befördern) muss man für die Prüfung nicht kennen.
+➜ „Kapitel 5: Wie ihr bei der Arbeit am Lkw gesund bleibt.“
+
+=== FOLIE 146 ===
+AUF DER FOLIE: KLASSE C  ·  ABEND 4  ·  C8  ·  ARBEITSSICHERHEIT | 146 | 05 | Arbeitssicherheit | Die meisten Unfälle passieren nicht beim Fahren, sondern rund um den Lkw.
+NOTIZEN:
+FOLIE 146 VON 162 · keine Klicks, läuft von selbst
+
+▶ Sagen: „Kapitel 5: Arbeitssicherheit. Viele Verletzungen von Lkw-Fahrern passieren gar nicht im Verkehr – sondern beim Aussteigen, Rangieren und Be- und Entladen.“
+💡 Zuständig ist die Berufsgenossenschaft (BG Verkehr). Ihre Regeln stehen in der Unfallverhütungsvorschrift „Fahrzeuge“ (DGUV Vorschrift 70).
+🖱 Keine Klicks.
+➜ „Fangen wir mit dem Aussteigen an.“
+
+=== FOLIE 147 ===
+AUF DER FOLIE: KLASSE C  ·  ABEND 4  ·  C8  ·  ARBEITSSICHERHEIT | 147 | EIN- UND AUSSTEIGEN | Drei Punkte halten | 1 | Gesicht zum Fahrerhaus | 2 | Immer drei Kontaktpunkte | 3 | Nicht springen | ❓ Frage an die Klasse   / Warum nicht einfach aus der Kabine springen? | Aussteigen wie von einer Leiter: mit dem Gesicht zum Fahrerhaus. | Schematisch · grüne Punkte = Kontaktpunkte | Gesicht zum Fahrerhaus
+NOTIZEN:
+FOLIE 147 VON 162 · keine Klicks, läuft von selbst
+
+▶ Sagen: „Wie steigt ihr aus einem Lkw aus? Wie von einer Leiter – mit dem Gesicht zum Fahrerhaus.“
+✅ DGUV Vorschrift 70 § 41: Aufstiege und Haltegriffe benutzen.
+🖱 Keine Animation auf dieser Folie – nächster Klick = nächster Schritt (Morph).
+➜ „Und festhalten?“
+
+=== FOLIE 148 ===
+AUF DER FOLIE: KLASSE C  ·  ABEND 4  ·  C8  ·  ARBEITSSICHERHEIT | 148 | EIN- UND AUSSTEIGEN | Drei Punkte halten | 1 | Gesicht zum Fahrerhaus | 2 | Immer drei Kontaktpunkte | 3 | Nicht springen | ❓ Frage an die Klasse   / Warum nicht einfach aus der Kabine springen? | Immer drei Punkte am Lkw: zwei Hände und ein Fuß – oder zwei Füße und eine Hand. Haltegriffe und Trittstufen benutzen. | Schematisch · grüne Punkte = Kontaktpunkte | Hand | Hand | Fuß | Drei Kontaktpunkte
+NOTIZEN:
+FOLIE 148 VON 162 · keine Klicks, läuft von selbst
+
+▶ „Die Drei-Punkte-Regel: Immer drei Punkte haben Kontakt – zwei Hände und ein Fuß oder zwei Füße und eine Hand.“
+✅ Empfehlung der BG Verkehr (Drei-Punkt-Regel). DGUV Vorschrift 70 § 41.
+🖱 Keine Animation auf dieser Folie – nächster Klick = nächster Schritt (Morph).
+➜ „Und warum nicht springen?“
+
+=== FOLIE 149 ===
+AUF DER FOLIE: KLASSE C  ·  ABEND 4  ·  C8  ·  ARBEITSSICHERHEIT | 149 | EIN- UND AUSSTEIGEN | Drei Punkte halten | 1 | Gesicht zum Fahrerhaus | 2 | Immer drei Kontaktpunkte | 3 | Nicht springen | ✓ Antwort   / Aus über einem Meter auf unebenen Boden: Knöchel, Knie und Rücken leiden – die Verletzung kommt oft schon beim ersten Mal. | Nicht springen, nicht über Reifen oder Felgen klettern. Stufen sauber und frei von Schnee und Eis halten. | Schematisch · grüne Punkte = Kontaktpunkte | Hand | Hand | Fuß | ✗  nicht springen | Stufe für Stufe
+NOTIZEN:
+FOLIE 149 VON 162 · keine Klicks, läuft von selbst
+
+▶ „Nicht springen! Der Sitz ist über einen Meter hoch, der Boden oft uneben. Knöchel und Knie halten das nicht lange aus.“
+❓ Frage auf der Folie auflösen.
+✅ DGUV Vorschrift 70 § 41 mit Durchführungsanweisung: Aufsteigen über Reifen, Felgen oder Radnaben sowie Abspringen ist nicht zulässig.
+🖱 Keine Animation auf dieser Folie – nächster Klick = nächster Schritt (Morph).
+➜ „Das zweite große Risiko: Rückwärtsfahren.“
+
+=== FOLIE 150 ===
+AUF DER FOLIE: KLASSE C  ·  ABEND 4  ·  C8  ·  ARBEITSSICHERHEIT | 150 | RÜCKWÄRTSFAHREN | Mit Einweiser an die Rampe | ❓ Frage an die Klasse / Wo darf der Einweiser stehen – und was tut ihr, wenn ihr ihn nicht mehr seht? | Antwort folgt … | Rückwärts an die Laderampe. Hinter dem Lkw seht ihr nichts. | Draufsicht · schematisch · grüner Bereich = Blick in den linken Außenspiegel
+NOTIZEN:
+FOLIE 150 VON 162 · keine Klicks, läuft von selbst
+
+▶ Sagen: „Ihr setzt rückwärts an die Rampe. Direkt hinter dem Lkw seht ihr gar nichts.“
+❓ Frage auf der Folie stellen.
+🖱 Klick: Gefahrzone und Platz des Einweisers erscheinen.
+➜ „Wo darf jemand stehen?“
+
+=== FOLIE 151 ===
+AUF DER FOLIE: KLASSE C  ·  ABEND 4  ·  C8  ·  ARBEITSSICHERHEIT | 151 | RÜCKWÄRTSFAHREN | Mit Einweiser an die Rampe | ❓ Frage an die Klasse / Wo darf der Einweiser stehen – und was tut ihr, wenn ihr ihn nicht mehr seht? | Antwort folgt … | Rot: Hier darf niemand stehen. Grün: Hier steht der Einweiser – im Spiegel sichtbar. | Draufsicht · schematisch · grüner Bereich = Blick in den linken Außenspiegel | ✗ | Einweiser
+NOTIZEN:
+FOLIE 151 VON 162 · keine Klicks, läuft von selbst
+
+▶ „Zwischen Lkw und Rampe: lebensgefährlich, da darf niemand stehen. Der Einweiser steht seitlich hinten, so dass ihr ihn im linken Spiegel seht.“
+✅ DGUV Vorschrift 70 § 46: Rückwärtsfahren nur, wenn niemand gefährdet ist – sonst mit Einweiser. Einweiser nur im Sichtbereich des Fahrers, nicht zwischen Fahrzeug und Hindernis, keine anderen Tätigkeiten.
+🖱 Klick: Der Lkw setzt zurück (läuft von selbst).
+➜ „Langsam zurück.“
+
+=== FOLIE 152 ===
+AUF DER FOLIE: KLASSE C  ·  ABEND 4  ·  C8  ·  ARBEITSSICHERHEIT | 152 | RÜCKWÄRTSFAHREN | Mit Einweiser an die Rampe | ❓ Frage an die Klasse / Wo darf der Einweiser stehen – und was tut ihr, wenn ihr ihn nicht mehr seht? | Antwort folgt … | Langsam, Schritttempo – Blick in den Spiegel, auf den Einweiser. | Draufsicht · schematisch · grüner Bereich = Blick in den linken Außenspiegel | ✗ | Einweiser
+NOTIZEN:
+FOLIE 152 VON 162 · keine Klicks, läuft von selbst
+
+▶ Die Bewegung läuft – zuschauen lassen.
+🖱 Kein Klick – die Folie läuft von selbst weiter.
+➜ (läuft weiter)
+
+=== FOLIE 153 ===
+AUF DER FOLIE: KLASSE C  ·  ABEND 4  ·  C8  ·  ARBEITSSICHERHEIT | 153 | RÜCKWÄRTSFAHREN | Mit Einweiser an die Rampe | ❓ Frage an die Klasse / Wo darf der Einweiser stehen – und was tut ihr, wenn ihr ihn nicht mehr seht? | Antwort folgt … | Langsam, Schritttempo – Blick in den Spiegel, auf den Einweiser. | Draufsicht · schematisch · grüner Bereich = Blick in den linken Außenspiegel | ✗ | Einweiser
+NOTIZEN:
+FOLIE 153 VON 162 · keine Klicks, läuft von selbst
+
+▶ Die Bewegung läuft – zuschauen lassen.
+🖱 Kein Klick – die Folie läuft von selbst weiter.
+➜ (läuft weiter)
+
+=== FOLIE 154 ===
+AUF DER FOLIE: KLASSE C  ·  ABEND 4  ·  C8  ·  ARBEITSSICHERHEIT | 154 | RÜCKWÄRTSFAHREN | Mit Einweiser an die Rampe | ❓ Frage an die Klasse / Wo darf der Einweiser stehen – und was tut ihr, wenn ihr ihn nicht mehr seht? | Antwort folgt … | Langsam, Schritttempo – Blick in den Spiegel, auf den Einweiser. | Draufsicht · schematisch · grüner Bereich = Blick in den linken Außenspiegel | ✗ | Einweiser
+NOTIZEN:
+FOLIE 154 VON 162 · keine Klicks, läuft von selbst
+
+▶ Die Bewegung läuft – zuschauen lassen.
+🖱 Kein Klick – die Folie läuft von selbst weiter.
+➜ (läuft weiter)
+
+=== FOLIE 155 ===
+AUF DER FOLIE: KLASSE C  ·  ABEND 4  ·  C8  ·  ARBEITSSICHERHEIT | 155 | RÜCKWÄRTSFAHREN | Mit Einweiser an die Rampe | ❓ Frage an die Klasse / Wo darf der Einweiser stehen – und was tut ihr, wenn ihr ihn nicht mehr seht? | ✓ Antwort / Seitlich hinten im Blickfeld des Fahrers – nie zwischen Lkw und Rampe. Seht ihr ihn nicht mehr: sofort anhalten. | Der Einweiser zeigt „Halt“ – sofort stehen bleiben. Seht ihr ihn nicht mehr: ebenfalls sofort anhalten. | Draufsicht · schematisch · grüner Bereich = Blick in den linken Außenspiegel | ✗ | HALT!
+NOTIZEN:
+FOLIE 155 VON 162 · keine Klicks, läuft von selbst
+
+▶ „Der Einweiser gibt das Haltzeichen – ihr bleibt sofort stehen. Und ganz wichtig: Verliert ihr ihn aus dem Spiegel, haltet ihr an. Erst wieder fahren, wenn ihr ihn seht.“
+✅ Prüfungsfrage 2.2.23-213: Beim Rückwärtsfahren aus einem Grundstück in die Straße sichert man durch Sicherungsposten (Einweiser) – nicht durch Warnblinker oder Hupen.
+💡 Rückfahrkamera und Rückfahrwarner helfen, ersetzen aber keinen Einweiser, wenn Personen gefährdet sein können.
+🖱 Keine Animation mehr – nächster Klick: nächste Folie.
+➜ „Und was zieht ihr bei der Arbeit an?“
+
+=== FOLIE 156 ===
+AUF DER FOLIE: KLASSE C  ·  ABEND 4  ·  C8  ·  ARBEITSSICHERHEIT | 156 | ARBEITSSICHERHEIT | Schutz für euch selbst | Warnweste / sobald ihr auf der Straße oder auf dem Betriebshof unterwegs seid. | Sicherheitsschuhe / beim Be- und Entladen – mit Zehenschutz und rutschfester Sohle. | Handschuhe / beim Arbeiten mit Spanngurten, Planen und Ketten. | Sicherheitsgurt / auch im Lkw. Bei einem Unfall hält er euch im Sitz.
+NOTIZEN:
+FOLIE 156 VON 162 · 4 Klicks
+
+▶ Sagen: „Was gehört zur Schutzausrüstung, wenn ihr am Lkw arbeitet?“
+🖱 Klick 1–4: je ein Punkt.
+✅ Warnweste: § 53a Abs. 2 Nr. 3 StVZO (mitführen); beim Aussteigen auf der Fahrbahn anziehen (Prüfungsfrage 2.2.15-201). Sicherheitsschuhe und Handschuhe: nach der Gefährdungsbeurteilung des Unternehmers, üblich beim Be- und Entladen (BG Verkehr). Sicherheitsgurt: § 21a StVO – auch im Lkw anlegen.
+➜ „Fassen wir C8 zusammen.“
+
+=== FOLIE 157 ===
+AUF DER FOLIE: KLASSE C  ·  ABEND 4  ·  C8  ·  ABSCHLUSS | 157 | ZUM MITSCHREIBEN | Ausrüstung, Beförderung, Sicherheit | ✎ | Über 3,5 t an Bord | Warndreieck + Warnleuchte, Warnweste, Verbandkasten | Unterlegkeile | über 4 t einer, ab 3 Achsen zwei – talseitig vor ein Hinterrad | Panne | Warnblinker, Weste, Dreieck bei schnellem Verkehr ca. 100 m | Maße | 2,55 m breit (Kühlaufbau 2,60 m) · 4 m hoch · 12 m lang | Gewicht | 2 Achsen 18 t · 3 Achsen 25 / 26 t · 4 Achsen 32 t | Ladung hinten | höchstens 1,50 m (bis 100 km 3 m) · über 1 m: rote Fahne | Überladung | Fahrer und Halter zahlen – Weiterfahrt erst nach Abladen | Rückwärts | Einweiser im Blickfeld – nie zwischen Lkw und Hindernis
+NOTIZEN:
+FOLIE 157 VON 162 · 8 Klicks
+
+▶ Sagen: „Schreibt euch diese acht Punkte auf.“
+❓ Vor jedem Klick fragen: „Was gehört hierhin?“
+🖱 Klick 1–8: je eine Antwort.
+✅ Zusammenfassung von C8 (Quellen auf den Folien davor).
+➜ „Drei Prüfungsfragen.“
+
+=== FOLIE 158 ===
+AUF DER FOLIE: KLASSE C  ·  ABEND 4  ·  C8  ·  ABSCHLUSS | 158 | QUIZ C8 · 1 | Was ist zu tun, um einen zweiachsigen Lkw in starkem Gefälle gegen Wegrollen zu sichern? | A | Feststellbremse anziehen | B | Unterlegkeil vor ein Hinterrad legen | C | Dauerbremse betätigen | ✓  RICHTIG | ✓  RICHTIG | Feststellbremse und Unterlegkeil. Die Dauerbremse hält den Lkw nicht fest (Prüfungsfrage 2.2.23-201).
+NOTIZEN:
+FOLIE 158 VON 162 · 2 Klicks
+
+▶ Frage vorlesen, abstimmen. Mehrere Antworten können richtig sein.
+🖱 Klick 1: Antworten · Klick 2: Lösung.
+✅ A und B.
+➜ „Nächste Frage.“
+
+=== FOLIE 159 ===
+AUF DER FOLIE: KLASSE C  ·  ABEND 4  ·  C8  ·  ABSCHLUSS | 159 | QUIZ C8 · 2 | Eine nach hinten hinausragende Ladung muss kenntlich gemacht werden. Welche Mittel sind bei Tage zulässig? | A | Hellrote Fahne, mind. 30 × 30 cm, mit Querstange | B | Orangefarbene Warntafel | C | Hellrotes Schild, mind. 30 × 30 cm, pendelnd aufgehängt | ✓  RICHTIG | ✓  RICHTIG | Fahne mit Querstange oder pendelndes Schild – die orangefarbene Tafel ist für Gefahrgut (Prüfungsfrage 2.7.09-204, § 22 Abs. 4 StVO).
+NOTIZEN:
+FOLIE 159 VON 162 · 2 Klicks
+
+▶ Frage vorlesen, abstimmen.
+🖱 Klick 1: Antworten · Klick 2: Lösung.
+✅ A und C.
+➜ „Letzte Frage.“
+
+=== FOLIE 160 ===
+AUF DER FOLIE: KLASSE C  ·  ABEND 4  ·  C8  ·  ABSCHLUSS | 160 | QUIZ C8 · 3 | Wie kann die Überladung eines Lastkraftwagens festgestellt werden? | A | Durch Nachwiegen des beladenen Fahrzeugs | B | Durch eine Bremsprobe mit dem beladenen Fahrzeug | C | Durch eingebaute Achslastmessgeräte | ✓  RICHTIG | ✓  RICHTIG | Nur die Waage oder eingebaute Achslastmesser zeigen das Gewicht. Eine Bremsprobe sagt darüber nichts (Prüfungsfrage 2.2.22-203).
+NOTIZEN:
+FOLIE 160 VON 162 · 2 Klicks
+
+▶ Frage vorlesen, abstimmen.
+🖱 Klick 1: Antworten · Klick 2: Lösung.
+✅ A und C.
+➜ „Das nimmst du aus C8 mit.“
+
+=== FOLIE 161 ===
+AUF DER FOLIE: KLASSE C  ·  ABEND 4  ·  C8  ·  ABSCHLUSS | 161 | ZUSAMMENFASSUNG | Das nimmst du mit | Über 3,5 t an Bord:  Warndreieck, Warnleuchte, Warnweste, Verbandkasten – über 4 t Unterlegkeil. | Panne:  Warnblinker, Weste an, Warndreieck bei schnellem Verkehr etwa 100 m dahinter. | 2,55 m breit, 4 m hoch, 12 m lang –  und die Achslasten zählen genauso wie das Gesamtgewicht. | Ladung über 1 m hinten raus:  rote Fahne oder Schild – höchstens 1,50 m, kurze Fahrt 3 m. | Schützt euch selbst:  drei Punkte beim Aussteigen, Einweiser im Blickfeld, Schutzkleidung.
+NOTIZEN:
+FOLIE 161 VON 162 · 5 Klicks
+
+▶ Sagen: „Das sind die fünf Punkte aus C8, die ihr sicher wissen müsst.“
+🖱 Klick 1–5: je ein Punkt.
+➜ „Damit sind wir für heute durch.“
+
+=== FOLIE 162 ===
+AUF DER FOLIE: Gute Heimfahrt! | Abend 4 geschafft: C7 + C8 | Nächstes Mal: / C9  Ladungssicherung und Abfahrtkontrolle / C10  Wirtschaftlich fahren, Streckenplanung
+NOTIZEN:
+FOLIE 162 VON 162 · keine Klicks, läuft von selbst
+
+▶ Sagen: „Das war Abend 4 – Kräfte, Ausrüstung, Gewichte und Sicherheit. Beim nächsten Mal: C9 – Ladung richtig sichern und die Abfahrtkontrolle – und C10 – wirtschaftlich und umweltschonend fahren und die Strecke planen. Danke fürs Mitmachen, kommt gut nach Hause.“
+💡 Ausbildungsnachweis abzeichnen lassen.
+🖱 Keine Klicks.

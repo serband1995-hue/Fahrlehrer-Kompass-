@@ -182,7 +182,7 @@ async function chapter(deck, key, { num, ttl, sub, bg, notes, ico = 'LuTruck', b
   s.text(String(num).padStart(2, '0'), { x: 0.6, y: 1.2, w: 5, h: 2.2, size: 150, bold: true, color: col, name: 'chN' }, { fx: 'rise', auto: true, dur: 900 });
   s.rect(0.75, 3.55, 1.4, 0.07, { fill: col }, { fx: 'wipeR', auto: true, dur: 600, d: 300 });
   s.text(ttl, { x: 0.7, y: 3.8, w: bgX ? bgX - 0.9 : 6.3, h: 1.6, size: 44, bold: true, color: C.txt, lsm: 0.92 }, { fx: 'float', auto: true, dur: 700, d: 350 });
-  if (sub) s.text(sub, { x: 0.7, y: 5.45, w: 5.6, h: 0.9, size: 19, color: C.mut }, { fx: 'fade', auto: true, dur: 700, d: 650 });
+  if (sub) s.text(sub, { x: 0.7, y: 5.45, w: bgX ? Math.min(5.6, bgX - 1.0) : 5.6, h: 0.9, size: 19, color: C.mut }, { fx: 'fade', auto: true, dur: 700, d: 650 });
   return s;
 }
 // Zum Mitschreiben: Zeilen mit Stichwort, Lösung erscheint je Klick (Frage → Lösung)
@@ -253,3 +253,14 @@ function tachoSym(kind, col = '#F3F5F8') {
   if (kind === 'ruhe') return `<path d="M70 120 L70 420 M70 330 L442 330 L442 420" ${st}/><circle cx="150" cy="260" r="42" fill="${col}"/><path d="M210 300 L210 230 Q210 210 230 210 L400 210 Q442 210 442 252 L442 300" ${st}/>`;
 }
 module.exports.svgImg = svgImg; module.exports.lkw = lkw; module.exports.lkwHeck = lkwHeck; module.exports.tachoSym = tachoSym;
+// Pfeil als Schaft + Dreieckspitze (morph-fähig über feste Namen): von (x1,y1) nach (x2,y2)
+function arrow(s, x1, y1, x2, y2, o = {}) {
+  const col = o.col || C.red, th = o.th || 0.11, hd = o.head || 0.3, nm = o.name || 'pf';
+  const L = Math.hypot(x2 - x1, y2 - y1), a = Math.atan2(y2 - y1, x2 - x1), deg = a * 180 / Math.PI;
+  const hide = L < 0.05 || o.hide;
+  const ls = Math.max(0.02, L - hd * 0.8), mx = x1 + Math.cos(a) * ls / 2, my = y1 + Math.sin(a) * ls / 2;
+  s.rrect(mx - ls / 2, my - th / 2, ls, th, { fill: col, ft: hide ? 100 : 0, rr: 0.5, rotate: Math.round(deg * 10) / 10, name: '!!' + nm + 'S', glow: o.glow, glowColor: col });
+  const hx = x2 - Math.cos(a) * hd / 2, hy = y2 - Math.sin(a) * hd / 2;
+  s.shape(s.pres.shapes.ISOSCELES_TRIANGLE, { x: hx - hd / 2, y: hy - hd / 2, w: hd, h: hd, fill: col, ft: hide ? 100 : 0, rotate: Math.round((deg + 90) * 10) / 10, name: '!!' + nm + 'H' });
+}
+module.exports.arrow = arrow;
