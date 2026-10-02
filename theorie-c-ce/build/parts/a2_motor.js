@@ -166,6 +166,7 @@ module.exports = async (deck) => {
   const RPM = [600, 1200, 1900, 1200];
   await steps(deck, 'c3m', {
     kicker: 'Drehzahl', ttl: 'Im grünen Bereich',
+    ask: { q: 'Wofür steht der grüne Bereich im Drehzahlmesser?', a: 'Viel Kraft bei wenig Verbrauch – dort fahren.', at: 1 },
     list: ['Leerlauf', 'Grüner Bereich', 'Zu hoch gedreht', 'Wirtschaftlich fahren'],
     caps: [
       'Im Leerlauf dreht der Motor langsam. Unnötig laufen lassen ist verboten.',

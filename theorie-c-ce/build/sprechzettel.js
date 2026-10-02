@@ -12,6 +12,7 @@ const fmt = t => esc(t).split('\n').map(l => {
   return l.trim() ? `<div class="l ${m ? 'k' + ['▶', '❓', '✅', '🖱', '➜', '⏱', '💡', '⚠️'].indexOf(m[1]) : ''}">${l}</div>` : '';
 }).join('');
 const items = notes.map((n, i) => {
+  if (n.includes('die Folie läuft von selbst weiter')) return ''; // Zwischenbilder der Bewegungen weglassen
   const img = 'data:image/jpeg;base64,' + fs.readFileSync(path.join(R, files[i])).toString('base64');
   const head = n.split('\n')[0];
   return `<div class="it"><div class="th"><img src="${img}"><div class="h">${esc(head)}</div></div><div class="nt">${fmt(n)}</div></div>`;
