@@ -75,7 +75,7 @@ NOTIZEN:
 FOLIE 8 VON 106 · keine Klicks, läuft von selbst
 
 ▶ „Das Getriebe ist der Übersetzer: kleiner Gang = viel Kraft, großer Gang = viel Tempo.“
-✅ Lkw-Getriebe haben meist 12 Gänge (früher auch 16), aufgebaut aus Grundgetriebe, Split- und Bereichsgruppe.
+✅ Schwere Lkw haben meist 12 Gänge (es gibt auch 16, heute seltener), aufgebaut aus Grundgetriebe, Split- und Bereichsgruppe.
 🖱 Keine Animation auf dieser Folie – nächster Klick = nächster Schritt (Morph).
 ➜ „Und dann geht es nach hinten.“
 
@@ -761,7 +761,7 @@ FOLIE 74 VON 106 · 4 Klicks
 ❓ Die Klasse suchen lassen, dann klicken.
 🖱 Klick 1: Größe · Klick 2: Tragfähigkeit und Tempo · Klick 3: Alpine-Symbol · Klick 4: M+S.
 ✅ 315/70 R22.5 = Breite 315 mm, Flanke 70 %, Radial, Felge 22,5 Zoll. 154/150 L = Tragfähigkeit einzeln/Zwilling, bis 120 km/h (Prüfungsfragen 2.7.05-220, -221). Alpine-Symbol (Berg mit Schneeflocke) = Winterreifen nach § 36 Abs. 4 StVZO. M+S allein reicht seit 1.10.2024 nicht mehr.
-💡 Auf der Flanke steht auch die DOT-Nummer: Die letzten vier Ziffern sind Woche und Jahr der Herstellung, z. B. 2324 = 23. Woche 2024. Runderneuerte Reifen tragen „Runderneuert“ oder „Retread“ und ein Prüfzeichen (Prüfungsfrage 2.7.05-212).
+💡 Auf der Flanke steht auch die DOT-Nummer: Die letzten vier Ziffern sind Woche und Jahr der Herstellung, z. B. 2324 = 23. Woche 2024. Runderneuerte Reifen erkennt man an der Kennzeichnung „RETREAD“ (amtliche Antwort, Prüfungsfrage 2.7.05-212) bzw. „Runderneuert“ und am Prüfzeichen.
 ➜ „Wie viel Profil muss mindestens drauf sein?“
 
 === FOLIE 75 ===
@@ -843,7 +843,7 @@ AUF DER FOLIE: KLASSE C  ·  ABEND 2  ·  C4  ·  AUFBAUTEN | 81 | 03 | Aufbaute
 NOTIZEN:
 FOLIE 81 VON 106 · keine Klicks, läuft von selbst
 
-▶ Sagen: „Kapitel 3: Aufbauten. Ganz kurz – wie man Ladung sichert, kommt ausführlich in C8.“
+▶ Sagen: „Kapitel 3: Aufbauten. Ganz kurz – wie man Ladung sichert, kommt ausführlich in C9.“
 🖱 Keine Klicks.
 ➜ „Welche Aufbauten kennt ihr?“
 
@@ -1046,14 +1046,14 @@ FOLIE 100 VON 106 · 2 Klicks
 ➜ „Zum Abschluss von C4: die Abfahrtkontrolle.“
 
 === FOLIE 101 ===
-AUF DER FOLIE: KLASSE C  ·  ABEND 2  ·  C4  ·  ABSCHLUSS | 101 | ABFAHRTKONTROLLE | Vor jeder Fahrt: einmal rundherum | 1 | 1 | Motorraum | Öl · Kühlmittel (nur kalt!) · Waschwasser · Keilriemen · AdBlue | 2 | 2 | Räder | Profil · Schäden · Steine zwischen Zwillingen · Luftdruck · Radmuttern | 3 | 3 | Licht | alle Leuchten an und sauber · Kontur · Rückstrahler | 4 | 4 | Aufbau | Türen, Plane, Bordwände zu · Ladebordwand verriegelt
+AUF DER FOLIE: KLASSE C  ·  ABEND 2  ·  C4  ·  ABSCHLUSS | 101 | ABFAHRTKONTROLLE | Vor jeder Fahrt: einmal rundherum | 1 | 1 | Motorraum | Öl · Kühlmittel (nur kalt!) · Waschwasser · Keilriemen | 2 | 2 | Räder | Profil · Schäden · Steine zwischen Zwillingen · Luftdruck · Radmuttern | 3 | 3 | Licht | alle Leuchten an und sauber · Kontur · Rückstrahler | 4 | 4 | Aufbau | Türen, Plane, Bordwände zu · Ladebordwand verriegelt
 NOTIZEN:
 FOLIE 101 VON 106 · 4 Klicks
 
 ▶ Sagen: „Alles, was ihr heute gelernt habt, kontrolliert ihr vor jeder Fahrt. In der praktischen Prüfung gehört die Abfahrtkontrolle dazu.“
 ❓ „Wo fangt ihr an?“
 🖱 Klick 1: Motorraum · Klick 2: Räder · Klick 3: Licht · Klick 4: Aufbau.
-✅ Motorraum: Motoröl, Kühlmittel (nur kalt öffnen), Scheibenwaschwasser, Keilrippenriemen, AdBlue-Stand. Räder: Profil (mind. 1,6 mm), Schäden, Steine zwischen den Zwillingen, Luftdruck, Radmuttern und Anzeiger, Kotflügel und Schmutzfänger. Licht: alle Leuchten an und sauber, Kontur und Rückstrahler. Aufbau: Türen, Plane, Bordwände zu, Ladebordwand verriegelt.
+✅ Motorraum: Motoröl, Kühlmittel (nur kalt öffnen), Scheibenwaschwasser, Keilrippenriemen. Räder: Profil (mind. 1,6 mm), Schäden, Steine zwischen den Zwillingen, Luftdruck, Radmuttern und Anzeiger, Kotflügel und Schmutzfänger. Licht: alle Leuchten an und sauber, Kontur und Rückstrahler. Am Rahmen: Diesel- und AdBlue-Stand, Tankdeckel zu. Aufbau: Türen, Plane, Bordwände zu, Ladebordwand verriegelt.
 💡 Ausführlich mit Bremsen und Ladung in C9 (Abfahrtkontrolle).
 ➜ „Jetzt schreiben wir die wichtigsten Punkte auf.“
 

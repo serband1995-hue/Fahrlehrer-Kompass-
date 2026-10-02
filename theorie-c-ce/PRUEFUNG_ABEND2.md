@@ -104,3 +104,70 @@ Ergebnis: **4 Fehler** (davon 3 wichtig), 14 Hinweise. Alles andere ist fachlich
 - Batteriehauptschalter mit Nachlaufzeit (AdBlue-Leitungen), Knallgas, Sicherungen (F90).
 - Warnleuchten-Farben Rot/Gelb/Grün/Blau grundsätzlich richtig (F94, siehe Hinweis 12).
 - Folientexte und Notizen stimmen überall inhaltlich überein. Einzige Abweichung ist der Begriff „Verwarnungsgeld“ (F3).
+
+---
+
+## NACHPRÜFUNG (neue Folien)
+
+Geprüfte Fassung: `ABEND2_INHALT.txt` mit 106 Folien, dazu die gerenderten Folien `build/r/KlasseC_Abend2_C3_C4/s-0xx.jpg` und die Fotos `build/art/g_tank_c.jpg` und `g_flanke.jpg`. Stand 02.10.2026.
+
+### Ergebnis: keine Fehler
+
+Die neuen Folien sind fachlich und rechtlich richtig. Alle 4 Fehler und alle 14 Hinweise aus der ersten Prüfung sind umgesetzt. Es gibt einen Nebenbefund außerhalb des Prüfauftrags (siehe unten) und 3 kleine Hinweise.
+
+### 1. Neue Folien
+
+- **Folien 12–14 (Gelenkwelle):** richtig. Die Kreuzgelenke gleichen den Winkel aus, das Schiebestück die Länge. Klacken oder Vibrieren beim Anfahren oder Lastwechsel deutet auf ausgeschlagene Gelenke. Wird mit der Antriebsachse auf der Straße abgeschleppt, muss die Gelenkwelle nach Herstellervorgabe abgeflanscht werden (alternativ werden je nach Hersteller die Achswellen gezogen). Grund: Das Getriebe wird ohne laufenden Motor nicht geschmiert. „Meist“ und „Herstellervorgabe“ sind passend vorsichtig formuliert.
+- **Folie 25 (AdBlue mit Foto):** richtig. Das Foto passt zum Text: Aluminium-Dieseltank mit schwarzem Deckel, daneben ein eigener AdBlue-Tank mit blauem Deckel. Die Angaben 32,5 % Harnstoff (ISO 22241), „etwa 3–6 %“ (Hinweis 13 umgesetzt) und etwa −11 °C stimmen.
+- **Folie 26 (AdBlue-Stufen, „25 % weniger Drehmoment“):** richtig. VO (EU) 582/2011 Anhang XIII sagt dazu:
+  - Die schwache Aufforderung „reduce the maximum available engine torque across the engine speed range by 25 %“ (zwischen Drehzahl des maximalen Drehmoments und Abregeldrehzahl).
+  - Die starke Aufforderung begrenzt auf 20 km/h („creep mode“).
+  - Auslöseschwellen: Warnung spätestens bei 10 %, schwache Aufforderung unter 2,5 % Füllstand, starke Aufforderung bei leerem Tank (bzw. unter 2,5 %).
+  - Die Stufenfolge auf der Folie und die Quellenangabe in der Notiz (i. V. m. UN-R 49 Anhang 11) stimmen.
+  - Quelle: https://www.legislation.gov.uk/eur/2011/582/annex/XIII/adopted
+- **Folie 74 (echter Reifen):** richtig. Das Foto zeigt 315/70 R22.5 154/150L, das Alpine-Symbol und M+S. Die Beschriftungen stimmen: LI 154 = 3.750 kg, LI 150 = 3.350 kg, L = 120 km/h. Das Alpine-Symbol ist die Winterreifen-Kennzeichnung nach § 36 Abs. 4 StVZO. Reine M+S-Reifen gelten seit 1.10.2024 nicht mehr (Übergang bis 30.9.2024). Zum DOT-Beispiel: 2324 = 23. Woche 2024. Die Prüfungsfrage 2.7.05-212 „Woran erkennen Sie, ob Reifen runderneuert sind?“ hat die richtige Antwort „An der Kennzeichnung „RETREAD“ auf der Reifenflanke“; die Notiz passt inhaltlich. Quelle: https://autovio.de/fuer-fahrschueler/fuehrerschein-theorie-lernen/2-7/2-7-05/2-7-05-212/
+- **Folie 98 (Farben der Kontrollleuchten mit Beispielen):** richtig, und Hinweis 12 ist umgesetzt. Die Beispiele sind:
+  - Rot: Öldruck, Kühlmitteltemperatur, Bremsdruck, Ladekontrolle.
+  - Gelb: ABS/EBS, Motorstörung, AdBlue, Partikelfilter.
+  - Grün: Blinker, Abblendlicht.
+  - Blau: Fernlicht.
+  Das entspricht der Farblogik nach ISO 2575. Für ABS-Störungen beim Nfz ist Gelb üblich (UN-R 13); schwere EBS-Störungen werden rot gemeldet, das deckt „Aussehen je nach Hersteller“ ab. Die Ausnahme „bei roter Bremsdruck-Warnung Motor laufen lassen“ steht in der Notiz.
+- **Folie 101 (Abfahrtkontrolle):** inhaltlich richtig. Der Verweis auf C9 stimmt mit `RAHMENPLAN_C_CE.md` überein (C9 Ladungssicherung/Abfahrtkontrolle). Siehe Hinweis B.
+
+### 2. Umsetzung der Fehler und Hinweise aus der ersten Prüfung
+
+- **F1:** umgesetzt auf Folie 99 (Notiz: 2.7.01-148, -149, -063). Auch in `FAKTEN_C3_C4.md` ist die Stelle korrigiert.
+- **F2:** umgesetzt auf Folie 100 (Folientext: 2.7.02-134). Auch in `FAKTEN_C3_C4.md` ist die Stelle korrigiert.
+- **F3:** umgesetzt auf Folie 30 („80 € Bußgeld“). Der Begriff „Verwarnungsgeld“ kommt nicht mehr vor.
+- **F4:** umgesetzt auf Folie 67 (Notiz: DIN A5 statt Postkarte). Das passt zur Abschätzung von etwa 300–400 cm².
+- **Hinweise 1–14:** alle umgesetzt.
+  - H1: Folie 3
+  - H2: Folie 8
+  - H3: Folie 37
+  - H4: Folie 35
+  - H5: Folie 26
+  - H6: Folie 29
+  - H7: Folie 34
+  - H8: Folie 30
+  - H9: Folie 96
+  - H10: Folie 95
+  - H11: Folie 97
+  - H12: Folie 98
+  - H13: Folie 25
+  - H14: Folie 76
+
+  Ausnahme ist ein Rest von H3, siehe Hinweis A.
+
+### Nebenbefund (außerhalb des Prüfauftrags, nicht neu)
+
+- **Folie 81 (Notiz):** „wie man Ladung sichert, kommt ausführlich in C8.“ Laut `RAHMENPLAN_C_CE.md` steht Ladungssicherung in **C9** („Ladungssicherung/Abfahrtkontrolle“). C8 behandelt Ausrüstung, Beförderungs- und Sicherheitsbestimmungen. Folie 101 nennt richtig C9.
+  - **Neuer Wortlaut:** „… wie man Ladung sichert, kommt ausführlich in C9.“
+
+### Hinweise (kann verbessert werden)
+
+- **A – Folie 8 (Notiz):** Dort steht noch „Lkw-Getriebe haben meist 12 Gänge (früher auch 16)“. Das widerspricht Folie 37 („Es gibt auch 16 Gänge, heute seltener“), also ist Hinweis 3 hier nicht umgesetzt.
+  - **Vorschlag:** „Schwere Lkw haben meist 12 Gänge (es gibt auch 16), aufgebaut aus …“
+- **B – Folie 101 (Folientext und Notiz):** AdBlue steht unter „Motorraum“. Der AdBlue-Tank sitzt aber am Rahmen neben dem Dieseltank, wie das Foto auf Folie 25 zeigt.
+  - **Vorschlag:** AdBlue unter einem eigenen Punkt nennen oder „Motorraum und Tanks: … · AdBlue-Stand“.
+- **C – Folie 74 (Notiz):** Die amtliche Antwort zu 2.7.05-212 lautet wörtlich „RETREAD“.
+  - **Vorschlag:** „Runderneuerte Reifen erkennt man an der Kennzeichnung „RETREAD“ auf der Flanke (Prüfungsfrage 2.7.05-212).“

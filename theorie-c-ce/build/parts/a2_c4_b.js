@@ -8,7 +8,7 @@ sec('c4e', 'C4  ·  BATTERIE UND BORDNETZ', 'C9A227', 'bg_am.jpg');
 module.exports = async (deck) => {
   // ===== KAPITEL 3 AUFBAUTEN =====
   await chapter(deck, 'c4a', { num: 3, ttl: 'Aufbauten', sub: 'Was hinten drauf ist – und was ihr vor der Fahrt kontrolliert.', ico: 'LuPackage', notes:
-    '▶ Sagen: „Kapitel 3: Aufbauten. Ganz kurz – wie man Ladung sichert, kommt ausführlich in C8.“\n🖱 Keine Klicks.\n➜ „Welche Aufbauten kennt ihr?“' });
+    '▶ Sagen: „Kapitel 3: Aufbauten. Ganz kurz – wie man Ladung sichert, kommt ausführlich in C9.“\n🖱 Keine Klicks.\n➜ „Welche Aufbauten kennt ihr?“' });
   {
     const s = base(deck, 'c4a', { notes:
       '▶ Sagen: „Welche Aufbauten kennt ihr?“\n' +

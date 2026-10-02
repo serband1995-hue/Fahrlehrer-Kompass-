@@ -182,7 +182,7 @@ module.exports = async (deck) => {
       '❓ Die Klasse suchen lassen, dann klicken.\n' +
       '🖱 Klick 1: Größe · Klick 2: Tragfähigkeit und Tempo · Klick 3: Alpine-Symbol · Klick 4: M+S.\n' +
       '✅ 315/70 R22.5 = Breite 315 mm, Flanke 70 %, Radial, Felge 22,5 Zoll. 154/150 L = Tragfähigkeit einzeln/Zwilling, bis 120 km/h (Prüfungsfragen 2.7.05-220, -221). Alpine-Symbol (Berg mit Schneeflocke) = Winterreifen nach § 36 Abs. 4 StVZO. M+S allein reicht seit 1.10.2024 nicht mehr.\n' +
-      '💡 Auf der Flanke steht auch die DOT-Nummer: Die letzten vier Ziffern sind Woche und Jahr der Herstellung, z. B. 2324 = 23. Woche 2024. Runderneuerte Reifen tragen „Runderneuert“ oder „Retread“ und ein Prüfzeichen (Prüfungsfrage 2.7.05-212).\n' +
+      '💡 Auf der Flanke steht auch die DOT-Nummer: Die letzten vier Ziffern sind Woche und Jahr der Herstellung, z. B. 2324 = 23. Woche 2024. Runderneuerte Reifen erkennt man an der Kennzeichnung „RETREAD“ (amtliche Antwort, Prüfungsfrage 2.7.05-212) bzw. „Runderneuert“ und am Prüfzeichen.\n' +
       '➜ „Wie viel Profil muss mindestens drauf sein?“' });
     s.rrect(9.55, 0.45, 3.4, 1.35, { fill: '070B12', ft: 15, rr: 0.08 });
     s.text('REIFEN LESEN', { x: 9.75, y: 0.55, w: 3.1, h: 0.35, size: 13, bold: true, color: C.or, cs: 3 });
