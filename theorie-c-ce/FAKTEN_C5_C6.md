@@ -18,14 +18,13 @@ Quelle: https://autovio.de/fuer-fahrschueler/fuehrerschein-theorie-lernen/2-7/2-
 - **Betriebsbremse:** mittlere Vollverzögerung mindestens **5,0 m/s²** (§ 41 Abs. 4).
 - **Teilausfall:** Mit dem Rest müssen mindestens **44 %** dieser Wirkung erreicht werden, ohne dass das Fahrzeug die Spur verlässt (§ 41 Abs. 4a).
 - **Feststellbremse:** muss feststellbar sein. Sie wirkt **rein mechanisch**, ohne Motorbremse. Sie hält das Fahrzeug auf der größten befahrbaren Steigung. Verzögerung mindestens **1,5 m/s²** (§ 41 Abs. 5).
-- **Messbedingungen:** voll beladen, ebene trockene Straße, erwärmte Bremsen. Ansprech- und Schwellzeit höchstens **0,6 s** (§ 41 Abs. 12).
+- **Messung:** voll beladen, eben, trocken. Ansprech- und Schwellzeit höchstens **0,6 s** (§ 41 Abs. 12).
 - **Dauerbremse Pflicht:** Lkw (andere Kfz) mit zGM **über 9 t** und Kraftomnibusse über 5,5 t. Leistung: Gefälle **7 %**, **6 km** lang, voll beladen, **30 km/h** halten (§ 41 Abs. 15). Lkw zwischen 7,5 t und 9 t brauchen keine Dauerbremse.
 - **EU-Recht:** Lkw über 25 km/h müssen den Bremsvorschriften im Anhang zu § 41 entsprechen (§ 41 Abs. 18). Das sind die RL 71/320 bzw. heute die UN-Regelung Nr. 13.
   - Quelle: https://www.gesetze-im-internet.de/stvzo_2012/__41.html
 - **EU-Werte (RL 71/320, Anhang II):** Feststellbremse hält beladenes Fahrzeug bei **18 %** Steigung oder Gefälle. Mit Anhänger muss die Feststellbremse des Zugfahrzeugs den Zug bei **12 %** halten.
   - Quelle: https://gesetze.legal/eu/rl_71_320_ewg/anhang_ii
-- **Hilfsbremse:** Bei Lkw über 7,5 t mindestens 2,2 m/s² (entspricht 44 %).
-  - Quelle: eurotransport, „Die Bremsanlage: Anker und Hilfsbremser“, 24.09.2015 – https://www.eurotransport.de/fahrzeuge/lkw/die-bremsanlage-anker-und-hilfsbremser/
+- **Rest-/Hilfsbremswirkung:** 44 % von 5,0 m/s² = **2,2 m/s²** (§ 41 Abs. 4a; so auch eurotransport, „Die Bremsanlage: Anker und Hilfsbremser“, 24.09.2015 – https://www.eurotransport.de/fahrzeuge/lkw/die-bremsanlage-anker-und-hilfsbremser/).
 - **Bremsanlagen im Lkw:** Betriebs-, Feststell- und Dauerbremse. Die Hilfsbremse ist keine eigene Anlage, sondern Schutzeinrichtungen in den anderen.
   - Quelle: eurotransport, „Die Bremsanlage: Retter in der Not“, 03.09.2015 – https://www.eurotransport.de/fahrzeuge/lkw/die-bremsanlage-retter-in-der-not/
 - **Fremdkraftbremse:** Der Fuß gibt nur das Steuersignal. Die Kraft kommt aus der Druckluft (gleiche Quelle).
@@ -153,12 +152,12 @@ Quelle: https://autovio.de/fuer-fahrschueler/fuehrerschein-theorie-lernen/2-7/2-
   - **2.7.06-216** „Welche Hilfslöseeinrichtungen für Federspeicher-Bremszylinder gibt es?“ Lösung: pneumatische; mechanische.
 
 ### Kontrollstellung (Prüfstellung) – mit Anhänger
-- **Rechtlicher Grund:** Zugfahrzeug-Feststellbremse und Anhänger-Druckluftbremse dürfen gemeinsam wirken, **wenn sich der Fahrer jederzeit überzeugen kann**, dass die rein mechanische Feststellbremse allein ausreicht (RL 71/320, Anhang I Nr. 2.1.2, s. o.).
-- **Ablauf (Herstellerangabe Mercedes Actros):** Handbremsventil hat Lösestellung, Vollbremsstellung, Kontrollstellung. In der Kontrollstellung hält nur die Federspeicherkraft des Zugfahrzeugs den Zug. Die Anhängerbremse ist gelöst.
+- **Grund:** Der Fahrer muss prüfen können, ob die mechanische Feststellbremse des Zugfahrzeugs allein den Zug hält (RL 71/320, Anhang I Nr. 2.1.2).
+- **Herstellerangabe Mercedes Actros:** Stellungen Lösen, Vollbremsung, Kontrolle. In Kontrollstellung hält nur der Federspeicher des Zugfahrzeugs; Anhängerbremse gelöst.
   - Quelle: Mercedes-Benz Actros Betriebsanleitung (manualslib) – https://www.manualslib.de/manual/46851/Mercedes-Benz-Actros.html?page=247
 - Prüfungsfrage **2.7.06-320** „… Welche Funktion übernimmt dabei die Kontrollstellung des Handbremsventils?“ Lösung: Zugfahrzeug wird über die Federspeicherbremse gebremst; Betriebsbremse des Anhängers wird gelöst.
 - Prüfungsfrage **2.7.06-321** „Wie wirkt es sich bei einem Lastzug aus, wenn der Feststellbremshebel im Zugfahrzeug betätigt wird (nicht in Kontrollstellung)?“ Lösung: Zugfahrzeug mechanisch gebremst; Anhänger üblicherweise nur mit Druckluft über die Betriebsbremse.
-  → Für Klasse C reicht der Hinweis. Ausführlich in CE2/CE3.
+  → Ausführlich in CE2/CE3.
 
 ### Abstellen
 - Prüfungsfrage **2.2.23-201** „Was ist zu tun, um einen zweiachsigen Lkw in starkem Gefälle gegen Wegrollen zu sichern?“ Lösung: Feststellbremse anziehen; Unterlegkeil vor ein Hinterrad legen. Falsch: Dauerbremse.
@@ -169,9 +168,7 @@ Quelle: https://autovio.de/fuer-fahrschueler/fuehrerschein-theorie-lernen/2-7/2-
 - „Die Federspeicherbremse bremst mit Luft.“ → Falsch. Die Feder bremst. Luft löst.
 - „Losfahren, sobald sich die Feststellbremse lösen lässt.“ → Falsch. Erst wenn die Druckwarnung erloschen ist (2.7.01-238).
 - „Wasser im Luftbehälter ist normal, einmal im Monat ablassen reicht.“ → Falsch. Wasser zeigt einen defekten Lufttrockner. Sofort klären lassen.
-- „ALB und ABS machen dasselbe.“ → Falsch. ALB = Last. ABS = Blockieren.
 - „Federspeicher mechanisch gelöst – Fahrzeug steht trotzdem sicher.“ → Falsch. Ohne Keile rollt es weg.
-- „Das Vierkreisschutzventil schützt vor zu hohem Druck.“ → Falsch. Das macht der Druckregler.
 
 ---
 
@@ -322,13 +319,12 @@ Quelle: https://autovio.de/fuer-fahrschueler/fuehrerschein-theorie-lernen/2-7/2-
 
 ### Was wird geprüft
 - **SP:** Sicht-, Wirkungs- und Funktionsprüfung von Fahrgestell, Fahrwerk, Verbindungseinrichtung, Lenkung, Reifen, Rädern und **Bremsanlage** (Anlage VIII Nr. 1.3.1).
-- **Wer:** SP in anerkannter Werkstatt oder bei Prüforganisation (Nr. 3.2.1, 3.2.2). HU nur durch Sachverständige/Prüfingenieure (TÜV, DEKRA, GTÜ usw.) (Nr. 3.1.1).
+- **Wer:** SP auch in anerkannter Werkstatt (Nr. 3.2.2). HU nur Sachverständige/Prüfingenieure (Nr. 3.1.1).
 - **HU-Bremsprüfung** beginnt mit einer kurzen Fahrt mit mindestens **8 km/h**. Sie umfasst u. a. Betriebs-, Feststell- und Hilfsbremswirkung, Dauerbremse, ABS, Dichtheit, Füllzeit, Entwässerung, ALB (Anlage VIIIa Nr. 6.1, s. o.).
 
 ### Nachweis
-- **HU:** Prüfplakette am hinteren Kennzeichen (§ 29 Abs. 2 Nr. 1).
-- **SP:** **Prüfmarke auf dem SP-Schild** (§ 29 Abs. 2 Nr. 2). Das SP-Schild sitzt am Fahrzeug (Anlage IXb).
-- Untersuchungsbericht und SP-Prüfprotokoll aufbewahren bis zur nächsten HU/SP. Auf Verlangen aushändigen (§ 29 Abs. 10).
+- HU: Plakette hinten (§ 29 Abs. 2 Nr. 1). SP: **Prüfmarke auf dem SP-Schild** (§ 29 Abs. 2 Nr. 2).
+- Bericht und SP-Protokoll bis zur nächsten HU/SP aufbewahren, auf Verlangen aushändigen (§ 29 Abs. 10).
   - Quelle: https://www.gesetze-im-internet.de/stvzo_2012/__29.html
 
 ### Mängel bei der HU (Anlage VIII Nr. 3.1.4)
@@ -336,14 +332,13 @@ Quelle: https://autovio.de/fuer-fahrschueler/fuehrerschein-theorie-lernen/2-7/2-
 - **Erhebliche/gefährliche Mängel:** keine Plakette. Nachprüfung spätestens **einen Monat** nach der HU, sonst neue HU.
 - **Verkehrsunsicher:** Plakette wird entfernt. Fahrzeug darf nicht mehr fahren. Zulassungsbehörde wird informiert.
 - Bei Mängeln verlängert sich die Gültigkeit der Plakette um einen Monat (§ 29 Abs. 7).
-- **SP mit Mängeln:** Nachprüfung binnen eines Monats. Bei unmittelbarer Verkehrsgefährdung entfernt die Werkstatt die Prüfmarke und informiert die Zulassungsbehörde (Anlage VIII Nr. 3.2.3).
+- **SP mit Mängeln:** Nachprüfung binnen eines Monats (Anlage VIII Nr. 3.2.3).
 - Ohne gültige Plakette/Prüfmarke kann die Behörde den Betrieb untersagen (§ 29 Abs. 7).
 
 ## C6-f) Fahrtenschreiber-Prüfung, Geschwindigkeitsbegrenzer
 
 ### Fahrtenschreiber (§ 57b StVZO)
-- **Halterpflicht:** Fahrtenschreiber prüfen lassen (Einbau, Zustand, Messgenauigkeit, Arbeitsweise).
-- **Nachprüfung mindestens alle 24 Monate.** Außerdem sofort nach Reparatur, nach Änderung der Reifengröße, nach Ersetzen einer Plombe, nach Kennzeichenwechsel und wenn die UTC-Zeit um **mehr als 20 Minuten** abweicht (§ 57b Abs. 2).
+- **Halterpflicht: Nachprüfung mindestens alle 24 Monate.** Sofort nach Reparatur, Reifengrößenwechsel, Plombentausch, Kennzeichenwechsel oder UTC-Abweichung **über 20 Minuten** (§ 57b Abs. 2).
 - **Einbauschild** am Gerät oder an der B-Säule Fahrerseite, plombiert (§ 57b Abs. 1).
   - Quelle: https://www.gesetze-im-internet.de/stvzo_2012/__57b.html
 - HU prüft „Vorhandensein von Einbauschild und Verplombung“ und „Einhaltung der Prüffrist“ (Anlage VIIIa, s. o.).
@@ -354,7 +349,7 @@ Quelle: https://autovio.de/fuer-fahrschueler/fuehrerschein-theorie-lernen/2-7/2-
 - **Pflicht:** Lkw, Zugmaschinen und Sattelzugmaschinen mit zGM **über 3,5 t**.
 - **Einstellung:** höchstens **90 km/h einschließlich aller Toleranzen** (§ 57c Abs. 2). Busse: 100 km/h.
 - **Nicht abschaltbar** (§ 57c Abs. 5).
-- **Ausnahmen:** u. a. Fahrzeuge mit bauartbedingt höchstens dieser Geschwindigkeit, Bundeswehr, Polizei, Feuerwehr, Rettungsdienst, Katastrophenschutz (§ 57c Abs. 3).
+- **Ausnahmen:** u. a. bauartbedingt langsamere Fahrzeuge, Bundeswehr, Polizei, Feuerwehr, Rettungsdienst (§ 57c Abs. 3).
   - Quelle: https://www.gesetze-im-internet.de/stvzo_2012/__57c.html
 - **90 km/h ist nur die Technikgrenze.** Erlaubt sind für Lkw über 3,5 t auf der Autobahn **80 km/h** (§ 18 Abs. 5 Nr. 1 StVO). Außerorts: über 3,5 t bis 7,5 t **80 km/h**, über 7,5 t **60 km/h** (§ 3 Abs. 3 Nr. 2 StVO).
   - Quellen: https://www.gesetze-im-internet.de/stvo_2013/__18.html · https://www.gesetze-im-internet.de/stvo_2013/__3.html
@@ -362,10 +357,10 @@ Quelle: https://autovio.de/fuer-fahrschueler/fuehrerschein-theorie-lernen/2-7/2-
 
 ### Prüfung des Begrenzers (§ 57d StVZO)
 - **Keine feste Frist im Gesetz.** Prüfung vor Erstinbetriebnahme, nach Einbau, Reparatur, Änderung der Wegdrehzahl, Änderung der Reifengröße und wesentlichen Änderungen an der Kraftstoffzufuhr (§ 57d Abs. 2).
-- **Einbauschild** an der B-Säule Fahrerseite, plombiert, mit eingestellter Geschwindigkeit (v set) u. a. Es darf mit dem Fahrtenschreiber-Schild kombiniert werden (§ 57d Abs. 2).
+- **Einbauschild** an der B-Säule, plombiert, mit v set. Kombinierbar mit dem Tacho-Schild (§ 57d Abs. 2).
   - Quelle: https://www.gesetze-im-internet.de/stvzo_2012/__57d.html
 - Die HU prüft den Begrenzer mit (Anlage VIIIa, s. o.).
-- **Achtung:** Die Aussage „Begrenzer-Prüfung alle 2 Jahre“ steht so nicht im Gesetz. Alle 24 Monate gilt nur für den Fahrtenschreiber. In der Praxis prüft die Werkstatt den Begrenzer oft gleich mit (siehe UNSICHER).
+- **Achtung:** „Begrenzer-Prüfung alle 2 Jahre“ steht nicht im Gesetz. 24 Monate gilt nur für den Fahrtenschreiber (siehe UNSICHER).
 - Seit 01.08.2013 Einbauschild statt mitzuführender Bescheinigung (buzer.de – https://www.buzer.de/gesetz/10146/al0-40364.htm).
 - Tempomat-Fragen (2.7.06-206, -110 bis -114, -240, -241) passen eher zu C10.
 
