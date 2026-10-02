@@ -195,13 +195,13 @@ async function svgImg(svg, w = 512, h = 512, sc = 1) {
 }
 // Detaillierter Lkw (Seitenansicht, Front links) auf die Folie: x = Front, gy = Boden, k = Maßstab.
 // split: Aufbau und Räder getrennt (für Morph beim Heben/Senken), lift = Aufbau um so viel (Zoll, unskaliert) angehoben
-async function lkw(s, o = {}, { x, gy, k = 1, name = 'lkw', split = false, lift = 0, anim } = {}) {
+async function lkw(s, o = {}, { x, gy, k = 1, name = 'lkw', split = false, lift = 0, anim, rot } = {}) {
   const { lkwSide } = require('./lkw');
   const r = lkwSide(o), w = r.W / 100 * k, h = r.H / 100 * k, X0 = x - r.pad * k, Y0 = gy - r.Ht * k;
   if (split) {
     s.img(await svgImg(r.wheels, r.W, r.H, 2.5), { x: X0, y: Y0, w, h, name: '!!' + name + 'W' }, anim);
     s.img(await svgImg(r.upper, r.W, r.H, 2.5), { x: X0, y: Y0 - lift * k, w, h, name: '!!' + name + 'U' }, anim);
-  } else s.img(await svgImg(r.upper + r.wheels, r.W, r.H, 2.5), { x: X0, y: Y0, w, h, name: name.startsWith('!!') ? name : undefined }, anim);
+  } else s.img(await svgImg(r.upper + r.wheels, r.W, r.H, 2.5), { x: X0, y: Y0, w, h, rotate: rot, name: name.startsWith('!!') ? name : undefined }, anim);
   return { pt: (nx, ny) => [x + nx * k, gy - ny * k], r };
 }
 async function lkwHeck(s, o = {}, { x, gy, k = 1, anim } = {}) {
