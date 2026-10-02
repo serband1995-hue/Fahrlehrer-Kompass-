@@ -195,33 +195,48 @@ const Quiz = (() => {
   })();
 
   /* ---------- Konfetti ---------- */
+  // Schlank gezeichnet (setTransform statt save/restore, begrenzte Teilchenzahl), damit es auch auf schwachen Laptops flüssig bleibt
   function konfetti(dauerMs) {
     if (window.matchMedia && matchMedia("(prefers-reduced-motion: reduce)").matches) return;
+    // Läuft schon Konfetti? Dann nur verlängern statt eine zweite Ebene zu malen.
+    const laufend = document.querySelector("canvas.konfetti");
+    if (laufend && laufend._verlaengern) { laufend._verlaengern(dauerMs || 6000); return; }
     const cv = document.createElement("canvas");
     cv.className = "konfetti";
     document.body.appendChild(cv);
-    const g = cv.getContext("2d");
+    const g = cv.getContext("2d", { alpha: true });
     const farben = ["#e2574c", "#2f7dd1", "#e0a92a", "#3f9c5a", "#f4f1e8", "#c9a227"];
+    // Bewusst niedrige Auflösung: Konfetti braucht keine Schärfe, spart aber viel Rechenzeit.
+    const k = Math.min(1, 1100 / Math.max(innerWidth, 1));
     let w, h;
-    const groesse = () => { w = cv.width = innerWidth * devicePixelRatio; h = cv.height = innerHeight * devicePixelRatio; };
+    const groesse = () => { w = cv.width = Math.round(innerWidth * k); h = cv.height = Math.round(innerHeight * k); };
     groesse(); addEventListener("resize", groesse);
-    const teile = Array.from({ length: Math.min(260, Math.round(innerWidth / 5)) }, () => ({
-      x: Math.random() * w, y: -Math.random() * h, r: (4 + Math.random() * 6) * devicePixelRatio,
-      vy: (2 + Math.random() * 3) * devicePixelRatio, vx: (Math.random() - .5) * 2 * devicePixelRatio,
-      rot: Math.random() * 6, vr: (Math.random() - .5) * .3, f: farben[(Math.random() * farben.length) | 0]
+    const teile = Array.from({ length: Math.min(130, Math.round(innerWidth / 11)) }, () => ({
+      x: Math.random() * w, y: -Math.random() * h, r: (5 + Math.random() * 6) * k,
+      vy: (120 + Math.random() * 180) * k, vx: (Math.random() - .5) * 120 * k,
+      rot: Math.random() * 6, vr: (Math.random() - .5) * 18, f: farben[(Math.random() * farben.length) | 0]
     }));
-    const ende = performance.now() + (dauerMs || 6000);
+    teile.sort((a, b) => (a.f < b.f ? -1 : 1));
+    let ende = performance.now() + (dauerMs || 6000);
+    cv._verlaengern = (ms) => { ende = Math.max(ende, performance.now() + ms); };
+    let vorher = performance.now();
     (function schritt(t) {
+      const dt = Math.min(.05, (t - vorher) / 1000); vorher = t;
+      g.setTransform(1, 0, 0, 1, 0, 0);
       g.clearRect(0, 0, w, h);
-      teile.forEach((p) => {
-        p.y += p.vy; p.x += p.vx + Math.sin(p.y / 40); p.rot += p.vr;
-        if (p.y > h && t < ende) { p.y = -20; p.x = Math.random() * w; }
-        g.save(); g.translate(p.x, p.y); g.rotate(p.rot); g.fillStyle = p.f;
-        g.fillRect(-p.r / 2, -p.r / 4, p.r, p.r / 2); g.restore();
-      });
+      let farbe = "";
+      for (const p of teile) {
+        p.y += p.vy * dt; p.x += (p.vx + Math.sin(p.y / (40 * k)) * 60 * k) * dt; p.rot += p.vr * dt;
+        if (p.y > h + 20 && t < ende) { p.y = -20; p.x = Math.random() * w; }
+        if (p.y > h + 20) continue;
+        const c = Math.cos(p.rot), s = Math.sin(p.rot);
+        g.setTransform(c, s, -s, c, p.x, p.y);
+        if (p.f !== farbe) g.fillStyle = farbe = p.f;
+        g.fillRect(-p.r / 2, -p.r / 4, p.r, p.r / 2);
+      }
       if (t < ende + 4000 && cv.isConnected) requestAnimationFrame(schritt);
       else { cv.remove(); removeEventListener("resize", groesse); }
-    })(performance.now());
+    })(vorher);
   }
 
   /* Zahl hochzählen lassen */
