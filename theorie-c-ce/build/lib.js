@@ -268,6 +268,13 @@ async function finalize(deck, outFile) {
     const head = `FOLIE ${ctx.idx} VON ${deck.slides.length} · ${how}`;
     ctx.s.addNotes([head, ctx.notes, extra].filter(Boolean).join('\n\n'));
   }
+  // Fußzeile (und ihr Verlauf auf Fotos) immer ganz oben, auch wenn eine Folie danach noch einen Verlauf darüberlegt
+  const TOP = ['!!ovb', '!!ftL', '!!ftR'];
+  for (const ctx of deck.slides) {
+    const objs = ctx.s._slideObjects || [], nm = o => (o.options && o.options.objectName) || o.objectName;
+    const top = objs.filter(o => TOP.includes(nm(o)));
+    if (top.length) { const rest = objs.filter(o => !TOP.includes(nm(o))); objs.length = 0; objs.push(...rest, ...top); }
+  }
   const buf = await deck.pres.write({ outputType: 'nodebuffer' });
   const zip = await JSZip.loadAsync(buf);
   for (const ctx of deck.slides) {

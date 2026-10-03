@@ -5,6 +5,18 @@ const { icon } = require('../lib');
 sec('c10', 'LEKTION C10', C.gr, 'bg_kap.jpg');
 sec('c10f', 'C10  ·  VORAUSSCHAUEND FAHREN', C.gr, 'bg_gr.jpg');
 
+// Kanister (20 l) mit Füllstand 0…1 – so sieht man, wie viel Diesel schon verbraucht ist
+function kanister(f) {
+  const c = f > 0 ? '#FFB547' : '#3A4656', lev = (116 - 86 * f).toFixed(1);
+  const body = 'M14 36 Q14 30 20 30 L62 30 L86 52 L86 110 Q86 116 80 116 L20 116 Q14 116 14 110 Z';
+  return svgImg(`<defs><clipPath id="kb"><path d="${body}"/></clipPath></defs>` +
+    (f > 0 ? `<rect x="0" y="${lev}" width="100" height="${(120 - lev).toFixed(1)}" fill="#FFB547" fill-opacity="0.9" clip-path="url(#kb)"/>` : '') +
+    `<path d="M24 52 L76 104 M76 52 L24 104" stroke="${c}" stroke-width="3" stroke-opacity="0.45"/>` +                     // Prägung
+    `<path d="${body}" fill="none" stroke="${c}" stroke-width="6" stroke-linejoin="round"/>` +
+    `<path d="M22 30 L22 14 Q22 10 26 10 L52 10 Q56 10 56 14 L56 30" fill="none" stroke="${c}" stroke-width="6" stroke-linejoin="round"/>` +   // Griff
+    `<path d="M70 37 L79 22 L91 30 L82 45" fill="none" stroke="${c}" stroke-width="6" stroke-linejoin="round"/>`, 100, 120, 2);   // Ausgießer
+}
+
 module.exports = async (deck) => {
   // ===== LERNZIELE C10 =====
   {
@@ -39,13 +51,13 @@ module.exports = async (deck) => {
       legend: 'Draufsicht · schematisch · Verbrauchsbalken ohne Maßstab',
       frames: [
         fr(6.7, 6.7, { hold: true, t: { fa: 0, fb: 0, sa: 'Gas', sb: 'Gas' }, cap: 'Zwei gleiche Lkw, beide mit 50 km/h. Vorne ist die Ampel rot.', note: '▶ Sagen: „Zwei gleiche Lkw, je 26 Tonnen, beide mit 50 km/h. Vorne: rote Ampel. Fahrer A fährt mit Gas bis kurz davor. Fahrerin B geht früh vom Gas.“\n❓ Frage auf der Folie stellen – abstimmen lassen.\n🖱 Klick: Die Fahrt läuft (von selbst bis A steht).\n➜ „Los geht’s.“' }),
-        fr(7.9, 7.7, { t: { fa: 0.12, fb: 0.03, sa: 'Gas', sb: 'rollt – kein Diesel' }, cap: 'B geht schon jetzt vom Gas. Mit eingelegtem Gang spritzt der Motor keinen Diesel ein.' }),
-        fr(9.1, 8.6, { t: { fa: 0.24, fb: 0.04, sa: 'Gas', sb: 'rollt – kein Diesel' } }),
+        fr(7.9, 7.7, { t: { fa: 0.12, fb: 0.03, sa: 'Gas', sb: 'rollt – (fast) kein Diesel' }, cap: 'B geht schon jetzt vom Gas. Im Gang rollen: Der Motor spritzt keinen Diesel ein, solange er über Leerlauf dreht.' }),
+        fr(9.1, 8.6, { t: { fa: 0.24, fb: 0.04, sa: 'Gas', sb: 'rollt – (fast) kein Diesel' } }),
         fr(10.3, 9.4, { t: { fa: 0.28, fb: 0.05, sa: 'bremst hart!', sb: 'rollt', brk: 1 }, cap: 'A bremst hart. Die Bewegungsenergie, die vorher Diesel gekostet hat, wird an den Bremsen zu Wärme.' }),
         fr(10.8, 10.0, { hold: true, t: { fa: 0.29, fb: 0.06, sa: 'steht', sb: 'rollt langsam', brk: 1 }, cap: 'A steht an der roten Ampel. B rollt noch langsam heran.', note: '▶ „A steht. Die ganze Bewegungsenergie ist in den Bremsen verpufft. B rollt noch langsam – und hat dabei fast keinen Diesel gebraucht.“\n💡 Die Schubabschaltung wirkt, solange der Motor über Leerlaufdrehzahl dreht. Wird der Lkw sehr langsam, spritzt der Motor wieder ein – dann zurückschalten.\n🖱 Klick: Die Ampel wird grün (läuft von selbst).\n➜ „Und jetzt wird es grün.“' }),
         fr(10.85, 10.9, { t: { fa: 0.33, fb: 0.07, sa: 'fährt aus dem Stand an …', sb: 'rollt durch', green: 1 }, cap: 'Grün! B rollt einfach durch. A muss 26 Tonnen aus dem Stand beschleunigen.' }),
         fr(11.2, 11.7, { t: { fa: 0.52, fb: 0.2, sa: 'beschleunigt', sb: 'Gas', green: 1 } }),
-        fr(11.6, 12.25, { hold: true, answer: true, t: { fa: 0.7, fb: 0.4, sa: 'beschleunigt', sb: 'Gas', green: 1 }, cap: 'B ist weiter – und hat weniger Diesel verbraucht. Anfahren aus dem Stand kostet am meisten.', note: '▶ „B ist schon weiter und hat weniger verbraucht. Das Anfahren aus dem Stand kostet beim schweren Lkw am meisten Diesel. Und A hat auch noch Bremsen und Reifen verschlissen.“\n✅ Schubabschaltung: Rollen mit eingelegtem Gang ohne Gas → keine Einspritzung (Lehrbuchwissen). Prüfungsfrage 2.5.01-015: Verbrauch senken durch vorausschauende Fahrweise, Luftleiteinrichtungen, spezielle Reifen (alle drei richtig).\n💡 Großer Abstand zum Vordermann macht vorausschauendes Fahren erst möglich.\n🖱 Keine Animation mehr – nächster Klick: nächste Folie.\n➜ „Zweites Werkzeug: der Drehzahlmesser.“' }),
+        fr(11.6, 12.1, { hold: true, answer: true, t: { fa: 0.7, fb: 0.4, sa: 'beschleunigt', sb: 'Gas', green: 1 }, cap: 'B ist weiter – und hat weniger Diesel verbraucht. Anfahren aus dem Stand kostet am meisten.', note: '▶ „B ist schon weiter und hat weniger verbraucht. Das Anfahren aus dem Stand kostet beim schweren Lkw am meisten Diesel. Und A hat auch noch Bremsen und Reifen verschlissen.“\n✅ Schubabschaltung: Rollen mit eingelegtem Gang ohne Gas → keine Einspritzung, solange der Motor über Leerlaufdrehzahl dreht (Lehrbuchwissen). Prüfungsfrage 2.5.01-015: Verbrauch senken durch vorausschauende Fahrweise, Luftleiteinrichtungen, spezielle Reifen (alle drei richtig).\n💡 Großer Abstand zum Vordermann macht vorausschauendes Fahren erst möglich.\n🖱 Keine Animation mehr – nächster Klick: nächste Folie.\n➜ „Zweites Werkzeug: der Drehzahlmesser.“' }),
       ],
       scene: async (s, { a, b, fa, fb, sa, sb, brk = 0, green = 0 }) => {
         for (let q = 0; q < 2; q++) {
@@ -81,11 +93,12 @@ module.exports = async (deck) => {
     const ang = rpm => -120 + 240 * rpm / MAX; // Grad, 0 = senkrecht nach oben, im Uhrzeigersinn
     const pol = (rpm, r) => { const a = (ang(rpm) - 90) * Math.PI / 180; return [200 + r * Math.cos(a), 200 + r * Math.sin(a)]; };
     const arc = (r0, r1, r, w, col) => { const [x0, y0] = pol(r0, r), [x1, y1] = pol(r1, r), large = (ang(r1) - ang(r0)) > 180 ? 1 : 0; return `<path d="M${x0.toFixed(1)} ${y0.toFixed(1)} A${r} ${r} 0 ${large} 1 ${x1.toFixed(1)} ${y1.toFixed(1)}" fill="none" stroke="${col}" stroke-width="${w}"/>`; };
-    let g = `<circle cx="200" cy="200" r="196" fill="#0B1119" stroke="#2A3342" stroke-width="3"/>` + arc(0, MAX, 160, 16, '#2A3342') + arc(1000, 1400, 160, 18, '#38D98A') + arc(2100, MAX, 160, 18, '#FF5C5C');
-    for (let r = 0; r <= MAX; r += 100) { const [x0, y0] = pol(r, r % 500 ? 140 : 132), [x1, y1] = pol(r, 150); g += `<line x1="${x0.toFixed(1)}" y1="${y0.toFixed(1)}" x2="${x1.toFixed(1)}" y2="${y1.toFixed(1)}" stroke="#A9B6C6" stroke-width="${r % 500 ? 2 : 4}"/>`; }
-    for (let r = 0; r <= MAX; r += 500) { const [x, y] = pol(r, 108); g += `<text x="${x.toFixed(1)}" y="${(y + 9).toFixed(1)}" font-family="Lato, Arial" font-size="26" font-weight="bold" fill="#F3F5F8" text-anchor="middle">${r / 100}</text>`; }
+    // Zahlen außen am Rand, Farbband innen: Der Zeiger reicht bis zu den Strichen und verdeckt nie eine Zahl
+    let g = `<circle cx="200" cy="200" r="196" fill="#0B1119" stroke="#2A3342" stroke-width="3"/>` + arc(0, MAX, 112, 14, '#2A3342') + arc(1000, 1400, 112, 18, '#38D98A') + arc(2100, MAX, 112, 18, '#FF5C5C');
+    for (let r = 0; r <= MAX; r += 100) { const [x0, y0] = pol(r, r % 500 ? 130 : 123), [x1, y1] = pol(r, 147); g += `<line x1="${x0.toFixed(1)}" y1="${y0.toFixed(1)}" x2="${x1.toFixed(1)}" y2="${y1.toFixed(1)}" stroke="#A9B6C6" stroke-width="${r % 500 ? 2 : 4}"/>`; }
+    for (let r = 0; r <= MAX; r += 500) { const [x, y] = pol(r, 171); g += `<text x="${x.toFixed(1)}" y="${(y + 9).toFixed(1)}" font-family="Lato, Arial" font-size="26" font-weight="bold" fill="#F3F5F8" text-anchor="middle">${r / 100}</text>`; }
     const dial = await svgImg(g, 400, 400, 2);
-    const needle = await svgImg(`<path d="M195 205 L198 52 L202 52 L205 205 Z" fill="#FFB547"/><circle cx="200" cy="200" r="16" fill="#3C4656" stroke="#FFB547" stroke-width="4"/>`, 400, 400, 2);
+    const needle = await svgImg(`<path d="M195 205 L198 56 L202 56 L205 205 Z" fill="#FFB547"/><circle cx="200" cy="200" r="16" fill="#3C4656" stroke="#FFB547" stroke-width="4"/>`, 400, 400, 2);
     const fr = (rpm, gang, o = {}) => ({ ...o, t: { rpm, gang, ...(o.t || {}) } });
     await motion(deck, 'c10f', {
       kicker: 'Drehzahl', ttl: 'Früh hochschalten', dur: 480, holdDur: 650,
@@ -94,9 +107,9 @@ module.exports = async (deck) => {
       legend: 'Skala × 100 /min · grüner Bereich ist ein Beispiel – maßgeblich ist euer Drehzahlmesser bzw. die Betriebsanleitung',
       frames: [
         fr(1900, 8, { hold: true, t: { v: 0.9 }, cap: 'Der Zeiger steht hoch, kurz vor Rot. Der Motor dreht unnötig schnell – das kostet Diesel.', note: '▶ Sagen: „Der Lkw beschleunigt im 8. Gang, der Zeiger steht bei 1.900 – kurz vor dem roten Bereich. Laut, durstig, verschleißt.“\n❓ Frage auf der Folie stellen.\n🖱 Klick: Hochschalten (läuft von selbst).\n➜ „Schalten wir hoch.“' }),
-        fr(1350, 9, { t: { v: 0.6 }, cap: 'Hochschalten: Der Zeiger fällt. Gleiches Tempo, weniger Umdrehungen.' }),
-        fr(1500, 9, { t: { v: 0.65 } }),
-        fr(1200, 10, { t: { v: 0.45 } }),
+        fr(1500, 9, { t: { v: 0.65 }, cap: 'Hochschalten: Der Zeiger fällt. Gleiches Tempo, weniger Umdrehungen.' }),
+        fr(1650, 9, { t: { v: 0.7 } }),
+        fr(1300, 10, { t: { v: 0.5 } }),
         fr(1150, 12, { hold: true, answer: true, t: { v: 0.35 }, cap: 'Im grünen Bereich: viel Kraft, wenig Diesel. Höchstmöglichen Gang fahren – Automatik im Eco-Modus.', note: '▶ „Jetzt steht der Zeiger im grünen Bereich. Hier hat der Motor viel Kraft und braucht am wenigsten Diesel. Regel: früh hochschalten, im höchstmöglichen Gang fahren.“\n✅ Grüner Drehzahlbereich = Bereich des günstigsten Verbrauchs, beim Diesel-Lkw meist um 1.000–1.400/min; genaue Werte stehen am Drehzahlmesser bzw. in der Betriebsanleitung (Lehrbuchwissen).\n💡 Bei Automatik: Eco-Modus nutzen, Gaspedal gefühlvoll.\n🖱 Keine Animation mehr – nächster Klick: nächste Folie.\n➜ „Und wenn man gar kein Gas braucht?“' }),
       ],
       scene: async (s, { rpm, gang, v }) => {
@@ -119,15 +132,16 @@ module.exports = async (deck) => {
   await ask(deck, 'c10f', {
     kicker: 'Rollen lassen', q: 'Rollen spart Diesel – aber wie rollt ihr richtig?', ico: 'LuLeaf', qsize: 32,
     answers: [
-      ['LuCircleCheck', 'Im Gang rollen, Fuß vom Gas', 'Schubabschaltung: Der Motor spritzt keinen Diesel ein – und die Motorbremse hilft mit.', C.gr],
-      ['LuCircleX', 'Im Leerlauf rollen', 'Der Motor läuft weiter und braucht Diesel. Bergab fehlt die Motorbremse – nicht machen!', C.red],
+      ['LuCircleCheck', 'Im Gang rollen, Fuß vom Gas', 'Schubabschaltung: Der Motor spritzt keinen Diesel ein – und bremst etwas mit.', C.gr],
+      ['LuCircleX', 'Im Leerlauf rollen', 'Der Motor braucht weiter Diesel. Bergab bremst er nicht mit, die Motorbremse wirkt nicht – nicht machen!', C.red],
       ['LuCirclePlay', 'Eco-Roll (Automatik)', 'Das Getriebe kuppelt auf ebener Strecke und bei leichtem Gefälle selbst aus und nutzt den Schwung. Zum Bremsen kuppelt es wieder ein.', C.bl],
     ],
     notes:
       '▶ Sagen: „Rollen spart Diesel. Aber wie?“\n' +
       '❓ Sammeln lassen, dann je Klick auflösen.\n' +
       '🖱 Klick 1–3: je eine Karte.\n' +
-      '✅ Schubabschaltung beim Rollen im Gang (Lehrbuchwissen). Prüfungsfrage 2.5.01-208: Gefälle in einem Gang durchfahren, in dem man wenig bremsen muss – nicht im Leerlauf, nicht mit Zündung aus. Prüfungsfrage 2.5.01-213: Eco-Roll spart, weil die Bewegungsenergie maximal ausgenutzt wird.\n' +
+      '💡 Begriffe wie an Abend 3: Die Motorbremse ist die Dauerbremse, die ihr einschaltet (Klappe im Auspuff). Rollt ihr nur im Gang ohne Gas, bremst der Motor durch seinen eigenen Widerstand etwas mit – das ist noch nicht die Motorbremse.\n' +
+      '✅ Schubabschaltung beim Rollen im Gang, solange der Motor über Leerlaufdrehzahl dreht (Lehrbuchwissen). Prüfungsfrage 2.5.01-208: Gefälle in einem Gang durchfahren, in dem man wenig bremsen muss – nicht im Leerlauf, nicht mit Zündung aus. Prüfungsfrage 2.5.01-213: Eco-Roll spart, weil die Bewegungsenergie maximal ausgenutzt wird.\n' +
       '💡 Vorausschauender Tempomat (mit GPS) kennt Kuppen und Gefälle und lässt vorher Schwung abfallen – laut Herstellern bis etwa 3–5 % Ersparnis.\n' +
       '➜ „Und wenn der Lkw steht?“',
   });
@@ -138,22 +152,22 @@ module.exports = async (deck) => {
     await motion(deck, 'c10f', {
       kicker: 'Motor aus!', ttl: 'Leerlauf kostet', dur: 550, holdDur: 700,
       question: 'Ihr wartet jeden Tag eine Stunde am Straßenrand vor dem Kunden – mit laufendem Motor. Wie viel Diesel ist das im Jahr?',
-      answer: 'Bei 2 Litern pro Stunde rund 440 Liter Diesel und 1,2 Tonnen CO₂ im Jahr. Dazu ist es verboten: 80 €.',
+      answer: 'Bei 2 Litern pro Stunde rund 440 Liter Diesel und 1,2 Tonnen CO₂ im Jahr. Außerdem verboten: 80 € Bußgeld.',
       legend: 'Beispiel: 2 l pro Stunde Leerlauf (Richtwert 1,5–4 l/h) · 220 Arbeitstage · 1 Kanister = 20 l',
       frames: [
-        fr(2, '1 Tag', { hold: true, cap: 'Eine Stunde Warten mit laufendem Motor: etwa 2 Liter Diesel.', note: '▶ Sagen: „Ihr wartet jeden Tag eine Stunde am Straßenrand vor dem Kunden und lasst den Motor laufen – für Heizung oder Klima. Im Leerlauf braucht ein Lkw etwa 2 Liter pro Stunde.“\n❓ Frage auf der Folie stellen – schätzen lassen.\n✅ Leerlaufverbrauch Lkw ca. 1,5–4 l pro Stunde (Richtwert, Sekundärquellen).\n🖱 Klick: Die Tage laufen (von selbst bis zum Jahr).\n➜ „Rechnen wir hoch.“' }),
+        fr(2, '1 Tag', { hold: true, cap: 'Eine Stunde Warten mit laufendem Motor: etwa 2\u00A0Liter Diesel.', note: '▶ Sagen: „Ihr wartet jeden Tag eine Stunde am Straßenrand vor dem Kunden und lasst den Motor laufen – für Heizung oder Klima. Im Leerlauf braucht ein Lkw etwa 2 Liter pro Stunde.“\n❓ Frage auf der Folie stellen – schätzen lassen.\n✅ Leerlaufverbrauch Lkw ca. 1,5–4 l pro Stunde (Richtwert, Sekundärquellen).\n🖱 Klick: Die Tage laufen (von selbst bis zum Jahr).\n➜ „Rechnen wir hoch.“' }),
         fr(10, '1 Woche', { cap: 'Eine Woche: 10 Liter.' }),
-        fr(40, '1 Monat', { cap: 'Ein Monat: 40 Liter – zwei Kanister.' }),
+        fr(40, '1 Monat', { cap: 'Ein Monat (rund 20 Arbeitstage): 40 Liter – zwei Kanister.' }),
         fr(440, '1 Jahr', { hold: true, answer: true, cap: 'Ein Jahr: rund 440 Liter Diesel – 22 Kanister. Das sind etwa 1,2 Tonnen CO₂.', note: '▶ „Im Jahr: 440 Liter Diesel, 22 Kanister. Und rund 1,2 Tonnen CO₂ – für nichts. Außerdem ist es verboten: unnötiges Laufenlassen des Motors kostet 80 Euro.“\n✅ Eigene Rechnung: 1 h × 2 l × 220 Arbeitstage = 440 l; × 2,65 kg CO₂/l ≈ 1,2 t. § 30 Abs. 1 StVO: verboten, Fahrzeugmotoren unnötig laufen zu lassen; BKat Nr. 117: 80 €, kein Punkt (gilt für alle Fahrzeuge, im öffentlichen Verkehrsraum – auf dem Werksgelände verbietet es meist die Hausordnung). Prüfungsfragen 2.5.01-108 (Motor im Stand warmlaufen lassen unterlassen) und 2.5.01-206 (Motor bei längeren Wartezeiten laufen lassen = falsch).\n💡 Standheizung braucht nur etwa 0,1–0,6 l pro Stunde. Ausnahme: Bei leerer Druckluftanlage muss der Motor laufen, bis der Vorrat steht – das ist nötig.\n🖱 Keine Animation mehr – nächster Klick: nächste Folie.\n➜ „Eine Prüfungsfrage dazu.“' }),
       ],
       scene: async (s, { liter, lab }) => {
         s.text(lab, { x: 5.75, y: 1.55, w: 3.5, h: 0.6, size: 30, bold: true, color: C.gr, name: '!!lab' });
         s.text(String(liter) + ' l', { x: 9.0, y: 1.45, w: 4.05, h: 0.8, size: 46, bold: true, color: C.txt, align: 'right', name: '!!liter' });
         s.text('Diesel im Leerlauf', { x: 9.0, y: 2.2, w: 4.05, h: 0.32, size: 14, color: C.mut, align: 'right', name: '!!dl' });
-        const n = liter / 20, ic = await icon('LuFuel', C.or), icd = await icon('LuFuel', '2A3342');
+        const n = liter / 20;
         for (let k = 0; k < 22; k++) {
           const x = 5.85 + (k % 11) * 0.65, y = 2.85 + Math.floor(k / 11) * 0.95, fill = Math.max(0, Math.min(1, n - k));
-          s.img(fill > 0 ? ic : icd, { x, y, w: 0.55, h: 0.55, transparency: fill > 0 ? Math.round(70 - 70 * fill) : 0, name: '!!k' + k });
+          s.img(await kanister(fill), { x: x + 0.045, y, w: 0.46, h: 0.55, name: '!!k' + k });
         }
         s.text(liter >= 440 ? '≈ 1,2 t CO₂' : '', { x: 5.75, y: 4.9, w: 7.3, h: 0.7, size: 30, bold: true, color: C.am, align: 'center', name: '!!co2' });
         s.text(liter >= 440 ? 'und 80 € Bußgeld, wenn der Motor unnötig läuft (§ 30 StVO)' : '', { x: 5.75, y: 5.6, w: 7.3, h: 0.4, size: 15, color: C.mut, align: 'center', name: '!!bgt' });
@@ -162,7 +176,7 @@ module.exports = async (deck) => {
   }
 
   await quiz(deck, 'c10f', {
-    kicker: 'Prüfungsfrage 2.5.01-213', q: 'Warum trägt der Eco-Roll-Modus zur Reduzierung des Kraftstoffverbrauchs bei? Weil im aktivierten Eco-Roll-Modus die …', size: 26,
+    kicker: 'Prüfungsfrage 2.5.01-213', q: 'Warum trägt der Eco-Roll-Modus bei Nutzfahrzeugen zur Reduzierung des Kraftstoffverbrauchs bei? Weil im aktivierten Eco-Roll-Modus die …', size: 26,
     opts: ['… Bewegungsenergie des Fahrzeugs maximal ausgenutzt wird', '… Motorbremswirkung erhöht wird', '… Rollphase des Fahrzeugs verkürzt wird'], ok: [0],
     why: 'Eco-Roll kuppelt aus und lässt den Lkw lange rollen – der Schwung wird genutzt.',
     notes: '▶ Frage vorlesen, abstimmen.\n🖱 Klick 1: Antworten · Klick 2: Lösung.\n✅ Amtlicher Fragenkatalog 2.5.01-213: nur A.\n➜ „Kapitel 2: Was spart am Lkw selbst?“',

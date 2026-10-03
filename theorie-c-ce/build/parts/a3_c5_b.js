@@ -1,6 +1,7 @@
 // Abend 3 · C5 Kapitel 3 Zweikreis-Bremse, Kapitel 4 ALB/EBS, Kapitel 5 Feststellbremse, Abschluss C5
 const { C, sec, base, kick, title, card, point, CLICK, ask, quiz, steps, write, takeaway, svgImg, chapter, lkw } = require('../gs');
 const { icon } = require('../lib');
+const { shiftImg } = require('./a3_c5_a');
 
 sec('c5e', 'C5  ·  ABSCHLUSS', C.gr, 'bg_gr.jpg');
 
@@ -36,8 +37,8 @@ module.exports = async (deck) => {
     legend: 'Draufsicht · Front links · schematisch',
     scene: async (s, i) => {
       s.rrect(5.75, FY - 1.25, 1.7, 2.5, { line: '33445C', lw: 1.5, dash: 'dash', rr: 0.12, name: '!!cab' });
-      s.rect(7.6, FY - 1.25, 5.4, 2.5, { line: '33445C', lw: 1.5, dash: 'dash', name: '!!box' });
-      s.rect(5.9, FY - 0.9, 7.0, 0.14, { fill: '3C4656', name: '!!r1' }); s.rect(5.9, FY + 0.76, 7.0, 0.14, { fill: '3C4656', name: '!!r2' });
+      s.rect(7.6, FY - 1.25, 5.1, 2.5, { line: '33445C', lw: 1.5, dash: 'dash', name: '!!box' });
+      s.rect(5.9, FY - 0.9, 6.75, 0.14, { fill: '3C4656', name: '!!r1' }); s.rect(5.9, FY + 0.76, 6.75, 0.14, { fill: '3C4656', name: '!!r2' });
       // Achsen und Räder
       const AX = [6.75, 11.6];
       AX.forEach((x, a) => {
@@ -49,13 +50,13 @@ module.exports = async (deck) => {
         }
       });
       // Bremsventil
-      s.rrect(6.05, FY - 0.35, 0.9, 0.7, { fill: '1C2440', line: C.pu, lw: 2, rr: 0.1, name: '!!bv' });
-      s.text('Brems-ventil', { x: 6.0, y: FY - 0.35, w: 1.0, h: 0.7, size: 12, bold: true, color: C.txt, align: 'center', valign: 'middle', name: '!!tbv' });
+      s.rrect(5.95, FY - 0.35, 1.1, 0.7, { fill: '1C2440', line: C.pu, lw: 2, rr: 0.1, name: '!!bv' });
+      s.text('Bremsventil', { x: 5.95, y: FY - 0.35, w: 1.1, h: 0.7, size: 13, bold: true, color: C.txt, align: 'center', valign: 'middle', name: '!!tbv' });
       // Leitungen Kreis 1 (vorn) und Kreis 2 (hinten)
       s.lineS(6.5, FY - 0.35, 6.5, FY - 1.2, { color: C.bl, lw: 4, name: '!!l1a' }); s.lineS(6.5, FY - 1.2, 7.03, FY - 1.2, { color: C.bl, lw: 4, name: '!!l1b' }); s.lineS(7.03, FY - 1.2, 7.03, FY - 1.65, { color: C.bl, lw: 4, name: '!!l1c' });
       s.lineS(6.5, FY + 0.35, 6.5, FY + 1.2, { color: C.bl, lw: 4, name: '!!l1d' }); s.lineS(6.5, FY + 1.2, 7.03, FY + 1.2, { color: C.bl, lw: 4, name: '!!l1e' }); s.lineS(7.03, FY + 1.2, 7.03, FY + 1.5, { color: C.bl, lw: 4, name: '!!l1f' });
       const c2 = i >= 1 ? C.red : C.or, d2 = i >= 1 ? 'dash' : 'solid';
-      s.lineS(6.95, FY, 11.88, FY, { color: c2, lw: 4, dash: d2, name: '!!l2a' });
+      s.lineS(7.05, FY, 11.88, FY, { color: c2, lw: 4, dash: d2, name: '!!l2a' });
       s.lineS(11.88, FY - 1.65, 11.88, FY + 1.5, { color: c2, lw: 4, dash: d2, name: '!!l2b' });
       s.text('Kreis 1 – vorn', { x: 7.3, y: FY - 1.55, w: 1.8, h: 0.3, size: 13, bold: true, color: C.bl, name: '!!tk1' });
       s.text('Kreis 2 – hinten', { x: 9.4, y: FY - 0.42, w: 2.0, h: 0.3, size: 13, bold: true, color: c2, name: '!!tk2' });
@@ -77,17 +78,17 @@ module.exports = async (deck) => {
     const Z = [[C.bl, 'Vorderachse', 'Membranzylinder', 'nur Betriebsbremse – Luft drückt eine Membran, die Kolbenstange bewegt den Bremshebel.'], [C.or, 'Hinterachse', 'Kombizylinder', 'zwei Teile in einem: Membranteil für die Betriebsbremse, Federspeicher für die Feststellbremse.']];
     for (let k = 0; k < 2; k++) {
       const x = 0.7 + k * 6.08, w = 5.85, col = Z[k][0];
-      card(s, x, 2.05, w, 2.7, { line: col }, CLICK);
-      // Zylinder-Skizze
-      const cx = x + 0.4, cy = 2.45;
+      card(s, x, 2.05, w, 2.25, { line: col }, CLICK);
+      // Zylinder-Skizze (Kolbenstange mit Abstand zum Kartenrand), Titel direkt daneben
+      const cx = x + 0.7, cy = 2.4, tx = k ? x + 3.2 : x + 1.95;
       s.rrect(cx, cy, 0.95, 0.9, { fill: '1A212C', line: '6E7888', lw: 2, rr: 0.3 }, { fx: 'fade', dur: 200 });
       if (k) { s.rect(cx + 0.92, cy - 0.05, 0.08, 1.0, { fill: '9AA6B5' }, { fx: 'fade', dur: 200 }); s.rrect(cx + 1.0, cy, 1.25, 0.9, { fill: '1A212C', line: C.or, lw: 2, rr: 0.3 }, { fx: 'fade', dur: 200 }); }
       s.rect(cx - 0.35, cy + 0.4, 0.4, 0.1, { fill: '9AA6B5' }, { fx: 'fade', dur: 200 });
-      s.text(Z[k][1], { x: x + 3.0, y: 2.2, w: 2.7, h: 0.35, size: 14, italic: true, color: col }, { fx: 'fade', dur: 200 });
-      s.text(Z[k][2], { x: x + 3.0, y: 2.55, w: 2.7, h: 0.5, size: 21, bold: true, color: C.txt }, { fx: 'fade', dur: 200 });
-      s.text(Z[k][3], { x: x + 0.4, y: 3.5, w: w - 0.7, h: 1.15, size: 16, color: C.mut }, { fx: 'fade', dur: 200 });
+      s.text(Z[k][1], { x: tx, y: 2.3, w: x + w - tx - 0.15, h: 0.35, size: 15, italic: true, color: col }, { fx: 'fade', dur: 200 });
+      s.text(Z[k][2], { x: tx, y: 2.65, w: x + w - tx - 0.15, h: 0.5, size: 22, bold: true, color: C.txt }, { fx: 'fade', dur: 200 });
+      s.text(Z[k][3], { x: x + 0.32, y: 3.42, w: w - 0.45, h: 0.78, size: 17, color: C.mut }, { fx: 'fade', dur: 200 });
     }
-    await point(s, 0.7, 4.95, 11.93, 1.5, 'LuDisc', C.pu, 'Radbremsen: Scheibe oder Trommel.', 'Ist der Weg der Kolbenstange (Zylinderhub) zu groß, stimmt die Nachstellung nicht – Gestängesteller defekt oder Lager ausgeschlagen. Werkstatt.', CLICK, { size: 17 });
+    await point(s, 0.7, 4.55, 11.93, 1.6, 'LuDisc', C.pu, 'Radbremsen: Scheibe oder Trommel.', 'Ist der Weg der Kolbenstange (Zylinderhub) zu groß, stimmt die Nachstellung nicht – Gestängesteller defekt oder Lager ausgeschlagen. Werkstatt.', CLICK, { size: 18 });
   }
 
   // ===== KAPITEL 4 ALB / EBS =====
@@ -105,8 +106,8 @@ module.exports = async (deck) => {
     ],
     notes: [
       '▶ Sagen: „ALB heißt automatisch lastabhängige Bremskraftregelung. Leer: wenig Last hinten – also wenig Bremsdruck hinten.“\n✅ Prüfungsfragen 2.7.06-208 und -233: Bremskraft wird der Achslast bzw. der tatsächlichen Fahrzeugmasse angepasst.\n➜ „Und voll beladen?“',
-      '▶ „Voll: Die Achse federt ein. Die ALB misst das – mechanisch über den Abstand Rahmen–Achse oder bei Luftfederung über den Balgdruck – und gibt mehr Druck.“\n✅ eurotransport, „Die Bremsanlage: Retter in der Not“.\n➜ „Was, wenn sie kaputt ist?“',
-      '▶ „Dann bekommt der leere Lkw hinten zu viel Druck – die Hinterräder blockieren.“\n✅ Prüfungsfrage 2.7.06-209: defekte oder falsch eingestellte ALB, Bruch mehrerer Federblätter. NICHT Fading.\n✅ 2.7.06-210: ABS verhindert Blockieren – egal bei welcher Last und Fahrbahn; ALB passt die Bremskraft der Achslast an, NICHT dem Fahrbahnzustand.\n➜ „Heute macht das bei schweren Lkw meist die Elektronik: EBS.“',
+      '▶ „Voll: Die Achse federt ein. Die ALB misst das – mechanisch über den Abstand Rahmen–Achse oder bei Luftfederung über den Balgdruck – und gibt mehr Druck.“\n✅ eurotransport, „Die Bremsanlage: Retter in der Not“: Die ALB misst den Abstand zwischen Fahrgestellrahmen und Achse. Balgdruck bei Luftfederung: Fachwissen.\n➜ „Was, wenn sie kaputt ist?“',
+      '▶ „Dann bekommt der leere Lkw hinten zu viel Druck – die Hinterräder blockieren.“\n✅ Prüfungsfrage 2.7.06-209: defekte oder falsch eingestellte ALB, Bruch mehrerer Federblätter. NICHT Fading.\n💡 Mit ABS (Pflicht über 3,5 t, § 41b StVZO) verhindert das ABS das Blockieren – es regelt dann ständig, ihr hört die Ventile zischen. Ohne ABS blockieren die Räder. Prüfungsfrage und ABS widersprechen sich also nicht.\n✅ 2.7.06-210: ABS verhindert Blockieren – egal bei welcher Last und Fahrbahn; ALB passt die Bremskraft der Achslast an, NICHT dem Fahrbahnzustand.\n➜ „Heute macht das bei schweren Lkw meist die Elektronik: EBS.“',
     ],
     legend: 'Seitenansicht · schematisch',
     scene: async (s, i) => {
@@ -123,8 +124,10 @@ module.exports = async (deck) => {
       s.text('ALB', { x: ax - 0.95, y: fy + 0.15, w: 0.6, h: 0.35, size: 12, bold: true, color: 'C9A227', align: 'center', valign: 'middle', name: '!!talb' });
       s.lineS(ax - 0.65, fy + 0.5, ax, GY - 0.3 * K, { color: 'C9A227', lw: 2, name: '!!gest' });
       // Last-Pfeil und Bremsdruck-Balken
-      s.lineS(ax, 1.75, ax, voll ? 2.55 : 2.25, { color: voll ? C.or : C.mut, lw: voll ? 6 : 3, endArrow: 'triangle', name: '!!last' });
-      s.text(voll ? 'viel Last' : 'wenig Last', { x: ax - 0.9, y: 1.4, w: 1.8, h: 0.32, size: 14, bold: true, color: voll ? C.or : C.mut, align: 'center', name: '!!tlast' });
+      // Lastpfeil endet 0,1 Zoll über Pritsche bzw. Ladung, Beschriftung direkt darüber
+      const lTop = voll ? fy - 0.08 - 0.85 : fy - 0.08, aLen = voll ? 0.9 : 0.6;
+      s.lineS(ax, lTop - 0.1 - aLen, ax, lTop - 0.1, { color: voll ? C.or : C.mut, lw: voll ? 6 : 3, endArrow: 'triangle', name: '!!last' });
+      s.text(voll ? 'viel Last' : 'wenig Last', { x: ax - 0.9, y: lTop - 0.1 - aLen - 0.36, w: 1.8, h: 0.32, size: 14, bold: true, color: voll ? C.or : C.mut, align: 'center', name: '!!tlast' });
       s.text('Bremsdruck hinten', { x: 5.8, y: 1.45, w: 2.6, h: 0.3, size: 13, bold: true, color: C.txt, name: '!!tbd' });
       s.rrect(5.8, 1.8, 2.6, 0.35, { fill: '1A212C', line: C.line, rr: 0.15, name: '!!bdbg' });
       const p = [0.3, 0.92, 0.92][i];
@@ -147,6 +150,7 @@ module.exports = async (deck) => {
       '▶ Sagen: „Heute haben schwere Lkw meist EBS – eine elektronisch geregelte Bremse.“\n' +
       '🖱 Klick 1–3: je ein Punkt.\n' +
       '✅ Prüfungsfrage 2.7.06-228: Bei Ausfall des EBS wird der Fehler per Kontrollleuchte angezeigt, gebremst wird über den pneumatischen Redundanzdruck – NICHT nur noch mit der Feststellbremse. 2.7.06-229: EBS stimmt die Bremskräfte optimal ab und überwacht die Bremsanlage – NICHT automatische Bremsung bei Hindernissen. 2.7.06-235: kürzerer Bremsweg, bessere Stabilität, weniger Belagverschleiß (alle drei richtig).\n' +
+      '✅ Prüfungsfragen 2.7.06-237/-238: Den Notbremsassistenten immer eingeschaltet lassen. 2.7.06-242: Er kann sich abschalten, z. B. bei Schnee auf dem Radarsensor oder wenn sich der Sensor nach einem Unfall verstellt hat.\n' +
       '➜ „Kapitel 5: die Feststellbremse.“',
   });
 
@@ -164,7 +168,7 @@ module.exports = async (deck) => {
       'Beim Fahren drückt Luft den Kolben nach rechts und spannt die starke Feder. Die Bremse ist gelöst.',
       'Pedal treten: Luft strömt in den Membranteil. Die Membran schiebt die Kolbenstange heraus – die Betriebsbremse wirkt.',
       'Handbremse ziehen: Die Luft aus dem Federspeicher wird abgelassen. Die Feder drückt den Kolben – der Lkw bremst mechanisch.',
-      'Kein Luftvorrat und der Lkw muss weg? Die Löseschraube herausdrehen spannt die Feder von Hand. Vorher den Lkw gegen Wegrollen sichern!',
+      'Kein Luftvorrat und der Lkw muss weg? Mit der Löseschraube spannt ihr die Feder von Hand (herausdrehen). Vorher den Lkw gegen Wegrollen sichern!',
     ],
     notes: [
       '▶ Sagen: „Links der Membranteil für die Betriebsbremse, rechts der Federspeicher. Beim Fahren ist im Federspeicher Luft – sie hält die starke Feder zusammengedrückt.“\n➜ „Jetzt tretet ihr auf die Bremse.“',
@@ -174,43 +178,45 @@ module.exports = async (deck) => {
     ],
     legend: 'Kombizylinder im Schnitt · schematisch',
     scene: async (s, i) => {
+      // ganze Zeichnung 0,45 Zoll nach links: rechts bleibt Platz für die Löseschraube und ihre Beschriftung
+      const OX = -0.45, g = { rect: (x, ...r) => s.rect(x + OX, ...r), rrect: (x, ...r) => s.rrect(x + OX, ...r), text: (t, o, an) => s.text(t, { ...o, x: o.x + OX }, an) };
       const betr = i === 1, fsAir = i <= 1, applied = i === 1 || i === 2;
-      const mem = applied ? 7.7 : 8.6, px = (i === 2) ? 9.3 : 11.2, tip = mem - 2.0;
+      const mem = applied ? 7.7 : 8.6, px = (i === 2) ? 9.3 : 11.2, tip = mem - 1.6;
       // Gehäuse
-      s.rrect(7.2, CY - 1.0, 1.7, 2.0, { fill: '1A212C', line: '6E7888', lw: 2, rr: 0.25, name: '!!g1' });
-      s.rrect(8.95, CY - 1.0, 3.5, 2.0, { fill: '1A212C', line: '6E7888', lw: 2, rr: 0.2, name: '!!g2' });
-      s.rect(8.86, CY - 1.1, 0.12, 2.2, { fill: '9AA6B5', name: '!!band' });
-      s.text('Betriebsbremsteil', { x: 6.9, y: CY - 1.5, w: 2.3, h: 0.35, size: 13, bold: true, color: C.bl, align: 'center', name: '!!tb1' });
-      s.text('Federspeicherteil', { x: 9.4, y: CY - 1.5, w: 2.6, h: 0.35, size: 13, bold: true, color: 'C9A227', align: 'center', name: '!!tb2' });
+      g.rrect(7.2, CY - 1.0, 1.7, 2.0, { fill: '1A212C', line: '6E7888', lw: 2, rr: 0.25, name: '!!g1' });
+      g.rrect(8.95, CY - 1.0, 3.5, 2.0, { fill: '1A212C', line: '6E7888', lw: 2, rr: 0.2, name: '!!g2' });
+      g.rect(8.86, CY - 1.1, 0.12, 2.2, { fill: '9AA6B5', name: '!!band' });
+      g.text('Betriebsbremsteil', { x: 6.9, y: CY - 1.5, w: 2.3, h: 0.35, size: 13, bold: true, color: C.bl, align: 'center', name: '!!tb1' });
+      g.text('Federspeicherteil', { x: 9.4, y: CY - 1.5, w: 2.6, h: 0.35, size: 13, bold: true, color: 'C9A227', align: 'center', name: '!!tb2' });
       // Luftanschlüsse
-      s.rect(8.35, CY - 1.3, 0.15, 0.3, { fill: betr ? C.bl : '55606F', name: '!!a11' });
-      s.rect(9.25, CY - 1.3, 0.15, 0.3, { fill: fsAir ? C.bl : '55606F', name: '!!a12' });
+      g.rect(8.35, CY - 1.3, 0.15, 0.3, { fill: betr ? C.bl : '55606F', name: '!!a11' });
+      g.rect(9.25, CY - 1.3, 0.15, 0.3, { fill: fsAir ? C.bl : '55606F', name: '!!a12' });
       // Luft in den Kammern
-      s.rect(mem + 0.06, CY - 0.88, Math.max(8.84 - mem - 0.06, 0.02), 1.76, { fill: C.bl, ft: betr ? 55 : 100, name: '!!luft1' });
-      s.rect(9.0, CY - 0.88, Math.max(px - 9.0, 0.02), 1.76, { fill: C.bl, ft: fsAir ? 55 : 100, name: '!!luft2' });
+      g.rect(mem + 0.06, CY - 0.88, Math.max(8.84 - mem - 0.06, 0.02), 1.76, { fill: C.bl, ft: betr ? 55 : 100, name: '!!luft1' });
+      g.rect(9.0, CY - 0.88, Math.max(px - 9.0, 0.02), 1.76, { fill: C.bl, ft: fsAir ? 55 : 100, name: '!!luft2' });
       // Membran + Kolbenstange + Bremshebel
-      s.rect(mem, CY - 0.88, 0.07, 1.76, { fill: '2E3A4A', line: C.bl, lw: 1, name: '!!mem' });
-      s.rect(tip, CY - 0.07, mem - tip, 0.14, { fill: '9AA6B5', name: '!!stange' });
-      s.rrect(tip - 0.12, CY - 0.75, 0.16, 1.1, { fill: applied ? C.or : '6E7888', rr: 0.3, name: '!!hebel' });
-      s.text(applied ? 'bremst' : 'gelöst', { x: tip - 0.35, y: CY - 1.2, w: 1.2, h: 0.35, size: 15, bold: true, color: applied ? C.or : C.gr, align: 'center', name: '!!tzust' });
+      g.rect(mem, CY - 0.88, 0.07, 1.76, { fill: '2E3A4A', line: C.bl, lw: 1, name: '!!mem' });
+      g.rect(tip, CY - 0.07, mem - tip, 0.14, { fill: '9AA6B5', name: '!!stange' });
+      g.rrect(tip - 0.12, CY - 0.75, 0.16, 1.1, { fill: applied ? C.or : '6E7888', rr: 0.3, name: '!!hebel' });
+      g.text(applied ? 'bremst' : 'gelöst', { x: tip - 0.35, y: CY - 1.2, w: 1.2, h: 0.35, size: 15, bold: true, color: applied ? C.or : C.gr, align: 'center', name: '!!tzust' });
       // Federspeicher: Kolben, Kolbenstange nach links, Feder rechts
-      s.rect(px, CY - 0.85, 0.18, 1.7, { fill: '8A96A6', name: '!!kolben' });
-      s.rect(px - 1.62, CY - 0.06, 1.62, 0.12, { fill: '6E7888', name: '!!kst' });
+      g.rect(px, CY - 0.85, 0.18, 1.7, { fill: '8A96A6', name: '!!kolben' });
+      g.rect(px - 1.62, CY - 0.06, 1.62, 0.12, { fill: '6E7888', name: '!!kst' });
       // Feder aus einzelnen Windungen – beim Morph wird sie sichtbar zusammengedrückt bzw. entspannt
       const fx0 = px + 0.2, fx1 = 12.36, nW = 16, top = CY - 0.66, bot = CY + 0.66;
       for (let k = 0; k < nW; k++) {
         const xa = fx0 + (fx1 - fx0) * k / nW, xb = fx0 + (fx1 - fx0) * (k + 1) / nW;
         const ya = k % 2 ? bot : top, yb = k % 2 ? top : bot;
         const len = Math.hypot(xb - xa, yb - ya), ang = Math.atan2(yb - ya, xb - xa) * 180 / Math.PI;
-        s.rrect((xa + xb) / 2 - len / 2, (ya + yb) / 2 - 0.035, len, 0.07, { fill: 'D4AF37', rr: 0.5, rotate: ang, name: '!!fw' + k });
+        g.rrect((xa + xb) / 2 - len / 2, (ya + yb) / 2 - 0.035, len, 0.07, { fill: 'D4AF37', rr: 0.5, rotate: ang, name: '!!fw' + k });
       }
       // Löseschraube
       const out = i === 3;
-      s.rect(12.45, CY - 0.05, out ? 0.5 : 0.12, 0.1, { fill: '9AA6B5', name: '!!schr' });
-      s.rect(out ? 12.95 : 12.57, CY - 0.18, 0.1, 0.36, { fill: out ? C.red : '9AA6B5', name: '!!skopf' });
-      if (out) s.text('Löse-schraube', { x: 12.45, y: CY + 0.3, w: 0.75, h: 0.6, size: 12, bold: true, color: C.red, align: 'center', name: '!!tschr' });
+      g.rect(12.45, CY - 0.05, out ? 0.5 : 0.12, 0.1, { fill: '9AA6B5', name: '!!schr' });
+      g.rect(out ? 12.95 : 12.57, CY - 0.18, 0.1, 0.36, { fill: out ? C.red : '9AA6B5', name: '!!skopf' });
+      if (out) { s.lineS(12.55, CY + 0.24, 12.55, CY + 1.08, { color: C.red, lw: 1.5, name: '!!lschr' }); s.text('Löseschraube', { x: 11.2, y: CY + 1.08, w: 1.5, h: 0.3, size: 13, bold: true, color: C.red, align: 'right', name: '!!tschr' }); }
       if (out) { s.rrect(5.75, 5.3, 4.2, 0.62, { fill: '2A1A1E', line: C.red, lw: 2, rr: 0.1, name: '!!warn' }); s.text('Keine Feststellbremse mehr – vorher Keile!', { x: 5.8, y: 5.3, w: 4.1, h: 0.62, size: 14, bold: true, color: C.red, align: 'center', valign: 'middle', name: '!!twarn' }); }
-      s.text(['Feder gespannt (Luft)', 'Feder gespannt (Luft)', 'Feder drückt – bremst', 'Feder von Hand gespannt'][i], { x: 9.3, y: CY + 1.1, w: 2.4, h: 0.32, size: 13, bold: true, color: 'C9A227', align: 'center', name: '!!tfeder' });
+      g.text(['Feder gespannt (Luft)', 'Feder gespannt (Luft)', 'Feder drückt – bremst', 'Feder von Hand gespannt'][i], { x: 9.3, y: CY + 1.1, w: 2.4, h: 0.32, size: 13, bold: true, color: 'C9A227', align: 'center', name: '!!tfeder' });
     },
   });
 
@@ -240,11 +246,9 @@ module.exports = async (deck) => {
       const [x1, y1] = pt(-45), [x2, y2] = pt(60);
       arc += `<path d="M ${x1} ${y1} A ${R} ${R} 0 0 1 ${x2} ${y2}" fill="none" stroke="#3C4656" stroke-width="18" stroke-linecap="round"/>`;
       s.img(await svgImg(arc, 600, 600, 1), { x: PX - 3, y: PY - 3, w: 6, h: 6, name: '!!kul' });
-      const lab = [['Fahrt', -35, C.gr], ['Feststell-bremse', 25, C.red], ['Kontroll-stellung', 50, C.pu]];
-      for (const [t, d, col] of lab) {
-        const a = d * Math.PI / 180, r = LL + 0.65;
-        s.text(t, { x: PX + r * Math.sin(a) - 0.75, y: PY - r * Math.cos(a) - 0.3, w: 1.5, h: 0.6, size: 14, bold: true, color: ANG[i] === d ? col : C.dim, align: 'center', valign: 'middle', name: '!!tl' + d });
-      }
+      // Beschriftung frei von Bogen und Knopf: [Text, Winkel, Farbe, x, y, w, Ausrichtung]
+      const lab = [['Fahrt', -35, C.gr, 6.62, 2.67, 1.5, 'center'], ['Feststellbremse', 25, C.red, 9.5, 2.3, 1.5, 'center'], ['Kontrollstellung', 50, C.pu, 10.8, 3.1, 1.6, 'left']];
+      for (const [t, d, col, x, y, w, al] of lab) s.text(t, { x, y, w, h: d === -35 ? 0.6 : 0.4, size: 14, bold: true, color: ANG[i] === d ? col : C.dim, align: al, valign: 'middle', name: '!!tl' + d });
       // Hebel um den Drehpunkt
       const a = ANG[i] * Math.PI / 180, mx = PX + (LL / 2) * Math.sin(a), my = PY - (LL / 2) * Math.cos(a);
       s.rrect(mx - 0.09, my - LL / 2, 0.18, LL, { fill: '9AA6B5', rr: 0.5, rotate: ANG[i], name: '!!hebel' });
@@ -260,9 +264,9 @@ module.exports = async (deck) => {
   // ===== NOTLÖSEN / ABSTELLEN =====
   quiz(deck, 'c5f', {
     kicker: 'Feststellbremse', q: 'Wie sichern Sie einen zweiachsigen Lkw in starkem Gefälle gegen Wegrollen?', size: 32,
-    opts: ['Feststellbremse anziehen', 'Unterlegkeil an ein Hinterrad legen', 'Dauerbremse einschalten'], ok: [0, 1],
+    opts: ['Feststellbremse anziehen', 'Unterlegkeil vor ein Hinterrad legen', 'Dauerbremse einschalten'], ok: [0, 1],
     why: 'Feststellbremse und Unterlegkeil – die Dauerbremse wirkt nur bei laufendem Motor und rollendem Lkw (Prüfungsfrage 2.2.23-201).',
-    notes: '▶ Frage vorlesen, abstimmen. Mehrere Antworten können richtig sein.\n🖱 Klick 1: Antworten · Klick 2: Lösung.\n✅ A und B. Den Keil auf der Talseite unter das Rad legen.\n➜ „Zum Schluss von C5: Mitschreiben.“',
+    notes: '▶ Frage vorlesen, abstimmen. Mehrere Antworten können richtig sein.\n💡 Mündlich abstimmen und begründen – kein Bogen zum Ausfüllen.\n🖱 Klick 1: Antworten · Klick 2: Lösung.\n✅ A und B. Den Keil auf der Talseite unter das Rad legen.\n➜ „Zum Schluss von C5: Mitschreiben.“',
   });
 
   // ===== ABSCHLUSS C5 =====
@@ -281,35 +285,35 @@ module.exports = async (deck) => {
     notes: '▶ Sagen: „Schreibt euch das auf – das sind die Kernpunkte aus C5.“\n❓ Vor jedem Klick fragen: „Was gehört hier hin?“\n🖱 Klick 1–8: je eine Lösung.\n✅ Quellen: § 41 StVZO; Prüfungsfragen 2.7.06-232, 2.7.01-238, 2.7.06-223, 2.7.06-220, 2.7.06-208, 2.7.06-213.\n➜ „Jetzt testen wir C5.“',
   });
   quiz(deck, 'c5e', {
-    kicker: 'Quiz C5 · 1', q: 'Der Lkw stand mehrere Tage. Wann dürfen Sie frühestens losfahren?', size: 34,
-    opts: ['Sobald sich die Feststellbremse lösen lässt', 'Wenn die Druckwarnung aufgehört hat', 'Bei 3 bar Vorratsdruck'], ok: 1,
+    kicker: 'Quiz C5 · 1', q: 'Ihr Lkw mit Druckluftbremse stand mehrere Tage. Wann dürfen Sie frühestens losfahren?', size: 32,
+    opts: ['Sobald sich die Federspeicherbremse automatisch löst', 'Wenn die Signale der Druckwarneinrichtung aufgehört haben', 'Wenn 3 bar Vorratsdruck angezeigt werden'], ok: 1,
     why: 'Erst wenn die Druckwarneinrichtung keine Signale mehr gibt, ist genug Luft für sicheres Bremsen da (Prüfungsfrage 2.7.01-238).',
-    notes: '▶ Frage vorlesen, abstimmen.\n🖱 Klick 1: Antworten · Klick 2: Lösung.\n✅ B.\n➜ „Nächste Frage.“',
+    notes: '▶ Frage vorlesen, abstimmen.\n💡 Mündlich abstimmen und begründen – kein Bogen zum Ausfüllen.\n🖱 Klick 1: Antworten · Klick 2: Lösung.\n✅ B.\n➜ „Nächste Frage.“',
   });
   quiz(deck, 'c5e', {
-    kicker: 'Quiz C5 · 2', q: 'Wodurch wird bei einer Federspeicher-Bremse die Bremsung bewirkt?', size: 34,
-    opts: ['Durch Druckluft', 'Durch Federkraft', 'Durch Bremsflüssigkeit'], ok: 1,
+    kicker: 'Quiz C5 · 2', q: 'Wodurch wird bei einer Federspeicherbremse die Bremsung bewirkt?', size: 34,
+    opts: ['Durch einströmende Druckluft', 'Durch Federkraft', 'Durch die Betätigungskraft des Fahrers'], ok: 1,
     why: 'Das Handbremsventil lässt die Luft aus dem Federspeicher – die Feder bremst. Luft löst (Prüfungsfragen 2.7.06-213, -214).',
-    notes: '▶ Frage vorlesen, abstimmen.\n🖱 Klick 1: Antworten · Klick 2: Lösung.\n✅ B.\n➜ „Und noch eine.“',
+    notes: '▶ Frage vorlesen, abstimmen.\n💡 Mündlich abstimmen und begründen – kein Bogen zum Ausfüllen.\n🖱 Klick 1: Antworten · Klick 2: Lösung.\n✅ B.\n➜ „Und noch eine.“',
   });
   quiz(deck, 'c5e', {
     kicker: 'Quiz C5 · 3', q: 'Beim leeren Lkw blockieren bei jeder stärkeren Bremsung die Hinterräder. Mögliche Ursache?', size: 30,
-    opts: ['Defekte oder falsch eingestellte ALB', 'Fading', 'Bruch mehrerer Federblätter'], ok: [0, 2],
+    opts: ['Defekte oder falsch eingestellte ALB', 'Starkes Bremsfading', 'Bruch mehrerer Federblätter an der Hinterachse'], ok: [0, 2],
     why: 'Die ALB misst die Last über die Federung. Ist sie defekt oder sind Federblätter gebrochen, bekommt die leere Hinterachse zu viel Druck (Prüfungsfrage 2.7.06-209).',
-    notes: '▶ Frage vorlesen, abstimmen. Mehrere Antworten können richtig sein.\n🖱 Klick 1: Antworten · Klick 2: Lösung.\n✅ A und C. Fading heißt: heiße Bremsen bremsen schwächer – das Gegenteil von Blockieren.\n➜ „Zum Schluss von C5: Das nehmt ihr mit.“',
+    notes: '▶ Frage vorlesen, abstimmen. Mehrere Antworten können richtig sein.\n💡 Mündlich abstimmen und begründen – kein Bogen zum Ausfüllen.\n🖱 Klick 1: Antworten · Klick 2: Lösung.\n✅ A und C. Fading heißt: heiße Bremsen bremsen schwächer – das Gegenteil von Blockieren.\n➜ „Zum Schluss von C5: Das nehmt ihr mit.“',
   });
   await takeaway(deck, 'c5e', {
     items: [
-      ['LuWind', 'Ohne Luft keine Betriebsbremse –', 'losfahren erst, wenn die Druckwarnung aus ist.'],
+      ['LuWind', 'Ohne Luft keine Betriebsbremse:', 'losfahren erst, wenn die Druckwarnung aus ist.'],
       ['LuSplit', 'Mehrere Kreise:', 'fällt einer aus, sperrt das Ventil ihn ab – die anderen bremsen weiter.'],
-      ['LuDroplets', 'Wasser im Luftbehälter', 'heißt: Lufttrockner defekt – bei Lufttrockner kein Frostschutzmittel.'],
-      ['LuWeight', 'ALB oder EBS', 'passen die Bremskraft der Beladung an.'],
-      ['LuSquareParking', 'Feder bremst, Luft löst –', 'vor dem Notlösen den Lkw mit Keilen sichern.'],
+      ['LuDroplets', 'Wasser im Luftbehälter:', 'Lufttrockner defekt – bei Lufttrockner kein Frostschutzmittel.'],
+      ['LuWeight', 'ALB oder EBS:', 'passen die Bremskraft der Beladung an.'],
+      ['LuSquareParking', 'Feder bremst, Luft löst:', 'vor dem Notlösen den Lkw mit Keilen sichern.'],
     ],
     notes: '▶ Sagen: „Das sind die fünf Punkte aus C5, die ihr auf jeden Fall wissen müsst.“\n🖱 Klick 1–5: je ein Punkt.\n➜ „Jetzt 15 Minuten Pause. Danach Lektion C6.“',
   });
   {
-    const s = base(deck, 'c5e', { bg: 'f_rast.jpg', ov: 8.5, footer: false, transition: 'black', notes:
+    const s = base(deck, 'c5e', { bg: await shiftImg('f_rast.jpg', 0.8), ov: 9.0, footer: false, transition: 'black', notes:
       '▶ Sagen: „15 Minuten Pause. Kurz raus, frische Luft.“\n' +
       '💡 Pausenende ansagen (z. B. 19:45 Uhr).\n' +
       '🖱 Keine Klicks.\n' +

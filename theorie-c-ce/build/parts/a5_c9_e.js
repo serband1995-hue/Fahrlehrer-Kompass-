@@ -7,8 +7,8 @@ sec('c9a', 'C9  ·  ABFAHRTKONTROLLE', C.gr, 'bg_gr.jpg');
 sec('c9e', 'C9  ·  ABSCHLUSS', C.or, 'bg_or.jpg');
 
 module.exports = async (deck) => {
-  await chapter(deck, 'c9a', { num: 5, ttl: 'Abfahrtkontrolle', sub: 'Fünf Minuten Rundgang vor der Fahrt – damit unterwegs nichts passiert.', ico: 'LuClipboardCheck', notes:
-    '▶ Sagen: „Kapitel 5: die Abfahrtkontrolle. In der Prüfung zeigt ihr sie dem Prüfer. Und im Beruf macht ihr sie vor jeder Schicht.“\n🖱 Keine Klicks.\n➜ „Gehen wir einmal um den Lkw.“' });
+  await chapter(deck, 'c9a', { num: 5, ttl: 'Abfahrtkontrolle', sub: 'Ein gründlicher Rundgang vor jeder Schicht – damit unterwegs nichts passiert.', ico: 'LuClipboardCheck', notes:
+    '▶ Sagen: „Kapitel 5: die Abfahrtkontrolle. In der Prüfung zeigt ihr sie dem Prüfer. Und im Beruf macht ihr sie vor jeder Schicht.“\n💡 Eine Mindestdauer schreibt kein Gesetz vor. Gründlich gemacht – Luft aufbauen, Rundgang, Bremsprobe – dauert es etwa 15 Minuten (Richtwert, bussgeldkatalog.de).\n✅ DGUV Vorschrift 70 § 36 Abs. 1: vor Beginn jeder Arbeitsschicht. DGUV Grundsatz 314-002: auch nach Ladevorgängen und nach dem Kuppeln.\n🖱 Keine Klicks.\n➜ „Gehen wir einmal um den Lkw.“' });
 
   // ===== RUNDGANG (fließend) =====
   {
@@ -36,13 +36,13 @@ module.exports = async (deck) => {
       legend: 'Draufsicht · Reihenfolge ist ein Vorschlag – wichtig ist, dass nichts fehlt',
       frames: [
         fr(0, { hold: true, cap: 'Im Fahrerhaus: Papiere und Fahrerkarte, Motor an, Druck aufbauen, Kontrollleuchten prüfen.', note: N('Wir starten im Fahrerhaus: Papiere da? Fahrerkarte gesteckt? Motor starten, damit sich Druck aufbaut. Alle Kontrollleuchten gehen kurz an – und dann aus.“\n❓ Frage auf der Folie stellen.\n✅ § 23 Abs. 1 StVO: Der Fahrer ist verantwortlich, dass Fahrzeug, Zug und Ladung vorschriftsmäßig sind. DGUV Vorschrift 70 § 36 Abs. 1: vor Beginn jeder Arbeitsschicht die Wirksamkeit der Betätigungs- und Sicherheitseinrichtungen prüfen. Ausführliche Checkliste: DGUV Grundsatz 314-002 „Kontrolle von Fahrzeugen durch Fahrpersonal“.\n💡 Kontrolle auch nach dem Laden, nach dem Kuppeln und nach längeren Pausen (Prüfungsfrage 2.2.23-216: auch prüfen, ob Kinder unter dem Fahrzeug sind).\n🖱 Klick: Der Rundgang beginnt (läuft bis zur nächsten Station).\n➜ „Raus und links vorn anfangen.“') }),
-        fr(1, { hold: true, cap: 'Links vorn: Spiegel sauber und richtig eingestellt, Scheiben frei, Vorderrad: Reifen, Profil, Radmuttern.', note: N('Links vorn: Spiegel sauber und richtig eingestellt? Scheiben frei? Vorderreifen – Profil, Schäden, Luftdruck. Radmuttern – sitzen alle?“\n💡 Viele Lkw haben Radmutter-Anzeiger: Stehen alle Pfeile in einer Linie, hat sich keine Mutter gelöst.\n🖱 Klick: weiter zur Front.\n➜ „Nach vorn.“') }),
+        fr(1, { hold: true, cap: 'Links vorn: Spiegel sauber und richtig eingestellt, Scheiben frei, Vorderrad: Reifen, Profil, Radmuttern.', note: N('Links vorn: Spiegel sauber und richtig eingestellt? Scheiben frei? Vorderreifen – Profil, Schäden, Luftdruck. Radmuttern – sitzen alle?“\n💡 Viele Lkw haben Radmutter-Anzeiger: Zeigen die Pfeile noch paarweise aufeinander, hat sich keine Mutter gelöst.\n🖱 Klick: weiter zur Front.\n➜ „Nach vorn.“') }),
         fr(1.5), fr(2, { hold: true, cap: 'Front: Scheinwerfer, Blinker, Kennzeichen, Wischer. Unter dem Lkw: Öl, Kühlmittel oder Diesel auf dem Boden?', note: N('Vorn: Scheinwerfer, Blinker, Kennzeichen, Scheibenwischer. Und ein Blick unter den Lkw – Pfützen von Öl, Kühlmittel oder Diesel?“\n🖱 Klick: weiter nach rechts vorn.\n➜ „Rechte Seite.“') }),
-        fr(2.5), fr(3, { hold: true, cap: 'Rechts vorn: Vorderrad, Spiegel rechts – auch Rampen- und Weitwinkelspiegel –, Trittstufen.', note: N('Rechts vorn: Vorderrad, und die rechten Spiegel – Haupt-, Weitwinkel- und Rampenspiegel. Die sind beim Rechtsabbiegen lebenswichtig.“\n🖱 Klick: weiter an der rechten Seite.\n➜ „Weiter nach hinten.“') }),
+        fr(2.5), fr(3, { hold: true, cap: 'Rechts vorn: Vorderrad, Spiegel rechts (auch Rampen- und Weitwinkelspiegel), Trittstufen.', note: N('Rechts vorn: Vorderrad, und die rechten Spiegel – Haupt-, Weitwinkel- und Rampenspiegel. Die sind beim Rechtsabbiegen lebenswichtig.“\n🖱 Klick: weiter an der rechten Seite.\n➜ „Weiter nach hinten.“') }),
         fr(4, { hold: true, cap: 'Rechte Seite: Zwillingsreifen (auch zwischen den Reifen!), seitliche Leuchten, Unterfahrschutz, Aufbau.', note: N('Rechte Seite: Zwillingsreifen – schaut auch zwischen die beiden Reifen, da klemmen gern Steine. Seitenmarkierungsleuchten, seitlicher Unterfahrschutz, Aufbau ohne Schäden.“\n🖱 Klick: weiter zum Heck.\n➜ „Zum Heck.“') }),
         fr(4.5), fr(5, { hold: true, cap: 'Heck: Rück-, Brems- und Blinkleuchten, Kennzeichen, Türen oder Plane zu, Ladung gesichert, Unterfahrschutz.', note: N('Heck: Leuchten, Kennzeichen, Unterfahrschutz. Türen zu oder Plane fest – und die Ladung: gesichert, nichts verrutscht?“\n💡 Leuchten prüft man zu zweit oder mit Spiegelung in einer Scheibe – oder mit der Kontrollfunktion im Lkw, falls vorhanden.\n🖱 Klick: weiter zur linken Seite.\n➜ „Linke Seite.“') }),
-        fr(5.5), fr(6, { hold: true, cap: 'Linke Seite: Reifen, Tank- und AdBlue-Deckel zu, Batteriekasten, Luftbehälter – bei Bedarf entwässern.', note: N('Linke Seite: Reifen, Tankdeckel und AdBlue-Deckel zu, Batteriekasten verschlossen, Luftbehälter – mit Lufttrockner nur zur Kontrolle entwässern.“\n✅ Siehe Abend 3 (C5): Wasser im Luftbehälter heißt Lufttrockner defekt.\n🖱 Klick: zurück ins Fahrerhaus.\n➜ „Zurück ins Fahrerhaus.“') }),
-        fr(7, { hold: true, answer: true, cap: 'Im Fahrerhaus: Druckwarnung aus, Lenkung, Hupe, Bremsprobe gleich nach dem Losfahren. Mängel melden!', note: N('Zurück im Fahrerhaus: Ist der Druck da und die Warnung aus? Lenkung leichtgängig? Hupe? Und gleich nach dem Losfahren eine Bremsprobe.“\n✅ Prüfungsfrage 2.7.02-017: Gleich nach dem Losfahren eine Bremsprobe machen, um die Wirkung der Betriebsbremse zu prüfen. DGUV Vorschrift 70 § 36: festgestellte Mängel dem Aufsichtführenden melden; bei Mängeln, die die Betriebssicherheit gefährden, den Betrieb einstellen.\n🖱 Keine Animation mehr – nächster Klick: nächste Folie.\n➜ „Und wenn unterwegs etwas nicht stimmt?“') }),
+        fr(5.5), fr(6, { hold: true, cap: 'Linke Seite: Reifen, Tank- und AdBlue-Deckel zu, Batteriekasten, Luftbehälter – bei Bedarf entwässern. Motoröl und Kühlmittel: Stand prüfen.', note: N('Linke Seite: Reifen, Tankdeckel und AdBlue-Deckel zu, Batteriekasten verschlossen, Luftbehälter – mit Lufttrockner nur zur Kontrolle entwässern. Und die Füllstände: Motoröl und Kühlmittel – reicht der Stand?“\n✅ Siehe Abend 3 (C5): Wasser im Luftbehälter heißt Lufttrockner defekt. DGUV Grundsatz 314-002, Nr. 2.4: Ölstand des Motors und Kühlflüssigkeitsstand ausreichend.\n💡 Wo Ölmessstab und Kühlmittelbehälter sitzen (oft hinter der Frontklappe), steht in der Betriebsanleitung.\n🖱 Klick: zurück ins Fahrerhaus.\n➜ „Zurück ins Fahrerhaus.“') }),
+        fr(7, { hold: true, answer: true, cap: 'Im Fahrerhaus: Druckwarnung aus, Lenkung, Hupe, Notbremsassistent an, Ausrüstung an Bord. Bremsprobe gleich nach dem Losfahren.', note: N('Zurück im Fahrerhaus: Ist der Druck da und die Warnung aus? Lenkung leichtgängig? Hupe? Notbremsassistent eingeschaltet? Ist die Ausrüstung an Bord? Und gleich nach dem Losfahren eine Bremsprobe.“\n✅ Ausrüstung: Unterlegkeile, Warndreieck, Warnleuchte, Verbandkasten, Warnweste, Zurrmittel (DGUV Grundsatz 314-002). § 23 Abs. 1d StVO: Wer einen Lkw über 3,5 t fährt, muss sicherstellen, dass der Notbremsassistent über 30 km/h eingeschaltet ist.\n✅ Prüfungsfrage 2.7.02-017: Gleich nach dem Losfahren eine Bremsprobe machen, um die Wirkung der Betriebsbremse zu prüfen. DGUV Vorschrift 70 § 36: festgestellte Mängel dem Aufsichtführenden melden; bei Mängeln, die die Betriebssicherheit gefährden, den Betrieb einstellen.\n🖱 Keine Animation mehr – nächster Klick: nächste Folie.\n➜ „Und wenn unterwegs etwas nicht stimmt?“') }),
       ],
       scene: async (s, { p }) => {
         s.img(path, { x: 6.06, y: 1.81, w: 6.68, h: 3.08, name: '!!pfad' });
@@ -126,6 +126,7 @@ module.exports = async (deck) => {
       '❓ Jede Situation vorlesen, Antworten sammeln, dann klicken.\n' +
       '🖱 Klick 1–5: je eine Störung.\n' +
       '✅ Prüfungsfragen 2.7.02-203 (Druckwarneinrichtung), 2.7.02-216 (rote Temperaturwarnung), 2.7.02-034 (Öldruckkontrollleuchte erlischt nicht: Motor umgehend abstellen, Ölstand kontrollieren), 2.7.02-030 (zieht beim Bremsen: Fachwerkstatt), 2.7.02-202 (Fülldauer zu lang: Luftbehälter/Anschlüsse undicht oder Förderleistung des Luftpressers zu gering).\n' +
+      '💡 Selbst beheben nur Einfaches nach Betriebsanleitung: z. B. Leuchtmittel oder Sicherung tauschen, Luftbehälter entwässern, Wischwasser nachfüllen. Alles andere: Werkstatt (FahrschAusbO Anl. 2.3 Nr. 9 d: Erkennen und Beseitigung einfacher Störungen).\n' +
       '➜ „Das war C9. Jetzt zum Mitschreiben.“',
   });
 
@@ -137,7 +138,7 @@ module.exports = async (deck) => {
       ['Formschluss', 'lückenlos an Stirn- und Seitenwände, Lücken mit Füllmitteln schließen'],
       ['Niederzurren', 'Gurt presst die Ladung auf die Ladefläche → mehr Reibung'],
       ['Zurrgurt-Etikett', 'LC = Zurrkraft · STF = Vorspannkraft · ohne Etikett: nicht benutzen'],
-      ['Stirnwand (Code L)', 'hält nur 40 % der Nutzlast, höchstens 5 t'],
+      ['Stirnwand (Code L)', 'hält nur 40 % der Nutzlast, höchstens 5.000\u00A0daN'],
       ['Lastverteilungsplan', 'Ladung nur im erlaubten Bereich – Achslasten beachten'],
       ['Abfahrtkontrolle', 'vor jeder Schicht und nach Laden oder Kuppeln · Mängel melden · Bremsprobe'],
     ],
@@ -164,7 +165,7 @@ module.exports = async (deck) => {
   await takeaway(deck, 'c9e', {
     items: [
       ['LuArrowBigRight', 'Die Ladung will weiter:', 'beim Bremsen mit bis zu 80 % ihres Gewichts nach vorn.'],
-      ['LuLink', 'Formschluss und Zurren:', 'lückenlos an die Wände und niederzurren – Reibung allein reicht nie.'],
+      ['LuLink', 'Formschluss und Zurren:', 'erst lückenlos an die Wände, dann zurren – Reibung allein reicht nie.'],
       ['LuTag', 'Gurt prüfen:', 'Etikett lesbar, keine Schnitte, Ratsche heil – sonst aussortieren.'],
       ['LuScale', 'Lastverteilungsplan:', 'nicht zu weit vorn, nicht zu weit hinten – Achslasten beachten.'],
       ['LuClipboardCheck', 'Abfahrtkontrolle:', 'vor jeder Schicht und nach Laden, Kuppeln, langen Pausen. Rote Warnleuchte: sicher anhalten.'],

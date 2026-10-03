@@ -12,6 +12,7 @@ module.exports = async (deck) => {
       '▶ Sagen: „Willkommen zurück. In C8 geht es um Regeln, die ihr bei jeder Fahrt erfüllen müsst: Was an Bord sein muss, wie groß und schwer ein Lkw sein darf, wie Ladung herausragen darf, was bei Gefahrgut und Abfall gilt – und wie ihr bei der Arbeit am Lkw gesund bleibt.“\n' +
       '🖱 Klick 1–5: je ein Kapitel.\n' +
       '💡 Zeiten sind Richtwerte für 90 Minuten.\n' +
+      '💡 Geschwindigkeitsbegrenzer (Rahmenplan C8 c): in Abend 3 behandelt – kurz wiederholen: Lkw über 3,5 t haben einen Begrenzer, eingestellt auf höchstens 90 km/h (§ 57c StVZO).\n' +
       '➜ „Kapitel 1: Was muss an Bord sein?“' });
     kick(s, 'Lektion C8 · Ausrüstung, Beförderung, Sicherheit'); title(s, 'Das lernt ihr in C8');
     const T = [['01', 'Pflichtausrüstung', 'Warndreieck, Warnleuchte, Warnweste, Verbandkasten, Keile, Abschleppen', '20 Min', C.gr], ['02', 'Maße und Gewichte', 'Breite, Höhe, Länge, Achslasten, Überladung', '20 Min', C.or], ['03', 'Ladung', 'Was herausragen darf, wer verantwortlich ist', '15 Min', 'C9A227'], ['04', 'Besondere Güter', 'Gefahrgut, Abfall, Tiere', '15 Min', C.red], ['05', 'Arbeitssicherheit', 'Aussteigen, Einweiser, Schutzkleidung', '15 Min', C.bl]];
@@ -90,7 +91,7 @@ module.exports = async (deck) => {
         s.text(t.d > 0 ? Math.round(t.d) + ' m' : '', { x: REAR - ml / 2 - 0.6, y: RY + RH + 0.3, w: 1.2, h: 0.32, size: 15, bold: true, color: C.txt, align: 'center', name: '!!masst' });
         // Warnleuchte
         s.oval(REAR - 1.9, RY + RH - 0.35, 0.22, 0.22, { fill: C.am, ft: t.wl ? (t.bl ? 0 : 55) : 100, glow: t.wl && t.bl ? 12 : undefined, glowColor: C.am, name: '!!wl' });
-        s.text(t.wl ? 'Warnleuchte' : '', { x: REAR - 2.6, y: RY + RH - 0.75, w: 1.6, h: 0.3, size: 12, bold: true, color: C.am, align: 'center', name: '!!wlt' });
+        s.text(t.wl ? 'Warnleuchte' : '', { x: REAR - 1.6, y: RY + RH - 0.39, w: 1.4, h: 0.3, size: 12, bold: true, color: C.am, valign: 'middle', name: '!!wlt' });   // rechts neben der Leuchte, nicht auf der Mittellinie
         s.text('Verkehr →', { x: 5.75, y: RY + RH * 0.55, w: 1.6, h: 0.35, size: 13, color: C.dim, name: '!!vk' });
       },
     });
@@ -121,7 +122,7 @@ module.exports = async (deck) => {
         const cx = SX - RH / 2 * Math.sin(-a), cy = SY + RH / 2 * Math.cos(a);
         s.rect(cx - RW / 2, cy - RH / 2, RW, RH, { fill: C.road, rotate: -deg, name: '!!hang' });
         // Lkw: Front links unten (bergab nach links)
-        const DN = 0.05;   // Lkw 0,05 Zoll tiefer: Räder stehen auf der Fahrbahn
+        const DN = 0.025;   // Lkw etwas tiefer: Räder stehen auf der Fahrbahn (nicht darüber schweben)
         const cxx = SX + (h / 2 - DN) * Math.sin(-a), cyy = SY - (h / 2 - DN) * Math.cos(a);
         await lkw(s, o, { x: cxx - w / 2 + r.pad * k, gy: cyy + h / 2, k, name: '!!lkwK', rot: -deg });
         // Hinterrad-Position (Achse 2) auf dem Hang

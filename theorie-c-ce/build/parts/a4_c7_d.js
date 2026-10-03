@@ -80,11 +80,11 @@ module.exports = async (deck) => {
         s.rect(5.65, GY - 0.12, 7.4, 0.12, { fill: '3B6EA8', ft: 30, name: '!!film' });
         // Wasserkeil vor dem Reifen (Fahrt nach links)
         const kw = st.keil, kh = 0.12 + st.lift + kw * 0.18;
-        s.shape(s.pres.shapes.RIGHT_TRIANGLE, { x: CX - R * 0.55 - kw, y: GY - kh, w: kw, h: kh, fill: '4CC9F0', ft: 15, flipH: true, name: '!!keil' });
+        s.shape(s.pres.shapes.RIGHT_TRIANGLE, { x: CX - R * 0.55 - kw, y: GY - kh, w: kw, h: kh, fill: '45B8DE', flipH: true, name: '!!keil' });   // deckend: keine Naht zur Wasserschicht
         // Bild 3: Das Wasser läuft unter dem Reifen weiter (liegt hinter dem Rad – sichtbar ist nur, was unter dem Reifen ist), dann 0,06 Zoll dünn bis x 9,9
         const wx = CX - R * 0.55, on = i === 2;
-        s.rect(wx, GY - kh, CX + 0.05 - wx, kh, { fill: '4CC9F0', ft: on ? 15 : 100, name: '!!wunter' });
-        s.rect(CX + 0.05, GY - 0.18, 9.9 - CX - 0.05, 0.18, { fill: '4CC9F0', ft: on ? 15 : 100, name: '!!wschicht' });
+        s.rect(wx - 0.03, GY - kh, CX + 0.08 - wx, kh, { fill: '45B8DE', ft: on ? 0 : 100, name: '!!wunter' });
+        s.rect(CX + 0.03, GY - 0.18, 9.9 - CX - 0.03, 0.18, { fill: '45B8DE', ft: on ? 0 : 100, name: '!!wschicht' });
         s.img(wheel, { x: CX - R, y: GY - 2 * R - st.lift, w: 2 * R, h: 2 * R, rotate: 120 - i * 40, name: '!!rad' });   // Fahrt nach links: Rad dreht gegen den Uhrzeigersinn
         // Spritzwasser
         for (let k = 0; k < 4; k++) s.oval(CX - R * 0.7 - 0.2 - k * 0.32 * (i + 1) * 0.6, GY - 0.35 - k * 0.22 * (i + 1) * 0.5, 0.12, 0.12, { fill: C.bl, ft: 30, name: '!!spr' + k });
@@ -165,7 +165,7 @@ module.exports = async (deck) => {
     kicker: 'Quiz C7 · 1', q: 'Sie befahren eine Kurve ein Mal mit 30 km/h und ein anderes Mal mit 60 km/h. Wie ändert sich dabei die Fliehkraft? Die Fliehkraft ist bei 60 km/h …', size: 26,
     opts: ['… doppelt so groß', '… gleich groß', '… viermal so groß'], ok: 2,
     why: 'Die Fliehkraft wächst mit dem Quadrat der Geschwindigkeit: doppelt so schnell – viermal so groß (Prüfungsfrage 2.7.01-046).',
-    notes: '▶ Frage vorlesen, abstimmen lassen.\n🖱 Klick 1: Antworten · Klick 2: Lösung.\n✅ C.\n➜ „Nächste Frage.“',
+    notes: '▶ Frage vorlesen, abstimmen lassen.\n💡 Gemeinsam besprechen – keine Prüfungsbögen ausfüllen lassen (§ 4 Abs. 1a FahrschAusbO).\n🖱 Klick 1: Antworten · Klick 2: Lösung.\n✅ C.\n➜ „Nächste Frage.“',
   });
   quiz(deck, 'c7e', {
     kicker: 'Quiz C7 · 2', q: 'Wodurch wird die auf ein Fahrzeug wirkende Fliehkraft bei Kurvenfahrt vergrößert?', size: 32,
@@ -195,7 +195,7 @@ module.exports = async (deck) => {
       '💡 Pausenende ansagen (z. B. 19:45 Uhr).\n' +
       '🖱 Keine Klicks.\n' +
       '➜ „Willkommen zurück. Lektion C8: Was muss an Bord sein – und wie schwer und groß darf ein Lkw sein?“' });
-    s.img('ov_left.png', { x: 0, y: 0, w: 7.6, h: 7.5, name: '!!ov2' });
+    s.img('ov_left.png', { x: 0, y: 0, w: 10.5, h: 7.5, name: '!!ov2' });   // zweiter Verlauf: „15 Minuten“ steht nicht auf dem weißen Fahrerhaus
     s.text('PAUSE', { x: 0.7, y: 2.0, w: 6, h: 0.5, size: 18, bold: true, color: C.gr, cs: 6 }, { fx: 'fade', auto: true, dur: 600 });
     s.text('15 Minuten', { x: 0.7, y: 2.5, w: 6.5, h: 1.4, size: 72, bold: true, color: C.txt }, { fx: 'rise', auto: true, dur: 900, d: 200 });
     s.text('Kurz raus, frische Luft.', { x: 0.7, y: 4.0, w: 6.2, h: 0.9, size: 22, color: C.mut }, { fx: 'fade', auto: true, dur: 700, d: 600 });

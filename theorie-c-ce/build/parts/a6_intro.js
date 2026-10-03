@@ -68,7 +68,7 @@ module.exports = async (deck) => {
       '💡 Zeiten sind Richtwerte für 90 Minuten.\n' +
       '➜ „Kapitel 1: Welche Züge gibt es?“' });
     kick(s, 'Lektion CE1 · Zusammenstellung von Zügen'); title(s, 'Das lernt ihr in CE1');
-    const T = [['01', 'Zugarten und Kupplungen', 'Gliederzug, Zentralachsanhänger, Sattelzug · Bolzen- und Sattelkupplung', '15 Min', C.bl], ['02', 'An- und Abkuppeln', 'Schritt für Schritt · gelb vor rot · Kontrollstift', '25 Min', C.or], ['03', 'Auf- und Absatteln', 'Höhe, Einrasten, Sicherung · Stützen', '15 Min', C.gr], ['04', 'Maße und Kurvenlauf', '16,50 m · 18,75 m · Kreisring 12,50 m', '15 Min', C.pu], ['05', 'Gewichte und Führerschein', '40 t, 44 t, Sattellast · C1E oder CE', '15 Min', 'C9A227']];
+    const T = [['01', 'Zugarten und Kupplungen', 'Gliederzug, Sattelzug · Bolzen- und Sattelkupplung · Verschleiß', '15 Min', C.bl], ['02', 'An- und Abkuppeln', 'Schritt für Schritt · gelb vor rot · Kontrollstift', '25 Min', C.or], ['03', 'Auf- und Absatteln', 'Höhe, Einrasten, Sicherung · Stützen', '15 Min', C.gr], ['04', 'Maße und Kurvenlauf', '16,50 m · 18,75 m · Kreisring 12,50 m', '15 Min', C.pu], ['05', 'Gewichte und Führerschein', '40 t, 44 t, Sattellast · C1E oder CE', '15 Min', 'C9A227']];
     for (let i = 0; i < 5; i++) {
       const y = 2.0 + i * 0.9;
       card(s, 0.7, y, 11.93, 0.78, { line: T[i][4] }, CLICK);

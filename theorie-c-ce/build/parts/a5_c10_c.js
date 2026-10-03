@@ -16,7 +16,7 @@ module.exports = async (deck) => {
 
   // ===== WAS GEHÖRT ZUR PLANUNG? =====
   await photoAsk(deck, 'c10s', {
-    bg: 'j_karte_r.jpg', bgX: 6.0, ov: 7.0, kicker: 'Streckenplanung', q: 'Was müsst ihr bei der Planung beachten?', qsize: 30, w: 5.05, asize: 15,
+    bg: 'j_karte_r.jpg', bgX: 6.0, ov: 7.0, kicker: 'Streckenplanung', q: 'Was müsst ihr bei der Planung beachten?', qsize: 30, w: 5.05, asize: 15, top: 2.45,
     answers: [
       ['LuRuler', 'Höhe, Breite, Gewicht', 'Brücken, Tunnel, Verbote.', C.pu],
       ['LuClock', 'Lenk- und Ruhezeiten', 'Pausen und Parkplätze einplanen.', C.pu],
@@ -80,13 +80,16 @@ module.exports = async (deck) => {
     const W = (13.05 - OX) * 100, H = (6.55 - OY) * 100;
     let base = `<rect x="0" y="0" width="${W}" height="${H}" rx="14" fill="#122019" stroke="#2A3342" stroke-width="2"/>`;
     base += `<path d="M${P([[5.75, 2.55], [7.0, 2.35], [8.3, 1.9], [9.1, 1.5]])}" fill="none" stroke="#1E4A6E" stroke-width="16" stroke-linecap="round"/>`;
-    [[9.85, 2.85], [10.75, 2.75], [10.9, 3.55], [9.6, 3.7], [10.0, 4.0], [11.7, 2.9], [6.2, 5.35], [6.7, 5.4], [12.2, 1.75]].forEach(([x, y]) => { base += `<rect x="${((x - OX) * 100).toFixed(0)}" y="${((y - OY) * 100).toFixed(0)}" width="30" height="24" rx="3" fill="#26313F"/>`; });
+    [[9.85, 2.85], [10.75, 2.75], [10.9, 3.55], [9.6, 3.7], [10.6, 4.2], [11.7, 2.9], [6.2, 5.35], [6.7, 5.4], [12.2, 1.75]].forEach(([x, y]) => { base += `<rect x="${((x - OX) * 100).toFixed(0)}" y="${((y - OY) * 100).toFixed(0)}" width="30" height="24" rx="3" fill="#26313F"/>`; });
     base += `<path d="M${P(A)}" fill="none" stroke="#3C4656" stroke-width="16" stroke-linejoin="round" stroke-linecap="round"/>`;
     base += `<path d="M${P(B)}" fill="none" stroke="#3C4656" stroke-width="16" stroke-linejoin="round" stroke-linecap="round"/>`;
-    // Bahnlinie über die Unterführung
-    base += `<path d="M${P([[9.75, 2.65], [11.05, 3.95]])}" fill="none" stroke="#8A95A6" stroke-width="6"/>`;
-    for (let k = 0; k <= 10; k++) { const x = 9.75 + k * 0.13, y = 2.65 + k * 0.13; base += `<path d="M${P([[x - 0.07, y + 0.07], [x + 0.07, y - 0.07]])}" stroke="#8A95A6" stroke-width="3"/>`; }
     const mapImg = await svgImg(base, W, H, 2);
+    // Bahn auf einer Brücke über der Straße (Unterführung): Brückendeck mit Geländern, Gleis obenauf – liegt über der Route
+    const BX = (10.4 - OX) * 100, BY = (3.3 - OY) * 100;
+    let bahn = `<g transform="translate(${BX.toFixed(1)} ${BY.toFixed(1)}) rotate(45)"><rect x="-34" y="-15" width="68" height="30" fill="#2E3846"/><path d="M-34 -15 L34 -15 M-34 15 L34 15" stroke="#C9D0DA" stroke-width="4"/></g>`;
+    bahn += `<path d="M${P([[9.75, 2.65], [11.05, 3.95]])}" fill="none" stroke="#A9B6C6" stroke-width="6"/>`;
+    for (let k = 0; k <= 10; k++) { const x = 9.75 + k * 0.13, y = 2.65 + k * 0.13; bahn += `<path d="M${P([[x - 0.07, y + 0.07], [x + 0.07, y - 0.07]])}" stroke="#A9B6C6" stroke-width="3"/>`; }
+    const bahnImg = await svgImg(bahn, W, H, 2);
     const routeA = await svgImg(`<path d="M${P(A)}" fill="none" stroke="#FFB547" stroke-width="7" stroke-dasharray="16 10" stroke-linejoin="round" stroke-linecap="round"/>`, W, H, 2);
     const routeB = await svgImg(`<path d="M${P(B)}" fill="none" stroke="#38D98A" stroke-width="7" stroke-linejoin="round" stroke-linecap="round"/>`, W, H, 2);
     const T = [[6.3, 5.9, rot(A[0], A[1])], [7.6, 5.9, rot(A[0], A[1])], [8.6, 5.1, rot(A[1], A[2])], [9.05, 4.65, rot(A[2], A[3])], [9.05, 4.65, rot(A[2], A[3])], [10.4, 4.75, rot(B[0], B[1])], [11.5, 4.7, rot(B[1], B[2])], [12.3, 4.0, rot(B[2], B[3])], [12.6, 2.75, rot(B[4], B[5])]];
@@ -100,7 +103,7 @@ module.exports = async (deck) => {
         fr(0, { hold: true, cap: 'Das Navi ist auf „Pkw“ eingestellt und nimmt den kürzesten Weg – durch den Ort und unter der Bahn hindurch.', note: '▶ Sagen: „Euer Navi ist auf Pkw eingestellt oder kennt die Höhe eures Lkw nicht. Es nimmt den kürzesten Weg – durch den Ort, unter der Bahn hindurch.“\n❓ Frage auf der Folie stellen.\n🖱 Klick: Der Lkw fährt los (läuft von selbst bis zum Schild).\n➜ „Fahren wir los.“' }),
         fr(1, { cap: 'Der Lkw folgt dem Navi …' }), fr(2),
         fr(3, { hold: true, t: { big: 1 }, answer: true, cap: 'Vor der Unterführung: Zeichen 265 – tatsächliche Höhe 3,8 m. Der Lkw ist 4,0 m hoch. STOPP!', note: '▶ „Da steht es: Zeichen 265, 3,8 Meter. Euer Lkw ist 4 Meter hoch. Hier passt ihr nicht durch – egal, was das Navi sagt.“\n✅ Zeichen 265 (tatsächliche Höhe), Z. 264 (Breite), Z. 266 (Länge), Z. 262 (tatsächliche Masse), Z. 263 (Achslast) – StVO Anlage 2. Prüfungsfrage 2.6.07-219: Die Informationen des Navis sind Empfehlungen. 2.6.07-223: Anweisungen des Navis „stets befolgen“ ist falsch.\n💡 Höhe mit Ladung und Aufbau messen – angehobene Luftfederung macht den Lkw höher!\n🖱 Klick: Die richtige Route.\n➜ „Was ist die Lösung?“' }),
-        fr(4, { hold: true, t: { big: 1, b: 1 }, cap: 'Lkw-Navi mit Fahrzeugprofil (Höhe, Breite, Länge, Gewicht, Achslast) plant die Umfahrung.', note: '▶ „Die Lösung: ein Lkw-Navi mit Fahrzeugprofil. Höhe, Breite, Länge, Gewicht, Achslast eintragen – dann plant es um die Unterführung herum. Und: Das Ziel vor der Abfahrt eingeben – am besten bei abgestelltem Motor oder per Sprache.“\n✅ Prüfungsfrage 2.6.07-223: Karten-Update regelmäßig; Ziel eingeben, wenn das Fahrzeug steht. § 23 Abs. 1a StVO: Navi während der Fahrt nicht in die Hand nehmen; die Ausnahme „stehendes Fahrzeug“ gilt nur bei ganz ausgeschaltetem Motor – Start-Stopp zählt nicht (§ 23 Abs. 1b StVO). BKat Nr. 246.1: 100 € und 1 Punkt.\n🖱 Klick: Der Lkw fährt die Umfahrung (läuft von selbst).\n➜ „Weiter auf der sicheren Route.“' }),
+        fr(4, { hold: true, t: { big: 1, b: 1 }, cap: 'Lkw-Navi mit Fahrzeugprofil (Höhe, Breite, Länge, Gewicht, Achslast) plant die Umfahrung.', note: '▶ „Die Lösung: ein Lkw-Navi mit Fahrzeugprofil. Höhe, Breite, Länge, Gewicht, Achslast eintragen – dann plant es um die Unterführung herum. Und: Das Ziel vor der Abfahrt eingeben – am besten bei abgestelltem Motor oder per Sprache.“\n💡 Breite mit Spiegeln eintragen – Zeichen 264 zählt die Außenspiegel mit (StVO Anlage 2).\n✅ Prüfungsfrage 2.6.07-223: Karten-Update regelmäßig; Ziel eingeben, wenn das Fahrzeug steht. § 23 Abs. 1a StVO: Navi während der Fahrt nicht in die Hand nehmen; die Ausnahme „stehendes Fahrzeug“ gilt nur bei ganz ausgeschaltetem Motor – Start-Stopp zählt nicht (§ 23 Abs. 1b StVO). BKat Nr. 246.1: 100 € und 1 Punkt.\n🖱 Klick: Der Lkw fährt die Umfahrung (läuft von selbst).\n➜ „Weiter auf der sicheren Route.“' }),
         fr(5, { t: { b: 1 } }), fr(6, { t: { b: 1 } }), fr(7, { t: { b: 1 } }),
         fr(8, { hold: true, t: { b: 1 }, cap: 'Ein kleiner Umweg – aber sicher am Ziel.', note: '▶ „Ein kleiner Umweg – aber sicher angekommen. Eine Brücke abzureißen kostet ein Vielfaches.“\n🖱 Keine Animation mehr – nächster Klick: nächste Folie.\n➜ „Eine Prüfungsfrage zum Navi.“' }),
       ],
@@ -108,11 +111,12 @@ module.exports = async (deck) => {
         s.img(mapImg, { x: OX, y: OY, w: 13.05 - OX, h: 6.55 - OY, name: '!!map' });
         s.img(routeA, { x: OX, y: OY, w: 13.05 - OX, h: 6.55 - OY, transparency: b ? 75 : 0, name: '!!rA' });
         s.img(routeB, { x: OX, y: OY, w: 13.05 - OX, h: 6.55 - OY, transparency: b ? 0 : 100, name: '!!rB' });
+        s.img(bahnImg, { x: OX, y: OY, w: 13.05 - OX, h: 6.55 - OY, name: '!!bahnB' });
         s.text('Start', { x: 5.85, y: 6.1, w: 1.0, h: 0.3, size: 12, bold: true, color: C.mut, name: '!!st' });
         s.img(await icon('LuMapPin', C.red), { x: 12.38, y: 1.62, w: 0.44, h: 0.44, name: '!!ziel' });
         s.text('Ziel', { x: 11.75, y: 1.62, w: 0.6, h: 0.3, size: 12, bold: true, color: C.mut, align: 'right', name: '!!zt' });
         s.text('Bahn', { x: 11.05, y: 3.95, w: 0.8, h: 0.3, size: 12, color: C.mut, name: '!!bahn' });
-        await sign(s, '265__3_8__', big ? 6.0 : 9.85, big ? 1.75 : 3.55, big ? 1.25 : 0.38, big ? 1.25 : 0.38, undefined, { name: '!!z265' });
+        await sign(s, '265__3_8__', big ? 6.0 : 9.975, big ? 1.75 : 3.775, big ? 1.25 : 0.45, big ? 1.25 : 0.45, undefined, { name: '!!z265' });   // rechts neben der Straße vor der Brücke
         const [x, y, r] = T[k];
         veh(s, 'truck.png', x, y, r, '!!tr', { scale: 0.33 });
         s.text(b ? 'Lkw-Navi: sichere Route' : big ? '4,0 m > 3,8 m – STOPP!' : 'Pkw-Navi: kürzester Weg', { x: 7.45, y: 1.68, w: 3.6, h: 0.42, size: 15, bold: true, color: C.dark, fill: b ? C.gr : big ? C.red : C.or, shape: s.pres.shapes.ROUNDED_RECTANGLE, rr: 0.3, align: 'center', valign: 'middle', name: '!!stat' });
@@ -146,7 +150,7 @@ module.exports = async (deck) => {
         fr({ t: { km: 315, s: 2 }, cap: 'Nach 4,5 Stunden Lenkzeit, um 10:30 Uhr …' }),
         fr({ t: { km: 315, s: 3 }, hold: true, cap: '… 45 Minuten Pause. Das ist Pflicht.', note: '▶ „Nach 4,5 Stunden Lenkzeit: 45 Minuten Pause – Pflicht. Ihr kennt das von Abend 1.“\n✅ Art. 7 VO (EG) Nr. 561/2006: nach höchstens 4,5 h Lenkzeit mindestens 45 min Fahrtunterbrechung (teilbar in 15 + 30 min). Prüfungsfrage 2.6.07-221: Lenk- und Ruhezeiten einplanen, damit die Pausen eingehalten werden können.\n🖱 Klick: Die Fahrt läuft weiter (von selbst bis München).\n➜ „Weiter nach München.“' }),
         fr({ t: { km: 472, s: 4 } }),
-        fr({ t: { km: 630, s: 5 }, hold: true, answer: true, cap: 'Ankunft gegen 15:45 Uhr – nach 9 Stunden Lenkzeit. Das ist eine volle Tageslenkzeit!', note: '▶ „Ankunft gegen Viertel vor vier. 9 Stunden Lenkzeit – das ist schon eine volle Tageslenkzeit. Ein Stau, eine Ladezeit – und es wird knapp. Deshalb: Puffer einplanen und den Parkplatz für die Ruhezeit früh suchen.“\n✅ Eigene Rechnung: 630 km ÷ 70 km/h = 9 h; + 45 min Pause → 15:45 Uhr. Tageslenkzeit höchstens 9 h, zweimal pro Woche 10 h (Art. 6 VO 561/2006, siehe Abend 1).\n🖱 Keine Animation mehr – nächster Klick: nächste Folie.\n➜ „Und an manchen Tagen dürft ihr gar nicht fahren.“' }),
+        fr({ t: { km: 630, s: 5 }, hold: true, answer: true, cap: 'Ankunft gegen 15:45 Uhr – nach 9 Stunden Lenkzeit. Das ist eine volle Tageslenkzeit!', note: '▶ „Ankunft gegen Viertel vor vier. 9 Stunden Lenkzeit – das ist schon eine volle Tageslenkzeit. Ein Stau, eine Ladezeit – und es wird knapp. Deshalb: Puffer einplanen und den Parkplatz für die Ruhezeit früh suchen.“\n✅ Eigene Rechnung: 630 km ÷ 70 km/h = 9 h; + 45 min Pause → 15:45 Uhr. Tageslenkzeit höchstens 9 h, zweimal pro Woche 10 h (Art. 6 VO 561/2006, siehe Abend 1).\n💡 Dazu das Arbeitszeitgesetz: höchstens 10 Stunden Arbeit am Tag (§ 3 ArbZG, gilt auch für Fahrer nach § 21a). Abfahrtkontrolle und Laden zählen mit – bei 9 Stunden Lenkzeit bleibt kaum Luft (Prüfungsfrage 2.6.07-227).\n🖱 Keine Animation mehr – nächster Klick: nächste Folie.\n➜ „Und an manchen Tagen dürft ihr gar nicht fahren.“' }),
       ],
       scene: async (s, { km, s: st }) => {
         // Strecke
@@ -154,7 +158,7 @@ module.exports = async (deck) => {
         s.text('München', { x: 11.45, y: 1.55, w: 1.6, h: 0.3, size: 14, bold: true, color: C.mut, align: 'right', name: '!!mm' });
         s.rrect(KX0, 2.05, KX1 - KX0, 0.14, { fill: C.road, rr: 0.5, name: '!!sr' });
         s.rrect(KX0, 2.05, Math.max(0.05, kx(km) - KX0), 0.14, { fill: C.or, ft: km ? 0 : 100, rr: 0.5, name: '!!sf' });
-        veh(s, 'truck.png', Math.max(KX0 + 0.4, kx(km) - 0.25), 2.12, 90, '!!tr', { scale: 0.32 });
+        veh(s, 'truck.png', Math.max(KX0 + 0.46, kx(km) - 0.46), 2.12, 90, '!!tr', { scale: 0.32 });   // Front = Ende des Balkens
         s.text(km + ' km', { x: 9.2, y: 2.35, w: 1.4, h: 0.3, size: 13, bold: true, color: C.txt, align: 'center', name: '!!kmt' });
         // Rechnung
         s.text(st >= 1 ? '630 km ÷ 70 km/h = 9 h Lenkzeit' : '', { x: 5.75, y: 2.85, w: 7.3, h: 0.6, size: 26, bold: true, color: C.or, align: 'center', valign: 'middle', name: '!!calc' });
@@ -195,7 +199,7 @@ module.exports = async (deck) => {
       '➜ „Eine Prüfungsfrage zur Zeitplanung.“',
   });
   await quiz(deck, 'c10z', {
-    kicker: 'Prüfungsfrage 2.6.07-214', q: 'Lkw über 7,5 t, Autobahn Hannover – München. Mit welcher Durchschnittsgeschwindigkeit können Sie rechnen?', size: 28,
+    kicker: 'Prüfungsfrage 2.6.07-214', q: 'Sie wollen mit Ihrem Lkw über 7,5 t zulässige Gesamtmasse auf der Autobahn von Hannover nach München fahren. Mit welcher Durchschnittsgeschwindigkeit können Sie rechnen?', size: 26,
     opts: ['70 km/h', '80 km/h', '40 km/h'], ok: [0],
     why: '80 km/h ist die Höchstgeschwindigkeit – im Schnitt schafft ihr mit Verkehr und Steigungen etwa 70 km/h.',
     notes: '▶ Frage vorlesen, abstimmen.\n🖱 Klick 1: Antworten · Klick 2: Lösung.\n✅ Amtlicher Fragenkatalog 2.6.07-214: A (70 km/h).\n➜ „Das war C10. Zum Mitschreiben.“',
@@ -205,7 +209,7 @@ module.exports = async (deck) => {
   write(deck, 'c10e', {
     ttl: 'Wirtschaftlich fahren, Strecke planen', labelW: 3.3, size: 17,
     rows: [
-      ['Vorausschauend', 'früh vom Gas, im Gang rollen (kein Diesel), unnötiges Anhalten vermeiden'],
+      ['Vorausschauend', 'früh vom Gas, im Gang rollen (Schubabschaltung), unnötiges Anhalten vermeiden'],
       ['Drehzahl', 'früh hochschalten, im grünen Bereich fahren'],
       ['Motor aus', 'unnötig laufen lassen ist verboten (§ 30 StVO, 80 €)'],
       ['CO₂', '1 Liter Diesel ≈ 2,65 kg CO₂'],
@@ -216,7 +220,7 @@ module.exports = async (deck) => {
     notes: '▶ Sagen: „Schreibt euch das auf – das kommt in der Prüfung.“\n🖱 Klick 1–7: je eine Lösung.\n💡 Erst das Stichwort vorlesen und fragen: „Wer weiß es?“ – dann klicken.\n✅ Quellen: Prüfungsfragen 2.5.01-213, 2.5.01-015, 2.6.07-218, 2.6.07-214; § 30 Abs. 1 StVO + BKat Nr. 117; § 1 Abs. 2 Nr. 7 BFStrMG; Art. 7 VO (EG) 561/2006; CO₂: eigene Rechnung nach UBA.\n➜ „Drei Prüfungsfragen.“',
   });
   quiz(deck, 'c10e', {
-    kicker: 'Prüfungsfrage 2.6.07-218', q: 'Straßenkarte im Maßstab 1:200.000. 1 cm auf der Karte entspricht wie vielen Kilometern in der Realität?', size: 28,
+    kicker: 'Prüfungsfrage 2.6.07-218', q: 'Sie planen Ihre Fahrt mit einer Straßenkarte mit dem Maßstab 1:200.000. 1\u00A0cm auf der Karte entspricht wie vielen Kilometern in der Realität?', size: 26,
     opts: ['2 km', '10 km', '20 km'], ok: [0],
     why: 'Fünf Nullen streichen: 200.000 cm = 2 km.',
     notes: '▶ Frage vorlesen, abstimmen.\n🖱 Klick 1: Antworten · Klick 2: Lösung.\n✅ Amtlicher Fragenkatalog 2.6.07-218: A.\n➜ „Nächste Frage.“',

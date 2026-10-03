@@ -10,12 +10,12 @@ module.exports = async (deck) => {
   // ===== LERNZIELE C6 =====
   {
     const s = base(deck, 'c6', { transition: 'black', notes:
-      '▶ Sagen: „Willkommen zurück. In C6 geht es darum, wie ihr die Bremse im Alltag schont und prüft: Dauerbremsen, Bremsweg, ABS, Kontrolle – und wer den Lkw regelmäßig untersucht.“\n' +
+      '▶ Sagen: „Willkommen zurück. In C6 geht es darum, wie ihr die Bremse im Alltag schont und prüft: Dauerbremsen, Bremsweg, ABS, Kontrolle – und wer den Lkw regelmäßig untersucht. Zum Schluss: Begrenzer, Tempomat und Fahrtenschreiber.“\n' +
       '🖱 Klick 1–6: je ein Kapitel.\n' +
       '💡 Zeiten sind Richtwerte für 90 Minuten.\n' +
       '➜ „Kapitel 1: die Dauerbremsen.“' });
     kick(s, 'Lektion C6 · Dauerbremsen, Untersuchungen, Begrenzer'); title(s, 'Das lernt ihr in C6');
-    const T = [['01', 'Dauerbremsen', 'Motorbremse, Retarder, Grenzen, Glätte', '20 Min', C.or], ['02', 'Bremsweg und Fading', 'Anhalteweg, Gefälle, heiße Bremsen', '15 Min', C.red], ['03', 'ABS', 'Funktion, Kontrollleuchte, richtig bremsen', '10 Min', C.bl], ['04', 'Kontrolle', 'Abfahrtkontrolle, Dichtheit, Bremsprobe', '15 Min', C.pu], ['05', 'HU und SP', 'Fristen, Plakette, Mängel, Bußgelder', '15 Min', 'C9A227'], ['06', 'Begrenzer und Fahrtenschreiber', '90 km/h, Einbauschild, Prüfungen', '10 Min', C.gr]];
+    const T = [['01', 'Dauerbremsen', 'Motorbremse, Retarder, Grenzen, Glätte', '20 Min', C.or], ['02', 'Bremsweg und Fading', 'Anhalteweg, Gefälle, heiße Bremsen', '15 Min', C.red], ['03', 'ABS', 'Funktion, Kontrollleuchte, richtig bremsen', '10 Min', C.bl], ['04', 'Kontrolle', 'Abfahrtkontrolle, Dichtheit, Bremsprobe', '15 Min', C.pu], ['05', 'HU und SP', 'Fristen, Plakette, Mängel, Bußgelder', '15 Min', 'C9A227'], ['06', 'Begrenzer, Tempomat, Fahrtenschreiber', '90 km/h, Abstand, Prüfungen', '10 Min', C.gr]];
     for (let i = 0; i < 6; i++) {
       const y = 1.95 + i * 0.76;
       card(s, 0.7, y, 11.93, 0.66, { line: T[i][4] }, CLICK);
@@ -27,8 +27,8 @@ module.exports = async (deck) => {
   }
 
   // ===== KAPITEL 1 DAUERBREMSEN =====
-  await chapter(deck, 'c6d', { num: 1, ttl: 'Dauerbremsen', sub: 'Bremsen ohne Verschleiß – damit die Betriebsbremse im Gefälle kühl bleibt.', bg: 'h_titel.jpg', notes:
-    '▶ Sagen: „Kapitel 1: die Dauerbremsen. Lange Gefälle wie hier im Gebirge – das ist ihre Aufgabe.“\n🖱 Keine Klicks.\n➜ „Wann ist eine Dauerbremse Pflicht?“' });
+  await chapter(deck, 'c6d', { num: 1, ttl: 'Dauerbremsen', sub: 'Bremsen ohne Verschleiß – damit die Betriebsbremse im Gefälle kühl bleibt.', bg: 'g_schnee.jpg', notes:
+    '▶ Sagen: „Kapitel 1: die Dauerbremsen. Lange Gefälle im Gebirge – das ist ihre Aufgabe. Und im Winter müsst ihr dabei besonders aufpassen, dazu gleich mehr.“\n🖱 Keine Klicks.\n➜ „Wann ist eine Dauerbremse Pflicht?“' });
   {
     const s = base(deck, 'c6d', { notes:
       '▶ Sagen: „Jeder Lkw über 9 Tonnen zulässiger Gesamtmasse muss eine Dauerbremse haben. Was muss sie können?“\n' +
@@ -44,7 +44,7 @@ module.exports = async (deck) => {
     s.text('7 %', { x: 4.7, y: 4.6, w: 1.2, h: 0.5, size: 26, bold: true, color: C.or }, { fx: 'fade', dur: 200 });
     s.text('6 km lang', { x: 4.3, y: 5.4, w: 2.2, h: 0.45, size: 20, bold: true, color: C.txt }, { fx: 'fade', dur: 200 });
     s.text('voll beladen 30 km/h halten – nur mit der Dauerbremse', { x: 0.95, y: 2.2, w: 5.9, h: 0.7, size: 16, bold: true, color: C.or }, { fx: 'fade', dur: 200 });
-    s.text('Steigung zur Verdeutlichung überzeichnet', { x: 0.9, y: 6.12, w: 6.0, h: 0.3, size: 12, italic: true, color: C.dim });
+    s.text('Neigung zur Verdeutlichung überzeichnet', { x: 0.9, y: 6.12, w: 6.0, h: 0.3, size: 12, italic: true, color: C.dim });
     await point(s, 7.35, 2.05, 5.28, 1.4, 'LuWeight', C.or, 'Pflicht:', 'Lkw über 9 t zulässiger Gesamtmasse.', CLICK, { br: true, size: 17 });
     await point(s, 7.35, 3.58, 5.28, 1.4, 'LuShieldCheck', C.gr, 'Verschleißfrei –', 'entlastet die Betriebsbremse. Die bleibt kühl für den Notfall.', CLICK, { br: true, size: 17 });
     await point(s, 7.35, 5.11, 5.28, 1.4, 'LuBan', C.red, 'Bremst nicht bis zum Stand.', 'Bei wenig Tempo wirkt sie kaum – anhalten mit der Betriebsbremse.', CLICK, { br: true, size: 17 });
@@ -59,16 +59,16 @@ module.exports = async (deck) => {
     caps: [
       'Beim normalen Fahren strömt das Abgas frei durch den Auspuff.',
       'Motorbremse an: Eine Klappe im Auspuff schließt. Der Motor muss gegen den Druck arbeiten – das bremst.',
-      'Die Konstantdrossel öffnet ein kleines Ventil im Zylinder. Die zusammengedrückte Luft entweicht – noch mehr Bremswirkung.',
-      'Je höher die Drehzahl, desto stärker bremst der Motor. Darum vor dem Gefälle zurückschalten.',
+      'Die Konstantdrossel öffnet ein kleines Ventil im Zylinderkopf. Die zusammengedrückte Luft entweicht – noch mehr Bremswirkung.',
+      'Je höher die Drehzahl, desto stärker bremst der Motor – aber nie in den roten Bereich. Darum vor dem Gefälle zurückschalten.',
     ],
     notes: [
       '▶ Sagen: „Die Motorbremse nutzt den Motor als Bremse. Beim Fahren strömt das Abgas frei.“\n➜ „Jetzt schaltet ihr die Motorbremse ein.“',
       '▶ „Eine Klappe im Auspuff schließt – die Staudruckbremse. Der Motor muss das Abgas gegen den Druck hinausschieben. Das bremst – aber nicht sehr stark.“\n✅ Auspuffklappe = Staudruckbremse (Herstellerangaben, z. B. Cummins/Jacobs).\n➜ „Darum kommt meist noch etwas dazu.“',
       '▶ „Die Konstantdrossel: Ein kleines Ventil im Zylinderkopf bleibt offen. Die Luft, die der Kolben zusammendrückt, entweicht – die Arbeit fürs Verdichten ist verloren. Das bremst deutlich mehr.“\n💡 Bezeichnungen und Leistung sind herstellerabhängig (z. B. Dekompressionsbremse).\n➜ „Wovon hängt die Bremswirkung ab?“',
-      '▶ „Von der Drehzahl. Hohe Drehzahl – viel Bremswirkung. Im großen Gang dreht der Motor zu langsam.“\n✅ Prüfungsfrage 2.7.01-257: Betriebsbremse im Gefälle schonen → rechtzeitig zurückschalten, Dauerbremse benutzen. 2.7.01-127: Gefälle nicht mit getretener Kupplung – sonst fehlt die Motorbremswirkung.\n➜ „Die zweite Dauerbremse: der Retarder.“',
+      '▶ „Von der Drehzahl. Hohe Drehzahl – viel Bremswirkung. Im großen Gang dreht der Motor zu langsam. Aber: nie in den roten Bereich – der Motor darf nicht überdrehen.“\n✅ Prüfungsfrage 2.7.01-257: Betriebsbremse im Gefälle schonen → rechtzeitig zurückschalten, Dauerbremse benutzen. 2.7.01-127: Gefälle nicht mit getretener Kupplung – sonst fehlt die Motorbremswirkung.\n➜ „Die zweite Dauerbremse: der Retarder.“',
     ],
-    legend: 'Schematisch',
+    legend: 'Motorbremse · schematisch',
     scene: async (s, i) => {
       // Motorblock mit einem Zylinder
       s.rrect(5.8, PY - 1.2, 2.2, 2.4, { fill: '2A1A1E', line: C.red, lw: 2, rr: 0.1, name: '!!mot' });
@@ -104,18 +104,21 @@ module.exports = async (deck) => {
     const s = base(deck, 'c6d', { notes:
       '▶ Sagen: „Der Retarder ist eine zusätzliche Bremse im Antriebsstrang. Ein Rad wirbelt Öl oder Wasser gegen ein feststehendes Rad – die Bewegung wird zu Wärme, das Kühlsystem führt sie ab.“\n' +
       '🖱 Klick 1: Primärretarder · Klick 2: Sekundärretarder · Klick 3: Bedienung · Klick 4: Wärme.\n' +
-      '✅ Primärretarder sitzt motorseitig und wirkt auch bei wenig Tempo. Sekundärretarder sitzt am Getriebeausgang – bei wenig Tempo bringt er wenig (eurotransport). Beispiele (Herstellerangaben): ZF-Intarder bis 4.000 Nm, bis zu 90 % der Bremsungen ohne Betriebsbremse; Mercedes Actros Wasserretarder 3.500 Nm.\n' +
+      '✅ Primärretarder sitzt motorseitig: Er wirkt auch bei wenig Tempo – wenn der Motor hoch dreht. Sekundärretarder (z. B. ZF-Intarder, Mercedes-Wasserretarder) sitzt am Getriebeausgang: Seine Bremskraft hängt vom Tempo ab, nicht vom Gang – bei wenig Tempo bringt er wenig (eurotransport, „ZF-Intarder: Feste Größe“ und „Bremsmoment: Der Retarder des neuen Actros“). Beispiele (Herstellerangaben): ZF-Intarder bis 4.000 Nm, bis zu 90 % der Bremsungen ohne Betriebsbremse; Mercedes Actros Wasserretarder 3.500 Nm.\n' +
       '✅ Wird das Kühlmittel zu heiß, regelt der Retarder zurück (herstellerabhängig).\n' +
+      '💡 E-Lkw: Der Elektromotor bremst als Generator (Rekuperation) – bedient wie der Retarder über den Hebel am Lenkrad (autozeitung, Fahrbericht eActros 600).\n' +
       '➜ „Und wann wird die Dauerbremse gefährlich?“' });
     kick(s, 'Dauerbremsen'); title(s, 'Der Retarder');
-    const P = [['Motor', 0.7, C.red], ['Getriebe', 4.95, C.pu], ['Gelenkwelle', 9.2, '9AA6B5']];
-    for (const [t, x, col] of P) { s.rrect(x, 2.15, 2.4, 1.0, { fill: C.card, line: col, lw: 2, rr: 0.1 }); s.text(t, { x, y: 2.15, w: 2.4, h: 1.0, size: 18, bold: true, color: C.txt, align: 'center', valign: 'middle' }); }
-    s.rrect(3.2, 2.35, 1.65, 0.6, { fill: '3A2A12', line: C.or, lw: 2, rr: 0.3 }, CLICK);
-    s.text('Primär-retarder', { x: 3.2, y: 2.35, w: 1.65, h: 0.6, size: 12, bold: true, color: C.or, align: 'center', valign: 'middle' }, { fx: 'fade', dur: 200 });
-    s.text('wirkt auch bei wenig Tempo', { x: 2.6, y: 3.25, w: 2.8, h: 0.35, size: 13, color: C.or, align: 'center' }, { fx: 'fade', dur: 200 });
-    s.rrect(7.45, 2.35, 1.65, 0.6, { fill: '3A2A12', line: C.or, lw: 2, rr: 0.3 }, CLICK);
-    s.text('Sekundär-retarder', { x: 7.45, y: 2.35, w: 1.65, h: 0.6, size: 12, bold: true, color: C.or, align: 'center', valign: 'middle' }, { fx: 'fade', dur: 200 });
-    s.text('bei wenig Tempo schwach', { x: 6.85, y: 3.25, w: 2.8, h: 0.35, size: 13, color: C.or, align: 'center' }, { fx: 'fade', dur: 200 });
+    // Antriebsstrang: Welle Motor → Getriebe → Gelenkwelle, die Retarder sitzen auf der Welle
+    s.rect(2.8, 2.615, 7.6, 0.07, { fill: '55606F' });
+    const P = [['Motor', 0.7, C.red], ['Getriebe', 5.55, C.pu], ['Gelenkwelle', 10.4, '9AA6B5']];
+    for (const [t, x, col] of P) { s.rrect(x, 2.15, 2.1, 1.0, { fill: C.card, line: col, lw: 2, rr: 0.1 }); s.text(t, { x, y: 2.15, w: 2.1, h: 1.0, size: 18, bold: true, color: C.txt, align: 'center', valign: 'middle' }); }
+    s.rrect(3.15, 2.35, 2.05, 0.6, { fill: '3A2A12', line: C.or, lw: 2, rr: 0.3 }, CLICK);
+    s.text('Primärretarder', { x: 3.15, y: 2.35, w: 2.05, h: 0.6, size: 14, bold: true, color: C.or, align: 'center', valign: 'middle' }, { fx: 'fade', dur: 200 });
+    s.text('wirkt auch langsam – bei hoher Motordrehzahl', { x: 2.2, y: 3.25, w: 3.95, h: 0.35, size: 14, color: C.or, align: 'center' }, { fx: 'fade', dur: 200 });
+    s.rrect(8.0, 2.35, 2.05, 0.6, { fill: '3A2A12', line: C.or, lw: 2, rr: 0.3 }, CLICK);
+    s.text('Sekundärretarder', { x: 8.0, y: 2.35, w: 2.05, h: 0.6, size: 14, bold: true, color: C.or, align: 'center', valign: 'middle' }, { fx: 'fade', dur: 200 });
+    s.text('bei wenig Tempo schwach', { x: 7.6, y: 3.25, w: 2.85, h: 0.35, size: 14, color: C.or, align: 'center' }, { fx: 'fade', dur: 200 });
     await point(s, 0.7, 3.95, 11.93, 1.1, 'LuSlidersHorizontal', C.or, 'Bedienung:', 'Hebel am Lenkrad in Stufen – oder automatisch mit dem Tempomat bergab (je nach Lkw).', CLICK, { size: 17 });
     await point(s, 0.7, 5.25, 11.93, 1.1, 'LuThermometer', C.red, 'Wärme:', 'Der Retarder macht aus Bewegung Wärme. Wird das Kühlwasser zu heiß, bremst er weniger – Temperatur im Blick behalten.', CLICK, { size: 17 });
   }
@@ -137,10 +140,10 @@ module.exports = async (deck) => {
       '➜ „Und wenn die Dauerbremse im Gefälle nicht reicht?“',
   });
   quiz(deck, 'c6d', {
-    kicker: 'Dauerbremsen', q: 'Starkes Gefälle: Trotz Dauerbremse wird der Lkw immer schneller. Was tun?', size: 32,
-    opts: ['In einen höheren Gang schalten', 'Mit der Betriebsbremse abbremsen und in einen niedrigeren Gang schalten', 'Die Dauerbremse ausschalten, damit sie nicht überhitzt'], ok: 1,
-    why: 'Erst die Geschwindigkeit mit der Betriebsbremse verringern, dann herunterschalten – im kleinen Gang bremsen Motor und Retarder stärker (Prüfungsfrage 2.7.06-236).',
-    notes: '▶ Frage vorlesen, abstimmen.\n🖱 Klick 1: Antworten · Klick 2: Lösung.\n✅ B.\n💡 Besser: schon vor dem Gefälle den kleinen Gang wählen.\n➜ „Kapitel 2: Bremsweg und Fading.“',
+    kicker: 'Dauerbremsen', q: 'Beladener Lkw mit Schaltgetriebe, starkes Gefälle: Trotz Dauerbremse wird er immer schneller. Was tun?', size: 30,
+    opts: ['Mit der Betriebsbremse abbremsen und hochschalten', 'Mit der Betriebsbremse abbremsen und herunterschalten', 'Dauerbremse aus, nur noch Betriebsbremse'], ok: 1,
+    why: 'Erst mit der Betriebsbremse langsamer werden, dann herunterschalten – im kleinen Gang bremst vor allem der Motor stärker (Prüfungsfrage 2.7.06-236).',
+    notes: '▶ Frage vorlesen, abstimmen.\n💡 Mündlich abstimmen und begründen – kein Bogen zum Ausfüllen.\n🖱 Klick 1: Antworten · Klick 2: Lösung.\n✅ B (Prüfungsfrage 2.7.06-236: beladen, manuelles Schaltgetriebe). Mit Automatik schaltet das Getriebe selbst zurück.\n💡 Ein Sekundärretarder bremst nach dem Tempo, nicht nach dem Gang – der Gewinn im kleinen Gang kommt vor allem vom Motor.\n💡 Besser: schon vor dem Gefälle den kleinen Gang wählen.\n➜ „Kapitel 2: Bremsweg und Fading.“',
   });
 
   // ===== KAPITEL 2 BREMSWEG UND FADING =====
@@ -148,38 +151,42 @@ module.exports = async (deck) => {
     '▶ Sagen: „Kapitel 2: Wie weit fährt ein Lkw, bis er steht?“\n🖱 Keine Klicks.\n➜ „Rechnen wir es aus.“' });
   // ===== ANHALTEWEG ALS FAHRT (fließend) =====
   {
-    const SCm = 0.06, XS = 11.25, RY = 3.05; // Start der Front rechts, Fahrt nach links
+    const SCm = 0.06, XS = 11.05, RY = 3.05; // Start der Front rechts, Fahrt nach links
+    // Teilstrecken genau: Reaktion 22,2 m + Druckaufbau 13,3 m = 35,6 m, dann Bremsweg 49,4 m (v gleichmäßig kleiner) → 84,9 m
+    const R0 = 35.56, BW = 49.38, END = R0 + BW;
     const fr = (d, v, o = {}) => ({ t: { d, v }, ...o });
-    const tau = [0.25, 0.5, 0.75, 1].map(x => 35 + 49 * (1 - (1 - x) * (1 - x)));
+    const tau = [0.25, 0.5, 0.75, 1].map(x => R0 + BW * (1 - (1 - x) * (1 - x)));
     await motion(deck, 'c6w', {
       kicker: 'Bremsweg', ttl: 'Bis der Lkw steht', dur: 520, holdDur: 700,
       question: 'Ihr fahrt 80 km/h und seht eine Gefahr. Wie weit fährt der Lkw noch, bis er steht?',
-      answer: 'Etwa 85 Meter – fast eine ganze Fußballfeld-Länge.',
+      answer: 'Etwa 85 Meter – gut drei Viertel eines Fußballfelds.',
       legend: 'Mindest-Bremsverzögerung 5,0 m/s² · gerundet · eigene Rechnung',
       frames: [
         fr(0, 80, { hold: true, cap: 'Gefahr erkannt! Jetzt beginnt die Reaktionszeit.', note: '▶ Sagen: „Ein Lkw mit 80 km/h, vorn eine Gefahr.“\n❓ Frage auf der Folie: „Wie weit fährt er noch, bis er steht?“ – Schätzungen sammeln und an die Tafel schreiben.\n🖱 Klick: Die Fahrt beginnt (läuft von selbst bis zum nächsten Halt).\n➜ „Erst reagiert ihr …“' }),
         fr(11, 80, { cap: 'Reaktion: rund 1 Sekunde – der Lkw fährt ungebremst weiter.' }),
         fr(22, 80, { hold: true, note: '▶ „1 Sekunde Reaktion – bei 80 km/h sind das 22 Meter, ohne dass irgendetwas bremst.“\n🖱 Klick: weiter.\n➜ „Jetzt tretet ihr auf die Bremse – aber …“' }),
         fr(28.5, 80, { cap: 'Die Druckluft braucht bis zu 0,6 Sekunden, bis sie in den Zylindern wirkt.' }),
-        fr(35, 80, { hold: true, note: '▶ „… die Druckluft muss erst in die Bremszylinder strömen. Bis zu 0,6 Sekunden – noch einmal 13 Meter.“\n✅ § 41 Abs. 12 StVZO: Ansprech- und Schwellzeit höchstens 0,6 s.\n🖱 Klick: Der Lkw bremst.\n➜ „Und jetzt bremst er.“' }),
+        fr(35, 80, { hold: true, note: '▶ „… die Druckluft muss erst in die Bremszylinder strömen. Bis zu 0,6 Sekunden – noch einmal 13 Meter.“\n✅ EU-/UN-Bremsenrecht (UN-R 13 Anhang 6): Spätestens 0,6 s nach dem Treten muss im Bremszylinder 75 % des Drucks anliegen. Vorsichtige Rechnung: Wir tun so, als ob in dieser Zeit noch nichts bremst.\n🖱 Klick: Der Lkw bremst.\n➜ „Und jetzt bremst er.“' }),
         fr(tau[0], 60, { cap: 'Jetzt bremst der Lkw – erst schnell, dann immer langsamer.' }), fr(tau[1], 40), fr(tau[2], 20),
-        fr(84, 0, { hold: true, answer: true, cap: 'Bremsweg rund 49 Meter. Zusammen: etwa 85 Meter Anhalteweg.', note: '▶ „Bremsweg rund 49 Meter. Zusammen etwa 85 Meter – fast ein Fußballfeld. Und das mit einer Bremse, die gerade das gesetzliche Minimum schafft, auf trockener Straße.“\n✅ Eigene Rechnung: 80 km/h = 22,2 m/s; Reaktion 1 s = 22 m; 0,6 s = 13 m; Bremsweg v²/(2 · 5,0 m/s²) = 49 m.\n🖱 Keine Animation mehr – nächster Klick: Vergleich mit Gefälle und halbem Tempo.\n➜ „Was ändert sich im Gefälle – und bei halbem Tempo?“' }),
+        fr(END, 0, { hold: true, answer: true, cap: 'Bremsweg rund 49 Meter. Zusammen: etwa 85 Meter Anhalteweg.', note: '▶ „Bremsweg rund 49 Meter. Zusammen etwa 85 Meter – gut drei Viertel eines Fußballfelds, das meist 105 Meter lang ist. Und das mit einer Bremse, die gerade das gesetzliche Minimum schafft, auf trockener Straße.“\n✅ Eigene Rechnung: 80 km/h = 22,2 m/s; Reaktion 1 s = 22 m; 0,6 s = 13 m; Bremsweg v²/(2 · 5,0 m/s²) = 49 m. Genau: 22,2 + 13,3 + 49,4 = 84,9 m ≈ 85 m (die gerundeten Teilstücke ergeben 84).\n🖱 Keine Animation mehr – nächster Klick: Vergleich mit Gefälle und halbem Tempo.\n➜ „Was ändert sich im Gefälle – und bei halbem Tempo?“' }),
       ],
       scene: async (s, { d, v }) => {
         // Straße
-        s.rrect(5.75, RY - 1.35, 7.35, 1.55, { fill: C.road, rr: 0.12, name: '!!road' });
-        for (let k = 0; k < 9; k++) s.rrect(5.95 + k * 0.82, RY - 0.6, 0.45, 0.05, { fill: C.mark, rr: 0.5, name: '!!rm' + k });
-        // Gefahr links
-        s.oval(5.8, RY - 1.2, 0.55, 0.55, { fill: C.red, glow: 8, glowColor: C.red, name: '!!gef' });
-        s.text('!', { x: 5.8, y: RY - 1.2, w: 0.55, h: 0.55, size: 22, bold: true, color: C.white, align: 'center', valign: 'middle', name: '!!tgef' });
+        // Seitenansicht: dunkler Hintergrund, der Lkw steht auf dem Fahrbahnstreifen (Markierung unter den Rädern)
+        s.rrect(5.75, RY - 1.55, 7.35, 1.68, { fill: C.road, rr: 0.12, name: '!!road' });
+        s.rrect(5.75, RY + 0.05, 7.35, 0.18, { fill: C.road2, rr: 0.3, name: '!!gnd' });
+        for (let k = 0; k < 9; k++) s.rrect(5.95 + k * 0.82, RY + 0.12, 0.45, 0.04, { fill: C.mark, rr: 0.5, name: '!!rm' + k });
+        // Gefahr links oben (frei über dem Fahrerhaus, auch wenn der Lkw steht)
+        s.oval(5.8, RY - 1.47, 0.5, 0.5, { fill: C.red, glow: 8, glowColor: C.red, name: '!!gef' });
+        s.text('!', { x: 5.8, y: RY - 1.47, w: 0.5, h: 0.5, size: 22, bold: true, color: C.white, align: 'center', valign: 'middle', name: '!!tgef' });
         // Lkw (Front links) fährt nach links
         const xf = XS - d * SCm;
         await lkw(s, { L: 4.4, axles: [0.62, 3.3], floor: 0.62, boxH: 1.2 }, { x: xf, gy: RY + 0.05, k: 0.42, name: '!!lkwA' });
         // Weg-Balken unter der Straße (von rechts nach links)
         const seg = (nm, from, to, col) => { const a = Math.min(d, to), w = Math.max(0, a - from) * SCm; s.rrect(XS - from * SCm - Math.max(w, 0.02), RY + 0.45, Math.max(w, 0.02), 0.42, { fill: col, ft: w < 0.02 ? 100 : 0, rr: 0.5, name: '!!' + nm }); };
-        seg('br', 0, 22, '6E7888'); seg('bs', 22, 35, C.am); seg('bb', 35, 84, C.red);
+        seg('br', 0, 22, '6E7888'); seg('bs', 22, 35, C.am); seg('bb', 35, END, C.red);
         const lab = (nm, from, to, txt, col) => s.text(d >= to ? txt : '', { x: XS - to * SCm, y: RY + 0.95, w: (to - from) * SCm, h: 0.35, size: 13, bold: true, color: col, align: 'center', name: '!!' + nm });
-        lab('lr', 0, 22, '22 m', C.mut); lab('ls', 22, 35, '13 m', C.am); lab('lb', 35, 84, '49 m', C.red);
+        lab('lr', 0, 22, '22 m', C.mut); lab('ls', 22, 35, '13 m', C.am); lab('lb', 35, END, '49 m', C.red);
         // Tacho und Summe
         s.text(String(v), { x: 11.1, y: 4.55, w: 1.2, h: 0.75, size: 40, bold: true, color: v ? C.txt : C.gr, align: 'right', name: '!!kmh' });
         s.text('km/h', { x: 12.35, y: 4.85, w: 0.8, h: 0.4, size: 15, color: C.mut, name: '!!kmhl' });
@@ -191,8 +198,9 @@ module.exports = async (deck) => {
   }
 
   // Anhalteweg (Morph, Balken in Metern)
-  const SC = 0.075, X0 = 5.9; // Zoll je Meter
-  const CASES = [[22, 13, 49, 'eben, 80 km/h'], [22, 13, 59, '8 % Gefälle, 80 km/h'], [11, 7, 12, 'eben, 40 km/h']];
+  const SC = 0.069, X0 = 5.9; // Zoll je Meter
+  // Teilstrecken gerundet, Anhalteweg aus den genauen Werten (84,9 / 94,1 / 30,1 m)
+  const CASES = [[22, 13, 49, 'eben, 80 km/h', 85], [22, 13, 59, '8 % Gefälle, 80 km/h', 94], [11, 7, 12, 'eben, 40 km/h', 30]];
   await steps(deck, 'c6w', {
     kicker: 'Bremsweg', ttl: 'Drei Fälle im Vergleich',
     list: ['Eben, 80 km/h', 'Im Gefälle', 'Halbes Tempo'],
@@ -202,28 +210,27 @@ module.exports = async (deck) => {
       'Halbes Tempo – nur ein Viertel Bremsweg. Der Anhalteweg schrumpft auf etwa 30 Meter.',
     ],
     notes: [
-      '▶ Sagen: „Noch einmal als Balken zum Vergleich: Erst die Reaktionszeit – rund 1 Sekunde, das sind 22 Meter. Dann braucht die Druckluft Zeit, bis sie bremst – bis zu 0,6 Sekunden, noch einmal 13 Meter. Dann erst bremst der Lkw – mit der gesetzlichen Mindest-Bremswirkung etwa 49 Meter.“\n✅ Eigene Rechnung mit 5,0 m/s² (Mindestwert nach § 41 Abs. 4 StVZO) und 0,6 s Ansprech- und Schwellzeit (§ 41 Abs. 12). Ergebnis: rund 85 m.\n➜ „Und bergab?“',
-      '▶ „Im Gefälle schiebt die Hangabtriebskraft mit. Bei 8 % Gefälle fehlen etwa 0,8 m/s² Verzögerung – aus 49 Metern Bremsweg werden etwa 59.“\n✅ Prüfungsfrage 2.7.01-042: Der Bremsweg verlängert sich im Gefälle und mit schwerer Last – NICHT bei Gegenwind. Eigene Rechnung.\n➜ „Was bringt es, langsamer zu fahren?“',
+      '▶ Sagen: „Noch einmal als Balken zum Vergleich: Erst die Reaktionszeit – rund 1 Sekunde, das sind 22 Meter. Dann braucht die Druckluft Zeit, bis sie bremst – bis zu 0,6 Sekunden, noch einmal 13 Meter. Dann erst bremst der Lkw – mit der gesetzlichen Mindest-Bremswirkung etwa 49 Meter.“\n✅ Eigene Rechnung mit 5,0 m/s² (Mindestwert für schwere Lkw, UN-R 13) und 0,6 s Ansprech- und Schwellzeit (UN-R 13 Anhang 6). Ergebnis: 84,9 m, rund 85 m.\n💡 Baut sich die Bremswirkung in den 0,6 s gleichmäßig auf, sind es etwa 78 m – unsere Rechnung ist die vorsichtige.\n➜ „Und bergab?“',
+      '▶ „Im Gefälle schiebt die Hangabtriebskraft mit. Bei 8 % Gefälle fehlen etwa 0,8 m/s² Verzögerung – aus 49 Metern Bremsweg werden etwa 59. Anhalteweg also etwa 94 Meter.“\n✅ Prüfungsfrage 2.7.01-042: Der Bremsweg verlängert sich im Gefälle und mit schwerer Last – NICHT bei Gegenwind. Eigene Rechnung.\n➜ „Was bringt es, langsamer zu fahren?“',
       '▶ „Der Bremsweg wächst mit dem Quadrat der Geschwindigkeit. Halbes Tempo – ein Viertel Bremsweg.“\n✅ Physik: Bremsweg = v² / (2 · a). Bei 40 km/h: 11 + 7 + 12 = rund 30 m.\n💡 Nasse Bremsen nach langer Standzeit bei Feuchtigkeit: Erste Bremsungen können schwächer sein oder blockieren (2.7.01-040).\n➜ „Und was passiert mit der Bremse auf einer langen Abfahrt?“',
     ],
     legend: 'Gerundete Werte · eigene Rechnung mit Mindest-Bremsverzögerung',
     scene: async (s, i) => {
-      const [r, sw, b, lab] = CASES[i];
+      const [r, sw, b, lab, tot] = CASES[i];
       const Y = 3.0, H = 0.7;
       s.text(lab, { x: X0, y: 1.6, w: 7, h: 0.45, size: 22, bold: true, color: C.txt, name: '!!lab' });
       s.rect(X0, Y, r * SC, H, { fill: '6E7888', name: '!!r' });
       s.rect(X0 + r * SC, Y, sw * SC, H, { fill: C.am, name: '!!sw' });
       s.rect(X0 + (r + sw) * SC, Y, b * SC, H, { fill: C.red, name: '!!b' });
       s.text(String(r) + ' m', { x: X0, y: Y, w: Math.max(r * SC, 0.6), h: H, size: 14, bold: true, color: C.dark, align: 'center', valign: 'middle', name: '!!tr' });
-      s.text(String(sw), { x: X0 + r * SC, y: Y, w: sw * SC, h: H, size: 13, bold: true, color: C.dark, align: 'center', valign: 'middle', name: '!!tsw' });
+      s.text(String(sw) + ' m', { x: X0 + r * SC, y: Y, w: sw * SC, h: H, size: 13, bold: true, color: C.dark, align: 'center', valign: 'middle', name: '!!tsw' });
       s.text(String(b) + ' m', { x: X0 + (r + sw) * SC, y: Y, w: b * SC, h: H, size: 15, bold: true, color: C.dark, align: 'center', valign: 'middle', name: '!!tb' });
       // Legende
       const L = [['6E7888', 'Reaktion (1 s)'], [C.am, 'Druckluft wirkt (bis 0,6 s)'], [C.red, 'Bremsweg']];
       L.forEach(([c, t], k) => { s.rect(X0 + k * 2.45, 4.0, 0.3, 0.3, { fill: c, name: '!!lg' + k }); s.text(t, { x: X0 + 0.38 + k * 2.45, y: 3.97, w: 2.1, h: 0.36, size: 12, color: C.mut, name: '!!lt' + k }); });
       // Summe
-      const tot = r + sw + b;
-      s.text([{ text: 'Anhalteweg ', options: { color: C.mut } }, { text: 'etwa ' + (Math.round(tot / 5) * 5) + ' m', options: { bold: true, color: C.txt } }], { x: X0, y: 4.65, w: 7, h: 0.6, size: 28, name: '!!sum' });
-      s.lineS(X0, 2.75, X0 + tot * SC, 2.75, { color: C.txt, lw: 1.5, beginArrow: 'triangle', endArrow: 'triangle', name: '!!pf' });
+      s.text([{ text: 'Anhalteweg ', options: { color: C.mut } }, { text: 'etwa ' + tot + ' m', options: { bold: true, color: C.txt } }], { x: X0, y: 4.65, w: 7, h: 0.6, size: 28, name: '!!sum' });
+      s.lineS(X0, 2.75, X0 + (r + sw + b) * SC, 2.75, { color: C.txt, lw: 1.5, beginArrow: 'triangle', endArrow: 'triangle', name: '!!pf' });
     },
   });
 

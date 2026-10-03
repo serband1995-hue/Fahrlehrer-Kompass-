@@ -110,7 +110,7 @@ module.exports = async (deck) => {
         '▶ Sagen: „Ein Liter Diesel wiegt etwa 0,83 Kilo. Wie viel CO₂ entsteht, wenn er verbrennt?“\n❓ Frage auf der Folie stellen – schätzen lassen.\n➜ „Die Auflösung.“',
         '▶ „Rund 2,65 Kilo CO₂ – mehr als dreimal so viel, wie der Diesel wiegt. Der Kohlenstoff im Diesel verbindet sich mit dem Sauerstoff aus der Luft.“\n✅ Eigene Rechnung aus dem UBA-Emissionsfaktor Diesel (74,0 t CO₂/TJ, Heizwert ca. 43 MJ/kg, Dichte ca. 0,83 kg/l) ≈ 2,65 kg CO₂ je Liter (Literaturwerte 2,62–2,67).\n➜ „Und auf 100 Kilometer?“',
         '▶ „Ein Sattelzug braucht im Fernverkehr etwa 30 Liter auf 100 Kilometer. Das sind rund 80 Kilo CO₂.“\n✅ Richtwert 25–35 l/100 km (Sekundärquellen); 30 × 2,65 ≈ 80 kg.\n➜ „Und im Jahr?“',
-        '▶ „Im Jahr, bei 100.000 Kilometern: 30.000 Liter Diesel und rund 80 Tonnen CO₂. Wer durch gutes Fahren nur 5 Prozent spart, spart 1.500 Liter Diesel – und 4 Tonnen CO₂.“\n✅ Eigene Rechnung. Prüfungsfrage 2.5.01-016: Hohe Geschwindigkeit erhöht Verbrauch und Schadstoffausstoß.\n➜ „Neben CO₂ gibt es noch etwas, das stört: Lärm.“',
+        '▶ „Im Jahr, bei 100.000 Kilometern: 30.000 Liter Diesel und rund 80 Tonnen CO₂. Wer durch gutes Fahren nur 5 Prozent spart, spart 1.500 Liter Diesel – und 4 Tonnen CO₂.“\n✅ Eigene Rechnung. Prüfungsfrage 2.5.01-016: Hohe Geschwindigkeit erhöht Verbrauch und Schadstoffausstoß.\n💡 Tempo kostet: Der Luftwiderstand wächst mit dem Quadrat der Geschwindigkeit. 85 statt 80 km/h: rund 13 % mehr Luftwiderstand – auf 100 km aber nur gut 4 Minuten schneller (eigene Rechnung: (85/80)² ≈ 1,13; 75,0 statt 70,6 Minuten).\n➜ „Neben CO₂ gibt es noch etwas, das stört: Lärm.“',
       ],
       legend: 'Richtwerte · CO₂ je Liter: eigene Rechnung nach Umweltbundesamt',
       scene: async (s, i) => {
@@ -150,36 +150,36 @@ module.exports = async (deck) => {
   {
     const A = [
       ['LuDroplet', C.gr, 'HVO100', 'Diesel, meist aus Rest- und Abfallstoffen', 'Seit Ende Mai 2024 an Tankstellen erlaubt. Nur tanken, wenn der Hersteller euren Lkw dafür freigegeben hat.'],
-      ['LuSnowflake', C.bl, 'Erdgas (LNG)', 'tiefkalt verflüssigtes Gas', 'Wird in einen isolierten Tank getankt, auch als Bio-LNG. Die Mautbefreiung für Gas-Lkw lief Ende 2023 aus.'],
-      ['LuBatteryCharging', C.am, 'Batterie-elektrisch', 'Strom aus der Batterie', 'Kein Abgas, sehr leise, Bremsenergie wird zurückgewonnen. Reichweite und Laden planen – die Ladepause als Fahrtunterbrechung nutzen.'],
+      ['LuSnowflake', C.bl, 'Erdgas (LNG/CNG)', 'tiefkalt verflüssigt oder verdichtet', 'LNG im isolierten Tank, CNG in Druckflaschen – auch als Bio-Gas. Die Mautbefreiung für Gas-Lkw lief Ende 2023 aus.'],
+      ['LuBatteryCharging', C.am, 'Batterie-elektrisch', 'Strom aus der Batterie', 'Kein Abgas, sehr leise, Bremsenergie wird zurückgewonnen. Reichweite und Laden planen – am besten in der Pause laden.'],
       ['LuAtom', C.pu, 'Wasserstoff', 'Brennstoffzelle macht Strom an Bord', 'Aus dem Auspuff kommt nur Wasserdampf. Es gibt noch wenige Tankstellen – Tankstopps genau planen.'],
     ];
     await steps(deck, 'c10u', {
       kicker: 'Antriebe', ttl: 'Nicht nur Diesel',
-      list: ['HVO100', 'Erdgas (LNG)', 'Batterie-elektrisch', 'Wasserstoff'],
-      ask: { q: 'Welche Lkw zahlen auf deutschen Autobahnen zurzeit keine Maut?', a: 'Emissionsfreie Lkw – mit Batterie oder Wasserstoff. Sie sind bis zum 30. Juni 2031 mautfrei.', at: 3 },
+      list: ['HVO100', 'Erdgas (LNG/CNG)', 'Batterie-elektrisch', 'Wasserstoff'],
+      ask: { q: 'Welcher Antrieb ist auf deutschen Autobahnen zurzeit mautfrei?', a: 'Emissionsfrei – mit Batterie oder Wasserstoff. Mautfrei bis zum 30. Juni 2031.', at: 3 },
       caps: [
         'HVO100 ist Diesel aus hydriertem Pflanzenöl, meist aus Rest- und Abfallstoffen. Nur tanken mit Freigabe des Herstellers.',
-        'Erdgas-Lkw tanken tiefkalt verflüssigtes Gas (LNG). Sie zahlen inzwischen wieder Maut.',
+        'Erdgas-Lkw tanken meist tiefkalt verflüssigtes Gas (LNG), manche verdichtetes Gas (CNG). Sie zahlen inzwischen wieder Maut.',
         'Batterie-Lkw fahren ohne Abgas und sehr leise. Reichweite und Ladestopps müssen geplant werden.',
         'Wasserstoff-Lkw machen mit der Brennstoffzelle Strom an Bord. Batterie- und Wasserstoff-Lkw sind bis 30.06.2031 mautfrei.',
       ],
       notes: [
         '▶ Sagen: „Diesel ist nicht mehr alles. Erstens: HVO100 – Diesel aus hydriertem Pflanzenöl, meist aus Rest- und Abfallstoffen wie altem Speiseöl. Er darf seit Ende Mai 2024 an Tankstellen verkauft werden. Aber: Nur tanken, wenn der Hersteller euren Lkw freigegeben hat!“\n✅ Zweite Verordnung zur Änderung der 10. BImSchV vom 28.05.2024 (BGBl. 2024 I Nr. 169), in Kraft seit 29.05.2024: paraffinischer Diesel nach DIN EN 15940 (z. B. HVO100) an öffentlichen Tankstellen zulässig (§ 4 Abs. 3 10. BImSchV).\n➜ „Zweitens: Gas.“',
-        '▶ „Erdgas-Lkw tanken LNG – tiefkalt verflüssigtes Erdgas, auch als Bio-LNG. Die Mautbefreiung für Gas-Lkw galt nur von 2019 bis Ende 2023.“\n✅ § 1 Abs. 2 Nr. 8 BFStrMG: Befreiung für Gas-Lkw nur 01.01.2019–31.12.2023.\n➜ „Drittens: Strom.“',
-        '▶ „Batterie-Lkw: kein Abgas, sehr leise. Beim Bremsen wird Energie zurückgewonnen. Aber: Reichweite und Ladestopps müssen geplant werden – am besten lädt man in der Pause.“\n✅ Lehrbuchwissen (Rekuperation, Ladepause als Lenkzeitunterbrechung nutzen). Batterie mindert die Nutzlast.\n➜ „Und viertens?“',
+        '▶ „Erdgas-Lkw tanken meist LNG – tiefkalt verflüssigtes Erdgas. Manche, vor allem im Verteilerverkehr, tanken CNG – verdichtetes Erdgas. Beides gibt es auch als Bio-Gas. Die Mautbefreiung für Gas-Lkw galt nur von 2019 bis Ende 2023.“\n✅ § 1 Abs. 2 Nr. 8 BFStrMG: Befreiung für Gas-Lkw (CNG, LNG oder Zweistoffmotor LNG/Diesel) nur 01.01.2019–31.12.2023.\n➜ „Drittens: Strom.“',
+        '▶ „Batterie-Lkw: kein Abgas, sehr leise. Beim Bremsen wird Energie zurückgewonnen. Aber: Reichweite und Ladestopps müssen geplant werden – am besten lädt man in der Pause.“\n💡 Anstecken und Abstecken gehören nicht zur Pause – nur die freie Zeit dazwischen.\n✅ Art. 4 Buchst. d VO (EG) 561/2006: Eine Fahrtunterbrechung dient ausschließlich der Erholung, keine anderen Arbeiten. Eine amtliche Auslegung zum Laden von E-Lkw gibt es bisher nicht. Rekuperation: Lehrbuchwissen. Batterie mindert die Nutzlast.\n➜ „Und viertens?“',
         '▶ „Wasserstoff: Die Brennstoffzelle macht an Bord Strom – aus dem Auspuff kommt nur Wasserdampf. Problem: Es gibt noch wenige Tankstellen.“\n❓ Frage auf der Folie auflösen.\n✅ § 1 Abs. 2 Nr. 7 BFStrMG: emissionsfreie schwere Nutzfahrzeuge mautfrei bis 30.06.2031; Nr. 9: bis 4,25 t dauerhaft (Viertes Gesetz zur Änderung mautrechtlicher Vorschriften, Dezember 2025). Die alte Regel „nur bis Ende 2025“ ist überholt.\n➜ „Was zahlt dann ein Diesel-Lkw an Maut?“',
       ],
       legend: 'Stand der Recherche: Oktober 2026',
       scene: async (s, i) => {
-        let y = 1.55;
+        let y = 1.7;
         for (let q = 0; q < 4; q++) {
-          const on = q === i, h = on ? 2.05 : 0.68, [ic, col, name, sub, det] = A[q];
+          const on = q === i, h = on ? 1.6 : 0.68, [ic, col, name, sub, det] = A[q];   // aufgeklappt nur so hoch wie der Text
           s.rrect(5.75, y, 7.3, h, { fill: on ? C.card2 : C.card, line: on ? col : C.line, lw: on ? 2 : 1, rr: 0.1, name: '!!ab' + q });
           s.oval(5.95, y + 0.1, 0.48, 0.48, { fill: on ? col : '2A3342', line: on ? col : '2A3342', name: '!!ao' + q });
           s.img(await icon(ic, on ? C.dark : C.mut), { x: 6.06, y: y + 0.21, w: 0.26, h: 0.26, name: '!!ai' + q });
           s.text([{ text: name + '  ', options: { bold: true, color: on ? C.txt : C.mut } }, { text: sub, options: { color: on ? col : C.dim } }], { x: 6.6, y: y + 0.08, w: 6.3, h: 0.52, size: on ? 20 : 16, valign: 'middle', name: '!!at' + q });
-          s.text(on ? det : '', { x: 6.6, y: y + 0.68, w: 6.25, h: on ? 1.25 : 0.05, size: 16, color: C.txt, valign: 'top', name: '!!ad' + q });
+          s.text(on ? det : '', { x: 6.6, y: y + 0.66, w: 6.25, h: on ? 0.86 : 0.05, size: 16, color: C.txt, valign: 'top', name: '!!ad' + q });
           y += h + 0.14;
         }
       },
@@ -204,6 +204,7 @@ module.exports = async (deck) => {
         fr(0, { t: { trip: 1, el: 1 }, hold: true, cap: 'Ein emissionsfreier Lkw (Batterie oder Wasserstoff) zahlt bis 30. Juni 2031 keine Maut.', note: '▶ „Ein E-Lkw zahlt auf derselben Strecke: nichts. Emissionsfreie Lkw sind bis Ende Juni 2031 mautfrei.“\n✅ § 1 Abs. 2 Nr. 7 BFStrMG: emissionsfreie schwere Nutzfahrzeuge mautfrei bis 30.06.2031.\n🖱 Keine Animation mehr – nächster Klick: nächste Folie.\n➜ „Kapitel 4: Wie plant ihr eine Strecke?“' }),
       ],
       scene: async (s, { n, trip = 0, el = 0 }) => {
+        s.rect(BX, BASE - 34.8 * SC, BW, 34.8 * SC, { line: '4A5668', lw: 1.25, dash: 'dash', name: '!!mrahmen' });   // leerer Rahmen: hier stapelt sich der Preis
         let y = BASE, sum = 0;
         for (let q = 0; q < 4; q++) {
           const on = q < n, h = on ? B[q][1] * SC : 0.02;
