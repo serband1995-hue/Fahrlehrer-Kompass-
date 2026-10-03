@@ -35,17 +35,17 @@ module.exports = async (deck) => {
     await steps(deck, 'ce4k', {
       kicker: 'Rundgang', ttl: 'Einmal um den Zug', listY: 1.62,
       list: ['Kupplung zu?', 'Leitungen dran?', 'Anhänger frei?', 'Licht, Reifen, Ladung', 'Bremsprobe'],
-      ask: { q: 'Was prüft ihr am Zug zusätzlich?', a: 'Kupplung, Leitungen mit ABS-Stecker, Anhänger frei, Licht, Reifen, Ladung und Plane – und die Bremsprobe.', at: 4 },
+      ask: { q: 'Was prüft ihr am Zug zusätzlich?', a: 'Kupplung, Leitungen mit ABS-Stecker, Anhänger frei, Licht, Reifen, Ladung – und die Bremsprobe.', at: 4 },
       caps: [
         'Kupplung: Bolzen eingerastet? Kontrollstift ansehen und tasten. Beim Sattel: Verriegelung zu, Sicherung drin.',
-        'Leitungen: rot, gelb, Licht und der ABS/EBS-Stecker. Nichts scheuert, nichts hängt bis zum Boden.',
+        'Leitungen: Gelb, rot und Licht sind dran, dazu der ABS/EBS-Stecker. Nichts scheuert, nichts hängt bis zum Boden.',
         'Anhänger frei: Feststellbremse gelöst, Keile weg und verstaut, Stützen hoch.',
         'Am ganzen Zug: Licht, Reifen, Radmuttern. Ladung auf Lkw und Anhänger gesichert. Plane zu, Dach frei von Eis und Schnee.',
         'Zum Schluss die Bremsprobe – mit dem ganzen Zug, langsam auf dem Hof.',
       ],
       notes: [
         '▶ Sagen: „Wir starten an der Kupplung. Ist der Bolzen ganz unten? Kontrollstift ansehen und anfassen.“\n❓ Frage auf der Folie stellen.\n✅ DGUV Grundsatz 314-002 Nr. 2.10: Anhängekupplung geschlossen und gesichert. Prüfungsfrage 2.7.07-209 (Kontrollstift), aus CE1.\n➜ „Weiter zu den Leitungen.“',
-        '▶ „Dann die Leitungen: rot, gelb, Licht – und der ABS/EBS-Stecker. Die Leitungen dürfen nicht scheuern und nicht durchhängen.“\n✅ DGUV Grundsatz 314-002 Nr. 2.10: elektrische und Bremsleitungen angeschlossen, sofern vorhanden auch ABV/ABS; nicht scheuern, nicht bis zum Boden durchhängen.\n➜ „Weiter am Anhänger.“',
+        '▶ „Dann die Leitungen: gelb, rot, Licht – und der ABS/EBS-Stecker. Die Leitungen dürfen nicht scheuern und nicht durchhängen.“\n✅ DGUV Grundsatz 314-002 Nr. 2.10: elektrische und Bremsleitungen angeschlossen, sofern vorhanden auch ABV/ABS; nicht scheuern, nicht bis zum Boden durchhängen.\n➜ „Weiter am Anhänger.“',
         '▶ „Ist der Anhänger frei? Roter Knopf gedrückt, Keile weg und verstaut, Stützen oben. Sonst fahrt ihr mit angezogener Bremse los.“\n✅ Lehrbuchwissen aus CE1 bis CE3 (Feststellbremse lösen, Keile verstauen: Prüfungsfrage 2.7.07-321).\n➜ „Nach hinten.“',
         '▶ „Hinten: Licht am Anhänger, Reifen, Radmuttern. Ist die Ladung auf Lkw und Anhänger gesichert? Und schaut auf die Plane: zu? Liegt Eis oder Schnee auf dem Dach? Das muss runter.“\n✅ DGUV Grundsatz 314-002 Nr. 2.1 (Licht auch am Anhänger), 2.2 (Reifen), 2.8 (Planen geschlossen, Dächer frei von Wasser, Schnee und Eis), 2.9 (Ladung gesichert; Achslasten einhalten, Mindestachslasten nicht unterschreiten). FahrschAusbO Anlage 2.4 Nr. 4 i (Ladung/Ladungssicherung).\n💡 Zentralachsanhänger nie hecklastig beladen – die Stützlast darf nie negativ sein (DGUV Information 214-080, S. 24). Hinten schwer beladen fördert auch das Pendeln (Kapitel 2). Ladungssicherung im Einzelnen: C9.\n➜ „Und als Letztes?“',
         '▶ „Als Letztes die Bremsprobe – mit dem ganzen Zug, langsam auf dem Hof. Zieht der Zug gerade? Bremst der Anhänger mit?“\n❓ Frage auf der Folie auflösen.\n✅ Prüfungsfragen 2.7.02-017 und -020 (Bremsprobe). DGUV Grundsatz 314-002 Nr. 2.3.2: Bremsprobe, ABV-Kontrolle ohne Störung.\n➜ „Zwei Prüfungsfragen dazu.“',
@@ -135,7 +135,7 @@ module.exports = async (deck) => {
     await motion(deck, 'ce4f', {
       kicker: 'Pendeln', ttl: 'Der Anhänger schaukelt', dur: 520, holdDur: 600,
       question: 'Euer Anhänger fängt bei 80 an zu pendeln. Was tut ihr?',
-      answer: 'Gas weg, Lenkrad ruhig gerade halten, nicht hektisch gegenlenken. Bremsen erst, wenn der Zug wieder gestreckt ist. Danach: Ladung und Kupplung prüfen.',
+      answer: 'Gas weg, Lenkrad ruhig gerade halten, nicht hektisch gegenlenken. Bremsen erst, wenn der Zug wieder gestreckt ist. Danach anhalten, Ladung und Kupplung prüfen.',
       legend: 'Draufsicht · schematisch · Autobahn',
       frames: [
         fr(0, { t: B('Autobahn, 80 km/h. Eine Windböe …', C.mut), hold: true,

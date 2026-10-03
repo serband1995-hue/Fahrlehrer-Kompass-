@@ -563,7 +563,7 @@ FOLIE 49 VON 103 · 3 Klicks
 ➜ „Kurze Frage dazu.“
 
 === FOLIE 50 ===
-AUF DER FOLIE: FRAGE · TOTER WINKEL | Dein Lkw hat einen Abbiegeassistenten. Er warnt nicht. Darfst du jetzt zügig rechts abbiegen? | A | Ja, der Assistent hätte gewarnt | B | Nein – Schrittgeschwindigkeit und selbst in alle Spiegel schauen | C | Ja, wenn ich vorher gehupt habe | ✓  RICHTIG | Der Assistent ist nur eine Hilfe. Innerorts über 3,5 t gilt beim Rechtsabbiegen Schrittgeschwindigkeit (§ 9 Abs. 6 StVO), und ihr müsst selbst schauen. | KLASSE C  ·  ABEND 1  ·  C1  ·  ARBEITSPLATZ UND TOTER WINKEL | 50
+AUF DER FOLIE: FRAGE · TOTER WINKEL | Dein Lkw hat einen Abbiegeassistenten. Er warnt nicht. Darfst du jetzt zügig rechts abbiegen? | A | Ja, wenn ich vorher gehupt habe | B | Nein – Schrittgeschwindigkeit und selbst in alle Spiegel schauen | C | Ja, der Assistent hätte gewarnt | ✓  RICHTIG | Der Assistent ist nur eine Hilfe. Innerorts über 3,5 t gilt beim Rechtsabbiegen Schrittgeschwindigkeit (§ 9 Abs. 6 StVO), und ihr müsst selbst schauen. | KLASSE C  ·  ABEND 1  ·  C1  ·  ARBEITSPLATZ UND TOTER WINKEL | 50
 NOTIZEN:
 FOLIE 50 VON 103 · 2 Klicks
 
@@ -597,17 +597,17 @@ FOLIE 52 VON 103 · 6 Klicks
 ➜ „Jetzt testen wir alles aus C1.“
 
 === FOLIE 53 ===
-AUF DER FOLIE: QUIZ C1 · 1 | Du bist heute 4 Stunden gefahren, ohne Pause. Was gilt? | A | Ich darf noch 30 Minuten fahren, dann mindestens 45 Minuten Pause | B | Ich darf noch 1 Stunde fahren | C | Ich muss sofort 11 Stunden Ruhezeit machen | ✓  RICHTIG | Nach höchstens 4,5 h Lenkzeit kommt die Fahrtunterbrechung von mindestens 45 Minuten (Art. 7 VO 561/2006). | KLASSE C  ·  ABEND 1  ·  C1  ·  ABSCHLUSS | 53
+AUF DER FOLIE: QUIZ C1 · 1 | Du bist heute 4 Stunden gefahren, ohne Pause. Was gilt? | A | Ich muss sofort 11 Stunden Ruhezeit machen | B | Ich darf noch 1 Stunde fahren | C | Ich darf noch 30 Minuten fahren, dann mindestens 45 Minuten Pause | ✓  RICHTIG | Nach höchstens 4,5 h Lenkzeit kommt die Fahrtunterbrechung von mindestens 45 Minuten (Art. 7 VO 561/2006). | KLASSE C  ·  ABEND 1  ·  C1  ·  ABSCHLUSS | 53
 NOTIZEN:
 FOLIE 53 VON 103 · 2 Klicks
 
 ▶ Frage vorlesen, abstimmen.
 🖱 Klick 1: Antworten · Klick 2: Lösung.
-✅ A. 4 h + 30 Min = 4,5 h.
+✅ C. 4 h + 30 Min = 4,5 h.
 ➜ „Nächste Frage.“
 
 === FOLIE 54 ===
-AUF DER FOLIE: QUIZ C1 · 2 | Wie oft darfst du die tägliche Ruhezeit auf 9 Stunden verkürzen? | A | Jeden Tag | B | Höchstens dreimal zwischen zwei wöchentlichen Ruhezeiten | C | Nie | ✓  RICHTIG | Art. 8 Abs. 4 VO 561/2006: höchstens drei verkürzte tägliche Ruhezeiten zwischen zwei wöchentlichen Ruhezeiten. | KLASSE C  ·  ABEND 1  ·  C1  ·  ABSCHLUSS | 54
+AUF DER FOLIE: QUIZ C1 · 2 | Wie oft darfst du die tägliche Ruhezeit auf 9 Stunden verkürzen? | A | Nie | B | Höchstens dreimal zwischen zwei wöchentlichen Ruhezeiten | C | Jeden Tag | ✓  RICHTIG | Art. 8 Abs. 4 VO 561/2006: höchstens drei verkürzte tägliche Ruhezeiten zwischen zwei wöchentlichen Ruhezeiten. | KLASSE C  ·  ABEND 1  ·  C1  ·  ABSCHLUSS | 54
 NOTIZEN:
 FOLIE 54 VON 103 · 2 Klicks
 
@@ -728,13 +728,13 @@ FOLIE 64 VON 103 · 3 Klicks
 ➜ „Kurze Frage zum Tempo.“
 
 === FOLIE 65 ===
-AUF DER FOLIE: FRAGE · GESCHWINDIGKEIT | Lkw mit 7,49 t zulässiger Gesamtmasse, ohne Anhänger, auf der Landstraße. Wie schnell darfst du höchstens fahren? | A | 60 km/h | B | 80 km/h | C | 100 km/h | ✓  RICHTIG | § 3 Abs. 3 StVO: Kfz über 3,5 t bis 7,5 t außerorts 80 km/h. Erst über 7,5 t oder mit Anhänger sind es 60 km/h. | KLASSE C  ·  ABEND 1  ·  C2  ·  GESCHWINDIGKEIT UND ABSTAND | 65
+AUF DER FOLIE: FRAGE · GESCHWINDIGKEIT | Lkw mit 7,49 t zulässiger Gesamtmasse, ohne Anhänger, auf der Landstraße. Wie schnell darfst du höchstens fahren? | A | 60 km/h | B | 100 km/h | C | 80 km/h | ✓  RICHTIG | § 3 Abs. 3 StVO: Kfz über 3,5 t bis 7,5 t außerorts 80 km/h. Erst über 7,5 t oder mit Anhänger sind es 60 km/h. | KLASSE C  ·  ABEND 1  ·  C2  ·  GESCHWINDIGKEIT UND ABSTAND | 65
 NOTIZEN:
 FOLIE 65 VON 103 · 2 Klicks
 
 ▶ Frage vorlesen, abstimmen.
 🖱 Klick 1: Antworten · Klick 2: Lösung.
-✅ B, 80 km/h.
+✅ C, 80 km/h.
 💡 Fangfrage: Viele sagen 60. Das gilt erst über 7,5 t oder mit Anhänger.
 ➜ „Kapitel 2: Überholen.“
 
@@ -816,13 +816,13 @@ FOLIE 71 VON 103 · 4 Klicks
 ➜ „Testen wir das Überholen.“
 
 === FOLIE 72 ===
-AUF DER FOLIE: FRAGE · ÜBERHOLEN | Du fährst 80 km/h, der Lkw vor dir 78 km/h. Darfst du überholen? | A | Ja, ich bin ja schneller | B | Nein – Überholen nur mit wesentlich höherer Geschwindigkeit | C | Ja, wenn ich den Blinker lange genug setze | ✓  RICHTIG | § 5 Abs. 2 StVO. 2 km/h Unterschied ist kein „wesentlich höher“ – das wird ein Elefantenrennen (80 €, 1 Punkt). | KLASSE C  ·  ABEND 1  ·  C2  ·  ÜBERHOLEN UND FAHRSTREIFEN | 72
+AUF DER FOLIE: FRAGE · ÜBERHOLEN | Du fährst 80 km/h, der Lkw vor dir 78 km/h. Darfst du überholen? | A | Ja, ich bin ja schneller | B | Ja, wenn ich den Blinker lange genug setze | C | Nein – Überholen nur mit wesentlich höherer Geschwindigkeit | ✓  RICHTIG | § 5 Abs. 2 StVO. 2 km/h Unterschied ist kein „wesentlich höher“ – das wird ein Elefantenrennen (80 €, 1 Punkt). | KLASSE C  ·  ABEND 1  ·  C2  ·  ÜBERHOLEN UND FAHRSTREIFEN | 72
 NOTIZEN:
 FOLIE 72 VON 103 · 2 Klicks
 
 ▶ Frage vorlesen, abstimmen.
 🖱 Klick 1: Antworten · Klick 2: Lösung.
-✅ B.
+✅ C.
 💡 Rechnung zum Staunen: Bei 2 km/h Unterschied dauert das Überholen eines Sattelzugs mit Abständen rund zweieinhalb Minuten (siehe Rechenbeispiel).
 ➜ „Kapitel 3: der Bahnübergang – hier geht es um Leben und Tod.“
 
@@ -945,7 +945,7 @@ FOLIE 83 VON 103 · 3 Klicks
 ➜ „Kurz testen.“
 
 === FOLIE 84 ===
-AUF DER FOLIE: FRAGE · ANHÄNGER | Du stellst einen Anhänger ohne Zugfahrzeug am Straßenrand ab. Wie lange darf er dort höchstens parken? | A | 1 Woche | B | 2 Wochen | C | Unbegrenzt, wenn er beleuchtet ist | ✓  RICHTIG | § 12 Abs. 3b StVO: Anhänger ohne Zugfahrzeug dürfen höchstens zwei Wochen geparkt werden (20 €, BKat Nr. 57). Ausnahme: gekennzeichnete Parkplätze. | KLASSE C  ·  ABEND 1  ·  C2  ·  HALTEN UND PARKEN | 84
+AUF DER FOLIE: FRAGE · ANHÄNGER | Du stellst einen Anhänger ohne Zugfahrzeug am Straßenrand ab. Wie lange darf er dort höchstens parken? | A | Unbegrenzt, wenn er beleuchtet ist | B | 2 Wochen | C | 1 Woche | ✓  RICHTIG | § 12 Abs. 3b StVO: Anhänger ohne Zugfahrzeug dürfen höchstens zwei Wochen geparkt werden (20 €, BKat Nr. 57). Ausnahme: gekennzeichnete Parkplätze. | KLASSE C  ·  ABEND 1  ·  C2  ·  HALTEN UND PARKEN | 84
 NOTIZEN:
 FOLIE 84 VON 103 · 2 Klicks
 
@@ -955,13 +955,13 @@ FOLIE 84 VON 103 · 2 Klicks
 ➜ „Und wie ist es mit der Beleuchtung?“
 
 === FOLIE 85 ===
-AUF DER FOLIE: FRAGE · PARKEN | Dein Lkw (18 t) steht innerorts nachts am Fahrbahnrand. Was ist Pflicht? | A | Nichts – innerorts ist es ja hell | B | Beleuchtung oder Park-Warntafeln | C | Nur das Warndreieck aufstellen | ✓  RICHTIG | § 17 Abs. 4 StVO: Innerorts müssen haltende Fahrzeuge über 3,5 t und Anhänger auf der Fahrbahn stets beleuchtet oder mit Park-Warntafeln kenntlich gemacht sein. | KLASSE C  ·  ABEND 1  ·  C2  ·  HALTEN UND PARKEN | 85
+AUF DER FOLIE: FRAGE · PARKEN | Dein Lkw (18 t) steht innerorts nachts am Fahrbahnrand. Was ist Pflicht? | A | Nur das Warndreieck aufstellen | B | Nichts – innerorts ist es ja hell | C | Beleuchtung oder Park-Warntafeln | ✓  RICHTIG | § 17 Abs. 4 StVO: Innerorts müssen haltende Fahrzeuge über 3,5 t und Anhänger auf der Fahrbahn stets beleuchtet oder mit Park-Warntafeln kenntlich gemacht sein. | KLASSE C  ·  ABEND 1  ·  C2  ·  HALTEN UND PARKEN | 85
 NOTIZEN:
 FOLIE 85 VON 103 · 2 Klicks
 
 ▶ Frage vorlesen, abstimmen.
 🖱 Klick 1: Antworten · Klick 2: Lösung.
-✅ B.
+✅ C.
 💡 Für Pkw reicht innerorts oft die Straßenbeleuchtung – für Lkw über 3,5 t nicht.
 ➜ „Kapitel 5: Wann dürft ihr gar nicht fahren?“
 
@@ -1001,7 +1001,7 @@ FOLIE 88 VON 103 · 3 Klicks
 ➜ „Testen wir die Fahrverbote.“
 
 === FOLIE 89 ===
-AUF DER FOLIE: FRAGE · SONNTAGSFAHRVERBOT | Sonntag, 21:30 Uhr. Du fährst einen 7-t-Lkw mit Anhänger, leer, für deine Spedition. Darfst du los? | A | Ja – unter 7,5 t gilt kein Verbot | B | Ja – leer zählt nicht | C | Nein – erst ab 22 Uhr | ✓  RICHTIG | § 30 Abs. 3 StVO: Das Verbot gilt auch für jeden Lkw mit Anhänger und ausdrücklich für Leerfahrten. Erst ab 22 Uhr ist die Fahrt erlaubt. | KLASSE C  ·  ABEND 1  ·  C2  ·  FAHRVERBOTE UND MITFAHRER | 89
+AUF DER FOLIE: FRAGE · SONNTAGSFAHRVERBOT | Sonntag, 21:30 Uhr. Du fährst einen 7-t-Lkw mit Anhänger, leer, für deine Spedition. Darfst du los? | A | Ja – leer zählt nicht | B | Ja – unter 7,5 t gilt kein Verbot | C | Nein – erst ab 22 Uhr | ✓  RICHTIG | § 30 Abs. 3 StVO: Das Verbot gilt auch für jeden Lkw mit Anhänger und ausdrücklich für Leerfahrten. Erst ab 22 Uhr ist die Fahrt erlaubt. | KLASSE C  ·  ABEND 1  ·  C2  ·  FAHRVERBOTE UND MITFAHRER | 89
 NOTIZEN:
 FOLIE 89 VON 103 · 2 Klicks
 
@@ -1012,13 +1012,13 @@ FOLIE 89 VON 103 · 2 Klicks
 ➜ „Gibt es Ausnahmen?“
 
 === FOLIE 90 ===
-AUF DER FOLIE: FRAGE · AUSNAHME | Sonntag, 10 Uhr. Dein 18-t-Lkw ist mit frischer Milch beladen. Darfst du fahren? | A | Nein – Sonntag ist Sonntag | B | Ja – frische Milch ist vom Sonntagsfahrverbot ausgenommen | C | Nur auf der Autobahn | ✓  RICHTIG | § 30 Abs. 3 Satz 2 StVO: Ausgenommen ist u. a. die Beförderung von frischer Milch, frischem Fleisch und Fisch sowie leicht verderblichem Obst und Gemüse (und die Leerfahrten dafür). | KLASSE C  ·  ABEND 1  ·  C2  ·  FAHRVERBOTE UND MITFAHRER | 90
+AUF DER FOLIE: FRAGE · AUSNAHME | Sonntag, 10 Uhr. Dein 18-t-Lkw ist mit frischer Milch beladen. Darfst du fahren? | A | Ja – frische Milch ist vom Sonntagsfahrverbot ausgenommen | B | Nur auf der Autobahn | C | Nein – Sonntag ist Sonntag | ✓  RICHTIG | § 30 Abs. 3 Satz 2 StVO: Ausgenommen ist u. a. die Beförderung von frischer Milch, frischem Fleisch und Fisch sowie leicht verderblichem Obst und Gemüse (und die Leerfahrten dafür). | KLASSE C  ·  ABEND 1  ·  C2  ·  FAHRVERBOTE UND MITFAHRER | 90
 NOTIZEN:
 FOLIE 90 VON 103 · 2 Klicks
 
 ▶ Frage vorlesen, abstimmen.
 🖱 Klick 1: Antworten · Klick 2: Lösung.
-✅ B.
+✅ A.
 💡 Die Ausnahme gilt für die Ware – nicht für den ganzen Tag. Wer danach Möbel lädt, steht wieder im Verbot.
 ➜ „Wer darf im Lkw mitfahren?“
 
@@ -1086,13 +1086,13 @@ FOLIE 95 VON 103 · 5 Klicks
 ➜ „Kurz testen.“
 
 === FOLIE 96 ===
-AUF DER FOLIE: FRAGE · MAUT | Ein Dachdecker fährt mit seinem 5-t-Lkw eigenes Material zur Baustelle. Muss er auf der Autobahn Maut zahlen? | A | Ja – über 3,5 t immer | B | Nein – Handwerker-Ausnahme unter 7,5 t | C | Nur auf Bundesstraßen | ✓  RICHTIG | § 1 Abs. 2 Nr. 10 BFStrMG: Fahrzeuge unter 7,5 t, die Material, Ausrüstung oder Maschinen zur Ausübung des Handwerks befördern, sind mautfrei, wenn nicht gewerblich gefahren wird. | KLASSE C  ·  ABEND 1  ·  C2  ·  PAPIERE UND MAUT | 96
+AUF DER FOLIE: FRAGE · MAUT | Ein Dachdecker fährt mit seinem 5-t-Lkw eigenes Material zur Baustelle. Muss er auf der Autobahn Maut zahlen? | A | Ja – über 3,5 t immer | B | Nur auf Bundesstraßen | C | Nein – Handwerker-Ausnahme unter 7,5 t | ✓  RICHTIG | § 1 Abs. 2 Nr. 10 BFStrMG: Fahrzeuge unter 7,5 t, die Material, Ausrüstung oder Maschinen zur Ausübung des Handwerks befördern, sind mautfrei, wenn nicht gewerblich gefahren wird. | KLASSE C  ·  ABEND 1  ·  C2  ·  PAPIERE UND MAUT | 96
 NOTIZEN:
 FOLIE 96 VON 103 · 2 Klicks
 
 ▶ Frage vorlesen, abstimmen.
 🖱 Klick 1: Antworten · Klick 2: Lösung.
-✅ B.
+✅ C.
 💡 Fährt derselbe Lkw gegen Bezahlung für andere (Spedition), ist er mautpflichtig.
 ➜ „Jetzt bringen wir alles zusammen: ein Fall aus dem echten Leben.“
 
@@ -1121,34 +1121,34 @@ FOLIE 98 VON 103 · 7 Klicks
 ➜ „Und jetzt das Abschluss-Quiz.“
 
 === FOLIE 99 ===
-AUF DER FOLIE: QUIZ C2 · 1 | Du fährst mit deinem 12-t-Lkw auf der Autobahn 80 km/h hinter einem anderen Lkw. Wie viel Abstand musst du mindestens halten? | A | 25 m | B | 50 m | C | halber Tacho = 40 m | ✓  RICHTIG | § 4 Abs. 3 StVO: Lkw über 3,5 t auf Autobahnen bei mehr als 50 km/h mindestens 50 m Abstand. Halber Tacho wären hier nur 40 m – zu wenig. | KLASSE C  ·  ABEND 1  ·  C2  ·  ABSCHLUSS | 99
+AUF DER FOLIE: QUIZ C2 · 1 | Du fährst mit deinem 12-t-Lkw auf der Autobahn 80 km/h hinter einem anderen Lkw. Wie viel Abstand musst du mindestens halten? | A | 50 m | B | 25 m | C | halber Tacho = 40 m | ✓  RICHTIG | § 4 Abs. 3 StVO: Lkw über 3,5 t auf Autobahnen bei mehr als 50 km/h mindestens 50 m Abstand. Halber Tacho wären hier nur 40 m – zu wenig. | KLASSE C  ·  ABEND 1  ·  C2  ·  ABSCHLUSS | 99
 NOTIZEN:
 FOLIE 99 VON 103 · 2 Klicks
 
 ▶ Frage vorlesen, abstimmen.
 🖱 Klick 1: Antworten · Klick 2: Lösung.
-✅ B.
+✅ A.
 💡 Zusatzfrage an die Klasse: „Und wenn ihr 85 fahrt?“ – Zu schnell: Lkw dürfen auf der Autobahn höchstens 80 km/h (§ 18 Abs. 5).
 ➜ „Nächste Frage.“
 
 === FOLIE 100 ===
-AUF DER FOLIE: QUIZ C2 · 2 | Vor dem Bahnübergang staut sich der Verkehr bis hinter das Gleis. Was tust du? | A | Langsam auf das Gleis rollen, der Stau löst sich gleich | B | Vor dem Andreaskreuz warten, bis hinter dem Gleis Platz für den ganzen Lkw ist | C | Hupen, damit die anderen aufrücken | ✓  RICHTIG | § 19 Abs. 3 StVO: Kann der Bahnübergang nicht zügig und ohne Aufenthalt überquert werden, ist vor dem Andreaskreuz zu warten. | KLASSE C  ·  ABEND 1  ·  C2  ·  ABSCHLUSS | 100
+AUF DER FOLIE: QUIZ C2 · 2 | Vor dem Bahnübergang staut sich der Verkehr bis hinter das Gleis. Was tust du? | A | Langsam auf das Gleis rollen, der Stau löst sich gleich | B | Hupen, damit die anderen aufrücken | C | Vor dem Andreaskreuz warten, bis hinter dem Gleis Platz für den ganzen Lkw ist | ✓  RICHTIG | § 19 Abs. 3 StVO: Kann der Bahnübergang nicht zügig und ohne Aufenthalt überquert werden, ist vor dem Andreaskreuz zu warten. | KLASSE C  ·  ABEND 1  ·  C2  ·  ABSCHLUSS | 100
 NOTIZEN:
 FOLIE 100 VON 103 · 2 Klicks
 
 ▶ Frage vorlesen, abstimmen.
 🖱 Klick 1: Antworten · Klick 2: Lösung.
-✅ B.
+✅ C.
 ➜ „Und die letzte.“
 
 === FOLIE 101 ===
-AUF DER FOLIE: QUIZ C2 · 3 | Für welche Fahrzeuge gilt das Überholverbot dieses Zeichens? | A | Nur für Lkw über 7,5 t | B | Für Kfz über 3,5 t (auch mit Anhänger) und Zugmaschinen – nicht für Pkw und Busse | C | Für alle Fahrzeuge | ✓  RICHTIG | Zeichen 277: Überholverbot für Kfz über 3,5 t zulässiger Gesamtmasse einschließlich ihrer Anhänger und für Zugmaschinen. Pkw und Busse sind ausgenommen (nur mit Zusatzzeichen betroffen). Verstoß: 70 €, 1 Punkt. | KLASSE C  ·  ABEND 1  ·  C2  ·  ABSCHLUSS | 101
+AUF DER FOLIE: QUIZ C2 · 3 | Für welche Fahrzeuge gilt das Überholverbot dieses Zeichens? | A | Für alle Fahrzeuge | B | Nur für Lkw über 7,5 t | C | Für Kfz über 3,5 t (auch mit Anhänger) und Zugmaschinen – nicht für Pkw und Busse | ✓  RICHTIG | Zeichen 277: Überholverbot für Kfz über 3,5 t zulässiger Gesamtmasse einschließlich ihrer Anhänger und für Zugmaschinen. Pkw und Busse sind ausgenommen (nur mit Zusatzzeichen betroffen). Verstoß: 70 €, 1 Punkt. | KLASSE C  ·  ABEND 1  ·  C2  ·  ABSCHLUSS | 101
 NOTIZEN:
 FOLIE 101 VON 103 · 2 Klicks
 
 ▶ Auf das Schild zeigen, Frage vorlesen, abstimmen.
 🖱 Klick 1: Antworten · Klick 2: Lösung.
-✅ B. (StVO Anlage 2 lfd. Nr. 54; BKat Nr. 153a).
+✅ C. (StVO Anlage 2 lfd. Nr. 54; BKat Nr. 153a).
 💡 Mit Zusatzzeichen kann das Verbot auch für Busse und Pkw mit Anhänger gelten – ohne Zusatzzeichen nicht.
 ➜ „Zum Schluss: Das nehmt ihr aus C2 mit.“
 

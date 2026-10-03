@@ -387,11 +387,11 @@ FOLIE 39 VON 171 · 5 Klicks
 ➜ „Schauen wir uns ein echtes Beispiel an.“
 
 === FOLIE 40 ===
-AUF DER FOLIE: HINSCHAUEN | Was wurde hier richtig gemacht? | Niedergezurrt / Gurte über die Paletten, straff gespannt. | Kantenschutz / an den oberen Ecken. | Antirutschmatte / unter den Paletten – mehr Reibung. | Feste Ladeeinheit / Folie hält die Kartons zusammen. | KLASSE C  ·  ABEND 5  ·  C9  ·  SO WIRD GESICHERT | 40
+AUF DER FOLIE: HINSCHAUEN | Was ist gut – und was fehlt noch? | Niedergezurrt / Gurte über die Paletten, straff gespannt. | Kantenschutz / an den oberen Ecken. | Feste Ladeeinheit / Folie hält die Kartons zusammen. | Haken prüfen! / Jeder Gurt gehört in einen Zurrpunkt – hier liegen Haken lose am Boden. | KLASSE C  ·  ABEND 5  ·  C9  ·  SO WIRD GESICHERT | 40
 NOTIZEN:
 FOLIE 40 VON 171 · 4 Klicks
 
-▶ Sagen: „Schaut euch die Ladung an. Was ist hier richtig gemacht?“
+▶ Sagen: „Schaut euch die Ladung an. Was ist gut – und was fehlt noch?“
 ❓ Sammeln lassen, dann je Klick auflösen.
 🖱 Klick 1–4: je ein Punkt.
 ✅ Niederzurren mit Kantenschutz und rutschhemmendem Material (VDI 2700 / DIN EN 12195-1). Die Ladeeinheit muss selbst stabil sein (Stretchfolie, Umreifung), sonst rutschen einzelne Kartons heraus.
@@ -725,13 +725,13 @@ FOLIE 71 VON 171 · keine Animation · Klick = weiter
 ➜ „Prüfungsfrage zum Ladekran.“
 
 === FOLIE 72 ===
-AUF DER FOLIE: PRÜFUNGSFRAGE 2.7.09-208 | Welche Vorsichtsmaßnahmen sind vor Inbetriebnahme eines Ladekranes zu treffen? | A | Mit Hilfe der seitlichen Stützen das Fahrzeug gegen Kippen sichern | B | Im Schwenkbereich dürfen sich keine elektrischen Leitungen befinden | C | Prüfen, ob seitliches Abstützen unbedingt erforderlich ist | ✓  RICHTIG | ✓  RICHTIG | Immer abstützen – nicht erst prüfen, ob es nötig ist. Und keine Stromleitungen im Schwenkbereich. | KLASSE C  ·  ABEND 5  ·  C9  ·  BE- UND ENTLADEN | 72
+AUF DER FOLIE: PRÜFUNGSFRAGE 2.7.09-208 | Welche Vorsichtsmaßnahmen sind vor Inbetriebnahme eines Ladekranes zu treffen? | A | Mit Hilfe der seitlichen Stützen das Fahrzeug gegen Kippen sichern | B | Prüfen, ob seitliches Abstützen unbedingt erforderlich ist | C | Im Schwenkbereich dürfen sich keine elektrischen Leitungen befinden | ✓  RICHTIG | ✓  RICHTIG | Immer abstützen – nicht erst prüfen, ob es nötig ist. Und keine Stromleitungen im Schwenkbereich. | KLASSE C  ·  ABEND 5  ·  C9  ·  BE- UND ENTLADEN | 72
 NOTIZEN:
 FOLIE 72 VON 171 · 2 Klicks
 
 ▶ Frage vorlesen, abstimmen.
 🖱 Klick 1: Antworten · Klick 2: Lösung.
-✅ Amtlicher Fragenkatalog 2.7.09-208: A und B.
+✅ Amtlicher Fragenkatalog 2.7.09-208: A und C.
 ➜ „Kapitel 5: Die Abfahrtkontrolle.“
 
 === FOLIE 73 ===
@@ -927,13 +927,13 @@ FOLIE 91 VON 171 · 2 Klicks
 ➜ „Nächste Frage.“
 
 === FOLIE 92 ===
-AUF DER FOLIE: PRÜFUNGSFRAGE 2.2.22-221 | Wer ist für die Ladungssicherung am Fahrzeug verantwortlich? | A | Der Fahrer | B | Der Verlader | C | Der Empfänger | ✓  RICHTIG | ✓  RICHTIG | Fahrer und Verlader – dazu auch der Halter. Der Fahrer muss vor der Abfahrt immer selbst prüfen. | KLASSE C  ·  ABEND 5  ·  C9  ·  ABSCHLUSS | 92
+AUF DER FOLIE: PRÜFUNGSFRAGE 2.2.22-221 | Wer ist für die Ladungssicherung am Fahrzeug verantwortlich? | A | Der Verlader | B | Der Empfänger | C | Der Fahrer | ✓  RICHTIG | ✓  RICHTIG | Fahrer und Verlader – dazu auch der Halter. Der Fahrer muss vor der Abfahrt immer selbst prüfen. | KLASSE C  ·  ABEND 5  ·  C9  ·  ABSCHLUSS | 92
 NOTIZEN:
 FOLIE 92 VON 171 · 2 Klicks
 
 ▶ Frage vorlesen, abstimmen.
 🖱 Klick 1: Antworten · Klick 2: Lösung.
-✅ Amtlicher Fragenkatalog 2.2.22-221: A und B. § 23 StVO (Fahrer), § 412 HGB (Absender/Verlader), § 31 StVZO (Halter).
+✅ Amtlicher Fragenkatalog 2.2.22-221: A und C. § 23 StVO (Fahrer), § 412 HGB (Absender/Verlader), § 31 StVZO (Halter).
 ➜ „Letzte Frage.“
 
 === FOLIE 93 ===
@@ -1163,13 +1163,13 @@ FOLIE 115 VON 171 · keine Animation · Klick = weiter
 ➜ „Eine Prüfungsfrage dazu.“
 
 === FOLIE 116 ===
-AUF DER FOLIE: PRÜFUNGSFRAGE 2.5.01-213 | Warum trägt der Eco-Roll-Modus bei Nutzfahrzeugen zur Reduzierung des Kraftstoffverbrauchs bei? Weil im aktivierten Eco-Roll-Modus die … | A | … Bewegungsenergie des Fahrzeugs maximal ausgenutzt wird | B | … Motorbremswirkung erhöht wird | C | … Rollphase des Fahrzeugs verkürzt wird | ✓  RICHTIG | Eco-Roll kuppelt aus und lässt den Lkw lange rollen – der Schwung wird genutzt. | KLASSE C  ·  ABEND 5  ·  C10  ·  VORAUSSCHAUEND FAHREN | 116
+AUF DER FOLIE: PRÜFUNGSFRAGE 2.5.01-213 | Warum trägt der Eco-Roll-Modus bei Nutzfahrzeugen zur Reduzierung des Kraftstoffverbrauchs bei? Weil im aktivierten Eco-Roll-Modus die … | A | … Motorbremswirkung erhöht wird | B | … Bewegungsenergie des Fahrzeugs maximal ausgenutzt wird | C | … Rollphase des Fahrzeugs verkürzt wird | ✓  RICHTIG | Eco-Roll kuppelt aus und lässt den Lkw lange rollen – der Schwung wird genutzt. | KLASSE C  ·  ABEND 5  ·  C10  ·  VORAUSSCHAUEND FAHREN | 116
 NOTIZEN:
 FOLIE 116 VON 171 · 2 Klicks
 
 ▶ Frage vorlesen, abstimmen.
 🖱 Klick 1: Antworten · Klick 2: Lösung.
-✅ Amtlicher Fragenkatalog 2.5.01-213: nur A.
+✅ Amtlicher Fragenkatalog 2.5.01-213: nur B.
 ➜ „Kapitel 2: Was spart am Lkw selbst?“
 
 === FOLIE 117 ===
@@ -1652,13 +1652,13 @@ FOLIE 164 VON 171 · 4 Klicks
 ➜ „Eine Prüfungsfrage zur Zeitplanung.“
 
 === FOLIE 165 ===
-AUF DER FOLIE: PRÜFUNGSFRAGE 2.6.07-214 | Sie wollen mit Ihrem Lkw über 7,5 t zulässige Gesamtmasse auf der Autobahn von Hannover nach München fahren. Mit welcher Durchschnittsgeschwindigkeit können Sie rechnen? | A | 70 km/h | B | 80 km/h | C | 40 km/h | ✓  RICHTIG | 80 km/h ist die Höchstgeschwindigkeit – im Schnitt schafft ihr mit Verkehr und Steigungen etwa 70 km/h. | KLASSE C  ·  ABEND 5  ·  C10  ·  ZEIT PLANEN | 165
+AUF DER FOLIE: PRÜFUNGSFRAGE 2.6.07-214 | Sie wollen mit Ihrem Lkw über 7,5 t zulässige Gesamtmasse auf der Autobahn von Hannover nach München fahren. Mit welcher Durchschnittsgeschwindigkeit können Sie rechnen? | A | 40 km/h | B | 70 km/h | C | 80 km/h | ✓  RICHTIG | 80 km/h ist die Höchstgeschwindigkeit – im Schnitt schafft ihr mit Verkehr und Steigungen etwa 70 km/h. | KLASSE C  ·  ABEND 5  ·  C10  ·  ZEIT PLANEN | 165
 NOTIZEN:
 FOLIE 165 VON 171 · 2 Klicks
 
 ▶ Frage vorlesen, abstimmen.
 🖱 Klick 1: Antworten · Klick 2: Lösung.
-✅ Amtlicher Fragenkatalog 2.6.07-214: A (70 km/h).
+✅ Amtlicher Fragenkatalog 2.6.07-214: B (70 km/h).
 ➜ „Das war C10. Zum Mitschreiben.“
 
 === FOLIE 166 ===
@@ -1673,7 +1673,7 @@ FOLIE 166 VON 171 · 7 Klicks
 ➜ „Drei Prüfungsfragen.“
 
 === FOLIE 167 ===
-AUF DER FOLIE: PRÜFUNGSFRAGE 2.6.07-218 | Sie planen Ihre Fahrt mit einer Straßenkarte mit dem Maßstab 1:200.000. 1 cm auf der Karte entspricht wie vielen Kilometern in der Realität? | A | 2 km | B | 10 km | C | 20 km | ✓  RICHTIG | Fünf Nullen streichen: 200.000 cm = 2 km. | KLASSE C  ·  ABEND 5  ·  C10  ·  ABSCHLUSS | 167
+AUF DER FOLIE: PRÜFUNGSFRAGE 2.6.07-218 | Sie planen Ihre Fahrt mit einer Straßenkarte mit dem Maßstab 1:200.000. 1 cm auf der Karte entspricht wie vielen Kilometern in der Realität? | A | 2 km | B | 20 km | C | 10 km | ✓  RICHTIG | Fünf Nullen streichen: 200.000 cm = 2 km. | KLASSE C  ·  ABEND 5  ·  C10  ·  ABSCHLUSS | 167
 NOTIZEN:
 FOLIE 167 VON 171 · 2 Klicks
 
@@ -1693,13 +1693,13 @@ FOLIE 168 VON 171 · 2 Klicks
 ➜ „Letzte Frage.“
 
 === FOLIE 169 ===
-AUF DER FOLIE: PRÜFUNGSFRAGE 2.6.07-221 | Warum sind bei der Streckenplanung die Lenk- und Ruhezeiten zu berücksichtigen? Weil dadurch … | A | … sichergestellt wird, dass der Fahrer die vorgeschriebenen Pausen einhalten kann | B | … Beeinträchtigungen der Fahrweise vermieden werden sollen | C | … die Fahrtstrecke kürzer wird | ✓  RICHTIG | ✓  RICHTIG | Pausen planen heißt: ausgeruht fahren. Kürzer wird die Strecke dadurch nicht. | KLASSE C  ·  ABEND 5  ·  C10  ·  ABSCHLUSS | 169
+AUF DER FOLIE: PRÜFUNGSFRAGE 2.6.07-221 | Warum sind bei der Streckenplanung die Lenk- und Ruhezeiten zu berücksichtigen? Weil dadurch … | A | … Beeinträchtigungen der Fahrweise vermieden werden sollen | B | … die Fahrtstrecke kürzer wird | C | … sichergestellt wird, dass der Fahrer die vorgeschriebenen Pausen einhalten kann | ✓  RICHTIG | ✓  RICHTIG | Pausen planen heißt: ausgeruht fahren. Kürzer wird die Strecke dadurch nicht. | KLASSE C  ·  ABEND 5  ·  C10  ·  ABSCHLUSS | 169
 NOTIZEN:
 FOLIE 169 VON 171 · 2 Klicks
 
 ▶ Frage vorlesen, abstimmen.
 🖱 Klick 1: Antworten · Klick 2: Lösung.
-✅ Amtlicher Fragenkatalog 2.6.07-221: A und B.
+✅ Amtlicher Fragenkatalog 2.6.07-221: A und C.
 ➜ „Das nehmt ihr aus C10 mit.“
 
 === FOLIE 170 ===

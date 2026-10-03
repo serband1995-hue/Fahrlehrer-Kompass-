@@ -640,7 +640,7 @@ FOLIE 64 VON 133 · 3 Klicks
 ➜ „Kurzes Quiz zum Getriebe.“
 
 === FOLIE 65 ===
-AUF DER FOLIE: QUIZ GETRIEBE | Wozu dient die Splitgruppe im Lkw-Getriebe? | A | Sie schaltet den Rückwärtsgang | B | Sie halbiert die Gangsprünge – der Motor bleibt im grünen Bereich | C | Sie verteilt die Kraft auf die Vorderachse | ✓  RICHTIG | Die Splitgruppe macht aus jedem Gang zwei Halbgänge. Die Bereichsgruppe verdoppelt die Gänge noch einmal: 3 × 2 × 2 = 12. | KLASSE C  ·  ABEND 2  ·  C3  ·  KUPPLUNG UND GETRIEBE | 65
+AUF DER FOLIE: QUIZ GETRIEBE | Wozu dient die Splitgruppe im Lkw-Getriebe? | A | Sie verteilt die Kraft auf die Vorderachse | B | Sie halbiert die Gangsprünge – der Motor bleibt im grünen Bereich | C | Sie schaltet den Rückwärtsgang | ✓  RICHTIG | Die Splitgruppe macht aus jedem Gang zwei Halbgänge. Die Bereichsgruppe verdoppelt die Gänge noch einmal: 3 × 2 × 2 = 12. | KLASSE C  ·  ABEND 2  ·  C3  ·  KUPPLUNG UND GETRIEBE | 65
 NOTIZEN:
 FOLIE 65 VON 133 · 2 Klicks
 
@@ -792,27 +792,27 @@ FOLIE 79 VON 133 · 8 Klicks
 ➜ „Jetzt testen wir C3.“
 
 === FOLIE 80 ===
-AUF DER FOLIE: QUIZ C3 · 1 | Wann können Sie die Differenzialsperre ohne Schaden einschalten? Wenn mein Lkw … | A | … steht | B | … mit Schrittgeschwindigkeit fährt | C | … in einer Kurve untersteuert | ✓  RICHTIG | ✓  RICHTIG | Im Stand oder mit Schrittgeschwindigkeit. In der Kurve nie: Untersteuern heißt, der Lkw schiebt über die Vorderachse – mit Sperre lenkt er noch schlechter (Prüfungsfrage 2.7.03-213). | KLASSE C  ·  ABEND 2  ·  C3  ·  ABSCHLUSS | 80
+AUF DER FOLIE: QUIZ C3 · 1 | Wann können Sie die Differenzialsperre ohne Schaden einschalten? Wenn mein Lkw … | A | … mit Schrittgeschwindigkeit fährt | B | … in einer Kurve untersteuert | C | … steht | ✓  RICHTIG | ✓  RICHTIG | Im Stand oder mit Schrittgeschwindigkeit. In der Kurve nie: Untersteuern heißt, der Lkw schiebt über die Vorderachse – mit Sperre lenkt er noch schlechter (Prüfungsfrage 2.7.03-213). | KLASSE C  ·  ABEND 2  ·  C3  ·  ABSCHLUSS | 80
 NOTIZEN:
 FOLIE 80 VON 133 · 2 Klicks
 
 ▶ Frage vorlesen, abstimmen. Mehrere Antworten können richtig sein.
 🖱 Klick 1: Antworten · Klick 2: Lösung.
-✅ A und B. Amtlicher Wortlaut 2.7.03-213: „Wann können Sie die Differenzialsperre einschalten, ohne dass dadurch Schäden am Kraftfahrzeug zu erwarten sind? Wenn mein Kraftfahrzeug – steht – mit Schrittgeschwindigkeit fährt – in einer Kurve untersteuert“.
+✅ A und C. Amtlicher Wortlaut 2.7.03-213: „Wann können Sie die Differenzialsperre einschalten, ohne dass dadurch Schäden am Kraftfahrzeug zu erwarten sind? Wenn mein Kraftfahrzeug – steht – mit Schrittgeschwindigkeit fährt – in einer Kurve untersteuert“.
 ➜ „Nächste Frage.“
 
 === FOLIE 81 ===
-AUF DER FOLIE: QUIZ C3 · 2 | Ein Lkw hat die Achsformel 6 × 4. Was heißt das? | A | 6 Räder, davon 4 Zwillingsräder | B | 3 Achsen, davon 2 angetrieben | C | 6 Gänge vorwärts, 4 rückwärts | ✓  RICHTIG | Erste Zahl: Radstellen (Zwillingsräder zählen als eine). Zweite Zahl: davon angetrieben. 6 Radstellen = 3 Achsen, 4 angetrieben = 2 Achsen. | KLASSE C  ·  ABEND 2  ·  C3  ·  ABSCHLUSS | 81
+AUF DER FOLIE: QUIZ C3 · 2 | Ein Lkw hat die Achsformel 6 × 4. Was heißt das? | A | 6 Räder, davon 4 Zwillingsräder | B | 6 Gänge vorwärts, 4 rückwärts | C | 3 Achsen, davon 2 angetrieben | ✓  RICHTIG | Erste Zahl: Radstellen (Zwillingsräder zählen als eine). Zweite Zahl: davon angetrieben. 6 Radstellen = 3 Achsen, 4 angetrieben = 2 Achsen. | KLASSE C  ·  ABEND 2  ·  C3  ·  ABSCHLUSS | 81
 NOTIZEN:
 FOLIE 81 VON 133 · 2 Klicks
 
 ▶ Frage vorlesen, abstimmen.
 🖱 Klick 1: Antworten · Klick 2: Lösung.
-✅ B.
+✅ C.
 ➜ „Und noch eine.“
 
 === FOLIE 82 ===
-AUF DER FOLIE: QUIZ C3 · 3 | Im Display steht: AdBlue-Tank leer. Was passiert, wenn Sie nicht nachfüllen? | A | Nichts – AdBlue ist nur für die Umwelt | B | Erst weniger Leistung, zuletzt höchstens 20 km/h | C | Der Motor geht sofort aus | ✓  RICHTIG | Das EU-Recht schreibt die Stufen vor: Warnung, Leistungsdrosselung, zuletzt Kriechmodus mit höchstens 20 km/h (VO (EU) 582/2011 Anhang XIII mit UN-Regelung Nr. 49). | KLASSE C  ·  ABEND 2  ·  C3  ·  ABSCHLUSS | 82
+AUF DER FOLIE: QUIZ C3 · 3 | Im Display steht: AdBlue-Tank leer. Was passiert, wenn Sie nicht nachfüllen? | A | Der Motor geht sofort aus | B | Erst weniger Leistung, zuletzt höchstens 20 km/h | C | Nichts – AdBlue ist nur für die Umwelt | ✓  RICHTIG | Das EU-Recht schreibt die Stufen vor: Warnung, Leistungsdrosselung, zuletzt Kriechmodus mit höchstens 20 km/h (VO (EU) 582/2011 Anhang XIII mit UN-Regelung Nr. 49). | KLASSE C  ·  ABEND 2  ·  C3  ·  ABSCHLUSS | 82
 NOTIZEN:
 FOLIE 82 VON 133 · 2 Klicks
 
@@ -855,7 +855,7 @@ AUF DER FOLIE: 01 | Federung | Blattfeder, Luftfeder – und warum man den Lkw h
 NOTIZEN:
 FOLIE 86 VON 133 · Animation läuft von selbst · Klick = weiter
 
-▶ Sagen: „Kapitel 1: die Federung. Auf dem Bild steht ein Lkw an der Rampe – die Ladefläche ist genau auf Rampenhöhe. Das macht die Luftfederung möglich.“
+▶ Sagen: „Kapitel 1: die Federung. Mit Luftfederung bringt ihr die Ladefläche genau auf Rampenhöhe – das schauen wir uns gleich an.“
 🖱 Keine Klicks.
 ➜ „Welche Federn gibt es am Lkw?“
 
@@ -1298,13 +1298,13 @@ FOLIE 126 VON 133 · 5 Klicks
 ➜ „Damit ist C4 geschafft. Zeit zum Mitschreiben.“
 
 === FOLIE 127 ===
-AUF DER FOLIE: QUIZ LICHT | Die Blinker-Kontrollleuchte blinkt plötzlich viel schneller als sonst. Warum? | A | Der Warnblinker ist an | B | Eine Blinkleuchte ist ausgefallen | C | Die Sicherung ist defekt | ✓  RICHTIG | Schnelles Blinken der Kontrolle zeigt: Eine Blinkleuchte am Lkw oder Anhänger ist ausgefallen (Prüfungsfrage 2.7.02-134). Ist die Sicherung defekt, blinkt gar nichts. | KLASSE C  ·  ABEND 2  ·  C4  ·  LICHT UND WARNLEUCHTEN | 127
+AUF DER FOLIE: QUIZ LICHT | Die Blinker-Kontrollleuchte blinkt plötzlich viel schneller als sonst. Warum? | A | Eine Blinkleuchte ist ausgefallen | B | Die Sicherung ist defekt | C | Der Warnblinker ist an | ✓  RICHTIG | Schnelles Blinken der Kontrolle zeigt: Eine Blinkleuchte am Lkw oder Anhänger ist ausgefallen (Prüfungsfrage 2.7.02-134). Ist die Sicherung defekt, blinkt gar nichts. | KLASSE C  ·  ABEND 2  ·  C4  ·  LICHT UND WARNLEUCHTEN | 127
 NOTIZEN:
 FOLIE 127 VON 133 · 2 Klicks
 
 ▶ Frage vorlesen, abstimmen.
 🖱 Klick 1: Antworten · Klick 2: Lösung.
-✅ B. Amtlich: „Ein Leuchtmittel ist defekt“. Falsch: „Die Sicherung ist defekt“ und „Das Warnblinklicht ist eingeschaltet“.
+✅ A. Amtlich: „Ein Leuchtmittel ist defekt“. Falsch: „Die Sicherung ist defekt“ und „Das Warnblinklicht ist eingeschaltet“.
 ➜ „Zum Abschluss von C4: die Abfahrtkontrolle.“
 
 === FOLIE 128 ===
@@ -1341,7 +1341,7 @@ FOLIE 130 VON 133 · 2 Klicks
 ➜ „Nächste Frage.“
 
 === FOLIE 131 ===
-AUF DER FOLIE: QUIZ C4 · 2 | Starthilfe: / Wohin kommt das letzte Ende des schwarzen Kabels? | A | An Minus der leeren Batterie | B | An den Massepunkt des Pannen-Lkw (Betriebsanleitung) oder den Motorblock | C | An Plus des Spenders | ✓  RICHTIG | An den Massepunkt laut Betriebsanleitung oder blankes Metall am Motorblock, mit Abstand zur Batterie – sonst können Funken das Knallgas der Batterie entzünden (ADAC). | KLASSE C  ·  ABEND 2  ·  C4  ·  ABSCHLUSS | 131
+AUF DER FOLIE: QUIZ C4 · 2 | Starthilfe: / Wohin kommt das letzte Ende des schwarzen Kabels? | A | An Plus des Spenders | B | An den Massepunkt des Pannen-Lkw (Betriebsanleitung) oder den Motorblock | C | An Minus der leeren Batterie | ✓  RICHTIG | An den Massepunkt laut Betriebsanleitung oder blankes Metall am Motorblock, mit Abstand zur Batterie – sonst können Funken das Knallgas der Batterie entzünden (ADAC). | KLASSE C  ·  ABEND 2  ·  C4  ·  ABSCHLUSS | 131
 NOTIZEN:
 FOLIE 131 VON 133 · 2 Klicks
 

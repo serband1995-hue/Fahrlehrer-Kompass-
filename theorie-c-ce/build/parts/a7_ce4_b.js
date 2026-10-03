@@ -1,6 +1,6 @@
 // Abend 7 · CE4: Kapitel 3 Rückwärts und Abbiegen (Sattelzug rückwärts, Einweiser, Rechtsabbiegen mit Anhänger und Radfahrer)
 const { C, sec, chapter, motion, quiz, ask, seg, veh, svgImg } = require('../gs');
-const { zugTop, satTop, stepSattel, stepGlieder, hitchG, uv } = require('../zugtop');
+const { zugTop, satTop, stepSattel, stepGlieder, hitchG, uv, lf } = require('../zugtop');
 
 sec('ce4r', 'CE4  ·  RÜCKWÄRTS UND ABBIEGEN', C.pu, 'bg_pu.jpg');
 
@@ -10,7 +10,7 @@ module.exports = async (deck) => {
 
   // ===== SATTELZUG RÜCKWÄRTS (Draufsicht, berechnet) =====
   {
-    const S = 0.2, X0 = 8.5, Y0 = 2.6, P = (x, y) => [X0 + x * S, Y0 - y * S];
+    const S = 0.19, X0 = 8.5, Y0 = 2.55, P = (x, y) => [X0 + x * S, Y0 - y * S];   // etwas kleiner: Aufliegerheck bleibt im Bild
     // Fahrplan: 4 m rückwärts mit Lenkrad links (25°), dann 6 m mit Lenkrad rechts (–20°) nachführen
     const sim = sEnd => { let st = { x: 0, y: 0, a: 90, b: 90 }, s = 0; while (s > sEnd + 1e-6) { st = stepSattel(st, -0.05, s > -4 ? 25 : -20); s -= 0.05; } return st; };
     const F = [
@@ -28,28 +28,28 @@ module.exports = async (deck) => {
       kicker: 'Rückwärts mit Sattelzug', ttl: 'Rückwärts lenken', dur: 650, holdDur: 650,
       question: 'Ihr fahrt rückwärts und lenkt nach links. Wohin wandert das Heck des Aufliegers?',
       answer: 'Nach rechts – andersherum. Erst anlenken, dann nachführen (gegenlenken), damit der Knick nicht zu groß wird.',
-      legend: 'Draufsicht · berechnet (Einspurmodell) · Sattelzug 16,5 m · Fahrer sitzt links, Blick nach oben',
+      legend: 'Draufsicht · berechnet · Sattelzug 16,5 m · Fahrer links, Blick nach oben · rot: Spur der Aufliegerachse',
       frames: [
         fr(0, { hold: true,
-          cap: 'Der Zug steht gerade. Die gestrichelte Linie zeigt, wo er jetzt steht.',
+          cap: 'Der Zug steht gerade. Die gestrichelte Linie zeigt, wo er am Anfang stand.',
           note: '▶ Sagen: „Der Sattelzug steht gerade. Ihr sitzt links, schaut nach vorn – also nach oben. Gleich fahrt ihr rückwärts und lenkt nach links.“\n❓ Frage auf der Folie stellen. Abstimmen: links oder rechts?\n✅ Lehrbuchwissen: Beim Rückwärtsfahren läuft der Auflieger entgegen dem Lenkeinschlag. Bewegung mit einem einfachen Fahrzeugmodell berechnet (Radstand 3,8 m, Königszapfen bis Achsmitte 7,6 m).\n🖱 Klick: Lenkrad links, rückwärts (läuft von selbst).\n➜ „Lenkrad nach links.“' }),
         fr(1), fr(2),
         fr(3, { hold: true, answer: true,
           cap: 'Lenkrad links: Die Zugmaschine schiebt ihr Heck nach links. Der Auflieger knickt dagegen – sein Heck geht nach rechts.',
-          note: '▶ „Seht ihr? Lenkrad links – das Heck der Zugmaschine geht nach links, aber der Auflieger knickt ab und sein Heck wandert nach rechts. Genau andersherum als beim Lkw allein.“\n❓ Frage auf der Folie auflösen.\n✅ Lehrbuchwissen (FAKTEN CE4-e); Bewegung berechnet.\n🖱 Klick: nachführen (läuft von selbst).\n➜ „Und jetzt? Wenn ich weiter links lenke, wird der Knick immer größer.“' }),
+          note: '▶ „Seht ihr? Lenkrad links – das Heck der Zugmaschine geht nach links, aber der Auflieger knickt ab und sein Heck wandert nach rechts. Genau andersherum als beim Lkw allein.“\n❓ Frage auf der Folie auflösen.\n✅ Lehrbuchwissen; Bewegung berechnet.\n🖱 Klick: nachführen (läuft von selbst).\n➜ „Und jetzt? Wenn ich weiter links lenke, wird der Knick immer größer.“' }),
         fr(4), fr(5),
         fr(6, { hold: true,
           cap: 'Nachführen: Habt ihr den Winkel, lenkt ihr zurück. Dann bleibt der Knick gleich und der Zug zieht seinen Bogen. Kleine Lenkbewegungen, langsam, früh korrigieren.',
-          note: '▶ „Hat der Auflieger den Winkel, den ihr wollt, lenkt ihr dagegen – man sagt: nachführen. Dann bleibt der Knick gleich und der Zug fährt im Bogen. Wird der Knick zu groß, gibt es nur eins: vorziehen und neu ansetzen.“\n✅ Lehrbuchwissen (FAKTEN CE4-e). Bewegung berechnet.\n💡 Gliederzug: zwei Gelenke – er reagiert verzögert und ist schwerer zu fahren. Am Fahrzeug üben, nicht nach Folie.\n🖱 Nächster Klick: nächste Folie.\n➜ „Und wer hilft euch dabei?“' }),
+          note: '▶ „Hat der Auflieger den Winkel, den ihr wollt, lenkt ihr dagegen – man sagt: nachführen. Dann bleibt der Knick gleich und der Zug fährt im Bogen. Wird der Knick zu groß, gibt es nur eins: vorziehen und neu ansetzen.“\n✅ Lehrbuchwissen; Bewegung berechnet.\n💡 Gliederzug mit Drehschemelanhänger: zwei Gelenke – er reagiert verzögert und ist schwerer zu fahren. Am Fahrzeug üben, nicht nach Folie.\n🖱 Nächster Klick: nächste Folie.\n➜ „Und wer hilft euch dabei?“' }),
       ],
       scene: async (s, t) => {
         const f = F[t.k], st = f.st;
         // Boden und Ausgangslinie
         s.rect(5.7, 1.55, 4.95, 5.05, { fill: '161D27', name: '!!hof' });
-        s.rect(X0 - 0.01, 1.6, 0.02, 4.95, { fill: C.dim, ft: 40, name: '!!ref' });
-        // Spur der Aufliegerachse (rot)
+        s.lineS(X0, 1.6, X0, 6.55, { color: C.dim, lw: 1.5, dash: 'dash', lt: 30, name: '!!ref' });   // gestrichelt: Lage am Anfang
+        // Spur der Aufliegerachse (rot) – erst, wenn der Auflieger deutlich ausschwenkt (vorher läge sie fast ganz unter ihm)
         const trail = F.slice(0, t.k + 1).filter((g, i, A) => i === 0 || g.s !== A[i - 1].s).map(g => ({ P: P(g.st.x, g.st.y), a: g.st.a, b: g.st.b }));
-        const r = satTop(s, { P: P(st.x, st.y), a: st.a, b: st.b, S, nm: 'sr', rb: 270, steer: f.w < 0 ? 25 : f.w > 0 ? -20 : 0, trail: trail.slice(0, -1), nTrail: 4, kpCol: C.pu });
+        const r = satTop(s, { P: P(st.x, st.y), a: st.a, b: st.b, S, nm: 'sr', rb: 270, steer: f.w < 0 ? 25 : f.w > 0 ? -20 : 0, trail: t.k >= 5 ? trail.slice(0, -1) : [], nTrail: 4, kpCol: C.pu });
         // Lenkrad
         s.rrect(10.85, 1.6, 2.2, 2.25, { fill: '0E1520', line: '2A3B52', rr: 0.08, name: '!!lrb' });
         s.text('LENKRAD', { x: 11.0, y: 1.66, w: 1.9, h: 0.28, size: 12, bold: true, color: C.dim, cs: 2, name: '!!lrt' });
@@ -58,7 +58,9 @@ module.exports = async (deck) => {
         // Rückwärts-Pfeil und Meldung
         s.text(t.k === 0 ? '' : '↓ rückwärts', { x: 10.9, y: 3.95, w: 2.1, h: 0.35, size: 14, bold: true, color: C.am, align: 'center', name: '!!rw' });
         s.text(f.msg, { x: 10.85, y: 4.45, w: 2.2, h: 2.1, size: 15, bold: true, color: f.mc, valign: 'top', name: '!!msg' });
-        s.text(t.k >= 3 ? 'Heck →' : '', { x: r.rear[0] + 0.15, y: r.rear[1] - 0.2, w: 1.0, h: 0.3, size: 12, bold: true, color: C.pu, name: '!!hk' });
+        // „Heck →“ mit 0,15″ Abstand rechts neben der äußersten Ecke des Aufliegerhecks
+        const nv = lf(uv(st.b)), xr = Math.max(...[1, -1].map(sd => r.rear[0] + nv[0] * 1.275 * S * sd));
+        s.text(t.k >= 3 ? 'Heck →' : '', { x: xr + 0.15, y: r.rear[1] - 0.1, w: 0.9, h: 0.3, size: 12, bold: true, color: C.pu, name: '!!hk' });
       },
     });
   }
@@ -68,15 +70,16 @@ module.exports = async (deck) => {
       ['LuUserCheck', 'Einweiser:', 'steht dort, wo ihr ihn seht – nie zwischen Fahrzeug und Hindernis.'],
       ['LuHand', 'Sichtkontakt weg?', 'Sofort anhalten. Erst weiter, wenn ihr ihn wieder seht.'],
       ['LuArrowLeft', 'Wenn möglich nach links:', 'Zur Fahrerseite seht ihr am meisten.'],
-      ['LuLink', 'Gliederzug:', 'zwei Gelenke – er reagiert verzögert. Klein lenken, langsam, im Zweifel vorziehen.'],
-      ['LuFootprints', 'Aussteigen und nachsehen', '– das ist keine Schande, sondern Profi.'],
+      ['LuLink', 'Drehschemelanhänger:', 'zwei Gelenke – er reagiert verzögert. Klein lenken, langsam fahren, im Zweifel vorziehen.'],
+      ['LuFootprints', 'Aussteigen und nachsehen', '– das ist keine Schande, das machen Profis.'],
     ],
     notes:
       '▶ Sagen: „Rückwärts seht ihr mit dem Zug fast nichts. Was hilft?“\n' +
       '❓ Vor jedem Klick fragen.\n' +
       '🖱 Klick 1–5: je ein Punkt.\n' +
-      '✅ § 9 Abs. 5 StVO: Gefährdung ausschließen, erforderlichenfalls einweisen lassen. DGUV Vorschrift 70 § 46 mit Durchführungsanweisung: Einweiser nur im Sichtbereich, nicht zwischen Fahrzeug und Hindernis; Sichtkontakt verloren → sofort anhalten. Prüfungsfrage 2.6.03-001. DGUV Information 214-080, S. 31 (Gliederzug: zwei Drehpunkte).\n' +
-      '💡 In welche Richtung der Gliederzug-Anhänger beim Rückwärtsfahren genau läuft, zeigen wir nicht auf der Folie – das übt ihr am Fahrzeug mit dem Fahrlehrer.\n' +
+      '✅ § 9 Abs. 5 StVO: Gefährdung ausschließen, erforderlichenfalls einweisen lassen. DGUV Vorschrift 70 § 46 Abs. 2: Einweiser nur im Sichtbereich des Fahrers, nicht zwischen Fahrzeug und Hindernis, keine anderen Tätigkeiten. Sichtkontakt weg → anhalten: Prüfungsfrage 2.6.03-001. DGUV Information 214-080, S. 31 (Gelenkdeichselanhänger mit Drehschemel: zwei Drehpunkte).\n' +
+      '💡 Beim Rangieren mit Drehschemelanhänger: niemand seitlich direkt neben dem Anhänger (DGUV Vorschrift 70 § 47 Abs. 2).\n' +
+      '💡 In welche Richtung der Drehschemelanhänger beim Rückwärtsfahren genau läuft, zeigen wir nicht auf der Folie – das übt ihr am Fahrzeug mit dem Fahrlehrer.\n' +
       '➜ „Eine Prüfungsfrage.“',
   });
   await quiz(deck, 'ce4r', {
@@ -88,15 +91,29 @@ module.exports = async (deck) => {
 
   // ===== RECHTS ABBIEGEN MIT ANHÄNGER (Draufsicht, berechnet) =====
   {
-    const S = 0.15, O = [7.15, 3.05], P = (x, y) => [O[0] + x * S, O[1] - y * S];
-    const sim = sEnd => { let st = { x: 1.75, y: -12.55, a: 90, bd: 90, b: 90 }, s = 0; while (s < sEnd - 1e-6) { st = stepGlieder(st, 0.05, st.y >= -10 && st.a > 0.5 ? -37 : 0); s += 0.05; } return st; };
+    // Querstraße: Fahrbahn von –3,5 m bis 8,5 m, Leitlinie bei 2,5 m (zwei Fahrstreifen je 6 m).
+    // Lenkverlauf: ab der Haltlinie gleichmäßig einlenken (31°). Das Fahrerhaus schwenkt dabei nach links aus,
+    // bleibt aber in allen gezeigten Bildern im eigenen Fahrstreifen (mind. 0,5 m unter der Leitlinie).
+    const S = 0.15, O = [7.15, 3.05], P = (x, y) => [O[0] + x * S, O[1] - y * S], YM = 2.5, YT = 8.5;
+    const sim = sEnd => { let st = { x: 1.75, y: -12.55, a: 90, bd: 90, b: 90 }, s = 0; while (s < sEnd - 1e-6) { st = stepGlieder(st, 0.05, st.y >= -12.25 && st.a > 0.5 ? -31 : 0); s += 0.05; } return st; };
     const F = [
-      { s: 0, cy: -20.0, msg: 'Der Zug will rechts abbiegen. Neben dem Anhänger fährt ein Radfahrer geradeaus.', mc: C.mut },
-      { s: 5, cy: -16.6, msg: 'Der Lkw biegt ab …', mc: C.txt },
-      { s: 10, cy: -13.3, msg: '… der Anhänger folgt weiter innen …', mc: C.txt },
-      { s: 13, cy: -11.25, msg: '… und schneidet die Kurve …', mc: C.am },
-      { s: 15, cy: -9.9, msg: 'Der Anhänger kreuzt den Radweg – genau da, wo der Radfahrer ist!', mc: C.red },
+      { s: 0, cy: -21.0, msg: 'Der Zug will rechts abbiegen. Neben dem Anhänger fährt ein Radfahrer geradeaus.', mc: C.mut },
+      { s: 5, cy: -17.5, msg: 'Der Lkw biegt ab …', mc: C.txt },
+      { s: 8.5, cy: -15.0, msg: '… der Anhänger folgt weiter innen …', mc: C.txt },
+      { s: 13.5, cy: -11.5, msg: '… und schneidet die Kurve …', mc: C.am },
+      { s: 16, cy: -9.5, msg: 'Der Anhänger kreuzt den Radweg – genau da, wo der Radfahrer ist!', mc: C.red },
     ].map(f => ({ ...f, st: sim(f.s) }));
+    // Punkte am Zug für die Spuren (Zoll): Lkw-Vorderrad rechts (lf), Anhänger-Hinterrad rechts (ar)
+    const zugPts = st => {
+      const R = Math.PI / 180, u = [Math.cos(st.a * R), Math.sin(st.a * R)];
+      const vr = [st.x + u[0] * 6.45 + Math.sin(st.a * R) * 1.05, st.y + u[1] * 6.45 - Math.cos(st.a * R) * 1.05];
+      const h = hitchG(st), T = [h[0] - 2.4 * Math.cos(st.bd * R), h[1] - 2.4 * Math.sin(st.bd * R)];
+      const ar = [T[0] - 5 * Math.cos(st.b * R) + Math.sin(st.b * R) * 1.05, T[1] - 5 * Math.sin(st.b * R) - Math.cos(st.b * R) * 1.05];
+      return { lf: P(vr[0], vr[1]), ar: P(ar[0], ar[1]) };
+    };
+    // Spuren in feinen Stücken (je Abschnitt NSUB Zwischenlagen), damit die Kurve rund aussieht
+    const NSUB = 4, SUB = [];
+    for (let j = 0; j < F.length - 1; j++) { const a = []; for (let q = 0; q <= NSUB; q++) a.push(zugPts(sim(F[j].s + (F[j + 1].s - F[j].s) * q / NSUB))); SUB.push(a); }
     const pose = st => { const h = hitchG(st); return { H: P(h[0], h[1]), a: st.a, bd: st.bd, b: st.b }; };
     const fr = (k, o = {}) => ({ ...o, t: { k } });
     await motion(deck, 'ce4r', {
@@ -111,13 +128,13 @@ module.exports = async (deck) => {
         fr(1), fr(2), fr(3),
         fr(4, { hold: true, answer: true,
           cap: 'Blau läuft der Lkw, rot der Anhänger – deutlich weiter innen. Er schneidet die Kurve und kreuzt den Radweg. Schrittgeschwindigkeit, Spiegel bis zum Schluss beobachten, im Zweifel anhalten.',
-          note: '▶ „Schaut auf die zwei Spuren: Blau ist das Vorderrad vom Lkw, rot das Hinterrad vom Anhänger. Der Anhänger läuft weit innen – er schneidet die Kurve und fährt über den Radweg. Genau dort ist jetzt der Radfahrer. Ihn neben dem Anhänger zu sehen, ist sehr schwer.“\n❓ Frage auf der Folie auflösen.\n✅ Prüfungsfrage 2.7.01-310: Der Anhänger kann ausschwenken und die Kurve schneiden (falsch: läuft in der Spur des Zugfahrzeugs). § 9 Abs. 6 StVO: Kfz über 3,5 t innerorts beim Rechtsabbiegen Schrittgeschwindigkeit, wenn mit Rad- oder Fußverkehr zu rechnen ist (BKat 45: 70 €, 1 Punkt). Prüfungsfrage 2.2.23-212: erst abbiegen, wenn neben dem Fahrzeug niemand ist.\n💡 Abbiegeassistent (Pflicht für neu zugelassene Lkw seit 7.7.2024) warnt – er ersetzt nicht Spiegel und Schrittgeschwindigkeit.\n🖱 Nächster Klick: nächste Folie.\n➜ „Zwei Prüfungsfragen dazu.“' }),
+          note: '▶ „Schaut auf die zwei Spuren: Blau ist das Vorderrad vom Lkw, rot das Hinterrad vom Anhänger. Der Anhänger läuft weit innen – er schneidet die Kurve und fährt über den Radweg. Genau dort ist jetzt der Radfahrer. Ihn neben dem Anhänger zu sehen, ist sehr schwer.“\n❓ Frage auf der Folie auflösen.\n✅ Prüfungsfrage 2.7.01-310: Der Anhänger kann ausschwenken und die Kurve schneiden (falsch: läuft in der Spur des Zugfahrzeugs). § 9 Abs. 6 StVO: Kfz über 3,5 t innerorts beim Rechtsabbiegen Schrittgeschwindigkeit, wenn mit Rad- oder Fußverkehr zu rechnen ist (BKat 45: 70 €, 1 Punkt). Prüfungsfrage 2.2.23-212: erst abbiegen, wenn neben dem Fahrzeug niemand ist.\n💡 Abbiegeassistent (Pflicht für neu zugelassene Lkw seit 7.7.2024) warnt – er ersetzt nicht Spiegel und Schrittgeschwindigkeit.\n💡 Achtet auch auf das Fahrerhaus: Es schwenkt beim Abbiegen weit nach links aus. In engen Querstraßen reicht der eigene Fahrstreifen dann oft nicht – Gegenverkehr beachten. Die Querstraße ist hier breit gezeichnet.\n🖱 Nächster Klick: nächste Folie.\n➜ „Zwei Prüfungsfragen dazu.“' }),
       ],
       scene: async (s, t) => {
         const f = F[t.k];
         // Kreuzung: Gehweg, Straßen, abgerundete Ecke (R = 10 m), Radweg
         s.rect(5.6, 1.5, 7.45, 5.15, { fill: '10161D', name: '!!gw' });
-        const [vx0] = P(-3.5, 0), [vx1] = P(5.0, 0), [, hy0] = P(0, 5.5), [, hy1] = P(0, -3.5);
+        const [vx0] = P(-3.5, 0), [vx1] = P(5.0, 0), [, hy0] = P(0, YT), [, hy1] = P(0, -3.5);
         s.rect(vx0, 1.5, vx1 - vx0, 5.15, { fill: C.road2, name: '!!rv' });
         s.rect(vx1, hy0, 13.05 - vx1, hy1 - hy0, { fill: C.road2, name: '!!rh' });
         s.rect(5.6, hy0, vx0 - 5.6, hy1 - hy0, { fill: C.road2, name: '!!rh2' });
@@ -132,37 +149,34 @@ module.exports = async (deck) => {
         // Mittellinien und Haltlinie
         const [mx] = P(0, 0);
         for (let k = 0, y = hy1 + 0.1; y < 6.5; y += 0.45, k++) s.rect(mx - 0.012, y, 0.025, 0.25, { fill: C.mark, name: '!!mv' + k });
-        const [, my] = P(0, 1.0);
+        const [, my] = P(0, YM);
         for (let k = 0, x = vx1 + 0.15; x < 12.9; x += 0.45, k++) s.rect(x, my - 0.012, 0.25, 0.025, { fill: C.mark, name: '!!mh' + k });
         const [hlx0, hly] = P(0, -4.3), [hlx1] = P(3.5, 0);
         s.rect(hlx0, hly - 0.02, hlx1 - hlx0, 0.045, { fill: C.mark, name: '!!hl' });
-        // Spuren: Lkw-Vorderrad rechts (blau) und Anhänger-Hinterrad rechts (rot)
-        for (let j = 0; j < 4; j++) {
-          // sichtbar: Stück j → j+1; noch unsichtbar: winziges Stück am Anfang, schon in der späteren Richtung (wächst dann per Morph)
-          const on = j < t.k, za = zugPts(F[j].st), zb = zugPts(F[j + 1].st);
-          const end = (A, B) => on ? B : [A[0] + (B[0] - A[0]) * 0.002, A[1] + (B[1] - A[1]) * 0.002];
-          const lb = end(za.lf, zb.lf), ab = end(za.ar, zb.ar);
-          seg(s, za.lf[0], za.lf[1], lb[0], lb[1], { col: '4C8DF0', th: 0.04, hide: !on, rb: -45, name: '!!sl' + j });
-          seg(s, za.ar[0], za.ar[1], ab[0], ab[1], { col: C.red, th: 0.045, hide: !on, rb: -45, name: '!!sa' + j });
-        }
         // Zug
         zugTop(s, { ...pose(f.st), S, nm: 'ab', rb: 270, hl: t.k === 4 ? C.red : undefined });
+        // Spuren über dem Zug: Lkw-Vorderrad rechts (blau) und Anhänger-Hinterrad rechts (rot)
+        for (let j = 0; j < SUB.length; j++) for (let q = 0; q < NSUB; q++) {
+          // sichtbar: Stück j → j+1; noch unsichtbar: winziges Stück am Anfang, schon in der späteren Richtung (wächst dann per Morph)
+          // sichtbare Stücke an beiden Enden etwas verlängern: Sie überlappen, die Linie wirkt durchgezogen
+          const on = j < t.k, A = SUB[j][q], B = SUB[j][q + 1];
+          const piece = (a, b) => {
+            if (!on) return [a, [a[0] + (b[0] - a[0]) * 0.002, a[1] + (b[1] - a[1]) * 0.002]];
+            const L = Math.hypot(b[0] - a[0], b[1] - a[1]) || 1, e = 0.025, d = [(b[0] - a[0]) / L * e, (b[1] - a[1]) / L * e];
+            return [[a[0] - d[0], a[1] - d[1]], [b[0] + d[0], b[1] + d[1]]];
+          };
+          const [l0, l1] = piece(A.lf, B.lf), [a0, a1] = piece(A.ar, B.ar);
+          seg(s, l0[0], l0[1], l1[0], l1[1], { col: '4C8DF0', th: 0.04, hide: !on, rb: -45, name: '!!sl' + j + '_' + q });
+          seg(s, a0[0], a0[1], a1[0], a1[1], { col: C.red, th: 0.045, hide: !on, rb: -45, name: '!!sa' + j + '_' + q });
+        }
         // Radfahrer (fährt geradeaus nach oben)
         const [bcx] = P(4.25, 0), [, bcy] = P(0, f.cy);
         veh(s, 'bike.png', bcx, bcy, 0, '!!bike', { scale: 0.62 });
         s.oval(bcx - 0.28, bcy - 0.28, 0.56, 0.56, { line: C.red, lw: 3, fill: C.red, ft: 100, lt: t.k === 4 ? 0 : 100, name: '!!bring' });
-        s.text(f.msg, { x: 9.0, y: 1.5, w: 4.05, h: 0.68, size: 13, bold: true, color: f.mc, valign: 'middle', name: '!!msg' });
-        s.text(t.k === 4 ? 'Anhänger schneidet die Kurve' : '', { x: 8.35, y: 4.55, w: 3.0, h: 0.3, size: 13, bold: true, color: C.red, name: '!!sct' });
+        s.text(f.msg, { x: 9.6, y: 3.75, w: 3.4, h: 0.8, size: 13, bold: true, color: f.mc, valign: 'top', name: '!!msg' });
+        s.text(t.k === 4 ? 'Anhänger schneidet die Kurve' : '', { x: 8.35, y: 4.7, w: 3.0, h: 0.3, size: 13, bold: true, color: C.red, name: '!!sct' });
       },
     });
-    // Punkte am Zug für die Spuren (Zoll)
-    function zugPts(st) {
-      const R = Math.PI / 180, u = [Math.cos(st.a * R), Math.sin(st.a * R)];
-      const lf = [st.x + u[0] * 6.45 + Math.sin(st.a * R) * 1.05, st.y + u[1] * 6.45 - Math.cos(st.a * R) * 1.05];
-      const h = hitchG(st), T = [h[0] - 2.4 * Math.cos(st.bd * R), h[1] - 2.4 * Math.sin(st.bd * R)];
-      const ar = [T[0] - 5 * Math.cos(st.b * R) + Math.sin(st.b * R) * 1.05, T[1] - 5 * Math.sin(st.b * R) - Math.cos(st.b * R) * 1.05];
-      return { lf: P(lf[0], lf[1]), ar: P(ar[0], ar[1]) };
-    }
   }
   await quiz(deck, 'ce4r', {
     kicker: 'Prüfungsfrage 2.7.01-310', q: 'Wie wirken sich die Kurvenlaufeigenschaften einer Fahrzeugkombination (Kraftfahrzeug mit Anhänger) beim Abbiegen aus? Der Anhänger …', size: 28,
@@ -173,7 +187,7 @@ module.exports = async (deck) => {
   await quiz(deck, 'ce4r', {
     kicker: 'Prüfungsfrage 2.2.09-201', q: 'Sie fahren ein Kraftfahrzeug mit mehr als 3,5 t zulässiger Gesamtmasse. Mit welcher Geschwindigkeit müssen Sie innerorts nach rechts abbiegen? Wenn mit Radfahrern oder Fußgängern zu rechnen ist, mit …', size: 24,
     opts: ['… Schrittgeschwindigkeit', '… höchstens 20 km/h', '… höchstens 30 km/h'], ok: [0],
-    why: 'Schritt heißt: so langsam, dass ihr sofort stehen könnt. Ein Verstoß kostet 70 € und einen Punkt.',
-    notes: '▶ Frage vorlesen, abstimmen.\n🖱 Klick 1: Antworten · Klick 2: Lösung.\n✅ Amtlicher Fragenkatalog 2.2.09-201: A. § 9 Abs. 6 StVO; BKat Nr. 45 (70 €, 1 Punkt).\n➜ „Kapitel 4: Wetter und Gefälle.“',
+    why: 'Schrittgeschwindigkeit heißt: so langsam, dass ihr sofort stehen könnt. Ein Verstoß kostet 70 € und einen Punkt.',
+    notes: '▶ Frage vorlesen, abstimmen.\n🖱 Klick 1: Antworten · Klick 2: Lösung.\n✅ Amtlicher Fragenkatalog 2.2.09-201: A. § 9 Abs. 6 StVO; BKat Nr. 45 (70 €, 1 Punkt).\n💡 Im Gesetz steht keine Zahl. Als Anhalt nannte das Verkehrsministerium 2019 in einem Entwurf etwa 7 bis 11 km/h (eurotransport, 18.06.2019).\n➜ „Kapitel 4: Wetter und Wind.“',
   });
 };

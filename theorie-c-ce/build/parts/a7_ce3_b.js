@@ -42,6 +42,7 @@ module.exports = async (deck) => {
         s.text([{ text: '✓  Mit ABS-Stecker', options: { bold: true, color: C.gr } }, { text: '   Lkw und Anhänger mit ABS', options: { color: C.mut } }], { x: RX, y: R1 - 0.46, w: RW, h: 0.3, size: 14, name: '!!l1' });
         s.text([{ text: '✕  Ohne ABS-Stecker', options: { bold: true, color: C.red } }, { text: '   ABS arbeitet nur am Lkw', options: { color: C.mut } }], { x: RX, y: R2 - 0.46, w: RW, h: 0.3, size: 14, name: '!!l2' });
         // Haltepunkt mit ABS (dünne Linie, liegt unter den Fahrzeugen)
+        const xs = F0 + D1, xe = F0 + D2;
         s.rect(xs - 0.008, R1, 0.016, R2 + 1.4 - R1, { fill: C.white, ft: k === 4 ? 45 : 100, name: '!!stop' });
         // oben: mit Stecker – bleibt gerade
         const H1 = hAt(D1, u, R1);
@@ -51,7 +52,6 @@ module.exports = async (deck) => {
         const H2 = hAt(D2, u, R2);
         zugTop(s, { H: H2, b: ANG[k], S, nm: 'u', trailAh: U.slice(0, k).map((uu, j) => ({ H: hAt(D2, uu, R2), b: ANG[j] })), nTrail: 4, hl: k >= 2 ? C.red : undefined });
         s.text(k ? 'Räder blockieren' : '', { x: H2[0] - 2.2, y: R2 + 1.53, w: 2.2, h: 0.28, size: 12, bold: true, color: C.red, align: 'center', name: '!!ut' });
-        const xs = F0 + D1, xe = F0 + D2;
         arrow(s, xs + 0.05, R2 + 0.3, xe - 0.02, R2 + 0.3, { col: C.am, th: 0.05, head: 0.16, name: 'mehr', hide: k !== 4 });
         s.text(k === 4 ? 'länger' : '', { x: xs, y: R2 + 0.02, w: xe - xs, h: 0.26, size: 12, bold: true, color: C.am, align: 'center', name: '!!mehrt' });
         s.text(t.msg, { x: RX, y: 5.95, w: RW, h: 0.7, size: 16, bold: true, color: t.mc, align: 'center', valign: 'middle', name: '!!msg' });
@@ -117,7 +117,7 @@ module.exports = async (deck) => {
     await motion(deck, 'ce3f', {
       kicker: 'Kontrollstellung', ttl: 'Den Zug am Berg abstellen', dur: 600, holdDur: 650,
       question: 'Ihr zieht im Lkw die Feststellbremse. Womit wird der Anhänger gehalten?',
-      answer: 'Nur mit Druckluft über seine Betriebsbremse – und die kann entweichen. Darum: Kontrollstellung prüfen, Feststellbremse am Anhänger ziehen, Keile unterlegen.',
+      answer: 'In der Regel nur mit Druckluft über seine Betriebsbremse – und die kann entweichen. Darum: Kontrollstellung prüfen, Feststellbremse am Anhänger ziehen, Keile unterlegen.',
       legend: 'Seitenansicht · schematisch · 12 % maßstäblich',
       frames: [
         fr({ lev: 'F', lk: 0, ah: 0, air: 0, roll: 0, msg: 'Der Zug steht an einer Steigung von 12 %. Der Fahrer hält ihn noch mit der Fußbremse.', mc: C.mut }, { hold: true,
@@ -131,13 +131,13 @@ module.exports = async (deck) => {
           note: '▶ „Luft bleibt nicht ewig. Über Stunden entweicht sie. Dann hält am Anhänger meist nichts mehr – nur noch der Lkw mit seinen Federn. Manche neue Anhänger bremsen dann von selbst mit ihrem Federspeicher, aber darauf verlasst ihr euch nicht. Die Frage ist: Schafft der Lkw das allein?“\n✅ Lehrbuchwissen; DGUV Information 214-080, S. 33: Anhänger nie nur mit der Notbremsfunktion abstellen; der Federspeicher spricht „in der Regel nicht“ automatisch an. WABCO TEBS E Kap. 5.8.1: Bei Anhängern mit dieser Ausstattung bremsen die Federspeicher automatisch, wenn der Druck am Kupplungskopf unter 2,5 bar fällt.\n🖱 Klick: Kontrollstellung.\n➜ „Genau das prüft ihr mit der Kontrollstellung.“' }),
         fr({ lev: 'K', lk: 1, ah: 3, air: 0, roll: 0, msg: 'Kontrollstellung: Hebel weiter ziehen und halten. Die Anhängerbremse ist gelöst. Hält der Lkw den Zug allein?', mc: C.pu }, { hold: true,
           cap: 'Kontrollstellung: Die Anhängerbremse wird gelöst, nur die Federspeicher des Lkw halten. So seht ihr: Hält der Lkw den ganzen Zug allein?',
-          note: '▶ „Jetzt der Trick: Hebel über Feststellen hinaus in die Kontrollstellung ziehen – und festhalten. Die Anhängerbremse wird gelöst. Es hält nur noch der Lkw. Bleibt der Zug stehen, ist alles gut.“\n✅ Prüfungsfrage 2.7.06-320: Zugfahrzeug über Federspeicher gebremst, Betriebsbremse des Anhängers gelöst (falsch: Anhängerbremse betätigt). Mercedes-Benz Actros Betriebsanleitung: Hebel in die Kontrollstellung schwenken und halten; „Das Fahrzeug darf sich nicht bewegen.“ UN-R 13 Nr. 5.1.2.3 (früher RL 71/320/EWG Anhang I Nr. 2.1.2.3): Der Fahrer muss prüfen können, ob die rein mechanische Feststellbremse allein reicht.\n💡 Bei den meisten Lkw rastet der Hebel in der Kontrollstellung nicht ein – Betriebsanleitung.\n🖱 Klick: Was, wenn er nicht hält?\n➜ „Und wenn er rollt?“' }),
+          note: '▶ „Jetzt der Trick: Hebel über Feststellen hinaus in die Kontrollstellung ziehen – und festhalten. Die Anhängerbremse wird gelöst. Es hält nur noch der Lkw. Bleibt der Zug stehen, ist alles gut.“\n✅ Prüfungsfrage 2.7.06-320: Zugfahrzeug über Federspeicher gebremst, Betriebsbremse des Anhängers gelöst (falsch: Anhängerbremse betätigt). Mercedes-Benz Actros Betriebsanleitung (manualslib S. 247, gedruckt S. 245): Hebel in die Kontrollstellung schwenken und halten; „Das Fahrzeug darf sich nicht bewegen.“ UN-R 13 Nr. 5.1.2.3 (früher RL 71/320/EWG Anhang I Nr. 2.1.2.3): Der Fahrer muss prüfen können, ob die rein mechanische Feststellbremse allein reicht.\n💡 Bei den meisten Lkw rastet der Hebel in der Kontrollstellung nicht ein – Betriebsanleitung.\n🖱 Klick: Was, wenn er nicht hält?\n➜ „Und wenn er rollt?“' }),
         fr({ lev: 'K', lk: 1, ah: 3, air: 0, roll: 1, msg: 'Der Zug rollt? Hebel sofort zurück auf Feststellen – der Lkw allein reicht hier nicht!', mc: C.red }, { hold: true,
           cap: 'Rollt der Zug in der Kontrollstellung, reicht der Lkw allein nicht. Dann den Zug zusätzlich sichern.',
-          note: '▶ „Rollt der Zug, Hebel sofort zurück auf Feststellen – dann hält der Anhänger wieder mit Luft. Aber auf Dauer reicht das nicht. Ihr müsst zusätzlich sichern.“\n✅ Mercedes-Benz Actros Betriebsanleitung: Hält der Zug in der Kontrollstellung nicht, Zugfahrzeug und Anhänger mit Unterlegkeilen sichern.\n🖱 Klick: richtig sichern.\n➜ „So stellt ihr den Zug sicher ab.“' }),
+          note: '▶ „Rollt der Zug, Hebel sofort zurück auf Feststellen – dann hält der Anhänger wieder mit Luft. Aber auf Dauer reicht das nicht. Ihr müsst zusätzlich sichern.“\n✅ Mercedes-Benz Actros Betriebsanleitung (manualslib S. 247): Hält der Zug in der Kontrollstellung nicht, Zugfahrzeug und Anhänger mit Unterlegkeilen sichern.\n🖱 Klick: richtig sichern.\n➜ „So stellt ihr den Zug sicher ab.“' }),
         fr({ lev: 'S', lk: 1, ah: 4, air: 0, roll: 1, keil: 1, msg: 'Sicher: Hebel in Feststellen einrasten. Feststellbremse am Anhänger ziehen. Keile unterlegen.', mc: C.gr }, { hold: true, answer: true,
-          cap: 'Hebel zurück in Feststellen und einrasten. Feststellbremse am Anhänger ziehen (roter Knopf). Keile an Räder einer starren Achse\u00A0– nie an Lenk- oder Liftachse\u00A0–, auf der Seite zum Gefälle.',
-          note: '▶ „So steht der Zug sicher: Hebel zurück in Feststellen und einrasten. Am Anhänger den roten Knopf ziehen – seine eigene Feststellbremse. Und Keile unter: an die Räder einer starren Achse, nie an eine Lenk- oder Liftachse – immer auf der Seite zum Gefälle.“\n❓ Frage auf der Folie auflösen.\n✅ Mercedes-Benz Actros Betriebsanleitung (Kontrollstellung, danach zurück in Vollbremsstellung und einrasten). Prüfungsfrage 2.2.23-201: Feststellbremse anziehen und Unterlegkeil vor ein Hinterrad legen. Keile nur an die starre Achse, nie an Lenk- oder Liftachse (DGUV Information 214-080, S. 34 und 51); mindestens einen in Richtung des Gefälles (S. 20).\n💡 Der rote Knopf löst sich wieder, wenn ihr vor dem Losfahren drückt – nur mit Luft im Anhänger (siehe Abend 6).\n🖱 Nächster Klick: nächste Folie.\n➜ „Zwei Prüfungsfragen.“' }),
+          cap: 'Hebel zurück in Feststellen, einrasten. Anhänger: Feststellbremse ziehen (roter Knopf). Keile an Räder einer starren Achse\u00A0– nie an Lenk- oder Liftachse\u00A0–, auf der Seite zum Gefälle.',
+          note: '▶ „So steht der Zug sicher: Hebel zurück in Feststellen und einrasten. Am Anhänger den roten Knopf ziehen – seine eigene Feststellbremse. Und Keile unter: an die Räder einer starren Achse, nie an eine Lenk- oder Liftachse – immer auf der Seite zum Gefälle.“\n❓ Frage auf der Folie auflösen.\n✅ Mercedes-Benz Actros Betriebsanleitung, manualslib S. 247 (Kontrollstellung, danach zurück in Vollbremsstellung und einrasten). Prüfungsfrage 2.2.23-201: Feststellbremse anziehen und Unterlegkeil vor ein Hinterrad legen. Keile nur an die starre Achse, nie an Lenk- oder Liftachse (DGUV Information 214-080, S. 34 und 51); mindestens einen in Richtung des Gefälles (S. 20).\n💡 Der rote Knopf löst sich wieder, wenn ihr vor dem Losfahren drückt – nur mit Luft im Anhänger (siehe Abend 6).\n🖱 Nächster Klick: nächste Folie.\n➜ „Zwei Prüfungsfragen.“' }),
       ],
       scene: async (s, t) => {
         // Hang
@@ -161,7 +161,7 @@ module.exports = async (deck) => {
         keil(pL, OL.axles[2], OL.r, '!!keil0');
         keil(pA, OA.axles[1], OA.r, '!!keil1');
         // Rollen: Pfeil parallel zum Hang direkt über der Fahrbahn, zwischen den Anhängerachsen (zeigt bergab)
-        const r0 = onS(sR + 1.9, 0.14), r1 = onS(sR + 0.72, 0.14), rl = onS(sR + 1.25, -0.1);
+        const r0 = onS(sR + 1.9, 0.14), r1 = onS(sR + 0.72, 0.14), rl = onS(sR + 1.45, -0.06);
         arrow(s, r0[0], r0[1], r1[0], r1[1], { col: C.red, th: 0.06, head: 0.2, name: 'roll', hide: !(t.roll && !t.keil) });
         s.text(t.roll && !t.keil ? 'rollt!' : '', { x: rl[0] - 0.6, y: rl[1], w: 1.2, h: 0.3, size: 14, bold: true, color: C.red, align: 'center', name: '!!rollt' });
         // Lkw-Status

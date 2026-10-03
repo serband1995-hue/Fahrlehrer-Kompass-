@@ -7,7 +7,7 @@ module.exports = async (deck) => {
   write(deck, 'ce4e', {
     ttl: 'Fahren mit Zügen', labelW: 3.0, size: 17,
     rows: [
-      ['Abfahrtkontrolle', 'Kupplung · Leitungen mit ABS-Stecker · Anhänger frei · Licht · Bremsprobe'],
+      ['Abfahrtkontrolle', 'Kupplung · Leitungen mit ABS-Stecker · Anhänger frei · Ladung · Licht · Bremsprobe'],
       ['Wo blockiert es?', 'Lkw-Antriebsräder rutschen → Zug knickt ein · Anhänger blockiert → bricht aus'],
       ['Pendeln', 'Gas weg, Lenkrad ruhig halten, erst gestreckt bremsen'],
       ['Rückwärts', 'Sattelzug: Lenkrad links → Aufliegerheck rechts · Einweiser weg → Stopp'],
@@ -55,7 +55,7 @@ module.exports = async (deck) => {
     s.img('ov_left.png', { x: 0, y: 0, w: 7.6, h: 7.5, name: '!!ov2' });
     s.img('boost_logo.png', { x: 0.7, y: 0.6, w: 1.6, h: 0.55, sizing: 'contain' }, { fx: 'fade', auto: true, dur: 800 });
     s.text('Klasse CE geschafft!', { x: 0.7, y: 1.7, w: 4.9, h: 1.8, size: 46, bold: true, color: C.txt, lsm: 0.9 }, { fx: 'rise', auto: true, dur: 900 });
-    s.text('Abend 7: CE3 Lastzugbremsen · CE4 Fahren mit Zügen', { x: 0.7, y: 3.6, w: 4.8, h: 0.8, size: 18, color: C.or }, { fx: 'fade', auto: true, dur: 700, d: 400 });
+    s.text('Abend 7: CE3 Lastzugbremsen\nCE4 Fahren mit Zügen', { x: 0.7, y: 3.6, w: 4.8, h: 0.8, size: 18, color: C.or }, { fx: 'fade', auto: true, dur: 700, d: 400 });
     s.text([{ text: 'Jetzt seid ihr dran:', options: { bold: true, color: C.mut, breakLine: true } }, { text: 'Prüfungsfragen üben', options: { color: C.txt, breakLine: true } }, { text: 'in der Praxis umsetzen', options: { color: C.txt, breakLine: true } }, { text: 'Viel Erfolg in der Prüfung!', options: { color: C.or, bold: true } }], { x: 0.7, y: 4.65, w: 4.9, h: 1.7, size: 16 }, { fx: 'fade', auto: true, dur: 700, d: 800 });
   }
 };

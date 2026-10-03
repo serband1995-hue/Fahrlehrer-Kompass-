@@ -288,13 +288,13 @@ FOLIE 30 VON 163 · keine Animation · Klick = weiter
 ➜ „Prüfen wir das mit einer Prüfungsfrage.“
 
 === FOLIE 31 ===
-AUF DER FOLIE: PRÜFUNGSFRAGE · HAFTUNG | Sie fahren sehr schnell in eine enge Kurve. Was kann passieren, wenn Sie plötzlich stark bremsen müssen? Mein Fahrzeug … | A | … verliert die Straßenhaftung | B | … rutscht aus der Kurve | C | … bleibt mit Stabilitätskontrolle jederzeit fahrstabil | ✓  RICHTIG | ✓  RICHTIG | Bremsen und Lenken zugleich überfordert die Haftung – auch Elektronik kann sie nicht vergrößern (Prüfungsfrage 2.7.01-141). | KLASSE C  ·  ABEND 4  ·  C7  ·  HAFTUNG | 31
+AUF DER FOLIE: PRÜFUNGSFRAGE · HAFTUNG | Sie fahren sehr schnell in eine enge Kurve. Was kann passieren, wenn Sie plötzlich stark bremsen müssen? Mein Fahrzeug … | A | … bleibt mit Stabilitätskontrolle jederzeit fahrstabil | B | … rutscht aus der Kurve | C | … verliert die Straßenhaftung | ✓  RICHTIG | ✓  RICHTIG | Bremsen und Lenken zugleich überfordert die Haftung – auch Elektronik kann sie nicht vergrößern (Prüfungsfrage 2.7.01-141). | KLASSE C  ·  ABEND 4  ·  C7  ·  HAFTUNG | 31
 NOTIZEN:
 FOLIE 31 VON 163 · 2 Klicks
 
 ▶ Frage vorlesen, abstimmen lassen. Mehrere Antworten können richtig sein.
 🖱 Klick 1: Antworten · Klick 2: Lösung.
-✅ A und B. Prüfungsfrage 2.7.01-141. Passend dazu 2.7.01-130: Mit ABS bleibt die Lenkfähigkeit länger erhalten – aber das Fahrzeug bleibt nicht immer fahrstabil.
+✅ B und C. Prüfungsfrage 2.7.01-141. Passend dazu 2.7.01-130: Mit ABS bleibt die Lenkfähigkeit länger erhalten – aber das Fahrzeug bleibt nicht immer fahrstabil.
 ➜ „Kapitel 2: Was den Lkw bremst, ohne dass ihr bremst.“
 
 === FOLIE 32 ===
@@ -920,24 +920,24 @@ FOLIE 96 VON 163 · 7 Klicks
 ➜ „Und jetzt testen wir das mit drei Prüfungsfragen.“
 
 === FOLIE 97 ===
-AUF DER FOLIE: QUIZ C7 · 1 | Sie befahren eine Kurve ein Mal mit 30 km/h und ein anderes Mal mit 60 km/h. Wie ändert sich dabei die Fliehkraft? Die Fliehkraft ist bei 60 km/h … | A | … doppelt so groß | B | … gleich groß | C | … viermal so groß | ✓  RICHTIG | Die Fliehkraft wächst mit dem Quadrat der Geschwindigkeit: doppelt so schnell – viermal so groß (Prüfungsfrage 2.7.01-046). | KLASSE C  ·  ABEND 4  ·  C7  ·  ABSCHLUSS | 97
+AUF DER FOLIE: QUIZ C7 · 1 | Sie befahren eine Kurve ein Mal mit 30 km/h und ein anderes Mal mit 60 km/h. Wie ändert sich dabei die Fliehkraft? Die Fliehkraft ist bei 60 km/h … | A | … viermal so groß | B | … doppelt so groß | C | … gleich groß | ✓  RICHTIG | Die Fliehkraft wächst mit dem Quadrat der Geschwindigkeit: doppelt so schnell – viermal so groß (Prüfungsfrage 2.7.01-046). | KLASSE C  ·  ABEND 4  ·  C7  ·  ABSCHLUSS | 97
 NOTIZEN:
 FOLIE 97 VON 163 · 2 Klicks
 
 ▶ Frage vorlesen, abstimmen lassen.
 💡 Gemeinsam besprechen – keine Prüfungsbögen ausfüllen lassen (§ 4 Abs. 1a FahrschAusbO).
 🖱 Klick 1: Antworten · Klick 2: Lösung.
-✅ C.
+✅ A.
 ➜ „Nächste Frage.“
 
 === FOLIE 98 ===
-AUF DER FOLIE: QUIZ C7 · 2 | Wodurch wird die auf ein Fahrzeug wirkende Fliehkraft bei Kurvenfahrt vergrößert? | A | Durch höhere Geschwindigkeit | B | Durch höheren Reifenluftdruck | C | Durch kleineren Kurvenradius | ✓  RICHTIG | ✓  RICHTIG | Mehr Tempo und engere Kurven vergrößern die Fliehkraft. Der Reifendruck ändert sie nicht (Prüfungsfrage 2.7.01-047). | KLASSE C  ·  ABEND 4  ·  C7  ·  ABSCHLUSS | 98
+AUF DER FOLIE: QUIZ C7 · 2 | Wodurch wird die auf ein Fahrzeug wirkende Fliehkraft bei Kurvenfahrt vergrößert? | A | Durch kleineren Kurvenradius | B | Durch höhere Geschwindigkeit | C | Durch höheren Reifenluftdruck | ✓  RICHTIG | ✓  RICHTIG | Mehr Tempo und engere Kurven vergrößern die Fliehkraft. Der Reifendruck ändert sie nicht (Prüfungsfrage 2.7.01-047). | KLASSE C  ·  ABEND 4  ·  C7  ·  ABSCHLUSS | 98
 NOTIZEN:
 FOLIE 98 VON 163 · 2 Klicks
 
 ▶ Frage vorlesen. Mehrere Antworten können richtig sein.
 🖱 Klick 1: Antworten · Klick 2: Lösung.
-✅ A und C.
+✅ A und B.
 ➜ „Letzte Frage.“
 
 === FOLIE 99 ===
@@ -1553,14 +1553,14 @@ FOLIE 158 VON 163 · 8 Klicks
 ➜ „Drei Prüfungsfragen.“
 
 === FOLIE 159 ===
-AUF DER FOLIE: QUIZ C8 · 1 | Was ist zu tun, um einen zweiachsigen Lkw in starkem Gefälle gegen Wegrollen zu sichern? | A | Feststellbremse anziehen | B | Unterlegkeil vor ein Hinterrad legen | C | Dauerbremse betätigen | ✓  RICHTIG | ✓  RICHTIG | Feststellbremse und Unterlegkeil. Die Dauerbremse hält den Lkw nicht fest (Prüfungsfrage 2.2.23-201). | KLASSE C  ·  ABEND 4  ·  C8  ·  ABSCHLUSS | 159
+AUF DER FOLIE: QUIZ C8 · 1 | Was ist zu tun, um einen zweiachsigen Lkw in starkem Gefälle gegen Wegrollen zu sichern? | A | Dauerbremse betätigen | B | Unterlegkeil vor ein Hinterrad legen | C | Feststellbremse anziehen | ✓  RICHTIG | ✓  RICHTIG | Feststellbremse und Unterlegkeil. Die Dauerbremse hält den Lkw nicht fest (Prüfungsfrage 2.2.23-201). | KLASSE C  ·  ABEND 4  ·  C8  ·  ABSCHLUSS | 159
 NOTIZEN:
 FOLIE 159 VON 163 · 2 Klicks
 
 ▶ Frage vorlesen, abstimmen. Mehrere Antworten können richtig sein.
 💡 Gemeinsam besprechen – keine Prüfungsbögen ausfüllen lassen (§ 4 Abs. 1a FahrschAusbO).
 🖱 Klick 1: Antworten · Klick 2: Lösung.
-✅ A und B.
+✅ B und C.
 ➜ „Nächste Frage.“
 
 === FOLIE 160 ===
