@@ -82,7 +82,7 @@ module.exports = async (deck) => {
       { pal: 0, bp: 0.2, bd: 0.25, info: 'Leer: wenig Luft im Balg – wenig Bremsdruck. Die Räder blockieren nicht.', col: C.gr },
       { pal: 1, bp: 0.55, bd: 0.6, info: 'Halb beladen: mehr Luft im Balg – mehr Bremsdruck.', col: C.gr },
       { pal: 2, bp: 1, bd: 1, info: 'Voll beladen: viel Luft im Balg – voller Bremsdruck.', col: C.gr },
-      { pal: 2, bp: 0.12, bd: 0.15, leak: 1, info: 'Balg undicht: Die Messung stimmt nicht mehr. Bremsdruck falsch – und der Anhänger hängt schief.', col: C.red },
+      { pal: 2, bp: 0.12, bd: 0.15, leak: 1, info: 'Balg undicht: Die Messung stimmt nicht mehr – der Bremsdruck ist falsch. Von hinten seht ihr: Der Anhänger hängt schief.', col: C.red },
     ];
     await steps(deck, 'ce3l', {
       kicker: 'Lastanpassung', ttl: 'Der Anhänger wiegt sich',
@@ -103,8 +103,12 @@ module.exports = async (deck) => {
       legend: 'Seitenansicht · schematisch',
       scene: async (s, i) => {
         const t = ST[i];
-        s.rect(5.75, GY, 7.3, 0.03, { fill: '3C4656', name: '!!boden' });
-        await anhaenger(s, { L, floor: 1.15, boxH: 0.6, r: 0.45, axles: AA, box: 'pritsche', zaa: true }, { x: TX, gy: GY, k: K, name: 'ah' });
+        s.rect(5.0, GY, 8.05, 0.03, { fill: '3C4656', name: '!!boden' });
+        const ah = await anhaenger(s, { L, floor: 1.15, boxH: 0.6, r: 0.45, axles: AA, box: 'pritsche' }, { x: TX, gy: GY, k: K, name: 'ah' });
+        // Deichsel mit Zugöse
+        const [dx, dy] = ah.pt(AA[0], 0.88), ey = GY - 0.78 * K;
+        seg(s, dx, dy, TX - 0.95, ey, { col: '5E6876', th: 0.08, name: '!!deichsel' });
+        s.oval(TX - 1.08, ey - 0.1, 0.2, 0.2, { fill: '14181E', line: '8C96A4', lw: 2, name: '!!oese' });
         // Paletten
         for (let k = 0; k < 5; k++) {
           const on = t.pal === 2 || (t.pal === 1 && k < 3);
