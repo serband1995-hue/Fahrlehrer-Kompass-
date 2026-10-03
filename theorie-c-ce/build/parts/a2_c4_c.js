@@ -10,7 +10,7 @@ const { warnSym } = require('../sym');
 const warnImg = {};
 
 module.exports = async (deck) => {
-  for (const [kd, hex] of [['oel', 'FF5C5C'], ['kuehl', 'FF5C5C'], ['brems', 'FF5C5C'], ['batt', 'FF5C5C'], ['abs', 'F2C230'], ['motor', 'F2C230'], ['adblue', 'F2C230'], ['dpf', 'F2C230'], ['blink', '38D98A'], ['abblend', '38D98A'], ['fern', '3B82F6']]) warnImg[kd + hex] = await svgImg(warnSym(kd, '#' + hex), 512, 512, 0.6);
+  for (const [kd, hex] of [['oel', 'FF5C5C'], ['kuehl', 'FF5C5C'], ['brems', 'FF5C5C'], ['batt', 'FF5C5C'], ['stop', 'FF5C5C'], ['abs', 'F2C230'], ['motor', 'F2C230'], ['adblue', 'F2C230'], ['dpf', 'F2C230'], ['blink', '38D98A'], ['abblend', '38D98A'], ['fern', '3B82F6']]) warnImg[kd + hex] = await svgImg(warnSym(kd, '#' + hex), 512, 512, 0.6);
   await chapter(deck, 'c4l', { num: 5, ttl: 'Licht und Warnleuchten', sub: 'Gesehen werden, richtig warnen – und verstehen, was im Cockpit leuchtet.', ico: 'LuLightbulb', notes:
     '▶ Sagen: „Letztes Kapitel: Licht. Ein Lkw ist nachts bis zu 12 Meter dunkle Wand – als Zug fast 19 Meter – er muss gut zu sehen sein.“\n🖱 Keine Klicks.\n➜ „Welche Leuchten hat ein Lkw, die ein Pkw nicht hat?“' });
 
@@ -98,14 +98,18 @@ module.exports = async (deck) => {
     for (let k = 0; k < 4; k++) {
       const x = 0.7 + k * 3.03, w = 2.85, [col, hex, nm, mean, act, sy] = F[k];
       card(s, x, 2.0, w, 4.55, { line: col }, CLICK);
-      s.rrect(x + 0.15, 2.15, w - 0.3, 2.45, { fill: '070B12', line: '1E2836', rr: 0.08 }, { fx: 'fade', dur: 200 });
+      // Symbolfeld: bis zu drei Reihen (Rot hat fünf Symbole, die STOP-Leuchte unten in der Mitte)
+      const SZ = 0.66, PIT = 0.95, PT = 2.15, PHT = 2.92, n = sy.length, rows = Math.ceil(n / 2);
+      s.rrect(x + 0.15, PT, w - 0.3, PHT, { fill: '070B12', line: '1E2836', rr: 0.08 }, { fx: 'fade', dur: 200 });
+      const y0 = PT + (PHT - rows * PIT) / 2 + 0.03;
       sy.forEach(([kd, lab], j) => {
-        const n = sy.length, cols = n === 1 ? 1 : 2, cx = x + (cols === 1 ? w / 2 : (j % 2 ? w * 0.72 : w * 0.28)), cy = 2.27 + (n <= 2 ? 0.55 : Math.floor(j / 2) * 1.17);
-        s.img(warnImg[kd + hex], { x: cx - 0.42, y: cy, w: 0.84, h: 0.84 }, { fx: 'zoom', dur: 250 });
-        s.text(lab, { x: cx - 0.7, y: cy + 0.84, w: 1.4, h: 0.28, size: 12, color: C.mut, align: 'center' }, { fx: 'fade', dur: 150 });
+        const alone = n === 1 || (j === n - 1 && n % 2 === 1);
+        const cx = x + (alone ? w / 2 : (j % 2 ? w * 0.72 : w * 0.28)), cy = y0 + Math.floor(j / 2) * PIT;
+        s.img(warnImg[kd + hex], { x: cx - SZ / 2, y: cy, w: SZ, h: SZ }, { fx: 'zoom', dur: 250 });
+        s.text(lab, { x: cx - 0.7, y: cy + SZ, w: 1.4, h: 0.26, size: 13, color: C.mut, align: 'center' }, { fx: 'fade', dur: 150 });
       });
-      s.text([{ text: nm + ' = ', options: { color: col } }, { text: mean, options: { color: C.txt } }], { x: x + 0.1, y: 4.72, w: w - 0.2, h: 0.5, size: 22, bold: true, align: 'center' }, { fx: 'fade', dur: 200 });
-      s.text(act, { x: x + 0.15, y: 5.25, w: w - 0.3, h: 1.2, size: 16, bold: true, color: C.txt, align: 'center' }, { fx: 'fade', dur: 200 });
+      s.text([{ text: nm + ' = ', options: { color: col } }, { text: mean, options: { color: C.txt } }], { x: x + 0.1, y: 5.12, w: w - 0.2, h: 0.45, size: 22, bold: true, align: 'center' }, { fx: 'fade', dur: 200 });
+      s.text(act, { x: x + 0.15, y: 5.57, w: w - 0.3, h: 0.92, size: 16, bold: true, color: C.txt, align: 'center' }, { fx: 'fade', dur: 200 });
     }
     foot(s, 'Symbole vereinfacht · Aussehen je nach Hersteller · STOP-Leuchte: so schnell wie möglich an sicherer Stelle anhalten');
   }
