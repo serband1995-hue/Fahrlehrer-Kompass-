@@ -106,8 +106,8 @@ function lkwSide(o = {}) {
   // Räder
   let w = '';
   for (const a of ax) {
-    w += circ(a, r, r, `fill="#14181E"`);
-    w += circ(a, r, r - 0.05, `fill="none" stroke="#262C35" stroke-width="5"`);
+    w += circ(a, r, r, `fill="#252A33" stroke="#68717F" stroke-width="5"`);   // Reifen: heller Rand, damit er sich vom dunklen Grund abhebt
+    w += circ(a, r, r - 0.06, `fill="none" stroke="#333944" stroke-width="5"`);
     w += circ(a, r, r * 0.58, `fill="#A7B1BE" stroke="#7D8898" stroke-width="2"`);
     w += circ(a, r, r * 0.22, `fill="#6E7888"`);
     for (let k = 0; k < 8; k++) { const t = k * Math.PI / 4; w += circ(a + r * 0.38 * Math.cos(t), r + r * 0.38 * Math.sin(t), 0.018, `fill="#5A6472"`); }
@@ -123,7 +123,7 @@ function lkwRear(o = {}) {
   const rect = (x, y, w, h, st) => `<rect x="${X(x)}" y="${Y(y + h)}" width="${S(w)}" height="${S(h)}" ${st}/>`;
   let s = '';
   // Zwillingsräder (unten sichtbar)
-  for (const x of [0.12, 0.42, Wd - 0.72, Wd - 0.42]) s += rect(x, 0, 0.28, 2 * r, `rx="6" fill="#14181E"`);
+  for (const x of [0.12, 0.42, Wd - 0.72, Wd - 0.42]) s += rect(x, 0, 0.28, 2 * r, `rx="6" fill="#252A33" stroke="#68717F" stroke-width="4"`);
   s += rect(0.7, r - 0.04, Wd - 1.4, 0.08, `fill="#3A4250"`);
   // Kasten mit zwei Türen
   s += rect(0, f, Wd, boxH, `fill="#C9D0DA" stroke="#97A1AE" stroke-width="3"`);
@@ -169,7 +169,8 @@ function aufliegerSide(o = {}) {
   // Räder
   let w = '';
   for (const a of ax) {
-    w += circ(a, r, r, `fill="#14181E"`);
+    w += circ(a, r, r, `fill="#252A33" stroke="#68717F" stroke-width="5"`);
+    w += circ(a, r, r - 0.06, `fill="none" stroke="#333944" stroke-width="5"`);
     w += circ(a, r, r * 0.58, `fill="#A7B1BE" stroke="#7D8898" stroke-width="2"`);
     w += circ(a, r, r * 0.22, `fill="#6E7888"`);
   }
@@ -206,7 +207,8 @@ function anhaengerSide(o = {}) {
   for (const a of ax) u += rect(a - r - 0.08, r * 2 + 0.06, 2 * r + 0.16, 0.06, `fill="#2A303A"`);
   let w = '';
   for (const a of ax) {
-    w += circ(a, r, r, `fill="#14181E"`);
+    w += circ(a, r, r, `fill="#252A33" stroke="#68717F" stroke-width="5"`);
+    w += circ(a, r, r - 0.06, `fill="none" stroke="#333944" stroke-width="5"`);
     w += circ(a, r, r * 0.58, `fill="#A7B1BE" stroke="#7D8898" stroke-width="2"`);
     w += circ(a, r, r * 0.22, `fill="#6E7888"`);
   }

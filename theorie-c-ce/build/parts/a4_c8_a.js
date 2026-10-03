@@ -29,7 +29,7 @@ module.exports = async (deck) => {
   await chapter(deck, 'c8a', { num: 1, ttl: 'Pflichtausrüstung', sub: 'Was in jedem Lkw an Bord sein muss – und wie ihr es richtig benutzt.', bg: 'i_ausr_r.jpg', bgX: 6.0, notes:
     '▶ Sagen: „Kapitel 1: Pflichtausrüstung. Auf dem Bild seht ihr schon fast alles.“\n🖱 Keine Klicks.\n➜ „Was genau muss an Bord sein?“' });
   await photoAsk(deck, 'c8a', {
-    bg: 'i_ausr_r.jpg', bgX: 6.0, ov: 7.0, kicker: 'Pflichtausrüstung', q: 'Was muss in jedem Lkw über 3,5 t an Bord sein?', qsize: 30, w: 5.05, asize: 15,
+    bg: 'i_ausr_r.jpg', bgX: 6.0, ov: 7.0, kicker: 'Pflichtausrüstung', q: 'Was muss in jedem Lkw über 3,5 t an Bord sein?', qsize: 30, w: 5.2, asize: 14, top: 2.45,
     answers: [
       ['LuTriangleAlert', 'Warndreieck und Warnleuchte', 'getrennt voneinander – die Leuchte mit gelbem Blinklicht, unabhängig von der Lichtanlage.', C.red],
       ['LuShirt', 'Warnweste', 'nach EN ISO 20471 – griffbereit in der Kabine.', C.am],

@@ -81,7 +81,7 @@ module.exports = async (deck) => {
         // Wasserkeil vor dem Reifen (Fahrt nach links)
         const kw = st.keil, kh = 0.12 + st.lift + kw * 0.18;
         s.shape(s.pres.shapes.RIGHT_TRIANGLE, { x: CX - R * 0.55 - kw, y: GY - kh, w: kw, h: kh, fill: '4CC9F0', ft: 15, flipH: true, name: '!!keil' });
-        s.img(wheel, { x: CX - R, y: GY - 2 * R - st.lift, w: 2 * R, h: 2 * R, rotate: i * 40, name: '!!rad' });
+        s.img(wheel, { x: CX - R, y: GY - 2 * R - st.lift, w: 2 * R, h: 2 * R, rotate: 120 - i * 40, name: '!!rad' });   // Fahrt nach links: Rad dreht gegen den Uhrzeigersinn
         // Spritzwasser
         for (let k = 0; k < 4; k++) s.oval(CX - R * 0.7 - 0.2 - k * 0.32 * (i + 1) * 0.6, GY - 0.35 - k * 0.22 * (i + 1) * 0.5, 0.12, 0.12, { fill: C.bl, ft: 30, name: '!!spr' + k });
         s.text(st.lab, { x: 5.7, y: 1.55, w: 5, h: 0.55, size: 26, bold: true, color: i === 2 ? C.red : C.txt, name: '!!lab' });

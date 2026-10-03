@@ -220,7 +220,7 @@ async function photoAsk(deck, key, o) {
   s.img('ov_left.png', { x: 0, y: 0, w: ov, h: H, name: '!!ov2' });
   kick(s, kicker);
   title(s, q, { w, h: 2.0, size: qsize });
-  const n = answers.length, top = 3.25, gap = 0.16, h = Math.min(1.15, (6.6 - top - gap * (n - 1)) / n);
+  const n = answers.length, top = o.top || 3.25, gap = 0.16, h = Math.min(1.15, (6.6 - top - gap * (n - 1)) / n);
   for (let i = 0; i < n; i++) {
     const mk = o.marks && o.marks[i];
     await point(s, 0.7, top + i * (h + gap), w, h, answers[i][0], answers[i][3] || s.sec.col, (mk ? (i + 1) + '  ' : '') + answers[i][1], answers[i][2], CLICK, { br: true, size: o.asize || 16 });
