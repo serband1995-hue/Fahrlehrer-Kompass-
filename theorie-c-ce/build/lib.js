@@ -63,7 +63,7 @@ class Ctx {
     let v = (((r || 0) % 360) + 360) % 360;
     const m = M[name], prev = m && m.idx === this.idx - 1 ? m.v : null;
     const alt = v < 180 ? v + 180 : v - 180;
-    if (prev === null) { if (sym === 180 && (v < 90 || v >= 270)) v = alt; }       // flache Balken um 180° statt um 0° → kein Sprung bei leichter Neigung
+    if (prev === null) { if (sym === 180 && r !== undefined && (v < 90 || v >= 270)) v = alt; }   // gedrehte flache Balken um 180° statt um 0° → kein Sprung bei leichter Neigung (ungedrehte Formen bleiben bei 0)
     else {
       if (sym === 180 && Math.abs(alt - prev) < Math.abs(v - prev)) v = alt;
       if (Math.abs(v - prev) > sym / 2) AL[name] = (AL[name] || 0) + 1;
@@ -135,7 +135,7 @@ class Ctx {
   }
   img(file, o = {}, anim) {
     const [name, rotate] = this.rotFix(this.nm(o.name), o.rotate, o.sym);
-    const opt = { x: o.x, y: o.y, w: o.w, h: o.h, objectName: name, rotate, transparency: o.transparency, altText: o.alt || '', rounding: o.round };
+    const opt = { x: o.x, y: o.y, w: o.w, h: o.h, objectName: name, rotate, flipH: o.flipH, transparency: o.transparency, altText: o.alt || '', rounding: o.round };
     if (typeof file === 'string' && file.startsWith('image/')) opt.data = file; else opt.path = path.join(ART, file);
     if (o.sizing) opt.sizing = { type: o.sizing, w: o.w, h: o.h };
     if (o.shadow) opt.shadow = { type: 'outer', color: '000000', blur: 24, offset: 6, angle: 90, opacity: 0.7 };

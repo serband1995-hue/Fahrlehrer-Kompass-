@@ -39,7 +39,7 @@ module.exports = async (deck) => {
     // Anzeige
     s.text(String(v), { x: 10.6, y: 4.95, w: 1.6, h: 0.8, size: 46, bold: true, color: C.txt, align: 'right', name: '!!kmh' });
     s.text('km/h', { x: 12.25, y: 5.3, w: 0.8, h: 0.4, size: 15, color: C.mut, name: '!!kmhl' });
-    s.text(brake ? 'VOLLBREMSUNG' : '', { x: 5.75, y: 1.6, w: 3.6, h: 0.5, size: 20, bold: true, color: C.white, fill: brake ? C.red : undefined, shape: s.pres.shapes.ROUNDED_RECTANGLE, rr: 0.3, align: 'center', valign: 'middle', name: '!!vb' });
+    s.text(brake ? 'VOLLBREMSUNG' : '', { x: 5.75, y: 5.98, w: 3.6, h: 0.5, size: 20, bold: true, color: C.white, fill: brake ? C.red : undefined, shape: s.pres.shapes.ROUNDED_RECTANGLE, rr: 0.3, align: 'center', valign: 'middle', name: '!!vb' });
     s.text(secured ? 'gesichert: Formschluss + Gurte' : 'ungesichert', { x: 5.75, y: 5.05, w: 5, h: 0.4, size: 18, bold: true, color: secured ? C.gr : C.red, name: '!!st' });
     s.text(hit ? 'Aufprall auf die Stirnwand!' : '', { x: 5.75, y: 5.5, w: 6, h: 0.4, size: 16, bold: true, color: C.red, name: '!!hit' });
   };

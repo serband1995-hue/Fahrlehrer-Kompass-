@@ -106,7 +106,7 @@ module.exports = async (deck) => {
         s.rect(bx1 - 0.25, FY - 0.04, i >= 2 ? (RX + 0.5) - (bx1 - 0.25) : 0.05, 0.07, { fill: '9AA4B1', ft: i >= 2 ? 0 : 100, name: '!!bruecke' });
         // Stapler
         const sx = i >= 3 ? bx1 - 1.5 : 11.85;
-        s.img(await icon('LuForklift', C.am), { x: sx, y: FY - 1.05, w: 1.05, h: 1.05, name: '!!stapler' });
+        s.img(await icon('LuForklift', C.am), { x: sx, y: FY - 0.92, w: 1.05, h: 1.05, flipH: true, name: '!!stapler' });   // Gabel zur Ladung, Räder auf dem Boden
         // Hinweise
         s.text(i === 0 ? 'Bremse fest · Motor aus' : i === 1 ? 'Keil!' : '', { x: 5.75, y: 1.55, w: 5, h: 0.4, size: 18, bold: true, color: C.am, name: '!!hw' });
         arrow(s, wx + 0.17, GY - 0.95, wx + 0.17, GY - 0.38, { col: C.am, th: 0.07, head: 0.2, name: 'kp', hide: i !== 1 });

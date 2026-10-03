@@ -60,8 +60,9 @@ module.exports = async (deck) => {
         // Formschluss: Wände halten
         s.text(i === 0 ? 'Wand hält' : '', { x: XL - 0.05, y: 2.3, w: 1.4, h: 0.35, size: 13, bold: true, color: C.gr, name: '!!wtL' });
         s.text(i === 0 ? 'Wand hält' : '', { x: XR - 1.35, y: 2.3, w: 1.4, h: 0.35, size: 13, bold: true, color: C.gr, align: 'right', name: '!!wtR' });
-        s.text(dz ? 'Zurröse' : '', { x: 8.35, y: 3.62, w: 2.1, h: 0.3, size: 12, bold: true, color: '4A3418', align: 'center', name: '!!oet' });
-        s.text(i ? 'Zurrpunkt' : '', { x: ZL - 0.2, y: DY + 0.24, w: 1.4, h: 0.3, size: 12, color: C.mut, name: '!!zpt' });
+        s.text(dz ? '← Zurrösen →' : '', { x: 8.4, y: 4.0, w: 2.0, h: 0.3, size: 13, bold: true, color: '2A1C0B', align: 'center', name: '!!oet' });
+        s.text(i ? 'Zurrpunkt' : '', { x: 5.3, y: DY - 0.3, w: 1.15, h: 0.3, size: 13, bold: true, color: C.mut, align: 'right', name: '!!zpt' });
+        s.lineS(6.47, DY - 0.15, ZL - 0.06, DY - 0.03, { color: C.mut, lw: 1.25, lt: i ? 0 : 100, name: '!!zpl' });
       },
     });
   }
