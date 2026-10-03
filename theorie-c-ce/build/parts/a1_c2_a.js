@@ -195,7 +195,7 @@ module.exports = async (deck) => {
     s.lineS(x0 + 45 * k, 2.2, x0 + 45 * k, 4.4, { color: C.or, lw: 2, dash: 'dash' });
     s.text('45 s', { x: x0 + 45 * k - 0.4, y: 4.42, w: 0.8, h: 0.3, size: 13, bold: true, color: C.or, align: 'center' });
     s.text([{ text: 'Merke:  ', options: { bold: true, color: C.or } }, { text: 'Nur überholen, wenn ihr deutlich schneller seid – sonst hinten bleiben. Der Stau hinter euch ist eure Schuld.', options: { color: C.txt } }],
-      { x: 0.7, y: 5.15, w: 11.93, h: 0.85, size: 18, valign: 'middle', fill: C.card2, line: C.or, shape: deck.pres.shapes.ROUNDED_RECTANGLE, rr: 0.1, margin: [8, 14, 8, 14] }, { fx: 'rise', c: true, dur: 400 });
+      { x: 0.7, y: 5.1, w: 11.93, h: 0.97, size: 18, valign: 'middle', fill: C.card2, line: C.or, shape: deck.pres.shapes.ROUNDED_RECTANGLE, rr: 0.1, margin: [8, 14, 8, 14] }, { fx: 'rise', c: true, dur: 400 });
     foot(s, 'Annahme: rund 80 m Weg mehr als der Überholte (Abstände + zwei Lkw-Längen)');
   }
   // ===== VERBOTSZEICHEN =====

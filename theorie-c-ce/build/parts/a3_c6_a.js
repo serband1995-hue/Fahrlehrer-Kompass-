@@ -44,7 +44,7 @@ module.exports = async (deck) => {
     s.text('7 %', { x: 4.7, y: 4.6, w: 1.2, h: 0.5, size: 26, bold: true, color: C.or }, { fx: 'fade', dur: 200 });
     s.text('6 km lang', { x: 4.3, y: 5.4, w: 2.2, h: 0.45, size: 20, bold: true, color: C.txt }, { fx: 'fade', dur: 200 });
     s.text('voll beladen 30 km/h halten – nur mit der Dauerbremse', { x: 0.95, y: 2.2, w: 5.9, h: 0.7, size: 16, bold: true, color: C.or }, { fx: 'fade', dur: 200 });
-    s.text('Steigung zur Verdeutlichung überzeichnet', { x: 0.9, y: 6.12, w: 6.0, h: 0.3, size: 11, italic: true, color: C.dim });
+    s.text('Steigung zur Verdeutlichung überzeichnet', { x: 0.9, y: 6.12, w: 6.0, h: 0.3, size: 12, italic: true, color: C.dim });
     await point(s, 7.35, 2.05, 5.28, 1.4, 'LuWeight', C.or, 'Pflicht:', 'Lkw über 9 t zulässiger Gesamtmasse.', CLICK, { br: true, size: 17 });
     await point(s, 7.35, 3.58, 5.28, 1.4, 'LuShieldCheck', C.gr, 'Verschleißfrei –', 'entlastet die Betriebsbremse. Die bleibt kühl für den Notfall.', CLICK, { br: true, size: 17 });
     await point(s, 7.35, 5.11, 5.28, 1.4, 'LuBan', C.red, 'Bremst nicht bis zum Stand.', 'Bei wenig Tempo wirkt sie kaum – anhalten mit der Betriebsbremse.', CLICK, { br: true, size: 17 });

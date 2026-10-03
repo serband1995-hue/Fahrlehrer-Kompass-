@@ -50,7 +50,7 @@ module.exports = async (deck) => {
       });
       // Bremsventil
       s.rrect(6.05, FY - 0.35, 0.9, 0.7, { fill: '1C2440', line: C.pu, lw: 2, rr: 0.1, name: '!!bv' });
-      s.text('Brems-ventil', { x: 6.0, y: FY - 0.35, w: 1.0, h: 0.7, size: 11, bold: true, color: C.txt, align: 'center', valign: 'middle', name: '!!tbv' });
+      s.text('Brems-ventil', { x: 6.0, y: FY - 0.35, w: 1.0, h: 0.7, size: 12, bold: true, color: C.txt, align: 'center', valign: 'middle', name: '!!tbv' });
       // Leitungen Kreis 1 (vorn) und Kreis 2 (hinten)
       s.lineS(6.5, FY - 0.35, 6.5, FY - 1.2, { color: C.bl, lw: 4, name: '!!l1a' }); s.lineS(6.5, FY - 1.2, 7.03, FY - 1.2, { color: C.bl, lw: 4, name: '!!l1b' }); s.lineS(7.03, FY - 1.2, 7.03, FY - 1.65, { color: C.bl, lw: 4, name: '!!l1c' });
       s.lineS(6.5, FY + 0.35, 6.5, FY + 1.2, { color: C.bl, lw: 4, name: '!!l1d' }); s.lineS(6.5, FY + 1.2, 7.03, FY + 1.2, { color: C.bl, lw: 4, name: '!!l1e' }); s.lineS(7.03, FY + 1.2, 7.03, FY + 1.5, { color: C.bl, lw: 4, name: '!!l1f' });

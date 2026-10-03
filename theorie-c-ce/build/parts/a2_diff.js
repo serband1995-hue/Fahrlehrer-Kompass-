@@ -3,16 +3,17 @@ const { C, base, kick, title, card, point, CLICK, ask, quiz, steps, foot, svgImg
 const { icon } = require('../lib');
 
 // Draufsicht einer Antriebsachse in der Kurve: Kurvenmittelpunkt links unten
-const CX = 6.0, CY = 6.6;
+const CX = 6.0, CY = 6.25;
 module.exports = async (deck) => {
   await chapter(deck, 'c3d', { num: 4, ttl: 'Differenzial und Achsen', sub: 'Warum die Räder verschieden schnell drehen – und wann man sperrt.', bg: 'g_bau_r.jpg', bgX: 6.2, notes:
     '▶ Sagen: „Letztes Kapitel von C3: das Differenzial, die Sperre und die Achsformeln wie 6×4 oder 8×4. Auf dem Bild: ein Baustellen-Kipper mit vier Achsen.“\n🖱 Keine Klicks.\n➜ „Erst die Frage: Warum braucht man überhaupt ein Differenzial?“' });
   // ===== DIFFERENZIAL IN DER KURVE (fließend: Achse fährt durch die Kurve) =====
   {
-    const R1 = 3.2, R2 = 4.35, px = 100, IW = 7.4, IH = 5.4, OX = 5.6, OY = 1.25; // Radien innen/außen, Bildfläche
+    const R1 = 3.2, R2 = 4.35, px = 100, IW = 7.4, IH = 5.85, OX = 5.6, OY = 0.9; // Radien innen/außen, Bildfläche
     const cx = (CX - OX) * px, cy = (CY - OY) * px;
-    const road = `<path d="M ${cx + (R1 - 0.4) * px} ${cy} A ${(R1 - 0.4) * px} ${(R1 - 0.4) * px} 0 0 0 ${cx} ${cy - (R1 - 0.4) * px} L ${cx} ${cy - (R2 + 0.4) * px} A ${(R2 + 0.4) * px} ${(R2 + 0.4) * px} 0 0 1 ${cx + (R2 + 0.4) * px} ${cy} Z" fill="#232A35"/>` +
-      `<path d="M ${cx + ((R1 + R2) / 2) * px} ${cy} A ${((R1 + R2) / 2) * px} ${((R1 + R2) / 2) * px} 0 0 0 ${cx} ${cy - ((R1 + R2) / 2) * px}" fill="none" stroke="#3C4656" stroke-width="4" stroke-dasharray="24 18"/>`;
+    // ein Fahrstreifen ohne Leitlinie (die Achse fährt mittig darauf); unten ein kurzes gerades Stück, damit die Räder im Startbild auf der Fahrbahn stehen
+    const ri = (R1 - 0.4) * px, ro = (R2 + 0.4) * px;
+    const road = `<path d="M ${cx + ri} ${cy + 45} L ${cx + ri} ${cy} A ${ri} ${ri} 0 0 0 ${cx} ${cy - ri} L ${cx} ${cy - ro} A ${ro} ${ro} 0 0 1 ${cx + ro} ${cy} L ${cx + ro} ${cy + 45} Z" fill="#232A35"/>`;
     const roadImg = await svgImg(road, IW * px, IH * px, 1);
     const arc = (r, a1, col) => `<path d="M ${cx + r * px} ${cy} A ${r * px} ${r * px} 0 0 0 ${cx + r * px * Math.cos(a1)} ${cy - r * px * Math.sin(a1)}" fill="none" stroke="${col}" stroke-width="12" stroke-linecap="round"/>`;
     const PH = [0, 0.14, 0.28, 0.42, 0.56, 0.7, 0.84, 0.98, 1.12];
@@ -41,9 +42,9 @@ module.exports = async (deck) => {
         // Wegbalken
         const sc = 1.3;
         s.text('Weg innen', { x: 10.6, y: 1.45, w: 2.5, h: 0.3, size: 13, bold: true, color: C.bl, name: '!!tw1' });
-        s.rrect(10.6, 1.8, Math.max(0.05, R1 * f * 0.51), 0.24, { fill: C.bl, rr: 0.5, name: '!!w1' });
+        s.rrect(10.6, 1.8, Math.max(0.05, R1 * f * 0.42), 0.24, { fill: C.bl, rr: 0.5, ft: f > 0.01 ? 0 : 100, name: '!!w1' });
         s.text('Weg außen', { x: 10.6, y: 2.2, w: 2.5, h: 0.3, size: 13, bold: true, color: C.or, name: '!!tw2' });
-        s.rrect(10.6, 2.55, Math.max(0.05, R2 * f * 0.51), 0.24, { fill: C.or, rr: 0.5, name: '!!w2' });
+        s.rrect(10.6, 2.55, Math.max(0.05, R2 * f * 0.42), 0.24, { fill: C.or, rr: 0.5, ft: f > 0.01 ? 0 : 100, name: '!!w2' });
         s.text(f > 0.9 ? 'außen schneller!' : '', { x: 10.6, y: 2.95, w: 2.5, h: 0.4, size: 16, bold: true, color: C.or, name: '!!tsch' });
       },
     });

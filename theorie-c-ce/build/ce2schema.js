@@ -39,7 +39,7 @@ function dots(s, p, col, on, nm, ph, u0 = 0, u1 = 1, back = false) {
 }
 function box(s, x, y, w, h, txt, nm, hi, hiCol) {
   s.rrect(x, y, w, h, { fill: '16202E', line: hi ? hiCol : '4A5668', lw: hi ? 2.5 : 1.25, rr: 0.12, glow: hi ? 6 : undefined, glowColor: hiCol, name: '!!' + nm });
-  s.text(txt, { x, y, w, h, size: 11, bold: true, color: hi ? C.txt : C.mut, align: 'center', valign: 'middle', lsm: 0.9, name: '!!' + nm + 't' });
+  s.text(txt, { x, y, w, h, size: 12, bold: true, color: hi ? C.txt : C.mut, align: 'center', valign: 'middle', lsm: 0.9, name: '!!' + nm + 't' });
 }
 
 function schema(s, st) {
@@ -76,18 +76,18 @@ function schema(s, st) {
   const tk = Math.max(0, Math.min(1, st.tank ?? 1));
   s.rrect(10.85, 2.42, 2.0, 0.6, { fill: '0B1119', line: hi === 'tank' ? C.or : '4A5668', lw: hi === 'tank' ? 2.5 : 1.25, rr: 0.3, name: '!!tk' });
   s.rrect(10.88, 2.45, Math.max(0.06, 1.94 * tk), 0.54, { fill: BLU, ft: tk > 0.02 ? 25 : 100, rr: 0.3, name: '!!tkf' });
-  s.text('Luftbehälter', { x: 10.85, y: 2.42, w: 2.0, h: 0.6, size: 11, bold: true, color: C.txt, align: 'center', valign: 'middle', name: '!!tkt' });
+  s.text('Luftbehälter', { x: 10.85, y: 2.42, w: 2.0, h: 0.6, size: 12, bold: true, color: C.txt, align: 'center', valign: 'middle', name: '!!tkt' });
   // Rückschlagventil
   const rz = st.rv === 'zu';
   s.oval(10.5, RY - 0.11, 0.22, 0.22, { fill: rz ? C.red : '16202E', line: rz ? C.red : '7A8494', lw: 1.5, name: '!!rv' });
-  s.text(rz ? 'abgesperrt' : '', { x: 10.2, y: 2.05, w: 1.6, h: 0.3, size: 11, bold: true, color: C.red, name: '!!rvt' });
+  s.text(rz ? 'abgesperrt' : '', { x: 10.2, y: 2.05, w: 1.6, h: 0.3, size: 12, bold: true, color: C.red, name: '!!rvt' });
   // Bremszylinder
   [11.2, 12.4].forEach((x, k) => {
     seg(s, x, 4.95, x, 5.12, { col: st.cyl ? BLU : DIM[BLU], th: 0.08, name: '!!cz' + k });
     s.rrect(x - 0.28, 5.1, 0.56, 0.3, { fill: st.cyl ? '1F3A63' : '16202E', line: st.cyl ? BLU : '4A5668', lw: 1.5, rr: 0.2, name: '!!cy' + k });
     seg(s, x, 5.4, x, st.cyl ? 5.66 : 5.46, { col: 'B3BBC6', th: 0.07, name: '!!cr' + k });
   });
-  s.text(st.cyl ? 'Bremszylinder: bremsen' : 'Bremszylinder: frei', { x: 9.2, y: 5.18, w: 1.75, h: 0.4, size: 11, bold: true, color: st.cyl ? C.txt : C.dim, lsm: 0.9, name: '!!cyt' });
+  s.text(st.cyl ? 'Bremszylinder: bremsen' : 'Bremszylinder: frei', { x: 9.2, y: 5.18, w: 1.75, h: 0.4, size: 12, bold: true, color: st.cyl ? C.txt : C.dim, lsm: 0.9, name: '!!cyt' });
   // Kupplungsköpfe
   s.oval(KX - 0.14, RY - 0.14, 0.28, 0.28, { fill: RED, line: C.dark, lw: 1.5, name: '!!kr' });
   s.oval(KX - 0.14, YY - 0.14, 0.28, 0.28, { fill: YEL, line: C.dark, lw: 1.5, name: '!!ky' });
@@ -95,13 +95,13 @@ function schema(s, st) {
   const mark = (on, y, nm, txt, col) => s.text(on ? txt : '', { x: KX - 0.8, y: y - 0.62, w: 1.6, h: 0.32, size: 13, bold: true, color: col, align: 'center', name: '!!' + nm });
   mark(red === 'brk', RY, 'mr', '✕ abgerissen', C.red);
   mark(yel === 'brk' || yel === 'leak', YY + 0.92, 'my', yel === 'leak' ? '✕ zischt!' : '✕ abgerissen', YEL);
-  s.text(st.vent ? 'entlüftet rot' : '', { x: 7.0, y: 2.08, w: 1.6, h: 0.3, size: 11, bold: true, color: C.red, align: 'center', name: '!!vt' });
+  s.text(st.vent ? 'entlüftet rot' : '', { x: 7.0, y: 2.08, w: 1.6, h: 0.3, size: 12, bold: true, color: C.red, align: 'center', name: '!!vt' });
   // Pedal
   s.rrect(6.25, 4.35, 0.6, 0.14, { fill: st.pedal ? C.txt : '7A8494', rr: 0.3, rotate: st.pedal ? 8 : -18, name: '!!pd' });
-  s.text(st.pedal ? 'Bremspedal: getreten' : 'Bremspedal', { x: 5.85, y: 4.6, w: 2.5, h: 0.3, size: 11, bold: !!st.pedal, color: st.pedal ? C.txt : C.dim, name: '!!pdt' });
+  s.text(st.pedal ? 'Bremspedal: getreten' : 'Bremspedal', { x: 5.85, y: 4.6, w: 2.5, h: 0.3, size: 12, bold: !!st.pedal, color: st.pedal ? C.txt : C.dim, name: '!!pdt' });
   // Lkw bremst / Vierkreisschutzventil
   s.text(st.lkwB ? 'Lkw bremst' : '', { x: 5.95, y: 5.05, w: 2.3, h: 0.36, size: 13, bold: true, color: C.dark, fill: st.lkwB ? C.red : undefined, ft: st.lkwB ? 0 : 100, shape: s.pres.shapes.ROUNDED_RECTANGLE, rr: 0.3, align: 'center', valign: 'middle', name: '!!lb' });
-  s.text(st.vksv ? '✓ Vierkreisschutzventil schützt den Lkw' : '', { x: 5.85, y: 3.15, w: 1.45, h: 0.75, size: 10, bold: true, color: C.gr, lsm: 0.9, name: '!!vk' });
+  s.text(st.vksv ? '✓ Vierkreisschutzventil schützt den Lkw' : '', { x: 5.8, y: 3.1, w: 1.6, h: 0.85, size: 11.5, bold: true, color: C.gr, lsm: 0.9, name: '!!vk' });
   // Statuszeile
   s.text(st.msg || '', { x: 5.75, y: 5.85, w: 7.3, h: 0.75, size: 16, bold: true, color: st.msgCol || C.txt, align: 'center', valign: 'middle', name: '!!msg' });
 }

@@ -252,7 +252,7 @@ module.exports = async (deck) => {
         s.text(lab, { x: x - 0.7, y: 2.2, w: 1.4, h: 0.35, size: 14, bold: true, color: C.bl, align: 'center' }, { fx: 'fade', dur: 200 });
       } else s.text(lab, { x: x - 0.55, y: 5.85, w: 1.3, h: 0.35, size: 13, color: C.dim, align: 'center' });
     }
-    s.text('Lkw 6 × 2 von oben · blau = Winterreifen Pflicht', { x: 0.8, y: 6.15, w: 5.4, h: 0.3, size: 11, italic: true, color: C.dim, align: 'center' });
+    s.text('Lkw 6 × 2 von oben · blau = Winterreifen Pflicht', { x: 0.8, y: 6.15, w: 5.4, h: 0.3, size: 12, italic: true, color: C.dim, align: 'center' });
     await point(s, 6.55, 2.05, 6.08, 1.4, 'LuSnowflake', C.bl, 'Kein festes Datum', 'Pflicht bei Glatteis, Schneeglätte, Schneematsch, Eis- oder Reifglätte.', CLICK, { br: true, size: 17 });
     await point(s, 6.55, 3.58, 6.08, 1.4, 'LuMountainSnow', C.gr, 'Nur mit Alpine-Symbol', 'Berg mit Schneeflocke. M+S allein reicht seit 1.10.2024 nicht mehr.', CLICK, { br: true, size: 17 });
     await point(s, 6.55, 5.11, 6.08, 1.4, 'LuCircleAlert', C.red, 'Ohne Winterreifen:', 'Fahrer 60 €, 1 Punkt (mit Behinderung 80 €) – Halter 75 €, 1 Punkt.', CLICK, { br: true, size: 17 });
@@ -278,7 +278,7 @@ module.exports = async (deck) => {
       for (let k = 0; k < 9; k++) s.rect(x + 0.15, 2.6 + k * 0.37, 1.05, 0.08, { fill: '2A3342' });
     }
     s.rect(3.75, 3.55, 0.2, 0.7, { fill: '9AA6B5' });
-    s.text('Zwillingsreifen von hinten · schematisch', { x: 0.8, y: 6.1, w: 5.4, h: 0.3, size: 11, italic: true, color: C.dim, align: 'center' });
+    s.text('Zwillingsreifen von hinten · schematisch', { x: 0.8, y: 6.1, w: 5.4, h: 0.3, size: 12, italic: true, color: C.dim, align: 'center' });
     s.oval(3.68, 5.45, 0.34, 0.3, { fill: 'A08A6A', line: C.red, lw: 2 }, CLICK);
     s.oval(3.35, 5.1, 1.0, 1.0, { line: C.red, lw: 3 }, { fx: 'zoom', dur: 300 });
     s.text('Stein!', { x: 4.4, y: 5.35, w: 1.2, h: 0.4, size: 17, bold: true, color: C.red }, { fx: 'fade', dur: 200 });
@@ -318,7 +318,7 @@ module.exports = async (deck) => {
         s.text('lose?', { x: 0.9, y: 5.7, w: 1.0, h: 0.4, size: 16, bold: true, color: C.red }, { fx: 'fade', dur: 200 });
       }
     }
-    s.text('Rad mit Radmutter-Anzeigern · schematisch', { x: 0.8, y: 6.15, w: 5.4, h: 0.3, size: 11, italic: true, color: C.dim, align: 'center' });
+    s.text('Rad mit Radmutter-Anzeigern · schematisch', { x: 0.8, y: 6.15, w: 5.4, h: 0.3, size: 12, italic: true, color: C.dim, align: 'center' });
     await point(s, 6.55, 2.05, 6.08, 1.4, 'LuWrench', C.or, 'Drehmomentschlüssel', 'Radmuttern nach Wert des Herstellers anziehen – nicht nach Gefühl.', CLICK, { br: true, size: 17 });
     await point(s, 6.55, 3.58, 6.08, 1.4, 'LuRefreshCw', C.bl, 'Nach 50 bis 100 km nachziehen', 'Die Teile setzen sich – sonst kann sich das Rad lösen.', CLICK, { br: true, size: 17 });
     await point(s, 6.55, 5.11, 6.08, 1.4, 'LuEye', C.am, 'Anzeiger-Pfeile', 'Einer zeigt aus der Reihe? Mutter hat sich gedreht – sofort prüfen lassen.', { fx: 'flyL', dur: 450 }, { br: true, size: 17 });

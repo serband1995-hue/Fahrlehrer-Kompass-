@@ -164,30 +164,30 @@ module.exports = async (deck) => {
         s.rrect(5.75, 1.62, 2.3, 3.9, { fill: '0E1520', line: '2A3B52', rr: 0.08, name: '!!zl' });
         s.rrect(11.75, 1.62, 1.3, 3.9, { fill: '0E1520', line: '2A3B52', rr: 0.08, name: '!!za' });
         s.text('LKW', { x: 5.9, y: 1.68, w: 1.5, h: 0.3, size: 12, bold: true, color: C.dim, cs: 3, name: '!!zlt' });
-        s.text('ANHÄNGER', { x: 11.8, y: 1.68, w: 1.25, h: 0.3, size: 10, bold: true, color: C.dim, cs: 1, name: '!!zat' });
+        s.text('ANHÄNGER', { x: 11.8, y: 1.68, w: 1.25, h: 0.3, size: 12, bold: true, color: C.dim, cs: 1, name: '!!zat' });
         // Kabel (mit Lücke am Stecker, wenn er fehlt)
         seg(s, 8.05, CY, t.plug ? 12.0 : 9.6, CY, { col: '2A303A', th: 0.12, name: '!!cab1' });
         seg(s, t.plug ? 9.9 : 10.5, CY, 12.0, CY, { col: '2A303A', th: 0.12, name: '!!cab2' });
         s.rrect(t.plug ? 9.55 : 9.45, CY - 0.17, 0.42, 0.34, { fill: '1A1F27', line: '6E7886', lw: 1.5, rr: 0.2, rotate: t.plug ? 0 : 25, name: '!!plug' });
         s.text(t.plug ? 'ABS/EBS-Stecker (ISO 7638)' : 'Stecker fehlt!', { x: 8.3, y: CY - 0.62, w: 3.5, h: 0.3, size: 12, bold: true, color: t.plug ? C.mut : C.red, align: 'center', name: '!!plugt' });
         dots(s, cable, 'FFFFFF', t.plug && t.brake, 'c', ph * 2);
-        s.text('Daten und Strom', { x: 8.3, y: CY + 0.2, w: 3.5, h: 0.28, size: 11, color: t.plug ? C.mut : C.dim, align: 'center', name: '!!cabt' });
+        s.text('Daten und Strom', { x: 8.3, y: CY + 0.2, w: 3.5, h: 0.28, size: 12, color: t.plug ? C.mut : C.dim, align: 'center', name: '!!cabt' });
         // gelbe Leitung
         seg(s, 8.05, AY, 12.0, AY, { col: t.brake ? C.am : '4A4224', th: 0.09, name: '!!air' });
         dots(s, air, C.am, !!t.brake, 'a', ph);
-        s.text('gelbe Leitung (Luft)', { x: 8.3, y: AY + 0.18, w: 3.5, h: 0.28, size: 11, color: C.mut, align: 'center', name: '!!airt' });
+        s.text('gelbe Leitung (Luft)', { x: 8.3, y: AY + 0.18, w: 3.5, h: 0.28, size: 12, color: C.mut, align: 'center', name: '!!airt' });
         // Lkw: Pedal + Steuergerät
         s.rrect(6.05, 2.35, 1.7, 2.2, { fill: '16202E', line: t.brake ? C.or : '4A5668', lw: t.brake ? 2.5 : 1.25, rr: 0.12, name: '!!ecu' });
         s.text('EBS-\nSteuergerät\nLkw', { x: 6.05, y: 2.35, w: 1.7, h: 2.2, size: 12, bold: true, color: C.mut, align: 'center', valign: 'middle', name: '!!ecut' });
         s.rrect(6.25, 4.82, 0.6, 0.14, { fill: t.brake ? C.txt : '7A8494', rr: 0.3, rotate: t.brake ? 8 : -18, name: '!!pd' });
-        s.text(t.brake ? 'Pedal getreten' : 'Pedal', { x: 6.9, y: 4.7, w: 1.4, h: 0.36, size: 11, color: t.brake ? C.txt : C.dim, valign: 'middle', name: '!!pdt' });
+        s.text(t.brake ? 'Pedal getreten' : 'Pedal', { x: 6.9, y: 4.7, w: 1.4, h: 0.36, size: 12, color: t.brake ? C.txt : C.dim, valign: 'middle', name: '!!pdt' });
         // Anhänger-Modul + Funktionen
         s.rrect(11.9, 2.35, 1.0, 2.2, { fill: '16202E', line: t.brake ? C.or : '4A5668', lw: t.brake ? 2.5 : 1.25, rr: 0.12, name: '!!mod' });
-        s.text('Brems-\nmodul', { x: 11.9, y: 2.35, w: 1.0, h: 2.2, size: 11, bold: true, color: C.mut, align: 'center', valign: 'middle', name: '!!modt' });
+        s.text('Brems-\nmodul', { x: 11.9, y: 2.35, w: 1.0, h: 2.2, size: 12, bold: true, color: C.mut, align: 'center', valign: 'middle', name: '!!modt' });
         const fn = [['ABS', 'abs'], ['Last', 'last'], ['Kippschutz', 'rss']];
         fn.forEach(([lab, nm], k) => {
           const ok = !!t.plug;
-          s.text((ok ? '✓ ' : '✕ ') + lab, { x: 11.8, y: 4.65 + k * 0.28, w: 1.25, h: 0.28, size: 11, bold: true, color: ok ? C.gr : C.red, name: '!!f' + nm });
+          s.text((ok ? '✓ ' : '✕ ') + lab, { x: 11.8, y: 4.65 + k * 0.28, w: 1.25, h: 0.28, size: 12, bold: true, color: ok ? C.gr : C.red, name: '!!f' + nm });
         });
         s.text(t.msg, { x: 5.75, y: 5.6, w: 7.3, h: 0.95, size: 16, bold: true, color: t.mc, align: 'center', valign: 'middle', name: '!!msg' });
       },

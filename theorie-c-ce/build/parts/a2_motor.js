@@ -14,10 +14,14 @@ module.exports = async (deck) => {
     const sOT = R + LR;
     const kin = th => { const a = th * Math.PI / 180, sx = R * Math.sin(a), sy = R * Math.cos(a), s = sy + Math.sqrt(LR * LR - sx * sx); const pin = KY - s; return { pinY: pin, top: pin - PIN, cx: KX + sx, cy: KY - sy }; };
     const top0 = kin(0).top, shift = (ZT + PTOP) - top0;      // Kolben im OT knapp unter dem Kopf
-    // Nocken (Ei-Form, Spitze zeigt nach oben bei Drehung 0)
-    const camImg = await svgImg('<path d="M 100 18 C 140 18 165 70 165 110 C 165 150 135 180 100 180 C 65 180 35 150 35 110 C 35 70 60 18 100 18 Z" fill="#8E99A8" stroke="#55606F" stroke-width="6"/><circle cx="100" cy="115" r="16" fill="#3C4656"/>', 200, 200, 1);
+    // Nocken: Grundkreis + Nocke, dreht um die Bildmitte; Spitze zeigt bei Drehung 0 nach oben
+    const CR0 = 45, CH = 46, CB = 55, CS = 0.7;                 // Grundkreis, Hub (px von 200), halbe Nockenbreite (°), Bildgröße (Zoll)
+    const camR = phi => { const p = Math.abs(((phi % 360) + 540) % 360 - 180); return CR0 + (p < CB ? CH * (1 + Math.cos(Math.PI * p / CB)) / 2 : 0); };
+    const camPts = []; for (let a = 0; a < 360; a += 3) { const r = camR(a), t = a * Math.PI / 180; camPts.push((100 + r * Math.sin(t)).toFixed(1) + ' ' + (100 - r * Math.cos(t)).toFixed(1)); }
+    const camImg = await svgImg('<path d="M ' + camPts.join(' L ') + ' Z" fill="#8E99A8" stroke="#55606F" stroke-width="5"/><circle cx="100" cy="100" r="15" fill="#3C4656"/>', 200, 200, 1);
+    const camLift = rot => (camR(rot - 180) - CR0) / CH;        // 0…1: Ventil liegt immer unten an der Nocke an
     const phase = th => th < 180 ? 0 : th < 360 ? 1 : th < 540 ? 2 : 3;
-    const gasCol = th => th < 180 ? '4CC9F0' : th < 330 ? 'FFB547' : th < 480 ? 'FF5C5C' : th < 540 ? 'B9772F' : '738296';
+    const gasCol = th => th <= 210 ? '4CC9F0' : th < 330 ? 'FFB547' : th < 480 ? 'FF5C5C' : th < 540 ? 'B9772F' : '738296';
     const TN = ['1  Ansaugen', '2  Verdichten', '3  Arbeiten', '4  Ausstoßen'];
     const VN = ['Einlass offen', 'beide Ventile zu', 'beide Ventile zu', 'Auslass offen'];
     const CAP = [
@@ -46,8 +50,9 @@ module.exports = async (deck) => {
       scene: async (s, th) => {
         const k = kin(th), ph = phase(th === 720 ? 719 : th);
         const ptop = k.top + shift, pin = k.pinY + shift, cpx = k.cx, cpy = k.cy;
-        const vin = th > 0 && th < 180 ? Math.sin(th * Math.PI / 180) : 0;
-        const vex = th > 540 && th < 720 ? Math.sin((th - 540) * Math.PI / 180) : 0;
+        const uin = th / 2 + 135, uex = th / 2 + 225;                 // fortlaufender Drehwinkel der Nocken
+        const rin = uin % 360, rex = uex % 360;
+        const vin = camLift(rin), vex = camLift(rex);
         // Zylinderkopf mit Kanälen, Wände mit Kühlmantel
         s.rrect(ZX - 0.35, ZT - 0.6, ZW + 0.7, 0.6, { fill: '55606F', rr: 0.15, name: '!!kopf' });
         s.rrect(ZX - 0.35, ZT - 0.5, 0.75, 0.22, { fill: '0E1520', rr: 0.4, name: '!!kanal1' });
@@ -60,15 +65,16 @@ module.exports = async (deck) => {
         const burn = th >= 360 && th < 450;
         s.rect(ZX, ZT, ZW, Math.max(ptop - ZT, 0.02), { fill: gasCol(th), ft: burn ? 12 : 50, name: '!!gas', glow: burn ? 16 : undefined, glowColor: C.red });
         // Nockenwelle (dreht halb so schnell) und Ventile
-        const camR = th / 2;
-        const cams = [[ZX + 0.42, (camR + 135) % 360, vin, C.bl, 'ein'], [ZX + ZW - 0.42, ((camR - 135) % 360 + 360) % 360, vex, C.mut, 'aus']];
-        for (const [cx, rot, lift, col, nm] of cams) {
-          s.img(camImg, { x: cx - 0.28, y: ZT - 1.42, w: 0.56, h: 0.56, rotate: Math.round(rot), name: '!!cam' + nm });
-          const d = lift * 0.24;
-          s.rrect(cx - 0.05, ZT - 0.88 + d, 0.1, 0.78, { fill: 'A9B6C6', rr: 0.4, name: '!!vs' + nm });
-          s.rrect(cx - 0.27, ZT - 0.13 + d, 0.54, 0.11, { fill: lift > 0.05 ? col : 'A9B6C6', rr: 0.4, name: '!!vt' + nm });
+        const cams = [[ZX + 0.42, rin, vin, C.bl, 'ein', Math.floor(uin / 360)], [ZX + ZW - 0.42, rex, vex, C.mut, 'aus', Math.floor(uex / 360)]];
+        const CY = ZT - 1.14, base = CY + CR0 / 200 * CS;            // Mitte der Nocke, Unterkante Grundkreis
+        for (const [cx, rot, lift, col, nm, turn] of cams) {
+          // neue Umdrehung = neuer Name: Morph blendet über statt 345° zurückzudrehen
+          s.img(camImg, { x: cx - CS / 2, y: CY - CS / 2, w: CS, h: CS, rotate: Math.round(rot), name: '!!cam' + nm + turn });
+          const d = lift * CH / 200 * CS;
+          s.rrect(cx - 0.05, base + d, 0.1, ZT - 0.08 - base, { fill: 'A9B6C6', rr: 0.4, name: '!!vs' + nm });
+          s.rrect(cx - 0.27, ZT - 0.13 + d, 0.54, 0.11, { fill: lift > 0.15 ? col : 'A9B6C6', rr: 0.4, name: '!!vt' + nm });
         }
-        s.text('Nockenwelle', { x: ZX + ZW / 2 - 0.8, y: ZT - 1.35, w: 1.6, h: 0.3, size: 11, italic: true, color: C.dim, align: 'center', name: '!!tnw' });
+        s.text('Nockenwelle', { x: ZX + ZW / 2 - 1.0, y: CY - 0.68, w: 2.0, h: 0.32, size: 13, color: C.mut, align: 'center', name: '!!tnw' });
         // Einspritzdüse und Strahl
         const inj = th >= 345 && th <= 390;
         s.rrect(ZX + ZW / 2 - 0.08, ZT - 0.75, 0.16, 0.7, { fill: inj ? C.or : '8A96A6', rr: 0.4, name: '!!duese' });
@@ -80,21 +86,21 @@ module.exports = async (deck) => {
         // Kurbelwelle mit Gegengewicht, Pleuel
         s.oval(KX - 0.95, KY - 0.95, 1.9, 1.9, { fill: '1A212C', line: '3C4656', lw: 2, name: '!!kurb' });
         const ga = (th + 180) * Math.PI / 180;
-        s.oval(KX + 0.55 * Math.sin(ga) - 0.5, KY - 0.55 * Math.cos(ga) - 0.3, 1.0, 0.6, { fill: '3C4656', rotate: Math.round(th % 180), name: '!!gegen' });
+        s.oval(KX + 0.5 * Math.sin(ga) - 0.36, KY - 0.5 * Math.cos(ga) - 0.36, 0.72, 0.72, { fill: '3C4656', name: '!!gegen' });
         s.oval(KX - 0.14, KY - 0.14, 0.28, 0.28, { fill: '55606F', name: '!!welle' });
         const rl = Math.hypot(cpx - KX, cpy - pin), ra = Math.atan2(cpy - pin, cpx - KX) * 180 / Math.PI;
         s.rrect((KX + cpx) / 2 - rl / 2, (pin + cpy) / 2 - 0.09, rl, 0.18, { fill: '8A96A6', rr: 0.5, rotate: Math.round(ra * 10) / 10, name: '!!pleuel' });
         s.oval(cpx - 0.2, cpy - 0.2, 0.4, 0.4, { fill: '9AA6B5', line: '6E7888', lw: 2, name: '!!zapfen' });
         s.oval(KX - 0.11, pin - 0.11, 0.22, 0.22, { fill: '6E7888', name: '!!bolzen' });
-        s.text('Kurbelwelle', { x: KX + 0.95, y: KY - 0.18, w: 1.6, h: 0.35, size: 12, italic: true, color: C.dim, name: '!!tkw' });
+        s.text('Kurbelwelle', { x: KX + 1.1, y: KY - 0.18, w: 1.6, h: 0.35, size: 13, color: C.mut, name: '!!tkw' });
         // Pfeile Luft rein / Abgas raus
-        s.text('Luft', { x: ZX - 1.55, y: ZT - 0.8, w: 1.1, h: 0.35, size: 15, bold: vin > 0, color: vin > 0 ? C.bl : C.dim, align: 'right', name: '!!tluft' });
-        s.rrect(ZX - 1.0, ZT - 0.42, 0.85, 0.06, { fill: vin > 0 ? C.bl : C.line, rr: 0.5, name: '!!pluft' });
-        s.text('Abgas', { x: ZX + ZW + 0.5, y: ZT - 0.8, w: 1.2, h: 0.35, size: 15, bold: vex > 0, color: vex > 0 ? C.txt : C.dim, name: '!!tab' });
-        s.rrect(ZX + ZW + 0.4, ZT - 0.42, 0.85, 0.06, { fill: vex > 0 ? C.mut : C.line, rr: 0.5, name: '!!pab' });
+        s.text('Luft', { x: ZX - 1.55, y: ZT - 0.8, w: 1.1, h: 0.35, size: 15, bold: vin > 0.15, color: vin > 0.15 ? C.bl : C.dim, align: 'right', name: '!!tluft' });
+        s.rrect(ZX - 1.0, ZT - 0.42, 0.85, 0.06, { fill: vin > 0.15 ? C.bl : C.line, rr: 0.5, name: '!!pluft' });
+        s.text('Abgas', { x: ZX + ZW + 0.5, y: ZT - 0.8, w: 1.2, h: 0.35, size: 15, bold: vex > 0.15, color: vex > 0.15 ? C.txt : C.dim, name: '!!tab' });
+        s.rrect(ZX + ZW + 0.4, ZT - 0.42, 0.85, 0.06, { fill: vex > 0.15 ? C.mut : C.line, rr: 0.5, name: '!!pab' });
         // Takt rechts
         s.text(TN[ph], { x: 10.75, y: 2.75, w: 2.4, h: 0.5, size: 20, bold: true, color: ph === 2 ? C.red : C.txt, name: '!!takt' });
-        s.text(VN[ph], { x: 10.75, y: 3.25, w: 2.4, h: 0.4, size: 15, color: C.mut, name: '!!vent' });
+        s.text(th === 0 ? 'Einlass öffnet' : th === 180 ? 'Einlass schließt' : th === 540 ? 'Auslass öffnet' : th === 720 ? 'Auslass schließt' : VN[ph], { x: 10.75, y: 3.25, w: 2.4, h: 0.4, size: 15, color: C.mut, name: '!!vent' });
         s.text('Kurbelwelle: ' + th + '°', { x: 10.75, y: 3.7, w: 2.4, h: 0.4, size: 14, color: C.dim, name: '!!grad' });
       },
     });
@@ -129,10 +135,10 @@ module.exports = async (deck) => {
     // 2 Verdichter
     s.oval(4.3, TY, 1.2, 1.2, { fill: '173048', line: C.bl, lw: 2 }, CLICK);
     s.img(await icon('LuFan', C.bl), { x: 4.55, y: TY + 0.25, w: 0.7, h: 0.7 }, { fx: 'fade', dur: 200 });
-    s.text('Verdichter', { x: 3.9, y: TY - 0.5, w: 2.0, h: 0.4, size: 16, bold: true, color: C.bl, align: 'center' }, { fx: 'fade', dur: 200 });
-    s.text('gleiche Welle', { x: 5.05, y: TY + 0.66, w: 1.9, h: 0.3, size: 11, color: C.dim, align: 'center' }, { fx: 'fade', dur: 200 });
-    s.text('Frischluft', { x: 3.15, y: TY + 0.12, w: 1.15, h: 0.35, size: 14, color: C.bl, align: 'center' }, { fx: 'fade', dur: 200 });
-    s.lineS(3.25, TY + 0.6, 4.3, TY + 0.6, { color: C.bl, lw: 3, endArrow: 'triangle' }, { fx: 'fade', dur: 200 });
+    s.text('Verdichter', { x: 3.15, y: TY + 1.22, w: 1.6, h: 0.4, size: 16, bold: true, color: C.bl, align: 'right' }, { fx: 'fade', dur: 200 });
+    s.text('gleiche Welle', { x: 5.3, y: TY + 0.02, w: 1.3, h: 0.28, size: 12, color: C.mut, align: 'center' }, { fx: 'fade', dur: 200 });
+    s.text('Frischluft', { x: 3.2, y: TY - 0.5, w: 1.5, h: 0.35, size: 15, bold: true, color: C.bl, align: 'right' }, { fx: 'fade', dur: 200 });
+    s.lineS(4.9, TY - 0.55, 4.9, TY - 0.02, { color: C.bl, lw: 3, endArrow: 'triangle' }, { fx: 'fade', dur: 200 });
     // 3 Ladeluftkühler
     s.lineS(4.9, TY + 1.2, 4.9, 5.85, { color: C.or, lw: 4 }, CLICK);
     s.rrect(4.2, 5.85, 1.4, 0.75, { fill: '173048', line: C.bl, lw: 2, rr: 0.08 }, { fx: 'zoom', dur: 300 });

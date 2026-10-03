@@ -12,7 +12,7 @@ module.exports = async (deck) => {
   // ===== ACHSLAST-WAAGE =====
   {
     const x0 = 5.95, K = 0.42, GY = 4.0, xm = m => x0 + m * K;
-    const AX = [{ x: xm(1.35), n: 'Lenkachse', max: 10 }, { x: xm(5.05), n: 'Antriebsachse', max: 11.5 }, { x: xm(2.9 + 9.2), n: 'Dreifachachse', max: 24, sub: 'max. 24 t (Abstand über 1,3 m)' }];
+    const AX = [{ x: xm(1.35), n: 'Lenkachse', max: 10 }, { x: xm(5.05), n: 'Antriebsachse', max: 11.5 }, { x: xm(2.9 + 9.2), n: 'Dreifachachse', max: 24, sub: 'max. 24 t (über 1,3 m)' }];
     const ST = [
       { w: [5.2, 3.6, 5.7], pal: 0, info: 'Jede Achse hat ihre eigene Grenze: Lenkachse 10 t, Antriebsachse 11,5 t, Dreifachachse 21 t – bei mehr als 1,30 m Achsabstand 24 t. Es gilt immer der kleinere Wert aus Gesetz und Fahrzeugschein.' },
       { w: [7.5, 11.5, 21.0], pal: 1, info: 'Mehr als 4 Achsen: höchstens 40 t. 44 t nur im Kombinierten Verkehr – auf dem Weg zum oder vom Bahnhof oder Hafen, mit Nachweis.' },
@@ -55,7 +55,7 @@ module.exports = async (deck) => {
           const bw = a.sub ? 2.0 : 1.36;
           s.rrect(a.x - bw / 2, GY + 0.16, bw, 0.82, { fill: bad ? '3A1418' : '0B1119', line: bad ? C.red : '3C4656', lw: 1.5, rr: 0.1, name: '!!wb' + k });
           s.text(f1(t.w[k]) + ' t', { x: a.x - bw / 2, y: GY + 0.18, w: bw, h: 0.46, size: 22, bold: true, color: col, align: 'center', valign: 'middle', name: '!!wv' + k });
-          s.text(a.n + '\n' + (a.sub || 'max. ' + f1(a.max).replace(',0', '') + ' t'), { x: a.x - 1.0, y: GY + 0.6, w: 2.0, h: 0.38, size: 10, color: C.mut, align: 'center', valign: 'middle', lsm: 0.9, name: '!!wn' + k });
+          s.text(a.n + '\n' + (a.sub || 'max. ' + f1(a.max).replace(',0', '') + ' t'), { x: a.x - 1.1, y: GY + 0.6, w: 2.2, h: 0.4, size: 12, color: C.mut, align: 'center', valign: 'middle', lsm: 0.9, name: '!!wn' + k });
         });
         // Summe
         s.text([{ text: 'Summe  ', options: { color: C.mut, fontSize: 20 } }, { text: f1(sum) + ' t', options: { bold: true, color: over ? C.red : (t.pal ? C.gr : C.txt) } }], { x: 7.6, y: 1.42, w: 5.45, h: 0.62, size: 36, align: 'right', valign: 'middle', name: '!!sum' });
@@ -131,7 +131,7 @@ module.exports = async (deck) => {
         const tag = (x, txt, nm, sub) => {
           s.rrect(x - 0.75, 1.62, 1.5, 0.5, { fill: '0B1119', line: GOLD, lw: 1.5, rr: 0.3, name: '!!' + nm + 'b' });
           s.text(txt, { x: x - 0.75, y: 1.62, w: 1.5, h: 0.5, size: 20, bold: true, color: C.txt, align: 'center', valign: 'middle', name: '!!' + nm + 't' });
-          s.text(sub, { x: x - 1.0, y: 2.14, w: 2.0, h: 0.28, size: 11, color: C.mut, align: 'center', name: '!!' + nm + 's' });
+          s.text(sub, { x: x - 1.0, y: 2.14, w: 2.0, h: 0.28, size: 12, color: C.mut, align: 'center', name: '!!' + nm + 's' });
         };
         tag(X + 3.5 * K, t.l, 'tl', 'Lkw');
         tag(ax + (t.small ? 1.5 : 2.5) * K, t.a, 'ta', t.zaa ? 'Zentralachsanhänger' : 'Anhänger');

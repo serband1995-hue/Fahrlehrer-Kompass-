@@ -52,7 +52,7 @@ module.exports = async (deck) => {
         const r = satTop(s, { P: P(st.x, st.y), a: st.a, b: st.b, S, nm: 'sr', rb: 270, steer: f.w < 0 ? 25 : f.w > 0 ? -20 : 0, trail: trail.slice(0, -1), nTrail: 4, kpCol: C.pu });
         // Lenkrad
         s.rrect(10.85, 1.6, 2.2, 2.25, { fill: '0E1520', line: '2A3B52', rr: 0.08, name: '!!lrb' });
-        s.text('LENKRAD', { x: 11.0, y: 1.66, w: 1.9, h: 0.28, size: 10, bold: true, color: C.dim, cs: 2, name: '!!lrt' });
+        s.text('LENKRAD', { x: 11.0, y: 1.66, w: 1.9, h: 0.28, size: 12, bold: true, color: C.dim, cs: 2, name: '!!lrt' });
         s.img(wheel, { x: 11.35, y: 2.0, w: 1.2, h: 1.2, rotate: 90 + f.w, name: '!!lr' });
         s.text(f.w < 0 ? '← links' : f.w > 0 ? 'rechts →' : 'gerade', { x: 10.9, y: 3.3, w: 2.1, h: 0.35, size: 15, bold: true, color: f.w ? C.pu : C.mut, align: 'center', name: '!!lrw' });
         // Rückwärts-Pfeil und Meldung
@@ -103,7 +103,7 @@ module.exports = async (deck) => {
       kicker: 'Toter Winkel am Zug', ttl: 'Rechts abbiegen', dur: 700, holdDur: 700,
       question: 'Ihr biegt rechts ab. Neben eurem Anhänger fährt ein Radfahrer geradeaus. Was passiert?',
       answer: 'Der Anhänger schneidet die Kurve und kreuzt den Radweg. Den Radfahrer neben dem Anhänger seht ihr kaum. Darum: Schrittgeschwindigkeit, Spiegel bis zum Ende – warten, bis neben dem Zug niemand ist.',
-      legend: 'Draufsicht · berechnet (Einspurmodell) · Gliederzug 18,4 m · blau: Spur Lkw-Vorderrad, rot: Spur Anhänger-Hinterrad',
+      legend: 'Draufsicht · berechnet · Zug 18,4 m · blau: Lkw-Vorderrad · rot: Anhänger-Hinterrad',
       frames: [
         fr(0, { hold: true,
           cap: 'Rechts neben dem Zug verläuft ein Radweg. Der Radfahrer ist auf Höhe des Anhängers und fährt geradeaus weiter.',

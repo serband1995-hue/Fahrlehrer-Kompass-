@@ -115,12 +115,12 @@ module.exports = async (deck) => {
         s.rect(CX0, cy(11), 0.015, 11 * CYS, { fill: '4A5668', name: '!!yAx' });
         s.rect(CX0, CY0, 7 * CXS, 0.015, { fill: '4A5668', name: '!!xAx' });
         s.img(curve, { x: CX0, y: cy(11), w: 7 * CXS, h: 11 * CYS, name: '!!kurve' });
-        [5, 10].forEach(p => s.text(p + ' t', { x: 5.95, y: cy(p) - 0.13, w: 0.68, h: 0.26, size: 10, color: C.dim, align: 'right', name: '!!yt' + p }));
-        [0, 2, 4, 6].forEach(m => s.text(m + ' m', { x: cx(m) - 0.3, y: CY0 + 0.03, w: 0.6, h: 0.24, size: 10, color: C.dim, align: 'center', name: '!!xt' + m }));
+        [5, 10].forEach(p => s.text(p + ' t', { x: 5.95, y: cy(p) - 0.13, w: 0.68, h: 0.26, size: 12, color: C.dim, align: 'right', name: '!!yt' + p }));
+        [0, 2, 4, 6].forEach(m => s.text(m + ' m', { x: cx(m) - 0.3, y: CY0 + 0.03, w: 0.6, h: 0.24, size: 12, color: C.dim, align: 'center', name: '!!xt' + m }));
         s.lineS(CX0, cy(P0), CX0 + 7 * CXS, cy(P0), { color: C.mut, lw: 1.25, dash: 'dash', name: '!!l8' });
-        s.text('8 t', { x: CX0 + 7 * CXS + 0.05, y: cy(P0) - 0.14, w: 0.5, h: 0.28, size: 11, bold: true, color: C.mut, name: '!!l8t' });
-        s.text('Vorderachse zu schwer', { x: CX0 + 0.08, y: cy(10.9), w: 2.1, h: 0.26, size: 10, italic: true, color: 'E58A8A', name: '!!zv' });
-        s.text('Hinterachse zu schwer,\nLenkachse zu leicht', { x: 10.75, y: cy(10.9), w: 2.05, h: 0.42, size: 10, italic: true, color: 'E58A8A', align: 'right', name: '!!zh' });
+        s.text('8 t', { x: CX0 + 7 * CXS + 0.05, y: cy(P0) - 0.14, w: 0.5, h: 0.28, size: 12, bold: true, color: C.mut, name: '!!l8t' });
+        s.text('Vorderachse zu schwer', { x: CX0 + 0.08, y: cy(10.9), w: 2.1, h: 0.26, size: 12, italic: true, color: 'E58A8A', name: '!!zv' });
+        s.text('Hinterachse zu schwer,\nLenkachse zu leicht', { x: 10.75, y: cy(10.9), w: 2.05, h: 0.42, size: 12, italic: true, color: 'E58A8A', align: 'right', name: '!!zh' });
         s.rect(cx(d) - 0.008, cy(11), 0.016, 11 * CYS, { fill: ok ? C.gr : C.red, ft: 40, name: '!!vl' });
         s.oval(cx(d) - 0.13, cy(P0) - 0.13, 0.26, 0.26, { fill: ok ? C.gr : C.red, line: C.white, lw: 2, glow: 8, glowColor: ok ? C.gr : C.red, name: '!!pt' });
       },

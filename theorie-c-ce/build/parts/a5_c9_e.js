@@ -102,7 +102,7 @@ module.exports = async (deck) => {
             const cc = g === 2 && q === 2 ? '3B82F6' : c;
             s.oval(x + 0.4, y + 0.45, 0.62, 0.62, { fill: on ? cc : '1A2230', line: on ? cc : '2A3342', lw: 1, glow: on ? 10 : undefined, glowColor: cc, name: '!!lo' + g + q });
             s.img(await icon(G[g].ic[q], on ? C.dark : '4A5668'), { x: x + 0.54, y: y + 0.59, w: 0.34, h: 0.34, name: '!!li' + g + q });
-            s.text(G[g].tx[q], { x: x - 0.1, y: y + 1.08, w: 1.62, h: 0.28, size: 11, color: on ? C.txt : C.dim, align: 'center', name: '!!lt' + g + q });
+            s.text(G[g].tx[q], { x: x - 0.1, y: y + 1.08, w: 1.62, h: 0.28, size: 12, color: on ? C.txt : C.dim, align: 'center', name: '!!lt' + g + q });
           }
         }
       },

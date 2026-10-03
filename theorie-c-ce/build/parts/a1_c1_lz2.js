@@ -73,14 +73,14 @@ module.exports = async (deck) => {
           s.rect(x, y + 0.2, w, 0.42, { fill: col }, { fx: 'wipeR', dur: 400 });
           s.text(lab, { x, y: y + 0.2, w, h: 0.42, size: 15, bold: true, color: C.dark, align: 'center', valign: 'middle' }, { fx: 'fade', dur: 150 });
         } else {
-          s.text(lab, { x, y: y + 0.2, w, h: 0.42, size: 11, color: C.mut, align: 'center', valign: 'middle' }, { fx: 'fade', dur: 150 });
+          s.text(lab, { x, y: y + 0.2, w, h: 0.42, size: 12, color: C.mut, align: 'center', valign: 'middle' }, { fx: 'fade', dur: 150 });
         }
         x += w;
       }
       s.text(R[i][2], { x: x0, y: y + 0.66, w: 8.2, h: 0.35, size: 14, color: C.mut }, { fx: 'fade', dur: 200 });
     }
     s.text([{ text: '24-Stunden-Regel:  ', options: { bold: true, color: C.bl } }, { text: 'Innerhalb von 24 Stunden nach Ende der letzten Ruhezeit muss die neue tägliche Ruhezeit genommen sein (mindestens 9 h davon in diesen 24 h).', options: { color: C.txt } }],
-      { x: 0.7, y: 5.85, w: 11.93, h: 0.75, size: 17, valign: 'middle', fill: C.card2, line: C.bl, shape: deck.pres.shapes.ROUNDED_RECTANGLE, rr: 0.1, margin: [8, 14, 8, 14] }, { fx: 'rise', c: true, dur: 400 });
+      { x: 0.7, y: 5.76, w: 11.93, h: 0.92, size: 17, valign: 'middle', fill: C.card2, line: C.bl, shape: deck.pres.shapes.ROUNDED_RECTANGLE, rr: 0.1, margin: [8, 14, 8, 14] }, { fx: 'rise', c: true, dur: 400 });
   }
   // ===== WÖCHENTLICHE RUHEZEIT =====
   {
@@ -122,7 +122,7 @@ module.exports = async (deck) => {
       s.text(T[i][3], { x: 9.9, y, w: 2.6, h: 0.92, size: 26, bold: true, color: C.red, align: 'center', valign: 'middle' }, { fx: 'zoom', dur: 300 });
     }
     s.text([{ text: 'Gut zu wissen:  ', options: { bold: true, color: C.or } }, { text: 'Kleinere Verstöße kosten je 30 €. Punkte gibt es keine – aber bei der Kontrolle kann die Weiterfahrt untersagt werden, bis die Ruhezeit eingehalten ist.', options: { color: C.txt } }],
-      { x: 0.7, y: 5.75, w: 11.93, h: 0.78, size: 16, valign: 'middle', fill: C.card2, line: C.or, shape: deck.pres.shapes.ROUNDED_RECTANGLE, rr: 0.1, margin: [8, 14, 8, 14] }, { fx: 'rise', c: true, dur: 400 });
+      { x: 0.7, y: 5.7, w: 11.93, h: 0.88, size: 16, valign: 'middle', fill: C.card2, line: C.or, shape: deck.pres.shapes.ROUNDED_RECTANGLE, rr: 0.1, margin: [8, 14, 8, 14] }, { fx: 'rise', c: true, dur: 400 });
     foot(s, 'Regelsätze: Buß- und Verwarnungsgeldkatalog Fahrpersonalrecht (LASI LV 48) · keine Punkte (FeV Anlage 13)');
   }
   // ===== MITSCHREIBEN =====

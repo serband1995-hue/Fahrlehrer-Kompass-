@@ -3,7 +3,7 @@ const { W, H, icon } = require('./lib');
 const sharp = require('sharp');
 const fs = require('fs');
 const path = require('path');
-const C = { txt: 'F3F5F8', mut: 'A9B6C6', dim: '738296', card: '111B28', line: '2A3B52', card2: '172538', red: 'FF5C5C', or: 'FFB547', bl: '4CC9F0', gr: '38D98A', pu: '7AA2FF', am: 'F2C230', kap: 'FF8A3D', dark: '070B12', road: '232A35', road2: '2B3340', curb: '3C4656', mark: 'D9DEE6', white: 'FFFFFF' };
+const C = { txt: 'F3F5F8', mut: 'A9B6C6', dim: '7F8CA1', card: '111B28', line: '2A3B52', card2: '172538', red: 'FF5C5C', or: 'FFB547', bl: '4CC9F0', gr: '38D98A', pu: '7AA2FF', am: 'F2C230', kap: 'FF8A3D', dark: '070B12', road: '232A35', road2: '2B3340', curb: '3C4656', mark: 'D9DEE6', white: 'FFFFFF' };
 // Kapitel: Name in der Fußzeile, Akzentfarbe, Hintergrund
 const SEC = {};
 function sec(key, name, col, bg) { SEC[key] = { name, col, bg }; }
@@ -15,9 +15,12 @@ function base(deck, key, { notes = '', bg, transition = 'fade', noGlide = false,
   if (bgX) s.img(SEC[key].bg, { x: 0, y: 0, w: W, h: H, name: '!!bg0' });
   s.img(bg || S.bg, { x: bgX, y: 0, w: bgX ? W - bgX : W, h: H, name: '!!bg' });
   if (ov) s.img('ov_left.png', { x: 0, y: 0, w: ov === true ? W : ov, h: H, name: '!!ov' });
+  // Fotos: unten dunkler Verlauf, damit Fußzeile und Seitenzahl lesbar bleiben
+  const photo = (bg && !/^bg_/.test(bg)) || (!bg && S.bg && !/^bg_/.test(S.bg));
+  if (footer && photo) s.img('ov_bot.png', { x: 0, y: 6.45, w: W, h: 1.05, name: '!!ovb' });
   if (footer) {
-    s.text(deck.ftLabel + '  ·  ' + S.name, { x: 0.6, y: 7.02, w: 9, h: 0.28, size: 10, color: C.dim, cs: 2, name: '!!ftL' });
-    s.text(String(s.idx), { x: 12.13, y: 7.02, w: 0.6, h: 0.28, size: 10, color: C.dim, align: 'right', name: '!!ftR' });
+    s.text(deck.ftLabel + '  ·  ' + S.name, { x: 0.6, y: 7.02, w: 9, h: 0.28, size: 10, color: '8592A6', cs: 2, name: '!!ftL' });
+    s.text(String(s.idx), { x: 12.13, y: 7.02, w: 0.6, h: 0.28, size: 10, color: '8592A6', align: 'right', name: '!!ftR' });
   }
   s.sec = S; s.deck = deck;
   return s;
@@ -80,7 +83,7 @@ async function ask(deck, key, { kicker, q, answers, notes, ico = 'LuMessageCircl
   return s;
 }
 // Morph-Schrittfolge: links Schrittliste, unten Erklärung, rechts Szene (Objekte mit festen !!-Namen)
-async function steps(deck, key, { kicker, ttl, list, caps, scene, notes, legend, listY = 1.7, dur, ask }) {
+async function steps(deck, key, { kicker, ttl, list, caps, scene, notes, legend, listY = 1.7, dur, ask, nums }) {
   const out = [];
   for (let i = 0; i < caps.length; i++) {
     const ML = '🖱 Keine Animation auf dieser Folie – nächster Klick = nächster Schritt (Morph).';
@@ -93,7 +96,7 @@ async function steps(deck, key, { kicker, ttl, list, caps, scene, notes, legend,
     s.rect(0.62, listY + hi * 0.5 - 0.04, 4.6, 0.44, { fill: col, name: '!!hl', ft: 0 });
     list.forEach((l, k) => {
       const on = k === hi, done = k < hi;
-      s.text(String(k + 1), { x: 0.7, y: listY + k * 0.5, w: 0.34, h: 0.34, size: 12, bold: true, color: on ? C.dark : (done ? C.dark : C.mut), fill: on ? col : (done ? C.mut : C.line), shape: deck.pres.shapes.OVAL, align: 'center', valign: 'middle', name: '!!b' + k });
+      s.text(nums ? nums[k] : String(k + 1), { x: 0.7, y: listY + k * 0.5, w: 0.34, h: 0.34, size: 12, bold: true, color: on ? C.dark : (done ? C.dark : C.mut), fill: on ? col : (done ? C.mut : C.line), shape: deck.pres.shapes.OVAL, align: 'center', valign: 'middle', name: '!!b' + k });
       s.text(l, { x: 1.2, y: listY - 0.04 + k * 0.5, w: 3.95, h: 0.4, size: 16, bold: on, color: on ? C.dark : (done ? C.mut : C.dim), valign: 'middle', name: '!!l' + k });
     });
     if (ask) {
@@ -103,7 +106,7 @@ async function steps(deck, key, { kicker, ttl, list, caps, scene, notes, legend,
     }
     s.rrect(0.62, 5.15, 4.6, 1.65, { fill: C.card2, line: C.line, rr: 0.12, name: '!!capbox' });
     s.text(caps[i], { x: 0.82, y: 5.2, w: 4.25, h: 1.55, size: 15, color: C.txt, valign: 'middle', name: '!!cap' });
-    if (legend) s.text(legend, { x: 5.6, y: 6.72, w: 7, h: 0.28, size: 10, italic: true, color: C.dim, name: '!!leg' });
+    if (legend) s.text(legend, { x: 5.6, y: 6.7, w: 7, h: 0.3, size: 11, italic: true, color: C.dim, name: '!!leg' });
     await scene(s, i);
     out.push(s);
   }
@@ -134,7 +137,7 @@ async function motion(deck, key, { kicker, ttl, frames, scene, question, answer,
     }
     s.rrect(0.62, 5.15, 4.6, 1.65, { fill: C.card2, line: C.line, rr: 0.12, name: '!!capbox' });
     s.text(cap, { x: 0.82, y: 5.2, w: 4.25, h: 1.55, size: 15, color: C.txt, valign: 'middle', name: '!!cap' });
-    if (legend) s.text(legend, { x: 5.6, y: 6.72, w: 7, h: 0.28, size: 10, italic: true, color: C.dim, name: '!!leg' });
+    if (legend) s.text(legend, { x: 5.6, y: 6.7, w: 7, h: 0.3, size: 11, italic: true, color: C.dim, name: '!!leg' });
     await scene(s, f.t, k);
   }
 }
@@ -171,7 +174,7 @@ async function point(s, x, y, w, h, ico, col, head, body, anim = CLICK, o = {}) 
   s.img(await icon(ico, C.dark), { x: x + 0.22 + d * 0.22, y: y + (h - d) / 2 + d * 0.22, w: d * 0.56, h: d * 0.56 }, anim ? { fx: 'fade', dur: 150 } : undefined);
   s.text([{ text: head + (body ? (o.br ? '' : '  ') : ''), options: { bold: true, color: C.txt, breakLine: !!o.br } }, ...(body ? [{ text: body, options: { color: o.bodyCol || C.mut } }] : [])], { x: x + d + 0.45, y, w: w - d - 0.6, h, size: o.size || 17, valign: 'middle' }, anim ? { fx: 'fade', dur: 200 } : undefined);
 }
-function foot(s, t) { s.text(t, { x: 0.7, y: 6.62, w: 11.9, h: 0.3, size: 11, italic: true, color: C.dim }); }
+function foot(s, t) { s.text(t, { x: 0.7, y: 6.6, w: 11.9, h: 0.32, size: 12, italic: true, color: '8F9BAE' }); }
 
 // Kapitel-Trennfolie: große Nummer, Titel, Unterzeile, Foto rechts mit Verlauf
 async function chapter(deck, key, { num, ttl, sub, bg, notes, ico = 'LuTruck', bgX = 0 }) {

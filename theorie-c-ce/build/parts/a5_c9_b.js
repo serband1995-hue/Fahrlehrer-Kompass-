@@ -61,7 +61,7 @@ module.exports = async (deck) => {
         s.text(i === 0 ? 'Wand hält' : '', { x: XL - 0.05, y: 2.3, w: 1.4, h: 0.35, size: 13, bold: true, color: C.gr, name: '!!wtL' });
         s.text(i === 0 ? 'Wand hält' : '', { x: XR - 1.35, y: 2.3, w: 1.4, h: 0.35, size: 13, bold: true, color: C.gr, align: 'right', name: '!!wtR' });
         s.text(dz ? 'Zurröse' : '', { x: 8.35, y: 3.62, w: 2.1, h: 0.3, size: 12, bold: true, color: '4A3418', align: 'center', name: '!!oet' });
-        s.text(i ? 'Zurrpunkt' : '', { x: ZL - 0.2, y: DY + 0.24, w: 1.4, h: 0.3, size: 11, color: C.mut, name: '!!zpt' });
+        s.text(i ? 'Zurrpunkt' : '', { x: ZL - 0.2, y: DY + 0.24, w: 1.4, h: 0.3, size: 12, color: C.mut, name: '!!zpt' });
       },
     });
   }
