@@ -110,7 +110,7 @@ async function steps(deck, key, { kicker, ttl, list, caps, scene, notes, legend,
     s.rrect(0.62, 5.15, 4.6, 1.65, { fill: C.card2, line: C.line, rr: 0.12, name: '!!capbox' });
     s.text(caps[i], { x: 0.82, y: 5.2, w: 4.25, h: 1.55, size: 15, color: C.txt, valign: 'middle', name: '!!cap' });
     await scene(s, i);
-    if (legend) s.text(legend, { x: 5.6, y: 6.7, w: 7, h: 0.3, size: 11, italic: true, color: C.dim, name: '!!leg' });   // nach der Szene: liegt obenauf
+    if (legend) s.text(legend, { x: 5.6, y: 6.68, w: 7.4, h: 0.32, size: 12, italic: true, color: '9AA6B8', name: '!!leg' });   // nach der Szene: liegt obenauf
     out.push(s);
   }
   return out;
@@ -141,7 +141,7 @@ async function motion(deck, key, { kicker, ttl, frames, scene, question, answer,
     s.rrect(0.62, 5.15, 4.6, 1.65, { fill: C.card2, line: C.line, rr: 0.12, name: '!!capbox' });
     s.text(cap, { x: 0.82, y: 5.2, w: 4.25, h: 1.55, size: 15, color: C.txt, valign: 'middle', name: '!!cap' });
     await scene(s, f.t, k);
-    if (legend) s.text(legend, { x: 5.6, y: 6.7, w: 7, h: 0.3, size: 11, italic: true, color: C.dim, name: '!!leg' });   // nach der Szene: liegt obenauf
+    if (legend) s.text(legend, { x: 5.6, y: 6.68, w: 7.4, h: 0.32, size: 12, italic: true, color: '9AA6B8', name: '!!leg' });   // nach der Szene: liegt obenauf
   }
 }
 // Straßen-Bausteine (Draufsicht). Alle Teile bekommen feste Namen, damit Morph sie wiedererkennt.
@@ -172,7 +172,7 @@ function veh(s, file, cx, cy, rot, name, o = {}) {
 // Karte mit Symbol, fett gedrucktem Stichwort und Erklärung
 async function point(s, x, y, w, h, ico, col, head, body, anim = CLICK, o = {}) {
   card(s, x, y, w, h, { fill: o.fill || C.card, line: o.line || C.line }, anim);
-  const d = Math.min(0.62, h - 0.3);
+  const d = Math.min(0.62, Math.max(0.42, h - 0.24));   // Symbol auch bei flachen Karten gut sichtbar
   s.oval(x + 0.22, y + (h - d) / 2, d, d, { fill: col, line: col }, anim ? { fx: 'zoom', dur: 250 } : undefined);
   s.img(await icon(ico, C.dark), { x: x + 0.22 + d * 0.22, y: y + (h - d) / 2 + d * 0.22, w: d * 0.56, h: d * 0.56 }, anim ? { fx: 'fade', dur: 150 } : undefined);
   s.text([{ text: head + (body ? (o.br ? '' : '  ') : ''), options: { bold: true, color: C.txt, breakLine: !!o.br } }, ...(body ? [{ text: body, options: { color: o.bodyCol || C.mut } }] : [])], { x: x + d + 0.45, y, w: w - d - 0.6, h, size: o.size || 17, valign: 'middle' }, anim ? { fx: 'fade', dur: 200 } : undefined);

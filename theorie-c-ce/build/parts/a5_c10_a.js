@@ -104,7 +104,7 @@ module.exports = async (deck) => {
       kicker: 'Drehzahl', ttl: 'Früh hochschalten', dur: 480, holdDur: 650,
       question: 'Wann schaltet ihr hoch – und wo soll der Zeiger möglichst stehen?',
       answer: 'Früh hochschalten und im grünen Bereich fahren – dort braucht der Motor am wenigsten Diesel.',
-      legend: 'Skala × 100 /min · grüner Bereich ist ein Beispiel – maßgeblich ist euer Drehzahlmesser bzw. die Betriebsanleitung',
+      legend: 'Skala × 100 /min · grüner Bereich als Beispiel – maßgeblich ist die Betriebsanleitung',
       frames: [
         fr(1900, 8, { hold: true, t: { v: 0.9 }, cap: 'Der Zeiger steht hoch, kurz vor Rot. Der Motor dreht unnötig schnell – das kostet Diesel.', note: '▶ Sagen: „Der Lkw beschleunigt im 8. Gang, der Zeiger steht bei 1.900 – kurz vor dem roten Bereich. Laut, durstig, verschleißt.“\n❓ Frage auf der Folie stellen.\n🖱 Klick: Hochschalten (läuft von selbst).\n➜ „Schalten wir hoch.“' }),
         fr(1500, 9, { t: { v: 0.65 }, cap: 'Hochschalten: Der Zeiger fällt. Gleiches Tempo, weniger Umdrehungen.' }),
