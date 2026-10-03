@@ -19,7 +19,7 @@ FOLIE 2 VON 133 · 3 Klicks
 ➜ „Erst ein kurzer Blick zurück auf Abend 1.“
 
 === FOLIE 3 ===
-AUF DER FOLIE: WIEDERHOLUNG ABEND 1 | Drei Fragen vom letzten Mal – wer weiß es noch? | Wie lange am Stück fahren?  4,5 h Lenkzeit, dann 45 Minuten Pause – oder erst 15, dann 30 Minuten. | Rechtsabbiegen innerorts über 3,5 t?  Schrittgeschwindigkeit – Radfahrer und Fußgänger im toten Winkel. | Sonntagsfahrverbot?  0 bis 22 Uhr im gewerblichen Güterverkehr: Lkw über 7,5 t und Lkw mit Anhänger – auch Leerfahrten. | KLASSE C  ·  ABEND 2  ·  LEKTION C3 | 3
+AUF DER FOLIE: WIEDERHOLUNG ABEND 1 | Drei Fragen vom letzten Mal – wer weiß es noch? | Wie lange am Stück fahren?  4,5 h Lenkzeit, dann 45 Minuten Pause – oder erst 15, dann 30 Minuten. | Rechtsabbiegen innerorts über 3,5 t?  Schrittgeschwindigkeit – Radfahrer und Fußgänger im toten Winkel. | Sonntagsfahrverbot?  0 bis 22 Uhr für Lkw über 7,5 t und Lkw mit Anhänger – bei Güterbeförderung gegen Geld oder geschäftsmäßig, auch Werkverkehr und Leerfahrten. | KLASSE C  ·  ABEND 2  ·  LEKTION C3 | 3
 NOTIZEN:
 FOLIE 3 VON 133 · 3 Klicks
 
@@ -30,7 +30,7 @@ FOLIE 3 VON 133 · 3 Klicks
 ➜ „Gut. Jetzt zur Technik: Was lernt ihr heute in C3?“
 
 === FOLIE 4 ===
-AUF DER FOLIE: LEKTION C3 · KRAFTSTRANG | Das lernt ihr in C3 | 01 | Der Weg der Kraft / vom Motor bis zum Rad | 10 Min | 02 | Motor und Abgas / Diesel, Turbo, Drehzahl, AdBlue, Partikelfilter, Kontrollen | 30 Min | 03 | Kupplung und Getriebe / schonend fahren, 12 Gänge, Automatik, Wandler | 20 Min | 04 | Differenzial und Achsen / Sperre, Achsformeln, Antriebs-Schlupf-Regelung | 25 Min | + 5 Min Abschluss: Quiz und „Das nehmt ihr mit“ | KLASSE C  ·  ABEND 2  ·  LEKTION C3 | 4
+AUF DER FOLIE: LEKTION C3 · KRAFTSTRANG | Das lernt ihr in C3 | 01 | Der Weg der Kraft / vom Motor bis zum Rad | 10 Min | 02 | Motor und Abgas / Diesel, Turbo, Drehzahl, AdBlue, Partikelfilter, Kontrollen | 25 Min | 03 | Kupplung und Getriebe / schonend fahren, 12 Gänge, Automatik, Wandler | 20 Min | 04 | Differenzial und Achsen / Sperre, Achsformeln, Antriebs-Schlupf-Regelung | 25 Min | + 10 Min Abschluss: Mitschreiben, Quiz und „Das nehmt ihr mit“ | KLASSE C  ·  ABEND 2  ·  LEKTION C3 | 4
 NOTIZEN:
 FOLIE 4 VON 133 · 4 Klicks
 
@@ -90,7 +90,7 @@ FOLIE 9 VON 133 · keine Animation · Klick = weiter
 ➜ „Am Ende sitzt ein wichtiges Bauteil.“
 
 === FOLIE 10 ===
-AUF DER FOLIE: KRAFTSTRANG | Der Weg der Kraft | 1 | Motor | 2 | Kupplung | 3 | Getriebe | 4 | Gelenkwelle | 5 | Differenzial | 6 | Achswellen und Räder | Das Differenzial verteilt die Kraft auf das linke und rechte Rad – und lässt sie in der Kurve verschieden schnell drehen. | Fahrerhaus | Motor | Kupplung | Getriebe | Gelenkwelle | Differenzial | Achswellen | vorn | Fahrgestell von oben · Front links · schematisch | KLASSE C  ·  ABEND 2  ·  C3  ·  KRAFTSTRANG | 10
+AUF DER FOLIE: KRAFTSTRANG | Der Weg der Kraft | 1 | Motor | 2 | Kupplung | 3 | Getriebe | 4 | Gelenkwelle | 5 | Differenzial | 6 | Achswellen und Räder | Im Achsgetriebe lenkt das Kegelrad die Kraft um 90° um. Das Differenzial verteilt sie auf links und rechts – in der Kurve drehen die Räder verschieden schnell. | Fahrerhaus | Motor | Kupplung | Getriebe | Gelenkwelle | Differenzial | Achswellen | vorn | Fahrgestell von oben · Front links · schematisch | KLASSE C  ·  ABEND 2  ·  C3  ·  KRAFTSTRANG | 10
 NOTIZEN:
 FOLIE 10 VON 133 · keine Animation · Klick = weiter
 
@@ -101,7 +101,7 @@ FOLIE 10 VON 133 · keine Animation · Klick = weiter
 ➜ „Und zuletzt …“
 
 === FOLIE 11 ===
-AUF DER FOLIE: KRAFTSTRANG | Der Weg der Kraft | 1 | Motor | 2 | Kupplung | 3 | Getriebe | 4 | Gelenkwelle | 5 | Differenzial | 6 | Achswellen und Räder | Über die Achswellen kommt die Kraft an die Antriebsräder. Bei schweren Lkw meist Zwillingsreifen. | Fahrerhaus | Motor | Kupplung | Getriebe | Gelenkwelle | Differenzial | Achswellen | vorn | Fahrgestell von oben · Front links · schematisch | KLASSE C  ·  ABEND 2  ·  C3  ·  KRAFTSTRANG | 11
+AUF DER FOLIE: KRAFTSTRANG | Der Weg der Kraft | 1 | Motor | 2 | Kupplung | 3 | Getriebe | 4 | Gelenkwelle | 5 | Differenzial | 6 | Achswellen und Räder | Über die Achswellen kommt die Kraft an die Räder. Baustellen-Lkw haben oft Außenplanetenachsen – mit einem Getriebe in der Radnabe. | Fahrerhaus | Motor | Kupplung | Getriebe | Gelenkwelle | Differenzial | Achswellen | vorn | Fahrgestell von oben · Front links · schematisch | KLASSE C  ·  ABEND 2  ·  C3  ·  KRAFTSTRANG | 11
 NOTIZEN:
 FOLIE 11 VON 133 · keine Animation · Klick = weiter
 
@@ -501,6 +501,7 @@ FOLIE 51 VON 133 · 3 Klicks
 🖱 Klick 1–3: je eine Antwort.
 ✅ Nein. Warmlaufen im Stand verschleißt den Motor und kostet Diesel. § 30 Abs. 1 StVO: unnötiger Lärm und vermeidbare Abgasbelästigungen sind verboten, insbesondere Motoren unnötig laufen lassen. BKat Nr. 117: 80 €, kein Punkt.
 ✅ Losfahren erst, wenn die Druckwarnung aus ist (Prüfungsfrage 2.7.01-238: „Wenn die Signale der Druckwarneinrichtung aufgehört haben“) und die Scheiben frei sind (§ 23 Abs. 1 StVO).
+💡 Die Druckwarnung (Summer und rote Leuchte bei zu wenig Bremsdruck) erklären wir genau in C5.
 💡 Kein Widerspruch zum Turbo: Nach Vollgas oder Bergfahrt kurz nachlaufen lassen ist nötig – das ist kein „unnötiges“ Laufenlassen.
 💡 Bei längerem Stillstand (Bahnübergang, Stau, Laderampe) Motor aus. Viele Lkw haben dafür Start-Stopp oder Leerlaufabschaltung.
 ➜ „Kurzes Quiz zum Motor.“
@@ -636,7 +637,7 @@ FOLIE 64 VON 133 · 3 Klicks
 ❓ „Wann schaltet ihr zurück – oben oder unten am Berg?“
 🖱 Klick 1–3: je eine Antwort.
 ✅ Vor dem Gefälle in einen kleineren Gang schalten. Dann wirken Motorbremse und Retarder stark, die Betriebsbremse bleibt kühl für den Notfall (Prüfungsfrage 2.7.01-257: rechtzeitig zurückschalten, Dauerbremse nutzen). Beim automatisierten Getriebe: Manuell-Modus oder Bergabfunktion nach Betriebsanleitung.
-💡 Mehr zu Dauerbremsen in der Bremsen-Lektion.
+💡 Motorbremse und Retarder (Dauerbremsen) erklären wir genau in C6.
 ➜ „Kurzes Quiz zum Getriebe.“
 
 === FOLIE 65 ===
@@ -841,7 +842,7 @@ FOLIE 84 VON 133 · Animation läuft von selbst · Klick = weiter
 ➜ „Willkommen zurück. Lektion C4: Worauf rollt, federt und leuchtet ein Lkw?“
 
 === FOLIE 85 ===
-AUF DER FOLIE: LEKTION C4 · FAHRWERK / ELEKTRISCHE ANLAGEN | Das lernt ihr in C4 | 01 | Federung / Blattfeder, Luftfeder, Heben und Senken, Liftachse | 15 Min | 02 | Räder und Reifen / Bezeichnung, Profil, Winterreifen, Zwillinge, Radmuttern, Radwechsel, Ketten | 30 Min | 03 | Aufbauten / Plane, Koffer, Kipper, Wechselbrücke, Ladebordwand | 10 Min | 04 | Batterie und Bordnetz / 24 Volt, Lichtmaschine, Starthilfe, Hauptschalter | 15 Min | 05 | Licht und Warnleuchten / Umriss, Seite, Kontur, Rundumlicht, Kontrollleuchten, Assistenten | 15 Min | + 5 Min Abschluss: Quiz und „Das nehmt ihr mit“ | KLASSE C  ·  ABEND 2  ·  LEKTION C4 | 85
+AUF DER FOLIE: LEKTION C4 · FAHRWERK / ELEKTRISCHE ANLAGEN | Das lernt ihr in C4 | 01 | Federung / Blattfeder, Luftfeder, Heben und Senken, Liftachse | 15 Min | 02 | Räder und Reifen / Bezeichnung, Profil, Winterreifen, Zwillinge, Radmuttern, Radwechsel, Ketten | 25 Min | 03 | Aufbauten / Plane, Koffer, Kipper, Wechselbrücke, Ladebordwand | 10 Min | 04 | Batterie und Bordnetz / 24 Volt, Lichtmaschine, Starthilfe, Hauptschalter | 15 Min | 05 | Licht und Warnleuchten / Umriss, Seite, Kontur, Rundumlicht, Kontrollleuchten, Assistenten | 15 Min | + 10 Min Abschluss: Mitschreiben, Quiz und „Das nehmt ihr mit“ | KLASSE C  ·  ABEND 2  ·  LEKTION C4 | 85
 NOTIZEN:
 FOLIE 85 VON 133 · 5 Klicks
 
@@ -1284,6 +1285,7 @@ FOLIE 125 VON 133 · 4 Klicks
 ❓ „Was bedeutet Rot?“
 🖱 Klick 1: Rot · Klick 2: Gelb · Klick 3: Grün · Klick 4: Blau.
 ✅ Rot = Gefahr: an sicherer Stelle anhalten, nach Betriebsanleitung handeln (meist Motor aus – aber bei roter Bremsdruck-Warnung Motor laufen lassen, damit der Kompressor Druck aufbaut) – z. B. Öldruck, Kühlmitteltemperatur (2.7.02-216), Bremsdruck/Druckwarnung (2.7.02-203), Ladekontrolle, oft ein großes rotes STOP. Gelb = Störung oder Hinweis: bald handeln – AdBlue nachfüllen, Partikelfilter regenerieren oder Werkstatt – z. B. ABS/EBS, Motorstörung, AdBlue, Partikelfilter. Grün = eingeschaltet. Blau = Fernlicht (Farben nach ISO 2575, Lehrbuchwissen).
+💡 ABS und EBS (elektronisch geregelte Bremse) kommen ausführlich in C5 und C6.
 ➜ „Zum Schluss: die elektronischen Helfer.“
 
 === FOLIE 126 ===
@@ -1360,7 +1362,7 @@ FOLIE 132 VON 133 · 5 Klicks
 ➜ „Das war Abend 2.“
 
 === FOLIE 133 ===
-AUF DER FOLIE: Gute Heimfahrt! | Abend 2 geschafft: C3 + C4 | Nächstes Mal: / C5  Bremsen – Druckluftbremse / C6  Dauerbremsen, Untersuchungen, Begrenzer
+AUF DER FOLIE: Gute Heimfahrt! | Abend 2 geschafft: C3 + C4 | Nächstes Mal: / C5  Lkw-Bremsen / C6  Dauerbremsen, Untersuchungen, Begrenzer
 NOTIZEN:
 FOLIE 133 VON 133 · Animation läuft von selbst · Klick = weiter
 

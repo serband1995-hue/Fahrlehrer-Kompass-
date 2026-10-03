@@ -105,7 +105,7 @@ module.exports = async (deck) => {
       '➜ „Kurzer Test.“',
   });
   quiz(deck, 'ft', {
-    kicker: 'Frage · Fahrerkarte', q: 'Deine Fahrerkarte ist am Montag kaputtgegangen. Was ist richtig?', size: 30,
+    kicker: 'Frage · Fahrerkarte', q: 'Eure Fahrerkarte ist am Montag kaputtgegangen. Was ist richtig?', size: 30,
     opts: ['Ich darf erst wieder fahren, wenn die neue Karte da ist', 'Ich fahre mit der Karte eines Kollegen weiter', 'Ersatz innerhalb von 7 Tagen beantragen, bis zu 15 Tage mit Ausdrucken fahren'], ok: 2,
     why: 'Art. 29 VO (EU) 165/2014. Eine fremde Karte zu benutzen ist verboten. Ausdrucke bei Beginn und Ende der Fahrt mit Name und Unterschrift.',
     notes: '▶ Frage vorlesen, abstimmen.\n🖱 Klick 1: Antworten · Klick 2: Lösung.\n✅ C. Ersatzkarte binnen 7 Kalendertagen beantragen; höchstens 15 Kalendertage ohne Karte mit Ausdrucken.\n💡 B ist ein schwerer Verstoß: Karte eines anderen benutzen. Dann stimmen alle Aufzeichnungen nicht mehr.\n➜ „Jetzt euer Arbeitsplatz.“',

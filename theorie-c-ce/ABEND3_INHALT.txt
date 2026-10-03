@@ -30,7 +30,7 @@ FOLIE 3 VON 126 · 3 Klicks
 ➜ „Gut. Jetzt zu den Bremsen: Was lernt ihr heute in C5?“
 
 === FOLIE 4 ===
-AUF DER FOLIE: LEKTION C5 · LKW-BREMSEN | Das lernt ihr in C5 | 01 | Bremsanlagen  Betriebs-, Feststell-, Dauerbremse – was das Gesetz verlangt | 10 Min | 02 | Druckluft  Kompressor, Trockner, Vierkreisschutzventil, Druck, Entwässern | 25 Min | 03 | Zweikreis-Bremse  zwei Kreise, Bremszylinder, Kreisausfall | 20 Min | 04 | ALB und EBS  Bremskraft nach Beladung, Elektronik | 10 Min | 05 | Feststellbremse  Feder bremst, Luft löst – Notlösen, Kontrollstellung | 20 Min | + 5 Min Abschluss: Quiz und „Das nehmt ihr mit“ | KLASSE C  ·  ABEND 3  ·  LEKTION C5 | 4
+AUF DER FOLIE: LEKTION C5 · LKW-BREMSEN | Das lernt ihr in C5 | 01 | Bremsanlagen  Betriebs-, Feststell-, Dauerbremse – was das Gesetz verlangt | 10 Min | 02 | Druckluft  Kompressor, Trockner, Vierkreisschutzventil, Druck, Entwässern | 20 Min | 03 | Zweikreis-Bremse  zwei Kreise, Bremszylinder, Kreisausfall | 20 Min | 04 | ALB und EBS  Bremskraft nach Beladung, Elektronik | 10 Min | 05 | Feststellbremse  Feder bremst, Luft löst – Notlösen, Kontrollstellung | 20 Min | + 10 Min Abschluss: Mitschreiben, Quiz und „Das nehmt ihr mit“ | KLASSE C  ·  ABEND 3  ·  LEKTION C5 | 4
 NOTIZEN:
 FOLIE 4 VON 126 · 5 Klicks
 
@@ -49,7 +49,7 @@ FOLIE 5 VON 126 · Animation läuft von selbst · Klick = weiter
 ➜ „Sammeln wir.“
 
 === FOLIE 6 ===
-AUF DER FOLIE: BREMSANLAGEN | Drei Bremsen im Lkw | Betriebsbremse | Fußpedal | bremst alle Räder – mit Druckluft. Für jede normale Bremsung. | Feststellbremse | Handbremsventil | Federspeicher, rein mechanisch – hält den Lkw am Berg fest. | Dauerbremse | Hebel am Lenkrad | Motorbremse oder Retarder – verschleißfrei, für lange Gefälle. Pflicht über 9 t. | Fällt ein Teil aus,  muss der Rest noch mindestens 44 % der Bremswirkung bringen – die Hilfsbremswirkung. | KLASSE C  ·  ABEND 3  ·  C5  ·  BREMSANLAGEN | 6
+AUF DER FOLIE: BREMSANLAGEN | Drei Bremsen im Lkw | Betriebsbremse | Fußpedal | bremst alle Räder – mit Druckluft. Für jede normale Bremsung. | Feststellbremse | Handbremsventil | Federspeicher, rein mechanisch – hält den Lkw am Berg fest. | Dauerbremse | Hebel am Lenkrad | Motorbremse oder Retarder – verschleißfrei, für lange Gefälle. StVZO: Pflicht über 9 t. | Fällt ein Teil aus,  muss der Rest noch mindestens 44 % der Bremswirkung bringen – die Hilfsbremswirkung. | KLASSE C  ·  ABEND 3  ·  C5  ·  BREMSANLAGEN | 6
 NOTIZEN:
 FOLIE 6 VON 126 · 4 Klicks
 
@@ -488,7 +488,7 @@ FOLIE 49 VON 126 · keine Animation · Klick = weiter
 ➜ „Und die Feststellbremse?“
 
 === FOLIE 50 ===
-AUF DER FOLIE: FESTSTELLBREMSE | Feder bremst, Luft löst | 1 | Fahren | 2 | Betriebsbremse | 3 | Feststellbremse | 4 | Notlösen | ✓ Antwort   / Die Feder! Luft hält sie gespannt und löst die Bremse. | Handbremse ziehen: Die Luft aus dem Federspeicher wird abgelassen. Die Feder drückt den Kolben – der Lkw bremst mechanisch. | Betriebsbremsteil | Federspeicherteil | bremst | Feder drückt – bremst | Kombizylinder im Schnitt · schematisch | KLASSE C  ·  ABEND 3  ·  C5  ·  FESTSTELLBREMSE | 50
+AUF DER FOLIE: FESTSTELLBREMSE | Feder bremst, Luft löst | 1 | Fahren | 2 | Betriebsbremse | 3 | Feststellbremse | 4 | Notlösen | ✓ Antwort   / Die Feder! Luft hält sie gespannt und löst die Bremse. | Feststellbremse ziehen: Die Luft aus dem Federspeicher wird abgelassen. Die Feder drückt den Kolben – der Lkw bremst mechanisch. | Betriebsbremsteil | Federspeicherteil | bremst | Feder drückt – bremst | Kombizylinder im Schnitt · schematisch | KLASSE C  ·  ABEND 3  ·  C5  ·  FESTSTELLBREMSE | 50
 NOTIZEN:
 FOLIE 50 VON 126 · keine Animation · Klick = weiter
 
@@ -551,7 +551,7 @@ FOLIE 55 VON 126 · 2 Klicks
 ➜ „Zum Schluss von C5: Mitschreiben.“
 
 === FOLIE 56 ===
-AUF DER FOLIE: ZUM MITSCHREIBEN | Lkw-Bremsen | ✎ | Drei Bremsen | Betriebsbremse, Feststellbremse, Dauerbremse (Pflicht über 9 t) | Druckluft | Kompressor – Druckregler – Lufttrockner – Vierkreisschutzventil – Behälter | Abschaltdruck | etwa 10 bis 13 bar – kurzes Zischen ist normal | Losfahren | erst wenn die Druckwarnung aus ist | Kreis undicht | Ventil sperrt ihn ab – die anderen Kreise bremsen weiter | Wasser im Behälter | Lufttrockner defekt – Werkstatt | ALB | passt die Bremskraft der Beladung an | Federspeicher | Feder bremst, Luft löst – Notlösen nur mit Keilen | KLASSE C  ·  ABEND 3  ·  C5  ·  ABSCHLUSS | 56
+AUF DER FOLIE: ZUM MITSCHREIBEN | Lkw-Bremsen | ✎ | Drei Bremsen | Betriebsbremse, Feststellbremse, Dauerbremse (StVZO: Pflicht über 9 t) | Druckluft | Kompressor – Druckregler – Lufttrockner – Vierkreisschutzventil – Behälter | Abschaltdruck | etwa 10 bis 13 bar – kurzes Zischen ist normal | Losfahren | erst wenn die Druckwarnung aus ist | Kreis undicht | Ventil sperrt ihn ab – die anderen Kreise bremsen weiter | Wasser im Behälter | Lufttrockner defekt – Werkstatt | ALB | passt die Bremskraft der Beladung an | Federspeicher | Feder bremst, Luft löst – Notlösen nur mit Keilen | KLASSE C  ·  ABEND 3  ·  C5  ·  ABSCHLUSS | 56
 NOTIZEN:
 FOLIE 56 VON 126 · 8 Klicks
 
@@ -614,7 +614,7 @@ FOLIE 61 VON 126 · Animation läuft von selbst · Klick = weiter
 ➜ „Willkommen zurück. Lektion C6: Wie bremst man lange Gefälle – und wer prüft die Bremse?“
 
 === FOLIE 62 ===
-AUF DER FOLIE: LEKTION C6 · DAUERBREMSEN, UNTERSUCHUNGEN, BEGRENZER | Das lernt ihr in C6 | 01 | Dauerbremsen  Motorbremse, Retarder, Grenzen, Glätte | 20 Min | 02 | Bremsweg und Fading  Anhalteweg, Gefälle, heiße Bremsen | 15 Min | 03 | ABS  Funktion, Kontrollleuchte, richtig bremsen | 10 Min | 04 | Kontrolle  Abfahrtkontrolle, Dichtheit, Bremsprobe | 15 Min | 05 | HU und SP  Fristen, Plakette, Mängel, Bußgelder | 15 Min | 06 | Begrenzer, Tempomat, Fahrtenschreiber  90 km/h, Abstand, Prüfungen | 10 Min | + 5 Min Abschluss: Quiz und „Das nehmt ihr mit“ | KLASSE C  ·  ABEND 3  ·  LEKTION C6 | 62
+AUF DER FOLIE: LEKTION C6 · DAUERBREMSEN, UNTERSUCHUNGEN, BEGRENZER | Das lernt ihr in C6 | 01 | Dauerbremsen  Motorbremse, Retarder, Grenzen, Glätte | 15 Min | 02 | Bremsweg und Fading  Anhalteweg, Gefälle, heiße Bremsen | 15 Min | 03 | ABS  Funktion, Kontrollleuchte, richtig bremsen | 10 Min | 04 | Kontrolle  Abfahrtkontrolle, Dichtheit, Bremsprobe | 15 Min | 05 | HU und SP  Fristen, Plakette, Mängel, Bußgelder | 15 Min | 06 | Begrenzer, Tempomat, Fahrtenschreiber  90 km/h, Abstand, Prüfungen | 10 Min | + 10 Min Abschluss: Mitschreiben, Quiz und „Das nehmt ihr mit“ | KLASSE C  ·  ABEND 3  ·  LEKTION C6 | 62
 NOTIZEN:
 FOLIE 62 VON 126 · 6 Klicks
 
@@ -633,14 +633,14 @@ FOLIE 63 VON 126 · Animation läuft von selbst · Klick = weiter
 ➜ „Wann ist eine Dauerbremse Pflicht?“
 
 === FOLIE 64 ===
-AUF DER FOLIE: DAUERBREMSEN | Pflicht über 9 Tonnen | 7 % | 6 km lang | voll beladen 30 km/h halten – nur mit der Dauerbremse | Neigung zur Verdeutlichung überzeichnet | Pflicht: / Lkw über 9 t zulässiger Gesamtmasse. | Verschleißfrei – / entlastet die Betriebsbremse. Die bleibt kühl für den Notfall. | Bremst nicht bis zum Stand. / Bei wenig Tempo wirkt sie kaum – anhalten mit der Betriebsbremse. | KLASSE C  ·  ABEND 3  ·  C6  ·  DAUERBREMSEN | 64
+AUF DER FOLIE: DAUERBREMSEN | Pflicht über 9 Tonnen | 7 % | 6 km lang | voll beladen 30 km/h halten – nur mit der Dauerbremse | Neigung zur Verdeutlichung überzeichnet | Pflicht: / Lkw über 9 t zulässiger Gesamtmasse (§ 41 StVZO). | Verschleißfrei – / entlastet die Betriebsbremse. Die bleibt kühl für den Notfall. | Bremst nicht bis zum Stand. / Bei wenig Tempo wirkt sie kaum – anhalten mit der Betriebsbremse. | KLASSE C  ·  ABEND 3  ·  C6  ·  DAUERBREMSEN | 64
 NOTIZEN:
 FOLIE 64 VON 126 · 4 Klicks
 
 ▶ Sagen: „Jeder Lkw über 9 Tonnen zulässiger Gesamtmasse muss eine Dauerbremse haben. Was muss sie können?“
 🖱 Klick 1: die Prüfstrecke · Klick 2–4: die Punkte.
 ✅ § 41 Abs. 15 StVZO: Lkw über 9 t zGM. Voll beladen auf einem Gefälle von 7 % und 6 km Länge 30 km/h halten – nur mit der Dauerbremse. Lkw zwischen 7,5 und 9 t brauchen keine.
-💡 Genau genommen verweist § 41 Abs. 18 bei Lkw über 25 km/h auf das EU-/UN-Bremsenrecht; dort ist die Dauerbremsprüfung für schwere Lkw vorgeschrieben, die schwere Anhänger ziehen dürfen. Für den Unterricht gilt die einfache Regel: über 9 t Dauerbremse.
+💡 Genau genommen verweist § 41 Abs. 18 bei Lkw über 25 km/h auf das EU-/UN-Bremsenrecht (UN-R 13): Dort ist die Dauerbremsprüfung für Lkw über 12 t vorgeschrieben, die Anhänger über 10 t ziehen dürfen (in CE3 kommt das wieder). Praktisch hat jeder schwere Lkw eine Dauerbremse. Für Unterricht und Prüfung gilt die StVZO-Regel: über 9 t.
 ✅ Prüfungsfrage 2.7.06-234: Motorbremse und Retarder arbeiten ohne nennenswerten Verschleiß. 2.7.06-239: Dauerbremse nutzen, weil verschleißfrei und weil sie die Betriebsbremse entlastet – sie bremst aber NICHT bis zum Stillstand.
 ➜ „Welche Dauerbremsen gibt es? Zuerst die Motorbremse.“
 
@@ -696,7 +696,7 @@ FOLIE 69 VON 126 · 4 Klicks
 ➜ „Und wann wird die Dauerbremse gefährlich?“
 
 === FOLIE 70 ===
-AUF DER FOLIE: DAUERBREMSEN · GLÄTTE | Glatte Straße, Kurve – und der Retarder steht auf voller Stufe. Was droht? | Die Antriebsachse kann blockieren –  die Dauerbremse bremst nur sie. Der Lkw bricht aus, ein Zug kann einknicken. | Bei Glätte:  Dauerbremse auf kleine Stufe oder aus – und nie voll in der Kurve. | Betriebsbremse zusätzlich treten?  Dann wird die Antriebsachse noch stärker gebremst – Vorsicht. | KLASSE C  ·  ABEND 3  ·  C6  ·  DAUERBREMSEN | 70
+AUF DER FOLIE: DAUERBREMSEN · GLÄTTE | Glatte Straße, Kurve – und der Retarder steht auf voller Stufe. Was droht? | Die Antriebsachse kann blockieren –  die Dauerbremse bremst nur sie. Der Lkw bricht aus, ein Zug kann einknicken. | Bei Glätte:  Dauerbremse aus – auch die automatische Zuschaltung. Tempo schon vorher raus. | Betriebsbremse zusätzlich treten?  Dann wird die Antriebsachse noch stärker gebremst – Vorsicht. | KLASSE C  ·  ABEND 3  ·  C6  ·  DAUERBREMSEN | 70
 NOTIZEN:
 FOLIE 70 VON 126 · 3 Klicks
 
@@ -705,6 +705,7 @@ FOLIE 70 VON 126 · 3 Klicks
 🖱 Klick 1–3: je eine Antwort.
 ✅ Prüfungsfrage 2.7.06-108: Einknick- und Schleudergefahr besonders groß, wenn der Retarder in der Kurve voll betätigt wird. 2.7.06-230: Dauerbremse an und Betriebsbremse dazu → die Antriebsachse wird stärker abgebremst; die Dauerbremse schaltet NICHT automatisch ab.
 💡 Mit ABS wird die integrierte Dauerbremse bei Blockierneigung abgeschaltet (EU-Bremsenrecht) – verlassen darf man sich darauf nicht.
+💡 Merksatz für C und CE gleich: Bei Glätte Dauerbremse aus. Manche Lkw schalten sie über den Tempomaten bergab selbst zu – dann auch das abschalten (Betriebsanleitung).
 ➜ „Und wenn die Dauerbremse im Gefälle nicht reicht?“
 
 === FOLIE 71 ===
@@ -1188,24 +1189,25 @@ FOLIE 119 VON 126 · 3 Klicks
 ➜ „Und wer prüft Fahrtenschreiber und Begrenzer?“
 
 === FOLIE 120 ===
-AUF DER FOLIE: PRÜFUNGEN | Fahrtenschreiber und Begrenzer prüfen | Fahrtenschreiber:  mindestens alle 24 Monate prüfen – und sofort nach Reparatur, neuer Reifengröße, beim digitalen Gerät auch nach neuem Kennzeichen oder falscher Uhrzeit (über 20 Minuten). | Begrenzer:  Prüfung nach Einbau, Reparatur oder neuer Reifengröße – die HU kontrolliert ihn mit. | Einbauschild:  plombiert an der B-Säule Fahrerseite (Tacho-Schild auch am Gerät) – zeigt die letzte Prüfung. | KLASSE C  ·  ABEND 3  ·  C6  ·  BEGRENZER UND TEMPOMAT | 120
+AUF DER FOLIE: PRÜFUNGEN | Fahrtenschreiber, Begrenzer, UVV | Fahrtenschreiber:  mindestens alle 24 Monate prüfen – und sofort nach Reparatur, neuer Reifengröße, beim digitalen Gerät auch nach neuem Kennzeichen oder falscher Uhrzeit (über 20 Minuten). | Begrenzer:  Prüfung nach Einbau, Reparatur oder neuer Reifengröße – die HU kontrolliert ihn mit. | Einbauschild:  plombiert an der B-Säule Fahrerseite (Tacho-Schild auch am Gerät) – zeigt die letzte Prüfung. | UVV-Prüfung:  mindestens einmal im Jahr durch einen Sachkundigen (Unfallverhütungsvorschrift). Das veranlasst der Unternehmer – das Ergebnis wird schriftlich festgehalten. | KLASSE C  ·  ABEND 3  ·  C6  ·  BEGRENZER UND TEMPOMAT | 120
 NOTIZEN:
-FOLIE 120 VON 126 · 3 Klicks
+FOLIE 120 VON 126 · 4 Klicks
 
-▶ Sagen: „Fahrtenschreiber und Begrenzer werden in einer Fachwerkstatt geprüft. Danach kommt ein Einbauschild an die B-Säule auf der Fahrerseite.“
-🖱 Klick 1: Fahrtenschreiber · Klick 2: Begrenzer · Klick 3: Einbauschild.
+▶ Sagen: „Fahrtenschreiber und Begrenzer werden in einer Fachwerkstatt geprüft. Danach kommt ein Einbauschild an die B-Säule auf der Fahrerseite. Und einmal im Jahr kommt die UVV-Prüfung dazu.“
+🖱 Klick 1: Fahrtenschreiber · Klick 2: Begrenzer · Klick 3: Einbauschild · Klick 4: UVV-Prüfung.
+✅ DGUV Vorschrift 70 § 57: Fahrzeuge bei Bedarf, mindestens einmal jährlich durch einen Sachkundigen auf betriebssicheren Zustand prüfen lassen; Ergebnis schriftlich festhalten und bis zur nächsten Prüfung aufbewahren. Das veranlasst der Unternehmer. Eine Prüfplakette ist üblich, aber nicht vorgeschrieben.
 ✅ § 57b StVZO: Fahrtenschreiber mindestens alle 24 Monate prüfen lassen (Halterpflicht), außerdem sofort nach Reparatur, Änderung der Reifengröße, Plombentausch, Kennzeichenwechsel oder wenn die Uhrzeit mehr als 20 Minuten abweicht. § 57d: Begrenzer prüfen nach Einbau, Reparatur, Änderung der Reifengröße oder der Kraftstoffzufuhr – eine feste Frist gibt es nicht; die HU prüft ihn mit. Einbauschild plombiert an der B-Säule der Fahrerseite (§ 57d Abs. 2) – das Schild des Fahrtenschreibers darf auch auf oder neben dem Gerät sitzen (§ 57b Abs. 1), beide Schilder dürfen kombiniert werden.
 ➜ „Damit ist C6 geschafft. Zeit zum Mitschreiben.“
 
 === FOLIE 121 ===
-AUF DER FOLIE: ZUM MITSCHREIBEN | Dauerbremsen, Prüfung, Begrenzer | ✎ | Dauerbremse | Pflicht über 9 t – verschleißfrei, bremst nicht bis zum Stand | Gefälle | vorher zurückschalten, Dauerbremse nutzen – sonst Fading | Glätte | Dauerbremse klein oder aus – sie bremst nur die Antriebsachse | ABS-Bremsung | schlagartig, voll treten und halten – nicht pumpen | Dichtheit | eine Vollbremsung: höchstens 0,7 bar Druckabfall | HU / SP | HU jedes Jahr – dazwischen SP: über 12 t ab dem 3., über 7,5 t ab dem 4. Jahr | Begrenzer | 90 km/h – erlaubt sind auf der Autobahn 80 km/h | Fahrtenschreiber | Prüfung mindestens alle 24 Monate | KLASSE C  ·  ABEND 3  ·  C6  ·  ABSCHLUSS | 121
+AUF DER FOLIE: ZUM MITSCHREIBEN | Dauerbremsen, Prüfung, Begrenzer | ✎ | Dauerbremse | StVZO: Pflicht über 9 t – verschleißfrei, bremst nicht bis zum Stand | Gefälle | vorher zurückschalten, Dauerbremse nutzen – sonst Fading | Glätte | Dauerbremse aus – sie bremst nur die Antriebsachse | ABS-Bremsung | schlagartig, voll treten und halten – nicht pumpen | Dichtheit | eine Vollbremsung: höchstens 0,7 bar Druckabfall | HU / SP | HU jedes Jahr – dazwischen SP: über 12 t ab dem 3., über 7,5 t ab dem 4. Jahr | Begrenzer | 90 km/h – erlaubt sind auf der Autobahn 80 km/h | Prüfungen | Fahrtenschreiber alle 24 Monate · UVV-Prüfung jedes Jahr | KLASSE C  ·  ABEND 3  ·  C6  ·  ABSCHLUSS | 121
 NOTIZEN:
 FOLIE 121 VON 126 · 8 Klicks
 
 ▶ Sagen: „Schreibt euch das auf – das sind die Kernpunkte aus C6.“
 ❓ Vor jedem Klick fragen: „Was gehört hier hin?“
 🖱 Klick 1–8: je eine Lösung.
-✅ Quellen: § 41 Abs. 15, § 57b, § 57c StVZO; StVZO Anlage VIII; § 18 Abs. 5 StVO; Prüfungsfragen 2.7.06-239, -310, -108, 2.7.01-139, 2.7.06-231.
+✅ Quellen: § 41 Abs. 15, § 57b, § 57c StVZO; DGUV Vorschrift 70 § 57 (UVV); StVZO Anlage VIII; § 18 Abs. 5 StVO; Prüfungsfragen 2.7.06-239, -310, -108, 2.7.01-139, 2.7.06-231.
 ➜ „Jetzt testen wir C6.“
 
 === FOLIE 122 ===
@@ -1242,7 +1244,7 @@ FOLIE 124 VON 126 · 2 Klicks
 ➜ „Zum Schluss: Das nehmt ihr mit.“
 
 === FOLIE 125 ===
-AUF DER FOLIE: ZUSAMMENFASSUNG | Das nehmt ihr mit | Bergab:  vorher zurückschalten, Dauerbremse arbeiten lassen – sonst droht Fading. | Auf Glätte:  Dauerbremse klein oder aus – nie voll in der Kurve. | ABS:  voll treten und halten – bleibt die Leuchte an, ab in die Werkstatt. | Vor jeder Schicht:  Druck, Dichtheit, Druckwarnung, ABS-Leuchte, Bremsprobe. | HU und SP:  HU jedes Jahr – über 7,5 t dazwischen auch SP. | Begrenzer:  90 km/h – auf der Autobahn höchstens 80. | KLASSE C  ·  ABEND 3  ·  C6  ·  ABSCHLUSS | 125
+AUF DER FOLIE: ZUSAMMENFASSUNG | Das nehmt ihr mit | Bergab:  vorher zurückschalten, Dauerbremse arbeiten lassen – sonst droht Fading. | Auf Glätte:  Dauerbremse aus – auch die automatische Zuschaltung. | ABS:  voll treten und halten – bleibt die Leuchte an, ab in die Werkstatt. | Vor jeder Schicht:  Druck, Dichtheit, Druckwarnung, ABS-Leuchte, Bremsprobe. | HU und SP:  HU jedes Jahr – über 7,5 t dazwischen auch SP. | Begrenzer:  90 km/h – auf der Autobahn höchstens 80. | KLASSE C  ·  ABEND 3  ·  C6  ·  ABSCHLUSS | 125
 NOTIZEN:
 FOLIE 125 VON 126 · 6 Klicks
 

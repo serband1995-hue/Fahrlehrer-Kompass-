@@ -15,7 +15,7 @@ module.exports = async (deck) => {
     kick(s, 'Lektion C1 · Persönliche Voraussetzungen und Arbeitsplatz'); title(s, 'Das lernt ihr in C1');
     const T = [
       ['01', 'Führerschein und Papiere', 'Klassen, Alter, Befristung, Untersuchungen, was ihr dabei haben müsst', '15 Min', C.bl],
-      ['02', 'Lenk- und Ruhezeiten', 'Wie lange fahren, wie lange Pause – Tag, Woche, Doppelwoche', '35 Min', C.or],
+      ['02', 'Lenk- und Ruhezeiten', 'Wie lange fahren, wie lange Pause – Tag, Woche, Doppelwoche', '30 Min', C.or],
       ['03', 'Fahrtenschreiber', 'Fahrerkarte, Symbole, Kontrolle, was bei Verlust zu tun ist', '15 Min', C.pu],
       ['04', 'Arbeitsplatz und toter Winkel', 'Sitz, Spiegel, Rechtsabbiegen, Abbiegeassistent', '20 Min', C.red],
     ];
@@ -26,7 +26,7 @@ module.exports = async (deck) => {
       s.text([{ text: T[i][1], options: { bold: true, color: C.txt, breakLine: true } }, { text: T[i][2], options: { color: C.mut, fontSize: 15 } }], { x: 2.0, y, w: 8.6, h: 0.95, size: 20, valign: 'middle' }, { fx: 'fade', dur: 200 });
       s.text(T[i][3], { x: 10.8, y, w: 1.6, h: 0.95, size: 18, bold: true, color: T[i][4], align: 'right', valign: 'middle' }, { fx: 'fade', dur: 200 });
     }
-    s.text('+ 5 Min Abschluss: Quiz und „Das nehmt ihr mit“', { x: 0.7, y: 6.5, w: 11.93, h: 0.35, size: 14, italic: true, color: C.dim });
+    s.text('+ 10 Min Abschluss: Mitschreiben, Quiz und „Das nehmt ihr mit“', { x: 0.7, y: 6.5, w: 11.93, h: 0.35, size: 14, italic: true, color: C.dim });
   }
   await chapter(deck, 'fs', { num: 1, ttl: 'Führerschein und Papiere', sub: 'Welche Klasse für welchen Lkw – und was ihr dafür mitbringen müsst.', ico: 'LuIdCard', notes:
     '▶ Sagen: „Erstes Kapitel: Welche Führerscheinklasse braucht ihr wofür, ab wann bekommt ihr sie, und warum ist sie befristet?“\n🖱 Keine Klicks.\n➜ „Zuerst die Klassen.“' });
@@ -72,6 +72,7 @@ module.exports = async (deck) => {
       '✅ § 10 Abs. 1 FeV: C/CE ab 21; ab 18 nach Grundqualifikation nach § 2 Abs. 1 Nr. 1 BKrFQG oder während bzw. nach einer Ausbildung zum Berufskraftfahrer/Fachkraft im Fahrbetrieb. In der Ausbildungsvariante gelten Auflagen (nur Inland, nur Ausbildung) bis 21 oder Abschluss (§ 10 Abs. 1 Nr. 7).\n' +
       '✅ Wichtig für alle unter 21: Wer C mit 18 erwirbt (Grundqualifikation oder Ausbildung), muss vor der ersten Erteilung ein medizinisch-psychologisches Gutachten (MPU) vorlegen (§ 10 Abs. 2 FeV).\n' +
       '✅ C1/C1E ab 18. C setzt B voraus (§ 9 Abs. 1), CE setzt C voraus (§ 9 Abs. 2) – die höhere Klasse darf frühestens zusammen mit der Grundklasse erteilt werden.\n' +
+      '💡 Falls jemand fragt: Die neue EU-Führerscheinrichtlinie (EU) 2025/2205 ist beschlossen, gilt aber erst ab 26.11.2029. Bis dahin gilt die FeV so, wie hier gezeigt.\n' +
       '➜ „Und wie lange gilt der Führerschein dann?“',
   });
   // ===== BEFRISTUNG UND UNTERSUCHUNGEN =====
@@ -101,7 +102,7 @@ module.exports = async (deck) => {
     foot(s, 'Quellen: §§ 11, 12, 23, 24 FeV · Anlagen 5 und 6 FeV');
   }
   quiz(deck, 'fs', {
-    kicker: 'Frage · Befristung', q: 'Dein C-Führerschein läuft in zwei Monaten ab. Was brauchst du für die Verlängerung?', size: 28,
+    kicker: 'Frage · Befristung', q: 'Euer C-Führerschein läuft in zwei Monaten ab. Was braucht ihr für die Verlängerung?', size: 28,
     opts: ['Nichts – Antrag stellen reicht', 'Ärztliche Untersuchung und Augen-Untersuchung', 'Eine neue theoretische Prüfung'], ok: 1,
     why: 'Verlängerung um 5 Jahre mit Nachweis nach Anlage 5 (Arzt) und Anlage 6 Nr. 2 (Augen) – § 24 FeV. Eine neue Prüfung gibt es nicht.',
     notes: '▶ Frage vorlesen, abstimmen.\n🖱 Klick 1: Antworten · Klick 2: Lösung.\n✅ B. § 24 Abs. 1 FeV. Antrag frühestens 6 Monate vor Ablauf.\n💡 Wer die Frist verpasst, darf ab dem Ablaufdatum kein Fahrzeug der Klasse C mehr fahren – Fahren ohne Fahrerlaubnis ist eine Straftat (§ 21 StVG). Neu beantragen geht auch nach Ablauf – ohne Prüfung, aber mit Arzt und Augen (§ 24 Abs. 2 FeV).\n➜ „Wer beruflich fährt, braucht noch etwas: die Berufskraftfahrer-Qualifikation.“' });

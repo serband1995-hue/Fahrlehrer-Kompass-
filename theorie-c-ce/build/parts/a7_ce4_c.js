@@ -1,14 +1,32 @@
-// Abend 7 · CE4: Kapitel 4 Wetter und Wind, Kapitel 5 Tempo, Abstand, Schwertransport
+// Abend 7 · CE4: Kapitel 4 Berg, Wetter und Wind, Kapitel 5 Tempo, Abstand, Schwertransport
 const { C, sec, chapter, steps, quiz, ask, photoAsk, base, kick, title, card, CLICK, sign, svgImg } = require('../gs');
 const { icon } = require('../lib');
 
-sec('ce4w', 'CE4  ·  WETTER UND WIND', C.gr, 'bg_gr.jpg');
+sec('ce4w', 'CE4  ·  BERG, WETTER UND WIND', C.gr, 'bg_gr.jpg');
 sec('ce4t', 'CE4  ·  TEMPO, ABSTAND, SCHWERTRANSPORT', 'C9A227', 'bg_am.jpg');
 
 module.exports = async (deck) => {
-  // ===== KAPITEL 4: WETTER UND WIND =====
-  await chapter(deck, 'ce4w', { num: 4, ttl: 'Wetter und Wind', sub: 'Schnee, Nebel und Wind treffen den Zug härter als den Lkw allein.', ico: 'LuCloudSnow', notes:
-    '▶ Sagen: „Bergab mit der Dauerbremse kennt ihr aus CE3. Jetzt das Wetter: Schnee, Glätte, schlechte Sicht und Wind.“\n✅ § 3, § 5, § 18 StVO; Prüfungsfragen 2.2.05-104, 2.2.23-101.\n💡 Nebenbei zum Berg: Anfahren an der Steigung mit dem Zug – Rollsperre oder Anfahrhilfe nutzen, wenn der Lkw sie hat (Betriebsanleitung; Actros manualslib S. 249). FahrschAusbO Anlage 2.4 Nr. 4 f.\n🖱 Keine Klicks.\n➜ „Erst der Winter.“' });
+  // ===== KAPITEL 4: BERG, WETTER UND WIND =====
+  await chapter(deck, 'ce4w', { num: 4, ttl: 'Berg, Wetter und Wind', sub: 'Steigung, Gefälle, Schnee und Wind treffen den Zug härter als den Lkw allein.', ico: 'LuCloudSnow', notes:
+    '▶ Sagen: „Erst der Berg: anfahren, hoch und runter mit dem ganzen Zug. Dann das Wetter: Schnee, Glätte, schlechte Sicht und Wind.“\n✅ FahrschAusbO Anlage 2.4 Nr. 4 f und h; § 3, § 5, § 18 StVO; Prüfungsfragen 2.2.05-104, 2.2.23-101.\n🖱 Keine Klicks.\n➜ „Zuerst der Berg.“' });
+  await ask(deck, 'ce4w', {
+    kicker: 'Zug am Berg', q: 'Steigung und Gefälle mit 40 Tonnen – worauf achtet ihr?', ico: 'LuMountain', qsize: 32,
+    answers: [
+      ['LuMountain', 'Anfahren am Berg:', 'Rollsperre oder Berganfahrhilfe nutzen. Drehen die Räder durch: Differenzialsperre – und die Anfahrhilfe, wenn vorhanden.', C.gr],
+      ['LuGauge', 'Bergauf:', 'Rechtzeitig zurückschalten. Der volle Zug verliert schnell Tempo – rechts fahren, ruhig bleiben.', C.bl],
+      ['LuArrowDownRight', 'Vor dem Gefälle:', 'Tempo raus, kleineren Gang wählen, Dauerbremse nutzen. Die Betriebsbremse bleibt kühl für den Notfall.', C.or],
+      ['LuTriangleAlert', 'Kurve im Gefälle:', 'Vorher gestreckt bremsen. Der Anhänger schiebt – bremst ihr erst in der Kurve, kann der Zug einknicken.', C.red],
+    ],
+    notes:
+      '▶ Sagen: „Euer Zug wiegt 40 Tonnen. Was ist am Berg anders als mit dem Lkw allein?“\n' +
+      '❓ Sammeln lassen, dann je Klick auflösen.\n' +
+      '🖱 Klick 1–4: je ein Punkt.\n' +
+      '✅ FahrschAusbO Anlage 2.4 Nr. 4 f (Kurven, Steigungen, Gefälle).\n' +
+      '✅ Anfahren: Rollsperre bzw. Berganfahrhilfe halten den Zug nach dem Loslassen des Bremspedals, bis ihr anfahrt (je nach System); Anfahrhilfe entlastet die Nachlauf- oder Liftachse, damit die Antriebsachse mehr Last trägt – nur bis zu einer geringen Geschwindigkeit (Betriebsanleitung; Actros manualslib S. 249). Differenzialsperre nur zum Anfahren und langsam geradeaus (siehe C3).\n' +
+      '✅ Gefälle: vorher in einen kleineren Gang schalten, Dauerbremse nutzen, Betriebsbremse kühl halten (Prüfungsfragen 2.7.01-257, 2.7.06-310 Fading; siehe C6 und CE3). Kurve im Gefälle: vorher gestreckt mit der Betriebsbremse verzögern – der Anhänger bremst dann mit (siehe CE3 Einknicken).\n' +
+      '💡 Bergauf: Der Zug verliert an langen Steigungen stark an Tempo. Nicht zu früh überholen wollen – „Elefantenrennen“ kosten allen Zeit (§ 5 StVO).\n' +
+      '➜ „Jetzt der Winter.“',
+  });
   await photoAsk(deck, 'ce4w', {
     bg: 'm_winter_r.jpg', bgX: 6.0, ov: 7.0, kicker: 'Winter', q: 'Schnee und Glätte – was gilt für euren Zug?', qsize: 30, w: 5.25, asize: 15,
     answers: [
@@ -159,6 +177,23 @@ module.exports = async (deck) => {
       '✅ § 70 StVZO: Ausnahmegenehmigung für Fahrzeuge, die von den Vorschriften über Maße und Gewichte abweichen (Urkunde mitführen). § 29 Abs. 3 StVO: Erlaubnis für den Verkehr mit Fahrzeugen und Zügen, die Abmessungen, Achslasten oder Gesamtmassen tatsächlich überschreiten. VwV-StVO zu § 29 Abs. 3, Rn. 133: Begleitfahrzeug mit nach hinten wirkender Wechselverkehrszeichen-Anlage u. a. bei Breite über 3,50 m außerhalb von Autobahnen (über 4,00 m bzw. 4,50 m auf Autobahnen). Rn. 139–143: Fahrzeiten, meist nachts. Merkblatt für Begleitfahrzeuge (BMVI 2015): BF3 (Zeichen nach hinten), BF4 (nach hinten, vorn und seitlich; VwV-StVO Rn. 131). BKat 116: ohne Erlaubnis 60 €, 1 Punkt.\n' +
       '💡 Ist nur die Ladung zu groß (Fahrzeug normal), braucht es eine Ausnahmegenehmigung nach § 46 Abs. 1 Nr. 5 StVO statt der Erlaubnis.\n' +
       '💡 Seit 7.9.2023 dürfen Transportbegleiter mit Anordnungsbefugnis den Verkehr regeln. Ihre Zeichen und die Schilder am Begleitfahrzeug gelten auch für euch – die Polizei geht vor (§ 36a StVO; StTbV § 3).\n' +
+      '➜ „Und wie fahrt ihr so einen Transport?“',
+  });
+  await ask(deck, 'ce4t', {
+    kicker: 'Übergroß unterwegs', q: 'Überbreit und überlang: Worauf achtet ihr beim Fahren?', ico: 'LuRuler', qsize: 32,
+    answers: [
+      ['LuMoveHorizontal', 'Kurven:', 'Langsam und weit ausholen. Das Heck schwenkt aus, die hinteren Achsen schneiden die Kurve – Spiegel beobachten.', C.or],
+      ['LuMilestone', 'Strecke:', 'Nur die genehmigte Strecke fahren – Brücken, Höhen und Engstellen sind dort geprüft. Nicht dem Navi folgen.', 'C9A227'],
+      ['LuSiren', 'Begleitfahrzeug:', 'Es sichert ab und warnt die anderen. Haltet Funkkontakt und stimmt jedes Manöver ab.', C.bl],
+      ['LuClock', 'Zeit und Pausen:', 'Nur zu den erlaubten Zeiten fahren, oft nachts. Pausenplätze vorher klären – nicht jeder Parkplatz ist groß genug.', C.pu],
+    ],
+    notes:
+      '▶ Sagen: „Die Genehmigung ist das eine. Aber wie fahrt ihr so einen Transport?“\n' +
+      '❓ Sammeln lassen, dann je Klick auflösen.\n' +
+      '🖱 Klick 1–4: je ein Punkt.\n' +
+      '✅ FahrschAusbO Anlage 2.4 Nr. 4 g (Fahren mit übergroßen und überschweren Fahrzeugen). § 29 Abs. 3 StVO mit VwV-StVO zu § 29 Abs. 3: Fahrtweg, Fahrzeiten und Auflagen stehen im Bescheid. Begleitfahrzeuge und Transportbegleiter: § 36a StVO.\n' +
+      '✅ Kurven: Platzbedarf und Ausschermaß wie in CE1 (Kurvenlauf) und Kapitel 3 – beim übergroßen Fahrzeug noch mehr.\n' +
+      '💡 Funkkontakt zwischen Transport und Begleitfahrzeug ist üblich und steht oft als Auflage im Bescheid. Ein normales Navi kennt die Auflagen nicht.\n' +
       '➜ „Eine Prüfungsfrage.“',
   });
   await quiz(deck, 'ce4t', {

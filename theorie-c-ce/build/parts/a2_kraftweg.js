@@ -20,8 +20,8 @@ module.exports = async (deck) => {
       'Die Kupplung trennt den Motor vom Getriebe – zum Anfahren und Schalten.',
       'Das Getriebe übersetzt: viel Kraft beim Anfahren, hohes Tempo auf der Autobahn. Schwere Lkw haben meist 12 Gänge.',
       'Die Gelenkwelle bringt die Kraft nach hinten. Gelenke gleichen das Federn der Achse aus.',
-      'Das Differenzial verteilt die Kraft auf das linke und rechte Rad – und lässt sie in der Kurve verschieden schnell drehen.',
-      'Über die Achswellen kommt die Kraft an die Antriebsräder. Bei schweren Lkw meist Zwillingsreifen.',
+      'Im Achsgetriebe lenkt das Kegelrad die Kraft um 90° um. Das Differenzial verteilt sie auf links und rechts – in der Kurve drehen die Räder verschieden schnell.',
+      'Über die Achswellen kommt die Kraft an die Räder. Baustellen-Lkw haben oft Außenplanetenachsen – mit einem Getriebe in der Radnabe.',
     ],
     notes: [
       '▶ Sagen: „Wie kommt die Kraft vom Motor auf die Straße? Wir gehen den Weg Schritt für Schritt ab. Das ist das Fahrgestell von oben, vorn ist links.“\n❓ „Wer kann die Reihenfolge schon nennen?“\n✅ Motor → Kupplung → Getriebe → Gelenkwelle → Differenzial (Achsgetriebe) → Achswellen → Räder.\n➜ „Zwischen Motor und Getriebe sitzt …“',

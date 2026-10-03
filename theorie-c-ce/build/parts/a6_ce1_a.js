@@ -29,7 +29,7 @@ const main = async (deck) => {
     const ART = [
       ['glieder', 'Lkw mit Drehschemelanhänger', 'ein Gliederzug · der Anhänger lenkt mit dem Drehschemel', 'Zwei Drehpunkte: Kupplungsbolzen und Drehkranz. Kaum Stützlast auf dem Lkw.'],
       ['zaa', 'Lkw mit Zentralachsanhänger', 'auch ein Gliederzug · Achsen nah am Schwerpunkt, starre Deichsel', 'Ein Teil des Gewichts liegt auf der Kupplung des Lkw: die Stützlast.'],
-      ['sattel', 'Sattelzug', 'Zugmaschine + Auflieger', 'Ein großer Teil des Aufliegers liegt auf der Zugmaschine: die Sattellast.'],
+      ['sattel', 'Sattelzug', 'Zugmaschine + Auflieger · amtlich: Sattelkraftfahrzeug', 'Ein großer Teil des Aufliegers liegt auf der Zugmaschine: die Sattellast (amtlich: Aufliegelast).'],
     ];
     await steps(deck, 'ce1z', {
       kicker: 'Zugarten', ttl: 'Drei Arten von Zügen',
@@ -43,7 +43,7 @@ const main = async (deck) => {
       notes: [
         '▶ Sagen: „Erste Zugart: ein Lkw mit Drehschemelanhänger. Der Anhänger hat vorn einen Drehschemel. Er hat zwei Drehpunkte: den Kupplungsbolzen am Lkw und den Drehkranz am Anhänger. Darum kann er doppelt einknicken.“\n✅ DGUV Information 214-080 „Kuppeln – aber sicher!“, Kap. 6 und S. 67: Gliederzug = Lkw + Gelenkdeichsel- oder Starrdeichselanhänger; Gelenkdeichselanhänger gibt keine nennenswerte Stützlast ab.\n💡 Kurzkuppelsystem: kürzerer Abstand zwischen Lkw und Anhänger, andere Kurvenlaufeigenschaften, mehr Verschleiß, mehr Ladefläche (Prüfungsfrage 2.6.03-306: alle drei Antworten richtig).\n➜ „Zweite Zugart.“',
         '▶ „Zweite Art: ein Lkw mit Zentralachsanhänger. Die Achsen sitzen nah am Schwerpunkt, die Deichsel ist starr. Ein Teil seines Gewichts drückt auf die Kupplung des Lkw – die Stützlast. Übrigens: 1 und 2 heißen beide Gliederzug.“\n✅ DGUV I 214-080, Kap. 6: Zentralachsanhänger, Stützlast höchstens 10 % der Anhängermasse oder 1.000 kg (der kleinere Wert). § 44 Abs. 3 StVZO: Mindeststützlast 4 %.\n➜ „Und die dritte Art?“',
-        '▶ „Dritte Art: der Sattelzug. Der Auflieger hat vorn keine Achse. Er liegt mit dem Königszapfen auf der Sattelkupplung – ein großer Teil seines Gewichts liegt auf der Zugmaschine: die Sattellast.“\n❓ Frage auf der Folie auflösen.\n✅ § 32a StVZO: Hinter Kfz nur ein Anhänger, hinter Sattelkraftfahrzeugen keiner. (Zwei Anhänger nur hinter Zugmaschinen.)\n➜ „Wie ist der Anhänger am Lkw befestigt?“',
+        '▶ „Dritte Art: der Sattelzug. Der Auflieger hat vorn keine Achse. Er liegt mit dem Königszapfen auf der Sattelkupplung – ein großer Teil seines Gewichts liegt auf der Zugmaschine: die Sattellast.“\n❓ Frage auf der Folie auflösen.\n💡 Begriffe aus den Prüfungsfragen: Auflieger = Sattelanhänger · Sattelzug = Sattelkraftfahrzeug · Sattellast = Aufliegelast (§ 34 Abs. 7 StVZO).\n✅ § 32a StVZO: Hinter Kfz nur ein Anhänger, hinter Sattelkraftfahrzeugen keiner. (Zwei Anhänger nur hinter Zugmaschinen.)\n➜ „Wie ist der Anhänger am Lkw befestigt?“',
       ],
       legend: 'Seitenansicht · schematisch',
       scene: async (s, i) => {

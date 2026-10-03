@@ -337,6 +337,7 @@ module.exports = async (deck) => {
       '🖱 Klick 1–3: je eine Antwort.\n' +
       '✅ Nein. Warmlaufen im Stand verschleißt den Motor und kostet Diesel. § 30 Abs. 1 StVO: unnötiger Lärm und vermeidbare Abgasbelästigungen sind verboten, insbesondere Motoren unnötig laufen lassen. BKat Nr. 117: 80 €, kein Punkt.\n' +
       '✅ Losfahren erst, wenn die Druckwarnung aus ist (Prüfungsfrage 2.7.01-238: „Wenn die Signale der Druckwarneinrichtung aufgehört haben“) und die Scheiben frei sind (§ 23 Abs. 1 StVO).\n' +
+      '💡 Die Druckwarnung (Summer und rote Leuchte bei zu wenig Bremsdruck) erklären wir genau in C5.\n' +
       '💡 Kein Widerspruch zum Turbo: Nach Vollgas oder Bergfahrt kurz nachlaufen lassen ist nötig – das ist kein „unnötiges“ Laufenlassen.\n' +
       '💡 Bei längerem Stillstand (Bahnübergang, Stau, Laderampe) Motor aus. Viele Lkw haben dafür Start-Stopp oder Leerlaufabschaltung.\n' +
       '➜ „Kurzes Quiz zum Motor.“',

@@ -28,7 +28,7 @@ module.exports = async (deck) => {
       '▶ Sagen: „Zwei Lektionen: zuerst CE1 – wie man Lkw und Anhänger oder Zugmaschine und Auflieger richtig zusammenstellt. Nach der Pause CE2 – wie die Bremse am Zug funktioniert.“\n' +
       '🖱 Klick 1: Lektion CE1 · Klick 2: Pause · Klick 3: Lektion CE2.\n' +
       '💡 Zeiten für einen Beginn um 18:00 Uhr.\n' +
-      '➜ „Erst ein kurzer Blick zurück auf Abend 5.“' });
+      '➜ „Erst ein kurzer Blick zurück auf die C-Ausbildung.“' });
     kick(s, 'Heute Abend'); title(s, 'Zwei Lektionen, eine Pause');
     const T = [
       ['18:00', '19:30', 'Lektion CE1', 'Zusammenstellung von Zügen', 'Zugarten und Kupplungen · Ankuppeln · Auf- und Absatteln · Maße und Kurvenlauf · Gewichte und Führerschein', C.bl, 'LuLink'],
@@ -47,14 +47,14 @@ module.exports = async (deck) => {
   }
   // ===== WIEDERHOLUNG ABEND 5 =====
   await ask(deck, 'ce1', {
-    kicker: 'Wiederholung Abend 5', q: 'Drei Fragen vom letzten Mal – wer weiß es noch?', ico: 'LuRotateCcw', qsize: 32,
+    kicker: 'Wiederholung Klasse C', q: 'Drei Fragen aus der C-Ausbildung – wer weiß es noch?', ico: 'LuRotateCcw', qsize: 32,
     answers: [
       ['LuBox', 'Wie viel hält eine normale Stirnwand (Code L)?', '40 % der Nutzlast – höchstens 5.000 daN (so viel, wie 5 t wiegen). Nach vorn drückt die Ladung mit bis zu 80 %.'],
       ['LuTag', 'Welcher Wert auf dem Zurrgurt zählt beim Niederzurren?', 'Die STF – die Vorspannkraft. Die LC zählt beim Direktzurren.'],
       ['LuClock', 'Mit welchem Schnitt plant ihr einen Lkw über 7,5 t auf der Autobahn?', 'Mit 70 km/h – nicht mit 80.'],
     ],
     notes:
-      '▶ Sagen: „Bevor wir anfangen: drei Fragen zu Abend 5.“\n' +
+      '▶ Sagen: „Bevor wir anfangen: drei Fragen aus der C-Ausbildung – zuletzt Ladungssicherung und Wirtschaftlichkeit.“\n' +
       '❓ Jede Frage vorlesen, Antworten sammeln, dann klicken.\n' +
       '🖱 Klick 1–3: je eine Frage mit Antwort.\n' +
       '✅ DIN EN 12642 Code L (Stirnwand 0,4 × Nutzlast, höchstens 5.000 daN) · DIN EN 12195-2 / BG BAU 2021 (STF beim Niederzurren, LC beim Direktzurren) · Prüfungsfrage 2.6.07-214 (70 km/h).\n' +
@@ -68,7 +68,7 @@ module.exports = async (deck) => {
       '💡 Zeiten sind Richtwerte für 90 Minuten.\n' +
       '➜ „Kapitel 1: Welche Züge gibt es?“' });
     kick(s, 'Lektion CE1 · Zusammenstellung von Zügen'); title(s, 'Das lernt ihr in CE1');
-    const T = [['01', 'Zugarten und Kupplungen', 'Gliederzug, Sattelzug · Bolzen- und Sattelkupplung · Verschleiß', '15 Min', C.bl], ['02', 'An- und Abkuppeln', 'Schritt für Schritt · gelb vor rot · Kontrollstift', '25 Min', C.or], ['03', 'Auf- und Absatteln', 'Höhe, Einrasten, Sicherung · Stützen', '15 Min', C.gr], ['04', 'Maße und Kurvenlauf', '16,50 m · 18,75 m · Kreisring 12,50 m', '15 Min', C.pu], ['05', 'Gewichte und Führerschein', '40 t, 44 t, Sattellast · C1E oder CE', '15 Min', 'C9A227']];
+    const T = [['01', 'Zugarten und Kupplungen', 'Gliederzug, Sattelzug · Bolzen- und Sattelkupplung · Verschleiß', '15 Min', C.bl], ['02', 'An- und Abkuppeln', 'Schritt für Schritt · gelb vor rot · Kontrollstift', '20 Min', C.or], ['03', 'Auf- und Absatteln', 'Höhe, Einrasten, Sicherung · Stützen', '15 Min', C.gr], ['04', 'Maße und Kurvenlauf', '16,50 m · 18,75 m · Kreisring 12,50 m', '15 Min', C.pu], ['05', 'Gewichte und Führerschein', '40 t, 44 t, Sattellast · C1E oder CE', '15 Min', 'C9A227']];
     for (let i = 0; i < 5; i++) {
       const y = 2.0 + i * 0.9;
       card(s, 0.7, y, 11.93, 0.78, { line: T[i][4] }, CLICK);
@@ -76,6 +76,6 @@ module.exports = async (deck) => {
       s.text([{ text: T[i][1] + '  ', options: { bold: true, color: C.txt } }, { text: T[i][2], options: { color: C.mut, fontSize: 15 } }], { x: 2.0, y, w: 8.6, h: 0.78, size: 20, valign: 'middle' }, { fx: 'fade', dur: 200 });
       s.text(T[i][3], { x: 10.8, y, w: 1.6, h: 0.78, size: 18, bold: true, color: T[i][4], align: 'right', valign: 'middle' }, { fx: 'fade', dur: 200 });
     }
-    s.text('+ 5 Min Abschluss: Quiz und „Das nehmt ihr mit“', { x: 0.7, y: 6.55, w: 11.93, h: 0.35, size: 14, italic: true, color: C.dim });
+    s.text('+ 10 Min Abschluss: Mitschreiben, Quiz und „Das nehmt ihr mit“', { x: 0.7, y: 6.55, w: 11.93, h: 0.35, size: 14, italic: true, color: C.dim });
   }
 };

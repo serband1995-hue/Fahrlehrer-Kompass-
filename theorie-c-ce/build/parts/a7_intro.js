@@ -68,7 +68,7 @@ module.exports = async (deck) => {
       '💡 Grundlagen (ALB, EBS, Federspeicher, Retarder, HU und SP) kennen alle aus C5 und C6 – heute geht es um das, was beim Zug anders ist.\n' +
       '➜ „Kapitel 1: Jedes Fahrzeug bremst sich selbst.“' });
     kick(s, 'Lektion CE3 · Lastzugbremsen'); title(s, 'Das lernt ihr in CE3');
-    const T = [['01', 'Jedes Fahrzeug bremst sich selbst', 'Koppelkraft · Einknicken · Voreilung', '15 Min', C.bl], ['02', 'Lastanpassung und EBS', 'Wie der Anhänger seine Last kennt · zwei Wege zum Anhänger', '20 Min', C.gr], ['03', 'Der ABS-Stecker', 'Was ohne Stecker passiert · Warnleuchte · Klicken', '15 Min', C.or], ['04', 'Feststellbremse im Zug', 'Anhänger hält meist nur mit Luft · Kontrollstellung · 12 %', '15 Min', C.pu], ['05', 'Dauerbremse und Prüffristen', 'Retarder auf Glätte · HU, SP und UVV am Anhänger', '20 Min', 'C9A227']];
+    const T = [['01', 'Jedes Fahrzeug bremst sich selbst', 'Koppelkraft · Einknicken · Voreilung', '15 Min', C.bl], ['02', 'Lastanpassung und EBS', 'Wie der Anhänger seine Last kennt · zwei Wege zum Anhänger', '15 Min', C.gr], ['03', 'Der ABS-Stecker', 'Was ohne Stecker passiert · Warnleuchte · Klicken', '15 Min', C.or], ['04', 'Feststellbremse im Zug', 'Anhänger hält meist nur mit Luft · Kontrollstellung · 12 %', '15 Min', C.pu], ['05', 'Dauerbremse und Prüffristen', 'Retarder auf Glätte · HU, SP und UVV am Anhänger', '20 Min', 'C9A227']];
     for (let i = 0; i < 5; i++) {
       const y = 2.0 + i * 0.9;
       card(s, 0.7, y, 11.93, 0.78, { line: T[i][4] }, CLICK);
@@ -76,6 +76,6 @@ module.exports = async (deck) => {
       s.text([{ text: T[i][1] + '  ', options: { bold: true, color: C.txt } }, { text: T[i][2], options: { color: C.mut, fontSize: 15 } }], { x: 2.0, y, w: 8.6, h: 0.78, size: 20, valign: 'middle' }, { fx: 'fade', dur: 200 });
       s.text(T[i][3], { x: 10.8, y, w: 1.6, h: 0.78, size: 18, bold: true, color: T[i][4], align: 'right', valign: 'middle' }, { fx: 'fade', dur: 200 });
     }
-    s.text('+ 5 Min Abschluss: Quiz und „Das nehmt ihr mit“', { x: 0.7, y: 6.55, w: 11.93, h: 0.35, size: 14, italic: true, color: C.dim });
+    s.text('+ 10 Min Abschluss: Mitschreiben, Quiz und „Das nehmt ihr mit“', { x: 0.7, y: 6.55, w: 11.93, h: 0.35, size: 14, italic: true, color: C.dim });
   }
 };

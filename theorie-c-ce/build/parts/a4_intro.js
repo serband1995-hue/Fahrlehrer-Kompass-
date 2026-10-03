@@ -51,7 +51,7 @@ module.exports = async (deck) => {
     answers: [
       ['LuGauge', 'Der Lkw stand übers Wochenende. Wann losfahren?', 'Erst wenn genug Luft im System ist – die Druckwarnung muss aus sein.'],
       ['LuThermometer', 'Was ist Fading?', 'Die Bremse wird zu heiß und lässt nach. Dagegen: zurückschalten, Dauerbremse nutzen.'],
-      ['LuMountain', 'Ab wann ist eine Dauerbremse Pflicht?', 'Bei Lkw über 9 t zulässiger Gesamtmasse.'],
+      ['LuMountain', 'Ab wann ist eine Dauerbremse Pflicht?', 'Nach StVZO bei Lkw über 9 t zulässiger Gesamtmasse.'],
     ],
     notes:
       '▶ Sagen: „Bevor wir anfangen: drei Fragen zu Abend 3.“\n' +
@@ -68,7 +68,7 @@ module.exports = async (deck) => {
       '💡 Zeiten sind Richtwerte für 90 Minuten.\n' +
       '➜ „Kapitel 1: Wie hält ein Lkw überhaupt auf der Straße?“' });
     kick(s, 'Lektion C7 · Wirkung von Kräften beim Fahren'); title(s, 'Das lernt ihr in C7');
-    const T = [['01', 'Haftung', 'Reifen und Straße, Bremsen und Lenken zugleich', '20 Min', C.bl], ['02', 'Widerstände und Energie', 'Rollen, Luft, Steigung – und die Wucht der Masse', '20 Min', C.or], ['03', 'Fliehkraft und Kippen', 'Kurve, Schwerpunkt, Kippgefahr', '25 Min', C.red], ['04', 'Wind und Wasser', 'Seitenwind und Aquaplaning', '10 Min', C.pu], ['05', 'Leer oder beladen', 'Was die Ladung am Fahrverhalten ändert', '10 Min', 'C9A227']];
+    const T = [['01', 'Haftung', 'Reifen und Straße, Bremsen und Lenken zugleich', '20 Min', C.bl], ['02', 'Widerstände und Energie', 'Rollen, Luft, Steigung – und die Wucht der Masse', '20 Min', C.or], ['03', 'Fliehkraft und Kippen', 'Kurve, Schwerpunkt, Kippgefahr', '20 Min', C.red], ['04', 'Wind und Wasser', 'Seitenwind und Aquaplaning', '10 Min', C.pu], ['05', 'Leer oder beladen', 'Was die Ladung am Fahrverhalten ändert', '10 Min', 'C9A227']];
     for (let i = 0; i < 5; i++) {
       const y = 2.0 + i * 0.9;
       card(s, 0.7, y, 11.93, 0.78, { line: T[i][4] }, CLICK);
@@ -76,6 +76,6 @@ module.exports = async (deck) => {
       s.text([{ text: T[i][1] + '  ', options: { bold: true, color: C.txt } }, { text: T[i][2], options: { color: C.mut, fontSize: 15 } }], { x: 2.0, y, w: 8.6, h: 0.78, size: 20, valign: 'middle' }, { fx: 'fade', dur: 200 });
       s.text(T[i][3], { x: 10.8, y, w: 1.6, h: 0.78, size: 18, bold: true, color: T[i][4], align: 'right', valign: 'middle' }, { fx: 'fade', dur: 200 });
     }
-    s.text('+ 5 Min Abschluss: Quiz und „Das nehmt ihr mit“', { x: 0.7, y: 6.55, w: 11.93, h: 0.35, size: 14, italic: true, color: C.dim });
+    s.text('+ 10 Min Abschluss: Mitschreiben, Quiz und „Das nehmt ihr mit“', { x: 0.7, y: 6.55, w: 11.93, h: 0.35, size: 14, italic: true, color: C.dim });
   }
 };

@@ -26,7 +26,7 @@ module.exports = async (deck) => {
       '💡 Zeiten sind Richtwerte für 90 Minuten.\n' +
       '➜ „Kapitel 1: vorausschauend fahren.“' });
     kick(s, 'Lektion C10 · Wirtschaftlich fahren, Streckenplanung'); title(s, 'Das lernt ihr in C10');
-    const T = [['01', 'Vorausschauend fahren', 'Rollen statt bremsen, grüner Drehzahlbereich, Motor aus', '25 Min', C.gr], ['02', 'Fahrzeug und Wartung', 'Reifendruck, Luftleitteile, Gewicht, Luftfilter', '10 Min', C.bl], ['03', 'Umwelt, Antriebe, Maut', 'CO₂, Lärm, E-Lkw und HVO, was die Maut kostet', '15 Min', 'C9A227'], ['04', 'Strecke planen', 'Karte und Maßstab, Lkw-Navi, Höhen und Verbote', '20 Min', C.pu], ['05', 'Zeit planen', 'Durchschnitt 70 km/h, Pausen, Fahrverbote', '15 Min', C.or]];
+    const T = [['01', 'Vorausschauend fahren', 'Rollen statt bremsen, grüner Drehzahlbereich, Motor aus', '20 Min', C.gr], ['02', 'Fahrzeug und Wartung', 'Reifendruck, Luftleitteile, Gewicht, Luftfilter', '10 Min', C.bl], ['03', 'Umwelt, Antriebe, Maut', 'CO₂, Lärm, E-Lkw und HVO, was die Maut kostet', '15 Min', 'C9A227'], ['04', 'Strecke planen', 'Karte und Maßstab, Lkw-Navi, Höhen und Verbote', '20 Min', C.pu], ['05', 'Zeit planen', 'Durchschnitt 70 km/h, Pausen, Fahrverbote', '15 Min', C.or]];
     for (let i = 0; i < 5; i++) {
       const y = 2.0 + i * 0.9;
       card(s, 0.7, y, 11.93, 0.78, { line: T[i][4] }, CLICK);
@@ -34,7 +34,7 @@ module.exports = async (deck) => {
       s.text([{ text: T[i][1] + '  ', options: { bold: true, color: C.txt } }, { text: T[i][2], options: { color: C.mut, fontSize: 15 } }], { x: 2.0, y, w: 8.6, h: 0.78, size: 20, valign: 'middle' }, { fx: 'fade', dur: 200 });
       s.text(T[i][3], { x: 10.8, y, w: 1.6, h: 0.78, size: 18, bold: true, color: T[i][4], align: 'right', valign: 'middle' }, { fx: 'fade', dur: 200 });
     }
-    s.text('+ 5 Min Abschluss: Quiz und „Das nehmt ihr mit“', { x: 0.7, y: 6.55, w: 11.93, h: 0.35, size: 14, italic: true, color: C.dim });
+    s.text('+ 10 Min Abschluss: Mitschreiben, Quiz und „Das nehmt ihr mit“', { x: 0.7, y: 6.55, w: 11.93, h: 0.35, size: 14, italic: true, color: C.dim });
   }
 
   await chapter(deck, 'c10f', { num: 1, ttl: 'Vorausschauend fahren', sub: 'Wer weit nach vorn schaut, bremst weniger – und spart Diesel.', ico: 'LuLeaf', notes:

@@ -15,7 +15,7 @@ module.exports = async (deck) => {
       '💡 Geschwindigkeitsbegrenzer (Rahmenplan C8 c): in Abend 3 behandelt – kurz wiederholen: Lkw über 3,5 t haben einen Begrenzer, eingestellt auf höchstens 90 km/h (§ 57c StVZO).\n' +
       '➜ „Kapitel 1: Was muss an Bord sein?“' });
     kick(s, 'Lektion C8 · Ausrüstung, Beförderung, Sicherheit'); title(s, 'Das lernt ihr in C8');
-    const T = [['01', 'Pflichtausrüstung', 'Warndreieck, Warnleuchte, Warnweste, Verbandkasten, Keile, Abschleppen', '20 Min', C.gr], ['02', 'Maße und Gewichte', 'Breite, Höhe, Länge, Achslasten, Überladung', '20 Min', C.or], ['03', 'Ladung', 'Was herausragen darf, wer verantwortlich ist', '15 Min', 'C9A227'], ['04', 'Besondere Güter', 'Gefahrgut, Abfall, Tiere', '15 Min', C.red], ['05', 'Arbeitssicherheit', 'Aussteigen, Einweiser, Schutzkleidung', '15 Min', C.bl]];
+    const T = [['01', 'Pflichtausrüstung', 'Warndreieck, Warnleuchte, Warnweste, Verbandkasten, Keile, Abschleppen', '15 Min', C.gr], ['02', 'Maße und Gewichte', 'Breite, Höhe, Länge, Achslasten, Überladung', '20 Min', C.or], ['03', 'Ladung', 'Was herausragen darf, wer verantwortlich ist', '15 Min', 'C9A227'], ['04', 'Besondere Güter', 'Gefahrgut, Abfall, Tiere', '15 Min', C.red], ['05', 'Arbeitssicherheit', 'Aussteigen, Einweiser, Schutzkleidung', '15 Min', C.bl]];
     for (let i = 0; i < 5; i++) {
       const y = 2.0 + i * 0.9;
       card(s, 0.7, y, 11.93, 0.78, { line: T[i][4] }, CLICK);
@@ -23,7 +23,7 @@ module.exports = async (deck) => {
       s.text([{ text: T[i][1] + '  ', options: { bold: true, color: C.txt } }, { text: T[i][2], options: { color: C.mut, fontSize: 15 } }], { x: 2.0, y, w: 8.6, h: 0.78, size: 20, valign: 'middle' }, { fx: 'fade', dur: 200 });
       s.text(T[i][3], { x: 10.8, y, w: 1.6, h: 0.78, size: 18, bold: true, color: T[i][4], align: 'right', valign: 'middle' }, { fx: 'fade', dur: 200 });
     }
-    s.text('+ 5 Min Abschluss: Quiz und „Das nehmt ihr mit“', { x: 0.7, y: 6.55, w: 11.93, h: 0.35, size: 14, italic: true, color: C.dim });
+    s.text('+ 10 Min Abschluss: Mitschreiben, Quiz und „Das nehmt ihr mit“', { x: 0.7, y: 6.55, w: 11.93, h: 0.35, size: 14, italic: true, color: C.dim });
   }
 
   // ===== KAPITEL 1 =====

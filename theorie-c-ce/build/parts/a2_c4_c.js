@@ -87,6 +87,7 @@ module.exports = async (deck) => {
       '❓ „Was bedeutet Rot?“\n' +
       '🖱 Klick 1: Rot · Klick 2: Gelb · Klick 3: Grün · Klick 4: Blau.\n' +
       '✅ Rot = Gefahr: an sicherer Stelle anhalten, nach Betriebsanleitung handeln (meist Motor aus – aber bei roter Bremsdruck-Warnung Motor laufen lassen, damit der Kompressor Druck aufbaut) – z. B. Öldruck, Kühlmitteltemperatur (2.7.02-216), Bremsdruck/Druckwarnung (2.7.02-203), Ladekontrolle, oft ein großes rotes STOP. Gelb = Störung oder Hinweis: bald handeln – AdBlue nachfüllen, Partikelfilter regenerieren oder Werkstatt – z. B. ABS/EBS, Motorstörung, AdBlue, Partikelfilter. Grün = eingeschaltet. Blau = Fernlicht (Farben nach ISO 2575, Lehrbuchwissen).\n' +
+      '💡 ABS und EBS (elektronisch geregelte Bremse) kommen ausführlich in C5 und C6.\n' +
       '➜ „Zum Schluss: die elektronischen Helfer.“' });
     kick(s, 'Kontrollleuchten'); title(s, 'Die Farbe sagt, was zu tun ist');
     const F = [
@@ -211,6 +212,6 @@ module.exports = async (deck) => {
     s.img('boost_logo.png', { x: 0.7, y: 0.6, w: 1.6, h: 0.55, sizing: 'contain' }, { fx: 'fade', auto: true, dur: 800 });
     s.text('Gute Heimfahrt!', { x: 0.7, y: 1.3, w: 6.5, h: 1.0, size: 54, bold: true, color: C.txt }, { fx: 'rise', auto: true, dur: 900 });   // über dem Lkw im Foto
     s.text('Abend 2 geschafft: C3 + C4', { x: 0.7, y: 4.85, w: 6.5, h: 0.5, size: 22, color: C.gr }, { fx: 'fade', auto: true, dur: 700, d: 400 });
-    s.text([{ text: 'Nächstes Mal:', options: { bold: true, color: C.mut, breakLine: true } }, { text: 'C5  Bremsen – Druckluftbremse', options: { color: C.txt, breakLine: true } }, { text: 'C6  Dauerbremsen, Untersuchungen, Begrenzer', options: { color: C.txt } }], { x: 0.7, y: 5.45, w: 6.3, h: 1.4, size: 20 }, { fx: 'fade', auto: true, dur: 700, d: 800 });
+    s.text([{ text: 'Nächstes Mal:', options: { bold: true, color: C.mut, breakLine: true } }, { text: 'C5  Lkw-Bremsen', options: { color: C.txt, breakLine: true } }, { text: 'C6  Dauerbremsen, Untersuchungen, Begrenzer', options: { color: C.txt } }], { x: 0.7, y: 5.45, w: 6.3, h: 1.4, size: 20 }, { fx: 'fade', auto: true, dur: 700, d: 800 });
   }
 };

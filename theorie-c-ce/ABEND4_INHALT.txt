@@ -19,7 +19,7 @@ FOLIE 2 VON 163 · 3 Klicks
 ➜ „Erst ein kurzer Blick zurück auf Abend 3.“
 
 === FOLIE 3 ===
-AUF DER FOLIE: WIEDERHOLUNG ABEND 3 | Drei Fragen vom letzten Mal – wer weiß es noch? | Der Lkw stand übers Wochenende. Wann losfahren?  Erst wenn genug Luft im System ist – die Druckwarnung muss aus sein. | Was ist Fading?  Die Bremse wird zu heiß und lässt nach. Dagegen: zurückschalten, Dauerbremse nutzen. | Ab wann ist eine Dauerbremse Pflicht?  Bei Lkw über 9 t zulässiger Gesamtmasse. | KLASSE C  ·  ABEND 4  ·  LEKTION C7 | 3
+AUF DER FOLIE: WIEDERHOLUNG ABEND 3 | Drei Fragen vom letzten Mal – wer weiß es noch? | Der Lkw stand übers Wochenende. Wann losfahren?  Erst wenn genug Luft im System ist – die Druckwarnung muss aus sein. | Was ist Fading?  Die Bremse wird zu heiß und lässt nach. Dagegen: zurückschalten, Dauerbremse nutzen. | Ab wann ist eine Dauerbremse Pflicht?  Nach StVZO bei Lkw über 9 t zulässiger Gesamtmasse. | KLASSE C  ·  ABEND 4  ·  LEKTION C7 | 3
 NOTIZEN:
 FOLIE 3 VON 163 · 3 Klicks
 
@@ -30,7 +30,7 @@ FOLIE 3 VON 163 · 3 Klicks
 ➜ „Gut. Heute geht es um die Kräfte, die dabei wirken. Was lernt ihr in C7?“
 
 === FOLIE 4 ===
-AUF DER FOLIE: LEKTION C7 · WIRKUNG VON KRÄFTEN BEIM FAHREN | Das lernt ihr in C7 | 01 | Haftung  Reifen und Straße, Bremsen und Lenken zugleich | 20 Min | 02 | Widerstände und Energie  Rollen, Luft, Steigung – und die Wucht der Masse | 20 Min | 03 | Fliehkraft und Kippen  Kurve, Schwerpunkt, Kippgefahr | 25 Min | 04 | Wind und Wasser  Seitenwind und Aquaplaning | 10 Min | 05 | Leer oder beladen  Was die Ladung am Fahrverhalten ändert | 10 Min | + 5 Min Abschluss: Quiz und „Das nehmt ihr mit“ | KLASSE C  ·  ABEND 4  ·  LEKTION C7 | 4
+AUF DER FOLIE: LEKTION C7 · WIRKUNG VON KRÄFTEN BEIM FAHREN | Das lernt ihr in C7 | 01 | Haftung  Reifen und Straße, Bremsen und Lenken zugleich | 20 Min | 02 | Widerstände und Energie  Rollen, Luft, Steigung – und die Wucht der Masse | 20 Min | 03 | Fliehkraft und Kippen  Kurve, Schwerpunkt, Kippgefahr | 20 Min | 04 | Wind und Wasser  Seitenwind und Aquaplaning | 10 Min | 05 | Leer oder beladen  Was die Ladung am Fahrverhalten ändert | 10 Min | + 10 Min Abschluss: Mitschreiben, Quiz und „Das nehmt ihr mit“ | KLASSE C  ·  ABEND 4  ·  LEKTION C7 | 4
 NOTIZEN:
 FOLIE 4 VON 163 · 5 Klicks
 
@@ -970,7 +970,7 @@ FOLIE 101 VON 163 · Animation läuft von selbst · Klick = weiter
 ➜ „Willkommen zurück. Lektion C8: Was muss an Bord sein – und wie schwer und groß darf ein Lkw sein?“
 
 === FOLIE 102 ===
-AUF DER FOLIE: LEKTION C8 · AUSRÜSTUNG, BEFÖRDERUNG, SICHERHEIT | Das lernt ihr in C8 | 01 | Pflichtausrüstung  Warndreieck, Warnleuchte, Warnweste, Verbandkasten, Keile, Abschleppen | 20 Min | 02 | Maße und Gewichte  Breite, Höhe, Länge, Achslasten, Überladung | 20 Min | 03 | Ladung  Was herausragen darf, wer verantwortlich ist | 15 Min | 04 | Besondere Güter  Gefahrgut, Abfall, Tiere | 15 Min | 05 | Arbeitssicherheit  Aussteigen, Einweiser, Schutzkleidung | 15 Min | + 5 Min Abschluss: Quiz und „Das nehmt ihr mit“ | KLASSE C  ·  ABEND 4  ·  LEKTION C8 | 102
+AUF DER FOLIE: LEKTION C8 · AUSRÜSTUNG, BEFÖRDERUNG, SICHERHEIT | Das lernt ihr in C8 | 01 | Pflichtausrüstung  Warndreieck, Warnleuchte, Warnweste, Verbandkasten, Keile, Abschleppen | 15 Min | 02 | Maße und Gewichte  Breite, Höhe, Länge, Achslasten, Überladung | 20 Min | 03 | Ladung  Was herausragen darf, wer verantwortlich ist | 15 Min | 04 | Besondere Güter  Gefahrgut, Abfall, Tiere | 15 Min | 05 | Arbeitssicherheit  Aussteigen, Einweiser, Schutzkleidung | 15 Min | + 10 Min Abschluss: Mitschreiben, Quiz und „Das nehmt ihr mit“ | KLASSE C  ·  ABEND 4  ·  LEKTION C8 | 102
 NOTIZEN:
 FOLIE 102 VON 163 · 5 Klicks
 
@@ -1553,14 +1553,14 @@ FOLIE 158 VON 163 · 8 Klicks
 ➜ „Drei Prüfungsfragen.“
 
 === FOLIE 159 ===
-AUF DER FOLIE: QUIZ C8 · 1 | Was ist zu tun, um einen zweiachsigen Lkw in starkem Gefälle gegen Wegrollen zu sichern? | A | Dauerbremse betätigen | B | Unterlegkeil vor ein Hinterrad legen | C | Feststellbremse anziehen | ✓  RICHTIG | ✓  RICHTIG | Feststellbremse und Unterlegkeil. Die Dauerbremse hält den Lkw nicht fest (Prüfungsfrage 2.2.23-201). | KLASSE C  ·  ABEND 4  ·  C8  ·  ABSCHLUSS | 159
+AUF DER FOLIE: QUIZ C8 · 1 | Ihr steigt nach einer langen Fahrt aus dem Fahrerhaus. Was ist richtig? | A | Mit dem Gesicht zum Fahrerhaus aussteigen – wie von einer Leiter | B | Die letzte Stufe überspringen, das geht schneller | C | Immer drei Kontaktpunkte: zwei Hände und ein Fuß | ✓  RICHTIG | ✓  RICHTIG | Gesicht zum Fahrerhaus, drei Kontaktpunkte, jede Stufe nehmen. Ein Sprung belastet die Gelenke bis zum Siebenfachen des Körpergewichts. | KLASSE C  ·  ABEND 4  ·  C8  ·  ABSCHLUSS | 159
 NOTIZEN:
 FOLIE 159 VON 163 · 2 Klicks
 
 ▶ Frage vorlesen, abstimmen. Mehrere Antworten können richtig sein.
 💡 Gemeinsam besprechen – keine Prüfungsbögen ausfüllen lassen (§ 4 Abs. 1a FahrschAusbO).
 🖱 Klick 1: Antworten · Klick 2: Lösung.
-✅ B und C.
+✅ A und C. DGUV Vorschrift 70 § 41 (Aufstiege und Haltegriffe benutzen); BG Verkehr „2+1“. Die Prüfungsfrage zum Sichern im Gefälle (2.2.23-201) kam schon in C5.
 ➜ „Nächste Frage.“
 
 === FOLIE 160 ===

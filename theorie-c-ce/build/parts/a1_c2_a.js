@@ -29,7 +29,7 @@ module.exports = async (deck) => {
       '💡 Zeiten sind Richtwerte, zusammen mit Abschluss 90 Minuten.\n' +
       '➜ „Kapitel 1: Wie schnell darf ein Lkw fahren?“' });
     kick(s, 'Lektion C2 · Besondere Vorschriften'); title(s, 'Das lernt ihr in C2');
-    const T = [['01', 'Geschwindigkeit und Abstand', '15 Min', C.bl], ['02', 'Überholen, Fahrstreifen, Verbotszeichen', '20 Min', C.or], ['03', 'Bahnübergänge', '10 Min', C.red], ['04', 'Halten und Parken', '10 Min', C.pu], ['05', 'Fahrverbote, Mitfahrer, Unterfahrschutz', '15 Min', C.am], ['06', 'Papiere und Maut', '15 Min', C.gr]];
+    const T = [['01', 'Geschwindigkeit und Abstand', '15 Min', C.bl], ['02', 'Überholen, Fahrstreifen, Verbotszeichen', '15 Min', C.or], ['03', 'Bahnübergänge', '10 Min', C.red], ['04', 'Halten und Parken', '10 Min', C.pu], ['05', 'Fahrverbote, Mitfahrer, Unterfahrschutz', '15 Min', C.am], ['06', 'Papiere und Maut', '15 Min', C.gr]];
     for (let i = 0; i < 6; i++) {
       const col = i % 2, row = Math.floor(i / 2), x = 0.7 + col * 6.08, y = 2.05 + row * 1.35;
       card(s, x, y, 5.85, 1.15, { line: T[i][3] }, CLICK);
@@ -37,7 +37,7 @@ module.exports = async (deck) => {
       s.text(T[i][1], { x: x + 1.15, y, w: 3.4, h: 1.15, size: 18, bold: true, color: C.txt, valign: 'middle' }, { fx: 'fade', dur: 200 });
       s.text(T[i][2], { x: x + 4.45, y, w: 1.2, h: 1.15, size: 16, bold: true, color: T[i][3], align: 'right', valign: 'middle' }, { fx: 'fade', dur: 200 });
     }
-    s.text('+ 5 Min Abschluss: Quiz und „Das nehmt ihr mit“', { x: 0.7, y: 6.15, w: 11.93, h: 0.35, size: 14, italic: true, color: C.dim });
+    s.text('+ 10 Min Abschluss: Mitschreiben, Quiz und „Das nehmt ihr mit“', { x: 0.7, y: 6.15, w: 11.93, h: 0.35, size: 14, italic: true, color: C.dim });
   }
   await chapter(deck, 'tmp', { num: 1, ttl: 'Geschwindigkeit und Abstand', sub: 'Mehr Masse heißt: langsamer fahren, mehr Platz lassen.', ico: 'LuGauge', notes:
     '▶ Sagen: „Kapitel 1: Tempo und Abstand.“\n🖱 Keine Klicks.\n➜ „Wer weiß, wie schnell ein Lkw außerorts fahren darf?“' });
@@ -152,7 +152,7 @@ module.exports = async (deck) => {
       { x: 0.7, y: 5.75, w: 11.93, h: 0.75, size: 17, valign: 'middle', fill: C.card2, line: C.bl, shape: deck.pres.shapes.ROUNDED_RECTANGLE, rr: 0.1, margin: [8, 14, 8, 14] }, { fx: 'rise', c: true, dur: 400 });
   }
   quiz(deck, 'tmp', {
-    kicker: 'Frage · Geschwindigkeit', q: 'Lkw mit 7,49 t zulässiger Gesamtmasse, ohne Anhänger, auf der Landstraße. Wie schnell darfst du höchstens fahren?', size: 28,
+    kicker: 'Frage · Geschwindigkeit', q: 'Lkw mit 7,49 t zulässiger Gesamtmasse, ohne Anhänger, auf der Landstraße. Wie schnell dürft ihr höchstens fahren?', size: 28,
     opts: ['60 km/h', '80 km/h', '100 km/h'], ok: 1,
     why: '§ 3 Abs. 3 StVO: Kfz über 3,5 t bis 7,5 t außerorts 80 km/h. Erst über 7,5 t oder mit Anhänger sind es 60 km/h.',
     notes: '▶ Frage vorlesen, abstimmen.\n🖱 Klick 1: Antworten · Klick 2: Lösung.\n✅ B, 80 km/h.\n💡 Fangfrage: Viele sagen 60. Das gilt erst über 7,5 t oder mit Anhänger.\n➜ „Kapitel 2: Überholen.“',
@@ -227,7 +227,7 @@ module.exports = async (deck) => {
       '❓ Bei jedem Schild fragen, abstimmen lassen, dann klicken.\n' +
       '🖱 Klick 1: links · Klick 2: Mitte · Klick 3: rechts.\n' +
       '✅ Links: 60 km/h mit Sinnbild Lkw – gilt für Kfz über 3,5 t (auch mit Anhänger) und Zugmaschinen, nicht für Pkw und Busse. Also: ja, für euch.\n' +
-      '✅ Mitte: Zeichen 277 mit Zusatzzeichen „7,5 t“ – das Überholverbot gilt erst über 7,5 t. Mit 12 t: ja. Mit einem 7-t-Lkw: nein.\n' +
+      '✅ Mitte: Zeichen 277 mit Zusatzzeichen „7,5 t“ – das Überholverbot gilt erst über 7,5 t. Mit 12 t: ja. Mit einem 7-t-Lkw ohne Anhänger: nein. Mit Anhänger zählt die zulässige Gesamtmasse des ganzen Zuges (mehr dazu in CE4).\n' +
       '✅ Rechts: Zeichen 253 mit „Anlieger frei“ – Durchfahrt verboten, aber wer dort etwas abholt oder liefert, darf hinein.\n' +
       '💡 In der Prüfung oft gefragt: Bei Zeichen 253 zählt die zulässige Gesamtmasse – auch der leere Lkw darf nicht hinein.\n' +
       '➜ „Und welche Spur dürft ihr auf der Autobahn benutzen?“' });
@@ -270,7 +270,7 @@ module.exports = async (deck) => {
     foot(s, '§ 7 Abs. 3c (15 €) · § 18 Abs. 11 (BKat 87a) · § 5 Abs. 3a (BKat 21)');
   }
   quiz(deck, 'ueb', {
-    kicker: 'Frage · Überholen', q: 'Du fährst 80 km/h, der Lkw vor dir 78 km/h. Darfst du überholen?', size: 32,
+    kicker: 'Frage · Überholen', q: 'Ihr fahrt 80 km/h, der Lkw vor euch 78 km/h. Dürft ihr überholen?', size: 32,
     opts: ['Ja, ich bin ja schneller', 'Nein – Überholen nur mit wesentlich höherer Geschwindigkeit', 'Ja, wenn ich den Blinker lange genug setze'], ok: 1,
     why: '§ 5 Abs. 2 StVO. 2 km/h Unterschied ist kein „wesentlich höher“ – das wird ein Elefantenrennen (80 €, 1 Punkt).',
     notes: '▶ Frage vorlesen, abstimmen.\n🖱 Klick 1: Antworten · Klick 2: Lösung.\n✅ B.\n💡 Rechnung zum Staunen: Bei 2 km/h Unterschied dauert das Überholen eines Sattelzugs mit Abständen rund zweieinhalb Minuten (siehe Rechenbeispiel).\n➜ „Kapitel 3: der Bahnübergang – hier geht es um Leben und Tod.“',

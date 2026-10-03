@@ -30,7 +30,7 @@ FOLIE 3 VON 171 · 3 Klicks
 ➜ „Heute geht es weiter mit der Ladung: Wie bleibt sie auf dem Lkw?“
 
 === FOLIE 4 ===
-AUF DER FOLIE: LEKTION C9 · LADUNGSSICHERUNG UND ABFAHRTKONTROLLE | Das lernt ihr in C9 | 01 | Warum sichern?  Welche Kräfte beim Bremsen und in der Kurve an der Ladung zerren | 15 Min | 02 | So wird gesichert  Formschluss, Nieder- und Direktzurren, Zurrgurte, besondere Ladung | 25 Min | 03 | Fahrzeug und Lastverteilung  Stirnwand, Zurrpunkte, Lastverteilungsplan | 15 Min | 04 | Be- und Entladen  Ladebordwand, Ladekran, Stapler | 10 Min | 05 | Abfahrtkontrolle  Der Rundgang vor jeder Schicht, einfache Störungen | 20 Min | + 5 Min Abschluss: Quiz und „Das nehmt ihr mit“ | KLASSE C  ·  ABEND 5  ·  LEKTION C9 | 4
+AUF DER FOLIE: LEKTION C9 · LADUNGSSICHERUNG UND ABFAHRTKONTROLLE | Das lernt ihr in C9 | 01 | Warum sichern?  Welche Kräfte beim Bremsen und in der Kurve an der Ladung zerren | 15 Min | 02 | So wird gesichert  Formschluss, Nieder- und Direktzurren, Zurrgurte, besondere Ladung | 20 Min | 03 | Fahrzeug und Lastverteilung  Stirnwand, Zurrpunkte, Lastverteilungsplan | 15 Min | 04 | Be- und Entladen  Ladebordwand, Ladekran, Stapler | 10 Min | 05 | Abfahrtkontrolle  Der Rundgang vor jeder Schicht, einfache Störungen | 20 Min | + 10 Min Abschluss: Mitschreiben, Quiz und „Das nehmt ihr mit“ | KLASSE C  ·  ABEND 5  ·  LEKTION C9 | 4
 NOTIZEN:
 FOLIE 4 VON 171 · 5 Klicks
 
@@ -528,6 +528,7 @@ FOLIE 52 VON 171 · keine Animation · Klick = weiter
 ▶ Sagen: „8 Tonnen auf einem 18-Tonner. Wir stellen sie ganz nach vorn an die Stirnwand – das ist doch gut für den Formschluss, oder?“
 ❓ Frage auf der Folie stellen.
 💡 Unten ist der Lastverteilungsplan: Die grüne Fläche zeigt, wie viel Ladung an welcher Stelle erlaubt ist. Der Punkt zeigt unsere 8 Tonnen.
+💡 Vorderachse höchstens 8 t: Das ist der Wert dieses Beispiel-Lkw (Fahrzeugpapiere, Plan). Die gesetzliche Grenze für eine Einzelachse ist 10 t (§ 34 StVZO) – der Lkw darf aber nie mehr tragen, als für ihn eingetragen ist.
 🖱 Klick: Die Ladung wandert nach hinten (läuft von selbst bis zur Mitte).
 ➜ „Vorne ist die Vorderachse überlastet. Schieben wir sie nach hinten.“
 
@@ -966,7 +967,7 @@ FOLIE 95 VON 171 · Animation läuft von selbst · Klick = weiter
 ➜ „Willkommen zurück. Lektion C10: Wie fahrt ihr sparsam – und wie plant ihr eine Strecke mit dem Lkw?“
 
 === FOLIE 96 ===
-AUF DER FOLIE: LEKTION C10 · WIRTSCHAFTLICH FAHREN, STRECKENPLANUNG | Das lernt ihr in C10 | 01 | Vorausschauend fahren  Rollen statt bremsen, grüner Drehzahlbereich, Motor aus | 25 Min | 02 | Fahrzeug und Wartung  Reifendruck, Luftleitteile, Gewicht, Luftfilter | 10 Min | 03 | Umwelt, Antriebe, Maut  CO₂, Lärm, E-Lkw und HVO, was die Maut kostet | 15 Min | 04 | Strecke planen  Karte und Maßstab, Lkw-Navi, Höhen und Verbote | 20 Min | 05 | Zeit planen  Durchschnitt 70 km/h, Pausen, Fahrverbote | 15 Min | + 5 Min Abschluss: Quiz und „Das nehmt ihr mit“ | KLASSE C  ·  ABEND 5  ·  LEKTION C10 | 96
+AUF DER FOLIE: LEKTION C10 · WIRTSCHAFTLICH FAHREN, STRECKENPLANUNG | Das lernt ihr in C10 | 01 | Vorausschauend fahren  Rollen statt bremsen, grüner Drehzahlbereich, Motor aus | 20 Min | 02 | Fahrzeug und Wartung  Reifendruck, Luftleitteile, Gewicht, Luftfilter | 10 Min | 03 | Umwelt, Antriebe, Maut  CO₂, Lärm, E-Lkw und HVO, was die Maut kostet | 15 Min | 04 | Strecke planen  Karte und Maßstab, Lkw-Navi, Höhen und Verbote | 20 Min | 05 | Zeit planen  Durchschnitt 70 km/h, Pausen, Fahrverbote | 15 Min | + 10 Min Abschluss: Mitschreiben, Quiz und „Das nehmt ihr mit“ | KLASSE C  ·  ABEND 5  ·  LEKTION C10 | 96
 NOTIZEN:
 FOLIE 96 VON 171 · 5 Klicks
 
@@ -1303,7 +1304,7 @@ FOLIE 129 VON 171 · 4 Klicks
 ➜ „Und welche Antriebe gibt es außer Diesel?“
 
 === FOLIE 130 ===
-AUF DER FOLIE: ANTRIEBE | Nicht nur Diesel | 1 | HVO100 | 2 | Erdgas (LNG/CNG) | 3 | Batterie-elektrisch | 4 | Wasserstoff | ❓ Frage an die Klasse   / Welcher Antrieb ist auf deutschen Autobahnen zurzeit mautfrei? | HVO100 ist Diesel aus hydriertem Pflanzenöl, meist aus Rest- und Abfallstoffen. Nur tanken mit Freigabe des Herstellers. | HVO100  Diesel, meist aus Rest- und Abfallstoffen | Seit Ende Mai 2024 an Tankstellen erlaubt. Nur tanken, wenn der Hersteller euren Lkw dafür freigegeben hat. | Erdgas (LNG/CNG)  tiefkalt verflüssigt oder verdichtet | Batterie-elektrisch  Strom aus der Batterie | Wasserstoff  Brennstoffzelle macht Strom an Bord | Stand der Recherche: Oktober 2026 | KLASSE C  ·  ABEND 5  ·  C10  ·  UMWELT, ANTRIEBE, MAUT | 130
+AUF DER FOLIE: ANTRIEBE | Nicht nur Diesel | 1 | HVO100 | 2 | Erdgas (LNG/CNG) | 3 | Batterie-elektrisch | 4 | Wasserstoff | ❓ Frage an die Klasse   / Welcher Antrieb ist auf deutschen Autobahnen zurzeit mautfrei? | HVO100 ist Diesel aus hydriertem Pflanzenöl, meist aus Rest- und Abfallstoffen. Nur tanken mit Freigabe des Herstellers. | HVO100  Diesel, meist aus Rest- und Abfallstoffen | Seit Ende Mai 2024 an Tankstellen erlaubt. Nur tanken, wenn der Hersteller euren Lkw dafür freigegeben hat. | Erdgas (LNG/CNG)  tiefkalt verflüssigt oder verdichtet | Batterie-elektrisch  Strom aus der Batterie | Wasserstoff  Brennstoffzelle macht Strom an Bord | Mautbefreiung: § 1 Abs. 2 BFStrMG | KLASSE C  ·  ABEND 5  ·  C10  ·  UMWELT, ANTRIEBE, MAUT | 130
 NOTIZEN:
 FOLIE 130 VON 171 · keine Animation · Klick = weiter
 
@@ -1313,7 +1314,7 @@ FOLIE 130 VON 171 · keine Animation · Klick = weiter
 ➜ „Zweitens: Gas.“
 
 === FOLIE 131 ===
-AUF DER FOLIE: ANTRIEBE | Nicht nur Diesel | 1 | HVO100 | 2 | Erdgas (LNG/CNG) | 3 | Batterie-elektrisch | 4 | Wasserstoff | ❓ Frage an die Klasse   / Welcher Antrieb ist auf deutschen Autobahnen zurzeit mautfrei? | Erdgas-Lkw tanken meist tiefkalt verflüssigtes Gas (LNG), manche verdichtetes Gas (CNG). Sie zahlen inzwischen wieder Maut. | HVO100  Diesel, meist aus Rest- und Abfallstoffen | Erdgas (LNG/CNG)  tiefkalt verflüssigt oder verdichtet | LNG im isolierten Tank, CNG in Druckflaschen – auch als Bio-Gas. Die Mautbefreiung für Gas-Lkw lief Ende 2023 aus. | Batterie-elektrisch  Strom aus der Batterie | Wasserstoff  Brennstoffzelle macht Strom an Bord | Stand der Recherche: Oktober 2026 | KLASSE C  ·  ABEND 5  ·  C10  ·  UMWELT, ANTRIEBE, MAUT | 131
+AUF DER FOLIE: ANTRIEBE | Nicht nur Diesel | 1 | HVO100 | 2 | Erdgas (LNG/CNG) | 3 | Batterie-elektrisch | 4 | Wasserstoff | ❓ Frage an die Klasse   / Welcher Antrieb ist auf deutschen Autobahnen zurzeit mautfrei? | Erdgas-Lkw tanken meist tiefkalt verflüssigtes Gas (LNG), manche verdichtetes Gas (CNG). Sie zahlen inzwischen wieder Maut. | HVO100  Diesel, meist aus Rest- und Abfallstoffen | Erdgas (LNG/CNG)  tiefkalt verflüssigt oder verdichtet | LNG im isolierten Tank, CNG in Druckflaschen – auch als Bio-Gas. Die Mautbefreiung für Gas-Lkw lief Ende 2023 aus. | Batterie-elektrisch  Strom aus der Batterie | Wasserstoff  Brennstoffzelle macht Strom an Bord | Mautbefreiung: § 1 Abs. 2 BFStrMG | KLASSE C  ·  ABEND 5  ·  C10  ·  UMWELT, ANTRIEBE, MAUT | 131
 NOTIZEN:
 FOLIE 131 VON 171 · keine Animation · Klick = weiter
 
@@ -1323,7 +1324,7 @@ FOLIE 131 VON 171 · keine Animation · Klick = weiter
 ➜ „Drittens: Strom.“
 
 === FOLIE 132 ===
-AUF DER FOLIE: ANTRIEBE | Nicht nur Diesel | 1 | HVO100 | 2 | Erdgas (LNG/CNG) | 3 | Batterie-elektrisch | 4 | Wasserstoff | ❓ Frage an die Klasse   / Welcher Antrieb ist auf deutschen Autobahnen zurzeit mautfrei? | Batterie-Lkw fahren ohne Abgas und sehr leise. Reichweite und Ladestopps müssen geplant werden. | HVO100  Diesel, meist aus Rest- und Abfallstoffen | Erdgas (LNG/CNG)  tiefkalt verflüssigt oder verdichtet | Batterie-elektrisch  Strom aus der Batterie | Kein Abgas, sehr leise, Bremsenergie wird zurückgewonnen. Reichweite und Laden planen – am besten in der Pause laden. | Wasserstoff  Brennstoffzelle macht Strom an Bord | Stand der Recherche: Oktober 2026 | KLASSE C  ·  ABEND 5  ·  C10  ·  UMWELT, ANTRIEBE, MAUT | 132
+AUF DER FOLIE: ANTRIEBE | Nicht nur Diesel | 1 | HVO100 | 2 | Erdgas (LNG/CNG) | 3 | Batterie-elektrisch | 4 | Wasserstoff | ❓ Frage an die Klasse   / Welcher Antrieb ist auf deutschen Autobahnen zurzeit mautfrei? | Batterie-Lkw fahren ohne Abgas und sehr leise. Reichweite und Ladestopps müssen geplant werden. | HVO100  Diesel, meist aus Rest- und Abfallstoffen | Erdgas (LNG/CNG)  tiefkalt verflüssigt oder verdichtet | Batterie-elektrisch  Strom aus der Batterie | Kein Abgas, sehr leise, Bremsenergie wird zurückgewonnen. Reichweite und Laden planen – am besten in der Pause laden. | Wasserstoff  Brennstoffzelle macht Strom an Bord | Mautbefreiung: § 1 Abs. 2 BFStrMG | KLASSE C  ·  ABEND 5  ·  C10  ·  UMWELT, ANTRIEBE, MAUT | 132
 NOTIZEN:
 FOLIE 132 VON 171 · keine Animation · Klick = weiter
 
@@ -1334,7 +1335,7 @@ FOLIE 132 VON 171 · keine Animation · Klick = weiter
 ➜ „Und viertens?“
 
 === FOLIE 133 ===
-AUF DER FOLIE: ANTRIEBE | Nicht nur Diesel | 1 | HVO100 | 2 | Erdgas (LNG/CNG) | 3 | Batterie-elektrisch | 4 | Wasserstoff | ✓ Antwort   / Emissionsfrei – mit Batterie oder Wasserstoff. Mautfrei bis zum 30. Juni 2031. | Wasserstoff-Lkw machen mit der Brennstoffzelle Strom an Bord. Batterie- und Wasserstoff-Lkw sind bis 30.06.2031 mautfrei. | HVO100  Diesel, meist aus Rest- und Abfallstoffen | Erdgas (LNG/CNG)  tiefkalt verflüssigt oder verdichtet | Batterie-elektrisch  Strom aus der Batterie | Wasserstoff  Brennstoffzelle macht Strom an Bord | Aus dem Auspuff kommt nur Wasserdampf. Es gibt noch wenige Tankstellen – Tankstopps genau planen. | Stand der Recherche: Oktober 2026 | KLASSE C  ·  ABEND 5  ·  C10  ·  UMWELT, ANTRIEBE, MAUT | 133
+AUF DER FOLIE: ANTRIEBE | Nicht nur Diesel | 1 | HVO100 | 2 | Erdgas (LNG/CNG) | 3 | Batterie-elektrisch | 4 | Wasserstoff | ✓ Antwort   / Emissionsfrei – mit Batterie oder Wasserstoff. Mautfrei bis zum 30. Juni 2031. | Wasserstoff-Lkw machen mit der Brennstoffzelle Strom an Bord. Batterie- und Wasserstoff-Lkw sind bis 30.06.2031 mautfrei. | HVO100  Diesel, meist aus Rest- und Abfallstoffen | Erdgas (LNG/CNG)  tiefkalt verflüssigt oder verdichtet | Batterie-elektrisch  Strom aus der Batterie | Wasserstoff  Brennstoffzelle macht Strom an Bord | Aus dem Auspuff kommt nur Wasserdampf. Es gibt noch wenige Tankstellen – Tankstopps genau planen. | Mautbefreiung: § 1 Abs. 2 BFStrMG | KLASSE C  ·  ABEND 5  ·  C10  ·  UMWELT, ANTRIEBE, MAUT | 133
 NOTIZEN:
 FOLIE 133 VON 171 · keine Animation · Klick = weiter
 

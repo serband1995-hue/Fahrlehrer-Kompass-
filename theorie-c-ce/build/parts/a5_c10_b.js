@@ -170,7 +170,7 @@ module.exports = async (deck) => {
         '▶ „Batterie-Lkw: kein Abgas, sehr leise. Beim Bremsen wird Energie zurückgewonnen. Aber: Reichweite und Ladestopps müssen geplant werden – am besten lädt man in der Pause.“\n💡 Anstecken und Abstecken gehören nicht zur Pause – nur die freie Zeit dazwischen.\n✅ Art. 4 Buchst. d VO (EG) 561/2006: Eine Fahrtunterbrechung dient ausschließlich der Erholung, keine anderen Arbeiten. Eine amtliche Auslegung zum Laden von E-Lkw gibt es bisher nicht. Rekuperation: Lehrbuchwissen. Batterie mindert die Nutzlast.\n➜ „Und viertens?“',
         '▶ „Wasserstoff: Die Brennstoffzelle macht an Bord Strom – aus dem Auspuff kommt nur Wasserdampf. Problem: Es gibt noch wenige Tankstellen.“\n❓ Frage auf der Folie auflösen.\n✅ § 1 Abs. 2 Nr. 7 BFStrMG: emissionsfreie schwere Nutzfahrzeuge mautfrei bis 30.06.2031; Nr. 9: bis 4,25 t dauerhaft (Viertes Gesetz zur Änderung mautrechtlicher Vorschriften, Dezember 2025). Die alte Regel „nur bis Ende 2025“ ist überholt.\n➜ „Was zahlt dann ein Diesel-Lkw an Maut?“',
       ],
-      legend: 'Stand der Recherche: Oktober 2026',
+      legend: 'Mautbefreiung: § 1 Abs. 2 BFStrMG',
       scene: async (s, i) => {
         let y = 1.7;
         for (let q = 0; q < 4; q++) {

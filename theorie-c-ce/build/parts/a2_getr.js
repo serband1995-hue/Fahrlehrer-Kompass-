@@ -165,7 +165,7 @@ module.exports = async (deck) => {
       '❓ „Wann schaltet ihr zurück – oben oder unten am Berg?“\n' +
       '🖱 Klick 1–3: je eine Antwort.\n' +
       '✅ Vor dem Gefälle in einen kleineren Gang schalten. Dann wirken Motorbremse und Retarder stark, die Betriebsbremse bleibt kühl für den Notfall (Prüfungsfrage 2.7.01-257: rechtzeitig zurückschalten, Dauerbremse nutzen). Beim automatisierten Getriebe: Manuell-Modus oder Bergabfunktion nach Betriebsanleitung.\n' +
-      '💡 Mehr zu Dauerbremsen in der Bremsen-Lektion.\n' +
+      '💡 Motorbremse und Retarder (Dauerbremsen) erklären wir genau in C6.\n' +
       '➜ „Kurzes Quiz zum Getriebe.“' });
     kick(s, 'Getriebe am Berg'); title(s, 'Langes Gefälle voraus – wann zurückschalten?', { w: 9.6, h: 1.4, size: 36 });
     await sign(s, '108_10', 10.9, 0.55, 1.75);

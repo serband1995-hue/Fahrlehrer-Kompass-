@@ -253,30 +253,32 @@ module.exports = async (deck) => {
   }
   {
     const s = base(deck, 'c6b', { notes:
-      '▶ Sagen: „Fahrtenschreiber und Begrenzer werden in einer Fachwerkstatt geprüft. Danach kommt ein Einbauschild an die B-Säule auf der Fahrerseite.“\n' +
-      '🖱 Klick 1: Fahrtenschreiber · Klick 2: Begrenzer · Klick 3: Einbauschild.\n' +
+      '▶ Sagen: „Fahrtenschreiber und Begrenzer werden in einer Fachwerkstatt geprüft. Danach kommt ein Einbauschild an die B-Säule auf der Fahrerseite. Und einmal im Jahr kommt die UVV-Prüfung dazu.“\n' +
+      '🖱 Klick 1: Fahrtenschreiber · Klick 2: Begrenzer · Klick 3: Einbauschild · Klick 4: UVV-Prüfung.\n' +
+      '✅ DGUV Vorschrift 70 § 57: Fahrzeuge bei Bedarf, mindestens einmal jährlich durch einen Sachkundigen auf betriebssicheren Zustand prüfen lassen; Ergebnis schriftlich festhalten und bis zur nächsten Prüfung aufbewahren. Das veranlasst der Unternehmer. Eine Prüfplakette ist üblich, aber nicht vorgeschrieben.\n' +
       '✅ § 57b StVZO: Fahrtenschreiber mindestens alle 24 Monate prüfen lassen (Halterpflicht), außerdem sofort nach Reparatur, Änderung der Reifengröße, Plombentausch, Kennzeichenwechsel oder wenn die Uhrzeit mehr als 20 Minuten abweicht. § 57d: Begrenzer prüfen nach Einbau, Reparatur, Änderung der Reifengröße oder der Kraftstoffzufuhr – eine feste Frist gibt es nicht; die HU prüft ihn mit. Einbauschild plombiert an der B-Säule der Fahrerseite (§ 57d Abs. 2) – das Schild des Fahrtenschreibers darf auch auf oder neben dem Gerät sitzen (§ 57b Abs. 1), beide Schilder dürfen kombiniert werden.\n' +
       '➜ „Damit ist C6 geschafft. Zeit zum Mitschreiben.“' });
-    kick(s, 'Prüfungen'); title(s, 'Fahrtenschreiber und Begrenzer prüfen');
-    await point(s, 0.7, 2.05, 11.93, 1.35, 'LuCalendarClock', C.bl, 'Fahrtenschreiber:', 'mindestens alle 24 Monate prüfen – und sofort nach Reparatur, neuer Reifengröße, beim digitalen Gerät auch nach neuem Kennzeichen oder falscher Uhrzeit (über 20 Minuten).', CLICK, { size: 17 });
-    await point(s, 0.7, 3.6, 11.93, 1.35, 'LuGauge', C.gr, 'Begrenzer:', 'Prüfung nach Einbau, Reparatur oder neuer Reifengröße – die HU kontrolliert ihn mit.', CLICK, { size: 17 });
-    await point(s, 0.7, 5.15, 11.93, 1.35, 'LuTag', 'C9A227', 'Einbauschild:', 'plombiert an der B-Säule Fahrerseite (Tacho-Schild auch am Gerät) – zeigt die letzte Prüfung.', CLICK, { size: 17 });
+    kick(s, 'Prüfungen'); title(s, 'Fahrtenschreiber, Begrenzer, UVV');
+    await point(s, 0.7, 2.05, 11.93, 1.08, 'LuCalendarClock', C.bl, 'Fahrtenschreiber:', 'mindestens alle 24 Monate prüfen – und sofort nach Reparatur, neuer Reifengröße, beim digitalen Gerät auch nach neuem Kennzeichen oder falscher Uhrzeit (über 20 Minuten).', CLICK, { size: 16 });
+    await point(s, 0.7, 3.22, 11.93, 1.08, 'LuGauge', C.gr, 'Begrenzer:', 'Prüfung nach Einbau, Reparatur oder neuer Reifengröße – die HU kontrolliert ihn mit.', CLICK, { size: 16 });
+    await point(s, 0.7, 4.39, 11.93, 1.08, 'LuTag', 'C9A227', 'Einbauschild:', 'plombiert an der B-Säule Fahrerseite (Tacho-Schild auch am Gerät) – zeigt die letzte Prüfung.', CLICK, { size: 16 });
+    await point(s, 0.7, 5.56, 11.93, 1.08, 'LuHardHat', C.or, 'UVV-Prüfung:', 'mindestens einmal im Jahr durch einen Sachkundigen (Unfallverhütungsvorschrift). Das veranlasst der Unternehmer – das Ergebnis wird schriftlich festgehalten.', CLICK, { size: 16 });
   }
 
   // ===== ABSCHLUSS C6 =====
   write(deck, 'c6e', {
     ttl: 'Dauerbremsen, Prüfung, Begrenzer', labelW: 3.6, size: 18,
     rows: [
-      ['Dauerbremse', 'Pflicht über 9 t – verschleißfrei, bremst nicht bis zum Stand'],
+      ['Dauerbremse', 'StVZO: Pflicht über 9 t – verschleißfrei, bremst nicht bis zum Stand'],
       ['Gefälle', 'vorher zurückschalten, Dauerbremse nutzen – sonst Fading'],
-      ['Glätte', 'Dauerbremse klein oder aus – sie bremst nur die Antriebsachse'],
+      ['Glätte', 'Dauerbremse aus – sie bremst nur die Antriebsachse'],
       ['ABS-Bremsung', 'schlagartig, voll treten und halten – nicht pumpen'],
       ['Dichtheit', 'eine Vollbremsung: höchstens 0,7 bar Druckabfall'],
       ['HU / SP', 'HU jedes Jahr – dazwischen SP: über 12 t ab dem 3., über 7,5 t ab dem 4. Jahr'],
       ['Begrenzer', '90 km/h – erlaubt sind auf der Autobahn 80 km/h'],
-      ['Fahrtenschreiber', 'Prüfung mindestens alle 24 Monate'],
+      ['Prüfungen', 'Fahrtenschreiber alle 24 Monate · UVV-Prüfung jedes Jahr'],
     ],
-    notes: '▶ Sagen: „Schreibt euch das auf – das sind die Kernpunkte aus C6.“\n❓ Vor jedem Klick fragen: „Was gehört hier hin?“\n🖱 Klick 1–8: je eine Lösung.\n✅ Quellen: § 41 Abs. 15, § 57b, § 57c StVZO; StVZO Anlage VIII; § 18 Abs. 5 StVO; Prüfungsfragen 2.7.06-239, -310, -108, 2.7.01-139, 2.7.06-231.\n➜ „Jetzt testen wir C6.“',
+    notes: '▶ Sagen: „Schreibt euch das auf – das sind die Kernpunkte aus C6.“\n❓ Vor jedem Klick fragen: „Was gehört hier hin?“\n🖱 Klick 1–8: je eine Lösung.\n✅ Quellen: § 41 Abs. 15, § 57b, § 57c StVZO; DGUV Vorschrift 70 § 57 (UVV); StVZO Anlage VIII; § 18 Abs. 5 StVO; Prüfungsfragen 2.7.06-239, -310, -108, 2.7.01-139, 2.7.06-231.\n➜ „Jetzt testen wir C6.“',
   });
   quiz(deck, 'c6e', {
     kicker: 'Quiz C6 · 1', q: 'Warum sollten Sie die Dauerbremse (Retarder) nutzen?', size: 34,
@@ -299,7 +301,7 @@ module.exports = async (deck) => {
   await takeaway(deck, 'c6e', {
     items: [
       ['LuMountain', 'Bergab:', 'vorher zurückschalten, Dauerbremse arbeiten lassen – sonst droht Fading.'],
-      ['LuSnowflake', 'Auf Glätte:', 'Dauerbremse klein oder aus – nie voll in der Kurve.'],
+      ['LuSnowflake', 'Auf Glätte:', 'Dauerbremse aus – auch die automatische Zuschaltung.'],
       ['LuCircleDot', 'ABS:', 'voll treten und halten – bleibt die Leuchte an, ab in die Werkstatt.'],
       ['LuListChecks', 'Vor jeder Schicht:', 'Druck, Dichtheit, Druckwarnung, ABS-Leuchte, Bremsprobe.'],
       ['LuClipboardCheck', 'HU und SP:', 'HU jedes Jahr – über 7,5 t dazwischen auch SP.'],

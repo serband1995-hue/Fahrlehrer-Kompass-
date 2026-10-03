@@ -132,13 +132,13 @@ module.exports = async (deck) => {
     s.text('rot-weiß, schräg gestreift – vorn und hinten', { x: 9.0, y: 4.85, w: 3.5, h: 0.9, size: 14, color: C.txt, align: 'center' });
   }
   quiz(deck, 'park', {
-    kicker: 'Frage · Anhänger', q: 'Du stellst einen Anhänger ohne Zugfahrzeug am Straßenrand ab. Wie lange darf er dort höchstens parken?', size: 28,
+    kicker: 'Frage · Anhänger', q: 'Ihr stellt einen Anhänger ohne Zugfahrzeug am Straßenrand ab. Wie lange darf er dort höchstens parken?', size: 28,
     opts: ['1 Woche', '2 Wochen', 'Unbegrenzt, wenn er beleuchtet ist'], ok: 1,
     why: '§ 12 Abs. 3b StVO: Anhänger ohne Zugfahrzeug dürfen höchstens zwei Wochen geparkt werden (20 €, BKat Nr. 57). Ausnahme: gekennzeichnete Parkplätze.',
     notes: '▶ Frage vorlesen, abstimmen.\n🖱 Klick 1: Antworten · Klick 2: Lösung.\n✅ B, 2 Wochen.\n➜ „Und wie ist es mit der Beleuchtung?“',
   });
   quiz(deck, 'park', {
-    kicker: 'Frage · Parken', q: 'Dein Lkw (18 t) steht innerorts nachts am Fahrbahnrand. Was ist Pflicht?', size: 30,
+    kicker: 'Frage · Parken', q: 'Euer Lkw (18 t) steht innerorts nachts am Fahrbahnrand. Was ist Pflicht?', size: 30,
     opts: ['Nichts – innerorts ist es ja hell', 'Beleuchtung oder Park-Warntafeln', 'Nur das Warndreieck aufstellen'], ok: 1,
     why: '§ 17 Abs. 4 StVO: Innerorts müssen haltende Fahrzeuge über 3,5 t und Anhänger auf der Fahrbahn stets beleuchtet oder mit Park-Warntafeln kenntlich gemacht sein.',
     notes: '▶ Frage vorlesen, abstimmen.\n🖱 Klick 1: Antworten · Klick 2: Lösung.\n✅ B.\n💡 Für Pkw reicht innerorts oft die Straßenbeleuchtung – für Lkw über 3,5 t nicht.\n➜ „Kapitel 5: Wann dürft ihr gar nicht fahren?“',
