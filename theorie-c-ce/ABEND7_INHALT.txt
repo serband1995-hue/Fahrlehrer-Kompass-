@@ -1,0 +1,1272 @@
+=== FOLIE 1 ===
+AUF DER FOLIE: KLASSE CE  ·  THEORIE  ·  ABEND 7 | Mit dem Zug sicher fahren | CE3  Lastzugbremsen / CE4  Fahren mit Zügen | Fahrschule Boost  ·  Offenbach am Main
+NOTIZEN:
+FOLIE 1 VON 124 · Animation läuft von selbst · Klick = weiter
+
+▶ Sagen: „Willkommen zu Abend 7 – dem letzten Abend für Klasse CE. Zuerst noch einmal Bremsen: Wie bremst ein Zug, damit er gerade bleibt? Was passiert, wenn der ABS-Stecker fehlt? Und wie sichert ihr den Zug am Berg? Nach der Pause geht es ums Fahren: Einknicken, Rückwärtsfahren, Abbiegen, Wetter, Tempo und Abstand.“
+💡 Vorher: Anwesenheit eintragen, Ausbildungsnachweis abzeichnen.
+🖱 Keine Klicks, alles läuft von selbst.
+➜ „So läuft der Abend.“
+
+=== FOLIE 2 ===
+AUF DER FOLIE: KLASSE CE  ·  ABEND 7  ·  LEKTION CE3 | 2 | HEUTE ABEND | Zwei Lektionen, eine Pause | 18:00 – 19:30 | Lektion CE3  Lastzugbremsen / Abstimmung Lkw und Anhänger · Lastanpassung und EBS · ABS-Stecker · Kontrollstellung · Dauerbremse und Prüffristen | 19:30 – 19:45 | Pause  15 Minuten | 19:45 – 21:15 | Lektion CE4  Fahren mit Zügen / Abfahrtkontrolle · Einknicken und Pendeln · Rückwärts und Abbiegen · Gefälle und Wetter · Tempo, Abstand, Schwertransport
+NOTIZEN:
+FOLIE 2 VON 124 · 3 Klicks
+
+▶ Sagen: „Zwei Lektionen: zuerst CE3 – wie die Bremse im Zug zusammenspielt. Nach der Pause CE4 – wie ihr den Zug sicher fahrt.“
+🖱 Klick 1: Lektion CE3 · Klick 2: Pause · Klick 3: Lektion CE4.
+💡 Zeiten für einen Beginn um 18:00 Uhr.
+➜ „Erst ein kurzer Blick zurück auf Abend 6.“
+
+=== FOLIE 3 ===
+AUF DER FOLIE: KLASSE CE  ·  ABEND 7  ·  LEKTION CE3 | 3 | WIEDERHOLUNG ABEND 6 | Drei Fragen von letztem Mal – wer weiß es noch? | Welche Leitung schließt ihr beim Ankuppeln zuerst an?  Gelb, die Bremsleitung – dann rot. Rot nie allein! | Die rote Leitung reißt ab. Was passiert?  Der Anhänger bremst sofort selbst. Der Lkw bremst nicht automatisch. | Wie lang darf ein Lkw mit Anhänger sein?  18,75 m – mit Ladung, die hinten übersteht, höchstens 20,75 m.
+NOTIZEN:
+FOLIE 3 VON 124 · 3 Klicks
+
+▶ Sagen: „Bevor wir anfangen: drei Fragen zu Abend 6.“
+❓ Jede Frage vorlesen, Antworten sammeln, dann klicken.
+🖱 Klick 1–3: je eine Frage mit Antwort.
+✅ Prüfungsfragen 2.7.07-320 (gelb zuerst), 2.7.02-302 (Bruch der Vorratsleitung), 2.6.06-301 (18,75 m); § 22 Abs. 4 StVO (20,75 m).
+➜ „Heute: Wie bremst der ganze Zug zusammen?“
+
+=== FOLIE 4 ===
+AUF DER FOLIE: KLASSE CE  ·  ABEND 7  ·  LEKTION CE3 | 4 | LEKTION CE3 · LASTZUGBREMSEN | Das lernt ihr in CE3 | 01 | Jedes Fahrzeug bremst sich selbst  Koppelkraft · Einknicken · Voreilung | 15 Min | 02 | Lastanpassung und EBS  Wie der Anhänger seine Last kennt · zwei Wege zum Anhänger | 20 Min | 03 | Der ABS-Stecker  Was ohne Stecker passiert · Warnleuchte · Klicken | 15 Min | 04 | Feststellbremse im Zug  Anhänger hält nur mit Luft · Kontrollstellung · 12 % | 15 Min | 05 | Dauerbremse und Prüffristen  Retarder schiebt · HU, SP und UVV am Anhänger | 20 Min | + 5 Min Abschluss: Quiz und „Das nimmst du mit“
+NOTIZEN:
+FOLIE 4 VON 124 · 5 Klicks
+
+▶ Sagen: „In CE3 schauen wir, wie die Bremse im Zug zusammenspielt: Wer bremst wie stark? Wie merkt der Anhänger, wie schwer er ist? Was passiert ohne ABS-Stecker? Wie sichert ihr den Zug am Berg? Und warum ist die Dauerbremse im Zug heikel?“
+🖱 Klick 1–5: je ein Kapitel.
+💡 Grundlagen (ALB, EBS, Federspeicher, Retarder, HU und SP) kennen alle aus C5 und C6 – heute geht es um das, was beim Zug anders ist.
+➜ „Kapitel 1: Jedes Fahrzeug bremst sich selbst.“
+
+=== FOLIE 5 ===
+AUF DER FOLIE: KLASSE CE  ·  ABEND 7  ·  CE3  ·  JEDES FAHRZEUG BREMST SICH SELBST | 5 | 01 | Jedes Fahrzeug bremst sich selbst | Lkw und Anhänger bremsen jeder ihr eigenes Gewicht. Dann bleibt der Zug gerade.
+NOTIZEN:
+FOLIE 5 VON 124 · Animation läuft von selbst · Klick = weiter
+
+▶ Sagen: „Im Zug hängen zwei schwere Fahrzeuge aneinander. Die Kunst ist: Beide bremsen genau so stark, wie es zu ihrem eigenen Gewicht passt. Dann drückt und zieht nichts an der Kupplung.“
+✅ WABCO EBS3 Systembeschreibung, Kap. 4: „Motorwagen und Anhängerfahrzeug bremsen jeweils den eigenen Massenanteil des Zuges. Dadurch wird die Koppelkraft … gering gehalten.“ DVR-Vorstandsbeschluss vom 17.10.2024.
+🖱 Keine Klicks.
+➜ „Schauen wir uns das an.“
+
+=== FOLIE 6 ===
+AUF DER FOLIE: KLASSE CE  ·  ABEND 7  ·  CE3  ·  JEDES FAHRZEUG BREMST SICH SELBST | 6 | KOPPELKRAFT | Wer bremst wie stark? | ❓ Frage an die Klasse / Was passiert, wenn der Lkw stärker bremst als der Anhänger? | Antwort folgt … | Im Zug soll jedes Fahrzeug sein eigenes Gewicht bremsen. Die Balken zeigen: Wie stark bremst der Lkw, wie stark der Anhänger? | Seitenansicht · schematisch · 100 % = so stark, wie es zum eigenen Gewicht passt | Lkw bremst  – | Anhänger bremst  – | Der Zug fährt. Noch bremst niemand.
+NOTIZEN:
+FOLIE 6 VON 124 · keine Animation · Klick = weiter
+
+▶ Sagen: „Oben seht ihr zwei Balken. 100 Prozent heißt: Das Fahrzeug bremst genau so stark, wie es zu seinem eigenen Gewicht passt. Zwischen den Fahrzeugen zeigt ein Pfeil, ob der Anhänger schiebt oder zieht.“
+❓ Frage auf der Folie stellen.
+✅ WABCO EBS3, Kap. 4; Mercedes-Benz Actros Betriebsanleitung (EBS): „… stets ihrem Gewicht entsprechend, an der Bremsarbeit des gesamten Lastzugs.“ Darstellung: eigene, schematisch.
+🖱 Klick: Der Fahrer bremst (läuft von selbst weiter).
+➜ „Jetzt wird gebremst.“
+
+=== FOLIE 7 ===
+AUF DER FOLIE: KLASSE CE  ·  ABEND 7  ·  CE3  ·  JEDES FAHRZEUG BREMST SICH SELBST | 7 | KOPPELKRAFT | Wer bremst wie stark? | ❓ Frage an die Klasse / Was passiert, wenn der Lkw stärker bremst als der Anhänger? | Antwort folgt … | Im Zug soll jedes Fahrzeug sein eigenes Gewicht bremsen. Die Balken zeigen: Wie stark bremst der Lkw, wie stark der Anhänger? | Seitenansicht · schematisch · 100 % = so stark, wie es zum eigenen Gewicht passt | Lkw bremst  50 % | Anhänger bremst  50 % | Koppelkraft klein | Der Fahrer bremst …
+NOTIZEN:
+FOLIE 7 VON 124 · läuft von selbst weiter (kein Klick)
+
+▶ Die Bewegung läuft – zuschauen lassen.
+🖱 Kein Klick – die Folie läuft von selbst weiter.
+➜ (läuft weiter)
+
+=== FOLIE 8 ===
+AUF DER FOLIE: KLASSE CE  ·  ABEND 7  ·  CE3  ·  JEDES FAHRZEUG BREMST SICH SELBST | 8 | KOPPELKRAFT | Wer bremst wie stark? | ❓ Frage an die Klasse / Was passiert, wenn der Lkw stärker bremst als der Anhänger? | Antwort folgt … | Richtig abgestimmt: Lkw und Anhänger bremsen beide ihr eigenes Gewicht. Die Kraft an der Kupplung bleibt klein. | Seitenansicht · schematisch · 100 % = so stark, wie es zum eigenen Gewicht passt | Lkw bremst  100 % | Anhänger bremst  100 % | Koppelkraft klein | Jeder bremst sein eigenes Gewicht: An der Kupplung drückt fast nichts. Der Zug bleibt gerade.
+NOTIZEN:
+FOLIE 8 VON 124 · keine Animation · Klick = weiter
+
+▶ „So soll es sein: Beide bremsen 100 Prozent ihres eigenen Gewichts. An der Kupplung drückt und zieht fast nichts – die Fachleute sagen: Die Koppelkraft ist klein. Der Zug bleibt gerade.“
+✅ WABCO EBS3, Kap. 4 (Koppelkraft gering halten).
+🖱 Klick: Was, wenn der Lkw stärker bremst?
+➜ „Jetzt bremst der Lkw zu stark.“
+
+=== FOLIE 9 ===
+AUF DER FOLIE: KLASSE CE  ·  ABEND 7  ·  CE3  ·  JEDES FAHRZEUG BREMST SICH SELBST | 9 | KOPPELKRAFT | Wer bremst wie stark? | ❓ Frage an die Klasse / Was passiert, wenn der Lkw stärker bremst als der Anhänger? | ✓ Antwort / Dann schiebt der Anhänger den Lkw. In der Kurve oder auf Glätte kann der Zug einknicken. Richtig: Jeder bremst sein eigenes Gewicht – der Anhänger eher einen Tick früher. | Der Lkw bremst stärker als der Anhänger – zum Beispiel, weil der Retarder nur den Lkw bremst. Der Anhänger schiebt. | Seitenansicht · schematisch · 100 % = so stark, wie es zum eigenen Gewicht passt | Lkw bremst  140 % | Anhänger bremst  60 % | Anhänger schiebt | Der Lkw bremst stärker: Der Anhänger schiebt. In der Kurve oder auf Glätte kann der Zug einknicken!
+NOTIZEN:
+FOLIE 9 VON 124 · keine Animation · Klick = weiter
+
+▶ „Jetzt bremst der Lkw viel stärker – zum Beispiel, weil der Retarder nur auf seine Antriebsachse wirkt. Der Anhänger will weiter und schiebt. Geradeaus merkt ihr das kaum. In der Kurve oder auf Glätte kann der Zug einknicken.“
+❓ Frage auf der Folie auflösen.
+✅ Prüfungsfrage 2.7.06-108: Einknick- oder Schleudergefahr auf Glätte, wenn der Retarder bei Kurvenfahrt voll betätigt wird oder der Lkw bei Kurvenfahrt stärker bremst als der Anhänger.
+🖱 Klick: Und umgekehrt?
+➜ „Und wenn der Anhänger viel stärker bremst?“
+
+=== FOLIE 10 ===
+AUF DER FOLIE: KLASSE CE  ·  ABEND 7  ·  CE3  ·  JEDES FAHRZEUG BREMST SICH SELBST | 10 | KOPPELKRAFT | Wer bremst wie stark? | ❓ Frage an die Klasse / Was passiert, wenn der Lkw stärker bremst als der Anhänger? | ✓ Antwort / Dann schiebt der Anhänger den Lkw. In der Kurve oder auf Glätte kann der Zug einknicken. Richtig: Jeder bremst sein eigenes Gewicht – der Anhänger eher einen Tick früher. | Der Anhänger bremst viel stärker: Er zieht am Lkw. Seine Bremsen machen die meiste Arbeit – sie werden heiß und verschleißen. | Seitenansicht · schematisch · 100 % = so stark, wie es zum eigenen Gewicht passt | Lkw bremst  70 % | Anhänger bremst  140 % | Anhänger zieht | Der Anhänger bremst viel stärker: Er zieht hinten. Seine Bremsen werden heiß und nutzen sich schneller ab.
+NOTIZEN:
+FOLIE 10 VON 124 · keine Animation · Klick = weiter
+
+▶ „Umgekehrt: Der Anhänger bremst viel stärker. Dann zieht er hinten – das ist zwar stabil, aber seine Bremsen machen fast alles. Sie werden heiß und verschleißen schneller.“
+✅ Lehrbuchwissen. DVR-Beschluss 17.10.2024: Lkw und Anhänger sollen jeweils ihre eigene Masse abbremsen.
+🖱 Klick: Die richtige Einstellung.
+➜ „Wie macht man es richtig?“
+
+=== FOLIE 11 ===
+AUF DER FOLIE: KLASSE CE  ·  ABEND 7  ·  CE3  ·  JEDES FAHRZEUG BREMST SICH SELBST | 11 | KOPPELKRAFT | Wer bremst wie stark? | ❓ Frage an die Klasse / Was passiert, wenn der Lkw stärker bremst als der Anhänger? | ✓ Antwort / Dann schiebt der Anhänger den Lkw. In der Kurve oder auf Glätte kann der Zug einknicken. Richtig: Jeder bremst sein eigenes Gewicht – der Anhänger eher einen Tick früher. | Voreilung: Bei leichtem Bremsen bekommt der Anhänger etwas mehr Druck. Er zieht den Zug gerade. Einstellen darf das nur die Werkstatt. | Seitenansicht · schematisch · 100 % = so stark, wie es zum eigenen Gewicht passt | Lkw bremst  100 % | Anhänger bremst  110 % | zieht leicht | Voreilung: Der Anhänger bremst einen Tick früher. Er zieht ganz leicht – der Zug bleibt gestreckt.
+NOTIZEN:
+FOLIE 11 VON 124 · keine Animation · Klick = weiter
+
+▶ „Deshalb gibt es die Voreilung: Bei leichtem Bremsen bekommt der Anhänger etwas mehr Druck als der Lkw. Er bremst einen Tick früher und zieht den Zug gerade. Das stellt die Werkstatt ein – beim EBS steht es im Steuergerät. Ihr als Fahrer verstellt daran nichts.“
+✅ Voreilung: Lehrbuchwissen (Patent DE4234098A1 „Anhänger-Steuerventil“; WABCO EBS3: bei EBS nicht von Hand einstellbar, im Steuergerät parametriert). Prüfungsfrage 2.7.07-328: „Bei abgeschalteter Voreilung … scharf bremsen“ ist eine falsche Antwort. Keine Zahlenwerte – je nach Fahrzeug verschieden.
+💡 DVR 2024: Starke Dauerbremsen nehmen dem Anhänger viel Arbeit ab – seine Beläge können „einschlafen“. Hersteller empfehlen, die Anhängerbremse ab und zu bewusst zu nutzen.
+🖱 Nächster Klick: nächste Folie.
+➜ „Eine Prüfungsfrage.“
+
+=== FOLIE 12 ===
+AUF DER FOLIE: KLASSE CE  ·  ABEND 7  ·  CE3  ·  JEDES FAHRZEUG BREMST SICH SELBST | 12 | PRÜFUNGSFRAGE 2.7.06-108 | Wann ist für einen druckluftgebremsten Lastzug die Gefahr besonders groß, auf glatter Fahrbahn einzuknicken oder zu schleudern? | A | Wenn der Retarder bei Kurvenfahrt voll betätigt wird | B | Wenn der Lkw bei Kurvenfahrt stärker bremst als der Anhänger | C | Wenn die Ladung überwiegend die Antriebsachse belastet | ✓  RICHTIG | ✓  RICHTIG | Beides heißt: Der Lkw bremst stärker als der Anhänger – der Anhänger schiebt.
+NOTIZEN:
+FOLIE 12 VON 124 · 2 Klicks
+
+▶ Frage vorlesen, abstimmen.
+🖱 Klick 1: Antworten · Klick 2: Lösung.
+✅ Amtlicher Fragenkatalog 2.7.06-108: A und B.
+➜ „Kapitel 2: Woher weiß der Anhänger, wie schwer er ist?“
+
+=== FOLIE 13 ===
+AUF DER FOLIE: KLASSE CE  ·  ABEND 7  ·  CE3  ·  LASTANPASSUNG UND EBS | 13 | 02 | Lastanpassung und EBS | Ein leerer Anhänger braucht wenig Bremsdruck, ein voller viel. Woher weiß er, wie schwer er ist?
+NOTIZEN:
+FOLIE 13 VON 124 · Animation läuft von selbst · Klick = weiter
+
+▶ Sagen: „Ein Anhänger wiegt leer vielleicht 6 Tonnen, voll 24. Bremst er leer mit vollem Druck, blockieren die Räder. Also muss er wissen, wie schwer er gerade ist.“
+✅ Wiederholung aus C5 (ALB am Lkw). Beispielgewichte: grobe Werte.
+🖱 Keine Klicks.
+➜ „So misst der Anhänger seine Last.“
+
+=== FOLIE 14 ===
+AUF DER FOLIE: KLASSE CE  ·  ABEND 7  ·  CE3  ·  LASTANPASSUNG UND EBS | 14 | LASTANPASSUNG | Der Anhänger wiegt sich | 1 | Leer | 2 | Halb beladen | 3 | Voll beladen | 4 | Luftbalg undicht | ❓ Frage an die Klasse   / Euer Anhänger ist leer. Ihr bremst kräftig. Warum blockieren seine Räder nicht? | Bei Luftfederung misst der Anhänger den Druck im Luftbalg. Bei Blattfedern misst er, wie weit die Feder einfedert. | Seitenansicht · schematisch | Luftbälge | Druck im Luftbalg | Bremsdruck (Vollbremsung) | Leer: wenig Luft im Balg – wenig Bremsdruck. Die Räder blockieren nicht.
+NOTIZEN:
+FOLIE 14 VON 124 · keine Animation · Klick = weiter
+
+▶ Sagen: „Hier ein Anhänger mit Luftfederung. Über jeder Achse sitzt ein Luftbalg. Je schwerer der Anhänger, desto mehr Luft braucht der Balg, um ihn zu tragen. Diesen Druck misst die Lastanpassung – früher das ALB-Ventil, heute meist das EBS.“
+❓ Frage auf der Folie stellen.
+✅ WABCO TEBS E System Description, Kap. 5.9.2: Last über Balgdruck (Luftfederung) bzw. Federweg (mechanische Federung). Prüfungsfrage 2.7.06-233: Bremskraft wird der tatsächlichen Fahrzeugmasse angepasst.
+🖱 Keine Animation auf dieser Folie – nächster Klick = nächster Schritt (Morph).
+➜ „Jetzt wird beladen.“
+
+=== FOLIE 15 ===
+AUF DER FOLIE: KLASSE CE  ·  ABEND 7  ·  CE3  ·  LASTANPASSUNG UND EBS | 15 | LASTANPASSUNG | Der Anhänger wiegt sich | 1 | Leer | 2 | Halb beladen | 3 | Voll beladen | 4 | Luftbalg undicht | ❓ Frage an die Klasse   / Euer Anhänger ist leer. Ihr bremst kräftig. Warum blockieren seine Räder nicht? | Je mehr Ladung, desto mehr Luft im Balg – und desto mehr Bremsdruck darf er geben. | Seitenansicht · schematisch | Luftbälge | Druck im Luftbalg | Bremsdruck (Vollbremsung) | Halb beladen: mehr Luft im Balg – mehr Bremsdruck.
+NOTIZEN:
+FOLIE 15 VON 124 · keine Animation · Klick = weiter
+
+▶ „Halb beladen: Der Balg braucht mehr Luft. Die Lastanpassung gibt mehr Bremsdruck frei.“
+✅ Prüfungsfrage 2.7.06-208: Die Bremskraft wird entsprechend der Belastung der Achsen automatisch geregelt.
+🖱 Keine Animation auf dieser Folie – nächster Klick = nächster Schritt (Morph).
+➜ „Und voll?“
+
+=== FOLIE 16 ===
+AUF DER FOLIE: KLASSE CE  ·  ABEND 7  ·  CE3  ·  LASTANPASSUNG UND EBS | 16 | LASTANPASSUNG | Der Anhänger wiegt sich | 1 | Leer | 2 | Halb beladen | 3 | Voll beladen | 4 | Luftbalg undicht | ✓ Antwort   / Die Lastanpassung misst am Luftbalg, wie schwer er ist – und gibt weniger Druck in die Bremszylinder. | Voll beladen: voller Bremsdruck. So bremst der Anhänger leer wie voll passend zu seinem Gewicht. | Seitenansicht · schematisch | Luftbälge | Druck im Luftbalg | Bremsdruck (Vollbremsung) | Voll beladen: viel Luft im Balg – voller Bremsdruck.
+NOTIZEN:
+FOLIE 16 VON 124 · keine Animation · Klick = weiter
+
+▶ „Voll beladen: viel Luft im Balg, voller Bremsdruck. So passt die Bremse immer zum Gewicht. Wichtig: Das ist kein ABS. Die Lastanpassung kennt nur das Gewicht – nicht, ob die Straße glatt ist.“
+❓ Frage auf der Folie auflösen.
+✅ Prüfungsfrage 2.7.06-210: ALB passt die Bremskraft der Achslast an; ABS verhindert unabhängig von Gewicht und Fahrbahn das Blockieren (falsch: ALB passt an den Fahrbahnzustand an).
+🖱 Keine Animation auf dieser Folie – nächster Klick = nächster Schritt (Morph).
+➜ „Was, wenn der Balg kaputt ist?“
+
+=== FOLIE 17 ===
+AUF DER FOLIE: KLASSE CE  ·  ABEND 7  ·  CE3  ·  LASTANPASSUNG UND EBS | 17 | LASTANPASSUNG | Der Anhänger wiegt sich | 1 | Leer | 2 | Halb beladen | 3 | Voll beladen | 4 | Luftbalg undicht | ✓ Antwort   / Die Lastanpassung misst am Luftbalg, wie schwer er ist – und gibt weniger Druck in die Bremszylinder. | Ein undichter Balg verfälscht die Messung: Die Bremswirkung stimmt nicht mehr. Ab in die Werkstatt! | Seitenansicht · schematisch | Luftbalg undicht! | Druck im Luftbalg | Bremsdruck (Vollbremsung) | Balg undicht: Die Messung stimmt nicht mehr – der Bremsdruck ist falsch. Von hinten seht ihr: Der Anhänger hängt schief.
+NOTIZEN:
+FOLIE 17 VON 124 · keine Animation · Klick = weiter
+
+▶ „Ist der Balg stark undicht, stimmt die Messung nicht mehr – der Bremsdruck ist falsch. Und das Fahrzeug hängt auf der Seite schief. Das seht ihr bei der Abfahrtkontrolle.“
+✅ Prüfungsfrage 2.7.02-211: Das Fahrzeug neigt sich einseitig; die Bremswirkung wird durch einen falschen Steuerdruck der ALB beeinträchtigt. WABCO: Im pneumatischen Notbetrieb fehlt die Lastanpassung ganz – ein leerer Anhänger blockiert dann leichter.
+🖱 Keine Animation auf dieser Folie – nächster Klick = nächster Schritt (Morph).
+➜ „Und wie kommt der Bremswunsch zum Anhänger?“
+
+=== FOLIE 18 ===
+AUF DER FOLIE: KLASSE CE  ·  ABEND 7  ·  CE3  ·  LASTANPASSUNG UND EBS | 18 | EBS | Zwei Wege zum Anhänger | ❓ Frage an die Klasse / Woher weiß der Anhänger, wie stark ihr bremsen wollt? | Antwort folgt … | Beim EBS bekommt der Anhänger den Bremswunsch doppelt: als elektrisches Signal und als Luftdruck in der gelben Leitung. | Schema · vereinfacht | LKW | ANHÄNGER | ABS/EBS-Stecker (ISO 7638) | Daten und Strom | gelbe Leitung (Luft) | EBS- / Steuergerät / Lkw | Pedal | Brems- / modul | ✓ ABS | ✓ Last | ✓ Kippschutz | Fahren: Der Stecker ist drin. Nichts wird gebremst.
+NOTIZEN:
+FOLIE 18 VON 124 · keine Animation · Klick = weiter
+
+▶ Sagen: „Links der Lkw mit seinem EBS-Steuergerät, rechts der Anhänger mit seinem Bremsmodul. Dazwischen zwei Verbindungen: das Kabel im schwarzen ABS/EBS-Stecker und die gelbe Leitung.“
+❓ Frage auf der Folie stellen.
+✅ WABCO EBS3 Systembeschreibung: Anhänger wird elektronisch (ISO 11992, CAN im ISO-7638-Stecker) und pneumatisch über das Anhängersteuerventil angesteuert.
+🖱 Klick: Der Fahrer bremst (läuft von selbst weiter).
+➜ „Jetzt wird gebremst.“
+
+=== FOLIE 19 ===
+AUF DER FOLIE: KLASSE CE  ·  ABEND 7  ·  CE3  ·  LASTANPASSUNG UND EBS | 19 | EBS | Zwei Wege zum Anhänger | ❓ Frage an die Klasse / Woher weiß der Anhänger, wie stark ihr bremsen wollt? | Antwort folgt … | Beim EBS bekommt der Anhänger den Bremswunsch doppelt: als elektrisches Signal und als Luftdruck in der gelben Leitung. | Schema · vereinfacht | LKW | ANHÄNGER | ABS/EBS-Stecker (ISO 7638) | Daten und Strom | gelbe Leitung (Luft) | EBS- / Steuergerät / Lkw | Pedal getreten | Brems- / modul | ✓ ABS | ✓ Last | ✓ Kippschutz | Bremsen: Das Signal läuft durch das Kabel – und Luft durch gelb.
+NOTIZEN:
+FOLIE 19 VON 124 · läuft von selbst weiter (kein Klick)
+
+▶ Die Bewegung läuft – zuschauen lassen.
+🖱 Kein Klick – die Folie läuft von selbst weiter.
+➜ (läuft weiter)
+
+=== FOLIE 20 ===
+AUF DER FOLIE: KLASSE CE  ·  ABEND 7  ·  CE3  ·  LASTANPASSUNG UND EBS | 20 | EBS | Zwei Wege zum Anhänger | ❓ Frage an die Klasse / Woher weiß der Anhänger, wie stark ihr bremsen wollt? | Antwort folgt … | Der Anhänger nimmt zuerst das elektrische Signal: schnell, mit Lastanpassung, ABS und Kippschutz. Gelb ist die Reserve. | Schema · vereinfacht | LKW | ANHÄNGER | ABS/EBS-Stecker (ISO 7638) | Daten und Strom | gelbe Leitung (Luft) | EBS- / Steuergerät / Lkw | Pedal getreten | Brems- / modul | ✓ ABS | ✓ Last | ✓ Kippschutz | Der Anhänger nimmt das elektrische Signal. Gelb ist die Reserve.
+NOTIZEN:
+FOLIE 20 VON 124 · keine Animation · Klick = weiter
+
+▶ „Bremst ihr, läuft das Signal durch das Kabel – sehr schnell. Gleichzeitig kommt Luft durch gelb. Der Anhänger nimmt zuerst das elektrische Signal. Dann regelt er selbst: Last, ABS und Kippschutz. Die gelbe Leitung ist die Reserve.“
+✅ WABCO TEBS E System Description, Kap. 5.9.1: Bremswunsch vorrangig über CAN; fehlt CAN, misst ein Drucksensor am gelben Anschluss. Kap. 5.1: TEBS mit Lastanpassung, ABS und Kippschutz (RSS).
+🖱 Klick: Was, wenn der Stecker fehlt?
+➜ „Und ohne Stecker?“
+
+=== FOLIE 21 ===
+AUF DER FOLIE: KLASSE CE  ·  ABEND 7  ·  CE3  ·  LASTANPASSUNG UND EBS | 21 | EBS | Zwei Wege zum Anhänger | ❓ Frage an die Klasse / Woher weiß der Anhänger, wie stark ihr bremsen wollt? | Antwort folgt … | Der Anhänger nimmt zuerst das elektrische Signal: schnell, mit Lastanpassung, ABS und Kippschutz. Gelb ist die Reserve. | Schema · vereinfacht | LKW | ANHÄNGER | Stecker fehlt! | Daten und Strom | gelbe Leitung (Luft) | EBS- / Steuergerät / Lkw | Pedal | Brems- / modul | ✕ ABS | ✕ Last | ✕ Kippschutz | Der Stecker fehlt.
+NOTIZEN:
+FOLIE 21 VON 124 · läuft von selbst weiter (kein Klick)
+
+▶ Die Bewegung läuft – zuschauen lassen.
+🖱 Kein Klick – die Folie läuft von selbst weiter.
+➜ (läuft weiter)
+
+=== FOLIE 22 ===
+AUF DER FOLIE: KLASSE CE  ·  ABEND 7  ·  CE3  ·  LASTANPASSUNG UND EBS | 22 | EBS | Zwei Wege zum Anhänger | ❓ Frage an die Klasse / Woher weiß der Anhänger, wie stark ihr bremsen wollt? | ✓ Antwort / Auf zwei Wegen: elektrisch über das Kabel im ABS/EBS-Stecker und mit Luft über die gelbe Leitung. Fehlt der Stecker, bleibt nur gelb. | Ohne Stecker: kein Strom, keine Daten. Der Anhänger bremst nur noch über gelb – ohne ABS, ohne Lastanpassung, ohne Kippschutz. | Schema · vereinfacht | LKW | ANHÄNGER | Stecker fehlt! | Daten und Strom | gelbe Leitung (Luft) | EBS- / Steuergerät / Lkw | Pedal getreten | Brems- / modul | ✕ ABS | ✕ Last | ✕ Kippschutz | Ohne Stecker bremst der Anhänger nur über gelb – ohne ABS, ohne Lastanpassung, ohne Kippschutz.
+NOTIZEN:
+FOLIE 22 VON 124 · keine Animation · Klick = weiter
+
+▶ „Fehlt der Stecker, hat das Bremsmodul keinen Strom und keine Daten. Der Anhänger bremst trotzdem – über gelb. Aber ohne ABS, ohne Lastanpassung und ohne Kippschutz. Ein leerer Anhänger blockiert dann sehr leicht.“
+❓ Frage auf der Folie auflösen.
+✅ WABCO TEBS E, Kap. 5.7: „The ABS, EBS and RSS control functions are not available if the ISO 7638 plug connection … is not connected.“ Kap. 5.9: ohne Strom wird der gelbe Steuerdruck ohne Lastanpassung durchgeschaltet. Prüfungsfrage 2.7.06-315: ABV kann abgeschaltet sein; Bremsung mit pneumatischem Redundanzdruck.
+🖱 Nächster Klick: nächste Folie.
+➜ „Zwei Prüfungsfragen.“
+
+=== FOLIE 23 ===
+AUF DER FOLIE: KLASSE CE  ·  ABEND 7  ·  CE3  ·  LASTANPASSUNG UND EBS | 23 | PRÜFUNGSFRAGE 2.7.02-211 | Welche Auswirkungen kann ein stark undichter Luftfederbalg für die Verkehrssicherheit haben? | A | Das Fahrzeug neigt sich einseitig | B | Die Bremswirkung wird durch einen falschen Steuerdruck der automatisch-lastabhängigen Bremskraftregelung (ALB) beeinträchtigt | C | Die Vorratsleitung des vorderen Bremskreises verliert Druckluft | ✓  RICHTIG | ✓  RICHTIG | Der Balg trägt das Fahrzeug – und er ist der Messfühler für die Lastanpassung.
+NOTIZEN:
+FOLIE 23 VON 124 · 2 Klicks
+
+▶ Frage vorlesen, abstimmen.
+🖱 Klick 1: Antworten · Klick 2: Lösung.
+✅ Amtlicher Fragenkatalog 2.7.02-211: A und B.
+➜ „Noch eine.“
+
+=== FOLIE 24 ===
+AUF DER FOLIE: KLASSE CE  ·  ABEND 7  ·  CE3  ·  LASTANPASSUNG UND EBS | 24 | PRÜFUNGSFRAGE 2.7.06-210 | Wie unterscheiden sich automatisch-lastabhängige Bremskraftregelung (ALB) und Antiblockiersystem (ABS) in ihrer Wirkung? | A | ABS verhindert beim Bremsen unabhängig von Gewicht und Fahrbahnzustand automatisch das Blockieren der Räder | B | ALB passt die Bremskraft automatisch der Achslast an | C | ALB passt die Bremskraft automatisch dem Fahrbahnzustand an | ✓  RICHTIG | ✓  RICHTIG | ALB kennt nur das Gewicht. Ob die Straße glatt ist, merkt nur das ABS.
+NOTIZEN:
+FOLIE 24 VON 124 · 2 Klicks
+
+▶ Frage vorlesen, abstimmen.
+🖱 Klick 1: Antworten · Klick 2: Lösung.
+✅ Amtlicher Fragenkatalog 2.7.06-210: A und B.
+➜ „Kapitel 3: der ABS-Stecker.“
+
+=== FOLIE 25 ===
+AUF DER FOLIE: KLASSE CE  ·  ABEND 7  ·  CE3  ·  DER ABS-STECKER | 25 | 03 | Der ABS-Stecker | Ein schwarzer Stecker entscheidet, ob der Anhänger ABS hat. Was passiert, wenn er fehlt?
+NOTIZEN:
+FOLIE 25 VON 124 · Animation läuft von selbst · Klick = weiter
+
+▶ Sagen: „Beim Ankuppeln steckt ihr drei Dinge: rot, gelb – und den schwarzen ABS/EBS-Stecker. Wer den vergisst, fährt mit einem Anhänger ohne ABS. Schauen wir, was dann passiert.“
+✅ ISO-7638-Steckverbindung: Strom und Daten für ABS/EBS des Anhängers (RL 71/320/EWG Anhang X; Haldex Trailer Application Guide).
+🖱 Keine Klicks.
+➜ „Zwei Züge, eine Vollbremsung.“
+
+=== FOLIE 26 ===
+AUF DER FOLIE: KLASSE CE  ·  ABEND 7  ·  CE3  ·  DER ABS-STECKER | 26 | ABS-STECKER | Vollbremsung auf Nässe | ❓ Frage an die Klasse / Vollbremsung auf nasser Fahrbahn. Was passiert, wenn der ABS-Stecker fehlt? | Antwort folgt … | Oben ist der ABS-Stecker drin. Unten fehlt er: Nur der Lkw hat ABS, der Anhänger nicht. | Draufsicht · schematisch · nasse Fahrbahn | ✓  Mit ABS-Stecker   Lkw und Anhänger mit ABS | ✕  Ohne ABS-Stecker   nur der Lkw hat ABS | Zwei gleiche Züge, gleich schnell. Gleich bremsen beide voll.
+NOTIZEN:
+FOLIE 26 VON 124 · keine Animation · Klick = weiter
+
+▶ Sagen: „Zwei gleiche Züge auf nasser Straße. Oben steckt der ABS-Stecker – Lkw und Anhänger haben ABS. Unten fehlt der Stecker – nur der Lkw hat ABS. Beide machen gleich eine Vollbremsung.“
+❓ Frage auf der Folie stellen. Tipps sammeln.
+✅ Prüfungsfrage 2.7.06-314: Nur das Zugfahrzeug hat ABV – Vollbremsung auf nasser Fahrbahn. WABCO TEBS E, Kap. 5.7: Ohne ISO-7638-Verbindung sind ABS, EBS und Kippschutz nicht verfügbar.
+🖱 Klick: Vollbremsung (läuft von selbst bis zum Stand).
+➜ „Achtung – Vollbremsung!“
+
+=== FOLIE 27 ===
+AUF DER FOLIE: KLASSE CE  ·  ABEND 7  ·  CE3  ·  DER ABS-STECKER | 27 | ABS-STECKER | Vollbremsung auf Nässe | ❓ Frage an die Klasse / Vollbremsung auf nasser Fahrbahn. Was passiert, wenn der ABS-Stecker fehlt? | Antwort folgt … | Oben ist der ABS-Stecker drin. Unten fehlt er: Nur der Lkw hat ABS, der Anhänger nicht. | Draufsicht · schematisch · nasse Fahrbahn | ✓  Mit ABS-Stecker   Lkw und Anhänger mit ABS | ✕  Ohne ABS-Stecker   nur der Lkw hat ABS | ABS regelt | Räder blockieren | Vollbremsung!
+NOTIZEN:
+FOLIE 27 VON 124 · läuft von selbst weiter (kein Klick)
+
+▶ Die Bewegung läuft – zuschauen lassen.
+🖱 Kein Klick – die Folie läuft von selbst weiter.
+➜ (läuft weiter)
+
+=== FOLIE 28 ===
+AUF DER FOLIE: KLASSE CE  ·  ABEND 7  ·  CE3  ·  DER ABS-STECKER | 28 | ABS-STECKER | Vollbremsung auf Nässe | ❓ Frage an die Klasse / Vollbremsung auf nasser Fahrbahn. Was passiert, wenn der ABS-Stecker fehlt? | Antwort folgt … | Oben ist der ABS-Stecker drin. Unten fehlt er: Nur der Lkw hat ABS, der Anhänger nicht. | Draufsicht · schematisch · nasse Fahrbahn | ✓  Mit ABS-Stecker   Lkw und Anhänger mit ABS | ✕  Ohne ABS-Stecker   nur der Lkw hat ABS | ABS regelt | Räder blockieren | Unten blockieren die Räder des Anhängers …
+NOTIZEN:
+FOLIE 28 VON 124 · läuft von selbst weiter (kein Klick)
+
+▶ Die Bewegung läuft – zuschauen lassen.
+🖱 Kein Klick – die Folie läuft von selbst weiter.
+➜ (läuft weiter)
+
+=== FOLIE 29 ===
+AUF DER FOLIE: KLASSE CE  ·  ABEND 7  ·  CE3  ·  DER ABS-STECKER | 29 | ABS-STECKER | Vollbremsung auf Nässe | ❓ Frage an die Klasse / Vollbremsung auf nasser Fahrbahn. Was passiert, wenn der ABS-Stecker fehlt? | Antwort folgt … | Oben ist der ABS-Stecker drin. Unten fehlt er: Nur der Lkw hat ABS, der Anhänger nicht. | Draufsicht · schematisch · nasse Fahrbahn | ✓  Mit ABS-Stecker   Lkw und Anhänger mit ABS | ✕  Ohne ABS-Stecker   nur der Lkw hat ABS | ABS regelt | Räder blockieren | … er verliert die Seitenführung und bricht aus.
+NOTIZEN:
+FOLIE 29 VON 124 · läuft von selbst weiter (kein Klick)
+
+▶ Die Bewegung läuft – zuschauen lassen.
+🖱 Kein Klick – die Folie läuft von selbst weiter.
+➜ (läuft weiter)
+
+=== FOLIE 30 ===
+AUF DER FOLIE: KLASSE CE  ·  ABEND 7  ·  CE3  ·  DER ABS-STECKER | 30 | ABS-STECKER | Vollbremsung auf Nässe | ❓ Frage an die Klasse / Vollbremsung auf nasser Fahrbahn. Was passiert, wenn der ABS-Stecker fehlt? | ✓ Antwort / Die Räder des Anhängers können blockieren. Dann kann der Anhänger ausbrechen – und der Bremsweg wird länger. | Oben regelt ABS an allen Rädern: Der Zug bleibt gerade. Unten blockieren die Anhängerräder: Er bricht aus, der Bremsweg wird länger. | Draufsicht · schematisch · nasse Fahrbahn | ✓  Mit ABS-Stecker   Lkw und Anhänger mit ABS | ✕  Ohne ABS-Stecker   nur der Lkw hat ABS | steht – gerade | Räder blockieren | länger | Ohne Stecker: Der Anhänger bricht aus – und der Zug steht später.
+NOTIZEN:
+FOLIE 30 VON 124 · keine Animation · Klick = weiter
+
+▶ „Oben: ABS regelt an allen Rädern, der Zug bleibt gerade und steht. Unten: Die Anhängerräder blockieren. Ein blockiertes Rad kann nicht mehr seitlich führen – der Anhänger schwenkt aus, bis in den Gegenverkehr. Und der Zug steht später.“
+❓ Frage auf der Folie auflösen.
+✅ Prüfungsfrage 2.7.06-314: Beim Blockieren der Anhängerräder kann sich der Bremsweg verlängern und der Anhänger ausbrechen (falsch: Zug sicher gestreckt). Mercedes-Benz Actros Betriebsanleitung: Ohne Anhänger-ABS „können die Räder des Anhängers/Aufliegers beim Bremsen blockieren und der Lastzug kann instabil werden“.
+💡 Strecken und Winkel sind gezeichnet, nicht gemessen.
+🖱 Nächster Klick: nächste Folie.
+➜ „Eine Prüfungsfrage dazu.“
+
+=== FOLIE 31 ===
+AUF DER FOLIE: KLASSE CE  ·  ABEND 7  ·  CE3  ·  DER ABS-STECKER | 31 | PRÜFUNGSFRAGE 2.7.06-314 | Bei einem Lastzug ist nur das Zugfahrzeug mit einem Automatischen Blockierverhinderer (ABV) ausgerüstet. Wie kann sich das bei einer Vollbremsung auf nasser Fahrbahn auswirken? Beim Blockieren der Räder des Anhängers kann … | A | … sich der Bremsweg verlängern | B | … der Anhänger ausbrechen | C | … der Zug sicher gestreckt werden | ✓  RICHTIG | ✓  RICHTIG | Blockierte Räder führen nicht mehr seitlich. Gestreckt bleibt der Zug nur, wenn der Anhänger nicht blockiert.
+NOTIZEN:
+FOLIE 31 VON 124 · 2 Klicks
+
+▶ Frage vorlesen, abstimmen.
+🖱 Klick 1: Antworten · Klick 2: Lösung.
+✅ Amtlicher Fragenkatalog 2.7.06-314: A und B.
+➜ „Merkt ihr eigentlich, wenn der Stecker fehlt?“
+
+=== FOLIE 32 ===
+AUF DER FOLIE: KLASSE CE  ·  ABEND 7  ·  CE3  ·  DER ABS-STECKER | 32 | ABS-STECKER | Stecker vergessen – merkt ihr das? | Warnleuchte? Kein Verlass! / Ohne Stecker bleibt sie oft einfach dunkel. | Hinsehen / Nach dem Kuppeln: Steckt der schwarze Stecker? | Hinhören / Zündung an: Oft klickt es kurz am Anhänger. | Leuchte prüfen / Kurz an, dann aus. Bleibt sie an: Werkstatt.
+NOTIZEN:
+FOLIE 32 VON 124 · 4 Klicks
+
+▶ Sagen: „Viele denken: Wenn der Stecker fehlt, leuchtet doch eine Lampe. Darauf könnt ihr euch nicht verlassen.“
+❓ Frage stellen, sammeln lassen, dann je Klick auflösen.
+🖱 Klick 1–4: je ein Punkt.
+✅ RL 71/320/EWG Anhang X Nr. 4.2.1: Die Anhänger-ABS-Warnung darf nicht leuchten, wenn kein Anhänger mit ABV angeschlossen ist. WABCO TEBS E, Kap. 5.8.1: Fällt die ISO-7638-Verbindung ganz aus, kann über Pin 5 keine Warnung gesendet werden. Daraus folgt (eigene Schlussfolgerung): Fehlt der Stecker, bleibt die Leuchte meist dunkel. WABCO TEBS E: Nach dem Einschalten schaltet der Modulator kurz die Magnetventile (hörbares Klicken). DGUV Grundsatz 314-002, Nr. 1 und 2.3.2: Nach dem Kuppeln den Zustand kontrollieren; ABV-Kontrolle zeigt keine Störung.
+💡 Wann die Leuchte genau ausgeht (gleich im Stand oder erst nach dem Anfahren), steht in der Betriebsanleitung.
+➜ „Noch eine Prüfungsfrage.“
+
+=== FOLIE 33 ===
+AUF DER FOLIE: KLASSE CE  ·  ABEND 7  ·  CE3  ·  DER ABS-STECKER | 33 | PRÜFUNGSFRAGE 2.7.06-315 | Die Verbindung des Elektronischen Bremssystems (EBS) zum Anhänger ist unterbrochen. Welche Auswirkung kann dies beim Bremsen für den Anhänger haben? | A | Der Automatische Blockierverhinderer (ABV) kann abgeschaltet sein | B | Der Anhänger wird mithilfe des pneumatischen Redundanzdrucks gebremst | C | Die Bremsleuchten funktionieren nicht mehr | ✓  RICHTIG | ✓  RICHTIG | „Redundanzdruck“ heißt: Er bremst nur noch über die gelbe Leitung – ohne ABS. Die Bremsleuchten hängen am Lichtstecker, nicht am EBS.
+NOTIZEN:
+FOLIE 33 VON 124 · 2 Klicks
+
+▶ Frage vorlesen, abstimmen.
+🖱 Klick 1: Antworten · Klick 2: Lösung.
+✅ Amtlicher Fragenkatalog 2.7.06-315: A und B. WABCO TEBS E, Kap. 5.9: ohne CAN Bremsung über den pneumatischen Steuerdruck (Redundanz).
+💡 Die Beleuchtung kommt über den eigenen Lichtstecker (24 V, ISO 1185 / ISO 12098).
+➜ „Kapitel 4: Die Feststellbremse im Zug.“
+
+=== FOLIE 34 ===
+AUF DER FOLIE: KLASSE CE  ·  ABEND 7  ·  CE3  ·  FESTSTELLBREMSE IM ZUG | 34 | 04 | Feststellbremse im Zug | Die Handbremse im Lkw hält den Lkw mit Federkraft. Und womit hält sie den Anhänger?
+NOTIZEN:
+FOLIE 34 VON 124 · Animation läuft von selbst · Klick = weiter
+
+▶ Sagen: „Ihr stellt den Zug am Berg ab und zieht die Handbremse. Fertig? Nicht ganz. Der Anhänger wird dabei anders gehalten als der Lkw.“
+✅ Prüfungsfragen 2.7.06-320 und -321.
+🖱 Keine Klicks.
+➜ „Schauen wir uns das am Berg an.“
+
+=== FOLIE 35 ===
+AUF DER FOLIE: KLASSE CE  ·  ABEND 7  ·  CE3  ·  FESTSTELLBREMSE IM ZUG | 35 | KONTROLLSTELLUNG | Den Zug am Berg abstellen | ❓ Frage an die Klasse / Ihr zieht im Lkw die Feststellbremse. Womit wird der Anhänger gehalten? | Antwort folgt … | Der Zug soll hier stehen bleiben. Gleich zieht der Fahrer die Feststellbremse. Was hält dann den Lkw – und was den Anhänger? | Seitenansicht · schematisch · 12 % maßstäblich | Steigung 12 % | HANDBREMSVENTIL | Fahren | Feststellen | Kontrolle (halten) | Der Zug steht an einer Steigung von 12 %. Der Fahrer hält ihn noch mit der Fußbremse.
+NOTIZEN:
+FOLIE 35 VON 124 · keine Animation · Klick = weiter
+
+▶ Sagen: „Der Zug steht an einer Steigung von 12 Prozent. Rechts oben seht ihr das Handbremsventil im Lkw mit drei Stellungen: Fahren, Feststellen und Kontrolle.“
+❓ Frage auf der Folie stellen.
+✅ RL 71/320/EWG Anhang II Nr. 2.1.3.2: Die Feststellbremse des Zugfahrzeugs muss den ganzen Zug an 12 % Steigung oder Gefälle halten.
+🖱 Klick: Feststellbremse ziehen.
+➜ „Hebel auf Feststellen.“
+
+=== FOLIE 36 ===
+AUF DER FOLIE: KLASSE CE  ·  ABEND 7  ·  CE3  ·  FESTSTELLBREMSE IM ZUG | 36 | KONTROLLSTELLUNG | Den Zug am Berg abstellen | ❓ Frage an die Klasse / Ihr zieht im Lkw die Feststellbremse. Womit wird der Anhänger gehalten? | Antwort folgt … | Lkw: Die Federspeicher halten – mechanisch, ohne Luft. Anhänger: Er wird nur mit Druckluft über seine Betriebsbremse gehalten. | Seitenansicht · schematisch · 12 % maßstäblich | Steigung 12 % | Lkw: Federspeicher hält | Anhänger: hält mit Luft | HANDBREMSVENTIL | Fahren | Feststellen | Kontrolle (halten) | Feststellen: Der Lkw hält mit Federkraft – mechanisch. Der Anhänger hält mit Luft.
+NOTIZEN:
+FOLIE 36 VON 124 · keine Animation · Klick = weiter
+
+▶ „Hebel auf Feststellen. Am Lkw drücken jetzt die Federspeicher – das hält mechanisch, auch ohne Luft. Der Anhänger bekommt dabei Luft auf seine normale Betriebsbremse. Er hält also nur mit Druckluft.“
+✅ Prüfungsfrage 2.7.06-321: Zugfahrzeug mechanisch gebremst; Anhänger üblicherweise nur mit Druckluft durch die Betriebsbremsanlage (falsch: Anhänger mechanisch). Mercedes-Benz Actros Betriebsanleitung: Bei angekuppeltem Anhänger wirkt die Feststellbremse auf die Betriebsbremse des Anhängers.
+🖱 Klick: Zeit vergeht.
+➜ „Was passiert über Nacht?“
+
+=== FOLIE 37 ===
+AUF DER FOLIE: KLASSE CE  ·  ABEND 7  ·  CE3  ·  FESTSTELLBREMSE IM ZUG | 37 | KONTROLLSTELLUNG | Den Zug am Berg abstellen | ❓ Frage an die Klasse / Ihr zieht im Lkw die Feststellbremse. Womit wird der Anhänger gehalten? | Antwort folgt … | Druckluft entweicht mit der Zeit. Auf Dauer hält nur noch der Lkw. Reicht er für den ganzen Zug? | Seitenansicht · schematisch · 12 % maßstäblich | Steigung 12 % | Lkw: Federspeicher hält | Anhänger: Luft entweicht … | HANDBREMSVENTIL | Fahren | Feststellen | Kontrolle (halten) | Stunden später: Die Luft im Anhänger entweicht. Dann hält dort nichts mehr.
+NOTIZEN:
+FOLIE 37 VON 124 · keine Animation · Klick = weiter
+
+▶ „Luft bleibt nicht ewig. Über Stunden entweicht sie. Dann hält am Anhänger nichts mehr – nur noch der Lkw mit seinen Federn. Die Frage ist: Schafft der Lkw das allein?“
+✅ Lehrbuchwissen; DGUV Information 214-080, S. 33: Anhänger nie nur mit der Notbremsfunktion abstellen.
+🖱 Klick: Kontrollstellung.
+➜ „Genau das prüft ihr mit der Kontrollstellung.“
+
+=== FOLIE 38 ===
+AUF DER FOLIE: KLASSE CE  ·  ABEND 7  ·  CE3  ·  FESTSTELLBREMSE IM ZUG | 38 | KONTROLLSTELLUNG | Den Zug am Berg abstellen | ❓ Frage an die Klasse / Ihr zieht im Lkw die Feststellbremse. Womit wird der Anhänger gehalten? | Antwort folgt … | Kontrollstellung: Die Anhängerbremse wird gelöst, nur die Federspeicher des Lkw halten. So seht ihr: Hält der Lkw den ganzen Zug allein? | Seitenansicht · schematisch · 12 % maßstäblich | Steigung 12 % | Lkw: Federspeicher hält | Anhänger: Bremse gelöst | HANDBREMSVENTIL | Fahren | Feststellen | Kontrolle (halten) | Kontrollstellung: Hebel weiter ziehen und halten. Die Anhängerbremse ist gelöst. Hält der Lkw den Zug allein?
+NOTIZEN:
+FOLIE 38 VON 124 · keine Animation · Klick = weiter
+
+▶ „Jetzt der Trick: Hebel über Feststellen hinaus in die Kontrollstellung ziehen – und festhalten. Die Anhängerbremse wird gelöst. Es hält nur noch der Lkw. Bleibt der Zug stehen, ist alles gut.“
+✅ Prüfungsfrage 2.7.06-320: Zugfahrzeug über Federspeicher gebremst, Betriebsbremse des Anhängers gelöst (falsch: Anhängerbremse betätigt). Mercedes-Benz Actros Betriebsanleitung: Hebel in die Kontrollstellung schwenken und halten; „Das Fahrzeug darf sich nicht bewegen.“ RL 71/320/EWG Anhang I Nr. 2.1.2.3: Der Fahrer muss prüfen können, ob die mechanische Feststellbremse allein reicht.
+💡 Bei den meisten Lkw rastet der Hebel in der Kontrollstellung nicht ein – Betriebsanleitung.
+🖱 Klick: Was, wenn er nicht hält?
+➜ „Und wenn er rollt?“
+
+=== FOLIE 39 ===
+AUF DER FOLIE: KLASSE CE  ·  ABEND 7  ·  CE3  ·  FESTSTELLBREMSE IM ZUG | 39 | KONTROLLSTELLUNG | Den Zug am Berg abstellen | ❓ Frage an die Klasse / Ihr zieht im Lkw die Feststellbremse. Womit wird der Anhänger gehalten? | Antwort folgt … | Rollt der Zug in der Kontrollstellung, reicht der Lkw allein nicht. Dann den Zug zusätzlich sichern. | Seitenansicht · schematisch · 12 % maßstäblich | Steigung 12 % | rollt! | Lkw: Federspeicher hält | Anhänger: Bremse gelöst | HANDBREMSVENTIL | Fahren | Feststellen | Kontrolle (halten) | Der Zug rollt? Hebel sofort zurück auf Feststellen – der Lkw allein reicht hier nicht!
+NOTIZEN:
+FOLIE 39 VON 124 · keine Animation · Klick = weiter
+
+▶ „Rollt der Zug, Hebel sofort zurück auf Feststellen – dann hält der Anhänger wieder mit Luft. Aber auf Dauer reicht das nicht. Ihr müsst zusätzlich sichern.“
+✅ Mercedes-Benz Actros Betriebsanleitung: Hält der Zug in der Kontrollstellung nicht, Zugfahrzeug und Anhänger mit Unterlegkeilen sichern.
+🖱 Klick: richtig sichern.
+➜ „So stellt ihr den Zug sicher ab.“
+
+=== FOLIE 40 ===
+AUF DER FOLIE: KLASSE CE  ·  ABEND 7  ·  CE3  ·  FESTSTELLBREMSE IM ZUG | 40 | KONTROLLSTELLUNG | Den Zug am Berg abstellen | ❓ Frage an die Klasse / Ihr zieht im Lkw die Feststellbremse. Womit wird der Anhänger gehalten? | ✓ Antwort / Nur mit Druckluft über seine Betriebsbremse – und die kann entweichen. Darum: Kontrollstellung prüfen, Feststellbremse am Anhänger ziehen, Keile unterlegen. | Hebel zurück in Feststellen und einrasten. Feststellbremse am Anhänger ziehen (roter Knopf). Keile an Hinterräder – auf der Seite zum Gefälle. | Seitenansicht · schematisch · 12 % maßstäblich | Steigung 12 % | Lkw: Federspeicher hält | Anhänger: Feststellbremse gezogen | HANDBREMSVENTIL | Fahren | Feststellen | Kontrolle (halten) | Sicher: Hebel in Feststellen einrasten. Feststellbremse am Anhänger ziehen. Keile unterlegen.
+NOTIZEN:
+FOLIE 40 VON 124 · keine Animation · Klick = weiter
+
+▶ „So steht der Zug sicher: Hebel zurück in Feststellen und einrasten. Am Anhänger den roten Knopf ziehen – seine eigene Feststellbremse. Und Keile unter: am Lkw an ein Hinterrad, am Anhänger an die starre Achse, immer auf der Seite zum Gefälle.“
+❓ Frage auf der Folie auflösen.
+✅ Mercedes-Benz Actros Betriebsanleitung (Kontrollstellung, danach zurück in Vollbremsstellung und einrasten). Prüfungsfrage 2.2.23-201: Feststellbremse anziehen und Unterlegkeil vor ein Hinterrad legen. Keile nie an die gelenkte Drehschemelachse (FAKTEN CE1, DGUV I 214-080).
+💡 Der rote Knopf löst sich wieder, wenn ihr vor dem Losfahren drückt – nur mit Luft im Anhänger (siehe Abend 6).
+🖱 Nächster Klick: nächste Folie.
+➜ „Zwei Prüfungsfragen.“
+
+=== FOLIE 41 ===
+AUF DER FOLIE: KLASSE CE  ·  ABEND 7  ·  CE3  ·  FESTSTELLBREMSE IM ZUG | 41 | PRÜFUNGSFRAGE 2.7.06-321 | Wie wirkt es sich bei einem Lastzug aus, wenn der Feststellbremshebel im Zugfahrzeug betätigt wird (nicht in Kontrollstellung)? | A | Das Zugfahrzeug wird mechanisch gebremst | B | Der Anhänger wird dabei üblicherweise nur mit Druckluft durch die Betriebsbremsanlage gebremst | C | Der Anhänger wird mechanisch gebremst | ✓  RICHTIG | ✓  RICHTIG | Lkw: Federspeicher, also mechanisch. Anhänger: nur Luft – und die kann entweichen.
+NOTIZEN:
+FOLIE 41 VON 124 · 2 Klicks
+
+▶ Frage vorlesen, abstimmen.
+🖱 Klick 1: Antworten · Klick 2: Lösung.
+✅ Amtlicher Fragenkatalog 2.7.06-321: A und B.
+➜ „Und was macht die Kontrollstellung?“
+
+=== FOLIE 42 ===
+AUF DER FOLIE: KLASSE CE  ·  ABEND 7  ·  CE3  ·  FESTSTELLBREMSE IM ZUG | 42 | PRÜFUNGSFRAGE 2.7.06-320 | Sie fahren einen Lkw mit Anhänger und durchgehender Druckluftbremsanlage. Welche Funktion übernimmt dabei die Kontrollstellung des Handbremsventils? | A | Das Zugfahrzeug wird über die Federspeicherbremse gebremst | B | Die Betriebsbremse des Anhängers wird gelöst | C | Die Betriebsbremse des Anhängers wird betätigt | ✓  RICHTIG | ✓  RICHTIG | In der Kontrollstellung hält nur der Lkw. So prüft ihr, ob er den ganzen Zug allein halten kann.
+NOTIZEN:
+FOLIE 42 VON 124 · 2 Klicks
+
+▶ Frage vorlesen, abstimmen.
+🖱 Klick 1: Antworten · Klick 2: Lösung.
+✅ Amtlicher Fragenkatalog 2.7.06-320: A und B.
+➜ „Wie steil darf es dabei sein?“
+
+=== FOLIE 43 ===
+AUF DER FOLIE: KLASSE CE  ·  ABEND 7  ·  CE3  ·  FESTSTELLBREMSE IM ZUG | 43 | FESTSTELLBREMSE | Wie steil darf es sein? Was muss die Feststellbremse halten? | Lkw hält den ganzen Zug  12 % – nur mit seiner eigenen Feststellbremse. | Ein Fahrzeug allein, beladen  18 % – Lkw ohne Anhänger. | Anhänger abgekuppelt, beladen  18 % – mit seiner eigenen Feststellbremse.
+NOTIZEN:
+FOLIE 43 VON 124 · 3 Klicks
+
+▶ Sagen: „Wie steil darf der Hang sein? Ratet mal.“
+❓ Je Zeile schätzen lassen, dann klicken.
+🖱 Klick 1–3: je eine Zeile.
+✅ RL 71/320/EWG Anhang II: Nr. 2.1.3.1 (Fahrzeug allein 18 %), Nr. 2.1.3.2 (Zugfahrzeug hält den Zug 12 %), Nr. 2.2.2.1 (Anhänger abgekuppelt 18 %). § 41 Abs. 9 StVZO (Anhänger 18 %).
+💡 Zum Vergleich: 12 % heißt 12 m Höhe auf 100 m Strecke. Das ist schon steil – viele Bergstraßen haben weniger.
+➜ „Kapitel 5: Dauerbremse und Prüffristen.“
+
+=== FOLIE 44 ===
+AUF DER FOLIE: KLASSE CE  ·  ABEND 7  ·  CE3  ·  DAUERBREMSE UND PRÜFFRISTEN | 44 | 05 | Dauerbremse und Prüffristen | Die Dauerbremse bremst nur die Antriebsachse des Lkw. Und: Wann muss der Anhänger zur Prüfung?
+NOTIZEN:
+FOLIE 44 VON 124 · Animation läuft von selbst · Klick = weiter
+
+▶ Sagen: „Motorbremse und Retarder kennt ihr aus C6. Im Zug gibt es dabei eine Falle. Und danach: Wann muss der Anhänger zur HU und zur SP?“
+✅ § 41 Abs. 15 StVZO (Dauerbremse über 9 t); StVZO Anlage VIII (HU und SP).
+🖱 Keine Klicks.
+➜ „Erst die Falle mit dem Retarder.“
+
+=== FOLIE 45 ===
+AUF DER FOLIE: KLASSE CE  ·  ABEND 7  ·  CE3  ·  DAUERBREMSE UND PRÜFFRISTEN | 45 | DAUERBREMSE | Retarder auf Glätte | ❓ Frage an die Klasse / Glatte Fahrbahn, ihr zieht den Retarder voll. Was kann mit dem Zug passieren? | Antwort folgt … | Der Retarder bremst verschleißfrei – aber nur über die Antriebsachse des Lkw. Vorderachse und Anhänger bremst er nicht. | Draufsicht · schematisch · glatte Fahrbahn | ❄  Glatte Fahrbahn | Glatte Fahrbahn. Der Fahrer zieht den Retarder voll. | Lkw-Vorderachse | bremst nicht | Lkw-Antriebsachse (Retarder) | bremst nicht | Anhänger | bremst nicht
+NOTIZEN:
+FOLIE 45 VON 124 · keine Animation · Klick = weiter
+
+▶ Sagen: „Glatte Straße. Der Fahrer will sanft verzögern und zieht den Retarder voll. Unten seht ihr: Welche Achse bremst wie stark?“
+❓ Frage auf der Folie stellen.
+✅ eurotransport „Profiwissen Retarder“ (15.11.2012): Der Retarder wirkt nur auf einzelne Achsen des Gespanns – für das Spurverhalten „erfahrungsgemäß fatale Folgen“. Prüfungsfrage 2.7.06-108.
+🖱 Klick: Retarder an (läuft von selbst weiter).
+➜ „Retarder voll.“
+
+=== FOLIE 46 ===
+AUF DER FOLIE: KLASSE CE  ·  ABEND 7  ·  CE3  ·  DAUERBREMSE UND PRÜFFRISTEN | 46 | DAUERBREMSE | Retarder auf Glätte | ❓ Frage an die Klasse / Glatte Fahrbahn, ihr zieht den Retarder voll. Was kann mit dem Zug passieren? | Antwort folgt … | Der Retarder bremst verschleißfrei – aber nur über die Antriebsachse des Lkw. Vorderachse und Anhänger bremst er nicht. | Draufsicht · schematisch · glatte Fahrbahn | ❄  Glatte Fahrbahn | Antriebsachse | Nur die Antriebsachse bremst. Der Anhänger rollt ungebremst – er schiebt. | Lkw-Vorderachse | bremst nicht | Lkw-Antriebsachse (Retarder) | Anhänger | bremst nicht
+NOTIZEN:
+FOLIE 46 VON 124 · läuft von selbst weiter (kein Klick)
+
+▶ Die Bewegung läuft – zuschauen lassen.
+🖱 Kein Klick – die Folie läuft von selbst weiter.
+➜ (läuft weiter)
+
+=== FOLIE 47 ===
+AUF DER FOLIE: KLASSE CE  ·  ABEND 7  ·  CE3  ·  DAUERBREMSE UND PRÜFFRISTEN | 47 | DAUERBREMSE | Retarder auf Glätte | ❓ Frage an die Klasse / Glatte Fahrbahn, ihr zieht den Retarder voll. Was kann mit dem Zug passieren? | Antwort folgt … | Der Retarder bremst verschleißfrei – aber nur über die Antriebsachse des Lkw. Vorderachse und Anhänger bremst er nicht. | Draufsicht · schematisch · glatte Fahrbahn | ❄  Glatte Fahrbahn | Antriebsachse | Die Antriebsräder verlieren die Haftung … | Lkw-Vorderachse | bremst nicht | Lkw-Antriebsachse (Retarder) | Anhänger | bremst nicht
+NOTIZEN:
+FOLIE 47 VON 124 · läuft von selbst weiter (kein Klick)
+
+▶ Die Bewegung läuft – zuschauen lassen.
+🖱 Kein Klick – die Folie läuft von selbst weiter.
+➜ (läuft weiter)
+
+=== FOLIE 48 ===
+AUF DER FOLIE: KLASSE CE  ·  ABEND 7  ·  CE3  ·  DAUERBREMSE UND PRÜFFRISTEN | 48 | DAUERBREMSE | Retarder auf Glätte | ❓ Frage an die Klasse / Glatte Fahrbahn, ihr zieht den Retarder voll. Was kann mit dem Zug passieren? | Antwort folgt … | Der Retarder bremst verschleißfrei – aber nur über die Antriebsachse des Lkw. Vorderachse und Anhänger bremst er nicht. | Draufsicht · schematisch · glatte Fahrbahn | ❄  Glatte Fahrbahn | Antriebsachse | … das Heck des Lkw bricht aus … | Lkw-Vorderachse | bremst nicht | Lkw-Antriebsachse (Retarder) | Anhänger | bremst nicht
+NOTIZEN:
+FOLIE 48 VON 124 · läuft von selbst weiter (kein Klick)
+
+▶ Die Bewegung läuft – zuschauen lassen.
+🖱 Kein Klick – die Folie läuft von selbst weiter.
+➜ (läuft weiter)
+
+=== FOLIE 49 ===
+AUF DER FOLIE: KLASSE CE  ·  ABEND 7  ·  CE3  ·  DAUERBREMSE UND PRÜFFRISTEN | 49 | DAUERBREMSE | Retarder auf Glätte | ❓ Frage an die Klasse / Glatte Fahrbahn, ihr zieht den Retarder voll. Was kann mit dem Zug passieren? | ✓ Antwort / Der Retarder bremst nur die Antriebsachse. Die Räder rutschen, der Anhänger schiebt – der Zug knickt ein. Bei Glätte: Dauerbremse aus oder nur schwach. | Bei Glätte: Dauerbremse aus oder nur schwach. Vorher Tempo raus, vor der Kurve gestreckt bremsen. ABS schaltet die Dauerbremse zwar ab – aber das ist kein Freibrief. | Draufsicht · schematisch · glatte Fahrbahn | ❄  Glatte Fahrbahn | Antriebsachse | Der Zug knickt ein! | Lkw-Vorderachse | bremst nicht | Lkw-Antriebsachse (Retarder) | Anhänger | bremst nicht
+NOTIZEN:
+FOLIE 49 VON 124 · keine Animation · Klick = weiter
+
+▶ „Die Antriebsräder rutschen, weil nur sie bremsen. Der Anhänger schiebt von hinten. Das Heck des Lkw bricht aus – der Zug knickt ein. Darum: Bei Glätte die Dauerbremse aus oder nur ganz schwach. Lieber vorher langsam und mit der Betriebsbremse gestreckt bremsen – dann bremst auch der Anhänger mit.“
+❓ Frage auf der Folie auflösen.
+✅ Mercedes-Benz Actros Betriebsanleitung: „Schalten Sie nicht auf glatter Fahrbahn die Dauerbremse ein“ – die Antriebsräder können die Haftung verlieren. ABS schaltet die Dauerbremse ab, sobald es regelt (Actros Betriebsanleitung; WABCO EBS3). Prüfungsfrage 2.7.06-108.
+💡 Winkel und Wege gezeichnet, nicht gemessen.
+🖱 Nächster Klick: nächste Folie.
+➜ „Was gilt sonst noch für die Dauerbremse im Zug?“
+
+=== FOLIE 50 ===
+AUF DER FOLIE: KLASSE CE  ·  ABEND 7  ·  CE3  ·  DAUERBREMSE UND PRÜFFRISTEN | 50 | DAUERBREMSE IM ZUG | Was gilt für die Dauerbremse, wenn ein Anhänger dran ist? | Glätte:  Dauerbremse aus oder nur schwach. Vorher Tempo raus und gestreckt bremsen. | Langes Gefälle:  vorher einen kleinen Gang wählen und die Dauerbremse arbeiten lassen. Nur Betriebsbremse = Bremsen werden heiß. | Der Anhänger hat meist keine Dauerbremse:  seine Radbremsen müssen das Gefälle aushalten. Darum vorher langsam. | ABS hilft:  Regelt das ABS, schaltet es die Dauerbremse ab. Aber verlasst euch nicht darauf.
+NOTIZEN:
+FOLIE 50 VON 124 · 4 Klicks
+
+▶ Sagen: „Vier Regeln für die Dauerbremse im Zug.“
+❓ Vor jedem Klick fragen: „Was meint ihr?“
+🖱 Klick 1–4: je eine Regel.
+✅ Mercedes-Benz Actros Betriebsanleitung (Dauerbremse bei Glätte nicht einschalten; ABS schaltet Dauerbremse ab). Prüfungsfragen 2.7.06-310 (nur Betriebsbremse im Gefälle → Bremswirkung lässt gefährlich nach) und 2.7.06-236 (Betriebsbremse und niedrigerer Gang). § 41 Abs. 15 StVZO: Dauerbremse Pflicht über 9 t (7 % Gefälle, 6 km, 30 km/h); bei Anhängern über 9 t muss die Betriebsbremse diese Anforderung erfüllen.
+💡 Manche Lkw haben einen Hebel, der nur den Anhänger bremst (Streckbremse). Laut Actros-Anleitung nur für kurze Bremsungen – kein Ersatz für die Dauerbremse.
+➜ „Eine Prüfungsfrage.“
+
+=== FOLIE 51 ===
+AUF DER FOLIE: KLASSE CE  ·  ABEND 7  ·  CE3  ·  DAUERBREMSE UND PRÜFFRISTEN | 51 | PRÜFUNGSFRAGE 2.7.06-230 | Was geschieht, wenn bei eingeschalteter Dauerbremse die Betriebsbremse betätigt wird? | A | Die Räder der Antriebsachse(n) werden stärker abgebremst | B | Die Dauerbremse wird automatisch abgeschaltet | C | Die Räder der Antriebsachse(n) werden blockieren | ✓  RICHTIG | Beide Bremsen wirken zusammen auf die Antriebsachse. Auf Glätte ist das genau die Gefahr.
+NOTIZEN:
+FOLIE 51 VON 124 · 2 Klicks
+
+▶ Frage vorlesen, abstimmen.
+🖱 Klick 1: Antworten · Klick 2: Lösung.
+✅ Amtlicher Fragenkatalog 2.7.06-230: A.
+➜ „Jetzt zu den Prüfungen am Anhänger.“
+
+=== FOLIE 52 ===
+AUF DER FOLIE: KLASSE CE  ·  ABEND 7  ·  CE3  ·  DAUERBREMSE UND PRÜFFRISTEN | 52 | PRÜFFRISTEN | Wann zur Prüfung? | 1 | bis 3,5 t | 2 | über 3,5 t bis 10 t | 3 | über 10 t | 4 | Dazu: UVV | ❓ Frage an die Klasse   / Euer Sattelanhänger hat 39 t und ist drei Jahre alt. Wann muss er zur Prüfung? | Der Anhänger hat ein eigenes Kennzeichen – und eigene Prüftermine. Kleine Anhänger: HU alle 2 Jahre. | Zeitleiste ab Erstzulassung · Monate | Anhänger über 0,75 t bis 3,5 t | HU alle 24 Monate · keine SP | Jahr 1 | Jahr 2 | Jahr 3 | Jahr 4 | Zulassung | HU | HU | HU | Plakette hinten am Kennzeichen | SP | Prüfmarke auf dem SP-Schild | UVV | Prüfnachweis vom Unternehmer
+NOTIZEN:
+FOLIE 52 VON 124 · keine Animation · Klick = weiter
+
+▶ Sagen: „Der Anhänger ist ein eigenes Fahrzeug mit eigenem Kennzeichen. Er hat eigene Prüftermine – unabhängig vom Lkw. Kleine Anhänger bis 3,5 Tonnen müssen alle zwei Jahre zur HU.“
+❓ Frage auf der Folie stellen.
+✅ StVZO Anlage VIII Nr. 2.1.5: Anhänger über 0,75 t bis 3,5 t HU 24 Monate (bis 0,75 t: erste HU nach 36, dann 24 Monate).
+🖱 Keine Animation auf dieser Folie – nächster Klick = nächster Schritt (Morph).
+➜ „Und schwerere Anhänger?“
+
+=== FOLIE 53 ===
+AUF DER FOLIE: KLASSE CE  ·  ABEND 7  ·  CE3  ·  DAUERBREMSE UND PRÜFFRISTEN | 53 | PRÜFFRISTEN | Wann zur Prüfung? | 1 | bis 3,5 t | 2 | über 3,5 t bis 10 t | 3 | über 10 t | 4 | Dazu: UVV | ❓ Frage an die Klasse   / Euer Sattelanhänger hat 39 t und ist drei Jahre alt. Wann muss er zur Prüfung? | Über 3,5 t: jedes Jahr zur HU. | Zeitleiste ab Erstzulassung · Monate | Anhänger über 3,5 t bis 10 t | HU alle 12 Monate · keine SP | Jahr 1 | Jahr 2 | Jahr 3 | Jahr 4 | Zulassung | HU | HU | HU | HU | HU | Plakette hinten am Kennzeichen | SP | Prüfmarke auf dem SP-Schild | UVV | Prüfnachweis vom Unternehmer
+NOTIZEN:
+FOLIE 53 VON 124 · keine Animation · Klick = weiter
+
+▶ „Über 3,5 bis 10 Tonnen: jedes Jahr zur HU. Eine SP gibt es hier nicht.“
+✅ StVZO Anlage VIII Nr. 2.1.5.3: Anhänger über 3,5 t bis 10 t HU 12 Monate.
+🖱 Keine Animation auf dieser Folie – nächster Klick = nächster Schritt (Morph).
+➜ „Und über 10 Tonnen?“
+
+=== FOLIE 54 ===
+AUF DER FOLIE: KLASSE CE  ·  ABEND 7  ·  CE3  ·  DAUERBREMSE UND PRÜFFRISTEN | 54 | PRÜFFRISTEN | Wann zur Prüfung? | 1 | bis 3,5 t | 2 | über 3,5 t bis 10 t | 3 | über 10 t | 4 | Dazu: UVV | ✓ Antwort   / Alle 12 Monate zur HU – und genau dazwischen zur SP. Also alle 6 Monate eine Prüfung. | Über 10 t: jedes Jahr HU. Ab dem 3. Jahr kommt genau dazwischen die Sicherheitsprüfung (SP) dazu. | Zeitleiste ab Erstzulassung · Monate | Anhänger über 10 t | HU alle 12 Monate · ab dem 3. Jahr dazwischen die SP | Jahr 1 | Jahr 2 | Jahr 3 | Jahr 4 | Zulassung | HU | HU | HU | HU | SP | SP | HU | Plakette hinten am Kennzeichen | SP | Prüfmarke auf dem SP-Schild | UVV | Prüfnachweis vom Unternehmer
+NOTIZEN:
+FOLIE 54 VON 124 · keine Animation · Klick = weiter
+
+▶ „Über 10 Tonnen – also fast jeder Anhänger im Fernverkehr: jedes Jahr HU. Ab dem dritten Jahr kommt genau in der Mitte die Sicherheitsprüfung dazu. Dann ist er alle sechs Monate dran.“
+❓ Frage auf der Folie auflösen.
+✅ StVZO Anlage VIII Nr. 2.1.5.4: Anhänger über 10 t: erste 24 Monate HU 12; danach HU 12 und SP 6 Monate. Gilt auch für Sattelanhänger (Nr. 2.1.5). SP-Frist zählt ab der letzten HU (Nr. 2.4).
+💡 Nachweis: HU-Plakette hinten am Kennzeichen des Anhängers, SP-Prüfmarke auf dem SP-Schild. Untersuchungsbericht (HU) und Prüfprotokoll (SP) aufbewahren (§ 29 Abs. 9 und 10 StVZO).
+🖱 Keine Animation auf dieser Folie – nächster Klick = nächster Schritt (Morph).
+➜ „Und noch eine Prüfung.“
+
+=== FOLIE 55 ===
+AUF DER FOLIE: KLASSE CE  ·  ABEND 7  ·  CE3  ·  DAUERBREMSE UND PRÜFFRISTEN | 55 | PRÜFFRISTEN | Wann zur Prüfung? | 1 | bis 3,5 t | 2 | über 3,5 t bis 10 t | 3 | über 10 t | 4 | Dazu: UVV | ✓ Antwort   / Alle 12 Monate zur HU – und genau dazwischen zur SP. Also alle 6 Monate eine Prüfung. | Dazu die UVV-Prüfung: mindestens einmal im Jahr durch einen Sachkundigen. Dafür sorgt der Unternehmer. | Zeitleiste ab Erstzulassung · Monate | Anhänger über 10 t | Dazu jedes Jahr die UVV-Prüfung – Sache des Unternehmers | Jahr 1 | Jahr 2 | Jahr 3 | Jahr 4 | Zulassung | HU | HU | HU | HU | SP | SP | UVV | UVV | UVV | UVV | HU | Plakette hinten am Kennzeichen | SP | Prüfmarke auf dem SP-Schild | UVV | Prüfnachweis vom Unternehmer
+NOTIZEN:
+FOLIE 55 VON 124 · keine Animation · Klick = weiter
+
+▶ „Dazu kommt die UVV-Prüfung – UVV heißt Unfallverhütungsvorschrift. Ein Sachkundiger prüft mindestens einmal im Jahr, ob das Fahrzeug betriebssicher ist – auch Rampen, Planen und Zurrpunkte. Dafür sorgt der Unternehmer, nicht ihr. Ihr macht die Abfahrtkontrolle.“
+✅ DGUV Vorschrift 70 § 57: mindestens einmal jährlich durch einen Sachkundigen; gilt auch für Anhänger (§ 2 Abs. 1). DGUV Vorschrift 70 § 36: Fahrer prüft vor jeder Schicht.
+💡 Den Fahrtenschreiber hat nur der Lkw – Prüfung alle 24 Monate (§ 57b StVZO).
+🖱 Keine Animation auf dieser Folie – nächster Klick = nächster Schritt (Morph).
+➜ „Eine Prüfungsfrage dazu.“
+
+=== FOLIE 56 ===
+AUF DER FOLIE: KLASSE CE  ·  ABEND 7  ·  CE3  ·  DAUERBREMSE UND PRÜFFRISTEN | 56 | PRÜFUNGSFRAGE 2.6.01-209 | Woran können Sie erkennen, wann Ihr Fahrzeug zur nächsten Sicherheitsprüfung vorgeführt werden muss? | A | Am SP-Schild mit der Prüfmarke | B | An der Eintragung in der Zulassungsbescheinigung Teil I | C | An der Prüfplakette auf dem amtlichen Kennzeichen | ✓  RICHTIG | Die Plakette am Kennzeichen gilt für die HU. Für die SP gibt es das SP-Schild mit Prüfmarke.
+NOTIZEN:
+FOLIE 56 VON 124 · 2 Klicks
+
+▶ Frage vorlesen, abstimmen.
+🖱 Klick 1: Antworten · Klick 2: Lösung.
+✅ Amtlicher Fragenkatalog 2.6.01-209: A. § 29 Abs. 2 StVZO.
+➜ „Zum Abschluss von CE3: Mitschreiben.“
+
+=== FOLIE 57 ===
+AUF DER FOLIE: KLASSE CE  ·  ABEND 7  ·  CE3  ·  ABSCHLUSS | 57 | ZUM MITSCHREIBEN | Lastzugbremsen | ✎ | Grundsatz | jedes Fahrzeug bremst sein eigenes Gewicht · Voreilung stellt die Werkstatt ein | Falsch abgestimmt | Lkw bremst stärker → Anhänger schiebt → Einknicken auf Glätte | Lastanpassung | misst am Luftbalg (oder Federweg) · kennt nur das Gewicht, nicht die Glätte | ABS-Stecker | fehlt er: kein ABS, keine Lastanpassung, kein Kippschutz · nur gelb | Warnleuchte | ohne Stecker oft dunkel → nach dem Kuppeln hinsehen | Feststellbremse | Lkw mit Federkraft · Anhänger nur mit Luft · Kontrollstellung: Lkw allein, 12 % | Dauerbremse | nur Antriebsachse · bei Glätte aus oder schwach | Anhänger über 10 t | HU alle 12 Monate · ab dem 3. Jahr SP dazwischen · UVV jährlich
+NOTIZEN:
+FOLIE 57 VON 124 · 8 Klicks
+
+▶ Sagen: „Schreibt euch das auf – das sind die Kernpunkte aus CE3.“
+🖱 Klick 1–8: je eine Zeile.
+💡 Erst das Stichwort vorlesen und fragen: „Wer weiß es?“ – dann klicken.
+✅ Quellen: WABCO EBS3 und TEBS E; Prüfungsfragen 2.7.06-108, -210, -314, -315, -320, -321, -230; RL 71/320/EWG Anhang II; StVZO Anlage VIII; DGUV Vorschrift 70 § 57.
+➜ „Drei Prüfungsfragen.“
+
+=== FOLIE 58 ===
+AUF DER FOLIE: KLASSE CE  ·  ABEND 7  ·  CE3  ·  ABSCHLUSS | 58 | PRÜFUNGSFRAGE 2.7.02-305 | Die elektrischen Verbindungen zu Ihrem Zugfahrzeug sind unterbrochen. Welche Einrichtung am Anhänger ist somit nicht betriebsfähig? | A | Der Automatische Blockierverhinderer (ABV) | B | Das Elektronische Bremssystem (EBS) | C | Die Antriebs-Schlupfregelung (ASR) | ✓  RICHTIG | ✓  RICHTIG | ABS und EBS brauchen Strom und Daten aus dem Stecker. Eine ASR hat der Anhänger nicht – er hat keinen Antrieb.
+NOTIZEN:
+FOLIE 58 VON 124 · 2 Klicks
+
+▶ Frage vorlesen, abstimmen.
+🖱 Klick 1: Antworten · Klick 2: Lösung.
+✅ Amtlicher Fragenkatalog 2.7.02-305: A und B.
+➜ „Nächste Frage.“
+
+=== FOLIE 59 ===
+AUF DER FOLIE: KLASSE CE  ·  ABEND 7  ·  CE3  ·  ABSCHLUSS | 59 | PRÜFUNGSFRAGE 2.2.23-201 | Was ist zu tun, um einen zweiachsigen Lkw in starkem Gefälle gegen Wegrollen zu sichern? | A | Feststellbremse anziehen | B | Unterlegkeil vor ein Hinterrad legen | C | Dauerbremse betätigen | ✓  RICHTIG | ✓  RICHTIG | Die Dauerbremse hält nichts fest – sie wirkt nur, wenn sich die Räder drehen.
+NOTIZEN:
+FOLIE 59 VON 124 · 2 Klicks
+
+▶ Frage vorlesen, abstimmen.
+🖱 Klick 1: Antworten · Klick 2: Lösung.
+✅ Amtlicher Fragenkatalog 2.2.23-201: A und B. Prüfungsfrage 2.7.06-239: Die Dauerbremse bremst nicht bis zum Stillstand.
+➜ „Letzte Frage.“
+
+=== FOLIE 60 ===
+AUF DER FOLIE: KLASSE CE  ·  ABEND 7  ·  CE3  ·  ABSCHLUSS | 60 | PRÜFUNGSFRAGE 2.6.01-207 | Sie sollen einen Anhänger mit einer zulässigen Gesamtmasse von 18 t zur Hauptuntersuchung vorführen. Welche Fahrzeugdokumente benötigen Sie? | A | Zulassungsbescheinigung Teil I (Fahrzeugschein) | B | Prüfbuch | C | Zulassungsbescheinigung Teil II (Fahrzeugbrief) | ✓  RICHTIG | ✓  RICHTIG | So steht es im Katalog: Fahrzeugschein und Prüfbuch. Den Fahrzeugbrief braucht ihr nicht.
+NOTIZEN:
+FOLIE 60 VON 124 · 2 Klicks
+
+▶ Frage vorlesen, abstimmen.
+🖱 Klick 1: Antworten · Klick 2: Lösung.
+✅ Amtlicher Fragenkatalog 2.6.01-207: A und B.
+💡 „Prüfbuch“ ist der Begriff aus dem Fragenkatalog. Im heutigen § 29 StVZO heißen die Nachweise Untersuchungsbericht (HU) und Prüfprotokoll (SP).
+➜ „Das nimmst du aus CE3 mit.“
+
+=== FOLIE 61 ===
+AUF DER FOLIE: KLASSE CE  ·  ABEND 7  ·  CE3  ·  ABSCHLUSS | 61 | ZUSAMMENFASSUNG | Das nimmst du mit | Jeder bremst sich selbst:  Lkw und Anhänger bremsen ihr eigenes Gewicht. Schiebt der Anhänger, droht Einknicken. | Stecker nie vergessen:  ohne ABS-Stecker kein ABS am Anhänger – und oft keine Warnung. Hinsehen! | Kontrollstellung:  Hält der Lkw den Zug allein? Dann Anhänger-Feststellbremse und Keile. | Dauerbremse bei Glätte:  aus oder nur schwach – sie bremst nur die Antriebsachse. | Anhänger über 10 t:  HU jedes Jahr, ab dem 3. Jahr SP dazwischen, UVV jährlich.
+NOTIZEN:
+FOLIE 61 VON 124 · 5 Klicks
+
+▶ Sagen: „Das sind die fünf Punkte aus CE3, die ihr sicher wissen müsst.“
+🖱 Klick 1–5: je ein Punkt.
+➜ „Jetzt 15 Minuten Pause. Danach CE4: Fahren mit dem Zug.“
+
+=== FOLIE 62 ===
+AUF DER FOLIE: PAUSE | 15 Minuten | Kurz raus, frische Luft. | Danach: Lektion CE4 · Fahren mit Zügen
+NOTIZEN:
+FOLIE 62 VON 124 · Animation läuft von selbst · Klick = weiter
+
+▶ Sagen: „15 Minuten Pause. Kurz raus, frische Luft.“
+💡 Pausenende ansagen (z. B. 19:45 Uhr).
+🖱 Keine Klicks.
+➜ „Willkommen zurück. Lektion CE4: Fahren mit dem Zug – Einknicken, Rückwärtsfahren, Abbiegen und Wetter.“
+
+=== FOLIE 63 ===
+AUF DER FOLIE: KLASSE CE  ·  ABEND 7  ·  LEKTION CE4 | 63 | LEKTION CE4 · FAHREN MIT ZÜGEN | Das lernt ihr in CE4 | 01 | Abfahrtkontrolle am Zug  Kupplung · Leitungen · Anhänger frei · Bremsprobe | 15 Min | 02 | Wie sich der Zug bewegt  Einknicken · Ausbrechen · Pendeln · Kippen | 20 Min | 03 | Rückwärts und Abbiegen  Sattelzug rückwärts · Einweiser · toter Winkel am Anhänger | 20 Min | 04 | Wetter und Gefälle  Glätte · Schneeketten · Sicht unter 50 m · Seitenwind | 15 Min | 05 | Tempo, Abstand, Schwertransport  50 · 60 · 80 · Zeichen 277 · Begleitfahrzeug | 15 Min | + 5 Min Abschluss: Quiz und „Das nimmst du mit“
+NOTIZEN:
+FOLIE 63 VON 124 · 5 Klicks
+
+▶ Sagen: „Willkommen zurück. In CE4 geht es ums Fahren mit dem Zug: Was prüft ihr vor der Fahrt? Wie verhält sich der Zug beim Bremsen und bei Wind? Wie fahrt ihr rückwärts, wie biegt ihr ab? Und was gilt bei Wetter, Tempo, Abstand und Schwertransport?“
+🖱 Klick 1–5: je ein Kapitel.
+➜ „Kapitel 1: Abfahrtkontrolle am Zug.“
+
+=== FOLIE 64 ===
+AUF DER FOLIE: KLASSE CE  ·  ABEND 7  ·  CE4  ·  ABFAHRTKONTROLLE AM ZUG | 64 | 01 | Abfahrtkontrolle am Zug | Vor jeder Schicht und nach jedem Kuppeln: einmal um den ganzen Zug.
+NOTIZEN:
+FOLIE 64 VON 124 · Animation läuft von selbst · Klick = weiter
+
+▶ Sagen: „Die Abfahrtkontrolle am Lkw kennt ihr aus C6. Mit Anhänger kommt einiges dazu. Wir gehen einmal um den Zug.“
+✅ DGUV Vorschrift 70 § 36 (vor jeder Schicht); DGUV Grundsatz 314-002 Nr. 1 (auch nach dem Kuppeln) und Nr. 2.10 (Anhängerbetrieb).
+🖱 Keine Klicks.
+➜ „Los geht der Rundgang.“
+
+=== FOLIE 65 ===
+AUF DER FOLIE: KLASSE CE  ·  ABEND 7  ·  CE4  ·  ABFAHRTKONTROLLE AM ZUG | 65 | RUNDGANG | Einmal um den Zug | 1 | Kupplung zu? | 2 | Leitungen dran? | 3 | Anhänger frei? | 4 | Licht, Reifen, Plane | 5 | Bremsprobe | ❓ Frage an die Klasse   / Was prüft ihr am Zug zusätzlich? | Kupplung: Bolzen eingerastet? Kontrollstift ansehen und tasten. Beim Sattel: Verriegelung zu, Sicherung drin. | Draufsicht · schematisch | Kupplung
+NOTIZEN:
+FOLIE 65 VON 124 · keine Animation · Klick = weiter
+
+▶ Sagen: „Wir starten an der Kupplung. Ist der Bolzen ganz unten? Kontrollstift ansehen und anfassen.“
+❓ Frage auf der Folie stellen.
+✅ DGUV Grundsatz 314-002 Nr. 2.10: Anhängekupplung geschlossen und gesichert. Prüfungsfrage 2.7.07-209 (Kontrollstift), aus CE1.
+🖱 Keine Animation auf dieser Folie – nächster Klick = nächster Schritt (Morph).
+➜ „Weiter zu den Leitungen.“
+
+=== FOLIE 66 ===
+AUF DER FOLIE: KLASSE CE  ·  ABEND 7  ·  CE4  ·  ABFAHRTKONTROLLE AM ZUG | 66 | RUNDGANG | Einmal um den Zug | 1 | Kupplung zu? | 2 | Leitungen dran? | 3 | Anhänger frei? | 4 | Licht, Reifen, Plane | 5 | Bremsprobe | ❓ Frage an die Klasse   / Was prüft ihr am Zug zusätzlich? | Leitungen: rot, gelb, Licht und der schwarze ABS-Stecker. Nichts scheuert, nichts hängt bis zum Boden. | Draufsicht · schematisch | Leitungen
+NOTIZEN:
+FOLIE 66 VON 124 · keine Animation · Klick = weiter
+
+▶ „Dann die Leitungen: rot, gelb, Licht – und der schwarze ABS-Stecker. Die Leitungen dürfen nicht scheuern und nicht durchhängen.“
+✅ DGUV Grundsatz 314-002 Nr. 2.10: elektrische und Bremsleitungen angeschlossen, sofern vorhanden auch ABV/ABS; nicht scheuern, nicht bis zum Boden durchhängen.
+🖱 Keine Animation auf dieser Folie – nächster Klick = nächster Schritt (Morph).
+➜ „Weiter am Anhänger.“
+
+=== FOLIE 67 ===
+AUF DER FOLIE: KLASSE CE  ·  ABEND 7  ·  CE4  ·  ABFAHRTKONTROLLE AM ZUG | 67 | RUNDGANG | Einmal um den Zug | 1 | Kupplung zu? | 2 | Leitungen dran? | 3 | Anhänger frei? | 4 | Licht, Reifen, Plane | 5 | Bremsprobe | ❓ Frage an die Klasse   / Was prüft ihr am Zug zusätzlich? | Anhänger frei: Feststellbremse gelöst, Keile weg und verstaut, Stützen hoch. | Draufsicht · schematisch | Anhänger frei
+NOTIZEN:
+FOLIE 67 VON 124 · keine Animation · Klick = weiter
+
+▶ „Ist der Anhänger frei? Roter Knopf gedrückt, Keile weg und verstaut, Stützen oben. Sonst fahrt ihr mit angezogener Bremse los.“
+✅ Lehrbuchwissen aus CE1 bis CE3 (Feststellbremse lösen, Keile verstauen: Prüfungsfrage 2.7.07-321).
+🖱 Keine Animation auf dieser Folie – nächster Klick = nächster Schritt (Morph).
+➜ „Nach hinten.“
+
+=== FOLIE 68 ===
+AUF DER FOLIE: KLASSE CE  ·  ABEND 7  ·  CE4  ·  ABFAHRTKONTROLLE AM ZUG | 68 | RUNDGANG | Einmal um den Zug | 1 | Kupplung zu? | 2 | Leitungen dran? | 3 | Anhänger frei? | 4 | Licht, Reifen, Plane | 5 | Bremsprobe | ❓ Frage an die Klasse   / Was prüft ihr am Zug zusätzlich? | Am ganzen Zug: Licht, Reifen und Radmuttern. Plane zu, auf dem Dach kein Eis und kein Schnee. | Draufsicht · schematisch | Licht · Reifen · Plane
+NOTIZEN:
+FOLIE 68 VON 124 · keine Animation · Klick = weiter
+
+▶ „Hinten: Licht am Anhänger, Reifen, Radmuttern. Und schaut auf die Plane: zu? Liegt Eis oder Schnee auf dem Dach? Das muss runter.“
+✅ DGUV Grundsatz 314-002 Nr. 2.1 (Licht auch am Anhänger), 2.2 (Reifen), 2.8 (Planen geschlossen, Dächer frei von Wasser, Schnee und Eis).
+🖱 Keine Animation auf dieser Folie – nächster Klick = nächster Schritt (Morph).
+➜ „Und als Letztes?“
+
+=== FOLIE 69 ===
+AUF DER FOLIE: KLASSE CE  ·  ABEND 7  ·  CE4  ·  ABFAHRTKONTROLLE AM ZUG | 69 | RUNDGANG | Einmal um den Zug | 1 | Kupplung zu? | 2 | Leitungen dran? | 3 | Anhänger frei? | 4 | Licht, Reifen, Plane | 5 | Bremsprobe | ✓ Antwort   / Kupplung, Leitungen mit ABS-Stecker, Anhänger frei, Licht und Reifen hinten – und die Bremsprobe. | Zum Schluss die Bremsprobe – mit dem ganzen Zug, langsam auf dem Hof. | Draufsicht · schematisch | Bremsprobe: Zug fährt an und bremst | →
+NOTIZEN:
+FOLIE 69 VON 124 · keine Animation · Klick = weiter
+
+▶ „Als Letztes die Bremsprobe – mit dem ganzen Zug, langsam auf dem Hof. Zieht der Zug gerade? Bremst der Anhänger mit?“
+❓ Frage auf der Folie auflösen.
+✅ Prüfungsfragen 2.7.02-017 und -020 (Bremsprobe). DGUV Grundsatz 314-002 Nr. 2.3.2: Bremsprobe, ABV-Kontrolle ohne Störung.
+🖱 Keine Animation auf dieser Folie – nächster Klick = nächster Schritt (Morph).
+➜ „Zwei Prüfungsfragen dazu.“
+
+=== FOLIE 70 ===
+AUF DER FOLIE: KLASSE CE  ·  ABEND 7  ·  CE4  ·  ABFAHRTKONTROLLE AM ZUG | 70 | PRÜFUNGSFRAGE 2.6.03-308 | Sie möchten einen Anhänger mitführen. Was müssen Sie hinsichtlich der elektrischen Verbindung zwischen Zugfahrzeug und Anhänger beachten? | A | Die elektrischen Verbindungseinrichtungen dürfen nicht beschädigt sein | B | Die Bordspannung von Zugfahrzeug und Anhänger muss aufeinander abgestimmt sein | C | Die Funktion der Beleuchtungseinrichtungen der Fahrzeugkombination muss vor Fahrtantritt überprüft werden | ✓  RICHTIG | ✓  RICHTIG | ✓  RICHTIG | Alle drei sind richtig. Lkw und Anhänger haben in der Regel 24 Volt.
+NOTIZEN:
+FOLIE 70 VON 124 · 2 Klicks
+
+▶ Frage vorlesen, abstimmen. Tipp: Es können auch alle drei richtig sein.
+🖱 Klick 1: Antworten · Klick 2: Lösung.
+✅ Amtlicher Fragenkatalog 2.6.03-308: A, B und C.
+➜ „Und noch eine – im Winter.“
+
+=== FOLIE 71 ===
+AUF DER FOLIE: KLASSE CE  ·  ABEND 7  ·  CE4  ·  ABFAHRTKONTROLLE AM ZUG | 71 | PRÜFUNGSFRAGE 2.2.23-302 | Die Plane Ihres Anhängers ist vereist. Was kann passieren, wenn Sie mit dem Anhänger eine Fahrt beginnen? Durch herabfallende Eisplatten können … | A | … beim Bremsen Luft- und Elektroleitungen am Fahrzeug stark beschädigt werden | B | … Personen lebensgefährlich verletzt werden | C | … andere Fahrzeuge erheblich beschädigt werden | ✓  RICHTIG | ✓  RICHTIG | ✓  RICHTIG | Eis und Schnee vom Dach runter, bevor ihr losfahrt. Beim Bremsen rutscht es nach vorn – auf die Leitungen zwischen Lkw und Anhänger.
+NOTIZEN:
+FOLIE 71 VON 124 · 2 Klicks
+
+▶ Frage vorlesen, abstimmen.
+🖱 Klick 1: Antworten · Klick 2: Lösung.
+✅ Amtlicher Fragenkatalog 2.2.23-302: A, B und C. DGUV Grundsatz 314-002 Nr. 2.8: Fahrzeugdächer frei von Wasser, Schnee und Eis.
+➜ „Kapitel 2: Wie sich der Zug bewegt.“
+
+=== FOLIE 72 ===
+AUF DER FOLIE: KLASSE CE  ·  ABEND 7  ·  CE4  ·  FAHRVERHALTEN | 72 | 02 | Wie sich der Zug bewegt | Zwei Fahrzeuge, ein Gelenk dazwischen. Beim Bremsen, in der Kurve und bei Wind macht das Gelenk, was es will – wenn ihr es lasst.
+NOTIZEN:
+FOLIE 72 VON 124 · Animation läuft von selbst · Klick = weiter
+
+▶ Sagen: „Ein Zug hat ein Gelenk – der Gliederzug sogar zwei: an der Kupplung und am Drehkranz. Darum kann er einknicken, ausbrechen und pendeln.“
+✅ DGUV Information 214-080, S. 31: Gliederzug mit zwei Drehpunkten (Kupplungsbolzen und Drehkranzmitte); Sattelzug mit einem (Königszapfen).
+🖱 Keine Klicks.
+➜ „Erst eine Merkhilfe aus CE3.“
+
+=== FOLIE 73 ===
+AUF DER FOLIE: KLASSE CE  ·  ABEND 7  ·  CE4  ·  FAHRVERHALTEN | 73 | MERKHILFE | Wo blockiert es? | 1 | Vorn blockiert | 2 | Hinten blockiert | ❓ Frage an die Klasse   / Beim Bremsen blockieren Räder. Was macht der Zug – je nachdem, wo? | Rutschen die Räder des Lkw – zum Beispiel durch Retarder auf Glätte –, schiebt der Anhänger. Der Lkw dreht sich ein: Klappmesser. | Draufsicht · schematisch | Lkw-Räder blockieren  →  Der Zug knickt ein | Anhänger-Räder blockieren  →  Der Anhänger bricht aus
+NOTIZEN:
+FOLIE 73 VON 124 · keine Animation · Klick = weiter
+
+▶ Sagen: „Eine Merkhilfe: Wo die Räder blockieren, geht die Führung verloren. Blockiert vorn der Lkw, schiebt der Anhänger und der Zug knickt ein – wie ein Klappmesser.“
+❓ Frage auf der Folie stellen.
+✅ Prüfungsfrage 2.7.06-108 (Retarder in der Kurve, Lkw bremst stärker). eurotransport 18.12.2013 (Klappmessereffekt). Merkhilfe: Lehrbuchwissen.
+🖱 Keine Animation auf dieser Folie – nächster Klick = nächster Schritt (Morph).
+➜ „Und hinten?“
+
+=== FOLIE 74 ===
+AUF DER FOLIE: KLASSE CE  ·  ABEND 7  ·  CE4  ·  FAHRVERHALTEN | 74 | MERKHILFE | Wo blockiert es? | 1 | Vorn blockiert | 2 | Hinten blockiert | ✓ Antwort   / Blockiert der Lkw (vorn), knickt der Zug ein. Blockiert der Anhänger (hinten), bricht er aus. Darum: gestreckt bremsen, ABS-Stecker drin. | Blockieren die Räder des Anhängers – zum Beispiel ohne ABS-Stecker –, verliert er die Führung und schwenkt seitlich aus. | Draufsicht · schematisch | Lkw-Räder blockieren  →  Der Zug knickt ein | Anhänger-Räder blockieren  →  Der Anhänger bricht aus
+NOTIZEN:
+FOLIE 74 VON 124 · keine Animation · Klick = weiter
+
+▶ „Blockiert hinten der Anhänger, schwenkt er seitlich aus. Das habt ihr bei der Vollbremsung ohne ABS-Stecker gesehen. Gegen beides hilft: vor der Kurve gestreckt bremsen, Dauerbremse bei Glätte aus, Stecker immer drin.“
+❓ Frage auf der Folie auflösen.
+✅ Prüfungsfrage 2.7.06-314. ESC am Lkw und Kippschutz (RSS) am Anhänger helfen – aber nur mit gestecktem ABS-Stecker (WABCO EBS3, TEBS E).
+🖱 Keine Animation auf dieser Folie – nächster Klick = nächster Schritt (Morph).
+➜ „Und dann gibt es noch das Pendeln.“
+
+=== FOLIE 75 ===
+AUF DER FOLIE: KLASSE CE  ·  ABEND 7  ·  CE4  ·  FAHRVERHALTEN | 75 | PENDELN | Der Anhänger schaukelt | ❓ Frage an die Klasse / Euer Anhänger fängt bei 80 an zu pendeln. Was tut ihr? | Antwort folgt … | Ein Gliederzug hat zwei Gelenke: Kupplung und Drehkranz. Darum kann der Anhänger seitlich hin und her schwingen. | Draufsicht · schematisch · Autobahn | Autobahn · 80 km/h | Autobahn, 80 km/h. Eine Windböe …
+NOTIZEN:
+FOLIE 75 VON 124 · keine Animation · Klick = weiter
+
+▶ Sagen: „Autobahn, 80 km/h. Eine Böe, eine Spurrille oder ein hastiger Lenker – und der Anhänger fängt an zu schwingen.“
+❓ Frage auf der Folie stellen.
+✅ DGUV Information 214-080, S. 31 (zwei Drehpunkte). Pendeln: Lehrbuchwissen; Prüfungsfrage 2.7.01-102 (hastige Lenkbewegungen erhöhen die Schleudergefahr), 2.1.07-209 (Windböen).
+🖱 Klick: Der Anhänger fängt an zu pendeln (läuft von selbst).
+➜ „Schaut auf den Anhänger.“
+
+=== FOLIE 76 ===
+AUF DER FOLIE: KLASSE CE  ·  ABEND 7  ·  CE4  ·  FAHRVERHALTEN | 76 | PENDELN | Der Anhänger schaukelt | ❓ Frage an die Klasse / Euer Anhänger fängt bei 80 an zu pendeln. Was tut ihr? | Antwort folgt … | Ein Gliederzug hat zwei Gelenke: Kupplung und Drehkranz. Darum kann der Anhänger seitlich hin und her schwingen. | Draufsicht · schematisch · Autobahn | Autobahn · 80 km/h | Der Anhänger schwingt aus …
+NOTIZEN:
+FOLIE 76 VON 124 · läuft von selbst weiter (kein Klick)
+
+▶ Die Bewegung läuft – zuschauen lassen.
+🖱 Kein Klick – die Folie läuft von selbst weiter.
+➜ (läuft weiter)
+
+=== FOLIE 77 ===
+AUF DER FOLIE: KLASSE CE  ·  ABEND 7  ·  CE4  ·  FAHRVERHALTEN | 77 | PENDELN | Der Anhänger schaukelt | ❓ Frage an die Klasse / Euer Anhänger fängt bei 80 an zu pendeln. Was tut ihr? | Antwort folgt … | Ein Gliederzug hat zwei Gelenke: Kupplung und Drehkranz. Darum kann der Anhänger seitlich hin und her schwingen. | Draufsicht · schematisch · Autobahn | Autobahn · 80 km/h | … und zurück …
+NOTIZEN:
+FOLIE 77 VON 124 · läuft von selbst weiter (kein Klick)
+
+▶ Die Bewegung läuft – zuschauen lassen.
+🖱 Kein Klick – die Folie läuft von selbst weiter.
+➜ (läuft weiter)
+
+=== FOLIE 78 ===
+AUF DER FOLIE: KLASSE CE  ·  ABEND 7  ·  CE4  ·  FAHRVERHALTEN | 78 | PENDELN | Der Anhänger schaukelt | ❓ Frage an die Klasse / Euer Anhänger fängt bei 80 an zu pendeln. Was tut ihr? | Antwort folgt … | Ein Gliederzug hat zwei Gelenke: Kupplung und Drehkranz. Darum kann der Anhänger seitlich hin und her schwingen. | Draufsicht · schematisch · Autobahn | Autobahn · 80 km/h | … immer weiter …
+NOTIZEN:
+FOLIE 78 VON 124 · läuft von selbst weiter (kein Klick)
+
+▶ Die Bewegung läuft – zuschauen lassen.
+🖱 Kein Klick – die Folie läuft von selbst weiter.
+➜ (läuft weiter)
+
+=== FOLIE 79 ===
+AUF DER FOLIE: KLASSE CE  ·  ABEND 7  ·  CE4  ·  FAHRVERHALTEN | 79 | PENDELN | Der Anhänger schaukelt | ❓ Frage an die Klasse / Euer Anhänger fängt bei 80 an zu pendeln. Was tut ihr? | Antwort folgt … | Pendeln wird schlimmer durch: hohes Tempo, leeren oder hinten schwer beladenen Anhänger, Seitenwind, hastiges Lenken, Spiel an Zugöse oder Drehkranz. | Draufsicht · schematisch · Autobahn | Autobahn · 80 km/h | Es schaukelt sich auf!
+NOTIZEN:
+FOLIE 79 VON 124 · keine Animation · Klick = weiter
+
+▶ „Jetzt schaukelt es sich auf. Was macht ihr? Wer jetzt Gas gibt oder hektisch gegenlenkt, macht es schlimmer.“
+✅ Lehrbuchwissen: Pendeln begünstigt durch hohe Geschwindigkeit, leeren oder hinten schwer beladenen Anhänger, Seitenwind, Spurrillen, Spiel an Zugöse, Zuggabel oder Drehkranz. Prüfungsfrage 2.6.03-102: Geschwindigkeit vermindern (falsch: beschleunigen, um den Zug zu strecken).
+🖱 Klick: Gas weg (läuft von selbst).
+➜ „So beruhigt ihr den Zug.“
+
+=== FOLIE 80 ===
+AUF DER FOLIE: KLASSE CE  ·  ABEND 7  ·  CE4  ·  FAHRVERHALTEN | 80 | PENDELN | Der Anhänger schaukelt | ❓ Frage an die Klasse / Euer Anhänger fängt bei 80 an zu pendeln. Was tut ihr? | Antwort folgt … | Pendeln wird schlimmer durch: hohes Tempo, leeren oder hinten schwer beladenen Anhänger, Seitenwind, hastiges Lenken, Spiel an Zugöse oder Drehkranz. | Draufsicht · schematisch · Autobahn | Autobahn · 80 km/h | Gas weg. Lenkrad ruhig halten …
+NOTIZEN:
+FOLIE 80 VON 124 · läuft von selbst weiter (kein Klick)
+
+▶ Die Bewegung läuft – zuschauen lassen.
+🖱 Kein Klick – die Folie läuft von selbst weiter.
+➜ (läuft weiter)
+
+=== FOLIE 81 ===
+AUF DER FOLIE: KLASSE CE  ·  ABEND 7  ·  CE4  ·  FAHRVERHALTEN | 81 | PENDELN | Der Anhänger schaukelt | ❓ Frage an die Klasse / Euer Anhänger fängt bei 80 an zu pendeln. Was tut ihr? | Antwort folgt … | Pendeln wird schlimmer durch: hohes Tempo, leeren oder hinten schwer beladenen Anhänger, Seitenwind, hastiges Lenken, Spiel an Zugöse oder Drehkranz. | Draufsicht · schematisch · Autobahn | Autobahn · 80 km/h | … das Schwingen wird kleiner …
+NOTIZEN:
+FOLIE 81 VON 124 · läuft von selbst weiter (kein Klick)
+
+▶ Die Bewegung läuft – zuschauen lassen.
+🖱 Kein Klick – die Folie läuft von selbst weiter.
+➜ (läuft weiter)
+
+=== FOLIE 82 ===
+AUF DER FOLIE: KLASSE CE  ·  ABEND 7  ·  CE4  ·  FAHRVERHALTEN | 82 | PENDELN | Der Anhänger schaukelt | ❓ Frage an die Klasse / Euer Anhänger fängt bei 80 an zu pendeln. Was tut ihr? | Antwort folgt … | Pendeln wird schlimmer durch: hohes Tempo, leeren oder hinten schwer beladenen Anhänger, Seitenwind, hastiges Lenken, Spiel an Zugöse oder Drehkranz. | Draufsicht · schematisch · Autobahn | Autobahn · 80 km/h | … und kleiner …
+NOTIZEN:
+FOLIE 82 VON 124 · läuft von selbst weiter (kein Klick)
+
+▶ Die Bewegung läuft – zuschauen lassen.
+🖱 Kein Klick – die Folie läuft von selbst weiter.
+➜ (läuft weiter)
+
+=== FOLIE 83 ===
+AUF DER FOLIE: KLASSE CE  ·  ABEND 7  ·  CE4  ·  FAHRVERHALTEN | 83 | PENDELN | Der Anhänger schaukelt | ❓ Frage an die Klasse / Euer Anhänger fängt bei 80 an zu pendeln. Was tut ihr? | ✓ Antwort / Gas weg, Lenkrad ruhig gerade halten, nicht hektisch gegenlenken. Bremsen erst, wenn der Zug wieder gestreckt ist. Danach: Ladung und Kupplung prüfen. | Gas weg, Lenkrad ruhig, nicht hektisch gegenlenken. Bremsen erst, wenn der Zug gestreckt ist. Danach Ladung und Spiel an der Kupplung prüfen. | Draufsicht · schematisch · Autobahn | Autobahn · 80 km/h | Der Zug läuft wieder gerade.
+NOTIZEN:
+FOLIE 83 VON 124 · keine Animation · Klick = weiter
+
+▶ „Gas weg, das Lenkrad ruhig gerade halten, nicht wild gegenlenken. Bremst ihr, dann erst, wenn der Zug wieder gestreckt ist. Und danach: anhalten und nachsehen – Ladung verrutscht? Spiel an Zugöse oder Drehkranz?“
+❓ Frage auf der Folie auflösen.
+✅ Prüfungsfrage 2.6.03-102 (Geschwindigkeit vermindern). Lehrbuchwissen (ruhig halten, gestreckt bremsen). Prüfungsfrage 2.7.08-301: Drehkranz und Zuggabel schmieren.
+💡 Winkel überzeichnet.
+🖱 Nächster Klick: nächste Folie.
+➜ „Eine Prüfungsfrage.“
+
+=== FOLIE 84 ===
+AUF DER FOLIE: KLASSE CE  ·  ABEND 7  ·  CE4  ·  FAHRVERHALTEN | 84 | PRÜFUNGSFRAGE 2.6.03-102 | Auf einer Straße mit Schlaglöchern kommt Ihr Anhänger ins „Springen“. Wie müssen Sie sich verhalten? | A | Geschwindigkeit vermindern, um Schleudern zu verhindern | B | Beschleunigen, um den Zug gestreckt zu halten | C | Mit gleich bleibender Geschwindigkeit den Schlaglöchern ausweichen | ✓  RICHTIG | Langsamer heißt: weniger Schwung im Anhänger. Gas geben macht es schlimmer.
+NOTIZEN:
+FOLIE 84 VON 124 · 2 Klicks
+
+▶ Frage vorlesen, abstimmen.
+🖱 Klick 1: Antworten · Klick 2: Lösung.
+✅ Amtlicher Fragenkatalog 2.6.03-102: A.
+➜ „Und wann knickt ein Zug auf Glätte ein?“
+
+=== FOLIE 85 ===
+AUF DER FOLIE: KLASSE CE  ·  ABEND 7  ·  CE4  ·  FAHRVERHALTEN | 85 | PRÜFUNGSFRAGE 2.7.06-107 | Wann ist für eine Fahrzeugkombination die Gefahr besonders groß, auf glatter Fahrbahn einzuknicken oder zu schleudern? | A | Wenn ruckartig gelenkt wird | B | Wenn bei Kurvenfahrten mit der Betriebsbremse mit maximaler Verzögerung gebremst wird | C | Wenn dosiert beschleunigt wird | ✓  RICHTIG | ✓  RICHTIG | Auf Glätte: ruhig lenken, vor der Kurve gestreckt bremsen – nicht in der Kurve.
+NOTIZEN:
+FOLIE 85 VON 124 · 2 Klicks
+
+▶ Frage vorlesen, abstimmen.
+🖱 Klick 1: Antworten · Klick 2: Lösung.
+✅ Amtlicher Fragenkatalog 2.7.06-107: A und B.
+➜ „Und zum Kippen.“
+
+=== FOLIE 86 ===
+AUF DER FOLIE: KLASSE CE  ·  ABEND 7  ·  CE4  ·  FAHRVERHALTEN | 86 | PRÜFUNGSFRAGE 2.7.01-202 | Worauf müssen Sie sich einstellen, wenn Sie ein Tankfahrzeug mit teilbeladenen Kammern fahren? | A | Auf erhöhte Kippgefahr in Kurven | B | Auf erhöhte Schleudergefahr | C | Auf schwergängige Lenkung im Gefälle | ✓  RICHTIG | ✓  RICHTIG | Die Flüssigkeit schwappt in der Kurve nach außen und beim Bremsen nach vorn. Das schiebt den Zug.
+NOTIZEN:
+FOLIE 86 VON 124 · 2 Klicks
+
+▶ Frage vorlesen, abstimmen.
+🖱 Klick 1: Antworten · Klick 2: Lösung.
+✅ Amtlicher Fragenkatalog 2.7.01-202: A und B.
+💡 Gilt sinngemäß für jede hohe oder lose Ladung: Schwerpunkt hoch = Kippgefahr in der Kurve (Prüfungsfrage 2.2.22-121).
+➜ „Kapitel 3: Rückwärts und Abbiegen.“
+
+=== FOLIE 87 ===
+AUF DER FOLIE: KLASSE CE  ·  ABEND 7  ·  CE4  ·  RÜCKWÄRTS UND ABBIEGEN | 87 | 03 | Rückwärts und Abbiegen | Beim Rückwärtsfahren macht der Anhänger das Gegenteil. Beim Abbiegen schneidet er die Kurve.
+NOTIZEN:
+FOLIE 87 VON 124 · Animation läuft von selbst · Klick = weiter
+
+▶ Sagen: „Zwei Situationen, in denen der Zug anders reagiert als ein Lkw allein: rückwärts und beim Abbiegen.“
+✅ DGUV Information 214-080, S. 31; Prüfungsfrage 2.7.01-310.
+🖱 Keine Klicks.
+➜ „Erst rückwärts – mit dem Sattelzug.“
+
+=== FOLIE 88 ===
+AUF DER FOLIE: KLASSE CE  ·  ABEND 7  ·  CE4  ·  RÜCKWÄRTS UND ABBIEGEN | 88 | RÜCKWÄRTS MIT SATTELZUG | Rückwärts lenken | ❓ Frage an die Klasse / Ihr fahrt rückwärts und lenkt nach links. Wohin wandert das Heck des Aufliegers? | Antwort folgt … | Der Zug steht gerade. Die gestrichelte Linie zeigt, wo er jetzt steht. | Draufsicht · berechnet (Einspurmodell) · Sattelzug 16,5 m · Fahrer sitzt links, Blick nach oben | LENKRAD | gerade | Gestreckt. Gleich geht es rückwärts – mit dem Lenkrad nach links.
+NOTIZEN:
+FOLIE 88 VON 124 · keine Animation · Klick = weiter
+
+▶ Sagen: „Der Sattelzug steht gerade. Ihr sitzt links, schaut nach vorn – also nach oben. Gleich fahrt ihr rückwärts und lenkt nach links.“
+❓ Frage auf der Folie stellen. Abstimmen: links oder rechts?
+✅ Lehrbuchwissen: Beim Rückwärtsfahren läuft der Auflieger entgegen dem Lenkeinschlag. Bewegung mit einem einfachen Fahrzeugmodell berechnet (Radstand 3,8 m, Königszapfen bis Achsmitte 7,6 m).
+🖱 Klick: Lenkrad links, rückwärts (läuft von selbst).
+➜ „Lenkrad nach links.“
+
+=== FOLIE 89 ===
+AUF DER FOLIE: KLASSE CE  ·  ABEND 7  ·  CE4  ·  RÜCKWÄRTS UND ABBIEGEN | 89 | RÜCKWÄRTS MIT SATTELZUG | Rückwärts lenken | ❓ Frage an die Klasse / Ihr fahrt rückwärts und lenkt nach links. Wohin wandert das Heck des Aufliegers? | Antwort folgt … | Der Zug steht gerade. Die gestrichelte Linie zeigt, wo er jetzt steht. | Draufsicht · berechnet (Einspurmodell) · Sattelzug 16,5 m · Fahrer sitzt links, Blick nach oben | LENKRAD | ← links | ↓ rückwärts | Lenkrad nach links …
+NOTIZEN:
+FOLIE 89 VON 124 · läuft von selbst weiter (kein Klick)
+
+▶ Die Bewegung läuft – zuschauen lassen.
+🖱 Kein Klick – die Folie läuft von selbst weiter.
+➜ (läuft weiter)
+
+=== FOLIE 90 ===
+AUF DER FOLIE: KLASSE CE  ·  ABEND 7  ·  CE4  ·  RÜCKWÄRTS UND ABBIEGEN | 90 | RÜCKWÄRTS MIT SATTELZUG | Rückwärts lenken | ❓ Frage an die Klasse / Ihr fahrt rückwärts und lenkt nach links. Wohin wandert das Heck des Aufliegers? | Antwort folgt … | Der Zug steht gerade. Die gestrichelte Linie zeigt, wo er jetzt steht. | Draufsicht · berechnet (Einspurmodell) · Sattelzug 16,5 m · Fahrer sitzt links, Blick nach oben | LENKRAD | ← links | ↓ rückwärts | Der Zug rollt rückwärts …
+NOTIZEN:
+FOLIE 90 VON 124 · läuft von selbst weiter (kein Klick)
+
+▶ Die Bewegung läuft – zuschauen lassen.
+🖱 Kein Klick – die Folie läuft von selbst weiter.
+➜ (läuft weiter)
+
+=== FOLIE 91 ===
+AUF DER FOLIE: KLASSE CE  ·  ABEND 7  ·  CE4  ·  RÜCKWÄRTS UND ABBIEGEN | 91 | RÜCKWÄRTS MIT SATTELZUG | Rückwärts lenken | ❓ Frage an die Klasse / Ihr fahrt rückwärts und lenkt nach links. Wohin wandert das Heck des Aufliegers? | ✓ Antwort / Nach rechts – andersherum. Erst anlenken, dann nachführen (gegenlenken), damit der Knick nicht zu groß wird. | Lenkrad links: Die Zugmaschine schiebt ihr Heck nach links. Der Auflieger knickt dagegen – sein Heck geht nach rechts. | Draufsicht · berechnet (Einspurmodell) · Sattelzug 16,5 m · Fahrer sitzt links, Blick nach oben | LENKRAD | ← links | ↓ rückwärts | Das Heck des Aufliegers wandert nach rechts – andersherum als das Lenkrad! | Heck →
+NOTIZEN:
+FOLIE 91 VON 124 · keine Animation · Klick = weiter
+
+▶ „Seht ihr? Lenkrad links – das Heck der Zugmaschine geht nach links, aber der Auflieger knickt ab und sein Heck wandert nach rechts. Genau andersherum als beim Lkw allein.“
+❓ Frage auf der Folie auflösen.
+✅ Lehrbuchwissen (FAKTEN CE4-e); Bewegung berechnet.
+🖱 Klick: nachführen (läuft von selbst).
+➜ „Und jetzt? Wenn ich weiter links lenke, wird der Knick immer größer.“
+
+=== FOLIE 92 ===
+AUF DER FOLIE: KLASSE CE  ·  ABEND 7  ·  CE4  ·  RÜCKWÄRTS UND ABBIEGEN | 92 | RÜCKWÄRTS MIT SATTELZUG | Rückwärts lenken | ❓ Frage an die Klasse / Ihr fahrt rückwärts und lenkt nach links. Wohin wandert das Heck des Aufliegers? | ✓ Antwort / Nach rechts – andersherum. Erst anlenken, dann nachführen (gegenlenken), damit der Knick nicht zu groß wird. | Lenkrad links: Die Zugmaschine schiebt ihr Heck nach links. Der Auflieger knickt dagegen – sein Heck geht nach rechts. | Draufsicht · berechnet (Einspurmodell) · Sattelzug 16,5 m · Fahrer sitzt links, Blick nach oben | LENKRAD | rechts → | ↓ rückwärts | Jetzt nachführen: Lenkrad nach rechts … | Heck →
+NOTIZEN:
+FOLIE 92 VON 124 · läuft von selbst weiter (kein Klick)
+
+▶ Die Bewegung läuft – zuschauen lassen.
+🖱 Kein Klick – die Folie läuft von selbst weiter.
+➜ (läuft weiter)
+
+=== FOLIE 93 ===
+AUF DER FOLIE: KLASSE CE  ·  ABEND 7  ·  CE4  ·  RÜCKWÄRTS UND ABBIEGEN | 93 | RÜCKWÄRTS MIT SATTELZUG | Rückwärts lenken | ❓ Frage an die Klasse / Ihr fahrt rückwärts und lenkt nach links. Wohin wandert das Heck des Aufliegers? | ✓ Antwort / Nach rechts – andersherum. Erst anlenken, dann nachführen (gegenlenken), damit der Knick nicht zu groß wird. | Lenkrad links: Die Zugmaschine schiebt ihr Heck nach links. Der Auflieger knickt dagegen – sein Heck geht nach rechts. | Draufsicht · berechnet (Einspurmodell) · Sattelzug 16,5 m · Fahrer sitzt links, Blick nach oben | LENKRAD | rechts → | ↓ rückwärts | … der Knick wird nicht größer … | Heck →
+NOTIZEN:
+FOLIE 93 VON 124 · läuft von selbst weiter (kein Klick)
+
+▶ Die Bewegung läuft – zuschauen lassen.
+🖱 Kein Klick – die Folie läuft von selbst weiter.
+➜ (läuft weiter)
+
+=== FOLIE 94 ===
+AUF DER FOLIE: KLASSE CE  ·  ABEND 7  ·  CE4  ·  RÜCKWÄRTS UND ABBIEGEN | 94 | RÜCKWÄRTS MIT SATTELZUG | Rückwärts lenken | ❓ Frage an die Klasse / Ihr fahrt rückwärts und lenkt nach links. Wohin wandert das Heck des Aufliegers? | ✓ Antwort / Nach rechts – andersherum. Erst anlenken, dann nachführen (gegenlenken), damit der Knick nicht zu groß wird. | Nachführen: Habt ihr den Winkel, lenkt ihr zurück. Dann bleibt der Knick gleich und der Zug zieht seinen Bogen. Kleine Lenkbewegungen, langsam, früh korrigieren. | Draufsicht · berechnet (Einspurmodell) · Sattelzug 16,5 m · Fahrer sitzt links, Blick nach oben | LENKRAD | rechts → | ↓ rückwärts | Der Knick bleibt – der Zug fährt im Bogen nach rechts hinten. | Heck →
+NOTIZEN:
+FOLIE 94 VON 124 · keine Animation · Klick = weiter
+
+▶ „Hat der Auflieger den Winkel, den ihr wollt, lenkt ihr dagegen – man sagt: nachführen. Dann bleibt der Knick gleich und der Zug fährt im Bogen. Wird der Knick zu groß, gibt es nur eins: vorziehen und neu ansetzen.“
+✅ Lehrbuchwissen (FAKTEN CE4-e). Bewegung berechnet.
+💡 Gliederzug: zwei Gelenke – er reagiert verzögert und ist schwerer zu fahren. Am Fahrzeug üben, nicht nach Folie.
+🖱 Nächster Klick: nächste Folie.
+➜ „Und wer hilft euch dabei?“
+
+=== FOLIE 95 ===
+AUF DER FOLIE: KLASSE CE  ·  ABEND 7  ·  CE4  ·  RÜCKWÄRTS UND ABBIEGEN | 95 | RÜCKWÄRTS MIT DEM ZUG | Ihr seht hinten fast nichts. Was gilt beim Rückwärtsfahren? | Einweiser:  steht dort, wo ihr ihn seht – nie zwischen Fahrzeug und Hindernis. | Sichtkontakt weg?  Sofort anhalten. Erst weiter, wenn ihr ihn wieder seht. | Wenn möglich nach links:  Zur Fahrerseite seht ihr am meisten. | Gliederzug:  zwei Gelenke – er reagiert verzögert. Klein lenken, langsam, im Zweifel vorziehen. | Aussteigen und nachsehen  – das ist keine Schande, sondern Profi.
+NOTIZEN:
+FOLIE 95 VON 124 · 5 Klicks
+
+▶ Sagen: „Rückwärts seht ihr mit dem Zug fast nichts. Was hilft?“
+❓ Vor jedem Klick fragen.
+🖱 Klick 1–5: je ein Punkt.
+✅ § 9 Abs. 5 StVO: Gefährdung ausschließen, erforderlichenfalls einweisen lassen. DGUV Vorschrift 70 § 46 mit Durchführungsanweisung: Einweiser nur im Sichtbereich, nicht zwischen Fahrzeug und Hindernis; Sichtkontakt verloren → sofort anhalten. Prüfungsfrage 2.6.03-001. DGUV Information 214-080, S. 31 (Gliederzug: zwei Drehpunkte).
+💡 In welche Richtung der Gliederzug-Anhänger beim Rückwärtsfahren genau läuft, zeigen wir nicht auf der Folie – das übt ihr am Fahrzeug mit dem Fahrlehrer.
+➜ „Eine Prüfungsfrage.“
+
+=== FOLIE 96 ===
+AUF DER FOLIE: KLASSE CE  ·  ABEND 7  ·  CE4  ·  RÜCKWÄRTS UND ABBIEGEN | 96 | PRÜFUNGSFRAGE 2.6.03-001 | Was ist beim Rückwärtsfahren mit einer Fahrzeugkombination richtig, wenn die Sicht nach hinten beeinträchtigt ist? | A | Wenn die Sichtverbindung zur einweisenden Person abreißt, muss angehalten werden | B | Nur beim Einfahren in eine Vorfahrtstraße ist Einweisung erforderlich | C | Auf einem Betriebsgelände kann auf Einweisung verzichtet werden | ✓  RICHTIG | Gerade auf dem Betriebsgelände passieren viele Rückwärts-Unfälle. Seht ihr den Einweiser nicht mehr: Stopp.
+NOTIZEN:
+FOLIE 96 VON 124 · 2 Klicks
+
+▶ Frage vorlesen, abstimmen.
+🖱 Klick 1: Antworten · Klick 2: Lösung.
+✅ Amtlicher Fragenkatalog 2.6.03-001: A. DGUV Vorschrift 70 § 46.
+➜ „Jetzt vorwärts: rechts abbiegen mit Anhänger.“
+
+=== FOLIE 97 ===
+AUF DER FOLIE: KLASSE CE  ·  ABEND 7  ·  CE4  ·  RÜCKWÄRTS UND ABBIEGEN | 97 | TOTER WINKEL AM ZUG | Rechts abbiegen | ❓ Frage an die Klasse / Ihr biegt rechts ab. Neben eurem Anhänger fährt ein Radfahrer geradeaus. Was passiert? | Antwort folgt … | Rechts neben dem Zug verläuft ein Radweg. Der Radfahrer ist auf Höhe des Anhängers und fährt geradeaus weiter. | Draufsicht · berechnet (Einspurmodell) · Gliederzug 18,4 m · blau: Spur Lkw-Vorderrad, rot: Spur Anhänger-Hinterrad | Der Zug will rechts abbiegen. Neben dem Anhänger fährt ein Radfahrer geradeaus.
+NOTIZEN:
+FOLIE 97 VON 124 · keine Animation · Klick = weiter
+
+▶ Sagen: „Der Zug steht an der Haltlinie und will rechts abbiegen. Rechts daneben der Radweg. Ein Radfahrer ist gerade auf Höhe des Anhängers und will geradeaus.“
+❓ Frage auf der Folie stellen.
+✅ Prüfungsfragen 2.2.23-046 (toter Winkel besonders für Radfahrer gefährlich) und 2.2.23-052 (Rechtsabbiegen innerorts: Radfahrer und Fußgänger übersehen). Bewegung mit einem einfachen Fahrzeugmodell berechnet.
+🖱 Klick: Der Zug biegt ab (läuft von selbst).
+➜ „Der Zug fährt los.“
+
+=== FOLIE 98 ===
+AUF DER FOLIE: KLASSE CE  ·  ABEND 7  ·  CE4  ·  RÜCKWÄRTS UND ABBIEGEN | 98 | TOTER WINKEL AM ZUG | Rechts abbiegen | ❓ Frage an die Klasse / Ihr biegt rechts ab. Neben eurem Anhänger fährt ein Radfahrer geradeaus. Was passiert? | Antwort folgt … | Rechts neben dem Zug verläuft ein Radweg. Der Radfahrer ist auf Höhe des Anhängers und fährt geradeaus weiter. | Draufsicht · berechnet (Einspurmodell) · Gliederzug 18,4 m · blau: Spur Lkw-Vorderrad, rot: Spur Anhänger-Hinterrad | Der Lkw biegt ab …
+NOTIZEN:
+FOLIE 98 VON 124 · läuft von selbst weiter (kein Klick)
+
+▶ Die Bewegung läuft – zuschauen lassen.
+🖱 Kein Klick – die Folie läuft von selbst weiter.
+➜ (läuft weiter)
+
+=== FOLIE 99 ===
+AUF DER FOLIE: KLASSE CE  ·  ABEND 7  ·  CE4  ·  RÜCKWÄRTS UND ABBIEGEN | 99 | TOTER WINKEL AM ZUG | Rechts abbiegen | ❓ Frage an die Klasse / Ihr biegt rechts ab. Neben eurem Anhänger fährt ein Radfahrer geradeaus. Was passiert? | Antwort folgt … | Rechts neben dem Zug verläuft ein Radweg. Der Radfahrer ist auf Höhe des Anhängers und fährt geradeaus weiter. | Draufsicht · berechnet (Einspurmodell) · Gliederzug 18,4 m · blau: Spur Lkw-Vorderrad, rot: Spur Anhänger-Hinterrad | … der Anhänger folgt weiter innen …
+NOTIZEN:
+FOLIE 99 VON 124 · läuft von selbst weiter (kein Klick)
+
+▶ Die Bewegung läuft – zuschauen lassen.
+🖱 Kein Klick – die Folie läuft von selbst weiter.
+➜ (läuft weiter)
+
+=== FOLIE 100 ===
+AUF DER FOLIE: KLASSE CE  ·  ABEND 7  ·  CE4  ·  RÜCKWÄRTS UND ABBIEGEN | 100 | TOTER WINKEL AM ZUG | Rechts abbiegen | ❓ Frage an die Klasse / Ihr biegt rechts ab. Neben eurem Anhänger fährt ein Radfahrer geradeaus. Was passiert? | Antwort folgt … | Rechts neben dem Zug verläuft ein Radweg. Der Radfahrer ist auf Höhe des Anhängers und fährt geradeaus weiter. | Draufsicht · berechnet (Einspurmodell) · Gliederzug 18,4 m · blau: Spur Lkw-Vorderrad, rot: Spur Anhänger-Hinterrad | … und schneidet die Kurve …
+NOTIZEN:
+FOLIE 100 VON 124 · läuft von selbst weiter (kein Klick)
+
+▶ Die Bewegung läuft – zuschauen lassen.
+🖱 Kein Klick – die Folie läuft von selbst weiter.
+➜ (läuft weiter)
+
+=== FOLIE 101 ===
+AUF DER FOLIE: KLASSE CE  ·  ABEND 7  ·  CE4  ·  RÜCKWÄRTS UND ABBIEGEN | 101 | TOTER WINKEL AM ZUG | Rechts abbiegen | ❓ Frage an die Klasse / Ihr biegt rechts ab. Neben eurem Anhänger fährt ein Radfahrer geradeaus. Was passiert? | ✓ Antwort / Der Anhänger schneidet die Kurve und kreuzt den Radweg. Den Radfahrer neben dem Anhänger seht ihr kaum. Darum: Schrittgeschwindigkeit, Spiegel bis zum Ende – warten, bis neben dem Zug niemand ist. | Blau läuft der Lkw, rot der Anhänger – deutlich weiter innen. Er schneidet die Kurve und kreuzt den Radweg. Schrittgeschwindigkeit, Spiegel bis zum Schluss beobachten, im Zweifel anhalten. | Draufsicht · berechnet (Einspurmodell) · Gliederzug 18,4 m · blau: Spur Lkw-Vorderrad, rot: Spur Anhänger-Hinterrad | Der Anhänger kreuzt den Radweg – genau da, wo der Radfahrer ist! | Anhänger schneidet die Kurve
+NOTIZEN:
+FOLIE 101 VON 124 · keine Animation · Klick = weiter
+
+▶ „Schaut auf die zwei Spuren: Blau ist das Vorderrad vom Lkw, rot das Hinterrad vom Anhänger. Der Anhänger läuft weit innen – er schneidet die Kurve und fährt über den Radweg. Genau dort ist jetzt der Radfahrer. Ihn neben dem Anhänger zu sehen, ist sehr schwer.“
+❓ Frage auf der Folie auflösen.
+✅ Prüfungsfrage 2.7.01-310: Der Anhänger kann ausschwenken und die Kurve schneiden (falsch: läuft in der Spur des Zugfahrzeugs). § 9 Abs. 6 StVO: Kfz über 3,5 t innerorts beim Rechtsabbiegen Schrittgeschwindigkeit, wenn mit Rad- oder Fußverkehr zu rechnen ist (BKat 45: 70 €, 1 Punkt). Prüfungsfrage 2.2.23-212: erst abbiegen, wenn neben dem Fahrzeug niemand ist.
+💡 Abbiegeassistent (Pflicht für neu zugelassene Lkw seit 7.7.2024) warnt – er ersetzt nicht Spiegel und Schrittgeschwindigkeit.
+🖱 Nächster Klick: nächste Folie.
+➜ „Zwei Prüfungsfragen dazu.“
+
+=== FOLIE 102 ===
+AUF DER FOLIE: KLASSE CE  ·  ABEND 7  ·  CE4  ·  RÜCKWÄRTS UND ABBIEGEN | 102 | PRÜFUNGSFRAGE 2.7.01-310 | Wie wirken sich die Kurvenlaufeigenschaften einer Fahrzeugkombination (Kraftfahrzeug mit Anhänger) beim Abbiegen aus? Der Anhänger … | A | … kann ausschwenken | B | … kann die Kurve schneiden | C | … läuft in der Regel in der Spur des Zugfahrzeugs | ✓  RICHTIG | ✓  RICHTIG | Innen schneidet er die Kurve, außen schwenkt das Heck aus. In der Spur des Lkw läuft er nicht.
+NOTIZEN:
+FOLIE 102 VON 124 · 2 Klicks
+
+▶ Frage vorlesen, abstimmen.
+🖱 Klick 1: Antworten · Klick 2: Lösung.
+✅ Amtlicher Fragenkatalog 2.7.01-310: A und B.
+➜ „Und wie schnell?“
+
+=== FOLIE 103 ===
+AUF DER FOLIE: KLASSE CE  ·  ABEND 7  ·  CE4  ·  RÜCKWÄRTS UND ABBIEGEN | 103 | PRÜFUNGSFRAGE 2.2.09-201 | Sie fahren ein Kraftfahrzeug mit mehr als 3,5 t zulässiger Gesamtmasse. Mit welcher Geschwindigkeit müssen Sie innerorts nach rechts abbiegen? Wenn mit Radfahrern oder Fußgängern zu rechnen ist, mit … | A | … Schrittgeschwindigkeit | B | … höchstens 20 km/h | C | … höchstens 30 km/h | ✓  RICHTIG | Schritt heißt: so langsam, dass ihr sofort stehen könnt. Ein Verstoß kostet 70 € und einen Punkt.
+NOTIZEN:
+FOLIE 103 VON 124 · 2 Klicks
+
+▶ Frage vorlesen, abstimmen.
+🖱 Klick 1: Antworten · Klick 2: Lösung.
+✅ Amtlicher Fragenkatalog 2.2.09-201: A. § 9 Abs. 6 StVO; BKat Nr. 45 (70 €, 1 Punkt).
+➜ „Kapitel 4: Wetter und Gefälle.“
+
+=== FOLIE 104 ===
+AUF DER FOLIE: KLASSE CE  ·  ABEND 7  ·  CE4  ·  WETTER UND GEFÄLLE | 104 | 04 | Wetter und Gefälle | Schnee, Nebel und Wind treffen den Zug härter als den Lkw allein.
+NOTIZEN:
+FOLIE 104 VON 124 · Animation läuft von selbst · Klick = weiter
+
+▶ Sagen: „Bergab mit der Dauerbremse kennt ihr aus CE3. Jetzt das Wetter: Schnee, Glätte, schlechte Sicht und Wind.“
+✅ § 3, § 5, § 18 StVO; Prüfungsfragen 2.2.05-104, 2.2.23-101.
+🖱 Keine Klicks.
+➜ „Erst der Winter.“
+
+=== FOLIE 105 ===
+AUF DER FOLIE: KLASSE CE  ·  ABEND 7  ·  CE4  ·  WETTER UND GEFÄLLE | 105 | WINTER | Schnee und Glätte – was gilt für euren Zug? | Schneeketten / höchstens 50 km/h. | Autobahn, über 7,5 t / bei Glätte nie ganz links fahren. | Sicht unter 50 m / 50 km/h. Über 7,5 t nicht überholen. | Dauerbremse / bei Glätte aus oder nur schwach.
+NOTIZEN:
+FOLIE 105 VON 124 · 4 Klicks
+
+▶ Sagen: „Euer Zug im Winter. Was gilt?“
+❓ Sammeln lassen, dann je Klick auflösen.
+🖱 Klick 1–4: je ein Punkt.
+✅ § 3 Abs. 4 StVO: mit Schneeketten höchstens 50 km/h (Prüfungsfrage 2.2.03-101); Zeichen 268 = Schneeketten vorgeschrieben; Ketten gehören auf die Antriebsachse (C4). § 18 Abs. 11 StVO: Lkw über 7,5 t einschließlich ihrer Anhänger dürfen bei Schneeglätte, Glatteis oder Sicht unter 50 m den äußerst linken Fahrstreifen nicht benutzen (BKat 87a: 80 €, 1 Punkt). § 3 Abs. 1 StVO: Sicht unter 50 m höchstens 50 km/h. § 5 Abs. 3a StVO: Kfz über 7,5 t Überholverbot bei Sicht unter 50 m (BKat 21: 120 €, 1 Punkt). Dauerbremse: CE3, Mercedes-Benz Actros Betriebsanleitung.
+💡 Winterreifen bei Glätte: an Lkw über 3,5 t mindestens auf den Antriebsachsen und den vorderen Lenkachsen (§ 2 Abs. 3a StVO, siehe C4).
+➜ „Eine Prüfungsfrage dazu.“
+
+=== FOLIE 106 ===
+AUF DER FOLIE: KLASSE CE  ·  ABEND 7  ·  CE4  ·  WETTER UND GEFÄLLE | 106 | PRÜFUNGSFRAGE 2.2.05-104 | Sie befahren die Autobahn mit einem Kraftfahrzeug, dessen zulässige Gesamtmasse 7,5 t übersteigt. Die Sichtweite beträgt aufgrund starken Schneefalls weniger als 50 m. Wie müssen Sie sich verhalten? | A | Ich darf den äußerst linken Fahrstreifen nicht benutzen | B | Ich darf nicht schneller als 50 km/h fahren | C | Ich muss die Autobahn an der nächsten Ausfahrt verlassen | ✓  RICHTIG | ✓  RICHTIG | Sicht unter 50 m heißt: höchstens 50 km/h – und über 7,5 t weg vom linken Fahrstreifen.
+NOTIZEN:
+FOLIE 106 VON 124 · 2 Klicks
+
+▶ Frage vorlesen, abstimmen.
+🖱 Klick 1: Antworten · Klick 2: Lösung.
+✅ Amtlicher Fragenkatalog 2.2.05-104: A und B. § 3 Abs. 1 und § 18 Abs. 11 StVO.
+➜ „Und bei Wind?“
+
+=== FOLIE 107 ===
+AUF DER FOLIE: KLASSE CE  ·  ABEND 7  ·  CE4  ·  WETTER UND GEFÄLLE | 107 | SEITENWIND | Sturm auf der Brücke: Wer ist gefährdeter – der volle oder der leere Planenzug? | Der leere Planenzug:  große Fläche, wenig Gewicht. Der Wind schiebt ihn zur Seite – im schlimmsten Fall kippt er. | Besonders gefährlich:  auf Brücken, an Waldschneisen und beim Überholen von Lastzügen. | Erfasst euch eine Böe:  gegenlenken und langsamer fahren. | Sturmwarnung und leer?  Windsäcke und Warnschilder beachten. Im Zweifel Pause machen.
+NOTIZEN:
+FOLIE 107 VON 124 · 4 Klicks
+
+▶ Sagen: „Sturm auf der Brücke. Welcher Zug ist gefährdeter – voll oder leer?“
+❓ Abstimmen lassen, dann je Klick auflösen.
+🖱 Klick 1–4: je ein Punkt.
+✅ Prüfungsfragen 2.2.23-101 (unbeladene Anhänger mit hohen Planenaufbauten besonders seitenwindempfindlich), 2.1.03-020 (Brücken, Waldschneisen, Überholen von Lastzügen), 2.1.03-018 (gegenlenken, Geschwindigkeit herabsetzen). Kippgefahr: Lehrbuchwissen.
+➜ „Eine Prüfungsfrage.“
+
+=== FOLIE 108 ===
+AUF DER FOLIE: KLASSE CE  ·  ABEND 7  ·  CE4  ·  WETTER UND GEFÄLLE | 108 | PRÜFUNGSFRAGE 2.2.23-101 | Was ist bei Fahrzeugen mit Planen zu beachten? | A | Die Planen dürfen die Sicht des Fahrers über die Außenspiegel nach hinten nicht behindern | B | Unbeladene Anhänger mit hohen Planenaufbauten sind gegen Seitenwind besonders empfindlich | C | Bei Fahrzeugen mit Planen kann auf eine besondere Sicherung der Ladung verzichtet werden | ✓  RICHTIG | ✓  RICHTIG | Eine Plane hält keine Ladung fest. Und leer ist die Plane ein Segel.
+NOTIZEN:
+FOLIE 108 VON 124 · 2 Klicks
+
+▶ Frage vorlesen, abstimmen.
+🖱 Klick 1: Antworten · Klick 2: Lösung.
+✅ Amtlicher Fragenkatalog 2.2.23-101: A und B.
+➜ „Kapitel 5: Tempo, Abstand und Schwertransport.“
+
+=== FOLIE 109 ===
+AUF DER FOLIE: KLASSE CE  ·  ABEND 7  ·  CE4  ·  TEMPO, ABSTAND, SCHWERTRANSPORT | 109 | 05 | Tempo, Abstand, Schwertransport | Mit Anhänger gelten eigene Zahlen. Und manche Transporte brauchen eine Erlaubnis und Begleitung.
+NOTIZEN:
+FOLIE 109 VON 124 · Animation läuft von selbst · Klick = weiter
+
+▶ Sagen: „Zum Schluss Zahlen: Wie schnell, wie viel Abstand? Und was ist ein Schwertransport?“
+✅ § 3, § 4, § 18 StVO; § 70 StVZO; § 29 Abs. 3 StVO.
+🖱 Keine Klicks.
+➜ „Wie schnell darf euer Zug?“
+
+=== FOLIE 110 ===
+AUF DER FOLIE: KLASSE CE  ·  ABEND 7  ·  CE4  ·  TEMPO, ABSTAND, SCHWERTRANSPORT | 110 | HÖCHSTGESCHWINDIGKEIT | Wie schnell mit dem Zug? | 1 | Innerorts | 2 | Landstraße | 3 | Autobahn | 4 | Schneeketten | ❓ Frage an die Klasse   / Wie schnell dürft ihr mit dem 40-t-Zug innerorts, auf der Landstraße und auf der Autobahn? | Innerorts gilt für alle 50 km/h – auch für euren Zug. | Höchstwerte nach StVO · Schilder vor Ort haben Vorrang, wenn sie weniger erlauben | 50 | km/h | innerorts | Wie alle Fahrzeuge innerorts
+NOTIZEN:
+FOLIE 110 VON 124 · keine Animation · Klick = weiter
+
+▶ Sagen: „Wie schnell darf euer 40-Tonnen-Zug? Innerorts?“
+❓ Frage auf der Folie stellen.
+✅ § 3 Abs. 3 Nr. 1 StVO: innerorts 50 km/h.
+🖱 Keine Animation auf dieser Folie – nächster Klick = nächster Schritt (Morph).
+➜ „Und auf der Landstraße?“
+
+=== FOLIE 111 ===
+AUF DER FOLIE: KLASSE CE  ·  ABEND 7  ·  CE4  ·  TEMPO, ABSTAND, SCHWERTRANSPORT | 111 | HÖCHSTGESCHWINDIGKEIT | Wie schnell mit dem Zug? | 1 | Innerorts | 2 | Landstraße | 3 | Autobahn | 4 | Schneeketten | ❓ Frage an die Klasse   / Wie schnell dürft ihr mit dem 40-t-Zug innerorts, auf der Landstraße und auf der Autobahn? | Landstraße: Lkw über 3,5 t mit Anhänger höchstens 60 km/h. Viele denken 80 – das ist falsch. | Höchstwerte nach StVO · Schilder vor Ort haben Vorrang, wenn sie weniger erlauben | 60 | km/h | auf der Landstraße | Lkw über 3,5 t mit Anhänger: 60 – nicht 80!
+NOTIZEN:
+FOLIE 111 VON 124 · keine Animation · Klick = weiter
+
+▶ „Auf der Landstraße: 60 km/h für Lkw über 3,5 t mit Anhänger. Nicht 80!“
+✅ § 3 Abs. 3 Nr. 2 Buchstabe b StVO (Lkw über 3,5 t mit Anhänger: 60 km/h). Prüfungsfrage 2.2.03-108 (Lkw 5,5 t + Anhänger 2 t: 60).
+💡 Ausnahme (nicht vertiefen): Auf Straßen mit getrennten Fahrbahnen oder zwei Fahrstreifen je Richtung gilt § 3 Abs. 3 nicht – dann Beschilderung beachten.
+🖱 Keine Animation auf dieser Folie – nächster Klick = nächster Schritt (Morph).
+➜ „Und auf der Autobahn?“
+
+=== FOLIE 112 ===
+AUF DER FOLIE: KLASSE CE  ·  ABEND 7  ·  CE4  ·  TEMPO, ABSTAND, SCHWERTRANSPORT | 112 | HÖCHSTGESCHWINDIGKEIT | Wie schnell mit dem Zug? | 1 | Innerorts | 2 | Landstraße | 3 | Autobahn | 4 | Schneeketten | ✓ Antwort   / 50 – 60 – 80 km/h. Mit Schneeketten höchstens 50. | Autobahn und Kraftfahrstraße mit getrennten Fahrbahnen: 80 km/h. Der Begrenzer regelt erst bei 90 ab. | Höchstwerte nach StVO · Schilder vor Ort haben Vorrang, wenn sie weniger erlauben | 80 | km/h | auf der Autobahn | Auch auf Kraftfahrstraßen mit getrennten Fahrbahnen. Begrenzer: 90 – erlaubt sind 80.
+NOTIZEN:
+FOLIE 112 VON 124 · keine Animation · Klick = weiter
+
+▶ „Autobahn: 80. Euer Begrenzer lässt 90 zu – erlaubt sind trotzdem nur 80.“
+❓ Frage auf der Folie auflösen.
+✅ § 18 Abs. 5 Nr. 1 StVO (Lkw mit Anhänger 80 km/h). Prüfungsfrage 2.2.03-301 (Lastzug 40 t: 80). § 57c StVZO (Begrenzer 90 km/h).
+🖱 Keine Animation auf dieser Folie – nächster Klick = nächster Schritt (Morph).
+➜ „Und im Winter?“
+
+=== FOLIE 113 ===
+AUF DER FOLIE: KLASSE CE  ·  ABEND 7  ·  CE4  ·  TEMPO, ABSTAND, SCHWERTRANSPORT | 113 | HÖCHSTGESCHWINDIGKEIT | Wie schnell mit dem Zug? | 1 | Innerorts | 2 | Landstraße | 3 | Autobahn | 4 | Schneeketten | ✓ Antwort   / 50 – 60 – 80 km/h. Mit Schneeketten höchstens 50. | Mit Schneeketten höchstens 50 km/h. Das gilt auch bei Sicht unter 50 m. | Höchstwerte nach StVO · Schilder vor Ort haben Vorrang, wenn sie weniger erlauben | 50 | km/h | mit Schneeketten | Und bei Sicht unter 50 m: ebenfalls höchstens 50.
+NOTIZEN:
+FOLIE 113 VON 124 · keine Animation · Klick = weiter
+
+▶ „Mit Schneeketten: höchstens 50. Und bei Nebel unter 50 Meter Sicht ebenfalls 50.“
+✅ § 3 Abs. 4 und Abs. 1 StVO. Prüfungsfrage 2.2.03-101.
+🖱 Keine Animation auf dieser Folie – nächster Klick = nächster Schritt (Morph).
+➜ „Und überholen?“
+
+=== FOLIE 114 ===
+AUF DER FOLIE: KLASSE CE  ·  ABEND 7  ·  CE4  ·  TEMPO, ABSTAND, SCHWERTRANSPORT | 114 | ÜBERHOLVERBOT | Zeichen 277 mit „7,5 t“ – dürft ihr überholen? | Nein!  Beim Zug zählt die Summe – Lkw und Anhänger zusammen. | 7,49 t  +  3,5 t  =  10,99 t   mehr als 7,5 t → Überholen verboten | Merke:  Ohne Zusatz gilt Zeichen 277 schon für alle Kfz über 3,5 t – samt Anhänger.
+NOTIZEN:
+FOLIE 114 VON 124 · 3 Klicks
+
+▶ Sagen: „Zeichen 277 mit Zusatz 7,5 t. Euer Lkw hat 7,49 Tonnen, der Anhänger 3,5 Tonnen. Dürft ihr überholen?“
+❓ Abstimmen lassen.
+🖱 Klick 1: Antwort · Klick 2: Rechnung · Klick 3: Merksatz.
+✅ StVO Anlage 2 lfd. Nr. 53–54: Das Verbot gilt für Kfz über 3,5 t „einschließlich ihrer Anhänger“; mit Zusatzzeichen, „soweit die zulässige Gesamtmasse dieser Kraftfahrzeuge, einschließlich ihrer Anhänger, die angegebene Grenze überschreitet“. BKat 153a: 70 €, 1 Punkt.
+💡 Auf dreistreifigen Straßen außerorts dürfen Lkw über 3,5 t und alle Kfz mit Anhänger den linken Streifen nur zum Linksabbiegen benutzen (§ 7 Abs. 3c StVO).
+➜ „Und wie viel Abstand?“
+
+=== FOLIE 115 ===
+AUF DER FOLIE: KLASSE CE  ·  ABEND 7  ·  CE4  ·  TEMPO, ABSTAND, SCHWERTRANSPORT | 115 | ABSTAND | Wie viel Abstand müsst ihr mit dem Zug halten? | Außerorts, ein Streifen je Richtung:  so viel, dass ein Überholer vor euch einscheren kann. Gilt für Lkw über 3,5 t und Züge über 7 m. | Autobahn, über 50 km/h:  mindestens 50 m – Lkw über 3,5 t. | Mit Zug lieber mehr:  Euer Bremsweg ist länger, und ihr seht nach vorn schlechter.
+NOTIZEN:
+FOLIE 115 VON 124 · 3 Klicks
+
+▶ Sagen: „Zwei Abstandsregeln, die nur für schwere Fahrzeuge gelten.“
+❓ Vor jedem Klick fragen.
+🖱 Klick 1–3: je eine Regel.
+✅ § 4 Abs. 2 StVO: Kfz mit besonderer Geschwindigkeitsbeschränkung und Züge über 7 m außerorts so viel Abstand, dass ein Überholer einscheren kann – nicht bei mehr als einem Fahrstreifen je Richtung, beim angekündigten Überholen und bei Überholverbot (BKat 14: 25 €). § 4 Abs. 3 StVO: Lkw über 3,5 t und Busse auf der Autobahn bei mehr als 50 km/h mindestens 50 m (BKat 15: 80 €, 1 Punkt). Prüfungsfragen 2.2.04-306, -307, -303.
+➜ „Eine Prüfungsfrage.“
+
+=== FOLIE 116 ===
+AUF DER FOLIE: KLASSE CE  ·  ABEND 7  ·  CE4  ·  TEMPO, ABSTAND, SCHWERTRANSPORT | 116 | PRÜFUNGSFRAGE 2.2.04-307 | Sie fahren mit einer Fahrzeugkombination außerorts auf einer Straße mit nur einem Fahrstreifen für jede Richtung. Welchen Abstand müssen Sie in der Regel zu einem vorausfahrenden Fahrzeug einhalten? Der Abstand … | A | … muss so groß sein, dass ein überholendes Fahrzeug einscheren kann | B | … darf nicht größer als 10 m sein, damit der Verkehrsraum optimal ausgenutzt wird | C | … muss so groß sein, dass mindestens zwei weitere Fahrzeuge einscheren können | ✓  RICHTIG | Ein Überholer muss vor euch Platz finden – nicht zwei, und erst recht nicht nur 10 m.
+NOTIZEN:
+FOLIE 116 VON 124 · 2 Klicks
+
+▶ Frage vorlesen, abstimmen.
+🖱 Klick 1: Antworten · Klick 2: Lösung.
+✅ Amtlicher Fragenkatalog 2.2.04-307: A. § 4 Abs. 2 StVO.
+➜ „Und jetzt die ganz Großen: Schwertransport.“
+
+=== FOLIE 117 ===
+AUF DER FOLIE: KLASSE CE  ·  ABEND 7  ·  CE4  ·  TEMPO, ABSTAND, SCHWERTRANSPORT | 117 | SCHWERTRANSPORT | Zu breit, zu lang, zu schwer – was braucht der Transport? | Ausnahmegenehmigung / für das Fahrzeug (§ 70 StVZO). | Erlaubnis für die Fahrt / mit Strecke und Auflagen (§ 29 StVO). | Oft ein Begleitfahrzeug / z. B. über 3,50 m Breite (nicht Autobahn). | Bescheid mitführen / Auflagen einhalten, oft nur nachts.
+NOTIZEN:
+FOLIE 117 VON 124 · 4 Klicks
+
+▶ Sagen: „Ein Transport ist breiter, länger oder schwerer als erlaubt. Was braucht er?“
+❓ Sammeln lassen, dann je Klick auflösen.
+🖱 Klick 1–4: je ein Punkt.
+✅ § 70 StVZO: Ausnahmegenehmigung für Fahrzeuge, die von den Vorschriften über Maße und Gewichte abweichen (Urkunde mitführen). § 29 Abs. 3 StVO: Erlaubnis für den Verkehr mit Fahrzeugen und Zügen, die Abmessungen, Achslasten oder Gesamtmassen tatsächlich überschreiten. VwV-StVO zu § 29 Abs. 3, Rn. 133: Begleitfahrzeug mit nach hinten wirkender Wechselverkehrszeichen-Anlage u. a. bei Breite über 3,50 m außerhalb von Autobahnen (über 4,00 m bzw. 4,50 m auf Autobahnen). Rn. 139–143: Fahrzeiten, meist nachts. Merkblatt für Begleitfahrzeuge (BMVI 2015): BF3 (Zeichen nach hinten), BF4 (nach vorn und seitlich). BKat 116: ohne Erlaubnis 60 €, 1 Punkt.
+💡 Ist nur die Ladung zu groß (Fahrzeug normal), braucht es eine Ausnahmegenehmigung nach § 46 Abs. 1 Nr. 5 StVO statt der Erlaubnis.
+➜ „Eine Prüfungsfrage.“
+
+=== FOLIE 118 ===
+AUF DER FOLIE: KLASSE CE  ·  ABEND 7  ·  CE4  ·  TEMPO, ABSTAND, SCHWERTRANSPORT | 118 | PRÜFUNGSFRAGE 2.2.29-205 | Ein Fahrzeug überschreitet die gesetzlichen Grenzwerte für Gesamtmassen und Abmessungen. Was gilt für den Betrieb dieses Fahrzeugs auf öffentlichen Straßen? | A | Es bedarf einer zusätzlichen Erlaubnis | B | Ein Begleitfahrzeug kann vorgeschrieben werden | C | Die Route des Fahrzeugs kann frei gewählt werden | ✓  RICHTIG | ✓  RICHTIG | Die Strecke steht im Bescheid – frei wählen dürft ihr sie nicht.
+NOTIZEN:
+FOLIE 118 VON 124 · 2 Klicks
+
+▶ Frage vorlesen, abstimmen.
+🖱 Klick 1: Antworten · Klick 2: Lösung.
+✅ Amtlicher Fragenkatalog 2.2.29-205: A und B.
+➜ „Zum Abschluss von CE4: Mitschreiben.“
+
+=== FOLIE 119 ===
+AUF DER FOLIE: KLASSE CE  ·  ABEND 7  ·  CE4  ·  ABSCHLUSS | 119 | ZUM MITSCHREIBEN | Fahren mit Zügen | ✎ | Abfahrtkontrolle | Kupplung · Leitungen mit ABS-Stecker · Anhänger frei · Licht · Bremsprobe | Wo blockiert es? | Lkw blockiert → Zug knickt ein · Anhänger blockiert → bricht aus | Pendeln | Gas weg, Lenkrad ruhig halten, erst gestreckt bremsen | Rückwärts | Sattelzug: Lenkrad links → Aufliegerheck rechts · Einweiser weg → Stopp | Rechts abbiegen | Anhänger schneidet die Kurve · innerorts Schrittgeschwindigkeit | Winter | Ketten höchstens 50 · Sicht unter 50 m: 50 und über 7,5 t nicht überholen | Tempo mit Anhänger | innerorts 50 · Landstraße 60 · Autobahn 80 · Zeichen 277: Zug-Summe | Abstand | außerorts Platz zum Einscheren (Zug über 7 m) · Autobahn mindestens 50 m
+NOTIZEN:
+FOLIE 119 VON 124 · 8 Klicks
+
+▶ Sagen: „Schreibt euch das auf – das sind die Kernpunkte aus CE4.“
+🖱 Klick 1–8: je eine Zeile.
+💡 Erst das Stichwort vorlesen und fragen: „Wer weiß es?“ – dann klicken.
+✅ Quellen: DGUV Grundsatz 314-002; Prüfungsfragen 2.7.06-107, -108, -314, 2.6.03-102, -001, 2.7.01-310, 2.2.09-201; § 3, § 4, § 5, § 9 Abs. 6, § 18 StVO; StVO Anlage 2 lfd. Nr. 53–54.
+➜ „Drei Prüfungsfragen.“
+
+=== FOLIE 120 ===
+AUF DER FOLIE: KLASSE CE  ·  ABEND 7  ·  CE4  ·  ABSCHLUSS | 120 | PRÜFUNGSFRAGE 2.2.23-212 | Wie kann die Gefährdung, die vom toten Winkel ausgeht, reduziert werden? | A | Durch Beobachtung des rückwärtigen Verkehrs in kurzen Zeitabständen | B | Erst abbiegen, wenn sichergestellt ist, dass sich neben dem Fahrzeug kein Verkehrsteilnehmer befindet | C | Durch zügiges Abbiegen | ✓  RICHTIG | ✓  RICHTIG | Zügig ist falsch – langsam und mit Blick in die Spiegel bis zum Schluss.
+NOTIZEN:
+FOLIE 120 VON 124 · 2 Klicks
+
+▶ Frage vorlesen, abstimmen.
+🖱 Klick 1: Antworten · Klick 2: Lösung.
+✅ Amtlicher Fragenkatalog 2.2.23-212: A und B.
+➜ „Nächste Frage.“
+
+=== FOLIE 121 ===
+AUF DER FOLIE: KLASSE CE  ·  ABEND 7  ·  CE4  ·  ABSCHLUSS | 121 | PRÜFUNGSFRAGE 2.2.05-202 | Sie fahren außerorts. Starker Regen schränkt die Sicht auf knapp 50 m ein. Was gilt in dieser Situation? | A | Mit Kraftfahrzeugen über 7,5 t zulässiger Gesamtmasse ist das Überholen verboten | B | Die zulässige Höchstgeschwindigkeit beträgt 50 km/h | C | Die Nebelschlussleuchte muss eingeschaltet werden | ✓  RICHTIG | ✓  RICHTIG | Die Nebelschlussleuchte ist nur bei Nebel unter 50 m Sicht erlaubt – bei Regen nicht.
+NOTIZEN:
+FOLIE 121 VON 124 · 2 Klicks
+
+▶ Frage vorlesen, abstimmen.
+🖱 Klick 1: Antworten · Klick 2: Lösung.
+✅ Amtlicher Fragenkatalog 2.2.05-202: A und B. § 5 Abs. 3a, § 3 Abs. 1, § 17 Abs. 3 StVO.
+➜ „Letzte Frage.“
+
+=== FOLIE 122 ===
+AUF DER FOLIE: KLASSE CE  ·  ABEND 7  ·  CE4  ·  ABSCHLUSS | 122 | PRÜFUNGSFRAGE 2.2.04-306 | Welche Kraftfahrzeuge müssen außerhalb geschlossener Ortschaften in der Regel einen so großen Abstand zum vorausfahrenden Fahrzeug einhalten, dass ein überholendes Kraftfahrzeug einscheren kann? | A | Lastkraftwagen über 3,5 t zulässiger Gesamtmasse | B | Fahrzeugkombinationen, die länger als 7 m sind | C | Kraftfahrzeuge bis 3,5 t zulässiger Gesamtmasse | ✓  RICHTIG | ✓  RICHTIG | Euer Zug ist beides: Lkw über 3,5 t und länger als 7 m.
+NOTIZEN:
+FOLIE 122 VON 124 · 2 Klicks
+
+▶ Frage vorlesen, abstimmen.
+🖱 Klick 1: Antworten · Klick 2: Lösung.
+✅ Amtlicher Fragenkatalog 2.2.04-306: A und B. § 4 Abs. 2 StVO.
+➜ „Das nimmst du aus CE4 mit.“
+
+=== FOLIE 123 ===
+AUF DER FOLIE: KLASSE CE  ·  ABEND 7  ·  CE4  ·  ABSCHLUSS | 123 | ZUSAMMENFASSUNG | Das nimmst du mit | Rundgang:  vor jeder Schicht und nach jedem Kuppeln einmal um den ganzen Zug. | Gestreckt bremsen:  vor der Kurve, nicht in der Kurve. Pendelt der Anhänger: Gas weg, ruhig halten. | Rückwärts:  Der Auflieger lenkt andersrum. Einweiser nicht mehr zu sehen = sofort anhalten. | Rechts abbiegen:  Der Anhänger schneidet die Kurve. Schritt fahren, Spiegel bis zum Schluss. | Zahlen:  50 – 60 – 80 km/h, Ketten 50, Autobahn-Abstand 50 m. Zeichen 277 zählt den ganzen Zug.
+NOTIZEN:
+FOLIE 123 VON 124 · 5 Klicks
+
+▶ Sagen: „Das sind die fünf Punkte aus CE4, die ihr sicher wissen müsst.“
+🖱 Klick 1–5: je ein Punkt.
+➜ „Und damit ist die Theorie für Klasse CE geschafft.“
+
+=== FOLIE 124 ===
+AUF DER FOLIE: Klasse CE geschafft! | Abend 7: CE3 Lastzugbremsen · CE4 Fahren mit Zügen | Jetzt seid ihr dran: / Prüfungsfragen üben / in der Praxis umsetzen / Viel Erfolg in der Prüfung!
+NOTIZEN:
+FOLIE 124 VON 124 · Animation läuft von selbst · Klick = weiter
+
+▶ Sagen: „Das war Abend 7 – und damit die ganze Theorie für Klasse CE. Ihr wisst jetzt, wie ein Zug bremst, wie ihr ihn sicher abstellt und wie ihr mit ihm fahrt: rückwärts, beim Abbiegen, im Winter. Jetzt heißt es: Prüfungsfragen üben und in der Praxis umsetzen. Danke fürs Mitmachen und viel Erfolg in der Prüfung!“
+💡 Ausbildungsnachweis abzeichnen lassen. Als Hausaufgabe die Prüfungsfragen 2.7.06 (Bremsen), 2.6.03 (Anhänger) und 2.2.04/2.2.05 (Abstand, Überholen) üben.
+🖱 Keine Klicks.

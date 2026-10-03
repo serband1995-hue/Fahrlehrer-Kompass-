@@ -105,7 +105,7 @@ module.exports = async (deck) => {
       notes: [
         '▶ Sagen: „Der Anhänger ist ein eigenes Fahrzeug mit eigenem Kennzeichen. Er hat eigene Prüftermine – unabhängig vom Lkw. Kleine Anhänger bis 3,5 Tonnen müssen alle zwei Jahre zur HU.“\n❓ Frage auf der Folie stellen.\n✅ StVZO Anlage VIII Nr. 2.1.5: Anhänger über 0,75 t bis 3,5 t HU 24 Monate (bis 0,75 t: erste HU nach 36, dann 24 Monate).\n➜ „Und schwerere Anhänger?“',
         '▶ „Über 3,5 bis 10 Tonnen: jedes Jahr zur HU. Eine SP gibt es hier nicht.“\n✅ StVZO Anlage VIII Nr. 2.1.5.3: Anhänger über 3,5 t bis 10 t HU 12 Monate.\n➜ „Und über 10 Tonnen?“',
-        '▶ „Über 10 Tonnen – also fast jeder Anhänger im Fernverkehr: jedes Jahr HU. Ab dem dritten Jahr kommt genau in der Mitte die Sicherheitsprüfung dazu. Dann ist er alle sechs Monate dran.“\n❓ Frage auf der Folie auflösen.\n✅ StVZO Anlage VIII Nr. 2.1.5.4: Anhänger über 10 t: erste 24 Monate HU 12; danach HU 12 und SP 6 Monate. Gilt auch für Sattelanhänger (Nr. 2.1.5). SP-Frist zählt ab der letzten HU (Nr. 2.4).\n💡 Nachweis: HU-Plakette hinten am Kennzeichen des Anhängers, SP-Prüfmarke auf dem SP-Schild. Prüfbuch mitführen (siehe Abend 3).\n➜ „Und noch eine Prüfung.“',
+        '▶ „Über 10 Tonnen – also fast jeder Anhänger im Fernverkehr: jedes Jahr HU. Ab dem dritten Jahr kommt genau in der Mitte die Sicherheitsprüfung dazu. Dann ist er alle sechs Monate dran.“\n❓ Frage auf der Folie auflösen.\n✅ StVZO Anlage VIII Nr. 2.1.5.4: Anhänger über 10 t: erste 24 Monate HU 12; danach HU 12 und SP 6 Monate. Gilt auch für Sattelanhänger (Nr. 2.1.5). SP-Frist zählt ab der letzten HU (Nr. 2.4).\n💡 Nachweis: HU-Plakette hinten am Kennzeichen des Anhängers, SP-Prüfmarke auf dem SP-Schild. Untersuchungsbericht (HU) und Prüfprotokoll (SP) aufbewahren (§ 29 Abs. 9 und 10 StVZO).\n➜ „Und noch eine Prüfung.“',
         '▶ „Dazu kommt die UVV-Prüfung – UVV heißt Unfallverhütungsvorschrift. Ein Sachkundiger prüft mindestens einmal im Jahr, ob das Fahrzeug betriebssicher ist – auch Rampen, Planen und Zurrpunkte. Dafür sorgt der Unternehmer, nicht ihr. Ihr macht die Abfahrtkontrolle.“\n✅ DGUV Vorschrift 70 § 57: mindestens einmal jährlich durch einen Sachkundigen; gilt auch für Anhänger (§ 2 Abs. 1). DGUV Vorschrift 70 § 36: Fahrer prüft vor jeder Schicht.\n💡 Den Fahrtenschreiber hat nur der Lkw – Prüfung alle 24 Monate (§ 57b StVZO).\n➜ „Eine Prüfungsfrage dazu.“',
       ],
       legend: 'Zeitleiste ab Erstzulassung · Monate',
@@ -178,8 +178,8 @@ module.exports = async (deck) => {
   await quiz(deck, 'ce3e', {
     kicker: 'Prüfungsfrage 2.6.01-207', q: 'Sie sollen einen Anhänger mit einer zulässigen Gesamtmasse von 18 t zur Hauptuntersuchung vorführen. Welche Fahrzeugdokumente benötigen Sie?', size: 28,
     opts: ['Zulassungsbescheinigung Teil I (Fahrzeugschein)', 'Prüfbuch', 'Zulassungsbescheinigung Teil II (Fahrzeugbrief)'], ok: [0, 1],
-    why: 'Wie beim Lkw: Fahrzeugschein und Prüfbuch. Den Fahrzeugbrief braucht ihr nicht.',
-    notes: '▶ Frage vorlesen, abstimmen.\n🖱 Klick 1: Antworten · Klick 2: Lösung.\n✅ Amtlicher Fragenkatalog 2.6.01-207: A und B.\n➜ „Das nimmst du aus CE3 mit.“',
+    why: 'So steht es im Katalog: Fahrzeugschein und Prüfbuch. Den Fahrzeugbrief braucht ihr nicht.',
+    notes: '▶ Frage vorlesen, abstimmen.\n🖱 Klick 1: Antworten · Klick 2: Lösung.\n✅ Amtlicher Fragenkatalog 2.6.01-207: A und B.\n💡 „Prüfbuch“ ist der Begriff aus dem Fragenkatalog. Im heutigen § 29 StVZO heißen die Nachweise Untersuchungsbericht (HU) und Prüfprotokoll (SP).\n➜ „Das nimmst du aus CE3 mit.“',
   });
   await takeaway(deck, 'ce3e', {
     items: [
