@@ -1,7 +1,7 @@
 // Abend 6 · CE1: Kapitel 4 Maße und Kurvenlauf (Abmessungen, Längen-Lineal, Kreisring nach § 32d StVZO)
 const { C, sec, chapter, steps, motion, ask, quiz, lkw, auflieger, anhaenger, seg, svgImg } = require('../gs');
 
-sec('ce1m', 'CE1  ·  MASSE UND KURVENLAUF', C.pu, 'bg_kap.jpg');
+sec('ce1m', 'CE1  ·  MASSE UND KURVENLAUF', C.pu, 'bg_pu.jpg');
 
 module.exports = async (deck) => {
   await chapter(deck, 'ce1m', { num: 4, ttl: 'Maße und Kurvenlauf', sub: 'Wie breit, wie hoch, wie lang darf ein Zug sein – und wie viel Platz braucht er in der Kurve?', ico: 'LuRuler', notes:
