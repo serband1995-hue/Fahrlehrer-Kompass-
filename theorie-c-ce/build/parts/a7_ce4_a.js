@@ -38,14 +38,14 @@ module.exports = async (deck) => {
       ask: { q: 'Was prüft ihr am Zug zusätzlich?', a: 'Kupplung, Leitungen mit ABS-Stecker, Anhänger frei, Licht und Reifen hinten – und die Bremsprobe.', at: 4 },
       caps: [
         'Kupplung: Bolzen eingerastet? Kontrollstift ansehen und tasten. Beim Sattel: Verriegelung zu, Sicherung drin.',
-        'Leitungen: rot, gelb, Licht und der schwarze ABS-Stecker. Nichts scheuert, nichts hängt bis zum Boden.',
+        'Leitungen: rot, gelb, Licht und der ABS/EBS-Stecker. Nichts scheuert, nichts hängt bis zum Boden.',
         'Anhänger frei: Feststellbremse gelöst, Keile weg und verstaut, Stützen hoch.',
         'Am ganzen Zug: Licht, Reifen und Radmuttern. Plane zu, auf dem Dach kein Eis und kein Schnee.',
         'Zum Schluss die Bremsprobe – mit dem ganzen Zug, langsam auf dem Hof.',
       ],
       notes: [
         '▶ Sagen: „Wir starten an der Kupplung. Ist der Bolzen ganz unten? Kontrollstift ansehen und anfassen.“\n❓ Frage auf der Folie stellen.\n✅ DGUV Grundsatz 314-002 Nr. 2.10: Anhängekupplung geschlossen und gesichert. Prüfungsfrage 2.7.07-209 (Kontrollstift), aus CE1.\n➜ „Weiter zu den Leitungen.“',
-        '▶ „Dann die Leitungen: rot, gelb, Licht – und der schwarze ABS-Stecker. Die Leitungen dürfen nicht scheuern und nicht durchhängen.“\n✅ DGUV Grundsatz 314-002 Nr. 2.10: elektrische und Bremsleitungen angeschlossen, sofern vorhanden auch ABV/ABS; nicht scheuern, nicht bis zum Boden durchhängen.\n➜ „Weiter am Anhänger.“',
+        '▶ „Dann die Leitungen: rot, gelb, Licht – und der ABS/EBS-Stecker. Die Leitungen dürfen nicht scheuern und nicht durchhängen.“\n✅ DGUV Grundsatz 314-002 Nr. 2.10: elektrische und Bremsleitungen angeschlossen, sofern vorhanden auch ABV/ABS; nicht scheuern, nicht bis zum Boden durchhängen.\n➜ „Weiter am Anhänger.“',
         '▶ „Ist der Anhänger frei? Roter Knopf gedrückt, Keile weg und verstaut, Stützen oben. Sonst fahrt ihr mit angezogener Bremse los.“\n✅ Lehrbuchwissen aus CE1 bis CE3 (Feststellbremse lösen, Keile verstauen: Prüfungsfrage 2.7.07-321).\n➜ „Nach hinten.“',
         '▶ „Hinten: Licht am Anhänger, Reifen, Radmuttern. Und schaut auf die Plane: zu? Liegt Eis oder Schnee auf dem Dach? Das muss runter.“\n✅ DGUV Grundsatz 314-002 Nr. 2.1 (Licht auch am Anhänger), 2.2 (Reifen), 2.8 (Planen geschlossen, Dächer frei von Wasser, Schnee und Eis).\n➜ „Und als Letztes?“',
         '▶ „Als Letztes die Bremsprobe – mit dem ganzen Zug, langsam auf dem Hof. Zieht der Zug gerade? Bremst der Anhänger mit?“\n❓ Frage auf der Folie auflösen.\n✅ Prüfungsfragen 2.7.02-017 und -020 (Bremsprobe). DGUV Grundsatz 314-002 Nr. 2.3.2: Bremsprobe, ABV-Kontrolle ohne Störung.\n➜ „Zwei Prüfungsfragen dazu.“',
@@ -92,21 +92,21 @@ module.exports = async (deck) => {
 
   // ===== KAPITEL 2: FAHRVERHALTEN =====
   await chapter(deck, 'ce4f', { num: 2, ttl: 'Wie sich der Zug bewegt', sub: 'Zwei Fahrzeuge, ein Gelenk dazwischen. Beim Bremsen, in der Kurve und bei Wind macht das Gelenk, was es will – wenn ihr es lasst.', ico: 'LuWaves', notes:
-    '▶ Sagen: „Ein Zug hat ein Gelenk – der Gliederzug sogar zwei: an der Kupplung und am Drehkranz. Darum kann er einknicken, ausbrechen und pendeln.“\n✅ DGUV Information 214-080, S. 31: Gliederzug mit zwei Drehpunkten (Kupplungsbolzen und Drehkranzmitte); Sattelzug mit einem (Königszapfen).\n🖱 Keine Klicks.\n➜ „Erst eine Merkhilfe aus CE3.“' });
+    '▶ Sagen: „Ein Zug hat ein Gelenk – der Gliederzug sogar zwei: an der Kupplung und am Drehkranz. Darum kann er einknicken, ausbrechen und pendeln.“\n✅ DGUV Information 214-080, S. 31: Gliederzug mit zwei Drehpunkten (Kupplungsbolzen und Drehkranzmitte). Sattelzug: ein Drehpunkt (Königszapfen) – Lehrbuchwissen.\n🖱 Keine Klicks.\n➜ „Erst eine Merkhilfe aus CE3.“' });
   {
     const S = 0.17;
-    const PAN = [{ y: 1.6, ttl: 'Lkw-Räder blockieren', res: 'Der Zug knickt ein', col: C.red }, { y: 4.15, ttl: 'Anhänger-Räder blockieren', res: 'Der Anhänger bricht aus', col: C.or }];
+    const PAN = [{ y: 1.6, ttl: 'Antriebsräder des Lkw rutschen', res: 'Der Zug knickt ein', col: C.red }, { y: 4.15, ttl: 'Anhänger-Räder blockieren', res: 'Der Anhänger bricht aus', col: C.or }];
     await steps(deck, 'ce4f', {
       kicker: 'Merkhilfe', ttl: 'Wo blockiert es?',
-      list: ['Vorn blockiert', 'Hinten blockiert'],
-      ask: { q: 'Beim Bremsen blockieren Räder. Was macht der Zug – je nachdem, wo?', a: 'Blockiert der Lkw (vorn), knickt der Zug ein. Blockiert der Anhänger (hinten), bricht er aus. Darum: gestreckt bremsen, ABS-Stecker drin.', at: 1 },
+      list: ['Lkw rutscht', 'Anhänger blockiert'],
+      ask: { q: 'Beim Bremsen blockieren Räder. Was macht der Zug – je nachdem, wo?', a: 'Rutschen die Antriebsräder des Lkw, knickt der Zug ein. Blockiert der Anhänger, bricht er aus. Darum: gestreckt bremsen, ABS-Stecker drin.', at: 1 },
       caps: [
-        'Rutschen die Räder des Lkw – zum Beispiel durch Retarder auf Glätte –, schiebt der Anhänger. Der Lkw dreht sich ein: Klappmesser.',
+        'Rutschen die Antriebsräder des Lkw – zum Beispiel durch Retarder auf Glätte –, schiebt der Anhänger. Der Lkw dreht sich ein: Klappmesser.',
         'Blockieren die Räder des Anhängers – zum Beispiel ohne ABS-Stecker –, verliert er die Führung und schwenkt seitlich aus.',
       ],
       notes: [
-        '▶ Sagen: „Eine Merkhilfe: Wo die Räder blockieren, geht die Führung verloren. Blockiert vorn der Lkw, schiebt der Anhänger und der Zug knickt ein – wie ein Klappmesser.“\n❓ Frage auf der Folie stellen.\n✅ Prüfungsfrage 2.7.06-108 (Retarder in der Kurve, Lkw bremst stärker). eurotransport 18.12.2013 (Klappmessereffekt). Merkhilfe: Lehrbuchwissen.\n➜ „Und hinten?“',
-        '▶ „Blockiert hinten der Anhänger, schwenkt er seitlich aus. Das habt ihr bei der Vollbremsung ohne ABS-Stecker gesehen. Gegen beides hilft: vor der Kurve gestreckt bremsen, Dauerbremse bei Glätte aus, Stecker immer drin.“\n❓ Frage auf der Folie auflösen.\n✅ Prüfungsfrage 2.7.06-314. ESC am Lkw und Kippschutz (RSS) am Anhänger helfen – aber nur mit gestecktem ABS-Stecker (WABCO EBS3, TEBS E).\n➜ „Und dann gibt es noch das Pendeln.“',
+        '▶ Sagen: „Eine Merkhilfe: Wo die Räder blockieren, geht die Führung verloren. Rutschen beim Lkw die Antriebsräder, schiebt der Anhänger und der Zug knickt ein – wie ein Klappmesser.“\n❓ Frage auf der Folie stellen.\n✅ Prüfungsfrage 2.7.06-108 (Retarder in der Kurve, Lkw bremst stärker). Mercedes-Benz Actros Betriebsanleitung, S. 250 (Antriebsräder verlieren die Haftung); WABCO EBS3, S. 15 (Blockierneigung der Antriebsräder → instabiler Fahrzustand). Merkhilfe: Lehrbuchwissen.\n💡 Blockiert nur die Vorderachse, kann der Lkw nicht mehr lenken – er schiebt geradeaus. Eingeknickt wird über die Antriebsachse.\n➜ „Und hinten?“',
+        '▶ „Blockiert der Anhänger, schwenkt er seitlich aus. Das habt ihr bei der Vollbremsung ohne ABS-Stecker gesehen. Gegen beides hilft: vor der Kurve gestreckt bremsen, Dauerbremse bei Glätte aus, Stecker immer drin.“\n❓ Frage auf der Folie auflösen.\n✅ Prüfungsfrage 2.7.06-314. Der Kippschutz (RSS) am Anhänger arbeitet nur mit gestecktem ABS-Stecker (WABCO TEBS E, Kap. 5.7). Das ESC des Lkw arbeitet auch ohne Stecker. Bremst es dabei den Anhänger mit, können ohne Anhänger-ABS dessen Räder blockieren (WABCO EBS3, S. 16–17).\n➜ „Und dann gibt es noch das Pendeln.“',
       ],
       legend: 'Draufsicht · schematisch',
       scene: async (s, i) => {
@@ -116,7 +116,7 @@ module.exports = async (deck) => {
           s.text([{ text: p.ttl + '  →  ', options: { color: on ? C.txt : C.dim, bold: true } }, { text: p.res, options: { color: on ? p.col : C.dim, bold: true } }], { x: 5.95, y: p.y + 0.1, w: 7.0, h: 0.38, size: 16, name: '!!pt' + k });
           roadH(s, 5.95, p.y + 0.68, 6.9, 1.4, { name: 'pr' + k, fill: on ? '252E3A' : '1C232D', curbs: false });
         });
-        // vorn blockiert: Einknicken (Lkw dreht ein, Anhänger schiebt)
+        // Antriebsräder Lkw rutschen: Einknicken (Lkw dreht ein, Anhänger schiebt)
         { const LY = 1.6 + 0.68 + 1.05, a = -30, u = uv(a), F = [11.6, LY], Hh = [F[0] - u[0] * 8.1 * S, F[1] - u[1] * 8.1 * S];
           const b = Math.asin((LY - Hh[1]) / (7.4 * S)) * 180 / Math.PI;
           zugTop(s, { H: Hh, a, b, S, nm: 'e', hlL: i === 0 ? C.red : undefined }); }
@@ -144,13 +144,13 @@ module.exports = async (deck) => {
         fr(9, { t: B('… immer weiter …', C.red) }),
         fr(-11, { t: B('Es schaukelt sich auf!', C.red), hold: true,
           cap: 'Pendeln wird schlimmer durch: hohes Tempo, leeren oder hinten schwer beladenen Anhänger, Seitenwind, hastiges Lenken, Spiel an Zugöse oder Drehkranz.',
-          note: '▶ „Jetzt schaukelt es sich auf. Was macht ihr? Wer jetzt Gas gibt oder hektisch gegenlenkt, macht es schlimmer.“\n✅ Lehrbuchwissen: Pendeln begünstigt durch hohe Geschwindigkeit, leeren oder hinten schwer beladenen Anhänger, Seitenwind, Spurrillen, Spiel an Zugöse, Zuggabel oder Drehkranz. Prüfungsfrage 2.6.03-102: Geschwindigkeit vermindern (falsch: beschleunigen, um den Zug zu strecken).\n🖱 Klick: Gas weg (läuft von selbst).\n➜ „So beruhigt ihr den Zug.“' }),
+          note: '▶ „Jetzt schaukelt es sich auf. Was macht ihr? Wer jetzt Gas gibt oder hektisch gegenlenkt, macht es schlimmer.“\n✅ Lehrbuchwissen: Pendeln begünstigt durch hohe Geschwindigkeit, leeren oder hinten schwer beladenen Anhänger, Seitenwind, Spurrillen, Spiel an Zugöse, Zuggabel oder Drehkranz. Vergleiche Prüfungsfrage 2.6.03-102 (Anhänger „springt“ auf Schlaglöchern: Geschwindigkeit vermindern; falsch: beschleunigen, um den Zug zu strecken).\n🖱 Klick: Gas weg (läuft von selbst).\n➜ „So beruhigt ihr den Zug.“' }),
         fr(6, { t: B('Gas weg. Lenkrad ruhig halten …', C.gr) }),
         fr(-3, { t: B('… das Schwingen wird kleiner …', C.gr) }),
         fr(1, { t: B('… und kleiner …', C.gr) }),
         fr(0, { t: B('Der Zug läuft wieder gerade.', C.gr), hold: true, answer: true,
           cap: 'Gas weg, Lenkrad ruhig, nicht hektisch gegenlenken. Bremsen erst, wenn der Zug gestreckt ist. Danach Ladung und Spiel an der Kupplung prüfen.',
-          note: '▶ „Gas weg, das Lenkrad ruhig gerade halten, nicht wild gegenlenken. Bremst ihr, dann erst, wenn der Zug wieder gestreckt ist. Und danach: anhalten und nachsehen – Ladung verrutscht? Spiel an Zugöse oder Drehkranz?“\n❓ Frage auf der Folie auflösen.\n✅ Prüfungsfrage 2.6.03-102 (Geschwindigkeit vermindern). Lehrbuchwissen (ruhig halten, gestreckt bremsen). Prüfungsfrage 2.7.08-301: Drehkranz und Zuggabel schmieren.\n💡 Winkel überzeichnet.\n🖱 Nächster Klick: nächste Folie.\n➜ „Eine Prüfungsfrage.“' }),
+          note: '▶ „Gas weg, das Lenkrad ruhig gerade halten, nicht wild gegenlenken. Bremst ihr, dann erst, wenn der Zug wieder gestreckt ist. Und danach: anhalten und nachsehen – Ladung verrutscht? Spiel an Zugöse oder Drehkranz?“\n❓ Frage auf der Folie auflösen.\n✅ Lehrbuchwissen (Gas weg, ruhig halten, gestreckt bremsen); vergleiche Prüfungsfrage 2.6.03-102 (Anhänger „springt“: Geschwindigkeit vermindern). Prüfungsfrage 2.7.08-301: Drehkranz und Zuggabel schmieren.\n💡 Winkel überzeichnet.\n🖱 Nächster Klick: nächste Folie.\n➜ „Eine Prüfungsfrage.“' }),
       ],
       scene: async (s, t) => {
         roadH(s, RX, R, RW, RH, { name: 'ab', cy: R + RH / 2 - 0.02 });
@@ -176,6 +176,6 @@ module.exports = async (deck) => {
     kicker: 'Prüfungsfrage 2.7.01-202', q: 'Worauf müssen Sie sich einstellen, wenn Sie ein Tankfahrzeug mit teilbeladenen Kammern fahren?', size: 32,
     opts: ['Auf erhöhte Kippgefahr in Kurven', 'Auf erhöhte Schleudergefahr', 'Auf schwergängige Lenkung im Gefälle'], ok: [0, 1],
     why: 'Die Flüssigkeit schwappt in der Kurve nach außen und beim Bremsen nach vorn. Das schiebt den Zug.',
-    notes: '▶ Frage vorlesen, abstimmen.\n🖱 Klick 1: Antworten · Klick 2: Lösung.\n✅ Amtlicher Fragenkatalog 2.7.01-202: A und B.\n💡 Gilt sinngemäß für jede hohe oder lose Ladung: Schwerpunkt hoch = Kippgefahr in der Kurve (Prüfungsfrage 2.2.22-121).\n➜ „Kapitel 3: Rückwärts und Abbiegen.“',
+    notes: '▶ Frage vorlesen, abstimmen.\n🖱 Klick 1: Antworten · Klick 2: Lösung.\n✅ Amtlicher Fragenkatalog 2.7.01-202: A und B.\n💡 Hoher Schwerpunkt = Kippgefahr in der Kurve (Lehrbuchwissen). Und ungesicherte Ladung kann in der Kurve das Umkippen begünstigen (Prüfungsfrage 2.2.22-121).\n➜ „Kapitel 3: Rückwärts und Abbiegen.“',
   });
 };

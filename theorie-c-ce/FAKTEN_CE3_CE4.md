@@ -698,3 +698,20 @@ Quelle (wenn nicht anders angegeben): DGUV Grundsatz 314-002 „Kontrolle von Fa
 - **Toter Winkel:** Spiegel II, IV, V, VI; Abbiegeassistent Pflicht bei Neuzulassung seit **7.7.2024**; Radfahrer gerät neben die **Anhängerachse**.
 - **Tempo mit Anhänger:** 50 / **60** / **80** / Ketten 50. **Z 277 mit Masse: Zug-Summe zählt.** Linker Fahrstreifen bei drei Streifen: alle Kfz mit Anhänger nur zum Linksabbiegen (§ 7 Abs. 3c).
 - **Abstand:** Zug > 7 m außerorts Einscher-Abstand (§ 4 Abs. 2); Autobahn > 50 km/h mindestens 50 m (§ 4 Abs. 3).
+
+---
+
+# Nachtrag nach der Fachprüfung Abend 7 (03.10.2026, siehe PRUEFUNG_ABEND7.md)
+- **Redundanzdruck ≠ kein ABS:** Fehlt nur das CAN-Signal, regelt ein TEBS-Anhänger mit Strom weiter Last, ABS und RSS (TEBS E Kap. 5.8.2, 5.9.1). Erst ohne ISO-7638-Stecker (kein Strom) fehlen ABS/EBS/RSS (Kap. 5.7). Darum „ABV **kann** abgeschaltet sein“ (2.7.06-315).
+- **Ohne Stecker keine Lastanpassung** gilt für EBS-Anhänger. Anhänger mit eigenem ALB-Ventil behalten sie (WABCO EBS3 S. 14). Optionale Notversorgung über Bremslicht (24N): Lastanpassung und eingeschränktes ABS, kein RSS (TEBS E 5.7.2).
+- **ESC des Lkw** arbeitet auch ohne Anhänger-ABS; ohne Anhänger-ABS können beim ESC-Eingriff die Anhängerräder blockieren (WABCO EBS3 S. 16–17). Nur der Kippschutz (RSS) des Anhängers braucht den Stecker.
+- **Warnleuchte Anhänger-ABS:** zwei zulässige Varianten – aus nach ca. 2 s oder erst ab ca. 7 km/h (TEBS E 5.8.1). Werkstatt, wenn sie auch beim Fahren an bleibt.
+- **§ 18 Abs. 11 StVO:** „durch erheblichen Schneefall oder Regen auf 50 m oder weniger“ sowie Schneeglätte/Glatteis; gilt auch für Zugmaschinen; Nebel nicht genannt.
+- **Dauerbremse bei Glätte:** Actros S. 250 „nicht einschalten“ (nicht „nur schwach“). Automatische Zuschaltung (beladen erkannt + Bremspedal; Tempomat/Limiter/Abstandshalte-Assistent im Schub) beachten.
+- **Einknicken** kommt von den rutschenden **Antriebsrädern** des Lkw; blockierte Vorderachse = Lkw nicht lenkbar, schiebt geradeaus.
+- **TEBS E 5.8.1:** Bei entsprechender Ausstattung bremsen die Federspeicher des Anhängers automatisch, wenn der Druck am Kupplungskopf unter 2,5 bar fällt. DGUV I 214-080 S. 33: „in der Regel nicht“.
+- **Gliederzug rückwärts (UNSICHER 11):** Prüfer-Rechnung bestätigt die eigene Herleitung (Anhängerheck verzögert zur Seite des Lkw-Hecks). Weiterhin nicht auf Folien lehren; Folien sprechen nur vom Auflieger.
+- **12 %/18 %** sind Bauvorschriften (Mindestleistung der Bremse), keine Abstell-Erlaubnis.
+- **§ 7 Abs. 3c StVO:** drei Fahrstreifen **für eine Richtung** (nicht 2+1-Straße).
+- **RL 71/320/EWG** ist aufgehoben (VO (EG) 661/2009); heutige Grundlage UN-Regelung Nr. 13. Werte unverändert.
+- **ISO-7638-Stecker:** Farbe „schwarz“ nicht belegt – auf Folien nur „ABS/EBS-Stecker (ISO 7638)“.

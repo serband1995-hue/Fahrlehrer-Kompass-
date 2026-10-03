@@ -8,7 +8,7 @@ module.exports = async (deck) => {
     ttl: 'Fahren mit Zügen', labelW: 3.0, size: 17,
     rows: [
       ['Abfahrtkontrolle', 'Kupplung · Leitungen mit ABS-Stecker · Anhänger frei · Licht · Bremsprobe'],
-      ['Wo blockiert es?', 'Lkw blockiert → Zug knickt ein · Anhänger blockiert → bricht aus'],
+      ['Wo blockiert es?', 'Lkw-Antriebsräder rutschen → Zug knickt ein · Anhänger blockiert → bricht aus'],
       ['Pendeln', 'Gas weg, Lenkrad ruhig halten, erst gestreckt bremsen'],
       ['Rückwärts', 'Sattelzug: Lenkrad links → Aufliegerheck rechts · Einweiser weg → Stopp'],
       ['Rechts abbiegen', 'Anhänger schneidet die Kurve · innerorts Schrittgeschwindigkeit'],
@@ -40,8 +40,8 @@ module.exports = async (deck) => {
     items: [
       ['LuClipboardCheck', 'Rundgang:', 'vor jeder Schicht und nach jedem Kuppeln einmal um den ganzen Zug.'],
       ['LuWaves', 'Gestreckt bremsen:', 'vor der Kurve, nicht in der Kurve. Pendelt der Anhänger: Gas weg, ruhig halten.'],
-      ['LuUndo2', 'Rückwärts:', 'Der Auflieger lenkt andersrum. Einweiser nicht mehr zu sehen = sofort anhalten.'],
-      ['LuBike', 'Rechts abbiegen:', 'Der Anhänger schneidet die Kurve. Schritt fahren, Spiegel bis zum Schluss.'],
+      ['LuUndo2', 'Rückwärts:', 'Der Auflieger läuft andersherum als das Lenkrad. Einweiser nicht mehr zu sehen = sofort anhalten.'],
+      ['LuBike', 'Rechts abbiegen:', 'Der Anhänger schneidet die Kurve. Schrittgeschwindigkeit, Spiegel bis zum Schluss.'],
       ['LuGauge', 'Zahlen:', '50 – 60 – 80 km/h, Ketten 50, Autobahn-Abstand 50 m. Zeichen 277 zählt den ganzen Zug.'],
     ],
     notes: '▶ Sagen: „Das sind die fünf Punkte aus CE4, die ihr sicher wissen müsst.“\n🖱 Klick 1–5: je ein Punkt.\n➜ „Und damit ist die Theorie für Klasse CE geschafft.“',

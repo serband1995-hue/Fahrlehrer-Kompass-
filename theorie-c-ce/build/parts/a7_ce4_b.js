@@ -5,7 +5,7 @@ const { zugTop, satTop, stepSattel, stepGlieder, hitchG, uv } = require('../zugt
 sec('ce4r', 'CE4  ·  RÜCKWÄRTS UND ABBIEGEN', C.pu, 'bg_pu.jpg');
 
 module.exports = async (deck) => {
-  await chapter(deck, 'ce4r', { num: 3, ttl: 'Rückwärts und Abbiegen', sub: 'Beim Rückwärtsfahren macht der Anhänger das Gegenteil. Beim Abbiegen schneidet er die Kurve.', ico: 'LuUndo2', notes:
+  await chapter(deck, 'ce4r', { num: 3, ttl: 'Rückwärts und Abbiegen', sub: 'Beim Rückwärtsfahren läuft der Auflieger andersherum als das Lenkrad. Beim Abbiegen schneidet der Anhänger die Kurve.', ico: 'LuUndo2', notes:
     '▶ Sagen: „Zwei Situationen, in denen der Zug anders reagiert als ein Lkw allein: rückwärts und beim Abbiegen.“\n✅ DGUV Information 214-080, S. 31; Prüfungsfrage 2.7.01-310.\n🖱 Keine Klicks.\n➜ „Erst rückwärts – mit dem Sattelzug.“' });
 
   // ===== SATTELZUG RÜCKWÄRTS (Draufsicht, berechnet) =====
