@@ -16,7 +16,7 @@ module.exports = async (deck) => {
     const ST = [
       { w: [5.2, 3.6, 5.7], pal: 0, info: 'Jede Achse hat ihre eigene Grenze: Lenkachse 10 t, Antriebsachse 11,5 t, Dreifachachse 21 t – bei mehr als 1,30 m Achsabstand 24 t. Es gilt immer der kleinere Wert aus Gesetz und Fahrzeugschein.' },
       { w: [7.5, 11.5, 21.0], pal: 1, info: 'Mehr als 4 Achsen: höchstens 40 t. 44 t nur im Kombinierten Verkehr – auf dem Weg zum oder vom Bahnhof oder Hafen, mit Nachweis.' },
-      { w: [7.7, 12.6, 22.7], pal: 2, info: 'Mehr als 5 % zu schwer (hier 7,5 %): 80 € und 1 Punkt für den Fahrer – ab 10 % wird es teurer. Dazu: längerer Bremsweg, heiße Bremsen.' },
+      { w: [7.7, 12.6, 22.7], pal: 2, info: 'Mehr als 5 % zu schwer (hier 7,5 %): 80 € und 1 Punkt für den Fahrer – über 10 % wird es teurer. Dazu: längerer Bremsweg, heiße Bremsen.' },
     ];
     const f1 = v => v.toFixed(1).replace('.', ',');
     await steps(deck, 'ce1g', {
@@ -30,8 +30,8 @@ module.exports = async (deck) => {
       ],
       notes: [
         '▶ Sagen: „Wir stellen unseren Sattelzug auf eine Waage – unter jeder Achse eine. Leer wiegt er etwa 14,5 Tonnen. Jede Achse hat ihre eigene Grenze.“\n❓ Frage auf der Folie stellen.\n✅ § 34 Abs. 4 StVZO: Einzelachse 10 t, angetriebene Einzelachse 11,5 t, Dreifachachse 21 t (Abstände bis 1,3 m) bzw. 24 t (über 1,3 bis 1,4 m). Es gilt immer der kleinere Wert aus Gesetz und Zulassungsbescheinigung (§ 34 Abs. 2 und 3). Leergewicht: Beispielwert.\n➜ „Jetzt wird beladen.“',
-        '▶ „Beladen: 7,5 plus 11,5 plus 21 – genau 40 Tonnen. Jede Achse hält ihre Grenze, die Summe auch. Mehr als 4 Achsen: höchstens 40 Tonnen.“\n❓ Frage auf der Folie auflösen.\n✅ § 34 Abs. 6 Nr. 5 StVZO: Züge und Sattelkraftfahrzeuge mit mehr als 4 Achsen 40 t. § 34 Abs. 6 Nr. 6 (intermodal, Container oder Wechselaufbauten bis 45 Fuß: 2 + 3 Achsen 42 t, 3 + 2/3 Achsen 44 t) und 53. StVZAusnV § 1 (44 t im Vor- und Nachlauf des Kombinierten Verkehrs: nächstgelegener geeigneter Bahnhof bzw. Hafen bis 150 km Luftlinie; Nachweis mitführen). Ausnahme E-Lkw: bis 2 t mehr für den Antrieb (§ 34 Abs. 6a StVZO). In der Prüfung: 40 t. Prüfungsfrage 2.6.06-302: 40 t. Achslasten: eigene Beispielrechnung.\n➜ „Und wenn noch zwei Paletten dazukommen?“',
-        '▶ „Zwei Paletten mehr – 43 Tonnen. Die Antriebsachse trägt jetzt 12,6 Tonnen: zu viel. Und der Zug ist 3 Tonnen zu schwer. Das sind mehr als 5 Prozent: 80 Euro und ein Punkt – für den Fahrer.“\n✅ BKatV Nr. 198.1 (Tabelle 3): Überschreitung der zulässigen Achslast oder Gesamtmasse bei Kfz über 7,5 t bzw. Kfz mit Anhänger über 2 t – mehr als 5 bis 10 %: 80 € und 1 Punkt (ab 10 %: 110 €, ab 15 %: 140 €, ab 20 %: 190 €, ab 25 %: 285 €, ab 30 %: 380 €; 2 bis 5 %: 30 € ohne Punkt); der Halter zahlt zusätzlich (Nr. 199). Punkte: FeV Anlage 13 Nr. 3.5.5. Eigene Beispielrechnung: 43 t ÷ 40 t = 7,5 % zu viel; Antriebsachse 12,6 ÷ 11,5 = 9,6 % zu viel.\n💡 Prüfungsfrage 2.2.22-301: Lkw beladen, Anhänger leer ist sicherer als umgekehrt.\n➜ „Eine Prüfungsfrage.“',
+        '▶ „Beladen: 7,5 plus 11,5 plus 21 – genau 40 Tonnen. Jede Achse hält ihre Grenze, die Summe auch. Mehr als 4 Achsen: höchstens 40 Tonnen.“\n❓ Frage auf der Folie auflösen.\n✅ § 34 Abs. 6 Nr. 5 StVZO: Züge und Sattelkraftfahrzeuge mit mehr als 4 Achsen 40 t. § 34 Abs. 6 Nr. 6 (intermodal, Container oder Wechselaufbauten bis 45 Fuß: 2 + 3 Achsen 42 t, 3 + 2/3 Achsen 44 t) und 53. StVZAusnV § 1 (44 t im Vor- und Nachlauf des Kombinierten Verkehrs: nächstgelegener geeigneter Bahnhof bzw. Hafen bis 150 km Luftlinie; Nachweis mitführen). Ausnahme E-Lkw: bis 2 t mehr (§ 34 Abs. 6a StVZO) – kommt in der Prüfung nicht vor. Prüfung: ohne Kombinierten Verkehr 40 t (2.6.06-302, -304), im Kombinierten Verkehr 44 t (2.6.06-303). Achslasten: eigene Beispielrechnung.\n➜ „Und wenn noch zwei Paletten dazukommen?“',
+        '▶ „Zwei Paletten mehr – 43 Tonnen. Die Antriebsachse trägt jetzt 12,6 Tonnen: zu viel. Und der Zug ist 3 Tonnen zu schwer. Das sind mehr als 5 Prozent: 80 Euro und ein Punkt – für den Fahrer.“\n✅ BKatV Nr. 198.1 (Tabelle 3): Überschreitung der zulässigen Achslast oder Gesamtmasse bei Kfz über 7,5 t bzw. Kfz mit Anhänger über 2 t – mehr als 5 bis 10 %: 80 € und 1 Punkt (über 10 %: 110 €, über 15 %: 140 €, über 20 %: 190 €, über 25 %: 285 €, über 30 %: 380 €; über 2 bis 5 %: 30 € ohne Punkt – genau 10 % bleibt bei 80 €); der Halter zahlt zusätzlich (Nr. 199). Punkte: FeV Anlage 13 Nr. 3.5.5. Eigene Beispielrechnung: 43 t ÷ 40 t = 7,5 % zu viel; Antriebsachse 12,6 ÷ 11,5 = 9,6 % zu viel.\n💡 Prüfungsfrage 2.2.22-301: Lkw beladen, Anhänger leer ist sicherer als umgekehrt.\n➜ „Eine Prüfungsfrage.“',
       ],
       legend: 'Seitenansicht · Beispielwerte',
       scene: async (s, i) => {
@@ -68,7 +68,7 @@ module.exports = async (deck) => {
     kicker: 'Prüfungsfrage 2.6.06-302', q: 'Welche zulässige Gesamtmasse darf ein Sattelkraftfahrzeug (zweiachsige Zugmaschine, dreiachsiger Sattelanhänger, kein kombinierter Verkehr) höchstens haben?', size: 26,
     opts: ['40 t', '38 t', '44 t'], ok: [0],
     why: 'Mehr als 4 Achsen: 40 t. 44 t gibt es nur im Kombinierten Verkehr.',
-    notes: '▶ Frage vorlesen, abstimmen.\n🖱 Klick 1: Antworten · Klick 2: Lösung.\n✅ Amtlicher Fragenkatalog 2.6.06-302: A. Gleiches gilt für Lkw (2 Achsen) mit Anhänger (3 Achsen): 2.6.06-304 → 40 t.\n➜ „Und wie rechnet man das beim Sattelzug?“',
+    notes: '▶ Frage vorlesen, abstimmen.\n🖱 Klick 1: Antworten · Klick 2: Lösung.\n✅ Amtlicher Fragenkatalog 2.6.06-302: A. Gleiches gilt für Lkw (2 Achsen) mit Anhänger (3 Achsen): 2.6.06-304 → 40 t. Gegenstück 2.6.06-303 (dreiachsige Zugmaschine, dreiachsiger Auflieger, Kombinierter Verkehr mit 40-Fuß-Container): 44 t.\n➜ „Und wie rechnet man das beim Sattelzug?“',
   });
 
   // ===== RECHNEN NACH STVZO =====
@@ -78,20 +78,20 @@ module.exports = async (deck) => {
       ['LuPlus', 'Addieren und Sattellast abziehen', '25 t + 34 t − 16 t = 43 t. Die Sattellast steckt in beiden Fahrzeugen – sie zählt nur einmal.', GOLD, 17],
       ['LuScale', 'Grenze prüfen', 'Mehr als 4 Achsen: höchstens 40 t. 43 t sind zu viel.', GOLD, 17],
       ['LuMinus', 'Also: 3 t weniger laden', 'Den Auflieger nicht voll beladen – sonst ist der Zug zu schwer.', C.red, 17],
-      ['LuLink', 'Gliederzug: einfach addieren', 'Lkw + Anhänger. Zentralachsanhänger: minus Stützlast. Mehr als 4 Achsen: auch hier 40 t (mit 4 Achsen 36 t).', GOLD, 17],
+      ['LuLink', 'Gliederzug: einfach addieren', 'Lkw + Anhänger. Zentralachsanhänger: minus Stützlast. Mehr als 4 Achsen: auch hier 40 t. Mit 4 Achsen weniger (35 oder 36 t).', GOLD, 17],
     ],
     notes:
       '▶ Sagen: „Rechenaufgabe aus der Prüfung: Zugmaschine 25 Tonnen, Auflieger 34 Tonnen, Sattellast 16 Tonnen. Was darf der Zug wiegen?“\n' +
       '❓ Rechnen lassen, dann je Klick auflösen.\n' +
       '🖱 Klick 1–4: je ein Schritt.\n' +
-      '✅ § 34 Abs. 7 StVZO: Sattelzug = zGM Zugmaschine + zGM Auflieger − die höhere von Sattellast/Aufliegelast; Zug mit Zentralachsanhänger: Summe − höhere Stützlast; Gliederzug: Summe. Prüfungsfrage 2.6.06-306: zulässig, wenn mindestens 3 t Nutzlast weniger (eigene Rechnung: 25 + 34 − 16 = 43 → 40). Prüfungsfrage 2.6.06-305: zGM Zugmaschine plus zGM Auflieger minus Aufliegelast.\n' +
+      '✅ § 34 Abs. 7 StVZO: Sattelzug = zGM Zugmaschine + zGM Auflieger − die höhere von Sattellast/Aufliegelast; Zug mit Zentralachsanhänger: Summe − höhere Stützlast; Gliederzug: Summe. Prüfungsfrage 2.6.06-306: zulässig, wenn mindestens 3 t Nutzlast weniger (eigene Rechnung: 25 + 34 − 16 = 43 → 40). Prüfungsfrage 2.6.06-305: zGM Zugmaschine plus zGM Auflieger minus Aufliegelast. § 34 Abs. 6 Nr. 2 und 4 StVZO: Züge mit 4 Achsen 36 t (zweiachsiger Lkw mit zweiachsigem Anhänger) bzw. 35 t (z. B. Dreiachs-Lkw mit einachsigem Zentralachsanhänger; mit 26-t-Lkw 36 t).\n' +
       '➜ „Und wie schwer darf ein Anhänger hinter dem Lkw sein?“',
   });
   await quiz(deck, 'ce1g', {
     kicker: 'Prüfungsfrage 2.6.03-301', q: 'Wie schwer darf ein Anhänger hinter einem Lkw mit 10 t zulässiger Gesamtmasse bei durchgehender Bremsanlage höchstens sein?', size: 28,
     opts: ['15 t', '10 t', '20 t'], ok: [0],
     why: 'Das 1,5-Fache der zulässigen Gesamtmasse des Lkw – und nie mehr, als der Hersteller erlaubt.',
-    notes: '▶ Frage vorlesen, abstimmen.\n🖱 Klick 1: Antworten · Klick 2: Lösung.\n✅ Amtlicher Fragenkatalog 2.6.03-301: A. § 42 Abs. 1 StVZO: Anhängelast hinter Lkw höchstens die zGM des Lkw, bei durchgehender Bremsanlage höchstens das 1,5-Fache (Prüfungsfrage 2.6.03-303) und nicht mehr als vom Hersteller angegeben. Anhängelast = tatsächlich gezogene Last (2.6.03-106).\n➜ „Und welche Klasse braucht ihr dafür?“',
+    notes: '▶ Frage vorlesen, abstimmen.\n🖱 Klick 1: Antworten · Klick 2: Lösung.\n✅ Amtlicher Fragenkatalog 2.6.03-301: A. § 42 Abs. 1 StVZO: Anhängelast hinter Lkw höchstens die zGM des Lkw, bei durchgehender Bremsanlage höchstens das 1,5-Fache (Prüfungsfrage 2.6.03-303) und nicht mehr als vom Hersteller angegeben. Anhängelast = tatsächlich gezogene Last (2.6.03-106). Dazu Prüfungsfragen 2.6.03-302 (zGM des Lkw zur tatsächlichen Masse des Anhängers) und 2.6.03-304 (Lkw 15 t → Anhänger höchstens 22,5 t).\n➜ „Und welche Klasse braucht ihr dafür?“',
   });
 
   // ===== C1E ODER CE =====
@@ -114,7 +114,7 @@ module.exports = async (deck) => {
         'CE schließt C1E, BE und T mit ein.',
       ],
       notes: [
-        '▶ Sagen: „Welche Klasse braucht ihr? 7,5-Tonnen-Lkw und 4,5-Tonnen-Anhänger: zusammen 12 Tonnen. Das ist C1E.“\n❓ Frage auf der Folie stellen.\n✅ § 6 Abs. 1 FeV: C1E = C1-Zugfahrzeug + Anhänger oder Sattelanhänger über 750 kg, Zug-zGM höchstens 12.000 kg. Beispiel: eigene Rechnung.\n➜ „Und mit einem etwas schwereren Anhänger?“',
+        '▶ Sagen: „Welche Klasse braucht ihr? 7,5-Tonnen-Lkw und 4,5-Tonnen-Anhänger: zusammen 12 Tonnen. Das ist C1E.“\n❓ Frage auf der Folie stellen.\n✅ § 6 Abs. 1 FeV: C1E = C1-Zugfahrzeug + Anhänger oder Sattelanhänger über 750 kg, Zug-zGM höchstens 12.000 kg. Auch C1E: B-Zugfahrzeug + Anhänger über 3.500 kg, Zug höchstens 12.000 kg. Beispiel: eigene Rechnung.\n➜ „Und mit einem etwas schwereren Anhänger?“',
         '▶ „Anhänger 5 Tonnen: 12,5 Tonnen. Mehr als 12 – also CE.“\n✅ § 6 Abs. 1 FeV: CE = Zugfahrzeug der Klasse C + Anhänger oder Sattelanhänger über 750 kg (keine Obergrenze im Führerscheinrecht). Bei mehr als 12 t mit C1-Zugfahrzeug: CE. Eigene Rechnung.\n➜ „Jetzt die Fangfrage.“',
         '▶ „Die Fangfrage: 7,49 plus 4,8 Tonnen, Zentralachsanhänger. Manche ziehen die Stützlast ab. Beim Führerschein gilt aber: volle Summe der zulässigen Gesamtmassen. 12,29 Tonnen – also CE.“\n❓ Frage auf der Folie auflösen.\n✅ § 6 Abs. 1 Satz 2 FeV: zGM der Kombination = Summe der zGM der Einzelfahrzeuge, ohne Abzug von Stütz- oder Aufliegelast. Anders § 34 Abs. 7 StVZO (dort wird abgezogen).\n➜ „Und umgekehrt?“',
         '▶ „Großer Lkw, kleiner Anhänger: 12-Tonnen-Lkw ist Klasse C. Dazu ein Anhänger über 750 Kilogramm – das ist immer CE. Bis 750 Kilogramm Anhänger reicht C.“\n✅ § 6 Abs. 1 FeV: C (auch mit Anhänger bis 750 kg), CE (Anhänger über 750 kg). § 6 Abs. 3 Nr. 6 FeV: CE schließt C1E, BE und T ein. § 9 Abs. 2 FeV: CE nur mit Klasse C (Vorbesitz oder gleichzeitig).\n➜ „Das war CE1. Zum Mitschreiben.“',
