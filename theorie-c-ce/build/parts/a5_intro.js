@@ -49,9 +49,9 @@ module.exports = async (deck) => {
   await ask(deck, 'c9', {
     kicker: 'Wiederholung Abend 4', q: 'Drei Fragen vom letzten Mal – wer weiß es noch?', ico: 'LuRotateCcw', qsize: 32,
     answers: [
-      ['LuGauge', 'Doppelt so schnell in die Kurve – wie viel mehr Fliehkraft?', 'Viermal so viel. Sie wächst mit dem Quadrat der Geschwindigkeit.'],
+      ['LuGauge', 'Doppelt so schnell in die Kurve – wie groß wird die Fliehkraft?', 'Viermal so groß. Sie wächst mit dem Quadrat der Geschwindigkeit.'],
       ['LuTriangleAlert', 'Panne auf der Landstraße – wie weit kommt das Warndreieck?', 'Bei schnellem Verkehr etwa 100 m hinter den Lkw.'],
-      ['LuFlag', 'Ladung ragt hinten 1,20 m heraus. Was muss dran?', 'Eine hellrote Fahne oder ein Schild, mindestens 30 × 30 cm.'],
+      ['LuFlag', 'Ladung ragt 1,20 m über die Rückstrahler hinaus. Was muss dran?', 'Eine hellrote Fahne oder ein Schild, mindestens 30 × 30 cm.'],
     ],
     notes:
       '▶ Sagen: „Bevor wir anfangen: drei Fragen zu Abend 4.“\n' +
@@ -68,7 +68,7 @@ module.exports = async (deck) => {
       '💡 Zeiten sind Richtwerte für 90 Minuten.\n' +
       '➜ „Kapitel 1: Warum muss Ladung überhaupt gesichert werden?“' });
     kick(s, 'Lektion C9 · Ladungssicherung und Abfahrtkontrolle'); title(s, 'Das lernt ihr in C9');
-    const T = [['01', 'Warum sichern?', 'Welche Kräfte beim Bremsen und in der Kurve an der Ladung zerren', '15 Min', C.red], ['02', 'So wird gesichert', 'Formschluss, Niederzurren, Direktzurren, Zurrgurte', '25 Min', C.or], ['03', 'Fahrzeug und Lastverteilung', 'Stirnwand, Zurrpunkte, Lastverteilungsplan', '15 Min', 'C9A227'], ['04', 'Be- und Entladen', 'Ladebordwand, Ladekran, Stapler', '10 Min', C.bl], ['05', 'Abfahrtkontrolle', 'Der Rundgang vor jeder Fahrt, einfache Störungen', '20 Min', C.gr]];
+    const T = [['01', 'Warum sichern?', 'Welche Kräfte beim Bremsen und in der Kurve an der Ladung zerren', '15 Min', C.red], ['02', 'So wird gesichert', 'Formschluss, Nieder- und Direktzurren, Zurrgurte, besondere Ladung', '25 Min', C.or], ['03', 'Fahrzeug und Lastverteilung', 'Stirnwand, Zurrpunkte, Lastverteilungsplan', '15 Min', 'C9A227'], ['04', 'Be- und Entladen', 'Ladebordwand, Ladekran, Stapler', '10 Min', C.bl], ['05', 'Abfahrtkontrolle', 'Der Rundgang vor jeder Schicht, einfache Störungen', '20 Min', C.gr]];
     for (let i = 0; i < 5; i++) {
       const y = 2.0 + i * 0.9;
       card(s, 0.7, y, 11.93, 0.78, { line: T[i][4] }, CLICK);

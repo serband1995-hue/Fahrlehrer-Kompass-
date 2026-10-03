@@ -7,9 +7,9 @@ sec('c7w', 'C7  ·  WIDERSTÄNDE UND ENERGIE', C.or, 'bg_or.jpg');
 
 // Lkw-Rad von der Seite (dreht sich): Reifen mit Profilblöcken, Felge, Radmuttern, rote Markierung
 function wheelSvg() {
-  let s = `<circle cx="200" cy="200" r="196" fill="#15191F"/>`;
-  for (let k = 0; k < 28; k++) { const a = k * 360 / 28; s += `<rect x="190" y="2" width="20" height="22" rx="4" fill="#2A313B" transform="rotate(${a} 200 200)"/>`; }
-  s += `<circle cx="200" cy="200" r="150" fill="#1E242C"/><circle cx="200" cy="200" r="118" fill="#A9B3C0" stroke="#7D8898" stroke-width="6"/>`;
+  let s = `<circle cx="200" cy="200" r="195" fill="#3A404C" stroke="#5A6272" stroke-width="3"/>`;
+  for (let k = 0; k < 28; k++) { const a = k * 360 / 28; s += `<rect x="190" y="2" width="20" height="22" rx="4" fill="#4A5160" stroke="#5A6272" stroke-width="2" transform="rotate(${a} 200 200)"/>`; }
+  s += `<circle cx="200" cy="200" r="150" fill="#2C323C" stroke="#5A6272" stroke-width="3"/><circle cx="200" cy="200" r="118" fill="#A9B3C0" stroke="#7D8898" stroke-width="6"/>`;
   s += `<circle cx="200" cy="200" r="78" fill="#8D98A6"/>`;
   for (let k = 0; k < 10; k++) { const a = k * Math.PI / 5; s += `<circle cx="${200 + 56 * Math.cos(a)}" cy="${200 + 56 * Math.sin(a)}" r="9" fill="#58626F"/>`; }
   for (let k = 0; k < 6; k++) { const a = k * Math.PI / 3 + 0.5; s += `<ellipse cx="${200 + 98 * Math.cos(a)}" cy="${200 + 98 * Math.sin(a)}" rx="13" ry="9" fill="#5E6876" transform="rotate(${a * 180 / Math.PI} ${200 + 98 * Math.cos(a)} ${200 + 98 * Math.sin(a)})"/>`; }
@@ -27,18 +27,18 @@ const main = async (deck) => {
     const wheel = await svgImg(wheelSvg(), 400, 400, 1);
     const R = 1.05, GY = 4.2, X0 = 6.85;
     const fr = (x, lock, o = {}) => ({ t: { x, lock }, ...o });
-    const XL = 9.0; // hier blockiert das Rad
+    const XL = X0 + 1.6; // hier blockiert das Rad (Weg pro Bild: 0,55 / 0,45 / 0,35 / 0,25 – das Rad wird langsamer)
     await motion(deck, 'c7h', {
       kicker: 'Haftung', ttl: 'Rollen oder rutschen', dur: 450, holdDur: 700,
       question: 'Was bremst stärker: ein Rad, das gerade noch rollt – oder ein blockiertes Rad?',
       answer: 'Das Rad, das noch rollt. Haftreibung ist größer als Gleitreibung – und nur ein rollendes Rad lässt sich lenken.',
       legend: 'Schematisch · rote Markierung zeigt die Drehung des Rads',
       frames: [
-        fr(X0, false, { hold: true, cap: 'Das Rad rollt. Wo der Reifen die Straße berührt, steht er kurz still – er haftet.', note: '▶ Sagen: „Ein Lkw-Rad. Achtet auf den roten Punkt.“\n❓ Frage auf der Folie vorlesen und abstimmen lassen: Wer meint „rollendes Rad“, wer „blockiertes Rad“?\n🖱 Klick: Das Rad rollt los (läuft von selbst).\n➜ „Schaut, was passiert.“' }),
-        fr(X0 + 0.55, false), fr(X0 + 1.1, false), fr(X0 + 1.65, false),
+        fr(X0, false, { hold: true, cap: 'Das Rad rollt. Wo der Reifen die Straße berührt, steht er kurz still – er haftet.', note: '▶ Sagen: „Ein Lkw-Rad. Achtet auf den roten Punkt.“\n❓ Frage auf der Folie vorlesen und abstimmen lassen: Wer meint „rollendes Rad“, wer „blockiertes Rad“?\n🖱 Klick: Jetzt wird gebremst – das Rad wird langsamer (läuft von selbst).\n➜ „Jetzt bremst der Fahrer. Schaut, was passiert.“' }),
+        fr(X0 + 0.55, false, { cap: 'Jetzt wird gebremst – das Rad dreht noch, der Reifen haftet.' }), fr(X0 + 1.0, false), fr(X0 + 1.35, false),
         fr(XL, false, { hold: true, cap: 'Bremsen bis kurz vor dem Blockieren: Haftreibung – hier ist die Bremskraft am größten.', note: '▶ „Solange das Rad rollt, haftet der Reifen an der Straße. Das heißt Haftreibung. Wenn ich kräftig bremse, aber das Rad gerade noch dreht, ist die Bremskraft am größten.“\n✅ Lehrbuchwissen: Haftreibung ist größer als Gleitreibung.\n🖱 Klick: Jetzt blockiert das Rad (läuft von selbst).\n➜ „Und jetzt tritt jemand zu fest drauf …“' }),
-        fr(XL + 0.6, true, { cap: 'Rad blockiert: Es dreht sich nicht mehr und rutscht über die Straße – Gleitreibung.' }), fr(XL + 1.15, true), fr(XL + 1.6, true), fr(XL + 1.95, true),
-        fr(XL + 2.2, true, { hold: true, answer: true, cap: 'Gleitreibung bremst schwächer, der Reifen radiert – und ein rutschendes Rad lässt sich nicht lenken.', note: '▶ „Das Rad steht, der Reifen rutscht. Jetzt wirkt nur noch Gleitreibung – die ist kleiner. Der Bremsweg wird länger, und vor allem: Ein rutschendes Rad hat keine Seitenführung, der Lkw lässt sich nicht mehr lenken.“\n✅ Lehrbuchwissen. Deshalb haben Lkw ABS: Es hält die Räder an der Grenze zum Blockieren (siehe Abend 3, C6).\n🖱 Keine Animation mehr – nächster Klick: nächste Folie.\n➜ „Wie viel Haftung gibt es überhaupt? Das hängt von der Straße ab.“' }),
+        fr(XL + 0.22, true, { cap: 'Rad blockiert: Es dreht sich nicht mehr und rutscht über die Straße – Gleitreibung.' }), fr(XL + 0.41, true), fr(XL + 0.57, true), fr(XL + 0.7, true),
+        fr(XL + 0.8, true, { hold: true, answer: true, cap: 'Gleitreibung bremst schwächer, der Reifen radiert – und ein rutschendes Rad lässt sich nicht lenken.', note: '▶ „Das Rad steht, der Reifen rutscht. Jetzt wirkt nur noch Gleitreibung – die ist kleiner. Der Bremsweg wird länger, und vor allem: Ein rutschendes Rad hat keine Seitenführung, der Lkw lässt sich nicht mehr lenken.“\n✅ Lehrbuchwissen. Deshalb haben Lkw ABS: Es hält die Räder an der Grenze zum Blockieren (siehe Abend 3, C6).\n🖱 Keine Animation mehr – nächster Klick: nächste Folie.\n➜ „Wie viel Haftung gibt es überhaupt? Das hängt von der Straße ab.“' }),
       ],
       scene: async (s, { x, lock }) => {
         // Straße
@@ -83,10 +83,11 @@ const main = async (deck) => {
         'Eis: Fast keine Haftung. Rund 100 Meter – bis zu achtmal so lang wie trocken.',
       ],
       notes: [
-        '▶ Sagen: „Wie viel Haftung ein Reifen hat, hängt vor allem von der Straße ab. Fachleute sagen Haftreibungszahl – wir sagen einfach Haftung.“\n❓ Frage auf der Folie vorlesen, schätzen lassen.\n✅ Richtwerte Haftreibungszahl: trocken etwa 0,8 · nass 0,5 · Schnee 0,2 · Eis 0,1 (Lehrbuchwerte). Bremsweg nur durch Haftung begrenzt: v² / (2 · Haftung · 9,81 m/s²). 50 km/h = 13,9 m/s → trocken etwa 12 m.\n💡 Vereinfachte Rechnung ohne Reaktions- und Ansprechzeit. Auf trockener Straße begrenzen beim Lkw die Bremsen, nicht die Reifen: Mit 5 m/s² (Abend 3) braucht ein Lkw aus 50 km/h eher 15–20 m (rund 19 m). Bei Nässe, Schnee und Eis zählt dagegen vor allem die Haftung.\n➜ „Jetzt regnet es.“',
+        '▶ Sagen: „Wie viel Haftung ein Reifen hat, hängt vor allem von der Straße ab. Fachleute sagen Haftreibungszahl oder Kraftschluss – wir sagen einfach Haftung.“\n❓ Frage auf der Folie vorlesen, schätzen lassen.\n✅ Richtwerte Haftreibungszahl: trocken etwa 0,8 · nass 0,5 · Schnee 0,2 · Eis 0,1 (Lehrbuchwerte). Bremsweg nur durch Haftung begrenzt: v² / (2 · Haftung · 9,81 m/s²). 50 km/h = 13,9 m/s → trocken etwa 12 m.\n💡 Achtung: In C9 heißt „Kraftschluss“ etwas anderes – das Niederzurren der Ladung.
+💡 Vereinfachte Rechnung ohne Reaktions- und Ansprechzeit. Auf trockener Straße begrenzen beim Lkw die Bremsen, nicht die Reifen: Mit 5 m/s² (Abend 3) braucht ein Lkw aus 50 km/h eher 15–20 m (rund 19 m). Bei Nässe, Schnee und Eis zählt dagegen vor allem die Haftung.\n➜ „Jetzt regnet es.“',
         '▶ „Nasse Straße: etwa 20 Meter. Besonders glatt ist es beim ersten Regen nach langer Trockenheit – Staub, Öl und Gummi machen einen Schmierfilm.“\n✅ Haftung etwa 0,5 → 13,9² / (2 · 0,5 · 9,81) ≈ 20 m.\n➜ „Und im Winter?“',
         '▶ „Schnee: etwa 50 Meter.“\n✅ Haftung etwa 0,2 → rund 49 m.\n➜ „Und auf Eis?“',
-        '▶ „Auf Eis: rund 100 Meter – achtmal so weit wie auf trockener Straße. Deshalb: Bei Glätte Tempo runter und viel Abstand.“\n✅ Haftung etwa 0,1 → rund 98 m. Achtmal so lang, weil die Haftung nur ein Achtel ist.\n➜ „Die Haftung muss für alles reichen – Bremsen UND Lenken. Wie das zusammenhängt, zeigt der Haftungskreis.“',
+        '▶ „Auf Eis: rund 100 Meter – bis zu achtmal so weit wie auf trockener Straße. Deshalb: Bei Glätte Tempo runter und viel Abstand.“\n✅ Haftung etwa 0,1 → rund 98 m. Achtmal so lang, weil die Haftung nur ein Achtel ist. Ein echter Lkw braucht trocken eher 19 m (Bremsen begrenzen) – auf Eis ist es dann etwa das Fünffache.\n➜ „Die Haftung muss für alles reichen – Bremsen UND Lenken. Wie das zusammenhängt, zeigt der Haftungskreis.“',
       ],
       legend: 'Richtwerte · Bremsweg aus 50 km/h, nur Haftung gerechnet, ohne Reaktionszeit',
       scene: async (s, i) => {
@@ -144,7 +145,7 @@ const main = async (deck) => {
         // Haftungskreis
         s.oval(CX - Rk, CY - Rk, 2 * Rk, 2 * Rk, { fill: C.bl, ft: 82, line: C.bl, lw: 2.5, name: '!!kreis' });
         // Lkw in der Mitte (dreht sich beim Rutschen)
-        veh(s, 'truck.png', CX, CY, out ? 22 : 0, '!!tr', { scale: 0.36 });
+        veh(s, 'truck.png', CX, CY, out ? 22 : 0, '!!tr', { scale: mu < 0.5 ? 0.175 : 0.36 });   // Matsch/Schnee: kleiner, damit der Kreis sichtbar bleibt
         // Pfeil vom Mittelpunkt zum Punkt
         const dx = q * R0, dy = b * R0, L = Math.hypot(dx, dy), ang = Math.atan2(dy, dx) * 180 / Math.PI;
         s.rrect(CX + dx / 2 - Math.max(L, 0.02) / 2, CY + dy / 2 - 0.035, Math.max(L, 0.02), 0.07, { fill: out ? C.red : C.gr, ft: L < 0.05 ? 100 : 0, rr: 0.5, rotate: Math.round(ang), name: '!!pf' });
