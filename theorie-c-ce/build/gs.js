@@ -279,10 +279,10 @@ async function auflieger(s, o = {}, { x, gy, k = 1, name = 'af', rot } = {}) {
   return { pt: (nx, ny) => [x + nx * k, gy - ny * k], r };
 }
 // Deichselanhänger (Seitenansicht, Front links bei x); pivot = Drehpunkt der Deichsel in Folienkoordinaten
-async function anhaenger(s, o = {}, { x, gy, k = 1, name = 'ah' } = {}) {
+async function anhaenger(s, o = {}, { x, gy, k = 1, name = 'ah', rot } = {}) {
   const { anhaengerSide } = require('./lkw');
   const r = anhaengerSide(o), w = r.W / 100 * k, h = r.H / 100 * k;
-  s.img(await svgImg(r.body, r.W, r.H, 2.5), { x: x - r.pad * k, y: gy - r.Ht * k, w, h, name: '!!' + name });
+  s.img(await svgImg(r.body, r.W, r.H, 2.5), { x: x - r.pad * k, y: gy - r.Ht * k, w, h, rotate: rot, name: '!!' + name });
   return { pt: (nx, ny) => [x + nx * k, gy - ny * k], pivot: [x + r.pivot[0] * k, gy - r.pivot[1] * k], r };
 }
 module.exports.auflieger = auflieger; module.exports.anhaenger = anhaenger;
