@@ -174,7 +174,7 @@ module.exports = async (deck) => {
     kicker: 'Prüfungsfrage 2.6.06-305', q: 'Wie können Sie rechnerisch überprüfen, ob durch die Zusammenstellung eines Sattelkraftfahrzeugs (Sattellast = Aufliegelast) die höchstzulässige Gesamtmasse des Zuges überschritten wird?', size: 24,
     opts: ['Zulässige Gesamtmasse der Zugmaschine plus zulässige Gesamtmasse des Sattelanhängers minus Aufliegelast', 'Zulässige Gesamtmasse der Zugmaschine plus zulässige Gesamtmasse des Sattelanhängers', 'Zulässige Gesamtmasse der Zugmaschine plus Nutzlast des Sattelanhängers'], ok: [0],
     why: 'Die Sattellast zählt nur einmal – also abziehen.',
-    notes: '▶ Frage vorlesen, abstimmen.\n🖱 Klick 1: Antworten · Klick 2: Lösung.\n✅ Amtlicher Fragenkatalog 2.6.06-305: A. § 34 Abs. 7 Nr. 3 StVZO.\n➜ „Das nimmst du aus CE1 mit.“',
+    notes: '▶ Frage vorlesen, abstimmen.\n🖱 Klick 1: Antworten · Klick 2: Lösung.\n✅ Amtlicher Fragenkatalog 2.6.06-305: A. § 34 Abs. 7 Nr. 3 StVZO.\n➜ „Das nehmt ihr aus CE1 mit.“',
   });
   await takeaway(deck, 'ce1e', {
     items: [
@@ -195,6 +195,6 @@ module.exports = async (deck) => {
     s.text('PAUSE', { x: 0.7, y: 2.0, w: 6, h: 0.5, size: 18, bold: true, color: C.bl, cs: 6 }, { fx: 'fade', auto: true, dur: 600 });
     s.text('15 Minuten', { x: 0.7, y: 2.5, w: 6.5, h: 1.4, size: 72, bold: true, color: C.txt }, { fx: 'rise', auto: true, dur: 900, d: 200 });
     s.text('Kurz raus, frische Luft.', { x: 0.7, y: 4.0, w: 6.2, h: 0.9, size: 22, color: C.mut }, { fx: 'fade', auto: true, dur: 700, d: 600 });
-    s.text('Danach: Lektion CE2 · Lastzugbremsen', { x: 0.7, y: 5.4, w: 6.2, h: 0.9, size: 16, color: C.bl }, { fx: 'fade', auto: true, dur: 700, d: 900 });
+    s.text('Danach: Lektion CE2 · Lastzugbremsen', { x: 0.7, y: 4.85, w: 6.4, h: 0.8, size: 18, color: C.txt }, { fx: 'fade', auto: true, dur: 700, d: 900 });
   }
 };

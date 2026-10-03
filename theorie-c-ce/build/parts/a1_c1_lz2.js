@@ -59,7 +59,7 @@ module.exports = async (deck) => {
     const k = 0.42, x0 = 4.3;
     const R = [
       ['Regelmäßig', [[11, C.bl, '11 h']], 'der Normalfall'],
-      ['Aufgeteilt', [[3, C.bl, '3 h'], [2.2, null, 'Arbeit / Fahrt'], [9, C.bl, '9 h']], 'erst 3 h, dann 9 h – zusammen 12 h'],
+      ['Aufgeteilt', [[3, C.bl, '3 h'], [4.6, null, 'Arbeit / Fahrt'], [9, C.bl, '9 h']], 'erst 3 h, dann 9 h – zusammen 12 h'],
       ['Verkürzt', [[9, '3A86C8', '9 h']], 'höchstens 3 × zwischen zwei Wochenruhezeiten'],
     ];
     for (let i = 0; i < 3; i++) {
@@ -73,7 +73,7 @@ module.exports = async (deck) => {
           s.rect(x, y + 0.2, w, 0.42, { fill: col }, { fx: 'wipeR', dur: 400 });
           s.text(lab, { x, y: y + 0.2, w, h: 0.42, size: 15, bold: true, color: C.dark, align: 'center', valign: 'middle' }, { fx: 'fade', dur: 150 });
         } else {
-          s.text(lab, { x, y: y + 0.2, w, h: 0.42, size: 12, color: C.mut, align: 'center', valign: 'middle' }, { fx: 'fade', dur: 150 });
+          s.text(lab, { x: x + 0.06, y: y + 0.2, w: w - 0.12, h: 0.42, size: 13, color: C.txt, fill: '22303F', align: 'center', valign: 'middle' }, { fx: 'fade', dur: 150 });
         }
         x += w;
       }
@@ -107,10 +107,10 @@ module.exports = async (deck) => {
       '🖱 Klick 1–3: je eine Zeile (Fahrer und Unternehmer) · Klick 4: Hinweis Punkte.\n' +
       '✅ Regelsätze nach dem Buß- und Verwarnungsgeldkatalog Fahrpersonalrecht (LASI): Lenkzeit über 2 h überschritten: 60 € je angefangene halbe Stunde (Unternehmer 180 €). Fahrtunterbrechung mehr als 15 Min zu kurz: 60 € je angefangene Viertelstunde (Unternehmer 180 €). Tägliche Ruhezeit mehr als 3 h zu kurz: 60 € je angefangene Stunde (Unternehmer 180 €).\n' +
       '✅ Punkte gibt es dafür keine – diese Verstöße stehen nicht in FeV Anlage 13. Aber die Summen werden schnell hoch, und die Polizei kann die Weiterfahrt untersagen, bis die Ruhezeit nachgeholt ist.\n' +
-      '💡 Hinweis: Die Beträge können je Bundesland leicht abweichen; Rahmen bis 5.000 € (Fahrer) bzw. 15.000 € (Unternehmer).\n' +
+      '💡 Hinweis: Die Länder können leicht abweichen. Gesetzlicher Rahmen: Fahrer bis 5.000 €, Unternehmer bis 30.000 € (§ 8a Abs. 4 FPersG). Weiterfahrt untersagen: § 5 Abs. 1 FPersG.\n' +
       '➜ „Schreibt euch die Zahlen auf.“' });
     kick(s, 'Was kostet ein Verstoß?'); title(s, 'Fahrer zahlt – Chef zahlt mehr');
-    s.text('Verstoß', { x: 0.95, y: 2.0, w: 6, h: 0.4, size: 14, bold: true, color: C.dim, cs: 2 });
+    s.text('VERSTOSS', { x: 0.95, y: 2.0, w: 6, h: 0.4, size: 14, bold: true, color: C.dim, cs: 2 });
     s.text('FAHRER', { x: 7.3, y: 2.0, w: 2.4, h: 0.4, size: 14, bold: true, color: C.dim, cs: 2, align: 'center' });
     s.text('UNTERNEHMER', { x: 9.9, y: 2.0, w: 2.6, h: 0.4, size: 14, bold: true, color: C.dim, cs: 2, align: 'center' });
     const T = [['Lenkzeit mehr als 2 h zu lang', 'je angefangene ½ Stunde', '60 €', '180 €'], ['Pause mehr als 15 Min zu kurz', 'je angefangene ¼ Stunde', '60 €', '180 €'], ['Tägliche Ruhezeit mehr als 3 h zu kurz', 'je angefangene Stunde', '60 €', '180 €']];
@@ -134,8 +134,8 @@ module.exports = async (deck) => {
       ['Wochenlenkzeit', '56 h – in zwei Wochen zusammen höchstens 90 h'],
       ['Tägliche Ruhezeit', '11 h (aufgeteilt 3 + 9, verkürzt 9 h höchstens 3 ×)'],
       ['Wöchentliche Ruhezeit', '45 h (verkürzt 24 h, mit Ausgleich)'],
-      ['Wochenruhe nicht …', '… in der Kabine (die regelmäßige) · alle 4 Wochen heim'],
-      ['Arbeitszeit (ArbZG)', 'Pause 30 Min nach 6 h, 45 Min nach 9 h Arbeit'],
+      ['Regelmäßige Wochenruhe', 'nicht in der Kabine · spätestens alle 4 Wochen heim'],
+      ['Arbeitszeit (ArbZG)', 'Pause spätestens nach 6 h: insgesamt 30 Min, über 9 h 45 Min'],
     ],
     notes: '▶ Sagen: „Schreibt das ab. Das sind die Zahlen, die ihr in der Prüfung und im Beruf jeden Tag braucht.“\n❓ Vor jedem Klick die Klasse fragen: „Was gehört hier hin?“\n🖱 Klick 1–7: je eine Lösung.\n✅ Werte aus VO (EG) 561/2006, Art. 6, 7, 8. Arbeitszeit: § 4 ArbZG (Ruhepause 30 Min bei mehr als 6 h, 45 Min bei mehr als 9 h Arbeitszeit) und § 21a ArbZG (48 h pro Woche, bis 60 h mit Ausgleich).\n💡 Falle: Wer 2 h lädt und dann 4 h fährt, hat 6 h gearbeitet → nach dem Arbeitszeitgesetz ist eine Pause fällig, obwohl die 4,5 h Lenkzeit noch nicht erreicht sind.\n➜ „Wer kontrolliert das alles? Der Fahrtenschreiber.“',
   });

@@ -26,7 +26,7 @@ module.exports = async (deck) => {
       s.text([{ text: T[i][1], options: { bold: true, color: C.txt, breakLine: true } }, { text: T[i][2], options: { color: C.mut, fontSize: 15 } }], { x: 2.0, y, w: 8.6, h: 0.95, size: 20, valign: 'middle' }, { fx: 'fade', dur: 200 });
       s.text(T[i][3], { x: 10.8, y, w: 1.6, h: 0.95, size: 18, bold: true, color: T[i][4], align: 'right', valign: 'middle' }, { fx: 'fade', dur: 200 });
     }
-    s.text('+ 5 Min Abschluss: Quiz und „Das nimmst du mit“', { x: 0.7, y: 6.5, w: 11.93, h: 0.35, size: 14, italic: true, color: C.dim });
+    s.text('+ 5 Min Abschluss: Quiz und „Das nehmt ihr mit“', { x: 0.7, y: 6.5, w: 11.93, h: 0.35, size: 14, italic: true, color: C.dim });
   }
   await chapter(deck, 'fs', { num: 1, ttl: 'Führerschein und Papiere', sub: 'Welche Klasse für welchen Lkw – und was ihr dafür mitbringen müsst.', ico: 'LuIdCard', notes:
     '▶ Sagen: „Erstes Kapitel: Welche Führerscheinklasse braucht ihr wofür, ab wann bekommt ihr sie, und warum ist sie befristet?“\n🖱 Keine Klicks.\n➜ „Zuerst die Klassen.“' });
@@ -63,7 +63,7 @@ module.exports = async (deck) => {
       ['LuIdCard', 'Mit 21 Jahren', '– der Normalfall.'],
       ['LuGraduationCap', 'Mit 18 Jahren', 'mit Grundqualifikation als Berufskraftfahrer (Prüfung bei der IHK) – vorher MPU.'],
       ['LuBriefcase', 'Mit 18 Jahren in der Ausbildung', 'zum Berufskraftfahrer – vorher MPU; nur im Inland und nur für die Ausbildung, bis 21 oder Abschluss.'],
-      ['LuTruck', 'Vorbesitz:', 'Klasse B muss da sein (oder gleichzeitig erworben werden). Für CE braucht ihr vorher C.'],
+      ['LuTruck', 'Vorbesitz:', 'C setzt B voraus, CE setzt C voraus – jeweils auch gleichzeitig möglich.'],
     ],
     notes:
       '▶ Sagen: „Wer von euch ist unter 21?“ Kurz schauen. „Für euch gibt es zwei Wege.“\n' +
@@ -71,7 +71,7 @@ module.exports = async (deck) => {
       '🖱 Klick 1: 21 · Klick 2: 18 mit Grundqualifikation · Klick 3: 18 in der Ausbildung · Klick 4: Vorbesitz.\n' +
       '✅ § 10 Abs. 1 FeV: C/CE ab 21; ab 18 nach Grundqualifikation nach § 2 Abs. 1 Nr. 1 BKrFQG oder während bzw. nach einer Ausbildung zum Berufskraftfahrer/Fachkraft im Fahrbetrieb. In der Ausbildungsvariante gelten Auflagen (nur Inland, nur Ausbildung) bis 21 oder Abschluss (§ 10 Abs. 1 Nr. 7).\n' +
       '✅ Wichtig für alle unter 21: Wer C mit 18 erwirbt (Grundqualifikation oder Ausbildung), muss vor der ersten Erteilung ein medizinisch-psychologisches Gutachten (MPU) vorlegen (§ 10 Abs. 2 FeV).\n' +
-      '✅ C1/C1E ab 18. C setzt B voraus (§ 9 Abs. 1), CE setzt C voraus (§ 9 Abs. 2).\n' +
+      '✅ C1/C1E ab 18. C setzt B voraus (§ 9 Abs. 1), CE setzt C voraus (§ 9 Abs. 2) – die höhere Klasse darf frühestens zusammen mit der Grundklasse erteilt werden.\n' +
       '➜ „Und wie lange gilt der Führerschein dann?“',
   });
   // ===== BEFRISTUNG UND UNTERSUCHUNGEN =====
@@ -89,7 +89,8 @@ module.exports = async (deck) => {
     s.rect(x0, 2.75, w, 0.06, { fill: C.line });
     for (let j = 0; j <= 5; j++) {
       s.oval(x0 + j * w / 5 - 0.09, 2.69, 0.18, 0.18, { fill: j === 0 || j === 5 ? C.bl : C.dim, line: C.bg });
-      s.text(j === 0 ? 'Erteilung' : j === 5 ? 'Ablauf' : 'Jahr ' + j, { x: x0 + j * w / 5 - 0.8, y: 2.95, w: 1.6, h: 0.3, size: 13, color: j === 0 || j === 5 ? C.bl : C.dim, align: 'center' });
+      s.rect(x0 + j * w / 5 - 0.015, 2.84, 0.03, 0.12, { fill: C.mut });   // Teilstrich je Jahr
+      s.text(j === 0 ? 'Erteilung' : j === 5 ? 'Ablauf' : 'Jahr ' + j, { x: x0 + j * w / 5 - 0.8, y: 2.98, w: 1.6, h: 0.3, size: 13, color: j === 0 || j === 5 ? C.bl : C.dim, align: 'center' });
     }
     s.rect(x0, 2.65, w, 0.26, { fill: C.bl }, { fx: 'wipeR', c: true, dur: 900 });
     s.text('5 Jahre', { x: x0 + w / 2 - 1, y: 2.15, w: 2, h: 0.4, size: 20, bold: true, color: C.bl, align: 'center' }, { fx: 'fade', dur: 200 });
@@ -103,7 +104,7 @@ module.exports = async (deck) => {
     kicker: 'Frage · Befristung', q: 'Dein C-Führerschein läuft in zwei Monaten ab. Was brauchst du für die Verlängerung?', size: 28,
     opts: ['Nichts – Antrag stellen reicht', 'Ärztliche Untersuchung und Augen-Untersuchung', 'Eine neue theoretische Prüfung'], ok: 1,
     why: 'Verlängerung um 5 Jahre mit Nachweis nach Anlage 5 (Arzt) und Anlage 6 Nr. 2 (Augen) – § 24 FeV. Eine neue Prüfung gibt es nicht.',
-    notes: '▶ Frage vorlesen, abstimmen.\n🖱 Klick 1: Antworten · Klick 2: Lösung.\n✅ B. § 24 Abs. 1 FeV. Antrag frühestens 6 Monate vor Ablauf.\n💡 Wer die Frist verpasst, darf ab dem Ablaufdatum kein Fahrzeug der Klasse C mehr fahren – Fahren ohne Fahrerlaubnis ist eine Straftat (§ 21 StVG).\n➜ „Wer beruflich fährt, braucht noch etwas: die Berufskraftfahrer-Qualifikation.“' });
+    notes: '▶ Frage vorlesen, abstimmen.\n🖱 Klick 1: Antworten · Klick 2: Lösung.\n✅ B. § 24 Abs. 1 FeV. Antrag frühestens 6 Monate vor Ablauf.\n💡 Wer die Frist verpasst, darf ab dem Ablaufdatum kein Fahrzeug der Klasse C mehr fahren – Fahren ohne Fahrerlaubnis ist eine Straftat (§ 21 StVG). Neu beantragen geht auch nach Ablauf – ohne Prüfung, aber mit Arzt und Augen (§ 24 Abs. 2 FeV).\n➜ „Wer beruflich fährt, braucht noch etwas: die Berufskraftfahrer-Qualifikation.“' });
   // ===== BERUFSKRAFTFAHRER – ABGRENZUNG =====
   {
     const s = base(deck, 'fs', { notes:
@@ -132,7 +133,7 @@ module.exports = async (deck) => {
     const T = [
       ['LuIdCard', 'Führerschein', 'mit gültiger Klasse C'],
       ['LuFileText', 'Fahrzeugschein', 'Zulassungsbescheinigung Teil I'],
-      ['LuCreditCard', 'Fahrerkarte', 'plus Ausdrucke: heute und die letzten 56 Tage'],
+      ['LuCreditCard', 'Fahrerkarte', 'dazu Ausdrucke und Notizen von heute und den letzten 56 Tagen – falls es welche gibt'],
       ['LuGraduationCap', 'Nachweis „95“', 'wenn ihr beruflich fahrt'],
       ['LuFileCheck', 'Lizenz-Kopie', 'beglaubigt, nicht eingeschweißt – bei gewerblichem Transport'],
       ['LuPackage', 'Ladungspapiere', 'Frachtbrief / Begleitpapier – kommt in C2'],

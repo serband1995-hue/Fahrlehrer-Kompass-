@@ -23,7 +23,7 @@ module.exports = async (deck) => {
       s.text([{ text: T[i][1] + '  ', options: { bold: true, color: C.txt } }, { text: T[i][2], options: { color: C.mut, fontSize: 15 } }], { x: 2.0, y, w: 8.6, h: 0.66, size: 19, valign: 'middle' }, { fx: 'fade', dur: 200 });
       s.text(T[i][3], { x: 10.8, y, w: 1.6, h: 0.66, size: 17, bold: true, color: T[i][4], align: 'right', valign: 'middle' }, { fx: 'fade', dur: 200 });
     }
-    s.text('+ 5 Min Abschluss: Quiz und „Das nimmst du mit“', { x: 0.7, y: 6.6, w: 11.93, h: 0.3, size: 13, italic: true, color: C.dim });
+    s.text('+ 5 Min Abschluss: Quiz und „Das nehmt ihr mit“', { x: 0.7, y: 6.6, w: 11.93, h: 0.3, size: 13, italic: true, color: C.dim });
   }
 
   // ===== KAPITEL 1 DAUERBREMSEN =====

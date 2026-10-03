@@ -173,7 +173,7 @@ module.exports = async (deck) => {
     kicker: 'Quiz C7 · 3', q: 'Ihr Fahrzeug wird von starkem Seitenwind erfasst. Wie verhalten Sie sich?', size: 34,
     opts: ['Gegenlenken', 'Stark beschleunigen', 'Geschwindigkeit herabsetzen'], ok: [0, 2],
     why: 'Ruhig gegenlenken und langsamer fahren. Beschleunigen macht es nur gefährlicher (Prüfungsfrage 2.1.03-018).',
-    notes: '▶ Frage vorlesen, abstimmen.\n🖱 Klick 1: Antworten · Klick 2: Lösung.\n✅ A und C.\n➜ „Das nimmst du aus C7 mit.“',
+    notes: '▶ Frage vorlesen, abstimmen.\n🖱 Klick 1: Antworten · Klick 2: Lösung.\n✅ A und C.\n➜ „Das nehmt ihr aus C7 mit.“',
   });
   await takeaway(deck, 'c7e', {
     items: [
@@ -194,6 +194,6 @@ module.exports = async (deck) => {
     s.text('PAUSE', { x: 0.7, y: 2.0, w: 6, h: 0.5, size: 18, bold: true, color: C.gr, cs: 6 }, { fx: 'fade', auto: true, dur: 600 });
     s.text('15 Minuten', { x: 0.7, y: 2.5, w: 6.5, h: 1.4, size: 72, bold: true, color: C.txt }, { fx: 'rise', auto: true, dur: 900, d: 200 });
     s.text('Kurz raus, frische Luft.', { x: 0.7, y: 4.0, w: 6.2, h: 0.9, size: 22, color: C.mut }, { fx: 'fade', auto: true, dur: 700, d: 600 });
-    s.text('Danach: Lektion C8 · Ausrüstung, Beförderung, Sicherheit', { x: 0.7, y: 5.4, w: 6.2, h: 0.9, size: 16, color: C.gr }, { fx: 'fade', auto: true, dur: 700, d: 900 });
+    s.text('Danach: Lektion C8 · Ausrüstung, Beförderung, Sicherheit', { x: 0.7, y: 4.85, w: 6.4, h: 0.8, size: 18, color: C.txt }, { fx: 'fade', auto: true, dur: 700, d: 900 });
   }
 };

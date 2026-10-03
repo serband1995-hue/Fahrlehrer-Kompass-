@@ -1,4 +1,4 @@
-// Abend 7 · CE4: Abschluss (Mitschreiben, Quiz, Das nimmst du mit) und Ende der Klasse CE
+// Abend 7 · CE4: Abschluss (Mitschreiben, Quiz, Das nehmt ihr mit) und Ende der Klasse CE
 const { C, sec, quiz, write, takeaway, base } = require('../gs');
 
 sec('ce4e', 'CE4  ·  ABSCHLUSS', C.or, 'bg_or.jpg');
@@ -34,7 +34,7 @@ module.exports = async (deck) => {
     kicker: 'Prüfungsfrage 2.2.04-306', q: 'Welche Kraftfahrzeuge müssen außerhalb geschlossener Ortschaften in der Regel einen so großen Abstand zum vorausfahrenden Fahrzeug einhalten, dass ein überholendes Kraftfahrzeug einscheren kann?', size: 26, osize: 18,
     opts: ['Lastkraftwagen über 3,5 t zulässiger Gesamtmasse', 'Fahrzeugkombinationen, die länger als 7 m sind', 'Kraftfahrzeuge bis 3,5 t zulässiger Gesamtmasse'], ok: [0, 1],
     why: 'Euer Zug ist beides: Lkw über 3,5 t und länger als 7 m.',
-    notes: '▶ Frage vorlesen, abstimmen.\n🖱 Klick 1: Antworten · Klick 2: Lösung.\n✅ Amtlicher Fragenkatalog 2.2.04-306: A und B. § 4 Abs. 2 StVO.\n➜ „Das nimmst du aus CE4 mit.“',
+    notes: '▶ Frage vorlesen, abstimmen.\n🖱 Klick 1: Antworten · Klick 2: Lösung.\n✅ Amtlicher Fragenkatalog 2.2.04-306: A und B. § 4 Abs. 2 StVO.\n➜ „Das nehmt ihr aus CE4 mit.“',
   });
   await takeaway(deck, 'ce4e', {
     items: [

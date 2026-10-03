@@ -10,7 +10,7 @@ const hx = h => X0 + h * HX;
 
 module.exports = async (deck) => {
   await chapter(deck, 'lz', { num: 2, ttl: 'Lenk- und Ruhezeiten', sub: 'Wie lange ihr fahren dürft – und wie lange ihr Pause machen müsst.', bg: 'f_rast.jpg', notes:
-    '▶ Sagen: „Jetzt kommt das wichtigste Thema für jeden Berufsfahrer: Lenk- und Ruhezeiten. Das wird bei jeder Kontrolle geprüft, und es kommt in der Prüfung sicher dran.“\n' +
+    '▶ Sagen: „Jetzt kommt das wichtigste Thema für jeden Berufsfahrer: Lenk- und Ruhezeiten. Das wird bei jeder Kontrolle geprüft, und es kommt in der Prüfung oft dran.“\n' +
     '🖱 Keine Klicks.\n' +
     '➜ „Erst die Frage: Warum gibt es diese Regeln überhaupt?“' });
 
@@ -44,7 +44,7 @@ module.exports = async (deck) => {
     kick(s, 'Wer muss sich daran halten?'); title(s, 'EU-Verordnung 561/2006');
     await point(s, 0.7, 2.1, 11.93, 1.05, 'LuTruck', C.or, 'Güterverkehr über 3,5 t', 'zulässige Gesamtmasse – nicht das, was gerade geladen ist.', CLICK, { size: 20 });
     await point(s, 0.7, 3.35, 11.93, 1.05, 'LuContainer', C.or, 'Anhänger zählt mit', 'Transporter 3,2 t + Anhänger 1 t = über 3,5 t → die Regeln gelten.', CLICK, { size: 20 });
-    await point(s, 0.7, 4.6, 11.93, 1.05, 'LuGlobe', C.or, 'Gewerblich und Werkverkehr', 'gilt in der ganzen EU. Ausgenommen u. a.: private Fahrten und Handwerker-Material bis 7,5 t.', CLICK, { size: 20 });
+    await point(s, 0.7, 4.6, 11.93, 1.05, 'LuGlobe', C.or, 'Gewerblicher Verkehr und Werkverkehr:', 'gilt in der ganzen EU. Ausgenommen u. a.: private Fahrten bis 7,5 t, Handwerker-Material bis 7,5 t im Umkreis von 100 km.', CLICK, { size: 20 });
     foot(s, 'Quelle: VO (EG) Nr. 561/2006, Art. 2 und 3');
   }
   // ===== VIER TÄTIGKEITEN =====
@@ -53,7 +53,7 @@ module.exports = async (deck) => {
       '▶ Sagen: „Euer Tag besteht aus vier Tätigkeiten. Jede hat ein Symbol, das ihr auf dem Fahrtenschreiber wiederfindet.“\n' +
       '❓ Vor jedem Klick fragen: „Was bedeutet dieses Symbol?“\n' +
       '🖱 Klick 1: Lenkzeit · Klick 2: andere Arbeit · Klick 3: Bereitschaft · Klick 4: Ruhe/Pause.\n' +
-      '✅ Lenken = Lenkrad. Andere Arbeit = zwei gekreuzte Hämmer (Be- und Entladen, Abfahrtkontrolle, Tanken, Waschen). Bereitschaft = Quadrat mit Diagonale (z. B. Warten an der Rampe, wenn das Ende vorher bekannt ist; Beifahrer im fahrenden Lkw). Ruhe = Bett (Pausen und Ruhezeiten).\n' +
+      '✅ Lenken = Lenkrad. Andere Arbeit = zwei gekreuzte Hämmer (Be- und Entladen, Abfahrtkontrolle, Tanken, Waschen). Bereitschaft = Quadrat mit Diagonale (z. B. Warten an der Rampe, wenn das Ende vorher bekannt ist; Beifahrer im fahrenden Lkw). Ruhe = Bett (Pausen und Ruhezeiten).\n💡 Zweifahrerbetrieb: Der Beifahrer darf seine 45-Minuten-Pause auch im fahrenden Lkw machen, wenn er den Fahrer dabei nicht unterstützt (Art. 7 VO 561/2006). Sonst zählt die Zeit als Bereitschaft.\n' +
       '💡 Wichtig: Andere Arbeit ist keine Pause! Wer an der Rampe hilft, hat keine Pause gemacht.\n' +
       '➜ „Jetzt planen wir zusammen einen Arbeitstag.“' });
     kick(s, 'Vier Tätigkeiten'); title(s, 'Was macht ihr gerade?');
@@ -93,9 +93,9 @@ module.exports = async (deck) => {
       '▶ Sagen: „Wir planen jetzt einen Arbeitstag. Ihr fahrt um 6 Uhr morgens los.“\n❓ „Wie lange dürft ihr am Stück fahren?“ – erst raten lassen.\n🖱 Keine Animation auf dieser Folie – nächster Klick = nächster Schritt (Morph).\n➜ „Erster Block.“',
       '▶ „4 Stunden 30 Minuten. Dann muss eine Pause kommen – die Verordnung sagt dazu Fahrtunterbrechung.“\n✅ Art. 7 VO (EG) 561/2006: Nach einer Lenkdauer von 4,5 h ist eine ununterbrochene Fahrtunterbrechung von mindestens 45 Minuten einzulegen.\n➜ „Wie lange muss die Pause sein?“',
       '▶ „45 Minuten. In der Zeit dürft ihr nicht arbeiten – kein Entladen, kein Tanken.“\n💡 Die Pause darf auch länger sein. Und sie darf geteilt werden – das zeige ich gleich.\n➜ „Und dann geht es weiter.“',
-      '▶ „Noch einmal 4,5 Stunden, jetzt habt ihr 9 Stunden Lenkzeit. Das ist die tägliche Lenkzeit.“\n✅ Art. 6 Abs. 1: Tageslenkzeit höchstens 9 h.\n💡 Arbeitszeit ist mehr als Lenkzeit: Laden, Kontrollen usw. kommen dazu. Dafür gilt das Arbeitszeitgesetz.\n➜ „Manchmal reicht das nicht …“',
+      '▶ „Noch einmal 4,5 Stunden, jetzt habt ihr 9 Stunden Lenkzeit. Das ist die tägliche Lenkzeit.“\n✅ Art. 6 Abs. 1: Tageslenkzeit höchstens 9 h.\n💡 Arbeitszeit ist mehr als Lenkzeit: Laden, Kontrollen usw. kommen dazu. Höchstens 10 h Arbeit am Tag (§ 3 ArbZG).\n➜ „Manchmal reicht das nicht …“',
       '▶ „Zweimal in der Woche dürft ihr bis zu 10 Stunden fahren. Vorher kommt aber wieder eine Pause von 45 Minuten – ihr seid ja schon wieder 4,5 Stunden am Stück gefahren.“\n✅ Art. 6 Abs. 1 Satz 2: höchstens zweimal in der Woche auf 10 h verlängern.\n❓ „Wie oft? Und was heißt Woche?“ ✅ Woche = Montag 0 Uhr bis Sonntag 24 Uhr (Art. 4 i).\n➜ „Und dann?“',
-      '▶ „Jetzt braucht ihr eure tägliche Ruhezeit: 11 Stunden. Erst danach beginnt ein neuer Arbeitstag.“\n✅ Art. 8 Abs. 2: innerhalb von 24 h nach dem Ende der vorigen Ruhezeit eine neue tägliche Ruhezeit. Regelmäßig mindestens 11 h.\n💡 Kontrollfrage: Um 6 Uhr losgefahren, wann muss die Ruhezeit spätestens beginnen? ✅ Für 11 h Ruhe spätestens um 19 Uhr (dann ist sie vor 6 Uhr vorbei). Mit verkürzter Ruhezeit (9 h, höchstens 3 ×) spätestens um 21 Uhr.\n➜ „Jetzt zur Pause: Darf man sie teilen?“',
+      '▶ „Jetzt braucht ihr eure tägliche Ruhezeit: 11 Stunden. Erst danach beginnt ein neuer Arbeitstag.“\n✅ Art. 8 Abs. 2: innerhalb von 24 h nach dem Ende der vorigen Ruhezeit eine neue tägliche Ruhezeit. Regelmäßig mindestens 11 h.\n💡 Kontrollfrage: Um 6 Uhr losgefahren, wann muss die Ruhezeit spätestens beginnen? ✅ Für 11 h Ruhe spätestens um 19 Uhr (dann endet sie um 6 Uhr – wenn die letzte Ruhezeit um 6 Uhr endete). Mit verkürzter Ruhezeit (9 h, höchstens 3 ×) spätestens um 21 Uhr.\n➜ „Jetzt zur Pause: Darf man sie teilen?“',
     ],
     legend: 'Lenkzeit (orange) · Fahrtunterbrechung (grün) · Ruhezeit (blau) – Zeitachse 0–24 Uhr, schematisch',
     scene: async (s, i) => {
@@ -120,14 +120,14 @@ module.exports = async (deck) => {
       const lz = [0, 4.5, 4.5, 9, 10, 10][i];
       s.rrect(X0, 4.85, 3.3, 1.4, { fill: C.card2, line: C.or, rr: 0.08, name: '!!cbox' });
       s.text('LENKZEIT HEUTE', { x: X0 + 0.2, y: 4.95, w: 3, h: 0.3, size: 12, bold: true, color: C.or, cs: 2, name: '!!clab' });
-      s.text(String(lz).replace('.', ',') + ' h', { x: X0 + 0.2, y: 5.25, w: 3, h: 0.85, size: 44, bold: true, color: C.txt, name: '!!cval' });
+      s.text(String(lz).replace('.', ',') + ' h', { x: X0 + 0.2, y: 5.25, w: 3, h: 0.85, size: 44, bold: true, color: C.txt, valign: 'middle', name: '!!cval' });
       s.rrect(X0 + 3.6, 4.85, 3.4, 1.4, { fill: C.card2, line: C.line, rr: 0.08, name: '!!cbox2' });
       s.text('ERLAUBT', { x: X0 + 3.8, y: 4.95, w: 3, h: 0.3, size: 12, bold: true, color: C.mut, cs: 2, name: '!!clab2' });
       s.text(i >= 4 ? '10 h (2× Woche)' : '9 h', { x: X0 + 3.8, y: 5.25, w: 3.1, h: 0.85, size: i >= 4 ? 28 : 44, bold: true, color: C.mut, valign: 'middle', name: '!!cval2' });
       // Lkw-Symbol fährt die Zeitleiste entlang
       const tx = [6, 10.5, 11.25, 15.75, 17.5, 17.5][i];
       s.img(await icon('LuTruck', C.or), { x: hx(tx) - 0.25, y: 1.5, w: 0.5, h: 0.5, name: '!!trk' });
-      s.lineS(hx(tx), 2.03, hx(tx), BY, { color: C.or, lw: 1.5, dash: 'dash', name: '!!trkl' });
+      s.lineS(hx(tx), 2.03, hx(tx), 2.2, { color: C.or, lw: 2, name: '!!trkl' });   // kurzer Zeiger, kreuzt keine Beschriftung
     },
   });
   // ===== FAHRTUNTERBRECHUNG TEILEN =====

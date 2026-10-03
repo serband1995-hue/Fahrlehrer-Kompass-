@@ -50,7 +50,7 @@ module.exports = async (deck) => {
       '🖱 Klick 1: Sitz · Klick 2: Lenkrad · Klick 3: Spiegel · Klick 4: Sicht frei · Klick 5: Klima.\n' +
       '✅ Spiegel bzw. Kamera-Monitor-Systeme müssen nach hinten, zur Seite und unmittelbar vor dem Fahrzeug alle wesentlichen Vorgänge zeigen (§ 56 StVZO).\n' +
       '✅ Sicht und Gehör dürfen nicht beeinträchtigt sein (§ 23 Abs. 1 StVO): nichts an die Scheibe hängen, was die Sicht nimmt. Navi und Handy nicht in die Hand nehmen (§ 23 Abs. 1a).\n' +
-      '💡 Klima: 20–22 °C, Frischluft. Zu warm macht müde. Beschlagene Scheiben sofort frei machen.\n' +
+      '💡 Klima: angenehm kühl (Richtwert etwa 20–22 °C), Frischluft. Zu warm macht müde. Beschlagene Scheiben sofort frei machen.\n' +
       '➜ „Schaut euch dieses Foto an: Wie viele Spiegel seht ihr?“' });
     kick(s, 'Vor der Fahrt'); title(s, 'Erst der Sitz, dann die Spiegel');
     const T = [['LuArmchair', 'Sitz', 'Rücken anlehnen, Pedale ganz durchtreten, Beine leicht gebeugt'], ['LuCircleDot', 'Lenkrad', 'Hände oben auf dem Kranz – Arme noch leicht angewinkelt'], ['LuEye', 'Alle Spiegel', 'jeden Spiegel einzeln einstellen – auch Rampen- und Frontspiegel'], ['LuEyeOff', 'Sicht frei', 'nichts an der Scheibe, das die Sicht nimmt – Navi nicht in die Hand'], ['LuThermometer', 'Klima', 'nicht zu warm, Frischluft – Wärme macht müde']];
@@ -63,6 +63,7 @@ module.exports = async (deck) => {
   // ===== FOTO: SPIEGEL =====
   await photoAsk(deck, 'ap', {
     bg: 'f_spiegel.jpg', kicker: 'Spiegel am Lkw', q: 'Welche Spiegel hat ein Lkw – und wozu?', qsize: 34, w: 5.4, ov: 7.4, asize: 15, bgX: 7.0,
+    marks: [[10.35, 2.9], [10.35, 4.45], [10.0, 1.3], [12.55, 1.85]],
     answers: [
       ['LuEye', 'Hauptspiegel', 'nach hinten, entlang der Seite'],
       ['LuEye', 'Weitwinkelspiegel', 'der kleine darunter: breiter, neben dem Lkw'],
@@ -78,10 +79,10 @@ module.exports = async (deck) => {
       '➜ „Was die Spiegel zeigen – und was nicht –, schauen wir uns jetzt von oben an.“',
   });
   // ===== TOTER WINKEL (MORPH, DRAUFSICHT) =====
-  const BIKE = [[11.05, 6.55], [11.05, 5.6], [11.05, 4.8], [11.05, 4.8], [11.05, 4.8], [11.05, 1.9], [11.05, 1.4]];
+  const BIKE = [[11.05, 6.55], [11.05, 5.6], [11.05, 4.8], [11.05, 4.8], [11.05, 4.8], [11.05, 1.95], [11.05, 1.8], [11.05, 1.65]];
   await steps(deck, 'ap', {
     kicker: 'Toter Winkel · Draufsicht', ttl: 'Rechts abbiegen',
-    list: ['Lkw will rechts abbiegen', 'Was ihr direkt seht', 'Was die Spiegel zeigen', 'Der tote Winkel', 'Assistent warnt – Schritttempo', 'Radfahrer zuerst', 'Jetzt abbiegen'],
+    list: ['Lkw will rechts abbiegen', 'Was ihr direkt seht', 'Was die Spiegel zeigen', 'Der tote Winkel', 'Assistent warnt – Schrittgeschwindigkeit', 'Radfahrer zuerst', 'Jetzt abbiegen'],
     caps: [
       'Ihr steht an der Kreuzung und wollt rechts abbiegen. Rechts neben euch: ein Radweg. Von hinten kommt ein Radfahrer.',
       'Durch die Scheiben seht ihr nach vorn und weit nach rechts – aber nicht nach unten neben das Fahrerhaus.',
@@ -89,7 +90,8 @@ module.exports = async (deck) => {
       'Zwischen den Bereichen bleibt eine Lücke. Genau dort fährt jetzt der Radfahrer – ihr seht ihn nicht.',
       'Der Abbiegeassistent warnt. Ihr fahrt nur in Schrittgeschwindigkeit an und schaut mehrfach in alle Spiegel.',
       'Der Radfahrer fährt geradeaus über die Kreuzung. Er hat Vorrang – ihr wartet.',
-      'Erst jetzt, wenn alles frei ist, biegt ihr langsam ab. Spiegel weiter im Blick behalten.',
+      'Erst jetzt, wenn alles frei ist, lenkt ihr langsam ein. Spiegel weiter im Blick behalten.',
+      'Im Bogen um die Ecke – bis auch das Heck ganz herum ist, bleibt der Blick in den Spiegeln.',
     ],
     notes: [
       '▶ Sagen: „Die gefährlichste Situation für Lkw in der Stadt: Rechtsabbiegen mit Radweg daneben.“\n❓ „Wo könnte hier ein Problem sein?“\n🖱 Keine Animation auf dieser Folie – nächster Klick = nächster Schritt (Morph).\n➜ „Was seht ihr ohne Spiegel?“',
@@ -98,7 +100,8 @@ module.exports = async (deck) => {
       '▶ „Rot: Hier zeigt kein Spiegel richtig hin, oder ihr schaut gerade in einen anderen Spiegel. Das ist der tote Winkel. Und genau da ist jetzt der Radfahrer.“\n❓ „Was heißt das für euch?“ ✅ Nie darauf verlassen, dass da niemand ist. Mehrfach schauen, langsam fahren.\n💡 Für den Radfahrer ist der Lkw riesig – er denkt oft, der Fahrer sieht ihn.\n➜ „Was hilft?“',
       '▶ „Neue Lkw haben einen Abbiegeassistenten. Er warnt, wenn neben euch jemand ist. Und das Gesetz sagt: Innerorts beim Rechtsabbiegen mit über 3,5 t nur Schrittgeschwindigkeit, wenn mit Radfahrern oder Fußgängern zu rechnen ist.“\n✅ § 9 Abs. 6 StVO; Verstoß: 70 €, 1 Punkt (BKat Nr. 45).\n✅ Abbiegeassistent Pflicht (VO (EU) 2019/2144): für neue Fahrzeugtypen seit 6.7.2022, für alle neu zugelassenen Lkw (N2, N3) seit 7.7.2024.\n➜ „Wer fährt zuerst?“',
       '▶ „Der Radfahrer fährt geradeaus. Er hat Vorrang (§ 9 Abs. 3 StVO). Ihr wartet, bis er sicher vorbei ist.“\n💡 Im Zweifel: stehen bleiben. Lieber 10 Sekunden warten als ein Leben lang damit leben.\n➜ „Und jetzt?“',
-      '▶ „Jetzt biegt ihr ab – langsam, und ihr schaut weiter in die Spiegel. Auch beim Abbiegen schwenkt das Heck und der Innenraum der Kurve wird eng.“\n💡 Mit Anhänger (CE) wird das noch enger – das kommt in CE4.\n➜ „Was sagt das Gesetz genau zum Abbiegen mit Lkw?“',
+      '▶ „Jetzt lenkt ihr ein – langsam. Der Radfahrer ist vorbei, aber schaut weiter in die Spiegel.“\n➜ „Und das Heck?“',
+      '▶ „Jetzt biegt ihr ab – langsam, und ihr schaut weiter in die Spiegel. Beim Abbiegen schwenkt das Heck nach außen aus, und die Hinterräder schneiden die Kurve innen.“\n💡 Mit Anhänger (CE) wird das noch enger – das kommt in CE4.\n➜ „Was sagt das Gesetz genau zum Abbiegen mit Lkw?“',
     ],
     legend: 'Draufsicht · schematisch · Bereiche je nach Lkw und Spiegeleinstellung verschieden',
     scene: async (s, i) => {
@@ -110,25 +113,26 @@ module.exports = async (deck) => {
       if (i >= 3 && i <= 4) svg += FIELDS.gap;
       s.img(await svgImg(svg || '<rect width="1" height="1" fill-opacity="0"/>', Math.round(SW * PX), Math.round(SH * PX)), { x: SX, y: SY, w: SW, h: SH, name: '!!fields' });
       // Lkw
-      if (i < 6) veh(s, 'truck.png', TX, TY, 0, '!!truck');
-      else veh(s, 'truck.png', 11.9, 2.75, 90, '!!truck');
-      if (i < 6) veh(s, 'blinkR.png', TX + 0.33, TY - 1.35, 0, '!!blk', { size: [0.3, 0.3] });
-      else veh(s, 'blinkR.png', 13.1, 3.05, 0, '!!blk', { size: [0.3, 0.3] });
+      // Lkw: geradeaus wartend, dann im Bogen (Zwischenbild 45°), dann in der Querstraße
+      const [cx, cy, th] = i < 6 ? [TX, TY, 0] : i === 6 ? [10.97, 3.85, 45] : [11.75, 2.75, 90];
+      veh(s, 'truck.png', cx, cy, th, '!!truck');
+      const tr = th * Math.PI / 180, bx0 = 0.25, by0 = -1.35;      // Blinker vorn rechts am Fahrerhaus, dreht mit
+      veh(s, 'blinkR.png', cx + bx0 * Math.cos(tr) - by0 * Math.sin(tr), cy + bx0 * Math.sin(tr) + by0 * Math.cos(tr), th, '!!blk', { size: [0.3, 0.3] });
       // Radfahrer
       const [bx, by] = BIKE[i];
       veh(s, 'bike.png', bx, by, 0, '!!bike', { scale: 1.1 });
       // Beschriftungen
       if (i >= 2 && i <= 4) {
-        s.text('VI', { x: 9.65, y: 3.0, w: 0.5, h: 0.3, size: 12, bold: true, color: C.gr, name: '!!lvi' });
-        s.text('V', { x: 11.5, y: 3.6, w: 0.5, h: 0.3, size: 12, bold: true, color: C.bl, name: '!!lv' });
-        s.text('IV', { x: 12.0, y: 6.2, w: 0.5, h: 0.3, size: 12, bold: true, color: C.or, name: '!!liv' });
-        s.text('II', { x: 11.4, y: 6.45, w: 0.4, h: 0.3, size: 12, bold: true, color: C.am, name: '!!lii' });
+        s.text('VI', { x: 9.62, y: 2.97, w: 0.4, h: 0.36, size: 14, bold: true, color: C.white, fill: '0B111A', line: C.gr, lw: 1.5, shape: deck.pres.shapes.OVAL, align: 'center', valign: 'middle', name: '!!lvi' });
+        s.text('V', { x: 11.5, y: 3.57, w: 0.4, h: 0.36, size: 14, bold: true, color: C.white, fill: '0B111A', line: C.bl, lw: 1.5, shape: deck.pres.shapes.OVAL, align: 'center', valign: 'middle', name: '!!lv' });
+        s.text('IV', { x: 12.0, y: 6.17, w: 0.4, h: 0.36, size: 14, bold: true, color: C.white, fill: '0B111A', line: C.or, lw: 1.5, shape: deck.pres.shapes.OVAL, align: 'center', valign: 'middle', name: '!!liv' });
+        s.text('II', { x: 11.38, y: 6.42, w: 0.4, h: 0.36, size: 14, bold: true, color: C.white, fill: '0B111A', line: C.am, lw: 1.5, shape: deck.pres.shapes.OVAL, align: 'center', valign: 'middle', name: '!!lii' });
       }
       if (i >= 3 && i <= 4) s.text('toter Winkel', { x: 11.55, y: 4.6, w: 1.7, h: 0.35, size: 14, bold: true, color: C.red, name: '!!ltw' });
       if (i === 4) {
         s.rrect(5.85, 4.05, 2.35, 1.2, { fill: '3A1515', line: C.red, lw: 2, rr: 0.12, name: '!!warn' });
         s.text('⚠  WARNUNG', { x: 5.9, y: 4.12, w: 2.25, h: 0.45, size: 16, bold: true, color: C.red, align: 'center', name: '!!warnt' });
-        s.text('Schritttempo!', { x: 5.9, y: 4.6, w: 2.25, h: 0.5, size: 18, bold: true, color: C.txt, align: 'center', name: '!!warnt2' });
+        s.text('Schrittgeschwindigkeit!', { x: 5.9, y: 4.6, w: 2.25, h: 0.5, size: 18, bold: true, color: C.txt, align: 'center', name: '!!warnt2' });
       }
     },
   });
@@ -137,16 +141,16 @@ module.exports = async (deck) => {
     const s = base(deck, 'ap', { notes:
       '▶ Sagen: „Für Lkw gibt es beim Rechtsabbiegen innerorts eine eigene Regel.“\n' +
       '❓ „Was meint ihr: Wie schnell dürft ihr innerorts rechts abbiegen, wenn Radfahrer da sein können?“\n' +
-      '🖱 Klick 1: die Regel · Klick 2: was es kostet · Klick 3: was Schritttempo heißt.\n' +
+      '🖱 Klick 1: die Regel · Klick 2: was es kostet · Klick 3: was Schrittgeschwindigkeit heißt.\n' +
       '✅ § 9 Abs. 6 StVO: Wer ein Kfz mit zulässiger Gesamtmasse über 3,5 t führt, muss innerorts beim Rechtsabbiegen Schrittgeschwindigkeit fahren, wo mit geradeaus fahrendem Radverkehr oder querenden Fußgängern zu rechnen ist.\n' +
       '✅ Verstoß: 70 €, 1 Punkt (BKat Nr. 45).\n' +
       '💡 Eine Zahl steht nicht im Gesetz. Die Begründung zur StVO-Novelle 2020 nennt für das Rechtsabbiegen etwa 7 bis 11 km/h; Gerichte sehen Schrittgeschwindigkeit sonst eher bei 4 bis 7 km/h. Merksatz: so langsam, dass ihr sofort stehen könnt.\n' +
       '💡 Außerorts gilt die Sonderregel nicht – Vorsicht ist trotzdem Pflicht.\n' +
       '➜ „Und was hilft euch die Technik?“' });
-    kick(s, 'Rechtsabbiegen · § 9 Abs. 6 StVO'); title(s, 'Innerorts: Schritttempo');
+    kick(s, 'Rechtsabbiegen · § 9 Abs. 6 StVO'); title(s, 'Innerorts: Schrittgeschwindigkeit');
     await point(s, 0.7, 2.1, 11.93, 1.2, 'LuTruck', C.red, 'Über 3,5 t, innerorts, rechts abbiegen', 'und Radfahrer oder Fußgänger können kommen → Schrittgeschwindigkeit.', CLICK, { br: true, size: 19 });
     await point(s, 0.7, 3.5, 11.93, 1.2, 'LuEuro', C.or, '70 € und 1 Punkt', 'wenn ihr schneller fahrt (BKat Nr. 45).', CLICK, { br: true, size: 19 });
-    await point(s, 0.7, 4.9, 11.93, 1.2, 'LuGauge', C.gr, 'Schritttempo heißt:', 'so langsam, dass ihr sofort anhalten könnt.', CLICK, { br: true, size: 19 });
+    await point(s, 0.7, 4.9, 11.93, 1.2, 'LuGauge', C.gr, 'Schrittgeschwindigkeit heißt:', 'so langsam, dass ihr sofort anhalten könnt.', CLICK, { br: true, size: 19 });
   }
   // ===== ABBIEGEASSISTENT =====
   {
@@ -158,9 +162,9 @@ module.exports = async (deck) => {
       '💡 Der Assistent ersetzt nicht den Blick in die Spiegel. Ältere Lkw haben ihn oft nicht.\n' +
       '➜ „Kurze Frage dazu.“' });
     kick(s, 'Technik hilft'); title(s, 'Der Abbiegeassistent');
-    await point(s, 0.7, 2.1, 11.93, 1.2, 'LuCalendar', C.red, 'Pflicht in neuen Lkw', 'für alle neu zugelassenen schweren Lkw seit Juli 2024 (EU-Verordnung 2019/2144).', CLICK, { br: true, size: 19 });
+    await point(s, 0.7, 2.1, 11.93, 1.2, 'LuCalendar', C.red, 'Pflicht in neuen Lkw', 'für alle neu zugelassenen Lkw über 3,5 t seit Juli 2024 (EU-Verordnung 2019/2144).', CLICK, { br: true, size: 19 });
     await point(s, 0.7, 3.5, 11.93, 1.2, 'LuRadar', C.or, 'Was er tut', 'überwacht die rechte Seite und warnt, wenn dort ein Radfahrer oder Fußgänger ist.', CLICK, { br: true, size: 19 });
-    await point(s, 0.7, 4.9, 11.93, 1.2, 'LuBan', C.dim, 'Was er nicht tut', 'Er bremst nicht für euch und ersetzt nicht den Blick in die Spiegel.', CLICK, { br: true, size: 19 });
+    await point(s, 0.7, 4.9, 11.93, 1.2, 'LuBan', C.dim, 'Was er nicht tut', 'Pflicht ist nur die Warnung – manche bremsen zusätzlich. Keiner ersetzt den Blick in die Spiegel.', CLICK, { br: true, size: 19 });
   }
   quiz(deck, 'ap', {
     kicker: 'Frage · Toter Winkel', q: 'Dein Lkw hat einen Abbiegeassistenten. Er warnt nicht. Darfst du jetzt zügig rechts abbiegen?', size: 28,
@@ -171,7 +175,7 @@ module.exports = async (deck) => {
   // ===== TOTER WINKEL VORN (Anfahren) =====
   {
     const s = base(deck, 'ap', { notes:
-      '▶ Sagen: „Ihr steht an der roten Ampel. Vor euch ist ein Zebrastreifen. Ein Kind läuft knapp vor eurer Stoßstange – könnt ihr es sehen?“\n' +
+      '▶ Sagen: „Ihr steht an der roten Ampel, vor euch die Fußgängerfurt. Ein Kind läuft knapp vor eurer Stoßstange – könnt ihr es sehen?“\n' +
       '❓ Antworten sammeln, dann klicken.\n' +
       '🖱 Klick 1: Bereich vor der Stoßstange · Klick 2: Frontspiegel · Klick 3: vor dem Anfahren schauen · Klick 4: das Kind im toten Winkel erscheint.\n' +
       '✅ Das Fahrerhaus ist hoch, die Motorhaube vorn breit: Direkt vor der Stoßstange und vorn rechts seht ihr durch die Scheibe nichts. Dafür gibt es den Frontspiegel (Klasse VI, bei schweren Lkw vorgeschrieben) und den Rampenspiegel.\n' +
@@ -179,20 +183,26 @@ module.exports = async (deck) => {
       '💡 Gefährlich vor allem nach einem Halt: an der Ampel, am Zebrastreifen, an der Haltestelle, beim Anfahren an Schulen. Erst Front- und Rampenspiegel prüfen, dann losrollen.\n' +
       '➜ „Damit haben wir alle vier Kapitel. Schreibt euch die Kernpunkte auf.“' });
     kick(s, 'Toter Winkel vorn'); title(s, 'Anfahren an der Ampel', { w: 6.8 });
-    await point(s, 0.7, 2.1, 6.6, 1.15, 'LuEyeOff', C.red, 'Direkt vor der Stoßstange', 'seht ihr durch die Scheibe nichts – ein Kind verschwindet ganz.', CLICK, { br: true, size: 16 });
+    await point(s, 0.7, 2.1, 6.6, 1.15, 'LuEyeOff', C.red, 'Direkt vor der Stoßstange', 'seht ihr durch die Scheibe kaum etwas – ein Kind kann ganz verschwinden.', CLICK, { br: true, size: 16 });
     await point(s, 0.7, 3.4, 6.6, 1.15, 'LuEye', C.gr, 'Frontspiegel', 'zeigt genau diesen Bereich – vorn rechts hilft der Rampenspiegel.', CLICK, { br: true, size: 16 });
     await point(s, 0.7, 4.7, 6.6, 1.15, 'LuCircleCheck', C.or, 'Vor dem Anfahren', 'immer zuerst Front- und Rampenspiegel – dann langsam losrollen.', CLICK, { br: true, size: 16 });
-    // Draufsicht: Lkw von oben, toter Bereich vorn
+    // Draufsicht: Lkw an der roten Ampel (rechter Fahrstreifen), vor ihm Haltlinie und Fußgängerfurt
     s.rect(7.9, 1.6, 4.7, 5.0, { fill: '1A2029' });
-    s.rect(9.1, 1.6, 2.3, 5.0, { fill: C.road });
-    for (let k = 0; k < 6; k++) s.rect(9.15 + k * 0.38, 2.0, 0.22, 0.55, { fill: C.mark });
-    veh(s, 'truck.png', 10.25, 5.0, 0, undefined, { scale: 1.05 });
-    s.rect(9.75, 2.75, 1.25, 0.75, { fill: C.red, ft: 45 });
-    s.text('toter Winkel', { x: 11.05, y: 2.85, w: 1.5, h: 0.5, size: 13, bold: true, color: C.red });
-    s.text('Zebrastreifen', { x: 7.95, y: 2.1, w: 1.15, h: 0.4, size: 12, color: C.dim });
-    const kid = veh(s, 'ped.png', 10.2, 3.1, 0, 'kid', { size: [0.42, 0.36] });
+    s.rect(8.4, 1.6, 3.4, 5.0, { fill: C.road });
+    for (let y = 3.6; y < 6.5; y += 0.6) s.rect(10.07, y, 0.06, 0.32, { fill: C.mark });            // Leitlinie
+    for (const fy of [2.3, 2.95]) for (let x = 8.45; x < 11.75; x += 0.42) s.rect(x, fy, 0.24, 0.07, { fill: C.mark });   // Furt
+    s.rect(10.15, 3.3, 1.65, 0.1, { fill: C.mark });                                                 // Haltlinie
+    s.rect(12.04, 2.7, 0.26, 0.66, { fill: '0E1218', line: '55606F', lw: 1, rr: 0.05 });            // Ampel
+    s.oval(12.09, 2.75, 0.16, 0.16, { fill: C.red, glow: 6, glowColor: C.red });
+    s.oval(12.09, 2.94, 0.16, 0.16, { fill: '3A3020' });
+    s.oval(12.09, 3.13, 0.16, 0.16, { fill: '1F3328' });
+    veh(s, 'truck.png', 10.95, 4.97, 0, undefined, { scale: 1.05 });
+    s.rect(10.45, 2.45, 1.0, 0.95, { fill: C.red, ft: 45 });
+    s.text('toter Winkel', { x: 8.45, y: 3.05, w: 1.55, h: 0.35, size: 13, bold: true, color: C.red, align: 'right' });
+    s.text('Fußgängerfurt', { x: 8.5, y: 1.78, w: 1.8, h: 0.35, size: 13, color: C.mut });
+    const kid = veh(s, 'ped.png', 10.95, 2.82, 0, 'kid', { size: [0.42, 0.36] });
     s.anims.push({ name: kid, kind: 'pic', fx: 'zoom', c: true, dur: 350 });
-    s.text('Kind', { x: 9.8, y: 3.25, w: 0.8, h: 0.28, size: 12, bold: true, color: C.white, align: 'center' }, { fx: 'fade', dur: 250 });
+    s.text('Kind', { x: 10.55, y: 3.0, w: 0.8, h: 0.28, size: 12, bold: true, color: C.white, align: 'center' }, { fx: 'fade', dur: 250 });
     foot(s, 'Draufsicht · schematisch');
   }
 };

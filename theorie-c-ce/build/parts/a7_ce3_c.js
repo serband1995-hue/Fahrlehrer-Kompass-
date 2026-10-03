@@ -179,7 +179,7 @@ module.exports = async (deck) => {
     kicker: 'Prüfungsfrage 2.6.01-207', q: 'Sie sollen einen Anhänger mit einer zulässigen Gesamtmasse von 18 t zur Hauptuntersuchung vorführen. Welche Fahrzeugdokumente benötigen Sie?', size: 28,
     opts: ['Zulassungsbescheinigung Teil I (Fahrzeugschein)', 'Prüfbuch', 'Zulassungsbescheinigung Teil II (Fahrzeugbrief)'], ok: [0, 1],
     why: 'So steht es im Katalog: Fahrzeugschein und Prüfbuch. Den Fahrzeugbrief braucht ihr nicht.',
-    notes: '▶ Frage vorlesen, abstimmen.\n🖱 Klick 1: Antworten · Klick 2: Lösung.\n✅ Amtlicher Fragenkatalog 2.6.01-207: A und B.\n💡 „Prüfbuch“ ist der Begriff aus dem Fragenkatalog. Im heutigen § 29 StVZO heißen die Nachweise Untersuchungsbericht (HU) und Prüfprotokoll (SP).\n➜ „Das nimmst du aus CE3 mit.“',
+    notes: '▶ Frage vorlesen, abstimmen.\n🖱 Klick 1: Antworten · Klick 2: Lösung.\n✅ Amtlicher Fragenkatalog 2.6.01-207: A und B.\n💡 „Prüfbuch“ ist der Begriff aus dem Fragenkatalog. Im heutigen § 29 StVZO heißen die Nachweise Untersuchungsbericht (HU) und Prüfprotokoll (SP).\n➜ „Das nehmt ihr aus CE3 mit.“',
   });
   await takeaway(deck, 'ce3e', {
     items: [
@@ -200,6 +200,6 @@ module.exports = async (deck) => {
     s.text('PAUSE', { x: 0.7, y: 2.0, w: 6, h: 0.5, size: 18, bold: true, color: C.bl, cs: 6 }, { fx: 'fade', auto: true, dur: 600 });
     s.text('15 Minuten', { x: 0.7, y: 2.5, w: 6.5, h: 1.4, size: 72, bold: true, color: C.txt }, { fx: 'rise', auto: true, dur: 900, d: 200 });
     s.text('Kurz raus, frische Luft.', { x: 0.7, y: 4.0, w: 6.2, h: 0.9, size: 22, color: C.mut }, { fx: 'fade', auto: true, dur: 700, d: 600 });
-    s.text('Danach: Lektion CE4 · Fahren mit Zügen', { x: 0.7, y: 5.4, w: 6.2, h: 0.9, size: 16, color: C.bl }, { fx: 'fade', auto: true, dur: 700, d: 900 });
+    s.text('Danach: Lektion CE4 · Fahren mit Zügen', { x: 0.7, y: 4.85, w: 6.4, h: 0.8, size: 18, color: C.txt }, { fx: 'fade', auto: true, dur: 700, d: 900 });
   }
 };
