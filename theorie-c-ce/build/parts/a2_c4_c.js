@@ -90,9 +90,9 @@ module.exports = async (deck) => {
       '➜ „Zum Schluss: die elektronischen Helfer.“' });
     kick(s, 'Kontrollleuchten'); title(s, 'Die Farbe sagt, was zu tun ist');
     const F = [
-      [C.red, 'FF5C5C', 'Rot', 'Gefahr!', 'An sicherer Stelle anhalten, Betriebsanleitung beachten.', [['oel', 'Öldruck'], ['kuehl', 'Kühlmittel'], ['brems', 'Bremse / Druck'], ['batt', 'Ladekontrolle'], ['stop', 'STOP-Leuchte']]],
+      [C.red, 'FF5C5C', 'Rot', 'Gefahr!', 'An sicherer Stelle anhalten, nach Anleitung handeln.', [['oel', 'Öldruck'], ['kuehl', 'Kühlmittel'], ['brems', 'Bremse / Druck'], ['batt', 'Ladekontrolle'], ['stop', 'STOP-Leuchte']]],
       ['F2C230', 'F2C230', 'Gelb', 'Störung', 'Bald handeln: nachfüllen, regenerieren oder Werkstatt.', [['abs', 'ABS / EBS'], ['motor', 'Motor'], ['adblue', 'AdBlue'], ['dpf', 'Partikelfilter']]],
-      [C.gr, '38D98A', 'Grün', 'Ist an', 'Alles in Ordnung.', [['blink', 'Blinker'], ['abblend', 'Abblendlicht']]],
+      [C.gr, '38D98A', 'Grün', 'eingeschaltet', 'Alles in Ordnung.', [['blink', 'Blinker'], ['abblend', 'Abblendlicht']]],
       ['3B82F6', '3B82F6', 'Blau', 'Fernlicht', 'Gegenverkehr? Abblenden!', [['fern', 'Fernlicht']]],
     ];
     for (let k = 0; k < 4; k++) {
@@ -108,8 +108,8 @@ module.exports = async (deck) => {
         s.img(warnImg[kd + hex], { x: cx - SZ / 2, y: cy, w: SZ, h: SZ }, { fx: 'zoom', dur: 250 });
         s.text(lab, { x: cx - 0.7, y: cy + SZ, w: 1.4, h: 0.26, size: 13, color: C.mut, align: 'center' }, { fx: 'fade', dur: 150 });
       });
-      s.text([{ text: nm + ' = ', options: { color: col } }, { text: mean, options: { color: C.txt } }], { x: x + 0.1, y: 5.12, w: w - 0.2, h: 0.45, size: 22, bold: true, align: 'center' }, { fx: 'fade', dur: 200 });
-      s.text(act, { x: x + 0.15, y: 5.57, w: w - 0.3, h: 0.92, size: 16, bold: true, color: C.txt, align: 'center' }, { fx: 'fade', dur: 200 });
+      s.text([{ text: nm + ' = ', options: { color: col } }, { text: mean, options: { color: C.txt } }], { x: x + 0.05, y: 5.12, w: w - 0.1, h: 0.45, size: 22, bold: true, align: 'center' }, { fx: 'fade', dur: 200 });
+      s.text(act, { x: x + 0.1, y: 5.57, w: w - 0.2, h: 0.92, size: 16, bold: true, color: C.txt, align: 'center' }, { fx: 'fade', dur: 200 });
     }
     foot(s, 'Symbole vereinfacht · Aussehen je nach Hersteller · STOP-Leuchte: so schnell wie möglich an sicherer Stelle anhalten');
   }

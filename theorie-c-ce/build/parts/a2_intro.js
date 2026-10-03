@@ -51,7 +51,7 @@ module.exports = async (deck) => {
   }
   // ===== WIEDERHOLUNG ABEND 1 =====
   await ask(deck, 'c3', {
-    kicker: 'Wiederholung Abend 1', q: 'Drei Fragen vom letzten Mal –\nwer weiß es noch?', ico: 'LuRotateCcw', qsize: 32,
+    kicker: 'Wiederholung Abend 1', q: 'Drei Fragen vom letzten Mal – wer weiß es noch?', ico: 'LuRotateCcw', qsize: 32,
     answers: [
       ['LuClock', 'Wie lange am Stück fahren?', '4,5 h Lenkzeit, dann 45 Minuten Pause – oder erst 15, dann 30 Minuten.'],
       ['LuEyeOff', 'Rechtsabbiegen innerorts über 3,5 t?', 'Schrittgeschwindigkeit – Radfahrer und Fußgänger im toten Winkel.'],

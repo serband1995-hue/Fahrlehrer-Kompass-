@@ -19,7 +19,7 @@ module.exports = async (deck) => {
       '✅ Maße nach § 32 StVZO: Breite 2,55 m, Kühlaufbau (Wände mind. 45 mm dick) 2,60 m, Höhe 4,00 m.\n' +
       '➜ „Ein Aufbau-Teil verdient eine eigene Folie: die Ladebordwand.“' });
     kick(s, 'Aufbauten'); title(s, 'Was ist hinten drauf?');
-    const A = [['LuTent', 'Plane / Pritsche', 'Plane, Spriegel, Bordwände zu und fest?'], ['LuBox', 'Koffer', 'Türen geschlossen und verriegelt?'], ['LuRefrigerator', 'Kühlkoffer', 'Kühlgerät an, Temperatur richtig?'], ['LuShovel', 'Kipper', 'nur auf festem, ebenem Boden kippen – Mulde vor der Fahrt ganz unten'], ['LuContainer', 'Wechselbrücke', 'Verriegelungen zu, Stützbeine hoch und gesichert?']];
+    const A = [['LuTent', 'Plane / Pritsche', 'Plane, Spriegel, Bordwände zu und fest?'], ['LuBox', 'Koffer', 'Türen geschlossen und verriegelt?'], ['LuRefrigerator', 'Kühlkoffer', 'Kühlgerät an, Temperatur richtig?'], ['LuShovel', 'Kipper', 'nur auf festem, ebenem Boden kippen. Mulde vor der Fahrt ganz unten'], ['LuContainer', 'Wechselbrücke', 'Verriegelungen zu, Stützbeine hoch und gesichert?']];
     for (let k = 0; k < 5; k++) {
       const x = 0.7 + k * 2.42, w = 2.25;
       card(s, x, 2.05, w, 3.05, { line: C.pu }, CLICK);

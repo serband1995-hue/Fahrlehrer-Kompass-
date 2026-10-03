@@ -130,8 +130,9 @@ module.exports = async (deck) => {
       const p = [0.3, 0.92, 0.92][i];
       s.rrect(5.84, 1.84, 2.52 * p, 0.27, { fill: i === 2 ? C.red : 'C9A227', rr: 0.15, name: '!!bd' });
       if (i === 2) {
-        s.text('blockiert!', { x: ax - 0.9, y: GY + 0.1, w: 1.8, h: 0.35, size: 16, bold: true, color: C.red, align: 'center', name: '!!tblock' });
-        s.lineS(ax - 1.4, GY + 0.02, ax - 0.4, GY + 0.02, { color: C.red, lw: 5, name: '!!spur' });
+        // Lkw fährt nach links: die Blockierspur liegt HINTER dem Rad (rechts davon)
+        s.text('blockiert!', { x: ax - 0.2, y: GY + 0.1, w: 1.8, h: 0.35, size: 16, bold: true, color: C.red, align: 'center', name: '!!tblock' });
+        s.lineS(ax + 0.02, GY + 0.02, ax + 1.3, GY + 0.02, { color: C.red, lw: 5, name: '!!spur' });
       }
     },
   });
