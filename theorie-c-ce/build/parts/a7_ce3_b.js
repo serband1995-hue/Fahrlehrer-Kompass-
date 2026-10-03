@@ -9,8 +9,8 @@ sec('ce3f', 'CE3  ·  FESTSTELLBREMSE IM ZUG', C.pu, 'bg_pu.jpg');
 
 module.exports = async (deck) => {
   // ===== KAPITEL 3: DER ABS-STECKER =====
-  await chapter(deck, 'ce3a', { num: 3, ttl: 'Der ABS-Stecker', sub: 'Ein schwarzer Stecker entscheidet, ob der Anhänger ABS hat. Was passiert, wenn er fehlt?', ico: 'LuPlug', notes:
-    '▶ Sagen: „Beim Ankuppeln steckt ihr drei Dinge: rot, gelb – und den schwarzen ABS/EBS-Stecker. Wer den vergisst, fährt mit einem Anhänger ohne ABS. Schauen wir, was dann passiert.“\n✅ ISO-7638-Steckverbindung: Strom und Daten für ABS/EBS des Anhängers (RL 71/320/EWG Anhang X; Haldex Trailer Application Guide).\n🖱 Keine Klicks.\n➜ „Zwei Züge, eine Vollbremsung.“' });
+  await chapter(deck, 'ce3a', { num: 3, ttl: 'Der ABS-Stecker', sub: 'Ein Stecker entscheidet, ob das ABS des Anhängers arbeitet: der ABS/EBS-Stecker (ISO 7638). Was passiert, wenn er fehlt?', ico: 'LuPlug', notes:
+    '▶ Sagen: „Beim Ankuppeln steckt ihr drei Dinge: rot, gelb – und den ABS/EBS-Stecker. Wer den vergisst, fährt mit einem Anhänger, dessen ABS nicht arbeitet. Zeigt am Fahrzeug, welcher Stecker es ist. Schauen wir, was dann passiert.“\n✅ ISO-7638-Steckverbindung: Strom und Daten für ABS/EBS des Anhängers (RL 71/320/EWG Anhang X Nr. 4.4, heute UN-Regelung Nr. 13; WABCO TEBS E Kap. 5.7).\n🖱 Keine Klicks.\n➜ „Zwei Züge, eine Vollbremsung.“' });
 
   // ===== VOLLBREMSUNG AUF NÄSSE (Draufsicht, fließend) =====
   {
@@ -26,21 +26,21 @@ module.exports = async (deck) => {
       legend: 'Draufsicht · schematisch · nasse Fahrbahn',
       frames: [
         fr({ k: 0, msg: 'Zwei gleiche Züge, gleich schnell. Gleich bremsen beide voll.', mc: C.mut }, { hold: true,
-          cap: 'Oben ist der ABS-Stecker drin. Unten fehlt er: Nur der Lkw hat ABS, der Anhänger nicht.',
-          note: '▶ Sagen: „Zwei gleiche Züge auf nasser Straße. Oben steckt der ABS-Stecker – Lkw und Anhänger haben ABS. Unten fehlt der Stecker – nur der Lkw hat ABS. Beide machen gleich eine Vollbremsung.“\n❓ Frage auf der Folie stellen. Tipps sammeln.\n✅ Prüfungsfrage 2.7.06-314: Nur das Zugfahrzeug hat ABV – Vollbremsung auf nasser Fahrbahn. WABCO TEBS E, Kap. 5.7: Ohne ISO-7638-Verbindung sind ABS, EBS und Kippschutz nicht verfügbar.\n🖱 Klick: Vollbremsung (läuft von selbst bis zum Stand).\n➜ „Achtung – Vollbremsung!“' }),
+          cap: 'Oben ist der ABS-Stecker drin. Unten fehlt er: Nur am Lkw arbeitet das ABS, am Anhänger nicht.',
+          note: '▶ Sagen: „Zwei gleiche Züge auf nasser Straße. Oben steckt der ABS-Stecker – Lkw und Anhänger haben ABS. Unten fehlt der Stecker – das ABS arbeitet nur am Lkw. Beide machen gleich eine Vollbremsung.“\n❓ Frage auf der Folie stellen. Tipps sammeln.\n✅ Prüfungsfrage 2.7.06-314: Nur das Zugfahrzeug hat ABV – Vollbremsung auf nasser Fahrbahn. WABCO TEBS E, Kap. 5.7: Ohne ISO-7638-Verbindung sind ABS, EBS und Kippschutz nicht verfügbar.\n🖱 Klick: Vollbremsung (läuft von selbst bis zum Stand).\n➜ „Achtung – Vollbremsung!“' }),
         fr({ k: 1, msg: 'Vollbremsung!', mc: C.am }),
         fr({ k: 2, msg: 'Unten blockieren die Räder des Anhängers …', mc: C.red }),
         fr({ k: 3, msg: '… er verliert die Seitenführung und bricht aus.', mc: C.red }),
-        fr({ k: 4, msg: 'Ohne Stecker: Der Anhänger bricht aus – und der Zug steht später.', mc: C.red }, { hold: true, answer: true,
+        fr({ k: 4, msg: 'Ohne Stecker: Der Anhänger kann ausbrechen – und der Zug steht später.', mc: C.red }, { hold: true, answer: true,
           cap: 'Oben regelt ABS an allen Rädern: Der Zug bleibt gerade. Unten blockieren die Anhängerräder: Er bricht aus, der Bremsweg wird länger.',
-          note: '▶ „Oben: ABS regelt an allen Rädern, der Zug bleibt gerade und steht. Unten: Die Anhängerräder blockieren. Ein blockiertes Rad kann nicht mehr seitlich führen – der Anhänger schwenkt aus, bis in den Gegenverkehr. Und der Zug steht später.“\n❓ Frage auf der Folie auflösen.\n✅ Prüfungsfrage 2.7.06-314: Beim Blockieren der Anhängerräder kann sich der Bremsweg verlängern und der Anhänger ausbrechen (falsch: Zug sicher gestreckt). Mercedes-Benz Actros Betriebsanleitung: Ohne Anhänger-ABS „können die Räder des Anhängers/Aufliegers beim Bremsen blockieren und der Lastzug kann instabil werden“.\n💡 Strecken und Winkel sind gezeichnet, nicht gemessen.\n🖱 Nächster Klick: nächste Folie.\n➜ „Eine Prüfungsfrage dazu.“' }),
+          note: '▶ „Oben: ABS regelt an allen Rädern, der Zug bleibt gerade und steht. Unten: Die Anhängerräder blockieren. Ein blockiertes Rad kann nicht mehr seitlich führen – der Anhänger schwenkt aus, bis in den Gegenverkehr. Und der Zug steht später.“\n❓ Frage auf der Folie auflösen.\n✅ Prüfungsfrage 2.7.06-314: Beim Blockieren der Anhängerräder kann sich der Bremsweg verlängern und der Anhänger ausbrechen (falsch: Zug sicher gestreckt). Mercedes-Benz Actros Betriebsanleitung, S. 244: „Die Räder des Anhängers/Aufliegers können beim Bremsen blockieren und der Lastzug kann instabil werden, wenn der Anhänger/Auflieger kein ABS hat …“\n💡 Strecken und Winkel sind gezeichnet, nicht gemessen.\n🖱 Nächster Klick: nächste Folie.\n➜ „Eine Prüfungsfrage dazu.“' }),
       ],
       scene: async (s, t) => {
         const k = t.k, u = U[k];
         roadH(s, RX, R1, RW, 1.4, { name: 'r1', fill: '252E3A' });
         roadH(s, RX, R2, RW, 1.4, { name: 'r2', fill: '252E3A' });
         s.text([{ text: '✓  Mit ABS-Stecker', options: { bold: true, color: C.gr } }, { text: '   Lkw und Anhänger mit ABS', options: { color: C.mut } }], { x: RX, y: R1 - 0.46, w: RW, h: 0.3, size: 14, name: '!!l1' });
-        s.text([{ text: '✕  Ohne ABS-Stecker', options: { bold: true, color: C.red } }, { text: '   nur der Lkw hat ABS', options: { color: C.mut } }], { x: RX, y: R2 - 0.46, w: RW, h: 0.3, size: 14, name: '!!l2' });
+        s.text([{ text: '✕  Ohne ABS-Stecker', options: { bold: true, color: C.red } }, { text: '   ABS arbeitet nur am Lkw', options: { color: C.mut } }], { x: RX, y: R2 - 0.46, w: RW, h: 0.3, size: 14, name: '!!l2' });
         // oben: mit Stecker – bleibt gerade
         const H1 = hAt(D1, u, R1);
         zugTop(s, { H: H1, S, nm: 'o' });
@@ -70,23 +70,23 @@ module.exports = async (deck) => {
     bg: 'k_koepfe_r.jpg', bgX: 6.0, ov: 7.0, kicker: 'ABS-Stecker', q: 'Stecker vergessen – merkt ihr das?', qsize: 32, w: 5.25, asize: 15,
     answers: [
       ['LuLightbulbOff', 'Warnleuchte? Kein Verlass!', 'Ohne Stecker bleibt sie oft einfach dunkel.', C.red],
-      ['LuEye', 'Hinsehen', 'Nach dem Kuppeln: Steckt der schwarze Stecker?', C.or],
+      ['LuEye', 'Hinsehen', 'Nach dem Kuppeln: Steckt der ABS-Stecker?', C.or],
       ['LuEar', 'Hinhören', 'Zündung an: Oft klickt es kurz am Anhänger.', C.gr],
-      ['LuCircleCheck', 'Leuchte prüfen', 'Kurz an, dann aus. Bleibt sie an: Werkstatt.', C.am],
+      ['LuCircleCheck', 'Leuchte prüfen', 'Muss spätestens beim Anfahren ausgehen.', C.am],
     ],
     notes:
       '▶ Sagen: „Viele denken: Wenn der Stecker fehlt, leuchtet doch eine Lampe. Darauf könnt ihr euch nicht verlassen.“\n' +
       '❓ Frage stellen, sammeln lassen, dann je Klick auflösen.\n' +
       '🖱 Klick 1–4: je ein Punkt.\n' +
-      '✅ RL 71/320/EWG Anhang X Nr. 4.2.1: Die Anhänger-ABS-Warnung darf nicht leuchten, wenn kein Anhänger mit ABV angeschlossen ist. WABCO TEBS E, Kap. 5.8.1: Fällt die ISO-7638-Verbindung ganz aus, kann über Pin 5 keine Warnung gesendet werden. Daraus folgt (eigene Schlussfolgerung): Fehlt der Stecker, bleibt die Leuchte meist dunkel. WABCO TEBS E: Nach dem Einschalten schaltet der Modulator kurz die Magnetventile (hörbares Klicken). DGUV Grundsatz 314-002, Nr. 1 und 2.3.2: Nach dem Kuppeln den Zustand kontrollieren; ABV-Kontrolle zeigt keine Störung.\n' +
-      '💡 Wann die Leuchte genau ausgeht (gleich im Stand oder erst nach dem Anfahren), steht in der Betriebsanleitung.\n' +
+      '✅ RL 71/320/EWG Anhang X Nr. 4.2.1 (heute UN-Regelung Nr. 13): Die Anhänger-ABS-Warnung darf nicht leuchten, wenn kein Anhänger mit ABV angeschlossen ist. WABCO TEBS E, Kap. 5.8.1: Fällt die ISO-7638-Verbindung ganz aus, kann über Pin 5 keine Warnung gesendet werden. Daraus folgt (eigene Schlussfolgerung): Fehlt der Stecker, bleibt die Leuchte meist dunkel. WABCO TEBS E: Nach dem Einschalten schaltet der Modulator kurz die Magnetventile (hörbares Klicken). DGUV Grundsatz 314-002, Nr. 1 und 2.3.2: Nach dem Kuppeln den Zustand kontrollieren; ABV-Kontrolle zeigt keine Störung.\n' +
+      '💡 Leuchte: WABCO TEBS E Kap. 5.8.1 nennt zwei zulässige Varianten – sie geht nach etwa 2 Sekunden aus oder erst beim Anfahren (ab etwa 7 km/h). Bleibt sie auch beim Fahren an: Fehler, Werkstatt. Welche Variante euer Zug hat, steht in der Betriebsanleitung.\n' +
       '➜ „Noch eine Prüfungsfrage.“',
   });
   await quiz(deck, 'ce3a', {
     kicker: 'Prüfungsfrage 2.7.06-315', q: 'Die Verbindung des Elektronischen Bremssystems (EBS) zum Anhänger ist unterbrochen. Welche Auswirkung kann dies beim Bremsen für den Anhänger haben?', size: 26, osize: 18,
     opts: ['Der Automatische Blockierverhinderer (ABV) kann abgeschaltet sein', 'Der Anhänger wird mithilfe des pneumatischen Redundanzdrucks gebremst', 'Die Bremsleuchten funktionieren nicht mehr'], ok: [0, 1],
-    why: '„Redundanzdruck“ heißt: Er bremst nur noch über die gelbe Leitung – ohne ABS. Die Bremsleuchten hängen am Lichtstecker, nicht am EBS.',
-    notes: '▶ Frage vorlesen, abstimmen.\n🖱 Klick 1: Antworten · Klick 2: Lösung.\n✅ Amtlicher Fragenkatalog 2.7.06-315: A und B. WABCO TEBS E, Kap. 5.9: ohne CAN Bremsung über den pneumatischen Steuerdruck (Redundanz).\n💡 Die Beleuchtung kommt über den eigenen Lichtstecker (24 V, ISO 1185 / ISO 12098).\n➜ „Kapitel 4: Die Feststellbremse im Zug.“',
+    why: '„Redundanzdruck“ heißt: Der Bremswunsch kommt nur noch als Luft über gelb. Fehlt auch der Strom (Stecker ganz ab), arbeitet das ABS nicht – darum „kann“. Bremsleuchten: Lichtstecker.',
+    notes: '▶ Frage vorlesen, abstimmen.\n🖱 Klick 1: Antworten · Klick 2: Lösung.\n✅ Amtlicher Fragenkatalog 2.7.06-315: A und B. WABCO TEBS E, Kap. 5.9.1: ohne CAN Bremsung über den pneumatischen Steuerdruck; hat das Modul Strom, regelt es weiter Last, ABS und Kippschutz. Kap. 5.8.2: ABS bleibt bei pneumatischer Redundanz „to the greatest possible extent“ erhalten. Kap. 5.7: Erst ohne ISO-7638-Stecker gibt es kein ABS.\n💡 Die Beleuchtung kommt über den eigenen Lichtstecker (24 V, ISO 1185 / ISO 12098).\n➜ „Kapitel 4: Die Feststellbremse im Zug.“',
   });
 
   // ===== KAPITEL 4: FESTSTELLBREMSE IM ZUG =====
@@ -121,16 +121,16 @@ module.exports = async (deck) => {
       frames: [
         fr({ lev: 'F', lk: 0, ah: 0, air: 0, roll: 0, msg: 'Der Zug steht an einer Steigung von 12 %. Der Fahrer hält ihn noch mit der Fußbremse.', mc: C.mut }, { hold: true,
           cap: 'Der Zug soll hier stehen bleiben. Gleich zieht der Fahrer die Feststellbremse. Was hält dann den Lkw – und was den Anhänger?',
-          note: '▶ Sagen: „Der Zug steht an einer Steigung von 12 Prozent. Rechts oben seht ihr das Handbremsventil im Lkw mit drei Stellungen: Fahren, Feststellen und Kontrolle.“\n❓ Frage auf der Folie stellen.\n✅ RL 71/320/EWG Anhang II Nr. 2.1.3.2: Die Feststellbremse des Zugfahrzeugs muss den ganzen Zug an 12 % Steigung oder Gefälle halten.\n🖱 Klick: Feststellbremse ziehen.\n➜ „Hebel auf Feststellen.“' }),
+          note: '▶ Sagen: „Der Zug steht an einer Steigung von 12 Prozent. Rechts oben seht ihr das Handbremsventil im Lkw mit drei Stellungen: Fahren, Feststellen und Kontrolle.“\n❓ Frage auf der Folie stellen.\n✅ RL 71/320/EWG Anhang II Nr. 2.1.3.2 (heute UN-Regelung Nr. 13): Die Feststellbremse des Zugfahrzeugs muss den ganzen Zug an 12 % Steigung oder Gefälle halten.\n🖱 Klick: Feststellbremse ziehen.\n➜ „Hebel auf Feststellen.“' }),
         fr({ lev: 'S', lk: 1, ah: 1, air: 1, roll: 0, msg: 'Feststellen: Der Lkw hält mit Federkraft – mechanisch. Der Anhänger hält mit Luft.', mc: C.txt }, { hold: true,
           cap: 'Lkw: Die Federspeicher halten – mechanisch, ohne Luft. Anhänger: Er wird nur mit Druckluft über seine Betriebsbremse gehalten.',
           note: '▶ „Hebel auf Feststellen. Am Lkw drücken jetzt die Federspeicher – das hält mechanisch, auch ohne Luft. Der Anhänger bekommt dabei Luft auf seine normale Betriebsbremse. Er hält also nur mit Druckluft.“\n✅ Prüfungsfrage 2.7.06-321: Zugfahrzeug mechanisch gebremst; Anhänger üblicherweise nur mit Druckluft durch die Betriebsbremsanlage (falsch: Anhänger mechanisch). Mercedes-Benz Actros Betriebsanleitung: Bei angekuppeltem Anhänger wirkt die Feststellbremse auf die Betriebsbremse des Anhängers.\n🖱 Klick: Zeit vergeht.\n➜ „Was passiert über Nacht?“' }),
-        fr({ lev: 'S', lk: 1, ah: 2, air: 0.2, roll: 0, msg: 'Stunden später: Die Luft im Anhänger entweicht. Dann hält dort nichts mehr.', mc: C.am }, { hold: true,
-          cap: 'Druckluft entweicht mit der Zeit. Auf Dauer hält nur noch der Lkw. Reicht er für den ganzen Zug?',
-          note: '▶ „Luft bleibt nicht ewig. Über Stunden entweicht sie. Dann hält am Anhänger nichts mehr – nur noch der Lkw mit seinen Federn. Die Frage ist: Schafft der Lkw das allein?“\n✅ Lehrbuchwissen; DGUV Information 214-080, S. 33: Anhänger nie nur mit der Notbremsfunktion abstellen.\n🖱 Klick: Kontrollstellung.\n➜ „Genau das prüft ihr mit der Kontrollstellung.“' }),
+        fr({ lev: 'S', lk: 1, ah: 2, air: 0.2, roll: 0, msg: 'Stunden später: Die Luft im Anhänger entweicht. Dann hält dort meist nichts mehr.', mc: C.am }, { hold: true,
+          cap: 'Druckluft entweicht mit der Zeit. Manche neue Anhänger bremsen dann selbst mit dem Federspeicher – verlasst euch nicht darauf. Reicht der Lkw allein für den ganzen Zug?',
+          note: '▶ „Luft bleibt nicht ewig. Über Stunden entweicht sie. Dann hält am Anhänger meist nichts mehr – nur noch der Lkw mit seinen Federn. Manche neue Anhänger bremsen dann von selbst mit ihrem Federspeicher, aber darauf verlasst ihr euch nicht. Die Frage ist: Schafft der Lkw das allein?“\n✅ Lehrbuchwissen; DGUV Information 214-080, S. 33: Anhänger nie nur mit der Notbremsfunktion abstellen; der Federspeicher spricht „in der Regel nicht“ automatisch an. WABCO TEBS E Kap. 5.8.1: Bei Anhängern mit dieser Ausstattung bremsen die Federspeicher automatisch, wenn der Druck am Kupplungskopf unter 2,5 bar fällt.\n🖱 Klick: Kontrollstellung.\n➜ „Genau das prüft ihr mit der Kontrollstellung.“' }),
         fr({ lev: 'K', lk: 1, ah: 3, air: 0, roll: 0, msg: 'Kontrollstellung: Hebel weiter ziehen und halten. Die Anhängerbremse ist gelöst. Hält der Lkw den Zug allein?', mc: C.pu }, { hold: true,
           cap: 'Kontrollstellung: Die Anhängerbremse wird gelöst, nur die Federspeicher des Lkw halten. So seht ihr: Hält der Lkw den ganzen Zug allein?',
-          note: '▶ „Jetzt der Trick: Hebel über Feststellen hinaus in die Kontrollstellung ziehen – und festhalten. Die Anhängerbremse wird gelöst. Es hält nur noch der Lkw. Bleibt der Zug stehen, ist alles gut.“\n✅ Prüfungsfrage 2.7.06-320: Zugfahrzeug über Federspeicher gebremst, Betriebsbremse des Anhängers gelöst (falsch: Anhängerbremse betätigt). Mercedes-Benz Actros Betriebsanleitung: Hebel in die Kontrollstellung schwenken und halten; „Das Fahrzeug darf sich nicht bewegen.“ RL 71/320/EWG Anhang I Nr. 2.1.2.3: Der Fahrer muss prüfen können, ob die mechanische Feststellbremse allein reicht.\n💡 Bei den meisten Lkw rastet der Hebel in der Kontrollstellung nicht ein – Betriebsanleitung.\n🖱 Klick: Was, wenn er nicht hält?\n➜ „Und wenn er rollt?“' }),
+          note: '▶ „Jetzt der Trick: Hebel über Feststellen hinaus in die Kontrollstellung ziehen – und festhalten. Die Anhängerbremse wird gelöst. Es hält nur noch der Lkw. Bleibt der Zug stehen, ist alles gut.“\n✅ Prüfungsfrage 2.7.06-320: Zugfahrzeug über Federspeicher gebremst, Betriebsbremse des Anhängers gelöst (falsch: Anhängerbremse betätigt). Mercedes-Benz Actros Betriebsanleitung: Hebel in die Kontrollstellung schwenken und halten; „Das Fahrzeug darf sich nicht bewegen.“ RL 71/320/EWG Anhang I Nr. 2.1.2.3 (heute UN-Regelung Nr. 13): Der Fahrer muss prüfen können, ob die mechanische Feststellbremse allein reicht.\n💡 Bei den meisten Lkw rastet der Hebel in der Kontrollstellung nicht ein – Betriebsanleitung.\n🖱 Klick: Was, wenn er nicht hält?\n➜ „Und wenn er rollt?“' }),
         fr({ lev: 'K', lk: 1, ah: 3, air: 0, roll: 1, msg: 'Der Zug rollt? Hebel sofort zurück auf Feststellen – der Lkw allein reicht hier nicht!', mc: C.red }, { hold: true,
           cap: 'Rollt der Zug in der Kontrollstellung, reicht der Lkw allein nicht. Dann den Zug zusätzlich sichern.',
           note: '▶ „Rollt der Zug, Hebel sofort zurück auf Feststellen – dann hält der Anhänger wieder mit Luft. Aber auf Dauer reicht das nicht. Ihr müsst zusätzlich sichern.“\n✅ Mercedes-Benz Actros Betriebsanleitung: Hält der Zug in der Kontrollstellung nicht, Zugfahrzeug und Anhänger mit Unterlegkeilen sichern.\n🖱 Klick: richtig sichern.\n➜ „So stellt ihr den Zug sicher ab.“' }),
@@ -197,21 +197,21 @@ module.exports = async (deck) => {
     kicker: 'Prüfungsfrage 2.7.06-320', q: 'Sie fahren einen Lkw mit Anhänger und durchgehender Druckluftbremsanlage. Welche Funktion übernimmt dabei die Kontrollstellung des Handbremsventils?', size: 26, osize: 18,
     opts: ['Das Zugfahrzeug wird über die Federspeicherbremse gebremst', 'Die Betriebsbremse des Anhängers wird gelöst', 'Die Betriebsbremse des Anhängers wird betätigt'], ok: [0, 1],
     why: 'In der Kontrollstellung hält nur der Lkw. So prüft ihr, ob er den ganzen Zug allein halten kann.',
-    notes: '▶ Frage vorlesen, abstimmen.\n🖱 Klick 1: Antworten · Klick 2: Lösung.\n✅ Amtlicher Fragenkatalog 2.7.06-320: A und B.\n➜ „Wie steil darf es dabei sein?“',
+    notes: '▶ Frage vorlesen, abstimmen.\n🖱 Klick 1: Antworten · Klick 2: Lösung.\n✅ Amtlicher Fragenkatalog 2.7.06-320: A und B.\n➜ „Wie steil muss die Feststellbremse das schaffen?“',
   });
   await ask(deck, 'ce3f', {
-    kicker: 'Feststellbremse', q: 'Wie steil darf es sein? Was muss die Feststellbremse halten?', ico: 'LuMountain', qsize: 32,
+    kicker: 'Feststellbremse', q: 'Wie steil? Was muss die Feststellbremse mindestens halten können?', ico: 'LuMountain', qsize: 32,
     answers: [
       ['LuTruck', 'Lkw hält den ganzen Zug', '12 % – nur mit seiner eigenen Feststellbremse.'],
       ['LuTruck', 'Ein Fahrzeug allein, beladen', '18 % – Lkw ohne Anhänger.'],
       ['LuCircleParking', 'Anhänger abgekuppelt, beladen', '18 % – mit seiner eigenen Feststellbremse.'],
     ],
     notes:
-      '▶ Sagen: „Wie steil darf der Hang sein? Ratet mal.“\n' +
+      '▶ Sagen: „Wie steil muss die Feststellbremse es mindestens schaffen? Ratet mal.“\n' +
       '❓ Je Zeile schätzen lassen, dann klicken.\n' +
       '🖱 Klick 1–3: je eine Zeile.\n' +
-      '✅ RL 71/320/EWG Anhang II: Nr. 2.1.3.1 (Fahrzeug allein 18 %), Nr. 2.1.3.2 (Zugfahrzeug hält den Zug 12 %), Nr. 2.2.2.1 (Anhänger abgekuppelt 18 %). § 41 Abs. 9 StVZO (Anhänger 18 %).\n' +
-      '💡 Zum Vergleich: 12 % heißt 12 m Höhe auf 100 m Strecke. Das ist schon steil – viele Bergstraßen haben weniger.\n' +
+      '✅ RL 71/320/EWG Anhang II (heute UN-Regelung Nr. 13): Nr. 2.1.3.1 (Fahrzeug allein 18 %), Nr. 2.1.3.2 (Zugfahrzeug hält den Zug 12 %), Nr. 2.2.2.1 (Anhänger abgekuppelt 18 %). § 41 Abs. 9 StVZO (Anhänger 18 %).\n' +
+      '💡 Das sind Bauvorschriften – was die Bremse mindestens können muss. Keine Erlaubnis, bis zu welcher Steigung man abstellen darf: Keile gehören am Hang immer dazu. Zum Vergleich: 12 % heißt 12 m Höhe auf 100 m waagerecht. Das ist schon steil – viele Bergstraßen haben weniger.\n' +
       '➜ „Kapitel 5: Dauerbremse und Prüffristen.“',
   });
 };

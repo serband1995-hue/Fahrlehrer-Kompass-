@@ -15,20 +15,20 @@ module.exports = async (deck) => {
       ['LuSnowflake', 'Schneeketten', 'höchstens 50 km/h.', C.bl],
       ['LuArrowLeftToLine', 'Autobahn, über 7,5 t', 'bei Glätte nie ganz links fahren.', C.or],
       ['LuCloudFog', 'Sicht unter 50 m', '50 km/h. Über 7,5 t nicht überholen.', C.pu],
-      ['LuMountainSnow', 'Dauerbremse', 'bei Glätte aus oder nur schwach.', C.gr],
+      ['LuMountainSnow', 'Dauerbremse', 'bei Glätte aus.', C.gr],
     ],
     notes:
       '▶ Sagen: „Euer Zug im Winter. Was gilt?“\n' +
       '❓ Sammeln lassen, dann je Klick auflösen.\n' +
       '🖱 Klick 1–4: je ein Punkt.\n' +
-      '✅ § 3 Abs. 4 StVO: mit Schneeketten höchstens 50 km/h (Prüfungsfrage 2.2.03-101); Zeichen 268 = Schneeketten vorgeschrieben; Ketten gehören auf die Antriebsachse (C4). § 18 Abs. 11 StVO: Lkw über 7,5 t einschließlich ihrer Anhänger dürfen bei Schneeglätte, Glatteis oder Sicht unter 50 m den äußerst linken Fahrstreifen nicht benutzen (BKat 87a: 80 €, 1 Punkt). § 3 Abs. 1 StVO: Sicht unter 50 m höchstens 50 km/h. § 5 Abs. 3a StVO: Kfz über 7,5 t Überholverbot bei Sicht unter 50 m (BKat 21: 120 €, 1 Punkt). Dauerbremse: CE3, Mercedes-Benz Actros Betriebsanleitung.\n' +
-      '💡 Winterreifen bei Glätte: an Lkw über 3,5 t mindestens auf den Antriebsachsen und den vorderen Lenkachsen (§ 2 Abs. 3a StVO, siehe C4).\n' +
+      '✅ § 3 Abs. 4 StVO: mit Schneeketten höchstens 50 km/h (Prüfungsfrage 2.2.03-101); Zeichen 268 = Schneeketten vorgeschrieben; Ketten gehören auf die Antriebsachse (C4). § 18 Abs. 11 StVO (Autobahn): Lkw über 7,5 t einschließlich ihrer Anhänger sowie Zugmaschinen dürfen bei Schneeglätte oder Glatteis oder bei Sicht von 50 m oder weniger durch erheblichen Schneefall oder Regen (Nebel ist hier nicht genannt) den äußerst linken Fahrstreifen nicht benutzen (BKat 87a: 80 €, 1 Punkt). § 3 Abs. 1 StVO: Sicht unter 50 m durch Nebel, Schneefall oder Regen höchstens 50 km/h. § 5 Abs. 3a StVO: Kfz über 7,5 t Überholverbot bei Sicht unter 50 m durch Nebel, Schneefall oder Regen (BKat 21: 120 €, 1 Punkt). Dauerbremse: CE3, Mercedes-Benz Actros Betriebsanleitung S. 250 (bei Glätte nicht einschalten).\n' +
+      '💡 Winterreifen bei Glätte: an Lkw über 3,5 t mindestens auf den permanent angetriebenen Achsen und den vorderen Lenkachsen (§ 2 Abs. 3a StVO, siehe C4).\n' +
       '➜ „Eine Prüfungsfrage dazu.“',
   });
   await quiz(deck, 'ce4w', {
     kicker: 'Prüfungsfrage 2.2.05-104', q: 'Sie befahren die Autobahn mit einem Kraftfahrzeug, dessen zulässige Gesamtmasse 7,5 t übersteigt. Die Sichtweite beträgt aufgrund starken Schneefalls weniger als 50 m. Wie müssen Sie sich verhalten?', size: 24,
     opts: ['Ich darf den äußerst linken Fahrstreifen nicht benutzen', 'Ich darf nicht schneller als 50 km/h fahren', 'Ich muss die Autobahn an der nächsten Ausfahrt verlassen'], ok: [0, 1],
-    why: 'Sicht unter 50 m heißt: höchstens 50 km/h – und über 7,5 t weg vom linken Fahrstreifen.',
+    why: 'Sicht unter 50 m: höchstens 50 km/h. Bei Schneefall oder Regen mit 50 m Sicht oder weniger zusätzlich: über 7,5 t weg vom linken Fahrstreifen.',
     notes: '▶ Frage vorlesen, abstimmen.\n🖱 Klick 1: Antworten · Klick 2: Lösung.\n✅ Amtlicher Fragenkatalog 2.2.05-104: A und B. § 3 Abs. 1 und § 18 Abs. 11 StVO.\n➜ „Und bei Wind?“',
   });
   await ask(deck, 'ce4w', {
@@ -86,7 +86,7 @@ module.exports = async (deck) => {
       ],
       notes: [
         '▶ Sagen: „Wie schnell darf euer 40-Tonnen-Zug? Innerorts?“\n❓ Frage auf der Folie stellen.\n✅ § 3 Abs. 3 Nr. 1 StVO: innerorts 50 km/h.\n➜ „Und auf der Landstraße?“',
-        '▶ „Auf der Landstraße: 60 km/h für Lkw über 3,5 t mit Anhänger. Nicht 80!“\n✅ § 3 Abs. 3 Nr. 2 Buchstabe b StVO (Lkw über 3,5 t mit Anhänger: 60 km/h). Prüfungsfrage 2.2.03-108 (Lkw 5,5 t + Anhänger 2 t: 60).\n💡 Ausnahme (nicht vertiefen): Auf Straßen mit getrennten Fahrbahnen oder zwei Fahrstreifen je Richtung gilt § 3 Abs. 3 nicht – dann Beschilderung beachten.\n➜ „Und auf der Autobahn?“',
+        '▶ „Auf der Landstraße: 60 km/h für Lkw über 3,5 t mit Anhänger. Nicht 80!“\n✅ § 3 Abs. 3 Nr. 2 Buchstabe b StVO (Lkw über 3,5 t mit Anhänger: 60 km/h). Prüfungsfrage 2.2.03-108 (Lkw 5,5 t + Anhänger 2 t: 60).\n💡 Ausnahme (nicht vertiefen): Auf Straßen mit baulich getrennten Fahrbahnen oder zwei markierten Fahrstreifen je Richtung gilt die 60-km/h-Grenze aus § 3 Abs. 3 Nr. 2 nicht. Ist es eine Kraftfahrstraße: 80 km/h (§ 18 Abs. 5). Sonst Beschilderung beachten.\n➜ „Und auf der Autobahn?“',
         '▶ „Autobahn: 80. Euer Begrenzer lässt 90 zu – erlaubt sind trotzdem nur 80.“\n❓ Frage auf der Folie auflösen.\n✅ § 18 Abs. 5 Nr. 1 StVO (Lkw mit Anhänger 80 km/h). Prüfungsfrage 2.2.03-301 (Lastzug 40 t: 80). § 57c StVZO (Begrenzer 90 km/h).\n➜ „Und im Winter?“',
         '▶ „Mit Schneeketten: höchstens 50. Und bei Nebel unter 50 Meter Sicht ebenfalls 50.“\n✅ § 3 Abs. 4 und Abs. 1 StVO. Prüfungsfrage 2.2.03-101.\n➜ „Und überholen?“',
       ],
@@ -111,7 +111,7 @@ module.exports = async (deck) => {
       '❓ Abstimmen lassen.\n' +
       '🖱 Klick 1: Antwort · Klick 2: Rechnung · Klick 3: Merksatz.\n' +
       '✅ StVO Anlage 2 lfd. Nr. 53–54: Das Verbot gilt für Kfz über 3,5 t „einschließlich ihrer Anhänger“; mit Zusatzzeichen, „soweit die zulässige Gesamtmasse dieser Kraftfahrzeuge, einschließlich ihrer Anhänger, die angegebene Grenze überschreitet“. BKat 153a: 70 €, 1 Punkt.\n' +
-      '💡 Auf dreistreifigen Straßen außerorts dürfen Lkw über 3,5 t und alle Kfz mit Anhänger den linken Streifen nur zum Linksabbiegen benutzen (§ 7 Abs. 3c StVO).\n' +
+      '💡 Sind außerorts für eine Richtung drei oder mehr Fahrstreifen markiert (auch auf der Autobahn), dürfen Lkw über 3,5 t und alle Kfz mit Anhänger den linken Streifen nur zum Linksabbiegen benutzen (§ 7 Abs. 3c StVO).\n' +
       '➜ „Und wie viel Abstand?“' });
     kick(s, 'Überholverbot'); title(s, 'Zeichen 277 mit „7,5 t“ – dürft ihr überholen?', { w: 11.9, size: 32 });
     await sign(s, '277', 0.9, 2.2, 1.9, 1.9);
@@ -155,7 +155,7 @@ module.exports = async (deck) => {
       '▶ Sagen: „Ein Transport ist breiter, länger oder schwerer als erlaubt. Was braucht er?“\n' +
       '❓ Sammeln lassen, dann je Klick auflösen.\n' +
       '🖱 Klick 1–4: je ein Punkt.\n' +
-      '✅ § 70 StVZO: Ausnahmegenehmigung für Fahrzeuge, die von den Vorschriften über Maße und Gewichte abweichen (Urkunde mitführen). § 29 Abs. 3 StVO: Erlaubnis für den Verkehr mit Fahrzeugen und Zügen, die Abmessungen, Achslasten oder Gesamtmassen tatsächlich überschreiten. VwV-StVO zu § 29 Abs. 3, Rn. 133: Begleitfahrzeug mit nach hinten wirkender Wechselverkehrszeichen-Anlage u. a. bei Breite über 3,50 m außerhalb von Autobahnen (über 4,00 m bzw. 4,50 m auf Autobahnen). Rn. 139–143: Fahrzeiten, meist nachts. Merkblatt für Begleitfahrzeuge (BMVI 2015): BF3 (Zeichen nach hinten), BF4 (nach vorn und seitlich). BKat 116: ohne Erlaubnis 60 €, 1 Punkt.\n' +
+      '✅ § 70 StVZO: Ausnahmegenehmigung für Fahrzeuge, die von den Vorschriften über Maße und Gewichte abweichen (Urkunde mitführen). § 29 Abs. 3 StVO: Erlaubnis für den Verkehr mit Fahrzeugen und Zügen, die Abmessungen, Achslasten oder Gesamtmassen tatsächlich überschreiten. VwV-StVO zu § 29 Abs. 3, Rn. 133: Begleitfahrzeug mit nach hinten wirkender Wechselverkehrszeichen-Anlage u. a. bei Breite über 3,50 m außerhalb von Autobahnen (über 4,00 m bzw. 4,50 m auf Autobahnen). Rn. 139–143: Fahrzeiten, meist nachts. Merkblatt für Begleitfahrzeuge (BMVI 2015): BF3 (Zeichen nach hinten), BF4 (nach hinten, vorn und seitlich; VwV-StVO Rn. 131). BKat 116: ohne Erlaubnis 60 €, 1 Punkt.\n' +
       '💡 Ist nur die Ladung zu groß (Fahrzeug normal), braucht es eine Ausnahmegenehmigung nach § 46 Abs. 1 Nr. 5 StVO statt der Erlaubnis.\n' +
       '➜ „Eine Prüfungsfrage.“',
   });
