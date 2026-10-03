@@ -26,7 +26,7 @@ function wheelsLkw(H, a, S) {
   return LKW.axles.flatMap(d => [at(H, u, n, d, 1.05, S), at(H, u, n, d, -1.05, S)]);
 }
 
-// o: { H, a, b, S, nm, trailAh: [{H, b}, …] + nTrail (Bremsspur Anhänger), skidLkw: {H, a} | null, hl/hlL: Rahmenfarbe Anhänger/Lkw }
+// o: { H, a, b, S, nm, trailAh: [{H, b}, …] + nTrail (Bremsspur Anhänger), trailLkw: [{H, a}, …] + nTrailL (Spur Antriebsräder), hl/hlL: Rahmenfarbe Anhänger/Lkw }
 function zugTop(s, o) {
   const { H, a = 0, b = 0, S = 0.2, nm = 'z' } = o;
   const u = uv(a), nu = lf(u), v = uv(b), nv = lf(v);
@@ -41,8 +41,15 @@ function zugTop(s, o) {
       sk(A, B, k + '_' + j, on, 'sa');
     });
   }
-  const wl = wheelsLkw(H, a, S), wl0 = o.skidLkw ? wheelsLkw(o.skidLkw.H, o.skidLkw.a, S) : wl;
-  [2, 3, 4, 5].forEach(k => sk(wl0[k], wl[k], k, !!o.skidLkw, 'sl'));
+  const wl = wheelsLkw(H, a, S);
+  if (o.trailLkw) {
+    // Spur der Antriebsräder (Hinterachsen des Lkw): o.trailLkw = [{H, a}, …], immer o.nTrailL Abschnitte
+    const P = [...o.trailLkw.map(q => wheelsLkw(q.H, q.a, S)), wl];
+    for (let j = 0; j < o.nTrailL; j++) [2, 3, 4, 5].forEach(k => {
+      const on = j < P.length - 1, A = on ? P[j][k] : wl[k], B = on ? P[j + 1][k] : wl[k];
+      sk(A, B, k + '_' + j, on, 'sl');
+    });
+  }
   // Räder
   const wheel = (p, ang, k, tag) => box(s, p, 1.0 * S, 0.42 * S, ang, { fill: '0B0E13', rr: 0.3, name: `!!${nm}${tag}${k}` });
   wa.forEach((p, k) => wheel(p, b, k, 'wa'));
