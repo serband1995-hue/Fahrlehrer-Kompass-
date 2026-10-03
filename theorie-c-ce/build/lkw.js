@@ -18,7 +18,8 @@ function lkwSide(o = {}) {
   const circ = (x, y, rr, st) => `<circle cx="${X(x)}" cy="${Y(y)}" r="${S(rr)}" ${st}/>`;
   const path = (pts, st) => `<path d="${pts.map((p, i) => (i ? 'L' : 'M') + X(p[0]) + ' ' + Y(p[1])).join(' ')} Z" ${st}/>`;
   const cabCol = o.cabCol || '#E4E8EE', boxCol = o.boxCol || '#C9D0DA', dark = '#1A1F27', metal = '#7D8898';
-  const cabB = f - 0.22, cabT = o.cabTop ?? (f + 1.12), cabL = 1.32;
+  const cabB = f - 0.22, cabT = o.cabTop ?? (f + 1.12), cabL = o.cabL ?? 1.32;
+  const wB = Math.max(f + 0.52, cabT - 0.95), xf = 0.1 + 0.1 * (wB - f - 0.5) / Math.max(0.1, cabT - 0.62 - f); // Fensterunterkante, Frontlinie dort
   let u = '';
   // Rahmen
   u += rect(0.25, f - 0.13, L - 0.4, 0.13, `fill="#3A4250"`);
@@ -82,9 +83,9 @@ function lkwSide(o = {}) {
   // Radkasten-Ausschnitt vorn
   u += `<path d="M ${X(ax[0] - r - 0.07)} ${Y(cabB)} A ${S(r + 0.08)} ${S(r + 0.08)} 0 0 1 ${X(ax[0] + r + 0.07)} ${Y(cabB)} Z" fill="#11151B"/>`;
   // Windschutzscheibe (seitlich gesehen) und Seitenfenster
-  u += path([[0.11, f + 0.55], [0.22, cabT - 0.14], [0.3, cabT - 0.07], [0.25, f + 0.55]], `fill="#26354A"`);
-  u += path([[0.36, f + 0.52], [0.36, cabT - 0.15], [1.0, cabT - 0.15], [1.0, f + 0.52]], `fill="#2B3B52"`);
-  u += line(0.38, cabT - 0.2, 0.98, f + 0.56, `stroke="#3D5170" stroke-width="3"`);
+  u += path([[xf + 0.01, wB + 0.03], [0.22, cabT - 0.14], [0.3, cabT - 0.07], [xf + 0.15, wB + 0.03]], `fill="#26354A"`);
+  u += path([[0.36, wB], [0.36, cabT - 0.15], [1.0, cabT - 0.15], [1.0, wB]], `fill="#2B3B52"`);
+  u += line(0.38, cabT - 0.2, 0.98, wB + 0.04, `stroke="#3D5170" stroke-width="3"`);
   // Tür, Griff, Trittstufen
   const db = 2 * r + 0.1; // Türunterkante über dem Radkasten
   u += path([[0.3, db], [0.3, cabT - 0.1], [1.05, cabT - 0.1], [1.05, db]], `fill="none" stroke="#AEB6C2" stroke-width="2"`);

@@ -10,11 +10,11 @@ module.exports = async (deck) => {
 
   // ===== ANKUPPELN (fließend) =====
   {
-    const K = 0.62, GY = 4.75, L = 5.0, TX = 9.35, EYE_C = GY - 0.6 * K, EYE_LOW = GY - 0.36 * K;
+    const K = 0.55, GY = 4.75, L = 5.0, TX = 10.4, EYE_C = GY - 0.6 * K, EYE_LOW = GY - 0.36 * K;
     const XC = TX - (1.0 + 0.02) * K - (L + 0.02) * K + 0.02 * K; // Lkw-X, wenn gekuppelt (Kupplung = Zugöse)
     const fr = (dx, o = {}) => ({ ...o, t: { dx, ...(o.t || {}) } });
     await motion(deck, 'ce1k', {
-      kicker: 'Ankuppeln', ttl: 'Der Lkw kommt zum Anhänger', dur: 520, holdDur: 650,
+      kicker: 'Ankuppeln', ttl: 'So wird angekuppelt', dur: 520, holdDur: 650,
       question: 'Wer bewegt sich beim Ankuppeln – und wo darf niemand stehen?',
       answer: 'Der Lkw setzt zum gesicherten Anhänger zurück. Zwischen den Fahrzeugen darf niemand stehen – auch nicht, um die Zuggabel zu halten.',
       legend: 'Seitenansicht · schematisch',
@@ -30,8 +30,10 @@ module.exports = async (deck) => {
         s.rect(5.75, GY, 7.3, 0.03, { fill: '3C4656', name: '!!boden' });
         // Gefahrbereich
         const z0 = X + (L + 0.05) * K, z1 = TX;
-        s.rect(Math.min(z0, z1 - 0.05), GY - 1.6, Math.max(0.05, z1 - z0), 1.6, { fill: C.red, ft: zone ? 72 : 100, name: '!!zone' });
-        s.text(zone ? 'Gefahrbereich – niemand dazwischen!' : '', { x: 7.3, y: 1.55, w: 4.6, h: 0.4, size: 15, bold: true, color: C.red, align: 'center', name: '!!zt' });
+        s.rect(Math.min(z0, z1 - 0.05), GY - 1.6, Math.max(0.05, z1 - z0), 1.6, { fill: C.red, ft: zone ? 55 : 100, line: zone ? C.red : undefined, lw: 1.5, name: '!!zone' });
+        const zc = (z0 + z1) / 2;
+        s.text(zone ? 'Gefahrbereich – niemand dazwischen!' : '', { x: zc - 2.0, y: GY - 2.12, w: 4.0, h: 0.4, size: 15, bold: true, color: 'FF6B6B', align: 'center', name: '!!zt' });
+        s.oval(zc - 0.04, GY - 1.72, 0.08, 0.08, { fill: C.red, ft: zone ? 0 : 100, name: '!!ztd' });
         await lkw(s, { L, box: 'koffer', boxH: 1.45, axles: [0.78, 3.9], hitch: true }, { x: X, gy: GY, k: K, name: '!!lk' });
         const a = await anhaenger(s, { L: 4.6 }, { x: TX, gy: GY, k: K, name: 'ah' });
         const ex = TX - 1.0 * K, ey = hee ? EYE_C : EYE_LOW;
@@ -40,14 +42,14 @@ module.exports = async (deck) => {
         // Keile + Feststellbremse
         const rw = TX + (4.6 - 0.85) * K;
         s.shape(s.pres.shapes.RIGHT_TRIANGLE, { x: rw + 0.2, y: GY - 0.17, w: 0.2, h: 0.17, fill: C.am, ft: secured ? 0 : 100, name: '!!keil' });
-        s.text('P', { x: TX + 2.0 * K - 0.17, y: GY - 1.45, w: 0.34, h: 0.34, size: 13, bold: true, color: C.white, fill: C.red, ft: secured ? 0 : 100, shape: s.pres.shapes.OVAL, align: 'center', valign: 'middle', name: '!!P' });
-        s.text(secured ? 'roter Knopf gezogen, Keil' : '', { x: TX + 2.0 * K + 0.25, y: GY - 1.45, w: 2.4, h: 0.34, size: 12, bold: true, color: C.am, valign: 'middle', name: '!!pt' });
+        s.text(secured ? 'P' : '', { x: 9.4, y: 5.62, w: 0.34, h: 0.34, size: 13, bold: true, color: C.white, fill: C.red, ft: secured ? 0 : 100, shape: s.pres.shapes.OVAL, align: 'center', valign: 'middle', name: '!!P' });
+        s.text(secured ? 'Anhänger gesichert: Feststellbremse + Keil' : '', { x: 9.82, y: 5.6, w: 3.3, h: 0.38, size: 12, bold: true, color: C.am, valign: 'middle', name: '!!pt' });
         // Leitungen
         const lx0 = X + (L - 0.05) * K, lx1 = TX + 0.02;
         seg(s, lx0, GY - 1.0 * K, lx1, GY - 0.95 * K, { col: C.am, th: 0.05, hide: !lines, name: '!!lgelb' });
         seg(s, lx0, GY - 1.08 * K, lx1, GY - 1.03 * K, { col: C.red, th: 0.05, hide: !lines, name: '!!lrot' });
         s.text(coupled ? '✓  eingerastet' : '', { x: 10.5, y: 5.05, w: 2.55, h: 0.42, size: 15, bold: true, color: C.dark, fill: coupled ? C.gr : undefined, ft: coupled ? 0 : 100, shape: s.pres.shapes.ROUNDED_RECTANGLE, rr: 0.3, align: 'center', valign: 'middle', name: '!!stat' });
-        s.text(hee && !coupled ? 'Zuggabel auf Kupplungshöhe' : '', { x: 6.3, y: 5.05, w: 3.6, h: 0.35, size: 13, bold: true, color: C.mut, name: '!!heet' });
+        s.text(hee && !coupled ? 'Zuggabel auf Kupplungshöhe' : '', { x: TX - 3.2, y: 5.05, w: 3.0, h: 0.35, size: 13, bold: true, color: C.mut, align: 'right', name: '!!heet' });
       },
     });
   }
@@ -56,8 +58,8 @@ module.exports = async (deck) => {
   await photoAsk(deck, 'ce1k', {
     bg: 'k_koepfe_r.jpg', bgX: 6.0, ov: 7.0, kicker: 'Leitungen', q: 'Rot, gelb, schwarz – was ist was?', qsize: 30, w: 5.05, asize: 15,
     answers: [
-      ['LuCircle', 'Rot: Vorratsleitung', 'immer Druck – füllt den Luftbehälter des Anhängers.', C.red],
-      ['LuCircle', 'Gelb: Bremsleitung', 'nur beim Bremsen Druck – meldet den Bremswunsch.', C.am],
+      ['LuCircle', 'Rot: Vorratsleitung', 'immer Druck – füllt den Anhänger-Behälter.', C.red],
+      ['LuCircle', 'Gelb: Bremsleitung', 'Druck nur beim Bremsen – der Bremswunsch.', C.am],
       ['LuPlug', 'Schwarz: ABS/EBS-Stecker', 'Strom und Daten für die Anhängerbremse.', '8A95A6'],
       ['LuBan', 'Farben nie vertauschen', 'Verschiedenfarbige Teile nicht verbinden.', C.or],
     ],
