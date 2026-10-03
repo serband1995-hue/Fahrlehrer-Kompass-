@@ -8,10 +8,10 @@ module.exports = async (deck) => {
 
   // ===== KUPPLUNG: PRÜFUNGSFRAGE =====
   quiz(deck, 'c3g', {
-    kicker: 'Kupplung', q: 'Was erhöht den Verschleiß der Kupplung?', size: 34,
-    opts: ['Anfahren in einem hohen Gang', 'Anfahren im kleinsten Gang', 'Rangieren mit erhöhter Motordrehzahl'], ok: [0, 2],
+    kicker: 'Kupplung', q: 'Was erhöht den Kupplungsverschleiß (Schaltgetriebe)?', size: 34,
+    opts: ['Anfahren in hohem Gang', 'Anfahren in niedrigem Gang', 'Rangieren mit erhöhter Motordrehzahl'], ok: [0, 2],
     why: 'Verschleiß entsteht durch Schleifen. Hoher Gang oder hohe Drehzahl beim Rangieren lassen die Kupplung lange schleifen (Prüfungsfrage 2.7.03-214).',
-    notes: '▶ Sagen: „Hier können mehrere Antworten richtig sein – wie in der Prüfung.“\n❓ Abstimmen lassen.\n🖱 Klick 1: Antworten · Klick 2: Lösung (A und C).\n✅ A und C. Je länger die Kupplung schleift, desto mehr verschleißt sie.\n➜ „Wie schont ihr die Kupplung also?“',
+    notes: '▶ Sagen: „Hier können mehrere Antworten richtig sein – wie in der Prüfung.“\n❓ Abstimmen lassen.\n🖱 Klick 1: Antworten · Klick 2: Lösung (A und C).\n✅ A und C. Je länger die Kupplung schleift, desto mehr verschleißt sie. Amtlicher Fragetext 2.7.03-214: „Was erhöht den Kupplungsverschleiß bei Kraftfahrzeugen mit manuellem Schaltgetriebe?“\n➜ „Wie schont ihr die Kupplung also?“',
   });
 
   // ===== KUPPLUNG SCHONEN =====
@@ -19,19 +19,19 @@ module.exports = async (deck) => {
     const s = base(deck, 'c3g', { notes:
       '▶ Sagen: „Die Kupplung ist ein Verschleißteil. Ein Wechsel kostet beim Lkw schnell mehrere tausend Euro und einen Tag Stillstand.“\n' +
       '🖱 Klick 1–4: je ein Tipp · Klick 5: Warnzeichen.\n' +
-      '✅ Prüfungsfrage 2.7.03-215 „Wie können Sie die Kupplungsbauteile schonen?“: im kleinen Gang anfahren, nicht schleifen lassen, Fuß nicht auf dem Pedal lassen, beim Warten in den Leerlauf statt ausgekuppelt stehen. Amtliche Antworten: „Beim Warten Leerlauf einlegen und Fuß vom Kupplungspedal“ und „mit geringer Motordrehzahl rangieren“.\n' +
+      '✅ Prüfungsfrage 2.7.03-215 „Wie können Sie die Kupplungsbauteile bei Kraftfahrzeugen mit manuellem Schaltgetriebe schonen?“ Richtig: „Ich lege beim Warten den Leerlauf ein und nehme den Fuß vom Kupplungspedal“ und „Ich rangiere mit geringer Motordrehzahl“. Falsch: „Ich fahre in einem hohen Gang an“.\n' +
       '✅ Rutscht die Kupplung (Drehzahl steigt, Lkw wird nicht schneller) oder riecht es verbrannt: Werkstatt.\n' +
       '➜ „Jetzt zum Getriebe: Warum hat ein Lkw 12 Gänge?“' });
     kick(s, 'Kupplung'); title(s, 'So schont ihr die Kupplung');
     await point(s, 0.7, 2.05, 5.85, 1.15, 'LuArrowDown01', C.pu, 'Im kleinen Gang anfahren', '', CLICK, { size: 18 });
-    await point(s, 6.78, 2.05, 5.85, 1.15, 'LuHand', C.pu, 'Nicht schleifen lassen', '', CLICK, { size: 18 });
+    await point(s, 6.78, 2.05, 5.85, 1.15, 'LuHand', C.pu, 'Nicht schleifen lassen', '– mit wenig Gas rangieren', CLICK, { size: 18 });
     await point(s, 0.7, 3.4, 5.85, 1.15, 'LuFootprints', C.pu, 'Fuß weg vom Pedal', 'während der Fahrt', CLICK, { size: 18 });
     await point(s, 6.78, 3.4, 5.85, 1.15, 'LuCirclePause', C.pu, 'Beim Warten: Leerlauf', 'statt ausgekuppelt stehen', CLICK, { size: 18 });
     await point(s, 0.7, 4.85, 11.93, 1.4, 'LuTriangleAlert', C.red, 'Warnzeichen: Die Kupplung rutscht', '– der Motor dreht hoch, aber der Lkw wird nicht schneller. Oder es riecht verbrannt. → Werkstatt.', CLICK, { size: 18 });
   }
 
   // ===== 12 GÄNGE (Morph) =====
-  const X0 = 5.9, AW = 7.0, BY = 2.75, BH = 1.0;
+  const X0 = 5.9, AW = 6.6, BY = 2.75, BH = 1.0;
   const bw = AW / 12; // ein Gang im fertigen 12-Gang-Bild
   await steps(deck, 'c3g', {
     kicker: 'Getriebe', ttl: 'Warum 12 Gänge?',
@@ -164,14 +164,14 @@ module.exports = async (deck) => {
       '▶ Sagen: „Vor euch dieses Zeichen: 10 % Gefälle, und euer Lkw ist voll beladen.“\n' +
       '❓ „Wann schaltet ihr zurück – oben oder unten am Berg?“\n' +
       '🖱 Klick 1–3: je eine Antwort.\n' +
-      '✅ Vor dem Gefälle in einen kleineren Gang schalten. Dann wirken Motorbremse und Retarder stark, die Betriebsbremse bleibt kühl für den Notfall (Prüfungsfrage 2.7.01-257: rechtzeitig zurückschalten, Dauerbremse nutzen). Beim automatisierten Getriebe: Manuell-Modus oder Bergab-Funktion nach Betriebsanleitung.\n' +
+      '✅ Vor dem Gefälle in einen kleineren Gang schalten. Dann wirken Motorbremse und Retarder stark, die Betriebsbremse bleibt kühl für den Notfall (Prüfungsfrage 2.7.01-257: rechtzeitig zurückschalten, Dauerbremse nutzen). Beim automatisierten Getriebe: Manuell-Modus oder Bergabfunktion nach Betriebsanleitung.\n' +
       '💡 Mehr zu Dauerbremsen in der Bremsen-Lektion.\n' +
       '➜ „Kurzes Quiz zum Getriebe.“' });
     kick(s, 'Getriebe am Berg'); title(s, 'Langes Gefälle voraus – wann zurückschalten?', { w: 9.6, h: 1.4, size: 36 });
     await sign(s, '108_10', 10.9, 0.55, 1.75);
     await point(s, 0.7, 2.6, 11.93, 1.1, 'LuArrowDown01', C.pu, 'Vor dem Gefälle', 'in einen kleineren Gang schalten – unten am Berg ist es zu spät.', CLICK, { size: 19 });
-    await point(s, 0.7, 3.9, 11.93, 1.1, 'LuGauge', C.or, 'Motorbremse und Retarder', 'halten das Tempo – sie wirken im kleinen Gang am stärksten.', CLICK, { size: 19 });
-    await point(s, 0.7, 5.2, 11.93, 1.1, 'LuShieldCheck', C.gr, 'Betriebsbremse bleibt kühl', '– für den Notfall. Bei der Automatik: Manuell-Modus oder Bergab-Funktion.', CLICK, { size: 19 });
+    await point(s, 0.7, 3.9, 11.93, 1.1, 'LuGauge', C.or, 'Motorbremse und Retarder', 'halten das Tempo – im kleinen Gang bremst der Motor stärker und kühlt besser.', CLICK, { size: 19 });
+    await point(s, 0.7, 5.2, 11.93, 1.1, 'LuShieldCheck', C.gr, 'Betriebsbremse bleibt kühl', '– für den Notfall. Bei der Automatik: Manuell-Modus oder Bergabfunktion.', CLICK, { size: 19 });
   }
 
   quiz(deck, 'c3g', {

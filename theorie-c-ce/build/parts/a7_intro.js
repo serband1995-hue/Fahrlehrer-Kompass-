@@ -47,7 +47,7 @@ module.exports = async (deck) => {
   }
   // ===== WIEDERHOLUNG ABEND 6 =====
   await ask(deck, 'ce3', {
-    kicker: 'Wiederholung Abend 6', q: 'Drei Fragen von letztem Mal – wer weiß es noch?', ico: 'LuRotateCcw', qsize: 32,
+    kicker: 'Wiederholung Abend 6', q: 'Drei Fragen vom letzten Mal – wer weiß es noch?', ico: 'LuRotateCcw', qsize: 32,
     answers: [
       ['LuLink', 'Welche Leitung schließt ihr beim Ankuppeln zuerst an?', 'Gelb, die Bremsleitung – dann rot. Rot nie allein!'],
       ['LuUnlink', 'Die rote Leitung reißt ab. Was passiert?', 'Der Anhänger bremst sofort selbst. Der Lkw bremst nicht automatisch.'],

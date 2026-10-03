@@ -47,7 +47,7 @@ module.exports = async (deck) => {
   }
   // ===== WIEDERHOLUNG ABEND 3 =====
   await ask(deck, 'c7', {
-    kicker: 'Wiederholung Abend 3', q: 'Drei Fragen von letztem Mal – wer weiß es noch?', ico: 'LuRotateCcw', qsize: 32,
+    kicker: 'Wiederholung Abend 3', q: 'Drei Fragen vom letzten Mal – wer weiß es noch?', ico: 'LuRotateCcw', qsize: 32,
     answers: [
       ['LuGauge', 'Der Lkw stand übers Wochenende. Wann losfahren?', 'Erst wenn genug Luft im System ist – die Druckwarnung muss aus sein.'],
       ['LuThermometer', 'Was ist Fading?', 'Die Bremse wird zu heiß und lässt nach. Dagegen: zurückschalten, Dauerbremse nutzen.'],

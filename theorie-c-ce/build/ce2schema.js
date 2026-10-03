@@ -101,7 +101,7 @@ function schema(s, st) {
   s.text(st.pedal ? 'Bremspedal: getreten' : 'Bremspedal', { x: 5.85, y: 4.6, w: 2.5, h: 0.3, size: 12, bold: !!st.pedal, color: st.pedal ? C.txt : C.dim, name: '!!pdt' });
   // Lkw bremst / Vierkreisschutzventil
   s.text(st.lkwB ? 'Lkw bremst' : '', { x: 5.95, y: 5.05, w: 2.3, h: 0.36, size: 13, bold: true, color: C.dark, fill: st.lkwB ? C.red : undefined, ft: st.lkwB ? 0 : 100, shape: s.pres.shapes.ROUNDED_RECTANGLE, rr: 0.3, align: 'center', valign: 'middle', name: '!!lb' });
-  s.text(st.vksv ? '✓ Vierkreisschutzventil schützt den Lkw' : '', { x: 5.8, y: 3.1, w: 1.6, h: 0.85, size: 11.5, bold: true, color: C.gr, lsm: 0.9, name: '!!vk' });
+  s.text(st.vksv ? '✓ Vierkreis-\nschutzventil\nschützt den Lkw' : '', { x: 5.92, y: 3.05, w: 1.3, h: 0.9, size: 11.5, bold: true, color: C.gr, lsm: 0.9, name: '!!vk' });
   // Statuszeile
   s.text(st.msg || '', { x: 5.75, y: 5.85, w: 7.3, h: 0.75, size: 16, bold: true, color: st.msgCol || C.txt, align: 'center', valign: 'middle', name: '!!msg' });
 }

@@ -74,7 +74,7 @@ function quiz(deck, key, { kicker, q, opts, ok, why, notes, size = 32, osize = 1
 async function ask(deck, key, { kicker, q, answers, notes, ico = 'LuMessageCircleQuestion', qsize = 34, foot: ft }) {
   const s = base(deck, key, { notes });
   kick(s, kicker);
-  await badge(s, 0.7, 1.05, 0.8, s.sec.col, ico);
+  await badge(s, 0.7, 1.33, 0.8, s.sec.col, ico);   // mittig zur Frage (Textmitte bei y 1,73)
   s.text(q, { x: 1.75, y: 0.98, w: 10.9, h: 1.5, size: qsize, bold: true, color: C.txt, valign: 'middle', lsm: 0.95 });
   const n = answers.length, gap = 0.18, top = 2.85, avail = 6.55 - top;
   const h = Math.min(1.25, (avail - gap * (n - 1)) / n);

@@ -6,7 +6,7 @@ const { icon } = require('../lib');
 const CX = 6.0, CY = 6.25;
 module.exports = async (deck) => {
   await chapter(deck, 'c3d', { num: 4, ttl: 'Differenzial und Achsen', sub: 'Warum die Räder verschieden schnell drehen – und wann man sperrt.', bg: 'g_bau_r.jpg', bgX: 6.2, notes:
-    '▶ Sagen: „Letztes Kapitel von C3: das Differenzial, die Sperre und die Achsformeln wie 6×4 oder 8×4. Auf dem Bild: ein Baustellen-Kipper mit vier Achsen.“\n🖱 Keine Klicks.\n➜ „Erst die Frage: Warum braucht man überhaupt ein Differenzial?“' });
+    '▶ Sagen: „Letztes Kapitel von C3: das Differenzial, die Sperre und die Achsformeln wie 6×4 oder 8×4. Auf dem Bild: ein Baustellen-Kipper.“\n🖱 Keine Klicks.\n➜ „Erst die Frage: Warum braucht man überhaupt ein Differenzial?“' });
   // ===== DIFFERENZIAL IN DER KURVE (fließend: Achse fährt durch die Kurve) =====
   {
     const R1 = 3.2, R2 = 4.35, px = 100, IW = 7.4, IH = 5.85, OX = 5.6, OY = 0.9; // Radien innen/außen, Bildfläche
@@ -58,12 +58,13 @@ module.exports = async (deck) => {
       '🖱 Klick 1: Problem · Klick 2: Lösung Sperre · Klick 3–5: die Regeln.\n' +
       '✅ Die Differenzialsperre verbindet beide Räder fest – sie drehen gleich schnell, die Kraft geht auch an das Rad mit Grip. Es gibt Quersperren (zwischen links und rechts) und Längssperren (zwischen Achsen bei mehreren Antriebsachsen).\n' +
       '✅ Regeln aus den Betriebsanleitungen: nur bei Bedarf (lockerer, rutschiger Untergrund), nur im Stand oder in Schrittgeschwindigkeit einlegen, nicht mit durchdrehendem Rad einlegen, nicht auf griffiger Straße und nicht in Kurven fahren (der Lkw lässt sich kaum lenken, Achse und Reifen werden überlastet), sofort wieder ausschalten.\n' +
+      '✅ Prüfungsfrage 2.7.03-212 „Wann ist das Einschalten der Differenzialsperre hilfreich?“: richtig, wenn ich mich festgefahren habe und einzelne Antriebsräder durchdrehen, und wenn ich auf glatter Fahrbahn langsam geradeaus fahre – falsch: beim Rangieren auf trockener Fahrbahn. Also: Rad dreht durch → Sperre hilft, aber erst Gas weg und anhalten, dann einlegen.\n' +
       '💡 Kontrollleuchte im Cockpit zeigt: Sperre ist drin.\n' +
       '➜ „Damit zu den Bezeichnungen wie 6×4.“' });
     kick(s, 'Differenzialsperre'); title(s, 'Festgefahren – was tun?');
     await point(s, 0.7, 2.05, 5.85, 1.4, 'LuSnowflake', C.bl, 'Problem', 'Ein Rad auf Eis dreht durch – das andere bekommt kaum Kraft.', CLICK, { br: true, size: 17 });
     await point(s, 6.78, 2.05, 5.85, 1.4, 'LuLock', 'C9A227', 'Sperre', 'verbindet beide Räder fest – die Kraft geht auch an das Rad mit Grip.', CLICK, { br: true, size: 17 });
-    await point(s, 0.7, 3.65, 11.93, 0.85, 'LuGauge', C.gr, 'Nur im Stand oder im Schritttempo einlegen', '– nicht, wenn ein Rad schon durchdreht.', CLICK, { size: 17 });
+    await point(s, 0.7, 3.65, 11.93, 0.85, 'LuGauge', C.gr, 'Rad dreht durch?', 'Gas weg, anhalten – dann im Stand oder in Schrittgeschwindigkeit sperren.', CLICK, { size: 17 });
     await point(s, 0.7, 4.65, 11.93, 0.85, 'LuBan', C.red, 'Nicht auf griffiger Straße, nicht in Kurven', '– der Lkw lässt sich kaum lenken, die Achse wird überlastet.', CLICK, { size: 17 });
     await point(s, 0.7, 5.65, 11.93, 0.85, 'LuCircleCheck', C.or, 'Sofort wieder ausschalten,', 'wenn ihr frei seid. Kontrollleuchte beachten.', CLICK, { size: 17 });
   }
@@ -105,7 +106,7 @@ module.exports = async (deck) => {
       '❓ „Beim Anfahren blinkt die ASR-Leuchte. Was heißt das für euch?“\n' +
       '🖱 Klick 1: was ASR macht · Klick 2: Leuchte blinkt · Klick 3: ASR-Taste · Klick 4: Unterschied zur Sperre.\n' +
       '✅ ASR bremst das durchdrehende Rad und/oder nimmt Motorleistung zurück. Blinkt die Leuchte, regelt die ASR gerade: Die Straße ist glatt – Gas zurück. Leuchtet sie dauernd: ASR aus oder gestört (je nach Hersteller).\n' +
-      '✅ ASR-Taste (Offroad- oder Tiefschnee-Funktion): nur bei Tiefschnee, losem Untergrund, mit Schneeketten oder zum Freifahren – am Berg erst, wenn ihr langsamer als etwa 25–30 km/h seid. Bei höherem Tempo nicht: Die Antriebsachse kann ausbrechen. Danach wieder einschalten (Quelle: eurotransport, Lkw-Fahren im Winter; Betriebsanleitung).\n' +
+      '✅ ASR-Taste (Offroad- oder Tiefschnee-Funktion): nur bei Tiefschnee, losem Untergrund, mit Schneeketten oder zum Freifahren – nur langsam, nach Betriebsanleitung. Bei höherem Tempo nicht: Die Antriebsachse kann ausbrechen. Danach wieder einschalten.\n💡 Praxistipp: am Berg erst unter etwa 25–30 km/h abschalten (eurotransport 2011, Lkw-Fahren im Winter) – Herstellerwerte können abweichen.\n' +
       '➜ „Damit ist Kapitel 4 geschafft. Zeit zum Mitschreiben.“' });
     kick(s, 'Antriebs-Schlupf-Regelung (ASR)'); title(s, 'Der automatische Helfer beim Anfahren');
     // Kontrollleuchte (schematisch)
@@ -117,7 +118,7 @@ module.exports = async (deck) => {
     s.text('blinkt = ASR regelt gerade', { x: 0.8, y: 5.4, w: 3.4, h: 0.7, size: 15, bold: true, color: C.am, align: 'center' });
     await point(s, 4.55, 2.05, 8.08, 1.0, 'LuCog', 'C9A227', 'Was macht ASR?', 'bremst das durchdrehende Rad und nimmt Gas weg – automatisch.', CLICK, { size: 16 });
     await point(s, 4.55, 3.2, 8.08, 1.0, 'LuSnowflake', C.bl, 'Leuchte blinkt:', 'die Straße ist glatt – Gas zurücknehmen.', CLICK, { size: 16 });
-    await point(s, 4.55, 4.35, 8.08, 1.0, 'LuPower', C.or, 'ASR-Taste nur bei Tiefschnee, Ketten, losem Boden –', 'langsamer als etwa 25–30 km/h. Danach wieder an.', CLICK, { size: 16 });
+    await point(s, 4.55, 4.35, 8.08, 1.0, 'LuPower', C.or, 'ASR-Taste nur bei Tiefschnee, Ketten, losem Boden', '– nur langsam, nach Betriebsanleitung. Danach wieder an.', CLICK, { size: 16 });
     await point(s, 4.55, 5.5, 8.08, 0.95, 'LuLock', C.mut, 'Nicht verwechseln:', 'ASR regelt von selbst – die Sperre verriegelt fest.', CLICK, { size: 16 });
   }
 };
