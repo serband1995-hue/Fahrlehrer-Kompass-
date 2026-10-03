@@ -95,7 +95,7 @@ module.exports = async (deck) => {
       const ok = i === 1;
       s.text(ok ? 'passt!' : (i === 0 ? 'zu tief' : ''), { x: 11.5, y: 3.9, w: 1.7, h: 0.4, size: 17, bold: true, color: ok ? C.gr : (i === 0 ? C.or : C.dim), name: '!!thoehe' });
       s.text(i === 2 ? '↓ Fahrniveau' : (i === 1 ? '↑ angehoben' : ''), { x: 11.5, y: 3.4, w: 1.75, h: 0.4, size: 17, bold: true, color: i === 2 ? C.gr : C.bl, name: '!!tniv' });
-      s.text('Luftbalg', { x: bx + 0.1 * K - 0.45, y: bot + 0.14, w: 1.0, h: 0.28, size: 13, bold: true, color: C.bl, align: 'center', name: '!!tbalg' });   // direkt unter dem Balg, über der Bodenlinie
+      s.text('Luftbalg', { x: bx + 0.1 * K - 0.33, y: bot + 0.14, w: 1.0, h: 0.28, size: 13, bold: true, color: C.bl, align: 'center', name: '!!tbalg' });   // direkt unter dem Balg, über der Bodenlinie
       if (i === 1) {
         // Warnung über der Szene (links steht die Frage an die Klasse)
         s.img(await icon('LuTriangleAlert', C.red), { x: 5.85, y: 1.7, w: 0.45, h: 0.45, name: '!!warn' });
@@ -293,7 +293,7 @@ module.exports = async (deck) => {
     s.oval(3.77, 5.24, 0.16, 0.44, { fill: 'A08A6A', line: C.red, lw: 1.5 }, CLICK);          // Stein steckt im Spalt (so schmal wie der Spalt)
     s.oval(3.35, 4.96, 1.0, 1.0, { line: C.red, lw: 3 }, { fx: 'zoom', dur: 300 });
     s.text('Stein!', { x: 4.42, y: 5.5, w: 0.85, h: 0.38, size: 17, bold: true, color: C.red, fill: '0A0F16', line: C.red, lw: 1.5, shape: deck.pres.shapes.ROUNDED_RECTANGLE, rr: 0.2, align: 'center', valign: 'middle' }, { fx: 'fade', dur: 200 });
-    await point(s, 6.55, 2.05, 6.08, 1.4, 'LuGauge', C.or, 'Druck am kalten Reifen prüfen', 'Werte aus Betriebsanleitung oder Tabelle. Zu wenig Druck: Hitze, schlechte Fahrstabilität, mehr Verbrauch – bis zum Platzen.', CLICK, { br: true, size: 16 });
+    await point(s, 6.55, 2.05, 6.08, 1.4, 'LuGauge', C.or, 'Druck am kalten Reifen prüfen', 'Werte aus Betriebsanleitung oder Tabelle. Zu wenig Druck: Hitze, schlechte Fahrstabilität, mehr Verbrauch, Platzgefahr.', CLICK, { br: true, size: 16 });
     await point(s, 6.55, 3.58, 6.08, 1.4, 'LuCopy', C.bl, 'Beide gleich:', 'gleiche Größe, gleiche Bauart, gleicher Druck. Steine dazwischen entfernen.', CLICK, { br: true, size: 16 });
     await point(s, 6.55, 5.11, 6.08, 1.4, 'LuTriangleAlert', C.red, 'Druckverlust gemeldet?', 'An der nächsten geeigneten Stelle anhalten und nachsehen – der Partner wird überlastet.', CLICK, { br: true, size: 16 });
   }
@@ -318,7 +318,7 @@ module.exports = async (deck) => {
     s.oval(CX - 0.28, CY - 0.28, 0.56, 0.56, { fill: '55606F', line: '7D8898', lw: 1 });
     // Anzeiger: je Mutter ein Pfeil, der unter der Mutter hervorkommt. Alle zeigen im Uhrzeigersinn entlang des Kreises –
     // nur einer (rechts) ist um 60° verdreht: Diese Mutter hat sich gelöst.
-    const PL = 0.32, PH = 0.16, BAD = 0;
+    const PL = 0.38, PH = 0.15, BAD = 0;
     const pointer = (nx, ny, deg, fill, anim) => { const t = deg * Math.PI / 180; s.shape(deck.pres.shapes.PENTAGON, { x: nx + Math.cos(t) * PL / 2 - PL / 2, y: ny + Math.sin(t) * PL / 2 - PH / 2, w: PL, h: PH, fill, rotate: Math.round(deg) % 360 }, anim); };
     for (let k = 0; k < 10; k++) {
       const a = k * Math.PI / 5, nx = CX + RN * Math.cos(a), ny = CY + RN * Math.sin(a), deg = a * 180 / Math.PI + (k === BAD ? 30 : 90);
