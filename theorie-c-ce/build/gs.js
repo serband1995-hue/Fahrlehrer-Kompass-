@@ -270,3 +270,19 @@ function seg(s, x1, y1, x2, y2, o = {}) {
   return s.rrect((x1 + x2) / 2 - L / 2, (y1 + y2) / 2 - th / 2, L, th, { fill: o.col || C.or, ft: o.hide ? 100 : (o.ft || 0), rr: o.rr ?? 0.3, rotate: Math.round(deg * 10) / 10, name: o.name, line: o.line, lw: o.lw, glow: o.glow, glowColor: o.col || C.or });
 }
 module.exports.seg = seg;
+// Sattelauflieger (Seitenansicht, Front links bei x): Aufbau und Stützwinden als getrennte Bilder (!!name / !!nameL)
+async function auflieger(s, o = {}, { x, gy, k = 1, name = 'af', rot } = {}) {
+  const { aufliegerSide } = require('./lkw');
+  const r = aufliegerSide(o), w = r.W / 100 * k, h = r.H / 100 * k, X0 = x - r.pad * k, Y0 = gy - r.Ht * k;
+  s.img(await svgImg(r.body, r.W, r.H, 2.5), { x: X0, y: Y0, w, h, rotate: rot, name: '!!' + name });
+  s.img(await svgImg(r.legs, r.W, r.H, 2.5), { x: X0, y: Y0, w, h, rotate: rot, name: '!!' + name + 'L' });
+  return { pt: (nx, ny) => [x + nx * k, gy - ny * k], r };
+}
+// Deichselanhänger (Seitenansicht, Front links bei x); pivot = Drehpunkt der Deichsel in Folienkoordinaten
+async function anhaenger(s, o = {}, { x, gy, k = 1, name = 'ah' } = {}) {
+  const { anhaengerSide } = require('./lkw');
+  const r = anhaengerSide(o), w = r.W / 100 * k, h = r.H / 100 * k;
+  s.img(await svgImg(r.body, r.W, r.H, 2.5), { x: x - r.pad * k, y: gy - r.Ht * k, w, h, name: '!!' + name });
+  return { pt: (nx, ny) => [x + nx * k, gy - ny * k], pivot: [x + r.pivot[0] * k, gy - r.pivot[1] * k], r };
+}
+module.exports.auflieger = auflieger; module.exports.anhaenger = anhaenger;

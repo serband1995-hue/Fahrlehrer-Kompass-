@@ -59,6 +59,24 @@ function lkwSide(o = {}) {
     u += rect(L - 0.2, 0.3, 0.06, f - 0.42, `fill="#5E6876"`);
     u += rect(L - 0.26, 0.26, 0.22, 0.09, `fill="#9AA6B5"`);
   }
+  // Sattelzugmaschine: Rückleuchte am Rahmenende und Sattelkupplung (o.sattel = Mitte der Platte)
+  if (box === 'none') {
+    u += rect(L - 0.14, f - 0.24, 0.1, 0.12, `fill="#C0392B"`);
+    u += rect(L - 0.2, 0.36, 0.06, f - 0.48, `fill="#5E6876"`);
+  }
+  if (o.sattel) {
+    const sx = o.sattel;
+    u += rect(sx - 0.42, f, 0.84, 0.06, `fill="#2E343D"`);                         // Montageplatte
+    u += path([[sx - 0.3, f + 0.06], [sx + 0.3, f + 0.06], [sx + 0.22, f + 0.13], [sx - 0.22, f + 0.13]], `fill="#3C4350"`); // Lagerbock
+    u += rect(sx - 0.55, f + 0.13, 1.1, 0.07, `rx="3" fill="#1F242B" stroke="#4A5361" stroke-width="2"`); // Platte
+    u += rect(sx + 0.38, f + 0.07, 0.2, 0.03, `fill="#E0A31A"`);                   // Entriegelungsgriff
+  }
+  // Anhängekupplung (Bolzenkupplung) am hinteren Querträger
+  if (o.hitch) {
+    u += rect(L - 0.3, 0.42, 0.22, 0.3, `fill="#2E343D"`);
+    u += path([[L - 0.08, 0.44], [L + 0.05, 0.4], [L + 0.05, 0.74], [L - 0.08, 0.7]], `fill="#3C4350" stroke="#596273" stroke-width="2"`); // Fangmaul
+    u += rect(L - 0.03, 0.47, 0.04, 0.32, `fill="#9AA6B5"`);                        // Kupplungsbolzen
+  }
   // Fahrerhaus
   u += path([[0.04, cabB], [0.04, f + 0.38], [0.1, f + 0.5], [0.2, cabT - 0.12], [0.34, cabT], [cabL, cabT], [cabL, cabB]], `fill="${cabCol}" stroke="#AEB6C2" stroke-width="2"`);
   // Radkasten-Ausschnitt vorn
@@ -123,4 +141,68 @@ function lkwRear(o = {}) {
   for (const x of [0.6, Wd - 0.66]) s += rect(x, 0.4, 0.06, f - 0.68, `fill="#5E6876"`);
   return { svg: s, W, H, pad, Ht };
 }
-module.exports = { lkwSide, lkwRear };
+
+// Sattelauflieger (Seitenansicht, Front links bei x = 0). Gibt Aufbau und Stützwinden getrennt zurück (für Morph).
+function aufliegerSide(o = {}) {
+  const L = o.L ?? 8.0, fl = o.floor ?? 0.98, boxH = o.boxH ?? 1.45, r = o.r ?? 0.3, kp = o.kp ?? 0.55, lg = o.lg ?? 1.75;
+  const ax = o.axles ?? [L - 2.55, L - 1.8, L - 1.05], legs = o.legs ?? 0;
+  const pad = 0.15, Ht = fl + boxH + 0.15;
+  const W = Math.round((L + 2 * pad) * 100), H = Math.round(Ht * 100);
+  const X = x => ((x + pad) * 100).toFixed(1), Y = y => ((Ht - y) * 100).toFixed(1), S = v => (v * 100).toFixed(1);
+  const rect = (x, y, w, h, st) => `<rect x="${X(x)}" y="${Y(y + h)}" width="${S(w)}" height="${S(h)}" ${st}/>`;
+  const circ = (x, y, rr, st) => `<circle cx="${X(x)}" cy="${Y(y)}" r="${S(rr)}" ${st}/>`;
+  const col = o.col || '#C9D0DA';
+  let u = '';
+  u += rect(0, fl - 0.14, L, 0.14, `fill="#3A4250"`);                                   // Rahmen
+  u += rect(kp - 0.05, fl - 0.24, 0.1, 0.1, `fill="#9AA6B5"`);                           // Königszapfen
+  u += rect(0, fl, L, boxH, `fill="${col}" stroke="#97A1AE" stroke-width="2"`);          // Koffer
+  for (let x = 0.45; x < L - 0.2; x += 0.45) u += `<line x1="${X(x)}" y1="${Y(fl + 0.04)}" x2="${X(x)}" y2="${Y(fl + boxH - 0.04)}" stroke="#B3BBC6" stroke-width="2"/>`;
+  u += rect(0, fl + boxH - 0.07, L, 0.07, `fill="#A9B2BE"`);
+  u += rect(L - 0.06, fl, 0.06, boxH, `fill="#9AA4B1"`);
+  // seitlicher Unterfahrschutz, Kotflügel, Rückleuchte, Unterfahrschutz hinten
+  for (const hh of [0.32, 0.5]) u += rect(lg + 0.35, hh, ax[0] - r - lg - 0.5, 0.045, `fill="#9AA6B5"`);
+  u += rect(ax[0] - r - 0.08, r * 2 + 0.06, ax[ax.length - 1] - ax[0] + 2 * r + 0.16, 0.06, `fill="#2A303A"`);
+  u += rect(L - 0.14, fl - 0.3, 0.1, 0.12, `fill="#C0392B"`);
+  u += rect(L - 0.22, 0.3, 0.06, fl - 0.44, `fill="#5E6876"`);
+  u += rect(L - 0.3, 0.26, 0.26, 0.09, `fill="#9AA6B5"`);
+  // Räder
+  let w = '';
+  for (const a of ax) {
+    w += circ(a, r, r, `fill="#14181E"`);
+    w += circ(a, r, r * 0.58, `fill="#A7B1BE" stroke="#7D8898" stroke-width="2"`);
+    w += circ(a, r, r * 0.22, `fill="#6E7888"`);
+  }
+  // Stützwinden: legs = 1 ausgefahren (Fuß am Boden), 0 eingefahren
+  const foot = 0.04 + (1 - legs) * 0.4;
+  let g = rect(lg - 0.06, foot + 0.06, 0.12, fl - 0.14 - foot - 0.06, `fill="#E0A31A"`) + rect(lg - 0.13, foot, 0.26, 0.06, `fill="#8A6A14"`) + rect(lg + 0.07, fl - 0.5, 0.12, 0.05, `fill="#5E6876"`);
+  return { body: u + w, legs: g, W, H, pad, Ht };
+}
+
+// Deichselanhänger (Drehschemel, Front links bei x = 0). Deichsel getrennt (Drehpunkt an der Vorderachse, für Morph).
+function anhaengerSide(o = {}) {
+  const L = o.L ?? 4.6, fl = o.floor ?? 0.88, boxH = o.boxH ?? 1.45, r = o.r ?? 0.3, ax = o.axles ?? [0.85, L - 0.85];
+  const pad = 0.15, Ht = fl + boxH + 0.15;
+  const W = Math.round((L + 2 * pad) * 100), H = Math.round(Ht * 100);
+  const X = x => ((x + pad) * 100).toFixed(1), Y = y => ((Ht - y) * 100).toFixed(1), S = v => (v * 100).toFixed(1);
+  const rect = (x, y, w, h, st) => `<rect x="${X(x)}" y="${Y(y + h)}" width="${S(w)}" height="${S(h)}" ${st}/>`;
+  const circ = (x, y, rr, st) => `<circle cx="${X(x)}" cy="${Y(y)}" r="${S(rr)}" ${st}/>`;
+  const col = o.col || '#C9D0DA';
+  let u = '';
+  u += rect(0.1, fl - 0.14, L - 0.2, 0.14, `fill="#3A4250"`);
+  u += rect(ax[0] - 0.42, fl - 0.24, 0.84, 0.1, `fill="#2E343D"`);                      // Drehschemel
+  u += rect(0, fl, L, boxH, `fill="${col}" stroke="#97A1AE" stroke-width="2"`);
+  for (let x = 0.45; x < L - 0.2; x += 0.45) u += `<line x1="${X(x)}" y1="${Y(fl + 0.04)}" x2="${X(x)}" y2="${Y(fl + boxH - 0.04)}" stroke="#B3BBC6" stroke-width="2"/>`;
+  u += rect(0, fl + boxH - 0.07, L, 0.07, `fill="#A9B2BE"`);
+  u += rect(L - 0.06, fl, 0.06, boxH, `fill="#9AA4B1"`);
+  u += rect(L - 0.14, fl - 0.3, 0.1, 0.12, `fill="#C0392B"`);
+  u += rect(L - 0.22, 0.3, 0.06, fl - 0.44, `fill="#5E6876"`);
+  for (const a of ax) u += rect(a - r - 0.08, r * 2 + 0.06, 2 * r + 0.16, 0.06, `fill="#2A303A"`);
+  let w = '';
+  for (const a of ax) {
+    w += circ(a, r, r, `fill="#14181E"`);
+    w += circ(a, r, r * 0.58, `fill="#A7B1BE" stroke="#7D8898" stroke-width="2"`);
+    w += circ(a, r, r * 0.22, `fill="#6E7888"`);
+  }
+  return { body: u + w, W, H, pad, Ht, pivot: [ax[0], 0.55] };
+}
+module.exports = { lkwSide, lkwRear, aufliegerSide, anhaengerSide };
