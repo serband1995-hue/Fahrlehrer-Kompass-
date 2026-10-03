@@ -54,7 +54,7 @@ module.exports = async (deck) => {
           s.text(q ? sb : sa, { x: 10.15, y: r.y - 0.42, w: 2.9, h: 0.36, size: 14, bold: true, color: C.txt, align: 'right', valign: 'middle', name: '!!st' + q });
           s.rect(5.75, r.y, 7.3, RH, { fill: C.road, name: '!!road' + q });
           for (let j = 0; j < 9; j++) s.rect(5.9 + j * 0.85, r.y + 0.03, 0.4, 0.03, { fill: '5A6576', name: '!!rm' + q + j });
-          s.rect(SL, r.y, 0.07, RH, { fill: C.mark, name: '!!sl' + q });
+          s.rect(SL, r.y, 0.07, RH, { fill: C.mark, ft: Math.abs(x - SL) < HL ? 100 : 0, name: '!!sl' + q });   // unter dem Lkw ausblenden
           // Ampel am Rand
           s.rrect(11.7, r.y + RH + 0.04, 0.62, 0.3, { fill: '161B23', line: '3C4656', lw: 1, rr: 0.4, name: '!!amp' + q });
           s.oval(11.75, r.y + RH + 0.07, 0.24, 0.24, { fill: green ? '4A1C1C' : C.red, glow: green ? undefined : 8, glowColor: C.red, name: '!!ar' + q });
@@ -84,7 +84,6 @@ module.exports = async (deck) => {
     let g = `<circle cx="200" cy="200" r="196" fill="#0B1119" stroke="#2A3342" stroke-width="3"/>` + arc(0, MAX, 160, 16, '#2A3342') + arc(1000, 1400, 160, 18, '#38D98A') + arc(2100, MAX, 160, 18, '#FF5C5C');
     for (let r = 0; r <= MAX; r += 100) { const [x0, y0] = pol(r, r % 500 ? 140 : 132), [x1, y1] = pol(r, 150); g += `<line x1="${x0.toFixed(1)}" y1="${y0.toFixed(1)}" x2="${x1.toFixed(1)}" y2="${y1.toFixed(1)}" stroke="#A9B6C6" stroke-width="${r % 500 ? 2 : 4}"/>`; }
     for (let r = 0; r <= MAX; r += 500) { const [x, y] = pol(r, 108); g += `<text x="${x.toFixed(1)}" y="${(y + 9).toFixed(1)}" font-family="Lato, Arial" font-size="26" font-weight="bold" fill="#F3F5F8" text-anchor="middle">${r / 100}</text>`; }
-    g += `<text x="200" y="300" font-family="Lato, Arial" font-size="18" fill="#738296" text-anchor="middle">× 100 /min</text>`;
     const dial = await svgImg(g, 400, 400, 2);
     const needle = await svgImg(`<path d="M195 205 L198 52 L202 52 L205 205 Z" fill="#FFB547"/><circle cx="200" cy="200" r="16" fill="#3C4656" stroke="#FFB547" stroke-width="4"/>`, 400, 400, 2);
     const fr = (rpm, gang, o = {}) => ({ ...o, t: { rpm, gang, ...(o.t || {}) } });
@@ -92,7 +91,7 @@ module.exports = async (deck) => {
       kicker: 'Drehzahl', ttl: 'Früh hochschalten', dur: 480, holdDur: 650,
       question: 'Wann schaltet ihr hoch – und wo soll der Zeiger möglichst stehen?',
       answer: 'Früh hochschalten und im grünen Bereich fahren – dort braucht der Motor am wenigsten Diesel.',
-      legend: 'Drehzahlmesser · grüner Bereich ist ein Beispiel – maßgeblich ist euer Drehzahlmesser bzw. die Betriebsanleitung',
+      legend: 'Skala × 100 /min · grüner Bereich ist ein Beispiel – maßgeblich ist euer Drehzahlmesser bzw. die Betriebsanleitung',
       frames: [
         fr(1900, 8, { hold: true, t: { v: 0.9 }, cap: 'Der Zeiger steht hoch, kurz vor Rot. Der Motor dreht unnötig schnell – das kostet Diesel.', note: '▶ Sagen: „Der Lkw beschleunigt im 8. Gang, der Zeiger steht bei 1.900 – kurz vor dem roten Bereich. Laut, durstig, verschleißt.“\n❓ Frage auf der Folie stellen.\n🖱 Klick: Hochschalten (läuft von selbst).\n➜ „Schalten wir hoch.“' }),
         fr(1350, 9, { t: { v: 0.6 }, cap: 'Hochschalten: Der Zeiger fällt. Gleiches Tempo, weniger Umdrehungen.' }),

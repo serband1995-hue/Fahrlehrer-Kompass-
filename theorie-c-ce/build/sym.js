@@ -25,6 +25,10 @@ function warnSym(kind, c = '#FF5C5C') {
       return `<path d="M300 130 Q440 130 440 256 Q440 382 300 382 Z" ${st}/><path d="M240 160 L80 210 M240 230 L80 280 M240 300 L80 350 M240 370 L80 420" ${st}/>`;
     case 'fern': // Fernlicht: Leuchte, Strahlen waagerecht
       return `<path d="M300 130 Q440 130 440 256 Q440 382 300 382 Z" ${st}/><path d="M240 150 L70 150 M240 220 L70 220 M240 290 L70 290 M240 360 L70 360" ${st}/>`;
+    case 'nebel': // Nebelscheinwerfer: Leuchte, geneigte Strahlen, von einer Wellenlinie gekreuzt
+      return `<path d="M300 130 Q440 130 440 256 Q440 382 300 382 Z" ${st}/><path d="M240 160 L80 210 M240 230 L80 280 M240 300 L80 350 M240 370 L80 420" ${st}/><path d="M165 120 q-30 35 0 70 t0 70 t0 70 t0 70 t0 70" ${st}/>`;
+    case 'hinweis': // allgemeiner Hinweis: Dreieck mit Ausrufezeichen
+      return `<path d="M256 70 L462 420 L50 420 Z" ${st}/><path d="M256 180 L256 310" ${st}/><circle cx="256" cy="365" r="20" ${fl}/>`;
     case 'stop':
       return `<path d="M180 60 L332 60 L452 180 L452 332 L332 452 L180 452 L60 332 L60 180 Z" ${fl}/><text x="256" y="300" text-anchor="middle" font-family="DejaVu Sans" font-weight="bold" font-size="120" fill="#0A0F16">STOP</text>`;
   }

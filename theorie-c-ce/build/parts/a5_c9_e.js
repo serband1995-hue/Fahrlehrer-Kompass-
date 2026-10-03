@@ -1,4 +1,5 @@
 // Abend 5 · C9: Kapitel 5 Abfahrtkontrolle (Rundgang), einfache Störungen
+const { warnSym } = require('../sym');
 const { C, sec, base, kick, title, point, CLICK, chapter, motion, steps, veh, ask, quiz, write, takeaway, svgImg } = require('../gs');
 const { icon } = require('../lib');
 
@@ -73,9 +74,9 @@ module.exports = async (deck) => {
   // ===== WARNLEUCHTEN: ROT – GELB – GRÜN (Morph) =====
   {
     const G = [
-      { col: C.red, lab: 'ROT', sub: 'So bald wie möglich sicher anhalten!', ic: ['LuGauge', 'LuThermometer', 'LuDroplet', 'LuBatteryWarning'], tx: ['Druckluft', 'Kühlwasser', 'Öldruck', 'Ladestrom'] },
-      { col: C.am, lab: 'GELB', sub: 'Weiterfahrt meist möglich – bald in die Werkstatt', ic: ['LuCircleAlert', 'LuDisc', 'LuDroplets', 'LuTriangleAlert'], tx: ['Motorstörung', 'ABS-Störung', 'AdBlue niedrig', 'Hinweis'] },
-      { col: C.gr, lab: 'GRÜN / BLAU', sub: 'Nur Info: Eine Funktion ist eingeschaltet', ic: ['LuLightbulb', 'LuArrowLeftRight', 'LuSun', 'LuCloudFog'], tx: ['Abblendlicht', 'Blinker', 'Fernlicht (blau)', 'Nebelscheinwerfer'] },
+      { col: C.red, lab: 'ROT', sub: 'So bald wie möglich sicher anhalten!', ic: ['brems', 'kuehl', 'oel', 'batt'], tx: ['Druckluft', 'Kühlwasser', 'Öldruck', 'Ladestrom'] },
+      { col: C.am, lab: 'GELB', sub: 'Weiterfahrt meist möglich – bald in die Werkstatt', ic: ['motor', 'abs', 'adblue', 'hinweis'], tx: ['Motorstörung', 'ABS-Störung', 'AdBlue niedrig', 'Hinweis'] },
+      { col: C.gr, lab: 'GRÜN / BLAU', sub: 'Nur Info: Eine Funktion ist eingeschaltet', ic: ['abblend', 'blink', 'fern', 'nebel'], tx: ['Abblendlicht', 'Blinker', 'Fernlicht (blau)', 'Nebelscheinwerfer'] },
     ];
     await steps(deck, 'c9a', {
       kicker: 'Einfache Störungen', ttl: 'Warnleuchten lesen',
@@ -100,8 +101,9 @@ module.exports = async (deck) => {
           for (let q = 0; q < 4; q++) {
             const x = 6.0 + q * 1.72;
             const cc = g === 2 && q === 2 ? '3B82F6' : c;
-            s.oval(x + 0.4, y + 0.45, 0.62, 0.62, { fill: on ? cc : '1A2230', line: on ? cc : '2A3342', lw: 1, glow: on ? 10 : undefined, glowColor: cc, name: '!!lo' + g + q });
-            s.img(await icon(G[g].ic[q], on ? C.dark : '4A5668'), { x: x + 0.54, y: y + 0.59, w: 0.34, h: 0.34, name: '!!li' + g + q });
+            // Leuchte wie im Cockpit: genormtes Symbol leuchtet in seiner Farbe auf dunklem Grund
+            s.rrect(x + 0.33, y + 0.42, 0.76, 0.68, { fill: '05080D', line: on ? cc : '2A3342', lw: 1, rr: 0.12, name: '!!lo' + g + q });
+            s.img(await svgImg(warnSym(G[g].ic[q], '#' + (on ? cc : '3A4656')), 512, 512, 0.6), { x: x + 0.43, y: y + 0.48, w: 0.56, h: 0.56, name: '!!li' + g + q, glowColor: cc });
             s.text(G[g].tx[q], { x: x - 0.1, y: y + 1.08, w: 1.62, h: 0.28, size: 12, color: on ? C.txt : C.dim, align: 'center', name: '!!lt' + g + q });
           }
         }

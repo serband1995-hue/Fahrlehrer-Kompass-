@@ -33,7 +33,7 @@ module.exports = async (deck) => {
       legend: 'Draufsicht · Anteile der Nutzlast (DIN EN 12642) · gerundet',
       scene: async (s, i) => {
         const xl = i === 3, on = k => xl || (k === 'front' && i === 0) || (k === 'side' && i === 1) || (k === 'rear' && i === 2);
-        const col = k => on(k) ? (xl ? C.gr : 'C9A227') : '5A6576';
+        const col = k => on(k) ? (xl ? C.gr : 'C9A227') : '6E7B8F';
         // Fahrerhaus + Aufbau
         s.rrect(6.75, 1.55, 2.1, 0.85, { fill: 'D4D9E1', line: '9AA4B1', lw: 1, rr: 0.25, name: '!!cab' });
         s.rect(6.6, 2.55, 2.4, 3.8, { fill: '1A2230', name: '!!box' });
@@ -91,7 +91,7 @@ module.exports = async (deck) => {
         fr(0.5, { hold: true, cap: 'Die 8 Tonnen stehen ganz vorn an der Stirnwand. Gut für den Formschluss – aber was sagt der Plan?', note: '▶ Sagen: „8 Tonnen auf einem 18-Tonner. Wir stellen sie ganz nach vorn an die Stirnwand – das ist doch gut für den Formschluss, oder?“\n❓ Frage auf der Folie stellen.\n💡 Unten ist der Lastverteilungsplan: Die grüne Fläche zeigt, wie viel Ladung an welcher Stelle erlaubt ist. Der Punkt zeigt unsere 8 Tonnen.\n🖱 Klick: Die Ladung wandert nach hinten (läuft von selbst bis zur Mitte).\n➜ „Vorne ist die Vorderachse überlastet. Schieben wir sie nach hinten.“' }),
         fr(1.3, { cap: 'Wir schieben die Ladung nach hinten …' }), fr(2.1),
         fr(3.1, { hold: true, cap: 'In der Mitte passt alles: Beide Achsen sind im grünen Bereich.', note: '▶ „Jetzt passt es: Der Punkt liegt in der grünen Fläche. Vorder- und Hinterachse sind unter ihrer Grenze.“\n🖱 Klick: Die Ladung wandert weiter nach hinten.\n➜ „Und ganz hinten?“' }),
-        fr(4.0), fr(5.0),
+        fr(4.0, { cap: 'Wir schieben noch weiter nach hinten …' }), fr(5.0),
         fr(6.2, { hold: true, answer: true, cap: 'Ganz hinten: Die Hinterachse ist überlastet – und die Vorderachse zu leicht. Der Lkw lenkt und bremst schlecht.', note: '▶ „Ganz hinten ist die Hinterachse überlastet. Und vorne fehlt Gewicht – die Lenkachse wird zu leicht, der Lkw lenkt schlecht.“\n✅ Prüfungsfragen 2.2.22-217 (Lastverteilungsplan einhalten: Achslastüberschreitungen vermeiden, Lenkfähigkeit gewährleisten), 2.2.22-218 (auch Achslastunterschreitungen vermeiden), 2.2.22-219 (Folgen: Reifenschäden, Lenkfähigkeit, Bremsverhalten), 2.2.22-220 (Angaben zum Ladungsschwerpunkt bei maximal zulässiger Last).\n✅ DGUV Vorschrift 70 § 37 (Durchführungsanweisung): Die gelenkte Achse muss mindestens 20 % des Fahrzeuggewichts tragen.\n💡 Bei Stückgut-Touren wandert der Schwerpunkt nach jedem Abladen – dann neu prüfen und ggf. umstauen.\n💡 Steht die Ladung wegen des Plans nicht an der Stirnwand, muss die Lücke nach vorn gesichert werden (Füllmittel, Sperrbalken oder Direktzurren).\n💡 Zahlen sind ein Beispiel – jeder Lkw hat seinen eigenen Plan (vom Aufbauhersteller).\n🖱 Keine Animation mehr – nächster Klick: nächste Folie.\n➜ „Kurz zur Prüfung.“' }),
       ],
       scene: async (s, { d }) => {
@@ -115,13 +115,13 @@ module.exports = async (deck) => {
         s.rect(CX0, cy(11), 0.015, 11 * CYS, { fill: '4A5668', name: '!!yAx' });
         s.rect(CX0, CY0, 7 * CXS, 0.015, { fill: '4A5668', name: '!!xAx' });
         s.img(curve, { x: CX0, y: cy(11), w: 7 * CXS, h: 11 * CYS, name: '!!kurve' });
-        [5, 10].forEach(p => s.text(p + ' t', { x: 5.95, y: cy(p) - 0.13, w: 0.68, h: 0.26, size: 12, color: C.dim, align: 'right', name: '!!yt' + p }));
-        [0, 2, 4, 6].forEach(m => s.text(m + ' m', { x: cx(m) - 0.3, y: CY0 + 0.03, w: 0.6, h: 0.24, size: 12, color: C.dim, align: 'center', name: '!!xt' + m }));
+        [5, 10].forEach(p => s.text(p + ' t', { x: 5.95, y: cy(p) - 0.13, w: 0.68, h: 0.26, size: 12, color: C.mut, align: 'right', name: '!!yt' + p }));
+        [0, 2, 4, 6].forEach(m => s.text(m + ' m', { x: cx(m) - 0.3, y: CY0 + 0.03, w: 0.6, h: 0.24, size: 12, color: C.mut, align: 'center', name: '!!xt' + m }));
         s.lineS(CX0, cy(P0), CX0 + 7 * CXS, cy(P0), { color: C.mut, lw: 1.25, dash: 'dash', name: '!!l8' });
         s.text('8 t', { x: CX0 + 7 * CXS + 0.05, y: cy(P0) - 0.14, w: 0.5, h: 0.28, size: 12, bold: true, color: C.mut, name: '!!l8t' });
-        s.text('Vorderachse zu schwer', { x: CX0 + 0.08, y: cy(10.9), w: 2.1, h: 0.26, size: 12, italic: true, color: 'E58A8A', name: '!!zv' });
-        s.text('Hinterachse zu schwer,\nLenkachse zu leicht', { x: 10.75, y: cy(10.9), w: 2.05, h: 0.42, size: 12, italic: true, color: 'E58A8A', align: 'right', name: '!!zh' });
-        s.rect(cx(d) - 0.008, cy(11), 0.016, 11 * CYS, { fill: ok ? C.gr : C.red, ft: 40, name: '!!vl' });
+        s.text('Vorderachse zu schwer', { x: CX0 + 0.08, y: cy(10.9), w: 2.3, h: 0.26, size: 12, color: 'F08C8C', name: '!!zv' });
+        s.text('Hinterachse zu schwer,\nLenkachse zu leicht', { x: 10.6, y: cy(10.9), w: 2.2, h: 0.42, size: 12, color: 'F08C8C', align: 'right', name: '!!zh' });
+        s.rect(cx(d) - 0.008, cy(P0), 0.016, CY0 - cy(P0), { fill: ok ? C.gr : C.red, ft: 40, name: '!!vl' });   // nur vom Punkt bis zur Achse
         s.oval(cx(d) - 0.13, cy(P0) - 0.13, 0.26, 0.26, { fill: ok ? C.gr : C.red, line: C.white, lw: 2, glow: 8, glowColor: ok ? C.gr : C.red, name: '!!pt' });
       },
     });
