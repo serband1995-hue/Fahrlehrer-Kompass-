@@ -189,7 +189,7 @@ function anhaengerSide(o = {}) {
   const col = o.col || '#C9D0DA';
   let u = '';
   u += rect(0.1, fl - 0.14, L - 0.2, 0.14, `fill="#3A4250"`);
-  u += rect(ax[0] - 0.42, fl - 0.24, 0.84, 0.1, `fill="#2E343D"`);                      // Drehschemel
+  if (!o.zaa) u += rect(ax[0] - 0.42, fl - 0.24, 0.84, 0.1, `fill="#2E343D"`);         // Drehschemel
   u += rect(0, fl, L, boxH, `fill="${col}" stroke="#97A1AE" stroke-width="2"`);
   for (let x = 0.45; x < L - 0.2; x += 0.45) u += `<line x1="${X(x)}" y1="${Y(fl + 0.04)}" x2="${X(x)}" y2="${Y(fl + boxH - 0.04)}" stroke="#B3BBC6" stroke-width="2"/>`;
   u += rect(0, fl + boxH - 0.07, L, 0.07, `fill="#A9B2BE"`);
@@ -203,6 +203,6 @@ function anhaengerSide(o = {}) {
     w += circ(a, r, r * 0.58, `fill="#A7B1BE" stroke="#7D8898" stroke-width="2"`);
     w += circ(a, r, r * 0.22, `fill="#6E7888"`);
   }
-  return { body: u + w, W, H, pad, Ht, pivot: [ax[0], 0.55] };
+  return { body: u + w, W, H, pad, Ht, pivot: o.zaa ? [0.05, fl - 0.2] : [ax[0], 0.55] };
 }
 module.exports = { lkwSide, lkwRear, aufliegerSide, anhaengerSide };
