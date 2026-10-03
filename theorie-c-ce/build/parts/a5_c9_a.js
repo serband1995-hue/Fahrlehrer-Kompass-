@@ -97,7 +97,9 @@ module.exports = async (deck) => {
         DIRS.forEach(([lab, f, dy, dx], q) => {
           const on = q === i, len = f * 2.2;
           const sx = CX + dx * 0.45, sy = CY + 0.2 + dy * 0.85;
-          arrow(s, sx, sy, sx + dx * len, sy + dy * len, { col: on ? C.red : '5A6576', th: on ? 0.14 : 0.08, head: on ? 0.36 : 0.24, name: 'a' + q, glow: on ? 6 : undefined });
+          // dunkle Kontur darunter: Pfeil bleibt auch über Fahrerhaus und Aufbau gut sichtbar
+          arrow(s, sx, sy, sx + dx * (len + 0.03), sy + dy * (len + 0.03), { col: '0B1119', th: (on ? 0.14 : 0.09) + 0.05, head: (on ? 0.36 : 0.26) + 0.1, name: 'aO' + q });
+          arrow(s, sx, sy, sx + dx * len, sy + dy * len, { col: on ? C.red : '8A95A6', th: on ? 0.14 : 0.09, head: on ? 0.36 : 0.26, name: 'a' + q, glow: on ? 6 : undefined });
           const tx = sx + dx * (len + 0.25), ty = sy + dy * (len + 0.3);
           s.text((f * 100) + ' %', { x: tx - (dx ? 0 : 0.6), y: ty - 0.25, w: 1.2, h: 0.5, size: on ? 24 : 16, bold: true, color: on ? C.red : C.mut, align: dx ? 'left' : 'center', name: '!!t' + q });
         });
