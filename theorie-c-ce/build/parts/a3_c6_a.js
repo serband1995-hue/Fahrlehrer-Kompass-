@@ -248,7 +248,7 @@ module.exports = async (deck) => {
       answer: 'Sie wird so heiß, dass sie schlechter greift – die Bremswirkung lässt gefährlich nach (Fading).',
       legend: 'Bremsscheibe · schematisch',
       frames: [
-        fr(0, { hold: true, cap: 'Kalte Bremse: Die Beläge greifen voll. Die Bremse wirkt wie sie soll.', note: '▶ Sagen: „Hier eine Bremsscheibe. Kalt bremst sie mit voller Kraft.“\n❓ Frage auf der Folie vorlesen, Antworten sammeln.\n🖱 Klick: Die Abfahrt beginnt (läuft von selbst).\n➜ „Jetzt fahrt ihr einen langen Pass hinunter – nur mit dem Fuß auf der Bremse.“' }),
+        fr(0, { hold: true, cap: 'Kalte Bremse: Die Beläge greifen voll. Die Bremse wirkt, wie sie soll.', note: '▶ Sagen: „Hier eine Bremsscheibe. Kalt bremst sie mit voller Kraft.“\n❓ Frage auf der Folie vorlesen, Antworten sammeln.\n🖱 Klick: Die Abfahrt beginnt (läuft von selbst).\n➜ „Jetzt fahrt ihr einen langen Pass hinunter – nur mit dem Fuß auf der Bremse.“' }),
         fr(0.15, { cap: 'Langes Gefälle, nur Betriebsbremse: Die Scheibe wird immer heißer …' }), fr(0.3), fr(0.45),
         fr(0.6, { hold: true, note: '▶ „Die ganze Bewegungsenergie wird an der Bremse zu Wärme. Ohne Dauerbremse wird sie immer heißer.“\n🖱 Klick: weiter.\n➜ „Und dann?“' }),
         fr(0.75, { cap: 'Sehr heiß: Belag und Scheibe greifen schlechter – die Wirkung lässt nach.' }), fr(0.88),
@@ -260,7 +260,7 @@ module.exports = async (deck) => {
         s.img(discImg, { x: DX - R, y: DY - R, w: R * 2, h: R * 2, rotate: Math.round(t * 1080) % 360, name: '!!disc' });
         s.oval(DX - R, DY - R, R * 2, R * 2, { fill: heat, ft: 100 - Math.round(t * 62), name: '!!heiss' });
         s.rrect(DX + R - 0.55, DY - 1.0, 0.75, 2.0, { fill: '3C4656', line: '6E7888', rr: 0.3, name: '!!sattel' });
-        s.text('Bremssattel', { x: DX + R - 0.6, y: DY + 1.05, w: 1.6, h: 0.3, size: 12, color: C.dim, name: '!!tsat' });
+        s.text('Bremssattel', { x: DX + R + 0.3, y: DY + 0.6, w: 1.3, h: 0.3, size: 13, color: C.mut, name: '!!tsat' });
         const W = 1 - Math.max(0, t - 0.45) * 1.18;
         s.text('Temperatur', { x: 10.6, y: 1.75, w: 2.5, h: 0.32, size: 14, bold: true, color: C.txt, name: '!!tt' });
         s.rrect(10.6, 2.1, 2.5, 0.32, { fill: '1A212C', line: C.line, rr: 0.5, name: '!!tbg' });
@@ -279,7 +279,10 @@ module.exports = async (deck) => {
       '✅ Faustregel (Lehrbuchwissen): bergab den Gang, den man bergauf bräuchte. Dauerbremse nutzen (2.7.01-257). Betriebsbremse nicht dauernd schleifen lassen – lieber kurz und kräftig bremsen und wieder lösen. Nie im Leerlauf oder mit getretener Kupplung rollen (2.7.01-127).\n' +
       '➜ „Kapitel 3: das ABS.“' });
     kick(s, 'Bremsen bergab'); title(s, 'Lange Gefälle richtig fahren');
-    await point(s, 0.7, 2.05, 5.85, 2.0, 'LuArrowDown01', C.pu, 'Vor dem Gefälle zurückschalten', 'Faustregel: den Gang, den ihr bergauf bräuchtet.', CLICK, { br: true, size: 18 });
+    await point(s, 0.7, 2.05, 5.85, 2.0, 'LuCog', C.pu, 'Vor dem Gefälle zurückschalten', 'Faustregel: den Gang, den ihr bergauf bräuchtet.', CLICK, { br: true, size: 18 });
+    // Schaltsymbol: Zahnrad mit kleinem Pfeil nach unten (kommt mit der Karte)
+    s.oval(1.33, 3.12, 0.3, 0.3, { fill: C.dark, line: C.pu, lw: 1.5 }, { fx: 'zoom', dur: 250 });
+    s.img(await icon('LuArrowDown', C.pu), { x: 1.375, y: 3.165, w: 0.21, h: 0.21 }, { fx: 'fade', dur: 150 });
     await point(s, 6.78, 2.05, 5.85, 2.0, 'LuMountain', C.or, 'Dauerbremse arbeiten lassen', 'Motorbremse und Retarder halten das Tempo.', CLICK, { br: true, size: 18 });
     await point(s, 0.7, 4.25, 5.85, 2.0, 'LuOctagonAlert', C.red, 'Betriebsbremse kurz und kräftig', 'statt lange schleifen lassen – dann wieder lösen und abkühlen lassen.', CLICK, { br: true, size: 18 });
     await point(s, 6.78, 4.25, 5.85, 2.0, 'LuBan', C.red, 'Nie im Leerlauf rollen', 'und nie mit getretener Kupplung – dann fehlt die Motorbremse.', CLICK, { br: true, size: 18 });
