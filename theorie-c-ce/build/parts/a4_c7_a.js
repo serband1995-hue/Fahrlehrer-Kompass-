@@ -104,7 +104,7 @@ const main = async (deck) => {
         s.rrect(X0, 4.45, Math.max(0.3, bw * SC), 0.55, { fill: C.red, rr: 0.5, name: '!!bw' });
         s.text('≈ ' + bw + ' m', { x: X0 + Math.max(0.3, bw * SC) + 0.15, y: 4.45, w: 1.6, h: 0.55, size: 22, bold: true, color: C.txt, valign: 'middle', name: '!!bwt' });
         // Lkw (klein) am Ende des Bremswegs
-        veh(s, 'truck.png', X0 + Math.max(0.3, bw * SC) - 0.05, 5.65, 90, '!!tr', { scale: 0.32 });
+        veh(s, 'truck.png', X0 + Math.max(0.3, bw * SC) - 2.86 * 0.32 / 2, 5.65, 90, '!!tr', { scale: 0.32 });   // Front genau am Ende des Bremswegs
         s.rect(X0, 5.35, 0.04, 0.6, { fill: C.mut, name: '!!start' });
         s.text('Bremsbeginn', { x: X0 - 0.1, y: 6.0, w: 1.6, h: 0.3, size: 12, color: C.dim, name: '!!startt' });
       },
