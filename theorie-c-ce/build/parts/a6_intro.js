@@ -33,7 +33,7 @@ module.exports = async (deck) => {
     const T = [
       ['18:00', '19:30', 'Lektion CE1', 'Zusammenstellung von Zügen', 'Zugarten und Kupplungen · Ankuppeln · Auf- und Absatteln · Maße und Kurvenlauf · Gewichte und Führerschein', C.bl, 'LuLink'],
       ['19:30', '19:45', 'Pause', '15 Minuten', '', C.dim, 'LuCoffee'],
-      ['19:45', '21:15', 'Lektion CE2', 'Lastzugbremsen', 'Auflaufbremse · Zweileitungs-Druckluftbremse · Leitungsbruch · Feststellbremse und ABS am Anhänger', C.or, 'LuDisc'],
+      ['19:45', '21:15', 'Lektion CE2', 'Lastzugbremsen', 'Auflaufbremse · Zweileitungs-Druckluftbremse · Leitungsbruch · Rangieren mit dem Löseventil', C.or, 'LuDisc'],
     ];
     for (let i = 0; i < 3; i++) {
       const t = T[i], h = i === 1 ? 1.0 : 1.32, yy = [2.05, 3.55, 4.73][i];
