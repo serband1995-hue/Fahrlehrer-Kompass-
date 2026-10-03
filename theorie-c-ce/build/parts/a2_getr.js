@@ -117,32 +117,42 @@ module.exports = async (deck) => {
       // Motor
       s.rrect(5.9, Y - 0.8, 1.6, 1.6, { fill: '2A1A1E', line: C.red, lw: 2, rr: 0.1, name: '!!mot' });
       s.text('Motor', { x: 5.9, y: Y - 0.8, w: 1.6, h: 1.6, size: 18, bold: true, color: C.txt, align: 'center', valign: 'middle', name: '!!tmot' });
-      // Gehäuse WSK
+      // Gehäuse WSK: unten der Wandler, oben parallel dazu die Überbrückungskupplung
       s.rrect(7.8, Y - 1.25, 2.9, 2.5, { fill: '111B28', line: C.line, lw: 1.5, rr: 0.08, name: '!!geh' });
+      const oil = i === 0, zu = i >= 1;
+      const on = C.or, off = '55606F', LW = 5;
+      const yu = Y - 0.75, yl = Y + 0.55;                        // oberer Weg (Kupplung), unterer Weg (Wandler)
       // Wandler: Pumpenrad + Turbinenrad + Öl
-      const oil = i === 0;
-      s.oval(8.0, Y - 1.0, 1.2, 2.0, { fill: oil ? 'B97A3A' : '3C4656', line: oil ? C.or : '55606F', lw: 2, ft: oil ? 20 : 0, name: '!!pumpe', glow: oil ? 10 : undefined, glowColor: C.or });
-      s.oval(8.75, Y - 1.0, 1.2, 2.0, { fill: oil ? 'B97A3A' : '3C4656', line: oil ? C.or : '55606F', lw: 2, ft: oil ? 35 : 0, name: '!!turb' });
-      s.text('Wandler (Öl)', { x: 7.8, y: Y + 1.3, w: 2.2, h: 0.35, size: 14, bold: oil, color: oil ? C.or : C.dim, align: 'center', name: '!!twand' });
+      s.oval(8.25, Y - 0.0, 0.8, 1.1, { fill: oil ? 'B97A3A' : '3C4656', line: oil ? C.or : '55606F', lw: 2, ft: oil ? 20 : 0, name: '!!pumpe', glow: oil ? 10 : undefined, glowColor: C.or });
+      s.oval(8.85, Y - 0.0, 0.8, 1.1, { fill: oil ? 'B97A3A' : '3C4656', line: oil ? C.or : '55606F', lw: 2, ft: oil ? 35 : 0, name: '!!turb' });
+      s.text('Wandler (Öl)', { x: 7.85, y: Y + 1.3, w: 2.2, h: 0.35, size: 14, bold: oil, color: oil ? C.or : C.mut, align: 'center', name: '!!twand' });
       // Überbrückungskupplung: zwei Scheiben, offen / zu
-      const zu = i >= 1;
-      s.rect(10.05, Y - 0.85, 0.14, 1.7, { fill: zu ? C.gr : '8A96A6', name: '!!sch1' });
-      s.rect(zu ? 10.2 : 10.4, Y - 0.85, 0.14, 1.7, { fill: zu ? C.gr : '8A96A6', name: '!!sch2', glow: zu ? 8 : undefined, glowColor: C.gr });
-      s.text(zu ? 'Kupplung zu' : 'Kupplung offen', { x: 9.6, y: Y - 1.65, w: 1.9, h: 0.35, size: 14, bold: zu, color: zu ? C.gr : C.dim, align: 'center', name: '!!tkup' });
+      const p2 = zu ? 9.04 : 9.24;
+      s.rect(8.9, yu - 0.32, 0.12, 0.64, { fill: zu ? C.gr : '8A96A6', name: '!!sch1' });
+      s.rect(p2, yu - 0.32, 0.12, 0.64, { fill: zu ? C.gr : '8A96A6', name: '!!sch2', glow: zu ? 8 : undefined, glowColor: C.gr });
+      s.text(zu ? 'Kupplung zu' : 'Kupplung offen', { x: 8.05, y: Y - 1.65, w: 1.9, h: 0.35, size: 14, bold: zu, color: zu ? C.gr : C.mut, align: 'center', name: '!!tkup' });
       // Getriebe
       s.rrect(11.0, Y - 0.8, 1.7, 1.6, { fill: '1C2440', line: C.pu, lw: 2, rr: 0.1, name: '!!getr' });
       s.text('Getriebe', { x: 11.0, y: Y - 0.8, w: 1.7, h: 1.6, size: 17, bold: true, color: C.txt, align: 'center', valign: 'middle', name: '!!tgetr' });
-      // Kraftweg
-      s.lineS(7.5, Y, 7.8, Y, { color: C.or, lw: 5, name: '!!w1' });
-      s.lineS(10.7, Y, 11.0, Y, { color: C.or, lw: 5, name: '!!w2' });
+      // Kraftweg: Motor → (Wandler | Kupplung) → Getriebe
+      s.lineS(7.5, Y, 7.95, Y, { color: on, lw: LW, name: '!!w1' });
+      s.lineS(7.95, Y, 7.95, yl, { color: oil ? on : off, lw: LW, name: '!!wl1' });
+      s.lineS(7.95, yl, 8.25, yl, { color: oil ? on : off, lw: LW, name: '!!wl2' });
+      s.lineS(9.65, yl, 10.35, yl, { color: oil ? on : off, lw: LW, name: '!!wl3' });
+      s.lineS(10.35, yl, 10.35, Y, { color: oil ? on : off, lw: LW, name: '!!wl4' });
+      s.lineS(7.95, Y, 7.95, yu, { color: zu ? on : off, lw: LW, name: '!!wu1' });
+      s.lineS(7.95, yu, 8.9, yu, { color: zu ? on : off, lw: LW, name: '!!wu2' });
+      s.lineS(p2 + 0.12, yu, 10.35, yu, { color: zu ? on : off, lw: LW, name: '!!wu3' });
+      s.lineS(10.35, yu, 10.35, Y, { color: zu ? on : off, lw: LW, name: '!!wu4' });
+      s.lineS(10.35, Y, 11.0, Y, { color: on, lw: LW, name: '!!w2' });
       // Einsatz
       if (i === 2) {
         const E = [['LuContainer', 'Schwertransport'], ['LuHardHat', 'Baustelle'], ['LuSiren', 'Feuerwehr']];
         for (let k = 0; k < 3; k++) {
-          const x = 6.0 + k * 2.3;
-          s.rrect(x, 5.35, 2.1, 1.15, { fill: C.card2, line: C.pu, rr: 0.1, name: '!!e' + k });
-          s.img(await icon(E[k][0], C.pu), { x: x + 0.15, y: 5.65, w: 0.55, h: 0.55, name: '!!ei' + k });
-          s.text(E[k][1], { x: x + 0.75, y: 5.35, w: 1.35, h: 1.15, size: 14, bold: true, color: C.txt, valign: 'middle', name: '!!et' + k });
+          const x = 5.85 + k * 2.35;
+          s.rrect(x, 5.35, 2.25, 1.15, { fill: C.card2, line: C.pu, rr: 0.1, name: '!!e' + k });
+          s.img(await icon(E[k][0], C.pu), { x: x + 0.15, y: 5.68, w: 0.5, h: 0.5, name: '!!ei' + k });
+          s.text(E[k][1], { x: x + 0.72, y: 5.35, w: 1.48, h: 1.15, size: 14, bold: true, color: C.txt, valign: 'middle', name: '!!et' + k });
         }
       }
     },

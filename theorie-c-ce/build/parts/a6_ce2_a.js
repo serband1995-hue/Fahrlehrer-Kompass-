@@ -142,7 +142,7 @@ module.exports = async (deck) => {
         s.text(t.torn ? 'Seil zieht die Handbremse an' : 'Handbremshebel', { x: lt[0] + 0.12, y: lt[1] - 0.36, w: 3.0, h: 0.3, size: 13, bold: !!t.torn, color: t.torn ? C.am : C.mut, name: '!!ht' });
         s.text('Abreißseil', { x: mid[0] - 0.6, y: Math.max(mid[1], H + 0.2) + 0.12, w: 1.4, h: 0.28, size: 12, color: C.am, align: 'center', name: '!!st' });
         s.text(t.trB ? 'Radbremsen ziehen an' : 'Radbremsen frei', { x: TX + 0.6, y: G + 0.1, w: 3.0, h: 0.32, size: 14, bold: true, color: t.trB ? C.red : C.mut, align: 'center', name: '!!tb' });
-        s.text('Gestänge', { x: TX + 0.25, y: G - 0.38, w: 1.0, h: 0.26, size: 11, color: t.trB ? C.or : C.dim, name: '!!gt' });
+        s.text('Gestänge', { x: TX + 0.25, y: G - 0.38, w: 1.0, h: 0.26, size: 12, color: t.trB ? C.or : C.dim, name: '!!gt' });
         // Fahrtrichtung bzw. Schub
         const ay = 1.95;
         arrow(s, t.back ? 8.6 : 9.8, ay, t.back ? 9.8 : 8.6, ay, { col: t.back ? C.am : C.mut, th: 0.08, head: 0.24, name: 'fr' });

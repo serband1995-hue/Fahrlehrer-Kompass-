@@ -189,7 +189,7 @@ module.exports = async (deck) => {
     veh(s, 'truck.png', 10.25, 5.0, 0, undefined, { scale: 1.05 });
     s.rect(9.75, 2.75, 1.25, 0.75, { fill: C.red, ft: 45 });
     s.text('toter Winkel', { x: 11.05, y: 2.85, w: 1.5, h: 0.5, size: 13, bold: true, color: C.red });
-    s.text('Zebrastreifen', { x: 7.95, y: 2.1, w: 1.15, h: 0.4, size: 11, color: C.dim });
+    s.text('Zebrastreifen', { x: 7.95, y: 2.1, w: 1.15, h: 0.4, size: 12, color: C.dim });
     const kid = veh(s, 'ped.png', 10.2, 3.1, 0, 'kid', { size: [0.42, 0.36] });
     s.anims.push({ name: kid, kind: 'pic', fx: 'zoom', c: true, dur: 350 });
     s.text('Kind', { x: 9.8, y: 3.25, w: 0.8, h: 0.28, size: 12, bold: true, color: C.white, align: 'center' }, { fx: 'fade', dur: 250 });

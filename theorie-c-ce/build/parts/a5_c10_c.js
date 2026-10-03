@@ -61,7 +61,7 @@ module.exports = async (deck) => {
         s.rrect(RX - 0.15, RY, 12 * SEG + 0.3, 0.75, { fill: 'E8E2CF', line: 'B8B09A', lw: 1, rr: 0.06, name: '!!lin' });
         for (let c = 0; c <= 12; c++) {
           s.rect(RX + c * SEG - 0.01, RY, 0.02, c % 5 === 0 ? 0.32 : 0.22, { fill: '3A3326', name: '!!tk' + c });
-          s.text(String(c), { x: RX + c * SEG - 0.2, y: RY + 0.36, w: 0.4, h: 0.3, size: 11, color: '3A3326', align: 'center', name: '!!tn' + c });
+          s.text(String(c), { x: RX + c * SEG - 0.2, y: RY + 0.36, w: 0.4, h: 0.3, size: 12, color: '3A3326', align: 'center', name: '!!tn' + c });
         }
         for (let c = 0; c < 12; c++) s.rect(RX + c * SEG + 0.02, RY - 0.22, SEG - 0.04, 0.14, { fill: C.pu, ft: all || c === 0 ? 0 : 100, name: '!!hl' + c });
         s.text('cm', { x: RX + 12 * SEG + 0.2, y: RY + 0.2, w: 0.5, h: 0.3, size: 12, color: C.mut, name: '!!cm' });
@@ -111,7 +111,7 @@ module.exports = async (deck) => {
         s.text('Start', { x: 5.85, y: 6.1, w: 1.0, h: 0.3, size: 12, bold: true, color: C.mut, name: '!!st' });
         s.img(await icon('LuMapPin', C.red), { x: 12.38, y: 1.62, w: 0.44, h: 0.44, name: '!!ziel' });
         s.text('Ziel', { x: 11.75, y: 1.62, w: 0.6, h: 0.3, size: 12, bold: true, color: C.mut, align: 'right', name: '!!zt' });
-        s.text('Bahn', { x: 11.05, y: 3.95, w: 0.8, h: 0.3, size: 11, color: C.mut, name: '!!bahn' });
+        s.text('Bahn', { x: 11.05, y: 3.95, w: 0.8, h: 0.3, size: 12, color: C.mut, name: '!!bahn' });
         await sign(s, '265__3_8__', big ? 6.0 : 9.85, big ? 1.75 : 3.55, big ? 1.25 : 0.38, big ? 1.25 : 0.38, undefined, { name: '!!z265' });
         const [x, y, r] = T[k];
         veh(s, 'truck.png', x, y, r, '!!tr', { scale: 0.33 });
@@ -162,7 +162,7 @@ module.exports = async (deck) => {
         s.rrect(X0, 4.0, X1 - X0, 0.6, { fill: '141D2A', line: C.line, rr: 0.08, name: '!!tl' });
         for (let h = T0; h <= T1; h += 1) {
           s.rect(xt(h) - 0.005, 4.6, 0.01, h % 2 ? 0.08 : 0.14, { fill: C.dim, name: '!!tt' + h });
-          s.text(h % 2 ? '' : h + ':00', { x: xt(h) - 0.4, y: 4.75, w: 0.8, h: 0.28, size: 11, color: C.dim, align: 'center', name: '!!tx' + h });
+          s.text(h % 2 ? '' : h + ':00', { x: xt(h) - 0.4, y: 4.75, w: 0.8, h: 0.28, size: 12, color: C.dim, align: 'center', name: '!!tx' + h });
         }
         const blk = (a, b, col, on, nm, lab) => {
           s.rrect(xt(a), 4.05, on ? (xt(b) - xt(a)) : 0.02, 0.5, { fill: col, ft: on ? 0 : 100, rr: 0.1, name: '!!' + nm });

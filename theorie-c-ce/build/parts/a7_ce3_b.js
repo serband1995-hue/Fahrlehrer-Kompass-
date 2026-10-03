@@ -175,7 +175,7 @@ module.exports = async (deck) => {
         s.rrect(bA[0] - 0.9, bA[1] - 0.22, Math.max(0.04, 1.8 * t.air), 0.13, { fill: t.air > 0.5 ? C.bl : C.am, rr: 0.3, ft: showBar && t.air > 0 ? 0 : 100, name: '!!airf' });
         // Handbremsventil
         s.rrect(10.35, 1.5, 2.7, 1.75, { fill: '0E1520', line: '2A3B52', rr: 0.08, name: '!!hbv' });
-        s.text('HANDBREMSVENTIL', { x: 10.5, y: 1.55, w: 2.4, h: 0.28, size: 10, bold: true, color: C.dim, cs: 2, name: '!!hbvt' });
+        s.text('HANDBREMSVENTIL', { x: 10.5, y: 1.55, w: 2.4, h: 0.28, size: 12, bold: true, color: C.dim, cs: 2, name: '!!hbvt' });
         s.rrect(10.72, 1.92, 0.12, 1.2, { fill: '0B1119', line: '3C4656', rr: 0.5, name: '!!gate' });
         const LY = [1.9, 2.37, 2.84], LT = ['Fahren', 'Feststellen', 'Kontrolle (halten)'];
         LT.forEach((l, i) => s.text(l, { x: 11.05, y: LY[i], w: 1.95, h: 0.3, size: 13, bold: LEV[t.lev] === i, color: LEV[t.lev] === i ? (i === 2 ? C.pu : C.txt) : C.dim, valign: 'middle', name: '!!hl' + i }));

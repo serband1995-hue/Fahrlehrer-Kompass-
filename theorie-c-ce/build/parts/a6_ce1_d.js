@@ -56,13 +56,13 @@ module.exports = async (deck) => {
         // Lineal
         s.rect(x0, RY, 26 * K, 0.03, { fill: '4A5668', name: '!!rl' });
         for (let m = 0; m <= 26; m++) s.rect(xm(m) - 0.01, RY, 0.02, m % 5 ? 0.07 : 0.15, { fill: m % 5 ? '3A4656' : '738296', name: '!!tm' + m });
-        for (let m = 0; m <= 25; m += 5) s.text(m === 25 ? '25 m' : String(m), { x: xm(m) - 0.4, y: RY + 0.15, w: 0.8, h: 0.26, size: 11, color: C.dim, align: 'center', name: '!!tl' + m });
+        for (let m = 0; m <= 25; m += 5) s.text(m === 25 ? '25 m' : String(m), { x: xm(m) - 0.4, y: RY + 0.15, w: 0.8, h: 0.26, size: 12, color: C.dim, align: 'center', name: '!!tl' + m });
         // Maßklammer
         seg(s, x0, BY, xm(t.len), BY, { col: t.col, th: 0.06, name: '!!brk' });
         s.rect(x0 - 0.02, BY - 0.13, 0.04, 0.26, { fill: t.col, name: '!!bk0' });
         s.rect(xm(t.len) - 0.02, BY - 0.13, 0.04, 0.26, { fill: t.col, name: '!!bk1' });
         s.text(t.v, { x: 8.3, y: 1.42, w: 4.75, h: 0.75, size: 44, bold: true, color: t.col, align: 'right', valign: 'middle', name: '!!lenv' });
-        s.text(t.n, { x: 7.3, y: 2.12, w: 5.75, h: 0.35, size: 16, color: C.mut, align: 'right', name: '!!lenn' });
+        s.text(t.n, { x: 7.3, y: 2.2, w: 5.75, h: 0.35, size: 16, color: C.mut, align: 'right', name: '!!lenn' });
         s.text(t.info, { x: x0, y: 5.0, w: 7.3, h: 1.5, size: 15, color: C.txt, valign: 'top', name: '!!info' });
         // Fahrzeuge
         const sattel = i === 0 || i === 3;
@@ -138,7 +138,7 @@ module.exports = async (deck) => {
         s.oval(CX - 5.3 * S, CY - 5.3 * S, 10.6 * S, 10.6 * S, { line: C.pu, lw: 2, dash: 'dash', lt: t.inner ? 0 : 100, fill: C.pu, ft: 100, name: '!!ki' });
         s.oval(CX - 0.05, CY - 0.05, 0.1, 0.1, { fill: C.mut, name: '!!km' });
         s.text('Außenkreis  R = 12,50 m', { x: CX - 1.6, y: CY - 12.5 * S - 0.36, w: 3.2, h: 0.3, size: 13, bold: true, color: C.pu, align: 'center', name: '!!kot' });
-        s.text(t.inner ? 'Innenkreis\nmind. 5,30 m' : '', { x: CX - 0.8, y: CY - 5.3 * S + 0.1, w: 1.6, h: 0.5, size: 11, bold: true, color: C.pu, align: 'center', name: '!!kit' });
+        s.text(t.inner ? 'Innenkreis\nmind. 5,30 m' : '', { x: CX - 0.8, y: CY - 5.3 * S + 0.1, w: 1.6, h: 0.5, size: 12, bold: true, color: C.pu, align: 'center', name: '!!kit' });
         // Ringbreite
         const a = rad(45), b0 = P(5.3 * Math.cos(a), 5.3 * Math.sin(a)), b1 = P(12.5 * Math.cos(a), 12.5 * Math.sin(a));
         seg(s, b0[0], b0[1], b1[0], b1[1], { col: C.white, th: 0.04, hide: !t.ring, name: '!!rb' });

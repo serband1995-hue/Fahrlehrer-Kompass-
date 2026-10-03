@@ -26,16 +26,16 @@ async function szene(s, { dx = 0, lift = 0, legs = 1, secured = 0, lines = 0, lo
   // Lupe (unter dem Zug)
   const LX = 9.25, LY = 4.72, LW = 3.8, LH = 1.85, KPX = 11.6, AY = LY + 0.72;
   s.rrect(LX, LY, LW, LH, { fill: '0B1119', line: ring, lw: 2, rr: 0.08, name: '!!lupe' });
-  s.text('LUPE: SATTELKUPPLUNG', { x: LX + 0.15, y: LY + 0.07, w: 3.0, h: 0.26, size: 10, bold: true, color: C.dim, cs: 2, name: '!!lupk' });
+  s.text('LUPE: SATTELKUPPLUNG', { x: LX + 0.15, y: LY + 0.07, w: 3.0, h: 0.26, size: 12, bold: true, color: C.dim, cs: 2, name: '!!lupk' });
   s.rect(LX + 0.15, AY, LW - 0.3, 0.17, { fill: '5A6474', name: '!!agp' });
-  s.text('Auflieger', { x: LX + 0.15, y: AY - 0.3, w: 1.4, h: 0.26, size: 11, color: C.mut, name: '!!agpt' });
+  s.text('Auflieger', { x: LX + 0.15, y: AY - 0.3, w: 1.4, h: 0.26, size: 12, color: C.mut, name: '!!agpt' });
   const gap = Math.max(0, -lift) * 2.0, pcx = KPX + Math.max(-1.35, Math.min(0, dx * 2.3)), px0 = Math.max(LX + 0.12, pcx - 1.1);
   s.rrect(px0, AY + 0.17 + gap, pcx + 1.1 - px0, 0.2, { fill: '1F242B', line: '7A8494', lw: 1.5, rr: 0.3, name: '!!sp' });
-  s.text('Sattelplatte', { x: px0 + 0.1, y: AY + 0.17 + gap, w: 1.0, h: 0.2, size: 9, color: 'C9D0DA', valign: 'middle', name: '!!spt' });
+  s.text('Sattelplatte', { x: px0 + 0.1, y: AY + 0.17 + gap, w: 1.0, h: 0.2, size: 12, color: 'C9D0DA', valign: 'middle', name: '!!spt' });
   s.rect(KPX - 0.1, AY + 0.17, 0.2, 0.2, { fill: '9AA6B5', name: '!!kz' });
   seg(s, KPX - 1.0, AY + 0.19, KPX - 1.0, AY + 0.15 + Math.max(0.06, gap), { col: C.or, th: 0.04, hide: !gm, name: '!!gm' });
-  s.text(gm ? '≤ 5 cm' : '', { x: KPX - 0.92, y: AY + 0.15, w: 0.8, h: 0.26, size: 11, bold: true, color: C.or, valign: 'middle', name: '!!gmt' });
-  s.text('Königszapfen', { x: KPX + 0.15, y: AY - 0.3, w: 1.2, h: 0.26, size: 11, color: C.mut, name: '!!kzt' });
+  s.text(gm ? '≤ 5 cm' : '', { x: KPX - 0.92, y: AY + 0.15, w: 0.8, h: 0.26, size: 12, bold: true, color: C.or, valign: 'middle', name: '!!gmt' });
+  s.text('Königszapfen', { x: KPX + 0.15, y: AY - 0.3, w: 1.2, h: 0.26, size: 12, color: C.mut, name: '!!kzt' });
   s.oval(KPX - 0.2, AY + 0.07, 0.4, 0.4, { line: C.gr, lw: 2, fill: C.gr, ft: 100, lt: locked ? 0 : 100, name: '!!kzr' });
   s.text(lupe, { x: LX + 0.15, y: LY + LH - 0.42, w: LW - 0.3, h: 0.34, size: 13, bold: true, color: lupeCol, align: 'right', valign: 'middle', name: '!!lupt' });
   // Status

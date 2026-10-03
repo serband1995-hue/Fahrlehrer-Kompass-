@@ -102,13 +102,13 @@ module.exports = async (deck) => {
         s.rrect(5.8, 2.1, 1.7, 3.0, { fill: '1A2230', line: C.line, rr: 0.08, name: '!!lkwb' });
         s.text('Lkw', { x: 5.8, y: 2.15, w: 1.7, h: 0.35, size: 15, bold: true, color: C.mut, align: 'center', name: '!!lkwt' });
         s.text('P', { x: 6.45, y: 4.35, w: 0.4, h: 0.4, size: 15, bold: true, color: C.white, fill: C.red, shape: s.pres.shapes.OVAL, align: 'center', valign: 'middle', name: '!!lp' });
-        s.text('Feststellbremse gezogen', { x: 5.8, y: 4.75, w: 1.7, h: 0.3, size: 10, color: C.mut, align: 'center', name: '!!lpt' });
+        s.text('Feststellbremse gezogen', { x: 5.8, y: 4.75, w: 1.7, h: 0.3, size: 12, color: C.mut, align: 'center', name: '!!lpt' });
         // Anhänger-Seite
         s.rrect(10.8, 2.1, 2.25, 3.0, { fill: '1A2230', line: C.line, rr: 0.08, name: '!!ahb' });
         s.text('Anhänger', { x: 10.8, y: 2.15, w: 2.25, h: 0.35, size: 15, bold: true, color: C.mut, align: 'center', name: '!!aht' });
         s.rrect(11.05, 2.65, 1.75, 0.6, { fill: '0B1119', line: '4A5668', rr: 0.3, name: '!!tank' });
         s.rrect(11.05, 2.65, Math.max(0.05, 1.75 * t.tank), 0.6, { fill: '4C8DF0', rr: 0.3, name: '!!tankf' });
-        s.text('Luftbehälter', { x: 11.05, y: 3.27, w: 1.75, h: 0.28, size: 11, color: C.mut, align: 'center', name: '!!tankt' });
+        s.text('Luftbehälter', { x: 11.05, y: 3.27, w: 1.75, h: 0.28, size: 12, color: C.mut, align: 'center', name: '!!tankt' });
         s.text([{ text: 'Betriebsbremse: ', options: { color: C.mut, breakLine: true } }, { text: t.bb, options: { bold: true, color: t.bbc, breakLine: true } }, { text: 'Federspeicher: ', options: { color: C.mut, breakLine: true } }, { text: t.fs, options: { bold: true, color: t.fsc || C.gr } }], { x: 10.85, y: 3.55, w: 2.15, h: 1.45, size: 12, align: 'center', valign: 'middle', lsm: 0.95, name: '!!cyl' });
         // Leitungen
         const ln = (yy, col, on, nm) => {

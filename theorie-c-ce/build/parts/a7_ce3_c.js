@@ -54,7 +54,7 @@ module.exports = async (deck) => {
           s.text(lab, { x: 5.75, y, w: 3.3, h: 0.34, size: 13, color: v ? C.am : C.mut, bold: !!v, valign: 'middle', name: '!!bl' + i });
           s.rrect(9.1, y + 0.06, 3.9, 0.22, { fill: '0B1119', line: '3C4656', rr: 0.3, name: '!!bb' + i });
           s.rrect(9.1, y + 0.06, Math.max(0.05, 3.9 * v), 0.22, { fill: C.am, ft: v ? 0 : 100, rr: 0.3, name: '!!bf' + i });
-          s.text(v ? '' : 'bremst nicht', { x: 9.2, y, w: 3.7, h: 0.34, size: 11, italic: true, color: C.dim, valign: 'middle', name: '!!bn' + i });
+          s.text(v ? '' : 'bremst nicht', { x: 9.2, y, w: 3.7, h: 0.34, size: 12, italic: true, color: C.dim, valign: 'middle', name: '!!bn' + i });
         });
       },
     });
@@ -116,8 +116,8 @@ module.exports = async (deck) => {
         // Zeitleiste
         s.rect(X0, LYt - 0.02, X1 - X0, 0.04, { fill: '4A5566', name: '!!tl' });
         for (let m = 0; m <= 48; m += 6) s.rect(M(m) - 0.01, LYt - (m % 12 ? 0.06 : 0.11), 0.02, m % 12 ? 0.12 : 0.22, { fill: m % 12 ? '3C4656' : '738296', name: '!!tk' + m });
-        [12, 24, 36, 48].forEach((m, j) => s.text('Jahr ' + (j + 1), { x: M(m) - 0.8, y: LYt + 0.15, w: 0.8, h: 0.28, size: 11, color: C.dim, align: 'right', name: '!!ty' + j }));
-        s.text('Zulassung', { x: X0 - 0.4, y: LYt + 0.15, w: 1.2, h: 0.28, size: 11, color: C.dim, name: '!!t0' });
+        [12, 24, 36, 48].forEach((m, j) => s.text('Jahr ' + (j + 1), { x: M(m) - 0.8, y: LYt + 0.15, w: 0.8, h: 0.28, size: 12, color: C.dim, align: 'right', name: '!!ty' + j }));
+        s.text('Zulassung', { x: X0 - 0.4, y: LYt + 0.15, w: 1.2, h: 0.28, size: 12, color: C.dim, name: '!!t0' });
         // HU (blau, rund) und SP (gelb, eckig)
         HU.forEach((m, j) => {
           const on = t.hu.includes(m);
@@ -129,7 +129,7 @@ module.exports = async (deck) => {
         });
         // UVV jährlich
         [12, 24, 36, 48].forEach((m, j) => {
-          s.text(t.uvv ? 'UVV' : '', { x: M(m) - 0.32, y: LYt + 0.55, w: 0.64, h: 0.36, size: 11, bold: true, color: C.dark, fill: C.gr, ft: t.uvv ? 0 : 100, shape: deck.pres.shapes.ROUNDED_RECTANGLE, rr: 0.2, align: 'center', valign: 'middle', name: '!!uv' + j });
+          s.text(t.uvv ? 'UVV' : '', { x: M(m) - 0.32, y: LYt + 0.55, w: 0.64, h: 0.36, size: 12, bold: true, color: C.dark, fill: C.gr, ft: t.uvv ? 0 : 100, shape: deck.pres.shapes.ROUNDED_RECTANGLE, rr: 0.2, align: 'center', valign: 'middle', name: '!!uv' + j });
         });
         // Nachweise
         const N = [['HU', C.bl, 'Plakette hinten am Kennzeichen'], ['SP', C.am, 'Prüfmarke auf dem SP-Schild'], ['UVV', C.gr, 'Prüfnachweis vom Unternehmer']];

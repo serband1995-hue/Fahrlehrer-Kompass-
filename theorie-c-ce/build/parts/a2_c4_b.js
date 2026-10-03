@@ -55,7 +55,7 @@ module.exports = async (deck) => {
     s.text([{ text: 'gelbe', options: { breakLine: true } }, { text: 'Blinkleuchte' }], { x: XR + 0.05, y: GL - 1.55, w: 1.1, h: 0.6, size: 12, bold: true, color: C.am, align: 'center' }, { fx: 'fade', dur: 200 });
     s.lineS(XR + 0.6, GL - 0.95, XR + 0.85, GL - 0.6, { color: C.am, lw: 1.5 }, { fx: 'fade', dur: 200 });
     s.text('rot-weiße Markierung', { x: XR - 1.3, y: GL + 0.08, w: 2.3, h: 0.32, size: 13, bold: true, color: C.red, align: 'right' }, { fx: 'fade', dur: 200 });
-    s.text('Seitenansicht · schematisch', { x: 0.9, y: 2.12, w: 3.0, h: 0.3, size: 11, italic: true, color: C.dim });
+    s.text('Seitenansicht · schematisch', { x: 0.9, y: 2.12, w: 3.0, h: 0.3, size: 12, italic: true, color: C.dim });
     await point(s, 6.55, 2.05, 6.08, 1.4, 'LuSiren', C.am, 'Im Betrieb gesichert', 'durch zwei gelbe Blinkleuchten und rot-weiße Warnmarkierungen.', { fx: 'flyL', dur: 450 }, { br: true, size: 17 });
     await point(s, 6.55, 3.58, 6.08, 1.4, 'LuFootprints', C.red, 'Quetschgefahr!', 'Nicht im Bewegungsbereich stehen, Füße weg von der Plattformkante.', CLICK, { br: true, size: 17 });
     await point(s, 6.55, 5.11, 6.08, 1.4, 'LuLock', C.gr, 'Vor der Fahrt', 'hochklappen und verriegeln – die Kontrollleuchte muss aus sein.', CLICK, { br: true, size: 17 });
@@ -124,6 +124,7 @@ module.exports = async (deck) => {
   await steps(deck, 'c4e', {
     kicker: 'Starthilfe', ttl: 'Die richtige Reihenfolge',
     ask: { q: 'Wohin kommt das letzte Ende des schwarzen Kabels?', a: 'An Masse am Motorblock – nicht an die Batterie.', at: 4 },
+    nums: ['!', '1', '2', '3', '4'],
     list: ['Nur 24 V an 24 V', 'Rot an Plus – Pannen-Lkw', 'Rot an Plus – Spender', 'Schwarz an Minus – Spender', 'Schwarz an Masse – Pannen-Lkw'],
     caps: [
       'Nur gleiche Spannung verbinden: 24 V an 24 V. Hat der Lkw einen eigenen Starthilfe-Anschluss, diesen nach Betriebsanleitung nutzen.',
@@ -158,10 +159,12 @@ module.exports = async (deck) => {
       if (i >= 1) s.lineS(rx1, ry, rx1, ry - (i >= 2 ? 0.5 : 0.35), { color: C.red, lw: 5, name: '!!k1' });
       if (i >= 2) { s.lineS(rx1, ry - 0.5, rx2, ry - 0.5, { color: C.red, lw: 5, name: '!!k2' }); s.lineS(rx2, ry - 0.5, rx2, ry, { color: C.red, lw: 5, name: '!!k3' }); }
       const mx = SX + 1.8;
-      if (i >= 3) { s.lineS(mx, ry, mx, ry - 0.3, { color: '9AA6B5', lw: 5, name: '!!k4' }); s.lineS(mx, ry - 0.3, 13.0, ry - 0.3, { color: '9AA6B5', lw: 5, name: '!!k4b' }); s.lineS(13.0, ry - 0.3, 13.0, 4.6, { color: '9AA6B5', lw: 5, name: '!!k4c' }); }
-      if (i >= 4) { s.lineS(13.0, 4.6, PX + 2.3, 5.6, { color: '9AA6B5', lw: 5, name: '!!k5' }); s.oval(PX + 2.15, 5.45, 0.3, 0.3, { fill: C.am, glow: 10, glowColor: C.am, name: '!!clip' }); }
+      // schwarzes Kabel: schwarz mit heller Kontur, damit es auf dunklem Grund sichtbar bleibt
+      const KX = 12.92, blk = (x1, y1, x2, y2, nm) => { s.lineS(x1, y1, x2, y2, { color: '9AA6B5', lw: 9, name: '!!' + nm + 'o' }); s.lineS(x1, y1, x2, y2, { color: '111317', lw: 6, name: '!!' + nm }); };
+      if (i >= 3) { blk(mx, ry, mx, ry - 0.3, 'k4'); blk(mx, ry - 0.3, KX, ry - 0.3, 'k4b'); blk(KX, ry - 0.3, KX, 4.6, 'k4c'); }
+      if (i >= 4) { blk(KX, 4.6, PX + 2.3, 5.6, 'k5'); s.oval(PX + 2.15, 5.45, 0.3, 0.3, { fill: C.am, glow: 10, glowColor: C.am, name: '!!clip' }); }
       // Nummern
-      const N = [null, [rx1 - 0.55, ry - 0.62], [rx2 + 0.15, ry - 0.45], [12.45, 4.35], [PX + 2.5, 5.75]];
+      const N = [null, [rx1 - 0.55, ry - 0.62], [rx2 + 0.15, ry - 0.45], [mx - 0.21, ry - 0.88], [PX + 2.5, 5.75]];
       for (let k = 1; k <= Math.min(i, 4); k++) s.text(String(k), { x: N[k][0], y: N[k][1], w: 0.42, h: 0.42, size: 15, bold: true, color: C.dark, fill: k <= 2 ? C.red : C.mut, shape: deck.pres.shapes.OVAL, align: 'center', valign: 'middle', name: '!!n' + k });
       if (i === 4) s.text('nicht an Minus der leeren Batterie!', { x: PX - 0.1, y: 4.35, w: 3.2, h: 0.4, size: 13, bold: true, color: C.red, name: '!!twarn' });
     },

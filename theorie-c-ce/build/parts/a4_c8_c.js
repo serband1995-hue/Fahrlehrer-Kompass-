@@ -45,7 +45,7 @@ module.exports = async (deck) => {
         arrow(s, END, y0 - 0.65, tip, y0 - 0.65, { col: C.am, th: 0.05, head: 0.18, name: 'ov' });
         s.rect(END - 0.015, y0 - 0.8, 0.03, 0.75, { fill: C.am, ft: 30, name: '!!rueck' });
         s.text(String(st.ov).replace('.', ',') + ' m', { x: (END + tip) / 2 - 0.8, y: y0 - 1.15, w: 1.6, h: 0.4, size: 20, bold: true, color: C.am, align: 'center', name: '!!ovt' });
-        s.text('Rückstrahler', { x: END - 0.9, y: GY + 0.35, w: 1.8, h: 0.3, size: 11, color: C.dim, align: 'center', name: '!!rt' });
+        s.text('Rückstrahler', { x: END - 0.9, y: GY + 0.35, w: 1.8, h: 0.3, size: 12, color: C.dim, align: 'center', name: '!!rt' });
         // Fahne / Schild
         s.rect(tip - 0.2, y0 - 0.12, 0.02, 0.45, { fill: C.txt, ft: st.flag ? 0 : 100, name: '!!stab' });
         s.rect(tip - 0.38, y0 + 0.28, 0.36, 0.36, { fill: 'FF4D4D', ft: st.flag ? 0 : 100, line: st.flag ? 'B02A2A' : undefined, name: '!!fahne' });

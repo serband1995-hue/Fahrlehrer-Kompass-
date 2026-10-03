@@ -36,7 +36,7 @@ module.exports = async (deck) => {
       // Umriss Fahrerhaus und Aufbau (zur Orientierung)
       s.rrect(5.7, FY - 1.25, 1.75, 2.5, { line: '33445C', lw: 1.5, dash: 'dash', rr: 0.12, name: '!!umr1' });
       s.rect(7.6, FY - 1.25, 5.45, 2.5, { line: '33445C', lw: 1.5, dash: 'dash', name: '!!umr2' });
-      s.text('Fahrer-haus', { x: 5.72, y: FY - 1.2, w: 0.7, h: 0.5, size: 10, italic: true, color: C.dim, name: '!!tfh' });
+      s.text('Fahrerhaus', { x: 5.75, y: FY - 1.28, w: 0.95, h: 0.3, size: 12, color: C.mut, name: '!!tfh' });
       // Rahmen
       s.rect(5.9, FY - 0.95, 7.0, 0.16, { fill: '3C4656', name: '!!r1' });
       s.rect(5.9, FY + 0.79, 7.0, 0.16, { fill: '3C4656', name: '!!r2' });
@@ -52,17 +52,17 @@ module.exports = async (deck) => {
       for (const [nm, x, y, w, h, col, lab, st] of parts) {
         const on = i >= st, cur = i === st;
         s.rrect(x, y, w, h, { fill: on ? col : '2A3342', line: cur ? C.white : (on ? col : C.line), lw: cur ? 2.5 : 1, rr: 0.08, name: '!!' + nm, glow: cur ? 10 : undefined, glowColor: col });
-        const L = { motor: [x + 0.05, y + 0.08, w - 0.1], kupp: [7.15, FY + 0.47, 1.2], getr: [7.92, FY - 0.74, 0.95], welle: [9.3, FY - 0.45, 1.6], diff: [9.95, FY + 0.3, 1.3] }[nm];
-        s.text(lab, { x: L[0], y: L[1], w: L[2], h: 0.32, size: 12, bold: cur, color: nm === 'motor' && on ? C.dark : (on ? C.txt : C.dim), align: 'center', valign: 'middle', name: '!!t' + nm });
+        const L = { motor: [x + 0.05, y + 0.08, w - 0.1], kupp: [7.3, FY + 0.47, 0.92], getr: [7.92, FY - 0.74, 0.95], welle: [9.3, FY - 0.45, 1.6], diff: [11.97, FY - 0.17, 1.02] }[nm];
+        s.text(lab, { x: L[0], y: L[1], w: L[2], h: 0.32, size: 12, bold: cur, color: nm === 'motor' && on ? C.dark : (on ? C.txt : C.mut), align: 'center', valign: 'middle', fill: nm === 'kupp' || nm === 'diff' ? '0B111A' : undefined, name: '!!t' + nm });
       }
       // Gelenke der Welle
       for (const [k, x] of [[0, 8.87], [1, 11.22]]) s.oval(x - 0.08, FY - 0.12, 0.24, 0.24, { fill: i >= 3 ? '9AA6B5' : '2A3342', name: '!!gl' + k });
-      s.text('Achswellen', { x: 12.05, y: FY + 1.0, w: 1.2, h: 0.3, size: 12, bold: i === 5, color: i >= 5 ? C.or : C.dim, name: '!!tachs' });
+      s.text('Achswellen', { x: 12.05, y: FY + 1.0, w: 1.2, h: 0.3, size: 12, bold: i === 5, color: i >= 5 ? C.or : C.mut, name: '!!tachs' });
       // Kraft-Puls wandert mit
       const PX = [6.97, 7.76, 8.4, 10.1, 11.62, 11.62];
       const PY = [FY + 0.2, FY, FY, FY, FY, FY - 1.6];
       s.oval(PX[i] - 0.17, PY[i] - 0.17, 0.34, 0.34, { fill: C.or, glow: 12, glowColor: C.or, name: '!!puls' });
-      s.text('vorn', { x: 5.9, y: 5.85, w: 1.0, h: 0.3, size: 12, color: C.dim, name: '!!vorn' });
+      s.text('vorn', { x: 5.9, y: 5.85, w: 1.0, h: 0.3, size: 13, color: C.mut, name: '!!vorn' });
       s.lineS(6.9, 6.2, 5.95, 6.2, { color: C.dim, lw: 1.5, endArrow: 'triangle', name: '!!vpf' });
     },
   });
@@ -98,7 +98,8 @@ module.exports = async (deck) => {
       s.oval(J2[0] + 0.15, J2[1] - 1.0 + 0.0, 2.0, 2.0, { line: '3C4656', lw: 3, name: '!!rad' });
       s.oval(J2[0] + 0.55, J2[1] - 0.6, 1.2, 1.2, { fill: '3A2E14', line: 'C9A227', lw: 2, name: '!!diffg' });
       s.text('Hinterachse', { x: J2[0] + 0.25, y: 5.05, w: 1.8, h: 0.35, size: 14, bold: true, color: 'C9A227', align: 'center', name: '!!tha' });
-      s.rect(J2[0] + 0.4, J2[1] - 0.32, 0.1, 0.64, { fill: '9AA6B5', name: '!!fl2' });
+      s.rect(J2[0] + 0.2, J2[1] - 0.32, 0.1, 0.64, { fill: '9AA6B5', name: '!!fl2' });
+      s.rect(J2[0] + 0.3, J2[1] - 0.07, 0.3, 0.14, { fill: '9AA6B5', name: '!!fl2s' });
       // Welle: Gelenk 1, Schiebestück, Rohr, Gelenk 2
       const cut = off ? 0.45 : 0;
       bar(0.15, 1.35, 0.34, '6E7888', 'sleeve');
@@ -111,9 +112,9 @@ module.exports = async (deck) => {
       }
       // Beschriftungen
       const [sx, sy] = at(0.75), [jx, jy] = at(len - 0.02 - cut);
-      s.text('Kreuzgelenk', { x: J1[0] - 0.75, y: 2.6, w: 1.5, h: 0.32, size: 13, bold: true, color: C.or, align: 'center', name: '!!tj1' });
+      s.text('Kreuzgelenk', { x: J1[0] - 0.55, y: J1[1] - 1.05, w: 1.5, h: 0.32, size: 13, bold: true, color: C.or, align: 'center', name: '!!tj1' });
       s.text('Schiebestück', { x: sx - 0.8, y: sy + 0.35, w: 1.6, h: 0.32, size: 13, bold: true, color: C.mut, align: 'center', name: '!!tsl' });
-      s.text('Kreuzgelenk', { x: jx - 0.9, y: jy - 0.7, w: 1.5, h: 0.32, size: 13, bold: true, color: C.or, align: 'center', name: '!!tj2' });
+      s.text('Kreuzgelenk', { x: jx - 1.15, y: jy - 0.7, w: 1.5, h: 0.32, size: 13, bold: true, color: C.or, align: 'center', name: '!!tj2' });
       if (i === 1) {
         s.lineS(J2[0] + 1.15, 5.0, J2[0] + 1.15, 4.35, { color: C.bl, lw: 3, endArrow: 'triangle', name: '!!pfeil' });
         s.text('federt ein', { x: J2[0] - 0.7, y: 5.45, w: 1.8, h: 0.35, size: 15, bold: true, color: C.bl, align: 'right', name: '!!tfed' });

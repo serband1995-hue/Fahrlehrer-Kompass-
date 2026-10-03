@@ -6,6 +6,7 @@ const LU = require('react-icons/lu');
 const sharp = require('sharp');
 const path = require('path');
 const fs = require('fs');
+const { balance } = require('./balance');
 const ART = path.join(__dirname, 'art');
 const MEDIA = path.join(__dirname, 'media');
 
@@ -53,6 +54,24 @@ class Ctx {
     this.pres = deck.pres;
   }
   nm(name) { return name || `e${this.idx}_${++this.n}`; }
+  // Morph dreht von Wert zu Wert (345° → 0° wäre eine Drehung rückwärts um 345°). Darum: Winkel in 0…360 so wählen,
+  // dass er nahe am Wert der vorigen Folie bleibt. sym = 180: Form sieht nach halber Drehung gleich aus (Rechteck, Oval).
+  // Ist ein Sprung über 0/360 nicht zu vermeiden, bekommt das Objekt ab hier einen neuen Namen – Morph blendet dann über.
+  rotFix(name, r, sym = 360) {
+    if (!name.startsWith('!!')) return [name, r];
+    const D = this.deck, M = D.rotMem ||= {}, AL = D.rotAlias ||= {};
+    let v = (((r || 0) % 360) + 360) % 360;
+    const m = M[name], prev = m && m.idx === this.idx - 1 ? m.v : null;
+    const alt = v < 180 ? v + 180 : v - 180;
+    if (prev === null) { if (sym === 180 && (v < 90 || v >= 270)) v = alt; }       // flache Balken um 180° statt um 0° → kein Sprung bei leichter Neigung
+    else {
+      if (sym === 180 && Math.abs(alt - prev) < Math.abs(v - prev)) v = alt;
+      if (Math.abs(v - prev) > sym / 2) AL[name] = (AL[name] || 0) + 1;
+    }
+    M[name] = { idx: this.idx, v };
+    const out = AL[name] ? name + '~' + AL[name] : name;
+    return [out, r === undefined && v === 0 ? undefined : Math.round(v * 100) / 100];
+  }
   reg(name, anim, kind) {
     (this.all ||= []).push({ name, kind, animated: !!anim });
     if (!anim) return;
@@ -63,6 +82,7 @@ class Ctx {
     // geschützte Leerzeichen: Zahl + Einheit, Z/§ + Nummer bleiben zusammen
     const nb = x => x.replace(/(\d) (kg|t\b|Std\.|Punkte?|Min\b|km\/h|€|m\b|Mio\.|Monate?|Jahre?|%|ng|°C)/g, '$1\u00A0$2').replace(/(Z|§|Abs\.|Nr\.) (\d)/g, '$1\u00A0$2');
     t = typeof t === 'string' ? nb(t) : t.map(r => ({ ...r, text: nb(r.text) }));
+    t = balance(t, o);   // kein einzelnes Wort allein in der letzten Zeile
     const name = this.nm(o.name);
     const opt = {
       x: o.x, y: o.y, w: o.w, h: o.h, fontFace: o.font || FONT, fontSize: o.size || 20, color: o.color || COL.txt,
@@ -83,8 +103,9 @@ class Ctx {
     return name;
   }
   shape(type, o = {}, anim) {
-    const name = this.nm(o.name);
-    const opt = { x: o.x, y: o.y, w: o.w, h: o.h, objectName: name, rotate: o.rotate, flipH: o.flipH };
+    const sym = [this.pres.shapes.RECTANGLE, this.pres.shapes.ROUNDED_RECTANGLE, this.pres.shapes.OVAL].includes(type) ? 180 : 360;
+    const [name, rotate] = this.rotFix(this.nm(o.name), o.rotate, sym);
+    const opt = { x: o.x, y: o.y, w: o.w, h: o.h, objectName: name, rotate, flipH: o.flipH };
     opt.fill = o.fill ? { color: o.fill, transparency: o.ft || 0 } : { type: 'none' };
     opt.line = o.line ? { color: o.line, width: o.lw || 1, dashType: o.dash, transparency: o.lt || 0 } : { type: 'none' };
     if (o.rr !== undefined) opt.rectRadius = o.rr;
@@ -113,8 +134,8 @@ class Ctx {
     return name;
   }
   img(file, o = {}, anim) {
-    const name = this.nm(o.name);
-    const opt = { x: o.x, y: o.y, w: o.w, h: o.h, objectName: name, rotate: o.rotate, transparency: o.transparency, altText: o.alt || '', rounding: o.round };
+    const [name, rotate] = this.rotFix(this.nm(o.name), o.rotate, o.sym);
+    const opt = { x: o.x, y: o.y, w: o.w, h: o.h, objectName: name, rotate, transparency: o.transparency, altText: o.alt || '', rounding: o.round };
     if (typeof file === 'string' && file.startsWith('image/')) opt.data = file; else opt.path = path.join(ART, file);
     if (o.sizing) opt.sizing = { type: o.sizing, w: o.w, h: o.h };
     if (o.shadow) opt.shadow = { type: 'outer', color: '000000', blur: 24, offset: 6, angle: 90, opacity: 0.7 };

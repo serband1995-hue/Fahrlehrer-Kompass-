@@ -92,7 +92,7 @@ module.exports = async (deck) => {
       // Ansaugen
       s.text('Luft', { x: 5.6, y: 1.35, w: 0.8, h: 0.3, size: 13, bold: true, color: on(0) ? C.bl : C.dim, name: '!!tluft' });
       s.lineS(5.95, 1.68, 6.25, 2.0, { color: C.bl, lw: 2.5, endArrow: 'triangle', name: '!!pluft' });
-      s.text('vom Motor angetrieben', { x: 5.6, y: 3.25, w: 1.9, h: 0.3, size: 11, italic: true, color: C.dim, name: '!!tmot' });
+      s.text('vom Motor angetrieben', { x: 5.6, y: 3.25, w: 1.9, h: 0.3, size: 12, italic: true, color: C.dim, name: '!!tmot' });
       // Leitungen
       const pipe = (nm, x1, y1, x2, y2, k) => { const v = Math.abs(x2 - x1) < 0.01, th = 0.09; s.rrect(Math.min(x1, x2) - (v ? th / 2 : 0.03), Math.min(y1, y2) - (v ? 0.03 : th / 2), v ? th : Math.abs(x2 - x1) + 0.06, v ? Math.abs(y2 - y1) + 0.06 : th, { fill: on(k) ? C.bl : '3C4656', rr: 0.5, name: '!!' + nm }); };
       pipe('p1', 7.1, YL, 7.4, YL, 1); pipe('p2', 8.7, YL, 9.0, YL, 2); pipe('p3', 9.95, YL, 10.25, YL, 3);
@@ -190,7 +190,7 @@ module.exports = async (deck) => {
         const hh = 1.5 * lev;
         s.rrect(x + 0.1, 3.85 + 1.5 - hh, 1.4, Math.max(hh, 0.04), { fill: bad ? C.red : C.bl, ft: 40, rr: 0.15, name: '!!lv' + k });
         s.text(KL[k][0], { x, y: 5.5, w: 1.6, h: 0.3, size: 13, bold: true, color: bad ? C.red : C.txt, align: 'center', name: '!!tbk' + k });
-        s.text(KL[k][1], { x: x - 0.05, y: 5.8, w: 1.7, h: 0.5, size: 11, color: C.mut, align: 'center', name: '!!tbv' + k });
+        s.text(KL[k][1], { x: x - 0.05, y: 5.8, w: 1.7, h: 0.5, size: 12, color: C.mut, align: 'center', name: '!!tbv' + k });
       }
       s.img(await icon('LuWind', C.red), { x: 8.05, y: 4.0, w: 0.5, h: 0.5, name: '!!leck', transparency: lk ? 0 : 100 });
       s.text(lk ? 'zisch!' : '', { x: 7.9, y: 4.5, w: 0.9, h: 0.3, size: 13, bold: true, color: C.red, align: 'center', name: '!!tleck' });
