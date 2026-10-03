@@ -265,8 +265,11 @@ function arrow(s, x1, y1, x2, y2, o = {}) {
 }
 module.exports.arrow = arrow;
 // Gerades Band (Gurt, Kette, Stange) von (x1,y1) nach (x2,y2), morph-fähig über festen Namen
+// rb: bevorzugter Winkel (Grad). Ein Balken sieht nach 180° gleich aus – so bleibt der Winkel über alle Morph-Folien in einem Bereich und springt nicht über 0/360.
 function seg(s, x1, y1, x2, y2, o = {}) {
-  const L = Math.max(0.02, Math.hypot(x2 - x1, y2 - y1)), deg = Math.atan2(y2 - y1, x2 - x1) * 180 / Math.PI, th = o.th || 0.07;
+  const L = Math.max(0.02, Math.hypot(x2 - x1, y2 - y1)), th = o.th || 0.07;
+  let deg = Math.atan2(y2 - y1, x2 - x1) * 180 / Math.PI;
+  if (o.rb !== undefined) { while (deg < o.rb - 90) deg += 180; while (deg >= o.rb + 90) deg -= 180; deg = ((deg % 360) + 360) % 360; }
   return s.rrect((x1 + x2) / 2 - L / 2, (y1 + y2) / 2 - th / 2, L, th, { fill: o.col || C.or, ft: o.hide ? 100 : (o.ft || 0), rr: o.rr ?? 0.3, rotate: Math.round(deg * 10) / 10, name: o.name, line: o.line, lw: o.lw, glow: o.glow, glowColor: o.col || C.or });
 }
 module.exports.seg = seg;
