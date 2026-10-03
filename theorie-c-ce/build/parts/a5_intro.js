@@ -63,7 +63,7 @@ module.exports = async (deck) => {
   // ===== LERNZIELE C9 =====
   {
     const s = base(deck, 'c9', { notes:
-      '▶ Sagen: „In C9 lernt ihr, welche Kräfte beim Fahren auf die Ladung wirken, wie man sie richtig sichert, was das Fahrzeug dazu beiträgt – und wie ihr vor jeder Fahrt den Lkw kontrolliert.“\n' +
+      '▶ Sagen: „In C9 lernt ihr, welche Kräfte beim Fahren auf die Ladung wirken, wie man sie richtig sichert, was das Fahrzeug dazu beiträgt – und wie ihr vor jeder Schicht den Lkw kontrolliert.“\n' +
       '🖱 Klick 1–5: je ein Kapitel.\n' +
       '💡 Zeiten sind Richtwerte für 90 Minuten.\n' +
       '➜ „Kapitel 1: Warum muss Ladung überhaupt gesichert werden?“' });

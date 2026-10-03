@@ -290,7 +290,7 @@ Quellen: https://www.gesetze-im-internet.de/bkatv_2013/anlage.html · Punkte: Fe
 - **E-Lkw (batterieelektrisch, Wasserstoff/Brennstoffzelle, Wasserstoff-Verbrenner):** emissionsfreie schwere Nutzfahrzeuge sind **mautbefreit bis 30. Juni 2031**; bis 4,25 t zGM **dauerhaft**. § 1 Abs. 2 Nr. 7 und 9 BFStrMG. https://www.gesetze-im-internet.de/bfstrmg/__1.html
   - **Klärung:** Die alte Regel „mautfrei bis 31.12.2025, danach reduzierter Satz“ ist **überholt**. Das „Vierte Gesetz zur Änderung mautrechtlicher Vorschriften“ (Bundestag Mitte November 2025, verkündet Anfang Dezember 2025) hat die Befreiung bis 30.06.2031 verlängert. https://www.electrive.net/2025/12/02/gesetzgebung-final-mautbefreiung-fuer-e-lkw-kann-in-kraft-treten/ · https://www.toll-collect.de/en/toll_collect/service/fragen___antworten/mautaenderungen_2023_und_2024/co2_maut/co2_emissionsklassen.html
 - **LNG/CNG-Lkw:** Mautbefreiung galt nur **1.1.2019 bis 31.12.2023** (§ 1 Abs. 2 Nr. 8 BFStrMG) → heute mautpflichtig.
-- **HVO100** (hydriertes Pflanzenöl, aus Rest- und Abfallstoffen): seit **13. April 2024** an deutschen Tankstellen erlaubt (Änderung der 10. BImSchV, Norm **DIN EN 15940**; Bundesrat 22.03.2024). **Nur tanken, wenn der Hersteller das Fahrzeug freigegeben hat.** https://www.autohaus.de/nachrichten/schadenbusiness/nach-bundesrats-zustimmung-weg-frei-fuer-hvo100-diesel-in-deutschland-3496769
+- **HVO100** (hydriertes Pflanzenöl, meist aus Rest- und Abfallstoffen): seit **29. Mai 2024** an deutschen Tankstellen erlaubt (Zweite Verordnung zur Änderung der 10. BImSchV vom 28.05.2024, BGBl. 2024 I Nr. 169; Art. 2: in Kraft am Tag nach der Verkündung, frühestens 13.04.2024 – korrigiert nach PRUEFUNG_ABEND5). Norm **DIN EN 15940**. **Nur tanken, wenn der Hersteller das Fahrzeug freigegeben hat.** https://www.autohaus.de/nachrichten/schadenbusiness/nach-bundesrats-zustimmung-weg-frei-fuer-hvo100-diesel-in-deutschland-3496769
 - E-Lkw-Fahrpraxis (Lehrbuchwissen): Rekuperation statt Bremse, Reichweite und Ladestopps einplanen (Ladepause = Lenkzeitunterbrechung nutzen), Gewicht der Batterie mindert Nutzlast.
 
 ## C10-e) Lkw-Maut 2026 (BFStrMG, primär geprüft)
@@ -373,7 +373,7 @@ Quellen: https://www.gesetze-im-internet.de/bkatv_2013/anlage.html · Punkte: Fe
 - C10: CO₂ ≈ 2,65 kg/l Diesel. Sattelzug ca. 25–35 l/100 km. Schubabschaltung, grüner Bereich, vorausschauend, Reifendruck, Spoiler, Wartung.
 - Motor unnötig laufen lassen: § 30 Abs. 1 StVO, 80 €, kein Punkt (für alle Fahrzeuge gleich).
 - Maut: emissionsfreie Lkw mautfrei bis 30.06.2031 (nicht nur bis 2025!). Diesel Euro VI, 5 Achsen, CO₂-Klasse 1: 34,8 ct/km.
-- HVO100 seit 13.04.2024 an Tankstellen (DIN EN 15940), nur mit Herstellerfreigabe.
+- HVO100 seit 29.05.2024 an Tankstellen (DIN EN 15940), nur mit Herstellerfreigabe.
 - Planung: Schnitt 70 km/h (2.6.07-214), 1:200.000 = 1 cm 2 km (2.6.07-218), Lenkzeiten, Feiertage, Ferienreise-VO, Baustellen, Fahrzeugprofil im Navi.
 
 # UNSICHER

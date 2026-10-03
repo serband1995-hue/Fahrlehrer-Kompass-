@@ -114,22 +114,22 @@ module.exports = async (deck) => {
 
   // ===== WIE VIEL HÄLT DIE REIBUNG? (Morph, Balken) =====
   {
-    const R = [['Nass, schmutzig oder vereist', 0.2, '20 %'], ['Gitterbox auf Siebdruckboden', 0.25, '25 %'], ['Holz auf Holz, trocken', 0.5, '20–50 %', 0.2], ['mit Antirutschmatte', 0.6, '60 %']];
+    const R = [['Schmutzig, verschneit oder vereist', 0.2, 'max. 20 %'], ['Gitterbox auf Siebdruckboden', 0.25, '25 %'], ['Holz auf Holz, trocken', 0.5, '20–50 %', 0.2], ['mit Antirutschmatte', 0.6, '60 %']];
     const X0 = 9.0, SCL = 3.9, Y0 = 2.45, RH = 0.92;
     await steps(deck, 'c9s', {
       kicker: 'Reibung', ttl: 'Wie viel hält die Reibung?',
-      list: ['Nass oder schmutzig', 'Gitterbox auf Siebdruck', 'Holz auf Holz', 'Antirutschmatte'],
+      list: ['Schmutzig oder vereist', 'Gitterbox auf Siebdruck', 'Holz auf Holz', 'Antirutschmatte'],
       ask: { q: 'Reicht die Reibung allein irgendwo aus?', a: 'Nein. Selbst mit Antirutschmatte fehlen nach vorn 20 %. Den Rest schaffen Formschluss oder Gurte.', at: 3 },
       caps: [
-        'Nass, schmutzig oder vereist: Die Reibung hält nur etwa 20 % des Gewichts.',
+        'Schmutzig, verschneit oder vereist: Die Reibung hält höchstens etwa 20 % des Gewichts – oft weniger.',
         'Gitterbox aus Metall auf Siebdruckboden: etwa 25 %.',
         'Holz auf Holz, trocken: je nach Holz 20 bis 50 %.',
         'Mit Antirutschmatte: etwa 60 %. Gebraucht werden nach vorn aber 80 %!',
       ],
       notes: [
-        '▶ Sagen: „Die rote Linie: 80 Prozent – so viel muss nach vorn gehalten werden. Wie viel schafft die Reibung allein? Ist die Ladefläche nass, schmutzig oder vereist: nur etwa 20 Prozent.“\n✅ BG BAU „Ladungssicherung“ 2021: Bei Schnee, Eis, Frost oder Schmutz wird mit μ = 0,2 gerechnet.\n➜ „Eine Gitterbox aus Metall?“',
+        '▶ Sagen: „Die rote Linie: 80 Prozent – so viel muss nach vorn gehalten werden. Wie viel schafft die Reibung allein? Ist die Ladefläche schmutzig, verschneit oder vereist: höchstens 20 Prozent.“\n✅ BG BAU „Ladungssicherung“ 2021, S. 15: Ist die Fläche nicht besenrein oder nicht frei von Frost, Eis und Schnee, darf höchstens μ = 0,2 angesetzt werden.\n➜ „Eine Gitterbox aus Metall?“',
         '▶ „Gitterbox aus Metall auf Siebdruckboden: etwa 25 Prozent.“\n✅ BG BAU 2021, Reibbeiwerte (nach VDI 2700 Blatt 14): Gitterbox auf Siebdruckboden 0,25.\n➜ „Und Holz auf Holz?“',
-        '▶ „Holz auf Holz, trocken: je nach Holz 20 bis 50 Prozent. Nass deutlich weniger.“\n✅ BG BAU 2021: Holz/Holz trocken 0,2–0,5, nass 0,2–0,25.\n➜ „Und mit Antirutschmatte?“',
+        '▶ „Holz auf Holz, trocken: je nach Holz 20 bis 50 Prozent. Nass deutlich weniger, fettig fast nichts.“\n✅ BG BAU 2021: Holz/Holz trocken 0,2–0,5, nass 0,2–0,25, fettig 0,05–0,15.\n➜ „Und mit Antirutschmatte?“',
         '▶ „Mit Antirutschmatte etwa 60 Prozent. Das ist viel – aber immer noch nicht 80.“\n❓ Frage auf der Folie auflösen.\n✅ BG BAU 2021: Antirutschmatte μ = 0,6. Gebraucht nach vorn: 0,8 g (DIN EN 12195-1).\n💡 Rechenbeispiel IHK Stuttgart (1 t Ladung, Ratsche STF 300 daN): bei μ 0,2 etwa 7 Gurte, bei μ 0,6 nur 1 Gurt – die Matte spart Gurte (nur als Tendenz).\n💡 Dazu kommt: Auf holpriger Straße hebt die Ladung kurz ab – dann ist die Reibung für einen Moment weg. Darum nie nur auf Reibung verlassen.\n➜ „Welche Helfer gibt es?“',
       ],
       legend: 'Anteil des Gewichts, den die Reibung hält (Reibbeiwert μ) · Werte: BG BAU 2021 nach VDI 2700 Blatt 14',

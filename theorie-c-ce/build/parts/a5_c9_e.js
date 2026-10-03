@@ -31,7 +31,7 @@ module.exports = async (deck) => {
     await motion(deck, 'c9a', {
       kicker: 'Abfahrtkontrolle', ttl: 'Der Rundgang', dur: 520, holdDur: 650,
       question: 'Was prüft ihr beim Rundgang – und was tut ihr, wenn ihr einen Mangel findet?',
-      answer: 'Vor jeder Fahrt: Reifen, Licht, Spiegel, Ladung, Bremse. Mängel melden – ist der Lkw nicht sicher: nicht losfahren.',
+      answer: 'Vor jeder Schicht: Reifen, Licht, Spiegel, Ladung, Bremse. Mängel melden – ist der Lkw nicht sicher: nicht losfahren.',
       legend: 'Draufsicht · Reihenfolge ist ein Vorschlag – wichtig ist, dass nichts fehlt',
       frames: [
         fr(0, { hold: true, cap: 'Im Fahrerhaus: Papiere und Fahrerkarte, Motor an, Druck aufbauen, Kontrollleuchten prüfen.', note: N('Wir starten im Fahrerhaus: Papiere da? Fahrerkarte gesteckt? Motor starten, damit sich Druck aufbaut. Alle Kontrollleuchten gehen kurz an – und dann aus.“\n❓ Frage auf der Folie stellen.\n✅ § 23 Abs. 1 StVO: Der Fahrer ist verantwortlich, dass Fahrzeug, Zug und Ladung vorschriftsmäßig sind. DGUV Vorschrift 70 § 36 Abs. 1: vor Beginn jeder Arbeitsschicht die Wirksamkeit der Betätigungs- und Sicherheitseinrichtungen prüfen. Ausführliche Checkliste: DGUV Grundsatz 314-002 „Kontrolle von Fahrzeugen durch Fahrpersonal“.\n💡 Kontrolle auch nach dem Laden, nach dem Kuppeln und nach längeren Pausen (Prüfungsfrage 2.2.23-216: auch prüfen, ob Kinder unter dem Fahrzeug sind).\n🖱 Klick: Der Rundgang beginnt (läuft bis zur nächsten Station).\n➜ „Raus und links vorn anfangen.“') }),
@@ -137,7 +137,7 @@ module.exports = async (deck) => {
       ['Zurrgurt-Etikett', 'LC = Zurrkraft · STF = Vorspannkraft · ohne Etikett: nicht benutzen'],
       ['Stirnwand (Code L)', 'hält nur 40 % der Nutzlast, höchstens 5 t'],
       ['Lastverteilungsplan', 'Ladung nur im erlaubten Bereich – Achslasten beachten'],
-      ['Abfahrtkontrolle', 'vor jeder Fahrt · Mängel melden · Bremsprobe nach dem Losfahren'],
+      ['Abfahrtkontrolle', 'vor jeder Schicht und nach Laden oder Kuppeln · Mängel melden · Bremsprobe'],
     ],
     notes: '▶ Sagen: „Schreibt euch das auf – das kommt in der Prüfung.“\n🖱 Klick 1–7: je eine Lösung.\n💡 Erst das Stichwort vorlesen und fragen: „Wer weiß es?“ – dann klicken.\n✅ Quellen: DIN EN 12195-1 (Beschleunigungsbeiwerte), Prüfungsfrage 2.2.22-210 (Formschluss), DIN EN 12195-2 (Etikett), DIN EN 12642 (Aufbau Code L), Prüfungsfragen 2.2.22-217/219 (Lastverteilungsplan), 2.7.02-017 (Bremsprobe), § 23 Abs. 1 StVO.\n➜ „Drei Prüfungsfragen.“',
   });
@@ -165,7 +165,7 @@ module.exports = async (deck) => {
       ['LuLink', 'Formschluss und Zurren:', 'lückenlos an die Wände und niederzurren – Reibung allein reicht nie.'],
       ['LuTag', 'Gurt prüfen:', 'Etikett lesbar, keine Schnitte, Ratsche heil – sonst aussortieren.'],
       ['LuScale', 'Lastverteilungsplan:', 'nicht zu weit vorn, nicht zu weit hinten – Achslasten beachten.'],
-      ['LuClipboardCheck', 'Abfahrtkontrolle:', 'vor jeder Fahrt. Rote Warnleuchte heißt: sicher anhalten.'],
+      ['LuClipboardCheck', 'Abfahrtkontrolle:', 'vor jeder Schicht und nach Laden, Kuppeln, langen Pausen. Rote Warnleuchte: sicher anhalten.'],
     ],
     notes: '▶ Sagen: „Das sind die fünf Punkte aus C9, die ihr sicher wissen müsst.“\n🖱 Klick 1–5: je ein Punkt.\n➜ „Jetzt 15 Minuten Pause. Danach C10: sparsam fahren und die Strecke planen.“',
   });

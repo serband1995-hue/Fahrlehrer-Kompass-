@@ -46,15 +46,15 @@ module.exports = async (deck) => {
   const fr = (v, o = {}) => ({ ...o, t: { v, ...(o.t || {}) } });
   await motion(deck, 'c9k', {
     kicker: 'Vollbremsung', ttl: 'Die Ladung will weiter', dur: 420, holdDur: 800,
-    question: 'Vollbremsung aus 80 km/h: Mit wie viel Kraft schiebt eine 10-Tonnen-Ladung nach vorn?',
-    answer: 'Mit bis zu 8 Tonnen – rund 80 % ihres Gewichts. Ungesichert rutscht sie gegen die Stirnwand.',
+    question: 'Vollbremsung: Mit wie viel Kraft schiebt eine 10-Tonnen-Ladung nach vorn?',
+    answer: 'Mit bis zu 8.000 daN – so viel, wie 8 Tonnen wiegen: rund 80 % ihres Gewichts. Egal ob aus 30 oder 80 km/h.',
     legend: 'Blick in den Aufbau · schematisch',
     frames: [
       fr(80, { hold: true, cap: 'Zwei Paletten stehen mitten im Aufbau – ohne Gurte. „Die sind doch schwer genug …“', note: '▶ Sagen: „Zwei schwere Paletten, einfach draufgestellt. Viele denken: Die bewegen sich schon nicht, die sind ja schwer.“\n❓ Frage auf der Folie stellen, schätzen lassen.\n🖱 Klick: Die Fahrt läuft (von selbst bis zur Bremsung).\n➜ „Und jetzt: Vollbremsung!“' }),
       fr(80), fr(80),
       fr(60, { t: { brake: 1, off: -0.12 }, cap: 'Vollbremsung! Der Lkw wird langsamer – die Ladung will mit 80 km/h weiter.' }),
       fr(40, { t: { brake: 1, off: -0.4 } }), fr(20, { t: { brake: 1, off: -0.72 } }),
-      fr(0, { t: { brake: 1, off: -0.92, hit: 1 }, hold: true, answer: true, cap: 'Die Ladung schlägt mit voller Wucht gegen die Stirnwand – oder durch sie hindurch ins Fahrerhaus.', note: '▶ „Die Ladung rutscht nach vorn und knallt gegen die Stirnwand. Beim Bremsen drückt sie mit bis zu 80 Prozent ihres Gewichts nach vorn – eine 10-Tonnen-Ladung also mit rund 8 Tonnen.“\n✅ DIN EN 12195-1 / VDI 2700: Bemessung der Ladungssicherung im Straßenverkehr nach vorn mit 0,8 g (80 % der Gewichtskraft). § 22 Abs. 1 StVO: Ladung muss selbst bei Vollbremsung und plötzlicher Ausweichbewegung gesichert sein.\n🖱 Keine Animation mehr – nächster Klick: dieselbe Bremsung mit gesicherter Ladung.\n➜ „Jetzt richtig gesichert.“' }),
+      fr(0, { t: { brake: 1, off: -0.92, hit: 1 }, hold: true, answer: true, cap: 'Die Ladung schlägt mit voller Wucht gegen die Stirnwand – oder durch sie hindurch ins Fahrerhaus.', note: '▶ „Die Ladung rutscht nach vorn und knallt gegen die Stirnwand. Beim Bremsen drückt sie mit bis zu 80 Prozent ihres Gewichts nach vorn – eine 10-Tonnen-Ladung also mit rund 8.000 daN, so viel, wie 8 Tonnen wiegen. Das hängt von der Bremsung ab, nicht vom Tempo: Aus 30 km/h ist die Kraft genauso groß, sie dauert nur kürzer.“\n✅ DIN EN 12195-1 / VDI 2700: Bemessung der Ladungssicherung im Straßenverkehr nach vorn mit 0,8 g (80 % der Gewichtskraft). § 22 Abs. 1 StVO: Ladung muss selbst bei Vollbremsung und plötzlicher Ausweichbewegung gesichert sein.\n🖱 Keine Animation mehr – nächster Klick: dieselbe Bremsung mit gesicherter Ladung.\n➜ „Jetzt richtig gesichert.“' }),
     ],
     scene: scene(false),
   });
@@ -111,14 +111,14 @@ module.exports = async (deck) => {
     kicker: 'Reibung', q: '„Die Ladung ist doch schwer – die rutscht schon nicht.“ Stimmt das?', ico: 'LuWeight', qsize: 32,
     answers: [
       ['LuX', 'Nein!', 'Schwere Ladung hält zwar mit mehr Reibung – aber sie drückt beim Bremsen auch mit mehr Kraft nach vorn.', C.red],
-      ['LuLayers', 'Reibung hält nur einen Teil', 'Holz auf Holz: je nach Zustand nur 20–50 % des Gewichts. Gebraucht werden 80 %.', C.or],
+      ['LuLayers', 'Reibung hält nur einen Teil', 'Holz auf Holz: trocken nur 20–50 % des Gewichts, fettig noch viel weniger. Gebraucht werden 80 %.', C.or],
       ['LuSquareStack', 'Antirutschmatten helfen', 'Sie erhöhen die Reibung stark – ersetzen aber keine Gurte und keinen Formschluss.', C.gr],
     ],
     notes:
       '▶ Sagen: „Viele glauben: Schweres rutscht nicht. Falsch! Je schwerer die Ladung, desto größer auch die Kraft, mit der sie beim Bremsen nach vorn drückt.“\n' +
       '❓ Erst sammeln lassen, dann je Klick auflösen.\n' +
       '🖱 Klick 1–3: je eine Karte.\n' +
-      '✅ Reibkraft und Massenkraft wachsen beide mit dem Gewicht – das Gewicht allein sichert nicht (Prüfungsfrage 2.2.22-117: „Ladung mit hohem Gewicht muss nicht gesichert werden“ ist falsch). Reibbeiwerte (BG BAU „Ladungssicherung“ 2021, nach VDI 2700 Blatt 14): Holz/Holz trocken 0,2–0,5, Metall/Holz 0,2–0,5, Antirutschmatte 0,6.\n' +
+      '✅ Reibkraft und Massenkraft wachsen beide mit dem Gewicht – das Gewicht allein sichert nicht (Prüfungsfrage 2.2.22-117: „Ladung mit hohem Gewicht muss nicht gesichert werden“ ist falsch). Reibbeiwerte (BG BAU „Ladungssicherung“ 2021, nach VDI 2700 Blatt 14): Holz/Holz trocken 0,2–0,5, nass 0,2–0,25, fettig 0,05–0,15; Metall/Holz 0,2–0,5; Antirutschmatte 0,6.\n' +
       '➜ „Und wer ist dafür verantwortlich?“',
   });
 
@@ -129,7 +129,7 @@ module.exports = async (deck) => {
       ['LuTruck', 'Fahrer', 'Ladung nicht verkehrssicher (Lkw): 60 € und 1 Punkt · mit Gefährdung 75 € und 1 Punkt.', C.red, 17],
       ['LuForklift', 'Verlader', 'Muss die Ladung beförderungssicher laden, stauen und befestigen.', C.or, 17],
       ['LuBuilding2', 'Halter', 'Lässt er den Lkw trotzdem fahren: 270 € und 1 Punkt.', C.or, 17],
-      ['LuTriangleAlert', 'Unterwegs ein Mangel?', 'Lässt er sich nicht gleich beheben: auf dem kürzesten Weg aus dem Verkehr.', C.gr, 17],
+      ['LuTriangleAlert', 'Unterwegs ein wesentlicher Mangel?', 'Lässt er sich nicht gleich beheben: auf dem kürzesten Weg aus dem Verkehr.', C.gr, 17],
     ],
     notes:
       '▶ Sagen: „Wer ist verantwortlich, wenn die Ladung nicht hält? Nicht nur einer!“\n' +

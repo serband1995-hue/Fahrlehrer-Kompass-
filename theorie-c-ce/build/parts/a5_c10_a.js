@@ -26,7 +26,7 @@ module.exports = async (deck) => {
   }
 
   await chapter(deck, 'c10f', { num: 1, ttl: 'Vorausschauend fahren', sub: 'Wer weit nach vorn schaut, bremst weniger – und spart Diesel.', ico: 'LuLeaf', notes:
-    '▶ Sagen: „Kapitel 1: vorausschauend fahren. Ein 40-Tonner braucht rund 30 Liter auf 100 Kilometer. Wer geschickt fährt, spart davon einiges.“\n✅ Richtwert 40-t-Sattelzug Fernverkehr: ca. 25–35 l/100 km (Sekundärquellen, große Streuung; siehe FAKTEN_C9_C10).\n🖱 Keine Klicks.\n➜ „Schauen wir zwei Lkw an einer Ampel zu.“' });
+    '▶ Sagen: „Kapitel 1: vorausschauend fahren. Ein Sattelzug braucht rund 30 Liter auf 100 Kilometer, euer C-Lkw etwas weniger. Wer geschickt fährt, spart davon einiges.“\n✅ Richtwert 40-t-Sattelzug Fernverkehr: ca. 25–35 l/100 km (Sekundärquellen, große Streuung; siehe FAKTEN_C9_C10).\n🖱 Keine Klicks.\n➜ „Schauen wir zwei Lkw an einer Ampel zu.“' });
 
   // ===== AMPEL: SPÄT BREMSEN vs. ROLLEN (fließend) =====
   {
@@ -35,15 +35,15 @@ module.exports = async (deck) => {
     await motion(deck, 'c10f', {
       kicker: 'Vorausschauend fahren', ttl: 'Zwei Lkw, eine Ampel', dur: 520, holdDur: 700,
       question: 'Die Ampel ist rot. Wer von beiden verbraucht weniger Diesel – und warum?',
-      answer: 'B: Er rollt früh ohne Gas, muss nicht anhalten und nicht wieder 40 Tonnen aus dem Stand beschleunigen.',
+      answer: 'B: Er rollt früh ohne Gas, muss nicht anhalten und nicht wieder 26 Tonnen aus dem Stand beschleunigen.',
       legend: 'Draufsicht · schematisch · Verbrauchsbalken ohne Maßstab',
       frames: [
-        fr(6.7, 6.7, { hold: true, t: { fa: 0, fb: 0, sa: 'Gas', sb: 'Gas' }, cap: 'Zwei gleiche Lkw, beide mit 50 km/h. Vorne ist die Ampel rot.', note: '▶ Sagen: „Zwei gleiche Lkw, 40 Tonnen, beide mit 50 km/h. Vorne: rote Ampel. Fahrer A fährt mit Gas bis kurz davor. Fahrerin B geht früh vom Gas.“\n❓ Frage auf der Folie stellen – abstimmen lassen.\n🖱 Klick: Die Fahrt läuft (von selbst bis A steht).\n➜ „Los geht’s.“' }),
+        fr(6.7, 6.7, { hold: true, t: { fa: 0, fb: 0, sa: 'Gas', sb: 'Gas' }, cap: 'Zwei gleiche Lkw, beide mit 50 km/h. Vorne ist die Ampel rot.', note: '▶ Sagen: „Zwei gleiche Lkw, je 26 Tonnen, beide mit 50 km/h. Vorne: rote Ampel. Fahrer A fährt mit Gas bis kurz davor. Fahrerin B geht früh vom Gas.“\n❓ Frage auf der Folie stellen – abstimmen lassen.\n🖱 Klick: Die Fahrt läuft (von selbst bis A steht).\n➜ „Los geht’s.“' }),
         fr(7.9, 7.7, { t: { fa: 0.12, fb: 0.03, sa: 'Gas', sb: 'rollt – kein Diesel' }, cap: 'B geht schon jetzt vom Gas. Mit eingelegtem Gang spritzt der Motor keinen Diesel ein.' }),
         fr(9.1, 8.6, { t: { fa: 0.24, fb: 0.04, sa: 'Gas', sb: 'rollt – kein Diesel' } }),
         fr(10.3, 9.4, { t: { fa: 0.28, fb: 0.05, sa: 'bremst hart!', sb: 'rollt', brk: 1 }, cap: 'A bremst hart. Die Bewegungsenergie, die vorher Diesel gekostet hat, wird an den Bremsen zu Wärme.' }),
-        fr(10.8, 10.0, { hold: true, t: { fa: 0.29, fb: 0.06, sa: 'steht', sb: 'rollt langsam', brk: 1 }, cap: 'A steht an der roten Ampel. B rollt noch langsam heran.', note: '▶ „A steht. Die ganze Bewegungsenergie ist in den Bremsen verpufft. B rollt noch langsam – ohne einen Tropfen Diesel.“\n🖱 Klick: Die Ampel wird grün (läuft von selbst).\n➜ „Und jetzt wird es grün.“' }),
-        fr(10.85, 10.9, { t: { fa: 0.33, fb: 0.07, sa: 'fährt aus dem Stand an …', sb: 'rollt durch', green: 1 }, cap: 'Grün! B rollt einfach durch. A muss 40 Tonnen aus dem Stand beschleunigen.' }),
+        fr(10.8, 10.0, { hold: true, t: { fa: 0.29, fb: 0.06, sa: 'steht', sb: 'rollt langsam', brk: 1 }, cap: 'A steht an der roten Ampel. B rollt noch langsam heran.', note: '▶ „A steht. Die ganze Bewegungsenergie ist in den Bremsen verpufft. B rollt noch langsam – und hat dabei fast keinen Diesel gebraucht.“\n💡 Die Schubabschaltung wirkt, solange der Motor über Leerlaufdrehzahl dreht. Wird der Lkw sehr langsam, spritzt der Motor wieder ein – dann zurückschalten.\n🖱 Klick: Die Ampel wird grün (läuft von selbst).\n➜ „Und jetzt wird es grün.“' }),
+        fr(10.85, 10.9, { t: { fa: 0.33, fb: 0.07, sa: 'fährt aus dem Stand an …', sb: 'rollt durch', green: 1 }, cap: 'Grün! B rollt einfach durch. A muss 26 Tonnen aus dem Stand beschleunigen.' }),
         fr(11.2, 11.7, { t: { fa: 0.52, fb: 0.2, sa: 'beschleunigt', sb: 'Gas', green: 1 } }),
         fr(11.6, 12.25, { hold: true, answer: true, t: { fa: 0.7, fb: 0.4, sa: 'beschleunigt', sb: 'Gas', green: 1 }, cap: 'B ist weiter – und hat weniger Diesel verbraucht. Anfahren aus dem Stand kostet am meisten.', note: '▶ „B ist schon weiter und hat weniger verbraucht. Das Anfahren aus dem Stand kostet beim schweren Lkw am meisten Diesel. Und A hat auch noch Bremsen und Reifen verschlissen.“\n✅ Schubabschaltung: Rollen mit eingelegtem Gang ohne Gas → keine Einspritzung (Lehrbuchwissen). Prüfungsfrage 2.5.01-015: Verbrauch senken durch vorausschauende Fahrweise, Luftleiteinrichtungen, spezielle Reifen (alle drei richtig).\n💡 Großer Abstand zum Vordermann macht vorausschauendes Fahren erst möglich.\n🖱 Keine Animation mehr – nächster Klick: nächste Folie.\n➜ „Zweites Werkzeug: der Drehzahlmesser.“' }),
       ],
@@ -122,7 +122,7 @@ module.exports = async (deck) => {
     answers: [
       ['LuCircleCheck', 'Im Gang rollen, Fuß vom Gas', 'Schubabschaltung: Der Motor spritzt keinen Diesel ein – und die Motorbremse hilft mit.', C.gr],
       ['LuCircleX', 'Im Leerlauf rollen', 'Der Motor läuft weiter und braucht Diesel. Bergab fehlt die Motorbremse – nicht machen!', C.red],
-      ['LuCirclePlay', 'Eco-Roll (Automatik)', 'Das Getriebe kuppelt auf ebener Strecke selbst aus und nutzt den Schwung. Zum Bremsen kuppelt es wieder ein.', C.bl],
+      ['LuCirclePlay', 'Eco-Roll (Automatik)', 'Das Getriebe kuppelt auf ebener Strecke und bei leichtem Gefälle selbst aus und nutzt den Schwung. Zum Bremsen kuppelt es wieder ein.', C.bl],
     ],
     notes:
       '▶ Sagen: „Rollen spart Diesel. Aber wie?“\n' +
@@ -138,14 +138,14 @@ module.exports = async (deck) => {
     const fr = (liter, lab, o = {}) => ({ ...o, t: { liter, lab, ...(o.t || {}) } });
     await motion(deck, 'c10f', {
       kicker: 'Motor aus!', ttl: 'Leerlauf kostet', dur: 550, holdDur: 700,
-      question: 'Ihr wartet jeden Tag eine Stunde an der Rampe – mit laufendem Motor. Wie viel Diesel ist das im Jahr?',
+      question: 'Ihr wartet jeden Tag eine Stunde am Straßenrand vor dem Kunden – mit laufendem Motor. Wie viel Diesel ist das im Jahr?',
       answer: 'Bei 2 Litern pro Stunde rund 440 Liter Diesel und 1,2 Tonnen CO₂ im Jahr. Dazu ist es verboten: 80 €.',
       legend: 'Beispiel: 2 l pro Stunde Leerlauf (Richtwert 1,5–4 l/h) · 220 Arbeitstage · 1 Kanister = 20 l',
       frames: [
-        fr(2, '1 Tag', { hold: true, cap: 'Eine Stunde Warten mit laufendem Motor: etwa 2 Liter Diesel.', note: '▶ Sagen: „Ihr wartet jeden Tag eine Stunde an der Rampe und lasst den Motor laufen – für Heizung oder Klima. Im Leerlauf braucht ein Lkw etwa 2 Liter pro Stunde.“\n❓ Frage auf der Folie stellen – schätzen lassen.\n✅ Leerlaufverbrauch Lkw ca. 1,5–4 l pro Stunde (Richtwert, Sekundärquellen).\n🖱 Klick: Die Tage laufen (von selbst bis zum Jahr).\n➜ „Rechnen wir hoch.“' }),
+        fr(2, '1 Tag', { hold: true, cap: 'Eine Stunde Warten mit laufendem Motor: etwa 2 Liter Diesel.', note: '▶ Sagen: „Ihr wartet jeden Tag eine Stunde am Straßenrand vor dem Kunden und lasst den Motor laufen – für Heizung oder Klima. Im Leerlauf braucht ein Lkw etwa 2 Liter pro Stunde.“\n❓ Frage auf der Folie stellen – schätzen lassen.\n✅ Leerlaufverbrauch Lkw ca. 1,5–4 l pro Stunde (Richtwert, Sekundärquellen).\n🖱 Klick: Die Tage laufen (von selbst bis zum Jahr).\n➜ „Rechnen wir hoch.“' }),
         fr(10, '1 Woche', { cap: 'Eine Woche: 10 Liter.' }),
         fr(40, '1 Monat', { cap: 'Ein Monat: 40 Liter – zwei Kanister.' }),
-        fr(440, '1 Jahr', { hold: true, answer: true, cap: 'Ein Jahr: rund 440 Liter Diesel – 22 Kanister. Das sind etwa 1,2 Tonnen CO₂.', note: '▶ „Im Jahr: 440 Liter Diesel, 22 Kanister. Und rund 1,2 Tonnen CO₂ – für nichts. Außerdem ist es verboten: unnötiges Laufenlassen des Motors kostet 80 Euro.“\n✅ Eigene Rechnung: 1 h × 2 l × 220 Arbeitstage = 440 l; × 2,65 kg CO₂/l ≈ 1,2 t. § 30 Abs. 1 StVO: verboten, Fahrzeugmotoren unnötig laufen zu lassen; BKat Nr. 117: 80 €, kein Punkt (gilt für alle Fahrzeuge). Prüfungsfragen 2.5.01-108 (Motor im Stand warmlaufen lassen unterlassen) und 2.5.01-206 (Motor bei längeren Wartezeiten laufen lassen = falsch).\n💡 Standheizung braucht nur etwa 0,1–0,6 l pro Stunde. Ausnahme: Bei leerer Druckluftanlage muss der Motor laufen, bis der Vorrat steht – das ist nötig.\n🖱 Keine Animation mehr – nächster Klick: nächste Folie.\n➜ „Eine Prüfungsfrage dazu.“' }),
+        fr(440, '1 Jahr', { hold: true, answer: true, cap: 'Ein Jahr: rund 440 Liter Diesel – 22 Kanister. Das sind etwa 1,2 Tonnen CO₂.', note: '▶ „Im Jahr: 440 Liter Diesel, 22 Kanister. Und rund 1,2 Tonnen CO₂ – für nichts. Außerdem ist es verboten: unnötiges Laufenlassen des Motors kostet 80 Euro.“\n✅ Eigene Rechnung: 1 h × 2 l × 220 Arbeitstage = 440 l; × 2,65 kg CO₂/l ≈ 1,2 t. § 30 Abs. 1 StVO: verboten, Fahrzeugmotoren unnötig laufen zu lassen; BKat Nr. 117: 80 €, kein Punkt (gilt für alle Fahrzeuge, im öffentlichen Verkehrsraum – auf dem Werksgelände verbietet es meist die Hausordnung). Prüfungsfragen 2.5.01-108 (Motor im Stand warmlaufen lassen unterlassen) und 2.5.01-206 (Motor bei längeren Wartezeiten laufen lassen = falsch).\n💡 Standheizung braucht nur etwa 0,1–0,6 l pro Stunde. Ausnahme: Bei leerer Druckluftanlage muss der Motor laufen, bis der Vorrat steht – das ist nötig.\n🖱 Keine Animation mehr – nächster Klick: nächste Folie.\n➜ „Eine Prüfungsfrage dazu.“' }),
       ],
       scene: async (s, { liter, lab }) => {
         s.text(lab, { x: 5.75, y: 1.55, w: 3.5, h: 0.6, size: 30, bold: true, color: C.gr, name: '!!lab' });
