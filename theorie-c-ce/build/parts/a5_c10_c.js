@@ -20,7 +20,7 @@ module.exports = async (deck) => {
     answers: [
       ['LuRuler', 'Höhe, Breite, Gewicht', 'Brücken, Tunnel, Verbote.', C.pu],
       ['LuClock', 'Lenk- und Ruhezeiten', 'Pausen und Parkplätze einplanen.', C.pu],
-      ['LuCalendarX', 'Fahrverbote und Feiertage', 'auch in Bundesländern und im Ausland.', C.pu],
+      ['LuCalendarX', 'Fahrverbote und Feiertage', 'auch regionale Feiertage und Ausland.', C.pu],
       ['LuConstruction', 'Baustellen, Ferienverkehr', 'und die Reihenfolge der Ladestellen.', C.pu],
     ],
     notes:
@@ -100,7 +100,7 @@ module.exports = async (deck) => {
         fr(0, { hold: true, cap: 'Das Navi ist auf „Pkw“ eingestellt und nimmt den kürzesten Weg – durch den Ort und unter der Bahn hindurch.', note: '▶ Sagen: „Euer Navi ist auf Pkw eingestellt oder kennt die Höhe eures Lkw nicht. Es nimmt den kürzesten Weg – durch den Ort, unter der Bahn hindurch.“\n❓ Frage auf der Folie stellen.\n🖱 Klick: Der Lkw fährt los (läuft von selbst bis zum Schild).\n➜ „Fahren wir los.“' }),
         fr(1, { cap: 'Der Lkw folgt dem Navi …' }), fr(2),
         fr(3, { hold: true, t: { big: 1 }, answer: true, cap: 'Vor der Unterführung: Zeichen 265 – tatsächliche Höhe 3,8 m. Der Lkw ist 4,0 m hoch. STOPP!', note: '▶ „Da steht es: Zeichen 265, 3,8 Meter. Euer Lkw ist 4 Meter hoch. Hier passt ihr nicht durch – egal, was das Navi sagt.“\n✅ Zeichen 265 (tatsächliche Höhe), Z. 264 (Breite), Z. 266 (Länge), Z. 262 (tatsächliche Masse), Z. 263 (Achslast) – StVO Anlage 2. Prüfungsfrage 2.6.07-219: Die Informationen des Navis sind Empfehlungen. 2.6.07-223: Anweisungen des Navis „stets befolgen“ ist falsch.\n💡 Höhe mit Ladung und Aufbau messen – angehobene Luftfederung macht den Lkw höher!\n🖱 Klick: Die richtige Route.\n➜ „Was ist die Lösung?“' }),
-        fr(4, { hold: true, t: { big: 1, b: 1 }, cap: 'Lkw-Navi mit Fahrzeugprofil (Höhe, Breite, Länge, Gewicht, Achslast) plant die Umfahrung.', note: '▶ „Die Lösung: ein Lkw-Navi mit Fahrzeugprofil. Höhe, Breite, Länge, Gewicht, Achslast eintragen – dann plant es um die Unterführung herum. Und: Das Ziel immer im Stand eingeben.“\n✅ Prüfungsfrage 2.6.07-223: Karten-Update regelmäßig; Ziel eingeben, wenn das Fahrzeug steht. § 23 Abs. 1a StVO: Navi während der Fahrt nicht in die Hand nehmen; BKat Nr. 246.1: 100 € und 1 Punkt.\n🖱 Klick: Der Lkw fährt die Umfahrung (läuft von selbst).\n➜ „Weiter auf der sicheren Route.“' }),
+        fr(4, { hold: true, t: { big: 1, b: 1 }, cap: 'Lkw-Navi mit Fahrzeugprofil (Höhe, Breite, Länge, Gewicht, Achslast) plant die Umfahrung.', note: '▶ „Die Lösung: ein Lkw-Navi mit Fahrzeugprofil. Höhe, Breite, Länge, Gewicht, Achslast eintragen – dann plant es um die Unterführung herum. Und: Das Ziel vor der Abfahrt eingeben – am besten bei abgestelltem Motor oder per Sprache.“\n✅ Prüfungsfrage 2.6.07-223: Karten-Update regelmäßig; Ziel eingeben, wenn das Fahrzeug steht. § 23 Abs. 1a StVO: Navi während der Fahrt nicht in die Hand nehmen; die Ausnahme „stehendes Fahrzeug“ gilt nur bei ganz ausgeschaltetem Motor – Start-Stopp zählt nicht (§ 23 Abs. 1b StVO). BKat Nr. 246.1: 100 € und 1 Punkt.\n🖱 Klick: Der Lkw fährt die Umfahrung (läuft von selbst).\n➜ „Weiter auf der sicheren Route.“' }),
         fr(5, { t: { b: 1 } }), fr(6, { t: { b: 1 } }), fr(7, { t: { b: 1 } }),
         fr(8, { hold: true, t: { b: 1 }, cap: 'Ein kleiner Umweg – aber sicher am Ziel.', note: '▶ „Ein kleiner Umweg – aber sicher angekommen. Eine Brücke abzureißen kostet ein Vielfaches.“\n🖱 Keine Animation mehr – nächster Klick: nächste Folie.\n➜ „Eine Prüfungsfrage zum Navi.“' }),
       ],
@@ -182,16 +182,16 @@ module.exports = async (deck) => {
   await ask(deck, 'c10z', {
     kicker: 'Fahrverbote', q: 'Wann dürft ihr mit dem Lkw gar nicht fahren?', ico: 'LuCalendarX', qsize: 32,
     answers: [
-      ['LuCalendarX', 'Sonn- und Feiertage, 0 bis 22 Uhr', 'Lkw über 7,5 t und Lkw mit Anhänger (gewerblich) – Verstoß: 120 €.', C.or],
-      ['LuSun', 'Samstags in den Sommerferien', 'Ferienreiseverordnung: 1. Juli bis 31. August, 7 bis 20 Uhr auf bestimmten Autobahnen.', C.or],
-      ['LuMapPin', 'Feiertage der Bundesländer', 'Ein Feiertag gilt oft nur in einem Land – vorher prüfen.', C.or],
+      ['LuCalendarX', 'Sonn- und Feiertage, 0 bis 22 Uhr', 'Lkw über 7,5 t und Lkw mit Anhänger beim Gütertransport, auch Werkverkehr und Leerfahrten – 120 €.', C.or],
+      ['LuSun', 'Samstags im Juli und August', 'Ferienreiseverordnung: 7 bis 20 Uhr auf bestimmten Autobahnen und Bundesstraßen.', C.or],
+      ['LuMapPin', 'Regionale Feiertage', 'Fronleichnam, Reformationstag, Allerheiligen gelten nur in einigen Ländern – vorher prüfen.', C.or],
       ['LuGlobe', 'Im Ausland', 'Andere Fahrverbote, Innenstadt-Maut, Umweltzonen und Tempolimits.', C.or],
     ],
     notes:
       '▶ Sagen: „An manchen Tagen steht der Lkw. Wann?“\n' +
       '❓ Sammeln lassen, dann je Klick auflösen.\n' +
       '🖱 Klick 1–4: je ein Punkt.\n' +
-      '✅ § 30 Abs. 3 StVO: Sonn- und Feiertagsfahrverbot 0–22 Uhr für Lkw über 7,5 t zulässige Gesamtmasse und Lkw mit Anhänger bei geschäftsmäßiger oder entgeltlicher Beförderung; BKat Nr. 119: 120 € (Details Abend 1). Ferienreiseverordnung: 1.7.–31.8., samstags 7–20 Uhr auf bestimmten Strecken. Prüfungsfragen 2.6.07-224 (Feiertage der einzelnen Bundesländer, Bestimmungen des anderen Staates), 2.6.07-226 (Ferienreiseverordnung), 2.6.07-101 (Ausland: City-Maut, Umweltzonen, Tempolimits).\n' +
+      '✅ § 30 Abs. 3 StVO: Sonn- und Feiertagsfahrverbot 0–22 Uhr für Lkw über 7,5 t zulässige Gesamtmasse und Lkw mit Anhänger bei geschäftsmäßiger oder entgeltlicher Beförderung; BKat Nr. 119: 120 € (Details Abend 1). Gilt auch für Werkverkehr und Leerfahrten. § 30 Abs. 4 StVO zählt die Feiertage auf – regional nur Fronleichnam, Reformationstag und Allerheiligen; andere Landesfeiertage (z. B. Heilige Drei Könige, Buß- und Bettag) lösen kein Fahrverbot aus. Ferienreiseverordnung: alle Samstage vom 1.7. bis 31.8., 7–20 Uhr, auf bestimmten Autobahnen und der B 31 und B 96 (Lkw über 7,5 t und Lkw mit Anhänger); BKat Nr. 239: 60 €. Beispiel: Hannover – München über A 3/A 9 ist betroffen. Prüfungsfragen 2.6.07-224 (Feiertage der einzelnen Bundesländer = richtig; Achtung Zwillingsfrage 2.6.07-225: dort ist „Die Fahrverbote aufgrund von Feiertagen der einzelnen Bundesländer“ als falsch markiert – beide üben), Bestimmungen des anderen Staates, 2.6.07-226 (Ferienreiseverordnung), 2.6.07-101 (Ausland: City-Maut, Umweltzonen, Tempolimits).\n' +
       '➜ „Eine Prüfungsfrage zur Zeitplanung.“',
   });
   await quiz(deck, 'c10z', {

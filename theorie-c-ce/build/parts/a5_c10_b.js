@@ -149,7 +149,7 @@ module.exports = async (deck) => {
   // ===== ANTRIEBE (Morph) =====
   {
     const A = [
-      ['LuDroplet', C.gr, 'HVO100', 'Diesel aus Rest- und Abfallstoffen', 'Seit April 2024 an Tankstellen erlaubt. Nur tanken, wenn der Hersteller euren Lkw dafür freigegeben hat.'],
+      ['LuDroplet', C.gr, 'HVO100', 'Diesel, meist aus Rest- und Abfallstoffen', 'Seit Ende Mai 2024 an Tankstellen erlaubt. Nur tanken, wenn der Hersteller euren Lkw dafür freigegeben hat.'],
       ['LuSnowflake', C.bl, 'Erdgas (LNG)', 'tiefkalt verflüssigtes Gas', 'Wird in einen isolierten Tank getankt, auch als Bio-LNG. Die Mautbefreiung für Gas-Lkw lief Ende 2023 aus.'],
       ['LuBatteryCharging', C.am, 'Batterie-elektrisch', 'Strom aus der Batterie', 'Kein Abgas, sehr leise, Bremsenergie wird zurückgewonnen. Reichweite und Laden planen – die Ladepause als Fahrtunterbrechung nutzen.'],
       ['LuAtom', C.pu, 'Wasserstoff', 'Brennstoffzelle macht Strom an Bord', 'Aus dem Auspuff kommt nur Wasserdampf. Es gibt noch wenige Tankstellen – Tankstopps genau planen.'],
@@ -159,16 +159,16 @@ module.exports = async (deck) => {
       list: ['HVO100', 'Erdgas (LNG)', 'Batterie-elektrisch', 'Wasserstoff'],
       ask: { q: 'Welche Lkw zahlen auf deutschen Autobahnen zurzeit keine Maut?', a: 'Emissionsfreie Lkw – mit Batterie oder Wasserstoff. Sie sind bis zum 30. Juni 2031 mautfrei.', at: 3 },
       caps: [
-        'HVO100 ist Diesel aus Rest- und Abfallstoffen. Er passt in viele Diesel-Lkw – aber nur mit Freigabe des Herstellers.',
+        'HVO100 ist Diesel aus hydriertem Pflanzenöl, meist aus Rest- und Abfallstoffen. Nur tanken mit Freigabe des Herstellers.',
         'Erdgas-Lkw tanken tiefkalt verflüssigtes Gas (LNG). Sie zahlen inzwischen wieder Maut.',
         'Batterie-Lkw fahren ohne Abgas und sehr leise. Reichweite und Ladestopps müssen geplant werden.',
         'Wasserstoff-Lkw machen mit der Brennstoffzelle Strom an Bord. Batterie- und Wasserstoff-Lkw sind bis 30.06.2031 mautfrei.',
       ],
       notes: [
-        '▶ Sagen: „Diesel ist nicht mehr alles. Erstens: HVO100 – Diesel, hergestellt aus Rest- und Abfallstoffen, zum Beispiel altem Speiseöl. Er darf seit April 2024 an Tankstellen verkauft werden. Aber: Nur tanken, wenn der Hersteller euren Lkw freigegeben hat!“\n✅ Änderung der 10. BImSchV, HVO100 nach DIN EN 15940 seit 13.04.2024 an Tankstellen zulässig.\n➜ „Zweitens: Gas.“',
+        '▶ Sagen: „Diesel ist nicht mehr alles. Erstens: HVO100 – Diesel aus hydriertem Pflanzenöl, meist aus Rest- und Abfallstoffen wie altem Speiseöl. Er darf seit Ende Mai 2024 an Tankstellen verkauft werden. Aber: Nur tanken, wenn der Hersteller euren Lkw freigegeben hat!“\n✅ Zweite Verordnung zur Änderung der 10. BImSchV vom 28.05.2024 (BGBl. 2024 I Nr. 169), in Kraft seit 29.05.2024: paraffinischer Diesel nach DIN EN 15940 (z. B. HVO100) an öffentlichen Tankstellen zulässig (§ 4 Abs. 3 10. BImSchV).\n➜ „Zweitens: Gas.“',
         '▶ „Erdgas-Lkw tanken LNG – tiefkalt verflüssigtes Erdgas, auch als Bio-LNG. Die Mautbefreiung für Gas-Lkw galt nur von 2019 bis Ende 2023.“\n✅ § 1 Abs. 2 Nr. 8 BFStrMG: Befreiung für Gas-Lkw nur 01.01.2019–31.12.2023.\n➜ „Drittens: Strom.“',
         '▶ „Batterie-Lkw: kein Abgas, sehr leise. Beim Bremsen wird Energie zurückgewonnen. Aber: Reichweite und Ladestopps müssen geplant werden – am besten lädt man in der Pause.“\n✅ Lehrbuchwissen (Rekuperation, Ladepause als Lenkzeitunterbrechung nutzen). Batterie mindert die Nutzlast.\n➜ „Und viertens?“',
-        '▶ „Wasserstoff: Die Brennstoffzelle macht an Bord Strom – aus dem Auspuff kommt nur Wasserdampf. Problem: Es gibt noch wenige Tankstellen.“\n❓ Frage auf der Folie auflösen.\n✅ § 1 Abs. 2 Nr. 7 BFStrMG: emissionsfreie schwere Nutzfahrzeuge mautfrei bis 30.06.2031, bis 4,25 t dauerhaft (Viertes Gesetz zur Änderung mautrechtlicher Vorschriften, Dezember 2025). Die alte Regel „nur bis Ende 2025“ ist überholt.\n➜ „Was zahlt dann ein Diesel-Lkw an Maut?“',
+        '▶ „Wasserstoff: Die Brennstoffzelle macht an Bord Strom – aus dem Auspuff kommt nur Wasserdampf. Problem: Es gibt noch wenige Tankstellen.“\n❓ Frage auf der Folie auflösen.\n✅ § 1 Abs. 2 Nr. 7 BFStrMG: emissionsfreie schwere Nutzfahrzeuge mautfrei bis 30.06.2031; Nr. 9: bis 4,25 t dauerhaft (Viertes Gesetz zur Änderung mautrechtlicher Vorschriften, Dezember 2025). Die alte Regel „nur bis Ende 2025“ ist überholt.\n➜ „Was zahlt dann ein Diesel-Lkw an Maut?“',
       ],
       legend: 'Stand der Recherche: Oktober 2026',
       scene: async (s, i) => {
@@ -193,14 +193,14 @@ module.exports = async (deck) => {
     const fr = (n, o = {}) => ({ ...o, t: { n, ...(o.t || {}) } });
     await motion(deck, 'c10u', {
       kicker: 'Lkw-Maut', ttl: 'Was kostet ein Kilometer?', dur: 480, holdDur: 650,
-      question: 'Ein 40-Tonner fährt von Hannover nach München – rund 630 km Autobahn. Was kostet die Maut?',
+      question: 'Ein 40-t-Sattelzug fährt von Hannover nach München – rund 630 km Autobahn. Was kostet die Maut?',
       answer: 'Rund 35 Cent pro Kilometer – also etwa 219 € für die Strecke. Ein E-Lkw zahlt zurzeit nichts.',
       legend: 'Mautsätze nach BFStrMG Anlage 1 · Euro VI, über 18 t, ab 5 Achsen, CO₂-Klasse 1',
       frames: [
-        fr(0, { hold: true, cap: 'Maut zahlen Lkw über 3,5 t auf Autobahnen und Bundesstraßen. Der Preis pro Kilometer hat vier Teile.', note: '▶ Sagen: „Maut zahlt in Deutschland jeder Lkw über 3,5 Tonnen auf Autobahnen und Bundesstraßen. Was kostet ein Kilometer für einen 40-Tonner?“\n❓ Frage auf der Folie stellen – schätzen lassen.\n✅ § 1 Abs. 1 BFStrMG: Mautpflicht auf Bundesautobahnen und Bundesstraßen für Kfz über 3,5 t technisch zulässige Gesamtmasse (Güterkraftverkehr). § 3 Abs. 1: Mautsatz = Infrastruktur + Luftverschmutzung + Lärm + CO₂.\n🖱 Klick: Die Teile stapeln sich (läuft von selbst).\n➜ „Rechnen wir zusammen.“' }),
+        fr(0, { hold: true, cap: 'Maut zahlen grundsätzlich alle Lkw im Güterverkehr über 3,5 t – auf Autobahnen und Bundesstraßen. Der Preis pro Kilometer hat vier Teile.', note: '▶ Sagen: „Maut zahlen grundsätzlich alle Lkw im Güterverkehr über 3,5 Tonnen technisch zulässiger Gesamtmasse – auf Autobahnen und Bundesstraßen. Was kostet ein Kilometer für einen 40-Tonner? Den fahrt ihr später mit CE.“\n❓ Frage auf der Folie stellen – schätzen lassen.\n✅ § 1 Abs. 1 BFStrMG: Mautpflicht auf Bundesautobahnen und Bundesstraßen für Kfz über 3,5 t technisch zulässige Gesamtmasse (Güterkraftverkehr). § 3 Abs. 1: Mautsatz = Infrastruktur + Luftverschmutzung + Lärm + CO₂.\n🖱 Klick: Die Teile stapeln sich (läuft von selbst).\n➜ „Rechnen wir zusammen.“' }),
         fr(1, { cap: 'Infrastruktur: für Bau und Erhalt der Straßen.' }), fr(2, { cap: 'Luftverschmutzung …' }), fr(3, { cap: '… und Lärm.' }),
         fr(4, { hold: true, cap: 'Dazu seit Dezember 2023 ein CO₂-Teil. Er hängt davon ab, wie viel CO₂ der Lkw ausstößt.', note: '▶ „Und seit Dezember 2023 kommt ein CO₂-Teil dazu – fast so groß wie der ganze Rest. Sparsame Lkw kommen in eine günstigere CO₂-Klasse.“\n✅ BFStrMG Anlage 1: CO₂-Klassen 1 bis 5 (1 = Standard, 5 = emissionsfrei). Rechenbeispiel Euro VI, über 18 t, ab 5 Achsen, CO₂-Klasse 1: 15,5 + 2,3 + 1,2 + 15,8 = 34,8 ct/km.\n🖱 Klick: das Ergebnis.\n➜ „Und für die ganze Strecke?“' }),
-        fr(4, { t: { trip: 1 }, hold: true, answer: true, cap: '34,8 Cent pro Kilometer. Hannover – München, rund 630 km: etwa 219 € Maut.', note: '▶ „34,8 Cent pro Kilometer. Für rund 630 Kilometer sind das etwa 219 Euro – für eine einzige Fahrt.“\n✅ Eigene Rechnung: 630 km × 0,348 €/km ≈ 219 €. Mautschuldner ist auch der Fahrer (§ 2 BFStrMG).\n💡 Mautsätze können sich ändern – vor dem Unterricht kurz auf toll-collect.de prüfen.\n🖱 Klick: Und ein E-Lkw?\n➜ „Und ein Elektro-Lkw?“' }),
+        fr(4, { t: { trip: 1 }, hold: true, answer: true, cap: '34,8 Cent pro Kilometer. Hannover – München, rund 630 km: etwa 219 € Maut.', note: '▶ „34,8 Cent pro Kilometer. Für rund 630 Kilometer sind das etwa 219 Euro – für eine einzige Fahrt.“\n✅ Eigene Rechnung: 630 km × 0,348 €/km ≈ 219 € (Sätze laut Toll Collect gültig seit 01.07.2024). Mautschuldner ist auch der Fahrer (§ 2 BFStrMG).\n💡 Vergleich für euren C-Lkw (3 Achsen, 26 t, Euro VI, CO₂-Klasse 1): 14,1 + 2,2 + 1,6 + 12,4 = 30,3 ct/km → rund 191 € für dieselbe Strecke.\n💡 Mautsätze können sich ändern – vor dem Unterricht kurz auf toll-collect.de prüfen.\n🖱 Klick: Und ein E-Lkw?\n➜ „Und ein Elektro-Lkw?“' }),
         fr(0, { t: { trip: 1, el: 1 }, hold: true, cap: 'Ein emissionsfreier Lkw (Batterie oder Wasserstoff) zahlt bis 30. Juni 2031 keine Maut.', note: '▶ „Ein E-Lkw zahlt auf derselben Strecke: nichts. Emissionsfreie Lkw sind bis Ende Juni 2031 mautfrei.“\n✅ § 1 Abs. 2 Nr. 7 BFStrMG: emissionsfreie schwere Nutzfahrzeuge mautfrei bis 30.06.2031.\n🖱 Keine Animation mehr – nächster Klick: nächste Folie.\n➜ „Kapitel 4: Wie plant ihr eine Strecke?“' }),
       ],
       scene: async (s, { n, trip = 0, el = 0 }) => {

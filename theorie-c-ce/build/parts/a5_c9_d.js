@@ -84,7 +84,7 @@ module.exports = async (deck) => {
       notes: [
         '▶ Sagen: „Laden an der Rampe mit dem Stapler. Zuerst: rückwärts gerade an die Rampe, Feststellbremse, Motor aus, Schlüssel ab.“\n❓ Frage auf der Folie stellen.\n✅ DGUV Vorschrift 70 § 37: Beim Be- und Entladen darf das Fahrzeug nicht fortrollen, kippen oder umstürzen.\n➜ „Reicht die Feststellbremse?“',
         '▶ „Dazu ein Unterlegkeil. Wenn der Stapler auf der Ladefläche bremst und anfährt, schiebt er den Lkw. Der Lkw darf sich keinen Zentimeter von der Rampe wegbewegen.“\n💡 Viele Rampen haben eine Ampel oder einen Radkeil mit Sensor: Erst bei Grün darf geladen bzw. abgefahren werden.\n➜ „Dann die Brücke.“',
-        '▶ „Die Überladebrücke wird aufgelegt – sie schließt die Lücke zwischen Rampe und Ladefläche.“\n➜ „Und jetzt der Stapler.“',
+        '▶ „Die Überladebrücke wird aufgelegt – sie schließt die Lücke zwischen Rampe und Ladefläche.“\n💡 Hat euer Lkw eine Ladebordwand: die Überladebrücke nie auf die Ladebordwand legen. Nur eine dafür geeignete Bordwand darf selbst auf die Rampe gelegt werden (Betriebsanleitung; BG Verkehr „Be- und Entladen“).\n➜ „Und jetzt der Stapler.“',
         '▶ „Erst jetzt fährt der Stapler auf die Ladefläche. Achtet darauf: Der Ladeboden muss das Gewicht tragen – Stapler plus Last. Und ganz wichtig: Nicht losfahren, solange noch geladen wird!“\n❓ Frage auf der Folie auflösen.\n✅ DGUV Vorschrift 70 § 37: gegen Fortrollen sichern. DGUV Vorschrift 68 § 7: Stapler fahren darf nur, wer 18 Jahre alt, ausgebildet (Staplerschein) und schriftlich beauftragt ist – der Lkw-Führerschein reicht dafür nicht.\n➜ „Prüfungsfrage zum Ladekran.“',
       ],
       legend: 'Seitenansicht · schematisch',
