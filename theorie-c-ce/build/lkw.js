@@ -191,10 +191,16 @@ function anhaengerSide(o = {}) {
   let u = '';
   u += rect(0.1, fl - 0.14, L - 0.2, 0.14, `fill="#3A4250"`);
   if (!o.zaa) u += rect(ax[0] - 0.42, fl - 0.24, 0.84, 0.1, `fill="#2E343D"`);         // Drehschemel
-  u += rect(0, fl, L, boxH, `fill="${col}" stroke="#97A1AE" stroke-width="2"`);
-  for (let x = 0.45; x < L - 0.2; x += 0.45) u += `<line x1="${X(x)}" y1="${Y(fl + 0.04)}" x2="${X(x)}" y2="${Y(fl + boxH - 0.04)}" stroke="#B3BBC6" stroke-width="2"/>`;
-  u += rect(0, fl + boxH - 0.07, L, 0.07, `fill="#A9B2BE"`);
-  u += rect(L - 0.06, fl, 0.06, boxH, `fill="#9AA4B1"`);
+  if (o.box === 'pritsche') {                                                           // offene Pritsche mit Rungen
+    u += rect(0, fl, L, boxH, `fill="#8C96A4" stroke="#6E7886" stroke-width="2"`);
+    for (let x = 0.6; x < L - 0.2; x += 0.6) u += `<line x1="${X(x)}" y1="${Y(fl + 0.03)}" x2="${X(x)}" y2="${Y(fl + boxH + 0.12)}" stroke="#6E7886" stroke-width="4"/>`;
+    u += rect(0, fl + boxH - 0.05, L, 0.05, `fill="#A9B2BE"`);
+  } else {
+    u += rect(0, fl, L, boxH, `fill="${col}" stroke="#97A1AE" stroke-width="2"`);
+    for (let x = 0.45; x < L - 0.2; x += 0.45) u += `<line x1="${X(x)}" y1="${Y(fl + 0.04)}" x2="${X(x)}" y2="${Y(fl + boxH - 0.04)}" stroke="#B3BBC6" stroke-width="2"/>`;
+    u += rect(0, fl + boxH - 0.07, L, 0.07, `fill="#A9B2BE"`);
+    u += rect(L - 0.06, fl, 0.06, boxH, `fill="#9AA4B1"`);
+  }
   u += rect(L - 0.14, fl - 0.3, 0.1, 0.12, `fill="#C0392B"`);
   u += rect(L - 0.22, 0.3, 0.06, fl - 0.44, `fill="#5E6876"`);
   for (const a of ax) u += rect(a - r - 0.08, r * 2 + 0.06, 2 * r + 0.16, 0.06, `fill="#2A303A"`);
