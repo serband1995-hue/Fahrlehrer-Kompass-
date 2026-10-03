@@ -6,7 +6,7 @@ sec('ce1s', 'CE1  ·  AUF- UND ABSATTELN', C.gr, 'bg_gr.jpg');
 // Wendelleitung (Seitenansicht): hängt in einem Bogen von der Rückwand des Fahrerhauses zur Stirnwand des Aufliegers
 async function wendel(s, x0, y0, x1, y1, sag, col, hide, name) {
   const bx = Math.min(x0, x1) - 0.06, by = Math.min(y0, y1) - 0.06, bw = Math.abs(x1 - x0) + 0.12, bh = Math.max(y0, y1) + sag + 0.08 - by;
-  const cx = (x0 + x1) / 2, cy = Math.max(y0, y1) + 2 * sag, N = 240, turns = 7, amp = 0.022, pts = [];
+  const cx = (x0 + x1) / 2, cy = Math.max(y0, y1) + 2 * sag, N = 240, turns = 6, amp = 0.028, pts = [];
   for (let i = 0; i <= N; i++) {
     const u = i / N, v = 1 - u;
     const px = v * v * x0 + 2 * v * u * cx + u * u * x1, py = v * v * y0 + 2 * v * u * cy + u * u * y1;
@@ -16,7 +16,7 @@ async function wendel(s, x0, y0, x1, y1, sag, col, hide, name) {
     const on2 = on ? amp * Math.sin(ph) : 0, ot = on ? amp * 0.8 * (Math.cos(ph) - 1) : 0;
     pts.push(((px - dy / L * on2 + dx / L * ot - bx) * 100).toFixed(1) + ' ' + ((py + dx / L * on2 + dy / L * ot - by) * 100).toFixed(1));
   }
-  const svg = `<path d="M ${pts.join(' L ')}" fill="none" stroke="#${col}" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/>`;
+  const svg = `<path d="M ${pts.join(' L ')}" fill="none" stroke="#${col}" stroke-width="3.2" stroke-linecap="round" stroke-linejoin="round"/>`;
   s.img(await svgImg(svg, bw * 100, bh * 100, 4), { x: bx, y: by, w: bw, h: bh, transparency: hide ? 100 : 0, name });
 }
 // Sattelzug in Seitenansicht mit Lupe auf die Sattelkupplung.
@@ -34,8 +34,8 @@ async function szene(s, { dx = 0, lift = 0, legs = 1, secured = 0, lines = 0, lo
   s.text(secured ? 'Feststellbremse + Keil' : '', { x: 6.32, y: 5.4, w: 2.85, h: 0.38, size: 13, bold: true, color: C.am, valign: 'middle', name: '!!pt' });
   // Leitungen Führerhaus → Stirnwand
   const lx0 = X + 1.79 * K, lx1 = TX + 0.03;
-  await wendel(s, lx0, GY - 2.5 * K, lx1, GY - 2.2 * K, 0.09, C.red, !lines, '!!lrot');
-  await wendel(s, lx0, GY - 1.95 * K, lx1, GY - 1.65 * K, 0.09, C.am, !lines, '!!lgelb');
+  await wendel(s, lx0, GY - 2.5 * K, lx1, GY - 2.2 * K, 0.11, C.red, !lines, '!!lrot');
+  await wendel(s, lx0, GY - 1.92 * K, lx1, GY - 1.62 * K, 0.11, C.am, !lines, '!!lgelb');
   // Markierung an der Kupplung
   const kx = TX + 0.55 * K, ky = GY - (FL - 0.14) * K;
   s.oval(kx - 0.24, ky - 0.24, 0.48, 0.48, { line: ring, lw: 2.5, fill: ring, ft: 100, name: '!!ring' });
