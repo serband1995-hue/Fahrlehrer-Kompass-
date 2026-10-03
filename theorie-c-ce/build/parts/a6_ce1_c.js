@@ -13,7 +13,7 @@ async function wendel(s, x0, y0, x1, y1, sag, col, hide, name) {
     const dx = 2 * v * (cx - x0) + 2 * u * (x1 - cx), dy = 2 * v * (cy - y0) + 2 * u * (y1 - cy), L = Math.hypot(dx, dy) || 1;
     // Schraubenlinie von der Seite: Versatz quer und längs zur Leitung → Schlaufen wie bei einer Spiralleitung
     const ph = (u - 0.1) / 0.8 * turns * 2 * Math.PI, on = u > 0.1 && u < 0.9;
-    const on2 = on ? amp * Math.sin(ph) : 0, ot = on ? amp * 0.8 * (1 - Math.cos(ph)) * 0.5 - amp * 0.8 * 0.5 * (1 - Math.cos(ph)) + amp * 0.8 * Math.sin(ph + Math.PI / 2) - amp * 0.8 : 0;
+    const on2 = on ? amp * Math.sin(ph) : 0, ot = on ? amp * 0.8 * (Math.cos(ph) - 1) : 0;
     pts.push(((px - dy / L * on2 + dx / L * ot - bx) * 100).toFixed(1) + ' ' + ((py + dx / L * on2 + dy / L * ot - by) * 100).toFixed(1));
   }
   const svg = `<path d="M ${pts.join(' L ')}" fill="none" stroke="#${col}" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/>`;
