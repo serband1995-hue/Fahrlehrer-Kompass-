@@ -1,5 +1,6 @@
 // Abend 6 · CE2: Kapitel 5 Anhänger rangieren (roter und schwarzer Knopf, Löseventil) + Abschluss CE2 + Ende
 const { C, sec, base, chapter, steps, photoAsk, quiz, write, takeaway, seg } = require('../gs');
+const { quizWide } = require('./a6_ce2_b');
 
 sec('ce2k', 'CE2  ·  ANHÄNGER RANGIEREN', C.pu, 'bg_pu.jpg');
 sec('ce2e', 'CE2  ·  ABSCHLUSS', C.or, 'bg_or.jpg');
@@ -12,7 +13,7 @@ module.exports = async (deck) => {
     answers: [
       ['LuCircleParking', 'Roter Knopf: Feststellbremse', 'gezogen = fest. Drücken löst (nur mit Luft).', C.red],
       ['LuCircle', 'Schwarzer Knopf: Löseventil', 'löst die Notbremsung ohne Leitung.', '8A95A6'],
-      ['LuRotateCcw', 'Springt von selbst heraus', 'wenn rot wieder angeschlossen wird.', C.pu],
+      ['LuRotateCcw', 'Schwarz springt von selbst heraus', 'sobald die rote Leitung wieder dran ist.', C.pu],
       ['LuTriangleAlert', 'Beide gedrückt = frei', 'Dann bremst der Anhänger gar nicht mehr!', C.or],
     ],
     notes:
@@ -27,7 +28,7 @@ module.exports = async (deck) => {
   // ===== RANGIEREN SCHRITT FÜR SCHRITT =====
   {
     const ST = [
-      { r: 1, b: 1, fs: 'fest', nb: 'fest', safe: 'Keile liegen', st: 'Der Anhänger steht – doppelt gebremst.', stc: C.gr, info: 'Abgekuppelt: Federspeicher fest (roter Knopf gezogen) und Notbremsung fest (keine rote Leitung).' },
+      { r: 1, b: 1, fs: 'fest', nb: 'fest', safe: 'Keile liegen', st: 'Der Anhänger steht – doppelt gebremst.', stc: C.gr, info: 'Abgekuppelt: Federspeicher fest (roter Knopf gezogen) und Notbremsung fest (keine\u00A0rote\u00A0Leitung).' },
       { r: 0, b: 1, fs: 'gelöst', nb: 'fest', safe: 'Rangierfahrzeug angekuppelt', st: 'Noch hält die Notbremsung.', stc: C.am, info: 'Erst sichern: Rangierfahrzeug dran. Dann roter Knopf drücken – die Federspeicher lösen mit Luft aus dem Behälter.' },
       { r: 0, b: 0, fs: 'gelöst', nb: 'gelöst', safe: 'Rangierfahrzeug angekuppelt', st: 'Der Anhänger rollt frei – nur gesichert bewegen!', stc: C.red, info: 'Schwarzer Knopf drücken: Die Notbremsung löst. Jetzt bremst der Anhänger nicht mehr selbst.' },
       { r: 1, b: 0, fs: 'fest', nb: 'gelöst', safe: 'Keile liegen', st: 'Der Anhänger steht wieder fest.', stc: C.gr, info: 'Danach: roter Knopf ziehen, Keile legen. Kommt die rote Leitung wieder dran, springt der schwarze Knopf von selbst heraus.' },
@@ -65,15 +66,15 @@ module.exports = async (deck) => {
         // Anzeigen
         const row = (y, lab, val, bad, nm) => {
           s.text(lab, { x: 9.3, y, w: 2.2, h: 0.42, size: 14, color: C.mut, valign: 'middle', name: '!!' + nm + 'l' });
-          s.text(val, { x: 11.5, y, w: 1.5, h: 0.42, size: 14, bold: true, color: C.dark, fill: bad ? C.red : C.gr, shape: s.pres.shapes.ROUNDED_RECTANGLE, rr: 0.3, align: 'center', valign: 'middle', name: '!!' + nm + 'v' });
+          s.text(val, { x: 11.5, y: y + 0.01, w: 1.5, h: 0.4, size: 14, bold: true, color: C.dark, fill: bad ? C.red : C.gr, shape: s.pres.shapes.ROUNDED_RECTANGLE, rr: 0.3, align: 'center', valign: 'middle', name: '!!' + nm + 'v' });
         };
         row(1.95, 'Federspeicher', t.fs, t.fs === 'fest', 'fs');
         row(2.55, 'Notbremsung', t.nb, t.nb === 'fest', 'nb');
         s.text('Luftbehälter', { x: 9.3, y: 3.15, w: 2.2, h: 0.42, size: 14, color: C.mut, valign: 'middle', name: '!!tkl' });
-        s.rrect(11.5, 3.2, 1.5, 0.32, { fill: '4C8DF0', ft: 25, line: '4A5668', rr: 0.3, name: '!!tk' });
-        s.text('voll', { x: 11.5, y: 3.2, w: 1.5, h: 0.32, size: 12, bold: true, color: C.txt, align: 'center', valign: 'middle', name: '!!tkt' });
+        s.rrect(11.5, 3.16, 1.5, 0.4, { fill: '4C8DF0', ft: 25, line: '4A5668', rr: 0.3, name: '!!tk' });
+        s.text('voll', { x: 11.5, y: 3.16, w: 1.5, h: 0.4, size: 14, bold: true, color: C.txt, align: 'center', valign: 'middle', name: '!!tkt' });
         s.text('Rote Leitung', { x: 9.3, y: 3.75, w: 2.2, h: 0.42, size: 14, color: C.mut, valign: 'middle', name: '!!rll' });
-        s.text('nicht dran', { x: 11.5, y: 3.75, w: 1.5, h: 0.42, size: 13, color: C.mut, align: 'center', valign: 'middle', name: '!!rlv' });
+        s.text('nicht dran', { x: 11.5, y: 3.76, w: 1.5, h: 0.4, size: 14, bold: true, color: C.txt, fill: '3A4656', shape: s.pres.shapes.ROUNDED_RECTANGLE, rr: 0.3, align: 'center', valign: 'middle', name: '!!rlv' });
         seg(s, 9.3, 4.35, 13.0, 4.35, { col: '2A3B52', th: 0.02, name: '!!sep' });
         s.text('✓  ' + t.safe, { x: 9.3, y: 4.5, w: 3.7, h: 0.4, size: 14, bold: true, color: C.gr, valign: 'middle', name: '!!safe' });
         s.text(t.st, { x: 5.75, y: 4.95, w: 7.3, h: 0.5, size: 18, bold: true, color: t.stc, align: 'center', valign: 'middle', name: '!!st' });
@@ -81,11 +82,11 @@ module.exports = async (deck) => {
       },
     });
   }
-  await quiz(deck, 'ce2k', {
+  quizWide(deck, 'ce2k', {
     kicker: 'Prüfungsfrage 2.7.06-306', q: 'In welchen Fällen müssen Sie das Löseventil betätigen?', size: 32, osize: 17,
     opts: ['Wenn der Anhänger bei gefüllten Luftbehältern und nicht angeschlossenen Bremsleitungen rangiert werden soll', 'Vor Antritt der Fahrt, damit die Luftbehälter des Anhängers aufgefüllt werden können', 'Vor Antritt der Fahrt, damit die Feststellbremse des Anhängers gelöst wird'], ok: [0],
-    why: 'Schwarz = Löseventil, nur zum Rangieren. Die Feststellbremse ist der rote Knopf.',
-    notes: '▶ Frage vorlesen, abstimmen.\n🖱 Klick 1: Antworten · Klick 2: Lösung.\n✅ Amtlicher Fragenkatalog 2.7.06-306: A.\n➜ „Das war CE2. Zum Mitschreiben.“',
+    why: 'Schwarz = Löseventil: löst die Notbremsung, z. B. zum Rangieren. Die Feststellbremse ist der rote Knopf.',
+    notes: '▶ Frage vorlesen, abstimmen.\n🖱 Klick 1: Antworten · Klick 2: Lösung.\n✅ Amtlicher Fragenkatalog 2.7.06-306: A.\n💡 Prüfungsfrage 2.7.06-313: Die Betriebsbremse eines kurz abgestellten Anhängers löst man durch Betätigen des Löseventils (falsch: Bremsleitung belüften, Feststellbremse lösen). Und beim Ankuppeln eines Drehschemelanhängers ohne Vorderachslöseventil löst der schwarze Knopf die Vorderachsbremse – erst nach dem roten Knopf (DGUV I 214-080, S. 21).\n➜ „Das war CE2. Zum Mitschreiben.“',
   });
 
   // ===== ABSCHLUSS CE2 =====
@@ -95,13 +96,13 @@ module.exports = async (deck) => {
       ['Eigene Bremse', 'über 0,75 t Achslast · ein Pedal oder Auflaufbremse · bremst bei Abriss selbst'],
       ['Auflaufbremse', 'bremst erst beim Auflaufen · bis 3,5 t · nie am Auflieger · Abreißseil an den Lkw'],
       ['Rot', 'Vorratsleitung: immer Druck, füllt den Behälter im Anhänger'],
-      ['Gelb', 'Bremsleitung: Druck nur beim Bremsen, meldet den Bremswunsch'],
+      ['Gelb', 'Bremsleitung: Druck beim Bremsen und bei gezogener Feststellbremse'],
       ['Rot reißt', 'Anhänger bremst sofort selbst, Behälter wird abgesperrt · Lkw bremst nicht automatisch'],
       ['Gelb reißt', 'erst beim Bremsen: Lkw entlüftet rot → Anhänger wird notgebremst'],
       ['Roter Knopf', 'Feststellbremse (Federspeicher) des Anhängers'],
-      ['Schwarzer Knopf', 'Löseventil: Notbremsung lösen zum Rangieren · springt beim Anschließen heraus'],
+      ['Schwarzer Knopf', 'Löseventil: löst die Notbremsung, z. B. zum Rangieren · springt beim Anschließen heraus'],
     ],
-    notes: '▶ Sagen: „Schreibt euch das auf – das kommt in der Prüfung.“\n🖱 Klick 1–8: je eine Zeile.\n💡 Erst das Stichwort vorlesen und fragen: „Wer weiß es?“ – dann klicken.\n✅ Quellen: § 41 Abs. 9 und 10 StVZO, UN-R 13 / RL 71/320/EWG, DGUV I 214-080, Prüfungsfragen 2.7.06-105, 2.7.02-302, 2.7.06-317, 2.7.06-306.\n➜ „Drei Prüfungsfragen.“',
+    notes: '▶ Sagen: „Schreibt euch das auf – das kommt in der Prüfung.“\n🖱 Klick 1–8: je eine Zeile.\n💡 Erst das Stichwort vorlesen und fragen: „Wer weiß es?“ – dann klicken.\n✅ Quellen: § 41 Abs. 9 und 10 StVZO, UN-R 13 / RL 71/320/EWG, DGUV I 214-080, Prüfungsfragen 2.7.06-105, 2.7.02-302, 2.7.06-317, 2.7.06-306, 2.7.06-321 (gelb führt auch bei gezogener Feststellbremse Druck).\n➜ „Drei Prüfungsfragen.“',
   });
   await quiz(deck, 'ce2e', {
     kicker: 'Prüfungsfrage 2.7.07-321', q: 'Was müssen Sie beim Ankuppeln eines Anhängers beachten?', size: 32,
@@ -127,14 +128,14 @@ module.exports = async (deck) => {
       ['LuWind', 'Rot und gelb:', 'rot bringt die Luft, gelb den Bremswunsch. Der Anhänger bremst mit eigener Luft.'],
       ['LuUnlink', 'Rot reißt:', 'der Anhänger bremst sofort selbst – der Lkw nicht.'],
       ['LuTriangleAlert', 'Gelb reißt:', 'merkt ihr erst beim Bremsen – dann wird der Anhänger notgebremst.'],
-      ['LuCircleParking', 'Abstellen:', 'roter Knopf ziehen und Keile. Schwarz nur zum Rangieren.'],
+      ['LuCircleParking', 'Abstellen:', 'roter Knopf ziehen und Keile. Schwarz löst nur die Notbremsung.'],
     ],
     notes: '▶ Sagen: „Das sind die fünf Punkte aus CE2, die ihr sicher wissen müsst.“\n🖱 Klick 1–5: je ein Punkt.\n➜ „Damit ist Abend 6 geschafft.“',
   });
 
   // ===== ENDE =====
   {
-    const s = base(deck, 'ce2e', { bg: 'k_titel.jpg', ov: 9.0, footer: false, transition: 'black', notes:
+    const s = base(deck, 'ce2e', { bg: 'm_titel_r.jpg', bgX: 3.3, ov: 9.0, footer: false, transition: 'black', notes:
       '▶ Sagen: „Das war Abend 6. Ihr wisst jetzt, wie man einen Zug richtig zusammenstellt und wie seine Bremse arbeitet. Beim nächsten Mal geht es weiter mit der Bremse – Bremskraftregelung, ABS, Feststellbremse mit Kontrollstellung und Dauerbremse – und dann mit dem Fahren mit Zügen. Danke fürs Mitmachen, kommt gut nach Hause.“\n' +
       '💡 Ausbildungsnachweis abzeichnen lassen. Prüfungsfragen 2.7.07 (Kuppeln) und 2.7.06 (Bremsen) als Hausaufgabe üben.\n' +
       '🖱 Keine Klicks.' });
@@ -142,6 +143,6 @@ module.exports = async (deck) => {
     s.img('boost_logo.png', { x: 0.7, y: 0.6, w: 1.6, h: 0.55, sizing: 'contain' }, { fx: 'fade', auto: true, dur: 800 });
     s.text('Abend 6 geschafft!', { x: 0.7, y: 1.7, w: 4.9, h: 1.8, size: 46, bold: true, color: C.txt, lsm: 0.9 }, { fx: 'rise', auto: true, dur: 900 });
     s.text('CE1 + CE2: Züge zusammenstellen und bremsen', { x: 0.7, y: 3.6, w: 4.8, h: 0.8, size: 18, color: C.or }, { fx: 'fade', auto: true, dur: 700, d: 400 });
-    s.text([{ text: 'Nächstes Mal – Abend 7:', options: { bold: true, color: C.mut, breakLine: true } }, { text: 'CE3  Bremsen: ABS, Feststellbremse, Dauerbremse', options: { color: C.txt, breakLine: true } }, { text: 'CE4  Fahren mit Zügen', options: { color: C.txt } }], { x: 0.7, y: 4.65, w: 4.9, h: 1.5, size: 16 }, { fx: 'fade', auto: true, dur: 700, d: 800 });
+    s.text([{ text: 'Nächstes Mal – Abend 7:', options: { bold: true, color: C.mut, breakLine: true } }, { text: 'CE3  Bremsen: Bremskraftregelung, ABS, Feststellbremse, Dauerbremse', options: { color: C.txt, breakLine: true } }, { text: 'CE4  Fahren mit Zügen', options: { color: C.txt } }], { x: 0.7, y: 4.65, w: 4.9, h: 1.5, size: 16 }, { fx: 'fade', auto: true, dur: 700, d: 800 });
   }
 };

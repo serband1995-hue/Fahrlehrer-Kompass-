@@ -29,7 +29,7 @@ module.exports = async (deck) => {
           note: '▶ „Rot reißt – der Druck fällt sofort. Das Anhängerbremsventil merkt das. Es macht zwei Dinge: Es sperrt den Behälter gegen die gerissene Leitung ab, damit die Luft nicht verloren geht. Und es schickt die Luft aus dem Behälter in die Bremszylinder. Der Anhänger bremst sofort von selbst.“\n✅ Prüfungsfrage 2.7.02-302: Das Anhängerbremsventil leitet eine Bremsung des Anhängers ein und schließt den Anhängerluftvorrat gegen die unterbrochene Vorratsleitung ab. § 41 Abs. 9 StVZO: Trennt sich der Anhänger, muss er selbsttätig zum Stehen kommen.\n💡 Bei manchen neuen Anhängern (z. B. mit ZF iEBS) greifen beim Abriss von rot zusätzlich die Federspeicher. In der Prüfung zählt: Das Anhängerbremsventil bremst und sperrt den Vorrat ab (2.7.02-302). Beim Abstellen trotzdem immer roter Knopf und Keile.\n🖱 Klick: Und der Lkw?\n➜ „Bremst der Lkw jetzt auch?“' }),
         fr({ red: 'brk', yel: 'empty', tank: 0.75, rv: 'zu', sup: true, brk: true, cyl: 1, msg: 'Der Lkw bremst nicht automatisch. Warnblinker an, kontrolliert anhalten.', msgCol: C.or }, { hold: true, answer: true,
           cap: 'Der Lkw bremst nicht von selbst. Ihr merkt, dass der Anhänger bremst: Warnblinker an, kontrolliert anhalten, Zug sichern.',
-          note: '▶ „Und der Lkw? Der bremst nicht automatisch – das ist die Falle in der Prüfung. Ihr merkt aber, dass der Anhänger bremst. Warnblinker an, kontrolliert anhalten, Zug sichern.“\n❓ Frage auf der Folie auflösen.\n✅ Prüfungsfrage 2.7.02-302 (falsch: „löst beim Zugfahrzeug automatisch eine Bremsung aus“).\n💡 Die Notbremsung ist nur ein Mindestschutz: Die EU-Regeln verlangen dafür nur eine schwache Mindestwirkung (UN-R 13 / RL 71/320/EWG Anhang II: 13,5 % der Gewichtskraft). Und die Luft im Behälter hält nicht ewig. Darum einen abgestellten Anhänger immer mit rotem Knopf und Keilen sichern.\n🖱 Nächster Klick: nächste Folie.\n➜ „Eine Prüfungsfrage.“' }),
+          note: '▶ „Und der Lkw? Der bremst nicht automatisch – das ist die Falle in der Prüfung. Ihr merkt aber, dass der Anhänger bremst. Warnblinker an, kontrolliert anhalten, Zug sichern.“\n❓ Frage auf der Folie auflösen.\n✅ Prüfungsfrage 2.7.02-302 (falsch: „löst beim Zugfahrzeug automatisch eine Bremsung aus“).\n💡 Die Notbremsung ist nur ein Mindestschutz: Die Bremsvorschriften (UN-R 13; über § 41 Abs. 18 StVZO die RL 71/320/EWG, Anhang II) verlangen dafür nur eine schwache Mindestwirkung (13,5 % der Gewichtskraft). Und die Luft im Behälter hält nicht ewig. Darum einen abgestellten Anhänger immer mit rotem Knopf und Keilen sichern.\n🖱 Nächster Klick: nächste Folie.\n➜ „Eine Prüfungsfrage.“' }),
       ],
       scene: async (s, t) => schema(s, t),
     });
@@ -77,7 +77,7 @@ module.exports = async (deck) => {
       ['LuCable', 'Leitungen scheuern oder hängen durch', 'Vor jeder Fahrt prüfen: frei, dicht, Dichtringe heil, in Kurven nicht zu straff.', C.red, 17],
       ['LuMountainSnow', 'Eis auf der Plane', 'Beim Bremsen rutscht es nach vorn – es kann Luft- und Stromleitungen abreißen.', C.red, 17],
       ['LuDisc', 'Bremsleitung am Lkw-Rad bricht', 'Der Lkw bremst schwächer, der Anhänger bremst normal weiter.', C.red, 17],
-      ['LuCircleParking', 'Notbremse ist kein Parken', 'Abgestellt wird nur mit Feststellbremse (roter Knopf) und Keilen.', C.or, 17],
+      ['LuCircleParking', 'Notbremsung ist kein Parken', 'Abgestellt wird nur mit Feststellbremse (roter Knopf) und Keilen.', C.or, 17],
     ],
     notes:
       '▶ Sagen: „Was kann den Leitungen sonst passieren?“\n' +

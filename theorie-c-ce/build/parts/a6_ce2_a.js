@@ -31,7 +31,7 @@ module.exports = async (deck) => {
   await ask(deck, 'ce2r', {
     kicker: 'Was das Gesetz verlangt', q: 'Was muss die Bremse eines großen Anhängers können?', ico: 'LuDisc', qsize: 34,
     answers: [
-      ['LuDisc', 'Eine eigene Bremse', 'Anhänger mit 2 oder mehr Achsen immer, einachsige über 0,75 t Achslast. Hinter schnellen Lkw auf alle Räder.', C.bl, 17],
+      ['LuDisc', 'Eine eigene Bremse', 'Anhänger mit 2 oder mehr Achsen immer, einachsige über 0,75 t Achslast. Hinter schnellen\u00A0Lkw auf alle Räder.', C.bl, 17],
       ['LuFootprints', 'Ein Pedal für beide', 'Lkw und Anhänger bremsen zusammen, mit einer Betätigung vom Fahrersitz. Oder der Anhänger bremst von selbst (Auflaufbremse).', C.bl, 17],
       ['LuUnlink', 'Selbst bremsen beim Abreißen', 'Löst sich der Anhänger, muss er von allein zum Stehen kommen.', C.red, 17],
       ['LuMountain', 'Am Berg stehen bleiben', 'Feststellbremse: Der volle Anhänger muss auf 18 % Steigung halten – rein mechanisch.', C.bl, 17],
@@ -40,14 +40,14 @@ module.exports = async (deck) => {
       '▶ Sagen: „Was muss die Bremse eines großen Anhängers können? Sammelt mal.“\n' +
       '❓ Sammeln lassen, dann je Klick eine Karte.\n' +
       '🖱 Klick 1–4: je eine Anforderung.\n' +
-      '✅ § 41 Abs. 9 StVZO: Zwei- und mehrachsige Anhänger brauchen eine eigene Bremsanlage (§ 41 Abs. 11: einachsige ohne eigene Bremse nur, wenn die Achslast höchstens die Hälfte des Leergewichts des Zugfahrzeugs und höchstens 0,75 t beträgt); Betriebsbremse von Zug und Anhänger mit einer Betätigung abstufbar (oder selbsttätig wie die Auflaufbremse); trennt sich der Anhänger, muss er selbsttätig zum Stehen kommen; Feststellbremse hält den beladenen Anhänger rein mechanisch auf 18 %; hinter Kfz über 25 km/h Bremse auf alle Räder. Mittlere Vollverzögerung mindestens 5,0 m/s² (Sattelanhänger 4,5 m/s²).\n' +
+      '✅ § 41 Abs. 9 StVZO: Zwei- und mehrachsige Anhänger brauchen eine eigene Bremsanlage (§ 41 Abs. 11: einachsige ohne eigene Bremse nur, wenn die Achslast höchstens die Hälfte des Leergewichts des Zugfahrzeugs und höchstens 0,75 t beträgt); Betriebsbremse von Zug und Anhänger mit einer Betätigung abstufbar (oder selbsttätig wie die Auflaufbremse); trennt sich der Anhänger, muss er selbsttätig zum Stehen kommen; Feststellbremse hält den beladenen Anhänger rein mechanisch auf 18 %; hinter Kfz über 25 km/h Bremse auf alle Räder. Mittlere Vollverzögerung mindestens 5,0 m/s² (Sattelanhänger 4,5 m/s²). Für Lkw-Anhänger verweist § 41 Abs. 18 StVZO auf die EU-Bremsvorschriften (RL 71/320/EWG, heute UN-R 13) – Inhalt gleich.\n' +
       '➜ „Welche Bremsen gibt es dafür?“',
   });
   await ask(deck, 'ce2r', {
     kicker: 'Zwei Bremsen', q: 'Welche Bremse hat welcher Anhänger?', ico: 'LuCog', qsize: 34,
     answers: [
       ['LuMoveHorizontal', 'Auflaufbremse', 'Mechanisch: Der Anhänger bremst sich selbst, wenn er aufläuft. Bei Anhängern über 40 km/h höchstens 3,5 t.', C.or, 17],
-      ['LuWind', 'Zweileitungs-Druckluftbremse', 'Mit Luft vom Lkw, gesteuert vom Bremspedal. Standard bei Lkw-Anhängern und Sattelaufliegern.', C.gr, 17],
+      ['LuWind', 'Zweileitungs-Druckluftbremse', 'Mit Luft vom Lkw, gesteuert vom Bremspedal. Standard bei Lkw-Anhängern und Aufliegern.', C.gr, 17],
       ['LuScale', 'Durchgehende Bremse = mehr Anhängelast', 'Mit Druckluftbremse darf die Anhängelast bis zum 1,5-Fachen der zulässigen Gesamtmasse des Lkw betragen – nie mehr, als im Fahrzeugschein steht.', C.bl, 17],
     ],
     notes:
@@ -61,19 +61,19 @@ module.exports = async (deck) => {
   await chapter(deck, 'ce2a', { num: 2, ttl: 'Die Auflaufbremse', sub: 'Der Anhänger bremst sich selbst – wenn er auf den Lkw aufläuft.', ico: 'LuMoveHorizontal', notes:
     '▶ Sagen: „Die Auflaufbremse braucht keine Leitung und keine Luft. Sie nutzt den Schub des Anhängers.“\n🖱 Keine Klicks.\n➜ „Schaut euch diese Deichsel an.“' });
   await photoAsk(deck, 'ce2a', {
-    bg: 'l_auflauf_r.jpg', bgX: 5.4, ov: 6.6, kicker: 'Anhänger mit Auflaufbremse', q: 'Was seht ihr an dieser Deichsel?', qsize: 30, w: 4.6, asize: 15,
+    bg: 'l_auflauf_r.jpg', bgX: 5.4, ov: 6.6, kicker: 'Anhänger mit Auflaufbremse', q: 'Was seht ihr an dieser Deichsel?', qsize: 30, w: 4.6, asize: 15, top: 2.3,
     answers: [
       ['LuMoveHorizontal', 'Auflaufeinrichtung', 'unter dem Faltenbalg – schiebt sich beim Bremsen zusammen.', C.or],
       ['LuHand', 'Handbremshebel', 'die Feststellbremse des Anhängers.', C.or],
       ['LuCable', 'Abreißseil', 'reißt der Anhänger ab, zieht es die Bremse an.', C.red],
-      ['LuArrowUpToLine', 'Stützrad', 'nach dem Ankuppeln ganz nach oben.', C.or],
+      ['LuArrowUpToLine', 'Stützrad (nicht im Bild)', 'nach dem Ankuppeln ganz nach oben.', C.or],
     ],
     notes:
       '▶ Sagen: „Ein Anhänger mit Auflaufbremse. Was seht ihr?“\n' +
       '❓ Sammeln lassen, dann je Klick auflösen.\n' +
       '🖱 Klick 1–4: je ein Teil.\n' +
       '✅ Auflaufeinrichtung, Handbremshebel, Abreißseil: Lehrbuchwissen; UN-R 13 / RL 71/320/EWG Anhang I Nr. 1.12 (Auflaufbremsung) und Nr. 2.2.2.9 (selbsttätige Bremsung beim Abreißen; Ausnahme einachsige Anhänger bis 1,5 t mit Sicherungsverbindung). Prüfungsfrage 2.7.01-121: nach dem Ankuppeln Bremse prüfen, Stützrad in die oberste Stellung, Abreißseil an der Anhängekupplung des Zugfahrzeugs einhängen.\n' +
-      '💡 Das Bild zeigt einen Kugelkopf. Am Lkw hängt so ein Anhänger meist mit Zugöse am Bolzen.\n' +
+      '💡 Das Bild zeigt einen Kugelkopf. Am Lkw hängt so ein Anhänger meist mit Zugöse am Bolzen. Das Stützrad ist im Bild nicht zu sehen – darum steht auf der Karte „nicht im Bild“.\n' +
       '➜ „Und wie bremst das Ding?“',
   });
 
@@ -98,18 +98,19 @@ module.exports = async (deck) => {
       ],
       scene: async (s, t) => {
         const G = 5.0, H = 4.15, comp = t.comp ? 0.22 : 0, push = t.back ? 0.15 : 0;
-        const LR = t.torn ? 6.3 : 6.9 + push;                  // Heck des Lkw
+        const LR = t.torn ? 6.3 : 6.9 + push, LX = t.torn ? 5.75 : 5.75 + push;   // Heck und linke Kante des Lkw-Ausschnitts
+        const gone = t.torn ? 100 : 0;                          // abgerissen: Der Lkw fährt aus dem Bild, nur das gespannte Seil bleibt
         const E = 7.02 + push - (t.torn ? comp : 0);            // Zugöse (hängt am Bolzen des Lkw)
         const HF = 7.77 + push - comp, HW = 0.9, TX = HF + HW + 0.93;
         s.rect(5.75, G, 7.3, 0.03, { fill: '3C4656', name: '!!boden' });
         // Lkw-Heck (Ausschnitt)
-        s.rect(5.75, 2.2, LR - 5.75, 1.55, { fill: 'C9D0DA', line: '97A1AE', lw: 1, name: '!!lkb' });
-        s.rect(LR - 0.06, 2.2, 0.06, 1.55, { fill: '9AA4B1', name: '!!lkt' });
-        s.rect(5.75, 3.75, LR - 5.75, 0.15, { fill: '3A4250', name: '!!lkr' });
-        const wx = LR - 0.8, wv = wx > 6.0 ? 0 : 100;
+        s.rect(LX, 2.2, LR - LX, 1.55, { fill: 'C9D0DA', ft: gone, line: '97A1AE', lt: gone, lw: 1, name: '!!lkb' });
+        s.rect(LR - 0.06, 2.2, 0.06, 1.55, { fill: '9AA4B1', ft: gone, name: '!!lkt' });
+        s.rect(LX, 3.75, LR - LX, 0.15, { fill: '3A4250', ft: gone, name: '!!lkr' });
+        const wx = LR - 0.8, wv = gone;
         s.oval(wx - 0.55, G - 1.1, 1.1, 1.1, { fill: '14181E', ft: wv, name: '!!lkw1' });
         s.oval(wx - 0.32, G - 0.87, 0.64, 0.64, { fill: 'A7B1BE', ft: wv, name: '!!lkw2' });
-        s.rect(LR - 0.2, 3.9, 0.14, H - 3.9 + 0.12, { fill: '2E343D', name: '!!lkh' });
+        s.rect(LR - 0.2, 3.9, 0.14, H - 3.9 + 0.12, { fill: '2E343D', ft: gone, name: '!!lkh' });
         s.rect(LR - 0.16, 3.42, 0.12, 0.16, { fill: C.red, ft: t.lkwB ? 0 : 100, glow: t.lkwB ? 12 : undefined, glowColor: C.red, name: '!!bl' });
         s.text(t.lkwB ? 'Lkw bremst' : (t.torn ? 'Lkw fährt weiter' : 'Lkw'), { x: 5.8, y: G + 0.1, w: 1.8, h: 0.32, size: 14, bold: true, color: t.lkwB ? C.red : C.mut, name: '!!lb' });
         // Anhänger-Front (Pritsche, Tandemachse)
@@ -132,7 +133,7 @@ module.exports = async (deck) => {
         const pv = [HF + 0.45, H - 0.2], lt = t.torn ? [HF - 0.05, H - 0.8] : [HF + 0.75, H - 0.82];
         seg(s, pv[0], pv[1], lt[0], lt[1], { col: 'B3BBC6', th: 0.1, name: '!!hebel' });
         s.oval(lt[0] - 0.08, lt[1] - 0.08, 0.16, 0.16, { fill: '1A1F27', line: 'B3BBC6', lw: 1, name: '!!griff' });
-        const lh = [LR - 0.13, H + 0.18];
+        const lh = t.torn ? [5.8, H + 0.1] : [LR - 0.13, H + 0.18];
         const mid = t.torn ? [(lt[0] + lh[0]) / 2, (lt[1] + lh[1]) / 2] : [(lt[0] + lh[0]) / 2 - 0.1, H + 0.68];
         seg(s, lt[0], lt[1], mid[0], mid[1], { col: C.am, th: 0.04, name: '!!seil1' });
         seg(s, mid[0], mid[1], lh[0], lh[1], { col: C.am, th: 0.04, name: '!!seil2' });
@@ -140,7 +141,7 @@ module.exports = async (deck) => {
         s.text(t.torn ? 'Verbindung gerissen!' : t.comp ? 'Auflaufeinrichtung schiebt sich zusammen' : 'Auflaufeinrichtung ausgezogen', { x: 7.2, y: 2.55, w: 4.2, h: 0.34, size: 15, bold: true, color: t.torn ? C.red : t.comp ? C.or : C.mut, name: '!!dt' });
         seg(s, (E + HF) / 2 + 0.1, 2.92, (E + HF) / 2 + 0.1, H - 0.22, { col: t.comp ? C.or : '4A5668', th: 0.025, hide: !!t.torn, name: '!!dtl' });
         s.text(t.torn ? 'Seil zieht die Handbremse an' : 'Handbremshebel', { x: lt[0] + 0.12, y: lt[1] - 0.36, w: 3.0, h: 0.3, size: 13, bold: !!t.torn, color: t.torn ? C.am : C.mut, name: '!!ht' });
-        s.text('Abreißseil', { x: mid[0] - 0.6, y: Math.max(mid[1], H + 0.2) + 0.12, w: 1.4, h: 0.28, size: 12, color: C.am, align: 'center', name: '!!st' });
+        s.text('Abreißseil', { x: mid[0] - 0.6, y: t.torn ? Math.max(mid[1], H + 0.2) + 0.12 : G + 0.1, w: 1.4, h: 0.28, size: 12, color: C.am, align: 'center', name: '!!st' });
         s.text(t.trB ? 'Radbremsen ziehen an' : 'Radbremsen frei', { x: TX + 0.6, y: G + 0.1, w: 3.0, h: 0.32, size: 14, bold: true, color: t.trB ? C.red : C.mut, align: 'center', name: '!!tb' });
         s.text('Gestänge', { x: TX + 0.25, y: G - 0.38, w: 1.0, h: 0.26, size: 12, color: t.trB ? C.or : C.dim, name: '!!gt' });
         // Fahrtrichtung bzw. Schub
@@ -160,15 +161,16 @@ module.exports = async (deck) => {
     kicker: 'Auflaufbremse am Lkw', q: 'Euer 12-t-Lkw soll einen 3,5-t-Tandem mit Auflaufbremse ziehen. Geht das?', ico: 'LuTruck', qsize: 30,
     answers: [
       ['LuScale', 'Ja – bis 3,5 t', 'Ein Anhänger mit Auflaufbremse darf hinter eurem Lkw höchstens 3,5 t haben.', C.or, 17],
-      ['LuBan', 'Nie am Sattelauflieger', 'Und im Zug immer nur ein Anhänger mit Auflaufbremse.', C.or, 17],
+      ['LuBan', 'Nie am Auflieger', 'Und im Zug immer nur ein Anhänger mit Auflaufbremse.', C.or, 17],
       ['LuIdCard', 'Klasse CE', 'Lkw der Klasse C mit Anhänger über 750 kg: CE – auch für den kleinen Tandem.', C.red, 17],
-      ['LuCable', 'Vor der Fahrt', 'Kupplung zu, Licht geht, Stützrad oben, Abreißseil am Lkw eingehängt.', C.or, 17],
+      ['LuCable', 'Vor der Fahrt', 'Kupplung zu, Licht geht (Spannung passt?), Stützrad oben, Abreißseil am Lkw eingehängt.', C.or, 17],
     ],
     notes:
       '▶ Sagen: „Euer 12-Tonnen-Lkw soll einen 3,5-Tonnen-Tandemanhänger mit Auflaufbremse ziehen. Geht das? Was müsst ihr beachten?“\n' +
       '❓ Sammeln lassen, dann je Klick eine Karte.\n' +
       '🖱 Klick 1–4: je ein Punkt.\n' +
-      '✅ § 41 Abs. 10 StVZO: Auflaufbremse bis 3,5 t (Anhänger über 40 km/h), nie beim Sattelanhänger; in einem Zug nur ein Anhänger mit Auflaufbremse. § 42 Abs. 1 StVZO: Anhängelast höchstens zGM des Lkw (ohne durchgehende Bremse). § 6 Abs. 1 FeV: C-Lkw + Anhänger über 750 kg = CE. Prüfungsfrage 2.7.01-121: Bremse prüfen, Stützrad oben, Abreißseil einhängen.\n' +
+      '✅ § 41 Abs. 10 StVZO: Auflaufbremse bis 3,5 t (Anhänger über 40 km/h), nie beim Sattelanhänger; in einem Zug nur ein Anhänger mit Auflaufbremse. § 42 Abs. 1 StVZO: Anhängelast höchstens zGM des Lkw (ohne durchgehende Bremse). § 6 Abs. 1 FeV: C-Lkw + Anhänger über 750 kg = CE. Prüfungsfrage 2.7.01-121: Bremse prüfen, Stützrad oben, Abreißseil einhängen. Prüfungsfrage 2.6.03-308: Bordspannung von Zugfahrzeug und Anhänger muss aufeinander abgestimmt sein.\n' +
+      '💡 Praxis: Ein kleiner Tandem mit Auflaufbremse hat oft eine 12-V-Anlage, der Lkw 24 V. Darum vor der Fahrt prüfen, ob die Spannung passt.\n' +
       '➜ „Noch eine Prüfungsfrage.“',
   });
   await quiz(deck, 'ce2a', {

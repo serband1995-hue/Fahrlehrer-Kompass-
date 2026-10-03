@@ -1,7 +1,7 @@
 === FOLIE 1 ===
 AUF DER FOLIE: KLASSE C  ·  THEORIE  ·  ABEND 3 | Bremsen, auf die man sich verlässt | C5  Lkw-Bremsen / C6  Dauerbremsen, Untersuchungen, Begrenzer | Fahrschule Boost  ·  Offenbach am Main
 NOTIZEN:
-FOLIE 1 VON 125 · Animation läuft von selbst · Klick = weiter
+FOLIE 1 VON 126 · Animation läuft von selbst · Klick = weiter
 
 ▶ Sagen: „Willkommen zu Abend 3 von 5 für Klasse C. Heute geht es um das Wichtigste am Lkw: die Bremsen. Bis zu 32 Tonnen bergab – da muss man wissen, wie die Bremse funktioniert und wie man sie schont.“
 💡 Vorher: Anwesenheit eintragen, Ausbildungsnachweis abzeichnen.
@@ -9,30 +9,30 @@ FOLIE 1 VON 125 · Animation läuft von selbst · Klick = weiter
 ➜ „So läuft der Abend.“
 
 === FOLIE 2 ===
-AUF DER FOLIE: KLASSE C  ·  ABEND 3  ·  LEKTION C5 | 2 | HEUTE ABEND | Zwei Lektionen, eine Pause | 18:00 – 19:30 | Lektion C5  Lkw-Bremsen / Bremsanlagen · Druckluft · Zweikreis-Bremse · ALB und EBS · Feststellbremse | 19:30 – 19:45 | Pause  15 Minuten | 19:45 – 21:15 | Lektion C6  Dauerbremsen, Untersuchungen, Begrenzer / Motorbremse und Retarder · Bremsweg und Fading · ABS · Kontrolle · HU und SP · Begrenzer
+AUF DER FOLIE: HEUTE ABEND | Zwei Lektionen, eine Pause | 18:00 – 19:30 | Lektion C5  Lkw-Bremsen / Bremsanlagen · Druckluft · Zweikreis-Bremse · ALB und EBS · Feststellbremse | 19:30 – 19:45 | Pause  15 Minuten | 19:45 – 21:15 | Lektion C6  Dauerbremsen, Untersuchungen, Begrenzer / Motorbremse, Retarder · Bremsweg, Fading · ABS · Kontrolle · HU und SP · Begrenzer, Tempomat | KLASSE C  ·  ABEND 3  ·  LEKTION C5 | 2
 NOTIZEN:
-FOLIE 2 VON 125 · 3 Klicks
+FOLIE 2 VON 126 · 3 Klicks
 
-▶ Sagen: „Zwei Lektionen: zuerst C5 – wie eine Druckluftbremse aufgebaut ist und funktioniert. Nach der Pause C6 – Dauerbremsen, ABS, Kontrolle der Bremse, Hauptuntersuchung und Geschwindigkeitsbegrenzer.“
+▶ Sagen: „Zwei Lektionen: zuerst C5 – wie eine Druckluftbremse aufgebaut ist und funktioniert. Nach der Pause C6 – Dauerbremsen, ABS, Kontrolle der Bremse, Hauptuntersuchung, Geschwindigkeitsbegrenzer und Tempomat.“
 🖱 Klick 1: Lektion C5 · Klick 2: Pause · Klick 3: Lektion C6.
 💡 Zeiten für einen Beginn um 18:00 Uhr.
 ➜ „Erst ein kurzer Blick zurück auf Abend 2.“
 
 === FOLIE 3 ===
-AUF DER FOLIE: KLASSE C  ·  ABEND 3  ·  LEKTION C5 | 3 | WIEDERHOLUNG ABEND 2 | Drei Fragen von letztem Mal – wer weiß es noch? | AdBlue-Tank leer – was passiert?  Erst weniger Leistung, zuletzt Kriechmodus mit höchstens 20 km/h. | Wann die Differenzialsperre einlegen?  Nur im Stand oder im Schritttempo – nie in Kurven, sofort wieder raus. | Winterreifen beim Lkw – wo mindestens?  Auf den Antriebsachsen und den vorderen Lenkachsen, mit Alpine-Symbol.
+AUF DER FOLIE: WIEDERHOLUNG ABEND 2 | Drei Fragen vom letzten Mal – wer weiß es noch? | AdBlue-Tank leer – was passiert?  Erst weniger Leistung, zuletzt Kriechmodus mit höchstens 20 km/h. | Wann die Differenzialsperre einlegen?  Nur im Stand oder in Schrittgeschwindigkeit – nie in Kurven, sofort wieder raus. | Winterreifen beim Lkw – wo mindestens?  Auf den ständig angetriebenen Achsen und den vorderen Lenkachsen, mit Alpine-Symbol. | KLASSE C  ·  ABEND 3  ·  LEKTION C5 | 3
 NOTIZEN:
-FOLIE 3 VON 125 · 3 Klicks
+FOLIE 3 VON 126 · 3 Klicks
 
 ▶ Sagen: „Bevor wir anfangen: drei Fragen zu Abend 2.“
 ❓ Jede Frage vorlesen, Antworten sammeln, dann klicken.
 🖱 Klick 1–3: je eine Frage mit Antwort.
-✅ VO (EU) 582/2011 Anhang XIII · Prüfungsfrage 2.7.03-213 · § 2 Abs. 3a StVO.
+✅ VO (EU) 582/2011 Anhang XIII · Prüfungsfrage 2.7.03-213 · § 2 Abs. 3a StVO: Winterreifen mindestens auf den „permanent angetriebenen Achsen“ und den vorderen Lenkachsen – eine zuschaltbare Antriebsachse zählt nicht.
 ➜ „Gut. Jetzt zu den Bremsen: Was lernt ihr heute in C5?“
 
 === FOLIE 4 ===
-AUF DER FOLIE: KLASSE C  ·  ABEND 3  ·  LEKTION C5 | 4 | LEKTION C5 · LKW-BREMSEN | Das lernt ihr in C5 | 01 | Bremsanlagen  Betriebs-, Feststell-, Dauerbremse – was das Gesetz verlangt | 10 Min | 02 | Druckluft  Kompressor, Trockner, Vierkreisschutzventil, Druck, Entwässern | 25 Min | 03 | Zweikreis-Bremse  zwei Kreise, Bremszylinder, Kreisausfall | 20 Min | 04 | ALB und EBS  Bremskraft nach Beladung, Elektronik | 10 Min | 05 | Feststellbremse  Feder bremst, Luft löst – Notlösen, Kontrollstellung | 20 Min | + 5 Min Abschluss: Quiz und „Das nimmst du mit“
+AUF DER FOLIE: LEKTION C5 · LKW-BREMSEN | Das lernt ihr in C5 | 01 | Bremsanlagen  Betriebs-, Feststell-, Dauerbremse – was das Gesetz verlangt | 10 Min | 02 | Druckluft  Kompressor, Trockner, Vierkreisschutzventil, Druck, Entwässern | 25 Min | 03 | Zweikreis-Bremse  zwei Kreise, Bremszylinder, Kreisausfall | 20 Min | 04 | ALB und EBS  Bremskraft nach Beladung, Elektronik | 10 Min | 05 | Feststellbremse  Feder bremst, Luft löst – Notlösen, Kontrollstellung | 20 Min | + 5 Min Abschluss: Quiz und „Das nehmt ihr mit“ | KLASSE C  ·  ABEND 3  ·  LEKTION C5 | 4
 NOTIZEN:
-FOLIE 4 VON 125 · 5 Klicks
+FOLIE 4 VON 126 · 5 Klicks
 
 ▶ Sagen: „In C5 lernt ihr, wie die Druckluftbremse aufgebaut ist: Woher kommt die Luft, wie wird sie verteilt, was passiert, wenn ein Kreis ausfällt – und wie die Feststellbremse mit einer Feder arbeitet.“
 🖱 Klick 1–5: je ein Kapitel.
@@ -40,18 +40,18 @@ FOLIE 4 VON 125 · 5 Klicks
 ➜ „Kapitel 1: Welche Bremsen hat ein Lkw?“
 
 === FOLIE 5 ===
-AUF DER FOLIE: KLASSE C  ·  ABEND 3  ·  C5  ·  BREMSANLAGEN | 5 | 01 | Welche Bremsen hat ein Lkw? | Drei Bremsanlagen – und was das Gesetz von ihnen verlangt.
+AUF DER FOLIE: 01 | Bremsanlagen | Welche Bremsen hat ein Lkw – und was verlangt das Gesetz von ihnen? | KLASSE C  ·  ABEND 3  ·  C5  ·  BREMSANLAGEN | 5
 NOTIZEN:
-FOLIE 5 VON 125 · Animation läuft von selbst · Klick = weiter
+FOLIE 5 VON 126 · Animation läuft von selbst · Klick = weiter
 
 ▶ Sagen: „Kapitel 1: Welche Bremsen hat ein Lkw überhaupt?“
 🖱 Keine Klicks.
 ➜ „Sammeln wir.“
 
 === FOLIE 6 ===
-AUF DER FOLIE: KLASSE C  ·  ABEND 3  ·  C5  ·  BREMSANLAGEN | 6 | BREMSANLAGEN | Drei Bremsen im Lkw | Betriebsbremse | Fußpedal | bremst alle Räder – mit Druckluft. Für jede normale Bremsung. | Feststellbremse | Handbremsventil | Federspeicher, rein mechanisch – hält den Lkw am Berg fest. | Dauerbremse | Hebel am Lenkrad | Motorbremse oder Retarder – verschleißfrei, für lange Gefälle. Pflicht über 9 t. | Fällt ein Teil aus,  muss der Rest noch mindestens 44 % der Bremswirkung bringen – die Hilfsbremswirkung.
+AUF DER FOLIE: BREMSANLAGEN | Drei Bremsen im Lkw | Betriebsbremse | Fußpedal | bremst alle Räder – mit Druckluft. Für jede normale Bremsung. | Feststellbremse | Handbremsventil | Federspeicher, rein mechanisch – hält den Lkw am Berg fest. | Dauerbremse | Hebel am Lenkrad | Motorbremse oder Retarder – verschleißfrei, für lange Gefälle. Pflicht über 9 t. | Fällt ein Teil aus,  muss der Rest noch mindestens 44 % der Bremswirkung bringen – die Hilfsbremswirkung. | KLASSE C  ·  ABEND 3  ·  C5  ·  BREMSANLAGEN | 6
 NOTIZEN:
-FOLIE 6 VON 125 · 4 Klicks
+FOLIE 6 VON 126 · 4 Klicks
 
 ▶ Sagen: „Ein Pkw hat zwei Bremsen: Fußbremse und Handbremse. Ein schwerer Lkw hat drei.“
 ❓ „Welche drei?“
@@ -61,9 +61,9 @@ FOLIE 6 VON 125 · 4 Klicks
 ➜ „Und wie bekommt die Betriebsbremse ihre Kraft? Nicht vom Fuß.“
 
 === FOLIE 7 ===
-AUF DER FOLIE: KLASSE C  ·  ABEND 3  ·  C5  ·  BREMSANLAGEN | 7 | BREMSANLAGEN | Der Fuß gibt nur das Signal | Pkw | Fuß drückt | ➜ | Bremskraft-verstärker | ➜ | Bremsflüssigkeit | ➜ | Radbremse | Lkw | Fuß öffnet Ventil | ➜ | Druckluft aus dem Vorrat | ➜ | Bremszylinder | ➜ | Radbremse | nur Signal | hier kommt die Kraft her | Ohne Luftvorrat keine Betriebsbremse.  Darum: Druck im Blick behalten, Druckwarnung ernst nehmen – und erst losfahren, wenn genug Luft da ist.
+AUF DER FOLIE: BREMSANLAGEN | Der Fuß gibt nur das Signal | Pkw | Fuß drückt | ➜ | Bremskraftverstärker | ➜ | Bremsflüssigkeit | ➜ | Radbremse | Lkw | Fuß öffnet Ventil | ➜ | Druckluft / aus dem Vorrat | ➜ | Bremszylinder | ➜ | Radbremse | nur Signal | hier kommt die Kraft her | Ohne Luftvorrat keine Betriebsbremse.  Darum: Druck im Blick behalten, Druckwarnung ernst nehmen – und erst losfahren, wenn genug Luft da ist. | KLASSE C  ·  ABEND 3  ·  C5  ·  BREMSANLAGEN | 7
 NOTIZEN:
-FOLIE 7 VON 125 · 3 Klicks
+FOLIE 7 VON 126 · 3 Klicks
 
 ▶ Sagen: „Beim Pkw drückt euer Fuß über die Bremsflüssigkeit direkt auf die Bremse – mit Verstärker. Beim schweren Lkw ist das anders: Euer Fuß öffnet nur ein Ventil. Die Kraft kommt aus der Druckluft.“
 ❓ „Was heißt das, wenn keine Luft da ist?“
@@ -73,28 +73,29 @@ FOLIE 7 VON 125 · 3 Klicks
 ➜ „Woher kommt die Luft? Kapitel 2.“
 
 === FOLIE 8 ===
-AUF DER FOLIE: KLASSE C  ·  ABEND 3  ·  C5  ·  DRUCKLUFT | 8 | 02 | Druckluft | Woher die Luft kommt, wie sie sauber und trocken wird – und wie sie verteilt wird.
+AUF DER FOLIE: 02 | Druckluft | Woher die Luft kommt, wie sie sauber und trocken wird – und wie sie verteilt wird. | KLASSE C  ·  ABEND 3  ·  C5  ·  DRUCKLUFT | 8
 NOTIZEN:
-FOLIE 8 VON 125 · Animation läuft von selbst · Klick = weiter
+FOLIE 8 VON 126 · Animation läuft von selbst · Klick = weiter
 
 ▶ Sagen: „Kapitel 2: die Druckluft. Auf dem Bild seht ihr Luftbehälter am Rahmen und daneben den Lufttrockner.“
 🖱 Keine Klicks.
 ➜ „Wir verfolgen die Luft vom Ansaugen bis zur Bremse.“
 
 === FOLIE 9 ===
-AUF DER FOLIE: KLASSE C  ·  ABEND 3  ·  C5  ·  DRUCKLUFT | 9 | DRUCKLUFT | Der Weg der Luft | 1 | Kompressor | 2 | Druckregler | 3 | Lufttrockner | 4 | Vierkreisschutzventil | 5 | Vorratsbehälter | 6 | Bremskreise | Der Kompressor wird vom Motor angetrieben. Er saugt Luft über einen Filter an und drückt sie ins System. | Druckluftanlage · schematisch | Luft | vom Motor angetrieben | Kompressor | Druckregler | Luft-trockner | Vierkreis-schutzventil | Kreis 1 / Bremse vorn | Kreis 2 / Bremse hinten | Kreis 3 / Feststellbremse, Anhänger | Kreis 4 / Nebenverbraucher
+AUF DER FOLIE: DRUCKLUFT | Der Weg der Luft | 1 | Kompressor | 2 | Druckregler | 3 | Lufttrockner | 4 | Vierkreisschutzventil | 5 | Vorratsbehälter | 6 | Bremskreise | Der Kompressor wird vom Motor angetrieben. Er saugt Luft über einen Filter an und drückt sie ins System. | Luft | vom Motor / angetrieben | Kompressor | Druckregler | Lufttrockner | Vierkreis- / schutzventil | Kreis 1 / Bremse vorn | Kreis 2 / Bremse hinten | Kreis 3 / Feststellbremse, Anhänger | Kreis 4 / Nebenverbraucher | Druckluftanlage · schematisch | KLASSE C  ·  ABEND 3  ·  C5  ·  DRUCKLUFT | 9
 NOTIZEN:
-FOLIE 9 VON 125 · keine Animation · Klick = weiter
+FOLIE 9 VON 126 · keine Animation · Klick = weiter
 
-▶ Sagen: „Wir verfolgen die Luft. Sie beginnt beim Kompressor – auch Luftpresser genannt. Er läuft immer mit, wenn der Motor läuft.“
-✅ Prüfungswissen: Am Luftpresser regelmäßig den Anschluss der Druckleitung und den Keilriemen kontrollieren.
+▶ Sagen: „Wir verfolgen die Luft. Sie beginnt beim Kompressor – auch Luftpresser genannt. Er wird vom Motor angetrieben. Ist der Vorrat voll, läuft er leer mit – bei neueren Lkw wird er abgekuppelt.“
+✅ Kompressor mit Kupplung: Bei vollem Vorrat wird er ganz vom Motor getrennt (eurotransport, Knorr-Bremse, seit 2009 auf dem Markt).
+✅ Fachwissen (Frage 2.7.06-406, Zugmaschinen-Teil): Am Luftpresser Druckleitungsanschluss und – falls vorhanden – Keilriemen kontrollieren.
 🖱 Keine Animation auf dieser Folie – nächster Klick = nächster Schritt (Morph).
 ➜ „Wer sagt dem Kompressor, wann genug ist?“
 
 === FOLIE 10 ===
-AUF DER FOLIE: KLASSE C  ·  ABEND 3  ·  C5  ·  DRUCKLUFT | 10 | DRUCKLUFT | Der Weg der Luft | 1 | Kompressor | 2 | Druckregler | 3 | Lufttrockner | 4 | Vierkreisschutzventil | 5 | Vorratsbehälter | 6 | Bremskreise | Der Druckregler schaltet den Kompressor ab, wenn der Abschaltdruck erreicht ist – heute etwa 10 bis 13 bar. Kurzes Abblasen ist normal. | Druckluftanlage · schematisch | Luft | vom Motor angetrieben | Kompressor | Druckregler | Luft-trockner | Vierkreis-schutzventil | zisch – Abblasen | Kreis 1 / Bremse vorn | Kreis 2 / Bremse hinten | Kreis 3 / Feststellbremse, Anhänger | Kreis 4 / Nebenverbraucher
+AUF DER FOLIE: DRUCKLUFT | Der Weg der Luft | 1 | Kompressor | 2 | Druckregler | 3 | Lufttrockner | 4 | Vierkreisschutzventil | 5 | Vorratsbehälter | 6 | Bremskreise | Der Druckregler schaltet den Kompressor ab, wenn der Abschaltdruck erreicht ist – heute etwa 10 bis 13 bar. Kurzes Abblasen ist normal. | Luft | vom Motor / angetrieben | Kompressor | Druckregler | Lufttrockner | Vierkreis- / schutzventil | zisch – Abblasen | Kreis 1 / Bremse vorn | Kreis 2 / Bremse hinten | Kreis 3 / Feststellbremse, Anhänger | Kreis 4 / Nebenverbraucher | Druckluftanlage · schematisch | KLASSE C  ·  ABEND 3  ·  C5  ·  DRUCKLUFT | 10
 NOTIZEN:
-FOLIE 10 VON 125 · keine Animation · Klick = weiter
+FOLIE 10 VON 126 · keine Animation · Klick = weiter
 
 ▶ „Der Druckregler. Ist der Abschaltdruck erreicht, schaltet er den Kompressor auf Leerlauf. Ihr hört dann ein kurzes Zischen – das ist normal.“
 ✅ Amtlicher Fragetext 2.7.06-232: Abschaltdruck etwa 10 bis 13 bar. Der genaue Wert ist herstellerabhängig.
@@ -103,9 +104,9 @@ FOLIE 10 VON 125 · keine Animation · Klick = weiter
 ➜ „Was ist in der Luft, das wir nicht wollen?“
 
 === FOLIE 11 ===
-AUF DER FOLIE: KLASSE C  ·  ABEND 3  ·  C5  ·  DRUCKLUFT | 11 | DRUCKLUFT | Der Weg der Luft | 1 | Kompressor | 2 | Druckregler | 3 | Lufttrockner | 4 | Vierkreisschutzventil | 5 | Vorratsbehälter | 6 | Bremskreise | Der Lufttrockner entzieht der Luft das Wasser. Sonst rosten Teile – und im Winter friert die Anlage ein. | Druckluftanlage · schematisch | Luft | vom Motor angetrieben | Kompressor | Druckregler | Luft-trockner | Vierkreis-schutzventil | Wasser raus | Kreis 1 / Bremse vorn | Kreis 2 / Bremse hinten | Kreis 3 / Feststellbremse, Anhänger | Kreis 4 / Nebenverbraucher
+AUF DER FOLIE: DRUCKLUFT | Der Weg der Luft | 1 | Kompressor | 2 | Druckregler | 3 | Lufttrockner | 4 | Vierkreisschutzventil | 5 | Vorratsbehälter | 6 | Bremskreise | Der Lufttrockner entzieht der Luft das Wasser. Sonst rosten Teile – und im Winter friert die Anlage ein. | Luft | vom Motor / angetrieben | Kompressor | Druckregler | Lufttrockner | Vierkreis- / schutzventil | Wasser raus | Kreis 1 / Bremse vorn | Kreis 2 / Bremse hinten | Kreis 3 / Feststellbremse, Anhänger | Kreis 4 / Nebenverbraucher | Druckluftanlage · schematisch | KLASSE C  ·  ABEND 3  ·  C5  ·  DRUCKLUFT | 11
 NOTIZEN:
-FOLIE 11 VON 125 · keine Animation · Klick = weiter
+FOLIE 11 VON 126 · keine Animation · Klick = weiter
 
 ▶ „Wasser. Luft enthält Feuchtigkeit. Der Trockner holt sie heraus und reinigt sich selbst.“
 ✅ Prüfungsfrage 2.7.06-220: An den Entwässerungsventilen kontrollieren, ob der Trockner richtig arbeitet, und ihn regelmäßig warten lassen. Bei Anlagen mit Lufttrockner gehört KEIN Frostschutzmittel in die Anlage.
@@ -113,9 +114,9 @@ FOLIE 11 VON 125 · keine Animation · Klick = weiter
 ➜ „Dann wird die Luft verteilt.“
 
 === FOLIE 12 ===
-AUF DER FOLIE: KLASSE C  ·  ABEND 3  ·  C5  ·  DRUCKLUFT | 12 | DRUCKLUFT | Der Weg der Luft | 1 | Kompressor | 2 | Druckregler | 3 | Lufttrockner | 4 | Vierkreisschutzventil | 5 | Vorratsbehälter | 6 | Bremskreise | Das Vierkreisschutzventil verteilt die Luft auf mehrere Kreise. Wird ein Kreis undicht, sperrt es ihn ab. | Druckluftanlage · schematisch | Luft | vom Motor angetrieben | Kompressor | Druckregler | Luft-trockner | Vierkreis-schutzventil | Kreis 1 / Bremse vorn | Kreis 2 / Bremse hinten | Kreis 3 / Feststellbremse, Anhänger | Kreis 4 / Nebenverbraucher
+AUF DER FOLIE: DRUCKLUFT | Der Weg der Luft | 1 | Kompressor | 2 | Druckregler | 3 | Lufttrockner | 4 | Vierkreisschutzventil | 5 | Vorratsbehälter | 6 | Bremskreise | Das Vierkreisschutzventil verteilt die Luft auf mehrere Kreise. Wird ein Kreis undicht, sperrt es ihn ab. | Luft | vom Motor / angetrieben | Kompressor | Druckregler | Lufttrockner | Vierkreis- / schutzventil | Kreis 1 / Bremse vorn | Kreis 2 / Bremse hinten | Kreis 3 / Feststellbremse, Anhänger | Kreis 4 / Nebenverbraucher | Druckluftanlage · schematisch | KLASSE C  ·  ABEND 3  ·  C5  ·  DRUCKLUFT | 12
 NOTIZEN:
-FOLIE 12 VON 125 · keine Animation · Klick = weiter
+FOLIE 12 VON 126 · keine Animation · Klick = weiter
 
 ▶ „Das Vierkreisschutzventil verteilt die Luft auf die Kreise. Sein Trick: Wird ein Kreis undicht, sperrt es ihn ab – die anderen behalten ihren Druck.“
 ✅ Prüfungsfrage 2.7.06-223: undichten Kreis gegen die anderen abschließen, Versorgung der intakten Kreise sichern. NICHT: Schutz vor zu hohem Druck.
@@ -123,18 +124,19 @@ FOLIE 12 VON 125 · keine Animation · Klick = weiter
 ➜ „Wohin geht die Luft?“
 
 === FOLIE 13 ===
-AUF DER FOLIE: KLASSE C  ·  ABEND 3  ·  C5  ·  DRUCKLUFT | 13 | DRUCKLUFT | Der Weg der Luft | 1 | Kompressor | 2 | Druckregler | 3 | Lufttrockner | 4 | Vierkreisschutzventil | 5 | Vorratsbehälter | 6 | Bremskreise | Jeder Kreis hat seinen eigenen Vorratsbehälter – unten mit einem Ventil zum Entwässern. | Druckluftanlage · schematisch | Luft | vom Motor angetrieben | Kompressor | Druckregler | Luft-trockner | Vierkreis-schutzventil | Kreis 1 / Bremse vorn | Kreis 2 / Bremse hinten | Kreis 3 / Feststellbremse, Anhänger | Kreis 4 / Nebenverbraucher | ↑ Entwässerungsventil
+AUF DER FOLIE: DRUCKLUFT | Der Weg der Luft | 1 | Kompressor | 2 | Druckregler | 3 | Lufttrockner | 4 | Vierkreisschutzventil | 5 | Vorratsbehälter | 6 | Bremskreise | Jeder Bremskreis hat seinen eigenen Vorratsbehälter – unten mit einem Ventil zum Entwässern. | Luft | vom Motor / angetrieben | Kompressor | Druckregler | Lufttrockner | Vierkreis- / schutzventil | Kreis 1 / Bremse vorn | Kreis 2 / Bremse hinten | Kreis 3 / Feststellbremse, Anhänger | Kreis 4 / Nebenverbraucher | Entwässerungsventil | Druckluftanlage · schematisch | KLASSE C  ·  ABEND 3  ·  C5  ·  DRUCKLUFT | 13
 NOTIZEN:
-FOLIE 13 VON 125 · keine Animation · Klick = weiter
+FOLIE 13 VON 126 · keine Animation · Klick = weiter
 
-▶ „In die Vorratsbehälter – jeder Kreis hat seinen eigenen. Unten sitzt ein Entwässerungsventil, oft automatisch.“
+▶ „In die Vorratsbehälter – jeder Bremskreis hat seinen eigenen. Unten sitzt ein Entwässerungsventil, oft automatisch.“
+💡 Die Ventile sind auf dieser Folie blau markiert.
 🖱 Keine Animation auf dieser Folie – nächster Klick = nächster Schritt (Morph).
 ➜ „Und wer verbraucht die Luft?“
 
 === FOLIE 14 ===
-AUF DER FOLIE: KLASSE C  ·  ABEND 3  ·  C5  ·  DRUCKLUFT | 14 | DRUCKLUFT | Der Weg der Luft | 1 | Kompressor | 2 | Druckregler | 3 | Lufttrockner | 4 | Vierkreisschutzventil | 5 | Vorratsbehälter | 6 | Bremskreise | Kreis 1 und 2: Betriebsbremse vorn und hinten. Kreis 3: Feststellbremse und Anhänger. Kreis 4: Nebenverbraucher. | Druckluftanlage · schematisch | Luft | vom Motor angetrieben | Kompressor | Druckregler | Luft-trockner | Vierkreis-schutzventil | Kreis 1 / Bremse vorn | Kreis 2 / Bremse hinten | Kreis 3 / Feststellbremse, Anhänger | Kreis 4 / Nebenverbraucher
+AUF DER FOLIE: DRUCKLUFT | Der Weg der Luft | 1 | Kompressor | 2 | Druckregler | 3 | Lufttrockner | 4 | Vierkreisschutzventil | 5 | Vorratsbehälter | 6 | Bremskreise | Kreis 1 und 2: Betriebsbremse vorn und hinten. Kreis 3: Feststellbremse und Anhänger. Kreis 4: Nebenverbraucher. | Luft | vom Motor / angetrieben | Kompressor | Druckregler | Lufttrockner | Vierkreis- / schutzventil | Kreis 1 / Bremse vorn | Kreis 2 / Bremse hinten | Kreis 3 / Feststellbremse, Anhänger | Kreis 4 / Nebenverbraucher | Druckluftanlage · schematisch | KLASSE C  ·  ABEND 3  ·  C5  ·  DRUCKLUFT | 14
 NOTIZEN:
-FOLIE 14 VON 125 · keine Animation · Klick = weiter
+FOLIE 14 VON 126 · keine Animation · Klick = weiter
 
 ▶ „Kreis 1 und 2 sind die Betriebsbremse vorn und hinten – getrennt. Kreis 3 ist die Feststellbremse und der Anhänger. Kreis 4 versorgt Nebenverbraucher, zum Beispiel die Betätigung der Motorbremse.“
 ✅ Kreiseinteilung nach eurotransport; neuere Lkw haben oft mehr Kreise (herstellerabhängig).
@@ -142,9 +144,9 @@ FOLIE 14 VON 125 · keine Animation · Klick = weiter
 ➜ „Wie viel Druck braucht ihr, bevor ihr losfahrt?“
 
 === FOLIE 15 ===
-AUF DER FOLIE: KLASSE C  ·  ABEND 3  ·  C5  ·  DRUCKLUFT | 15 | DRUCKLUFT | Wann darf ich losfahren? | ❓ Frage an die Klasse / Der Motor läuft, der Druck steigt. Ab wann dürft ihr losfahren? | Antwort folgt … | Nach langer Standzeit ist kaum Druck da. Die Druckwarnung leuchtet und summt. Die Federspeicher halten den Lkw fest. | Vorratsdruck · Werte je nach Fahrzeug | 0 | 2 | 4 | 6 | 8 | 10 | 12 | 14 | bar | 0,0 bar | Druckwarnung! | Feststellbremse: lässt sich nicht lösen | warten
+AUF DER FOLIE: DRUCKLUFT | Wann dürft ihr losfahren? | ❓ Frage an die Klasse / Der Motor läuft, der Druck steigt. Ab wann dürft ihr losfahren? | Antwort folgt … | Nach langer Standzeit ist kaum Druck da. Die Druckwarnung leuchtet und summt. Die Federspeicher halten den Lkw fest. | 0 | 2 | 4 | 6 | 8 | 10 | 12 | 14 | bar | 0,0 bar | Druckwarnung! | Feststellbremse: / lässt sich nicht lösen | warten | Vorratsdruck · Werte je nach Fahrzeug | KLASSE C  ·  ABEND 3  ·  C5  ·  DRUCKLUFT | 15
 NOTIZEN:
-FOLIE 15 VON 125 · keine Animation · Klick = weiter
+FOLIE 15 VON 126 · keine Animation · Klick = weiter
 
 ▶ Sagen: „Der Lkw stand übers Wochenende. Ihr startet den Motor. Das Manometer zeigt den Vorratsdruck.“
 ❓ Frage auf der Folie vorlesen: „Ab wann dürft ihr losfahren?“ – Antworten sammeln, noch nicht auflösen.
@@ -152,36 +154,36 @@ FOLIE 15 VON 125 · keine Animation · Klick = weiter
 ➜ „Der Kompressor arbeitet …“
 
 === FOLIE 16 ===
-AUF DER FOLIE: KLASSE C  ·  ABEND 3  ·  C5  ·  DRUCKLUFT | 16 | DRUCKLUFT | Wann darf ich losfahren? | ❓ Frage an die Klasse / Der Motor läuft, der Druck steigt. Ab wann dürft ihr losfahren? | Antwort folgt … | Nach langer Standzeit ist kaum Druck da. Die Druckwarnung leuchtet und summt. Die Federspeicher halten den Lkw fest. | Vorratsdruck · Werte je nach Fahrzeug | 0 | 2 | 4 | 6 | 8 | 10 | 12 | 14 | bar | 1,5 bar | Druckwarnung! | Feststellbremse: lässt sich nicht lösen | warten
+AUF DER FOLIE: DRUCKLUFT | Wann dürft ihr losfahren? | ❓ Frage an die Klasse / Der Motor läuft, der Druck steigt. Ab wann dürft ihr losfahren? | Antwort folgt … | Nach langer Standzeit ist kaum Druck da. Die Druckwarnung leuchtet und summt. Die Federspeicher halten den Lkw fest. | 0 | 2 | 4 | 6 | 8 | 10 | 12 | 14 | bar | 1,5 bar | Druckwarnung! | Feststellbremse: / lässt sich nicht lösen | warten | Vorratsdruck · Werte je nach Fahrzeug | KLASSE C  ·  ABEND 3  ·  C5  ·  DRUCKLUFT | 16
 NOTIZEN:
-FOLIE 16 VON 125 · läuft von selbst weiter (kein Klick)
+FOLIE 16 VON 126 · läuft von selbst weiter (kein Klick)
 
 ▶ Die Bewegung läuft – zuschauen lassen.
 🖱 Kein Klick – die Folie läuft von selbst weiter.
 ➜ (läuft weiter)
 
 === FOLIE 17 ===
-AUF DER FOLIE: KLASSE C  ·  ABEND 3  ·  C5  ·  DRUCKLUFT | 17 | DRUCKLUFT | Wann darf ich losfahren? | ❓ Frage an die Klasse / Der Motor läuft, der Druck steigt. Ab wann dürft ihr losfahren? | Antwort folgt … | Nach langer Standzeit ist kaum Druck da. Die Druckwarnung leuchtet und summt. Die Federspeicher halten den Lkw fest. | Vorratsdruck · Werte je nach Fahrzeug | 0 | 2 | 4 | 6 | 8 | 10 | 12 | 14 | bar | 3,0 bar | Druckwarnung! | Feststellbremse: lässt sich nicht lösen | warten
+AUF DER FOLIE: DRUCKLUFT | Wann dürft ihr losfahren? | ❓ Frage an die Klasse / Der Motor läuft, der Druck steigt. Ab wann dürft ihr losfahren? | Antwort folgt … | Nach langer Standzeit ist kaum Druck da. Die Druckwarnung leuchtet und summt. Die Federspeicher halten den Lkw fest. | 0 | 2 | 4 | 6 | 8 | 10 | 12 | 14 | bar | 3,0 bar | Druckwarnung! | Feststellbremse: / lässt sich nicht lösen | warten | Vorratsdruck · Werte je nach Fahrzeug | KLASSE C  ·  ABEND 3  ·  C5  ·  DRUCKLUFT | 17
 NOTIZEN:
-FOLIE 17 VON 125 · läuft von selbst weiter (kein Klick)
+FOLIE 17 VON 126 · läuft von selbst weiter (kein Klick)
 
 ▶ Die Bewegung läuft – zuschauen lassen.
 🖱 Kein Klick – die Folie läuft von selbst weiter.
 ➜ (läuft weiter)
 
 === FOLIE 18 ===
-AUF DER FOLIE: KLASSE C  ·  ABEND 3  ·  C5  ·  DRUCKLUFT | 18 | DRUCKLUFT | Wann darf ich losfahren? | ❓ Frage an die Klasse / Der Motor läuft, der Druck steigt. Ab wann dürft ihr losfahren? | Antwort folgt … | Nach langer Standzeit ist kaum Druck da. Die Druckwarnung leuchtet und summt. Die Federspeicher halten den Lkw fest. | Vorratsdruck · Werte je nach Fahrzeug | 0 | 2 | 4 | 6 | 8 | 10 | 12 | 14 | bar | 4,5 bar | Druckwarnung! | Feststellbremse: lässt sich nicht lösen | warten
+AUF DER FOLIE: DRUCKLUFT | Wann dürft ihr losfahren? | ❓ Frage an die Klasse / Der Motor läuft, der Druck steigt. Ab wann dürft ihr losfahren? | Antwort folgt … | Nach langer Standzeit ist kaum Druck da. Die Druckwarnung leuchtet und summt. Die Federspeicher halten den Lkw fest. | 0 | 2 | 4 | 6 | 8 | 10 | 12 | 14 | bar | 4,5 bar | Druckwarnung! | Feststellbremse: / lässt sich nicht lösen | warten | Vorratsdruck · Werte je nach Fahrzeug | KLASSE C  ·  ABEND 3  ·  C5  ·  DRUCKLUFT | 18
 NOTIZEN:
-FOLIE 18 VON 125 · läuft von selbst weiter (kein Klick)
+FOLIE 18 VON 126 · läuft von selbst weiter (kein Klick)
 
 ▶ Die Bewegung läuft – zuschauen lassen.
 🖱 Kein Klick – die Folie läuft von selbst weiter.
 ➜ (läuft weiter)
 
 === FOLIE 19 ===
-AUF DER FOLIE: KLASSE C  ·  ABEND 3  ·  C5  ·  DRUCKLUFT | 19 | DRUCKLUFT | Wann darf ich losfahren? | ❓ Frage an die Klasse / Der Motor läuft, der Druck steigt. Ab wann dürft ihr losfahren? | Antwort folgt … | Der Druck steigt. Die Feststellbremse lässt sich schon lösen – aber die Warnung ist noch an: noch nicht losfahren! | Vorratsdruck · Werte je nach Fahrzeug | 0 | 2 | 4 | 6 | 8 | 10 | 12 | 14 | bar | 6,0 bar | Druckwarnung! | Feststellbremse: lässt sich lösen | warten
+AUF DER FOLIE: DRUCKLUFT | Wann dürft ihr losfahren? | ❓ Frage an die Klasse / Der Motor läuft, der Druck steigt. Ab wann dürft ihr losfahren? | Antwort folgt … | Der Druck steigt. Die Feststellbremse lässt sich schon lösen – aber die Warnung ist noch an: noch nicht losfahren! | 0 | 2 | 4 | 6 | 8 | 10 | 12 | 14 | bar | 6,0 bar | Druckwarnung! | Feststellbremse: / lässt sich lösen | warten | Vorratsdruck · Werte je nach Fahrzeug | KLASSE C  ·  ABEND 3  ·  C5  ·  DRUCKLUFT | 19
 NOTIZEN:
-FOLIE 19 VON 125 · keine Animation · Klick = weiter
+FOLIE 19 VON 126 · keine Animation · Klick = weiter
 
 ▶ „Der Druck steigt. Ab einem gewissen Druck lassen sich die Federspeicher lösen – aber die Druckwarnung ist noch an: Der Vorrat reicht noch nicht für mehrere kräftige Bremsungen!“
 ✅ Federspeicher lösen je nach Fahrzeug bei etwa 5–7 bar (Fachquelle, herstellerabhängig).
@@ -189,27 +191,27 @@ FOLIE 19 VON 125 · keine Animation · Klick = weiter
 ➜ „Wann also?“
 
 === FOLIE 20 ===
-AUF DER FOLIE: KLASSE C  ·  ABEND 3  ·  C5  ·  DRUCKLUFT | 20 | DRUCKLUFT | Wann darf ich losfahren? | ❓ Frage an die Klasse / Der Motor läuft, der Druck steigt. Ab wann dürft ihr losfahren? | Antwort folgt … | Der Druck steigt. Die Feststellbremse lässt sich schon lösen – aber die Warnung ist noch an: noch nicht losfahren! | Vorratsdruck · Werte je nach Fahrzeug | 0 | 2 | 4 | 6 | 8 | 10 | 12 | 14 | bar | 7,0 bar | Druckwarnung! | Feststellbremse: lässt sich lösen | warten
+AUF DER FOLIE: DRUCKLUFT | Wann dürft ihr losfahren? | ❓ Frage an die Klasse / Der Motor läuft, der Druck steigt. Ab wann dürft ihr losfahren? | Antwort folgt … | Der Druck steigt. Die Feststellbremse lässt sich schon lösen – aber die Warnung ist noch an: noch nicht losfahren! | 0 | 2 | 4 | 6 | 8 | 10 | 12 | 14 | bar | 7,0 bar | Druckwarnung! | Feststellbremse: / lässt sich lösen | warten | Vorratsdruck · Werte je nach Fahrzeug | KLASSE C  ·  ABEND 3  ·  C5  ·  DRUCKLUFT | 20
 NOTIZEN:
-FOLIE 20 VON 125 · läuft von selbst weiter (kein Klick)
+FOLIE 20 VON 126 · läuft von selbst weiter (kein Klick)
 
 ▶ Die Bewegung läuft – zuschauen lassen.
 🖱 Kein Klick – die Folie läuft von selbst weiter.
 ➜ (läuft weiter)
 
 === FOLIE 21 ===
-AUF DER FOLIE: KLASSE C  ·  ABEND 3  ·  C5  ·  DRUCKLUFT | 21 | DRUCKLUFT | Wann darf ich losfahren? | ❓ Frage an die Klasse / Der Motor läuft, der Druck steigt. Ab wann dürft ihr losfahren? | Antwort folgt … | Der Druck steigt. Die Feststellbremse lässt sich schon lösen – aber die Warnung ist noch an: noch nicht losfahren! | Vorratsdruck · Werte je nach Fahrzeug | 0 | 2 | 4 | 6 | 8 | 10 | 12 | 14 | bar | 8,0 bar | Druckwarnung! | Feststellbremse: lässt sich lösen | warten
+AUF DER FOLIE: DRUCKLUFT | Wann dürft ihr losfahren? | ❓ Frage an die Klasse / Der Motor läuft, der Druck steigt. Ab wann dürft ihr losfahren? | Antwort folgt … | Der Druck steigt. Die Feststellbremse lässt sich schon lösen – aber die Warnung ist noch an: noch nicht losfahren! | 0 | 2 | 4 | 6 | 8 | 10 | 12 | 14 | bar | 8,0 bar | Druckwarnung! | Feststellbremse: / lässt sich lösen | warten | Vorratsdruck · Werte je nach Fahrzeug | KLASSE C  ·  ABEND 3  ·  C5  ·  DRUCKLUFT | 21
 NOTIZEN:
-FOLIE 21 VON 125 · läuft von selbst weiter (kein Klick)
+FOLIE 21 VON 126 · läuft von selbst weiter (kein Klick)
 
 ▶ Die Bewegung läuft – zuschauen lassen.
 🖱 Kein Klick – die Folie läuft von selbst weiter.
 ➜ (läuft weiter)
 
 === FOLIE 22 ===
-AUF DER FOLIE: KLASSE C  ·  ABEND 3  ·  C5  ·  DRUCKLUFT | 22 | DRUCKLUFT | Wann darf ich losfahren? | ❓ Frage an die Klasse / Der Motor läuft, der Druck steigt. Ab wann dürft ihr losfahren? | ✓ Antwort / Erst wenn die Druckwarnung aus ist – nicht schon, wenn sich die Feststellbremse lösen lässt. | Die Druckwarnung geht aus: Jetzt ist genug Luft für sicheres Bremsen da. Erst jetzt losfahren. | Vorratsdruck · Werte je nach Fahrzeug | 0 | 2 | 4 | 6 | 8 | 10 | 12 | 14 | bar | 8,6 bar | Warnung aus | Feststellbremse: lässt sich lösen | losfahren
+AUF DER FOLIE: DRUCKLUFT | Wann dürft ihr losfahren? | ❓ Frage an die Klasse / Der Motor läuft, der Druck steigt. Ab wann dürft ihr losfahren? | ✓ Antwort / Erst wenn die Druckwarnung aus ist – nicht schon, wenn sich die Feststellbremse lösen lässt. | Die Druckwarnung geht aus: Jetzt ist genug Luft für sicheres Bremsen da. Erst jetzt losfahren. | 0 | 2 | 4 | 6 | 8 | 10 | 12 | 14 | bar | 8,6 bar | Warnung aus | Feststellbremse: / lässt sich lösen | losfahren | Vorratsdruck · Werte je nach Fahrzeug | KLASSE C  ·  ABEND 3  ·  C5  ·  DRUCKLUFT | 22
 NOTIZEN:
-FOLIE 22 VON 125 · keine Animation · Klick = weiter
+FOLIE 22 VON 126 · keine Animation · Klick = weiter
 
 ▶ „Erst wenn die Druckwarnung aus ist. Das ist die amtliche Antwort – jetzt steht sie auch auf der Folie.“
 ✅ Prüfungsfrage 2.7.01-238: Frühestens losfahren, wenn die Signale der Druckwarneinrichtung aufgehört haben. FALSCH: sobald sich der Federspeicher löst; bei 3 bar.
@@ -218,36 +220,36 @@ FOLIE 22 VON 125 · keine Animation · Klick = weiter
 ➜ „Und wenn der Kompressor weiterfüllt?“
 
 === FOLIE 23 ===
-AUF DER FOLIE: KLASSE C  ·  ABEND 3  ·  C5  ·  DRUCKLUFT | 23 | DRUCKLUFT | Wann darf ich losfahren? | ❓ Frage an die Klasse / Der Motor läuft, der Druck steigt. Ab wann dürft ihr losfahren? | ✓ Antwort / Erst wenn die Druckwarnung aus ist – nicht schon, wenn sich die Feststellbremse lösen lässt. | Die Druckwarnung geht aus: Jetzt ist genug Luft für sicheres Bremsen da. Erst jetzt losfahren. | Vorratsdruck · Werte je nach Fahrzeug | 0 | 2 | 4 | 6 | 8 | 10 | 12 | 14 | bar | 9,6 bar | Warnung aus | Feststellbremse: lässt sich lösen | losfahren
+AUF DER FOLIE: DRUCKLUFT | Wann dürft ihr losfahren? | ❓ Frage an die Klasse / Der Motor läuft, der Druck steigt. Ab wann dürft ihr losfahren? | ✓ Antwort / Erst wenn die Druckwarnung aus ist – nicht schon, wenn sich die Feststellbremse lösen lässt. | Die Druckwarnung geht aus: Jetzt ist genug Luft für sicheres Bremsen da. Erst jetzt losfahren. | 0 | 2 | 4 | 6 | 8 | 10 | 12 | 14 | bar | 9,6 bar | Warnung aus | Feststellbremse: / lässt sich lösen | losfahren | Vorratsdruck · Werte je nach Fahrzeug | KLASSE C  ·  ABEND 3  ·  C5  ·  DRUCKLUFT | 23
 NOTIZEN:
-FOLIE 23 VON 125 · läuft von selbst weiter (kein Klick)
+FOLIE 23 VON 126 · läuft von selbst weiter (kein Klick)
 
 ▶ Die Bewegung läuft – zuschauen lassen.
 🖱 Kein Klick – die Folie läuft von selbst weiter.
 ➜ (läuft weiter)
 
 === FOLIE 24 ===
-AUF DER FOLIE: KLASSE C  ·  ABEND 3  ·  C5  ·  DRUCKLUFT | 24 | DRUCKLUFT | Wann darf ich losfahren? | ❓ Frage an die Klasse / Der Motor läuft, der Druck steigt. Ab wann dürft ihr losfahren? | ✓ Antwort / Erst wenn die Druckwarnung aus ist – nicht schon, wenn sich die Feststellbremse lösen lässt. | Die Druckwarnung geht aus: Jetzt ist genug Luft für sicheres Bremsen da. Erst jetzt losfahren. | Vorratsdruck · Werte je nach Fahrzeug | 0 | 2 | 4 | 6 | 8 | 10 | 12 | 14 | bar | 10,6 bar | Warnung aus | Feststellbremse: lässt sich lösen | losfahren
+AUF DER FOLIE: DRUCKLUFT | Wann dürft ihr losfahren? | ❓ Frage an die Klasse / Der Motor läuft, der Druck steigt. Ab wann dürft ihr losfahren? | ✓ Antwort / Erst wenn die Druckwarnung aus ist – nicht schon, wenn sich die Feststellbremse lösen lässt. | Die Druckwarnung geht aus: Jetzt ist genug Luft für sicheres Bremsen da. Erst jetzt losfahren. | 0 | 2 | 4 | 6 | 8 | 10 | 12 | 14 | bar | 10,6 bar | Warnung aus | Feststellbremse: / lässt sich lösen | losfahren | Vorratsdruck · Werte je nach Fahrzeug | KLASSE C  ·  ABEND 3  ·  C5  ·  DRUCKLUFT | 24
 NOTIZEN:
-FOLIE 24 VON 125 · läuft von selbst weiter (kein Klick)
+FOLIE 24 VON 126 · läuft von selbst weiter (kein Klick)
 
 ▶ Die Bewegung läuft – zuschauen lassen.
 🖱 Kein Klick – die Folie läuft von selbst weiter.
 ➜ (läuft weiter)
 
 === FOLIE 25 ===
-AUF DER FOLIE: KLASSE C  ·  ABEND 3  ·  C5  ·  DRUCKLUFT | 25 | DRUCKLUFT | Wann darf ich losfahren? | ❓ Frage an die Klasse / Der Motor läuft, der Druck steigt. Ab wann dürft ihr losfahren? | ✓ Antwort / Erst wenn die Druckwarnung aus ist – nicht schon, wenn sich die Feststellbremse lösen lässt. | Die Druckwarnung geht aus: Jetzt ist genug Luft für sicheres Bremsen da. Erst jetzt losfahren. | Vorratsdruck · Werte je nach Fahrzeug | 0 | 2 | 4 | 6 | 8 | 10 | 12 | 14 | bar | 11,4 bar | Warnung aus | Feststellbremse: lässt sich lösen | losfahren
+AUF DER FOLIE: DRUCKLUFT | Wann dürft ihr losfahren? | ❓ Frage an die Klasse / Der Motor läuft, der Druck steigt. Ab wann dürft ihr losfahren? | ✓ Antwort / Erst wenn die Druckwarnung aus ist – nicht schon, wenn sich die Feststellbremse lösen lässt. | Die Druckwarnung geht aus: Jetzt ist genug Luft für sicheres Bremsen da. Erst jetzt losfahren. | 0 | 2 | 4 | 6 | 8 | 10 | 12 | 14 | bar | 11,4 bar | Warnung aus | Feststellbremse: / lässt sich lösen | losfahren | Vorratsdruck · Werte je nach Fahrzeug | KLASSE C  ·  ABEND 3  ·  C5  ·  DRUCKLUFT | 25
 NOTIZEN:
-FOLIE 25 VON 125 · läuft von selbst weiter (kein Klick)
+FOLIE 25 VON 126 · läuft von selbst weiter (kein Klick)
 
 ▶ Die Bewegung läuft – zuschauen lassen.
 🖱 Kein Klick – die Folie läuft von selbst weiter.
 ➜ (läuft weiter)
 
 === FOLIE 26 ===
-AUF DER FOLIE: KLASSE C  ·  ABEND 3  ·  C5  ·  DRUCKLUFT | 26 | DRUCKLUFT | Wann darf ich losfahren? | ❓ Frage an die Klasse / Der Motor läuft, der Druck steigt. Ab wann dürft ihr losfahren? | ✓ Antwort / Erst wenn die Druckwarnung aus ist – nicht schon, wenn sich die Feststellbremse lösen lässt. | Abschaltdruck erreicht: Der Druckregler schaltet ab und bläst kurz ab. Das Zischen ist normal. | Vorratsdruck · Werte je nach Fahrzeug | 0 | 2 | 4 | 6 | 8 | 10 | 12 | 14 | bar | 12,0 bar | zisch – Abschaltdruck | Warnung aus | Feststellbremse: lässt sich lösen | losfahren
+AUF DER FOLIE: DRUCKLUFT | Wann dürft ihr losfahren? | ❓ Frage an die Klasse / Der Motor läuft, der Druck steigt. Ab wann dürft ihr losfahren? | ✓ Antwort / Erst wenn die Druckwarnung aus ist – nicht schon, wenn sich die Feststellbremse lösen lässt. | Abschaltdruck erreicht: Der Druckregler schaltet ab und bläst kurz ab. Das Zischen ist normal. | 0 | 2 | 4 | 6 | 8 | 10 | 12 | 14 | bar | 12,0 bar | zisch – Abschaltdruck | Warnung aus | Feststellbremse: / lässt sich lösen | losfahren | Vorratsdruck · Werte je nach Fahrzeug | KLASSE C  ·  ABEND 3  ·  C5  ·  DRUCKLUFT | 26
 NOTIZEN:
-FOLIE 26 VON 125 · keine Animation · Klick = weiter
+FOLIE 26 VON 126 · keine Animation · Klick = weiter
 
 ▶ „Bis zum Abschaltdruck – etwa 10 bis 13 bar. Dann schaltet der Regler ab, es zischt kurz.“
 ✅ 2.7.06-232 (amtlicher Fragetext). Füllzeit nach EU-Recht: 65 % des Betriebsdrucks in höchstens 3 Minuten, mit Anhängeranschluss 6 Minuten – gemessen bei Nenndrehzahl, im Leerlauf dauert es länger. Dauert es länger: undicht oder Förderleistung zu gering (2.7.02-202).
@@ -255,9 +257,9 @@ FOLIE 26 VON 125 · keine Animation · Klick = weiter
 ➜ „Was passiert, wenn ein Kreis undicht wird?“
 
 === FOLIE 27 ===
-AUF DER FOLIE: KLASSE C  ·  ABEND 3  ·  C5  ·  DRUCKLUFT | 27 | DRUCKLUFT | Ein Kreis wird undicht | ❓ Frage an die Klasse / Eine Leitung im Kreis 2 platzt. Verliert jetzt die ganze Anlage ihre Luft? | Antwort folgt … | Alle Kreise sind gefüllt. Das Vierkreisschutzventil hält die Kreise voneinander getrennt. | Schematisch · Füllstand = Druck im Kreis | Vierkreis-schutzventil | vom Trockner | Kreis 1 | Bremse vorn | Kreis 2 | Bremse hinten | Kreis 3 | Feststellbremse, Anhänger | Kreis 4 | Nebenverbraucher
+AUF DER FOLIE: DRUCKLUFT | Ein Kreis wird undicht | ❓ Frage an die Klasse / Eine Leitung im Kreis 2 platzt. Verliert jetzt die ganze Anlage ihre Luft? | Antwort folgt … | Alle Kreise sind gefüllt. Das Vierkreisschutzventil hält die Kreise voneinander getrennt. | Vierkreisschutzventil | vom Trockner | Kreis 1 | Bremse vorn | Kreis 2 | Bremse hinten | Kreis 3 | Feststellbremse, Anhänger | Kreis 4 | Nebenverbraucher | Schematisch · Füllstand = Druck im Kreis | KLASSE C  ·  ABEND 3  ·  C5  ·  DRUCKLUFT | 27
 NOTIZEN:
-FOLIE 27 VON 125 · keine Animation · Klick = weiter
+FOLIE 27 VON 126 · keine Animation · Klick = weiter
 
 ▶ Sagen: „Hier die vier Kreise mit ihrem Druck. Alle voll.“
 ❓ Frage auf der Folie: „Verliert jetzt die ganze Anlage ihre Luft?“ – abstimmen lassen.
@@ -265,27 +267,27 @@ FOLIE 27 VON 125 · keine Animation · Klick = weiter
 ➜ „Schauen wir.“
 
 === FOLIE 28 ===
-AUF DER FOLIE: KLASSE C  ·  ABEND 3  ·  C5  ·  DRUCKLUFT | 28 | DRUCKLUFT | Ein Kreis wird undicht | ❓ Frage an die Klasse / Eine Leitung im Kreis 2 platzt. Verliert jetzt die ganze Anlage ihre Luft? | Antwort folgt … | Eine Leitung im Kreis 2 platzt. Die Luft zischt heraus, die Druckwarnung geht an. | Schematisch · Füllstand = Druck im Kreis | Vierkreis-schutzventil | vom Trockner | Kreis 1 | Bremse vorn | Kreis 2 | Bremse hinten | Kreis 3 | Feststellbremse, Anhänger | Kreis 4 | Nebenverbraucher | zisch!
+AUF DER FOLIE: DRUCKLUFT | Ein Kreis wird undicht | ❓ Frage an die Klasse / Eine Leitung im Kreis 2 platzt. Verliert jetzt die ganze Anlage ihre Luft? | Antwort folgt … | Eine Leitung im Kreis 2 platzt. Die Luft zischt heraus, die Druckwarnung geht an. | Vierkreisschutzventil | vom Trockner | Kreis 1 | Bremse vorn | Kreis 2 | Bremse hinten | Kreis 3 | Feststellbremse, Anhänger | Kreis 4 | Nebenverbraucher | zisch! | Schematisch · Füllstand = Druck im Kreis | KLASSE C  ·  ABEND 3  ·  C5  ·  DRUCKLUFT | 28
 NOTIZEN:
-FOLIE 28 VON 125 · läuft von selbst weiter (kein Klick)
+FOLIE 28 VON 126 · läuft von selbst weiter (kein Klick)
 
 ▶ Die Bewegung läuft – zuschauen lassen.
 🖱 Kein Klick – die Folie läuft von selbst weiter.
 ➜ (läuft weiter)
 
 === FOLIE 29 ===
-AUF DER FOLIE: KLASSE C  ·  ABEND 3  ·  C5  ·  DRUCKLUFT | 29 | DRUCKLUFT | Ein Kreis wird undicht | ❓ Frage an die Klasse / Eine Leitung im Kreis 2 platzt. Verliert jetzt die ganze Anlage ihre Luft? | Antwort folgt … | Eine Leitung im Kreis 2 platzt. Die Luft zischt heraus, die Druckwarnung geht an. | Schematisch · Füllstand = Druck im Kreis | Vierkreis-schutzventil | vom Trockner | Kreis 1 | Bremse vorn | Kreis 2 | Bremse hinten | Kreis 3 | Feststellbremse, Anhänger | Kreis 4 | Nebenverbraucher | zisch!
+AUF DER FOLIE: DRUCKLUFT | Ein Kreis wird undicht | ❓ Frage an die Klasse / Eine Leitung im Kreis 2 platzt. Verliert jetzt die ganze Anlage ihre Luft? | Antwort folgt … | Eine Leitung im Kreis 2 platzt. Die Luft zischt heraus, die Druckwarnung geht an. | Vierkreisschutzventil | vom Trockner | Kreis 1 | Bremse vorn | Kreis 2 | Bremse hinten | Kreis 3 | Feststellbremse, Anhänger | Kreis 4 | Nebenverbraucher | zisch! | Schematisch · Füllstand = Druck im Kreis | KLASSE C  ·  ABEND 3  ·  C5  ·  DRUCKLUFT | 29
 NOTIZEN:
-FOLIE 29 VON 125 · läuft von selbst weiter (kein Klick)
+FOLIE 29 VON 126 · läuft von selbst weiter (kein Klick)
 
 ▶ Die Bewegung läuft – zuschauen lassen.
 🖱 Kein Klick – die Folie läuft von selbst weiter.
 ➜ (läuft weiter)
 
 === FOLIE 30 ===
-AUF DER FOLIE: KLASSE C  ·  ABEND 3  ·  C5  ·  DRUCKLUFT | 30 | DRUCKLUFT | Ein Kreis wird undicht | ❓ Frage an die Klasse / Eine Leitung im Kreis 2 platzt. Verliert jetzt die ganze Anlage ihre Luft? | Antwort folgt … | Eine Leitung im Kreis 2 platzt. Die Luft zischt heraus, die Druckwarnung geht an. | Schematisch · Füllstand = Druck im Kreis | Vierkreis-schutzventil | vom Trockner | Kreis 1 | Bremse vorn | Kreis 2 | Bremse hinten | Kreis 3 | Feststellbremse, Anhänger | Kreis 4 | Nebenverbraucher | zisch!
+AUF DER FOLIE: DRUCKLUFT | Ein Kreis wird undicht | ❓ Frage an die Klasse / Eine Leitung im Kreis 2 platzt. Verliert jetzt die ganze Anlage ihre Luft? | Antwort folgt … | Eine Leitung im Kreis 2 platzt. Die Luft zischt heraus, die Druckwarnung geht an. | Vierkreisschutzventil | vom Trockner | Kreis 1 | Bremse vorn | Kreis 2 | Bremse hinten | Kreis 3 | Feststellbremse, Anhänger | Kreis 4 | Nebenverbraucher | zisch! | Schematisch · Füllstand = Druck im Kreis | KLASSE C  ·  ABEND 3  ·  C5  ·  DRUCKLUFT | 30
 NOTIZEN:
-FOLIE 30 VON 125 · keine Animation · Klick = weiter
+FOLIE 30 VON 126 · keine Animation · Klick = weiter
 
 ▶ „Kreis 2 – die Hinterachse – verliert Luft. Ihr hört es zischen, die Druckwarnung geht an. Auch die anderen Kreise verlieren kurz etwas Druck.“
 ✅ Prüfungsfrage 2.7.02-213: Undichte Bremsleitung erkennt man am Zischen, an der Druckwarnung und an geringerer Bremswirkung.
@@ -293,18 +295,18 @@ FOLIE 30 VON 125 · keine Animation · Klick = weiter
 ➜ „Und jetzt?“
 
 === FOLIE 31 ===
-AUF DER FOLIE: KLASSE C  ·  ABEND 3  ·  C5  ·  DRUCKLUFT | 31 | DRUCKLUFT | Ein Kreis wird undicht | ❓ Frage an die Klasse / Eine Leitung im Kreis 2 platzt. Verliert jetzt die ganze Anlage ihre Luft? | Antwort folgt … | Das Ventil sperrt den undichten Kreis ab. Die anderen Kreise behalten ihren Sicherungsdruck – vorn wird weiter gebremst. | Schematisch · Füllstand = Druck im Kreis | Vierkreis-schutzventil | vom Trockner | Kreis 1 | Bremse vorn | Kreis 2 | Bremse hinten | Kreis 3 | Feststellbremse, Anhänger | Kreis 4 | Nebenverbraucher | zisch! | × | abgesperrt
+AUF DER FOLIE: DRUCKLUFT | Ein Kreis wird undicht | ❓ Frage an die Klasse / Eine Leitung im Kreis 2 platzt. Verliert jetzt die ganze Anlage ihre Luft? | Antwort folgt … | Das Ventil sperrt den undichten Kreis ab. Die anderen Kreise behalten ihren Sicherungsdruck – vorn wird weiter gebremst. | Vierkreisschutzventil | vom Trockner | Kreis 1 | Bremse vorn | Kreis 2 | Bremse hinten | Kreis 3 | Feststellbremse, Anhänger | Kreis 4 | Nebenverbraucher | zisch! | × | abgesperrt | Schematisch · Füllstand = Druck im Kreis | KLASSE C  ·  ABEND 3  ·  C5  ·  DRUCKLUFT | 31
 NOTIZEN:
-FOLIE 31 VON 125 · läuft von selbst weiter (kein Klick)
+FOLIE 31 VON 126 · läuft von selbst weiter (kein Klick)
 
 ▶ Die Bewegung läuft – zuschauen lassen.
 🖱 Kein Klick – die Folie läuft von selbst weiter.
 ➜ (läuft weiter)
 
 === FOLIE 32 ===
-AUF DER FOLIE: KLASSE C  ·  ABEND 3  ·  C5  ·  DRUCKLUFT | 32 | DRUCKLUFT | Ein Kreis wird undicht | ❓ Frage an die Klasse / Eine Leitung im Kreis 2 platzt. Verliert jetzt die ganze Anlage ihre Luft? | ✓ Antwort / Nein. Das Vierkreisschutzventil sperrt den undichten Kreis ab – die anderen behalten ihren Druck und bremsen weiter. | Das Ventil sperrt den undichten Kreis ab. Die anderen Kreise behalten ihren Sicherungsdruck – vorn wird weiter gebremst. | Schematisch · Füllstand = Druck im Kreis | Vierkreis-schutzventil | vom Trockner | Kreis 1 | Bremse vorn | Kreis 2 | Bremse hinten | Kreis 3 | Feststellbremse, Anhänger | Kreis 4 | Nebenverbraucher | zisch! | × | abgesperrt
+AUF DER FOLIE: DRUCKLUFT | Ein Kreis wird undicht | ❓ Frage an die Klasse / Eine Leitung im Kreis 2 platzt. Verliert jetzt die ganze Anlage ihre Luft? | ✓ Antwort / Nein. Das Vierkreisschutzventil sperrt den undichten Kreis ab – die anderen behalten ihren Druck und bremsen weiter. | Das Ventil sperrt den undichten Kreis ab. Die anderen Kreise behalten ihren Sicherungsdruck – vorn wird weiter gebremst. | Vierkreisschutzventil | vom Trockner | Kreis 1 | Bremse vorn | Kreis 2 | Bremse hinten | Kreis 3 | Feststellbremse, Anhänger | Kreis 4 | Nebenverbraucher | zisch! | × | abgesperrt | Schematisch · Füllstand = Druck im Kreis | KLASSE C  ·  ABEND 3  ·  C5  ·  DRUCKLUFT | 32
 NOTIZEN:
-FOLIE 32 VON 125 · keine Animation · Klick = weiter
+FOLIE 32 VON 126 · keine Animation · Klick = weiter
 
 ▶ „Das Vierkreisschutzventil sperrt den kaputten Kreis ab. Die anderen behalten genug Druck – der Lkw bremst weiter, aber schwächer. Sofort gefahrlos anhalten.“
 ✅ Prüfungsfragen 2.7.06-223 und 2.7.02-304 (CE-Teil). Sicherungsdruck nach Fachquelle etwa 6–7 bar (herstellerabhängig).
@@ -313,9 +315,9 @@ FOLIE 32 VON 125 · keine Animation · Klick = weiter
 ➜ „Und noch etwas sammelt sich in den Behältern: Wasser.“
 
 === FOLIE 33 ===
-AUF DER FOLIE: KLASSE C  ·  ABEND 3  ·  C5  ·  DRUCKLUFT | 33 | DRUCKLUFT · ENTWÄSSERN | Ihr öffnet das Ventil am Luftbehälter – und es kommt Wasser. Was heißt das? | Der Lufttrockner arbeitet nicht richtig.  Bald in die Werkstatt – Trockner und Kartusche prüfen lassen. | Wasser ist gefährlich:  weniger Luftvorrat, Rost in Ventilen – und im Winter kann die Anlage einfrieren. | Abfahrtkontrolle:  Behälter entwässern, wenn keine automatischen Ventile verbaut sind. Bei Lufttrockner kein Frostschutzmittel in die Anlage.
+AUF DER FOLIE: DRUCKLUFT · ENTWÄSSERN | Ihr öffnet das Ventil am Luftbehälter – und es kommt Wasser. Was heißt das? | Der Lufttrockner arbeitet nicht richtig.  Bald in die Werkstatt – Trockner und Kartusche prüfen lassen. | Wasser ist gefährlich:  weniger Luftvorrat, Rost in Ventilen – und im Winter kann die Anlage einfrieren. | Abfahrtkontrolle:  Behälter entwässern, wenn keine automatischen Ventile verbaut sind. Bei Lufttrockner kein Frostschutzmittel in die Anlage. | KLASSE C  ·  ABEND 3  ·  C5  ·  DRUCKLUFT | 33
 NOTIZEN:
-FOLIE 33 VON 125 · 3 Klicks
+FOLIE 33 VON 126 · 3 Klicks
 
 ▶ Sagen: „Ältere oder einfache Lkw haben Ventile zum Entwässern von Hand. Ihr zieht am Ring – es zischt.“
 ❓ „Und wenn Wasser kommt?“
@@ -324,48 +326,51 @@ FOLIE 33 VON 125 · 3 Klicks
 ➜ „Noch zwei Störungen, die ihr erkennen müsst.“
 
 === FOLIE 34 ===
-AUF DER FOLIE: KLASSE C  ·  ABEND 3  ·  C5  ·  DRUCKLUFT | 34 | DRUCKLUFT · STÖRUNGEN | Was stimmt hier nicht? | Das Füllen dauert viel länger als sonst:  Behälter oder Anschlüsse undicht – oder der Kompressor fördert zu wenig (Ansaugfilter verschmutzt, Kompressor defekt). | Der Kompressor hört nicht auf zu fördern:  Der Abschaltdruck wird nicht erreicht – Kompressor verschlissen oder ein Kreis ist undicht. | Am Kompressor regelmäßig prüfen:  den Anschluss der Druckleitung und den Keilriemen (falls er per Riemen angetrieben wird).
+AUF DER FOLIE: DRUCKLUFT · STÖRUNGEN | Was stimmt hier nicht? | Das Füllen dauert viel länger als sonst:  Behälter oder Anschlüsse undicht – oder der Kompressor fördert zu wenig (Ansaugfilter verschmutzt, Kompressor defekt). | Der Kompressor hört nicht auf zu fördern:  Der Abschaltdruck wird nicht erreicht – Kompressor verschlissen oder ein Kreis ist undicht. | Am Kompressor regelmäßig prüfen:  den Anschluss der Druckleitung und den Keilriemen (falls er per Riemen angetrieben wird). | KLASSE C  ·  ABEND 3  ·  C5  ·  DRUCKLUFT | 34
 NOTIZEN:
-FOLIE 34 VON 125 · 3 Klicks
+FOLIE 34 VON 126 · 3 Klicks
 
 ▶ Sagen: „Zwei Störungen kommen in der Prüfung immer wieder.“
 🖱 Klick 1: Füllen dauert zu lange · Klick 2: Kompressor hört nicht auf · Klick 3: Kontrolle am Kompressor.
-✅ 2.7.02-202: Fülldauer zu lang → Behälter oder Anschlüsse undicht, Förderleistung zu gering. 2.7.02-215: zu geringe Förderleistung → verschmutzter Ansaugluftfilter, Luftpresser schadhaft. 2.7.02-204: Kompressor fördert ununterbrochen → Kolbenverschleiß (Abschaltdruck wird nicht erreicht) oder ein Kreis ist undicht. Am Luftpresser Druckleitungsanschluss und Keilriemen kontrollieren.
+✅ 2.7.02-202: Fülldauer zu lang → Behälter oder Anschlüsse undicht, Förderleistung zu gering. 2.7.02-215: zu geringe Förderleistung → verschmutzter Ansaugluftfilter, Luftpresser schadhaft. 2.7.02-204: Kompressor fördert ununterbrochen → Kolbenverschleiß (Abschaltdruck wird nicht erreicht) oder ein Kreis ist undicht. Am Luftpresser Druckleitungsanschluss und – falls vorhanden – Keilriemen kontrollieren (Fachwissen, Frage 2.7.06-406 aus dem Zugmaschinen-Teil).
 ➜ „Es gibt auch Lkw mit Hydraulik-Bremse. Ganz kurz.“
 
 === FOLIE 35 ===
-AUF DER FOLIE: KLASSE C  ·  ABEND 3  ·  C5  ·  DRUCKLUFT | 35 | ANDERE BREMSANLAGEN | Hydraulisch und kombiniert | Hydraulische Bremse | leichte Lkw | Pedal | ↓ | Hauptbremszylinder | ↓ | Bremsflüssigkeit | ↓ | Radbremse | Bremsflüssigkeit nach Vorgabe wechseln – sie zieht Wasser. Pedal fällt durch: sofort abstellen. | Druckluft-Hydraulik | kombiniert | Ventil | ↓ | Druckluft | ↓ | Hydraulik-Zylinder | ↓ | Radbremse | Kontrolle von beidem: Luftdruck und Bremsflüssigkeit.
+AUF DER FOLIE: ANDERE BREMSANLAGEN | Hydraulisch und kombiniert | Hydraulische Bremse | leichte Lkw | Pedal | Hauptbremszylinder | Bremsflüssigkeit | Radbremse | Bremsflüssigkeit nach Vorgabe wechseln – sie zieht Wasser. Pedal fällt durch: sofort abstellen. | Druckluft-Hydraulik | kombiniert | Ventil | Druckluft | Hydraulik-Zylinder | Radbremse | Kontrolle von beidem: Luftdruck und Bremsflüssigkeit. | KLASSE C  ·  ABEND 3  ·  C5  ·  DRUCKLUFT | 35
 NOTIZEN:
-FOLIE 35 VON 125 · 2 Klicks
+FOLIE 35 VON 126 · 2 Klicks
 
 ▶ Sagen: „Leichte Lkw – meist auf Transporter-Basis – bremsen wie ein Pkw mit Bremsflüssigkeit. Es gibt auch Mischformen: Druckluft drückt auf einen Hydraulik-Zylinder.“
 🖱 Klick 1: Hydraulik · Klick 2: kombiniert.
 ✅ Bremsflüssigkeit zieht Wasser an, der Siedepunkt sinkt – bei langer Bergabfahrt Dampfblasen, das Pedal fällt durch. Darum Wechsel nach Herstellervorgabe (Prüfungsfrage 2.7.08-001). Pedal fällt bis zum Boden durch: Fahrzeug sofort abstellen, Bremse reparieren lassen – nur nachfüllen genügt nicht (2.7.02-109). Bei der kombinierten Anlage kontrolliert der Fahrer beides: Luftdruck und Bremsflüssigkeit.
+✅ Abfahrtkontrolle Hydraulik: Stand der Bremsflüssigkeit prüfen; Pedal länger fest treten – es darf nicht nachgeben (DGUV Grundsatz 314-002 Nr. 2.3.1).
 ➜ „Kurze Prüfungsfrage zur Druckluft.“
 
 === FOLIE 36 ===
-AUF DER FOLIE: KLASSE C  ·  ABEND 3  ·  C5  ·  DRUCKLUFT | 36 | QUIZ DRUCKLUFT | Welche Aufgabe hat das Vierkreisschutzventil? | A | Es schützt die Anlage vor zu hohem Druck | B | Es schließt einen undichten Kreis gegen die anderen ab | C | Es sichert die Versorgung der intakten Kreise | ✓  RICHTIG | ✓  RICHTIG | Fällt ein Kreis aus, sperrt das Ventil ihn ab – die anderen Kreise behalten ihren Druck. Vor zu hohem Druck schützt der Druckregler bzw. ein Sicherheitsventil (Prüfungsfrage 2.7.06-223).
+AUF DER FOLIE: QUIZ DRUCKLUFT | Welche Aufgabe hat das Vierkreisschutzventil? | A | Es schützt die Anlage vor zu hohem Druck | B | Es schließt einen undichten Kreis gegen die anderen ab | C | Es sichert die Versorgung der intakten Kreise | ✓  RICHTIG | ✓  RICHTIG | Fällt ein Kreis aus, sperrt das Ventil ihn ab – die anderen Kreise behalten ihren Druck. Vor zu hohem Druck schützt der Druckregler bzw. ein Sicherheitsventil (Prüfungsfrage 2.7.06-223). | KLASSE C  ·  ABEND 3  ·  C5  ·  DRUCKLUFT | 36
 NOTIZEN:
-FOLIE 36 VON 125 · 2 Klicks
+FOLIE 36 VON 126 · 2 Klicks
 
 ▶ Frage vorlesen, abstimmen. Mehrere Antworten können richtig sein.
+💡 Mündlich abstimmen und begründen – kein Bogen zum Ausfüllen (Lernkontrolle, kein Prüfungsbogen, § 4 Abs. 1a FahrschAusbO).
+💡 Einmal ansagen: „Im Quiz stehen die Fragen mit Sie – so wie in der Prüfung. Sonst sagen wir ihr.“
 🖱 Klick 1: Antworten · Klick 2: Lösung.
 ✅ B und C.
 ➜ „Weiter zu Kapitel 3: die Zweikreis-Bremse.“
 
 === FOLIE 37 ===
-AUF DER FOLIE: KLASSE C  ·  ABEND 3  ·  C5  ·  ZWEIKREIS-BREMSE | 37 | 03 | Zweikreis-Bremse | Vorn und hinten getrennt – damit bei einem Defekt noch gebremst wird.
+AUF DER FOLIE: 03 | Zweikreis-Bremse | Vorn und hinten getrennt – damit bei einem Defekt noch gebremst wird. | KLASSE C  ·  ABEND 3  ·  C5  ·  ZWEIKREIS-BREMSE | 37
 NOTIZEN:
-FOLIE 37 VON 125 · Animation läuft von selbst · Klick = weiter
+FOLIE 37 VON 126 · Animation läuft von selbst · Klick = weiter
 
 ▶ Sagen: „Kapitel 3: Die Betriebsbremse arbeitet mit zwei getrennten Kreisen.“
 🖱 Keine Klicks.
 ➜ „Schauen wir von oben auf den Lkw.“
 
 === FOLIE 38 ===
-AUF DER FOLIE: KLASSE C  ·  ABEND 3  ·  C5  ·  ZWEIKREIS-BREMSE | 38 | ZWEIKREIS-BREMSE | Vorn und hinten getrennt | 1 | Zwei Kreise | 2 | Kreis 2 fällt aus | 3 | Vorn wird weiter gebremst | ❓ Frage an die Klasse   / Kreis 2 fällt aus – zieht der Lkw dann zur Seite? | Das Bremsventil am Pedal steuert zwei Kreise: Kreis 1 bremst die Vorderachse, Kreis 2 die Hinterachse. | Draufsicht · Front links · schematisch | Brems-ventil | Kreis 1 – vorn | Kreis 2 – hinten
+AUF DER FOLIE: ZWEIKREIS-BREMSE | Vorn und hinten getrennt | 1 | Zwei Kreise | 2 | Kreis 2 fällt aus | 3 | Vorn wird weiter gebremst | ❓ Frage an die Klasse   / Kreis 2 fällt aus – zieht der Lkw dann zur Seite? | Das Bremsventil am Pedal steuert zwei Kreise: Kreis 1 bremst die Vorderachse, Kreis 2 die Hinterachse. | Bremsventil | Kreis 1 – vorn | Kreis 2 – hinten | Draufsicht · Front links · schematisch | KLASSE C  ·  ABEND 3  ·  C5  ·  ZWEIKREIS-BREMSE | 38
 NOTIZEN:
-FOLIE 38 VON 125 · keine Animation · Klick = weiter
+FOLIE 38 VON 126 · keine Animation · Klick = weiter
 
 ▶ Sagen: „Von oben: Das Bremsventil – auch Motorwagenbremsventil – sitzt am Pedal. Es hat zwei Teile: einen für vorn, einen für hinten.“
 ✅ Zweikreis-Druckluftbremse, achsweise aufgeteilt (eurotransport, „Die Bremsanlage: Retter in der Not“). Mehr Pedal = mehr Druck.
@@ -373,9 +378,9 @@ FOLIE 38 VON 125 · keine Animation · Klick = weiter
 ➜ „Was passiert bei einem Leck?“
 
 === FOLIE 39 ===
-AUF DER FOLIE: KLASSE C  ·  ABEND 3  ·  C5  ·  ZWEIKREIS-BREMSE | 39 | ZWEIKREIS-BREMSE | Vorn und hinten getrennt | 1 | Zwei Kreise | 2 | Kreis 2 fällt aus | 3 | Vorn wird weiter gebremst | ❓ Frage an die Klasse   / Kreis 2 fällt aus – zieht der Lkw dann zur Seite? | Eine Leitung im Kreis 2 wird undicht. Es zischt, die Druckwarnung geht an. | Draufsicht · Front links · schematisch | Brems-ventil | Kreis 1 – vorn | Kreis 2 – hinten | undicht
+AUF DER FOLIE: ZWEIKREIS-BREMSE | Vorn und hinten getrennt | 1 | Zwei Kreise | 2 | Kreis 2 fällt aus | 3 | Vorn wird weiter gebremst | ❓ Frage an die Klasse   / Kreis 2 fällt aus – zieht der Lkw dann zur Seite? | Eine Leitung im Kreis 2 wird undicht. Es zischt, die Druckwarnung geht an. | Bremsventil | Kreis 1 – vorn | Kreis 2 – hinten | undicht | Draufsicht · Front links · schematisch | KLASSE C  ·  ABEND 3  ·  C5  ·  ZWEIKREIS-BREMSE | 39
 NOTIZEN:
-FOLIE 39 VON 125 · keine Animation · Klick = weiter
+FOLIE 39 VON 126 · keine Animation · Klick = weiter
 
 ▶ „Kreis 2 verliert Luft. Das Vierkreisschutzventil sperrt ihn ab.“
 ✅ Prüfungsfrage 2.7.02-304 (CE-Teil): Luft des Kreises entweicht, die Bremswirkung kann erheblich nachlassen; das Vierkreisschutzventil sichert die intakten Kreise.
@@ -383,9 +388,9 @@ FOLIE 39 VON 125 · keine Animation · Klick = weiter
 ➜ „Wie bremst der Lkw jetzt?“
 
 === FOLIE 40 ===
-AUF DER FOLIE: KLASSE C  ·  ABEND 3  ·  C5  ·  ZWEIKREIS-BREMSE | 40 | ZWEIKREIS-BREMSE | Vorn und hinten getrennt | 1 | Zwei Kreise | 2 | Kreis 2 fällt aus | 3 | Vorn wird weiter gebremst | ✓ Antwort   / Nein. Die Kreise sind nach Achsen getrennt – links und rechts bremsen gleich. | Kreis 1 bremst die Vorderachse weiter. Der Bremsweg wird länger – aber der Lkw zieht nicht zur Seite. Sofort gefahrlos anhalten. | Draufsicht · Front links · schematisch | Brems-ventil | Kreis 1 – vorn | Kreis 2 – hinten | undicht | bremst | bremst nicht
+AUF DER FOLIE: ZWEIKREIS-BREMSE | Vorn und hinten getrennt | 1 | Zwei Kreise | 2 | Kreis 2 fällt aus | 3 | Vorn wird weiter gebremst | ✓ Antwort   / Nein. Die Kreise sind nach Achsen getrennt – links und rechts bremsen gleich. | Kreis 1 bremst die Vorderachse weiter. Der Bremsweg wird länger – aber der Lkw zieht nicht zur Seite. Sofort gefahrlos anhalten. | Bremsventil | Kreis 1 – vorn | Kreis 2 – hinten | undicht | bremst | bremst nicht | Draufsicht · Front links · schematisch | KLASSE C  ·  ABEND 3  ·  C5  ·  ZWEIKREIS-BREMSE | 40
 NOTIZEN:
-FOLIE 40 VON 125 · keine Animation · Klick = weiter
+FOLIE 40 VON 126 · keine Animation · Klick = weiter
 
 ▶ „Nur noch mit der Vorderachse. Weil die Kreise achsweise getrennt sind, bremsen links und rechts gleich – der Lkw bleibt in der Spur.“
 💡 Darum ist die Aufteilung nach Achsen gewählt – nicht nach Seiten.
@@ -393,9 +398,9 @@ FOLIE 40 VON 125 · keine Animation · Klick = weiter
 ➜ „Was sitzt an den Rädern? Die Bremszylinder.“
 
 === FOLIE 41 ===
-AUF DER FOLIE: KLASSE C  ·  ABEND 3  ·  C5  ·  ZWEIKREIS-BREMSE | 41 | ZWEIKREIS-BREMSE | Was an den Rädern sitzt | Vorderachse | Membranzylinder | nur Betriebsbremse – Luft drückt eine Membran, die Kolbenstange bewegt den Bremshebel. | Hinterachse | Kombizylinder | zwei Teile in einem: Membranteil für die Betriebsbremse, Federspeicher für die Feststellbremse. | Radbremsen: Scheibe oder Trommel.  Ist der Weg der Kolbenstange (Zylinderhub) zu groß, stimmt die Nachstellung nicht – Gestängesteller defekt oder Lager ausgeschlagen. Werkstatt.
+AUF DER FOLIE: ZWEIKREIS-BREMSE | Was an den Rädern sitzt | Vorderachse | Membranzylinder | nur Betriebsbremse – Luft drückt eine Membran, die Kolbenstange bewegt den Bremshebel. | Hinterachse | Kombizylinder | zwei Teile in einem: Membranteil für die Betriebsbremse, Federspeicher für die Feststellbremse. | Radbremsen: Scheibe oder Trommel.  Ist der Weg der Kolbenstange (Zylinderhub) zu groß, stimmt die Nachstellung nicht – Gestängesteller defekt oder Lager ausgeschlagen. Werkstatt. | KLASSE C  ·  ABEND 3  ·  C5  ·  ZWEIKREIS-BREMSE | 41
 NOTIZEN:
-FOLIE 41 VON 125 · 3 Klicks
+FOLIE 41 VON 126 · 3 Klicks
 
 ▶ Sagen: „An den Rädern sitzen die Bremszylinder. Vorn meist einfache Membranzylinder – nur für die Betriebsbremse. Hinten Kombizylinder: vorne ein Membranteil für die Betriebsbremse, hinten ein Federspeicher für die Feststellbremse.“
 🖱 Klick 1: Membranzylinder · Klick 2: Kombizylinder · Klick 3: Radbremsen.
@@ -404,18 +409,18 @@ FOLIE 41 VON 125 · 3 Klicks
 ➜ „Kapitel 4: Wie weiß die Bremse, wie schwer der Lkw ist?“
 
 === FOLIE 42 ===
-AUF DER FOLIE: KLASSE C  ·  ABEND 3  ·  C5  ·  ALB UND EBS | 42 | 04 | ALB und EBS | Leer oder voll beladen – die Bremse passt sich an.
+AUF DER FOLIE: 04 | ALB und EBS | Leer oder voll beladen – die Bremse passt sich an. | KLASSE C  ·  ABEND 3  ·  C5  ·  ALB UND EBS | 42
 NOTIZEN:
-FOLIE 42 VON 125 · Animation läuft von selbst · Klick = weiter
+FOLIE 42 VON 126 · Animation läuft von selbst · Klick = weiter
 
 ▶ Sagen: „Kapitel 4: Ein leerer Lkw wiegt vielleicht 9 Tonnen, voll beladen 26. Die Bremse muss sich daran anpassen.“
 🖱 Keine Klicks.
 ➜ „Wie macht sie das?“
 
 === FOLIE 43 ===
-AUF DER FOLIE: KLASSE C  ·  ABEND 3  ·  C5  ·  ALB UND EBS | 43 | ALB | Bremskraft nach Beladung | 1 | Leer: wenig Last hinten | 2 | Voll: viel Last hinten | 3 | ALB defekt | ❓ Frage an die Klasse   / Warum bekommt die Hinterachse leer weniger Bremsdruck? | Leer drückt wenig Gewicht auf die Hinterachse. Die ALB gibt wenig Bremsdruck nach hinten – sonst blockieren die Räder. | Seitenansicht · schematisch | ALB | wenig Last | Bremsdruck hinten
+AUF DER FOLIE: ALB | Bremskraft nach Beladung | 1 | Leer: wenig Last hinten | 2 | Voll: viel Last hinten | 3 | ALB defekt | ❓ Frage an die Klasse   / Warum bekommt die Hinterachse leer weniger Bremsdruck? | Leer drückt wenig Gewicht auf die Hinterachse. Die ALB gibt wenig Bremsdruck nach hinten – sonst blockieren die Räder. | ALB | wenig Last | Bremsdruck hinten | Seitenansicht · schematisch | KLASSE C  ·  ABEND 3  ·  C5  ·  ALB UND EBS | 43
 NOTIZEN:
-FOLIE 43 VON 125 · keine Animation · Klick = weiter
+FOLIE 43 VON 126 · keine Animation · Klick = weiter
 
 ▶ Sagen: „ALB heißt automatisch lastabhängige Bremskraftregelung. Leer: wenig Last hinten – also wenig Bremsdruck hinten.“
 ✅ Prüfungsfragen 2.7.06-208 und -233: Bremskraft wird der Achslast bzw. der tatsächlichen Fahrzeugmasse angepasst.
@@ -423,67 +428,69 @@ FOLIE 43 VON 125 · keine Animation · Klick = weiter
 ➜ „Und voll beladen?“
 
 === FOLIE 44 ===
-AUF DER FOLIE: KLASSE C  ·  ABEND 3  ·  C5  ·  ALB UND EBS | 44 | ALB | Bremskraft nach Beladung | 1 | Leer: wenig Last hinten | 2 | Voll: viel Last hinten | 3 | ALB defekt | ✓ Antwort   / Wenig Last hinten – mit vollem Druck würden die Räder blockieren. | Voll beladen trägt die Hinterachse viel. Die ALB gibt mehr Bremsdruck nach hinten. | Seitenansicht · schematisch | ALB | viel Last | Bremsdruck hinten
+AUF DER FOLIE: ALB | Bremskraft nach Beladung | 1 | Leer: wenig Last hinten | 2 | Voll: viel Last hinten | 3 | ALB defekt | ✓ Antwort   / Wenig Last hinten – mit vollem Druck würden die Räder blockieren. | Voll beladen trägt die Hinterachse viel. Die ALB gibt mehr Bremsdruck nach hinten. | ALB | viel Last | Bremsdruck hinten | Seitenansicht · schematisch | KLASSE C  ·  ABEND 3  ·  C5  ·  ALB UND EBS | 44
 NOTIZEN:
-FOLIE 44 VON 125 · keine Animation · Klick = weiter
+FOLIE 44 VON 126 · keine Animation · Klick = weiter
 
 ▶ „Voll: Die Achse federt ein. Die ALB misst das – mechanisch über den Abstand Rahmen–Achse oder bei Luftfederung über den Balgdruck – und gibt mehr Druck.“
-✅ eurotransport, „Die Bremsanlage: Retter in der Not“.
+✅ eurotransport, „Die Bremsanlage: Retter in der Not“: Die ALB misst den Abstand zwischen Fahrgestellrahmen und Achse. Balgdruck bei Luftfederung: Fachwissen.
 🖱 Keine Animation auf dieser Folie – nächster Klick = nächster Schritt (Morph).
 ➜ „Was, wenn sie kaputt ist?“
 
 === FOLIE 45 ===
-AUF DER FOLIE: KLASSE C  ·  ABEND 3  ·  C5  ·  ALB UND EBS | 45 | ALB | Bremskraft nach Beladung | 1 | Leer: wenig Last hinten | 2 | Voll: viel Last hinten | 3 | ALB defekt | ✓ Antwort   / Wenig Last hinten – mit vollem Druck würden die Räder blockieren. | Ist die ALB defekt oder falsch eingestellt, blockieren die Hinterräder des leeren Lkw bei jeder stärkeren Bremsung. | Seitenansicht · schematisch | ALB | wenig Last | Bremsdruck hinten | blockiert!
+AUF DER FOLIE: ALB | Bremskraft nach Beladung | 1 | Leer: wenig Last hinten | 2 | Voll: viel Last hinten | 3 | ALB defekt | ✓ Antwort   / Wenig Last hinten – mit vollem Druck würden die Räder blockieren. | Ist die ALB defekt oder falsch eingestellt, blockieren die Hinterräder des leeren Lkw bei jeder stärkeren Bremsung. | ALB | wenig Last | Bremsdruck hinten | blockiert! | Seitenansicht · schematisch | KLASSE C  ·  ABEND 3  ·  C5  ·  ALB UND EBS | 45
 NOTIZEN:
-FOLIE 45 VON 125 · keine Animation · Klick = weiter
+FOLIE 45 VON 126 · keine Animation · Klick = weiter
 
 ▶ „Dann bekommt der leere Lkw hinten zu viel Druck – die Hinterräder blockieren.“
 ✅ Prüfungsfrage 2.7.06-209: defekte oder falsch eingestellte ALB, Bruch mehrerer Federblätter. NICHT Fading.
+💡 Mit ABS (Pflicht über 3,5 t, § 41b StVZO) verhindert das ABS das Blockieren – es regelt dann ständig, ihr hört die Ventile zischen. Ohne ABS blockieren die Räder. Prüfungsfrage und ABS widersprechen sich also nicht.
 ✅ 2.7.06-210: ABS verhindert Blockieren – egal bei welcher Last und Fahrbahn; ALB passt die Bremskraft der Achslast an, NICHT dem Fahrbahnzustand.
 🖱 Keine Animation auf dieser Folie – nächster Klick = nächster Schritt (Morph).
 ➜ „Heute macht das bei schweren Lkw meist die Elektronik: EBS.“
 
 === FOLIE 46 ===
-AUF DER FOLIE: KLASSE C  ·  ABEND 3  ·  C5  ·  ALB UND EBS | 46 | EBS | Moderne Lkw bremsen elektronisch geregelt. Was ihr über EBS wissen müsst: | Pedal gibt ein elektrisches Signal –  die Elektronik regelt den Druck an jeder Achse. ABS und Lastregelung sind eingebaut. | Elektronik fällt aus?  Kontrollleuchte an – der Lkw bremst über die Druckluft weiter (Redundanz). Bald in die Werkstatt. | EBS ist kein Notbremsassistent.  Es bremst nicht selbst bei Hindernissen – es verteilt die Bremskraft optimal.
+AUF DER FOLIE: EBS | Moderne Lkw bremsen elektronisch geregelt. Was ihr über EBS wissen müsst: | Pedal gibt ein elektrisches Signal –  die Elektronik regelt den Druck an jeder Achse. ABS und Lastregelung sind eingebaut. | Elektronik fällt aus?  Kontrollleuchte an – der Lkw bremst über die Druckluft weiter (Redundanz). Bald in die Werkstatt. | EBS ist kein Notbremsassistent.  Es bremst nicht selbst bei Hindernissen – es verteilt die Bremskraft optimal. | KLASSE C  ·  ABEND 3  ·  C5  ·  ALB UND EBS | 46
 NOTIZEN:
-FOLIE 46 VON 125 · 3 Klicks
+FOLIE 46 VON 126 · 3 Klicks
 
 ▶ Sagen: „Heute haben schwere Lkw meist EBS – eine elektronisch geregelte Bremse.“
 🖱 Klick 1–3: je ein Punkt.
 ✅ Prüfungsfrage 2.7.06-228: Bei Ausfall des EBS wird der Fehler per Kontrollleuchte angezeigt, gebremst wird über den pneumatischen Redundanzdruck – NICHT nur noch mit der Feststellbremse. 2.7.06-229: EBS stimmt die Bremskräfte optimal ab und überwacht die Bremsanlage – NICHT automatische Bremsung bei Hindernissen. 2.7.06-235: kürzerer Bremsweg, bessere Stabilität, weniger Belagverschleiß (alle drei richtig).
+✅ Prüfungsfragen 2.7.06-237/-238: Den Notbremsassistenten immer eingeschaltet lassen. 2.7.06-242: Er kann sich abschalten, z. B. bei Schnee auf dem Radarsensor oder wenn sich der Sensor nach einem Unfall verstellt hat.
 ➜ „Kapitel 5: die Feststellbremse.“
 
 === FOLIE 47 ===
-AUF DER FOLIE: KLASSE C  ·  ABEND 3  ·  C5  ·  FESTSTELLBREMSE | 47 | 05 | Feststellbremse | Die Feder bremst, die Luft löst – und was bei leerem Luftvorrat passiert.
+AUF DER FOLIE: 05 | Feststellbremse | Die Feder bremst, die Luft löst – und was bei leerem Luftvorrat passiert. | KLASSE C  ·  ABEND 3  ·  C5  ·  FESTSTELLBREMSE | 47
 NOTIZEN:
-FOLIE 47 VON 125 · Animation läuft von selbst · Klick = weiter
+FOLIE 47 VON 126 · Animation läuft von selbst · Klick = weiter
 
 ▶ Sagen: „Kapitel 5: Die Feststellbremse des Lkw funktioniert ganz anders als beim Pkw.“
 🖱 Keine Klicks.
 ➜ „Wir schneiden einen Kombizylinder auf.“
 
 === FOLIE 48 ===
-AUF DER FOLIE: KLASSE C  ·  ABEND 3  ·  C5  ·  FESTSTELLBREMSE | 48 | FESTSTELLBREMSE | Feder bremst, Luft löst | 1 | Fahren | 2 | Betriebsbremse | 3 | Feststellbremse | 4 | Notlösen | ❓ Frage an die Klasse   / Wer bremst bei der Feststellbremse – die Luft oder die Feder? | Beim Fahren drückt Luft den Kolben nach rechts und spannt die starke Feder. Die Bremse ist gelöst. | Kombizylinder im Schnitt · schematisch | Betriebsbremsteil | Federspeicherteil | gelöst | Feder gespannt (Luft)
+AUF DER FOLIE: FESTSTELLBREMSE | Feder bremst, Luft löst | 1 | Fahren | 2 | Betriebsbremse | 3 | Feststellbremse | 4 | Notlösen | ❓ Frage an die Klasse   / Wer bremst bei der Feststellbremse – die Luft oder die Feder? | Beim Fahren drückt Luft den Kolben nach rechts und spannt die starke Feder. Die Bremse ist gelöst. | Betriebsbremsteil | Federspeicherteil | gelöst | Feder gespannt (Luft) | Kombizylinder im Schnitt · schematisch | KLASSE C  ·  ABEND 3  ·  C5  ·  FESTSTELLBREMSE | 48
 NOTIZEN:
-FOLIE 48 VON 125 · keine Animation · Klick = weiter
+FOLIE 48 VON 126 · keine Animation · Klick = weiter
 
 ▶ Sagen: „Links der Membranteil für die Betriebsbremse, rechts der Federspeicher. Beim Fahren ist im Federspeicher Luft – sie hält die starke Feder zusammengedrückt.“
 🖱 Keine Animation auf dieser Folie – nächster Klick = nächster Schritt (Morph).
 ➜ „Jetzt tretet ihr auf die Bremse.“
 
 === FOLIE 49 ===
-AUF DER FOLIE: KLASSE C  ·  ABEND 3  ·  C5  ·  FESTSTELLBREMSE | 49 | FESTSTELLBREMSE | Feder bremst, Luft löst | 1 | Fahren | 2 | Betriebsbremse | 3 | Feststellbremse | 4 | Notlösen | ❓ Frage an die Klasse   / Wer bremst bei der Feststellbremse – die Luft oder die Feder? | Pedal treten: Luft strömt in den Membranteil. Die Membran schiebt die Kolbenstange heraus – die Betriebsbremse wirkt. | Kombizylinder im Schnitt · schematisch | Betriebsbremsteil | Federspeicherteil | bremst | Feder gespannt (Luft)
+AUF DER FOLIE: FESTSTELLBREMSE | Feder bremst, Luft löst | 1 | Fahren | 2 | Betriebsbremse | 3 | Feststellbremse | 4 | Notlösen | ❓ Frage an die Klasse   / Wer bremst bei der Feststellbremse – die Luft oder die Feder? | Pedal treten: Luft strömt in den Membranteil. Die Membran schiebt die Kolbenstange heraus – die Betriebsbremse wirkt. | Betriebsbremsteil | Federspeicherteil | bremst | Feder gespannt (Luft) | Kombizylinder im Schnitt · schematisch | KLASSE C  ·  ABEND 3  ·  C5  ·  FESTSTELLBREMSE | 49
 NOTIZEN:
-FOLIE 49 VON 125 · keine Animation · Klick = weiter
+FOLIE 49 VON 126 · keine Animation · Klick = weiter
 
 ▶ „Luft strömt in den linken Teil. Die Membran schiebt die Kolbenstange heraus, der Bremshebel dreht sich – die Radbremse wirkt. Pedal los: Luft raus, eine kleine Feder zieht die Stange zurück.“
 🖱 Keine Animation auf dieser Folie – nächster Klick = nächster Schritt (Morph).
 ➜ „Und die Feststellbremse?“
 
 === FOLIE 50 ===
-AUF DER FOLIE: KLASSE C  ·  ABEND 3  ·  C5  ·  FESTSTELLBREMSE | 50 | FESTSTELLBREMSE | Feder bremst, Luft löst | 1 | Fahren | 2 | Betriebsbremse | 3 | Feststellbremse | 4 | Notlösen | ✓ Antwort   / Die Feder! Luft hält sie gespannt und löst die Bremse. | Handbremse ziehen: Die Luft aus dem Federspeicher wird abgelassen. Die Feder drückt den Kolben – der Lkw bremst mechanisch. | Kombizylinder im Schnitt · schematisch | Betriebsbremsteil | Federspeicherteil | bremst | Feder drückt – bremst
+AUF DER FOLIE: FESTSTELLBREMSE | Feder bremst, Luft löst | 1 | Fahren | 2 | Betriebsbremse | 3 | Feststellbremse | 4 | Notlösen | ✓ Antwort   / Die Feder! Luft hält sie gespannt und löst die Bremse. | Handbremse ziehen: Die Luft aus dem Federspeicher wird abgelassen. Die Feder drückt den Kolben – der Lkw bremst mechanisch. | Betriebsbremsteil | Federspeicherteil | bremst | Feder drückt – bremst | Kombizylinder im Schnitt · schematisch | KLASSE C  ·  ABEND 3  ·  C5  ·  FESTSTELLBREMSE | 50
 NOTIZEN:
-FOLIE 50 VON 125 · keine Animation · Klick = weiter
+FOLIE 50 VON 126 · keine Animation · Klick = weiter
 
 ▶ „Ihr betätigt das Handbremsventil: Es lässt die Luft aus dem Federspeicher. Die Feder drückt den Kolben nach links – und über die Stange wird gebremst. Feder bremst, Luft löst.“
 ✅ Prüfungsfragen 2.7.06-213 (Bremsung durch Federkraft) und 2.7.06-214 (Handbremsventil entlüftet den Federspeicher-Zylinder, die Federkraft bremst).
@@ -492,9 +499,9 @@ FOLIE 50 VON 125 · keine Animation · Klick = weiter
 ➜ „Und wenn keine Luft mehr da ist und der Lkw abgeschleppt werden muss?“
 
 === FOLIE 51 ===
-AUF DER FOLIE: KLASSE C  ·  ABEND 3  ·  C5  ·  FESTSTELLBREMSE | 51 | FESTSTELLBREMSE | Feder bremst, Luft löst | 1 | Fahren | 2 | Betriebsbremse | 3 | Feststellbremse | 4 | Notlösen | ✓ Antwort   / Die Feder! Luft hält sie gespannt und löst die Bremse. | Kein Luftvorrat und der Lkw muss weg? Die Löseschraube herausdrehen spannt die Feder von Hand. Vorher den Lkw gegen Wegrollen sichern! | Kombizylinder im Schnitt · schematisch | Betriebsbremsteil | Federspeicherteil | gelöst | Löse-schraube | Keine Feststellbremse mehr – vorher Keile! | Feder von Hand gespannt
+AUF DER FOLIE: FESTSTELLBREMSE | Feder bremst, Luft löst | 1 | Fahren | 2 | Betriebsbremse | 3 | Feststellbremse | 4 | Notlösen | ✓ Antwort   / Die Feder! Luft hält sie gespannt und löst die Bremse. | Kein Luftvorrat und der Lkw muss weg? Mit der Löseschraube spannt ihr die Feder von Hand (herausdrehen). Vorher den Lkw gegen Wegrollen sichern! | Betriebsbremsteil | Federspeicherteil | gelöst | Löseschraube | Keine Feststellbremse mehr – vorher Keile! | Feder von Hand gespannt | Kombizylinder im Schnitt · schematisch | KLASSE C  ·  ABEND 3  ·  C5  ·  FESTSTELLBREMSE | 51
 NOTIZEN:
-FOLIE 51 VON 125 · keine Animation · Klick = weiter
+FOLIE 51 VON 126 · keine Animation · Klick = weiter
 
 ▶ „Dann lässt sich der Federspeicher nicht über das Handbremsventil lösen. Es gibt eine Hilfslöseeinrichtung – mechanisch über die Löseschraube oder pneumatisch.“
 ✅ Prüfungsfragen 2.7.06-215 und -216. EU-Recht: Hilfslöseeinrichtung Pflicht; braucht man Werkzeug, muss es im Fahrzeug sein.
@@ -503,18 +510,18 @@ FOLIE 51 VON 125 · keine Animation · Klick = weiter
 ➜ „Wie bedient ihr die Feststellbremse im Fahrerhaus?“
 
 === FOLIE 52 ===
-AUF DER FOLIE: KLASSE C  ·  ABEND 3  ·  C5  ·  FESTSTELLBREMSE | 52 | FESTSTELLBREMSE | Das Handbremsventil | 1 | Fahrstellung | 2 | Feststellbremse | 3 | Kontrollstellung | ❓ Frage an die Klasse   / Wozu gibt es die Kontrollstellung? | Fahrstellung: Der Federspeicher ist belüftet, die Feststellbremse ist gelöst. | Handbremsventil · schematisch · je nach Hersteller | Fahrt | Feststell-bremse | Kontroll-stellung | Lkw: gelöst | Anhänger: gelöst
+AUF DER FOLIE: FESTSTELLBREMSE | Das Handbremsventil | 1 | Fahrstellung | 2 | Feststellbremse | 3 | Kontrollstellung | ❓ Frage an die Klasse   / Wozu gibt es die Kontrollstellung? | Fahrstellung: Der Federspeicher ist belüftet, die Feststellbremse ist gelöst. | Fahrt | Feststellbremse | Kontrollstellung | Lkw: gelöst | Anhänger: gelöst | Handbremsventil · schematisch · je nach Hersteller | KLASSE C  ·  ABEND 3  ·  C5  ·  FESTSTELLBREMSE | 52
 NOTIZEN:
-FOLIE 52 VON 125 · keine Animation · Klick = weiter
+FOLIE 52 VON 126 · keine Animation · Klick = weiter
 
 ▶ Sagen: „Im Fahrerhaus sitzt das Handbremsventil – ein Hebel mit mehreren Stellungen. Bei manchen neuen Lkw ist es ein elektrischer Schalter.“
 🖱 Keine Animation auf dieser Folie – nächster Klick = nächster Schritt (Morph).
 ➜ „Hebel nach hinten ziehen …“
 
 === FOLIE 53 ===
-AUF DER FOLIE: KLASSE C  ·  ABEND 3  ·  C5  ·  FESTSTELLBREMSE | 53 | FESTSTELLBREMSE | Das Handbremsventil | 1 | Fahrstellung | 2 | Feststellbremse | 3 | Kontrollstellung | ❓ Frage an die Klasse   / Wozu gibt es die Kontrollstellung? | Hebel ziehen: Der Federspeicher wird entlüftet, die Federn bremsen. Abstufbar – im Notfall auch als Hilfsbremse. | Handbremsventil · schematisch · je nach Hersteller | Fahrt | Feststell-bremse | Kontroll-stellung | Lkw: bremst | Anhänger: bremst (Luft)
+AUF DER FOLIE: FESTSTELLBREMSE | Das Handbremsventil | 1 | Fahrstellung | 2 | Feststellbremse | 3 | Kontrollstellung | ❓ Frage an die Klasse   / Wozu gibt es die Kontrollstellung? | Hebel ziehen: Der Federspeicher wird entlüftet, die Federn bremsen. Abstufbar – im Notfall auch als Hilfsbremse. | Fahrt | Feststellbremse | Kontrollstellung | Lkw: bremst | Anhänger: bremst (Luft) | Handbremsventil · schematisch · je nach Hersteller | KLASSE C  ·  ABEND 3  ·  C5  ·  FESTSTELLBREMSE | 53
 NOTIZEN:
-FOLIE 53 VON 125 · keine Animation · Klick = weiter
+FOLIE 53 VON 126 · keine Animation · Klick = weiter
 
 ▶ „… die Federspeicher werden entlüftet, die Federn bremsen. Ihr könnt den Hebel auch stufenweise ziehen – das ist im Notfall eine Hilfsbremse.“
 ✅ Die Feststellbremse muss den beladenen Lkw auf 18 % Steigung oder Gefälle halten (EU-Bremsenrecht). § 41 Abs. 5 StVZO: rein mechanisch wirkend.
@@ -522,9 +529,9 @@ FOLIE 53 VON 125 · keine Animation · Klick = weiter
 ➜ „Und ganz durchziehen?“
 
 === FOLIE 54 ===
-AUF DER FOLIE: KLASSE C  ·  ABEND 3  ·  C5  ·  FESTSTELLBREMSE | 54 | FESTSTELLBREMSE | Das Handbremsventil | 1 | Fahrstellung | 2 | Feststellbremse | 3 | Kontrollstellung | ✓ Antwort   / Mit Anhänger: prüfen, ob der Lkw den ganzen Zug allein hält. | Kontrollstellung (mit Anhänger): Nur das Zugfahrzeug hält, die Anhängerbremse wird gelöst. So prüft ihr, ob der Lkw den Zug allein hält. | Handbremsventil · schematisch · je nach Hersteller | Fahrt | Feststell-bremse | Kontroll-stellung | Lkw: bremst | Anhänger: gelöst
+AUF DER FOLIE: FESTSTELLBREMSE | Das Handbremsventil | 1 | Fahrstellung | 2 | Feststellbremse | 3 | Kontrollstellung | ✓ Antwort   / Mit Anhänger: prüfen, ob der Lkw den ganzen Zug allein hält. | Kontrollstellung (mit Anhänger): Nur das Zugfahrzeug hält, die Anhängerbremse wird gelöst. So prüft ihr, ob der Lkw den Zug allein hält. | Fahrt | Feststellbremse | Kontrollstellung | Lkw: bremst | Anhänger: gelöst | Handbremsventil · schematisch · je nach Hersteller | KLASSE C  ·  ABEND 3  ·  C5  ·  FESTSTELLBREMSE | 54
 NOTIZEN:
-FOLIE 54 VON 125 · keine Animation · Klick = weiter
+FOLIE 54 VON 126 · keine Animation · Klick = weiter
 
 ▶ „Die Kontrollstellung braucht ihr mit Anhänger: Der Anhänger wird gelöst, nur der Lkw hält. So seht ihr, ob die Feststellbremse des Lkw den ganzen Zug allein hält – das muss sie auf 12 %.“
 ✅ Prüfungsfrage 2.7.06-320 (CE-Teil): In Kontrollstellung bremst das Zugfahrzeug über den Federspeicher, die Betriebsbremse des Anhängers wird gelöst. Mehr dazu in CE.
@@ -533,19 +540,20 @@ FOLIE 54 VON 125 · keine Animation · Klick = weiter
 ➜ „Und wie stellt ihr den Lkw am Berg sicher ab?“
 
 === FOLIE 55 ===
-AUF DER FOLIE: KLASSE C  ·  ABEND 3  ·  C5  ·  FESTSTELLBREMSE | 55 | FESTSTELLBREMSE | Wie sichern Sie einen zweiachsigen Lkw in starkem Gefälle gegen Wegrollen? | A | Feststellbremse anziehen | B | Unterlegkeil an ein Hinterrad legen | C | Dauerbremse einschalten | ✓  RICHTIG | ✓  RICHTIG | Feststellbremse und Unterlegkeil – die Dauerbremse wirkt nur bei laufendem Motor und rollendem Lkw (Prüfungsfrage 2.2.23-201).
+AUF DER FOLIE: FESTSTELLBREMSE | Wie sichern Sie einen zweiachsigen Lkw in starkem Gefälle gegen Wegrollen? | A | Feststellbremse anziehen | B | Unterlegkeil vor ein Hinterrad legen | C | Dauerbremse einschalten | ✓  RICHTIG | ✓  RICHTIG | Feststellbremse und Unterlegkeil – die Dauerbremse wirkt nur bei laufendem Motor und rollendem Lkw (Prüfungsfrage 2.2.23-201). | KLASSE C  ·  ABEND 3  ·  C5  ·  FESTSTELLBREMSE | 55
 NOTIZEN:
-FOLIE 55 VON 125 · 2 Klicks
+FOLIE 55 VON 126 · 2 Klicks
 
 ▶ Frage vorlesen, abstimmen. Mehrere Antworten können richtig sein.
+💡 Mündlich abstimmen und begründen – kein Bogen zum Ausfüllen.
 🖱 Klick 1: Antworten · Klick 2: Lösung.
 ✅ A und B. Den Keil auf der Talseite unter das Rad legen.
 ➜ „Zum Schluss von C5: Mitschreiben.“
 
 === FOLIE 56 ===
-AUF DER FOLIE: KLASSE C  ·  ABEND 3  ·  C5  ·  ABSCHLUSS | 56 | ZUM MITSCHREIBEN | Lkw-Bremsen | ✎ | Drei Bremsen | Betriebsbremse, Feststellbremse, Dauerbremse (Pflicht über 9 t) | Druckluft | Kompressor – Druckregler – Lufttrockner – Vierkreisschutzventil – Behälter | Abschaltdruck | etwa 10 bis 13 bar – kurzes Zischen ist normal | Losfahren | erst wenn die Druckwarnung aus ist | Kreis undicht | Ventil sperrt ihn ab – die anderen Kreise bremsen weiter | Wasser im Behälter | Lufttrockner defekt – Werkstatt | ALB | passt die Bremskraft der Beladung an | Federspeicher | Feder bremst, Luft löst – Notlösen nur mit Keilen
+AUF DER FOLIE: ZUM MITSCHREIBEN | Lkw-Bremsen | ✎ | Drei Bremsen | Betriebsbremse, Feststellbremse, Dauerbremse (Pflicht über 9 t) | Druckluft | Kompressor – Druckregler – Lufttrockner – Vierkreisschutzventil – Behälter | Abschaltdruck | etwa 10 bis 13 bar – kurzes Zischen ist normal | Losfahren | erst wenn die Druckwarnung aus ist | Kreis undicht | Ventil sperrt ihn ab – die anderen Kreise bremsen weiter | Wasser im Behälter | Lufttrockner defekt – Werkstatt | ALB | passt die Bremskraft der Beladung an | Federspeicher | Feder bremst, Luft löst – Notlösen nur mit Keilen | KLASSE C  ·  ABEND 3  ·  C5  ·  ABSCHLUSS | 56
 NOTIZEN:
-FOLIE 56 VON 125 · 8 Klicks
+FOLIE 56 VON 126 · 8 Klicks
 
 ▶ Sagen: „Schreibt euch das auf – das sind die Kernpunkte aus C5.“
 ❓ Vor jedem Klick fragen: „Was gehört hier hin?“
@@ -554,39 +562,42 @@ FOLIE 56 VON 125 · 8 Klicks
 ➜ „Jetzt testen wir C5.“
 
 === FOLIE 57 ===
-AUF DER FOLIE: KLASSE C  ·  ABEND 3  ·  C5  ·  ABSCHLUSS | 57 | QUIZ C5 · 1 | Der Lkw stand mehrere Tage. Wann dürfen Sie frühestens losfahren? | A | Sobald sich die Feststellbremse lösen lässt | B | Wenn die Druckwarnung aufgehört hat | C | Bei 3 bar Vorratsdruck | ✓  RICHTIG | Erst wenn die Druckwarneinrichtung keine Signale mehr gibt, ist genug Luft für sicheres Bremsen da (Prüfungsfrage 2.7.01-238).
+AUF DER FOLIE: QUIZ C5 · 1 | Ihr Lkw mit Druckluftbremse stand mehrere Tage. Wann dürfen Sie frühestens losfahren? | A | Sobald sich die Federspeicherbremse automatisch löst | B | Wenn die Signale der Druckwarneinrichtung aufgehört haben | C | Wenn 3 bar Vorratsdruck angezeigt werden | ✓  RICHTIG | Erst wenn die Druckwarneinrichtung keine Signale mehr gibt, ist genug Luft für sicheres Bremsen da (Prüfungsfrage 2.7.01-238). | KLASSE C  ·  ABEND 3  ·  C5  ·  ABSCHLUSS | 57
 NOTIZEN:
-FOLIE 57 VON 125 · 2 Klicks
+FOLIE 57 VON 126 · 2 Klicks
 
 ▶ Frage vorlesen, abstimmen.
+💡 Mündlich abstimmen und begründen – kein Bogen zum Ausfüllen.
 🖱 Klick 1: Antworten · Klick 2: Lösung.
 ✅ B.
 ➜ „Nächste Frage.“
 
 === FOLIE 58 ===
-AUF DER FOLIE: KLASSE C  ·  ABEND 3  ·  C5  ·  ABSCHLUSS | 58 | QUIZ C5 · 2 | Wodurch wird bei einer Federspeicher-Bremse die Bremsung bewirkt? | A | Durch Druckluft | B | Durch Federkraft | C | Durch Bremsflüssigkeit | ✓  RICHTIG | Das Handbremsventil lässt die Luft aus dem Federspeicher – die Feder bremst. Luft löst (Prüfungsfragen 2.7.06-213, -214).
+AUF DER FOLIE: QUIZ C5 · 2 | Wodurch wird bei einer Federspeicherbremse die Bremsung bewirkt? | A | Durch einströmende Druckluft | B | Durch Federkraft | C | Durch die Betätigungskraft des Fahrers | ✓  RICHTIG | Das Handbremsventil lässt die Luft aus dem Federspeicher – die Feder bremst. Luft löst (Prüfungsfragen 2.7.06-213, -214). | KLASSE C  ·  ABEND 3  ·  C5  ·  ABSCHLUSS | 58
 NOTIZEN:
-FOLIE 58 VON 125 · 2 Klicks
+FOLIE 58 VON 126 · 2 Klicks
 
 ▶ Frage vorlesen, abstimmen.
+💡 Mündlich abstimmen und begründen – kein Bogen zum Ausfüllen.
 🖱 Klick 1: Antworten · Klick 2: Lösung.
 ✅ B.
 ➜ „Und noch eine.“
 
 === FOLIE 59 ===
-AUF DER FOLIE: KLASSE C  ·  ABEND 3  ·  C5  ·  ABSCHLUSS | 59 | QUIZ C5 · 3 | Beim leeren Lkw blockieren bei jeder stärkeren Bremsung die Hinterräder. Mögliche Ursache? | A | Defekte oder falsch eingestellte ALB | B | Fading | C | Bruch mehrerer Federblätter | ✓  RICHTIG | ✓  RICHTIG | Die ALB misst die Last über die Federung. Ist sie defekt oder sind Federblätter gebrochen, bekommt die leere Hinterachse zu viel Druck (Prüfungsfrage 2.7.06-209).
+AUF DER FOLIE: QUIZ C5 · 3 | Beim leeren Lkw blockieren bei jeder stärkeren Bremsung die Hinterräder. Mögliche Ursache? | A | Defekte oder falsch eingestellte ALB | B | Starkes Bremsfading | C | Bruch mehrerer Federblätter an der Hinterachse | ✓  RICHTIG | ✓  RICHTIG | Die ALB misst die Last über die Federung. Ist sie defekt oder sind Federblätter gebrochen, bekommt die leere Hinterachse zu viel Druck (Prüfungsfrage 2.7.06-209). | KLASSE C  ·  ABEND 3  ·  C5  ·  ABSCHLUSS | 59
 NOTIZEN:
-FOLIE 59 VON 125 · 2 Klicks
+FOLIE 59 VON 126 · 2 Klicks
 
 ▶ Frage vorlesen, abstimmen. Mehrere Antworten können richtig sein.
+💡 Mündlich abstimmen und begründen – kein Bogen zum Ausfüllen.
 🖱 Klick 1: Antworten · Klick 2: Lösung.
 ✅ A und C. Fading heißt: heiße Bremsen bremsen schwächer – das Gegenteil von Blockieren.
 ➜ „Zum Schluss von C5: Das nehmt ihr mit.“
 
 === FOLIE 60 ===
-AUF DER FOLIE: KLASSE C  ·  ABEND 3  ·  C5  ·  ABSCHLUSS | 60 | ZUSAMMENFASSUNG | Das nimmst du mit | Ohne Luft keine Betriebsbremse –  losfahren erst, wenn die Druckwarnung aus ist. | Mehrere Kreise:  fällt einer aus, sperrt das Ventil ihn ab – die anderen bremsen weiter. | Wasser im Luftbehälter  heißt: Lufttrockner defekt – bei Lufttrockner kein Frostschutzmittel. | ALB oder EBS  passen die Bremskraft der Beladung an. | Feder bremst, Luft löst –  vor dem Notlösen den Lkw mit Keilen sichern.
+AUF DER FOLIE: ZUSAMMENFASSUNG | Das nehmt ihr mit | Ohne Luft keine Betriebsbremse:  losfahren erst, wenn die Druckwarnung aus ist. | Mehrere Kreise:  fällt einer aus, sperrt das Ventil ihn ab – die anderen bremsen weiter. | Wasser im Luftbehälter:  Lufttrockner defekt – bei Lufttrockner kein Frostschutzmittel. | ALB oder EBS:  passen die Bremskraft der Beladung an. | Feder bremst, Luft löst:  vor dem Notlösen den Lkw mit Keilen sichern. | KLASSE C  ·  ABEND 3  ·  C5  ·  ABSCHLUSS | 60
 NOTIZEN:
-FOLIE 60 VON 125 · 5 Klicks
+FOLIE 60 VON 126 · 5 Klicks
 
 ▶ Sagen: „Das sind die fünf Punkte aus C5, die ihr auf jeden Fall wissen müsst.“
 🖱 Klick 1–5: je ein Punkt.
@@ -595,7 +606,7 @@ FOLIE 60 VON 125 · 5 Klicks
 === FOLIE 61 ===
 AUF DER FOLIE: PAUSE | 15 Minuten | Kurz raus, frische Luft. | Danach: Lektion C6 · Dauerbremsen, Untersuchungen, Begrenzer
 NOTIZEN:
-FOLIE 61 VON 125 · Animation läuft von selbst · Klick = weiter
+FOLIE 61 VON 126 · Animation läuft von selbst · Klick = weiter
 
 ▶ Sagen: „15 Minuten Pause. Kurz raus, frische Luft.“
 💡 Pausenende ansagen (z. B. 19:45 Uhr).
@@ -603,28 +614,28 @@ FOLIE 61 VON 125 · Animation läuft von selbst · Klick = weiter
 ➜ „Willkommen zurück. Lektion C6: Wie bremst man lange Gefälle – und wer prüft die Bremse?“
 
 === FOLIE 62 ===
-AUF DER FOLIE: KLASSE C  ·  ABEND 3  ·  LEKTION C6 | 62 | LEKTION C6 · DAUERBREMSEN, UNTERSUCHUNGEN, BEGRENZER | Das lernt ihr in C6 | 01 | Dauerbremsen  Motorbremse, Retarder, Grenzen, Glätte | 20 Min | 02 | Bremsweg und Fading  Anhalteweg, Gefälle, heiße Bremsen | 15 Min | 03 | ABS  Funktion, Kontrollleuchte, richtig bremsen | 10 Min | 04 | Kontrolle  Abfahrtkontrolle, Dichtheit, Bremsprobe | 15 Min | 05 | HU und SP  Fristen, Plakette, Mängel, Bußgelder | 15 Min | 06 | Begrenzer und Fahrtenschreiber  90 km/h, Einbauschild, Prüfungen | 10 Min | + 5 Min Abschluss: Quiz und „Das nimmst du mit“
+AUF DER FOLIE: LEKTION C6 · DAUERBREMSEN, UNTERSUCHUNGEN, BEGRENZER | Das lernt ihr in C6 | 01 | Dauerbremsen  Motorbremse, Retarder, Grenzen, Glätte | 20 Min | 02 | Bremsweg und Fading  Anhalteweg, Gefälle, heiße Bremsen | 15 Min | 03 | ABS  Funktion, Kontrollleuchte, richtig bremsen | 10 Min | 04 | Kontrolle  Abfahrtkontrolle, Dichtheit, Bremsprobe | 15 Min | 05 | HU und SP  Fristen, Plakette, Mängel, Bußgelder | 15 Min | 06 | Begrenzer, Tempomat, Fahrtenschreiber  90 km/h, Abstand, Prüfungen | 10 Min | + 5 Min Abschluss: Quiz und „Das nehmt ihr mit“ | KLASSE C  ·  ABEND 3  ·  LEKTION C6 | 62
 NOTIZEN:
-FOLIE 62 VON 125 · 6 Klicks
+FOLIE 62 VON 126 · 6 Klicks
 
-▶ Sagen: „Willkommen zurück. In C6 geht es darum, wie ihr die Bremse im Alltag schont und prüft: Dauerbremsen, Bremsweg, ABS, Kontrolle – und wer den Lkw regelmäßig untersucht.“
+▶ Sagen: „Willkommen zurück. In C6 geht es darum, wie ihr die Bremse im Alltag schont und prüft: Dauerbremsen, Bremsweg, ABS, Kontrolle – und wer den Lkw regelmäßig untersucht. Zum Schluss: Begrenzer, Tempomat und Fahrtenschreiber.“
 🖱 Klick 1–6: je ein Kapitel.
 💡 Zeiten sind Richtwerte für 90 Minuten.
 ➜ „Kapitel 1: die Dauerbremsen.“
 
 === FOLIE 63 ===
-AUF DER FOLIE: KLASSE C  ·  ABEND 3  ·  C6  ·  DAUERBREMSEN | 63 | 01 | Dauerbremsen | Bremsen ohne Verschleiß – damit die Betriebsbremse im Gefälle kühl bleibt.
+AUF DER FOLIE: 01 | Dauerbremsen | Bremsen ohne Verschleiß – damit die Betriebsbremse im Gefälle kühl bleibt. | KLASSE C  ·  ABEND 3  ·  C6  ·  DAUERBREMSEN | 63
 NOTIZEN:
-FOLIE 63 VON 125 · Animation läuft von selbst · Klick = weiter
+FOLIE 63 VON 126 · Animation läuft von selbst · Klick = weiter
 
-▶ Sagen: „Kapitel 1: die Dauerbremsen. Lange Gefälle wie hier im Gebirge – das ist ihre Aufgabe.“
+▶ Sagen: „Kapitel 1: die Dauerbremsen. Lange Gefälle im Gebirge – das ist ihre Aufgabe. Und im Winter müsst ihr dabei besonders aufpassen, dazu gleich mehr.“
 🖱 Keine Klicks.
 ➜ „Wann ist eine Dauerbremse Pflicht?“
 
 === FOLIE 64 ===
-AUF DER FOLIE: KLASSE C  ·  ABEND 3  ·  C6  ·  DAUERBREMSEN | 64 | DAUERBREMSEN | Pflicht über 9 Tonnen | 7 % | 6 km lang | voll beladen 30 km/h halten – nur mit der Dauerbremse | Steigung zur Verdeutlichung überzeichnet | Pflicht: / Lkw über 9 t zulässiger Gesamtmasse. | Verschleißfrei – / entlastet die Betriebsbremse. Die bleibt kühl für den Notfall. | Bremst nicht bis zum Stand. / Bei wenig Tempo wirkt sie kaum – anhalten mit der Betriebsbremse.
+AUF DER FOLIE: DAUERBREMSEN | Pflicht über 9 Tonnen | 7 % | 6 km lang | voll beladen 30 km/h halten – nur mit der Dauerbremse | Neigung zur Verdeutlichung überzeichnet | Pflicht: / Lkw über 9 t zulässiger Gesamtmasse. | Verschleißfrei – / entlastet die Betriebsbremse. Die bleibt kühl für den Notfall. | Bremst nicht bis zum Stand. / Bei wenig Tempo wirkt sie kaum – anhalten mit der Betriebsbremse. | KLASSE C  ·  ABEND 3  ·  C6  ·  DAUERBREMSEN | 64
 NOTIZEN:
-FOLIE 64 VON 125 · 4 Klicks
+FOLIE 64 VON 126 · 4 Klicks
 
 ▶ Sagen: „Jeder Lkw über 9 Tonnen zulässiger Gesamtmasse muss eine Dauerbremse haben. Was muss sie können?“
 🖱 Klick 1: die Prüfstrecke · Klick 2–4: die Punkte.
@@ -634,18 +645,18 @@ FOLIE 64 VON 125 · 4 Klicks
 ➜ „Welche Dauerbremsen gibt es? Zuerst die Motorbremse.“
 
 === FOLIE 65 ===
-AUF DER FOLIE: KLASSE C  ·  ABEND 3  ·  C6  ·  DAUERBREMSEN | 65 | DAUERBREMSEN | Die Motorbremse | 1 | Fahren: Klappe offen | 2 | Auspuffklappe zu | 3 | Konstantdrossel dazu | 4 | Drehzahl hoch halten | ❓ Frage an die Klasse   / Warum schaltet man vor dem Gefälle zurück? | Beim normalen Fahren strömt das Abgas frei durch den Auspuff. | Schematisch | Motor | Auspuffklappe | Bremswirkung | Drehzahl
+AUF DER FOLIE: DAUERBREMSEN | Die Motorbremse | 1 | Fahren: Klappe offen | 2 | Auspuffklappe zu | 3 | Konstantdrossel dazu | 4 | Drehzahl hoch halten | ❓ Frage an die Klasse   / Warum schaltet man vor dem Gefälle zurück? | Beim normalen Fahren strömt das Abgas frei durch den Auspuff. | Motor | Auspuffklappe | Bremswirkung | Drehzahl | Motorbremse · schematisch | KLASSE C  ·  ABEND 3  ·  C6  ·  DAUERBREMSEN | 65
 NOTIZEN:
-FOLIE 65 VON 125 · keine Animation · Klick = weiter
+FOLIE 65 VON 126 · keine Animation · Klick = weiter
 
 ▶ Sagen: „Die Motorbremse nutzt den Motor als Bremse. Beim Fahren strömt das Abgas frei.“
 🖱 Keine Animation auf dieser Folie – nächster Klick = nächster Schritt (Morph).
 ➜ „Jetzt schaltet ihr die Motorbremse ein.“
 
 === FOLIE 66 ===
-AUF DER FOLIE: KLASSE C  ·  ABEND 3  ·  C6  ·  DAUERBREMSEN | 66 | DAUERBREMSEN | Die Motorbremse | 1 | Fahren: Klappe offen | 2 | Auspuffklappe zu | 3 | Konstantdrossel dazu | 4 | Drehzahl hoch halten | ❓ Frage an die Klasse   / Warum schaltet man vor dem Gefälle zurück? | Motorbremse an: Eine Klappe im Auspuff schließt. Der Motor muss gegen den Druck arbeiten – das bremst. | Schematisch | Motor | Auspuffklappe | Druck staut sich | Bremswirkung | Drehzahl
+AUF DER FOLIE: DAUERBREMSEN | Die Motorbremse | 1 | Fahren: Klappe offen | 2 | Auspuffklappe zu | 3 | Konstantdrossel dazu | 4 | Drehzahl hoch halten | ❓ Frage an die Klasse   / Warum schaltet man vor dem Gefälle zurück? | Motorbremse an: Eine Klappe im Auspuff schließt. Der Motor muss gegen den Druck arbeiten – das bremst. | Motor | Auspuffklappe | Druck staut sich | Bremswirkung | Drehzahl | Motorbremse · schematisch | KLASSE C  ·  ABEND 3  ·  C6  ·  DAUERBREMSEN | 66
 NOTIZEN:
-FOLIE 66 VON 125 · keine Animation · Klick = weiter
+FOLIE 66 VON 126 · keine Animation · Klick = weiter
 
 ▶ „Eine Klappe im Auspuff schließt – die Staudruckbremse. Der Motor muss das Abgas gegen den Druck hinausschieben. Das bremst – aber nicht sehr stark.“
 ✅ Auspuffklappe = Staudruckbremse (Herstellerangaben, z. B. Cummins/Jacobs).
@@ -653,9 +664,9 @@ FOLIE 66 VON 125 · keine Animation · Klick = weiter
 ➜ „Darum kommt meist noch etwas dazu.“
 
 === FOLIE 67 ===
-AUF DER FOLIE: KLASSE C  ·  ABEND 3  ·  C6  ·  DAUERBREMSEN | 67 | DAUERBREMSEN | Die Motorbremse | 1 | Fahren: Klappe offen | 2 | Auspuffklappe zu | 3 | Konstantdrossel dazu | 4 | Drehzahl hoch halten | ❓ Frage an die Klasse   / Warum schaltet man vor dem Gefälle zurück? | Die Konstantdrossel öffnet ein kleines Ventil im Zylinder. Die zusammengedrückte Luft entweicht – noch mehr Bremswirkung. | Schematisch | Luft entweicht | Motor | Auspuffklappe | Druck staut sich | Bremswirkung | Drehzahl
+AUF DER FOLIE: DAUERBREMSEN | Die Motorbremse | 1 | Fahren: Klappe offen | 2 | Auspuffklappe zu | 3 | Konstantdrossel dazu | 4 | Drehzahl hoch halten | ❓ Frage an die Klasse   / Warum schaltet man vor dem Gefälle zurück? | Die Konstantdrossel öffnet ein kleines Ventil im Zylinderkopf. Die zusammengedrückte Luft entweicht – noch mehr Bremswirkung. | Luft entweicht | Motor | Auspuffklappe | Druck staut sich | Bremswirkung | Drehzahl | Motorbremse · schematisch | KLASSE C  ·  ABEND 3  ·  C6  ·  DAUERBREMSEN | 67
 NOTIZEN:
-FOLIE 67 VON 125 · keine Animation · Klick = weiter
+FOLIE 67 VON 126 · keine Animation · Klick = weiter
 
 ▶ „Die Konstantdrossel: Ein kleines Ventil im Zylinderkopf bleibt offen. Die Luft, die der Kolben zusammendrückt, entweicht – die Arbeit fürs Verdichten ist verloren. Das bremst deutlich mehr.“
 💡 Bezeichnungen und Leistung sind herstellerabhängig (z. B. Dekompressionsbremse).
@@ -663,30 +674,31 @@ FOLIE 67 VON 125 · keine Animation · Klick = weiter
 ➜ „Wovon hängt die Bremswirkung ab?“
 
 === FOLIE 68 ===
-AUF DER FOLIE: KLASSE C  ·  ABEND 3  ·  C6  ·  DAUERBREMSEN | 68 | DAUERBREMSEN | Die Motorbremse | 1 | Fahren: Klappe offen | 2 | Auspuffklappe zu | 3 | Konstantdrossel dazu | 4 | Drehzahl hoch halten | ✓ Antwort   / Die Motorbremse wirkt bei hoher Drehzahl am stärksten. | Je höher die Drehzahl, desto stärker bremst der Motor. Darum vor dem Gefälle zurückschalten. | Schematisch | Luft entweicht | Motor | Auspuffklappe | Druck staut sich | Bremswirkung | Drehzahl | zurückgeschaltet
+AUF DER FOLIE: DAUERBREMSEN | Die Motorbremse | 1 | Fahren: Klappe offen | 2 | Auspuffklappe zu | 3 | Konstantdrossel dazu | 4 | Drehzahl hoch halten | ✓ Antwort   / Die Motorbremse wirkt bei hoher Drehzahl am stärksten. | Je höher die Drehzahl, desto stärker bremst der Motor – aber nie in den roten Bereich. Darum vor dem Gefälle zurückschalten. | Luft entweicht | Motor | Auspuffklappe | Druck staut sich | Bremswirkung | Drehzahl | zurückgeschaltet | Motorbremse · schematisch | KLASSE C  ·  ABEND 3  ·  C6  ·  DAUERBREMSEN | 68
 NOTIZEN:
-FOLIE 68 VON 125 · keine Animation · Klick = weiter
+FOLIE 68 VON 126 · keine Animation · Klick = weiter
 
-▶ „Von der Drehzahl. Hohe Drehzahl – viel Bremswirkung. Im großen Gang dreht der Motor zu langsam.“
+▶ „Von der Drehzahl. Hohe Drehzahl – viel Bremswirkung. Im großen Gang dreht der Motor zu langsam. Aber: nie in den roten Bereich – der Motor darf nicht überdrehen.“
 ✅ Prüfungsfrage 2.7.01-257: Betriebsbremse im Gefälle schonen → rechtzeitig zurückschalten, Dauerbremse benutzen. 2.7.01-127: Gefälle nicht mit getretener Kupplung – sonst fehlt die Motorbremswirkung.
 🖱 Keine Animation auf dieser Folie – nächster Klick = nächster Schritt (Morph).
 ➜ „Die zweite Dauerbremse: der Retarder.“
 
 === FOLIE 69 ===
-AUF DER FOLIE: KLASSE C  ·  ABEND 3  ·  C6  ·  DAUERBREMSEN | 69 | DAUERBREMSEN | Der Retarder | Motor | Getriebe | Gelenkwelle | Primär-retarder | wirkt auch bei wenig Tempo | Sekundär-retarder | bei wenig Tempo schwach | Bedienung:  Hebel am Lenkrad in Stufen – oder automatisch mit dem Tempomat bergab (je nach Lkw). | Wärme:  Der Retarder macht aus Bewegung Wärme. Wird das Kühlwasser zu heiß, bremst er weniger – Temperatur im Blick behalten.
+AUF DER FOLIE: DAUERBREMSEN | Der Retarder | Motor | Getriebe | Gelenkwelle | Primärretarder | wirkt auch langsam – bei hoher Motordrehzahl | Sekundärretarder | bei wenig Tempo schwach | Bedienung:  Hebel am Lenkrad in Stufen – oder automatisch mit dem Tempomat bergab (je nach Lkw). | Wärme:  Der Retarder macht aus Bewegung Wärme. Wird das Kühlwasser zu heiß, bremst er weniger – Temperatur im Blick behalten. | KLASSE C  ·  ABEND 3  ·  C6  ·  DAUERBREMSEN | 69
 NOTIZEN:
-FOLIE 69 VON 125 · 4 Klicks
+FOLIE 69 VON 126 · 4 Klicks
 
 ▶ Sagen: „Der Retarder ist eine zusätzliche Bremse im Antriebsstrang. Ein Rad wirbelt Öl oder Wasser gegen ein feststehendes Rad – die Bewegung wird zu Wärme, das Kühlsystem führt sie ab.“
 🖱 Klick 1: Primärretarder · Klick 2: Sekundärretarder · Klick 3: Bedienung · Klick 4: Wärme.
-✅ Primärretarder sitzt motorseitig und wirkt auch bei wenig Tempo. Sekundärretarder sitzt am Getriebeausgang – bei wenig Tempo bringt er wenig (eurotransport). Beispiele (Herstellerangaben): ZF-Intarder bis 4.000 Nm, bis zu 90 % der Bremsungen ohne Betriebsbremse; Mercedes Actros Wasserretarder 3.500 Nm.
+✅ Primärretarder sitzt motorseitig: Er wirkt auch bei wenig Tempo – wenn der Motor hoch dreht. Sekundärretarder (z. B. ZF-Intarder, Mercedes-Wasserretarder) sitzt am Getriebeausgang: Seine Bremskraft hängt vom Tempo ab, nicht vom Gang – bei wenig Tempo bringt er wenig (eurotransport, „ZF-Intarder: Feste Größe“ und „Bremsmoment: Der Retarder des neuen Actros“). Beispiele (Herstellerangaben): ZF-Intarder bis 4.000 Nm, bis zu 90 % der Bremsungen ohne Betriebsbremse; Mercedes Actros Wasserretarder 3.500 Nm.
 ✅ Wird das Kühlmittel zu heiß, regelt der Retarder zurück (herstellerabhängig).
+💡 E-Lkw: Der Elektromotor bremst als Generator (Rekuperation) – bedient wie der Retarder über den Hebel am Lenkrad (autozeitung, Fahrbericht eActros 600).
 ➜ „Und wann wird die Dauerbremse gefährlich?“
 
 === FOLIE 70 ===
-AUF DER FOLIE: KLASSE C  ·  ABEND 3  ·  C6  ·  DAUERBREMSEN | 70 | DAUERBREMSEN · GLÄTTE | Glatte Straße, Kurve – und der Retarder steht auf voller Stufe. Was droht? | Die Antriebsachse kann blockieren –  die Dauerbremse bremst nur sie. Der Lkw bricht aus, ein Zug kann einknicken. | Bei Glätte:  Dauerbremse auf kleine Stufe oder aus – und nie voll in der Kurve. | Betriebsbremse zusätzlich treten?  Dann wird die Antriebsachse noch stärker gebremst – Vorsicht.
+AUF DER FOLIE: DAUERBREMSEN · GLÄTTE | Glatte Straße, Kurve – und der Retarder steht auf voller Stufe. Was droht? | Die Antriebsachse kann blockieren –  die Dauerbremse bremst nur sie. Der Lkw bricht aus, ein Zug kann einknicken. | Bei Glätte:  Dauerbremse auf kleine Stufe oder aus – und nie voll in der Kurve. | Betriebsbremse zusätzlich treten?  Dann wird die Antriebsachse noch stärker gebremst – Vorsicht. | KLASSE C  ·  ABEND 3  ·  C6  ·  DAUERBREMSEN | 70
 NOTIZEN:
-FOLIE 70 VON 125 · 3 Klicks
+FOLIE 70 VON 126 · 3 Klicks
 
 ▶ Sagen: „Die Dauerbremse wirkt nur auf die Antriebsachse. Auf trockener Straße kein Problem. Auf Glätte schon.“
 ❓ „Was passiert, wenn nur die Hinterachse bremst und die Straße glatt ist?“
@@ -696,29 +708,31 @@ FOLIE 70 VON 125 · 3 Klicks
 ➜ „Und wenn die Dauerbremse im Gefälle nicht reicht?“
 
 === FOLIE 71 ===
-AUF DER FOLIE: KLASSE C  ·  ABEND 3  ·  C6  ·  DAUERBREMSEN | 71 | DAUERBREMSEN | Starkes Gefälle: Trotz Dauerbremse wird der Lkw immer schneller. Was tun? | A | In einen höheren Gang schalten | B | Mit der Betriebsbremse abbremsen und in einen niedrigeren Gang schalten | C | Die Dauerbremse ausschalten, damit sie nicht überhitzt | ✓  RICHTIG | Erst die Geschwindigkeit mit der Betriebsbremse verringern, dann herunterschalten – im kleinen Gang bremsen Motor und Retarder stärker (Prüfungsfrage 2.7.06-236).
+AUF DER FOLIE: DAUERBREMSEN | Beladener Lkw mit Schaltgetriebe, starkes Gefälle: Trotz Dauerbremse wird er immer schneller. Was tun? | A | Mit der Betriebsbremse abbremsen und hochschalten | B | Mit der Betriebsbremse abbremsen und herunterschalten | C | Dauerbremse aus, nur noch Betriebsbremse | ✓  RICHTIG | Erst mit der Betriebsbremse langsamer werden, dann herunterschalten – im kleinen Gang bremst vor allem der Motor stärker (Prüfungsfrage 2.7.06-236). | KLASSE C  ·  ABEND 3  ·  C6  ·  DAUERBREMSEN | 71
 NOTIZEN:
-FOLIE 71 VON 125 · 2 Klicks
+FOLIE 71 VON 126 · 2 Klicks
 
 ▶ Frage vorlesen, abstimmen.
+💡 Mündlich abstimmen und begründen – kein Bogen zum Ausfüllen.
 🖱 Klick 1: Antworten · Klick 2: Lösung.
-✅ B.
+✅ B (Prüfungsfrage 2.7.06-236: beladen, manuelles Schaltgetriebe). Mit Automatik schaltet das Getriebe selbst zurück.
+💡 Ein Sekundärretarder bremst nach dem Tempo, nicht nach dem Gang – der Gewinn im kleinen Gang kommt vor allem vom Motor.
 💡 Besser: schon vor dem Gefälle den kleinen Gang wählen.
 ➜ „Kapitel 2: Bremsweg und Fading.“
 
 === FOLIE 72 ===
-AUF DER FOLIE: KLASSE C  ·  ABEND 3  ·  C6  ·  BREMSWEG UND FADING | 72 | 02 | Bremsweg und Fading | Wie lang der Anhalteweg wirklich ist – und warum heiße Bremsen nachlassen.
+AUF DER FOLIE: 02 | Bremsweg und Fading | Wie lang der Anhalteweg wirklich ist – und warum heiße Bremsen nachlassen. | KLASSE C  ·  ABEND 3  ·  C6  ·  BREMSWEG UND FADING | 72
 NOTIZEN:
-FOLIE 72 VON 125 · Animation läuft von selbst · Klick = weiter
+FOLIE 72 VON 126 · Animation läuft von selbst · Klick = weiter
 
 ▶ Sagen: „Kapitel 2: Wie weit fährt ein Lkw, bis er steht?“
 🖱 Keine Klicks.
 ➜ „Rechnen wir es aus.“
 
 === FOLIE 73 ===
-AUF DER FOLIE: KLASSE C  ·  ABEND 3  ·  C6  ·  BREMSWEG UND FADING | 73 | BREMSWEG | Bis der Lkw steht | ❓ Frage an die Klasse / Ihr fahrt 80 km/h und seht eine Gefahr. Wie weit fährt der Lkw noch, bis er steht? | Antwort folgt … | Gefahr erkannt! Jetzt beginnt die Reaktionszeit. | Mindest-Bremsverzögerung 5,0 m/s² · gerundet · eigene Rechnung | ! | 80 | km/h | gefahren: 0 m | Reaktion | Druckluft wirkt | Bremsen
+AUF DER FOLIE: BREMSWEG | Bis der Lkw steht | ❓ Frage an die Klasse / Ihr fahrt 80 km/h und seht eine Gefahr. Wie weit fährt der Lkw noch, bis er steht? | Antwort folgt … | Gefahr erkannt! Jetzt beginnt die Reaktionszeit. | ! | 80 | km/h | gefahren: 0 m | Reaktion | Druckluft wirkt | Bremsen | Mindest-Bremsverzögerung 5,0 m/s² · gerundet · eigene Rechnung | KLASSE C  ·  ABEND 3  ·  C6  ·  BREMSWEG UND FADING | 73
 NOTIZEN:
-FOLIE 73 VON 125 · keine Animation · Klick = weiter
+FOLIE 73 VON 126 · keine Animation · Klick = weiter
 
 ▶ Sagen: „Ein Lkw mit 80 km/h, vorn eine Gefahr.“
 ❓ Frage auf der Folie: „Wie weit fährt er noch, bis er steht?“ – Schätzungen sammeln und an die Tafel schreiben.
@@ -726,103 +740,104 @@ FOLIE 73 VON 125 · keine Animation · Klick = weiter
 ➜ „Erst reagiert ihr …“
 
 === FOLIE 74 ===
-AUF DER FOLIE: KLASSE C  ·  ABEND 3  ·  C6  ·  BREMSWEG UND FADING | 74 | BREMSWEG | Bis der Lkw steht | ❓ Frage an die Klasse / Ihr fahrt 80 km/h und seht eine Gefahr. Wie weit fährt der Lkw noch, bis er steht? | Antwort folgt … | Reaktion: rund 1 Sekunde – der Lkw fährt ungebremst weiter. | Mindest-Bremsverzögerung 5,0 m/s² · gerundet · eigene Rechnung | ! | 80 | km/h | gefahren: 11 m | Reaktion | Druckluft wirkt | Bremsen
+AUF DER FOLIE: BREMSWEG | Bis der Lkw steht | ❓ Frage an die Klasse / Ihr fahrt 80 km/h und seht eine Gefahr. Wie weit fährt der Lkw noch, bis er steht? | Antwort folgt … | Reaktion: rund 1 Sekunde – der Lkw fährt ungebremst weiter. | ! | 80 | km/h | gefahren: 11 m | Reaktion | Druckluft wirkt | Bremsen | Mindest-Bremsverzögerung 5,0 m/s² · gerundet · eigene Rechnung | KLASSE C  ·  ABEND 3  ·  C6  ·  BREMSWEG UND FADING | 74
 NOTIZEN:
-FOLIE 74 VON 125 · läuft von selbst weiter (kein Klick)
+FOLIE 74 VON 126 · läuft von selbst weiter (kein Klick)
 
 ▶ Die Bewegung läuft – zuschauen lassen.
 🖱 Kein Klick – die Folie läuft von selbst weiter.
 ➜ (läuft weiter)
 
 === FOLIE 75 ===
-AUF DER FOLIE: KLASSE C  ·  ABEND 3  ·  C6  ·  BREMSWEG UND FADING | 75 | BREMSWEG | Bis der Lkw steht | ❓ Frage an die Klasse / Ihr fahrt 80 km/h und seht eine Gefahr. Wie weit fährt der Lkw noch, bis er steht? | Antwort folgt … | Reaktion: rund 1 Sekunde – der Lkw fährt ungebremst weiter. | Mindest-Bremsverzögerung 5,0 m/s² · gerundet · eigene Rechnung | ! | 22 m | 80 | km/h | gefahren: 22 m | Reaktion | Druckluft wirkt | Bremsen
+AUF DER FOLIE: BREMSWEG | Bis der Lkw steht | ❓ Frage an die Klasse / Ihr fahrt 80 km/h und seht eine Gefahr. Wie weit fährt der Lkw noch, bis er steht? | Antwort folgt … | Reaktion: rund 1 Sekunde – der Lkw fährt ungebremst weiter. | ! | 22 m | 80 | km/h | gefahren: 22 m | Reaktion | Druckluft wirkt | Bremsen | Mindest-Bremsverzögerung 5,0 m/s² · gerundet · eigene Rechnung | KLASSE C  ·  ABEND 3  ·  C6  ·  BREMSWEG UND FADING | 75
 NOTIZEN:
-FOLIE 75 VON 125 · keine Animation · Klick = weiter
+FOLIE 75 VON 126 · keine Animation · Klick = weiter
 
 ▶ „1 Sekunde Reaktion – bei 80 km/h sind das 22 Meter, ohne dass irgendetwas bremst.“
 🖱 Klick: weiter.
 ➜ „Jetzt tretet ihr auf die Bremse – aber …“
 
 === FOLIE 76 ===
-AUF DER FOLIE: KLASSE C  ·  ABEND 3  ·  C6  ·  BREMSWEG UND FADING | 76 | BREMSWEG | Bis der Lkw steht | ❓ Frage an die Klasse / Ihr fahrt 80 km/h und seht eine Gefahr. Wie weit fährt der Lkw noch, bis er steht? | Antwort folgt … | Die Druckluft braucht bis zu 0,6 Sekunden, bis sie in den Zylindern wirkt. | Mindest-Bremsverzögerung 5,0 m/s² · gerundet · eigene Rechnung | ! | 22 m | 80 | km/h | gefahren: 29 m | Reaktion | Druckluft wirkt | Bremsen
+AUF DER FOLIE: BREMSWEG | Bis der Lkw steht | ❓ Frage an die Klasse / Ihr fahrt 80 km/h und seht eine Gefahr. Wie weit fährt der Lkw noch, bis er steht? | Antwort folgt … | Die Druckluft braucht bis zu 0,6 Sekunden, bis sie in den Zylindern wirkt. | ! | 22 m | 80 | km/h | gefahren: 29 m | Reaktion | Druckluft wirkt | Bremsen | Mindest-Bremsverzögerung 5,0 m/s² · gerundet · eigene Rechnung | KLASSE C  ·  ABEND 3  ·  C6  ·  BREMSWEG UND FADING | 76
 NOTIZEN:
-FOLIE 76 VON 125 · läuft von selbst weiter (kein Klick)
+FOLIE 76 VON 126 · läuft von selbst weiter (kein Klick)
 
 ▶ Die Bewegung läuft – zuschauen lassen.
 🖱 Kein Klick – die Folie läuft von selbst weiter.
 ➜ (läuft weiter)
 
 === FOLIE 77 ===
-AUF DER FOLIE: KLASSE C  ·  ABEND 3  ·  C6  ·  BREMSWEG UND FADING | 77 | BREMSWEG | Bis der Lkw steht | ❓ Frage an die Klasse / Ihr fahrt 80 km/h und seht eine Gefahr. Wie weit fährt der Lkw noch, bis er steht? | Antwort folgt … | Die Druckluft braucht bis zu 0,6 Sekunden, bis sie in den Zylindern wirkt. | Mindest-Bremsverzögerung 5,0 m/s² · gerundet · eigene Rechnung | ! | 22 m | 13 m | 80 | km/h | gefahren: 35 m | Reaktion | Druckluft wirkt | Bremsen
+AUF DER FOLIE: BREMSWEG | Bis der Lkw steht | ❓ Frage an die Klasse / Ihr fahrt 80 km/h und seht eine Gefahr. Wie weit fährt der Lkw noch, bis er steht? | Antwort folgt … | Die Druckluft braucht bis zu 0,6 Sekunden, bis sie in den Zylindern wirkt. | ! | 22 m | 13 m | 80 | km/h | gefahren: 35 m | Reaktion | Druckluft wirkt | Bremsen | Mindest-Bremsverzögerung 5,0 m/s² · gerundet · eigene Rechnung | KLASSE C  ·  ABEND 3  ·  C6  ·  BREMSWEG UND FADING | 77
 NOTIZEN:
-FOLIE 77 VON 125 · keine Animation · Klick = weiter
+FOLIE 77 VON 126 · keine Animation · Klick = weiter
 
 ▶ „… die Druckluft muss erst in die Bremszylinder strömen. Bis zu 0,6 Sekunden – noch einmal 13 Meter.“
-✅ § 41 Abs. 12 StVZO: Ansprech- und Schwellzeit höchstens 0,6 s.
+✅ EU-/UN-Bremsenrecht (UN-R 13 Anhang 6): Spätestens 0,6 s nach dem Treten muss im Bremszylinder 75 % des Drucks anliegen. Vorsichtige Rechnung: Wir tun so, als ob in dieser Zeit noch nichts bremst.
 🖱 Klick: Der Lkw bremst.
 ➜ „Und jetzt bremst er.“
 
 === FOLIE 78 ===
-AUF DER FOLIE: KLASSE C  ·  ABEND 3  ·  C6  ·  BREMSWEG UND FADING | 78 | BREMSWEG | Bis der Lkw steht | ❓ Frage an die Klasse / Ihr fahrt 80 km/h und seht eine Gefahr. Wie weit fährt der Lkw noch, bis er steht? | Antwort folgt … | Jetzt bremst der Lkw – erst schnell, dann immer langsamer. | Mindest-Bremsverzögerung 5,0 m/s² · gerundet · eigene Rechnung | ! | 22 m | 13 m | 60 | km/h | gefahren: 56 m | Reaktion | Druckluft wirkt | Bremsen
+AUF DER FOLIE: BREMSWEG | Bis der Lkw steht | ❓ Frage an die Klasse / Ihr fahrt 80 km/h und seht eine Gefahr. Wie weit fährt der Lkw noch, bis er steht? | Antwort folgt … | Jetzt bremst der Lkw – erst schnell, dann immer langsamer. | ! | 22 m | 13 m | 60 | km/h | gefahren: 57 m | Reaktion | Druckluft wirkt | Bremsen | Mindest-Bremsverzögerung 5,0 m/s² · gerundet · eigene Rechnung | KLASSE C  ·  ABEND 3  ·  C6  ·  BREMSWEG UND FADING | 78
 NOTIZEN:
-FOLIE 78 VON 125 · läuft von selbst weiter (kein Klick)
+FOLIE 78 VON 126 · läuft von selbst weiter (kein Klick)
 
 ▶ Die Bewegung läuft – zuschauen lassen.
 🖱 Kein Klick – die Folie läuft von selbst weiter.
 ➜ (läuft weiter)
 
 === FOLIE 79 ===
-AUF DER FOLIE: KLASSE C  ·  ABEND 3  ·  C6  ·  BREMSWEG UND FADING | 79 | BREMSWEG | Bis der Lkw steht | ❓ Frage an die Klasse / Ihr fahrt 80 km/h und seht eine Gefahr. Wie weit fährt der Lkw noch, bis er steht? | Antwort folgt … | Jetzt bremst der Lkw – erst schnell, dann immer langsamer. | Mindest-Bremsverzögerung 5,0 m/s² · gerundet · eigene Rechnung | ! | 22 m | 13 m | 40 | km/h | gefahren: 72 m | Reaktion | Druckluft wirkt | Bremsen
+AUF DER FOLIE: BREMSWEG | Bis der Lkw steht | ❓ Frage an die Klasse / Ihr fahrt 80 km/h und seht eine Gefahr. Wie weit fährt der Lkw noch, bis er steht? | Antwort folgt … | Jetzt bremst der Lkw – erst schnell, dann immer langsamer. | ! | 22 m | 13 m | 40 | km/h | gefahren: 73 m | Reaktion | Druckluft wirkt | Bremsen | Mindest-Bremsverzögerung 5,0 m/s² · gerundet · eigene Rechnung | KLASSE C  ·  ABEND 3  ·  C6  ·  BREMSWEG UND FADING | 79
 NOTIZEN:
-FOLIE 79 VON 125 · läuft von selbst weiter (kein Klick)
+FOLIE 79 VON 126 · läuft von selbst weiter (kein Klick)
 
 ▶ Die Bewegung läuft – zuschauen lassen.
 🖱 Kein Klick – die Folie läuft von selbst weiter.
 ➜ (läuft weiter)
 
 === FOLIE 80 ===
-AUF DER FOLIE: KLASSE C  ·  ABEND 3  ·  C6  ·  BREMSWEG UND FADING | 80 | BREMSWEG | Bis der Lkw steht | ❓ Frage an die Klasse / Ihr fahrt 80 km/h und seht eine Gefahr. Wie weit fährt der Lkw noch, bis er steht? | Antwort folgt … | Jetzt bremst der Lkw – erst schnell, dann immer langsamer. | Mindest-Bremsverzögerung 5,0 m/s² · gerundet · eigene Rechnung | ! | 22 m | 13 m | 20 | km/h | gefahren: 81 m | Reaktion | Druckluft wirkt | Bremsen
+AUF DER FOLIE: BREMSWEG | Bis der Lkw steht | ❓ Frage an die Klasse / Ihr fahrt 80 km/h und seht eine Gefahr. Wie weit fährt der Lkw noch, bis er steht? | Antwort folgt … | Jetzt bremst der Lkw – erst schnell, dann immer langsamer. | ! | 22 m | 13 m | 20 | km/h | gefahren: 82 m | Reaktion | Druckluft wirkt | Bremsen | Mindest-Bremsverzögerung 5,0 m/s² · gerundet · eigene Rechnung | KLASSE C  ·  ABEND 3  ·  C6  ·  BREMSWEG UND FADING | 80
 NOTIZEN:
-FOLIE 80 VON 125 · läuft von selbst weiter (kein Klick)
+FOLIE 80 VON 126 · läuft von selbst weiter (kein Klick)
 
 ▶ Die Bewegung läuft – zuschauen lassen.
 🖱 Kein Klick – die Folie läuft von selbst weiter.
 ➜ (läuft weiter)
 
 === FOLIE 81 ===
-AUF DER FOLIE: KLASSE C  ·  ABEND 3  ·  C6  ·  BREMSWEG UND FADING | 81 | BREMSWEG | Bis der Lkw steht | ❓ Frage an die Klasse / Ihr fahrt 80 km/h und seht eine Gefahr. Wie weit fährt der Lkw noch, bis er steht? | ✓ Antwort / Etwa 85 Meter – fast eine ganze Fußballfeld-Länge. | Bremsweg rund 49 Meter. Zusammen: etwa 85 Meter Anhalteweg. | Mindest-Bremsverzögerung 5,0 m/s² · gerundet · eigene Rechnung | ! | 22 m | 13 m | 49 m | 0 | km/h | gefahren: 84 m | Reaktion | Druckluft wirkt | Bremsen
+AUF DER FOLIE: BREMSWEG | Bis der Lkw steht | ❓ Frage an die Klasse / Ihr fahrt 80 km/h und seht eine Gefahr. Wie weit fährt der Lkw noch, bis er steht? | ✓ Antwort / Etwa 85 Meter – gut drei Viertel eines Fußballfelds. | Bremsweg rund 49 Meter. Zusammen: etwa 85 Meter Anhalteweg. | ! | 22 m | 13 m | 49 m | 0 | km/h | gefahren: 85 m | Reaktion | Druckluft wirkt | Bremsen | Mindest-Bremsverzögerung 5,0 m/s² · gerundet · eigene Rechnung | KLASSE C  ·  ABEND 3  ·  C6  ·  BREMSWEG UND FADING | 81
 NOTIZEN:
-FOLIE 81 VON 125 · keine Animation · Klick = weiter
+FOLIE 81 VON 126 · keine Animation · Klick = weiter
 
-▶ „Bremsweg rund 49 Meter. Zusammen etwa 85 Meter – fast ein Fußballfeld. Und das mit einer Bremse, die gerade das gesetzliche Minimum schafft, auf trockener Straße.“
-✅ Eigene Rechnung: 80 km/h = 22,2 m/s; Reaktion 1 s = 22 m; 0,6 s = 13 m; Bremsweg v²/(2 · 5,0 m/s²) = 49 m.
+▶ „Bremsweg rund 49 Meter. Zusammen etwa 85 Meter – gut drei Viertel eines Fußballfelds, das meist 105 Meter lang ist. Und das mit einer Bremse, die gerade das gesetzliche Minimum schafft, auf trockener Straße.“
+✅ Eigene Rechnung: 80 km/h = 22,2 m/s; Reaktion 1 s = 22 m; 0,6 s = 13 m; Bremsweg v²/(2 · 5,0 m/s²) = 49 m. Genau: 22,2 + 13,3 + 49,4 = 84,9 m ≈ 85 m (die gerundeten Teilstücke ergeben 84).
 🖱 Keine Animation mehr – nächster Klick: Vergleich mit Gefälle und halbem Tempo.
 ➜ „Was ändert sich im Gefälle – und bei halbem Tempo?“
 
 === FOLIE 82 ===
-AUF DER FOLIE: KLASSE C  ·  ABEND 3  ·  C6  ·  BREMSWEG UND FADING | 82 | BREMSWEG | Drei Fälle im Vergleich | 1 | Eben, 80 km/h | 2 | Im Gefälle | 3 | Halbes Tempo | Reaktion 1 Sekunde, dazu braucht die Druckluft bis zu 0,6 Sekunden, bis sie wirkt. Zusammen etwa 85 Meter. | Gerundete Werte · eigene Rechnung mit Mindest-Bremsverzögerung | eben, 80 km/h | 22 m | 13 | 49 m | Reaktion (1 s) | Druckluft wirkt (bis 0,6 s) | Bremsweg | Anhalteweg etwa 85 m
+AUF DER FOLIE: BREMSWEG | Drei Fälle im Vergleich | 1 | Eben, 80 km/h | 2 | Im Gefälle | 3 | Halbes Tempo | Reaktion 1 Sekunde, dazu braucht die Druckluft bis zu 0,6 Sekunden, bis sie wirkt. Zusammen etwa 85 Meter. | eben, 80 km/h | 22 m | 13 m | 49 m | Reaktion (1 s) | Druckluft wirkt (bis 0,6 s) | Bremsweg | Anhalteweg etwa 85 m | Gerundete Werte · eigene Rechnung mit Mindest-Bremsverzögerung | KLASSE C  ·  ABEND 3  ·  C6  ·  BREMSWEG UND FADING | 82
 NOTIZEN:
-FOLIE 82 VON 125 · keine Animation · Klick = weiter
+FOLIE 82 VON 126 · keine Animation · Klick = weiter
 
 ▶ Sagen: „Noch einmal als Balken zum Vergleich: Erst die Reaktionszeit – rund 1 Sekunde, das sind 22 Meter. Dann braucht die Druckluft Zeit, bis sie bremst – bis zu 0,6 Sekunden, noch einmal 13 Meter. Dann erst bremst der Lkw – mit der gesetzlichen Mindest-Bremswirkung etwa 49 Meter.“
-✅ Eigene Rechnung mit 5,0 m/s² (Mindestwert nach § 41 Abs. 4 StVZO) und 0,6 s Ansprech- und Schwellzeit (§ 41 Abs. 12). Ergebnis: rund 85 m.
+✅ Eigene Rechnung mit 5,0 m/s² (Mindestwert für schwere Lkw, UN-R 13) und 0,6 s Ansprech- und Schwellzeit (UN-R 13 Anhang 6). Ergebnis: 84,9 m, rund 85 m.
+💡 Baut sich die Bremswirkung in den 0,6 s gleichmäßig auf, sind es etwa 78 m – unsere Rechnung ist die vorsichtige.
 🖱 Keine Animation auf dieser Folie – nächster Klick = nächster Schritt (Morph).
 ➜ „Und bergab?“
 
 === FOLIE 83 ===
-AUF DER FOLIE: KLASSE C  ·  ABEND 3  ·  C6  ·  BREMSWEG UND FADING | 83 | BREMSWEG | Drei Fälle im Vergleich | 1 | Eben, 80 km/h | 2 | Im Gefälle | 3 | Halbes Tempo | Im Gefälle schiebt die Last mit. Bei 8 % wird der Bremsweg etwa 10 Meter länger. | Gerundete Werte · eigene Rechnung mit Mindest-Bremsverzögerung | 8 % Gefälle, 80 km/h | 22 m | 13 | 59 m | Reaktion (1 s) | Druckluft wirkt (bis 0,6 s) | Bremsweg | Anhalteweg etwa 95 m
+AUF DER FOLIE: BREMSWEG | Drei Fälle im Vergleich | 1 | Eben, 80 km/h | 2 | Im Gefälle | 3 | Halbes Tempo | Im Gefälle schiebt die Last mit. Bei 8 % wird der Bremsweg etwa 10 Meter länger. | 8 % Gefälle, 80 km/h | 22 m | 13 m | 59 m | Reaktion (1 s) | Druckluft wirkt (bis 0,6 s) | Bremsweg | Anhalteweg etwa 94 m | Gerundete Werte · eigene Rechnung mit Mindest-Bremsverzögerung | KLASSE C  ·  ABEND 3  ·  C6  ·  BREMSWEG UND FADING | 83
 NOTIZEN:
-FOLIE 83 VON 125 · keine Animation · Klick = weiter
+FOLIE 83 VON 126 · keine Animation · Klick = weiter
 
-▶ „Im Gefälle schiebt die Hangabtriebskraft mit. Bei 8 % Gefälle fehlen etwa 0,8 m/s² Verzögerung – aus 49 Metern Bremsweg werden etwa 59.“
+▶ „Im Gefälle schiebt die Hangabtriebskraft mit. Bei 8 % Gefälle fehlen etwa 0,8 m/s² Verzögerung – aus 49 Metern Bremsweg werden etwa 59. Anhalteweg also etwa 94 Meter.“
 ✅ Prüfungsfrage 2.7.01-042: Der Bremsweg verlängert sich im Gefälle und mit schwerer Last – NICHT bei Gegenwind. Eigene Rechnung.
 🖱 Keine Animation auf dieser Folie – nächster Klick = nächster Schritt (Morph).
 ➜ „Was bringt es, langsamer zu fahren?“
 
 === FOLIE 84 ===
-AUF DER FOLIE: KLASSE C  ·  ABEND 3  ·  C6  ·  BREMSWEG UND FADING | 84 | BREMSWEG | Drei Fälle im Vergleich | 1 | Eben, 80 km/h | 2 | Im Gefälle | 3 | Halbes Tempo | Halbes Tempo – nur ein Viertel Bremsweg. Der Anhalteweg schrumpft auf etwa 30 Meter. | Gerundete Werte · eigene Rechnung mit Mindest-Bremsverzögerung | eben, 40 km/h | 11 m | 7 | 12 m | Reaktion (1 s) | Druckluft wirkt (bis 0,6 s) | Bremsweg | Anhalteweg etwa 30 m
+AUF DER FOLIE: BREMSWEG | Drei Fälle im Vergleich | 1 | Eben, 80 km/h | 2 | Im Gefälle | 3 | Halbes Tempo | Halbes Tempo – nur ein Viertel Bremsweg. Der Anhalteweg schrumpft auf etwa 30 Meter. | eben, 40 km/h | 11 m | 7 m | 12 m | Reaktion (1 s) | Druckluft wirkt (bis 0,6 s) | Bremsweg | Anhalteweg etwa 30 m | Gerundete Werte · eigene Rechnung mit Mindest-Bremsverzögerung | KLASSE C  ·  ABEND 3  ·  C6  ·  BREMSWEG UND FADING | 84
 NOTIZEN:
-FOLIE 84 VON 125 · keine Animation · Klick = weiter
+FOLIE 84 VON 126 · keine Animation · Klick = weiter
 
 ▶ „Der Bremsweg wächst mit dem Quadrat der Geschwindigkeit. Halbes Tempo – ein Viertel Bremsweg.“
 ✅ Physik: Bremsweg = v² / (2 · a). Bei 40 km/h: 11 + 7 + 12 = rund 30 m.
@@ -831,9 +846,9 @@ FOLIE 84 VON 125 · keine Animation · Klick = weiter
 ➜ „Und was passiert mit der Bremse auf einer langen Abfahrt?“
 
 === FOLIE 85 ===
-AUF DER FOLIE: KLASSE C  ·  ABEND 3  ·  C6  ·  BREMSWEG UND FADING | 85 | FADING | Wenn die Bremse nachlässt | ❓ Frage an die Klasse / Ein langer Pass, die ganze Zeit nur die Fußbremse. Was passiert mit der Bremse? | Antwort folgt … | Kalte Bremse: Die Beläge greifen voll. Die Bremse wirkt wie sie soll. | Bremsscheibe · schematisch | Bremssattel | Temperatur | Bremswirkung
+AUF DER FOLIE: FADING | Wenn die Bremse nachlässt | ❓ Frage an die Klasse / Ein langer Pass, die ganze Zeit nur die Fußbremse. Was passiert mit der Bremse? | Antwort folgt … | Kalte Bremse: Die Beläge greifen voll. Die Bremse wirkt, wie sie soll. | Bremssattel | Temperatur | Bremswirkung | Bremsscheibe · schematisch | KLASSE C  ·  ABEND 3  ·  C6  ·  BREMSWEG UND FADING | 85
 NOTIZEN:
-FOLIE 85 VON 125 · keine Animation · Klick = weiter
+FOLIE 85 VON 126 · keine Animation · Klick = weiter
 
 ▶ Sagen: „Hier eine Bremsscheibe. Kalt bremst sie mit voller Kraft.“
 ❓ Frage auf der Folie vorlesen, Antworten sammeln.
@@ -841,63 +856,63 @@ FOLIE 85 VON 125 · keine Animation · Klick = weiter
 ➜ „Jetzt fahrt ihr einen langen Pass hinunter – nur mit dem Fuß auf der Bremse.“
 
 === FOLIE 86 ===
-AUF DER FOLIE: KLASSE C  ·  ABEND 3  ·  C6  ·  BREMSWEG UND FADING | 86 | FADING | Wenn die Bremse nachlässt | ❓ Frage an die Klasse / Ein langer Pass, die ganze Zeit nur die Fußbremse. Was passiert mit der Bremse? | Antwort folgt … | Langes Gefälle, nur Betriebsbremse: Die Scheibe wird immer heißer … | Bremsscheibe · schematisch | Bremssattel | Temperatur | Bremswirkung
+AUF DER FOLIE: FADING | Wenn die Bremse nachlässt | ❓ Frage an die Klasse / Ein langer Pass, die ganze Zeit nur die Fußbremse. Was passiert mit der Bremse? | Antwort folgt … | Langes Gefälle, nur Betriebsbremse: Die Scheibe wird immer heißer … | Bremssattel | Temperatur | Bremswirkung | Bremsscheibe · schematisch | KLASSE C  ·  ABEND 3  ·  C6  ·  BREMSWEG UND FADING | 86
 NOTIZEN:
-FOLIE 86 VON 125 · läuft von selbst weiter (kein Klick)
+FOLIE 86 VON 126 · läuft von selbst weiter (kein Klick)
 
 ▶ Die Bewegung läuft – zuschauen lassen.
 🖱 Kein Klick – die Folie läuft von selbst weiter.
 ➜ (läuft weiter)
 
 === FOLIE 87 ===
-AUF DER FOLIE: KLASSE C  ·  ABEND 3  ·  C6  ·  BREMSWEG UND FADING | 87 | FADING | Wenn die Bremse nachlässt | ❓ Frage an die Klasse / Ein langer Pass, die ganze Zeit nur die Fußbremse. Was passiert mit der Bremse? | Antwort folgt … | Langes Gefälle, nur Betriebsbremse: Die Scheibe wird immer heißer … | Bremsscheibe · schematisch | Bremssattel | Temperatur | Bremswirkung
+AUF DER FOLIE: FADING | Wenn die Bremse nachlässt | ❓ Frage an die Klasse / Ein langer Pass, die ganze Zeit nur die Fußbremse. Was passiert mit der Bremse? | Antwort folgt … | Langes Gefälle, nur Betriebsbremse: Die Scheibe wird immer heißer … | Bremssattel | Temperatur | Bremswirkung | Bremsscheibe · schematisch | KLASSE C  ·  ABEND 3  ·  C6  ·  BREMSWEG UND FADING | 87
 NOTIZEN:
-FOLIE 87 VON 125 · läuft von selbst weiter (kein Klick)
+FOLIE 87 VON 126 · läuft von selbst weiter (kein Klick)
 
 ▶ Die Bewegung läuft – zuschauen lassen.
 🖱 Kein Klick – die Folie läuft von selbst weiter.
 ➜ (läuft weiter)
 
 === FOLIE 88 ===
-AUF DER FOLIE: KLASSE C  ·  ABEND 3  ·  C6  ·  BREMSWEG UND FADING | 88 | FADING | Wenn die Bremse nachlässt | ❓ Frage an die Klasse / Ein langer Pass, die ganze Zeit nur die Fußbremse. Was passiert mit der Bremse? | Antwort folgt … | Langes Gefälle, nur Betriebsbremse: Die Scheibe wird immer heißer … | Bremsscheibe · schematisch | Bremssattel | Temperatur | Bremswirkung
+AUF DER FOLIE: FADING | Wenn die Bremse nachlässt | ❓ Frage an die Klasse / Ein langer Pass, die ganze Zeit nur die Fußbremse. Was passiert mit der Bremse? | Antwort folgt … | Langes Gefälle, nur Betriebsbremse: Die Scheibe wird immer heißer … | Bremssattel | Temperatur | Bremswirkung | Bremsscheibe · schematisch | KLASSE C  ·  ABEND 3  ·  C6  ·  BREMSWEG UND FADING | 88
 NOTIZEN:
-FOLIE 88 VON 125 · läuft von selbst weiter (kein Klick)
+FOLIE 88 VON 126 · läuft von selbst weiter (kein Klick)
 
 ▶ Die Bewegung läuft – zuschauen lassen.
 🖱 Kein Klick – die Folie läuft von selbst weiter.
 ➜ (läuft weiter)
 
 === FOLIE 89 ===
-AUF DER FOLIE: KLASSE C  ·  ABEND 3  ·  C6  ·  BREMSWEG UND FADING | 89 | FADING | Wenn die Bremse nachlässt | ❓ Frage an die Klasse / Ein langer Pass, die ganze Zeit nur die Fußbremse. Was passiert mit der Bremse? | Antwort folgt … | Langes Gefälle, nur Betriebsbremse: Die Scheibe wird immer heißer … | Bremsscheibe · schematisch | Bremssattel | Temperatur | Bremswirkung
+AUF DER FOLIE: FADING | Wenn die Bremse nachlässt | ❓ Frage an die Klasse / Ein langer Pass, die ganze Zeit nur die Fußbremse. Was passiert mit der Bremse? | Antwort folgt … | Langes Gefälle, nur Betriebsbremse: Die Scheibe wird immer heißer … | Bremssattel | Temperatur | Bremswirkung | Bremsscheibe · schematisch | KLASSE C  ·  ABEND 3  ·  C6  ·  BREMSWEG UND FADING | 89
 NOTIZEN:
-FOLIE 89 VON 125 · keine Animation · Klick = weiter
+FOLIE 89 VON 126 · keine Animation · Klick = weiter
 
 ▶ „Die ganze Bewegungsenergie wird an der Bremse zu Wärme. Ohne Dauerbremse wird sie immer heißer.“
 🖱 Klick: weiter.
 ➜ „Und dann?“
 
 === FOLIE 90 ===
-AUF DER FOLIE: KLASSE C  ·  ABEND 3  ·  C6  ·  BREMSWEG UND FADING | 90 | FADING | Wenn die Bremse nachlässt | ❓ Frage an die Klasse / Ein langer Pass, die ganze Zeit nur die Fußbremse. Was passiert mit der Bremse? | Antwort folgt … | Sehr heiß: Belag und Scheibe greifen schlechter – die Wirkung lässt nach. | Bremsscheibe · schematisch | Bremssattel | Temperatur | Bremswirkung
+AUF DER FOLIE: FADING | Wenn die Bremse nachlässt | ❓ Frage an die Klasse / Ein langer Pass, die ganze Zeit nur die Fußbremse. Was passiert mit der Bremse? | Antwort folgt … | Sehr heiß: Belag und Scheibe greifen schlechter – die Wirkung lässt nach. | Bremssattel | Temperatur | Bremswirkung | Bremsscheibe · schematisch | KLASSE C  ·  ABEND 3  ·  C6  ·  BREMSWEG UND FADING | 90
 NOTIZEN:
-FOLIE 90 VON 125 · läuft von selbst weiter (kein Klick)
+FOLIE 90 VON 126 · läuft von selbst weiter (kein Klick)
 
 ▶ Die Bewegung läuft – zuschauen lassen.
 🖱 Kein Klick – die Folie läuft von selbst weiter.
 ➜ (läuft weiter)
 
 === FOLIE 91 ===
-AUF DER FOLIE: KLASSE C  ·  ABEND 3  ·  C6  ·  BREMSWEG UND FADING | 91 | FADING | Wenn die Bremse nachlässt | ❓ Frage an die Klasse / Ein langer Pass, die ganze Zeit nur die Fußbremse. Was passiert mit der Bremse? | Antwort folgt … | Sehr heiß: Belag und Scheibe greifen schlechter – die Wirkung lässt nach. | Bremsscheibe · schematisch | Bremssattel | Temperatur | Bremswirkung
+AUF DER FOLIE: FADING | Wenn die Bremse nachlässt | ❓ Frage an die Klasse / Ein langer Pass, die ganze Zeit nur die Fußbremse. Was passiert mit der Bremse? | Antwort folgt … | Sehr heiß: Belag und Scheibe greifen schlechter – die Wirkung lässt nach. | Bremssattel | Temperatur | Bremswirkung | Bremsscheibe · schematisch | KLASSE C  ·  ABEND 3  ·  C6  ·  BREMSWEG UND FADING | 91
 NOTIZEN:
-FOLIE 91 VON 125 · läuft von selbst weiter (kein Klick)
+FOLIE 91 VON 126 · läuft von selbst weiter (kein Klick)
 
 ▶ Die Bewegung läuft – zuschauen lassen.
 🖱 Kein Klick – die Folie läuft von selbst weiter.
 ➜ (läuft weiter)
 
 === FOLIE 92 ===
-AUF DER FOLIE: KLASSE C  ·  ABEND 3  ·  C6  ·  BREMSWEG UND FADING | 92 | FADING | Wenn die Bremse nachlässt | ❓ Frage an die Klasse / Ein langer Pass, die ganze Zeit nur die Fußbremse. Was passiert mit der Bremse? | ✓ Antwort / Sie wird so heiß, dass sie schlechter greift – die Bremswirkung lässt gefährlich nach (Fading). | Fading! Gegenmittel: vor dem Gefälle zurückschalten und die Dauerbremse arbeiten lassen. | Bremsscheibe · schematisch | Bremssattel | Temperatur | Bremswirkung | Fading!
+AUF DER FOLIE: FADING | Wenn die Bremse nachlässt | ❓ Frage an die Klasse / Ein langer Pass, die ganze Zeit nur die Fußbremse. Was passiert mit der Bremse? | ✓ Antwort / Sie wird so heiß, dass sie schlechter greift – die Bremswirkung lässt gefährlich nach (Fading). | Fading! Gegenmittel: vor dem Gefälle zurückschalten und die Dauerbremse arbeiten lassen. | Bremssattel | Temperatur | Bremswirkung | Fading! | Bremsscheibe · schematisch | KLASSE C  ·  ABEND 3  ·  C6  ·  BREMSWEG UND FADING | 92
 NOTIZEN:
-FOLIE 92 VON 125 · keine Animation · Klick = weiter
+FOLIE 92 VON 126 · keine Animation · Klick = weiter
 
 ▶ „Die Reibung zwischen Belag und Scheibe sinkt, Trommeln dehnen sich aus – die Bremse wird schwach. Das heißt Fading.“
 ✅ Prüfungsfrage 2.7.06-310 (Lastzug-Frage, gilt sinngemäß auch für C): Wird im langen Gefälle ständig nur mit der Betriebsbremse gebremst, werden die Radbremsen so heiß, dass die Bremswirkung gefährlich nachlässt.
@@ -906,9 +921,9 @@ FOLIE 92 VON 125 · keine Animation · Klick = weiter
 ➜ „Wie fahrt ihr bergab richtig?“
 
 === FOLIE 93 ===
-AUF DER FOLIE: KLASSE C  ·  ABEND 3  ·  C6  ·  BREMSWEG UND FADING | 93 | BREMSEN BERGAB | Lange Gefälle richtig fahren | Vor dem Gefälle zurückschalten / Faustregel: den Gang, den ihr bergauf bräuchtet. | Dauerbremse arbeiten lassen / Motorbremse und Retarder halten das Tempo. | Betriebsbremse kurz und kräftig / statt lange schleifen lassen – dann wieder lösen und abkühlen lassen. | Nie im Leerlauf rollen / und nie mit getretener Kupplung – dann fehlt die Motorbremse.
+AUF DER FOLIE: BREMSEN BERGAB | Lange Gefälle richtig fahren | Vor dem Gefälle zurückschalten / Faustregel: den Gang, den ihr bergauf bräuchtet. | Dauerbremse arbeiten lassen / Motorbremse und Retarder halten das Tempo. | Betriebsbremse kurz und kräftig / statt lange schleifen lassen – dann wieder lösen und abkühlen lassen. | Nie im Leerlauf rollen / und nie mit getretener Kupplung – dann fehlt die Motorbremse. | KLASSE C  ·  ABEND 3  ·  C6  ·  BREMSWEG UND FADING | 93
 NOTIZEN:
-FOLIE 93 VON 125 · 4 Klicks
+FOLIE 93 VON 126 · 4 Klicks
 
 ▶ Sagen: „So fahrt ihr ein langes Gefälle richtig.“
 🖱 Klick 1–4: je ein Punkt.
@@ -916,109 +931,109 @@ FOLIE 93 VON 125 · 4 Klicks
 ➜ „Kapitel 3: das ABS.“
 
 === FOLIE 94 ===
-AUF DER FOLIE: KLASSE C  ·  ABEND 3  ·  C6  ·  ABS | 94 | 03 | ABS | Die Räder blockieren nicht – der Lkw bleibt lenkbar.
+AUF DER FOLIE: 03 | ABS | Die Räder blockieren nicht – der Lkw bleibt lenkbar. | KLASSE C  ·  ABEND 3  ·  C6  ·  ABS | 94
 NOTIZEN:
-FOLIE 94 VON 125 · Animation läuft von selbst · Klick = weiter
+FOLIE 94 VON 126 · Animation läuft von selbst · Klick = weiter
 
 ▶ Sagen: „Kapitel 3: das ABS – im Gesetz heißt es Automatischer Blockierverhinderer, ABV.“
 🖱 Keine Klicks.
 ➜ „Was bringt es in der Gefahr?“
 
 === FOLIE 95 ===
-AUF DER FOLIE: KLASSE C  ·  ABEND 3  ·  C6  ·  ABS | 95 | ABS | Bremsen und lenken | ❓ Frage an die Klasse / Vollbremsung – kann der Lkw noch am Auto vorbei? | Antwort folgt … | Vor euch steht plötzlich ein Auto. Vollbremsung! | Draufsicht · schematisch
+AUF DER FOLIE: ABS | Bremsen und lenken | ❓ Frage an die Klasse / Vollbremsung – kann der Lkw noch am Auto vorbei? | Antwort folgt … | Vor euch steht plötzlich ein Auto. Vollbremsung! | Draufsicht · schematisch | KLASSE C  ·  ABEND 3  ·  C6  ·  ABS | 95
 NOTIZEN:
-FOLIE 95 VON 125 · keine Animation · Klick = weiter
+FOLIE 95 VON 126 · keine Animation · Klick = weiter
 
 ▶ Sagen: „Ein Auto steht plötzlich auf eurer Spur. Ihr macht eine Vollbremsung und wollt links vorbei.“
-❓ Frage auf der Folie: „Kann der Lkw noch ausweichen?“ – abstimmen lassen.
+❓ Frage auf der Folie: „Kann der Lkw noch am Auto vorbei?“ – abstimmen lassen.
 🖱 Klick: Bremsung ohne ABS (läuft von selbst).
 ➜ „Zuerst ohne ABS.“
 
 === FOLIE 96 ===
-AUF DER FOLIE: KLASSE C  ·  ABEND 3  ·  C6  ·  ABS | 96 | ABS | Bremsen und lenken | ❓ Frage an die Klasse / Vollbremsung – kann der Lkw noch am Auto vorbei? | Antwort folgt … | Ohne ABS blockieren die Räder. Der Lkw rutscht geradeaus – lenken bringt nichts. | Draufsicht · schematisch | ohne ABS: blockiert – nicht lenkbar
+AUF DER FOLIE: ABS | Bremsen und lenken | ❓ Frage an die Klasse / Vollbremsung – kann der Lkw noch am Auto vorbei? | Antwort folgt … | Ohne ABS blockieren die Räder. Der Lkw rutscht geradeaus – lenken bringt nichts. | ohne ABS: blockiert – nicht lenkbar | Draufsicht · schematisch | KLASSE C  ·  ABEND 3  ·  C6  ·  ABS | 96
 NOTIZEN:
-FOLIE 96 VON 125 · läuft von selbst weiter (kein Klick)
+FOLIE 96 VON 126 · läuft von selbst weiter (kein Klick)
 
 ▶ Die Bewegung läuft – zuschauen lassen.
 🖱 Kein Klick – die Folie läuft von selbst weiter.
 ➜ (läuft weiter)
 
 === FOLIE 97 ===
-AUF DER FOLIE: KLASSE C  ·  ABEND 3  ·  C6  ·  ABS | 97 | ABS | Bremsen und lenken | ❓ Frage an die Klasse / Vollbremsung – kann der Lkw noch am Auto vorbei? | Antwort folgt … | Ohne ABS blockieren die Räder. Der Lkw rutscht geradeaus – lenken bringt nichts. | Draufsicht · schematisch | ohne ABS: blockiert – nicht lenkbar
+AUF DER FOLIE: ABS | Bremsen und lenken | ❓ Frage an die Klasse / Vollbremsung – kann der Lkw noch am Auto vorbei? | Antwort folgt … | Ohne ABS blockieren die Räder. Der Lkw rutscht geradeaus – lenken bringt nichts. | ohne ABS: blockiert – nicht lenkbar | Draufsicht · schematisch | KLASSE C  ·  ABEND 3  ·  C6  ·  ABS | 97
 NOTIZEN:
-FOLIE 97 VON 125 · läuft von selbst weiter (kein Klick)
+FOLIE 97 VON 126 · läuft von selbst weiter (kein Klick)
 
 ▶ Die Bewegung läuft – zuschauen lassen.
 🖱 Kein Klick – die Folie läuft von selbst weiter.
 ➜ (läuft weiter)
 
 === FOLIE 98 ===
-AUF DER FOLIE: KLASSE C  ·  ABEND 3  ·  C6  ·  ABS | 98 | ABS | Bremsen und lenken | ❓ Frage an die Klasse / Vollbremsung – kann der Lkw noch am Auto vorbei? | Antwort folgt … | Ohne ABS blockieren die Räder. Der Lkw rutscht geradeaus – lenken bringt nichts. | Draufsicht · schematisch | ohne ABS: blockiert – nicht lenkbar
+AUF DER FOLIE: ABS | Bremsen und lenken | ❓ Frage an die Klasse / Vollbremsung – kann der Lkw noch am Auto vorbei? | Antwort folgt … | Ohne ABS blockieren die Räder. Der Lkw rutscht geradeaus – lenken bringt nichts. | ohne ABS: blockiert – nicht lenkbar | Draufsicht · schematisch | KLASSE C  ·  ABEND 3  ·  C6  ·  ABS | 98
 NOTIZEN:
-FOLIE 98 VON 125 · läuft von selbst weiter (kein Klick)
+FOLIE 98 VON 126 · läuft von selbst weiter (kein Klick)
 
 ▶ Die Bewegung läuft – zuschauen lassen.
 🖱 Kein Klick – die Folie läuft von selbst weiter.
 ➜ (läuft weiter)
 
 === FOLIE 99 ===
-AUF DER FOLIE: KLASSE C  ·  ABEND 3  ·  C6  ·  ABS | 99 | ABS | Bremsen und lenken | ❓ Frage an die Klasse / Vollbremsung – kann der Lkw noch am Auto vorbei? | Antwort folgt … | Ohne ABS blockieren die Räder. Der Lkw rutscht geradeaus – lenken bringt nichts. | Draufsicht · schematisch | ohne ABS: blockiert – nicht lenkbar
+AUF DER FOLIE: ABS | Bremsen und lenken | ❓ Frage an die Klasse / Vollbremsung – kann der Lkw noch am Auto vorbei? | Antwort folgt … | Ohne ABS blockieren die Räder. Der Lkw rutscht geradeaus – lenken bringt nichts. | ohne ABS: blockiert – nicht lenkbar | Draufsicht · schematisch | KLASSE C  ·  ABEND 3  ·  C6  ·  ABS | 99
 NOTIZEN:
-FOLIE 99 VON 125 · keine Animation · Klick = weiter
+FOLIE 99 VON 126 · keine Animation · Klick = weiter
 
 ▶ „Blockierte Räder übertragen keine Seitenkraft – der Lkw rutscht geradeaus, auch wenn ihr lenkt. Er trifft das Auto.“
 🖱 Klick: noch einmal – jetzt mit ABS.
 ➜ „Und mit ABS?“
 
 === FOLIE 100 ===
-AUF DER FOLIE: KLASSE C  ·  ABEND 3  ·  C6  ·  ABS | 100 | ABS | Bremsen und lenken | ❓ Frage an die Klasse / Vollbremsung – kann der Lkw noch am Auto vorbei? | Antwort folgt … | Noch einmal – jetzt mit ABS. | Draufsicht · schematisch | mit ABS: lenkbar – ausweichen
+AUF DER FOLIE: ABS | Bremsen und lenken | ❓ Frage an die Klasse / Vollbremsung – kann der Lkw noch am Auto vorbei? | Antwort folgt … | Noch einmal – jetzt mit ABS. | mit ABS: lenkbar – ausweichen | Draufsicht · schematisch | KLASSE C  ·  ABEND 3  ·  C6  ·  ABS | 100
 NOTIZEN:
-FOLIE 100 VON 125 · keine Animation · Klick = weiter
+FOLIE 100 VON 126 · keine Animation · Klick = weiter
 
 ▶ „Gleiche Lage, jetzt mit ABS.“
 🖱 Klick: Bremsung mit ABS (läuft von selbst).
 ➜ „Schaut auf die Räder.“
 
 === FOLIE 101 ===
-AUF DER FOLIE: KLASSE C  ·  ABEND 3  ·  C6  ·  ABS | 101 | ABS | Bremsen und lenken | ❓ Frage an die Klasse / Vollbremsung – kann der Lkw noch am Auto vorbei? | Antwort folgt … | Mit ABS drehen die Räder weiter. Ihr könnt bremsen und gleichzeitig ausweichen. | Draufsicht · schematisch | mit ABS: lenkbar – ausweichen
+AUF DER FOLIE: ABS | Bremsen und lenken | ❓ Frage an die Klasse / Vollbremsung – kann der Lkw noch am Auto vorbei? | Antwort folgt … | Mit ABS drehen die Räder weiter. Ihr könnt bremsen und gleichzeitig ausweichen. | mit ABS: lenkbar – ausweichen | Draufsicht · schematisch | KLASSE C  ·  ABEND 3  ·  C6  ·  ABS | 101
 NOTIZEN:
-FOLIE 101 VON 125 · läuft von selbst weiter (kein Klick)
+FOLIE 101 VON 126 · läuft von selbst weiter (kein Klick)
 
 ▶ Die Bewegung läuft – zuschauen lassen.
 🖱 Kein Klick – die Folie läuft von selbst weiter.
 ➜ (läuft weiter)
 
 === FOLIE 102 ===
-AUF DER FOLIE: KLASSE C  ·  ABEND 3  ·  C6  ·  ABS | 102 | ABS | Bremsen und lenken | ❓ Frage an die Klasse / Vollbremsung – kann der Lkw noch am Auto vorbei? | Antwort folgt … | Mit ABS drehen die Räder weiter. Ihr könnt bremsen und gleichzeitig ausweichen. | Draufsicht · schematisch | mit ABS: lenkbar – ausweichen
+AUF DER FOLIE: ABS | Bremsen und lenken | ❓ Frage an die Klasse / Vollbremsung – kann der Lkw noch am Auto vorbei? | Antwort folgt … | Mit ABS drehen die Räder weiter. Ihr könnt bremsen und gleichzeitig ausweichen. | mit ABS: lenkbar – ausweichen | Draufsicht · schematisch | KLASSE C  ·  ABEND 3  ·  C6  ·  ABS | 102
 NOTIZEN:
-FOLIE 102 VON 125 · läuft von selbst weiter (kein Klick)
+FOLIE 102 VON 126 · läuft von selbst weiter (kein Klick)
 
 ▶ Die Bewegung läuft – zuschauen lassen.
 🖱 Kein Klick – die Folie läuft von selbst weiter.
 ➜ (läuft weiter)
 
 === FOLIE 103 ===
-AUF DER FOLIE: KLASSE C  ·  ABEND 3  ·  C6  ·  ABS | 103 | ABS | Bremsen und lenken | ❓ Frage an die Klasse / Vollbremsung – kann der Lkw noch am Auto vorbei? | Antwort folgt … | Mit ABS drehen die Räder weiter. Ihr könnt bremsen und gleichzeitig ausweichen. | Draufsicht · schematisch | mit ABS: lenkbar – ausweichen
+AUF DER FOLIE: ABS | Bremsen und lenken | ❓ Frage an die Klasse / Vollbremsung – kann der Lkw noch am Auto vorbei? | Antwort folgt … | Mit ABS drehen die Räder weiter. Ihr könnt bremsen und gleichzeitig ausweichen. | mit ABS: lenkbar – ausweichen | Draufsicht · schematisch | KLASSE C  ·  ABEND 3  ·  C6  ·  ABS | 103
 NOTIZEN:
-FOLIE 103 VON 125 · läuft von selbst weiter (kein Klick)
+FOLIE 103 VON 126 · läuft von selbst weiter (kein Klick)
 
 ▶ Die Bewegung läuft – zuschauen lassen.
 🖱 Kein Klick – die Folie läuft von selbst weiter.
 ➜ (läuft weiter)
 
 === FOLIE 104 ===
-AUF DER FOLIE: KLASSE C  ·  ABEND 3  ·  C6  ·  ABS | 104 | ABS | Bremsen und lenken | ❓ Frage an die Klasse / Vollbremsung – kann der Lkw noch am Auto vorbei? | Antwort folgt … | Mit ABS drehen die Räder weiter. Ihr könnt bremsen und gleichzeitig ausweichen. | Draufsicht · schematisch | mit ABS: lenkbar – ausweichen
+AUF DER FOLIE: ABS | Bremsen und lenken | ❓ Frage an die Klasse / Vollbremsung – kann der Lkw noch am Auto vorbei? | Antwort folgt … | Mit ABS drehen die Räder weiter. Ihr könnt bremsen und gleichzeitig ausweichen. | mit ABS: lenkbar – ausweichen | Draufsicht · schematisch | KLASSE C  ·  ABEND 3  ·  C6  ·  ABS | 104
 NOTIZEN:
-FOLIE 104 VON 125 · läuft von selbst weiter (kein Klick)
+FOLIE 104 VON 126 · läuft von selbst weiter (kein Klick)
 
 ▶ Die Bewegung läuft – zuschauen lassen.
 🖱 Kein Klick – die Folie läuft von selbst weiter.
 ➜ (läuft weiter)
 
 === FOLIE 105 ===
-AUF DER FOLIE: KLASSE C  ·  ABEND 3  ·  C6  ·  ABS | 105 | ABS | Bremsen und lenken | ❓ Frage an die Klasse / Vollbremsung – kann der Lkw noch am Auto vorbei? | ✓ Antwort / Nur mit ABS: Die Räder drehen weiter, der Lkw bleibt lenkbar. Ohne ABS rutscht er geradeaus. | Mit ABS drehen die Räder weiter. Ihr könnt bremsen und gleichzeitig ausweichen. | Draufsicht · schematisch | mit ABS: lenkbar – ausweichen
+AUF DER FOLIE: ABS | Bremsen und lenken | ❓ Frage an die Klasse / Vollbremsung – kann der Lkw noch am Auto vorbei? | ✓ Antwort / Nur mit ABS: Die Räder drehen weiter, der Lkw bleibt lenkbar. Ohne ABS rutscht er geradeaus. | Mit ABS drehen die Räder weiter. Ihr könnt bremsen und gleichzeitig ausweichen. | mit ABS: lenkbar – ausweichen | Draufsicht · schematisch | KLASSE C  ·  ABEND 3  ·  C6  ·  ABS | 105
 NOTIZEN:
-FOLIE 105 VON 125 · keine Animation · Klick = weiter
+FOLIE 105 VON 126 · keine Animation · Klick = weiter
 
 ▶ „Das ABS regelt den Schlupf: Die Räder drehen knapp vor dem Blockieren weiter. Der Lkw bleibt lenkbar – ihr kommt am Auto vorbei.“
 ✅ Prüfungsfrage 2.7.06-101: bestmögliche Bremsung auch bei Glätte, Lenkfähigkeit bleibt weitgehend erhalten – NICHT: verhindert Aquaplaning. 2.7.06-103/-104: kein Blockieren, lenkbar, Bremsen und Ausweichen möglich – NICHT: schneller durch Kurven, weniger Kippgefahr.
@@ -1027,9 +1042,9 @@ FOLIE 105 VON 125 · keine Animation · Klick = weiter
 ➜ „Wie bremst ihr richtig mit ABS?“
 
 === FOLIE 106 ===
-AUF DER FOLIE: KLASSE C  ·  ABEND 3  ·  C6  ·  ABS | 106 | ABS | Leuchte und richtig bremsen | ABS-Kontrollleuchte | Symbol je nach Hersteller | Beim Start leuchtet sie kurz auf – / Selbsttest. Dann geht sie aus, bei manchen Lkw erst nach dem Anfahren. | Bleibt sie an: ABS ist aus. / Die Bremse wirkt – aber die Räder können blockieren. Vorsichtig fahren, Werkstatt. | Vollbremsung mit ABS: / Pedal schlagartig und mit voller Kraft treten und halten – nicht pumpen!
+AUF DER FOLIE: ABS | Leuchte und richtig bremsen | ABS-Kontrollleuchte | Symbol je nach Hersteller | Beim Start leuchtet sie kurz auf – / Selbsttest. Dann geht sie aus, bei manchen Lkw erst nach dem Anfahren. | Bleibt sie an: ABS ist aus. / Die Bremse wirkt – aber die Räder können blockieren. Vorsichtig fahren, Werkstatt. | Vollbremsung mit ABS: / Pedal schlagartig und mit voller Kraft treten und halten – nicht pumpen! | KLASSE C  ·  ABEND 3  ·  C6  ·  ABS | 106
 NOTIZEN:
-FOLIE 106 VON 125 · 3 Klicks
+FOLIE 106 VON 126 · 3 Klicks
 
 ▶ Sagen: „ABS ist bei Lkw über 3,5 t Pflicht, wenn sie schneller als 60 km/h fahren können.“
 🖱 Klick 1: Leuchte beim Start · Klick 2: Leuchte bleibt an · Klick 3: richtig bremsen.
@@ -1038,29 +1053,29 @@ FOLIE 106 VON 125 · 3 Klicks
 ➜ „Kapitel 4: Wie kontrolliert ihr die Bremse?“
 
 === FOLIE 107 ===
-AUF DER FOLIE: KLASSE C  ·  ABEND 3  ·  C6  ·  KONTROLLE | 107 | 04 | Kontrolle der Bremse | Was ihr vor der Fahrt prüft – und woran ihr einen Fehler erkennt.
+AUF DER FOLIE: 04 | Kontrolle der Bremse | Was ihr vor der Fahrt prüft – und woran ihr einen Fehler erkennt. | KLASSE C  ·  ABEND 3  ·  C6  ·  KONTROLLE | 107
 NOTIZEN:
-FOLIE 107 VON 125 · Animation läuft von selbst · Klick = weiter
+FOLIE 107 VON 126 · Animation läuft von selbst · Klick = weiter
 
 ▶ Sagen: „Kapitel 4: Der Fahrer ist verantwortlich, dass die Bremse in Ordnung ist.“
 🖱 Keine Klicks.
 ➜ „Was gehört vor jeder Schicht dazu?“
 
 === FOLIE 108 ===
-AUF DER FOLIE: KLASSE C  ·  ABEND 3  ·  C6  ·  KONTROLLE | 108 | KONTROLLE | Vor jeder Schicht: Bremse prüfen | Entwässern:  wenn keine automatischen Ventile – kommt Wasser, ist der Trockner defekt | Druck aufbauen:  der volle Vorratsdruck wird erreicht | Dicht?:  kein Zischen, Druck fällt nicht ab | Druckwarnung:  funktioniert – Prüfung nach Betriebsanleitung | Bremsprobe:  gleich nach dem Losfahren – wirkt sie gleichmäßig?
+AUF DER FOLIE: KONTROLLE | Vor jeder Schicht: Bremse prüfen | Entwässern:  wenn keine automatischen Ventile – kommt Wasser, ist der Trockner defekt | Druck aufbauen:  der volle Vorratsdruck wird erreicht | Dicht:  kein Zischen, Druck hält (Werte: Betriebsanleitung) | Druckwarnung:  funktioniert – Prüfung nach Betriebsanleitung | ABS-Leuchte:  erlischt nach dem Start oder kurz nach dem Anfahren – keine Störung | Bremsprobe:  gleich nach dem Losfahren – wirkt sie gleichmäßig? | KLASSE C  ·  ABEND 3  ·  C6  ·  KONTROLLE | 108
 NOTIZEN:
-FOLIE 108 VON 125 · 5 Klicks
+FOLIE 108 VON 126 · 6 Klicks
 
 ▶ Sagen: „Vor jeder Schicht prüft ihr die Bremse. Das verlangt die Berufsgenossenschaft.“
-🖱 Klick 1–5: je ein Punkt.
-✅ DGUV Vorschrift 70 § 36: Der Fahrer prüft vor jeder Arbeitsschicht die Wirksamkeit der Betätigungs- und Sicherheitseinrichtungen; Mängel melden, bei Gefahr Betrieb einstellen. DGUV Grundsatz 314-002 Nr. 2.3.2: Luftbehälter entwässert (wenn nicht automatisch), Lufttrockner funktionsfähig, Anlage dicht, maximaler Vorratsdruck erreicht, Druckwarnung funktioniert, Bremsprobe.
-✅ Rechtsprechung (OLG Düsseldorf, 28.01.2014): Bei der Abfahrtkontrolle genügt eine Bremsprobe – Risse in den Bremsscheiben durch die Felgen suchen muss der Fahrer nicht.
+🖱 Klick 1–6: je ein Punkt.
+✅ DGUV Vorschrift 70 § 36: Der Fahrer prüft vor jeder Arbeitsschicht die Wirksamkeit der Betätigungs- und Sicherheitseinrichtungen; Mängel melden, bei Gefahr Betrieb einstellen. DGUV Grundsatz 314-002 Nr. 2.3.2: Luftbehälter entwässert (wenn nicht automatisch), Lufttrockner funktionsfähig, Anlage dicht, maximaler Vorratsdruck erreicht (Werte zur Dichtheit: Betriebsanleitung – ein kleiner Druckabfall ist normal), Druckwarnung funktioniert, die ABV-/ABS-Kontrolleinrichtung zeigt keine Störung an, Bremsprobe.
+✅ OLG Düsseldorf, 28.01.2014, IV-3 RBs 11/14: Gibt es keine Hinweise auf Schäden, genügt bei der Abfahrtkontrolle die Bremsprobe – durch die Felgen nach Rissen suchen muss der Fahrer nicht.
 ➜ „Wie prüft ihr die Dichtheit genau?“
 
 === FOLIE 109 ===
-AUF DER FOLIE: KLASSE C  ·  ABEND 3  ·  C6  ·  KONTROLLE | 109 | KONTROLLE | Ist die Anlage dicht? | 1 | Voll füllen, Motor aus | 2 | Einmal voll bremsen | 3 | Mehr als 0,7 bar weg? | ❓ Frage an die Klasse   / Wie viel Druck darf bei einer Vollbremsung verloren gehen? | Lkw mit Keilen sichern, bis zum Abschaltdruck füllen, Motor aus. Hören: zischt es irgendwo? | Vorratsdruck · Beispielwerte | 0 | 2 | 4 | 6 | 8 | 10 | 12 | 14 | 12,0 bar | Start: 12,0 bar | Motor aus | Grenze: 0,7 bar je Vollbremsung
+AUF DER FOLIE: KONTROLLE | Ist die Anlage dicht? | 1 | Voll füllen, Motor aus | 2 | Einmal voll bremsen | 3 | Mehr als 0,7 bar weg? | ❓ Frage an die Klasse   / Wie viel Druck darf bei einer Vollbremsung verloren gehen? | Lkw mit Keilen sichern, bis zum Abschaltdruck füllen, Motor aus. Hören: zischt es irgendwo? | 0 | 2 | 4 | 6 | 8 | 10 | 12 | 14 | 12,0 bar | Start: 12,0 bar | Motor aus | Grenze: 0,7 bar je Vollbremsung | Vorratsdruck · Beispielwerte | KLASSE C  ·  ABEND 3  ·  C6  ·  KONTROLLE | 109
 NOTIZEN:
-FOLIE 109 VON 125 · keine Animation · Klick = weiter
+FOLIE 109 VON 126 · keine Animation · Klick = weiter
 
 ▶ Sagen: „Ein einfacher Test: Anlage voll füllen, Motor aus, Manometer ablesen. Und hinhören – jedes Zischen ist verdächtig.“
 💡 Wie lange und wie viel Druckverlust ohne Bremsen erlaubt ist, steht in der Betriebsanleitung.
@@ -1068,9 +1083,9 @@ FOLIE 109 VON 125 · keine Animation · Klick = weiter
 ➜ „Jetzt einmal voll bremsen.“
 
 === FOLIE 110 ===
-AUF DER FOLIE: KLASSE C  ·  ABEND 3  ·  C6  ·  KONTROLLE | 110 | KONTROLLE | Ist die Anlage dicht? | 1 | Voll füllen, Motor aus | 2 | Einmal voll bremsen | 3 | Mehr als 0,7 bar weg? | ✓ Antwort   / Höchstens 0,7 bar. Mehr heißt: undicht oder zu großer Zylinderhub. | Einmal das Bremspedal voll durchtreten. Fällt der Druck um höchstens 0,7 bar, ist alles in Ordnung. | Vorratsdruck · Beispielwerte | 0 | 2 | 4 | 6 | 8 | 10 | 12 | 14 | 11,4 bar | − 0,6 bar | in Ordnung | Grenze: 0,7 bar je Vollbremsung
+AUF DER FOLIE: KONTROLLE | Ist die Anlage dicht? | 1 | Voll füllen, Motor aus | 2 | Einmal voll bremsen | 3 | Mehr als 0,7 bar weg? | ✓ Antwort   / Höchstens 0,7 bar. Mehr heißt: undicht oder zu großer Zylinderhub. | Einmal das Bremspedal voll durchtreten. Fällt der Druck um höchstens 0,7 bar, ist alles in Ordnung. | 0 | 2 | 4 | 6 | 8 | 10 | 12 | 14 | 11,4 bar | − 0,6 bar | in Ordnung | Grenze: 0,7 bar je Vollbremsung | Vorratsdruck · Beispielwerte | KLASSE C  ·  ABEND 3  ·  C6  ·  KONTROLLE | 110
 NOTIZEN:
-FOLIE 110 VON 125 · keine Animation · Klick = weiter
+FOLIE 110 VON 126 · keine Animation · Klick = weiter
 
 ▶ „Einmal voll durchtreten – der Druck sinkt ein wenig. Bis 0,7 bar ist unbedenklich.“
 ✅ Prüfungsfrage 2.7.06-231: maximal unbedenklicher Druckabfall bei einer Vollbremsung mit voll gefülltem Behälter: 0,7 bar.
@@ -1078,9 +1093,9 @@ FOLIE 110 VON 125 · keine Animation · Klick = weiter
 ➜ „Und wenn mehr?“
 
 === FOLIE 111 ===
-AUF DER FOLIE: KLASSE C  ·  ABEND 3  ·  C6  ·  KONTROLLE | 111 | KONTROLLE | Ist die Anlage dicht? | 1 | Voll füllen, Motor aus | 2 | Einmal voll bremsen | 3 | Mehr als 0,7 bar weg? | ✓ Antwort   / Höchstens 0,7 bar. Mehr heißt: undicht oder zu großer Zylinderhub. | Fällt er mehr, verliert die Anlage zu schnell Luft – undicht oder zu großer Zylinderhub. Werkstatt! | Vorratsdruck · Beispielwerte | 0 | 2 | 4 | 6 | 8 | 10 | 12 | 14 | 10,8 bar | − 1,2 bar | zu viel – Werkstatt | Grenze: 0,7 bar je Vollbremsung
+AUF DER FOLIE: KONTROLLE | Ist die Anlage dicht? | 1 | Voll füllen, Motor aus | 2 | Einmal voll bremsen | 3 | Mehr als 0,7 bar weg? | ✓ Antwort   / Höchstens 0,7 bar. Mehr heißt: undicht oder zu großer Zylinderhub. | Fällt er mehr, verliert die Anlage zu schnell Luft – undicht oder zu großer Zylinderhub. Werkstatt! | 0 | 2 | 4 | 6 | 8 | 10 | 12 | 14 | 10,8 bar | − 1,2 bar | zu viel – Werkstatt | Grenze: 0,7 bar je Vollbremsung | Vorratsdruck · Beispielwerte | KLASSE C  ·  ABEND 3  ·  C6  ·  KONTROLLE | 111
 NOTIZEN:
-FOLIE 111 VON 125 · keine Animation · Klick = weiter
+FOLIE 111 VON 126 · keine Animation · Klick = weiter
 
 ▶ „Dann fällt der Luftvorrat zu schnell ab – nach wenigen Bremsungen ist die Wirkung schlechter.“
 ✅ Prüfungsfrage 2.7.06-232 (Abschaltdruck etwa 10–13 bar): Druckabfall über 0,7 bar ist problematisch, weil der Luftvorrat zu schnell abfällt und die Bremswirkung schlechter wird. Ursache oft Undichtigkeit oder zu großer Zylinderhub (Beläge, Nachstellung).
@@ -1088,9 +1103,9 @@ FOLIE 111 VON 125 · keine Animation · Klick = weiter
 ➜ „Noch zwei Punkte: Bremsprobe und Beläge.“
 
 === FOLIE 112 ===
-AUF DER FOLIE: KLASSE C  ·  ABEND 3  ·  C6  ·  KONTROLLE | 112 | KONTROLLE | Bremsprobe und Beläge | Bremsprobe gleich nach dem Losfahren:  zieht der Lkw gerade, greift die Bremse gleichmäßig und kräftig? | Unbedingt bei:  Übernahme eines anderen Fahrzeugs und nach längerer Standzeit. | Bremsbeläge:  Verschleißanzeige im Display beachten – Wechsel und Wartung macht die Werkstatt.
+AUF DER FOLIE: KONTROLLE | Bremsprobe und Beläge | Bremsprobe gleich nach dem Losfahren:  zieht der Lkw gerade, greift die Bremse gleichmäßig und kräftig? | Unbedingt bei:  Übernahme eines anderen Fahrzeugs und nach längerer Standzeit. | Bremsbeläge:  Verschleißanzeige im Display beachten – Wechsel und Wartung macht die Werkstatt. | KLASSE C  ·  ABEND 3  ·  C6  ·  KONTROLLE | 112
 NOTIZEN:
-FOLIE 112 VON 125 · 3 Klicks
+FOLIE 112 VON 126 · 3 Klicks
 
 ▶ Sagen: „Die Bremsprobe macht ihr gleich nach dem Losfahren – bei geringem Tempo, ohne Verkehr hinter euch zu gefährden.“
 🖱 Klick 1: Bremsprobe · Klick 2: wann unerlässlich · Klick 3: Beläge.
@@ -1098,39 +1113,39 @@ FOLIE 112 VON 125 · 3 Klicks
 ➜ „Kapitel 5: Wer prüft den Lkw regelmäßig?“
 
 === FOLIE 113 ===
-AUF DER FOLIE: KLASSE C  ·  ABEND 3  ·  C6  ·  HU UND SP | 113 | 05 | HU und SP | Hauptuntersuchung und Sicherheitsprüfung – wann, was und was es kostet, wenn man sie verpasst.
+AUF DER FOLIE: 05 | HU und SP | Hauptuntersuchung und Sicherheitsprüfung – wann, was und was es kostet, wenn man sie verpasst. | KLASSE C  ·  ABEND 3  ·  C6  ·  HU UND SP | 113
 NOTIZEN:
-FOLIE 113 VON 125 · Animation läuft von selbst · Klick = weiter
+FOLIE 113 VON 126 · Animation läuft von selbst · Klick = weiter
 
 ▶ Sagen: „Kapitel 5: Lkw müssen öfter zur Prüfung als Pkw.“
 🖱 Keine Klicks.
 ➜ „Wie oft?“
 
 === FOLIE 114 ===
-AUF DER FOLIE: KLASSE C  ·  ABEND 3  ·  C6  ·  HU UND SP | 114 | HU UND SP | Wie oft zur Prüfung? | neu | 1 Jahr | 2 Jahre | 3 Jahre | 4 Jahre | 3,5 – 7,5 t | HU | HU | HU | HU | HU jedes Jahr | 7,5 – 12 t | HU | HU | HU | HU | SP | SP ab dem 4. Jahr | über 12 t | HU | HU | HU | HU | SP | SP | SP ab dem 3. Jahr
+AUF DER FOLIE: HU UND SP | Wie oft zur Prüfung? | neu | 1 Jahr | 2 Jahre | 3 Jahre | 4 Jahre | über 3,5 bis 7,5 t | HU | HU | HU | HU | HU jedes Jahr | über 7,5 bis 12 t | HU | HU | HU | HU | SP | SP ab dem 4. Jahr | über 12 t | HU | HU | HU | HU | SP | SP | SP ab dem 3. Jahr | KLASSE C  ·  ABEND 3  ·  C6  ·  HU UND SP | 114
 NOTIZEN:
-FOLIE 114 VON 125 · 3 Klicks
+FOLIE 114 VON 126 · 3 Klicks
 
 ▶ Sagen: „Lkw über 3,5 t müssen jedes Jahr zur Hauptuntersuchung. Schwere Lkw zusätzlich zur Sicherheitsprüfung – immer in der Mitte zwischen zwei HU.“
-🖱 Klick 1: 3,5 bis 7,5 t · Klick 2: 7,5 bis 12 t · Klick 3: über 12 t.
-✅ StVZO Anlage VIII Nr. 2.1: HU alle 12 Monate bei Lkw über 3,5 t. SP alle 6 Monate: über 7,5 bis 12 t nach den ersten 36 Monaten, über 12 t nach den ersten 24 Monaten. Die SP-Frist zählt ab der letzten HU. SP darf einen Monat früher gemacht werden, ohne dass sich die Frist verschiebt.
+🖱 Klick 1: über 3,5 bis 7,5 t · Klick 2: über 7,5 bis 12 t · Klick 3: über 12 t.
+✅ StVZO Anlage VIII Nr. 2.1: HU alle 12 Monate bei Lkw über 3,5 t. SP alle 6 Monate: über 7,5 bis 12 t nach den ersten 36 Monaten, über 12 t nach den ersten 24 Monaten. Die SP-Frist zählt ab der letzten HU (Nr. 2.1). SP darf einen Monat früher gemacht werden, ohne dass sich die Frist verschiebt (Nr. 2.4).
 💡 SP prüft Fahrgestell, Fahrwerk, Lenkung, Reifen, Räder und Bremsanlage – auch in anerkannten Werkstätten. HU nur Prüfingenieure/Sachverständige.
 ➜ „Woran sieht man, dass der Lkw geprüft ist?“
 
 === FOLIE 115 ===
-AUF DER FOLIE: KLASSE C  ·  ABEND 3  ·  C6  ·  HU UND SP | 115 | HU UND SP | Nachweis und Mängel | Nachweis:  HU-Plakette hinten am Kennzeichen – SP-Prüfmarke auf dem SP-Schild. Prüfbericht aufbewahren. | Geringe Mängel:  Plakette gibt es – Mängel innerhalb eines Monats beheben. | Erhebliche Mängel:  keine Plakette – nach der Reparatur Nachprüfung spätestens nach einem Monat. | Verkehrsunsicher:  Plakette wird entfernt – der Lkw darf nicht mehr fahren.
+AUF DER FOLIE: HU UND SP | Nachweis und Mängel | Nachweis:  HU-Plakette hinten am Kennzeichen – SP-Prüfmarke auf dem SP-Schild. Prüfbericht aufbewahren. | Geringe Mängel:  Plakette meist trotzdem – Mängel sofort, spätestens in einem Monat beheben. | Erhebliche Mängel:  keine Plakette – reparieren und innerhalb eines Monats zur Nachprüfung. | Verkehrsunsicher:  Plakette wird entfernt – der Lkw darf nicht mehr fahren. | KLASSE C  ·  ABEND 3  ·  C6  ·  HU UND SP | 115
 NOTIZEN:
-FOLIE 115 VON 125 · 4 Klicks
+FOLIE 115 VON 126 · 4 Klicks
 
 ▶ Sagen: „Die HU-Plakette kennt ihr vom Pkw – hinten am Kennzeichen. Für die SP gibt es eine Prüfmarke auf dem SP-Schild.“
 🖱 Klick 1: Nachweis · Klick 2: geringe Mängel · Klick 3: erhebliche Mängel · Klick 4: verkehrsunsicher.
-✅ § 29 Abs. 2 StVZO (Plakette, Prüfmarke), Anlage VIII Nr. 3.1.4: geringe Mängel – Plakette, beheben binnen eines Monats; erhebliche/gefährliche Mängel – keine Plakette, Nachprüfung spätestens nach einem Monat; verkehrsunsicher – Plakette wird entfernt, Fahrzeug darf nicht mehr fahren. Bericht und SP-Protokoll aufbewahren und auf Verlangen aushändigen (§ 29 Abs. 10).
+✅ § 29 Abs. 2 StVZO (Plakette, Prüfmarke), Anlage VIII Nr. 3.1.4: geringe Mängel – der Prüfer kann die Plakette trotzdem zuteilen (nicht bei einer HU mit nachgeholter SP, Nr. 3.1.3), Mängel unverzüglich, spätestens innerhalb eines Monats beheben (Nr. 3.1.4.1); erhebliche/gefährliche Mängel – keine Plakette, Fahrzeug spätestens bis zum Ablauf eines Monats nach der HU wieder vorführen (Nr. 3.1.4.2); verkehrsunsicher – Plakette wird entfernt, Fahrzeug darf nicht mehr fahren. Bericht und SP-Protokoll aufbewahren und auf Verlangen aushändigen (§ 29 Abs. 10).
 ➜ „Und was kostet es, wenn die Frist überzogen ist?“
 
 === FOLIE 116 ===
-AUF DER FOLIE: KLASSE C  ·  ABEND 3  ·  C6  ·  HU UND SP | 116 | HU UND SP | Was es kostet | HU/SP überzogen – zahlt der Halter | bis 2 Monate | 15 € | über 2 bis 4 Monate | 25 € | über 4 bis 8 Monate | 60 € + 1 Punkt | über 8 Monate | 75 € + 1 Punkt | Lkw mit SP-Pflicht · andere Fahrzeuge etwas weniger | Fahrer fährt Lkw mit kaputten Bremsen: / 180 € + 1 Punkt | Halter lässt das zu: / 270 € + 1 Punkt
+AUF DER FOLIE: HU UND SP | Was es kostet | HU/SP überzogen – zahlt der Halter | bis 2 Monate | 15 € | über 2 bis 4 Monate | 25 € | über 4 bis 8 Monate | 60 € + 1 Punkt | über 8 Monate | 75 € + 1 Punkt | Lkw mit SP-Pflicht · andere Fahrzeuge etwas weniger | Fahrer fährt Lkw mit kaputten Bremsen: / 180 € + 1 Punkt | Halter lässt das zu: / 270 € + 1 Punkt | KLASSE C  ·  ABEND 3  ·  C6  ·  HU UND SP | 116
 NOTIZEN:
-FOLIE 116 VON 125 · 3 Klicks
+FOLIE 116 VON 126 · 3 Klicks
 
 ▶ Sagen: „Wer zahlt, wenn die HU abgelaufen ist? Der Halter – also meist die Firma. Wer mit kaputten Bremsen fährt, zahlt aber selbst.“
 🖱 Klick 1: Tabelle Halter · Klick 2: Fahrer · Klick 3: Halter bei unsicherem Lkw.
@@ -1138,40 +1153,54 @@ FOLIE 116 VON 125 · 3 Klicks
 ➜ „Letztes Kapitel: Begrenzer und Fahrtenschreiber.“
 
 === FOLIE 117 ===
-AUF DER FOLIE: KLASSE C  ·  ABEND 3  ·  C6  ·  BEGRENZER | 117 | 06 | Begrenzer und Fahrtenschreiber | Was eingebaut sein muss – und wie oft es geprüft wird.
+AUF DER FOLIE: 06 | Begrenzer, Tempomat, Fahrtenschreiber | Was eingebaut sein muss, wie ihr den Tempomat nutzt – und wie oft geprüft wird. | KLASSE C  ·  ABEND 3  ·  C6  ·  BEGRENZER UND TEMPOMAT | 117
 NOTIZEN:
-FOLIE 117 VON 125 · Animation läuft von selbst · Klick = weiter
+FOLIE 117 VON 126 · Animation läuft von selbst · Klick = weiter
 
-▶ Sagen: „Letztes Kapitel: Geschwindigkeitsbegrenzer und Prüfung des Fahrtenschreibers.“
+▶ Sagen: „Letztes Kapitel: Geschwindigkeitsbegrenzer, Tempomat und die Prüfung von Fahrtenschreiber und Begrenzer.“
 🖱 Keine Klicks.
 ➜ „Wie schnell kann ein Lkw fahren – und wie schnell darf er?“
 
 === FOLIE 118 ===
-AUF DER FOLIE: KLASSE C  ·  ABEND 3  ·  C6  ·  BEGRENZER | 118 | GESCHWINDIGKEITSBEGRENZER | Kann 90 – darf 80 | 0 | 20 | 40 | 60 | 80 | 100 | 120 | km/h | 60 außerorts über 7,5 t | 80 Autobahn | 90 Begrenzer | Begrenzer: höchstens 90 km/h / Pflicht über 3,5 t – nicht abschaltbar. | Erlaubt ist weniger: / Autobahn 80 km/h – außerorts über 7,5 t nur 60 km/h. | Kein oder falsch eingestellter Begrenzer: / Fahrer 100 € + 1 Punkt, Halter 150 € + 1 Punkt.
+AUF DER FOLIE: GESCHWINDIGKEITSBEGRENZER | Kann 90 – darf 80 | 0 | 20 | 40 | 60 | 80 | 100 | 120 | km/h | 60 Landstraße über 7,5 t | 80 Autobahn | 90 Begrenzer | Begrenzer: höchstens 90 km/h / Pflicht über 3,5 t – nicht abschaltbar. | Erlaubt ist weniger: / Autobahn: 80 km/h / Landstraße über 7,5 t: 60 km/h | Kein oder falsch eingestellter Begrenzer: / Fahrer: 100 € + 1 Punkt / Halter: 150 € + 1 Punkt | KLASSE C  ·  ABEND 3  ·  C6  ·  BEGRENZER UND TEMPOMAT | 118
 NOTIZEN:
-FOLIE 118 VON 125 · 4 Klicks
+FOLIE 118 VON 126 · 4 Klicks
 
 ▶ Sagen: „Jeder Lkw über 3,5 t hat einen Geschwindigkeitsbegrenzer. Er ist auf höchstens 90 km/h eingestellt – und nicht abschaltbar.“
-❓ „Darf ich also 90 fahren?“
-✅ Nein. Erlaubt sind für Lkw über 3,5 t auf der Autobahn 80 km/h (§ 18 Abs. 5 StVO), außerorts über 7,5 t 60 km/h, bis 7,5 t 80 km/h (§ 3 Abs. 3 StVO).
+❓ „Dürft ihr also 90 fahren?“
+✅ Nein. Erlaubt sind für Lkw über 3,5 t auf der Autobahn 80 km/h (§ 18 Abs. 5 StVO), außerorts über 7,5 t 60 km/h, bis 7,5 t 80 km/h (§ 3 Abs. 3 StVO), innerorts 50 km/h.
+✅ Die 80 km/h gelten auf Autobahnen und auf Kraftfahrstraßen mit Mittelstreifen (§ 18 Abs. 5 StVO). Sonst gilt außerorts über 7,5 t: 60 km/h – auch auf vierspurigen Straßen. Die Ausnahme in § 3 Abs. 3 (Mittelstreifen, zwei Fahrstreifen je Richtung) steht unter Buchstabe c und betrifft nur die 100 km/h für Pkw.
 🖱 Klick 1: 60 km/h · Klick 2: 80 km/h · Klick 3: 90 km/h Begrenzer · Klick 4: Bußgeld.
 ✅ § 57c StVZO: Pflicht über 3,5 t, höchstens 90 km/h einschließlich aller Toleranzen, nicht abschaltbar. Einbauschild an der B-Säule (§ 57d). BKat 223 (Fahrer): ohne Begrenzer, falsch eingestellt oder nicht benutzt – 100 € + 1 Punkt; BKat 224 (Halter): 150 € + 1 Punkt.
-➜ „Und wer prüft Fahrtenschreiber und Begrenzer?“
+➜ „Der Begrenzer setzt nur die Obergrenze. Den Tempomat stellt ihr selbst ein.“
 
 === FOLIE 119 ===
-AUF DER FOLIE: KLASSE C  ·  ABEND 3  ·  C6  ·  BEGRENZER | 119 | PRÜFUNGEN | Fahrtenschreiber und Begrenzer prüfen | Fahrtenschreiber:  mindestens alle 24 Monate prüfen – und sofort nach Reparatur, neuer Reifengröße, beim digitalen Gerät auch nach neuem Kennzeichen oder falscher Uhrzeit (über 20 Minuten). | Begrenzer:  Prüfung nach Einbau, Reparatur oder neuer Reifengröße – die HU kontrolliert ihn mit. | Einbauschild:  plombiert am Gerät oder an der B-Säule auf der Fahrerseite – zeigt die letzte Prüfung.
+AUF DER FOLIE: GESCHWINDIGKEITSREGLER | Tempomat und Abstandstempomat | Tempomat:  hält das Tempo – nur wenn der Verkehr gleichmäßiges Fahren zulässt. Rechtzeitig ausschalten: sonst zu dicht auf, zu schnell in die Kurve, über das Tempolimit. | Abstandstempomat (AGR):  hält Tempo und gewählten Abstand, bremst selbst – den Sicherheitsabstand garantiert er nicht. Gut auf Autobahn und Kraftfahrstraße. | Ihr bleibt verantwortlich:  immer aufmerksam bleiben – Regen und Schnee stören den Sensor. Gas oder Bremse übersteuern das System jederzeit. | KLASSE C  ·  ABEND 3  ·  C6  ·  BEGRENZER UND TEMPOMAT | 119
 NOTIZEN:
-FOLIE 119 VON 125 · 3 Klicks
+FOLIE 119 VON 126 · 3 Klicks
+
+▶ Sagen: „Der Begrenzer setzt nur die Obergrenze. Das Tempo selbst hält der Tempomat – und viele Lkw haben einen Abstandstempomat, der auch bremst. Beides entlastet euch – aber verantwortlich bleibt ihr.“
+❓ „Wo lasst ihr den Tempomat besser aus?“ – sammeln: Stadt, Stop-and-go, kurvige Strecken, Glätte.
+🖱 Klick 1: Tempomat · Klick 2: Abstandstempomat · Klick 3: Verantwortung.
+✅ FahrschAusbO Anlage 2.3 Nr. 6 e): Geschwindigkeitsregler gehört zu dieser Lektion.
+✅ Tempomat – Prüfungsfragen: 2.7.06-206: benutzen, wenn die Verkehrsverhältnisse eine gleichbleibende Geschwindigkeit zulassen (NICHT nur in Steigungen oder nur bei hohem Tempo). 2.7.06-110: zu spätes Ausschalten → zu dichtes Auffahren, zu hohe Kurvengeschwindigkeit, Überschreiten der Höchstgeschwindigkeit. 2.7.06-111 und -114: hält das Tempo, entlastet, hilft beim Energiesparen – hält NICHT den Mindestabstand und passt sich NICHT der Verkehrsdichte an. 2.7.06-241: Mit Schaltgetriebe den richtigen Gang wählen – nicht im Stop-and-go.
+✅ Abstandstempomat (AGR) – Prüfungsfragen: 2.7.06-113: beschleunigt bis zum eingestellten Tempo und bremst selbst, wenn der Vordermann langsamer wird – stellt NICHT automatisch den vorgeschriebenen Sicherheitsabstand ein. 2.7.06-115: zweckmäßig auf Autobahnen und Kraftfahrstraßen, NICHT auf kurvenreichen Straßen. 2.7.06-240: unterstützt beim gewählten Abstand, weniger Auffahrunfälle – eine Unterschreitung des Sicherheitsabstands ist NICHT ausgeschlossen. 2.7.06-112: aufmerksam bleiben; starker Regen oder Schneefall können das System stören; Gas- oder Bremspedal übersteuern jederzeit.
+➜ „Und wer prüft Fahrtenschreiber und Begrenzer?“
+
+=== FOLIE 120 ===
+AUF DER FOLIE: PRÜFUNGEN | Fahrtenschreiber und Begrenzer prüfen | Fahrtenschreiber:  mindestens alle 24 Monate prüfen – und sofort nach Reparatur, neuer Reifengröße, beim digitalen Gerät auch nach neuem Kennzeichen oder falscher Uhrzeit (über 20 Minuten). | Begrenzer:  Prüfung nach Einbau, Reparatur oder neuer Reifengröße – die HU kontrolliert ihn mit. | Einbauschild:  plombiert an der B-Säule Fahrerseite (Tacho-Schild auch am Gerät) – zeigt die letzte Prüfung. | KLASSE C  ·  ABEND 3  ·  C6  ·  BEGRENZER UND TEMPOMAT | 120
+NOTIZEN:
+FOLIE 120 VON 126 · 3 Klicks
 
 ▶ Sagen: „Fahrtenschreiber und Begrenzer werden in einer Fachwerkstatt geprüft. Danach kommt ein Einbauschild an die B-Säule auf der Fahrerseite.“
 🖱 Klick 1: Fahrtenschreiber · Klick 2: Begrenzer · Klick 3: Einbauschild.
-✅ § 57b StVZO: Fahrtenschreiber mindestens alle 24 Monate prüfen lassen (Halterpflicht), außerdem sofort nach Reparatur, Änderung der Reifengröße, Plombentausch, Kennzeichenwechsel oder wenn die Uhrzeit mehr als 20 Minuten abweicht. § 57d: Begrenzer prüfen nach Einbau, Reparatur, Änderung der Reifengröße oder der Kraftstoffzufuhr – eine feste Frist gibt es nicht; die HU prüft ihn mit. Einbauschild plombiert an der B-Säule.
+✅ § 57b StVZO: Fahrtenschreiber mindestens alle 24 Monate prüfen lassen (Halterpflicht), außerdem sofort nach Reparatur, Änderung der Reifengröße, Plombentausch, Kennzeichenwechsel oder wenn die Uhrzeit mehr als 20 Minuten abweicht. § 57d: Begrenzer prüfen nach Einbau, Reparatur, Änderung der Reifengröße oder der Kraftstoffzufuhr – eine feste Frist gibt es nicht; die HU prüft ihn mit. Einbauschild plombiert an der B-Säule der Fahrerseite (§ 57d Abs. 2) – das Schild des Fahrtenschreibers darf auch auf oder neben dem Gerät sitzen (§ 57b Abs. 1), beide Schilder dürfen kombiniert werden.
 ➜ „Damit ist C6 geschafft. Zeit zum Mitschreiben.“
 
-=== FOLIE 120 ===
-AUF DER FOLIE: KLASSE C  ·  ABEND 3  ·  C6  ·  ABSCHLUSS | 120 | ZUM MITSCHREIBEN | Dauerbremsen, Prüfung, Begrenzer | ✎ | Dauerbremse | Pflicht über 9 t – verschleißfrei, bremst nicht bis zum Stand | Gefälle | vorher zurückschalten, Dauerbremse nutzen – sonst Fading | Glätte | Dauerbremse klein oder aus – sie bremst nur die Antriebsachse | ABS-Bremsung | schlagartig, voll treten und halten – nicht pumpen | Dichtheit | eine Vollbremsung: höchstens 0,7 bar Druckabfall | HU / SP | HU jedes Jahr – über 7,5 t dazu SP alle 6 Monate (ab 3. bzw. 4. Jahr) | Begrenzer | 90 km/h – erlaubt sind auf der Autobahn 80 km/h | Fahrtenschreiber | Prüfung mindestens alle 24 Monate
+=== FOLIE 121 ===
+AUF DER FOLIE: ZUM MITSCHREIBEN | Dauerbremsen, Prüfung, Begrenzer | ✎ | Dauerbremse | Pflicht über 9 t – verschleißfrei, bremst nicht bis zum Stand | Gefälle | vorher zurückschalten, Dauerbremse nutzen – sonst Fading | Glätte | Dauerbremse klein oder aus – sie bremst nur die Antriebsachse | ABS-Bremsung | schlagartig, voll treten und halten – nicht pumpen | Dichtheit | eine Vollbremsung: höchstens 0,7 bar Druckabfall | HU / SP | HU jedes Jahr – dazwischen SP: über 12 t ab dem 3., über 7,5 t ab dem 4. Jahr | Begrenzer | 90 km/h – erlaubt sind auf der Autobahn 80 km/h | Fahrtenschreiber | Prüfung mindestens alle 24 Monate | KLASSE C  ·  ABEND 3  ·  C6  ·  ABSCHLUSS | 121
 NOTIZEN:
-FOLIE 120 VON 125 · 8 Klicks
+FOLIE 121 VON 126 · 8 Klicks
 
 ▶ Sagen: „Schreibt euch das auf – das sind die Kernpunkte aus C6.“
 ❓ Vor jedem Klick fragen: „Was gehört hier hin?“
@@ -1179,49 +1208,52 @@ FOLIE 120 VON 125 · 8 Klicks
 ✅ Quellen: § 41 Abs. 15, § 57b, § 57c StVZO; StVZO Anlage VIII; § 18 Abs. 5 StVO; Prüfungsfragen 2.7.06-239, -310, -108, 2.7.01-139, 2.7.06-231.
 ➜ „Jetzt testen wir C6.“
 
-=== FOLIE 121 ===
-AUF DER FOLIE: KLASSE C  ·  ABEND 3  ·  C6  ·  ABSCHLUSS | 121 | QUIZ C6 · 1 | Warum sollten Sie die Dauerbremse (Retarder) nutzen? | A | Sie arbeitet verschleißfrei | B | Sie bremst den Lkw bis zum Stillstand | C | Sie entlastet die Betriebsbremse | ✓  RICHTIG | ✓  RICHTIG | Die Dauerbremse ist verschleißfrei und hält die Betriebsbremse kühl. Bis zum Stillstand bremst sie nicht (Prüfungsfrage 2.7.06-239).
+=== FOLIE 122 ===
+AUF DER FOLIE: QUIZ C6 · 1 | Warum sollten Sie die Dauerbremse (Retarder) nutzen? | A | Sie arbeitet verschleißfrei | B | Sie bremst den Lkw bis zum Stillstand | C | Sie entlastet die Betriebsbremse | ✓  RICHTIG | ✓  RICHTIG | Die Dauerbremse ist verschleißfrei und hält die Betriebsbremse kühl. Bis zum Stillstand bremst sie nicht (Prüfungsfrage 2.7.06-239). | KLASSE C  ·  ABEND 3  ·  C6  ·  ABSCHLUSS | 122
 NOTIZEN:
-FOLIE 121 VON 125 · 2 Klicks
+FOLIE 122 VON 126 · 2 Klicks
 
 ▶ Frage vorlesen, abstimmen. Mehrere Antworten können richtig sein.
+💡 Mündlich abstimmen und begründen – kein Bogen zum Ausfüllen.
 🖱 Klick 1: Antworten · Klick 2: Lösung.
 ✅ A und C.
 ➜ „Nächste Frage.“
 
-=== FOLIE 122 ===
-AUF DER FOLIE: KLASSE C  ·  ABEND 3  ·  C6  ·  ABSCHLUSS | 122 | QUIZ C6 · 2 | Sie treten bei voll gefülltem Luftbehälter einmal das Bremspedal voll durch. Welcher Druckabfall ist unbedenklich? | A | Bis 0,7 bar | B | Bis 1,2 bar | C | Bis 1,5 bar | ✓  RICHTIG | Höchstens 0,7 bar je Vollbremsung. Mehr heißt: Der Luftvorrat fällt zu schnell ab (Prüfungsfragen 2.7.06-231, -232).
+=== FOLIE 123 ===
+AUF DER FOLIE: QUIZ C6 · 2 | Sie treten bei voll gefülltem Luftbehälter einmal das Bremspedal voll durch. Welcher Druckabfall ist unbedenklich? | A | Bis 0,7 bar | B | Bis 1,2 bar | C | Bis 1,5 bar | ✓  RICHTIG | Höchstens 0,7 bar je Vollbremsung. Mehr heißt: Der Luftvorrat fällt zu schnell ab (Prüfungsfragen 2.7.06-231, -232). | KLASSE C  ·  ABEND 3  ·  C6  ·  ABSCHLUSS | 123
 NOTIZEN:
-FOLIE 122 VON 125 · 2 Klicks
+FOLIE 123 VON 126 · 2 Klicks
 
 ▶ Frage vorlesen, abstimmen.
+💡 Mündlich abstimmen und begründen – kein Bogen zum Ausfüllen.
 🖱 Klick 1: Antworten · Klick 2: Lösung.
 ✅ A.
 ➜ „Und noch eine.“
 
-=== FOLIE 123 ===
-AUF DER FOLIE: KLASSE C  ·  ABEND 3  ·  C6  ·  ABSCHLUSS | 123 | QUIZ C6 · 3 | Wie erreichen Sie mit ABS den kürzesten Bremsweg? | A | Pedal mehrmals kurz treten (pumpen) | B | Schlagartig und mit maximaler Pedalkraft bremsen | C | Erst leicht, dann immer stärker bremsen | ✓  RICHTIG | Voll treten und halten – das ABS regelt selbst. Pumpen verlängert den Bremsweg (Prüfungsfrage 2.7.01-139).
+=== FOLIE 124 ===
+AUF DER FOLIE: QUIZ C6 · 3 | Wie erreichen Sie mit ABS den kürzesten Bremsweg? | A | Mehrmals kurz hintereinander mit voller Kraft treten (pumpen) | B | Schlagartig und mit maximaler Pedalkraft bremsen | C | Erst leicht, dann immer stärker bremsen | ✓  RICHTIG | Voll treten und halten – das ABS regelt selbst. Pumpen verlängert den Bremsweg (Prüfungsfrage 2.7.01-139). | KLASSE C  ·  ABEND 3  ·  C6  ·  ABSCHLUSS | 124
 NOTIZEN:
-FOLIE 123 VON 125 · 2 Klicks
+FOLIE 124 VON 126 · 2 Klicks
 
 ▶ Frage vorlesen, abstimmen.
+💡 Mündlich abstimmen und begründen – kein Bogen zum Ausfüllen.
 🖱 Klick 1: Antworten · Klick 2: Lösung.
 ✅ B.
 ➜ „Zum Schluss: Das nehmt ihr mit.“
 
-=== FOLIE 124 ===
-AUF DER FOLIE: KLASSE C  ·  ABEND 3  ·  C6  ·  ABSCHLUSS | 124 | ZUSAMMENFASSUNG | Das nimmst du mit | Bergab:  vorher zurückschalten, Dauerbremse arbeiten lassen – sonst droht Fading. | Auf Glätte  Dauerbremse klein oder aus – nie voll in der Kurve. | ABS:  voll treten und halten – bleibt die Leuchte an, ab in die Werkstatt. | Vor jeder Schicht:  Druck, Dichtheit, Druckwarnung, Bremsprobe. | HU jedes Jahr, über 7,5 t auch SP –  Begrenzer 90 km/h, erlaubt 80.
+=== FOLIE 125 ===
+AUF DER FOLIE: ZUSAMMENFASSUNG | Das nehmt ihr mit | Bergab:  vorher zurückschalten, Dauerbremse arbeiten lassen – sonst droht Fading. | Auf Glätte:  Dauerbremse klein oder aus – nie voll in der Kurve. | ABS:  voll treten und halten – bleibt die Leuchte an, ab in die Werkstatt. | Vor jeder Schicht:  Druck, Dichtheit, Druckwarnung, ABS-Leuchte, Bremsprobe. | HU und SP:  HU jedes Jahr – über 7,5 t dazwischen auch SP. | Begrenzer:  90 km/h – auf der Autobahn höchstens 80. | KLASSE C  ·  ABEND 3  ·  C6  ·  ABSCHLUSS | 125
 NOTIZEN:
-FOLIE 124 VON 125 · 5 Klicks
+FOLIE 125 VON 126 · 6 Klicks
 
-▶ Sagen: „Das sind die fünf Punkte aus C6, die ihr auf jeden Fall wissen müsst.“
-🖱 Klick 1–5: je ein Punkt.
+▶ Sagen: „Das sind die sechs Punkte aus C6, die ihr auf jeden Fall wissen müsst.“
+🖱 Klick 1–6: je ein Punkt.
 ➜ „Das war Abend 3.“
 
-=== FOLIE 125 ===
+=== FOLIE 126 ===
 AUF DER FOLIE: Gute Heimfahrt! | Abend 3 geschafft: C5 + C6 | Nächstes Mal: / C7  Wirkung von Kräften beim Fahren / C8  Ausrüstung, Beförderung, Sicherheit
 NOTIZEN:
-FOLIE 125 VON 125 · Animation läuft von selbst · Klick = weiter
+FOLIE 126 VON 126 · Animation läuft von selbst · Klick = weiter
 
 ▶ Sagen: „Das war Abend 3 – die Bremsen. Beim nächsten Mal: C7 – welche Kräfte beim Fahren wirken – und C8 – Ausrüstung, Gewichte und Abmessungen, Sicherheit. Danke fürs Mitmachen, kommt gut nach Hause.“
 💡 Ausbildungsnachweis abzeichnen lassen.
