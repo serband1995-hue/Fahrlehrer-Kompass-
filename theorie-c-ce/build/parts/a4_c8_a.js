@@ -31,7 +31,7 @@ module.exports = async (deck) => {
   await photoAsk(deck, 'c8a', {
     bg: 'i_ausr_r.jpg', bgX: 6.0, ov: 7.0, kicker: 'Pflichtausrüstung', q: 'Was muss in jedem Lkw über 3,5 t an Bord sein?', qsize: 30, w: 5.05, asize: 15,
     answers: [
-      ['LuTriangleAlert', 'Warndreieck und Warnleuchte', 'getrennt voneinander – die Leuchte mit gelbem Blinklicht, unabhängig vom Bordnetz.', C.red],
+      ['LuTriangleAlert', 'Warndreieck und Warnleuchte', 'getrennt voneinander – die Leuchte mit gelbem Blinklicht, unabhängig von der Lichtanlage.', C.red],
       ['LuShirt', 'Warnweste', 'nach EN ISO 20471 – griffbereit in der Kabine.', C.am],
       ['LuBriefcaseMedical', 'Verbandkasten', 'nach DIN 13164, geschützt vor Staub und Feuchtigkeit.', C.gr],
       ['LuTriangleRight', 'Unterlegkeile', 'über 4 t mindestens einer, ab drei Achsen zwei – fest in einer Halterung.', C.or],
@@ -57,14 +57,14 @@ module.exports = async (deck) => {
       answer: 'Warnblinker an, Warnweste an, Warndreieck bei schnellem Verkehr etwa 100 m hinter den Lkw – und die Warnleuchte dazu.',
       legend: 'Draufsicht · schematisch · Verkehr kommt von links',
       frames: [
-        fr({ x: 8.6, y: RY + RH * 0.75, bl: 0, d: -1 }, { hold: true, cap: 'Landstraße, 80 km/h erlaubt. Plötzlich verliert der Motor Leistung …', note: '▶ Sagen: „Ihr fahrt auf der Landstraße, der Motor geht in Notlauf. Ihr müsst anhalten.“\n❓ Frage auf der Folie stellen: Was macht ihr zuerst?\n🖱 Klick: Der Lkw rollt an den Rand (läuft von selbst).\n➜ „Ihr rollt rechts ran.“' }),
+        fr({ x: 8.6, y: RY + RH * 0.75, bl: 0, d: -1 }, { hold: true, cap: 'Landstraße mit schnellem Verkehr. Plötzlich verliert der Motor Leistung …', note: '▶ Sagen: „Ihr fahrt auf der Landstraße, der Motor geht in Notlauf. Ihr müsst anhalten.“\n❓ Frage auf der Folie stellen: Was macht ihr zuerst?\n🖱 Klick: Der Lkw rollt an den Rand (läuft von selbst).\n➜ „Ihr rollt rechts ran.“' }),
         fr({ x: 10.0, y: RY + RH * 0.75 + 0.05, bl: 0, d: -1 }), fr({ x: TRX, y: TRY, bl: 1, d: -1 }, { cap: 'So weit rechts wie möglich anhalten – sofort Warnblinklicht an.' }),
         fr({ x: TRX, y: TRY, bl: 0, d: -1 }), fr({ x: TRX, y: TRY, bl: 1, d: -1, weste: 1 }, { hold: true, cap: 'Warnweste anziehen, bevor ihr aussteigt – rechts aussteigen, wenn möglich.', note: '▶ „Zuerst Warnblinklicht. Dann Warnweste anziehen – noch in der Kabine – und möglichst auf der rechten Seite aussteigen.“\n✅ § 15 StVO: sofort Warnblinklicht einschalten. Warnweste: § 53a Abs. 2 Nr. 3 StVZO (mitführen).\n🖱 Klick: Das Warndreieck wird aufgestellt (läuft von selbst).\n➜ „Jetzt das Warndreieck.“' }),
         fr({ x: TRX, y: TRY, bl: 0, d: 0, weste: 1 }, { cap: 'Das Warndreieck wandert nach hinten – gegen die Fahrtrichtung …' }),
         fr({ x: TRX, y: TRY, bl: 1, d: 20, weste: 1 }), fr({ x: TRX, y: TRY, bl: 0, d: 40, weste: 1 }), fr({ x: TRX, y: TRY, bl: 1, d: 60, weste: 1 }), fr({ x: TRX, y: TRY, bl: 0, d: 80, weste: 1 }),
         fr({ x: TRX, y: TRY, bl: 1, d: 100, weste: 1 }, { hold: true, answer: true, cap: 'Etwa 100 m bei schnellem Verkehr. Vor Kurven und Kuppen so weit, dass man es rechtzeitig sieht.', note: '▶ „Das Warndreieck kommt bei schnellem Verkehr etwa 100 Meter hinter den Lkw. Vor einer Kurve oder Kuppe so, dass es rechtzeitig vor der Gefahr zu sehen ist.“\n✅ § 15 StVO: Warnzeichen gut sichtbar in ausreichender Entfernung, bei schnellem Verkehr in etwa 100 m. Prüfungsfrage 2.2.15-201 (Seitenstreifen der Autobahn): Warndreieck etwa 100 m am rechten Fahrbahnrand, Warnleuchte in ausreichender Entfernung, Warnweste tragen.\n💡 Faustregel aus der Fahrschule: innerorts etwa 50 m, Autobahn deutlich weiter – lieber zu weit als zu nah. Beim Gehen am Fahrbahnrand das Dreieck vor sich halten.\n🖱 Klick: die Warnleuchte (läuft von selbst).\n➜ „Und die Warnleuchte?“' }),
         fr({ x: TRX, y: TRY, bl: 0, d: 100, weste: 1, wl: 1 }),
-        fr({ x: TRX, y: TRY, bl: 1, d: 100, weste: 1, wl: 1 }, { hold: true, cap: 'Dazu die Warnleuchte mit gelbem Blinklicht – zusätzlich, gut sichtbar am Fahrbahnrand.', note: '▶ „Ab 3,5 t habt ihr zusätzlich eine Warnleuchte mit gelbem Blinklicht. Die stellt ihr zusätzlich am Fahrbahnrand auf, gut sichtbar – das Warndreieck bleibt Pflicht. Danach hinter die Schutzplanke oder weit weg vom Verkehr warten.“\n✅ § 53a Abs. 1 und 2 StVZO (Warnleuchte: gelbes Blinklicht, unabhängig von der Lichtanlage). Prüfungsfrage 2.2.15-201: Warnleuchte in ausreichender Entfernung aufstellen.\n🖱 Keine Animation mehr – nächster Klick: nächste Folie.\n➜ „Und wenn der Lkw im Gefälle steht?“' }),
+        fr({ x: TRX, y: TRY, bl: 1, d: 100, weste: 1, wl: 1 }, { hold: true, cap: 'Dazu die Warnleuchte mit gelbem Blinklicht – zusätzlich, gut sichtbar am Fahrbahnrand.', note: '▶ „Über 3,5 t habt ihr zusätzlich eine Warnleuchte mit gelbem Blinklicht. Die stellt ihr zusätzlich am Fahrbahnrand auf, gut sichtbar – das Warndreieck bleibt Pflicht. Danach hinter die Schutzplanke oder weit weg vom Verkehr warten.“\n✅ § 53a Abs. 1 und 2 StVZO (Warnleuchte: gelbes Blinklicht, unabhängig von der Lichtanlage; auch eine tragbare Blinkleuchte nach § 53b Abs. 5 ist erlaubt). Prüfungsfrage 2.2.15-201: Warnleuchte in ausreichender Entfernung aufstellen.\n🖱 Keine Animation mehr – nächster Klick: nächste Folie.\n➜ „Und wenn der Lkw im Gefälle steht?“' }),
       ],
       scene: async (s, t) => {
         s.rect(5.65, RY, 7.4, RH, { fill: C.road, name: '!!road' });
@@ -140,14 +140,14 @@ module.exports = async (deck) => {
     answers: [
       ['LuTriangleAlert', 'Warnblinklicht an beiden Fahrzeugen', 'während des ganzen Abschleppens.', C.am],
       ['LuSignpost', 'Auf der Autobahn liegen geblieben?', 'Bei der nächsten Ausfahrt runter. Außerhalb liegen geblieben: nicht auf die Autobahn.', C.bl],
-      ['LuLink', 'Beim schweren Lkw: Abschleppstange', 'statt Seil – und am besten ein Abschleppdienst.', C.gr],
+      ['LuLink', 'Beim schweren Lkw: Abschleppstange', 'statt Seil – höchstens 5 m Abstand, gut kennzeichnen. Am besten ein Abschleppdienst.', C.gr],
       ['LuWind', 'Keine Luft mehr in der Anlage?', 'Federspeicher erst nach dem Sichern mit Keilen lösen (siehe C5).', C.red],
     ],
     notes:
       '▶ Sagen: „Ein Lkw ist schwer. Abschleppen ist Sache von Profis – aber die Regeln müsst ihr kennen.“\n' +
       '❓ Antworten sammeln, dann je Klick auflösen.\n' +
       '🖱 Klick 1–4: je ein Punkt.\n' +
-      '✅ § 15a StVO: Abs. 1 Autobahn bei der nächsten Ausfahrt verlassen; Abs. 2 nicht in die Autobahn einfahren; Abs. 3 beide Fahrzeuge Warnblinklicht.\n' +
+      '✅ § 15a StVO: Abs. 1 Autobahn bei der nächsten Ausfahrt verlassen; Abs. 2 nicht in die Autobahn einfahren; Abs. 3 beide Fahrzeuge Warnblinklicht. § 43 Abs. 3 StVZO und Prüfungsfrage 2.2.15-109: Abstand zwischen den Fahrzeugen höchstens 5 m, Abschleppseil oder -stange deutlich kennzeichnen (z. B. roter Lappen).\n' +
       '💡 Abschleppstange und Federspeicher lösen: Lehrbuchwissen. Ohne Luft wirkt beim geschleppten Lkw die Betriebsbremse nicht – mit Seil gibt es dann keine Möglichkeit zu bremsen. Prüfungsfrage 2.7.06-215: Federspeicher zum Abschleppen mit der Hilfslöseeinrichtung lösen.\n' +
       '➜ „Kapitel 2: Wie groß und wie schwer darf ein Lkw sein?“',
   });

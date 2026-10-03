@@ -75,15 +75,15 @@ const main = async (deck) => {
     await steps(deck, 'c7h', {
       kicker: 'Haftung', ttl: 'Die Straße entscheidet',
       list: ['Trockener Asphalt', 'Nasse Straße', 'Schnee', 'Eis'],
-      ask: { q: 'Bremsweg aus 50 km/h: Wie viel länger ist er auf Eis als auf trockener Straße?', a: 'Etwa achtmal so lang – rund 100 statt 12 Meter.', at: 3 },
+      ask: { q: 'Bremsweg aus 50 km/h: Wie viel länger ist er auf Eis als auf trockener Straße?', a: 'Bis zu achtmal so lang – rund 100 statt 12 Meter, wenn nur die Haftung zählt.', at: 3 },
       caps: [
-        'Trockener Asphalt: Der Reifen haftet sehr gut. Aus 50 km/h steht der Lkw nach etwa 12 Metern Bremsweg.',
+        'Trockener Asphalt: Der Reifen haftet sehr gut. Die Haftung allein würde aus 50 km/h für etwa 12 Meter reichen.',
         'Nasse Straße: Ein Wasserfilm zwischen Reifen und Straße. Etwa 20 Meter.',
         'Schnee: Nur noch ein Viertel der Haftung. Etwa 50 Meter.',
-        'Eis: Fast keine Haftung. Rund 100 Meter – achtmal so lang wie trocken.',
+        'Eis: Fast keine Haftung. Rund 100 Meter – bis zu achtmal so lang wie trocken.',
       ],
       notes: [
-        '▶ Sagen: „Wie viel Haftung ein Reifen hat, hängt vor allem von der Straße ab. Fachleute sagen Haftreibungszahl – wir sagen einfach Haftung.“\n❓ Frage auf der Folie vorlesen, schätzen lassen.\n✅ Richtwerte Haftreibungszahl: trocken etwa 0,8 · nass 0,5 · Schnee 0,2 · Eis 0,1 (Lehrbuchwerte). Bremsweg nur durch Haftung begrenzt: v² / (2 · Haftung · 9,81 m/s²). 50 km/h = 13,9 m/s → trocken etwa 12 m.\n💡 Vereinfachte Rechnung ohne Reaktions- und Ansprechzeit. Echte Lkw-Bremswege sind länger (siehe Abend 3).\n➜ „Jetzt regnet es.“',
+        '▶ Sagen: „Wie viel Haftung ein Reifen hat, hängt vor allem von der Straße ab. Fachleute sagen Haftreibungszahl – wir sagen einfach Haftung.“\n❓ Frage auf der Folie vorlesen, schätzen lassen.\n✅ Richtwerte Haftreibungszahl: trocken etwa 0,8 · nass 0,5 · Schnee 0,2 · Eis 0,1 (Lehrbuchwerte). Bremsweg nur durch Haftung begrenzt: v² / (2 · Haftung · 9,81 m/s²). 50 km/h = 13,9 m/s → trocken etwa 12 m.\n💡 Vereinfachte Rechnung ohne Reaktions- und Ansprechzeit. Auf trockener Straße begrenzen beim Lkw die Bremsen, nicht die Reifen: Mit 5 m/s² (Abend 3) braucht ein Lkw aus 50 km/h eher 15–20 m (rund 19 m). Bei Nässe, Schnee und Eis zählt dagegen vor allem die Haftung.\n➜ „Jetzt regnet es.“',
         '▶ „Nasse Straße: etwa 20 Meter. Besonders glatt ist es beim ersten Regen nach langer Trockenheit – Staub, Öl und Gummi machen einen Schmierfilm.“\n✅ Haftung etwa 0,5 → 13,9² / (2 · 0,5 · 9,81) ≈ 20 m.\n➜ „Und im Winter?“',
         '▶ „Schnee: etwa 50 Meter.“\n✅ Haftung etwa 0,2 → rund 49 m.\n➜ „Und auf Eis?“',
         '▶ „Auf Eis: rund 100 Meter – achtmal so weit wie auf trockener Straße. Deshalb: Bei Glätte Tempo runter und viel Abstand.“\n✅ Haftung etwa 0,1 → rund 98 m. Achtmal so lang, weil die Haftung nur ein Achtel ist.\n➜ „Die Haftung muss für alles reichen – Bremsen UND Lenken. Wie das zusammenhängt, zeigt der Haftungskreis.“',
@@ -100,7 +100,7 @@ const main = async (deck) => {
         s.rrect(X0, 3.42, 7.0, 0.36, { fill: '1A212C', line: C.line, rr: 0.5, name: '!!hbg' });
         s.rrect(X0 + 0.03, 3.45, 6.94 * mu / 0.8, 0.3, { fill: C.bl, rr: 0.5, name: '!!hv' });
         // Bremsweg-Balken
-        s.text('Bremsweg aus 50 km/h', { x: X0, y: 4.05, w: 4, h: 0.35, size: 14, bold: true, color: C.mut, name: '!!bt' });
+        s.text('Bremsweg aus 50 km/h – nur durch Haftung begrenzt', { x: X0, y: 4.05, w: 6, h: 0.35, size: 14, bold: true, color: C.mut, name: '!!bt' });
         s.rrect(X0, 4.45, Math.max(0.3, bw * SC), 0.55, { fill: C.red, rr: 0.5, name: '!!bw' });
         s.text('≈ ' + bw + ' m', { x: X0 + Math.max(0.3, bw * SC) + 0.15, y: 4.45, w: 1.6, h: 0.55, size: 22, bold: true, color: C.txt, valign: 'middle', name: '!!bwt' });
         // Lkw (klein) am Ende des Bremswegs
@@ -155,5 +155,11 @@ const main = async (deck) => {
       },
     });
   }
+  quiz(deck, 'c7h', {
+    kicker: 'Prüfungsfrage · Haftung', q: 'Sie fahren sehr schnell in eine enge Kurve. Was kann passieren, wenn Sie plötzlich stark bremsen müssen? Mein Fahrzeug …', size: 28,
+    opts: ['… verliert die Straßenhaftung', '… rutscht aus der Kurve', '… bleibt mit Stabilitätskontrolle jederzeit fahrstabil'], ok: [0, 1],
+    why: 'Bremsen und Lenken zugleich überfordert die Haftung – auch Elektronik kann sie nicht vergrößern (Prüfungsfrage 2.7.01-141).',
+    notes: '▶ Frage vorlesen, abstimmen lassen. Mehrere Antworten können richtig sein.\n🖱 Klick 1: Antworten · Klick 2: Lösung.\n✅ A und B. Prüfungsfrage 2.7.01-141. Passend dazu 2.7.01-130: Mit ABS bleibt die Lenkfähigkeit länger erhalten – aber das Fahrzeug bleibt nicht immer fahrstabil.\n➜ „Kapitel 2: Was den Lkw bremst, ohne dass ihr bremst.“',
+  });
 };
 module.exports = main; module.exports.wheelSvg = wheelSvg;

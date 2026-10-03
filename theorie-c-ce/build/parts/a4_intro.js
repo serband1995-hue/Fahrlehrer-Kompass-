@@ -57,7 +57,7 @@ module.exports = async (deck) => {
       '▶ Sagen: „Bevor wir anfangen: drei Fragen zu Abend 3.“\n' +
       '❓ Jede Frage vorlesen, Antworten sammeln, dann klicken.\n' +
       '🖱 Klick 1–3: je eine Frage mit Antwort.\n' +
-      '✅ Prüfungsfrage 2.7.01-238 (losfahren erst, wenn die Druckwarnung aufgehört hat) · 2.7.06-310 (Fading) · § 41 Abs. 15 StVZO (Dauerbremse über 9 t).\n' +
+      '✅ Prüfungsfrage 2.7.01-238 (losfahren erst, wenn die Druckwarnung aufgehört hat) · 2.7.06-310 (Fading; CE-Frage, Inhalt gilt auch für C) · § 41 Abs. 15 StVZO (Dauerbremse über 9 t).\n' +
       '➜ „Gut. Heute geht es um die Kräfte, die dabei wirken. Was lernt ihr in C7?“',
   });
   // ===== LERNZIELE C7 =====

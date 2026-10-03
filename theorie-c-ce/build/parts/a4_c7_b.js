@@ -54,7 +54,7 @@ module.exports = async (deck) => {
       notes: [
         '▶ Sagen: „Die Luft muss um den großen Lkw herum. Das Fahrerhaus ist wie eine Wand von gut 2,5 Metern Breite und fast 4 Metern Höhe.“\n✅ Physik: Luftwiderstand wächst mit dem Quadrat der Geschwindigkeit. (60/80)² = 0,56.\n➜ „Jetzt 80 km/h.“',
         '▶ „80 km/h – das nehmen wir als Vergleich. Dachspoiler und Seitenverkleidungen lenken die Luft um den Aufbau herum und sparen so Diesel.“\n💡 Spoiler richtig einstellen: Er soll die Luft auf Höhe der Aufbau-Oberkante führen.\n➜ „Und bei 90?“',
-        '▶ „90 km/h: Ihr seid nur gut 10 Prozent schneller, aber der Luftwiderstand ist um 27 Prozent größer. Und Lkw über 3,5 t dürfen auf der Autobahn ohnehin nur 80 fahren.“\n❓ Frage auf der Folie auflösen.\n✅ Eigene Rechnung: (90/80)² = 1,27. § 3 Abs. 3 und § 18 Abs. 5 StVO: Lkw über 3,5 t höchstens 80 km/h auf der Autobahn.\n➜ „Noch stärker bremst den Lkw nur eins: der Berg.“',
+        '▶ „90 km/h: Ihr seid nur gut 10 Prozent schneller, aber der Luftwiderstand ist um 27 Prozent größer. Und Lkw über 3,5 t dürfen auf der Autobahn ohnehin nur 80 fahren.“\n❓ Frage auf der Folie auflösen.\n✅ Eigene Rechnung: (90/80)² = 1,27. § 18 Abs. 5 Satz 2 Nr. 1 a StVO: Kfz über 3,5 t höchstens 80 km/h auf Autobahnen.\n➜ „Noch stärker bremst den Lkw nur eins: der Berg.“',
       ],
       legend: 'Schematisch · Werte im Verhältnis zu 80 km/h',
       scene: async (s, i) => {
