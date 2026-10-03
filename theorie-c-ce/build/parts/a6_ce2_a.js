@@ -31,8 +31,8 @@ module.exports = async (deck) => {
   await ask(deck, 'ce2r', {
     kicker: 'Was das Gesetz verlangt', q: 'Was muss die Bremse eines großen Anhängers können?', ico: 'LuDisc', qsize: 34,
     answers: [
-      ['LuDisc', 'Eine eigene Bremse', 'Anhänger mit zwei oder mehr Achsen brauchen eine eigene Bremse – hinter schnellen Lkw auf alle Räder.', C.bl, 17],
-      ['LuFootprints', 'Ein Pedal für beide', 'Lkw und Anhänger bremsen zusammen – mit einer Betätigung vom Fahrersitz aus.', C.bl, 17],
+      ['LuDisc', 'Eine eigene Bremse', 'Anhänger mit 2 oder mehr Achsen immer, einachsige über 0,75 t Achslast. Hinter schnellen Lkw auf alle Räder.', C.bl, 17],
+      ['LuFootprints', 'Ein Pedal für beide', 'Lkw und Anhänger bremsen zusammen, mit einer Betätigung vom Fahrersitz. Oder der Anhänger bremst von selbst (Auflaufbremse).', C.bl, 17],
       ['LuUnlink', 'Selbst bremsen beim Abreißen', 'Löst sich der Anhänger, muss er von allein zum Stehen kommen.', C.red, 17],
       ['LuMountain', 'Am Berg stehen bleiben', 'Feststellbremse: Der volle Anhänger muss auf 18 % Steigung halten – rein mechanisch.', C.bl, 17],
     ],
@@ -40,20 +40,20 @@ module.exports = async (deck) => {
       '▶ Sagen: „Was muss die Bremse eines großen Anhängers können? Sammelt mal.“\n' +
       '❓ Sammeln lassen, dann je Klick eine Karte.\n' +
       '🖱 Klick 1–4: je eine Anforderung.\n' +
-      '✅ § 41 Abs. 9 StVZO: Zwei- und mehrachsige Anhänger brauchen eine eigene Bremsanlage; Betriebsbremse von Zug und Anhänger mit einer Betätigung abstufbar (oder selbsttätig wie die Auflaufbremse); trennt sich der Anhänger, muss er selbsttätig zum Stehen kommen; Feststellbremse hält den beladenen Anhänger rein mechanisch auf 18 %; hinter Kfz über 25 km/h Bremse auf alle Räder. Mittlere Vollverzögerung mindestens 5,0 m/s² (Sattelanhänger 4,5 m/s²).\n' +
+      '✅ § 41 Abs. 9 StVZO: Zwei- und mehrachsige Anhänger brauchen eine eigene Bremsanlage (§ 41 Abs. 11: einachsige ohne eigene Bremse nur, wenn die Achslast höchstens die Hälfte des Leergewichts des Zugfahrzeugs und höchstens 0,75 t beträgt); Betriebsbremse von Zug und Anhänger mit einer Betätigung abstufbar (oder selbsttätig wie die Auflaufbremse); trennt sich der Anhänger, muss er selbsttätig zum Stehen kommen; Feststellbremse hält den beladenen Anhänger rein mechanisch auf 18 %; hinter Kfz über 25 km/h Bremse auf alle Räder. Mittlere Vollverzögerung mindestens 5,0 m/s² (Sattelanhänger 4,5 m/s²).\n' +
       '➜ „Welche Bremsen gibt es dafür?“',
   });
   await ask(deck, 'ce2r', {
     kicker: 'Zwei Bremsen', q: 'Welche Bremse hat welcher Anhänger?', ico: 'LuCog', qsize: 34,
     answers: [
-      ['LuMoveHorizontal', 'Auflaufbremse', 'Mechanisch: Der Anhänger bremst sich selbst, wenn er aufläuft. Nur bei kleinen Anhängern – auf der Straße höchstens 3,5 t.', C.or, 17],
+      ['LuMoveHorizontal', 'Auflaufbremse', 'Mechanisch: Der Anhänger bremst sich selbst, wenn er aufläuft. Bei Anhängern über 40 km/h höchstens 3,5 t.', C.or, 17],
       ['LuWind', 'Zweileitungs-Druckluftbremse', 'Mit Luft vom Lkw, gesteuert vom Bremspedal. Standard bei Lkw-Anhängern und Sattelaufliegern.', C.gr, 17],
-      ['LuScale', 'Durchgehende Bremse = mehr Anhängelast', 'Mit Druckluftbremse darf der Anhänger bis zum 1,5-Fachen des Lkw wiegen.', C.bl, 17],
+      ['LuScale', 'Durchgehende Bremse = mehr Anhängelast', 'Mit Druckluftbremse darf die Anhängelast bis zum 1,5-Fachen der zulässigen Gesamtmasse des Lkw betragen – nie mehr, als im Fahrzeugschein steht.', C.bl, 17],
     ],
     notes:
       '▶ Sagen: „Zwei Bremsen gibt es am Anhänger. Die Auflaufbremse kennt ihr vom Pkw-Anhänger. Und die Druckluftbremse – die hat fast jeder Lkw-Anhänger.“\n' +
       '🖱 Klick 1–3: je eine Karte.\n' +
-      '✅ § 41 Abs. 10 StVZO: Auflaufbremse nur bis 3,5 t (bei Anhängern über 40 km/h; bis 8 t nur bei langsamen Anhängern bis 25 bzw. 40 km/h), nie beim Sattelanhänger. RL 71/320/EWG Anhang I Nr. 1.9: „durchgehende Bremsung“ = eine Betätigung, eine Energiequelle, abgestimmte Bremsung von Zug und Anhänger. § 42 Abs. 1 StVZO: mit durchgehender Bremse Anhängelast bis 1,5 × zGM des Lkw (Prüfungsfrage 2.6.03-303).\n' +
+      '✅ § 41 Abs. 10 StVZO: Auflaufbremse nur bis 3,5 t (bei Anhängern über 40 km/h; bis 8 t nur bei langsamen Anhängern bis 25 bzw. 40 km/h), nie beim Sattelanhänger. UN-R 13 / RL 71/320/EWG Anhang I Nr. 1.9: „durchgehende Bremsung“ = eine Betätigung, eine Energiequelle, abgestimmte Bremsung von Zug und Anhänger. § 42 Abs. 1 StVZO: mit durchgehender Bremse Anhängelast bis 1,5 × zGM des Lkw (Prüfungsfrage 2.6.03-303).\n' +
       '➜ „Kapitel 2: die Auflaufbremse.“',
   });
 
@@ -72,7 +72,7 @@ module.exports = async (deck) => {
       '▶ Sagen: „Ein Anhänger mit Auflaufbremse. Was seht ihr?“\n' +
       '❓ Sammeln lassen, dann je Klick auflösen.\n' +
       '🖱 Klick 1–4: je ein Teil.\n' +
-      '✅ Auflaufeinrichtung, Handbremshebel, Abreißseil: Lehrbuchwissen; RL 71/320/EWG Anhang I Nr. 1.12 (Auflaufbremsung) und Nr. 2.2.2.9 (selbsttätige Bremsung beim Abreißen; Ausnahme einachsige Anhänger bis 1,5 t mit Sicherungsverbindung). Prüfungsfrage 2.7.01-121: nach dem Ankuppeln Bremse prüfen, Stützrad in die oberste Stellung, Abreißseil an der Anhängekupplung des Zugfahrzeugs einhängen.\n' +
+      '✅ Auflaufeinrichtung, Handbremshebel, Abreißseil: Lehrbuchwissen; UN-R 13 / RL 71/320/EWG Anhang I Nr. 1.12 (Auflaufbremsung) und Nr. 2.2.2.9 (selbsttätige Bremsung beim Abreißen; Ausnahme einachsige Anhänger bis 1,5 t mit Sicherungsverbindung). Prüfungsfrage 2.7.01-121: nach dem Ankuppeln Bremse prüfen, Stützrad in die oberste Stellung, Abreißseil an der Anhängekupplung des Zugfahrzeugs einhängen.\n' +
       '💡 Das Bild zeigt einen Kugelkopf. Am Lkw hängt so ein Anhänger meist mit Zugöse am Bolzen.\n' +
       '➜ „Und wie bremst das Ding?“',
   });
@@ -87,14 +87,14 @@ module.exports = async (deck) => {
       legend: 'Seitenansicht · Ausschnitt · schematisch · Hub vergrößert',
       frames: [
         fr({ dx: 0, comp: 0, lkwB: 0, trB: 0, pull: 1 }, { hold: true, cap: 'Beim Fahren zieht der Lkw. Die Auflaufeinrichtung ist auseinandergezogen – die Bremse am Anhänger ist frei.',
-          note: '▶ Sagen: „Beim Fahren zieht der Lkw den Anhänger. Die Auflaufeinrichtung in der Deichsel ist ausgezogen. Am Anhänger bremst nichts.“\n❓ Frage auf der Folie stellen.\n✅ Funktion der Auflaufbremse: Lehrbuchwissen (RL 71/320/EWG Anhang I Nr. 1.12: Bremsung durch das Auflaufen des Anhängers auf das Zugfahrzeug).\n🖱 Klick: Der Lkw bremst (läuft von selbst weiter).\n➜ „Jetzt bremst der Lkw.“' }),
+          note: '▶ Sagen: „Beim Fahren zieht der Lkw den Anhänger. Die Auflaufeinrichtung in der Deichsel ist ausgezogen. Am Anhänger bremst nichts.“\n❓ Frage auf der Folie stellen.\n✅ Funktion der Auflaufbremse: Lehrbuchwissen (UN-R 13 / RL 71/320/EWG Anhang I Nr. 1.12: Bremsung durch das Auflaufen des Anhängers auf das Zugfahrzeug).\n🖱 Klick: Der Lkw bremst (läuft von selbst weiter).\n➜ „Jetzt bremst der Lkw.“' }),
         fr({ dx: 0, comp: 0, lkwB: 1, trB: 0 }),
         fr({ dx: 0, comp: 1, lkwB: 1, trB: 1 }, { hold: true, answer: true, cap: 'Der Lkw bremst, der Anhänger schiebt nach: Er läuft auf. Die Deichsel schiebt sich zusammen und zieht über das Gestänge die Radbremsen an.',
           note: '▶ „Der Lkw bremst. Der Anhänger will weiter – er schiebt nach, er läuft auf. Dabei schiebt sich die Auflaufeinrichtung zusammen. Das Gestänge zieht die Radbremsen an. Darum bremst der Anhänger immer einen Moment später als der Lkw.“\n❓ Frage auf der Folie auflösen.\n✅ Prüfungsfrage 2.7.06-105: Bremswirkung beim Auflaufen des Anhängers auf das Zugfahrzeug (falsch: zeitgleich mit dem Pedal; vor dem Zugfahrzeug).\n🖱 Klick: Die Verbindung reißt ab.\n➜ „Und wenn der Anhänger abreißt?“' }),
         fr({ dx: -1.1, comp: 0, lkwB: 0, trB: 1, torn: 1 }, { hold: true, cap: 'Reißt die Verbindung, spannt sich das Abreißseil. Es zieht die Handbremse an – der Anhänger bremst von selbst.',
-          note: '▶ „Und wenn die Kupplung abreißt? Dann spannt sich das Abreißseil. Es zieht die Handbremse an, und der Anhänger bremst von selbst. Darum: Seil immer am Lkw einhängen – nicht an der Kupplung des Anhängers selbst!“\n✅ § 41 Abs. 9 StVZO: Trennt sich der Anhänger, muss er selbsttätig zum Stehen kommen. RL 71/320/EWG Anhang I Nr. 2.2.2.9. Prüfungsfrage 2.7.01-121: Abreißseil an der Anhängekupplung des Motorwagens einhängen.\n🖱 Klick: rückwärts.\n➜ „Und beim Rückwärtsfahren?“' }),
-        fr({ dx: 0.25, comp: 1, lkwB: 0, trB: 1, back: 1 }, { hold: true, cap: 'Rückwärts schiebt der Lkw – der Anhänger läuft auch auf. Die meisten Bremsen haben eine Rückfahrautomatik. Bei manchen sperrt man die Bremse von Hand.',
-          note: '▶ „Beim Rückwärtsfahren drückt der Lkw den Anhänger. Auch dann schiebt sich die Deichsel zusammen – die Bremse würde bremsen. Moderne Auflaufbremsen haben eine Rückfahrautomatik. Bei manchen Anhängern muss man die Auflaufbremse vorher von Hand sperren.“\n✅ Prüfungsfrage 2.7.06-109: Bei manchen Anhängern muss die Auflaufbremse manuell gesperrt werden, damit man rückwärtsfahren kann. Rückfahrautomatik: Lehrbuchwissen.\n🖱 Nächster Klick: nächste Folie.\n➜ „Eine Prüfungsfrage.“' }),
+          note: '▶ „Und wenn die Kupplung abreißt? Dann spannt sich das Abreißseil. Es zieht die Handbremse an, und der Anhänger bremst von selbst. Darum: Seil immer am Lkw einhängen – nicht an der Kupplung des Anhängers selbst!“\n✅ § 41 Abs. 9 StVZO: Trennt sich der Anhänger, muss er selbsttätig zum Stehen kommen. UN-R 13 / RL 71/320/EWG Anhang I Nr. 2.2.2.9. Prüfungsfrage 2.7.01-121: Abreißseil an der Anhängekupplung des Motorwagens einhängen.\n🖱 Klick: rückwärts.\n➜ „Und beim Rückwärtsfahren?“' }),
+        fr({ dx: 0.25, comp: 1, lkwB: 0, trB: 1, back: 1 }, { hold: true, cap: 'Rückwärts schiebt der Lkw – der Anhänger läuft auch auf. Viele Bremsen haben eine Rückfahrautomatik. Bei manchen sperrt man die Bremse von Hand.',
+          note: '▶ „Beim Rückwärtsfahren drückt der Lkw den Anhänger. Auch dann schiebt sich die Deichsel zusammen – die Bremse würde bremsen. Viele Auflaufbremsen haben eine Rückfahrautomatik. Bei manchen Anhängern muss man die Auflaufbremse vorher von Hand sperren.“\n✅ Prüfungsfrage 2.7.06-109: Bei manchen Anhängern muss die Auflaufbremse manuell gesperrt werden, damit man rückwärtsfahren kann. Rückfahrautomatik: Lehrbuchwissen.\n🖱 Nächster Klick: nächste Folie.\n➜ „Eine Prüfungsfrage.“' }),
       ],
       scene: async (s, t) => {
         const G = 5.0, H = 4.15, comp = t.comp ? 0.22 : 0, push = t.back ? 0.15 : 0;
@@ -159,7 +159,7 @@ module.exports = async (deck) => {
   await ask(deck, 'ce2a', {
     kicker: 'Auflaufbremse am Lkw', q: 'Euer 12-t-Lkw soll einen 3,5-t-Tandem mit Auflaufbremse ziehen. Geht das?', ico: 'LuTruck', qsize: 30,
     answers: [
-      ['LuScale', 'Ja – bis 3,5 t', 'Ein Straßenanhänger mit Auflaufbremse darf höchstens 3,5 t haben.', C.or, 17],
+      ['LuScale', 'Ja – bis 3,5 t', 'Ein Anhänger mit Auflaufbremse darf hinter eurem Lkw höchstens 3,5 t haben.', C.or, 17],
       ['LuBan', 'Nie am Sattelauflieger', 'Und im Zug immer nur ein Anhänger mit Auflaufbremse.', C.or, 17],
       ['LuIdCard', 'Klasse CE', 'Lkw der Klasse C mit Anhänger über 750 kg: CE – auch für den kleinen Tandem.', C.red, 17],
       ['LuCable', 'Vor der Fahrt', 'Kupplung zu, Licht geht, Stützrad oben, Abreißseil am Lkw eingehängt.', C.or, 17],

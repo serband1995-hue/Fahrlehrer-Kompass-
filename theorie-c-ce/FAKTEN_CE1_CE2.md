@@ -505,3 +505,13 @@ Quelle: https://www.gesetze-im-internet.de/fev_2010/__6.html
 13. **Anhänger-Klassen O1–O4** (bis 0,75 t / bis 3,5 t / bis 10 t / über 10 t) sind Fachwissen nach EU-Typgenehmigungsrecht; Grundlage nicht im Original gelesen.
 14. **FeV:** Text am 03.10.2026 gelesen. Die neue EU-Führerscheinrichtlinie (2025) ist nach diesem Text noch nicht in der FeV umgesetzt; Inhalt und Fristen nicht geprüft.
 15. **BKat-Tabelle 3, Halter über 30 %:** In der Tabelle 199.1 endet bei „mehr als 25 %“ (425 €); eine eigene Stufe über 30 % gibt es für den Halter nicht.
+
+# NACHTRAG nach der Faktenprüfung (PRUEFUNG_ABEND6.md, 03.10.2026)
+- **Einachsige Anhänger** brauchen eine eigene Bremse, wenn ihre Achslast die Hälfte des Leergewichts des Zugfahrzeugs oder 0,75 t übersteigt (§ 41 Abs. 11 StVZO). Betriebsbremse: eine Betätigung vom Führersitz **oder** selbsttätig (Auflaufbremse), § 41 Abs. 9.
+- **§ 34 Abs. 6a StVZO:** alternative Antriebe bis +1 t, emissionsfrei bis +2 t (nur für das Mehrgewicht des Antriebs).
+- **Rot allein:** löst die **Betriebsbremse** (Notbremsung) des Anhängers, nicht den Federspeicher (DGUV I 214-080, S. 20 und 28). Gefährlich, wenn der rote Knopf nicht gezogen ist.
+- **Gelb zuerst:** Das Bremssignal liegt an (Feststellbremse im Lkw). Kommt danach rot, bleibt der Anhänger gebremst.
+- **Ladungsüberstand:** Kennzeichnung bei **mehr als 1 m über die Rückstrahler**; Überstand höchstens 1,50 m, auf Fahrten bis 100 km höchstens 3 m (§ 22 Abs. 4 StVO).
+- **Fundstellen:** Sattelzug-Rechnung § 34 Abs. 7 **Nr. 3** StVZO; Lang-Lkw-Längen § 4 Abs. 2/3 LKWÜberlStVAusnV, Anhänger hinter Sattelzug § 4 Abs. 4.
+- **Lang-Lkw Typ 1:** Referentenentwurf 14. ÄndVO (Stand 07.07.2026) will die Frist bis 31.12.2033 verlängern; Berlin seit 01.04.2026 für Typ 1 freigegeben. Am 03.10.2026 noch nicht in Kraft.
+- **Abriss rot bei neuen Anhängern:** ZF iEBS mit Park-Löse-Ventil aktiviert zusätzlich die Federspeicher (ZF-Datenblatt). WABCO 973 002 bestätigt: Bei Bremsleitungsbruch wird beim Bremsen die Vorratsleitung gedrosselt und entlüftet.

@@ -49,7 +49,7 @@ module.exports = async (deck) => {
   await ask(deck, 'ce1', {
     kicker: 'Wiederholung Abend 5', q: 'Drei Fragen von letztem Mal – wer weiß es noch?', ico: 'LuRotateCcw', qsize: 32,
     answers: [
-      ['LuBox', 'Wie viel hält eine normale Stirnwand (Code L)?', '40 % der Nutzlast – höchstens 5 Tonnen. Nach vorn drückt die Ladung mit bis zu 80 %.'],
+      ['LuBox', 'Wie viel hält eine normale Stirnwand (Code L)?', '40 % der Nutzlast – höchstens 5.000 daN (so viel, wie 5 t wiegen). Nach vorn drückt die Ladung mit bis zu 80 %.'],
       ['LuTag', 'Welcher Wert auf dem Zurrgurt zählt beim Niederzurren?', 'Die STF – die Vorspannkraft. Die LC zählt beim Direktzurren.'],
       ['LuClock', 'Mit welchem Schnitt plant ihr einen Lkw über 7,5 t auf der Autobahn?', 'Mit 70 km/h – nicht mit 80.'],
     ],

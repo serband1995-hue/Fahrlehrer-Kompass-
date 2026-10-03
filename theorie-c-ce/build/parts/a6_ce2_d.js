@@ -19,7 +19,7 @@ module.exports = async (deck) => {
       '▶ Sagen: „Zwei Knöpfe an der Seite des Anhängers. Was machen sie?“\n' +
       '❓ Sammeln lassen, dann je Klick auflösen.\n' +
       '🖱 Klick 1–4: je ein Punkt.\n' +
-      '✅ DGUV I 214-080, S. 19, 21 und 39: roter Knopf = Feststellbremse (Federspeicher), schwarzer Knopf = Löseventil. Haldex Trailer Application Guide: Drücken des roten Knopfs löst die Federspeicher nur mit Druck im Anhängerbehälter. RL 71/320/EWG Anhang I Nr. 2.2.2.11: Das Löseventil muss beim Anschließen der Vorratsleitung automatisch in die Betriebsstellung zurückkehren.\n' +
+      '✅ DGUV I 214-080, S. 19, 21 und 39: roter Knopf = Feststellbremse (Federspeicher), schwarzer Knopf = Löseventil. Haldex Trailer Application Guide: Drücken des roten Knopfs löst die Federspeicher nur mit Druck im Anhängerbehälter. UN-R 13 / RL 71/320/EWG Anhang I Nr. 2.2.2.11: Das Löseventil muss beim Anschließen der Vorratsleitung automatisch in die Betriebsstellung zurückkehren.\n' +
       '💡 Neuere Anhänger haben oft nur einen roten Knopf mit drei Stellungen: Parken – Fahren – Lösen. Herstellerangabe beachten.\n' +
       '➜ „Wie rangiert ihr damit?“',
   });
@@ -43,10 +43,10 @@ module.exports = async (deck) => {
         'Fertig rangiert: roter Knopf ziehen, Keile legen.',
       ],
       notes: [
-        '▶ Sagen: „Der Anhänger ist abgekuppelt. Er ist doppelt gebremst: Der rote Knopf ist gezogen – die Federspeicher halten. Und weil die rote Leitung fehlt, wirkt die Notbremsung mit Luft aus dem Behälter.“\n❓ Frage auf der Folie stellen.\n✅ DGUV I 214-080, S. 19/39; Lehrbuchwissen (Haldex).\n➜ „Wie bekommen wir ihn frei?“',
+        '▶ Sagen: „Der Anhänger ist abgekuppelt. Er ist doppelt gebremst: Der rote Knopf ist gezogen – die Federspeicher halten. Und weil die rote Leitung fehlt, wirkt die Notbremsung mit Luft aus dem Behälter.“\n❓ Frage auf der Folie stellen.\n✅ DGUV I 214-080, S. 19/39; Lehrbuchwissen (Haldex).\n💡 Bei manchen neuen Anhängern (z. B. ZF iEBS mit Park-Löse-Ventil) greift ohne rote Leitung zusätzlich der Federspeicher – Herstellerangabe beachten.\n➜ „Wie bekommen wir ihn frei?“',
         '▶ „Zuerst sichern: Rangierfahrzeug ankuppeln – oder wenigstens Keile. Dann den roten Knopf drücken. Die Federspeicher lösen – mit Luft aus dem Behälter. Aber die Notbremsung hält noch.“\n✅ Haldex: Lösen der Federspeicher nur mit Druck im Behälter. Ist der Behälter leer: Fremdluft oder mechanische Hilfslöseeinrichtung.\n➜ „Und jetzt?“',
         '▶ „Jetzt der schwarze Knopf – das Löseventil. Die Notbremsung löst. Ab jetzt bremst der Anhänger gar nicht mehr selbst! Darum nur, wenn er gesichert ist.“\n✅ Prüfungsfrage 2.7.06-306: Löseventil betätigen, wenn der Anhänger bei gefüllten Luftbehältern und nicht angeschlossenen Bremsleitungen rangiert werden soll.\n💡 Gefahr: Löseventil gedrückt und Feststellbremse gelöst = Anhänger ungebremst.\n➜ „Und wenn er steht?“',
-        '▶ „Fertig rangiert: roter Knopf ziehen, Keile legen. Den schwarzen Knopf müsst ihr nicht ziehen – er springt von selbst heraus, sobald die rote Leitung wieder angeschlossen wird.“\n❓ Frage auf der Folie auflösen.\n✅ RL 71/320/EWG Anhang I Nr. 2.2.2.11 (automatische Rückstellung des Löseventils). DGUV I 214-080, S. 33: nie nur mit der Notbremsfunktion abstellen.\n➜ „Prüfungsfrage.“',
+        '▶ „Fertig rangiert: roter Knopf ziehen, Keile legen. Den schwarzen Knopf müsst ihr nicht ziehen – er springt von selbst heraus, sobald die rote Leitung wieder angeschlossen wird.“\n❓ Frage auf der Folie auflösen.\n✅ UN-R 13 / RL 71/320/EWG Anhang I Nr. 2.2.2.11 (automatische Rückstellung des Löseventils). DGUV I 214-080, S. 33: nie nur mit der Notbremsfunktion abstellen.\n➜ „Prüfungsfrage.“',
       ],
       legend: 'Schema · Knöpfe von der Seite',
       scene: async (s, i) => {
@@ -92,7 +92,7 @@ module.exports = async (deck) => {
   write(deck, 'ce2e', {
     ttl: 'Lastzugbremsen', labelW: 2.9, size: 17,
     rows: [
-      ['Eigene Bremse', 'Anhänger mit 2 und mehr Achsen · ein Pedal für beide · bremst beim Abreißen selbst'],
+      ['Eigene Bremse', 'über 0,75 t Achslast · ein Pedal oder Auflaufbremse · bremst bei Abriss selbst'],
       ['Auflaufbremse', 'bremst erst beim Auflaufen · bis 3,5 t · nie am Auflieger · Abreißseil an den Lkw'],
       ['Rot', 'Vorratsleitung: immer Druck, füllt den Behälter im Anhänger'],
       ['Gelb', 'Bremsleitung: Druck nur beim Bremsen, meldet den Bremswunsch'],
@@ -101,7 +101,7 @@ module.exports = async (deck) => {
       ['Roter Knopf', 'Feststellbremse (Federspeicher) des Anhängers'],
       ['Schwarzer Knopf', 'Löseventil: Notbremsung lösen zum Rangieren · springt beim Anschließen heraus'],
     ],
-    notes: '▶ Sagen: „Schreibt euch das auf – das kommt in der Prüfung.“\n🖱 Klick 1–8: je eine Zeile.\n💡 Erst das Stichwort vorlesen und fragen: „Wer weiß es?“ – dann klicken.\n✅ Quellen: § 41 Abs. 9 und 10 StVZO, RL 71/320/EWG, DGUV I 214-080, Prüfungsfragen 2.7.06-105, 2.7.02-302, 2.7.06-317, 2.7.06-306.\n➜ „Drei Prüfungsfragen.“',
+    notes: '▶ Sagen: „Schreibt euch das auf – das kommt in der Prüfung.“\n🖱 Klick 1–8: je eine Zeile.\n💡 Erst das Stichwort vorlesen und fragen: „Wer weiß es?“ – dann klicken.\n✅ Quellen: § 41 Abs. 9 und 10 StVZO, UN-R 13 / RL 71/320/EWG, DGUV I 214-080, Prüfungsfragen 2.7.06-105, 2.7.02-302, 2.7.06-317, 2.7.06-306.\n➜ „Drei Prüfungsfragen.“',
   });
   await quiz(deck, 'ce2e', {
     kicker: 'Prüfungsfrage 2.7.07-321', q: 'Was müssen Sie beim Ankuppeln eines Anhängers beachten?', size: 32,
@@ -112,7 +112,7 @@ module.exports = async (deck) => {
   await quiz(deck, 'ce2e', {
     kicker: 'Prüfungsfrage 2.7.06-319', q: 'Sie fahren ein Zugfahrzeug mit Druckluftbremsanlage. Die Bremsleitung am rechten Vorderrad bricht. Wie wirkt sich das im Anhängerbetrieb aus?', size: 26,
     opts: ['Beim Anhänger bleibt die Betriebsbremse voll funktionsfähig', 'Die Bremsleistung des Zugfahrzeugs ist eingeschränkt', 'Der Anhänger wird sofort selbsttätig gebremst'], ok: [0, 1],
-    why: 'Der Kreis am Lkw ist kaputt, die anderen bleiben dicht. Der Anhänger bremst normal.',
+    why: 'Der Kreis am Lkw ist kaputt, die anderen behalten ihren Druck. Der Anhänger bremst normal.',
     notes: '▶ Frage vorlesen, abstimmen.\n🖱 Klick 1: Antworten · Klick 2: Lösung.\n✅ Amtlicher Fragenkatalog 2.7.06-319: A und B.\n➜ „Letzte Frage.“',
   });
   await quiz(deck, 'ce2e', {

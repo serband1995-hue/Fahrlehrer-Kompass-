@@ -11,7 +11,7 @@ module.exports = async (deck) => {
     kicker: 'Wiederholung aus C5', q: 'Woher kommt die Luft für den Anhänger?', ico: 'LuRotateCcw', qsize: 34,
     answers: [
       ['LuWind', 'Kompressor', 'Er pumpt Luft in die Behälter des Lkw.', C.gr, 17],
-      ['LuShieldCheck', 'Vierkreisschutzventil', 'Teilt die Luft auf vier Kreise. Reißt einer, bleiben die anderen dicht.', C.gr, 17],
+      ['LuShieldCheck', 'Vierkreisschutzventil', 'Teilt die Luft auf vier Kreise. Reißt einer, behalten die anderen ihren Druck.', C.gr, 17],
       ['LuLink', 'Kreis 3', 'Versorgt die Feststellbremse – und den Anhänger.', C.or, 17],
       ['LuCircleParking', 'Federspeicher', 'Die Feder bremst, die Luft löst.', C.gr, 17],
     ],
