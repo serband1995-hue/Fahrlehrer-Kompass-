@@ -62,7 +62,7 @@ module.exports = async (deck) => {
     await steps(deck, 'c7l', {
       kicker: 'Aquaplaning', ttl: 'Der Reifen schwimmt auf',
       list: ['Profil verdrängt Wasser', 'Wasserkeil wächst', 'Reifen schwimmt'],
-      ask: { q: 'Der Lkw schwimmt auf. Was tut ihr?', a: 'Gas weg, nicht bremsen, Lenkrad gerade halten – bis die Reifen wieder greifen.', at: 2 },
+      ask: { q: 'Der Lkw schwimmt auf. Was tut ihr?', a: 'Gas weg, auskuppeln, Dauerbremse aus, nicht bremsen, Lenkrad gerade halten – bis die Reifen wieder greifen.', at: 2 },
       caps: [
         'Das Profil leitet das Wasser zur Seite. Der Reifen hat vollen Kontakt zur Straße.',
         'Schneller und abgefahrenes Profil: Das Wasser kommt nicht mehr schnell genug weg. Vor dem Reifen staut sich ein Wasserkeil.',
@@ -71,7 +71,7 @@ module.exports = async (deck) => {
       notes: [
         '▶ Sagen: „Bei Regen muss der Reifen das Wasser zur Seite wegdrücken. Das schafft das Profil – wenn es tief genug ist und ihr nicht zu schnell seid.“\n✅ Prüfungsfrage 2.1.03-015: Aquaplaning entsteht durch hohe Geschwindigkeit, abgefahrene Reifen und Spurrillen.\n➜ „Jetzt schneller, und das Profil ist abgefahren.“',
         '▶ „Das Wasser kommt nicht mehr weg. Vor dem Reifen staut sich ein Keil aus Wasser.“\n✅ Prüfungsfrage 2.1.03-101: besonders häufig in Fahrbahnsenken und in Spurrillen.\n💡 Lkw sind schwer und haben einen hohen Reifendruck – sie schwimmen später auf als Autos. In tiefen Spurrillen kann es trotzdem passieren.\n➜ „Und dann?“',
-        '▶ „Der Reifen schwimmt auf. Kein Kontakt mehr zur Straße – Lenken und Bremsen wirken nicht.“\n❓ Frage auf der Folie: „Was tut ihr?“\n✅ Prüfungsfrage 2.1.03-034: eingeschränkte Lenkfähigkeit, verringerte Bremsfähigkeit. Verhalten (Lehrbuchwissen): Gas weg, nicht bremsen, Lenkrad gerade halten, bis die Reifen wieder greifen. Vorbeugen: Tempo runter bei starkem Regen, Profil prüfen.\n➜ „Kapitel 5: Leer oder beladen – was ändert sich?“',
+        '▶ „Der Reifen schwimmt auf. Kein Kontakt mehr zur Straße – Lenken und Bremsen wirken nicht.“\n❓ Frage auf der Folie: „Was tut ihr?“\n✅ Prüfungsfrage 2.1.03-034: eingeschränkte Lenkfähigkeit, verringerte Bremsfähigkeit. Verhalten (ADAC/Lehrbuchwissen): Gas weg, auskuppeln, nicht bremsen, Lenkrad gerade halten, bis die Reifen wieder greifen. Beim Lkw zusätzlich: Dauerbremse/Retarder aus – sie wirkt nur auf die Antriebsachse und kann sie blockieren lassen. Vorbeugen: Tempo runter bei starkem Regen, Profil prüfen.\n➜ „Kapitel 5: Leer oder beladen – was ändert sich?“',
       ],
       legend: 'Seitenansicht · schematisch',
       scene: async (s, i) => {
@@ -103,7 +103,7 @@ module.exports = async (deck) => {
       list: ['Leer', 'Voll, schwer unten', 'Schwer oben geladen'],
       ask: { q: 'Leer oder voll: Wann drehen die Antriebsräder eher durch?', a: 'Leer – auf der Antriebsachse liegt wenig Gewicht, also wenig Haftung.', at: 1 },
       caps: [
-        'Leer: wenig Gewicht auf den Antriebsrädern – sie drehen leicht durch und blockieren leicht. Der hohe Aufbau fängt viel Wind.',
+        'Leer: wenig Gewicht auf den Antriebsrädern – sie drehen leicht durch und neigen zum Blockieren (ABS und ALB gleichen das aus). Der hohe Aufbau fängt viel Wind.',
         'Voll, schwere Teile unten: gute Haftung, liegt satt. Aber: mehr Wucht, längerer Bremsweg, mehr Fliehkraft.',
         'Schwere Teile oben: Der Schwerpunkt wandert nach oben – in der Kurve kippt der Lkw viel früher.',
       ],
@@ -153,7 +153,7 @@ module.exports = async (deck) => {
       ['Fliehkraft größer', 'durch Tempo, Masse und enge Kurven.'],
       ['Kippen', 'Hoher Schwerpunkt kippt früher – Schweres nach unten.'],
       ['Seitenwind', 'Brücken, Waldschneisen, Überholen: langsamer, gegenlenken.'],
-      ['Aquaplaning', 'Tempo, abgefahrenes Profil, Spurrillen – Gas weg, nicht bremsen.'],
+      ['Aquaplaning', 'Tempo, Profil, Spurrillen – Gas weg, Dauerbremse aus, nicht bremsen.'],
     ],
     notes: '▶ Sagen: „Schreibt euch diese sieben Punkte auf.“\n❓ Vor jedem Klick fragen: „Was gehört hierhin?“\n🖱 Klick 1–7: je eine Antwort.\n✅ Zusammenfassung von C7 (Quellen auf den Folien davor).\n➜ „Und jetzt testen wir das mit drei Prüfungsfragen.“',
   });

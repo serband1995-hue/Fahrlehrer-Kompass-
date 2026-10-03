@@ -32,7 +32,7 @@ module.exports = async (deck) => {
       '▶ Sagen: „Ein Lkw darf höchstens 2,55 Meter breit sein – mit Ladung.“\n✅ § 32 Abs. 1 StVZO; § 22 Abs. 2 StVO (Fahrzeug und Ladung zusammen 2,55 m). Prüfungsfrage 2.7.09-202 (Zahleneingabe).\n➜ „Es gibt eine Ausnahme.“',
       '▶ „Kühlfahrzeuge mit dick isolierten Wänden dürfen 2,60 m breit sein. Und Achtung: Die Außenspiegel zählen nicht zur Breite – sie stehen noch weiter raus.“\n❓ Frage auf der Folie auflösen.\n✅ § 32 Abs. 1 Nr. 4 StVZO (2,60 m bei mindestens 45 mm Wanddicke); Einrichtungen für indirekte Sicht werden nicht mitgemessen. Prüfungsfrage 2.6.06-211: An engen Durchfahrten ragen die Spiegel über die angegebene Breite hinaus, und Aufbauten schwanken auf unebener Fahrbahn.\n➜ „Und nach oben?“',
       '▶ „Höhe: höchstens 4 Meter, mit Ladung. Kennt die Höhe eures Lkw – sie steht oft an einem Schild im Fahrerhaus. Brücken mit Höhenbeschränkung, Tankstellendächer, Hallentore.“\n✅ § 32 Abs. 2 StVZO; § 22 Abs. 2 StVO. Prüfungsfrage 2.7.09-210: 4,0 m.\n➜ „Und die Länge?“',
-      '▶ „Ein einzelner Lkw darf höchstens 12 Meter lang sein. Mit Anhänger und Ladung höchstens 20,75 Meter – das kommt in CE.“\n✅ § 32 Abs. 3 Nr. 1 StVZO (12,00 m). § 22 Abs. 4 StVO und Prüfungsfrage 2.6.06-201: Zug samt Ladung höchstens 20,75 m.\n➜ „Jetzt die Gewichte.“',
+      '▶ „Ein einzelner Lkw darf höchstens 12 Meter lang sein. Mit Anhänger und Ladung höchstens 20,75 Meter – das kommt in CE.“\n💡 Der Lastzug selbst darf höchstens 18,75 m lang sein (§ 32 Abs. 4 StVZO); bis 20,75 m nur mit überstehender Ladung.\n✅ § 32 Abs. 3 Nr. 1 StVZO (12,00 m). § 22 Abs. 4 StVO und Prüfungsfrage 2.6.06-201: Zug samt Ladung höchstens 20,75 m.\n➜ „Jetzt die Gewichte.“',
     ],
     legend: 'Nicht maßstäblich',
     scene: async (s, i) => {
@@ -71,7 +71,7 @@ module.exports = async (deck) => {
         'Zusätzlich jede Achse: Einzelachse 10 t, Antriebsachse 11,5 t. Beides muss eingehalten werden.',
       ],
       notes: [
-        '▶ Sagen: „Wie schwer ein Lkw sein darf, hängt von der Zahl der Achsen ab. Zweiachser: 18 Tonnen.“\n✅ § 34 Abs. 5 Nr. 1a StVZO.\n💡 Das genaue Höchstgewicht eures Lkw steht in der Zulassungsbescheinigung Teil I (Feld F.2) – es kann niedriger sein.\n➜ „Drei Achsen.“',
+        '▶ Sagen: „Wie schwer ein Lkw sein darf, hängt von der Zahl der Achsen ab. Zweiachser: 18 Tonnen.“\n✅ § 34 Abs. 5 Nr. 1a StVZO.\n💡 Das genaue Höchstgewicht eures Lkw steht in der Zulassungsbescheinigung Teil I (Feld F.2) – es kann niedriger sein. E-Lkw und Lkw mit alternativem Antrieb dürfen etwas schwerer sein (§ 34 Abs. 5b: bis 1 t, emissionsfrei bis 2 t mehr).\n➜ „Drei Achsen.“',
         '▶ „Dreiachser: 25 Tonnen – 26 Tonnen, wenn die Antriebsachse Zwillingsreifen und Luftfederung hat.“\n✅ § 34 Abs. 5 Nr. 2a und 2b StVZO (mit Doppelachslast nach Abs. 4 Nr. 2d).\n➜ „Vier Achsen.“',
         '▶ „Vierachser – zum Beispiel Baustellenkipper: 32 Tonnen.“\n✅ § 34 Abs. 5 Nr. 3 StVZO (mit Bedingungen an Achsabstand und Lenkachsen).\n➜ „Und jede Achse für sich?“',
         '▶ „Jede Achse hat ihre eigene Grenze: Einzelachse 10 Tonnen, angetriebene Achse 11,5 Tonnen. Zusammen wären das 21,5 – aber das Gesamtgewicht bleibt bei 18. Beides muss stimmen.“\n❓ Frage auf der Folie auflösen.\n✅ § 34 Abs. 4 Nr. 1 StVZO. Prüfungsfrage 2.7.09-222: zulässige Gesamtmasse, zulässige Achslasten sowie Höhe, Breite, Lage und Sicherung der Ladung beachten.\n💡 Beim Teilentladen kann sich die Achslast verschieben: Wird hinten abgeladen, wird vorn manchmal mehr belastet.\n➜ „Was passiert, wenn der Lkw zu schwer ist?“',
@@ -98,9 +98,9 @@ module.exports = async (deck) => {
 
   // ===== ÜBERLADUNG AUF DER WAAGE (fließend) =====
   {
-    const ROWS = [['2–5 %', '30 €', '35 €'], ['über 5 %', '80 € + 1 P', '140 € + 1 P'], ['über 10 %', '110 € + 1 P', '235 € + 1 P'], ['über 20 %', '190 € + 1 P', '380 € + 1 P'], ['über 30 %', '380 € + 1 P', '425 € + 1 P']];
+    const ROWS = [['2–5 %', '30 €', '35 €'], ['über 5 %', '80 € + 1 P', '140 € + 1 P'], ['über 10 %', '110 € + 1 P', '235 € + 1 P'], ['über 15 %', '140 € + 1 P', '285 € + 1 P'], ['über 20 %', '190 € + 1 P', '380 € + 1 P'], ['über 25 %', '285 € + 1 P', '425 € + 1 P'], ['über 30 %', '380 € + 1 P', '425 € + 1 P']];
     const fr = (w, n, o = {}) => ({ t: { w, n }, ...o });
-    const rowOf = p => p > 30 ? 4 : p > 20 ? 3 : p > 10 ? 2 : p > 5 ? 1 : p > 2 ? 0 : -1;
+    const rowOf = p => p > 30 ? 6 : p > 25 ? 5 : p > 20 ? 4 : p > 15 ? 3 : p > 10 ? 2 : p > 5 ? 1 : p > 2 ? 0 : -1;
     await motion(deck, 'c8m', {
       kicker: 'Überladung', ttl: 'Ab auf die Waage', dur: 480, holdDur: 800,
       question: 'Euer 18-Tonner wiegt auf der Waage fast 20 Tonnen. Wer zahlt – und wie viel?',
@@ -134,16 +134,16 @@ module.exports = async (deck) => {
         s.text(w.toFixed(1).replace('.', ',') + ' t', { x: 10.1, y: 1.6, w: 2.95, h: 0.9, size: 40, bold: true, color: col, align: 'center', valign: 'middle', font: 'Consolas', name: '!!disv' });
         s.text(w <= 18.0001 ? 'erlaubt: 18,0 t' : '+' + p.toFixed(1).replace('.', ',') + ' %', { x: 10.1, y: 2.45, w: 2.95, h: 0.45, size: 18, bold: true, color: col, align: 'center', name: '!!disp2' });
         // Bußgeldtabelle
-        const TY = 4.3, RH = 0.36;
+        const TY = 4.22, RH = 0.285;
         s.text('Überladung', { x: 5.8, y: TY, w: 2.2, h: RH, size: 13, bold: true, color: C.mut, valign: 'middle', name: '!!th0' });
         s.text('Fahrer', { x: 8.1, y: TY, w: 2.3, h: RH, size: 13, bold: true, color: C.mut, valign: 'middle', name: '!!th1' });
         s.text('Halter', { x: 10.5, y: TY, w: 2.5, h: RH, size: 13, bold: true, color: C.mut, valign: 'middle', name: '!!th2' });
         s.rrect(5.7, TY + RH + 0.02 + Math.max(0, row) * RH, 7.35, RH, { fill: row >= 2 ? '3A1A1E' : '3A2E14', line: row >= 2 ? C.red : C.or, ft: row >= 0 ? 0 : 100, lt: row >= 0 ? 0 : 100, rr: 0.15, name: '!!hl' });
         ROWS.forEach((rw, q) => {
           const y = TY + RH + 0.02 + q * RH, on = q === row;
-          s.text(rw[0], { x: 5.8, y, w: 2.2, h: RH, size: 14, bold: on, color: on ? C.txt : C.mut, valign: 'middle', name: '!!r0' + q });
-          s.text(rw[1], { x: 8.1, y, w: 2.3, h: RH, size: 14, bold: on, color: on ? C.txt : C.mut, valign: 'middle', name: '!!r1' + q });
-          s.text(rw[2], { x: 10.5, y, w: 2.5, h: RH, size: 14, bold: on, color: on ? C.txt : C.mut, valign: 'middle', name: '!!r2' + q });
+          s.text(rw[0], { x: 5.8, y, w: 2.2, h: RH, size: 12.5, bold: on, color: on ? C.txt : C.mut, valign: 'middle', name: '!!r0' + q });
+          s.text(rw[1], { x: 8.1, y, w: 2.3, h: RH, size: 12.5, bold: on, color: on ? C.txt : C.mut, valign: 'middle', name: '!!r1' + q });
+          s.text(rw[2], { x: 10.5, y, w: 2.5, h: RH, size: 12.5, bold: on, color: on ? C.txt : C.mut, valign: 'middle', name: '!!r2' + q });
         });
       },
     });

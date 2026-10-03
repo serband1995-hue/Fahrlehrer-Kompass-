@@ -28,7 +28,7 @@ module.exports = async (deck) => {
       notes: [
         '▶ Sagen: „Lange Rohre auf der Pritsche. Wie weit dürfen sie hinten raus?“\n✅ § 22 Abs. 4 StVO: Kennzeichnung erst, wenn das äußerste Ende mehr als 1 m über die Rückstrahler hinausragt.\n➜ „Jetzt etwas mehr.“',
         '▶ „Mehr als 1 Meter: Dann muss eine hellrote Fahne dran – mindestens 30 mal 30 Zentimeter, mit Querstange, oder ein gleich großes, pendelnd aufgehängtes Schild. Nicht höher als 1,50 Meter über der Straße.“\n❓ Frage auf der Folie auflösen.\n✅ § 22 Abs. 4 StVO. Prüfungsfrage 2.7.09-204: Fahne mit Querstange oder pendelndes Schild – NICHT eine orangefarbene Warntafel.\n➜ „Wie weit darf es höchstens sein?“',
-        '▶ „Nach hinten höchstens 1,50 Meter. Ausnahme: Wenn die ganze Fahrt höchstens 100 Kilometer lang ist, dürfen es bis zu 3 Meter sein.“\n✅ § 22 Abs. 4 StVO. Zug samt Ladung höchstens 20,75 m.\n💡 Nach vorn: bis 2,50 m Höhe darf gar nichts über das Fahrzeug hinausragen, darüber höchstens 50 cm (§ 22 Abs. 3 StVO). Seitlich: Ragt Ladung mehr als 40 cm über die Leuchten hinaus, vorn weißes und hinten rotes Licht (§ 22 Abs. 5; Prüfungsfrage 2.7.09-221).\n➜ „Und nachts?“',
+        '▶ „Nach hinten höchstens 1,50 Meter. Ausnahme: Wenn die ganze Fahrt höchstens 100 Kilometer lang ist, dürfen es bis zu 3 Meter sein.“\n✅ § 22 Abs. 4 StVO. Die 1,50 m bzw. 3 m zählen ab dem Fahrzeugende, die 1-m-Grenze für die Kennzeichnung ab den Rückstrahlern. Zug samt Ladung höchstens 20,75 m.\n💡 Nach vorn: bis 2,50 m Höhe darf gar nichts über das Fahrzeug hinausragen, darüber höchstens 50 cm (§ 22 Abs. 3 StVO). Seitlich: Ragt Ladung mehr als 40 cm über die Leuchten hinaus, vorn weißes und hinten rotes Licht (§ 22 Abs. 5; Prüfungsfrage 2.7.09-221).\n➜ „Und nachts?“',
         '▶ „Wenn es dunkel ist oder die Sicht schlecht: zusätzlich eine Leuchte mit rotem Licht an gleicher Stelle und ein roter Rückstrahler, nicht höher als 90 cm.“\n✅ § 22 Abs. 4 StVO (wenn nötig nach § 17 Abs. 1).\n➜ „Und wer ist für die Ladung verantwortlich?“',
       ],
       legend: 'Schematisch · nicht maßstäblich',
@@ -80,14 +80,14 @@ module.exports = async (deck) => {
     bg: 'i_adr_r.jpg', bgX: 6.0, ov: 7.0, kicker: 'Gefahrgut', q: 'Orange Tafel am Lkw – was bedeutet das?', qsize: 30, w: 5.05, asize: 15,
     answers: [
       ['LuFlame', 'Gefahrgut über der Freigrenze', 'Der Fahrer braucht dann eine ADR-Schulungsbescheinigung.', C.or],
-      ['LuFireExtinguisher', 'Kleine Mengen (1000-Punkte-Regel)', 'keine orange Tafel, kein ADR-Schein – aber Feuerlöscher (2 kg), Begleitpapier, Unterweisung.', C.red],
+      ['LuFireExtinguisher', 'Kleine Mengen in Versandstücken', 'keine Tafel, kein ADR-Schein – aber Feuerlöscher (2 kg), Papier, Unterweisung.', C.red],
       ['LuPhoneCall', 'Bei einem Unfall', 'Abstand halten, Nummern auf der Tafel der Feuerwehr nennen.', C.am],
     ],
     notes:
       '▶ Sagen: „Die orangefarbene Tafel heißt: Hier wird Gefahrgut transportiert – in einer Menge, für die die vollen Gefahrgutregeln gelten.“\n' +
-      '❓ „Darf ich mit meinem C-Führerschein Gefahrgut fahren?“ – Antwort: kleine Mengen ja, darüber nur mit ADR-Schulung.\n' +
+      '❓ „Darf ich mit meinem C-Führerschein Gefahrgut fahren?“ – Antwort: kleine Mengen in Versandstücken (Kanister, Fässer, Pakete) ja, darüber nur mit ADR-Schulung. Tank- und Schüttguttransporte wie auf dem Bild: nie ohne ADR-Schein.\n' +
       '🖱 Klick 1–3: je eine Karte.\n' +
-      '✅ ADR 1.1.3.6 (1000-Punkte-Regel): unterhalb der Grenze keine orangefarbenen Tafeln, keine ADR-Schulungsbescheinigung; mitzuführen sind ein Feuerlöscher (2 kg) und das Beförderungspapier; der Fahrer braucht eine Unterweisung nach 1.3 ADR. Quellen: WEKA „1000-Punkte-Regel“, IHK Frankfurt „Feuerlöscher für Gefahrgutfahrzeuge“.\n' +
+      '✅ ADR 1.1.3.6 (1000-Punkte-Regel): nur für Güter in Versandstücken (nicht in Tanks oder lose geschüttet); unterhalb der Grenze keine orangefarbenen Tafeln, keine ADR-Schulungsbescheinigung; mitzuführen sind ein Feuerlöscher (2 kg) und das Beförderungspapier; der Fahrer braucht eine Unterweisung nach 1.3 ADR. Quellen: WEKA „1000-Punkte-Regel“, IHK Frankfurt „Feuerlöscher für Gefahrgutfahrzeuge“.\n' +
       '💡 Auf der Tafel stehen oft zwei Zahlen: oben die Nummer zur Gefahr, unten die UN-Nummer des Stoffs. Die helfen der Feuerwehr.\n' +
       '➜ „Es gibt noch mehr Güter mit eigenen Regeln.“',
   });
@@ -100,7 +100,7 @@ module.exports = async (deck) => {
       '➜ „Kapitel 5: Wie ihr bei der Arbeit am Lkw gesund bleibt.“' });
     kick(s, 'Besondere Güter'); title(s, 'Eigene Regeln für besondere Güter');
     const T = [
-      ['LuFlame', C.or, 'Gefahrgut', 'Orange Tafeln, ADR-Schein, Ausrüstung – unter der Freigrenze nur Feuerlöscher, Papier, Unterweisung.'],
+      ['LuFlame', C.or, 'Gefahrgut', 'Orange Tafeln, ADR-Schein, Ausrüstung – kleine Mengen in Versandstücken: Feuerlöscher, Papier, Unterweisung.'],
       ['LuRecycle', C.gr, 'Abfall', 'Wer gewerblich Abfall sammelt oder befördert: vorn und hinten ein weißes A-Schild.'],
       ['LuPawPrint', C.am, 'Lebende Tiere', 'Eigene Tierschutz-Vorschriften: genug Platz, Versorgung, Fahrzeiten.'],
     ];
@@ -120,8 +120,8 @@ module.exports = async (deck) => {
   }
 
   // ===== KAPITEL 5 ARBEITSSICHERHEIT =====
-  await chapter(deck, 'c8s', { num: 5, ttl: 'Arbeitssicherheit', sub: 'Die meisten Unfälle passieren nicht beim Fahren, sondern rund um den Lkw.', ico: 'LuHardHat', notes:
-    '▶ Sagen: „Kapitel 5: Arbeitssicherheit. Viele Verletzungen von Lkw-Fahrern passieren gar nicht im Verkehr – sondern beim Aussteigen, Rangieren und Be- und Entladen.“\n💡 Zuständig ist die Berufsgenossenschaft (BG Verkehr). Ihre Regeln stehen in der Unfallverhütungsvorschrift „Fahrzeuge“ (DGUV Vorschrift 70).\n🖱 Keine Klicks.\n➜ „Fangen wir mit dem Aussteigen an.“' });
+  await chapter(deck, 'c8s', { num: 5, ttl: 'Arbeitssicherheit', sub: 'Die meisten Arbeitsunfälle passieren nicht beim Fahren, sondern rund um den Lkw.', ico: 'LuHardHat', notes:
+    '▶ Sagen: „Kapitel 5: Arbeitssicherheit. Die meisten Arbeitsunfälle von Lkw-Fahrern passieren gar nicht im Verkehr – sondern beim Aussteigen, Rangieren und Be- und Entladen. Vor allem Stürze.“\n✅ BG Verkehr: 2015 waren im Güterkraftverkehr nur 8,4 % der meldepflichtigen Arbeitsunfälle Verkehrsunfälle, 44,3 % waren Stürze. Tödliche Unfälle passieren aber vor allem im Verkehr.\n💡 Zuständig ist die Berufsgenossenschaft (BG Verkehr). Ihre Regeln stehen in der Unfallverhütungsvorschrift „Fahrzeuge“ (DGUV Vorschrift 70).\n🖱 Keine Klicks.\n➜ „Fangen wir mit dem Aussteigen an.“' });
   {
     const k = 2.1, X = 6.3, GY = 6.55;
     await steps(deck, 'c8s', {
@@ -171,7 +171,7 @@ module.exports = async (deck) => {
         fr(5.2, { hold: true, cap: 'Rückwärts an die Laderampe. Hinter dem Lkw seht ihr nichts.', note: '▶ Sagen: „Ihr setzt rückwärts an die Rampe. Direkt hinter dem Lkw seht ihr gar nichts.“\n❓ Frage auf der Folie stellen.\n🖱 Klick: Gefahrzone und Platz des Einweisers erscheinen.\n➜ „Wo darf jemand stehen?“' }),
         fr(5.2, { t: { zone: 1 }, hold: true, cap: 'Rot: Hier darf niemand stehen. Grün: Hier steht der Einweiser – im Spiegel sichtbar.', note: '▶ „Zwischen Lkw und Rampe: lebensgefährlich, da darf niemand stehen. Der Einweiser steht seitlich hinten, so dass ihr ihn im linken Spiegel seht.“\n✅ DGUV Vorschrift 70 § 46: Rückwärtsfahren nur, wenn niemand gefährdet ist – sonst mit Einweiser. Einweiser nur im Sichtbereich des Fahrers, nicht zwischen Fahrzeug und Hindernis, keine anderen Tätigkeiten.\n🖱 Klick: Der Lkw setzt zurück (läuft von selbst).\n➜ „Langsam zurück.“' }),
         fr(4.7, { t: { zone: 1 }, cap: 'Langsam, Schritttempo – Blick in den Spiegel, auf den Einweiser.' }), fr(4.2, { t: { zone: 1 } }), fr(3.7, { t: { zone: 1 } }),
-        fr(3.25, { t: { zone: 1, stop: 1 }, hold: true, answer: true, cap: 'Der Einweiser zeigt „Halt“ – sofort stehen bleiben. Seht ihr ihn nicht mehr: ebenfalls sofort anhalten.', note: '▶ „Der Einweiser gibt das Haltzeichen – ihr bleibt sofort stehen. Und ganz wichtig: Verliert ihr ihn aus dem Spiegel, haltet ihr an. Erst wieder fahren, wenn ihr ihn seht.“\n✅ Prüfungsfrage 2.2.23-213: Beim Rückwärtsfahren aus einem Grundstück in die Straße sichert man durch Sicherungsposten (Einweiser) – nicht durch Warnblinker oder Hupen.\n💡 Rückfahrkamera und Rückfahrwarner helfen, ersetzen aber keinen Einweiser, wenn Personen gefährdet sein können.\n🖱 Keine Animation mehr – nächster Klick: nächste Folie.\n➜ „Und was zieht ihr bei der Arbeit an?“' }),
+        fr(3.25, { t: { zone: 1, stop: 1 }, hold: true, answer: true, cap: 'Der Einweiser zeigt „Halt“ – sofort stehen bleiben. Seht ihr ihn nicht mehr: ebenfalls sofort anhalten.', note: '▶ „Der Einweiser gibt das Haltzeichen – ihr bleibt sofort stehen. Und ganz wichtig: Verliert ihr ihn aus dem Spiegel, haltet ihr an. Erst wieder fahren, wenn ihr ihn seht.“\n✅ Prüfungsfrage 2.2.23-213: Beim Rückwärtsfahren aus einem Grundstück in die Straße sichert man durch Sicherungsposten (Einweiser) – nicht durch Warnblinker oder Hupen.\n💡 Rückfahrkamera, Rückfahrwarner oder eine Absperrung können genügen, wenn damit sicher niemand gefährdet ist – sonst Einweiser (Durchführungsanweisung zu DGUV Vorschrift 70 § 46).\n🖱 Keine Animation mehr – nächster Klick: nächste Folie.\n➜ „Und was zieht ihr bei der Arbeit an?“' }),
       ],
       scene: async (s, t) => {
         // Halle / Rampe
@@ -203,7 +203,7 @@ module.exports = async (deck) => {
     const s = base(deck, 'c8s', { notes:
       '▶ Sagen: „Was gehört zur Schutzausrüstung, wenn ihr am Lkw arbeitet?“\n' +
       '🖱 Klick 1–4: je ein Punkt.\n' +
-      '✅ Warnweste: § 53a Abs. 2 Nr. 3 StVZO (mitführen); beim Aussteigen auf der Fahrbahn anziehen (Prüfungsfrage 2.2.15-201). Sicherheitsschuhe und Handschuhe: nach der Gefährdungsbeurteilung des Unternehmers, üblich beim Be- und Entladen (BG Verkehr). Sicherheitsgurt: § 21a StVO – auch im Lkw anlegen.\n' +
+      '✅ Warnweste: § 53a Abs. 2 Nr. 3 StVZO (mitführen); beim Aussteigen auf der Fahrbahn anziehen (Prüfungsfrage 2.2.15-201). Sicherheitsschuhe und Handschuhe: nach der Gefährdungsbeurteilung des Unternehmers, üblich beim Be- und Entladen (BG Verkehr). Sicherheitsgurt: § 21a StVO – auch im Lkw anlegen. Ausnahmen nur bei Haus-zu-Haus-Auslieferung mit häufigem Aussteigen und bei Schrittgeschwindigkeit, z. B. beim Rückwärtsfahren (§ 21a Abs. 1 Satz 2 Nr. 2 und 3).\n' +
       '➜ „Fassen wir C8 zusammen.“' });
     kick(s, 'Arbeitssicherheit'); title(s, 'Schutz für euch selbst');
     await point(s, 0.7, 2.05, 5.85, 2.0, 'LuShirt', 'D7F000', 'Warnweste', 'sobald ihr auf der Straße oder auf dem Betriebshof unterwegs seid.', CLICK, { br: true, size: 18 });

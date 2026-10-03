@@ -18,7 +18,7 @@ Stand: 02.10.2026. Gesetze am Recherchetag auf gesetze-im-internet.de gelesen. P
 - Luftwiderstand wächst mit v². (90/80)² = 1,27 → +27 %. (60/80)² = 0,56. (Physik, eigene Rechnung)
 - Hangabtriebskraft = m · g · sin α. 18 t bei 5 %: ≈ 8,8 kN; bei 10 %: ≈ 17,6 kN (eigene Rechnung).
 - Bewegungsenergie = ½ · m · v². Doppelte Geschwindigkeit → vierfache Energie. 18 t bei 80 km/h ≈ 4,4 MJ = Pkw 1,5 t bei ≈ 277 km/h (eigene Rechnung).
-- Lkw über 3,5 t Autobahn höchstens 80 km/h: § 3 Abs. 3, § 18 Abs. 5 StVO (siehe FAKTEN_C1_C2).
+- Lkw über 3,5 t Autobahn höchstens 80 km/h: § 18 Abs. 5 Satz 2 Nr. 1 a StVO (§ 3 Abs. 3 gilt nicht auf Autobahnen; siehe FAKTEN_C1_C2).
 
 ## C7-c) Fliehkraft, Kippen
 - Fliehkraft = m · v² / r. Prüfungsfrage **2.7.01-046**: Kurve mit 30 und mit 60 km/h → Fliehkraft bei 60 km/h **viermal so groß**.

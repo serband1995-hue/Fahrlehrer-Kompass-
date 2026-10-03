@@ -38,7 +38,7 @@ function heckSvg(hoch) {
 module.exports = async (deck) => {
   // ===== KAPITEL 3 =====
   await chapter(deck, 'c7f', { num: 3, ttl: 'Fliehkraft und Kippen', sub: 'Warum ein Lkw in der Kurve viel früher an seine Grenze kommt als ein Auto.', ico: 'LuRotateCw', notes:
-    '▶ Sagen: „Kapitel 3: die Kurve. Hier passieren die meisten Lkw-Unfälle ohne fremde Beteiligung – der Lkw rutscht oder kippt.“\n🖱 Keine Klicks.\n➜ „Was drückt den Lkw in der Kurve nach außen?“' });
+    '▶ Sagen: „Kapitel 3: die Kurve. Hier passieren viele Lkw-Unfälle ohne fremde Beteiligung – der Lkw rutscht oder kippt.“\n🖱 Keine Klicks.\n➜ „Was drückt den Lkw in der Kurve nach außen?“' });
 
   // ===== FLIEHKRAFT: zwei Durchfahrten (fließend) =====
   const kurve = await svgImg(kurveSvg(), IW * 100, IH * 100, 1);
@@ -75,7 +75,7 @@ module.exports = async (deck) => {
     frames: [
       fr(88, { hold: true, cap: 'Dieselbe Kurve mit 60 km/h – doppelt so schnell.', note: '▶ Sagen: „Jetzt mit 60 km/h. Schaut auf den Pfeil.“\n🖱 Klick: Die Durchfahrt beginnt (läuft von selbst – schneller als eben).\n➜ „Los.“' }),
       fr(78, { cap: 'Der Pfeil ist viermal so lang …' }), fr(68), fr(58, { dr: 0.08 }),
-      fr(48, { dr: 0.2, hold: true, answer: true, cap: 'Viermal so viel Fliehkraft. Der Lkw drängt nach außen.', note: '▶ „Doppelt so schnell – viermal so viel Fliehkraft. Der Lkw drängt nach außen, Richtung Gegenverkehr.“\n✅ Physik: Fliehkraft = Masse · Geschwindigkeit² / Radius. (60/30)² = 4. Beispiel Radius 50 m: 30 km/h → etwa 1,4 m/s² Querbeschleunigung, 60 km/h → etwa 5,6 m/s².\n🖱 Klick: weiter.\n➜ „Und wenn die Reifen das nicht mehr halten?“' }),
+      fr(48, { dr: 0.2, hold: true, answer: true, cap: 'Viermal so viel Fliehkraft. Der Lkw drängt nach außen.', note: '▶ „Doppelt so schnell – viermal so viel Fliehkraft. Der Lkw drängt nach außen, Richtung Gegenverkehr.“\n✅ Physik: Fliehkraft = Masse · Geschwindigkeit² / Radius. (60/30)² = 4. Beispiel Radius 50 m: 30 km/h → etwa 1,4 m/s² Querbeschleunigung, 60 km/h → etwa 5,6 m/s² (≈ 0,57 g). Das ist weniger als die Haftung trocken (0,8), aber mehr als die Kippgrenze eines hoch beladenen Lkw (Beispiel: halbe Spurweite 1,0 m ÷ Schwerpunkthöhe 2,0 m = 0,5 g) – er würde hier kippen, bevor er rutscht.\n🖱 Klick: weiter.\n➜ „Und wenn die Reifen das nicht mehr halten?“' }),
       fr(38, { dr: 0.5, cap: 'Reicht die Haftung nicht, wird der Lkw aus der Kurve getragen.' }), fr(28, { dr: 0.8 }),
       fr(20, { dr: 1.2, hold: true, cap: 'Aus der Kurve getragen – oder, bei hohem Schwerpunkt, vorher umgekippt.', note: '▶ „Reicht die Haftung nicht, rutscht der Lkw nach außen – in den Gegenverkehr oder in den Graben. Ein hoch beladener Lkw kippt oft schon, bevor er rutscht. Das schauen wir uns gleich an.“\n💡 Merksatz: Vor der Kurve bremsen, in der Kurve nicht mehr stark bremsen, am Kurvenausgang wieder Gas.\n🖱 Keine Animation mehr – nächster Klick: nächste Folie.\n➜ „Wovon hängt die Fliehkraft noch ab?“' }),
     ],
@@ -89,10 +89,11 @@ module.exports = async (deck) => {
       '❓ „Was davon könnt ihr als Fahrer beeinflussen?“ – Antwort: vor allem das Tempo.\n' +
       '🖱 Klick 1: Tempo · Klick 2: Masse · Klick 3: Kurve.\n' +
       '✅ Physik: Fliehkraft = m · v² / r. Doppelte Geschwindigkeit → vierfache Kraft. Doppelte Masse → doppelte Kraft. Halber Radius (engere Kurve) → doppelte Kraft.\n' +
+      '💡 Mit der Masse wächst auch die Haftung – ein voller Lkw rutscht deshalb kaum früher als ein leerer. Gefährlich ist beim vollen Lkw vor allem der höhere Schwerpunkt (Kippen) und der längere Bremsweg.\n' +
       '➜ „Und warum kippt ein Lkw, ein Auto aber nicht?“' });
     kick(s, 'Fliehkraft'); title(s, 'Wovon die Fliehkraft abhängt');
     await point(s, 0.7, 2.05, 11.93, 1.3, 'LuGauge', C.red, 'Doppeltes Tempo – vierfache Kraft.', 'Das Tempo zählt im Quadrat. Hier habt ihr den größten Hebel.', CLICK, { size: 20 });
-    await point(s, 0.7, 3.5, 11.93, 1.3, 'LuWeight', C.or, 'Doppelte Masse – doppelte Kraft.', 'Ein voller Lkw drückt doppelt so stark nach außen wie ein halb so schwerer.', CLICK, { size: 20 });
+    await point(s, 0.7, 3.5, 11.93, 1.3, 'LuWeight', C.or, 'Doppelte Masse – doppelte Kraft.', 'Mehr Masse drückt stärker nach außen. Die Reifen haften zwar auch besser – aber der Schwerpunkt liegt meist höher.', CLICK, { size: 20 });
     await point(s, 0.7, 4.95, 11.93, 1.3, 'LuCornerUpRight', C.bl, 'Halber Kurvenradius – doppelte Kraft.', 'Enge Kurven, Kreisverkehre und Abfahrten sind besonders gefährlich.', CLICK, { size: 20 });
     foot(s, 'Fliehkraft = Masse · Geschwindigkeit² ÷ Kurvenradius');
   }
