@@ -48,7 +48,30 @@ async function signImg(code) {
 async function sign(s, code, x, y, w, h, anim, o = {}) { return s.img(await signImg(code), { x, y, w, h: h ?? w, name: o.name }, anim); }
 
 // Mehrfachwahl: Frage steht, Klick 1 = Antworten, Klick 2 = Lösung, (Begründung kommt mit der Lösung)
+// Antworten mischen, damit die richtige nicht immer an derselben Stelle steht (fest je Frage, nicht zufällig je Bau).
+// Nur wenn die Notiz die Lösung in der festen Form „✅ … B.“ / „✅ Amtlicher Fragenkatalog …: A und B.“ nennt
+// und sonst nirgends ein einzelner Buchstabe A/B/C vorkommt – dann werden die Buchstaben mit umgeschrieben.
+const LET = 'ABC';
+function mixQuiz(q, opts, ok, notes, why) {
+  const oks = [].concat(ok);
+  if (opts.length !== 3 || oks.length === 3) return { opts, ok, notes };
+  const re = /(✅ (?:Amtlicher Fragenkatalog [\d.\-]+: )?(?:nur )?)([ABC](?:(?:, | und )[ABC])*)(?=[ .,(:]|$)/;
+  const m = notes.match(re);
+  if (!m) return { opts, ok, notes };
+  const solo = /(^|[^\wÄÖÜäöüß])[ABC](?=[^\wÄÖÜäöüß]|$)/;
+  if (solo.test(notes.replace(m[0], '')) || solo.test(why || '')) return { opts, ok, notes };
+  const given = m[2].split(/, | und /).map(l => LET.indexOf(l)).sort();
+  if (given.join() !== [...oks].sort().join()) return { opts, ok, notes };   // Notiz und Lösung passen nicht zusammen → nichts ändern
+  let h = 0; for (const ch of q) h = (h * 31 + ch.charCodeAt(0)) >>> 0;
+  const P = [[0, 1, 2], [1, 2, 0], [2, 0, 1], [0, 2, 1], [1, 0, 2], [2, 1, 0]][h % 6];   // neue Stelle k ← alte Antwort P[k]
+  const nOpts = P.map(i => opts[i]);
+  const nOk = oks.map(i => P.indexOf(i)).sort();
+  const lets = nOk.map(i => LET[i]);
+  const txt = lets.length === 1 ? lets[0] : lets.slice(0, -1).join(', ') + ' und ' + lets[lets.length - 1];
+  return { opts: nOpts, ok: Array.isArray(ok) ? nOk : nOk[0], notes: notes.replace(m[0], m[1] + txt) };
+}
 function quiz(deck, key, { kicker, q, opts, ok, why, notes, size = 32, osize = 19 }) {
+  ({ opts, ok, notes } = mixQuiz(q, opts, ok, notes, why));
   const s = base(deck, key, { notes });
   kick(s, kicker); title(s, q, { size, h: 1.4 });
   const y0 = 2.75;
