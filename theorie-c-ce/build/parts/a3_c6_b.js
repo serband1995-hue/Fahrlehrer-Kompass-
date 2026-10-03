@@ -6,11 +6,11 @@ const { warnSym } = require('../sym');
 sec('c6a', 'C6  ·  ABS', C.bl, 'bg_blue.jpg');
 sec('c6k', 'C6  ·  KONTROLLE', C.pu, 'bg_pu.jpg');
 sec('c6h', 'C6  ·  HU UND SP', 'C9A227', 'bg_am.jpg');
-sec('c6b', 'C6  ·  BEGRENZER', C.gr, 'bg_gr.jpg');
+sec('c6b', 'C6  ·  BEGRENZER UND TEMPOMAT', C.gr, 'bg_gr.jpg');
 sec('c6e', 'C6  ·  ABSCHLUSS', C.gr, 'bg_gr.jpg');
 
 // Manometer (gleich wie in C5)
-const MX = 9.0, MY = 3.6, MR = 1.75, MAXB = 14;
+const MX = 8.3, MY = 3.6, MR = 1.6, MAXB = 14;   // Ziffern außen am Skalenring, Nadel nur bis zum Ring
 const mAng = b => (210 - (b / MAXB) * 240) * Math.PI / 180;
 const mPt = (b, r) => [MX + r * Math.cos(mAng(b)), MY - r * Math.sin(mAng(b))];
 
@@ -21,14 +21,14 @@ module.exports = async (deck) => {
   // ===== ABS (fließend: ohne und mit ABS) =====
   const SK = (on, len) => ({ on, len });
   const AF = [
-    { t: { x: 10.0, y: 5.6, r: 0, sk: 0, mode: 0 }, hold: true, cap: 'Vor euch steht plötzlich ein Auto. Vollbremsung!', note: '▶ Sagen: „Ein Auto steht plötzlich auf eurer Spur. Ihr macht eine Vollbremsung und wollt links vorbei.“\n❓ Frage auf der Folie: „Kann der Lkw noch ausweichen?“ – abstimmen lassen.\n🖱 Klick: Bremsung ohne ABS (läuft von selbst).\n➜ „Zuerst ohne ABS.“' },
-    { t: { x: 10.0, y: 5.15, r: 0, sk: 0.45, mode: 1 }, cap: 'Ohne ABS blockieren die Räder. Der Lkw rutscht geradeaus – lenken bringt nichts.' },
-    { t: { x: 10.0, y: 4.72, r: 0, sk: 0.88, mode: 1 } }, { t: { x: 10.0, y: 4.38, r: 0, sk: 1.22, mode: 1 } },
-    { t: { x: 10.0, y: 4.12, r: 0, sk: 1.48, mode: 1 }, hold: true, note: '▶ „Blockierte Räder übertragen keine Seitenkraft – der Lkw rutscht geradeaus, auch wenn ihr lenkt. Er trifft das Auto.“\n🖱 Klick: noch einmal – jetzt mit ABS.\n➜ „Und mit ABS?“' },
-    { t: { x: 10.0, y: 5.6, r: 0, sk: 0, mode: 2 }, hold: true, cap: 'Noch einmal – jetzt mit ABS.', note: '▶ „Gleiche Lage, jetzt mit ABS.“\n🖱 Klick: Bremsung mit ABS (läuft von selbst).\n➜ „Schaut auf die Räder.“' },
-    { t: { x: 9.92, y: 5.05, r: -4, sk: 0, mode: 2 }, cap: 'Mit ABS drehen die Räder weiter. Ihr könnt bremsen und gleichzeitig ausweichen.' },
-    { t: { x: 9.6, y: 4.45, r: -11, sk: 0, mode: 2 } }, { t: { x: 9.05, y: 3.75, r: -15, sk: 0, mode: 2 } }, { t: { x: 8.5, y: 3.05, r: -10, sk: 0, mode: 2 } },
-    { t: { x: 8.25, y: 2.55, r: -3, sk: 0, mode: 2 }, hold: true, answer: true, note: '▶ „Das ABS regelt den Schlupf: Die Räder drehen knapp vor dem Blockieren weiter. Der Lkw bleibt lenkbar – ihr kommt am Auto vorbei.“\n✅ Prüfungsfrage 2.7.06-101: bestmögliche Bremsung auch bei Glätte, Lenkfähigkeit bleibt weitgehend erhalten – NICHT: verhindert Aquaplaning. 2.7.06-103/-104: kein Blockieren, lenkbar, Bremsen und Ausweichen möglich – NICHT: schneller durch Kurven, weniger Kippgefahr.\n💡 Auf Schnee oder Schotter kann der Bremsweg mit ABS sogar länger sein – der Gewinn ist die Lenkbarkeit.\n🖱 Keine Animation mehr – nächster Klick: nächste Folie.\n➜ „Wie bremst ihr richtig mit ABS?“' },
+    { t: { x: 10.0, y: 5.3, r: 0, sk: 0, mode: 0 }, hold: true, cap: 'Vor euch steht plötzlich ein Auto. Vollbremsung!', note: '▶ Sagen: „Ein Auto steht plötzlich auf eurer Spur. Ihr macht eine Vollbremsung und wollt links vorbei.“\n❓ Frage auf der Folie: „Kann der Lkw noch am Auto vorbei?“ – abstimmen lassen.\n🖱 Klick: Bremsung ohne ABS (läuft von selbst).\n➜ „Zuerst ohne ABS.“' },
+    { t: { x: 10.0, y: 4.94, r: 0, sk: 0.36, mode: 1 }, cap: 'Ohne ABS blockieren die Räder. Der Lkw rutscht geradeaus – lenken bringt nichts.' },
+    { t: { x: 10.0, y: 4.6, r: 0, sk: 0.7, mode: 1 } }, { t: { x: 10.0, y: 4.33, r: 0, sk: 0.97, mode: 1 } },
+    { t: { x: 10.0, y: 4.12, r: 0, sk: 1.18, mode: 1 }, hold: true, note: '▶ „Blockierte Räder übertragen keine Seitenkraft – der Lkw rutscht geradeaus, auch wenn ihr lenkt. Er trifft das Auto.“\n🖱 Klick: noch einmal – jetzt mit ABS.\n➜ „Und mit ABS?“' },
+    { t: { x: 10.0, y: 5.3, r: 0, sk: 0, mode: 2 }, hold: true, cap: 'Noch einmal – jetzt mit ABS.', note: '▶ „Gleiche Lage, jetzt mit ABS.“\n🖱 Klick: Bremsung mit ABS (läuft von selbst).\n➜ „Schaut auf die Räder.“' },
+    { t: { x: 9.92, y: 4.84, r: -4, sk: 0, mode: 2 }, cap: 'Mit ABS drehen die Räder weiter. Ihr könnt bremsen und gleichzeitig ausweichen.' },
+    { t: { x: 9.6, y: 4.34, r: -11, sk: 0, mode: 2 } }, { t: { x: 9.05, y: 3.76, r: -15, sk: 0, mode: 2 } }, { t: { x: 8.5, y: 3.17, r: -10, sk: 0, mode: 2 } },
+    { t: { x: 8.25, y: 2.75, r: -3, sk: 0, mode: 2 }, hold: true, answer: true, note: '▶ „Das ABS regelt den Schlupf: Die Räder drehen knapp vor dem Blockieren weiter. Der Lkw bleibt lenkbar – ihr kommt am Auto vorbei.“\n✅ Prüfungsfrage 2.7.06-101: bestmögliche Bremsung auch bei Glätte, Lenkfähigkeit bleibt weitgehend erhalten – NICHT: verhindert Aquaplaning. 2.7.06-103/-104: kein Blockieren, lenkbar, Bremsen und Ausweichen möglich – NICHT: schneller durch Kurven, weniger Kippgefahr.\n💡 Auf Schnee oder Schotter kann der Bremsweg mit ABS sogar länger sein – der Gewinn ist die Lenkbarkeit.\n🖱 Keine Animation mehr – nächster Klick: nächste Folie.\n➜ „Wie bremst ihr richtig mit ABS?“' },
   ];
   await motion(deck, 'c6a', {
     kicker: 'ABS', ttl: 'Bremsen und lenken', frames: AF, dur: 480, holdDur: 800,
@@ -39,9 +39,9 @@ module.exports = async (deck) => {
       roadV(s, 7.3, 1.5, 3.6, 5.1, { name: 'str' });
       veh(s, 'car_r.png', 10.0, 2.4, 0, '!!auto');
       const on = f.mode === 1;
-      for (const [k, dx] of [[1, -0.25], [2, 0.25]]) s.rrect(10.0 + dx - 0.05, 5.95 - f.sk, 0.1, Math.max(f.sk, 0.02), { fill: '050505', ft: on ? 10 : 100, rr: 0.5, name: '!!sp' + k });
+      for (const [k, dx] of [[1, -0.25], [2, 0.25]]) s.rrect(10.0 + dx - 0.05, 5.65 - f.sk, 0.1, Math.max(f.sk, 0.02), { fill: '050505', ft: on ? 10 : 100, rr: 0.5, name: '!!sp' + k });
       veh(s, 'truck.png', f.x, f.y, f.r, '!!lkw', { scale: 0.85 });
-      const hit = f.mode === 1 && f.sk > 1.4;
+      const hit = f.mode === 1 && f.sk > 1.1;
       s.oval(9.6, 2.65, 0.8, 0.8, { line: C.red, lw: 3, lt: hit ? 0 : 100, name: '!!knall' });
       const lab = f.mode === 0 ? '' : (f.mode === 1 ? 'ohne ABS: blockiert – nicht lenkbar' : 'mit ABS: lenkbar – ausweichen');
       s.text(lab, { x: 11.05, y: 3.3, w: 2.1, h: 0.9, size: 15, bold: true, color: f.mode === 1 ? C.red : C.gr, name: '!!t1' });
@@ -72,15 +72,15 @@ module.exports = async (deck) => {
   {
     const s = base(deck, 'c6k', { notes:
       '▶ Sagen: „Vor jeder Schicht prüft ihr die Bremse. Das verlangt die Berufsgenossenschaft.“\n' +
-      '🖱 Klick 1–5: je ein Punkt.\n' +
-      '✅ DGUV Vorschrift 70 § 36: Der Fahrer prüft vor jeder Arbeitsschicht die Wirksamkeit der Betätigungs- und Sicherheitseinrichtungen; Mängel melden, bei Gefahr Betrieb einstellen. DGUV Grundsatz 314-002 Nr. 2.3.2: Luftbehälter entwässert (wenn nicht automatisch), Lufttrockner funktionsfähig, Anlage dicht, maximaler Vorratsdruck erreicht, Druckwarnung funktioniert, Bremsprobe.\n' +
-      '✅ Rechtsprechung (OLG Düsseldorf, 28.01.2014): Bei der Abfahrtkontrolle genügt eine Bremsprobe – Risse in den Bremsscheiben durch die Felgen suchen muss der Fahrer nicht.\n' +
+      '🖱 Klick 1–6: je ein Punkt.\n' +
+      '✅ DGUV Vorschrift 70 § 36: Der Fahrer prüft vor jeder Arbeitsschicht die Wirksamkeit der Betätigungs- und Sicherheitseinrichtungen; Mängel melden, bei Gefahr Betrieb einstellen. DGUV Grundsatz 314-002 Nr. 2.3.2: Luftbehälter entwässert (wenn nicht automatisch), Lufttrockner funktionsfähig, Anlage dicht, maximaler Vorratsdruck erreicht (Werte zur Dichtheit: Betriebsanleitung – ein kleiner Druckabfall ist normal), Druckwarnung funktioniert, die ABV-/ABS-Kontrolleinrichtung zeigt keine Störung an, Bremsprobe.\n' +
+      '✅ OLG Düsseldorf, 28.01.2014, IV-3 RBs 11/14: Gibt es keine Hinweise auf Schäden, genügt bei der Abfahrtkontrolle die Bremsprobe – durch die Felgen nach Rissen suchen muss der Fahrer nicht.\n' +
       '➜ „Wie prüft ihr die Dichtheit genau?“' });
     kick(s, 'Kontrolle'); title(s, 'Vor jeder Schicht: Bremse prüfen');
-    const P = [['LuDroplets', C.bl, 'Entwässern', 'wenn keine automatischen Ventile – kommt Wasser, ist der Trockner defekt'], ['LuGauge', C.or, 'Druck aufbauen', 'der volle Vorratsdruck wird erreicht'], ['LuEar', C.pu, 'Dicht?', 'kein Zischen, Druck fällt nicht ab'], ['LuSiren', C.red, 'Druckwarnung', 'funktioniert – Prüfung nach Betriebsanleitung'], ['LuFootprints', C.gr, 'Bremsprobe', 'gleich nach dem Losfahren – wirkt sie gleichmäßig?']];
-    for (let k = 0; k < 5; k++) {
-      const y = 2.0 + k * 0.92;
-      await point(s, 0.7, y, 11.93, 0.8, P[k][0], P[k][1], P[k][2] + ':', P[k][3], CLICK, { size: 17 });
+    const P = [['LuDroplets', C.bl, 'Entwässern', 'wenn keine automatischen Ventile – kommt Wasser, ist der Trockner defekt'], ['LuGauge', C.or, 'Druck aufbauen', 'der volle Vorratsdruck wird erreicht'], ['LuEar', C.pu, 'Dicht', 'kein Zischen, Druck hält (Werte: Betriebsanleitung)'], ['LuSiren', C.red, 'Druckwarnung', 'funktioniert – Prüfung nach Betriebsanleitung'], ['LuCircleDot', 'F2C230', 'ABS-Leuchte', 'erlischt nach dem Start oder kurz nach dem Anfahren – keine Störung'], ['LuFootprints', C.gr, 'Bremsprobe', 'gleich nach dem Losfahren – wirkt sie gleichmäßig?']];
+    for (let k = 0; k < P.length; k++) {
+      const y = 1.95 + k * 0.78;
+      await point(s, 0.7, y, 11.93, 0.68, P[k][0], P[k][1], P[k][2] + ':', P[k][3], CLICK, { size: 17 });
     }
   }
   // Dichtheit (Manometer-Morph)
@@ -106,19 +106,19 @@ module.exports = async (deck) => {
     ],
     legend: 'Vorratsdruck · Beispielwerte',
     scene: async (s, i) => {
-      s.oval(MX - MR - 0.4, MY - MR - 0.4, (MR + 0.4) * 2, (MR + 0.4) * 2, { fill: '0D141E', line: '2A3B52', lw: 2, name: '!!mface' });
+      s.oval(MX - MR - 0.6, MY - MR - 0.6, (MR + 0.6) * 2, (MR + 0.6) * 2, { fill: '0D141E', line: '2A3B52', lw: 2, name: '!!mface' });
       s.img(dialImg, { x: MX - MR - 0.3, y: MY - MR - 0.3, w: (MR + 0.3) * 2, h: (MR + 0.3) * 2, name: '!!mdial' });
-      for (let b = 0; b <= MAXB; b += 2) { const [x, y] = mPt(b, MR - 0.52); s.text(String(b), { x: x - 0.25, y: y - 0.17, w: 0.5, h: 0.34, size: 14, bold: true, color: C.mut, align: 'center', valign: 'middle', name: '!!mz' + b }); }
-      const a = mAng(BAR[i]), L = MR - 0.2;
+      for (let b = 0; b <= MAXB; b += 2) { const [x, y] = mPt(b, MR + 0.3); s.text(String(b), { x: x - 0.25, y: y - 0.17, w: 0.5, h: 0.34, size: 14, bold: true, color: C.mut, align: 'center', valign: 'middle', name: '!!mz' + b }); }
+      const a = mAng(BAR[i]), L = MR - 0.05;
       s.rect(MX - L / 2 + (L / 2) * Math.cos(a), MY - 0.03 - (L / 2) * Math.sin(a), L, 0.06, { fill: C.or, rotate: -a * 180 / Math.PI, name: '!!mzeiger', glow: 6, glowColor: C.or });
       s.oval(MX - 0.17, MY - 0.17, 0.34, 0.34, { fill: '55606F', name: '!!mnabe' });
       s.text(BAR[i].toFixed(1).replace('.', ',') + ' bar', { x: MX - 1.0, y: MY + 0.55, w: 2.0, h: 0.5, size: 24, bold: true, color: C.txt, align: 'center', name: '!!digi' });
       // Ergebnis rechts
       const ok = i === 1, bad = i === 2;
-      s.text(i === 0 ? 'Start: 12,0 bar' : (ok ? '− 0,6 bar' : '− 1,2 bar'), { x: 11.35, y: 2.3, w: 1.85, h: 0.5, size: 20, bold: true, color: i === 0 ? C.mut : (ok ? C.gr : C.red), name: '!!diff' });
-      s.text(i === 0 ? 'Motor aus' : (ok ? 'in Ordnung' : 'zu viel – Werkstatt'), { x: 11.35, y: 2.85, w: 1.85, h: 0.8, size: 16, bold: true, color: i === 0 ? C.dim : (ok ? C.gr : C.red), name: '!!erg' });
-      s.text('Grenze: 0,7 bar je Vollbremsung', { x: 11.35, y: 4.6, w: 1.85, h: 0.7, size: 13, color: C.mut, name: '!!gr' });
-      if (bad) s.img(await icon('LuWind', C.red), { x: 11.35, y: 3.75, w: 0.5, h: 0.5, name: '!!leck' });
+      s.text(i === 0 ? 'Start: 12,0 bar' : (ok ? '− 0,6 bar' : '− 1,2 bar'), { x: 10.83, y: 2.3, w: 1.9, h: 0.5, size: 20, bold: true, color: i === 0 ? C.mut : (ok ? C.gr : C.red), name: '!!diff' });
+      s.text(i === 0 ? 'Motor aus' : (ok ? 'in Ordnung' : 'zu viel – Werkstatt'), { x: 10.83, y: 2.85, w: 1.9, h: 0.8, size: 16, bold: true, color: i === 0 ? C.mut : (ok ? C.gr : C.red), name: '!!erg' });
+      s.text('Grenze: 0,7 bar je Vollbremsung', { x: 10.83, y: 4.6, w: 1.9, h: 0.7, size: 14, color: 'C8D0DA', name: '!!gr' });
+      if (bad) s.img(await icon('LuWind', C.red), { x: 10.83, y: 3.75, w: 0.5, h: 0.5, name: '!!leck' });
     },
   });
   {
@@ -139,19 +139,19 @@ module.exports = async (deck) => {
   {
     const s = base(deck, 'c6h', { notes:
       '▶ Sagen: „Lkw über 3,5 t müssen jedes Jahr zur Hauptuntersuchung. Schwere Lkw zusätzlich zur Sicherheitsprüfung – immer in der Mitte zwischen zwei HU.“\n' +
-      '🖱 Klick 1: 3,5 bis 7,5 t · Klick 2: 7,5 bis 12 t · Klick 3: über 12 t.\n' +
-      '✅ StVZO Anlage VIII Nr. 2.1: HU alle 12 Monate bei Lkw über 3,5 t. SP alle 6 Monate: über 7,5 bis 12 t nach den ersten 36 Monaten, über 12 t nach den ersten 24 Monaten. Die SP-Frist zählt ab der letzten HU. SP darf einen Monat früher gemacht werden, ohne dass sich die Frist verschiebt.\n' +
+      '🖱 Klick 1: über 3,5 bis 7,5 t · Klick 2: über 7,5 bis 12 t · Klick 3: über 12 t.\n' +
+      '✅ StVZO Anlage VIII Nr. 2.1: HU alle 12 Monate bei Lkw über 3,5 t. SP alle 6 Monate: über 7,5 bis 12 t nach den ersten 36 Monaten, über 12 t nach den ersten 24 Monaten. Die SP-Frist zählt ab der letzten HU (Nr. 2.1). SP darf einen Monat früher gemacht werden, ohne dass sich die Frist verschiebt (Nr. 2.4).\n' +
       '💡 SP prüft Fahrgestell, Fahrwerk, Lenkung, Reifen, Räder und Bremsanlage – auch in anerkannten Werkstätten. HU nur Prüfingenieure/Sachverständige.\n' +
       '➜ „Woran sieht man, dass der Lkw geprüft ist?“' });
     kick(s, 'HU und SP'); title(s, 'Wie oft zur Prüfung?');
-    const X0 = 3.0, XS = 0.16; // Zoll je Monat
+    const X0 = 2.75, XS = 0.16; // Zoll je Monat
     s.lineS(X0, 6.0, X0 + 48 * XS + 0.2, 6.0, { color: C.dim, lw: 1.5, endArrow: 'triangle' });
     for (const m of [0, 12, 24, 36, 48]) { s.rect(X0 + m * XS - 0.01, 5.92, 0.02, 0.16, { fill: C.dim }); s.text(m ? (m / 12) + (m === 12 ? ' Jahr' : ' Jahre') : 'neu', { x: X0 + m * XS - 0.6, y: 6.1, w: 1.2, h: 0.3, size: 12, color: C.dim, align: 'center' }); }
-    const R = [['3,5 – 7,5 t', []], ['7,5 – 12 t', [42]], ['über 12 t', [30, 42]]];
+    const R = [['über 3,5 bis 7,5 t', []], ['über 7,5 bis 12 t', [42]], ['über 12 t', [30, 42]]];
     for (let k = 0; k < 3; k++) {
       const y = 2.15 + k * 1.2;
       card(s, 0.7, y, 11.93, 1.0, {}, CLICK);
-      s.text(R[k][0], { x: 0.9, y, w: 2.0, h: 1.0, size: 18, bold: true, color: C.txt, valign: 'middle' }, { fx: 'fade', dur: 200 });
+      s.text(R[k][0], { x: 0.9, y, w: 3.0, h: 1.0, size: 18, bold: true, color: C.txt, valign: 'middle' }, { fx: 'fade', dur: 200 });
       for (const m of [12, 24, 36, 48]) {
         s.oval(X0 + m * XS - 0.3, y + 0.2, 0.6, 0.6, { fill: C.bl, line: C.bl }, { fx: 'zoom', dur: 200 });
         s.text('HU', { x: X0 + m * XS - 0.3, y: y + 0.2, w: 0.6, h: 0.6, size: 12, bold: true, color: C.dark, align: 'center', valign: 'middle' }, { fx: 'fade', dur: 100 });
@@ -161,19 +161,19 @@ module.exports = async (deck) => {
         s.text('SP', { x: X0 + m * XS - 0.3, y: y + 0.2, w: 0.6, h: 0.6, size: 12, bold: true, color: C.dark, align: 'center', valign: 'middle' }, { fx: 'fade', dur: 100 });
       }
       const txt = ['HU jedes Jahr', 'SP ab dem 4. Jahr', 'SP ab dem 3. Jahr'][k];
-      s.text(txt, { x: X0 + 48 * XS + 0.45, y, w: 1.75, h: 1.0, size: 14, bold: true, color: k ? C.or : C.bl, valign: 'middle' }, { fx: 'fade', dur: 200 });
+      s.text(txt, { x: X0 + 48 * XS + 0.45, y, w: 1.65, h: 1.0, size: 14, bold: true, color: k ? C.or : C.bl, valign: 'middle' }, { fx: 'fade', dur: 200 });
     }
   }
   {
     const s = base(deck, 'c6h', { notes:
       '▶ Sagen: „Die HU-Plakette kennt ihr vom Pkw – hinten am Kennzeichen. Für die SP gibt es eine Prüfmarke auf dem SP-Schild.“\n' +
       '🖱 Klick 1: Nachweis · Klick 2: geringe Mängel · Klick 3: erhebliche Mängel · Klick 4: verkehrsunsicher.\n' +
-      '✅ § 29 Abs. 2 StVZO (Plakette, Prüfmarke), Anlage VIII Nr. 3.1.4: geringe Mängel – Plakette, beheben binnen eines Monats; erhebliche/gefährliche Mängel – keine Plakette, Nachprüfung spätestens nach einem Monat; verkehrsunsicher – Plakette wird entfernt, Fahrzeug darf nicht mehr fahren. Bericht und SP-Protokoll aufbewahren und auf Verlangen aushändigen (§ 29 Abs. 10).\n' +
+      '✅ § 29 Abs. 2 StVZO (Plakette, Prüfmarke), Anlage VIII Nr. 3.1.4: geringe Mängel – der Prüfer kann die Plakette trotzdem zuteilen (nicht bei einer HU mit nachgeholter SP, Nr. 3.1.3), Mängel unverzüglich, spätestens innerhalb eines Monats beheben (Nr. 3.1.4.1); erhebliche/gefährliche Mängel – keine Plakette, Fahrzeug spätestens bis zum Ablauf eines Monats nach der HU wieder vorführen (Nr. 3.1.4.2); verkehrsunsicher – Plakette wird entfernt, Fahrzeug darf nicht mehr fahren. Bericht und SP-Protokoll aufbewahren und auf Verlangen aushändigen (§ 29 Abs. 10).\n' +
       '➜ „Und was kostet es, wenn die Frist überzogen ist?“' });
     kick(s, 'HU und SP'); title(s, 'Nachweis und Mängel');
     await point(s, 0.7, 2.05, 11.93, 1.0, 'LuBadgeCheck', C.bl, 'Nachweis:', 'HU-Plakette hinten am Kennzeichen – SP-Prüfmarke auf dem SP-Schild. Prüfbericht aufbewahren.', CLICK, { size: 17 });
-    await point(s, 0.7, 3.2, 11.93, 1.0, 'LuCircleCheck', C.gr, 'Geringe Mängel:', 'Plakette gibt es – Mängel innerhalb eines Monats beheben.', CLICK, { size: 17 });
-    await point(s, 0.7, 4.35, 11.93, 1.0, 'LuTriangleAlert', C.or, 'Erhebliche Mängel:', 'keine Plakette – nach der Reparatur Nachprüfung spätestens nach einem Monat.', CLICK, { size: 17 });
+    await point(s, 0.7, 3.2, 11.93, 1.0, 'LuCircleCheck', C.gr, 'Geringe Mängel:', 'Plakette meist trotzdem – Mängel sofort, spätestens in einem Monat beheben.', CLICK, { size: 17 });
+    await point(s, 0.7, 4.35, 11.93, 1.0, 'LuTriangleAlert', C.or, 'Erhebliche Mängel:', 'keine Plakette – reparieren und innerhalb eines Monats zur Nachprüfung.', CLICK, { size: 17 });
     await point(s, 0.7, 5.5, 11.93, 1.0, 'LuOctagonAlert', C.red, 'Verkehrsunsicher:', 'Plakette wird entfernt – der Lkw darf nicht mehr fahren.', CLICK, { size: 17 });
   }
   {
@@ -192,14 +192,14 @@ module.exports = async (deck) => {
       s.text(a, { x: 0.95, y, w: 3.3, h: 0.66, size: 17, color: C.txt, valign: 'middle' }, { fx: 'fade', dur: 100 });
       s.text(b, { x: 4.3, y, w: 2.75, h: 0.66, size: 18, bold: true, color: k >= 2 ? C.red : C.txt, align: 'right', valign: 'middle' }, { fx: 'fade', dur: 100 });
     });
-    s.text('Lkw mit SP-Pflicht · andere Fahrzeuge etwas weniger', { x: 0.95, y: 5.95, w: 6.2, h: 0.4, size: 12, italic: true, color: C.dim }, { fx: 'fade', dur: 100 });
+    s.text('Lkw mit SP-Pflicht · andere Fahrzeuge etwas weniger', { x: 0.95, y: 5.95, w: 6.2, h: 0.4, size: 13, italic: true, color: C.mut }, { fx: 'fade', dur: 100 });
     await point(s, 7.55, 2.05, 5.08, 2.1, 'LuUser', C.red, 'Fahrer fährt Lkw mit kaputten Bremsen:', '180 € + 1 Punkt', CLICK, { br: true, size: 18, bodyCol: C.red });
     await point(s, 7.55, 4.4, 5.08, 2.1, 'LuBuilding2', C.or, 'Halter lässt das zu:', '270 € + 1 Punkt', CLICK, { br: true, size: 18, bodyCol: C.or });
   }
 
   // ===== KAPITEL 6 BEGRENZER UND FAHRTENSCHREIBER =====
-  await chapter(deck, 'c6b', { num: 6, ttl: 'Begrenzer und Fahrtenschreiber', sub: 'Was eingebaut sein muss – und wie oft es geprüft wird.', ico: 'LuGauge', notes:
-    '▶ Sagen: „Letztes Kapitel: Geschwindigkeitsbegrenzer und Prüfung des Fahrtenschreibers.“\n🖱 Keine Klicks.\n➜ „Wie schnell kann ein Lkw fahren – und wie schnell darf er?“' });
+  await chapter(deck, 'c6b', { num: 6, ttl: 'Begrenzer, Tempomat, Fahrtenschreiber', sub: 'Was eingebaut sein muss, wie ihr den Tempomat nutzt – und wie oft geprüft wird.', ico: 'LuGauge', notes:
+    '▶ Sagen: „Letztes Kapitel: Geschwindigkeitsbegrenzer, Tempomat und die Prüfung von Fahrtenschreiber und Begrenzer.“\n🖱 Keine Klicks.\n➜ „Wie schnell kann ein Lkw fahren – und wie schnell darf er?“' });
   {
     // Tacho 0–120 km/h
     const TX = 3.9, TY = 4.45, TR = 1.95, MAXV = 120;
@@ -210,11 +210,12 @@ module.exports = async (deck) => {
     for (let v = 0; v <= MAXV; v += 10) { const [a, b] = tP(v, TR - (v % 20 ? 0.12 : 0.24)), [c, d] = tP(v, TR + 0.04); svg += `<line x1="${Q(a, b).split(' ')[0]}" y1="${Q(a, b).split(' ')[1]}" x2="${Q(c, d).split(' ')[0]}" y2="${Q(c, d).split(' ')[1]}" stroke="#A9B6C6" stroke-width="${v % 20 ? 3 : 6}"/>`; }
     const s = base(deck, 'c6b', { notes:
       '▶ Sagen: „Jeder Lkw über 3,5 t hat einen Geschwindigkeitsbegrenzer. Er ist auf höchstens 90 km/h eingestellt – und nicht abschaltbar.“\n' +
-      '❓ „Darf ich also 90 fahren?“\n' +
-      '✅ Nein. Erlaubt sind für Lkw über 3,5 t auf der Autobahn 80 km/h (§ 18 Abs. 5 StVO), außerorts über 7,5 t 60 km/h, bis 7,5 t 80 km/h (§ 3 Abs. 3 StVO).\n' +
+      '❓ „Dürft ihr also 90 fahren?“\n' +
+      '✅ Nein. Erlaubt sind für Lkw über 3,5 t auf der Autobahn 80 km/h (§ 18 Abs. 5 StVO), außerorts über 7,5 t 60 km/h, bis 7,5 t 80 km/h (§ 3 Abs. 3 StVO), innerorts 50 km/h.\n' +
+      '✅ Die 80 km/h gelten auf Autobahnen und auf Kraftfahrstraßen mit Mittelstreifen (§ 18 Abs. 5 StVO). Sonst gilt außerorts über 7,5 t: 60 km/h – auch auf vierspurigen Straßen. Die Ausnahme in § 3 Abs. 3 (Mittelstreifen, zwei Fahrstreifen je Richtung) steht unter Buchstabe c und betrifft nur die 100 km/h für Pkw.\n' +
       '🖱 Klick 1: 60 km/h · Klick 2: 80 km/h · Klick 3: 90 km/h Begrenzer · Klick 4: Bußgeld.\n' +
       '✅ § 57c StVZO: Pflicht über 3,5 t, höchstens 90 km/h einschließlich aller Toleranzen, nicht abschaltbar. Einbauschild an der B-Säule (§ 57d). BKat 223 (Fahrer): ohne Begrenzer, falsch eingestellt oder nicht benutzt – 100 € + 1 Punkt; BKat 224 (Halter): 150 € + 1 Punkt.\n' +
-      '➜ „Und wer prüft Fahrtenschreiber und Begrenzer?“' });
+      '➜ „Der Begrenzer setzt nur die Obergrenze. Den Tempomat stellt ihr selbst ein.“' });
     kick(s, 'Geschwindigkeitsbegrenzer'); title(s, 'Kann 90 – darf 80');
     s.oval(TX - TR - 0.4, TY - TR - 0.4, (TR + 0.4) * 2, (TR + 0.4) * 2, { fill: '0D141E', line: '2A3B52', lw: 2 });
     s.img(await svgImg(svg, (TR + 0.3) * 200, (TR + 0.3) * 200, 2), { x: TX - TR - 0.3, y: TY - TR - 0.3, w: (TR + 0.3) * 2, h: (TR + 0.3) * 2 });
@@ -228,23 +229,38 @@ module.exports = async (deck) => {
       s.rect(TX - 1.2, ly + 0.12, 0.3, 0.08, { fill: col }, { fx: 'fade', dur: 200 });
       s.text(lab, { x: TX - 0.82, y: ly, w: 2.3, h: 0.32, size: 12, bold: true, color: col, valign: 'middle' }, { fx: 'fade', dur: 200 });
     };
-    await mark(60, C.bl, '60 außerorts über 7,5 t', CLICK);
+    await mark(60, C.bl, '60 Landstraße über 7,5 t', CLICK);
     await mark(80, C.gr, '80 Autobahn', CLICK);
     await mark(90, C.red, '90 Begrenzer', CLICK);
     await point(s, 7.6, 2.05, 5.03, 1.4, 'LuLock', C.red, 'Begrenzer: höchstens 90 km/h', 'Pflicht über 3,5 t – nicht abschaltbar.', { fx: 'flyL', dur: 450 }, { br: true, size: 16 });
-    await point(s, 7.6, 3.58, 5.03, 1.4, 'LuGauge', C.gr, 'Erlaubt ist weniger:', 'Autobahn 80 km/h – außerorts über 7,5 t nur 60 km/h.', { fx: 'flyL', dur: 450 }, { br: true, size: 16 });
-    await point(s, 7.6, 5.11, 5.03, 1.4, 'LuReceiptEuro', C.or, 'Kein oder falsch eingestellter Begrenzer:', 'Fahrer 100 € + 1 Punkt, Halter 150 € + 1 Punkt.', CLICK, { br: true, size: 16 });
+    await point(s, 7.6, 3.58, 5.03, 1.4, 'LuGauge', C.gr, 'Erlaubt ist weniger:', 'Autobahn: 80 km/h\nLandstraße über 7,5 t: 60 km/h', { fx: 'flyL', dur: 450 }, { br: true, size: 16 });
+    await point(s, 7.6, 5.11, 5.03, 1.4, 'LuReceiptEuro', C.or, 'Kein oder falsch eingestellter Begrenzer:', 'Fahrer: 100 € + 1 Punkt\nHalter: 150 € + 1 Punkt', CLICK, { br: true, size: 16 });
+  }
+  // ===== TEMPOMAT UND ABSTANDSTEMPOMAT (Rahmenplan C6 e: Geschwindigkeitsregler) =====
+  {
+    const s = base(deck, 'c6b', { notes:
+      '▶ Sagen: „Der Begrenzer setzt nur die Obergrenze. Das Tempo selbst hält der Tempomat – und viele Lkw haben einen Abstandstempomat, der auch bremst. Beides entlastet euch – aber verantwortlich bleibt ihr.“\n' +
+      '❓ „Wo lasst ihr den Tempomat besser aus?“ – sammeln: Stadt, Stop-and-go, kurvige Strecken, Glätte.\n' +
+      '🖱 Klick 1: Tempomat · Klick 2: Abstandstempomat · Klick 3: Verantwortung.\n' +
+      '✅ FahrschAusbO Anlage 2.3 Nr. 6 e): Geschwindigkeitsregler gehört zu dieser Lektion.\n' +
+      '✅ Tempomat – Prüfungsfragen: 2.7.06-206: benutzen, wenn die Verkehrsverhältnisse eine gleichbleibende Geschwindigkeit zulassen (NICHT nur in Steigungen oder nur bei hohem Tempo). 2.7.06-110: zu spätes Ausschalten → zu dichtes Auffahren, zu hohe Kurvengeschwindigkeit, Überschreiten der Höchstgeschwindigkeit. 2.7.06-111 und -114: hält das Tempo, entlastet, hilft beim Energiesparen – hält NICHT den Mindestabstand und passt sich NICHT der Verkehrsdichte an. 2.7.06-241: Mit Schaltgetriebe den richtigen Gang wählen – nicht im Stop-and-go.\n' +
+      '✅ Abstandstempomat (AGR) – Prüfungsfragen: 2.7.06-113: beschleunigt bis zum eingestellten Tempo und bremst selbst, wenn der Vordermann langsamer wird – stellt NICHT automatisch den vorgeschriebenen Sicherheitsabstand ein. 2.7.06-115: zweckmäßig auf Autobahnen und Kraftfahrstraßen, NICHT auf kurvenreichen Straßen. 2.7.06-240: unterstützt beim gewählten Abstand, weniger Auffahrunfälle – eine Unterschreitung des Sicherheitsabstands ist NICHT ausgeschlossen. 2.7.06-112: aufmerksam bleiben; starker Regen oder Schneefall können das System stören; Gas- oder Bremspedal übersteuern jederzeit.\n' +
+      '➜ „Und wer prüft Fahrtenschreiber und Begrenzer?“' });
+    kick(s, 'Geschwindigkeitsregler'); title(s, 'Tempomat und Abstandstempomat');
+    await point(s, 0.7, 2.05, 11.93, 1.35, 'LuCircleGauge', C.gr, 'Tempomat:', 'hält das Tempo – nur wenn der Verkehr gleichmäßiges Fahren zulässt. Rechtzeitig ausschalten: sonst zu dicht auf, zu schnell in die Kurve, über das Tempolimit.', CLICK, { size: 17 });
+    await point(s, 0.7, 3.6, 11.93, 1.35, 'LuRadar', C.bl, 'Abstandstempomat (AGR):', 'hält Tempo und gewählten Abstand, bremst selbst – den Sicherheitsabstand garantiert er nicht. Gut auf Autobahn und Kraftfahrstraße.', CLICK, { size: 17 });
+    await point(s, 0.7, 5.15, 11.93, 1.35, 'LuEye', C.or, 'Ihr bleibt verantwortlich:', 'immer aufmerksam bleiben – Regen und Schnee stören den Sensor. Gas oder Bremse übersteuern das System jederzeit.', CLICK, { size: 17 });
   }
   {
     const s = base(deck, 'c6b', { notes:
       '▶ Sagen: „Fahrtenschreiber und Begrenzer werden in einer Fachwerkstatt geprüft. Danach kommt ein Einbauschild an die B-Säule auf der Fahrerseite.“\n' +
       '🖱 Klick 1: Fahrtenschreiber · Klick 2: Begrenzer · Klick 3: Einbauschild.\n' +
-      '✅ § 57b StVZO: Fahrtenschreiber mindestens alle 24 Monate prüfen lassen (Halterpflicht), außerdem sofort nach Reparatur, Änderung der Reifengröße, Plombentausch, Kennzeichenwechsel oder wenn die Uhrzeit mehr als 20 Minuten abweicht. § 57d: Begrenzer prüfen nach Einbau, Reparatur, Änderung der Reifengröße oder der Kraftstoffzufuhr – eine feste Frist gibt es nicht; die HU prüft ihn mit. Einbauschild plombiert an der B-Säule.\n' +
+      '✅ § 57b StVZO: Fahrtenschreiber mindestens alle 24 Monate prüfen lassen (Halterpflicht), außerdem sofort nach Reparatur, Änderung der Reifengröße, Plombentausch, Kennzeichenwechsel oder wenn die Uhrzeit mehr als 20 Minuten abweicht. § 57d: Begrenzer prüfen nach Einbau, Reparatur, Änderung der Reifengröße oder der Kraftstoffzufuhr – eine feste Frist gibt es nicht; die HU prüft ihn mit. Einbauschild plombiert an der B-Säule der Fahrerseite (§ 57d Abs. 2) – das Schild des Fahrtenschreibers darf auch auf oder neben dem Gerät sitzen (§ 57b Abs. 1), beide Schilder dürfen kombiniert werden.\n' +
       '➜ „Damit ist C6 geschafft. Zeit zum Mitschreiben.“' });
     kick(s, 'Prüfungen'); title(s, 'Fahrtenschreiber und Begrenzer prüfen');
     await point(s, 0.7, 2.05, 11.93, 1.35, 'LuCalendarClock', C.bl, 'Fahrtenschreiber:', 'mindestens alle 24 Monate prüfen – und sofort nach Reparatur, neuer Reifengröße, beim digitalen Gerät auch nach neuem Kennzeichen oder falscher Uhrzeit (über 20 Minuten).', CLICK, { size: 17 });
     await point(s, 0.7, 3.6, 11.93, 1.35, 'LuGauge', C.gr, 'Begrenzer:', 'Prüfung nach Einbau, Reparatur oder neuer Reifengröße – die HU kontrolliert ihn mit.', CLICK, { size: 17 });
-    await point(s, 0.7, 5.15, 11.93, 1.35, 'LuTag', 'C9A227', 'Einbauschild:', 'plombiert am Gerät oder an der B-Säule auf der Fahrerseite – zeigt die letzte Prüfung.', CLICK, { size: 17 });
+    await point(s, 0.7, 5.15, 11.93, 1.35, 'LuTag', 'C9A227', 'Einbauschild:', 'plombiert an der B-Säule Fahrerseite (Tacho-Schild auch am Gerät) – zeigt die letzte Prüfung.', CLICK, { size: 17 });
   }
 
   // ===== ABSCHLUSS C6 =====
@@ -256,7 +272,7 @@ module.exports = async (deck) => {
       ['Glätte', 'Dauerbremse klein oder aus – sie bremst nur die Antriebsachse'],
       ['ABS-Bremsung', 'schlagartig, voll treten und halten – nicht pumpen'],
       ['Dichtheit', 'eine Vollbremsung: höchstens 0,7 bar Druckabfall'],
-      ['HU / SP', 'HU jedes Jahr – über 7,5 t dazu SP alle 6 Monate (ab 3. bzw. 4. Jahr)'],
+      ['HU / SP', 'HU jedes Jahr – dazwischen SP: über 12 t ab dem 3., über 7,5 t ab dem 4. Jahr'],
       ['Begrenzer', '90 km/h – erlaubt sind auf der Autobahn 80 km/h'],
       ['Fahrtenschreiber', 'Prüfung mindestens alle 24 Monate'],
     ],
@@ -266,29 +282,30 @@ module.exports = async (deck) => {
     kicker: 'Quiz C6 · 1', q: 'Warum sollten Sie die Dauerbremse (Retarder) nutzen?', size: 34,
     opts: ['Sie arbeitet verschleißfrei', 'Sie bremst den Lkw bis zum Stillstand', 'Sie entlastet die Betriebsbremse'], ok: [0, 2],
     why: 'Die Dauerbremse ist verschleißfrei und hält die Betriebsbremse kühl. Bis zum Stillstand bremst sie nicht (Prüfungsfrage 2.7.06-239).',
-    notes: '▶ Frage vorlesen, abstimmen. Mehrere Antworten können richtig sein.\n🖱 Klick 1: Antworten · Klick 2: Lösung.\n✅ A und C.\n➜ „Nächste Frage.“',
+    notes: '▶ Frage vorlesen, abstimmen. Mehrere Antworten können richtig sein.\n💡 Mündlich abstimmen und begründen – kein Bogen zum Ausfüllen.\n🖱 Klick 1: Antworten · Klick 2: Lösung.\n✅ A und C.\n➜ „Nächste Frage.“',
   });
   quiz(deck, 'c6e', {
     kicker: 'Quiz C6 · 2', q: 'Sie treten bei voll gefülltem Luftbehälter einmal das Bremspedal voll durch. Welcher Druckabfall ist unbedenklich?', size: 28,
     opts: ['Bis 0,7 bar', 'Bis 1,2 bar', 'Bis 1,5 bar'], ok: 0,
     why: 'Höchstens 0,7 bar je Vollbremsung. Mehr heißt: Der Luftvorrat fällt zu schnell ab (Prüfungsfragen 2.7.06-231, -232).',
-    notes: '▶ Frage vorlesen, abstimmen.\n🖱 Klick 1: Antworten · Klick 2: Lösung.\n✅ A.\n➜ „Und noch eine.“',
+    notes: '▶ Frage vorlesen, abstimmen.\n💡 Mündlich abstimmen und begründen – kein Bogen zum Ausfüllen.\n🖱 Klick 1: Antworten · Klick 2: Lösung.\n✅ A.\n➜ „Und noch eine.“',
   });
   quiz(deck, 'c6e', {
     kicker: 'Quiz C6 · 3', q: 'Wie erreichen Sie mit ABS den kürzesten Bremsweg?', size: 34,
-    opts: ['Pedal mehrmals kurz treten (pumpen)', 'Schlagartig und mit maximaler Pedalkraft bremsen', 'Erst leicht, dann immer stärker bremsen'], ok: 1,
+    opts: ['Mehrmals kurz hintereinander mit voller Kraft treten (pumpen)', 'Schlagartig und mit maximaler Pedalkraft bremsen', 'Erst leicht, dann immer stärker bremsen'], ok: 1,
     why: 'Voll treten und halten – das ABS regelt selbst. Pumpen verlängert den Bremsweg (Prüfungsfrage 2.7.01-139).',
-    notes: '▶ Frage vorlesen, abstimmen.\n🖱 Klick 1: Antworten · Klick 2: Lösung.\n✅ B.\n➜ „Zum Schluss: Das nehmt ihr mit.“',
+    notes: '▶ Frage vorlesen, abstimmen.\n💡 Mündlich abstimmen und begründen – kein Bogen zum Ausfüllen.\n🖱 Klick 1: Antworten · Klick 2: Lösung.\n✅ B.\n➜ „Zum Schluss: Das nehmt ihr mit.“',
   });
   await takeaway(deck, 'c6e', {
     items: [
       ['LuMountain', 'Bergab:', 'vorher zurückschalten, Dauerbremse arbeiten lassen – sonst droht Fading.'],
-      ['LuSnowflake', 'Auf Glätte', 'Dauerbremse klein oder aus – nie voll in der Kurve.'],
+      ['LuSnowflake', 'Auf Glätte:', 'Dauerbremse klein oder aus – nie voll in der Kurve.'],
       ['LuCircleDot', 'ABS:', 'voll treten und halten – bleibt die Leuchte an, ab in die Werkstatt.'],
-      ['LuListChecks', 'Vor jeder Schicht:', 'Druck, Dichtheit, Druckwarnung, Bremsprobe.'],
-      ['LuClipboardCheck', 'HU jedes Jahr, über 7,5 t auch SP –', 'Begrenzer 90 km/h, erlaubt 80.'],
+      ['LuListChecks', 'Vor jeder Schicht:', 'Druck, Dichtheit, Druckwarnung, ABS-Leuchte, Bremsprobe.'],
+      ['LuClipboardCheck', 'HU und SP:', 'HU jedes Jahr – über 7,5 t dazwischen auch SP.'],
+      ['LuGauge', 'Begrenzer:', '90 km/h – auf der Autobahn höchstens 80.'],
     ],
-    notes: '▶ Sagen: „Das sind die fünf Punkte aus C6, die ihr auf jeden Fall wissen müsst.“\n🖱 Klick 1–5: je ein Punkt.\n➜ „Das war Abend 3.“',
+    notes: '▶ Sagen: „Das sind die sechs Punkte aus C6, die ihr auf jeden Fall wissen müsst.“\n🖱 Klick 1–6: je ein Punkt.\n➜ „Das war Abend 3.“',
   });
   // ===== ENDE =====
   {

@@ -1,6 +1,7 @@
 // Abend 6 · CE1: Kapitel 1 Zugarten und Kupplungen (Gliederzug, ZAA, Sattelzug; Bolzenkupplung; Sattelkupplung)
 const { C, sec, chapter, motion, steps, ask, photoAsk, quiz, lkw, auflieger, anhaenger, seg, arrow, svgImg } = require('../gs');
 const { icon } = require('../lib');
+const { quizWide } = require('./a6_ce2_b');
 
 sec('ce1z', 'CE1  ·  ZUGARTEN UND KUPPLUNGEN', C.bl, 'bg_blue.jpg');
 
@@ -136,7 +137,7 @@ const main = async (deck) => {
       ['LuShieldCheck', 'Sicherung eingefallen', 'Bügel oder Klappe – je nach Hersteller.', C.bl],
       ['LuEyeOff', 'Kontrollstift weg', 'nicht mehr zu sehen und zu tasten.', C.bl],
       ['LuAlignVerticalJustifyEnd', 'Kein Luftspalt', 'Der Auflieger liegt flach auf der Platte.', C.bl],
-      ['LuLink', 'Karabiner eingehängt', 'bei Kupplungen ohne selbsttätige Sicherung – Herstellerangabe.', C.bl],
+      ['LuLink', 'Karabiner eingehängt', 'wenn die Kupplung keine selbsttätige Sicherung hat (Herstellerangabe).', C.bl],
     ],
     notes:
       '▶ Sagen: „Die Sattelkupplung – die Platte auf der Zugmaschine. Der Königszapfen des Aufliegers fährt hinten in den Schlitz und wird vom Verschlusshaken umfasst. Woran erkennt ihr, dass sie zu ist?“\n' +
@@ -169,8 +170,8 @@ const main = async (deck) => {
       '💡 In Abend 7: Verschleiß prüfen durch Anfahren gegen die Feststellbremse (Prüfungsfrage 2.7.07-328).\n' +
       '➜ „Eine Prüfungsfrage dazu.“',
   });
-  await quiz(deck, 'ce1z', {
-    kicker: 'Prüfungsfrage 2.7.07-324', q: 'Der Kupplungsbolzen Ihrer Anhängekupplung hat im Neuzustand 38 mm Durchmesser. Was müssen Sie bei Verschleiß beachten?', size: 28, osize: 17,
+  quizWide(deck, 'ce1z', {
+    kicker: 'Prüfungsfrage 2.7.07-324', q: 'Der Kupplungsbolzen Ihrer Anhängekupplung hat im Neuzustand 38 mm Durchmesser. Was müssen Sie bei Verschleiß beachten?', size: 28, osize: 18,
     opts: ['Der Durchmesser darf 36,5 mm am gesamten Umfang der Kupplungsfläche nicht unterschreiten', 'Es darf kein übermäßiges Spiel in der unteren Bolzenführung vorhanden sein', 'Der Kupplungsbolzen darf einseitig den Durchmesser von 36,5 mm an der Kupplungsfläche unterschreiten'], ok: [0, 1],
     why: 'Rundum mindestens 36,5 mm – auch nicht an einer Stelle weniger. Und unten kein übermäßiges Spiel.',
     notes: '▶ Frage vorlesen, abstimmen.\n🖱 Klick 1: Antworten · Klick 2: Lösung.\n✅ Amtlicher Fragenkatalog 2.7.07-324: A und B. Gegenstück 2.7.07-326: „Ein Längsspiel ist nicht zulässig“ (falsch: höchstens 1,5 mm; abhängig vom Durchmesser).\n➜ „Kapitel 2: Wie kuppelt man sicher an?“',
