@@ -105,4 +105,4 @@ function schema(s, st) {
   // Statuszeile
   s.text(st.msg || '', { x: 5.75, y: 5.85, w: 7.3, h: 0.75, size: 16, bold: true, color: st.msgCol || C.txt, align: 'center', valign: 'middle', name: '!!msg' });
 }
-module.exports = { schema };
+module.exports = { schema, dots, len, at };
