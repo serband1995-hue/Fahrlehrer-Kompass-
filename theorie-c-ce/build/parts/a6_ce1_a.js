@@ -27,7 +27,7 @@ const main = async (deck) => {
     const K = 0.62, X = 5.95, GY = 4.45;
     const ART = [
       ['glieder', 'Gliederzug', 'Lkw + Anhänger mit Drehschemel', 'Zwei Drehpunkte: Kupplungsbolzen und Drehkranz. Kaum Stützlast auf dem Lkw.'],
-      ['zaa', 'Zentralachsanhänger', 'Achsen in der Mitte, starre Deichsel', 'Ein Teil des Gewichts liegt auf der Kupplung des Lkw: die Stützlast.'],
+      ['zaa', 'Zentralachsanhänger', 'Achsen nah am Schwerpunkt, starre Deichsel', 'Ein Teil des Gewichts liegt auf der Kupplung des Lkw: die Stützlast.'],
       ['sattel', 'Sattelzug', 'Zugmaschine + Auflieger', 'Ein großer Teil des Aufliegers liegt auf der Zugmaschine: die Sattellast.'],
     ];
     await steps(deck, 'ce1z', {
@@ -36,7 +36,7 @@ const main = async (deck) => {
       ask: { q: 'Wie viele Anhänger dürft ihr hinter einem Lkw mitnehmen?', a: 'Nur einen. Hinter einem Sattelzug gar keinen.', at: 2 },
       caps: [
         'Gliederzug: Lkw mit Anhänger. Der Anhänger hat vorn einen Drehschemel – er lenkt mit der Zuggabel.',
-        'Zentralachsanhänger: Die Achsen sitzen in der Mitte, die Deichsel ist starr. Er drückt mit der Stützlast auf den Lkw.',
+        'Zentralachsanhänger: Die Achsen sitzen nah am Schwerpunkt (etwa in der Mitte), die Deichsel ist starr. Er drückt mit der Stützlast auf den Lkw.',
         'Sattelzug: Der Auflieger hat vorn keine Achse. Er liegt mit dem Königszapfen auf der Sattelkupplung der Zugmaschine.',
       ],
       notes: [

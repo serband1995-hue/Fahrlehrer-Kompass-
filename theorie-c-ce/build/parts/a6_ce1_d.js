@@ -13,7 +13,7 @@ module.exports = async (deck) => {
     answers: [
       ['LuMoveHorizontal', 'Breite 2,55 m', 'Kühlaufbau mit dicken Wänden: 2,60 m. Die Spiegel zählen nicht mit.', C.pu, 17],
       ['LuMoveVertical', 'Höhe 4,00 m', 'Kennt die echte Höhe von Fahrzeug und Ladung – und beachtet Schilder an Brücken.', C.pu, 17],
-      ['LuRuler', 'Länge eines Fahrzeugs 12,00 m', 'Gilt für den Lkw und für den Anhänger – jeden für sich.', C.pu, 17],
+      ['LuRuler', 'Länge eines Fahrzeugs 12,00 m', 'Gilt für den Lkw und den Deichselanhänger – jeden für sich. Nicht für den Auflieger.', C.pu, 17],
       ['LuTriangleAlert', 'Keine Toleranz', 'Auf diese Maße gibt es keinen Zuschlag.', C.red, 17],
     ],
     notes:
@@ -29,10 +29,10 @@ module.exports = async (deck) => {
   {
     const x0 = 5.75, K = 0.27, GY = 3.75, RY = GY + 0.32, BY = RY + 0.55;
     const ST = [
-      { len: 16.5, col: C.pu, v: '16,50 m', n: 'Sattelzug', info: 'Sattelzug: 16,50 m. Dafür muss der Auflieger passen: vom Königszapfen bis zum Heck höchstens 12,00 m. Sonst gelten 15,50 m.' },
+      { len: 16.5, col: C.pu, v: '16,50 m', n: 'Sattelzug', info: 'Sattelzug: 16,50 m. Dafür muss der Auflieger passen: vom Königszapfen bis zum Heck höchstens 12,00 m, vorn (Überhangradius) höchstens 2,04 m. Sonst gelten 15,50 m.' },
       { len: 18.75, col: C.bl, v: '18,75 m', n: 'Lkw mit Anhänger', info: 'Lkw mit Anhänger: 18,75 m. Lkw und Anhänger sind dabei jeder für sich höchstens 12,00 m lang.' },
-      { len: 20.75, col: C.or, v: '20,75 m', n: 'mit Ladung, die hinten übersteht', info: 'Zug samt Ladung: höchstens 20,75 m. Steht die Ladung mehr als 1 m über die Rückstrahler: rote Fahne. Mehr als 1,50 m nur bei Fahrten bis 100 km.' },
-      { len: 25.25, col: C.gr, v: '25,25 m', n: 'Lang-Lkw', info: 'Lang-Lkw, hier Sattelzug mit Zentralachsanhänger: bis 25,25 m. Nur auf freigegebenen Strecken, Überholverbot. Fahrer: seit 5 Jahren CE und 5 Jahre Berufserfahrung.' },
+      { len: 20.75, col: C.or, v: '20,75 m', n: 'mit Ladung, die hinten übersteht', info: 'Zug samt Ladung: höchstens 20,75 m. Mehr als 1 m über die Rückstrahler: hellrote Fahne (mind. 30 × 30 cm). Überstand hinten höchstens 1,50 m – auf Fahrten bis 100 km höchstens 3 m.' },
+      { len: 25.25, col: C.gr, v: '25,25 m', n: 'Lang-Lkw', info: 'Lang-Lkw (Ausnahme-Verordnung), hier Sattelzug mit Zentralachsanhänger: bis 25,25 m. Nur auf freigegebenen Strecken, Überholverbot. Fahrer: seit 5 Jahren CE und 5 Jahre Berufserfahrung.' },
     ];
     await steps(deck, 'ce1m', {
       kicker: 'Länge', ttl: 'Wie lang darf ein Zug sein?',
@@ -40,15 +40,15 @@ module.exports = async (deck) => {
       ask: { q: 'Wie lang darf ein Lkw mit Anhänger sein – und wie lang mit Ladung?', a: '18,75 m. Mit Ladung, die hinten übersteht: höchstens 20,75 m.', at: 2 },
       caps: [
         'Der Sattelzug: 16,50 m – wenn der Auflieger die Teillängen einhält.',
-        'Lkw mit Anhänger: 18,75 m. Das ist der Wert für die Prüfung.',
-        'Mit Ladung, die hinten übersteht: höchstens 20,75 m – und ab 1 m Überstand eine rote Fahne.',
+        'Lkw mit Anhänger: höchstens 18,75 m.',
+        'Mit Ladung, die hinten übersteht: höchstens 20,75 m. Ragt sie mehr als 1 m über die Rückstrahler: hellrote Fahne.',
         'Lang-Lkw bis 25,25 m: nur auf erlaubten Strecken und nur mit Erfahrung.',
       ],
       notes: [
-        '▶ Sagen: „Unten seht ihr ein Lineal in Metern. Der Sattelzug: 16,50 Meter – wenn der Auflieger passt. Vom Königszapfen bis zum Heck höchstens 12 Meter. Sonst 15,50 Meter.“\n❓ Frage auf der Folie stellen.\n✅ § 32 Abs. 4 Nr. 1 und 2 StVZO: Sattelkraftfahrzeug 15,50 m; 16,50 m, wenn Königszapfen bis Heck höchstens 12,00 m und vorderer Überhangradius höchstens 2,04 m.\n➜ „Lkw mit Anhänger?“',
+        '▶ Sagen: „Unten seht ihr ein Lineal in Metern. Der Sattelzug: 16,50 Meter – wenn der Auflieger passt. Vom Königszapfen bis zum Heck höchstens 12 Meter, nach vorn höchstens 2,04 Meter. Sonst 15,50 Meter.“\n❓ Frage auf der Folie stellen.\n✅ § 32 Abs. 4 Nr. 1 und 2 StVZO: Sattelkraftfahrzeug 15,50 m; 16,50 m, wenn Königszapfen bis Heck höchstens 12,00 m und vorderer Überhangradius höchstens 2,04 m.\n➜ „Lkw mit Anhänger?“',
         '▶ „Lkw mit Anhänger: 18,75 Meter. Lkw und Anhänger sind dabei jeder für sich höchstens 12 Meter lang.“\n✅ § 32 Abs. 4 Nr. 4 StVZO: Lastzug 18,75 m (Teillängen: Ladefläche vorn bis hinten höchstens 16,40 m, ohne Lücke 15,65 m). § 32 Abs. 3: Einzelfahrzeug 12,00 m. Prüfungsfrage 2.6.06-301: 18,75 m (falsch: 18,00 m, 20,00 m).\n➜ „Und mit Ladung?“',
-        '▶ „Mit Ladung, die hinten übersteht: Zug samt Ladung höchstens 20,75 Meter. Steht die Ladung mehr als einen Meter über die Rückstrahler, braucht ihr eine rote Fahne. Mehr als 1,50 Meter Überstand nur, wenn die Fahrt höchstens 100 Kilometer lang ist.“\n❓ Frage auf der Folie auflösen.\n✅ § 22 Abs. 4 StVO: nach hinten bis 1,50 m, bei Fahrten bis 100 km bis 3 m; Zug samt Ladung höchstens 20,75 m; Kennzeichnung ab mehr als 1 m (hellrote Fahne mind. 30 × 30 cm, Schild oder Zylinder). Prüfungsfragen 2.6.06-201 / 2.2.22-006: 20,75 m.\n➜ „Und der längste Zug?“',
-        '▶ „Der Lang-Lkw. Bis 25,25 Meter. Den gibt es als Sattelzug mit Zentralachsanhänger, als Lkw mit Dolly und Auflieger oder als Sattelzug mit zweitem Auflieger. Er darf nur auf freigegebenen Strecken fahren und nicht überholen. Fahrer brauchen seit fünf Jahren CE und fünf Jahre Berufserfahrung.“\n✅ LKWÜberlStVAusnV: § 3 (Länge 25,25 m bei Typ 2–4, Typ 5: 24,00 m), § 2 (Positivnetz), § 9 (Überholverbot außer Fahrzeuge bis 25 km/h), § 11 (5 Jahre CE, 5 Jahre Berufserfahrung, Einweisung). Mehr Gewicht als 40 t erlaubt die Verordnung nicht.\n💡 Der verlängerte Auflieger bis 17,88 m (Typ 1) gilt nur noch bis 31.12.2026 (§ 13 LKWÜberlStVAusnV).\n➜ „Eine Prüfungsfrage.“',
+        '▶ „Mit Ladung, die hinten übersteht: Zug samt Ladung höchstens 20,75 Meter. Ragt die Ladung mehr als einen Meter über die Rückstrahler, braucht ihr eine hellrote Fahne. Mehr als 1,50 Meter Überstand – höchstens 3 Meter – nur, wenn die Fahrt höchstens 100 Kilometer lang ist. Im Bild sind es 2 Meter: also nur auf kurzen Fahrten.“\n❓ Frage auf der Folie auflösen.\n✅ § 22 Abs. 4 StVO: nach hinten bis 1,50 m, bei Fahrten bis 100 km bis 3 m; Zug samt Ladung höchstens 20,75 m; Kennzeichnung bei mehr als 1 m über die Rückstrahler (hellrote Fahne mind. 30 × 30 cm, Schild oder Zylinder, höchstens 1,50 m über der Fahrbahn). Prüfungsfragen 2.6.06-201 / 2.2.22-006: 20,75 m.\n➜ „Und der längste Zug?“',
+        '▶ „Der Lang-Lkw. Bis 25,25 Meter. Den gibt es als Sattelzug mit Zentralachsanhänger, als Lkw mit Dolly und Auflieger oder als Sattelzug mit zweitem Auflieger. Er darf nur auf freigegebenen Strecken fahren und nicht überholen. Fahrer brauchen seit fünf Jahren CE und fünf Jahre Berufserfahrung. Achtung: Das ist eine Ausnahme – normal gilt, wie vorhin: hinter dem Sattelzug kein Anhänger.“\n✅ LKWÜberlStVAusnV: § 3 (Fahrzeugarten), § 4 Abs. 2 und 3 (Länge 25,25 m bei Typ 2–4, Typ 5: 24,00 m), § 4 Abs. 4 (Ausnahme von § 32a StVZO: hinter dem Sattelkraftfahrzeug ein Anhänger), § 2 (Positivnetz), § 9 (Überholverbot außer Fahrzeuge bis 25 km/h), § 11 (5 Jahre CE, 5 Jahre Berufserfahrung, Einweisung). Die Verordnung erlaubt nur mehr Länge, kein Mehrgewicht – es gelten die normalen Gewichte (§ 34 StVZO).\n💡 Typ 1 (verlängerter Auflieger, 17,88 m) ist nach heutigem Recht bis 31.12.2026 befristet (§ 13 Abs. 1 LKWÜberlStVAusnV). Eine Verlängerung bis 2033 ist geplant (Referentenentwurf Juli 2026) – vor dem Unterricht kurz prüfen.\n➜ „Eine Prüfungsfrage.“',
       ],
       legend: 'Seitenansicht · maßstabsgetreu · Lineal in Metern',
       scene: async (s, i) => {
@@ -124,7 +124,7 @@ module.exports = async (deck) => {
         fr({ th: 180 }),
         fr({ th: 210 }),
         fr({ th: 240 }),
-        fr({ th: 270, inner: 1 }, { hold: true, cap: 'Der Auflieger läuft weiter innen: Er schneidet die Kurve. Sein innerster Punkt bleibt auf dem Innenkreis.',
+        fr({ th: 270, inner: 1 }, { hold: true, cap: 'Der Auflieger läuft weiter innen: Er schneidet die Kurve. Sein innerster Punkt darf nicht näher als 5,30 m an die Kreismitte kommen.',
           note: '▶ „Seht ihr den Auflieger? Er fährt nicht in der Spur der Zugmaschine – er läuft weiter innen. Er schneidet die Kurve. Darum ist innen mehr Platz nötig, als man denkt.“\n✅ Schleppkurve: Der Anhänger bzw. Auflieger läuft auf einem kleineren Radius als das Zugfahrzeug (Prüfungsfrage 2.7.01-310: kann die Kurve schneiden). Eigene Rechnung für diesen Sattelzug (Radstand 3,70 m, Sattelvormaß 0,55 m, Königszapfen–Achsmitte 7,60 m): innerster Punkt bei etwa 5,5 m.\n🖱 Klick: Der Zug fährt weiter.\n➜ „Und was ergibt das zusammen?“' }),
         fr({ th: 300, inner: 1 }),
         fr({ th: 330, inner: 1, ring: 1 }, { hold: true, answer: true, cap: 'Der Ring zwischen den Kreisen darf höchstens 7,20 m breit sein. Beim Einfahren darf nichts mehr als 0,80 m nach außen ausschwenken.',

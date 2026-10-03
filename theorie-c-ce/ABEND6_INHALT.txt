@@ -1,7 +1,7 @@
 === FOLIE 1 ===
 AUF DER FOLIE: KLASSE CE  ·  THEORIE  ·  ABEND 6 | Mit Anhänger unterwegs | CE1  Zusammenstellung von Zügen / CE2  Lastzugbremsen | Fahrschule Boost  ·  Offenbach am Main
 NOTIZEN:
-FOLIE 1 VON 131 · keine Klicks, läuft von selbst
+FOLIE 1 VON 131 · Animation läuft von selbst · Klick = weiter
 
 ▶ Sagen: „Willkommen zu Abend 6 – dem ersten Abend für Klasse CE. Ab heute geht es um Lkw mit Anhänger und um Sattelzüge. Zuerst: Wie stellt man einen Zug zusammen – Kuppeln, Satteln, Maße und Gewichte. Nach der Pause: Wie bremst ein Zug – die Lastzugbremse.“
 💡 Vorher: Anwesenheit eintragen, Ausbildungsnachweis abzeichnen.
@@ -19,7 +19,7 @@ FOLIE 2 VON 131 · 3 Klicks
 ➜ „Erst ein kurzer Blick zurück auf Abend 5.“
 
 === FOLIE 3 ===
-AUF DER FOLIE: KLASSE CE  ·  ABEND 6  ·  LEKTION CE1 | 3 | WIEDERHOLUNG ABEND 5 | Drei Fragen von letztem Mal – wer weiß es noch? | Wie viel hält eine normale Stirnwand (Code L)?  40 % der Nutzlast – höchstens 5 Tonnen. Nach vorn drückt die Ladung mit bis zu 80 %. | Welcher Wert auf dem Zurrgurt zählt beim Niederzurren?  Die STF – die Vorspannkraft. Die LC zählt beim Direktzurren. | Mit welchem Schnitt plant ihr einen Lkw über 7,5 t auf der Autobahn?  Mit 70 km/h – nicht mit 80.
+AUF DER FOLIE: KLASSE CE  ·  ABEND 6  ·  LEKTION CE1 | 3 | WIEDERHOLUNG ABEND 5 | Drei Fragen von letztem Mal – wer weiß es noch? | Wie viel hält eine normale Stirnwand (Code L)?  40 % der Nutzlast – höchstens 5.000 daN (so viel, wie 5 t wiegen). Nach vorn drückt die Ladung mit bis zu 80 %. | Welcher Wert auf dem Zurrgurt zählt beim Niederzurren?  Die STF – die Vorspannkraft. Die LC zählt beim Direktzurren. | Mit welchem Schnitt plant ihr einen Lkw über 7,5 t auf der Autobahn?  Mit 70 km/h – nicht mit 80.
 NOTIZEN:
 FOLIE 3 VON 131 · 3 Klicks
 
@@ -42,7 +42,7 @@ FOLIE 4 VON 131 · 5 Klicks
 === FOLIE 5 ===
 AUF DER FOLIE: KLASSE CE  ·  ABEND 6  ·  CE1  ·  ZUGARTEN UND KUPPLUNGEN | 5 | 01 | Zugarten und Kupplungen | Gliederzug, Zentralachsanhänger, Sattelzug – und was sie zusammenhält.
 NOTIZEN:
-FOLIE 5 VON 131 · keine Klicks, läuft von selbst
+FOLIE 5 VON 131 · Animation läuft von selbst · Klick = weiter
 
 ▶ Sagen: „Kapitel 1: Welche Züge gibt es – und wie hängen sie zusammen?“
 🖱 Keine Klicks.
@@ -51,7 +51,7 @@ FOLIE 5 VON 131 · keine Klicks, läuft von selbst
 === FOLIE 6 ===
 AUF DER FOLIE: KLASSE CE  ·  ABEND 6  ·  CE1  ·  ZUGARTEN UND KUPPLUNGEN | 6 | ZUGARTEN | Drei Arten von Zügen | 1 | Gliederzug | 2 | Zentralachsanhänger | 3 | Sattelzug | ❓ Frage an die Klasse   / Wie viele Anhänger dürft ihr hinter einem Lkw mitnehmen? | Gliederzug: Lkw mit Anhänger. Der Anhänger hat vorn einen Drehschemel – er lenkt mit der Zuggabel. | Seitenansicht · schematisch | Gliederzug | Lkw + Anhänger mit Drehschemel | Drehpunkte | Zwei Drehpunkte: Kupplungsbolzen und Drehkranz. Kaum Stützlast auf dem Lkw.
 NOTIZEN:
-FOLIE 6 VON 131 · keine Klicks, läuft von selbst
+FOLIE 6 VON 131 · keine Animation · Klick = weiter
 
 ▶ Sagen: „Erste Zugart: der Gliederzug – ein Lkw mit Anhänger. Der Anhänger hat vorn einen Drehschemel. Er hat zwei Drehpunkte: den Kupplungsbolzen am Lkw und den Drehkranz am Anhänger. Darum kann er doppelt einknicken.“
 ✅ DGUV Information 214-080 „Kuppeln – aber sicher!“, Kap. 6: Gliederzug = Lkw + Gelenkdeichsel- oder Starrdeichselanhänger; Gelenkdeichselanhänger gibt keine nennenswerte Stützlast ab.
@@ -59,9 +59,9 @@ FOLIE 6 VON 131 · keine Klicks, läuft von selbst
 ➜ „Zweite Zugart.“
 
 === FOLIE 7 ===
-AUF DER FOLIE: KLASSE CE  ·  ABEND 6  ·  CE1  ·  ZUGARTEN UND KUPPLUNGEN | 7 | ZUGARTEN | Drei Arten von Zügen | 1 | Gliederzug | 2 | Zentralachsanhänger | 3 | Sattelzug | ❓ Frage an die Klasse   / Wie viele Anhänger dürft ihr hinter einem Lkw mitnehmen? | Zentralachsanhänger: Die Achsen sitzen in der Mitte, die Deichsel ist starr. Er drückt mit der Stützlast auf den Lkw. | Seitenansicht · schematisch | Zentralachsanhänger | Achsen in der Mitte, starre Deichsel | Stützlast | Ein Teil des Gewichts liegt auf der Kupplung des Lkw: die Stützlast.
+AUF DER FOLIE: KLASSE CE  ·  ABEND 6  ·  CE1  ·  ZUGARTEN UND KUPPLUNGEN | 7 | ZUGARTEN | Drei Arten von Zügen | 1 | Gliederzug | 2 | Zentralachsanhänger | 3 | Sattelzug | ❓ Frage an die Klasse   / Wie viele Anhänger dürft ihr hinter einem Lkw mitnehmen? | Zentralachsanhänger: Die Achsen sitzen nah am Schwerpunkt (etwa in der Mitte), die Deichsel ist starr. Er drückt mit der Stützlast auf den Lkw. | Seitenansicht · schematisch | Zentralachsanhänger | Achsen nah am Schwerpunkt, starre Deichsel | Stützlast | Ein Teil des Gewichts liegt auf der Kupplung des Lkw: die Stützlast.
 NOTIZEN:
-FOLIE 7 VON 131 · keine Klicks, läuft von selbst
+FOLIE 7 VON 131 · keine Animation · Klick = weiter
 
 ▶ „Zweite Art: der Zentralachsanhänger. Die Achsen sitzen nah am Schwerpunkt, die Deichsel ist starr. Ein Teil seines Gewichts drückt auf die Kupplung des Lkw – die Stützlast.“
 ✅ DGUV I 214-080, Kap. 6: Zentralachsanhänger, Stützlast höchstens 10 % der Anhängermasse oder 1.000 kg (der kleinere Wert). § 44 Abs. 3 StVZO: Mindeststützlast 4 %.
@@ -71,7 +71,7 @@ FOLIE 7 VON 131 · keine Klicks, läuft von selbst
 === FOLIE 8 ===
 AUF DER FOLIE: KLASSE CE  ·  ABEND 6  ·  CE1  ·  ZUGARTEN UND KUPPLUNGEN | 8 | ZUGARTEN | Drei Arten von Zügen | 1 | Gliederzug | 2 | Zentralachsanhänger | 3 | Sattelzug | ✓ Antwort   / Nur einen. Hinter einem Sattelzug gar keinen. | Sattelzug: Der Auflieger hat vorn keine Achse. Er liegt mit dem Königszapfen auf der Sattelkupplung der Zugmaschine. | Seitenansicht · schematisch | Sattelzug | Zugmaschine + Auflieger | Sattellast | Ein großer Teil des Aufliegers liegt auf der Zugmaschine: die Sattellast.
 NOTIZEN:
-FOLIE 8 VON 131 · keine Klicks, läuft von selbst
+FOLIE 8 VON 131 · keine Animation · Klick = weiter
 
 ▶ „Dritte Art: der Sattelzug. Der Auflieger hat vorn keine Achse. Er liegt mit dem Königszapfen auf der Sattelkupplung – ein großer Teil seines Gewichts liegt auf der Zugmaschine: die Sattellast.“
 ❓ Frage auf der Folie auflösen.
@@ -93,7 +93,7 @@ FOLIE 9 VON 131 · 4 Klicks
 === FOLIE 10 ===
 AUF DER FOLIE: KLASSE CE  ·  ABEND 6  ·  CE1  ·  ZUGARTEN UND KUPPLUNGEN | 10 | BOLZENKUPPLUNG | So schließt die Kupplung | ❓ Frage an die Klasse / Woran erkennt ihr sicher, dass die Kupplung wirklich zu ist? | Antwort folgt … | Die Kupplung ist offen: Bolzen oben, Handhebel oben, der Kontrollstift steht heraus. | Seitenansicht · schematisch | Lkw | Zuggabel des Anhängers | Kontrollstift | Bolzen | Fangmaul | Handhebel | offen
 NOTIZEN:
-FOLIE 10 VON 131 · keine Klicks, läuft von selbst
+FOLIE 10 VON 131 · keine Animation · Klick = weiter
 
 ▶ Sagen: „Die Kupplung ist geöffnet: Der Handhebel ist oben eingerastet, der Bolzen steht oben, das Fangmaul ist arretiert. Und der Kontrollstift steht heraus – das heißt: offen.“
 ❓ Frage auf der Folie stellen.
@@ -103,7 +103,7 @@ FOLIE 10 VON 131 · keine Klicks, läuft von selbst
 === FOLIE 11 ===
 AUF DER FOLIE: KLASSE CE  ·  ABEND 6  ·  CE1  ·  ZUGARTEN UND KUPPLUNGEN | 11 | BOLZENKUPPLUNG | So schließt die Kupplung | ❓ Frage an die Klasse / Woran erkennt ihr sicher, dass die Kupplung wirklich zu ist? | Antwort folgt … | Der Lkw setzt zurück – die Zugöse gleitet ins Fangmaul … | Seitenansicht · schematisch | Lkw | Zuggabel des Anhängers | Kontrollstift | Bolzen | Fangmaul | Handhebel | offen
 NOTIZEN:
-FOLIE 11 VON 131 · keine Klicks, läuft von selbst
+FOLIE 11 VON 131 · läuft von selbst weiter (kein Klick)
 
 ▶ Die Bewegung läuft – zuschauen lassen.
 🖱 Kein Klick – die Folie läuft von selbst weiter.
@@ -112,7 +112,7 @@ FOLIE 11 VON 131 · keine Klicks, läuft von selbst
 === FOLIE 12 ===
 AUF DER FOLIE: KLASSE CE  ·  ABEND 6  ·  CE1  ·  ZUGARTEN UND KUPPLUNGEN | 12 | BOLZENKUPPLUNG | So schließt die Kupplung | ❓ Frage an die Klasse / Woran erkennt ihr sicher, dass die Kupplung wirklich zu ist? | Antwort folgt … | Der Lkw setzt zurück – die Zugöse gleitet ins Fangmaul … | Seitenansicht · schematisch | Lkw | Zuggabel des Anhängers | Kontrollstift | Bolzen | Fangmaul | Handhebel | offen
 NOTIZEN:
-FOLIE 12 VON 131 · keine Klicks, läuft von selbst
+FOLIE 12 VON 131 · läuft von selbst weiter (kein Klick)
 
 ▶ Die Bewegung läuft – zuschauen lassen.
 🖱 Kein Klick – die Folie läuft von selbst weiter.
@@ -121,7 +121,7 @@ FOLIE 12 VON 131 · keine Klicks, läuft von selbst
 === FOLIE 13 ===
 AUF DER FOLIE: KLASSE CE  ·  ABEND 6  ·  CE1  ·  ZUGARTEN UND KUPPLUNGEN | 13 | BOLZENKUPPLUNG | So schließt die Kupplung | ❓ Frage an die Klasse / Woran erkennt ihr sicher, dass die Kupplung wirklich zu ist? | Antwort folgt … | Die Zugöse stößt hinten an und löst die Sperre … | Seitenansicht · schematisch | Lkw | Zuggabel des Anhängers | Kontrollstift | Bolzen | Fangmaul | Handhebel | offen
 NOTIZEN:
-FOLIE 13 VON 131 · keine Klicks, läuft von selbst
+FOLIE 13 VON 131 · läuft von selbst weiter (kein Klick)
 
 ▶ Die Bewegung läuft – zuschauen lassen.
 🖱 Kein Klick – die Folie läuft von selbst weiter.
@@ -130,7 +130,7 @@ FOLIE 13 VON 131 · keine Klicks, läuft von selbst
 === FOLIE 14 ===
 AUF DER FOLIE: KLASSE CE  ·  ABEND 6  ·  CE1  ·  ZUGARTEN UND KUPPLUNGEN | 14 | BOLZENKUPPLUNG | So schließt die Kupplung | ❓ Frage an die Klasse / Woran erkennt ihr sicher, dass die Kupplung wirklich zu ist? | ✓ Antwort / Am Kontrollstift (oder an der Kontrollleuchte im Führerhaus): Er darf nicht mehr herausstehen. Anrucken allein reicht nicht! | Federkraft drückt den Bolzen durch die Zugöse. Der Kontrollstift ist verschwunden: geschlossen! | Seitenansicht · schematisch | Lkw | Zuggabel des Anhängers | Kontrollstift | Bolzen | Fangmaul | Handhebel | ✓  geschlossen
 NOTIZEN:
-FOLIE 14 VON 131 · keine Klicks, läuft von selbst
+FOLIE 14 VON 131 · keine Animation · Klick = weiter
 
 ▶ „Die Zugöse löst die Sperre, eine Feder drückt den Bolzen nach unten durch die Öse. Jetzt ist die Kupplung zu – und der Kontrollstift ist verschwunden. Das kontrolliert ihr immer: hinsehen, im Dunkeln mit der Hand tasten. Anrucken allein reicht nicht!“
 ✅ DGUV I 214-080, Kap. 1.3.1: Kontrollstift steht hervor, solange die Kupplung offen ist; Kontrolle durch Sehen und Tasten oder Fernanzeige im Führerhaus. Prüfungsfrage 2.7.07-312: am Kontrollstift oder an der Kontrollleuchte – „durch kurzes Anrucken“ ist falsch.
@@ -161,7 +161,7 @@ FOLIE 16 VON 131 · 2 Klicks
 === FOLIE 17 ===
 AUF DER FOLIE: KLASSE CE  ·  ABEND 6  ·  CE1  ·  AN- UND ABKUPPELN | 17 | 02 | An- und Abkuppeln | Kuppelunfälle gehören zu den häufigsten tödlichen Unfällen mit Lkw. Fast immer war es ein Fehler im Ablauf.
 NOTIZEN:
-FOLIE 17 VON 131 · keine Klicks, läuft von selbst
+FOLIE 17 VON 131 · Animation läuft von selbst · Klick = weiter
 
 ▶ Sagen: „Kapitel 2: An- und Abkuppeln. Das klingt einfach – aber Kuppelunfälle gehören zu den häufigsten tödlichen Unfällen mit Nutzfahrzeugen. Die Ursache ist fast immer ein Fehler im Ablauf, nicht die Technik.“
 ✅ DGUV Information 214-080 „Kuppeln – aber sicher!“ (2020), S. 5.
@@ -171,7 +171,7 @@ FOLIE 17 VON 131 · keine Klicks, läuft von selbst
 === FOLIE 18 ===
 AUF DER FOLIE: KLASSE CE  ·  ABEND 6  ·  CE1  ·  AN- UND ABKUPPELN | 18 | ANKUPPELN | So wird angekuppelt | ❓ Frage an die Klasse / Wer bewegt sich beim Ankuppeln – und wo darf niemand stehen? | Antwort folgt … | Zuerst den Anhänger sichern: Feststellbremse (roter Knopf ziehen) und Unterlegkeile. | Seitenansicht · schematisch | P | Anhänger gesichert: Feststellbremse + Keil
 NOTIZEN:
-FOLIE 18 VON 131 · keine Klicks, läuft von selbst
+FOLIE 18 VON 131 · keine Animation · Klick = weiter
 
 ▶ Sagen: „Bevor irgendetwas passiert: Der Anhänger wird gesichert. Feststellbremse – der rote Knopf am Anhänger wird gezogen – und Unterlegkeile an die starre Achse.“
 ❓ Frage auf der Folie stellen.
@@ -182,7 +182,7 @@ FOLIE 18 VON 131 · keine Klicks, läuft von selbst
 === FOLIE 19 ===
 AUF DER FOLIE: KLASSE CE  ·  ABEND 6  ·  CE1  ·  AN- UND ABKUPPELN | 19 | ANKUPPELN | So wird angekuppelt | ❓ Frage an die Klasse / Wer bewegt sich beim Ankuppeln – und wo darf niemand stehen? | Antwort folgt … | Bis etwa 1 m heranfahren. Zuggabel mit der Höheneinstellung auf Kupplungshöhe bringen, Kupplung öffnen. | Seitenansicht · schematisch | Gefahrbereich – niemand dazwischen! | P | Anhänger gesichert: Feststellbremse + Keil | Zuggabel auf Kupplungshöhe
 NOTIZEN:
-FOLIE 19 VON 131 · keine Klicks, läuft von selbst
+FOLIE 19 VON 131 · keine Animation · Klick = weiter
 
 ▶ „Der Lkw fährt bis etwa einen Meter vor die Zugöse. Dann wird die Zuggabel mit der Höheneinstellung auf die Höhe des Fangmauls gebracht, und die Kupplung wird geöffnet. Bei einem Drehschemelanhänger wird jetzt die Vorderachsbremse gelöst – erst wenn die Feststellbremse angezogen ist.“
 ✅ DGUV I 214-080, Kap. 2.2. Prüfungsfrage 2.7.07-327: Die Zuggabel wird von der Höheneinstellvorrichtung des Anhängers auf Höhe gehalten – nicht von einer Person.
@@ -192,7 +192,7 @@ FOLIE 19 VON 131 · keine Klicks, läuft von selbst
 === FOLIE 20 ===
 AUF DER FOLIE: KLASSE CE  ·  ABEND 6  ·  CE1  ·  AN- UND ABKUPPELN | 20 | ANKUPPELN | So wird angekuppelt | ❓ Frage an die Klasse / Wer bewegt sich beim Ankuppeln – und wo darf niemand stehen? | Antwort folgt … | Langsam zurücksetzen. Zwischen den Fahrzeugen ist Gefahrbereich – niemand dazwischen! | Seitenansicht · schematisch | Gefahrbereich – niemand dazwischen! | P | Anhänger gesichert: Feststellbremse + Keil | Zuggabel auf Kupplungshöhe
 NOTIZEN:
-FOLIE 20 VON 131 · keine Klicks, läuft von selbst
+FOLIE 20 VON 131 · läuft von selbst weiter (kein Klick)
 
 ▶ Die Bewegung läuft – zuschauen lassen.
 🖱 Kein Klick – die Folie läuft von selbst weiter.
@@ -201,7 +201,7 @@ FOLIE 20 VON 131 · keine Klicks, läuft von selbst
 === FOLIE 21 ===
 AUF DER FOLIE: KLASSE CE  ·  ABEND 6  ·  CE1  ·  AN- UND ABKUPPELN | 21 | ANKUPPELN | So wird angekuppelt | ❓ Frage an die Klasse / Wer bewegt sich beim Ankuppeln – und wo darf niemand stehen? | ✓ Antwort / Der Lkw setzt zum gesicherten Anhänger zurück. Zwischen den Fahrzeugen darf niemand stehen – auch nicht, um die Zuggabel zu halten. | Eingerastet. Feststellbremse im Lkw ziehen, aussteigen – dann den Kontrollstift prüfen. | Seitenansicht · schematisch | P | Anhänger gesichert: Feststellbremse + Keil | ✓  eingerastet
 NOTIZEN:
-FOLIE 21 VON 131 · keine Klicks, läuft von selbst
+FOLIE 21 VON 131 · keine Animation · Klick = weiter
 
 ▶ „Klack – eingerastet. Jetzt Feststellbremse im Lkw ziehen, erst dann aussteigen. Und dann: Kontrollstift ansehen, im Dunkeln tasten.“
 ✅ Prüfungsfrage 2.7.07-306: Das Zugfahrzeug wird zum Anhänger rangiert. 2.6.03-307: gegen Wegrollen sichern; keine Personen zwischen den Fahrzeugen. 2.7.01-128: Einweiser steht im Sichtbereich des Fahrers – er hält nicht die Zuggabel. DGUV I 214-080, S. 27: Anhänger zum Kuppeln auflaufen lassen ist ohne Ausnahme verboten.
@@ -211,10 +211,10 @@ FOLIE 21 VON 131 · keine Klicks, läuft von selbst
 === FOLIE 22 ===
 AUF DER FOLIE: KLASSE CE  ·  ABEND 6  ·  CE1  ·  AN- UND ABKUPPELN | 22 | ANKUPPELN | So wird angekuppelt | ❓ Frage an die Klasse / Wer bewegt sich beim Ankuppeln – und wo darf niemand stehen? | ✓ Antwort / Der Lkw setzt zum gesicherten Anhänger zurück. Zwischen den Fahrzeugen darf niemand stehen – auch nicht, um die Zuggabel zu halten. | Leitungen: gelb, dann rot, dazu Strom und ABS. Höheneinstellung lösen, Anhänger-Feststellbremse lösen, Keile weg. | Seitenansicht · schematisch | ✓  eingerastet
 NOTIZEN:
-FOLIE 22 VON 131 · keine Klicks, läuft von selbst
+FOLIE 22 VON 131 · keine Animation · Klick = weiter
 
 ▶ „Jetzt die Leitungen: erst gelb, dann rot – gleich schauen wir, warum. Dazu der Stecker für Licht und der ABS/EBS-Stecker. Dann Höheneinstellung lösen, Feststellbremse am Anhänger lösen, Keile wegnehmen und verstauen. Zum Schluss: Abfahrtkontrolle.“
-✅ DGUV I 214-080, Kap. 2.2, Schritte 10–13.
+✅ DGUV I 214-080, Kap. 2.2, Schritte 11–14.
 🖱 Keine Animation mehr – nächster Klick: nächste Folie.
 ➜ „Welche Leitung ist welche?“
 
@@ -230,9 +230,9 @@ FOLIE 23 VON 131 · 4 Klicks
 ➜ „Und welche schließt ihr zuerst an?“
 
 === FOLIE 24 ===
-AUF DER FOLIE: KLASSE CE  ·  ABEND 6  ·  CE1  ·  AN- UND ABKUPPELN | 24 | LEITUNGEN | Gelb vor Rot | 1 | Vorher: nichts verbunden | 2 | Zuerst gelb | 3 | Dann rot | 4 | Falsch: nur rot | ❓ Frage an die Klasse   / Welche Leitung schließt ihr zuerst an – und warum? | Vorher: Der Anhänger ist abgekuppelt und mit Feststellbremse und Keilen gesichert. | Schema · vereinfacht | Lkw | P | Feststellbremse gezogen | Anhänger | Luftbehälter | Bremse: fest (Federspeicher) | gelb = Bremse | rot = Vorrat | Anhänger steht sicher: roter Knopf gezogen, Keile liegen.
+AUF DER FOLIE: KLASSE CE  ·  ABEND 6  ·  CE1  ·  AN- UND ABKUPPELN | 24 | LEITUNGEN | Gelb vor Rot | 1 | Vorher: nichts verbunden | 2 | Zuerst gelb | 3 | Dann rot | 4 | Falsch: nur rot | ❓ Frage an die Klasse   / Welche Leitung schließt ihr zuerst an – und warum? | Vorher: Der Anhänger ist abgekuppelt und mit Feststellbremse und Keilen gesichert. | Schema · vereinfacht | Lkw | P | Feststellbremse gezogen | Anhänger | Luftbehälter | Betriebsbremse:  / Notbremsung / Federspeicher:  / fest | gelb = Bremse | rot = Vorrat | Anhänger steht sicher: roter Knopf gezogen, Keile liegen.
 NOTIZEN:
-FOLIE 24 VON 131 · keine Klicks, läuft von selbst
+FOLIE 24 VON 131 · keine Animation · Klick = weiter
 
 ▶ Sagen: „Links der Lkw mit seinen Kupplungsköpfen, rechts der Anhänger mit Luftbehälter und Bremszylinder. Noch ist nichts verbunden. Der Anhänger steht mit Feststellbremse und Keilen.“
 ❓ Frage auf der Folie stellen.
@@ -240,33 +240,33 @@ FOLIE 24 VON 131 · keine Klicks, läuft von selbst
 ➜ „Was kommt zuerst?“
 
 === FOLIE 25 ===
-AUF DER FOLIE: KLASSE CE  ·  ABEND 6  ·  CE1  ·  AN- UND ABKUPPELN | 25 | LEITUNGEN | Gelb vor Rot | 1 | Vorher: nichts verbunden | 2 | Zuerst gelb | 3 | Dann rot | 4 | Falsch: nur rot | ❓ Frage an die Klasse   / Welche Leitung schließt ihr zuerst an – und warum? | Zuerst gelb, die Bremsleitung. Die Feststellbremse im Lkw belüftet gelb – der Anhänger wird gebremst. Kein Zischen? Feststellbremse im Lkw prüfen! | Schema · vereinfacht | Lkw | P | Feststellbremse gezogen | Anhänger | Luftbehälter | Bremse: bremst (über gelb) | gelb = Bremse | rot = Vorrat | Gelb angeschlossen: Es zischt kurz – die Feststellbremse im Lkw schickt Luft in gelb.
+AUF DER FOLIE: KLASSE CE  ·  ABEND 6  ·  CE1  ·  AN- UND ABKUPPELN | 25 | LEITUNGEN | Gelb vor Rot | 1 | Vorher: nichts verbunden | 2 | Zuerst gelb | 3 | Dann rot | 4 | Falsch: nur rot | ❓ Frage an die Klasse   / Welche Leitung schließt ihr zuerst an – und warum? | Zuerst gelb, die Bremsleitung. Die Feststellbremse im Lkw gibt Druck auf gelb – das Bremssignal liegt an. Kommt gleich rot dazu, bleibt der Anhänger gebremst. Kein Zischen? Feststellbremse im Lkw prüfen! | Schema · vereinfacht | Lkw | P | Feststellbremse gezogen | Anhänger | Luftbehälter | Betriebsbremse:  / Notbremsung / Federspeicher:  / fest | gelb = Bremse | rot = Vorrat | Gelb angeschlossen: Es zischt kurz – das Bremssignal aus dem Lkw liegt an.
 NOTIZEN:
-FOLIE 25 VON 131 · keine Klicks, läuft von selbst
+FOLIE 25 VON 131 · keine Animation · Klick = weiter
 
-▶ „Zuerst gelb, die Bremsleitung. Weil im Lkw die Feststellbremse gezogen ist, schickt der Lkw Luft in die gelbe Leitung – es zischt kurz, und der Anhänger wird gebremst. Zischt es nicht, prüft ihr die Feststellbremse im Lkw.“
+▶ „Zuerst gelb, die Bremsleitung. Weil im Lkw die Feststellbremse gezogen ist, schickt der Lkw Luft in die gelbe Leitung – es zischt kurz, das Bremssignal liegt an. Gebremst wird damit noch nichts Neues: Der Anhänger steht ja noch mit Notbremsung und rotem Knopf. Aber wenn gleich rot dazukommt, bleibt er gebremst. Zischt es nicht, prüft ihr die Feststellbremse im Lkw.“
 ✅ DGUV I 214-080, S. 28/29: Ankuppeln – zuerst Bremsleitung (gelb), dann Vorratsleitung (rot); ist beim Anschließen von gelb kein Zischen zu hören, prüfen, ob die Feststellbremse im Zugfahrzeug betätigt ist. Prüfungsfrage 2.7.07-320.
 🖱 Keine Animation auf dieser Folie – nächster Klick = nächster Schritt (Morph).
 ➜ „Dann rot.“
 
 === FOLIE 26 ===
-AUF DER FOLIE: KLASSE CE  ·  ABEND 6  ·  CE1  ·  AN- UND ABKUPPELN | 26 | LEITUNGEN | Gelb vor Rot | 1 | Vorher: nichts verbunden | 2 | Zuerst gelb | 3 | Dann rot | 4 | Falsch: nur rot | ✓ Antwort   / Gelb, dann rot. Rot allein löst die Anhängerbremse. Abkuppeln: zuerst rot, dann gelb. Rot nie allein! | Dann rot, die Vorratsleitung. Der Luftbehälter im Anhänger füllt sich. Jetzt bremst der Anhänger, wann der Fahrer bremst. | Schema · vereinfacht | Lkw | P | Feststellbremse gezogen | Anhänger | Luftbehälter | Bremse: bremst (über gelb) | gelb = Bremse | rot = Vorrat | Dann rot: Der Behälter füllt sich. Der Anhänger hängt jetzt am Bremswunsch des Fahrers.
+AUF DER FOLIE: KLASSE CE  ·  ABEND 6  ·  CE1  ·  AN- UND ABKUPPELN | 26 | LEITUNGEN | Gelb vor Rot | 1 | Vorher: nichts verbunden | 2 | Zuerst gelb | 3 | Dann rot | 4 | Falsch: nur rot | ✓ Antwort   / Gelb, dann rot. Rot allein löst die Betriebsbremse des Anhängers. Abkuppeln: zuerst rot, dann gelb. Rot nie allein! | Dann rot, die Vorratsleitung. Der Luftbehälter im Anhänger füllt sich. Jetzt bremst der Anhänger, wenn der Fahrer bremst. | Schema · vereinfacht | Lkw | P | Feststellbremse gezogen | Anhänger | Luftbehälter | Betriebsbremse:  / bremst (Signal über gelb) / Federspeicher:  / fest | gelb = Bremse | rot = Vorrat | Dann rot: Der Behälter füllt sich. Der Anhänger bleibt gebremst – und hängt jetzt am Bremswunsch des Fahrers.
 NOTIZEN:
-FOLIE 26 VON 131 · keine Klicks, läuft von selbst
+FOLIE 26 VON 131 · keine Animation · Klick = weiter
 
-▶ „Jetzt rot, die Vorratsleitung. Der Behälter im Anhänger füllt sich. Ab jetzt bremst der Anhänger, wenn der Fahrer bremst – oder die Feststellbremse im Lkw zieht.“
+▶ „Jetzt rot, die Vorratsleitung. Der Behälter im Anhänger füllt sich, die Notbremsung ist aufgehoben – aber weil das Signal aus gelb anliegt, bleibt der Anhänger gebremst. Ab jetzt bremst er, wenn der Fahrer bremst – oder die Feststellbremse im Lkw zieht.“
 ❓ Frage auf der Folie auflösen.
 ✅ Prüfungsfragen 2.7.07-320 (zuerst gelb; kombinierte Köpfe gleichzeitig) und 2.7.07-319 (abkuppeln: zuerst rot).
 🖱 Keine Animation auf dieser Folie – nächster Klick = nächster Schritt (Morph).
 ➜ „Und was passiert, wenn man es falsch macht?“
 
 === FOLIE 27 ===
-AUF DER FOLIE: KLASSE CE  ·  ABEND 6  ·  CE1  ·  AN- UND ABKUPPELN | 27 | LEITUNGEN | Gelb vor Rot | 1 | Vorher: nichts verbunden | 2 | Zuerst gelb | 3 | Dann rot | 4 | Falsch: nur rot | ✓ Antwort   / Gelb, dann rot. Rot allein löst die Anhängerbremse. Abkuppeln: zuerst rot, dann gelb. Rot nie allein! | Wer nur rot anschließt, löst die Anhängerbremse – ohne gelb gibt es kein Signal zum Bremsen. Merksatz: „Rot nie allein!“ | Schema · vereinfacht | Lkw | P | Feststellbremse gezogen | Anhänger | Luftbehälter | Bremse: GELÖST! | gelb = Bremse | rot = Vorrat | Falsch: nur rot. Rot löst die Anhängerbremse – gelb sagt nichts. Der Anhänger kann wegrollen!
+AUF DER FOLIE: KLASSE CE  ·  ABEND 6  ·  CE1  ·  AN- UND ABKUPPELN | 27 | LEITUNGEN | Gelb vor Rot | 1 | Vorher: nichts verbunden | 2 | Zuerst gelb | 3 | Dann rot | 4 | Falsch: nur rot | ✓ Antwort   / Gelb, dann rot. Rot allein löst die Betriebsbremse des Anhängers. Abkuppeln: zuerst rot, dann gelb. Rot nie allein! | Wer nur rot anschließt, löst die Betriebsbremse – ohne gelb kein Bremssignal. Ist der rote Knopf am Anhänger nicht gezogen, rollt er weg! Merksatz: „Rot nie allein!“ | Schema · vereinfacht | Lkw | P | Feststellbremse gezogen | Anhänger | Luftbehälter | Betriebsbremse:  / GELÖST! / Federspeicher:  / hält nur, wenn der / rote Knopf gezogen ist | gelb = Bremse | rot = Vorrat | Falsch: nur rot. Rot löst die Betriebsbremse – gelb sagt nichts. Ist der rote Knopf nicht gezogen, rollt der Anhänger weg!
 NOTIZEN:
-FOLIE 27 VON 131 · keine Klicks, läuft von selbst
+FOLIE 27 VON 131 · keine Animation · Klick = weiter
 
-▶ „Der Fehler: nur rot. Das Anschließen von rot löst die Notbremse des Anhängers. Ohne gelb bekommt er aber kein Bremssignal. Ist dann auch die Feststellbremse am Anhänger nicht gezogen – rollt er weg. Darum: Rot nie allein!“
-✅ DGUV I 214-080, S. 20 und 28: Das Anschließen der roten Leitung löst die Betriebsbremse des Anhängers. Notfall-Tipp (S. 29): Rollt der Zug los, rote Leitung trennen – nie versuchen, ins Führerhaus zu kommen.
+▶ „Der Fehler: nur rot. Das Anschließen von rot löst die Betriebsbremse des Anhängers – die Notbremsung ist weg. Ohne gelb bekommt er aber kein Bremssignal. Der Federspeicher hält nur, wenn der rote Knopf gezogen ist. Ist er nicht gezogen – rollt der Anhänger weg. Darum: Rot nie allein!“
+✅ DGUV I 214-080, S. 20 und 28: Das Anschließen der roten Leitung löst die Betriebsbremse des Anhängers; den Federspeicher (Feststellbremse) betätigt die rote Leitung nicht. Notfall-Tipp (S. 29): Rollt der Zug los, rote Leitung trennen – nie versuchen, ins Führerhaus zu kommen.
 💡 Kombinierte Kupplungsköpfe (beide Leitungen in einer Einheit) vermeiden Verwechslungen.
 🖱 Keine Animation auf dieser Folie – nächster Klick = nächster Schritt (Morph).
 ➜ „Die ganze Reihenfolge beim Ankuppeln.“
@@ -282,14 +282,14 @@ FOLIE 28 VON 131 · 7 Klicks
 ➜ „Und das Abkuppeln?“
 
 === FOLIE 29 ===
-AUF DER FOLIE: KLASSE CE  ·  ABEND 6  ·  CE1  ·  AN- UND ABKUPPELN | 29 | ABKUPPELN | Abkuppeln: Was ist anders? | Gestreckt abstellen  Davor Platz lassen – etwa doppelt so lang wie der Lkw. | Beide Feststellbremsen und Keile  Lkw und Anhänger (roter Knopf). Nie nur mit abgezogener roter Leitung abstellen! | Erst rot, dann gelb trennen  In die Parkdosen stecken, Schutzkappen drauf. | Kupplung verspannt?  Nicht ruckeln – Lebensgefahr! Auf ebener Fläche kurz über die Kontrollstellung entspannen. | Vorziehen, Kupplung schließen  Ohne Anhänger: Kupplung zu, Schutzkappen auf die Kupplungsköpfe.
+AUF DER FOLIE: KLASSE CE  ·  ABEND 6  ·  CE1  ·  AN- UND ABKUPPELN | 29 | ABKUPPELN | Abkuppeln: Was ist anders? | Gestreckt abstellen  Davor mindestens die doppelte Lkw-Länge frei lassen. | Beide Feststellbremsen und Keile  Lkw und Anhänger (roter Knopf). Nie nur mit abgezogenem Rot abstellen! | Zentralachsanhänger: Stütze ab  vor dem Öffnen – sonst schlägt die Deichsel hoch oder fällt herunter. | Erst rot, dann gelb trennen  In die Parkdosen stecken, Schutzkappen drauf. | Kupplung verspannt?  Nicht ruckeln – Lebensgefahr! Eben stehen, kurz die Kontrollstellung einlegen. | Vorziehen, Kupplung schließen  Ohne Anhänger: Kupplung zu, Schutzkappen auf die Kupplungsköpfe.
 NOTIZEN:
-FOLIE 29 VON 131 · 5 Klicks
+FOLIE 29 VON 131 · 6 Klicks
 
 ▶ Sagen: „Beim Abkuppeln ist es fast umgekehrt. Was ist wichtig?“
 ❓ Sammeln lassen, dann je Klick eine Karte.
-🖱 Klick 1–5: je ein Schritt.
-✅ DGUV I 214-080, Kap. 2.2 (Abkuppeln), S. 32–37: gestreckt abstellen, vorn etwa doppelte Zugfahrzeuglänge frei; beide Feststellbremsen; Keile; Leitungen rot, dann gelb; bei Verspannung nicht ruckeln, auf ebener Fläche Anhängerbremse kurz über die Kontrollstellung entlüften. S. 33: Anhänger nie nur mit der Notbremsfunktion (abgezogene rote Leitung) abstellen – die Luft entweicht mit der Zeit. Prüfungsfrage 2.7.07-319: zuerst die Vorratsleitung (rot) trennen.
+🖱 Klick 1–6: je ein Schritt.
+✅ DGUV I 214-080, Kap. 2.2 (Abkuppeln), S. 32–37: gestreckt abstellen, vorn mindestens die doppelte Zugfahrzeuglänge frei; Starrdeichsel- und Zentralachsanhänger: Stütze absenken, bis die Zugöse leicht vom Fangmaulgrund frei ist (S. 35, 72) – sonst kann die Deichsel hochschlagen (negative Stützlast) oder herabfallen; beide Feststellbremsen; Keile; Leitungen rot, dann gelb; bei Verspannung nicht ruckeln, auf ebener Fläche Anhängerbremse kurz über die Kontrollstellung entlüften. S. 33: Anhänger nie nur mit der Notbremsfunktion (abgezogene rote Leitung) abstellen – die Luft entweicht mit der Zeit. Prüfungsfrage 2.7.07-319: zuerst die Vorratsleitung (rot) trennen.
 ➜ „Zwei Prüfungsfragen.“
 
 === FOLIE 30 ===
@@ -315,7 +315,7 @@ FOLIE 31 VON 131 · 2 Klicks
 === FOLIE 32 ===
 AUF DER FOLIE: KLASSE CE  ·  ABEND 6  ·  CE1  ·  AUF- UND ABSATTELN | 32 | 03 | Auf- und Absatteln | Beim Sattelzug liegt der Auflieger auf einer großen Platte. Die Höhe entscheidet – und der zweite Blick.
 NOTIZEN:
-FOLIE 32 VON 131 · keine Klicks, läuft von selbst
+FOLIE 32 VON 131 · Animation läuft von selbst · Klick = weiter
 
 ▶ Sagen: „Kapitel 3: Sattelzug. Hier gibt es keine Zuggabel. Der Auflieger liegt mit dem Königszapfen auf der Sattelkupplung. Zwei Dinge sind wichtig: die richtige Höhe – und die Kontrolle danach.“
 ✅ DGUV Information 214-080 „Kuppeln – aber sicher!“, Kap. 2.3.
@@ -325,7 +325,7 @@ FOLIE 32 VON 131 · keine Klicks, läuft von selbst
 === FOLIE 33 ===
 AUF DER FOLIE: KLASSE CE  ·  ABEND 6  ·  CE1  ·  AUF- UND ABSATTELN | 33 | AUFSATTELN | So wird aufgesattelt | ❓ Frage an die Klasse / Wie hoch muss die Sattelplatte stehen, wenn ihr unter den Auflieger fahrt? | Antwort folgt … | Auflieger gesichert: Feststellbremse, Keile. Sattelkupplung entsichert und offen. Zugmaschine abgesenkt. | Seitenansicht · schematisch · Lupe vergrößert | P | Feststellbremse + Keil | LUPE: SATTELKUPPLUNG | Auflieger | Sattelplatte | Königszapfen | Kupplung offen
 NOTIZEN:
-FOLIE 33 VON 131 · keine Klicks, läuft von selbst
+FOLIE 33 VON 131 · keine Animation · Klick = weiter
 
 ▶ Sagen: „Der Auflieger steht auf seinen Stützen und ist gesichert: roter Knopf gezogen, Keile liegen. Bei der Zugmaschine ist die Sattelkupplung entsichert und offen. Mit Luftfederung wird die Zugmaschine abgesenkt.“
 ❓ Frage auf der Folie stellen.
@@ -337,7 +337,7 @@ FOLIE 33 VON 131 · keine Klicks, läuft von selbst
 === FOLIE 34 ===
 AUF DER FOLIE: KLASSE CE  ·  ABEND 6  ·  CE1  ·  AUF- UND ABSATTELN | 34 | AUFSATTELN | So wird aufgesattelt | ❓ Frage an die Klasse / Wie hoch muss die Sattelplatte stehen, wenn ihr unter den Auflieger fahrt? | Antwort folgt … | Gerade rückwärts unterfahren. Die Sattelplatte bleibt knapp unter dem Auflieger. | Seitenansicht · schematisch · Lupe vergrößert | P | Feststellbremse + Keil | LUPE: SATTELKUPPLUNG | Auflieger | Sattelplatte | ≤ 5 cm | Königszapfen | Luftspalt höchstens 5 cm
 NOTIZEN:
-FOLIE 34 VON 131 · keine Klicks, läuft von selbst
+FOLIE 34 VON 131 · keine Animation · Klick = weiter
 
 ▶ „Die Zugmaschine fährt gerade rückwärts unter den Auflieger. Die Platte bleibt knapp darunter – höchstens 5 Zentimeter Luft. In der Lupe seht ihr den Spalt.“
 ✅ DGUV I 214-080, Kap. 2.3: mit Luftfederung unterfahren, Luftspalt Sattelplatte–Aufgleitplatte höchstens 5 cm.
@@ -347,7 +347,7 @@ FOLIE 34 VON 131 · keine Klicks, läuft von selbst
 === FOLIE 35 ===
 AUF DER FOLIE: KLASSE CE  ·  ABEND 6  ·  CE1  ·  AUF- UND ABSATTELN | 35 | AUFSATTELN | So wird aufgesattelt | ❓ Frage an die Klasse / Wie hoch muss die Sattelplatte stehen, wenn ihr unter den Auflieger fahrt? | ✓ Antwort / Knapp darunter – höchstens 5 cm Luftspalt. Dann anheben bis Kontakt. Der Auflieger selbst wird nicht angehoben. | Luftfederung anheben, bis die Platte den Auflieger berührt. Nicht weiter: Der Auflieger bleibt auf seinen Stützen. | Seitenansicht · schematisch · Lupe vergrößert | P | Feststellbremse + Keil | LUPE: SATTELKUPPLUNG | Auflieger | Sattelplatte | Königszapfen | Kontakt – Auflieger nicht anheben
 NOTIZEN:
-FOLIE 35 VON 131 · keine Klicks, läuft von selbst
+FOLIE 35 VON 131 · keine Animation · Klick = weiter
 
 ▶ „Jetzt hebt die Luftfederung an – bis die Platte den Auflieger berührt. Nicht weiter! Der Auflieger darf nicht angehoben werden.“
 ❓ Frage auf der Folie auflösen.
@@ -358,17 +358,17 @@ FOLIE 35 VON 131 · keine Klicks, läuft von selbst
 === FOLIE 36 ===
 AUF DER FOLIE: KLASSE CE  ·  ABEND 6  ·  CE1  ·  AUF- UND ABSATTELN | 36 | AUFSATTELN | So wird aufgesattelt | ❓ Frage an die Klasse / Wie hoch muss die Sattelplatte stehen, wenn ihr unter den Auflieger fahrt? | ✓ Antwort / Knapp darunter – höchstens 5 cm Luftspalt. Dann anheben bis Kontakt. Der Auflieger selbst wird nicht angehoben. | Zurücksetzen, bis es einrastet. Kurz anrucken – das ist nur ein Vortest. Feststellbremse ziehen, aussteigen. | Seitenansicht · schematisch · Lupe vergrößert | P | Feststellbremse + Keil | LUPE: SATTELKUPPLUNG | Auflieger | Sattelplatte | Königszapfen | Königszapfen im Verschluss | ✓  eingerastet
 NOTIZEN:
-FOLIE 36 VON 131 · keine Klicks, läuft von selbst
+FOLIE 36 VON 131 · keine Animation · Klick = weiter
 
 ▶ „Langsam zurück, bis die Kupplung einrastet. Dann kurz im Vorwärtsgang anrucken. Aber Achtung: Das Anrucken ersetzt nicht den Blick. Feststellbremse der Zugmaschine ziehen, aussteigen.“
-✅ DGUV I 214-080, Kap. 2.3 (Schritte 5–6): Anrucken ersetzt die Sichtkontrolle nicht. Prüfungsfrage 2.7.07-312: Kontrolle am Kontrollstift bzw. an der Anzeige – „durch kurzes Anrucken“ ist falsch.
+✅ DGUV I 214-080, Kap. 2.3 (Schritte 5–6 und Tipp nach Schritt 8): Anrucken ersetzt die Sichtkontrolle nicht. Vergleiche Prüfungsfrage 2.7.07-312 (Bolzenkupplung): „durch kurzes Anrucken“ ist dort falsch.
 🖱 Klick: Kontrolle.
 ➜ „Was prüft ihr draußen?“
 
 === FOLIE 37 ===
 AUF DER FOLIE: KLASSE CE  ·  ABEND 6  ·  CE1  ·  AUF- UND ABSATTELN | 37 | AUFSATTELN | So wird aufgesattelt | ❓ Frage an die Klasse / Wie hoch muss die Sattelplatte stehen, wenn ihr unter den Auflieger fahrt? | ✓ Antwort / Knapp darunter – höchstens 5 cm Luftspalt. Dann anheben bis Kontakt. Der Auflieger selbst wird nicht angehoben. | Kontrolle von außen: Der Auflieger liegt ohne Spalt auf der Platte. Die Sicherung ist eingefallen. Im Dunkeln: Handlampe. | Seitenansicht · schematisch · Lupe vergrößert | P | Feststellbremse + Keil | LUPE: SATTELKUPPLUNG | Auflieger | Sattelplatte | Königszapfen | kein Luftspalt ✓   Sicherung eingefallen ✓ | ✓  eingerastet
 NOTIZEN:
-FOLIE 37 VON 131 · keine Klicks, läuft von selbst
+FOLIE 37 VON 131 · keine Animation · Klick = weiter
 
 ▶ „Jetzt der Blick von außen: Liegt der Auflieger ohne Spalt auf der Platte? Ist die Sicherung eingefallen – je nach Hersteller ein Bügel, eine Klappe oder ein Karabiner? Im Dunkeln mit der Handlampe.“
 ✅ DGUV I 214-080, Kap. 2.3 (Schritt 7). Prüfungsfrage 2.7.07-302: Nach dem Aufsatteln Verschluss und Sicherungssystem der Sattelkupplung überprüfen.
@@ -379,7 +379,7 @@ FOLIE 37 VON 131 · keine Klicks, läuft von selbst
 === FOLIE 38 ===
 AUF DER FOLIE: KLASSE CE  ·  ABEND 6  ·  CE1  ·  AUF- UND ABSATTELN | 38 | AUFSATTELN | So wird aufgesattelt | ❓ Frage an die Klasse / Wie hoch muss die Sattelplatte stehen, wenn ihr unter den Auflieger fahrt? | ✓ Antwort / Knapp darunter – höchstens 5 cm Luftspalt. Dann anheben bis Kontakt. Der Auflieger selbst wird nicht angehoben. | Leitungen: gelb, dann rot, dazu Strom und ABS/EBS. Sie dürfen nicht scheuern und in Kurven nicht zu straff sein. | Seitenansicht · schematisch · Lupe vergrößert | P | Feststellbremse + Keil | LUPE: SATTELKUPPLUNG | Auflieger | Sattelplatte | Königszapfen | Leitungen: gelb, dann rot | ✓  eingerastet
 NOTIZEN:
-FOLIE 38 VON 131 · keine Klicks, läuft von selbst
+FOLIE 38 VON 131 · keine Animation · Klick = weiter
 
 ▶ „Leitungen: wie beim Anhänger erst gelb, dann rot. Dazu Licht und ABS/EBS. Die Wendelleitungen dürfen nicht scheuern und nicht durchhängen. Tipp: Zugmaschine etwa 45 Grad einschlagen und schauen, ob die Leitungen noch Luft haben.“
 ✅ DGUV I 214-080, Kap. 2.3 (Schritt 8). Prüfungsfrage 2.7.07-302: alle Schlauch- und Kabelverbindungen herstellen und überprüfen.
@@ -389,7 +389,7 @@ FOLIE 38 VON 131 · keine Klicks, läuft von selbst
 === FOLIE 39 ===
 AUF DER FOLIE: KLASSE CE  ·  ABEND 6  ·  CE1  ·  AUF- UND ABSATTELN | 39 | AUFSATTELN | So wird aufgesattelt | ❓ Frage an die Klasse / Wie hoch muss die Sattelplatte stehen, wenn ihr unter den Auflieger fahrt? | ✓ Antwort / Knapp darunter – höchstens 5 cm Luftspalt. Dann anheben bis Kontakt. Der Auflieger selbst wird nicht angehoben. | Stützen hoch, Kurbel sichern. Feststellbremse am Auflieger lösen, Keile weg. Dann: Abfahrtkontrolle. | Seitenansicht · schematisch · Lupe vergrößert | LUPE: SATTELKUPPLUNG | Auflieger | Sattelplatte | Königszapfen | Fahrbereit | ✓  fahrbereit
 NOTIZEN:
-FOLIE 39 VON 131 · keine Klicks, läuft von selbst
+FOLIE 39 VON 131 · keine Animation · Klick = weiter
 
 ▶ „Zum Schluss: Stützen ganz hochkurbeln, Kurbel sichern. Feststellbremse am Auflieger lösen, Keile wegnehmen und verstauen. Luftfederung und Liftachse in Fahrstellung. Dann die Abfahrtkontrolle.“
 ✅ DGUV I 214-080, Kap. 2.3 (Schritte 9–10).
@@ -420,7 +420,7 @@ FOLIE 41 VON 131 · 2 Klicks
 === FOLIE 42 ===
 AUF DER FOLIE: KLASSE CE  ·  ABEND 6  ·  CE1  ·  AUF- UND ABSATTELN | 42 | ABSATTELN | So wird abgesattelt | ❓ Frage an die Klasse / Warum fahrt ihr erst ein Stück vor und senkt dann ab – statt gleich wegzufahren? | Antwort folgt … | Vorher klären: Darf der Auflieger beladen abgestellt werden? Trägt der Boden die Stützen? Gestreckt abstellen. | Seitenansicht · schematisch · Lupe vergrößert | LUPE: SATTELKUPPLUNG | Auflieger | Sattelplatte | Königszapfen | Untergrund fest? Beladen erlaubt?
 NOTIZEN:
-FOLIE 42 VON 131 · keine Klicks, läuft von selbst
+FOLIE 42 VON 131 · keine Animation · Klick = weiter
 
 ▶ Sagen: „Absatteln. Zuerst denken: Darf der Auflieger beladen abgestellt werden? Das steht auf dem Fabrikschild oder an den Stützen. Trägt der Boden? Sonst eine Platte unterlegen. Und gestreckt abstellen – einen zwangsgelenkten Auflieger bekommt man im Winkel nicht wieder drauf.“
 ❓ Frage auf der Folie stellen.
@@ -431,7 +431,7 @@ FOLIE 42 VON 131 · keine Klicks, läuft von selbst
 === FOLIE 43 ===
 AUF DER FOLIE: KLASSE CE  ·  ABEND 6  ·  CE1  ·  AUF- UND ABSATTELN | 43 | ABSATTELN | So wird abgesattelt | ❓ Frage an die Klasse / Warum fahrt ihr erst ein Stück vor und senkt dann ab – statt gleich wegzufahren? | Antwort folgt … | Feststellbremse der Zugmaschine, dann roter Knopf am Auflieger. Keile. Stützen ausfahren bis zum Boden. | Seitenansicht · schematisch · Lupe vergrößert | P | Feststellbremse + Keil | LUPE: SATTELKUPPLUNG | Auflieger | Sattelplatte | Königszapfen | Stützen am Boden
 NOTIZEN:
-FOLIE 43 VON 131 · keine Klicks, läuft von selbst
+FOLIE 43 VON 131 · keine Animation · Klick = weiter
 
 ▶ „Wenn der Zug steht: Feststellbremse der Zugmaschine, dann am Auflieger den roten Knopf ziehen. Keile unterlegen. Stützen ausfahren. Mit Luftfederung: bis sie den Boden berühren. Mit Blattfederung: bis die Federn der Zugmaschine entlastet sind.“
 ✅ DGUV I 214-080, Kap. 2.3 (Absatteln, Schritte 4–7): luftgefederte Zugmaschine vorher etwas anheben. Prüfungsfrage 2.7.07-305: Räder feststellen und Stützeinrichtung ausfahren.
@@ -441,7 +441,7 @@ FOLIE 43 VON 131 · keine Klicks, läuft von selbst
 === FOLIE 44 ===
 AUF DER FOLIE: KLASSE CE  ·  ABEND 6  ·  CE1  ·  AUF- UND ABSATTELN | 44 | ABSATTELN | So wird abgesattelt | ❓ Frage an die Klasse / Warum fahrt ihr erst ein Stück vor und senkt dann ab – statt gleich wegzufahren? | Antwort folgt … | Leitungen trennen: erst rot, dann gelb. In die Halter, Kappen drauf. Sicherung aushängen, Kupplung öffnen. | Seitenansicht · schematisch · Lupe vergrößert | P | Feststellbremse + Keil | LUPE: SATTELKUPPLUNG | Auflieger | Sattelplatte | Königszapfen | rot, dann gelb ab · Kupplung offen
 NOTIZEN:
-FOLIE 44 VON 131 · keine Klicks, läuft von selbst
+FOLIE 44 VON 131 · keine Animation · Klick = weiter
 
 ▶ „Leitungen trennen – wie beim Anhänger: erst rot, dann gelb. In die Parkdosen, Schutzkappen drauf, Wendeln entwirren. Dann Sicherung aushängen und Kupplung öffnen.“
 ✅ DGUV I 214-080, Kap. 2.3 (Absatteln, Schritte 8–9). Prüfungsfrage 2.7.07-305: alle Verbindungen trennen; Verriegelung entsichern und Verschluss öffnen. 2.7.07-319: zuerst rot.
@@ -451,7 +451,7 @@ FOLIE 44 VON 131 · keine Klicks, läuft von selbst
 === FOLIE 45 ===
 AUF DER FOLIE: KLASSE CE  ·  ABEND 6  ·  CE1  ·  AUF- UND ABSATTELN | 45 | ABSATTELN | So wird abgesattelt | ❓ Frage an die Klasse / Warum fahrt ihr erst ein Stück vor und senkt dann ab – statt gleich wegzufahren? | Antwort folgt … | Leitungen trennen: erst rot, dann gelb. In die Halter, Kappen drauf. Sicherung aushängen, Kupplung öffnen. | Seitenansicht · schematisch · Lupe vergrößert | P | Feststellbremse + Keil | LUPE: SATTELKUPPLUNG | Auflieger | Sattelplatte | Königszapfen | etwa 30 cm vor
 NOTIZEN:
-FOLIE 45 VON 131 · keine Klicks, läuft von selbst
+FOLIE 45 VON 131 · läuft von selbst weiter (kein Klick)
 
 ▶ Die Bewegung läuft – zuschauen lassen.
 🖱 Kein Klick – die Folie läuft von selbst weiter.
@@ -460,7 +460,7 @@ FOLIE 45 VON 131 · keine Klicks, läuft von selbst
 === FOLIE 46 ===
 AUF DER FOLIE: KLASSE CE  ·  ABEND 6  ·  CE1  ·  AUF- UND ABSATTELN | 46 | ABSATTELN | So wird abgesattelt | ❓ Frage an die Klasse / Warum fahrt ihr erst ein Stück vor und senkt dann ab – statt gleich wegzufahren? | ✓ Antwort / Damit sich die Platte ruhig vom Auflieger löst. Fährt die Zugmaschine gleich ganz heraus, kann ihr Heck hochschlagen. | Etwa 30 cm vorziehen, dann 5–10 cm absenken. Jetzt trägt der Auflieger sich selbst. | Seitenansicht · schematisch · Lupe vergrößert | P | Feststellbremse + Keil | LUPE: SATTELKUPPLUNG | Auflieger | Sattelplatte | Königszapfen | dann 5–10 cm absenken
 NOTIZEN:
-FOLIE 46 VON 131 · keine Klicks, läuft von selbst
+FOLIE 46 VON 131 · keine Animation · Klick = weiter
 
 ▶ „Mit Luftfederung: erst etwa 30 Zentimeter vorziehen, dann die Zugmaschine 5 bis 10 Zentimeter absenken. Jetzt liegt das Gewicht auf den Stützen.“
 ❓ Frage auf der Folie auflösen.
@@ -471,7 +471,7 @@ FOLIE 46 VON 131 · keine Klicks, läuft von selbst
 === FOLIE 47 ===
 AUF DER FOLIE: KLASSE CE  ·  ABEND 6  ·  CE1  ·  AUF- UND ABSATTELN | 47 | ABSATTELN | So wird abgesattelt | ❓ Frage an die Klasse / Warum fahrt ihr erst ein Stück vor und senkt dann ab – statt gleich wegzufahren? | ✓ Antwort / Damit sich die Platte ruhig vom Auflieger löst. Fährt die Zugmaschine gleich ganz heraus, kann ihr Heck hochschlagen. | Langsam herausfahren. Der Auflieger steht gesichert auf seinen Stützen. Bei Bedarf: Parkwarntafel. | Seitenansicht · schematisch · Lupe vergrößert | P | Feststellbremse + Keil | LUPE: SATTELKUPPLUNG | Auflieger | Sattelplatte | Königszapfen | Auflieger steht sicher
 NOTIZEN:
-FOLIE 47 VON 131 · keine Klicks, läuft von selbst
+FOLIE 47 VON 131 · keine Animation · Klick = weiter
 
 ▶ „Jetzt langsam heraus. Der Auflieger steht auf den Stützen, Feststellbremse und Keile halten ihn.“
 ✅ DGUV I 214-080, Kap. 2.3 (Absatteln, Schritt 11): ggf. Parkwarntafel; Liftachse absenken, wenn beladen wird.
@@ -491,7 +491,7 @@ FOLIE 48 VON 131 · 2 Klicks
 === FOLIE 49 ===
 AUF DER FOLIE: KLASSE CE  ·  ABEND 6  ·  CE1  ·  MASSE UND KURVENLAUF | 49 | 04 | Maße und Kurvenlauf | Wie breit, wie hoch, wie lang darf ein Zug sein – und wie viel Platz braucht er in der Kurve?
 NOTIZEN:
-FOLIE 49 VON 131 · keine Klicks, läuft von selbst
+FOLIE 49 VON 131 · Animation läuft von selbst · Klick = weiter
 
 ▶ Sagen: „Kapitel 4: Maße. Mit Anhänger wird der Zug lang – und in der Kurve braucht er viel Platz. Dafür gibt es feste Grenzen.“
 ✅ § 32 und § 32d StVZO, § 22 StVO.
@@ -499,7 +499,7 @@ FOLIE 49 VON 131 · keine Klicks, läuft von selbst
 ➜ „Erst die Grundmaße.“
 
 === FOLIE 50 ===
-AUF DER FOLIE: KLASSE CE  ·  ABEND 6  ·  CE1  ·  MASSE UND KURVENLAUF | 50 | ABMESSUNGEN | Wie breit und wie hoch darf euer Zug sein? | Breite 2,55 m  Kühlaufbau mit dicken Wänden: 2,60 m. Die Spiegel zählen nicht mit. | Höhe 4,00 m  Kennt die echte Höhe von Fahrzeug und Ladung – und beachtet Schilder an Brücken. | Länge eines Fahrzeugs 12,00 m  Gilt für den Lkw und für den Anhänger – jeden für sich. | Keine Toleranz  Auf diese Maße gibt es keinen Zuschlag.
+AUF DER FOLIE: KLASSE CE  ·  ABEND 6  ·  CE1  ·  MASSE UND KURVENLAUF | 50 | ABMESSUNGEN | Wie breit und wie hoch darf euer Zug sein? | Breite 2,55 m  Kühlaufbau mit dicken Wänden: 2,60 m. Die Spiegel zählen nicht mit. | Höhe 4,00 m  Kennt die echte Höhe von Fahrzeug und Ladung – und beachtet Schilder an Brücken. | Länge eines Fahrzeugs 12,00 m  Gilt für den Lkw und den Deichselanhänger – jeden für sich. Nicht für den Auflieger. | Keine Toleranz  Auf diese Maße gibt es keinen Zuschlag.
 NOTIZEN:
 FOLIE 50 VON 131 · 4 Klicks
 
@@ -511,20 +511,20 @@ FOLIE 50 VON 131 · 4 Klicks
 ➜ „Und wie lang darf ein ganzer Zug sein?“
 
 === FOLIE 51 ===
-AUF DER FOLIE: KLASSE CE  ·  ABEND 6  ·  CE1  ·  MASSE UND KURVENLAUF | 51 | LÄNGE | Wie lang darf ein Zug sein? | 1 | Sattelzug | 2 | Lkw mit Anhänger | 3 | Mit Ladung | 4 | Lang-Lkw | ❓ Frage an die Klasse   / Wie lang darf ein Lkw mit Anhänger sein – und wie lang mit Ladung? | Der Sattelzug: 16,50 m – wenn der Auflieger die Teillängen einhält. | Seitenansicht · maßstabsgetreu · Lineal in Metern | 0 | 5 | 10 | 15 | 20 | 25 m | 16,50 m | Sattelzug | Sattelzug: 16,50 m. Dafür muss der Auflieger passen: vom Königszapfen bis zum Heck höchstens 12,00 m. Sonst gelten 15,50 m.
+AUF DER FOLIE: KLASSE CE  ·  ABEND 6  ·  CE1  ·  MASSE UND KURVENLAUF | 51 | LÄNGE | Wie lang darf ein Zug sein? | 1 | Sattelzug | 2 | Lkw mit Anhänger | 3 | Mit Ladung | 4 | Lang-Lkw | ❓ Frage an die Klasse   / Wie lang darf ein Lkw mit Anhänger sein – und wie lang mit Ladung? | Der Sattelzug: 16,50 m – wenn der Auflieger die Teillängen einhält. | Seitenansicht · maßstabsgetreu · Lineal in Metern | 0 | 5 | 10 | 15 | 20 | 25 m | 16,50 m | Sattelzug | Sattelzug: 16,50 m. Dafür muss der Auflieger passen: vom Königszapfen bis zum Heck höchstens 12,00 m, vorn (Überhangradius) höchstens 2,04 m. Sonst gelten 15,50 m.
 NOTIZEN:
-FOLIE 51 VON 131 · keine Klicks, läuft von selbst
+FOLIE 51 VON 131 · keine Animation · Klick = weiter
 
-▶ Sagen: „Unten seht ihr ein Lineal in Metern. Der Sattelzug: 16,50 Meter – wenn der Auflieger passt. Vom Königszapfen bis zum Heck höchstens 12 Meter. Sonst 15,50 Meter.“
+▶ Sagen: „Unten seht ihr ein Lineal in Metern. Der Sattelzug: 16,50 Meter – wenn der Auflieger passt. Vom Königszapfen bis zum Heck höchstens 12 Meter, nach vorn höchstens 2,04 Meter. Sonst 15,50 Meter.“
 ❓ Frage auf der Folie stellen.
 ✅ § 32 Abs. 4 Nr. 1 und 2 StVZO: Sattelkraftfahrzeug 15,50 m; 16,50 m, wenn Königszapfen bis Heck höchstens 12,00 m und vorderer Überhangradius höchstens 2,04 m.
 🖱 Keine Animation auf dieser Folie – nächster Klick = nächster Schritt (Morph).
 ➜ „Lkw mit Anhänger?“
 
 === FOLIE 52 ===
-AUF DER FOLIE: KLASSE CE  ·  ABEND 6  ·  CE1  ·  MASSE UND KURVENLAUF | 52 | LÄNGE | Wie lang darf ein Zug sein? | 1 | Sattelzug | 2 | Lkw mit Anhänger | 3 | Mit Ladung | 4 | Lang-Lkw | ❓ Frage an die Klasse   / Wie lang darf ein Lkw mit Anhänger sein – und wie lang mit Ladung? | Lkw mit Anhänger: 18,75 m. Das ist der Wert für die Prüfung. | Seitenansicht · maßstabsgetreu · Lineal in Metern | 0 | 5 | 10 | 15 | 20 | 25 m | 18,75 m | Lkw mit Anhänger | Lkw mit Anhänger: 18,75 m. Lkw und Anhänger sind dabei jeder für sich höchstens 12,00 m lang.
+AUF DER FOLIE: KLASSE CE  ·  ABEND 6  ·  CE1  ·  MASSE UND KURVENLAUF | 52 | LÄNGE | Wie lang darf ein Zug sein? | 1 | Sattelzug | 2 | Lkw mit Anhänger | 3 | Mit Ladung | 4 | Lang-Lkw | ❓ Frage an die Klasse   / Wie lang darf ein Lkw mit Anhänger sein – und wie lang mit Ladung? | Lkw mit Anhänger: höchstens 18,75 m. | Seitenansicht · maßstabsgetreu · Lineal in Metern | 0 | 5 | 10 | 15 | 20 | 25 m | 18,75 m | Lkw mit Anhänger | Lkw mit Anhänger: 18,75 m. Lkw und Anhänger sind dabei jeder für sich höchstens 12,00 m lang.
 NOTIZEN:
-FOLIE 52 VON 131 · keine Klicks, läuft von selbst
+FOLIE 52 VON 131 · keine Animation · Klick = weiter
 
 ▶ „Lkw mit Anhänger: 18,75 Meter. Lkw und Anhänger sind dabei jeder für sich höchstens 12 Meter lang.“
 ✅ § 32 Abs. 4 Nr. 4 StVZO: Lastzug 18,75 m (Teillängen: Ladefläche vorn bis hinten höchstens 16,40 m, ohne Lücke 15,65 m). § 32 Abs. 3: Einzelfahrzeug 12,00 m. Prüfungsfrage 2.6.06-301: 18,75 m (falsch: 18,00 m, 20,00 m).
@@ -532,24 +532,24 @@ FOLIE 52 VON 131 · keine Klicks, läuft von selbst
 ➜ „Und mit Ladung?“
 
 === FOLIE 53 ===
-AUF DER FOLIE: KLASSE CE  ·  ABEND 6  ·  CE1  ·  MASSE UND KURVENLAUF | 53 | LÄNGE | Wie lang darf ein Zug sein? | 1 | Sattelzug | 2 | Lkw mit Anhänger | 3 | Mit Ladung | 4 | Lang-Lkw | ✓ Antwort   / 18,75 m. Mit Ladung, die hinten übersteht: höchstens 20,75 m. | Mit Ladung, die hinten übersteht: höchstens 20,75 m – und ab 1 m Überstand eine rote Fahne. | Seitenansicht · maßstabsgetreu · Lineal in Metern | 0 | 5 | 10 | 15 | 20 | 25 m | 20,75 m | mit Ladung, die hinten übersteht | Zug samt Ladung: höchstens 20,75 m. Steht die Ladung mehr als 1 m über die Rückstrahler: rote Fahne. Mehr als 1,50 m nur bei Fahrten bis 100 km.
+AUF DER FOLIE: KLASSE CE  ·  ABEND 6  ·  CE1  ·  MASSE UND KURVENLAUF | 53 | LÄNGE | Wie lang darf ein Zug sein? | 1 | Sattelzug | 2 | Lkw mit Anhänger | 3 | Mit Ladung | 4 | Lang-Lkw | ✓ Antwort   / 18,75 m. Mit Ladung, die hinten übersteht: höchstens 20,75 m. | Mit Ladung, die hinten übersteht: höchstens 20,75 m. Ragt sie mehr als 1 m über die Rückstrahler: hellrote Fahne. | Seitenansicht · maßstabsgetreu · Lineal in Metern | 0 | 5 | 10 | 15 | 20 | 25 m | 20,75 m | mit Ladung, die hinten übersteht | Zug samt Ladung: höchstens 20,75 m. Mehr als 1 m über die Rückstrahler: hellrote Fahne (mind. 30 × 30 cm). Überstand hinten höchstens 1,50 m – auf Fahrten bis 100 km höchstens 3 m.
 NOTIZEN:
-FOLIE 53 VON 131 · keine Klicks, läuft von selbst
+FOLIE 53 VON 131 · keine Animation · Klick = weiter
 
-▶ „Mit Ladung, die hinten übersteht: Zug samt Ladung höchstens 20,75 Meter. Steht die Ladung mehr als einen Meter über die Rückstrahler, braucht ihr eine rote Fahne. Mehr als 1,50 Meter Überstand nur, wenn die Fahrt höchstens 100 Kilometer lang ist.“
+▶ „Mit Ladung, die hinten übersteht: Zug samt Ladung höchstens 20,75 Meter. Ragt die Ladung mehr als einen Meter über die Rückstrahler, braucht ihr eine hellrote Fahne. Mehr als 1,50 Meter Überstand – höchstens 3 Meter – nur, wenn die Fahrt höchstens 100 Kilometer lang ist. Im Bild sind es 2 Meter: also nur auf kurzen Fahrten.“
 ❓ Frage auf der Folie auflösen.
-✅ § 22 Abs. 4 StVO: nach hinten bis 1,50 m, bei Fahrten bis 100 km bis 3 m; Zug samt Ladung höchstens 20,75 m; Kennzeichnung ab mehr als 1 m (hellrote Fahne mind. 30 × 30 cm, Schild oder Zylinder). Prüfungsfragen 2.6.06-201 / 2.2.22-006: 20,75 m.
+✅ § 22 Abs. 4 StVO: nach hinten bis 1,50 m, bei Fahrten bis 100 km bis 3 m; Zug samt Ladung höchstens 20,75 m; Kennzeichnung bei mehr als 1 m über die Rückstrahler (hellrote Fahne mind. 30 × 30 cm, Schild oder Zylinder, höchstens 1,50 m über der Fahrbahn). Prüfungsfragen 2.6.06-201 / 2.2.22-006: 20,75 m.
 🖱 Keine Animation auf dieser Folie – nächster Klick = nächster Schritt (Morph).
 ➜ „Und der längste Zug?“
 
 === FOLIE 54 ===
-AUF DER FOLIE: KLASSE CE  ·  ABEND 6  ·  CE1  ·  MASSE UND KURVENLAUF | 54 | LÄNGE | Wie lang darf ein Zug sein? | 1 | Sattelzug | 2 | Lkw mit Anhänger | 3 | Mit Ladung | 4 | Lang-Lkw | ✓ Antwort   / 18,75 m. Mit Ladung, die hinten übersteht: höchstens 20,75 m. | Lang-Lkw bis 25,25 m: nur auf erlaubten Strecken und nur mit Erfahrung. | Seitenansicht · maßstabsgetreu · Lineal in Metern | 0 | 5 | 10 | 15 | 20 | 25 m | 25,25 m | Lang-Lkw | Lang-Lkw, hier Sattelzug mit Zentralachsanhänger: bis 25,25 m. Nur auf freigegebenen Strecken, Überholverbot. Fahrer: seit 5 Jahren CE und 5 Jahre Berufserfahrung.
+AUF DER FOLIE: KLASSE CE  ·  ABEND 6  ·  CE1  ·  MASSE UND KURVENLAUF | 54 | LÄNGE | Wie lang darf ein Zug sein? | 1 | Sattelzug | 2 | Lkw mit Anhänger | 3 | Mit Ladung | 4 | Lang-Lkw | ✓ Antwort   / 18,75 m. Mit Ladung, die hinten übersteht: höchstens 20,75 m. | Lang-Lkw bis 25,25 m: nur auf erlaubten Strecken und nur mit Erfahrung. | Seitenansicht · maßstabsgetreu · Lineal in Metern | 0 | 5 | 10 | 15 | 20 | 25 m | 25,25 m | Lang-Lkw | Lang-Lkw (Ausnahme-Verordnung), hier Sattelzug mit Zentralachsanhänger: bis 25,25 m. Nur auf freigegebenen Strecken, Überholverbot. Fahrer: seit 5 Jahren CE und 5 Jahre Berufserfahrung.
 NOTIZEN:
-FOLIE 54 VON 131 · keine Klicks, läuft von selbst
+FOLIE 54 VON 131 · keine Animation · Klick = weiter
 
-▶ „Der Lang-Lkw. Bis 25,25 Meter. Den gibt es als Sattelzug mit Zentralachsanhänger, als Lkw mit Dolly und Auflieger oder als Sattelzug mit zweitem Auflieger. Er darf nur auf freigegebenen Strecken fahren und nicht überholen. Fahrer brauchen seit fünf Jahren CE und fünf Jahre Berufserfahrung.“
-✅ LKWÜberlStVAusnV: § 3 (Länge 25,25 m bei Typ 2–4, Typ 5: 24,00 m), § 2 (Positivnetz), § 9 (Überholverbot außer Fahrzeuge bis 25 km/h), § 11 (5 Jahre CE, 5 Jahre Berufserfahrung, Einweisung). Mehr Gewicht als 40 t erlaubt die Verordnung nicht.
-💡 Der verlängerte Auflieger bis 17,88 m (Typ 1) gilt nur noch bis 31.12.2026 (§ 13 LKWÜberlStVAusnV).
+▶ „Der Lang-Lkw. Bis 25,25 Meter. Den gibt es als Sattelzug mit Zentralachsanhänger, als Lkw mit Dolly und Auflieger oder als Sattelzug mit zweitem Auflieger. Er darf nur auf freigegebenen Strecken fahren und nicht überholen. Fahrer brauchen seit fünf Jahren CE und fünf Jahre Berufserfahrung. Achtung: Das ist eine Ausnahme – normal gilt, wie vorhin: hinter dem Sattelzug kein Anhänger.“
+✅ LKWÜberlStVAusnV: § 3 (Fahrzeugarten), § 4 Abs. 2 und 3 (Länge 25,25 m bei Typ 2–4, Typ 5: 24,00 m), § 4 Abs. 4 (Ausnahme von § 32a StVZO: hinter dem Sattelkraftfahrzeug ein Anhänger), § 2 (Positivnetz), § 9 (Überholverbot außer Fahrzeuge bis 25 km/h), § 11 (5 Jahre CE, 5 Jahre Berufserfahrung, Einweisung). Die Verordnung erlaubt nur mehr Länge, kein Mehrgewicht – es gelten die normalen Gewichte (§ 34 StVZO).
+💡 Typ 1 (verlängerter Auflieger, 17,88 m) ist nach heutigem Recht bis 31.12.2026 befristet (§ 13 Abs. 1 LKWÜberlStVAusnV). Eine Verlängerung bis 2033 ist geplant (Referentenentwurf Juli 2026) – vor dem Unterricht kurz prüfen.
 🖱 Keine Animation auf dieser Folie – nächster Klick = nächster Schritt (Morph).
 ➜ „Eine Prüfungsfrage.“
 
@@ -566,7 +566,7 @@ FOLIE 55 VON 131 · 2 Klicks
 === FOLIE 56 ===
 AUF DER FOLIE: KLASSE CE  ·  ABEND 6  ·  CE1  ·  MASSE UND KURVENLAUF | 56 | KURVENLAUF | Der Kreisring | ❓ Frage an die Klasse / Wie viel Platz braucht euer Sattelzug, wenn er einmal im Kreis fährt? | Antwort folgt … | Der Prüfkreis aus dem Gesetz: 12,50 m Radius. Die vordere äußere Ecke des Zuges fährt genau auf diesem Kreis. | Draufsicht · maßstabsgetreu (Sattelzug 16,50 m) | Außenkreis  R = 12,50 m
 NOTIZEN:
-FOLIE 56 VON 131 · keine Klicks, läuft von selbst
+FOLIE 56 VON 131 · keine Animation · Klick = weiter
 
 ▶ Sagen: „Jedes Fahrzeug und jeder Zug muss diesen Test schaffen: einmal ganz im Kreis fahren. Die vordere äußere Ecke fährt auf einem Kreis mit 12,50 Meter Radius.“
 ❓ Frage auf der Folie stellen.
@@ -577,7 +577,7 @@ FOLIE 56 VON 131 · keine Klicks, läuft von selbst
 === FOLIE 57 ===
 AUF DER FOLIE: KLASSE CE  ·  ABEND 6  ·  CE1  ·  MASSE UND KURVENLAUF | 57 | KURVENLAUF | Der Kreisring | ❓ Frage an die Klasse / Wie viel Platz braucht euer Sattelzug, wenn er einmal im Kreis fährt? | Antwort folgt … | Der Prüfkreis aus dem Gesetz: 12,50 m Radius. Die vordere äußere Ecke des Zuges fährt genau auf diesem Kreis. | Draufsicht · maßstabsgetreu (Sattelzug 16,50 m) | Außenkreis  R = 12,50 m
 NOTIZEN:
-FOLIE 57 VON 131 · keine Klicks, läuft von selbst
+FOLIE 57 VON 131 · läuft von selbst weiter (kein Klick)
 
 ▶ Die Bewegung läuft – zuschauen lassen.
 🖱 Kein Klick – die Folie läuft von selbst weiter.
@@ -586,7 +586,7 @@ FOLIE 57 VON 131 · keine Klicks, läuft von selbst
 === FOLIE 58 ===
 AUF DER FOLIE: KLASSE CE  ·  ABEND 6  ·  CE1  ·  MASSE UND KURVENLAUF | 58 | KURVENLAUF | Der Kreisring | ❓ Frage an die Klasse / Wie viel Platz braucht euer Sattelzug, wenn er einmal im Kreis fährt? | Antwort folgt … | Der Prüfkreis aus dem Gesetz: 12,50 m Radius. Die vordere äußere Ecke des Zuges fährt genau auf diesem Kreis. | Draufsicht · maßstabsgetreu (Sattelzug 16,50 m) | Außenkreis  R = 12,50 m
 NOTIZEN:
-FOLIE 58 VON 131 · keine Klicks, läuft von selbst
+FOLIE 58 VON 131 · läuft von selbst weiter (kein Klick)
 
 ▶ Die Bewegung läuft – zuschauen lassen.
 🖱 Kein Klick – die Folie läuft von selbst weiter.
@@ -595,16 +595,16 @@ FOLIE 58 VON 131 · keine Klicks, läuft von selbst
 === FOLIE 59 ===
 AUF DER FOLIE: KLASSE CE  ·  ABEND 6  ·  CE1  ·  MASSE UND KURVENLAUF | 59 | KURVENLAUF | Der Kreisring | ❓ Frage an die Klasse / Wie viel Platz braucht euer Sattelzug, wenn er einmal im Kreis fährt? | Antwort folgt … | Der Prüfkreis aus dem Gesetz: 12,50 m Radius. Die vordere äußere Ecke des Zuges fährt genau auf diesem Kreis. | Draufsicht · maßstabsgetreu (Sattelzug 16,50 m) | Außenkreis  R = 12,50 m
 NOTIZEN:
-FOLIE 59 VON 131 · keine Klicks, läuft von selbst
+FOLIE 59 VON 131 · läuft von selbst weiter (kein Klick)
 
 ▶ Die Bewegung läuft – zuschauen lassen.
 🖱 Kein Klick – die Folie läuft von selbst weiter.
 ➜ (läuft weiter)
 
 === FOLIE 60 ===
-AUF DER FOLIE: KLASSE CE  ·  ABEND 6  ·  CE1  ·  MASSE UND KURVENLAUF | 60 | KURVENLAUF | Der Kreisring | ❓ Frage an die Klasse / Wie viel Platz braucht euer Sattelzug, wenn er einmal im Kreis fährt? | Antwort folgt … | Der Auflieger läuft weiter innen: Er schneidet die Kurve. Sein innerster Punkt bleibt auf dem Innenkreis. | Draufsicht · maßstabsgetreu (Sattelzug 16,50 m) | Außenkreis  R = 12,50 m | Innenkreis / mind. 5,30 m
+AUF DER FOLIE: KLASSE CE  ·  ABEND 6  ·  CE1  ·  MASSE UND KURVENLAUF | 60 | KURVENLAUF | Der Kreisring | ❓ Frage an die Klasse / Wie viel Platz braucht euer Sattelzug, wenn er einmal im Kreis fährt? | Antwort folgt … | Der Auflieger läuft weiter innen: Er schneidet die Kurve. Sein innerster Punkt darf nicht näher als 5,30 m an die Kreismitte kommen. | Draufsicht · maßstabsgetreu (Sattelzug 16,50 m) | Außenkreis  R = 12,50 m | Innenkreis / mind. 5,30 m
 NOTIZEN:
-FOLIE 60 VON 131 · keine Klicks, läuft von selbst
+FOLIE 60 VON 131 · keine Animation · Klick = weiter
 
 ▶ „Seht ihr den Auflieger? Er fährt nicht in der Spur der Zugmaschine – er läuft weiter innen. Er schneidet die Kurve. Darum ist innen mehr Platz nötig, als man denkt.“
 ✅ Schleppkurve: Der Anhänger bzw. Auflieger läuft auf einem kleineren Radius als das Zugfahrzeug (Prüfungsfrage 2.7.01-310: kann die Kurve schneiden). Eigene Rechnung für diesen Sattelzug (Radstand 3,70 m, Sattelvormaß 0,55 m, Königszapfen–Achsmitte 7,60 m): innerster Punkt bei etwa 5,5 m.
@@ -612,9 +612,9 @@ FOLIE 60 VON 131 · keine Klicks, läuft von selbst
 ➜ „Und was ergibt das zusammen?“
 
 === FOLIE 61 ===
-AUF DER FOLIE: KLASSE CE  ·  ABEND 6  ·  CE1  ·  MASSE UND KURVENLAUF | 61 | KURVENLAUF | Der Kreisring | ❓ Frage an die Klasse / Wie viel Platz braucht euer Sattelzug, wenn er einmal im Kreis fährt? | Antwort folgt … | Der Auflieger läuft weiter innen: Er schneidet die Kurve. Sein innerster Punkt bleibt auf dem Innenkreis. | Draufsicht · maßstabsgetreu (Sattelzug 16,50 m) | Außenkreis  R = 12,50 m | Innenkreis / mind. 5,30 m
+AUF DER FOLIE: KLASSE CE  ·  ABEND 6  ·  CE1  ·  MASSE UND KURVENLAUF | 61 | KURVENLAUF | Der Kreisring | ❓ Frage an die Klasse / Wie viel Platz braucht euer Sattelzug, wenn er einmal im Kreis fährt? | Antwort folgt … | Der Auflieger läuft weiter innen: Er schneidet die Kurve. Sein innerster Punkt darf nicht näher als 5,30 m an die Kreismitte kommen. | Draufsicht · maßstabsgetreu (Sattelzug 16,50 m) | Außenkreis  R = 12,50 m | Innenkreis / mind. 5,30 m
 NOTIZEN:
-FOLIE 61 VON 131 · keine Klicks, läuft von selbst
+FOLIE 61 VON 131 · läuft von selbst weiter (kein Klick)
 
 ▶ Die Bewegung läuft – zuschauen lassen.
 🖱 Kein Klick – die Folie läuft von selbst weiter.
@@ -623,7 +623,7 @@ FOLIE 61 VON 131 · keine Klicks, läuft von selbst
 === FOLIE 62 ===
 AUF DER FOLIE: KLASSE CE  ·  ABEND 6  ·  CE1  ·  MASSE UND KURVENLAUF | 62 | KURVENLAUF | Der Kreisring | ❓ Frage an die Klasse / Wie viel Platz braucht euer Sattelzug, wenn er einmal im Kreis fährt? | ✓ Antwort / Außen ein Kreis mit 12,50 m Radius. Innen bleiben mindestens 5,30 m frei. Der Ring dazwischen ist höchstens 7,20 m breit. | Der Ring zwischen den Kreisen darf höchstens 7,20 m breit sein. Beim Einfahren darf nichts mehr als 0,80 m nach außen ausschwenken. | Draufsicht · maßstabsgetreu (Sattelzug 16,50 m) | Außenkreis  R = 12,50 m | Innenkreis / mind. 5,30 m | Ring höchstens / 7,20 m breit
 NOTIZEN:
-FOLIE 62 VON 131 · keine Klicks, läuft von selbst
+FOLIE 62 VON 131 · keine Animation · Klick = weiter
 
 ▶ „Das ist der Kreisring: außen 12,50 Meter, innen mindestens 5,30 Meter. Der Ring ist höchstens 7,20 Meter breit. Und beim Einlenken aus der Geraden darf kein Teil mehr als 80 Zentimeter nach außen ausschwenken.“
 ❓ Frage auf der Folie auflösen.
@@ -645,7 +645,7 @@ FOLIE 63 VON 131 · 2 Klicks
 === FOLIE 64 ===
 AUF DER FOLIE: KLASSE CE  ·  ABEND 6  ·  CE1  ·  GEWICHTE UND FÜHRERSCHEIN | 64 | 05 | Gewichte und Führerschein | Wie schwer darf der Zug werden – und wann reicht C1E, wann braucht ihr CE?
 NOTIZEN:
-FOLIE 64 VON 131 · keine Klicks, läuft von selbst
+FOLIE 64 VON 131 · Animation läuft von selbst · Klick = weiter
 
 ▶ Sagen: „Letztes Kapitel vor der Pause: Gewicht. Wie schwer darf jede Achse und der ganze Zug sein? Und welche Klasse braucht ihr für welchen Zug?“
 ✅ § 34 StVZO, § 42 StVZO, § 6 FeV.
@@ -653,34 +653,34 @@ FOLIE 64 VON 131 · keine Klicks, läuft von selbst
 ➜ „Wir stellen den Sattelzug auf die Waage.“
 
 === FOLIE 65 ===
-AUF DER FOLIE: KLASSE CE  ·  ABEND 6  ·  CE1  ·  GEWICHTE UND FÜHRERSCHEIN | 65 | ACHSLASTEN | Der Zug auf der Waage | 1 | Leer | 2 | Beladen: 40 t | 3 | Überladen: 43 t | ❓ Frage an die Klasse   / Euer Sattelzug hat 5 Achsen. Wie schwer darf er insgesamt sein? | Leer wiegt der Sattelzug etwa 14,5 t. Unter jeder Achse steht eine Waage. | Seitenansicht · Beispielwerte | 5,2 t | Lenkachse / max. 10 t | 3,6 t | Antriebsachse / max. 11,5 t | 5,7 t | Dreifachachse / max. 24 t | Summe  14,5 t | erlaubt: 40 t | Jede Achse hat ihre eigene Grenze (§ 34 StVZO): Lenkachse 10 t, angetriebene Achse 11,5 t, Dreifachachse 24 t.
+AUF DER FOLIE: KLASSE CE  ·  ABEND 6  ·  CE1  ·  GEWICHTE UND FÜHRERSCHEIN | 65 | ACHSLASTEN | Der Zug auf der Waage | 1 | Leer | 2 | Beladen: 40 t | 3 | Überladen: 43 t | ❓ Frage an die Klasse   / Euer Sattelzug hat 5 Achsen. Wie schwer darf er insgesamt sein? | Leer wiegt der Sattelzug etwa 14,5 t. Unter jeder Achse steht eine Waage. | Seitenansicht · Beispielwerte | 5,2 t | Lenkachse / max. 10 t | 3,6 t | Antriebsachse / max. 11,5 t | 5,7 t | Dreifachachse / max. 24 t (Abstand über 1,3 m) | Summe  14,5 t | erlaubt: 40 t | Jede Achse hat ihre eigene Grenze: Lenkachse 10 t, Antriebsachse 11,5 t, Dreifachachse 21 t – bei mehr als 1,30 m Achsabstand 24 t. Es gilt immer der kleinere Wert aus Gesetz und Fahrzeugschein.
 NOTIZEN:
-FOLIE 65 VON 131 · keine Klicks, läuft von selbst
+FOLIE 65 VON 131 · keine Animation · Klick = weiter
 
 ▶ Sagen: „Wir stellen unseren Sattelzug auf eine Waage – unter jeder Achse eine. Leer wiegt er etwa 14,5 Tonnen. Jede Achse hat ihre eigene Grenze.“
 ❓ Frage auf der Folie stellen.
-✅ § 34 Abs. 4 StVZO: Einzelachse 10 t, angetriebene Einzelachse 11,5 t, Dreifachachse 21 t (Abstände bis 1,3 m) bzw. 24 t (über 1,3 bis 1,4 m). Leergewicht: Beispielwert.
+✅ § 34 Abs. 4 StVZO: Einzelachse 10 t, angetriebene Einzelachse 11,5 t, Dreifachachse 21 t (Abstände bis 1,3 m) bzw. 24 t (über 1,3 bis 1,4 m). Es gilt immer der kleinere Wert aus Gesetz und Zulassungsbescheinigung (§ 34 Abs. 2 und 3). Leergewicht: Beispielwert.
 🖱 Keine Animation auf dieser Folie – nächster Klick = nächster Schritt (Morph).
 ➜ „Jetzt wird beladen.“
 
 === FOLIE 66 ===
-AUF DER FOLIE: KLASSE CE  ·  ABEND 6  ·  CE1  ·  GEWICHTE UND FÜHRERSCHEIN | 66 | ACHSLASTEN | Der Zug auf der Waage | 1 | Leer | 2 | Beladen: 40 t | 3 | Überladen: 43 t | ✓ Antwort   / 40 t. 44 t nur im Kombinierten Verkehr (Bahn, Hafen) – mit Nachweis. | Beladen: 7,5 + 11,5 + 21,0 = 40,0 t. Jede Achse hält ihre Grenze – und die Summe genau 40 t. | Seitenansicht · Beispielwerte | 7,5 t | Lenkachse / max. 10 t | 11,5 t | Antriebsachse / max. 11,5 t | 21,0 t | Dreifachachse / max. 24 t | Summe  40,0 t | erlaubt: 40 t | Mehr als 4 Achsen: höchstens 40 t. 44 t nur im Kombinierten Verkehr – auf dem Weg zu Bahn oder Hafen, mit Nachweis.
+AUF DER FOLIE: KLASSE CE  ·  ABEND 6  ·  CE1  ·  GEWICHTE UND FÜHRERSCHEIN | 66 | ACHSLASTEN | Der Zug auf der Waage | 1 | Leer | 2 | Beladen: 40 t | 3 | Überladen: 43 t | ✓ Antwort   / 40 t. 44 t nur im Kombinierten Verkehr (zum oder vom Bahnhof oder Hafen) – mit Nachweis. | Beladen: 7,5 + 11,5 + 21,0 = 40,0 t. Jede Achse hält ihre Grenze – und die Summe genau 40 t. | Seitenansicht · Beispielwerte | 7,5 t | Lenkachse / max. 10 t | 11,5 t | Antriebsachse / max. 11,5 t | 21,0 t | Dreifachachse / max. 24 t (Abstand über 1,3 m) | Summe  40,0 t | erlaubt: 40 t | Mehr als 4 Achsen: höchstens 40 t. 44 t nur im Kombinierten Verkehr – auf dem Weg zum oder vom Bahnhof oder Hafen, mit Nachweis.
 NOTIZEN:
-FOLIE 66 VON 131 · keine Klicks, läuft von selbst
+FOLIE 66 VON 131 · keine Animation · Klick = weiter
 
 ▶ „Beladen: 7,5 plus 11,5 plus 21 – genau 40 Tonnen. Jede Achse hält ihre Grenze, die Summe auch. Mehr als 4 Achsen: höchstens 40 Tonnen.“
 ❓ Frage auf der Folie auflösen.
-✅ § 34 Abs. 6 Nr. 5 StVZO: Züge und Sattelkraftfahrzeuge mit mehr als 4 Achsen 40 t. 44 t: § 34 Abs. 6 Nr. 6 (intermodal, 3-Achs-Zugmaschine mit 40- oder 45-Fuß-Container) und 53. StVZAusnV (Vor- und Nachlauf im Kombinierten Verkehr, Nachweis mitführen). Prüfungsfrage 2.6.06-302: 40 t. Achslasten: eigene Beispielrechnung.
+✅ § 34 Abs. 6 Nr. 5 StVZO: Züge und Sattelkraftfahrzeuge mit mehr als 4 Achsen 40 t. § 34 Abs. 6 Nr. 6 (intermodal, Container oder Wechselaufbauten bis 45 Fuß: 2 + 3 Achsen 42 t, 3 + 2/3 Achsen 44 t) und 53. StVZAusnV § 1 (44 t im Vor- und Nachlauf des Kombinierten Verkehrs: nächstgelegener geeigneter Bahnhof bzw. Hafen bis 150 km Luftlinie; Nachweis mitführen). Ausnahme E-Lkw: bis 2 t mehr für den Antrieb (§ 34 Abs. 6a StVZO). In der Prüfung: 40 t. Prüfungsfrage 2.6.06-302: 40 t. Achslasten: eigene Beispielrechnung.
 🖱 Keine Animation auf dieser Folie – nächster Klick = nächster Schritt (Morph).
 ➜ „Und wenn noch zwei Paletten dazukommen?“
 
 === FOLIE 67 ===
-AUF DER FOLIE: KLASSE CE  ·  ABEND 6  ·  CE1  ·  GEWICHTE UND FÜHRERSCHEIN | 67 | ACHSLASTEN | Der Zug auf der Waage | 1 | Leer | 2 | Beladen: 40 t | 3 | Überladen: 43 t | ✓ Antwort   / 40 t. 44 t nur im Kombinierten Verkehr (Bahn, Hafen) – mit Nachweis. | Zwei Paletten mehr: 43 t. Die Antriebsachse ist zu schwer – und der ganze Zug auch. | Seitenansicht · Beispielwerte | 7,7 t | Lenkachse / max. 10 t | 12,6 t | Antriebsachse / max. 11,5 t | 22,7 t | Dreifachachse / max. 24 t | Summe  43,0 t | erlaubt: 40 t  →  3 t zu viel! | Mehr als 5 % zu schwer: 80 € und 1 Punkt für den Fahrer. Dazu: längerer Bremsweg, heiße Bremsen, mehr Verschleiß.
+AUF DER FOLIE: KLASSE CE  ·  ABEND 6  ·  CE1  ·  GEWICHTE UND FÜHRERSCHEIN | 67 | ACHSLASTEN | Der Zug auf der Waage | 1 | Leer | 2 | Beladen: 40 t | 3 | Überladen: 43 t | ✓ Antwort   / 40 t. 44 t nur im Kombinierten Verkehr (zum oder vom Bahnhof oder Hafen) – mit Nachweis. | Zwei Paletten mehr: 43 t. Die Antriebsachse ist zu schwer – und der ganze Zug auch. | Seitenansicht · Beispielwerte | 7,7 t | Lenkachse / max. 10 t | 12,6 t | Antriebsachse / max. 11,5 t | 22,7 t | Dreifachachse / max. 24 t (Abstand über 1,3 m) | Summe  43,0 t | erlaubt: 40 t  →  3 t zu viel! | Mehr als 5 % zu schwer (hier 7,5 %): 80 € und 1 Punkt für den Fahrer – ab 10 % wird es teurer. Dazu: längerer Bremsweg, heiße Bremsen.
 NOTIZEN:
-FOLIE 67 VON 131 · keine Klicks, läuft von selbst
+FOLIE 67 VON 131 · keine Animation · Klick = weiter
 
 ▶ „Zwei Paletten mehr – 43 Tonnen. Die Antriebsachse trägt jetzt 12,6 Tonnen: zu viel. Und der Zug ist 3 Tonnen zu schwer. Das sind mehr als 5 Prozent: 80 Euro und ein Punkt – für den Fahrer.“
-✅ BKatV Nr. 198.1 (Tabelle 3): Überschreitung der zulässigen Achslast oder Gesamtmasse bei Kfz über 7,5 t bzw. Kfz mit Anhänger über 2 t – mehr als 5 %: 80 € und 1 Punkt; der Halter zahlt zusätzlich (Nr. 199). Eigene Beispielrechnung: 43 t ÷ 40 t = 7,5 % zu viel.
+✅ BKatV Nr. 198.1 (Tabelle 3): Überschreitung der zulässigen Achslast oder Gesamtmasse bei Kfz über 7,5 t bzw. Kfz mit Anhänger über 2 t – mehr als 5 bis 10 %: 80 € und 1 Punkt (ab 10 %: 110 €, ab 15 %: 140 €, ab 20 %: 190 €, ab 25 %: 285 €, ab 30 %: 380 €; 2 bis 5 %: 30 € ohne Punkt); der Halter zahlt zusätzlich (Nr. 199). Punkte: FeV Anlage 13 Nr. 3.5.5. Eigene Beispielrechnung: 43 t ÷ 40 t = 7,5 % zu viel; Antriebsachse 12,6 ÷ 11,5 = 9,6 % zu viel.
 💡 Prüfungsfrage 2.2.22-301: Lkw beladen, Anhänger leer ist sicherer als umgekehrt.
 🖱 Keine Animation auf dieser Folie – nächster Klick = nächster Schritt (Morph).
 ➜ „Eine Prüfungsfrage.“
@@ -696,7 +696,7 @@ FOLIE 68 VON 131 · 2 Klicks
 ➜ „Und wie rechnet man das beim Sattelzug?“
 
 === FOLIE 69 ===
-AUF DER FOLIE: KLASSE CE  ·  ABEND 6  ·  CE1  ·  GEWICHTE UND FÜHRERSCHEIN | 69 | RECHNEN | Zugmaschine 25 t, Auflieger 34 t, Sattellast 16 t. Wie viel darf der Zug wiegen? | Addieren und Sattellast abziehen  25 t + 34 t − 16 t = 43 t. Die Sattellast steckt in beiden Fahrzeugen – sie zählt nur einmal. | Grenze prüfen  Mehr als 4 Achsen: höchstens 40 t. 43 t sind zu viel. | Also: 3 t weniger laden  Den Auflieger nicht voll beladen – sonst ist der Zug zu schwer. | Gliederzug: einfach addieren  Lkw + Anhänger. Zentralachsanhänger: minus Stützlast. Grenze auch hier 40 t.
+AUF DER FOLIE: KLASSE CE  ·  ABEND 6  ·  CE1  ·  GEWICHTE UND FÜHRERSCHEIN | 69 | RECHNEN | Sattelzug mit 5 Achsen, kein Kombinierter Verkehr: Zugmaschine 25 t, Auflieger 34 t, Sattellast 16 t. Wie viel darf er wiegen? | Addieren und Sattellast abziehen  25 t + 34 t − 16 t = 43 t. Die Sattellast steckt in beiden Fahrzeugen – sie zählt nur einmal. | Grenze prüfen  Mehr als 4 Achsen: höchstens 40 t. 43 t sind zu viel. | Also: 3 t weniger laden  Den Auflieger nicht voll beladen – sonst ist der Zug zu schwer. | Gliederzug: einfach addieren  Lkw + Anhänger. Zentralachsanhänger: minus Stützlast. Mehr als 4 Achsen: auch hier 40 t (mit 4 Achsen 36 t).
 NOTIZEN:
 FOLIE 69 VON 131 · 4 Klicks
 
@@ -719,7 +719,7 @@ FOLIE 70 VON 131 · 2 Klicks
 === FOLIE 71 ===
 AUF DER FOLIE: KLASSE CE  ·  ABEND 6  ·  CE1  ·  GEWICHTE UND FÜHRERSCHEIN | 71 | FÜHRERSCHEIN | C1E oder CE? | 1 | 7,5 t + 4,5 t | 2 | 7,5 t + 5,0 t | 3 | Mit Zentralachsanhänger | 4 | Großer Lkw, kleiner Anhänger | ❓ Frage an die Klasse   / Reicht C1E für einen 7,49-t-Lkw mit 4,8-t-Zentralachsanhänger? | C1E: Zug aus C1-Lkw und Anhänger über 750 kg – zusammen höchstens 12 t. | Seitenansicht · schematisch · zulässige Gesamtmassen | 7,5 t | Lkw | 4,5 t | Anhänger | 7,5 t  +  4,5 t  =  12,0 t | C1E | Der ganze Zug höchstens 12 t: Dafür reicht C1E.
 NOTIZEN:
-FOLIE 71 VON 131 · keine Klicks, läuft von selbst
+FOLIE 71 VON 131 · keine Animation · Klick = weiter
 
 ▶ Sagen: „Welche Klasse braucht ihr? 7,5-Tonnen-Lkw und 4,5-Tonnen-Anhänger: zusammen 12 Tonnen. Das ist C1E.“
 ❓ Frage auf der Folie stellen.
@@ -730,7 +730,7 @@ FOLIE 71 VON 131 · keine Klicks, läuft von selbst
 === FOLIE 72 ===
 AUF DER FOLIE: KLASSE CE  ·  ABEND 6  ·  CE1  ·  GEWICHTE UND FÜHRERSCHEIN | 72 | FÜHRERSCHEIN | C1E oder CE? | 1 | 7,5 t + 4,5 t | 2 | 7,5 t + 5,0 t | 3 | Mit Zentralachsanhänger | 4 | Großer Lkw, kleiner Anhänger | ❓ Frage an die Klasse   / Reicht C1E für einen 7,49-t-Lkw mit 4,8-t-Zentralachsanhänger? | Eine halbe Tonne mehr am Anhänger – und schon ist es CE. | Seitenansicht · schematisch · zulässige Gesamtmassen | 7,5 t | Lkw | 5,0 t | Anhänger | 7,5 t  +  5,0 t  =  12,5 t | CE | Mehr als 12 t: CE – auch wenn der Lkw nur 7,5 t hat.
 NOTIZEN:
-FOLIE 72 VON 131 · keine Klicks, läuft von selbst
+FOLIE 72 VON 131 · keine Animation · Klick = weiter
 
 ▶ „Anhänger 5 Tonnen: 12,5 Tonnen. Mehr als 12 – also CE.“
 ✅ § 6 Abs. 1 FeV: CE = Zugfahrzeug der Klasse C + Anhänger oder Sattelanhänger über 750 kg (keine Obergrenze im Führerscheinrecht). Bei mehr als 12 t mit C1-Zugfahrzeug: CE. Eigene Rechnung.
@@ -740,18 +740,18 @@ FOLIE 72 VON 131 · keine Klicks, läuft von selbst
 === FOLIE 73 ===
 AUF DER FOLIE: KLASSE CE  ·  ABEND 6  ·  CE1  ·  GEWICHTE UND FÜHRERSCHEIN | 73 | FÜHRERSCHEIN | C1E oder CE? | 1 | 7,5 t + 4,5 t | 2 | 7,5 t + 5,0 t | 3 | Mit Zentralachsanhänger | 4 | Großer Lkw, kleiner Anhänger | ✓ Antwort   / Nein. 12,29 t – beim Führerschein zählt die volle Summe. Ihr braucht CE. | Bei der StVZO wird die Stützlast abgezogen. Beim Führerschein nicht! | Seitenansicht · schematisch · zulässige Gesamtmassen | 7,49 t | Lkw | 4,8 t | Zentralachsanhänger | 7,49 t  +  4,8 t  =  12,29 t | CE | Zentralachsanhänger: Beim Führerschein wird die Stützlast nicht abgezogen. Es zählt die volle Summe.
 NOTIZEN:
-FOLIE 73 VON 131 · keine Klicks, läuft von selbst
+FOLIE 73 VON 131 · keine Animation · Klick = weiter
 
 ▶ „Die Fangfrage: 7,49 plus 4,8 Tonnen, Zentralachsanhänger. Manche ziehen die Stützlast ab. Beim Führerschein gilt aber: volle Summe der zulässigen Gesamtmassen. 12,29 Tonnen – also CE.“
 ❓ Frage auf der Folie auflösen.
-✅ § 6 Abs. 1 FeV (vorletzter Absatz): zGM der Kombination = Summe der zGM der Einzelfahrzeuge, ohne Abzug von Stütz- oder Aufliegelast. Anders § 34 Abs. 7 StVZO (dort wird abgezogen).
+✅ § 6 Abs. 1 Satz 2 FeV: zGM der Kombination = Summe der zGM der Einzelfahrzeuge, ohne Abzug von Stütz- oder Aufliegelast. Anders § 34 Abs. 7 StVZO (dort wird abgezogen).
 🖱 Keine Animation auf dieser Folie – nächster Klick = nächster Schritt (Morph).
 ➜ „Und umgekehrt?“
 
 === FOLIE 74 ===
 AUF DER FOLIE: KLASSE CE  ·  ABEND 6  ·  CE1  ·  GEWICHTE UND FÜHRERSCHEIN | 74 | FÜHRERSCHEIN | C1E oder CE? | 1 | 7,5 t + 4,5 t | 2 | 7,5 t + 5,0 t | 3 | Mit Zentralachsanhänger | 4 | Großer Lkw, kleiner Anhänger | ✓ Antwort   / Nein. 12,29 t – beim Führerschein zählt die volle Summe. Ihr braucht CE. | CE schließt C1E, BE und T mit ein. | Seitenansicht · schematisch · zulässige Gesamtmassen | 12 t | Lkw | 1,2 t | Anhänger | 12 t  +  1,2 t  =  13,2 t | CE | Lkw über 7,5 t (Klasse C) und Anhänger über 750 kg: immer CE.
 NOTIZEN:
-FOLIE 74 VON 131 · keine Klicks, läuft von selbst
+FOLIE 74 VON 131 · keine Animation · Klick = weiter
 
 ▶ „Großer Lkw, kleiner Anhänger: 12-Tonnen-Lkw ist Klasse C. Dazu ein Anhänger über 750 Kilogramm – das ist immer CE. Bis 750 Kilogramm Anhänger reicht C.“
 ✅ § 6 Abs. 1 FeV: C (auch mit Anhänger bis 750 kg), CE (Anhänger über 750 kg). § 6 Abs. 3 Nr. 6 FeV: CE schließt C1E, BE und T ein. § 9 Abs. 2 FeV: CE nur mit Klasse C (Vorbesitz oder gleichzeitig).
@@ -796,11 +796,11 @@ FOLIE 78 VON 131 · 2 Klicks
 
 ▶ Frage vorlesen, abstimmen.
 🖱 Klick 1: Antworten · Klick 2: Lösung.
-✅ Amtlicher Fragenkatalog 2.6.06-305: A. § 34 Abs. 7 Nr. 2 StVZO.
+✅ Amtlicher Fragenkatalog 2.6.06-305: A. § 34 Abs. 7 Nr. 3 StVZO.
 ➜ „Das nimmst du aus CE1 mit.“
 
 === FOLIE 79 ===
-AUF DER FOLIE: KLASSE CE  ·  ABEND 6  ·  CE1  ·  ABSCHLUSS | 79 | ZUSAMMENFASSUNG | Das nimmst du mit | Gelb vor Rot:  beim Ankuppeln erst gelb, dann rot. Rot nie allein. | Kontrollstift prüfen:  ansehen und tasten. Beim Sattel: kein Spalt, Sicherung eingefallen. | Niemand dazwischen:  der Lkw kommt zum gesicherten Anhänger – nie umgekehrt. | Maße:  18,75 m für Lkw mit Anhänger, 16,50 m für den Sattelzug, Kreisring 12,50 m. | Gewicht und Klasse:  40 t bei mehr als 4 Achsen. Über 12 t Zug oder C-Lkw mit Anhänger: CE.
+AUF DER FOLIE: KLASSE CE  ·  ABEND 6  ·  CE1  ·  ABSCHLUSS | 79 | ZUSAMMENFASSUNG | Das nimmst du mit | Gelb vor Rot:  beim Ankuppeln erst gelb, dann rot. Rot nie allein. | Kontrollstift prüfen:  ansehen und tasten. Beim Sattel: kein Spalt, Sicherung eingefallen. | Niemand dazwischen:  der Lkw kommt zum gesicherten Anhänger – nie umgekehrt. | Maße:  18,75 m für Lkw mit Anhänger, 16,50 m für den Sattelzug, Kreisring 12,50 m. | Gewicht und Klasse:  40 t bei mehr als 4 Achsen. Über 12 t Zug oder C-Lkw mit Anhänger über 750 kg: CE.
 NOTIZEN:
 FOLIE 79 VON 131 · 5 Klicks
 
@@ -811,7 +811,7 @@ FOLIE 79 VON 131 · 5 Klicks
 === FOLIE 80 ===
 AUF DER FOLIE: PAUSE | 15 Minuten | Kurz raus, frische Luft. | Danach: Lektion CE2 · Lastzugbremsen
 NOTIZEN:
-FOLIE 80 VON 131 · keine Klicks, läuft von selbst
+FOLIE 80 VON 131 · Animation läuft von selbst · Klick = weiter
 
 ▶ Sagen: „15 Minuten Pause. Kurz raus, frische Luft.“
 💡 Pausenende ansagen (z. B. 19:45 Uhr).
@@ -831,7 +831,7 @@ FOLIE 81 VON 131 · 5 Klicks
 === FOLIE 82 ===
 AUF DER FOLIE: KLASSE CE  ·  ABEND 6  ·  CE2  ·  DER ANHÄNGER BREMST SELBST | 82 | 01 | Der Anhänger bremst selbst | Ein voller Anhänger wiegt so viel wie ein Lkw. Der Lkw allein kann ihn nicht mitbremsen.
 NOTIZEN:
-FOLIE 82 VON 131 · keine Klicks, läuft von selbst
+FOLIE 82 VON 131 · Animation läuft von selbst · Klick = weiter
 
 ▶ Sagen: „Stellt euch vor, nur der Lkw bremst – und hinten schieben 18 Tonnen nach. Der Zug knickt ein. Darum muss der Anhänger selbst bremsen.“
 ✅ § 41 Abs. 9 StVZO.
@@ -839,30 +839,30 @@ FOLIE 82 VON 131 · keine Klicks, läuft von selbst
 ➜ „Was verlangt das Gesetz?“
 
 === FOLIE 83 ===
-AUF DER FOLIE: KLASSE CE  ·  ABEND 6  ·  CE2  ·  DER ANHÄNGER BREMST SELBST | 83 | WAS DAS GESETZ VERLANGT | Was muss die Bremse eines großen Anhängers können? | Eine eigene Bremse  Anhänger mit zwei oder mehr Achsen brauchen eine eigene Bremse – hinter schnellen Lkw auf alle Räder. | Ein Pedal für beide  Lkw und Anhänger bremsen zusammen – mit einer Betätigung vom Fahrersitz aus. | Selbst bremsen beim Abreißen  Löst sich der Anhänger, muss er von allein zum Stehen kommen. | Am Berg stehen bleiben  Feststellbremse: Der volle Anhänger muss auf 18 % Steigung halten – rein mechanisch.
+AUF DER FOLIE: KLASSE CE  ·  ABEND 6  ·  CE2  ·  DER ANHÄNGER BREMST SELBST | 83 | WAS DAS GESETZ VERLANGT | Was muss die Bremse eines großen Anhängers können? | Eine eigene Bremse  Anhänger mit 2 oder mehr Achsen immer, einachsige über 0,75 t Achslast. Hinter schnellen Lkw auf alle Räder. | Ein Pedal für beide  Lkw und Anhänger bremsen zusammen, mit einer Betätigung vom Fahrersitz. Oder der Anhänger bremst von selbst (Auflaufbremse). | Selbst bremsen beim Abreißen  Löst sich der Anhänger, muss er von allein zum Stehen kommen. | Am Berg stehen bleiben  Feststellbremse: Der volle Anhänger muss auf 18 % Steigung halten – rein mechanisch.
 NOTIZEN:
 FOLIE 83 VON 131 · 4 Klicks
 
 ▶ Sagen: „Was muss die Bremse eines großen Anhängers können? Sammelt mal.“
 ❓ Sammeln lassen, dann je Klick eine Karte.
 🖱 Klick 1–4: je eine Anforderung.
-✅ § 41 Abs. 9 StVZO: Zwei- und mehrachsige Anhänger brauchen eine eigene Bremsanlage; Betriebsbremse von Zug und Anhänger mit einer Betätigung abstufbar (oder selbsttätig wie die Auflaufbremse); trennt sich der Anhänger, muss er selbsttätig zum Stehen kommen; Feststellbremse hält den beladenen Anhänger rein mechanisch auf 18 %; hinter Kfz über 25 km/h Bremse auf alle Räder. Mittlere Vollverzögerung mindestens 5,0 m/s² (Sattelanhänger 4,5 m/s²).
+✅ § 41 Abs. 9 StVZO: Zwei- und mehrachsige Anhänger brauchen eine eigene Bremsanlage (§ 41 Abs. 11: einachsige ohne eigene Bremse nur, wenn die Achslast höchstens die Hälfte des Leergewichts des Zugfahrzeugs und höchstens 0,75 t beträgt); Betriebsbremse von Zug und Anhänger mit einer Betätigung abstufbar (oder selbsttätig wie die Auflaufbremse); trennt sich der Anhänger, muss er selbsttätig zum Stehen kommen; Feststellbremse hält den beladenen Anhänger rein mechanisch auf 18 %; hinter Kfz über 25 km/h Bremse auf alle Räder. Mittlere Vollverzögerung mindestens 5,0 m/s² (Sattelanhänger 4,5 m/s²).
 ➜ „Welche Bremsen gibt es dafür?“
 
 === FOLIE 84 ===
-AUF DER FOLIE: KLASSE CE  ·  ABEND 6  ·  CE2  ·  DER ANHÄNGER BREMST SELBST | 84 | ZWEI BREMSEN | Welche Bremse hat welcher Anhänger? | Auflaufbremse  Mechanisch: Der Anhänger bremst sich selbst, wenn er aufläuft. Nur bei kleinen Anhängern – auf der Straße höchstens 3,5 t. | Zweileitungs-Druckluftbremse  Mit Luft vom Lkw, gesteuert vom Bremspedal. Standard bei Lkw-Anhängern und Sattelaufliegern. | Durchgehende Bremse = mehr Anhängelast  Mit Druckluftbremse darf der Anhänger bis zum 1,5-Fachen des Lkw wiegen.
+AUF DER FOLIE: KLASSE CE  ·  ABEND 6  ·  CE2  ·  DER ANHÄNGER BREMST SELBST | 84 | ZWEI BREMSEN | Welche Bremse hat welcher Anhänger? | Auflaufbremse  Mechanisch: Der Anhänger bremst sich selbst, wenn er aufläuft. Bei Anhängern über 40 km/h höchstens 3,5 t. | Zweileitungs-Druckluftbremse  Mit Luft vom Lkw, gesteuert vom Bremspedal. Standard bei Lkw-Anhängern und Sattelaufliegern. | Durchgehende Bremse = mehr Anhängelast  Mit Druckluftbremse darf die Anhängelast bis zum 1,5-Fachen der zulässigen Gesamtmasse des Lkw betragen – nie mehr, als im Fahrzeugschein steht.
 NOTIZEN:
 FOLIE 84 VON 131 · 3 Klicks
 
 ▶ Sagen: „Zwei Bremsen gibt es am Anhänger. Die Auflaufbremse kennt ihr vom Pkw-Anhänger. Und die Druckluftbremse – die hat fast jeder Lkw-Anhänger.“
 🖱 Klick 1–3: je eine Karte.
-✅ § 41 Abs. 10 StVZO: Auflaufbremse nur bis 3,5 t (bei Anhängern über 40 km/h; bis 8 t nur bei langsamen Anhängern bis 25 bzw. 40 km/h), nie beim Sattelanhänger. RL 71/320/EWG Anhang I Nr. 1.9: „durchgehende Bremsung“ = eine Betätigung, eine Energiequelle, abgestimmte Bremsung von Zug und Anhänger. § 42 Abs. 1 StVZO: mit durchgehender Bremse Anhängelast bis 1,5 × zGM des Lkw (Prüfungsfrage 2.6.03-303).
+✅ § 41 Abs. 10 StVZO: Auflaufbremse nur bis 3,5 t (bei Anhängern über 40 km/h; bis 8 t nur bei langsamen Anhängern bis 25 bzw. 40 km/h), nie beim Sattelanhänger. UN-R 13 / RL 71/320/EWG Anhang I Nr. 1.9: „durchgehende Bremsung“ = eine Betätigung, eine Energiequelle, abgestimmte Bremsung von Zug und Anhänger. § 42 Abs. 1 StVZO: mit durchgehender Bremse Anhängelast bis 1,5 × zGM des Lkw (Prüfungsfrage 2.6.03-303).
 ➜ „Kapitel 2: die Auflaufbremse.“
 
 === FOLIE 85 ===
 AUF DER FOLIE: KLASSE CE  ·  ABEND 6  ·  CE2  ·  AUFLAUFBREMSE | 85 | 02 | Die Auflaufbremse | Der Anhänger bremst sich selbst – wenn er auf den Lkw aufläuft.
 NOTIZEN:
-FOLIE 85 VON 131 · keine Klicks, läuft von selbst
+FOLIE 85 VON 131 · Animation läuft von selbst · Klick = weiter
 
 ▶ Sagen: „Die Auflaufbremse braucht keine Leitung und keine Luft. Sie nutzt den Schub des Anhängers.“
 🖱 Keine Klicks.
@@ -876,25 +876,25 @@ FOLIE 86 VON 131 · 4 Klicks
 ▶ Sagen: „Ein Anhänger mit Auflaufbremse. Was seht ihr?“
 ❓ Sammeln lassen, dann je Klick auflösen.
 🖱 Klick 1–4: je ein Teil.
-✅ Auflaufeinrichtung, Handbremshebel, Abreißseil: Lehrbuchwissen; RL 71/320/EWG Anhang I Nr. 1.12 (Auflaufbremsung) und Nr. 2.2.2.9 (selbsttätige Bremsung beim Abreißen; Ausnahme einachsige Anhänger bis 1,5 t mit Sicherungsverbindung). Prüfungsfrage 2.7.01-121: nach dem Ankuppeln Bremse prüfen, Stützrad in die oberste Stellung, Abreißseil an der Anhängekupplung des Zugfahrzeugs einhängen.
+✅ Auflaufeinrichtung, Handbremshebel, Abreißseil: Lehrbuchwissen; UN-R 13 / RL 71/320/EWG Anhang I Nr. 1.12 (Auflaufbremsung) und Nr. 2.2.2.9 (selbsttätige Bremsung beim Abreißen; Ausnahme einachsige Anhänger bis 1,5 t mit Sicherungsverbindung). Prüfungsfrage 2.7.01-121: nach dem Ankuppeln Bremse prüfen, Stützrad in die oberste Stellung, Abreißseil an der Anhängekupplung des Zugfahrzeugs einhängen.
 💡 Das Bild zeigt einen Kugelkopf. Am Lkw hängt so ein Anhänger meist mit Zugöse am Bolzen.
 ➜ „Und wie bremst das Ding?“
 
 === FOLIE 87 ===
 AUF DER FOLIE: KLASSE CE  ·  ABEND 6  ·  CE2  ·  AUFLAUFBREMSE | 87 | AUFLAUFBREMSE | So bremst sie | ❓ Frage an die Klasse / Wann bremst ein Anhänger mit Auflaufbremse? | Antwort folgt … | Beim Fahren zieht der Lkw. Die Auflaufeinrichtung ist auseinandergezogen – die Bremse am Anhänger ist frei. | Seitenansicht · Ausschnitt · schematisch · Hub vergrößert | Lkw | Auflaufeinrichtung ausgezogen | Handbremshebel | Abreißseil | Radbremsen frei | Gestänge | Fahrtrichtung
 NOTIZEN:
-FOLIE 87 VON 131 · keine Klicks, läuft von selbst
+FOLIE 87 VON 131 · keine Animation · Klick = weiter
 
 ▶ Sagen: „Beim Fahren zieht der Lkw den Anhänger. Die Auflaufeinrichtung in der Deichsel ist ausgezogen. Am Anhänger bremst nichts.“
 ❓ Frage auf der Folie stellen.
-✅ Funktion der Auflaufbremse: Lehrbuchwissen (RL 71/320/EWG Anhang I Nr. 1.12: Bremsung durch das Auflaufen des Anhängers auf das Zugfahrzeug).
+✅ Funktion der Auflaufbremse: Lehrbuchwissen (UN-R 13 / RL 71/320/EWG Anhang I Nr. 1.12: Bremsung durch das Auflaufen des Anhängers auf das Zugfahrzeug).
 🖱 Klick: Der Lkw bremst (läuft von selbst weiter).
 ➜ „Jetzt bremst der Lkw.“
 
 === FOLIE 88 ===
 AUF DER FOLIE: KLASSE CE  ·  ABEND 6  ·  CE2  ·  AUFLAUFBREMSE | 88 | AUFLAUFBREMSE | So bremst sie | ❓ Frage an die Klasse / Wann bremst ein Anhänger mit Auflaufbremse? | Antwort folgt … | Beim Fahren zieht der Lkw. Die Auflaufeinrichtung ist auseinandergezogen – die Bremse am Anhänger ist frei. | Seitenansicht · Ausschnitt · schematisch · Hub vergrößert | Lkw bremst | Auflaufeinrichtung ausgezogen | Handbremshebel | Abreißseil | Radbremsen frei | Gestänge | Fahrtrichtung
 NOTIZEN:
-FOLIE 88 VON 131 · keine Klicks, läuft von selbst
+FOLIE 88 VON 131 · läuft von selbst weiter (kein Klick)
 
 ▶ Die Bewegung läuft – zuschauen lassen.
 🖱 Kein Klick – die Folie läuft von selbst weiter.
@@ -903,7 +903,7 @@ FOLIE 88 VON 131 · keine Klicks, läuft von selbst
 === FOLIE 89 ===
 AUF DER FOLIE: KLASSE CE  ·  ABEND 6  ·  CE2  ·  AUFLAUFBREMSE | 89 | AUFLAUFBREMSE | So bremst sie | ❓ Frage an die Klasse / Wann bremst ein Anhänger mit Auflaufbremse? | ✓ Antwort / Erst wenn er auf den Lkw aufläuft – also einen Moment nach dem Lkw. Nicht gleichzeitig mit dem Pedal. | Der Lkw bremst, der Anhänger schiebt nach: Er läuft auf. Die Deichsel schiebt sich zusammen und zieht über das Gestänge die Radbremsen an. | Seitenansicht · Ausschnitt · schematisch · Hub vergrößert | Lkw bremst | Auflaufeinrichtung schiebt sich zusammen | Handbremshebel | Abreißseil | Radbremsen ziehen an | Gestänge | Anhänger schiebt nach
 NOTIZEN:
-FOLIE 89 VON 131 · keine Klicks, läuft von selbst
+FOLIE 89 VON 131 · keine Animation · Klick = weiter
 
 ▶ „Der Lkw bremst. Der Anhänger will weiter – er schiebt nach, er läuft auf. Dabei schiebt sich die Auflaufeinrichtung zusammen. Das Gestänge zieht die Radbremsen an. Darum bremst der Anhänger immer einen Moment später als der Lkw.“
 ❓ Frage auf der Folie auflösen.
@@ -914,19 +914,19 @@ FOLIE 89 VON 131 · keine Klicks, läuft von selbst
 === FOLIE 90 ===
 AUF DER FOLIE: KLASSE CE  ·  ABEND 6  ·  CE2  ·  AUFLAUFBREMSE | 90 | AUFLAUFBREMSE | So bremst sie | ❓ Frage an die Klasse / Wann bremst ein Anhänger mit Auflaufbremse? | ✓ Antwort / Erst wenn er auf den Lkw aufläuft – also einen Moment nach dem Lkw. Nicht gleichzeitig mit dem Pedal. | Reißt die Verbindung, spannt sich das Abreißseil. Es zieht die Handbremse an – der Anhänger bremst von selbst. | Seitenansicht · Ausschnitt · schematisch · Hub vergrößert | Lkw fährt weiter | Verbindung gerissen! | Seil zieht die Handbremse an | Abreißseil | Radbremsen ziehen an | Gestänge | Fahrtrichtung
 NOTIZEN:
-FOLIE 90 VON 131 · keine Klicks, läuft von selbst
+FOLIE 90 VON 131 · keine Animation · Klick = weiter
 
 ▶ „Und wenn die Kupplung abreißt? Dann spannt sich das Abreißseil. Es zieht die Handbremse an, und der Anhänger bremst von selbst. Darum: Seil immer am Lkw einhängen – nicht an der Kupplung des Anhängers selbst!“
-✅ § 41 Abs. 9 StVZO: Trennt sich der Anhänger, muss er selbsttätig zum Stehen kommen. RL 71/320/EWG Anhang I Nr. 2.2.2.9. Prüfungsfrage 2.7.01-121: Abreißseil an der Anhängekupplung des Motorwagens einhängen.
+✅ § 41 Abs. 9 StVZO: Trennt sich der Anhänger, muss er selbsttätig zum Stehen kommen. UN-R 13 / RL 71/320/EWG Anhang I Nr. 2.2.2.9. Prüfungsfrage 2.7.01-121: Abreißseil an der Anhängekupplung des Motorwagens einhängen.
 🖱 Klick: rückwärts.
 ➜ „Und beim Rückwärtsfahren?“
 
 === FOLIE 91 ===
-AUF DER FOLIE: KLASSE CE  ·  ABEND 6  ·  CE2  ·  AUFLAUFBREMSE | 91 | AUFLAUFBREMSE | So bremst sie | ❓ Frage an die Klasse / Wann bremst ein Anhänger mit Auflaufbremse? | ✓ Antwort / Erst wenn er auf den Lkw aufläuft – also einen Moment nach dem Lkw. Nicht gleichzeitig mit dem Pedal. | Rückwärts schiebt der Lkw – der Anhänger läuft auch auf. Die meisten Bremsen haben eine Rückfahrautomatik. Bei manchen sperrt man die Bremse von Hand. | Seitenansicht · Ausschnitt · schematisch · Hub vergrößert | Lkw | Auflaufeinrichtung schiebt sich zusammen | Handbremshebel | Abreißseil | Radbremsen ziehen an | Gestänge | rückwärts: Lkw drückt
+AUF DER FOLIE: KLASSE CE  ·  ABEND 6  ·  CE2  ·  AUFLAUFBREMSE | 91 | AUFLAUFBREMSE | So bremst sie | ❓ Frage an die Klasse / Wann bremst ein Anhänger mit Auflaufbremse? | ✓ Antwort / Erst wenn er auf den Lkw aufläuft – also einen Moment nach dem Lkw. Nicht gleichzeitig mit dem Pedal. | Rückwärts schiebt der Lkw – der Anhänger läuft auch auf. Viele Bremsen haben eine Rückfahrautomatik. Bei manchen sperrt man die Bremse von Hand. | Seitenansicht · Ausschnitt · schematisch · Hub vergrößert | Lkw | Auflaufeinrichtung schiebt sich zusammen | Handbremshebel | Abreißseil | Radbremsen ziehen an | Gestänge | rückwärts: Lkw drückt
 NOTIZEN:
-FOLIE 91 VON 131 · keine Klicks, läuft von selbst
+FOLIE 91 VON 131 · keine Animation · Klick = weiter
 
-▶ „Beim Rückwärtsfahren drückt der Lkw den Anhänger. Auch dann schiebt sich die Deichsel zusammen – die Bremse würde bremsen. Moderne Auflaufbremsen haben eine Rückfahrautomatik. Bei manchen Anhängern muss man die Auflaufbremse vorher von Hand sperren.“
+▶ „Beim Rückwärtsfahren drückt der Lkw den Anhänger. Auch dann schiebt sich die Deichsel zusammen – die Bremse würde bremsen. Viele Auflaufbremsen haben eine Rückfahrautomatik. Bei manchen Anhängern muss man die Auflaufbremse vorher von Hand sperren.“
 ✅ Prüfungsfrage 2.7.06-109: Bei manchen Anhängern muss die Auflaufbremse manuell gesperrt werden, damit man rückwärtsfahren kann. Rückfahrautomatik: Lehrbuchwissen.
 🖱 Nächster Klick: nächste Folie.
 ➜ „Eine Prüfungsfrage.“
@@ -942,7 +942,7 @@ FOLIE 92 VON 131 · 2 Klicks
 ➜ „Darf euer Lkw so einen Anhänger ziehen?“
 
 === FOLIE 93 ===
-AUF DER FOLIE: KLASSE CE  ·  ABEND 6  ·  CE2  ·  AUFLAUFBREMSE | 93 | AUFLAUFBREMSE AM LKW | Euer 12-t-Lkw soll einen 3,5-t-Tandem mit Auflaufbremse ziehen. Geht das? | Ja – bis 3,5 t  Ein Straßenanhänger mit Auflaufbremse darf höchstens 3,5 t haben. | Nie am Sattelauflieger  Und im Zug immer nur ein Anhänger mit Auflaufbremse. | Klasse CE  Lkw der Klasse C mit Anhänger über 750 kg: CE – auch für den kleinen Tandem. | Vor der Fahrt  Kupplung zu, Licht geht, Stützrad oben, Abreißseil am Lkw eingehängt.
+AUF DER FOLIE: KLASSE CE  ·  ABEND 6  ·  CE2  ·  AUFLAUFBREMSE | 93 | AUFLAUFBREMSE AM LKW | Euer 12-t-Lkw soll einen 3,5-t-Tandem mit Auflaufbremse ziehen. Geht das? | Ja – bis 3,5 t  Ein Anhänger mit Auflaufbremse darf hinter eurem Lkw höchstens 3,5 t haben. | Nie am Sattelauflieger  Und im Zug immer nur ein Anhänger mit Auflaufbremse. | Klasse CE  Lkw der Klasse C mit Anhänger über 750 kg: CE – auch für den kleinen Tandem. | Vor der Fahrt  Kupplung zu, Licht geht, Stützrad oben, Abreißseil am Lkw eingehängt.
 NOTIZEN:
 FOLIE 93 VON 131 · 4 Klicks
 
@@ -965,14 +965,14 @@ FOLIE 94 VON 131 · 2 Klicks
 === FOLIE 95 ===
 AUF DER FOLIE: KLASSE CE  ·  ABEND 6  ·  CE2  ·  ZWEILEITUNGS-DRUCKLUFTBREMSE | 95 | 03 | Die Zweileitungs-Druckluftbremse | Zwei Leitungen, zwei Aufgaben: Rot bringt die Luft, gelb bringt den Befehl.
 NOTIZEN:
-FOLIE 95 VON 131 · keine Klicks, läuft von selbst
+FOLIE 95 VON 131 · Animation läuft von selbst · Klick = weiter
 
 ▶ Sagen: „Fast jeder Lkw-Anhänger und jeder Auflieger hat sie: die Zweileitungs-Druckluftbremse. Rot und gelb kennt ihr schon vom Ankuppeln. Jetzt schauen wir, was in den Leitungen passiert.“
 🖱 Keine Klicks.
 ➜ „Kurz zurück zur Bremse des Lkw.“
 
 === FOLIE 96 ===
-AUF DER FOLIE: KLASSE CE  ·  ABEND 6  ·  CE2  ·  ZWEILEITUNGS-DRUCKLUFTBREMSE | 96 | WIEDERHOLUNG AUS C5 | Woher kommt die Luft für den Anhänger? | Kompressor  Er pumpt Luft in die Behälter des Lkw. | Vierkreisschutzventil  Teilt die Luft auf vier Kreise. Reißt einer, bleiben die anderen dicht. | Kreis 3  Versorgt die Feststellbremse – und den Anhänger. | Federspeicher  Die Feder bremst, die Luft löst.
+AUF DER FOLIE: KLASSE CE  ·  ABEND 6  ·  CE2  ·  ZWEILEITUNGS-DRUCKLUFTBREMSE | 96 | WIEDERHOLUNG AUS C5 | Woher kommt die Luft für den Anhänger? | Kompressor  Er pumpt Luft in die Behälter des Lkw. | Vierkreisschutzventil  Teilt die Luft auf vier Kreise. Reißt einer, behalten die anderen ihren Druck. | Kreis 3  Versorgt die Feststellbremse – und den Anhänger. | Federspeicher  Die Feder bremst, die Luft löst.
 NOTIZEN:
 FOLIE 96 VON 131 · 4 Klicks
 
@@ -985,7 +985,7 @@ FOLIE 96 VON 131 · 4 Klicks
 === FOLIE 97 ===
 AUF DER FOLIE: KLASSE CE  ·  ABEND 6  ·  CE2  ·  ZWEILEITUNGS-DRUCKLUFTBREMSE | 97 | SO BREMST DER ANHÄNGER | Luft fließt | ❓ Frage an die Klasse / Mit welcher Luft bremst der Anhänger – mit der Luft vom Lkw? | Antwort folgt … | Rot = Vorratsleitung: Sie führt immer Luft. Über das Anhängerbremsventil füllt sie den Behälter im Anhänger. | Schema · vereinfacht | LKW | ANHÄNGER | Vorrat / (Kreis 3) | Anhänger- / steuer- / ventil | Anhänger- / brems- / ventil | Luftbehälter | Bremszylinder: frei | Bremspedal | Fahren: Rot führt immer Luft und füllt den Behälter im Anhänger.
 NOTIZEN:
-FOLIE 97 VON 131 · keine Klicks, läuft von selbst
+FOLIE 97 VON 131 · keine Animation · Klick = weiter
 
 ▶ Sagen: „Links der Lkw, rechts der Anhänger. Beim Fahren fließt ständig Luft durch die rote Leitung – die Vorratsleitung. Sie füllt den Luftbehälter im Anhänger. Die gelbe Leitung ist leer.“
 ❓ Frage auf der Folie stellen.
@@ -996,7 +996,7 @@ FOLIE 97 VON 131 · keine Klicks, läuft von selbst
 === FOLIE 98 ===
 AUF DER FOLIE: KLASSE CE  ·  ABEND 6  ·  CE2  ·  ZWEILEITUNGS-DRUCKLUFTBREMSE | 98 | SO BREMST DER ANHÄNGER | Luft fließt | ❓ Frage an die Klasse / Mit welcher Luft bremst der Anhänger – mit der Luft vom Lkw? | Antwort folgt … | Rot = Vorratsleitung: Sie führt immer Luft. Über das Anhängerbremsventil füllt sie den Behälter im Anhänger. | Schema · vereinfacht | LKW | ANHÄNGER | Vorrat / (Kreis 3) | Anhänger- / steuer- / ventil | Anhänger- / brems- / ventil | Luftbehälter | Bremszylinder: frei | Bremspedal | Fahren: Rot führt immer Luft und füllt den Behälter im Anhänger.
 NOTIZEN:
-FOLIE 98 VON 131 · keine Klicks, läuft von selbst
+FOLIE 98 VON 131 · läuft von selbst weiter (kein Klick)
 
 ▶ Die Bewegung läuft – zuschauen lassen.
 🖱 Kein Klick – die Folie läuft von selbst weiter.
@@ -1005,7 +1005,7 @@ FOLIE 98 VON 131 · keine Klicks, läuft von selbst
 === FOLIE 99 ===
 AUF DER FOLIE: KLASSE CE  ·  ABEND 6  ·  CE2  ·  ZWEILEITUNGS-DRUCKLUFTBREMSE | 99 | SO BREMST DER ANHÄNGER | Luft fließt | ❓ Frage an die Klasse / Mit welcher Luft bremst der Anhänger – mit der Luft vom Lkw? | Antwort folgt … | Rot = Vorratsleitung: Sie führt immer Luft. Über das Anhängerbremsventil füllt sie den Behälter im Anhänger. | Schema · vereinfacht | LKW | ANHÄNGER | Vorrat / (Kreis 3) | Anhänger- / steuer- / ventil | Anhänger- / brems- / ventil | Luftbehälter | Bremszylinder: frei | Bremspedal | Der Behälter ist voll.
 NOTIZEN:
-FOLIE 99 VON 131 · keine Klicks, läuft von selbst
+FOLIE 99 VON 131 · läuft von selbst weiter (kein Klick)
 
 ▶ Die Bewegung läuft – zuschauen lassen.
 🖱 Kein Klick – die Folie läuft von selbst weiter.
@@ -1014,7 +1014,7 @@ FOLIE 99 VON 131 · keine Klicks, läuft von selbst
 === FOLIE 100 ===
 AUF DER FOLIE: KLASSE CE  ·  ABEND 6  ·  CE2  ·  ZWEILEITUNGS-DRUCKLUFTBREMSE | 100 | SO BREMST DER ANHÄNGER | Luft fließt | ❓ Frage an die Klasse / Mit welcher Luft bremst der Anhänger – mit der Luft vom Lkw? | Antwort folgt … | Rot = Vorratsleitung: Sie führt immer Luft. Über das Anhängerbremsventil füllt sie den Behälter im Anhänger. | Schema · vereinfacht | LKW | ANHÄNGER | Vorrat / (Kreis 3) | Anhänger- / steuer- / ventil | Anhänger- / brems- / ventil | Luftbehälter | Bremszylinder: bremsen | Bremspedal: getreten | Lkw bremst | Bremsen: Das Anhängersteuerventil gibt Druck auf gelb.
 NOTIZEN:
-FOLIE 100 VON 131 · keine Klicks, läuft von selbst
+FOLIE 100 VON 131 · läuft von selbst weiter (kein Klick)
 
 ▶ Die Bewegung läuft – zuschauen lassen.
 🖱 Kein Klick – die Folie läuft von selbst weiter.
@@ -1023,7 +1023,7 @@ FOLIE 100 VON 131 · keine Klicks, läuft von selbst
 === FOLIE 101 ===
 AUF DER FOLIE: KLASSE CE  ·  ABEND 6  ·  CE2  ·  ZWEILEITUNGS-DRUCKLUFTBREMSE | 101 | SO BREMST DER ANHÄNGER | Luft fließt | ❓ Frage an die Klasse / Mit welcher Luft bremst der Anhänger – mit der Luft vom Lkw? | ✓ Antwort / Mit seiner eigenen Luft aus dem Anhänger-Behälter. Rot füllt den Behälter auf, gelb sagt nur, wie stark gebremst wird. | Gelb = Bremsleitung: Druck nur beim Bremsen. Das Anhängerbremsventil nimmt Luft aus dem eigenen Behälter und schickt sie in die Bremszylinder. | Schema · vereinfacht | LKW | ANHÄNGER | Vorrat / (Kreis 3) | Anhänger- / steuer- / ventil | Anhänger- / brems- / ventil | Luftbehälter | Bremszylinder: bremsen | Bremspedal: getreten | Lkw bremst | Gelb meldet den Bremswunsch. Das Anhängerbremsventil schickt Luft aus dem Behälter in die Zylinder.
 NOTIZEN:
-FOLIE 101 VON 131 · keine Klicks, läuft von selbst
+FOLIE 101 VON 131 · keine Animation · Klick = weiter
 
 ▶ „Der Fahrer bremst. Das Anhängersteuerventil im Lkw gibt Druck auf die gelbe Leitung – je stärker das Pedal, desto mehr Druck. Am Anhänger öffnet das Anhängerbremsventil: Es schickt Luft aus dem eigenen Behälter in die Bremszylinder. Der Anhänger bremst mit seiner eigenen Luft. Rot füllt den Behälter gleich wieder auf.“
 ❓ Frage auf der Folie auflösen.
@@ -1035,7 +1035,7 @@ FOLIE 101 VON 131 · keine Klicks, läuft von selbst
 === FOLIE 102 ===
 AUF DER FOLIE: KLASSE CE  ·  ABEND 6  ·  CE2  ·  ZWEILEITUNGS-DRUCKLUFTBREMSE | 102 | SO BREMST DER ANHÄNGER | Luft fließt | ❓ Frage an die Klasse / Mit welcher Luft bremst der Anhänger – mit der Luft vom Lkw? | ✓ Antwort / Mit seiner eigenen Luft aus dem Anhänger-Behälter. Rot füllt den Behälter auf, gelb sagt nur, wie stark gebremst wird. | Gelb = Bremsleitung: Druck nur beim Bremsen. Das Anhängerbremsventil nimmt Luft aus dem eigenen Behälter und schickt sie in die Bremszylinder. | Schema · vereinfacht | LKW | ANHÄNGER | Vorrat / (Kreis 3) | Anhänger- / steuer- / ventil | Anhänger- / brems- / ventil | Luftbehälter | Bremszylinder: frei | Bremspedal | Pedal los: Gelb wird leer, die Bremse löst.
 NOTIZEN:
-FOLIE 102 VON 131 · keine Klicks, läuft von selbst
+FOLIE 102 VON 131 · läuft von selbst weiter (kein Klick)
 
 ▶ Die Bewegung läuft – zuschauen lassen.
 🖱 Kein Klick – die Folie läuft von selbst weiter.
@@ -1044,7 +1044,7 @@ FOLIE 102 VON 131 · keine Klicks, läuft von selbst
 === FOLIE 103 ===
 AUF DER FOLIE: KLASSE CE  ·  ABEND 6  ·  CE2  ·  ZWEILEITUNGS-DRUCKLUFTBREMSE | 103 | SO BREMST DER ANHÄNGER | Luft fließt | ❓ Frage an die Klasse / Mit welcher Luft bremst der Anhänger – mit der Luft vom Lkw? | ✓ Antwort / Mit seiner eigenen Luft aus dem Anhänger-Behälter. Rot füllt den Behälter auf, gelb sagt nur, wie stark gebremst wird. | Pedal los: Gelb wird leer, die Zylinder lösen. Rot füllt den Behälter wieder auf. | Schema · vereinfacht | LKW | ANHÄNGER | Vorrat / (Kreis 3) | Anhänger- / steuer- / ventil | Anhänger- / brems- / ventil | Luftbehälter | Bremszylinder: frei | Bremspedal | Pedal los: Gelb wird leer, die Bremse löst. Rot füllt den Behälter wieder auf.
 NOTIZEN:
-FOLIE 103 VON 131 · keine Klicks, läuft von selbst
+FOLIE 103 VON 131 · keine Animation · Klick = weiter
 
 ▶ „Pedal los: Die gelbe Leitung wird leer, die Bremszylinder lösen. Und rot füllt den Behälter wieder auf. So geht das bei jeder Bremsung.“
 ✅ Lehrbuchwissen (siehe oben).
@@ -1075,7 +1075,7 @@ FOLIE 105 VON 131 · 2 Klicks
 === FOLIE 106 ===
 AUF DER FOLIE: KLASSE CE  ·  ABEND 6  ·  CE2  ·  WENN EINE LEITUNG REISST | 106 | 04 | Wenn eine Leitung reißt | Rot oder gelb – am Ende bremst der Anhänger selbst. Nur der Zeitpunkt ist verschieden.
 NOTIZEN:
-FOLIE 106 VON 131 · keine Klicks, läuft von selbst
+FOLIE 106 VON 131 · Animation läuft von selbst · Klick = weiter
 
 ▶ Sagen: „Was passiert, wenn eine Leitung reißt – zum Beispiel weil sie scheuert oder weil Eis von der Plane fällt? Das ist eine der häufigsten Prüfungsfragen.“
 🖱 Keine Klicks.
@@ -1084,7 +1084,7 @@ FOLIE 106 VON 131 · keine Klicks, läuft von selbst
 === FOLIE 107 ===
 AUF DER FOLIE: KLASSE CE  ·  ABEND 6  ·  CE2  ·  WENN EINE LEITUNG REISST | 107 | ROT REISST | Die Vorratsleitung reißt | ❓ Frage an die Klasse / Auf der Autobahn reißt die rote Leitung ab. Was passiert mit Anhänger und Lkw? | Antwort folgt … | Der Zug fährt. Rot füllt den Behälter, gelb ist leer. | Schema · vereinfacht | LKW | ANHÄNGER | Vorrat / (Kreis 3) | Anhänger- / steuer- / ventil | Anhänger- / brems- / ventil | Luftbehälter | Bremszylinder: frei | Bremspedal | Fahren: Rot führt Luft, gelb ist leer.
 NOTIZEN:
-FOLIE 107 VON 131 · keine Klicks, läuft von selbst
+FOLIE 107 VON 131 · keine Animation · Klick = weiter
 
 ▶ Sagen: „Der Zug fährt auf der Autobahn. Rot führt Luft, der Behälter im Anhänger ist voll.“
 ❓ Frage auf der Folie stellen.
@@ -1094,7 +1094,7 @@ FOLIE 107 VON 131 · keine Klicks, läuft von selbst
 === FOLIE 108 ===
 AUF DER FOLIE: KLASSE CE  ·  ABEND 6  ·  CE2  ·  WENN EINE LEITUNG REISST | 108 | ROT REISST | Die Vorratsleitung reißt | ❓ Frage an die Klasse / Auf der Autobahn reißt die rote Leitung ab. Was passiert mit Anhänger und Lkw? | Antwort folgt … | Der Zug fährt. Rot füllt den Behälter, gelb ist leer. | Schema · vereinfacht | LKW | ANHÄNGER | Vorrat / (Kreis 3) | Anhänger- / steuer- / ventil | Anhänger- / brems- / ventil | Luftbehälter | Bremszylinder: frei | Bremspedal
 NOTIZEN:
-FOLIE 108 VON 131 · keine Klicks, läuft von selbst
+FOLIE 108 VON 131 · läuft von selbst weiter (kein Klick)
 
 ▶ Die Bewegung läuft – zuschauen lassen.
 🖱 Kein Klick – die Folie läuft von selbst weiter.
@@ -1103,7 +1103,7 @@ FOLIE 108 VON 131 · keine Klicks, läuft von selbst
 === FOLIE 109 ===
 AUF DER FOLIE: KLASSE CE  ·  ABEND 6  ·  CE2  ·  WENN EINE LEITUNG REISST | 109 | ROT REISST | Die Vorratsleitung reißt | ❓ Frage an die Klasse / Auf der Autobahn reißt die rote Leitung ab. Was passiert mit Anhänger und Lkw? | Antwort folgt … | Der Zug fährt. Rot füllt den Behälter, gelb ist leer. | Schema · vereinfacht | LKW | ANHÄNGER | Vorrat / (Kreis 3) | Anhänger- / steuer- / ventil | Anhänger- / brems- / ventil | Luftbehälter | abgesperrt | Bremszylinder: frei | ✕ abgerissen | Bremspedal | Rot reißt ab: Der Druck in rot fällt sofort.
 NOTIZEN:
-FOLIE 109 VON 131 · keine Klicks, läuft von selbst
+FOLIE 109 VON 131 · läuft von selbst weiter (kein Klick)
 
 ▶ Die Bewegung läuft – zuschauen lassen.
 🖱 Kein Klick – die Folie läuft von selbst weiter.
@@ -1112,22 +1112,23 @@ FOLIE 109 VON 131 · keine Klicks, läuft von selbst
 === FOLIE 110 ===
 AUF DER FOLIE: KLASSE CE  ·  ABEND 6  ·  CE2  ·  WENN EINE LEITUNG REISST | 110 | ROT REISST | Die Vorratsleitung reißt | ❓ Frage an die Klasse / Auf der Autobahn reißt die rote Leitung ab. Was passiert mit Anhänger und Lkw? | Antwort folgt … | Rot ist leer: Das Anhängerbremsventil schaltet auf Notbremsung. Es sperrt den Behälter gegen die gerissene Leitung ab und schickt seine Luft in die Zylinder. | Schema · vereinfacht | LKW | ANHÄNGER | Vorrat / (Kreis 3) | Anhänger- / steuer- / ventil | Anhänger- / brems- / ventil | Luftbehälter | abgesperrt | Bremszylinder: bremsen | ✕ abgerissen | Bremspedal | Das Anhängerbremsventil bremst den Anhänger – mit Luft aus dem eigenen Behälter.
 NOTIZEN:
-FOLIE 110 VON 131 · keine Klicks, läuft von selbst
+FOLIE 110 VON 131 · keine Animation · Klick = weiter
 
 ▶ „Rot reißt – der Druck fällt sofort. Das Anhängerbremsventil merkt das. Es macht zwei Dinge: Es sperrt den Behälter gegen die gerissene Leitung ab, damit die Luft nicht verloren geht. Und es schickt die Luft aus dem Behälter in die Bremszylinder. Der Anhänger bremst sofort von selbst.“
 ✅ Prüfungsfrage 2.7.02-302: Das Anhängerbremsventil leitet eine Bremsung des Anhängers ein und schließt den Anhängerluftvorrat gegen die unterbrochene Vorratsleitung ab. § 41 Abs. 9 StVZO: Trennt sich der Anhänger, muss er selbsttätig zum Stehen kommen.
+💡 Bei manchen neuen Anhängern (z. B. mit ZF iEBS) greifen beim Abriss von rot zusätzlich die Federspeicher. In der Prüfung zählt: Das Anhängerbremsventil bremst und sperrt den Vorrat ab (2.7.02-302). Beim Abstellen trotzdem immer roter Knopf und Keile.
 🖱 Klick: Und der Lkw?
 ➜ „Bremst der Lkw jetzt auch?“
 
 === FOLIE 111 ===
-AUF DER FOLIE: KLASSE CE  ·  ABEND 6  ·  CE2  ·  WENN EINE LEITUNG REISST | 111 | ROT REISST | Die Vorratsleitung reißt | ❓ Frage an die Klasse / Auf der Autobahn reißt die rote Leitung ab. Was passiert mit Anhänger und Lkw? | ✓ Antwort / Der Anhänger bremst sofort selbst – mit Luft aus seinem Behälter, der gegen die Leitung abgesperrt wird. Der Lkw bremst nicht automatisch. | Der Lkw bremst nicht von selbst. Ihr spürt den Ruck: Warnblinker an, kontrolliert anhalten, Zug sichern. | Schema · vereinfacht | LKW | ANHÄNGER | Vorrat / (Kreis 3) | Anhänger- / steuer- / ventil | Anhänger- / brems- / ventil | Luftbehälter | abgesperrt | Bremszylinder: bremsen | ✕ abgerissen | Bremspedal | Der Lkw bremst nicht automatisch. Warnblinker an, kontrolliert anhalten.
+AUF DER FOLIE: KLASSE CE  ·  ABEND 6  ·  CE2  ·  WENN EINE LEITUNG REISST | 111 | ROT REISST | Die Vorratsleitung reißt | ❓ Frage an die Klasse / Auf der Autobahn reißt die rote Leitung ab. Was passiert mit Anhänger und Lkw? | ✓ Antwort / Der Anhänger bremst sofort selbst – mit Luft aus seinem Behälter, der gegen die Leitung abgesperrt wird. Der Lkw bremst nicht automatisch. | Der Lkw bremst nicht von selbst. Ihr merkt, dass der Anhänger bremst: Warnblinker an, kontrolliert anhalten, Zug sichern. | Schema · vereinfacht | LKW | ANHÄNGER | Vorrat / (Kreis 3) | Anhänger- / steuer- / ventil | Anhänger- / brems- / ventil | Luftbehälter | abgesperrt | Bremszylinder: bremsen | ✕ abgerissen | Bremspedal | Der Lkw bremst nicht automatisch. Warnblinker an, kontrolliert anhalten.
 NOTIZEN:
-FOLIE 111 VON 131 · keine Klicks, läuft von selbst
+FOLIE 111 VON 131 · keine Animation · Klick = weiter
 
-▶ „Und der Lkw? Der bremst nicht automatisch – das ist die Falle in der Prüfung. Ihr spürt aber, dass hinten etwas zieht. Warnblinker an, kontrolliert anhalten, Zug sichern.“
+▶ „Und der Lkw? Der bremst nicht automatisch – das ist die Falle in der Prüfung. Ihr merkt aber, dass der Anhänger bremst. Warnblinker an, kontrolliert anhalten, Zug sichern.“
 ❓ Frage auf der Folie auflösen.
 ✅ Prüfungsfrage 2.7.02-302 (falsch: „löst beim Zugfahrzeug automatisch eine Bremsung aus“).
-💡 Die Notbremsung ist nur ein Mindestschutz: Die EU-Regeln verlangen dafür nur eine schwache Mindestwirkung (RL 71/320/EWG Anhang II: 13,5 % der Gewichtskraft). Und die Luft im Behälter hält nicht ewig. Darum einen abgestellten Anhänger immer mit rotem Knopf und Keilen sichern.
+💡 Die Notbremsung ist nur ein Mindestschutz: Die EU-Regeln verlangen dafür nur eine schwache Mindestwirkung (UN-R 13 / RL 71/320/EWG Anhang II: 13,5 % der Gewichtskraft). Und die Luft im Behälter hält nicht ewig. Darum einen abgestellten Anhänger immer mit rotem Knopf und Keilen sichern.
 🖱 Nächster Klick: nächste Folie.
 ➜ „Eine Prüfungsfrage.“
 
@@ -1144,7 +1145,7 @@ FOLIE 112 VON 131 · 2 Klicks
 === FOLIE 113 ===
 AUF DER FOLIE: KLASSE CE  ·  ABEND 6  ·  CE2  ·  WENN EINE LEITUNG REISST | 113 | GELB REISST | Die Bremsleitung reißt | ❓ Frage an die Klasse / Die gelbe Leitung ist abgerissen. Merkt ihr das beim Fahren? | Antwort folgt … | Gelb führt beim Fahren keine Luft. Darum fällt ein Riss zuerst gar nicht auf. | Schema · vereinfacht | LKW | ANHÄNGER | Vorrat / (Kreis 3) | Anhänger- / steuer- / ventil | Anhänger- / brems- / ventil | Luftbehälter | Bremszylinder: frei | ✕ abgerissen | Bremspedal | Gelb ist abgerissen – aber gelb ist beim Fahren leer. Nichts passiert.
 NOTIZEN:
-FOLIE 113 VON 131 · keine Klicks, läuft von selbst
+FOLIE 113 VON 131 · keine Animation · Klick = weiter
 
 ▶ Sagen: „Jetzt reißt die gelbe Leitung. Beim Fahren ist sie leer – es passiert gar nichts. Ihr merkt es nicht.“
 ❓ Frage auf der Folie stellen.
@@ -1155,7 +1156,7 @@ FOLIE 113 VON 131 · keine Klicks, läuft von selbst
 === FOLIE 114 ===
 AUF DER FOLIE: KLASSE CE  ·  ABEND 6  ·  CE2  ·  WENN EINE LEITUNG REISST | 114 | GELB REISST | Die Bremsleitung reißt | ❓ Frage an die Klasse / Die gelbe Leitung ist abgerissen. Merkt ihr das beim Fahren? | Antwort folgt … | Der Fahrer bremst. Die Luft für gelb zischt an der Bruchstelle heraus – beim Anhänger kommt kein Bremssignal an. | Schema · vereinfacht | LKW | ANHÄNGER | Vorrat / (Kreis 3) | Anhänger- / steuer- / ventil | Anhänger- / brems- / ventil | Luftbehälter | Bremszylinder: frei | ✕ zischt! | Bremspedal: getreten | Lkw bremst | Bremsen: Die Luft aus gelb zischt an der Bruchstelle ins Freie.
 NOTIZEN:
-FOLIE 114 VON 131 · keine Klicks, läuft von selbst
+FOLIE 114 VON 131 · keine Animation · Klick = weiter
 
 ▶ „Jetzt bremst ihr. Das Anhängersteuerventil gibt Druck auf gelb – aber die Luft zischt an der Bruchstelle heraus. Beim Anhänger kommt nichts an.“
 🖱 Klick: Das Anhängersteuerventil reagiert (läuft von selbst weiter).
@@ -1164,7 +1165,7 @@ FOLIE 114 VON 131 · keine Klicks, läuft von selbst
 === FOLIE 115 ===
 AUF DER FOLIE: KLASSE CE  ·  ABEND 6  ·  CE2  ·  WENN EINE LEITUNG REISST | 115 | GELB REISST | Die Bremsleitung reißt | ❓ Frage an die Klasse / Die gelbe Leitung ist abgerissen. Merkt ihr das beim Fahren? | Antwort folgt … | Der Fahrer bremst. Die Luft für gelb zischt an der Bruchstelle heraus – beim Anhänger kommt kein Bremssignal an. | Schema · vereinfacht | LKW | ANHÄNGER | Vorrat / (Kreis 3) | Anhänger- / steuer- / ventil | Anhänger- / brems- / ventil | Luftbehälter | abgesperrt | Bremszylinder: frei | ✕ zischt! | entlüftet rot | Bremspedal: getreten | Lkw bremst | Das Anhängersteuerventil entlüftet die rote Leitung.
 NOTIZEN:
-FOLIE 115 VON 131 · keine Klicks, läuft von selbst
+FOLIE 115 VON 131 · läuft von selbst weiter (kein Klick)
 
 ▶ Die Bewegung läuft – zuschauen lassen.
 🖱 Kein Klick – die Folie läuft von selbst weiter.
@@ -1173,7 +1174,7 @@ FOLIE 115 VON 131 · keine Klicks, läuft von selbst
 === FOLIE 116 ===
 AUF DER FOLIE: KLASSE CE  ·  ABEND 6  ·  CE2  ·  WENN EINE LEITUNG REISST | 116 | GELB REISST | Die Bremsleitung reißt | ❓ Frage an die Klasse / Die gelbe Leitung ist abgerissen. Merkt ihr das beim Fahren? | ✓ Antwort / Nein – erst beim Bremsen. Dann entlüftet der Lkw die rote Leitung, und der Anhänger wird notgebremst. | Das Anhängersteuerventil entlüftet rot. Für den Anhänger ist das wie ein Abriss: Er wird notgebremst. Der Lkw bremst normal weiter. | Schema · vereinfacht | LKW | ANHÄNGER | Vorrat / (Kreis 3) | Anhänger- / steuer- / ventil | Anhänger- / brems- / ventil | Luftbehälter | abgesperrt | Bremszylinder: bremsen | ✕ zischt! | entlüftet rot | Bremspedal: getreten | Lkw bremst | ✓ Vierkreisschutzventil schützt den Lkw | Rot ist leer: Der Anhänger wird notgebremst. Der Lkw bremst normal weiter.
 NOTIZEN:
-FOLIE 116 VON 131 · keine Klicks, läuft von selbst
+FOLIE 116 VON 131 · keine Animation · Klick = weiter
 
 ▶ „Das Anhängersteuerventil merkt den Druckverlust. Es entlüftet die rote Leitung. Für den Anhänger sieht das aus wie ein Abriss von rot: Er wird notgebremst. Der Lkw bremst ganz normal weiter – seine Kreise schützt das Vierkreisschutzventil.“
 ❓ Frage auf der Folie auflösen.
@@ -1205,7 +1206,7 @@ FOLIE 118 VON 131 · 4 Klicks
 === FOLIE 119 ===
 AUF DER FOLIE: KLASSE CE  ·  ABEND 6  ·  CE2  ·  ANHÄNGER RANGIEREN | 119 | 05 | Anhänger rangieren | Roter Knopf, schwarzer Knopf – wer sie verwechselt, hat einen rollenden Anhänger.
 NOTIZEN:
-FOLIE 119 VON 131 · keine Klicks, läuft von selbst
+FOLIE 119 VON 131 · Animation läuft von selbst · Klick = weiter
 
 ▶ Sagen: „Letztes Kapitel: Ein abgekuppelter Anhänger steht auf dem Hof und soll ein Stück bewegt werden. Dafür gibt es zwei Knöpfe.“
 🖱 Keine Klicks.
@@ -1219,25 +1220,26 @@ FOLIE 120 VON 131 · 4 Klicks
 ▶ Sagen: „Zwei Knöpfe an der Seite des Anhängers. Was machen sie?“
 ❓ Sammeln lassen, dann je Klick auflösen.
 🖱 Klick 1–4: je ein Punkt.
-✅ DGUV I 214-080, S. 19, 21 und 39: roter Knopf = Feststellbremse (Federspeicher), schwarzer Knopf = Löseventil. Haldex Trailer Application Guide: Drücken des roten Knopfs löst die Federspeicher nur mit Druck im Anhängerbehälter. RL 71/320/EWG Anhang I Nr. 2.2.2.11: Das Löseventil muss beim Anschließen der Vorratsleitung automatisch in die Betriebsstellung zurückkehren.
+✅ DGUV I 214-080, S. 19, 21 und 39: roter Knopf = Feststellbremse (Federspeicher), schwarzer Knopf = Löseventil. Haldex Trailer Application Guide: Drücken des roten Knopfs löst die Federspeicher nur mit Druck im Anhängerbehälter. UN-R 13 / RL 71/320/EWG Anhang I Nr. 2.2.2.11: Das Löseventil muss beim Anschließen der Vorratsleitung automatisch in die Betriebsstellung zurückkehren.
 💡 Neuere Anhänger haben oft nur einen roten Knopf mit drei Stellungen: Parken – Fahren – Lösen. Herstellerangabe beachten.
 ➜ „Wie rangiert ihr damit?“
 
 === FOLIE 121 ===
 AUF DER FOLIE: KLASSE CE  ·  ABEND 6  ·  CE2  ·  ANHÄNGER RANGIEREN | 121 | RANGIEREN | Rot und schwarz | 1 | Abgestellt | 2 | Rot drücken | 3 | Schwarz drücken | 4 | Danach | ❓ Frage an die Klasse   / Der abgekuppelte Anhänger soll ein Stück bewegt werden. Welche Knöpfe – und was vorher? | Abgestellt ist der Anhänger doppelt gebremst: Federspeicher und Notbremsung. | Schema · Knöpfe von der Seite | Roter Knopf / gezogen | Schwarzer Knopf / draußen | Federspeicher | fest | Notbremsung | fest | Luftbehälter | voll | Rote Leitung | nicht dran | ✓  Keile liegen | Der Anhänger steht – doppelt gebremst. | Abgekuppelt: Federspeicher fest (roter Knopf gezogen) und Notbremsung fest (keine rote Leitung).
 NOTIZEN:
-FOLIE 121 VON 131 · keine Klicks, läuft von selbst
+FOLIE 121 VON 131 · keine Animation · Klick = weiter
 
 ▶ Sagen: „Der Anhänger ist abgekuppelt. Er ist doppelt gebremst: Der rote Knopf ist gezogen – die Federspeicher halten. Und weil die rote Leitung fehlt, wirkt die Notbremsung mit Luft aus dem Behälter.“
 ❓ Frage auf der Folie stellen.
 ✅ DGUV I 214-080, S. 19/39; Lehrbuchwissen (Haldex).
+💡 Bei manchen neuen Anhängern (z. B. ZF iEBS mit Park-Löse-Ventil) greift ohne rote Leitung zusätzlich der Federspeicher – Herstellerangabe beachten.
 🖱 Keine Animation auf dieser Folie – nächster Klick = nächster Schritt (Morph).
 ➜ „Wie bekommen wir ihn frei?“
 
 === FOLIE 122 ===
 AUF DER FOLIE: KLASSE CE  ·  ABEND 6  ·  CE2  ·  ANHÄNGER RANGIEREN | 122 | RANGIEREN | Rot und schwarz | 1 | Abgestellt | 2 | Rot drücken | 3 | Schwarz drücken | 4 | Danach | ❓ Frage an die Klasse   / Der abgekuppelte Anhänger soll ein Stück bewegt werden. Welche Knöpfe – und was vorher? | Erst sichern! Dann roter Knopf: Die Feststellbremse löst – die Notbremsung hält noch. | Schema · Knöpfe von der Seite | Roter Knopf / gedrückt | Schwarzer Knopf / draußen | Federspeicher | gelöst | Notbremsung | fest | Luftbehälter | voll | Rote Leitung | nicht dran | ✓  Rangierfahrzeug angekuppelt | Noch hält die Notbremsung. | Erst sichern: Rangierfahrzeug dran. Dann roter Knopf drücken – die Federspeicher lösen mit Luft aus dem Behälter.
 NOTIZEN:
-FOLIE 122 VON 131 · keine Klicks, läuft von selbst
+FOLIE 122 VON 131 · keine Animation · Klick = weiter
 
 ▶ „Zuerst sichern: Rangierfahrzeug ankuppeln – oder wenigstens Keile. Dann den roten Knopf drücken. Die Federspeicher lösen – mit Luft aus dem Behälter. Aber die Notbremsung hält noch.“
 ✅ Haldex: Lösen der Federspeicher nur mit Druck im Behälter. Ist der Behälter leer: Fremdluft oder mechanische Hilfslöseeinrichtung.
@@ -1247,7 +1249,7 @@ FOLIE 122 VON 131 · keine Klicks, läuft von selbst
 === FOLIE 123 ===
 AUF DER FOLIE: KLASSE CE  ·  ABEND 6  ·  CE2  ·  ANHÄNGER RANGIEREN | 123 | RANGIEREN | Rot und schwarz | 1 | Abgestellt | 2 | Rot drücken | 3 | Schwarz drücken | 4 | Danach | ❓ Frage an die Klasse   / Der abgekuppelte Anhänger soll ein Stück bewegt werden. Welche Knöpfe – und was vorher? | Schwarzer Knopf: Die Notbremsung löst. Jetzt rollt der Anhänger frei. | Schema · Knöpfe von der Seite | Roter Knopf / gedrückt | Schwarzer Knopf / gedrückt | Federspeicher | gelöst | Notbremsung | gelöst | Luftbehälter | voll | Rote Leitung | nicht dran | ✓  Rangierfahrzeug angekuppelt | Der Anhänger rollt frei – nur gesichert bewegen! | Schwarzer Knopf drücken: Die Notbremsung löst. Jetzt bremst der Anhänger nicht mehr selbst.
 NOTIZEN:
-FOLIE 123 VON 131 · keine Klicks, läuft von selbst
+FOLIE 123 VON 131 · keine Animation · Klick = weiter
 
 ▶ „Jetzt der schwarze Knopf – das Löseventil. Die Notbremsung löst. Ab jetzt bremst der Anhänger gar nicht mehr selbst! Darum nur, wenn er gesichert ist.“
 ✅ Prüfungsfrage 2.7.06-306: Löseventil betätigen, wenn der Anhänger bei gefüllten Luftbehältern und nicht angeschlossenen Bremsleitungen rangiert werden soll.
@@ -1258,11 +1260,11 @@ FOLIE 123 VON 131 · keine Klicks, läuft von selbst
 === FOLIE 124 ===
 AUF DER FOLIE: KLASSE CE  ·  ABEND 6  ·  CE2  ·  ANHÄNGER RANGIEREN | 124 | RANGIEREN | Rot und schwarz | 1 | Abgestellt | 2 | Rot drücken | 3 | Schwarz drücken | 4 | Danach | ✓ Antwort   / Erst sichern. Dann rot drücken und schwarz drücken – nur mit vollem Behälter. Danach wieder rot ziehen und Keile. | Fertig rangiert: roter Knopf ziehen, Keile legen. | Schema · Knöpfe von der Seite | Roter Knopf / gezogen | Schwarzer Knopf / gedrückt | Federspeicher | fest | Notbremsung | gelöst | Luftbehälter | voll | Rote Leitung | nicht dran | ✓  Keile liegen | Der Anhänger steht wieder fest. | Danach: roter Knopf ziehen, Keile legen. Kommt die rote Leitung wieder dran, springt der schwarze Knopf von selbst heraus.
 NOTIZEN:
-FOLIE 124 VON 131 · keine Klicks, läuft von selbst
+FOLIE 124 VON 131 · keine Animation · Klick = weiter
 
 ▶ „Fertig rangiert: roter Knopf ziehen, Keile legen. Den schwarzen Knopf müsst ihr nicht ziehen – er springt von selbst heraus, sobald die rote Leitung wieder angeschlossen wird.“
 ❓ Frage auf der Folie auflösen.
-✅ RL 71/320/EWG Anhang I Nr. 2.2.2.11 (automatische Rückstellung des Löseventils). DGUV I 214-080, S. 33: nie nur mit der Notbremsfunktion abstellen.
+✅ UN-R 13 / RL 71/320/EWG Anhang I Nr. 2.2.2.11 (automatische Rückstellung des Löseventils). DGUV I 214-080, S. 33: nie nur mit der Notbremsfunktion abstellen.
 🖱 Keine Animation auf dieser Folie – nächster Klick = nächster Schritt (Morph).
 ➜ „Prüfungsfrage.“
 
@@ -1277,14 +1279,14 @@ FOLIE 125 VON 131 · 2 Klicks
 ➜ „Das war CE2. Zum Mitschreiben.“
 
 === FOLIE 126 ===
-AUF DER FOLIE: KLASSE CE  ·  ABEND 6  ·  CE2  ·  ABSCHLUSS | 126 | ZUM MITSCHREIBEN | Lastzugbremsen | ✎ | Eigene Bremse | Anhänger mit 2 und mehr Achsen · ein Pedal für beide · bremst beim Abreißen selbst | Auflaufbremse | bremst erst beim Auflaufen · bis 3,5 t · nie am Auflieger · Abreißseil an den Lkw | Rot | Vorratsleitung: immer Druck, füllt den Behälter im Anhänger | Gelb | Bremsleitung: Druck nur beim Bremsen, meldet den Bremswunsch | Rot reißt | Anhänger bremst sofort selbst, Behälter wird abgesperrt · Lkw bremst nicht automatisch | Gelb reißt | erst beim Bremsen: Lkw entlüftet rot → Anhänger wird notgebremst | Roter Knopf | Feststellbremse (Federspeicher) des Anhängers | Schwarzer Knopf | Löseventil: Notbremsung lösen zum Rangieren · springt beim Anschließen heraus
+AUF DER FOLIE: KLASSE CE  ·  ABEND 6  ·  CE2  ·  ABSCHLUSS | 126 | ZUM MITSCHREIBEN | Lastzugbremsen | ✎ | Eigene Bremse | über 0,75 t Achslast · ein Pedal oder Auflaufbremse · bremst bei Abriss selbst | Auflaufbremse | bremst erst beim Auflaufen · bis 3,5 t · nie am Auflieger · Abreißseil an den Lkw | Rot | Vorratsleitung: immer Druck, füllt den Behälter im Anhänger | Gelb | Bremsleitung: Druck nur beim Bremsen, meldet den Bremswunsch | Rot reißt | Anhänger bremst sofort selbst, Behälter wird abgesperrt · Lkw bremst nicht automatisch | Gelb reißt | erst beim Bremsen: Lkw entlüftet rot → Anhänger wird notgebremst | Roter Knopf | Feststellbremse (Federspeicher) des Anhängers | Schwarzer Knopf | Löseventil: Notbremsung lösen zum Rangieren · springt beim Anschließen heraus
 NOTIZEN:
 FOLIE 126 VON 131 · 8 Klicks
 
 ▶ Sagen: „Schreibt euch das auf – das kommt in der Prüfung.“
 🖱 Klick 1–8: je eine Zeile.
 💡 Erst das Stichwort vorlesen und fragen: „Wer weiß es?“ – dann klicken.
-✅ Quellen: § 41 Abs. 9 und 10 StVZO, RL 71/320/EWG, DGUV I 214-080, Prüfungsfragen 2.7.06-105, 2.7.02-302, 2.7.06-317, 2.7.06-306.
+✅ Quellen: § 41 Abs. 9 und 10 StVZO, UN-R 13 / RL 71/320/EWG, DGUV I 214-080, Prüfungsfragen 2.7.06-105, 2.7.02-302, 2.7.06-317, 2.7.06-306.
 ➜ „Drei Prüfungsfragen.“
 
 === FOLIE 127 ===
@@ -1298,7 +1300,7 @@ FOLIE 127 VON 131 · 2 Klicks
 ➜ „Nächste Frage.“
 
 === FOLIE 128 ===
-AUF DER FOLIE: KLASSE CE  ·  ABEND 6  ·  CE2  ·  ABSCHLUSS | 128 | PRÜFUNGSFRAGE 2.7.06-319 | Sie fahren ein Zugfahrzeug mit Druckluftbremsanlage. Die Bremsleitung am rechten Vorderrad bricht. Wie wirkt sich das im Anhängerbetrieb aus? | A | Beim Anhänger bleibt die Betriebsbremse voll funktionsfähig | B | Die Bremsleistung des Zugfahrzeugs ist eingeschränkt | C | Der Anhänger wird sofort selbsttätig gebremst | ✓  RICHTIG | ✓  RICHTIG | Der Kreis am Lkw ist kaputt, die anderen bleiben dicht. Der Anhänger bremst normal.
+AUF DER FOLIE: KLASSE CE  ·  ABEND 6  ·  CE2  ·  ABSCHLUSS | 128 | PRÜFUNGSFRAGE 2.7.06-319 | Sie fahren ein Zugfahrzeug mit Druckluftbremsanlage. Die Bremsleitung am rechten Vorderrad bricht. Wie wirkt sich das im Anhängerbetrieb aus? | A | Beim Anhänger bleibt die Betriebsbremse voll funktionsfähig | B | Die Bremsleistung des Zugfahrzeugs ist eingeschränkt | C | Der Anhänger wird sofort selbsttätig gebremst | ✓  RICHTIG | ✓  RICHTIG | Der Kreis am Lkw ist kaputt, die anderen behalten ihren Druck. Der Anhänger bremst normal.
 NOTIZEN:
 FOLIE 128 VON 131 · 2 Klicks
 
@@ -1329,7 +1331,7 @@ FOLIE 130 VON 131 · 5 Klicks
 === FOLIE 131 ===
 AUF DER FOLIE: Abend 6 geschafft! | CE1 + CE2: Züge zusammenstellen und bremsen | Nächstes Mal – Abend 7: / CE3  Bremsen: ABS, Feststellbremse, Dauerbremse / CE4  Fahren mit Zügen
 NOTIZEN:
-FOLIE 131 VON 131 · keine Klicks, läuft von selbst
+FOLIE 131 VON 131 · Animation läuft von selbst · Klick = weiter
 
 ▶ Sagen: „Das war Abend 6. Ihr wisst jetzt, wie man einen Zug richtig zusammenstellt und wie seine Bremse arbeitet. Beim nächsten Mal geht es weiter mit der Bremse – Bremskraftregelung, ABS, Feststellbremse mit Kontrollstellung und Dauerbremse – und dann mit dem Fahren mit Zügen. Danke fürs Mitmachen, kommt gut nach Hause.“
 💡 Ausbildungsnachweis abzeichnen lassen. Prüfungsfragen 2.7.07 (Kuppeln) und 2.7.06 (Bremsen) als Hausaufgabe üben.

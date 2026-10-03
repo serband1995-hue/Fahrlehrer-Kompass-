@@ -12,26 +12,26 @@ module.exports = async (deck) => {
   // ===== ACHSLAST-WAAGE =====
   {
     const x0 = 5.95, K = 0.42, GY = 4.0, xm = m => x0 + m * K;
-    const AX = [{ x: xm(1.35), n: 'Lenkachse', max: 10 }, { x: xm(5.05), n: 'Antriebsachse', max: 11.5 }, { x: xm(2.9 + 9.2), n: 'Dreifachachse', max: 24 }];
+    const AX = [{ x: xm(1.35), n: 'Lenkachse', max: 10 }, { x: xm(5.05), n: 'Antriebsachse', max: 11.5 }, { x: xm(2.9 + 9.2), n: 'Dreifachachse', max: 24, sub: 'max. 24 t (Abstand über 1,3 m)' }];
     const ST = [
-      { w: [5.2, 3.6, 5.7], pal: 0, info: 'Jede Achse hat ihre eigene Grenze (§ 34 StVZO): Lenkachse 10 t, angetriebene Achse 11,5 t, Dreifachachse 24 t.' },
-      { w: [7.5, 11.5, 21.0], pal: 1, info: 'Mehr als 4 Achsen: höchstens 40 t. 44 t nur im Kombinierten Verkehr – auf dem Weg zu Bahn oder Hafen, mit Nachweis.' },
-      { w: [7.7, 12.6, 22.7], pal: 2, info: 'Mehr als 5 % zu schwer: 80 € und 1 Punkt für den Fahrer. Dazu: längerer Bremsweg, heiße Bremsen, mehr Verschleiß.' },
+      { w: [5.2, 3.6, 5.7], pal: 0, info: 'Jede Achse hat ihre eigene Grenze: Lenkachse 10 t, Antriebsachse 11,5 t, Dreifachachse 21 t – bei mehr als 1,30 m Achsabstand 24 t. Es gilt immer der kleinere Wert aus Gesetz und Fahrzeugschein.' },
+      { w: [7.5, 11.5, 21.0], pal: 1, info: 'Mehr als 4 Achsen: höchstens 40 t. 44 t nur im Kombinierten Verkehr – auf dem Weg zum oder vom Bahnhof oder Hafen, mit Nachweis.' },
+      { w: [7.7, 12.6, 22.7], pal: 2, info: 'Mehr als 5 % zu schwer (hier 7,5 %): 80 € und 1 Punkt für den Fahrer – ab 10 % wird es teurer. Dazu: längerer Bremsweg, heiße Bremsen.' },
     ];
     const f1 = v => v.toFixed(1).replace('.', ',');
     await steps(deck, 'ce1g', {
       kicker: 'Achslasten', ttl: 'Der Zug auf der Waage',
       list: ['Leer', 'Beladen: 40 t', 'Überladen: 43 t'],
-      ask: { q: 'Euer Sattelzug hat 5 Achsen. Wie schwer darf er insgesamt sein?', a: '40 t. 44 t nur im Kombinierten Verkehr (Bahn, Hafen) – mit Nachweis.', at: 1 },
+      ask: { q: 'Euer Sattelzug hat 5 Achsen. Wie schwer darf er insgesamt sein?', a: '40 t. 44 t nur im Kombinierten Verkehr (zum oder vom Bahnhof oder Hafen) – mit Nachweis.', at: 1 },
       caps: [
         'Leer wiegt der Sattelzug etwa 14,5 t. Unter jeder Achse steht eine Waage.',
         'Beladen: 7,5 + 11,5 + 21,0 = 40,0 t. Jede Achse hält ihre Grenze – und die Summe genau 40 t.',
         'Zwei Paletten mehr: 43 t. Die Antriebsachse ist zu schwer – und der ganze Zug auch.',
       ],
       notes: [
-        '▶ Sagen: „Wir stellen unseren Sattelzug auf eine Waage – unter jeder Achse eine. Leer wiegt er etwa 14,5 Tonnen. Jede Achse hat ihre eigene Grenze.“\n❓ Frage auf der Folie stellen.\n✅ § 34 Abs. 4 StVZO: Einzelachse 10 t, angetriebene Einzelachse 11,5 t, Dreifachachse 21 t (Abstände bis 1,3 m) bzw. 24 t (über 1,3 bis 1,4 m). Leergewicht: Beispielwert.\n➜ „Jetzt wird beladen.“',
-        '▶ „Beladen: 7,5 plus 11,5 plus 21 – genau 40 Tonnen. Jede Achse hält ihre Grenze, die Summe auch. Mehr als 4 Achsen: höchstens 40 Tonnen.“\n❓ Frage auf der Folie auflösen.\n✅ § 34 Abs. 6 Nr. 5 StVZO: Züge und Sattelkraftfahrzeuge mit mehr als 4 Achsen 40 t. 44 t: § 34 Abs. 6 Nr. 6 (intermodal, 3-Achs-Zugmaschine mit 40- oder 45-Fuß-Container) und 53. StVZAusnV (Vor- und Nachlauf im Kombinierten Verkehr, Nachweis mitführen). Prüfungsfrage 2.6.06-302: 40 t. Achslasten: eigene Beispielrechnung.\n➜ „Und wenn noch zwei Paletten dazukommen?“',
-        '▶ „Zwei Paletten mehr – 43 Tonnen. Die Antriebsachse trägt jetzt 12,6 Tonnen: zu viel. Und der Zug ist 3 Tonnen zu schwer. Das sind mehr als 5 Prozent: 80 Euro und ein Punkt – für den Fahrer.“\n✅ BKatV Nr. 198.1 (Tabelle 3): Überschreitung der zulässigen Achslast oder Gesamtmasse bei Kfz über 7,5 t bzw. Kfz mit Anhänger über 2 t – mehr als 5 %: 80 € und 1 Punkt; der Halter zahlt zusätzlich (Nr. 199). Eigene Beispielrechnung: 43 t ÷ 40 t = 7,5 % zu viel.\n💡 Prüfungsfrage 2.2.22-301: Lkw beladen, Anhänger leer ist sicherer als umgekehrt.\n➜ „Eine Prüfungsfrage.“',
+        '▶ Sagen: „Wir stellen unseren Sattelzug auf eine Waage – unter jeder Achse eine. Leer wiegt er etwa 14,5 Tonnen. Jede Achse hat ihre eigene Grenze.“\n❓ Frage auf der Folie stellen.\n✅ § 34 Abs. 4 StVZO: Einzelachse 10 t, angetriebene Einzelachse 11,5 t, Dreifachachse 21 t (Abstände bis 1,3 m) bzw. 24 t (über 1,3 bis 1,4 m). Es gilt immer der kleinere Wert aus Gesetz und Zulassungsbescheinigung (§ 34 Abs. 2 und 3). Leergewicht: Beispielwert.\n➜ „Jetzt wird beladen.“',
+        '▶ „Beladen: 7,5 plus 11,5 plus 21 – genau 40 Tonnen. Jede Achse hält ihre Grenze, die Summe auch. Mehr als 4 Achsen: höchstens 40 Tonnen.“\n❓ Frage auf der Folie auflösen.\n✅ § 34 Abs. 6 Nr. 5 StVZO: Züge und Sattelkraftfahrzeuge mit mehr als 4 Achsen 40 t. § 34 Abs. 6 Nr. 6 (intermodal, Container oder Wechselaufbauten bis 45 Fuß: 2 + 3 Achsen 42 t, 3 + 2/3 Achsen 44 t) und 53. StVZAusnV § 1 (44 t im Vor- und Nachlauf des Kombinierten Verkehrs: nächstgelegener geeigneter Bahnhof bzw. Hafen bis 150 km Luftlinie; Nachweis mitführen). Ausnahme E-Lkw: bis 2 t mehr für den Antrieb (§ 34 Abs. 6a StVZO). In der Prüfung: 40 t. Prüfungsfrage 2.6.06-302: 40 t. Achslasten: eigene Beispielrechnung.\n➜ „Und wenn noch zwei Paletten dazukommen?“',
+        '▶ „Zwei Paletten mehr – 43 Tonnen. Die Antriebsachse trägt jetzt 12,6 Tonnen: zu viel. Und der Zug ist 3 Tonnen zu schwer. Das sind mehr als 5 Prozent: 80 Euro und ein Punkt – für den Fahrer.“\n✅ BKatV Nr. 198.1 (Tabelle 3): Überschreitung der zulässigen Achslast oder Gesamtmasse bei Kfz über 7,5 t bzw. Kfz mit Anhänger über 2 t – mehr als 5 bis 10 %: 80 € und 1 Punkt (ab 10 %: 110 €, ab 15 %: 140 €, ab 20 %: 190 €, ab 25 %: 285 €, ab 30 %: 380 €; 2 bis 5 %: 30 € ohne Punkt); der Halter zahlt zusätzlich (Nr. 199). Punkte: FeV Anlage 13 Nr. 3.5.5. Eigene Beispielrechnung: 43 t ÷ 40 t = 7,5 % zu viel; Antriebsachse 12,6 ÷ 11,5 = 9,6 % zu viel.\n💡 Prüfungsfrage 2.2.22-301: Lkw beladen, Anhänger leer ist sicherer als umgekehrt.\n➜ „Eine Prüfungsfrage.“',
       ],
       legend: 'Seitenansicht · Beispielwerte',
       scene: async (s, i) => {
@@ -52,9 +52,10 @@ module.exports = async (deck) => {
         AX.forEach((a, k) => {
           const bad = t.w[k] > a.max + 0.001, col = bad ? C.red : (t.pal ? C.gr : C.txt);
           s.rect(a.x - 0.62, GY + 0.02, 1.24, 0.06, { fill: '5A6474', name: '!!wp' + k });
-          s.rrect(a.x - 0.68, GY + 0.16, 1.36, 0.82, { fill: bad ? '3A1418' : '0B1119', line: bad ? C.red : '3C4656', lw: 1.5, rr: 0.1, name: '!!wb' + k });
-          s.text(f1(t.w[k]) + ' t', { x: a.x - 0.68, y: GY + 0.18, w: 1.36, h: 0.46, size: 22, bold: true, color: col, align: 'center', valign: 'middle', name: '!!wv' + k });
-          s.text(a.n + '\nmax. ' + f1(a.max).replace(',0', '') + ' t', { x: a.x - 0.8, y: GY + 0.6, w: 1.6, h: 0.38, size: 10, color: C.mut, align: 'center', valign: 'middle', lsm: 0.9, name: '!!wn' + k });
+          const bw = a.sub ? 2.0 : 1.36;
+          s.rrect(a.x - bw / 2, GY + 0.16, bw, 0.82, { fill: bad ? '3A1418' : '0B1119', line: bad ? C.red : '3C4656', lw: 1.5, rr: 0.1, name: '!!wb' + k });
+          s.text(f1(t.w[k]) + ' t', { x: a.x - bw / 2, y: GY + 0.18, w: bw, h: 0.46, size: 22, bold: true, color: col, align: 'center', valign: 'middle', name: '!!wv' + k });
+          s.text(a.n + '\n' + (a.sub || 'max. ' + f1(a.max).replace(',0', '') + ' t'), { x: a.x - 1.0, y: GY + 0.6, w: 2.0, h: 0.38, size: 10, color: C.mut, align: 'center', valign: 'middle', lsm: 0.9, name: '!!wn' + k });
         });
         // Summe
         s.text([{ text: 'Summe  ', options: { color: C.mut, fontSize: 20 } }, { text: f1(sum) + ' t', options: { bold: true, color: over ? C.red : (t.pal ? C.gr : C.txt) } }], { x: 7.6, y: 1.42, w: 5.45, h: 0.62, size: 36, align: 'right', valign: 'middle', name: '!!sum' });
@@ -72,12 +73,12 @@ module.exports = async (deck) => {
 
   // ===== RECHNEN NACH STVZO =====
   await ask(deck, 'ce1g', {
-    kicker: 'Rechnen', q: 'Zugmaschine 25 t, Auflieger 34 t, Sattellast 16 t. Wie viel darf der Zug wiegen?', ico: 'LuCalculator', qsize: 30,
+    kicker: 'Rechnen', q: 'Sattelzug mit 5 Achsen, kein Kombinierter Verkehr: Zugmaschine 25 t, Auflieger 34 t, Sattellast 16 t. Wie viel darf er wiegen?', ico: 'LuCalculator', qsize: 26,
     answers: [
       ['LuPlus', 'Addieren und Sattellast abziehen', '25 t + 34 t − 16 t = 43 t. Die Sattellast steckt in beiden Fahrzeugen – sie zählt nur einmal.', GOLD, 17],
       ['LuScale', 'Grenze prüfen', 'Mehr als 4 Achsen: höchstens 40 t. 43 t sind zu viel.', GOLD, 17],
       ['LuMinus', 'Also: 3 t weniger laden', 'Den Auflieger nicht voll beladen – sonst ist der Zug zu schwer.', C.red, 17],
-      ['LuLink', 'Gliederzug: einfach addieren', 'Lkw + Anhänger. Zentralachsanhänger: minus Stützlast. Grenze auch hier 40 t.', GOLD, 17],
+      ['LuLink', 'Gliederzug: einfach addieren', 'Lkw + Anhänger. Zentralachsanhänger: minus Stützlast. Mehr als 4 Achsen: auch hier 40 t (mit 4 Achsen 36 t).', GOLD, 17],
     ],
     notes:
       '▶ Sagen: „Rechenaufgabe aus der Prüfung: Zugmaschine 25 Tonnen, Auflieger 34 Tonnen, Sattellast 16 Tonnen. Was darf der Zug wiegen?“\n' +
@@ -115,7 +116,7 @@ module.exports = async (deck) => {
       notes: [
         '▶ Sagen: „Welche Klasse braucht ihr? 7,5-Tonnen-Lkw und 4,5-Tonnen-Anhänger: zusammen 12 Tonnen. Das ist C1E.“\n❓ Frage auf der Folie stellen.\n✅ § 6 Abs. 1 FeV: C1E = C1-Zugfahrzeug + Anhänger oder Sattelanhänger über 750 kg, Zug-zGM höchstens 12.000 kg. Beispiel: eigene Rechnung.\n➜ „Und mit einem etwas schwereren Anhänger?“',
         '▶ „Anhänger 5 Tonnen: 12,5 Tonnen. Mehr als 12 – also CE.“\n✅ § 6 Abs. 1 FeV: CE = Zugfahrzeug der Klasse C + Anhänger oder Sattelanhänger über 750 kg (keine Obergrenze im Führerscheinrecht). Bei mehr als 12 t mit C1-Zugfahrzeug: CE. Eigene Rechnung.\n➜ „Jetzt die Fangfrage.“',
-        '▶ „Die Fangfrage: 7,49 plus 4,8 Tonnen, Zentralachsanhänger. Manche ziehen die Stützlast ab. Beim Führerschein gilt aber: volle Summe der zulässigen Gesamtmassen. 12,29 Tonnen – also CE.“\n❓ Frage auf der Folie auflösen.\n✅ § 6 Abs. 1 FeV (vorletzter Absatz): zGM der Kombination = Summe der zGM der Einzelfahrzeuge, ohne Abzug von Stütz- oder Aufliegelast. Anders § 34 Abs. 7 StVZO (dort wird abgezogen).\n➜ „Und umgekehrt?“',
+        '▶ „Die Fangfrage: 7,49 plus 4,8 Tonnen, Zentralachsanhänger. Manche ziehen die Stützlast ab. Beim Führerschein gilt aber: volle Summe der zulässigen Gesamtmassen. 12,29 Tonnen – also CE.“\n❓ Frage auf der Folie auflösen.\n✅ § 6 Abs. 1 Satz 2 FeV: zGM der Kombination = Summe der zGM der Einzelfahrzeuge, ohne Abzug von Stütz- oder Aufliegelast. Anders § 34 Abs. 7 StVZO (dort wird abgezogen).\n➜ „Und umgekehrt?“',
         '▶ „Großer Lkw, kleiner Anhänger: 12-Tonnen-Lkw ist Klasse C. Dazu ein Anhänger über 750 Kilogramm – das ist immer CE. Bis 750 Kilogramm Anhänger reicht C.“\n✅ § 6 Abs. 1 FeV: C (auch mit Anhänger bis 750 kg), CE (Anhänger über 750 kg). § 6 Abs. 3 Nr. 6 FeV: CE schließt C1E, BE und T ein. § 9 Abs. 2 FeV: CE nur mit Klasse C (Vorbesitz oder gleichzeitig).\n➜ „Das war CE1. Zum Mitschreiben.“',
       ],
       legend: 'Seitenansicht · schematisch · zulässige Gesamtmassen',
@@ -173,7 +174,7 @@ module.exports = async (deck) => {
     kicker: 'Prüfungsfrage 2.6.06-305', q: 'Wie können Sie rechnerisch überprüfen, ob durch die Zusammenstellung eines Sattelkraftfahrzeugs (Sattellast = Aufliegelast) die höchstzulässige Gesamtmasse des Zuges überschritten wird?', size: 24,
     opts: ['Zulässige Gesamtmasse der Zugmaschine plus zulässige Gesamtmasse des Sattelanhängers minus Aufliegelast', 'Zulässige Gesamtmasse der Zugmaschine plus zulässige Gesamtmasse des Sattelanhängers', 'Zulässige Gesamtmasse der Zugmaschine plus Nutzlast des Sattelanhängers'], ok: [0],
     why: 'Die Sattellast zählt nur einmal – also abziehen.',
-    notes: '▶ Frage vorlesen, abstimmen.\n🖱 Klick 1: Antworten · Klick 2: Lösung.\n✅ Amtlicher Fragenkatalog 2.6.06-305: A. § 34 Abs. 7 Nr. 2 StVZO.\n➜ „Das nimmst du aus CE1 mit.“',
+    notes: '▶ Frage vorlesen, abstimmen.\n🖱 Klick 1: Antworten · Klick 2: Lösung.\n✅ Amtlicher Fragenkatalog 2.6.06-305: A. § 34 Abs. 7 Nr. 3 StVZO.\n➜ „Das nimmst du aus CE1 mit.“',
   });
   await takeaway(deck, 'ce1e', {
     items: [
@@ -181,7 +182,7 @@ module.exports = async (deck) => {
       ['LuEye', 'Kontrollstift prüfen:', 'ansehen und tasten. Beim Sattel: kein Spalt, Sicherung eingefallen.'],
       ['LuBan', 'Niemand dazwischen:', 'der Lkw kommt zum gesicherten Anhänger – nie umgekehrt.'],
       ['LuRuler', 'Maße:', '18,75 m für Lkw mit Anhänger, 16,50 m für den Sattelzug, Kreisring 12,50 m.'],
-      ['LuScale', 'Gewicht und Klasse:', '40 t bei mehr als 4 Achsen. Über 12 t Zug oder C-Lkw mit Anhänger: CE.'],
+      ['LuScale', 'Gewicht und Klasse:', '40 t bei mehr als 4 Achsen. Über 12 t Zug oder C-Lkw mit Anhänger über 750 kg: CE.'],
     ],
     notes: '▶ Sagen: „Das sind die fünf Punkte aus CE1, die ihr sicher wissen müsst.“\n🖱 Klick 1–5: je ein Punkt.\n➜ „Jetzt 15 Minuten Pause. Danach CE2: Wie bremst ein Zug?“',
   });
