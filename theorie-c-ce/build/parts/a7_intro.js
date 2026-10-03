@@ -9,7 +9,7 @@ module.exports = async (deck) => {
   // ===== TITEL =====
   {
     const s = base(deck, 'ce3', { bg: 'm_titel_r.jpg', bgX: 3.3, ov: 9.0, footer: false, transition: 'black', notes:
-      '▶ Sagen: „Willkommen zu Abend 7 – dem letzten Abend für Klasse CE. Zuerst noch einmal Bremsen: Wie bremst ein Zug, damit er gerade bleibt? Was passiert, wenn der ABS-Stecker fehlt? Und wie sichert ihr den Zug am Berg? Nach der Pause geht es ums Fahren: Einknicken, Rückwärtsfahren, Abbiegen, Wetter, Tempo und Abstand.“\n' +
+      '▶ Sagen: „Willkommen zu Abend 7 – dem letzten Abend für Klasse CE. Zuerst noch einmal Bremsen: Wie bremst ein Zug, damit er gerade bleibt? Was passiert, wenn der ABS-Stecker fehlt? Und wie sichert ihr den Zug am Berg? Nach der Pause geht es ums Fahren: Abfahrtkontrolle, Einknicken, Rückwärtsfahren, Abbiegen, Wetter, Tempo und Abstand.“\n' +
       '💡 Vorher: Anwesenheit eintragen, Ausbildungsnachweis abzeichnen.\n' +
       '🖱 Keine Klicks, alles läuft von selbst.\n' +
       '➜ „So läuft der Abend.“' });
@@ -31,9 +31,9 @@ module.exports = async (deck) => {
       '➜ „Erst ein kurzer Blick zurück auf Abend 6.“' });
     kick(s, 'Heute Abend'); title(s, 'Zwei Lektionen, eine Pause');
     const T = [
-      ['18:00', '19:30', 'Lektion CE3', 'Lastzugbremsen', 'Abstimmung Lkw und Anhänger · Lastanpassung und EBS · ABS-Stecker · Kontrollstellung · Dauerbremse und Prüffristen', C.bl, 'LuDisc'],
+      ['18:00', '19:30', 'Lektion CE3', 'Lastzugbremsen', 'Abstimmung Lkw und Anhänger · Lastanpassung und EBS · ABS-Stecker\nKontrollstellung · Dauerbremse und Prüffristen', C.bl, 'LuDisc'],
       ['19:30', '19:45', 'Pause', '15 Minuten', '', C.dim, 'LuCoffee'],
-      ['19:45', '21:15', 'Lektion CE4', 'Fahren mit Zügen', 'Abfahrtkontrolle · Einknicken und Pendeln · Rückwärts und Abbiegen · Gefälle und Wetter · Tempo, Abstand, Schwertransport', C.or, 'LuTruck'],
+      ['19:45', '21:15', 'Lektion CE4', 'Fahren mit Zügen', 'Abfahrtkontrolle · Einknicken und Pendeln · Rückwärts und Abbiegen · Wetter und Wind\nTempo, Abstand, Schwertransport', C.or, 'LuTruck'],
     ];
     for (let i = 0; i < 3; i++) {
       const t = T[i], h = i === 1 ? 1.0 : 1.32, yy = [2.05, 3.55, 4.73][i];
@@ -68,7 +68,7 @@ module.exports = async (deck) => {
       '💡 Grundlagen (ALB, EBS, Federspeicher, Retarder, HU und SP) kennen alle aus C5 und C6 – heute geht es um das, was beim Zug anders ist.\n' +
       '➜ „Kapitel 1: Jedes Fahrzeug bremst sich selbst.“' });
     kick(s, 'Lektion CE3 · Lastzugbremsen'); title(s, 'Das lernt ihr in CE3');
-    const T = [['01', 'Jedes Fahrzeug bremst sich selbst', 'Koppelkraft · Einknicken · Voreilung', '15 Min', C.bl], ['02', 'Lastanpassung und EBS', 'Wie der Anhänger seine Last kennt · zwei Wege zum Anhänger', '20 Min', C.gr], ['03', 'Der ABS-Stecker', 'Was ohne Stecker passiert · Warnleuchte · Klicken', '15 Min', C.or], ['04', 'Feststellbremse im Zug', 'Anhänger hält nur mit Luft · Kontrollstellung · 12 %', '15 Min', C.pu], ['05', 'Dauerbremse und Prüffristen', 'Retarder schiebt · HU, SP und UVV am Anhänger', '20 Min', 'C9A227']];
+    const T = [['01', 'Jedes Fahrzeug bremst sich selbst', 'Koppelkraft · Einknicken · Voreilung', '15 Min', C.bl], ['02', 'Lastanpassung und EBS', 'Wie der Anhänger seine Last kennt · zwei Wege zum Anhänger', '20 Min', C.gr], ['03', 'Der ABS-Stecker', 'Was ohne Stecker passiert · Warnleuchte · Klicken', '15 Min', C.or], ['04', 'Feststellbremse im Zug', 'Anhänger hält meist nur mit Luft · Kontrollstellung · 12 %', '15 Min', C.pu], ['05', 'Dauerbremse und Prüffristen', 'Retarder auf Glätte · HU, SP und UVV am Anhänger', '20 Min', 'C9A227']];
     for (let i = 0; i < 5; i++) {
       const y = 2.0 + i * 0.9;
       card(s, 0.7, y, 11.93, 0.78, { line: T[i][4] }, CLICK);

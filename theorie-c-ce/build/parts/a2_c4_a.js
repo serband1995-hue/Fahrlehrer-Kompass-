@@ -27,8 +27,8 @@ module.exports = async (deck) => {
   }
 
   // ===== KAPITEL 1 FEDERUNG =====
-  await chapter(deck, 'c4f', { num: 1, ttl: 'Federung', sub: 'Blattfeder, Luftfeder – und warum man den Lkw heben und senken kann.', bg: 'g_rampe.jpg', notes:
-    '▶ Sagen: „Kapitel 1: die Federung. Auf dem Bild steht ein Lkw an der Rampe – die Ladefläche ist genau auf Rampenhöhe. Das macht die Luftfederung möglich.“\n🖱 Keine Klicks.\n➜ „Welche Federn gibt es am Lkw?“' });
+  await chapter(deck, 'c4f', { num: 1, ttl: 'Federung', sub: 'Blattfeder, Luftfeder – und warum man den Lkw heben und senken kann.', ico: 'LuArrowUpDown', notes:
+    '▶ Sagen: „Kapitel 1: die Federung. Mit Luftfederung bringt ihr die Ladefläche genau auf Rampenhöhe – das schauen wir uns gleich an.“\n🖱 Keine Klicks.\n➜ „Welche Federn gibt es am Lkw?“' });
 
   // ===== BLATTFEDER / LUFTFEDER =====
   {

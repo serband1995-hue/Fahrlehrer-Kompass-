@@ -66,14 +66,14 @@ module.exports = async (deck) => {
       ['LuMoveHorizontal', 'Auflaufeinrichtung', 'unter dem Faltenbalg – schiebt sich beim Bremsen zusammen.', C.or],
       ['LuHand', 'Handbremshebel', 'die Feststellbremse des Anhängers.', C.or],
       ['LuCable', 'Abreißseil', 'reißt der Anhänger ab, zieht es die Bremse an.', C.red],
-      ['LuArrowUpToLine', 'Stützrad (nicht im Bild)', 'nach dem Ankuppeln ganz nach oben.', C.or],
+      ['LuArrowUpToLine', 'Stützrad', 'nach dem Ankuppeln ganz nach oben.', C.or],
     ],
     notes:
       '▶ Sagen: „Ein Anhänger mit Auflaufbremse. Was seht ihr?“\n' +
       '❓ Sammeln lassen, dann je Klick auflösen.\n' +
       '🖱 Klick 1–4: je ein Teil.\n' +
       '✅ Auflaufeinrichtung, Handbremshebel, Abreißseil: Lehrbuchwissen; UN-R 13 / RL 71/320/EWG Anhang I Nr. 1.12 (Auflaufbremsung) und Nr. 2.2.2.9 (selbsttätige Bremsung beim Abreißen; Ausnahme einachsige Anhänger bis 1,5 t mit Sicherungsverbindung). Prüfungsfrage 2.7.01-121: nach dem Ankuppeln Bremse prüfen, Stützrad in die oberste Stellung, Abreißseil an der Anhängekupplung des Zugfahrzeugs einhängen.\n' +
-      '💡 Das Bild zeigt einen Kugelkopf. Am Lkw hängt so ein Anhänger meist mit Zugöse am Bolzen. Das Stützrad ist im Bild nicht zu sehen – darum steht auf der Karte „nicht im Bild“.\n' +
+      '💡 Vorn an dieser Deichsel sitzt ein Kugelkopf (im Bild links abgeschnitten). Am Lkw hängt so ein Anhänger meist mit Zugöse am Bolzen.\n' +
       '➜ „Und wie bremst das Ding?“',
   });
 

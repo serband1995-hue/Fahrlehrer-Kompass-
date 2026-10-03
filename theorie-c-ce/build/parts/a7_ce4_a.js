@@ -14,7 +14,7 @@ module.exports = async (deck) => {
       '🖱 Klick 1–5: je ein Kapitel.\n' +
       '➜ „Kapitel 1: Abfahrtkontrolle am Zug.“' });
     kick(s, 'Lektion CE4 · Fahren mit Zügen'); title(s, 'Das lernt ihr in CE4');
-    const T = [['01', 'Abfahrtkontrolle am Zug', 'Kupplung · Leitungen · Anhänger frei · Bremsprobe', '15 Min', C.bl], ['02', 'Wie sich der Zug bewegt', 'Einknicken · Ausbrechen · Pendeln · Kippen', '20 Min', C.or], ['03', 'Rückwärts und Abbiegen', 'Sattelzug rückwärts · Einweiser · toter Winkel am Anhänger', '20 Min', C.pu], ['04', 'Wetter und Gefälle', 'Glätte · Schneeketten · Sicht unter 50 m · Seitenwind', '15 Min', C.gr], ['05', 'Tempo, Abstand, Schwertransport', '50 · 60 · 80 · Zeichen 277 · Begleitfahrzeug', '15 Min', 'C9A227']];
+    const T = [['01', 'Abfahrtkontrolle am Zug', 'Kupplung · Leitungen · Anhänger frei · Ladung · Bremsprobe', '15 Min', C.bl], ['02', 'Wie sich der Zug bewegt', 'Einknicken · Ausbrechen · Pendeln · Kippen', '20 Min', C.or], ['03', 'Rückwärts und Abbiegen', 'Sattelzug rückwärts · Einweiser · toter Winkel am Anhänger', '20 Min', C.pu], ['04', 'Wetter und Wind', 'Glätte · Schneeketten · Sicht unter 50 m · Seitenwind', '15 Min', C.gr], ['05', 'Tempo, Abstand, Schwertransport', '50 · 60 · 80 · Zeichen 277 · Begleitfahrzeug', '15 Min', 'C9A227']];
     for (let i = 0; i < 5; i++) {
       const y = 2.0 + i * 0.9;
       card(s, 0.7, y, 11.93, 0.78, { line: T[i][4] }, CLICK);
@@ -31,23 +31,23 @@ module.exports = async (deck) => {
   {
     const S = 0.3, H = [8.55, 3.75], HX = H[0];
     // Rundgang-Punkte (Zoll) und Markierungen je Schritt
-    const WALK = [[HX - 0.05, 4.55], [HX - 0.3, 2.95], [HX - 1.1, 4.55], [HX - 2.45, 4.6], [HX + 3.6, 4.6]];
+    const WALK = [[HX - 0.05, 4.55], [HX - 0.3, 2.95], [HX - 1.1, 4.55], [HX - 2.45, 4.6], [HX + 3.15, 3.55]];   // Bremsprobe: Fahrer sitzt im Fahrerhaus (links)
     await steps(deck, 'ce4k', {
       kicker: 'Rundgang', ttl: 'Einmal um den Zug', listY: 1.62,
-      list: ['Kupplung zu?', 'Leitungen dran?', 'Anhänger frei?', 'Licht, Reifen, Plane', 'Bremsprobe'],
-      ask: { q: 'Was prüft ihr am Zug zusätzlich?', a: 'Kupplung, Leitungen mit ABS-Stecker, Anhänger frei, Licht und Reifen hinten – und die Bremsprobe.', at: 4 },
+      list: ['Kupplung zu?', 'Leitungen dran?', 'Anhänger frei?', 'Licht, Reifen, Ladung', 'Bremsprobe'],
+      ask: { q: 'Was prüft ihr am Zug zusätzlich?', a: 'Kupplung, Leitungen mit ABS-Stecker, Anhänger frei, Licht, Reifen, Ladung und Plane – und die Bremsprobe.', at: 4 },
       caps: [
         'Kupplung: Bolzen eingerastet? Kontrollstift ansehen und tasten. Beim Sattel: Verriegelung zu, Sicherung drin.',
         'Leitungen: rot, gelb, Licht und der ABS/EBS-Stecker. Nichts scheuert, nichts hängt bis zum Boden.',
         'Anhänger frei: Feststellbremse gelöst, Keile weg und verstaut, Stützen hoch.',
-        'Am ganzen Zug: Licht, Reifen und Radmuttern. Plane zu, auf dem Dach kein Eis und kein Schnee.',
+        'Am ganzen Zug: Licht, Reifen, Radmuttern. Ladung auf Lkw und Anhänger gesichert. Plane zu, Dach frei von Eis und Schnee.',
         'Zum Schluss die Bremsprobe – mit dem ganzen Zug, langsam auf dem Hof.',
       ],
       notes: [
         '▶ Sagen: „Wir starten an der Kupplung. Ist der Bolzen ganz unten? Kontrollstift ansehen und anfassen.“\n❓ Frage auf der Folie stellen.\n✅ DGUV Grundsatz 314-002 Nr. 2.10: Anhängekupplung geschlossen und gesichert. Prüfungsfrage 2.7.07-209 (Kontrollstift), aus CE1.\n➜ „Weiter zu den Leitungen.“',
         '▶ „Dann die Leitungen: rot, gelb, Licht – und der ABS/EBS-Stecker. Die Leitungen dürfen nicht scheuern und nicht durchhängen.“\n✅ DGUV Grundsatz 314-002 Nr. 2.10: elektrische und Bremsleitungen angeschlossen, sofern vorhanden auch ABV/ABS; nicht scheuern, nicht bis zum Boden durchhängen.\n➜ „Weiter am Anhänger.“',
         '▶ „Ist der Anhänger frei? Roter Knopf gedrückt, Keile weg und verstaut, Stützen oben. Sonst fahrt ihr mit angezogener Bremse los.“\n✅ Lehrbuchwissen aus CE1 bis CE3 (Feststellbremse lösen, Keile verstauen: Prüfungsfrage 2.7.07-321).\n➜ „Nach hinten.“',
-        '▶ „Hinten: Licht am Anhänger, Reifen, Radmuttern. Und schaut auf die Plane: zu? Liegt Eis oder Schnee auf dem Dach? Das muss runter.“\n✅ DGUV Grundsatz 314-002 Nr. 2.1 (Licht auch am Anhänger), 2.2 (Reifen), 2.8 (Planen geschlossen, Dächer frei von Wasser, Schnee und Eis).\n➜ „Und als Letztes?“',
+        '▶ „Hinten: Licht am Anhänger, Reifen, Radmuttern. Ist die Ladung auf Lkw und Anhänger gesichert? Und schaut auf die Plane: zu? Liegt Eis oder Schnee auf dem Dach? Das muss runter.“\n✅ DGUV Grundsatz 314-002 Nr. 2.1 (Licht auch am Anhänger), 2.2 (Reifen), 2.8 (Planen geschlossen, Dächer frei von Wasser, Schnee und Eis), 2.9 (Ladung gesichert; Achslasten einhalten, Mindestachslasten nicht unterschreiten). FahrschAusbO Anlage 2.4 Nr. 4 i (Ladung/Ladungssicherung).\n💡 Zentralachsanhänger nie hecklastig beladen – die Stützlast darf nie negativ sein (DGUV Information 214-080, S. 24). Hinten schwer beladen fördert auch das Pendeln (Kapitel 2). Ladungssicherung im Einzelnen: C9.\n➜ „Und als Letztes?“',
         '▶ „Als Letztes die Bremsprobe – mit dem ganzen Zug, langsam auf dem Hof. Zieht der Zug gerade? Bremst der Anhänger mit?“\n❓ Frage auf der Folie auflösen.\n✅ Prüfungsfragen 2.7.02-017 und -020 (Bremsprobe). DGUV Grundsatz 314-002 Nr. 2.3.2: Bremsprobe, ABV-Kontrolle ohne Störung.\n➜ „Zwei Prüfungsfragen dazu.“',
       ],
       legend: 'Draufsicht · schematisch',
@@ -65,13 +65,15 @@ module.exports = async (deck) => {
         // Hervorhebung je Schritt
         const HL = [[H2[0] - 0.45, H2[1] - 0.45, 0.9, 0.9], [H2[0] - 0.7, H2[1] - 0.55, 1.0, 1.1], [z.T[0] - 0.55, H2[1] - 0.6, 1.3, 1.2], [z.rear[0] - 0.35, H2[1] - 0.65, 0.9, 1.3], [0, 0, 0, 0]][i];
         s.oval(HL[0], HL[1], Math.max(0.1, HL[2]), Math.max(0.1, HL[3]), { line: C.am, lw: 2.5, fill: C.am, ft: 100, lt: i === 4 ? 100 : 0, name: '!!hlr' });
-        // Keile (Schritt 3: weg und verstaut)
-        s.rrect(i >= 2 ? H2[0] - 3.2 : z.wa[3][0] + 0.12, i >= 2 ? H2[1] + 0.62 : z.wa[3][1] - 0.06, 0.14, 0.1, { fill: 'E3A23B', rr: 0.2, ft: i >= 2 ? 100 : 0, name: '!!keil' });
+        // Keil am Hinterrad des Anhängers (Schritt 3: weg und verstaut)
+        const kx = z.wa[3][0] + 0.12, ky = z.wa[3][1] + 0.1;
+        s.rrect(kx - 0.07, ky, 0.14, 0.1, { fill: 'E3A23B', rr: 0.2, ft: i >= 2 ? 100 : 0, name: '!!keil' });
+        s.text(i >= 2 ? '' : 'Keil', { x: kx - 0.4, y: ky + 0.12, w: 0.8, h: 0.26, size: 12, bold: true, color: 'E3A23B', align: 'center', name: '!!keilt' });
         // Läufer
         const w = WALK[i];
         s.oval(w[0] - 0.13, w[1] - 0.13, 0.26, 0.26, { fill: C.bl, line: C.txt, lw: 1.5, name: '!!walk' });
         // Stichwort
-        const LAB = ['Kupplung', 'Leitungen', 'Anhänger frei', 'Licht · Reifen · Plane', 'Bremsprobe: Zug fährt an und bremst'][i];
+        const LAB = ['Kupplung', 'Leitungen', 'Anhänger frei', 'Licht · Reifen · Ladung · Plane', 'Bremsprobe: Zug fährt an und bremst'][i];
         s.text(LAB, { x: 5.75, y: 5.35, w: 7.3, h: 0.5, size: 20, bold: true, color: C.bl, align: 'center', name: '!!lab' });
         s.text(i === 4 ? '→' : '', { x: H2[0] + 2.95, y: H2[1] - 0.95, w: 0.6, h: 0.4, size: 22, bold: true, color: C.gr, name: '!!pf' });
       },
@@ -92,7 +94,7 @@ module.exports = async (deck) => {
 
   // ===== KAPITEL 2: FAHRVERHALTEN =====
   await chapter(deck, 'ce4f', { num: 2, ttl: 'Wie sich der Zug bewegt', sub: 'Zwei Fahrzeuge, ein Gelenk dazwischen. Beim Bremsen, in der Kurve und bei Wind macht das Gelenk, was es will – wenn ihr es lasst.', ico: 'LuWaves', notes:
-    '▶ Sagen: „Ein Zug hat ein Gelenk – der Gliederzug sogar zwei: an der Kupplung und am Drehkranz. Darum kann er einknicken, ausbrechen und pendeln.“\n✅ DGUV Information 214-080, S. 31: Gliederzug mit zwei Drehpunkten (Kupplungsbolzen und Drehkranzmitte). Sattelzug: ein Drehpunkt (Königszapfen) – Lehrbuchwissen.\n🖱 Keine Klicks.\n➜ „Erst eine Merkhilfe aus CE3.“' });
+    '▶ Sagen: „Ein Zug hat ein Gelenk – mit Drehschemelanhänger sogar zwei: an der Kupplung und am Drehkranz. Am Gelenk kann der Zug einknicken, ausbrechen und pendeln.“\n✅ DGUV Information 214-080, S. 31: Gliederzug mit Gelenkdeichselanhänger (Drehschemel) – zwei Drehpunkte (Kupplungsbolzen und Drehkranzmitte). S. 67: Gliederzug heißt auch Lkw mit Starrdeichsel- oder Zentralachsanhänger – dann ein Drehpunkt. Sattelzug: ein Drehpunkt (Königszapfen) – Lehrbuchwissen.\n🖱 Keine Klicks.\n➜ „Erst eine Merkhilfe aus CE3.“' });
   {
     const S = 0.17;
     const PAN = [{ y: 1.6, ttl: 'Antriebsräder des Lkw rutschen', res: 'Der Zug knickt ein', col: C.red }, { y: 4.15, ttl: 'Anhänger-Räder blockieren', res: 'Der Anhänger bricht aus', col: C.or }];
@@ -105,8 +107,8 @@ module.exports = async (deck) => {
         'Blockieren die Räder des Anhängers – zum Beispiel ohne ABS-Stecker –, verliert er die Führung und schwenkt seitlich aus.',
       ],
       notes: [
-        '▶ Sagen: „Eine Merkhilfe: Wo die Räder blockieren, geht die Führung verloren. Rutschen beim Lkw die Antriebsräder, schiebt der Anhänger und der Zug knickt ein – wie ein Klappmesser.“\n❓ Frage auf der Folie stellen.\n✅ Prüfungsfrage 2.7.06-108 (Retarder in der Kurve, Lkw bremst stärker). Mercedes-Benz Actros Betriebsanleitung, S. 250 (Antriebsräder verlieren die Haftung); WABCO EBS3, S. 15 (Blockierneigung der Antriebsräder → instabiler Fahrzustand). Merkhilfe: Lehrbuchwissen.\n💡 Blockiert nur die Vorderachse, kann der Lkw nicht mehr lenken – er schiebt geradeaus. Eingeknickt wird über die Antriebsachse.\n➜ „Und hinten?“',
-        '▶ „Blockiert der Anhänger, schwenkt er seitlich aus. Das habt ihr bei der Vollbremsung ohne ABS-Stecker gesehen. Gegen beides hilft: vor der Kurve gestreckt bremsen, Dauerbremse bei Glätte aus, Stecker immer drin.“\n❓ Frage auf der Folie auflösen.\n✅ Prüfungsfrage 2.7.06-314. Der Kippschutz (RSS) am Anhänger arbeitet nur mit gestecktem ABS-Stecker (WABCO TEBS E, Kap. 5.7). Das ESC des Lkw arbeitet auch ohne Stecker. Bremst es dabei den Anhänger mit, können ohne Anhänger-ABS dessen Räder blockieren (WABCO EBS3, S. 16–17).\n➜ „Und dann gibt es noch das Pendeln.“',
+        '▶ Sagen: „Eine Merkhilfe: Wo die Räder blockieren, geht die Führung verloren. Rutschen beim Lkw die Antriebsräder, schiebt der Anhänger und der Zug knickt ein – wie ein Klappmesser.“\n❓ Frage auf der Folie stellen.\n✅ Prüfungsfrage 2.7.06-108 (Retarder in der Kurve, Lkw bremst stärker). Mercedes-Benz Actros Betriebsanleitung, manualslib S. 250, gedruckt S. 248 (Antriebsräder verlieren die Haftung); WABCO EBS3, S. 15 (Blockierneigung der Antriebsräder → instabiler Fahrzustand). Merkhilfe: Lehrbuchwissen.\n💡 Blockiert nur die Vorderachse, kann der Lkw nicht mehr lenken – er schiebt geradeaus. Einknicken beginnt an der Antriebsachse.\n➜ „Und hinten?“',
+        '▶ „Blockiert der Anhänger, schwenkt er seitlich aus. Das habt ihr bei der Vollbremsung ohne ABS-Stecker gesehen. Gegen beides hilft: vor der Kurve gestreckt bremsen, Dauerbremse bei Glätte aus, Stecker immer drin.“\n❓ Frage auf der Folie auflösen.\n✅ Prüfungsfrage 2.7.06-314. Der Kippschutz (RSS) am Anhänger arbeitet nur mit gestecktem ABS-Stecker (WABCO TEBS E, Kap. 5.7). Das ESC des Lkw arbeitet auch ohne Stecker. Bremst es dabei den Anhänger mit, können ohne Anhänger-ABS dessen Räder blockieren (WABCO EBS3, S. 16–17).\n💡 Bricht der Anhänger beim Bremsen aus: Bremse lösen – dann greifen die Räder wieder und führen seitlich (eurotransport „Lkw-Fahren im Winter“, 26.10.2011).\n➜ „Und dann gibt es noch das Pendeln.“',
       ],
       legend: 'Draufsicht · schematisch',
       scene: async (s, i) => {
@@ -137,8 +139,8 @@ module.exports = async (deck) => {
       legend: 'Draufsicht · schematisch · Autobahn',
       frames: [
         fr(0, { t: B('Autobahn, 80 km/h. Eine Windböe …', C.mut), hold: true,
-          cap: 'Ein Gliederzug hat zwei Gelenke: Kupplung und Drehkranz. Darum kann der Anhänger seitlich hin und her schwingen.',
-          note: '▶ Sagen: „Autobahn, 80 km/h. Eine Böe, eine Spurrille oder ein hastiger Lenker – und der Anhänger fängt an zu schwingen.“\n❓ Frage auf der Folie stellen.\n✅ DGUV Information 214-080, S. 31 (zwei Drehpunkte). Pendeln: Lehrbuchwissen; Prüfungsfrage 2.7.01-102 (hastige Lenkbewegungen erhöhen die Schleudergefahr), 2.1.07-209 (Windböen).\n🖱 Klick: Der Anhänger fängt an zu pendeln (läuft von selbst).\n➜ „Schaut auf den Anhänger.“' }),
+          cap: 'Mit Drehschemelanhänger hat der Zug zwei Gelenke: Kupplung und Drehkranz. Pendeln kann aber jeder Anhänger.',
+          note: '▶ Sagen: „Autobahn, 80 km/h. Eine Böe, eine Spurrille oder ein hastiger Lenker – und der Anhänger fängt an zu schwingen.“\n❓ Frage auf der Folie stellen.\n✅ DGUV Information 214-080, S. 31 (Gelenkdeichselanhänger: zwei Drehpunkte). Pendeln: Lehrbuchwissen; vergleiche Prüfungsfrage 2.7.01-102 (Wohnanhänger: hastige Lenkbewegungen erhöhen die Schleudergefahr), 2.1.07-209 (Windböen).\n🖱 Klick: Der Anhänger fängt an zu pendeln (läuft von selbst).\n➜ „Schaut auf den Anhänger.“' }),
         fr(5, { t: B('Der Anhänger schwingt aus …', C.am) }),
         fr(-7, { t: B('… und zurück …', C.am) }),
         fr(9, { t: B('… immer weiter …', C.red) }),
@@ -149,7 +151,7 @@ module.exports = async (deck) => {
         fr(-3, { t: B('… das Schwingen wird kleiner …', C.gr) }),
         fr(1, { t: B('… und kleiner …', C.gr) }),
         fr(0, { t: B('Der Zug läuft wieder gerade.', C.gr), hold: true, answer: true,
-          cap: 'Gas weg, Lenkrad ruhig, nicht hektisch gegenlenken. Bremsen erst, wenn der Zug gestreckt ist. Danach Ladung und Spiel an der Kupplung prüfen.',
+          cap: 'Warum? Gas weg nimmt Schwung aus dem Anhänger. Hektisches Gegenlenken schaukelt ihn nur weiter auf.',
           note: '▶ „Gas weg, das Lenkrad ruhig gerade halten, nicht wild gegenlenken. Bremst ihr, dann erst, wenn der Zug wieder gestreckt ist. Und danach: anhalten und nachsehen – Ladung verrutscht? Spiel an Zugöse oder Drehkranz?“\n❓ Frage auf der Folie auflösen.\n✅ Lehrbuchwissen (Gas weg, ruhig halten, gestreckt bremsen); vergleiche Prüfungsfrage 2.6.03-102 (Anhänger „springt“: Geschwindigkeit vermindern). Prüfungsfrage 2.7.08-301: Drehkranz und Zuggabel schmieren.\n💡 Winkel überzeichnet.\n🖱 Nächster Klick: nächste Folie.\n➜ „Eine Prüfungsfrage.“' }),
       ],
       scene: async (s, t) => {

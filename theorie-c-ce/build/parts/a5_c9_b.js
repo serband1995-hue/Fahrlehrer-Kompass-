@@ -21,7 +21,7 @@ function ladung(s, x0, x1, y0) {
 }
 
 module.exports = async (deck) => {
-  await chapter(deck, 'c9s', { num: 2, ttl: 'So wird gesichert', sub: 'Lückenlos anstellen, niederzurren oder direkt festzurren – und das richtige Werkzeug.', bg: 'j_gurt.jpg', notes:
+  await chapter(deck, 'c9s', { num: 2, ttl: 'So wird gesichert', sub: 'Lückenlos anstellen, niederzurren oder direkt festzurren – und das richtige Werkzeug.', ico: 'LuLink', notes:
     '▶ Sagen: „Kapitel 2: Wie sichert man Ladung richtig? Dafür gibt es drei Grundarten – und ein paar Helfer.“\n🖱 Keine Klicks.\n➜ „Die drei Arten.“' });
 
   // ===== DREI ARTEN (Morph, Heckansicht) =====
@@ -177,15 +177,15 @@ module.exports = async (deck) => {
 
   // ===== FOTO: WAS IST HIER RICHTIG? =====
   await photoAsk(deck, 'c9s', {
-    bg: 'j_lad_r.jpg', bgX: 6.0, ov: 7.0, kicker: 'Hinschauen', q: 'Was wurde hier richtig gemacht?', qsize: 30, w: 5.05, asize: 15,
+    bg: 'j_lad_r.jpg', bgX: 6.0, ov: 7.0, kicker: 'Hinschauen', q: 'Was ist gut – und was fehlt noch?', qsize: 30, w: 5.05, asize: 15,
     answers: [
       ['LuLink', 'Niedergezurrt', 'Gurte über die Paletten, straff gespannt.', C.or],
       ['LuShield', 'Kantenschutz', 'an den oberen Ecken.', C.or],
-      ['LuSquareStack', 'Antirutschmatte', 'unter den Paletten – mehr Reibung.', C.or],
       ['LuPackage', 'Feste Ladeeinheit', 'Folie hält die Kartons zusammen.', C.or],
+      ['LuTriangleAlert', 'Haken prüfen!', 'Jeder Gurt gehört in einen Zurrpunkt – hier liegen Haken lose am Boden.', C.red],
     ],
     notes:
-      '▶ Sagen: „Schaut euch die Ladung an. Was ist hier richtig gemacht?“\n' +
+      '▶ Sagen: „Schaut euch die Ladung an. Was ist gut – und was fehlt noch?“\n' +
       '❓ Sammeln lassen, dann je Klick auflösen.\n' +
       '🖱 Klick 1–4: je ein Punkt.\n' +
       '✅ Niederzurren mit Kantenschutz und rutschhemmendem Material (VDI 2700 / DIN EN 12195-1). Die Ladeeinheit muss selbst stabil sein (Stretchfolie, Umreifung), sonst rutschen einzelne Kartons heraus.\n' +
