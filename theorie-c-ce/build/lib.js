@@ -242,7 +242,9 @@ async function finalize(deck, outFile) {
     for (const a of ctx.anims) { if (a.auto) continue; if (a.c || !seen) clicks++; seen = true; }
     const texts = Object.entries(deck.texts || {}).filter(([k]) => k.startsWith(ctx.idx + ':')).map(([, v]) => v);
     const extra = deck.notesExtra ? deck.notesExtra(texts, ctx) : '';
-    const head = `FOLIE ${ctx.idx} VON ${deck.slides.length} · ${clicks ? clicks + ' Klick' + (clicks > 1 ? 's' : '') : 'keine Klicks, läuft von selbst'}`;
+    const autoAnim = ctx.anims.some(a => a.auto);
+    const how = clicks ? clicks + ' Klick' + (clicks > 1 ? 's' : '') : ctx.meta.adv === 0 ? 'läuft von selbst weiter (kein Klick)' : autoAnim ? 'Animation läuft von selbst · Klick = weiter' : 'keine Animation · Klick = weiter';
+    const head = `FOLIE ${ctx.idx} VON ${deck.slides.length} · ${how}`;
     ctx.s.addNotes([head, ctx.notes, extra].filter(Boolean).join('\n\n'));
   }
   const buf = await deck.pres.write({ outputType: 'nodebuffer' });
