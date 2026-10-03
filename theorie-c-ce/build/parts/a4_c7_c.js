@@ -59,7 +59,7 @@ module.exports = async (deck) => {
     const cx = KX + R * Math.cos(a), cy = KY - R * Math.sin(a);
     // Fliehkraft-Pfeil nach außen
     const ux = Math.cos(a), uy = -Math.sin(a);
-    arrow(s, cx + ux * 0.4, cy + uy * 0.4, cx + ux * (0.4 + L), cy + uy * (0.4 + L), { col: C.red, th: 0.12, head: 0.32, name: 'fk', glow: 6 });
+    arrow(s, cx + ux * 0.4, cy + uy * 0.4, cx + ux * (0.4 + L), cy + uy * (0.4 + L), { col: C.red, th: 0.11, head: 0.24, name: 'fk', glow: 6 });
     veh(s, 'truck.png', cx, cy, Math.round(180 - th - dr * 10), '!!tr', { scale: 0.55 });
     s.text(speed + ' km/h', { x: 5.75, y: 5.05, w: 2.6, h: 0.6, size: 30, bold: true, color: C.txt, name: '!!v' });
     s.text([{ text: 'Fliehkraft  ', options: { color: C.mut } }, { text: mal, options: { bold: true, color: C.red } }], { x: 5.75, y: 5.65, w: 2.8, h: 0.45, size: 20, name: '!!fkt' });

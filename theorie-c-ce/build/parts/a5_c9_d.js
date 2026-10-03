@@ -1,6 +1,15 @@
 // Abend 5 · C9: Kapitel 4 Be- und Entladen (Ladekran + Freileitung, Ladebordwand, Rampe/Stapler)
-const { C, sec, chapter, motion, steps, ask, quiz, lkw, seg, arrow } = require('../gs');
+const { C, sec, chapter, motion, steps, ask, quiz, lkw, seg, arrow, svgImg } = require('../gs');
 const { icon } = require('../lib');
+
+const { lkwSide } = require('../lkw');
+// Pritsche: Fahrerhaus ohne Dachspoiler nachzeichnen – der Spoiler aus lkw.js ragt bei niedrigen Bordwänden als Schrägfläche ins Fahrerhaus
+async function ohneSpoiler(s, o, { x, gy, k, name }) {
+  const r = lkwSide({ ...o, box: 'none' }), f = o.floor ?? 0.75, cabT = o.cabTop ?? f + 1.12, cabL = o.cabL ?? 1.32;
+  const X = v => ((v + r.pad) * 100).toFixed(1), Y = v => ((r.Ht - v) * 100).toFixed(1);
+  const svg = `<defs><clipPath id="fh"><rect x="${X(0.3)}" y="${Y(cabT + 0.02)}" width="${((cabL + 0.012 - 0.3) * 100).toFixed(1)}" height="${((cabT + 0.02 - f) * 100).toFixed(1)}"/></clipPath></defs><g clip-path="url(#fh)">${r.upper}</g>`;
+  s.img(await svgImg(svg, r.W, r.H, 2.5), { x: x - r.pad * k, y: gy - r.Ht * k, w: r.W / 100 * k, h: r.H / 100 * k, name });
+}
 
 sec('c9b', 'C9  ·  BE- UND ENTLADEN', C.bl, 'bg_blue.jpg');
 
@@ -11,6 +20,8 @@ module.exports = async (deck) => {
   // ===== LADEKRAN: ABSTÜTZEN + FREILEITUNG (fließend) =====
   {
     const X = 6.0, GY = 6.25, K = 1.0, PX = 7.5, PY = 4.35, BL = 4.3, LY = 1.75, ZONE = 0.75;
+    // Kranhaken: Öse, Schaft, Hakenbogen mit Spitze (20 × 30 = 0,2″ × 0,3″)
+    const haken = await svgImg('<circle cx="12" cy="5" r="3.2" fill="none" stroke="#C9D0DA" stroke-width="2.2"/><path d="M12 8.2 L12 19.5 A5 5 0 0 1 2.6 21 L4.2 16.8" fill="none" stroke="#C9D0DA" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"/>', 20, 30, 6);
     const fr = (a, o = {}) => ({ ...o, t: { a, ...(o.t || {}) } });
     await motion(deck, 'c9b', {
       kicker: 'Ladekran', ttl: 'Abstützen und Abstand', dur: 450, holdDur: 700,
@@ -19,9 +30,9 @@ module.exports = async (deck) => {
       legend: 'Seitenansicht · schematisch · Schutzabstände nach DGUV Vorschrift 70 § 54 / 52 § 39',
       frames: [
         fr(-4, { hold: true, cap: 'Der Lkw steht an der Baustelle. Über ihm: eine Stromleitung.', note: '▶ Sagen: „Ladekran-Einsatz an der Baustelle. Über dem Lkw hängt eine Freileitung.“\n❓ Frage auf der Folie stellen – schätzen lassen.\n🖱 Klick: Zuerst wird abgestützt.\n➜ „Bevor der Kran sich bewegt: abstützen.“' }),
-        fr(-4, { t: { st: 1 }, hold: true, cap: 'Zuerst abstützen: Stützen ganz ausfahren, auf festen Boden, mit Unterlegplatten. Sonst kippt der Lkw.', note: '▶ „Als Erstes die Stützen ganz ausfahren – auf festen Boden und mit Unterlegplatten. Ohne Stützen kippt der Lkw, sobald die Last zur Seite schwenkt.“\n✅ Prüfungsfrage 2.7.09-208: Vor Inbetriebnahme des Ladekrans das Fahrzeug mit den seitlichen Stützen gegen Kippen sichern; im Schwenkbereich dürfen sich keine elektrischen Leitungen befinden. BG Verkehr: tragfähiger Untergrund, Aufstandsfläche mit Unterlagen vergrößern.\n💡 Kranführer darf nur sein, wer 18 Jahre alt, befähigt und schriftlich beauftragt ist (DGUV Vorschrift 52 § 29). Der Lkw-Führerschein allein reicht nicht.\n🖱 Klick: Der Kran fährt aus (läuft von selbst).\n➜ „Jetzt hebt der Kran an.“' }),
+        fr(-4, { t: { st: 1 }, hold: true, cap: 'Zuerst abstützen: Stützen nach Betriebsanleitung ausfahren, fester Boden, Unterlegplatten. Sonst kippt der Lkw.', note: '▶ „Als Erstes die Stützen ausfahren – so weit, wie die Betriebsanleitung und das Lastdiagramm es verlangen. Auf festen Boden und mit Unterlegplatten. Ohne Stützen kippt der Lkw, sobald die Last zur Seite schwenkt.“\n✅ Prüfungsfrage 2.7.09-208: Vor Inbetriebnahme des Ladekrans das Fahrzeug mit den seitlichen Stützen gegen Kippen sichern; im Schwenkbereich dürfen sich keine elektrischen Leitungen befinden. BG Verkehr „Be- und Entladen“: tragfähiger Untergrund, Aufstandsfläche durch Unterbauen vergrößern, Stützen nach Herstellervorgaben ausfahren, Lastdiagramm beachten.\n💡 Kranführer darf nur sein, wer 18 Jahre alt, befähigt und schriftlich beauftragt ist (DGUV Vorschrift 52 § 29). Der Lkw-Führerschein allein reicht nicht.\n🖱 Klick: Der Kran fährt aus (läuft von selbst).\n➜ „Jetzt hebt der Kran an.“' }),
         fr(6, { t: { st: 1 }, cap: 'Der Kranarm hebt sich …' }), fr(14, { t: { st: 1 } }), fr(20, { t: { st: 1 } }),
-        fr(24, { t: { st: 1, stop: 1 }, hold: true, answer: true, cap: 'STOPP! Der Kran darf nicht in den Schutzabstand. Strom kann überspringen – ohne Berührung!', note: '▶ „Stopp! Der rote Bereich ist der Schutzabstand. Da darf kein Teil des Krans und keine Last hinein. Der Strom kann überspringen – auch ohne dass der Kran die Leitung berührt.“\n✅ Schutzabstände zu Freileitungen (DGUV Vorschrift 70 § 54 und DGUV Vorschrift 52 § 39, Durchführungsanweisungen, nach DIN VDE 0105-100) – auch beim Ausschwingen von Seil und Last: bis 1 kV 1 m · über 1 kV bis 110 kV 3 m · über 110 kV bis 220 kV 4 m · über 220 kV bis 380 kV 5 m · Spannung unbekannt: 5 m.\n💡 Wenn es doch passiert: im Fahrerhaus bleiben. Muss man raus: mit beiden Füßen zugleich weit wegspringen, nicht gleichzeitig Lkw und Boden berühren, in kleinen Hüpfschritten weg.\n🖱 Keine Animation mehr – nächster Klick: nächste Folie.\n➜ „Die Ladebordwand.“' }),
+        fr(24, { t: { st: 1, stop: 1 }, hold: true, answer: true, cap: 'STOPP! Der Kran darf nicht in den Schutzabstand. Strom kann überspringen – ohne Berührung!', note: '▶ „Stopp! Der rote Bereich ist der Schutzabstand. Da darf kein Teil des Krans und keine Last hinein. Der Strom kann überspringen – auch ohne dass der Kran die Leitung berührt.“\n✅ Schutzabstände zu Freileitungen (DGUV Vorschrift 70 § 54 und DGUV Vorschrift 52 § 39, Durchführungsanweisungen, nach DIN VDE 0105-100) – auch beim Ausschwingen von Seil und Last: bis 1 kV 1 m · über 1 kV bis 110 kV 3 m · über 110 kV bis 220 kV 4 m · über 220 kV bis 380 kV 5 m · Spannung unbekannt: 5 m.\n💡 Merkregel (BG Verkehr): Die Spannung kennt man meist nicht – also immer mindestens 5 m.\n💡 Wenn es doch passiert: im Fahrerhaus bleiben. Muss man raus: mit beiden Füßen zugleich weit wegspringen, nicht gleichzeitig Lkw und Boden berühren, in kleinen Hüpfschritten weg.\n🖱 Keine Animation mehr – nächster Klick: nächste Folie.\n➜ „Die Ladebordwand.“' }),
       ],
       scene: async (s, { a, st = 0, stop = 0 }) => {
         // Freileitung mit Schutzabstand
@@ -33,19 +44,21 @@ module.exports = async (deck) => {
         s.img(await icon('LuZap', C.am), { x: 12.55, y: LY - 0.55, w: 0.4, h: 0.4, name: '!!zap' });
         // Boden
         s.rect(5.75, GY, 7.3, 0.04, { fill: '3C4656', name: '!!boden' });
-        await lkw(s, { L: 5.0, box: 'pritsche', boxH: 0.38, axles: [0.78, 3.95], top: 1.95 }, { x: X, gy: GY, k: K, name: '!!lkwK' });
+        const LO = { L: 5.0, box: 'pritsche', boxH: 0.38, axles: [0.78, 3.95], top: 1.95 };
+        await lkw(s, LO, { x: X, gy: GY, k: K, name: '!!lkwK' });
+        await ohneSpoiler(s, LO, { x: X, gy: GY, k: K, name: '!!lkwKc' });
         // Stütze
         const sy1 = st ? GY - 0.02 : GY - 0.55;
-        s.rect(PX - 0.24, GY - 0.95, 0.17, sy1 - (GY - 0.95), { fill: 'F2C230', line: 'A87A10', lw: 1, name: '!!stz' });
-        s.rect(PX - 0.45, GY - 0.07, 0.6, 0.07, { fill: '9AA4B1', ft: st ? 0 : 100, name: '!!platte' });
-        s.text(st ? '↑ Stütze ausgefahren, Unterlegplatte' : '', { x: PX - 0.5, y: GY + 0.06, w: 4.5, h: 0.3, size: 12, bold: true, color: C.am, name: '!!stzt' });
+        s.rect(PX - 0.16, GY - 0.95, 0.17, sy1 - (GY - 0.95), { fill: 'F2C230', line: 'A87A10', lw: 1, name: '!!stz' });   // hinter dem Fahrerhaus
+        s.rect(PX - 0.37, GY - 0.07, 0.6, 0.07, { fill: '9AA4B1', ft: st ? 0 : 100, name: '!!platte' });
+        s.text(st ? '↑ Stütze ausgefahren, Unterlegplatte' : '', { x: PX - 0.42, y: GY + 0.06, w: 4.5, h: 0.3, size: 12, bold: true, color: C.am, name: '!!stzt' });
         // Kransäule + Arm
         s.rect(PX - 0.08, PY, 0.22, GY - 0.82 - PY, { fill: 'E0A31A', line: 'A87A10', lw: 1, name: '!!saeule' });
         const r = a * Math.PI / 180, tx = PX + BL * Math.cos(r), ty = PY - BL * Math.sin(r);
         seg(s, PX, PY, tx, ty, { col: stop ? C.red : 'E0A31A', th: 0.16, rr: 0.2, name: '!!arm', glow: stop ? 8 : undefined });
         s.oval(PX - 0.1, PY - 0.1, 0.24, 0.24, { fill: '5A6576', name: '!!gelenk' });
         s.rect(tx - 0.01, ty, 0.02, 0.55, { fill: 'C9D0DA', name: '!!seil' });
-        s.text('J', { x: tx - 0.12, y: ty + 0.45, w: 0.3, h: 0.3, size: 16, bold: true, color: 'C9D0DA', name: '!!haken' });
+        s.img(haken, { x: tx - 0.12, y: ty + 0.5, w: 0.2, h: 0.3, name: '!!haken' });
         s.text(stop ? 'STOPP!' : '', { x: 6.0, y: 2.75, w: 2.2, h: 0.55, size: 22, bold: true, color: C.white, fill: C.red, ft: stop ? 0 : 100, shape: s.pres.shapes.ROUNDED_RECTANGLE, rr: 0.3, align: 'center', valign: 'middle', name: '!!stop' });
       },
     });
@@ -65,6 +78,7 @@ module.exports = async (deck) => {
       '❓ Sammeln lassen, dann je Klick eine Karte.\n' +
       '🖱 Klick 1–4: je ein Punkt.\n' +
       '✅ BG Verkehr „Be- und Entladen“: Last mittig, rollende Last sichern, Herstellerangaben beachten, nicht nahe der Absturzkante, außer der Bedienperson keine weiteren Personen mitnehmen. § 53b Abs. 5 StVZO: Hubladebühnen müssen im Betrieb durch zwei gelbe Blinkleuchten und rot-weiße retroreflektierende Warnmarkierungen kenntlich sein (Blinkleuchten arbeiten selbsttätig). Prüfungsfrage 2.7.09-209: Ladetätigkeit am Fahrbahnrand nur, wenn die Sicherheit des Verkehrs nicht beeinträchtigt wird und keine Haltverbote missachtet werden.\n' +
+      '💡 Nie mit beladener Ladebordwand fahren oder rangieren (BG Verkehr).\n' +
       '➜ „Und an der Laderampe mit dem Stapler?“',
   });
 
@@ -100,16 +114,18 @@ module.exports = async (deck) => {
         s.rect(bx0, by0, bx1 - bx0, by1 - by0, { fill: '1A1F27', ft: 10, name: '!!innen' });
         [0, 1].forEach(q => s.rect(bx0 + 0.15 + q * 0.95, by1 - 0.85, 0.85, 0.85, { fill: 'B9864A', line: '6E4E2A', lw: 1, name: '!!pal' + q }));
         // Keil
-        const wx = X + 4.05 * K - 0.3 * K - 0.36;
-        s.shape(s.pres.shapes.RIGHT_TRIANGLE, { x: wx, y: GY - 0.28, w: 0.34, h: 0.28, fill: 'E0A31A', ft: i >= 1 ? 0 : 100, flipH: true, name: '!!keil' });
+        // Keil vor dem Hinterrad: schräge Seite liegt am Reifen an (Rad r = 0,3 + Reifenrand)
+        const wx = X + 4.05 * K - 0.487;
+        s.shape(s.pres.shapes.RIGHT_TRIANGLE, { x: wx, y: GY - 0.28, w: 0.34, h: 0.28, fill: 'E0A31A', line: 'A87A10', lw: 0.75, ft: i >= 1 ? 0 : 100, lt: i >= 1 ? 0 : 100, name: '!!keil' });
         // Überladebrücke
         s.rect(bx1 - 0.25, FY - 0.04, i >= 2 ? (RX + 0.5) - (bx1 - 0.25) : 0.05, 0.07, { fill: '9AA4B1', ft: i >= 2 ? 0 : 100, name: '!!bruecke' });
         // Stapler
         const sx = i >= 3 ? bx1 - 1.5 : 11.85;
         s.img(await icon('LuForklift', C.am), { x: sx, y: FY - 0.92, w: 1.05, h: 1.05, flipH: true, name: '!!stapler' });   // Gabel zur Ladung, Räder auf dem Boden
         // Hinweise
-        s.text(i === 0 ? 'Bremse fest · Motor aus' : i === 1 ? 'Keil!' : '', { x: 5.75, y: 1.55, w: 5, h: 0.4, size: 18, bold: true, color: C.am, name: '!!hw' });
-        arrow(s, wx + 0.17, GY - 0.95, wx + 0.17, GY - 0.38, { col: C.am, th: 0.07, head: 0.2, name: 'kp', hide: i !== 1 });
+        s.text(i === 0 ? 'Bremse fest · Motor aus' : '', { x: 5.75, y: 1.55, w: 5, h: 0.4, size: 18, bold: true, color: C.am, name: '!!hw' });
+        arrow(s, wx + 0.12, GY + 0.62, wx + 0.12, GY + 0.1, { col: C.am, th: 0.07, head: 0.2, name: 'kp', hide: i !== 1 });
+        s.text(i === 1 ? 'Unterlegkeil!' : '', { x: wx + 0.3, y: GY + 0.24, w: 2.0, h: 0.36, size: 16, bold: true, color: C.am, name: '!!kt' });
       },
     });
   }

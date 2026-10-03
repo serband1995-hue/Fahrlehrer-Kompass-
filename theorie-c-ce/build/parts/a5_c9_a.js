@@ -47,7 +47,7 @@ module.exports = async (deck) => {
   await motion(deck, 'c9k', {
     kicker: 'Vollbremsung', ttl: 'Die Ladung will weiter', dur: 420, holdDur: 800,
     question: 'Vollbremsung: Mit wie viel Kraft schiebt eine Ladung von 10\u00A0Tonnen nach vorn?',
-    answer: 'Mit bis zu 8.000 daN – so viel, wie 8 Tonnen wiegen: rund 80 % ihres Gewichts. Egal ob aus 30 oder 80 km/h.',
+    answer: 'Mit bis zu 8.000\u00A0daN – so viel, wie 8 Tonnen wiegen: rund 80 % ihres Gewichts. Egal ob aus 30 oder 80 km/h.',
     legend: 'Blick in den Aufbau · schematisch',
     frames: [
       fr(80, { hold: true, cap: 'Zwei Paletten stehen mitten im Aufbau – ohne Gurte. „Die sind doch schwer genug …“', note: '▶ Sagen: „Zwei schwere Paletten, einfach draufgestellt. Viele denken: Die bewegen sich schon nicht, die sind ja schwer.“\n❓ Frage auf der Folie stellen, schätzen lassen.\n🖱 Klick: Die Fahrt läuft (von selbst bis zur Bremsung).\n➜ „Und jetzt: Vollbremsung!“' }),

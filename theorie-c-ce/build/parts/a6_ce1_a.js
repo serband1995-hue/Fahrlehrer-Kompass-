@@ -1,5 +1,5 @@
 // Abend 6 · CE1: Kapitel 1 Zugarten und Kupplungen (Gliederzug, ZAA, Sattelzug; Bolzenkupplung; Sattelkupplung)
-const { C, sec, chapter, motion, steps, photoAsk, quiz, lkw, auflieger, anhaenger, seg, arrow, svgImg } = require('../gs');
+const { C, sec, chapter, motion, steps, ask, photoAsk, quiz, lkw, auflieger, anhaenger, seg, arrow, svgImg } = require('../gs');
 const { icon } = require('../lib');
 
 sec('ce1z', 'CE1  ·  ZUGARTEN UND KUPPLUNGEN', C.bl, 'bg_blue.jpg');
@@ -19,29 +19,29 @@ async function zug(s, art, { X, GY, K }) {
   return { eye: [ex, ey], pivot: a.pivot, drehkranz: art === 'zaa' ? null : [X + (L + gap + 0.85) * K, GY - 0.8 * K], len: (L + gap + (art === 'zaa' ? 4.4 : 4.6)) * K };
 }
 const main = async (deck) => {
-  await chapter(deck, 'ce1z', { num: 1, ttl: 'Zugarten und Kupplungen', sub: 'Gliederzug, Zentralachsanhänger, Sattelzug – und was sie zusammenhält.', ico: 'LuLink', notes:
+  await chapter(deck, 'ce1z', { num: 1, ttl: 'Zugarten und Kupplungen', sub: 'Gliederzug und Sattelzug – was sie zusammenhält und wie ihr die Kupplung prüft.', ico: 'LuLink', notes:
     '▶ Sagen: „Kapitel 1: Welche Züge gibt es – und wie hängen sie zusammen?“\n🖱 Keine Klicks.\n➜ „Drei Zugarten.“' });
 
   // ===== DREI ZUGARTEN (Morph) =====
   {
     const K = 0.62, X = 5.95, GY = 4.45;
     const ART = [
-      ['glieder', 'Gliederzug', 'Lkw + Anhänger mit Drehschemel', 'Zwei Drehpunkte: Kupplungsbolzen und Drehkranz. Kaum Stützlast auf dem Lkw.'],
-      ['zaa', 'Zentralachsanhänger', 'Achsen nah am Schwerpunkt, starre Deichsel', 'Ein Teil des Gewichts liegt auf der Kupplung des Lkw: die Stützlast.'],
+      ['glieder', 'Lkw mit Drehschemelanhänger', 'ein Gliederzug · der Anhänger lenkt mit dem Drehschemel', 'Zwei Drehpunkte: Kupplungsbolzen und Drehkranz. Kaum Stützlast auf dem Lkw.'],
+      ['zaa', 'Lkw mit Zentralachsanhänger', 'auch ein Gliederzug · Achsen nah am Schwerpunkt, starre Deichsel', 'Ein Teil des Gewichts liegt auf der Kupplung des Lkw: die Stützlast.'],
       ['sattel', 'Sattelzug', 'Zugmaschine + Auflieger', 'Ein großer Teil des Aufliegers liegt auf der Zugmaschine: die Sattellast.'],
     ];
     await steps(deck, 'ce1z', {
       kicker: 'Zugarten', ttl: 'Drei Arten von Zügen',
-      list: ['Gliederzug', 'Zentralachsanhänger', 'Sattelzug'],
+      list: ['Lkw mit Drehschemelanhänger', 'Lkw mit Zentralachsanhänger', 'Sattelzug'],
       ask: { q: 'Wie viele Anhänger dürft ihr hinter einem Lkw mitnehmen?', a: 'Nur einen. Hinter einem Sattelzug gar keinen.', at: 2 },
       caps: [
-        'Gliederzug: Lkw mit Anhänger. Der Anhänger hat vorn einen Drehschemel – er lenkt mit der Zuggabel.',
-        'Zentralachsanhänger: Die Achsen sitzen nah am Schwerpunkt (etwa in der Mitte), die Deichsel ist starr. Er drückt mit der Stützlast auf den Lkw.',
+        'Lkw mit Drehschemelanhänger: Der Anhänger hat vorn einen Drehschemel – er lenkt mit der Zuggabel.',
+        'Lkw mit Zentralachsanhänger: Die Achsen sitzen nah am Schwerpunkt, die Deichsel ist starr. Er drückt mit der Stützlast auf den Lkw. 1 und 2 heißen beide Gliederzug.',
         'Sattelzug: Der Auflieger hat vorn keine Achse. Er liegt mit dem Königszapfen auf der Sattelkupplung der Zugmaschine.',
       ],
       notes: [
-        '▶ Sagen: „Erste Zugart: der Gliederzug – ein Lkw mit Anhänger. Der Anhänger hat vorn einen Drehschemel. Er hat zwei Drehpunkte: den Kupplungsbolzen am Lkw und den Drehkranz am Anhänger. Darum kann er doppelt einknicken.“\n✅ DGUV Information 214-080 „Kuppeln – aber sicher!“, Kap. 6: Gliederzug = Lkw + Gelenkdeichsel- oder Starrdeichselanhänger; Gelenkdeichselanhänger gibt keine nennenswerte Stützlast ab.\n➜ „Zweite Zugart.“',
-        '▶ „Zweite Art: der Zentralachsanhänger. Die Achsen sitzen nah am Schwerpunkt, die Deichsel ist starr. Ein Teil seines Gewichts drückt auf die Kupplung des Lkw – die Stützlast.“\n✅ DGUV I 214-080, Kap. 6: Zentralachsanhänger, Stützlast höchstens 10 % der Anhängermasse oder 1.000 kg (der kleinere Wert). § 44 Abs. 3 StVZO: Mindeststützlast 4 %.\n➜ „Und die dritte Art?“',
+        '▶ Sagen: „Erste Zugart: ein Lkw mit Drehschemelanhänger. Der Anhänger hat vorn einen Drehschemel. Er hat zwei Drehpunkte: den Kupplungsbolzen am Lkw und den Drehkranz am Anhänger. Darum kann er doppelt einknicken.“\n✅ DGUV Information 214-080 „Kuppeln – aber sicher!“, Kap. 6 und S. 67: Gliederzug = Lkw + Gelenkdeichsel- oder Starrdeichselanhänger; Gelenkdeichselanhänger gibt keine nennenswerte Stützlast ab.\n💡 Kurzkuppelsystem: kürzerer Abstand zwischen Lkw und Anhänger, andere Kurvenlaufeigenschaften, mehr Verschleiß, mehr Ladefläche (Prüfungsfrage 2.6.03-306: alle drei Antworten richtig).\n➜ „Zweite Zugart.“',
+        '▶ „Zweite Art: ein Lkw mit Zentralachsanhänger. Die Achsen sitzen nah am Schwerpunkt, die Deichsel ist starr. Ein Teil seines Gewichts drückt auf die Kupplung des Lkw – die Stützlast. Übrigens: 1 und 2 heißen beide Gliederzug.“\n✅ DGUV I 214-080, Kap. 6: Zentralachsanhänger, Stützlast höchstens 10 % der Anhängermasse oder 1.000 kg (der kleinere Wert). § 44 Abs. 3 StVZO: Mindeststützlast 4 %.\n➜ „Und die dritte Art?“',
         '▶ „Dritte Art: der Sattelzug. Der Auflieger hat vorn keine Achse. Er liegt mit dem Königszapfen auf der Sattelkupplung – ein großer Teil seines Gewichts liegt auf der Zugmaschine: die Sattellast.“\n❓ Frage auf der Folie auflösen.\n✅ § 32a StVZO: Hinter Kfz nur ein Anhänger, hinter Sattelkraftfahrzeugen keiner. (Zwei Anhänger nur hinter Zugmaschinen.)\n➜ „Wie ist der Anhänger am Lkw befestigt?“',
       ],
       legend: 'Seitenansicht · schematisch',
@@ -70,15 +70,15 @@ const main = async (deck) => {
     bg: 'k_kupplung_r.jpg', bgX: 6.0, ov: 7.0, kicker: 'Anhängekupplung', q: 'Bolzenkupplung: Was seht ihr hier?', qsize: 30, w: 5.05, asize: 15,
     answers: [
       ['LuMagnet', 'Fangmaul', 'führt die Zugöse in die Kupplung.', C.bl],
-      ['LuArrowDownToLine', 'Kupplungsbolzen', 'fällt durch die Zugöse und hält sie fest.', C.bl],
+      ['LuArrowDownToLine', 'Kupplungsbolzen', 'eine Feder drückt ihn durch die Zugöse.', C.bl],
       ['LuCircle', 'Zugöse', 'am Ende der Zuggabel, 40 oder 50 mm.', C.bl],
-      ['LuCable', 'Leitungen', 'rot und gelb für Luft, schwarz für Strom.', C.bl],
+      ['LuCable', 'Leitungen', 'rot und gelb für Luft, Stecker für Strom.', C.bl],
     ],
     notes:
       '▶ Sagen: „So sieht die Kupplung am Lkw aus. Was erkennt ihr?“\n' +
       '❓ Sammeln lassen, dann je Klick auflösen.\n' +
       '🖱 Klick 1–4: je ein Teil.\n' +
-      '✅ DGUV I 214-080, Kap. 1.3.1: selbsttätige Bolzenkupplung Größe 40 oder 50 (Innendurchmesser der Zugöse in mm). § 43 Abs. 4 StVZO: Anhängekupplungen müssen selbsttätig wirken. Nur genehmigte Bauart – Schweißen oder Bohren an der Kupplung ist verboten.\n' +
+      '✅ DGUV I 214-080, Kap. 1.3.1: selbsttätige Bolzenkupplung Größe 40 oder 50 (Innendurchmesser der Zugöse in mm). § 43 Abs. 4 StVZO: Anhängekupplungen müssen selbsttätig wirken. Nur genehmigte Bauart – Schweißen oder Bohren an der Kupplung ist verboten (Kap. 1.1, S. 6).\n' +
       '➜ „Wie schließt so eine Kupplung?“',
   });
 
@@ -99,7 +99,7 @@ const main = async (deck) => {
         fr(10.6, 0, { cap: 'Der Lkw setzt zurück – die Zugöse gleitet ins Fangmaul …' }),
         fr(9.3, 0),
         fr(BX, 0, { cap: 'Die Zugöse stößt hinten an und löst die Sperre …' }),
-        fr(BX, 1, { hold: true, answer: true, cap: 'Federkraft drückt den Bolzen durch die Zugöse. Der Kontrollstift ist verschwunden: geschlossen!', note: '▶ „Die Zugöse löst die Sperre, eine Feder drückt den Bolzen nach unten durch die Öse. Jetzt ist die Kupplung zu – und der Kontrollstift ist verschwunden. Das kontrolliert ihr immer: hinsehen, im Dunkeln mit der Hand tasten. Anrucken allein reicht nicht!“\n✅ DGUV I 214-080, Kap. 1.3.1: Kontrollstift steht hervor, solange die Kupplung offen ist; Kontrolle durch Sehen und Tasten oder Fernanzeige im Führerhaus. Prüfungsfrage 2.7.07-312: am Kontrollstift oder an der Kontrollleuchte – „durch kurzes Anrucken“ ist falsch.\n🖱 Keine Animation mehr – nächster Klick: nächste Folie.\n➜ „Und beim Sattelzug?“' }),
+        fr(BX, 1, { hold: true, answer: true, cap: 'Federkraft drückt den Bolzen durch die Zugöse. Der Kontrollstift ist verschwunden: geschlossen!', note: '▶ „Die Zugöse löst die Sperre, eine Feder drückt den Bolzen nach unten durch die Öse. Jetzt ist die Kupplung zu – und der Kontrollstift ist verschwunden. Das kontrolliert ihr immer: hinsehen, im Dunkeln mit der Hand tasten. Anrucken allein reicht nicht!“\n✅ DGUV I 214-080, Kap. 1.3.1: Kontrollstift steht hervor, solange die Kupplung offen ist; Kontrolle durch Sehen und Tasten oder Fernanzeige im Führerhaus. Prüfungsfrage 2.7.07-312: am Kontrollstift oder an der Kontrollleuchte – „durch kurzes Anrucken“ ist falsch.\n💡 Nach dem Einrasten darf das Fangmaul wieder schwenken – arretiert sein muss es nur bei offener Kupplung (DGUV I 214-080, S. 9 und 25). Prüfungsfrage 2.7.07-322: richtig sind ‚Bolzen vollständig eingerastet‘ und ‚Stellung des Kontrollstiftes‘ – „Das Fangmaul darf nach dem Einrasten nicht mehr seitlich schwenkbar sein“ ist falsch.\n🖱 Keine Animation mehr – nächster Klick: nächste Folie.\n➜ „Und beim Sattelzug?“' }),
       ],
       scene: async (s, { ex, closed }) => {
         s.rect(5.75, 2.0, 0.55, 4.3, { fill: '1F242B', name: '!!traeger' });
@@ -131,25 +131,49 @@ const main = async (deck) => {
 
   // ===== FOTO: SATTELKUPPLUNG =====
   await photoAsk(deck, 'ce1z', {
-    bg: 'k_sattel_r.jpg', bgX: 6.0, ov: 7.0, kicker: 'Sattelkupplung', q: 'Woran erkennt ihr, dass die Sattelkupplung zu ist?', qsize: 28, w: 5.05, asize: 15,
+    bg: 'k_sattel_r.jpg', bgX: 6.0, ov: 7.0, kicker: 'Sattelkupplung', q: 'Woran erkennt ihr, dass die Sattelkupplung zu ist?', qsize: 28, w: 5.05, asize: 15, top: 2.75,
     answers: [
       ['LuShieldCheck', 'Sicherung eingefallen', 'Bügel oder Klappe – je nach Hersteller.', C.bl],
       ['LuEyeOff', 'Kontrollstift weg', 'nicht mehr zu sehen und zu tasten.', C.bl],
       ['LuAlignVerticalJustifyEnd', 'Kein Luftspalt', 'Der Auflieger liegt flach auf der Platte.', C.bl],
-      ['LuCircleDot', 'Königszapfen passt', '50 oder 90 mm (2 oder 3,5 Zoll).', C.bl],
+      ['LuLink', 'Karabiner eingehängt', 'bei Kupplungen ohne selbsttätige Sicherung – Herstellerangabe.', C.bl],
     ],
     notes:
       '▶ Sagen: „Die Sattelkupplung – die Platte auf der Zugmaschine. Der Königszapfen des Aufliegers fährt hinten in den Schlitz und wird vom Verschlusshaken umfasst. Woran erkennt ihr, dass sie zu ist?“\n' +
       '❓ Sammeln lassen, dann je Klick auflösen.\n' +
       '🖱 Klick 1–4: je ein Punkt.\n' +
-      '✅ DGUV I 214-080, Kap. 1.4.1 und S. 15: Verschlusshaken umfasst den Königszapfen, Verschlussriegel sichert; „ordnungsgemäß geschlossen“ je nach Bauart: Sicherungsklappe/-bügel eingefallen, Kontrollstift nicht mehr sichtbar und tastbar oder Karabiner eingehängt – Herstellerangabe beachten. Königszapfen genormt: Größe 50 (DIN 74080) und 90 (DIN 74083). Prüfungsfrage 2.7.07-201: Sattelkupplung regelmäßig abschmieren und Befestigung am Rahmen kontrollieren.\n' +
+      '✅ DGUV I 214-080, Kap. 1.4.1 und S. 15: Verschlusshaken umfasst den Königszapfen, Verschlussriegel sichert; „ordnungsgemäß geschlossen“ je nach Bauart: Sicherungsklappe/-bügel eingefallen, Kontrollstift nicht mehr sichtbar und tastbar oder Karabiner eingehängt – Herstellerangabe beachten. Die Größe des Königszapfens (50 oder 90 mm) kommt auf der Folie „Ein fremder Auflieger“. Prüfungsfrage 2.7.07-201: Sattelkupplung regelmäßig abschmieren und Befestigung am Rahmen kontrollieren.\n' +
       '➜ „Eine Prüfungsfrage dazu.“',
   });
   await quiz(deck, 'ce1z', {
     kicker: 'Prüfungsfrage 2.7.07-201', q: 'Welche Kontroll- und Wartungsarbeiten müssen an einer Sattelkupplung regelmäßig vorgenommen werden?', size: 28,
     opts: ['Sattelkupplung abschmieren', 'Befestigung am Rahmen kontrollieren', 'Sattelkupplungen sind immer wartungsfrei'], ok: [0, 1],
     why: 'Die Platte muss geschmiert sein – und die Kupplung muss fest auf dem Rahmen sitzen.',
-    notes: '▶ Frage vorlesen, abstimmen.\n🖱 Klick 1: Antworten · Klick 2: Lösung.\n✅ Amtlicher Fragenkatalog 2.7.07-201: A und B.\n➜ „Kapitel 2: Wie kuppelt man sicher an?“',
+    notes: '▶ Frage vorlesen, abstimmen.\n🖱 Klick 1: Antworten · Klick 2: Lösung.\n✅ Amtlicher Fragenkatalog 2.7.07-201: A und B.\n➜ „Auch die Bolzenkupplung müsst ihr prüfen – auf Verschleiß.“',
+  });
+
+  // ===== KUPPLUNG PRÜFEN: VERSCHLEISS =====
+  await ask(deck, 'ce1z', {
+    kicker: 'Wartung und Prüfung', q: 'Kupplung prüfen – wann ist sie verschlissen?', ico: 'LuSearchCheck', qsize: 32,
+    answers: [
+      ['LuMoveHorizontal', 'Kein Längsspiel', 'Kupplungskopf kräftig rütteln. Spiel? Kein Anhängerbetrieb – ab in die Werkstatt!', C.bl, 17],
+      ['LuArrowDownToLine', 'Kupplungsbolzen', 'Höhenspiel höchstens 4 mm. Bolzen mit 38 mm: rundum nicht unter 36,5 mm.', C.bl, 17],
+      ['LuCircle', 'Zugöse', 'höchstens 1,5 mm Verschleiß. Die Buchse nie durch Schweißen befestigen.', C.bl, 17],
+      ['LuWrench', 'Zuggabel', 'kein merkliches Spiel in der Lagerung. Verbogen? Ersetzen, nicht richten.', C.bl, 17],
+    ],
+    notes:
+      '▶ Sagen: „Die Kupplung hält den ganzen Anhänger. Darum prüft ihr sie regelmäßig auf Verschleiß. Worauf achtet ihr?“\n' +
+      '❓ Sammeln lassen, dann je Klick eine Karte.\n' +
+      '🖱 Klick 1–4: je ein Punkt.\n' +
+      '✅ FahrschAusbO Anlage 2.4 Nr. 1a: Einrichtungen zur Verbindung – Wartung und Prüfung. DGUV I 214-080, S. 60: Die Zugstange darf keinerlei Längsspiel haben – bei Längsspiel kein Anhängerbetrieb mehr. S. 62: Buchsen auf keinen Fall durch Schweißen befestigen; die Zuggabellagerung darf kein merkliches Spiel haben. Prüfungsfragen 2.7.07-326 (Längsspiel nicht zulässig), 2.7.07-317 und -325 (Längsspiel → Risse an der Traverse bzw. Schlusstraverse, Ausreißen bzw. Abreißen), 2.7.07-303 (Höhenspiel des Bolzens höchstens 4 mm), 2.7.07-324 (Bolzen 38 mm: rundum nicht unter 36,5 mm), 2.7.07-330 (Zugöse höchstens 1,5 mm Verschleiß), 2.7.07-315 (Zuggabel: kein merkliches Spiel).\n' +
+      '💡 In Abend 7: Verschleiß prüfen durch Anfahren gegen die Feststellbremse (Prüfungsfrage 2.7.07-328).\n' +
+      '➜ „Eine Prüfungsfrage dazu.“',
+  });
+  await quiz(deck, 'ce1z', {
+    kicker: 'Prüfungsfrage 2.7.07-324', q: 'Der Kupplungsbolzen Ihrer Anhängekupplung hat im Neuzustand 38 mm Durchmesser. Was müssen Sie bei Verschleiß beachten?', size: 28, osize: 17,
+    opts: ['Der Durchmesser darf 36,5 mm am gesamten Umfang der Kupplungsfläche nicht unterschreiten', 'Es darf kein übermäßiges Spiel in der unteren Bolzenführung vorhanden sein', 'Der Kupplungsbolzen darf einseitig den Durchmesser von 36,5 mm an der Kupplungsfläche unterschreiten'], ok: [0, 1],
+    why: 'Rundum mindestens 36,5 mm – auch nicht an einer Stelle weniger. Und unten kein übermäßiges Spiel.',
+    notes: '▶ Frage vorlesen, abstimmen.\n🖱 Klick 1: Antworten · Klick 2: Lösung.\n✅ Amtlicher Fragenkatalog 2.7.07-324: A und B. Gegenstück 2.7.07-326: „Ein Längsspiel ist nicht zulässig“ (falsch: höchstens 1,5 mm; abhängig vom Durchmesser).\n➜ „Kapitel 2: Wie kuppelt man sicher an?“',
   });
 };
 module.exports = main; module.exports.zug = zug;

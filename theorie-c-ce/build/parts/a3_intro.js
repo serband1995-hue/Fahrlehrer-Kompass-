@@ -30,7 +30,7 @@ module.exports = async (deck) => {
   // ===== ABLAUF =====
   {
     const s = base(deck, 'c5', { notes:
-      '▶ Sagen: „Zwei Lektionen: zuerst C5 – wie eine Druckluftbremse aufgebaut ist und funktioniert. Nach der Pause C6 – Dauerbremsen, ABS, Kontrolle der Bremse, Hauptuntersuchung und Geschwindigkeitsbegrenzer.“\n' +
+      '▶ Sagen: „Zwei Lektionen: zuerst C5 – wie eine Druckluftbremse aufgebaut ist und funktioniert. Nach der Pause C6 – Dauerbremsen, ABS, Kontrolle der Bremse, Hauptuntersuchung, Geschwindigkeitsbegrenzer und Tempomat.“\n' +
       '🖱 Klick 1: Lektion C5 · Klick 2: Pause · Klick 3: Lektion C6.\n' +
       '💡 Zeiten für einen Beginn um 18:00 Uhr.\n' +
       '➜ „Erst ein kurzer Blick zurück auf Abend 2.“' });
@@ -38,7 +38,7 @@ module.exports = async (deck) => {
     const T = [
       ['18:00', '19:30', 'Lektion C5', 'Lkw-Bremsen', 'Bremsanlagen · Druckluft · Zweikreis-Bremse · ALB und EBS · Feststellbremse', C.red, 'LuOctagonAlert'],
       ['19:30', '19:45', 'Pause', '15 Minuten', '', C.dim, 'LuCoffee'],
-      ['19:45', '21:15', 'Lektion C6', 'Dauerbremsen, Untersuchungen, Begrenzer', 'Motorbremse und Retarder · Bremsweg und Fading · ABS · Kontrolle · HU und SP · Begrenzer', C.bl, 'LuMountain'],
+      ['19:45', '21:15', 'Lektion C6', 'Dauerbremsen, Untersuchungen, Begrenzer', 'Motorbremse, Retarder · Bremsweg, Fading · ABS · Kontrolle · HU und SP · Begrenzer, Tempomat', C.bl, 'LuMountain'],
     ];
     for (let i = 0; i < 3; i++) {
       const t = T[i], h = i === 1 ? 1.0 : 1.32, yy = [2.05, 3.55, 4.73][i];
@@ -56,13 +56,13 @@ module.exports = async (deck) => {
     answers: [
       ['LuDroplet', 'AdBlue-Tank leer – was passiert?', 'Erst weniger Leistung, zuletzt Kriechmodus mit höchstens 20 km/h.'],
       ['LuLock', 'Wann die Differenzialsperre einlegen?', 'Nur im Stand oder in Schrittgeschwindigkeit – nie in Kurven, sofort wieder raus.'],
-      ['LuSnowflake', 'Winterreifen beim Lkw – wo mindestens?', 'Auf den Antriebsachsen und den vorderen Lenkachsen, mit Alpine-Symbol.'],
+      ['LuSnowflake', 'Winterreifen beim Lkw – wo mindestens?', 'Auf den ständig angetriebenen Achsen und den vorderen Lenkachsen, mit Alpine-Symbol.'],
     ],
     notes:
       '▶ Sagen: „Bevor wir anfangen: drei Fragen zu Abend 2.“\n' +
       '❓ Jede Frage vorlesen, Antworten sammeln, dann klicken.\n' +
       '🖱 Klick 1–3: je eine Frage mit Antwort.\n' +
-      '✅ VO (EU) 582/2011 Anhang XIII · Prüfungsfrage 2.7.03-213 · § 2 Abs. 3a StVO.\n' +
+      '✅ VO (EU) 582/2011 Anhang XIII · Prüfungsfrage 2.7.03-213 · § 2 Abs. 3a StVO: Winterreifen mindestens auf den „permanent angetriebenen Achsen“ und den vorderen Lenkachsen – eine zuschaltbare Antriebsachse zählt nicht.\n' +
       '➜ „Gut. Jetzt zu den Bremsen: Was lernt ihr heute in C5?“',
   });
   // ===== LERNZIELE C5 =====
