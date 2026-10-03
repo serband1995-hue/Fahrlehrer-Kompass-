@@ -29,7 +29,7 @@ module.exports = async (deck) => {
     s.rect(x0 + 22 * k, y0, 2 * k, 0.7, { fill: C.gr }, { fx: 'fade', dur: 300, d: 900 });
     s.text('frei', { x: x0 + 22 * k, y: y0, w: 2 * k, h: 0.7, size: 16, bold: true, color: C.dark, align: 'center', valign: 'middle' }, { fx: 'fade', dur: 300, d: 900 });
     await point(s, 0.7, 3.4, 5.85, 1.35, 'LuTruck', C.am, 'Lkw über 7,5 t', 'und JEDER Lkw mit Anhänger – egal wie schwer.', CLICK, { br: true, size: 17 });
-    await point(s, 6.78, 3.4, 5.85, 1.35, 'LuPackage', C.am, 'Gewerblich – auch leer', 'Güterbeförderung gegen Geld oder geschäftsmäßig, Leerfahrten eingeschlossen.', CLICK, { br: true, size: 17 });
+    await point(s, 6.78, 3.4, 5.85, 1.35, 'LuPackage', C.am, 'Auch Werkverkehr – auch leer', 'Jede Güterbeförderung gegen Geld oder geschäftsmäßig – auch für die eigene Firma, Leerfahrten eingeschlossen.', CLICK, { br: true, size: 17 });
     await point(s, 0.7, 4.95, 11.93, 1.2, 'LuLeaf', C.gr, 'Ausnahmen (Beispiele):', 'frische Milch, Fleisch, Fisch, leicht verderbliches Obst und Gemüse · kombinierter Verkehr Schiene/Hafen · Pannenhilfe.', CLICK, { br: true, size: 16 });
     foot(s, 'Fahrer 120 €, Halter 570 € – keine Punkte (BKat Nr. 119, 120)');
   }
@@ -56,18 +56,18 @@ module.exports = async (deck) => {
         else s.text(String(d), { x, y, w: 0.5, h: 0.45, size: 13, color: C.mut, align: 'center', valign: 'middle' }, { fx: 'fade', dur: 100 });
       }
     }
-    await point(s, 9.15, 2.05, 3.48, 1.85, 'LuClock', C.am, '7 – 20 Uhr', 'Samstage 1.7.–31.8., gewerblich – auch leer', CLICK, { br: true, size: 16 });
+    await point(s, 9.15, 2.05, 3.48, 1.85, 'LuClock', C.am, '7 – 20 Uhr', 'Samstage 1.7.–31.8., auch Werkverkehr und leer', CLICK, { br: true, size: 16 });
     await point(s, 9.15, 4.1, 3.48, 1.9, 'LuRoute', C.am, 'Nur bestimmte Strecken', 'Abschnitte z. B. von A 1, A 3, A 5, A 7, A 8, A 9', { fx: 'flyL', dur: 450 }, { br: true, size: 16 });
     foot(s, 'Kalender schematisch – die Wochentage ändern sich jedes Jahr · Lkw über 7,5 t und Lkw mit Anhänger · 60 €, keine Punkte');
   }
   quiz(deck, 'fv', {
-    kicker: 'Frage · Sonntagsfahrverbot', q: 'Sonntag, 21:30 Uhr. Du fährst einen 7-t-Lkw mit Anhänger, leer, für deine Spedition. Darfst du los?', size: 26,
+    kicker: 'Frage · Sonntagsfahrverbot', q: 'Sonntag, 21:30 Uhr. Ihr fahrt einen 7-t-Lkw mit Anhänger, leer, für eure Spedition. Dürft ihr los?', size: 26,
     opts: ['Ja – unter 7,5 t gilt kein Verbot', 'Ja – leer zählt nicht', 'Nein – erst ab 22 Uhr'], ok: 2,
     why: '§ 30 Abs. 3 StVO: Das Verbot gilt auch für jeden Lkw mit Anhänger und ausdrücklich für Leerfahrten. Erst ab 22 Uhr ist die Fahrt erlaubt.',
     notes: '▶ Frage vorlesen, abstimmen.\n🖱 Klick 1: Antworten · Klick 2: Lösung.\n✅ C.\n💡 Zwei Fallen in einer Frage: Anhänger (dann egal wie schwer) und Leerfahrt (zählt mit).\n➜ „Gibt es Ausnahmen?“',
   });
   quiz(deck, 'fv', {
-    kicker: 'Frage · Ausnahme', q: 'Sonntag, 10 Uhr. Dein 18-t-Lkw ist mit frischer Milch beladen. Darfst du fahren?', size: 30,
+    kicker: 'Frage · Ausnahme', q: 'Sonntag, 10 Uhr. Euer 18-t-Lkw ist mit frischer Milch beladen. Dürft ihr fahren?', size: 30,
     opts: ['Nein – Sonntag ist Sonntag', 'Ja – frische Milch ist vom Sonntagsfahrverbot ausgenommen', 'Nur auf der Autobahn'], ok: 1,
     why: '§ 30 Abs. 3 Satz 2 StVO: Ausgenommen ist u. a. die Beförderung von frischer Milch, frischem Fleisch und Fisch sowie leicht verderblichem Obst und Gemüse (und die Leerfahrten dafür).',
     notes: '▶ Frage vorlesen, abstimmen.\n🖱 Klick 1: Antworten · Klick 2: Lösung.\n✅ B.\n💡 Die Ausnahme gilt für die Ware – nicht für den ganzen Tag. Wer danach Möbel lädt, steht wieder im Verbot.\n➜ „Wer darf im Lkw mitfahren?“',
@@ -152,6 +152,7 @@ module.exports = async (deck) => {
       '✅ Seit 1.12.2023 enthält die Maut einen CO₂-Aufschlag – saubere Fahrzeuge zahlen weniger. Emissionsfreie Lkw sind bis 30.06.2031 befreit.\n' +
       '✅ Mautschuldner ist auch der Fahrer (§ 2 BFStrMG). Wer ohne Bezahlung (On-Board-Unit oder Buchung) fährt, riskiert Nacherhebung und Bußgeld.\n' +
       '✅ Handwerker-Ausnahme: unter 7,5 t für Material, Ausrüstung, Maschinen zur Ausübung des Handwerks bzw. Auslieferung handwerklich hergestellter Güter, wenn nicht gewerblich (§ 1 Abs. 2 Nr. 10).\n' +
+      '💡 Nicht verwechseln – drei Handwerker-Ausnahmen mit verschiedenen Grenzen: Berufskraftfahrer-Qualifikation: ohne Gewichtsgrenze, wenn Fahren nicht die Haupttätigkeit ist (§ 1 Abs. 2 BKrFQG). Lenk- und Ruhezeiten: bis 7,5 t im Umkreis von 100 km (Art. 3 Buchst. aa VO 561/2006). Maut: unter 7,5 t und nicht gewerblich (§ 1 Abs. 2 Nr. 10 BFStrMG).\n' +
       '➜ „Kurz testen.“' });
     kick(s, 'Lkw-Maut · Bundesfernstraßenmautgesetz'); title(s, 'Die Straße kostet');
     await point(s, 0.7, 2.05, 5.85, 1.35, 'LuWeight', C.gr, 'Über 3,5 t', 'technisch zulässige Gesamtmasse – seit Juli 2024', CLICK, { br: true, size: 17 });
@@ -199,13 +200,13 @@ module.exports = async (deck) => {
     notes: '▶ Sagen: „Das sind die sieben Regeln aus C2, die ihr sicher können müsst. Schreibt mit.“\n❓ Vor jedem Klick fragen.\n🖱 Klick 1–7: je eine Lösung.\n✅ § 3 Abs. 3, § 18 Abs. 5, § 4 Abs. 3, § 7 Abs. 3c, § 19 Abs. 3, § 12 Abs. 3a, § 30 Abs. 3 StVO, Ferienreiseverordnung.\n➜ „Und jetzt das Abschluss-Quiz.“',
   });
   quiz(deck, 'c2e', {
-    kicker: 'Quiz C2 · 1', q: 'Du fährst mit deinem 12-t-Lkw auf der Autobahn 80 km/h hinter einem anderen Lkw. Wie viel Abstand musst du mindestens halten?', size: 28,
+    kicker: 'Quiz C2 · 1', q: 'Ihr fahrt mit eurem 12-t-Lkw auf der Autobahn 80 km/h hinter einem anderen Lkw. Wie viel Abstand müsst ihr mindestens halten?', size: 28,
     opts: ['25 m', '50 m', 'halber Tacho = 40 m'], ok: 1,
     why: '§ 4 Abs. 3 StVO: Lkw über 3,5 t auf Autobahnen bei mehr als 50 km/h mindestens 50 m Abstand. Halber Tacho wären hier nur 40 m – zu wenig.',
     notes: '▶ Frage vorlesen, abstimmen.\n🖱 Klick 1: Antworten · Klick 2: Lösung.\n✅ B.\n💡 Zusatzfrage an die Klasse: „Und wenn ihr 85 fahrt?“ – Zu schnell: Lkw dürfen auf der Autobahn höchstens 80 km/h (§ 18 Abs. 5).\n➜ „Nächste Frage.“',
   });
   quiz(deck, 'c2e', {
-    kicker: 'Quiz C2 · 2', q: 'Vor dem Bahnübergang staut sich der Verkehr bis hinter das Gleis. Was tust du?', size: 30,
+    kicker: 'Quiz C2 · 2', q: 'Vor dem Bahnübergang staut sich der Verkehr bis hinter das Gleis. Was tut ihr?', size: 30,
     opts: ['Langsam auf das Gleis rollen, der Stau löst sich gleich', 'Vor dem Andreaskreuz warten, bis hinter dem Gleis Platz für den ganzen Lkw ist', 'Hupen, damit die anderen aufrücken'], ok: 1,
     why: '§ 19 Abs. 3 StVO: Kann der Bahnübergang nicht zügig und ohne Aufenthalt überquert werden, ist vor dem Andreaskreuz zu warten.',
     notes: '▶ Frage vorlesen, abstimmen.\n🖱 Klick 1: Antworten · Klick 2: Lösung.\n✅ B.\n➜ „Und die letzte.“',

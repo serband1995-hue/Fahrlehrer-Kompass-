@@ -128,7 +128,7 @@ module.exports = async (deck) => {
         fr(1), fr(2), fr(3),
         fr(4, { hold: true, answer: true,
           cap: 'Blau läuft der Lkw, rot der Anhänger – deutlich weiter innen. Er schneidet die Kurve und kreuzt den Radweg. Schrittgeschwindigkeit, Spiegel bis zum Schluss beobachten, im Zweifel anhalten.',
-          note: '▶ „Schaut auf die zwei Spuren: Blau ist das Vorderrad vom Lkw, rot das Hinterrad vom Anhänger. Der Anhänger läuft weit innen – er schneidet die Kurve und fährt über den Radweg. Genau dort ist jetzt der Radfahrer. Ihn neben dem Anhänger zu sehen, ist sehr schwer.“\n❓ Frage auf der Folie auflösen.\n✅ Prüfungsfrage 2.7.01-310: Der Anhänger kann ausschwenken und die Kurve schneiden (falsch: läuft in der Spur des Zugfahrzeugs). § 9 Abs. 6 StVO: Kfz über 3,5 t innerorts beim Rechtsabbiegen Schrittgeschwindigkeit, wenn mit Rad- oder Fußverkehr zu rechnen ist (BKat 45: 70 €, 1 Punkt). Prüfungsfrage 2.2.23-212: erst abbiegen, wenn neben dem Fahrzeug niemand ist.\n💡 Abbiegeassistent (Pflicht für neu zugelassene Lkw seit 7.7.2024) warnt – er ersetzt nicht Spiegel und Schrittgeschwindigkeit.\n💡 Achtet auch auf das Fahrerhaus: Es schwenkt beim Abbiegen weit nach links aus. In engen Querstraßen reicht der eigene Fahrstreifen dann oft nicht – Gegenverkehr beachten. Die Querstraße ist hier breit gezeichnet.\n🖱 Nächster Klick: nächste Folie.\n➜ „Zwei Prüfungsfragen dazu.“' }),
+          note: '▶ „Schaut auf die zwei Spuren: Blau ist das Vorderrad vom Lkw, rot das Hinterrad vom Anhänger. Der Anhänger läuft weit innen – er schneidet die Kurve und fährt über den Radweg. Genau dort ist jetzt der Radfahrer. Ihn neben dem Anhänger zu sehen, ist sehr schwer.“\n❓ Frage auf der Folie auflösen.\n✅ Prüfungsfrage 2.7.01-310: Der Anhänger kann ausschwenken und die Kurve schneiden (falsch: läuft in der Spur des Zugfahrzeugs). § 9 Abs. 6 StVO: Kfz über 3,5 t innerorts beim Rechtsabbiegen Schrittgeschwindigkeit, wenn mit Rad- oder Fußverkehr zu rechnen ist (BKat 45: 70 €, 1 Punkt). Prüfungsfrage 2.2.23-212: erst abbiegen, wenn neben dem Fahrzeug niemand ist.\n💡 Abbiegeassistent (Pflicht für neu zugelassene Lkw seit 7.7.2024) warnt – er ersetzt nicht Spiegel und Schrittgeschwindigkeit.\n💡 Achtet auch auf das Fahrerhaus: Es schwenkt beim Abbiegen weit nach links aus. In engen Querstraßen reicht der eigene Fahrstreifen dann oft nicht – Gegenverkehr beachten. Die Querstraße ist hier breit gezeichnet.\n🖱 Nächster Klick: nächste Folie.\n➜ „Eine Prüfungsfrage dazu: Wie schnell?“' }),
       ],
       scene: async (s, t) => {
         const f = F[t.k];
@@ -178,12 +178,6 @@ module.exports = async (deck) => {
       },
     });
   }
-  await quiz(deck, 'ce4r', {
-    kicker: 'Prüfungsfrage 2.7.01-310', q: 'Wie wirken sich die Kurvenlaufeigenschaften einer Fahrzeugkombination (Kraftfahrzeug mit Anhänger) beim Abbiegen aus? Der Anhänger …', size: 28,
-    opts: ['… kann ausschwenken', '… kann die Kurve schneiden', '… läuft in der Regel in der Spur des Zugfahrzeugs'], ok: [0, 1],
-    why: 'Innen schneidet er die Kurve, außen schwenkt das Heck aus. In der Spur des Lkw läuft er nicht.',
-    notes: '▶ Frage vorlesen, abstimmen.\n🖱 Klick 1: Antworten · Klick 2: Lösung.\n✅ Amtlicher Fragenkatalog 2.7.01-310: A und B.\n➜ „Und wie schnell?“',
-  });
   await quiz(deck, 'ce4r', {
     kicker: 'Prüfungsfrage 2.2.09-201', q: 'Sie fahren ein Kraftfahrzeug mit mehr als 3,5 t zulässiger Gesamtmasse. Mit welcher Geschwindigkeit müssen Sie innerorts nach rechts abbiegen? Wenn mit Radfahrern oder Fußgängern zu rechnen ist, mit …', size: 24,
     opts: ['… Schrittgeschwindigkeit', '… höchstens 20 km/h', '… höchstens 30 km/h'], ok: [0],

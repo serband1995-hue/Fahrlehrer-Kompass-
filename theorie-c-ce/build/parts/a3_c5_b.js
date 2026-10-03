@@ -167,7 +167,7 @@ module.exports = async (deck) => {
     caps: [
       'Beim Fahren drückt Luft den Kolben nach rechts und spannt die starke Feder. Die Bremse ist gelöst.',
       'Pedal treten: Luft strömt in den Membranteil. Die Membran schiebt die Kolbenstange heraus – die Betriebsbremse wirkt.',
-      'Handbremse ziehen: Die Luft aus dem Federspeicher wird abgelassen. Die Feder drückt den Kolben – der Lkw bremst mechanisch.',
+      'Feststellbremse ziehen: Die Luft aus dem Federspeicher wird abgelassen. Die Feder drückt den Kolben – der Lkw bremst mechanisch.',
       'Kein Luftvorrat und der Lkw muss weg? Mit der Löseschraube spannt ihr die Feder von Hand (herausdrehen). Vorher den Lkw gegen Wegrollen sichern!',
     ],
     notes: [
@@ -273,7 +273,7 @@ module.exports = async (deck) => {
   write(deck, 'c5e', {
     ttl: 'Lkw-Bremsen', labelW: 3.6, size: 18,
     rows: [
-      ['Drei Bremsen', 'Betriebsbremse, Feststellbremse, Dauerbremse (Pflicht über 9 t)'],
+      ['Drei Bremsen', 'Betriebsbremse, Feststellbremse, Dauerbremse (StVZO: Pflicht über 9 t)'],
       ['Druckluft', 'Kompressor – Druckregler – Lufttrockner – Vierkreisschutzventil – Behälter'],
       ['Abschaltdruck', 'etwa 10 bis 13 bar – kurzes Zischen ist normal'],
       ['Losfahren', 'erst wenn die Druckwarnung aus ist'],

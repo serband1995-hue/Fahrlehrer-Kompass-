@@ -102,7 +102,7 @@ module.exports = async (deck) => {
       ['Roter Knopf', 'Feststellbremse (Federspeicher) des Anhängers'],
       ['Schwarzer Knopf', 'Löseventil: löst die Notbremsung, z. B. zum Rangieren · springt beim Anschließen heraus'],
     ],
-    notes: '▶ Sagen: „Schreibt euch das auf – das kommt in der Prüfung.“\n🖱 Klick 1–8: je eine Zeile.\n💡 Erst das Stichwort vorlesen und fragen: „Wer weiß es?“ – dann klicken.\n✅ Quellen: § 41 Abs. 9 und 10 StVZO, UN-R 13 / RL 71/320/EWG, DGUV I 214-080, Prüfungsfragen 2.7.06-105, 2.7.02-302, 2.7.06-317, 2.7.06-306, 2.7.06-321 (gelb führt auch bei gezogener Feststellbremse Druck).\n➜ „Drei Prüfungsfragen.“',
+    notes: '▶ Sagen: „Schreibt euch das auf – das kommt in der Prüfung.“\n🖱 Klick 1–8: je eine Zeile.\n💡 Erst das Stichwort vorlesen und fragen: „Wer weiß es?“ – dann klicken.\n✅ Quellen: § 41 Abs. 9 und 10 StVZO, UN-R 13 / RL 71/320/EWG, DGUV I 214-080, Prüfungsfragen 2.7.06-105, 2.7.02-302, 2.7.06-317, 2.7.06-306, 2.7.06-321 (gelb führt auch bei gezogener Feststellbremse Druck).\n➜ „Zwei Prüfungsfragen.“',
   });
   await quiz(deck, 'ce2e', {
     kicker: 'Prüfungsfrage 2.7.07-321', q: 'Was müssen Sie beim Ankuppeln eines Anhängers beachten?', size: 32,
@@ -114,13 +114,7 @@ module.exports = async (deck) => {
     kicker: 'Prüfungsfrage 2.7.06-319', q: 'Sie fahren ein Zugfahrzeug mit Druckluftbremsanlage. Die Bremsleitung am rechten Vorderrad bricht. Wie wirkt sich das im Anhängerbetrieb aus?', size: 26,
     opts: ['Beim Anhänger bleibt die Betriebsbremse voll funktionsfähig', 'Die Bremsleistung des Zugfahrzeugs ist eingeschränkt', 'Der Anhänger wird sofort selbsttätig gebremst'], ok: [0, 1],
     why: 'Der Kreis am Lkw ist kaputt, die anderen behalten ihren Druck. Der Anhänger bremst normal.',
-    notes: '▶ Frage vorlesen, abstimmen.\n🖱 Klick 1: Antworten · Klick 2: Lösung.\n✅ Amtlicher Fragenkatalog 2.7.06-319: A und B.\n➜ „Letzte Frage.“',
-  });
-  await quiz(deck, 'ce2e', {
-    kicker: 'Prüfungsfrage 2.2.23-302', q: 'Die Plane Ihres Anhängers ist vereist. Was kann passieren, wenn Sie mit dem Anhänger eine Fahrt beginnen? Durch herabfallende Eisplatten können …', size: 26, osize: 17,
-    opts: ['… beim Bremsen Luft- und Elektroleitungen am Fahrzeug stark beschädigt werden', '… Personen lebensgefährlich verletzt werden', '… andere Fahrzeuge erheblich beschädigt werden'], ok: [0, 1, 2],
-    why: 'Alle drei. Eis vor der Fahrt entfernen – oder nicht losfahren.',
-    notes: '▶ Frage vorlesen, abstimmen.\n🖱 Klick 1: Antworten · Klick 2: Lösung.\n✅ Amtlicher Fragenkatalog 2.2.23-302: A, B und C.\n➜ „Das nehmt ihr aus CE2 mit.“',
+    notes: '▶ Frage vorlesen, abstimmen.\n🖱 Klick 1: Antworten · Klick 2: Lösung.\n✅ Amtlicher Fragenkatalog 2.7.06-319: A und B.\n➜ „Das nehmt ihr aus CE2 mit.“',
   });
   await takeaway(deck, 'ce2e', {
     items: [
@@ -143,6 +137,6 @@ module.exports = async (deck) => {
     s.img('boost_logo.png', { x: 0.7, y: 0.6, w: 1.6, h: 0.55, sizing: 'contain' }, { fx: 'fade', auto: true, dur: 800 });
     s.text('Abend 6 geschafft!', { x: 0.7, y: 1.7, w: 4.9, h: 1.8, size: 46, bold: true, color: C.txt, lsm: 0.9 }, { fx: 'rise', auto: true, dur: 900 });
     s.text('CE1 + CE2: Züge zusammenstellen und bremsen', { x: 0.7, y: 3.6, w: 4.8, h: 0.8, size: 18, color: C.or }, { fx: 'fade', auto: true, dur: 700, d: 400 });
-    s.text([{ text: 'Nächstes Mal – Abend 7:', options: { bold: true, color: C.mut, breakLine: true } }, { text: 'CE3  Bremsen: Bremskraftregelung, ABS, Feststellbremse, Dauerbremse', options: { color: C.txt, breakLine: true } }, { text: 'CE4  Fahren mit Zügen', options: { color: C.txt } }], { x: 0.7, y: 4.65, w: 4.9, h: 1.5, size: 16 }, { fx: 'fade', auto: true, dur: 700, d: 800 });
+    s.text([{ text: 'Nächstes Mal – Abend 7:', options: { bold: true, color: C.mut, breakLine: true } }, { text: 'CE3  Lastzugbremsen', options: { color: C.txt, breakLine: true } }, { text: 'CE4  Fahren mit Zügen', options: { color: C.txt } }], { x: 0.7, y: 4.65, w: 4.9, h: 1.5, size: 16 }, { fx: 'fade', auto: true, dur: 700, d: 800 });
   }
 };

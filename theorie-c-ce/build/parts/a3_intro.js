@@ -73,7 +73,7 @@ module.exports = async (deck) => {
       '💡 Zeiten sind Richtwerte für 90 Minuten.\n' +
       '➜ „Kapitel 1: Welche Bremsen hat ein Lkw?“' });
     kick(s, 'Lektion C5 · Lkw-Bremsen'); title(s, 'Das lernt ihr in C5');
-    const T = [['01', 'Bremsanlagen', 'Betriebs-, Feststell-, Dauerbremse – was das Gesetz verlangt', '10 Min', C.or], ['02', 'Druckluft', 'Kompressor, Trockner, Vierkreisschutzventil, Druck, Entwässern', '25 Min', C.bl], ['03', 'Zweikreis-Bremse', 'zwei Kreise, Bremszylinder, Kreisausfall', '20 Min', C.pu], ['04', 'ALB und EBS', 'Bremskraft nach Beladung, Elektronik', '10 Min', 'C9A227'], ['05', 'Feststellbremse', 'Feder bremst, Luft löst – Notlösen, Kontrollstellung', '20 Min', C.red]];
+    const T = [['01', 'Bremsanlagen', 'Betriebs-, Feststell-, Dauerbremse – was das Gesetz verlangt', '10 Min', C.or], ['02', 'Druckluft', 'Kompressor, Trockner, Vierkreisschutzventil, Druck, Entwässern', '20 Min', C.bl], ['03', 'Zweikreis-Bremse', 'zwei Kreise, Bremszylinder, Kreisausfall', '20 Min', C.pu], ['04', 'ALB und EBS', 'Bremskraft nach Beladung, Elektronik', '10 Min', 'C9A227'], ['05', 'Feststellbremse', 'Feder bremst, Luft löst – Notlösen, Kontrollstellung', '20 Min', C.red]];
     for (let i = 0; i < 5; i++) {
       const y = 2.0 + i * 0.9;
       card(s, 0.7, y, 11.93, 0.78, { line: T[i][4] }, CLICK);
@@ -81,6 +81,6 @@ module.exports = async (deck) => {
       s.text([{ text: T[i][1] + '  ', options: { bold: true, color: C.txt } }, { text: T[i][2], options: { color: C.mut, fontSize: 15 } }], { x: 2.0, y, w: 8.6, h: 0.78, size: 20, valign: 'middle' }, { fx: 'fade', dur: 200 });
       s.text(T[i][3], { x: 10.8, y, w: 1.6, h: 0.78, size: 18, bold: true, color: T[i][4], align: 'right', valign: 'middle' }, { fx: 'fade', dur: 200 });
     }
-    s.text('+ 5 Min Abschluss: Quiz und „Das nehmt ihr mit“', { x: 0.7, y: 6.55, w: 11.93, h: 0.35, size: 14, italic: true, color: C.mut });
+    s.text('+ 10 Min Abschluss: Mitschreiben, Quiz und „Das nehmt ihr mit“', { x: 0.7, y: 6.55, w: 11.93, h: 0.35, size: 14, italic: true, color: C.mut });
   }
 };

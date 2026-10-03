@@ -17,19 +17,19 @@ module.exports = async (deck) => {
     notes: '▶ Sagen: „Schreibt euch das auf – das sind die Kernpunkte aus Kapitel 3 und 4.“\n❓ Vor jedem Klick fragen: „Was gehört hier hin?“\n🖱 Klick 1–6: je eine Lösung.\n✅ Quellen: Art. 26, 27, 29, 34, 36 VO (EU) 165/2014; § 9 Abs. 6 StVO, BKat Nr. 45; § 56 StVZO.\n➜ „Jetzt testen wir alles aus C1.“',
   });
   quiz(deck, 'c1e', {
-    kicker: 'Quiz C1 · 1', q: 'Du bist heute 4 Stunden gefahren, ohne Pause. Was gilt?', size: 32,
+    kicker: 'Quiz C1 · 1', q: 'Ihr seid heute 4 Stunden gefahren, ohne Pause. Was gilt?', size: 32,
     opts: ['Ich darf noch 30 Minuten fahren, dann mindestens 45 Minuten Pause', 'Ich darf noch 1 Stunde fahren', 'Ich muss sofort 11 Stunden Ruhezeit machen'], ok: 0,
     why: 'Nach höchstens 4,5 h Lenkzeit kommt die Fahrtunterbrechung von mindestens 45 Minuten (Art. 7 VO 561/2006).',
     notes: '▶ Frage vorlesen, abstimmen.\n🖱 Klick 1: Antworten · Klick 2: Lösung.\n✅ A. 4 h + 30 Min = 4,5 h.\n➜ „Nächste Frage.“',
   });
   quiz(deck, 'c1e', {
-    kicker: 'Quiz C1 · 2', q: 'Wie oft darfst du die tägliche Ruhezeit auf 9 Stunden verkürzen?', size: 32,
+    kicker: 'Quiz C1 · 2', q: 'Wie oft dürft ihr die tägliche Ruhezeit auf 9 Stunden verkürzen?', size: 32,
     opts: ['Jeden Tag', 'Höchstens dreimal zwischen zwei wöchentlichen Ruhezeiten', 'Nie'], ok: 1,
     why: 'Art. 8 Abs. 4 VO 561/2006: höchstens drei verkürzte tägliche Ruhezeiten zwischen zwei wöchentlichen Ruhezeiten.',
     notes: '▶ Frage vorlesen, abstimmen.\n🖱 Klick 1: Antworten · Klick 2: Lösung.\n✅ B.\n💡 Nicht verwechseln: Die Lenkzeit darf 2 × pro Woche auf 10 h verlängert werden – die Ruhezeit 3 × verkürzt.\n➜ „Und noch eine.“',
   });
   quiz(deck, 'c1e', {
-    kicker: 'Quiz C1 · 3', q: 'Was brauchst du, um die Klasse C nach 5 Jahren zu verlängern?', size: 32,
+    kicker: 'Quiz C1 · 3', q: 'Was braucht ihr, um die Klasse C nach 5 Jahren zu verlängern?', size: 32,
     opts: ['Nur den einfachen Sehtest wie für Klasse B', 'Ärztliche Untersuchung und Augen-Untersuchung nach Anlage 6 Nr. 2 FeV', 'Eine Fahrstunde mit dem Fahrlehrer'], ok: 1,
     why: '§ 24 FeV mit Anlage 5 und Anlage 6 Nr. 2. Der einfache Sehtest reicht für C nicht.',
     notes: '▶ Frage vorlesen, abstimmen.\n🖱 Klick 1: Antworten · Klick 2: Lösung.\n✅ B.\n➜ „Zum Schluss von C1: Das nehmt ihr mit.“',

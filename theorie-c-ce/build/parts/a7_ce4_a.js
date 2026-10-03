@@ -1,5 +1,5 @@
 // Abend 7 · CE4: Lernziele, Kapitel 1 Abfahrtkontrolle am Zug, Kapitel 2 Fahrverhalten (Einknicken, Ausbrechen, Pendeln)
-const { C, sec, chapter, motion, steps, quiz, base, kick, title, card, CLICK, roadH } = require('../gs');
+const { C, sec, chapter, motion, steps, quiz, ask, base, kick, title, card, CLICK, roadH } = require('../gs');
 const { zugTop, uv } = require('../zugtop');
 
 sec('ce4', 'LEKTION CE4', C.or, 'bg_kap.jpg');
@@ -10,11 +10,11 @@ module.exports = async (deck) => {
   // ===== LERNZIELE CE4 =====
   {
     const s = base(deck, 'ce4', { transition: 'black', notes:
-      '▶ Sagen: „Willkommen zurück. In CE4 geht es ums Fahren mit dem Zug: Was prüft ihr vor der Fahrt? Wie verhält sich der Zug beim Bremsen und bei Wind? Wie fahrt ihr rückwärts, wie biegt ihr ab? Und was gilt bei Wetter, Tempo, Abstand und Schwertransport?“\n' +
+      '▶ Sagen: „Willkommen zurück. In CE4 geht es ums Fahren mit dem Zug: Was prüft ihr vor der Fahrt? Wie verhält sich der Zug beim Bremsen und bei Wind? Wie fahrt ihr rückwärts, wie biegt ihr ab? Und was gilt am Berg, bei Wetter, Tempo, Abstand und Schwertransport?“\n' +
       '🖱 Klick 1–5: je ein Kapitel.\n' +
       '➜ „Kapitel 1: Abfahrtkontrolle am Zug.“' });
     kick(s, 'Lektion CE4 · Fahren mit Zügen'); title(s, 'Das lernt ihr in CE4');
-    const T = [['01', 'Abfahrtkontrolle am Zug', 'Kupplung · Leitungen · Anhänger frei · Ladung · Bremsprobe', '15 Min', C.bl], ['02', 'Wie sich der Zug bewegt', 'Einknicken · Ausbrechen · Pendeln · Kippen', '20 Min', C.or], ['03', 'Rückwärts und Abbiegen', 'Sattelzug rückwärts · Einweiser · toter Winkel am Anhänger', '20 Min', C.pu], ['04', 'Wetter und Wind', 'Glätte · Schneeketten · Sicht unter 50 m · Seitenwind', '15 Min', C.gr], ['05', 'Tempo, Abstand, Schwertransport', '50 · 60 · 80 · Zeichen 277 · Begleitfahrzeug', '15 Min', 'C9A227']];
+    const T = [['01', 'Abfahrtkontrolle am Zug', 'Kupplung · Leitungen · Anhänger frei · Ladung · Bremsprobe', '15 Min', C.bl], ['02', 'Wie sich der Zug bewegt', 'Einknicken · Ausbrechen · Pendeln · Kippen', '15 Min', C.or], ['03', 'Rückwärts und Abbiegen', 'Sattelzug rückwärts · Einweiser · toter Winkel am Anhänger', '20 Min', C.pu], ['04', 'Berg, Wetter und Wind', 'Steigung · Gefälle · Glätte · Sicht unter 50 m · Seitenwind', '15 Min', C.gr], ['05', 'Tempo, Abstand, Schwertransport', '50 · 60 · 80 · Zeichen 277 · übergroße Transporte', '15 Min', 'C9A227']];
     for (let i = 0; i < 5; i++) {
       const y = 2.0 + i * 0.9;
       card(s, 0.7, y, 11.93, 0.78, { line: T[i][4] }, CLICK);
@@ -22,7 +22,7 @@ module.exports = async (deck) => {
       s.text([{ text: T[i][1] + '  ', options: { bold: true, color: C.txt } }, { text: T[i][2], options: { color: C.mut, fontSize: 15 } }], { x: 2.0, y, w: 8.6, h: 0.78, size: 20, valign: 'middle' }, { fx: 'fade', dur: 200 });
       s.text(T[i][3], { x: 10.8, y, w: 1.6, h: 0.78, size: 18, bold: true, color: T[i][4], align: 'right', valign: 'middle' }, { fx: 'fade', dur: 200 });
     }
-    s.text('+ 5 Min Abschluss: Quiz und „Das nehmt ihr mit“', { x: 0.7, y: 6.55, w: 11.93, h: 0.35, size: 14, italic: true, color: C.dim });
+    s.text('+ 10 Min Abschluss: Mitschreiben, Quiz und „Das nehmt ihr mit“', { x: 0.7, y: 6.55, w: 11.93, h: 0.35, size: 14, italic: true, color: C.dim });
   }
 
   // ===== KAPITEL 1: ABFAHRTKONTROLLE AM ZUG =====
@@ -89,7 +89,25 @@ module.exports = async (deck) => {
     kicker: 'Prüfungsfrage 2.2.23-302', q: 'Die Plane Ihres Anhängers ist vereist. Was kann passieren, wenn Sie mit dem Anhänger eine Fahrt beginnen? Durch herabfallende Eisplatten können …', size: 26, osize: 18,
     opts: ['… beim Bremsen Luft- und Elektroleitungen am Fahrzeug stark beschädigt werden', '… Personen lebensgefährlich verletzt werden', '… andere Fahrzeuge erheblich beschädigt werden'], ok: [0, 1, 2],
     why: 'Eis und Schnee vom Dach runter, bevor ihr losfahrt. Beim Bremsen rutscht es nach vorn – auf die Leitungen zwischen Lkw und Anhänger.',
-    notes: '▶ Frage vorlesen, abstimmen.\n🖱 Klick 1: Antworten · Klick 2: Lösung.\n✅ Amtlicher Fragenkatalog 2.2.23-302: A, B und C. DGUV Grundsatz 314-002 Nr. 2.8: Fahrzeugdächer frei von Wasser, Schnee und Eis.\n➜ „Kapitel 2: Wie sich der Zug bewegt.“',
+    notes: '▶ Frage vorlesen, abstimmen.\n🖱 Klick 1: Antworten · Klick 2: Lösung.\n✅ Amtlicher Fragenkatalog 2.2.23-302: A, B und C. DGUV Grundsatz 314-002 Nr. 2.8: Fahrzeugdächer frei von Wasser, Schnee und Eis.\n➜ „Und wie verteilt ihr die Ladung im Zug?“',
+  });
+  await ask(deck, 'ce4k', {
+    kicker: 'Ladung im Zug', q: 'Ladung für Lkw und Anhänger: Wie verteilt ihr sie?', ico: 'LuPackage', qsize: 32,
+    answers: [
+      ['LuScale', 'Schwer auf den Lkw:', 'Schwere Ladung möglichst auf den Lkw. Ein voller Anhänger hinter leerem Lkw schiebt – der Zug kann einknicken.', C.or],
+      ['LuArrowDownToLine', 'Zentralachsanhänger:', 'Ladung so verteilen, dass die Stützlast stimmt – nie negativ. Höchstwerte an Kupplung und Anhänger beachten.', C.bl],
+      ['LuFileText', 'Auflieger:', 'Lastverteilungsplan beachten. Zu weit hinten: Aufliegerachsen überlastet, Antriebsachse zu leicht.', 'C9A227'],
+      ['LuPackageOpen', 'Teilentladung:', 'Nach jedem Abladen neu verteilen und sichern – Achslasten und Schwerpunkt ändern sich.', C.gr],
+    ],
+    notes:
+      '▶ Sagen: „Ihr habt Ladung für Lkw und Anhänger. Wie verteilt ihr sie?“\n' +
+      '❓ Sammeln lassen, dann je Klick auflösen.\n' +
+      '🖱 Klick 1–4: je ein Punkt.\n' +
+      '✅ FahrschAusbO Anlage 2.4 Nr. 4 i (Ladung, Ladungssicherung). Prüfungsfrage 2.2.22-301 (aus CE1): besser Lkw beladen und Anhänger leer als umgekehrt – ein schwerer Anhänger schiebt.\n' +
+      '✅ Zentralachsanhänger: Stützlast höchstens 10 % der Anhängermasse oder 1.000 kg, der kleinere Wert (DGUV Information 214-080, Kap. 6); Mindeststützlast § 44 Abs. 3 StVZO. Die zulässigen Werte stehen an der Kupplung und am Anhänger.\n' +
+      '✅ Lastverteilungsplan: VDI 2700 Blatt 4 (siehe C9). Ladung muss bei jeder Fahrt gesichert sein – also auch nach dem Abladen eines Teils (§ 22 Abs. 1 StVO).\n' +
+      '💡 Negative Stützlast (Ladung zu weit hinten) zieht die Kupplung nach oben: Die Hinterachse des Lkw wird leichter, der Anhänger pendelt leichter.\n' +
+      '➜ „Kapitel 2: Wie sich der Zug bewegt.“',
   });
 
   // ===== KAPITEL 2: FAHRVERHALTEN =====

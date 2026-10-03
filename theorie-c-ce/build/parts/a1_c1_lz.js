@@ -159,7 +159,7 @@ module.exports = async (deck) => {
     s.text('Teil 1: mindestens 15 Min  ·  Teil 2: mindestens 30 Min  ·  zusammen mindestens 45 Min', { x: 0.7, y: 5.85, w: 11.93, h: 0.7, size: 18, bold: true, color: C.txt, align: 'center', valign: 'middle', fill: C.card2, line: C.or, shape: deck.pres.shapes.ROUNDED_RECTANGLE, rr: 0.1 }, { fx: 'rise', c: true, dur: 400 });
   }
   quiz(deck, 'lz', {
-    kicker: 'Frage · Fahrtunterbrechung', q: 'Du bist 3 h gefahren und hast 30 Minuten Pause gemacht. Wie lange darfst du jetzt noch fahren, bevor eine Pause kommen muss?', size: 26,
+    kicker: 'Frage · Fahrtunterbrechung', q: 'Ihr seid 3 h gefahren und habt 30 Minuten Pause gemacht. Wie lange dürft ihr jetzt noch fahren, bevor eine Pause kommen muss?', size: 26,
     opts: ['Wieder volle 4,5 Stunden', 'Noch 1,5 Stunden – dann 15 Minuten Pause', 'Noch 1,5 Stunden – dann 30 Minuten Pause'], ok: 2,
     why: 'Die 30 Minuten zählen nur als erster Teil. Nach insgesamt 4,5 h Lenkzeit muss noch eine Pause von mindestens 30 Minuten kommen (Art. 7).',
     notes: '▶ Frage vorlesen, abstimmen lassen.\n🖱 Klick 1: Antworten · Klick 2: Lösung mit Begründung.\n✅ C. Der erste Teil (hier 30 Min, mindestens 15) ist erledigt. Der zweite Teil muss mindestens 30 Minuten dauern und spätestens nach insgesamt 4,5 h Lenkzeit kommen. 3 h + 1,5 h = 4,5 h.\n💡 Typischer Fehler: B – „Es fehlen doch nur noch 15 Minuten zu 45.“ Die Reihenfolge ist aber fest: erst mind. 15, dann mind. 30.\n➜ „Jetzt schauen wir über den Tag hinaus: die Woche.“',

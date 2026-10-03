@@ -15,7 +15,7 @@ module.exports = async (deck) => {
       '💡 Zeiten sind Richtwerte für 90 Minuten.\n' +
       '➜ „Kapitel 1: die Dauerbremsen.“' });
     kick(s, 'Lektion C6 · Dauerbremsen, Untersuchungen, Begrenzer'); title(s, 'Das lernt ihr in C6');
-    const T = [['01', 'Dauerbremsen', 'Motorbremse, Retarder, Grenzen, Glätte', '20 Min', C.or], ['02', 'Bremsweg und Fading', 'Anhalteweg, Gefälle, heiße Bremsen', '15 Min', C.red], ['03', 'ABS', 'Funktion, Kontrollleuchte, richtig bremsen', '10 Min', C.bl], ['04', 'Kontrolle', 'Abfahrtkontrolle, Dichtheit, Bremsprobe', '15 Min', C.pu], ['05', 'HU und SP', 'Fristen, Plakette, Mängel, Bußgelder', '15 Min', 'C9A227'], ['06', 'Begrenzer, Tempomat, Fahrtenschreiber', '90 km/h, Abstand, Prüfungen', '10 Min', C.gr]];
+    const T = [['01', 'Dauerbremsen', 'Motorbremse, Retarder, Grenzen, Glätte', '15 Min', C.or], ['02', 'Bremsweg und Fading', 'Anhalteweg, Gefälle, heiße Bremsen', '15 Min', C.red], ['03', 'ABS', 'Funktion, Kontrollleuchte, richtig bremsen', '10 Min', C.bl], ['04', 'Kontrolle', 'Abfahrtkontrolle, Dichtheit, Bremsprobe', '15 Min', C.pu], ['05', 'HU und SP', 'Fristen, Plakette, Mängel, Bußgelder', '15 Min', 'C9A227'], ['06', 'Begrenzer, Tempomat, Fahrtenschreiber', '90 km/h, Abstand, Prüfungen', '10 Min', C.gr]];
     for (let i = 0; i < 6; i++) {
       const y = 1.95 + i * 0.76;
       card(s, 0.7, y, 11.93, 0.66, { line: T[i][4] }, CLICK);
@@ -23,7 +23,7 @@ module.exports = async (deck) => {
       s.text([{ text: T[i][1] + '  ', options: { bold: true, color: C.txt } }, { text: T[i][2], options: { color: C.mut, fontSize: 15 } }], { x: 2.0, y, w: 8.6, h: 0.66, size: 19, valign: 'middle' }, { fx: 'fade', dur: 200 });
       s.text(T[i][3], { x: 10.8, y, w: 1.6, h: 0.66, size: 17, bold: true, color: T[i][4], align: 'right', valign: 'middle' }, { fx: 'fade', dur: 200 });
     }
-    s.text('+ 5 Min Abschluss: Quiz und „Das nehmt ihr mit“', { x: 0.7, y: 6.58, w: 11.93, h: 0.32, size: 14, italic: true, color: C.mut });
+    s.text('+ 10 Min Abschluss: Mitschreiben, Quiz und „Das nehmt ihr mit“', { x: 0.7, y: 6.58, w: 11.93, h: 0.32, size: 14, italic: true, color: C.mut });
   }
 
   // ===== KAPITEL 1 DAUERBREMSEN =====
@@ -33,7 +33,7 @@ module.exports = async (deck) => {
     const s = base(deck, 'c6d', { notes:
       '▶ Sagen: „Jeder Lkw über 9 Tonnen zulässiger Gesamtmasse muss eine Dauerbremse haben. Was muss sie können?“\n' +
       '🖱 Klick 1: die Prüfstrecke · Klick 2–4: die Punkte.\n' +
-      '✅ § 41 Abs. 15 StVZO: Lkw über 9 t zGM. Voll beladen auf einem Gefälle von 7 % und 6 km Länge 30 km/h halten – nur mit der Dauerbremse. Lkw zwischen 7,5 und 9 t brauchen keine.\n💡 Genau genommen verweist § 41 Abs. 18 bei Lkw über 25 km/h auf das EU-/UN-Bremsenrecht; dort ist die Dauerbremsprüfung für schwere Lkw vorgeschrieben, die schwere Anhänger ziehen dürfen. Für den Unterricht gilt die einfache Regel: über 9 t Dauerbremse.\n' +
+      '✅ § 41 Abs. 15 StVZO: Lkw über 9 t zGM. Voll beladen auf einem Gefälle von 7 % und 6 km Länge 30 km/h halten – nur mit der Dauerbremse. Lkw zwischen 7,5 und 9 t brauchen keine.\n💡 Genau genommen verweist § 41 Abs. 18 bei Lkw über 25 km/h auf das EU-/UN-Bremsenrecht (UN-R 13): Dort ist die Dauerbremsprüfung für Lkw über 12 t vorgeschrieben, die Anhänger über 10 t ziehen dürfen (in CE3 kommt das wieder). Praktisch hat jeder schwere Lkw eine Dauerbremse. Für Unterricht und Prüfung gilt die StVZO-Regel: über 9 t.\n' +
       '✅ Prüfungsfrage 2.7.06-234: Motorbremse und Retarder arbeiten ohne nennenswerten Verschleiß. 2.7.06-239: Dauerbremse nutzen, weil verschleißfrei und weil sie die Betriebsbremse entlastet – sie bremst aber NICHT bis zum Stillstand.\n' +
       '➜ „Welche Dauerbremsen gibt es? Zuerst die Motorbremse.“' });
     kick(s, 'Dauerbremsen'); title(s, 'Pflicht über 9 Tonnen');
@@ -45,7 +45,7 @@ module.exports = async (deck) => {
     s.text('6 km lang', { x: 4.3, y: 5.4, w: 2.2, h: 0.45, size: 20, bold: true, color: C.txt }, { fx: 'fade', dur: 200 });
     s.text('voll beladen 30 km/h halten – nur mit der Dauerbremse', { x: 0.95, y: 2.2, w: 5.9, h: 0.7, size: 16, bold: true, color: C.or }, { fx: 'fade', dur: 200 });
     s.text('Neigung zur Verdeutlichung überzeichnet', { x: 0.9, y: 6.12, w: 6.0, h: 0.3, size: 12, italic: true, color: C.dim });
-    await point(s, 7.35, 2.05, 5.28, 1.4, 'LuWeight', C.or, 'Pflicht:', 'Lkw über 9 t zulässiger Gesamtmasse.', CLICK, { br: true, size: 17 });
+    await point(s, 7.35, 2.05, 5.28, 1.4, 'LuWeight', C.or, 'Pflicht:', 'Lkw über 9 t zulässiger Gesamtmasse (§ 41 StVZO).', CLICK, { br: true, size: 17 });
     await point(s, 7.35, 3.58, 5.28, 1.4, 'LuShieldCheck', C.gr, 'Verschleißfrei –', 'entlastet die Betriebsbremse. Die bleibt kühl für den Notfall.', CLICK, { br: true, size: 17 });
     await point(s, 7.35, 5.11, 5.28, 1.4, 'LuBan', C.red, 'Bremst nicht bis zum Stand.', 'Bei wenig Tempo wirkt sie kaum – anhalten mit der Betriebsbremse.', CLICK, { br: true, size: 17 });
   }
@@ -128,7 +128,7 @@ module.exports = async (deck) => {
     kicker: 'Dauerbremsen · Glätte', q: 'Glatte Straße, Kurve – und der Retarder steht auf voller Stufe. Was droht?', qsize: 30, ico: 'LuSnowflake',
     answers: [
       ['LuTriangleAlert', 'Die Antriebsachse kann blockieren –', 'die Dauerbremse bremst nur sie. Der Lkw bricht aus, ein Zug kann einknicken.', C.red],
-      ['LuSlidersHorizontal', 'Bei Glätte:', 'Dauerbremse auf kleine Stufe oder aus – und nie voll in der Kurve.', C.bl],
+      ['LuSlidersHorizontal', 'Bei Glätte:', 'Dauerbremse aus – auch die automatische Zuschaltung. Tempo schon vorher raus.', C.bl],
       ['LuPlus', 'Betriebsbremse zusätzlich treten?', 'Dann wird die Antriebsachse noch stärker gebremst – Vorsicht.', C.or],
     ],
     notes:
@@ -137,6 +137,7 @@ module.exports = async (deck) => {
       '🖱 Klick 1–3: je eine Antwort.\n' +
       '✅ Prüfungsfrage 2.7.06-108: Einknick- und Schleudergefahr besonders groß, wenn der Retarder in der Kurve voll betätigt wird. 2.7.06-230: Dauerbremse an und Betriebsbremse dazu → die Antriebsachse wird stärker abgebremst; die Dauerbremse schaltet NICHT automatisch ab.\n' +
       '💡 Mit ABS wird die integrierte Dauerbremse bei Blockierneigung abgeschaltet (EU-Bremsenrecht) – verlassen darf man sich darauf nicht.\n' +
+      '💡 Merksatz für C und CE gleich: Bei Glätte Dauerbremse aus. Manche Lkw schalten sie über den Tempomaten bergab selbst zu – dann auch das abschalten (Betriebsanleitung).\n' +
       '➜ „Und wenn die Dauerbremse im Gefälle nicht reicht?“',
   });
   quiz(deck, 'c6d', {

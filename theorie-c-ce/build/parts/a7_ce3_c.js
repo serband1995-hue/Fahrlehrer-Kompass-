@@ -7,7 +7,7 @@ sec('ce3e', 'CE3  ·  ABSCHLUSS', C.bl, 'bg_blue.jpg');
 
 module.exports = async (deck) => {
   await chapter(deck, 'ce3d', { num: 5, ttl: 'Dauerbremse und Prüffristen', sub: 'Die Dauerbremse bremst nur die Antriebsachse des Lkw. Und: Wann muss der Anhänger zur Prüfung?', ico: 'LuMountain', notes:
-    '▶ Sagen: „Motorbremse und Retarder kennt ihr aus C6. Im Zug gibt es dabei eine Falle. Und danach: Wann muss der Anhänger zur HU und zur SP?“\n✅ Dauerbremse: Für Lkw gilt über § 41 Abs. 18 StVZO die UN-R 13. Pflicht für Lkw über 12 t, die Anhänger über 10 t ziehen dürfen: 7 % Gefälle, 6 km, 30 km/h (UN-R 13 Anh. 4 Nr. 1.8). StVZO Anlage VIII (HU und SP).\n🖱 Keine Klicks.\n➜ „Erst die Falle mit dem Retarder.“' });
+    '▶ Sagen: „Motorbremse und Retarder kennt ihr aus C6. Im Zug gibt es dabei eine Falle. Und danach: Wann muss der Anhänger zur HU und zur SP?“\n✅ Dauerbremse: In C6 hieß es „Pflicht über 9 t“ – das steht in § 41 Abs. 15 StVZO und gilt für die Prüfung. Genauer gilt für Lkw über § 41 Abs. 18 StVZO die UN-R 13: Pflicht für Lkw über 12 t, die Anhänger über 10 t ziehen dürfen: 7 % Gefälle, 6 km, 30 km/h (UN-R 13 Anh. 4 Nr. 1.8). StVZO Anlage VIII (HU und SP).\n🖱 Keine Klicks.\n➜ „Erst die Falle mit dem Retarder.“' });
 
   // ===== RETARDER AUF GLÄTTE (Draufsicht, fließend) =====
   {
@@ -161,19 +161,13 @@ module.exports = async (deck) => {
       ['Dauerbremse', 'nur Antriebsachse · bei Glätte aus'],
       ['Anhänger über 10 t', 'HU alle 12 Monate · ab dem 3. Jahr SP dazwischen · UVV jährlich'],
     ],
-    notes: '▶ Sagen: „Schreibt euch das auf – das sind die Kernpunkte aus CE3.“\n🖱 Klick 1–8: je eine Zeile.\n💡 Erst das Stichwort vorlesen und fragen: „Wer weiß es?“ – dann klicken.\n✅ Quellen: WABCO EBS3 und TEBS E; Prüfungsfragen 2.7.06-108, -210, -314, -315, -320, -321, -230; UN-R 13 Anh. 4 (früher RL 71/320/EWG Anhang II); StVZO Anlage VIII; DGUV Vorschrift 70 § 57.\n💡 Dazu passt Prüfungsfrage 2.7.06-318: Fährt am Anhänger ein Bremszylinder-Kolben bis zum Anschlag aus, lässt die Bremswirkung nach – ab in die Werkstatt.\n➜ „Drei Prüfungsfragen.“',
+    notes: '▶ Sagen: „Schreibt euch das auf – das sind die Kernpunkte aus CE3.“\n🖱 Klick 1–8: je eine Zeile.\n💡 Erst das Stichwort vorlesen und fragen: „Wer weiß es?“ – dann klicken.\n✅ Quellen: WABCO EBS3 und TEBS E; Prüfungsfragen 2.7.06-108, -210, -314, -315, -320, -321, -230; UN-R 13 Anh. 4 (früher RL 71/320/EWG Anhang II); StVZO Anlage VIII; DGUV Vorschrift 70 § 57.\n💡 Dazu passt Prüfungsfrage 2.7.06-318: Fährt am Anhänger ein Bremszylinder-Kolben bis zum Anschlag aus, lässt die Bremswirkung nach – ab in die Werkstatt.\n➜ „Zwei Prüfungsfragen.“',
   });
   await quiz(deck, 'ce3e', {
     kicker: 'Prüfungsfrage 2.7.02-305', q: 'Die elektrischen Verbindungen zu Ihrem Zugfahrzeug sind unterbrochen. Welche Einrichtung am Anhänger ist somit nicht betriebsfähig?', size: 28,
     opts: ['Der Automatische Blockierverhinderer (ABV)', 'Das Elektronische Bremssystem (EBS)', 'Die Antriebs-Schlupfregelung (ASR)'], ok: [0, 1],
     why: 'ABS und EBS brauchen Strom und Daten aus dem Stecker. Eine ASR hat der Anhänger nicht – er hat keinen Antrieb.',
     notes: '▶ Frage vorlesen, abstimmen.\n🖱 Klick 1: Antworten · Klick 2: Lösung.\n✅ Amtlicher Fragenkatalog 2.7.02-305: A und B.\n➜ „Nächste Frage.“',
-  });
-  await quiz(deck, 'ce3e', {
-    kicker: 'Prüfungsfrage 2.2.23-201', q: 'Was ist zu tun, um einen zweiachsigen Lkw in starkem Gefälle gegen Wegrollen zu sichern?', size: 32,
-    opts: ['Feststellbremse anziehen', 'Unterlegkeil vor ein Hinterrad legen', 'Dauerbremse betätigen'], ok: [0, 1],
-    why: 'Die Dauerbremse hält nichts fest – sie wirkt nur, wenn sich die Räder drehen.',
-    notes: '▶ Frage vorlesen, abstimmen.\n🖱 Klick 1: Antworten · Klick 2: Lösung.\n✅ Amtlicher Fragenkatalog 2.2.23-201: A und B. Prüfungsfrage 2.7.06-239: Die Dauerbremse bremst nicht bis zum Stillstand.\n➜ „Letzte Frage.“',
   });
   await quiz(deck, 'ce3e', {
     kicker: 'Prüfungsfrage 2.6.01-207', q: 'Sie sollen einen Anhänger mit einer zulässigen Gesamtmasse von 18 t zur Hauptuntersuchung vorführen. Welche Fahrzeugdokumente benötigen Sie?', size: 28,

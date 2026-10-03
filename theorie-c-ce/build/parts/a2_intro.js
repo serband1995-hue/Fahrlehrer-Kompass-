@@ -55,7 +55,7 @@ module.exports = async (deck) => {
     answers: [
       ['LuClock', 'Wie lange am Stück fahren?', '4,5 h Lenkzeit, dann 45 Minuten Pause – oder erst 15, dann 30 Minuten.'],
       ['LuEyeOff', 'Rechtsabbiegen innerorts über 3,5 t?', 'Schrittgeschwindigkeit – Radfahrer und Fußgänger im toten Winkel.'],
-      ['LuCalendarX', 'Sonntagsfahrverbot?', '0 bis 22 Uhr im gewerblichen Güterverkehr: Lkw über 7,5 t und Lkw mit Anhänger – auch Leerfahrten.'],
+      ['LuCalendarX', 'Sonntagsfahrverbot?', '0 bis 22 Uhr für Lkw über 7,5 t und Lkw mit Anhänger – bei Güterbeförderung gegen Geld oder geschäftsmäßig, auch Werkverkehr und Leerfahrten.'],
     ],
     notes:
       '▶ Sagen: „Bevor wir anfangen: drei Fragen zu Abend 1.“\n' +
@@ -72,7 +72,7 @@ module.exports = async (deck) => {
       '💡 Zeiten sind Richtwerte für 90 Minuten.\n' +
       '➜ „Kapitel 1: der Weg der Kraft.“' });
     kick(s, 'Lektion C3 · Kraftstrang'); title(s, 'Das lernt ihr in C3');
-    const T = [['01', 'Der Weg der Kraft', 'vom Motor bis zum Rad', '10 Min', C.or], ['02', 'Motor und Abgas', 'Diesel, Turbo, Drehzahl, AdBlue, Partikelfilter, Kontrollen', '30 Min', C.red], ['03', 'Kupplung und Getriebe', 'schonend fahren, 12 Gänge, Automatik, Wandler', '20 Min', C.pu], ['04', 'Differenzial und Achsen', 'Sperre, Achsformeln, Antriebs-Schlupf-Regelung', '25 Min', 'C9A227']];
+    const T = [['01', 'Der Weg der Kraft', 'vom Motor bis zum Rad', '10 Min', C.or], ['02', 'Motor und Abgas', 'Diesel, Turbo, Drehzahl, AdBlue, Partikelfilter, Kontrollen', '25 Min', C.red], ['03', 'Kupplung und Getriebe', 'schonend fahren, 12 Gänge, Automatik, Wandler', '20 Min', C.pu], ['04', 'Differenzial und Achsen', 'Sperre, Achsformeln, Antriebs-Schlupf-Regelung', '25 Min', 'C9A227']];
     for (let i = 0; i < 4; i++) {
       const y = 2.05 + i * 1.1;
       card(s, 0.7, y, 11.93, 0.95, { line: T[i][4] }, CLICK);
@@ -80,7 +80,7 @@ module.exports = async (deck) => {
       s.text([{ text: T[i][1], options: { bold: true, color: C.txt, breakLine: true } }, { text: T[i][2], options: { color: C.mut, fontSize: 15 } }], { x: 2.0, y, w: 8.6, h: 0.95, size: 20, valign: 'middle' }, { fx: 'fade', dur: 200 });
       s.text(T[i][3], { x: 10.8, y, w: 1.6, h: 0.95, size: 18, bold: true, color: T[i][4], align: 'right', valign: 'middle' }, { fx: 'fade', dur: 200 });
     }
-    s.text('+ 5 Min Abschluss: Quiz und „Das nehmt ihr mit“', { x: 0.7, y: 6.5, w: 11.93, h: 0.35, size: 14, italic: true, color: C.dim });
+    s.text('+ 10 Min Abschluss: Mitschreiben, Quiz und „Das nehmt ihr mit“', { x: 0.7, y: 6.5, w: 11.93, h: 0.35, size: 14, italic: true, color: C.dim });
   }
   await chapter(deck, 'c3k', { num: 1, ttl: 'Der Weg der Kraft', sub: 'Vom Diesel im Tank bis zum Reifen auf der Straße.', ico: 'LuRoute', notes:
     '▶ Sagen: „Kapitel 1: Wie kommt die Kraft auf die Straße?“\n🖱 Keine Klicks.\n➜ „Wir schauen von oben auf das Fahrgestell.“' });

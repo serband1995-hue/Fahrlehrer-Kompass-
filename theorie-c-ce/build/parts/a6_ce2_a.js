@@ -14,7 +14,7 @@ module.exports = async (deck) => {
       '💡 Zeiten sind Richtwerte für 90 Minuten. Feststellbremse mit Kontrollstellung, ABS/EBS und Dauerbremse kommen in CE3 (Abend 7).\n' +
       '➜ „Kapitel 1: Warum braucht der Anhänger eine eigene Bremse?“' });
     kick(s, 'Lektion CE2 · Lastzugbremsen'); title(s, 'Das lernt ihr in CE2');
-    const T = [['01', 'Der Anhänger bremst selbst', 'Was das Gesetz verlangt · welche Bremsen es gibt', '10 Min', C.bl], ['02', 'Auflaufbremse', 'Wann sie bremst · Abreißseil · bis 3,5 t', '20 Min', C.or], ['03', 'Zweileitungs-Druckluftbremse', 'Rot = Vorrat, gelb = Bremse · die Ventile · Funktionsprobe', '25 Min', C.gr], ['04', 'Wenn eine Leitung reißt', 'Rot reißt · gelb reißt · was dann bremst', '20 Min', C.red], ['05', 'Anhänger rangieren', 'Roter und schwarzer Knopf · Löseventil', '10 Min', C.pu]];
+    const T = [['01', 'Der Anhänger bremst selbst', 'Was das Gesetz verlangt · welche Bremsen es gibt', '10 Min', C.bl], ['02', 'Auflaufbremse', 'Wann sie bremst · Abreißseil · bis 3,5 t', '20 Min', C.or], ['03', 'Zweileitungs-Druckluftbremse', 'Rot = Vorrat, gelb = Bremse · die Ventile · Funktionsprobe', '20 Min', C.gr], ['04', 'Wenn eine Leitung reißt', 'Rot reißt · gelb reißt · was dann bremst', '20 Min', C.red], ['05', 'Anhänger rangieren', 'Roter und schwarzer Knopf · Löseventil', '10 Min', C.pu]];
     for (let i = 0; i < 5; i++) {
       const y = 2.0 + i * 0.9;
       card(s, 0.7, y, 11.93, 0.78, { line: T[i][4] }, CLICK);
@@ -22,7 +22,7 @@ module.exports = async (deck) => {
       s.text([{ text: T[i][1] + '  ', options: { bold: true, color: C.txt } }, { text: T[i][2], options: { color: C.mut, fontSize: 15 } }], { x: 2.0, y, w: 8.6, h: 0.78, size: 20, valign: 'middle' }, { fx: 'fade', dur: 200 });
       s.text(T[i][3], { x: 10.8, y, w: 1.6, h: 0.78, size: 18, bold: true, color: T[i][4], align: 'right', valign: 'middle' }, { fx: 'fade', dur: 200 });
     }
-    s.text('+ 5 Min Abschluss: Quiz und „Das nehmt ihr mit“', { x: 0.7, y: 6.55, w: 11.93, h: 0.35, size: 14, italic: true, color: C.dim });
+    s.text('+ 10 Min Abschluss: Mitschreiben, Quiz und „Das nehmt ihr mit“', { x: 0.7, y: 6.55, w: 11.93, h: 0.35, size: 14, italic: true, color: C.dim });
   }
 
   // ===== KAPITEL 1: DER ANHÄNGER BREMST SELBST =====

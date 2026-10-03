@@ -39,7 +39,7 @@ module.exports = async (deck) => {
       { x: 9.8, y: 2.3, w: 2.7, h: 3.0, size: 18, color: C.txt });
   }
   quiz(deck, 'lz', {
-    kicker: 'Frage · Doppelwoche', q: 'Letzte Woche bist du 50 Stunden gefahren. Wie viele Stunden darfst du diese Woche höchstens fahren?', size: 28,
+    kicker: 'Frage · Doppelwoche', q: 'Letzte Woche seid ihr 50 Stunden gefahren. Wie viele Stunden dürft ihr diese Woche höchstens fahren?', size: 28,
     opts: ['56 Stunden', '40 Stunden', '45 Stunden'], ok: 1,
     why: '90 h in zwei Wochen minus 50 h = 40 h. Die 56 h pro Woche wären zwar erlaubt, aber die Doppelwoche begrenzt hier (Art. 6 Abs. 3).',
     notes: '▶ Frage vorlesen, rechnen lassen.\n🖱 Klick 1: Antworten · Klick 2: Lösung.\n✅ B, 40 h. 90 − 50 = 40. Es gilt immer die strengere Grenze.\n💡 Typischer Fehler: A – nur an die 56 h denken.\n➜ „Jetzt zur Ruhe: Wie lange müsst ihr euch erholen?“',

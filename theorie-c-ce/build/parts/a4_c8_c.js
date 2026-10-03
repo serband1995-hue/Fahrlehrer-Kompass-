@@ -262,10 +262,10 @@ module.exports = async (deck) => {
     notes: '▶ Sagen: „Schreibt euch diese acht Punkte auf.“\n❓ Vor jedem Klick fragen: „Was gehört hierhin?“\n🖱 Klick 1–8: je eine Antwort.\n✅ Zusammenfassung von C8 (Quellen auf den Folien davor).\n➜ „Drei Prüfungsfragen.“',
   });
   quiz(deck, 'c8e', {
-    kicker: 'Quiz C8 · 1', q: 'Was ist zu tun, um einen zweiachsigen Lkw in starkem Gefälle gegen Wegrollen zu sichern?', size: 30,
-    opts: ['Feststellbremse anziehen', 'Unterlegkeil vor ein Hinterrad legen', 'Dauerbremse betätigen'], ok: [0, 1],
-    why: 'Feststellbremse und Unterlegkeil. Die Dauerbremse hält den Lkw nicht fest (Prüfungsfrage 2.2.23-201).',
-    notes: '▶ Frage vorlesen, abstimmen. Mehrere Antworten können richtig sein.\n💡 Gemeinsam besprechen – keine Prüfungsbögen ausfüllen lassen (§ 4 Abs. 1a FahrschAusbO).\n🖱 Klick 1: Antworten · Klick 2: Lösung.\n✅ A und B.\n➜ „Nächste Frage.“',
+    kicker: 'Quiz C8 · 1', q: 'Ihr steigt nach einer langen Fahrt aus dem Fahrerhaus. Was ist richtig?', size: 32,
+    opts: ['Mit dem Gesicht zum Fahrerhaus aussteigen – wie von einer Leiter', 'Die letzte Stufe überspringen, das geht schneller', 'Immer drei Kontaktpunkte: zwei Hände und ein Fuß'], ok: [0, 2],
+    why: 'Gesicht zum Fahrerhaus, drei Kontaktpunkte, jede Stufe nehmen. Ein Sprung belastet die Gelenke bis zum Siebenfachen des Körpergewichts.',
+    notes: '▶ Frage vorlesen, abstimmen. Mehrere Antworten können richtig sein.\n💡 Gemeinsam besprechen – keine Prüfungsbögen ausfüllen lassen (§ 4 Abs. 1a FahrschAusbO).\n🖱 Klick 1: Antworten · Klick 2: Lösung.\n✅ A und C. DGUV Vorschrift 70 § 41 (Aufstiege und Haltegriffe benutzen); BG Verkehr „2+1“. Die Prüfungsfrage zum Sichern im Gefälle (2.2.23-201) kam schon in C5.\n➜ „Nächste Frage.“',
   });
   quiz(deck, 'c8e', {
     kicker: 'Quiz C8 · 2', q: 'Eine nach hinten hinausragende Ladung muss kenntlich gemacht werden. Welche Mittel sind bei Tage zulässig?', size: 28,

@@ -31,7 +31,7 @@ module.exports = async (deck) => {
       '✅ § 41 StVZO: zwei voneinander unabhängige Bremsanlagen – jede muss wirken, wenn die andere versagt. Feststellbremse rein mechanisch. Dauerbremse Pflicht bei Lkw über 9 t zulässiger Gesamtmasse (§ 41 Abs. 15). Die Hilfsbremse ist keine eigene Anlage: Fällt ein Teil aus, bremst der Rest noch mit mindestens 44 % der Wirkung (§ 41 Abs. 4a).\n💡 Nach EU-Bremsenrecht (für Lkw über 25 km/h maßgeblich) gelten bei Ausfall eines Kreises eigene Mindestwerte – für den Unterricht reicht: Der Rest bremst weiter.\n' +
       '➜ „Und wie bekommt die Betriebsbremse ihre Kraft? Nicht vom Fuß.“' });
     kick(s, 'Bremsanlagen'); title(s, 'Drei Bremsen im Lkw');
-    const B = [['LuFootprints', C.or, 'Betriebsbremse', 'Fußpedal', 'bremst alle Räder – mit Druckluft. Für jede normale Bremsung.'], ['LuSquareParking', C.red, 'Feststellbremse', 'Handbremsventil', 'Federspeicher, rein mechanisch – hält den Lkw am Berg fest.'], ['LuMountain', C.bl, 'Dauerbremse', 'Hebel am Lenkrad', 'Motorbremse oder Retarder – verschleißfrei, für lange Gefälle. Pflicht über 9 t.']];
+    const B = [['LuFootprints', C.or, 'Betriebsbremse', 'Fußpedal', 'bremst alle Räder – mit Druckluft. Für jede normale Bremsung.'], ['LuSquareParking', C.red, 'Feststellbremse', 'Handbremsventil', 'Federspeicher, rein mechanisch – hält den Lkw am Berg fest.'], ['LuMountain', C.bl, 'Dauerbremse', 'Hebel am Lenkrad', 'Motorbremse oder Retarder – verschleißfrei, für lange Gefälle. StVZO: Pflicht über 9 t.']];
     for (let k = 0; k < 3; k++) {
       const x = 0.7 + k * 4.05, w = 3.85;
       card(s, x, 2.05, w, 2.7, { line: B[k][1] }, CLICK);

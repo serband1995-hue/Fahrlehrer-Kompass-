@@ -158,7 +158,7 @@ module.exports = async (deck) => {
       '▶ Sagen: „Neue Lkw haben einen Abbiegeassistenten. Sensoren überwachen die rechte Seite und warnen.“\n' +
       '🖱 Klick 1: seit wann Pflicht · Klick 2: was er tut · Klick 3: was er nicht tut.\n' +
       '✅ VO (EU) 2019/2144: Totwinkel-Assistent Pflicht für neue Typgenehmigungen seit 6.7.2022, für alle Neuzulassungen schwerer Lkw und Busse (N2, N3, M2, M3) seit 7.7.2024.\n' +
-      '✅ Ab 2026/2029 kommen Anforderungen an die direkte Sicht aus dem Fahrerhaus dazu (größere Scheiben, tiefere Fenster).\n' +
+      '✅ Direkte Sicht aus dem Fahrerhaus (größere Scheiben, tiefere Fenster): Pflicht für neue Lkw-Typen seit 7.1.2026, für alle Neuzulassungen ab 7.1.2029 (VO (EU) 2019/2144 Anh. II).\n✅ Seit 7.7.2024 für alle Neuzulassungen ebenfalls Pflicht: intelligenter Geschwindigkeitsassistent (ISA) und Reifendrucküberwachung (VO (EU) 2019/2144 Anh. II).\n' +
       '💡 Der Assistent ersetzt nicht den Blick in die Spiegel. Ältere Lkw haben ihn oft nicht.\n' +
       '➜ „Kurze Frage dazu.“' });
     kick(s, 'Technik hilft'); title(s, 'Der Abbiegeassistent');
@@ -167,7 +167,7 @@ module.exports = async (deck) => {
     await point(s, 0.7, 4.9, 11.93, 1.2, 'LuBan', C.dim, 'Was er nicht tut', 'Pflicht ist nur die Warnung – manche bremsen zusätzlich. Keiner ersetzt den Blick in die Spiegel.', CLICK, { br: true, size: 19 });
   }
   quiz(deck, 'ap', {
-    kicker: 'Frage · Toter Winkel', q: 'Dein Lkw hat einen Abbiegeassistenten. Er warnt nicht. Darfst du jetzt zügig rechts abbiegen?', size: 28,
+    kicker: 'Frage · Toter Winkel', q: 'Euer Lkw hat einen Abbiegeassistenten. Er warnt nicht. Dürft ihr jetzt zügig rechts abbiegen?', size: 28,
     opts: ['Ja, der Assistent hätte gewarnt', 'Nein – Schrittgeschwindigkeit und selbst in alle Spiegel schauen', 'Ja, wenn ich vorher gehupt habe'], ok: 1,
     why: 'Der Assistent ist nur eine Hilfe. Innerorts über 3,5 t gilt beim Rechtsabbiegen Schrittgeschwindigkeit (§ 9 Abs. 6 StVO), und ihr müsst selbst schauen.',
     notes: '▶ Frage vorlesen, abstimmen.\n🖱 Klick 1: Antworten · Klick 2: Lösung.\n✅ B. Assistenten können Fehler machen (Schmutz auf dem Sensor, Person zu klein, zu schnell).\n➜ „Ein toter Winkel fehlt noch – direkt vor dem Lkw.“',
