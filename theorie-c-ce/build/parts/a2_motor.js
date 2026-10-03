@@ -281,7 +281,7 @@ module.exports = async (deck) => {
       '➜ „Und was kommt in den Tank, wenn es kalt wird?“' });
     kick(s, 'Kontrolle'); title(s, 'Öl und Kühlmittel');
     await point(s, 0.7, 2.05, 5.85, 2.0, 'LuDroplet', C.or, 'Ölstand', 'Lkw steht eben. Messstab oder Anzeige im Display. Nur Öl mit Freigabe des Herstellers nachfüllen.', CLICK, { br: true, size: 17 });
-    await point(s, 6.78, 2.05, 5.85, 2.0, 'LuThermometer', C.bl, 'Kühlmittel nur kalt öffnen', 'Heißes Kühlmittel steht unter Druck – Verbrühungsgefahr!', CLICK, { br: true, size: 17 });
+    await point(s, 6.78, 2.05, 5.85, 2.0, 'LuThermometer', C.bl, 'Kühlmittel nur kalt öffnen', 'Heißes Kühlmittel steht unter Druck: Verbrühungsgefahr!', CLICK, { br: true, size: 17 });
     await point(s, 0.7, 4.25, 5.85, 2.0, 'LuSnowflake', C.pu, 'Frostschutz vor dem Winter', 'Gefrierendes Wasser dehnt sich aus und kann Kühler oder Motor sprengen.', CLICK, { br: true, size: 17 });
     await point(s, 6.78, 4.25, 5.85, 2.0, 'LuTriangleAlert', C.red, 'Rote Temperatur-Warnung', 'So schnell wie möglich an geeigneter Stelle anhalten. Betriebsanleitung beachten.', CLICK, { br: true, size: 17 });
   }

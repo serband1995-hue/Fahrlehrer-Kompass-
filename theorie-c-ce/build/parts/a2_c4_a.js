@@ -106,7 +106,7 @@ module.exports = async (deck) => {
 
   // ===== LIFTACHSE =====
   await ask(deck, 'c4f', {
-    kicker: 'Liftachse', q: 'Leer unterwegs: Die Liftachse ist oben.\nWas müsst ihr wissen?', qsize: 30, ico: 'LuArrowUpDown',
+    kicker: 'Liftachse', q: 'Leer unterwegs: Die Liftachse ist oben. Was müsst ihr wissen?', qsize: 30, ico: 'LuArrowUpDown',
     answers: [
       ['LuTrendingDown', 'Vorteil', 'weniger Reifenverschleiß, weniger Diesel, kleinerer Wendekreis.', C.gr],
       ['LuWeight', 'Achslast beachten', '– die Antriebsachse trägt mehr. Beim Beladen senkt sich die Liftachse meist selbst ab.'],
@@ -130,7 +130,7 @@ module.exports = async (deck) => {
   });
 
   // ===== KAPITEL 2 RÄDER UND REIFEN =====
-  await chapter(deck, 'c4r', { num: 2, ttl: 'Räder und Reifen', sub: 'Bezeichnung lesen, Profil, Winterreifen, Zwillinge, Radmuttern, Schneeketten.', ico: 'LuCircleDot', notes:
+  await chapter(deck, 'c4r', { num: 2, ttl: 'Räder und Reifen', sub: 'Bezeichnung lesen, Profil, Winterreifen, Zwillinge, Radmuttern, Radwechsel, Schneeketten.', ico: 'LuCircleDot', notes:
     '▶ Sagen: „Kapitel 2: Räder und Reifen. Der Reifen ist die einzige Verbindung zur Straße – beim Lkw pro Reifen etwa so groß wie ein Blatt DIN A5.“\n🖱 Keine Klicks.\n➜ „Erst lesen wir einen Reifen.“' });
 
   // ===== REIFENBEZEICHNUNG (Morph) =====
@@ -336,7 +336,7 @@ module.exports = async (deck) => {
     s.text('Rad mit Radmutter-Anzeigern · schematisch', { x: 0.8, y: 6.12, w: 5.4, h: 0.3, size: 12, italic: true, color: C.dim, align: 'center' });
     await point(s, 6.55, 2.05, 6.08, 1.4, 'LuWrench', C.or, 'Drehmomentschlüssel', 'Radmuttern über Kreuz nach Herstellerwert anziehen – nicht nach Gefühl.', CLICK, { br: true, size: 17 });
     await point(s, 6.55, 3.58, 6.08, 1.4, 'LuRefreshCw', C.bl, 'Nach 50 bis 100 km nachziehen', 'Die Teile setzen sich – sonst kann sich das Rad lösen.', CLICK, { br: true, size: 17 });
-    await point(s, 6.55, 5.11, 6.08, 1.4, 'LuEye', C.am, 'Anzeiger-Pfeile', 'Einer zeigt aus der Reihe? Mutter hat sich gedreht – sofort prüfen lassen.', { fx: 'flyL', dur: 450 }, { br: true, size: 17 });
+    await point(s, 6.55, 5.11, 6.08, 1.4, 'LuEye', C.am, 'Anzeiger-Pfeile', 'Einer zeigt aus der Reihe? Dann hat sich die Mutter gedreht: sofort prüfen lassen.', { fx: 'flyL', dur: 450 }, { br: true, size: 17 });
   }
 
   // ===== RADWECHSEL UNTERWEGS (Rahmenplan C4 b, Prüfungsfragen 2.7.05-218, -219, -224) =====
@@ -373,7 +373,7 @@ module.exports = async (deck) => {
         '💡 Mit Ketten kann die ASR-Taste nötig sein (siehe C3) – nach Betriebsanleitung.\n' +
         '➜ „Kurzes Quiz zu den Reifen.“',
     });
-    await sign(s, '268', 0.7, 2.0, 1.5);
+    await sign(s, '268', 0.7, 2.1, 1.42);
     const A = [
       ['LuLink', 'Nur mit Schneeketten weiter', 'auf den Rädern der Antriebsachse.', s.sec.col],
       ['LuGauge', 'Höchstens 50 km/h', 'mit Ketten – auch auf guter Strecke.', C.red],
