@@ -264,3 +264,9 @@ function arrow(s, x1, y1, x2, y2, o = {}) {
   s.shape(s.pres.shapes.ISOSCELES_TRIANGLE, { x: hx - hd / 2, y: hy - hd / 2, w: hd, h: hd, fill: col, ft: hide ? 100 : 0, rotate: Math.round((deg + 90) * 10) / 10, name: '!!' + nm + 'H' });
 }
 module.exports.arrow = arrow;
+// Gerades Band (Gurt, Kette, Stange) von (x1,y1) nach (x2,y2), morph-fähig über festen Namen
+function seg(s, x1, y1, x2, y2, o = {}) {
+  const L = Math.max(0.02, Math.hypot(x2 - x1, y2 - y1)), deg = Math.atan2(y2 - y1, x2 - x1) * 180 / Math.PI, th = o.th || 0.07;
+  return s.rrect((x1 + x2) / 2 - L / 2, (y1 + y2) / 2 - th / 2, L, th, { fill: o.col || C.or, ft: o.hide ? 100 : (o.ft || 0), rr: o.rr ?? 0.3, rotate: Math.round(deg * 10) / 10, name: o.name, line: o.line, lw: o.lw, glow: o.glow, glowColor: o.col || C.or });
+}
+module.exports.seg = seg;
