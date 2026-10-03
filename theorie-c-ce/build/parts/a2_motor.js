@@ -31,7 +31,7 @@ module.exports = async (deck) => {
       'Ausstoßen: Das Auslassventil öffnet, der Kolben schiebt das Abgas hinaus. Danach beginnt alles von vorn.',
     ];
     const NOTE = {
-      0: '▶ Sagen: „Ein Lkw-Motor ist ein Dieselmotor. Wir schauen in einen Zylinder – oben die Nockenwelle, sie öffnet die Ventile. Unten die Kurbelwelle.“\n❓ Frage auf der Folie: „Was fehlt beim Diesel im Vergleich zum Benziner?“ – Antworten sammeln.\n🖱 Klick: Die Kurbelwelle dreht sich – Ansaugen (läuft von selbst bis zum nächsten Halt).\n➜ „Erster Takt: Ansaugen.“',
+      0: '▶ Sagen: „Ein Lkw-Motor ist ein Dieselmotor. Wir schauen in einen Zylinder – oben die Nockenwelle, sie steuert die Ventile. Unten die Kurbelwelle.“\n✅ Prüfungsfrage 2.7.03-203: Die Nockenwelle hat die Aufgabe, die Ventile im Motor zu steuern.\n❓ Frage auf der Folie: „Was fehlt beim Diesel im Vergleich zum Benziner?“ – Antworten sammeln.\n🖱 Klick: Die Kurbelwelle dreht sich – Ansaugen (läuft von selbst bis zum nächsten Halt).\n➜ „Erster Takt: Ansaugen.“',
       180: '▶ „Der Kolben war unten, der Zylinder ist voll Luft. Seht ihr: Die Nocke hat das Einlassventil aufgedrückt – jetzt schließt es.“\n🖱 Klick: Verdichten.\n➜ „Jetzt wird es eng.“',
       360: '▶ „Oben angekommen: Die Luft ist stark verdichtet und sehr heiß. Jetzt spritzt die Düse Diesel ein – er entzündet sich von selbst. Darum heißt der Diesel Selbstzünder.“\n✅ Prüfungsfrage 2.7.03-201. Die Antwort auf die Frage steht jetzt auf der Folie: Es gibt keine Zündkerze.\n🖱 Klick: Arbeitstakt.\n➜ „Der Druck treibt den Kolben nach unten.“',
       540: '▶ „Das war der Arbeitstakt – nur er liefert Kraft. Jetzt öffnet das Auslassventil.“\n🖱 Klick: Ausstoßen.\n➜ „Das Abgas muss raus.“',
@@ -115,7 +115,7 @@ module.exports = async (deck) => {
       '❓ „Woran merkt ihr, dass mit dem Turbo etwas nicht stimmt?“\n' +
       '✅ Weniger Leistung, Pfeifen, blauer oder schwarzer Rauch, Öl am Ladeluftschlauch → Werkstatt.\n' +
       '➜ „Wie fahre ich den Motor richtig? Ein Blick auf den Drehzahlmesser.“' });
-    kick(s, 'Turbolader'); title(s, 'Abgas pustet Luft in den Motor');
+    kick(s, 'Turbolader'); title(s, 'Abgas treibt den Lader – mehr Luft im Motor');
     // Motor
     card(s, 0.7, 2.3, 2.4, 3.0, { line: C.red, fill: '2A1A1E' });
     s.img(await icon('LuFlame', C.red), { x: 1.45, y: 3.0, w: 0.9, h: 0.9 });
@@ -124,7 +124,8 @@ module.exports = async (deck) => {
     const TX = 6.2, TY = 2.35;
     s.lineS(4.3 + 0.55, TY + 0.6, 4.3 + 2.95, TY + 0.6, { color: '9AA6B5', lw: 5 });
     // 1 Abgas → Turbine
-    s.lineS(3.1, 4.6, 7.0, 4.6, { color: C.mut, lw: 4, endArrow: 'triangle' }, CLICK);
+    s.lineS(3.1, 4.6, 4.75, 4.6, { color: C.mut, lw: 4 }, CLICK);
+    s.lineS(5.05, 4.6, 7.0, 4.6, { color: C.mut, lw: 4 }, { fx: 'fade', dur: 250 });   // Lücke = Brücke über die Ladeluftleitung
     s.lineS(7.0, 4.6, 7.0, TY + 1.25, { color: C.mut, lw: 4, endArrow: 'triangle' }, { fx: 'fade', dur: 250 });
     s.oval(6.4, TY, 1.2, 1.2, { fill: '3C4656', line: C.mut, lw: 2 }, { fx: 'zoom', dur: 300 });
     s.img(await icon('LuFan', C.mut), { x: 6.65, y: TY + 0.25, w: 0.7, h: 0.7 }, [{ fx: 'fade', dur: 200 }]);
@@ -169,7 +170,7 @@ module.exports = async (deck) => {
     dial += `<line x1="${(a - GX + GR + 0.3) * 100}" y1="${(b - GY + GR + 0.3) * 100}" x2="${(c - GX + GR + 0.3) * 100}" y2="${(d - GY + GR + 0.3) * 100}" stroke="#A9B6C6" stroke-width="6"/>`;
   }
   const dialImg = await svgImg(dial, (GR + 0.3) * 200, (GR + 0.3) * 200);
-  const RPM = [600, 1200, 1900, 1200];
+  const RPM = [600, 1200, 2200, 1200];
   await steps(deck, 'c3m', {
     kicker: 'Drehzahl', ttl: 'Im grünen Bereich',
     ask: { q: 'Wofür steht der grüne Bereich im Drehzahlmesser?', a: 'Viel Kraft bei wenig Verbrauch – dort fahren.', at: 1 },
@@ -237,7 +238,7 @@ module.exports = async (deck) => {
       '❓ Antworten sammeln.\n' +
       '🖱 Klick 1: Warnung · Klick 2: weniger Leistung · Klick 3: Kriechmodus · Klick 4: Manipulation.\n' +
       '✅ Das EU-Recht schreibt dieses „Aufforderungssystem“ vor: erst Warnung, dann Leistungsdrosselung, zuletzt höchstens 20 km/h (VO (EU) 582/2011 Anhang XIII i. V. m. UN-Regelung Nr. 49 Anhang 11). Die Drosselstufe davor: Drehmoment −25 %.\n' +
-      '✅ Manipulation (z. B. AdBlue-Emulator) ist verboten: Die Betriebserlaubnis erlischt.\n' +
+      '✅ Manipulation (z. B. AdBlue-Emulator) ist verboten: Die Betriebserlaubnis erlischt (§ 19 Abs. 2 Satz 2 Nr. 3 und Abs. 7 StVZO).\n' +
       '➜ „Der zweite Abgasreiniger: der Partikelfilter.“' });
     kick(s, 'Abgas · AdBlue'); title(s, 'AdBlue leer – was passiert?');
     const St = [['LuTriangleAlert', C.am, 'Warnung', 'Anzeige im Display: AdBlue nachfüllen.'], ['LuTrendingDown', C.or, 'Weniger Leistung', 'Der Motor wird gedrosselt: 25 % weniger Drehmoment.'], ['LuSnail', C.red, 'Kriechmodus', 'höchstens 20 km/h']];
@@ -255,7 +256,7 @@ module.exports = async (deck) => {
 
   // ===== PARTIKELFILTER =====
   await ask(deck, 'c3m', {
-    kicker: 'Abgas · Partikelfilter', q: 'Die Leuchte fordert eine Standregeneration. Worauf achtest du?', qsize: 30, ico: 'LuFilter',
+    kicker: 'Abgas · Partikelfilter', q: 'Die Leuchte fordert eine Standregeneration.\nWorauf achtet ihr?', qsize: 30, ico: 'LuFilter',
     answers: [
       ['LuRefreshCw', 'Normalfall', 'Der Filter sammelt Ruß und brennt ihn bei längerer Fahrt selbst frei – automatisch.'],
       ['LuFlame', 'Sehr heißes Abgas', 'Nicht über trockenem Gras oder anderem Brennbaren abstellen, nicht in einer Halle.'],
@@ -276,7 +277,7 @@ module.exports = async (deck) => {
       '❓ „Wann darf ich den Kühlmittel-Behälter öffnen?“\n' +
       '✅ Nur bei kaltem Motor – heißes Kühlmittel steht unter Druck, Verbrühungsgefahr.\n' +
       '🖱 Klick 1–4: je ein Punkt.\n' +
-      '✅ Ölstand auf ebener Fläche, Messstab oder Anzeige im Display. Nur Öl mit Freigabe des Herstellers (Prüfungsfragen 2.7.04-206, 2.7.03-207: Mehrbereichsöl deckt den größten Temperaturbereich ab). Frostschutz vor dem Winter prüfen – gefrierendes Wasser kann Kühler und Motorblock sprengen (2.7.03-206). Rote Temperaturwarnung: so schnell wie möglich an geeigneter Stelle anhalten, nach Betriebsanleitung handeln (2.7.02-216).\n' +
+      '✅ Ölstand auf ebener Fläche, Messstab oder Anzeige im Display. Nur Öl mit Herstellerfreigabe. 2.7.04-206: Dieselöl muss Verschleiß mindern, hitzebeständig und bei Kälte fließfähig sein (alle drei richtig). 2.7.03-207: SAE 10 W 40 deckt den größten Bereich ab – nicht 10 W 30. Frostschutz vor dem Winter prüfen – gefrierendes Wasser kann Kühler und Motorblock sprengen (2.7.03-206). Frostschutz schützt vor Einfrieren und Korrosion (2.7.04-201, -203). Der Thermostat regelt die Betriebstemperatur des Motors (2.7.03-205). Rote Temperaturwarnung: so schnell wie möglich an geeigneter Stelle anhalten, nach Betriebsanleitung handeln (2.7.02-216).\n' +
       '➜ „Und was kommt in den Tank, wenn es kalt wird?“' });
     kick(s, 'Kontrolle'); title(s, 'Öl und Kühlmittel');
     await point(s, 0.7, 2.05, 5.85, 2.0, 'LuDroplet', C.or, 'Ölstand', 'Lkw steht eben. Messstab oder Anzeige im Display. Nur Öl mit Freigabe des Herstellers nachfüllen.', CLICK, { br: true, size: 17 });
@@ -309,7 +310,7 @@ module.exports = async (deck) => {
     // Übergang
     s.rrect(xd(1, 1), Y + 0.7, xd(2, 16) - xd(1, 1) - 0.04, 0.9, { fill: '1C2E44', line: C.bl, rr: 0.08 }, CLICK);
     s.text([{ text: 'Übergang', options: { bold: true, breakLine: true } }, { text: 'bis −10 °C', options: {} }], { x: xd(1, 1), y: Y + 0.7, w: xd(2, 16) - xd(1, 1), h: 0.9, size: 16, color: C.bl, align: 'center', valign: 'middle' }, { fx: 'fade', dur: 200 });
-    s.text('ab 1.10.', { x: xd(1, 1) - 0.5, y: Y + 1.7, w: 1.4, h: 0.4, size: 16, bold: true, color: C.bl }, { fx: 'fade', dur: 200 });
+    s.text('ab 1.10.', { x: xd(1, 1), y: Y + 1.7, w: 1.4, h: 0.4, size: 16, bold: true, color: C.bl }, { fx: 'fade', dur: 200 });
     // Winter
     s.rrect(xd(2, 16), Y + 0.7, xd(6, 1) - xd(2, 16) - 0.04, 0.9, { fill: '23284A', line: C.pu, lw: 2, rr: 0.08, glow: 8, glowColor: C.pu }, CLICK);
     s.text([{ text: 'Winterdiesel  ', options: { bold: true } }, { text: 'bis −20 °C', options: {} }], { x: xd(2, 16), y: Y + 0.7, w: xd(6, 1) - xd(2, 16), h: 0.9, size: 20, color: C.txt, align: 'center', valign: 'middle' }, { fx: 'fade', dur: 200 });
@@ -326,7 +327,7 @@ module.exports = async (deck) => {
   await ask(deck, 'c3m', {
     kicker: 'Motor · Leerlauf', q: 'Morgens bei −5 °C: den Motor erst 10 Minuten warmlaufen lassen?', qsize: 30, ico: 'LuThermometer',
     answers: [
-      ['LuX', 'Nein!', 'Sofort losfahren – die ersten Kilometer ohne Vollgas und ohne hohe Drehzahl.', C.red],
+      ['LuX', 'Nein!', 'Losfahren, sobald die Druckwarnung aus ist und die Scheiben frei sind – die ersten Kilometer ohne Vollgas.', C.red],
       ['LuScale', 'Verboten:', 'Motor unnötig laufen lassen (§ 30 Abs. 1 StVO) – 80 € Bußgeld.'],
       ['LuHeater', 'Zum Heizen oder Kühlen in der Pause', 'gibt es Standheizung und Standklimaanlage. Beim Be- und Entladen Motor aus – außer er treibt Kran, Kipper oder Pumpe an.', C.gr],
     ],
@@ -335,14 +336,16 @@ module.exports = async (deck) => {
       '❓ Abstimmen lassen: Wer würde warmlaufen lassen?\n' +
       '🖱 Klick 1–3: je eine Antwort.\n' +
       '✅ Nein. Warmlaufen im Stand verschleißt den Motor und kostet Diesel. § 30 Abs. 1 StVO: unnötiger Lärm und vermeidbare Abgasbelästigungen sind verboten, insbesondere Motoren unnötig laufen lassen. BKat Nr. 117: 80 €, kein Punkt.\n' +
+      '✅ Losfahren erst, wenn die Druckwarnung aus ist (Prüfungsfrage 2.7.01-238: „Wenn die Signale der Druckwarneinrichtung aufgehört haben“) und die Scheiben frei sind (§ 23 Abs. 1 StVO).\n' +
+      '💡 Kein Widerspruch zum Turbo: Nach Vollgas oder Bergfahrt kurz nachlaufen lassen ist nötig – das ist kein „unnötiges“ Laufenlassen.\n' +
       '💡 Bei längerem Stillstand (Bahnübergang, Stau, Laderampe) Motor aus. Viele Lkw haben dafür Start-Stopp oder Leerlaufabschaltung.\n' +
       '➜ „Kurzes Quiz zum Motor.“',
   });
 
   quiz(deck, 'c3m', {
     kicker: 'Quiz Motor', q: 'Warum nennt man den Dieselmotor auch Selbstzündungsmotor?', size: 32,
-    opts: ['Weil eine Zündkerze den Diesel entzündet', 'Weil sich der Diesel in der stark verdichteten, heißen Luft selbst entzündet', 'Weil der Motor ohne Anlasser startet'], ok: 1,
+    opts: ['Weil ein Zündfunke den Arbeitstakt startet', 'Weil sich der eingespritzte Diesel an der heißen, verdichteten Luft entzündet', 'Weil der Kraftstoff druckempfindlich ist'], ok: 1,
     why: 'Die Luft wird beim Verdichten so heiß, dass sich der eingespritzte Diesel von selbst entzündet (Prüfungsfrage 2.7.03-201).',
-    notes: '▶ Frage vorlesen, abstimmen.\n🖱 Klick 1: Antworten · Klick 2: Lösung.\n✅ B.\n💡 Vorglühen hilft nur beim Kaltstart – es zündet den Diesel nicht.\n➜ „Weiter zu Kapitel 3: Kupplung und Getriebe.“',
+    notes: '▶ Frage vorlesen, abstimmen.\n💡 Die Quizfragen stehen im Prüfungsstil mit „Sie“ – so wie im amtlichen Fragenkatalog. Das einmal ansagen.\n🖱 Klick 1: Antworten · Klick 2: Lösung.\n✅ B. Amtlich richtig: „Weil der Arbeitstakt durch die Entzündung des eingespritzten Kraftstoffes an der verdichteten Luft gestartet wird.“ A (Zündfunke) und C (druckempfindlicher Kraftstoff) sind die amtlichen Fallen.\n💡 Vorglühen hilft nur beim Kaltstart – es zündet den Diesel nicht.\n➜ „Weiter zu Kapitel 3: Kupplung und Getriebe.“',
   });
 };

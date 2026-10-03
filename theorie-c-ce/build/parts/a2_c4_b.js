@@ -15,6 +15,7 @@ module.exports = async (deck) => {
       '❓ Sammeln lassen, dann klicken.\n' +
       '🖱 Klick 1–5: je ein Aufbau · Klick 6: Maße.\n' +
       '✅ Kontrolle vor der Fahrt: Verschlüsse, Plane und Spriegel, Bordwände, Türen und Verriegelungen. Wechselbrücke: Verriegelungen zu, Stützbeine hochgeklappt und gesichert. Kipper: nur auf festem, ebenem Boden kippen, vor der Fahrt Mulde ganz absenken.\n' +
+      '✅ Wechselbrücke nur auf tragfähigem Boden absetzen (DGUV Vorschrift 70 § 55). Kipper: Sicherheitsabstand zu Stromleitungen (Freileitungen) halten (§ 54).\n' +
       '✅ Maße nach § 32 StVZO: Breite 2,55 m, Kühlaufbau (Wände mind. 45 mm dick) 2,60 m, Höhe 4,00 m.\n' +
       '➜ „Ein Aufbau-Teil verdient eine eigene Folie: die Ladebordwand.“' });
     kick(s, 'Aufbauten'); title(s, 'Was ist hinten drauf?');
@@ -37,24 +38,24 @@ module.exports = async (deck) => {
     const s = base(deck, 'c4a', { notes:
       '▶ Sagen: „Viele Verteiler-Lkw haben eine Ladebordwand – eine Hebebühne hinten. Damit passieren schwere Unfälle: Füße werden gequetscht, Fußgänger und Radfahrer übersehen die Plattform.“\n' +
       '❓ „Wie wird eine heruntergeklappte Ladebordwand im Verkehr gesichert?“\n' +
-      '✅ Zwei gelbe Blinkleuchten und rot-weiße Warnmarkierungen, die bei Betrieb selbsttätig wirken (§ 53b Abs. 5 StVZO).\n' +
+      '✅ Zwei gelbe Blinkleuchten, die im Betrieb selbsttätig blinken, und rot-weiße rückstrahlende Warnmarkierungen (§ 53b Abs. 5 StVZO).\n' +
       '🖱 Klick 1: Blinkleuchte, Warnmarkierung und erster Punkt · Klick 2–3: Regeln.\n' +
       '✅ Nicht im Bewegungsbereich stehen, Füße weg von der Plattformkante. Vor der Fahrt hochklappen und verriegeln – Kontrollleuchte im Fahrerhaus muss aus sein (BG Verkehr, Herstellerangaben).\n' +
       '➜ „Weiter zu Kapitel 4: Batterie und Bordnetz.“' });
     kick(s, 'Ladebordwand'); title(s, 'Die Hebebühne am Heck');
     card(s, 0.7, 2.05, 5.6, 4.45, {});
     // Seitenansicht: detaillierter Lkw, Ladebordwand hinten auf den Boden abgesenkt
-    const GL = 6.05, XF = 0.85, K = 1.15, LL = 3.8, XR = XF + LL * K;
-    await lkw(s, { L: LL, axles: [0.62, 2.78], floor: 0.72, boxH: 1.5 }, { x: XF, gy: GL, k: K });
-    s.rect(0.85, GL, 5.35, 0.04, { fill: '55606F' });
+    const GL = 5.7, XF = 0.85, K = 1.38, LL = 3.17, XR = XF + LL * K;
+    await lkw(s, { L: LL, axles: [0.62, 2.3], floor: 0.72, boxH: 1.5 }, { x: XF, gy: GL, k: K });
+    s.rect(0.85, GL, 5.3, 0.04, { fill: '55606F' });
     s.lineS(XR - 0.08, GL - 0.62, XR + 0.08, GL - 0.1, { color: '6E7888', lw: 5 });           // Hubarm
     s.rect(XR - 0.02, GL - 0.09, 0.95, 0.07, { fill: '9AA6B5' });                                  // Plattform
-    for (let k = 0; k < 7; k++) s.rect(XR + k * 0.125, GL - 0.09, 0.0625, 0.07, { fill: C.red }, k === 0 ? CLICK : { fx: 'fade', dur: 80 });
+    for (let k = 0; k < 7; k++) { s.rect(XR + k * 0.125 + 0.0625, GL - 0.09, 0.0625, 0.07, { fill: C.white }, k === 0 ? CLICK : { fx: 'fade', dur: 80 }); s.rect(XR + k * 0.125, GL - 0.09, 0.0625, 0.07, { fill: C.red }, { fx: 'fade', dur: 80 }); }
     s.rect(XR + 0.85, GL - 0.42, 0.04, 0.33, { fill: '6E7888' }, { fx: 'fade', dur: 150 });          // Halter
     s.oval(XR + 0.77, GL - 0.6, 0.2, 0.2, { fill: C.am, glow: 10, glowColor: C.am }, { fx: 'zoom', dur: 300 });
     s.text([{ text: 'gelbe', options: { breakLine: true } }, { text: 'Blinkleuchte' }], { x: XR + 0.05, y: GL - 1.55, w: 1.1, h: 0.6, size: 12, bold: true, color: C.am, align: 'center' }, { fx: 'fade', dur: 200 });
     s.lineS(XR + 0.6, GL - 0.95, XR + 0.85, GL - 0.6, { color: C.am, lw: 1.5 }, { fx: 'fade', dur: 200 });
-    s.text('rot-weiße Markierung', { x: XR - 1.3, y: GL + 0.08, w: 2.3, h: 0.32, size: 13, bold: true, color: C.red, align: 'right' }, { fx: 'fade', dur: 200 });
+    s.text('rot-weiße Markierung', { x: XR - 1.55, y: GL + 0.08, w: 2.3, h: 0.32, size: 13, bold: true, color: C.red, align: 'right' }, { fx: 'fade', dur: 200 });
     s.text('Seitenansicht · schematisch', { x: 0.9, y: 2.12, w: 3.0, h: 0.3, size: 12, italic: true, color: C.dim });
     await point(s, 6.55, 2.05, 6.08, 1.4, 'LuSiren', C.am, 'Im Betrieb gesichert', 'durch zwei gelbe Blinkleuchten und rot-weiße Warnmarkierungen.', { fx: 'flyL', dur: 450 }, { br: true, size: 17 });
     await point(s, 6.55, 3.58, 6.08, 1.4, 'LuFootprints', C.red, 'Quetschgefahr!', 'Nicht im Bewegungsbereich stehen, Füße weg von der Plattformkante.', CLICK, { br: true, size: 17 });
@@ -106,9 +107,11 @@ module.exports = async (deck) => {
         const bad = i === 3;
         s.oval(6.6, 5.0, 1.0, 1.0, { fill: '3C4656', line: '9AA6B5', lw: 2, name: '!!motr' });
         s.oval(9.7, 5.15, 0.7, 0.7, { fill: '3C4656', line: bad ? C.red : C.gr, lw: 3, name: '!!lima' });
-        s.lineS(7.1, 5.0, 10.05, 5.15, { color: bad ? C.red : '9AA6B5', lw: 3, dash: bad ? 'dash' : 'solid', name: '!!r1' });
-        s.lineS(7.1, 6.0, 10.05, 5.85, { color: bad ? C.red : '9AA6B5', lw: 3, dash: bad ? 'dash' : 'solid', name: '!!r2' });
-        s.text('Motor', { x: 6.35, y: 6.05, w: 1.5, h: 0.35, size: 13, color: C.dim, align: 'center', name: '!!tmo' });
+        s.lineS(7.1, 5.0, 10.05, 5.15, { color: bad ? C.red : '9AA6B5', lw: 3, name: '!!r1' });
+        // gerissen: unten offen, beide Enden hängen durch
+        if (bad) { s.lineS(7.1, 6.0, 7.95, 6.42, { color: C.red, lw: 3, name: '!!r2' }); s.lineS(10.05, 5.85, 9.75, 6.45, { color: C.red, lw: 3, name: '!!r3' }); }
+        else s.lineS(7.1, 6.0, 10.05, 5.85, { color: '9AA6B5', lw: 3, name: '!!r2' });
+        s.text('Motor', { x: 5.55, y: 5.33, w: 0.95, h: 0.35, size: 13, color: C.dim, align: 'right', name: '!!tmo' });
         s.text('Lichtmaschine', { x: 10.5, y: 5.3, w: 1.9, h: 0.4, size: 15, bold: true, color: bad ? C.red : C.gr, name: '!!tli' });
         s.text(bad ? 'Riemen gerissen?' : 'Riemen', { x: 7.9, y: 5.35, w: 1.8, h: 0.35, size: 13, bold: bad, color: bad ? C.red : C.dim, align: 'center', name: '!!tri' });
       }
@@ -123,7 +126,7 @@ module.exports = async (deck) => {
   const PX = 6.1, SX = 10.4, TY = 2.9;   // Pannen-Lkw links, Spender rechts
   await steps(deck, 'c4e', {
     kicker: 'Starthilfe', ttl: 'Die richtige Reihenfolge',
-    ask: { q: 'Wohin kommt das letzte Ende des schwarzen Kabels?', a: 'An Masse am Motorblock – nicht an die Batterie.', at: 4 },
+    ask: { q: 'Wohin kommt das letzte Ende des schwarzen Kabels?', a: 'An den Massepunkt (Betriebsanleitung) oder den Motorblock – nicht an die Batterie.', at: 4 },
     nums: ['!', '1', '2', '3', '4'],
     list: ['Nur 24 V an 24 V', 'Rot an Plus – Pannen-Lkw', 'Rot an Plus – Spender', 'Schwarz an Minus – Spender', 'Schwarz an Masse – Pannen-Lkw'],
     caps: [
@@ -131,14 +134,14 @@ module.exports = async (deck) => {
       '1. Rotes Kabel an Plus des Pannen-Lkw.',
       '2. Das andere Ende des roten Kabels an Plus des Spenders.',
       '3. Schwarzes Kabel an Minus des Spenders.',
-      '4. Das andere Ende an Masse am Motorblock des Pannen-Lkw – nicht an die Batterie: Funken! Abklemmen in umgekehrter Reihenfolge.',
+      '4. Das andere Ende an den Massepunkt laut Betriebsanleitung oder blankes Metall am Motorblock – nicht an die Batterie: Funken! Abklemmen in umgekehrter Reihenfolge.',
     ],
     notes: [
-      '▶ Sagen: „Batterie leer – ein Kollege hilft. Erste Regel: Nur gleiche Spannung, also 24 Volt an 24 Volt.“\n✅ ADAC, Starthilfe; Betriebsanleitung. Viele Lkw haben einen Fremdstartstecker.\n➜ „Jetzt die Reihenfolge. Zuerst das rote Kabel.“',
+      '▶ Sagen: „Batterie leer – ein Kollege hilft. Erste Regel: Nur gleiche Spannung, also 24 Volt an 24 Volt.“\n✅ ADAC, Starthilfe; Betriebsanleitung. Viele Lkw haben einen Fremdstartstecker.\n💡 Im Bild steht je ein Batteriesatz mit 24 V. Am echten Lkw sind es zwei 12-V-Batterien in Reihe: Die Kabel kommen an den freien Plus- und Minuspol des Batteriesatzes – nie an die Brücke zwischen den Batterien (dort liegen nur 12 V).\n➜ „Jetzt die Reihenfolge. Zuerst das rote Kabel.“',
       '▶ „Rot an Plus der leeren Batterie.“\n➜ „Dann …“',
       '▶ „… das andere rote Ende an Plus des Spenders.“\n➜ „Dann das schwarze Kabel.“',
       '▶ „Schwarz an Minus des Spenders.“\n➜ „Und das letzte Ende?“',
-      '▶ „Nicht an Minus der leeren Batterie – sondern an Masse, also blankes Metall am Motorblock, mit Abstand zur Batterie. Beim Laden entsteht Knallgas, ein Funke kann es entzünden.“\n✅ Reihenfolge laut ADAC. Spendermotor laufen lassen, starten. Vor dem Abklemmen Verbraucher einschalten (Gebläse, Licht). Abklemmen in umgekehrter Reihenfolge: erst Schwarz, dann Rot.\n➜ „Noch drei Dinge zur Batterie.“',
+      '▶ „Nicht an Minus der leeren Batterie – sondern an Masse: an den Massepunkt, den die Betriebsanleitung nennt, oder an blankes Metall am Motorblock, mit Abstand zur Batterie. Beim Lkw sitzt der Motor unter dem Fahrerhaus – darum gibt es oft einen eigenen Massepunkt. Beim Laden entsteht Knallgas, ein Funke kann es entzünden.“\n✅ Reihenfolge laut ADAC. Spendermotor laufen lassen, starten. Vor dem Abklemmen Verbraucher einschalten (Gebläse, Licht). Abklemmen in umgekehrter Reihenfolge: erst Schwarz, dann Rot.\n➜ „Noch drei Dinge zur Batterie.“',
     ],
     legend: 'Schematisch · Batterie jeweils 24 V',
     scene: async (s, i) => {
@@ -181,7 +184,7 @@ module.exports = async (deck) => {
       '➜ „Weiter zu Kapitel 5: Licht und Warnleuchten.“' });
     kick(s, 'Elektrik'); title(s, 'Hauptschalter, Batterie, Sicherung');
     await point(s, 0.7, 2.05, 11.93, 1.35, 'LuPower', 'C9A227', 'Batteriehauptschalter:', 'nie bei laufendem Motor. Nach „Zündung aus“ die Nachlaufzeit abwarten – das AdBlue-System muss seine Leitungen leer pumpen.', CLICK, { size: 18 });
-    await point(s, 0.7, 3.6, 11.93, 1.35, 'LuFlame', C.red, 'Batterie gast Knallgas aus:', 'kein Feuer, nicht rauchen, keine Funken. Säure ätzt – Schutzbrille und Handschuhe.', CLICK, { size: 18 });
+    await point(s, 0.7, 3.6, 11.93, 1.35, 'LuFlame', C.red, 'Beim Laden entsteht Knallgas:', 'kein Feuer, nicht rauchen, keine Funken. Säure ätzt – Schutzbrille und Handschuhe.', CLICK, { size: 18 });
     await point(s, 0.7, 5.15, 11.93, 1.35, 'LuZap', C.or, 'Sicherung kaputt?', 'Nur durch eine mit gleicher Amperezahl ersetzen – nie überbrücken. Brennt sie wieder durch: Werkstatt.', CLICK, { size: 18 });
   }
 };

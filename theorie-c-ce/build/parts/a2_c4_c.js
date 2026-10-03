@@ -102,7 +102,7 @@ module.exports = async (deck) => {
       s.text([{ text: nm + ' = ', options: { color: col } }, { text: mean, options: { color: C.txt } }], { x: x + 0.1, y: 4.72, w: w - 0.2, h: 0.5, size: 22, bold: true, align: 'center' }, { fx: 'fade', dur: 200 });
       s.text(act, { x: x + 0.15, y: 5.25, w: w - 0.3, h: 1.2, size: 16, bold: true, color: C.txt, align: 'center' }, { fx: 'fade', dur: 200 });
     }
-    foot(s, 'Symbole vereinfacht · Aussehen je nach Hersteller · STOP-Leuchte beim Lkw: sofort anhalten');
+    foot(s, 'Symbole vereinfacht · Aussehen je nach Hersteller · STOP-Leuchte: so schnell wie möglich an sicherer Stelle anhalten');
   }
 
   // ===== ASSISTENZSYSTEME =====
@@ -111,14 +111,14 @@ module.exports = async (deck) => {
       '▶ Sagen: „Neue Lkw haben viele elektronische Helfer – einige schreibt die EU vor.“\n' +
       '🖱 Klick 1–4: je ein System · Klick 5: die wichtigste Regel.\n' +
       '✅ Notbremsassistent: warnt und bremst selbst, wenn ein Aufprall droht – nicht dauerhaft abschalten. Spurhaltewarner: warnt, wenn der Lkw ohne Blinker die Spur verlässt. Abbiegeassistent: warnt vor Radfahrern und Fußgängern rechts neben dem Lkw – Pflicht für alle neuen Lkw seit 7.7.2024 (VO (EU) 2019/2144). Anfahr-Informationssystem: warnt vor Personen direkt vor dem Lkw beim Anfahren.\n' +
-      '✅ Prüfungsfragen 2.7.01-148 (Notbremsassistent), 2.7.01-149 und 2.7.01-063: Assistenzsysteme unterstützen – die Verantwortung bleibt beim Fahrer.\n' +
+      '✅ 2.7.01-148: Bremsassistent und autonomer Notbremsassistent sind richtig, der Tempomat nicht. 2.7.01-149: warnen, helfen, automatisch eingreifen (alle drei richtig). 2.7.01-063: mehr Sicherheit, Unterstützung – kein Ausgleich von Fahruntüchtigkeit. Die Verantwortung bleibt beim Fahrer.\n' +
       '➜ „Damit ist C4 geschafft. Zeit zum Mitschreiben.“' });
     kick(s, 'Fahrerassistenz'); title(s, 'Elektronische Helfer');
     await point(s, 0.7, 2.05, 5.85, 1.25, 'LuOctagonAlert', C.red, 'Notbremsassistent', 'warnt und bremst selbst, wenn ein Auffahrunfall droht.', CLICK, { br: true, size: 16 });
     await point(s, 6.78, 2.05, 5.85, 1.25, 'LuMoveHorizontal', C.bl, 'Spurhaltewarner', 'warnt, wenn der Lkw ohne Blinker die Spur verlässt.', CLICK, { br: true, size: 16 });
-    await point(s, 0.7, 3.45, 5.85, 1.25, 'LuBike', C.or, 'Abbiegeassistent', 'warnt vor Radfahrern rechts – Pflicht für alle neuen Lkw seit Juli 2024.', CLICK, { br: true, size: 16 });
+    await point(s, 0.7, 3.45, 5.85, 1.25, 'LuBike', C.or, 'Abbiegeassistent', 'warnt vor Radfahrern rechts – Pflicht für neu zugelassene Lkw über 3,5 t seit Juli 2024.', CLICK, { br: true, size: 16 });
     await point(s, 6.78, 3.45, 5.85, 1.25, 'LuPersonStanding', C.pu, 'Anfahr-Informationssystem', 'warnt vor Menschen direkt vor dem Lkw.', CLICK, { br: true, size: 16 });
-    await point(s, 0.7, 4.95, 11.93, 1.5, 'LuShieldAlert', C.gr, 'Die Helfer unterstützen – die Verantwortung bleibt bei dir.', 'Spiegel, Schulterblick und Schritttempo beim Rechtsabbiegen bleiben Pflicht – auch wenn nichts piept.', CLICK, { br: true, size: 18 });
+    await point(s, 0.7, 4.95, 11.93, 1.5, 'LuShieldAlert', C.gr, 'Die Helfer unterstützen – die Verantwortung bleibt bei dir.', 'Spiegel, Schulterblick und innerorts Schrittgeschwindigkeit beim Rechtsabbiegen bleiben Pflicht – auch wenn nichts piept.', CLICK, { br: true, size: 18 });
   }
 
   quiz(deck, 'c4l', {

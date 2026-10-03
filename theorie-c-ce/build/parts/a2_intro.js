@@ -51,7 +51,7 @@ module.exports = async (deck) => {
   }
   // ===== WIEDERHOLUNG ABEND 1 =====
   await ask(deck, 'c3', {
-    kicker: 'Wiederholung Abend 1', q: 'Drei Fragen von letztem Mal – wer weiß es noch?', ico: 'LuRotateCcw', qsize: 32,
+    kicker: 'Wiederholung Abend 1', q: 'Drei Fragen vom letzten Mal –\nwer weiß es noch?', ico: 'LuRotateCcw', qsize: 32,
     answers: [
       ['LuClock', 'Wie lange am Stück fahren?', '4,5 h Lenkzeit, dann 45 Minuten Pause – oder erst 15, dann 30 Minuten.'],
       ['LuEyeOff', 'Rechtsabbiegen innerorts über 3,5 t?', 'Schrittgeschwindigkeit – Radfahrer und Fußgänger im toten Winkel.'],
@@ -61,7 +61,7 @@ module.exports = async (deck) => {
       '▶ Sagen: „Bevor wir anfangen: drei Fragen zu Abend 1.“\n' +
       '❓ Jede Frage vorlesen, Antworten sammeln, dann klicken.\n' +
       '🖱 Klick 1–3: je eine Frage mit Antwort.\n' +
-      '✅ Art. 7 VO 561/2006 · § 9 Abs. 6 StVO (70 €, 1 Punkt) · § 30 Abs. 3 StVO.\n' +
+      '✅ Art. 7 VO 561/2006 · § 9 Abs. 6 StVO, BKat Nr. 45 (70 €, 1 Punkt) · § 30 Abs. 3 StVO.\n' +
       '➜ „Gut. Jetzt zur Technik: Was lernt ihr heute in C3?“',
   });
   // ===== LERNZIELE C3 =====
@@ -80,7 +80,7 @@ module.exports = async (deck) => {
       s.text([{ text: T[i][1], options: { bold: true, color: C.txt, breakLine: true } }, { text: T[i][2], options: { color: C.mut, fontSize: 15 } }], { x: 2.0, y, w: 8.6, h: 0.95, size: 20, valign: 'middle' }, { fx: 'fade', dur: 200 });
       s.text(T[i][3], { x: 10.8, y, w: 1.6, h: 0.95, size: 18, bold: true, color: T[i][4], align: 'right', valign: 'middle' }, { fx: 'fade', dur: 200 });
     }
-    s.text('+ 5 Min Abschluss: Quiz und „Das nimmst du mit“', { x: 0.7, y: 6.5, w: 11.93, h: 0.35, size: 14, italic: true, color: C.dim });
+    s.text('+ 5 Min Abschluss: Quiz und „Das nehmt ihr mit“', { x: 0.7, y: 6.5, w: 11.93, h: 0.35, size: 14, italic: true, color: C.dim });
   }
   await chapter(deck, 'c3k', { num: 1, ttl: 'Der Weg der Kraft', sub: 'Vom Diesel im Tank bis zum Reifen auf der Straße.', ico: 'LuRoute', notes:
     '▶ Sagen: „Kapitel 1: Wie kommt die Kraft auf die Straße?“\n🖱 Keine Klicks.\n➜ „Wir schauen von oben auf das Fahrgestell.“' });

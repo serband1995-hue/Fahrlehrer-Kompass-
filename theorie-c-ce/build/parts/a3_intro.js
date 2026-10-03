@@ -52,7 +52,7 @@ module.exports = async (deck) => {
   }
   // ===== WIEDERHOLUNG ABEND 2 =====
   await ask(deck, 'c5', {
-    kicker: 'Wiederholung Abend 2', q: 'Drei Fragen von letztem Mal – wer weiß es noch?', ico: 'LuRotateCcw', qsize: 32,
+    kicker: 'Wiederholung Abend 2', q: 'Drei Fragen vom letzten Mal – wer weiß es noch?', ico: 'LuRotateCcw', qsize: 32,
     answers: [
       ['LuDroplet', 'AdBlue-Tank leer – was passiert?', 'Erst weniger Leistung, zuletzt Kriechmodus mit höchstens 20 km/h.'],
       ['LuLock', 'Wann die Differenzialsperre einlegen?', 'Nur im Stand oder in Schrittgeschwindigkeit – nie in Kurven, sofort wieder raus.'],

@@ -47,7 +47,7 @@ module.exports = async (deck) => {
   }
   // ===== WIEDERHOLUNG ABEND 4 =====
   await ask(deck, 'c9', {
-    kicker: 'Wiederholung Abend 4', q: 'Drei Fragen von letztem Mal – wer weiß es noch?', ico: 'LuRotateCcw', qsize: 32,
+    kicker: 'Wiederholung Abend 4', q: 'Drei Fragen vom letzten Mal – wer weiß es noch?', ico: 'LuRotateCcw', qsize: 32,
     answers: [
       ['LuGauge', 'Doppelt so schnell in die Kurve – wie viel mehr Fliehkraft?', 'Viermal so viel. Sie wächst mit dem Quadrat der Geschwindigkeit.'],
       ['LuTriangleAlert', 'Panne auf der Landstraße – wie weit kommt das Warndreieck?', 'Bei schnellem Verkehr etwa 100 m hinter den Lkw.'],
