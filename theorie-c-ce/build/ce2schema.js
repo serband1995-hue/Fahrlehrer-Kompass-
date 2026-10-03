@@ -87,14 +87,14 @@ function schema(s, st) {
     s.rrect(x - 0.28, 5.1, 0.56, 0.3, { fill: st.cyl ? '1F3A63' : '16202E', line: st.cyl ? BLU : '4A5668', lw: 1.5, rr: 0.2, name: '!!cy' + k });
     seg(s, x, 5.4, x, st.cyl ? 5.66 : 5.46, { col: 'B3BBC6', th: 0.07, name: '!!cr' + k });
   });
-  s.text(st.cyl ? 'Bremszylinder: bremsen' : 'Bremszylinder: frei', { x: 9.2, y: 5.18, w: 1.75, h: 0.4, size: 12, bold: true, color: st.cyl ? C.txt : C.dim, lsm: 0.9, name: '!!cyt' });
+  s.text(st.cyl ? 'Bremszylinder: bremsen' : 'Bremszylinder: frei', { x: 9.2, y: 5.12, w: 1.12, h: 0.48, size: 12, bold: true, color: st.cyl ? C.txt : C.dim, lsm: 0.9, name: '!!cyt' });
   // Kupplungsköpfe
   s.oval(KX - 0.14, RY - 0.14, 0.28, 0.28, { fill: RED, line: C.dark, lw: 1.5, name: '!!kr' });
   s.oval(KX - 0.14, YY - 0.14, 0.28, 0.28, { fill: YEL, line: C.dark, lw: 1.5, name: '!!ky' });
   // Bruchstellen und Zischen
   const mark = (on, y, nm, txt, col) => s.text(on ? txt : '', { x: KX - 0.8, y: y - 0.62, w: 1.6, h: 0.32, size: 13, bold: true, color: col, align: 'center', name: '!!' + nm });
-  mark(red === 'brk', RY, 'mr', '✕ abgerissen', C.red);
-  mark(yel === 'brk' || yel === 'leak', YY + 0.92, 'my', yel === 'leak' ? '✕ zischt!' : '✕ abgerissen', YEL);
+  mark(red === 'brk', RY, 'mr', '✕ Riss', C.red);
+  mark(yel === 'brk' || yel === 'leak', YY + 0.92, 'my', yel === 'leak' ? '✕ zischt!' : '✕ Riss', YEL);
   s.text(st.vent ? 'entlüftet rot' : '', { x: 7.0, y: 2.08, w: 1.6, h: 0.3, size: 12, bold: true, color: C.red, align: 'center', name: '!!vt' });
   // Pedal
   s.rrect(6.25, 4.35, 0.6, 0.14, { fill: st.pedal ? C.txt : '7A8494', rr: 0.3, rotate: st.pedal ? 8 : -18, name: '!!pd' });
