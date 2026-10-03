@@ -231,7 +231,7 @@ module.exports = async (deck) => {
     kicker: 'Prüfungsfrage 2.6.07-221', q: 'Warum sind bei der Streckenplanung die Lenk- und Ruhezeiten zu berücksichtigen? Weil dadurch …', size: 28,
     opts: ['… sichergestellt wird, dass der Fahrer die vorgeschriebenen Pausen einhalten kann', '… Beeinträchtigungen der Fahrweise vermieden werden sollen', '… die Fahrtstrecke kürzer wird'], ok: [0, 1],
     why: 'Pausen planen heißt: ausgeruht fahren. Kürzer wird die Strecke dadurch nicht.',
-    notes: '▶ Frage vorlesen, abstimmen.\n🖱 Klick 1: Antworten · Klick 2: Lösung.\n✅ Amtlicher Fragenkatalog 2.6.07-221: A und B.\n➜ „Das nimmst du aus C10 mit.“',
+    notes: '▶ Frage vorlesen, abstimmen.\n🖱 Klick 1: Antworten · Klick 2: Lösung.\n✅ Amtlicher Fragenkatalog 2.6.07-221: A und B.\n➜ „Das nehmt ihr aus C10 mit.“',
   });
   await takeaway(deck, 'c10e', {
     items: [

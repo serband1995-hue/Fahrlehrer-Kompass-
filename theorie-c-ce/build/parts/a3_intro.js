@@ -55,7 +55,7 @@ module.exports = async (deck) => {
     kicker: 'Wiederholung Abend 2', q: 'Drei Fragen von letztem Mal – wer weiß es noch?', ico: 'LuRotateCcw', qsize: 32,
     answers: [
       ['LuDroplet', 'AdBlue-Tank leer – was passiert?', 'Erst weniger Leistung, zuletzt Kriechmodus mit höchstens 20 km/h.'],
-      ['LuLock', 'Wann die Differenzialsperre einlegen?', 'Nur im Stand oder im Schritttempo – nie in Kurven, sofort wieder raus.'],
+      ['LuLock', 'Wann die Differenzialsperre einlegen?', 'Nur im Stand oder in Schrittgeschwindigkeit – nie in Kurven, sofort wieder raus.'],
       ['LuSnowflake', 'Winterreifen beim Lkw – wo mindestens?', 'Auf den Antriebsachsen und den vorderen Lenkachsen, mit Alpine-Symbol.'],
     ],
     notes:
@@ -81,6 +81,6 @@ module.exports = async (deck) => {
       s.text([{ text: T[i][1] + '  ', options: { bold: true, color: C.txt } }, { text: T[i][2], options: { color: C.mut, fontSize: 15 } }], { x: 2.0, y, w: 8.6, h: 0.78, size: 20, valign: 'middle' }, { fx: 'fade', dur: 200 });
       s.text(T[i][3], { x: 10.8, y, w: 1.6, h: 0.78, size: 18, bold: true, color: T[i][4], align: 'right', valign: 'middle' }, { fx: 'fade', dur: 200 });
     }
-    s.text('+ 5 Min Abschluss: Quiz und „Das nimmst du mit“', { x: 0.7, y: 6.55, w: 11.93, h: 0.35, size: 14, italic: true, color: C.dim });
+    s.text('+ 5 Min Abschluss: Quiz und „Das nehmt ihr mit“', { x: 0.7, y: 6.55, w: 11.93, h: 0.35, size: 14, italic: true, color: C.dim });
   }
 };

@@ -1,4 +1,4 @@
-// C1 Abschluss: Mitschreiben, Quiz, Das nimmst du mit, Pause
+// C1 Abschluss: Mitschreiben, Quiz, Das nehmt ihr mit, Pause
 const { C, sec, base, kick, title, quiz, write, takeaway } = require('../gs');
 
 sec('c1e', 'C1  ·  ABSCHLUSS', C.gr, 'bg_gr.jpg');
@@ -40,7 +40,7 @@ module.exports = async (deck) => {
       ['LuClock', '4,5 h fahren → 45 Min Pause', '(15 + 30). Tag 9 h (2 × 10 h), Woche 56 h, Doppelwoche 90 h.'],
       ['LuBed', 'Ruhe: täglich 11 h,', 'wöchentlich 45 h – die regelmäßige Wochenruhe nicht in der Kabine.'],
       ['LuCreditCard', 'Fahrerkarte:', 'persönlich, immer stecken; Kontrolle heute + 56 Tage.'],
-      ['LuEyeOff', 'Toter Winkel:', 'innerorts rechts abbiegen nur in Schritttempo – Radfahrer haben Vorrang.'],
+      ['LuEyeOff', 'Toter Winkel:', 'innerorts rechts abbiegen nur in Schrittgeschwindigkeit – Radfahrer haben Vorrang.'],
     ],
     notes: '▶ Sagen: „Das sind die fünf Punkte aus C1, die ihr auf jeden Fall wissen müsst.“\n🖱 Klick 1–5: je ein Punkt. Gern die Klasse den Satz vervollständigen lassen.\n➜ „Jetzt 15 Minuten Pause. Danach Lektion C2.“',
   });
@@ -50,10 +50,10 @@ module.exports = async (deck) => {
       '▶ Sagen: „15 Minuten Pause. Wie beim Lkw: Fahrtunterbrechung – kurz raus, frische Luft, Wasser trinken.“\n' +
       '💡 Pausenende ansagen (z. B. 19:45 Uhr).\n' +
       '🖱 Keine Klicks.\n' +
-      '➜ „Willkommen zurück. Lektion C2: Welche Regeln gelten für Lkw anders?“' });
+      '➜ „Gleich geht es weiter mit Lektion C2.“' });
     s.text('PAUSE', { x: 0.7, y: 2.0, w: 6, h: 0.5, size: 18, bold: true, color: C.gr, cs: 6 }, { fx: 'fade', auto: true, dur: 600 });
     s.text('15 Minuten', { x: 0.7, y: 2.5, w: 6.5, h: 1.4, size: 72, bold: true, color: C.txt }, { fx: 'rise', auto: true, dur: 900, d: 200 });
     s.text('Fahrtunterbrechung – kurz raus, frische Luft.', { x: 0.7, y: 4.0, w: 6.2, h: 0.9, size: 22, color: C.mut }, { fx: 'fade', auto: true, dur: 700, d: 600 });
-    s.text('Danach: Lektion C2 · Besondere Vorschriften aus der StVO / Transportvorschriften', { x: 0.7, y: 5.4, w: 6.2, h: 0.9, size: 16, color: C.gr }, { fx: 'fade', auto: true, dur: 700, d: 900 });
+    s.text('Danach: Lektion C2 · Besondere Vorschriften, Transportvorschriften', { x: 0.7, y: 4.85, w: 6.4, h: 0.8, size: 18, color: C.txt }, { fx: 'fade', auto: true, dur: 700, d: 900 });
   }
 };

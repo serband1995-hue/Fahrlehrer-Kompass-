@@ -7,7 +7,7 @@ sec('pap', 'C2  ·  PAPIERE UND MAUT', C.gr, 'bg_gr.jpg');
 sec('c2e', 'C2  ·  ABSCHLUSS', C.gr, 'bg_gr.jpg');
 
 module.exports = async (deck) => {
-  await chapter(deck, 'fv', { num: 5, ttl: 'Fahrverbote und Mitfahrer', sub: 'Sonntags, in den Sommerferien – und wer wo mitfahren darf.', bg: 'f_sonntag.jpg', notes:
+  await chapter(deck, 'fv', { num: 5, ttl: 'Fahrverbote und Mitfahrer', sub: 'Sonntags, in den Sommerferien – und wer wo mitfahren darf.', subW: 4.8, bg: 'f_sonntag.jpg', notes:
     '▶ Sagen: „Kapitel 5. Schaut euch das Bild an: Sonntagmorgen, der Parkplatz voller Lkw, die Autobahn fast leer. Warum?“\n🖱 Keine Klicks.\n➜ „Weil sonntags für viele Lkw Fahrverbot ist.“' });
   // ===== SONNTAGSFAHRVERBOT (Zeitleiste) =====
   {
@@ -15,10 +15,10 @@ module.exports = async (deck) => {
       '▶ Sagen: „An Sonn- und Feiertagen gilt ein Fahrverbot für Lkw.“\n' +
       '❓ „Für welche Lkw? Und von wann bis wann?“\n' +
       '🖱 Klick 1: Zeitleiste 0–22 Uhr · Klick 2: für wen · Klick 3: auch leer · Klick 4: Ausnahmen. (Die Bußgeldzeile unten steht von Anfang an.)\n' +
-      '✅ § 30 Abs. 3 StVO: An Sonn- und Feiertagen von 0 bis 22 Uhr dürfen Lkw über 7,5 t zGM sowie Anhänger hinter Lkw (jeder Masse!) zur geschäftsmäßigen oder entgeltlichen Güterbeförderung einschließlich Leerfahrten nicht verkehren.\n' +
+      '✅ § 30 Abs. 3 StVO: An Sonn- und Feiertagen von 0 bis 22 Uhr dürfen Lkw über 7,5 t zGM sowie Anhänger hinter Lkw (jeder Masse!) zur geschäftsmäßigen oder entgeltlichen Güterbeförderung einschließlich Leerfahrten nicht geführt werden.\n' +
       '✅ Ausnahmen u. a.: kombinierter Verkehr Schiene–Straße (bis 200 km) und Hafen–Straße (bis 150 km), frische Milch, frisches Fleisch und Fisch, leicht verderbliches Obst und Gemüse, Pannenhilfe und Abschleppen.\n' +
       '✅ Verstoß: Fahrer 120 € (BKat Nr. 119), Halter 570 € (Nr. 120). Keine Punkte.\n' +
-      '💡 Feiertage: bundesweite Feiertage; Fronleichnam, Reformationstag und Allerheiligen nur in den Ländern, in denen sie Feiertag sind (§ 30 Abs. 4).\n' +
+      '💡 Feiertage: bundesweite Feiertage; Fronleichnam, Reformationstag und Allerheiligen nur in den Ländern, die § 30 Abs. 4 dafür nennt. Andere Landesfeiertage (z. B. Heilige Drei Könige) lösen kein Lkw-Fahrverbot aus.\n' +
       '➜ „Im Sommer kommt noch ein Verbot dazu.“' });
     kick(s, 'Sonn- und Feiertagsfahrverbot · § 30 Abs. 3 StVO'); title(s, 'Sonntags: 0 bis 22 Uhr', { size: 36 });
     const x0 = 0.9, w = 11.5, y0 = 2.15, k = w / 24;
@@ -100,7 +100,7 @@ module.exports = async (deck) => {
       '➜ „Letztes Kapitel: Papiere und Maut.“' });
     kick(s, 'Unterfahrschutz · §§ 32b, 32c StVZO'); title(s, 'Damit niemand unter den Lkw gerät', { size: 34 });
     // Lkw-Seitenansicht (gezeichnet)
-    const gy = 5.2;
+    const gy = 5.39;
     s.rect(0.7, gy, 11.9, 0.04, { fill: C.dim });
     s.rrect(1.2, 2.55, 1.9, 2.15, { fill: 'D9DEE6', rr: 0.08 }); // Fahrerhaus
     s.rect(1.35, 2.7, 1.2, 0.85, { fill: '2B3F55' }); // Fenster
@@ -110,16 +110,16 @@ module.exports = async (deck) => {
     // hinten
     s.rect(10.45, 4.75, 0.2, 0.3, { fill: C.am }, { fx: 'zoom', c: true, dur: 350 });
     s.rect(10.0, 4.95, 0.75, 0.12, { fill: C.am }, { fx: 'wipeR', dur: 300 });
-    s.text('hinten', { x: 10.2, y: 5.35, w: 1.6, h: 0.35, size: 16, bold: true, color: C.am }, { fx: 'fade', dur: 200 });
+    s.text('hinten', { x: 10.2, y: 5.5, w: 1.6, h: 0.35, size: 16, bold: true, color: C.am }, { fx: 'fade', dur: 200 });
     // seitlich
     s.rect(3.0, 4.95, 4.1, 0.1, { fill: C.or }, { fx: 'wipeR', c: true, dur: 500 });
     s.rect(3.0, 4.75, 4.1, 0.08, { fill: C.or }, { fx: 'wipeR', dur: 500 });
-    s.text('seitlich – schützt Radfahrer und Fußgänger', { x: 3.0, y: 5.35, w: 5.5, h: 0.35, size: 16, bold: true, color: C.or }, { fx: 'fade', dur: 200 });
+    s.text('seitlich – schützt Radfahrer und Fußgänger', { x: 3.0, y: 5.5, w: 5.5, h: 0.35, size: 16, bold: true, color: C.or }, { fx: 'fade', dur: 200 });
     // vorne
     s.rect(1.05, 4.6, 0.15, 0.45, { fill: C.bl }, { fx: 'zoom', c: true, dur: 350 });
-    s.text('vorne', { x: 0.7, y: 5.35, w: 1.5, h: 0.35, size: 16, bold: true, color: C.bl }, { fx: 'fade', dur: 200 });
-    s.text([{ text: 'Wechselaufbau / Container:  ', options: { bold: true, color: C.am } }, { text: 'Gewichtserklärung vom Auftraggeber mitführen (§ 7 GüKG).', options: { color: C.txt } }],
-      { x: 0.7, y: 5.95, w: 11.93, h: 0.7, size: 17, valign: 'middle', fill: C.card2, line: C.am, shape: deck.pres.shapes.ROUNDED_RECTANGLE, rr: 0.1, margin: [8, 14, 8, 14] }, { fx: 'rise', c: true, dur: 400 });
+    s.text('vorne', { x: 0.7, y: 5.5, w: 1.5, h: 0.35, size: 16, bold: true, color: C.bl }, { fx: 'fade', dur: 200 });
+    s.text([{ text: 'Außerdem bei Wechselaufbau / Container:  ', options: { bold: true, color: C.am } }, { text: 'Gewichtserklärung vom Auftraggeber mitführen (§ 7 GüKG).', options: { color: C.txt } }],
+      { x: 0.7, y: 6.0, w: 11.93, h: 0.7, size: 17, valign: 'middle', fill: C.card2, line: C.am, shape: deck.pres.shapes.ROUNDED_RECTANGLE, rr: 0.1, margin: [8, 14, 8, 14] }, { fx: 'rise', c: true, dur: 400 });
   }
   // ================= KAPITEL 6: PAPIERE UND MAUT =================
   await chapter(deck, 'pap', { num: 6, ttl: 'Papiere und Maut', sub: 'Was zur Ladung gehört – und was die Straße kostet.', ico: 'LuFileText', notes:
@@ -133,10 +133,10 @@ module.exports = async (deck) => {
       '✅ § 408 HGB: Der Frachtführer kann einen Frachtbrief verlangen; er wird in drei Originalen ausgestellt (Absender, mit dem Gut, Frachtführer). Elektronisch ist gleichgestellt.\n' +
       '✅ International: CMR-Frachtbrief (internationales Übereinkommen).\n' +
       '✅ Gewerblicher Güterkraftverkehr braucht eine Gemeinschaftslizenz – seit 2026 auch im Inland. Ältere nationale Erlaubnisse gelten bis zum Ende ihrer Befristung (unbefristete bis 27.02.2036). Beglaubigte Kopie mitführen, nicht eingeschweißt (§§ 3, 7, 24 GüKG).\n' +
-      '💡 Werkverkehr (eigene Güter, eigenes Personal) braucht keine Lizenz (§ 1 Abs. 2 GüKG).\n' +
+      '💡 Werkverkehr (eigene Güter, eigenes Personal) braucht keine Lizenz (§ 9 GüKG; Begriff in § 1 Abs. 2).\n' +
       '➜ „Und dann kommt die Rechnung für die Straße: die Maut.“' });
     kick(s, 'Ladungspapiere'); title(s, 'Was gehört zur Ladung?');
-    const T = [['LuFileText', 'Begleitpapier', 'Was wird gefahren, von wo nach wo, für wen (§ 7 GüKG).'], ['LuFileCheck', 'Frachtbrief', 'national, 3 Originale – auch elektronisch (§ 408 HGB).'], ['LuGlobe', 'CMR-Frachtbrief', 'für Fahrten ins Ausland.'], ['LuShieldCheck', 'Lizenz-Kopie', 'beglaubigt, bei gewerblichem Transport – nicht bei Werkverkehr.']];
+    const T = [['LuFileText', 'Begleitpapier', 'Was wird gefahren, von wo nach wo, für wen (§ 7 GüKG).'], ['LuFileCheck', 'Frachtbrief', 'national, wenn vereinbart: 3 Originale – auch elektronisch (§ 408 HGB).'], ['LuGlobe', 'CMR-Frachtbrief', 'für Fahrten ins Ausland.'], ['LuShieldCheck', 'Lizenz-Kopie', 'beglaubigt, bei gewerblichem Transport – nicht bei Werkverkehr.']];
     for (let i = 0; i < 4; i++) {
       const col = i % 2, row = Math.floor(i / 2), x = 0.7 + col * 6.08, y = 2.05 + row * 2.1;
       await point(s, x, y, 5.85, 1.85, T[i][0], C.gr, T[i][1], T[i][2], CLICK, { br: true, size: 18 });
@@ -172,7 +172,7 @@ module.exports = async (deck) => {
     answers: [
       ['LuGauge', 'Tempo:', 'Autobahn 80 km/h, 50 m Abstand – bei rund 70 km/h Schnitt etwa 7 h reine Lenkzeit.'],
       ['LuCoffee', 'Pause:', 'spätestens nach 4,5 h Lenkzeit 45 Minuten (oder 15 + 30) – Rastplatz vorher einplanen.'],
-      ['LuEuro', 'Maut:', 'über 3,5 t, gewerblich – Maut auf Autobahn und Bundesstraße.'],
+      ['LuEuro', 'Maut:', 'über 3,5 t – Autobahn und Bundesstraße, auch im Werkverkehr.'],
       ['LuFileText', 'Papiere:', 'Führerschein, Fahrzeugschein, Fahrerkarte, „95“, Begleitpapier, Lizenz-Kopie.'],
     ],
     notes:
@@ -181,7 +181,7 @@ module.exports = async (deck) => {
       '🖱 Klick 1: Tempo · Klick 2: Pause · Klick 3: Maut · Klick 4: Papiere.\n' +
       '✅ 500 km bei rund 70 km/h Schnitt ≈ 7 h Lenkzeit → unter 9 h, also ohne Verlängerung möglich, aber mit Pause nach spätestens 4,5 h (Art. 6, 7 VO 561/2006).\n' +
       '✅ Gewerblicher Güterverkehr über 3,5 t: mautpflichtig (BFStrMG), Begleitpapier und beglaubigte Lizenz-Kopie mitführen (§ 7 GüKG), Fahrerkarte stecken, Nachweis 95.\n' +
-      '💡 Rückfahrt am selben Tag? Nein: 14 h Lenkzeit wären zu viel – erst nach 11 h Ruhe.\n' +
+      '💡 Rückfahrt am selben Tag? Nein: 14 h Lenkzeit wären zu viel – erst nach der täglichen Ruhezeit (11 h, verkürzt 9 h).\n' +
       '➜ „Schreibt euch die wichtigsten Regeln aus C2 auf.“',
   });
   // ===== MITSCHREIBEN C2 =====
@@ -223,7 +223,7 @@ module.exports = async (deck) => {
       ['LuGauge', 'Tempo:', 'innerorts 50 · außerorts 80 (bis 7,5 t) bzw. 60 · Autobahn 80 · Begrenzer 90.'],
       ['LuMoveHorizontal', 'Abstand und Spur:', '50 m auf der Autobahn · bei 3 Fahrstreifen nicht links · Überholen nur deutlich schneller.'],
       ['LuTrainFront', 'Bahnübergang:', 'kein Platz für den ganzen Lkw → vor dem Andreaskreuz warten.'],
-      ['LuCalendarX', 'Fahrverbote:', 'Sonn- und Feiertage 0–22 Uhr · Sommer samstags 7–20 Uhr – auch leer, auch jeder Zug.'],
+      ['LuCalendarX', 'Fahrverbote:', 'Sonn- und Feiertage 0–22 Uhr · Sommer samstags 7–20 Uhr – auch leer, auch jeder Lkw mit Anhänger.'],
       ['LuFileText', 'Papiere und Maut:', 'Begleitpapier / Frachtbrief, Lizenz-Kopie · Maut über 3,5 t auf Autobahn und Bundesstraße.'],
     ],
     notes: '▶ Sagen: „Fünf Punkte aus C2. Wer kann sie mit eigenen Worten sagen?“\n🖱 Klick 1–5: je ein Punkt.\n➜ „Das war Abend 1. Beim nächsten Mal geht es um die Technik.“',

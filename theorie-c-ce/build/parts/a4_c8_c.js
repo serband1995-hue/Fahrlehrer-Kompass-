@@ -170,7 +170,7 @@ module.exports = async (deck) => {
       frames: [
         fr(5.2, { hold: true, cap: 'Rückwärts an die Laderampe. Hinter dem Lkw seht ihr nichts.', note: '▶ Sagen: „Ihr setzt rückwärts an die Rampe. Direkt hinter dem Lkw seht ihr gar nichts.“\n❓ Frage auf der Folie stellen.\n🖱 Klick: Gefahrzone und Platz des Einweisers erscheinen.\n➜ „Wo darf jemand stehen?“' }),
         fr(5.2, { t: { zone: 1 }, hold: true, cap: 'Rot: Hier darf niemand stehen. Grün: Hier steht der Einweiser – im Spiegel sichtbar.', note: '▶ „Zwischen Lkw und Rampe: lebensgefährlich, da darf niemand stehen. Der Einweiser steht seitlich hinten, so dass ihr ihn im linken Spiegel seht.“\n✅ DGUV Vorschrift 70 § 46: Rückwärtsfahren nur, wenn niemand gefährdet ist – sonst mit Einweiser. Einweiser nur im Sichtbereich des Fahrers, nicht zwischen Fahrzeug und Hindernis, keine anderen Tätigkeiten.\n🖱 Klick: Der Lkw setzt zurück (läuft von selbst).\n➜ „Langsam zurück.“' }),
-        fr(4.7, { t: { zone: 1 }, cap: 'Langsam, Schritttempo – Blick in den Spiegel, auf den Einweiser.' }), fr(4.2, { t: { zone: 1 } }), fr(3.7, { t: { zone: 1 } }),
+        fr(4.7, { t: { zone: 1 }, cap: 'Langsam, Schrittgeschwindigkeit – Blick in den Spiegel, auf den Einweiser.' }), fr(4.2, { t: { zone: 1 } }), fr(3.7, { t: { zone: 1 } }),
         fr(3.25, { t: { zone: 1, stop: 1 }, hold: true, answer: true, cap: 'Der Einweiser zeigt „Halt“ – sofort stehen bleiben. Seht ihr ihn nicht mehr: ebenfalls sofort anhalten.', note: '▶ „Der Einweiser gibt das Haltzeichen – ihr bleibt sofort stehen. Und ganz wichtig: Verliert ihr ihn aus dem Spiegel, haltet ihr an. Erst wieder fahren, wenn ihr ihn seht.“\n✅ Prüfungsfrage 2.2.23-213: Beim Rückwärtsfahren aus einem Grundstück in die Straße sichert man durch Sicherungsposten (Einweiser) – nicht durch Warnblinker oder Hupen.\n💡 Rückfahrkamera, Rückfahrwarner oder eine Absperrung können genügen, wenn damit sicher niemand gefährdet ist – sonst Einweiser (Durchführungsanweisung zu DGUV Vorschrift 70 § 46).\n🖱 Keine Animation mehr – nächster Klick: nächste Folie.\n➜ „Und was zieht ihr bei der Arbeit an?“' }),
       ],
       scene: async (s, t) => {
@@ -243,7 +243,7 @@ module.exports = async (deck) => {
     kicker: 'Quiz C8 · 3', q: 'Wie kann die Überladung eines Lastkraftwagens festgestellt werden?', size: 32,
     opts: ['Durch Nachwiegen des beladenen Fahrzeugs', 'Durch eine Bremsprobe mit dem beladenen Fahrzeug', 'Durch eingebaute Achslastmessgeräte'], ok: [0, 2],
     why: 'Nur die Waage oder eingebaute Achslastmesser zeigen das Gewicht. Eine Bremsprobe sagt darüber nichts (Prüfungsfrage 2.2.22-203).',
-    notes: '▶ Frage vorlesen, abstimmen.\n🖱 Klick 1: Antworten · Klick 2: Lösung.\n✅ A und C.\n➜ „Das nimmst du aus C8 mit.“',
+    notes: '▶ Frage vorlesen, abstimmen.\n🖱 Klick 1: Antworten · Klick 2: Lösung.\n✅ A und C.\n➜ „Das nehmt ihr aus C8 mit.“',
   });
   await takeaway(deck, 'c8e', {
     items: [

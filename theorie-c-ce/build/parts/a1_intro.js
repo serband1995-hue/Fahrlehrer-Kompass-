@@ -19,7 +19,7 @@ module.exports = async (deck) => {
     s.rect(0.75, 4.75, 1.6, 0.07, { fill: C.or }, { fx: 'wipeR', auto: true, dur: 700, d: 900 });
     s.text([{ text: 'C1  ', options: { bold: true, color: C.or } }, { text: 'Persönliche Voraussetzungen und Arbeitsplatz', options: { color: C.txt, breakLine: true } },
       { text: 'C2  ', options: { bold: true, color: C.or } }, { text: 'Besondere Vorschriften aus der StVO / Transportvorschriften', options: { color: C.txt } }],
-      { x: 0.7, y: 5.0, w: 7.8, h: 1.0, size: 18, lsm: 1.2 }, { fx: 'fade', auto: true, dur: 800, d: 1100 });
+      { x: 0.7, y: 5.0, w: 6.4, h: 1.0, size: 17, lsm: 1.2 }, { fx: 'fade', auto: true, dur: 800, d: 1100 });
     s.text('Fahrschule Boost  ·  Offenbach am Main', { x: 0.7, y: 6.7, w: 6, h: 0.35, size: 12, color: C.dim }, { fx: 'fade', auto: true, dur: 800, d: 1400 });
   }
   // ===== ABLAUF DES ABENDS =====
@@ -50,7 +50,7 @@ module.exports = async (deck) => {
   await ask(deck, 'c1', {
     kicker: 'Einstieg', q: 'Ihr fahrt schon Auto. Was ist beim Lkw anders?', ico: 'LuTruck',
     answers: [
-      ['LuWeight', 'Masse:', 'bis 40 t statt 1,5 t. Längerer Bremsweg, viel mehr Wucht beim Aufprall.'],
+      ['LuWeight', 'Masse:', 'bis 32 t als Solo-Lkw, als Zug (CE) bis 40 t – statt 1,5 t beim Pkw. Längerer Bremsweg, viel mehr Wucht.'],
       ['LuEyeOff', 'Sicht:', 'hoch oben, aber große tote Winkel. Rechts neben euch kann ein ganzer Radfahrer verschwinden.'],
       ['LuClock', 'Arbeitsplatz:', 'Lenk- und Ruhezeiten, Fahrtenschreiber. Wer fährt, wird kontrolliert.'],
       ['LuShieldCheck', 'Verantwortung:', 'Ladung, Fahrzeugzustand, Papiere. Ihr seid Profis auf der Straße.'],

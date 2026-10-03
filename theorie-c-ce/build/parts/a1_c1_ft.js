@@ -5,7 +5,7 @@ const { icon } = require('../lib');
 sec('ft', 'C1  ·  FAHRTENSCHREIBER', C.pu, 'bg_pu.jpg');
 
 module.exports = async (deck) => {
-  await chapter(deck, 'ft', { num: 3, ttl: 'Der Fahrtenschreiber', sub: 'Er schreibt alles mit – und ihr müsst es bei jeder Kontrolle zeigen können.', bg: 'f_tacho.jpg', notes:
+  await chapter(deck, 'ft', { num: 3, ttl: 'Der Fahrtenschreiber', ttlW: 5.2, sub: 'Er schreibt alles mit – und ihr müsst es bei jeder Kontrolle zeigen können.', bg: 'f_tacho.jpg', notes:
     '▶ Sagen: „Woher weiß die Polizei, wie lange ihr gefahren seid? Vom Fahrtenschreiber. Er sitzt im Armaturenbrett, und eure persönliche Fahrerkarte steckt darin.“\n🖱 Keine Klicks.\n➜ „Was genau zeichnet er auf?“' });
   // ===== WAS WIRD AUFGEZEICHNET =====
   {
@@ -14,7 +14,7 @@ module.exports = async (deck) => {
       '❓ „Was meint ihr, was alles gespeichert wird?“\n' +
       '🖱 Klick 1: Tätigkeiten · Klick 2: Tempo und Strecke · Klick 3: Ort · Klick 4: Ereignisse.\n' +
       '✅ Lenken, andere Arbeit, Bereitschaft, Ruhe (die Symbole von vorhin). Dazu Geschwindigkeit und gefahrene Kilometer.\n' +
-      '✅ Der intelligente Fahrtenschreiber (2. Generation) speichert zusätzlich Standorte, z. B. Beginn und Ende der Arbeit und alle drei Stunden Lenkzeit, und den Grenzübertritt automatisch.\n' +
+      '✅ Der intelligente Fahrtenschreiber (Smart-Tacho) speichert zusätzlich Standorte, z. B. Beginn und Ende der Arbeit und alle drei Stunden Lenkzeit, und den Grenzübertritt automatisch.\n' +
       '✅ Ereignisse und Fehler: Fahren ohne Karte, Geschwindigkeitsüberschreitung, Stromunterbrechung.\n' +
       '💡 Die Behörde kann manche Daten sogar aus der Ferne während der Fahrt abfragen (Fernkommunikation), um gezielt zu kontrollieren.\n' +
       '➜ „Das Wichtigste daran: die Fahrerkarte.“' });
@@ -46,7 +46,7 @@ module.exports = async (deck) => {
     s.text('D', { x: 11.55, y: 2.3, w: 0.6, h: 0.5, size: 22, bold: true, color: C.am, align: 'center', fill: '1E2E5A', shape: deck.pres.shapes.OVAL });
     s.rect(9.5, 3.15, 2.6, 0.08, { fill: '6B7FB5' }); s.rect(9.5, 3.4, 2.0, 0.08, { fill: '6B7FB5' });
     s.rect(8.55, 4.0, 3.5, 0.08, { fill: '6B7FB5' }); s.rect(8.55, 4.25, 2.8, 0.08, { fill: '6B7FB5' });
-    const T = [['LuLock', 'Persönlich', 'Nur ihr fahrt damit. Nie fremde Karte benutzen.'], ['LuCircleAlert', 'Nur eine', 'Jeder darf nur eine gültige Fahrerkarte haben.'], ['LuCalendar', 'Höchstens 5 Jahre', 'gültig. Neue Karte spätestens 15 Arbeitstage vorher beantragen.'], ['LuCreditCard', 'Immer stecken', 'von Arbeitsbeginn bis Arbeitsende.']];
+    const T = [['LuLock', 'Persönlich', 'Nur ihr fahrt damit. Nie fremde Karte benutzen.'], ['LuCircleAlert', 'Nur eine', 'Jeder darf nur eine gültige Fahrerkarte haben.'], ['LuCalendar', 'Höchstens 5 Jahre', 'gültig. Neue Karte spätestens 15 Arbeitstage vorher beantragen.'], ['LuCreditCard', 'Immer stecken', 'ab Übernahme des Lkw bis Ende der Arbeitszeit.']];
     for (let i = 0; i < 4; i++) await point(s, 0.7, 2.05 + i * 1.12, 7.1, 0.98, T[i][0], C.pu, T[i][1], T[i][2], CLICK, { size: 17 });
   }
   // ===== 56 TAGE (Kalender-Diagramm) =====
@@ -92,7 +92,7 @@ module.exports = async (deck) => {
   await ask(deck, 'ft', {
     kicker: 'Grenze und Nachträge', q: 'Ihr fahrt von Frankfurt nach Lyon. Was müsst ihr am Fahrtenschreiber beachten?', ico: 'LuGlobe', qsize: 30,
     answers: [
-      ['LuFlag', 'Grenzübertritt:', 'Land eingeben – am nächsten möglichen Halteort nach der Grenze. Der neue Fahrtenschreiber macht es automatisch.'],
+      ['LuFlag', 'Grenzübertritt:', 'Land eingeben – am nächsten möglichen Halteort nach der Grenze. Der Smart-Tacho Version 2 macht es automatisch.'],
       ['LuClipboardList', 'Manueller Nachtrag:', 'Zeiten ohne Karte im Gerät (z. B. Urlaub, frei, Krankheit) vor Fahrtbeginn auf der Karte nachtragen.'],
       ['LuShieldCheck', 'Regeln gleich:', 'Lenk- und Ruhezeiten gelten in Frankreich genauso – es ist dieselbe EU-Verordnung.'],
     ],
@@ -100,7 +100,7 @@ module.exports = async (deck) => {
       '▶ Sagen: „Ihr fahrt ins Ausland. Woran müsst ihr denken?“\n' +
       '❓ Sammeln lassen.\n' +
       '🖱 Klick 1: Grenzübertritt · Klick 2: Nachtrag · Klick 3: gleiche Regeln.\n' +
-      '✅ Art. 34 Abs. 7 VO 165/2014: Ländersymbol nach dem Grenzübertritt am nächstmöglichen Halteplatz eingeben. Beim intelligenten Fahrtenschreiber 2. Generation wird der Grenzübertritt automatisch aufgezeichnet.\n' +
+      '✅ Art. 34 Abs. 7 VO 165/2014: Ländersymbol nach dem Grenzübertritt am nächstmöglichen Halteplatz eingeben. Beim intelligenten Fahrtenschreiber Version 2 (Neufahrzeuge seit August 2023, im Auslandsverkehr nachgerüstet) wird der Grenzübertritt automatisch aufgezeichnet.\n' +
       '✅ Nachträge: Zeiten, in denen die Karte nicht im Gerät war (frei, Urlaub, Krankheit, anderes Fahrzeug ohne Fahrtenschreiber), werden über die manuelle Eingabe auf der Karte nachgetragen (Art. 34 Abs. 3; § 20 FPersV).\n' +
       '➜ „Kurzer Test.“',
   });
@@ -108,6 +108,6 @@ module.exports = async (deck) => {
     kicker: 'Frage · Fahrerkarte', q: 'Deine Fahrerkarte ist am Montag kaputtgegangen. Was ist richtig?', size: 30,
     opts: ['Ich darf erst wieder fahren, wenn die neue Karte da ist', 'Ich fahre mit der Karte eines Kollegen weiter', 'Ersatz innerhalb von 7 Tagen beantragen, bis zu 15 Tage mit Ausdrucken fahren'], ok: 2,
     why: 'Art. 29 VO (EU) 165/2014. Eine fremde Karte zu benutzen ist verboten. Ausdrucke bei Beginn und Ende der Fahrt mit Name und Unterschrift.',
-    notes: '▶ Frage vorlesen, abstimmen.\n🖱 Klick 1: Antworten · Klick 2: Lösung.\n✅ C. Ersatzkarte binnen 7 Kalendertagen beantragen; höchstens 15 Kalendertage ohne Karte mit Ausdrucken.\n💡 B ist ein schwerer Verstoß: Karte eines anderen benutzen. Dann stimmen alle Aufzeichnungen nicht mehr.\n➜ „Letztes Kapitel von C1: euer Arbeitsplatz – und was ihr von dort oben nicht seht.“',
+    notes: '▶ Frage vorlesen, abstimmen.\n🖱 Klick 1: Antworten · Klick 2: Lösung.\n✅ C. Ersatzkarte binnen 7 Kalendertagen beantragen; höchstens 15 Kalendertage ohne Karte mit Ausdrucken.\n💡 B ist ein schwerer Verstoß: Karte eines anderen benutzen. Dann stimmen alle Aufzeichnungen nicht mehr.\n➜ „Jetzt euer Arbeitsplatz.“',
   });
 };

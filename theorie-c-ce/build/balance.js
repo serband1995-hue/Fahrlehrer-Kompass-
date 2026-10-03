@@ -19,7 +19,11 @@ function units(segs) {
     let m;
     while ((m = re.exec(g.text))) {
       if (m[3] !== undefined) { if (out.length) { out[out.length - 1].sp += m[3]; out[out.length - 1].spW += width(m[3], g.size, g.bold, g.italic, g.cs); } continue; }
-      out.push({ si, off: m.index, word: m[1], sp: m[2], w: width(m[1], g.size, g.bold, g.italic, g.cs), spW: width(m[2], g.size, g.bold, g.italic, g.cs) });
+      const u = { si, off: m.index, word: m[1], sp: m[2], w: width(m[1], g.size, g.bold, g.italic, g.cs), spW: width(m[2], g.size, g.bold, g.italic, g.cs) };
+      const pv = out[out.length - 1];
+      // Nummern wie „2.7.03-214“ oder „15-30“ nicht am Bindestrich trennen
+      if (pv && pv.si === si && !pv.sp && /\d-$/.test(pv.word) && /^\d/.test(u.word)) { pv.word += u.word; pv.w += u.w; pv.sp = u.sp; pv.spW = u.spW; pv.glued = true; continue; }
+      out.push(u);
     }
   });
   return out;
@@ -45,7 +49,9 @@ function breaks(segs, W) {
   if (L.length < 2 || L.length > 6) return null;
   const last = L[L.length - 1];
   const single = last.length === 1 || (words(U, last) === 1 && !last.slice(0, -1).some(k => U[k].sp.length));
-  if (!single) return null;
+  const nat = () => L.slice(1).map(line => { const u = U[line[0]]; return [u.si, u.off]; });
+  const glued = U.some(u => u.glued);
+  if (!single) return glued ? nat() : null;        // feste Umbrüche, damit PowerPoint die Nummer nicht trennt
   // Kandidaten: gleiche Zeilenzahl, letzte Zeile mit mindestens zwei Wörtern. Bevorzugt: Umbruch nach Satzzeichen.
   const cand = [];
   for (let f = 0.98; f >= 0.62; f -= 0.01) {
@@ -58,7 +64,7 @@ function breaks(segs, W) {
       cand.push({ L2, punct: /[.?!:;,–]$/.test(before) || U[l2[0]].word === '–' });
     }
   }
-  if (!cand.length) return null;
+  if (!cand.length) return glued ? nat() : null;
   const best = cand.find(c => c.punct) || cand[0];
   return best.L2.slice(1).map(line => { const u = U[line[0]]; return [u.si, u.off]; });
   return null;

@@ -17,15 +17,18 @@ function base(deck, key, { notes = '', bg, transition = 'fade', noGlide = false,
   if (ov) s.img('ov_left.png', { x: 0, y: 0, w: ov === true ? W : ov, h: H, name: '!!ov' });
   // Fotos: unten dunkler Verlauf, damit Fußzeile und Seitenzahl lesbar bleiben
   const photo = (bg && !/^bg_/.test(bg)) || (!bg && S.bg && !/^bg_/.test(S.bg));
-  if (footer && photo) s.img('ov_bot.png', { x: 0, y: 6.45, w: W, h: 1.05, name: '!!ovb' });
+  if (footer && photo) s.img('ov_bot.png', { x: 0, y: 6.35, w: W, h: 1.15, name: '!!ovb' });
   if (footer) {
-    s.text(deck.ftLabel + '  ·  ' + S.name, { x: 0.6, y: 7.02, w: 9, h: 0.28, size: 10, color: '8592A6', cs: 2, name: '!!ftL' });
-    s.text(String(s.idx), { x: 12.13, y: 7.02, w: 0.6, h: 0.28, size: 10, color: '8592A6', align: 'right', name: '!!ftR' });
+    s.text(deck.ftLabel + '  ·  ' + S.name, { x: 0.6, y: 7.02, w: 9, h: 0.28, size: 10, color: '9AA6B8', cs: 2, name: '!!ftL' });
+    s.text(String(s.idx), { x: 12.13, y: 7.02, w: 0.6, h: 0.28, size: 10, color: '9AA6B8', align: 'right', name: '!!ftR' });
   }
   s.sec = S; s.deck = deck;
   return s;
 }
-const kick = (s, t, o = {}) => s.text(t.toUpperCase(), { x: o.x ?? 0.7, y: o.y ?? 0.6, w: o.w ?? 11, h: 0.35, size: 13, bold: true, color: o.col || s.sec.col, cs: 3, name: o.name }, o.anim);
+// Versalien, aber Paragrafen und Gesetzeskürzel bleiben richtig geschrieben (§ 32b StVZO, nicht § 32B STVZO; Abs. nicht wie ABS)
+const KEEP = /^(StVO|StVZO|StVG|FeV|GüKG|FPersG|FPersV|ArbZG|BKatV|BKat|FahrschAusbO|BFStrMG|GGVSEB|HGB|BKrFQG|Abs\.|Nr\.|lfd\.|UAbs\.|Buchst\.|i\.|V\.|m\.|\d+[a-z]+)[,.;:)]?$/;
+const versal = t => t.split(' ').map(w => KEEP.test(w) ? w : w.toUpperCase()).join(' ');
+const kick = (s, t, o = {}) => s.text(versal(t), { x: o.x ?? 0.7, y: o.y ?? 0.6, w: o.w ?? 11, h: 0.35, size: 13, bold: true, color: o.col || s.sec.col, cs: 3, name: o.name }, o.anim);
 const title = (s, t, o = {}) => s.text(t, { x: o.x ?? 0.7, y: o.y ?? 0.95, w: o.w ?? 12, h: o.h ?? 0.8, size: o.size ?? 40, bold: true, color: o.col || C.txt, name: o.name, lsm: 0.95 }, o.anim);
 const card = (s, x, y, w, h, o = {}, anim) => s.rrect(x, y, w, h, { fill: o.fill || C.card, line: o.line || C.line, lw: o.lw || 1, rr: o.rr ?? 0.16, name: o.name }, anim);
 const CLICK = { fx: 'flyL', c: true, dur: 450 };
@@ -90,7 +93,7 @@ async function steps(deck, key, { kicker, ttl, list, caps, scene, notes, legend,
     const nt = /🖱/.test(notes[i]) ? notes[i] : (notes[i].includes('\n➜') ? notes[i].replace('\n➜', '\n' + ML + '\n➜') : notes[i] + '\n' + ML);
     const s = base(deck, key, { notes: nt, transition: i ? 'morph' : 'fade', noGlide: true, dur });
     const col = s.sec.col;
-    s.text(kicker.toUpperCase(), { x: 0.7, y: 0.55, w: 5.2, h: 0.35, size: 13, bold: true, color: col, cs: 3, name: '!!k' });
+    s.text(versal(kicker), { x: 0.7, y: 0.55, w: 5.2, h: 0.35, size: 13, bold: true, color: col, cs: 3, name: '!!k' });
     s.text(ttl, { x: 0.7, y: 0.88, w: 5.2, h: 0.6, size: 30, bold: true, color: C.txt, name: '!!t' });
     const hi = Math.min(i, list.length - 1);
     s.rect(0.62, listY + hi * 0.5 - 0.04, 4.6, 0.44, { fill: col, name: '!!hl', ft: 0 });
@@ -106,8 +109,8 @@ async function steps(deck, key, { kicker, ttl, list, caps, scene, notes, legend,
     }
     s.rrect(0.62, 5.15, 4.6, 1.65, { fill: C.card2, line: C.line, rr: 0.12, name: '!!capbox' });
     s.text(caps[i], { x: 0.82, y: 5.2, w: 4.25, h: 1.55, size: 15, color: C.txt, valign: 'middle', name: '!!cap' });
-    if (legend) s.text(legend, { x: 5.6, y: 6.7, w: 7, h: 0.3, size: 11, italic: true, color: C.dim, name: '!!leg' });
     await scene(s, i);
+    if (legend) s.text(legend, { x: 5.6, y: 6.7, w: 7, h: 0.3, size: 11, italic: true, color: C.dim, name: '!!leg' });   // nach der Szene: liegt obenauf
     out.push(s);
   }
   return out;
@@ -127,7 +130,7 @@ async function motion(deck, key, { kicker, ttl, frames, scene, question, answer,
     const prevHold = k > 0 && (frames[k - 1].hold);
     const s = base(deck, key, { notes: nt, transition: k ? 'morph' : 'fade', noGlide: true, dur: k ? (prevHold ? holdDur : dur) : undefined, adv: auto ? 0 : undefined });
     const col = s.sec.col;
-    s.text(kicker.toUpperCase(), { x: 0.7, y: 0.55, w: 5.2, h: 0.35, size: 13, bold: true, color: col, cs: 3, name: '!!k' });
+    s.text(versal(kicker), { x: 0.7, y: 0.55, w: 5.2, h: 0.35, size: 13, bold: true, color: col, cs: 3, name: '!!k' });
     s.text(ttl, { x: 0.7, y: 0.88, w: 5.0, h: 0.6, size: 30, bold: true, color: C.txt, name: '!!t' });
     if (question) {
       s.rrect(0.62, 1.75, 4.6, 1.5, { fill: '1F1A33', line: C.pu, lw: 1.5, rr: 0.12, name: '!!qbox' });
@@ -137,8 +140,8 @@ async function motion(deck, key, { kicker, ttl, frames, scene, question, answer,
     }
     s.rrect(0.62, 5.15, 4.6, 1.65, { fill: C.card2, line: C.line, rr: 0.12, name: '!!capbox' });
     s.text(cap, { x: 0.82, y: 5.2, w: 4.25, h: 1.55, size: 15, color: C.txt, valign: 'middle', name: '!!cap' });
-    if (legend) s.text(legend, { x: 5.6, y: 6.7, w: 7, h: 0.3, size: 11, italic: true, color: C.dim, name: '!!leg' });
     await scene(s, f.t, k);
+    if (legend) s.text(legend, { x: 5.6, y: 6.7, w: 7, h: 0.3, size: 11, italic: true, color: C.dim, name: '!!leg' });   // nach der Szene: liegt obenauf
   }
 }
 // Straßen-Bausteine (Draufsicht). Alle Teile bekommen feste Namen, damit Morph sie wiedererkennt.
@@ -177,15 +180,15 @@ async function point(s, x, y, w, h, ico, col, head, body, anim = CLICK, o = {}) 
 function foot(s, t) { s.text(t, { x: 0.7, y: 6.6, w: 11.9, h: 0.32, size: 12, italic: true, color: '8F9BAE' }); }
 
 // Kapitel-Trennfolie: große Nummer, Titel, Unterzeile, Foto rechts mit Verlauf
-async function chapter(deck, key, { num, ttl, sub, bg, notes, ico = 'LuTruck', bgX = 0 }) {
+async function chapter(deck, key, { num, ttl, sub, bg, notes, ico = 'LuTruck', bgX = 0, subW, ttlW }) {
   const s = base(deck, key, { notes, bg, bgX, ov: bg && !bgX ? 9.5 : false, transition: 'black', footer: true });
   const col = s.sec.col;
   if (bg && !bgX) s.img('ov_left.png', { x: 0, y: 0, w: 8.0, h: H, name: '!!ov2' });
   if (!bg) { s.oval(8.3, 1.4, 4.4, 4.4, { fill: col, ft: 90, line: col, lt: 60, lw: 2 }, { fx: 'zoom', auto: true, dur: 900 }); s.img(await icon(ico, col), { x: 9.4, y: 2.5, w: 2.2, h: 2.2 }, { fx: 'fade', auto: true, dur: 900, d: 200 }); }
   s.text(String(num).padStart(2, '0'), { x: 0.6, y: 1.2, w: 5, h: 2.6, size: 150, bold: true, color: col, name: 'chN' }, { fx: 'rise', auto: true, dur: 900 });
   s.rect(0.75, 3.55, 1.4, 0.07, { fill: col }, { fx: 'wipeR', auto: true, dur: 600, d: 300 });
-  s.text(ttl, { x: 0.7, y: 3.8, w: bgX ? bgX - 0.9 : 6.3, h: 1.6, size: 44, bold: true, color: C.txt, lsm: 0.92 }, { fx: 'float', auto: true, dur: 700, d: 350 });
-  if (sub) s.text(sub, { x: 0.7, y: 5.45, w: bgX ? Math.min(5.6, bgX - 1.0) : 5.6, h: 0.9, size: 19, color: C.mut }, { fx: 'fade', auto: true, dur: 700, d: 650 });
+  s.text(ttl, { x: 0.7, y: 3.8, w: ttlW || (bgX ? bgX - 0.9 : 6.3), h: 1.6, size: 44, bold: true, color: C.txt, lsm: 0.92 }, { fx: 'float', auto: true, dur: 700, d: 350 });
+  if (sub) s.text(sub, { x: 0.7, y: 5.45, w: subW || (bgX ? Math.min(5.6, bgX - 1.0) : 5.6), h: 0.9, size: 19, color: C.mut }, { fx: 'fade', auto: true, dur: 700, d: 650 });
   return s;
 }
 // Zum Mitschreiben: Zeilen mit Stichwort, Lösung erscheint je Klick (Frage → Lösung)
@@ -202,8 +205,8 @@ function write(deck, key, { kicker = 'Zum Mitschreiben', ttl, rows, notes, size 
   });
   return s;
 }
-// Das nimmst du mit: Punkte je Klick
-async function takeaway(deck, key, { ttl = 'Das nimmst du mit', items, notes }) {
+// Das nehmt ihr mit: Punkte je Klick
+async function takeaway(deck, key, { ttl = 'Das nehmt ihr mit', items, notes }) {
   const s = base(deck, key, { notes });
   kick(s, 'Zusammenfassung'); title(s, ttl, { size: 40 });
   const n = items.length, top = 2.0, gap = 0.14, h = Math.min(0.95, (6.6 - top - gap * (n - 1)) / n);
@@ -218,7 +221,12 @@ async function photoAsk(deck, key, o) {
   kick(s, kicker);
   title(s, q, { w, h: 2.0, size: qsize });
   const n = answers.length, top = 3.25, gap = 0.16, h = Math.min(1.15, (6.6 - top - gap * (n - 1)) / n);
-  for (let i = 0; i < n; i++) await point(s, 0.7, top + i * (h + gap), w, h, answers[i][0], answers[i][3] || s.sec.col, answers[i][1], answers[i][2], CLICK, { br: true, size: o.asize || 16 });
+  for (let i = 0; i < n; i++) {
+    const mk = o.marks && o.marks[i];
+    await point(s, 0.7, top + i * (h + gap), w, h, answers[i][0], answers[i][3] || s.sec.col, (mk ? (i + 1) + '  ' : '') + answers[i][1], answers[i][2], CLICK, { br: true, size: o.asize || 16 });
+    // Nummer am Foto (zeigt, wo das Teil sitzt)
+    if (mk) s.text(String(i + 1), { x: mk[0] - 0.23, y: mk[1] - 0.23, w: 0.46, h: 0.46, size: 18, bold: true, color: C.dark, fill: answers[i][3] || s.sec.col, line: C.white, lw: 2, shape: deck.pres.shapes.OVAL, align: 'center', valign: 'middle' }, { fx: 'zoom', dur: 250 });
+  }
   return s;
 }
 module.exports = { motion, C, SEC, sec, P, base, kick, title, card, badge, quiz, ask, steps, roadH, roadV, veh, foot, point, chapter, write, takeaway, photoAsk, sign, signImg, CLICK };

@@ -123,8 +123,8 @@ module.exports = async (deck) => {
         cap: 'Etwa 30 cm vorziehen, dann 5–10 cm absenken. Jetzt trägt der Auflieger sich selbst.',
         note: '▶ „Mit Luftfederung: erst etwa 30 Zentimeter vorziehen, dann die Zugmaschine 5 bis 10 Zentimeter absenken. Jetzt liegt das Gewicht auf den Stützen.“\n❓ Frage auf der Folie auflösen.\n✅ DGUV I 214-080, Kap. 2.3 (Absatteln, Schritt 10): ca. 30 cm vorziehen, 5–10 cm absenken, dann ganz ausfahren – sonst kann das Heck hochschlagen. Mit Blattfederung: langsam vorziehen.\n🖱 Klick: Die Zugmaschine fährt weg.\n➜ „Und raus.“' }),
       fa({ dx: -1.1, lift: -0.08, legs: 1, secured: 1, lupe: 'Auflieger steht sicher', lupeCol: C.gr }, { hold: true,
-        cap: 'Langsam herausfahren. Der Auflieger steht gesichert auf seinen Stützen. Bei Bedarf: Parkwarntafel.',
-        note: '▶ „Jetzt langsam heraus. Der Auflieger steht auf den Stützen, Feststellbremse und Keile halten ihn.“\n✅ DGUV I 214-080, Kap. 2.3 (Absatteln, Schritt 11): ggf. Parkwarntafel; Liftachse absenken, wenn beladen wird.\n🖱 Nächster Klick: nächste Folie.\n➜ „Eine Prüfungsfrage dazu.“' }),
+        cap: 'Langsam herausfahren. Der Auflieger steht gesichert auf seinen Stützen. Bei Bedarf: Park-Warntafel.',
+        note: '▶ „Jetzt langsam heraus. Der Auflieger steht auf den Stützen, Feststellbremse und Keile halten ihn.“\n✅ DGUV I 214-080, Kap. 2.3 (Absatteln, Schritt 11): ggf. Park-Warntafel; Liftachse absenken, wenn beladen wird.\n🖱 Nächster Klick: nächste Folie.\n➜ „Eine Prüfungsfrage dazu.“' }),
     ],
     scene: async (s, t) => szene(s, t),
   });

@@ -157,7 +157,7 @@ module.exports = async (deck) => {
     kicker: 'Prüfungsfrage 2.7.02-203', q: 'Die Druckwarneinrichtung der Bremsanlage spricht während der Fahrt an. Was bedeutet dies?', size: 30,
     opts: ['Der Vorratsdruck ist nicht mehr ausreichend', 'Die Bremsanlage ist wahrscheinlich defekt', 'Ein Bremszylinder ist undicht'], ok: [0, 1],
     why: 'Der Druck reicht nicht – die Ursache ist noch unklar. Sicher anhalten, nicht weiterfahren.',
-    notes: '▶ Frage vorlesen, abstimmen.\n🖱 Klick 1: Antworten · Klick 2: Lösung.\n✅ Amtlicher Fragenkatalog 2.7.02-203: A und B.\n➜ „Das nimmst du aus C9 mit.“',
+    notes: '▶ Frage vorlesen, abstimmen.\n🖱 Klick 1: Antworten · Klick 2: Lösung.\n✅ Amtlicher Fragenkatalog 2.7.02-203: A und B.\n➜ „Das nehmt ihr aus C9 mit.“',
   });
   await takeaway(deck, 'c9e', {
     items: [
@@ -178,6 +178,6 @@ module.exports = async (deck) => {
     s.text('PAUSE', { x: 0.7, y: 2.0, w: 6, h: 0.5, size: 18, bold: true, color: C.gr, cs: 6 }, { fx: 'fade', auto: true, dur: 600 });
     s.text('15 Minuten', { x: 0.7, y: 2.5, w: 6.5, h: 1.4, size: 72, bold: true, color: C.txt }, { fx: 'rise', auto: true, dur: 900, d: 200 });
     s.text('Kurz raus, frische Luft.', { x: 0.7, y: 4.0, w: 6.2, h: 0.9, size: 22, color: C.mut }, { fx: 'fade', auto: true, dur: 700, d: 600 });
-    s.text('Danach: Lektion C10 · Wirtschaftlich fahren, Streckenplanung', { x: 0.7, y: 5.4, w: 6.2, h: 0.9, size: 16, color: C.gr }, { fx: 'fade', auto: true, dur: 700, d: 900 });
+    s.text('Danach: Lektion C10 · Wirtschaftlich fahren, Streckenplanung', { x: 0.7, y: 4.85, w: 6.4, h: 0.8, size: 18, color: C.txt }, { fx: 'fade', auto: true, dur: 700, d: 900 });
   }
 };

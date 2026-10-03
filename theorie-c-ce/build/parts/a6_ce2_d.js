@@ -119,7 +119,7 @@ module.exports = async (deck) => {
     kicker: 'Prüfungsfrage 2.2.23-302', q: 'Die Plane Ihres Anhängers ist vereist. Was kann passieren, wenn Sie mit dem Anhänger eine Fahrt beginnen? Durch herabfallende Eisplatten können …', size: 26, osize: 17,
     opts: ['… beim Bremsen Luft- und Elektroleitungen am Fahrzeug stark beschädigt werden', '… Personen lebensgefährlich verletzt werden', '… andere Fahrzeuge erheblich beschädigt werden'], ok: [0, 1, 2],
     why: 'Alle drei. Eis vor der Fahrt entfernen – oder nicht losfahren.',
-    notes: '▶ Frage vorlesen, abstimmen.\n🖱 Klick 1: Antworten · Klick 2: Lösung.\n✅ Amtlicher Fragenkatalog 2.2.23-302: A, B und C.\n➜ „Das nimmst du aus CE2 mit.“',
+    notes: '▶ Frage vorlesen, abstimmen.\n🖱 Klick 1: Antworten · Klick 2: Lösung.\n✅ Amtlicher Fragenkatalog 2.2.23-302: A, B und C.\n➜ „Das nehmt ihr aus CE2 mit.“',
   });
   await takeaway(deck, 'ce2e', {
     items: [

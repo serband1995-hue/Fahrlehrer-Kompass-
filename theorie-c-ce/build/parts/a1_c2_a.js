@@ -17,9 +17,9 @@ module.exports = async (deck) => {
       '➜ „Hier der Plan für die nächsten 90 Minuten.“' });
     s.img('ov_left.png', { x: 0, y: 0, w: 8.0, h: 7.5, name: '!!ov2' });
     s.text('KLASSE C  ·  LEKTION C2', { x: 0.7, y: 2.2, w: 8, h: 0.4, size: 15, bold: true, color: C.bl, cs: 4 }, { fx: 'fade', auto: true, dur: 700 });
-    s.text('Besondere Vorschriften aus der StVO', { x: 0.7, y: 2.7, w: 7.0, h: 1.9, size: 42, bold: true, color: C.txt, lsm: 0.9 }, { fx: 'rise', auto: true, dur: 1000, d: 250 });
+    s.text('Besondere Vorschriften aus der StVO / Transportvorschriften', { x: 0.7, y: 2.55, w: 7.0, h: 2.1, size: 40, bold: true, color: C.txt, lsm: 0.9 }, { fx: 'rise', auto: true, dur: 1000, d: 250 });
     s.rect(0.75, 4.75, 1.6, 0.07, { fill: C.bl }, { fx: 'wipeR', auto: true, dur: 700, d: 800 });
-    s.text('und Transportvorschriften', { x: 0.7, y: 4.95, w: 6.0, h: 0.6, size: 24, color: C.mut }, { fx: 'fade', auto: true, dur: 800, d: 1000 });
+    s.text('Tempo, Abstand, Überholen, Bahnübergang, Parken, Fahrverbote, Papiere', { x: 0.7, y: 4.95, w: 6.4, h: 0.8, size: 20, color: C.mut }, { fx: 'fade', auto: true, dur: 800, d: 1000 });
   }
   // ===== LERNZIELE C2 =====
   {
@@ -37,7 +37,7 @@ module.exports = async (deck) => {
       s.text(T[i][1], { x: x + 1.15, y, w: 3.4, h: 1.15, size: 18, bold: true, color: C.txt, valign: 'middle' }, { fx: 'fade', dur: 200 });
       s.text(T[i][2], { x: x + 4.45, y, w: 1.2, h: 1.15, size: 16, bold: true, color: T[i][3], align: 'right', valign: 'middle' }, { fx: 'fade', dur: 200 });
     }
-    s.text('+ 5 Min Abschluss: Quiz und „Das nimmst du mit“', { x: 0.7, y: 6.15, w: 11.93, h: 0.35, size: 14, italic: true, color: C.dim });
+    s.text('+ 5 Min Abschluss: Quiz und „Das nehmt ihr mit“', { x: 0.7, y: 6.15, w: 11.93, h: 0.35, size: 14, italic: true, color: C.dim });
   }
   await chapter(deck, 'tmp', { num: 1, ttl: 'Geschwindigkeit und Abstand', sub: 'Mehr Masse heißt: langsamer fahren, mehr Platz lassen.', ico: 'LuGauge', notes:
     '▶ Sagen: „Kapitel 1: Tempo und Abstand.“\n🖱 Keine Klicks.\n➜ „Wer weiß, wie schnell ein Lkw außerorts fahren darf?“' });
@@ -51,7 +51,7 @@ module.exports = async (deck) => {
       '✅ Innerorts 50 km/h für alle (§ 3 Abs. 3 Nr. 1).\n' +
       '✅ Geschwindigkeitsbegrenzer: Lkw über 3,5 t auf 90 km/h begrenzt (§ 57c StVZO). Er schützt euch nicht davor, 80 zu überschreiten!\n' +
       '💡 Häufiger Irrtum: „Lkw außerorts immer 60.“ Bis 7,5 t ohne Anhänger sind es 80.\n' +
-      '💡 Mit Schneeketten höchstens 50; Sichtweite unter 50 m höchstens 50 (§ 3 Abs. 1).\n' +
+      '💡 Mit Schneeketten höchstens 50 (§ 3 Abs. 4); Sichtweite unter 50 m höchstens 50 (§ 3 Abs. 1).\n' +
       '➜ „Warum sind die Grenzen für Lkw so niedrig?“' });
     kick(s, 'Höchstgeschwindigkeit · § 3 und § 18 StVO'); title(s, 'Wie schnell darf ein Lkw?');
     const cx = [5.3, 7.75, 10.2], hy = 2.05;
@@ -69,8 +69,8 @@ module.exports = async (deck) => {
         s.text(R[i][2][j], { x: cx[j] + 0.68, y: y + 0.08, w: 0.84, h: 0.84, size: 26, bold: true, color: '111111', align: 'center', valign: 'middle' }, { fx: 'fade', dur: 200, d: j * 120 });
       }
     }
-    s.text([{ text: 'Geschwindigkeitsbegrenzer:  ', options: { bold: true, color: C.bl } }, { text: 'Lkw über 3,5 t sind bei 90 km/h abgeregelt (§ 57c StVZO). Erlaubt sind trotzdem nur 80!', options: { color: C.txt } }],
-      { x: 0.7, y: 5.95, w: 11.93, h: 0.7, size: 17, valign: 'middle', fill: C.card2, line: C.bl, shape: deck.pres.shapes.ROUNDED_RECTANGLE, rr: 0.1, margin: [8, 14, 8, 14] }, { fx: 'rise', c: true, dur: 400 });
+    s.text([{ text: 'Geschwindigkeitsbegrenzer:  ', options: { bold: true, color: C.bl } }, { text: 'Lkw über 3,5 t sind bei 90 km/h abgeregelt (§ 57c StVZO). Erlaubt sind trotzdem nur 80! Länger als 5 Minuten mit 90: 140 €, 1 Punkt.', options: { color: C.txt } }],
+      { x: 0.7, y: 5.9, w: 11.93, h: 0.88, size: 17, valign: 'middle', fill: C.card2, line: C.bl, shape: deck.pres.shapes.ROUNDED_RECTANGLE, rr: 0.1, margin: [8, 14, 8, 14] }, { fx: 'rise', c: true, dur: 400 });
   }
   // ===== WUCHT: BEWEGUNGSENERGIE =====
   {
@@ -123,10 +123,10 @@ module.exports = async (deck) => {
   {
     const s = base(deck, 'tmp', { notes:
       '▶ Sagen: „Auf der Autobahn gibt es für Lkw eine feste Regel: mindestens 50 Meter Abstand zum Vordermann.“\n' +
-      '❓ „Woran erkennt ihr 50 Meter?“ ✅ An den Leitpfosten: Sie stehen alle 50 m.\n' +
+      '❓ „Woran erkennt ihr 50 Meter?“ ✅ An den Leitpfosten: auf gerader Strecke alle 50 m.\n' +
       '🖱 Klick 1: „zu dicht!“ · Klick 2: der hintere Lkw fällt zurück auf 50 m · Klick 3: die Regel.\n' +
       '✅ § 4 Abs. 3 StVO: Lkw über 3,5 t zGM und Busse müssen auf Autobahnen bei mehr als 50 km/h mindestens 50 m Abstand halten. Verstoß: 80 €, 1 Punkt (BKat Nr. 15).\n' +
-      '✅ Außerorts allgemein (§ 4 Abs. 2): Lkw und Züge über 7 m lassen so viel Platz, dass ein Überholer davor einscheren kann.\n' +
+      '✅ Landstraße mit einem Fahrstreifen je Richtung (§ 4 Abs. 2): Lkw über 3,5 t und Züge über 7 m lassen so viel Platz, dass ein Überholer davor einscheren kann. Auf der Autobahn gilt stattdessen die 50-m-Regel.\n' +
       '💡 Bei 80 km/h sind 50 m nur gut 2 Sekunden. Bei Nässe oder schwerer Ladung lieber mehr.\n' +
       '➜ „Kurze Frage zum Tempo.“' });
     kick(s, 'Abstand · § 4 Abs. 3 StVO'); title(s, 'Autobahn: mindestens 50 m');
@@ -134,25 +134,25 @@ module.exports = async (deck) => {
     s.rect(0, ry, W, rh, { fill: C.road });
     s.rect(0, ry - 0.1, W, 0.1, { fill: C.curb }); s.rect(0, ry + rh, W, 0.1, { fill: C.curb });
     for (let x = 0.1; x < W; x += 0.75) s.rect(x, ry + rh / 2 - 0.02, 0.42, 0.045, { fill: C.mark });
-    // Leitpfosten alle 50 m (1 m = 0,06 Zoll → 50 m = 3,0 Zoll)
-    for (let k = 0, x = 0.9; x < W; x += 3.0, k++) {
+    // Leitpfosten alle 50 m (1 m = 0,09 Zoll → 50 m = 4,5 Zoll)
+    for (let k = 0, x = 0.8; x < W; x += 4.5, k++) {
       s.rect(x - 0.03, ry + rh + 0.2, 0.06, 0.32, { fill: 'E8ECF2' });
       s.rect(x - 0.03, ry + rh + 0.24, 0.06, 0.08, { fill: C.dark });
     }
     s.text('Leitpfosten: alle 50 m', { x: 0.7, y: ry + rh + 0.6, w: 4, h: 0.3, size: 13, italic: true, color: C.dim });
-    veh(s, 'truck.png', 10.4, ry + rh * 0.75, 90, undefined, { scale: 1.1 });
-    const back = veh(s, 'truck.png', 6.7, ry + rh * 0.75, 90, 'trB', { scale: 1.1 });
+    veh(s, 'truck.png', 10.6, ry + rh * 0.75, 90, undefined, { size: [0.44, 1.6] });   // maßstäblich: rund 18 m
+    const back = veh(s, 'truck.png', 8.1, ry + rh * 0.75, 90, 'trB', { size: [0.44, 1.6] });   // erst rund 10 m dahinter
     // Klick 1: zu dicht! · Klick 2: zurückfallen auf 50 m
-    const ring = s.text('zu dicht!', { x: 7.65, y: ry + rh + 0.55, w: 1.8, h: 0.4, size: 18, bold: true, color: C.red, align: 'center' }, { fx: 'stamp', c: true, dur: 380 });
-    s.anims.push({ name: back, kind: 'pic', fx: 'move', c: true, dur: 1600, path: mv(-2.44, 0) });
+    const ring = s.text('zu dicht!', { x: 8.45, y: ry + rh + 0.55, w: 1.8, h: 0.4, size: 18, bold: true, color: C.red, align: 'center' }, { fx: 'stamp', c: true, dur: 380 });
+    s.anims.push({ name: back, kind: 'pic', fx: 'move', c: true, dur: 1600, path: mv(-3.6, 0) });
     s.anims.push({ name: ring, kind: 'sp', fx: 'out', dur: 300 });
-    s.lineS(5.83, ry + 0.3, 8.83, ry + 0.3, { color: C.gr, lw: 2.5, beginArrow: 'triangle', endArrow: 'triangle' }, { fx: 'wipeR', dur: 500, a: true });
-    s.text('50 m', { x: 6.53, y: ry - 0.15, w: 1.6, h: 0.4, size: 18, bold: true, color: C.gr, align: 'center' }, { fx: 'fade', dur: 200 });
+    s.lineS(5.3, ry + 0.3, 9.8, ry + 0.3, { color: C.gr, lw: 2.5, beginArrow: 'triangle', endArrow: 'triangle' }, { fx: 'wipeR', dur: 500, a: true });
+    s.text('50 m', { x: 6.75, y: ry - 0.15, w: 1.6, h: 0.4, size: 18, bold: true, color: C.gr, align: 'center' }, { fx: 'fade', dur: 200 });
     s.text([{ text: 'Lkw über 3,5 t, Autobahn, schneller als 50 km/h:  ', options: { bold: true, color: C.bl } }, { text: 'mindestens 50 m Abstand · sonst 80 €, 1 Punkt', options: { color: C.txt } }],
       { x: 0.7, y: 5.75, w: 11.93, h: 0.75, size: 17, valign: 'middle', fill: C.card2, line: C.bl, shape: deck.pres.shapes.ROUNDED_RECTANGLE, rr: 0.1, margin: [8, 14, 8, 14] }, { fx: 'rise', c: true, dur: 400 });
   }
   quiz(deck, 'tmp', {
-    kicker: 'Frage · Geschwindigkeit', q: 'Lkw mit 7,49 t, ohne Anhänger, auf der Landstraße. Wie schnell darfst du höchstens fahren?', size: 28,
+    kicker: 'Frage · Geschwindigkeit', q: 'Lkw mit 7,49 t zulässiger Gesamtmasse, ohne Anhänger, auf der Landstraße. Wie schnell darfst du höchstens fahren?', size: 28,
     opts: ['60 km/h', '80 km/h', '100 km/h'], ok: 1,
     why: '§ 3 Abs. 3 StVO: Kfz über 3,5 t bis 7,5 t außerorts 80 km/h. Erst über 7,5 t oder mit Anhänger sind es 60 km/h.',
     notes: '▶ Frage vorlesen, abstimmen.\n🖱 Klick 1: Antworten · Klick 2: Lösung.\n✅ B, 80 km/h.\n💡 Fangfrage: Viele sagen 60. Das gilt erst über 7,5 t oder mit Anhänger.\n➜ „Kapitel 2: Überholen.“',
@@ -161,10 +161,10 @@ module.exports = async (deck) => {
   await chapter(deck, 'ueb', { num: 2, ttl: 'Überholen und Fahrstreifen', sub: 'Elefantenrennen, linke Spur und die Verbotsschilder für Lkw.', bg: 'f_elefant.jpg', notes:
     '▶ Sagen: „Kapitel 2: Überholen. Jeder kennt das von der Autobahn …“\n🖱 Keine Klicks.\n➜ „Schaut euch das Bild an.“' });
   await photoAsk(deck, 'ueb', {
-    bg: 'f_elefant.jpg', kicker: 'Was ist hier los?', q: 'Was machen die zwei Lkw falsch?', w: 5.6, ov: 7.4, qsize: 36,
+    bg: 'f_elefant.jpg', kicker: 'Was ist hier los?', q: 'Was machen die zwei Lkw falsch?', w: 4.7, ov: 7.0, qsize: 36, asize: 15,
     answers: [
       ['LuGauge', '„Elefantenrennen“', 'Überholen ist nur mit wesentlich höherer Geschwindigkeit erlaubt.'],
-      ['LuTimer', 'Viel zu lange nebeneinander', 'Die Autos dahinter stauen sich – auch bei Regen und Gischt.'],
+      ['LuTimer', 'Viel zu lange nebeneinander', 'Dahinter staut sich der Verkehr.'],
       ['LuEuro', '80 € und 1 Punkt', 'für den Überholenden (BKat Nr. 18).'],
     ],
     notes:
@@ -172,7 +172,7 @@ module.exports = async (deck) => {
       '❓ Sammeln lassen.\n' +
       '🖱 Klick 1: Elefantenrennen · Klick 2: zu lange nebeneinander · Klick 3: Bußgeld.\n' +
       '✅ § 5 Abs. 2 Satz 2 StVO: Überholen darf nur, wer mit wesentlich höherer Geschwindigkeit als der zu Überholende fährt. Verstoß: 80 €, 1 Punkt (BKat Nr. 18).\n' +
-      '💡 Gerichte haben Überholvorgänge von deutlich über 45 Sekunden als unzulässig angesehen – keine feste Gesetzeszahl, aber ein guter Anhaltspunkt. Ist der Unterschied nur 2–3 km/h, wird es nichts – dann lieber hinten bleiben.\n' +
+      '💡 Faustregel der Rechtsprechung (OLG Hamm, 4 Ss OWi 629/08): höchstens 45 Sekunden; unter 10 km/h Unterschied gilt es als deutliche Behinderung. Ist der Unterschied nur 2–3 km/h, wird es nichts – dann lieber hinten bleiben.\n' +
       '➜ „Rechnen wir mal: Wie lange dauert so ein Überholvorgang?“',
   });
   // ===== WIE LANGE DAUERT ÜBERHOLEN? (Diagramm) =====
@@ -182,7 +182,7 @@ module.exports = async (deck) => {
       '❓ „Ihr seid 2 km/h schneller als der Lkw vor euch. Wie lange dauert das Überholen?“ Schätzen lassen.\n' +
       '🖱 Klick 1: 2 km/h schneller · Klick 2: 10 km/h schneller · Klick 3: Merksatz.\n' +
       '✅ Annahme: Ihr müsst rund 80 m mehr zurücklegen als der andere (Abstand davor, zwei Lkw-Längen, Abstand danach). 2 km/h = 0,56 m/s → 80 m dauern rund 144 Sekunden, fast zweieinhalb Minuten. 10 km/h = 2,8 m/s → rund 29 Sekunden.\n' +
-      '💡 Gerichte haben Überholvorgänge von deutlich über 45 Sekunden als unzulässig angesehen – keine feste Gesetzeszahl, aber ein guter Anhaltspunkt.\n' +
+      '💡 Faustregel der Rechtsprechung (OLG Hamm, 4 Ss OWi 629/08): höchstens 45 Sekunden; unter 10 km/h Unterschied gilt es als deutliche Behinderung.\n' +
       '➜ „Oft ist Überholen für Lkw aber ohnehin verboten. Welche Schilder kennt ihr?“' });
     kick(s, 'Rechenbeispiel'); title(s, 'Wie lange dauert das Überholen?', { size: 36 });
     const x0 = 3.9, k = 0.058; // 1 s = k Zoll
@@ -191,10 +191,10 @@ module.exports = async (deck) => {
     s.text('≈ 144 Sekunden', { x: x0 + 144 * k - 2.6, y: 2.45, w: 2.5, h: 0.6, size: 18, bold: true, color: C.white, align: 'right', valign: 'middle' }, { fx: 'fade', dur: 200, d: 800 });
     s.text('10 km/h schneller', { x: 0.7, y: 3.45, w: 3.1, h: 0.8, size: 19, bold: true, color: C.txt, valign: 'middle' }, { fx: 'fade', c: true, dur: 200 });
     s.rect(x0, 3.55, 29 * k, 0.6, { fill: C.gr }, { fx: 'wipeR', dur: 600 });
-    s.text('≈ 29 Sekunden', { x: x0 + 45 * k + 0.15, y: 3.55, w: 2.5, h: 0.6, size: 18, bold: true, color: C.gr, valign: 'middle' }, { fx: 'fade', dur: 200, d: 400 });
+    s.text('≈ 29 Sekunden', { x: x0 + 29 * k + 0.15, y: 3.55, w: 2.5, h: 0.6, size: 18, bold: true, color: C.gr, valign: 'middle' }, { fx: 'fade', dur: 200, d: 400 });
     s.lineS(x0 + 45 * k, 2.2, x0 + 45 * k, 4.4, { color: C.or, lw: 2, dash: 'dash' });
-    s.text('45 s', { x: x0 + 45 * k - 0.4, y: 4.42, w: 0.8, h: 0.3, size: 13, bold: true, color: C.or, align: 'center' });
-    s.text([{ text: 'Merke:  ', options: { bold: true, color: C.or } }, { text: 'Nur überholen, wenn ihr deutlich schneller seid – sonst hinten bleiben. Der Stau hinter euch ist eure Schuld.', options: { color: C.txt } }],
+    s.text('45 s – Richtwert der Gerichte', { x: x0 + 45 * k - 0.4, y: 4.42, w: 3.4, h: 0.3, size: 13, bold: true, color: C.or });
+    s.text([{ text: 'Merke:  ', options: { bold: true, color: C.or } }, { text: 'Nur überholen, wenn ihr deutlich schneller seid – sonst hinten bleiben. Sonst staut sich der Verkehr hinter euch.', options: { color: C.txt } }],
       { x: 0.7, y: 5.1, w: 11.93, h: 0.97, size: 18, valign: 'middle', fill: C.card2, line: C.or, shape: deck.pres.shapes.ROUNDED_RECTANGLE, rr: 0.1, margin: [8, 14, 8, 14] }, { fx: 'rise', c: true, dur: 400 });
     foot(s, 'Annahme: rund 80 m Weg mehr als der Überholte (Abstände + zwei Lkw-Längen)');
   }
@@ -206,12 +206,12 @@ module.exports = async (deck) => {
       '🖱 Klick 1–7: je ein Schild mit Bedeutung.\n' +
       '✅ Zeichen 277: Überholverbot für Kfz über 3,5 t zulässiger Gesamtmasse (einschließlich ihrer Anhänger) und für Zugmaschinen – ausgenommen Pkw und Busse. Nur mit Zusatzzeichen gilt es auch für Busse und Pkw mit Anhänger. Verstoß 70 €, 1 Punkt (BKat Nr. 153a).\n' +
       '✅ Zeichen 253: Verbot für Kfz über 3,5 t zulässiger Gesamtmasse (inkl. Anhänger). Verstoß 100 € (BKat 141.1), laut FeV Anlage 13 kein Punkt.\n' +
-      '✅ Zeichen 262: tatsächliche Masse über Angabe · 263: tatsächliche Achslast · 264: Breite · 265: Höhe · 266: Länge (jeweils einschließlich Ladung). Verstoß 40 € (BKat Nr. 142).\n' +
+      '✅ Zeichen 262: tatsächliche Masse über Angabe · 263: tatsächliche Achslast · 264: Breite · 265: Höhe · 266: Länge (jeweils einschließlich Ladung). Verstoß 40 € (BKat Nr. 142).\n✅ Zeichen 264: Breite einschließlich Außenspiegel (Anlage 2 lfd. Nr. 38) – mit Spiegeln ist euer Lkw deutlich breiter als 2,55 m!\n' +
       '💡 Wichtig: Bei 253 zählt die ZULÄSSIGE Gesamtmasse, bei 262 und 263 die TATSÄCHLICHE (was wirklich drauf ist).\n' +
       '💡 Höhe ist der Klassiker: Brücke 3,8 m, euer Koffer 4 m – das endet mit abgerissenem Dach.\n' +
       '➜ „Was ändert sich, wenn ein Zusatzzeichen darunter hängt?“' });
     kick(s, 'Verkehrszeichen für Lkw'); title(s, 'Was bedeuten diese Schilder?');
-    const S = [['277', 'Überholverbot für Kfz über 3,5 t (nicht Pkw, Busse)'], ['253', 'Verbot für Kfz über 3,5 t (zulässige Gesamtmasse)'], ['262__5_5__', 'tatsächliche Masse über 5,5 t verboten'], ['263__8__', 'Achslast über 8 t verboten'], ['264__2__', 'breiter als 2 m verboten'], ['265__3_8__', 'höher als 3,8 m verboten'], ['266__10__', 'länger als 10 m verboten']];
+    const S = [['277', 'Überholverbot für Kfz über 3,5 t (nicht Pkw, Busse)'], ['253', 'Verbot für Kfz über 3,5 t zGM und Zugmaschinen (nicht Pkw, Busse)'], ['262__5_5__', 'tatsächliche Masse über 5,5 t verboten'], ['263__8__', 'Achslast über 8 t verboten'], ['264__2__', 'breiter als 2 m verboten'], ['265__3_8__', 'höher als 3,8 m verboten'], ['266__10__', 'länger als 10 m verboten']];
     for (let i = 0; i < 7; i++) {
       const col = i < 4 ? 0 : 1, row = i < 4 ? i : i - 4;
       const x = col ? 6.85 : 0.7, y = (col ? 2.6 : 2.05) + row * 1.12;
@@ -265,8 +265,8 @@ module.exports = async (deck) => {
     veh(s, 'truck.png', x0 + 4.8, y0 + 1.5 * lw, 90, undefined, { scale: 0.9, anim: { fx: 'flyL', dur: 600 } });
     s.rect(x0, y0 + 0.05, w, lw - 0.1, { fill: C.red, ft: 65 }, { fx: 'fade', c: true, dur: 400 });
     s.text('✗  Lkw über 3,5 t und Kfz mit Anhänger: nicht links', { x: x0 + 0.2, y: y0 + 0.05, w: w - 0.4, h: lw - 0.1, size: 16, bold: true, color: C.txt, valign: 'middle' }, { fx: 'fade', dur: 200 });
-    await point(s, 8.7, 2.05, 3.93, 1.55, 'LuSnowflake', C.bl, 'Sicht bis 50 m, Glätte', 'über 7,5 t: äußerst linke Spur tabu (80 €, 1 Punkt)', CLICK, { br: true, size: 15 });
-    await point(s, 8.7, 3.75, 3.93, 1.55, 'LuEyeOff', C.or, 'Sicht unter 50 m', 'über 7,5 t: Überholverbot (120 €, 1 Punkt)', CLICK, { br: true, size: 15 });
+    await point(s, 8.7, 2.05, 3.93, 1.55, 'LuSnowflake', C.bl, 'Sicht ≤ 50 m durch Schnee/Regen, Glätte', 'über 7,5 t: äußerst linke Spur tabu (80 €, 1 Punkt)', CLICK, { br: true, size: 15 });
+    await point(s, 8.7, 3.75, 3.93, 1.55, 'LuEyeOff', C.or, 'Sicht unter 50 m (auch Nebel)', 'über 7,5 t: Überholverbot (120 €, 1 Punkt)', CLICK, { br: true, size: 15 });
     foot(s, '§ 7 Abs. 3c (15 €) · § 18 Abs. 11 (BKat 87a) · § 5 Abs. 3a (BKat 21)');
   }
   quiz(deck, 'ueb', {
