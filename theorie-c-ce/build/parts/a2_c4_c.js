@@ -69,7 +69,7 @@ module.exports = async (deck) => {
     answers: [
       ['LuX', 'Nein – nur berechtigte Fahrzeuge', 'z. B. Straßendienst, Müllabfuhr, Pannenhilfe, Begleitfahrzeuge – und nur zur Warnung vor Arbeits- oder Unfallstellen, ungewöhnlich langsamen oder übergroßen Fahrzeugen.', C.red],
       ['LuTriangleAlert', 'Bei einer Panne:', 'Warnblinklicht an, Warnweste anziehen, Warndreieck aufstellen.', C.am],
-      ['LuLightbulbOff', 'Arbeitsscheinwerfer nicht während der Fahrt', '(außer Straßendienst, Müllabfuhr) – und keine Deko-Leuchten: nur genehmigte Leuchten sind erlaubt.'],
+      ['LuLightbulbOff', 'Arbeitsscheinwerfer nicht während der Fahrt', '(außer Straßendienst, Müllabfuhr) – und nur genehmigte Leuchten, keine Dekoleuchten.'],
     ],
     notes:
       '▶ Sagen: „Manche Lkw haben ein gelbes Rundumlicht auf dem Dach.“\n' +
@@ -90,7 +90,7 @@ module.exports = async (deck) => {
       '➜ „Zum Schluss: die elektronischen Helfer.“' });
     kick(s, 'Kontrollleuchten'); title(s, 'Die Farbe sagt, was zu tun ist');
     const F = [
-      [C.red, 'FF5C5C', 'Rot', 'Gefahr!', 'An sicherer Stelle anhalten – Betriebsanleitung.', [['oel', 'Öldruck'], ['kuehl', 'Kühlmittel'], ['brems', 'Bremse / Druck'], ['batt', 'Ladekontrolle'], ['stop', 'STOP-Leuchte']]],
+      [C.red, 'FF5C5C', 'Rot', 'Gefahr!', 'An sicherer Stelle anhalten, Betriebsanleitung beachten.', [['oel', 'Öldruck'], ['kuehl', 'Kühlmittel'], ['brems', 'Bremse / Druck'], ['batt', 'Ladekontrolle'], ['stop', 'STOP-Leuchte']]],
       ['F2C230', 'F2C230', 'Gelb', 'Störung', 'Bald handeln: nachfüllen, regenerieren oder Werkstatt.', [['abs', 'ABS / EBS'], ['motor', 'Motor'], ['adblue', 'AdBlue'], ['dpf', 'Partikelfilter']]],
       [C.gr, '38D98A', 'Grün', 'Ist an', 'Alles in Ordnung.', [['blink', 'Blinker'], ['abblend', 'Abblendlicht']]],
       ['3B82F6', '3B82F6', 'Blau', 'Fernlicht', 'Gegenverkehr? Abblenden!', [['fern', 'Fernlicht']]],
@@ -147,7 +147,7 @@ module.exports = async (deck) => {
       '💡 Ausführlich mit Bremsen und Ladung in C9 (Abfahrtkontrolle).\n' +
       '➜ „Jetzt schreiben wir die wichtigsten Punkte auf.“' });
     kick(s, 'Abfahrtkontrolle'); title(s, 'Vor jeder Fahrt: einmal rundherum');
-    const GL = 4.38, XF = 3.55, K = 0.86;
+    const GL = 4.45, XF = 3.43, K = 0.9;
     const g = await lkw(s, { L: 7.2, axles: [0.82, 5.25, 5.85], floor: 0.78, boxH: 1.75 }, { x: XF, gy: GL, k: K });
     const M = [[0.55, 1.1, C.red], [5.55, 0.3, C.or], [7.15, 0.6, C.am], [4.0, 1.7, C.pu]];
     const P = [['LuDroplet', 'Motorraum', 'Öl, Waschwasser\nKühlmittel (nur kalt!)\nKeilrippenriemen'], ['LuCircleDot', 'Räder', 'Profil, Schäden, Luftdruck\nSteine zwischen Zwillingen\nRadmuttern, Kotflügel'], ['LuLightbulb', 'Licht', 'alle Leuchten an und sauber\nKontur, Rückstrahler'], ['LuPackage', 'Aufbau', 'Türen, Plane, Bordwände zu\nLadebordwand verriegelt']];
@@ -155,11 +155,11 @@ module.exports = async (deck) => {
       const [px, py] = g.pt(M[k][0], M[k][1]);
       s.text(String(k + 1), { x: px - 0.22, y: py - 0.22, w: 0.44, h: 0.44, size: 16, bold: true, color: C.dark, fill: M[k][2], shape: deck.pres.shapes.OVAL, align: 'center', valign: 'middle', glow: 8, glowColor: M[k][2] }, { fx: 'zoom', c: true, dur: 300 });
       const x = 0.7 + k * 3.03;
-      card(s, x, 4.6, 2.85, 1.9, { line: M[k][2] }, { fx: 'rise', dur: 400 });
-      s.text(String(k + 1), { x: x + 0.2, y: 4.72, w: 0.42, h: 0.42, size: 15, bold: true, color: C.dark, fill: M[k][2], shape: deck.pres.shapes.OVAL, align: 'center', valign: 'middle' }, { fx: 'fade', dur: 200 });
-      s.img(await icon(P[k][0], M[k][2]), { x: x + 2.25, y: 4.74, w: 0.4, h: 0.4 }, { fx: 'fade', dur: 200 });
-      s.text(P[k][1], { x: x + 0.75, y: 4.72, w: 1.5, h: 0.42, size: 18, bold: true, color: C.txt, valign: 'middle' }, { fx: 'fade', dur: 200 });
-      s.text(P[k][2], { x: x + 0.2, y: 5.25, w: 2.55, h: 1.15, size: 15, color: C.mut }, { fx: 'fade', dur: 200 });
+      card(s, x, 4.7, 2.85, 1.75, { line: M[k][2] }, { fx: 'rise', dur: 400 });
+      s.text(String(k + 1), { x: x + 0.2, y: 4.82, w: 0.42, h: 0.42, size: 15, bold: true, color: C.dark, fill: M[k][2], shape: deck.pres.shapes.OVAL, align: 'center', valign: 'middle' }, { fx: 'fade', dur: 200 });
+      s.img(await icon(P[k][0], M[k][2]), { x: x + 2.25, y: 4.84, w: 0.4, h: 0.4 }, { fx: 'fade', dur: 200 });
+      s.text(P[k][1], { x: x + 0.75, y: 4.82, w: 1.5, h: 0.42, size: 18, bold: true, color: C.txt, valign: 'middle' }, { fx: 'fade', dur: 200 });
+      s.text(P[k][2], { x: x + 0.17, y: 5.33, w: 2.6, h: 0.95, size: 16, color: C.mut }, { fx: 'fade', dur: 200 });
     }
   }
 

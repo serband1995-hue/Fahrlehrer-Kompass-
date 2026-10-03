@@ -102,7 +102,7 @@ module.exports = async (deck) => {
     ask: { q: 'Warum verschleißt diese Kupplung beim Anfahren nicht?', a: 'Die Kraft geht über Öl im Wandler – ohne Reibung.', at: 1 },
     list: ['Anfahren: Wandler', 'Fahren: Kupplung zu', 'Wo man sie findet'],
     caps: [
-      'Beim Anfahren überträgt Öl im Wandler die Kraft – ohne Reibung, ohne Verschleiß, sehr feinfühlig.',
+      'Beim Anfahren überträgt Öl im Wandler die Kraft: ohne Reibung, ohne Verschleiß, sehr feinfühlig.',
       'Danach schließt eine Kupplung und überbrückt den Wandler – die Kraft geht direkt ins Getriebe.',
       'Bei schweren Fahrzeugen, die oft langsam anfahren und rangieren: Schwertransport, Baustelle, Feuerwehr.',
     ],

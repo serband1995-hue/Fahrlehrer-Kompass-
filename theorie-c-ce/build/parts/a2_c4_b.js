@@ -126,7 +126,7 @@ module.exports = async (deck) => {
   const PX = 6.1, SX = 10.4, TY = 2.9;   // Pannen-Lkw links, Spender rechts
   await steps(deck, 'c4e', {
     kicker: 'Starthilfe', ttl: 'Die richtige Reihenfolge',
-    ask: { q: 'Wohin kommt das letzte Ende des schwarzen Kabels?', a: 'An den Massepunkt (Betriebsanleitung) oder den Motorblock – nicht an die Batterie.', at: 4 },
+    ask: { q: 'Wohin kommt das letzte Ende des schwarzen Kabels?', a: 'Massepunkt oder Motorblock – nicht an die Batterie.', at: 4 },
     nums: ['!', '1', '2', '3', '4'],
     list: ['Nur 24 V an 24 V', 'Rot an Plus – Pannen-Lkw', 'Rot an Plus – Spender', 'Schwarz an Minus – Spender', 'Schwarz an Masse – Pannen-Lkw'],
     caps: [
