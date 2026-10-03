@@ -96,8 +96,9 @@ module.exports = async (deck) => {
       s.text(i === 2 ? '↓ Fahrniveau' : (i === 1 ? '↑ angehoben' : ''), { x: 11.45, y: 3.4, w: 1.75, h: 0.4, size: 17, bold: true, color: i === 2 ? C.gr : C.bl, name: '!!tniv' });
       s.text('Luftbalg', { x: 10.1, y: GY + 0.12, w: 1.7, h: 0.35, size: 13, color: C.bl, align: 'center', name: '!!tbalg' });
       if (i === 1) {
-        s.img(await icon('LuTriangleAlert', C.red), { x: 0.7, y: 3.95, w: 0.45, h: 0.45, name: '!!warn' });
-        s.text('Nur im Stand – Quetschgefahr!', { x: 1.25, y: 3.95, w: 3.9, h: 0.45, size: 15, bold: true, color: C.red, valign: 'middle', name: '!!twarn' });
+        // Warnung über der Szene (links steht die Frage an die Klasse)
+        s.img(await icon('LuTriangleAlert', C.red), { x: 5.85, y: 1.7, w: 0.45, h: 0.45, name: '!!warn' });
+        s.text('Nur im Stand – Quetschgefahr!', { x: 6.4, y: 1.7, w: 5.2, h: 0.45, size: 18, bold: true, color: C.red, valign: 'middle', name: '!!twarn' });
       }
     },
   });

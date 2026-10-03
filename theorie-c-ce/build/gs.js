@@ -179,7 +179,7 @@ async function chapter(deck, key, { num, ttl, sub, bg, notes, ico = 'LuTruck', b
   const col = s.sec.col;
   if (bg && !bgX) s.img('ov_left.png', { x: 0, y: 0, w: 8.0, h: H, name: '!!ov2' });
   if (!bg) { s.oval(8.3, 1.4, 4.4, 4.4, { fill: col, ft: 90, line: col, lt: 60, lw: 2 }, { fx: 'zoom', auto: true, dur: 900 }); s.img(await icon(ico, col), { x: 9.4, y: 2.5, w: 2.2, h: 2.2 }, { fx: 'fade', auto: true, dur: 900, d: 200 }); }
-  s.text(String(num).padStart(2, '0'), { x: 0.6, y: 1.2, w: 5, h: 2.2, size: 150, bold: true, color: col, name: 'chN' }, { fx: 'rise', auto: true, dur: 900 });
+  s.text(String(num).padStart(2, '0'), { x: 0.6, y: 1.2, w: 5, h: 2.6, size: 150, bold: true, color: col, name: 'chN' }, { fx: 'rise', auto: true, dur: 900 });
   s.rect(0.75, 3.55, 1.4, 0.07, { fill: col }, { fx: 'wipeR', auto: true, dur: 600, d: 300 });
   s.text(ttl, { x: 0.7, y: 3.8, w: bgX ? bgX - 0.9 : 6.3, h: 1.6, size: 44, bold: true, color: C.txt, lsm: 0.92 }, { fx: 'float', auto: true, dur: 700, d: 350 });
   if (sub) s.text(sub, { x: 0.7, y: 5.45, w: bgX ? Math.min(5.6, bgX - 1.0) : 5.6, h: 0.9, size: 19, color: C.mut }, { fx: 'fade', auto: true, dur: 700, d: 650 });
