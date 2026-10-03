@@ -97,7 +97,7 @@ module.exports = async (deck) => {
         // 50 km/h zeigt senkrecht nach oben → Drehwinkel (v – 50) · 2,4°
         s.img(needle, { x: CX - 1.8, y: CY - 1.8, w: 3.6, h: 3.6, rotate: (t.v - 50) * 2.4, name: '!!ndl' });
         s.text(String(t.v), { x: CX - 1.0, y: CY + 0.45, w: 2.0, h: 0.8, size: 44, bold: true, color: C.or, align: 'center', name: '!!val' });
-        s.text('km/h', { x: CX - 1.0, y: CY + 1.12, w: 2.0, h: 0.3, size: 13, color: C.mut, align: 'center', name: '!!unit' });
+        s.text('km/h', { x: CX - 1.0, y: CY + 1.2, w: 2.0, h: 0.3, size: 13, color: C.mut, align: 'center', name: '!!unit' });
         await sign(s, t.sg, 11.75, 2.35, 1.15, 1.15, undefined, { name: '!!sg' });
         s.text(t.road, { x: 11.2, y: 3.6, w: 1.85, h: 0.6, size: 16, bold: true, color: C.txt, align: 'center', name: '!!road' });
         s.text(t.note, { x: 5.75, y: 6.0, w: 7.3, h: 0.6, size: 15, color: 'C9A227', bold: true, align: 'center', valign: 'middle', name: '!!nt' });
