@@ -25,7 +25,7 @@ module.exports = async (deck) => {
         fr({ l: 0, a: 0, kop: 0, msg: 'Der Zug fährt. Noch bremst niemand.', mc: C.mut }, { hold: true,
           cap: 'Im Zug soll jedes Fahrzeug sein eigenes Gewicht bremsen. Die Balken zeigen: Wie stark bremst der Lkw, wie stark der Anhänger?',
           note: '▶ Sagen: „Oben seht ihr zwei Balken. 100 Prozent heißt: Das Fahrzeug bremst genau so stark, wie es zu seinem eigenen Gewicht passt. Zwischen den Fahrzeugen zeigt ein Pfeil, ob der Anhänger schiebt oder zieht.“\n❓ Frage auf der Folie stellen.\n✅ WABCO EBS3, Kap. 4; Mercedes-Benz Actros Betriebsanleitung (EBS): „… stets ihrem Gewicht entsprechend, an der Bremsarbeit des gesamten Lastzugs.“ Darstellung: eigene, schematisch.\n🖱 Klick: Der Fahrer bremst (läuft von selbst weiter).\n➜ „Jetzt wird gebremst.“' }),
-        fr({ l: 50, a: 50, kop: 0, msg: 'Der Fahrer bremst …', mc: C.mut }),
+        fr({ l: 50, a: 50, kop: 0, neu: 1, msg: 'Der Fahrer bremst …', mc: C.mut }),
         fr({ l: 100, a: 100, kop: 0.2, msg: 'Jeder bremst sein eigenes Gewicht: An der Kupplung drückt fast nichts. Der Zug bleibt gerade.', mc: C.gr }, { hold: true,
           cap: 'Richtig abgestimmt: Lkw und Anhänger bremsen beide ihr eigenes Gewicht. Die Kraft an der Kupplung bleibt klein.',
           note: '▶ „So soll es sein: Beide bremsen 100 Prozent ihres eigenen Gewichts. An der Kupplung drückt und zieht fast nichts – die Fachleute sagen: Die Koppelkraft ist klein. Der Zug bleibt gerade.“\n✅ WABCO EBS3, Kap. 4 (Koppelkraft gering halten).\n🖱 Klick: Was, wenn der Lkw stärker bremst?\n➜ „Jetzt bremst der Lkw zu stark.“' }),
@@ -37,7 +37,7 @@ module.exports = async (deck) => {
           note: '▶ „Umgekehrt: Der Anhänger bremst viel stärker. Dann zieht er hinten – das ist zwar stabil, aber seine Bremsen machen fast alles. Sie werden heiß und verschleißen schneller.“\n✅ Lehrbuchwissen. DVR-Beschluss 17.10.2024: Lkw und Anhänger sollen jeweils ihre eigene Masse abbremsen.\n🖱 Klick: Die richtige Einstellung.\n➜ „Wie macht man es richtig?“' }),
         fr({ l: 100, a: 110, kop: 0.45, msg: 'Voreilung: Der Anhänger bremst einen Tick früher. Er zieht ganz leicht – der Zug bleibt gestreckt.', mc: C.gr }, { hold: true,
           cap: 'Voreilung: Bei leichtem Bremsen bekommt der Anhänger etwas mehr Druck. Er zieht den Zug gerade. Einstellen darf das nur die Werkstatt.',
-          note: '▶ „Deshalb gibt es die Voreilung: Bei leichtem Bremsen bekommt der Anhänger etwas mehr Druck als der Lkw. Er bremst einen Tick früher und zieht den Zug gerade. Das stellt die Werkstatt ein – beim EBS steht es im Steuergerät. Ihr als Fahrer verstellt daran nichts.“\n✅ Voreilung: Lehrbuchwissen (Patent DE4234098A1 „Anhänger-Steuerventil“; WABCO EBS3: bei EBS nicht von Hand einstellbar, im Steuergerät parametriert). Prüfungsfrage 2.7.07-328: „Bei abgeschalteter Voreilung … scharf bremsen“ ist eine falsche Antwort. Keine Zahlenwerte – je nach Fahrzeug verschieden.\n💡 DVR 2024: Starke Dauerbremsen nehmen dem Anhänger viel Arbeit ab – seine Beläge können „einschlafen“. Hersteller empfehlen, die Anhängerbremse ab und zu bewusst zu nutzen.\n🖱 Nächster Klick: nächste Folie.\n➜ „Eine Prüfungsfrage.“' }),
+          note: '▶ „Deshalb gibt es die Voreilung: Bei leichtem Bremsen bekommt der Anhänger etwas mehr Druck als der Lkw. Er bremst einen Tick früher und zieht den Zug gerade. Das stellt die Werkstatt ein – beim EBS steht es im Steuergerät. Ihr als Fahrer verstellt daran nichts.“\n✅ Voreilung: Lehrbuchwissen; WABCO EBS3 Systembeschreibung, S. 29: beim EBS nicht von Hand einstellbar, im Steuergerät parametriert. Prüfungsfrage 2.7.07-328: „Bei abgeschalteter Voreilung … scharf bremsen“ ist eine falsche Antwort. Keine Zahlenwerte – je nach Fahrzeug verschieden.\n💡 DVR 2024: Starke Dauerbremsen nehmen dem Anhänger viel Arbeit ab – seine Beläge können „einschlafen“. Hersteller empfehlen, die Anhängerbremse ab und zu bewusst zu nutzen.\n🖱 Nächster Klick: nächste Folie.\n➜ „Eine Prüfungsfrage.“' }),
       ],
       scene: async (s, t) => {
         s.rect(5.75, GY, 7.3, 0.03, { fill: '3C4656', name: '!!boden' });
@@ -49,17 +49,19 @@ module.exports = async (deck) => {
         LA.forEach((ax, k) => ring(xm(ax), t.l, '!!rl' + k));
         AA.forEach((ax, k) => ring(xm(AX + ax), t.a, '!!ra' + k));
         // Balken: wie stark bremst jedes Fahrzeug?
+        // Zwischenbild „Der Fahrer bremst …“: neutral blau statt rot (rot heißt: bremst zu wenig)
+        const pc = p => (t.neu ? C.bl : pctCol(p));
         const bar = (cx, p, lab, nm) => {
           const W = 2.6, x = cx - W / 2;
-          s.text([{ text: lab + '  ', options: { color: C.mut } }, { text: p ? p + ' %' : '–', options: { bold: true, color: pctCol(p) } }], { x, y: 1.5, w: W, h: 0.32, size: 14, align: 'center', name: '!!' + nm + 't' });
+          s.text([{ text: lab + '  ', options: { color: C.mut } }, { text: p ? p + ' %' : '–', options: { bold: true, color: pc(p) } }], { x, y: 1.5, w: W, h: 0.32, size: 14, align: 'center', name: '!!' + nm + 't' });
           s.rrect(x, 1.85, W, 0.3, { fill: '0B1119', line: '3C4656', rr: 0.3, name: '!!' + nm + 'b' });
-          s.rrect(x, 1.85, Math.max(0.05, W * Math.min(150, p) / 150), 0.3, { fill: pctCol(p), ft: p ? 0 : 100, rr: 0.3, name: '!!' + nm + 'f' });
+          s.rrect(x, 1.85, Math.max(0.05, W * Math.min(150, p) / 150), 0.3, { fill: pc(p), ft: p ? 0 : 100, rr: 0.3, name: '!!' + nm + 'f' });
           s.rect(x + W * 100 / 150 - 0.01, 1.78, 0.025, 0.44, { fill: C.txt, name: '!!' + nm + 'm' });
         };
         bar(xm(3.75), t.l, 'Lkw bremst', 'bl');
         bar(xm(AX + 3.25), t.a, 'Anhänger bremst', 'ba');
         // Koppelkraft
-        const cx = (xm(7.5) + xm(AX)) / 2, L = 0.75 * Math.abs(t.kop), col = t.kop < 0 ? C.red : C.or;
+        const cx = (xm(7.5) + xm(AX)) / 2, L = 0.75 * Math.abs(t.kop), col = t.kop < 0 ? C.red : t.kop >= 0.9 ? C.or : C.gr;   // „zieht leicht“: grün wie die Beschriftung
         const lf = t.kop < 0.3; // unsichtbar: schon so ausgerichtet wie im nächsten Bild (schiebt)
         arrow(s, lf ? cx + Math.max(L, 0.05) : cx - L, 2.75, lf ? cx - Math.max(L, 0.05) : cx + L, 2.75, { col, th: 0.09, head: 0.26, name: 'kop', hide: Math.abs(t.kop) < 0.3 });
         s.text(t.kop <= -0.3 ? 'Anhänger schiebt' : t.kop >= 0.9 ? 'Anhänger zieht' : t.kop >= 0.3 ? 'zieht leicht' : t.l ? 'Koppelkraft klein' : '', { x: cx - 1.3, y: 2.26, w: 2.6, h: 0.32, size: 14, bold: true, color: t.kop <= -0.3 ? C.red : t.kop >= 0.9 ? C.or : C.gr, align: 'center', name: '!!kopt' });
@@ -78,9 +80,9 @@ module.exports = async (deck) => {
   await chapter(deck, 'ce3l', { num: 2, ttl: 'Lastanpassung und EBS', sub: 'Ein leerer Anhänger braucht wenig Bremsdruck, ein voller viel. Woher weiß er, wie schwer er ist?', ico: 'LuGauge', notes:
     '▶ Sagen: „Ein Anhänger wiegt leer vielleicht 6 Tonnen, voll 24. Bremst er leer mit vollem Druck, blockieren die Räder. Also muss er wissen, wie schwer er gerade ist.“\n✅ Wiederholung aus C5 (ALB am Lkw). Beispielgewichte: grobe Werte.\n🖱 Keine Klicks.\n➜ „So misst der Anhänger seine Last.“' });
   {
-    const K = 0.72, GY = 4.25, TX = 6.2, AA = [1.2, 5.3], L = 6.5;
+    const K = 0.72, GY = 4.25, TX = 6.5, AA = [1.2, 5.3], L = 6.5;
     const ST = [
-      { pal: 0, bp: 0.2, bd: 0.25, info: 'Leer: wenig Luft im Balg – wenig Bremsdruck. Die Räder blockieren nicht.', col: C.gr },
+      { pal: 0, bp: 0.2, bd: 0.25, info: 'Leer: wenig Luft im Balg – wenig Bremsdruck. Auf trockener Straße blockieren die Räder nicht.', col: C.gr },
       { pal: 1, bp: 0.55, bd: 0.6, info: 'Halb beladen: mehr Luft im Balg – mehr Bremsdruck.', col: C.gr },
       { pal: 2, bp: 1, bd: 1, info: 'Voll beladen: viel Luft im Balg – voller Bremsdruck.', col: C.gr },
       { pal: 2, bp: 0.12, bd: 0.15, leak: 1, info: 'Balg undicht: Die Messung stimmt nicht mehr – der Bremsdruck ist falsch. Von hinten seht ihr: Der Anhänger hängt schief.', col: C.red },
@@ -88,7 +90,7 @@ module.exports = async (deck) => {
     await steps(deck, 'ce3l', {
       kicker: 'Lastanpassung', ttl: 'Der Anhänger wiegt sich',
       list: ['Leer', 'Halb beladen', 'Voll beladen', 'Luftbalg undicht'],
-      ask: { q: 'Euer Anhänger ist leer. Ihr bremst kräftig. Warum blockieren seine Räder nicht?', a: 'Die Lastanpassung misst am Luftbalg, wie schwer er ist – und gibt weniger Druck in die Bremszylinder.', at: 2 },
+      ask: { q: 'Euer Anhänger ist leer. Ihr bremst kräftig auf trockener Straße. Warum blockieren seine Räder nicht?', a: 'Die Lastanpassung misst am Luftbalg, wie schwer er ist – und gibt weniger Druck in die Bremszylinder. Gegen Blockieren auf Glätte hilft nur das ABS.', at: 2 },
       caps: [
         'Bei Luftfederung misst der Anhänger den Druck im Luftbalg. Bei Blattfedern misst er, wie weit die Feder einfedert.',
         'Je mehr Ladung, desto mehr Luft im Balg – und desto mehr Bremsdruck darf er geben.',
@@ -104,23 +106,28 @@ module.exports = async (deck) => {
       legend: 'Seitenansicht · schematisch',
       scene: async (s, i) => {
         const t = ST[i];
-        s.rect(5.0, GY, 8.05, 0.03, { fill: '3C4656', name: '!!boden' });
+        s.rect(5.5, GY, 7.55, 0.03, { fill: '3C4656', name: '!!boden' });
         const ah = await anhaenger(s, { L, floor: 1.15, boxH: 0.6, r: 0.45, axles: AA, box: 'pritsche' }, { x: TX, gy: GY, k: K, name: 'ah' });
-        // Deichsel mit Zugöse
+        // Deichsel mit Zugöse (mit Abstand zur linken Spalte)
         const [dx, dy] = ah.pt(AA[0], 0.88), ey = GY - 0.78 * K;
-        seg(s, dx, dy, TX - 0.95, ey, { col: '5E6876', th: 0.08, name: '!!deichsel' });
-        s.oval(TX - 1.08, ey - 0.1, 0.2, 0.2, { fill: '14181E', line: '8C96A4', lw: 2, name: '!!oese' });
+        seg(s, dx, dy, TX - 0.85, ey, { col: '5E6876', th: 0.08, name: '!!deichsel' });
+        s.oval(TX - 0.98, ey - 0.1, 0.2, 0.2, { fill: '14181E', line: '8C96A4', lw: 2, name: '!!oese' });
         // Paletten
         for (let k = 0; k < 5; k++) {
           const on = t.pal === 2 || (t.pal === 1 && k < 3);
           s.rrect(TX + (0.25 + k * 1.22) * K, GY - (1.75 + 1.15) * K, 1.1 * K, 1.15 * K, { fill: 'B98A4E', ft: on ? 0 : 100, line: on ? '8A6334' : undefined, lw: 0.75, rr: 0.05, name: '!!pa' + k });
         }
-        // Luftbälge über den Achsen
+        // Luftbälge über den Achsen (undicht: der hintere Balg)
+        const BY = GY - 1.0 * K;
         AA.forEach((ax, k) => {
-          const x = TX + ax * K, hb = t.leak ? 0.13 : 0.26, wb = t.leak ? 0.5 : 0.42;
-          s.rrect(x - wb / 2, GY - 1.0 * K - hb / 2 + (t.leak ? 0.05 : 0), wb, hb, { fill: t.leak ? '5A2A2E' : '1F3A63', line: t.leak ? C.red : '4C8DF0', lw: 1.5, rr: 0.4, name: '!!balg' + k });
+          const lk = t.leak && k === 1, x = TX + ax * K, hb = lk ? 0.13 : 0.26, wb = lk ? 0.5 : 0.42;
+          s.rrect(x - wb / 2, BY - hb / 2 + (lk ? 0.05 : 0), wb, hb, { fill: lk ? '5A2A2E' : '1F3A63', line: lk ? C.red : '4C8DF0', lw: 1.5, rr: 0.4, name: '!!balg' + k });
         });
-        s.text(t.leak ? 'Luftbalg undicht!' : 'Luftbälge', { x: TX + 1.2 * K - 1.0, y: GY + 0.12, w: 2.0, h: 0.3, size: 13, bold: true, color: t.leak ? C.red : '4C8DF0', align: 'center', name: '!!balgt' });
+        // Beschriftung zwischen den Rädern, mit Bezugslinien zu den Bälgen
+        const bc = TX + (AA[0] + AA[1]) / 2 * K, ly = GY - 0.53, lc = t.leak ? C.red : '4C8DF0', hw = t.leak ? 0.72 : 0.48;
+        s.text(t.leak ? 'Luftbalg undicht!' : 'Luftbälge', { x: bc - 0.85, y: ly - 0.15, w: 1.7, h: 0.3, size: 13, bold: true, color: lc, align: 'center', valign: 'middle', name: '!!balgt' });
+        seg(s, bc - hw, ly, TX + AA[0] * K + 0.24, BY + 0.03, { col: lc, th: 0.018, hide: !!t.leak, name: '!!balgl0' });
+        seg(s, bc + hw, ly, TX + AA[1] * K - 0.24, BY + 0.03, { col: lc, th: 0.018, name: '!!balgl1' });
         // Anzeigen
         const gauge = (y, lab, v, col, nm) => {
           s.text(lab, { x: 6.2, y, w: 2.8, h: 0.36, size: 14, color: C.mut, valign: 'middle', name: '!!' + nm + 'l' });
@@ -137,7 +144,7 @@ module.exports = async (deck) => {
   // ===== ZWEI WEGE ZUM ANHÄNGER (EBS, fließend) =====
   {
     const CY = 2.75, AY = 4.05;
-    const cable = [[8.05, CY], [12.0, CY]], air = [[8.05, AY], [12.0, AY]];
+    const cable = [[8.1, CY], [11.6, CY]], air = [[8.1, AY], [11.6, AY]];
     let ph = 0;
     const fr = (t, o = {}) => ({ ...o, t: { ...t, ph: ph++ } });
     await motion(deck, 'ce3l', {
@@ -156,38 +163,38 @@ module.exports = async (deck) => {
         fr({ plug: 0, brake: 0, msg: 'Der Stecker fehlt.', mc: C.red }),
         fr({ plug: 0, brake: 1, msg: 'Ohne Stecker bremst der EBS-Anhänger nur über gelb – ohne ABS, ohne Kippschutz, meist ohne Lastanpassung.', mc: C.red }, { hold: true, answer: true,
           cap: 'Ohne Stecker: kein Strom, keine Daten. Ein EBS-Anhänger bremst dann nur über gelb – ohne ABS, ohne Kippschutz und in der Regel ohne Lastanpassung.',
-          note: '▶ „Fehlt der Stecker, hat das Bremsmodul keinen Strom und keine Daten. Der Anhänger bremst trotzdem – über gelb. Aber ohne ABS und ohne Kippschutz – und beim EBS-Anhänger meist auch ohne Lastanpassung. Ein leerer Anhänger blockiert dann sehr leicht.“\n❓ Frage auf der Folie auflösen.\n✅ WABCO TEBS E, Kap. 5.7: „The ABS, EBS and RSS control functions are not available if the ISO 7638 plug connection … is not connected.“ Kap. 5.9: ohne Strom wird der gelbe Steuerdruck ohne Lastanpassung durchgeschaltet. Prüfungsfrage 2.7.06-315: ABV kann abgeschaltet sein; Bremsung mit pneumatischem Redundanzdruck.\n💡 Anhänger mit eigenem ALB-Ventil (ohne EBS) behalten ohne Stecker die Lastanpassung – nur das ABS fehlt (WABCO EBS3, S. 14). Manche TEBS-E-Anhänger haben eine Notversorgung über das Bremslicht: dann Lastanpassung und eingeschränktes ABS, aber kein Kippschutz (TEBS E Kap. 5.7.2). Kein Ersatz für den Stecker.\n🖱 Nächster Klick: nächste Folie.\n➜ „Zwei Prüfungsfragen.“' }),
+          note: '▶ „Fehlt der Stecker, hat das Bremsmodul keinen Strom und keine Daten. Der Anhänger bremst trotzdem – über gelb. Aber ohne ABS und ohne Kippschutz – und beim EBS-Anhänger meist auch ohne Lastanpassung. Ein leerer Anhänger blockiert dann sehr leicht.“\n❓ Frage auf der Folie auflösen.\n✅ WABCO TEBS E, Kap. 5.7: „The ABS, EBS and RSS control functions are not available if the ISO 7638 plug connection … is not connected.“ Kap. 5.9: ohne Strom wird der gelbe Steuerdruck ohne Lastanpassung durchgeschaltet. Prüfungsfrage 2.7.06-315: ABV kann abgeschaltet sein; Bremsung mit pneumatischem Redundanzdruck.\n💡 Anhänger mit eigenem ALB-Ventil (ohne EBS) behalten ohne Stecker die Lastanpassung – nur das ABS fehlt (WABCO EBS3, S. 14). Manche TEBS-E-Anhänger haben eine Notversorgung über das Bremslicht: dann Lastanpassung und eingeschränktes ABS, aber kein Kippschutz (TEBS E Kap. 5.7.2). Kein Ersatz für den Stecker.\n💡 Am Anhänger klebt ein Pflichtschild: Was funktioniert mit und was ohne ABS/EBS-Stecker – am Fahrzeug zeigen (UN-R 13 Nr. 5.2.2.17). Und: Anhänger mit ABS, aber ohne ALB-Ventil, dürfen nur hinter einem Lkw fahren, der ihr ABS sicherstellt (§ 41b Abs. 4 StVZO).\n🖱 Nächster Klick: nächste Folie.\n➜ „Zwei Prüfungsfragen.“' }),
       ],
       scene: async (s, t) => {
         const ph = t.ph;
         // Bereiche
-        s.rrect(5.75, 1.62, 2.3, 3.9, { fill: '0E1520', line: '2A3B52', rr: 0.08, name: '!!zl' });
-        s.rrect(11.75, 1.62, 1.3, 3.9, { fill: '0E1520', line: '2A3B52', rr: 0.08, name: '!!za' });
+        s.rrect(5.75, 1.62, 2.6, 3.9, { fill: '0E1520', line: '2A3B52', rr: 0.08, name: '!!zl' });
+        s.rrect(11.45, 1.62, 1.6, 3.9, { fill: '0E1520', line: '2A3B52', rr: 0.08, name: '!!za' });
         s.text('LKW', { x: 5.9, y: 1.68, w: 1.5, h: 0.3, size: 12, bold: true, color: C.dim, cs: 3, name: '!!zlt' });
-        s.text('ANHÄNGER', { x: 11.8, y: 1.68, w: 1.25, h: 0.3, size: 12, bold: true, color: C.dim, cs: 1, name: '!!zat' });
+        s.text('ANHÄNGER', { x: 11.55, y: 1.68, w: 1.4, h: 0.3, size: 12, bold: true, color: C.dim, cs: 1, name: '!!zat' });
         // Kabel (mit Lücke am Stecker, wenn er fehlt)
-        seg(s, 8.05, CY, t.plug ? 12.0 : 9.6, CY, { col: '2A303A', th: 0.12, name: '!!cab1' });
-        seg(s, t.plug ? 9.9 : 10.5, CY, 12.0, CY, { col: '2A303A', th: 0.12, name: '!!cab2' });
+        seg(s, 8.0, CY, t.plug ? 11.7 : 9.6, CY, { col: '2A303A', th: 0.12, name: '!!cab1' });
+        seg(s, t.plug ? 9.9 : 10.5, CY, 11.7, CY, { col: '2A303A', th: 0.12, name: '!!cab2' });
         s.rrect(t.plug ? 9.55 : 9.45, CY - 0.17, 0.42, 0.34, { fill: '1A1F27', line: '6E7886', lw: 1.5, rr: 0.2, rotate: t.plug ? 0 : 25, name: '!!plug' });
-        s.text(t.plug ? 'ABS/EBS-Stecker (ISO 7638)' : 'Stecker fehlt!', { x: 8.3, y: CY - 0.62, w: 3.5, h: 0.3, size: 12, bold: true, color: t.plug ? C.mut : C.red, align: 'center', name: '!!plugt' });
+        s.text(t.plug ? 'ABS/EBS-Stecker (ISO 7638)' : 'Stecker fehlt!', { x: 8.45, y: CY - 0.62, w: 2.9, h: 0.3, size: 12, bold: true, color: t.plug ? C.mut : C.red, align: 'center', name: '!!plugt' });
         dots(s, cable, 'FFFFFF', t.plug && t.brake, 'c', ph * 2);
-        s.text('Daten und Strom', { x: 8.3, y: CY + 0.2, w: 3.5, h: 0.28, size: 12, color: t.plug ? C.mut : C.dim, align: 'center', name: '!!cabt' });
+        s.text('Daten und Strom', { x: 8.45, y: CY + 0.2, w: 2.9, h: 0.28, size: 12, color: t.plug ? C.mut : C.dim, align: 'center', name: '!!cabt' });
         // gelbe Leitung
-        seg(s, 8.05, AY, 12.0, AY, { col: t.brake ? C.am : '4A4224', th: 0.09, name: '!!air' });
+        seg(s, 8.0, AY, 11.7, AY, { col: t.brake ? C.am : '4A4224', th: 0.09, name: '!!air' });
         dots(s, air, C.am, !!t.brake, 'a', ph);
-        s.text('gelbe Leitung (Luft)', { x: 8.3, y: AY + 0.18, w: 3.5, h: 0.28, size: 12, color: C.mut, align: 'center', name: '!!airt' });
+        s.text('gelbe Leitung (Luft)', { x: 8.45, y: AY + 0.18, w: 2.9, h: 0.28, size: 12, color: C.mut, align: 'center', name: '!!airt' });
         // Lkw: Pedal + Steuergerät
-        s.rrect(6.05, 2.35, 1.7, 2.2, { fill: '16202E', line: t.brake ? C.or : '4A5668', lw: t.brake ? 2.5 : 1.25, rr: 0.12, name: '!!ecu' });
-        s.text('EBS-\nSteuergerät\nLkw', { x: 6.05, y: 2.35, w: 1.7, h: 2.2, size: 12, bold: true, color: C.mut, align: 'center', valign: 'middle', name: '!!ecut' });
+        s.rrect(6.0, 2.35, 2.1, 2.2, { fill: '16202E', line: t.brake ? C.or : '4A5668', lw: t.brake ? 2.5 : 1.25, rr: 0.12, name: '!!ecu' });
+        s.text('EBS-Steuergerät\nLkw', { x: 6.0, y: 2.35, w: 2.1, h: 2.2, size: 12, bold: true, color: C.mut, align: 'center', valign: 'middle', name: '!!ecut' });
         s.rrect(6.25, 4.82, 0.6, 0.14, { fill: t.brake ? C.txt : '7A8494', rr: 0.3, rotate: t.brake ? 8 : -18, name: '!!pd' });
         s.text(t.brake ? 'Pedal getreten' : 'Pedal', { x: 6.9, y: 4.7, w: 1.4, h: 0.36, size: 12, color: t.brake ? C.txt : C.dim, valign: 'middle', name: '!!pdt' });
         // Anhänger-Modul + Funktionen
-        s.rrect(11.9, 2.35, 1.0, 2.2, { fill: '16202E', line: t.brake ? C.or : '4A5668', lw: t.brake ? 2.5 : 1.25, rr: 0.12, name: '!!mod' });
-        s.text('Brems-\nmodul', { x: 11.9, y: 2.35, w: 1.0, h: 2.2, size: 12, bold: true, color: C.mut, align: 'center', valign: 'middle', name: '!!modt' });
+        s.rrect(11.6, 2.35, 1.3, 2.2, { fill: '16202E', line: t.brake ? C.or : '4A5668', lw: t.brake ? 2.5 : 1.25, rr: 0.12, name: '!!mod' });
+        s.text('Bremsmodul', { x: 11.6, y: 2.35, w: 1.3, h: 2.2, size: 12, bold: true, color: C.mut, align: 'center', valign: 'middle', name: '!!modt' });
         const fn = [['ABS', 'abs'], ['Last', 'last'], ['Kippschutz', 'rss']];
         fn.forEach(([lab, nm], k) => {
           const ok = !!t.plug;
-          s.text((ok ? '✓ ' : '✕ ') + lab, { x: 11.8, y: 4.65 + k * 0.28, w: 1.25, h: 0.28, size: 12, bold: true, color: ok ? C.gr : C.red, name: '!!f' + nm });
+          s.text((ok ? '✓ ' : '✕ ') + lab, { x: 11.6, y: 4.65 + k * 0.28, w: 1.4, h: 0.28, size: 12, bold: true, color: ok ? C.gr : C.red, name: '!!f' + nm });
         });
         s.text(t.msg, { x: 5.75, y: 5.6, w: 7.3, h: 0.95, size: 16, bold: true, color: t.mc, align: 'center', valign: 'middle', name: '!!msg' });
       },

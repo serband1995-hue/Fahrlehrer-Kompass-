@@ -63,7 +63,7 @@ module.exports = async (deck) => {
   // ===== FOTO: SPIEGEL =====
   await photoAsk(deck, 'ap', {
     bg: 'f_spiegel.jpg', kicker: 'Spiegel am Lkw', q: 'Welche Spiegel hat ein Lkw – und wozu?', qsize: 34, w: 5.4, ov: 7.4, asize: 15, bgX: 7.0,
-    marks: [[10.35, 2.9], [10.35, 4.45], [10.0, 1.3], [12.55, 1.85]],
+    marks: [[10.35, 2.9], [10.35, 4.45], [10.0, 1.3], [13.0, 2.1]],
     answers: [
       ['LuEye', 'Hauptspiegel', 'nach hinten, entlang der Seite'],
       ['LuEye', 'Weitwinkelspiegel', 'der kleine darunter: breiter, neben dem Lkw'],

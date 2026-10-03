@@ -7,7 +7,7 @@ sec('ce3e', 'CE3  ·  ABSCHLUSS', C.bl, 'bg_blue.jpg');
 
 module.exports = async (deck) => {
   await chapter(deck, 'ce3d', { num: 5, ttl: 'Dauerbremse und Prüffristen', sub: 'Die Dauerbremse bremst nur die Antriebsachse des Lkw. Und: Wann muss der Anhänger zur Prüfung?', ico: 'LuMountain', notes:
-    '▶ Sagen: „Motorbremse und Retarder kennt ihr aus C6. Im Zug gibt es dabei eine Falle. Und danach: Wann muss der Anhänger zur HU und zur SP?“\n✅ § 41 Abs. 15 StVZO (Dauerbremse über 9 t); StVZO Anlage VIII (HU und SP).\n🖱 Keine Klicks.\n➜ „Erst die Falle mit dem Retarder.“' });
+    '▶ Sagen: „Motorbremse und Retarder kennt ihr aus C6. Im Zug gibt es dabei eine Falle. Und danach: Wann muss der Anhänger zur HU und zur SP?“\n✅ Dauerbremse: Für Lkw gilt über § 41 Abs. 18 StVZO die UN-R 13. Pflicht für Lkw über 12 t, die Anhänger über 10 t ziehen dürfen: 7 % Gefälle, 6 km, 30 km/h (UN-R 13 Anh. 4 Nr. 1.8). StVZO Anlage VIII (HU und SP).\n🖱 Keine Klicks.\n➜ „Erst die Falle mit dem Retarder.“' });
 
   // ===== RETARDER AUF GLÄTTE (Draufsicht, fließend) =====
   {
@@ -23,18 +23,18 @@ module.exports = async (deck) => {
     await motion(deck, 'ce3d', {
       kicker: 'Dauerbremse', ttl: 'Retarder auf Glätte', dur: 650, holdDur: 650,
       question: 'Glatte Fahrbahn, ihr zieht den Retarder voll. Was kann mit dem Zug passieren?',
-      answer: 'Der Retarder bremst nur die Antriebsachse. Die Räder rutschen, der Anhänger schiebt – der Zug knickt ein. Bei Glätte: Dauerbremse aus.',
+      answer: 'Der Retarder bremst nur die Antriebsachse. Die Räder rutschen, der Anhänger schiebt – der Zug kann einknicken. Bei Glätte: Dauerbremse aus.',
       legend: 'Draufsicht · schematisch · glatte Fahrbahn',
       frames: [
         fr({ k: 0, msg: 'Glatte Fahrbahn. Der Fahrer zieht den Retarder voll.', mc: C.mut }, { hold: true,
           cap: 'Der Retarder bremst verschleißfrei – aber nur über die Antriebsachse des Lkw. Vorderachse und Anhänger bremst er nicht.',
-          note: '▶ Sagen: „Glatte Straße. Der Fahrer will sanft verzögern und zieht den Retarder voll. Unten seht ihr: Welche Achse bremst wie stark?“\n❓ Frage auf der Folie stellen.\n✅ eurotransport „Lkw-Fahren im Winter“ (26.10.2011): „Nicht mit Retarder oder Motorbremse, sondern nur mit der Betriebsbremse verzögern“ – die Dauerbremse wirkt nur auf die Antriebsachse. Mercedes-Benz Actros Betriebsanleitung, S. 250. Prüfungsfrage 2.7.06-108.\n🖱 Klick: Retarder an (läuft von selbst weiter).\n➜ „Retarder voll.“' }),
+          note: '▶ Sagen: „Glatte Straße. Der Fahrer will sanft verzögern und zieht den Retarder voll. Unten seht ihr: Welche Achse bremst wie stark?“\n❓ Frage auf der Folie stellen.\n✅ eurotransport „Lkw-Fahren im Winter“ (26.10.2011): „Nicht mit Retarder oder Motorbremse, sondern nur mit der Betriebsbremse verzögern“ – die Dauerbremse wirkt nur auf die Antriebsachse. Mercedes-Benz Actros Betriebsanleitung (manualslib S. 250, gedruckt S. 248). Prüfungsfrage 2.7.06-108.\n🖱 Klick: Retarder an (läuft von selbst weiter).\n➜ „Retarder voll.“' }),
         fr({ k: 1, msg: 'Nur die Antriebsachse bremst. Der Anhänger rollt ungebremst – er schiebt.', mc: C.am }),
         fr({ k: 2, msg: 'Die Antriebsräder verlieren die Haftung …', mc: C.red }),
         fr({ k: 3, msg: '… das Heck des Lkw bricht aus …', mc: C.red }),
         fr({ k: 4, msg: 'Der Zug knickt ein!', mc: C.red }, { hold: true, answer: true,
           cap: 'Bei Glätte: Dauerbremse aus – auch die automatische Zuschaltung, wenn euer Lkw sie hat. Vorher Tempo raus, vor der Kurve gestreckt mit der Betriebsbremse bremsen.',
-          note: '▶ „Die Antriebsräder rutschen, weil nur sie bremsen. Der Anhänger schiebt von hinten. Das Heck des Lkw bricht aus – der Zug knickt ein. Darum: Bei Glätte die Dauerbremse aus. Achtung: Bei manchen Lkw schaltet sie sich selbst zu – zum Beispiel über den Tempomaten bergab. Lieber vorher langsam und mit der Betriebsbremse gestreckt bremsen – dann bremst auch der Anhänger mit. Das ABS schaltet die Dauerbremse zwar ab, wenn es regelt – aber das ist kein Freibrief.“\n❓ Frage auf der Folie auflösen.\n✅ Mercedes-Benz Actros Betriebsanleitung, S. 250: „Schalten Sie nicht auf glatter Fahrbahn die Dauerbremse ein und schalten Sie nicht zurück, um die Bremswirkung des Motors zu erhöhen“ – die Antriebsräder können die Haftung verlieren. Ebd.: Automatische Zuschaltung, wenn ein beladenes Fahrzeug erkannt ist und ihr bremst, oder wenn Tempomat, Limiter oder Abstandshalte-Assistent im Schub regeln. ABS schaltet die Dauerbremse ab, sobald es regelt (Actros Betriebsanleitung; WABCO EBS3). Prüfungsfrage 2.7.06-108.\n💡 Winkel und Wege gezeichnet, nicht gemessen.\n🖱 Nächster Klick: nächste Folie.\n➜ „Was gilt sonst noch für die Dauerbremse im Zug?“' }),
+          note: '▶ „Die Antriebsräder rutschen, weil nur sie bremsen. Der Anhänger schiebt von hinten. Das Heck des Lkw bricht aus – der Zug knickt ein. Darum: Bei Glätte die Dauerbremse aus. Achtung: Bei manchen Lkw schaltet sie sich selbst zu – zum Beispiel über den Tempomaten bergab. Lieber vorher langsam und mit der Betriebsbremse gestreckt bremsen – dann bremst auch der Anhänger mit. Das ABS schaltet die Dauerbremse zwar ab, wenn es regelt – aber das ist kein Freibrief.“\n❓ Frage auf der Folie auflösen.\n✅ Mercedes-Benz Actros Betriebsanleitung (manualslib S. 250, gedruckt S. 248): „Schalten Sie nicht auf glatter Fahrbahn die Dauerbremse ein und schalten Sie nicht zurück, um die Bremswirkung des Motors zu erhöhen“ – die Antriebsräder können die Haftung verlieren. Ebd.: Automatische Zuschaltung, wenn ein beladenes Fahrzeug erkannt ist und ihr bremst, oder wenn Tempomat, Limiter oder Abstandshalte-Assistent im Schub regeln. ABS schaltet die Dauerbremse ab, sobald es regelt (Actros Betriebsanleitung; WABCO EBS3). Prüfungsfrage 2.7.06-108.\n💡 Winkel und Wege gezeichnet, nicht gemessen.\n🖱 Nächster Klick: nächste Folie.\n➜ „Was gilt sonst noch für die Dauerbremse im Zug?“' }),
       ],
       scene: async (s, t) => {
         const k = t.k, p = pose(k);
@@ -45,7 +45,7 @@ module.exports = async (deck) => {
         // Hinweis an der Antriebsachse
         const u = uv(p.a), ax = [p.H[0] + u[0] * 1.65 * S, p.H[1] + u[1] * 1.65 * S];
         s.oval(ax[0] - 0.42, ax[1] - 0.42, 0.84, 0.84, { line: C.am, lw: 2.5, fill: C.am, ft: 100, lt: k ? 0 : 100, name: '!!axr' });
-        s.text(k ? 'Antriebsachse' : '', { x: ax[0] - 1.0, y: R + RH + 0.16, w: 2.0, h: 0.28, size: 12, bold: true, color: C.am, align: 'center', name: '!!axt' });
+        s.text(k ? 'Antriebsachse' : '', { x: ax[0] - 1.0, y: ax[1] - 0.42 - 0.08 - 0.28, w: 2.0, h: 0.28, size: 12, bold: true, color: C.am, align: 'center', name: '!!axt' });
         s.text(t.msg, { x: RX, y: 4.55, w: RW, h: 0.55, size: 17, bold: true, color: t.mc, align: 'center', valign: 'middle', name: '!!msg' });
         // Wer bremst wie stark?
         const rows = [['Lkw-Vorderachse', 0], ['Lkw-Antriebsachse (Retarder)', k ? 1 : 0], ['Anhänger', 0]];
@@ -63,7 +63,7 @@ module.exports = async (deck) => {
     kicker: 'Dauerbremse im Zug', q: 'Was gilt für die Dauerbremse, wenn ein Anhänger dran ist?', ico: 'LuMountain', qsize: 32,
     answers: [
       ['LuSnowflake', 'Glätte:', 'Dauerbremse aus – auch die automatische Zuschaltung. Vorher Tempo raus, gestreckt mit der Betriebsbremse bremsen.'],
-      ['LuMountain', 'Langes Gefälle:', 'vorher einen kleinen Gang wählen und die Dauerbremse arbeiten lassen. Nur Betriebsbremse = Bremsen werden heiß.'],
+      ['LuMountain', 'Langes Gefälle:', 'vorher kleiner Gang, Dauerbremse arbeiten lassen. Aber: Sie bremst nur den Lkw – vor Kurven Tempo raus.'],
       ['LuTriangleAlert', 'Der Anhänger hat meist keine Dauerbremse:', 'seine Radbremsen müssen das Gefälle aushalten. Darum vorher langsam.'],
       ['LuCpu', 'ABS hilft:', 'Regelt das ABS, schaltet es die Dauerbremse ab. Aber verlasst euch nicht darauf.'],
     ],
@@ -71,8 +71,8 @@ module.exports = async (deck) => {
       '▶ Sagen: „Vier Regeln für die Dauerbremse im Zug.“\n' +
       '❓ Vor jedem Klick fragen: „Was meint ihr?“\n' +
       '🖱 Klick 1–4: je eine Regel.\n' +
-      '✅ Mercedes-Benz Actros Betriebsanleitung (Dauerbremse bei Glätte nicht einschalten; ABS schaltet Dauerbremse ab). Prüfungsfragen 2.7.06-310 (nur Betriebsbremse im Gefälle → Bremswirkung lässt gefährlich nach) und 2.7.06-236 (Betriebsbremse und niedrigerer Gang). § 41 Abs. 15 StVZO: Dauerbremse Pflicht über 9 t (7 % Gefälle, 6 km, 30 km/h); bei Anhängern über 9 t muss die Betriebsbremse diese Anforderung erfüllen.\n' +
-      '💡 Manche Lkw haben einen Hebel, der nur den Anhänger bremst (Streckbremse). Laut Actros-Anleitung nur für kurze Bremsungen – kein Ersatz für die Dauerbremse.\n' +
+      '✅ Mercedes-Benz Actros Betriebsanleitung (manualslib S. 245 und 250, gedruckt S. 243 und 248: Dauerbremse bei Glätte nicht einschalten; ABS schaltet Dauerbremse ab). Prüfungsfragen 2.7.06-310 (nur Betriebsbremse im Gefälle → Bremswirkung lässt gefährlich nach) und 2.7.06-236 (Betriebsbremse und niedrigerer Gang). Dauerbremse: Für Lkw gilt über § 41 Abs. 18 StVZO die UN-R 13 – Pflicht für Lkw über 12 t, die Anhänger über 10 t ziehen dürfen (Prüfung Typ IIA: 7 % Gefälle, 6 km, 30 km/h; UN-R 13 Anh. 4 Nr. 1.8).\n' +
+      '💡 Manche Lkw haben einen Hebel, der nur den Anhänger bremst (Streckbremse). Im Gefälle für kurze Anpassungsbremsungen – gegen Einknicken. Kein Ersatz für die Dauerbremse (Actros-Betriebsanleitung, manualslib S. 245–246, gedruckt S. 243–244).\n' +
       '➜ „Eine Prüfungsfrage.“',
   });
   await quiz(deck, 'ce3d', {
@@ -84,7 +84,7 @@ module.exports = async (deck) => {
 
   // ===== PRÜFFRISTEN AM ANHÄNGER (Zeitleiste) =====
   {
-    const X0 = 6.0, X1 = 12.7, M = m => X0 + (X1 - X0) * m / 48, LYt = 3.75;
+    const X0 = 5.8, X1 = 12.5, M = m => X0 + (X1 - X0) * m / 48, LYt = 3.75;
     const HU = [12, 24, 36, 48], SP = [30, 42];
     const ST = [
       { ttl: 'Anhänger über 0,75 t bis 3,5 t', sub: 'HU alle 24 Monate · keine SP', hu: [24, 48], sp: [], uvv: 0 },
@@ -116,8 +116,8 @@ module.exports = async (deck) => {
         // Zeitleiste
         s.rect(X0, LYt - 0.02, X1 - X0, 0.04, { fill: '4A5566', name: '!!tl' });
         for (let m = 0; m <= 48; m += 6) s.rect(M(m) - 0.01, LYt - (m % 12 ? 0.06 : 0.11), 0.02, m % 12 ? 0.12 : 0.22, { fill: m % 12 ? '3C4656' : '738296', name: '!!tk' + m });
-        [12, 24, 36, 48].forEach((m, j) => s.text('Jahr ' + (j + 1), { x: M(m) - 0.8, y: LYt + 0.15, w: 0.8, h: 0.28, size: 12, color: C.dim, align: 'right', name: '!!ty' + j }));
-        s.text('Zulassung', { x: X0 - 0.4, y: LYt + 0.15, w: 1.2, h: 0.28, size: 12, color: C.dim, name: '!!t0' });
+        [12, 24, 36, 48].forEach((m, j) => s.text('Jahr ' + (j + 1), { x: M(m) - 0.4, y: LYt + 0.15, w: 0.8, h: 0.28, size: 12, color: C.dim, align: 'center', name: '!!ty' + j }));
+        s.text('Zulassung', { x: X0 - 0.55, y: LYt + 0.15, w: 1.1, h: 0.28, size: 12, color: C.dim, align: 'center', name: '!!t0' });
         // HU (blau, rund) und SP (gelb, eckig)
         HU.forEach((m, j) => {
           const on = t.hu.includes(m);
@@ -157,11 +157,11 @@ module.exports = async (deck) => {
       ['Lastanpassung', 'misst am Luftbalg (oder Federweg) · kennt nur das Gewicht, nicht die Glätte'],
       ['ABS-Stecker', 'fehlt er: kein ABS, kein Kippschutz · beim EBS-Anhänger meist auch keine Lastanpassung'],
       ['Warnleuchte', 'ohne Stecker oft dunkel → nach dem Kuppeln hinsehen'],
-      ['Feststellbremse', 'Lkw mit Federkraft · Anhänger nur mit Luft · Kontrollstellung: Lkw allein, 12 %'],
+      ['Feststellbremse', 'Lkw mit Federkraft · Anhänger meist nur mit Luft · Kontrollstellung: Lkw allein, 12 %'],
       ['Dauerbremse', 'nur Antriebsachse · bei Glätte aus'],
       ['Anhänger über 10 t', 'HU alle 12 Monate · ab dem 3. Jahr SP dazwischen · UVV jährlich'],
     ],
-    notes: '▶ Sagen: „Schreibt euch das auf – das sind die Kernpunkte aus CE3.“\n🖱 Klick 1–8: je eine Zeile.\n💡 Erst das Stichwort vorlesen und fragen: „Wer weiß es?“ – dann klicken.\n✅ Quellen: WABCO EBS3 und TEBS E; Prüfungsfragen 2.7.06-108, -210, -314, -315, -320, -321, -230; RL 71/320/EWG Anhang II (heute UN-Regelung Nr. 13); StVZO Anlage VIII; DGUV Vorschrift 70 § 57.\n➜ „Drei Prüfungsfragen.“',
+    notes: '▶ Sagen: „Schreibt euch das auf – das sind die Kernpunkte aus CE3.“\n🖱 Klick 1–8: je eine Zeile.\n💡 Erst das Stichwort vorlesen und fragen: „Wer weiß es?“ – dann klicken.\n✅ Quellen: WABCO EBS3 und TEBS E; Prüfungsfragen 2.7.06-108, -210, -314, -315, -320, -321, -230; UN-R 13 Anh. 4 (früher RL 71/320/EWG Anhang II); StVZO Anlage VIII; DGUV Vorschrift 70 § 57.\n💡 Dazu passt Prüfungsfrage 2.7.06-318: Fährt am Anhänger ein Bremszylinder-Kolben bis zum Anschlag aus, lässt die Bremswirkung nach – ab in die Werkstatt.\n➜ „Drei Prüfungsfragen.“',
   });
   await quiz(deck, 'ce3e', {
     kicker: 'Prüfungsfrage 2.7.02-305', q: 'Die elektrischen Verbindungen zu Ihrem Zugfahrzeug sind unterbrochen. Welche Einrichtung am Anhänger ist somit nicht betriebsfähig?', size: 28,
@@ -199,7 +199,7 @@ module.exports = async (deck) => {
       '➜ „Willkommen zurück. Lektion CE4: Fahren mit dem Zug – Einknicken, Rückwärtsfahren, Abbiegen und Wetter.“' });
     s.text('PAUSE', { x: 0.7, y: 2.0, w: 6, h: 0.5, size: 18, bold: true, color: C.bl, cs: 6 }, { fx: 'fade', auto: true, dur: 600 });
     s.text('15 Minuten', { x: 0.7, y: 2.5, w: 6.5, h: 1.4, size: 72, bold: true, color: C.txt }, { fx: 'rise', auto: true, dur: 900, d: 200 });
-    s.text('Kurz raus, frische Luft.', { x: 0.7, y: 4.0, w: 6.2, h: 0.9, size: 22, color: C.mut }, { fx: 'fade', auto: true, dur: 700, d: 600 });
-    s.text('Danach: Lektion CE4 · Fahren mit Zügen', { x: 0.7, y: 4.85, w: 6.4, h: 0.8, size: 18, color: C.txt }, { fx: 'fade', auto: true, dur: 700, d: 900 });
+    s.text('Kurz raus, frische Luft.', { x: 0.7, y: 4.0, w: 6.2, h: 0.5, size: 22, color: C.mut }, { fx: 'fade', auto: true, dur: 700, d: 600 });
+    s.text('Danach: Lektion CE4 · Fahren mit Zügen', { x: 0.7, y: 4.55, w: 6.4, h: 0.45, size: 18, color: C.txt, shadow: true }, { fx: 'fade', auto: true, dur: 700, d: 900 });
   }
 };
