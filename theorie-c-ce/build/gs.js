@@ -42,7 +42,7 @@ async function signImg(code) {
 async function sign(s, code, x, y, w, h, anim, o = {}) { return s.img(await signImg(code), { x, y, w, h: h ?? w, name: o.name }, anim); }
 
 // Mehrfachwahl: Frage steht, Klick 1 = Antworten, Klick 2 = Lösung, (Begründung kommt mit der Lösung)
-function quiz(deck, key, { kicker, q, opts, ok, why, notes, size = 32 }) {
+function quiz(deck, key, { kicker, q, opts, ok, why, notes, size = 32, osize = 19 }) {
   const s = base(deck, key, { notes });
   kick(s, kicker); title(s, q, { size, h: 1.4 });
   const y0 = 2.75;
@@ -50,7 +50,7 @@ function quiz(deck, key, { kicker, q, opts, ok, why, notes, size = 32 }) {
     const y = y0 + i * 1.0;
     card(s, 0.7, y, 8.2, 0.82, { name: 'qo' + i }, { fx: 'flyL', c: i === 0, dur: 450 });
     s.text(String.fromCharCode(65 + i), { x: 0.92, y: y + 0.17, w: 0.48, h: 0.48, size: 15, bold: true, color: C.dark, fill: s.sec.col, shape: deck.pres.shapes.OVAL, align: 'center', valign: 'middle' }, { fx: 'fade', dur: 200 });
-    s.text(o, { x: 1.6, y, w: 7.2, h: 0.82, size: 19, color: C.txt, valign: 'middle' }, { fx: 'fade', dur: 200 });
+    s.text(o, { x: 1.6, y, w: 7.2, h: 0.82, size: osize, color: C.txt, valign: 'middle' }, { fx: 'fade', dur: 200 });
   });
   const oks = [].concat(ok);
   oks.forEach((k, j) => {
