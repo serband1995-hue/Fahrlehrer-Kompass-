@@ -1,8 +1,22 @@
 // Abend 6 · CE1: Kapitel 3 Auf- und Absatteln (Aufsatteln fließend mit Lupe, fremder Auflieger, Absatteln fließend)
-const { C, sec, chapter, motion, ask, quiz, lkw, auflieger, seg } = require('../gs');
+const { C, sec, chapter, motion, ask, quiz, lkw, auflieger, seg, svgImg } = require('../gs');
 
 sec('ce1s', 'CE1  ·  AUF- UND ABSATTELN', C.gr, 'bg_gr.jpg');
 
+// Wendelleitung (Seitenansicht): hängt in einem Bogen von der Rückwand des Fahrerhauses zur Stirnwand des Aufliegers
+async function wendel(s, x0, y0, x1, y1, sag, col, hide, name) {
+  const bx = Math.min(x0, x1) - 0.06, by = Math.min(y0, y1) - 0.06, bw = Math.abs(x1 - x0) + 0.12, bh = Math.max(y0, y1) + sag + 0.08 - by;
+  const cx = (x0 + x1) / 2, cy = Math.max(y0, y1) + 2 * sag, N = 160, turns = 11, amp = 0.022, pts = [];
+  for (let i = 0; i <= N; i++) {
+    const u = i / N, v = 1 - u;
+    const px = v * v * x0 + 2 * v * u * cx + u * u * x1, py = v * v * y0 + 2 * v * u * cy + u * u * y1;
+    const dx = 2 * v * (cx - x0) + 2 * u * (x1 - cx), dy = 2 * v * (cy - y0) + 2 * u * (y1 - cy), L = Math.hypot(dx, dy) || 1;
+    const off = u > 0.1 && u < 0.9 ? amp * Math.sin((u - 0.1) / 0.8 * turns * 2 * Math.PI) : 0;
+    pts.push(((px - dy / L * off - bx) * 100).toFixed(1) + ' ' + ((py + dx / L * off - by) * 100).toFixed(1));
+  }
+  const svg = `<path d="M ${pts.join(' L ')}" fill="none" stroke="#${col}" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/>`;
+  s.img(await svgImg(svg, bw * 100, bh * 100, 4), { x: bx, y: by, w: bw, h: bh, transparency: hide ? 100 : 0, name });
+}
 // Sattelzug in Seitenansicht mit Lupe auf die Sattelkupplung.
 // dx = Versatz der Zugmaschine (Zoll, 0 = eingekuppelt), lift = Höhe der Luftfederung (m, negativ = abgesenkt)
 const K = 0.58, GY = 4.4, TX = 8.3, FL = 1.09, XC = TX - (2.55 - 0.55) * K;
@@ -17,9 +31,9 @@ async function szene(s, { dx = 0, lift = 0, legs = 1, secured = 0, lines = 0, lo
   s.text(secured ? 'P' : '', { x: 5.9, y: 5.42, w: 0.34, h: 0.34, size: 13, bold: true, color: C.white, fill: C.red, ft: secured ? 0 : 100, shape: s.pres.shapes.OVAL, align: 'center', valign: 'middle', name: '!!P' });
   s.text(secured ? 'Feststellbremse + Keil' : '', { x: 6.32, y: 5.4, w: 2.85, h: 0.38, size: 13, bold: true, color: C.am, valign: 'middle', name: '!!pt' });
   // Leitungen Führerhaus → Stirnwand
-  const lx0 = X + 1.79 * K, lx1 = TX + 0.02;
-  seg(s, lx0, GY - 1.75 * K, lx1, GY - 1.62 * K, { col: C.am, th: 0.05, hide: !lines, name: '!!lgelb' });
-  seg(s, lx0, GY - 1.87 * K, lx1, GY - 1.74 * K, { col: C.red, th: 0.05, hide: !lines, name: '!!lrot' });
+  const lx0 = X + 1.79 * K, lx1 = TX + 0.03;
+  await wendel(s, lx0, GY - 2.25 * K, lx1, GY - 1.75 * K, 0.2, C.red, !lines, '!!lrot');
+  await wendel(s, lx0, GY - 2.05 * K, lx1, GY - 1.55 * K, 0.22, C.am, !lines, '!!lgelb');
   // Markierung an der Kupplung
   const kx = TX + 0.55 * K, ky = GY - (FL - 0.14) * K;
   s.oval(kx - 0.24, ky - 0.24, 0.48, 0.48, { line: ring, lw: 2.5, fill: ring, ft: 100, name: '!!ring' });
@@ -29,7 +43,7 @@ async function szene(s, { dx = 0, lift = 0, legs = 1, secured = 0, lines = 0, lo
   s.text('LUPE: SATTELKUPPLUNG', { x: LX + 0.15, y: LY + 0.07, w: 3.0, h: 0.26, size: 12, bold: true, color: C.dim, cs: 2, name: '!!lupk' });
   s.rect(LX + 0.15, AY, LW - 0.3, 0.17, { fill: '5A6474', name: '!!agp' });
   s.text('Auflieger', { x: LX + 0.15, y: AY - 0.3, w: 1.4, h: 0.26, size: 12, color: C.mut, name: '!!agpt' });
-  const gap = Math.max(0, -lift) * 2.0, pcx = KPX + Math.max(-1.35, Math.min(0, dx * 2.3)), px0 = Math.max(LX + 0.12, pcx - 1.1);
+  const gap = Math.max(0, -lift) * 2.0, pcx = KPX + Math.max(-1.35, Math.min(0, dx * 2.3)), px0 = Math.max(LX + 0.12, pcx - 1.3);
   s.rrect(px0, AY + 0.17 + gap, pcx + 1.1 - px0, 0.2, { fill: '1F242B', line: '7A8494', lw: 1.5, rr: 0.3, name: '!!sp' });
   s.text('Sattelplatte', { x: px0 + 0.1, y: AY + 0.17 + gap, w: 1.0, h: 0.2, size: 12, color: 'C9D0DA', valign: 'middle', name: '!!spt' });
   s.rect(KPX - 0.1, AY + 0.17, 0.2, 0.2, { fill: '9AA6B5', name: '!!kz' });
@@ -70,8 +84,8 @@ module.exports = async (deck) => {
         cap: 'Kontrolle von außen: Der Auflieger liegt ohne Spalt auf der Platte. Die Sicherung ist eingefallen. Im Dunkeln: Handlampe.',
         note: '▶ „Jetzt der Blick von außen: Liegt der Auflieger ohne Spalt auf der Platte? Ist die Sicherung eingefallen – je nach Hersteller ein Bügel, eine Klappe oder ein Karabiner? Im Dunkeln mit der Handlampe.“\n✅ DGUV I 214-080, Kap. 2.3 (Schritt 7). Prüfungsfrage 2.7.07-302: Nach dem Aufsatteln Verschluss und Sicherungssystem der Sattelkupplung überprüfen.\n💡 Ein Spalt kann heißen: Der Königszapfen sitzt nicht richtig im Verschluss. Dann nicht losfahren – neu aufsatteln.\n🖱 Klick: Leitungen.\n➜ „Jetzt die Leitungen.“' }),
       fa({ dx: 0, lift: 0, secured: 1, locked: 1, lines: 1, lupe: 'Leitungen: gelb, dann rot', lupeCol: C.am, ring: C.am, pill: '✓  eingerastet' }, { hold: true,
-        cap: 'Leitungen: gelb, dann rot, dazu Strom und ABS/EBS. Sie dürfen nicht scheuern und in Kurven nicht zu straff sein.',
-        note: '▶ „Leitungen: wie beim Anhänger erst gelb, dann rot. Dazu Licht und ABS/EBS. Die Wendelleitungen dürfen nicht scheuern und nicht durchhängen. Tipp: Zugmaschine etwa 45 Grad einschlagen und schauen, ob die Leitungen noch Luft haben.“\n✅ DGUV I 214-080, Kap. 2.3 (Schritt 8). Prüfungsfrage 2.7.07-302: alle Schlauch- und Kabelverbindungen herstellen und überprüfen.\n🖱 Klick: Stützen hoch.\n➜ „Und zum Schluss.“' }),
+        cap: 'Leitungen: gelb, dann rot, dazu Licht- und ABS/EBS-Stecker. Sie dürfen nicht scheuern und in Kurven nicht zu straff sein.',
+        note: '▶ „Leitungen: wie beim Anhänger erst gelb, dann rot. Dazu Licht und ABS/EBS. Die Wendelleitungen dürfen nicht scheuern und nicht durchhängen. Tipp: Zugmaschine in einen Winkel von etwa 45 Grad zum Auflieger rangieren und schauen, ob die Leitungen noch Luft haben.“\n✅ DGUV I 214-080, Kap. 2.3 (Schritt 8) und S. 46 (in ca. 45° rangieren, Freigang der Leitungen prüfen). Prüfungsfrage 2.7.07-302: alle Schlauch- und Kabelverbindungen herstellen und überprüfen.\n🖱 Klick: Stützen hoch.\n➜ „Und zum Schluss.“' }),
       fa({ dx: 0, lift: 0, legs: 0, locked: 1, lines: 1, lupe: 'Fahrbereit', lupeCol: C.gr, pill: '✓  fahrbereit' }, { hold: true,
         cap: 'Stützen hoch, Kurbel sichern. Feststellbremse am Auflieger lösen, Keile weg. Dann: Abfahrtkontrolle.',
         note: '▶ „Zum Schluss: Stützen ganz hochkurbeln, Kurbel sichern. Feststellbremse am Auflieger lösen, Keile wegnehmen und verstauen. Luftfederung und Liftachse in Fahrstellung. Dann die Abfahrtkontrolle.“\n✅ DGUV I 214-080, Kap. 2.3 (Schritte 9–10).\n🖱 Nächster Klick: nächste Folie.\n➜ „Und wenn der Auflieger fremd ist?“' }),
@@ -98,15 +112,15 @@ module.exports = async (deck) => {
   await quiz(deck, 'ce1s', {
     kicker: 'Prüfungsfrage 2.7.07-323', q: 'Welche Voraussetzung muss vor dem Aufsatteln eines Sattelanhängers erfüllt sein?', size: 30,
     opts: ['Die Sattelkupplung muss entsichert und geöffnet sein', 'Sattelkupplung und Sattelzapfen müssen etwa auf gleicher Höhe stehen', 'Alle Schlauch- und Kabelverbindungen müssen hergestellt sein'], ok: [0, 1],
-    why: 'Erst aufsatteln, dann die Leitungen. (Ausnahme: kein Platz hinter dem Führerhaus – dann vorher, aber auch gelb vor rot.)',
-    notes: '▶ Frage vorlesen, abstimmen.\n🖱 Klick 1: Antworten · Klick 2: Lösung.\n✅ Amtlicher Fragenkatalog 2.7.07-323: A und B. Ausnahme „abweichendes Aufsatteln“: DGUV I 214-080, S. 47, und DGUV FBVL-003 (2020) – nur wenn bauartbedingt kein Platz für die Leitungen ist.\n➜ „Und das Absatteln?“',
+    why: 'Erst aufsatteln, dann die Leitungen. (Ausnahme nur, wenn der Auflieger bauartbedingt keinen Platz lässt, z. B. Kühlaggregat: dann vorher – auch gelb vor rot.)',
+    notes: '▶ Frage vorlesen, abstimmen.\n🖱 Klick 1: Antworten · Klick 2: Lösung.\n✅ Amtlicher Fragenkatalog 2.7.07-323: A und B. Ausnahme „abweichendes Aufsatteln“: DGUV I 214-080, S. 47, und DGUV FBVL-003 (2020) – ausschließlich bei Aufliegern, die bauartbedingt (z. B. Kühlaggregat vorn) zu wenig Abstand zur Zugmaschine lassen; nicht bei jeder Enge.\n➜ „Und das Absatteln?“',
   });
 
   // ===== ABSATTELN (fließend) =====
   await motion(deck, 'ce1s', {
     kicker: 'Absatteln', ttl: 'So wird abgesattelt', dur: 650, holdDur: 900,
     question: 'Warum fahrt ihr erst ein Stück vor und senkt dann ab – statt gleich wegzufahren?',
-    answer: 'Damit sich die Platte ruhig vom Auflieger löst. Fährt die Zugmaschine gleich ganz heraus, kann ihr Heck hochschlagen.',
+    answer: 'Damit sich die Platte ruhig vom Auflieger löst. Fährt die Zugmaschine gleich ganz heraus, kann\u00A0ihr\u00A0Heck hochschlagen.',
     legend: 'Seitenansicht · schematisch · Lupe vergrößert',
     frames: [
       fa({ dx: 0, lift: 0, legs: 0, locked: 1, lines: 1, lupe: 'Untergrund fest? Beladen erlaubt?', lupeCol: C.or, ring: C.or }, { hold: true,
