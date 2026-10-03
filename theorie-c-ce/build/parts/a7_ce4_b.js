@@ -138,11 +138,12 @@ module.exports = async (deck) => {
         s.rect(hlx0, hly - 0.02, hlx1 - hlx0, 0.045, { fill: C.mark, name: '!!hl' });
         // Spuren: Lkw-Vorderrad rechts (blau) und Anhänger-Hinterrad rechts (rot)
         for (let j = 0; j < 4; j++) {
-          const on = j < t.k;
-          const A = on ? F[j] : f, B = on ? F[j + 1] : f;
-          const za = zugPts(A.st), zb = zugPts(B.st);
-          seg(s, za.lf[0], za.lf[1], zb.lf[0], zb.lf[1], { col: '4C8DF0', th: 0.04, hide: !on, rb: -45, name: '!!sl' + j });
-          seg(s, za.ar[0], za.ar[1], zb.ar[0], zb.ar[1], { col: C.red, th: 0.045, hide: !on, rb: -45, name: '!!sa' + j });
+          // sichtbar: Stück j → j+1; noch unsichtbar: winziges Stück am Anfang, schon in der späteren Richtung (wächst dann per Morph)
+          const on = j < t.k, za = zugPts(F[j].st), zb = zugPts(F[j + 1].st);
+          const end = (A, B) => on ? B : [A[0] + (B[0] - A[0]) * 0.002, A[1] + (B[1] - A[1]) * 0.002];
+          const lb = end(za.lf, zb.lf), ab = end(za.ar, zb.ar);
+          seg(s, za.lf[0], za.lf[1], lb[0], lb[1], { col: '4C8DF0', th: 0.04, hide: !on, rb: -45, name: '!!sl' + j });
+          seg(s, za.ar[0], za.ar[1], ab[0], ab[1], { col: C.red, th: 0.045, hide: !on, rb: -45, name: '!!sa' + j });
         }
         // Zug
         zugTop(s, { ...pose(f.st), S, nm: 'ab', rb: 270, hl: t.k === 4 ? C.red : undefined });

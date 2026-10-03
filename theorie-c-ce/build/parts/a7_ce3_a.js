@@ -60,7 +60,8 @@ module.exports = async (deck) => {
         bar(xm(AX + 3.25), t.a, 'Anhänger bremst', 'ba');
         // Koppelkraft
         const cx = (xm(7.5) + xm(AX)) / 2, L = 0.75 * Math.abs(t.kop), col = t.kop < 0 ? C.red : C.or;
-        arrow(s, t.kop < 0 ? cx + L : cx - L, 2.75, t.kop < 0 ? cx - L : cx + L, 2.75, { col, th: 0.09, head: 0.26, name: 'kop', hide: Math.abs(t.kop) < 0.3 });
+        const lf = t.kop < 0.3; // unsichtbar: schon so ausgerichtet wie im nächsten Bild (schiebt)
+        arrow(s, lf ? cx + Math.max(L, 0.05) : cx - L, 2.75, lf ? cx - Math.max(L, 0.05) : cx + L, 2.75, { col, th: 0.09, head: 0.26, name: 'kop', hide: Math.abs(t.kop) < 0.3 });
         s.text(t.kop <= -0.3 ? 'Anhänger schiebt' : t.kop >= 0.9 ? 'Anhänger zieht' : t.kop >= 0.3 ? 'zieht leicht' : t.l ? 'Koppelkraft klein' : '', { x: cx - 1.3, y: 2.26, w: 2.6, h: 0.32, size: 14, bold: true, color: t.kop <= -0.3 ? C.red : t.kop >= 0.9 ? C.or : C.gr, align: 'center', name: '!!kopt' });
         s.text(t.msg, { x: 5.75, y: 5.0, w: 7.3, h: 1.2, size: 17, bold: true, color: t.mc, align: 'center', valign: 'middle', name: '!!msg' });
       },

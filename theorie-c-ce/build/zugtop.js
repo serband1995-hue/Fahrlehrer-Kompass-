@@ -36,14 +36,15 @@ function zugTop(s, o) {
   const { H, a = 0, b = 0, S = 0.2, nm = 'z', bd, rb = 180 } = o;
   const u = uv(a), nu = lf(u), v = uv(b), nv = lf(v);
   // Bremsspuren (unter allem)
-  const sk = (from, to, k, show, tag) => seg(s, from[0], from[1], to[0], to[1], { col: '0B0E13', th: 0.05, hide: !show, rb, name: `!!${nm}${tag}${k}` });
+  const tiny = (p, ang) => { const w = uv(ang); return [p[0] + w[0] * 0.001, p[1] + w[1] * 0.001]; };
+  const sk = (from, to, k, show, tag, ang) => seg(s, from[0], from[1], ...(Math.hypot(to[0] - from[0], to[1] - from[1]) < 1e-4 ? tiny(from, ang) : to), { col: '0B0E13', th: 0.05, hide: !show, rb, name: `!!${nm}${tag}${k}` });
   const wa = wheelsAh(H, b, S, bd);
   if (o.trailAh) {
     // Spur als Polylinie über frühere Lagen: o.trailAh = [{H, b}, …] (älteste zuerst), immer o.nTrail Abschnitte
     const P = [...o.trailAh.map(q => wheelsAh(q.H, q.b, S, q.bd)), wa];
     for (let j = 0; j < o.nTrail; j++) wa.forEach((p, k) => {
       const on = j < P.length - 1, A = on ? P[j][k] : p, B = on ? P[j + 1][k] : p;
-      sk(A, B, k + '_' + j, on, 'sa');
+      sk(A, B, k + '_' + j, on, 'sa', b);
     });
   }
   const wl = wheelsLkw(H, a, S);
@@ -52,7 +53,7 @@ function zugTop(s, o) {
     const P = [...o.trailLkw.map(q => wheelsLkw(q.H, q.a, S)), wl];
     for (let j = 0; j < o.nTrailL; j++) [2, 3, 4, 5].forEach(k => {
       const on = j < P.length - 1, A = on ? P[j][k] : wl[k], B = on ? P[j + 1][k] : wl[k];
-      sk(A, B, k + '_' + j, on, 'sl');
+      sk(A, B, k + '_' + j, on, 'sl', a);
     });
   }
   // Räder
@@ -79,7 +80,7 @@ const SZ = { wb: 3.8, c: 0.5, fo: 1.2, ro: 0.9, kp: 1.6, ax: 7.6, len: 13.6 };
 function satTop(s, o) {
   const { P, a = 0, b = 0, S = 0.2, nm = 's', rb = 180 } = o;
   const u = uv(a), nu = lf(u), v = uv(b), nv = lf(v), K = at(P, u, nu, SZ.c, 0, S);
-  const sk = (from, to, k, show, tag) => seg(s, from[0], from[1], to[0], to[1], { col: o.trailCol || 'FF5C5C', th: 0.035, hide: !show, rb, name: `!!${nm}${tag}${k}` });
+  const sk = (from, to, k, show, tag) => { if (Math.hypot(to[0] - from[0], to[1] - from[1]) < 1e-4) { const w = uv(b); to = [from[0] + w[0] * 0.001, from[1] + w[1] * 0.001]; } return seg(s, from[0], from[1], to[0], to[1], { col: o.trailCol || 'FF5C5C', th: 0.035, hide: !show, rb, name: `!!${nm}${tag}${k}` }); };
   // Spur der Aufliegerachsen (Mitte außen links/rechts)
   const wA = (q) => { const vv = uv(q.b), nn = lf(vv), KK = at(q.P, uv(q.a), lf(uv(q.a)), SZ.c, 0, S); return [at(KK, vv, nn, -SZ.ax, 1.05, S), at(KK, vv, nn, -SZ.ax, -1.05, S)]; };
   if (o.trail) {

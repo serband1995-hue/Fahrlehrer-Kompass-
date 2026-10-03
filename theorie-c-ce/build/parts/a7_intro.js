@@ -8,7 +8,7 @@ module.exports = async (deck) => {
   deck.ftLabel = 'KLASSE CE  ·  ABEND 7';
   // ===== TITEL =====
   {
-    const s = base(deck, 'ce3', { bg: 'm_titel.jpg', ov: 9.0, footer: false, transition: 'black', notes:
+    const s = base(deck, 'ce3', { bg: 'm_titel_r.jpg', bgX: 3.3, ov: 9.0, footer: false, transition: 'black', notes:
       '▶ Sagen: „Willkommen zu Abend 7 – dem letzten Abend für Klasse CE. Zuerst noch einmal Bremsen: Wie bremst ein Zug, damit er gerade bleibt? Was passiert, wenn der ABS-Stecker fehlt? Und wie sichert ihr den Zug am Berg? Nach der Pause geht es ums Fahren: Einknicken, Rückwärtsfahren, Abbiegen, Wetter, Tempo und Abstand.“\n' +
       '💡 Vorher: Anwesenheit eintragen, Ausbildungsnachweis abzeichnen.\n' +
       '🖱 Keine Klicks, alles läuft von selbst.\n' +
