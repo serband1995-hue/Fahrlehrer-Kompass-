@@ -24,9 +24,9 @@ module.exports = async (deck) => {
     // Stirnwand
     s.rect(bx0 - 0.07, by0, 0.09, by1 - by0, { fill: hit ? C.red : '9AA4B1', glow: hit ? 10 : undefined, glowColor: C.red, name: '!!stirn' });
     // Ladung: zwei Paletten mit Kartons
-    const SW = 0.92, gap = secured ? 0.03 : 0.95;
+    const SW = 0.92, gap = secured ? 0.02 : 0.95, step = secured ? SW - 0.06 : SW + 0.04;   // gesichert: Kartons stehen lückenlos aneinander
     for (let q = 0; q < 2; q++) {
-      const x0 = bx0 + gap + q * (SW + 0.04) + off;
+      const x0 = bx0 + gap + q * step + off;
       s.rect(x0, by1 - 0.13, SW, 0.13, { fill: '9A6B3A', name: '!!pal' + q });
       for (let b = 0; b < 3; b++) s.rrect(x0 + 0.03, by1 - 0.13 - (b + 1) * 0.36 + 0.02, SW - 0.06, 0.34, { fill: b % 2 ? 'C69A5B' : 'B9864A', line: '6E4E2A', lw: 1, rr: 0.04, name: '!!box' + q + b });
       // Zurrgurte (nur gesichert)
@@ -46,7 +46,7 @@ module.exports = async (deck) => {
   const fr = (v, o = {}) => ({ ...o, t: { v, ...(o.t || {}) } });
   await motion(deck, 'c9k', {
     kicker: 'Vollbremsung', ttl: 'Die Ladung will weiter', dur: 420, holdDur: 800,
-    question: 'Vollbremsung: Mit wie viel Kraft schiebt eine 10-Tonnen-Ladung nach vorn?',
+    question: 'Vollbremsung: Mit wie viel Kraft schiebt eine Ladung von 10\u00A0Tonnen nach vorn?',
     answer: 'Mit bis zu 8.000 daN – so viel, wie 8 Tonnen wiegen: rund 80 % ihres Gewichts. Egal ob aus 30 oder 80 km/h.',
     legend: 'Blick in den Aufbau · schematisch',
     frames: [
@@ -61,13 +61,13 @@ module.exports = async (deck) => {
   await motion(deck, 'c9k', {
     kicker: 'Vollbremsung', ttl: 'Die Ladung will weiter', dur: 420, holdDur: 800,
     question: 'Was hilft dagegen?',
-    answer: 'Ladung lückenlos an die Stirnwand (Formschluss) und zusätzlich niederzurren – dann bewegt sich nichts.',
+    answer: 'Ladung lückenlos an die Stirnwand (Formschluss) und mit genug Gurten niederzurren – dann bleibt sie stehen.',
     legend: 'Blick in den Aufbau · schematisch',
     frames: [
       fr(80, { hold: true, cap: 'Dieselbe Ladung – jetzt direkt an der Stirnwand und mit Gurten niedergezurrt.', note: '▶ Sagen: „Jetzt dieselbe Ladung – aber direkt an die Stirnwand gestellt und mit Gurten niedergezurrt.“\n❓ „Was passiert jetzt bei der Vollbremsung?“\n🖱 Klick: Die Fahrt läuft (von selbst bis zur Bremsung).\n➜ „Vollbremsung.“' }),
       fr(80), fr(80),
       fr(60, { t: { brake: 1 }, cap: 'Vollbremsung – die Kraft ist genauso groß …' }), fr(40, { t: { brake: 1 } }), fr(20, { t: { brake: 1 } }),
-      fr(0, { t: { brake: 1 }, hold: true, answer: true, cap: '… aber die Stirnwand und die Gurte halten. Die Ladung bleibt, wo sie ist.', note: '▶ „Die Kraft ist genauso groß. Aber die Ladung steht schon an der Stirnwand – sie kann keinen Schwung holen. Und die Gurte pressen sie auf die Ladefläche. Das ist der Unterschied.“\n✅ Formschluss (lückenlos an Stirnwand und Seitenwände) plus Kraftschluss (Niederzurren) – die üblichen Methoden nach VDI 2700. Die Stirnwand allein hält nur einen Teil der Nutzlast (Kapitel 3).\n🖱 Keine Animation mehr – nächster Klick: nächste Folie.\n➜ „Und nicht nur nach vorn wirken Kräfte.“' }),
+      fr(0, { t: { brake: 1 }, hold: true, answer: true, cap: '… aber Stirnwand und Gurte halten – weil genug Gurte gespannt sind. Die Ladung bleibt stehen.', note: '▶ „Die Kraft ist genauso groß. Aber die Ladung steht schon an der Stirnwand – sie kann keinen Schwung holen. Und die Gurte pressen sie auf die Ladefläche. Wichtig: Es müssen genug Gurte sein – wie viele, das wird berechnet.“\n✅ Formschluss (lückenlos an Stirnwand und Seitenwände) plus Kraftschluss (Niederzurren) – die üblichen Methoden nach VDI 2700. Die Stirnwand allein hält nur einen Teil der Nutzlast: Bei 10 t drückt die Ladung mit bis zu 8.000 daN nach vorn, eine normale Stirnwand (Code L) hält höchstens 5.000 daN (BG BAU 2021, Tab. 1 und Tab. 3; Kapitel 3). Den Rest müssen genug Gurte schaffen – Zahl der Gurte nach DIN EN 12195-1 berechnen.\n🖱 Keine Animation mehr – nächster Klick: nächste Folie.\n➜ „Und nicht nur nach vorn wirken Kräfte.“' }),
     ],
     scene: scene(true),
   });
@@ -87,8 +87,8 @@ module.exports = async (deck) => {
       ],
       notes: [
         '▶ Sagen: „Wir schauen von oben auf den Lkw. Beim Bremsen drückt die Ladung nach vorn – bis zu 80 Prozent ihres Gewichts.“\n✅ DIN EN 12195-1: Beschleunigungsbeiwerte Straßenverkehr – vorn 0,8 g.\n➜ „In der Kurve?“',
-        '▶ „In der Kurve und beim Ausweichen drückt sie zur Seite – bis zu 50 Prozent.“\n✅ DIN EN 12195-1:2011: seitlich 0,5 g; bei kippgefährdeter Ladung 0,6 g (alte VDI 2700: 0,7 g). Quelle: BG BAU „Ladungssicherung“ 2021.\n➜ „Und nach hinten?“',
-        '▶ „Beim Anfahren, beim Schalten und am Berg drückt sie nach hinten – bis zu 50 Prozent.“\n❓ Frage auf der Folie auflösen.\n✅ DIN EN 12195-1: nach hinten 0,5 g.\n💡 Die Ladung muss in ALLE Richtungen gesichert sein – nicht nur nach vorn.\n➜ „Hält nicht schon die Reibung?“',
+        '▶ „In der Kurve und beim Ausweichen drückt sie zur Seite – bis zu 50 Prozent.“\n✅ DIN EN 12195-1:2011 (BG BAU „Ladungssicherung“ 2021, Tab. 1): seitlich 0,5 g, kippgefährdet 0,6 g. Ältere Rechnung nach VDI 2700: 0,7 g (IHK Stuttgart 2016, S. 17).\n➜ „Und nach hinten?“',
+        '▶ „Beim Anfahren, beim Schalten und am Berg drückt sie nach hinten – bis zu 50 Prozent.“\n❓ Frage auf der Folie auflösen.\n✅ DIN EN 12195-1: nach hinten 0,5 g, bei kippgefährdeter Ladung 0,6 g (BG BAU 2021, Tab. 1).\n💡 Die Ladung muss in ALLE Richtungen gesichert sein – nicht nur nach vorn.\n➜ „Hält nicht schon die Reibung?“',
       ],
       legend: 'Draufsicht · Pfeillänge = Anteil der Gewichtskraft (DIN EN 12195-1)',
       scene: async (s, i) => {
@@ -128,14 +128,14 @@ module.exports = async (deck) => {
     answers: [
       ['LuTruck', 'Fahrer', 'Ladung nicht verkehrssicher (Lkw): 60 € und 1 Punkt · mit Gefährdung 75 € und 1 Punkt.', C.red, 17],
       ['LuForklift', 'Verlader', 'Muss die Ladung beförderungssicher laden, stauen und befestigen.', C.or, 17],
-      ['LuBuilding2', 'Halter', 'Lässt er den Lkw trotzdem fahren: 270 € und 1 Punkt.', C.or, 17],
+      ['LuBuilding2', 'Halter', 'Lässt er den Lkw trotzdem fahren und leidet die Sicherheit wesentlich: 270 € und 1 Punkt.', C.or, 17],
       ['LuTriangleAlert', 'Unterwegs ein wesentlicher Mangel?', 'Lässt er sich nicht gleich beheben: auf dem kürzesten Weg aus dem Verkehr.', C.gr, 17],
     ],
     notes:
       '▶ Sagen: „Wer ist verantwortlich, wenn die Ladung nicht hält? Nicht nur einer!“\n' +
       '❓ Erst sammeln lassen, dann je Klick auflösen.\n' +
       '🖱 Klick 1–4: je eine Karte.\n' +
-      '✅ § 22 Abs. 1 und § 23 Abs. 1 StVO (Fahrer); BKat Nr. 102.1: Lkw, Bus oder Anhänger 60 € · Nr. 102.1.1 mit Gefährdung 75 € (je 1 Punkt, FeV Anlage 13 Nr. 3.2.14). § 412 Abs. 1 HGB: Der Absender hat das Gut beförderungssicher zu verladen. § 31 Abs. 2 StVZO + BKat Nr. 189.3.1: Halter 270 € und 1 Punkt. § 23 Abs. 2 StVO: Mangel nicht alsbald zu beheben → auf dem kürzesten Weg aus dem Verkehr. Prüfungsfragen 2.2.22-221 (Fahrer und Verlader) und 2.2.22-214 (Fahrer und Halter).\n' +
+      '✅ § 22 Abs. 1 und § 23 Abs. 1 StVO (Fahrer); BKat Nr. 102.1: Lkw, Bus oder Anhänger 60 € · Nr. 102.1.1 mit Gefährdung 75 € (je 1 Punkt, FeV Anlage 13 Nr. 3.2.14). § 412 Abs. 1 HGB: Der Absender hat das Gut beförderungssicher zu verladen. § 31 Abs. 2 StVZO + BKat Nr. 189.3.1: Halter 270 € und 1 Punkt – nur wenn die Verkehrssicherheit durch die Ladung wesentlich litt (FeV Anlage 13 Nr. 3.5.2). § 23 Abs. 2 StVO: Mangel nicht alsbald zu beheben → auf dem kürzesten Weg aus dem Verkehr. Prüfungsfragen 2.2.22-221 (Fahrer und Verlader) und 2.2.22-214 (Fahrer und Halter).\n' +
       '💡 Die Werte gelten für Lkw. Beim Pkw ist es weniger (35 €).\n' +
       '➜ „Kapitel 2: Wie sichert man richtig?“',
   });

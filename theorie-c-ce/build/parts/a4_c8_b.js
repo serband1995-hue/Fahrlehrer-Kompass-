@@ -31,24 +31,27 @@ module.exports = async (deck) => {
     notes: [
       '▶ Sagen: „Ein Lkw darf höchstens 2,55 Meter breit sein – mit Ladung.“\n✅ § 32 Abs. 1 StVZO; § 22 Abs. 2 StVO (Fahrzeug und Ladung zusammen 2,55 m). Prüfungsfrage 2.7.09-202 (Zahleneingabe).\n➜ „Es gibt eine Ausnahme.“',
       '▶ „Kühlfahrzeuge mit dick isolierten Wänden dürfen 2,60 m breit sein. Und Achtung: Die Außenspiegel zählen nicht zur Breite – sie stehen noch weiter raus.“\n❓ Frage auf der Folie auflösen.\n✅ § 32 Abs. 1 Nr. 4 StVZO (2,60 m bei mindestens 45 mm Wanddicke); Einrichtungen für indirekte Sicht werden nicht mitgemessen. Prüfungsfrage 2.6.06-211: An engen Durchfahrten ragen die Spiegel über die angegebene Breite hinaus, und Aufbauten schwanken auf unebener Fahrbahn.\n➜ „Und nach oben?“',
-      '▶ „Höhe: höchstens 4 Meter, mit Ladung. Kennt die Höhe eures Lkw – sie steht oft an einem Schild im Fahrerhaus. Brücken mit Höhenbeschränkung, Tankstellendächer, Hallentore.“\n✅ § 32 Abs. 2 StVZO; § 22 Abs. 2 StVO. Prüfungsfrage 2.7.09-210: 4,0 m.\n➜ „Und die Länge?“',
-      '▶ „Ein einzelner Lkw darf höchstens 12 Meter lang sein. Mit Anhänger und Ladung höchstens 20,75 Meter – das kommt in CE.“\n💡 Der Lastzug selbst darf höchstens 18,75 m lang sein (§ 32 Abs. 4 StVZO); bis 20,75 m nur mit überstehender Ladung.\n✅ § 32 Abs. 3 Nr. 1 StVZO (12,00 m). § 22 Abs. 4 StVO und Prüfungsfrage 2.6.06-201: Zug samt Ladung höchstens 20,75 m.\n➜ „Jetzt die Gewichte.“',
+      '▶ „Höhe: höchstens 4 Meter, mit Ladung. Kennt die Höhe eures Lkw – sie steht oft an einem Schild im Fahrerhaus. Brücken mit Höhenbeschränkung, Tankstellendächer, Hallentore.“\n✅ § 32 Abs. 2 StVZO; § 22 Abs. 2 StVO. Prüfungsfragen 2.7.09-210: 4,0 m und 2.7.09-203 (Zahlenfrage zur Höhe mit Ladung: 4).\n➜ „Und die Länge?“',
+      '▶ „Ein einzelner Lkw darf höchstens 12 Meter lang sein. Mit Anhänger und Ladung höchstens 20,75 Meter – das kommt in CE.“\n💡 Der Lastzug selbst darf höchstens 18,75 m lang sein (§ 32 Abs. 4 StVZO); bis 20,75 m nur mit überstehender Ladung.\n✅ § 32 Abs. 3 Nr. 1 StVZO (12,00 m). § 22 Abs. 4 StVO und Prüfungsfrage 2.6.06-201: Zug samt Ladung höchstens 20,75 m.\n💡 Auf Breite, Höhe und Länge gibt es keine Toleranz (§ 32 Abs. 8 StVZO). Ausnahme bei der Länge: ein zugelassenes verlängertes Fahrerhaus (§ 32 Abs. 3 Satz 2 StVZO).\n➜ „Jetzt die Gewichte.“',
     ],
     legend: 'Nicht maßstäblich',
     scene: async (s, i) => {
-      const GY = 5.15;
-      await lkwHeck(s, {}, { x: 6.9, gy: GY, k: 0.78 });
+      // Heck- und Seitenansicht im gleichen Maßstab (gleich hoch: Dachkante auf einer Linie)
+      const GY = 5.15, KK = 0.7, SX0 = 9.2, SL = 5.2;
+      await lkwHeck(s, {}, { x: 6.9, gy: GY, k: KK });
       // Spiegelköpfe (ragen seitlich über den Aufbau hinaus)
-      const rx0 = 6.9, rw = 2.6 * 0.78;
-      for (const [nm, x] of [['spL', rx0 - 0.2], ['spR', rx0 + rw + 0.06]]) s.rrect(x, GY - 1.55, 0.14, 0.4, { fill: '2A303A', line: i === 1 ? C.or : '2A303A', lw: 2, rr: 0.3, name: '!!' + nm });
-      s.oval(rx0 - 0.4, GY - 1.75, 0.55, 0.8, { line: C.or, lw: 2.5, ft: 100, lt: i === 1 ? 0 : 100, name: '!!spRing' });
-      await lkw(s, { L: 5.6, axles: [0.78, 4.05] }, { x: 9.4, gy: GY, k: 0.62 });
+      const rx0 = 6.9, rw = 2.6 * KK, my = GY - 1.39, mh = 0.36;
+      for (const [nm, x] of [['spL', rx0 - 0.2], ['spR', rx0 + rw + 0.06]]) {
+        s.rrect(x, my, 0.14, mh, { fill: '2A303A', line: i === 1 ? C.or : '2A303A', lw: 2, rr: 0.3, name: '!!' + nm });
+        s.oval(x + 0.07 - 0.275, my + mh / 2 - 0.4, 0.55, 0.8, { line: C.or, lw: 2.5, ft: 100, lt: i === 1 ? 0 : 100, name: nm === 'spL' ? '!!spRing' : '!!spRing2' });
+      }
+      await lkw(s, { L: SL, boxH: 1.9 }, { x: SX0, gy: GY, k: KK });
       mass(s, rx0, GY + 0.3, rx0 + rw, GY + 0.3, i === 1 ? '2,60 m' : '2,55 m', i <= 1, 'b', { tw: 1.6 });
-      const top = GY - (0.75 + 1.9) * 0.78;
+      const top = GY - (0.75 + 1.9) * KK;
       mass(s, rx0 - 0.55, GY, rx0 - 0.55, top, '4,00 m', i === 2, 'h', { tw: 0.75 });
-      mass(s, 9.4, GY + 0.3, 9.4 + 5.6 * 0.62, GY + 0.3, '12,00 m', i === 3, 'l', { tw: 1.6 });
-      s.text('Von hinten', { x: rx0, y: 1.65, w: rw, h: 0.35, size: 14, color: C.dim, align: 'center', name: '!!vh' });
-      s.text('Von der Seite', { x: 9.4, y: 1.65, w: 3.5, h: 0.35, size: 14, color: C.dim, align: 'center', name: '!!vs' });
+      mass(s, SX0, GY + 0.3, SX0 + SL * KK, GY + 0.3, '12,00 m', i === 3, 'l', { tw: 1.6 });
+      s.text('Von hinten', { x: rx0 - 0.2, y: 1.65, w: rw + 0.4, h: 0.35, size: 14, color: C.dim, align: 'center', name: '!!vh' });
+      s.text('Von der Seite', { x: SX0, y: 1.65, w: SL * KK, h: 0.35, size: 14, color: C.dim, align: 'center', name: '!!vs' });
     },
   });
 
@@ -78,7 +81,7 @@ module.exports = async (deck) => {
       ],
       legend: 'Nach § 34 StVZO · eure Fahrzeugpapiere können niedrigere Werte nennen',
       scene: async (s, i) => {
-        const t = T[i], GY = 4.55, k = 0.92, X = 6.3;
+        const t = T[i], GY = 4.7, k = 0.92, X = 6.3;
         await lkw(s, { L: 5.6, axles: t.ax }, { x: X, gy: GY, k, name: '!!lkwG' + (t.ax.length) });
         s.text(t.lab, { x: 5.7, y: 1.55, w: 4, h: 0.55, size: 26, bold: true, color: C.txt, name: '!!lab' });
         s.text(t.zgm, { x: 9.0, y: 1.45, w: 4.05, h: 0.8, size: 44, bold: true, color: C.or, align: 'right', name: '!!zgm' });
@@ -87,11 +90,11 @@ module.exports = async (deck) => {
         const lab = ['höchstens 10 t', 'höchstens 11,5 t'];
         T[3].ax.forEach((a, q) => {
           const x = X + a * k;
-          arrow(s, x, GY + 0.95, x, GY + 0.2, { col: C.or, th: 0.09, head: 0.24, name: 'al' + q, hide: i !== 3 });
-          s.text(i === 3 ? lab[q] : '', { x: x - 1.1, y: GY + 0.98, w: 2.2, h: 0.35, size: 15, bold: true, color: C.or, align: 'center', name: '!!alt' + q });
+          arrow(s, x, GY + 0.04, x, GY + 0.62, { col: C.or, th: 0.09, head: 0.24, name: 'al' + q, hide: i !== 3 });   // Achslast drückt nach unten auf die Straße
+          s.text(i === 3 ? lab[q] : '', { x: x - 1.1, y: GY + 0.68, w: 2.2, h: 0.35, size: 15, bold: true, color: C.or, align: 'center', name: '!!alt' + q });
         });
-        s.text(i === 3 ? 'Vorderachse' : '', { x: X + T[3].ax[0] * k - 1.1, y: GY + 1.3, w: 2.2, h: 0.3, size: 12, color: C.mut, align: 'center', name: '!!an0' });
-        s.text(i === 3 ? 'Antriebsachse' : '', { x: X + T[3].ax[1] * k - 1.1, y: GY + 1.3, w: 2.2, h: 0.3, size: 12, color: C.mut, align: 'center', name: '!!an1' });
+        s.text(i === 3 ? 'Vorderachse' : '', { x: X + T[3].ax[0] * k - 1.1, y: GY + 1.0, w: 2.2, h: 0.3, size: 12, color: C.mut, align: 'center', name: '!!an0' });
+        s.text(i === 3 ? 'Antriebsachse' : '', { x: X + T[3].ax[1] * k - 1.1, y: GY + 1.0, w: 2.2, h: 0.3, size: 12, color: C.mut, align: 'center', name: '!!an1' });
       },
     });
   }
@@ -100,18 +103,18 @@ module.exports = async (deck) => {
   {
     const ROWS = [['2–5 %', '30 €', '35 €'], ['über 5 %', '80 € + 1 P', '140 € + 1 P'], ['über 10 %', '110 € + 1 P', '235 € + 1 P'], ['über 15 %', '140 € + 1 P', '285 € + 1 P'], ['über 20 %', '190 € + 1 P', '380 € + 1 P'], ['über 25 %', '285 € + 1 P', '425 € + 1 P'], ['über 30 %', '380 € + 1 P', '425 € + 1 P']];
     const fr = (w, n, o = {}) => ({ t: { w, n }, ...o });
-    const rowOf = p => p > 30 ? 6 : p > 25 ? 5 : p > 20 ? 4 : p > 15 ? 3 : p > 10 ? 2 : p > 5 ? 1 : p > 2 ? 0 : -1;
+    const rowOf = p => p > 30 ? 6 : p > 25 ? 5 : p > 20 ? 4 : p > 15 ? 3 : p > 10 ? 2 : p > 5 ? 1 : p >= 2 ? 0 : -1;   // BKat: „2 bis 5 %“ – 2 % gehören schon dazu
     await motion(deck, 'c8m', {
       kicker: 'Überladung', ttl: 'Ab auf die Waage', dur: 480, holdDur: 800,
       question: 'Euer 18-Tonner wiegt auf der Waage fast 20 Tonnen. Wer zahlt – und wie viel?',
-      answer: 'Fahrer UND Halter. Über 10 %: Fahrer 110 €, Halter 235 €, je 1 Punkt. Weiter geht es erst nach dem Abladen.',
-      legend: 'Bußgelder für Kfz über 7,5 t (bussgeldkatalog.de, Stand 07/2026) · P = Punkt in Flensburg',
+      answer: 'Fahrer UND Halter. Über 10 %: Fahrer 110 €, Halter 235 €, je 1 Punkt. Die Polizei kann Um- oder Abladen verlangen.',
+      legend: 'Bußgelder für Kfz über 7,5 t (Bußgeldkatalog Nr. 198/199) · P = Punkt in Flensburg',
       frames: [
         fr(14.2, 4, { hold: true, cap: 'Ein 18-Tonner wird beladen. Die Waage zeigt das tatsächliche Gewicht.', note: '▶ Sagen: „Ein 18-Tonner wird beladen. Die Polizei kann ihn jederzeit auf die Waage holen.“\n❓ Frage auf der Folie stellen: Wer zahlt bei Überladung?\n🖱 Klick: Es wird weiter geladen (läuft von selbst).\n➜ „Weiter laden.“' }),
         fr(15.5, 6), fr(16.8, 8),
         fr(18.0, 10, { hold: true, cap: 'Genau 18 t – voll, aber erlaubt.', note: '▶ „Genau 18 Tonnen – erlaubt. Jetzt sagt der Disponent: Die zwei Paletten passen doch noch drauf …“\n🖱 Klick: weiter (läuft von selbst).\n➜ „Noch zwei Paletten.“' }),
-        fr(18.6, 11, { cap: 'Mehr als 2 % zu viel: Ab hier wird es teuer.' }), fr(19.3, 12),
-        fr(19.9, 13, { hold: true, answer: true, cap: 'Über 10 % zu schwer: Bußgeld und Punkt für Fahrer und Halter – und Abladen, bevor es weitergeht.', note: '▶ „19,9 Tonnen – mehr als 10 Prozent zu viel. Ihr als Fahrer zahlt 110 Euro und bekommt einen Punkt. Der Halter zahlt sogar 235 Euro und bekommt auch einen Punkt. Und weiterfahren dürft ihr erst, wenn abgeladen ist.“\n✅ bussgeldkatalog.de „Überladung Lkw“ (Stand 12.07.2026), Kfz über 7,5 t. Überladung gilt ab mehr als 2 %.\n✅ Prüfungsfrage 2.2.22-203: Überladung feststellen durch Nachwiegen oder eingebaute Achslastmessgeräte – nicht durch eine Bremsprobe.\n💡 Überladung ist gefährlich: längerer Bremsweg, überlastete Reifen und Bremsen, mehr Fliehkraft. Ihr seid verantwortlich – auch wenn der Disponent drängt.\n🖱 Keine Animation mehr – nächster Klick: nächste Folie.\n➜ „Kapitel 3: Ladung, die herausragt.“' }),
+        fr(18.6, 11, { cap: 'Ab 2 % zu viel kostet es Bußgeld – erlaubt ist nur das zulässige Gewicht.' }), fr(19.3, 12),
+        fr(19.9, 13, { hold: true, answer: true, cap: 'Über 10 % zu schwer: Bußgeld und Punkt für Fahrer und Halter – und die Polizei kann verlangen, dass ihr erst umladet oder abladet.', note: '▶ „19,9 Tonnen – mehr als 10 Prozent zu viel. Ihr als Fahrer zahlt 110 Euro und bekommt einen Punkt. Der Halter zahlt sogar 235 Euro und bekommt auch einen Punkt. Und die Polizei kann verlangen, dass ihr umladet oder abladet, bevor ihr weiterfahrt.“\n✅ BKatV Anhang Tabelle 3 a (Nr. 198 Fahrer, Nr. 199 Halter), Kfz über 7,5 t; Punkte: FeV Anlage 13 Nr. 3.5.5. Jede Überladung ist verboten (§ 34 Abs. 3 StVZO) – der Bußgeldkatalog beginnt bei 2 % (BKat Nr. 198.1.1: 2 bis 5 % = 30 €).\n✅ § 31c StVZO: Wiegen auf Weisung. Die Polizei kann Um- oder Abladen verlangen. Die Kosten fürs Wiegen (bei Übergewicht) und fürs Um- oder Abladen trägt der Halter.\n✅ Prüfungsfrage 2.2.22-203: Überladung feststellen durch Nachwiegen oder eingebaute Achslastmessgeräte – nicht durch eine Bremsprobe.\n💡 Überladung ist gefährlich: längerer Bremsweg, überlastete Reifen und Bremsen, mehr Fliehkraft. Ihr seid verantwortlich – auch wenn der Disponent drängt.\n🖱 Keine Animation mehr – nächster Klick: nächste Folie.\n➜ „Kapitel 3: Ladung, die herausragt.“' }),
       ],
       scene: async (s, { w, n }) => {
         const GY = 3.85, k = 0.66, X = 5.95, L = 5.6;

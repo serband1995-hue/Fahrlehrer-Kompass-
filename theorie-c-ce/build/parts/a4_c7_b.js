@@ -32,7 +32,7 @@ module.exports = async (deck) => {
       '✅ Lehrbuchwissen (Fahrwiderstände). Zu wenig Reifendruck erhöht den Rollwiderstand und den Verbrauch, der Reifen walkt und wird heiß (siehe Abend 2).\n' +
       '➜ „Der Luftwiderstand hat eine Besonderheit – schauen wir ihn genauer an.“' });
     kick(s, 'Widerstände'); title(s, 'Was den Lkw bremst – ohne Bremse');
-    await point(s, 0.7, 2.05, 11.93, 1.3, 'LuCircleDashed', C.or, 'Rollwiderstand –', 'der Reifen verformt sich beim Rollen. Mehr Gewicht und zu wenig Luftdruck = mehr Widerstand.', CLICK, { size: 19 });
+    await point(s, 0.7, 2.05, 11.93, 1.3, 'LuCircleDashed', C.or, 'Rollwiderstand –', 'der Reifen verformt sich beim Rollen. Mehr Gewicht und zu wenig Luftdruck erhöhen den Widerstand.', CLICK, { size: 19 });
     await point(s, 0.7, 3.5, 11.93, 1.3, 'LuWind', C.bl, 'Luftwiderstand –', 'die große Stirnfläche drückt gegen die Luft. Er wächst mit dem Quadrat der Geschwindigkeit.', CLICK, { size: 19 });
     await point(s, 0.7, 4.95, 11.93, 1.3, 'LuMountain', C.red, 'Steigungswiderstand –', 'bergauf zieht die Masse den Lkw zurück. Je schwerer und je steiler, desto mehr.', CLICK, { size: 19 });
     foot(s, 'Im Gefälle dreht sich das um: Dann schiebt die Masse den Lkw nach vorn.');
@@ -52,9 +52,9 @@ module.exports = async (deck) => {
         '90 km/h: nur gut 10 Prozent schneller, aber etwa 27 Prozent mehr Luftwiderstand. Das kostet Diesel.',
       ],
       notes: [
-        '▶ Sagen: „Die Luft muss um den großen Lkw herum. Das Fahrerhaus ist wie eine Wand von gut 2,5 Metern Breite und fast 4 Metern Höhe.“\n✅ Physik: Luftwiderstand wächst mit dem Quadrat der Geschwindigkeit. (60/80)² = 0,56.\n➜ „Jetzt 80 km/h.“',
+        '▶ Sagen: „Die Luft muss um den großen Lkw herum. Die Front mit dem Aufbau ist wie eine Wand von gut 2,5 Metern Breite und bis zu 4 Metern Höhe.“\n✅ Physik: Luftwiderstand wächst mit dem Quadrat der Geschwindigkeit. (60/80)² = 0,56.\n➜ „Jetzt 80 km/h.“',
         '▶ „80 km/h – das nehmen wir als Vergleich. Dachspoiler und Seitenverkleidungen lenken die Luft um den Aufbau herum und sparen so Diesel.“\n💡 Spoiler richtig einstellen: Er soll die Luft auf Höhe der Aufbau-Oberkante führen.\n➜ „Und bei 90?“',
-        '▶ „90 km/h: Ihr seid nur gut 10 Prozent schneller, aber der Luftwiderstand ist um 27 Prozent größer. Und Lkw über 3,5 t dürfen auf der Autobahn ohnehin nur 80 fahren.“\n❓ Frage auf der Folie auflösen.\n✅ Eigene Rechnung: (90/80)² = 1,27. § 18 Abs. 5 Satz 2 Nr. 1 a StVO: Kfz über 3,5 t höchstens 80 km/h auf Autobahnen.\n➜ „Noch stärker bremst den Lkw nur eins: der Berg.“',
+        '▶ „90 km/h: Ihr seid nur gut 10 Prozent schneller, aber der Luftwiderstand ist um 27 Prozent größer. Und Lkw über 3,5 t dürfen auf der Autobahn ohnehin nur 80 fahren. Der Geschwindigkeitsbegrenzer aus Abend 3 lässt zwar 90 zu – erlaubt sind trotzdem nur 80.“\n❓ Frage auf der Folie auflösen.\n✅ Eigene Rechnung: (90/80)² = 1,27. § 18 Abs. 5 Satz 2 Nr. 1 a StVO: Kfz über 3,5 t höchstens 80 km/h auf Autobahnen. § 57c Abs. 2 StVZO: Lkw über 3,5 t haben einen Geschwindigkeitsbegrenzer, eingestellt auf höchstens 90 km/h (Abend 3, C6).\n➜ „Noch stärker bremst den Lkw nur eins: der Berg.“',
       ],
       legend: 'Schematisch · Werte im Verhältnis zu 80 km/h',
       scene: async (s, i) => {
@@ -83,22 +83,22 @@ module.exports = async (deck) => {
       ask: { q: '18-t-Lkw, 10 % Steigung: Wie stark zieht der Berg ihn zurück?', a: 'So stark, als hingen 1,8 Tonnen hinten am Seil.', at: 2 },
       caps: [
         'Auf der Ebene zieht nichts nach hinten. Der Motor muss nur Roll- und Luftwiderstand überwinden.',
-        '5 % Steigung: Die Masse zieht mit etwa 9 Kilonewton nach hinten – wie 900 Kilo am Seil.',
+        '5 % Steigung: Die Masse zieht mit etwa 9\u00A0Kilonewton nach hinten – wie 900 Kilo am Seil.',
         '10 % Steigung: doppelt so viel – wie 1,8 Tonnen am Seil. Früh zurückschalten!',
       ],
       notes: [
         '▶ Sagen: „Ein voller 18-Tonner auf der Ebene.“\n➜ „Jetzt geht es bergauf.“',
         '▶ „5 Prozent Steigung – 5 Meter Höhe auf 100 Meter Strecke. Schon zieht der Berg mit rund 9 Kilonewton nach hinten. Das ist, als würde hinten ein Gewicht von 900 Kilo am Seil hängen.“\n✅ Eigene Rechnung: 18.000 kg · 9,81 m/s² · 0,05 ≈ 8,8 kN.\n➜ „Und bei 10 Prozent?“',
-        '▶ „10 Prozent: doppelt so viel, rund 18 Kilonewton – wie 1,8 Tonnen am Seil. Deshalb vor der Steigung zurückschalten, damit der Lkw nicht ins Stocken kommt. Und bergab dreht sich das um: Dann schiebt die Masse mit dieser Kraft nach vorn – darum Dauerbremse.“\n✅ Eigene Rechnung: 18.000 kg · 9,81 m/s² · 0,10 ≈ 17,6 kN. Steigung hier überzeichnet dargestellt.\n➜ „Und jetzt: Wie viel Wucht steckt in einem fahrenden Lkw?“',
+        '▶ „10 Prozent: doppelt so viel, rund 18 Kilonewton – wie 1,8 Tonnen am Seil. Deshalb vor der Steigung zurückschalten, damit der Lkw nicht ins Stocken kommt. Und bergab dreht sich das um: Dann schiebt die Masse mit dieser Kraft nach vorn – darum Dauerbremse.“\n✅ Eigene Rechnung: 18.000 kg · 9,81 m/s² · 0,10 ≈ 17,6 kN. Steigung hier überzeichnet dargestellt.\n✅ Prüfungsfrage 2.7.01-257 (Gefälle, Betriebsbremse schonen): rechtzeitig zurückschalten, Dauerbremse benutzen – nicht die Feststellbremse.\n➜ „Und jetzt: Wie viel Wucht steckt in einem fahrenden Lkw?“',
       ],
       legend: 'Neigung überzeichnet · Rechnung für 18 t',
       scene: async (s, i) => {
         const [deg, lab, kn, f] = A[i], a = deg * Math.PI / 180;
         // Straße als gedrehtes Band: Oberkante läuft durch (SX, SY)
-        const RW = 7.6, RH = 1.1;
-        const cx = SX - RH / 2 * Math.sin(a), cy = SY + RH / 2 * Math.cos(a);
+        const U1 = -3.8, U2 = 3.45, RW = U2 - U1, RH = 1.1, UM = (U1 + U2) / 2;   // Fahrbahn von 3,8 Zoll hinter bis 3,45 Zoll vor dem Lkw-Mittelpunkt: rechts Ende bei x 13,00
+        const cx = SX + UM * Math.cos(a) - RH / 2 * Math.sin(a), cy = SY + UM * Math.sin(a) + RH / 2 * Math.cos(a);
         s.rect(cx - RW / 2, cy - RH / 2, RW, RH, { fill: C.road, rotate: deg, name: '!!hang' });
-        const kx = SX - 0.025 * Math.sin(a), ky = SY + 0.025 * Math.cos(a);
+        const kx = SX + UM * Math.cos(a) - 0.025 * Math.sin(a), ky = SY + UM * Math.sin(a) + 0.025 * Math.cos(a);
         s.rect(kx - RW / 2, ky - 0.025, RW, 0.05, { fill: '55606F', rotate: deg, name: '!!hangK' });
         // Lkw: Mitte unten auf (SX, SY), gedreht (Front links geht nach oben)
         const cxx = SX + (h / 2) * Math.sin(a), cyy = SY - (h / 2) * Math.cos(a);

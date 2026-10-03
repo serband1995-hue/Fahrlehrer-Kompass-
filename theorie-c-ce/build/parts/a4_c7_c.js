@@ -1,6 +1,16 @@
 // Abend 4 · C7: Kapitel 3 Fliehkraft und Kippen
-const { C, sec, base, kick, title, point, CLICK, svgImg, chapter, motion, veh, sign, foot, arrow } = require('../gs');
+const { C, sec, base, kick, title, card, point, CLICK, svgImg, chapter, motion, veh, sign, foot, arrow } = require('../gs');
 const { lkwRear } = require('../lkw');
+const { icon } = require('../lib');
+
+// Karte wie point() (br: true), aber mit schmalerem Textfeld (cut in Zoll) – für mehr Rand rechts
+async function pointSchmal(s, x, y, w, h, ico, col, head, body, cut, size = 18) {
+  card(s, x, y, w, h, {}, CLICK);
+  const d = Math.min(0.62, h - 0.3);
+  s.oval(x + 0.22, y + (h - d) / 2, d, d, { fill: col, line: col }, { fx: 'zoom', dur: 250 });
+  s.img(await icon(ico, C.dark), { x: x + 0.22 + d * 0.22, y: y + (h - d) / 2 + d * 0.22, w: d * 0.56, h: d * 0.56 }, { fx: 'fade', dur: 150 });
+  s.text([{ text: head, options: { bold: true, color: C.txt, breakLine: true } }, { text: body, options: { color: C.mut } }], { x: x + d + 0.45, y, w: w - d - 0.6 - cut, h, size, valign: 'middle' }, { fx: 'fade', dur: 200 });
+}
 
 sec('c7f', 'C7  ·  FLIEHKRAFT UND KIPPEN', C.red, 'bg_red.jpg');
 
@@ -61,25 +71,25 @@ module.exports = async (deck) => {
     kicker: 'Fliehkraft', ttl: 'Die Kurve drückt nach außen', dur: 650, holdDur: 800, question: Q, answer: A,
     legend: 'Draufsicht · schematisch · Pfeil = Fliehkraft',
     frames: [
-      fr(88, { hold: true, cap: '30 km/h in eine Rechtskurve.', note: '▶ Sagen: „Ein Lkw fährt mit 30 km/h in eine Rechtskurve. Der rote Pfeil ist die Fliehkraft – sie drückt den Lkw nach außen.“\n❓ Frage auf der Folie stellen, Tipps sammeln („doppelt so stark?“).\n🖱 Klick: Der Lkw fährt durch die Kurve (läuft von selbst).\n➜ „Schauen wir zu.“' }),
-      fr(78, { cap: 'Die Reifen halten dagegen – die Seitenführungskraft.' }), fr(68), fr(58),
-      fr(48, { hold: true, cap: 'Kleiner Pfeil: Die Reifen halten den Lkw locker in der Spur.', note: '▶ „Die Fliehkraft will den Lkw geradeaus weiterschieben. Die Reifen halten dagegen – das nennt man Seitenführungskraft. Bei 30 km/h kein Problem.“\n🖱 Klick: weiter.\n➜ „Durch.“' }),
-      fr(38), fr(28),
-      fr(18, { hold: true, cap: 'Sauber durch die Kurve.', note: '▶ „Sauber durch. Jetzt dieselbe Kurve mit 60 km/h – doppelt so schnell.“\n🖱 Keine Animation mehr – nächster Klick: die zweite Durchfahrt.\n➜ „Doppelt so schnell.“' }),
+      fr(83, { hold: true, cap: '30 km/h in eine Rechtskurve.', note: '▶ Sagen: „Ein Lkw fährt mit 30 km/h in eine Rechtskurve. Der rote Pfeil ist die Fliehkraft – sie drückt den Lkw nach außen.“\n❓ Frage auf der Folie stellen, Tipps sammeln („doppelt so stark?“).\n🖱 Klick: Der Lkw fährt durch die Kurve (läuft von selbst).\n➜ „Schauen wir zu.“' }),
+      fr(74, { cap: 'Die Reifen halten dagegen – die Seitenführungskraft.' }), fr(65), fr(56),
+      fr(47, { hold: true, cap: 'Kleiner Pfeil: Die Reifen halten den Lkw locker in der Spur.', note: '▶ „Die Fliehkraft will den Lkw geradeaus weiterschieben. Die Reifen halten dagegen – das nennt man Seitenführungskraft. Bei 30 km/h kein Problem.“\n🖱 Klick: weiter.\n➜ „Durch.“' }),
+      fr(38), fr(29),
+      fr(21, { hold: true, cap: 'Sauber durch die Kurve.', note: '▶ „Sauber durch. Jetzt dieselbe Kurve mit 60 km/h – doppelt so schnell.“\n🖱 Keine Animation mehr – nächster Klick: die zweite Durchfahrt.\n➜ „Doppelt so schnell.“' }),
     ],
-    scene: scene(0.42, 30, '× 1'),
+    scene: scene(0.3, 30, '× 1'),
   });
   await motion(deck, 'c7f', {
     kicker: 'Fliehkraft', ttl: 'Die Kurve drückt nach außen', dur: 330, holdDur: 800, question: Q, answer: A,
     legend: 'Draufsicht · schematisch · Pfeil = Fliehkraft',
     frames: [
-      fr(88, { hold: true, cap: 'Dieselbe Kurve mit 60 km/h – doppelt so schnell.', note: '▶ Sagen: „Jetzt mit 60 km/h. Schaut auf den Pfeil.“\n🖱 Klick: Die Durchfahrt beginnt (läuft von selbst – schneller als eben).\n➜ „Los.“' }),
-      fr(78, { cap: 'Der Pfeil ist viermal so lang …' }), fr(68), fr(58, { dr: 0.08 }),
+      fr(83, { hold: true, cap: 'Dieselbe Kurve mit 60 km/h – doppelt so schnell.', note: '▶ Sagen: „Jetzt mit 60 km/h. Schaut auf den Pfeil.“\n🖱 Klick: Die Durchfahrt beginnt (läuft von selbst – schneller als eben).\n➜ „Los.“' }),
+      fr(75, { cap: 'Der Pfeil ist viermal so lang …' }), fr(67), fr(58, { dr: 0.08 }),
       fr(48, { dr: 0.2, hold: true, answer: true, cap: 'Viermal so viel Fliehkraft. Der Lkw drängt nach außen.', note: '▶ „Doppelt so schnell – viermal so viel Fliehkraft. Der Lkw drängt nach außen, Richtung Gegenverkehr.“\n✅ Physik: Fliehkraft = Masse · Geschwindigkeit² / Radius. (60/30)² = 4. Beispiel Radius 50 m: 30 km/h → etwa 1,4 m/s² Querbeschleunigung, 60 km/h → etwa 5,6 m/s² (≈ 0,57 g). Das ist weniger als die Haftung trocken (0,8), aber mehr als die Kippgrenze eines hoch beladenen Lkw (Beispiel: halbe Spurweite 1,0 m ÷ Schwerpunkthöhe 2,0 m = 0,5 g) – er würde hier kippen, bevor er rutscht.\n🖱 Klick: weiter.\n➜ „Und wenn die Reifen das nicht mehr halten?“' }),
       fr(38, { dr: 0.5, cap: 'Reicht die Haftung nicht, wird der Lkw aus der Kurve getragen.' }), fr(28, { dr: 0.8 }),
       fr(20, { dr: 1.2, hold: true, cap: 'Aus der Kurve getragen – oder, bei hohem Schwerpunkt, vorher umgekippt.', note: '▶ „Reicht die Haftung nicht, rutscht der Lkw nach außen – in den Gegenverkehr oder in den Graben. Ein hoch beladener Lkw kippt oft schon, bevor er rutscht. Das schauen wir uns gleich an.“\n💡 Merksatz: Vor der Kurve bremsen, in der Kurve nicht mehr stark bremsen, am Kurvenausgang wieder Gas.\n🖱 Keine Animation mehr – nächster Klick: nächste Folie.\n➜ „Wovon hängt die Fliehkraft noch ab?“' }),
     ],
-    scene: scene(1.68, 60, '× 4'),
+    scene: scene(1.2, 60, '× 4'),
   });
 
   // ===== DREI STELLSCHRAUBEN DER FLIEHKRAFT =====
@@ -115,9 +125,9 @@ module.exports = async (deck) => {
       frames: [
         fr(0, 0, { hold: true, cap: 'Zwei gleiche Lkw, gleich schwer. Links Kisten bis unters Dach, rechts schwere Platten unten.', note: '▶ Sagen: „Zwei Lkw, von hinten gesehen, gleich schwer. Links ist die Ladung bis unters Dach gestapelt, rechts liegen schwere Stahlplatten unten. Der Punkt ist jeweils der Schwerpunkt.“\n❓ Frage auf der Folie: „Welcher kippt zuerst?“\n🖱 Klick: Beide fahren in die Rechtskurve (läuft von selbst).\n➜ „Jetzt in die Kurve.“' }),
         fr(0.2, 0, { cap: 'Rechtskurve: Die Fliehkraft drückt beide nach links, nach außen.' }), fr(0.4, 0),
-        fr(0.55, 0, { hold: true, cap: 'Die schwarze Linie zeigt, wohin die Kraft drückt. Solange sie zwischen den Rädern landet, bleibt der Lkw stehen.', note: '▶ „Die Fliehkraft drückt zur Seite, das Gewicht nach unten. Zusammen ergibt das die schräge Linie. Solange sie zwischen den Rädern auf die Straße trifft, bleibt der Lkw auf allen Rädern.“\n🖱 Klick: Etwas schneller (läuft von selbst).\n➜ „Jetzt etwas schneller.“' }),
+        fr(0.55, 0, { hold: true, cap: 'Die schwarze Linie zeigt, wohin die Kraft drückt. Solange sie zwischen den Rädern landet, bleibt der Lkw auf allen Rädern.', note: '▶ „Die Fliehkraft drückt zur Seite, das Gewicht nach unten. Zusammen ergibt das die schräge Linie. Solange sie zwischen den Rädern auf die Straße trifft, bleibt der Lkw auf allen Rädern.“\n🖱 Klick: Etwas schneller (läuft von selbst).\n➜ „Jetzt etwas schneller.“' }),
         fr(0.68, 0, { cap: 'Links trifft die Linie das äußere Rad – die Kippgrenze.' }), fr(0.75, 3), fr(0.75, 8), fr(0.75, 13),
-        fr(0.75, 18, { hold: true, answer: true, cap: 'Der hohe Lkw kippt. Der niedrige steht noch sicher – bei gleichem Tempo.', note: '▶ „Beim hohen Lkw zeigt die Linie über das Rad hinaus – er kippt. Der niedrige steht noch sicher, obwohl beide genau gleich schnell sind.“\n✅ Physik: Ein Fahrzeug kippt, wenn die Querbeschleunigung im Verhältnis zur Erdbeschleunigung größer wird als halbe Spurweite ÷ Schwerpunkthöhe. Hoher Schwerpunkt → kleinere Kippgrenze. Lehrbuchwissen; echte Lkw kippen wegen Federung und Reifen noch früher als in diesem einfachen Modell.\n💡 Gefährlich: schwere Ladung oben, hoch gestapelte Ladung, hängende Lasten (z. B. Fleischhälften), Flüssigkeiten in teilgefüllten Tanks.\n🖱 Keine Animation mehr – nächster Klick: nächste Folie.\n➜ „Was heißt das für die Fahrpraxis?“' }),
+        fr(0.75, 18, { hold: true, answer: true, cap: 'Der hohe Lkw kippt. Der niedrige bleibt auf allen Rädern – bei gleichem Tempo.', note: '▶ „Beim hohen Lkw zeigt die Linie über das Rad hinaus – er kippt. Der niedrige bleibt auf allen Rädern, obwohl beide genau gleich schnell sind.“\n✅ Physik: Ein Fahrzeug kippt, wenn die Querbeschleunigung im Verhältnis zur Erdbeschleunigung größer wird als halbe Spurweite ÷ Schwerpunkthöhe. Hoher Schwerpunkt → kleinere Kippgrenze. Lehrbuchwissen; echte Lkw kippen wegen Federung und Reifen noch früher als in diesem einfachen Modell.\n💡 Gefährlich: schwere Ladung oben, hoch gestapelte Ladung, hängende Lasten (z. B. Fleischhälften), Flüssigkeiten in teilgefüllten Tanks.\n🖱 Keine Animation mehr – nächster Klick: nächste Folie.\n➜ „Was heißt das für die Fahrpraxis?“' }),
       ],
       scene: async (s, { f, tilt }) => {
         s.rrect(5.6, GY, 7.45, 0.14, { fill: '3C4656', rr: 0.5, name: '!!boden' });
@@ -159,7 +169,7 @@ module.exports = async (deck) => {
       '💡 Flüssigkeiten in teilgefüllten Tanks schwappen nach außen und verstärken das Kippen.\n' +
       '➜ „Kapitel 4: Wind und Wasser.“' });
     kick(s, 'Fliehkraft und Kippen'); title(s, 'So bleibt der Lkw auf den Rädern');
-    await point(s, 0.7, 2.05, 5.85, 2.0, 'LuArrowDownToLine', C.red, 'Vor der Kurve bremsen', 'nicht in der Kurve. Am Kurvenausgang wieder Gas geben.', CLICK, { br: true, size: 18 });
+    await pointSchmal(s, 0.7, 2.05, 5.85, 2.0, 'LuArrowDownToLine', C.red, 'Vor der Kurve bremsen', 'nicht in der Kurve. Am Kurvenausgang wieder Gas geben.', 0.3);
     await point(s, 6.78, 2.05, 5.85, 2.0, 'LuRefreshCw', C.or, 'Kreisverkehr und Abfahrt', 'langsam: enger Radius, große Fliehkraft.', CLICK, { br: true, size: 18 });
     await point(s, 0.7, 4.25, 5.85, 2.0, 'LuLayers', C.am, 'Hohe Ladung = langsamer', 'schwere Teile immer nach unten laden.', CLICK, { br: true, size: 18 });
     await point(s, 6.78, 4.25, 5.85, 2.0, 'LuMoveHorizontal', C.bl, 'Ruckartiges Ausweichen vermeiden', 'Der Lkw schaukelt sich auf – beim Zurücklenken kippt er leicht.', CLICK, { br: true, size: 18 });

@@ -26,7 +26,7 @@ module.exports = async (deck) => {
   }
 
   // ===== KAPITEL 1 =====
-  await chapter(deck, 'c8a', { num: 1, ttl: 'Pflichtausrüstung', sub: 'Was in jedem Lkw an Bord sein muss – und wie ihr es richtig benutzt.', bg: 'i_ausr_r.jpg', bgX: 6.0, notes:
+  await chapter(deck, 'c8a', { num: 1, ttl: 'Pflichtausrüstung', sub: 'Was in eurem Lkw an Bord sein muss – und wie ihr es richtig benutzt.', bg: 'i_ausr_r.jpg', bgX: 6.0, notes:
     '▶ Sagen: „Kapitel 1: Pflichtausrüstung. Auf dem Bild seht ihr schon fast alles.“\n🖱 Keine Klicks.\n➜ „Was genau muss an Bord sein?“' });
   await photoAsk(deck, 'c8a', {
     bg: 'i_ausr_r.jpg', bgX: 6.0, ov: 7.0, kicker: 'Pflichtausrüstung', q: 'Was muss in jedem Lkw über 3,5 t an Bord sein?', qsize: 30, w: 5.2, asize: 14, top: 2.45,
@@ -34,7 +34,7 @@ module.exports = async (deck) => {
       ['LuTriangleAlert', 'Warndreieck und Warnleuchte', 'getrennt voneinander – die Leuchte mit gelbem Blinklicht, unabhängig von der Lichtanlage.', C.red],
       ['LuShirt', 'Warnweste', 'nach EN ISO 20471 – griffbereit in der Kabine.', C.am],
       ['LuBriefcaseMedical', 'Verbandkasten', 'nach DIN 13164, geschützt vor Staub und Feuchtigkeit.', C.gr],
-      ['LuTriangleRight', 'Unterlegkeile', 'über 4 t mindestens einer, ab drei Achsen zwei – fest in einer Halterung.', C.or],
+      ['LuTriangleRight', 'Unterlegkeile', 'über 4 t mindestens einer, ab drei Achsen zwei, fest in einer Halterung.', C.or],
     ],
     notes:
       '▶ Sagen: „Was muss an Bord sein?“\n' +
@@ -42,27 +42,30 @@ module.exports = async (deck) => {
       '🖱 Klick 1–4: je ein Teil.\n' +
       '✅ § 53a Abs. 2 StVZO: Kfz über 3,5 t: Warndreieck und getrennt davon eine Warnleuchte; in Lkw eine Warnweste. § 35h Abs. 3 StVZO: Erste-Hilfe-Material nach DIN 13164. § 41 Abs. 14 StVZO: Unterlegkeile – mindestens einer bei Kfz über 4 t, zwei bei drei- und mehrachsigen Fahrzeugen; Halterung gegen Verlieren und Klappern, keine Haken oder Ketten.\n' +
       '💡 Feuerlöscher ist beim normalen Lkw nicht vorgeschrieben (nur in Bussen und bei Gefahrgut – Kapitel 4). Empfehlenswert ist er trotzdem.\n' +
+      '💡 Park-Warntafeln (rot-weiß, vorn und hinten) sind keine Pflicht-Ausrüstung. Abgestellt innerorts auf der Fahrbahn muss ein Lkw über 3,5 t bei Dunkelheit aber beleuchtet oder mit Park-Warntafeln gekennzeichnet sein.\n' +
+      '✅ § 17 Abs. 4 StVO, § 51c StVZO (Park-Warntafel), Prüfungsfrage 2.2.17-202: gilt für Lkw und Wohnmobile über 3,5 t zulässige Gesamtmasse und für Anhänger – nicht für Pkw.\n' +
       '➜ „Und wie benutzt ihr das bei einer Panne?“',
   });
 
   // ===== PANNE ABSICHERN (fließend) =====
   {
-    const RY = 3.0, RH = 1.7, SC = 0.05; // 1 m = 0.05 Zoll
-    const TRX = 11.6, TRY = RY + RH * 0.75 + 0.12; // Lkw steht rechts am Rand
-    const REAR = TRX - 0.79; // Heck (Lkw zeigt nach rechts)
+    const RY = 3.0, RH = 1.4, SC = 0.05; // 1 m = 0.05 Zoll
+    const TL = 12 * SC, TW = 0.22; // Lkw 12 m lang, im selben Maßstab wie die Abstände (Breite etwas überzeichnet)
+    const TRX = 12.39 - TL / 2, TRY = RY + RH * 0.75 + 0.1; // Lkw steht rechts am Rand, Front bei x 12,39
+    const REAR = TRX - TL / 2; // Heck (Lkw zeigt nach rechts)
     const fr = (t, o = {}) => ({ t, ...o });
     await motion(deck, 'c8a', {
       kicker: 'Panne', ttl: 'Panne – was jetzt?', dur: 480, holdDur: 800,
       question: 'Der Lkw bleibt auf der Landstraße liegen. Was macht ihr – und wie weit muss das Warndreieck weg?',
-      answer: 'Warnblinker an, Warnweste an, Warndreieck bei schnellem Verkehr etwa 100 m hinter den Lkw – und die Warnleuchte dazu.',
-      legend: 'Draufsicht · schematisch · Verkehr kommt von links',
+      answer: 'Warnblinklicht an, Warnweste an, Warndreieck bei schnellem Verkehr etwa 100 m hinter den Lkw – und die Warnleuchte dazu.',
+      legend: 'Draufsicht · Lkw (12 m) und Abstände im gleichen Maßstab · Verkehr kommt von links',
       frames: [
         fr({ x: 8.6, y: RY + RH * 0.75, bl: 0, d: -1 }, { hold: true, cap: 'Landstraße mit schnellem Verkehr. Plötzlich verliert der Motor Leistung …', note: '▶ Sagen: „Ihr fahrt auf der Landstraße, der Motor geht in Notlauf. Ihr müsst anhalten.“\n❓ Frage auf der Folie stellen: Was macht ihr zuerst?\n🖱 Klick: Der Lkw rollt an den Rand (läuft von selbst).\n➜ „Ihr rollt rechts ran.“' }),
         fr({ x: 10.0, y: RY + RH * 0.75 + 0.05, bl: 0, d: -1 }), fr({ x: TRX, y: TRY, bl: 1, d: -1 }, { cap: 'So weit rechts wie möglich anhalten – sofort Warnblinklicht an.' }),
-        fr({ x: TRX, y: TRY, bl: 0, d: -1 }), fr({ x: TRX, y: TRY, bl: 1, d: -1, weste: 1 }, { hold: true, cap: 'Warnweste anziehen, bevor ihr aussteigt – rechts aussteigen, wenn möglich.', note: '▶ „Zuerst Warnblinklicht. Dann Warnweste anziehen – noch in der Kabine – und möglichst auf der rechten Seite aussteigen.“\n✅ § 15 StVO: sofort Warnblinklicht einschalten. Warnweste: § 53a Abs. 2 Nr. 3 StVZO (mitführen).\n🖱 Klick: Das Warndreieck wird aufgestellt (läuft von selbst).\n➜ „Jetzt das Warndreieck.“' }),
+        fr({ x: TRX, y: TRY, bl: 0, d: -1 }), fr({ x: TRX, y: TRY, bl: 1, d: -1, weste: 1 }, { hold: true, cap: 'Warnweste anziehen, bevor ihr aussteigt – rechts aussteigen, wenn möglich.', note: '▶ „Zuerst Warnblinklicht. Dann Warnweste anziehen – noch in der Kabine – und möglichst auf der rechten Seite aussteigen.“\n✅ § 15 StVO: sofort Warnblinklicht einschalten. Warnweste: § 53a Abs. 2 Nr. 3 StVZO (mitführen). DGUV Vorschrift 70 § 56 Abs. 5: Wer als Beschäftigter im fließenden Verkehr am Fahrzeug arbeitet (z. B. Radwechsel), muss Warnkleidung tragen.\n🖱 Klick: Das Warndreieck wird aufgestellt (läuft von selbst).\n➜ „Jetzt das Warndreieck.“' }),
         fr({ x: TRX, y: TRY, bl: 0, d: 0, weste: 1 }, { cap: 'Das Warndreieck wandert nach hinten – gegen die Fahrtrichtung …' }),
         fr({ x: TRX, y: TRY, bl: 1, d: 20, weste: 1 }), fr({ x: TRX, y: TRY, bl: 0, d: 40, weste: 1 }), fr({ x: TRX, y: TRY, bl: 1, d: 60, weste: 1 }), fr({ x: TRX, y: TRY, bl: 0, d: 80, weste: 1 }),
-        fr({ x: TRX, y: TRY, bl: 1, d: 100, weste: 1 }, { hold: true, answer: true, cap: 'Etwa 100 m bei schnellem Verkehr. Vor Kurven und Kuppen so weit, dass man es rechtzeitig sieht.', note: '▶ „Das Warndreieck kommt bei schnellem Verkehr etwa 100 Meter hinter den Lkw. Vor einer Kurve oder Kuppe so, dass es rechtzeitig vor der Gefahr zu sehen ist.“\n✅ § 15 StVO: Warnzeichen gut sichtbar in ausreichender Entfernung, bei schnellem Verkehr in etwa 100 m. Prüfungsfrage 2.2.15-201 (Seitenstreifen der Autobahn): Warndreieck etwa 100 m am rechten Fahrbahnrand, Warnleuchte in ausreichender Entfernung, Warnweste tragen.\n💡 Faustregel aus der Fahrschule: innerorts etwa 50 m, Autobahn deutlich weiter – lieber zu weit als zu nah. Beim Gehen am Fahrbahnrand das Dreieck vor sich halten.\n🖱 Klick: die Warnleuchte (läuft von selbst).\n➜ „Und die Warnleuchte?“' }),
+        fr({ x: TRX, y: TRY, bl: 1, d: 100, weste: 1 }, { hold: true, answer: true, cap: 'Etwa 100 m bei schnellem Verkehr. Steht der Lkw hinter einer Kurve oder Kuppe: Dreieck schon davor aufstellen.', note: '▶ „Das Warndreieck kommt bei schnellem Verkehr etwa 100 Meter hinter den Lkw. Steht der Lkw hinter einer Kurve oder Kuppe, kommt das Dreieck schon vor die Kurve – damit die anderen rechtzeitig gewarnt sind.“\n✅ § 15 StVO: Warnzeichen gut sichtbar in ausreichender Entfernung, bei schnellem Verkehr in etwa 100 m. Prüfungsfragen 2.2.15-106 (Straße mit schnellem Verkehr: etwa 100 m) und 2.2.15-113 (Fahrzeug steht hinter einer Kurve: Warnblinklicht, hinter dem Fahrzeug ein auffällig warnendes Zeichen, Warnweste). Passend auch 2.2.15-201 (Seitenstreifen der Autobahn). Nicht abgesichert und dadurch jemand gefährdet: 60 € und 1 Punkt (BKat Nr. 66, FeV Anlage 13).\n💡 Faustregel aus der Fahrschule: innerorts etwa 50 m, Autobahn deutlich weiter – lieber zu weit als zu nah. Beim Gehen am Fahrbahnrand das Dreieck vor sich halten.\n🖱 Klick: die Warnleuchte (läuft von selbst).\n➜ „Und die Warnleuchte?“' }),
         fr({ x: TRX, y: TRY, bl: 0, d: 100, weste: 1, wl: 1 }),
         fr({ x: TRX, y: TRY, bl: 1, d: 100, weste: 1, wl: 1 }, { hold: true, cap: 'Dazu die Warnleuchte mit gelbem Blinklicht – zusätzlich, gut sichtbar am Fahrbahnrand.', note: '▶ „Über 3,5 t habt ihr zusätzlich eine Warnleuchte mit gelbem Blinklicht. Die stellt ihr zusätzlich am Fahrbahnrand auf, gut sichtbar – das Warndreieck bleibt Pflicht. Danach hinter die Schutzplanke oder weit weg vom Verkehr warten.“\n✅ § 53a Abs. 1 und 2 StVZO (Warnleuchte: gelbes Blinklicht, unabhängig von der Lichtanlage; auch eine tragbare Blinkleuchte nach § 53b Abs. 5 ist erlaubt). Prüfungsfrage 2.2.15-201: Warnleuchte in ausreichender Entfernung aufstellen.\n🖱 Keine Animation mehr – nächster Klick: nächste Folie.\n➜ „Und wenn der Lkw im Gefälle steht?“' }),
       ],
@@ -73,9 +76,9 @@ module.exports = async (deck) => {
         s.rect(5.65, RY + RH + 0.05, 7.4, 0.55, { fill: '2E4A30', name: '!!bank' });
         for (let k = 0; k < 9; k++) s.rrect(5.85 + k * 0.82, RY + RH / 2 - 0.025, 0.45, 0.05, { fill: C.mark, rr: 0.5, name: '!!rm' + k });
         // Lkw (zeigt nach rechts)
-        veh(s, 'truck.png', t.x, t.y, 90, '!!tr', { scale: 0.55 });
-        const L = 0.79, Wd = 0.215;
-        for (const [nm, dx, dy] of [['bl1', -L + 0.05, -Wd], ['bl2', -L + 0.05, Wd - 0.08], ['bl3', L - 0.13, -Wd], ['bl4', L - 0.13, Wd - 0.08]]) s.oval(t.x + dx, t.y + dy, 0.09, 0.09, { fill: C.am, ft: t.bl ? 0 : 100, glow: t.bl ? 8 : undefined, glowColor: C.am, name: '!!' + nm });
+        veh(s, 'truck.png', t.x, t.y, 90, '!!tr', { size: [TW, TL] });
+        const L = TL / 2, Wd = TW / 2, BD = 0.07;
+        for (const [nm, dx, dy] of [['bl1', -L - 0.01, -Wd - 0.01], ['bl2', -L - 0.01, Wd - BD + 0.01], ['bl3', L - BD + 0.01, -Wd - 0.01], ['bl4', L - BD + 0.01, Wd - BD + 0.01]]) s.oval(t.x + dx, t.y + dy, BD, BD, { fill: C.am, ft: t.bl ? 0 : 100, glow: t.bl ? 8 : undefined, glowColor: C.am, name: '!!' + nm });
         // Warnweste
         s.text(t.weste ? 'Warnweste an' : '', { x: 11.3, y: 1.6, w: 1.75, h: 0.42, size: 14, bold: true, color: C.dark, fill: t.weste ? 'D7F000' : undefined, shape: s.pres.shapes.ROUNDED_RECTANGLE, rr: 0.3, align: 'center', valign: 'middle', name: '!!weste' });
         // Warndreieck wandert nach hinten (nach links)
@@ -118,14 +121,19 @@ module.exports = async (deck) => {
         const cx = SX - RH / 2 * Math.sin(-a), cy = SY + RH / 2 * Math.cos(a);
         s.rect(cx - RW / 2, cy - RH / 2, RW, RH, { fill: C.road, rotate: -deg, name: '!!hang' });
         // Lkw: Front links unten (bergab nach links)
-        const cxx = SX + (h / 2) * Math.sin(-a), cyy = SY - (h / 2) * Math.cos(a);
+        const DN = 0.05;   // Lkw 0,05 Zoll tiefer: Räder stehen auf der Fahrbahn
+        const cxx = SX + (h / 2 - DN) * Math.sin(-a), cyy = SY - (h / 2 - DN) * Math.cos(a);
         await lkw(s, o, { x: cxx - w / 2 + r.pad * k, gy: cyy + h / 2, k, name: '!!lkwK', rot: -deg });
         // Hinterrad-Position (Achse 2) auf dem Hang
         const ax = (o.axles[1] - (o.L / 2)) * k; // Abstand von der Mitte nach rechts
         const hx = SX + ax * Math.cos(a), hy = SY - ax * Math.sin(a);
         const rw = 0.3 * k; // Radradius
-        const kx = hx - rw - 0.3, ky = hy + 0.3 * Math.sin(a) - 0.25;
-        s.shape(s.pres.shapes.RIGHT_TRIANGLE, { x: kx, y: ky, w: 0.36, h: 0.3, fill: C.am, ft: i >= 1 ? 0 : 100, line: i >= 1 ? '8A6A10' : undefined, rotate: -deg, flipH: true, name: '!!keil' });
+        // Keil liegt auf der schrägen Fahrbahn (gleiche Neigung), senkrechte Seite am Reifen (Höhe des Radmittelpunkts)
+        const KW = 0.36, KH = 0.3, th = -a;
+        const qx = hx - (rw + 0.01) * Math.cos(a), qy = hy + (rw + 0.01) * Math.sin(a);   // Ecke unten rechts, auf der Fahrbahn
+        const kcx = qx - (KW / 2 * Math.cos(th) - KH / 2 * Math.sin(th)), kcy = qy - (KW / 2 * Math.sin(th) + KH / 2 * Math.cos(th));
+        const kx = kcx - KW / 2, ky = kcy - KH / 2;
+        s.shape(s.pres.shapes.RIGHT_TRIANGLE, { x: kx, y: ky, w: KW, h: KH, fill: C.am, ft: i >= 1 ? 0 : 100, line: i >= 1 ? '8A6A10' : undefined, rotate: -deg, flipH: true, name: '!!keil' });
         s.oval(kx - 0.1, ky - 0.1, 0.56, 0.5, { line: C.gr, lw: 2.5, ft: 100, lt: i >= 2 ? 0 : 100, name: '!!keilring' });
         s.text('P', { x: 11.9, y: 1.6, w: 0.7, h: 0.7, size: 32, bold: true, color: C.white, fill: i >= 0 ? C.red : C.line, shape: s.pres.shapes.OVAL, align: 'center', valign: 'middle', name: '!!pb' });
         s.text(['Feststellbremse', 'Keil talseitig', 'Talseite = Rollrichtung'][i], { x: 8.4, y: 1.7, w: 3.4, h: 0.5, size: 20, bold: true, color: C.txt, align: 'right', name: '!!lab' });
@@ -149,6 +157,7 @@ module.exports = async (deck) => {
       '🖱 Klick 1–4: je ein Punkt.\n' +
       '✅ § 15a StVO: Abs. 1 Autobahn bei der nächsten Ausfahrt verlassen; Abs. 2 nicht in die Autobahn einfahren; Abs. 3 beide Fahrzeuge Warnblinklicht. § 43 Abs. 3 StVZO und Prüfungsfrage 2.2.15-109: Abstand zwischen den Fahrzeugen höchstens 5 m, Abschleppseil oder -stange deutlich kennzeichnen (z. B. roter Lappen).\n' +
       '💡 Abschleppstange und Federspeicher lösen: Lehrbuchwissen. Ohne Luft wirkt beim geschleppten Lkw die Betriebsbremse nicht – mit Seil gibt es dann keine Möglichkeit zu bremsen. Prüfungsfrage 2.7.06-215: Federspeicher zum Abschleppen mit der Hilfslöseeinrichtung lösen.\n' +
+      '💡 Ohne laufenden Motor geht die Lenkung sehr schwer, und die Bremse braucht viel mehr Kraft (Prüfungsfragen 2.2.15-105, -111). Vorher die Herstellerangaben beachten (z. B. Gelenkwelle trennen). Fahrerlaubnis: Die Klasse des ziehenden Fahrzeugs genügt (§ 6 Abs. 1 FeV; Prüfungsfrage 2.2.15-114).\n' +
       '➜ „Kapitel 2: Wie groß und wie schwer darf ein Lkw sein?“',
   });
 };
