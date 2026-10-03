@@ -34,7 +34,7 @@ module.exports = async (deck) => {
         fr({ k: 3, msg: '… das Heck des Lkw bricht aus …', mc: C.red }),
         fr({ k: 4, msg: 'Der Zug knickt ein!', mc: C.red }, { hold: true, answer: true,
           cap: 'Bei Glätte: Dauerbremse aus – auch die automatische Zuschaltung, wenn euer Lkw sie hat. Vorher Tempo raus, vor der Kurve gestreckt mit der Betriebsbremse bremsen.',
-          note: '▶ „Die Antriebsräder rutschen, weil nur sie bremsen. Der Anhänger schiebt von hinten. Das Heck des Lkw bricht aus – der Zug knickt ein. Darum: Bei Glätte die Dauerbremse aus. Achtung: Bei manchen Lkw schaltet sie sich selbst zu – zum Beispiel über den Tempomaten bergab. Lieber vorher langsam und mit der Betriebsbremse gestreckt bremsen – dann bremst auch der Anhänger mit. Das ABS schaltet die Dauerbremse zwar ab, wenn es regelt – aber das ist kein Freibrief.“\n❓ Frage auf der Folie auflösen.\n✅ Mercedes-Benz Actros Betriebsanleitung (manualslib S. 250, gedruckt S. 248): „Schalten Sie nicht auf glatter Fahrbahn die Dauerbremse ein und schalten Sie nicht zurück, um die Bremswirkung des Motors zu erhöhen“ – die Antriebsräder können die Haftung verlieren. Ebd.: Automatische Zuschaltung, wenn ein beladenes Fahrzeug erkannt ist und ihr bremst, oder wenn Tempomat, Limiter oder Abstandshalte-Assistent im Schub regeln. ABS schaltet die Dauerbremse ab, sobald es regelt (Actros Betriebsanleitung; WABCO EBS3). Prüfungsfrage 2.7.06-108.\n💡 Winkel und Wege gezeichnet, nicht gemessen.\n🖱 Nächster Klick: nächste Folie.\n➜ „Was gilt sonst noch für die Dauerbremse im Zug?“' }),
+          note: '▶ „Die Antriebsräder rutschen, weil nur sie bremsen. Der Anhänger schiebt von hinten. Das Heck des Lkw bricht aus – der Zug knickt ein. Darum: Bei Glätte die Dauerbremse aus. Achtung: Bei manchen Lkw schaltet sie sich selbst zu – zum Beispiel über den Tempomaten bergab. Lieber vorher langsam und mit der Betriebsbremse gestreckt bremsen – dann bremst auch der Anhänger mit. Das ABS schaltet die Dauerbremse zwar ab, wenn es regelt – aber das ist kein Freibrief.“\n❓ Frage auf der Folie auflösen.\n✅ Mercedes-Benz Actros Betriebsanleitung (manualslib S. 250, gedruckt S. 248): „Schalten Sie nicht auf glatter Fahrbahn die Dauerbremse ein und schalten Sie nicht zurück, um die Bremswirkung des Motors zu erhöhen“ – die Antriebsräder können die Haftung verlieren. Ebd.: Automatische Zuschaltung, wenn ein beladenes Fahrzeug erkannt ist und ihr bremst, oder wenn Tempomat, Limiter oder Abstandshalte-Assistent im Schub regeln. ABS schaltet die Dauerbremse ab, sobald es regelt (Actros Betriebsanleitung, manualslib S. 245; WABCO EBS3, S. 15). Prüfungsfrage 2.7.06-108.\n💡 Winkel und Wege gezeichnet, nicht gemessen.\n🖱 Nächster Klick: nächste Folie.\n➜ „Was gilt sonst noch für die Dauerbremse im Zug?“' }),
       ],
       scene: async (s, t) => {
         const k = t.k, p = pose(k);
@@ -97,10 +97,10 @@ module.exports = async (deck) => {
       list: ['bis 3,5 t', 'über 3,5 t bis 10 t', 'über 10 t', 'Dazu: UVV'],
       ask: { q: 'Euer Sattelanhänger hat 39 t und ist drei Jahre alt. Wann muss er zur Prüfung?', a: 'Alle 12 Monate zur HU – und genau dazwischen zur SP. Also alle 6 Monate eine Prüfung.', at: 2 },
       caps: [
-        'Der Anhänger hat ein eigenes Kennzeichen – und eigene Prüftermine. Kleine Anhänger: HU alle 2 Jahre.',
+        'Der Anhänger hat ein eigenes Kennzeichen – und eigene Prüftermine. Kleine Anhänger müssen alle 2 Jahre zur HU.',
         'Über 3,5 t: jedes Jahr zur HU.',
-        'Über 10 t: jedes Jahr HU. Ab dem 3. Jahr kommt genau dazwischen die Sicherheitsprüfung (SP) dazu.',
-        'Dazu die UVV-Prüfung: mindestens einmal im Jahr durch einen Sachkundigen. Dafür sorgt der Unternehmer.',
+        'Über 10 t: jedes Jahr HU. Ab dem 3. Jahr kommt genau dazwischen noch die Sicherheitsprüfung (SP) dazu.',
+        'Dazu die UVV-Prüfung: mindestens einmal im Jahr durch einen Sachkundigen. Darum kümmert sich der Unternehmer.',
       ],
       notes: [
         '▶ Sagen: „Der Anhänger ist ein eigenes Fahrzeug mit eigenem Kennzeichen. Er hat eigene Prüftermine – unabhängig vom Lkw. Kleine Anhänger bis 3,5 Tonnen müssen alle zwei Jahre zur HU.“\n❓ Frage auf der Folie stellen.\n✅ StVZO Anlage VIII Nr. 2.1.5: Anhänger über 0,75 t bis 3,5 t HU 24 Monate (bis 0,75 t: erste HU nach 36, dann 24 Monate).\n➜ „Und schwerere Anhänger?“',

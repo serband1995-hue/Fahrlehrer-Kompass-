@@ -151,13 +151,13 @@ FOLIE 15 VON 134 · 4 Klicks
 ➜ „Eine Prüfungsfrage dazu.“
 
 === FOLIE 16 ===
-AUF DER FOLIE: PRÜFUNGSFRAGE 2.7.07-201 | Welche Kontroll- und Wartungsarbeiten müssen an einer Sattelkupplung regelmäßig vorgenommen werden? | A | Sattelkupplung abschmieren | B | Befestigung am Rahmen kontrollieren | C | Sattelkupplungen sind immer wartungsfrei | ✓  RICHTIG | ✓  RICHTIG | Die Platte muss geschmiert sein – und die Kupplung muss fest auf dem Rahmen sitzen. | KLASSE CE  ·  ABEND 6  ·  CE1  ·  ZUGARTEN UND KUPPLUNGEN | 16
+AUF DER FOLIE: PRÜFUNGSFRAGE 2.7.07-201 | Welche Kontroll- und Wartungsarbeiten müssen an einer Sattelkupplung regelmäßig vorgenommen werden? | A | Sattelkupplung abschmieren | B | Sattelkupplungen sind immer wartungsfrei | C | Befestigung am Rahmen kontrollieren | ✓  RICHTIG | ✓  RICHTIG | Die Platte muss geschmiert sein – und die Kupplung muss fest auf dem Rahmen sitzen. | KLASSE CE  ·  ABEND 6  ·  CE1  ·  ZUGARTEN UND KUPPLUNGEN | 16
 NOTIZEN:
 FOLIE 16 VON 134 · 2 Klicks
 
 ▶ Frage vorlesen, abstimmen.
 🖱 Klick 1: Antworten · Klick 2: Lösung.
-✅ Amtlicher Fragenkatalog 2.7.07-201: A und B.
+✅ Amtlicher Fragenkatalog 2.7.07-201: A und C.
 ➜ „Auch die Bolzenkupplung müsst ihr prüfen – auf Verschleiß.“
 
 === FOLIE 17 ===
@@ -319,7 +319,7 @@ FOLIE 31 VON 134 · 6 Klicks
 ➜ „Zwei Prüfungsfragen.“
 
 === FOLIE 32 ===
-AUF DER FOLIE: PRÜFUNGSFRAGE 2.7.07-320 | Was müssen Sie beim Ankuppeln eines Anhängers beachten? | A | Zuerst die Bremsleitung anschließen (gelber Kupplungskopf) | B | Bei kombinierten Kupplungsköpfen beide Leitungen gleichzeitig anschließen | C | Zuerst die Vorratsleitung anschließen (roter Kupplungskopf) | ✓  RICHTIG | ✓  RICHTIG | Gelb zuerst – rot nie allein. Beim Abkuppeln ist es umgekehrt: zuerst rot. | KLASSE CE  ·  ABEND 6  ·  CE1  ·  AN- UND ABKUPPELN | 32
+AUF DER FOLIE: PRÜFUNGSFRAGE 2.7.07-320 | Was müssen Sie beim Ankuppeln eines Anhängers beachten? | A | Bei kombinierten Kupplungsköpfen beide Leitungen gleichzeitig anschließen | B | Zuerst die Bremsleitung anschließen (gelber Kupplungskopf) | C | Zuerst die Vorratsleitung anschließen (roter Kupplungskopf) | ✓  RICHTIG | ✓  RICHTIG | Gelb zuerst – rot nie allein. Beim Abkuppeln ist es umgekehrt: zuerst rot. | KLASSE CE  ·  ABEND 6  ·  CE1  ·  AN- UND ABKUPPELN | 32
 NOTIZEN:
 FOLIE 32 VON 134 · 2 Klicks
 
@@ -582,7 +582,7 @@ FOLIE 56 VON 134 · keine Animation · Klick = weiter
 ➜ „Eine Prüfungsfrage.“
 
 === FOLIE 57 ===
-AUF DER FOLIE: PRÜFUNGSFRAGE 2.6.06-301 | Wie lang darf ein Zug, bestehend aus einem Lkw und einem Anhänger, ohne dass Ladung hinausragt, höchstens sein? | A | 18,75 m | B | 18,00 m | C | 20,00 m | ✓  RICHTIG | 18,75 m für Lkw mit Anhänger. Mit Ladung, die hinten übersteht: höchstens 20,75 m. | KLASSE CE  ·  ABEND 6  ·  CE1  ·  MASSE UND KURVENLAUF | 57
+AUF DER FOLIE: PRÜFUNGSFRAGE 2.6.06-301 | Wie lang darf ein Zug, bestehend aus einem Lkw und einem Anhänger, ohne dass Ladung hinausragt, höchstens sein? | A | 18,75 m | B | 20,00 m | C | 18,00 m | ✓  RICHTIG | 18,75 m für Lkw mit Anhänger. Mit Ladung, die hinten übersteht: höchstens 20,75 m. | KLASSE CE  ·  ABEND 6  ·  CE1  ·  MASSE UND KURVENLAUF | 57
 NOTIZEN:
 FOLIE 57 VON 134 · 2 Klicks
 
@@ -670,13 +670,13 @@ FOLIE 65 VON 134 · keine Animation · Klick = weiter
 ➜ „Eine Prüfungsfrage dazu.“
 
 === FOLIE 66 ===
-AUF DER FOLIE: PRÜFUNGSFRAGE 2.7.01-310 | Wie wirken sich die Kurvenlaufeigenschaften einer Fahrzeugkombination (Kraftfahrzeug mit Anhänger) beim Abbiegen aus? Der Anhänger … | A | … kann ausschwenken | B | … kann die Kurve schneiden | C | … läuft in der Regel in der Spur des Zugfahrzeugs | ✓  RICHTIG | ✓  RICHTIG | Der Anhänger schneidet die Kurve innen – und sein Heck kann nach außen ausschwenken. | KLASSE CE  ·  ABEND 6  ·  CE1  ·  MASSE UND KURVENLAUF | 66
+AUF DER FOLIE: PRÜFUNGSFRAGE 2.7.01-310 | Wie wirken sich die Kurvenlaufeigenschaften einer Fahrzeugkombination (Kraftfahrzeug mit Anhänger) beim Abbiegen aus? Der Anhänger … | A | … kann ausschwenken | B | … läuft in der Regel in der Spur des Zugfahrzeugs | C | … kann die Kurve schneiden | ✓  RICHTIG | ✓  RICHTIG | Der Anhänger schneidet die Kurve innen – und sein Heck kann nach außen ausschwenken. | KLASSE CE  ·  ABEND 6  ·  CE1  ·  MASSE UND KURVENLAUF | 66
 NOTIZEN:
 FOLIE 66 VON 134 · 2 Klicks
 
 ▶ Frage vorlesen, abstimmen.
 🖱 Klick 1: Antworten · Klick 2: Lösung.
-✅ Amtlicher Fragenkatalog 2.7.01-310: A und B. § 32d StVZO (Kreisring, Ausschermaß 0,80 m).
+✅ Amtlicher Fragenkatalog 2.7.01-310: A und C. § 32d StVZO (Kreisring, Ausschermaß 0,80 m).
 ➜ „Kapitel 5: Wie schwer darf der Zug sein – und welchen Führerschein braucht ihr?“
 
 === FOLIE 67 ===
@@ -723,13 +723,13 @@ FOLIE 70 VON 134 · keine Animation · Klick = weiter
 ➜ „Eine Prüfungsfrage.“
 
 === FOLIE 71 ===
-AUF DER FOLIE: PRÜFUNGSFRAGE 2.6.06-302 | Welche zulässige Gesamtmasse darf ein Sattelkraftfahrzeug (zweiachsige Zugmaschine, dreiachsiger Sattelanhänger, kein kombinierter Verkehr) höchstens haben? | A | 40 t | B | 38 t | C | 44 t | ✓  RICHTIG | Mehr als 4 Achsen: 40 t. 44 t gibt es nur im Kombinierten Verkehr. | KLASSE CE  ·  ABEND 6  ·  CE1  ·  GEWICHTE UND FÜHRERSCHEIN | 71
+AUF DER FOLIE: PRÜFUNGSFRAGE 2.6.06-302 | Welche zulässige Gesamtmasse darf ein Sattelkraftfahrzeug (zweiachsige Zugmaschine, dreiachsiger Sattelanhänger, kein kombinierter Verkehr) höchstens haben? | A | 44 t | B | 40 t | C | 38 t | ✓  RICHTIG | Mehr als 4 Achsen: 40 t. 44 t gibt es nur im Kombinierten Verkehr. | KLASSE CE  ·  ABEND 6  ·  CE1  ·  GEWICHTE UND FÜHRERSCHEIN | 71
 NOTIZEN:
 FOLIE 71 VON 134 · 2 Klicks
 
 ▶ Frage vorlesen, abstimmen.
 🖱 Klick 1: Antworten · Klick 2: Lösung.
-✅ Amtlicher Fragenkatalog 2.6.06-302: A. Gleiches gilt für Lkw (2 Achsen) mit Anhänger (3 Achsen): 2.6.06-304 → 40 t. Gegenstück 2.6.06-303 (dreiachsige Zugmaschine, dreiachsiger Auflieger, Kombinierter Verkehr mit 40-Fuß-Container): 44 t.
+✅ Amtlicher Fragenkatalog 2.6.06-302: B. Gleiches gilt für Lkw (2 Achsen) mit Anhänger (3 Achsen): 2.6.06-304 → 40 t. Gegenstück 2.6.06-303 (dreiachsige Zugmaschine, dreiachsiger Auflieger, Kombinierter Verkehr mit 40-Fuß-Container): 44 t.
 ➜ „Und wie rechnet man das beim Sattelzug?“
 
 === FOLIE 72 ===
@@ -744,13 +744,13 @@ FOLIE 72 VON 134 · 4 Klicks
 ➜ „Und wie schwer darf ein Anhänger hinter dem Lkw sein?“
 
 === FOLIE 73 ===
-AUF DER FOLIE: PRÜFUNGSFRAGE 2.6.03-301 | Wie schwer darf ein Anhänger hinter einem Lkw mit 10 t zulässiger Gesamtmasse bei durchgehender Bremsanlage höchstens sein? | A | 15 t | B | 10 t | C | 20 t | ✓  RICHTIG | Das 1,5-Fache der zulässigen Gesamtmasse des Lkw – und nie mehr, als der Hersteller erlaubt. | KLASSE CE  ·  ABEND 6  ·  CE1  ·  GEWICHTE UND FÜHRERSCHEIN | 73
+AUF DER FOLIE: PRÜFUNGSFRAGE 2.6.03-301 | Wie schwer darf ein Anhänger hinter einem Lkw mit 10 t zulässiger Gesamtmasse bei durchgehender Bremsanlage höchstens sein? | A | 10 t | B | 20 t | C | 15 t | ✓  RICHTIG | Das 1,5-Fache der zulässigen Gesamtmasse des Lkw – und nie mehr, als der Hersteller erlaubt. | KLASSE CE  ·  ABEND 6  ·  CE1  ·  GEWICHTE UND FÜHRERSCHEIN | 73
 NOTIZEN:
 FOLIE 73 VON 134 · 2 Klicks
 
 ▶ Frage vorlesen, abstimmen.
 🖱 Klick 1: Antworten · Klick 2: Lösung.
-✅ Amtlicher Fragenkatalog 2.6.03-301: A. § 42 Abs. 1 StVZO: Anhängelast hinter Lkw höchstens die zGM des Lkw, bei durchgehender Bremsanlage höchstens das 1,5-Fache (Prüfungsfrage 2.6.03-303) und nicht mehr als vom Hersteller angegeben. Anhängelast = tatsächlich gezogene Last (2.6.03-106). Dazu Prüfungsfragen 2.6.03-302 (zGM des Lkw zur tatsächlichen Masse des Anhängers) und 2.6.03-304 (Lkw 15 t → Anhänger höchstens 22,5 t).
+✅ Amtlicher Fragenkatalog 2.6.03-301: C. § 42 Abs. 1 StVZO: Anhängelast hinter Lkw höchstens die zGM des Lkw, bei durchgehender Bremsanlage höchstens das 1,5-Fache (Prüfungsfrage 2.6.03-303) und nicht mehr als vom Hersteller angegeben. Anhängelast = tatsächlich gezogene Last (2.6.03-106). Dazu Prüfungsfragen 2.6.03-302 (zGM des Lkw zur tatsächlichen Masse des Anhängers) und 2.6.03-304 (Lkw 15 t → Anhänger höchstens 22,5 t).
 ➜ „Und welche Klasse braucht ihr dafür?“
 
 === FOLIE 74 ===
@@ -807,13 +807,13 @@ FOLIE 78 VON 134 · 8 Klicks
 ➜ „Drei Prüfungsfragen.“
 
 === FOLIE 79 ===
-AUF DER FOLIE: PRÜFUNGSFRAGE 2.7.07-312 | Wie können Sie erkennen, ob bei einer selbsttätigen Anhängekupplung der Kupplungsbolzen richtig eingerastet ist? | A | Am Kontrollstift der Kupplung oder an der Kontrollleuchte im Führerhaus | B | An der Stellung des Lösehebels der Kupplung | C | Durch kurzes Anrucken | ✓  RICHTIG | Anrucken ist nur ein Vortest. Entscheidend ist der Kontrollstift – oder die Kontrollleuchte. | KLASSE CE  ·  ABEND 6  ·  CE1  ·  ABSCHLUSS | 79
+AUF DER FOLIE: PRÜFUNGSFRAGE 2.7.07-312 | Wie können Sie erkennen, ob bei einer selbsttätigen Anhängekupplung der Kupplungsbolzen richtig eingerastet ist? | A | Durch kurzes Anrucken | B | An der Stellung des Lösehebels der Kupplung | C | Am Kontrollstift der Kupplung oder an der Kontrollleuchte im Führerhaus | ✓  RICHTIG | Anrucken ist nur ein Vortest. Entscheidend ist der Kontrollstift – oder die Kontrollleuchte. | KLASSE CE  ·  ABEND 6  ·  CE1  ·  ABSCHLUSS | 79
 NOTIZEN:
 FOLIE 79 VON 134 · 2 Klicks
 
 ▶ Frage vorlesen, abstimmen.
 🖱 Klick 1: Antworten · Klick 2: Lösung.
-✅ Amtlicher Fragenkatalog 2.7.07-312: A.
+✅ Amtlicher Fragenkatalog 2.7.07-312: C.
 ➜ „Nächste Frage.“
 
 === FOLIE 80 ===
@@ -827,13 +827,13 @@ FOLIE 80 VON 134 · 2 Klicks
 ➜ „Letzte Frage.“
 
 === FOLIE 81 ===
-AUF DER FOLIE: PRÜFUNGSFRAGE 2.6.06-305 | Wie können Sie rechnerisch überprüfen, ob durch die Zusammenstellung eines Sattelkraftfahrzeugs (Sattellast = Aufliegelast) die höchstzulässige Gesamtmasse des Zuges überschritten wird? | A | Zulässige Gesamtmasse der Zugmaschine plus zulässige Gesamtmasse des Sattelanhängers minus Aufliegelast | B | Zulässige Gesamtmasse der Zugmaschine plus zulässige Gesamtmasse des Sattelanhängers | C | Zulässige Gesamtmasse der Zugmaschine plus Nutzlast des Sattelanhängers | ✓  RICHTIG | Die Sattellast zählt nur einmal – also abziehen. | KLASSE CE  ·  ABEND 6  ·  CE1  ·  ABSCHLUSS | 81
+AUF DER FOLIE: PRÜFUNGSFRAGE 2.6.06-305 | Wie können Sie rechnerisch überprüfen, ob durch die Zusammenstellung eines Sattelkraftfahrzeugs (Sattellast = Aufliegelast) die höchstzulässige Gesamtmasse des Zuges überschritten wird? | A | Zulässige Gesamtmasse der Zugmaschine plus zulässige Gesamtmasse des Sattelanhängers | B | Zulässige Gesamtmasse der Zugmaschine plus zulässige Gesamtmasse des Sattelanhängers minus Aufliegelast | C | Zulässige Gesamtmasse der Zugmaschine plus Nutzlast des Sattelanhängers | ✓  RICHTIG | Die Sattellast zählt nur einmal – also abziehen. | KLASSE CE  ·  ABEND 6  ·  CE1  ·  ABSCHLUSS | 81
 NOTIZEN:
 FOLIE 81 VON 134 · 2 Klicks
 
 ▶ Frage vorlesen, abstimmen.
 🖱 Klick 1: Antworten · Klick 2: Lösung.
-✅ Amtlicher Fragenkatalog 2.6.06-305: A. § 34 Abs. 7 Nr. 3 StVZO.
+✅ Amtlicher Fragenkatalog 2.6.06-305: B. § 34 Abs. 7 Nr. 3 StVZO.
 ➜ „Das nehmt ihr aus CE1 mit.“
 
 === FOLIE 82 ===
@@ -906,7 +906,7 @@ FOLIE 88 VON 134 · Animation läuft von selbst · Klick = weiter
 ➜ „Schaut euch diese Deichsel an.“
 
 === FOLIE 89 ===
-AUF DER FOLIE: ANHÄNGER MIT AUFLAUFBREMSE | Was seht ihr an dieser Deichsel? | Auflaufeinrichtung / unter dem Faltenbalg – schiebt sich beim Bremsen zusammen. | Handbremshebel / die Feststellbremse des Anhängers. | Abreißseil / reißt der Anhänger ab, zieht es die Bremse an. | Stützrad (nicht im Bild) / nach dem Ankuppeln ganz nach oben. | KLASSE CE  ·  ABEND 6  ·  CE2  ·  AUFLAUFBREMSE | 89
+AUF DER FOLIE: ANHÄNGER MIT AUFLAUFBREMSE | Was seht ihr an dieser Deichsel? | Auflaufeinrichtung / unter dem Faltenbalg – schiebt sich beim Bremsen zusammen. | Handbremshebel / die Feststellbremse des Anhängers. | Abreißseil / reißt der Anhänger ab, zieht es die Bremse an. | Stützrad / nach dem Ankuppeln ganz nach oben. | KLASSE CE  ·  ABEND 6  ·  CE2  ·  AUFLAUFBREMSE | 89
 NOTIZEN:
 FOLIE 89 VON 134 · 4 Klicks
 
@@ -914,7 +914,7 @@ FOLIE 89 VON 134 · 4 Klicks
 ❓ Sammeln lassen, dann je Klick auflösen.
 🖱 Klick 1–4: je ein Teil.
 ✅ Auflaufeinrichtung, Handbremshebel, Abreißseil: Lehrbuchwissen; UN-R 13 / RL 71/320/EWG Anhang I Nr. 1.12 (Auflaufbremsung) und Nr. 2.2.2.9 (selbsttätige Bremsung beim Abreißen; Ausnahme einachsige Anhänger bis 1,5 t mit Sicherungsverbindung). Prüfungsfrage 2.7.01-121: nach dem Ankuppeln Bremse prüfen, Stützrad in die oberste Stellung, Abreißseil an der Anhängekupplung des Zugfahrzeugs einhängen.
-💡 Das Bild zeigt einen Kugelkopf. Am Lkw hängt so ein Anhänger meist mit Zugöse am Bolzen. Das Stützrad ist im Bild nicht zu sehen – darum steht auf der Karte „nicht im Bild“.
+💡 Vorn an dieser Deichsel sitzt ein Kugelkopf (im Bild links abgeschnitten). Am Lkw hängt so ein Anhänger meist mit Zugöse am Bolzen.
 ➜ „Und wie bremst das Ding?“
 
 === FOLIE 90 ===
@@ -969,13 +969,13 @@ FOLIE 94 VON 134 · keine Animation · Klick = weiter
 ➜ „Eine Prüfungsfrage.“
 
 === FOLIE 95 ===
-AUF DER FOLIE: PRÜFUNGSFRAGE 2.7.06-105 | Wann tritt bei einem Anhänger mit Auflaufbremse die Bremswirkung ein? | A | Beim Auflaufen des Anhängers auf das Zugfahrzeug | B | Zeitgleich mit der Betätigung des Bremspedals im Zugfahrzeug | C | Vor Eintreten der Bremswirkung beim Zugfahrzeug, damit der Zug gestreckt bleibt | ✓  RICHTIG | Erst wenn der Anhänger aufläuft. Darum bremst er immer einen Moment später als der Lkw. | KLASSE CE  ·  ABEND 6  ·  CE2  ·  AUFLAUFBREMSE | 95
+AUF DER FOLIE: PRÜFUNGSFRAGE 2.7.06-105 | Wann tritt bei einem Anhänger mit Auflaufbremse die Bremswirkung ein? | A | Vor Eintreten der Bremswirkung beim Zugfahrzeug, damit der Zug gestreckt bleibt | B | Zeitgleich mit der Betätigung des Bremspedals im Zugfahrzeug | C | Beim Auflaufen des Anhängers auf das Zugfahrzeug | ✓  RICHTIG | Erst wenn der Anhänger aufläuft. Darum bremst er immer einen Moment später als der Lkw. | KLASSE CE  ·  ABEND 6  ·  CE2  ·  AUFLAUFBREMSE | 95
 NOTIZEN:
 FOLIE 95 VON 134 · 2 Klicks
 
 ▶ Frage vorlesen, abstimmen.
 🖱 Klick 1: Antworten · Klick 2: Lösung.
-✅ Amtlicher Fragenkatalog 2.7.06-105: A.
+✅ Amtlicher Fragenkatalog 2.7.06-105: C.
 ➜ „Darf euer Lkw so einen Anhänger ziehen?“
 
 === FOLIE 96 ===
@@ -1171,13 +1171,13 @@ FOLIE 114 VON 134 · keine Animation · Klick = weiter
 ➜ „Eine Prüfungsfrage.“
 
 === FOLIE 115 ===
-AUF DER FOLIE: PRÜFUNGSFRAGE 2.7.02-302 | Welche Auswirkung hat ein Bruch der Vorratsleitung zum Anhänger bei einer Zweileitungs-Bremsanlage? Das Anhängerbremsventil … | A | … leitet eine Bremsung des Anhängers ein | B | … schließt den Anhängerluftvorrat gegen die unterbrochene Vorratsleitung ab | C | … löst beim Zugfahrzeug automatisch eine Bremsung aus | ✓  RICHTIG | ✓  RICHTIG | Der Anhänger bremst selbst und hält seine Luft fest. Der Lkw bremst nicht automatisch. | KLASSE CE  ·  ABEND 6  ·  CE2  ·  WENN EINE LEITUNG REISST | 115
+AUF DER FOLIE: PRÜFUNGSFRAGE 2.7.02-302 | Welche Auswirkung hat ein Bruch der Vorratsleitung zum Anhänger bei einer Zweileitungs-Bremsanlage? Das Anhängerbremsventil … | A | … löst beim Zugfahrzeug automatisch eine Bremsung aus | B | … leitet eine Bremsung des Anhängers ein | C | … schließt den Anhängerluftvorrat gegen die unterbrochene Vorratsleitung ab | ✓  RICHTIG | ✓  RICHTIG | Der Anhänger bremst selbst und hält seine Luft fest. Der Lkw bremst nicht automatisch. | KLASSE CE  ·  ABEND 6  ·  CE2  ·  WENN EINE LEITUNG REISST | 115
 NOTIZEN:
 FOLIE 115 VON 134 · 2 Klicks
 
 ▶ Frage vorlesen, abstimmen.
 🖱 Klick 1: Antworten · Klick 2: Lösung.
-✅ Amtlicher Fragenkatalog 2.7.02-302: A und B.
+✅ Amtlicher Fragenkatalog 2.7.02-302: B und C.
 ➜ „Und wenn gelb reißt?“
 
 === FOLIE 116 ===
@@ -1221,13 +1221,13 @@ FOLIE 119 VON 134 · keine Animation · Klick = weiter
 ➜ „Prüfungsfrage.“
 
 === FOLIE 120 ===
-AUF DER FOLIE: PRÜFUNGSFRAGE 2.7.06-317 | Welche Auswirkung hat der Abriss des Bremsschlauchs mit gelbem Kupplungskopf zwischen Zugfahrzeug und Anhänger beim Bremsen? | A | Das Vierkreisschutzventil sichert den Sicherungsdruck für die Betriebsbremsanlage des Zugfahrzeugs | B | Die Vorratsleitung wird automatisch entlüftet und der Anhänger wird gebremst | C | Die Betriebsbremsanlage des Anhängers fällt aus | ✓  RICHTIG | ✓  RICHTIG | Gelb reißt → beim Bremsen wird rot entlüftet → der Anhänger wird notgebremst. | KLASSE CE  ·  ABEND 6  ·  CE2  ·  WENN EINE LEITUNG REISST | 120
+AUF DER FOLIE: PRÜFUNGSFRAGE 2.7.06-317 | Welche Auswirkung hat der Abriss des Bremsschlauchs mit gelbem Kupplungskopf zwischen Zugfahrzeug und Anhänger beim Bremsen? | A | Die Vorratsleitung wird automatisch entlüftet und der Anhänger wird gebremst | B | Die Betriebsbremsanlage des Anhängers fällt aus | C | Das Vierkreisschutzventil sichert den Sicherungsdruck für die Betriebsbremsanlage des Zugfahrzeugs | ✓  RICHTIG | ✓  RICHTIG | Gelb reißt → beim Bremsen wird rot entlüftet → der Anhänger wird notgebremst. | KLASSE CE  ·  ABEND 6  ·  CE2  ·  WENN EINE LEITUNG REISST | 120
 NOTIZEN:
 FOLIE 120 VON 134 · 2 Klicks
 
 ▶ Frage vorlesen, abstimmen.
 🖱 Klick 1: Antworten · Klick 2: Lösung.
-✅ Amtlicher Fragenkatalog 2.7.06-317: A und B.
+✅ Amtlicher Fragenkatalog 2.7.06-317: A und C.
 ➜ „Was kann noch passieren?“
 
 === FOLIE 121 ===
@@ -1329,7 +1329,7 @@ FOLIE 129 VON 134 · 8 Klicks
 ➜ „Drei Prüfungsfragen.“
 
 === FOLIE 130 ===
-AUF DER FOLIE: PRÜFUNGSFRAGE 2.7.07-321 | Was müssen Sie beim Ankuppeln eines Anhängers beachten? | A | Verschiedenfarbige Kupplungsteile dürfen nicht miteinander verbunden werden | B | Nach dem Ankuppeln Feststellbremse lösen und Unterlegkeile entfernen | C | Zuerst die Vorratsleitung anschließen | ✓  RICHTIG | ✓  RICHTIG | Rot an rot, gelb an gelb – und zuerst gelb. Nach dem Ankuppeln: roter Knopf rein, Keile weg. | KLASSE CE  ·  ABEND 6  ·  CE2  ·  ABSCHLUSS | 130
+AUF DER FOLIE: PRÜFUNGSFRAGE 2.7.07-321 | Was müssen Sie beim Ankuppeln eines Anhängers beachten? | A | Nach dem Ankuppeln Feststellbremse lösen und Unterlegkeile entfernen | B | Verschiedenfarbige Kupplungsteile dürfen nicht miteinander verbunden werden | C | Zuerst die Vorratsleitung anschließen | ✓  RICHTIG | ✓  RICHTIG | Rot an rot, gelb an gelb – und zuerst gelb. Nach dem Ankuppeln: roter Knopf rein, Keile weg. | KLASSE CE  ·  ABEND 6  ·  CE2  ·  ABSCHLUSS | 130
 NOTIZEN:
 FOLIE 130 VON 134 · 2 Klicks
 
@@ -1339,7 +1339,7 @@ FOLIE 130 VON 134 · 2 Klicks
 ➜ „Nächste Frage.“
 
 === FOLIE 131 ===
-AUF DER FOLIE: PRÜFUNGSFRAGE 2.7.06-319 | Sie fahren ein Zugfahrzeug mit Druckluftbremsanlage. Die Bremsleitung am rechten Vorderrad bricht. Wie wirkt sich das im Anhängerbetrieb aus? | A | Beim Anhänger bleibt die Betriebsbremse voll funktionsfähig | B | Die Bremsleistung des Zugfahrzeugs ist eingeschränkt | C | Der Anhänger wird sofort selbsttätig gebremst | ✓  RICHTIG | ✓  RICHTIG | Der Kreis am Lkw ist kaputt, die anderen behalten ihren Druck. Der Anhänger bremst normal. | KLASSE CE  ·  ABEND 6  ·  CE2  ·  ABSCHLUSS | 131
+AUF DER FOLIE: PRÜFUNGSFRAGE 2.7.06-319 | Sie fahren ein Zugfahrzeug mit Druckluftbremsanlage. Die Bremsleitung am rechten Vorderrad bricht. Wie wirkt sich das im Anhängerbetrieb aus? | A | Die Bremsleistung des Zugfahrzeugs ist eingeschränkt | B | Beim Anhänger bleibt die Betriebsbremse voll funktionsfähig | C | Der Anhänger wird sofort selbsttätig gebremst | ✓  RICHTIG | ✓  RICHTIG | Der Kreis am Lkw ist kaputt, die anderen behalten ihren Druck. Der Anhänger bremst normal. | KLASSE CE  ·  ABEND 6  ·  CE2  ·  ABSCHLUSS | 131
 NOTIZEN:
 FOLIE 131 VON 134 · 2 Klicks
 

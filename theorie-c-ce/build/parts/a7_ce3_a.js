@@ -24,7 +24,7 @@ module.exports = async (deck) => {
       frames: [
         fr({ l: 0, a: 0, kop: 0, msg: 'Der Zug fährt. Noch bremst niemand.', mc: C.mut }, { hold: true,
           cap: 'Im Zug soll jedes Fahrzeug sein eigenes Gewicht bremsen. Die Balken zeigen: Wie stark bremst der Lkw, wie stark der Anhänger?',
-          note: '▶ Sagen: „Oben seht ihr zwei Balken. 100 Prozent heißt: Das Fahrzeug bremst genau so stark, wie es zu seinem eigenen Gewicht passt. Zwischen den Fahrzeugen zeigt ein Pfeil, ob der Anhänger schiebt oder zieht.“\n❓ Frage auf der Folie stellen.\n✅ WABCO EBS3, Kap. 4; Mercedes-Benz Actros Betriebsanleitung (EBS): „… stets ihrem Gewicht entsprechend, an der Bremsarbeit des gesamten Lastzugs.“ Darstellung: eigene, schematisch.\n🖱 Klick: Der Fahrer bremst (läuft von selbst weiter).\n➜ „Jetzt wird gebremst.“' }),
+          note: '▶ Sagen: „Oben seht ihr zwei Balken. 100 Prozent heißt: Das Fahrzeug bremst genau so stark, wie es zu seinem eigenen Gewicht passt. Zwischen den Fahrzeugen zeigt ein Pfeil, ob der Anhänger schiebt oder zieht.“\n❓ Frage auf der Folie stellen.\n✅ WABCO EBS3, Kap. 4; Mercedes-Benz Actros Betriebsanleitung (EBS; manualslib S. 243, gedruckt S. 241): „… stets ihrem Gewicht entsprechend, an der Bremsarbeit des gesamten Lastzugs.“ Darstellung: eigene, schematisch.\n🖱 Klick: Der Fahrer bremst (läuft von selbst weiter).\n➜ „Jetzt wird gebremst.“' }),
         fr({ l: 50, a: 50, kop: 0, neu: 1, msg: 'Der Fahrer bremst …', mc: C.mut }),
         fr({ l: 100, a: 100, kop: 0.2, msg: 'Jeder bremst sein eigenes Gewicht: An der Kupplung drückt fast nichts. Der Zug bleibt gerade.', mc: C.gr }, { hold: true,
           cap: 'Richtig abgestimmt: Lkw und Anhänger bremsen beide ihr eigenes Gewicht. Die Kraft an der Kupplung bleibt klein.',
@@ -90,12 +90,12 @@ module.exports = async (deck) => {
     await steps(deck, 'ce3l', {
       kicker: 'Lastanpassung', ttl: 'Der Anhänger wiegt sich',
       list: ['Leer', 'Halb beladen', 'Voll beladen', 'Luftbalg undicht'],
-      ask: { q: 'Euer Anhänger ist leer. Ihr bremst kräftig auf trockener Straße. Warum blockieren seine Räder nicht?', a: 'Die Lastanpassung misst am Luftbalg, wie schwer er ist – und gibt weniger Druck in die Bremszylinder. Gegen Blockieren auf Glätte hilft nur das ABS.', at: 2 },
+      ask: { q: 'Euer Anhänger ist leer. Ihr bremst kräftig auf trockener Straße. Warum blockieren die Räder trotzdem nicht?', a: 'Die Lastanpassung misst am Luftbalg, wie schwer er ist – und gibt weniger Druck in die Bremszylinder. Gegen Blockieren auf Glätte hilft nur das ABS.', at: 2 },
       caps: [
         'Bei Luftfederung misst der Anhänger den Druck im Luftbalg. Bei Blattfedern misst er, wie weit die Feder einfedert.',
         'Je mehr Ladung, desto mehr Luft im Balg – und desto mehr Bremsdruck darf er geben.',
-        'Voll beladen: voller Bremsdruck. So bremst der Anhänger leer wie voll passend zu seinem Gewicht.',
-        'Ein undichter Balg verfälscht die Messung: Die Bremswirkung stimmt nicht mehr. Ab in die Werkstatt!',
+        'Voll beladen: voller Bremsdruck. So bremst der Anhänger leer wie voll – immer passend zu seinem Gewicht.',
+        'Ein undichter Balg verfälscht die Messung: Die Bremswirkung stimmt nicht mehr. Der Anhänger muss in die Werkstatt!',
       ],
       notes: [
         '▶ Sagen: „Hier ein Anhänger mit Luftfederung. Über jeder Achse sitzt ein Luftbalg. Je schwerer der Anhänger, desto mehr Luft braucht der Balg, um ihn zu tragen. Diesen Druck misst die Lastanpassung – früher das ALB-Ventil, heute meist das EBS.“\n❓ Frage auf der Folie stellen.\n✅ WABCO TEBS E System Description, Kap. 5.9.2: Last über Balgdruck (Luftfederung) bzw. Federweg (mechanische Federung). Prüfungsfrage 2.7.06-233: Bremskraft wird der tatsächlichen Fahrzeugmasse angepasst.\n➜ „Jetzt wird beladen.“',
@@ -162,7 +162,7 @@ module.exports = async (deck) => {
           note: '▶ „Bremst ihr, läuft das Signal durch das Kabel – sehr schnell. Gleichzeitig kommt Luft durch gelb. Das Bremsmodul nimmt zuerst das elektrische Signal. Und weil es über den Stecker Strom hat, regelt es selbst: Last, ABS und Kippschutz. Die gelbe Leitung ist die Reserve.“\n✅ WABCO TEBS E System Description, Kap. 5.9.1: Bremswunsch vorrangig über CAN (ISO 7638, Pin 6/7); fehlt CAN, misst ein Drucksensor am gelben Anschluss – Last, ABS und RSS regelt das Modul trotzdem, solange es Strom hat. Kap. 5.1: TEBS mit Lastanpassung, ABS und Kippschutz (RSS).\n🖱 Klick: Was, wenn der Stecker fehlt?\n➜ „Und ohne Stecker?“' }),
         fr({ plug: 0, brake: 0, msg: 'Der Stecker fehlt.', mc: C.red }),
         fr({ plug: 0, brake: 1, msg: 'Ohne Stecker bremst der EBS-Anhänger nur über gelb – ohne ABS, ohne Kippschutz, meist ohne Lastanpassung.', mc: C.red }, { hold: true, answer: true,
-          cap: 'Ohne Stecker: kein Strom, keine Daten. Ein EBS-Anhänger bremst dann nur über gelb – ohne ABS, ohne Kippschutz und in der Regel ohne Lastanpassung.',
+          cap: 'Ohne Stecker: kein Strom, keine Daten. Ein EBS-Anhänger bremst dann nur über gelb – ohne ABS, ohne Kippschutz, meist ohne Lastanpassung.',
           note: '▶ „Fehlt der Stecker, hat das Bremsmodul keinen Strom und keine Daten. Der Anhänger bremst trotzdem – über gelb. Aber ohne ABS und ohne Kippschutz – und beim EBS-Anhänger meist auch ohne Lastanpassung. Ein leerer Anhänger blockiert dann sehr leicht.“\n❓ Frage auf der Folie auflösen.\n✅ WABCO TEBS E, Kap. 5.7: „The ABS, EBS and RSS control functions are not available if the ISO 7638 plug connection … is not connected.“ Kap. 5.9: ohne Strom wird der gelbe Steuerdruck ohne Lastanpassung durchgeschaltet. Prüfungsfrage 2.7.06-315: ABV kann abgeschaltet sein; Bremsung mit pneumatischem Redundanzdruck.\n💡 Anhänger mit eigenem ALB-Ventil (ohne EBS) behalten ohne Stecker die Lastanpassung – nur das ABS fehlt (WABCO EBS3, S. 14). Manche TEBS-E-Anhänger haben eine Notversorgung über das Bremslicht: dann Lastanpassung und eingeschränktes ABS, aber kein Kippschutz (TEBS E Kap. 5.7.2). Kein Ersatz für den Stecker.\n💡 Am Anhänger klebt ein Pflichtschild: Was funktioniert mit und was ohne ABS/EBS-Stecker – am Fahrzeug zeigen (UN-R 13 Nr. 5.2.2.17). Und: Anhänger mit ABS, aber ohne ALB-Ventil, dürfen nur hinter einem Lkw fahren, der ihr ABS sicherstellt (§ 41b Abs. 4 StVZO).\n🖱 Nächster Klick: nächste Folie.\n➜ „Zwei Prüfungsfragen.“' }),
       ],
       scene: async (s, t) => {

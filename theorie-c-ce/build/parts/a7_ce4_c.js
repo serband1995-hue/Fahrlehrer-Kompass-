@@ -1,14 +1,14 @@
-// Abend 7 · CE4: Kapitel 4 Wetter und Gefälle, Kapitel 5 Tempo, Abstand, Schwertransport
+// Abend 7 · CE4: Kapitel 4 Wetter und Wind, Kapitel 5 Tempo, Abstand, Schwertransport
 const { C, sec, chapter, steps, quiz, ask, photoAsk, base, kick, title, card, CLICK, sign, svgImg } = require('../gs');
 const { icon } = require('../lib');
 
-sec('ce4w', 'CE4  ·  WETTER UND GEFÄLLE', C.gr, 'bg_gr.jpg');
+sec('ce4w', 'CE4  ·  WETTER UND WIND', C.gr, 'bg_gr.jpg');
 sec('ce4t', 'CE4  ·  TEMPO, ABSTAND, SCHWERTRANSPORT', 'C9A227', 'bg_am.jpg');
 
 module.exports = async (deck) => {
-  // ===== KAPITEL 4: WETTER UND GEFÄLLE =====
-  await chapter(deck, 'ce4w', { num: 4, ttl: 'Wetter und Gefälle', sub: 'Schnee, Nebel und Wind treffen den Zug härter als den Lkw allein.', ico: 'LuCloudSnow', notes:
-    '▶ Sagen: „Bergab mit der Dauerbremse kennt ihr aus CE3. Jetzt das Wetter: Schnee, Glätte, schlechte Sicht und Wind.“\n✅ § 3, § 5, § 18 StVO; Prüfungsfragen 2.2.05-104, 2.2.23-101.\n🖱 Keine Klicks.\n➜ „Erst der Winter.“' });
+  // ===== KAPITEL 4: WETTER UND WIND =====
+  await chapter(deck, 'ce4w', { num: 4, ttl: 'Wetter und Wind', sub: 'Schnee, Nebel und Wind treffen den Zug härter als den Lkw allein.', ico: 'LuCloudSnow', notes:
+    '▶ Sagen: „Bergab mit der Dauerbremse kennt ihr aus CE3. Jetzt das Wetter: Schnee, Glätte, schlechte Sicht und Wind.“\n✅ § 3, § 5, § 18 StVO; Prüfungsfragen 2.2.05-104, 2.2.23-101.\n💡 Nebenbei zum Berg: Anfahren an der Steigung mit dem Zug – Rollsperre oder Anfahrhilfe nutzen, wenn der Lkw sie hat (Betriebsanleitung; Actros manualslib S. 249). FahrschAusbO Anlage 2.4 Nr. 4 f.\n🖱 Keine Klicks.\n➜ „Erst der Winter.“' });
   await photoAsk(deck, 'ce4w', {
     bg: 'm_winter_r.jpg', bgX: 6.0, ov: 7.0, kicker: 'Winter', q: 'Schnee und Glätte – was gilt für euren Zug?', qsize: 30, w: 5.25, asize: 15,
     answers: [
@@ -21,7 +21,7 @@ module.exports = async (deck) => {
       '▶ Sagen: „Euer Zug im Winter. Was gilt?“\n' +
       '❓ Sammeln lassen, dann je Klick auflösen.\n' +
       '🖱 Klick 1–4: je ein Punkt.\n' +
-      '✅ § 3 Abs. 4 StVO: mit Schneeketten höchstens 50 km/h (Prüfungsfrage 2.2.03-101); Zeichen 268 = Schneeketten vorgeschrieben; Ketten gehören auf die Antriebsachse (C4). § 18 Abs. 11 StVO (Autobahn): Lkw über 7,5 t einschließlich ihrer Anhänger sowie Zugmaschinen dürfen bei Schneeglätte oder Glatteis oder bei Sicht von 50 m oder weniger durch erheblichen Schneefall oder Regen (Nebel ist hier nicht genannt) den äußerst linken Fahrstreifen nicht benutzen (BKat 87a: 80 €, 1 Punkt). § 3 Abs. 1 StVO: Sicht unter 50 m durch Nebel, Schneefall oder Regen höchstens 50 km/h. § 5 Abs. 3a StVO: Kfz über 7,5 t Überholverbot bei Sicht unter 50 m durch Nebel, Schneefall oder Regen (BKat 21: 120 €, 1 Punkt). Dauerbremse: CE3, Mercedes-Benz Actros Betriebsanleitung S. 250 (bei Glätte nicht einschalten).\n' +
+      '✅ § 3 Abs. 4 StVO: mit Schneeketten höchstens 50 km/h (Prüfungsfrage 2.2.03-101); Zeichen 268 = Schneeketten vorgeschrieben; Ketten gehören auf die Antriebsachse (C4). § 18 Abs. 11 StVO (Autobahn): Lkw über 7,5 t einschließlich ihrer Anhänger sowie Zugmaschinen dürfen bei Schneeglätte oder Glatteis oder bei Sicht von 50 m oder weniger durch erheblichen Schneefall oder Regen (Nebel ist hier nicht genannt) den äußerst linken Fahrstreifen nicht benutzen (BKat 87a: 80 €, 1 Punkt). § 3 Abs. 1 StVO: Sicht unter 50 m durch Nebel, Schneefall oder Regen höchstens 50 km/h. § 5 Abs. 3a StVO: Kfz über 7,5 t Überholverbot bei Sicht unter 50 m durch Nebel, Schneefall oder Regen (BKat 21: 120 €, 1 Punkt). Dauerbremse: CE3, Mercedes-Benz Actros Betriebsanleitung, manualslib S. 250, gedruckt S. 248 (bei Glätte nicht einschalten).\n' +
       '💡 Winterreifen bei Glätte: an Lkw über 3,5 t mindestens auf den permanent angetriebenen Achsen und den vorderen Lenkachsen (§ 2 Abs. 3a StVO, siehe C4).\n' +
       '➜ „Eine Prüfungsfrage dazu.“',
   });
@@ -61,17 +61,18 @@ module.exports = async (deck) => {
     const dial = await svgImg((() => {
       let g = `<circle cx="200" cy="200" r="190" fill="#0E1520" stroke="#2A3B52" stroke-width="6"/>`;
       for (let v = 0; v <= 100; v += 10) {
-        const a = (-120 + v * 2.4 - 90) * Math.PI / 180, r1 = v % 20 ? 160 : 150, r0 = 176;
+        // Teilstriche innen, Zahlen außen: Die Nadel endet an den Teilstrichen und verdeckt keine Zahl
+        const a = (-120 + v * 2.4 - 90) * Math.PI / 180, r1 = v % 20 ? 118 : 106, r0 = 132;
         g += `<line x1="${200 + r0 * Math.cos(a)}" y1="${200 + r0 * Math.sin(a)}" x2="${200 + r1 * Math.cos(a)}" y2="${200 + r1 * Math.sin(a)}" stroke="#738296" stroke-width="${v % 20 ? 3 : 6}"/>`;
-        if (v % 20 === 0) g += `<text x="${200 + 125 * Math.cos(a)}" y="${200 + 125 * Math.sin(a) + 9}" font-family="Lato, sans-serif" font-size="26" fill="#A9B6C6" text-anchor="middle">${v}</text>`;
+        if (v % 20 === 0) g += `<text x="${200 + 158 * Math.cos(a)}" y="${200 + 158 * Math.sin(a) + 9}" font-family="Lato, sans-serif" font-size="26" fill="#A9B6C6" text-anchor="middle">${v}</text>`;
       }
       return g;
     })(), 400, 400, 2);
-    const needle = await svgImg('<polygon points="96,20 104,20 108,104 92,104" fill="#FFB547"/><circle cx="100" cy="100" r="13" fill="#FFB547"/>', 200, 200, 3);
+    const needle = await svgImg('<polygon points="97,36 103,36 108,104 92,104" fill="#FFB547"/><circle cx="100" cy="100" r="13" fill="#FFB547"/>', 200, 200, 3);
     const ST = [
       { v: 50, road: 'innerorts', sg: '274_50', note: 'Wie alle Fahrzeuge innerorts' },
       { v: 60, road: 'auf der Landstraße', sg: '274_60', note: 'Lkw über 3,5 t mit Anhänger: 60 – nicht 80!' },
-      { v: 80, road: 'auf der Autobahn', sg: '274_80', note: 'Auch auf Kraftfahrstraßen mit getrennten Fahrbahnen. Begrenzer: 90 – erlaubt sind 80.' },
+      { v: 80, road: 'auf der Autobahn', sg: '274_80', note: 'Auch auf Kraftfahrstraßen mit getrennten Fahrbahnen.\nBegrenzer: höchstens 90 – erlaubt sind 80.' },
       { v: 50, road: 'mit Schneeketten', sg: '268', note: 'Und bei Sicht unter 50 m: ebenfalls höchstens 50.' },
     ];
     await steps(deck, 'ce4t', {
@@ -79,18 +80,18 @@ module.exports = async (deck) => {
       list: ['Innerorts', 'Landstraße', 'Autobahn', 'Schneeketten'],
       ask: { q: 'Wie schnell dürft ihr mit dem 40-t-Zug innerorts, auf der Landstraße und auf der Autobahn?', a: '50 – 60 – 80 km/h. Mit Schneeketten höchstens 50.', at: 2 },
       caps: [
-        'Innerorts gilt für alle 50 km/h – auch für euren Zug.',
-        'Landstraße: Lkw über 3,5 t mit Anhänger höchstens 60 km/h. Viele denken 80 – das ist falsch.',
-        'Autobahn und Kraftfahrstraße mit getrennten Fahrbahnen: 80 km/h. Der Begrenzer regelt erst bei 90 ab.',
+        'Innerorts gilt für alle Fahrzeuge 50 km/h – auch für euren Zug.',
+        'Landstraße: Lkw über 3,5 t mit Anhänger dürfen höchstens 60 km/h fahren. Viele denken, es sind 80 – falsch.',
+        'Autobahn und Kraftfahrstraße mit getrennten Fahrbahnen: 80 km/h. Der Begrenzer lässt höchstens 90 zu – erlaubt sind 80.',
         'Mit Schneeketten höchstens 50 km/h. Das gilt auch bei Sicht unter 50 m.',
       ],
       notes: [
-        '▶ Sagen: „Wie schnell darf euer 40-Tonnen-Zug? Innerorts?“\n❓ Frage auf der Folie stellen.\n✅ § 3 Abs. 3 Nr. 1 StVO: innerorts 50 km/h.\n➜ „Und auf der Landstraße?“',
-        '▶ „Auf der Landstraße: 60 km/h für Lkw über 3,5 t mit Anhänger. Nicht 80!“\n✅ § 3 Abs. 3 Nr. 2 Buchstabe b StVO (Lkw über 3,5 t mit Anhänger: 60 km/h). Prüfungsfrage 2.2.03-108 (Lkw 5,5 t + Anhänger 2 t: 60).\n💡 Ausnahme (nicht vertiefen): Auf Straßen mit baulich getrennten Fahrbahnen oder zwei markierten Fahrstreifen je Richtung gilt die 60-km/h-Grenze aus § 3 Abs. 3 Nr. 2 nicht. Ist es eine Kraftfahrstraße: 80 km/h (§ 18 Abs. 5). Sonst Beschilderung beachten.\n➜ „Und auf der Autobahn?“',
-        '▶ „Autobahn: 80. Euer Begrenzer lässt 90 zu – erlaubt sind trotzdem nur 80.“\n❓ Frage auf der Folie auflösen.\n✅ § 18 Abs. 5 Nr. 1 StVO (Lkw mit Anhänger 80 km/h). Prüfungsfrage 2.2.03-301 (Lastzug 40 t: 80). § 57c StVZO (Begrenzer 90 km/h).\n➜ „Und im Winter?“',
-        '▶ „Mit Schneeketten: höchstens 50. Und bei Nebel unter 50 Meter Sicht ebenfalls 50.“\n✅ § 3 Abs. 4 und Abs. 1 StVO. Prüfungsfrage 2.2.03-101.\n➜ „Und überholen?“',
+        '▶ Sagen: „Wie schnell darf euer 40-Tonnen-Zug? Innerorts?“\n❓ Frage auf der Folie stellen.\n✅ § 3 Abs. 3 Nr. 1 StVO: innerorts 50 km/h. StVO Anlage 2 lfd. Nr. 49 (Zeichen 274) Nr. 2 und 3: Erlaubt ein Schild innerorts mehr als 50, gilt das für Fahrzeuge aller Art. Außerorts bleiben die 60 bzw. 80 für den Zug, auch wenn das Schild mehr erlaubt.\n💡 Fußzeile erklären: Weniger auf dem Schild gilt immer. Mehr gilt innerorts auch für euch (z. B. 70 auf der Ausfallstraße) – außerorts nicht (z. B. 100 auf der Bundesstraße).\n➜ „Und auf der Landstraße?“',
+        '▶ „Auf der Landstraße: 60 km/h für Lkw über 3,5 t mit Anhänger. Nicht 80!“\n✅ § 3 Abs. 3 Nr. 2 Buchstabe b StVO (Lkw über 3,5 t mit Anhänger: 60 km/h). Prüfungsfrage 2.2.03-108 (Lkw 5,5 t + Anhänger 2 t: 60).\n💡 Die 60 km/h gelten außerorts überall – auch auf vierspurigen Bundesstraßen. Nur auf Autobahnen und Kraftfahrstraßen mit baulich getrennten Fahrbahnen: 80 km/h (§ 18 Abs. 5 StVO). Die Ausnahme in § 3 Abs. 3 für zwei Fahrstreifen je Richtung steht unter Buchstabe c und gilt nur für die 100 km/h der Pkw.\n➜ „Und auf der Autobahn?“',
+        '▶ „Autobahn: 80. Euer Begrenzer lässt höchstens 90 zu – erlaubt sind trotzdem nur 80.“\n❓ Frage auf der Folie auflösen.\n✅ § 18 Abs. 5 Nr. 1 StVO (Lkw mit Anhänger 80 km/h). Prüfungsfrage 2.2.03-301 (Lastzug 40 t: 80). § 57c Abs. 2 StVZO: Begrenzer auf höchstens 90 km/h einschließlich aller Toleranzen eingestellt – meist regelt er schon darunter ab.\n💡 Die Richtgeschwindigkeit 130 gilt nicht für Lkw über 3,5 t (Prüfungsfragen 2.2.03-304 und -305).\n➜ „Und im Winter?“',
+        '▶ „Mit Schneeketten: höchstens 50. Und bei Sicht unter 50 Meter – durch Nebel, Schnee oder Regen – ebenfalls 50.“\n✅ § 3 Abs. 4 und Abs. 1 StVO. Prüfungsfrage 2.2.03-101.\n➜ „Und überholen?“',
       ],
-      legend: 'Höchstwerte nach StVO · Schilder vor Ort haben Vorrang, wenn sie weniger erlauben',
+      legend: 'Höchstwerte nach StVO · Weniger auf dem Schild gilt immer. Mehr gilt nur innerorts auch für euch.',
       scene: async (s, i) => {
         const t = ST[i];
         s.img(dial, { x: CX - RR, y: CY - RR, w: 2 * RR, h: 2 * RR, name: '!!dial' });
@@ -128,13 +129,13 @@ module.exports = async (deck) => {
     answers: [
       ['LuArrowRightLeft', 'Außerorts, ein Streifen je Richtung:', 'so viel, dass ein Überholer vor euch einscheren kann. Gilt für Lkw über 3,5 t und Züge über 7 m.'],
       ['LuMilestone', 'Autobahn, über 50 km/h:', 'mindestens 50 m – Lkw über 3,5 t.'],
-      ['LuTimer', 'Mit Zug lieber mehr:', 'Euer Bremsweg ist länger, und ihr seht nach vorn schlechter.'],
+      ['LuTimer', 'Mit Zug lieber mehr:', 'Der Zug ist schwer und braucht einen langen Bremsweg – und ihr wollt gestreckt bremsen können.'],
     ],
     notes:
       '▶ Sagen: „Zwei Abstandsregeln, die nur für schwere Fahrzeuge gelten.“\n' +
       '❓ Vor jedem Klick fragen.\n' +
       '🖱 Klick 1–3: je eine Regel.\n' +
-      '✅ § 4 Abs. 2 StVO: Kfz mit besonderer Geschwindigkeitsbeschränkung und Züge über 7 m außerorts so viel Abstand, dass ein Überholer einscheren kann – nicht bei mehr als einem Fahrstreifen je Richtung, beim angekündigten Überholen und bei Überholverbot (BKat 14: 25 €). § 4 Abs. 3 StVO: Lkw über 3,5 t und Busse auf der Autobahn bei mehr als 50 km/h mindestens 50 m (BKat 15: 80 €, 1 Punkt). Prüfungsfragen 2.2.04-306, -307, -303.\n' +
+      '✅ § 4 Abs. 2 StVO: Kfz mit besonderer Geschwindigkeitsbeschränkung und Züge über 7 m außerorts so viel Abstand, dass ein Überholer einscheren kann – nicht bei mehr als einem Fahrstreifen je Richtung, beim angekündigten Überholen und bei Überholverbot (BKat 14: 25 €). § 4 Abs. 3 StVO: Lkw über 3,5 t und Busse auf der Autobahn bei mehr als 50 km/h mindestens 50 m (BKat 15: 80 €, 1 Punkt). § 4 Abs. 1 StVO: so viel Abstand, dass ihr auch bei plötzlichem Bremsen des Vordermanns halten könnt. Prüfungsfragen 2.2.04-306, -307, -303 sowie -302, -304 und -305.\n' +
       '➜ „Eine Prüfungsfrage.“',
   });
   await quiz(deck, 'ce4t', {
@@ -157,12 +158,13 @@ module.exports = async (deck) => {
       '🖱 Klick 1–4: je ein Punkt.\n' +
       '✅ § 70 StVZO: Ausnahmegenehmigung für Fahrzeuge, die von den Vorschriften über Maße und Gewichte abweichen (Urkunde mitführen). § 29 Abs. 3 StVO: Erlaubnis für den Verkehr mit Fahrzeugen und Zügen, die Abmessungen, Achslasten oder Gesamtmassen tatsächlich überschreiten. VwV-StVO zu § 29 Abs. 3, Rn. 133: Begleitfahrzeug mit nach hinten wirkender Wechselverkehrszeichen-Anlage u. a. bei Breite über 3,50 m außerhalb von Autobahnen (über 4,00 m bzw. 4,50 m auf Autobahnen). Rn. 139–143: Fahrzeiten, meist nachts. Merkblatt für Begleitfahrzeuge (BMVI 2015): BF3 (Zeichen nach hinten), BF4 (nach hinten, vorn und seitlich; VwV-StVO Rn. 131). BKat 116: ohne Erlaubnis 60 €, 1 Punkt.\n' +
       '💡 Ist nur die Ladung zu groß (Fahrzeug normal), braucht es eine Ausnahmegenehmigung nach § 46 Abs. 1 Nr. 5 StVO statt der Erlaubnis.\n' +
+      '💡 Seit 7.9.2023 dürfen Transportbegleiter mit Anordnungsbefugnis den Verkehr regeln. Ihre Zeichen und die Schilder am Begleitfahrzeug gelten auch für euch – die Polizei geht vor (§ 36a StVO; StTbV § 3).\n' +
       '➜ „Eine Prüfungsfrage.“',
   });
   await quiz(deck, 'ce4t', {
     kicker: 'Prüfungsfrage 2.2.29-205', q: 'Ein Fahrzeug überschreitet die gesetzlichen Grenzwerte für Gesamtmassen und Abmessungen. Was gilt für den Betrieb dieses Fahrzeugs auf öffentlichen Straßen?', size: 28,
     opts: ['Es bedarf einer zusätzlichen Erlaubnis', 'Ein Begleitfahrzeug kann vorgeschrieben werden', 'Die Route des Fahrzeugs kann frei gewählt werden'], ok: [0, 1],
-    why: 'Die Strecke steht im Bescheid – frei wählen dürft ihr sie nicht.',
-    notes: '▶ Frage vorlesen, abstimmen.\n🖱 Klick 1: Antworten · Klick 2: Lösung.\n✅ Amtlicher Fragenkatalog 2.2.29-205: A und B.\n➜ „Zum Abschluss von CE4: Mitschreiben.“',
+    why: 'Frei wählen dürft ihr die Strecke nicht: Sie steht im Bescheid – oder der Bescheid sperrt bestimmte Strecken.',
+    notes: '▶ Frage vorlesen, abstimmen.\n🖱 Klick 1: Antworten · Klick 2: Lösung.\n✅ Amtlicher Fragenkatalog 2.2.29-205: A und B.\n💡 Muss ein Anhörverfahren laufen, legt der Bescheid den Fahrtweg fest. Dauererlaubnisse für ein ganzes Gebiet nennen stattdessen gesperrte Strecken (Negativliste) – VwV-StVO zu § 29 Abs. 3, Rn. 100 und 119.\n➜ „Zum Abschluss von CE4: Mitschreiben.“',
   });
 };

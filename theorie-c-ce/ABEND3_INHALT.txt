@@ -540,14 +540,14 @@ FOLIE 54 VON 126 · keine Animation · Klick = weiter
 ➜ „Und wie stellt ihr den Lkw am Berg sicher ab?“
 
 === FOLIE 55 ===
-AUF DER FOLIE: FESTSTELLBREMSE | Wie sichern Sie einen zweiachsigen Lkw in starkem Gefälle gegen Wegrollen? | A | Feststellbremse anziehen | B | Unterlegkeil vor ein Hinterrad legen | C | Dauerbremse einschalten | ✓  RICHTIG | ✓  RICHTIG | Feststellbremse und Unterlegkeil – die Dauerbremse wirkt nur bei laufendem Motor und rollendem Lkw (Prüfungsfrage 2.2.23-201). | KLASSE C  ·  ABEND 3  ·  C5  ·  FESTSTELLBREMSE | 55
+AUF DER FOLIE: FESTSTELLBREMSE | Wie sichern Sie einen zweiachsigen Lkw in starkem Gefälle gegen Wegrollen? | A | Unterlegkeil vor ein Hinterrad legen | B | Dauerbremse einschalten | C | Feststellbremse anziehen | ✓  RICHTIG | ✓  RICHTIG | Feststellbremse und Unterlegkeil – die Dauerbremse wirkt nur bei laufendem Motor und rollendem Lkw (Prüfungsfrage 2.2.23-201). | KLASSE C  ·  ABEND 3  ·  C5  ·  FESTSTELLBREMSE | 55
 NOTIZEN:
 FOLIE 55 VON 126 · 2 Klicks
 
 ▶ Frage vorlesen, abstimmen. Mehrere Antworten können richtig sein.
 💡 Mündlich abstimmen und begründen – kein Bogen zum Ausfüllen.
 🖱 Klick 1: Antworten · Klick 2: Lösung.
-✅ A und B. Den Keil auf der Talseite unter das Rad legen.
+✅ A und C. Den Keil auf der Talseite unter das Rad legen.
 ➜ „Zum Schluss von C5: Mitschreiben.“
 
 === FOLIE 56 ===
@@ -562,29 +562,29 @@ FOLIE 56 VON 126 · 8 Klicks
 ➜ „Jetzt testen wir C5.“
 
 === FOLIE 57 ===
-AUF DER FOLIE: QUIZ C5 · 1 | Ihr Lkw mit Druckluftbremse stand mehrere Tage. Wann dürfen Sie frühestens losfahren? | A | Sobald sich die Federspeicherbremse automatisch löst | B | Wenn die Signale der Druckwarneinrichtung aufgehört haben | C | Wenn 3 bar Vorratsdruck angezeigt werden | ✓  RICHTIG | Erst wenn die Druckwarneinrichtung keine Signale mehr gibt, ist genug Luft für sicheres Bremsen da (Prüfungsfrage 2.7.01-238). | KLASSE C  ·  ABEND 3  ·  C5  ·  ABSCHLUSS | 57
+AUF DER FOLIE: QUIZ C5 · 1 | Ihr Lkw mit Druckluftbremse stand mehrere Tage. Wann dürfen Sie frühestens losfahren? | A | Wenn die Signale der Druckwarneinrichtung aufgehört haben | B | Wenn 3 bar Vorratsdruck angezeigt werden | C | Sobald sich die Federspeicherbremse automatisch löst | ✓  RICHTIG | Erst wenn die Druckwarneinrichtung keine Signale mehr gibt, ist genug Luft für sicheres Bremsen da (Prüfungsfrage 2.7.01-238). | KLASSE C  ·  ABEND 3  ·  C5  ·  ABSCHLUSS | 57
 NOTIZEN:
 FOLIE 57 VON 126 · 2 Klicks
 
 ▶ Frage vorlesen, abstimmen.
 💡 Mündlich abstimmen und begründen – kein Bogen zum Ausfüllen.
 🖱 Klick 1: Antworten · Klick 2: Lösung.
-✅ B.
+✅ A.
 ➜ „Nächste Frage.“
 
 === FOLIE 58 ===
-AUF DER FOLIE: QUIZ C5 · 2 | Wodurch wird bei einer Federspeicherbremse die Bremsung bewirkt? | A | Durch einströmende Druckluft | B | Durch Federkraft | C | Durch die Betätigungskraft des Fahrers | ✓  RICHTIG | Das Handbremsventil lässt die Luft aus dem Federspeicher – die Feder bremst. Luft löst (Prüfungsfragen 2.7.06-213, -214). | KLASSE C  ·  ABEND 3  ·  C5  ·  ABSCHLUSS | 58
+AUF DER FOLIE: QUIZ C5 · 2 | Wodurch wird bei einer Federspeicherbremse die Bremsung bewirkt? | A | Durch Federkraft | B | Durch einströmende Druckluft | C | Durch die Betätigungskraft des Fahrers | ✓  RICHTIG | Das Handbremsventil lässt die Luft aus dem Federspeicher – die Feder bremst. Luft löst (Prüfungsfragen 2.7.06-213, -214). | KLASSE C  ·  ABEND 3  ·  C5  ·  ABSCHLUSS | 58
 NOTIZEN:
 FOLIE 58 VON 126 · 2 Klicks
 
 ▶ Frage vorlesen, abstimmen.
 💡 Mündlich abstimmen und begründen – kein Bogen zum Ausfüllen.
 🖱 Klick 1: Antworten · Klick 2: Lösung.
-✅ B.
+✅ A.
 ➜ „Und noch eine.“
 
 === FOLIE 59 ===
-AUF DER FOLIE: QUIZ C5 · 3 | Beim leeren Lkw blockieren bei jeder stärkeren Bremsung die Hinterräder. Mögliche Ursache? | A | Defekte oder falsch eingestellte ALB | B | Starkes Bremsfading | C | Bruch mehrerer Federblätter an der Hinterachse | ✓  RICHTIG | ✓  RICHTIG | Die ALB misst die Last über die Federung. Ist sie defekt oder sind Federblätter gebrochen, bekommt die leere Hinterachse zu viel Druck (Prüfungsfrage 2.7.06-209). | KLASSE C  ·  ABEND 3  ·  C5  ·  ABSCHLUSS | 59
+AUF DER FOLIE: QUIZ C5 · 3 | Beim leeren Lkw blockieren bei jeder stärkeren Bremsung die Hinterräder. Mögliche Ursache? | A | Bruch mehrerer Federblätter an der Hinterachse | B | Starkes Bremsfading | C | Defekte oder falsch eingestellte ALB | ✓  RICHTIG | ✓  RICHTIG | Die ALB misst die Last über die Federung. Ist sie defekt oder sind Federblätter gebrochen, bekommt die leere Hinterachse zu viel Druck (Prüfungsfrage 2.7.06-209). | KLASSE C  ·  ABEND 3  ·  C5  ·  ABSCHLUSS | 59
 NOTIZEN:
 FOLIE 59 VON 126 · 2 Klicks
 
@@ -708,14 +708,14 @@ FOLIE 70 VON 126 · 3 Klicks
 ➜ „Und wenn die Dauerbremse im Gefälle nicht reicht?“
 
 === FOLIE 71 ===
-AUF DER FOLIE: DAUERBREMSEN | Beladener Lkw mit Schaltgetriebe, starkes Gefälle: Trotz Dauerbremse wird er immer schneller. Was tun? | A | Mit der Betriebsbremse abbremsen und hochschalten | B | Mit der Betriebsbremse abbremsen und herunterschalten | C | Dauerbremse aus, nur noch Betriebsbremse | ✓  RICHTIG | Erst mit der Betriebsbremse langsamer werden, dann herunterschalten – im kleinen Gang bremst vor allem der Motor stärker (Prüfungsfrage 2.7.06-236). | KLASSE C  ·  ABEND 3  ·  C6  ·  DAUERBREMSEN | 71
+AUF DER FOLIE: DAUERBREMSEN | Beladener Lkw mit Schaltgetriebe, starkes Gefälle: Trotz Dauerbremse wird er immer schneller. Was tun? | A | Mit der Betriebsbremse abbremsen und herunterschalten | B | Mit der Betriebsbremse abbremsen und hochschalten | C | Dauerbremse aus, nur noch Betriebsbremse | ✓  RICHTIG | Erst mit der Betriebsbremse langsamer werden, dann herunterschalten – im kleinen Gang bremst vor allem der Motor stärker (Prüfungsfrage 2.7.06-236). | KLASSE C  ·  ABEND 3  ·  C6  ·  DAUERBREMSEN | 71
 NOTIZEN:
 FOLIE 71 VON 126 · 2 Klicks
 
 ▶ Frage vorlesen, abstimmen.
 💡 Mündlich abstimmen und begründen – kein Bogen zum Ausfüllen.
 🖱 Klick 1: Antworten · Klick 2: Lösung.
-✅ B (Prüfungsfrage 2.7.06-236: beladen, manuelles Schaltgetriebe). Mit Automatik schaltet das Getriebe selbst zurück.
+✅ A (Prüfungsfrage 2.7.06-236: beladen, manuelles Schaltgetriebe). Mit Automatik schaltet das Getriebe selbst zurück.
 💡 Ein Sekundärretarder bremst nach dem Tempo, nicht nach dem Gang – der Gewinn im kleinen Gang kommt vor allem vom Motor.
 💡 Besser: schon vor dem Gefälle den kleinen Gang wählen.
 ➜ „Kapitel 2: Bremsweg und Fading.“
@@ -1209,36 +1209,36 @@ FOLIE 121 VON 126 · 8 Klicks
 ➜ „Jetzt testen wir C6.“
 
 === FOLIE 122 ===
-AUF DER FOLIE: QUIZ C6 · 1 | Warum sollten Sie die Dauerbremse (Retarder) nutzen? | A | Sie arbeitet verschleißfrei | B | Sie bremst den Lkw bis zum Stillstand | C | Sie entlastet die Betriebsbremse | ✓  RICHTIG | ✓  RICHTIG | Die Dauerbremse ist verschleißfrei und hält die Betriebsbremse kühl. Bis zum Stillstand bremst sie nicht (Prüfungsfrage 2.7.06-239). | KLASSE C  ·  ABEND 3  ·  C6  ·  ABSCHLUSS | 122
+AUF DER FOLIE: QUIZ C6 · 1 | Warum sollten Sie die Dauerbremse (Retarder) nutzen? | A | Sie bremst den Lkw bis zum Stillstand | B | Sie arbeitet verschleißfrei | C | Sie entlastet die Betriebsbremse | ✓  RICHTIG | ✓  RICHTIG | Die Dauerbremse ist verschleißfrei und hält die Betriebsbremse kühl. Bis zum Stillstand bremst sie nicht (Prüfungsfrage 2.7.06-239). | KLASSE C  ·  ABEND 3  ·  C6  ·  ABSCHLUSS | 122
 NOTIZEN:
 FOLIE 122 VON 126 · 2 Klicks
 
 ▶ Frage vorlesen, abstimmen. Mehrere Antworten können richtig sein.
 💡 Mündlich abstimmen und begründen – kein Bogen zum Ausfüllen.
 🖱 Klick 1: Antworten · Klick 2: Lösung.
-✅ A und C.
+✅ B und C.
 ➜ „Nächste Frage.“
 
 === FOLIE 123 ===
-AUF DER FOLIE: QUIZ C6 · 2 | Sie treten bei voll gefülltem Luftbehälter einmal das Bremspedal voll durch. Welcher Druckabfall ist unbedenklich? | A | Bis 0,7 bar | B | Bis 1,2 bar | C | Bis 1,5 bar | ✓  RICHTIG | Höchstens 0,7 bar je Vollbremsung. Mehr heißt: Der Luftvorrat fällt zu schnell ab (Prüfungsfragen 2.7.06-231, -232). | KLASSE C  ·  ABEND 3  ·  C6  ·  ABSCHLUSS | 123
+AUF DER FOLIE: QUIZ C6 · 2 | Sie treten bei voll gefülltem Luftbehälter einmal das Bremspedal voll durch. Welcher Druckabfall ist unbedenklich? | A | Bis 1,2 bar | B | Bis 1,5 bar | C | Bis 0,7 bar | ✓  RICHTIG | Höchstens 0,7 bar je Vollbremsung. Mehr heißt: Der Luftvorrat fällt zu schnell ab (Prüfungsfragen 2.7.06-231, -232). | KLASSE C  ·  ABEND 3  ·  C6  ·  ABSCHLUSS | 123
 NOTIZEN:
 FOLIE 123 VON 126 · 2 Klicks
 
 ▶ Frage vorlesen, abstimmen.
 💡 Mündlich abstimmen und begründen – kein Bogen zum Ausfüllen.
 🖱 Klick 1: Antworten · Klick 2: Lösung.
-✅ A.
+✅ C.
 ➜ „Und noch eine.“
 
 === FOLIE 124 ===
-AUF DER FOLIE: QUIZ C6 · 3 | Wie erreichen Sie mit ABS den kürzesten Bremsweg? | A | Mehrmals kurz hintereinander mit voller Kraft treten (pumpen) | B | Schlagartig und mit maximaler Pedalkraft bremsen | C | Erst leicht, dann immer stärker bremsen | ✓  RICHTIG | Voll treten und halten – das ABS regelt selbst. Pumpen verlängert den Bremsweg (Prüfungsfrage 2.7.01-139). | KLASSE C  ·  ABEND 3  ·  C6  ·  ABSCHLUSS | 124
+AUF DER FOLIE: QUIZ C6 · 3 | Wie erreichen Sie mit ABS den kürzesten Bremsweg? | A | Mehrmals kurz hintereinander mit voller Kraft treten (pumpen) | B | Erst leicht, dann immer stärker bremsen | C | Schlagartig und mit maximaler Pedalkraft bremsen | ✓  RICHTIG | Voll treten und halten – das ABS regelt selbst. Pumpen verlängert den Bremsweg (Prüfungsfrage 2.7.01-139). | KLASSE C  ·  ABEND 3  ·  C6  ·  ABSCHLUSS | 124
 NOTIZEN:
 FOLIE 124 VON 126 · 2 Klicks
 
 ▶ Frage vorlesen, abstimmen.
 💡 Mündlich abstimmen und begründen – kein Bogen zum Ausfüllen.
 🖱 Klick 1: Antworten · Klick 2: Lösung.
-✅ B.
+✅ C.
 ➜ „Zum Schluss: Das nehmt ihr mit.“
 
 === FOLIE 125 ===
