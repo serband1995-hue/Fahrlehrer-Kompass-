@@ -17,4 +17,5 @@ Fahrlehrer-Kompass: PWA for driving instructors, plain HTML/CSS/JS (no build, al
 - Bump `APP_VERSION` (`index.html`) and `CACHE_VERSION` (`sw.js`) with every release.
 - Before shipping run `bash scripts/release-check.sh` (versions bumped, no secrets) and `NODE_PATH=$(npm root -g) node scripts/handy-test.mjs` (pages at 360/412 px, portrait and landscape).
 - End of a session or "Vault aktualisieren": run `/vault-abschluss`.
+- Video with captions/pictures/cinematic look: run `/video-overlay` (tools in `scripts/video-overlay/`).
 - Never write to the Fahr-Akademie Supabase project (`fxgljvhpikjcejhghgbp`) from here.
