@@ -1,0 +1,25 @@
+{
+  "fehler": [
+    {"muster": "90 ?(%|prozent).{0,40}(informationen|visuell)|(informationen|visuell).{0,40}90 ?(%|prozent)",
+     "text": "Aussage „90 % der Informationen sind visuell“ ist nicht belegt und wird nicht gelehrt."},
+    {"muster": "(jeder (4|vierte)\\.?).{0,40}(autobahn|sekundenschlaf)|(autobahn|sekundenschlaf).{0,40}jeder (4|vierte)\\.?",
+     "text": "Aussage „jeder 4. tödliche Autobahnunfall durch Sekundenschlaf“ ist nicht sauber belegt und wird nicht gelehrt."},
+    {"muster": "anfänger schauen zu nah",
+     "text": "Aussage „Anfänger schauen zu nah vors Auto“ ist nicht eindeutig belegt und wird nicht gelehrt."}
+  ],
+  "warnungen": [
+    {"muster": "€|\\beuro\\b|\\bfahrstundenpreis|\\bgrundbetrag|\\bvorstellungsentgelt|\\bpreise?\\b|\\bpreisen\\b",
+     "text": "Preisangabe? Fahrschul-Preise nur mit Grundbetrag, Vorstellungsentgelt und Fahrstundenpreis zusammen (§ 19 FahrlG), sonst weglassen. Bußgelder sind kein Fahrschulpreis."},
+    {"muster": "\\b(beste[rn]?|nummer eins|nr\\.? ?1|garantiert|garantie|einzigartig|unschlagbar|bestehensquote)\\b|100 ?(%|prozent) (bestanden|sicher)",
+     "text": "Eigenlob oder Superlativ. Serbans Regel: kein Eigenlob, keine Bestehensquote, keine Werbesprache."},
+    {"muster": "jetzt (kaufen|buchen|sichern)|nur heute|nur noch heute|limitiert|letzte chance",
+     "text": "Verkaufsdruck. Serbans Ton: ehrlich statt werblich."},
+    {"muster": "\\b0\\d{2,4}[ /-]?\\d{5,}\\b|\\+49 ?\\d+",
+     "text": "Sieht nach einer Telefonnummer aus. Keine Schüler- oder Privatdaten im Video."},
+    {"muster": "[\\w.+-]+@[\\w-]+\\.[a-z]{2,}",
+     "text": "E-Mail-Adresse im Text. Nur wenn sie ausdrücklich Serbans eigene öffentliche Adresse ist."},
+    {"muster": "\\b[A-ZÄÖÜ]{1,3}[ -][A-Z]{1,2} ?\\d{1,4}[EH]?\\b",
+     "text": "Sieht nach einem Kfz-Kennzeichen aus. Keine echten Kennzeichen nennen."}
+  ],
+  "quellen_warnung": ["film", "movie", "netflix", "disney", "screenshot", "tiktok", "youtube", "serie"]
+}
