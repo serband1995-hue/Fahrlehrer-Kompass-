@@ -143,6 +143,7 @@ def main():
     ap.add_argument("--card-h", type=int)
     ap.add_argument("--upper", action="store_true", help="Wörter in Großbuchstaben")
     ap.add_argument("--loudnorm", action="store_true", help="Lautstärke angleichen")
+    ap.add_argument("--audio-clean", action="store_true", help="Rauschen dämpfen, Rumpeln filtern, Stimme gleichmäßiger, Lautstärke angleichen")
     ap.add_argument("--captions", action="store_true", help="Wort-Einblendungen auch beim Preset kurs")
     ap.add_argument("--no-captions", action="store_true")
     ap.add_argument("--look", choices=sorted(LOOK), help="Farbstimmung des Sprecher-Bildes")
@@ -246,7 +247,10 @@ def main():
 
     teile.append(f"[{aktuell}]ass={ass}[v]" if mit_captions else f"[{aktuell}]null[v]")
     cmd += ["-filter_complex", ";".join(teile), "-map", "[v]", "-map", "0:a?"]
-    if a.loudnorm:
+    if a.audio_clean:
+        cmd += ["-af", "highpass=f=80,afftdn=nr=12:nf=-30,acompressor=threshold=-20dB:ratio=3:attack=5:release=100:makeup=2,"
+                       "loudnorm=I=-16:TP=-1.5:LRA=11"]
+    elif a.loudnorm:
         cmd += ["-af", "loudnorm=I=-16:TP=-1.5:LRA=11"]
     cmd += ["-c:v", "libx264", "-preset", "veryfast", "-crf", "18", "-pix_fmt", "yuv420p",
             "-c:a", "aac", "-b:a", "192k", "-movflags", "+faststart", "-t", f"{dauer:.2f}", a.out]
