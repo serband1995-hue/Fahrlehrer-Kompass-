@@ -3,7 +3,7 @@ name: video-overlay
 description: Edit a recorded video of Serban (vertical clip or full lesson): cut pauses and ähm, big word captions, matching pictures or short clips, cinematic color look, subtitle files (SRT/VTT) in several languages, and a final quality check. Use when Serban sends a video and wants Schnitt, Einblendungen, Untertitel, Bilder im Video, "cinematischen Look" or a Video-Prüfung.
 allowed-tools: Read, Write, Bash(python3 *), Bash(ffmpeg *), Bash(ffprobe *), Bash(ls *), mcp__Dropbox__download_link, mcp__Dropbox__list_folder
 ---
-Werkzeuge in `scripts/video-overlay/`: `transcribe.py`, `cut_silence.py`, `captions.py`, `render.py`, `subtitles.py`, `check.py`. Nötig: `ffmpeg` (mit libass), `pip install faster-whisper pillow` (am besten in einem venv außerhalb des Repos).
+Werkzeuge in `scripts/video-overlay/`: `transcribe.py`, `cut_silence.py`, `captions.py`, `render.py`, `subtitles.py`, `check.py`, `record_scene.mjs`. Nötig: `ffmpeg` (mit libass), `pip install faster-whisper pillow` (am besten in einem venv außerhalb des Repos).
 
 ## Ablauf
 1. **Video holen.** Anhang aus dem Chat oder `mcp__Dropbox__download_link` (einmaliger Link, mit `curl` laden). In ein eigenes leeres Arbeitsverzeichnis legen, nicht ins Repo. Original nie überschreiben.
@@ -29,7 +29,13 @@ Werkzeuge in `scripts/video-overlay/`: `transcribe.py`, `cut_silence.py`, `capti
 - Format: Karte quer (z. B. 1600×1000), `full` hochkant 1080×1920.
 - Prompt: konkrete Szene, Perspektive, Licht, Alltagsmaterial („Fahrersicht durch die Windschutzscheibe, Landstraße, Abenddämmerung, leichter Regen, Fotostil“). Keine Schrift im Bild verlangen (die KI schreibt sie falsch), Beschriftung macht die Einblendung.
 - **Jedes Bild vor dem Einbau selbst prüfen** (Serbans Regeln): Anatomie (Hände, Armlänge), Verkehrslogik (Fahrerseite links, Rechtsverkehr, Spurführung), deutsche Kennzeichen oder keine, keine Fantasie-Schrift, keine Markenlogos, keine erkennbaren echten Personen. Was nicht stimmt, wird nicht eingesetzt und nicht „schon irgendwie passt“.
-- Für Verkehrssituationen sind die animierten Lernszenen der App (`lernszenen.js`) fachlich sicherer als KI-Bilder.
+- Für Verkehrssituationen die Lernszenen der App nehmen (siehe unten), nicht KI-Bilder.
+
+## Lernszenen als Clips (animierte Verkehrssituationen aus dem Kompass)
+- 22 Szenen (Autobahn, Einparken, Kreisverkehr, Zebrastreifen …). Liste: `NODE_PATH=$(npm root -g) node scripts/video-overlay/record_scene.mjs --list`.
+- Aufnehmen: `NODE_PATH=$(npm root -g) node scripts/video-overlay/record_scene.mjs auffahren clip.mp4 --view 3d --seconds 8`. Ansichten: `oben`, `3d`, `fahrer`. Ergebnis: 1080×1920, ohne Ton, ohne Bedienknöpfe (mit `--keep-ui` mit Knöpfen). Der Kompass wird dazu lokal in einem unsichtbaren Browser gestartet, es geht nichts ins Netz.
+- Den Clip als `file` in `plan.json` eintragen (`card` oder `full`). Die Szenen sind fachlich von Serban gebaut und deshalb sicherer als KI-Bilder.
+- Vor dem Einsetzen den Ausschnitt ansehen: In der Karte wird die Mitte des Bildes gezeigt. Die Szene muss in dem Moment zeigen, was Serban gerade sagt (Zeit mit `--seconds` und Plan abstimmen, Szenen sind 11 bis 60 s lang).
 
 ## Regeln
 - Keine Ausschnitte aus Filmen, Serien oder fremden Videos (Urheberrecht). Keine echten Gesichter von Dritten. Keine Fahrschüler im Bild. Echtes Logo im Schnitt statt von der KI gemalt.
