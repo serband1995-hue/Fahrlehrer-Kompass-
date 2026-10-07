@@ -15,4 +15,6 @@ Serban's long-term memory lives in the private repo `serband1995-hue/obsidian-va
 Fahrlehrer-Kompass: PWA for driving instructors, plain HTML/CSS/JS (no build, almost everything in `index.html`), Supabase project `oectrvkjunntzsggyhxv`, GitHub Pages. Also hosts the live quiz "Lernzielkontrolle" (`quiz*.html`, `quiz-fragen.js`). Details: vault `Projekte/Fahrlehrer-Kompass.md`.
 - Work on a branch, ship via pull request.
 - Bump `APP_VERSION` (`index.html`) and `CACHE_VERSION` (`sw.js`) with every release.
+- Before shipping run `bash scripts/release-check.sh` (versions bumped, no secrets) and `NODE_PATH=$(npm root -g) node scripts/handy-test.mjs` (pages at 360/412 px, portrait and landscape).
+- End of a session or "Vault aktualisieren": run `/vault-abschluss`.
 - Never write to the Fahr-Akademie Supabase project (`fxgljvhpikjcejhghgbp`) from here.
