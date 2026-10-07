@@ -6,7 +6,7 @@ allowed-tools: Read, Write, Bash(ls *), Bash(git *), mcp__Dropbox__fetch, mcp__D
 Ziel: Aus einer Lektion 3 bis 4 Kurzclip-Skripte machen, die Serband vor der Kamera sprechen kann. Er prüft und gibt frei. Du veröffentlichst nichts.
 
 ## Quelle (nur lesend)
-Sprechzettel der Lektion in Dropbox, Team-Ordner `ns:14648808867//Theorie Unterricht/Lektion NN + MM - …/Abend_LektionNN_MM_Sprechzettel.pdf`. Pfad bei Bedarf mit `list_folder` (`recursive=false`) suchen. Mit `mcp__Dropbox__fetch` lesen (Limit 5 MiB). Bei C/CE liegen die Dateien im Ordner `Theorie Unterricht C und CE`.
+Sprechzettel der Lektion in Dropbox, Team-Ordner `ns:14648808867//Theorie Unterricht/Lektion NN + MM - …/Abend_LektionNN_MM_Sprechzettel.pdf`. Pfad bei Bedarf mit `list_folder` (`recursive=false`) suchen. Für L5+6, L7+8 und L11+12 liegt (Stand 04.10.2026) kein Sprechzettel in Dropbox; dann die Lektionsnotiz im Vault und die Folien-Inhaltsdateien im Git (`sprechzettel.js`) nutzen und im Skript vermerken: „Quelle nicht der Sprechzettel“. Mit `mcp__Dropbox__fetch` lesen (Limit 5 MiB). Bei C/CE liegen die Dateien im Ordner `Theorie Unterricht C und CE`.
 Zahlen, Paragrafen und Quellen **nur** aus dem Sprechzettel übernehmen. Nichts aus dem Gedächtnis ergänzen.
 
 ## Was ein Clip enthält
@@ -25,6 +25,7 @@ Du-Form, kurze Sätze, gesprochene Sprache. Ehrlich statt werblich. Konkret stat
 - Die Aussagen, die der Sprechzettel mit ⚠ als **nicht belegt** markiert, zum Beispiel „90 % der Informationen sind visuell“, „Anfänger schauen zu nah vors Auto“, „jeder 4. tödliche Autobahnunfall durch Sekundenschlaf“.
 - Fahrschüler im Bild, Namen, Fotos von Schülern. Keine echten Kennzeichen, keine Firmenlogos von der KI malen lassen.
 - Verkaufsaussagen zum Online-Kurs, solange die Rechtslage und der Kurs nicht stehen.
+- Fahrschul-Preise (§ 19 FahrlG), fremde Musik und Trend-Sounds (GEMA), KI-Stimme. Mit `scripts/video-overlay/lint_text.py` den Sprechtext vor der Freigabe prüfen.
 
 ## Ablauf
 1. Sprechzettel lesen. Die 3 bis 4 stärksten, eigenständigen Aussagen wählen (merkbar, belegt, ohne Vorwissen verständlich).
