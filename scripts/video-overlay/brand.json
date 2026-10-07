@@ -1,0 +1,8 @@
+{
+  "name": "Fahrlehrer Serband",
+  "farben": { "nacht": "#05080a", "gold": "#d9b56b", "gold_hell": "#f1dca6", "creme": "#f4efe6" },
+  "schrift": "Liberation Sans",
+  "schrift_datei": "/usr/share/fonts/truetype/liberation/LiberationSans-Bold.ttf",
+  "logo": "icon-512.png",
+  "untertitel_groesse_bei_1080": 116
+}

@@ -4,9 +4,15 @@ Schlüsselwörter in Gold. Aufruf:  python3 captions.py words.json captions.ass 
 """
 import argparse
 import json
+import os
 import re
+import sys
 
-GOLD = "&H0037AFD4&"   # ASS nutzt BGR: Gold D4AF37
+sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+import brand  # noqa: E402
+
+MARKE = brand.laden()
+GOLD = brand.ass(MARKE["farben"]["gold"])   # Gold der Webseite (#d9b56b)
 WEISS = "&H00FFFFFF&"
 
 
@@ -37,7 +43,7 @@ def blaetter(woerter, max_woerter=3, max_zeichen=18, max_pause=0.4):
     return gruppen
 
 
-def erzeuge(woerter, hervorheben=(), font="Liberation Sans", groesse=116, y=1380, breite=1080, hoehe=1920, gross=False):
+def erzeuge(woerter, hervorheben=(), font=MARKE["schrift"], groesse=116, y=1380, breite=1080, hoehe=1920, gross=False):
     hv = {h.strip().lower().strip(".,!?") for h in hervorheben if h.strip()}
     kopf = f"""[Script Info]
 ScriptType: v4.00+

@@ -20,6 +20,7 @@ def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("video")
     ap.add_argument("--vertical", action="store_true", help="1080x1920 erwartet")
+    ap.add_argument("--landscape", action="store_true", help="1920x1080 erwartet (Kurs, YouTube)")
     ap.add_argument("--max-sec", type=float)
     ap.add_argument("--caption-y", type=int, help="untere Kante der Einblendung (Pixel von oben, bei 1920 Höhe)")
     ap.add_argument("--target-lufs", type=float, default=-16.0)
@@ -39,6 +40,8 @@ def main():
 
     if a.vertical and (w, h) != (1080, 1920):
         fehler.append(f"Format {w}x{h}, erwartet 1080x1920")
+    if a.landscape and (w, h) != (1920, 1080):
+        fehler.append(f"Format {w}x{h}, erwartet 1920x1080")
     if v["codec_name"] != "h264":
         hinweise.append("Bild ist nicht H.264 (Plattformen mögen H.264)")
     if not au:
