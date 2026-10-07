@@ -10,11 +10,11 @@
 | Nur Text im Bild (ohne Gesicht) | Reels-Plan Phase 1 | HyperFrames (`npx hyperframes`, lokal) laut Vault `Plan Einnahmen mit Claude` | Dieses Werkzeug ist für Aufnahmen **mit** Serban |
 
 ## Werkzeuge
-- `transcribe.py`: Sprache zu Wörtern mit Zeiten (lokal).
+- `transcribe.py`: Sprache zu Wörtern mit Zeiten (lokal). Optional `--glossar glossar.txt` (Fachwörter als Erkennungshilfe): im Test mit Computerstimme kein Vorteil, darum aus. Bei echtem Material vergleichen.
 - `cut_silence.py`: Pausen über `--max-pause 0.45` auf `--keep 0.2` kürzen, „ähm“ entfernen, neue Wortzeiten in `*.words_cut.json`. Über etwa 30 Minuten langsam, vorher in Kapitel teilen.
 - `lint_text.py` und `regeln.json`: harte Fehler und Warnungen aus Serbans Regeln. Neue Regel = neuer Eintrag in `regeln.json`.
 - `captions.py`: Wort-Einblendungen als ASS, Gold = `#d9b56b` (Webseite). Schrift laut `brand.json` (Liberation Sans). Die Markenschriften Archivo/Inter liegen im Webseiten-Repo und sind hier nicht installiert.
-- `render.py`: Karten, Zwischenschnitte, Lower-Third, Endkarte mit Logo (`icon-512.png`), Kino-Look, Lautstärke. Schreibt `*.quellen.txt` (Rechteprüfung). Optionen: `--caption-y --card-x --card-y --card-w --card-h --upper --captions --no-captions --no-lint`.
+- `render.py`: Karten, Zwischenschnitte, Lower-Third, Endkarte mit Logo (`icon-512.png`), Kino-Look, Lautstärke. Schreibt `*.quellen.txt` (Rechteprüfung). `--audio-clean` (Rumpeln filtern, Rauschen dämpfen, Stimme gleichmäßiger, Lautstärke): im Test mit künstlichem Rauschen 6 dB besserer Abstand zwischen Stimme und Rauschen als ohne, 9 dB besser als nur `--loudnorm`. Optionen: `--caption-y --card-x --card-y --card-w --card-h --upper --captions --no-captions --no-lint`.
 - `subtitles.py`: `words.json` → `de.srt`, `de.vtt`, `cues.json`. Übersetzen: Texte aus `cues.json` übersetzen, Liste in `uebersetzung_xx.json`, dann `subtitles.py --apply cues.json uebersetzung_xx.json untertitel/xx`. Verkehrsrechtliche Begriffe nur mit Serbans Freigabe oder Vermerk „nicht fachlich geprüft“. Die Akademie hat eine eigene Untertitel-Pipeline (Tabelle `untertitel.zeilen`, Function `academy-untertitel`); SRT/VTT von hier sind nur Vorlage.
 - `chapters.py`: `--suggest words.json` zeigt Pausen als Kandidaten, `chapters.json` prüft und gibt „mm:ss Titel“ für die Akademie und die YouTube-Beschreibung aus.
 - `check.py`: Format, Ton, Lautstärke, Schwarzbilder, Sicherheitsränder (TikTok unten ab etwa y=1540, rechts ab etwa x=940, geschätzt), Vorschaubogen.

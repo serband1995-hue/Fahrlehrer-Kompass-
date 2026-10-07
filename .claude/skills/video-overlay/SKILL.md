@@ -3,7 +3,7 @@ name: video-overlay
 description: Edit a recorded video of Serban (Reel, Online-Kurs-Lektion, Akademie- oder Webseiten-Video): cut pauses and ähm, big word captions, pictures and Lernszenen clips, lower third, end card with logo, cinematic look, subtitles (SRT/VTT), chapters, text check against his rules and a final quality check. Use when Serban sends a video or asks for Schnitt, Einblendungen, Untertitel, Kapitel, Bilder im Video, Kino-Look or a Video-Prüfung.
 allowed-tools: Read, Write, Bash(python3 *), Bash(ffmpeg *), Bash(ffprobe *), Bash(node *), Bash(ls *), mcp__Dropbox__download_link, mcp__Dropbox__list_folder
 ---
-Werkzeuge in `scripts/video-overlay/` (Details, Formate, Veröffentlichen: `REFERENZ.md` neben dieser Datei lesen, wenn nötig). Nötig: `ffmpeg` mit libass, `pip install faster-whisper pillow` (venv außerhalb des Repos), für Lernszenen Playwright.
+Werkzeuge in `scripts/video-overlay/` (Details, Formate, Veröffentlichen: `REFERENZ.md` neben dieser Datei lesen, wenn nötig). Einrichten in jeder frischen Sitzung (ca. 1 Min.): `source scripts/video-overlay/setup.sh` (setzt `$VO_PY`, Python mit allen Paketen; danach `$VO_PY scripts/video-overlay/…py` statt `python3`). Nötig: `ffmpeg` mit libass, für Lernszenen Playwright.
 
 ## Ablauf
 1. **Video holen** (Chat-Anhang oder `mcp__Dropbox__download_link` + `curl`) in ein eigenes leeres Arbeitsverzeichnis. Original nie überschreiben.
@@ -13,7 +13,7 @@ Werkzeuge in `scripts/video-overlay/` (Details, Formate, Veröffentlichen: `REFE
 5. **Plan (`plan.json`):** `emphasis` (3–6 Gold-Wörter) und `items` mit `start`, `end`, `file`, `mode` (`card` Standard, `full` sparsam), **`quelle`** (eigen, canva, higgsfield, lernszene, verkehrszeichen …) und `ki: true` bei KI-Bildern. Höchstens eine Einblendung alle 4–5 s.
 6. **Bilder/Clips:** Reihenfolge der Quellen: amtliche Verkehrszeichen als echte Bilder → Lernszenen (`record_scene.mjs`, siehe REFERENZ) → eigene Fotos → Canva → Higgsfield (Guthaben begrenzt, nur nach Plan, gebündelt). Jedes Bild vorher selbst prüfen.
 7. **Rendern:**
-   - Reel: `render.py geschnitten.mp4 --words … --broll plan.json --out fertig.mp4 --look cinematic --loudnorm --endcard`
+   - Reel: `render.py geschnitten.mp4 --words … --broll plan.json --out fertig.mp4 --look cinematic --audio-clean --endcard`
    - Kurs-Lektion quer: `render.py … --preset kurs --lower-third "Lektion 1 · Persönliche Voraussetzungen" --endcard`
 8. **Prüfen (Pflicht):** `check.py fertig.mp4 --vertical|--landscape --sheet bogen.png`, Vorschaubogen ansehen: Gesicht frei, Schrift lesbar, Karte nur zur geplanten Zeit, Endkarte sauber. Bei FEHLER nicht senden.
 9. **Untertitel/Kapitel** bei Kursvideos: `subtitles.py`, `chapters.py` (siehe REFERENZ).
