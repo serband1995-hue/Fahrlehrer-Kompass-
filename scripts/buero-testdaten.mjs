@@ -79,8 +79,8 @@ export function bauDaten(heute) {
       profiles: [...lehrer, ...buero],
       schueler, kalender_termine: termine, kalender_pruefungen: pruefungen, pruefungstermine,
       fahrschule_fahrzeuge: [
-        { id: "fz-1", fahrschule_id: FS, bezeichnung: "Golf Schalter", typ: "schalt", aktiv: true, erstellt_am: "2026-01-01" },
-        { id: "fz-2", fahrschule_id: FS, bezeichnung: "Golf Automatik", typ: "automatik", aktiv: true, erstellt_am: "2026-01-02" },
+        { id: "fz-1", fahrschule_id: FS, name: "Golf Schalter", typ: "schalt", aktiv: true, erstellt_am: "2026-01-01" },
+        { id: "fz-2", fahrschule_id: FS, name: "Golf Automatik", typ: "automatik", aktiv: true, erstellt_am: "2026-01-02" },
       ],
       fahrschule_pakete: [{ id: "p-1", fahrschule_id: FS, name: "Boost-Paket 1" }, { id: "p-turbo", fahrschule_id: FS, name: "Turboboost" }],
     },
