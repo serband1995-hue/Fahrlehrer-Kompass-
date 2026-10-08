@@ -1,0 +1,299 @@
+/* Kompass Büro – für den PC gebaut: große Schrift, viel Platz, feste Menüleiste.
+   Farben aus der Kompass-App (Papierweiß, Waldgrün, Gold), Ampelfarben unverändert. */
+:root{
+  --bg:#f3f1e9; --surface:#fffdf7; --surface-2:#ece7d8;
+  --line:#ddd5bd; --line-soft:#e8e2cd;
+  --txt:#23261d; --muted:#5f5e4b; --faint:#8d8a6a;
+  --akzent:#3a7350; --akzent-dark:#2f5d3f; --akzent-soft:rgba(58,115,80,.12); --akzent-line:rgba(58,115,80,.28);
+  --gold:#b8873a; --gold-soft:rgba(184,135,58,.14);
+  --rot:#c0503f; --rot-soft:rgba(192,80,63,.12);
+  --gelb:#b9862f; --gelb-soft:rgba(207,154,62,.16);
+  --gruen:#3f9a62; --gruen-soft:rgba(76,175,114,.14);
+  --blau:#2F7DD1; --blau-soft:rgba(47,125,209,.12);
+  --schatten:0 1px 2px rgba(60,50,20,.06),0 6px 18px rgba(60,50,20,.07);
+  --r:16px; --r-klein:10px;
+  --seite:272px;
+  --diagramm:#2e8550;
+  color-scheme:light;
+}
+@media (prefers-color-scheme:dark){
+  :root{
+    --bg:#0c1410; --surface:#16221c; --surface-2:#1f2d25;
+    --line:#2e3f35; --line-soft:#223029;
+    --txt:#eef3ef; --muted:#b1bfb5; --faint:#7d8d82;
+    --akzent:#4a8b5c; --akzent-dark:#7fbf95; --akzent-soft:rgba(74,139,92,.2); --akzent-line:rgba(120,170,140,.38);
+    --gold:#c9a227; --gold-soft:rgba(201,162,39,.16);
+    --rot:#e07060; --rot-soft:rgba(207,90,72,.18);
+    --gelb:#d9a64a; --gelb-soft:rgba(207,154,62,.2);
+    --gruen:#5cc283; --gruen-soft:rgba(76,175,114,.18);
+    --blau:#5fa0e6; --blau-soft:rgba(47,125,209,.2);
+    --schatten:0 1px 2px rgba(0,0,0,.3),0 6px 18px rgba(0,0,0,.3);
+    --diagramm:#45a96c;
+    color-scheme:dark;
+  }
+}
+*{box-sizing:border-box;}
+html,body{margin:0;}
+body{background:var(--bg);color:var(--txt);font:17px/1.5 'Barlow',system-ui,sans-serif;-webkit-font-smoothing:antialiased;}
+h1,h2,h3{font-family:'Source Serif 4',Georgia,serif;font-weight:700;line-height:1.2;margin:0;}
+[hidden]{display:none !important;}
+button,input,select,textarea{font:inherit;color:inherit;}
+a{color:var(--akzent-dark);}
+.leise{color:var(--muted);}
+.klein{font-size:15px;}
+
+/* Knöpfe */
+.knopf{text-decoration:none;display:inline-flex;align-items:center;justify-content:center;gap:8px;min-height:44px;padding:0 18px;border-radius:var(--r-klein);
+  border:1px solid var(--line);background:var(--surface);cursor:pointer;font-weight:600;transition:background .12s,border-color .12s;}
+.knopf:hover{background:var(--surface-2);}
+.knopf:focus-visible,input:focus-visible,select:focus-visible,.nav-punkt:focus-visible{outline:3px solid var(--akzent-line);outline-offset:2px;}
+.knopf.haupt{background:var(--akzent);border-color:var(--akzent);color:#fff;}
+.knopf.haupt:hover{background:var(--akzent-dark);}
+.knopf.klein{min-height:36px;padding:0 12px;font-size:15px;}
+.knopf.gross{min-height:52px;font-size:18px;}
+.knopf:disabled{opacity:.55;cursor:default;}
+.knopfreihe{display:flex;gap:10px;flex-wrap:wrap;}
+
+/* Anmeldung und Hinweise */
+.login{min-height:100vh;display:grid;place-items:center;padding:24px;}
+.login-karte{width:min(440px,100%);background:var(--surface);border:1px solid var(--line-soft);border-radius:22px;padding:36px;box-shadow:var(--schatten);display:grid;gap:16px;}
+.login-logo{width:64px;height:64px;}
+.login-karte h1{font-size:30px;}
+.login-karte label{display:grid;gap:6px;font-weight:600;}
+.login-karte input{min-height:48px;padding:0 14px;border:1px solid var(--line);border-radius:var(--r-klein);background:var(--bg);}
+.fehler{color:var(--rot);min-height:1.5em;margin:0;}
+
+/* Grundaufbau */
+.app{display:grid;grid-template-columns:var(--seite) 1fr;min-height:100vh;}
+.seite{position:sticky;top:0;height:100vh;display:flex;flex-direction:column;gap:14px;padding:22px 16px;background:var(--surface);border-right:1px solid var(--line-soft);overflow-y:auto;}
+.marke{display:flex;align-items:center;gap:12px;padding:0 6px 6px;}
+.marke img{width:44px;height:44px;}
+.marke-name{font-family:'Source Serif 4',Georgia,serif;font-weight:700;font-size:20px;}
+.marke-schule{color:var(--muted);font-size:15px;}
+.schulwahl{display:grid;gap:4px;font-size:14px;color:var(--muted);padding:0 6px;}
+.schulwahl select{min-height:40px;border:1px solid var(--line);border-radius:var(--r-klein);background:var(--bg);padding:0 8px;}
+nav{display:grid;gap:2px;}
+.nav-gruppe{font-size:13px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:var(--faint);padding:14px 12px 4px;}
+.nav-punkt{display:flex;align-items:center;gap:10px;min-height:44px;padding:6px 12px;line-height:1.25;border-radius:var(--r-klein);text-decoration:none;color:var(--txt);font-weight:500;}
+.nav-punkt:hover{background:var(--surface-2);}
+.nav-punkt[aria-current="page"]{background:var(--akzent-soft);color:var(--akzent-dark);font-weight:700;}
+.nav-punkt .zahl{margin-left:auto;min-width:26px;height:26px;padding:0 8px;border-radius:999px;background:var(--rot);color:#fff;font-size:14px;font-weight:700;display:inline-grid;place-items:center;}
+.nav-punkt .bald{margin-left:auto;flex-shrink:0;font-size:12px;color:var(--faint);white-space:nowrap;}
+.nav-punkt .zahl{flex-shrink:0;}
+.seite-fuss{margin-top:auto;display:flex;align-items:center;justify-content:space-between;gap:10px;padding:14px 6px 0;border-top:1px solid var(--line-soft);}
+.nutzer-name{font-weight:600;}
+.nutzer-rolle{color:var(--muted);font-size:14px;}
+
+.inhalt{min-width:0;padding:28px 40px 60px;}
+.kopf{display:flex;align-items:center;justify-content:space-between;gap:20px;margin-bottom:24px;}
+.kopf h1{font-size:34px;}
+.kopf-rechts{display:flex;align-items:center;gap:14px;}
+.vorfuehrung{background:var(--gold-soft);color:var(--gold);border:1px solid var(--gold);padding:6px 12px;border-radius:999px;font-weight:700;font-size:14px;}
+.status{display:inline-flex;align-items:center;gap:8px;color:var(--muted);font-size:15px;}
+.status .punkt{width:10px;height:10px;border-radius:50%;background:var(--faint);}
+.status.ok .punkt{background:var(--gruen);}
+.status.warn .punkt{background:var(--gelb);}
+.status.fehler .punkt{background:var(--rot);}
+.ansicht{max-width:1500px;outline:none;}
+
+/* Bausteine */
+.raster{display:grid;gap:18px;}
+.kacheln{display:grid;grid-template-columns:repeat(auto-fit,minmax(210px,1fr));gap:18px;margin-bottom:26px;}
+.kachel{background:var(--surface);border:1px solid var(--line-soft);border-radius:var(--r);padding:20px 22px;box-shadow:var(--schatten);}
+.kachel .wert{font-family:'Source Serif 4',Georgia,serif;font-size:40px;font-weight:700;line-height:1.1;}
+.kachel .name{color:var(--muted);font-weight:600;margin-top:4px;}
+.kachel.rot .wert{color:var(--rot);} .kachel.gruen .wert{color:var(--gruen);} .kachel.gold .wert{color:var(--gold);}
+.karte{background:var(--surface);border:1px solid var(--line-soft);border-radius:var(--r);padding:22px 24px;box-shadow:var(--schatten);margin-bottom:22px;}
+.karte h2{font-size:24px;margin-bottom:12px;}
+.karte-kopf{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:12px;flex-wrap:wrap;}
+.karte-kopf h2{margin:0;}
+.leer{color:var(--muted);padding:12px 0;}
+
+/* Tabellen */
+.tabelle{width:100%;border-collapse:collapse;}
+.tabelle th{font-size:14px;text-transform:uppercase;letter-spacing:.05em;color:var(--faint);text-align:left;font-weight:700;padding:10px 12px;border-bottom:2px solid var(--line-soft);white-space:nowrap;}
+.tabelle td{padding:12px;border-bottom:1px solid var(--line-soft);vertical-align:middle;overflow-wrap:break-word;}
+.tabelle tr:last-child td{border-bottom:none;}
+.tabelle tbody tr:hover{background:var(--bg);}
+.zahlspalte{text-align:right;font-variant-numeric:tabular-nums;}
+.zeitspalte{width:1%;white-space:nowrap;font-variant-numeric:tabular-nums;font-weight:600;}
+
+/* Marken */
+.marke-pill{display:inline-flex;align-items:center;gap:6px;padding:3px 10px;border-radius:999px;font-size:14px;font-weight:600;background:var(--surface-2);color:var(--muted);white-space:nowrap;}
+.marke-pill.rot{background:var(--rot-soft);color:var(--rot);}
+.marke-pill.gelb{background:var(--gelb-soft);color:var(--gelb);}
+.marke-pill.gruen{background:var(--gruen-soft);color:var(--gruen);}
+.marke-pill.blau{background:var(--blau-soft);color:var(--blau);}
+
+/* Aufgaben, Reiter, Suche */
+.aufgaben{display:grid;gap:10px;}
+.aufgabe{display:block;padding:14px 18px;border-radius:12px;background:var(--bg);border:1px solid var(--line-soft);text-decoration:none;color:var(--txt);font-size:18px;}
+.aufgabe:hover{border-color:var(--akzent-line);}
+.aufgabe b{font-size:22px;margin-right:6px;}
+.aufgabe.rot{background:var(--rot-soft);border-color:transparent;} .aufgabe.rot b{color:var(--rot);}
+.aufgabe.gelb{background:var(--gelb-soft);border-color:transparent;} .aufgabe.gelb b{color:var(--gelb);}
+.tabs{display:flex;gap:6px;flex-wrap:wrap;}
+.tab{padding:8px 14px;border-radius:999px;text-decoration:none;color:var(--muted);font-weight:600;border:1px solid var(--line-soft);}
+.tab:hover{background:var(--surface-2);}
+.tab[aria-current="page"]{background:var(--akzent);border-color:var(--akzent);color:#fff;}
+.suche{min-height:44px;min-width:260px;padding:0 14px;border:1px solid var(--line);border-radius:var(--r-klein);background:var(--bg);}
+.unter{color:var(--muted);font-size:15px;margin-top:2px;}
+.aktionen{width:1%;}
+.aktionen-box{display:flex;flex-wrap:wrap;justify-content:flex-end;gap:6px;min-width:150px;max-width:300px;margin-left:auto;}
+.aktionen-box .knopf{white-space:nowrap;}
+
+/* Prüfungstafel */
+.tag-titel{font-size:20px;margin:22px 0 6px;color:var(--muted);}
+.tag-titel.heute{color:var(--akzent-dark);}
+.haken-reihe{display:flex;gap:10px;}
+.haken{width:40px;height:40px;border-radius:50%;border:2px solid var(--line);background:var(--surface);color:transparent;font-weight:800;font-size:20px;cursor:pointer;display:inline-grid;place-items:center;transition:background .12s,border-color .12s;}
+.haken:hover:not(:disabled){border-color:var(--muted);}
+.haken:disabled{cursor:default;opacity:.7;}
+.haken.blau{border-color:var(--blau);} .haken.rot{border-color:var(--rot);} .haken.gruen{border-color:var(--gruen);}
+.haken.blau.an{background:var(--blau);color:#fff;} .haken.rot.an{background:var(--rot);color:#fff;} .haken.gruen.an{background:var(--gruen);color:#fff;}
+.haken.mini{width:24px;height:24px;font-size:13px;border-width:1px;vertical-align:middle;cursor:default;}
+.haken-reihe.gross .haken{width:56px;height:56px;font-size:28px;}
+.legende{display:flex;gap:22px;flex-wrap:wrap;color:var(--muted);font-size:15px;margin:4px 0 6px;}
+.trenner{width:1px;background:var(--line);margin:0 6px;}
+.warnkarte{border-color:var(--rot);background:linear-gradient(0deg,var(--rot-soft),var(--rot-soft)),var(--surface);}
+.warnzeile td{background:var(--rot-soft);}
+/* Prüfungs-Tabellen: gleiche Spalten über alle Tage */
+.ptabelle{table-layout:fixed;}
+.ptabelle .c-zeit{width:90px;} .ptabelle .c-zeit.breit{width:190px;} .ptabelle .c-art{width:140px;}
+.ptabelle .c-lehrer{width:22%;} .ptabelle .c-haken{width:170px;} .ptabelle .c-akt{width:150px;}
+.ptabelle td{overflow-wrap:break-word;}
+@media (max-width:1300px){
+  .ptabelle{table-layout:auto;}
+  .ptabelle col{width:auto !important;}
+  .haken-reihe{gap:6px;} .haken{width:34px;height:34px;font-size:17px;}
+}
+body.kiosk .ptabelle .c-zeit{width:130px;} body.kiosk .ptabelle .c-art{width:200px;} body.kiosk .ptabelle .c-haken{width:220px;}
+/* Großansicht für den Bildschirm in der Küche: ohne Menü, alles größer */
+body.kiosk .seite,body.kiosk .kopf{display:none;}
+body.kiosk .app{grid-template-columns:1fr;}
+body.kiosk .inhalt{padding:28px 44px;}
+body.kiosk .ansicht{max-width:none;font-size:24px;}
+body.kiosk .tabelle td{padding:16px 14px;}
+body.kiosk .tag-titel{font-size:30px;}
+.kiosk-kopf{display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;}
+.kiosk-kopf h2{font-size:40px;}
+
+/* Schülerliste */
+.name-zeile{display:flex;align-items:center;gap:8px;}
+.farbpunkt{flex:0 0 14px;width:14px;height:14px;border-radius:50%;display:inline-block;align-self:center;}
+.farbpunkt.ohne{border:2px solid var(--line);}
+.tabelle .unter{overflow-wrap:anywhere;}
+@media (min-width:1201px){ .schuelertab td:first-child{min-width:190px;} }
+.datum{white-space:nowrap;}
+.stand{display:flex;align-items:center;gap:10px;min-width:120px;}
+.stand-spur{flex:1;height:10px;background:var(--bg);border-radius:999px;overflow:hidden;}
+.stand-balken{display:block;height:100%;background:var(--diagramm);border-radius:999px;}
+.stand-zahl{font-variant-numeric:tabular-nums;font-weight:700;min-width:44px;text-align:right;}
+
+/* Kalender */
+.chips{display:flex;gap:8px;flex-wrap:wrap;margin:6px 0 8px;}
+.chip{display:inline-flex;align-items:center;gap:6px;padding:6px 12px;border:1px solid var(--line-soft);border-radius:999px;background:var(--bg);font-weight:600;cursor:pointer;}
+.chip input{width:18px;height:18px;}
+.k-titel{font-size:22px;}
+.kalender{display:grid;grid-template-columns:56px 1fr;margin-top:10px;}
+.k-achse{position:relative;margin-top:44px;}
+.k-stunde{position:absolute;left:0;font-size:13px;color:var(--faint);transform:translateY(-8px);}
+.k-spalten{display:grid;grid-template-columns:repeat(var(--spalten),minmax(0,1fr));gap:8px;min-width:0;}
+.k-spalte{min-width:0;}
+.k-kopf{height:44px;display:flex;flex-direction:column;justify-content:center;padding:0 6px;border-bottom:2px solid var(--line-soft);overflow:hidden;}
+.k-lname,.k-anz{display:block;max-width:100%;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.k-lname{font-weight:700;line-height:1.2;} .k-anz{font-size:13px;color:var(--muted);line-height:1.2;}
+.k-flaeche{position:relative;background:repeating-linear-gradient(180deg,var(--bg) 0,var(--bg) 1px,transparent 1px,transparent 69px);background-size:100% 69px;border-radius:0 0 10px 10px;cursor:copy;}
+.k-termin{position:absolute;left:3px;right:3px;border:none;border-left:4px solid var(--farbe);background:color-mix(in srgb,var(--farbe) 16%,var(--surface));border-radius:8px;padding:3px 7px;text-align:left;cursor:pointer;overflow:hidden;display:flex;flex-direction:column;gap:0;font-size:14px;line-height:1.25;}
+.k-termin:hover{box-shadow:var(--schatten);}
+.k-termin.block{background:repeating-linear-gradient(135deg,var(--surface-2) 0,var(--surface-2) 6px,var(--bg) 6px,var(--bg) 12px);border-left-color:var(--faint);}
+.k-termin.gesperrt{outline:2px solid var(--rot);}
+.k-zeit{font-weight:700;font-size:13px;color:var(--muted);}
+.k-name{font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.k-fz{font-size:12px;color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+
+/* Fahrcheck-Abgabe */
+.soll-ist{display:grid;grid-template-columns:auto auto 1fr;gap:24px;align-items:end;margin:8px 0 18px;padding:16px 18px;background:var(--bg);border-radius:14px;}
+.gross-zahl{font-family:'Source Serif 4',Georgia,serif;font-size:44px;font-weight:700;line-height:1;}
+.gross-eingabe{width:150px;min-height:58px;font-size:32px;font-weight:700;text-align:center;border:2px solid var(--akzent-line);border-radius:12px;background:var(--surface);}
+.fc-ergebnis{font-weight:700;font-size:18px;}
+.fc-ergebnis.gut{color:var(--gruen);} .fc-ergebnis.schlecht{color:var(--rot);}
+details summary{cursor:pointer;font-weight:700;margin:6px 0;}
+
+.split{margin-top:10px;}
+
+/* Diagramme (eine Reihe, eine Farbe; Werte stehen zusätzlich als Tabelle bereit) */
+.raster.zwei{grid-template-columns:repeat(auto-fit,minmax(420px,1fr));}
+.raster.zwei>.karte{margin-bottom:0;}
+.raster.zwei{margin-bottom:22px;}
+.diagramm{width:100%;height:auto;display:block;}
+.d-gitter{stroke:var(--line-soft);stroke-width:1;}
+.d-balken{fill:var(--diagramm);}
+.d-punkt:hover .d-balken,.d-punkt:focus .d-balken{fill:var(--akzent-dark);}
+.d-punkt:focus{outline:none;}
+.d-achse{font-size:13px;fill:var(--muted);text-anchor:middle;font-family:'Barlow',sans-serif;}
+.d-skala{font-size:12px;fill:var(--faint);font-family:'Barlow',sans-serif;}
+.d-wert{font-size:14px;fill:var(--txt);text-anchor:middle;font-weight:700;font-family:'Barlow',sans-serif;}
+.hbalken{display:grid;gap:10px;}
+.hb-zeile{display:grid;grid-template-columns:minmax(120px,30%) 1fr 70px;align-items:center;gap:12px;}
+.hb-name{white-space:nowrap;overflow:hidden;text-overflow:ellipsis;font-weight:600;}
+.hb-spur{height:16px;background:var(--bg);border-radius:4px;overflow:hidden;}
+.hb-balken{display:block;height:100%;background:var(--diagramm);border-radius:0 4px 4px 0;}
+.hb-wert{text-align:right;font-variant-numeric:tabular-nums;color:var(--muted);font-weight:600;}
+.als-tabelle{margin-top:10px;color:var(--muted);}
+.tip{position:fixed;z-index:40;background:var(--txt);color:var(--bg);padding:8px 12px;border-radius:8px;font-size:15px;font-weight:600;pointer-events:none;max-width:320px;}
+
+/* Dialog */
+.dialog{border:none;border-radius:20px;padding:0;width:min(760px,94vw);max-height:90vh;background:var(--surface);color:var(--txt);box-shadow:0 20px 60px rgba(0,0,0,.3);}
+.dialog::backdrop{background:rgba(20,24,18,.45);}
+.dialog-form{display:flex;flex-direction:column;max-height:90vh;}
+.dialog-form header,.dialog-form footer{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:18px 24px;}
+.dialog-form header{border-bottom:1px solid var(--line-soft);}
+.dialog-form footer{border-top:1px solid var(--line-soft);justify-content:flex-end;}
+.dialog-form h2{font-size:24px;}
+.dialog-inhalt{padding:20px 24px;overflow-y:auto;}
+.formular{display:grid;grid-template-columns:1fr 1fr;gap:16px 20px;}
+.formular label{display:grid;gap:6px;font-weight:600;}
+.formular .voll{grid-column:1/-1;}
+.formular input,.formular select{min-height:46px;padding:0 12px;border:1px solid var(--line);border-radius:var(--r-klein);background:var(--bg);font-weight:400;}
+.formular fieldset{border:1px solid var(--line-soft);border-radius:12px;padding:10px 16px 14px;display:flex;gap:22px;flex-wrap:wrap;}
+.formular legend{font-weight:700;padding:0 6px;}
+.formular .wahl{display:flex;align-items:center;gap:8px;font-weight:500;min-height:40px;}
+.formular .wahl input{min-height:auto;width:20px;height:20px;}
+.protokoll{margin-top:20px;border-top:1px solid var(--line-soft);padding-top:12px;}
+.protokoll h3{font-size:18px;margin-bottom:6px;}
+.protokoll ul{margin:0;padding-left:20px;color:var(--muted);font-size:15px;}
+
+/* Meldung unten */
+.toast{position:fixed;left:50%;bottom:28px;transform:translate(-50%,20px);background:var(--txt);color:var(--bg);padding:14px 22px;border-radius:12px;font-weight:600;opacity:0;pointer-events:none;transition:opacity .2s,transform .2s;z-index:50;max-width:min(640px,90vw);}
+.toast.zeigen{opacity:1;transform:translate(-50%,0);}
+.toast.fehler{background:var(--rot);color:#fff;}
+
+/* Spalten, die bei schmalem Bildschirm in die Zeile darüber wandern */
+.nur-schmal{display:none;}
+@media (max-width:1100px){ .nur-breit{display:none;} .nur-schmal{display:inline;} }
+@media (max-width:1500px){ .nur-sehr-breit{display:none;} }
+
+/* Niedrige Bildschirme: Menü enger, damit Abmelden immer sichtbar bleibt */
+@media (max-height:820px){ .nav-punkt{min-height:38px;padding:4px 12px;} .nav-gruppe{padding:10px 12px 2px;} .seite{gap:8px;padding:16px 14px;} }
+
+/* Kleinere Bildschirme (Laptop): Menü schmaler; unter 900 px oben statt links */
+@media (max-width:1200px){
+  :root{--seite:236px;} .inhalt{padding:24px 26px 50px;}
+  .tabelle td,.tabelle th{padding:10px 8px;}
+  .aktionen-box{flex-direction:column;align-items:stretch;min-width:120px;}
+  .stand{min-width:96px;gap:6px;}
+  .tabelle .marke-pill{white-space:normal;}
+  .suche{min-width:200px;}
+}
+@media (max-width:900px){
+  .app{grid-template-columns:1fr;}
+  .seite{position:static;height:auto;}
+  .inhalt{padding:20px 16px 40px;}
+  .kopf{flex-wrap:wrap;}
+  .kopf h1{font-size:28px;}
+  .tabelle{display:block;overflow-x:auto;}
+}
+@media (prefers-reduced-motion:reduce){ *{transition:none !important;} }
+.tabelle .wahl{display:inline-flex;align-items:center;gap:6px;white-space:nowrap;cursor:pointer;}
+.tabelle .wahl input{width:20px;height:20px;}
