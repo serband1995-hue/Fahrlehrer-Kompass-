@@ -1432,6 +1432,7 @@ async function starte(user) {
       return;
     }
   }
+  if (window.BUERO_VORFUEHRUNG) { $("vorfuehrung").hidden = false; document.title = "Vorführung · Kompass Büro"; }
   $("nutzerName").textContent = profil.name || user.email;
   $("nutzerRolle").textContent = ROLLEN[profil.rolle];
   zeigeNur("app");
