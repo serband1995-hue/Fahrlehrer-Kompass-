@@ -133,6 +133,7 @@ if (typeof module !== "undefined" && module.exports) { module.exports = { bauDat
     not(k, op, v) { if (op === "is") this.filter.push((r) => (r[k] == null ? null : r[k]) !== v); return this; }
     order(k, o) { this.sort.push([k, !(o && o.ascending === false)]); return this; }
     limit(n) { this.grenze = n; return this; }
+    range(a, b) { this.ab = a; this.grenze = b - a + 1; return this; }
     single() { this.einzeln = "single"; return this; }
     maybeSingle() { this.einzeln = "maybe"; return this; }
     insert(rows) { this.art = "insert"; this.daten = Array.isArray(rows) ? rows : [rows]; return this; }
@@ -165,7 +166,7 @@ if (typeof module !== "undefined" && module.exports) { module.exports = { bauDat
         for (const [k, auf] of this.sort.slice().reverse()) {
           daten = daten.slice().sort((a, b) => { const x = a[k], y = b[k]; if (x == y) return 0; if (x == null) return 1; if (y == null) return -1; return (x < y ? -1 : 1) * (auf ? 1 : -1); });
         }
-        if (this.grenze != null) daten = daten.slice(0, this.grenze);
+        if (this.grenze != null) daten = daten.slice(this.ab || 0, (this.ab || 0) + this.grenze);
       }
       F.log.push({ tabelle: this.name, art: this.art, anzahl: daten.length, werte: this.werte || this.daten || null });
       daten = kopie(daten);

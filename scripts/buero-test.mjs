@@ -51,6 +51,58 @@ async function oeffne({ nutzer, breite = 1366, hoehe = 860, hash = "", dunkel = 
   await page.waitForTimeout(400);
   return { page, ctx, konsole };
 }
+// Sauberes Layout: nichts ragt aus seinem Kästchen, kein Text überlappt anderen Text,
+// kein Text wird ungewollt abgeschnitten (gewolltes „…“ nur in Kalender-Kacheln und Kalenderköpfen).
+async function pruefeLayout(page, name) {
+  const r = await page.evaluate(() => {
+    const sichtbar = (el) => { const b = el.getBoundingClientRect(); const st = getComputedStyle(el); return b.width > 0 && b.height > 0 && st.visibility !== "hidden" && st.display !== "none"; };
+    const gewolltGekuerzt = (el) => !!el.closest(".k-termin, .k-kopf, .hb-name, details:not([open])");
+    const probleme = [];
+    // 1) Inhalt ragt aus Kästchen
+    for (const box of document.querySelectorAll(".kachel, .karte, .dialog-form, .aufgabe, .login-karte, .seite")) {
+      if (!sichtbar(box)) continue;
+      const b = box.getBoundingClientRect();
+      for (const el of box.querySelectorAll("*")) {
+        if (!sichtbar(el) || gewolltGekuerzt(el) || el.closest(".dialog-inhalt") && box.classList.contains("dialog-form")) continue;
+        const e = el.getBoundingClientRect();
+        if (e.left < b.left - 1 || e.right > b.right + 1) { probleme.push("ragt seitlich aus " + box.className.split(" ")[0] + ": " + el.tagName + "." + String(el.className).split(" ")[0] + " „" + (el.textContent || "").trim().slice(0, 30) + "“"); break; }
+      }
+    }
+    // 2) Abgeschnittener Text
+    for (const el of document.querySelectorAll("td, th, .knopf, .tab, .marke-pill, .name, .wert, .nav-punkt, .unter, h1, h2, h3, label, .chip, .aufgabe")) {
+      if (!sichtbar(el) || gewolltGekuerzt(el)) continue;
+      if (el.scrollWidth > el.clientWidth + 1 && getComputedStyle(el).overflowX !== "visible") probleme.push("Text abgeschnitten: " + el.tagName + " „" + el.textContent.trim().slice(0, 30) + "“");
+    }
+    // 3) Text überlappt Text
+    const blaetter = [];
+    const walker = document.createTreeWalker(document.body, NodeFilter.SHOW_TEXT);
+    while (walker.nextNode()) {
+      const t = walker.currentNode;
+      if (!t.textContent.trim() || !t.parentElement || !sichtbar(t.parentElement) || t.parentElement.closest("#toast, #tip, svg, dialog:not([open]), option, select, details:not([open]) > :not(summary)") || gewolltGekuerzt(t.parentElement)) continue;
+      // Text, der in einem Scrollbereich gerade verdeckt ist, zählt nicht
+      let clip = null;
+      for (let a = t.parentElement; a && a !== document.body; a = a.parentElement) { const o = getComputedStyle(a).overflowY; if (o === "auto" || o === "scroll" || o === "hidden") { clip = a.getBoundingClientRect(); break; } }
+      const rg = document.createRange(); rg.selectNodeContents(t);
+      for (const q of rg.getClientRects()) {
+        if (q.width <= 2 || q.height <= 2) continue;
+        if (clip && (q.top < clip.top - 1 || q.bottom > clip.bottom + 1)) continue;
+        blaetter.push({ q, t: t.textContent.trim().slice(0, 25), el: t.parentElement });
+      }
+    }
+    for (let i = 0; i < blaetter.length; i++) for (let j = i + 1; j < blaetter.length; j++) {
+      const a = blaetter[i].q, b = blaetter[j].q;
+      const ueber = Math.min(a.right, b.right) - Math.max(a.left, b.left), hoch = Math.min(a.bottom, b.bottom) - Math.max(a.top, b.top);
+      if (ueber > 3 && hoch > 3 && blaetter[i].el !== blaetter[j].el) {
+        // Dialog liegt bewusst über der Seite
+        const dlgA = !!blaetter[i].el.closest("dialog[open]"), dlgB = !!blaetter[j].el.closest("dialog[open]");
+        if (dlgA !== dlgB) continue;
+        probleme.push(`Text überlappt: „${blaetter[i].t}“ / „${blaetter[j].t}“`);
+      }
+    }
+    return [...new Set(probleme)].slice(0, 6);
+  });
+  for (const p of r) fehler(`${name}: ${p}`);
+}
 async function pruefeBreite(page, name) {
   const r = await page.evaluate(() => {
     const w = document.documentElement.clientWidth;
@@ -99,6 +151,7 @@ for (const [breite, hoehe] of [[1920, 1080], [1366, 768], [1024, 768]]) {
     const titel = await page.textContent("#titel");
     if (!titel) fehler(`${b}@${breite}: kein Titel`);
     await pruefeBreite(page, `${b}@${breite}`);
+    await pruefeLayout(page, `${b}@${breite}`);
     if (konsole.length) fehler(`${b}@${breite}: Konsole: ${konsole.join(" | ")}`);
     if (FOTOS && (breite === 1920 || breite === 1024)) await page.screenshot({ path: join(FOTOS, `${b}-${breite}.png`), fullPage: true });
     await ctx.close();
@@ -119,6 +172,7 @@ for (const [breite, hoehe] of [[1920, 1080], [1366, 768], [1024, 768]]) {
   // Bearbeiten: „befreit“ ohne Grund muss abgelehnt werden
   await page.click("[data-fristen]");
   if (FOTOS) await page.screenshot({ path: join(FOTOS, "fristen-dialog.png") });
+  await pruefeLayout(page, "Fristen-Dialog");
   await page.check("dialog input[value=befreit]");
   await page.fill("dialog input[name=reakt_notiz]", "");
   await page.click("dialog button[value=ok]");
@@ -161,6 +215,7 @@ for (const [breite, hoehe] of [[1920, 1080], [1366, 768], [1024, 768]]) {
   await page.selectOption("dialog select[name=schueler_id]", "s2");
   await page.fill("dialog input[name=von]", "11:30");
   if (FOTOS) await page.screenshot({ path: join(FOTOS, "pruefungen-dialog.png") });
+  await pruefeLayout(page, "Prüfungs-Dialog");
   await page.click("dialog button[value=ok]");
   await page.waitForTimeout(400);
   const neu = await page.evaluate(() => window.__FAKE.tabellen.pruefungstermine.find((p) => p.schueler_id === "s2"));
@@ -181,6 +236,7 @@ for (const [breite, hoehe] of [[1920, 1080], [1366, 768], [1024, 768]]) {
   await page.waitForTimeout(300);
   if (await page.isVisible(".seite")) fehler("Großansicht: Menü noch sichtbar");
   await pruefeBreite(page, "Großansicht");
+  await pruefeLayout(page, "Großansicht");
   if (FOTOS) await page.screenshot({ path: join(FOTOS, "pruefungen-gross.png"), fullPage: true });
   if (konsole.length) fehler("Prüfungstafel: Konsole: " + konsole.join(" | "));
   await ctx.close();
@@ -259,6 +315,7 @@ for (const [breite, hoehe] of [[1920, 1080], [1366, 768], [1024, 768]]) {
   const kaesten = await page.$$("dialog input[name=fehlt]");
   await kaesten[0].check();
   if (FOTOS) await page.screenshot({ path: join(FOTOS, "fahrchecks-dialog.png") });
+  await pruefeLayout(page, "Fahrcheck-Dialog");
   await page.click("dialog button[value=ok]");
   await page.waitForTimeout(400);
   const q = await page.evaluate(() => (window.__FAKE.tabellen.fc_abgaben || [])[0]);

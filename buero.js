@@ -28,7 +28,14 @@ const $ = (id) => document.getElementById(id);
 function esc(s) {
   return String(s == null ? "" : s).replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
 }
-function datumDE(iso) { if (!iso) return ""; const [j, m, t] = String(iso).slice(0, 10).split("-"); return `${t}.${m}.${j}`; }
+// ISO-Datum (2026-10-08) → 08.10.2026; ein schon deutsches Datum (10.08.2026) bleibt, wie es ist
+function datumDE(iso) {
+  if (!iso) return "";
+  const t = String(iso).trim();
+  if (/^\d{1,2}\.\d{1,2}\.\d{2,4}$/.test(t)) return t;
+  const m = t.slice(0, 10).match(/^(\d{4})-(\d{2})-(\d{2})$/);
+  return m ? `${m[3]}.${m[2]}.${m[1]}` : t;
+}
 function zahlDE(n, stellen = 0) { return Number(n || 0).toLocaleString("de-DE", { minimumFractionDigits: stellen, maximumFractionDigits: stellen }); }
 function euro(n) { return Number(n || 0).toLocaleString("de-DE", { style: "currency", currency: "EUR", maximumFractionDigits: 0 }); }
 let _toastTimer = null;
@@ -183,7 +190,7 @@ const FRISTEN_ANSICHTEN = [["handeln", "Handlungsbedarf"], ["alle", "Alle Schül
 const REAKT_RANG = { gesperrt: 0, pruefen_faellig: 1, bald: 2, demnaechst: 3, ohne_datum: 4, ok: 5, befreit: 6 };
 function renderFristen() {
   const heute = KR.todayISO();
-  const ansicht = fristenParam("ansicht") || "handeln";
+  const ansicht = FRISTEN_ANSICHTEN.some(([id]) => id === fristenParam("ansicht")) ? fristenParam("ansicht") : "handeln";
   const suche = (fristenParam("suche") || "").toLowerCase();
   const f = zaehleFristen();
   const kacheln = `<div class="kacheln">
@@ -232,7 +239,7 @@ function bindeFristen(ziel) {
     suche.addEventListener("input", () => {
       clearTimeout(t);
       t = setTimeout(() => {
-        const ansicht = fristenParam("ansicht") || "handeln";
+        const ansicht = FRISTEN_ANSICHTEN.some(([id]) => id === fristenParam("ansicht")) ? fristenParam("ansicht") : "handeln";
         history.replaceState(null, "", `#fristen?ansicht=${ansicht}${suche.value ? "&suche=" + encodeURIComponent(suche.value) : ""}`);
         zeichne();
         const neu = $("fristenSuche"); if (neu) { neu.focus(); neu.setSelectionRange(neu.value.length, neu.value.length); }
@@ -357,8 +364,8 @@ function hakenHTML(p, gross) {
 }
 function renderPruefungen() {
   const heute = KR.todayISO();
-  const ansicht = fristenParam("ansicht") || "kommend";
-  const art = fristenParam("art") || "alle";
+  const ansicht = fristenParam("ansicht") === "vergangen" ? "vergangen" : "kommend";
+  const art = ["praxis", "theorie"].includes(fristenParam("art")) ? fristenParam("art") : "alle";
   const gross = fristenParam("gross") === "1";
   document.body.classList.toggle("kiosk", gross);
   let liste = S.pruefungstermine.slice();
@@ -537,6 +544,16 @@ function ergebnisDialog(id) {
 }
 
 /* ---------- Schüler ---------- */
+const FARBTYP = { rot: ["Rot", "#D64534"], gelb: ["Gelb", "#E0A32E"], gruen: ["Grün", "#3FAE6B"], blau: ["Blau", "#2F7DD1"] };
+function farbPunkt(a) {
+  const f = a && FARBTYP[a.profil];
+  return f ? `<span class="farbpunkt" style="background:${f[1]}" title="Farbprofil ${f[0]}" aria-label="Farbprofil ${f[0]}"></span>` : `<span class="farbpunkt ohne" title="kein Farbprofil"></span>`;
+}
+function standHTML(a) {
+  const p = a && typeof a.standPct === "number" ? Math.max(0, Math.min(100, Math.round(a.standPct))) : null;
+  if (p == null) return '<span class="leise">–</span>';
+  return `<span class="stand"><span class="stand-spur"><span class="stand-balken" style="width:${p}%"></span></span><span class="stand-zahl">${p} %</span></span>`;
+}
 function paketName(id) { const p = S.pakete.find((x) => x.id === id); return p ? p.name : ""; }
 function neueSchuelerId() { return "s" + Date.now().toString(36) + Math.random().toString(36).slice(2, 6); }
 function renderSchueler() {
@@ -553,11 +570,14 @@ function renderSchueler() {
   const zeilen = liste.map((x) => {
     const r = KR.reaktInfo(x, heute);
     const [rf, rt] = REAKT_TEXT[r.stufe];
+    const a = x.ausbildung || {};
+    const theo = typeof a.theoriePct === "number" ? Math.round(a.theoriePct) + " %" : "–";
     return `<tr>
-      <td><b>${esc(x.name)}</b><div class="unter">${esc(x.telefon || "")}${x.email ? " · " + esc(x.email) : ""}</div></td>
+      <td><div class="name-zeile">${farbPunkt(a)}<b>${esc(x.name)}</b></div><div class="unter">${esc(x.telefon || "")}${x.email ? " · " + esc(x.email) : ""}<span class="nur-schmal"> · ${esc(x.klasse || a.form || "")}</span></div></td>
       <td>${x.fahrlehrer_id ? esc(lehrerName(x.fahrlehrer_id)) : '<span class="marke-pill rot">ohne Fahrlehrer</span>'}</td>
-      <td>${esc(x.klasse || (x.ausbildung && x.ausbildung.form) || "")}<div class="unter">${esc(AUSBILDUNGSARTEN[x.ausbildungsart] || "Neu")}${x.paket_id ? " · " + esc(paketName(x.paket_id)) : ""}</div></td>
-      <td class="nur-breit">${naechster[x.id] ? esc(datumDE(naechster[x.id])) : '<span class="leise">–</span>'}</td>
+      <td class="nur-breit">${esc(x.klasse || a.form || "")}<div class="unter">${esc(AUSBILDUNGSARTEN[x.ausbildungsart] || "Neu")}${x.paket_id ? " · " + esc(paketName(x.paket_id)) : ""}${a.beginn ? ` · seit <span class="datum">${esc(datumDE(a.beginn))}</span>` : ""}</div></td>
+      <td>${standHTML(a)}<div class="unter">Theorie ${esc(theo)}</div></td>
+      <td class="nur-sehr-breit">${naechster[x.id] ? esc(datumDE(naechster[x.id])) : '<span class="leise">–</span>'}</td>
       <td><span class="marke-pill ${rf}">${rt}</span></td>
       <td class="aktionen"><div class="aktionen-box"><button class="knopf klein" data-sbearb="${esc(x.id)}" type="button">Bearbeiten</button></div></td>
     </tr>`;
@@ -571,7 +591,7 @@ function renderSchueler() {
       <button class="knopf haupt" id="sNeu" type="button">+ Schüler anlegen</button>
     </div>
     <p class="leise klein">${liste.length} von ${S.schueler.length} Schülern</p>
-    ${liste.length ? `<table class="tabelle"><thead><tr><th>Schüler</th><th>Fahrlehrer</th><th>Klasse</th><th class="nur-breit">Nächster Termin</th><th>Reaktivierung</th><th></th></tr></thead><tbody>${zeilen}</tbody></table>` : `<p class="leer">Keine Schüler gefunden.</p>`}
+    ${liste.length ? `<table class="tabelle schuelertab"><thead><tr><th>Schüler</th><th>Fahrlehrer</th><th class="nur-breit">Klasse</th><th>Ausbildungsstand</th><th class="nur-sehr-breit">Nächster Termin</th><th>Reaktivierung</th><th></th></tr></thead><tbody>${zeilen}</tbody></table>` : `<p class="leer">Keine Schüler gefunden.</p>`}
   </div>`;
 }
 function setzeFilter(bereich, werte) {
@@ -631,9 +651,8 @@ function schuelerDialog(id) {
       zeichne();
       return true;
     }
-    // Umschreiber-Merkmal auch im Ausbildungsstand setzen, damit die Fahrlehrer-App Sonderfahrten weglässt
-    const ausb = Object.assign({}, x.ausbildung || {});
-    if ((werte.ausbildungsart === "umschreibung") !== !!ausb.umschreiber) { ausb.umschreiber = werte.ausbildungsart === "umschreibung"; werte.ausbildung = ausb; }
+    // Umschreiber: die Fahrlehrer-App liest die Spalte ausbildungsart selbst (nicht ins jsonb schreiben,
+    // sonst überschreibt der nächste Abgleich des Fahrlehrers den Wert)
     if (!(await speichereSchueler(id, werte, "Gespeichert"))) return false;
     if ((x.fahrlehrer_id || null) !== neuerLehrer) await verschiebeSchueler(x, neuerLehrer);
     return true;
@@ -660,7 +679,7 @@ async function verschiebeSchueler(x, neuerLehrer) {
 const K_START = 7 * 60, K_ENDE = 21 * 60, K_PX = 1.15; // Pixel pro Minute
 const K_FARBEN = { fahrstunde: "#3a7350", nacht: "#5a7da8", sonder: "#5a7da8", pruefung: "#c9a227", theorie: "#9b7dc4", schalt: "#c4607d", block: "#88939a", vortest: "#d68a3e", simulator: "#3ea6a0", beratung: "#7a8fd6", ersthilfe: "#d65a5a" };
 function renderKalender() {
-  const tag = fristenParam("tag") || KR.todayISO();
+  const tag = /^\d{4}-\d\d-\d\d$/.test(fristenParam("tag")) ? fristenParam("tag") : KR.todayISO();
   const gewaehlt = (fristenParam("lehrer") || "").split(",").filter(Boolean);
   const lehrer = gewaehlt.length ? S.lehrer.filter((l) => gewaehlt.includes(l.id)) : S.lehrer;
   const termine = S.termine.filter((t) => t.datum === tag);
@@ -810,7 +829,7 @@ function renderFahrchecks() {
     return `<tr>
       <td><b>${esc(l.name || l.email)}</b></td>
       <td class="zahlspalte"><b>${r.soll}</b></td>
-      <td class="zahlspalte">${vermerkt ? `<span class="marke-pill gelb">${vermerkt}</span>` : "–"}</td>
+      <td class="zahlspalte nur-breit">${vermerkt ? `<span class="marke-pill gelb">${vermerkt}</span>` : "–"}</td>
       <td>${status}</td>
       <td class="aktionen"><div class="aktionen-box">${r.soll || q ? `<button class="knopf klein${q ? "" : " haupt"}" data-fcabgabe="${esc(l.id)}" type="button">${q ? "Neu erfassen" : "Abgabe erfassen"}</button>` : ""}</div></td>
     </tr>`;
@@ -824,7 +843,7 @@ function renderFahrchecks() {
     </div>
     <div class="karte">
       <div class="karte-kopf"><div class="tabs">${tabs}</div></div>
-      <table class="tabelle"><thead><tr><th>Fahrlehrer</th><th class="zahlspalte">Erwartet</th><th class="zahlspalte">Als fehlend vermerkt</th><th>Abgabe</th><th></th></tr></thead><tbody>${zeilen}</tbody></table>
+      <table class="tabelle"><thead><tr><th>Fahrlehrer</th><th class="zahlspalte">Erwartet</th><th class="zahlspalte nur-breit">Als fehlend vermerkt</th><th>Abgabe</th><th></th></tr></thead><tbody>${zeilen}</tbody></table>
       <p class="leise klein">So geht's: Umschlag des Fahrlehrers zählen, „Abgabe erfassen“, Zahl eintippen. Stimmt sie, ist alles mit einem Klick erledigt. Jede Abgabe ist eine Quittung, die nicht geändert werden kann; der Fahrlehrer sieht sie in seiner App.</p>
     </div>
     ${renderFcVerlauf()}`;
@@ -871,9 +890,10 @@ function fcAbgabeDialog(lehrerId) {
     // Büro-Status je Termin setzen: angekreuzt = fehlt, Rest = abgegeben
     const ids = r.posten.filter((p) => p.n && p.fc !== "nachgereicht").map((p) => p.id);
     const ok = ids.filter((id) => !fehlend.includes(id));
-    const jetztZ = new Date().toISOString();
-    const a = ok.length ? await supa.from("kalender_termine").update({ buero_fc_status: "abgegeben", aktualisiert_am: jetztZ }).in("id", ok) : { error: null };
-    const b = fehlend.length ? await supa.from("kalender_termine").update({ buero_fc_status: "fehlt", aktualisiert_am: jetztZ }).in("id", fehlend) : { error: null };
+    // Bewusst ohne aktualisiert_am: sonst hält die Fahrlehrer-App die Zeile für neuer und überschreibt
+    // ihre eigenen, vielleicht noch nicht hochgeladenen Fahrcheck-Vermerke.
+    const a = ok.length ? await supa.from("kalender_termine").update({ buero_fc_status: "abgegeben" }).in("id", ok) : { error: null };
+    const b = fehlend.length ? await supa.from("kalender_termine").update({ buero_fc_status: "fehlt" }).in("id", fehlend) : { error: null };
     if (a.error || b.error) toast("Quittung gespeichert, aber der Status einzelner Stunden nicht: " + (a.error || b.error).message, true);
     else toast(ist >= r.soll ? `Abgabe bestätigt: ${ist} von ${r.soll} ✓` : `Abgabe gespeichert: ${r.soll - ist} Fahrcheck${r.soll - ist === 1 ? "" : "s"} fehlen`);
     S.termine.forEach((t) => { if (ok.includes(t.id)) t.buero_fc_status = "abgegeben"; if (fehlend.includes(t.id)) t.buero_fc_status = "fehlt"; });
@@ -904,7 +924,7 @@ function vkVorschlag(typ) {
 }
 function monatVon(iso) { return String(iso || "").slice(0, 7); }
 function renderVerkaeufe() {
-  const monat = fristenParam("monat") || KR.todayISO().slice(0, 7);
+  const monat = /^\d{4}-\d\d$/.test(fristenParam("monat")) ? fristenParam("monat") : KR.todayISO().slice(0, 7);
   const lehrerF = fristenParam("lehrer");
   const statusF = fristenParam("status");
   let liste = S.verkaeufe.filter((v) => monatVon(v.erstellt_am) === monat || (v.status !== "bezahlt" && v.status !== "storniert"));
@@ -1045,7 +1065,7 @@ function verkaufNeuDialog() {
     const d = Object.fromEntries(new FormData(form).entries());
     if (!d.schueler_id) { toast("Bitte einen Schüler wählen.", true); return false; }
     const doppelt = S.verkaeufe.find((v) => v.schueler_id === d.schueler_id && v.typ === d.typ && v.status !== "storniert");
-    if (doppelt && !(await bestaetige("Schon vorhanden", `Für diesen Schüler gibt es schon einen Eintrag (${V_STATUS[doppelt.status][1]}). Trotzdem neu anlegen?`, "Ja"))) return false;
+    if (doppelt && !(await bestaetige("Schon vorhanden", `Für diesen Schüler gibt es schon einen Eintrag (${(V_STATUS[doppelt.status] || ["", doppelt.status])[1]}). Trotzdem neu anlegen?`, "Ja"))) return false;
     const res = await supa.from("fahrschule_empfehlungen").insert({
       fahrschule_id: S.fsId, schueler_id: d.schueler_id, schueler_name: schuelerName(d.schueler_id), typ: d.typ, status: "empfohlen",
       fahrlehrer_id: d.fahrlehrer_id || null, fahrlehrer_name: d.fahrlehrer_id ? lehrerName(d.fahrlehrer_id) : null,
@@ -1102,9 +1122,16 @@ function tabelleAus(kopf, zeilen) {
 }
 function renderZahlen() {
   const heute = KR.todayISO(), monate = letzteMonate(12), dieser = monate[11], vorher = monate[10];
-  // Anmeldungen: Vertragsdatum, sonst Tag der Eingabe im Kompass
+  // Anmeldungen: Vertragsdatum, sonst Ausbildungsbeginn aus der Fahrlehrer-App (TT.MM.JJJJ).
+  // Nicht der Tag der Eingabe im Kompass: beim ersten Übertragen wären sonst alle im selben Monat.
   const anm = {};
-  for (const x of S.schueler) { const m = String(x.vertrag_am || x.erstellt_am || "").slice(0, 7); if (m) anm[m] = (anm[m] || 0) + 1; }
+  let ohneDatum = 0;
+  for (const x of S.schueler) {
+    let m = x.vertrag_am ? String(x.vertrag_am).slice(0, 7) : "";
+    const b = !m && x.ausbildung && String(x.ausbildung.beginn || "").match(/^(\d{1,2})\.(\d{1,2})\.(\d{4})$/);
+    if (b) m = `${b[3]}-${b[2].padStart(2, "0")}`;
+    if (m) anm[m] = (anm[m] || 0) + 1; else ohneDatum++;
+  }
   // Bestehensquote Praxis je Monat
   const erg = praxisErgebnisse(), quote = {};
   for (const e of erg) { const m = e.datum.slice(0, 7); quote[m] = quote[m] || { ok: 0, n: 0 }; quote[m].n++; if (e.ok) quote[m].ok++; }
@@ -1135,6 +1162,7 @@ function renderZahlen() {
   const hinweis = S.lehrer.length <= 1 ? `<p class="leise klein">Hinweis: Zahlen sind nur so vollständig wie die Daten im Kompass. Solange nicht alle Fahrlehrer den Kompass nutzen, fehlen ihre Stunden.</p>` : "";
   return kacheln + `<div class="raster zwei">
     <div class="karte"><h2>Anmeldungen je Monat</h2>${saeulenSVG(anmPunkte, { titel: "Anmeldungen je Monat, letzte 12 Monate" })}
+      ${ohneDatum ? `<p class="leise klein">${ohneDatum} Schüler ohne Vertragsdatum oder Ausbildungsbeginn sind nicht mitgezählt.</p>` : ""}
       ${tabelleAus(["Monat", "Anmeldungen"], monate.map((m) => [monatKurz(m) + " " + m.slice(0, 4), anm[m] || 0]))}</div>
     <div class="karte"><h2>Bestehensquote Praxis</h2>${saeulenSVG(qPunkte, { titel: "Bestehensquote Praxisprüfung je Monat in Prozent", max: 100 })}
       ${tabelleAus(["Monat", "Bestanden", "Prüfungen", "Quote"], monate.map((m) => { const v = quote[m] || { ok: 0, n: 0 }; return [monatKurz(m) + " " + m.slice(0, 4), v.ok, v.n, v.n ? Math.round(v.ok / v.n * 100) + " %" : "–"]; }))}</div>
@@ -1325,6 +1353,17 @@ function bestaetige(titel, text, jaText) {
 }
 
 /* ---------- Daten ---------- */
+// Supabase liefert höchstens 1000 Zeilen je Abfrage: seitenweise laden, damit nie still etwas fehlt
+async function alleSeiten(abfrage, seite = 1000) {
+  const alle = [];
+  for (let von = 0; von < 50000; von += seite) {
+    const res = await abfrage().range(von, von + seite - 1);
+    if (res.error) return res;
+    alle.push(...(res.data || []));
+    if (!res.data || res.data.length < seite) break;
+  }
+  return { data: alle, error: null };
+}
 async function ladeDaten() {
   const nr = ++S.ladeNr;
   const fsId = S.fsId;
@@ -1334,7 +1373,7 @@ async function ladeDaten() {
       supa.from("fahrschulen").select("*").eq("id", fsId).single(),
       supa.from("profiles").select("*").eq("fahrschule_id", fsId).in("rolle", ["fahrlehrer", "super_admin"]).order("name"),
       supa.from("schueler").select("*").eq("fahrschule_id", fsId).neq("status", "geloescht").order("name"),
-      supa.from("kalender_termine").select("*").eq("fahrschule_id", fsId).eq("geloescht", false),
+      alleSeiten(() => supa.from("kalender_termine").select("*").eq("fahrschule_id", fsId).eq("geloescht", false).gte("datum", KR.addDaysISO(KR.todayISO(), -200)).order("datum").order("id")),
       supa.from("kalender_pruefungen").select("*").eq("fahrschule_id", fsId).eq("geloescht", false),
       supa.from("fahrschule_fahrzeuge").select("*").eq("fahrschule_id", fsId).eq("aktiv", true).order("erstellt_am"),
       supa.from("fahrschule_pakete").select("*").eq("fahrschule_id", fsId),

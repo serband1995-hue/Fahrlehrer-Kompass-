@@ -86,7 +86,7 @@
 
   /* ----- Fahrchecks (FC) -----
      Papier-Wertmarke: 1 FC je 45 Minuten Fahrstunde/Sonderfahrt/Nachtfahrt (90 Min = 2 FC).
-     Vermerke des Fahrlehrers (wie index.html, setFC): v1/halb_bewusst = 1 FC vergessen,
+     Vermerke des Fahrlehrers (wie index.html, setFC): v1/halb_bewusst/eins_ok = 1 FC weniger,
      v2 = 2 vergessen, geschenkt = keiner, offen = FC fehlt noch, nachgereicht = zählt im
      Zeitraum von nachAm. Ohne Vermerk = alle FC erhalten.
      Gezählt wird die gebuchte Zeit (von–bis), nicht eine verschenkte Restzeit.
@@ -100,7 +100,8 @@
   function fcErhalten(t) {
     const voll = fcGebucht(t);
     if (!voll || t.status === "abgebrochen" || t.status === "nicht erschienen") return 0;
-    if (t.fc === "v1" || t.fc === "halb_bewusst") return Math.max(voll - 1, 0);
+    // eins_ok = „1 FC (abgeschlossen)“: bezahlt wird voll, im Umschlag liegt aber nur 1 FC weniger
+    if (t.fc === "v1" || t.fc === "halb_bewusst" || t.fc === "eins_ok") return Math.max(voll - 1, 0);
     if (t.fc === "v2" || t.fc === "geschenkt" || t.fc === "offen" || t.fc === "nachgereicht") return 0;
     return voll;
   }

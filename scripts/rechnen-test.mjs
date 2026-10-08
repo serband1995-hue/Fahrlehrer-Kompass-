@@ -81,7 +81,7 @@ gleich("FC v1", 1, KR.fcErhalten(T({ fc: "v1" })));
 gleich("FC v1 bei 45 Min", 0, KR.fcErhalten(T({ fc: "v1", bis: "08:45" })));
 gleich("FC v2", 0, KR.fcErhalten(T({ fc: "v2" })));
 gleich("FC geschenkt", 0, KR.fcErhalten(T({ fc: "geschenkt" })));
-gleich("FC eins_ok = voll", 2, KR.fcErhalten(T({ fc: "eins_ok" })));
+gleich("FC eins_ok = 1 weniger im Umschlag", 1, KR.fcErhalten(T({ fc: "eins_ok" })));
 gleich("FC Prüfung zählt nicht", 0, KR.fcErhalten(T({ art: "pruefung" })));
 gleich("FC Theorie zählt nicht", 0, KR.fcErhalten(T({ art: "theorie" })));
 gleich("FC nicht erschienen", 0, KR.fcErhalten(T({ status: "nicht erschienen" })));
