@@ -149,6 +149,43 @@ for (const [breite, hoehe] of [[1920, 1080], [1366, 768], [1024, 768]]) {
   await ctx.close();
 }
 
+// 4b) Prüfungstafel: Haken setzen, planen (mit Kalender), Ergebnis, Großansicht
+{
+  const { page, ctx, konsole } = await oeffne({ nutzer: "bu-1", hash: "#pruefungen", breite: 1920, hoehe: 1080 });
+  if (FOTOS) await page.screenshot({ path: join(FOTOS, "pruefungen-tafel.png"), fullPage: true });
+  await page.click('[data-id="pt-1"][data-haken="tuev_gutschein"]');
+  await page.waitForTimeout(200);
+  const pt1 = await page.evaluate(() => window.__FAKE.tabellen.pruefungstermine.find((p) => p.id === "pt-1"));
+  if (!pt1.tuev_gutschein) fehler("Prüfungstafel: Haken nicht gespeichert");
+  await page.click("#pNeu");
+  await page.selectOption("dialog select[name=schueler_id]", "s2");
+  await page.fill("dialog input[name=von]", "11:30");
+  if (FOTOS) await page.screenshot({ path: join(FOTOS, "pruefungen-dialog.png") });
+  await page.click("dialog button[value=ok]");
+  await page.waitForTimeout(400);
+  const neu = await page.evaluate(() => window.__FAKE.tabellen.pruefungstermine.find((p) => p.schueler_id === "s2"));
+  if (!neu) fehler("Prüfungstafel: neue Prüfung nicht gespeichert");
+  else {
+    if (!neu.fahrlehrer_id) fehler("Prüfungstafel: Fahrlehrer nicht vom Schüler übernommen");
+    const kt = await page.evaluate((id) => window.__FAKE.tabellen.kalender_termine.find((t) => t.id === id), neu.kalender_termin_id);
+    if (!kt || kt.art !== "pruefung" || kt.bis !== "13:00") fehler("Prüfungstafel: kein passender Kalendertermin für den Fahrlehrer " + JSON.stringify(kt));
+  }
+  // Ergebnis für die gestrige Prüfung
+  await page.click('[data-ergebnis="pt-4"]');
+  await page.check("dialog input[value=bestanden]");
+  await page.click("dialog button[value=ok]");
+  await page.waitForTimeout(400);
+  const s8 = await page.evaluate(() => window.__FAKE.tabellen.schueler.find((s) => s.id === "s8"));
+  if (s8.reakt_status !== "befreit") fehler("Prüfungstafel: bestandene Praxis befreit nicht von der Reaktivierung");
+  await page.goto(page.url().split("#")[0] + "#pruefungen?gross=1");
+  await page.waitForTimeout(300);
+  if (await page.isVisible(".seite")) fehler("Großansicht: Menü noch sichtbar");
+  await pruefeBreite(page, "Großansicht");
+  if (FOTOS) await page.screenshot({ path: join(FOTOS, "pruefungen-gross.png"), fullPage: true });
+  if (konsole.length) fehler("Prüfungstafel: Konsole: " + konsole.join(" | "));
+  await ctx.close();
+}
+
 // 5) Super-Admin sieht die Auswahl der Fahrschule
 {
   const { page, ctx } = await oeffne({ nutzer: "sa-1" });

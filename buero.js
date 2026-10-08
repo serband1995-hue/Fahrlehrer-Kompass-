@@ -19,7 +19,7 @@ const ARTEN = {
 const supa = window.supabase.createClient(SUPA_URL, SUPA_KEY);
 const S = {
   user: null, profil: null, fsId: null, fs: null, schulen: [],
-  lehrer: [], schueler: [], termine: [], pruefungen: [], fahrzeuge: [], pakete: [],
+  lehrer: [], schueler: [], termine: [], pruefungen: [], pruefungstermine: [], fahrzeuge: [], pakete: [],
   geladenAm: null, ladeNr: 0
 };
 
@@ -65,7 +65,7 @@ function istAdmin() { return S.profil && (S.profil.rolle === "fahrschule_admin" 
 // schritt = Bauplan-Schritt, in dem der Bereich fertig wird (nur Hinweis, solange er noch fehlt)
 const BEREICHE = [
   { id: "heute", titel: "Heute zu tun", gruppe: "Arbeit", render: renderHeute },
-  { id: "pruefungen", titel: "Prüfungstafel", gruppe: "Arbeit", schritt: 2 },
+  { id: "pruefungen", titel: "Prüfungstafel", gruppe: "Arbeit", render: renderPruefungen, nachher: bindePruefungen, zahl: () => zaehlePruefungen().handeln || "" },
   { id: "fahrchecks", titel: "Fahrchecks", gruppe: "Arbeit", schritt: 4 },
   { id: "fristen", titel: "Fristen & Reaktivierung", gruppe: "Arbeit", render: renderFristen, nachher: bindeFristen, zahl: () => zaehleFristen().handeln || "" },
   { id: "kalender", titel: "Kalender", gruppe: "Planung", schritt: 3 },
@@ -137,6 +137,9 @@ function renderHeute() {
   if (f.pruefen) aufgaben.push(`<a class="aufgabe gelb" href="#fristen"><b>${f.pruefen}</b> Schüler mit möglicher Reaktivierung: in ClickClickDrive prüfen</a>`);
   if (f.bald) aufgaben.push(`<a class="aufgabe gelb" href="#fristen"><b>${f.bald}</b> Reaktivierung${f.bald === 1 ? "" : "en"} in den nächsten 30 Tagen fällig</a>`);
   if (f.theorie) aufgaben.push(`<a class="aufgabe gelb" href="#fristen?ansicht=theorie"><b>${f.theorie}</b> Theorie läuft in 60 Tagen ab oder ist abgelaufen</a>`);
+  const pz = zaehlePruefungen();
+  if (pz.ohneErgebnis) aufgaben.push(`<a class="aufgabe rot" href="#pruefungen"><b>${pz.ohneErgebnis}</b> Prüfung${pz.ohneErgebnis === 1 ? "" : "en"} ohne Ergebnis eingetragen</a>`);
+  if (pz.offeneHaken) aufgaben.push(`<a class="aufgabe gelb" href="#pruefungen"><b>${pz.offeneHaken}</b> Prüfung${pz.offeneHaken === 1 ? "" : "en"} in den nächsten 14 Tagen mit offenen Haken (Entgelt, TÜV, AS-Portal)</a>`);
   if (f.ohneDatum) aufgaben.push(`<a class="aufgabe" href="#fristen?ansicht=ohne"><b>${f.ohneDatum}</b> Schüler ohne Vertragsdatum</a>`);
   const todo = `<div class="karte"><div class="karte-kopf"><h2>Zu erledigen</h2></div>${aufgaben.length ? `<div class="aufgaben">${aufgaben.join("")}</div>` : `<p class="leer">Gerade ist nichts offen.</p>`}</div>`;
   return kacheln + todo + liste;
@@ -324,6 +327,211 @@ async function ladeProtokoll(tabelle, id) {
   ziel.innerHTML = zeilen ? `<h3>Verlauf</h3><ul>${zeilen}</ul>` : `<p class="leise klein">Noch keine Änderungen protokolliert.</p>`;
 }
 
+/* ---------- Prüfungstafel ---------- */
+const P_STATUS = { geplant: ["", "geplant"], bestanden: ["gruen", "bestanden"], nicht_bestanden: ["rot", "nicht bestanden"], abgesagt: ["", "abgesagt"] };
+const HAKEN = [
+  ["entgelt_bezahlt", "blau", "Vorstellungsentgelt bezahlt"],
+  ["tuev_gutschein", "rot", "TÜV-Gutschein gekauft"],
+  ["as_portal", "gruen", "Letzte Stunde im AS-Portal eingetragen"],
+];
+function zaehlePruefungen() {
+  const heute = KR.todayISO(), bis14 = KR.addDaysISO(heute, 14);
+  const z = { ohneErgebnis: 0, offeneHaken: 0, woche: 0, handeln: 0 };
+  for (const p of S.pruefungstermine) {
+    if (p.status !== "geplant") continue;
+    if (p.datum < heute) z.ohneErgebnis++;
+    else if (p.datum <= bis14 && HAKEN.some(([k]) => !p[k])) z.offeneHaken++;
+    if (p.datum >= heute && p.datum <= KR.addDaysISO(heute, 6)) z.woche++;
+  }
+  z.handeln = z.ohneErgebnis + z.offeneHaken;
+  return z;
+}
+function wochentag(iso) { return KR.parseISO(iso).toLocaleDateString("de-DE", { weekday: "long" }); }
+function hakenHTML(p, gross) {
+  return `<div class="haken-reihe${gross ? " gross" : ""}">${HAKEN.map(([k, farbe, titel]) =>
+    `<button type="button" class="haken ${farbe}${p[k] ? " an" : ""}" data-haken="${k}" data-id="${esc(p.id)}" aria-pressed="${p[k] ? "true" : "false"}" title="${titel}" aria-label="${titel}"${p.status !== "geplant" ? " disabled" : ""}>✓</button>`).join("")}</div>`;
+}
+function renderPruefungen() {
+  const heute = KR.todayISO();
+  const ansicht = fristenParam("ansicht") || "kommend";
+  const art = fristenParam("art") || "alle";
+  const gross = fristenParam("gross") === "1";
+  document.body.classList.toggle("kiosk", gross);
+  let liste = S.pruefungstermine.slice();
+  if (art !== "alle") liste = liste.filter((p) => p.art === art);
+  const offen = liste.filter((p) => p.status === "geplant" && p.datum < heute);
+  if (ansicht === "kommend") liste = liste.filter((p) => p.datum >= heute && p.status !== "abgesagt");
+  else liste = liste.filter((p) => p.datum < heute || p.status !== "geplant").reverse();
+  if (gross) liste = liste.filter((p) => p.datum <= KR.addDaysISO(heute, 13));
+  const z = zaehlePruefungen();
+  const nachTag = {};
+  for (const p of liste) (nachTag[p.datum] = nachTag[p.datum] || []).push(p);
+  const tage = Object.keys(nachTag);
+  const zeile = (p) => {
+    const s = S.schueler.find((x) => x.id === p.schueler_id) || {};
+    const [sf, st] = P_STATUS[p.status] || P_STATUS.geplant;
+    const aktion = p.status === "geplant"
+      ? (p.datum <= heute ? `<button class="knopf klein haupt" data-ergebnis="${esc(p.id)}" type="button">Ergebnis</button>` : "")
+      : `<span class="marke-pill ${sf}">${st}</span>`;
+    return `<tr class="${p.status === "geplant" && p.datum < heute ? "warnzeile" : ""}">
+      <td class="zeitspalte">${esc(p.von || "–")}</td>
+      <td><span class="marke-pill ${p.art === "praxis" ? "gruen" : "blau"}">${p.art === "praxis" ? "Praxis" : "Theorie"}</span>${p.klasse ? ` <span class="leise klein">${esc(p.klasse)}</span>` : ""}</td>
+      <td><b>${esc(s.name || "(Schüler gelöscht)")}</b>${p.notiz ? `<div class="unter">${esc(p.notiz)}</div>` : ""}</td>
+      <td>${esc(p.fahrlehrer_id ? lehrerName(p.fahrlehrer_id) : "–")}</td>
+      <td>${hakenHTML(p, gross)}</td>
+      ${gross ? "" : `<td class="aktionen"><div class="aktionen-box">${aktion}<button class="knopf klein" data-pbearb="${esc(p.id)}" type="button">Bearbeiten</button></div></td>`}
+    </tr>`;
+  };
+  const tabellen = tage.map((d) => `<h3 class="tag-titel${d === heute ? " heute" : ""}">${d === heute ? "Heute" : esc(wochentag(d))}, ${esc(datumDE(d))}</h3>
+    <table class="tabelle ptabelle"><colgroup><col class="c-zeit"><col class="c-art"><col><col class="c-lehrer"><col class="c-haken">${gross ? "" : '<col class="c-akt">'}</colgroup><thead><tr><th>Zeit</th><th>Art</th><th>Schüler</th><th>Fahrlehrer</th><th>Entgelt · TÜV · AS</th>${gross ? "" : "<th></th>"}</tr></thead>
+    <tbody>${nachTag[d].map(zeile).join("")}</tbody></table>`).join("");
+  const legende = `<div class="legende">${HAKEN.map(([, f, t]) => `<span><span class="haken ${f} an mini">✓</span> ${t}</span>`).join("")}</div>`;
+  if (gross) {
+    return `<div class="kiosk-kopf"><h2>Prüfungen der nächsten 14 Tage</h2><a class="knopf" href="#pruefungen">Großansicht beenden</a></div>${legende}
+      ${tabellen || `<p class="leer">Keine Prüfungen in den nächsten 14 Tagen.</p>`}`;
+  }
+  const tabs = [["kommend", "Kommende"], ["vergangen", "Vergangene"]].map(([id, n]) => `<a class="tab" href="#pruefungen?ansicht=${id}&art=${art}"${id === ansicht ? ' aria-current="page"' : ""}>${n}</a>`).join("");
+  const arten = [["alle", "Alle"], ["praxis", "Praxis"], ["theorie", "Theorie"]].map(([id, n]) => `<a class="tab" href="#pruefungen?ansicht=${ansicht}&art=${id}"${id === art ? ' aria-current="page"' : ""}>${n}</a>`).join("");
+  const warn = offen.length && ansicht === "kommend"
+    ? `<div class="karte warnkarte"><h2>${offen.length} Prüfung${offen.length === 1 ? "" : "en"} ohne Ergebnis</h2><table class="tabelle ptabelle"><colgroup><col class="c-zeit breit"><col class="c-art"><col><col class="c-lehrer"><col class="c-haken"><col class="c-akt"></colgroup><tbody>${offen.map((p) => zeile(p).replace("<td class=\"zeitspalte\">", `<td class="zeitspalte">${esc(datumDE(p.datum))} `)).join("")}</tbody></table></div>` : "";
+  return `<div class="kacheln">
+      <div class="kachel"><div class="wert">${z.woche}</div><div class="name">Prüfungen in den nächsten 7 Tagen</div></div>
+      <div class="kachel${z.offeneHaken ? " gold" : ""}"><div class="wert">${z.offeneHaken}</div><div class="name">mit offenen Haken (14 Tage)</div></div>
+      <div class="kachel${z.ohneErgebnis ? " rot" : ""}"><div class="wert">${z.ohneErgebnis}</div><div class="name">ohne Ergebnis</div></div>
+    </div>${warn}
+    <div class="karte">
+      <div class="karte-kopf"><div class="tabs">${tabs}<span class="trenner"></span>${arten}</div>
+        <div class="knopfreihe"><a class="knopf" href="#pruefungen?gross=1">Großansicht für die Küche</a><button class="knopf haupt" id="pNeu" type="button">+ Prüfung planen</button></div></div>
+      ${legende}
+      ${tabellen || `<p class="leer">${ansicht === "kommend" ? "Keine kommenden Prüfungen geplant." : "Noch keine vergangenen Prüfungen."}</p>`}
+    </div>`;
+}
+function bindePruefungen(ziel) {
+  const neu = ziel.querySelector("#pNeu");
+  if (neu) neu.addEventListener("click", () => pruefungDialog(null));
+  ziel.querySelectorAll("[data-haken]").forEach((b) => b.addEventListener("click", () => setzeHaken(b.dataset.id, b.dataset.haken)));
+  ziel.querySelectorAll("[data-pbearb]").forEach((b) => b.addEventListener("click", () => pruefungDialog(b.dataset.pbearb)));
+  ziel.querySelectorAll("[data-ergebnis]").forEach((b) => b.addEventListener("click", () => ergebnisDialog(b.dataset.ergebnis)));
+}
+window.addEventListener("hashchange", () => { if (aktuellerBereich().id !== "pruefungen") document.body.classList.remove("kiosk"); });
+async function speicherePruefung(id, werte) {
+  werte.aktualisiert_am = new Date().toISOString();
+  const res = await supa.from("pruefungstermine").update(werte).eq("id", id).select("*");
+  if (res.error || !res.data || !res.data.length) { toast("Nicht gespeichert: " + (res.error ? res.error.message : "keine Berechtigung"), true); return null; }
+  const i = S.pruefungstermine.findIndex((x) => x.id === id);
+  if (i >= 0) S.pruefungstermine[i] = res.data[0];
+  return res.data[0];
+}
+async function setzeHaken(id, feld) {
+  const p = S.pruefungstermine.find((x) => x.id === id);
+  if (!p) return;
+  if (await speicherePruefung(id, { [feld]: !p[feld] })) zeichne();
+}
+// Praxisprüfung mit Fahrlehrer und Uhrzeit steht als Termin auch in dessen Kalender (2 UE, wie jede Prüfung)
+function kalenderZeile(p) {
+  const ende = Math.min(KR.hm2min(p.von) + 90, 23 * 60 + 59);
+  const bis = KR.pad2(Math.floor(ende / 60)) + ":" + KR.pad2(ende % 60);
+  return {
+    fahrschule_id: S.fsId, fahrlehrer_id: p.fahrlehrer_id, schueler_id: p.schueler_id, datum: p.datum, von: p.von, bis,
+    art: "pruefung", status: "geplant", geloescht: false, payload: { note: "Praxisprüfung (vom Büro geplant)" }, aktualisiert_am: new Date().toISOString(),
+  };
+}
+async function abgleichKalender(p) {
+  const soll = p.art === "praxis" && p.fahrlehrer_id && p.von && p.status !== "abgesagt";
+  try {
+    if (p.kalender_termin_id && !soll) {
+      pruefe(await supa.from("kalender_termine").update({ geloescht: true, aktualisiert_am: new Date().toISOString() }).eq("id", p.kalender_termin_id), "Kalender");
+      await speicherePruefung(p.id, { kalender_termin_id: null });
+    } else if (p.kalender_termin_id && soll) {
+      pruefe(await supa.from("kalender_termine").update(kalenderZeile(p)).eq("id", p.kalender_termin_id), "Kalender");
+    } else if (soll) {
+      const tid = "pt" + crypto.randomUUID().replace(/-/g, "").slice(0, 20);
+      pruefe(await supa.from("kalender_termine").insert(Object.assign({ id: tid, erstellt_von: S.user.id }, kalenderZeile(p))), "Kalender");
+      await speicherePruefung(p.id, { kalender_termin_id: tid });
+    }
+  } catch (e) {
+    console.error(e);
+    toast("Prüfung gespeichert, aber nicht im Kalender des Fahrlehrers: " + e.message, true);
+  }
+}
+function schuelerOptionen(gewaehlt) {
+  return S.schueler.slice().sort((a, b) => String(a.name).localeCompare(String(b.name), "de"))
+    .map((s) => `<option value="${esc(s.id)}"${s.id === gewaehlt ? " selected" : ""}>${esc(s.name)}${s.fahrlehrer_id ? " · " + esc(lehrerName(s.fahrlehrer_id)) : ""}</option>`).join("");
+}
+function lehrerOptionen(gewaehlt) {
+  return `<option value="">– kein Fahrlehrer –</option>` + S.lehrer.map((l) => `<option value="${esc(l.id)}"${l.id === gewaehlt ? " selected" : ""}>${esc(l.name || l.email)}</option>`).join("");
+}
+function pruefungDialog(id) {
+  const p = id ? S.pruefungstermine.find((x) => x.id === id) : { art: "praxis", datum: KR.addDaysISO(KR.todayISO(), 7), status: "geplant" };
+  if (!p) return;
+  const body = `<div class="formular">
+      <label class="voll">Schüler<select name="schueler_id" required>${id ? "" : '<option value="">– bitte wählen –</option>'}${schuelerOptionen(p.schueler_id)}</select></label>
+      <label>Art<select name="art"><option value="praxis"${p.art === "praxis" ? " selected" : ""}>Praxisprüfung</option><option value="theorie"${p.art === "theorie" ? " selected" : ""}>Theorieprüfung</option></select></label>
+      <label>Klasse<select name="klasse"><option value="">–</option>${KLASSEN.map((k) => `<option${p.klasse === k ? " selected" : ""}>${k}</option>`).join("")}</select></label>
+      <label>Datum<input type="date" name="datum" required value="${esc(p.datum || "")}"></label>
+      <label>Uhrzeit<input type="time" name="von" value="${esc(p.von || "")}"></label>
+      <label>Fahrlehrer<select name="fahrlehrer_id">${lehrerOptionen(p.fahrlehrer_id)}</select></label>
+      <label>Prüfer (nur Initialen)<input type="text" name="pruefer" maxlength="10" value="${esc(p.pruefer || "")}"></label>
+      <fieldset class="voll"><legend>Haken</legend>${HAKEN.map(([k, , t]) => `<label class="wahl"><input type="checkbox" name="${k}"${p[k] ? " checked" : ""}> ${t}</label>`).join("")}</fieldset>
+      <label class="voll">Notiz<input type="text" name="notiz" maxlength="200" value="${esc(p.notiz || "")}"></label>
+      ${id && p.status === "geplant" ? `<label class="voll wahl"><input type="checkbox" name="absagen"> Prüfung absagen</label>` : ""}
+    </div>
+    <p class="leise klein">Praxisprüfungen mit Fahrlehrer und Uhrzeit erscheinen automatisch im Kalender des Fahrlehrers.</p>`;
+  const dlg = oeffneDialog(id ? "Prüfung bearbeiten" : "Prüfung planen", body, async (form) => {
+    const d = Object.fromEntries(new FormData(form).entries());
+    if (!d.schueler_id) { toast("Bitte einen Schüler wählen.", true); return false; }
+    if (!d.datum) { toast("Bitte ein Datum eintragen.", true); return false; }
+    const werte = {
+      schueler_id: d.schueler_id, art: d.art, klasse: d.klasse || null, datum: d.datum, von: d.von || null,
+      fahrlehrer_id: d.fahrlehrer_id || null, pruefer: (d.pruefer || "").trim() || null, notiz: (d.notiz || "").trim() || null,
+      entgelt_bezahlt: !!d.entgelt_bezahlt, tuev_gutschein: !!d.tuev_gutschein, as_portal: !!d.as_portal,
+    };
+    if (d.absagen) werte.status = "abgesagt";
+    let gespeichert;
+    if (id) gespeichert = await speicherePruefung(id, werte);
+    else {
+      const res = await supa.from("pruefungstermine").insert(Object.assign({ fahrschule_id: S.fsId, status: "geplant" }, werte)).select("*");
+      if (res.error || !res.data || !res.data.length) { toast("Nicht gespeichert: " + (res.error ? res.error.message : "keine Berechtigung"), true); return false; }
+      gespeichert = res.data[0];
+      S.pruefungstermine.push(gespeichert);
+    }
+    if (!gespeichert) return false;
+    await abgleichKalender(gespeichert);
+    toast(d.absagen ? "Prüfung abgesagt" : "Prüfung gespeichert");
+    zeichne();
+    return true;
+  });
+  // Neuer Schüler gewählt: Fahrlehrer und Klasse vom Schüler vorschlagen
+  const sel = dlg.querySelector("select[name=schueler_id]");
+  sel.addEventListener("change", () => {
+    const s = S.schueler.find((x) => x.id === sel.value);
+    if (!s) return;
+    if (s.fahrlehrer_id) dlg.querySelector("select[name=fahrlehrer_id]").value = s.fahrlehrer_id;
+    if (s.klasse) dlg.querySelector("select[name=klasse]").value = s.klasse;
+  });
+}
+function ergebnisDialog(id) {
+  const p = S.pruefungstermine.find((x) => x.id === id);
+  if (!p) return;
+  const s = S.schueler.find((x) => x.id === p.schueler_id) || {};
+  const body = `<p>${p.art === "praxis" ? "Praxisprüfung" : "Theorieprüfung"} von <b>${esc(s.name || "")}</b> am ${esc(datumDE(p.datum))}.</p>
+    <div class="formular"><fieldset class="voll"><legend>Ergebnis</legend>
+      <label class="wahl"><input type="radio" name="ergebnis" value="bestanden"> bestanden</label>
+      <label class="wahl"><input type="radio" name="ergebnis" value="nicht_bestanden"> nicht bestanden</label>
+    </fieldset></div>
+    <p class="leise klein">${p.art === "theorie" ? "Bei „bestanden“ wird das Datum beim Schüler eingetragen: Ab dann hat er 12 Monate für die Praxisprüfung." : "Bei „bestanden“ entfällt die Reaktivierung für diesen Schüler."}</p>`;
+  oeffneDialog("Ergebnis eintragen", body, async (form) => {
+    const e = new FormData(form).get("ergebnis");
+    if (!e) { toast("Bitte bestanden oder nicht bestanden wählen.", true); return false; }
+    if (!(await speicherePruefung(id, { status: e }))) return false;
+    if (e === "bestanden" && s.id) {
+      if (p.art === "theorie") await speichereSchueler(s.id, { theorie_bestanden_am: p.datum }, "Ergebnis gespeichert");
+      else await speichereSchueler(s.id, { reakt_status: "befreit", reakt_notiz: `Praxisprüfung bestanden am ${datumDE(p.datum)}` }, "Glückwunsch! Ergebnis gespeichert.");
+    } else { toast("Ergebnis gespeichert"); zeichne(); }
+    return true;
+  }, "Speichern");
+}
+
 /* ---------- Dialoge ---------- */
 function oeffneDialog(titel, inhalt, speichern, knopfText) {
   const dlg = document.createElement("dialog");
@@ -362,7 +570,7 @@ async function ladeDaten() {
   const fsId = S.fsId;
   setStatus("", "lade …");
   try {
-    const [fs, lehrer, schueler, termine, pruefungen, fahrzeuge, pakete] = await Promise.all([
+    const [fs, lehrer, schueler, termine, pruefungen, fahrzeuge, pakete, pTermine] = await Promise.all([
       supa.from("fahrschulen").select("*").eq("id", fsId).single(),
       supa.from("profiles").select("*").eq("fahrschule_id", fsId).in("rolle", ["fahrlehrer", "super_admin"]).order("name"),
       supa.from("schueler").select("*").eq("fahrschule_id", fsId).neq("status", "geloescht").order("name"),
@@ -370,6 +578,7 @@ async function ladeDaten() {
       supa.from("kalender_pruefungen").select("*").eq("fahrschule_id", fsId).eq("geloescht", false),
       supa.from("fahrschule_fahrzeuge").select("*").eq("fahrschule_id", fsId).eq("aktiv", true).order("erstellt_am"),
       supa.from("fahrschule_pakete").select("*").eq("fahrschule_id", fsId),
+      supa.from("pruefungstermine").select("*").eq("fahrschule_id", fsId).gte("datum", KR.addDaysISO(KR.todayISO(), -120)).order("datum").order("von"),
     ]);
     if (nr !== S.ladeNr) return; // inzwischen wurde neu geladen oder die Fahrschule gewechselt
     S.fs = pruefe(fs, "Fahrschule");
@@ -379,6 +588,7 @@ async function ladeDaten() {
     S.pruefungen = pruefe(pruefungen, "Prüfungen") || [];
     S.fahrzeuge = pruefe(fahrzeuge, "Fahrzeuge") || [];
     S.pakete = pruefe(pakete, "Pakete") || [];
+    S.pruefungstermine = pruefe(pTermine, "Prüfungstafel") || [];
     S.geladenAm = new Date();
     $("schulName").textContent = S.fs ? S.fs.name : "";
     setStatus("ok", "verbunden · " + S.geladenAm.toLocaleTimeString("de-DE", { hour: "2-digit", minute: "2-digit" }));
