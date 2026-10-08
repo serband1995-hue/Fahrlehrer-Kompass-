@@ -139,7 +139,21 @@
     return { soll, posten, fehlend: posten.filter((p) => p.fehlt > 0) };
   }
 
-  const api = { FS_BUERO_ARTEN, pad2, hm2min, parseISO, dateISO, todayISO, ueOf, addMonthsISO, addDaysISO, daysBetweenISO, reaktFaellig, reaktNachZahlung, reaktInfo, theorieInfo, fcGebucht, fcErhalten, fcZeitraum, fcVorZeitraum, fcSoll };
+  /* ----- Verkauf: Aufteilung eines Betrags nach Prozent (Einstellung akademieVermittlung.splitKollege).
+     Jeder Anteil auf ganze Euro gerundet; der Rundungsrest geht an die Fahrschule, damit die Summe
+     immer genau dem Betrag entspricht. null, wenn die Prozente fehlen oder nicht 100 ergeben. */
+  function aufteilung(betrag, split) {
+    const teile = ["fahrlehrer", "fahrschule", "plattform", "akademie"];
+    if (!split || teile.some((k) => split[k] == null || isNaN(Number(split[k])))) return null;
+    const summe = teile.reduce((a, k) => a + Number(split[k]), 0);
+    if (Math.abs(summe - 100) > 0.001) return null;
+    const out = {};
+    for (const k of teile) out[k] = Math.round((Number(betrag) || 0) * Number(split[k]) / 100);
+    out.fahrschule += (Number(betrag) || 0) - teile.reduce((a, k) => a + out[k], 0);
+    return out;
+  }
+
+  const api = { FS_BUERO_ARTEN, pad2, hm2min, parseISO, dateISO, todayISO, ueOf, addMonthsISO, addDaysISO, daysBetweenISO, reaktFaellig, reaktNachZahlung, reaktInfo, theorieInfo, fcGebucht, fcErhalten, fcZeitraum, fcVorZeitraum, fcSoll, aufteilung };
   if (typeof module !== "undefined" && module.exports) module.exports = api;
   else root.KR = api;
 })(typeof self !== "undefined" ? self : this);
