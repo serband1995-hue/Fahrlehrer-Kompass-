@@ -19,7 +19,7 @@ const ARTEN = {
 const supa = window.supabase.createClient(SUPA_URL, SUPA_KEY);
 const S = {
   user: null, profil: null, fsId: null, fs: null, schulen: [],
-  lehrer: [], schueler: [], termine: [], pruefungen: [], pruefungstermine: [], fcAbgaben: [], verkaeufe: [], provisionen: [], fahrzeuge: [], pakete: [],
+  lehrer: [], team: [], schueler: [], termine: [], pruefungen: [], pruefungstermine: [], fcAbgaben: [], verkaeufe: [], provisionen: [], fahrzeuge: [], pakete: [],
   geladenAm: null, ladeNr: 0
 };
 
@@ -72,8 +72,8 @@ const BEREICHE = [
   { id: "schueler", titel: "Schüler", gruppe: "Planung", render: renderSchueler, nachher: bindeSchueler, zahl: () => S.schueler.filter((x) => !x.fahrlehrer_id).length || "" },
   { id: "verkaeufe", titel: "Verkäufe & Provision", gruppe: "Geld", render: renderVerkaeufe, nachher: bindeVerkaeufe, zahl: () => S.verkaeufe.filter((v) => v.status === "empfohlen").length || "" },
   { id: "zahlen", titel: "Zahlen", gruppe: "Geld", render: renderZahlen, nachher: bindeZahlen },
-  { id: "team", titel: "Fahrlehrer & Zugänge", gruppe: "Verwaltung", schritt: 9 },
-  { id: "flotte", titel: "Fahrzeuge", gruppe: "Verwaltung", schritt: 9 },
+  { id: "team", titel: "Fahrlehrer & Zugänge", gruppe: "Verwaltung", render: renderTeam, nachher: bindeTeam },
+  { id: "flotte", titel: "Fahrzeuge", gruppe: "Verwaltung", render: renderFlotte, nachher: bindeFlotte, zahl: () => fahrzeugKonflikte().length || "" },
 ];
 function aktuellerBereich() {
   const id = (location.hash || "#heute").slice(1).split("?")[0];
@@ -1162,6 +1162,136 @@ function bindeZahlen(ziel) {
   });
 }
 
+/* ---------- Fahrlehrer & Zugänge ---------- */
+async function adminFunktion(body) {
+  const { data: sd } = await supa.auth.getSession();
+  const token = sd && sd.session ? sd.session.access_token : null;
+  const { data, error } = await supa.functions.invoke("admin-create-account", { body: Object.assign({}, body, { requester_token: token }) });
+  if (error) throw error;
+  if (data && data.error) throw new Error(data.error);
+  return data;
+}
+function renderTeam() {
+  const heute = KR.todayISO(), monat = heute.slice(0, 7);
+  const ue = {}, schuelerZahl = {};
+  for (const t of S.termine) if (t.datum && t.datum.slice(0, 7) === monat && t.datum <= heute && t.art !== "block") ue[t.fahrlehrer_id] = (ue[t.fahrlehrer_id] || 0) + KR.ueOf(t.art, t.von, t.bis, (t.payload || {}).tatsaechlicheDauer);
+  for (const x of S.schueler) if (x.fahrlehrer_id) schuelerZahl[x.fahrlehrer_id] = (schuelerZahl[x.fahrlehrer_id] || 0) + 1;
+  const admin = istAdmin();
+  const zeile = (p, mitZahlen) => `<tr>
+      <td><b>${esc(p.name || "–")}</b><div class="unter">${esc(p.email || "")}</div></td>
+      <td>${esc(ROLLEN[p.rolle] || (p.rolle === "fahrlehrer" ? "Fahrlehrer" : p.rolle))}</td>
+      ${mitZahlen ? `<td class="zahlspalte">${schuelerZahl[p.id] || 0}</td><td class="zahlspalte">${zahlDE(ue[p.id] || 0)}</td>` : ""}
+      <td>${p.aktiv === false ? '<span class="marke-pill rot">gesperrt</span>' : '<span class="marke-pill gruen">aktiv</span>'}</td>
+      <td class="aktionen"><div class="aktionen-box">${admin && p.rolle !== "super_admin" && p.id !== S.user.id ? `<button class="knopf klein" data-pwreset="${esc(p.id)}" type="button">Neues Passwort</button>
+        <button class="knopf klein" data-sperren="${esc(p.id)}" type="button">${p.aktiv === false ? "Freischalten" : "Sperren"}</button>` : ""}</div></td></tr>`;
+  const lehrer = S.lehrer;
+  const buero = S.team.filter((p) => p.rolle === "buero" || p.rolle === "fahrschule_admin");
+  return `<div class="karte"><div class="karte-kopf"><h2>Fahrlehrer (${lehrer.length})</h2>${admin ? '<button class="knopf haupt" id="tNeuFl" type="button">+ Fahrlehrer anlegen</button>' : ""}</div>
+      <table class="tabelle"><thead><tr><th>Name</th><th>Rolle</th><th class="zahlspalte">Schüler</th><th class="zahlspalte">UE im Monat</th><th>Zugang</th><th></th></tr></thead><tbody>${lehrer.map((p) => zeile(p, true)).join("")}</tbody></table></div>
+    <div class="karte"><div class="karte-kopf"><h2>Büro und Leitung</h2>${admin ? '<button class="knopf" id="tNeuBu" type="button">+ Büro-Zugang anlegen</button>' : ""}</div>
+      ${buero.length ? `<table class="tabelle"><thead><tr><th>Name</th><th>Rolle</th><th>Zugang</th><th></th></tr></thead><tbody>${buero.map((p) => zeile(p, false)).join("")}</tbody></table>` : `<p class="leer">Keine weiteren Zugänge sichtbar.</p>`}
+      ${admin ? "" : `<p class="leise klein">Zugänge anlegen, sperren und Passwörter zurücksetzen darf die Fahrschul-Leitung.</p>`}</div>`;
+}
+function bindeTeam(ziel) {
+  const fl = ziel.querySelector("#tNeuFl"), bu = ziel.querySelector("#tNeuBu");
+  if (fl) fl.addEventListener("click", () => zugangDialog("fahrlehrer"));
+  if (bu) bu.addEventListener("click", () => zugangDialog("buero"));
+  ziel.querySelectorAll("[data-pwreset]").forEach((b) => b.addEventListener("click", () => passwortNeu(b.dataset.pwreset)));
+  ziel.querySelectorAll("[data-sperren]").forEach((b) => b.addEventListener("click", () => zugangSperren(b.dataset.sperren)));
+}
+function teamPerson(id) { return S.team.find((p) => p.id === id) || S.lehrer.find((p) => p.id === id); }
+function zeigePasswort(email, passwort) {
+  oeffneDialog("Zugangsdaten", `<p>Bitte jetzt weitergeben. Das Passwort wird <b>nur dieses eine Mal</b> angezeigt.</p>
+    <div class="formular"><label class="voll">E-Mail<input type="text" readonly value="${esc(email)}"></label>
+    <label class="voll">Passwort<input type="text" readonly value="${esc(passwort)}" id="pwFeld"></label></div>`, async () => {
+    try { await navigator.clipboard.writeText(`E-Mail: ${email}\nPasswort: ${passwort}`); toast("Kopiert"); } catch (e) { toast("Kopieren ging nicht, bitte abschreiben.", true); return false; }
+    return true;
+  }, "Kopieren und schließen");
+}
+function zugangDialog(rolle) {
+  oeffneDialog(rolle === "buero" ? "Büro-Zugang anlegen" : "Fahrlehrer anlegen", `<div class="formular">
+      <label class="voll">E-Mail<input type="email" name="email" required></label>
+      <label class="voll">Name<input type="text" name="name" maxlength="100"></label></div>`, async (form) => {
+    const email = form.email.value.trim(), name = form.name.value.trim();
+    if (!email) { toast("Bitte eine E-Mail eintragen.", true); return false; }
+    try {
+      const res = await adminFunktion({ action: "create_account", email, name, rolle, fahrschule_id: S.fsId });
+      setTimeout(() => zeigePasswort(res.email || email, res.passwort), 50);
+      ladeDaten();
+      return true;
+    } catch (e) { toast("Nicht angelegt: " + e.message, true); return false; }
+  }, "Anlegen");
+}
+async function passwortNeu(id) {
+  const p = teamPerson(id);
+  if (!p || !(await bestaetige("Neues Passwort?", `Für ${p.name || p.email} wird ein neues Passwort erzeugt. Das alte gilt dann nicht mehr.`, "Ja, neues Passwort"))) return;
+  try { const res = await adminFunktion({ action: "reset_password", target_user_id: id }); zeigePasswort(res.email || p.email, res.passwort); }
+  catch (e) { toast("Nicht möglich: " + e.message, true); }
+}
+async function zugangSperren(id) {
+  const p = teamPerson(id);
+  if (!p) return;
+  const sperren = p.aktiv !== false;
+  if (!(await bestaetige(sperren ? "Zugang sperren?" : "Zugang freischalten?", sperren ? `${p.name || p.email} wird sofort abgemeldet und kann sich nicht mehr anmelden.` : `${p.name || p.email} kann sich wieder anmelden.`, sperren ? "Ja, sperren" : "Ja, freischalten"))) return;
+  const res = await supa.from("profiles").update({ aktiv: !sperren }).eq("id", id).select("id");
+  if (res.error || !res.data || !res.data.length) { toast("Nicht gespeichert: " + (res.error ? res.error.message : "keine Berechtigung"), true); return; }
+  for (const l of [S.team, S.lehrer]) { const x = l.find((y) => y.id === id); if (x) x.aktiv = !sperren; }
+  toast(sperren ? "Gesperrt" : "Freigeschaltet"); zeichne();
+}
+
+/* ---------- Fahrzeuge ---------- */
+// Doppelt belegte Fahrzeuge in den nächsten 14 Tagen (gleiches Fahrzeug, überschneidende Zeit)
+function fahrzeugKonflikte() {
+  const heute = KR.todayISO(), bis = KR.addDaysISO(heute, 14), out = [];
+  const nach = {};
+  for (const t of S.termine) {
+    if (!t.fahrzeug || !t.von || !t.bis || t.art === "block" || t.datum < heute || t.datum > bis) continue;
+    (nach[t.datum + "|" + t.fahrzeug] = nach[t.datum + "|" + t.fahrzeug] || []).push(t);
+  }
+  for (const liste of Object.values(nach)) {
+    liste.sort((a, b) => a.von.localeCompare(b.von));
+    for (let i = 0; i < liste.length; i++) for (let j = i + 1; j < liste.length; j++) {
+      if (KR.hm2min(liste[j].von) < KR.hm2min(liste[i].bis)) out.push([liste[i], liste[j]]);
+    }
+  }
+  return out;
+}
+function renderFlotte() {
+  const heute = KR.todayISO(), bis = KR.addDaysISO(heute, 6);
+  const nutzung = {};
+  for (const t of S.termine) if (t.fahrzeug && t.datum >= heute && t.datum <= bis && t.art !== "block") nutzung[t.fahrzeug] = (nutzung[t.fahrzeug] || 0) + 1;
+  const konf = fahrzeugKonflikte();
+  const admin = istAdmin();
+  const typName = { schalt: "Schaltung", automatik: "Automatik" };
+  return `${konf.length ? `<div class="karte warnkarte"><h2>${konf.length} Doppelbelegung${konf.length === 1 ? "" : "en"} in den nächsten 14 Tagen</h2><table class="tabelle"><tbody>${konf.map(([a, b]) => `<tr>
+      <td class="zeitspalte">${esc(datumDE(a.datum))}</td><td><b>${esc(a.fahrzeug)}</b></td>
+      <td>${esc(a.von)}–${esc(a.bis)} ${esc(lehrerName(a.fahrlehrer_id))}</td><td>${esc(b.von)}–${esc(b.bis)} ${esc(lehrerName(b.fahrlehrer_id))}</td></tr>`).join("")}</tbody></table></div>` : ""}
+    <div class="karte"><div class="karte-kopf"><h2>Fahrzeuge (${S.fahrzeuge.length})</h2>${admin ? '<button class="knopf haupt" id="fzNeu" type="button">+ Fahrzeug</button>' : ""}</div>
+      ${S.fahrzeuge.length ? `<table class="tabelle"><thead><tr><th>Fahrzeug</th><th>Typ</th><th class="zahlspalte">Termine in 7 Tagen</th><th></th></tr></thead><tbody>${S.fahrzeuge.map((f) => `<tr>
+        <td><b>${esc(f.name || f.bezeichnung || "")}</b></td><td>${esc(typName[f.typ] || f.typ || "")}</td><td class="zahlspalte">${nutzung[f.name || f.bezeichnung] || 0}</td>
+        <td class="aktionen"><div class="aktionen-box">${admin ? `<button class="knopf klein" data-fzweg="${esc(f.id)}" type="button">Entfernen</button>` : ""}</div></td></tr>`).join("")}</tbody></table>` : `<p class="leer">Noch keine Fahrzeuge eingetragen.</p>`}
+      ${admin ? "" : `<p class="leise klein">Fahrzeuge anlegen und entfernen darf die Fahrschul-Leitung.</p>`}</div>`;
+}
+function bindeFlotte(ziel) {
+  const neu = ziel.querySelector("#fzNeu");
+  if (neu) neu.addEventListener("click", () => oeffneDialog("Fahrzeug anlegen", `<div class="formular">
+      <label class="voll">Bezeichnung (z. B. „Golf Schalter“)<input type="text" name="name" required maxlength="60"></label>
+      <label>Typ<select name="typ"><option value="schalt">Schaltung</option><option value="automatik">Automatik</option></select></label></div>`, async (form) => {
+    const name = form.name.value.trim();
+    if (!name) { toast("Bitte eine Bezeichnung eintragen.", true); return false; }
+    const res = await supa.from("fahrschule_fahrzeuge").insert({ fahrschule_id: S.fsId, name, typ: form.typ.value, aktiv: true }).select("*");
+    if (res.error || !res.data || !res.data.length) { toast("Nicht gespeichert: " + (res.error ? res.error.message : "keine Berechtigung"), true); return false; }
+    S.fahrzeuge.push(res.data[0]); toast("Fahrzeug angelegt"); zeichne(); return true;
+  }, "Anlegen"));
+  ziel.querySelectorAll("[data-fzweg]").forEach((b) => b.addEventListener("click", async () => {
+    const f = S.fahrzeuge.find((x) => x.id === b.dataset.fzweg);
+    if (!f || !(await bestaetige("Fahrzeug entfernen?", `${f.name || ""} wird aus der Liste genommen. Alte Termine bleiben unverändert.`, "Ja, entfernen"))) return;
+    const res = await supa.from("fahrschule_fahrzeuge").update({ aktiv: false }).eq("id", f.id).select("id");
+    if (res.error || !res.data || !res.data.length) { toast("Nicht gespeichert: " + (res.error ? res.error.message : "keine Berechtigung"), true); return; }
+    S.fahrzeuge = S.fahrzeuge.filter((x) => x.id !== f.id); toast("Entfernt"); zeichne();
+  }));
+}
+
 /* ---------- Dialoge ---------- */
 function oeffneDialog(titel, inhalt, speichern, knopfText) {
   const dlg = document.createElement("dialog");
@@ -1200,7 +1330,7 @@ async function ladeDaten() {
   const fsId = S.fsId;
   setStatus("", "lade …");
   try {
-    const [fs, lehrer, schueler, termine, pruefungen, fahrzeuge, pakete, pTermine, fcAbg, verk, prov] = await Promise.all([
+    const [fs, lehrer, schueler, termine, pruefungen, fahrzeuge, pakete, pTermine, fcAbg, verk, prov, team] = await Promise.all([
       supa.from("fahrschulen").select("*").eq("id", fsId).single(),
       supa.from("profiles").select("*").eq("fahrschule_id", fsId).in("rolle", ["fahrlehrer", "super_admin"]).order("name"),
       supa.from("schueler").select("*").eq("fahrschule_id", fsId).neq("status", "geloescht").order("name"),
@@ -1212,6 +1342,7 @@ async function ladeDaten() {
       supa.from("fc_abgaben").select("*").eq("fahrschule_id", fsId).gte("zeitraum_von", KR.addDaysISO(KR.todayISO(), -200)).order("bestaetigt_am", { ascending: false }),
       supa.from("fahrschule_empfehlungen").select("*").eq("fahrschule_id", fsId).order("erstellt_am", { ascending: false }).limit(1000),
       supa.from("provisionen").select("*").eq("fahrschule_id", fsId).order("erstellt_am", { ascending: false }).limit(2000),
+      supa.from("profiles").select("*").eq("fahrschule_id", fsId).order("name"),
     ]);
     if (nr !== S.ladeNr) return; // inzwischen wurde neu geladen oder die Fahrschule gewechselt
     S.fs = pruefe(fs, "Fahrschule");
@@ -1225,6 +1356,7 @@ async function ladeDaten() {
     S.fcAbgaben = pruefe(fcAbg, "Fahrcheck-Abgaben") || [];
     S.verkaeufe = pruefe(verk, "Verkäufe") || [];
     S.provisionen = pruefe(prov, "Provisionen") || [];
+    S.team = pruefe(team, "Team") || [];
     S.geladenAm = new Date();
     $("schulName").textContent = S.fs ? S.fs.name : "";
     setStatus("ok", "verbunden · " + S.geladenAm.toLocaleTimeString("de-DE", { hour: "2-digit", minute: "2-digit" }));
