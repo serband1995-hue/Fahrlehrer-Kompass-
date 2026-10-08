@@ -84,7 +84,62 @@
     return { stufe, ablauf, tage, grund };
   }
 
-  const api = { FS_BUERO_ARTEN, pad2, hm2min, parseISO, dateISO, todayISO, ueOf, addMonthsISO, addDaysISO, daysBetweenISO, reaktFaellig, reaktNachZahlung, reaktInfo, theorieInfo };
+  /* ----- Fahrchecks (FC) -----
+     Papier-Wertmarke: 1 FC je 45 Minuten Fahrstunde/Sonderfahrt/Nachtfahrt (90 Min = 2 FC).
+     Vermerke des Fahrlehrers (wie index.html, setFC): v1/halb_bewusst = 1 FC vergessen,
+     v2 = 2 vergessen, geschenkt = keiner, offen = FC fehlt noch, nachgereicht = zählt im
+     Zeitraum von nachAm. Ohne Vermerk = alle FC erhalten.
+     Gezählt wird die gebuchte Zeit (von–bis), nicht eine verschenkte Restzeit.
+     Nicht erschienen / abgebrochen = keine FC. */
+  const FC_ARTEN = ["fahrstunde", "sonder", "nacht"];
+  function fcGebucht(t) {
+    if (!t || !FC_ARTEN.includes(t.art) || !t.von || !t.bis) return 0;
+    const min = hm2min(t.bis) - hm2min(t.von);
+    return min > 0 ? Math.round(min / 45) : 0;
+  }
+  function fcErhalten(t) {
+    const voll = fcGebucht(t);
+    if (!voll || t.status === "abgebrochen" || t.status === "nicht erschienen") return 0;
+    if (t.fc === "v1" || t.fc === "halb_bewusst") return Math.max(voll - 1, 0);
+    if (t.fc === "v2" || t.fc === "geschenkt" || t.fc === "offen" || t.fc === "nachgereicht") return 0;
+    return voll;
+  }
+  // Halbmonat: 1.–15. und 16.–Monatsende (zwei Abgaben im Monat)
+  function fcZeitraum(iso) {
+    const d = parseISO(iso), j = d.getFullYear(), m = d.getMonth();
+    if (d.getDate() <= 15) return [dateISO(new Date(j, m, 1)), dateISO(new Date(j, m, 15))];
+    return [dateISO(new Date(j, m, 16)), dateISO(new Date(j, m + 1, 0))];
+  }
+  function fcVorZeitraum(von) { return fcZeitraum(addDaysISO(von, -1)); }
+  /* termine: Objekte mit datum (oder date), von, bis, art, status, fc, nachAm.
+     Ergebnis: soll = Fahrchecks, die der Fahrlehrer für den Zeitraum abgeben muss. */
+  function fcSoll(termine, von, bis, heute) {
+    heute = heute || todayISO();
+    const posten = [];
+    let soll = 0;
+    for (const t of termine || []) {
+      const datum = t.datum || t.date;
+      if (!datum) continue;
+      if (datum >= von && datum <= bis && datum <= heute) {
+        const n = fcErhalten(t);
+        const fehlt = fcGebucht(t) - n;
+        if (n || fehlt) posten.push({ id: t.id, datum, von: t.von, n, fehlt, fc: t.fc || null, sid: t.sid || t.schueler_id || null });
+        soll += n;
+      }
+      if (t.fc === "nachgereicht" && t.nachAm) {
+        const am = String(t.nachAm).slice(0, 10);
+        if (am >= von && am <= bis && am <= heute) {
+          const n = fcGebucht(t);
+          soll += n;
+          posten.push({ id: t.id, datum, von: t.von, n, fehlt: 0, fc: "nachgereicht", nachAm: am, sid: t.sid || t.schueler_id || null });
+        }
+      }
+    }
+    posten.sort((a, b) => (a.datum + (a.von || "")).localeCompare(b.datum + (b.von || "")));
+    return { soll, posten, fehlend: posten.filter((p) => p.fehlt > 0) };
+  }
+
+  const api = { FS_BUERO_ARTEN, pad2, hm2min, parseISO, dateISO, todayISO, ueOf, addMonthsISO, addDaysISO, daysBetweenISO, reaktFaellig, reaktNachZahlung, reaktInfo, theorieInfo, fcGebucht, fcErhalten, fcZeitraum, fcVorZeitraum, fcSoll };
   if (typeof module !== "undefined" && module.exports) module.exports = api;
   else root.KR = api;
 })(typeof self !== "undefined" ? self : this);

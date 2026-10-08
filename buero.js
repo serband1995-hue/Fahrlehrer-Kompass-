@@ -19,7 +19,7 @@ const ARTEN = {
 const supa = window.supabase.createClient(SUPA_URL, SUPA_KEY);
 const S = {
   user: null, profil: null, fsId: null, fs: null, schulen: [],
-  lehrer: [], schueler: [], termine: [], pruefungen: [], pruefungstermine: [], fahrzeuge: [], pakete: [],
+  lehrer: [], schueler: [], termine: [], pruefungen: [], pruefungstermine: [], fcAbgaben: [], fahrzeuge: [], pakete: [],
   geladenAm: null, ladeNr: 0
 };
 
@@ -66,7 +66,7 @@ function istAdmin() { return S.profil && (S.profil.rolle === "fahrschule_admin" 
 const BEREICHE = [
   { id: "heute", titel: "Heute zu tun", gruppe: "Arbeit", render: renderHeute },
   { id: "pruefungen", titel: "Prüfungstafel", gruppe: "Arbeit", render: renderPruefungen, nachher: bindePruefungen, zahl: () => zaehlePruefungen().handeln || "" },
-  { id: "fahrchecks", titel: "Fahrchecks", gruppe: "Arbeit", schritt: 4 },
+  { id: "fahrchecks", titel: "Fahrchecks", gruppe: "Arbeit", render: renderFahrchecks, nachher: bindeFahrchecks, zahl: () => fcOffeneAbgaben().length || "" },
   { id: "fristen", titel: "Fristen & Reaktivierung", gruppe: "Arbeit", render: renderFristen, nachher: bindeFristen, zahl: () => zaehleFristen().handeln || "" },
   { id: "kalender", titel: "Kalender", gruppe: "Planung", render: renderKalender, nachher: bindeKalender },
   { id: "schueler", titel: "Schüler", gruppe: "Planung", render: renderSchueler, nachher: bindeSchueler, zahl: () => S.schueler.filter((x) => !x.fahrlehrer_id).length || "" },
@@ -140,6 +140,8 @@ function renderHeute() {
   const pz = zaehlePruefungen();
   if (pz.ohneErgebnis) aufgaben.push(`<a class="aufgabe rot" href="#pruefungen"><b>${pz.ohneErgebnis}</b> Prüfung${pz.ohneErgebnis === 1 ? "" : "en"} ohne Ergebnis eingetragen</a>`);
   if (pz.offeneHaken) aufgaben.push(`<a class="aufgabe gelb" href="#pruefungen"><b>${pz.offeneHaken}</b> Prüfung${pz.offeneHaken === 1 ? "" : "en"} in den nächsten 14 Tagen mit offenen Haken (Entgelt, TÜV, AS-Portal)</a>`);
+  const fcOffen = fcOffeneAbgaben();
+  if (fcOffen.length) aufgaben.push(`<a class="aufgabe gelb" href="#fahrchecks?z=vor"><b>${fcOffen.length}</b> Fahrcheck-Abgabe${fcOffen.length === 1 ? "" : "n"} für ${esc(datumDE(fcOffen[0].von))}–${esc(datumDE(fcOffen[0].bis))} noch nicht bestätigt</a>`);
   if (f.ohneDatum) aufgaben.push(`<a class="aufgabe" href="#fristen?ansicht=ohne"><b>${f.ohneDatum}</b> Schüler ohne Vertragsdatum</a>`);
   const todo = `<div class="karte"><div class="karte-kopf"><h2>Zu erledigen</h2></div>${aufgaben.length ? `<div class="aufgaben">${aufgaben.join("")}</div>` : `<p class="leer">Gerade ist nichts offen.</p>`}</div>`;
   return kacheln + todo + liste;
@@ -771,6 +773,124 @@ async function onlineBuchungMelden(lessonId, type, zeit) {
   } catch (e) { /* Benachrichtigung ist Zusatz, die Änderung selbst ist gespeichert */ }
 }
 
+/* ---------- Fahrchecks ---------- */
+// Termin aus der Datenbank in die Form, die KR.fcSoll erwartet (Vermerke stehen im payload)
+function fcTermin(t) {
+  const p = t.payload || {};
+  return { id: t.id, datum: t.datum, von: t.von, bis: t.bis, art: t.art, status: p.status || t.status, fc: p.fc || null, nachAm: p.nachAm || null, schueler_id: t.schueler_id };
+}
+function fcFuerLehrer(lehrerId, von, bis) {
+  return KR.fcSoll(S.termine.filter((t) => t.fahrlehrer_id === lehrerId).map(fcTermin), von, bis);
+}
+function letzteQuittung(lehrerId, von) {
+  return S.fcAbgaben.find((q) => q.fahrlehrer_id === lehrerId && q.zeitraum_von === von) || null;
+}
+// Abgeschlossener letzter Zeitraum: welche Fahrlehrer haben Fahrchecks, aber noch keine Quittung?
+function fcOffeneAbgaben() {
+  if (!S.geladenAm) return [];
+  const [von, bis] = KR.fcVorZeitraum(KR.fcZeitraum(KR.todayISO())[0]);
+  return S.lehrer.filter((l) => !letzteQuittung(l.id, von) && fcFuerLehrer(l.id, von, bis).soll > 0).map((l) => ({ lehrer: l, von, bis }));
+}
+function renderFahrchecks() {
+  const jetzt = KR.fcZeitraum(KR.todayISO());
+  const [von, bis] = fristenParam("z") === "vor" ? KR.fcVorZeitraum(jetzt[0]) : jetzt;
+  const laeuft = bis >= KR.todayISO();
+  let summeSoll = 0, summeIst = 0, offen = 0;
+  const zeilen = S.lehrer.map((l) => {
+    const r = fcFuerLehrer(l.id, von, bis);
+    const q = letzteQuittung(l.id, von);
+    summeSoll += r.soll;
+    if (q) summeIst += q.ist; else if (r.soll) offen++;
+    const vermerkt = r.fehlend.reduce((a, p) => a + p.fehlt, 0);
+    const status = q
+      ? (q.ist >= q.soll ? `<span class="marke-pill gruen">✓ ${q.ist} von ${q.soll}</span>` : `<span class="marke-pill rot">${q.ist} von ${q.soll}</span>`) + `<div class="unter">bestätigt ${esc(new Date(q.bestaetigt_am).toLocaleDateString("de-DE"))}</div>`
+      : (r.soll ? `<span class="marke-pill${laeuft ? "" : " gelb"}">${laeuft ? "Zeitraum läuft" : "noch nicht abgegeben"}</span>` : `<span class="leise">–</span>`);
+    return `<tr>
+      <td><b>${esc(l.name || l.email)}</b></td>
+      <td class="zahlspalte"><b>${r.soll}</b></td>
+      <td class="zahlspalte">${vermerkt ? `<span class="marke-pill gelb">${vermerkt}</span>` : "–"}</td>
+      <td>${status}</td>
+      <td class="aktionen"><div class="aktionen-box">${r.soll || q ? `<button class="knopf klein${q ? "" : " haupt"}" data-fcabgabe="${esc(l.id)}" type="button">${q ? "Neu erfassen" : "Abgabe erfassen"}</button>` : ""}</div></td>
+    </tr>`;
+  }).join("");
+  const tabs = [["jetzt", `Aktuell (${datumDE(jetzt[0]).slice(0, 6)}–${datumDE(jetzt[1]).slice(0, 6)})`], ["vor", "Letzter Zeitraum"]]
+    .map(([id, n]) => `<a class="tab" href="#fahrchecks?z=${id}"${(fristenParam("z") || "jetzt") === id ? ' aria-current="page"' : ""}>${esc(n)}</a>`).join("");
+  return `<div class="kacheln">
+      <div class="kachel"><div class="wert">${summeSoll}</div><div class="name">Fahrchecks erwartet (${esc(datumDE(von))}–${esc(datumDE(bis))})</div></div>
+      <div class="kachel gruen"><div class="wert">${summeIst}</div><div class="name">davon bestätigt abgegeben</div></div>
+      <div class="kachel${offen && !laeuft ? " gold" : ""}"><div class="wert">${offen}</div><div class="name">Fahrlehrer ohne Quittung</div></div>
+    </div>
+    <div class="karte">
+      <div class="karte-kopf"><div class="tabs">${tabs}</div></div>
+      <table class="tabelle"><thead><tr><th>Fahrlehrer</th><th class="zahlspalte">Erwartet</th><th class="zahlspalte">Als fehlend vermerkt</th><th>Abgabe</th><th></th></tr></thead><tbody>${zeilen}</tbody></table>
+      <p class="leise klein">So geht's: Umschlag des Fahrlehrers zählen, „Abgabe erfassen“, Zahl eintippen. Stimmt sie, ist alles mit einem Klick erledigt. Jede Abgabe ist eine Quittung, die nicht geändert werden kann; der Fahrlehrer sieht sie in seiner App.</p>
+    </div>
+    ${renderFcVerlauf()}`;
+}
+function renderFcVerlauf() {
+  const liste = S.fcAbgaben.slice(0, 15);
+  if (!liste.length) return "";
+  return `<div class="karte"><h2>Letzte Quittungen</h2><table class="tabelle"><thead><tr><th>Zeitraum</th><th>Fahrlehrer</th><th class="zahlspalte">Ergebnis</th><th>Bestätigt</th><th>Notiz</th></tr></thead><tbody>${liste.map((q) => `<tr>
+    <td class="zeitspalte">${esc(datumDE(q.zeitraum_von))}–${esc(datumDE(q.zeitraum_bis))}</td>
+    <td>${esc(lehrerName(q.fahrlehrer_id))}</td>
+    <td class="zahlspalte">${q.ist >= q.soll ? `<span class="marke-pill gruen">${q.ist} von ${q.soll}</span>` : `<span class="marke-pill rot">${q.ist} von ${q.soll}</span>`}</td>
+    <td>${esc(new Date(q.bestaetigt_am).toLocaleString("de-DE", { dateStyle: "short", timeStyle: "short" }))}</td>
+    <td>${esc(q.notiz || "")}</td></tr>`).join("")}</tbody></table></div>`;
+}
+function bindeFahrchecks(ziel) {
+  ziel.querySelectorAll("[data-fcabgabe]").forEach((b) => b.addEventListener("click", () => fcAbgabeDialog(b.dataset.fcabgabe)));
+}
+function fcAbgabeDialog(lehrerId) {
+  const jetzt = KR.fcZeitraum(KR.todayISO());
+  const [von, bis] = fristenParam("z") === "vor" ? KR.fcVorZeitraum(jetzt[0]) : jetzt;
+  const r = fcFuerLehrer(lehrerId, von, bis);
+  const zeilen = r.posten.map((p) => `<tr>
+      <td class="zeitspalte">${esc(datumDE(p.datum))} ${esc(p.von || "")}</td>
+      <td>${esc(schuelerName(p.sid) || "–")}${p.fc === "nachgereicht" ? ' <span class="marke-pill blau">nachgereicht</span>' : ""}${p.fehlt ? ` <span class="marke-pill gelb">${p.fehlt} vom Fahrlehrer als fehlend vermerkt</span>` : ""}</td>
+      <td class="zahlspalte"><b>${p.n}</b></td>
+      <td>${p.n ? `<label class="wahl"><input type="checkbox" name="fehlt" value="${esc(p.id)}"> fehlt</label>` : ""}</td></tr>`).join("");
+  const body = `<p><b>${esc(lehrerName(lehrerId))}</b> · Zeitraum ${esc(datumDE(von))}–${esc(datumDE(bis))}</p>
+    <div class="soll-ist">
+      <div><div class="leise">Erwartet</div><div class="gross-zahl">${r.soll}</div></div>
+      <label><div class="leise">Gezählt im Umschlag</div><input type="number" name="ist" min="0" max="999" inputmode="numeric" class="gross-eingabe" required></label>
+      <div id="fcErgebnis" class="fc-ergebnis"></div>
+    </div>
+    <details${r.posten.length > 20 ? "" : " open"}><summary>Stunden im Zeitraum (${r.posten.length})</summary>
+      <table class="tabelle"><thead><tr><th>Datum</th><th>Schüler</th><th class="zahlspalte">FC</th><th></th></tr></thead><tbody>${zeilen}</tbody></table></details>
+    <div class="formular" style="margin-top:12px"><label class="voll">Notiz (optional)<input type="text" name="notiz" maxlength="200"></label></div>`;
+  const dlg = oeffneDialog("Fahrcheck-Abgabe erfassen", body, async (form) => {
+    const ist = Number(form.ist.value);
+    if (form.ist.value === "" || !Number.isInteger(ist) || ist < 0) { toast("Bitte die gezählte Zahl eintragen.", true); return false; }
+    const fehlend = [...form.querySelectorAll("input[name=fehlt]:checked")].map((c) => c.value);
+    if (ist < r.soll && !fehlend.length && !(await bestaetige("Es fehlen Fahrchecks", `Es fehlen ${r.soll - ist}. Ohne Angabe, bei welchen Stunden, weiß der Fahrlehrer nicht, was fehlt. Trotzdem speichern?`, "Trotzdem speichern"))) return false;
+    const res = await supa.from("fc_abgaben").insert({ fahrschule_id: S.fsId, fahrlehrer_id: lehrerId, zeitraum_von: von, zeitraum_bis: bis, soll: r.soll, ist, fehlend, notiz: (form.notiz.value || "").trim() || null, bestaetigt_von: S.user.id }).select("*");
+    if (res.error || !res.data || !res.data.length) { toast("Nicht gespeichert: " + (res.error ? res.error.message : "keine Berechtigung"), true); return false; }
+    S.fcAbgaben.unshift(res.data[0]);
+    // Büro-Status je Termin setzen: angekreuzt = fehlt, Rest = abgegeben
+    const ids = r.posten.filter((p) => p.n && p.fc !== "nachgereicht").map((p) => p.id);
+    const ok = ids.filter((id) => !fehlend.includes(id));
+    const jetztZ = new Date().toISOString();
+    const a = ok.length ? await supa.from("kalender_termine").update({ buero_fc_status: "abgegeben", aktualisiert_am: jetztZ }).in("id", ok) : { error: null };
+    const b = fehlend.length ? await supa.from("kalender_termine").update({ buero_fc_status: "fehlt", aktualisiert_am: jetztZ }).in("id", fehlend) : { error: null };
+    if (a.error || b.error) toast("Quittung gespeichert, aber der Status einzelner Stunden nicht: " + (a.error || b.error).message, true);
+    else toast(ist >= r.soll ? `Abgabe bestätigt: ${ist} von ${r.soll} ✓` : `Abgabe gespeichert: ${r.soll - ist} Fahrcheck${r.soll - ist === 1 ? "" : "s"} fehlen`);
+    S.termine.forEach((t) => { if (ok.includes(t.id)) t.buero_fc_status = "abgegeben"; if (fehlend.includes(t.id)) t.buero_fc_status = "fehlt"; });
+    zeichne();
+    return true;
+  }, "Abgabe bestätigen");
+  const feld = dlg.querySelector("input[name=ist]");
+  const zeig = () => {
+    const e = dlg.querySelector("#fcErgebnis");
+    if (feld.value === "") { e.textContent = ""; e.className = "fc-ergebnis"; return; }
+    const ist = Number(feld.value);
+    if (ist === r.soll) { e.textContent = "✓ Stimmt genau"; e.className = "fc-ergebnis gut"; }
+    else if (ist < r.soll) { e.textContent = `Es fehlen ${r.soll - ist}. Bitte unten die Stunden ankreuzen.`; e.className = "fc-ergebnis schlecht"; dlg.querySelector("details").open = true; }
+    else { e.textContent = `${ist - r.soll} mehr als erwartet (z. B. nachgereicht). Bitte in der Notiz vermerken.`; e.className = "fc-ergebnis schlecht"; }
+  };
+  feld.addEventListener("input", zeig);
+  feld.focus();
+}
+
 /* ---------- Dialoge ---------- */
 function oeffneDialog(titel, inhalt, speichern, knopfText) {
   const dlg = document.createElement("dialog");
@@ -809,7 +929,7 @@ async function ladeDaten() {
   const fsId = S.fsId;
   setStatus("", "lade …");
   try {
-    const [fs, lehrer, schueler, termine, pruefungen, fahrzeuge, pakete, pTermine] = await Promise.all([
+    const [fs, lehrer, schueler, termine, pruefungen, fahrzeuge, pakete, pTermine, fcAbg] = await Promise.all([
       supa.from("fahrschulen").select("*").eq("id", fsId).single(),
       supa.from("profiles").select("*").eq("fahrschule_id", fsId).in("rolle", ["fahrlehrer", "super_admin"]).order("name"),
       supa.from("schueler").select("*").eq("fahrschule_id", fsId).neq("status", "geloescht").order("name"),
@@ -818,6 +938,7 @@ async function ladeDaten() {
       supa.from("fahrschule_fahrzeuge").select("*").eq("fahrschule_id", fsId).eq("aktiv", true).order("erstellt_am"),
       supa.from("fahrschule_pakete").select("*").eq("fahrschule_id", fsId),
       supa.from("pruefungstermine").select("*").eq("fahrschule_id", fsId).gte("datum", KR.addDaysISO(KR.todayISO(), -120)).order("datum").order("von"),
+      supa.from("fc_abgaben").select("*").eq("fahrschule_id", fsId).gte("zeitraum_von", KR.addDaysISO(KR.todayISO(), -200)).order("bestaetigt_am", { ascending: false }),
     ]);
     if (nr !== S.ladeNr) return; // inzwischen wurde neu geladen oder die Fahrschule gewechselt
     S.fs = pruefe(fs, "Fahrschule");
@@ -828,6 +949,7 @@ async function ladeDaten() {
     S.fahrzeuge = pruefe(fahrzeuge, "Fahrzeuge") || [];
     S.pakete = pruefe(pakete, "Pakete") || [];
     S.pruefungstermine = pruefe(pTermine, "Prüfungstafel") || [];
+    S.fcAbgaben = pruefe(fcAbg, "Fahrcheck-Abgaben") || [];
     S.geladenAm = new Date();
     $("schulName").textContent = S.fs ? S.fs.name : "";
     setStatus("ok", "verbunden · " + S.geladenAm.toLocaleTimeString("de-DE", { hour: "2-digit", minute: "2-digit" }));

@@ -55,7 +55,7 @@ export function bauDaten(heute) {
         termine.push({
           id: "t" + t, fahrschule_id: FS, fahrlehrer_id: l.id, schueler_id: s.id, datum, von, bis,
           art: zi === 5 && tag % 4 === 0 ? "sonder" : (zi === 2 ? "fahrstunde" : "fahrstunde"), fahrzeug: li % 2 ? "Golf Automatik" : "Golf Schalter",
-          status: "geplant", geloescht: false, payload: {}, buero_fc_status: "offen",
+          status: "geplant", geloescht: false, payload: t % 13 === 0 ? { fc: "v1" } : (t % 17 === 0 ? { fc: "v2" } : {}), buero_fc_status: "offen",
         });
       });
     });

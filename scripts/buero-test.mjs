@@ -247,6 +247,29 @@ for (const [breite, hoehe] of [[1920, 1080], [1366, 768], [1024, 768]]) {
   await ctx.close();
 }
 
+// 4e) Fahrcheck-Abgabe: Soll stimmt mit der Rechenregel überein, Quittung wird gespeichert
+{
+  const { page, ctx, konsole } = await oeffne({ nutzer: "bu-1", hash: "#fahrchecks?z=vor", breite: 1920, hoehe: 1080 });
+  await page.click('[data-fcabgabe="fl-1"]');
+  const soll = Number(await page.textContent("dialog .gross-zahl"));
+  if (!(soll > 0)) fehler("Fahrchecks: kein Soll für Fahrlehrer Anton");
+  await page.fill("dialog input[name=ist]", String(soll - 2));
+  const meldung = await page.textContent("#fcErgebnis");
+  if (!/fehlen 2/.test(meldung)) fehler("Fahrchecks: Differenz nicht angezeigt: " + meldung);
+  const kaesten = await page.$$("dialog input[name=fehlt]");
+  await kaesten[0].check();
+  if (FOTOS) await page.screenshot({ path: join(FOTOS, "fahrchecks-dialog.png") });
+  await page.click("dialog button[value=ok]");
+  await page.waitForTimeout(400);
+  const q = await page.evaluate(() => (window.__FAKE.tabellen.fc_abgaben || [])[0]);
+  if (!q || q.soll !== soll || q.ist !== soll - 2 || q.fehlend.length !== 1) fehler("Fahrchecks: Quittung falsch " + JSON.stringify(q));
+  const st = await page.evaluate((id) => window.__FAKE.tabellen.kalender_termine.find((t) => t.id === id).buero_fc_status, q && q.fehlend[0]);
+  if (st !== "fehlt") fehler("Fahrchecks: Stunde nicht als fehlend markiert");
+  if (FOTOS) await page.screenshot({ path: join(FOTOS, "fahrchecks.png"), fullPage: true });
+  if (konsole.length) fehler("Fahrchecks: Konsole: " + konsole.join(" | "));
+  await ctx.close();
+}
+
 // 5) Super-Admin sieht die Auswahl der Fahrschule
 {
   const { page, ctx } = await oeffne({ nutzer: "sa-1" });
