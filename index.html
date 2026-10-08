@@ -5805,7 +5805,7 @@ window.addEventListener("load", () => {
 const STORE_KEY="serband-app-v1";
 /* Build-Version: bei jeder Auslieferung hier das Datum aktualisieren.
    Wird in den Einstellungen angezeigt + für den Update-Hinweis genutzt. */
-const APP_VERSION="2026.10.08.1";
+const APP_VERSION="2026.10.09";
 // Nutzungsbedingungen & Haftungsausschluss (Bereich: rechtliche Absicherung) - Version hochzählen
 // und alle Nutzer müssen erneut zustimmen, sobald sich der Text inhaltlich ändert.
 const AGB_VERSION="1.0";
@@ -12165,14 +12165,48 @@ function eurFmt(n){ return (Math.round(n)).toLocaleString("de-DE")+" €"; }
 // Dashboard-Karte: zeigt NUR offene Ausnahmen (vergessene FC). Kein Bestätigen mehr im Normalfall.
 function fcPendingCardHTML(){
   const forg=fcForgottenLessons();
-  if(!forg.length)return "";
+  const abgabe=_fcAbgabeJetzt();
+  if(!forg.length&&!abgabe.soll)return "";
   const eur=fcForgottenEuro();
   let h=`<div class="fc-card">`;
-  h+=`<button class="fc-missing-link" id="fcMissingLink"><span>FC vergessen: <b>${forg.length}</b></span><span class="fc-missing-eur">${eurFmt(eur)} offen ›</span></button>`;
+  if(forg.length) h+=`<button class="fc-missing-link" id="fcMissingLink"><span>FC vergessen: <b>${forg.length}</b></span><span class="fc-missing-eur">${eurFmt(eur)} offen ›</span></button>`;
+  if(abgabe.soll) h+=`<button class="fc-missing-link" id="fcAbgabeLink"${forg.length?' style="margin-top:8px;"':''}><span>Fahrcheck-Abgabe ${isoDE(abgabe.von).slice(0,6)}–${isoDE(abgabe.bis).slice(0,6)}: <b>${abgabe.soll}</b></span><span class="fc-missing-eur">Quittungen ›</span></button>`;
   h+=`</div>`; return h;
 }
 function bindFC(){
   const ml=$("#fcMissingLink"); if(ml)ml.addEventListener("click",routeFCMissing);
+  const al=$("#fcAbgabeLink"); if(al)al.addEventListener("click",routeFCAbgabe);
+}
+/* Fahrcheck-Abgabe im Büro (Halbmonat). Gleiche Zählregel wie die Büro-Seite (kompass-rechnen.js),
+   damit Fahrlehrer und Büro dieselbe Zahl sehen. Quittungen kommen aus fc_abgaben (nur lesen). */
+function _fcAbgabeJetzt(zeitraum){
+  if(!window.KR)return {soll:0,posten:[],von:todayISO(),bis:todayISO()};
+  const [von,bis]=zeitraum||KR.fcZeitraum(todayISO());
+  const r=KR.fcSoll(DB.lessons||[],von,bis);
+  return Object.assign(r,{von,bis});
+}
+async function routeFCAbgabe(){
+  ensureDB(); $("#tbTitle").textContent="Fahrcheck-Abgabe"; setFab(false); view.scrollTop=0;
+  const jetzt=_fcAbgabeJetzt(), vorher=_fcAbgabeJetzt(KR.fcVorZeitraum(jetzt.von));
+  const block=(a,titel)=>`<div class="fc-grp"><div class="fc-grp-head"><div class="fc-nm">${titel} · ${isoDE(a.von)}–${isoDE(a.bis)}</div><div class="fc-grp-eur">${a.soll} FC</div></div>
+    ${a.posten.map(p=>{ const st=DB.students.find(x=>x.id===p.sid);
+      return `<div class="fc-miss-row"><div class="fc-info"><div class="fc-meta">${isoDE(p.datum)} · ${p.von||""} · ${esc(st?st.name:"—")} · <b>${p.n} FC</b>${p.fehlt?` <span style="color:var(--rot);">(${p.fehlt} fehlt)</span>`:""}${p.fc==="nachgereicht"?" · nachgereicht":""}</div></div></div>`; }).join("")||'<p class="muted-p" style="padding:8px 0;">Keine Fahrstunden in diesem Zeitraum.</p>'}</div>`;
+  let h=`<div class="view-inner view-read fade-up">
+    <div class="back-row"><button class="back-btn" id="backBtn">${ICN.back} Start</button></div>
+    <div class="sec-h" style="margin:4px 0 4px;">Fahrcheck-<span class="o">Abgabe</span></div>
+    <p class="muted-p" style="font-size:13.5px;margin-bottom:14px;">So viele Fahrchecks gibst du im Büro ab. Das Büro sieht dieselbe Zahl und bestätigt die Abgabe; die Quittung erscheint hier.</p>
+    <div id="fcQuittungen"><p class="muted-p">Quittungen werden geladen …</p></div>
+    ${block(jetzt,"Aktuell")}${block(vorher,"Davor")}
+  </div>`;
+  view.innerHTML=h;
+  $("#backBtn").addEventListener("click",routeDashboard);
+  try{
+    const {data,error}=await getSupa().from("fc_abgaben").select("*").eq("fahrlehrer_id",_authUser.id).order("bestaetigt_am",{ascending:false}).limit(12);
+    const ziel=$("#fcQuittungen"); if(!ziel)return;
+    if(error)throw error;
+    ziel.innerHTML=(data||[]).length?`<div class="fc-grp"><div class="fc-grp-head"><div class="fc-nm">Quittungen vom Büro</div></div>${data.map(q=>`<div class="fc-miss-row"><div class="fc-info"><div class="fc-meta">${isoDE(q.zeitraum_von)}–${isoDE(q.zeitraum_bis)}: <b>${q.ist} von ${q.soll}</b> ${q.ist>=q.soll?"✓":`<span style="color:var(--rot);">(${q.soll-q.ist} fehlen)</span>`} · bestätigt ${new Date(q.bestaetigt_am).toLocaleDateString("de-DE")}</div></div></div>`).join("")}</div>`
+      :`<p class="muted-p" style="margin-bottom:12px;">Noch keine Quittung vom Büro.</p>`;
+  }catch(e){ const z=$("#fcQuittungen"); if(z)z.innerHTML=`<p class="muted-p">Quittungen gerade nicht abrufbar (Internet?).</p>`; }
 }
 
 // Zentrale Funktion: FC-Status einer Fahrstunde setzen (mit Historie + Undo)

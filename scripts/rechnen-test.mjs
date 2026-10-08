@@ -72,6 +72,31 @@ gleich("Theorie Unterricht vor 13 Monaten", "abgelaufen", th({ theorie_abgeschlo
 gleich("Theorie bestanden verlängert", "ok", th({ theorie_abgeschlossen_am: "2025-09-01", theorie_bestanden_am: "2026-08-01" }).stufe);
 gleich("Theorie Ablauf nach Prüfung", "2027-08-01", th({ theorie_abgeschlossen_am: "2025-09-01", theorie_bestanden_am: "2026-08-01" }).ablauf);
 
+// Fahrchecks
+const T = (o) => Object.assign({ art: "fahrstunde", von: "08:00", bis: "09:30", datum: "2026-10-05" }, o);
+gleich("FC 90 Min", 2, KR.fcErhalten(T({})));
+gleich("FC 45 Min", 1, KR.fcErhalten(T({ bis: "08:45" })));
+gleich("FC 135 Min", 3, KR.fcErhalten(T({ bis: "10:15" })));
+gleich("FC v1", 1, KR.fcErhalten(T({ fc: "v1" })));
+gleich("FC v1 bei 45 Min", 0, KR.fcErhalten(T({ fc: "v1", bis: "08:45" })));
+gleich("FC v2", 0, KR.fcErhalten(T({ fc: "v2" })));
+gleich("FC geschenkt", 0, KR.fcErhalten(T({ fc: "geschenkt" })));
+gleich("FC eins_ok = voll", 2, KR.fcErhalten(T({ fc: "eins_ok" })));
+gleich("FC Prüfung zählt nicht", 0, KR.fcErhalten(T({ art: "pruefung" })));
+gleich("FC Theorie zählt nicht", 0, KR.fcErhalten(T({ art: "theorie" })));
+gleich("FC nicht erschienen", 0, KR.fcErhalten(T({ status: "nicht erschienen" })));
+gleich("FC Sonderfahrt", 2, KR.fcErhalten(T({ art: "sonder" })));
+gleich("Zeitraum 1.–15.", "2026-10-01|2026-10-15", KR.fcZeitraum("2026-10-15").join("|"));
+gleich("Zeitraum 16.–Ende", "2026-10-16|2026-10-31", KR.fcZeitraum("2026-10-16").join("|"));
+gleich("Zeitraum Februar", "2027-02-16|2027-02-28", KR.fcZeitraum("2027-02-20").join("|"));
+gleich("Vorzeitraum", "2026-09-16|2026-09-30", KR.fcVorZeitraum("2026-10-01").join("|"));
+const z = KR.fcSoll([
+  T({ id: "a" }), T({ id: "b", fc: "v1", datum: "2026-10-06" }), T({ id: "c", datum: "2026-10-20" }),
+  T({ id: "d", datum: "2026-09-28", fc: "nachgereicht", nachAm: "2026-10-03" }), T({ id: "e", datum: "2026-10-14" }),
+], "2026-10-01", "2026-10-15", "2026-10-10");
+gleich("FC-Soll Zeitraum (ohne Zukunft, mit nachgereicht)", 5, z.soll);
+gleich("FC fehlend", 1, z.fehlend.length);
+
 // Büro-Seite muss dieselbe Version der Nutzungsbedingungen verlangen wie die App
 const agbApp = (html.match(/const AGB_VERSION="([^"]+)"/) || [])[1];
 const agbBuero = (readFileSync(join(ROOT, "buero.js"), "utf8").match(/const AGB_VERSION = "([^"]+)"/) || [])[1];

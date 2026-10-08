@@ -192,6 +192,14 @@ body.kiosk .tag-titel{font-size:30px;}
 .k-name{font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
 .k-fz{font-size:12px;color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
 
+/* Fahrcheck-Abgabe */
+.soll-ist{display:grid;grid-template-columns:auto auto 1fr;gap:24px;align-items:end;margin:8px 0 18px;padding:16px 18px;background:var(--bg);border-radius:14px;}
+.gross-zahl{font-family:'Source Serif 4',Georgia,serif;font-size:44px;font-weight:700;line-height:1;}
+.gross-eingabe{width:150px;min-height:58px;font-size:32px;font-weight:700;text-align:center;border:2px solid var(--akzent-line);border-radius:12px;background:var(--surface);}
+.fc-ergebnis{font-weight:700;font-size:18px;}
+.fc-ergebnis.gut{color:var(--gruen);} .fc-ergebnis.schlecht{color:var(--rot);}
+details summary{cursor:pointer;font-weight:700;margin:6px 0;}
+
 /* Dialog */
 .dialog{border:none;border-radius:20px;padding:0;width:min(760px,94vw);max-height:90vh;background:var(--surface);color:var(--txt);box-shadow:0 20px 60px rgba(0,0,0,.3);}
 .dialog::backdrop{background:rgba(20,24,18,.45);}
@@ -238,3 +246,5 @@ body.kiosk .tag-titel{font-size:30px;}
   .tabelle{display:block;overflow-x:auto;}
 }
 @media (prefers-reduced-motion:reduce){ *{transition:none !important;} }
+.tabelle .wahl{display:inline-flex;align-items:center;gap:6px;white-space:nowrap;cursor:pointer;}
+.tabelle .wahl input{width:20px;height:20px;}
