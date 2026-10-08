@@ -31,7 +31,15 @@ export function bauDaten(heute) {
     schueler.push({
       id: "s" + n, fahrschule_id: FS, fahrlehrer_id: fl, name: `${vor} ${nach}`, telefon: "0170 000" + String(n).padStart(4, "0"),
       status: "aktiv", paket_id: n % 4 === 0 ? "p-turbo" : (n % 2 ? "p-1" : null), hat_simulator: n % 5 === 0, hat_theorie_app: n % 3 === 0,
-      bogen_ausgefuellt: true, erstellt_am: addMonate(heute, -((n % 14) + 1)) + "T10:00:00Z", ausbildung: { form: n % 6 === 0 ? "B197" : "B" },
+      bogen_ausgefuellt: true,
+      vertrag_am: n % 7 === 0 ? null : addTage(heute, -[400, 380, 370, 350, 340, 200, 90, 30, 500, 366, 330, 100][n % 12]),
+      reakt_status: n % 10 === 0 ? "befreit" : (n % 3 === 0 ? "bezahlt" : "pruefen"),
+      reakt_bezahlt_bis: n % 3 === 0 && n % 10 !== 0 ? addTage(heute, [-20, 15, 200][n % 3 === 0 ? (n / 3) % 3 : 0]) : null,
+      reakt_notiz: n % 10 === 0 ? "Prüfung bestanden" : null,
+      ausbildungsart: n % 11 === 0 ? "umschreibung" : "neu", klasse: n % 8 === 0 ? "CE" : "B",
+      theorie_abgeschlossen_am: n % 4 === 0 ? addTage(heute, -[340, 100, 380][n % 3]) : null,
+      theorie_bestanden_am: n % 8 === 0 ? addTage(heute, -50) : null,
+      erstellt_am: addMonate(heute, -((n % 14) + 1)) + "T10:00:00Z", ausbildung: { form: n % 6 === 0 ? "B197" : "B" },
     });
   }
   const termine = [];

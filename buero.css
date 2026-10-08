@@ -102,7 +102,7 @@ nav{display:grid;gap:2px;}
 .kachel.rot .wert{color:var(--rot);} .kachel.gruen .wert{color:var(--gruen);} .kachel.gold .wert{color:var(--gold);}
 .karte{background:var(--surface);border:1px solid var(--line-soft);border-radius:var(--r);padding:22px 24px;box-shadow:var(--schatten);margin-bottom:22px;}
 .karte h2{font-size:24px;margin-bottom:12px;}
-.karte-kopf{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:12px;}
+.karte-kopf{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:12px;flex-wrap:wrap;}
 .karte-kopf h2{margin:0;}
 .leer{color:var(--muted);padding:12px 0;}
 
@@ -122,13 +122,60 @@ nav{display:grid;gap:2px;}
 .marke-pill.gruen{background:var(--gruen-soft);color:var(--gruen);}
 .marke-pill.blau{background:var(--blau-soft);color:var(--blau);}
 
+/* Aufgaben, Reiter, Suche */
+.aufgaben{display:grid;gap:10px;}
+.aufgabe{display:block;padding:14px 18px;border-radius:12px;background:var(--bg);border:1px solid var(--line-soft);text-decoration:none;color:var(--txt);font-size:18px;}
+.aufgabe:hover{border-color:var(--akzent-line);}
+.aufgabe b{font-size:22px;margin-right:6px;}
+.aufgabe.rot{background:var(--rot-soft);border-color:transparent;} .aufgabe.rot b{color:var(--rot);}
+.aufgabe.gelb{background:var(--gelb-soft);border-color:transparent;} .aufgabe.gelb b{color:var(--gelb);}
+.tabs{display:flex;gap:6px;flex-wrap:wrap;}
+.tab{padding:8px 14px;border-radius:999px;text-decoration:none;color:var(--muted);font-weight:600;border:1px solid var(--line-soft);}
+.tab:hover{background:var(--surface-2);}
+.tab[aria-current="page"]{background:var(--akzent);border-color:var(--akzent);color:#fff;}
+.suche{min-height:44px;min-width:260px;padding:0 14px;border:1px solid var(--line);border-radius:var(--r-klein);background:var(--bg);}
+.unter{color:var(--muted);font-size:15px;margin-top:2px;}
+.aktionen{width:1%;}
+.aktionen-box{display:flex;flex-wrap:wrap;justify-content:flex-end;gap:6px;min-width:150px;max-width:300px;margin-left:auto;}
+.aktionen-box .knopf{white-space:nowrap;}
+
+/* Dialog */
+.dialog{border:none;border-radius:20px;padding:0;width:min(760px,94vw);max-height:90vh;background:var(--surface);color:var(--txt);box-shadow:0 20px 60px rgba(0,0,0,.3);}
+.dialog::backdrop{background:rgba(20,24,18,.45);}
+.dialog-form{display:flex;flex-direction:column;max-height:90vh;}
+.dialog-form header,.dialog-form footer{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:18px 24px;}
+.dialog-form header{border-bottom:1px solid var(--line-soft);}
+.dialog-form footer{border-top:1px solid var(--line-soft);justify-content:flex-end;}
+.dialog-form h2{font-size:24px;}
+.dialog-inhalt{padding:20px 24px;overflow-y:auto;}
+.formular{display:grid;grid-template-columns:1fr 1fr;gap:16px 20px;}
+.formular label{display:grid;gap:6px;font-weight:600;}
+.formular .voll{grid-column:1/-1;}
+.formular input,.formular select{min-height:46px;padding:0 12px;border:1px solid var(--line);border-radius:var(--r-klein);background:var(--bg);font-weight:400;}
+.formular fieldset{border:1px solid var(--line-soft);border-radius:12px;padding:10px 16px 14px;display:flex;gap:22px;flex-wrap:wrap;}
+.formular legend{font-weight:700;padding:0 6px;}
+.formular .wahl{display:flex;align-items:center;gap:8px;font-weight:500;min-height:40px;}
+.formular .wahl input{min-height:auto;width:20px;height:20px;}
+.protokoll{margin-top:20px;border-top:1px solid var(--line-soft);padding-top:12px;}
+.protokoll h3{font-size:18px;margin-bottom:6px;}
+.protokoll ul{margin:0;padding-left:20px;color:var(--muted);font-size:15px;}
+
 /* Meldung unten */
 .toast{position:fixed;left:50%;bottom:28px;transform:translate(-50%,20px);background:var(--txt);color:var(--bg);padding:14px 22px;border-radius:12px;font-weight:600;opacity:0;pointer-events:none;transition:opacity .2s,transform .2s;z-index:50;max-width:min(640px,90vw);}
 .toast.zeigen{opacity:1;transform:translate(-50%,0);}
 .toast.fehler{background:var(--rot);color:#fff;}
 
+/* Spalten, die bei schmalem Bildschirm in die Zeile darüber wandern */
+.nur-schmal{display:none;}
+@media (max-width:1100px){ .nur-breit{display:none;} .nur-schmal{display:inline;} }
+
 /* Kleinere Bildschirme (Laptop): Menü schmaler; unter 900 px oben statt links */
-@media (max-width:1200px){ :root{--seite:236px;} .inhalt{padding:24px 26px 50px;} }
+@media (max-width:1200px){
+  :root{--seite:236px;} .inhalt{padding:24px 26px 50px;}
+  .tabelle td,.tabelle th{padding:10px 8px;}
+  .aktionen-box{flex-direction:column;align-items:stretch;min-width:140px;}
+  .suche{min-width:200px;}
+}
 @media (max-width:900px){
   .app{grid-template-columns:1fr;}
   .seite{position:static;height:auto;}
