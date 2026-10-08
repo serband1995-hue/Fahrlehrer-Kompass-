@@ -105,7 +105,51 @@ for (const [breite, hoehe] of [[1920, 1080], [1366, 768], [1024, 768]]) {
   }
 }
 
-// 4) Super-Admin sieht die Auswahl der Fahrschule
+// 4) Fristen: Zahlung erfassen, Bearbeiten-Dialog, Prüfungen der Eingaben
+{
+  const { page, ctx, konsole } = await oeffne({ nutzer: "bu-1", hash: "#fristen" });
+  const vorher = await page.$$eval("[data-zahlung]", (b) => b.length);
+  if (!vorher) fehler("Fristen: keine Zahlungs-Knöpfe in den Testdaten");
+  const id = await page.getAttribute("[data-zahlung]", "data-zahlung");
+  await page.click(`[data-zahlung="${id}"]`);
+  await page.click("dialog button[value=ok]");
+  await page.waitForTimeout(250);
+  const gespeichert = await page.evaluate((sid) => window.__FAKE.tabellen.schueler.find((s) => s.id === sid), id);
+  if (gespeichert.reakt_status !== "bezahlt" || !gespeichert.reakt_bezahlt_bis) fehler("Fristen: Zahlung nicht gespeichert");
+  // Bearbeiten: „befreit“ ohne Grund muss abgelehnt werden
+  await page.click("[data-fristen]");
+  if (FOTOS) await page.screenshot({ path: join(FOTOS, "fristen-dialog.png") });
+  await page.check("dialog input[value=befreit]");
+  await page.fill("dialog input[name=reakt_notiz]", "");
+  await page.click("dialog button[value=ok]");
+  await page.waitForTimeout(150);
+  if (!(await page.isVisible("dialog"))) fehler("Fristen: „befreit“ ohne Grund wurde gespeichert");
+  await page.fill("dialog input[name=reakt_notiz]", "Test-Grund");
+  await page.click("dialog button[value=ok]");
+  await page.waitForTimeout(250);
+  if (await page.isVisible("dialog")) fehler("Fristen: Dialog bleibt nach gültigem Speichern offen");
+  // Suche
+  await page.goto(page.url().split("#")[0] + "#fristen?ansicht=alle");
+  await page.waitForTimeout(300);
+  const alle = await page.$$eval(".tabelle tbody tr", (r) => r.length);
+  await page.fill("#fristenSuche", "Lena");
+  await page.waitForTimeout(500);
+  const gefiltert = await page.$$eval(".tabelle tbody tr", (r) => r.length);
+  if (!(gefiltert > 0 && gefiltert < alle)) fehler(`Fristen: Suche filtert nicht (${alle} → ${gefiltert})`);
+  if (konsole.length) fehler("Fristen: Konsole: " + konsole.join(" | "));
+  await ctx.close();
+}
+// Speichern ohne Berechtigung meldet einen Fehler statt „gespeichert“
+{
+  const { page, ctx } = await oeffne({ nutzer: "bu-1", hash: "#fristen", vorbereiten: function () { F.fehler = { schueler: "permission denied" }; } });
+  await page.waitForTimeout(200);
+  // Laden schlägt fehl -> Statusanzeige rot
+  const status = await page.getAttribute("#status", "class");
+  if (!/fehler/.test(status)) fehler("Fehlerfall: Status nicht rot");
+  await ctx.close();
+}
+
+// 5) Super-Admin sieht die Auswahl der Fahrschule
 {
   const { page, ctx } = await oeffne({ nutzer: "sa-1" });
   if (!(await page.isVisible("#schulWahlWrap"))) fehler("Super-Admin: keine Fahrschul-Auswahl");

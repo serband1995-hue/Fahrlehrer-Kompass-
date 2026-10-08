@@ -49,6 +49,29 @@ gleich("daysBetweenISO Sommerzeit", 1, KR.daysBetweenISO("2026-03-28", "2026-03-
 gleich("daysBetweenISO rückwärts", -30, KR.daysBetweenISO("2026-10-31", "2026-10-01"));
 gleich("addDaysISO Jahreswechsel", "2027-01-02", KR.addDaysISO("2026-12-31", 2));
 
+// Fristen: Reaktivierung und Theorie
+const H = "2026-10-08";
+const fall = (s) => KR.reaktInfo(s, H);
+gleich("Reakt ohne Datum", "ohne_datum", fall({ reakt_status: "pruefen" }).stufe);
+gleich("Reakt befreit", "befreit", fall({ reakt_status: "befreit", vertrag_am: "2020-01-01" }).stufe);
+gleich("Reakt Vertrag vor 13 Monaten, ungeprüft", "pruefen_faellig", fall({ reakt_status: "pruefen", vertrag_am: "2025-09-08" }).stufe);
+gleich("Reakt Vertrag vor 13 Monaten, bezahlt-Status ohne Datum", "gesperrt", fall({ reakt_status: "bezahlt", vertrag_am: "2025-09-08" }).stufe);
+gleich("Reakt fällig heute = nicht gesperrt", "bald", fall({ reakt_status: "bezahlt", vertrag_am: "2025-10-08" }).stufe);
+gleich("Reakt fällig gestern = gesperrt", true, fall({ reakt_status: "bezahlt", vertrag_am: "2025-10-07" }).gesperrt);
+gleich("Reakt fällig in 30 Tagen", "bald", fall({ reakt_status: "bezahlt", reakt_bezahlt_bis: "2026-11-07" }).stufe);
+gleich("Reakt fällig in 31 Tagen", "demnaechst", fall({ reakt_status: "bezahlt", reakt_bezahlt_bis: "2026-11-08" }).stufe);
+gleich("Reakt fällig in 61 Tagen", "ok", fall({ reakt_status: "bezahlt", reakt_bezahlt_bis: "2026-12-08" }).stufe);
+gleich("Reakt bezahlt_bis hat Vorrang", "2027-05-01", KR.reaktFaellig({ reakt_status: "bezahlt", vertrag_am: "2025-01-01", reakt_bezahlt_bis: "2027-05-01" }));
+gleich("Zahlung: +12 Monate ab Fälligkeit", "2026-09-08", KR.reaktNachZahlung({ reakt_status: "pruefen", vertrag_am: "2024-09-08" }));
+gleich("Zahlung bei 2 Jahren Rückstand bleibt überfällig", "gesperrt", fall({ reakt_status: "bezahlt", reakt_bezahlt_bis: KR.reaktNachZahlung({ vertrag_am: "2023-09-08" }) }).stufe);
+gleich("Schaltjahr-Vertrag", "2025-02-28", KR.reaktFaellig({ reakt_status: "bezahlt", vertrag_am: "2024-02-29" }));
+const th = (s) => KR.theorieInfo(s, H);
+gleich("Theorie ohne Datum", "ohne_datum", th({}).stufe);
+gleich("Theorie Unterricht vor 11 Monaten", "bald", th({ theorie_abgeschlossen_am: "2025-11-01" }).stufe);
+gleich("Theorie Unterricht vor 13 Monaten", "abgelaufen", th({ theorie_abgeschlossen_am: "2025-09-01" }).stufe);
+gleich("Theorie bestanden verlängert", "ok", th({ theorie_abgeschlossen_am: "2025-09-01", theorie_bestanden_am: "2026-08-01" }).stufe);
+gleich("Theorie Ablauf nach Prüfung", "2027-08-01", th({ theorie_abgeschlossen_am: "2025-09-01", theorie_bestanden_am: "2026-08-01" }).ablauf);
+
 // Büro-Seite muss dieselbe Version der Nutzungsbedingungen verlangen wie die App
 const agbApp = (html.match(/const AGB_VERSION="([^"]+)"/) || [])[1];
 const agbBuero = (readFileSync(join(ROOT, "buero.js"), "utf8").match(/const AGB_VERSION = "([^"]+)"/) || [])[1];

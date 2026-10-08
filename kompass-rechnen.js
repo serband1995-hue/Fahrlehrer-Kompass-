@@ -42,7 +42,49 @@
   }
   function addDaysISO(iso, tage) { const d = parseISO(iso); d.setDate(d.getDate() + tage); return dateISO(d); }
 
-  const api = { FS_BUERO_ARTEN, pad2, hm2min, parseISO, dateISO, todayISO, ueOf, addMonthsISO, addDaysISO, daysBetweenISO };
+  /* ----- Fristen (Fahrschule Boost, laut Serband 08.10.2026) -----
+     Reaktivierung: 12 Monate nach Vertragsabschluss fällig, danach jedes Jahr.
+     reakt_bezahlt_bis = nächste Fälligkeit; ist sie vorbei, ist die Reaktivierung offen.
+     Eine Zahlung verschiebt die Fälligkeit um genau 12 Monate (auch bei später Zahlung,
+     wer zwei Jahre im Rückstand ist, bleibt nach einer Zahlung weiter überfällig). */
+  function reaktFaellig(s) {
+    if (!s || s.reakt_status === "befreit") return null;
+    if (s.reakt_bezahlt_bis) return s.reakt_bezahlt_bis;
+    if (s.vertrag_am) return addMonthsISO(s.vertrag_am, 12);
+    return null;
+  }
+  function reaktNachZahlung(s) {
+    const f = reaktFaellig(s);
+    return f ? addMonthsISO(f, 12) : null;
+  }
+  // stufe: befreit | ohne_datum | gesperrt | pruefen_faellig | bald (≤30 Tage) | demnaechst (≤60) | ok
+  function reaktInfo(s, heute) {
+    heute = heute || todayISO();
+    if (s && s.reakt_status === "befreit") return { stufe: "befreit", faellig: null, tage: null, gesperrt: false };
+    const faellig = reaktFaellig(s);
+    if (!faellig) return { stufe: "ohne_datum", faellig: null, tage: null, gesperrt: false };
+    const tage = daysBetweenISO(heute, faellig);
+    let stufe;
+    if (tage < 0) stufe = s.reakt_status === "pruefen" ? "pruefen_faellig" : "gesperrt";
+    else if (tage <= 30) stufe = "bald";
+    else if (tage <= 60) stufe = "demnaechst";
+    else stufe = "ok";
+    return { stufe, faellig, tage, gesperrt: stufe === "gesperrt" };
+  }
+  /* Theorie: gilt 12 Monate nach Abschluss des Unterrichts. Wer in dieser Zeit die
+     Theorieprüfung besteht, hat ab dem Prüfungstag 12 Monate für die Praxisprüfung. */
+  function theorieInfo(s, heute) {
+    heute = heute || todayISO();
+    let ablauf = null, grund = null;
+    if (s && s.theorie_bestanden_am) { ablauf = addMonthsISO(s.theorie_bestanden_am, 12); grund = "praxis"; }
+    else if (s && s.theorie_abgeschlossen_am) { ablauf = addMonthsISO(s.theorie_abgeschlossen_am, 12); grund = "unterricht"; }
+    if (!ablauf) return { stufe: "ohne_datum", ablauf: null, tage: null, grund: null };
+    const tage = daysBetweenISO(heute, ablauf);
+    const stufe = tage < 0 ? "abgelaufen" : tage <= 30 ? "bald" : tage <= 60 ? "demnaechst" : "ok";
+    return { stufe, ablauf, tage, grund };
+  }
+
+  const api = { FS_BUERO_ARTEN, pad2, hm2min, parseISO, dateISO, todayISO, ueOf, addMonthsISO, addDaysISO, daysBetweenISO, reaktFaellig, reaktNachZahlung, reaktInfo, theorieInfo };
   if (typeof module !== "undefined" && module.exports) module.exports = api;
   else root.KR = api;
 })(typeof self !== "undefined" ? self : this);
