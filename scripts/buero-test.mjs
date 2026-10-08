@@ -291,6 +291,32 @@ for (const [breite, hoehe] of [[1920, 1080], [1366, 768], [1024, 768]]) {
   await ctx.close();
 }
 
+// 4g) Team und Fahrzeuge (Leitung)
+{
+  const { page, ctx, konsole } = await oeffne({ nutzer: "ad-1", hash: "#team", breite: 1920, hoehe: 1080 });
+  await page.click('[data-sperren="fl-3"]');
+  await page.click("dialog button[value=ok]");
+  await page.waitForTimeout(300);
+  const fl3 = await page.evaluate(() => window.__FAKE.tabellen.profiles.find((p) => p.id === "fl-3"));
+  if (fl3.aktiv !== false) fehler("Team: Sperren nicht gespeichert");
+  await page.goto(page.url().split("#")[0] + "#flotte");
+  await page.waitForTimeout(300);
+  await page.click("#fzNeu");
+  await page.fill("dialog input[name=name]", "Test-Lkw");
+  await page.click("dialog button[value=ok]");
+  await page.waitForTimeout(300);
+  const fz = await page.evaluate(() => window.__FAKE.tabellen.fahrschule_fahrzeuge.find((f) => f.name === "Test-Lkw"));
+  if (!fz) fehler("Flotte: Fahrzeug nicht angelegt");
+  if (FOTOS) await page.screenshot({ path: join(FOTOS, "flotte.png"), fullPage: true });
+  if (konsole.length) fehler("Team/Flotte: Konsole: " + konsole.join(" | "));
+  await ctx.close();
+}
+{
+  const { page, ctx } = await oeffne({ nutzer: "bu-1", hash: "#team" });
+  if (await page.isVisible("#tNeuFl")) fehler("Team: Büro darf keine Fahrlehrer anlegen");
+  await ctx.close();
+}
+
 // 5) Super-Admin sieht die Auswahl der Fahrschule
 {
   const { page, ctx } = await oeffne({ nutzer: "sa-1" });
