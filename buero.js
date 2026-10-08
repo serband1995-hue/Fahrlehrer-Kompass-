@@ -71,7 +71,7 @@ const BEREICHE = [
   { id: "kalender", titel: "Kalender", gruppe: "Planung", render: renderKalender, nachher: bindeKalender },
   { id: "schueler", titel: "Schüler", gruppe: "Planung", render: renderSchueler, nachher: bindeSchueler, zahl: () => S.schueler.filter((x) => !x.fahrlehrer_id).length || "" },
   { id: "verkaeufe", titel: "Verkäufe & Provision", gruppe: "Geld", render: renderVerkaeufe, nachher: bindeVerkaeufe, zahl: () => S.verkaeufe.filter((v) => v.status === "empfohlen").length || "" },
-  { id: "zahlen", titel: "Zahlen", gruppe: "Geld", schritt: 7 },
+  { id: "zahlen", titel: "Zahlen", gruppe: "Geld", render: renderZahlen, nachher: bindeZahlen },
   { id: "team", titel: "Fahrlehrer & Zugänge", gruppe: "Verwaltung", schritt: 9 },
   { id: "flotte", titel: "Fahrzeuge", gruppe: "Verwaltung", schritt: 9 },
 ];
@@ -1053,6 +1053,112 @@ function verkaufNeuDialog() {
     if (res.error || !res.data || !res.data.length) { toast("Nicht gespeichert: " + (res.error ? res.error.message : "keine Berechtigung"), true); return false; }
     S.verkaeufe.unshift(res.data[0]);
     toast("Verkauf erfasst"); zeichne(); return true;
+  });
+}
+
+/* ---------- Zahlen (für die Fahrschul-Leitung) ---------- */
+function letzteMonate(n) {
+  const out = [], d = KR.parseISO(KR.todayISO().slice(0, 7) + "-01");
+  for (let i = n - 1; i >= 0; i--) { const x = new Date(d.getFullYear(), d.getMonth() - i, 1); out.push(KR.dateISO(x).slice(0, 7)); }
+  return out;
+}
+function monatKurz(m) { return KR.parseISO(m + "-01").toLocaleDateString("de-DE", { month: "short" }).replace(".", ""); }
+// Praxis-Ergebnisse aus beiden Quellen (Fahrlehrer-App und Prüfungstafel), je Schüler und Tag nur einmal
+function praxisErgebnisse() {
+  const map = {};
+  for (const e of S.pruefungen) {
+    const ok = e.result === "pass" || e.result === "bestanden", nein = e.result === "fail" || e.result === "nicht_bestanden";
+    if ((ok || nein) && e.datum) map[e.schueler_id + "|" + e.datum] = { datum: e.datum, ok };
+  }
+  for (const p of S.pruefungstermine) {
+    if (p.art !== "praxis" || (p.status !== "bestanden" && p.status !== "nicht_bestanden")) continue;
+    map[p.schueler_id + "|" + p.datum] = { datum: p.datum, ok: p.status === "bestanden" };
+  }
+  return Object.values(map);
+}
+function saeulenSVG(punkte, opt) {
+  // punkte: [{x, wert, text, tip}] – eine Reihe, eine Farbe, Grundlinie bei 0
+  const B = 720, H = 240, unten = 28, oben = 22, max = Math.max(opt.max || 0, ...punkte.map((p) => p.wert || 0), 1);
+  const breite = B / punkte.length, balken = Math.min(breite * 0.6, 44);
+  const y = (v) => H - unten - (v / max) * (H - unten - oben);
+  const fmt = (v) => (opt.max === 100 ? Math.round(v) + " %" : String(Math.round(v * 10) / 10).replace(".", ","));
+  const linien = [0, 0.5, 1].map((f) => `<line x1="0" x2="${B}" y1="${y(max * f)}" y2="${y(max * f)}" class="d-gitter"/>${f ? `<text x="2" y="${y(max * f) - 4}" class="d-skala">${fmt(max * f)}</text>` : ""}`).join("");
+  const saeulen = punkte.map((p, i) => {
+    const cx = breite * i + breite / 2;
+    const hoch = p.wert == null ? 0 : Math.max(H - unten - y(p.wert), p.wert > 0 ? 3 : 0);
+    const rect = !p.wert ? "" : `<path class="d-balken" d="M${cx - balken / 2},${H - unten} v${-Math.max(hoch - 4, 0)} q0,-4 4,-4 h${balken - 8} q4,0 4,4 v${Math.max(hoch - 4, 0)} z"/>`;
+    const label = p.zeigen && p.wert != null ? `<text x="${cx}" y="${y(p.wert) - 7}" class="d-wert">${esc(p.text)}</text>` : "";
+    return `<g class="d-punkt" tabindex="0" data-tip="${esc(p.tip)}"><rect x="${breite * i}" y="0" width="${breite}" height="${H}" fill="transparent"/>${rect}${label}<text x="${cx}" y="${H - 8}" class="d-achse">${esc(p.x)}</text></g>`;
+  }).join("");
+  return `<svg viewBox="0 0 ${B} ${H}" class="diagramm" role="img" aria-label="${esc(opt.titel)}">${linien}${saeulen}</svg>`;
+}
+function balkenListe(zeilen, max) {
+  max = Math.max(max || 0, ...zeilen.map((z) => z.wert), 1);
+  return `<div class="hbalken">${zeilen.map((z) => `<div class="hb-zeile" data-tip="${esc(z.tip)}" tabindex="0">
+    <span class="hb-name">${esc(z.name)}</span><span class="hb-spur"><span class="hb-balken" style="width:${(z.wert / max) * 100}%"></span></span><span class="hb-wert">${esc(z.text)}</span></div>`).join("")}</div>`;
+}
+function tabelleAus(kopf, zeilen) {
+  return `<details class="als-tabelle"><summary>Als Tabelle</summary><table class="tabelle"><thead><tr>${kopf.map((k, i) => `<th${i ? ' class="zahlspalte"' : ""}>${esc(k)}</th>`).join("")}</tr></thead><tbody>${zeilen.map((z) => `<tr>${z.map((v, i) => `<td${i ? ' class="zahlspalte"' : ""}>${esc(v)}</td>`).join("")}</tr>`).join("")}</tbody></table></details>`;
+}
+function renderZahlen() {
+  const heute = KR.todayISO(), monate = letzteMonate(12), dieser = monate[11], vorher = monate[10];
+  // Anmeldungen: Vertragsdatum, sonst Tag der Eingabe im Kompass
+  const anm = {};
+  for (const x of S.schueler) { const m = String(x.vertrag_am || x.erstellt_am || "").slice(0, 7); if (m) anm[m] = (anm[m] || 0) + 1; }
+  // Bestehensquote Praxis je Monat
+  const erg = praxisErgebnisse(), quote = {};
+  for (const e of erg) { const m = e.datum.slice(0, 7); quote[m] = quote[m] || { ok: 0, n: 0 }; quote[m].n++; if (e.ok) quote[m].ok++; }
+  const q3 = monate.slice(9).reduce((a, m) => ({ ok: a.ok + ((quote[m] || {}).ok || 0), n: a.n + ((quote[m] || {}).n || 0) }), { ok: 0, n: 0 });
+  // Auslastung: Unterrichtseinheiten je Fahrlehrer in diesem Monat (gefahren bis heute)
+  const ue = {}, ueGesamt = { v: 0 };
+  for (const t of S.termine) {
+    if (!t.datum || t.datum.slice(0, 7) !== dieser || t.datum > heute || t.art === "block") continue;
+    const p = t.payload || {};
+    if ((p.status || t.status) === "abgebrochen") continue;
+    const u = KR.ueOf(t.art, t.von, t.bis, p.tatsaechlicheDauer);
+    ue[t.fahrlehrer_id] = (ue[t.fahrlehrer_id] || 0) + u; ueGesamt.v += u;
+  }
+  const f = zaehleFristen();
+  const provOffen = S.provisionen.filter((p) => p.status === "offen").reduce((a, p) => a + Number(p.betrag || 0), 0);
+  const fcFehlt = S.fcAbgaben.filter((q) => q.ist < q.soll).reduce((a, q) => a + (q.soll - q.ist), 0);
+  const verkaufMonat = S.verkaeufe.filter((v) => v.status === "bezahlt" && monatVon(v.aktualisiert_am || v.erstellt_am) === dieser);
+  const diff = (anm[dieser] || 0) - (anm[vorher] || 0);
+  const kacheln = `<div class="kacheln">
+    <div class="kachel"><div class="wert">${anm[dieser] || 0}</div><div class="name">Anmeldungen im ${esc(monatKurz(dieser))}${anm[vorher] != null || diff ? ` <span class="leise">(${diff >= 0 ? "+" : ""}${diff} zum Vormonat)</span>` : ""}</div></div>
+    <div class="kachel gruen"><div class="wert">${q3.n ? Math.round(q3.ok / q3.n * 100) + " %" : "–"}</div><div class="name">Bestehensquote Praxis, 3 Monate (${q3.ok} von ${q3.n})</div></div>
+    <div class="kachel"><div class="wert">${zahlDE(ueGesamt.v)}</div><div class="name">Unterrichtseinheiten im ${esc(monatKurz(dieser))} (bis heute)</div></div>
+    <div class="kachel${f.gesperrt ? " rot" : ""}"><div class="wert">${euro(f.gesperrt * reaktBetrag())}</div><div class="name">offene Reaktivierungen</div></div>
+  </div>`;
+  const anmPunkte = monate.map((m, i) => ({ x: monatKurz(m), wert: anm[m] || 0, text: String(anm[m] || 0), zeigen: i === 11 || i === 10, tip: `${monatKurz(m)}: ${anm[m] || 0} Anmeldungen` }));
+  const qPunkte = monate.map((m, i) => { const v = quote[m]; return { x: monatKurz(m), wert: v ? Math.round(v.ok / v.n * 100) : null, text: v ? Math.round(v.ok / v.n * 100) + " %" : "", zeigen: !!v && i >= 9, tip: v ? `${monatKurz(m)}: ${Math.round(v.ok / v.n * 100)} % (${v.ok} von ${v.n} bestanden)` : `${monatKurz(m)}: keine Prüfungen` }; });
+  const lehrerZeilen = S.lehrer.map((l) => ({ name: l.name || l.email, wert: ue[l.id] || 0, text: zahlDE(ue[l.id] || 0, 0) + " UE", tip: `${l.name || l.email}: ${zahlDE(ue[l.id] || 0, 1)} Unterrichtseinheiten` })).sort((a, b) => b.wert - a.wert);
+  const hinweis = S.lehrer.length <= 1 ? `<p class="leise klein">Hinweis: Zahlen sind nur so vollständig wie die Daten im Kompass. Solange nicht alle Fahrlehrer den Kompass nutzen, fehlen ihre Stunden.</p>` : "";
+  return kacheln + `<div class="raster zwei">
+    <div class="karte"><h2>Anmeldungen je Monat</h2>${saeulenSVG(anmPunkte, { titel: "Anmeldungen je Monat, letzte 12 Monate" })}
+      ${tabelleAus(["Monat", "Anmeldungen"], monate.map((m) => [monatKurz(m) + " " + m.slice(0, 4), anm[m] || 0]))}</div>
+    <div class="karte"><h2>Bestehensquote Praxis</h2>${saeulenSVG(qPunkte, { titel: "Bestehensquote Praxisprüfung je Monat in Prozent", max: 100 })}
+      ${tabelleAus(["Monat", "Bestanden", "Prüfungen", "Quote"], monate.map((m) => { const v = quote[m] || { ok: 0, n: 0 }; return [monatKurz(m) + " " + m.slice(0, 4), v.ok, v.n, v.n ? Math.round(v.ok / v.n * 100) + " %" : "–"]; }))}</div>
+  </div>
+  <div class="raster zwei">
+    <div class="karte"><h2>Auslastung der Fahrlehrer im ${esc(monatKurz(dieser))}</h2>${balkenListe(lehrerZeilen)}${hinweis}</div>
+    <div class="karte"><h2>Offenes Geld und Verkäufe</h2>
+      <table class="tabelle"><tbody>
+        <tr><td>Reaktivierungen überfällig (${f.gesperrt} × ${euro(reaktBetrag())})</td><td class="zahlspalte"><b>${euro(f.gesperrt * reaktBetrag())}</b></td></tr>
+        <tr><td>Reaktivierung fällig, noch nicht geprüft</td><td class="zahlspalte">${f.pruefen} Schüler</td></tr>
+        <tr><td>Fahrchecks fehlend laut Quittungen</td><td class="zahlspalte">${fcFehlt}</td></tr>
+        <tr><td>Provision an Fahrlehrer offen</td><td class="zahlspalte">${euro(provOffen)}</td></tr>
+        <tr><td>Akademie & Simulator verkauft im ${esc(monatKurz(dieser))}</td><td class="zahlspalte">${verkaufMonat.length} · ${euro(verkaufMonat.reduce((a, v) => a + Number(v.betrag || 0), 0))}</td></tr>
+      </tbody></table></div>
+  </div><div id="tip" class="tip" hidden></div>`;
+}
+function bindeZahlen(ziel) {
+  const tip = ziel.querySelector("#tip");
+  const zeig = (el, x, y) => { tip.textContent = el.dataset.tip; tip.hidden = false; tip.style.left = x + 14 + "px"; tip.style.top = y + 14 + "px"; };
+  ziel.querySelectorAll("[data-tip]").forEach((el) => {
+    el.addEventListener("mousemove", (e) => zeig(el, e.clientX, e.clientY));
+    el.addEventListener("mouseleave", () => { tip.hidden = true; });
+    el.addEventListener("focus", () => { const r = el.getBoundingClientRect(); zeig(el, r.left, r.top); });
+    el.addEventListener("blur", () => { tip.hidden = true; });
   });
 }
 

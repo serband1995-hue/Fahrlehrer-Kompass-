@@ -13,6 +13,7 @@
   --schatten:0 1px 2px rgba(60,50,20,.06),0 6px 18px rgba(60,50,20,.07);
   --r:16px; --r-klein:10px;
   --seite:272px;
+  --diagramm:#2e8550;
   color-scheme:light;
 }
 @media (prefers-color-scheme:dark){
@@ -27,6 +28,7 @@
     --gruen:#5cc283; --gruen-soft:rgba(76,175,114,.18);
     --blau:#5fa0e6; --blau-soft:rgba(47,125,209,.2);
     --schatten:0 1px 2px rgba(0,0,0,.3),0 6px 18px rgba(0,0,0,.3);
+    --diagramm:#45a96c;
     color-scheme:dark;
   }
 }
@@ -201,6 +203,27 @@ body.kiosk .tag-titel{font-size:30px;}
 details summary{cursor:pointer;font-weight:700;margin:6px 0;}
 
 .split{margin-top:10px;}
+
+/* Diagramme (eine Reihe, eine Farbe; Werte stehen zusätzlich als Tabelle bereit) */
+.raster.zwei{grid-template-columns:repeat(auto-fit,minmax(420px,1fr));}
+.raster.zwei>.karte{margin-bottom:0;}
+.raster.zwei{margin-bottom:22px;}
+.diagramm{width:100%;height:auto;display:block;}
+.d-gitter{stroke:var(--line-soft);stroke-width:1;}
+.d-balken{fill:var(--diagramm);}
+.d-punkt:hover .d-balken,.d-punkt:focus .d-balken{fill:var(--akzent-dark);}
+.d-punkt:focus{outline:none;}
+.d-achse{font-size:13px;fill:var(--muted);text-anchor:middle;font-family:'Barlow',sans-serif;}
+.d-skala{font-size:12px;fill:var(--faint);font-family:'Barlow',sans-serif;}
+.d-wert{font-size:14px;fill:var(--txt);text-anchor:middle;font-weight:700;font-family:'Barlow',sans-serif;}
+.hbalken{display:grid;gap:10px;}
+.hb-zeile{display:grid;grid-template-columns:minmax(120px,30%) 1fr 70px;align-items:center;gap:12px;}
+.hb-name{white-space:nowrap;overflow:hidden;text-overflow:ellipsis;font-weight:600;}
+.hb-spur{height:16px;background:var(--bg);border-radius:4px;overflow:hidden;}
+.hb-balken{display:block;height:100%;background:var(--diagramm);border-radius:0 4px 4px 0;}
+.hb-wert{text-align:right;font-variant-numeric:tabular-nums;color:var(--muted);font-weight:600;}
+.als-tabelle{margin-top:10px;color:var(--muted);}
+.tip{position:fixed;z-index:40;background:var(--txt);color:var(--bg);padding:8px 12px;border-radius:8px;font-size:15px;font-weight:600;pointer-events:none;max-width:320px;}
 
 /* Dialog */
 .dialog{border:none;border-radius:20px;padding:0;width:min(760px,94vw);max-height:90vh;background:var(--surface);color:var(--txt);box-shadow:0 20px 60px rgba(0,0,0,.3);}
