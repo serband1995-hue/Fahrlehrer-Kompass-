@@ -186,6 +186,67 @@ for (const [breite, hoehe] of [[1920, 1080], [1366, 768], [1024, 768]]) {
   await ctx.close();
 }
 
+// 4c) Schüler anlegen, Fahrlehrer wechseln
+{
+  const { page, ctx, konsole } = await oeffne({ nutzer: "bu-1", hash: "#schueler", breite: 1920, hoehe: 1080 });
+  await page.click("#sNeu");
+  await page.fill("dialog input[name=name]", "Neu Testschüler");
+  await page.fill("dialog input[name=telefon]", "0170 1234567");
+  await page.selectOption("dialog select[name=fahrlehrer_id]", "fl-2");
+  await page.selectOption("dialog select[name=ausbildungsart]", "umschreibung");
+  await page.click("dialog button[value=ok]");
+  await page.waitForTimeout(300);
+  const neu = await page.evaluate(() => window.__FAKE.tabellen.schueler.find((s) => s.name === "Neu Testschüler"));
+  if (!neu || neu.fahrlehrer_id !== "fl-2" || !neu.ausbildung.umschreiber || !/^[A-Za-z0-9_-]{1,64}$/.test(neu.id)) fehler("Schüler anlegen falsch: " + JSON.stringify(neu));
+  await page.selectOption("#sLehrer", "ohne");
+  await page.waitForTimeout(200);
+  const ohne = await page.$$eval(".tabelle tbody tr", (r) => r.length);
+  if (ohne < 1) fehler("Schüler: Filter ohne Fahrlehrer leer");
+  await page.click("[data-sbearb]");
+  await page.selectOption("dialog select[name=fahrlehrer_id]", "fl-1");
+  await page.click("dialog button[value=ok]");
+  await page.waitForTimeout(400);
+  const v = await page.evaluate(() => (window.__FAKE.tabellen.schueler_verschiebungen || []).length);
+  if (v !== 1) fehler("Schüler verschieben: kein Übergabe-Eintrag");
+  if (FOTOS) await page.screenshot({ path: join(FOTOS, "schueler.png") });
+  if (konsole.length) fehler("Schüler: Konsole: " + konsole.join(" | "));
+  await ctx.close();
+}
+// 4d) Kalender: Termin anlegen per Klick, verschieben, absagen
+{
+  const { page, ctx, konsole } = await oeffne({ nutzer: "bu-1", hash: "#kalender", breite: 1920, hoehe: 1080 });
+  if (FOTOS) await page.screenshot({ path: join(FOTOS, "kalender.png"), fullPage: true });
+  const flaeche = await page.$('.k-flaeche[data-lehrer="fl-1"]');
+  const box = await flaeche.boundingBox();
+  await flaeche.click({ position: { x: 10, y: box.height - 20 } }); // ganz unten = später Abend, sicher frei
+  await page.waitForSelector("dialog");
+  await page.selectOption("dialog select[name=schueler_id]", "s1");
+  await page.fill("dialog input[name=von]", "20:00");
+  await page.fill("dialog input[name=bis]", "20:45");
+  await page.click("dialog button[value=ok]");
+  await page.waitForTimeout(300);
+  const t = await page.evaluate(() => window.__FAKE.tabellen.kalender_termine.find((x) => x.von === "20:00" && x.fahrlehrer_id === "fl-1"));
+  if (!t || t.schueler_id !== "s1") fehler("Kalender: Termin nicht angelegt");
+  else {
+    await page.click(`[data-termin="${t.id}"]`);
+    await page.fill("dialog input[name=von]", "19:00");
+    await page.fill("dialog input[name=bis]", "19:30");
+    await page.click("dialog button[value=ok]");
+    await page.waitForTimeout(300);
+    const t2 = await page.evaluate((id) => window.__FAKE.tabellen.kalender_termine.find((x) => x.id === id), t.id);
+    if (t2.von !== "19:00") fehler("Kalender: Verschieben nicht gespeichert");
+    await page.click(`[data-termin="${t.id}"]`);
+    await page.check("dialog input[name=absagen]");
+    await page.click("dialog button[value=ok]");
+    await page.click("dialog >> nth=1 >> button[value=ok]");
+    await page.waitForTimeout(300);
+    const t3 = await page.evaluate((id) => window.__FAKE.tabellen.kalender_termine.find((x) => x.id === id), t.id);
+    if (!t3.geloescht) fehler("Kalender: Absagen nicht gespeichert");
+  }
+  if (konsole.length) fehler("Kalender: Konsole: " + konsole.join(" | "));
+  await ctx.close();
+}
+
 // 5) Super-Admin sieht die Auswahl der Fahrschule
 {
   const { page, ctx } = await oeffne({ nutzer: "sa-1" });

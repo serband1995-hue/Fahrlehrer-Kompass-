@@ -13642,11 +13642,12 @@ function examReadiness(s){
   const skillOpen=EVAL_SKILLS.filter(id=>(s.plan.ampeln[id]||null)!=="gruen").length;
   let sonderDone=0,sonderTot=0;
   SONDER_DEF.forEach(d=>{ sonderTot+=d.soll; sonderDone+=Math.min(sfCount(s.plan.sonder[d.key]),d.soll); });
-  const sonderOk=sonderDone>=sonderTot, theoOk=!!s.plan.theorie;
+  // Umschreiber brauchen keine Sonderfahrten (Entscheidung Serband 08.10.2026)
+  const sonderOk=!!s.umschreiber||sonderDone>=sonderTot, theoOk=!!s.plan.theorie;
   const skillOk=pct>=READY_MIN;
   const items=[
     {label:`Ausbildungsstand ${pct} % (Ziel ≥ ${READY_MIN} %)`, ok:skillOk, detail:skillOk?null:`Noch ${skillOpen} ${skillOpen===1?"Thema":"Themen"} nicht auf Grün.`},
-    {label:`Sonderfahrten ${sonderDone}/${sonderTot}`, ok:sonderOk, detail:sonderOk?null:"Pflichtfahrten noch nicht komplett."},
+    {label:s.umschreiber?"Sonderfahrten entfallen (Umschreiber)":`Sonderfahrten ${sonderDone}/${sonderTot}`, ok:sonderOk, detail:sonderOk?null:"Pflichtfahrten noch nicht komplett."},
     {label:"Theorieprüfung bestanden", ok:theoOk, detail:theoOk?null:"Im Ausbildungsplan noch nicht abgehakt."}
   ];
   if(s.attempts>0){
