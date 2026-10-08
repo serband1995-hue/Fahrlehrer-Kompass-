@@ -112,7 +112,7 @@ nav{display:grid;gap:2px;}
 /* Tabellen */
 .tabelle{width:100%;border-collapse:collapse;}
 .tabelle th{font-size:14px;text-transform:uppercase;letter-spacing:.05em;color:var(--faint);text-align:left;font-weight:700;padding:10px 12px;border-bottom:2px solid var(--line-soft);white-space:nowrap;}
-.tabelle td{padding:12px;border-bottom:1px solid var(--line-soft);vertical-align:middle;overflow-wrap:anywhere;}
+.tabelle td{padding:12px;border-bottom:1px solid var(--line-soft);vertical-align:middle;overflow-wrap:break-word;}
 .tabelle tr:last-child td{border-bottom:none;}
 .tabelle tbody tr:hover{background:var(--bg);}
 .zahlspalte{text-align:right;font-variant-numeric:tabular-nums;}
@@ -161,7 +161,12 @@ nav{display:grid;gap:2px;}
 .ptabelle{table-layout:fixed;}
 .ptabelle .c-zeit{width:90px;} .ptabelle .c-zeit.breit{width:190px;} .ptabelle .c-art{width:140px;}
 .ptabelle .c-lehrer{width:22%;} .ptabelle .c-haken{width:170px;} .ptabelle .c-akt{width:150px;}
-.ptabelle td{overflow-wrap:anywhere;}
+.ptabelle td{overflow-wrap:break-word;}
+@media (max-width:1300px){
+  .ptabelle{table-layout:auto;}
+  .ptabelle col{width:auto !important;}
+  .haken-reihe{gap:6px;} .haken{width:34px;height:34px;font-size:17px;}
+}
 body.kiosk .ptabelle .c-zeit{width:130px;} body.kiosk .ptabelle .c-art{width:200px;} body.kiosk .ptabelle .c-haken{width:220px;}
 /* Großansicht für den Bildschirm in der Küche: ohne Menü, alles größer */
 body.kiosk .seite,body.kiosk .kopf{display:none;}
@@ -172,6 +177,18 @@ body.kiosk .tabelle td{padding:16px 14px;}
 body.kiosk .tag-titel{font-size:30px;}
 .kiosk-kopf{display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;}
 .kiosk-kopf h2{font-size:40px;}
+
+/* Schülerliste */
+.name-zeile{display:flex;align-items:center;gap:8px;}
+.farbpunkt{flex:0 0 14px;width:14px;height:14px;border-radius:50%;display:inline-block;align-self:center;}
+.farbpunkt.ohne{border:2px solid var(--line);}
+.tabelle .unter{overflow-wrap:anywhere;}
+@media (min-width:1201px){ .schuelertab td:first-child{min-width:190px;} }
+.datum{white-space:nowrap;}
+.stand{display:flex;align-items:center;gap:10px;min-width:120px;}
+.stand-spur{flex:1;height:10px;background:var(--bg);border-radius:999px;overflow:hidden;}
+.stand-balken{display:block;height:100%;background:var(--diagramm);border-radius:999px;}
+.stand-zahl{font-variant-numeric:tabular-nums;font-weight:700;min-width:44px;text-align:right;}
 
 /* Kalender */
 .chips{display:flex;gap:8px;flex-wrap:wrap;margin:6px 0 8px;}
@@ -255,12 +272,18 @@ details summary{cursor:pointer;font-weight:700;margin:6px 0;}
 /* Spalten, die bei schmalem Bildschirm in die Zeile darüber wandern */
 .nur-schmal{display:none;}
 @media (max-width:1100px){ .nur-breit{display:none;} .nur-schmal{display:inline;} }
+@media (max-width:1500px){ .nur-sehr-breit{display:none;} }
+
+/* Niedrige Bildschirme: Menü enger, damit Abmelden immer sichtbar bleibt */
+@media (max-height:820px){ .nav-punkt{min-height:38px;padding:4px 12px;} .nav-gruppe{padding:10px 12px 2px;} .seite{gap:8px;padding:16px 14px;} }
 
 /* Kleinere Bildschirme (Laptop): Menü schmaler; unter 900 px oben statt links */
 @media (max-width:1200px){
   :root{--seite:236px;} .inhalt{padding:24px 26px 50px;}
   .tabelle td,.tabelle th{padding:10px 8px;}
-  .aktionen-box{flex-direction:column;align-items:stretch;min-width:140px;}
+  .aktionen-box{flex-direction:column;align-items:stretch;min-width:120px;}
+  .stand{min-width:96px;gap:6px;}
+  .tabelle .marke-pill{white-space:normal;}
   .suche{min-width:200px;}
 }
 @media (max-width:900px){
