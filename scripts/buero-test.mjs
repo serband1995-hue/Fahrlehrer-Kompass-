@@ -7,9 +7,9 @@ import { createServer } from "node:http";
 import { readFile, mkdir } from "node:fs/promises";
 import { extname, join, normalize } from "node:path";
 import { fileURLToPath } from "node:url";
-import { bauDaten } from "./buero-testdaten.mjs";
 
 const require = createRequire(import.meta.url);
+const { bauDaten } = require("../buero-vorfuehrung.js");
 const { chromium } = require("playwright");
 const ROOT = join(fileURLToPath(new URL(".", import.meta.url)), "..");
 const FOTOS = process.argv[2] || null;
@@ -26,7 +26,7 @@ const server = createServer(async (req, res) => {
 });
 await new Promise((ok) => server.listen(0, "127.0.0.1", ok));
 const basis = `http://127.0.0.1:${server.address().port}/`;
-const fake = await readFile(join(ROOT, "scripts/buero-fake-supabase.js"), "utf8");
+const fake = await readFile(join(ROOT, "buero-vorfuehrung.js"), "utf8");
 if (FOTOS) await mkdir(FOTOS, { recursive: true });
 
 const browser = await chromium.launch({ executablePath: process.env.CHROMIUM_PATH || "/opt/pw-browsers/chromium" });
@@ -314,6 +314,24 @@ for (const [breite, hoehe] of [[1920, 1080], [1366, 768], [1024, 768]]) {
 {
   const { page, ctx } = await oeffne({ nutzer: "bu-1", hash: "#team" });
   if (await page.isVisible("#tNeuFl")) fehler("Team: Büro darf keine Fahrlehrer anlegen");
+  await ctx.close();
+}
+
+// 4h) Vorführung: ohne Anmeldung, erfundene Daten, Hinweis sichtbar, echte Bibliothek wird nicht geladen
+{
+  const ctx = await browser.newContext({ viewport: { width: 1920, height: 1080 } });
+  const page = await ctx.newPage();
+  const konsole = []; let cdn = false;
+  page.on("pageerror", (e) => konsole.push(String(e)));
+  await page.route("https://cdn.jsdelivr.net/**", (r) => { cdn = true; r.abort(); });
+  await page.route(/fonts\./, (r) => r.fulfill({ body: "" }));
+  await page.goto(basis + "buero.html?vorfuehrung#heute");
+  await page.waitForTimeout(600);
+  if (!(await page.isVisible("#vorfuehrung"))) fehler("Vorführung: Hinweis fehlt");
+  if (!(await page.isVisible("#app"))) fehler("Vorführung: App startet nicht");
+  if (cdn) fehler("Vorführung: lädt die echte Datenbank-Bibliothek");
+  if (FOTOS) await page.screenshot({ path: join(FOTOS, "vorfuehrung-heute.png"), fullPage: true });
+  if (konsole.length) fehler("Vorführung: " + konsole.join(" | "));
   await ctx.close();
 }
 
