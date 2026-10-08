@@ -5785,7 +5785,7 @@ window.addEventListener("load", () => {
 const STORE_KEY="serband-app-v1";
 /* Build-Version: bei jeder Auslieferung hier das Datum aktualisieren.
    Wird in den Einstellungen angezeigt + für den Update-Hinweis genutzt. */
-const APP_VERSION="2026.10.03";
+const APP_VERSION="2026.10.08";
 // Nutzungsbedingungen & Haftungsausschluss (Bereich: rechtliche Absicherung) - Version hochzählen
 // und alle Nutzer müssen erneut zustimmen, sobald sich der Text inhaltlich ändert.
 const AGB_VERSION="1.0";
@@ -12659,7 +12659,7 @@ function _bindDashTiles(act,ready,q,wocheEuro,naechsteTheorie){
 }
 // Kurzer "Was ist neu"-Hinweis nach App-Updates (Bereich 1, Punkt 10) - einmalig pro Version,
 // verschwindet danach von selbst und kommt erst beim nächsten echten Update wieder.
-const DASH_WAS_NEU_TEXT="Neu: Urlaub blockieren mit automatischer Pauschale, Video-Push zur Fahr-Akademie.";
+const DASH_WAS_NEU_TEXT=""; // leer = kein Banner; der alte Text vom August war veraltet
 function _whatsNewBannerHTML(){
   if(!DASH_WAS_NEU_TEXT||DB.dashWasNeuGesehen===APP_VERSION)return "";
   return `<div class="was-neu-banner" id="wasNeuBanner"><span>✨ ${esc(DASH_WAS_NEU_TEXT)}</span><button id="wasNeuSchliessen" aria-label="Schließen">✕</button></div>`;

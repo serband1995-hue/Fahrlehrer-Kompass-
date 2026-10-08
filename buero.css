@@ -1,0 +1,140 @@
+/* Kompass Büro – für den PC gebaut: große Schrift, viel Platz, feste Menüleiste.
+   Farben aus der Kompass-App (Papierweiß, Waldgrün, Gold), Ampelfarben unverändert. */
+:root{
+  --bg:#f3f1e9; --surface:#fffdf7; --surface-2:#ece7d8;
+  --line:#ddd5bd; --line-soft:#e8e2cd;
+  --txt:#23261d; --muted:#5f5e4b; --faint:#8d8a6a;
+  --akzent:#3a7350; --akzent-dark:#2f5d3f; --akzent-soft:rgba(58,115,80,.12); --akzent-line:rgba(58,115,80,.28);
+  --gold:#b8873a; --gold-soft:rgba(184,135,58,.14);
+  --rot:#c0503f; --rot-soft:rgba(192,80,63,.12);
+  --gelb:#b9862f; --gelb-soft:rgba(207,154,62,.16);
+  --gruen:#3f9a62; --gruen-soft:rgba(76,175,114,.14);
+  --blau:#2F7DD1; --blau-soft:rgba(47,125,209,.12);
+  --schatten:0 1px 2px rgba(60,50,20,.06),0 6px 18px rgba(60,50,20,.07);
+  --r:16px; --r-klein:10px;
+  --seite:272px;
+  color-scheme:light;
+}
+@media (prefers-color-scheme:dark){
+  :root{
+    --bg:#0c1410; --surface:#16221c; --surface-2:#1f2d25;
+    --line:#2e3f35; --line-soft:#223029;
+    --txt:#eef3ef; --muted:#b1bfb5; --faint:#7d8d82;
+    --akzent:#4a8b5c; --akzent-dark:#7fbf95; --akzent-soft:rgba(74,139,92,.2); --akzent-line:rgba(120,170,140,.38);
+    --gold:#c9a227; --gold-soft:rgba(201,162,39,.16);
+    --rot:#e07060; --rot-soft:rgba(207,90,72,.18);
+    --gelb:#d9a64a; --gelb-soft:rgba(207,154,62,.2);
+    --gruen:#5cc283; --gruen-soft:rgba(76,175,114,.18);
+    --blau:#5fa0e6; --blau-soft:rgba(47,125,209,.2);
+    --schatten:0 1px 2px rgba(0,0,0,.3),0 6px 18px rgba(0,0,0,.3);
+    color-scheme:dark;
+  }
+}
+*{box-sizing:border-box;}
+html,body{margin:0;}
+body{background:var(--bg);color:var(--txt);font:17px/1.5 'Barlow',system-ui,sans-serif;-webkit-font-smoothing:antialiased;}
+h1,h2,h3{font-family:'Source Serif 4',Georgia,serif;font-weight:700;line-height:1.2;margin:0;}
+[hidden]{display:none !important;}
+button,input,select,textarea{font:inherit;color:inherit;}
+a{color:var(--akzent-dark);}
+.leise{color:var(--muted);}
+.klein{font-size:15px;}
+
+/* Knöpfe */
+.knopf{display:inline-flex;align-items:center;justify-content:center;gap:8px;min-height:44px;padding:0 18px;border-radius:var(--r-klein);
+  border:1px solid var(--line);background:var(--surface);cursor:pointer;font-weight:600;transition:background .12s,border-color .12s;}
+.knopf:hover{background:var(--surface-2);}
+.knopf:focus-visible,input:focus-visible,select:focus-visible,.nav-punkt:focus-visible{outline:3px solid var(--akzent-line);outline-offset:2px;}
+.knopf.haupt{background:var(--akzent);border-color:var(--akzent);color:#fff;}
+.knopf.haupt:hover{background:var(--akzent-dark);}
+.knopf.klein{min-height:36px;padding:0 12px;font-size:15px;}
+.knopf.gross{min-height:52px;font-size:18px;}
+.knopf:disabled{opacity:.55;cursor:default;}
+.knopfreihe{display:flex;gap:10px;flex-wrap:wrap;}
+
+/* Anmeldung und Hinweise */
+.login{min-height:100vh;display:grid;place-items:center;padding:24px;}
+.login-karte{width:min(440px,100%);background:var(--surface);border:1px solid var(--line-soft);border-radius:22px;padding:36px;box-shadow:var(--schatten);display:grid;gap:16px;}
+.login-logo{width:64px;height:64px;}
+.login-karte h1{font-size:30px;}
+.login-karte label{display:grid;gap:6px;font-weight:600;}
+.login-karte input{min-height:48px;padding:0 14px;border:1px solid var(--line);border-radius:var(--r-klein);background:var(--bg);}
+.fehler{color:var(--rot);min-height:1.5em;margin:0;}
+
+/* Grundaufbau */
+.app{display:grid;grid-template-columns:var(--seite) 1fr;min-height:100vh;}
+.seite{position:sticky;top:0;height:100vh;display:flex;flex-direction:column;gap:14px;padding:22px 16px;background:var(--surface);border-right:1px solid var(--line-soft);overflow-y:auto;}
+.marke{display:flex;align-items:center;gap:12px;padding:0 6px 6px;}
+.marke img{width:44px;height:44px;}
+.marke-name{font-family:'Source Serif 4',Georgia,serif;font-weight:700;font-size:20px;}
+.marke-schule{color:var(--muted);font-size:15px;}
+.schulwahl{display:grid;gap:4px;font-size:14px;color:var(--muted);padding:0 6px;}
+.schulwahl select{min-height:40px;border:1px solid var(--line);border-radius:var(--r-klein);background:var(--bg);padding:0 8px;}
+nav{display:grid;gap:2px;}
+.nav-gruppe{font-size:13px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:var(--faint);padding:14px 12px 4px;}
+.nav-punkt{display:flex;align-items:center;gap:10px;min-height:44px;padding:6px 12px;line-height:1.25;border-radius:var(--r-klein);text-decoration:none;color:var(--txt);font-weight:500;}
+.nav-punkt:hover{background:var(--surface-2);}
+.nav-punkt[aria-current="page"]{background:var(--akzent-soft);color:var(--akzent-dark);font-weight:700;}
+.nav-punkt .zahl{margin-left:auto;min-width:26px;height:26px;padding:0 8px;border-radius:999px;background:var(--rot);color:#fff;font-size:14px;font-weight:700;display:inline-grid;place-items:center;}
+.nav-punkt .bald{margin-left:auto;flex-shrink:0;font-size:12px;color:var(--faint);white-space:nowrap;}
+.nav-punkt .zahl{flex-shrink:0;}
+.seite-fuss{margin-top:auto;display:flex;align-items:center;justify-content:space-between;gap:10px;padding:14px 6px 0;border-top:1px solid var(--line-soft);}
+.nutzer-name{font-weight:600;}
+.nutzer-rolle{color:var(--muted);font-size:14px;}
+
+.inhalt{min-width:0;padding:28px 40px 60px;}
+.kopf{display:flex;align-items:center;justify-content:space-between;gap:20px;margin-bottom:24px;}
+.kopf h1{font-size:34px;}
+.kopf-rechts{display:flex;align-items:center;gap:14px;}
+.status{display:inline-flex;align-items:center;gap:8px;color:var(--muted);font-size:15px;}
+.status .punkt{width:10px;height:10px;border-radius:50%;background:var(--faint);}
+.status.ok .punkt{background:var(--gruen);}
+.status.warn .punkt{background:var(--gelb);}
+.status.fehler .punkt{background:var(--rot);}
+.ansicht{max-width:1500px;outline:none;}
+
+/* Bausteine */
+.raster{display:grid;gap:18px;}
+.kacheln{display:grid;grid-template-columns:repeat(auto-fit,minmax(210px,1fr));gap:18px;margin-bottom:26px;}
+.kachel{background:var(--surface);border:1px solid var(--line-soft);border-radius:var(--r);padding:20px 22px;box-shadow:var(--schatten);}
+.kachel .wert{font-family:'Source Serif 4',Georgia,serif;font-size:40px;font-weight:700;line-height:1.1;}
+.kachel .name{color:var(--muted);font-weight:600;margin-top:4px;}
+.kachel.rot .wert{color:var(--rot);} .kachel.gruen .wert{color:var(--gruen);} .kachel.gold .wert{color:var(--gold);}
+.karte{background:var(--surface);border:1px solid var(--line-soft);border-radius:var(--r);padding:22px 24px;box-shadow:var(--schatten);margin-bottom:22px;}
+.karte h2{font-size:24px;margin-bottom:12px;}
+.karte-kopf{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:12px;}
+.karte-kopf h2{margin:0;}
+.leer{color:var(--muted);padding:12px 0;}
+
+/* Tabellen */
+.tabelle{width:100%;border-collapse:collapse;}
+.tabelle th{font-size:14px;text-transform:uppercase;letter-spacing:.05em;color:var(--faint);text-align:left;font-weight:700;padding:10px 12px;border-bottom:2px solid var(--line-soft);white-space:nowrap;}
+.tabelle td{padding:12px;border-bottom:1px solid var(--line-soft);vertical-align:middle;}
+.tabelle tr:last-child td{border-bottom:none;}
+.tabelle tbody tr:hover{background:var(--bg);}
+.zahlspalte{text-align:right;font-variant-numeric:tabular-nums;}
+.zeitspalte{width:1%;white-space:nowrap;font-variant-numeric:tabular-nums;font-weight:600;}
+
+/* Marken */
+.marke-pill{display:inline-flex;align-items:center;gap:6px;padding:3px 10px;border-radius:999px;font-size:14px;font-weight:600;background:var(--surface-2);color:var(--muted);white-space:nowrap;}
+.marke-pill.rot{background:var(--rot-soft);color:var(--rot);}
+.marke-pill.gelb{background:var(--gelb-soft);color:var(--gelb);}
+.marke-pill.gruen{background:var(--gruen-soft);color:var(--gruen);}
+.marke-pill.blau{background:var(--blau-soft);color:var(--blau);}
+
+/* Meldung unten */
+.toast{position:fixed;left:50%;bottom:28px;transform:translate(-50%,20px);background:var(--txt);color:var(--bg);padding:14px 22px;border-radius:12px;font-weight:600;opacity:0;pointer-events:none;transition:opacity .2s,transform .2s;z-index:50;max-width:min(640px,90vw);}
+.toast.zeigen{opacity:1;transform:translate(-50%,0);}
+.toast.fehler{background:var(--rot);color:#fff;}
+
+/* Kleinere Bildschirme (Laptop): Menü schmaler; unter 900 px oben statt links */
+@media (max-width:1200px){ :root{--seite:236px;} .inhalt{padding:24px 26px 50px;} }
+@media (max-width:900px){
+  .app{grid-template-columns:1fr;}
+  .seite{position:static;height:auto;}
+  .inhalt{padding:20px 16px 40px;}
+  .kopf{flex-wrap:wrap;}
+  .kopf h1{font-size:28px;}
+  .tabelle{display:block;overflow-x:auto;}
+}
+@media (prefers-reduced-motion:reduce){ *{transition:none !important;} }
