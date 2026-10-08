@@ -41,7 +41,7 @@ a{color:var(--akzent-dark);}
 .klein{font-size:15px;}
 
 /* Knöpfe */
-.knopf{display:inline-flex;align-items:center;justify-content:center;gap:8px;min-height:44px;padding:0 18px;border-radius:var(--r-klein);
+.knopf{text-decoration:none;display:inline-flex;align-items:center;justify-content:center;gap:8px;min-height:44px;padding:0 18px;border-radius:var(--r-klein);
   border:1px solid var(--line);background:var(--surface);cursor:pointer;font-weight:600;transition:background .12s,border-color .12s;}
 .knopf:hover{background:var(--surface-2);}
 .knopf:focus-visible,input:focus-visible,select:focus-visible,.nav-punkt:focus-visible{outline:3px solid var(--akzent-line);outline-offset:2px;}
@@ -138,6 +138,37 @@ nav{display:grid;gap:2px;}
 .aktionen{width:1%;}
 .aktionen-box{display:flex;flex-wrap:wrap;justify-content:flex-end;gap:6px;min-width:150px;max-width:300px;margin-left:auto;}
 .aktionen-box .knopf{white-space:nowrap;}
+
+/* Prüfungstafel */
+.tag-titel{font-size:20px;margin:22px 0 6px;color:var(--muted);}
+.tag-titel.heute{color:var(--akzent-dark);}
+.haken-reihe{display:flex;gap:10px;}
+.haken{width:40px;height:40px;border-radius:50%;border:2px solid var(--line);background:var(--surface);color:transparent;font-weight:800;font-size:20px;cursor:pointer;display:inline-grid;place-items:center;transition:background .12s,border-color .12s;}
+.haken:hover:not(:disabled){border-color:var(--muted);}
+.haken:disabled{cursor:default;opacity:.7;}
+.haken.blau{border-color:var(--blau);} .haken.rot{border-color:var(--rot);} .haken.gruen{border-color:var(--gruen);}
+.haken.blau.an{background:var(--blau);color:#fff;} .haken.rot.an{background:var(--rot);color:#fff;} .haken.gruen.an{background:var(--gruen);color:#fff;}
+.haken.mini{width:24px;height:24px;font-size:13px;border-width:1px;vertical-align:middle;cursor:default;}
+.haken-reihe.gross .haken{width:56px;height:56px;font-size:28px;}
+.legende{display:flex;gap:22px;flex-wrap:wrap;color:var(--muted);font-size:15px;margin:4px 0 6px;}
+.trenner{width:1px;background:var(--line);margin:0 6px;}
+.warnkarte{border-color:var(--rot);background:linear-gradient(0deg,var(--rot-soft),var(--rot-soft)),var(--surface);}
+.warnzeile td{background:var(--rot-soft);}
+/* Prüfungs-Tabellen: gleiche Spalten über alle Tage */
+.ptabelle{table-layout:fixed;}
+.ptabelle .c-zeit{width:90px;} .ptabelle .c-zeit.breit{width:190px;} .ptabelle .c-art{width:140px;}
+.ptabelle .c-lehrer{width:22%;} .ptabelle .c-haken{width:170px;} .ptabelle .c-akt{width:150px;}
+.ptabelle td{overflow-wrap:anywhere;}
+body.kiosk .ptabelle .c-zeit{width:130px;} body.kiosk .ptabelle .c-art{width:200px;} body.kiosk .ptabelle .c-haken{width:220px;}
+/* Großansicht für den Bildschirm in der Küche: ohne Menü, alles größer */
+body.kiosk .seite,body.kiosk .kopf{display:none;}
+body.kiosk .app{grid-template-columns:1fr;}
+body.kiosk .inhalt{padding:28px 44px;}
+body.kiosk .ansicht{max-width:none;font-size:24px;}
+body.kiosk .tabelle td{padding:16px 14px;}
+body.kiosk .tag-titel{font-size:30px;}
+.kiosk-kopf{display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;}
+.kiosk-kopf h2{font-size:40px;}
 
 /* Dialog */
 .dialog{border:none;border-radius:20px;padding:0;width:min(760px,94vw);max-height:90vh;background:var(--surface);color:var(--txt);box-shadow:0 20px 60px rgba(0,0,0,.3);}

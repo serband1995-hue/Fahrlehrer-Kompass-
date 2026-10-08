@@ -64,13 +64,20 @@ export function bauDaten(heute) {
     { id: "pr-1", fahrschule_id: FS, fahrlehrer_id: "fl-1", schueler_id: "s1", datum: addTage(heute, -14), result: "bestanden", attempt: 1, geloescht: false, payload: {} },
     { id: "pr-2", fahrschule_id: FS, fahrlehrer_id: "fl-2", schueler_id: "s2", datum: addTage(heute, -9), result: "nicht_bestanden", attempt: 1, geloescht: false, payload: {} },
   ];
+  const pruefungstermine = [
+    { id: "pt-1", fahrschule_id: FS, schueler_id: "s3", fahrlehrer_id: "fl-1", art: "praxis", klasse: "B", datum: addTage(heute, 2), von: "08:00", status: "geplant", entgelt_bezahlt: true, tuev_gutschein: false, as_portal: false },
+    { id: "pt-2", fahrschule_id: FS, schueler_id: "s5", fahrlehrer_id: "fl-2", art: "praxis", klasse: "B", datum: addTage(heute, 2), von: "09:15", status: "geplant", entgelt_bezahlt: true, tuev_gutschein: true, as_portal: true },
+    { id: "pt-3", fahrschule_id: FS, schueler_id: "s7", fahrlehrer_id: null, art: "theorie", klasse: "B", datum: addTage(heute, 5), von: "13:00", status: "geplant", entgelt_bezahlt: false, tuev_gutschein: false, as_portal: false },
+    { id: "pt-4", fahrschule_id: FS, schueler_id: "s8", fahrlehrer_id: "fl-3", art: "praxis", klasse: "CE", datum: addTage(heute, -1), von: "10:00", status: "geplant", entgelt_bezahlt: true, tuev_gutschein: true, as_portal: true },
+    { id: "pt-5", fahrschule_id: FS, schueler_id: "s9", fahrlehrer_id: "fl-1", art: "praxis", klasse: "B", datum: addTage(heute, -6), von: "10:00", status: "bestanden", entgelt_bezahlt: true, tuev_gutschein: true, as_portal: true },
+  ];
   return {
     FS,
     konten: [...lehrer, ...buero].map((p) => ({ id: p.id, email: p.email, password: "test1234" })),
     tabellen: {
       fahrschulen: [{ id: FS, name: "Fahrschule Testhausen", slug: "test", aktiv: true, konfiguration: {} }, { id: "fs-test-2", name: "Zweite Testschule", slug: "test2", aktiv: true, konfiguration: {} }],
       profiles: [...lehrer, ...buero],
-      schueler, kalender_termine: termine, kalender_pruefungen: pruefungen,
+      schueler, kalender_termine: termine, kalender_pruefungen: pruefungen, pruefungstermine,
       fahrschule_fahrzeuge: [
         { id: "fz-1", fahrschule_id: FS, bezeichnung: "Golf Schalter", typ: "schalt", aktiv: true, erstellt_am: "2026-01-01" },
         { id: "fz-2", fahrschule_id: FS, bezeichnung: "Golf Automatik", typ: "automatik", aktiv: true, erstellt_am: "2026-01-02" },
