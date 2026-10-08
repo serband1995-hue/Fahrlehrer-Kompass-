@@ -97,6 +97,14 @@ const z = KR.fcSoll([
 gleich("FC-Soll Zeitraum (ohne Zukunft, mit nachgereicht)", 5, z.soll);
 gleich("FC fehlend", 1, z.fehlend.length);
 
+// Aufteilung
+const a1 = KR.aufteilung(100, { fahrlehrer: 15, fahrschule: 45, plattform: 20, akademie: 20 });
+gleich("Aufteilung 100 €", "15|45|20|20", [a1.fahrlehrer, a1.fahrschule, a1.plattform, a1.akademie].join("|"));
+const a2 = KR.aufteilung(99, { fahrlehrer: 33.3, fahrschule: 33.4, plattform: 33.3, akademie: 0 });
+gleich("Aufteilung Summe bleibt Betrag", 99, a2.fahrlehrer + a2.fahrschule + a2.plattform + a2.akademie);
+gleich("Aufteilung ≠ 100 % abgelehnt", null, KR.aufteilung(100, { fahrlehrer: 50, fahrschule: 40, plattform: 0, akademie: 0 }));
+gleich("Aufteilung fehlt", null, KR.aufteilung(100, null));
+
 // Büro-Seite muss dieselbe Version der Nutzungsbedingungen verlangen wie die App
 const agbApp = (html.match(/const AGB_VERSION="([^"]+)"/) || [])[1];
 const agbBuero = (readFileSync(join(ROOT, "buero.js"), "utf8").match(/const AGB_VERSION = "([^"]+)"/) || [])[1];

@@ -71,11 +71,19 @@ export function bauDaten(heute) {
     { id: "pt-4", fahrschule_id: FS, schueler_id: "s8", fahrlehrer_id: "fl-3", art: "praxis", klasse: "CE", datum: addTage(heute, -1), von: "10:00", status: "geplant", entgelt_bezahlt: true, tuev_gutschein: true, as_portal: true },
     { id: "pt-5", fahrschule_id: FS, schueler_id: "s9", fahrlehrer_id: "fl-1", art: "praxis", klasse: "B", datum: addTage(heute, -6), von: "10:00", status: "bestanden", entgelt_bezahlt: true, tuev_gutschein: true, as_portal: true },
   ];
+  const jetztMonat = heute.slice(0, 7) + "-03T10:00:00Z";
+  const fahrschule_empfehlungen = [
+    { id: "e1", fahrschule_id: FS, schueler_id: "s4", schueler_name: "Jonas Muster", fahrlehrer_id: "fl-1", fahrlehrer_name: "Fahrlehrer Anton", typ: "akademie", status: "empfohlen", erstellt_am: jetztMonat },
+    { id: "e2", fahrschule_id: FS, schueler_id: "s6", schueler_name: "Jonas Beispiel", fahrlehrer_id: "fl-2", fahrlehrer_name: "Fahrlehrerin Berta", typ: "simulator", status: "zugangsdaten_ausgegeben", erstellt_am: jetztMonat },
+    { id: "e3", fahrschule_id: FS, schueler_id: "s10", schueler_name: "Lena Demo", fahrlehrer_id: "fl-1", fahrlehrer_name: "Fahrlehrer Anton", typ: "akademie", status: "bezahlt", betrag: 100, aufteilung: { fahrlehrer: 15, fahrschule: 45, plattform: 20, akademie: 20 }, erstellt_am: jetztMonat, aktualisiert_am: jetztMonat },
+  ];
+  const provisionen = [{ id: "pv1", fahrlehrer_id: "fl-1", fahrschule_id: FS, typ: "akademie", schueler_id: "s10", betrag: 15, status: "offen", erstellt_am: jetztMonat }];
   return {
     FS,
     konten: [...lehrer, ...buero].map((p) => ({ id: p.id, email: p.email, password: "test1234" })),
     tabellen: {
-      fahrschulen: [{ id: FS, name: "Fahrschule Testhausen", slug: "test", aktiv: true, konfiguration: {} }, { id: "fs-test-2", name: "Zweite Testschule", slug: "test2", aktiv: true, konfiguration: {} }],
+      fahrschule_empfehlungen, provisionen,
+      fahrschulen: [{ id: FS, name: "Fahrschule Testhausen", slug: "test", aktiv: true, konfiguration: { akademieVermittlung: { betragAkademie: 100, betragSimulator: 149, splitKollege: { fahrlehrer: 15, fahrschule: 45, plattform: 20, akademie: 20 } } } }, { id: "fs-test-2", name: "Zweite Testschule", slug: "test2", aktiv: true, konfiguration: {} }],
       profiles: [...lehrer, ...buero],
       schueler, kalender_termine: termine, kalender_pruefungen: pruefungen, pruefungstermine,
       fahrschule_fahrzeuge: [

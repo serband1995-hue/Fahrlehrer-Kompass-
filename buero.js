@@ -19,7 +19,7 @@ const ARTEN = {
 const supa = window.supabase.createClient(SUPA_URL, SUPA_KEY);
 const S = {
   user: null, profil: null, fsId: null, fs: null, schulen: [],
-  lehrer: [], schueler: [], termine: [], pruefungen: [], pruefungstermine: [], fcAbgaben: [], fahrzeuge: [], pakete: [],
+  lehrer: [], schueler: [], termine: [], pruefungen: [], pruefungstermine: [], fcAbgaben: [], verkaeufe: [], provisionen: [], fahrzeuge: [], pakete: [],
   geladenAm: null, ladeNr: 0
 };
 
@@ -70,7 +70,7 @@ const BEREICHE = [
   { id: "fristen", titel: "Fristen & Reaktivierung", gruppe: "Arbeit", render: renderFristen, nachher: bindeFristen, zahl: () => zaehleFristen().handeln || "" },
   { id: "kalender", titel: "Kalender", gruppe: "Planung", render: renderKalender, nachher: bindeKalender },
   { id: "schueler", titel: "Schüler", gruppe: "Planung", render: renderSchueler, nachher: bindeSchueler, zahl: () => S.schueler.filter((x) => !x.fahrlehrer_id).length || "" },
-  { id: "verkaeufe", titel: "Verkäufe & Provision", gruppe: "Geld", schritt: 6 },
+  { id: "verkaeufe", titel: "Verkäufe & Provision", gruppe: "Geld", render: renderVerkaeufe, nachher: bindeVerkaeufe, zahl: () => S.verkaeufe.filter((v) => v.status === "empfohlen").length || "" },
   { id: "zahlen", titel: "Zahlen", gruppe: "Geld", schritt: 7 },
   { id: "team", titel: "Fahrlehrer & Zugänge", gruppe: "Verwaltung", schritt: 9 },
   { id: "flotte", titel: "Fahrzeuge", gruppe: "Verwaltung", schritt: 9 },
@@ -142,6 +142,8 @@ function renderHeute() {
   if (pz.offeneHaken) aufgaben.push(`<a class="aufgabe gelb" href="#pruefungen"><b>${pz.offeneHaken}</b> Prüfung${pz.offeneHaken === 1 ? "" : "en"} in den nächsten 14 Tagen mit offenen Haken (Entgelt, TÜV, AS-Portal)</a>`);
   const fcOffen = fcOffeneAbgaben();
   if (fcOffen.length) aufgaben.push(`<a class="aufgabe gelb" href="#fahrchecks?z=vor"><b>${fcOffen.length}</b> Fahrcheck-Abgabe${fcOffen.length === 1 ? "" : "n"} für ${esc(datumDE(fcOffen[0].von))}–${esc(datumDE(fcOffen[0].bis))} noch nicht bestätigt</a>`);
+  const neuVerk = S.verkaeufe.filter((v) => v.status === "empfohlen").length;
+  if (neuVerk) aufgaben.push(`<a class="aufgabe" href="#verkaeufe"><b>${neuVerk}</b> neue Empfehlung${neuVerk === 1 ? "" : "en"} von Fahrlehrern (Akademie/Simulator): Zugang ausgeben, Zahlung eintragen</a>`);
   if (f.ohneDatum) aufgaben.push(`<a class="aufgabe" href="#fristen?ansicht=ohne"><b>${f.ohneDatum}</b> Schüler ohne Vertragsdatum</a>`);
   const todo = `<div class="karte"><div class="karte-kopf"><h2>Zu erledigen</h2></div>${aufgaben.length ? `<div class="aufgaben">${aufgaben.join("")}</div>` : `<p class="leer">Gerade ist nichts offen.</p>`}</div>`;
   return kacheln + todo + liste;
@@ -891,6 +893,169 @@ function fcAbgabeDialog(lehrerId) {
   feld.focus();
 }
 
+/* ---------- Verkäufe & Provision ---------- */
+const V_TYP = { akademie: "Fahr-Akademie", simulator: "Simulator-Flat" };
+const V_STATUS = { empfohlen: ["gelb", "empfohlen"], zugangsdaten_ausgegeben: ["blau", "Zugang ausgegeben"], bezahlt: ["gruen", "bezahlt"], storniert: ["", "storniert"] };
+function vkKonfig() { return ((S.fs && S.fs.konfiguration) || {}).akademieVermittlung || {}; }
+function vkVorschlag(typ) {
+  const c = vkKonfig();
+  const b = typ === "simulator" ? c.betragSimulator : c.betragAkademie;
+  return b != null && b !== "" ? Number(b) : (typ === "akademie" ? 100 : 149); // Akademie 100 € (Serband 08.10.2026), Simulator-Flat 149 € (Webseite)
+}
+function monatVon(iso) { return String(iso || "").slice(0, 7); }
+function renderVerkaeufe() {
+  const monat = fristenParam("monat") || KR.todayISO().slice(0, 7);
+  const lehrerF = fristenParam("lehrer");
+  const statusF = fristenParam("status");
+  let liste = S.verkaeufe.filter((v) => monatVon(v.erstellt_am) === monat || (v.status !== "bezahlt" && v.status !== "storniert"));
+  if (lehrerF) liste = liste.filter((v) => v.fahrlehrer_id === lehrerF);
+  if (statusF) liste = liste.filter((v) => v.status === statusF);
+  const bezahltMonat = S.verkaeufe.filter((v) => v.status === "bezahlt" && monatVon(v.aktualisiert_am || v.erstellt_am) === monat);
+  const umsatz = bezahltMonat.reduce((a, v) => a + Number(v.betrag || 0), 0);
+  const provOffen = S.provisionen.filter((p) => p.status === "offen");
+  const offenSumme = provOffen.reduce((a, p) => a + Number(p.betrag || 0), 0);
+  const monate = [...new Set([KR.todayISO().slice(0, 7), ...S.verkaeufe.map((v) => monatVon(v.erstellt_am))])].sort().reverse().slice(0, 12);
+  const monatName = (m) => KR.parseISO(m + "-01").toLocaleDateString("de-DE", { month: "long", year: "numeric" });
+  const zeilen = liste.map((v) => {
+    const [sf, st] = V_STATUS[v.status] || ["", v.status];
+    const anteil = v.aufteilung && v.aufteilung.fahrlehrer != null ? euro(v.aufteilung.fahrlehrer) : "–";
+    const knoepfe = [];
+    if (v.status === "empfohlen") knoepfe.push(`<button class="knopf klein" data-vzugang="${esc(v.id)}" type="button">Zugang ausgegeben</button>`);
+    if (v.status !== "bezahlt" && v.status !== "storniert") knoepfe.push(`<button class="knopf klein haupt" data-vbezahlt="${esc(v.id)}" type="button">Bezahlt</button>`);
+    if (v.status !== "storniert") knoepfe.push(`<button class="knopf klein" data-vstorno="${esc(v.id)}" type="button">${v.status === "bezahlt" ? "Zurücknehmen" : "Stornieren"}</button>`);
+    return `<tr>
+      <td><b>${esc(v.schueler_name || schuelerName(v.schueler_id))}</b><div class="unter">${esc(datumDE(String(v.erstellt_am).slice(0, 10)))} · ${v.fahrlehrer_id ? "von " + esc(v.fahrlehrer_name || lehrerName(v.fahrlehrer_id)) : "Büro"}</div></td>
+      <td><span class="marke-pill ${v.typ === "simulator" ? "blau" : "gruen"}">${esc(V_TYP[v.typ] || v.typ)}</span></td>
+      <td><span class="marke-pill ${sf}">${esc(st)}</span></td>
+      <td class="zahlspalte">${v.betrag != null ? euro(v.betrag) : "–"}</td>
+      <td class="zahlspalte nur-breit">${anteil}</td>
+      <td class="aktionen"><div class="aktionen-box">${knoepfe.join("")}</div></td></tr>`;
+  }).join("");
+  const provProLehrer = {};
+  for (const p of provOffen) provProLehrer[p.fahrlehrer_id] = (provProLehrer[p.fahrlehrer_id] || 0) + Number(p.betrag || 0);
+  const provZeilen = Object.entries(provProLehrer).map(([id, sum]) => `<tr><td><b>${esc(lehrerName(id))}</b></td>
+    <td class="zahlspalte">${S.provisionen.filter((p) => p.status === "offen" && p.fahrlehrer_id === id).length}</td><td class="zahlspalte"><b>${euro(sum)}</b></td>
+    <td class="aktionen"><div class="aktionen-box"><button class="knopf klein" data-pausz="${esc(id)}" type="button">Als ausgezahlt markieren</button></div></td></tr>`).join("");
+  const c = vkKonfig();
+  const splitText = KR.aufteilung(100, c.splitKollege)
+    ? (istAdmin() ? `Aufteilung je Verkauf: Fahrlehrer ${c.splitKollege.fahrlehrer} %, Fahrschule ${c.splitKollege.fahrschule} %, Plattform ${c.splitKollege.plattform} %, Akademie ${c.splitKollege.akademie} %.`
+      : `Provision für den vermittelnden Fahrlehrer: ${c.splitKollege.fahrlehrer} % des Betrags.`)
+    : "Die Aufteilung (Fahrlehrer, Fahrschule, Serband) ist noch nicht festgelegt. Bis dahin wird nur der Betrag gespeichert, ohne Provision.";
+  const sel = (id, opts) => `<select class="suche" id="${id}">${opts}</select>`;
+  return `<div class="kacheln">
+      <div class="kachel gruen"><div class="wert">${bezahltMonat.length}</div><div class="name">verkauft (bezahlt) im ${esc(monatName(monat))}</div></div>
+      <div class="kachel"><div class="wert">${euro(umsatz)}</div><div class="name">Umsatz Akademie & Simulator</div></div>
+      <div class="kachel gold"><div class="wert">${euro(offenSumme)}</div><div class="name">Provision an Fahrlehrer offen</div></div>
+      <div class="kachel${S.verkaeufe.filter((v) => v.status === "empfohlen").length ? " rot" : ""}"><div class="wert">${S.verkaeufe.filter((v) => v.status === "empfohlen").length}</div><div class="name">neue Empfehlungen</div></div>
+    </div>
+    <div class="karte">
+      <div class="karte-kopf"><div class="knopfreihe">
+        ${sel("vMonat", monate.map((m) => `<option value="${m}"${m === monat ? " selected" : ""}>${esc(monatName(m))}</option>`).join(""))}
+        ${sel("vLehrer", `<option value="">Alle Fahrlehrer</option>` + S.lehrer.map((l) => `<option value="${esc(l.id)}"${l.id === lehrerF ? " selected" : ""}>${esc(l.name || l.email)}</option>`).join(""))}
+        ${sel("vStatus", `<option value="">Alle Stände</option>` + Object.entries(V_STATUS).map(([k, [, n]]) => `<option value="${k}"${k === statusF ? " selected" : ""}>${n}</option>`).join(""))}
+      </div><button class="knopf haupt" id="vNeu" type="button">+ Verkauf erfassen</button></div>
+      <p class="leise klein">Fahrlehrer empfehlen in ihrer App („Akademie empfehlen“, „Simulator empfehlen“). Hier sieht das Büro, von wem es kam, gibt den Zugang aus und trägt die Zahlung ein. Bei „bezahlt“ wird die Provision des Fahrlehrers automatisch gebucht.</p>
+      ${liste.length ? `<table class="tabelle"><thead><tr><th>Schüler</th><th>Was</th><th>Stand</th><th class="zahlspalte">Betrag</th><th class="zahlspalte nur-breit">Provision</th><th></th></tr></thead><tbody>${zeilen}</tbody></table>` : `<p class="leer">Keine Verkäufe in dieser Auswahl.</p>`}
+      <p class="leise klein">${esc(splitText)}</p>
+    </div>
+    <div class="karte"><h2>Offene Provisionen der Fahrlehrer</h2>
+      ${provZeilen ? `<table class="tabelle"><thead><tr><th>Fahrlehrer</th><th class="zahlspalte">Verkäufe</th><th class="zahlspalte">Summe</th><th></th></tr></thead><tbody>${provZeilen}</tbody></table>` : `<p class="leer">Keine offenen Provisionen.</p>`}
+    </div>`;
+}
+function bindeVerkaeufe(ziel) {
+  ziel.querySelector("#vMonat").addEventListener("change", (e) => setzeFilter("verkaeufe", { monat: e.target.value }));
+  ziel.querySelector("#vLehrer").addEventListener("change", (e) => setzeFilter("verkaeufe", { lehrer: e.target.value }));
+  ziel.querySelector("#vStatus").addEventListener("change", (e) => setzeFilter("verkaeufe", { status: e.target.value }));
+  ziel.querySelector("#vNeu").addEventListener("click", verkaufNeuDialog);
+  ziel.querySelectorAll("[data-vzugang]").forEach((b) => b.addEventListener("click", () => verkaufStatus(b.dataset.vzugang, { status: "zugangsdaten_ausgegeben" }, "Zugang als ausgegeben vermerkt")));
+  ziel.querySelectorAll("[data-vbezahlt]").forEach((b) => b.addEventListener("click", () => verkaufBezahltDialog(b.dataset.vbezahlt)));
+  ziel.querySelectorAll("[data-vstorno]").forEach((b) => b.addEventListener("click", () => verkaufStorno(b.dataset.vstorno)));
+  ziel.querySelectorAll("[data-pausz]").forEach((b) => b.addEventListener("click", () => provisionAusgezahlt(b.dataset.pausz)));
+}
+async function verkaufStatus(id, werte, meldung) {
+  werte.aktualisiert_am = new Date().toISOString();
+  const res = await supa.from("fahrschule_empfehlungen").update(werte).eq("id", id).select("*");
+  if (res.error || !res.data || !res.data.length) { toast("Nicht gespeichert: " + (res.error ? res.error.message : "keine Berechtigung"), true); return null; }
+  const i = S.verkaeufe.findIndex((v) => v.id === id);
+  if (i >= 0) S.verkaeufe[i] = res.data[0];
+  if (meldung) { toast(meldung); zeichne(); }
+  return res.data[0];
+}
+function verkaufBezahltDialog(id) {
+  const v = S.verkaeufe.find((x) => x.id === id);
+  if (!v) return;
+  const split = vkKonfig().splitKollege;
+  const body = `<p>${esc(V_TYP[v.typ] || v.typ)} für <b>${esc(v.schueler_name || schuelerName(v.schueler_id))}</b>${v.fahrlehrer_id ? ", vermittelt von " + esc(v.fahrlehrer_name || lehrerName(v.fahrlehrer_id)) : ""}.</p>
+    <div class="formular"><label>Bezahlter Betrag (€)<input type="number" name="betrag" min="0" step="1" value="${vkVorschlag(v.typ)}" required></label></div>
+    <div id="vSplit" class="split"></div>`;
+  const dlg = oeffneDialog("Zahlung eintragen", body, async (form) => {
+    const betrag = Number(form.betrag.value);
+    if (!(betrag >= 0) || form.betrag.value === "") { toast("Bitte den Betrag eintragen.", true); return false; }
+    const auf = v.fahrlehrer_id ? KR.aufteilung(betrag, split) : null;
+    const neu = await verkaufStatus(id, { status: "bezahlt", betrag, aufteilung: auf });
+    if (!neu) return false;
+    if (auf && auf.fahrlehrer > 0 && !S.provisionen.some((p) => p.empfehlung_id === id || (p.schueler_id === v.schueler_id && p.typ === v.typ && p.fahrlehrer_id === v.fahrlehrer_id))) {
+      const res = await supa.from("provisionen").insert({ fahrlehrer_id: v.fahrlehrer_id, fahrschule_id: S.fsId, typ: v.typ, schueler_id: v.schueler_id, betrag: auf.fahrlehrer, status: "offen" }).select("*");
+      if (res.error) toast("Zahlung gespeichert, Provision aber nicht: " + res.error.message, true);
+      else S.provisionen.unshift(res.data[0]);
+    }
+    if (v.typ === "simulator" && v.schueler_id) await supa.from("schueler").update({ hat_simulator: true }).eq("id", v.schueler_id);
+    toast(auf ? `Bezahlt. Provision ${euro(auf.fahrlehrer)} für ${lehrerName(v.fahrlehrer_id)} gebucht.` : "Bezahlt eingetragen");
+    zeichne();
+    return true;
+  }, "Bezahlt speichern");
+  const feld = dlg.querySelector("input[name=betrag]");
+  const zeig = () => {
+    const box = dlg.querySelector("#vSplit");
+    if (!v.fahrlehrer_id) { box.innerHTML = `<p class="leise klein">Direktverkauf durch das Büro: keine Provision.</p>`; return; }
+    const a = KR.aufteilung(Number(feld.value || 0), split);
+    box.innerHTML = a ? `<table class="tabelle"><tbody>
+        <tr><td>${esc(v.fahrlehrer_name || lehrerName(v.fahrlehrer_id))} (Provision)</td><td class="zahlspalte"><b>${euro(a.fahrlehrer)}</b></td></tr>
+        <tr><td>Fahrschule</td><td class="zahlspalte">${euro(a.fahrschule)}</td></tr>
+        ${istAdmin() ? `<tr><td>Plattform</td><td class="zahlspalte">${euro(a.plattform)}</td></tr><tr><td>Akademie</td><td class="zahlspalte">${euro(a.akademie)}</td></tr>` : ""}
+      </tbody></table>` : `<p class="leise klein">Aufteilung noch nicht festgelegt: Betrag wird gespeichert, Provision nicht.</p>`;
+  };
+  feld.addEventListener("input", zeig);
+  zeig();
+}
+async function verkaufStorno(id) {
+  const v = S.verkaeufe.find((x) => x.id === id);
+  if (!v) return;
+  const war = v.status === "bezahlt";
+  if (!(await bestaetige(war ? "Zahlung zurücknehmen?" : "Empfehlung stornieren?", war ? "Betrag und Aufteilung werden zurückgesetzt. Eine schon gebuchte Provision bitte bei „Offene Provisionen“ prüfen." : "Die Empfehlung wird als storniert markiert.", "Ja"))) return;
+  await verkaufStatus(id, { status: "storniert", betrag: null, aufteilung: null }, war ? "Zurückgenommen" : "Storniert");
+}
+async function provisionAusgezahlt(lehrerId) {
+  const offen = S.provisionen.filter((p) => p.status === "offen" && p.fahrlehrer_id === lehrerId);
+  const summe = offen.reduce((a, p) => a + Number(p.betrag || 0), 0);
+  if (!(await bestaetige("Provision ausgezahlt?", `${euro(summe)} an ${lehrerName(lehrerId)} (${offen.length} Verkäufe) als ausgezahlt markieren?`, "Ja, ausgezahlt"))) return;
+  const res = await supa.from("provisionen").update({ status: "ausgezahlt" }).in("id", offen.map((p) => p.id)).select("id");
+  if (res.error) { toast("Nicht gespeichert: " + res.error.message, true); return; }
+  offen.forEach((p) => { p.status = "ausgezahlt"; });
+  toast(`${euro(summe)} als ausgezahlt vermerkt`);
+  zeichne();
+}
+function verkaufNeuDialog() {
+  const body = `<div class="formular">
+      <label class="voll">Schüler<select name="schueler_id" required><option value="">– bitte wählen –</option>${schuelerOptionen("")}</select></label>
+      <label>Was<select name="typ"><option value="akademie">Fahr-Akademie</option><option value="simulator">Simulator-Flat</option></select></label>
+      <label>Verkauft von<select name="fahrlehrer_id"><option value="">Büro (keine Provision)</option>${S.lehrer.map((l) => `<option value="${esc(l.id)}">${esc(l.name || l.email)}</option>`).join("")}</select></label>
+    </div>`;
+  oeffneDialog("Verkauf erfassen", body, async (form) => {
+    const d = Object.fromEntries(new FormData(form).entries());
+    if (!d.schueler_id) { toast("Bitte einen Schüler wählen.", true); return false; }
+    const doppelt = S.verkaeufe.find((v) => v.schueler_id === d.schueler_id && v.typ === d.typ && v.status !== "storniert");
+    if (doppelt && !(await bestaetige("Schon vorhanden", `Für diesen Schüler gibt es schon einen Eintrag (${V_STATUS[doppelt.status][1]}). Trotzdem neu anlegen?`, "Ja"))) return false;
+    const res = await supa.from("fahrschule_empfehlungen").insert({
+      fahrschule_id: S.fsId, schueler_id: d.schueler_id, schueler_name: schuelerName(d.schueler_id), typ: d.typ, status: "empfohlen",
+      fahrlehrer_id: d.fahrlehrer_id || null, fahrlehrer_name: d.fahrlehrer_id ? lehrerName(d.fahrlehrer_id) : null,
+    }).select("*");
+    if (res.error || !res.data || !res.data.length) { toast("Nicht gespeichert: " + (res.error ? res.error.message : "keine Berechtigung"), true); return false; }
+    S.verkaeufe.unshift(res.data[0]);
+    toast("Verkauf erfasst"); zeichne(); return true;
+  });
+}
+
 /* ---------- Dialoge ---------- */
 function oeffneDialog(titel, inhalt, speichern, knopfText) {
   const dlg = document.createElement("dialog");
@@ -929,7 +1094,7 @@ async function ladeDaten() {
   const fsId = S.fsId;
   setStatus("", "lade …");
   try {
-    const [fs, lehrer, schueler, termine, pruefungen, fahrzeuge, pakete, pTermine, fcAbg] = await Promise.all([
+    const [fs, lehrer, schueler, termine, pruefungen, fahrzeuge, pakete, pTermine, fcAbg, verk, prov] = await Promise.all([
       supa.from("fahrschulen").select("*").eq("id", fsId).single(),
       supa.from("profiles").select("*").eq("fahrschule_id", fsId).in("rolle", ["fahrlehrer", "super_admin"]).order("name"),
       supa.from("schueler").select("*").eq("fahrschule_id", fsId).neq("status", "geloescht").order("name"),
@@ -939,6 +1104,8 @@ async function ladeDaten() {
       supa.from("fahrschule_pakete").select("*").eq("fahrschule_id", fsId),
       supa.from("pruefungstermine").select("*").eq("fahrschule_id", fsId).gte("datum", KR.addDaysISO(KR.todayISO(), -120)).order("datum").order("von"),
       supa.from("fc_abgaben").select("*").eq("fahrschule_id", fsId).gte("zeitraum_von", KR.addDaysISO(KR.todayISO(), -200)).order("bestaetigt_am", { ascending: false }),
+      supa.from("fahrschule_empfehlungen").select("*").eq("fahrschule_id", fsId).order("erstellt_am", { ascending: false }).limit(1000),
+      supa.from("provisionen").select("*").eq("fahrschule_id", fsId).order("erstellt_am", { ascending: false }).limit(2000),
     ]);
     if (nr !== S.ladeNr) return; // inzwischen wurde neu geladen oder die Fahrschule gewechselt
     S.fs = pruefe(fs, "Fahrschule");
@@ -950,6 +1117,8 @@ async function ladeDaten() {
     S.pakete = pruefe(pakete, "Pakete") || [];
     S.pruefungstermine = pruefe(pTermine, "Prüfungstafel") || [];
     S.fcAbgaben = pruefe(fcAbg, "Fahrcheck-Abgaben") || [];
+    S.verkaeufe = pruefe(verk, "Verkäufe") || [];
+    S.provisionen = pruefe(prov, "Provisionen") || [];
     S.geladenAm = new Date();
     $("schulName").textContent = S.fs ? S.fs.name : "";
     setStatus("ok", "verbunden · " + S.geladenAm.toLocaleTimeString("de-DE", { hour: "2-digit", minute: "2-digit" }));

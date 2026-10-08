@@ -270,6 +270,27 @@ for (const [breite, hoehe] of [[1920, 1080], [1366, 768], [1024, 768]]) {
   await ctx.close();
 }
 
+// 4f) Verkäufe: bezahlt bucht Provision, ausgezahlt
+{
+  const { page, ctx, konsole } = await oeffne({ nutzer: "bu-1", hash: "#verkaeufe", breite: 1920, hoehe: 1080 });
+  await page.click('[data-vbezahlt="e1"]');
+  await page.waitForSelector("#vSplit table");
+  await page.click("dialog button[value=ok]");
+  await page.waitForTimeout(400);
+  const e1 = await page.evaluate(() => window.__FAKE.tabellen.fahrschule_empfehlungen.find((e) => e.id === "e1"));
+  if (e1.status !== "bezahlt" || e1.betrag !== 100 || e1.aufteilung.fahrlehrer !== 15) fehler("Verkauf: bezahlt falsch " + JSON.stringify(e1));
+  const pv = await page.evaluate(() => window.__FAKE.tabellen.provisionen.filter((p) => p.fahrlehrer_id === "fl-1" && p.status === "offen").length);
+  if (pv !== 2) fehler("Verkauf: Provision nicht gebucht (" + pv + ")");
+  if (FOTOS) await page.screenshot({ path: join(FOTOS, "verkaeufe.png"), fullPage: true });
+  await page.click('[data-pausz="fl-1"]');
+  await page.click("dialog button[value=ok]");
+  await page.waitForTimeout(300);
+  const offen = await page.evaluate(() => window.__FAKE.tabellen.provisionen.filter((p) => p.status === "offen").length);
+  if (offen !== 0) fehler("Provision: ausgezahlt nicht gespeichert");
+  if (konsole.length) fehler("Verkäufe: Konsole: " + konsole.join(" | "));
+  await ctx.close();
+}
+
 // 5) Super-Admin sieht die Auswahl der Fahrschule
 {
   const { page, ctx } = await oeffne({ nutzer: "sa-1" });
