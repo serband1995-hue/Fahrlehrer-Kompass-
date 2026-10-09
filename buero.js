@@ -1216,7 +1216,7 @@ function renderTeam() {
   const buero = S.team.filter((p) => p.rolle === "buero" || p.rolle === "fahrschule_admin");
   return `<div class="karte"><div class="karte-kopf"><h2>Fahrlehrer (${lehrer.length})</h2>${admin ? '<button class="knopf haupt" id="tNeuFl" type="button">+ Fahrlehrer anlegen</button>' : ""}</div>
       <table class="tabelle"><thead><tr><th>Name</th><th>Rolle</th><th class="zahlspalte">Schüler</th><th class="zahlspalte">UE im Monat</th><th>Zugang</th><th></th></tr></thead><tbody>${lehrer.map((p) => zeile(p, true)).join("")}</tbody></table></div>
-    <div class="karte"><div class="karte-kopf"><h2>Büro und Leitung</h2>${admin ? '<button class="knopf" id="tNeuBu" type="button">+ Büro-Zugang anlegen</button>' : ""}</div>
+    <div class="karte"><div class="karte-kopf"><h2>Büro und Leitung</h2>${admin ? `<button class="knopf" id="tNeuBu" type="button">+ ${S.profil.rolle === "super_admin" ? "Büro- oder Leitungs-Zugang" : "Büro-Zugang"} anlegen</button>` : ""}</div>
       ${buero.length ? `<table class="tabelle"><thead><tr><th>Name</th><th>Rolle</th><th>Zugang</th><th></th></tr></thead><tbody>${buero.map((p) => zeile(p, false)).join("")}</tbody></table>` : `<p class="leer">Keine weiteren Zugänge sichtbar.</p>`}
       ${admin ? "" : `<p class="leise klein">Zugänge anlegen, sperren und Passwörter zurücksetzen darf die Fahrschul-Leitung.</p>`}</div>`;
 }
@@ -1237,9 +1237,14 @@ function zeigePasswort(email, passwort) {
   }, "Kopieren und schließen");
 }
 function zugangDialog(rolle) {
-  oeffneDialog(rolle === "buero" ? "Büro-Zugang anlegen" : "Fahrlehrer anlegen", `<div class="formular">
+  // Super-Admin kann auch die Fahrschul-Leitung (Inhaber, Prokuristin) anlegen
+  const wahl = rolle === "buero" && S.profil.rolle === "super_admin"
+    ? `<label class="voll">Rolle<select name="rolle"><option value="buero">Büro</option><option value="fahrschule_admin">Fahrschul-Leitung (Inhaber, Prokura)</option></select></label>` : "";
+  oeffneDialog(rolle === "buero" ? "Zugang für Büro oder Leitung anlegen" : "Fahrlehrer anlegen", `<div class="formular">
       <label class="voll">E-Mail<input type="email" name="email" required></label>
-      <label class="voll">Name<input type="text" name="name" maxlength="100"></label></div>`, async (form) => {
+      <label class="voll">Name<input type="text" name="name" maxlength="100"></label>${wahl}</div>
+      <p class="leise klein">Das Passwort erscheint danach einmal zum Weitergeben. Die Person kann es später über „Passwort vergessen?“ selbst ändern.</p>`, async (form) => {
+    if (form.rolle) rolle = form.rolle.value;
     const email = form.email.value.trim(), name = form.name.value.trim();
     if (!email) { toast("Bitte eine E-Mail eintragen.", true); return false; }
     try {
