@@ -76,6 +76,7 @@
       </div>
       <button class="knopf klein" id="abmelden" type="button">Abmelden</button>
     </div>
+    <div class="wer-zeile" id="werZeile" hidden>Bedient: <b id="werAnzeige"></b> <button type="button" class="textknopf" id="werWechseln">wechseln</button></div>
     <div class="seite-links"><a class="knopf klein" id="zurApp" href="index.html">← Zur Fahrlehrer-Ansicht (Kompass-App)</a></div>
     <button class="knopf klein installieren" id="installieren" type="button" hidden>Als App auf diesem PC installieren</button>
   </aside>
@@ -90,6 +91,17 @@
     </header>
     <section id="ansicht" class="ansicht" tabindex="-1"></section>
   </main>
+</div>
+
+<!-- Gemeinsamer Büro-Zugang: wer bedient gerade? (erscheint beim Start und nach 20 Minuten ohne Eingabe) -->
+<div id="wer" class="wer" hidden role="dialog" aria-modal="true" aria-labelledby="werTitel">
+  <div class="wer-karte">
+    <h2 id="werTitel">Wer bedient gerade?</h2>
+    <p class="leise">Dein Name steht bei jeder Änderung im Protokoll.</p>
+    <div class="wer-liste" id="werListe"></div>
+    <form class="wer-anderer" id="werAnderer"><input id="werName" maxlength="30" placeholder="Anderer Name" autocomplete="off" aria-label="Anderer Name"><button class="knopf" type="submit">Weiter</button></form>
+    <button class="textknopf" type="button" data-abmelden>Abmelden</button>
+  </div>
 </div>
 
 <div id="toast" class="toast" role="status" aria-live="polite"></div>
