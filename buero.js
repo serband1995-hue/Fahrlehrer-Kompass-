@@ -244,7 +244,7 @@ function wartDaten() {
   const heute = KR.todayISO(), fahr = {}, pruef = {};
   for (const t of S.termine) {
     if (!t.schueler_id) continue;
-    if (KR.FAHR_ARTEN.includes(t.art) && t.status !== "abgebrochen" && t.status !== "nicht erschienen") { if (!fahr[t.schueler_id] || t.datum > fahr[t.schueler_id]) fahr[t.schueler_id] = t.datum; }
+    if (KR.FAHR_ARTEN.includes(t.art) && t.status !== "abgebrochen" && t.status !== "nicht erschienen") { const z = t.datum + "T" + (t.von || "23:59"); if (!fahr[t.schueler_id] || z > fahr[t.schueler_id]) fahr[t.schueler_id] = z; }
     if (t.art === "pruefung" && t.datum >= heute && t.status !== "abgesagt") pruef[t.schueler_id] = true;
   }
   for (const p of S.pruefungstermine) if (p.art === "praxis" && p.datum >= heute && !["abgesagt", "bestanden", "nicht_bestanden"].includes(p.status)) pruef[p.schueler_id] = true;
@@ -918,7 +918,7 @@ function renderSchueler() {
         <input type="search" class="suche" id="sSuche" placeholder="Name oder Telefon suchen" value="${esc(fristenParam("suche"))}" aria-label="Schüler suchen"></div>
       <button class="knopf haupt" id="sNeu" type="button">+ Schüler anlegen</button>
     </div>
-    <p class="leise klein">${liste.length} Schüler${sicht === "inaktiv" ? " (Archiv: bestanden oder nicht mehr dabei; überall ausgeblendet, zählen nicht bei Fristen, Reaktivierung und Auslastung)" : ""}${sicht === "warte" ? " (warten auf Theorie oder Praxisprüfung; zählen nicht in der Auslastung. Sobald neue Fahrstunden oder ein Prüfungstermin eingetragen sind, sind sie wieder aktiv.)" : ""}</p>
+    <p class="leise klein">${liste.length} Schüler${sicht === "inaktiv" ? " (Archiv: bestanden oder nicht mehr dabei; überall ausgeblendet, zählen nicht bei Fristen, Reaktivierung und Auslastung)" : ""}${sicht === "warte" ? " (warten auf Theorie oder Praxisprüfung; zählen nicht in der Auslastung. Wer auf die Praxisprüfung wartet, ist wieder aktiv, sobald eine neue Fahrstunde oder ein Prüfungstermin im Kalender steht. Die Pause „wartet auf Theorie“ hebt der Fahrlehrer in seiner App auf. Prüfungstermine, die ein Fahrlehrer nur in seiner App einträgt, sieht das Büro erst, wenn sie im Kalender stehen.)" : ""}</p>
     ${liste.length ? `<table class="tabelle schuelertab"><thead><tr><th>Schüler</th><th>Fahrlehrer</th><th class="nur-sehr-breit">Klasse</th><th>Ausbildungsstand</th><th class="nur-sehr-breit">Nächster Termin</th><th>Reaktivierung</th><th></th></tr></thead><tbody>${zeilen}</tbody></table>` : `<p class="leer">${sicht === "inaktiv" ? "Das Archiv ist leer." : sicht === "warte" ? "Niemand steht auf der Warteliste." : "Keine Schüler gefunden."}</p>`}
   </div>`;
 }
@@ -1074,6 +1074,7 @@ function bindeAufgabenBlock(dlg, sid) {
     neu();
   };
   const bind = () => {
+    block.querySelector("#agDatum").addEventListener("keydown", (e) => { if (e.key === "Enter") e.preventDefault(); }); // Enter soll nicht das ganze Schüler-Fenster absenden
     block.querySelector("#agSpeichern").addEventListener("click", (e) => anlegen(false, e.target));
     block.querySelector("#agHeute").addEventListener("click", (e) => anlegen(true, e.target));
     block.querySelectorAll("[data-agheute]").forEach((b) => b.addEventListener("click", async () => {
