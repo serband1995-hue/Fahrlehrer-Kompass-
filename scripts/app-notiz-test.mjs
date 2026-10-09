@@ -97,6 +97,16 @@ if (box !== 3) fehler("Abschnitt „Wartet“ zeigt " + box + " statt 3 Schüler
 const oben = await page.evaluate(() => [...document.querySelectorAll("#studentGrid > .s-card, #studentGrid .alpha-anchor ~ .s-card")].filter((c) => !c.closest("#wartendBox")).map((c) => c.dataset.id).sort().join());
 if (oben !== "a1,a5,a6") fehler("Liste oben zeigt falsche Schüler: " + oben);
 if (/Archiv Schüler/.test(await page.textContent("#studentGrid"))) fehler("Archivierter Schüler steht in der Schülerliste");
+// Gleicher Tag: Theorie um 10 Uhr, Fahrstunde um 14 Uhr zählt; Fahrstunde um 08 Uhr nicht
+const gleicherTag = await page.evaluate(() => {
+  const d = new Date(); d.setHours(10, 0, 0, 0); const wann = d.toISOString(), heute = todayISO();
+  DB.students = [{ id: "g1", name: "G", ready: wann }];
+  DB.lessons = [{ id: "g", sid: "g1", date: heute, von: "08:00", bis: "09:30", art: "fahrstunde", status: "geplant" }];
+  const frueh = wartetBuero(DB.students[0]);
+  DB.lessons = [{ id: "g", sid: "g1", date: heute, von: "14:00", bis: "15:30", art: "fahrstunde", status: "geplant" }];
+  return [frueh, wartetBuero(DB.students[0])].join();
+});
+if (gleicherTag !== "praxis,") fehler("Wartelisten-Regel am selben Tag falsch: " + gleicherTag);
 if (konsole.length) fehler("Konsole: " + konsole.join(" | "));
 await browser.close(); server.close();
 console.log(probleme ? `App-Notiz-Test: ${probleme} Problem(e).` : "App-Notiz-Test: alles in Ordnung.");

@@ -168,16 +168,24 @@
        theorie       : Fahrlehrer hat „Pausiert – wartet auf Theorie“ gesetzt, Theorie noch nicht bestanden
        nach_theorie  : Theorie bestanden (Pause war gesetzt), aber noch keine neue Fahrstunde gebucht
        praxis        : auf der Praxis-Warteliste (prüfungsreif), weder Fahrstunde danach noch Prüfungstermin
-     Sobald ein Prüfungstermin (Praxis) oder eine Fahrstunde nach dem Wartedatum eingetragen ist, ist er wieder aktiv.
-     a = Feld „ausbildung“ des Schülers; k = { pruefungstermin: Ja/Nein, fahrstundeNach(datumISO): Ja/Nein }. */
+     Sobald ein Prüfungstermin (Praxis) oder eine Fahrstunde nach dem Wartezeitpunkt eingetragen ist, ist er wieder aktiv
+     (Ausnahme „theorie“: die Pause endet, wenn der Fahrlehrer sie in der App aufhebt oder die Theorie als bestanden einträgt).
+     a = Feld „ausbildung“ des Schülers; k = { pruefungstermin: Ja/Nein, fahrstundeNach(lokaleMinute „JJJJ-MM-TTTHH:MM“): Ja/Nein }. */
   const FAHR_ARTEN = ["fahrstunde", "sonder", "nacht"];
+  // Zeitpunkt (UTC-Text aus der App) als lokale Minute „JJJJ-MM-TTTHH:MM“; so lassen sich Fahrstunden am selben Tag richtig einordnen
+  function lokalMinute(v) {
+    const d = new Date(v);
+    if (isNaN(d.getTime())) return String(v).slice(0, 10) + "T00:00";
+    return dateISO(d) + "T" + pad2(d.getHours()) + ":" + pad2(d.getMinutes());
+  }
   function wartetInfo(a, k) {
+    k = k || {};
     if (!a || a.passed) return "";
-    const tag = (v) => String(v).slice(0, 10);
+    const nach = (v) => typeof k.fahrstundeNach === "function" && k.fahrstundeNach(lokalMinute(v));
     if (a.theorieWait && !a.theoryPassed) return "theorie";
-    if (k && k.pruefungstermin) return "";
-    if (a.theorieWaitBis && !k.fahrstundeNach(tag(a.theorieWaitBis))) return "nach_theorie";
-    if (a.ready && !k.fahrstundeNach(tag(a.ready))) return "praxis";
+    if (k.pruefungstermin) return "";
+    if (a.theorieWaitBis && !nach(a.theorieWaitBis)) return "nach_theorie";
+    if (a.ready && !nach(a.ready)) return "praxis";
     return "";
   }
 

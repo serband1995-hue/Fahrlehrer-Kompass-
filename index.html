@@ -3700,7 +3700,7 @@ function nameVergleich(n) {
 }
 // Findet zu einer Online-Buchung den Schüler - nur bei eindeutigem Treffer, sonst bleibt es beim Namen.
 function schuelerZuBuchung(r) {
-  const liste = DB.students || [];
+  const liste = (DB.students || []).filter(s => !istArchiviert(s));
   const tel = telVergleich(r.schueler_telefon);
   if (tel) {
     const t = liste.filter(s => telVergleich(s.telefon) === tel);
@@ -6239,7 +6239,7 @@ function ensure(s){ if(!s.plan) s.plan=newPlan(); if(!s.plan.sonder) s.plan.sond
 function seedHash(s){return JSON.stringify([s.name||"",s.form||"",s.beginn||"",s.next||"",s.nextDate||"",s.nextTime||"",s.notiz||"",s.profil||null,s.bogen||null,s.plan||null]);}
 const SEED=[];
 (function seedSync(){try{let changed=false;SEED.forEach(seed=>{const h=seedHash(seed);const i=DB.students.findIndex(x=>(x.name||"").trim()===(seed.name||"").trim());if(i<0){const c=JSON.parse(JSON.stringify(seed));c._seedHash=h;DB.students.push(c);changed=true;return;}const ex=DB.students[i];const exHash=seedHash(ex);const untouched=(ex._seedHash===undefined)||(ex._seedHash===exHash);if(untouched&&exHash!==h){const c=JSON.parse(JSON.stringify(seed));c._seedHash=h;c.id=ex.id;c.created=ex.created||c.created;DB.students[i]=c;changed=true;}else if(ex._seedHash===undefined&&exHash===h){ex._seedHash=h;changed=true;}});if(changed)save();}catch(e){}})();
-(function theoryWaitSync(){try{let ch=false;DB.students.forEach(s=>{ensure(s);const t=s.plan&&s.plan.theorie;if(t&&!s.theoryPassed){s.theoryPassed=s.created?new Date(s.created).toISOString():new Date().toISOString();ch=true;}if(t&&stand(s)>=90&&!s.ready&&!s.passed){s.ready=s.theoryPassed;ch=true;}});if(ch)save();}catch(e){}})();
+(function theoryWaitSync(){try{let ch=false;DB.students.forEach(s=>{ensure(s);const t=s.plan&&s.plan.theorie;if(t&&!s.theoryPassed){s.theoryPassed=s.created?new Date(s.created).toISOString():new Date().toISOString();if(s.theorieWait){s.theorieWaitBis=new Date().toISOString();delete s.theorieWait;}ch=true;}if(t&&stand(s)>=90&&!s.ready&&!s.passed){s.ready=s.theoryPassed;ch=true;}});if(ch)save();}catch(e){}})();
 
 
 
@@ -11479,7 +11479,7 @@ function activeStudents(){return DB.students.filter(s=>!s.passed&&!istArchiviert
 function wartetBuero(s){
   if(_fsAgg||!window.KR||typeof KR.wartetInfo!=="function")return "";
   let letzte="";
-  (DB.lessons||[]).forEach(l=>{ if(l.sid===s.id&&KR.FAHR_ARTEN.includes(l.art||"fahrstunde")&&l.status!=="abgebrochen"&&l.status!=="nicht erschienen"&&l.date>letzte)letzte=l.date; });
+  (DB.lessons||[]).forEach(l=>{ if(l.sid===s.id&&KR.FAHR_ARTEN.includes(l.art||"fahrstunde")&&l.status!=="abgebrochen"&&l.status!=="nicht erschienen"){ const z=l.date+"T"+(l.von||"23:59"); if(z>letzte)letzte=z; } });
   const heute=todayISO(), hatPruefung=!!terminFor(s.id)||(DB.lessons||[]).some(l=>l.sid===s.id&&l.art==="pruefung"&&l.date>=heute&&l.status!=="abgebrochen");
   return KR.wartetInfo(s,{pruefungstermin:hatPruefung,fahrstundeNach:iso=>!!letzte&&letzte>iso});
 }
@@ -12496,7 +12496,7 @@ function capacityStats(){
   const avgPerStudent=1.5; // Schnitt 1-2× pro Woche
   // Aktiv fahrende Schüler: nicht passed, kein Theorie-Wait, nicht prüfungsreif/Warteliste, >=1%, kein Dummy
   const fahrend=DB.students.filter(s=>{
-    if(s.passed)return false;
+    if(s.passed||istArchiviert(s))return false;
     if(isDummyStudent(s))return false;
     if(s.theorieWait&&!s.theoryPassed)return false; // wartet auf Theorie
     if(s.ready)return false;                          // prüfungsreif/Warteliste → fährt kaum noch
@@ -13829,7 +13829,7 @@ function getMorgenPruefungen(){
 // Schüler, die heute Geburtstag haben (Bereich 3, Punkt 6) - Tag+Monat verglichen, Jahr egal
 function getGeburtstageHeute(){
   const heute=todayISO(); const md=heute.slice(5); // "MM-DD"
-  return (DB.students||[]).filter(s=>s.geburtsdatum&&s.geburtsdatum.slice(5)===md);
+  return (DB.students||[]).filter(s=>!istArchiviert(s)&&s.geburtsdatum&&s.geburtsdatum.slice(5)===md);
 }
 
 function updateBell(){
