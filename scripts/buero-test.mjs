@@ -529,7 +529,7 @@ for (const [breite, hoehe] of [[1920, 1080], [1366, 768], [1024, 768]]) {
   await page.click("[data-sbearb]");
   if (await page.isVisible("dialog input[name=aktiv]") === false && !(await page.$("dialog input[name=aktiv]"))) fehler("Aktiv-Schalter fehlt");
   await page.click("dialog .schalter-bahn");
-  if (!/Inaktiv/.test(await page.textContent("#aktivText"))) fehler("Aktiv-Schalter zeigt nicht „Inaktiv“");
+  if (!/Archiv/.test(await page.textContent("#aktivText"))) fehler("Aktiv-Schalter zeigt nicht „Im Archiv“");
   await page.click("dialog button[value=ok]");
   await page.waitForTimeout(400);
   const ina = await page.evaluate(() => window.__FAKE.tabellen.schueler.find((x) => x.name === "Test Schüler").inaktiv_seit);
@@ -538,7 +538,7 @@ for (const [breite, hoehe] of [[1920, 1080], [1366, 768], [1024, 768]]) {
   await page.goto(page.url().split("#")[0] + "#schueler?sicht=inaktiv");
   await page.waitForTimeout(400);
   const inaktive = await page.$$eval(".schuelertab tbody tr", (r) => r.length);
-  if (inaktive < 1) fehler("Reiter „Inaktiv“ zeigt keine Schüler");
+  if (inaktive < 1) fehler("Reiter „Archiv“ zeigt keine Schüler");
   await pruefeLayout(page, "Schüler inaktiv");
   // Wieder aktiv
   await page.fill("#sSuche", "Test Schüler");
@@ -704,6 +704,49 @@ for (const [breite, hoehe] of [[1920, 1080], [1366, 768], [1024, 768]]) {
   await page.click("[data-notizerledigt]"); await page.waitForTimeout(300);
   if (!(await page.evaluate(() => window.__FAKE.tabellen.schueler_notizen[0].erledigt_am))) fehler("Notiz „Erledigt“ nicht gespeichert");
   await page.click("dialog [data-schliessen] >> nth=0");
+  // Interne Aufgaben je Schüler und „Heute zu tun“
+  await page.click("[data-sbearb] >> nth=0");
+  await page.fill("#agText", "Unterlagen nachfordern");
+  await pruefeLayout(page, "Aufgaben-Block");
+  await page.click("#agHeute"); await page.waitForTimeout(300);
+  await page.fill("#agText", "Später anrufen");
+  await page.fill("#agDatum", "2999-01-01");
+  await page.click("#agSpeichern"); await page.waitForTimeout(300);
+  const ag = await page.evaluate(() => (window.__FAKE.tabellen.schueler_aufgaben || []).map((a) => [a.text, a.heute, a.faellig_am]));
+  if (ag.length !== 2 || !ag.some((a) => a[0] === "Unterlagen nachfordern" && a[1] === true)) fehler("Aufgaben nicht gespeichert: " + JSON.stringify(ag));
+  await page.fill("#agText", "Nicht gespeichert");
+  await page.click("dialog button[value=ok]"); await page.waitForTimeout(200);
+  if (!(await page.isVisible("dialog[open]"))) fehler("Fenster schließt trotz ungespeicherter Aufgabe");
+  await page.fill("#agText", "");
+  await page.click("dialog [data-schliessen] >> nth=0");
+  await page.goto(page.url().split("#")[0] + "#heute"); await page.waitForTimeout(350);
+  const heuteText = await page.textContent("#ansicht");
+  if (!/Unterlagen nachfordern/.test(heuteText)) fehler("„Heute zu tun“ zeigt die Aufgabe nicht");
+  if (/Später anrufen/.test(heuteText)) fehler("Aufgabe mit Datum in der Zukunft steht schon unter „Heute zu tun“");
+  await pruefeLayout(page, "Heute zu tun mit Aufgabe");
+  await page.click("[data-hagerledigt]"); await page.waitForTimeout(300);
+  if ((await page.$$("[data-hagerledigt]")).length !== 0) fehler("Erledigte Aufgabe steht noch unter „Heute zu tun“");
+  if (!(await page.evaluate(() => window.__FAKE.tabellen.schueler_aufgaben.find((a) => a.text === "Unterlagen nachfordern").erledigt_am))) fehler("Aufgabe „Erledigt“ nicht gespeichert");
+  // Warteliste: Regel und Anzeige
+  const warte = await page.evaluate((h) => {
+    const alt = "2026-01-10T10:00:00Z", zu = (a) => { wartIndex = null; return wartetArt({ id: "wt", ausbildung: a }); };
+    const fs = (datum) => ({ schueler_id: "wt", art: "fahrstunde", datum, status: "geplant" });
+    const out = [zu({ theorieWait: alt }), zu({ ready: alt })];
+    S.termine.push(fs("2026-02-01")); out.push(zu({ ready: alt }));
+    S.termine.pop(); S.termine.push(fs("2999-01-01")); out.push(zu({ ready: alt }), zu({ theorieWaitBis: alt, theoryPassed: alt }));
+    S.termine.pop(); S.termine.push({ schueler_id: "wt", art: "pruefung", datum: "2999-01-01", status: "geplant" }); out.push(zu({ ready: alt }));
+    S.termine.pop(); wartIndex = null;
+    return out.join();
+  }, HEUTE);
+  if (warte !== "theorie,praxis,,,,") fehler("Warteliste-Regel falsch: " + warte);
+  await page.evaluate(() => { const x = window.__FAKE.tabellen.schueler.find((s) => !s.inaktiv_seit); x.ausbildung = Object.assign({}, x.ausbildung, { theorieWait: "2026-01-10T10:00:00Z" }); window.__wartId = x.id; return ladeDaten(); });
+  await page.waitForTimeout(500);
+  await page.goto(page.url().split("#")[0] + "#schueler?sicht=warte"); await page.waitForTimeout(400);
+  if ((await page.$$eval(".schuelertab tbody tr", (r) => r.length)) < 1) fehler("Reiter „Warteliste“ zeigt keinen Schüler");
+  if (!/Warteliste \(\d+\)/.test(await page.textContent(".tabs"))) fehler("Reiter „Warteliste“ fehlt");
+  await pruefeLayout(page, "Schüler Warteliste");
+  await page.goto(page.url().split("#")[0] + "#auslastung"); await page.waitForTimeout(400);
+  await pruefeLayout(page, "Auslastung mit Warteliste");
   // Drucken: weißes Papier, kein Menü, nichts ragt heraus (A4 quer)
   await page.setViewportSize({ width: 1047, height: 740 });
   for (const hash of ["#heute", "#pruefungen?ansicht=alle", "#fahrchecks", "#fahrchecks?ansicht=stunden&von=2000-01-01", "#fristen?ansicht=alle", "#kalender", "#kalender?ansicht=monat", "#schueler", "#verkaeufe", "#zahlen", "#flotte", "#auslastung"]) {

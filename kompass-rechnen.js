@@ -163,6 +163,32 @@
     return { soll, posten, fehlend: posten.filter((p) => p.fehlt > 0) };
   }
 
+  /* ----- Warteliste (Serband, 09.10.2026) -----
+     Ein Schüler „wartet“, solange er keine Fahrstunden braucht. Er zählt dann nicht in der Auslastung des Fahrlehrers.
+       theorie       : Fahrlehrer hat „Pausiert – wartet auf Theorie“ gesetzt, Theorie noch nicht bestanden
+       nach_theorie  : Theorie bestanden (Pause war gesetzt), aber noch keine neue Fahrstunde gebucht
+       praxis        : auf der Praxis-Warteliste (prüfungsreif), weder Fahrstunde danach noch Prüfungstermin
+     Sobald ein Prüfungstermin (Praxis) oder eine Fahrstunde nach dem Wartezeitpunkt eingetragen ist, ist er wieder aktiv
+     (Ausnahme „theorie“: die Pause endet, wenn der Fahrlehrer sie in der App aufhebt oder die Theorie als bestanden einträgt).
+     a = Feld „ausbildung“ des Schülers; k = { pruefungstermin: Ja/Nein, fahrstundeNach(lokaleMinute „JJJJ-MM-TTTHH:MM“): Ja/Nein }. */
+  const FAHR_ARTEN = ["fahrstunde", "sonder", "nacht"];
+  // Zeitpunkt (UTC-Text aus der App) als lokale Minute „JJJJ-MM-TTTHH:MM“; so lassen sich Fahrstunden am selben Tag richtig einordnen
+  function lokalMinute(v) {
+    const d = new Date(v);
+    if (isNaN(d.getTime())) return String(v).slice(0, 10) + "T00:00";
+    return dateISO(d) + "T" + pad2(d.getHours()) + ":" + pad2(d.getMinutes());
+  }
+  function wartetInfo(a, k) {
+    k = k || {};
+    if (!a || a.passed) return "";
+    const nach = (v) => typeof k.fahrstundeNach === "function" && k.fahrstundeNach(lokalMinute(v));
+    if (a.theorieWait && !a.theoryPassed) return "theorie";
+    if (k.pruefungstermin) return "";
+    if (a.theorieWaitBis && !nach(a.theorieWaitBis)) return "nach_theorie";
+    if (a.ready && !nach(a.ready)) return "praxis";
+    return "";
+  }
+
   /* ----- Verkauf: Aufteilung eines Betrags nach Prozent (Einstellung akademieVermittlung.splitKollege).
      Jeder Anteil auf ganze Euro gerundet; der Rundungsrest geht an die Fahrschule, damit die Summe
      immer genau dem Betrag entspricht. null, wenn die Prozente fehlen oder nicht 100 ergeben. */
@@ -177,7 +203,7 @@
     return out;
   }
 
-  const api = { FS_BUERO_ARTEN, pad2, hm2min, parseISO, dateISO, todayISO, ueOf, addMonthsISO, addDaysISO, daysBetweenISO, reaktFaellig, reaktNachZahlung, reaktInfo, theorieInfo, antragInfo, fcGebucht, fcErhalten, fcGueltigBis, fcGueltigkeit, fcZeitraum, fcVorZeitraum, fcSoll, aufteilung };
+  const api = { FS_BUERO_ARTEN, pad2, hm2min, parseISO, dateISO, todayISO, ueOf, addMonthsISO, addDaysISO, daysBetweenISO, reaktFaellig, reaktNachZahlung, reaktInfo, theorieInfo, antragInfo, fcGebucht, fcErhalten, fcGueltigBis, fcGueltigkeit, fcZeitraum, fcVorZeitraum, fcSoll, aufteilung, FAHR_ARTEN, wartetInfo };
   if (typeof module !== "undefined" && module.exports) module.exports = api;
   else root.KR = api;
 })(typeof self !== "undefined" ? self : this);
