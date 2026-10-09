@@ -201,7 +201,8 @@ body.kiosk .tag-titel{font-size:30px;}
 .name-zeile{display:flex;align-items:center;gap:8px;}
 .farbpunkt{flex:0 0 14px;width:14px;height:14px;border-radius:50%;display:inline-block;align-self:center;}
 .farbpunkt.ohne{border:2px solid var(--line);}
-.tabelle .unter{overflow-wrap:anywhere;}
+.tabelle .unter{overflow-wrap:break-word;}
+.tabelle td:first-child .unter{overflow-wrap:anywhere;}
 @media (min-width:1201px){ .schuelertab td:first-child{min-width:190px;} }
 .datum{white-space:nowrap;}
 .stand{display:flex;align-items:center;gap:10px;min-width:120px;}
@@ -344,3 +345,11 @@ details summary{cursor:pointer;font-weight:700;margin:6px 0;}
 .datum-klein{display:inline-flex;align-items:center;gap:8px;font-weight:400 !important;}
 .datum-klein input{min-height:40px !important;}
 .inaktivzeile{opacity:.7;}
+.name-zeile{min-width:0;}
+.name-zeile b{overflow-wrap:anywhere;}
+.schuelertab td:first-child{max-width:320px;}
+.formular .schalter{display:flex;align-items:center;gap:14px;}
+.formular .b197-feld{display:flex;flex-wrap:wrap;align-items:center;gap:10px 18px;}
+.formular .b197-feld[hidden]{display:none;}
+.formular .datum-klein{display:inline-flex;align-items:center;gap:8px;font-weight:500;}
+.formular .datum-klein input{min-height:40px;}
