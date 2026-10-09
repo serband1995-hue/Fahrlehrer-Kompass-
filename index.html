@@ -3813,16 +3813,65 @@ let _schuelerAbrufLaeuft = false;
 let _schuelerFristen = {};
 function _merkeFristen(rows){
   (rows||[]).forEach(r=>{ _schuelerFristen[r.id]={reakt_status:r.reakt_status,vertrag_am:r.vertrag_am,reakt_bezahlt_bis:r.reakt_bezahlt_bis,
-    theorie_abgeschlossen_am:r.theorie_abgeschlossen_am,theorie_bestanden_am:r.theorie_bestanden_am}; });
+    theorie_abgeschlossen_am:r.theorie_abgeschlossen_am,theorie_bestanden_am:r.theorie_bestanden_am,antrag_am:r.antrag_am,inaktiv_seit:r.inaktiv_seit}; });
+}
+/* Notizen vom Büro zu einem Schüler (Info oder Stopp). Sie poppen beim nächsten Abgleich auf, bis der Fahrlehrer
+   „Gelesen“ tippt, und bleiben danach als Hinweis in der Akte und im Terminblatt stehen, bis das Büro sie erledigt. */
+let _bueroNotizen = {};   // schueler_id -> [Notiz]
+let _notizSpaeterBis = 0; // „Später erinnern“: bis dahin kein Popup
+async function pullBueroNotizen(supa, ids){
+  if(!ids.length){ _bueroNotizen={}; return; }
+  const {data:nz,error}=await supa.from("schueler_notizen").select("*").in("schueler_id",ids).is("erledigt_am",null).order("erstellt_am",{ascending:true});
+  if(error||!Array.isArray(nz)) return; // z. B. offline oder Datenbank noch ohne Notizen: nichts ändern
+  const {data:gel}=await supa.from("schueler_notiz_gelesen").select("notiz_id").eq("fahrlehrer_id",_authUser.id);
+  const gelesen=new Set((gel||[]).map(g=>g.notiz_id));
+  const map={};
+  nz.forEach(n=>{ (map[n.schueler_id]=map[n.schueler_id]||[]).push(Object.assign({gelesen:gelesen.has(n.id)},n)); });
+  _bueroNotizen=map;
+  zeigeBueroNotizPopup();
+}
+function zeigeBueroNotizPopup(){
+  if(document.getElementById("bueroNotizPopup")||Date.now()<_notizSpaeterBis) return;
+  const offen=[];
+  Object.keys(_bueroNotizen).forEach(sid=>_bueroNotizen[sid].forEach(n=>{ if(!n.gelesen) offen.push(n); }));
+  if(!offen.length) return;
+  const name=sid=>{ const st=(DB.students||[]).find(x=>x.id===sid); return st?st.name:"Schüler"; };
+  const wann=iso=>{ try{ return new Date(iso).toLocaleString("de-DE",{day:"2-digit",month:"2-digit",hour:"2-digit",minute:"2-digit"}); }catch(e){ return ""; } };
+  const box=document.createElement("div");
+  box.id="bueroNotizPopup"; box.setAttribute("role","alertdialog"); box.setAttribute("aria-modal","true"); box.setAttribute("aria-label","Nachricht vom Büro");
+  box.style.cssText="position:fixed;inset:0;z-index:10050;background:rgba(10,16,12,.6);display:flex;align-items:center;justify-content:center;padding:18px;overflow-y:auto;";
+  box.innerHTML=`<div style="width:100%;max-width:420px;max-height:90vh;overflow-y:auto;background:var(--surface);color:var(--txt);border:1px solid var(--line-soft);border-radius:22px;padding:22px;box-shadow:0 20px 60px rgba(0,0,0,.45);">
+    <div style="font-size:13px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:var(--muted);margin-bottom:6px;">📣 Nachricht vom Büro</div>
+    ${offen.map(n=>`<div style="margin:12px 0;padding:12px 14px;border-radius:14px;background:${n.art==="stopp"?"rgba(207,90,72,.14)":"rgba(207,154,62,.16)"};border:1px solid ${n.art==="stopp"?"rgba(207,90,72,.5)":"rgba(207,154,62,.5)"};">
+      <div style="font-weight:700;font-size:16px;">${esc(name(n.schueler_id))}${n.art==="stopp"?' · <span style="color:#cf5a48;">STOPP</span>':''}</div>
+      <div style="margin-top:6px;font-size:15px;line-height:1.45;overflow-wrap:anywhere;">${esc(n.text)}</div>
+      <div style="margin-top:6px;font-size:12.5px;color:var(--muted);">${esc(n.bearbeiter||"Büro")} · ${esc(wann(n.erstellt_am))}</div></div>`).join("")}
+    <button type="button" id="bnGelesen" class="btn btn-primary" style="width:100%;margin-top:6px;">Gelesen ✓</button>
+    <button type="button" id="bnSpaeter" class="btn btn-ghost" style="width:100%;margin-top:8px;">Später erinnern</button></div>`;
+  document.body.appendChild(box);
+  document.getElementById("bnSpaeter").addEventListener("click",()=>{ _notizSpaeterBis=Date.now()+30*60*1000; box.remove(); });
+  document.getElementById("bnGelesen").addEventListener("click",async()=>{
+    const b=document.getElementById("bnGelesen"); b.disabled=true;
+    const {error}=await getSupa().from("schueler_notiz_gelesen").upsert(offen.map(n=>({notiz_id:n.id,fahrlehrer_id:_authUser.id})),{onConflict:"notiz_id,fahrlehrer_id",ignoreDuplicates:true});
+    if(error){ b.disabled=false; toast("Konnte nicht als gelesen eintragen. Internet prüfen."); return; }
+    offen.forEach(n=>{ n.gelesen=true; });
+    box.remove();
+  });
 }
 function fristenHinweisHTML(sid){
-  const f=_schuelerFristen[sid]; if(!f||!window.KR)return "";
+  const f=_schuelerFristen[sid]||(_bueroNotizen[sid]?{}:null); if(!f||!window.KR)return "";
   const r=KR.reaktInfo(f), t=KR.theorieInfo(f), teile=[];
   if(r.gesperrt) teile.push(`<b>Reaktivierung offen seit ${isoDE(r.faellig)}.</b> Keine weiteren Fahrstunden, bis im Büro bezahlt ist.`);
   if(t.stufe==="abgelaufen") teile.push(`<b>Theorie abgelaufen seit ${isoDE(t.ablauf)}.</b> Bitte mit dem Büro klären.`);
   else if(t.stufe==="bald") teile.push(`Theorie gilt nur noch bis ${isoDE(t.ablauf)}${t.grund==="praxis"?" (Praxisprüfung bis dahin)":""}.`);
+  const a=KR.antragInfo?KR.antragInfo(f):null;
+  if(!f.inaktiv_seit&&a&&a.stufe==="abgelaufen") teile.push(`<b>Führerscheinantrag abgelaufen seit ${isoDE(a.ablauf)}.</b> Muss neu gestellt werden, bitte mit dem Büro klären.`);
+  else if(!f.inaktiv_seit&&a&&a.stufe==="bald") teile.push(`Führerscheinantrag gilt nur noch bis ${isoDE(a.ablauf)}.`);
+  const stopp=(_bueroNotizen[sid]||[]).filter(n=>n.art==="stopp"), infos=(_bueroNotizen[sid]||[]).filter(n=>n.art!=="stopp");
+  stopp.forEach(n=>teile.push(`<b>STOPP vom Büro:</b> ${esc(n.text)}`));
+  infos.forEach(n=>teile.push(`<b>Büro:</b> ${esc(n.text)}`));
   if(!teile.length)return "";
-  const rot=r.gesperrt||t.stufe==="abgelaufen";
+  const rot=r.gesperrt||t.stufe==="abgelaufen"||stopp.length>0||(a&&a.stufe==="abgelaufen");
   return `<div role="alert" style="margin:10px 0;padding:12px 14px;border-radius:14px;font-size:14px;line-height:1.45;background:${rot?"rgba(207,90,72,.14)":"rgba(207,154,62,.16)"};border:1px solid ${rot?"rgba(207,90,72,.45)":"rgba(207,154,62,.45)"};">⚠️ ${teile.join("<br>")}</div>`;
 }
 async function pullSchuelerZuweisungen() {
@@ -3867,6 +3916,8 @@ async function pullSchuelerZuweisungen() {
         neu.push(r);
       }
     }
+    // Notizen erst jetzt: neue Schüler sind dann schon in DB.students, das Popup kann ihren Namen nennen
+    try{ await pullBueroNotizen(supa,(rows||[]).map(r=>r.id)); }catch(e){ console.warn("[Kompass] Büro-Notizen nicht geladen:",e.message); }
     const { data: weg, error: wegErr } = await supa.from("schueler_verschiebungen").select("*").eq("von_fahrlehrer_id", _authUser.id).eq("gesehen_von_alt", false);
     if (wegErr) throw wegErr;
     let entfernt = [];
@@ -5819,7 +5870,7 @@ window.addEventListener("load", () => {
 const STORE_KEY="serband-app-v1";
 /* Build-Version: bei jeder Auslieferung hier das Datum aktualisieren.
    Wird in den Einstellungen angezeigt + für den Update-Hinweis genutzt. */
-const APP_VERSION="2026.10.09.6";
+const APP_VERSION="2026.10.09.7";
 // Nutzungsbedingungen & Haftungsausschluss (Bereich: rechtliche Absicherung) - Version hochzählen
 // und alle Nutzer müssen erneut zustimmen, sobald sich der Text inhaltlich ändert.
 const AGB_VERSION="1.0";
@@ -10038,6 +10089,8 @@ function openAddLessonSheet(art){
     $("#alSave").addEventListener("click",()=>{
       const date=$("#alDate").value, von=$("#alTime").value, note=$("#alNote").value.trim();
       if(!date||!von){toast("Datum & Zeit wählen");return;}
+      const stoppN=(_bueroNotizen[sid]||[]).filter(n=>n.art==="stopp");
+      if(stoppN.length&&["fahrstunde","sonder","nacht","schalt"].indexOf(art)>=0&&!confirm("STOPP vom Büro bei "+(st?st.name:"diesem Schüler")+":\n\n"+stoppN.map(n=>n.text).join("\n")+"\n\nTrotzdem eintragen?"))return;
       const doBook=(fzName)=>{
         if(isSchalt){ addLesson({date,von,bis:min2hm(hm2min(von)+15),art,sid,note,fahrzeug:fzName}); }
         else if(dur===0.5){ addLesson({date,von,bis:min2hm(hm2min(von)+45),art,sid,note,fahrzeug:fzName}); }

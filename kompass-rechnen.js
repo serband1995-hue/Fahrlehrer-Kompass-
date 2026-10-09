@@ -105,6 +105,19 @@
     if (t.fc === "v2" || t.fc === "geschenkt" || t.fc === "offen" || t.fc === "nachgereicht") return 0;
     return voll;
   }
+  // Führerscheinantrag bei der Führerscheinstelle: 12 Monate ab Antragsdatum; nach bestandener Theorieprüfung gilt er
+  // 12 Monate ab Prüfungsdatum (wie die Theorie; Kristina, 09.10.2026). stufe: ohne_datum | abgelaufen | bald (≤60 Tage) | ok
+  function antragInfo(s, heute) {
+    heute = heute || todayISO();
+    if (!s || !s.antrag_am) return { stufe: "ohne_datum", ablauf: null, tage: null, grund: null };
+    let ablauf = addMonthsISO(s.antrag_am, 12), grund = "antrag";
+    if (s.theorie_bestanden_am) {
+      const v = addMonthsISO(s.theorie_bestanden_am, 12);
+      if (v > ablauf) { ablauf = v; grund = "theorie"; }
+    }
+    const tage = daysBetweenISO(heute, ablauf);
+    return { stufe: tage < 0 ? "abgelaufen" : (tage <= 60 ? "bald" : "ok"), ablauf, tage, grund };
+  }
   // Fahrcheck-Zettel (Übungs-, Sonder- und Testfahrten) verfallen 12 Monate nach dem Datum der Stunde (Kristina, 09.10.2026)
   function fcGueltigBis(datum) { return datum ? addMonthsISO(datum, 12) : null; }
   // stufe: verfallen | bald (≤60 Tage) | ok
@@ -164,7 +177,7 @@
     return out;
   }
 
-  const api = { FS_BUERO_ARTEN, pad2, hm2min, parseISO, dateISO, todayISO, ueOf, addMonthsISO, addDaysISO, daysBetweenISO, reaktFaellig, reaktNachZahlung, reaktInfo, theorieInfo, fcGebucht, fcErhalten, fcGueltigBis, fcGueltigkeit, fcZeitraum, fcVorZeitraum, fcSoll, aufteilung };
+  const api = { FS_BUERO_ARTEN, pad2, hm2min, parseISO, dateISO, todayISO, ueOf, addMonthsISO, addDaysISO, daysBetweenISO, reaktFaellig, reaktNachZahlung, reaktInfo, theorieInfo, antragInfo, fcGebucht, fcErhalten, fcGueltigBis, fcGueltigkeit, fcZeitraum, fcVorZeitraum, fcSoll, aufteilung };
   if (typeof module !== "undefined" && module.exports) module.exports = api;
   else root.KR = api;
 })(typeof self !== "undefined" ? self : this);
