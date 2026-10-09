@@ -163,6 +163,24 @@
     return { soll, posten, fehlend: posten.filter((p) => p.fehlt > 0) };
   }
 
+  /* ----- Warteliste (Serband, 09.10.2026) -----
+     Ein Schüler „wartet“, solange er keine Fahrstunden braucht. Er zählt dann nicht in der Auslastung des Fahrlehrers.
+       theorie       : Fahrlehrer hat „Pausiert – wartet auf Theorie“ gesetzt, Theorie noch nicht bestanden
+       nach_theorie  : Theorie bestanden (Pause war gesetzt), aber noch keine neue Fahrstunde gebucht
+       praxis        : auf der Praxis-Warteliste (prüfungsreif), weder Fahrstunde danach noch Prüfungstermin
+     Sobald ein Prüfungstermin (Praxis) oder eine Fahrstunde nach dem Wartedatum eingetragen ist, ist er wieder aktiv.
+     a = Feld „ausbildung“ des Schülers; k = { pruefungstermin: Ja/Nein, fahrstundeNach(datumISO): Ja/Nein }. */
+  const FAHR_ARTEN = ["fahrstunde", "sonder", "nacht"];
+  function wartetInfo(a, k) {
+    if (!a || a.passed) return "";
+    const tag = (v) => String(v).slice(0, 10);
+    if (a.theorieWait && !a.theoryPassed) return "theorie";
+    if (k && k.pruefungstermin) return "";
+    if (a.theorieWaitBis && !k.fahrstundeNach(tag(a.theorieWaitBis))) return "nach_theorie";
+    if (a.ready && !k.fahrstundeNach(tag(a.ready))) return "praxis";
+    return "";
+  }
+
   /* ----- Verkauf: Aufteilung eines Betrags nach Prozent (Einstellung akademieVermittlung.splitKollege).
      Jeder Anteil auf ganze Euro gerundet; der Rundungsrest geht an die Fahrschule, damit die Summe
      immer genau dem Betrag entspricht. null, wenn die Prozente fehlen oder nicht 100 ergeben. */
@@ -177,7 +195,7 @@
     return out;
   }
 
-  const api = { FS_BUERO_ARTEN, pad2, hm2min, parseISO, dateISO, todayISO, ueOf, addMonthsISO, addDaysISO, daysBetweenISO, reaktFaellig, reaktNachZahlung, reaktInfo, theorieInfo, antragInfo, fcGebucht, fcErhalten, fcGueltigBis, fcGueltigkeit, fcZeitraum, fcVorZeitraum, fcSoll, aufteilung };
+  const api = { FS_BUERO_ARTEN, pad2, hm2min, parseISO, dateISO, todayISO, ueOf, addMonthsISO, addDaysISO, daysBetweenISO, reaktFaellig, reaktNachZahlung, reaktInfo, theorieInfo, antragInfo, fcGebucht, fcErhalten, fcGueltigBis, fcGueltigkeit, fcZeitraum, fcVorZeitraum, fcSoll, aufteilung, FAHR_ARTEN, wartetInfo };
   if (typeof module !== "undefined" && module.exports) module.exports = api;
   else root.KR = api;
 })(typeof self !== "undefined" ? self : this);

@@ -5870,7 +5870,7 @@ window.addEventListener("load", () => {
 const STORE_KEY="serband-app-v1";
 /* Build-Version: bei jeder Auslieferung hier das Datum aktualisieren.
    Wird in den Einstellungen angezeigt + für den Update-Hinweis genutzt. */
-const APP_VERSION="2026.10.09.7";
+const APP_VERSION="2026.10.09.8";
 // Nutzungsbedingungen & Haftungsausschluss (Bereich: rechtliche Absicherung) - Version hochzählen
 // und alle Nutzer müssen erneut zustimmen, sobald sich der Text inhaltlich ändert.
 const AGB_VERSION="1.0";
@@ -6554,6 +6554,8 @@ function telefonFehlt(s){ return !((s.telefon||"").trim()); }
 function routeHome(){
   $("#tbTitle").textContent="Schüler";setFab(true);view.scrollTop=0;
   let list=activeStudents().slice();
+  const wartende=list.filter(wartetBuero); // wartet auf Theorie/Praxis: eigener Abschnitt unten, zählt nicht als aktiv fahrend
+  if(wartende.length)list=list.filter(s=>!wartende.includes(s));
   if(_homeFormFilter.length) list=list.filter(s=>_homeFormFilter.includes(s.form||"B"));
   if(_homeColorFilter.length) list=list.filter(s=>_homeColorFilter.includes(s.profil));
   if(_homeOhneTelefon) list=list.filter(telefonFehlt);
@@ -6593,13 +6595,14 @@ function routeHome(){
   } else {
     gridHTML=list.map((s,i)=>cardHTML(s,i)).join("");
   }
-  if(!list.length)gridHTML=`<p class="muted-p" style="text-align:center;padding:20px;">Kein Treffer für diese Filter.</p>`;
+  if(!list.length)gridHTML=`<p class="muted-p" style="text-align:center;padding:20px;">${wartende.length&&!filterAktiv?"Alle deine Schüler warten gerade (siehe unten).":"Kein Treffer für diese Filter."}</p>`;
+  if(wartende.length)gridHTML+=`<details id="wartendBox" style="margin-top:18px;"><summary style="cursor:pointer;font-size:12px;font-weight:800;color:var(--muted);letter-spacing:.06em;text-transform:uppercase;padding:8px 0;">⏳ Wartet (${wartende.length}) – auf Theorie oder Praxisprüfung</summary><p class="muted-p" style="font-size:12px;margin:0 0 8px;">Diese Schüler zählen nicht in deiner Auslastung. Sobald neue Fahrstunden gebucht oder ein Prüfungstermin eingetragen ist, erscheinen sie wieder oben.</p>${wartende.map((s,i)=>cardHTML(s,i)).join("")}</details>`;
   const sortBar=`<div class="seg" style="margin-bottom:12px;">
     <button class="seg-i${_homeSortMode==='az'?' on':''}" data-sort="az">A–Z</button>
     <button class="seg-i${_homeSortMode==='stand'?' on':''}" data-sort="stand">Fortschritt</button>
   </div>`;
   view.innerHTML=`<div class="view-inner view-wide fade-up" style="position:relative;padding-right:32px;">
-    <div class="row-between" style="margin-bottom:12px;"><div class="sec-h">Meine <span class="o">Schüler</span></div><div class="count-pill">${alle.length}</div></div>
+    <div class="row-between" style="margin-bottom:12px;"><div class="sec-h">Meine <span class="o">Schüler</span></div><div class="count-pill">${alle.length-wartende.length}</div></div>
     ${sortBar}
     <div id="homeSearchRow" style="display:flex;gap:8px;align-items:center;margin-bottom:12px;">
       <div class="search-wrap" style="flex:1;margin:0;"><span class="search-ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="11" cy="11" r="7"/><path d="M21 21l-4.3-4.3"/></svg></span><input id="studentSearch" type="search" placeholder="Schüler suchen …" autocomplete="off"><button class="search-clear" id="searchClear" aria-label="Leeren" style="display:none;">✕</button></div>
@@ -6625,6 +6628,7 @@ function routeHome(){
       document.querySelectorAll(".alpha-anchor").forEach(a=>a.style.display="none");
       let n=0;
       document.querySelectorAll("#studentGrid .s-card").forEach(c=>{const hit=(c.dataset.name||"").indexOf(q)>=0;c.style.display=hit?"":"none";if(hit)n++;});
+      const wb=$("#wartendBox"); if(wb&&n)wb.open=true;
       nh.style.display=n?"none":"block";sc.style.display="block";
     } else {
       if(sortiertAlpha&&!gruppiertNachFahrlehrer&&nav)nav.style.display="flex";
@@ -6908,10 +6912,10 @@ function routeDetail(id){
   document.querySelectorAll("#dashFormPills .pill").forEach(b=>b.addEventListener("click",()=>{ s.form=b.dataset.form; save(); toast("Klasse: "+formLabel(s.form)); routeDetail(id); }));
   // Theorie-/Umschreiber-/Pausiert-Toggles (aus dem Ausbildungsplan hierher verschoben)
   const dtt=$("#dashTheoToggle"); if(dtt)dtt.addEventListener("click",()=>{
-    pl.theorie=!pl.theorie; if(pl.theorie){ if(!s.theoryPassed)s.theoryPassed=new Date().toISOString(); logHist(s,"theorie","Theorieprüfung bestanden"); if(stand(s)>=90&&!s.ready&&!s.passed){ s.ready=s.theoryPassed; toast("Theorie bestanden – auf die Praxis-Warteliste gesetzt"); } else if(stand(s)<90&&!s.ready&&!s.passed){ toast("Theorie bestanden – erst ab 90 % kommt er auf die Warteliste"); } delete s.theorieWait; } else { if(s.ready&&s.ready===s.theoryPassed&&!s.pruefungsreifManuell)delete s.ready; delete s.theoryPassed; } save(); routeDetail(id);
+    pl.theorie=!pl.theorie; if(pl.theorie){ if(!s.theoryPassed)s.theoryPassed=new Date().toISOString(); logHist(s,"theorie","Theorieprüfung bestanden"); if(stand(s)>=90&&!s.ready&&!s.passed){ s.ready=s.theoryPassed; toast("Theorie bestanden – auf die Praxis-Warteliste gesetzt"); } else if(stand(s)<90&&!s.ready&&!s.passed){ toast("Theorie bestanden – erst ab 90 % kommt er auf die Warteliste"); } if(s.theorieWait)s.theorieWaitBis=new Date().toISOString(); delete s.theorieWait; } else { if(s.ready&&s.ready===s.theoryPassed&&!s.pruefungsreifManuell)delete s.ready; delete s.theoryPassed; delete s.theorieWaitBis; } save(); routeDetail(id);
   });
   const dwt=$("#dashTheorieWaitToggle"); if(dwt)dwt.addEventListener("click",()=>{
-    if(s.theorieWait){ delete s.theorieWait; toast("Fahrstunden wieder aufgenommen"); } else { s.theorieWait=new Date().toISOString(); toast("Pausiert – wartet auf Theorie"); }
+    if(s.theorieWait){ delete s.theorieWait; delete s.theorieWaitBis; toast("Fahrstunden wieder aufgenommen"); } else { s.theorieWait=new Date().toISOString(); toast("Pausiert – wartet auf Theorie"); }
     save(); routeDetail(id);
   });
   const dut=$("#dashUmschreiberToggle"); if(dut)dut.addEventListener("click",()=>{
@@ -11467,7 +11471,18 @@ FAULTS.forEach(g=>g.items.forEach(([id,lab])=>{FAULT_LABEL[id]=lab;}));
 
 function todayISO(){const d=new Date();return d.getFullYear()+"-"+pad2(d.getMonth()+1)+"-"+pad2(d.getDate());}
 function isoDE(iso){ if(!iso)return ""; const p=(""+iso).slice(0,10).split("-"); return p.length===3?`${p[2]}.${p[1]}.${p[0].slice(2)}`:iso; }
-function activeStudents(){return DB.students.filter(s=>!s.passed);}
+/* Archiv (Büro hat den Schüler auf „inaktiv“ gesetzt): überall ausgeblendet, Daten und alte Termine bleiben erhalten. */
+function istArchiviert(s){ const f=_schuelerFristen[s.id]; return !!(f&&f.inaktiv_seit); }
+function activeStudents(){return DB.students.filter(s=>!s.passed&&!istArchiviert(s));}
+/* Wartet auf Theorie oder Praxis und hat weder neue Fahrstunden noch Prüfungstermin: kommt in den Abschnitt „Wartet“
+   (gleiche Regel wie in der Büro-Auslastung, siehe KR.wartetInfo in kompass-rechnen.js). */
+function wartetBuero(s){
+  if(_fsAgg||!window.KR||typeof KR.wartetInfo!=="function")return "";
+  let letzte="";
+  (DB.lessons||[]).forEach(l=>{ if(l.sid===s.id&&KR.FAHR_ARTEN.includes(l.art||"fahrstunde")&&l.status!=="abgebrochen"&&l.status!=="nicht erschienen"&&l.date>letzte)letzte=l.date; });
+  const heute=todayISO(), hatPruefung=!!terminFor(s.id)||(DB.lessons||[]).some(l=>l.sid===s.id&&l.art==="pruefung"&&l.date>=heute&&l.status!=="abgebrochen");
+  return KR.wartetInfo(s,{pruefungstermin:hatPruefung,fahrstundeNach:iso=>!!letzte&&letzte>iso});
+}
 // Flexible Namenssuche: jedes eingegebene Wort muss irgendwo im Namen vorkommen (Vor-/Nachname egal)
 function matchStudent(name,q){
   if(!q)return true;
@@ -11615,7 +11630,7 @@ function openCalSearchSheet(){
     const q=(inp.value||"").trim().toLowerCase();
     const von=vonI.value, bis=bisI.value;
     if(q.length<1 && !von && !bis){ list.innerHTML=""; return; }
-    let matches=(DB.students||[]).filter(s=>!isDummyStudent(s)&&(q.length<1||(s.name||"").toLowerCase().includes(q)));
+    let matches=(DB.students||[]).filter(s=>!isDummyStudent(s)&&!istArchiviert(s)&&(q.length<1||(s.name||"").toLowerCase().includes(q)));
     if(von||bis){
       matches=matches.filter(s=>(DB.lessons||[]).some(l=>l.sid===s.id&&l.status!=="abgebrochen"&&(!von||l.date>=von)&&(!bis||l.date<=bis)));
     }
