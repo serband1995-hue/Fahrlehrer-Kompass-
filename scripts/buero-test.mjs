@@ -33,7 +33,7 @@ const browser = await chromium.launch({ executablePath: process.env.CHROMIUM_PAT
 let probleme = 0;
 function fehler(text) { probleme++; console.log("FEHLER:", text); }
 
-async function oeffne({ nutzer, breite = 1366, hoehe = 860, hash = "", dunkel = false, vorbereiten }) {
+async function oeffne({ nutzer, breite = 1366, hoehe = 860, hash = "", dunkel = false, vorbereiten, wer = "Kristina" }) {
   const daten = bauDaten(HEUTE);
   const session = nutzer ? { user: { id: nutzer, email: nutzer + "@example.org" } } : null;
   const ctx = await browser.newContext({ viewport: { width: breite, height: hoehe }, colorScheme: dunkel ? "dark" : "light" });
@@ -49,6 +49,11 @@ async function oeffne({ nutzer, breite = 1366, hoehe = 860, hash = "", dunkel = 
   }, [daten, session, vorbereiten ? vorbereiten.toString().replace(/^[^{]*{/, "").replace(/}\s*$/, "") : ""]);
   await page.goto(basis + "buero.html" + hash);
   await page.waitForTimeout(400);
+  // Gemeinsamer Büro-Zugang: „Wer bedient gerade?“ beantworten (Super-Admin wird nicht gefragt)
+  if (wer && nutzer) {
+    const frage = await page.waitForSelector("#wer:not([hidden])", { timeout: 1200 }).catch(() => null);
+    if (frage) { await page.click(`[data-wer="${wer}"]`); await page.waitForTimeout(100); }
+  }
   return { page, ctx, konsole };
 }
 // Sauberes Layout: nichts ragt aus seinem Kästchen, kein Text überlappt anderen Text,
@@ -235,7 +240,10 @@ for (const [breite, hoehe] of [[1920, 1080], [1366, 768], [1024, 768]]) {
   await page.click('[data-ergebnis="pt-4"]');
   await page.check("dialog input[value=bestanden]");
   await page.click("dialog button[value=ok]");
-  await page.waitForTimeout(400);
+  await page.waitForTimeout(700);
+  // Nach „bestanden“ fragt die Seite, ob der Schüler inaktiv werden soll: hier „Nein“
+  if (!(await page.isVisible("dialog[open]"))) fehler("Prüfungstafel: keine Frage „auf inaktiv setzen?“ nach bestandener Praxis");
+  else { await page.click("dialog [data-schliessen]"); await page.waitForTimeout(200); }
   const s8 = await page.evaluate(() => window.__FAKE.tabellen.schueler.find((s) => s.id === "s8"));
   if (s8.reakt_status !== "befreit") fehler("Prüfungstafel: bestandene Praxis befreit nicht von der Reaktivierung");
   await page.goto(page.url().split("#")[0] + "#pruefungen?gross=1");
@@ -438,6 +446,211 @@ for (const [breite, hoehe] of [[1920, 1080], [1366, 768], [1024, 768]]) {
   const r2 = await b.page.$eval(".marke img", (i) => parseFloat(getComputedStyle(i).borderTopLeftRadius));
   if (!(r2 >= 8)) fehler("Logo in der Seitenleiste: Ecken nicht abgerundet");
   await b.ctx.close();
+}
+
+// 4g) Fenster lassen sich immer schließen (auch bei leeren Pflichtfeldern), auf jeder Seite
+{
+  const faelle = [
+    ["#fahrchecks?z=vor", '[data-fcabgabe="fl-1"]', "Fahrcheck-Abgabe"],
+    ["#schueler", "#sNeu", "Schüler anlegen"],
+    ["#pruefungen", "#pNeu", "Prüfung planen"],
+    ["#fristen?ansicht=alle", "[data-fristen]", "Fristen"],
+    ["#fristen?ansicht=alle", "[data-zahlung]", "Reaktivierung bezahlt"],
+    ["#verkaeufe", "[data-vbezahlt]", "Verkauf bezahlt"],
+    ["#team", "#tNeuBu", "Zugang anlegen"],
+    ["#kalender", ".k-flaeche", "Kalender: neuer Termin"],
+    ["#fahrchecks?ansicht=stunden&von=2000-01-01", "[data-fcbearb]", "Fahrcheck ändern"],
+  ];
+  const { page, ctx, konsole } = await oeffne({ nutzer: "ad-1", breite: 1366, hoehe: 900 });
+  for (const [hash, knopf, name] of faelle) {
+    await page.goto(page.url().split("#")[0] + hash);
+    await page.waitForTimeout(500);
+    for (const weg of ["Abbrechen", "Kreuz", "Esc", "Rand"]) {
+      const el = await page.$(knopf);
+      if (!el) { fehler(`Fenster „${name}“: Knopf ${knopf} nicht gefunden`); break; }
+      if (knopf === ".k-flaeche") { const b = await el.boundingBox(); await page.mouse.click(b.x + 60, b.y + 200); } else await el.click();
+      await page.waitForTimeout(250);
+      if (!(await page.isVisible("dialog[open]"))) { fehler(`Fenster „${name}“ ließ sich nicht öffnen (${weg})`); break; }
+      if (weg === "Abbrechen") await page.click("dialog footer [data-schliessen]");
+      else if (weg === "Kreuz") await page.click("dialog header [data-schliessen]");
+      else if (weg === "Esc") await page.keyboard.press("Escape");
+      else await page.mouse.click(3, 3);
+      await page.waitForTimeout(250);
+      if (await page.isVisible("dialog[open]")) { fehler(`Fenster „${name}“ lässt sich nicht schließen per ${weg}`); await page.keyboard.press("Escape"); await page.waitForTimeout(200); }
+    }
+  }
+  if (konsole.length) fehler("Fenster schließen: Konsole: " + konsole.join(" | "));
+  await ctx.close();
+}
+
+// 4h) Seitenleiste einklappbar, Reaktivierung 240 € mit Absprache, Ausbildungsart/Klasse, Aktiv/Inaktiv, B197-Testfahrt
+{
+  const { page, ctx, konsole } = await oeffne({ nutzer: "bu-1", hash: "#heute", breite: 1366, hoehe: 900 });
+  // Seitenleiste
+  const sichtbar = () => page.$$eval(".nav-liste:not([hidden]) .nav-punkt", (a) => a.length);
+  const alle = await sichtbar();
+  await page.click('[data-gruppe="Geld"]');
+  if ((await sichtbar()) !== alle - 2) fehler("Seitenleiste: Gruppe „Geld“ klappt nicht zu");
+  await page.evaluate(() => zeichneNav());
+  if ((await sichtbar()) !== alle - 2) fehler("Seitenleiste: zugeklappte Gruppe wird nicht gemerkt");
+  // „Wer bist du“ merkt sich der Browser-Tab (auch nach Neuladen), bis 20 Minuten nichts angeklickt wurde
+  await page.evaluate(() => { setzeWer("Isra"); S.wer = ""; starteWer(); });
+  if (await page.isVisible("#wer:not([hidden])")) fehler("Wer bist du: Name wird nach Neuladen nicht übernommen");
+  await page.goto(page.url().split("#")[0] + "#zahlen");
+  await page.waitForTimeout(300);
+  if ((await sichtbar()) !== alle) fehler("Seitenleiste: Seite in zugeklappter Gruppe öffnet die Gruppe nicht");
+  await pruefeLayout(page, "Seitenleiste");
+  // Wer bedient: Name und Kopfzeile
+  const wer = await page.evaluate(() => ({ s: S.wer, an: document.getElementById("werAnzeige").textContent }));
+  if (wer.s !== "Isra" || wer.an !== "Isra") fehler("Wer bist du: Name nicht übernommen " + JSON.stringify(wer));
+  const kopf = await page.evaluate(() => { window.__echt = window.fetch; window.fetch = (u, o) => ({ h: [...new Headers(o.headers)].filter(([k]) => k === "x-buero-bearbeiter").map(([, v]) => v), u }); S.wer = "Jelena"; const r = [bueroFetch("https://x/rest/v1/schueler", {}), bueroFetch("https://x/auth/v1/token", {})]; window.fetch = window.__echt; return r; });
+  if (kopf[0].h[0] !== "Jelena" || kopf[1].h.length) fehler("Wer bist du: Kopfzeile falsch " + JSON.stringify(kopf));
+  await page.evaluate(() => { S.wer = "Isra"; });
+  // Ausbildungsart und Klasse
+  await page.goto(page.url().split("#")[0] + "#schueler");
+  await page.waitForTimeout(400);
+  await page.click("#sNeu");
+  const arten = await page.$$eval("dialog select[name=ausbildungsart] option", (o) => o.map((x) => x.textContent));
+  if (arten.join("|") !== "Ersterwerb|Fahrschulwechsel|Umschreibung|Neuerteilung|Auffrischung|Erweiterung") fehler("Ausbildungsart: " + arten.join("|"));
+  const klassen = await page.$$eval("dialog select[name=klasse] option", (o) => o.slice(0, 4).map((x) => x.textContent));
+  if (klassen.join("|") !== "–|B (Schalter)|B78 (Automatik)|B197 (Schaltkompetenz)") fehler("Klassen: " + klassen.join("|"));
+  if (await page.isVisible("#b197Feld")) fehler("B197-Feld sichtbar, obwohl Klasse B");
+  await page.selectOption("dialog select[name=klasse]", "B197");
+  if (!(await page.isVisible("#b197Feld"))) fehler("B197-Feld erscheint nicht bei Klasse B197");
+  await page.fill("dialog input[name=name]", "Test Schüler");
+  await page.check("dialog input[name=testfahrt]");
+  await page.click("dialog button[value=ok]");
+  await page.waitForTimeout(400);
+  const neu = await page.evaluate(() => window.__FAKE.tabellen.schueler.find((x) => x.name === "Test Schüler"));
+  if (!neu || neu.ausbildungsart !== "ersterwerb" || neu.klasse !== "B197" || neu.b197_testfahrt_am !== HEUTE) fehler("Neuer Schüler: " + JSON.stringify(neu && [neu.ausbildungsart, neu.klasse, neu.b197_testfahrt_am]));
+  // Aktiv/Inaktiv
+  await page.fill("#sSuche", "Test Schüler");
+  await page.waitForTimeout(500);
+  await page.click("[data-sbearb]");
+  if (await page.isVisible("dialog input[name=aktiv]") === false && !(await page.$("dialog input[name=aktiv]"))) fehler("Aktiv-Schalter fehlt");
+  await page.click("dialog .schalter-bahn");
+  if (!/Inaktiv/.test(await page.textContent("#aktivText"))) fehler("Aktiv-Schalter zeigt nicht „Inaktiv“");
+  await page.click("dialog button[value=ok]");
+  await page.waitForTimeout(400);
+  const ina = await page.evaluate(() => window.__FAKE.tabellen.schueler.find((x) => x.name === "Test Schüler").inaktiv_seit);
+  if (ina !== HEUTE) fehler("Inaktiv nicht gespeichert: " + ina);
+  if ((await page.$$eval(".schuelertab tbody tr", (r) => r.length)) !== 0) fehler("Inaktiver Schüler steht noch in der aktiven Liste");
+  await page.goto(page.url().split("#")[0] + "#schueler?sicht=inaktiv");
+  await page.waitForTimeout(400);
+  const inaktive = await page.$$eval(".schuelertab tbody tr", (r) => r.length);
+  if (inaktive < 1) fehler("Reiter „Inaktiv“ zeigt keine Schüler");
+  await pruefeLayout(page, "Schüler inaktiv");
+  // Wieder aktiv
+  await page.fill("#sSuche", "Test Schüler");
+  await page.waitForTimeout(500);
+  await page.click("[data-sbearb]");
+  await page.click("dialog .schalter-bahn");
+  await page.click("dialog button[value=ok]");
+  await page.waitForTimeout(400);
+  if ((await page.evaluate(() => window.__FAKE.tabellen.schueler.find((x) => x.name === "Test Schüler").inaktiv_seit)) !== null) fehler("Wieder aktiv: inaktiv_seit nicht geleert");
+  // Reaktivierung bezahlt: Standard 240, Abweichung braucht Absprache
+  await page.goto(page.url().split("#")[0] + "#fristen?ansicht=alle");
+  await page.waitForTimeout(500);
+  const bez = await page.$("[data-zahlung]");
+  if (!bez) fehler("Fristen: kein Schüler mit „erhalten“-Knopf"); else {
+    const sid = await bez.getAttribute("data-zahlung");
+    await bez.click();
+    if ((await page.inputValue("dialog input[name=betrag]")) !== "240") fehler("Reaktivierung: Standardbetrag nicht 240");
+    await page.fill("dialog input[name=betrag]", "200");
+    await page.click("dialog button[value=ok]");
+    await page.waitForTimeout(300);
+    if (!(await page.isVisible("dialog[open]"))) fehler("Reaktivierung: abweichender Betrag ohne Absprache wurde gespeichert");
+    await page.selectOption("dialog select[name=absprache]", "Murat");
+    await pruefeLayout(page, "Reaktivierung-Dialog");
+    await page.click("dialog button[value=ok]");
+    await page.waitForTimeout(400);
+    const z = await page.evaluate((id) => window.__FAKE.tabellen.schueler.find((x) => x.id === id), sid);
+    if (z.reakt_betrag !== 200 || !/Absprache mit Murat/.test(z.reakt_notiz) || z.reakt_status !== "bezahlt") fehler("Reaktivierung gespeichert falsch: " + JSON.stringify([z.reakt_betrag, z.reakt_notiz, z.reakt_status]));
+  }
+  // Einstellungen: nur Super-Admin ändert
+  if (!(await page.$("#einstForm input[name=betrag][disabled]"))) fehler("Einstellungen: Büro darf den Standardbetrag ändern");
+  if (konsole.length) fehler("Runde 2: Konsole: " + konsole.join(" | "));
+  await ctx.close();
+}
+
+// 4i) Fahrcheck-Zettel: 12 Monate gültig
+{
+  const { page, ctx, konsole } = await oeffne({ nutzer: "bu-1", hash: "#fahrchecks?ansicht=stunden&gueltig=verfallen", breite: 1366, hoehe: 900,
+    vorbereiten: function () {
+      const d = (n) => { const x = new Date(); x.setDate(x.getDate() + n); return x.toISOString().slice(0, 10); };
+      const alt = F.tabellen.kalender_termine[0];
+      F.tabellen.kalender_termine.push(Object.assign({}, alt, { id: "t-alt", datum: d(-380), von: "09:00", bis: "10:30", art: "fahrstunde", status: "geplant", payload: {}, buero_fc_status: "offen" }));
+      F.tabellen.kalender_termine.push(Object.assign({}, alt, { id: "t-bald", datum: d(-330), von: "09:00", bis: "10:30", art: "sonder", status: "geplant", payload: {}, buero_fc_status: "offen" }));
+    } });
+  const zeilen = await page.$$eval(".karte table.tabelle tbody tr", (r) => r.filter((x) => !x.querySelector(".leer")).map((x) => x.textContent));
+  if (zeilen.length !== 1 || !/verfallen/.test(zeilen[0])) fehler("Fahrchecks verfallen: " + zeilen.length + " Zeilen");
+  await page.selectOption("#fcGueltig", "bald");
+  await page.waitForTimeout(300);
+  const bald = await page.$$eval(".karte table.tabelle tbody tr", (r) => r.filter((x) => !x.querySelector(".leer")).map((x) => x.textContent));
+  if (bald.length !== 1 || !/läuft bald ab/.test(bald[0])) fehler("Fahrchecks läuft bald ab: " + bald.length);
+  for (const b of [1024, 1366, 1920]) { await page.setViewportSize({ width: b, height: 900 }); await pruefeLayout(page, "Fahrcheck-Gültigkeit@" + b); }
+  if (konsole.length) fehler("Fahrcheck-Gültigkeit: Konsole: " + konsole.join(" | "));
+  await ctx.close();
+}
+
+// 4j) Fehler aus der Fehlersuche (09.10.2026): Enter speichert, kein „undefined“ in Fenstern, lange Namen, Großansicht, Wer-bist-du abbrechbar
+{
+  const { page, ctx, konsole } = await oeffne({ nutzer: "ad-1", hash: "#schueler", breite: 1366, hoehe: 900 });
+  // Enter speichert (und schließt nicht still)
+  await page.click("#sNeu");
+  const lang = "Langername".repeat(10);
+  await page.fill("dialog input[name=name]", lang);
+  await page.press("dialog input[name=name]", "Enter");
+  await page.waitForTimeout(400);
+  if (!(await page.evaluate((n) => window.__FAKE.tabellen.schueler.some((x) => x.name === n), lang))) fehler("Enter im Dialog speichert nicht");
+  await pruefeLayout(page, "Schüler mit sehr langem Namen");
+  await pruefeBreite(page, "Schüler mit sehr langem Namen");
+  for (const sicht of ["alle", "inaktiv"]) for (const b of [1024, 1366]) {
+    await page.setViewportSize({ width: b, height: 900 });
+    await page.goto(page.url().split("#")[0] + "#schueler?sicht=" + sicht);
+    await page.waitForTimeout(300);
+    await pruefeLayout(page, `Schüler ${sicht}@${b}`);
+    await pruefeBreite(page, `Schüler ${sicht}@${b}`);
+  }
+  await page.setViewportSize({ width: 1366, height: 900 });
+  // Kein „undefined“/„NaN“ in Fenstern
+  for (const [hash, knopf, name] of [["#schueler", "#sNeu", "Schüler"], ["#pruefungen", "#pNeu", "Prüfung"], ["#kalender", ".k-flaeche", "Kalender"], ["#verkaeufe", "#vNeu", "Verkauf"]]) {
+    await page.goto(page.url().split("#")[0] + hash);
+    await page.waitForTimeout(400);
+    const el = await page.$(knopf);
+    if (!el) continue;
+    if (knopf === ".k-flaeche") { const b = await el.boundingBox(); await page.mouse.click(b.x + 60, b.y + 200); } else await el.click();
+    await page.waitForTimeout(250);
+    const text = await page.evaluate(() => { const d = document.querySelector("dialog[open]"); return d ? d.innerText + [...d.querySelectorAll("option")].map((o) => o.textContent).join(" ") : ""; });
+    if (/undefined|NaN|\[object/.test(text)) fehler(`Fenster „${name}“ zeigt „undefined/NaN“`);
+    await page.keyboard.press("Escape"); await page.waitForTimeout(200);
+  }
+  // Großansicht: wirklich nur 14 Tage
+  await page.evaluate(() => { const d = new Date(); d.setDate(d.getDate() + 40); window.__FAKE.tabellen.pruefungstermine.push({ id: "pt-fern", fahrschule_id: window.__FAKE.tabellen.pruefungstermine[0].fahrschule_id, schueler_id: window.__FAKE.tabellen.schueler[0].id, art: "praxis", datum: d.toISOString().slice(0, 10), von: "09:00", status: "geplant" }); });
+  await page.goto(page.url().split("#")[0] + "#heute"); await page.waitForTimeout(200);
+  await page.evaluate(() => ladeDaten()); await page.waitForTimeout(500);
+  await page.goto(page.url().split("#")[0] + "#pruefungen?gross=1");
+  await page.waitForTimeout(400);
+  const fern = await page.$$eval(".tag-titel", (h) => h.map((x) => x.textContent).join("|"));
+  const grenze = new Date(); grenze.setDate(grenze.getDate() + 14);
+  const fernDE = (() => { const d = new Date(); d.setDate(d.getDate() + 40); return d.toLocaleDateString("de-DE", { day: "2-digit", month: "2-digit", year: "numeric" }); })();
+  if (fern.includes(fernDE)) fehler("Großansicht zeigt eine Prüfung in 40 Tagen");
+  await page.goto(page.url().split("#")[0] + "#heute");
+  // „Wer bedient“: bewusst wechseln lässt sich abbrechen (Knopf und Esc)
+  await page.click("#werWechseln");
+  if (!(await page.isVisible("#werZu"))) fehler("Wer bist du: kein Abbrechen beim Wechseln");
+  await page.click("#werZu");
+  if (await page.isVisible("#wer:not([hidden])")) fehler("Wer bist du: Abbrechen schließt nicht");
+  await page.click("#werWechseln");
+  await page.keyboard.press("Escape");
+  if (await page.isVisible("#wer:not([hidden])")) fehler("Wer bist du: Esc schließt nicht");
+  // Fokus bleibt in der Seitenleiste
+  await page.focus('[data-gruppe="Geld"]');
+  await page.keyboard.press("Enter");
+  if ((await page.evaluate(() => document.activeElement && document.activeElement.dataset.gruppe)) !== "Geld") fehler("Seitenleiste: Fokus geht beim Zuklappen verloren");
+  await page.keyboard.press("Enter");
+  if (konsole.length) fehler("Fehlersuche-Fälle: Konsole: " + konsole.join(" | "));
+  await ctx.close();
 }
 
 // 4f) Verkäufe: bezahlt bucht Provision, ausgezahlt
