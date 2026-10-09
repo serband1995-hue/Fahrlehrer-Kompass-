@@ -240,7 +240,10 @@ for (const [breite, hoehe] of [[1920, 1080], [1366, 768], [1024, 768]]) {
   await page.click('[data-ergebnis="pt-4"]');
   await page.check("dialog input[value=bestanden]");
   await page.click("dialog button[value=ok]");
-  await page.waitForTimeout(400);
+  await page.waitForTimeout(700);
+  // Nach „bestanden“ fragt die Seite, ob der Schüler inaktiv werden soll: hier „Nein“
+  if (!(await page.isVisible("dialog[open]"))) fehler("Prüfungstafel: keine Frage „auf inaktiv setzen?“ nach bestandener Praxis");
+  else { await page.click("dialog [data-schliessen]"); await page.waitForTimeout(200); }
   const s8 = await page.evaluate(() => window.__FAKE.tabellen.schueler.find((s) => s.id === "s8"));
   if (s8.reakt_status !== "befreit") fehler("Prüfungstafel: bestandene Praxis befreit nicht von der Reaktivierung");
   await page.goto(page.url().split("#")[0] + "#pruefungen?gross=1");
@@ -468,8 +471,8 @@ for (const [breite, hoehe] of [[1920, 1080], [1366, 768], [1024, 768]]) {
       if (knopf === ".k-flaeche") { const b = await el.boundingBox(); await page.mouse.click(b.x + 60, b.y + 200); } else await el.click();
       await page.waitForTimeout(250);
       if (!(await page.isVisible("dialog[open]"))) { fehler(`Fenster „${name}“ ließ sich nicht öffnen (${weg})`); break; }
-      if (weg === "Abbrechen") await page.click("dialog footer button[value=abbrechen]");
-      else if (weg === "Kreuz") await page.click("dialog header button[value=abbrechen]");
+      if (weg === "Abbrechen") await page.click("dialog footer [data-schliessen]");
+      else if (weg === "Kreuz") await page.click("dialog header [data-schliessen]");
       else if (weg === "Esc") await page.keyboard.press("Escape");
       else await page.mouse.click(3, 3);
       await page.waitForTimeout(250);
@@ -587,6 +590,66 @@ for (const [breite, hoehe] of [[1920, 1080], [1366, 768], [1024, 768]]) {
   if (bald.length !== 1 || !/läuft bald ab/.test(bald[0])) fehler("Fahrchecks läuft bald ab: " + bald.length);
   for (const b of [1024, 1366, 1920]) { await page.setViewportSize({ width: b, height: 900 }); await pruefeLayout(page, "Fahrcheck-Gültigkeit@" + b); }
   if (konsole.length) fehler("Fahrcheck-Gültigkeit: Konsole: " + konsole.join(" | "));
+  await ctx.close();
+}
+
+// 4j) Fehler aus der Fehlersuche (09.10.2026): Enter speichert, kein „undefined“ in Fenstern, lange Namen, Großansicht, Wer-bist-du abbrechbar
+{
+  const { page, ctx, konsole } = await oeffne({ nutzer: "ad-1", hash: "#schueler", breite: 1366, hoehe: 900 });
+  // Enter speichert (und schließt nicht still)
+  await page.click("#sNeu");
+  const lang = "Langername".repeat(10);
+  await page.fill("dialog input[name=name]", lang);
+  await page.press("dialog input[name=name]", "Enter");
+  await page.waitForTimeout(400);
+  if (!(await page.evaluate((n) => window.__FAKE.tabellen.schueler.some((x) => x.name === n), lang))) fehler("Enter im Dialog speichert nicht");
+  await pruefeLayout(page, "Schüler mit sehr langem Namen");
+  await pruefeBreite(page, "Schüler mit sehr langem Namen");
+  for (const sicht of ["alle", "inaktiv"]) for (const b of [1024, 1366]) {
+    await page.setViewportSize({ width: b, height: 900 });
+    await page.goto(page.url().split("#")[0] + "#schueler?sicht=" + sicht);
+    await page.waitForTimeout(300);
+    await pruefeLayout(page, `Schüler ${sicht}@${b}`);
+    await pruefeBreite(page, `Schüler ${sicht}@${b}`);
+  }
+  await page.setViewportSize({ width: 1366, height: 900 });
+  // Kein „undefined“/„NaN“ in Fenstern
+  for (const [hash, knopf, name] of [["#schueler", "#sNeu", "Schüler"], ["#pruefungen", "#pNeu", "Prüfung"], ["#kalender", ".k-flaeche", "Kalender"], ["#verkaeufe", "#vNeu", "Verkauf"]]) {
+    await page.goto(page.url().split("#")[0] + hash);
+    await page.waitForTimeout(400);
+    const el = await page.$(knopf);
+    if (!el) continue;
+    if (knopf === ".k-flaeche") { const b = await el.boundingBox(); await page.mouse.click(b.x + 60, b.y + 200); } else await el.click();
+    await page.waitForTimeout(250);
+    const text = await page.evaluate(() => { const d = document.querySelector("dialog[open]"); return d ? d.innerText + [...d.querySelectorAll("option")].map((o) => o.textContent).join(" ") : ""; });
+    if (/undefined|NaN|\[object/.test(text)) fehler(`Fenster „${name}“ zeigt „undefined/NaN“`);
+    await page.keyboard.press("Escape"); await page.waitForTimeout(200);
+  }
+  // Großansicht: wirklich nur 14 Tage
+  await page.evaluate(() => { const d = new Date(); d.setDate(d.getDate() + 40); window.__FAKE.tabellen.pruefungstermine.push({ id: "pt-fern", fahrschule_id: window.__FAKE.tabellen.pruefungstermine[0].fahrschule_id, schueler_id: window.__FAKE.tabellen.schueler[0].id, art: "praxis", datum: d.toISOString().slice(0, 10), von: "09:00", status: "geplant" }); });
+  await page.goto(page.url().split("#")[0] + "#heute"); await page.waitForTimeout(200);
+  await page.evaluate(() => ladeDaten()); await page.waitForTimeout(500);
+  await page.goto(page.url().split("#")[0] + "#pruefungen?gross=1");
+  await page.waitForTimeout(400);
+  const fern = await page.$$eval(".tag-titel", (h) => h.map((x) => x.textContent).join("|"));
+  const grenze = new Date(); grenze.setDate(grenze.getDate() + 14);
+  const fernDE = (() => { const d = new Date(); d.setDate(d.getDate() + 40); return d.toLocaleDateString("de-DE", { day: "2-digit", month: "2-digit", year: "numeric" }); })();
+  if (fern.includes(fernDE)) fehler("Großansicht zeigt eine Prüfung in 40 Tagen");
+  await page.goto(page.url().split("#")[0] + "#heute");
+  // „Wer bedient“: bewusst wechseln lässt sich abbrechen (Knopf und Esc)
+  await page.click("#werWechseln");
+  if (!(await page.isVisible("#werZu"))) fehler("Wer bist du: kein Abbrechen beim Wechseln");
+  await page.click("#werZu");
+  if (await page.isVisible("#wer:not([hidden])")) fehler("Wer bist du: Abbrechen schließt nicht");
+  await page.click("#werWechseln");
+  await page.keyboard.press("Escape");
+  if (await page.isVisible("#wer:not([hidden])")) fehler("Wer bist du: Esc schließt nicht");
+  // Fokus bleibt in der Seitenleiste
+  await page.focus('[data-gruppe="Geld"]');
+  await page.keyboard.press("Enter");
+  if ((await page.evaluate(() => document.activeElement && document.activeElement.dataset.gruppe)) !== "Geld") fehler("Seitenleiste: Fokus geht beim Zuklappen verloren");
+  await page.keyboard.press("Enter");
+  if (konsole.length) fehler("Fehlersuche-Fälle: Konsole: " + konsole.join(" | "));
   await ctx.close();
 }
 
