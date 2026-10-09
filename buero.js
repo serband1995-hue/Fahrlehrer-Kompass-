@@ -83,7 +83,7 @@ const BEREICHE = [
   { id: "fahrchecks", titel: "Fahrchecks", gruppe: "Arbeit", render: renderFahrchecks, nachher: bindeFahrchecks, zahl: () => fcOffeneAbgaben().length || "" },
   { id: "fristen", titel: "Fristen & Reaktivierung", gruppe: "Arbeit", render: renderFristen, nachher: bindeFristen, zahl: () => zaehleFristen().handeln || "" },
   { id: "kalender", titel: "Kalender", gruppe: "Planung", render: renderKalender, nachher: bindeKalender },
-  { id: "auslastung", titel: "Auslastung", gruppe: "Planung", render: renderAuslastung, zahl: () => auslastungListe().filter((x) => x.naechste.voll).length || "" },
+  { id: "auslastung", titel: "Auslastung", gruppe: "Planung", render: renderAuslastung },
   { id: "schueler", titel: "Schüler", gruppe: "Planung", render: renderSchueler, nachher: bindeSchueler, zahl: () => aktiveSchueler().filter((x) => !x.fahrlehrer_id).length || "" },
   { id: "verkaeufe", titel: "Verkäufe & Provision", gruppe: "Geld", render: renderVerkaeufe, nachher: bindeVerkaeufe, zahl: () => S.verkaeufe.filter((v) => v.status === "empfohlen").length || "" },
   { id: "zahlen", titel: "Zahlen", gruppe: "Geld", render: renderZahlen, nachher: bindeZahlen },
@@ -161,7 +161,7 @@ function renderHeute() {
     .sort((a, b) => String(a.von || "").localeCompare(String(b.von || "")));
   const kacheln = `<div class="kacheln">
     <div class="kachel"><div class="wert">${zahlDE(anzahlAktiv)}</div><div class="name">aktive Schüler</div></div>
-    <div class="kachel"><div class="wert">${zahlDE(S.lehrer.length)}</div><div class="name">Fahrlehrer</div></div>
+    <div class="kachel"><div class="wert">${zahlDE(S.lehrer.filter((l) => l.aktiv !== false).length)}</div><div class="name">Fahrlehrer</div></div>
     <div class="kachel"><div class="wert">${zahlDE(termineHeute.length)}</div><div class="name">Termine heute</div></div>
     <div class="kachel${ohneLehrer ? " rot" : ""}"><div class="wert">${zahlDE(ohneLehrer)}</div><div class="name">Schüler ohne Fahrlehrer</div></div>
   </div>`;
@@ -188,10 +188,12 @@ function renderHeute() {
   if (fcOffen.length) aufgaben.push(`<a class="aufgabe gelb" href="#fahrchecks?z=vor"><b>${fcOffen.length}</b> Fahrcheck-Abgabe${fcOffen.length === 1 ? "" : "n"} für ${esc(datumDE(fcOffen[0].von))}–${esc(datumDE(fcOffen[0].bis))} noch nicht bestätigt</a>`);
   const neuVerk = S.verkaeufe.filter((v) => v.status === "empfohlen").length;
   if (neuVerk) aufgaben.push(`<a class="aufgabe" href="#verkaeufe"><b>${neuVerk}</b> neue Empfehlung${neuVerk === 1 ? "" : "en"} von Fahrlehrern (Akademie/Simulator): Zugang ausgeben, Zahlung eintragen</a>`);
-  const ungelesen = S.notizen.filter((n) => !n.erledigt_am && !S.gelesen.some((g) => g.notiz_id === n.id));
+  const ungelesen = S.notizen.filter((n) => !n.erledigt_am && !S.gelesen.some((g) => g.notiz_id === n.id) && aktiveSchueler().some((x) => x.id === n.schueler_id));
   if (ungelesen.length) aufgaben.push(`<a class="aufgabe gelb" href="#schueler?notiz=ungelesen"><b>${ungelesen.length}</b> Notiz${ungelesen.length === 1 ? "" : "en"} an Fahrlehrer noch nicht gelesen</a>`);
-  if (f.antragAb) aufgaben.push(`<a class="aufgabe rot" href="#fristen?ansicht=antrag"><b>${f.antragAb}</b> Führerscheinantrag${f.antragAb === 1 ? "" : "e"} abgelaufen: neu stellen</a>`);
-  if (f.antragBald) aufgaben.push(`<a class="aufgabe gelb" href="#fristen?ansicht=antrag"><b>${f.antragBald}</b> Führerscheinantrag${f.antragBald === 1 ? " läuft" : "e laufen"} in den nächsten 60 Tagen ab</a>`);
+  const beiGesperrten = aktiveSchueler().filter((x) => x.fahrlehrer_id && (S.lehrer.find((l) => l.id === x.fahrlehrer_id) || {}).aktiv === false).length;
+  if (beiGesperrten) aufgaben.push(`<a class="aufgabe rot" href="#schueler"><b>${beiGesperrten}</b> Schüler ${beiGesperrten === 1 ? "gehört" : "gehören"} zu einem gesperrten Fahrlehrer: neu zuweisen (Bereich „Auslastung“ zeigt, wer Platz hat)</a>`);
+  if (f.antragAb) aufgaben.push(`<a class="aufgabe rot" href="#fristen?ansicht=antrag"><b>${f.antragAb}</b> ${f.antragAb === 1 ? "Führerscheinantrag" : "Führerscheinanträge"} abgelaufen: neu stellen</a>`);
+  if (f.antragBald) aufgaben.push(`<a class="aufgabe gelb" href="#fristen?ansicht=antrag"><b>${f.antragBald}</b> ${f.antragBald === 1 ? "Führerscheinantrag läuft" : "Führerscheinanträge laufen"} in den nächsten 60 Tagen ab</a>`);
   if (f.ohneDatum) aufgaben.push(`<a class="aufgabe" href="#fristen?ansicht=ohne"><b>${f.ohneDatum}</b> Schüler ohne Vertragsdatum</a>`);
   const todo = `<div class="karte"><div class="karte-kopf"><h2>Zu erledigen</h2></div>${aufgaben.length ? `<div class="aufgaben">${aufgaben.join("")}</div>` : `<p class="leer">Gerade ist nichts offen.</p>`}</div>`;
   return kacheln + todo + liste;
@@ -276,7 +278,8 @@ function renderFristen() {
   </div>`;
   let liste = aktiveSchueler().map((s) => ({ s, r: KR.reaktInfo(s, heute), t: KR.theorieInfo(s, heute), a: KR.antragInfo(s, heute) }));
   if (ansicht === "handeln") liste = liste.filter((x) => ["gesperrt", "pruefen_faellig", "bald"].includes(x.r.stufe) || ["abgelaufen", "bald"].includes(x.t.stufe) || x.a.stufe === "abgelaufen");
-  if (ansicht === "antrag") liste = liste.filter((x) => x.a.stufe !== "ohne_datum" || !(x.s.reakt_status === "befreit"));
+  const ohneAntrag = liste.filter((x) => x.a.stufe === "ohne_datum").length;
+  if (ansicht === "antrag") liste = liste.filter((x) => x.a.stufe !== "ohne_datum");
   if (ansicht === "ohne") liste = liste.filter((x) => x.r.stufe === "ohne_datum");
   if (ansicht === "theorie") liste = liste.filter((x) => x.t.stufe !== "ohne_datum");
   if (suche) liste = liste.filter((x) => (x.s.name || "").toLowerCase().includes(suche) || (x.s.telefon || "").replace(/\s/g, "").includes(suche.replace(/\s/g, "")));
@@ -316,7 +319,7 @@ function renderFristen() {
   return kacheln + `<div class="karte">
     <div class="karte-kopf"><div class="tabs">${tabs}</div>
       <input type="search" class="suche" id="fristenSuche" placeholder="Name oder Telefon suchen" value="${esc(fristenParam("suche"))}" aria-label="Schüler suchen"></div>
-    ${ansicht === "antrag" ? (liste.length ? `<table class="tabelle"><thead><tr><th>Schüler</th><th class="nur-sehr-breit">Fahrlehrer</th><th>Eingereicht</th><th>Gültig bis</th><th>Status</th><th></th></tr></thead><tbody>${antragZeilen}</tbody></table><p class="leise klein">Der Führerscheinantrag bei der Führerscheinstelle gilt 12 Monate. Nach bestandener Theorieprüfung gilt er 12 Monate ab dem Prüfungsdatum. Danach muss er neu gestellt werden: „Neu eingereicht“ setzt das heutige Datum.</p>` : `<p class="leer">Keine Schüler.</p>`) : ""}
+    ${ansicht === "antrag" ? (liste.length ? `<table class="tabelle"><thead><tr><th>Schüler</th><th class="nur-sehr-breit">Fahrlehrer</th><th>Eingereicht</th><th>Gültig bis</th><th>Status</th><th></th></tr></thead><tbody>${antragZeilen}</tbody></table><p class="leise klein">Der Führerscheinantrag bei der Führerscheinstelle gilt 12 Monate. Nach bestandener Theorieprüfung gilt er 12 Monate ab dem Prüfungsdatum. Danach muss er neu gestellt werden: „Neu eingereicht“ setzt das heutige Datum. ${ohneAntrag} aktive Schüler haben noch kein Antragsdatum (im Fenster „Bearbeiten“ eintragen).</p>` : `<p class="leer">Keine Schüler.</p>`) : ""}
     ${ansicht === "antrag" ? "" : liste.length ? `<table class="tabelle"><thead><tr><th>Schüler</th><th>Fahrlehrer</th><th class="nur-breit">Vertrag</th><th>Reaktivierung</th><th>Theorie</th><th></th></tr></thead><tbody>${zeilen}</tbody></table>`
       : `<p class="leer">${ansicht === "handeln" ? "Kein Handlungsbedarf. Sehr gut." : "Keine Schüler in dieser Ansicht."}</p>`}
     <p class="leise klein">Reaktivierung: ${euro(reaktBetrag())}, fällig 12 Monate nach Vertragsabschluss und dann jährlich. „Gesperrt“ heißt: keine weiteren Leistungen, bis bezahlt ist. Jede Änderung wird mit Name und Uhrzeit protokolliert.</p>
@@ -325,7 +328,7 @@ function renderFristen() {
 function renderBueroEinstellungen() {
   const k = (S.fs && S.fs.konfiguration) || {};
   const darf = S.profil && S.profil.rolle === "super_admin";
-  return `<div class="karte"><div class="karte-kopf"><h2>Einstellungen</h2></div>
+  return `<div class="karte nicht-drucken"><div class="karte-kopf"><h2>Einstellungen</h2></div>
     <form id="einstForm" class="formular">
       <label>Standardbetrag Reaktivierung in €<input type="number" name="betrag" min="1" max="9999" step="0.01" value="${esc(k.reaktivierungBetrag || REAKT_STANDARD)}"${darf ? "" : " disabled"}></label>
       <label>Unterrichtseinheiten pro Fahrlehrer und Woche (12 pro Tag × 5 Tage)<input type="number" name="ue" min="1" max="200" step="1" value="${esc(ueProWoche())}"${darf ? "" : " disabled"}></label>
@@ -552,7 +555,7 @@ function renderPruefungen() {
     return `<tr class="${p.status === "geplant" && p.datum < heute ? "warnzeile" : ""}">
       <td class="zeitspalte">${esc(p.von || "–")}</td>
       <td><span class="marke-pill ${p.art === "praxis" ? "gruen" : "blau"}">${p.art === "praxis" ? "Praxis" : "Theorie"}</span>${p.klasse ? ` <span class="leise klein">${esc(p.klasse)}</span>` : ""}</td>
-      <td><b>${esc(s.name || "(Schüler gelöscht)")}</b>${p.notiz ? `<div class="unter">${esc(p.notiz)}</div>` : ""}</td>
+      <td><b>${esc(s.name || "(Schüler gelöscht)")}</b>${p.status !== "geplant" ? `<div class="nur-druck">${esc(sf === "gruen" ? "Ergebnis: " : "Status: ")}${esc(st)}</div>` : ""}${p.notiz ? `<div class="unter">${esc(p.notiz)}</div>` : ""}</td>
       <td>${esc(p.fahrlehrer_id ? lehrerName(p.fahrlehrer_id) : "–")}</td>
       <td>${hakenHTML(p, gross)}</td>
       ${gross ? "" : `<td class="aktionen"><div class="aktionen-box">${aktion}<button class="knopf klein" data-pbearb="${esc(p.id)}" type="button">Bearbeiten</button></div></td>`}
@@ -747,7 +750,7 @@ function ergebnisDialog(id) {
 /* ---------- Auslastung je Fahrlehrer ---------- */
 // Regel (Serband/Kristina, 09.10.2026): 12 UE am Tag, 5 Tage = 60 UE pro Woche. „Voll“ ist ein Fahrlehrer erst, wenn er
 // demselben Schüler in der Woche nicht mehr zwei Termine (je 90 Minuten) geben kann.
-const UE_PRO_WOCHE_STANDARD = 60;
+const UE_PRO_WOCHE_STANDARD = 60, UE_PRO_TAG = 12;
 function ueProWoche() {
   const k = (S.fs && S.fs.konfiguration) || {};
   return Number(k.ueProWoche) > 0 ? Number(k.ueProWoche) : UE_PRO_WOCHE_STANDARD;
@@ -756,11 +759,14 @@ function montagVon(iso) { const wt = (KR.parseISO(iso).getDay() + 6) % 7; return
 function auslastungWoche(lehrerId, montag) {
   const bis = KR.addDaysISO(montag, 6);
   let belegt = 0, gesperrt = 0;
+  const blockTag = {};
   for (const t of S.termine) {
     if (t.fahrlehrer_id !== lehrerId || t.datum < montag || t.datum > bis || !t.von || !t.bis) continue;
     const ue = Math.max(KR.hm2min(t.bis) - KR.hm2min(t.von), 0) / 45;
-    if (t.art === "block") gesperrt += ue; else belegt += ue;
+    if (t.art === "block") { const wt = (KR.parseISO(t.datum).getDay() + 6) % 7; if (wt < 5) blockTag[t.datum] = (blockTag[t.datum] || 0) + ue; }
+    else belegt += ue;
   }
+  for (const d of Object.keys(blockTag)) gesperrt += Math.min(blockTag[d], UE_PRO_TAG); // je Tag höchstens 12 UE; nur Montag bis Freitag
   const kapazitaet = Math.max(ueProWoche() - gesperrt, 0);
   const frei = Math.max(kapazitaet - belegt, 0);
   const termine = Math.floor(frei / 2 + 1e-9); // freie 90-Minuten-Termine
@@ -819,7 +825,7 @@ function renderAuslastung() {
     <div class="karte">
       <div class="karte-kopf"><h2>Wer hat noch Platz?</h2><a class="knopf" href="#schueler?lehrer=ohne">Schüler ohne Fahrlehrer zeigen</a></div>
       <table class="tabelle"><thead><tr><th>Fahrlehrer</th><th>Diese Woche<div class="th-unter">ab ${esc(datumDE(diese).slice(0, 6))}</div></th><th>Nächste Woche<div class="th-unter">ab ${esc(datumDE(naechste).slice(0, 6))}</div></th><th class="zahlspalte nur-sehr-breit">Freie Termine</th><th class="zahlspalte nur-sehr-breit">Platz für neue Schüler</th><th>Ergebnis</th></tr></thead><tbody>${zeilen || `<tr><td colspan="6" class="leer">Keine Fahrlehrer.</td></tr>`}</tbody></table>
-      <p class="leise klein">So wird gerechnet: ${ueProWoche()} UE pro Woche (12 UE am Tag, 5 Tage). Blockierte Zeiten zählen nicht. Ein Termin dauert 90 Minuten = 2 UE. <b>Voll</b> ist ein Fahrlehrer, wenn er einem Schüler nicht mehr zwei Termine in der Woche geben kann. Ein neuer Schüler braucht zwei Termine pro Woche. Die Liste ist so sortiert, dass der Fahrlehrer mit den meisten freien Terminen oben steht.</p>
+      <p class="leise klein">So wird gerechnet: ${ueProWoche()} UE pro Woche (Standard: 12 UE am Tag, 5 Tage). Blockierte Zeiten (Montag bis Freitag, höchstens 12 UE am Tag) zählen nicht zur Kapazität. Ein Termin dauert 90 Minuten = 2 UE. <b>Voll</b> ist ein Fahrlehrer, wenn er einem Schüler nicht mehr zwei Termine in der Woche geben kann. Ein neuer Schüler braucht zwei Termine pro Woche. Die Liste ist so sortiert, dass der Fahrlehrer mit den meisten freien Terminen oben steht.</p>
     </div>`;
 }
 
@@ -874,7 +880,7 @@ function renderSchueler() {
     S.lehrer.map((l) => `<option value="${esc(l.id)}"${l.id === lehrerFilter ? " selected" : ""}>${esc(l.name || l.email)}</option>`).join("");
   const sichtTabs = [["aktiv", `Aktiv (${nAktiv})`], ["inaktiv", `Inaktiv (${nInaktiv})`], ["alle", "Alle"]]
     .map(([id, n]) => `<a class="tab" href="${linkMit("schueler", { sicht: id === "aktiv" ? "" : id })}"${id === sicht ? ' aria-current="page"' : ""}>${esc(n)}</a>`).join("");
-  const klassenFilter = `<select class="suche" id="sKlasse" aria-label="Klasse filtern"><option value="">Alle Klassen</option>${KLASSEN.slice(0, 4).map(([k, n]) => `<option value="${k}"${k === klasseF ? " selected" : ""}>${esc(n)}</option>`).join("")}</select>`;
+  const klassenFilter = `<select class="suche" id="sKlasse" aria-label="Klasse filtern"><option value="">Alle Klassen</option>${KLASSEN.map(([k, n]) => `<option value="${k}"${k === klasseF ? " selected" : ""}>${esc(n)}</option>`).join("")}</select>`;
   return `<div class="karte">
     <div class="tabs" style="margin-bottom:12px">${sichtTabs}</div>
     <div class="karte-kopf">
@@ -905,11 +911,12 @@ function klasseVon(x) {
   const f = (x.ausbildung || {}).form || "";
   return f === "Automatik" ? "B78" : f;
 }
-function setzeFilter(bereich, werte) {
+function setzeFilter(bereich, werte, neuerEintrag) {
   const p = new URLSearchParams((location.hash.split("?")[1]) || "");
   for (const [k, v] of Object.entries(werte)) { if (v) p.set(k, v); else p.delete(k); }
   const q = p.toString();
-  history.replaceState(null, "", "#" + bereich + (q ? "?" + q : ""));
+  // Blättern (←/→) legt einen Eintrag im Verlauf an, damit „Zurück“ im Browser den vorigen Tag/Monat zeigt
+  history[neuerEintrag ? "pushState" : "replaceState"](null, "", "#" + bereich + (q ? "?" + q : ""));
   zeichne();
 }
 function bindeSchueler(ziel) {
@@ -957,7 +964,7 @@ function notizBlockHTML(sid, fahrlehrerId) {
 }
 function bindeNotizBlock(dlg, sid, fahrlehrerId) {
   const block = dlg.querySelector("#notizBlock");
-  const neu = () => { block.innerHTML = notizBlockHTML(sid, fahrlehrerId); bind(); };
+  const neu = () => { block.innerHTML = notizBlockHTML(sid, fahrlehrerId); bind(); zeichne(); };
   const bind = () => {
     block.querySelector("#nzSenden").addEventListener("click", async (e) => {
       const text = block.querySelector("#nzText").value.trim();
@@ -1007,6 +1014,8 @@ function schuelerDialog(id) {
     const d = Object.fromEntries(new FormData(form).entries());
     const name = (d.name || "").trim();
     if (!name) { toast("Bitte einen Namen eintragen.", true); return false; }
+    const offenerText = form.querySelector("#nzText");
+    if (offenerText && offenerText.value.trim()) { toast("Die Notiz ist noch nicht gesendet. Bitte „An Fahrlehrer senden“ tippen oder den Text löschen.", true); return false; }
     const doppelt = d.telefon && S.schueler.find((y) => y.id !== id && y.telefon && y.telefon.replace(/\D/g, "").slice(-9) === d.telefon.replace(/\D/g, "").slice(-9));
     if (doppelt && !id && !(await bestaetige("Telefonnummer gibt es schon", `${doppelt.name} hat dieselbe Telefonnummer. Trotzdem neu anlegen?`, "Ja, anlegen"))) return false;
     const werte = {
@@ -1060,13 +1069,23 @@ async function verschiebeSchueler(x, neuerLehrer) {
 }
 
 /* ---------- Kalender: Tag, Woche, Monat, Jahr ---------- */
-const K_START = 7 * 60, K_ENDE = 21 * 60, K_PX = 1.15; // Pixel pro Minute
+let K_START = 7 * 60, K_ENDE = 21 * 60; const K_PX = 1.15; // Pixel pro Minute
+// Normal 07–21 Uhr; liegt ein Termin davor oder danach, wird der Bereich erweitert (nichts darf unsichtbar bleiben)
+function kBereichSetzen(termine) {
+  let a = 7 * 60, e = 21 * 60;
+  for (const t of termine) {
+    if (!t.von || !t.bis) continue;
+    a = Math.min(a, Math.floor(KR.hm2min(t.von) / 60) * 60);
+    e = Math.max(e, Math.ceil(KR.hm2min(t.bis) / 60) * 60);
+  }
+  K_START = a; K_ENDE = Math.min(e, 24 * 60);
+}
 const K_FARBEN = { fahrstunde: "#3a7350", nacht: "#5a7da8", sonder: "#5a7da8", pruefung: "#c9a227", theorie: "#9b7dc4", schalt: "#c4607d", block: "#88939a", vortest: "#d68a3e", simulator: "#3ea6a0", beratung: "#7a8fd6", ersthilfe: "#d65a5a" };
 const K_ANSICHTEN = [["tag", "Tag"], ["woche", "Woche"], ["monat", "Monat"], ["jahr", "Jahr"]];
 const MONATE = ["Januar", "Februar", "März", "April", "Mai", "Juni", "Juli", "August", "September", "Oktober", "November", "Dezember"];
 const WOCHENTAGE_KURZ = ["Mo", "Di", "Mi", "Do", "Fr", "Sa", "So"];
 function kAnsicht() { const a = fristenParam("ansicht"); return K_ANSICHTEN.some(([id]) => id === a) ? a : "tag"; }
-function kTag() { return /^\d{4}-\d\d-\d\d$/.test(fristenParam("tag")) ? fristenParam("tag") : KR.todayISO(); }
+function kTag() { const t = fristenParam("tag"); return /^\d{4}-\d\d-\d\d$/.test(t) && KR.dateISO(KR.parseISO(t)) === t ? t : KR.todayISO(); }
 function kGewaehlteLehrer() { return (fristenParam("lehrer") || "").split(",").filter(Boolean); }
 function kTerminBlock(t) {
   const a = Math.max(KR.hm2min(t.von), K_START), b = Math.min(KR.hm2min(t.bis), K_ENDE);
@@ -1103,7 +1122,8 @@ function kSuchErgebnis() {
   const q = (fristenParam("ksuche") || "").trim().toLowerCase();
   if (!q) return "";
   const heute = KR.todayISO();
-  const treffer = S.schueler.filter((x) => (x.name || "").toLowerCase().includes(q)).slice(0, 8);
+  const alleTreffer = S.schueler.filter((x) => (x.name || "").toLowerCase().includes(q));
+  const treffer = alleTreffer.slice(0, 8);
   if (!treffer.length) return `<div class="k-suche-erg"><p class="leer">Kein Schüler mit „${esc(fristenParam("ksuche"))}“ gefunden.</p></div>`;
   const zeilen = treffer.map((x) => {
     const eigene = S.termine.filter((t) => t.schueler_id === x.id && t.art !== "block").sort((a, b) => (a.datum + (a.von || "")).localeCompare(b.datum + (b.von || "")));
@@ -1112,7 +1132,7 @@ function kSuchErgebnis() {
     return `<li><b>${esc(x.name)}</b> <span class="leise klein">${esc(lehrerName(x.fahrlehrer_id))}</span>
       <div class="k-sprung">${davor.length ? `<span class="leise klein">zuletzt</span> ${davor.map(knopf).join("")}` : ""} ${kommend.length ? `<span class="leise klein">als Nächstes</span> ${kommend.map(knopf).join("")}` : '<span class="leise klein">keine künftigen Termine</span>'}</div></li>`;
   }).join("");
-  return `<div class="k-suche-erg"><ul>${zeilen}</ul></div>`;
+  return `<div class="k-suche-erg"><ul>${zeilen}</ul>${alleTreffer.length > 8 ? `<p class="leise klein">${alleTreffer.length - 8} weitere Treffer: bitte genauer suchen.</p>` : ""}</div>`;
 }
 function kopfKalender(ansicht, tag, titel, schritt) {
   const tabs = K_ANSICHTEN.map(([id, n]) => `<a class="tab" href="${linkMit("kalender", { ansicht: id === "tag" ? "" : id })}"${id === ansicht ? ' aria-current="page"' : ""}>${n}</a>`).join("");
@@ -1138,12 +1158,13 @@ function renderKalender() {
   if (ansicht === "monat") return kalenderMonat(tag);
   if (ansicht === "jahr") return kalenderJahr(tag);
   const gewaehlt = kGewaehlteLehrer();
-  const lehrer = gewaehlt.length ? S.lehrer.filter((l) => gewaehlt.includes(l.id)) : S.lehrer;
+  const lehrer = (gewaehlt.length ? S.lehrer.filter((l) => gewaehlt.includes(l.id)) : S.lehrer).filter((l) => l.aktiv !== false);
   const termine = S.termine.filter((t) => t.datum === tag);
+  kBereichSetzen(termine);
   const hoehe = (K_ENDE - K_START) * K_PX;
   const spalten = lehrer.map((l) => {
     const eigene = termine.filter((t) => t.fahrlehrer_id === l.id && t.von && t.bis);
-    return `<div class="k-spalte"><div class="k-kopf"><span class="k-lname">${esc(l.name || l.email)}</span><span class="k-anz">${eigene.filter((t) => t.art !== "block").length} Termine</span></div>
+    return `<div class="k-spalte"><div class="k-kopf"><span class="k-lname" title="${esc(l.name || l.email)}">${esc(l.name || l.email)}</span><span class="k-anz">${eigene.filter((t) => t.art !== "block").length} Termine</span></div>
       <div class="k-flaeche" data-lehrer="${esc(l.id)}" data-datum="${esc(tag)}" style="height:${hoehe}px">${eigene.map(kTerminBlock).join("")}</div></div>`;
   }).join("");
   const wtag = KR.parseISO(tag).toLocaleDateString("de-DE", { weekday: "long", day: "numeric", month: "long", year: "numeric" });
@@ -1159,7 +1180,8 @@ function kalenderWoche(tag) {
   const aktive = S.lehrer.filter((l) => l.aktiv !== false);
   const gewaehlt = kGewaehlteLehrer();
   const wahl = fristenParam("wl") || gewaehlt[0] || (aktive[0] || {}).id;
-  const l = S.lehrer.find((x) => x.id === wahl) || aktive[0];
+  const l = aktive.find((x) => x.id === wahl) || aktive[0];
+  kBereichSetzen(S.termine.filter((t) => l && t.fahrlehrer_id === l.id && t.datum >= montag && t.datum <= sonntag));
   const hoehe = (K_ENDE - K_START) * K_PX;
   const heute = KR.todayISO();
   const spalten = l ? Array.from({ length: 7 }, (_, i) => {
@@ -1193,7 +1215,7 @@ function kalenderMonat(tag) {
       <span class="m-nr">${Number(d.slice(8))}</span>${e ? `<span class="m-anz">${e.n} Termine</span><span class="m-ue">${Math.round(e.ue * 10) / 10} UE</span>` : ""}</button>`);
   }
   return `<div class="karte">
-    ${kopfKalender("monat", tag, `${MONATE[m]} ${j}`, (n) => KR.addMonthsISO(tag.slice(0, 8) + "01", n))}
+    ${kopfKalender("monat", tag, `${MONATE[m]} ${j}`, (n) => KR.addMonthsISO(tag, n))}
     ${kLehrerChips(gewaehlt)}
     <div class="monat"><div class="m-kopf">${WOCHENTAGE_KURZ.map((w) => `<span>${w}</span>`).join("")}</div><div class="m-raster">${zellen.join("")}</div></div>
     <p class="leise klein">Farbe = Auslastung des Tages (12 UE je Fahrlehrer). Auf einen Tag klicken, um ihn zu öffnen.</p>
@@ -1225,8 +1247,8 @@ function kalenderJahr(tag) {
   </div>`;
 }
 function bindeKalender(ziel) {
-  ziel.querySelectorAll("[data-ktag]").forEach((b) => b.addEventListener("click", () => setzeFilter("kalender", { tag: b.dataset.ktag })));
-  ziel.querySelectorAll("[data-ksprung]").forEach((b) => b.addEventListener("click", () => { location.hash = linkMit("kalender", { ansicht: "", tag: b.dataset.ksprung, ksuche: "" }); }));
+  ziel.querySelectorAll("[data-ktag]").forEach((b) => b.addEventListener("click", () => setzeFilter("kalender", { tag: b.dataset.ktag }, true)));
+  ziel.querySelectorAll("[data-ksprung]").forEach((b) => b.addEventListener("click", () => { location.hash = linkMit("kalender", { ansicht: "", tag: b.dataset.ksprung }); }));
   ziel.querySelector("#kDatum").addEventListener("change", (e) => e.target.value && setzeFilter("kalender", { tag: e.target.value }));
   const su = ziel.querySelector("#kSuche");
   let t = null;
@@ -1276,6 +1298,13 @@ function terminDialog(id, vorgabe) {
       S.termine = S.termine.filter((x) => x.id !== id);
       onlineBuchungMelden(id, "cancelled");
       toast("Termin abgesagt"); zeichne(); return true;
+    }
+    // Stopp-Notiz oder offene Reaktivierung: Büro vor dem Buchen warnen (wie in der Fahrlehrer-App)
+    if (!id && d.schueler_id && ["fahrstunde", "sonder", "nacht", "schalt"].includes(d.art)) {
+      const sch = S.schueler.find((x) => x.id === d.schueler_id) || {};
+      const stopp = offeneNotizen(d.schueler_id).filter((n) => n.art === "stopp");
+      const gesperrtR = KR.reaktInfo(sch).gesperrt;
+      if ((stopp.length || gesperrtR) && !(await bestaetige("Achtung bei " + (sch.name || "diesem Schüler"), (stopp.length ? "Stopp-Notiz: " + stopp.map((n) => n.text).join(" / ") + ". " : "") + (gesperrtR ? "Die Reaktivierung ist überfällig. " : "") + "Trotzdem buchen?", "Trotzdem buchen"))) return false;
     }
     // Überschneidung beim selben Fahrlehrer warnen
     const kollision = S.termine.find((x) => x.id !== id && x.fahrlehrer_id === d.fahrlehrer_id && x.datum === d.datum && x.von && x.bis
@@ -2100,10 +2129,13 @@ function oeffneDialog(titel, inhalt, speichern, knopfText, optionen) {
   const form = dlg.querySelector("form");
   // Abbrechen und ✕ sind keine Absende-Knöpfe: Enter speichert, und das Schließen klappt auch bei leeren Pflichtfeldern
   dlg.querySelectorAll("[data-schliessen]").forEach((b) => b.addEventListener("click", () => dlg.close()));
+  let laeuft = false;
   form.addEventListener("submit", async (e) => {
     e.preventDefault();
+    if (laeuft) return; // Doppelklick oder zweimal Enter: nur einmal speichern
+    laeuft = true;
     const knopf = dlg.querySelector("footer button[value=ok]");
-    try { if ((await speichern(form)) !== false) dlg.close(); } finally { knopf.disabled = false; }
+    try { if ((await speichern(form)) !== false) dlg.close(); } finally { knopf.disabled = false; laeuft = false; }
   });
   dlg.addEventListener("close", () => dlg.remove());
   // Immer schließbar: Abbrechen, ✕ (ohne Pflichtfeld-Prüfung), Esc, und ein Klick neben das Fenster (nur solange nichts eingegeben wurde)
@@ -2322,9 +2354,11 @@ function fuelleDruckKopf() {
   const teile = [];
   const tab = document.querySelector("#ansicht .tab[aria-current=page]");
   if (tab) teile.push(tab.textContent.trim());
-  document.querySelectorAll("#ansicht .filterzeile select, #ansicht .karte-kopf select").forEach((sel) => { if (sel.value && sel.selectedOptions[0]) teile.push(sel.selectedOptions[0].textContent.trim()); });
+  document.querySelectorAll("#ansicht .filterzeile select, #ansicht .karte-kopf select").forEach((sel) => { if (sel.value && sel.selectedOptions[0] && !/Sort$/.test(sel.id)) teile.push(sel.selectedOptions[0].textContent.trim()); });
+  const chips = [...document.querySelectorAll("#ansicht [data-klehrer]")];
+  if (chips.length && chips.some((c) => !c.checked)) teile.push("Fahrlehrer: " + (chips.filter((c) => c.checked).map((c) => c.closest("label").textContent.trim()).join(", ") || "keiner"));
   document.querySelectorAll("#ansicht .filterzeile input[type=search], #ansicht .karte-kopf input[type=search]").forEach((i) => { if (i.value.trim()) teile.push("Suche: „" + i.value.trim() + "“"); });
-  document.querySelectorAll("#ansicht .filterzeile input[type=date]").forEach((i) => { if (i.value) teile.push((i.closest("label") ? i.closest("label").textContent.trim().split(/\s+/)[0] + " " : "") + datumDE(i.value)); });
+  document.querySelectorAll("#ansicht .filterzeile input[type=date]:not(#kDatum)").forEach((i) => { if (i.value) teile.push((i.closest("label") ? i.closest("label").textContent.trim().split(/\s+/)[0] + " " : "") + datumDE(i.value)); });
   const jetzt = new Date().toLocaleString("de-DE", { dateStyle: "medium", timeStyle: "short" });
   $("druckKopf").innerHTML = `<b>${esc(b.titel)}</b><span>${esc((S.fs && S.fs.name) || "")} · gedruckt am ${esc(jetzt)}${S.werAnzeige || (S.profil && S.profil.name) ? " von " + esc(S.werAnzeige || S.profil.name) : ""}${teile.length ? " · " + esc(teile.join(" · ")) : ""}</span>`;
 }

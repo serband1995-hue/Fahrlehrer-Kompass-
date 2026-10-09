@@ -3882,7 +3882,6 @@ async function pullSchuelerZuweisungen() {
     const { data: rows, error: schErr } = await supa.from("schueler").select("*").eq("fahrlehrer_id", _authUser.id).eq("status", "aktiv");
     if (schErr) throw schErr;
     _merkeFristen(rows);
-    try{ await pullBueroNotizen(supa,(rows||[]).map(r=>r.id)); }catch(e){ console.warn("[Kompass] Büro-Notizen nicht geladen:",e.message); }
     const lokaleIds = new Set((DB.students||[]).map(s=>s.id));
     let neu = [];
     ensureAusbildungsplaene();
@@ -3917,6 +3916,8 @@ async function pullSchuelerZuweisungen() {
         neu.push(r);
       }
     }
+    // Notizen erst jetzt: neue Schüler sind dann schon in DB.students, das Popup kann ihren Namen nennen
+    try{ await pullBueroNotizen(supa,(rows||[]).map(r=>r.id)); }catch(e){ console.warn("[Kompass] Büro-Notizen nicht geladen:",e.message); }
     const { data: weg, error: wegErr } = await supa.from("schueler_verschiebungen").select("*").eq("von_fahrlehrer_id", _authUser.id).eq("gesehen_von_alt", false);
     if (wegErr) throw wegErr;
     let entfernt = [];

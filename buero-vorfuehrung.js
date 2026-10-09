@@ -178,7 +178,7 @@ if (typeof module !== "undefined" && module.exports) { module.exports = { bauDat
       }
       return { data: (this.art === "select" || this.nachher) ? daten : null, error: null };
     }
-    then(ok, nein) { return Promise.resolve(this.ausfuehren()).then(ok, nein); }
+    then(ok, nein) { return (F.verzoegerung ? new Promise((r) => setTimeout(r, F.verzoegerung)).then(() => this.ausfuehren()) : Promise.resolve(this.ausfuehren())).then(ok, nein); }
   }
 
   window.supabase = {
