@@ -80,6 +80,7 @@ nav{display:grid;gap:2px;}
 .nav-punkt .zahl{margin-left:auto;min-width:26px;height:26px;padding:0 8px;border-radius:999px;background:var(--rot);color:#fff;font-size:14px;font-weight:700;display:inline-grid;place-items:center;}
 .nav-punkt .bald{margin-left:auto;flex-shrink:0;font-size:12px;color:var(--faint);white-space:nowrap;}
 .nav-punkt .zahl{flex-shrink:0;}
+.installieren{width:100%;margin-top:6px;border-style:dashed;}
 .seite-fuss{margin-top:auto;display:flex;align-items:center;justify-content:space-between;gap:10px;padding:14px 6px 0;border-top:1px solid var(--line-soft);}
 .nutzer-name{font-weight:600;}
 .nutzer-rolle{color:var(--muted);font-size:14px;}

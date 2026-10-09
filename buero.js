@@ -1507,6 +1507,22 @@ $("loginForm").addEventListener("submit", async (e) => {
   starte(data.user);
 });
 
+/* Als App installieren (Chrome/Edge am PC): eigenes Fenster, Symbol auf dem Desktop und in der Taskleiste.
+   Die Anmeldung bleibt gespeichert; man muss sich nur nach „Abmelden“ neu anmelden. */
+let _installEvent = null;
+window.addEventListener("beforeinstallprompt", (e) => { e.preventDefault(); _installEvent = e; $("installieren").hidden = false; });
+window.addEventListener("appinstalled", () => { $("installieren").hidden = true; toast("Kompass Büro ist jetzt als App installiert"); });
+$("installieren").addEventListener("click", async () => {
+  if (!_installEvent) return;
+  _installEvent.prompt();
+  await _installEvent.userChoice.catch(() => null);
+  _installEvent = null;
+  $("installieren").hidden = true;
+});
+if ("serviceWorker" in navigator && !window.BUERO_VORFUEHRUNG) {
+  window.addEventListener("load", () => { navigator.serviceWorker.register("./sw.js").catch(() => {}); });
+}
+
 (async function init() {
   const { data } = await supa.auth.getSession();
   if (data && data.session && data.session.user) starte(data.session.user);
