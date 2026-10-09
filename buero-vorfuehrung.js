@@ -39,6 +39,7 @@ function bauDaten(heute) {
       reakt_bezahlt_bis: n % 3 === 0 && n % 10 !== 0 ? addTage(heute, [-20, 15, 200][n % 3 === 0 ? (n / 3) % 3 : 0]) : null,
       reakt_notiz: n % 10 === 0 ? "Prüfung bestanden" : null,
       ausbildungsart: n % 11 === 0 ? "umschreibung" : (n % 13 === 0 ? "neuerteilung" : "ersterwerb"), klasse: n % 8 === 0 ? "CE" : (n % 6 === 0 ? "B197" : (n % 5 === 0 ? "B78" : "B")),
+      antrag_am: n % 7 === 1 ? addTage(heute, -400) : (n % 9 === 2 ? addTage(heute, -330) : (n % 3 === 0 ? addTage(heute, -90) : null)),
       b197_testfahrt_am: n % 6 === 0 && n % 12 === 0 ? addTage(heute, -12) : null, reakt_betrag: null, inaktiv_seit: n === 10 || n === 20 ? addTage(heute, -30) : null,
       theorie_abgeschlossen_am: n % 4 === 0 ? addTage(heute, -[340, 100, 380][n % 3]) : null,
       theorie_bestanden_am: n % 8 === 0 ? addTage(heute, -50) : null,
@@ -177,7 +178,7 @@ if (typeof module !== "undefined" && module.exports) { module.exports = { bauDat
       }
       return { data: (this.art === "select" || this.nachher) ? daten : null, error: null };
     }
-    then(ok, nein) { return Promise.resolve(this.ausfuehren()).then(ok, nein); }
+    then(ok, nein) { return (F.verzoegerung ? new Promise((r) => setTimeout(r, F.verzoegerung)).then(() => this.ausfuehren()) : Promise.resolve(this.ausfuehren())).then(ok, nein); }
   }
 
   window.supabase = {

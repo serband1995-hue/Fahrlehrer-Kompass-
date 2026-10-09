@@ -653,6 +653,152 @@ for (const [breite, hoehe] of [[1920, 1080], [1366, 768], [1024, 768]]) {
   await ctx.close();
 }
 
+// 4k) Zweite Hälfte: Notizen, Antrag, Auslastung, Kalender-Ansichten, Drucken
+{
+  const { page, ctx, konsole } = await oeffne({ nutzer: "ad-1", hash: "#kalender", breite: 1366, hoehe: 900 });
+  // Kalender: alle vier Ansichten, Springen, Suche
+  for (const ans of ["woche", "monat", "jahr", "tag"]) for (const b of [1024, 1366, 1920]) {
+    await page.setViewportSize({ width: b, height: 900 });
+    await page.goto(page.url().split("#")[0] + "#kalender" + (ans === "tag" ? "" : "?ansicht=" + ans));
+    await page.waitForTimeout(300);
+    await pruefeLayout(page, `Kalender ${ans}@${b}`);
+    await pruefeBreite(page, `Kalender ${ans}@${b}`);
+  }
+  await page.setViewportSize({ width: 1366, height: 900 });
+  await page.goto(page.url().split("#")[0] + "#kalender?ansicht=woche"); await page.waitForTimeout(300);
+  if ((await page.$$(".k-spalte")).length !== 7) fehler("Kalender Woche: nicht 7 Tage");
+  if ((await page.$$(".k-termin")).length < 3) fehler("Kalender Woche: zu wenige Termine");
+  await page.click('[data-ktag]:has-text("→")'); await page.waitForTimeout(250);
+  await page.goto(page.url().split("#")[0] + "#kalender?ansicht=monat"); await page.waitForTimeout(300);
+  if ((await page.$$(".m-tag")).length < 28) fehler("Kalender Monat: zu wenige Tage");
+  await page.click(".m-tag:not(.fremd) >> nth=14"); await page.waitForTimeout(300);
+  if (!/^#kalender/.test(await page.evaluate(() => location.hash)) || /ansicht=/.test(await page.evaluate(() => location.hash))) fehler("Kalender Monat: Klick auf Tag öffnet nicht die Tagesansicht");
+  await page.fill("#kDatum", "2027-03-05"); await page.dispatchEvent("#kDatum", "change"); await page.waitForTimeout(300);
+  if (!/5\. März 2027/.test(await page.textContent(".k-titel"))) fehler("Kalender: Datum springen geht nicht: " + await page.textContent(".k-titel"));
+  await page.goto(page.url().split("#")[0] + "#kalender"); await page.waitForTimeout(300);
+  const name = await page.evaluate(() => { const t = window.__FAKE.tabellen.kalender_termine.find((x) => x.schueler_id && x.datum >= new Date().toISOString().slice(0, 10)); return window.__FAKE.tabellen.schueler.find((x) => x.id === t.schueler_id).name; });
+  await page.fill("#kSuche", name); await page.waitForTimeout(600);
+  if (!(await page.$(".k-suche-erg [data-ksprung]"))) fehler("Kalender: Schülersuche findet keine Termine für " + name);
+  await pruefeLayout(page, "Kalender-Suche");
+  // Auslastung
+  await page.goto(page.url().split("#")[0] + "#auslastung"); await page.waitForTimeout(300);
+  if ((await page.$$(".karte table tbody tr")).length < 3) fehler("Auslastung: zu wenige Fahrlehrer");
+  for (const b of [1024, 1366, 1920]) { await page.setViewportSize({ width: b, height: 900 }); await pruefeLayout(page, "Auslastung@" + b); await pruefeBreite(page, "Auslastung@" + b); }
+  await page.setViewportSize({ width: 1366, height: 900 });
+  // Führerscheinantrag
+  await page.goto(page.url().split("#")[0] + "#fristen?ansicht=antrag"); await page.waitForTimeout(300);
+  await pruefeLayout(page, "Fristen Antrag");
+  const neuBtn = await page.$("[data-antragneu]");
+  if (neuBtn) { const sid = await neuBtn.getAttribute("data-antragneu"); await neuBtn.click(); await page.waitForTimeout(300); if ((await page.evaluate((id) => window.__FAKE.tabellen.schueler.find((x) => x.id === id).antrag_am, sid)) !== HEUTE) fehler("Antrag: „Neu eingereicht“ nicht gespeichert"); }
+  else fehler("Antrag: kein Schüler mit abgelaufenem oder bald ablaufendem Antrag in den Testdaten");
+  // Notiz an Fahrlehrer
+  await page.goto(page.url().split("#")[0] + "#schueler"); await page.waitForTimeout(300);
+  await page.click("[data-sbearb] >> nth=0");
+  await page.fill("#nzText", "Bitte keine Fahrstunden anbieten");
+  await page.selectOption("#nzArt", "stopp");
+  await pruefeLayout(page, "Notiz-Block");
+  await page.click("#nzSenden"); await page.waitForTimeout(300);
+  const nz = await page.evaluate(() => window.__FAKE.tabellen.schueler_notizen || []);
+  if (nz.length !== 1 || nz[0].art !== "stopp") fehler("Notiz nicht gespeichert: " + JSON.stringify(nz));
+  if (!/noch nicht gelesen/.test(await page.textContent("#notizBlock"))) fehler("Notiz: „noch nicht gelesen“ fehlt");
+  await page.click("[data-notizerledigt]"); await page.waitForTimeout(300);
+  if (!(await page.evaluate(() => window.__FAKE.tabellen.schueler_notizen[0].erledigt_am))) fehler("Notiz „Erledigt“ nicht gespeichert");
+  await page.click("dialog [data-schliessen] >> nth=0");
+  // Drucken: weißes Papier, kein Menü, nichts ragt heraus (A4 quer)
+  await page.setViewportSize({ width: 1047, height: 740 });
+  for (const hash of ["#heute", "#pruefungen?ansicht=alle", "#fahrchecks", "#fahrchecks?ansicht=stunden&von=2000-01-01", "#fristen?ansicht=alle", "#kalender", "#kalender?ansicht=monat", "#schueler", "#verkaeufe", "#zahlen", "#flotte", "#auslastung"]) {
+    await page.emulateMedia({ media: "screen" });
+    await page.goto(page.url().split("#")[0] + hash); await page.waitForTimeout(350);
+    await page.emulateMedia({ media: "print", colorScheme: "dark" });
+    await page.evaluate(() => fuelleDruckKopf());
+    const r = await page.evaluate(() => ({
+      menue: getComputedStyle(document.querySelector(".seite")).display !== "none",
+      knopf: [...document.querySelectorAll("#ansicht .knopf")].some((k) => getComputedStyle(k).display !== "none"),
+      bg: getComputedStyle(document.body).backgroundColor, breite: document.documentElement.scrollWidth, fenster: window.innerWidth,
+      kopf: document.getElementById("druckKopf").textContent.length,
+    }));
+    if (r.menue) fehler(`Drucken ${hash}: Menü sichtbar`);
+    if (r.knopf) fehler(`Drucken ${hash}: Knöpfe sichtbar`);
+    if (r.bg !== "rgb(255, 255, 255)") fehler(`Drucken ${hash}: Hintergrund nicht weiß (${r.bg})`);
+    if (r.breite > r.fenster + 2) fehler(`Drucken ${hash}: breiter als Papier (${r.breite} > ${r.fenster})`);
+    if (r.kopf < 10) fehler(`Drucken ${hash}: Kopfzeile fehlt`);
+    if (FOTOS && hash === "#pruefungen?ansicht=alle") await page.screenshot({ path: join(FOTOS, "druck-pruefungen.png"), fullPage: true });
+    if (FOTOS && hash === "#schueler") await page.screenshot({ path: join(FOTOS, "druck-schueler.png"), fullPage: true });
+  }
+  await page.emulateMedia({ media: "screen" });
+  if (konsole.length) fehler("Zweite Hälfte: Konsole: " + konsole.join(" | "));
+  await ctx.close();
+}
+
+// 4l) Fehler aus der zweiten Fehlersuche (09.10.2026)
+{
+  const { page, ctx, konsole } = await oeffne({ nutzer: "ad-1", hash: "#schueler", breite: 1366, hoehe: 900 });
+  // Schüler-Dialog läuft nicht seitlich über (neu und bestehend)
+  for (const b of [1024, 1366, 1920]) {
+    await page.setViewportSize({ width: b, height: 900 });
+    for (const knopf of ["#sNeu", "[data-sbearb] >> nth=0"]) {
+      await page.click(knopf); await page.waitForTimeout(150);
+      const r = await page.evaluate(() => { const i = document.querySelector("dialog[open] .dialog-inhalt"); return [i.scrollWidth, i.clientWidth]; });
+      if (r[0] > r[1] + 1) fehler(`Schüler-Dialog läuft über (${r[0]} > ${r[1]}) bei ${b} px`);
+      await pruefeLayout(page, `Schüler-Dialog@${b}`);
+      await page.keyboard.press("Escape"); await page.waitForTimeout(150);
+    }
+  }
+  // Doppelklick auf „Speichern“ legt nur einen Schüler an
+  await page.setViewportSize({ width: 1366, height: 900 });
+  await page.evaluate(() => { const alt = window.__FAKE; window.__FAKE.verzoegerung = 120; });
+  await page.click("#sNeu");
+  await page.fill("dialog input[name=name]", "Doppelklick Test");
+  await page.dblclick("dialog button[value=ok]");
+  await page.waitForTimeout(600);
+  const anzahl = await page.evaluate(() => window.__FAKE.tabellen.schueler.filter((x) => x.name === "Doppelklick Test").length);
+  if (anzahl !== 1) fehler(`Doppelklick legt ${anzahl} Schüler an`);
+  // Ungesendeter Notiztext geht nicht still verloren
+  await page.fill("#sSuche", "Doppelklick"); await page.waitForTimeout(500);
+  await page.click("[data-sbearb]");
+  await page.fill("#nzText", "noch nicht gesendet");
+  await page.click("dialog button[value=ok]"); await page.waitForTimeout(300);
+  if (!(await page.isVisible("dialog[open]"))) fehler("Ungesendete Notiz: Fenster schließt ohne Warnung");
+  await page.click("#nzSenden"); await page.waitForTimeout(300);
+  await page.click("dialog [data-schliessen] >> nth=0"); await page.waitForTimeout(200);
+  if (!/Notiz/.test(await page.textContent(".schuelertab tbody"))) fehler("Schülerliste zeigt die neue Notiz nicht sofort");
+  // Kalender: Termine vor 7 und nach 21 Uhr bleiben sichtbar; gesperrter Fahrlehrer fehlt in der Tagesansicht
+  const tag = await page.evaluate(() => {
+    const T = window.__FAKE.tabellen, d = new Date(); d.setDate(d.getDate() + 3); const datum = d.toISOString().slice(0, 10);
+    const fl = T.profiles.find((p) => p.rolle === "fahrlehrer");
+    T.kalender_termine.push({ id: "t-nacht", fahrschule_id: fl.fahrschule_id, fahrlehrer_id: fl.id, schueler_id: null, datum, von: "21:15", bis: "22:45", art: "nacht", status: "geplant", geloescht: false, payload: {}, buero_fc_status: "offen" });
+    T.kalender_termine.push({ id: "t-frueh", fahrschule_id: fl.fahrschule_id, fahrlehrer_id: fl.id, schueler_id: null, datum, von: "05:30", bis: "06:45", art: "fahrstunde", status: "geplant", geloescht: false, payload: {}, buero_fc_status: "offen" });
+    const g = T.profiles.find((p) => p.rolle === "fahrlehrer" && p.id !== fl.id); g.aktiv = false; window.__gesperrt = g.name;
+    return datum;
+  });
+  await page.evaluate(() => ladeDaten()); await page.waitForTimeout(500);
+  await page.goto(page.url().split("#")[0] + "#kalender?tag=" + tag); await page.waitForTimeout(400);
+  const sicht = await page.$$eval('.k-termin[data-termin="t-nacht"], .k-termin[data-termin="t-frueh"]', (b) => b.length);
+  if (sicht !== 2) fehler("Kalender: Termine vor 07:00 oder nach 21:00 sind nicht sichtbar (" + sicht + " von 2)");
+  const gesperrtName = await page.evaluate(() => window.__gesperrt);
+  const koepfe = await page.$$eval(".k-lname", (e) => e.map((x) => x.textContent));
+  if (koepfe.includes(gesperrtName)) fehler("Kalender Tag zeigt gesperrten Fahrlehrer " + gesperrtName);
+  // Jahr: Farben unterscheiden sich
+  await page.goto(page.url().split("#")[0] + "#kalender?ansicht=jahr"); await page.waitForTimeout(400);
+  const farben = await page.$$eval(".j-tag", (e) => [...new Set(e.map((x) => getComputedStyle(x).backgroundColor))].length);
+  if (farben < 2) fehler("Kalender Jahr: Auslastungsfarben fehlen (" + farben + " Farben)");
+  // Blättern legt Verlaufseinträge an (Zurück zeigt den vorigen Monat)
+  await page.goto(page.url().split("#")[0] + "#kalender?ansicht=monat&tag=2026-05-15"); await page.waitForTimeout(300);
+  await page.click('[data-ktag] >> nth=2'); await page.waitForTimeout(250);
+  if (!/Juni 2026/.test(await page.textContent(".k-titel"))) fehler("Monat →: " + await page.textContent(".k-titel"));
+  await page.goBack(); await page.waitForTimeout(300);
+  if (!/Mai 2026/.test(await page.textContent(".k-titel"))) fehler("Zurück im Browser springt nicht zum vorigen Monat: " + await page.textContent(".k-titel"));
+  // Druck als PDF: keine leere Zusatzseite bei kurzer Liste
+  await page.goto(page.url().split("#")[0] + "#kalender?ansicht=monat"); await page.waitForTimeout(300);
+  await page.emulateMedia({ media: "print" });
+  const pdf = await page.pdf({ landscape: true, format: "A4", preferCSSPageSize: true });
+  const seiten = (pdf.toString("latin1").match(/\/Type\s*\/Page\b/g) || []).length;
+  if (seiten !== 1) fehler("Druck Monatsansicht hat " + seiten + " Seiten statt 1");
+  await page.emulateMedia({ media: "screen" });
+  if (konsole.length) fehler("Fehlersuche 2: Konsole: " + konsole.join(" | "));
+  await ctx.close();
+}
+
 // 4f) Verkäufe: bezahlt bucht Provision, ausgezahlt
 {
   const { page, ctx, konsole } = await oeffne({ nutzer: "bu-1", hash: "#verkaeufe", breite: 1920, hoehe: 1080 });
