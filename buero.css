@@ -272,7 +272,7 @@ details summary{cursor:pointer;font-weight:700;margin:6px 0;}
 .dialog-form footer{border-top:1px solid var(--line-soft);justify-content:flex-end;}
 .dialog-form h2{font-size:24px;}
 .dialog-inhalt{padding:20px 24px;overflow-y:auto;}
-.formular{display:grid;grid-template-columns:1fr 1fr;gap:16px 20px;}
+.formular{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:16px 20px;}
 .formular label{display:grid;gap:6px;font-weight:600;}
 .formular .voll{grid-column:1/-1;}
 .formular input,.formular select{min-height:46px;padding:0 12px;border:1px solid var(--line);border-radius:var(--r-klein);background:var(--bg);font-weight:400;}
@@ -400,7 +400,7 @@ details summary{cursor:pointer;font-weight:700;margin:6px 0;}
 
 /* Drucken: weißes Papier, Querformat, ohne Menü, Knöpfe und Filter */
 .druckkopf,.druckfuss{display:none;}
-@page{size:A4 landscape;margin:12mm 12mm 17mm 12mm;}
+@page{size:A4 landscape;margin:12mm 12mm 16mm 12mm;@bottom-center{content:"Vertraulich: enthält Personendaten. Nach Gebrauch bitte vernichten.";font-size:8pt;color:#555;}}
 @media print{
   :root{color-scheme:light;
   --bg:#f3f1e9; --surface:#fffdf7; --surface-2:#ece7d8;
@@ -426,7 +426,8 @@ details summary{cursor:pointer;font-weight:700;margin:6px 0;}
   .druckkopf{display:block;margin:0 0 10pt;padding-bottom:6pt;border-bottom:1.5pt solid #333;}
   .druckkopf b{font-size:15pt;display:block;}
   .druckkopf span{font-size:9.5pt;color:#444;}
-  .druckfuss{display:block;position:fixed;left:0;right:0;bottom:-12mm;font-size:8.5pt;color:#555;text-align:center;border-top:.5pt solid #999;padding-top:3pt;}
+  .druckkopf::before{content:"Vertraulich: enthält Personendaten";float:right;font-size:8.5pt;color:#555;}
+  .druckfuss{display:none !important;}
   .karte,.kachel{box-shadow:none !important;border:.5pt solid #bbb !important;border-radius:6pt !important;background:#fff !important;padding:8pt 10pt !important;margin-bottom:8pt !important;}
   .karte{border:none !important;padding:0 !important;}
   .kacheln{gap:8pt !important;margin-bottom:8pt !important;grid-template-columns:repeat(4,1fr) !important;}
@@ -440,7 +441,13 @@ details summary{cursor:pointer;font-weight:700;margin:6px 0;}
   .nur-schmal,.nur-unter{display:none !important;}
   .marke-pill{border:.5pt solid #999;background:#fff !important;color:#111 !important;}
   .karte-kopf{margin-bottom:4pt !important;}
-  .kalender{zoom:.62;}
+  .kalender{zoom:.5;}
+  p.leise.klein,summary,.hinweis{display:none !important;}
+  .nur-druck{display:block !important;font-size:9pt;color:#333;}
+  .tag-titel{break-after:avoid;margin:10pt 0 2pt !important;font-size:12pt !important;}
+  .tabelle .unter{font-size:8.5pt !important;}
+  .aufgabe{padding:4pt 8pt !important;font-size:10pt !important;margin:0 0 3pt !important;}
+  .aufgaben{gap:3pt !important;}
   .m-tag{min-height:62pt;} .m-tag.h1,.m-tag.h2,.m-tag.h3,.m-tag.h4,.j-tag.h1,.j-tag.h2,.j-tag.h3,.j-tag.h4{-webkit-print-color-adjust:exact;print-color-adjust:exact;}
   .stand-balken,.k-termin{-webkit-print-color-adjust:exact;print-color-adjust:exact;}
   body[data-bereich="team"] #ansicht{display:none !important;}
@@ -449,3 +456,11 @@ details summary{cursor:pointer;font-weight:700;margin:6px 0;}
 .th-unter{font-size:12px;font-weight:600;text-transform:none;letter-spacing:0;color:var(--faint);}
 .stand{display:flex;align-items:center;gap:8px;min-width:0;}
 .stand-spur{min-width:50px;}
+.formular select,.formular input,.formular textarea{min-width:0;max-width:100%;}
+.nur-druck{display:none;}
+.j-tag.h1{background:color-mix(in srgb,var(--gruen) 14%,var(--surface));}
+.j-tag.h2{background:color-mix(in srgb,var(--gruen) 32%,var(--surface));}
+.j-tag.h3{background:color-mix(in srgb,var(--gold) 34%,var(--surface));}
+.j-tag.h4{background:color-mix(in srgb,var(--rot) 32%,var(--surface));}
+.k-lname{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+@media (max-width:1100px){ .k-lname{font-size:14px;} }
