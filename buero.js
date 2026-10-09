@@ -362,18 +362,39 @@ function hakenHTML(p, gross) {
   return `<div class="haken-reihe${gross ? " gross" : ""}">${HAKEN.map(([k, farbe, titel]) =>
     `<button type="button" class="haken ${farbe}${p[k] ? " an" : ""}" data-haken="${k}" data-id="${esc(p.id)}" aria-pressed="${p[k] ? "true" : "false"}" title="${titel}" aria-label="${titel}"${p.status !== "geplant" ? " disabled" : ""}>✓</button>`).join("")}</div>`;
 }
+const P_ANSICHTEN = [["kommend", "Kommende"], ["vergangen", "Vergangene"], ["alle", "Alle"]];
+// Link innerhalb der Prüfungstafel; Suche, Datum und Sortierung bleiben beim Wechsel der Reiter erhalten
+function pLink(aender) {
+  const p = new URLSearchParams((location.hash.split("?")[1]) || "");
+  p.delete("gross");
+  for (const [k, v] of Object.entries(aender)) { if (v) p.set(k, v); else p.delete(k); }
+  const q = p.toString();
+  return "#pruefungen" + (q ? "?" + q : "");
+}
 function renderPruefungen() {
   const heute = KR.todayISO();
-  const ansicht = fristenParam("ansicht") === "vergangen" ? "vergangen" : "kommend";
+  const ansicht = P_ANSICHTEN.some(([id]) => id === fristenParam("ansicht")) ? fristenParam("ansicht") : "kommend";
   const art = ["praxis", "theorie"].includes(fristenParam("art")) ? fristenParam("art") : "alle";
   const gross = fristenParam("gross") === "1";
+  const suche = (fristenParam("suche") || "").trim().toLowerCase();
+  const datumOk = (d) => /^\d{4}-\d\d-\d\d$/.test(d) ? d : "";
+  const vonF = datumOk(fristenParam("von")), bisF = datumOk(fristenParam("bis"));
+  const sortierung = fristenParam("sort") === "auf" || fristenParam("sort") === "ab" ? fristenParam("sort") : (ansicht === "vergangen" ? "ab" : "auf");
   document.body.classList.toggle("kiosk", gross);
   let liste = S.pruefungstermine.slice();
   if (art !== "alle") liste = liste.filter((p) => p.art === art);
   const offen = liste.filter((p) => p.status === "geplant" && p.datum < heute);
   if (ansicht === "kommend") liste = liste.filter((p) => p.datum >= heute && p.status !== "abgesagt");
-  else liste = liste.filter((p) => p.datum < heute || p.status !== "geplant").reverse();
-  if (gross) liste = liste.filter((p) => p.datum <= KR.addDaysISO(heute, 13));
+  else if (ansicht === "vergangen") liste = liste.filter((p) => p.datum < heute || p.status !== "geplant");
+  if (!gross) {
+    if (vonF) liste = liste.filter((p) => p.datum >= vonF);
+    if (bisF) liste = liste.filter((p) => p.datum <= bisF);
+    if (suche) liste = liste.filter((p) => {
+      const s = S.schueler.find((x) => x.id === p.schueler_id) || {};
+      return [s.name, p.fahrlehrer_id ? lehrerName(p.fahrlehrer_id) : "", p.notiz, p.klasse, datumDE(p.datum)].some((t) => String(t || "").toLowerCase().includes(suche));
+    });
+  }
+  liste.sort((a, b) => (a.datum + (a.von || "")).localeCompare(b.datum + (b.von || "")) * (sortierung === "ab" && !gross ? -1 : 1));
   const z = zaehlePruefungen();
   const nachTag = {};
   for (const p of liste) (nachTag[p.datum] = nachTag[p.datum] || []).push(p);
@@ -401,9 +422,17 @@ function renderPruefungen() {
     return `<div class="kiosk-kopf"><h2>Prüfungen der nächsten 14 Tage</h2><a class="knopf" href="#pruefungen">Großansicht beenden</a></div>${legende}
       ${tabellen || `<p class="leer">Keine Prüfungen in den nächsten 14 Tagen.</p>`}`;
   }
-  const tabs = [["kommend", "Kommende"], ["vergangen", "Vergangene"]].map(([id, n]) => `<a class="tab" href="#pruefungen?ansicht=${id}&art=${art}"${id === ansicht ? ' aria-current="page"' : ""}>${n}</a>`).join("");
-  const arten = [["alle", "Alle"], ["praxis", "Praxis"], ["theorie", "Theorie"]].map(([id, n]) => `<a class="tab" href="#pruefungen?ansicht=${ansicht}&art=${id}"${id === art ? ' aria-current="page"' : ""}>${n}</a>`).join("");
-  const warn = offen.length && ansicht === "kommend"
+  const tabs = P_ANSICHTEN.map(([id, n]) => `<a class="tab" href="${pLink({ ansicht: id === "kommend" ? "" : id })}"${id === ansicht ? ' aria-current="page"' : ""}>${n}</a>`).join("");
+  const arten = [["alle", "Alle"], ["praxis", "Praxis"], ["theorie", "Theorie"]].map(([id, n]) => `<a class="tab" href="${pLink({ art: id === "alle" ? "" : id })}"${id === art ? ' aria-current="page"' : ""}>${n}</a>`).join("");
+  const filterAktiv = suche || vonF || bisF;
+  const filterZeile = `<div class="filterzeile">
+      <input type="search" class="suche" id="pSuche" placeholder="Name oder Datum suchen" value="${esc(fristenParam("suche"))}" aria-label="Prüfungen suchen">
+      <label class="feld-klein">von <input type="date" class="suche" id="pVon" value="${esc(vonF)}"></label>
+      <label class="feld-klein">bis <input type="date" class="suche" id="pBis" value="${esc(bisF)}"></label>
+      <select class="suche" id="pSort" aria-label="Sortierung"><option value="auf"${sortierung === "auf" ? " selected" : ""}>Datum: älteste zuerst</option><option value="ab"${sortierung === "ab" ? " selected" : ""}>Datum: neueste zuerst</option></select>
+      ${filterAktiv ? `<a class="knopf klein" href="${pLink({ suche: "", von: "", bis: "" })}">Filter löschen</a>` : ""}
+    </div>`;
+  const warn = offen.length && ansicht === "kommend" && !filterAktiv
     ? `<div class="karte warnkarte"><h2>${offen.length} Prüfung${offen.length === 1 ? "" : "en"} ohne Ergebnis</h2><table class="tabelle ptabelle"><colgroup><col class="c-zeit breit"><col class="c-art"><col><col class="c-lehrer"><col class="c-haken"><col class="c-akt"></colgroup><tbody>${offen.map((p) => zeile(p).replace("<td class=\"zeitspalte\">", `<td class="zeitspalte">${esc(datumDE(p.datum))} `)).join("")}</tbody></table></div>` : "";
   return `<div class="kacheln">
       <div class="kachel"><div class="wert">${z.woche}</div><div class="name">Prüfungen in den nächsten 7 Tagen</div></div>
@@ -413,11 +442,26 @@ function renderPruefungen() {
     <div class="karte">
       <div class="karte-kopf"><div class="tabs">${tabs}<span class="trenner"></span>${arten}</div>
         <div class="knopfreihe"><a class="knopf" href="#pruefungen?gross=1">Großansicht für die Küche</a><button class="knopf haupt" id="pNeu" type="button">+ Prüfung planen</button></div></div>
+      ${filterZeile}
       ${legende}
-      ${tabellen || `<p class="leer">${ansicht === "kommend" ? "Keine kommenden Prüfungen geplant." : "Noch keine vergangenen Prüfungen."}</p>`}
+      ${tabellen || `<p class="leer">${filterAktiv ? "Keine Prüfung passt zu dieser Suche." : (ansicht === "kommend" ? "Keine kommenden Prüfungen geplant." : "Noch keine Prüfungen in dieser Ansicht.")}</p>`}
     </div>`;
 }
 function bindePruefungen(ziel) {
+  const ps = ziel.querySelector("#pSuche");
+  if (ps) {
+    let t = null;
+    ps.addEventListener("input", () => {
+      clearTimeout(t);
+      t = setTimeout(() => {
+        setzeFilter("pruefungen", { suche: ps.value.trim() });
+        const n = $("pSuche"); if (n) { n.focus(); n.setSelectionRange(n.value.length, n.value.length); }
+      }, 250);
+    });
+    ziel.querySelector("#pVon").addEventListener("change", (e) => setzeFilter("pruefungen", { von: e.target.value }));
+    ziel.querySelector("#pBis").addEventListener("change", (e) => setzeFilter("pruefungen", { bis: e.target.value }));
+    ziel.querySelector("#pSort").addEventListener("change", (e) => setzeFilter("pruefungen", { sort: e.target.value }));
+  }
   const neu = ziel.querySelector("#pNeu");
   if (neu) neu.addEventListener("click", () => pruefungDialog(null));
   ziel.querySelectorAll("[data-haken]").forEach((b) => b.addEventListener("click", () => setzeHaken(b.dataset.id, b.dataset.haken)));
@@ -812,58 +856,272 @@ function fcOffeneAbgaben() {
   const [von, bis] = KR.fcVorZeitraum(KR.fcZeitraum(KR.todayISO())[0]);
   return S.lehrer.filter((l) => !letzteQuittung(l.id, von) && fcFuerLehrer(l.id, von, bis).soll > 0).map((l) => ({ lehrer: l, von, bis }));
 }
-function renderFahrchecks() {
+// Gewählter Abgabe-Zeitraum: jetzt | vor | Startdatum eines früheren Halbmonats (JJJJ-MM-TT)
+function fcPeriode() {
   const jetzt = KR.fcZeitraum(KR.todayISO());
-  const [von, bis] = fristenParam("z") === "vor" ? KR.fcVorZeitraum(jetzt[0]) : jetzt;
+  const z = fristenParam("z");
+  if (z === "vor") return KR.fcVorZeitraum(jetzt[0]);
+  if (/^\d{4}-\d\d-\d\d$/.test(z)) return KR.fcZeitraum(z);
+  return jetzt;
+}
+function fcPeriodenOptionen(gewaehlt) {
+  let [von, bis] = KR.fcZeitraum(KR.todayISO());
+  let html = "";
+  for (let i = 0; i < 14; i++) {
+    const wert = i === 0 ? "jetzt" : (i === 1 ? "vor" : von);
+    const name = `${i === 0 ? "Aktuell" : (i === 1 ? "Letzter Zeitraum" : "Früher")} · ${datumDE(von).slice(0, 6)}–${datumDE(bis)}`;
+    html += `<option value="${wert}"${wert === gewaehlt || (gewaehlt === von && i > 1) ? " selected" : ""}>${esc(name)}</option>`;
+    [von, bis] = KR.fcVorZeitraum(von);
+  }
+  return html;
+}
+const FC_ANSICHTEN = [["abgaben", "Abgaben je Fahrlehrer"], ["stunden", "Alle Fahrcheck-Stunden"]];
+function fcTabs(aktiv) {
+  return FC_ANSICHTEN.map(([id, n]) => `<a class="tab" href="#fahrchecks${id === "abgaben" ? "" : "?ansicht=" + id}"${id === aktiv ? ' aria-current="page"' : ""}>${esc(n)}</a>`).join("");
+}
+function lehrerOptionen(gewaehlt, alleText) {
+  return `<option value="">${esc(alleText)}</option>` + S.lehrer.map((l) => `<option value="${esc(l.id)}"${l.id === gewaehlt ? " selected" : ""}>${esc(l.name || l.email)}</option>`).join("");
+}
+function renderFahrchecks() {
+  if (fristenParam("ansicht") === "stunden") return renderFcStunden();
+  const [von, bis] = fcPeriode();
   const laeuft = bis >= KR.todayISO();
+  const lehrerF = fristenParam("lehrer");
+  const statusF = ["ohne", "fehlend", "ok"].includes(fristenParam("status")) ? fristenParam("status") : "";
+  const suche = (fristenParam("suche") || "").trim().toLowerCase();
   let summeSoll = 0, summeIst = 0, offen = 0;
-  const zeilen = S.lehrer.map((l) => {
+  const zeilen = S.lehrer.filter((l) => (!lehrerF || l.id === lehrerF) && (!suche || (l.name || l.email || "").toLowerCase().includes(suche))).map((l) => {
     const r = fcFuerLehrer(l.id, von, bis);
     const q = letzteQuittung(l.id, von);
     summeSoll += r.soll;
     if (q) summeIst += q.ist; else if (r.soll) offen++;
     const vermerkt = r.fehlend.reduce((a, p) => a + p.fehlt, 0);
+    const istOk = q && q.ist >= q.soll;
+    if (statusF === "ohne" && (q || !r.soll)) return "";
+    if (statusF === "fehlend" && !(q && !istOk)) return "";
+    if (statusF === "ok" && !istOk) return "";
     const status = q
-      ? (q.ist >= q.soll ? `<span class="marke-pill gruen">✓ ${q.ist} von ${q.soll}</span>` : `<span class="marke-pill rot">${q.ist} von ${q.soll}</span>`) + `<div class="unter">bestätigt ${esc(new Date(q.bestaetigt_am).toLocaleDateString("de-DE"))}</div>`
+      ? (istOk ? `<span class="marke-pill gruen">✓ ${q.ist} von ${q.soll}</span>` : `<span class="marke-pill rot">${q.ist} von ${q.soll}</span>`) + `<div class="unter">bestätigt ${esc(new Date(q.bestaetigt_am).toLocaleDateString("de-DE"))}</div>`
       : (r.soll ? `<span class="marke-pill${laeuft ? "" : " gelb"}">${laeuft ? "Zeitraum läuft" : "noch nicht abgegeben"}</span>` : `<span class="leise">–</span>`);
     return `<tr>
       <td><b>${esc(l.name || l.email)}</b></td>
       <td class="zahlspalte"><b>${r.soll}</b></td>
       <td class="zahlspalte nur-breit">${vermerkt ? `<span class="marke-pill gelb">${vermerkt}</span>` : "–"}</td>
       <td>${status}</td>
-      <td class="aktionen"><div class="aktionen-box">${r.soll || q ? `<button class="knopf klein${q ? "" : " haupt"}" data-fcabgabe="${esc(l.id)}" type="button">${q ? "Neu erfassen" : "Abgabe erfassen"}</button>` : ""}</div></td>
+      <td class="aktionen"><div class="aktionen-box">
+        ${r.soll || q ? `<button class="knopf klein${q ? "" : " haupt"}" data-fcabgabe="${esc(l.id)}" type="button">${q ? "Neu erfassen" : "Abgabe erfassen"}</button>` : ""}
+        <a class="knopf klein" href="#fahrchecks?ansicht=stunden&lehrer=${esc(l.id)}&von=${esc(von)}&bis=${esc(bis)}">Stunden</a></div></td>
     </tr>`;
   }).join("");
-  const tabs = [["jetzt", `Aktuell (${datumDE(jetzt[0]).slice(0, 6)}–${datumDE(jetzt[1]).slice(0, 6)})`], ["vor", "Letzter Zeitraum"]]
-    .map(([id, n]) => `<a class="tab" href="#fahrchecks?z=${id}"${(fristenParam("z") || "jetzt") === id ? ' aria-current="page"' : ""}>${esc(n)}</a>`).join("");
   return `<div class="kacheln">
       <div class="kachel"><div class="wert">${summeSoll}</div><div class="name">Fahrchecks erwartet (${esc(datumDE(von))}–${esc(datumDE(bis))})</div></div>
       <div class="kachel gruen"><div class="wert">${summeIst}</div><div class="name">davon bestätigt abgegeben</div></div>
       <div class="kachel${offen && !laeuft ? " gold" : ""}"><div class="wert">${offen}</div><div class="name">Fahrlehrer ohne Quittung</div></div>
     </div>
     <div class="karte">
-      <div class="karte-kopf"><div class="tabs">${tabs}</div></div>
-      <table class="tabelle"><thead><tr><th>Fahrlehrer</th><th class="zahlspalte">Erwartet</th><th class="zahlspalte nur-breit">Als fehlend vermerkt</th><th>Abgabe</th><th></th></tr></thead><tbody>${zeilen}</tbody></table>
-      <p class="leise klein">So geht's: Umschlag des Fahrlehrers zählen, „Abgabe erfassen“, Zahl eintippen. Stimmt sie, ist alles mit einem Klick erledigt. Jede Abgabe ist eine Quittung, die nicht geändert werden kann; der Fahrlehrer sieht sie in seiner App.</p>
+      <div class="karte-kopf"><div class="tabs">${fcTabs("abgaben")}</div></div>
+      <div class="filterzeile">
+        <input type="search" class="suche" id="fcSuche" placeholder="Fahrlehrer suchen" value="${esc(fristenParam("suche"))}" aria-label="Fahrlehrer suchen">
+        <select class="suche" id="fcLehrer" aria-label="Fahrlehrer">${lehrerOptionen(lehrerF, "Alle Fahrlehrer")}</select>
+        <select class="suche" id="fcZeitraum" aria-label="Zeitraum">${fcPeriodenOptionen(fristenParam("z") || "jetzt")}</select>
+        <select class="suche" id="fcStatus" aria-label="Abgabe-Status">
+          <option value="">Alle Abgaben</option><option value="ohne"${statusF === "ohne" ? " selected" : ""}>Noch ohne Quittung</option>
+          <option value="fehlend"${statusF === "fehlend" ? " selected" : ""}>Mit fehlenden Fahrchecks</option><option value="ok"${statusF === "ok" ? " selected" : ""}>Vollständig abgegeben</option></select>
+      </div>
+      <table class="tabelle"><thead><tr><th>Fahrlehrer</th><th class="zahlspalte">Erwartet</th><th class="zahlspalte nur-breit">Als fehlend vermerkt</th><th>Abgabe</th><th></th></tr></thead><tbody>${zeilen || `<tr><td colspan="5" class="leer">Nichts gefunden.</td></tr>`}</tbody></table>
+      <p class="leise klein">So geht's: Umschlag des Fahrlehrers zählen, „Abgabe erfassen“, Zahl eintippen. Stimmt sie, ist alles mit einem Klick erledigt. Auch frühere Zeiträume lassen sich nachtragen (Zeitraum oben wählen). Jede Abgabe ist eine Quittung, die nicht geändert werden kann. Stimmt etwas nicht, wird sie neu erfasst; die alte bleibt als Verlauf stehen. Der Fahrlehrer sieht sie in seiner App.</p>
     </div>
     ${renderFcVerlauf()}`;
 }
+
+/* ----- Alle Fahrcheck-Stunden: suchen, filtern, ändern, nachtragen ----- */
+const FC_TYP = {
+  ok: ["gruen", "Alle FC erhalten"], eins: ["gelb", "1 FC fehlt"], zwei: ["rot", "2 FC fehlen"],
+  geschenkt: ["", "geschenkt"], offen: ["gelb", "FC noch offen"], nachgereicht: ["blau", "nachgereicht"], keine: ["", "keine FC"],
+};
+function fcTyp(ft) {
+  if (!KR.fcGebucht(ft)) return "keine";
+  if (ft.status === "abgebrochen" || ft.status === "nicht erschienen") return "keine";
+  if (ft.fc === "v1" || ft.fc === "halb_bewusst" || ft.fc === "eins_ok") return "eins";
+  if (ft.fc === "v2") return "zwei";
+  if (ft.fc === "geschenkt") return "geschenkt";
+  if (ft.fc === "offen") return "offen";
+  if (ft.fc === "nachgereicht") return "nachgereicht";
+  return "ok";
+}
+const FC_BUERO = { offen: ["", "noch nicht geprüft"], abgegeben: ["gruen", "abgegeben"], fehlt: ["rot", "fehlt"] };
+const FC_MAX_ZEILEN = 300;
+function fcStundenListe() {
+  const heute = KR.todayISO();
+  const [vorVon] = KR.fcVorZeitraum(KR.fcZeitraum(heute)[0]);
+  const fruehester = S.termine.reduce((m, t) => (t.datum && t.datum < m ? t.datum : m), heute);
+  let von = /^\d{4}-\d\d-\d\d$/.test(fristenParam("von")) ? fristenParam("von") : vorVon;
+  if (von < fruehester) von = fruehester; // „alle geladenen“: nicht ab 2000 anzeigen, sondern ab dem ersten vorhandenen Termin
+  const bis = /^\d{4}-\d\d-\d\d$/.test(fristenParam("bis")) ? fristenParam("bis") : heute;
+  const lehrerF = fristenParam("lehrer");
+  const artF = ["fahrstunde", "sonder", "nacht"].includes(fristenParam("art")) ? fristenParam("art") : "";
+  const typF = FC_TYP[fristenParam("typ")] ? fristenParam("typ") : "";
+  const statusF = FC_BUERO[fristenParam("status")] ? fristenParam("status") : "";
+  const suche = (fristenParam("suche") || "").trim().toLowerCase();
+  const richtung = fristenParam("sort") === "auf" ? 1 : -1;
+  const alle = [];
+  for (const t of S.termine) {
+    if (!["fahrstunde", "sonder", "nacht"].includes(t.art) || t.datum < von || t.datum > bis) continue;
+    const ft = fcTermin(t);
+    const gebucht = KR.fcGebucht(ft);
+    if (!gebucht) continue;
+    const typ = fcTyp(ft);
+    const buero = t.buero_fc_status || "offen";
+    if (lehrerF && t.fahrlehrer_id !== lehrerF) continue;
+    if (artF && t.art !== artF) continue;
+    if (typF && typ !== typF) continue;
+    if (statusF && buero !== statusF) continue;
+    if (suche) {
+      const hay = [schuelerName(t.schueler_id), lehrerName(t.fahrlehrer_id), datumDE(t.datum), t.interessent_name].join(" ").toLowerCase();
+      if (!hay.includes(suche)) continue;
+    }
+    alle.push({ t, ft, gebucht, erwartet: KR.fcErhalten(ft), typ, buero });
+  }
+  alle.sort((x, y) => (x.t.datum + (x.t.von || "")).localeCompare(y.t.datum + (y.t.von || "")) * richtung);
+  return { alle, von, bis, lehrerF, artF, typF, statusF, suche, richtung };
+}
+function renderFcStunden() {
+  const f = fcStundenListe();
+  const zaehl = { erwartet: 0, abgegeben: 0, fehlt: 0, offen: 0 };
+  for (const x of f.alle) {
+    if (!x.erwartet) continue;
+    zaehl.erwartet += x.erwartet;
+    if (x.buero === "abgegeben") zaehl.abgegeben += x.erwartet; else if (x.buero === "fehlt") zaehl.fehlt += x.erwartet; else zaehl.offen += x.erwartet;
+  }
+  const sicht = f.alle.slice(0, FC_MAX_ZEILEN);
+  const zeilen = sicht.map(({ t, gebucht, erwartet, typ, buero }) => {
+    const [tf, tn] = FC_TYP[typ], [bf, bn] = FC_BUERO[buero];
+    const knoepfe = erwartet ? [
+      buero !== "abgegeben" ? `<button class="knopf klein haupt" data-fcstatus="abgegeben" data-id="${esc(t.id)}" type="button">Abgegeben</button>` : "",
+      buero !== "fehlt" ? `<button class="knopf klein" data-fcstatus="fehlt" data-id="${esc(t.id)}" type="button">Fehlt</button>` : "",
+      buero === "fehlt" ? `<button class="knopf klein" data-fcnach="${esc(t.id)}" type="button">Nachgereicht</button>` : "",
+    ].join("") : "";
+    return `<tr>
+      <td class="zeitspalte">${esc(datumDE(t.datum))}<div class="unter">${esc(t.von || "")}${t.bis ? "–" + esc(t.bis) : ""}</div></td>
+      <td><b>${esc(schuelerName(t.schueler_id) || t.interessent_name || "–")}</b><div class="unter nur-unter">${esc(lehrerName(t.fahrlehrer_id))} · ${esc(ARTEN[t.art] || t.art)}</div></td>
+      <td class="nur-sehr-breit">${esc(lehrerName(t.fahrlehrer_id))}</td>
+      <td class="nur-sehr-breit"><span class="marke-pill">${esc(ARTEN[t.art] || t.art)}</span></td>
+      <td class="zahlspalte"><b>${erwartet}</b><span class="leise"> von ${gebucht}</span></td>
+      <td><span class="marke-pill ${tf}">${esc(tn)}</span></td>
+      <td>${erwartet ? `<span class="marke-pill ${bf}">${esc(bn)}</span>${t.buero_fc_nachgereicht_am ? `<div class="unter">nachgereicht ${esc(datumDE(t.buero_fc_nachgereicht_am))}</div>` : ""}` : `<span class="leise">–</span>`}</td>
+      <td class="aktionen"><div class="aktionen-box">${knoepfe}<button class="knopf klein" data-fcbearb="${esc(t.id)}" type="button">Ändern</button></div></td>
+    </tr>`;
+  }).join("");
+  const filterAktiv = f.lehrerF || f.artF || f.typF || f.statusF || f.suche || fristenParam("von") || fristenParam("bis");
+  const opt = (obj, gew, alle) => `<option value="">${esc(alle)}</option>` + Object.entries(obj).map(([k, v]) => `<option value="${k}"${k === gew ? " selected" : ""}>${esc(v[1])}</option>`).join("");
+  return `<div class="kacheln">
+      <div class="kachel"><div class="wert">${zaehl.erwartet}</div><div class="name">Fahrchecks erwartet (${esc(datumDE(f.von))}–${esc(datumDE(f.bis))})</div></div>
+      <div class="kachel gruen"><div class="wert">${zaehl.abgegeben}</div><div class="name">als abgegeben markiert</div></div>
+      <div class="kachel${zaehl.fehlt ? " rot" : ""}"><div class="wert">${zaehl.fehlt}</div><div class="name">als fehlend markiert</div></div>
+      <div class="kachel"><div class="wert">${zaehl.offen}</div><div class="name">noch nicht geprüft</div></div>
+    </div>
+    <div class="karte">
+      <div class="karte-kopf"><div class="tabs">${fcTabs("stunden")}</div></div>
+      <div class="filterzeile">
+        <input type="search" class="suche" id="fcSuche" placeholder="Name oder Datum suchen" value="${esc(fristenParam("suche"))}" aria-label="Fahrchecks suchen">
+        <select class="suche" id="fcLehrer" aria-label="Fahrlehrer">${lehrerOptionen(f.lehrerF, "Alle Fahrlehrer")}</select>
+        <select class="suche" id="fcArt" aria-label="Stundenart"><option value="">Alle Stundenarten</option>${["fahrstunde", "sonder", "nacht"].map((k) => `<option value="${k}"${k === f.artF ? " selected" : ""}>${esc(ARTEN[k])}</option>`).join("")}</select>
+        <select class="suche" id="fcTyp" aria-label="Fahrcheck-Vermerk">${opt(FC_TYP, f.typF, "Alle Fahrcheck-Typen")}</select>
+        <select class="suche" id="fcStatus" aria-label="Status im Büro">${opt(FC_BUERO, f.statusF, "Jeder Status")}</select>
+        <label class="feld-klein">von <input type="date" class="suche" id="fcVon" value="${esc(f.von)}"></label>
+        <label class="feld-klein">bis <input type="date" class="suche" id="fcBis" value="${esc(f.bis)}"></label>
+        <select class="suche" id="fcSort" aria-label="Sortierung"><option value="ab"${f.richtung < 0 ? " selected" : ""}>Neueste zuerst</option><option value="auf"${f.richtung > 0 ? " selected" : ""}>Älteste zuerst</option></select>
+        ${filterAktiv ? `<a class="knopf klein" href="#fahrchecks?ansicht=stunden">Filter löschen</a>` : ""}
+        <a class="knopf klein" href="#fahrchecks?ansicht=stunden&von=2000-01-01">Alle geladenen Monate</a>
+      </div>
+      <table class="tabelle"><thead><tr><th>Datum</th><th>Schüler</th><th class="nur-sehr-breit">Fahrlehrer</th><th class="nur-sehr-breit">Art</th><th class="zahlspalte">FC</th><th>Vermerk</th><th>Status Büro</th><th></th></tr></thead>
+      <tbody>${zeilen || `<tr><td colspan="8" class="leer">${filterAktiv ? "Keine Stunde passt zu diesem Filter." : "Keine Fahrstunden in diesem Zeitraum."}</td></tr>`}</tbody></table>
+      ${f.alle.length > FC_MAX_ZEILEN ? `<p class="leise klein">Angezeigt: die ersten ${FC_MAX_ZEILEN} von ${f.alle.length}. Bitte oben weiter eingrenzen.</p>` : `<p class="leise klein">${f.alle.length} Stunde${f.alle.length === 1 ? "" : "n"}.</p>`}
+      <p class="leise klein">„Vermerk Fahrlehrer“ trägt der Fahrlehrer selbst in seiner App ein (z. B. 1 FC vergessen). „Status Büro“ ist deine Kontrolle: abgegeben, fehlt oder noch nicht geprüft. Beides wird zusammen gezählt.</p>
+    </div>`;
+}
+// Status einer Stunde im Büro setzen (ohne aktualisiert_am: sonst überschreibt die Fahrlehrer-App ihre eigenen Vermerke)
+async function fcSetzeStatus(id, status, nachAm) {
+  const upd = { buero_fc_status: status };
+  if (nachAm !== undefined) upd.buero_fc_nachgereicht_am = nachAm || null;
+  const res = await supa.from("kalender_termine").update(upd).eq("id", id).select("id");
+  if (res.error || !res.data || !res.data.length) { toast("Nicht gespeichert: " + (res.error ? res.error.message : "keine Berechtigung"), true); return false; }
+  const t = S.termine.find((x) => x.id === id);
+  if (t) { Object.assign(t, upd); }
+  return true;
+}
+function pLinkFc(aender) {
+  const p = new URLSearchParams((location.hash.split("?")[1]) || "");
+  for (const [k, v] of Object.entries(aender)) { if (v) p.set(k, v); else p.delete(k); }
+  return "#fahrchecks?" + p.toString();
+}
+function bindeFcFilter(ziel) {
+  const sende = (w) => setzeFilter("fahrchecks", w);
+  const su = ziel.querySelector("#fcSuche");
+  if (su) {
+    let t = null;
+    su.addEventListener("input", () => {
+      clearTimeout(t);
+      t = setTimeout(() => { sende({ suche: su.value.trim() }); const n = $("fcSuche"); if (n) { n.focus(); n.setSelectionRange(n.value.length, n.value.length); } }, 250);
+    });
+  }
+  const wahl = [["#fcLehrer", "lehrer"], ["#fcArt", "art"], ["#fcTyp", "typ"], ["#fcStatus", "status"], ["#fcSort", "sort"], ["#fcVon", "von"], ["#fcBis", "bis"], ["#fcZeitraum", "z"]];
+  for (const [sel, name] of wahl) {
+    const e = ziel.querySelector(sel);
+    if (e) e.addEventListener("change", () => sende({ [name]: name === "z" && e.value === "jetzt" ? "" : e.value }));
+  }
+}
 function renderFcVerlauf() {
-  const liste = S.fcAbgaben.slice(0, 15);
+  const lehrerF = fristenParam("lehrer");
+  const gefiltert = lehrerF ? S.fcAbgaben.filter((q) => q.fahrlehrer_id === lehrerF) : S.fcAbgaben;
+  const liste = gefiltert.slice(0, fristenParam("alle") === "1" || lehrerF ? 200 : 15);
   if (!liste.length) return "";
-  return `<div class="karte"><h2>Letzte Quittungen</h2><table class="tabelle"><thead><tr><th>Zeitraum</th><th>Fahrlehrer</th><th class="zahlspalte">Ergebnis</th><th>Bestätigt</th><th>Notiz</th></tr></thead><tbody>${liste.map((q) => `<tr>
+  return `<div class="karte"><h2>${lehrerF ? "Quittungen von " + esc(lehrerName(lehrerF)) : "Letzte Quittungen"}</h2><table class="tabelle"><thead><tr><th>Zeitraum</th><th>Fahrlehrer</th><th class="zahlspalte">Ergebnis</th><th>Bestätigt</th><th>Notiz</th></tr></thead><tbody>${liste.map((q) => `<tr>
     <td class="zeitspalte">${esc(datumDE(q.zeitraum_von))}–${esc(datumDE(q.zeitraum_bis))}</td>
     <td>${esc(lehrerName(q.fahrlehrer_id))}</td>
     <td class="zahlspalte">${q.ist >= q.soll ? `<span class="marke-pill gruen">${q.ist} von ${q.soll}</span>` : `<span class="marke-pill rot">${q.ist} von ${q.soll}</span>`}</td>
     <td>${esc(new Date(q.bestaetigt_am).toLocaleString("de-DE", { dateStyle: "short", timeStyle: "short" }))}</td>
-    <td>${esc(q.notiz || "")}</td></tr>`).join("")}</tbody></table></div>`;
+    <td>${esc(q.notiz || "")}</td></tr>`).join("")}</tbody></table>${!lehrerF && gefiltert.length > 15 && fristenParam("alle") !== "1" ? `<p class="leise klein"><a href="${pLinkFc({ alle: "1" })}">Alle ${gefiltert.length} Quittungen anzeigen</a></p>` : ""}</div>`;
 }
 function bindeFahrchecks(ziel) {
+  bindeFcFilter(ziel);
   ziel.querySelectorAll("[data-fcabgabe]").forEach((b) => b.addEventListener("click", () => fcAbgabeDialog(b.dataset.fcabgabe)));
+  ziel.querySelectorAll("[data-fcstatus]").forEach((b) => b.addEventListener("click", async () => {
+    b.disabled = true;
+    if (await fcSetzeStatus(b.dataset.id, b.dataset.fcstatus)) { toast(b.dataset.fcstatus === "abgegeben" ? "Als abgegeben markiert ✓" : "Als fehlend markiert"); zeichne(); } else b.disabled = false;
+  }));
+  ziel.querySelectorAll("[data-fcnach]").forEach((b) => b.addEventListener("click", async () => {
+    b.disabled = true;
+    if (await fcSetzeStatus(b.dataset.fcnach, "abgegeben", KR.todayISO())) { toast("Als nachgereicht eingetragen ✓"); zeichne(); } else b.disabled = false;
+  }));
+  ziel.querySelectorAll("[data-fcbearb]").forEach((b) => b.addEventListener("click", () => fcStundeDialog(b.dataset.fcbearb)));
+}
+function fcStundeDialog(id) {
+  const t = S.termine.find((x) => x.id === id);
+  if (!t) return;
+  const ft = fcTermin(t);
+  const typ = fcTyp(ft);
+  const status = t.buero_fc_status || "offen";
+  const body = `<p><b>${esc(schuelerName(t.schueler_id) || t.interessent_name || "–")}</b> · ${esc(datumDE(t.datum))} ${esc(t.von || "")}${t.bis ? "–" + esc(t.bis) : ""}<br>
+      <span class="leise">${esc(lehrerName(t.fahrlehrer_id))} · ${esc(ARTEN[t.art] || t.art)} · erwartet ${KR.fcErhalten(ft)} von ${KR.fcGebucht(ft)} Fahrcheck${KR.fcGebucht(ft) === 1 ? "" : "s"} · Vermerk des Fahrlehrers: ${esc(FC_TYP[typ][1])}</span></p>
+    <div class="formular">
+      <label>Status im Büro
+        <select name="status">${Object.entries(FC_BUERO).map(([k, v]) => `<option value="${k}"${k === status ? " selected" : ""}>${esc(v[1])}</option>`).join("")}</select></label>
+      <label>Nachgereicht am (leer = nicht nachgereicht)
+        <input type="date" name="nach" value="${esc(t.buero_fc_nachgereicht_am || "")}"></label>
+    </div>
+    <p class="leise klein">Den Vermerk des Fahrlehrers (z. B. „1 FC vergessen“) ändert nur er selbst in seiner App; sonst würde seine Eingabe beim nächsten Abgleich überschrieben.</p>`;
+  oeffneDialog("Fahrcheck ändern", body, async (form) => {
+    const nach = form.nach.value;
+    if (nach && !/^\d{4}-\d\d-\d\d$/.test(nach)) { toast("Bitte ein gültiges Datum wählen.", true); return false; }
+    if (!(await fcSetzeStatus(id, form.status.value, nach || null))) return false;
+    toast("Gespeichert ✓");
+    zeichne();
+    return true;
+  });
 }
 function fcAbgabeDialog(lehrerId) {
-  const jetzt = KR.fcZeitraum(KR.todayISO());
-  const [von, bis] = fristenParam("z") === "vor" ? KR.fcVorZeitraum(jetzt[0]) : jetzt;
+  const [von, bis] = fcPeriode();
   const r = fcFuerLehrer(lehrerId, von, bis);
   const zeilen = r.posten.map((p) => `<tr>
       <td class="zeitspalte">${esc(datumDE(p.datum))} ${esc(p.von || "")}</td>
@@ -1498,6 +1756,15 @@ document.addEventListener("visibilitychange", () => {
   if (!document.hidden && S.geladenAm && Date.now() - S.geladenAm.getTime() > NEU_LADEN_MS) ladeDaten();
 });
 
+function loginFehlerText(error) {
+  const m = String((error && error.message) || "");
+  if (/invalid login/i.test(m)) return "E-Mail oder Passwort stimmt nicht. Bitte die E-Mail prüfen oder in der Kompass-App „Passwort vergessen?“ nutzen.";
+  if (/not confirmed/i.test(m)) return "Die E-Mail-Adresse ist noch nicht bestätigt. Bitte den Link in der E-Mail anklicken.";
+  if (/rate limit|too many/i.test(m)) return "Zu viele Versuche. Bitte ein paar Minuten warten.";
+  if (/fetch|network/i.test(m)) return "Keine Internetverbindung.";
+  return "Anmeldung fehlgeschlagen: " + m;
+}
+$("loginZeig").addEventListener("change", (e) => { $("loginPw").type = e.target.checked ? "text" : "password"; });
 $("loginForm").addEventListener("submit", async (e) => {
   e.preventDefault();
   const knopf = $("loginKnopf");
@@ -1506,7 +1773,7 @@ $("loginForm").addEventListener("submit", async (e) => {
   const { data, error } = await supa.auth.signInWithPassword({ email: $("loginMail").value.trim(), password: $("loginPw").value });
   knopf.disabled = false; knopf.textContent = "Anmelden";
   if (error) {
-    $("loginFehler").textContent = /invalid/i.test(error.message) ? "E-Mail oder Passwort stimmt nicht." : "Anmeldung fehlgeschlagen: " + error.message;
+    $("loginFehler").textContent = loginFehlerText(error);
     return;
   }
   starte(data.user);
