@@ -63,6 +63,50 @@ const antrag = await page.evaluate(() => { _schuelerFristen.s2 = { antrag_am: "2
 if (!/Führerscheinantrag abgelaufen/.test(antrag)) fehler("Antrag-Hinweis fehlt: " + antrag.slice(0, 200));
 const inaktiv = await page.evaluate(() => { _schuelerFristen.s3 = { antrag_am: "2020-01-01", inaktiv_seit: "2026-01-01" }; return fristenHinweisHTML("s3"); });
 if (/Führerscheinantrag/.test(inaktiv)) fehler("Inaktiver Schüler bekommt Antrag-Hinweis");
+// Archiv und Warteliste (Büro-Wünsche vom 09.10.2026)
+const arch = await page.evaluate(() => {
+  const heute = todayISO(), alt = "2026-01-10T10:00:00Z";
+  DB.lessons = DB.lessons || []; DB.termine = DB.termine || [];
+  DB.students = [
+    { id: "a1", name: "Aktiv Fahrend" },
+    { id: "a2", name: "Archiv Schüler" },
+    { id: "a3", name: "Wartet Theorie", theorieWait: alt },
+    { id: "a4", name: "Wartet Praxis", ready: alt },
+    { id: "a5", name: "Praxis mit Fahrstunde", ready: alt },
+    { id: "a6", name: "Praxis mit Prüfung", ready: alt },
+    { id: "a7", name: "Nach Theorie", theoryPassed: alt, theorieWaitBis: alt },
+    { id: "a8", name: "Bestanden", ready: alt, passed: true },
+  ];
+  DB.lessons = [
+    { id: "l1", sid: "a5", date: "2026-02-01", art: "fahrstunde", status: "geplant" },
+    { id: "l2", sid: "a6", date: "2099-01-01", art: "pruefung", status: "geplant" },
+    { id: "l3", sid: "a4", date: "2026-02-01", art: "block", status: "geplant" },
+  ];
+  _schuelerFristen.a2 = { inaktiv_seit: "2026-01-01" };
+  return {
+    aktiv: activeStudents().map((s) => s.id).join(),
+    wartet: DB.students.map((s) => s.id + ":" + wartetBuero(s)).join(),
+  };
+});
+if (arch.aktiv.includes("a2")) fehler("Archivierter Schüler steht noch in activeStudents: " + arch.aktiv);
+if (arch.wartet !== "a1:,a2:,a3:theorie,a4:praxis,a5:,a6:,a7:nach_theorie,a8:") fehler("Warteliste falsch: " + arch.wartet);
+await page.evaluate(() => routeHome());
+await page.waitForTimeout(300);
+const box = await page.evaluate(() => { const b = document.querySelector("#wartendBox"); return b ? b.querySelectorAll(".s-card").length : -1; });
+if (box !== 3) fehler("Abschnitt „Wartet“ zeigt " + box + " statt 3 Schüler");
+const oben = await page.evaluate(() => [...document.querySelectorAll("#studentGrid > .s-card, #studentGrid .alpha-anchor ~ .s-card")].filter((c) => !c.closest("#wartendBox")).map((c) => c.dataset.id).sort().join());
+if (oben !== "a1,a5,a6") fehler("Liste oben zeigt falsche Schüler: " + oben);
+if (/Archiv Schüler/.test(await page.textContent("#studentGrid"))) fehler("Archivierter Schüler steht in der Schülerliste");
+// Gleicher Tag: Theorie um 10 Uhr, Fahrstunde um 14 Uhr zählt; Fahrstunde um 08 Uhr nicht
+const gleicherTag = await page.evaluate(() => {
+  const d = new Date(); d.setHours(10, 0, 0, 0); const wann = d.toISOString(), heute = todayISO();
+  DB.students = [{ id: "g1", name: "G", ready: wann }];
+  DB.lessons = [{ id: "g", sid: "g1", date: heute, von: "08:00", bis: "09:30", art: "fahrstunde", status: "geplant" }];
+  const frueh = wartetBuero(DB.students[0]);
+  DB.lessons = [{ id: "g", sid: "g1", date: heute, von: "14:00", bis: "15:30", art: "fahrstunde", status: "geplant" }];
+  return [frueh, wartetBuero(DB.students[0])].join();
+});
+if (gleicherTag !== "praxis,") fehler("Wartelisten-Regel am selben Tag falsch: " + gleicherTag);
 if (konsole.length) fehler("Konsole: " + konsole.join(" | "));
 await browser.close(); server.close();
 console.log(probleme ? `App-Notiz-Test: ${probleme} Problem(e).` : "App-Notiz-Test: alles in Ordnung.");
