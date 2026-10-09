@@ -97,6 +97,13 @@ const z = KR.fcSoll([
 gleich("FC-Soll Zeitraum (ohne Zukunft, mit nachgereicht)", 5, z.soll);
 gleich("FC fehlend", 1, z.fehlend.length);
 
+// Führerscheinantrag: 12 Monate, nach bestandener Theorie ab Prüfung
+const ai = (s) => { const r = KR.antragInfo(s, H); return r.stufe + "|" + r.ablauf + "|" + r.grund; };
+gleich("Antrag ohne Datum", "ohne_datum|null|null", ai({}));
+gleich("Antrag gültig", "ok|" + KR.addMonthsISO(KR.addDaysISO(H, -30), 12) + "|antrag", ai({ antrag_am: KR.addDaysISO(H, -30) }));
+gleich("Antrag läuft bald ab", "bald|" + KR.addMonthsISO(KR.addDaysISO(H, -330), 12) + "|antrag", ai({ antrag_am: KR.addDaysISO(H, -330) }));
+gleich("Antrag abgelaufen", "abgelaufen|" + KR.addMonthsISO(KR.addDaysISO(H, -400), 12) + "|antrag", ai({ antrag_am: KR.addDaysISO(H, -400) }));
+gleich("Antrag verlängert durch bestandene Theorie", "ok|" + KR.addMonthsISO(KR.addDaysISO(H, -20), 12) + "|theorie", ai({ antrag_am: KR.addDaysISO(H, -400), theorie_bestanden_am: KR.addDaysISO(H, -20) }));
 // Fahrcheck-Zettel: 12 Monate ab Datum der Stunde
 const gv = (d, h) => { const g = KR.fcGueltigkeit(d, h); return g.stufe + "|" + g.bis; };
 gleich("FC gültig bis", "2027-10-06", KR.fcGueltigBis("2026-10-06"));

@@ -27,7 +27,7 @@ const supa = window.supabase.createClient(SUPA_URL, SUPA_KEY, { global: { fetch:
 const S = {
   user: null, profil: null, fsId: null, fs: null, schulen: [],
   lehrer: [], team: [], schueler: [], termine: [], pruefungen: [], pruefungstermine: [], fcAbgaben: [], verkaeufe: [], provisionen: [], fahrzeuge: [], pakete: [],
-  geladenAm: null, ladeNr: 0, wer: ""
+  geladenAm: null, ladeNr: 0, wer: "", notizen: [], gelesen: []
 };
 
 /* ---------- Hilfen ---------- */
@@ -83,6 +83,7 @@ const BEREICHE = [
   { id: "fahrchecks", titel: "Fahrchecks", gruppe: "Arbeit", render: renderFahrchecks, nachher: bindeFahrchecks, zahl: () => fcOffeneAbgaben().length || "" },
   { id: "fristen", titel: "Fristen & Reaktivierung", gruppe: "Arbeit", render: renderFristen, nachher: bindeFristen, zahl: () => zaehleFristen().handeln || "" },
   { id: "kalender", titel: "Kalender", gruppe: "Planung", render: renderKalender, nachher: bindeKalender },
+  { id: "auslastung", titel: "Auslastung", gruppe: "Planung", render: renderAuslastung, zahl: () => auslastungListe().filter((x) => x.naechste.voll).length || "" },
   { id: "schueler", titel: "Schüler", gruppe: "Planung", render: renderSchueler, nachher: bindeSchueler, zahl: () => aktiveSchueler().filter((x) => !x.fahrlehrer_id).length || "" },
   { id: "verkaeufe", titel: "Verkäufe & Provision", gruppe: "Geld", render: renderVerkaeufe, nachher: bindeVerkaeufe, zahl: () => S.verkaeufe.filter((v) => v.status === "empfohlen").length || "" },
   { id: "zahlen", titel: "Zahlen", gruppe: "Geld", render: renderZahlen, nachher: bindeZahlen },
@@ -130,6 +131,8 @@ document.addEventListener("click", (e) => {
 function zeichne() {
   const b = aktuellerBereich();
   $("titel").textContent = b.titel;
+  document.body.dataset.bereich = b.id;
+  $("drucken").hidden = b.id === "team"; // Zugangsliste wird nicht gedruckt
   document.title = b.titel + " · Kompass Büro";
   zeichneNav();
   const ziel = $("ansicht");
@@ -185,6 +188,10 @@ function renderHeute() {
   if (fcOffen.length) aufgaben.push(`<a class="aufgabe gelb" href="#fahrchecks?z=vor"><b>${fcOffen.length}</b> Fahrcheck-Abgabe${fcOffen.length === 1 ? "" : "n"} für ${esc(datumDE(fcOffen[0].von))}–${esc(datumDE(fcOffen[0].bis))} noch nicht bestätigt</a>`);
   const neuVerk = S.verkaeufe.filter((v) => v.status === "empfohlen").length;
   if (neuVerk) aufgaben.push(`<a class="aufgabe" href="#verkaeufe"><b>${neuVerk}</b> neue Empfehlung${neuVerk === 1 ? "" : "en"} von Fahrlehrern (Akademie/Simulator): Zugang ausgeben, Zahlung eintragen</a>`);
+  const ungelesen = S.notizen.filter((n) => !n.erledigt_am && !S.gelesen.some((g) => g.notiz_id === n.id));
+  if (ungelesen.length) aufgaben.push(`<a class="aufgabe gelb" href="#schueler?notiz=ungelesen"><b>${ungelesen.length}</b> Notiz${ungelesen.length === 1 ? "" : "en"} an Fahrlehrer noch nicht gelesen</a>`);
+  if (f.antragAb) aufgaben.push(`<a class="aufgabe rot" href="#fristen?ansicht=antrag"><b>${f.antragAb}</b> Führerscheinantrag${f.antragAb === 1 ? "" : "e"} abgelaufen: neu stellen</a>`);
+  if (f.antragBald) aufgaben.push(`<a class="aufgabe gelb" href="#fristen?ansicht=antrag"><b>${f.antragBald}</b> Führerscheinantrag${f.antragBald === 1 ? " läuft" : "e laufen"} in den nächsten 60 Tagen ab</a>`);
   if (f.ohneDatum) aufgaben.push(`<a class="aufgabe" href="#fristen?ansicht=ohne"><b>${f.ohneDatum}</b> Schüler ohne Vertragsdatum</a>`);
   const todo = `<div class="karte"><div class="karte-kopf"><h2>Zu erledigen</h2></div>${aufgaben.length ? `<div class="aufgaben">${aufgaben.join("")}</div>` : `<p class="leer">Gerade ist nichts offen.</p>`}</div>`;
   return kacheln + todo + liste;
@@ -222,7 +229,7 @@ function istAktiv(x) { return !x.inaktiv_seit; }
 function aktiveSchueler() { return S.schueler.filter(istAktiv); }
 function zaehleFristen() {
   const heute = KR.todayISO();
-  const z = { gesperrt: 0, pruefen: 0, bald: 0, theorie: 0, ohneDatum: 0, handeln: 0 };
+  const z = { gesperrt: 0, pruefen: 0, bald: 0, theorie: 0, ohneDatum: 0, handeln: 0, antragAb: 0, antragBald: 0 };
   for (const s of aktiveSchueler()) {
     const r = KR.reaktInfo(s, heute), t = KR.theorieInfo(s, heute);
     if (r.stufe === "gesperrt") z.gesperrt++;
@@ -230,8 +237,11 @@ function zaehleFristen() {
     else if (r.stufe === "bald") z.bald++;
     if (r.stufe === "ohne_datum") z.ohneDatum++;
     if (t.stufe === "abgelaufen" || t.stufe === "bald" || t.stufe === "demnaechst") z.theorie++;
+    const a = KR.antragInfo(s, heute);
+    if (a.stufe === "abgelaufen") z.antragAb++;
+    else if (a.stufe === "bald") z.antragBald++;
   }
-  z.handeln = z.gesperrt + z.pruefen;
+  z.handeln = z.gesperrt + z.pruefen + z.antragAb;
   return z;
 }
 const REAKT_TEXT = {
@@ -249,7 +259,8 @@ function fristenParam(name) {
   if (!m) return "";
   try { return decodeURIComponent(m[1].replace(/\+/g, " ")); } catch (e) { return ""; } // URLSearchParams schreibt Leerzeichen als „+“; kaputte Adresse ignorieren
 }
-const FRISTEN_ANSICHTEN = [["handeln", "Handlungsbedarf"], ["alle", "Alle Schüler"], ["ohne", "Ohne Vertragsdatum"], ["theorie", "Theorie-Fristen"]];
+const FRISTEN_ANSICHTEN = [["handeln", "Handlungsbedarf"], ["alle", "Alle Schüler"], ["ohne", "Ohne Vertragsdatum"], ["theorie", "Theorie-Fristen"], ["antrag", "Führerscheinantrag"]];
+const ANTRAG_TEXT = { abgelaufen: ["rot", "abgelaufen · neu stellen"], bald: ["gelb", "läuft bald ab"], ok: ["gruen", "gültig"], ohne_datum: ["", "Antragsdatum fehlt"] };
 const REAKT_RANG = { gesperrt: 0, pruefen_faellig: 1, bald: 2, demnaechst: 3, ohne_datum: 4, ok: 5, befreit: 6 };
 function renderFristen() {
   const heute = KR.todayISO();
@@ -261,16 +272,31 @@ function renderFristen() {
     <div class="kachel${f.pruefen ? " rot" : ""}"><div class="wert">${f.pruefen}</div><div class="name">fällig, noch nicht geprüft</div></div>
     <div class="kachel${f.bald ? " gold" : ""}"><div class="wert">${f.bald}</div><div class="name">in 30 Tagen fällig</div></div>
     <div class="kachel"><div class="wert">${f.ohneDatum}</div><div class="name">ohne Vertragsdatum</div></div>
+    <div class="kachel${f.antragAb ? " rot" : (f.antragBald ? " gold" : "")}"><div class="wert">${f.antragAb + f.antragBald}</div><div class="name">Führerscheinanträge abgelaufen oder bald (${f.antragAb} abgelaufen)</div></div>
   </div>`;
-  let liste = aktiveSchueler().map((s) => ({ s, r: KR.reaktInfo(s, heute), t: KR.theorieInfo(s, heute) }));
-  if (ansicht === "handeln") liste = liste.filter((x) => ["gesperrt", "pruefen_faellig", "bald"].includes(x.r.stufe) || ["abgelaufen", "bald"].includes(x.t.stufe));
+  let liste = aktiveSchueler().map((s) => ({ s, r: KR.reaktInfo(s, heute), t: KR.theorieInfo(s, heute), a: KR.antragInfo(s, heute) }));
+  if (ansicht === "handeln") liste = liste.filter((x) => ["gesperrt", "pruefen_faellig", "bald"].includes(x.r.stufe) || ["abgelaufen", "bald"].includes(x.t.stufe) || x.a.stufe === "abgelaufen");
+  if (ansicht === "antrag") liste = liste.filter((x) => x.a.stufe !== "ohne_datum" || !(x.s.reakt_status === "befreit"));
   if (ansicht === "ohne") liste = liste.filter((x) => x.r.stufe === "ohne_datum");
   if (ansicht === "theorie") liste = liste.filter((x) => x.t.stufe !== "ohne_datum");
   if (suche) liste = liste.filter((x) => (x.s.name || "").toLowerCase().includes(suche) || (x.s.telefon || "").replace(/\s/g, "").includes(suche.replace(/\s/g, "")));
+  const ANTRAG_RANG = { abgelaufen: 0, bald: 1, ok: 2, ohne_datum: 3 };
   if (ansicht === "theorie") liste.sort((a, b) => (a.t.tage ?? 99999) - (b.t.tage ?? 99999));
+  else if (ansicht === "antrag") liste.sort((a, b) => (ANTRAG_RANG[a.a.stufe] - ANTRAG_RANG[b.a.stufe]) || ((a.a.tage ?? 99999) - (b.a.tage ?? 99999)) || String(a.s.name).localeCompare(String(b.s.name), "de"));
   else liste.sort((a, b) => (REAKT_RANG[a.r.stufe] - REAKT_RANG[b.r.stufe]) || ((a.r.tage ?? 99999) - (b.r.tage ?? 99999)) || String(a.s.name).localeCompare(String(b.s.name), "de"));
   const tabs = FRISTEN_ANSICHTEN.map(([id, name]) => `<a class="tab" href="#fristen?ansicht=${id}"${id === ansicht ? ' aria-current="page"' : ""}>${name}</a>`).join("");
-  const zeilen = liste.map(({ s, r, t }) => {
+  const antragZeilen = ansicht !== "antrag" ? "" : liste.map(({ s, a }) => {
+    const [af, at] = ANTRAG_TEXT[a.stufe];
+    return `<tr>
+      <td><b>${esc(s.name)}</b><div class="unter">${esc(artName(s.ausbildungsart))}${s.klasse ? " · " + esc(s.klasse) : ""}</div><div class="unter nur-unter">${esc(lehrerName(s.fahrlehrer_id))}</div></td>
+      <td class="nur-sehr-breit">${esc(lehrerName(s.fahrlehrer_id))}</td>
+      <td class="zeitspalte">${s.antrag_am ? esc(datumDE(s.antrag_am)) : '<span class="leise">fehlt</span>'}</td>
+      <td class="zeitspalte">${a.ablauf ? esc(datumDE(a.ablauf)) : "–"}${a.grund === "theorie" ? '<div class="unter">verlängert durch Theorie</div>' : ""}</td>
+      <td><span class="marke-pill ${af}">${at}</span></td>
+      <td class="aktionen"><div class="aktionen-box">${a.stufe === "abgelaufen" || a.stufe === "bald" ? `<button class="knopf klein haupt" data-antragneu="${esc(s.id)}" type="button">Neu eingereicht</button>` : ""}<button class="knopf klein" data-fristen="${esc(s.id)}" type="button">Bearbeiten</button></div></td>
+    </tr>`;
+  }).join("");
+  const zeilen = liste.map(({ s, r, t, a }) => {
     const [rf, rt] = reaktText(s, r);
     const [tf, tt] = THEORIE_TEXT[t.stufe];
     const rDatum = r.faellig ? `<div class="unter">${r.tage < 0 ? "seit " + datumDE(r.faellig) : "am " + datumDE(r.faellig)}</div>` : "";
@@ -283,14 +309,15 @@ function renderFristen() {
       <td>${esc(lehrerName(s.fahrlehrer_id))}</td>
       <td class="zeitspalte nur-breit">${s.vertrag_am ? esc(datumDE(s.vertrag_am)) : '<span class="leise">fehlt</span>'}</td>
       <td><span class="marke-pill ${rf}">${rt}</span>${rDatum}</td>
-      <td><span class="marke-pill ${tf}">${tt}</span>${tDatum}</td>
+      <td><span class="marke-pill ${tf}">${tt}</span>${tDatum}${a.stufe === "abgelaufen" || a.stufe === "bald" ? `<div class="unter"><span class="marke-pill ${ANTRAG_TEXT[a.stufe][0]}">Antrag ${a.stufe === "abgelaufen" ? "abgelaufen" : "bis " + esc(datumDE(a.ablauf))}</span></div>` : ""}</td>
       <td class="aktionen"><div class="aktionen-box">${zahlen}<button class="knopf klein" data-fristen="${esc(s.id)}" type="button">Bearbeiten</button></div></td>
     </tr>`;
   }).join("");
   return kacheln + `<div class="karte">
     <div class="karte-kopf"><div class="tabs">${tabs}</div>
       <input type="search" class="suche" id="fristenSuche" placeholder="Name oder Telefon suchen" value="${esc(fristenParam("suche"))}" aria-label="Schüler suchen"></div>
-    ${liste.length ? `<table class="tabelle"><thead><tr><th>Schüler</th><th>Fahrlehrer</th><th class="nur-breit">Vertrag</th><th>Reaktivierung</th><th>Theorie</th><th></th></tr></thead><tbody>${zeilen}</tbody></table>`
+    ${ansicht === "antrag" ? (liste.length ? `<table class="tabelle"><thead><tr><th>Schüler</th><th class="nur-sehr-breit">Fahrlehrer</th><th>Eingereicht</th><th>Gültig bis</th><th>Status</th><th></th></tr></thead><tbody>${antragZeilen}</tbody></table><p class="leise klein">Der Führerscheinantrag bei der Führerscheinstelle gilt 12 Monate. Nach bestandener Theorieprüfung gilt er 12 Monate ab dem Prüfungsdatum. Danach muss er neu gestellt werden: „Neu eingereicht“ setzt das heutige Datum.</p>` : `<p class="leer">Keine Schüler.</p>`) : ""}
+    ${ansicht === "antrag" ? "" : liste.length ? `<table class="tabelle"><thead><tr><th>Schüler</th><th>Fahrlehrer</th><th class="nur-breit">Vertrag</th><th>Reaktivierung</th><th>Theorie</th><th></th></tr></thead><tbody>${zeilen}</tbody></table>`
       : `<p class="leer">${ansicht === "handeln" ? "Kein Handlungsbedarf. Sehr gut." : "Keine Schüler in dieser Ansicht."}</p>`}
     <p class="leise klein">Reaktivierung: ${euro(reaktBetrag())}, fällig 12 Monate nach Vertragsabschluss und dann jährlich. „Gesperrt“ heißt: keine weiteren Leistungen, bis bezahlt ist. Jede Änderung wird mit Name und Uhrzeit protokolliert.</p>
   </div>${renderBueroEinstellungen()}`;
@@ -301,6 +328,7 @@ function renderBueroEinstellungen() {
   return `<div class="karte"><div class="karte-kopf"><h2>Einstellungen</h2></div>
     <form id="einstForm" class="formular">
       <label>Standardbetrag Reaktivierung in €<input type="number" name="betrag" min="1" max="9999" step="0.01" value="${esc(k.reaktivierungBetrag || REAKT_STANDARD)}"${darf ? "" : " disabled"}></label>
+      <label>Unterrichtseinheiten pro Fahrlehrer und Woche (12 pro Tag × 5 Tage)<input type="number" name="ue" min="1" max="200" step="1" value="${esc(ueProWoche())}"${darf ? "" : " disabled"}></label>
       <label>Namen für „Wer bist du?“ (mit Komma trennen)<input type="text" name="personen" maxlength="200" value="${esc(bueroPersonen().join(", "))}"${darf ? "" : " disabled"}></label>
       <div class="voll knopfreihe">${darf ? `<button class="knopf haupt" type="submit">Einstellungen speichern</button>` : `<span class="leise klein">Diese Einstellungen ändert der Super-Admin. Eine abweichende Zahlung (z. B. Sonderangebot) trägst du direkt beim Eintragen der Zahlung ein.</span>`}</div>
     </form></div>`;
@@ -313,7 +341,9 @@ function bindeEinstellungen(ziel) {
     const betrag = Number(String(f.betrag.value).replace(",", "."));
     const personen = f.personen.value.split(",").map((x) => x.trim()).filter(Boolean);
     if (!(betrag > 0) || !personen.length) { toast("Bitte Betrag und mindestens einen Namen eintragen.", true); return; }
-    const neu = Object.assign({}, (S.fs && S.fs.konfiguration) || {}, { reaktivierungBetrag: betrag, bueroPersonen: personen });
+    const ue = Number(f.ue.value);
+    if (!(ue >= 1)) { toast("Bitte die Unterrichtseinheiten pro Woche eintragen.", true); return; }
+    const neu = Object.assign({}, (S.fs && S.fs.konfiguration) || {}, { reaktivierungBetrag: betrag, bueroPersonen: personen, ueProWoche: ue });
     const res = await supa.from("fahrschulen").update({ konfiguration: neu }).eq("id", S.fsId).select("id");
     if (res.error || !res.data || !res.data.length) { toast("Nicht gespeichert: " + (res.error ? res.error.message : "keine Berechtigung"), true); return; }
     S.fs.konfiguration = neu;
@@ -339,6 +369,10 @@ function bindeFristen(ziel) {
   ziel.querySelectorAll("[data-zahlung]").forEach((b) => b.addEventListener("click", () => zahlungErhalten(b.dataset.zahlung)));
   ziel.querySelectorAll("[data-nichtbezahlt]").forEach((b) => b.addEventListener("click", () => nichtBezahlt(b.dataset.nichtbezahlt)));
   ziel.querySelectorAll("[data-fristen]").forEach((b) => b.addEventListener("click", () => fristenDialog(b.dataset.fristen)));
+  ziel.querySelectorAll("[data-antragneu]").forEach((b) => b.addEventListener("click", async () => {
+    b.disabled = true;
+    if (!(await speichereSchueler(b.dataset.antragneu, { antrag_am: KR.todayISO() }, "Antrag als neu eingereicht eingetragen ✓"))) b.disabled = false;
+  }));
 }
 async function speichereSchueler(id, werte, meldung) {
   const res = await supa.from("schueler").update(werte).eq("id", id).select("id");
@@ -401,6 +435,7 @@ function fristenDialog(id) {
       </fieldset>
       <label>Nächste Reaktivierung fällig am (nur bei „bezahlt“)<input type="date" name="reakt_bezahlt_bis" value="${esc(s.reakt_bezahlt_bis || r.faellig || "")}"${s.reakt_status === "bezahlt" ? "" : " disabled"}></label>
       <label>Notiz (z. B. Grund für „befreit“)<input type="text" name="reakt_notiz" maxlength="200" value="${esc(s.reakt_notiz || "")}"></label>
+      <label>Führerscheinantrag eingereicht am<span class="feld-mit-knopf"><input type="date" name="antrag_am" value="${esc(s.antrag_am || "")}"><button type="button" class="knopf klein" id="antragHeute">heute</button></span></label>
       <label>Theorieunterricht abgeschlossen am<input type="date" name="theorie_abgeschlossen_am" value="${esc(s.theorie_abgeschlossen_am || "")}"></label>
       <label>Theorieprüfung bestanden am<input type="date" name="theorie_bestanden_am" value="${esc(s.theorie_bestanden_am || "")}"></label>
     </div>
@@ -416,6 +451,7 @@ function fristenDialog(id) {
       reakt_notiz: (d.reakt_notiz || "").trim() || null,
       theorie_abgeschlossen_am: d.theorie_abgeschlossen_am || null,
       theorie_bestanden_am: d.theorie_bestanden_am || null,
+      antrag_am: d.antrag_am || null,
     };
     if (werte.reakt_status === "bezahlt" && !werte.reakt_bezahlt_bis) { toast("Bitte das Datum der nächsten Fälligkeit eintragen.", true); return false; }
     if (werte.reakt_status === "befreit" && !werte.reakt_notiz) { toast("Bitte einen Grund für „befreit“ eintragen.", true); return false; }
@@ -424,11 +460,12 @@ function fristenDialog(id) {
     }
     return speichereSchueler(id, werte);
   });
+  fdlg.querySelector("#antragHeute").addEventListener("click", () => { fdlg.querySelector("input[name=antrag_am]").value = KR.todayISO(); });
   const faellig = fdlg.querySelector("input[name=reakt_bezahlt_bis]");
   fdlg.querySelectorAll("input[name=reakt_status]").forEach((r) => r.addEventListener("change", () => { faellig.disabled = r.value !== "bezahlt" || !r.checked; }));
   ladeProtokoll("schueler", id);
 }
-const FELD_NAMEN = { vertrag_am: "Vertragsdatum", klasse: "Klasse", ausbildungsart: "Ausbildungsart", reakt_status: "Reaktivierung", reakt_bezahlt_bis: "fällig am", reakt_notiz: "Notiz", theorie_abgeschlossen_am: "Theorie abgeschlossen", theorie_bestanden_am: "Theorieprüfung bestanden", reakt_betrag: "Reaktivierung bezahlt (€)", b197_testfahrt_am: "B197 Testfahrt abgegeben", inaktiv_seit: "Inaktiv seit" };
+const FELD_NAMEN = { vertrag_am: "Vertragsdatum", klasse: "Klasse", ausbildungsart: "Ausbildungsart", reakt_status: "Reaktivierung", reakt_bezahlt_bis: "fällig am", reakt_notiz: "Notiz", theorie_abgeschlossen_am: "Theorie abgeschlossen", theorie_bestanden_am: "Theorieprüfung bestanden", antrag_am: "Führerscheinantrag eingereicht", reakt_betrag: "Reaktivierung bezahlt (€)", b197_testfahrt_am: "B197 Testfahrt abgegeben", inaktiv_seit: "Inaktiv seit" };
 async function ladeProtokoll(tabelle, id) {
   const ziel = $("protokoll");
   const res = await supa.from("aenderungsprotokoll").select("*").eq("tabelle", tabelle).eq("datensatz_id", id).order("geaendert_am", { ascending: false }).limit(20);
@@ -620,8 +657,10 @@ function schuelerOptionen(gewaehlt) {
   return S.schueler.filter((x) => istAktiv(x) || x.id === gewaehlt).sort((a, b) => String(a.name).localeCompare(String(b.name), "de"))
     .map((s) => `<option value="${esc(s.id)}"${s.id === gewaehlt ? " selected" : ""}>${esc(s.name)}${s.fahrlehrer_id ? " · " + esc(lehrerName(s.fahrlehrer_id)) : ""}</option>`).join("");
 }
-function lehrerOptionen(gewaehlt) {
-  return `<option value="">– kein Fahrlehrer –</option>` + S.lehrer.filter((l) => l.aktiv !== false || l.id === gewaehlt).map((l) => `<option value="${esc(l.id)}"${l.id === gewaehlt ? " selected" : ""}>${esc(l.name || l.email)}</option>`).join("");
+function lehrerOptionen(gewaehlt, mitAuslastung) {
+  let l2 = S.lehrer.filter((l) => l.aktiv !== false || l.id === gewaehlt);
+  if (mitAuslastung) { const rang = auslastungListe().map((x) => x.l.id); l2 = l2.slice().sort((a, b) => (rang.indexOf(a.id) + 1 || 999) - (rang.indexOf(b.id) + 1 || 999)); }
+  return `<option value="">– kein Fahrlehrer –</option>` + l2.map((l) => `<option value="${esc(l.id)}"${l.id === gewaehlt ? " selected" : ""}>${esc(l.name || l.email)}${mitAuslastung ? esc(auslastungKurz(l.id)) : ""}</option>`).join("");
 }
 function pruefungDialog(id) {
   const p = id ? S.pruefungstermine.find((x) => x.id === id) : { art: "praxis", datum: KR.addDaysISO(KR.todayISO(), 7), status: "geplant" };
@@ -705,6 +744,85 @@ function ergebnisDialog(id) {
   }, "Speichern");
 }
 
+/* ---------- Auslastung je Fahrlehrer ---------- */
+// Regel (Serband/Kristina, 09.10.2026): 12 UE am Tag, 5 Tage = 60 UE pro Woche. „Voll“ ist ein Fahrlehrer erst, wenn er
+// demselben Schüler in der Woche nicht mehr zwei Termine (je 90 Minuten) geben kann.
+const UE_PRO_WOCHE_STANDARD = 60;
+function ueProWoche() {
+  const k = (S.fs && S.fs.konfiguration) || {};
+  return Number(k.ueProWoche) > 0 ? Number(k.ueProWoche) : UE_PRO_WOCHE_STANDARD;
+}
+function montagVon(iso) { const wt = (KR.parseISO(iso).getDay() + 6) % 7; return KR.addDaysISO(iso, -wt); }
+function auslastungWoche(lehrerId, montag) {
+  const bis = KR.addDaysISO(montag, 6);
+  let belegt = 0, gesperrt = 0;
+  for (const t of S.termine) {
+    if (t.fahrlehrer_id !== lehrerId || t.datum < montag || t.datum > bis || !t.von || !t.bis) continue;
+    const ue = Math.max(KR.hm2min(t.bis) - KR.hm2min(t.von), 0) / 45;
+    if (t.art === "block") gesperrt += ue; else belegt += ue;
+  }
+  const kapazitaet = Math.max(ueProWoche() - gesperrt, 0);
+  const frei = Math.max(kapazitaet - belegt, 0);
+  const termine = Math.floor(frei / 2 + 1e-9); // freie 90-Minuten-Termine
+  return {
+    montag, belegt: Math.round(belegt * 10) / 10, kapazitaet: Math.round(kapazitaet * 10) / 10,
+    pct: kapazitaet > 0 ? Math.round(belegt / kapazitaet * 100) : 100,
+    freieTermine: termine, platz: Math.floor(termine / 2), voll: termine < 2,
+  };
+}
+function auslastungListe() {
+  const heute = KR.todayISO(), diese = montagVon(heute), naechste = KR.addDaysISO(diese, 7);
+  const zahl = {};
+  for (const x of aktiveSchueler()) if (x.fahrlehrer_id) zahl[x.fahrlehrer_id] = (zahl[x.fahrlehrer_id] || 0) + 1;
+  return S.lehrer.filter((l) => l.aktiv !== false).map((l) => ({ l, schueler: zahl[l.id] || 0, diese: auslastungWoche(l.id, diese), naechste: auslastungWoche(l.id, naechste) }))
+    .sort((a, b) => (b.naechste.freieTermine - a.naechste.freieTermine) || (a.schueler - b.schueler));
+}
+function auslastungAmpel(w) {
+  if (w.voll) return ["rot", "voll"];
+  if (w.pct >= 80) return ["gelb", "fast voll"];
+  return ["gruen", "hat Platz"];
+}
+function auslastungBalken(w) {
+  const f = auslastungAmpel(w)[0];
+  return `<span class="stand"><span class="stand-spur"><span class="stand-balken ausl-${f}" style="width:${Math.min(w.pct, 100)}%"></span></span><span class="stand-zahl">${w.pct} %</span></span>`;
+}
+// Kurztext für Auswahllisten („Fahrlehrer zuweisen“)
+function auslastungKurz(lehrerId) {
+  const x = auslastungListe().find((y) => y.l.id === lehrerId);
+  if (!x) return "";
+  return ` · nächste Woche ${x.naechste.pct} %${x.naechste.voll ? " (voll)" : `, Platz für ${x.naechste.platz}`}`;
+}
+function renderAuslastung() {
+  const liste = auslastungListe();
+  const heute = KR.todayISO(), diese = montagVon(heute), naechste = KR.addDaysISO(diese, 7);
+  const ohne = aktiveSchueler().filter((x) => !x.fahrlehrer_id).length;
+  const frei = liste.filter((x) => !x.naechste.voll);
+  const empfehlung = frei.length
+    ? `<div class="kachel gruen"><div class="wert">${esc(frei[0].l.name || frei[0].l.email)}</div><div class="name">Nächster Schüler zu: hat nächste Woche noch ${frei[0].naechste.freieTermine} freie Termine (Platz für ${frei[0].naechste.platz} neue Schüler)</div></div>`
+    : `<div class="kachel rot"><div class="wert">Alle voll</div><div class="name">Kein Fahrlehrer hat nächste Woche zwei freie Termine</div></div>`;
+  const zeilen = liste.map((x) => {
+    const [af, at] = auslastungAmpel(x.naechste);
+    return `<tr>
+      <td><b>${esc(x.l.name || x.l.email)}</b><div class="unter">${x.schueler} aktive Schüler</div></td>
+      <td>${auslastungBalken(x.diese)}<div class="unter">${x.diese.belegt} von ${x.diese.kapazitaet} UE</div></td>
+      <td>${auslastungBalken(x.naechste)}<div class="unter">${x.naechste.belegt} von ${x.naechste.kapazitaet} UE</div></td>
+      <td class="zahlspalte nur-sehr-breit">${x.naechste.freieTermine}</td>
+      <td class="zahlspalte nur-sehr-breit">${x.naechste.platz}</td>
+      <td><span class="marke-pill ${af}">${at}</span><div class="unter nur-unter">${x.naechste.freieTermine} freie Termine · Platz für ${x.naechste.platz}</div></td>
+    </tr>`;
+  }).join("");
+  return `<div class="kacheln">
+      <div class="kachel"><div class="wert">${liste.length}</div><div class="name">Fahrlehrer</div></div>
+      ${empfehlung}
+      <div class="kachel${ohne ? " rot" : ""}"><div class="wert">${ohne}</div><div class="name">Schüler ohne Fahrlehrer</div></div>
+    </div>
+    <div class="karte">
+      <div class="karte-kopf"><h2>Wer hat noch Platz?</h2><a class="knopf" href="#schueler?lehrer=ohne">Schüler ohne Fahrlehrer zeigen</a></div>
+      <table class="tabelle"><thead><tr><th>Fahrlehrer</th><th>Diese Woche<div class="th-unter">ab ${esc(datumDE(diese).slice(0, 6))}</div></th><th>Nächste Woche<div class="th-unter">ab ${esc(datumDE(naechste).slice(0, 6))}</div></th><th class="zahlspalte nur-sehr-breit">Freie Termine</th><th class="zahlspalte nur-sehr-breit">Platz für neue Schüler</th><th>Ergebnis</th></tr></thead><tbody>${zeilen || `<tr><td colspan="6" class="leer">Keine Fahrlehrer.</td></tr>`}</tbody></table>
+      <p class="leise klein">So wird gerechnet: ${ueProWoche()} UE pro Woche (12 UE am Tag, 5 Tage). Blockierte Zeiten zählen nicht. Ein Termin dauert 90 Minuten = 2 UE. <b>Voll</b> ist ein Fahrlehrer, wenn er einem Schüler nicht mehr zwei Termine in der Woche geben kann. Ein neuer Schüler braucht zwei Termine pro Woche. Die Liste ist so sortiert, dass der Fahrlehrer mit den meisten freien Terminen oben steht.</p>
+    </div>`;
+}
+
 /* ---------- Schüler ---------- */
 const FARBTYP = { rot: ["Rot", "#D64534"], gelb: ["Gelb", "#E0A32E"], gruen: ["Grün", "#3FAE6B"], blau: ["Blau", "#2F7DD1"] };
 function farbPunkt(a) {
@@ -726,6 +844,8 @@ function renderSchueler() {
   const nAktiv = aktiveSchueler().length, nInaktiv = S.schueler.length - nAktiv;
   let liste = S.schueler.filter((x) => sicht === "alle" || (sicht === "aktiv") === istAktiv(x));
   if (klasseF) liste = liste.filter((x) => klasseVon(x) === klasseF);
+  const notizF = ["offen", "ungelesen"].includes(fristenParam("notiz")) ? fristenParam("notiz") : "";
+  if (notizF) liste = liste.filter((x) => { const o = offeneNotizen(x.id); return notizF === "offen" ? o.length > 0 : o.some((n) => !S.gelesen.some((g) => g.notiz_id === n.id)); });
   if (lehrerFilter === "ohne") liste = liste.filter((x) => !x.fahrlehrer_id);
   else if (lehrerFilter) liste = liste.filter((x) => x.fahrlehrer_id === lehrerFilter);
   if (suche) liste = liste.filter((x) => (x.name || "").toLowerCase().includes(suche) || (x.telefon || "").replace(/\s/g, "").includes(suche.replace(/\s/g, "")));
@@ -746,7 +866,7 @@ function renderSchueler() {
       <td class="nur-sehr-breit">${esc(klasseVon(x))}<div class="unter">${esc(artName(x.ausbildungsart))}${x.paket_id ? " · " + esc(paketName(x.paket_id)) : ""}${a.beginn ? ` · seit <span class="datum">${esc(datumDE(a.beginn))}</span>` : ""}</div></td>
       <td>${standHTML(a)}<div class="unter">Theorie ${esc(theo)}</div></td>
       <td class="nur-sehr-breit">${naechster[x.id] ? esc(datumDE(naechster[x.id])) : '<span class="leise">–</span>'}</td>
-      <td>${istAktiv(x) ? `<span class="marke-pill ${rf}">${rt}</span>` : '<span class="leise">–</span>'}${testfahrt ? `<div class="unter">${testfahrt}</div>` : ""}</td>
+      <td>${istAktiv(x) ? `<span class="marke-pill ${rf}">${rt}</span>` : '<span class="leise">–</span>'}${testfahrt ? `<div class="unter">${testfahrt}</div>` : ""}${notizPill(x.id)}</td>
       <td class="aktionen"><div class="aktionen-box">${b197 && !x.b197_testfahrt_am && istAktiv(x) ? `<button class="knopf klein" data-testfahrt="${esc(x.id)}" type="button">Testfahrt ✓</button>` : ""}<button class="knopf klein" data-sbearb="${esc(x.id)}" type="button">Bearbeiten</button></div></td>
     </tr>`;
   }).join("");
@@ -758,13 +878,20 @@ function renderSchueler() {
   return `<div class="karte">
     <div class="tabs" style="margin-bottom:12px">${sichtTabs}</div>
     <div class="karte-kopf">
-      <div class="knopfreihe">${klassenFilter}<select class="suche" id="sLehrer" aria-label="Fahrlehrer filtern">${lehrerOpt}</select>
+      <div class="knopfreihe">${klassenFilter}<select class="suche" id="sNotiz" aria-label="Notizen filtern"><option value="">Alle Notizen</option><option value="offen"${notizF === "offen" ? " selected" : ""}>Mit offener Notiz</option><option value="ungelesen"${notizF === "ungelesen" ? " selected" : ""}>Notiz noch nicht gelesen</option></select><select class="suche" id="sLehrer" aria-label="Fahrlehrer filtern">${lehrerOpt}</select>
         <input type="search" class="suche" id="sSuche" placeholder="Name oder Telefon suchen" value="${esc(fristenParam("suche"))}" aria-label="Schüler suchen"></div>
       <button class="knopf haupt" id="sNeu" type="button">+ Schüler anlegen</button>
     </div>
     <p class="leise klein">${liste.length} Schüler${sicht === "inaktiv" ? " (inaktiv: bestanden oder nicht mehr dabei; zählen nicht bei Fristen und Reaktivierung)" : ""}</p>
     ${liste.length ? `<table class="tabelle schuelertab"><thead><tr><th>Schüler</th><th>Fahrlehrer</th><th class="nur-sehr-breit">Klasse</th><th>Ausbildungsstand</th><th class="nur-sehr-breit">Nächster Termin</th><th>Reaktivierung</th><th></th></tr></thead><tbody>${zeilen}</tbody></table>` : `<p class="leer">${sicht === "inaktiv" ? "Keine inaktiven Schüler." : "Keine Schüler gefunden."}</p>`}
   </div>`;
+}
+function notizPill(sid) {
+  const o = offeneNotizen(sid);
+  if (!o.length) return "";
+  const stopp = o.some((n) => n.art === "stopp");
+  const ungelesen = o.some((n) => !S.gelesen.some((g) => g.notiz_id === n.id));
+  return `<div class="unter"><span class="marke-pill ${stopp ? "rot" : "gelb"}">${stopp ? "Stopp-Notiz" : "Notiz"}${ungelesen ? " · ungelesen" : " · gelesen"}</span></div>`;
 }
 function linkMit(bereich, aender) {
   const p = new URLSearchParams((location.hash.split("?")[1]) || "");
@@ -788,6 +915,7 @@ function setzeFilter(bereich, werte) {
 function bindeSchueler(ziel) {
   ziel.querySelector("#sNeu").addEventListener("click", () => schuelerDialog(null));
   ziel.querySelector("#sLehrer").addEventListener("change", (e) => setzeFilter("schueler", { lehrer: e.target.value }));
+  ziel.querySelector("#sNotiz").addEventListener("change", (e) => setzeFilter("schueler", { notiz: e.target.value }));
   ziel.querySelector("#sKlasse").addEventListener("change", (e) => setzeFilter("schueler", { klasse: e.target.value }));
   ziel.querySelectorAll("[data-testfahrt]").forEach((b) => b.addEventListener("click", async () => {
     b.disabled = true;
@@ -801,6 +929,58 @@ function bindeSchueler(ziel) {
   });
   ziel.querySelectorAll("[data-sbearb]").forEach((b) => b.addEventListener("click", () => schuelerDialog(b.dataset.sbearb)));
 }
+/* ---------- Notizen ans Team (Fahrlehrer bekommt sie als Popup, bis er „Gelesen“ tippt) ---------- */
+function offeneNotizen(sid) { return S.notizen.filter((n) => n.schueler_id === sid && !n.erledigt_am); }
+function notizGelesenText(n) {
+  const g = S.gelesen.filter((x) => x.notiz_id === n.id);
+  if (!g.length) return `<span class="marke-pill gelb">noch nicht gelesen</span>`;
+  return `<span class="marke-pill gruen">gelesen von ${esc(g.map((x) => lehrerName(x.fahrlehrer_id)).join(", "))} · ${esc(new Date(g[0].gelesen_am).toLocaleString("de-DE", { day: "2-digit", month: "2-digit", hour: "2-digit", minute: "2-digit" }))}</span>`;
+}
+function notizZeit(n) { return new Date(n.erstellt_am).toLocaleString("de-DE", { day: "2-digit", month: "2-digit", hour: "2-digit", minute: "2-digit" }); }
+function notizBlockHTML(sid, fahrlehrerId) {
+  const alle = S.notizen.filter((n) => n.schueler_id === sid);
+  const offen = alle.filter((n) => !n.erledigt_am), erledigt = alle.filter((n) => n.erledigt_am);
+  const zeile = (n) => `<li class="notiz ${n.art === "stopp" ? "stopp" : ""}">
+      <div><span class="marke-pill ${n.art === "stopp" ? "rot" : "gelb"}">${n.art === "stopp" ? "Stopp" : "Info"}</span> <span class="notiz-text">${esc(n.text)}</span></div>
+      <div class="unter">${esc(n.bearbeiter || "Büro")} · ${esc(notizZeit(n))}${n.erledigt_am ? ` · erledigt${n.erledigt_bearbeiter ? " von " + esc(n.erledigt_bearbeiter) : ""}` : ""}</div>
+      ${n.erledigt_am ? "" : `<div class="notiz-aktion">${notizGelesenText(n)}<button type="button" class="knopf klein" data-notizerledigt="${esc(n.id)}">Erledigt</button></div>`}</li>`;
+  return `<h3>Notiz an den Fahrlehrer</h3>
+    ${fahrlehrerId ? "" : `<p class="leise klein">Dieser Schüler hat noch keinen Fahrlehrer. Die Notiz erscheint, sobald einer zugeteilt ist.</p>`}
+    <div class="notiz-neu">
+      <select class="suche" id="nzArt" aria-label="Art der Notiz"><option value="info">Info</option><option value="stopp">Stopp: keine Fahrstunden anbieten</option></select>
+      <textarea id="nzText" rows="2" maxlength="500" placeholder="z. B. Reaktivierung offen, bitte keine Fahrstunden anbieten" aria-label="Text der Notiz"></textarea>
+      <button type="button" class="knopf haupt" id="nzSenden">An Fahrlehrer senden</button>
+    </div>
+    ${offen.length ? `<ul class="notizliste">${offen.map(zeile).join("")}</ul>` : `<p class="leise klein">Keine offene Notiz.</p>`}
+    ${erledigt.length ? `<details><summary>Erledigt (${erledigt.length})</summary><ul class="notizliste">${erledigt.slice(0, 20).map(zeile).join("")}</ul></details>` : ""}
+    <p class="leise klein">Nur kurze Arbeitsanweisungen. Keine Gesundheits- oder Privatdaten. Der Fahrlehrer sieht die Notiz innerhalb einer Minute als Meldung und danach im Schülerblatt.</p>`;
+}
+function bindeNotizBlock(dlg, sid, fahrlehrerId) {
+  const block = dlg.querySelector("#notizBlock");
+  const neu = () => { block.innerHTML = notizBlockHTML(sid, fahrlehrerId); bind(); };
+  const bind = () => {
+    block.querySelector("#nzSenden").addEventListener("click", async (e) => {
+      const text = block.querySelector("#nzText").value.trim();
+      if (!text) { toast("Bitte einen Text eintragen.", true); return; }
+      e.target.disabled = true;
+      const res = await supa.from("schueler_notizen").insert({ fahrschule_id: S.fsId, schueler_id: sid, text, art: block.querySelector("#nzArt").value, erstellt_von: S.user.id }).select("*");
+      if (res.error || !res.data || !res.data.length) { toast("Notiz nicht gesendet: " + (res.error ? res.error.message : "keine Berechtigung"), true); e.target.disabled = false; return; }
+      S.notizen.unshift(Object.assign({}, res.data[0], { bearbeiter: res.data[0].bearbeiter || S.werAnzeige || null }));
+      toast("Notiz gesendet. Der Fahrlehrer sieht sie innerhalb einer Minute.");
+      neu();
+    });
+    block.querySelectorAll("[data-notizerledigt]").forEach((b) => b.addEventListener("click", async () => {
+      b.disabled = true;
+      const jetzt = new Date().toISOString();
+      const res = await supa.from("schueler_notizen").update({ erledigt_am: jetzt, erledigt_von: S.user.id }).eq("id", b.dataset.notizerledigt).select("*");
+      if (res.error || !res.data || !res.data.length) { toast("Nicht gespeichert: " + (res.error ? res.error.message : "keine Berechtigung"), true); b.disabled = false; return; }
+      const n = S.notizen.find((x) => x.id === b.dataset.notizerledigt);
+      if (n) Object.assign(n, res.data[0], { erledigt_bearbeiter: res.data[0].erledigt_bearbeiter || S.werAnzeige || null });
+      neu();
+    }));
+  };
+  bind();
+}
 function schuelerDialog(id) {
   const x = id ? S.schueler.find((y) => y.id === id) : { ausbildungsart: "ersterwerb", klasse: "B", vertrag_am: KR.todayISO() };
   if (!x) return;
@@ -808,7 +988,7 @@ function schuelerDialog(id) {
       <label class="voll">Name<input type="text" name="name" required maxlength="100" value="${esc(x.name || "")}"></label>
       <label>Telefon (Login für die Fahr-Akademie)<input type="tel" name="telefon" maxlength="40" value="${esc(x.telefon || "")}"></label>
       <label>E-Mail<input type="email" name="email" maxlength="200" value="${esc(x.email || "")}"></label>
-      <label>Fahrlehrer<select name="fahrlehrer_id">${lehrerOptionen(x.fahrlehrer_id)}</select></label>
+      <label>Fahrlehrer (der mit dem meisten Platz steht oben)<select name="fahrlehrer_id">${lehrerOptionen(x.fahrlehrer_id, true)}</select></label>
       <label>Paket<select name="paket_id"><option value="">– ohne Paket –</option>${S.pakete.map((p) => `<option value="${esc(p.id)}"${p.id === x.paket_id ? " selected" : ""}>${esc(p.name)}</option>`).join("")}</select></label>
       <label>Ausbildungsart<select name="ausbildungsart">${artOptionen(x.ausbildungsart)}</select></label>
       <label>Klasse<select name="klasse">${klassenOptionen(x.klasse)}</select></label>
@@ -818,8 +998,9 @@ function schuelerDialog(id) {
         <label class="datum-klein">am<input type="date" name="testfahrt_am" value="${esc(x.b197_testfahrt_am || "")}"></label>
       </div>
       ${id ? `<div class="voll schalter-zeile"><label class="schalter"><input type="checkbox" name="aktiv" role="switch"${istAktiv(x) ? " checked" : ""}><span class="schalter-bahn" aria-hidden="true"></span><span class="schalter-text"><b id="aktivText">${istAktiv(x) ? "Aktiv" : "Inaktiv"}</b><span class="leise klein"> Inaktiv heißt: bestanden oder nicht mehr dabei. Zählt nicht bei Fristen und Reaktivierung. Jederzeit umstellbar.</span></span></label></div>` : ""}
-      <label class="voll">Büro-Notiz<input type="text" name="buero_notiz" maxlength="500" value="${esc(x.buero_notiz || "")}"></label>
-      <label class="voll">Büro-To-do<input type="text" name="buero_todo" maxlength="500" value="${esc(x.buero_todo || "")}"></label>
+      ${id ? `<div class="voll" id="notizBlock">${notizBlockHTML(id, x.fahrlehrer_id)}</div>` : ""}
+      <label class="voll">Interne Notiz (nur Büro, der Fahrlehrer sieht sie nicht)<input type="text" name="buero_notiz" maxlength="500" value="${esc(x.buero_notiz || "")}"></label>
+      <label class="voll">Interne Aufgabe (nur Büro)<input type="text" name="buero_todo" maxlength="500" value="${esc(x.buero_todo || "")}"></label>
     </div>
     <p class="leise klein">Umschreiber brauchen keine Sonderfahrten. Ein neuer Schüler mit Fahrlehrer erscheint innerhalb einer Minute in dessen App.</p>`;
   const dlg = oeffneDialog(id ? `Schüler: ${x.name}` : "Schüler anlegen", body, async (form) => {
@@ -854,6 +1035,7 @@ function schuelerDialog(id) {
     if ((x.fahrlehrer_id || null) !== neuerLehrer) await verschiebeSchueler(x, neuerLehrer);
     return true;
   });
+  if (id) bindeNotizBlock(dlg, id, x.fahrlehrer_id);
   const klasseSel = dlg.querySelector("select[name=klasse]"), testBox = dlg.querySelector("input[name=testfahrt]"), testDat = dlg.querySelector("input[name=testfahrt_am]");
   klasseSel.addEventListener("change", () => { dlg.querySelector("#b197Feld").hidden = klasseSel.value !== "B197"; });
   testBox.addEventListener("change", () => { if (testBox.checked && !testDat.value) testDat.value = KR.todayISO(); if (!testBox.checked) testDat.value = ""; });
@@ -877,58 +1059,193 @@ async function verschiebeSchueler(x, neuerLehrer) {
   if (v.error) console.warn("Verschiebung nicht protokolliert:", v.error.message);
 }
 
-/* ---------- Kalender (Tag, eine Spalte pro Fahrlehrer) ---------- */
+/* ---------- Kalender: Tag, Woche, Monat, Jahr ---------- */
 const K_START = 7 * 60, K_ENDE = 21 * 60, K_PX = 1.15; // Pixel pro Minute
 const K_FARBEN = { fahrstunde: "#3a7350", nacht: "#5a7da8", sonder: "#5a7da8", pruefung: "#c9a227", theorie: "#9b7dc4", schalt: "#c4607d", block: "#88939a", vortest: "#d68a3e", simulator: "#3ea6a0", beratung: "#7a8fd6", ersthilfe: "#d65a5a" };
-function renderKalender() {
-  const tag = /^\d{4}-\d\d-\d\d$/.test(fristenParam("tag")) ? fristenParam("tag") : KR.todayISO();
-  const gewaehlt = (fristenParam("lehrer") || "").split(",").filter(Boolean);
-  const lehrer = gewaehlt.length ? S.lehrer.filter((l) => gewaehlt.includes(l.id)) : S.lehrer;
-  const termine = S.termine.filter((t) => t.datum === tag);
+const K_ANSICHTEN = [["tag", "Tag"], ["woche", "Woche"], ["monat", "Monat"], ["jahr", "Jahr"]];
+const MONATE = ["Januar", "Februar", "März", "April", "Mai", "Juni", "Juli", "August", "September", "Oktober", "November", "Dezember"];
+const WOCHENTAGE_KURZ = ["Mo", "Di", "Mi", "Do", "Fr", "Sa", "So"];
+function kAnsicht() { const a = fristenParam("ansicht"); return K_ANSICHTEN.some(([id]) => id === a) ? a : "tag"; }
+function kTag() { return /^\d{4}-\d\d-\d\d$/.test(fristenParam("tag")) ? fristenParam("tag") : KR.todayISO(); }
+function kGewaehlteLehrer() { return (fristenParam("lehrer") || "").split(",").filter(Boolean); }
+function kTerminBlock(t) {
+  const a = Math.max(KR.hm2min(t.von), K_START), b = Math.min(KR.hm2min(t.bis), K_ENDE);
+  if (b <= a) return "";
+  const sn = schuelerName(t.schueler_id) || t.interessent_name || (t.payload && t.payload.note) || ARTEN[t.art] || "";
+  const gesperrt = t.schueler_id && KR.reaktInfo(S.schueler.find((x) => x.id === t.schueler_id) || {}).gesperrt;
+  return `<button type="button" class="k-termin${t.art === "block" ? " block" : ""}${gesperrt ? " gesperrt" : ""}" data-termin="${esc(t.id)}" style="top:${(a - K_START) * K_PX}px;height:${Math.max((b - a) * K_PX - 2, 22)}px;--farbe:${K_FARBEN[t.art] || "#3a7350"}">
+        <span class="k-zeit">${esc(t.von)}–${esc(t.bis)}</span><span class="k-name">${gesperrt ? "⚠ " : ""}${esc(sn)}</span>${t.fahrzeug ? `<span class="k-fz">${esc(t.fahrzeug)}</span>` : ""}</button>`;
+}
+function kStundenAchse() {
   const stunden = [];
   for (let m = K_START; m < K_ENDE; m += 60) stunden.push(`<div class="k-stunde" style="top:${(m - K_START) * K_PX}px">${KR.pad2(m / 60)}:00</div>`);
+  return `<div class="k-achse" style="height:${(K_ENDE - K_START) * K_PX}px">${stunden.join("")}</div>`;
+}
+// Anzahl Termine und Unterrichtseinheiten je Tag für die gewählten Fahrlehrer (für Monat und Jahr)
+function kTageSummen(von, bis, lehrerIds) {
+  const m = {};
+  const ids = new Set(lehrerIds);
+  for (const t of S.termine) {
+    if (t.datum < von || t.datum > bis || t.art === "block" || !ids.has(t.fahrlehrer_id)) continue;
+    const e = (m[t.datum] = m[t.datum] || { n: 0, ue: 0 });
+    e.n++;
+    if (t.von && t.bis) e.ue += Math.max(KR.hm2min(t.bis) - KR.hm2min(t.von), 0) / 45;
+  }
+  return m;
+}
+// Stufe 0–4 nach Auslastung des Tages (12 UE je Fahrlehrer und Tag)
+function kHitze(e, anzahlLehrer) {
+  if (!e || !e.n) return 0;
+  const r = e.ue / (12 * Math.max(anzahlLehrer, 1));
+  return r < 0.34 ? 1 : (r < 0.67 ? 2 : (r < 0.95 ? 3 : 4));
+}
+function kSuchErgebnis() {
+  const q = (fristenParam("ksuche") || "").trim().toLowerCase();
+  if (!q) return "";
+  const heute = KR.todayISO();
+  const treffer = S.schueler.filter((x) => (x.name || "").toLowerCase().includes(q)).slice(0, 8);
+  if (!treffer.length) return `<div class="k-suche-erg"><p class="leer">Kein Schüler mit „${esc(fristenParam("ksuche"))}“ gefunden.</p></div>`;
+  const zeilen = treffer.map((x) => {
+    const eigene = S.termine.filter((t) => t.schueler_id === x.id && t.art !== "block").sort((a, b) => (a.datum + (a.von || "")).localeCompare(b.datum + (b.von || "")));
+    const kommend = eigene.filter((t) => t.datum >= heute).slice(0, 4), davor = eigene.filter((t) => t.datum < heute).slice(-1);
+    const knopf = (t) => `<button type="button" class="knopf klein" data-ksprung="${esc(t.datum)}">${esc(datumDE(t.datum))} ${esc(t.von || "")}</button>`;
+    return `<li><b>${esc(x.name)}</b> <span class="leise klein">${esc(lehrerName(x.fahrlehrer_id))}</span>
+      <div class="k-sprung">${davor.length ? `<span class="leise klein">zuletzt</span> ${davor.map(knopf).join("")}` : ""} ${kommend.length ? `<span class="leise klein">als Nächstes</span> ${kommend.map(knopf).join("")}` : '<span class="leise klein">keine künftigen Termine</span>'}</div></li>`;
+  }).join("");
+  return `<div class="k-suche-erg"><ul>${zeilen}</ul></div>`;
+}
+function kopfKalender(ansicht, tag, titel, schritt) {
+  const tabs = K_ANSICHTEN.map(([id, n]) => `<a class="tab" href="${linkMit("kalender", { ansicht: id === "tag" ? "" : id })}"${id === ansicht ? ' aria-current="page"' : ""}>${n}</a>`).join("");
+  return `<div class="karte-kopf">
+      <div class="tabs">${tabs}</div>
+      <h2 class="k-titel">${esc(titel)}</h2>
+    </div>
+    <div class="filterzeile">
+      <div class="knopfreihe"><button class="knopf" data-ktag="${schritt(-1)}" type="button" aria-label="Zurück">←</button>
+        <button class="knopf" data-ktag="${KR.todayISO()}" type="button">Heute</button>
+        <button class="knopf" data-ktag="${schritt(1)}" type="button" aria-label="Weiter">→</button></div>
+      <label class="feld-klein">Zu Datum springen <input type="date" class="suche" id="kDatum" value="${esc(tag)}" aria-label="Datum wählen"></label>
+      <input type="search" class="suche" id="kSuche" placeholder="Schüler im Kalender suchen" value="${esc(fristenParam("ksuche"))}" aria-label="Schüler im Kalender suchen">
+    </div>
+    ${kSuchErgebnis()}`;
+}
+function kLehrerChips(gewaehlt) {
+  return `<div class="chips">${S.lehrer.filter((l) => l.aktiv !== false).map((l) => `<label class="chip"><input type="checkbox" data-klehrer="${esc(l.id)}"${!gewaehlt.length || gewaehlt.includes(l.id) ? " checked" : ""}> ${esc(l.name || l.email)}</label>`).join("")}</div>`;
+}
+function renderKalender() {
+  const ansicht = kAnsicht(), tag = kTag();
+  if (ansicht === "woche") return kalenderWoche(tag);
+  if (ansicht === "monat") return kalenderMonat(tag);
+  if (ansicht === "jahr") return kalenderJahr(tag);
+  const gewaehlt = kGewaehlteLehrer();
+  const lehrer = gewaehlt.length ? S.lehrer.filter((l) => gewaehlt.includes(l.id)) : S.lehrer;
+  const termine = S.termine.filter((t) => t.datum === tag);
   const hoehe = (K_ENDE - K_START) * K_PX;
   const spalten = lehrer.map((l) => {
     const eigene = termine.filter((t) => t.fahrlehrer_id === l.id && t.von && t.bis);
-    const bloecke = eigene.map((t) => {
-      const a = Math.max(KR.hm2min(t.von), K_START), b = Math.min(KR.hm2min(t.bis), K_ENDE);
-      if (b <= a) return "";
-      const sn = schuelerName(t.schueler_id) || t.interessent_name || (t.payload && t.payload.note) || ARTEN[t.art] || "";
-      const gesperrt = t.schueler_id && KR.reaktInfo(S.schueler.find((x) => x.id === t.schueler_id) || {}).gesperrt;
-      return `<button type="button" class="k-termin${t.art === "block" ? " block" : ""}${gesperrt ? " gesperrt" : ""}" data-termin="${esc(t.id)}" style="top:${(a - K_START) * K_PX}px;height:${Math.max((b - a) * K_PX - 2, 22)}px;--farbe:${K_FARBEN[t.art] || "#3a7350"}">
-        <span class="k-zeit">${esc(t.von)}–${esc(t.bis)}</span><span class="k-name">${gesperrt ? "⚠ " : ""}${esc(sn)}</span>${t.fahrzeug ? `<span class="k-fz">${esc(t.fahrzeug)}</span>` : ""}</button>`;
-    }).join("");
     return `<div class="k-spalte"><div class="k-kopf"><span class="k-lname">${esc(l.name || l.email)}</span><span class="k-anz">${eigene.filter((t) => t.art !== "block").length} Termine</span></div>
-      <div class="k-flaeche" data-lehrer="${esc(l.id)}" style="height:${hoehe}px">${bloecke}</div></div>`;
+      <div class="k-flaeche" data-lehrer="${esc(l.id)}" data-datum="${esc(tag)}" style="height:${hoehe}px">${eigene.map(kTerminBlock).join("")}</div></div>`;
   }).join("");
   const wtag = KR.parseISO(tag).toLocaleDateString("de-DE", { weekday: "long", day: "numeric", month: "long", year: "numeric" });
-  const chips = S.lehrer.map((l) => `<label class="chip"><input type="checkbox" data-klehrer="${esc(l.id)}"${!gewaehlt.length || gewaehlt.includes(l.id) ? " checked" : ""}> ${esc(l.name || l.email)}</label>`).join("");
   return `<div class="karte">
-    <div class="karte-kopf">
-      <div class="knopfreihe"><button class="knopf" data-ktag="${KR.addDaysISO(tag, -1)}" type="button" aria-label="Vortag">←</button>
-        <button class="knopf" data-ktag="${KR.todayISO()}" type="button">Heute</button>
-        <button class="knopf" data-ktag="${KR.addDaysISO(tag, 1)}" type="button" aria-label="Nächster Tag">→</button>
-        <input type="date" class="suche" id="kDatum" value="${esc(tag)}" aria-label="Datum wählen"></div>
-      <h2 class="k-titel">${esc(wtag)}</h2>
-    </div>
-    <div class="chips">${chips}</div>
+    ${kopfKalender("tag", tag, wtag, (n) => KR.addDaysISO(tag, n))}
+    ${kLehrerChips(gewaehlt)}
     <p class="leise klein">In eine freie Stelle klicken, um einen Termin anzulegen. Auf einen Termin klicken, um ihn zu verschieben oder abzusagen.</p>
-    <div class="kalender"><div class="k-achse" style="height:${hoehe}px">${stunden.join("")}</div><div class="k-spalten" style="--spalten:${Math.max(lehrer.length, 1)}">${spalten || '<p class="leer">Kein Fahrlehrer gewählt.</p>'}</div></div>
+    <div class="kalender">${kStundenAchse()}<div class="k-spalten" style="--spalten:${Math.max(lehrer.length, 1)}">${spalten || '<p class="leer">Kein Fahrlehrer gewählt.</p>'}</div></div>
+  </div>`;
+}
+function kalenderWoche(tag) {
+  const montag = montagVon(tag), sonntag = KR.addDaysISO(montag, 6);
+  const aktive = S.lehrer.filter((l) => l.aktiv !== false);
+  const gewaehlt = kGewaehlteLehrer();
+  const wahl = fristenParam("wl") || gewaehlt[0] || (aktive[0] || {}).id;
+  const l = S.lehrer.find((x) => x.id === wahl) || aktive[0];
+  const hoehe = (K_ENDE - K_START) * K_PX;
+  const heute = KR.todayISO();
+  const spalten = l ? Array.from({ length: 7 }, (_, i) => {
+    const d = KR.addDaysISO(montag, i);
+    const eigene = S.termine.filter((t) => t.fahrlehrer_id === l.id && t.datum === d && t.von && t.bis);
+    return `<div class="k-spalte${d === heute ? " heute" : ""}"><div class="k-kopf"><span class="k-lname">${WOCHENTAGE_KURZ[i]} ${esc(datumDE(d).slice(0, 6))}</span><span class="k-anz">${eigene.filter((t) => t.art !== "block").length} Termine</span></div>
+      <div class="k-flaeche" data-lehrer="${esc(l.id)}" data-datum="${esc(d)}" style="height:${hoehe}px">${eigene.map(kTerminBlock).join("")}</div></div>`;
+  }).join("") : "";
+  const kw = (() => { const d = KR.parseISO(montag); const t = new Date(d.getTime()); t.setDate(t.getDate() + 3); const j = new Date(t.getFullYear(), 0, 4); return 1 + Math.round(((t - j) / 86400000 - 3 + ((j.getDay() + 6) % 7)) / 7); })();
+  const titel = `Woche ${kw}: ${datumDE(montag).slice(0, 6)}–${datumDE(sonntag)}`;
+  return `<div class="karte">
+    ${kopfKalender("woche", tag, titel, (n) => KR.addDaysISO(tag, 7 * n))}
+    <div class="filterzeile"><label class="feld-klein">Fahrlehrer <select class="suche" id="kWoLehrer" aria-label="Fahrlehrer der Woche">${aktive.map((x) => `<option value="${esc(x.id)}"${l && x.id === l.id ? " selected" : ""}>${esc(x.name || x.email)}</option>`).join("")}</select></label></div>
+    <p class="leise klein">In eine freie Stelle klicken, um einen Termin anzulegen. Auf einen Termin klicken, um ihn zu verschieben oder abzusagen.</p>
+    <div class="kalender">${kStundenAchse()}<div class="k-spalten" style="--spalten:7">${spalten || '<p class="leer">Kein Fahrlehrer vorhanden.</p>'}</div></div>
+  </div>`;
+}
+function kalenderMonat(tag) {
+  const j = KR.parseISO(tag).getFullYear(), m = KR.parseISO(tag).getMonth();
+  const erster = KR.dateISO(new Date(j, m, 1)), letzter = KR.dateISO(new Date(j, m + 1, 0));
+  const start = montagVon(erster), ende = KR.addDaysISO(montagVon(letzter), 6);
+  const gewaehlt = kGewaehlteLehrer();
+  const lehrer = (gewaehlt.length ? S.lehrer.filter((l) => gewaehlt.includes(l.id)) : S.lehrer).filter((l) => l.aktiv !== false);
+  const summen = kTageSummen(start, ende, lehrer.map((l) => l.id));
+  const heute = KR.todayISO();
+  const zellen = [];
+  for (let d = start; d <= ende; d = KR.addDaysISO(d, 1)) {
+    const e = summen[d], h = kHitze(e, lehrer.length);
+    const wt = (KR.parseISO(d).getDay() + 6) % 7;
+    zellen.push(`<button type="button" class="m-tag h${h}${d.slice(0, 7) !== erster.slice(0, 7) ? " fremd" : ""}${d === heute ? " heute" : ""}${wt >= 5 ? " we" : ""}" data-ksprung="${esc(d)}" aria-label="${esc(datumDE(d))}: ${e ? e.n : 0} Termine">
+      <span class="m-nr">${Number(d.slice(8))}</span>${e ? `<span class="m-anz">${e.n} Termine</span><span class="m-ue">${Math.round(e.ue * 10) / 10} UE</span>` : ""}</button>`);
+  }
+  return `<div class="karte">
+    ${kopfKalender("monat", tag, `${MONATE[m]} ${j}`, (n) => KR.addMonthsISO(tag.slice(0, 8) + "01", n))}
+    ${kLehrerChips(gewaehlt)}
+    <div class="monat"><div class="m-kopf">${WOCHENTAGE_KURZ.map((w) => `<span>${w}</span>`).join("")}</div><div class="m-raster">${zellen.join("")}</div></div>
+    <p class="leise klein">Farbe = Auslastung des Tages (12 UE je Fahrlehrer). Auf einen Tag klicken, um ihn zu öffnen.</p>
+  </div>`;
+}
+function kalenderJahr(tag) {
+  const j = KR.parseISO(tag).getFullYear();
+  const gewaehlt = kGewaehlteLehrer();
+  const lehrer = (gewaehlt.length ? S.lehrer.filter((l) => gewaehlt.includes(l.id)) : S.lehrer).filter((l) => l.aktiv !== false);
+  const summen = kTageSummen(`${j}-01-01`, `${j}-12-31`, lehrer.map((l) => l.id));
+  const heute = KR.todayISO();
+  const frueh = S.termine.reduce((a, t) => (t.datum && t.datum < a ? t.datum : a), heute);
+  const monate = MONATE.map((name, m) => {
+    const erster = KR.dateISO(new Date(j, m, 1)), letzter = KR.dateISO(new Date(j, m + 1, 0));
+    const start = montagVon(erster), ende = KR.addDaysISO(montagVon(letzter), 6);
+    const zellen = [];
+    for (let d = start; d <= ende; d = KR.addDaysISO(d, 1)) {
+      if (d.slice(0, 7) !== erster.slice(0, 7)) { zellen.push('<span class="j-leer"></span>'); continue; }
+      const e = summen[d];
+      zellen.push(`<button type="button" class="j-tag h${kHitze(e, lehrer.length)}${d === heute ? " heute" : ""}" data-ksprung="${esc(d)}" title="${esc(datumDE(d))}: ${e ? e.n : 0} Termine" aria-label="${esc(datumDE(d))}: ${e ? e.n : 0} Termine">${Number(d.slice(8))}</button>`);
+    }
+    return `<div class="j-monat"><a class="j-titel" href="${linkMit("kalender", { ansicht: "monat", tag: erster })}">${name}</a><div class="j-kopf">${WOCHENTAGE_KURZ.map((w) => `<span>${w.slice(0, 1)}</span>`).join("")}</div><div class="j-raster">${zellen.join("")}</div></div>`;
+  }).join("");
+  return `<div class="karte">
+    ${kopfKalender("jahr", tag, String(j), (n) => KR.addMonthsISO(tag, 12 * n))}
+    ${kLehrerChips(gewaehlt)}
+    <div class="jahr">${monate}</div>
+    <p class="leise klein">Farbe = Auslastung des Tages. Auf einen Tag klicken, um ihn zu öffnen; auf einen Monat klicken, um ihn groß zu sehen. Termine sind ab dem ${esc(datumDE(frueh))} geladen.</p>
   </div>`;
 }
 function bindeKalender(ziel) {
   ziel.querySelectorAll("[data-ktag]").forEach((b) => b.addEventListener("click", () => setzeFilter("kalender", { tag: b.dataset.ktag })));
+  ziel.querySelectorAll("[data-ksprung]").forEach((b) => b.addEventListener("click", () => { location.hash = linkMit("kalender", { ansicht: "", tag: b.dataset.ksprung, ksuche: "" }); }));
   ziel.querySelector("#kDatum").addEventListener("change", (e) => e.target.value && setzeFilter("kalender", { tag: e.target.value }));
+  const su = ziel.querySelector("#kSuche");
+  let t = null;
+  su.addEventListener("input", () => {
+    clearTimeout(t);
+    t = setTimeout(() => { setzeFilter("kalender", { ksuche: su.value.trim() }); const n = $("kSuche"); if (n) { n.focus(); n.setSelectionRange(n.value.length, n.value.length); } }, 250);
+  });
+  const wl = ziel.querySelector("#kWoLehrer");
+  if (wl) wl.addEventListener("change", () => setzeFilter("kalender", { wl: wl.value }));
   ziel.querySelectorAll("[data-klehrer]").forEach((c) => c.addEventListener("change", () => {
     const an = [...ziel.querySelectorAll("[data-klehrer]")].filter((x) => x.checked).map((x) => x.dataset.klehrer);
-    setzeFilter("kalender", { lehrer: an.length === S.lehrer.length ? "" : (an.join(",") || "keiner") });
+    setzeFilter("kalender", { lehrer: an.length === ziel.querySelectorAll("[data-klehrer]").length ? "" : (an.join(",") || "keiner") });
   }));
   ziel.querySelectorAll("[data-termin]").forEach((b) => b.addEventListener("click", (e) => { e.stopPropagation(); terminDialog(b.dataset.termin); }));
   ziel.querySelectorAll(".k-flaeche").forEach((f) => f.addEventListener("click", (e) => {
     if (e.target !== f) return;
     const y = e.clientY - f.getBoundingClientRect().top;
     const min = Math.round((K_START + y / K_PX) / 15) * 15;
-    terminDialog(null, { fahrlehrer_id: f.dataset.lehrer, datum: fristenParam("tag") || KR.todayISO(), von: KR.pad2(Math.floor(min / 60)) + ":" + KR.pad2(min % 60) });
+    terminDialog(null, { fahrlehrer_id: f.dataset.lehrer, datum: f.dataset.datum || kTag(), von: KR.pad2(Math.floor(min / 60)) + ":" + KR.pad2(min % 60) });
   }));
 }
 function plusMinuten(hm, n) { const m = Math.min(KR.hm2min(hm) + n, 23 * 60 + 59); return KR.pad2(Math.floor(m / 60)) + ":" + KR.pad2(m % 60); }
@@ -1824,7 +2141,7 @@ async function ladeDaten() {
   const fsId = S.fsId;
   setStatus("", "lade …");
   try {
-    const [fs, lehrer, schueler, termine, pruefungen, fahrzeuge, pakete, pTermine, fcAbg, verk, prov, team] = await Promise.all([
+    const [fs, lehrer, schueler, termine, pruefungen, fahrzeuge, pakete, pTermine, fcAbg, verk, prov, team, notizen, gelesen] = await Promise.all([
       supa.from("fahrschulen").select("*").eq("id", fsId).single(),
       supa.from("profiles").select("*").eq("fahrschule_id", fsId).in("rolle", ["fahrlehrer", "super_admin"]).order("name"),
       supa.from("schueler").select("*").eq("fahrschule_id", fsId).neq("status", "geloescht").order("name"),
@@ -1837,6 +2154,8 @@ async function ladeDaten() {
       supa.from("fahrschule_empfehlungen").select("*").eq("fahrschule_id", fsId).order("erstellt_am", { ascending: false }).limit(1000),
       supa.from("provisionen").select("*").eq("fahrschule_id", fsId).order("erstellt_am", { ascending: false }).limit(2000),
       supa.from("profiles").select("*").eq("fahrschule_id", fsId).order("name"),
+      supa.from("schueler_notizen").select("*").eq("fahrschule_id", fsId).order("erstellt_am", { ascending: false }).limit(2000),
+      supa.from("schueler_notiz_gelesen").select("*").limit(5000),
     ]);
     if (nr !== S.ladeNr) return; // inzwischen wurde neu geladen oder die Fahrschule gewechselt
     S.fs = pruefe(fs, "Fahrschule");
@@ -1851,6 +2170,8 @@ async function ladeDaten() {
     S.verkaeufe = pruefe(verk, "Verkäufe") || [];
     S.provisionen = pruefe(prov, "Provisionen") || [];
     S.team = pruefe(team, "Team") || [];
+    S.notizen = (notizen && !notizen.error && notizen.data) || [];   // Notizen sind Zusatz: Fehler ignorieren
+    S.gelesen = (gelesen && !gelesen.error && gelesen.data) || [];
     S.geladenAm = new Date();
     $("schulName").textContent = S.fs ? S.fs.name : "";
     setStatus("ok", "verbunden · " + S.geladenAm.toLocaleTimeString("de-DE", { hour: "2-digit", minute: "2-digit" }));
@@ -1995,6 +2316,20 @@ $("schulWahl").addEventListener("change", (e) => {
 });
 $("abmelden").addEventListener("click", abmelden);
 $("neuLaden").addEventListener("click", () => ladeDaten());
+// Drucken: Kopf mit Fahrschule, Bereich, Datum, Person und den aktiven Filtern
+function fuelleDruckKopf() {
+  const b = aktuellerBereich();
+  const teile = [];
+  const tab = document.querySelector("#ansicht .tab[aria-current=page]");
+  if (tab) teile.push(tab.textContent.trim());
+  document.querySelectorAll("#ansicht .filterzeile select, #ansicht .karte-kopf select").forEach((sel) => { if (sel.value && sel.selectedOptions[0]) teile.push(sel.selectedOptions[0].textContent.trim()); });
+  document.querySelectorAll("#ansicht .filterzeile input[type=search], #ansicht .karte-kopf input[type=search]").forEach((i) => { if (i.value.trim()) teile.push("Suche: „" + i.value.trim() + "“"); });
+  document.querySelectorAll("#ansicht .filterzeile input[type=date]").forEach((i) => { if (i.value) teile.push((i.closest("label") ? i.closest("label").textContent.trim().split(/\s+/)[0] + " " : "") + datumDE(i.value)); });
+  const jetzt = new Date().toLocaleString("de-DE", { dateStyle: "medium", timeStyle: "short" });
+  $("druckKopf").innerHTML = `<b>${esc(b.titel)}</b><span>${esc((S.fs && S.fs.name) || "")} · gedruckt am ${esc(jetzt)}${S.werAnzeige || (S.profil && S.profil.name) ? " von " + esc(S.werAnzeige || S.profil.name) : ""}${teile.length ? " · " + esc(teile.join(" · ")) : ""}</span>`;
+}
+window.addEventListener("beforeprint", fuelleDruckKopf);
+$("drucken").addEventListener("click", () => { fuelleDruckKopf(); window.print(); });
 document.addEventListener("visibilitychange", () => {
   if (!document.hidden && S.geladenAm && Date.now() - S.geladenAm.getTime() > NEU_LADEN_MS) ladeDaten();
 });
