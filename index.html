@@ -576,7 +576,7 @@ input,select,textarea{font-family:inherit;font-size:15px;color:var(--txt);}
 .lk-ends{display:flex;justify-content:space-between;font-size:11px;color:var(--faint);font-weight:700;margin-top:7px;letter-spacing:.02em;}
 .wiz-nav{display:flex;gap:12px;margin-top:18px;}
 .bogen-intro{ text-align:center;padding-top:8vh;}
-.bogen-intro img{width:110px;filter:drop-shadow(0 0 24px rgba(232,69,31,.3));margin-bottom:18px;}
+.bogen-intro img{width:110px;border-radius:24px;filter:drop-shadow(0 0 24px rgba(232,69,31,.3));margin-bottom:18px;}
 .bogen-intro h2{font-family:'Anton',sans-serif;text-transform:uppercase;font-size:26px;letter-spacing:.03em;margin-bottom:10px;}
 .bogen-intro p{color:var(--muted);max-width:420px;margin:0 auto 26px;font-size:14.5px;}
 
@@ -1813,9 +1813,10 @@ body:not(.light) .cw-col.today .cw-dnum{color:var(--gold);}
 #loginOverlay{
   position:fixed;inset:0;z-index:9999;
   background:radial-gradient(120% 90% at 50% 0%,#0f2018 0%,#0c1410 70%);
-  display:flex;flex-direction:column;align-items:center;justify-content:center;
-  padding:24px;
+  display:flex;flex-direction:column;align-items:center;justify-content:safe center;
+  padding:24px;overflow-y:auto;-webkit-overflow-scrolling:touch;
 }
+#loginOverlay>*{flex:0 0 auto;}
 #loginOverlay.hidden{display:none;}
 .lo-logo-img{width:90px;height:90px;border-radius:22px;margin-bottom:16px;object-fit:cover;box-shadow:0 8px 32px rgba(0,0,0,.5);}
 .lo-logo{font-family:'Anton',sans-serif;font-size:26px;color:#e8f0eb;margin-bottom:4px;letter-spacing:1px;}
@@ -1828,6 +1829,8 @@ body:not(.light) .cw-col.today .cw-dnum{color:var(--gold);}
   border-radius:24px;padding:32px 28px;
   box-shadow:0 20px 60px rgba(0,0,0,.4),inset 0 1px 0 rgba(190,220,200,.08);
 }
+.lo-buero{margin-top:18px;padding-top:16px;border-top:1px solid rgba(150,200,165,.16);display:grid;gap:8px;text-align:center;font-size:13px;color:var(--muted);}
+.lo-buero a{display:block;padding:12px 14px;border-radius:14px;border:1px solid var(--line-soft);background:var(--surface);color:var(--txt);font-weight:700;text-decoration:none;font-size:15px;}
 .lo-field{margin-bottom:18px;}
 .lo-field label{display:block;font-size:11px;color:var(--mint-soft);margin-bottom:7px;font-weight:700;letter-spacing:.8px;text-transform:uppercase;}
 .lo-field-wrap{position:relative;}
@@ -2079,7 +2082,7 @@ body.light .fc-miss-sum b{color:#7a2a1e !important;}
     <div class="lo-field">
       <label>E-Mail</label>
       <div class="lo-field-wrap">
-        <input type="email" id="loEmail" autocomplete="email" placeholder="deine@email.de">
+        <input type="email" id="loEmail" autocomplete="username" autocapitalize="off" spellcheck="false" placeholder="deine@email.de">
       </div>
     </div>
     <div class="lo-field">
@@ -2094,6 +2097,7 @@ body.light .fc-miss-sum b{color:#7a2a1e !important;}
     <button class="lo-btn" id="loBtn" onclick="doLogin()">Einloggen</button>
     <button type="button" id="loForgotBtn" style="background:none;border:none;color:var(--muted);font-size:12.5px;margin-top:10px;text-decoration:underline;cursor:pointer;width:100%;">Passwort vergessen?</button>
     <div class="lo-err" id="loErr"></div>
+    <div class="lo-buero"><span>Du arbeitest im Büro oder in der Leitung?</span><a href="buero.html">Büro-Anmeldung (am PC)</a></div>
   </div>
 </div>
 
@@ -3398,7 +3402,7 @@ async function doLogin() {
       return;
     }
     btn.disabled = false; btn.innerHTML = "Einloggen";
-    showLoginErr(e.message || "Login fehlgeschlagen.");
+    showLoginErr(/invalid login/i.test(msg) ? "E-Mail oder Passwort stimmt nicht. Tipp: unten auf „Passwort vergessen?“ tippen, dann bekommst du einen Link per E-Mail." : /not confirmed/i.test(msg) ? "Die E-Mail-Adresse ist noch nicht bestätigt. Bitte den Link in der E-Mail anklicken." : /rate limit|too many/i.test(msg) ? "Zu viele Versuche. Bitte ein paar Minuten warten." : (msg || "Login fehlgeschlagen."));
   }
 }
 
@@ -5815,7 +5819,7 @@ window.addEventListener("load", () => {
 const STORE_KEY="serband-app-v1";
 /* Build-Version: bei jeder Auslieferung hier das Datum aktualisieren.
    Wird in den Einstellungen angezeigt + für den Update-Hinweis genutzt. */
-const APP_VERSION="2026.10.09.4";
+const APP_VERSION="2026.10.09.5";
 // Nutzungsbedingungen & Haftungsausschluss (Bereich: rechtliche Absicherung) - Version hochzählen
 // und alle Nutzer müssen erneut zustimmen, sobald sich der Text inhaltlich ändert.
 const AGB_VERSION="1.0";

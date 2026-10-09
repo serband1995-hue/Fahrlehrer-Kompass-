@@ -68,6 +68,12 @@ async function pruefeLayout(page, name) {
         if (e.left < b.left - 1 || e.right > b.right + 1) { probleme.push("ragt seitlich aus " + box.className.split(" ")[0] + ": " + el.tagName + "." + String(el.className).split(" ")[0] + " „" + (el.textContent || "").trim().slice(0, 30) + "“"); break; }
       }
     }
+    // 1b) Knöpfe und Marken ragen über den Rand ihrer Tabellenzelle
+    for (const el of document.querySelectorAll("td .knopf, td .marke-pill, td .haken, td select, td input")) {
+      if (!sichtbar(el) || gewolltGekuerzt(el)) continue;
+      const z = el.closest("td").getBoundingClientRect(), e = el.getBoundingClientRect();
+      if (e.right > z.right + 1 || e.left < z.left - 1) { probleme.push("ragt aus Tabellenzelle: " + el.tagName + " „" + (el.textContent || "").trim().slice(0, 25) + "“"); break; }
+    }
     // 2) Abgeschnittener Text
     for (const el of document.querySelectorAll("td, th, .knopf, .tab, .marke-pill, .name, .wert, .nav-punkt, .unter, h1, h2, h3, label, .chip, .aufgabe")) {
       if (!sichtbar(el) || gewolltGekuerzt(el)) continue;
@@ -325,6 +331,113 @@ for (const [breite, hoehe] of [[1920, 1080], [1366, 768], [1024, 768]]) {
   if (FOTOS) await page.screenshot({ path: join(FOTOS, "fahrchecks.png"), fullPage: true });
   if (konsole.length) fehler("Fahrchecks: Konsole: " + konsole.join(" | "));
   await ctx.close();
+}
+
+// 4e2) Fahrchecks: alle Stunden suchen, filtern, ändern, nachtragen
+{
+  const { page, ctx, konsole } = await oeffne({ nutzer: "bu-1", hash: "#fahrchecks?ansicht=stunden&von=2000-01-01", breite: 1366, hoehe: 900 });
+  const zeilen = async () => page.$$eval(".karte table.tabelle tbody tr", (r) => r.filter((x) => !x.querySelector(".leer")).length);
+  const alle = await zeilen();
+  if (!(alle > 20)) fehler("Fahrchecks-Stunden: zu wenige Zeilen (" + alle + ")");
+  for (const breite of [1024, 1366, 1920]) {
+    await page.setViewportSize({ width: breite, height: 900 });
+    await pruefeLayout(page, "Fahrcheck-Stunden@" + breite);
+    await pruefeBreite(page, "Fahrcheck-Stunden@" + breite);
+  }
+  await page.setViewportSize({ width: 1366, height: 900 });
+  // Fahrlehrer filtern
+  await page.selectOption("#fcLehrer", "fl-1");
+  await page.waitForTimeout(200);
+  const nurAnton = await page.$$eval(".karte table.tabelle tbody tr td.nur-sehr-breit:nth-child(3)", (c) => [...new Set(c.map((x) => x.textContent.trim()))]);
+  if (nurAnton.length !== 1) fehler("Fahrchecks-Stunden: Fahrlehrer-Filter zeigt " + JSON.stringify(nurAnton));
+  const nachFilter = await zeilen();
+  if (!(nachFilter > 0 && nachFilter < alle)) fehler(`Fahrchecks-Stunden: Filter ${alle} -> ${nachFilter}`);
+  // Fahrcheck-Typ filtern
+  await page.selectOption("#fcLehrer", "");
+  await page.selectOption("#fcTyp", "eins");
+  await page.waitForTimeout(200);
+  const eins = await page.$$eval(".karte table.tabelle tbody tr", (r) => r.filter((x) => !x.querySelector(".leer")).map((x) => x.textContent));
+  if (!eins.length || eins.some((t) => !/1 FC fehlt/.test(t))) fehler("Fahrchecks-Stunden: Typ-Filter falsch (" + eins.length + ")");
+  await page.selectOption("#fcTyp", "");
+  // Suche nach Unsinn
+  await page.fill("#fcSuche", "zzzqqq");
+  await page.waitForTimeout(500);
+  if (!(await page.isVisible(".leer"))) fehler("Fahrchecks-Stunden: Suche ohne Treffer zeigt keinen Hinweis");
+  await page.fill("#fcSuche", "");
+  await page.waitForTimeout(500);
+  // Abgegeben setzen, ändern, nachreichen
+  const erste = await page.$eval("[data-fcstatus=abgegeben]", (b) => b.dataset.id);
+  await page.click(`[data-fcstatus=abgegeben][data-id="${erste}"]`);
+  await page.waitForTimeout(300);
+  let t = await page.evaluate((id) => window.__FAKE.tabellen.kalender_termine.find((x) => x.id === id), erste);
+  if (t.buero_fc_status !== "abgegeben") fehler("Fahrchecks-Stunden: Abgegeben nicht gespeichert");
+  await page.click(`[data-fcbearb="${erste}"]`);
+  await page.selectOption("dialog select[name=status]", "fehlt");
+  await pruefeLayout(page, "Fahrcheck-Ändern-Dialog");
+  await page.click("dialog button[value=ok]");
+  await page.waitForTimeout(300);
+  t = await page.evaluate((id) => window.__FAKE.tabellen.kalender_termine.find((x) => x.id === id), erste);
+  if (t.buero_fc_status !== "fehlt") fehler("Fahrchecks-Stunden: Ändern nicht gespeichert");
+  if ("aktualisiert_am" in t && t.aktualisiert_am === new Date().toISOString().slice(0, 10)) fehler("Fahrchecks-Stunden: aktualisiert_am verändert");
+  await page.click(`[data-fcnach="${erste}"]`);
+  await page.waitForTimeout(300);
+  t = await page.evaluate((id) => window.__FAKE.tabellen.kalender_termine.find((x) => x.id === id), erste);
+  if (t.buero_fc_status !== "abgegeben" || t.buero_fc_nachgereicht_am !== HEUTE) fehler("Fahrchecks-Stunden: Nachgereicht falsch " + JSON.stringify([t.buero_fc_status, t.buero_fc_nachgereicht_am]));
+  // früherer Zeitraum wählbar
+  await page.goto(page.url().split("#")[0] + "#fahrchecks");
+  await page.waitForTimeout(300);
+  const optionen = await page.$$eval("#fcZeitraum option", (o) => o.length);
+  if (optionen < 10) fehler("Fahrchecks: Zeitraum-Auswahl hat nur " + optionen + " Einträge");
+  if (konsole.length) fehler("Fahrchecks-Stunden: Konsole: " + konsole.join(" | "));
+  await ctx.close();
+}
+
+// 4e3) Prüfungstafel: suchen und nach Datum sortieren/eingrenzen
+{
+  const { page, ctx, konsole } = await oeffne({ nutzer: "bu-1", hash: "#pruefungen?ansicht=alle", breite: 1366, hoehe: 900 });
+  const daten = async () => page.$$eval(".karte table.ptabelle", (t) => t.length);
+  const alle = await daten();
+  if (!alle) fehler("Prüfungstafel: keine Tage in Ansicht „Alle“");
+  const tage = async () => page.$$eval(".tag-titel", (h) => h.map((x) => x.textContent));
+  const auf = await tage();
+  await page.selectOption("#pSort", "ab");
+  await page.waitForTimeout(200);
+  const ab = await tage();
+  if (auf.length > 1 && auf[0] !== ab[ab.length - 1]) fehler("Prüfungstafel: Sortierung dreht die Reihenfolge nicht um");
+  await page.fill("#pSuche", "zzzqqq");
+  await page.waitForTimeout(500);
+  if (!(await page.isVisible(".leer"))) fehler("Prüfungstafel: Suche ohne Treffer zeigt keinen Hinweis");
+  await page.fill("#pSuche", "");
+  await page.waitForTimeout(500);
+  await page.fill("#pVon", "2099-01-01");
+  await page.dispatchEvent("#pVon", "change");
+  await page.waitForTimeout(300);
+  if (await daten()) fehler("Prüfungstafel: Datumsfilter „von“ ohne Wirkung");
+  for (const breite of [1024, 1366, 1920]) {
+    await page.setViewportSize({ width: breite, height: 900 });
+    await pruefeLayout(page, "Prüfungstafel-Filter@" + breite);
+  }
+  if (konsole.length) fehler("Prüfungstafel-Filter: Konsole: " + konsole.join(" | "));
+  await ctx.close();
+}
+
+// 4e4) Anmeldung: eigener Büro-Bereich, Rückweg zur App, Logo mit runden Ecken
+{
+  const { page, ctx, konsole } = await oeffne({ nutzer: null, breite: 1366, hoehe: 860 });
+  if (!/Büro-Anmeldung/.test(await page.textContent("#login h1"))) fehler("Anmeldung: Überschrift „Büro-Anmeldung“ fehlt");
+  if (!(await page.$('#login a[href="index.html"].knopf'))) fehler("Anmeldung: Link zur Fahrlehrer-Anmeldung fehlt");
+  await page.check("#loginZeig");
+  if ((await page.getAttribute("#loginPw", "type")) !== "text") fehler("Anmeldung: Passwort anzeigen geht nicht");
+  const radius = await page.$eval(".login-logo", (i) => parseFloat(getComputedStyle(i).borderTopLeftRadius));
+  if (!(radius >= 8)) fehler("Logo: Ecken nicht abgerundet (" + radius + ")");
+  await pruefeLayout(page, "Büro-Anmeldung");
+  if (konsole.length) fehler("Anmeldung: Konsole: " + konsole.join(" | "));
+  await ctx.close();
+  const b = await oeffne({ nutzer: "ad-1", breite: 1366, hoehe: 860 });
+  if (!(await b.page.isVisible("#zurApp"))) fehler("Rückweg: Link zur Fahrlehrer-Ansicht fehlt in der Seitenleiste");
+  const r2 = await b.page.$eval(".marke img", (i) => parseFloat(getComputedStyle(i).borderTopLeftRadius));
+  if (!(r2 >= 8)) fehler("Logo in der Seitenleiste: Ecken nicht abgerundet");
+  await b.ctx.close();
 }
 
 // 4f) Verkäufe: bezahlt bucht Provision, ausgezahlt
