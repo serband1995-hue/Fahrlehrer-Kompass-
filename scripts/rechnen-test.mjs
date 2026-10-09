@@ -97,6 +97,15 @@ const z = KR.fcSoll([
 gleich("FC-Soll Zeitraum (ohne Zukunft, mit nachgereicht)", 5, z.soll);
 gleich("FC fehlend", 1, z.fehlend.length);
 
+// Fahrcheck-Zettel: 12 Monate ab Datum der Stunde
+const gv = (d, h) => { const g = KR.fcGueltigkeit(d, h); return g.stufe + "|" + g.bis; };
+gleich("FC gültig bis", "2027-10-06", KR.fcGueltigBis("2026-10-06"));
+gleich("FC gültig bis (29. Februar)", "2025-02-28", KR.fcGueltigBis("2024-02-29"));
+gleich("FC gültig", "ok|2027-10-06", gv("2026-10-06", "2026-10-10"));
+gleich("FC läuft bald ab (60 Tage)", "bald|2026-12-09", gv("2025-12-09", "2026-10-10"));
+gleich("FC letzter gültiger Tag", "bald|2026-10-10", gv("2025-10-10", "2026-10-10"));
+gleich("FC einen Tag zu spät", "verfallen|2026-10-09", gv("2025-10-09", "2026-10-10"));
+
 // Aufteilung
 const a1 = KR.aufteilung(100, { fahrlehrer: 15, fahrschule: 45, plattform: 20, akademie: 20 });
 gleich("Aufteilung 100 €", "15|45|20|20", [a1.fahrlehrer, a1.fahrschule, a1.plattform, a1.akademie].join("|"));
