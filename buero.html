@@ -29,17 +29,19 @@
 <div id="login" class="login" hidden>
   <form class="login-karte" id="loginForm" autocomplete="on">
     <img src="icon-192.png" alt="" class="login-logo">
-    <h1>Kompass Büro</h1>
-    <p class="leise">Für Büro und Fahrschul-Leitung. Gleiche Zugangsdaten wie in der Kompass-App.</p>
+    <h1>Büro-Anmeldung</h1>
+    <p class="leise">Für Büro und Fahrschul-Leitung am PC. Bitte mit der E-Mail anmelden, die für das Büro angelegt wurde. Gleiche Zugangsdaten wie in der Kompass-App.</p>
     <label>E-Mail
-      <input type="email" id="loginMail" autocomplete="username" required>
+      <input type="email" id="loginMail" autocomplete="username" autocapitalize="off" spellcheck="false" required>
     </label>
     <label>Passwort
       <input type="password" id="loginPw" autocomplete="current-password" required>
     </label>
+    <label class="login-zeig"><input type="checkbox" id="loginZeig"> Passwort anzeigen</label>
     <p class="fehler" id="loginFehler" role="alert"></p>
     <button type="submit" class="knopf haupt gross" id="loginKnopf">Anmelden</button>
     <a class="leise klein" href="index.html">Passwort vergessen? In der Kompass-App zurücksetzen</a>
+    <div class="login-wechsel"><span class="leise klein">Du bist Fahrlehrer?</span><a class="knopf" href="index.html">Zur Fahrlehrer-Anmeldung (Kompass-App)</a></div>
   </form>
 </div>
 
@@ -74,6 +76,7 @@
       </div>
       <button class="knopf klein" id="abmelden" type="button">Abmelden</button>
     </div>
+    <div class="seite-links"><a class="knopf klein" id="zurApp" href="index.html">← Zur Fahrlehrer-Ansicht (Kompass-App)</a></div>
     <button class="knopf klein installieren" id="installieren" type="button" hidden>Als App auf diesem PC installieren</button>
   </aside>
   <main class="inhalt">
