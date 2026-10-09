@@ -105,6 +105,16 @@
     if (t.fc === "v2" || t.fc === "geschenkt" || t.fc === "offen" || t.fc === "nachgereicht") return 0;
     return voll;
   }
+  // Fahrcheck-Zettel (Übungs-, Sonder- und Testfahrten) verfallen 12 Monate nach dem Datum der Stunde (Kristina, 09.10.2026)
+  function fcGueltigBis(datum) { return datum ? addMonthsISO(datum, 12) : null; }
+  // stufe: verfallen | bald (≤60 Tage) | ok
+  function fcGueltigkeit(datum, heute) {
+    heute = heute || todayISO();
+    const bis = fcGueltigBis(datum);
+    if (!bis) return { stufe: "ok", bis: null, tage: null };
+    const tage = daysBetweenISO(heute, bis);
+    return { stufe: tage < 0 ? "verfallen" : (tage <= 60 ? "bald" : "ok"), bis, tage };
+  }
   // Halbmonat: 1.–15. und 16.–Monatsende (zwei Abgaben im Monat)
   function fcZeitraum(iso) {
     const d = parseISO(iso), j = d.getFullYear(), m = d.getMonth();
@@ -154,7 +164,7 @@
     return out;
   }
 
-  const api = { FS_BUERO_ARTEN, pad2, hm2min, parseISO, dateISO, todayISO, ueOf, addMonthsISO, addDaysISO, daysBetweenISO, reaktFaellig, reaktNachZahlung, reaktInfo, theorieInfo, fcGebucht, fcErhalten, fcZeitraum, fcVorZeitraum, fcSoll, aufteilung };
+  const api = { FS_BUERO_ARTEN, pad2, hm2min, parseISO, dateISO, todayISO, ueOf, addMonthsISO, addDaysISO, daysBetweenISO, reaktFaellig, reaktNachZahlung, reaktInfo, theorieInfo, fcGebucht, fcErhalten, fcGueltigBis, fcGueltigkeit, fcZeitraum, fcVorZeitraum, fcSoll, aufteilung };
   if (typeof module !== "undefined" && module.exports) module.exports = api;
   else root.KR = api;
 })(typeof self !== "undefined" ? self : this);
