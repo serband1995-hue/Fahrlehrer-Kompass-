@@ -82,6 +82,24 @@ fall("2  Prüfung mit Ergebnis (Kalendertermin + exams) zählt 2 UE", async (f) 
   if (zahl(r.fcDone) !== 2) f("fcDone = " + r.fcDone + ", erwartet 2");
 });
 
+fall("2b Ergebnis erst am Folgetag eingetragen: Prüfung zählt trotzdem nur einmal", async (f) => {
+  const vorgestern = "2026-11-09", gestern = "2026-11-10";
+  await neu({
+    students: [schueler("S1", "Anna Muster")],
+    lessons: [les("P1", vorgestern, "09:00", "09:55", { art: "pruefung", sid: "S1" })],
+    exams: [{ id: "E1", sid: "S1", name: "Anna Muster", date: gestern, result: "pass", pruefer: "P" }],
+  });
+  const r = await ruf((a) => { const u = ueRange(a[0], a[1]); return { total: u.total, fcDone: u.fcDone }; }, [vorgestern, gestern]);
+  if (zahl(r.total) !== 2) f("ueRange().total = " + r.total + ", erwartet 2");
+  if (zahl(r.fcDone) !== 2) f("fcDone = " + r.fcDone + ", erwartet 2");
+});
+
+fall("2c Prüfung nur als Kalendertermin (Büro) zählt in die Prognose", async (f) => {
+  await neu({ students: [schueler("S1", "Anna Muster")], lessons: [les("P1", "2026-11-20", "09:00", "09:55", { art: "pruefung", sid: "S1" })] });
+  const r = await ruf((d) => ueRange(d, d).fcCounted, "2026-11-20");
+  if (zahl(r) !== 2) f("fcCounted = " + r + ", erwartet 2");
+});
+
 fall("3  Zwei Schüler, Prüfung am selben Tag = 4 UE", async (f) => {
   await neu({
     students: [schueler("S1", "Anna Muster"), schueler("S2", "Ben Beispiel")],

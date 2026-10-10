@@ -6779,7 +6779,7 @@ function ensure(s){ if(!s.plan) s.plan=newPlan(); if(!s.plan.sonder) s.plan.sond
 function seedHash(s){return JSON.stringify([s.name||"",s.form||"",s.beginn||"",s.next||"",s.nextDate||"",s.nextTime||"",s.notiz||"",s.profil||null,s.bogen||null,s.plan||null]);}
 const SEED=[];
 (function seedSync(){try{let changed=false;SEED.forEach(seed=>{const h=seedHash(seed);const i=DB.students.findIndex(x=>(x.name||"").trim()===(seed.name||"").trim());if(i<0){const c=JSON.parse(JSON.stringify(seed));c._seedHash=h;DB.students.push(c);changed=true;return;}const ex=DB.students[i];const exHash=seedHash(ex);const untouched=(ex._seedHash===undefined)||(ex._seedHash===exHash);if(untouched&&exHash!==h){const c=JSON.parse(JSON.stringify(seed));c._seedHash=h;c.id=ex.id;c.created=ex.created||c.created;DB.students[i]=c;changed=true;}else if(ex._seedHash===undefined&&exHash===h){ex._seedHash=h;changed=true;}});if(changed)save();}catch(e){}})();
-(function theoryWaitSync(){try{let ch=false;DB.students.forEach(s=>{ensure(s);const t=s.plan&&s.plan.theorie;if(t&&!s.theoryPassed){s.theoryPassed=s.created?new Date(s.created).toISOString():new Date().toISOString();if(s.theorieWait){s.theorieWaitBis=new Date().toISOString();delete s.theorieWait;}ch=true;}if(t&&stand(s)>=90&&!s.ready&&!s.passed&&!s.wartelisteRaus){s.ready=s.theoryPassed;ch=true;}});if(ch)save();}catch(e){}})();
+(function theoryWaitSync(){try{let ch=false;DB.students.forEach(s=>{ensure(s);const t=s.plan&&s.plan.theorie;if(t&&!s.theoryPassed){s.theoryPassed=s.created?new Date(s.created).toISOString():new Date().toISOString();if(s.theorieWait){s.theorieWaitBis=new Date().toISOString();delete s.theorieWait;}ch=true;}if(t&&stand(s)>=90&&!s.ready&&!s.passed&&!s.wartelisteRaus){s.ready=s.umschreiber?new Date().toISOString():s.theoryPassed;ch=true;}});if(ch)save();}catch(e){}})();
 
 
 
@@ -10694,7 +10694,7 @@ function openEventSheet(kind,id,sid){
   openSheet(`<div class="sheet-h">${st?esc(st.name):titelTermin}</div>
     <p class="muted-p" style="font-size:13.5px;margin:-4px 0 ${l.note?'8px':'16px'};">${isoDE(l.date)} · ${l.von}–${l.bis} · ${l.lektion?lektionTitel(l.lektion):artLab} ${statusInfo}</p>
     ${st?fristenHinweisHTML(st.id):""}
-    ${(()=>{ const ev=dayEvents(l.date).find(e=>e.kind==="lesson"&&e.id===l.id); return ev&&ev.doppelt?`<div class="es-note">⚠ Doppelt: Diese Prüfung steht schon auf der Prüfungstafel bzw. hat schon ein Ergebnis und zählt dort. Hier kannst du sie löschen.</div>`:""; })()}
+    ${(()=>{ const ev=dayEvents(l.date).find(e=>e.kind==="lesson"&&e.id===l.id); return ev&&ev.doppelt?`<div class="es-note">ℹ️ Doppelt: Diese Prüfung steht auch auf der Prüfungstafel bzw. hat schon ein Ergebnis. Sie zählt nur einmal (2 UE) – dieser Eintrag zählt nicht mit.</div>`:""; })()}
     ${l.note?`<div class="es-note">${esc(l.note)}</div>`:''}
     <div class="es-actions">
       ${(fcRelevant&&st&&l.date<=todayISO())?(()=>{
@@ -11612,7 +11612,7 @@ function calDayHTML(){
 function dayUE(iso,doneOnly){
   let ue=0;
   dayEvents(iso).forEach(e=>{
-    if(e.status==="abgebrochen"||e.doppelt)return;
+    if(e.status==="abgebrochen"||e.doppelt||e.b197)return; // Schaltkompetenz-Einträge sind keine Prüfung
     if(e.status==="nicht erschienen"){
       if(doneOnly){ if(e.noshow==="1")ue+=ueOf(e.art,e.von,e.bis,e.tatsaechlicheDauer)/2; else if(e.noshow==="2")ue+=ueOf(e.art,e.von,e.bis,e.tatsaechlicheDauer); }
       return;
@@ -11666,7 +11666,8 @@ function ueRange(fromISO,toISO){
       // Prüfungen immer voll. Fahrstunden NEU: Standard (kein fc-Vermerk) = voll bezahlt (Schüler bringt 2 FC).
       // Ausnahmen werden abgehakt: v1 = nur 1 FC (halbe UE), v2/geschenkt = 0.
       // nachgereicht = wieder voll, wird aber dem AKTUELLEN Monat gutgeschrieben (s.u., nicht hier).
-      if(e.kind==="pruefung"){ fcCounted+=ue; }
+      // Prüfung auf der Tafel oder als Kalendertermin (z.B. vom Büro): zählt voll. Doppelte sind oben schon raus.
+      if(e.kind==="pruefung"||(e.kind==="lesson"&&e.art==="pruefung")){ fcCounted+=ue; }
       else if(["fahrstunde","sonder","nacht"].indexOf(e.art)>=0){
         if(e.fc==="v1"||e.fc==="halb_bewusst")fcCounted+=ue/2;
         else if(e.fc==="v2"||e.fc==="geschenkt")fcCounted+=0;
@@ -11809,15 +11810,21 @@ function dayEvents(iso){
   // Prüfungstermine: jeder belegte Slot = ein 90-Min-Event (Default 09:00, falls keine Zeit).
   // NUR solange noch kein Ergebnis eingetragen ist – sonst zählt die Prüfung über exams.earnAt (s. ueRange).
   // Prüfungstermine: Block beginnt genau zur eingetragenen Prüfungszeit und dauert PRUEF_MIN (55) Minuten.
-  const doneOnDay=new Set((DB.exams||[]).filter(ex=>ex.date===iso).map(ex=>ex.sid));
+  const doneOnDay=new Set((DB.exams||[]).filter(ex=>ex.date===iso&&istPruefung(ex)).map(ex=>ex.sid));
   (DB.termine||[]).filter(t=>t.date===iso).forEach(t=>{ (t.slots||[]).forEach(sid=>{ if(sid&&!doneOnDay.has(sid)){ const st=DB.students.find(s=>s.id===sid); const rawVon=t.von||"09:00"; const blockVon=rawVon; const blockBis=min2hm(hm2min(rawVon)+PRUEF_MIN); ev.push({kind:"pruefung",id:t.id,von:blockVon,bis:blockBis,art:"pruefung",sid,name:st?st.name:"—",status:"geplant",pruefTime:rawVon,_fahrlehrerId:t._fahrlehrerId,_fahrlehrerName:t._fahrlehrerName}); } }); });
   // Erledigte Prüfungen (Ergebnis liegt vor): bleiben dauerhaft im Kalender als Erfolgs-/Misserfolgs-Marker.
-  (DB.exams||[]).filter(ex=>ex.date===iso).forEach(ex=>{ const rawVon=ex.von||"09:00"; const blockVon=rawVon; const blockBis=min2hm(hm2min(rawVon)+PRUEF_MIN); ev.push({kind:"examDone",id:ex.id,von:blockVon,bis:blockBis,art:"pruefung",sid:ex.sid,name:ex.name||"—",status:"erledigt",result:ex.result,pruefTime:rawVon,pruefer:ex.pruefer||"",_fahrlehrerId:ex._fahrlehrerId,_fahrlehrerName:ex._fahrlehrerName}); });
+  (DB.exams||[]).filter(ex=>ex.date===iso).forEach(ex=>{ const rawVon=ex.von||"09:00"; const blockVon=rawVon; const blockBis=min2hm(hm2min(rawVon)+PRUEF_MIN); ev.push({kind:"examDone",b197:!!ex.b197,id:ex.id,von:blockVon,bis:blockBis,art:"pruefung",sid:ex.sid,name:ex.name||"—",status:"erledigt",result:ex.result,pruefTime:rawVon,pruefer:ex.pruefer||"",_fahrlehrerId:ex._fahrlehrerId,_fahrlehrerName:ex._fahrlehrerName}); });
   // Dieselbe Prüfung kann doppelt im Kalender stehen: als Kalendertermin (z.B. vom Büro geplant) UND auf der
   // Prüfungstafel bzw. schon mit Ergebnis. Sie zählt nur einmal (2 UE): der Kalendertermin wird als "doppelt"
   // markiert, bleibt sichtbar (zum Löschen) und zählt nicht mit.
   const echtePruefung=new Set((DB.exams||[]).filter(ex=>ex.date===iso&&istPruefung(ex)).map(ex=>ex.id));
   const pruefSids=new Set(ev.filter(e=>(e.kind==="pruefung"||(e.kind==="examDone"&&echtePruefung.has(e.id)))&&e.sid).map(e=>e.sid));
+  // Ergebnis an einem anderen Tag eingetragen (bis 7 Tage nach dem Kalendertermin): dieselbe Prüfung.
+  const bis7=addDays(iso,7);
+  (DB.exams||[]).forEach(ex=>{ if(ex.sid&&istPruefung(ex)&&ex.date&&ex.date!==iso&&ex.date>=iso&&ex.date<=bis7)pruefSids.add(ex.sid); });
+  // Auf der Prüfungstafel an einem nahen Tag (±7 Tage) eingetragen: ebenfalls dieselbe Prüfung.
+  const ab7=addDays(iso,-7);
+  (DB.termine||[]).forEach(t=>{ if(t.date&&t.date!==iso&&t.date>=ab7&&t.date<=bis7)(t.slots||[]).forEach(sid=>{ if(sid)pruefSids.add(sid); }); });
   const gesehen=new Set();
   ev.forEach(e=>{
     if(e.kind!=="lesson"||e.art!=="pruefung"||!e.sid||e.status==="abgebrochen")return;
@@ -12489,7 +12496,12 @@ function pruefungsTerminFuer(sid){
   const vergangen=(DB.termine||[])
     .filter(t=>Array.isArray(t.slots)&&t.slots.indexOf(sid)>=0&&t.date<heute)
     .sort((a,b)=>(b.date||"").localeCompare(a.date||""));
-  return vergangen[0]||null;
+  if(vergangen[0])return vergangen[0];
+  // Keine Tafel: Prüfung als Kalendertermin (z.B. vom Büro geplant) - zuletzt vergangener, sonst nächster.
+  const kal=(DB.lessons||[]).filter(l=>l.sid===sid&&l.art==="pruefung"&&l.status!=="abgebrochen"&&l.date);
+  const kalVorbei=kal.filter(l=>l.date<=heute).sort((a,b)=>b.date.localeCompare(a.date))[0];
+  const kalKommend=kal.filter(l=>l.date>heute).sort((a,b)=>a.date.localeCompare(b.date))[0];
+  const k=kalVorbei||kalKommend; return k?{date:k.date,von:k.von}:null;
 }
 // Bestandene Schüler: Bestehens-Daten pflegen. Legt NIE einen neuen Prüfungseintrag an
 // (sonst würde eine alte Prüfung nochmal mit 46 € gezählt). Vorhandener Eintrag wird bearbeitet.
