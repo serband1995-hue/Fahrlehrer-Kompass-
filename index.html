@@ -3256,7 +3256,7 @@ function _lokalerDatenEigentuemer() {
 // Entfernt alle personenbezogenen App-Daten vom Gerät (nicht die App-Version und Geräte-Einstellungen).
 function _lokaleNutzerdatenLoeschen() {
   ["serband-app-v1", "serband-sync-stamp", "serband-restore-stamp", "serband-session-cache", "serband-backup-stamp",
-   "serband-weather-cache", "serband-weather-forecast-cache", "serband-abgleich-v1", "serband-db-defekt", "serband-vor-import", OWNER_KEY].forEach(k => {
+   "serband-weather-cache", "serband-weather-forecast-cache", "serband-abgleich-v1", "serband-db-defekt", "serband-vor-import", "serband-snapbasis-v1", OWNER_KEY].forEach(k => {
     try { localStorage.removeItem(k); } catch (e) {}
   });
   try { sessionStorage.removeItem("vd_unlocked"); } catch (e) {}
@@ -3497,7 +3497,10 @@ async function _continueLoginFlow(prof) {
   document.getElementById("loginOverlay").classList.add("hidden");
   updateBell();
   // Periodischer Sync alle 2 Minuten
-  _syncTimer = setInterval(async () => { if (!_pullOk) await pullFromCloud(); pushToCloud(); }, 120000);
+  // Jede Minute: kurz prüfen, ob ein anderes Gerät gespeichert hat (dann zusammenführen), und eigene Änderungen sichern.
+  // Alle 10 Minuten zusätzlich ohne "geändert"-Merker prüfen - falls irgendwo ohne save() geändert wurde.
+  let _syncTakt = 0;
+  _syncTimer = setInterval(async () => { if (!_pullOk) await pullFromCloud(); if (++_syncTakt % 10 === 0) _snapGeaendert = true; pushToCloud(); }, 60000);
   // Online-Buchungen alle 60 Sekunden neu abholen (schnellere Rückmeldung als der reguläre Sync)
   setInterval(() => pullPublicBookings(), 60000);
   setInterval(() => pullSchuelerZuweisungen(), 60000);
@@ -3580,6 +3583,7 @@ async function pullFromCloud() {
   try {
     const supa = getSupa();
     const { data, error } = await supa.from("snapshots").select("data, updated_at").eq("user_id", _authUser.id).single();
+    if (_fsAgg) return; // inzwischen in der Gesamtansicht: DB nicht anfassen, der nächste Lauf holt es nach
     if (error && error.code !== "PGRST116") throw error; // PGRST116 = noch kein Snapshot (neuer Nutzer) -> ok
     if (data && data.data) {
       const cloudUpdated = new Date(data.updated_at).getTime();
@@ -3588,8 +3592,14 @@ async function pullFromCloud() {
       const d = data.data;
       _cloudHatteDaten = !!((d.students && d.students.length) || (d.lessons && d.lessons.length));
       const lokalLeer = !(DB.students && DB.students.length) && !(DB.lessons && DB.lessons.length);
-      if (cloudUpdated > localStamp || _lokalDefekt || (lokalLeer && _cloudHatteDaten)) {
-        // Cloud ist neuer → lokal überschreiben
+      const basis = _snapBasisLaden();
+      if (!_lokalDefekt && !lokalLeer && basis && basis.roh !== data.updated_at) {
+        // Ein anderes Gerät hat gespeichert: zusammenführen statt ersetzen - so gehen Änderungen dieses
+        // Geräts (z.B. offline gemacht) nicht verloren. Ohne gemeinsamen Stand gilt bei Unterschieden die Cloud.
+        await _snapHolenUndZusammenfuehren(supa, "cloud", data);
+        if (_cloudHatteDaten) _sitzungHatteDaten = true;
+      } else if (_lokalDefekt || (lokalLeer && _cloudHatteDaten) || (!basis && cloudUpdated > localStamp)) {
+        // Gerät defekt oder leer → Cloud-Stand übernehmen
         const cloudDB = data.data;
         DB = cloudDB;
         // Das Abgleich-Gedächtnis beschreibt den alten Gerätestand - mit dem Cloud-Stand passt es nicht mehr.
@@ -3599,6 +3609,7 @@ async function pullFromCloud() {
         _termineAbgerufen = false; _schuelerAbgerufen = false;
         localStorage.setItem(STORE_KEY, JSON.stringify(DB));
         localStorage.setItem("serband-sync-stamp", cloudUpdated + "");
+        _snapBasisSetzen(DB, data.updated_at);
         console.log("[Kompass] Cloud-Daten geladen (" + new Date(cloudUpdated).toLocaleString("de") + ")");
         if (_cloudHatteDaten) _sitzungHatteDaten = true;
         if (_lokalDefekt) { _lokalDefekt = false; if (_cloudHatteDaten) try { localStorage.removeItem("serband-db-defekt"); } catch (e) {} toast("Speicher war defekt – Cloud-Stand geladen"); }
@@ -3733,8 +3744,258 @@ async function _upsertRobust(tabelle, rows, konflikt) {
   }
   return ok;
 }
+/* ===== Zwei Geräte (Handy + Tablet): Zusammenführen statt Überschreiben =====
+   Das Gerät merkt sich den zuletzt mit der Cloud gemeinsamen Stand als Prüfwerte ("Basis"):
+   je Eintrag (Schüler, Termin, Prüfung, …) und je sonstigem Feld (Einstellungen, Verdienst, …).
+   Hat ein anderes Gerät inzwischen gespeichert, wird je Eintrag entschieden:
+   nur hier geändert → hier gilt; nur dort geändert → dort gilt; beide → dieses Gerät gilt;
+   hier gelöscht und dort unverändert → bleibt gelöscht (und umgekehrt); neu auf einer Seite → kommt dazu. */
+const _BASIS_KEY = "serband-snapbasis-v1";
+function _snapBasisLaden() {
+  try { const o = JSON.parse(localStorage.getItem(_BASIS_KEY) || "null"); if (o && _authUser && o.user === _authUser.id) return o; } catch (e) {}
+  return null;
+}
+// Prüfwert ohne Merker, die nur auf einem Gerät gelten (_syncedAt).
+function _snapWert(x) { return _abglWert(x === undefined ? null : JSON.parse(JSON.stringify(x, (k, v) => k === "_syncedAt" ? undefined : v))); }
+function _istEintragsListe(v) { return Array.isArray(v) && v.every(e => e && typeof e === "object" && !Array.isArray(e) && (typeof e.id === "string" || typeof e.id === "number")); }
+function _istMenge(v) { return Array.isArray(v) && v.every(e => typeof e === "string" || typeof e === "number"); }
+function _istObjekt(v) { return v && typeof v === "object" && !Array.isArray(v); }
+// Prüfwert-Baum: bei Objekten zusätzlich je Feld (bis "tiefe" Ebenen), damit zwei Geräte verschiedene Felder
+// desselben Schülers oder derselben Einstellung ändern können, ohne dass eines verloren geht.
+function _snapBaum(x, tiefe) {
+  if (tiefe > 0 && _istObjekt(x)) { const k = {}; Object.keys(x).forEach(n => { if (n !== "_syncedAt") k[n] = _snapBaum(x[n], tiefe - 1); }); return { h: _snapWert(x), k }; }
+  return _snapWert(x);
+}
+function _baumH(b) { return b === undefined ? undefined : (typeof b === "string" ? b : b.h); }
+// Drei-Wege-Zusammenführung eines Werts. b = Prüfwert-Baum des gemeinsamen Stands (oder undefined).
+function _snapDrei(l, c, b, tiefe, cloudVor) {
+  const hl = _snapWert(l), hc = _snapWert(c), hb = _baumH(b);
+  if (hl === hc) return { wert: l, cloud: false };
+  if (hb !== undefined && hl === hb) return { wert: c, cloud: true };
+  if (hb !== undefined && hc === hb) return { wert: l, cloud: false };
+  // Beide haben geändert: bei Objekten Feld für Feld weiter, sonst gilt dieses Gerät (ohne gemeinsamen Stand: Vorrang).
+  if (tiefe > 0 && _istObjekt(l) && _istObjekt(c) && b && typeof b === "object") {
+    const out = {}; let cloud = false;
+    new Set([...Object.keys(l), ...Object.keys(c)]).forEach(n => {
+      if (n === "_syncedAt") { if (l[n] !== undefined) out[n] = l[n]; return; }
+      // Feld gab es im gemeinsamen Stand nicht: als "war leer" werten (sonst ginge ein neu angelegtes Feld verloren).
+      const r = _snapDrei(l[n], c[n], (b.k && n in b.k) ? b.k[n] : _snapWert(undefined), tiefe - 1, cloudVor);
+      if (r.cloud) cloud = true;
+      if (r.wert !== undefined) out[n] = r.wert;
+    });
+    return { wert: out, cloud };
+  }
+  if (_istMenge(l) && _istMenge(c)) {
+    // Listen aus Texten (Prüfer, Orte): beide Ergänzungen behalten, nichts streichen.
+    const m = l.slice(); c.forEach(x => { if (!m.includes(x)) m.push(x); });
+    return { wert: m, cloud: m.length !== l.length };
+  }
+  return cloudVor ? { wert: c, cloud: true } : { wert: l, cloud: false };
+}
+const _SNAP_TIEFE_EINTRAG = { students: 3 }; // Schüler: Feld → plan → ampeln
+function _snapBasisBauen(daten, roh) {
+  const b = { user: _authUser.id, roh: roh || null, listen: {}, felder: {}, mengen: {} };
+  Object.keys(daten || {}).forEach(k => {
+    const v = daten[k];
+    if (_istEintragsListe(v) && v.length) { const t = _SNAP_TIEFE_EINTRAG[k] || 0; const m = {}; v.forEach(e => { m[e.id] = _snapBaum(e, t); }); b.listen[k] = m; }
+    else { b.felder[k] = _snapBaum(v, 2); if (_istMenge(v)) b.mengen[k] = v.slice(); }
+  });
+  // Gesamt-Prüfwert unabhängig von der Reihenfolge der Einträge (zwei Geräte ordnen nach dem Zusammenführen verschieden).
+  const hl = {}; Object.keys(b.listen).forEach(k => { hl[k] = {}; Object.keys(b.listen[k]).forEach(id => { hl[k][id] = _baumH(b.listen[k][id]); }); });
+  const hf = {}; Object.keys(b.felder).forEach(k => { hf[k] = _baumH(b.felder[k]); });
+  b.gesamt = _abglWert({ l: hl, f: hf });
+  return b;
+}
+function _snapGesamt(daten) { return _snapBasisBauen(daten, null).gesamt; }
+function _snapBasisSetzen(daten, roh) { try { localStorage.setItem(_BASIS_KEY, JSON.stringify(_snapBasisBauen(daten, roh))); } catch (e) {} }
+// Ersetzt den Inhalt eines Objekts, ohne die Referenz zu ändern (offene Ansichten halten sie fest).
+function _ersetzeInhalt(ziel, quelle) { Object.keys(ziel).forEach(k => { if (!(k in quelle)) delete ziel[k]; }); Object.assign(ziel, quelle); }
+/* Führt den Cloud-Stand C in den Gerätestand L (= DB, wird an Ort und Stelle geändert) zusammen.
+   basis darf null sein (erster Start): dann geht nichts verloren - alles von beiden Seiten bleibt,
+   bei Unterschieden gilt "vorrang" ("lokal" oder "cloud"). Liefert {vonCloud: Anzahl übernommener Änderungen, ids: {liste:[ids]}}. */
+function _snapZusammenfuehren(L, C, basis, vorrang) {
+  const cloudVor = !basis && vorrang === "cloud";
+  const B = basis || { listen: {}, felder: {}, mengen: {} };
+  let vonCloud = 0; const ids = {};
+  // Alte Einträge ohne id (z.B. aus frühen Versionen) bekämen sonst die ganze Liste als ein Feld behandelt:
+  // sie erhalten eine feste id aus ihrem Inhalt - auf beiden Geräten dieselbe.
+  ["students", "lessons", "exams", "termine"].forEach(k => [L[k], C[k]].forEach(arr => {
+    if (Array.isArray(arr)) arr.forEach(e => { if (e && typeof e === "object" && !Array.isArray(e) && e.id == null) e.id = "auto_" + _snapWert(e).replace(/\W/g, ""); });
+  }));
+  const schluessel = new Set([...Object.keys(L), ...Object.keys(C)]);
+  schluessel.forEach(k => {
+    const lv = L[k], cv = C[k];
+    const liste = (_istEintragsListe(lv) || lv === undefined) && (_istEintragsListe(cv) || cv === undefined) && (Array.isArray(lv) || Array.isArray(cv))
+      && !((lv === undefined || (Array.isArray(lv) && !lv.length)) && (cv === undefined || (Array.isArray(cv) && !cv.length)));
+    if (!liste) {
+      if (_snapWert(lv) === _snapWert(cv)) return;
+      // Listen aus Texten mit gemeinsamem Stand: Ergänzungen beider Seiten behalten, Streichungen beider Seiten anwenden.
+      const bm = B.mengen && B.mengen[k];
+      if (Array.isArray(bm) && (_istMenge(lv) || lv === undefined) && (_istMenge(cv) || cv === undefined)) {
+        const la = lv || [], ca = cv || [];
+        const erg = la.filter(x => ca.includes(x) || !bm.includes(x));
+        ca.forEach(x => { if (!erg.includes(x) && !bm.includes(x)) erg.push(x); });
+        if (_snapWert(erg) !== _snapWert(la)) { L[k] = erg; vonCloud++; }
+        return;
+      }
+      if (lv === undefined && B.felder[k] === undefined) { L[k] = JSON.parse(JSON.stringify(cv)); vonCloud++; return; }
+      const r = _snapDrei(lv, cv, B.felder[k], 2, cloudVor);
+      if (r.cloud) {
+        if (r.wert === undefined) delete L[k]; else L[k] = JSON.parse(JSON.stringify(r.wert));
+        vonCloud++;
+      }
+      return;
+    }
+    const lArr = Array.isArray(lv) ? lv : [], cArr = Array.isArray(cv) ? cv : [];
+    const bm = B.listen[k] || {};
+    const tiefe = _SNAP_TIEFE_EINTRAG[k] || 0;
+    const cById = new Map(cArr.map(e => [String(e.id), e]));
+    const lIds = new Set(lArr.map(e => String(e.id)));
+    const neu = []; ids[k] = [];
+    lArr.forEach(e => {
+      const id = String(e.id), c = cById.get(id), wb = _baumH(bm[id]), wl = _snapWert(e);
+      if (!c) {
+        // Dort gelöscht: hier unverändert → auch hier weg. Hier geändert oder nie abgeglichen → bleibt.
+        if (wb !== undefined && wl === wb) { vonCloud++; ids[k].push(id); return; }
+        neu.push(e); return;
+      }
+      const r = _snapDrei(e, c, bm[id], tiefe, cloudVor);
+      if (r.cloud) {
+        // Cloud-Stand (ganz oder teilweise) übernehmen, Merker _syncedAt dieses Geräts behalten.
+        const syn = e._syncedAt; _ersetzeInhalt(e, JSON.parse(JSON.stringify(r.wert)));
+        if (syn !== undefined) e._syncedAt = syn; else delete e._syncedAt;
+        // Nur ganz aus der Cloud übernommene Einträge gelten im Büro-Abgleich als "nicht selbst geändert";
+        // gemischte enthalten eigene Änderungen, die die Brücke noch hochladen muss.
+        vonCloud++; if (_snapWert(e) === _snapWert(c)) ids[k].push(id);
+      }
+      neu.push(e);
+    });
+    cArr.forEach(c => {
+      const id = String(c.id); if (lIds.has(id)) return;
+      const wb = _baumH(bm[id]);
+      // Hier gelöscht und dort unverändert → bleibt gelöscht. Sonst (neu oder dort geändert) → dazu.
+      if (wb !== undefined && _snapWert(c) === wb) return;
+      const kopie = JSON.parse(JSON.stringify(c)); delete kopie._syncedAt;
+      neu.push(kopie); vonCloud++; ids[k].push(id);
+    });
+    if (Array.isArray(lv)) { lv.length = 0; neu.forEach(e => lv.push(e)); } else L[k] = neu;
+  });
+  return { vonCloud, ids };
+}
+// Nach dem Zusammenführen: Für Einträge, die aus der Cloud kamen, gilt der Stand als "nicht selbst geändert" -
+// so übernimmt der nächste Büro-Abruf neuere Büro-Änderungen, statt sie zu überschreiben.
+function _abglNachZusammenfuehren(ids) {
+  if (!_authUser) return;
+  const mem = _abglLaden();
+  const paare = [["students", "schueler"], ["lessons", "termine"], ["exams", "pruefungen"]];
+  paare.forEach(([k, art]) => {
+    (ids[k] || []).forEach(id => {
+      const e = (DB[k] || []).find(x => String(x.id) === id);
+      if (e) { if (_authProfile && _authProfile.fahrschule_id) mem[art][e.id] = _abglWertVon(art, e); }
+      else delete mem[art][id];
+    });
+  });
+  _abglSpeichern(mem);
+}
+// Zeigt die aktuelle Ansicht neu, wenn gerade nichts bearbeitet wird (kein offenes Fenster, kein Eingabefeld).
+function _ansichtNeuZeigen() {
+  try {
+    const sh = document.getElementById("sheet");
+    if (sh && sh.classList.contains("open")) return;
+    const a = document.activeElement;
+    if (a && /^(INPUT|TEXTAREA|SELECT)$/.test(a.tagName)) return;
+    const dr = document.getElementById("drawer");
+    if ((dr && dr.classList.contains("open")) || (typeof _calDragActive !== "undefined" && _calDragActive)) return;
+    const letzte = _navStack[_navStack.length - 1];
+    // Nur reine Anzeigeseiten neu zeigen - Seiten mit halb ausgefüllten Eingaben (z.B. Prüfung eintragen) nie.
+    if (!letzte || !["routeDashboard", "routeHome", "routeKalender", "routeDetail", "routePlan"].includes(letzte.name)) return;
+    const y = view.scrollTop;
+    _navFahrt = true; try { letzte.fn.apply(null, letzte.args); } finally { _navFahrt = false; }
+    view.scrollTop = y;
+  } catch (e) {}
+}
+// Holt den Cloud-Stand (oder nimmt den schon gelesenen) und führt ihn mit DB zusammen.
+// Liefert den Server-Zeitstempel (Text) oder wirft.
+async function _snapHolenUndZusammenfuehren(supa, vorrang, schonGelesen, gen) {
+  let data = schonGelesen;
+  if (!data) {
+    const r = await supa.from("snapshots").select("data, updated_at").eq("user_id", _authUser.id).single();
+    if (r.error) throw r.error;
+    data = r.data;
+  }
+  // Während des Wartens in die Gesamtansicht gewechselt (DB = Bestand aller Fahrlehrer) oder Lauf veraltet: nichts anfassen.
+  if (_fsAgg) throw new Error("Gesamtansicht");
+  if (gen !== undefined && gen !== _pushGen) throw new Error("veraltet");
+  if (!data || !data.data) return data ? data.updated_at : null;
+  const basis = _snapBasisLaden();
+  const erg = _snapZusammenfuehren(DB, data.data, basis, vorrang);
+  ensureDB();
+  let lokalOk = true;
+  try { localStorage.setItem(STORE_KEY, JSON.stringify(DB)); } catch (e) { lokalOk = false; }
+  if (lokalOk) _snapBasisSetzen(data.data, data.updated_at); else try { localStorage.removeItem(_BASIS_KEY); } catch (e) {}
+  const t = new Date(data.updated_at).getTime();
+  if (isFinite(t)) localStorage.setItem("serband-sync-stamp", t + "");
+  _abglNachZusammenfuehren(erg.ids);
+  if (erg.vonCloud) {
+    _cloudHatteDaten = true; _sitzungHatteDaten = true;
+    toast("🔄 Änderungen vom anderen Gerät übernommen");
+    _ansichtNeuZeigen();
+    // Neue/geänderte Einträge auch an die Fahrschul-Tabellen geben (die Brücken senden nur Abweichungen).
+    if (_authProfile && _authProfile.fahrschule_id) { _syncSchuelerBridge(); _syncTermineBridge(); _syncPruefungenBridge(); }
+  }
+  return data.updated_at;
+}
+// Übernimmt den Cloud-Stand ganz (Gerät defekt/leer oder ohne gemeinsamen Stand und älter als die Cloud).
+function _snapErsetzeDurch(data) {
+  DB = data.data;
+  ensureDB();
+  // Das Abgleich-Gedächtnis beschreibt den alten Gerätestand - mit dem Cloud-Stand passt es nicht mehr.
+  // Leeren: dann gewinnt beim nächsten Abruf der Stand vom Büro, und es wird nichts aufgrund alter
+  // Einträge gelöscht. (Unbekanntes wird nie gelöscht.)
+  _abglSpeichern({ user: _authUser.id, schueler: {}, termine: {}, pruefungen: {} });
+  _termineAbgerufen = false; _schuelerAbgerufen = false;
+  let lokalOk = true;
+  try { localStorage.setItem(STORE_KEY, JSON.stringify(DB)); } catch (e) { lokalOk = false; }
+  const t = new Date(data.updated_at).getTime();
+  if (isFinite(t)) localStorage.setItem("serband-sync-stamp", t + "");
+  if (lokalOk) _snapBasisSetzen(DB, data.updated_at);
+  const d = DB; _cloudHatteDaten = !!((d.students && d.students.length) || (d.lessons && d.lessons.length));
+  if (_cloudHatteDaten) _sitzungHatteDaten = true;
+}
+let _pushLaeuft = null, _pushNochmal = false, _pushGen = 0;
+var _snapGeaendert = true; // seit dem letzten Hochladen gespeichert? (spart das Rechnen der Prüfwerte, wenn nicht)
 // Liefert true, wenn der Stand gesichert ist (oder es nichts zu sichern gibt), sonst false.
+// Läuft schon ein Hochladen, wird danach genau einmal erneut hochgeladen.
 async function pushToCloud() {
+  if (_pushLaeuft) { _pushNochmal = true; return _pushLaeuft; }
+  // Zeitlimit: Hängt eine Anfrage (schlechtes Netz), wird die Sperre nach 25 s freigegeben -
+  // sonst würde nie wieder gesichert und Abmelden hinge.
+  // Jeder Lauf bekommt eine Nummer: ein Lauf, der nach dem Zeitlimit doch noch weiterläuft, fasst nichts mehr an.
+  const mitZeitlimit = () => { const gen = ++_pushGen; return Promise.race([_pushToCloudJetzt(gen).then(ok => { if (!ok) _snapGeaendert = true; return ok; }), new Promise(ok => setTimeout(() => { console.warn("[Kompass] Push: Zeitlimit"); _snapGeaendert = true; ok(false); }, 25000))]); };
+  _pushLaeuft = (async () => {
+    let ok = false, runden = 0;
+    do { _pushNochmal = false; ok = await mitZeitlimit(); } while (_pushNochmal && ++runden < 3);
+    return ok;
+  })();
+  try { return await _pushLaeuft; } finally { _pushLaeuft = null; }
+}
+// Nach erfolgreichem Schreiben: gemeinsamen Stand und Zeitstempel merken.
+function _pushFertig(d, gespeichert) {
+  // Gemeinsamen Stand nur merken, wenn der Gerätespeicher aktuell ist - sonst hielte das Gerät nach einem
+  // Neustart seinen alten gespeicherten Stand für "hier geändert" und überschriebe die Cloud.
+  let lokalOk = true;
+  // In der Gesamtansicht ist d der eigene Stand (DB enthält dort alle Fahrlehrer).
+  try { localStorage.setItem(STORE_KEY, JSON.stringify(_fsAgg ? d : DB)); } catch (e) { lokalOk = false; }
+  if (lokalOk) _snapBasisSetzen(d, gespeichert); else try { localStorage.removeItem(_BASIS_KEY); } catch (e) {}
+  _cloudHatteDaten = !(!(d.students && d.students.length) && !(d.lessons && d.lessons.length));
+  const serverStamp = gespeichert ? new Date(gespeichert).getTime() : NaN;
+  localStorage.setItem("serband-sync-stamp", (isFinite(serverStamp) ? serverStamp : Date.now()) + "");
+  // Sync-Status im Admin-Panel aktualisieren
+  const el = document.getElementById("apSyncStatus");
+  if (el) el.textContent = new Date().toLocaleTimeString("de");
+  return true;
+}
+async function _pushToCloudJetzt(gen) {
   if (!_authUser) return false;
   // Büro und Fahrschul-Admin arbeiten nur auf den Fahrschul-Tabellen, einen persönlichen Snapshot gibt es nicht.
   if (_authProfile && (_authProfile.rolle === "buero" || _authProfile.rolle === "fahrschule_admin")) return true;
@@ -3747,24 +4008,90 @@ async function pushToCloud() {
   if (!leer) _sitzungHatteDaten = true;
   // Wer bewusst alles gelöscht hat, hatte vorher Daten - das darf hoch. Gesperrt ist nur ein Gerät, das leer startete.
   if (leer && !_sitzungHatteDaten && (_cloudHatteDaten || _lokalDefekt)) { console.warn("[Kompass] Push übersprungen: leerer Stand, Cloud hat Daten."); return false; }
+  const geaendert = _snapGeaendert; _snapGeaendert = false;
+  const veraltet = () => gen !== undefined && gen !== _pushGen;
   try {
     const supa = getSupa();
-    const now = new Date().toISOString();
-    // updated_at setzt der Server selbst (Trigger trg_snapshots_server_zeit). Wir merken uns genau diese
-    // Server-Zeit, damit die Geräte-Uhr beim Vergleich "wer ist neuer" keine Rolle mehr spielt.
-    const { data: saved, error } = await supa.from("snapshots").upsert({
-      user_id: _authUser.id,
-      data: daten,
-      updated_at: now
-    }, { onConflict: "user_id" }).select("updated_at").single();
-    if (error) { console.warn("[Kompass] Push fehlgeschlagen:", error.message); return false; }
-    _cloudHatteDaten = !leer;
-    const serverStamp = saved && saved.updated_at ? new Date(saved.updated_at).getTime() : NaN;
-    localStorage.setItem("serband-sync-stamp", (isFinite(serverStamp) ? serverStamp : Date.now()) + "");
-    // Sync-Status im Admin-Panel aktualisieren
-    const el = document.getElementById("apSyncStatus");
-    if (el) el.textContent = new Date().toLocaleTimeString("de");
-    return true;
+    // Schneller Weg (eine Anfrage): Hat sich hier etwas geändert und kennt das Gerät den gemeinsamen Stand,
+    // gleich bedingt schreiben. Trifft das nichts, hat ein anderes Gerät gespeichert → normaler Weg.
+    {
+      // Kopie: Eingaben während des Hochladens dürfen nicht als "schon in der Cloud" gelten.
+      const basis0 = _snapBasisLaden(); const p0 = _persoenlicheDaten(); const d0 = p0 && JSON.parse(JSON.stringify(p0));
+      if (geaendert && basis0 && basis0.roh && d0 && _snapGesamt(d0) !== basis0.gesamt) {
+        const { data: rows0, error: e0 } = await supa.from("snapshots").update({ data: d0, updated_at: new Date().toISOString() }).eq("user_id", _authUser.id).eq("updated_at", basis0.roh).select("updated_at");
+        if (veraltet()) return false;
+        if (!e0 && rows0 && rows0.length) return _pushFertig(d0, rows0[0].updated_at);
+      }
+    }
+    // Bis zu 3 Runden: Schreibt ein anderes Gerät genau zwischen Prüfen und Schreiben, wird neu zusammengeführt.
+    for (let runde = 0; runde < 3; runde++) {
+      const { data: kopf, error: kErr } = await supa.from("snapshots").select("updated_at").eq("user_id", _authUser.id).maybeSingle();
+      if (veraltet()) return false;
+      if (kErr) throw kErr;
+      let basis = _snapBasisLaden();
+      let roh = kopf ? kopf.updated_at : null;
+      let zusammengefuehrt = false;
+      if (kopf && !basis) {
+        // Kein gemeinsamer Stand bekannt (erster Start nach dem Update, voller Speicher): wie früher gilt der
+        // neuere Stand ganz - ein Vereinigen holte sonst längst gelöschte Einträge zurück.
+        if (_fsAgg) return false;
+        const tLok = parseInt(localStorage.getItem("serband-sync-stamp") || "0"), tCloud = new Date(roh).getTime();
+        if (tCloud > tLok) {
+          const r = await supa.from("snapshots").select("data, updated_at").eq("user_id", _authUser.id).single();
+          if (veraltet()) return false;
+          if (r.error) throw r.error;
+          if (_fsAgg) return false;
+          // Speicher voll: hier können ungesicherte Änderungen liegen - dann zusammenführen statt ersetzen.
+          if (_speicherVollGemeldet) { await _snapHolenUndZusammenfuehren(supa, "cloud", r.data, gen); continue; }
+          if (r.data && r.data.data) { _snapErsetzeDurch(r.data); toast("🔄 Stand vom anderen Gerät geladen"); _ansichtNeuZeigen(); }
+          continue;
+        }
+      } else if (kopf && basis.roh !== roh) {
+        // Ein anderes Gerät hat inzwischen gespeichert (oder dieses Gerät kennt den gemeinsamen Stand nicht):
+        // erst zusammenführen, nie blind überschreiben. In der Gesamtansicht steht in DB der Bestand aller
+        // Fahrlehrer - dort wird nicht zusammengeführt, sondern nach dem Verlassen.
+        if (_fsAgg) { console.warn("[Kompass] Push verschoben: anderes Gerät hat gespeichert, Zusammenführen nach der Gesamtansicht."); return false; }
+        roh = await _snapHolenUndZusammenfuehren(supa, "lokal", null, gen);
+        basis = _snapBasisLaden();
+        zusammengefuehrt = true;
+      }
+      const p1 = _persoenlicheDaten();
+      if (!p1) return false;
+      const d = JSON.parse(JSON.stringify(p1));
+      // Nichts Neues gegenüber dem gemeinsamen Stand: nichts schreiben.
+      // Nichts gespeichert und nichts zusammengeführt: ohne Rechnen fertig (spart jede Minute Rechenzeit).
+      if (!geaendert && !zusammengefuehrt && kopf && basis && basis.roh === roh) return true;
+      const dWert = _snapGesamt(d);
+      if (kopf && basis && basis.roh === roh && dWert === basis.gesamt) { _cloudHatteDaten = !leer; return true; }
+      // updated_at setzt der Server selbst (Trigger trg_snapshots_server_zeit). Wir merken uns genau diese
+      // Server-Zeit, damit die Geräte-Uhr beim Vergleich "wer ist neuer" keine Rolle spielt.
+      const now = new Date().toISOString();
+      let gespeichert = null;
+      if (kopf) {
+        // Nur schreiben, wenn seit dem Prüfen niemand anderes geschrieben hat.
+        const { data: rows, error } = await supa.from("snapshots").update({ data: d, updated_at: now }).eq("user_id", _authUser.id).eq("updated_at", roh).select("updated_at");
+        if (veraltet()) return false;
+        if (error) throw error;
+        if (rows && rows.length) gespeichert = rows[0].updated_at;
+        else {
+          const { data: k2, error: e2 } = await supa.from("snapshots").select("updated_at").eq("user_id", _authUser.id).maybeSingle();
+          if (veraltet()) return false;
+          if (e2) throw e2;
+          if (k2 && k2.updated_at !== roh) continue; // anderes Gerät war schneller: neu zusammenführen
+          // Sonst passt nur der Zeitvergleich nicht (Format) - dann normal schreiben wie bisher.
+        }
+      }
+      if (!gespeichert) {
+        if (veraltet()) return false;
+        const { data: saved, error } = await supa.from("snapshots").upsert({ user_id: _authUser.id, data: d, updated_at: now }, { onConflict: "user_id" }).select("updated_at").single();
+        if (veraltet()) return false;
+        if (error) { console.warn("[Kompass] Push fehlgeschlagen:", error.message); return false; }
+        gespeichert = saved && saved.updated_at;
+      }
+      return _pushFertig(d, gespeichert);
+    }
+    console.warn("[Kompass] Push: nach 3 Runden noch Konflikt - nächster Versuch beim nächsten Speichern.");
+    return false;
   } catch(e) { console.warn("[Kompass] Push fehlgeschlagen:", e.message); return false; }
 }
 
@@ -4182,6 +4509,9 @@ async function doLogout(opts) {
     try { ok = await _fsSyncAggJetzt(); } catch (e) {}
     if (!ok && !confirm("Deine letzten Änderungen in der Fahrschul-Ansicht konnten nicht gespeichert werden (keine Verbindung?).\n\nBeim Abmelden gehen sie verloren. Trotzdem abmelden?")) return false;
   }
+  // Super-Admin in der Gesamtansicht: erst zur eigenen Ansicht zurück, damit der eigene Stand zusammengeführt
+  // und gesichert werden kann (in der Gesamtansicht wird nicht zusammengeführt).
+  if (_fsAgg && _fsPersonalBackup) { await _fsExitAggModeJetzt(); }
   // Letzten Stand sichern. Beim Abmelden werden alle Daten dieses Kontos vom Gerät gelöscht, damit
   // die nächste Person nichts davon sieht - klappt das Sichern nicht, wird vorher gewarnt.
   let gesichert = false;
@@ -4550,6 +4880,8 @@ async function _fsExitAggModeJetzt(){
   document.getElementById("fsCalTiles")?.remove();
   _fsSetDrawer(false);
   routeDashboard();
+  // Was in der Gesamtansicht verschoben wurde (Zusammenführen mit dem anderen Gerät), jetzt nachholen.
+  if(_authUser&&_pullOk) pushToCloud();
 }
 async function _fsRefreshAggData(){
   if(!_fsAgg)return;
@@ -6094,7 +6426,7 @@ window.addEventListener("load", () => {
 const STORE_KEY="serband-app-v1";
 /* Build-Version: bei jeder Auslieferung hier das Datum aktualisieren.
    Wird in den Einstellungen angezeigt + für den Update-Hinweis genutzt. */
-const APP_VERSION="2026.10.10.1";
+const APP_VERSION="2026.10.10.2";
 // Nutzungsbedingungen & Haftungsausschluss (Bereich: rechtliche Absicherung) - Version hochzählen
 // und alle Nutzer müssen erneut zustimmen, sobald sich der Text inhaltlich ändert.
 const AGB_VERSION="1.0";
@@ -6159,6 +6491,7 @@ function load(){
 let DB=load();
 if((DB.students&&DB.students.length)||(DB.lessons&&DB.lessons.length)) _sitzungHatteDaten=true;
 function save(){
+  _snapGeaendert=true;
   if(_fsAgg){ _fsSyncAggChanges(); return; }
   if((DB.students&&DB.students.length)||(DB.lessons&&DB.lessons.length)) _sitzungHatteDaten=true;
   if(_lokalerSpeicherGehoertAnderem()){ location.reload(); return; } // anderer Tab hat anderes Konto angemeldet
@@ -6366,6 +6699,8 @@ let _saveSyncDebounce=null;
 // sofort pushen statt zu riskieren, dass der geplante Push nie mehr feuert.
 document.addEventListener("visibilitychange",()=>{
   if(document.visibilityState==="hidden"&&_saveSyncDebounce){ clearTimeout(_saveSyncDebounce); _saveSyncDebounce=null; pushToCloud(); }
+  // Zurück in der App (z.B. Tablet nach dem Handy): sofort Änderungen des anderen Geräts holen.
+  if(document.visibilityState==="visible"&&_authUser&&_pullOk&&!_fsAgg) pushToCloud();
 });
 window.addEventListener("pagehide",()=>{
   if(_saveSyncDebounce){ clearTimeout(_saveSyncDebounce); _saveSyncDebounce=null; pushToCloud(); }
