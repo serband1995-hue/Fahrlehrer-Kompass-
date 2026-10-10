@@ -3724,7 +3724,7 @@ async function _upsertRobust(tabelle, rows, konflikt) {
     const rechteFehler = error.code === "42501" || error.code === "P0001" || /row-level security|Nur Fahrschule-Admin/i.test(error.message || "");
     // Netzfehler: ganzer Block später. Andere Fehler (Rechte, ungültige Zeile): einzeln weiter, damit eine
     // fehlerhafte Zeile nicht die übrigen blockiert.
-    const netzFehler = !error.code || /fetch|network|timeout/i.test(error.message || "");
+    const netzFehler = !error.code || /^PGRST|^5\d\d$/.test(String(error.code)) || /fetch|network|timeout/i.test(error.message || "");
     if (netzFehler && !rechteFehler) { console.warn("[Kompass] " + tabelle + " nicht gespeichert:", error.message); continue; }
     for (const r of block) {
       const { error: e1 } = await supa.from(tabelle).upsert([r], { onConflict: konflikt });
@@ -3928,6 +3928,7 @@ async function pullPublicBookings() {
    die zu einem anderen Fahrlehrer verschoben wurden - mit Hinweis-Toast in beide Richtungen. */
 let _schuelerAbrufLaeuft = false;
 let _termineAbrufLaeuft = false;
+let _termineFehlversuche = 0;
 /* Fristen vom Büro (Reaktivierung, Theorie). Nur im Speicher, nie in DB.students:
    sonst landeten die Felder beim nächsten Abgleich in schueler.ausbildung. */
 let _schuelerFristen = {};
@@ -4050,6 +4051,7 @@ async function pullSchuelerZuweisungen() {
       if (n !== lok.name || t !== (lok.telefon || "")) { lok.name = n; lok.telefon = t; memS.schueler[r.id] = _abglWertVon("schueler", lok); namenNeu = true; }
     }
     _abglSpeichern(memS);
+    _schuelerAbgerufen = true;
     // Notizen erst jetzt: neue Schüler sind dann schon in DB.students, das Popup kann ihren Namen nennen
     try{ await pullBueroNotizen(supa,(rows||[]).map(r=>r.id)); }catch(e){ console.warn("[Kompass] Büro-Notizen nicht geladen:",e.message); }
     const { data: weg, error: wegErr } = await supa.from("schueler_verschiebungen").select("*").eq("von_fahrlehrer_id", _authUser.id).eq("gesehen_von_alt", false);
@@ -4157,7 +4159,11 @@ async function pullTermineZuweisungen() {
       if (neu) toast(neu===1 ? "🔔 1 neuer Termin von der Fahrschule" : `🔔 ${neu} neue Termine von der Fahrschule`);
       else toast("Kalender von der Fahrschule aktualisiert");
     } else if (merker) _lokalAblegen(); // nur _syncedAt-Merker nachgeführt: lokal sichern, ohne neu hochzuladen
-  } catch (e) { console.warn("[Kompass] Kalender-Abgleich fehlgeschlagen:", e.message); }
+    _termineFehlversuche = 0;
+  } catch (e) {
+    console.warn("[Kompass] Kalender-Abgleich fehlgeschlagen:", e.message);
+    if (++_termineFehlversuche === 5) toast("⚠ Kalender-Abgleich mit dem Büro klappt gerade nicht");
+  }
   finally { _termineAbrufLaeuft = false; }
 }
 /* ---- Logout ---- */
@@ -4503,6 +4509,7 @@ async function _fsLoadAggData(fahrschuleId){
 let _fsRefreshTimer=null;
 async function _fsEnterAggMode(fahrschuleId){
   _fsAggGen++;
+  const meinGen=_fsAggGen;
   const neuGesichert=_fsPersonalBackup===null;
   if(neuGesichert){
     _fsPersonalBackup={students:DB.students,lessons:DB.lessons,exams:DB.exams};
@@ -4510,7 +4517,8 @@ async function _fsEnterAggMode(fahrschuleId){
   if(!(await _fsLoadAggData(fahrschuleId))){
     // Nicht in die Gesamtansicht gekommen: die Sicherung der eigenen Daten wieder freigeben, sonst würde
     // ein späteres Umschalten diesen alten Stand über die inzwischen gemachten Änderungen legen.
-    if(neuGesichert&&!_fsAgg) _fsPersonalBackup=null;
+    // Nur, wenn kein neuerer Versuch läuft (Doppeltipp): der braucht die Sicherung noch.
+    if(neuGesichert&&!_fsAgg&&meinGen===_fsAggGen) _fsPersonalBackup=null;
     return false;
   }
   _fsSetDrawer(true);
