@@ -2036,13 +2036,7 @@ function renderZahlen() {
   const q3 = monate.slice(9).reduce((a, m) => ({ ok: a.ok + ((quote[m] || {}).ok || 0), n: a.n + ((quote[m] || {}).n || 0) }), { ok: 0, n: 0 });
   // Auslastung: Unterrichtseinheiten je Fahrlehrer in diesem Monat (gefahren bis heute)
   const ue = {}, ueGesamt = { v: 0 };
-  for (const t of S.termine) {
-    if (!t.datum || t.datum.slice(0, 7) !== dieser || t.datum > heute || t.art === "block") continue;
-    const p = t.payload || {};
-    if ((p.status || t.status) === "abgebrochen") continue;
-    const u = KR.ueOf(t.art, t.von, t.bis, p.tatsaechlicheDauer);
-    ue[t.fahrlehrer_id] = (ue[t.fahrlehrer_id] || 0) + u; ueGesamt.v += u;
-  }
+  ueJeFahrlehrer(S.termine.filter((t) => t.datum && t.datum.slice(0, 7) === dieser && t.datum <= heute), (fl, u) => { ue[fl] = (ue[fl] || 0) + u; ueGesamt.v += u; });
   const f = zaehleFristen();
   const provOffen = S.provisionen.filter((p) => p.status === "offen").reduce((a, p) => a + Number(p.betrag || 0), 0);
   const fcFehlt = S.fcAbgaben.filter((q) => q.ist < q.soll).reduce((a, q) => a + (q.soll - q.ist), 0);
@@ -2097,10 +2091,24 @@ async function adminFunktion(body) {
   if (data && data.error) throw new Error(data.error);
   return data;
 }
+// UE wie in der Fahrlehrer-App: ohne Blocker und abgebrochene Termine, "nicht erschienen" nach Vermerk
+// (halb/voll/nichts), jede Prüfung nur einmal je Schüler und Tag.
+function ueJeFahrlehrer(termine, add) {
+  const pruef = new Set();
+  for (const t of termine) {
+    if (t.art === "block") continue;
+    const p = t.payload || {}, status = p.status || t.status;
+    if (status === "abgebrochen") continue;
+    if (t.art === "pruefung" && t.schueler_id) { const k = t.schueler_id + "|" + t.datum; if (pruef.has(k)) continue; pruef.add(k); }
+    let u = KR.ueOf(t.art, t.von, t.bis, p.tatsaechlicheDauer);
+    if (status === "nicht erschienen") u = p.noshow === "2" ? u : p.noshow === "1" ? u / 2 : 0;
+    add(t.fahrlehrer_id, u);
+  }
+}
 function renderTeam() {
   const heute = KR.todayISO(), monat = heute.slice(0, 7);
   const ue = {}, schuelerZahl = {};
-  for (const t of S.termine) if (t.datum && t.datum.slice(0, 7) === monat && t.datum <= heute && t.art !== "block") ue[t.fahrlehrer_id] = (ue[t.fahrlehrer_id] || 0) + KR.ueOf(t.art, t.von, t.bis, (t.payload || {}).tatsaechlicheDauer);
+  ueJeFahrlehrer(S.termine.filter((t) => t.datum && t.datum.slice(0, 7) === monat && t.datum <= heute), (fl, u) => { ue[fl] = (ue[fl] || 0) + u; });
   for (const x of aktiveSchueler()) if (x.fahrlehrer_id) schuelerZahl[x.fahrlehrer_id] = (schuelerZahl[x.fahrlehrer_id] || 0) + 1;
   const admin = istAdmin();
   const zeile = (p, mitZahlen) => `<tr>
