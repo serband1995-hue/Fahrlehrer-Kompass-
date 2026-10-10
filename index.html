@@ -11819,12 +11819,11 @@ function dayEvents(iso){
   // markiert, bleibt sichtbar (zum Löschen) und zählt nicht mit.
   const echtePruefung=new Set((DB.exams||[]).filter(ex=>ex.date===iso&&istPruefung(ex)).map(ex=>ex.id));
   const pruefSids=new Set(ev.filter(e=>(e.kind==="pruefung"||(e.kind==="examDone"&&echtePruefung.has(e.id)))&&e.sid).map(e=>e.sid));
-  // Ergebnis an einem anderen Tag eingetragen (bis 7 Tage nach dem Kalendertermin): dieselbe Prüfung.
-  const bis7=addDays(iso,7);
-  (DB.exams||[]).forEach(ex=>{ if(ex.sid&&istPruefung(ex)&&ex.date&&ex.date!==iso&&ex.date>=iso&&ex.date<=bis7)pruefSids.add(ex.sid); });
-  // Auf der Prüfungstafel an einem nahen Tag (±7 Tage) eingetragen: ebenfalls dieselbe Prüfung.
-  const ab7=addDays(iso,-7);
-  (DB.termine||[]).forEach(t=>{ if(t.date&&t.date!==iso&&t.date>=ab7&&t.date<=bis7)(t.slots||[]).forEach(sid=>{ if(sid)pruefSids.add(sid); }); });
+  // Ergebnis oder Tafel-Eintrag kurz danach (bis 3 Tage nach dem Kalendertermin): dieselbe Prüfung.
+  // Nur nach vorn und kurz - eine echte Wiederholungsprüfung liegt frühestens 2 Wochen später.
+  const bis3=addDays(iso,3);
+  (DB.exams||[]).forEach(ex=>{ if(ex.sid&&istPruefung(ex)&&ex.date&&ex.date>iso&&ex.date<=bis3)pruefSids.add(ex.sid); });
+  (DB.termine||[]).forEach(t=>{ if(t.date&&t.date>iso&&t.date<=bis3)(t.slots||[]).forEach(sid=>{ if(sid)pruefSids.add(sid); }); });
   const gesehen=new Set();
   ev.forEach(e=>{
     if(e.kind!=="lesson"||e.art!=="pruefung"||!e.sid||e.status==="abgebrochen")return;
@@ -12499,9 +12498,10 @@ function pruefungsTerminFuer(sid){
   if(vergangen[0])return vergangen[0];
   // Keine Tafel: Prüfung als Kalendertermin (z.B. vom Büro geplant) - zuletzt vergangener, sonst nächster.
   const kal=(DB.lessons||[]).filter(l=>l.sid===sid&&l.art==="pruefung"&&l.status!=="abgebrochen"&&l.date);
-  const kalVorbei=kal.filter(l=>l.date<=heute).sort((a,b)=>b.date.localeCompare(a.date))[0];
-  const kalKommend=kal.filter(l=>l.date>heute).sort((a,b)=>a.date.localeCompare(b.date))[0];
-  const k=kalVorbei||kalKommend; return k?{date:k.date,von:k.von}:null;
+  // Nur aus den letzten 14 Tagen (sonst wäre es die erste Prüfung, nicht die Wiederholung) - nie in der Zukunft.
+  const ab14=addDays(heute,-14);
+  const k=kal.filter(l=>l.date<=heute&&l.date>=ab14).sort((a,b)=>b.date.localeCompare(a.date))[0];
+  return k?{date:k.date,von:k.von}:null;
 }
 // Bestandene Schüler: Bestehens-Daten pflegen. Legt NIE einen neuen Prüfungseintrag an
 // (sonst würde eine alte Prüfung nochmal mit 46 € gezählt). Vorhandener Eintrag wird bearbeitet.
