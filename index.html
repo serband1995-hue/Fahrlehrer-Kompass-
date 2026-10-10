@@ -6187,8 +6187,11 @@ async function fsProvisionErfassen(){
     if(isNaN(idx)||!lehrer[idx]){ toast("Bitte eine Nummer aus der Liste eingeben"); return; }
     fahrlehrerId=lehrer[idx].id;
   }
-  const typ=(prompt("Was wurde verkauft (z.B. Simulator, Theorie-App)?","Simulator")||"Simulator").trim();
-  const betrag=parseFloat((prompt("Provisionsbetrag in Euro:")||"").replace(",","."));
+  const typRoh=prompt("Was wurde verkauft (z.B. Simulator, Theorie-App)?","Simulator");
+  if(typRoh===null)return;
+  const typ=typRoh.trim()||"Simulator";
+  // "1.250,00" → 1250: Tausenderpunkte weg, Komma als Dezimalzeichen.
+  const betrag=parseFloat((prompt("Provisionsbetrag in Euro:")||"").replace(/\./g,"").replace(",","."));
   if(!(betrag>0)){ if(betrag!==undefined&&!isNaN(betrag))toast("Der Betrag muss größer als 0 sein"); return; }
   const supa=getSupa();
   const {error}=await supa.from("provisionen").insert({
@@ -7276,7 +7279,7 @@ function cardHTML(s,i){
   const p=s.profil?PROFILE[s.profil]:null;const col=p?p.color:"var(--orange)";
   const pct=s.theoriePct||0;
   const istTurbo=_fsAgg&&s._paketId&&(_fsAgg.pakete||[]).some(pk=>pk.id===s._paketId&&pk.name==="Turboboost");
-  return `<button class="s-card" data-id="${s.id}" data-name="${esc((s.name||'').toLowerCase())}" data-turbo="${istTurbo?'1':'0'}" style="animation-delay:${Math.min(i*45,360)}ms">
+  return `<button class="s-card" data-id="${s.id}" data-name="${esc(((s.name||'')+' '+(s.telefon||'').replace(/\s+/g,'')).toLowerCase())}" data-turbo="${istTurbo?'1':'0'}" style="animation-delay:${Math.min(i*45,360)}ms">
     <div>${ring(stand(s),50,3,col)}</div>
     <div class="s-body">
       <div class="s-name">${esc(s.name)}${s.sehhilfe?` <span class="s-sehhilfe">👓</span>`:''}${s.pruefungsreifManuell?' <span title="Prüfungsreif" style="color:var(--gruen);">🏁</span>':''}${istTurbo?' <span title="Turboboost" style="color:#d68a3e;">⚡</span>':''}${telefonFehlt(s)?' <span title="Telefonnummer fehlt – kein Akademie-Zugang möglich" style="color:var(--orange);">📵</span>':''}</div>
@@ -7475,6 +7478,7 @@ function routeDetail(id){
   $("#delBtn").addEventListener("click",()=>{
     if(confirm("Diesen Schüler wirklich löschen? Das kann nicht rückgängig gemacht werden.")){
       // Termine und Prüfungen bleiben im Kalender - mit Namen, auch ohne Schülerdatei.
+      clearSlot(id); // Platz auf der Prüfungstafel freigeben
       const weg=DB.students.find(x=>x.id===id); if(weg){ (DB.lessons||[]).forEach(l=>{ if(l.sid===id&&!l.name)l.name=weg.name; }); (DB.exams||[]).forEach(ex=>{ if(ex.sid===id&&!ex.name)ex.name=weg.name; }); }
       DB.students=DB.students.filter(x=>x.id!==id);save();toast("Schüler gelöscht");routeHome();}});
   // Sehhilfe Toggle
@@ -12428,9 +12432,9 @@ function openExamPlanSheet(s){
     // Alter Termin des Schülers: wird er dadurch leer, kommt er weg (sonst bliebe ein leerer Termin stehen).
     const alt=terminFor(s.id);
     clearSlot(s.id);
-    if(alt&&Array.isArray(alt.slots)&&alt.slots.every(x=>!x))DB.termine=DB.termine.filter(x=>x!==alt);
     // Gleicher Tag UND gleiche Uhrzeit = derselbe Termin; andere Uhrzeit = eigener Termin (die gewählte Zeit gilt).
     let t=DB.termine.find(x=>x.date===d&&(x.von||"09:00")===von);
+    if(alt&&alt!==t&&Array.isArray(alt.slots)&&alt.slots.every(x=>!x))DB.termine=DB.termine.filter(x=>x!==alt);
     if(!t){ t={id:uid(),date:d,plaetze:1,slots:[s.id],von,bis:min2hm(hm2min(von)+PRUEF_MIN)}; DB.termine.push(t); }
     else { const free=t.slots.indexOf(null); if(free>=0)t.slots[free]=s.id; else {t.plaetze++;t.slots.push(s.id);} }
     save(); closeSheet(); toast("Prüfungstermin am "+isoDE(d)+" gesetzt"); routeDetail(s.id);
@@ -12578,7 +12582,7 @@ function renderPassedEdit(s){
 function routeExam(id){
   const s=DB.students.find(x=>x.id===id); if(!s)return routeHome();
   $("#tbTitle").textContent="Prüfung eintragen"; setFab(false); view.scrollTop=0;
-  _examChoice=null; _examPr=null; _examFaults=[]; _examEingriff=false;
+  _examChoice=null; _examPr=(_lastUsedPruefer&&DB.pruefer.includes(_lastUsedPruefer))?_lastUsedPruefer:null; _examFaults=[]; _examEingriff=false;
   renderExam(s);
 }
 function renderExam(s){
@@ -14091,7 +14095,7 @@ function routeArchive(){
     letters.forEach(letter=>{
       const group=list.filter(s=>(s.name||"?")[0].toUpperCase()===letter);
       gridHTML+=`<div class="alpha-anchor" id="alpha-arch-${letter}" style="font-size:11px;font-weight:800;color:var(--muted);letter-spacing:.1em;padding:14px 0 6px;text-transform:uppercase;">${letter}</div>`;
-      gridHTML+=group.map(s=>`<button class="wait-card" data-id="${s.id}" data-name="${esc((s.name||'').toLowerCase())}"><div class="wait-days" style="background:var(--gruen)"><div class="wd-n">✓</div><div class="wd-l">${isoDE(s.passed).slice(0,5)}</div></div>
+      gridHTML+=group.map(s=>`<button class="wait-card" data-id="${s.id}" data-name="${esc(((s.name||'')+' '+(s.telefon||'').replace(/\s+/g,'')).toLowerCase())}"><div class="wait-days" style="background:var(--gruen)"><div class="wd-n">✓</div><div class="wd-l">${isoDE(s.passed).slice(0,5)}</div></div>
         <div class="wait-body"><div class="wait-name">${esc(s.name)}</div><div class="wait-since">bestanden am ${isoDE(s.passed)} · ${esc(formLabel(s.form||'B'))}</div></div><span class="na-arrow">${ICN.arrow}</span></button>`).join("");
     });
   }
