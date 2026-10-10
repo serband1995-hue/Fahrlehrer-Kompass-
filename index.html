@@ -3275,7 +3275,7 @@ function _lokalerDatenEigentuemer() {
 // Entfernt alle personenbezogenen App-Daten vom Gerät (nicht die App-Version und Geräte-Einstellungen).
 function _lokaleNutzerdatenLoeschen() {
   ["serband-app-v1", "serband-sync-stamp", "serband-restore-stamp", "serband-session-cache", "serband-backup-stamp",
-   "serband-weather-cache", "serband-weather-forecast-cache", "serband-abgleich-v1", "serband-db-defekt", "serband-vor-import", "serband-snapbasis-v1", OWNER_KEY].forEach(k => {
+   "serband-weather-cache", "serband-weather-forecast-cache", "serband-abgleich-v1", "serband-db-defekt", "serband-vor-import", "serband-snapbasis-v1", "serband-gefeiert", OWNER_KEY].forEach(k => {
     try { localStorage.removeItem(k); } catch (e) {}
   });
   try { sessionStorage.removeItem("vd_unlocked"); } catch (e) {}
@@ -4717,8 +4717,10 @@ async function renderAdminPanel() {
 }
 
 async function toggleUser(userId, aktiv) {
+  if (!aktiv && !confirm("Diesen Zugang wirklich sperren? Die Person kann sich dann nicht mehr anmelden.")) return;
   const supa = getSupa();
-  await supa.from("profiles").update({ aktiv }).eq("id", userId);
+  const { error } = await supa.from("profiles").update({ aktiv }).eq("id", userId);
+  if (error) { toast("Nicht geändert: " + error.message); return; }
   renderAdminPanel();
 }
 
@@ -5150,8 +5152,10 @@ async function neueFahrschuleAnlegen(){
 }
 
 async function toggleFahrschuleAktiv(id,aktiv){
+  if(!aktiv&&!confirm("Die GANZE Fahrschule sperren? Alle Fahrlehrer und das Büro können sich dann nicht mehr anmelden."))return;
   const supa=getSupa();
-  await supa.from("fahrschulen").update({aktiv}).eq("id",id);
+  const {error}=await supa.from("fahrschulen").update({aktiv}).eq("id",id);
+  if(error){toast("Nicht geändert: "+error.message);return;}
   routeFahrschuleDetail(id);
 }
 
@@ -5293,6 +5297,7 @@ async function fahrlehrerPasswortZuruecksetzen(userId){
 }
 
 async function toggleFahrlehrerAktiv(userId,aktiv,fahrschuleId){
+  if(!aktiv&&!confirm("Diesen Fahrlehrer wirklich sperren?"))return;
   const supa=getSupa();
   const {error}=await supa.from("profiles").update({aktiv}).eq("id",userId);
   if(error){toast("Fehler: "+error.message);return;}
@@ -6177,14 +6182,21 @@ async function fsProvisionErfassen(){
   if(lehrer.length>1){
     const auswahl=lehrer.map((l,i)=>`${i+1} = ${l.name||l.email}`).join("\n");
     const wahl=prompt(`Welcher Fahrlehrer hat verkauft?\n${auswahl}`);
+    if(wahl===null)return; // abgebrochen: nichts erfassen
     const idx=parseInt(wahl)-1;
-    if(!isNaN(idx)&&lehrer[idx])fahrlehrerId=lehrer[idx].id;
+    if(isNaN(idx)||!lehrer[idx]){ toast("Bitte eine Nummer aus der Liste eingeben"); return; }
+    fahrlehrerId=lehrer[idx].id;
   }
-  const typ=(prompt("Was wurde verkauft (z.B. Simulator, Theorie-App)?","Simulator")||"Simulator").trim();
-  const betrag=parseFloat((prompt("Provisionsbetrag in Euro:")||"").replace(",","."));
-  if(!betrag||isNaN(betrag))return;
+  const typRoh=prompt("Was wurde verkauft (z.B. Simulator, Theorie-App)?","Simulator");
+  if(typRoh===null)return;
+  const typ=typRoh.trim()||"Simulator";
+  // "1.250,00" → 1250 und "49,90" → 49.9; ein Punkt ohne Komma ist Dezimalpunkt ("49.90"), außer bei
+  // Tausendergruppen ("1.250").
+  const roh=(prompt("Provisionsbetrag in Euro:")||"").trim();
+  const norm=(/,/.test(roh)||/^\d{1,3}(\.\d{3})+$/.test(roh))?roh.replace(/\./g,"").replace(",","."):roh;
+  const betrag=parseFloat(norm);
+  if(!(betrag>0)){ if(betrag!==undefined&&!isNaN(betrag))toast("Der Betrag muss größer als 0 sein"); return; }
   const supa=getSupa();
-  const {data:sessionData}=await supa.auth.getSession();
   const {error}=await supa.from("provisionen").insert({
     fahrlehrer_id:fahrlehrerId, fahrschule_id:_fsAgg.fahrschuleId, typ, betrag, status:"offen"
   });
@@ -6445,7 +6457,7 @@ window.addEventListener("load", () => {
 const STORE_KEY="serband-app-v1";
 /* Build-Version: bei jeder Auslieferung hier das Datum aktualisieren.
    Wird in den Einstellungen angezeigt + für den Update-Hinweis genutzt. */
-const APP_VERSION="2026.10.10.4";
+const APP_VERSION="2026.10.10.5";
 try{const f=document.getElementById("drawerFoot"); if(f)f.textContent="Fahrlehrer-Kompass · Version "+APP_VERSION;}catch(e){}
 // Nutzungsbedingungen & Haftungsausschluss (Bereich: rechtliche Absicherung) - Version hochzählen
 // und alle Nutzer müssen erneut zustimmen, sobald sich der Text inhaltlich ändert.
@@ -7194,7 +7206,7 @@ function routeHome(){
       if(nav)nav.style.display="none";
       document.querySelectorAll(".alpha-anchor").forEach(a=>a.style.display="none");
       let n=0;
-      document.querySelectorAll("#studentGrid .s-card").forEach(c=>{const hit=(c.dataset.name||"").indexOf(q)>=0;c.style.display=hit?"":"none";if(hit)n++;});
+      document.querySelectorAll("#studentGrid .s-card").forEach(c=>{const hit=matchStudent(c.dataset.name,q);c.style.display=hit?"":"none";if(hit)n++;});
       const wb=$("#wartendBox"); if(wb&&n)wb.open=true;
       nh.style.display=n?"none":"block";sc.style.display="block";
     } else {
@@ -7270,7 +7282,7 @@ function cardHTML(s,i){
   const p=s.profil?PROFILE[s.profil]:null;const col=p?p.color:"var(--orange)";
   const pct=s.theoriePct||0;
   const istTurbo=_fsAgg&&s._paketId&&(_fsAgg.pakete||[]).some(pk=>pk.id===s._paketId&&pk.name==="Turboboost");
-  return `<button class="s-card" data-id="${s.id}" data-name="${esc((s.name||'').toLowerCase())}" data-turbo="${istTurbo?'1':'0'}" style="animation-delay:${Math.min(i*45,360)}ms">
+  return `<button class="s-card" data-id="${s.id}" data-name="${esc(((s.name||'')+' '+(s.telefon||'').replace(/\s+/g,'')).toLowerCase())}" data-turbo="${istTurbo?'1':'0'}" style="animation-delay:${Math.min(i*45,360)}ms">
     <div>${ring(stand(s),50,3,col)}</div>
     <div class="s-body">
       <div class="s-name">${esc(s.name)}${s.sehhilfe?` <span class="s-sehhilfe">👓</span>`:''}${s.pruefungsreifManuell?' <span title="Prüfungsreif" style="color:var(--gruen);">🏁</span>':''}${istTurbo?' <span title="Turboboost" style="color:#d68a3e;">⚡</span>':''}${telefonFehlt(s)?' <span title="Telefonnummer fehlt – kein Akademie-Zugang möglich" style="color:var(--orange);">📵</span>':''}</div>
@@ -7458,7 +7470,11 @@ function routeDetail(id){
     </div>
   </div>`;
   animateRings();
-  if(done)setTimeout(()=>celebrate(),420);
+  // Konfetti nur einmal, wenn der Schüler 100 % erreicht - nicht bei jedem Öffnen der Akte.
+  // Gemerkt nur auf diesem Gerät (nicht am Schüler), damit das Öffnen einer Akte nichts speichert.
+  let gefeiert={}; try{ gefeiert=JSON.parse(localStorage.getItem("serband-gefeiert")||"{}")||{}; }catch(e){}
+  if(done&&!gefeiert[s.id]){ gefeiert[s.id]=1; try{localStorage.setItem("serband-gefeiert",JSON.stringify(gefeiert));}catch(e){} setTimeout(()=>celebrate(),420); }
+  if(!done&&gefeiert[s.id]){ delete gefeiert[s.id]; try{localStorage.setItem("serband-gefeiert",JSON.stringify(gefeiert));}catch(e){} }
   $("#backBtn").addEventListener("click",routeHome);
   $("#editBtn").addEventListener("click",()=>formView(s));
   const prb=$("#pruefReifBtn"); if(prb)prb.addEventListener("click",()=>{ s.pruefungsreifManuell=!s.pruefungsreifManuell; save(); routeDetail(id); });
@@ -7466,6 +7482,9 @@ function routeDetail(id){
   _fillAkademieFortschritt(s);
   $("#delBtn").addEventListener("click",()=>{
     if(confirm("Diesen Schüler wirklich löschen? Das kann nicht rückgängig gemacht werden.")){
+      // Termine und Prüfungen bleiben im Kalender - mit Namen, auch ohne Schülerdatei.
+      clearSlot(id); // Platz auf der Prüfungstafel freigeben
+      const weg=DB.students.find(x=>x.id===id); if(weg){ (DB.lessons||[]).forEach(l=>{ if(l.sid===id&&!l.name)l.name=weg.name; }); (DB.exams||[]).forEach(ex=>{ if(ex.sid===id&&!ex.name)ex.name=weg.name; }); }
       DB.students=DB.students.filter(x=>x.id!==id);save();toast("Schüler gelöscht");routeHome();}});
   // Sehhilfe Toggle
   $("#sehhilfeBtn").addEventListener("click",()=>{
@@ -7480,7 +7499,7 @@ function routeDetail(id){
   document.querySelectorAll("#dashFormPills .pill").forEach(b=>b.addEventListener("click",()=>{ s.form=b.dataset.form; save(); toast("Klasse: "+formLabel(s.form)); routeDetail(id); }));
   // Theorie-/Umschreiber-/Pausiert-Toggles (aus dem Ausbildungsplan hierher verschoben)
   const dtt=$("#dashTheoToggle"); if(dtt)dtt.addEventListener("click",()=>{
-    pl.theorie=!pl.theorie; if(pl.theorie){ delete s.wartelisteRaus; if(!s.theoryPassed)s.theoryPassed=new Date().toISOString(); logHist(s,"theorie","Theorieprüfung bestanden"); if(stand(s)>=90&&!s.ready&&!s.passed){ s.ready=s.theoryPassed; toast("Theorie bestanden – auf die Praxis-Warteliste gesetzt"); } else if(stand(s)<90&&!s.ready&&!s.passed){ toast("Theorie bestanden – erst ab 90 % kommt er auf die Warteliste"); } if(s.theorieWait)s.theorieWaitBis=new Date().toISOString(); delete s.theorieWait; } else { if(s.ready&&s.ready===s.theoryPassed&&!s.pruefungsreifManuell)delete s.ready; delete s.theoryPassed; delete s.theorieWaitBis; } save(); routeDetail(id);
+    pl.theorie=!pl.theorie; if(pl.theorie){ delete s.wartelisteRaus; if(!s.theoryPassed)s.theoryPassed=new Date().toISOString(); if(!(s.hist||[]).some(h=>h.typ==="theorie"||h.type==="theorie"))logHist(s,"theorie","Theorieprüfung bestanden"); if(stand(s)>=90&&!s.ready&&!s.passed){ s.ready=s.theoryPassed; toast("Theorie bestanden – auf die Praxis-Warteliste gesetzt"); } else if(stand(s)<90&&!s.ready&&!s.passed){ toast("Theorie bestanden – erst ab 90 % kommt er auf die Warteliste"); } if(s.theorieWait)s.theorieWaitBis=new Date().toISOString(); delete s.theorieWait; } else { if(s.ready&&s.ready===s.theoryPassed&&!s.pruefungsreifManuell)delete s.ready; delete s.theoryPassed; delete s.theorieWaitBis; } save(); routeDetail(id);
   });
   const dwt=$("#dashTheorieWaitToggle"); if(dwt)dwt.addEventListener("click",()=>{
     if(s.theorieWait){ delete s.theorieWait; delete s.theorieWaitBis; toast("Fahrstunden wieder aufgenommen"); } else { s.theorieWait=new Date().toISOString(); toast("Pausiert – wartet auf Theorie"); }
@@ -12020,7 +12039,7 @@ function ensureDB(){ let _ensureDirty=false; if(!Array.isArray(DB.exams))DB.exam
 }
 function ensurePruefer(nm){ if(!DB.prueferData[nm])DB.prueferData[nm]={behoerde:"",tags:[],routen:[],notiz:"",created:Date.now()}; return DB.prueferData[nm]; }
 /* Statistik pro Prüfer aus den Prüfungen ableiten */
-function prueferStats(nm){ const ex=DB.exams.filter(e=>e.pruefer===nm); const q=quoteOf(ex); const dates=ex.map(e=>e.date).filter(Boolean).sort(); const last=dates.length?dates[dates.length-1]:null; return {total:ex.filter(istPruefung).length,last,quote:q,faults:faultCounts(ex).slice(0,3),eingriff:eingriffQuote(ex)}; }
+function prueferStats(nm){ const ex=DB.exams.filter(e=>e.pruefer===nm); const q=quoteOf(ex); const dates=ex.filter(istPruefung).map(e=>e.date).filter(Boolean).sort(); const last=dates.length?dates[dates.length-1]:null; return {total:ex.filter(istPruefung).length,last,quote:q,faults:faultCounts(ex).slice(0,3),eingriff:eingriffQuote(ex)}; }
 ensureDB();
 
 const FAULTS=[
@@ -12413,9 +12432,14 @@ function openExamPlanSheet(s){
   $("#epSave").addEventListener("click",()=>{
     const d=$("#epDate").value; if(!d){toast("Bitte Datum wählen");return;}
     const von=$("#epTime").value||"09:00";
+    if(d<todayISO()&&!confirm("Das Datum liegt in der Vergangenheit. Trotzdem setzen?"))return;
     if(!s.ready&&!s.passed){ setReady(s); }
+    // Alter Termin des Schülers: wird er dadurch leer, kommt er weg (sonst bliebe ein leerer Termin stehen).
+    const alt=terminFor(s.id);
     clearSlot(s.id);
-    let t=DB.termine.find(x=>x.date===d);
+    // Gleicher Tag UND gleiche Uhrzeit = derselbe Termin; andere Uhrzeit = eigener Termin (die gewählte Zeit gilt).
+    let t=DB.termine.find(x=>x.date===d&&(x.von||"09:00")===von);
+    if(alt&&alt!==t&&Array.isArray(alt.slots)&&alt.slots.every(x=>!x))DB.termine=DB.termine.filter(x=>x!==alt);
     if(!t){ t={id:uid(),date:d,plaetze:1,slots:[s.id],von,bis:min2hm(hm2min(von)+PRUEF_MIN)}; DB.termine.push(t); }
     else { const free=t.slots.indexOf(null); if(free>=0)t.slots[free]=s.id; else {t.plaetze++;t.slots.push(s.id);} }
     save(); closeSheet(); toast("Prüfungstermin am "+isoDE(d)+" gesetzt"); routeDetail(s.id);
@@ -12563,7 +12587,7 @@ function renderPassedEdit(s){
 function routeExam(id){
   const s=DB.students.find(x=>x.id===id); if(!s)return routeHome();
   $("#tbTitle").textContent="Prüfung eintragen"; setFab(false); view.scrollTop=0;
-  _examChoice=null; _examPr=null; _examFaults=[]; _examEingriff=false;
+  _examChoice=null; _examPr=(_lastUsedPruefer&&DB.pruefer.includes(_lastUsedPruefer))?_lastUsedPruefer:null; _examFaults=[]; _examEingriff=false;
   renderExam(s);
 }
 function renderExam(s){
@@ -12624,6 +12648,8 @@ function renderExam(s){
     const et=$("#eingToggle"); if(et)et.addEventListener("click",()=>{ _examEingriff=!_examEingriff; et.classList.toggle("on",_examEingriff); const en=$("#eingNote"); if(en)en.style.display=_examEingriff?"block":"none"; });
   }
   $("#saveExam").addEventListener("click",()=>{
+    // Ohne Prüfer stimmt die Prüfer-Statistik nicht (wie beim Eintragen über die Tafel).
+    if(!_examPr){ toast("Bitte den Prüfer auswählen"); const w=$("#prWrap"); if(w)w.scrollIntoView({behavior:"smooth",block:"center"}); return; }
     const date=$("#exDate").value||todayISO();
     const noteEl=$("#exNote"); const note=noteEl?noteEl.value.trim():"";
     const en=$("#eingNote");
@@ -14074,7 +14100,7 @@ function routeArchive(){
     letters.forEach(letter=>{
       const group=list.filter(s=>(s.name||"?")[0].toUpperCase()===letter);
       gridHTML+=`<div class="alpha-anchor" id="alpha-arch-${letter}" style="font-size:11px;font-weight:800;color:var(--muted);letter-spacing:.1em;padding:14px 0 6px;text-transform:uppercase;">${letter}</div>`;
-      gridHTML+=group.map(s=>`<button class="wait-card" data-id="${s.id}" data-name="${esc((s.name||'').toLowerCase())}"><div class="wait-days" style="background:var(--gruen)"><div class="wd-n">✓</div><div class="wd-l">${isoDE(s.passed).slice(0,5)}</div></div>
+      gridHTML+=group.map(s=>`<button class="wait-card" data-id="${s.id}" data-name="${esc(((s.name||'')+' '+(s.telefon||'').replace(/\s+/g,'')).toLowerCase())}"><div class="wait-days" style="background:var(--gruen)"><div class="wd-n">✓</div><div class="wd-l">${isoDE(s.passed).slice(0,5)}</div></div>
         <div class="wait-body"><div class="wait-name">${esc(s.name)}</div><div class="wait-since">bestanden am ${isoDE(s.passed)} · ${esc(formLabel(s.form||'B'))}</div></div><span class="na-arrow">${ICN.arrow}</span></button>`).join("");
     });
   }
@@ -14112,7 +14138,7 @@ function routeArchive(){
       if(nav)nav.style.display="none";
       document.querySelectorAll("#archGrid .alpha-anchor").forEach(a=>a.style.display="none");
       let n=0;
-      document.querySelectorAll("#archGrid .wait-card").forEach(c=>{const hit=(c.dataset.name||"").indexOf(q)>=0;c.style.display=hit?"":"none";if(hit)n++;});
+      document.querySelectorAll("#archGrid .wait-card").forEach(c=>{const hit=matchStudent(c.dataset.name,q);c.style.display=hit?"":"none";if(hit)n++;});
       nh.style.display=n?"none":"block";sc.style.display="block";
     } else {
       if(nav&&list.length)nav.style.display="flex";
