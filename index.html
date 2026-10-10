@@ -3498,7 +3498,9 @@ async function _continueLoginFlow(prof) {
   updateBell();
   // Periodischer Sync alle 2 Minuten
   // Jede Minute: kurz prüfen, ob ein anderes Gerät gespeichert hat (dann zusammenführen), und eigene Änderungen sichern.
-  _syncTimer = setInterval(async () => { if (!_pullOk) await pullFromCloud(); pushToCloud(); }, 60000);
+  // Alle 10 Minuten zusätzlich ohne "geändert"-Merker prüfen - falls irgendwo ohne save() geändert wurde.
+  let _syncTakt = 0;
+  _syncTimer = setInterval(async () => { if (!_pullOk) await pullFromCloud(); if (++_syncTakt % 10 === 0) _snapGeaendert = true; pushToCloud(); }, 60000);
   // Online-Buchungen alle 60 Sekunden neu abholen (schnellere Rückmeldung als der reguläre Sync)
   setInterval(() => pullPublicBookings(), 60000);
   setInterval(() => pullSchuelerZuweisungen(), 60000);
@@ -3581,6 +3583,7 @@ async function pullFromCloud() {
   try {
     const supa = getSupa();
     const { data, error } = await supa.from("snapshots").select("data, updated_at").eq("user_id", _authUser.id).single();
+    if (_fsAgg) return; // inzwischen in der Gesamtansicht: DB nicht anfassen, der nächste Lauf holt es nach
     if (error && error.code !== "PGRST116") throw error; // PGRST116 = noch kein Snapshot (neuer Nutzer) -> ok
     if (data && data.data) {
       const cloudUpdated = new Date(data.updated_at).getTime();
@@ -4038,6 +4041,8 @@ async function _pushToCloudJetzt(gen) {
           if (veraltet()) return false;
           if (r.error) throw r.error;
           if (_fsAgg) return false;
+          // Speicher voll: hier können ungesicherte Änderungen liegen - dann zusammenführen statt ersetzen.
+          if (_speicherVollGemeldet) { await _snapHolenUndZusammenfuehren(supa, "cloud", r.data, gen); continue; }
           if (r.data && r.data.data) { _snapErsetzeDurch(r.data); toast("🔄 Stand vom anderen Gerät geladen"); _ansichtNeuZeigen(); }
           continue;
         }
