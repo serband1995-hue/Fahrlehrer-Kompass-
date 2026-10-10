@@ -3256,7 +3256,7 @@ function _lokalerDatenEigentuemer() {
 // Entfernt alle personenbezogenen App-Daten vom Gerät (nicht die App-Version und Geräte-Einstellungen).
 function _lokaleNutzerdatenLoeschen() {
   ["serband-app-v1", "serband-sync-stamp", "serband-restore-stamp", "serband-session-cache", "serband-backup-stamp",
-   "serband-weather-cache", "serband-weather-forecast-cache", OWNER_KEY].forEach(k => {
+   "serband-weather-cache", "serband-weather-forecast-cache", "serband-abgleich-v1", "serband-db-defekt", "serband-vor-import", OWNER_KEY].forEach(k => {
     try { localStorage.removeItem(k); } catch (e) {}
   });
   try { sessionStorage.removeItem("vd_unlocked"); } catch (e) {}
@@ -3482,7 +3482,9 @@ async function _continueLoginFlow(prof) {
   // Fahrschule-Admin: exakt dieselbe App, nur mit den zusammengeführten Daten der ganzen Fahrschule
   if (prof && (prof.rolle === "fahrschule_admin" || prof.rolle === "buero")) {
     document.getElementById("loginOverlay").classList.add("hidden");
-    await _fsEnterAggMode(prof.fahrschule_id);
+    // Schlägt das Laden fehl (z.B. kein Netz), alle 20 s erneut versuchen statt eine leere Ansicht zu zeigen.
+    const versuch = async () => { if (_fsAgg || !_authUser) return; if (!(await _fsEnterAggMode(prof.fahrschule_id)) && !_fsAgg) setTimeout(versuch, 20000); };
+    await versuch();
     return;
   }
   // Cloud-Daten laden (falls neuere als localStorage)
@@ -3569,6 +3571,8 @@ function printAgb() {
 // hochladen. Sonst könnte ein Gerät mit altem/leerem Stand (z.B. neu installiert, Pull fehlgeschlagen)
 // den Server überschreiben. var statt let, damit save() beim Start nie an der TDZ scheitert.
 var _pullOk = false;
+var _cloudHatteDaten = false; // hatte der zuletzt gelesene Cloud-Stand Schüler oder Termine?
+var _sitzungHatteDaten = false; // hatte dieses Gerät seit dem Start schon einmal Schüler oder Termine?
 async function pullFromCloud() {
   // In der Fahrschul-Gesamtansicht steht in DB der Bestand aller Fahrlehrer - ein Pull würde ihn
   // mit dem eigenen Snapshot vermischen. Der nächste Timer-Lauf nach dem Verlassen holt es nach.
@@ -3581,13 +3585,23 @@ async function pullFromCloud() {
       const cloudUpdated = new Date(data.updated_at).getTime();
       const localStamp = parseInt(localStorage.getItem("serband-sync-stamp") || "0");
       if (_lokalerSpeicherGehoertAnderem()) { location.reload(); return; } // anderer Tab hat anderes Konto angemeldet
-      if (cloudUpdated > localStamp) {
+      const d = data.data;
+      _cloudHatteDaten = !!((d.students && d.students.length) || (d.lessons && d.lessons.length));
+      const lokalLeer = !(DB.students && DB.students.length) && !(DB.lessons && DB.lessons.length);
+      if (cloudUpdated > localStamp || _lokalDefekt || (lokalLeer && _cloudHatteDaten)) {
         // Cloud ist neuer → lokal überschreiben
         const cloudDB = data.data;
         DB = cloudDB;
+        // Das Abgleich-Gedächtnis beschreibt den alten Gerätestand - mit dem Cloud-Stand passt es nicht mehr.
+        // Leeren: dann gewinnt beim nächsten Abruf der Stand vom Büro, und es wird nichts aufgrund alter
+        // Einträge gelöscht. (Unbekanntes wird nie gelöscht.)
+        _abglSpeichern({ user: _authUser.id, schueler: {}, termine: {}, pruefungen: {} });
+        _termineAbgerufen = false; _schuelerAbgerufen = false;
         localStorage.setItem(STORE_KEY, JSON.stringify(DB));
         localStorage.setItem("serband-sync-stamp", cloudUpdated + "");
         console.log("[Kompass] Cloud-Daten geladen (" + new Date(cloudUpdated).toLocaleString("de") + ")");
+        if (_cloudHatteDaten) _sitzungHatteDaten = true;
+        if (_lokalDefekt) { _lokalDefekt = false; if (_cloudHatteDaten) try { localStorage.removeItem("serband-db-defekt"); } catch (e) {} toast("Speicher war defekt – Cloud-Stand geladen"); }
       }
     }
     _pullOk = true;
@@ -3602,6 +3616,102 @@ function _persoenlicheDaten() {
   if (!_fsPersonalBackup) return null;
   return Object.assign({}, DB, _fsPersonalBackup);
 }
+/* Abgleich-Gedächtnis: merkt sich je Schüler/Termin/Prüfung, welchen Stand DIESES Gerät zuletzt
+   hochgeladen oder vom Büro abgeholt hat (nur ein kurzer Prüfwert, keine Daten).
+   - Hochgeladen wird nur, was sich seitdem geändert hat. So überschreibt das Gerät keine Büro-Änderung
+     mit einem alten Stand, und der Abgleich läuft nicht im Kreis.
+   - Als gelöscht markiert wird nur, was das Gerät schon kannte. Ein gerade vom Büro angelegter Eintrag,
+     den das Gerät noch nicht abgeholt hat, bleibt unangetastet. */
+const _ABGL_KEY = "serband-abgleich-v1";
+var _abglGen = 0; // zählt jedes Schreiben der Brücken; ein Abruf, der währenddessen lief, verwirft seine Runde
+var _termineAbgerufen = false, _schuelerAbgerufen = false; // erst nach einem Abruf dürfen die Brücken schreiben
+function _abglLaden() {
+  const uid = _authUser && _authUser.id;
+  try { const o = JSON.parse(localStorage.getItem(_ABGL_KEY) || "null"); if (o && o.user === uid) return o; } catch (e) {}
+  return { user: uid, schueler: {}, termine: {}, pruefungen: {} };
+}
+function _abglSpeichern(o) { try { localStorage.setItem(_ABGL_KEY, JSON.stringify(o)); } catch (e) {} }
+// Stabiler Prüfwert: Reihenfolge der Felder spielt keine Rolle, undefined zählt wie fehlend.
+function _abglWert(x) {
+  const s = JSON.stringify(x, (k, v) => (v && typeof v === "object" && !Array.isArray(v)) ? Object.keys(v).sort().reduce((o, kk) => (o[kk] = v[kk], o), {}) : v);
+  let h = 2166136261; for (let i = 0; i < s.length; i++) { h ^= s.charCodeAt(i); h = Math.imul(h, 16777619); }
+  return (h >>> 0).toString(36) + "." + s.length.toString(36);
+}
+// Die Zeilen, die in die Fahrschul-Tabellen gehen (ohne Zeitstempel - der kommt erst beim Schreiben dazu).
+function _schuelerZeile(s) {
+  const { id, name, telefon, bogen, ...rest } = s;
+  try { rest.standPct = stand(s); } catch (e) {}
+  return { id: s.id, fahrschule_id: _authProfile.fahrschule_id, fahrlehrer_id: _authUser.id,
+    name: s.name || "(ohne Namen)", telefon: s.telefon || null, bogen_ausgefuellt: !!s.bogen, status: "aktiv", ausbildung: rest };
+}
+function _terminZeile(l) {
+  const { id, sid, date, von, bis, art, fahrzeug, status, _syncedAt, ...rest } = l;
+  return { id: l.id, fahrschule_id: _authProfile.fahrschule_id, fahrlehrer_id: _authUser.id,
+    schueler_id: l.sid || null, datum: l.date, von: l.von || null, bis: l.bis || null,
+    art: l.art || null, fahrzeug: l.fahrzeug || null, status: l.status || null, geloescht: false, payload: rest };
+}
+function _pruefungZeile(ex) {
+  const { id, sid, date, result, pruefer, attempt, _syncedAt, ...rest } = ex;
+  return { id: ex.id, fahrschule_id: _authProfile.fahrschule_id, fahrlehrer_id: _authUser.id,
+    schueler_id: ex.sid || null, datum: ex.date || null, result: ex.result || null, pruefer: ex.pruefer || null,
+    attempt: typeof ex.attempt === "number" ? ex.attempt : null, geloescht: false, payload: rest };
+}
+// Prüfwert je Art. Beim Schüler zählt der Fragebogen mit: er geht separat (privat) hoch, wenn er sich ändert.
+function _abglWertVon(art, e) {
+  if (art === "schueler") return _abglWert([_schuelerZeile(e), e.bogen || null]);
+  return _abglWert(art === "termine" ? _terminZeile(e) : _pruefungZeile(e));
+}
+// Liest alle Zeilen seitenweise. Supabase liefert pro Abfrage höchstens 1000 Zeilen - ohne Seiten
+// sähe ein großer Kalender abgeschnitten aus und der Rest würde als "gelöscht" behandelt.
+async function _alleSeiten(bau) {
+  const out = [];
+  for (let von = 0; ; von += 500) {
+    const { data, error } = await bau().order("id").range(von, von + 499);
+    if (error) throw error;
+    if (!Array.isArray(data)) throw new Error("keine Antwort");
+    out.push(...data);
+    if (data.length < 500) return out;
+  }
+}
+// Gemeinsamer Ablauf der drei Brücken: nur Geändertes schreiben, nur Bekanntes löschen.
+// Liefert die IDs, die geschrieben wurden.
+async function _brueckeAbgleichen({ tabelle, art, eintraege, zeileVon, loeschWert, aktivFilter }) {
+  const supa = getSupa(); const merk = _abglLaden()[art];
+  const nowIso = new Date().toISOString();
+  const offen = [];
+  eintraege.forEach(e => { if (!e || !e.id) return; const w = _abglWertVon(art, e); if (merk[e.id] !== w) offen.push({ e, z: zeileVon(e), w }); });
+  let geschrieben = [];
+  if (offen.length) {
+    geschrieben = await _upsertRobust(tabelle, offen.map(o => Object.assign({}, o.z, { aktualisiert_am: nowIso })), "id");
+    // Gedächtnis frisch lesen: ein Abruf kann es während des Schreibens ergänzt haben.
+    const ok = new Set(geschrieben); const zeit = Date.parse(nowIso); const mem = _abglLaden();
+    offen.forEach(o => { if (!ok.has(o.e.id)) return; mem[art][o.e.id] = o.w; merk[o.e.id] = o.w; if (art !== "schueler") o.e._syncedAt = zeit; });
+    _abglSpeichern(mem); _abglGen++;
+  }
+  // Löschen: nur Einträge, die dieses Gerät kannte und die es lokal nicht mehr gibt.
+  const lokal = new Set(eintraege.map(e => e && e.id));
+  const bekanntWeg = Object.keys(merk).filter(id => !lokal.has(id));
+  if (bekanntWeg.length) {
+    // Sicherheitssperre: leerer lokaler Bestand ist eher ein Lade-Fehler als echte Absicht (18.08.26: 200 Fahrstunden weg).
+    if (!eintraege.length) { console.warn("[Kompass] " + tabelle + ": lokaler Bestand leer - Löschung übersprungen."); return geschrieben; }
+    for (let i = 0; i < bekanntWeg.length; i += 150) {
+      const teil = bekanntWeg.slice(i, i + 150);
+      const { data: noch, error } = await aktivFilter(supa.from(tabelle).select("id").eq("fahrlehrer_id", _authUser.id).in("id", teil));
+      if (error) throw error;
+      const zuLoeschen = (noch || []).map(r => r.id);
+      if (zuLoeschen.length) {
+        const upd = Object.assign({}, loeschWert); if (art !== "schueler") upd.aktualisiert_am = nowIso;
+        const { error: dErr } = await supa.from(tabelle).update(upd).in("id", zuLoeschen);
+        if (dErr) throw dErr;
+      }
+    }
+    // Was gelöscht ist oder nicht mehr diesem Fahrlehrer gehört, muss sich das Gerät nicht mehr merken.
+    const m2 = _abglLaden(); bekanntWeg.forEach(id => delete m2[art][id]); _abglSpeichern(m2); _abglGen++;
+  }
+  return geschrieben;
+}
+// Speichert DB lokal, ohne die Brücken erneut auszulösen (für Merker wie _syncedAt).
+function _lokalAblegen() { if (_fsAgg || _lokalerSpeicherGehoertAnderem()) return; try { localStorage.setItem(STORE_KEY, JSON.stringify(DB)); } catch (e) {} }
 /* Upsert, das an einzelnen Zeilen nicht komplett scheitert: Gehört ein Schüler oder Termin inzwischen
    einem anderen Fahrlehrer (Umverteilung durchs Büro), lehnt die Datenbank genau diese Zeile ab - die
    übrigen werden trotzdem geschrieben. Liefert die IDs der erfolgreich geschriebenen Zeilen. */
@@ -3612,7 +3722,10 @@ async function _upsertRobust(tabelle, rows, konflikt) {
     const { error } = await supa.from(tabelle).upsert(block, { onConflict: konflikt });
     if (!error) { block.forEach(r => ok.push(r[konflikt])); continue; }
     const rechteFehler = error.code === "42501" || error.code === "P0001" || /row-level security|Nur Fahrschule-Admin/i.test(error.message || "");
-    if (!rechteFehler) { console.warn("[Kompass] " + tabelle + " nicht gespeichert:", error.message); continue; }
+    // Netzfehler: ganzer Block später. Andere Fehler (Rechte, ungültige Zeile): einzeln weiter, damit eine
+    // fehlerhafte Zeile nicht die übrigen blockiert.
+    const netzFehler = !error.code || /^PGRST|^5\d\d$/.test(String(error.code)) || /fetch|network|timeout/i.test(error.message || "");
+    if (netzFehler && !rechteFehler) { console.warn("[Kompass] " + tabelle + " nicht gespeichert:", error.message); continue; }
     for (const r of block) {
       const { error: e1 } = await supa.from(tabelle).upsert([r], { onConflict: konflikt });
       if (!e1) ok.push(r[konflikt]); else console.warn("[Kompass] " + tabelle + " " + r[konflikt] + " übersprungen:", e1.message);
@@ -3629,6 +3742,11 @@ async function pushToCloud() {
   const daten = _persoenlicheDaten();
   if (!daten) { console.warn("[Kompass] Push übersprungen: persönlicher Stand nicht verfügbar."); return false; }
   if (_lokalerSpeicherGehoertAnderem()) { console.warn("[Kompass] Push übersprungen: anderer Tab hat das Konto gewechselt."); return false; }
+  // Ein leerer Stand überschreibt nie eine Cloud mit Daten (z.B. nach beschädigtem Gerätespeicher).
+  const leer = !(daten.students && daten.students.length) && !(daten.lessons && daten.lessons.length);
+  if (!leer) _sitzungHatteDaten = true;
+  // Wer bewusst alles gelöscht hat, hatte vorher Daten - das darf hoch. Gesperrt ist nur ein Gerät, das leer startete.
+  if (leer && !_sitzungHatteDaten && (_cloudHatteDaten || _lokalDefekt)) { console.warn("[Kompass] Push übersprungen: leerer Stand, Cloud hat Daten."); return false; }
   try {
     const supa = getSupa();
     const now = new Date().toISOString();
@@ -3640,6 +3758,7 @@ async function pushToCloud() {
       updated_at: now
     }, { onConflict: "user_id" }).select("updated_at").single();
     if (error) { console.warn("[Kompass] Push fehlgeschlagen:", error.message); return false; }
+    _cloudHatteDaten = !leer;
     const serverStamp = saved && saved.updated_at ? new Date(saved.updated_at).getTime() : NaN;
     localStorage.setItem("serband-sync-stamp", (isFinite(serverStamp) ? serverStamp : Date.now()) + "");
     // Sync-Status im Admin-Panel aktualisieren
@@ -3808,6 +3927,8 @@ async function pullPublicBookings() {
 /* Holt neue oder zu mir verschobene Schüler von der Fahrschule ab, und entfernt lokal Schüler,
    die zu einem anderen Fahrlehrer verschoben wurden - mit Hinweis-Toast in beide Richtungen. */
 let _schuelerAbrufLaeuft = false;
+let _termineAbrufLaeuft = false;
+let _termineFehlversuche = 0;
 /* Fristen vom Büro (Reaktivierung, Theorie). Nur im Speicher, nie in DB.students:
    sonst landeten die Felder beim nächsten Abgleich in schueler.ausbildung. */
 let _schuelerFristen = {};
@@ -3879,6 +4000,7 @@ async function pullSchuelerZuweisungen() {
   _schuelerAbrufLaeuft = true;
   try {
     const supa = getSupa();
+    const gen = _abglGen;
     const { data: rows, error: schErr } = await supa.from("schueler").select("*").eq("fahrlehrer_id", _authUser.id).eq("status", "aktiv");
     if (schErr) throw schErr;
     _merkeFristen(rows);
@@ -3916,6 +4038,20 @@ async function pullSchuelerZuweisungen() {
         neu.push(r);
       }
     }
+    // Name und Telefon pflegt das Büro: Hat dieses Gerät den Schüler seit dem letzten Abgleich nicht selbst
+    // geändert, gilt der Stand vom Büro (sonst schrieb die Brücke den alten Namen zurück).
+    // (Neue Schüler kommen bewusst nicht ins Gedächtnis: die Brücke lädt ihren vollen Ausbildungsstand einmal hoch.)
+    const memS = _abglLaden(); const neuIds = new Set(neu.map(r => r.id)); let namenNeu = false;
+    for (const r of (gen === _abglGen ? (rows||[]) : [])) { // Brücke hat inzwischen geschrieben: Namen erst nächste Runde
+      const lok = DB.students.find(x => x.id === r.id); if (!lok) continue;
+      if (neuIds.has(r.id)) continue;
+      const bekannt = memS.schueler[r.id];
+      if (bekannt && bekannt !== _abglWertVon("schueler", lok)) continue; // selbst geändert: eigener Stand gilt
+      const n = (r.name && !(r.name === "(ohne Namen)" && !lok.name)) ? r.name : lok.name, t = r.telefon || "";
+      if (n !== lok.name || t !== (lok.telefon || "")) { lok.name = n; lok.telefon = t; memS.schueler[r.id] = _abglWertVon("schueler", lok); namenNeu = true; }
+    }
+    _abglSpeichern(memS);
+    _schuelerAbgerufen = true;
     // Notizen erst jetzt: neue Schüler sind dann schon in DB.students, das Popup kann ihren Namen nennen
     try{ await pullBueroNotizen(supa,(rows||[]).map(r=>r.id)); }catch(e){ console.warn("[Kompass] Büro-Notizen nicht geladen:",e.message); }
     const { data: weg, error: wegErr } = await supa.from("schueler_verschiebungen").select("*").eq("von_fahrlehrer_id", _authUser.id).eq("gesehen_von_alt", false);
@@ -3935,7 +4071,8 @@ async function pullSchuelerZuweisungen() {
     for (const v of (zu||[])) {
       await supa.from("schueler_verschiebungen").update({ gesehen_von_neu: true }).eq("id", v.id);
     }
-    if (umschreiberNeu && !neu.length) save();
+    _schuelerAbgerufen = true;
+    if ((umschreiberNeu || namenNeu) && !neu.length) save();
     if (neu.length) {
       save();
       toast(neu.length===1 ? `🔔 Neuer Schüler von der Fahrschule: ${neu[0].name}` : `🔔 ${neu.length} neue Schüler von der Fahrschule`);
@@ -3950,45 +4087,84 @@ async function pullSchuelerZuweisungen() {
 /* Holt Kalender-Änderungen von der Fahrschule (neue/geänderte/gelöschte Termine) ab.
    "Zuletzt geändert gewinnt" pro Termin, via aktualisiert_am - dein Kalender bleibt sonst unangetastet. */
 async function pullTermineZuweisungen() {
-  if (!_authUser || !_authProfile || !_authProfile.fahrschule_id || !DB.lessons || _fsAgg) return;
+  if (!_authUser || !_authProfile || !_authProfile.fahrschule_id || !DB.lessons || _fsAgg || _termineAbrufLaeuft) return;
+  _termineAbrufLaeuft = true;
   try {
     const supa = getSupa();
-    // Fehler abbrechen lassen: sonst gälte eine leere Antwort als "alles gelöscht" und der Kalender würde geleert.
-    const { data: rows, error: termErr } = await supa.from("kalender_termine").select("*").eq("fahrlehrer_id", _authUser.id).eq("geloescht", false);
-    if (termErr || !Array.isArray(rows)) throw (termErr || new Error("keine Antwort"));
-    const localById = {};
-    DB.lessons.forEach(l => { localById[l.id] = l; });
-    let neu = 0, geaendert = 0;
-    for (const r of (rows||[])) {
-      const remoteTime = new Date(r.aktualisiert_am).getTime();
-      const local = localById[r.id];
-      const merged = Object.assign({ sid: r.schueler_id, date: r.datum, von: r.von, bis: r.bis, art: r.art, fahrzeug: r.fahrzeug, status: r.status }, r.payload || {});
-      if (!local) {
-        DB.lessons.push(Object.assign({ id: r.id }, merged, { _syncedAt: remoteTime }));
-        neu++;
-      } else if (!local._syncedAt || remoteTime > local._syncedAt) {
-        Object.assign(local, merged, { _syncedAt: remoteTime });
-        geaendert++;
-      }
-    }
-    const remoteIds = new Set((rows||[]).map(r => r.id));
+    const gen = _abglGen;
+    // Seitenweise lesen (mehr als 1000 Termine). Fehler brechen ab: sonst gälte eine leere Antwort als "alles gelöscht".
+    const rows = await _alleSeiten(() => supa.from("kalender_termine").select("*").eq("fahrlehrer_id", _authUser.id).eq("geloescht", false));
+    const remoteIds = new Set(rows.map(r => r.id));
     // Termine, die das Büro einem anderen Fahrlehrer gegeben hat, sieht man selbst nicht mehr (RLS) -
     // die Datenbank sagt, welche der eigenen IDs inzwischen jemand anderem gehören.
+    // (Vor dem Lesen des Gedächtnisses: nach dem letzten await darf es sich nicht mehr ändern.)
     const unklar = DB.lessons.filter(l => !remoteIds.has(l.id) && !l._syncedAt && l.id).map(l => l.id);
     let weggegeben = new Set();
     if (unklar.length) {
       const { data: fremd, error: fErr } = await supa.rpc("termine_nicht_mehr_meine", { p_ids: unklar });
       if (!fErr && Array.isArray(fremd)) weggegeben = new Set(fremd);
     }
-    const vorher = DB.lessons.length;
-    DB.lessons = DB.lessons.filter(l => !weggegeben.has(l.id) && (remoteIds.has(l.id) || !l._syncedAt));
-    const entfernt = vorher - DB.lessons.length;
+    // Hat eine Brücke geschrieben, während gelesen wurde, sind die Zeilen schon veraltet: Runde verwerfen.
+    if (gen !== _abglGen) return;
+    const localById = {};
+    DB.lessons.forEach(l => { localById[l.id] = l; });
+    const mem = _abglLaden();
+    let neu = 0, geaendert = 0, merker = false;
+    for (const r of rows) {
+      const remoteTime = new Date(r.aktualisiert_am).getTime();
+      const local = localById[r.id];
+      const merged = Object.assign({ sid: r.schueler_id, date: r.datum, von: r.von, bis: r.bis, art: r.art, fahrzeug: r.fahrzeug, status: r.status }, r.payload || {});
+      if (!local) {
+        const l = Object.assign({ id: r.id }, merged, { _syncedAt: remoteTime });
+        DB.lessons.push(l); mem.termine[r.id] = _abglWertVon("termine", l);
+        neu++;
+        continue;
+      }
+      const wertLokal = _abglWertVon("termine", local);
+      const wertServer = _abglWertVon("termine", Object.assign({ id: r.id }, merged));
+      if (wertServer === wertLokal) {
+        // Gleicher Inhalt: nur merken, dass er abgeglichen ist.
+        if (mem.termine[r.id] !== wertLokal) { mem.termine[r.id] = wertLokal; merker = true; }
+        if (!local._syncedAt || remoteTime > local._syncedAt) { local._syncedAt = remoteTime; merker = true; }
+        continue;
+      }
+      const bekannt = mem.termine[r.id];
+      // Hat dieses Gerät den Termin seit dem letzten Abgleich selbst geändert, gilt die eigene Änderung -
+      // die Brücke lädt sie gleich hoch.
+      if (bekannt && bekannt !== wertLokal) continue;
+      // Kennt das Gerät seinen letzten Stand, steht fest: der Server hat etwas Neues (vom Büro) - unabhängig
+      // von der Uhrzeit des Geräts. Ohne Gedächtnis entscheidet die Zeit.
+      if (bekannt || !local._syncedAt || remoteTime > local._syncedAt) {
+        Object.assign(local, merged, { _syncedAt: remoteTime });
+        mem.termine[r.id] = _abglWertVon("termine", local);
+        geaendert++;
+      }
+    }
+    // Sicherheitssperre: Kommt gar nichts zurück, obwohl das Gerät viele abgeglichene Termine hat,
+    // ist das eher ein Lese-Problem (z.B. abgelaufene Anmeldung) als eine echte Löschung.
+    const abgeglichen = DB.lessons.filter(l => l._syncedAt).length;
+    const vorherAnzahl = DB.lessons.length;
+    if (rows.length || abgeglichen <= 3) {
+      DB.lessons = DB.lessons.filter(l => {
+        const bleibt = !weggegeben.has(l.id) && (remoteIds.has(l.id) || !l._syncedAt);
+        if (!bleibt) delete mem.termine[l.id];
+        return bleibt;
+      });
+    } else console.warn("[Kompass] Kalender-Abgleich: Server liefert keine Termine - lokal wird nichts entfernt.");
+    const entfernt = vorherAnzahl - DB.lessons.length;
+    _abglSpeichern(mem);
+    _termineAbgerufen = true;
     if (neu || geaendert || entfernt) {
       save();
       if (neu) toast(neu===1 ? "🔔 1 neuer Termin von der Fahrschule" : `🔔 ${neu} neue Termine von der Fahrschule`);
       else toast("Kalender von der Fahrschule aktualisiert");
-    }
-  } catch (e) { console.warn("[Kompass] Kalender-Abgleich fehlgeschlagen:", e.message); }
+    } else if (merker) _lokalAblegen(); // nur _syncedAt-Merker nachgeführt: lokal sichern, ohne neu hochzuladen
+    _termineFehlversuche = 0;
+  } catch (e) {
+    console.warn("[Kompass] Kalender-Abgleich fehlgeschlagen:", e.message);
+    if (++_termineFehlversuche === 5) toast("⚠ Kalender-Abgleich mit dem Büro klappt gerade nicht");
+  }
+  finally { _termineAbrufLaeuft = false; }
 }
 /* ---- Logout ---- */
 /* opts.alleGeraete: Sitzung überall beenden (muss dann auch klappen).
@@ -4278,18 +4454,31 @@ function _fsMapPruefung(row,lehrerName){
 let _fsAggGen=0;
 async function _fsLoadAggData(fahrschuleId){
   const gen=_fsAggGen;
+  // Stand beim Start merken: Ändert jemand während des Ladens etwas, wird nicht ersetzt (sonst wäre es weg).
+  const standVorher=_fsAgg?JSON.stringify([DB.students,DB.lessons,DB.exams]):null;
   const supa=getSupa();
-  const [fsR,lehrerR,schuelerR,termineR,pruefungenR,fahrzeugeR,paketeR,urlaubR]=await Promise.all([
-    supa.from("fahrschulen").select("*").eq("id",fahrschuleId).single(),
-    supa.from("profiles").select("*").eq("fahrschule_id",fahrschuleId).in("rolle",["fahrlehrer","super_admin"]).order("email"),
-    supa.from("schueler").select("*").eq("fahrschule_id",fahrschuleId).neq("status","geloescht"),
-    supa.from("kalender_termine").select("*").eq("fahrschule_id",fahrschuleId).eq("geloescht",false),
-    supa.from("kalender_pruefungen").select("*").eq("fahrschule_id",fahrschuleId).eq("geloescht",false),
-    supa.from("fahrschule_fahrzeuge").select("*").eq("fahrschule_id",fahrschuleId).eq("aktiv",true).order("erstellt_am"),
-    supa.from("fahrschule_pakete").select("*").eq("fahrschule_id",fahrschuleId),
-    supa.from("fahrschule_urlaub").select("*").eq("fahrschule_id",fahrschuleId).gte("bis",todayISO())
-  ]);
+  // Schüler, Termine und Prüfungen seitenweise (mehr als 1000 Zeilen). Schlägt eine Abfrage fehl, bleibt der
+  // bisherige Stand stehen - sonst sähe die Ansicht leer aus und ungespeicherte Änderungen wären weg.
+  let fsR,lehrerR,schuelerR,termineR,pruefungenR,fahrzeugeR,paketeR,urlaubR;
+  try{
+    [fsR,lehrerR,schuelerR,termineR,pruefungenR,fahrzeugeR,paketeR,urlaubR]=await Promise.all([
+      supa.from("fahrschulen").select("*").eq("id",fahrschuleId).single(),
+      supa.from("profiles").select("*").eq("fahrschule_id",fahrschuleId).in("rolle",["fahrlehrer","super_admin"]).order("email"),
+      _alleSeiten(()=>supa.from("schueler").select("*").eq("fahrschule_id",fahrschuleId).neq("status","geloescht")).then(data=>({data})),
+      _alleSeiten(()=>supa.from("kalender_termine").select("*").eq("fahrschule_id",fahrschuleId).eq("geloescht",false)).then(data=>({data})),
+      _alleSeiten(()=>supa.from("kalender_pruefungen").select("*").eq("fahrschule_id",fahrschuleId).eq("geloescht",false)).then(data=>({data})),
+      supa.from("fahrschule_fahrzeuge").select("*").eq("fahrschule_id",fahrschuleId).eq("aktiv",true).order("erstellt_am"),
+      supa.from("fahrschule_pakete").select("*").eq("fahrschule_id",fahrschuleId),
+      supa.from("fahrschule_urlaub").select("*").eq("fahrschule_id",fahrschuleId).gte("bis",todayISO())
+    ]);
+    if(lehrerR.error) throw lehrerR.error;
+  }catch(e){
+    console.warn("[Kompass] Fahrschul-Daten nicht geladen:",e.message);
+    toast("Laden fehlgeschlagen – Verbindung prüfen");
+    return false;
+  }
   if(gen!==_fsAggGen)return false;
+  if(standVorher!==null&&standVorher!==JSON.stringify([DB.students,DB.lessons,DB.exams])){ _fsSyncAggChanges(); return false; }
   const lehrer=lehrerR.data||[];
   const lehrerName=id=>{ const l=lehrer.find(x=>x.id===id); return l?(l.name||l.email):"Unbekannt"; };
   DB.students=(schuelerR.data||[]).map(r=>_fsMapSchueler(r,lehrerName));
@@ -4320,22 +4509,43 @@ async function _fsLoadAggData(fahrschuleId){
 let _fsRefreshTimer=null;
 async function _fsEnterAggMode(fahrschuleId){
   _fsAggGen++;
-  if(_fsPersonalBackup===null){
+  const meinGen=_fsAggGen;
+  const neuGesichert=_fsPersonalBackup===null;
+  if(neuGesichert){
     _fsPersonalBackup={students:DB.students,lessons:DB.lessons,exams:DB.exams};
   }
-  if(!(await _fsLoadAggData(fahrschuleId)))return; // inzwischen wieder verlassen
+  if(!(await _fsLoadAggData(fahrschuleId))){
+    // Nicht in die Gesamtansicht gekommen: die Sicherung der eigenen Daten wieder freigeben, sonst würde
+    // ein späteres Umschalten diesen alten Stand über die inzwischen gemachten Änderungen legen.
+    // Nur, wenn kein neuerer Versuch läuft (Doppeltipp): der braucht die Sicherung noch.
+    if(neuGesichert&&!_fsAgg&&meinGen===_fsAggGen) _fsPersonalBackup=null;
+    return false;
+  }
   _fsSetDrawer(true);
   routeFahrschuleDashboard();
   clearInterval(_fsRefreshTimer);
   _fsRefreshTimer=setInterval(()=>_fsRefreshAggData(),120000);
+  return true;
 }
-function _fsExitAggMode(){
+let _fsExitLaeuft=false;
+async function _fsExitAggMode(){
+  if(_fsExitLaeuft)return;
+  _fsExitLaeuft=true;
+  try{ await _fsExitAggModeJetzt(); }finally{ _fsExitLaeuft=false; }
+}
+async function _fsExitAggModeJetzt(){
+  // Noch nicht geschriebene Änderungen erst speichern - sonst gingen sie beim Umschalten verloren.
+  if(_fsAgg&&(_fsSyncDebounce||_fsUngespeichert)){
+    clearTimeout(_fsSyncDebounce);
+    if(!(await _fsSyncAggJetzt())&&!confirm("Nicht alle Änderungen konnten gespeichert werden. Trotzdem zur eigenen Ansicht wechseln? Ungespeichertes geht dann verloren."))return;
+  }
   _fsAggGen++;
   clearInterval(_fsRefreshTimer);
   if(_fsPersonalBackup){
     DB.students=_fsPersonalBackup.students; DB.lessons=_fsPersonalBackup.lessons; DB.exams=_fsPersonalBackup.exams;
     _fsPersonalBackup=null;
   }
+  _fsUngespeichert=false; _fsNurOhneLehrer=false;
   _fsAgg=null; _fsBaseline=null; _fsCalFahrzeugFilter=[]; _fsCalLehrerFilter=[]; _fsCalBueroFilter=[]; _fsFilterPanelOpen=false; _fsTileOpen={fahrzeug:false,lehrer:false};
   document.getElementById("fsCalTiles")?.remove();
   _fsSetDrawer(false);
@@ -4343,7 +4553,21 @@ function _fsExitAggMode(){
 }
 async function _fsRefreshAggData(){
   if(!_fsAgg)return;
-  await _fsLoadAggData(_fsAgg.fahrschuleId);
+  // Ungespeicherte Änderungen zuerst schreiben. Klappt das nicht, wird nicht neu geladen -
+  // das Neuladen würde sie sonst still verwerfen.
+  if(_fsSyncDebounce||_fsUngespeichert){
+    clearTimeout(_fsSyncDebounce);
+    if(!(await _fsSyncAggJetzt())&&!_fsNurOhneLehrer)return;
+  }
+  // Einträge ohne Fahrlehrer gibt es noch nicht in der Datenbank: über das Neuladen hinweg behalten.
+  const basisT=new Set((_fsBaseline&&_fsBaseline.lessons||[]).map(l=>l.id)), basisP=new Set((_fsBaseline&&_fsBaseline.exams||[]).map(e=>e.id));
+  const offenT=_fsNurOhneLehrer?(DB.lessons||[]).filter(l=>!l._synthetic&&!basisT.has(l.id)):[];
+  const offenP=_fsNurOhneLehrer?(DB.exams||[]).filter(e=>!basisP.has(e.id)):[];
+  if(!_fsAgg)return;
+  if(await _fsLoadAggData(_fsAgg.fahrschuleId)){
+    if(offenT.length) DB.lessons=[...DB.lessons,...offenT];
+    if(offenP.length) DB.exams=[...DB.exams,...offenP];
+  }
 }
 function _fsSuperAdminToggleBtn(){
   if(!isSuperAdmin())return "";
@@ -5870,7 +6094,7 @@ window.addEventListener("load", () => {
 const STORE_KEY="serband-app-v1";
 /* Build-Version: bei jeder Auslieferung hier das Datum aktualisieren.
    Wird in den Einstellungen angezeigt + für den Update-Hinweis genutzt. */
-const APP_VERSION="2026.10.09.8";
+const APP_VERSION="2026.10.10.1";
 // Nutzungsbedingungen & Haftungsausschluss (Bereich: rechtliche Absicherung) - Version hochzählen
 // und alle Nutzer müssen erneut zustimmen, sobald sich der Text inhaltlich ändert.
 const AGB_VERSION="1.0";
@@ -5919,12 +6143,27 @@ const AGB_HTML=`
   if(_lokalerDatenEigentuemer()||_gespeicherteSupabaseSitzung())return;
   _lokaleNutzerdatenLoeschen();
 }catch(e){}})();
-function load(){try{return JSON.parse(localStorage.getItem(STORE_KEY))||{students:[]};}catch(e){return {students:[]};}}
+/* Ist der gespeicherte Stand beschädigt, startet die App leer - aber der kaputte Text wird aufgehoben
+   ("serband-db-defekt") und der nächste Abruf nimmt den Cloud-Stand, auch wenn er älter aussieht. */
+var _lokalDefekt=false;
+var _speicherVollGemeldet=false;
+function load(){
+  let roh=null; try{roh=localStorage.getItem(STORE_KEY);}catch(e){}
+  if(roh===null)return {students:[]};
+  try{const d=JSON.parse(roh); if(d&&typeof d==="object"&&!Array.isArray(d))return d;}catch(e){}
+  _lokalDefekt=true;
+  try{localStorage.setItem("serband-db-defekt",roh);}catch(e){}
+  try{localStorage.removeItem("serband-sync-stamp");}catch(e){}
+  return {students:[]};
+}
 let DB=load();
+if((DB.students&&DB.students.length)||(DB.lessons&&DB.lessons.length)) _sitzungHatteDaten=true;
 function save(){
   if(_fsAgg){ _fsSyncAggChanges(); return; }
+  if((DB.students&&DB.students.length)||(DB.lessons&&DB.lessons.length)) _sitzungHatteDaten=true;
   if(_lokalerSpeicherGehoertAnderem()){ location.reload(); return; } // anderer Tab hat anderes Konto angemeldet
-  try{localStorage.setItem(STORE_KEY,JSON.stringify(DB));}catch(e){}
+  try{localStorage.setItem(STORE_KEY,JSON.stringify(DB));}
+  catch(e){ if(!_speicherVollGemeldet){ _speicherVollGemeldet=true; toast("⚠ Gerätespeicher voll – nur Cloud sichert"); } }
   if(_authUser&&_pullOk){clearTimeout(_saveSyncDebounce);_saveSyncDebounce=setTimeout(pushToCloud,4000);_syncSchuelerBridge();_syncTermineBridge();_syncPruefungenBridge();}
 }
 
@@ -5934,6 +6173,8 @@ function save(){
    NIEMALS pauschal beim gerade eingeloggten Admin. Neue Einträge ohne Fahrlehrer-Zuordnung
    landen automatisch im "nicht zugeordnet"-Pool statt bei irgendjemandem zu landen. */
 let _fsSyncDebounce=null;
+let _fsUngespeichert=false; // letzter Speicherversuch der Gesamtansicht hat nicht alles geschrieben
+let _fsNurOhneLehrer=false; // ... und zwar nur, weil Einträgen der Fahrlehrer fehlt (kein Verbindungsfehler)
 function _fsSyncAggChanges(){
   if(!_fsAgg||!_fsBaseline)return;
   clearTimeout(_fsSyncDebounce);
@@ -5951,12 +6192,16 @@ async function _fsSyncAggJetzt(){
       const nowIso=new Date().toISOString();
       const {data:sessionData}=await supa.auth.getSession();
       const meineId=sessionData&&sessionData.session?sessionData.session.user.id:null;
+      // Stand zu Beginn festhalten: Was während des Speicherns geändert wird, gilt NICHT als gespeichert
+      // und wird beim nächsten Lauf geschrieben.
+      const snap={students:JSON.parse(JSON.stringify(DB.students||[])),lessons:JSON.parse(JSON.stringify(DB.lessons||[])),exams:JSON.parse(JSON.stringify(DB.exams||[]))};
+      const ohneLehrerT=new Set(), ohneLehrerP=new Set();
 
       // ---- SCHÜLER ----
       const baseS={}; (_fsBaseline.students||[]).forEach(s=>baseS[s.id]=s);
-      const curSIds=new Set((DB.students||[]).map(s=>s.id));
+      const curSIds=new Set(snap.students.map(s=>s.id));
       const schuelerUpserts=[];
-      (DB.students||[]).forEach(s=>{
+      snap.students.forEach(s=>{
         const b=baseS[s.id];
         if(!b||JSON.stringify(s)!==JSON.stringify(b)){
           const {id,name,telefon,_fahrlehrerId,_fahrlehrerName,_paketId,_hatSimulator,_hatTheorieApp,_bogenAusgefuellt,bogen,...rest}=s;
@@ -5974,15 +6219,15 @@ async function _fsSyncAggJetzt(){
 
       // ---- TERMINE ---- (künstliche Einträge wie Urlaubs-Blöcke werden NIE zurückgeschrieben)
       const baseT={}; (_fsBaseline.lessons||[]).forEach(l=>{ if(!l._synthetic) baseT[l.id]=l; });
-      const curTIds=new Set((DB.lessons||[]).filter(l=>!l._synthetic).map(l=>l.id));
+      const curTIds=new Set(snap.lessons.filter(l=>!l._synthetic).map(l=>l.id));
       const termineUpserts=[];
-      (DB.lessons||[]).forEach(l=>{
+      snap.lessons.forEach(l=>{
         if(l._synthetic)return;
         const b=baseT[l.id];
         if(!b||JSON.stringify(l)!==JSON.stringify(b)){
           const {id,sid,date,von,bis,art,fahrzeug,status,_fahrlehrerId,_fahrlehrerName,...rest}=l;
           const zielLehrer=l._fahrlehrerId||(_fsAgg.lehrer.length===1?_fsAgg.lehrer[0].id:null);
-          if(!zielLehrer){ toast("⚠ Neuer Termin braucht einen Fahrlehrer — bitte über 'Alle Fahrlehrer' zuordnen."); return; }
+          if(!zielLehrer){ ohneLehrerT.add(l.id); return; }
           termineUpserts.push({
             id:l.id, fahrschule_id:_fsAgg.fahrschuleId, fahrlehrer_id:zielLehrer,
             schueler_id:l.sid||null, datum:l.date, von:l.von||null, bis:l.bis||null,
@@ -5997,14 +6242,14 @@ async function _fsSyncAggJetzt(){
 
       // ---- PRÜFUNGEN ----
       const baseP={}; (_fsBaseline.exams||[]).forEach(e=>baseP[e.id]=e);
-      const curPIds=new Set((DB.exams||[]).map(e=>e.id));
+      const curPIds=new Set(snap.exams.map(e=>e.id));
       const pruefungenUpserts=[];
-      (DB.exams||[]).forEach(e=>{
+      snap.exams.forEach(e=>{
         const b=baseP[e.id];
         if(!b||JSON.stringify(e)!==JSON.stringify(b)){
           const {id,sid,date,result,pruefer,attempt,_fahrlehrerId,_fahrlehrerName,...rest}=e;
           const zielLehrer=e._fahrlehrerId||(_fsAgg.lehrer.length===1?_fsAgg.lehrer[0].id:null);
-          if(!zielLehrer)return;
+          if(!zielLehrer){ ohneLehrerP.add(e.id); return; }
           pruefungenUpserts.push({
             id:e.id, fahrschule_id:_fsAgg.fahrschuleId, fahrlehrer_id:zielLehrer,
             schueler_id:e.sid||null, datum:e.date||null, result:e.result||null, pruefer:e.pruefer||null,
@@ -6017,11 +6262,19 @@ async function _fsSyncAggJetzt(){
       if(pruefungenUpserts.length) _fsPruefe(await supa.from("kalender_pruefungen").upsert(pruefungenUpserts,{onConflict:"id"}));
       if(pruefungenDeletes.length) _fsPruefe(await supa.from("kalender_pruefungen").update({geloescht:true,aktualisiert_am:nowIso}).in("id",pruefungenDeletes));
 
-      // Baseline auf den neuen Stand heben, damit der nächste Vergleich wieder stimmt
-      _fsBaseline={students:JSON.parse(JSON.stringify(DB.students)),lessons:JSON.parse(JSON.stringify(DB.lessons)),exams:JSON.parse(JSON.stringify(DB.exams))};
+      // Baseline auf den geschriebenen Stand heben. Einträge ohne Fahrlehrer wurden NICHT geschrieben:
+      // für sie bleibt der alte Vergleichsstand, damit sie beim nächsten Lauf wieder auffallen.
+      const altT={}; (_fsBaseline.lessons||[]).forEach(l=>altT[l.id]=l);
+      const altP={}; (_fsBaseline.exams||[]).forEach(e=>altP[e.id]=e);
+      const behalte=(liste,ohne,alt)=>liste.map(x=>ohne.has(x.id)?alt[x.id]:x).filter(Boolean);
+      _fsBaseline={students:snap.students,lessons:behalte(snap.lessons,ohneLehrerT,altT),exams:behalte(snap.exams,ohneLehrerP,altP)};
+      const ohne=ohneLehrerT.size+ohneLehrerP.size;
+      _fsNurOhneLehrer=ohne>0;
+      if(ohne){ _fsUngespeichert=true; toast(`⚠ ${ohne} ${ohne===1?"Eintrag":"Einträge"} ohne Fahrlehrer – bitte zuordnen`); return false; }
+      _fsUngespeichert=false;
       toast("Gespeichert ✓");
       return true;
-    }catch(e){ console.warn("[Kompass] Fahrschul-Speichern fehlgeschlagen:",e.message); toast("Fehler beim Speichern: "+e.message); return false; }
+    }catch(e){ _fsUngespeichert=true; _fsNurOhneLehrer=false; console.warn("[Kompass] Fahrschul-Speichern fehlgeschlagen:",e.message); toast("Fehler beim Speichern: "+e.message); return false; }
 }
 
 /* ===== Fahrschule-Synchronisations-Brücke =====
@@ -6038,78 +6291,47 @@ function _syncSchuelerBridge(){
   _schuelerSyncDebounce=setTimeout(async()=>{
     // Stand erst beim Auslösen lesen - und nie den Fahrschul-Bestand der Gesamtansicht.
     const P=_persoenlicheDaten(); if(!P||!Array.isArray(P.students)||_lokalerSpeicherGehoertAnderem())return;
+    // Erst nach einem Abruf schreiben: sonst überschriebe ein leeres Gedächtnis Büro-Änderungen.
+    if(!_schuelerAbgerufen){ setTimeout(_syncSchuelerBridge,6000); return; }
     try{
       const supa=getSupa();
-      const rows=P.students.map(s=>{
-        // Die Antworten des Fragebogens (bogen) bleiben privat beim eigenen Fahrlehrer - geteilt wird nur das Häkchen.
-        const {id,name,telefon,bogen,...rest}=s;
-        // Ausbildungsstand in % fürs Büro mitschicken (die Büro-Seite kennt den Ausbildungsplan nicht)
-        try{ rest.standPct=stand(s); }catch(e){}
-        return {
-          id:s.id, fahrschule_id:_authProfile.fahrschule_id, fahrlehrer_id:_authUser.id,
-          name:s.name||"(ohne Namen)", telefon:s.telefon||null,
-          bogen_ausgefuellt:!!s.bogen, status:"aktiv", ausbildung:rest
-        };
-      });
-      const geschrieben=rows.length?await _upsertRobust("schueler",rows,"id"):[];
+      // Nur geänderte Schüler hochladen; als gelöscht markieren nur, was dieses Gerät kannte.
+      // Die Antworten des Fragebogens (bogen) bleiben privat beim eigenen Fahrlehrer - geteilt wird nur das Häkchen.
+      const geschrieben=await _brueckeAbgleichen({ tabelle:"schueler", art:"schueler", eintraege:P.students, zeileVon:_schuelerZeile,
+        loeschWert:{status:"geloescht"}, aktivFilter:q=>q.neq("status","geloescht") });
       // Fragebogen privat, aber mit dem Schüler übertragbar: nur der aktuell zugeordnete Fahrlehrer kann ihn lesen.
       const boegen=P.students.filter(s=>geschrieben.includes(s.id)).map(s=>({schueler_id:s.id,bogen:s.bogen||null,aktualisiert_am:new Date().toISOString()}));
-      if(boegen.length) await _upsertRobust("schueler_privat",boegen,"schueler_id");
+      if(boegen.length){
+        const bogenOk=new Set(await _upsertRobust("schueler_privat",boegen,"schueler_id"));
+        // Fragebogen nicht angekommen: Schüler gilt als nicht abgeglichen, der nächste Lauf versucht es erneut.
+        const fehlt=boegen.filter(b=>!bogenOk.has(b.schueler_id));
+        if(fehlt.length){ const m=_abglLaden(); fehlt.forEach(b=>delete m.schueler[b.schueler_id]); _abglSpeichern(m); }
+      }
       // Auslastung fürs Fahrschule-Dashboard mitschicken (keine privaten Kalenderdaten, nur die Kennzahl)
       // capacityStats() rechnet auf DB - in der Gesamtansicht wäre das der Bestand aller Fahrlehrer.
       if(!_fsAgg) try{
         const cap=capacityStats();
         await supa.from("profiles").update({auslastung_pct:cap.auslastung, aktive_schueler_anzahl:cap.fahrend}).eq("id",_authUser.id);
       }catch(e2){}
-      // lokal gelöschte Schüler auch im geteilten Bereich als gelöscht markieren (Soft-Delete)
-      // Sicherheitssperre: bei leerem lokalem Schüler-Bestand wird nichts gelöscht (siehe Termine-Brücke).
-      const lokaleIds=P.students.map(s=>s.id);
-      const {data:meineRemote}=await supa.from("schueler").select("id").eq("fahrlehrer_id",_authUser.id).neq("status","geloescht");
-      if(lokaleIds.length===0&&(meineRemote||[]).length>0){
-        console.warn("[Kompass] Schüler-Sync: lokaler Bestand leer, Server hat "+meineRemote.length+" Schüler - Löschung sicherheitshalber übersprungen.");
-        return;
-      }
-      const zuLoeschen=(meineRemote||[]).map(r=>r.id).filter(id=>!lokaleIds.includes(id));
-      if(zuLoeschen.length) await supa.from("schueler").update({status:"geloescht"}).in("id",zuLoeschen);
     }catch(e){ console.warn("[Kompass] Fahrschul-Sync fehlgeschlagen:",e.message); }
   },4000);
 }
 
 /* ===== Kalender-Synchronisations-Brücke (gleiches Prinzip wie bei Schülern) =====
-   Spiegelt DB.lessons bei jeder Änderung in die geteilte "kalender_termine"-Tabelle.
-   Dein Kalender-Code selbst bleibt komplett unverändert - liest/schreibt weiter DB.lessons
-   wie immer, die Brücke läuft nur zusätzlich unsichtbar im Hintergrund mit. */
+   Spiegelt DB.lessons in die geteilte "kalender_termine"-Tabelle - aber nur Termine, die sich auf
+   diesem Gerät geändert haben. Nach dem Schreiben bekommt der Termin _syncedAt = Schreibzeit,
+   damit der nächste Abruf ihn nicht für eine Büro-Änderung hält (sonst lief der Abgleich im Kreis). */
 let _termineSyncDebounce=null;
 function _syncTermineBridge(){
   if(!_authUser||!_pullOk||!_authProfile||!_authProfile.fahrschule_id||!DB.lessons)return;
   clearTimeout(_termineSyncDebounce);
   _termineSyncDebounce=setTimeout(async()=>{
     const P=_persoenlicheDaten(); if(!P||!Array.isArray(P.lessons)||_lokalerSpeicherGehoertAnderem())return;
+    if(!_termineAbgerufen){ setTimeout(_syncTermineBridge,6000); return; }
     try{
-      const supa=getSupa();
-      const nowIso=new Date().toISOString();
-      const rows=P.lessons.map(l=>{
-        const {id,sid,date,von,bis,art,fahrzeug,status,_syncedAt,...rest}=l;
-        return {
-          id:l.id, fahrschule_id:_authProfile.fahrschule_id, fahrlehrer_id:_authUser.id,
-          schueler_id:l.sid||null, datum:l.date, von:l.von||null, bis:l.bis||null,
-          art:l.art||null, fahrzeug:l.fahrzeug||null, status:l.status||null,
-          geloescht:false, payload:rest, aktualisiert_am:nowIso
-        };
-      });
-      await _upsertRobust("kalender_termine",rows,"id");
-      // Sicherheitssperre gegen versehentliche Massenlöschung: wenn der lokale Kalender leer
-      // ist, obwohl der Server noch Termine hat, wird NICHTS gelöscht - ein leerer lokaler
-      // Zustand ist viel wahrscheinlicher ein Lade-/Verbindungsfehler als eine echte Absicht,
-      // alles zu löschen. Genau das hat am 18.08.26 200 Fahrstunden fälschlich gelöscht.
-      const lokaleIds=P.lessons.map(l=>l.id);
-      const {data:meineRemote}=await supa.from("kalender_termine").select("id").eq("fahrlehrer_id",_authUser.id).eq("geloescht",false);
-      if(lokaleIds.length===0&&(meineRemote||[]).length>0){
-        console.warn("[Kompass] Termine-Sync: lokaler Kalender leer, Server hat "+meineRemote.length+" Termine - Löschung sicherheitshalber übersprungen.");
-        return;
-      }
-      const zuLoeschen=(meineRemote||[]).map(r=>r.id).filter(id=>!lokaleIds.includes(id));
-      if(zuLoeschen.length) await supa.from("kalender_termine").update({geloescht:true,aktualisiert_am:nowIso}).in("id",zuLoeschen);
+      const geschrieben=await _brueckeAbgleichen({ tabelle:"kalender_termine", art:"termine", eintraege:P.lessons, zeileVon:_terminZeile,
+        loeschWert:{geloescht:true}, aktivFilter:q=>q.eq("geloescht",false) });
+      if(geschrieben.length) _lokalAblegen();
     }catch(e){ console.warn("[Kompass] Kalender-Sync fehlgeschlagen:",e.message); }
   },4000);
 }
@@ -6122,27 +6344,9 @@ function _syncPruefungenBridge(){
   _pruefungenSyncDebounce=setTimeout(async()=>{
     const P=_persoenlicheDaten(); if(!P||!Array.isArray(P.exams)||_lokalerSpeicherGehoertAnderem())return;
     try{
-      const supa=getSupa();
-      const nowIso=new Date().toISOString();
-      const rows=P.exams.map(ex=>{
-        const {id,sid,date,result,pruefer,attempt,_syncedAt,...rest}=ex;
-        return {
-          id:ex.id, fahrschule_id:_authProfile.fahrschule_id, fahrlehrer_id:_authUser.id,
-          schueler_id:ex.sid||null, datum:ex.date||null, result:ex.result||null, pruefer:ex.pruefer||null,
-          attempt:typeof ex.attempt==="number"?ex.attempt:null, geloescht:false, payload:rest, aktualisiert_am:nowIso
-        };
-      });
-      for(let i=0;i<rows.length;i+=200){
-        await supa.from("kalender_pruefungen").upsert(rows.slice(i,i+200),{onConflict:"id"});
-      }
-      const lokaleIds=P.exams.map(ex=>ex.id);
-      const {data:meineRemote}=await supa.from("kalender_pruefungen").select("id").eq("fahrlehrer_id",_authUser.id).eq("geloescht",false);
-      if(lokaleIds.length===0&&(meineRemote||[]).length>0){
-        console.warn("[Kompass] Prüfungen-Sync: lokaler Bestand leer, Server hat "+meineRemote.length+" Prüfungen - Löschung sicherheitshalber übersprungen.");
-        return;
-      }
-      const zuLoeschen=(meineRemote||[]).map(r=>r.id).filter(id=>!lokaleIds.includes(id));
-      if(zuLoeschen.length) await supa.from("kalender_pruefungen").update({geloescht:true,aktualisiert_am:nowIso}).in("id",zuLoeschen);
+      const geschrieben=await _brueckeAbgleichen({ tabelle:"kalender_pruefungen", art:"pruefungen", eintraege:P.exams, zeileVon:_pruefungZeile,
+        loeschWert:{geloescht:true}, aktivFilter:q=>q.eq("geloescht",false) });
+      if(geschrieben.length) _lokalAblegen();
     }catch(e){ console.warn("[Kompass] Prüfungen-Sync fehlgeschlagen:",e.message); }
   },4000);
 }
@@ -6350,6 +6554,13 @@ function countUp(el,target,suffix){
 }
 function toast(m){const t=$("#toast");t.textContent=m;t.classList.remove("undo");t.classList.add("show");clearTimeout(t._t);t._t=setTimeout(()=>t.classList.remove("show"),1900);}
 /* Undo-Toast: zeigt kurz eine Aktion + "Rückgängig"-Link (ca. 5s). onUndo wird bei Klick ausgeführt. */
+// Lädt den aktuellen Stand als Backup-Datei herunter (zusatz landet im Dateinamen).
+function _backupHerunterladen(zusatz){
+  const blob=new Blob([JSON.stringify({app:"serband",version:1,datum:new Date().toISOString(),data:DB},null,1)],{type:"application/json"});
+  const a=document.createElement("a");a.href=URL.createObjectURL(blob);
+  a.download="Fahrlehrer-Kompass_Backup_"+heute().d.replace(/\./g,"-")+(zusatz||"")+".json";a.click();
+  setTimeout(()=>URL.revokeObjectURL(a.href),60000);
+}
 function toastUndo(msg,onUndo,ms){
   const t=$("#toast"); ms=ms||5000;
   t.classList.add("undo","show");
@@ -9824,25 +10035,31 @@ function routeSettings(){
     <div style="text-align:center;padding:14px 0 4px;color:var(--muted);font-size:11.5px;opacity:.6;">Kompass · Version ${APP_VERSION}</div>
   </div>`;
   $("#expBtn").addEventListener("click",()=>{
-    try{
-      const blob=new Blob([JSON.stringify({app:"serband",version:1,datum:new Date().toISOString(),data:DB},null,1)],{type:"application/json"});
-      const a=document.createElement("a");a.href=URL.createObjectURL(blob);
-      a.download="Fahrlehrer-Kompass_Backup_"+heute().d.replace(/\./g,"-")+".json";a.click();
-      setTimeout(()=>URL.revokeObjectURL(a.href),1000);
-      localStorage.setItem("serband-backup-stamp",Date.now()+"");
-      toast("Backup erstellt ✓");
-    }catch(e){toast("Backup nicht möglich");}});
-  $("#impBtn").addEventListener("click",()=>$("#impFile").click());
+    try{ _backupHerunterladen(""); localStorage.setItem("serband-backup-stamp",Date.now()+""); toast("Backup erstellt ✓"); }
+    catch(e){toast("Backup nicht möglich");}});
+  $("#impBtn").addEventListener("click",()=>{
+    // In der Fahrschul-Gesamtansicht steht in DB der Bestand ALLER Fahrlehrer - ein Backup würde ihn ersetzen.
+    if(_fsAgg){ toast("Backup einspielen geht nur in deiner eigenen Ansicht"); return; }
+    $("#impFile").click();
+  });
   $("#impFile").addEventListener("change",e=>{
-    const f=e.target.files[0];if(!f)return;
+    const f=e.target.files[0]; e.target.value=""; if(!f||_fsAgg)return;
     const r=new FileReader();
     r.onload=()=>{try{
       const j=JSON.parse(r.result);
       if(!j||j.app!=="serband"||!j.data||typeof j.data!=="object"||!Array.isArray(j.data.students))throw 0;
       if(["lessons","exams","termine"].some(k=>k in j.data&&!Array.isArray(j.data[k])))throw 0;
       if(j.data.students.some(s=>!s||typeof s!=="object"||typeof s.id!=="string"||!/^[A-Za-z0-9_-]{1,64}$/.test(s.id)))throw 0;
-      if(confirm("Backup einspielen? Die aktuellen Daten werden ersetzt.")){
-        DB=j.data;ensureDB();save();toast("Backup eingespielt");routeDashboard();}
+      if(confirm("Backup einspielen? Die aktuellen Daten werden ersetzt. Dein jetziger Stand wird vorher als Datei gesichert.")){
+        // Erst den jetzigen Stand sichern - ohne Sicherung wird nichts ersetzt.
+        try{ _backupHerunterladen("_vor-Einspielen"); }catch(e2){ toast("Sicherung fehlgeschlagen – nichts geändert"); return; }
+        const vorher=JSON.stringify(DB);
+        DB=j.data;ensureDB();save();routeDashboard();
+        toastUndo("Backup eingespielt",()=>{ DB=JSON.parse(vorher);
+          // Ohne Merker gelten die Einträge als nicht abgeglichen: der Abruf entfernt sie nicht, die Brücke lädt sie wieder hoch.
+          (DB.lessons||[]).forEach(l=>delete l._syncedAt); (DB.exams||[]).forEach(x=>delete x._syncedAt);
+          ensureDB(); save(); routeDashboard(); toast("Alter Stand wiederhergestellt"); },10000);
+      }
     }catch(_){toast("Keine gültige Backup-Datei");}};
     r.readAsText(f);});
   document.querySelectorAll("[data-vis]").forEach(b=>b.addEventListener("click",()=>{
