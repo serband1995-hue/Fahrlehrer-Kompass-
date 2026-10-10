@@ -4717,8 +4717,10 @@ async function renderAdminPanel() {
 }
 
 async function toggleUser(userId, aktiv) {
+  if (!aktiv && !confirm("Diesen Zugang wirklich sperren? Die Person kann sich dann nicht mehr anmelden.")) return;
   const supa = getSupa();
-  await supa.from("profiles").update({ aktiv }).eq("id", userId);
+  const { error } = await supa.from("profiles").update({ aktiv }).eq("id", userId);
+  if (error) { toast("Nicht geändert: " + error.message); return; }
   renderAdminPanel();
 }
 
@@ -5150,8 +5152,10 @@ async function neueFahrschuleAnlegen(){
 }
 
 async function toggleFahrschuleAktiv(id,aktiv){
+  if(!aktiv&&!confirm("Die GANZE Fahrschule sperren? Alle Fahrlehrer und das Büro können sich dann nicht mehr anmelden."))return;
   const supa=getSupa();
-  await supa.from("fahrschulen").update({aktiv}).eq("id",id);
+  const {error}=await supa.from("fahrschulen").update({aktiv}).eq("id",id);
+  if(error){toast("Nicht geändert: "+error.message);return;}
   routeFahrschuleDetail(id);
 }
 
@@ -5293,6 +5297,7 @@ async function fahrlehrerPasswortZuruecksetzen(userId){
 }
 
 async function toggleFahrlehrerAktiv(userId,aktiv,fahrschuleId){
+  if(!aktiv&&!confirm("Diesen Fahrlehrer wirklich sperren?"))return;
   const supa=getSupa();
   const {error}=await supa.from("profiles").update({aktiv}).eq("id",userId);
   if(error){toast("Fehler: "+error.message);return;}
@@ -6177,14 +6182,15 @@ async function fsProvisionErfassen(){
   if(lehrer.length>1){
     const auswahl=lehrer.map((l,i)=>`${i+1} = ${l.name||l.email}`).join("\n");
     const wahl=prompt(`Welcher Fahrlehrer hat verkauft?\n${auswahl}`);
+    if(wahl===null)return; // abgebrochen: nichts erfassen
     const idx=parseInt(wahl)-1;
-    if(!isNaN(idx)&&lehrer[idx])fahrlehrerId=lehrer[idx].id;
+    if(isNaN(idx)||!lehrer[idx]){ toast("Bitte eine Nummer aus der Liste eingeben"); return; }
+    fahrlehrerId=lehrer[idx].id;
   }
   const typ=(prompt("Was wurde verkauft (z.B. Simulator, Theorie-App)?","Simulator")||"Simulator").trim();
   const betrag=parseFloat((prompt("Provisionsbetrag in Euro:")||"").replace(",","."));
-  if(!betrag||isNaN(betrag))return;
+  if(!(betrag>0)){ if(betrag!==undefined&&!isNaN(betrag))toast("Der Betrag muss größer als 0 sein"); return; }
   const supa=getSupa();
-  const {data:sessionData}=await supa.auth.getSession();
   const {error}=await supa.from("provisionen").insert({
     fahrlehrer_id:fahrlehrerId, fahrschule_id:_fsAgg.fahrschuleId, typ, betrag, status:"offen"
   });
@@ -6445,7 +6451,7 @@ window.addEventListener("load", () => {
 const STORE_KEY="serband-app-v1";
 /* Build-Version: bei jeder Auslieferung hier das Datum aktualisieren.
    Wird in den Einstellungen angezeigt + für den Update-Hinweis genutzt. */
-const APP_VERSION="2026.10.10.4";
+const APP_VERSION="2026.10.10.5";
 try{const f=document.getElementById("drawerFoot"); if(f)f.textContent="Fahrlehrer-Kompass · Version "+APP_VERSION;}catch(e){}
 // Nutzungsbedingungen & Haftungsausschluss (Bereich: rechtliche Absicherung) - Version hochzählen
 // und alle Nutzer müssen erneut zustimmen, sobald sich der Text inhaltlich ändert.
@@ -7194,7 +7200,7 @@ function routeHome(){
       if(nav)nav.style.display="none";
       document.querySelectorAll(".alpha-anchor").forEach(a=>a.style.display="none");
       let n=0;
-      document.querySelectorAll("#studentGrid .s-card").forEach(c=>{const hit=(c.dataset.name||"").indexOf(q)>=0;c.style.display=hit?"":"none";if(hit)n++;});
+      document.querySelectorAll("#studentGrid .s-card").forEach(c=>{const hit=matchStudent(c.dataset.name,q);c.style.display=hit?"":"none";if(hit)n++;});
       const wb=$("#wartendBox"); if(wb&&n)wb.open=true;
       nh.style.display=n?"none":"block";sc.style.display="block";
     } else {
@@ -7458,7 +7464,9 @@ function routeDetail(id){
     </div>
   </div>`;
   animateRings();
-  if(done)setTimeout(()=>celebrate(),420);
+  // Konfetti nur einmal, wenn der Schüler 100 % erreicht - nicht bei jedem Öffnen der Akte.
+  if(done&&!s.gefeiert){ s.gefeiert=true; save(); setTimeout(()=>celebrate(),420); }
+  if(!done&&s.gefeiert){ delete s.gefeiert; save(); }
   $("#backBtn").addEventListener("click",routeHome);
   $("#editBtn").addEventListener("click",()=>formView(s));
   const prb=$("#pruefReifBtn"); if(prb)prb.addEventListener("click",()=>{ s.pruefungsreifManuell=!s.pruefungsreifManuell; save(); routeDetail(id); });
@@ -7466,6 +7474,8 @@ function routeDetail(id){
   _fillAkademieFortschritt(s);
   $("#delBtn").addEventListener("click",()=>{
     if(confirm("Diesen Schüler wirklich löschen? Das kann nicht rückgängig gemacht werden.")){
+      // Termine und Prüfungen bleiben im Kalender - mit Namen, auch ohne Schülerdatei.
+      const weg=DB.students.find(x=>x.id===id); if(weg){ (DB.lessons||[]).forEach(l=>{ if(l.sid===id&&!l.name)l.name=weg.name; }); (DB.exams||[]).forEach(ex=>{ if(ex.sid===id&&!ex.name)ex.name=weg.name; }); }
       DB.students=DB.students.filter(x=>x.id!==id);save();toast("Schüler gelöscht");routeHome();}});
   // Sehhilfe Toggle
   $("#sehhilfeBtn").addEventListener("click",()=>{
@@ -7480,7 +7490,7 @@ function routeDetail(id){
   document.querySelectorAll("#dashFormPills .pill").forEach(b=>b.addEventListener("click",()=>{ s.form=b.dataset.form; save(); toast("Klasse: "+formLabel(s.form)); routeDetail(id); }));
   // Theorie-/Umschreiber-/Pausiert-Toggles (aus dem Ausbildungsplan hierher verschoben)
   const dtt=$("#dashTheoToggle"); if(dtt)dtt.addEventListener("click",()=>{
-    pl.theorie=!pl.theorie; if(pl.theorie){ delete s.wartelisteRaus; if(!s.theoryPassed)s.theoryPassed=new Date().toISOString(); logHist(s,"theorie","Theorieprüfung bestanden"); if(stand(s)>=90&&!s.ready&&!s.passed){ s.ready=s.theoryPassed; toast("Theorie bestanden – auf die Praxis-Warteliste gesetzt"); } else if(stand(s)<90&&!s.ready&&!s.passed){ toast("Theorie bestanden – erst ab 90 % kommt er auf die Warteliste"); } if(s.theorieWait)s.theorieWaitBis=new Date().toISOString(); delete s.theorieWait; } else { if(s.ready&&s.ready===s.theoryPassed&&!s.pruefungsreifManuell)delete s.ready; delete s.theoryPassed; delete s.theorieWaitBis; } save(); routeDetail(id);
+    pl.theorie=!pl.theorie; if(pl.theorie){ delete s.wartelisteRaus; if(!s.theoryPassed)s.theoryPassed=new Date().toISOString(); if(!(s.hist||[]).some(h=>h.typ==="theorie"||h.type==="theorie"))logHist(s,"theorie","Theorieprüfung bestanden"); if(stand(s)>=90&&!s.ready&&!s.passed){ s.ready=s.theoryPassed; toast("Theorie bestanden – auf die Praxis-Warteliste gesetzt"); } else if(stand(s)<90&&!s.ready&&!s.passed){ toast("Theorie bestanden – erst ab 90 % kommt er auf die Warteliste"); } if(s.theorieWait)s.theorieWaitBis=new Date().toISOString(); delete s.theorieWait; } else { if(s.ready&&s.ready===s.theoryPassed&&!s.pruefungsreifManuell)delete s.ready; delete s.theoryPassed; delete s.theorieWaitBis; } save(); routeDetail(id);
   });
   const dwt=$("#dashTheorieWaitToggle"); if(dwt)dwt.addEventListener("click",()=>{
     if(s.theorieWait){ delete s.theorieWait; delete s.theorieWaitBis; toast("Fahrstunden wieder aufgenommen"); } else { s.theorieWait=new Date().toISOString(); toast("Pausiert – wartet auf Theorie"); }
@@ -12020,7 +12030,7 @@ function ensureDB(){ let _ensureDirty=false; if(!Array.isArray(DB.exams))DB.exam
 }
 function ensurePruefer(nm){ if(!DB.prueferData[nm])DB.prueferData[nm]={behoerde:"",tags:[],routen:[],notiz:"",created:Date.now()}; return DB.prueferData[nm]; }
 /* Statistik pro Prüfer aus den Prüfungen ableiten */
-function prueferStats(nm){ const ex=DB.exams.filter(e=>e.pruefer===nm); const q=quoteOf(ex); const dates=ex.map(e=>e.date).filter(Boolean).sort(); const last=dates.length?dates[dates.length-1]:null; return {total:ex.filter(istPruefung).length,last,quote:q,faults:faultCounts(ex).slice(0,3),eingriff:eingriffQuote(ex)}; }
+function prueferStats(nm){ const ex=DB.exams.filter(e=>e.pruefer===nm); const q=quoteOf(ex); const dates=ex.filter(istPruefung).map(e=>e.date).filter(Boolean).sort(); const last=dates.length?dates[dates.length-1]:null; return {total:ex.filter(istPruefung).length,last,quote:q,faults:faultCounts(ex).slice(0,3),eingriff:eingriffQuote(ex)}; }
 ensureDB();
 
 const FAULTS=[
@@ -12413,9 +12423,14 @@ function openExamPlanSheet(s){
   $("#epSave").addEventListener("click",()=>{
     const d=$("#epDate").value; if(!d){toast("Bitte Datum wählen");return;}
     const von=$("#epTime").value||"09:00";
+    if(d<todayISO()&&!confirm("Das Datum liegt in der Vergangenheit. Trotzdem setzen?"))return;
     if(!s.ready&&!s.passed){ setReady(s); }
+    // Alter Termin des Schülers: wird er dadurch leer, kommt er weg (sonst bliebe ein leerer Termin stehen).
+    const alt=terminFor(s.id);
     clearSlot(s.id);
-    let t=DB.termine.find(x=>x.date===d);
+    if(alt&&Array.isArray(alt.slots)&&alt.slots.every(x=>!x))DB.termine=DB.termine.filter(x=>x!==alt);
+    // Gleicher Tag UND gleiche Uhrzeit = derselbe Termin; andere Uhrzeit = eigener Termin (die gewählte Zeit gilt).
+    let t=DB.termine.find(x=>x.date===d&&(x.von||"09:00")===von);
     if(!t){ t={id:uid(),date:d,plaetze:1,slots:[s.id],von,bis:min2hm(hm2min(von)+PRUEF_MIN)}; DB.termine.push(t); }
     else { const free=t.slots.indexOf(null); if(free>=0)t.slots[free]=s.id; else {t.plaetze++;t.slots.push(s.id);} }
     save(); closeSheet(); toast("Prüfungstermin am "+isoDE(d)+" gesetzt"); routeDetail(s.id);
@@ -12624,6 +12639,8 @@ function renderExam(s){
     const et=$("#eingToggle"); if(et)et.addEventListener("click",()=>{ _examEingriff=!_examEingriff; et.classList.toggle("on",_examEingriff); const en=$("#eingNote"); if(en)en.style.display=_examEingriff?"block":"none"; });
   }
   $("#saveExam").addEventListener("click",()=>{
+    // Ohne Prüfer stimmt die Prüfer-Statistik nicht (wie beim Eintragen über die Tafel).
+    if(!_examPr){ toast("Bitte den Prüfer auswählen"); const w=$("#prWrap"); if(w)w.scrollIntoView({behavior:"smooth",block:"center"}); return; }
     const date=$("#exDate").value||todayISO();
     const noteEl=$("#exNote"); const note=noteEl?noteEl.value.trim():"";
     const en=$("#eingNote");
@@ -14112,7 +14129,7 @@ function routeArchive(){
       if(nav)nav.style.display="none";
       document.querySelectorAll("#archGrid .alpha-anchor").forEach(a=>a.style.display="none");
       let n=0;
-      document.querySelectorAll("#archGrid .wait-card").forEach(c=>{const hit=(c.dataset.name||"").indexOf(q)>=0;c.style.display=hit?"":"none";if(hit)n++;});
+      document.querySelectorAll("#archGrid .wait-card").forEach(c=>{const hit=matchStudent(c.dataset.name,q);c.style.display=hit?"":"none";if(hit)n++;});
       nh.style.display=n?"none":"block";sc.style.display="block";
     } else {
       if(nav&&list.length)nav.style.display="flex";
