@@ -145,6 +145,8 @@ function grundzustand(opts) {
   _authUser = { id: "fl-1" };
   _authProfile = { id: "fl-1", fahrschule_id: "fs-1", rolle: null };
   _pullOk = true;
+  // Wie nach dem Login: die Abrufe sind gelaufen, die Brücken dürfen schreiben.
+  try { _termineAbgerufen = true; _schuelerAbgerufen = true; _sitzungHatteDaten = false; } catch (e) {}
   try { _fsAgg = null; _fsPersonalBackup = null; } catch (e) {}
   try { _schuelerAbrufLaeuft = false; _schuelerFristen = {}; _bueroNotizen = {}; } catch (e) {}
   if (opts.db) DB = { students: [], lessons: [], exams: [], termine: [] };
@@ -357,7 +359,10 @@ fall("10 Leerer Stand wird nicht hochgeladen (Gerät startete leer, Cloud hat Da
   // Gerät ist leer und hält sich für aktueller (Stempel neuer) - z.B. leerer Speicher nach Neuinstallation.
   await ruf(() => { DB = { students: [], lessons: [], exams: [] }; _sitzungHatteDaten = false; localStorage.setItem("serband-sync-stamp", String(Date.parse("2026-10-10T08:00:00Z"))); });
   await ruf(() => pullFromCloud());
-  if ((await dbIds("students")).length !== 0) return f("Vorbereitung: Cloud-Stand wurde geladen, Fall nicht nachgestellt");
+  // Ein leeres Gerät übernimmt den Cloud-Stand, auch wenn sein Stempel neuer ist.
+  if ((await dbIds("students")).length !== 2) f("Leeres Gerät hat den Cloud-Stand nicht übernommen");
+  // Schlug das Laden fehl und das Gerät ist weiter leer, darf es die Cloud nicht leeren.
+  await ruf(() => { DB = { students: [], lessons: [], exams: [] }; _sitzungHatteDaten = false; });
   await zaehlerNull();
   const r = await ruf(() => pushToCloud());
   const n = await zaehler("upserts", "snapshots");
@@ -369,6 +374,18 @@ fall("10 Leerer Stand wird nicht hochgeladen (Gerät startete leer, Cloud hat Da
   await ruf(() => { _sitzungHatteDaten = true; });
   const r2 = await ruf(() => pushToCloud());
   if (r2 !== true) f("Bewusst geleerter Stand wird nicht hochgeladen");
+});
+
+fall("10b Brücke wartet, bis der Kalender einmal abgerufen ist", async (f) => {
+  await neu();
+  await setzeTabelle("kalender_termine", [{ id: "T1", fahrschule_id: "fs-1", fahrlehrer_id: "fl-1", datum: "2026-11-03", von: "10:00", bis: "11:30", art: "fahrstunde", status: "abgesagt", geloescht: false, payload: {}, aktualisiert_am: "2026-10-10T09:00:00.000Z" }]);
+  await ruf(() => { _termineAbgerufen = false; DB.lessons = [{ id: "T1", date: "2026-11-03", von: "10:00", bis: "11:30", art: "fahrstunde", status: "geplant", _syncedAt: 1 }]; save(); });
+  await page.clock.runFor(12000);
+  const t = (await tabelle("kalender_termine")).find((r) => r.id === "T1");
+  if (t.status !== "abgesagt") f("Brücke hat vor dem Abruf die Büro-Absage überschrieben");
+  await ruf(() => pullTermineZuweisungen());
+  const lok = await ruf(() => DB.lessons.find((l) => l.id === "T1").status);
+  if (lok !== "abgesagt") f("Abruf hat die Absage nicht übernommen: " + lok);
 });
 
 fall("11 Über 1000 Termine: Abruf entfernt keinen lokalen Termin", async (f) => {
