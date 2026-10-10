@@ -84,7 +84,8 @@ for (const seite of SEITEN) {
 if (process.argv.length <= 2) {
   const ANSICHTEN = ["routeDashboard()", "routeHome()", "routeDetail('t1')", "routePlan('t1')", "routeHistorie('t1')", "routeNotes('t1')", "routeExam('t1')",
     "routeWaitlist()", "routeKalender()", "routePruefungen()", "routeStats()", "routeSettings()", "routeTodos()", "routeArchive()", "routeArbeitszeit()"];
-  for (const g of GROESSEN.slice(0, 2)) {
+  const APPGROESSEN = [GROESSEN[0], { name: "384 hoch", width: 384, height: 830 }, { name: "393 hoch", width: 393, height: 850 }, GROESSEN[1], GROESSEN[2]];
+  for (const g of APPGROESSEN) {
     const ctx = await browser.newContext({ viewport: { width: g.width, height: g.height }, isMobile: true, hasTouch: true });
     const page = await ctx.newPage();
     const jsFehler = [];
