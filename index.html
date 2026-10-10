@@ -185,7 +185,7 @@ input,select,textarea{font-family:inherit;font-size:15px;color:var(--txt);}
 
 /* ===== SHELL ===== */
 .app{display:flex;flex-direction:column;height:100dvh;position:relative;overflow:hidden;z-index:1;}
-.topbar{display:grid;grid-template-columns:1fr auto 1fr;align-items:center;gap:10px;
+.topbar{display:grid;grid-template-columns:auto minmax(0,1fr) auto;align-items:center;gap:10px;
   padding:calc(12px + env(safe-area-inset-top)) var(--pad) 12px;
   border-bottom:1px solid var(--line-soft);position:relative;z-index:5;flex:0 0 auto;
   background:linear-gradient(180deg,rgba(12,20,16,.92),rgba(12,20,16,.55));backdrop-filter:blur(8px);}
@@ -193,7 +193,7 @@ input,select,textarea{font-family:inherit;font-size:15px;color:var(--txt);}
 .tb-left{justify-content:flex-start;}
 .tb-right{justify-content:flex-end;}
 /* Zentrales Logo als Home-Button */
-.tb-logo-btn{justify-self:center;display:flex;align-items:center;justify-content:center;padding:0;
+.tb-logo-btn{justify-self:center;flex:0 0 auto;display:flex;align-items:center;justify-content:center;padding:0;
   transition:transform .16s var(--pop);}
 .tb-logo-btn:active{transform:scale(.9);}
 .tb-logo-wrap{width:50px;height:50px;border-radius:15px;display:flex;align-items:center;justify-content:center;overflow:hidden;
@@ -209,7 +209,20 @@ input,select,textarea{font-family:inherit;font-size:15px;color:var(--txt);}
 .icon-btn:active{transform:scale(.9);}
 .icon-btn svg{width:21px;height:21px;}
 .tb-title{font-family:'Playfair Display',serif;font-weight:600;letter-spacing:.01em;font-size:16px;
-  white-space:nowrap;overflow:hidden;text-overflow:ellipsis;color:var(--muted);text-align:right;}
+  white-space:nowrap;overflow:hidden;text-overflow:ellipsis;color:var(--muted);text-align:left;min-width:0;}
+/* Titel neben dem Logo in der Mitte: dort hat er auch bei 360 px genug Platz (rechts waren es nur ~35 px). */
+.tb-mitte{display:flex;align-items:center;justify-content:center;gap:10px;min-width:0;}
+@media (max-width:420px){
+  .topbar{gap:6px;}
+  .tb-mitte{gap:7px;}
+  .tb-logo-wrap{width:40px !important;height:40px !important;border-radius:12px;}
+  .topbar .icon-btn,.topbar .theme-btn{width:38px;height:38px;}
+  .tb-title{font-size:15px !important;}
+}
+/* Sehr schmal: lange Titel ("Prüfung eintragen") dürfen auf zwei Zeilen umbrechen statt abgeschnitten zu werden. */
+@media (max-width:380px){
+  .tb-title{font-size:14px !important;white-space:normal;line-height:1.15;hyphens:auto;-webkit-hyphens:auto;overflow-wrap:anywhere;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;}
+}
 .view{flex:1 1 auto;overflow-y:auto;overflow-x:hidden;-webkit-overflow-scrolling:touch;position:relative;}
 .view-inner{padding:var(--pad);padding-bottom:130px;}
 .view-wide{max-width:1100px;margin:0 auto;}
@@ -274,7 +287,7 @@ input,select,textarea{font-family:inherit;font-size:15px;color:var(--txt);}
 .stat .sl{font-size:11.5px;color:var(--muted);margin-top:4px;font-weight:600;letter-spacing:.02em;position:relative;z-index:1;}
 .brush{height:2px;margin:22px 0 18px;background:linear-gradient(90deg,transparent,var(--glass-brd) 20%,var(--glass-brd) 80%,transparent);}
 .sec-h{font-family:'Playfair Display',serif;font-weight:600;font-size:clamp(24px,4.8vw,32px);letter-spacing:.01em;line-height:1.05;}
-.row-between{display:flex;align-items:baseline;justify-content:space-between;gap:12px;}
+.row-between{display:flex;align-items:baseline;justify-content:space-between;gap:12px;flex-wrap:wrap;}
 .count-pill{font-size:13px;color:var(--muted);font-weight:700;}
 .grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(272px,1fr));gap:14px;margin-top:16px;}
 .s-card{position:relative;overflow:hidden;background:linear-gradient(160deg,var(--glass),var(--glass-2));
@@ -702,8 +715,8 @@ input,select,textarea{font-family:inherit;font-size:15px;color:var(--txt);}
   transition:border-color .18s var(--ease),transform .14s var(--ease);animation:cardIn .45s var(--ease) both;}
 .wait-card:hover{border-color:var(--orange-line);}
 .wait-card:active{transform:scale(.985);}
-.pruef-tabs{display:flex;gap:7px;margin-bottom:16px;background:var(--bg-soft);border:1px solid var(--line);border-radius:13px;padding:4px;}
-.pt-tab{flex:1;padding:10px 6px;border-radius:10px;font-size:12.5px;font-weight:700;color:var(--muted);background:transparent;display:flex;align-items:center;justify-content:center;gap:5px;}
+.pruef-tabs{display:flex;flex-wrap:wrap;gap:7px;margin-bottom:16px;background:var(--bg-soft);border:1px solid var(--line);border-radius:13px;padding:4px;}
+.pt-tab{flex:1;min-width:0;padding:10px 6px;border-radius:10px;font-size:12.5px;font-weight:700;color:var(--muted);background:transparent;display:flex;align-items:center;justify-content:center;gap:5px;}
 .pt-tab.on{background:var(--gruen-soft);color:var(--mint);box-shadow:var(--inset-top);}
 .pt-cnt{font-size:10.5px;background:var(--surface-2);color:var(--muted);border-radius:10px;padding:1px 6px;font-weight:800;}
 .pt-tab.on .pt-cnt{background:var(--gruen-line);color:var(--mint);}
@@ -881,6 +894,7 @@ input,select,textarea{font-family:inherit;font-size:15px;color:var(--txt);}
 @keyframes conf{0%{opacity:1;transform:translateY(0) translateX(0) rotate(0);}100%{opacity:0;transform:translateY(66vh) translateX(calc(var(--x)*44vw)) rotate(var(--r));}}
 .toast{position:fixed;left:50%;bottom:calc(30px + env(safe-area-inset-bottom));transform:translateX(-50%) translateY(20px);
   background:#f2efe9;color:#1a1b1f;padding:13px 22px;border-radius:14px;font-weight:800;font-size:14px;
+  width:max-content;max-width:calc(100vw - 32px);box-sizing:border-box;text-align:center;line-height:1.35;
   box-shadow:0 12px 34px rgba(0,0,0,.45);opacity:0;pointer-events:none;transition:all .3s var(--ease);z-index:80;}
 .toast.show{opacity:1;transform:translateX(-50%) translateY(0);}
 .toast.undo{display:flex;align-items:center;gap:14px;pointer-events:auto;}
@@ -1322,7 +1336,7 @@ body.light .dt-n{background:linear-gradient(160deg,#1d3324 10%,#2f5d3f 90%);-web
 .risk-list{display:flex;flex-direction:column;gap:12px}
 
 /* ===== Kalender ===== */
-.cal-head{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:12px;}
+.cal-head{display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:10px;margin-bottom:12px;}
 .cal-viewbtn{display:inline-flex;align-items:center;gap:7px;font-family:'Playfair Display',serif;font-size:19px;font-weight:600;color:var(--txt);}
 .cal-today{padding:9px 18px;border-radius:22px;font-weight:800;font-size:13.5px;color:#eaf1ec;background:linear-gradient(160deg,var(--gruen-2,#3a7350),var(--gruen,#2f5d3f));border:1px solid rgba(150,200,165,.25);box-shadow:inset 0 1px 0 rgba(190,220,200,.2),0 4px 10px rgba(0,0,0,.3);}
 .cal-today:active{transform:scale(.95);}
@@ -2130,9 +2144,12 @@ body.light .fc-miss-sum b{color:#7a2a1e !important;}
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M15 18l-6-6 6-6"/></svg>
       </button>
     </div>
-    <button class="tb-logo-btn" id="homeBtn" aria-label="Zum Dashboard">
-      <span class="tb-logo-wrap"><img id="brandLogo" alt="Fahrlehrer-Kompass"></span>
-    </button>
+    <div class="tb-mitte">
+      <button class="tb-logo-btn" id="homeBtn" aria-label="Zum Dashboard">
+        <span class="tb-logo-wrap"><img id="brandLogo" alt="Fahrlehrer-Kompass"></span>
+      </button>
+      <div class="tb-title" id="tbTitle">Schüler</div>
+    </div>
     <div class="tb-side tb-right">
       <button class="icon-btn bell-btn" id="bellBtn" aria-label="Erinnerungen">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 8a6 6 0 0 0-12 0c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg>
@@ -2141,7 +2158,6 @@ body.light .fc-miss-sum b{color:#7a2a1e !important;}
       <button class="theme-btn" id="themeBtn" aria-label="Design wechseln">
         <svg id="themeIcon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="5"/><path d="M12 1v2M12 21v2M4.22 4.22l1.42 1.42M18.36 18.36l1.42 1.42M1 12h2M21 12h2M4.22 19.78l1.42-1.42M18.36 5.64l1.42-1.42"/></svg>
       </button>
-      <div class="tb-title" id="tbTitle">Schüler</div>
     </div>
   </header>
   <main class="view" id="view"></main>
@@ -2202,7 +2218,7 @@ body.light .fc-miss-sum b{color:#7a2a1e !important;}
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
       Einstellungen</button>
   </nav>
-  <div class="drawer-foot">Fahrlehrer-Kompass · v1.0 · läuft offline auf deinem Gerät</div>
+  <div class="drawer-foot" id="drawerFoot">Fahrlehrer-Kompass · läuft offline auf deinem Gerät</div>
 </aside>
 
 <div id="printRoot"></div>
@@ -6426,7 +6442,8 @@ window.addEventListener("load", () => {
 const STORE_KEY="serband-app-v1";
 /* Build-Version: bei jeder Auslieferung hier das Datum aktualisieren.
    Wird in den Einstellungen angezeigt + für den Update-Hinweis genutzt. */
-const APP_VERSION="2026.10.10.3";
+const APP_VERSION="2026.10.10.4";
+try{const f=document.getElementById("drawerFoot"); if(f)f.textContent="Fahrlehrer-Kompass · Version "+APP_VERSION;}catch(e){}
 // Nutzungsbedingungen & Haftungsausschluss (Bereich: rechtliche Absicherung) - Version hochzählen
 // und alle Nutzer müssen erneut zustimmen, sobald sich der Text inhaltlich ändert.
 const AGB_VERSION="1.0";
@@ -6888,7 +6905,7 @@ function countUp(el,target,suffix){
     if(k<1)requestAnimationFrame(step);}
   requestAnimationFrame(step);
 }
-function toast(m){const t=$("#toast");t.textContent=m;t.classList.remove("undo");t.classList.add("show");clearTimeout(t._t);t._t=setTimeout(()=>t.classList.remove("show"),1900);}
+function toast(m){const t=$("#toast");t.textContent=m;t.classList.remove("undo");t.classList.add("show");clearTimeout(t._t);t._t=setTimeout(()=>t.classList.remove("show"),Math.min(6000,Math.max(1900,String(m).length*65)));}
 /* Undo-Toast: zeigt kurz eine Aktion + "Rückgängig"-Link (ca. 5s). onUndo wird bei Klick ausgeführt. */
 // Lädt den aktuellen Stand als Backup-Datei herunter (zusatz landet im Dateinamen).
 function _backupHerunterladen(zusatz){
@@ -7412,17 +7429,17 @@ function routeDetail(id){
       <button class="akte-btn" data-go="profil"><div class="ab-ic">🧠</div><div class="ab-lab">Bogen</div></button>
       <button class="akte-btn" data-go="hist"><div class="ab-ic">🕐</div><div class="ab-lab">Historie</div></button>
     </div>
-    ${(letzteStunde&&themenDesTages(s,letzteStunde.date).gut.length+themenDesTages(s,letzteStunde.date).ueben.length>0)?`<button class="vortest-big" id="protokollBtn" style="background:#25D366;border:none;width:100%;cursor:pointer;">
+    ${(letzteStunde&&themenDesTages(s,letzteStunde.date).gut.length+themenDesTages(s,letzteStunde.date).ueben.length>0)?`<button class="vortest-big" id="protokollBtn" style="background:#0f7d6e;border:none;width:100%;cursor:pointer;">
       <div class="vb-ic">📤</div>
       <div class="vb-body"><div class="vb-name">Protokoll der letzten Stunde</div><div class="vb-sub">${isoDE(letzteStunde.date)} · was lief gut, was üben wir weiter</div></div>
       <div class="vb-arr">›</div>
     </button>`:""}
-    <button class="vortest-big" id="shareStandBtn" style="background:#25D366;border:none;width:100%;cursor:pointer;">
+    <button class="vortest-big" id="shareStandBtn" style="background:#0f7d6e;border:none;width:100%;cursor:pointer;">
       <div class="vb-ic">📤</div>
       <div class="vb-body"><div class="vb-name">Stand teilen</div><div class="vb-sub">Aktuellen Ausbildungsstand per WhatsApp schicken</div></div>
       <div class="vb-arr">›</div>
     </button>
-    <button class="vortest-big" id="waKontaktBtn" style="background:#25D366;border:none;width:100%;cursor:pointer;">
+    <button class="vortest-big" id="waKontaktBtn" style="background:#0f7d6e;border:none;width:100%;cursor:pointer;">
       <div class="vb-ic">💬</div>
       <div class="vb-body"><div class="vb-name">WhatsApp öffnen</div><div class="vb-sub">Frei schreiben, ohne festen Text</div></div>
       <div class="vb-arr">›</div>
@@ -10700,7 +10717,7 @@ function openEventSheet(kind,id,sid){
       ${(fcRelevant&&st&&l.date<=todayISO())?(()=>{
         const tg=themenDesTages(st,l.date);
         const n=tg.gut.length+tg.ueben.length;
-        return `<button class="es-act primary" id="esProtokoll" style="background:#25D366;border-color:#25D366;color:#fff;">📤 Stunde abschließen · Protokoll schicken${n?` <b>(${n} Thema${n===1?"":"en"})</b>`:""}</button>`;
+        return `<button class="es-act primary" id="esProtokoll" style="background:#0f7d6e;border-color:#0f7d6e;color:#fff;">📤 Stunde abschließen · Protokoll schicken${n?` <b>(${n} Thema${n===1?"":"en"})</b>`:""}</button>`;
       })():''}
       ${st?`<button class="es-act primary" id="esAkte">Schülerakte öffnen</button>`:''}
       ${fcRelevant&&sichtbar("fahrcheck")?`<button class="es-act" id="esFC">Fahrcheck · <b>${fcLab}</b></button>`:''}
@@ -11521,7 +11538,10 @@ function weekDayRowsHTML(iso){
   // ausgeblendeter) Termin wie Theorie oder Urlaub ihn belegt - gleiche Regel wie die Tagesansicht (dayFreeSlots).
   const feiertag=isHoliday(iso);
   const belegtVon=dayEvents(iso).filter(e=>e.status!=="abgebrochen"&&e.status!=="nicht erschienen");
-  const istBelegt=(sv,sb)=>feiertag||belegtVon.some(e=>{ const ev=hm2min(e.von),eb=hm2min(e.bis); return sv<eb&&sb>ev; });
+  // Vergangene Slots sind nicht mehr buchbar: kein "+ frei" an vergangenen Tagen bzw. Uhrzeiten.
+  const heuteIso=todayISO(), jetztMin=(()=>{ const d=new Date(); return d.getHours()*60+d.getMinutes(); })();
+  const vorbei=sv=>iso<heuteIso||(iso===heuteIso&&sv<jetztMin);
+  const istBelegt=(sv,sb)=>feiertag||vorbei(sv)||belegtVon.some(e=>{ const ev=hm2min(e.von),eb=hm2min(e.bis); return sv<eb&&sb>ev; });
   // Alle Items: Slots + Events zusammenführen und nach Zeit sortieren
   const items=[];
   slots.forEach(s=>{
@@ -11536,6 +11556,7 @@ function weekDayRowsHTML(iso){
   // Events außerhalb des Rasters ebenfalls nach Zeit einsortieren
   evs.forEach(e=>{ if(!used.has(e)) items.push({t:hm2min(e.von),html:calEventChip(e,iso)}); });
   items.sort((a,b)=>a.t-b.t);
+  if(!items.length)return `<div class="cw-empty">–</div>`;
   return items.map(i=>i.html).join("");
 }
 function sfKuerzel(e){ if(e.srcSonder){ const grp=e.srcSonder.split(":")[1]; return SF_KUERZEL[grp]||"SF"; } return "SF"; }
@@ -12620,7 +12641,7 @@ function routePruefungen(){
   const theorieList=theorieBestanden(); const praxisList=bereitFuerPraxis(); const waitList=theorieAusstehend();
   let html=`<div class="view-inner view-read fade-up">
     <div class="row-between" style="margin-bottom:14px;"><div class="sec-h">Prüf<span class="o">ungen</span></div>
-      <div style="display:flex;gap:8px;"><button class="mini-btn ghost" id="openPruefWoche">Diese Woche</button><button class="mini-btn ghost" id="openPruefer">Prüfer</button>${_pruefTab==='wait'?'<button class="mini-btn" id="addTheorieWait">+ Schüler</button>':'<button class="mini-btn" id="addTermin">+ Termin</button>'}</div></div>
+      <div style="display:flex;flex-wrap:wrap;gap:8px;"><button class="mini-btn ghost" id="openPruefWoche">Diese Woche</button><button class="mini-btn ghost" id="openPruefer">Prüfer</button>${_pruefTab==='wait'?'<button class="mini-btn" id="addTheorieWait">+ Schüler</button>':'<button class="mini-btn" id="addTermin">+ Termin</button>'}</div></div>
     <div class="pruef-tabs">
       <button class="pt-tab${_pruefTab==='termine'?' on':''}" data-pt="termine">Termine</button>
       <button class="pt-tab${_pruefTab==='wait'?' on':''}" data-pt="wait">Wartet auf Theorie <span class="pt-cnt">${waitList.length}</span></button>
@@ -13390,7 +13411,7 @@ function _bindWasNeuBanner(){
 function routeDashboard(){
   ensureDB();
   // KAPAZITÄTS-RECHNUNG vorbereiten (wird unten als Card gerendert)
-  $("#tbTitle").textContent="Start"; setFab(true); view.scrollTop=0;
+  $("#tbTitle").textContent="Heute"; setFab(true); view.scrollTop=0;
   const act=activeStudents().filter(s=>!isDummyStudent(s)).length; const ready=waitlist().filter(s=>!isDummyStudent(s)).length; const q=quoteOf(examsIn('cur'));
   const today=todayISO();
   const heuteCount=(DB.lessons||[]).filter(l=>l.date===today&&l.status!=="abgebrochen"&&l.status!=="nicht erschienen"&&["fahrstunde","sonder","nacht","schalt"].indexOf(l.art)>=0).length;
@@ -14762,6 +14783,10 @@ function navZurueck(){
   if(b)b.addEventListener("click",navZurueck);
   // Android-Zuruecktaste ebenfalls bedienen
   window.addEventListener("popstate",()=>{
+    // Erst offenes Fenster bzw. Menü schließen, dann eine Seite zurück (wie bei Android-Apps üblich).
+    const sh=document.getElementById("sheet"), dr=document.getElementById("drawer");
+    if(sh&&sh.classList.contains("open")){ closeSheet(); try{history.pushState(null,"",location.href);}catch(e){} return; }
+    if(dr&&dr.classList.contains("open")){ try{closeDrawer();}catch(e){} try{history.pushState(null,"",location.href);}catch(e){} return; }
     if(_navStack.length>1){ navZurueck(); try{history.pushState(null,"",location.href);}catch(e){} }
   });
   try{ history.pushState(null,"",location.href); }catch(e){}
@@ -14787,7 +14812,7 @@ routeDashboard();
 <script>
 /* Redesign v2: markiert nur den aktiven Tab anhand des Seitentitels — reine Anzeige, keine Logik. */
 (function(){
-  const map={"Start":"heute","Schüler":"schueler","Kalender":"kalender","Warteliste":"schueler","Ausbildungsplan":"schueler","Notizen":"schueler","Persönlichkeitsbogen":"schueler","Persönlichkeitsprofil":"schueler","Prüfung eintragen":"schueler","Risiko-Themen":"schueler","Schülerdatei":"schueler","Historie":"schueler","Ergebnis eintragen":"schueler","Neuer Schüler":"schueler","Schüler bearbeiten":"schueler","Bestehens-Daten":"schueler"};
+  const map={"Heute":"heute","Start":"heute","Schüler":"schueler","Kalender":"kalender","Warteliste":"schueler","Ausbildungsplan":"schueler","Notizen":"schueler","Persönlichkeitsbogen":"schueler","Persönlichkeitsprofil":"schueler","Prüfung eintragen":"schueler","Risiko-Themen":"schueler","Schülerdatei":"schueler","Historie":"schueler","Ergebnis eintragen":"schueler","Neuer Schüler":"schueler","Schüler bearbeiten":"schueler","Bestehens-Daten":"schueler"};
   const t=document.getElementById("tbTitle"); if(!t)return;
   const paint=()=>{ const k=map[(t.textContent||"").trim()]||"mehr"; document.querySelectorAll(".tab-i").forEach(b=>b.classList.toggle("on",b.dataset.tab===k)); };
   new MutationObserver(paint).observe(t,{childList:true,characterData:true,subtree:true});
