@@ -363,6 +363,168 @@ fall("Z12 Nach dem Zusammenführen ist DB gültig, keine Fehler in der Konsole",
   // die Konsolenprüfung für beide Geräte macht der Ausführer unten
 });
 
+fall("F1 Pingpong: beide legen gleichzeitig je einen Schüler an, danach nichts mehr - schreibt es trotzdem weiter?", async (f) => {
+  await neuesSzenario();
+  await starte(A); await starte(B);
+  await ev(A, (s) => { DB.students.push(s); }, neuerSchueler("S-A", "Anna"));
+  await ev(B, (s) => { DB.students.push(s); }, neuerSchueler("S-B", "Berta"));
+  await push(A); await push(B);
+  const v0 = srv.log.filter((e) => e.op !== "select").length;
+  for (let i = 0; i < 4; i++) { await push(A); await push(B); }
+  const n = srv.log.filter((e) => e.op !== "select").length - v0;
+  if (n) f("Ohne jede Änderung: " + n + " Schreibzugriffe in 4 Runden (Ping-Pong durch Listenreihenfolge)");
+  const a = await dbVon(A), b = await dbVon(B);
+  console.log("   Reihenfolge A: " + ids(a.students) + " | B: " + ids(b.students));
+});
+fall("F2 Eingabe während das Hochladen läuft geht nie hoch", async (f) => {
+  await neuesSzenario();
+  await starte(B);
+  await ev(B, (t) => { DB.lessons.push(t); }, neuerTermin("L-B"));
+  srv.vorUpdateDev = "B";
+  srv.vorUpdate = async () => { await ev(B, () => { DB.lessons.find((l) => l.id === "L2").von = "07:07"; }); };
+  await push(B);
+  await push(B); // der Debounce-Push 4 s später
+  const l2 = finde(cloud().lessons, "L2");
+  if (!l2 || l2.von !== "07:07") f("Cloud: Änderung während des Hochladens fehlt (" + (l2 && l2.von) + "), Basis hielt sie für gesichert");
+});
+fall("F3 Beide ändern verschiedene Felder in verdienst", async (f) => {
+  await neuesSzenario(Object.assign(seedDaten(), { verdienst: { proUE: 50, fixum: 2100 } }));
+  await starte(A); await starte(B);
+  await ev(A, () => { DB.verdienst.proUE = 65; }); await push(A);
+  await ev(B, () => { DB.verdienst.fixum = 2200; }); await push(B);
+  const v = cloud().verdienst;
+  if (v.proUE !== 65) f("proUE von A verloren: " + JSON.stringify(v));
+});
+fall("F4 Prüfer-Namen (Strings): A und B legen verschiedene an", async (f) => {
+  await neuesSzenario(Object.assign(seedDaten(), { pruefer: ["Alt"] }));
+  await starte(A); await starte(B);
+  await ev(A, () => { DB.pruefer.push("Mueller"); }); await push(A);
+  await ev(B, () => { DB.pruefer.push("Meier"); }); await push(B);
+  const p = cloud().pruefer;
+  if (!p.includes("Mueller")) f("Prüfer von A verloren: " + JSON.stringify(p));
+});
+fall("F5 Zwei verschiedene Ampeln desselben Schülers", async (f) => {
+  await neuesSzenario();
+  await starte(A); await starte(B);
+  await ev(A, () => { DB.students[0].plan.ampeln.a = "gruen"; }); await push(A);
+  await ev(B, () => { DB.students[0].plan.ampeln.b = "rot"; }); await push(B);
+  const x = cloud().students[0];
+  if (x.plan.ampeln.a !== "gruen") f("Ampel a von A verloren: " + JSON.stringify(x.plan.ampeln));
+});
+fall("F6 A loescht Schueler, B aendert ihn", async (f) => {
+  await neuesSzenario();
+  await starte(A); await starte(B);
+  await ev(A, () => { DB.students = []; }); await push(A);
+  await ev(B, () => { DB.students[0].notiz = "wichtig"; }); await push(B);
+  const x = finde(cloud().students, "X");
+  console.log("   F6 Ergebnis: Schueler X in Cloud: " + JSON.stringify(x && x.notiz));
+});
+fall("F7 Ein Termin ohne id -> ganze Liste wird als Feld behandelt", async (f) => {
+  await neuesSzenario(Object.assign(seedDaten(), { lessons: [{ sid: "X", date: "2026-11-03", von: "09:00", bis: "10:30", art: "fahrstunde", status: "geplant" }, { id: "L2", sid: "X", date: "2026-11-04" }] }));
+  await starte(A); await starte(B);
+  await ev(A, (t) => { DB.lessons.push(t); }, neuerTermin("L-A")); await push(A);
+  await ev(B, (t) => { DB.lessons.push(t); }, neuerTermin("L-B")); await push(B);
+  if (!finde(cloud().lessons, "L-A")) f("Termin L-A von A verloren (Liste mit id-losem Eintrag)");
+});
+fall("F8 Doppelte id in lessons", async (f) => {
+  await neuesSzenario(Object.assign(seedDaten(), { lessons: [{ id: "D", sid: "X", date: "2026-11-03", von: "09:00" }, { id: "D", sid: "X", date: "2026-11-05", von: "10:00" }] }));
+  await starte(A); await starte(B);
+  await ev(A, () => { DB.lessons[1].von = "12:00"; }); await push(A);
+  await ev(B, (t) => { DB.lessons.push(t); }, neuerTermin("L-B")); await push(B);
+  const c = cloud().lessons;
+  console.log("   F8 Cloud: " + JSON.stringify(c.map((l) => l.id + "@" + l.von)));
+  if (!c.some((l) => l.von === "12:00")) f("Änderung an zweitem D verloren");
+});
+fall("F9 Beide Geraete aendern eine Liste Trinkgeld/orte (Strings)", async (f) => {
+  await neuesSzenario(Object.assign(seedDaten(), { trinkgeld: [], orte: [] }));
+  await starte(A); await starte(B);
+  await ev(A, () => { DB.orte.push("Hbf"); }); await push(A);
+  await ev(B, () => { DB.orte.push("Markt"); }); await push(B);
+  if (!cloud().orte.includes("Hbf")) f("Ort von A verloren: " + JSON.stringify(cloud().orte));
+});
+fall("F10 Toast-Schleife: nach Zusammenfuehren bei ruhigem Betrieb kommt kein Toast mehr", async (f) => {
+  await neuesSzenario();
+  await starte(A); await starte(B);
+  for (const g of [A, B]) await ev(g, () => { window.__t = 0; window.toast = () => { window.__t++; }; });
+  await ev(A, (s) => { DB.students.push(s); }, neuerSchueler("S-A", "Anna")); await push(A);
+  await ev(B, (s) => { DB.students.push(s); }, neuerSchueler("S-B", "Berta")); await push(B);
+  for (let i = 0; i < 5; i++) { await push(A); await push(B); await ev(A, () => pullFromCloud()); await ev(B, () => pullFromCloud()); }
+  const ta = await ev(A, () => window.__t), tb = await ev(B, () => window.__t);
+  console.log("   Toasts A=" + ta + " B=" + tb + ", Writes=" + srv.log.filter((e) => e.op !== "select").length);
+  if (ta > 1 || tb > 1) f("Zu viele Toasts: A=" + ta + " B=" + tb);
+});
+fall("F11 Gesamtansicht: B in _fsAgg, A schreibt; B push false, nach Verlassen Zusammenfuehren", async (f) => {
+  await neuesSzenario();
+  await starte(A); await starte(B);
+  await ev(B, (t) => { DB.lessons.push(t); }, neuerTermin("L-B"));
+  await ev(B, () => { _fsPersonalBackup = { students: DB.students, lessons: DB.lessons, exams: DB.exams }; DB.students = DB.students.concat([{ id: "FREMD", name: "Fremd", plan: {} }]); _fsAgg = { lehrer: [] }; });
+  await ev(A, (s) => { DB.students.push(s); }, neuerSchueler("S-A", "Anna")); await push(A);
+  const r = await push(B);
+  console.log("   B in Gesamtansicht push=" + r);
+  await ev(B, () => { DB.students = _fsPersonalBackup.students; _fsPersonalBackup = null; _fsAgg = null; });
+  const r2 = await push(B);
+  const c = cloud();
+  if (r2 !== true) f("nach Verlassen push=" + r2);
+  if (!finde(c.students, "S-A")) f("S-A fehlt"); if (!finde(c.lessons, "L-B")) f("L-B fehlt"); if (finde(c.students, "FREMD")) f("FREMD in Cloud");
+});
+fall("F12 Basis veraltet nach fehlgeschlagenem Hochladen (Fehler im update)", async (f) => {
+  await neuesSzenario();
+  await starte(A); await starte(B);
+  await ev(A, (s) => { DB.students.push(s); }, neuerSchueler("S-A", "Anna")); await push(A);
+  // B: Zusammenfuehren klappt, update schlaegt fehl (Netz weg)
+  await ev(B, (t) => { DB.lessons.push(t); }, neuerTermin("L-B"));
+  await ev(B, () => { const g = getSupa(); const alt = g.from; g.from = (t) => { const b = alt(t); const u = b.update; b.update = () => { const x = u.apply(b, arguments); x.then = (ok, fail) => Promise.resolve({ data: null, error: { message: "offline" } }).then(ok, fail); return x; }; return b; }; window.__alt = alt; });
+  const r = await push(B);
+  await ev(B, () => { getSupa().from = window.__alt; });
+  const bd = await dbVon(B);
+  console.log("   B push offline=" + r + " B hat S-A=" + !!finde(bd.students, "S-A") + " L-B=" + !!finde(bd.lessons, "L-B"));
+  const r2 = await push(B);
+  const c = cloud();
+  if (!finde(c.students, "S-A") || !finde(c.lessons, "L-B")) f("nach Wiederholung fehlt etwas: " + ids(c.students) + " / " + ids(c.lessons));
+});
+fall("G1 Erster Prüfername (A) geht verloren, wenn B danach etwas ganz anderes aendert", async (f) => {
+  await neuesSzenario(Object.assign(seedDaten(), { pruefer: [], orte: [], prueferTags: [] }));
+  await starte(A); await starte(B);
+  await ev(A, () => { DB.pruefer.push("Mueller"); DB.orte.push("Hbf"); }); await push(A);
+  await ev(B, () => { DB.lessons.find((l) => l.id === "L2").von = "11:30"; }); await push(B);
+  const c = cloud();
+  if (!c.pruefer.includes("Mueller")) f("Cloud: Prüfer von A weg: " + JSON.stringify(c.pruefer));
+  if (!c.orte.includes("Hbf")) f("Cloud: Ort von A weg: " + JSON.stringify(c.orte));
+  const b = await dbVon(B);
+  console.log("   B.pruefer=" + JSON.stringify(b.pruefer));
+});
+fall("G2 Ansicht neu zeigen wirft Prüfungs-Eingabe weg", async (f) => {
+  await neuesSzenario();
+  await starte(A); await starte(B);
+  await ev(B, () => { routeExam("X"); _examChoice = "nicht"; _examFaults = ["f1", "f2"]; });
+  const vor = await ev(B, () => JSON.stringify([_examChoice, _examFaults]));
+  await ev(A, () => { DB.lessons.find((l) => l.id === "L2").von = "11:45"; }); await push(A);
+  await ev(B, () => pullFromCloud()); // B holt, wie der Timer/Wiedereinstieg
+  await ev(B, () => pushToCloud());
+  const nach = await ev(B, () => JSON.stringify([_examChoice, _examFaults]));
+  console.log("   Prüfungsansicht vorher=" + vor + " nachher=" + nach);
+  if (vor !== nach) f("Prüfungs-Eingabe (Auswahl/Fehler) ging beim Übernehmen verloren");
+});
+fall("G3 Bogen-Assistent wird zurückgesetzt", async (f) => {
+  await neuesSzenario();
+  await starte(A); await starte(B);
+  await ev(B, () => { routeBogen("X"); WIZ = { id: "X", answers: { 0: 3, 1: 2 }, open: { q1: "", q2: "", q3: "" }, page: 1 }; wizPage(); });
+  const h1 = await ev(B, () => document.getElementById("wizStart") ? "intro" : "wizard");
+  await ev(A, () => { DB.lessons.find((l) => l.id === "L2").von = "11:45"; }); await push(A);
+  await ev(B, () => pushToCloud());
+  const h2 = await ev(B, () => document.getElementById("wizStart") ? "intro" : "wizard");
+  console.log("   Bogen vorher=" + h1 + " nachher=" + h2);
+  if (h1 !== h2) f("Fragebogen springt zurück auf Start");
+});
+fall("G4 Scrollposition / Detailansicht ohne route", async (f) => {
+  await neuesSzenario();
+  await starte(A); await starte(B);
+  await ev(B, () => { routeHome(); });
+  const t0 = await ev(B, () => document.getElementById("tbTitle").textContent);
+  await ev(B, () => { document.getElementById("view") && 0; });
+  console.log("   Titel " + t0);
+});
+
 /* ---------- Ausführen ---------- */
 let rot = 0;
 for (const { name, fn } of faelle) {
