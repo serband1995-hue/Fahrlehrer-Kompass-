@@ -11816,7 +11816,8 @@ function dayEvents(iso){
   // Dieselbe Prüfung kann doppelt im Kalender stehen: als Kalendertermin (z.B. vom Büro geplant) UND auf der
   // Prüfungstafel bzw. schon mit Ergebnis. Sie zählt nur einmal (2 UE): der Kalendertermin wird als "doppelt"
   // markiert, bleibt sichtbar (zum Löschen) und zählt nicht mit.
-  const pruefSids=new Set(ev.filter(e=>(e.kind==="pruefung"||e.kind==="examDone")&&e.sid).map(e=>e.sid));
+  const echtePruefung=new Set((DB.exams||[]).filter(ex=>ex.date===iso&&istPruefung(ex)).map(ex=>ex.id));
+  const pruefSids=new Set(ev.filter(e=>(e.kind==="pruefung"||(e.kind==="examDone"&&echtePruefung.has(e.id)))&&e.sid).map(e=>e.sid));
   const gesehen=new Set();
   ev.forEach(e=>{
     if(e.kind!=="lesson"||e.art!=="pruefung"||!e.sid||e.status==="abgebrochen")return;
@@ -11926,7 +11927,7 @@ function nextLessonEvents(n){
   const today=todayISO(); const now=new Date(); const nowMin=now.getHours()*60+now.getMinutes();
   let cur=today, guard=0; const out=[];
   while(guard++<120&&out.length<n){
-    const ev=dayEvents(cur).filter(e=>e.status==="geplant");
+    const ev=dayEvents(cur).filter(e=>e.status==="geplant"&&!e.doppelt);
     for(const e of ev){ if(out.length>=n)break; if(cur>today || hm2min(e.bis)>=nowMin){ if(e.sid) out.push({date:cur,...e}); } }
     cur=addDays(cur,1);
   }
@@ -13378,7 +13379,7 @@ function routeDashboard(){
   ensureDB();
   // KAPAZITÄTS-RECHNUNG vorbereiten (wird unten als Card gerendert)
   $("#tbTitle").textContent="Start"; setFab(true); view.scrollTop=0;
-  const act=activeStudents().filter(s=>!isDummyStudent(s)).length; const ready=waitlist().length; const q=quoteOf(examsIn('cur'));
+  const act=activeStudents().filter(s=>!isDummyStudent(s)).length; const ready=waitlist().filter(s=>!isDummyStudent(s)).length; const q=quoteOf(examsIn('cur'));
   const today=todayISO();
   const heuteCount=(DB.lessons||[]).filter(l=>l.date===today&&l.status!=="abgebrochen"&&l.status!=="nicht erschienen"&&["fahrstunde","sonder","nacht","schalt"].indexOf(l.art)>=0).length;
   const heuteTag=heuteCount? `${heuteCount} Fahrstunde${heuteCount===1?"":"n"} heute, alles auf Kurs` : "Heute keine Fahrstunde geplant";
@@ -14302,7 +14303,7 @@ function daysSince(iso){ if(!iso)return 0; const _v=new Date(iso); const s=((""+
 function examReadiness(s){
   ensure(s);
   const pct=stand(s);
-  const skillOpen=EVAL_SKILLS.filter(id=>(s.plan.ampeln[id]||null)!=="gruen").length;
+  const skillOpen=evalSkillsFor(s).filter(id=>(s.plan.ampeln[id]||null)!=="gruen").length;
   let sonderDone=0,sonderTot=0;
   SONDER_DEF.forEach(d=>{ sonderTot+=d.soll; sonderDone+=Math.min(sfCount(s.plan.sonder[d.key]),d.soll); });
   // Umschreiber brauchen keine Sonderfahrten (Entscheidung Serband 08.10.2026)
