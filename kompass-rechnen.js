@@ -137,14 +137,17 @@
   function fcVorZeitraum(von) { return fcZeitraum(addDaysISO(von, -1)); }
   /* termine: Objekte mit datum (oder date), von, bis, art, status, fc, nachAm.
      Ergebnis: soll = Fahrchecks, die der Fahrlehrer für den Zeitraum abgeben muss. */
-  function fcSoll(termine, von, bis, heute) {
+  function fcSoll(termine, von, bis, heute, jetztMin) {
     heute = heute || todayISO();
+    // Heutige Termine zählen erst, wenn sie vorbei sind (sonst stünde die Abend-Fahrstunde schon mittags im Soll).
+    if (typeof jetztMin !== "number") { const d = new Date(); jetztMin = heute === todayISO() ? d.getHours() * 60 + d.getMinutes() : 24 * 60; }
+    const ende = (t) => { const m = /^(\d{1,2}):(\d{2})/.exec(t.bis || ""); return m ? (+m[1]) * 60 + (+m[2]) : 0; };
     const posten = [];
     let soll = 0;
     for (const t of termine || []) {
       const datum = t.datum || t.date;
       if (!datum) continue;
-      if (datum >= von && datum <= bis && datum <= heute) {
+      if (datum >= von && datum <= bis && (datum < heute || (datum === heute && ende(t) <= jetztMin))) {
         const n = fcErhalten(t);
         const fehlt = fcGebucht(t) - n;
         if (n || fehlt) posten.push({ id: t.id, datum, von: t.von, n, fehlt, fc: t.fc || null, sid: t.sid || t.schueler_id || null });

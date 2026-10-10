@@ -6426,7 +6426,7 @@ window.addEventListener("load", () => {
 const STORE_KEY="serband-app-v1";
 /* Build-Version: bei jeder Auslieferung hier das Datum aktualisieren.
    Wird in den Einstellungen angezeigt + für den Update-Hinweis genutzt. */
-const APP_VERSION="2026.10.10.2";
+const APP_VERSION="2026.10.10.3";
 // Nutzungsbedingungen & Haftungsausschluss (Bereich: rechtliche Absicherung) - Version hochzählen
 // und alle Nutzer müssen erneut zustimmen, sobald sich der Text inhaltlich ändert.
 const AGB_VERSION="1.0";
@@ -6757,7 +6757,8 @@ function allSkillsFor(s){
   const out=[]; stufenFor(s).forEach(st=>st.items.forEach(it=>out.push(it.id))); return out;
 }
 function evalSkillsFor(s){
-  const out=[]; stufenFor(s).forEach(st=>{if(st.eval!==false)st.items.forEach(it=>out.push(it.id));}); return out;
+  // Umschreiber: Sonderfahrten entfallen und zählen deshalb auch nicht in die %-Wertung.
+  const out=[]; stufenFor(s).forEach(st=>{if(st.eval!==false&&!(s&&s.umschreiber&&st.key==="sonder"))st.items.forEach(it=>out.push(it.id));}); return out;
 }
 // Migration: bestehende Schüler ohne planSnapshot bekommen exakt die aktuelle
 // Grund/Aufbau/Leistung-Struktur eingefroren -> keine Änderung an ihrem Stand.
@@ -6778,7 +6779,7 @@ function ensure(s){ if(!s.plan) s.plan=newPlan(); if(!s.plan.sonder) s.plan.sond
 function seedHash(s){return JSON.stringify([s.name||"",s.form||"",s.beginn||"",s.next||"",s.nextDate||"",s.nextTime||"",s.notiz||"",s.profil||null,s.bogen||null,s.plan||null]);}
 const SEED=[];
 (function seedSync(){try{let changed=false;SEED.forEach(seed=>{const h=seedHash(seed);const i=DB.students.findIndex(x=>(x.name||"").trim()===(seed.name||"").trim());if(i<0){const c=JSON.parse(JSON.stringify(seed));c._seedHash=h;DB.students.push(c);changed=true;return;}const ex=DB.students[i];const exHash=seedHash(ex);const untouched=(ex._seedHash===undefined)||(ex._seedHash===exHash);if(untouched&&exHash!==h){const c=JSON.parse(JSON.stringify(seed));c._seedHash=h;c.id=ex.id;c.created=ex.created||c.created;DB.students[i]=c;changed=true;}else if(ex._seedHash===undefined&&exHash===h){ex._seedHash=h;changed=true;}});if(changed)save();}catch(e){}})();
-(function theoryWaitSync(){try{let ch=false;DB.students.forEach(s=>{ensure(s);const t=s.plan&&s.plan.theorie;if(t&&!s.theoryPassed){s.theoryPassed=s.created?new Date(s.created).toISOString():new Date().toISOString();if(s.theorieWait){s.theorieWaitBis=new Date().toISOString();delete s.theorieWait;}ch=true;}if(t&&stand(s)>=90&&!s.ready&&!s.passed){s.ready=s.theoryPassed;ch=true;}});if(ch)save();}catch(e){}})();
+(function theoryWaitSync(){try{let ch=false;DB.students.forEach(s=>{ensure(s);const t=s.plan&&s.plan.theorie;if(t&&!s.theoryPassed){s.theoryPassed=s.created?new Date(s.created).toISOString():new Date().toISOString();if(s.theorieWait){s.theorieWaitBis=new Date().toISOString();delete s.theorieWait;}ch=true;}if(t&&stand(s)>=90&&!s.ready&&!s.passed&&!s.wartelisteRaus){s.ready=s.theoryPassed;ch=true;}});if(ch)save();}catch(e){}})();
 
 
 
@@ -7299,7 +7300,8 @@ function routeWaitlist(){
     const s=DB.students.find(x=>x.id===sid);
     if(!s)return;
     if(confirm(`${s.name} von der Warteliste entfernen?`)){
-      delete s.ready;delete s.waitOrder;save();routeWaitlist();toast(s.name+" von der Warteliste entfernt");
+      // Merker: bewusst entfernt - die Automatik (Theorie + 90 %) setzt ihn dann nicht wieder drauf.
+      delete s.ready;delete s.waitOrder;s.wartelisteRaus=true;save();routeWaitlist();toast(s.name+" von der Warteliste entfernt");
     }
   }));
 }
@@ -7458,7 +7460,7 @@ function routeDetail(id){
   document.querySelectorAll("#dashFormPills .pill").forEach(b=>b.addEventListener("click",()=>{ s.form=b.dataset.form; save(); toast("Klasse: "+formLabel(s.form)); routeDetail(id); }));
   // Theorie-/Umschreiber-/Pausiert-Toggles (aus dem Ausbildungsplan hierher verschoben)
   const dtt=$("#dashTheoToggle"); if(dtt)dtt.addEventListener("click",()=>{
-    pl.theorie=!pl.theorie; if(pl.theorie){ if(!s.theoryPassed)s.theoryPassed=new Date().toISOString(); logHist(s,"theorie","Theorieprüfung bestanden"); if(stand(s)>=90&&!s.ready&&!s.passed){ s.ready=s.theoryPassed; toast("Theorie bestanden – auf die Praxis-Warteliste gesetzt"); } else if(stand(s)<90&&!s.ready&&!s.passed){ toast("Theorie bestanden – erst ab 90 % kommt er auf die Warteliste"); } if(s.theorieWait)s.theorieWaitBis=new Date().toISOString(); delete s.theorieWait; } else { if(s.ready&&s.ready===s.theoryPassed&&!s.pruefungsreifManuell)delete s.ready; delete s.theoryPassed; delete s.theorieWaitBis; } save(); routeDetail(id);
+    pl.theorie=!pl.theorie; if(pl.theorie){ delete s.wartelisteRaus; if(!s.theoryPassed)s.theoryPassed=new Date().toISOString(); logHist(s,"theorie","Theorieprüfung bestanden"); if(stand(s)>=90&&!s.ready&&!s.passed){ s.ready=s.theoryPassed; toast("Theorie bestanden – auf die Praxis-Warteliste gesetzt"); } else if(stand(s)<90&&!s.ready&&!s.passed){ toast("Theorie bestanden – erst ab 90 % kommt er auf die Warteliste"); } if(s.theorieWait)s.theorieWaitBis=new Date().toISOString(); delete s.theorieWait; } else { if(s.ready&&s.ready===s.theoryPassed&&!s.pruefungsreifManuell)delete s.ready; delete s.theoryPassed; delete s.theorieWaitBis; } save(); routeDetail(id);
   });
   const dwt=$("#dashTheorieWaitToggle"); if(dwt)dwt.addEventListener("click",()=>{
     if(s.theorieWait){ delete s.theorieWait; delete s.theorieWaitBis; toast("Fahrstunden wieder aufgenommen"); } else { s.theorieWait=new Date().toISOString(); toast("Pausiert – wartet auf Theorie"); }
@@ -10129,13 +10131,6 @@ function formView(existing){
       DB.students.push(nst);save();openBogenChoiceSheet(nst.id,nst.name,()=>routeDetail(nst.id));}
   });
 }
-function saveFeiertagsPauschale(){
-  const v=+($("#feiertagsPauschaleInput")?.value);
-  if(!(v>=0)){toast("Bitte einen gültigen Betrag eingeben");return;}
-  DB.verdienst.feiertagsUrlaubsPauschale=v;save();
-  toast("Feiertagspauschale gespeichert ✓");
-  routeSettings();
-}
 /* ===== Akademie-Vermittlung: Beträge/Split-Konfiguration =====
    Bewusst leer/optional, bis Serband die echten Zahlen festlegt - siehe empfehlungAufteilung(). */
 async function renderAkademieVermittlungCfg(){
@@ -10296,14 +10291,6 @@ function routeSettings(){
             ${DB.verdienstPin?`<button class="btn btn-ghost" style="padding:8px 16px;color:#f08080;border-color:rgba(200,60,60,.3);" onclick="deleteVerdienstPin()">PIN entfernen</button>`:''}
           </div>
           ${DB.verdienstPin?`<div class="field" style="margin-top:12px;"><div class="toggle-row"><div><div class="tc-name" style="font-weight:800;font-size:14px;">Auto-Sperre nach Inaktivität</div><div class="tc-sub" style="font-size:12.5px;color:var(--muted);margin-top:2px;">Verdienst-Anzeige sperrt sich nach 3 Min. ohne Berührung von selbst wieder</div></div><button class="check-toggle${DB.verdienstAutoLock?' on':''}" id="vdAutoLockToggle"></button></div></div>`:''}
-        </div>
-        <div class="res-block" style="animation:none;"><h4>🎉 Feiertagspauschale</h4>
-          <p>Fester Betrag, der pro Feiertag (an einem sonst regulären Arbeitstag) automatisch zum Verdienst addiert wird. Bitte selbst mit deinem Vertrag gegenchecken — der Wert ist ein Startpunkt.</p>
-          <div style="display:flex;align-items:center;gap:8px;margin-top:10px;">
-            <input type="number" id="feiertagsPauschaleInput" value="${DB.verdienst.feiertagsUrlaubsPauschale||0}" min="0" max="1000" style="width:90px;padding:8px 12px;background:var(--surface-2);border:1px solid var(--line);border-radius:10px;color:var(--txt);font-size:15px;">
-            <span style="color:var(--muted);font-size:13px;">€ pro Feiertag</span>
-            <button class="btn btn-ghost" style="padding:8px 16px;" onclick="saveFeiertagsPauschale()">Speichern</button>
-          </div>
         </div>
         <div class="res-block" style="animation:none;"><h4>🔒 Sicherheit</h4>
           <p style="font-size:13px;color:var(--muted);">Falls dein Handy mal verloren geht oder du dir unsicher bist, ob du irgendwo noch angemeldet bist.</p>
@@ -10559,7 +10546,7 @@ function openBlockSheet(){
     <div class="field"><label>Von (Datum)</label><input type="date" id="blVonDatum" value="${defDate}"></div>
     <div class="field"><label>Bis (Datum)</label><input type="date" id="blBisDatum" value="${defDate}"></div>
     <div class="field"><label>Grund (optional)</label><input type="text" id="blGrund" placeholder="z. B. Arzttermin, Fortbildung …" autocomplete="off"></div>
-    <p class="muted-p" style="font-size:12px;margin-top:-4px;" id="blHinweis">Urlaub wird automatisch mit ${DB.verdienst.feiertagsUrlaubsPauschale||0}€ pro Tag in den Verdienst eingerechnet (wie Feiertage).</p>
+    <p class="muted-p" style="font-size:12px;margin-top:-4px;" id="blHinweis">Urlaub blockiert die ganzen Tage im Kalender.</p>
     <div class="btn-row"><button class="btn btn-ghost" id="blCancel" style="flex:0;padding:13px 18px;">Abbrechen</button><button class="btn btn-primary" id="blSave">Blockieren</button></div>`);
   let typ="urlaub";
   const btnUrlaub=$("#blTypUrlaub"),btnSonst=$("#blTypSonstiges"),hinweis=$("#blHinweis");
@@ -10702,7 +10689,7 @@ function openEventSheet(kind,id,sid){
   const titelTermin=(l.art==="theorie"&&l.lektion)?("Lektion "+l.lektion):"Termin";
   const statusInfo=l.status&&l.status!=="geplant"?`<span class="es-badge">${esc(l.status)}</span>`:"";
   const fcRelevant=["fahrstunde","sonder","nacht"].indexOf(l.art)>=0;
-  const fcLab={v1:"1 FC vergessen",v2:"2 FC vergessen",geschenkt:"geschenkt",nachgereicht:"FC nachgereicht",eins_ok:"1 FC (abgeschlossen)"}[l.fc]||"2 FC erhalten";
+  const fcLab={v1:"1 FC vergessen",v2:"2 FC vergessen",geschenkt:"geschenkt",nachgereicht:"FC nachgereicht",eins_ok:"1 FC (abgeschlossen)",halb_bewusst:"1 FC (bewusst)"}[l.fc]||"2 FC erhalten";
   // SCHRITT 1: Optionen-Übersicht
   openSheet(`<div class="sheet-h">${st?esc(st.name):titelTermin}</div>
     <p class="muted-p" style="font-size:13.5px;margin:-4px 0 ${l.note?'8px':'16px'};">${isoDE(l.date)} · ${l.von}–${l.bis} · ${l.lektion?lektionTitel(l.lektion):artLab} ${statusInfo}</p>
@@ -11230,7 +11217,8 @@ function eventMatchesFilter(e,iso){
   }
   if(_calFcOffen){
     if(["fahrstunde","sonder","nacht"].indexOf(e.art)<0)return false;
-    if(!(isAbsolved(iso,e.bis)&&(!e.fc||e.fc==="offen")))return false;
+    // Offen = Fahrcheck(s) fehlen noch (vergessen) und können nachgereicht werden.
+    if(!(isAbsolved(iso,e.bis)&&(e.fc==="v1"||e.fc==="v2"||e.fc==="offen")))return false;
   }
   return true;
 }
@@ -11527,6 +11515,11 @@ function weekDayRowsHTML(iso){
   const slots=daySlots(iso).filter(s=>slotMatchesFilter(s)); const evs=dayEvents(iso).filter(e=>eventMatchesFilter(e,iso));
   if(!slots.length&&!evs.length)return `<div class="cw-empty">–</div>`;
   const used=new Set();
+  // "+ frei" nur, wenn der Slot wirklich frei ist: nicht an Feiertagen und nicht, wenn ein (durch den Filter
+  // ausgeblendeter) Termin wie Theorie oder Urlaub ihn belegt - gleiche Regel wie die Tagesansicht (dayFreeSlots).
+  const feiertag=isHoliday(iso);
+  const belegtVon=dayEvents(iso).filter(e=>e.status!=="abgebrochen"&&e.status!=="nicht erschienen");
+  const istBelegt=(sv,sb)=>feiertag||belegtVon.some(e=>{ const ev=hm2min(e.von),eb=hm2min(e.bis); return sv<eb&&sb>ev; });
   // Alle Items: Slots + Events zusammenführen und nach Zeit sortieren
   const items=[];
   slots.forEach(s=>{
@@ -11536,7 +11529,7 @@ function weekDayRowsHTML(iso){
     const alreadyCovered=[...used].some(e=>{ const ev=hm2min(e.von),eb=hm2min(e.bis); return sv<eb&&sb>ev; });
     if(alreadyCovered)return;
     const match=evs.find(e=>{ if(used.has(e))return false; const ev=hm2min(e.von),eb=hm2min(e.bis); return sv<eb&&sb>ev; });
-    if(match){ used.add(match); items.push({t:hm2min(match.von),html:calEventChip(match,iso)}); } else { items.push({t:hm2min(s.von),html:`<button class="cw-free" data-freeslot="${iso}|${s.von}|${s.bis}|${s.art}"><span class="cw-free-t">${s.von}</span><span class="cw-free-p">+ frei</span></button>`}); }
+    if(match){ used.add(match); items.push({t:hm2min(match.von),html:calEventChip(match,iso)}); } else if(!istBelegt(sv,sb)){ items.push({t:hm2min(s.von),html:`<button class="cw-free" data-freeslot="${iso}|${s.von}|${s.bis}|${s.art}"><span class="cw-free-t">${s.von}</span><span class="cw-free-p">+ frei</span></button>`}); }
   });
   // Events außerhalb des Rasters ebenfalls nach Zeit einsortieren
   evs.forEach(e=>{ if(!used.has(e)) items.push({t:hm2min(e.von),html:calEventChip(e,iso)}); });
@@ -11561,7 +11554,8 @@ function calEventChip(e,iso){
   const examSoon=e.sid&&!!terminFor(e.sid);
   const fzTag=e.fahrzeug?`<span class="cw-fz">${esc(e.fahrzeug)}</span>`:'';
   const pruefLabel=e.pruefTime?`<span class="cw-fz" style="color:${c.col}">Prüfung ${e.pruefTime}</span>`:'';
-  const draggable=e.kind==="lesson"&&e.status==="geplant";
+  // Urlaub/Blocker sind ganze Tage (00:00–23:59) und nicht ziehbar - beim Verschieben gingen sie kaputt.
+  const draggable=e.kind==="lesson"&&e.status==="geplant"&&e.art!=="block";
   const dispName=(e.art==="theorie"&&e.lektion)?("Lektion "+e.lektion):esc(e.name||"");
   return `<div class="cw-ev${off?' off':''}${examSoon?' exam-soon':''}${draggable?' cw-draggable':''}" style="border-left-color:${c.col}" data-evedit="${e.kind}|${e.id}|${e.sid||''}"${draggable?` data-dragid="${e.id}"`:''}><span class="cw-evt">${e.von}</span><span class="cw-evn">${dispName}${sf}${stat}${fzTag}${pruefLabel}</span></div>`;
 }
@@ -11616,7 +11610,7 @@ function calDayHTML(){
 function dayUE(iso,doneOnly){
   let ue=0;
   dayEvents(iso).forEach(e=>{
-    if(e.status==="abgebrochen")return;
+    if(e.status==="abgebrochen"||e.doppelt)return;
     if(e.status==="nicht erschienen"){
       if(doneOnly){ if(e.noshow==="1")ue+=ueOf(e.art,e.von,e.bis,e.tatsaechlicheDauer)/2; else if(e.noshow==="2")ue+=ueOf(e.art,e.von,e.bis,e.tatsaechlicheDauer); }
       return;
@@ -11651,7 +11645,7 @@ function ueRange(fromISO,toISO){
   let cur=fromISO, guard=0;
   while(cur<=toISO && guard++<400){
     dayEvents(cur).forEach(e=>{
-      if(e.status==="abgebrochen")return;
+      if(e.status==="abgebrochen"||e.doppelt)return;
       // Erledigte Prüfungen zählen unten über DB.exams. Hier nicht nochmal, sonst doppelt.
       if(e.kind==="examDone")return;
       const ue=ueOf(e.art,e.von,e.bis,e.tatsaechlicheDauer);
@@ -11726,6 +11720,9 @@ function gehaltAusUE(ue){
   if(ue>=v.bonusUE)g+=v.bonus;
   return Math.round(g);
 }
+// "Diese Woche verdient": nur schon gefahrene, abgerechnete UE (wie die Verdienst-Seite) -
+// ohne Theorie, Schaltkompetenz und noch nicht gefahrene Termine.
+function wocheVerdientEuro(){ const wk=_wocheVonBis(); return Math.round(ueRange(wk.von,wk.bis).fcDone*((DB.verdienst&&DB.verdienst.proUE)||0)); }
 // Reiner Leistungswert (für Tag/Woche): UE × Satz
 function leistungAusUE(ue){ return Math.round(ue*DB.verdienst.proUE); }
 function monthRangeOf(iso){ return isoMonthRange(iso); }
@@ -11814,6 +11811,16 @@ function dayEvents(iso){
   (DB.termine||[]).filter(t=>t.date===iso).forEach(t=>{ (t.slots||[]).forEach(sid=>{ if(sid&&!doneOnDay.has(sid)){ const st=DB.students.find(s=>s.id===sid); const rawVon=t.von||"09:00"; const blockVon=rawVon; const blockBis=min2hm(hm2min(rawVon)+PRUEF_MIN); ev.push({kind:"pruefung",id:t.id,von:blockVon,bis:blockBis,art:"pruefung",sid,name:st?st.name:"—",status:"geplant",pruefTime:rawVon,_fahrlehrerId:t._fahrlehrerId,_fahrlehrerName:t._fahrlehrerName}); } }); });
   // Erledigte Prüfungen (Ergebnis liegt vor): bleiben dauerhaft im Kalender als Erfolgs-/Misserfolgs-Marker.
   (DB.exams||[]).filter(ex=>ex.date===iso).forEach(ex=>{ const rawVon=ex.von||"09:00"; const blockVon=rawVon; const blockBis=min2hm(hm2min(rawVon)+PRUEF_MIN); ev.push({kind:"examDone",id:ex.id,von:blockVon,bis:blockBis,art:"pruefung",sid:ex.sid,name:ex.name||"—",status:"erledigt",result:ex.result,pruefTime:rawVon,pruefer:ex.pruefer||"",_fahrlehrerId:ex._fahrlehrerId,_fahrlehrerName:ex._fahrlehrerName}); });
+  // Dieselbe Prüfung kann doppelt im Kalender stehen: als Kalendertermin (z.B. vom Büro geplant) UND auf der
+  // Prüfungstafel bzw. schon mit Ergebnis. Sie zählt nur einmal (2 UE): der Kalendertermin wird als "doppelt"
+  // markiert, bleibt sichtbar (zum Löschen) und zählt nicht mit.
+  const pruefSids=new Set(ev.filter(e=>(e.kind==="pruefung"||e.kind==="examDone")&&e.sid).map(e=>e.sid));
+  const gesehen=new Set();
+  ev.forEach(e=>{
+    if(e.kind!=="lesson"||e.art!=="pruefung"||!e.sid||e.status==="abgebrochen")return;
+    if(pruefSids.has(e.sid)||gesehen.has(e.sid)){ e.doppelt=true; e.name=e.name+" · doppelt"; }
+    else gesehen.add(e.sid);
+  });
   return ev.sort((a,b)=>hm2min(a.von)-hm2min(b.von));
 }
 function dayHasEvents(iso){ return dayEvents(iso).length>0; }
@@ -11831,7 +11838,11 @@ function dayFreeSlots(iso){
 function countRange(fromISO,toISO){
   let planned=0, free=0, slots=0, plannedUE=0;
   let cur=fromISO;
-  while(cur<=toISO){ const ds=daySlots(cur); const ev=dayEvents(cur).filter(e=>!["abgebrochen","nicht erschienen","abgesagt","geplatzt"].includes(e.status)&&e.art!=="block"); slots+=ds.length; planned+=ev.length; plannedUE+=ev.reduce((a,e)=>a+ueOf(e.art||'fahrstunde',e.von,e.bis,e.tatsaechlicheDauer),0); free+=dayFreeSlots(cur).length; cur=addDays(cur,1); }
+  // Gezählt werden Fahr-Termine (inkl. Prüfungen), keine Theorie, keine Büro-Arten, keine doppelten Prüfungen.
+  // Heute zählt nur, was noch nicht vorbei ist - bei Terminen wie bei freien Slots.
+  const heute=todayISO(), jetzt=(()=>{ const d=new Date(); return d.getHours()*60+d.getMinutes(); })();
+  const nochOffen=(iso,von)=>iso!==heute||hm2min(von)>=jetzt;
+  while(cur<=toISO){ const ds=daySlots(cur); const ev=dayEvents(cur).filter(e=>!["abgebrochen","nicht erschienen","abgesagt","geplatzt"].includes(e.status)&&e.art!=="block"&&e.art!=="theorie"&&!FS_BUERO_ARTEN.includes(e.art)&&!e.doppelt&&e.kind!=="examDone"&&(cur!==heute||!isAbsolved(cur,e.bis))); slots+=ds.length; planned+=ev.length; plannedUE+=ev.reduce((a,e)=>a+ueOf(e.art||'fahrstunde',e.von,e.bis,e.tatsaechlicheDauer),0); free+=dayFreeSlots(cur).filter(sl=>nochOffen(cur,sl.von)).length; cur=addDays(cur,1); }
   return {planned,free,slots,plannedUE};
 }
 // Lesson-CRUD
@@ -11961,7 +11972,6 @@ function ensureDB(){ let _ensureDirty=false; if(!Array.isArray(DB.exams))DB.exam
   if(typeof DB.verdienst.startUE!=="number")DB.verdienst.startUE=0;
   if(!DB.verdienst.startMonth)DB.verdienst.startMonth="2026-06";
   if(typeof DB.verdienstAutoLock!=="boolean")DB.verdienstAutoLock=true;
-  if(typeof DB.verdienst.feiertagsUrlaubsPauschale!=="number")DB.verdienst.feiertagsUrlaubsPauschale=100;
   if(!DB.prueferData||typeof DB.prueferData!=="object")DB.prueferData={};
   if(!Array.isArray(DB.orte))DB.orte=[];
   if(!Array.isArray(DB.prueferTags))DB.prueferTags=[];
@@ -12047,7 +12057,7 @@ const PERIODS=[["cur","Monat"],["last","Vormonat"],["3","3 Mon."],["6","6 Mon."]
 
 function waitlist(){ return activeStudents().filter(s=>s.ready).sort((a,b)=>{ const ao=(typeof a.waitOrder==='number')?a.waitOrder:null, bo=(typeof b.waitOrder==='number')?b.waitOrder:null; if(ao!=null&&bo!=null)return ao-bo; if(ao!=null)return -1; if(bo!=null)return 1; const at=a.theoryPassed?Date.parse(a.theoryPassed):Infinity,bt=b.theoryPassed?Date.parse(b.theoryPassed):Infinity; if(at!==bt)return at-bt; return Date.parse(a.ready)-Date.parse(b.ready); }); }
 function nextWaitOrder(){ let m=0; activeStudents().forEach(s=>{ if(s.ready&&typeof s.waitOrder==='number'&&s.waitOrder>m)m=s.waitOrder; }); return m+1; }
-function setReady(s){ if(!s.ready)s.ready=new Date().toISOString(); }
+function setReady(s){ delete s.wartelisteRaus; if(!s.ready)s.ready=new Date().toISOString(); }
 function bumpBack(s,n){ const wl=waitlist(); const idx=wl.indexOf(s); if(idx<0)return; const rest=wl.filter(x=>x!==s); const pos=Math.min(idx+n,rest.length); rest.splice(pos,0,s); rest.forEach((x,i)=>x.waitOrder=i+1); }
 // Durchfaller hinter ALLE setzen, die bereits einen Prüfungstermin haben (aber vor die Termin-losen).
 function bumpBehindScheduled(s){
@@ -12267,7 +12277,7 @@ function bindExamReady(s,rerender){
   const off=$("#readyOff"); if(off)off.addEventListener("click",()=>{
     const hatTermin=!!terminFor(s.id);
     if(hatTermin&&!confirm("Der geplante Prüfungstermin wird dabei mit gelöscht. Fortfahren?"))return;
-    delete s.ready; delete s.waitOrder; clearSlot(s.id); save();
+    delete s.ready; delete s.waitOrder; if(!hatTermin)s.wartelisteRaus=true; clearSlot(s.id); save();
     toast(hatTermin?"Termin gelöst":"Von der Warteliste genommen"); rerender();
   });
   const force=$("#readyForce"); if(force)force.addEventListener("click",()=>{ if(confirm("Diesen Schüler trotz offener Punkte manuell auf die Warteliste setzen?")){ setReady(s); save(); toast("Manuell auf die Warteliste gesetzt"); rerender(); } });
@@ -12704,7 +12714,7 @@ function theorieAusstehend(){ return activeStudents().filter(s=>s.theorieWait&&!
 // Theorie bestanden UND >=90% (bereit für Praxis)
 function bereitFuerPraxis(){ return activeStudents().filter(s=>s.theoryPassed&&stand(s)>=90).sort((a,b)=>a.name.localeCompare(b.name,'de')); }
 // Automatik: wer bereit ist, wird als prüfungsreif (ready) markiert
-function syncTheoriePraxis(){ let dirty=false; activeStudents().forEach(s=>{ if(s.theoryPassed&&stand(s)>=90&&!s.ready){ s.ready=new Date().toISOString(); dirty=true; } }); if(dirty)save(); }
+function syncTheoriePraxis(){ let dirty=false; activeStudents().forEach(s=>{ if(s.theoryPassed&&stand(s)>=90&&!s.ready&&!s.wartelisteRaus&&!s.passed){ s.ready=new Date().toISOString(); dirty=true; } }); if(dirty)save(); }
 function openTerminSheet(){
   let p=1;
   const defaultVon=()=>{ const base=540; return Array.from({length:p},(_,i)=>min2hm(base+i*(DB.workCfg.blockMin||90))); };
@@ -12889,7 +12899,7 @@ function openFCMenu(id){
     <p class="muted-p" style="font-size:12.5px;margin:-6px 0 14px;color:var(--faint);">Standard ist „2 FC erhalten“ – hier nur Ausnahmen vermerken.</p>
     <div class="es-actions">${acts}</div>`);
   document.querySelectorAll("[data-fcset]").forEach(b=>b.addEventListener("click",()=>{ closeSheet(); setFC(id,b.dataset.fcset); }));
-  document.querySelectorAll("[data-fcdel]").forEach(b=>b.addEventListener("click",()=>{ deleteLesson(b.dataset.fcdel); closeSheet(); toast("Termin gelöscht"); refreshCurrentView(); }));
+  document.querySelectorAll("[data-fcdel]").forEach(b=>b.addEventListener("click",()=>{ if(!confirm("Termin wirklich löschen? Ein online gebuchter Schüler bekommt eine Absage."))return; deleteLesson(b.dataset.fcdel); closeSheet(); toast("Termin gelöscht"); refreshCurrentView(); }));
 }
 
 /* Übersicht „FC vergessen“ – welche Schüler, wie oft, wie viel Geld entgeht */
@@ -13365,7 +13375,7 @@ function routeDashboard(){
   ensureDB();
   // KAPAZITÄTS-RECHNUNG vorbereiten (wird unten als Card gerendert)
   $("#tbTitle").textContent="Start"; setFab(true); view.scrollTop=0;
-  const act=activeStudents().length; const ready=waitlist().length; const q=quoteOf(examsIn('cur'));
+  const act=activeStudents().filter(s=>!isDummyStudent(s)).length; const ready=waitlist().length; const q=quoteOf(examsIn('cur'));
   const today=todayISO();
   const heuteCount=(DB.lessons||[]).filter(l=>l.date===today&&l.status!=="abgebrochen"&&l.status!=="nicht erschienen"&&["fahrstunde","sonder","nacht","schalt"].indexOf(l.art)>=0).length;
   const heuteTag=heuteCount? `${heuteCount} Fahrstunde${heuteCount===1?"":"n"} heute, alles auf Kurs` : "Heute keine Fahrstunde geplant";
@@ -13377,8 +13387,7 @@ function routeDashboard(){
     .map(l=>({id:l.id,von:l.von,name:l.sid?((DB.students.find(s=>s.id===l.sid)||{}).name||"—"):(CAL_ARTEN[l.art]||{lab:"Termin"}).lab}));
   // Neue Kachel: Verdienst diese Woche
   const wk=_wocheVonBis();
-  const wocheUE=ueRange(wk.von,wk.bis).total;
-  const wocheEuro=Math.round(wocheUE*(DB.verdienst?.proUE||0));
+  const wocheEuro=wocheVerdientEuro();
   // Neue Kachel: nächste Theorie
   const naechsteTheorie=(DB.lessons||[]).filter(l=>l.art==="theorie"&&l.date>=today&&l.status!=="abgebrochen").sort((a,b)=>(a.date+a.von).localeCompare(b.date+b.von))[0]||null;
   view.innerHTML=`<div class="view-inner view-wide fade-up">
@@ -13541,23 +13550,6 @@ function _vdAutoLockArm(){
 }
 function _vdAutoLockDisarm(){ clearTimeout(_vdAutoLockTimer); }
 view.addEventListener("pointerdown",()=>{ if((($("#tbTitle")||{}).textContent)==="Statistik")_vdAutoLockArm(); });
-// Feiertage, die auf einen sonst regulären Arbeitstag fallen (Bereich 11, Punkt 6) - für die
-// Feiertagspauschale. Feiertage am Wochenende (wenn eh nicht gearbeitet wird) zählen nicht extra.
-function feiertagsTageInRange(fromISO,toISO){
-  let n=0,cur=fromISO,guard=0;
-  while(cur<=toISO&&guard++<400){
-    const wd=weekdayMon0(cur);
-    const waereArbeitstag=(wd<=4)||(wd===5&&DB.workCfg&&DB.workCfg.samstagAn);
-    if(waereArbeitstag&&isHoliday(cur))n++;
-    cur=addDays(cur,1);
-  }
-  return n;
-}
-// Urlaubstage im Zeitraum (Bereich: "Zeit blockieren" mit Urlaub/Sonstiges) - zählt genau wie
-// die Feiertage, gleiche Pauschale, aber aus den lokal geblockten Urlaubstagen statt Feiertagsformel.
-function urlaubsTageInRange(fromISO,toISO){
-  return (DB.lessons||[]).filter(l=>l.art==="block"&&l.blockTyp==="urlaub"&&l.date>=fromISO&&l.date<=toISO).length;
-}
 function _verdienstModulHTMLContent(){
   const v=DB.verdienst;
   const _base=parseISO(todayISO());
@@ -13604,7 +13596,8 @@ function _verdienstModulHTMLContent(){
   // absolvierte UE) darf hier NICHT nochmal draufaddiert werden, sonst zählen geplante Termine doppelt.
   // Seit 2026.09.21: verdientUE enthält nur Stattgefundenes, prognoseUE auch die geplanten Termine.
   const verdientJetzt=verdientUE;
-  const restUE=Math.max(0,_bonusUE-Math.round(prognoseUE));
+  // Aufrunden statt Runden: bei 239,6 von 240 UE fehlt noch etwas ("noch 0 UE" wäre falsch).
+  const restUE=Math.max(0,Math.ceil((_bonusUE-prognoseUE)*100)/100);
   const bonusJetzt=verdientJetzt>=_bonusUE;
   const bonusMitPlan=prognoseUE>=_bonusUE;
   let bisHtml;
@@ -13613,14 +13606,10 @@ function _verdienstModulHTMLContent(){
   }else if(bonusMitPlan){
     bisHtml=`<div class="th-goal"><div class="thg-lab">✓ Mit geplanten Terminen → Bonus</div><div class="thg-val">${_bonusUE} UE</div></div>`;
   }else{
-    bisHtml=`<div class="th-goal"><div class="thg-lab">Für den Bonus noch legen</div><div class="thg-val">${restUE} UE · ~${Math.ceil(restUE/2)} Fahrstd.</div></div>`;
+    bisHtml=`<div class="th-goal"><div class="thg-lab">Für den Bonus noch legen</div><div class="thg-val">${fmtUE(restUE)} UE · ~${Math.ceil(restUE/2)} Fahrstd.</div></div>`;
   }
   const mk=monatsKennzahlen(moStart,moEnd);
   const fcAusnahmenGesamt=mk.fcV1+mk.fcV2+mk.fcGeschenkt+mk.fcBewusst;
-  const feiertagsPauschale=(v&&v.feiertagsUrlaubsPauschale)||0;
-  const feiertageMonat=feiertagsTageInRange(moStart,moEnd);
-  const urlaubMonat=urlaubsTageInRange(moStart,moEnd);
-  const feiertagsBonusEuro=(feiertageMonat+urlaubMonat)*feiertagsPauschale;
   return `<div class="vd-card">
     <div class="vd-head">
       <button class="vd-nav" onclick="vdShiftMonth(-1)" aria-label="Vormonat">${ICN.back}</button>
@@ -13644,7 +13633,6 @@ function _verdienstModulHTMLContent(){
       <div class="thi-card future"><div class="thi-k"><span class="ic ic-gold" style="font-size:12px;">${ICN.cal}</span> Voraussichtlich</div><div class="thi-v">${_eurMasked(gesamtEuro)}</div><div class="thi-s">${Math.round(prognoseUE)} UE gesamt · ${Math.round(Math.max(0,prognoseUE-verdientUE))} noch offen</div></div>
     </div>
     ${offenUE>0.3?`<div class="vd-offen">⚠ ${fmtUE(offenUE)} UE gefahren, FC noch offen · <b>${_eurMasked(leistungAusUE(offenUE))}</b> stehen aus</div>`:''}
-    ${feiertagsPauschale>0&&(feiertageMonat+urlaubMonat)>0?`<div class="th-goal" style="margin-bottom:8px;background:rgba(207,154,62,.08);border-color:rgba(207,154,62,.3);"><div class="thg-lab">🎉 Feiertage &amp; Urlaub diesen Monat</div><div class="thg-val">${feiertageMonat?feiertageMonat+" Feiertag"+(feiertageMonat===1?'':'e'):''}${feiertageMonat&&urlaubMonat?' · ':''}${urlaubMonat?urlaubMonat+" Urlaubstag"+(urlaubMonat===1?'':'e'):''} · +${_eurMasked(feiertagsBonusEuro)} extra</div></div>`:''}
     <div class="th-goal" style="margin-bottom:8px;">
       <div class="thg-lab"><span class="ic ic-gold" style="font-size:11px;">${ICN.chart}</span> Terminierte Fahrstunden diesen Monat</div>
       <div class="thg-val">${terminiertUE} UE</div>
@@ -13717,7 +13705,7 @@ function jahresRueckblickHTML(){
     if(!ersterMonat||iso.slice(0,7)<ersterMonat)continue;
     const [ms,me]=isoMonthRange(iso);
     const u=ueRange(ms,me);
-    monthsData.push({m,euro:gehaltAusUE(Math.round(u.fcDone))});
+    monthsData.push({m,euro:gehaltAusUE(u.fcDone)});
   }
   const gesamtEuro=monthsData.reduce((a,x)=>a+x.euro,0);
   const anzahlMonate=monthsData.length;
@@ -13754,7 +13742,8 @@ function routeStats(period){
   $("#tbTitle").textContent="Statistik"; setFab(false); view.scrollTop=0;
   const ex=examsIn(period);
   const q=quoteOf(ex), fq=firstAttemptQuote(ex), avgA=avgAttempts(ex), eq=eingriffQuote(ex);
-  const all=DB.students, active=activeStudents(), passed=all.filter(s=>s.passed);
+  // Test-Schüler zählen in der Statistik nicht mit (wie in der Auslastung).
+  const all=DB.students.filter(s=>!isDummyStudent(s)), active=activeStudents().filter(s=>!isDummyStudent(s)), passed=all.filter(s=>s.passed);
   const avgProg=active.length?Math.round(active.reduce((a,s)=>a+stand(s),0)/active.length):0;
   const theoCount=active.filter(s=>s.plan&&s.plan.theorie).length;
   const fc=faultCounts(ex); const fcTotal=fc.reduce((a,x)=>a+x[1],0);
