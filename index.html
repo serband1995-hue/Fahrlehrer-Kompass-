@@ -211,17 +211,20 @@ input,select,textarea{font-family:inherit;font-size:15px;color:var(--txt);}
 .tb-title{font-family:'Playfair Display',serif;font-weight:600;letter-spacing:.01em;font-size:16px;
   white-space:nowrap;overflow:hidden;text-overflow:ellipsis;color:var(--muted);text-align:left;min-width:0;}
 /* Titel neben dem Logo in der Mitte: dort hat er auch bei 360 px genug Platz (rechts waren es nur ~35 px). */
-.tb-mitte{display:flex;align-items:center;justify-content:center;gap:10px;min-width:0;}
+.tb-mitte{display:flex;align-items:center;justify-content:flex-start;gap:10px;min-width:0;}
+/* Platz für Menü + Zurück immer reservieren, damit das Logo beim Seitenwechsel nicht springt. */
+.tb-left{min-width:94px;}
 @media (max-width:420px){
   .topbar{gap:6px;}
+  .tb-left{min-width:80px;}
   .tb-mitte{gap:7px;}
   .tb-logo-wrap{width:40px !important;height:40px !important;border-radius:12px;}
   .topbar .icon-btn,.topbar .theme-btn{width:38px;height:38px;}
-  .tb-title{font-size:15px !important;}
+  .topbar .tb-title{font-size:15px !important;}
 }
 /* Sehr schmal: lange Titel ("Prüfung eintragen") dürfen auf zwei Zeilen umbrechen statt abgeschnitten zu werden. */
 @media (max-width:380px){
-  .tb-title{font-size:14px !important;white-space:normal;line-height:1.15;hyphens:auto;-webkit-hyphens:auto;overflow-wrap:anywhere;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;}
+  .topbar .tb-title{font-size:14px !important;white-space:normal;line-height:1.15;hyphens:auto;-webkit-hyphens:auto;overflow-wrap:anywhere;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;}
 }
 .view{flex:1 1 auto;overflow-y:auto;overflow-x:hidden;-webkit-overflow-scrolling:touch;position:relative;}
 .view-inner{padding:var(--pad);padding-bottom:130px;}
@@ -716,7 +719,7 @@ input,select,textarea{font-family:inherit;font-size:15px;color:var(--txt);}
 .wait-card:hover{border-color:var(--orange-line);}
 .wait-card:active{transform:scale(.985);}
 .pruef-tabs{display:flex;flex-wrap:wrap;gap:7px;margin-bottom:16px;background:var(--bg-soft);border:1px solid var(--line);border-radius:13px;padding:4px;}
-.pt-tab{flex:1;min-width:0;padding:10px 6px;border-radius:10px;font-size:12.5px;font-weight:700;color:var(--muted);background:transparent;display:flex;align-items:center;justify-content:center;gap:5px;}
+.pt-tab{flex:1 1 auto;white-space:nowrap;padding:10px 6px;border-radius:10px;font-size:12.5px;font-weight:700;color:var(--muted);background:transparent;display:flex;align-items:center;justify-content:center;gap:5px;}
 .pt-tab.on{background:var(--gruen-soft);color:var(--mint);box-shadow:var(--inset-top);}
 .pt-cnt{font-size:10.5px;background:var(--surface-2);color:var(--muted);border-radius:10px;padding:1px 6px;font-weight:800;}
 .pt-tab.on .pt-cnt{background:var(--gruen-line);color:var(--mint);}
@@ -894,11 +897,11 @@ input,select,textarea{font-family:inherit;font-size:15px;color:var(--txt);}
 @keyframes conf{0%{opacity:1;transform:translateY(0) translateX(0) rotate(0);}100%{opacity:0;transform:translateY(66vh) translateX(calc(var(--x)*44vw)) rotate(var(--r));}}
 .toast{position:fixed;left:50%;bottom:calc(30px + env(safe-area-inset-bottom));transform:translateX(-50%) translateY(20px);
   background:#f2efe9;color:#1a1b1f;padding:13px 22px;border-radius:14px;font-weight:800;font-size:14px;
-  width:max-content;max-width:calc(100vw - 32px);box-sizing:border-box;text-align:center;line-height:1.35;
+  width:max-content;max-width:calc(100vw - 32px);box-sizing:border-box;text-align:center;line-height:1.35;overflow-wrap:anywhere;
   box-shadow:0 12px 34px rgba(0,0,0,.45);opacity:0;pointer-events:none;transition:all .3s var(--ease);z-index:80;}
 .toast.show{opacity:1;transform:translateX(-50%) translateY(0);}
 .toast.undo{display:flex;align-items:center;gap:14px;pointer-events:auto;}
-.toast.undo .ut-txt{font-weight:800;}
+.toast.undo .ut-txt{font-weight:800;min-width:0;}
 .toast.undo .ut-btn{background:#1a1b1f;color:#fff;border:none;padding:7px 14px;border-radius:9px;font-weight:800;font-size:13px;cursor:pointer;flex:0 0 auto;}
 .toast.undo .ut-btn:active{transform:scale(.95);}
 .fade-up{animation:fadeUp .32s var(--ease) both;}
@@ -2021,7 +2024,7 @@ body:not(.light) .nav-item.primary svg,body:not(.light) .nav-item.primary{color:
 .fab:active{background:var(--akzent-dark) !important;}
 .sheet,body.light .sheet{background:var(--surface) !important;border-top:none !important;border-radius:28px 28px 0 0 !important;box-shadow:var(--elev-3) !important;}
 .sheet-scrim,.scrim{background:rgba(12,20,16,.40) !important;backdrop-filter:blur(2px) !important;}
-.toast{background:var(--txt) !important;color:var(--bg) !important;border-radius:999px !important;font-weight:600 !important;box-shadow:var(--elev-3) !important;
+.toast{background:var(--txt) !important;color:var(--bg) !important;border-radius:24px !important;font-weight:600 !important;box-shadow:var(--elev-3) !important;
   bottom:calc(104px + env(safe-area-inset-bottom)) !important;}
 .view-inner{padding-bottom:160px !important;}
 /* Tab-Leiste unten — ruft ausschließlich bestehende Routen auf */
@@ -6919,7 +6922,7 @@ function toastUndo(msg,onUndo,ms){
   t.classList.add("undo","show");
   t.innerHTML=`<span class="ut-txt"></span><button class="ut-btn" type="button">Rückgängig</button>`;
   t.querySelector(".ut-txt").textContent=msg;
-  const close=()=>{ t.classList.remove("show"); setTimeout(()=>{t.classList.remove("undo");t.innerHTML="";},300); };
+  const close=()=>{ t.classList.remove("show"); setTimeout(()=>{ if(t.classList.contains("show"))return; t.classList.remove("undo");t.innerHTML="";},300); };
   t.querySelector(".ut-btn").onclick=()=>{ clearTimeout(t._t); close(); try{onUndo&&onUndo();}catch(e){} };
   clearTimeout(t._t); t._t=setTimeout(close,ms);
 }
@@ -11538,10 +11541,7 @@ function weekDayRowsHTML(iso){
   // ausgeblendeter) Termin wie Theorie oder Urlaub ihn belegt - gleiche Regel wie die Tagesansicht (dayFreeSlots).
   const feiertag=isHoliday(iso);
   const belegtVon=dayEvents(iso).filter(e=>e.status!=="abgebrochen"&&e.status!=="nicht erschienen");
-  // Vergangene Slots sind nicht mehr buchbar: kein "+ frei" an vergangenen Tagen bzw. Uhrzeiten.
-  const heuteIso=todayISO(), jetztMin=(()=>{ const d=new Date(); return d.getHours()*60+d.getMinutes(); })();
-  const vorbei=sv=>iso<heuteIso||(iso===heuteIso&&sv<jetztMin);
-  const istBelegt=(sv,sb)=>feiertag||vorbei(sv)||belegtVon.some(e=>{ const ev=hm2min(e.von),eb=hm2min(e.bis); return sv<eb&&sb>ev; });
+  const istBelegt=(sv,sb)=>feiertag||belegtVon.some(e=>{ const ev=hm2min(e.von),eb=hm2min(e.bis); return sv<eb&&sb>ev; });
   // Alle Items: Slots + Events zusammenführen und nach Zeit sortieren
   const items=[];
   slots.forEach(s=>{
@@ -12876,7 +12876,7 @@ async function routeFCAbgabe(){
     ${a.posten.map(p=>{ const st=DB.students.find(x=>x.id===p.sid);
       return `<div class="fc-miss-row"><div class="fc-info"><div class="fc-meta">${isoDE(p.datum)} · ${p.von||""} · ${esc(st?st.name:"—")} · <b>${p.n} FC</b>${p.fehlt?` <span style="color:var(--rot);">(${p.fehlt} fehlt)</span>`:""}${p.fc==="nachgereicht"?" · nachgereicht":""}</div></div></div>`; }).join("")||'<p class="muted-p" style="padding:8px 0;">Keine Fahrstunden in diesem Zeitraum.</p>'}</div>`;
   let h=`<div class="view-inner view-read fade-up">
-    <div class="back-row"><button class="back-btn" id="backBtn">${ICN.back} Start</button></div>
+    <div class="back-row"><button class="back-btn" id="backBtn">${ICN.back} Heute</button></div>
     <div class="sec-h" style="margin:4px 0 4px;">Fahrcheck-<span class="o">Abgabe</span></div>
     <p class="muted-p" style="font-size:13.5px;margin-bottom:14px;">So viele Fahrchecks gibst du im Büro ab. Das Büro sieht dieselbe Zahl und bestätigt die Abgabe; die Quittung erscheint hier.</p>
     <div id="fcQuittungen"><p class="muted-p">Quittungen werden geladen …</p></div>
@@ -12948,7 +12948,7 @@ function routeFCMissing(){
   forg.forEach(l=>{ const k=l.sid||"?"; if(!byStud[k])byStud[k]={sid:l.sid,lessons:[],ue:0}; byStud[k].lessons.push(l); byStud[k].ue += (l.fc==="v1")?ueOf(l.art,l.von,l.bis,l.tatsaechlicheDauer)/2:ueOf(l.art,l.von,l.bis,l.tatsaechlicheDauer); });
   const groups=Object.values(byStud).sort((a,b)=>b.ue-a.ue);
   let h=`<div class="view-inner view-read fade-up">
-    <div class="back-row"><button class="back-btn" id="backBtn">${ICN.back} Start</button></div>
+    <div class="back-row"><button class="back-btn" id="backBtn">${ICN.back} Heute</button></div>
     <div class="sec-h" style="margin:4px 0 4px;">FC <span class="o">vergessen</span></div>
     <p class="muted-p" style="font-size:13.5px;margin-bottom:14px;">Wenn ein Schüler einen oder beide Fahrchecks nicht dabei hatte. Sobald nachgereicht, fließt der Verdienst im aktuellen Monat nach.</p>
     <div class="fc-miss-sum">Aktuell entgehen dir <b>${eurFmt(eur)}</b> durch ${forg.length} vergessene${forg.length===1?'n':''} Fahrcheck${forg.length===1?'':'s'}.</div>`;
@@ -13325,7 +13325,7 @@ function routeWetter(w){
     deco+=`<div class="wx-fogband f1"></div><div class="wx-fogband f2"></div><div class="wx-fogband f3"></div>`;
   }
   view.innerHTML=`<div class="view-inner fade-up wx-screen">
-    <div class="back-row"><button class="back-btn" id="backBtn">${ICN.back} Start</button></div>
+    <div class="back-row"><button class="back-btn" id="backBtn">${ICN.back} Heute</button></div>
     <div class="wx-stage wx-cat-${cat}${night?' wx-night':''}">${deco}</div>
     <div class="wx-info">
       <div class="wx-temp">${w.temp}°</div>
@@ -14784,10 +14784,17 @@ function navZurueck(){
   // Android-Zuruecktaste ebenfalls bedienen
   window.addEventListener("popstate",()=>{
     // Erst offenes Fenster bzw. Menü schließen, dann eine Seite zurück (wie bei Android-Apps üblich).
-    const sh=document.getElementById("sheet"), dr=document.getElementById("drawer");
-    if(sh&&sh.classList.contains("open")){ closeSheet(); try{history.pushState(null,"",location.href);}catch(e){} return; }
-    if(dr&&dr.classList.contains("open")){ try{closeDrawer();}catch(e){} try{history.pushState(null,"",location.href);}catch(e){} return; }
-    if(_navStack.length>1){ navZurueck(); try{history.pushState(null,"",location.href);}catch(e){} }
+    const sperre=()=>{ try{history.pushState(null,"",location.href);}catch(e){} };
+    const sh=document.getElementById("sheet"), dr=document.getElementById("drawer"), ap=document.getElementById("adminPanel"), ff=document.getElementById("fsFilterDrawer");
+    if(document.getElementById("bueroNotizPopup")){ sperre(); return; } // Büro-Nachricht muss bewusst bestätigt werden
+    if(sh&&sh.classList.contains("open")){ closeSheet(); sperre(); return; }
+    if(ap&&ap.classList.contains("open")){ try{closeAdminPanel();}catch(e){} sperre(); return; }
+    if(ff&&ff.classList.contains("open")){ try{_fsCloseFilterPanel();}catch(e){} sperre(); return; }
+    if(dr&&dr.classList.contains("open")){ try{closeDrawer();}catch(e){} sperre(); return; }
+    if(_navStack.length>1){ navZurueck(); sperre(); return; }
+    // Auf der ersten Seite: zweimal Zurück kurz hintereinander beendet die App, einmal nicht.
+    if(Date.now()-(window._zurueckEnde||0)<2000){ history.back(); return; }
+    window._zurueckEnde=Date.now(); toast("Nochmal zurück zum Beenden"); sperre();
   });
   try{ history.pushState(null,"",location.href); }catch(e){}
 })();
