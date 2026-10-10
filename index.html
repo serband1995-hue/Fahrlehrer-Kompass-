@@ -3256,7 +3256,7 @@ function _lokalerDatenEigentuemer() {
 // Entfernt alle personenbezogenen App-Daten vom Gerät (nicht die App-Version und Geräte-Einstellungen).
 function _lokaleNutzerdatenLoeschen() {
   ["serband-app-v1", "serband-sync-stamp", "serband-restore-stamp", "serband-session-cache", "serband-backup-stamp",
-   "serband-weather-cache", "serband-weather-forecast-cache", OWNER_KEY].forEach(k => {
+   "serband-weather-cache", "serband-weather-forecast-cache", "serband-abgleich-v1", OWNER_KEY].forEach(k => {
     try { localStorage.removeItem(k); } catch (e) {}
   });
   try { sessionStorage.removeItem("vd_unlocked"); } catch (e) {}
@@ -3588,6 +3588,10 @@ async function pullFromCloud() {
         // Cloud ist neuer → lokal überschreiben
         const cloudDB = data.data;
         DB = cloudDB;
+        // Das Abgleich-Gedächtnis beschreibt den alten Gerätestand - mit dem Cloud-Stand passt es nicht mehr.
+        // Leeren: dann gewinnt beim nächsten Abruf der Stand vom Büro, und es wird nichts aufgrund alter
+        // Einträge gelöscht. (Unbekanntes wird nie gelöscht.)
+        _abglSpeichern({ user: _authUser.id, schueler: {}, termine: {}, pruefungen: {} });
         localStorage.setItem(STORE_KEY, JSON.stringify(DB));
         localStorage.setItem("serband-sync-stamp", cloudUpdated + "");
         console.log("[Kompass] Cloud-Daten geladen (" + new Date(cloudUpdated).toLocaleString("de") + ")");
@@ -4026,7 +4030,7 @@ async function pullSchuelerZuweisungen() {
       const lok = DB.students.find(x => x.id === r.id); if (!lok) continue;
       if (neuIds.has(r.id)) { memS.schueler[r.id] = _abglWertVon("schueler", lok); continue; }
       const bekannt = memS.schueler[r.id];
-      if (!bekannt || bekannt !== _abglWertVon("schueler", lok)) continue;
+      if (bekannt && bekannt !== _abglWertVon("schueler", lok)) continue; // selbst geändert: eigener Stand gilt
       const n = (r.name && !(r.name === "(ohne Namen)" && !lok.name)) ? r.name : lok.name, t = r.telefon || "";
       if (n !== lok.name || t !== (lok.telefon || "")) { lok.name = n; lok.telefon = t; memS.schueler[r.id] = _abglWertVon("schueler", lok); namenNeu = true; }
     }
@@ -4071,6 +4075,16 @@ async function pullTermineZuweisungen() {
     const supa = getSupa();
     // Seitenweise lesen (mehr als 1000 Termine). Fehler brechen ab: sonst gälte eine leere Antwort als "alles gelöscht".
     const rows = await _alleSeiten(() => supa.from("kalender_termine").select("*").eq("fahrlehrer_id", _authUser.id).eq("geloescht", false));
+    const remoteIds = new Set(rows.map(r => r.id));
+    // Termine, die das Büro einem anderen Fahrlehrer gegeben hat, sieht man selbst nicht mehr (RLS) -
+    // die Datenbank sagt, welche der eigenen IDs inzwischen jemand anderem gehören.
+    // (Vor dem Lesen des Gedächtnisses: nach dem letzten await darf es sich nicht mehr ändern.)
+    const unklar = DB.lessons.filter(l => !remoteIds.has(l.id) && !l._syncedAt && l.id).map(l => l.id);
+    let weggegeben = new Set();
+    if (unklar.length) {
+      const { data: fremd, error: fErr } = await supa.rpc("termine_nicht_mehr_meine", { p_ids: unklar });
+      if (!fErr && Array.isArray(fremd)) weggegeben = new Set(fremd);
+    }
     const localById = {};
     DB.lessons.forEach(l => { localById[l.id] = l; });
     const mem = _abglLaden();
@@ -4083,26 +4097,27 @@ async function pullTermineZuweisungen() {
         const l = Object.assign({ id: r.id }, merged, { _syncedAt: remoteTime });
         DB.lessons.push(l); mem.termine[r.id] = _abglWertVon("termine", l);
         neu++;
-      } else if (!local._syncedAt || remoteTime > local._syncedAt) {
-        // Hat dieses Gerät den Termin seit dem letzten Abgleich selbst geändert, gilt die eigene Änderung -
-        // die Brücke lädt sie gleich hoch. Sonst gewinnt der neuere Stand vom Büro.
-        const selbstGeaendert = mem.termine[r.id] && mem.termine[r.id] !== _abglWertVon("termine", local);
-        if (selbstGeaendert) continue;
-        const vorher = _abglWertVon("termine", local);
-        Object.assign(local, merged, { _syncedAt: remoteTime });
-        const nachher = _abglWertVon("termine", local);
-        mem.termine[r.id] = nachher;
-        if (nachher !== vorher) geaendert++;
+        continue;
       }
-    }
-    const remoteIds = new Set(rows.map(r => r.id));
-    // Termine, die das Büro einem anderen Fahrlehrer gegeben hat, sieht man selbst nicht mehr (RLS) -
-    // die Datenbank sagt, welche der eigenen IDs inzwischen jemand anderem gehören.
-    const unklar = DB.lessons.filter(l => !remoteIds.has(l.id) && !l._syncedAt && l.id).map(l => l.id);
-    let weggegeben = new Set();
-    if (unklar.length) {
-      const { data: fremd, error: fErr } = await supa.rpc("termine_nicht_mehr_meine", { p_ids: unklar });
-      if (!fErr && Array.isArray(fremd)) weggegeben = new Set(fremd);
+      const wertLokal = _abglWertVon("termine", local);
+      const wertServer = _abglWertVon("termine", Object.assign({ id: r.id }, merged));
+      if (wertServer === wertLokal) {
+        // Gleicher Inhalt: nur merken, dass er abgeglichen ist.
+        mem.termine[r.id] = wertLokal;
+        if (!local._syncedAt || remoteTime > local._syncedAt) local._syncedAt = remoteTime;
+        continue;
+      }
+      const bekannt = mem.termine[r.id];
+      // Hat dieses Gerät den Termin seit dem letzten Abgleich selbst geändert, gilt die eigene Änderung -
+      // die Brücke lädt sie gleich hoch.
+      if (bekannt && bekannt !== wertLokal) continue;
+      // Kennt das Gerät seinen letzten Stand, steht fest: der Server hat etwas Neues (vom Büro) - unabhängig
+      // von der Uhrzeit des Geräts. Ohne Gedächtnis entscheidet die Zeit.
+      if (bekannt || !local._syncedAt || remoteTime > local._syncedAt) {
+        Object.assign(local, merged, { _syncedAt: remoteTime });
+        mem.termine[r.id] = _abglWertVon("termine", local);
+        geaendert++;
+      }
     }
     // Sicherheitssperre: Kommt gar nichts zurück, obwohl das Gerät viele abgeglichene Termine hat,
     // ist das eher ein Lese-Problem (z.B. abgelaufene Anmeldung) als eine echte Löschung.
@@ -4413,6 +4428,8 @@ function _fsMapPruefung(row,lehrerName){
 let _fsAggGen=0;
 async function _fsLoadAggData(fahrschuleId){
   const gen=_fsAggGen;
+  // Stand beim Start merken: Ändert jemand während des Ladens etwas, wird nicht ersetzt (sonst wäre es weg).
+  const standVorher=_fsAgg?JSON.stringify([DB.students,DB.lessons,DB.exams]):null;
   const supa=getSupa();
   // Schüler, Termine und Prüfungen seitenweise (mehr als 1000 Zeilen). Schlägt eine Abfrage fehl, bleibt der
   // bisherige Stand stehen - sonst sähe die Ansicht leer aus und ungespeicherte Änderungen wären weg.
@@ -4435,6 +4452,7 @@ async function _fsLoadAggData(fahrschuleId){
     return false;
   }
   if(gen!==_fsAggGen)return false;
+  if(standVorher!==null&&standVorher!==JSON.stringify([DB.students,DB.lessons,DB.exams])){ _fsSyncAggChanges(); return false; }
   const lehrer=lehrerR.data||[];
   const lehrerName=id=>{ const l=lehrer.find(x=>x.id===id); return l?(l.name||l.email):"Unbekannt"; };
   DB.students=(schuelerR.data||[]).map(r=>_fsMapSchueler(r,lehrerName));
@@ -4474,7 +4492,13 @@ async function _fsEnterAggMode(fahrschuleId){
   clearInterval(_fsRefreshTimer);
   _fsRefreshTimer=setInterval(()=>_fsRefreshAggData(),120000);
 }
+let _fsExitLaeuft=false;
 async function _fsExitAggMode(){
+  if(_fsExitLaeuft)return;
+  _fsExitLaeuft=true;
+  try{ await _fsExitAggModeJetzt(); }finally{ _fsExitLaeuft=false; }
+}
+async function _fsExitAggModeJetzt(){
   // Noch nicht geschriebene Änderungen erst speichern - sonst gingen sie beim Umschalten verloren.
   if(_fsAgg&&(_fsSyncDebounce||_fsUngespeichert)){
     clearTimeout(_fsSyncDebounce);
@@ -4497,9 +4521,17 @@ async function _fsRefreshAggData(){
   // das Neuladen würde sie sonst still verwerfen.
   if(_fsSyncDebounce||_fsUngespeichert){
     clearTimeout(_fsSyncDebounce);
-    if(!(await _fsSyncAggJetzt()))return;
+    if(!(await _fsSyncAggJetzt())&&!_fsNurOhneLehrer)return;
   }
-  await _fsLoadAggData(_fsAgg.fahrschuleId);
+  // Einträge ohne Fahrlehrer gibt es noch nicht in der Datenbank: über das Neuladen hinweg behalten.
+  const basisT=new Set((_fsBaseline&&_fsBaseline.lessons||[]).map(l=>l.id)), basisP=new Set((_fsBaseline&&_fsBaseline.exams||[]).map(e=>e.id));
+  const offenT=_fsNurOhneLehrer?(DB.lessons||[]).filter(l=>!l._synthetic&&!basisT.has(l.id)):[];
+  const offenP=_fsNurOhneLehrer?(DB.exams||[]).filter(e=>!basisP.has(e.id)):[];
+  if(!_fsAgg)return;
+  if(await _fsLoadAggData(_fsAgg.fahrschuleId)){
+    if(offenT.length) DB.lessons=[...DB.lessons,...offenT];
+    if(offenP.length) DB.exams=[...DB.exams,...offenP];
+  }
 }
 function _fsSuperAdminToggleBtn(){
   if(!isSuperAdmin())return "";
@@ -6102,6 +6134,7 @@ function save(){
    landen automatisch im "nicht zugeordnet"-Pool statt bei irgendjemandem zu landen. */
 let _fsSyncDebounce=null;
 let _fsUngespeichert=false; // letzter Speicherversuch der Gesamtansicht hat nicht alles geschrieben
+let _fsNurOhneLehrer=false; // ... und zwar nur, weil Einträgen der Fahrlehrer fehlt (kein Verbindungsfehler)
 function _fsSyncAggChanges(){
   if(!_fsAgg||!_fsBaseline)return;
   clearTimeout(_fsSyncDebounce);
@@ -6196,11 +6229,12 @@ async function _fsSyncAggJetzt(){
       const behalte=(liste,ohne,alt)=>liste.map(x=>ohne.has(x.id)?alt[x.id]:x).filter(Boolean);
       _fsBaseline={students:snap.students,lessons:behalte(snap.lessons,ohneLehrerT,altT),exams:behalte(snap.exams,ohneLehrerP,altP)};
       const ohne=ohneLehrerT.size+ohneLehrerP.size;
+      _fsNurOhneLehrer=ohne>0;
       if(ohne){ _fsUngespeichert=true; toast(`⚠ ${ohne} ${ohne===1?"Eintrag":"Einträge"} ohne Fahrlehrer nicht gespeichert – bitte einen Fahrlehrer zuordnen`); return false; }
       _fsUngespeichert=false;
       toast("Gespeichert ✓");
       return true;
-    }catch(e){ _fsUngespeichert=true; console.warn("[Kompass] Fahrschul-Speichern fehlgeschlagen:",e.message); toast("Fehler beim Speichern: "+e.message); return false; }
+    }catch(e){ _fsUngespeichert=true; _fsNurOhneLehrer=false; console.warn("[Kompass] Fahrschul-Speichern fehlgeschlagen:",e.message); toast("Fehler beim Speichern: "+e.message); return false; }
 }
 
 /* ===== Fahrschule-Synchronisations-Brücke =====
@@ -6225,7 +6259,12 @@ function _syncSchuelerBridge(){
         loeschWert:{status:"geloescht"}, aktivFilter:q=>q.neq("status","geloescht") });
       // Fragebogen privat, aber mit dem Schüler übertragbar: nur der aktuell zugeordnete Fahrlehrer kann ihn lesen.
       const boegen=P.students.filter(s=>geschrieben.includes(s.id)).map(s=>({schueler_id:s.id,bogen:s.bogen||null,aktualisiert_am:new Date().toISOString()}));
-      if(boegen.length) await _upsertRobust("schueler_privat",boegen,"schueler_id");
+      if(boegen.length){
+        const bogenOk=new Set(await _upsertRobust("schueler_privat",boegen,"schueler_id"));
+        // Fragebogen nicht angekommen: Schüler gilt als nicht abgeglichen, der nächste Lauf versucht es erneut.
+        const fehlt=boegen.filter(b=>!bogenOk.has(b.schueler_id));
+        if(fehlt.length){ const m=_abglLaden(); fehlt.forEach(b=>delete m.schueler[b.schueler_id]); _abglSpeichern(m); }
+      }
       // Auslastung fürs Fahrschule-Dashboard mitschicken (keine privaten Kalenderdaten, nur die Kennzahl)
       // capacityStats() rechnet auf DB - in der Gesamtansicht wäre das der Bestand aller Fahrlehrer.
       if(!_fsAgg) try{
