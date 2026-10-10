@@ -10694,6 +10694,7 @@ function openEventSheet(kind,id,sid){
   openSheet(`<div class="sheet-h">${st?esc(st.name):titelTermin}</div>
     <p class="muted-p" style="font-size:13.5px;margin:-4px 0 ${l.note?'8px':'16px'};">${isoDE(l.date)} · ${l.von}–${l.bis} · ${l.lektion?lektionTitel(l.lektion):artLab} ${statusInfo}</p>
     ${st?fristenHinweisHTML(st.id):""}
+    ${(()=>{ const ev=dayEvents(l.date).find(e=>e.kind==="lesson"&&e.id===l.id); return ev&&ev.doppelt?`<div class="es-note">⚠ Doppelt: Diese Prüfung steht schon auf der Prüfungstafel bzw. hat schon ein Ergebnis und zählt dort. Hier kannst du sie löschen.</div>`:""; })()}
     ${l.note?`<div class="es-note">${esc(l.note)}</div>`:''}
     <div class="es-actions">
       ${(fcRelevant&&st&&l.date<=todayISO())?(()=>{
@@ -10704,10 +10705,10 @@ function openEventSheet(kind,id,sid){
       ${st?`<button class="es-act primary" id="esAkte">Schülerakte öffnen</button>`:''}
       ${fcRelevant&&sichtbar("fahrcheck")?`<button class="es-act" id="esFC">Fahrcheck · <b>${fcLab}</b></button>`:''}
       ${fcRelevant&&st?`<button class="es-act" id="esSig">Unterschrift · <b>${l.signed?'✓ vorhanden':'noch offen'}</b></button>`:''}
-      <button class="es-act" id="esEdit">Bearbeiten / verschieben</button>
+      ${l.art==="block"?'':`<button class="es-act" id="esEdit">Bearbeiten / verschieben</button>
       <button class="es-act" id="esOther">Mit anderem Schüler gefahren</button>
       <button class="es-act" id="esNoshow">Nicht erschienen</button>
-      <button class="es-act" id="esCancel">Abgebrochen</button>
+      <button class="es-act" id="esCancel">Abgebrochen</button>`}
       ${fcRelevant?`<button class="es-act" id="esGift">🎁 Zeit verschenkt${typeof l.tatsaechlicheDauer==="number"?` · <b>${l.tatsaechlicheDauer} Min berechnet</b>`:''}</button>`:''}
       ${l.status&&l.status!=="geplant"?`<button class="es-act" id="esReset">Status zurücksetzen</button>`:''}
       <button class="es-act danger" id="esDelete">Termin löschen</button>
@@ -10716,10 +10717,11 @@ function openEventSheet(kind,id,sid){
   const ak=$("#esAkte"); if(ak)ak.addEventListener("click",()=>{ closeSheet(); routeDetail(l.sid); });
   const fcb=$("#esFC"); if(fcb)fcb.addEventListener("click",()=>{ closeSheet(); openFCMenu(id); });
   const sigb=$("#esSig"); if(sigb)sigb.addEventListener("click",()=>{ closeSheet(); openSignatureSheet(id); });
-  $("#esEdit").addEventListener("click",()=>openEventEdit(id));
-  $("#esOther").addEventListener("click",()=>{ closeSheet(); nsQuickAction("other",id,"lesson",routeKalender); });
-  $("#esNoshow").addEventListener("click",()=>openNoshowChoice(id,routeKalender));
-  $("#esCancel").addEventListener("click",()=>{ l.status="abgebrochen"; save(); _notifyOnlineBookingChange(id,"cancelled"); closeSheet(); toast("Als abgebrochen vermerkt"); routeKalender(); });
+  // Urlaub/Blocker (ganze Tage) nur löschen, nicht bearbeiten - sonst gingen sie kaputt.
+  if($("#esEdit"))$("#esEdit").addEventListener("click",()=>openEventEdit(id));
+  if($("#esOther"))$("#esOther").addEventListener("click",()=>{ closeSheet(); nsQuickAction("other",id,"lesson",routeKalender); });
+  if($("#esNoshow"))$("#esNoshow").addEventListener("click",()=>openNoshowChoice(id,routeKalender));
+  if($("#esCancel"))$("#esCancel").addEventListener("click",()=>{ l.status="abgebrochen"; save(); _notifyOnlineBookingChange(id,"cancelled"); closeSheet(); toast("Als abgebrochen vermerkt"); routeKalender(); });
   const gb=$("#esGift"); if(gb)gb.addEventListener("click",()=>openGiftTimeSheet(id,routeKalender));
   const rs=$("#esReset"); if(rs)rs.addEventListener("click",()=>{ l.status="geplant"; save(); closeSheet(); toast("Status zurückgesetzt"); routeKalender(); });
   $("#esDelete").addEventListener("click",()=>{ if(confirm("Diesen Termin löschen?")){ deleteLesson(id); closeSheet(); toast("Termin gelöscht"); routeKalender(); } });
@@ -11555,7 +11557,7 @@ function calEventChip(e,iso){
   const fzTag=e.fahrzeug?`<span class="cw-fz">${esc(e.fahrzeug)}</span>`:'';
   const pruefLabel=e.pruefTime?`<span class="cw-fz" style="color:${c.col}">Prüfung ${e.pruefTime}</span>`:'';
   // Urlaub/Blocker sind ganze Tage (00:00–23:59) und nicht ziehbar - beim Verschieben gingen sie kaputt.
-  const draggable=e.kind==="lesson"&&e.status==="geplant"&&e.art!=="block";
+  const draggable=e.kind==="lesson"&&e.status==="geplant"&&e.art!=="block"&&!e.doppelt;
   const dispName=(e.art==="theorie"&&e.lektion)?("Lektion "+e.lektion):esc(e.name||"");
   return `<div class="cw-ev${off?' off':''}${examSoon?' exam-soon':''}${draggable?' cw-draggable':''}" style="border-left-color:${c.col}" data-evedit="${e.kind}|${e.id}|${e.sid||''}"${draggable?` data-dragid="${e.id}"`:''}><span class="cw-evt">${e.von}</span><span class="cw-evn">${dispName}${sf}${stat}${fzTag}${pruefLabel}</span></div>`;
 }
@@ -11603,7 +11605,7 @@ function calDayHTML(){
   const cnt=countRange(iso,iso);
   const doneUE=dayUE(iso,true), planUE=dayUE(iso,false);
   const hol=holidayName(iso);
-  return `${hol?`<div class="cd-holiday">🎌 ${esc(hol)} · Feiertag in Hessen</div>`:''}<div class="cd-summary"><span><b>${evs.length}</b> belegt</span><span><b>${free.length}</b> frei</span>${_fsAgg?'':`<span><b>${planUE}</b> UE</span>`}</div>
+  return `${hol?`<div class="cd-holiday">🎌 ${esc(hol)} · Feiertag in Hessen</div>`:''}<div class="cd-summary"><span><b>${evs.filter(e=>!e.doppelt&&e.art!=="block").length}</b> belegt</span><span><b>${free.length}</b> frei</span>${_fsAgg?'':`<span><b>${planUE}</b> UE</span>`}</div>
     <div class="ct-wrap" style="height:${totalH}px">${hourLines}${nowLine}<div class="ct-events">${blocks}</div></div>`;
 }
 // UE eines Tages (done=nur absolvierte)
@@ -11818,7 +11820,7 @@ function dayEvents(iso){
   const gesehen=new Set();
   ev.forEach(e=>{
     if(e.kind!=="lesson"||e.art!=="pruefung"||!e.sid||e.status==="abgebrochen")return;
-    if(pruefSids.has(e.sid)||gesehen.has(e.sid)){ e.doppelt=true; e.name=e.name+" · doppelt"; }
+    if(pruefSids.has(e.sid)||gesehen.has(e.sid)){ e.doppelt=true; e.name="2× "+e.name; }
     else gesehen.add(e.sid);
   });
   return ev.sort((a,b)=>hm2min(a.von)-hm2min(b.von));
@@ -12277,7 +12279,8 @@ function bindExamReady(s,rerender){
   const off=$("#readyOff"); if(off)off.addEventListener("click",()=>{
     const hatTermin=!!terminFor(s.id);
     if(hatTermin&&!confirm("Der geplante Prüfungstermin wird dabei mit gelöscht. Fortfahren?"))return;
-    delete s.ready; delete s.waitOrder; if(!hatTermin)s.wartelisteRaus=true; clearSlot(s.id); save();
+    // Termin lösen: nur den Termin, der Platz auf der Warteliste bleibt. Ohne Termin: von der Warteliste nehmen.
+    if(hatTermin){ clearSlot(s.id); } else { delete s.ready; delete s.waitOrder; s.wartelisteRaus=true; } save();
     toast(hatTermin?"Termin gelöst":"Von der Warteliste genommen"); rerender();
   });
   const force=$("#readyForce"); if(force)force.addEventListener("click",()=>{ if(confirm("Diesen Schüler trotz offener Punkte manuell auf die Warteliste setzen?")){ setReady(s); save(); toast("Manuell auf die Warteliste gesetzt"); rerender(); } });
@@ -13597,7 +13600,7 @@ function _verdienstModulHTMLContent(){
   // Seit 2026.09.21: verdientUE enthält nur Stattgefundenes, prognoseUE auch die geplanten Termine.
   const verdientJetzt=verdientUE;
   // Aufrunden statt Runden: bei 239,6 von 240 UE fehlt noch etwas ("noch 0 UE" wäre falsch).
-  const restUE=Math.max(0,Math.ceil((_bonusUE-prognoseUE)*100)/100);
+  const restUE=Math.max(0,Math.ceil(Math.round((_bonusUE-prognoseUE)*1000)/10)/100);
   const bonusJetzt=verdientJetzt>=_bonusUE;
   const bonusMitPlan=prognoseUE>=_bonusUE;
   let bisHtml;
@@ -13630,7 +13633,7 @@ function _verdienstModulHTMLContent(){
     </div>
     <div class="thermo-info">
       <div class="thi-card"><div class="thi-k">✅ Verdient</div><div class="thi-v">${_eurMasked(verdientEuro)}</div><div class="thi-s">${Math.round(verdientUE)} UE abgerechnet</div></div>
-      <div class="thi-card future"><div class="thi-k"><span class="ic ic-gold" style="font-size:12px;">${ICN.cal}</span> Voraussichtlich</div><div class="thi-v">${_eurMasked(gesamtEuro)}</div><div class="thi-s">${Math.round(prognoseUE)} UE gesamt · ${Math.round(Math.max(0,prognoseUE-verdientUE))} noch offen</div></div>
+      <div class="thi-card future"><div class="thi-k"><span class="ic ic-gold" style="font-size:12px;">${ICN.cal}</span> Voraussichtlich</div><div class="thi-v">${_eurMasked(gesamtEuro)}</div><div class="thi-s">${fmtUE(prognoseUE)} UE gesamt · ${Math.round(Math.max(0,prognoseUE-verdientUE))} noch offen</div></div>
     </div>
     ${offenUE>0.3?`<div class="vd-offen">⚠ ${fmtUE(offenUE)} UE gefahren, FC noch offen · <b>${_eurMasked(leistungAusUE(offenUE))}</b> stehen aus</div>`:''}
     <div class="th-goal" style="margin-bottom:8px;">
