@@ -222,8 +222,8 @@ input,select,textarea{font-family:inherit;font-size:15px;color:var(--txt);}
   .topbar .icon-btn,.topbar .theme-btn{width:38px;height:38px;}
   .topbar .tb-title{font-size:15px !important;}
 }
-/* Sehr schmal: lange Titel ("Prüfung eintragen") dürfen auf zwei Zeilen umbrechen statt abgeschnitten zu werden. */
-@media (max-width:380px){
+/* Schmal (bis 420 px, z.B. 360/384/393): lange Titel ("Prüfung eintragen") dürfen auf zwei Zeilen umbrechen statt abgeschnitten zu werden. */
+@media (max-width:420px){
   .topbar .tb-title{font-size:14px !important;white-space:normal;line-height:1.15;hyphens:auto;-webkit-hyphens:auto;overflow-wrap:anywhere;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;}
 }
 .view{flex:1 1 auto;overflow-y:auto;overflow-x:hidden;-webkit-overflow-scrolling:touch;position:relative;}
@@ -1621,7 +1621,7 @@ body:not(.light) .cw-col.today .cw-dnum{color:var(--gold);}
 .vortest-big{display:flex;align-items:center;gap:12px;padding:14px 16px;background:var(--akzent);border-radius:14px;margin-bottom:14px;text-decoration:none;}
 .vortest-big .vb-ic{font-size:22px;flex:0 0 auto;}
 .vortest-big .vb-body .vb-name{color:#fff;font-weight:800;font-size:15px;}
-.vortest-big .vb-body .vb-sub{color:rgba(255,255,255,.7);font-size:12px;margin-top:1px;}
+.vortest-big .vb-body .vb-sub{color:rgba(255,255,255,.88);font-size:12px;margin-top:1px;}
 .vortest-big .vb-arr{color:rgba(255,255,255,.6);font-size:18px;margin-left:auto;}
 .vortest-big:active{opacity:.85;}
 /* Sehhilfe */
@@ -7067,7 +7067,7 @@ function toggleTheme(){
 /* ============================================================
    DRAWER + FAB
    ============================================================ */
-function openDrawer(){$("#drawer").classList.add("open");$("#scrim").classList.add("open");}
+function openDrawer(){_zurueckSperreNachholen();$("#drawer").classList.add("open");$("#scrim").classList.add("open");}
 function closeDrawer(){$("#drawer").classList.remove("open");$("#scrim").classList.remove("open");}
 $("#menuBtn").addEventListener("click",openDrawer);
 $("#scrim").addEventListener("click",closeDrawer);
@@ -12271,7 +12271,8 @@ function showCalStudentDetail(sid){
     _calDate=b.dataset.date; _calView="tag"; closeSheet(); routeKalender();
   }));
 }
-function openSheet(html){ $("#sheet").innerHTML=html; $("#sheet").classList.add("open"); $("#sheetScrim").classList.add("open"); }
+function _zurueckSperreNachholen(){ if(window._zurueckOffen){ window._zurueckOffen=false; window._zurueckEnde=0; try{history.pushState(null,"",location.href);}catch(e){} } }
+function openSheet(html){ _zurueckSperreNachholen(); $("#sheet").innerHTML=html; $("#sheet").classList.add("open"); $("#sheetScrim").classList.add("open"); }
 function closeSheet(){ $("#sheet").classList.remove("open"); $("#sheetScrim").classList.remove("open"); }
 
 /* ---------- geteilte Bausteine: Prüfungsreif + Simulator ---------- */
@@ -14432,7 +14433,7 @@ function openBellSheet(){
     const msg=encodeURIComponent(`Hey ${s.name.split(" ")[0]}! Kurze Erinnerung: morgen um ${l.von} Uhr ist deine Fahrstunde. Bis dann! 🚗`);
     const url=phone?`https://wa.me/${phone}?text=${msg}`:`https://wa.me/?text=${msg}`;
     return `<a class="es-act" href="${url}" target="_blank" rel="noopener" style="display:flex;justify-content:space-between;align-items:center;text-decoration:none;">
-      <span>${esc(s.name)} · ${l.von} Uhr</span><span style="color:#25D366;">WhatsApp ›</span>
+      <span>${esc(s.name)} · ${l.von} Uhr</span><span style="color:#0f7d6e;font-weight:700;">WhatsApp ›</span>
     </a>`;
   }).join("") : "";
   const pruefRows=pruefList.length? pruefList.map(p=>{
@@ -14442,7 +14443,7 @@ function openBellSheet(){
     const msg=encodeURIComponent(`Hey ${s.name.split(" ")[0]}! Kurze Erinnerung: morgen um ${p.von} Uhr ist deine Prüfung. Viel Erfolg! 🍀🚗`);
     const url=phone?`https://wa.me/${phone}?text=${msg}`:`https://wa.me/?text=${msg}`;
     return `<a class="es-act" href="${url}" target="_blank" rel="noopener" style="display:flex;justify-content:space-between;align-items:center;text-decoration:none;">
-      <span>🏆 ${esc(s.name)} · ${p.von} Uhr</span><span style="color:#25D366;">WhatsApp ›</span>
+      <span>🏆 ${esc(s.name)} · ${p.von} Uhr</span><span style="color:#0f7d6e;font-weight:700;">WhatsApp ›</span>
     </a>`;
   }).join("") : "";
   const alleRows=geburtstagRows+rows+pruefRows;
@@ -14766,6 +14767,7 @@ function navZurueck(){
       window[name]=function(){
         const args=Array.prototype.slice.call(arguments);
         if(!_navFahrt){
+          _zurueckSperreNachholen();
           const letzte=_navStack[_navStack.length-1];
           let gleich=false;
           try{ gleich=!!letzte&&letzte.name===name&&JSON.stringify(letzte.args)===JSON.stringify(args); }catch(e){}
@@ -14784,17 +14786,19 @@ function navZurueck(){
   // Android-Zuruecktaste ebenfalls bedienen
   window.addEventListener("popstate",()=>{
     // Erst offenes Fenster bzw. Menü schließen, dann eine Seite zurück (wie bei Android-Apps üblich).
-    const sperre=()=>{ try{history.pushState(null,"",location.href);}catch(e){} };
+    const sperre=()=>{ window._zurueckEnde=0; window._zurueckOffen=false; try{history.pushState(null,"",location.href);}catch(e){} };
     const sh=document.getElementById("sheet"), dr=document.getElementById("drawer"), ap=document.getElementById("adminPanel"), ff=document.getElementById("fsFilterDrawer");
     if(document.getElementById("bueroNotizPopup")){ sperre(); return; } // Büro-Nachricht muss bewusst bestätigt werden
     if(sh&&sh.classList.contains("open")){ closeSheet(); sperre(); return; }
     if(ap&&ap.classList.contains("open")){ try{closeAdminPanel();}catch(e){} sperre(); return; }
     if(ff&&ff.classList.contains("open")){ try{_fsCloseFilterPanel();}catch(e){} sperre(); return; }
+    if(typeof DRAW!=="undefined"&&DRAW&&DRAW.drawerOpen){ try{closeTafelDrawer();}catch(e){} sperre(); return; }
     if(dr&&dr.classList.contains("open")){ try{closeDrawer();}catch(e){} sperre(); return; }
     if(_navStack.length>1){ navZurueck(); sperre(); return; }
-    // Auf der ersten Seite: zweimal Zurück kurz hintereinander beendet die App, einmal nicht.
-    if(Date.now()-(window._zurueckEnde||0)<2000){ history.back(); return; }
-    window._zurueckEnde=Date.now(); toast("Nochmal zurück zum Beenden"); sperre();
+    // Auf der ersten Seite: einmal Zurück zeigt einen Hinweis, ein zweites Zurück innerhalb von 2 s beendet die App
+    // (dann ist keine Sperre mehr da - Android schließt selbst). Danach oder bei jeder anderen Aktion kommt die Sperre zurück.
+    window._zurueckEnde=Date.now(); window._zurueckOffen=true; toast("Nochmal zurück zum Beenden");
+    setTimeout(()=>{ if(window._zurueckOffen&&Date.now()-window._zurueckEnde>=1900) sperre(); },2000);
   });
   try{ history.pushState(null,"",location.href); }catch(e){}
 })();
