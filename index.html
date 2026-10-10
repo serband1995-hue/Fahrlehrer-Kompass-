@@ -3256,7 +3256,7 @@ function _lokalerDatenEigentuemer() {
 // Entfernt alle personenbezogenen App-Daten vom Gerät (nicht die App-Version und Geräte-Einstellungen).
 function _lokaleNutzerdatenLoeschen() {
   ["serband-app-v1", "serband-sync-stamp", "serband-restore-stamp", "serband-session-cache", "serband-backup-stamp",
-   "serband-weather-cache", "serband-weather-forecast-cache", "serband-abgleich-v1", OWNER_KEY].forEach(k => {
+   "serband-weather-cache", "serband-weather-forecast-cache", "serband-abgleich-v1", "serband-db-defekt", "serband-vor-import", OWNER_KEY].forEach(k => {
     try { localStorage.removeItem(k); } catch (e) {}
   });
   try { sessionStorage.removeItem("vd_unlocked"); } catch (e) {}
@@ -3482,7 +3482,9 @@ async function _continueLoginFlow(prof) {
   // Fahrschule-Admin: exakt dieselbe App, nur mit den zusammengeführten Daten der ganzen Fahrschule
   if (prof && (prof.rolle === "fahrschule_admin" || prof.rolle === "buero")) {
     document.getElementById("loginOverlay").classList.add("hidden");
-    await _fsEnterAggMode(prof.fahrschule_id);
+    // Schlägt das Laden fehl (z.B. kein Netz), alle 20 s erneut versuchen statt eine leere Ansicht zu zeigen.
+    const versuch = async () => { if (_fsAgg || !_authUser) return; if (!(await _fsEnterAggMode(prof.fahrschule_id)) && !_fsAgg) setTimeout(versuch, 20000); };
+    await versuch();
     return;
   }
   // Cloud-Daten laden (falls neuere als localStorage)
@@ -3570,6 +3572,7 @@ function printAgb() {
 // den Server überschreiben. var statt let, damit save() beim Start nie an der TDZ scheitert.
 var _pullOk = false;
 var _cloudHatteDaten = false; // hatte der zuletzt gelesene Cloud-Stand Schüler oder Termine?
+var _sitzungHatteDaten = false; // hatte dieses Gerät seit dem Start schon einmal Schüler oder Termine?
 async function pullFromCloud() {
   // In der Fahrschul-Gesamtansicht steht in DB der Bestand aller Fahrlehrer - ein Pull würde ihn
   // mit dem eigenen Snapshot vermischen. Der nächste Timer-Lauf nach dem Verlassen holt es nach.
@@ -3595,7 +3598,8 @@ async function pullFromCloud() {
         localStorage.setItem(STORE_KEY, JSON.stringify(DB));
         localStorage.setItem("serband-sync-stamp", cloudUpdated + "");
         console.log("[Kompass] Cloud-Daten geladen (" + new Date(cloudUpdated).toLocaleString("de") + ")");
-        if (_lokalDefekt) { _lokalDefekt = false; toast("Gerätespeicher war beschädigt – Stand aus der Cloud geladen"); }
+        if (_cloudHatteDaten) _sitzungHatteDaten = true;
+        if (_lokalDefekt) { _lokalDefekt = false; toast("Speicher war defekt – Cloud-Stand geladen"); }
       }
     }
     _pullOk = true;
@@ -3733,7 +3737,9 @@ async function pushToCloud() {
   if (_lokalerSpeicherGehoertAnderem()) { console.warn("[Kompass] Push übersprungen: anderer Tab hat das Konto gewechselt."); return false; }
   // Ein leerer Stand überschreibt nie eine Cloud mit Daten (z.B. nach beschädigtem Gerätespeicher).
   const leer = !(daten.students && daten.students.length) && !(daten.lessons && daten.lessons.length);
-  if (leer && (_cloudHatteDaten || _lokalDefekt)) { console.warn("[Kompass] Push übersprungen: leerer Stand, Cloud hat Daten."); return false; }
+  if (!leer) _sitzungHatteDaten = true;
+  // Wer bewusst alles gelöscht hat, hatte vorher Daten - das darf hoch. Gesperrt ist nur ein Gerät, das leer startete.
+  if (leer && !_sitzungHatteDaten && (_cloudHatteDaten || _lokalDefekt)) { console.warn("[Kompass] Push übersprungen: leerer Stand, Cloud hat Daten."); return false; }
   try {
     const supa = getSupa();
     const now = new Date().toISOString();
@@ -4448,7 +4454,7 @@ async function _fsLoadAggData(fahrschuleId){
     if(lehrerR.error) throw lehrerR.error;
   }catch(e){
     console.warn("[Kompass] Fahrschul-Daten nicht geladen:",e.message);
-    toast("Fahrschul-Daten konnten nicht geladen werden – bitte Verbindung prüfen");
+    toast("Laden fehlgeschlagen – Verbindung prüfen");
     return false;
   }
   if(gen!==_fsAggGen)return false;
@@ -4486,11 +4492,12 @@ async function _fsEnterAggMode(fahrschuleId){
   if(_fsPersonalBackup===null){
     _fsPersonalBackup={students:DB.students,lessons:DB.lessons,exams:DB.exams};
   }
-  if(!(await _fsLoadAggData(fahrschuleId)))return; // inzwischen wieder verlassen
+  if(!(await _fsLoadAggData(fahrschuleId)))return false; // inzwischen wieder verlassen oder Ladefehler
   _fsSetDrawer(true);
   routeFahrschuleDashboard();
   clearInterval(_fsRefreshTimer);
   _fsRefreshTimer=setInterval(()=>_fsRefreshAggData(),120000);
+  return true;
 }
 let _fsExitLaeuft=false;
 async function _fsExitAggMode(){
@@ -4510,6 +4517,7 @@ async function _fsExitAggModeJetzt(){
     DB.students=_fsPersonalBackup.students; DB.lessons=_fsPersonalBackup.lessons; DB.exams=_fsPersonalBackup.exams;
     _fsPersonalBackup=null;
   }
+  _fsUngespeichert=false; _fsNurOhneLehrer=false;
   _fsAgg=null; _fsBaseline=null; _fsCalFahrzeugFilter=[]; _fsCalLehrerFilter=[]; _fsCalBueroFilter=[]; _fsFilterPanelOpen=false; _fsTileOpen={fahrzeug:false,lehrer:false};
   document.getElementById("fsCalTiles")?.remove();
   _fsSetDrawer(false);
@@ -6120,8 +6128,10 @@ function load(){
   return {students:[]};
 }
 let DB=load();
+if((DB.students&&DB.students.length)||(DB.lessons&&DB.lessons.length)) _sitzungHatteDaten=true;
 function save(){
   if(_fsAgg){ _fsSyncAggChanges(); return; }
+  if((DB.students&&DB.students.length)||(DB.lessons&&DB.lessons.length)) _sitzungHatteDaten=true;
   if(_lokalerSpeicherGehoertAnderem()){ location.reload(); return; } // anderer Tab hat anderes Konto angemeldet
   try{localStorage.setItem(STORE_KEY,JSON.stringify(DB));}catch(e){}
   if(_authUser&&_pullOk){clearTimeout(_saveSyncDebounce);_saveSyncDebounce=setTimeout(pushToCloud,4000);_syncSchuelerBridge();_syncTermineBridge();_syncPruefungenBridge();}
@@ -6230,7 +6240,7 @@ async function _fsSyncAggJetzt(){
       _fsBaseline={students:snap.students,lessons:behalte(snap.lessons,ohneLehrerT,altT),exams:behalte(snap.exams,ohneLehrerP,altP)};
       const ohne=ohneLehrerT.size+ohneLehrerP.size;
       _fsNurOhneLehrer=ohne>0;
-      if(ohne){ _fsUngespeichert=true; toast(`⚠ ${ohne} ${ohne===1?"Eintrag":"Einträge"} ohne Fahrlehrer nicht gespeichert – bitte einen Fahrlehrer zuordnen`); return false; }
+      if(ohne){ _fsUngespeichert=true; toast(`⚠ ${ohne} ${ohne===1?"Eintrag":"Einträge"} ohne Fahrlehrer – bitte zuordnen`); return false; }
       _fsUngespeichert=false;
       toast("Gespeichert ✓");
       return true;
@@ -10009,8 +10019,10 @@ function routeSettings(){
       if(j.data.students.some(s=>!s||typeof s!=="object"||typeof s.id!=="string"||!/^[A-Za-z0-9_-]{1,64}$/.test(s.id)))throw 0;
       if(confirm("Backup einspielen? Die aktuellen Daten werden ersetzt. Dein jetziger Stand wird vorher als Datei gesichert.")){
         // Erst den jetzigen Stand sichern - ohne Sicherung wird nichts ersetzt.
-        try{ _backupHerunterladen("_vor-Einspielen"); }catch(e2){ toast("Sicherung nicht möglich – Backup wurde nicht eingespielt"); return; }
+        try{ _backupHerunterladen("_vor-Einspielen"); }catch(e2){ toast("Sicherung fehlgeschlagen – nichts geändert"); return; }
         const vorher=JSON.stringify(DB);
+        // Zweite Sicherung im Gerät, falls der Browser den Download still blockiert.
+        try{ localStorage.setItem("serband-vor-import",vorher); }catch(e3){}
         DB=j.data;ensureDB();save();routeDashboard();
         toastUndo("Backup eingespielt",()=>{ DB=JSON.parse(vorher); ensureDB(); save(); routeDashboard(); toast("Alter Stand wiederhergestellt"); },10000);
       }

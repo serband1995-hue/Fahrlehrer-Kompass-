@@ -348,15 +348,16 @@ fall("9  Defekter Speicher wird gesichert, Cloud-Stand gewinnt trotz neuem Stemp
   await ruf(() => { ["serband-db-defekt", STORE_KEY, "serband-sync-stamp"].forEach((k) => localStorage.removeItem(k)); });
 });
 
-fall("10 Leerer Stand wird nicht hochgeladen", async (f) => {
+fall("10 Leerer Stand wird nicht hochgeladen (Gerät startete leer, Cloud hat Daten)", async (f) => {
   await neu();
   await setzeTabelle("snapshots", [{
     user_id: "fl-1", updated_at: "2026-10-09T08:00:00.000Z",
     data: { students: [{ id: "A", name: "Eins Test" }, { id: "B", name: "Zwei Test" }], lessons: [], exams: [] },
   }]);
+  // Gerät ist leer und hält sich für aktueller (Stempel neuer) - z.B. leerer Speicher nach Neuinstallation.
+  await ruf(() => { DB = { students: [], lessons: [], exams: [] }; _sitzungHatteDaten = false; localStorage.setItem("serband-sync-stamp", String(Date.parse("2026-10-10T08:00:00Z"))); });
   await ruf(() => pullFromCloud());
-  if ((await dbIds("students")).length !== 2) return f("Vorbereitung: Cloud-Stand nicht geladen");
-  await ruf(() => { DB = { students: [], lessons: [], exams: [] }; });
+  if ((await dbIds("students")).length !== 0) return f("Vorbereitung: Cloud-Stand wurde geladen, Fall nicht nachgestellt");
   await zaehlerNull();
   const r = await ruf(() => pushToCloud());
   const n = await zaehler("upserts", "snapshots");
@@ -364,6 +365,10 @@ fall("10 Leerer Stand wird nicht hochgeladen", async (f) => {
   if (r !== false) f("pushToCloud lieferte " + r + " statt false");
   const snap = (await tabelle("snapshots"))[0];
   if (!snap || !(snap.data.students || []).length) f("Snapshot auf dem Server wurde geleert");
+  // Bewusst alles gelöscht (Gerät hatte in dieser Sitzung Daten): darf hoch.
+  await ruf(() => { _sitzungHatteDaten = true; });
+  const r2 = await ruf(() => pushToCloud());
+  if (r2 !== true) f("Bewusst geleerter Stand wird nicht hochgeladen");
 });
 
 fall("11 Über 1000 Termine: Abruf entfernt keinen lokalen Termin", async (f) => {
