@@ -157,7 +157,8 @@ async function neuesSzenario(daten) { // Server auf Ausgangsstand, beide Geräte
 }
 async function starte(g) { await ev(g, () => pullFromCloud()); } // wie der Start der App: Cloud lesen
 const schreibzugriffe = (dev) => srv.log.filter((e) => e.dev === dev && (e.op === "update" || e.op === "upsert")).length;
-const push = (g) => ev(g, () => pushToCloud());
+// Wie save(): Die Tests ändern DB direkt, die App ruft danach immer save() auf (setzt den Merker "geändert").
+const push = (g) => ev(g, () => { try { _snapGeaendert = true; } catch (e) {} return pushToCloud(); });
 const cloud = () => (srv.snap ? C(srv.snap.data) : null);
 const finde = (liste, id) => (liste || []).find((x) => x.id === id);
 const ids = (liste) => (liste || []).map((x) => x.id).join();
@@ -327,21 +328,24 @@ fall("Z10 Unterschiedliches _syncedAt auf demselben Termin zählt nicht als Änd
   if (!finde(c.students, "S-B")) f("Cloud: Schüler S-B von B fehlt");
 });
 
-fall("Z11 Erster Start nach dem Update (ohne Merkzettel): nichts geht verloren", async (f) => {
+fall("Z11 Erster Start nach dem Update (ohne Merkzettel): der neuere Stand gilt ganz, Gelöschtes kommt nicht zurück", async (f) => {
   await neuesSzenario({ students: [neuerSchueler("S9", "Neun Schüler")], lessons: [], exams: [], termine: [] });
-  // B: kein serband-snapbasis-v1, kein Sync-Stempel, lokal gibt es einen Termin, den die Cloud nicht kennt
-  await ev(B, (t) => { DB.lessons = [t]; localStorage.removeItem("serband-snapbasis-v1"); }, neuerTermin("L9"));
+  // B: kein serband-snapbasis-v1, kein Sync-Stempel (älter als die Cloud), lokal ein Termin, den die Cloud nicht mehr hat
+  // (z.B. auf A gelöscht). Ohne gemeinsamen Stand ist nicht erkennbar, ob er neu oder gelöscht ist: wie früher gilt die Cloud.
+  await ev(B, (t) => { DB.lessons = [t]; localStorage.removeItem("serband-snapbasis-v1"); localStorage.removeItem("serband-sync-stamp"); }, neuerTermin("L9"));
   await starte(B);
   let b = await dbVon(B);
   if (!finde(b.students, "S9")) f("B.DB: Schüler S9 aus der Cloud fehlt");
-  if (!finde(b.lessons, "L9")) f("B.DB: lokaler Termin L9 wurde vom Cloud-Stand ersetzt (verloren)");
+  if (finde(b.lessons, "L9")) f("B.DB: alter Termin L9 kam zurück (Cloud ist neuer)");
   const r = await push(B);
   if (r !== true) f("B: pushToCloud lieferte " + r + " statt true");
   const c = cloud();
   if (!finde(c.students, "S9")) f("Cloud: S9 fehlt");
-  if (!finde(c.lessons, "L9")) f("Cloud: L9 fehlt");
-  b = await dbVon(B);
-  if (!finde(b.students, "S9") || !finde(b.lessons, "L9")) f("B.DB: nach dem Hochladen fehlt S9 oder L9");
+  if (finde(c.lessons, "L9")) f("Cloud: L9 wurde zurückgeholt");
+  // Danach arbeitet B normal mit gemeinsamem Stand weiter: eine neue Änderung geht hoch.
+  await ev(B, (t) => { DB.lessons.push(t); }, neuerTermin("L10"));
+  await push(B);
+  if (!finde(cloud().lessons, "L10")) f("Cloud: neue Änderung von B nach dem ersten Start fehlt");
 });
 
 fall("Z12 Nach dem Zusammenführen ist DB gültig, keine Fehler in der Konsole", async (f) => {
