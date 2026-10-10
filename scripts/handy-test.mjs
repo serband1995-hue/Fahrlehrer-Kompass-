@@ -1,5 +1,6 @@
 // Handy-Test: öffnet jede Seite bei 360 und 412 px (hoch) und quer
 // und meldet Seiten, die seitlich wischbar sind oder Elemente über den Rand schieben.
+// Danach alle Hauptansichten der App (Titel abgeschnitten, Knöpfe über den Rand, JS-Fehler).
 // Aufruf:  NODE_PATH=$(npm root -g) node scripts/handy-test.mjs [seite.html ...]
 import { createRequire } from "node:module";
 import { createServer } from "node:http";
@@ -74,6 +75,43 @@ for (const seite of SEITEN) {
       probleme++;
       console.log(`FEHLER   ${seite} @ ${g.name}: ${e.message.split("\n")[0]}`);
     }
+    await ctx.close();
+  }
+}
+
+// App-Ansichten (index.html): jede Hauptseite mit einem Test-Schüler öffnen. Geprüft wird: kein seitliches Wischen,
+// keine Knöpfe über den rechten Rand, Titel oben passt ganz hinein, keine JS-Fehler.
+if (process.argv.length <= 2) {
+  const ANSICHTEN = ["routeDashboard()", "routeHome()", "routeDetail('t1')", "routePlan('t1')", "routeHistorie('t1')", "routeNotes('t1')", "routeExam('t1')",
+    "routeWaitlist()", "routeKalender()", "routePruefungen()", "routeStats()", "routeSettings()", "routeTodos()", "routeArchive()", "routeArbeitszeit()"];
+  for (const g of GROESSEN.slice(0, 2)) {
+    const ctx = await browser.newContext({ viewport: { width: g.width, height: g.height }, isMobile: true, hasTouch: true });
+    const page = await ctx.newPage();
+    const jsFehler = [];
+    page.on("pageerror", (e) => jsFehler.push(e.message));
+    await page.route("**/*", (r) => (r.request().url().startsWith(basis) ? r.continue() : r.abort()));
+    await page.goto(basis + "index.html", { waitUntil: "load" });
+    await page.waitForTimeout(600);
+    await page.evaluate(() => {
+      for (const id of ["loginOverlay", "splash"]) { const e = document.getElementById(id); if (e) e.style.display = "none"; }
+      ensureAusbildungsplaene(); ensureDB();
+      const c = DB.ausbildungsplaene.find((p) => p.standard) || DB.ausbildungsplaene[0];
+      DB.students.push({ id: "t1", name: "Erfundene Testperson Lang", form: "B", created: Date.now(), plan: newPlan(), planId: c.id, planSnapshot: JSON.parse(JSON.stringify(c.stufen)), telefon: "0123" });
+    });
+    for (const a of ANSICHTEN) {
+      const m = await page.evaluate(async (a) => {
+        try { if (typeof eval(a.split("(")[0]) !== "function") return { fehlt: true }; eval(a); } catch (e) { return { fehler: String(e) }; }
+        await new Promise((k) => setTimeout(k, 250));
+        const W = document.documentElement.clientWidth;
+        const t = document.getElementById("tbTitle");
+        const ueber = [...document.querySelectorAll("#view button, #view a")].filter((e) => { const r = e.getBoundingClientRect(); return r.width > 0 && r.right > W + 1 && !e.closest("[style*='overflow'],.cal-chips,.fc-scroll"); }).map((e) => e.textContent.trim().slice(0, 20));
+        return { wisch: document.documentElement.scrollWidth > W + 1, titelAb: t && (t.scrollWidth > t.clientWidth + 1 || t.scrollHeight > t.clientHeight + 1) ? t.textContent : "", ueber: ueber.slice(0, 3) };
+      }, a);
+      if (m.fehlt) continue;
+      const f = [m.fehler, m.wisch && "seitlich wischbar", m.titelAb && "Titel abgeschnitten: " + m.titelAb, m.ueber && m.ueber.length && "über den Rand: " + m.ueber.join(", ")].filter(Boolean);
+      if (f.length) { probleme++; console.log(`PROBLEM  ${a} @ ${g.name}: ${f.join(" · ")}`); } else console.log(`ok       ${a} @ ${g.name}`);
+    }
+    if (jsFehler.length) { probleme++; console.log(`PROBLEM  App-Ansichten @ ${g.name}: JS-Fehler: ${jsFehler[0]}`); }
     await ctx.close();
   }
 }
