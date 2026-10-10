@@ -3275,7 +3275,7 @@ function _lokalerDatenEigentuemer() {
 // Entfernt alle personenbezogenen App-Daten vom Gerät (nicht die App-Version und Geräte-Einstellungen).
 function _lokaleNutzerdatenLoeschen() {
   ["serband-app-v1", "serband-sync-stamp", "serband-restore-stamp", "serband-session-cache", "serband-backup-stamp",
-   "serband-weather-cache", "serband-weather-forecast-cache", "serband-abgleich-v1", "serband-db-defekt", "serband-vor-import", "serband-snapbasis-v1", OWNER_KEY].forEach(k => {
+   "serband-weather-cache", "serband-weather-forecast-cache", "serband-abgleich-v1", "serband-db-defekt", "serband-vor-import", "serband-snapbasis-v1", "serband-gefeiert", OWNER_KEY].forEach(k => {
     try { localStorage.removeItem(k); } catch (e) {}
   });
   try { sessionStorage.removeItem("vd_unlocked"); } catch (e) {}
@@ -6190,8 +6190,11 @@ async function fsProvisionErfassen(){
   const typRoh=prompt("Was wurde verkauft (z.B. Simulator, Theorie-App)?","Simulator");
   if(typRoh===null)return;
   const typ=typRoh.trim()||"Simulator";
-  // "1.250,00" → 1250: Tausenderpunkte weg, Komma als Dezimalzeichen.
-  const betrag=parseFloat((prompt("Provisionsbetrag in Euro:")||"").replace(/\./g,"").replace(",","."));
+  // "1.250,00" → 1250 und "49,90" → 49.9; ein Punkt ohne Komma ist Dezimalpunkt ("49.90"), außer bei
+  // Tausendergruppen ("1.250").
+  const roh=(prompt("Provisionsbetrag in Euro:")||"").trim();
+  const norm=(/,/.test(roh)||/^\d{1,3}(\.\d{3})+$/.test(roh))?roh.replace(/\./g,"").replace(",","."):roh;
+  const betrag=parseFloat(norm);
   if(!(betrag>0)){ if(betrag!==undefined&&!isNaN(betrag))toast("Der Betrag muss größer als 0 sein"); return; }
   const supa=getSupa();
   const {error}=await supa.from("provisionen").insert({
@@ -7468,8 +7471,10 @@ function routeDetail(id){
   </div>`;
   animateRings();
   // Konfetti nur einmal, wenn der Schüler 100 % erreicht - nicht bei jedem Öffnen der Akte.
-  if(done&&!s.gefeiert){ s.gefeiert=true; save(); setTimeout(()=>celebrate(),420); }
-  if(!done&&s.gefeiert){ delete s.gefeiert; save(); }
+  // Gemerkt nur auf diesem Gerät (nicht am Schüler), damit das Öffnen einer Akte nichts speichert.
+  let gefeiert={}; try{ gefeiert=JSON.parse(localStorage.getItem("serband-gefeiert")||"{}")||{}; }catch(e){}
+  if(done&&!gefeiert[s.id]){ gefeiert[s.id]=1; try{localStorage.setItem("serband-gefeiert",JSON.stringify(gefeiert));}catch(e){} setTimeout(()=>celebrate(),420); }
+  if(!done&&gefeiert[s.id]){ delete gefeiert[s.id]; try{localStorage.setItem("serband-gefeiert",JSON.stringify(gefeiert));}catch(e){} }
   $("#backBtn").addEventListener("click",routeHome);
   $("#editBtn").addEventListener("click",()=>formView(s));
   const prb=$("#pruefReifBtn"); if(prb)prb.addEventListener("click",()=>{ s.pruefungsreifManuell=!s.pruefungsreifManuell; save(); routeDetail(id); });
