@@ -802,6 +802,47 @@ await pruefe("F2t", "„Abbrechen“ ohne Bewertung/Notiz: ohne Rückfrage zurü
 });
 
 // ---------- F4 Nichts kaputt (Teil im Hauptlauf) ----------
+// F5: Funde des Prüf-Teams (Schritt 3)
+await pruefe("F5a", "Tipp auf ein Thema springt nicht nach oben (Scrollstand bleibt)", async () => {
+  await setze(page, basisSzenario());
+  await page.evaluate(() => { try { localStorage.removeItem("kompass-fahrstunde"); } catch (e) {} routeFahrstunde("L1"); });
+  await warte(page, 250);
+  const r = await page.evaluate(async () => { view.scrollTop = 200; const vor = view.scrollTop; document.querySelectorAll("#view .fm-thema")[2].click(); await new Promise((k) => setTimeout(k, 150)); return { vor, nach: view.scrollTop }; });
+  await page.evaluate(() => { try { localStorage.removeItem("kompass-fahrstunde"); } catch (e) {} });
+  if (r.vor > 0 && r.nach === 0) return `Scrollstand ${r.vor} → 0`;
+});
+await pruefe("F5b", "Fertig zweimal mit gleicher Notiz: Notiz steht nur einmal in l.note", async () => {
+  await setze(page, basisSzenario());
+  const n = await page.evaluate(async () => {
+    const w = (ms) => new Promise((k) => setTimeout(k, ms));
+    for (let i = 0; i < 2; i++) { localStorage.removeItem("kompass-fahrstunde"); routeFahrstunde("L1"); await w(100);
+      document.querySelector('#view .fm-notiz[data-notiz="Zu schnell"]').click(); await w(100); document.getElementById("fmFertig").click(); await w(150); }
+    return (DB.lessons.find((l) => l.id === "L1").note || "").split("Zu schnell").length - 1;
+  });
+  if (n !== 1) return `„Zu schnell“ steht ${n}× in der Notiz`;
+});
+await pruefe("F5c", "Stunde während des Modus gelöscht: Fertig speichert die Bewertungen trotzdem im Plan", async () => {
+  await setze(page, basisSzenario());
+  const r = await page.evaluate(async () => {
+    const w = (ms) => new Promise((k) => setTimeout(k, ms));
+    localStorage.removeItem("kompass-fahrstunde"); routeFahrstunde("L1"); await w(100);
+    const b = [...document.querySelectorAll("#view .fm-thema")].find((x) => x.dataset.wert === "offen"); const id = b.dataset.item; b.click(); await w(100);
+    DB.lessons = DB.lessons.filter((l) => l.id !== "L1");
+    fahrstundeAbschliessen("L1"); await w(100);
+    return DB.students.find((x) => x.id === "t1").plan.ampeln[id];
+  });
+  if (r !== "gelb") return `Bewertung verloren (${r})`;
+});
+await pruefe("F5d", "Abmelden löscht den Merker „kompass-fahrstunde“; Sonderfahrt-Verschieben behält angehängte Notizen", async () => {
+  const r = await page.evaluate(() => { localStorage.setItem("kompass-fahrstunde", JSON.stringify({ lid: "x" })); _lokaleNutzerdatenLoeschen(); return { weg: localStorage.getItem("kompass-fahrstunde") === null, sn: _sonderNotiz("Autobahnfahrt · Zu schnell", "Überlandfahrt"), leer: _sonderNotiz("", "Nachtfahrt") }; });
+  const f = [];
+  if (!r.weg) f.push("Merker bleibt nach dem Abmelden");
+  if (r.sn !== "Überlandfahrt · Zu schnell") f.push("Sonderfahrt-Notiz: " + r.sn);
+  if (r.leer !== "Nachtfahrt") f.push("leere Notiz: " + r.leer);
+  await setze(page, basisSzenario());
+  return f;
+});
+
 await pruefe("F4a", "openAssignSlotSheet ohne neue Angaben: alphabetische Liste, nach dem Buchen in den Kalender", async () => {
   await setze(page, basisSzenario());
   await page.evaluate((d) => openAssignSlotSheet(d, "09:30", "11:00"), MORGEN); await warte(page, 300);
