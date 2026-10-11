@@ -2319,6 +2319,7 @@ body:not(.light) #view[data-seite2] :is(.pill,.f-chip,.pr-chip,.pt-tab,.chip,.s-
 #view[data-seite2] .cc-sep{background:var(--s2-rand);}
 /* Archiv-Filter und To-do-Reiter: Chips wie überall */
 #view[data-seite2] .pause-days{flex-wrap:wrap;}
+#view[data-seite2] .pause-days .pday{font-size:12.5px;padding:0 9px !important;flex:1 1 auto;}
 #view[data-seite2] .pday,#view[data-seite2] .todo-tab{min-height:44px;border-radius:999px !important;white-space:nowrap;background:var(--s2-karte) !important;border:1px solid var(--s2-rand) !important;color:var(--s2-tinte) !important;font-weight:700;}
 #view[data-seite2] .pday.on,#view[data-seite2] .todo-tab.on{background:var(--s2-on) !important;border-color:var(--s2-on) !important;color:var(--s2-on-t) !important;}
 /* Lage-Karten der Akte (Stand, Fokus) als ruhige Karten */
@@ -2370,6 +2371,33 @@ body:not(.light) #view[data-seite2] #histAddBtn{color:#fff !important;}
 body.light #view[data-seite2] span[style*="color:var(--gelb)"]{color:#7A4508 !important;}
 body.light #view[data-seite2] span[style*="color:var(--gruen)"]{color:#1E6B46 !important;}
 body.light #view[data-seite2] span[style*="color:var(--rot)"]{color:#9E2F22 !important;}
+/* 5a nach Design-Kritik: kleine Knöpfe auf 44 px Tippfläche (Zeichen bleibt klein) */
+#view[data-seite2] :is(.tb-edit,.tb-del,.slot-x,.todo-del,.vd-gear,.pf-bang){min-width:44px;min-height:44px;display:inline-flex;align-items:center;justify-content:center;border-radius:12px;}
+#view[data-seite2] .wait-card-wrap .btn{min-width:48px;}
+/* Prüfungskarte flach wie der Entwurf: durchgehender Streifen, Datum in Tinte, Schüler-Zeile ohne graue Karte in der Karte */
+#view[data-seite2] .termin-blk{background:var(--s2-karte) !important;border:1px solid var(--s2-rand) !important;border-radius:18px !important;}
+#view[data-seite2] .termin-blk::before{background:var(--s2-akzent) !important;width:4px !important;top:14px !important;height:calc(100% - 28px) !important;border-radius:4px;left:0;}
+#view[data-seite2] .tb-date{font-family:var(--k-font-text) !important;font-weight:800;font-size:17px;color:var(--s2-tinte) !important;}
+#view[data-seite2] .slot{background:transparent !important;border:0 !important;border-top:1px solid var(--s2-trenn) !important;border-radius:0 !important;padding:6px 0 0 !important;}
+#view[data-seite2] .slot-result{background:var(--k-akzent) !important;color:#fff !important;box-shadow:none !important;min-height:44px;border-radius:12px !important;}
+#view[data-seite2] .pruef-tabs{background:transparent !important;border:0 !important;padding:0 !important;}
+#view[data-seite2] .pf-card{box-shadow:none !important;}
+/* Kalender: Titel wie die anderen Seiten, Filter in einer Reihe, Plus-Knopf rund (verdeckt weniger) */
+#view[data-seite2] .view-inner .cal-viewbtn,#view[data-seite2] .view-inner .cal-viewbtn *:not(svg):not(svg *){font-family:var(--k-font-titel) !important;}
+#view[data-seite2] .cal-viewbtn{font-size:26px !important;font-weight:700 !important;color:var(--s2-tinte) !important;min-height:44px;}
+#view[data-seite2] .cal-filters{flex-wrap:nowrap;gap:6px;}
+#view[data-seite2] .cal-fchip{padding:0 11px;font-size:13px;}
+#view[data-seite2] .cal-legend-bar{gap:4px 12px;margin-bottom:10px;}
+body:has(#view[data-seite2] #calBody) #fab{width:56px;height:56px !important;padding:0 !important;justify-content:center;}
+body:has(#view[data-seite2] #calBody) #fab span{display:none;}
+/* Suchfeld: nur eine Pille (das Eingabefeld darin randlos) */
+#view[data-seite2] .view-inner .search-wrap input:not([type="checkbox"]):not([type="radio"]):not([type="range"]),.schueler2 .search-wrap input{border:0 !important;background:transparent !important;box-shadow:none !important;}
+/* Einstellungen: Abschnittsnamen in normaler Schreibweise, fett */
+#view[data-seite2] .acc-h .ti{text-transform:none !important;letter-spacing:0 !important;font-weight:800 !important;font-size:16px !important;}
+/* Zurück-Zeile in der Seite nur, wenn oben kein Zurück-Pfeil steht (sonst zwei Wege für dasselbe) */
+body:has(#navBackBtn:not([hidden])) #view:is([data-seite2="routePruefungenWoche"],[data-seite2="routePrueferListe"],[data-seite2="routeNichtBesteher"],[data-seite2="routeArbeitszeit"],[data-seite2="routeHistorie"]) .back-row:has(> .back-btn:only-child){display:none !important;}
+/* Erledigte To-dos lesbarer */
+body.light #view[data-seite2] .todo-item.done .todo-txt{color:#6B776F !important;}
 /* Kopfleisten-Titel: nie mitten im Wort umbrechen (z. B. „Ausbildungsplan“ bei 360 px) */
 .topbar .tb-title{overflow-wrap:normal !important;word-break:normal !important;font-family:var(--k-font-text) !important;font-weight:800 !important;}
 @media (max-width:380px){.topbar .tb-title.tb-lang{font-size:12px !important;letter-spacing:-.02em !important;}}
@@ -15648,7 +15676,7 @@ const SEITE2_ROUTEN=new Set(["routeKalender","routePruefungen","routePruefungenW
 function _seite2Markieren(name){
   const v=document.getElementById("view"); if(!v)return;
   // Nur die zuletzt aufgerufene Seite zählt: eine Seite, die intern eine andere aufruft, setzt das Merkmal danach neu.
-  if(SEITE2_ROUTEN.has(name))v.setAttribute("data-seite2",""); else v.removeAttribute("data-seite2");
+  if(SEITE2_ROUTEN.has(name))v.setAttribute("data-seite2",name); else v.removeAttribute("data-seite2");
 }
 (function navInstallieren(){
   const ueberspringen=new Set(["routeKalenderRefresh"]);
