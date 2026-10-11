@@ -180,9 +180,10 @@ await pruefe("A7", "Kalender: nur ein Plus-Knopf; „Neuer Termin“ ohne vergan
   const plus = await page.evaluate(() => [...document.querySelectorAll("#fab,#calFab")].filter((x) => { const r = x.getBoundingClientRect(); return r.width > 0 && getComputedStyle(x).display !== "none"; }).length);
   if (plus !== 1) return `${plus} Plus-Knöpfe sichtbar`;
   const r = await page.evaluate(async () => {
-    const orig = naechsteFreieLuecken, h = todayISO(), m = addDays(h, 1);
-    naechsteFreieLuecken = () => [{ date: h, von: "00:00", bis: "00:45", art: "fahrstunde" }, { date: m, von: "10:00", bis: "11:30", art: "fahrstunde" }];
-    try { routeDashboard(); openNeuerTerminSheet(); } finally { naechsteFreieLuecken = orig; }
+    // heute 6 schon vergangene Lücken, morgen eine freie: die von morgen muss erscheinen (Richter-Fund)
+    const orig = dayFreeSlots, h = todayISO(), m = addDays(h, 1);
+    dayFreeSlots = (d) => d === h ? ["00:00", "00:01", "00:02", "00:03", "00:04", "00:05"].map((v) => ({ von: v, bis: "00:45", art: "fahrstunde" })) : d === m ? [{ von: "10:00", bis: "11:30", art: "fahrstunde" }] : [];
+    try { routeDashboard(); openNeuerTerminSheet(); } finally { dayFreeSlots = orig; }
     await new Promise((k) => setTimeout(k, 150));
     const t = [...document.querySelectorAll("#sheet .nt-gap")].map((b) => b.textContent);
     const andere = !!document.getElementById("ntAndere");
@@ -358,14 +359,14 @@ await pruefe("D4", "Plus-Knopf aus auf Prüfungen, Einstellungen, Statistik, Sch
 });
 
 await pruefe("D5", "Fenster „Neuer Termin“: Lücken als Knöpfe → „Termin vergeben“; ohne Lücken Hinweis + „Schließen“", async () => {
-  if (!(await gibtFunktion(page, "naechsteFreieLuecken"))) return { skip: "naechsteFreieLuecken fehlt" };
+  if (!(await gibtFunktion(page, "dayFreeSlots"))) return { skip: "dayFreeSlots fehlt" };
   const f = [];
   await aufraeumen(page);
   // Eine erfundene Lücke morgen 10:00–11:30
   await page.evaluate(() => {
-    window.__lueckenOrig = window.naechsteFreieLuecken;
+    window.__dfsOrig = window.dayFreeSlots;
     const d = addDays(todayISO(), 1);
-    window.naechsteFreieLuecken = () => [{ date: d, von: "10:00", bis: "11:30", art: "fahrstunde" }];
+    window.dayFreeSlots = (x) => x === d ? [{ von: "10:00", bis: "11:30", art: "fahrstunde" }] : [];
     routeDashboard();
   });
   try {
@@ -385,7 +386,7 @@ await pruefe("D5", "Fenster „Neuer Termin“: Lücken als Knöpfe → „Termi
     }
     await aufraeumen(page);
     // Ohne Lücken
-    await page.evaluate(() => { window.naechsteFreieLuecken = () => []; if (typeof window.dayFreeSlots === "function") { window.__dfsOrig = window.dayFreeSlots; window.dayFreeSlots = () => []; } });
+    await page.evaluate(() => { window.dayFreeSlots = () => []; });
     await page.click("#fab");
     await warte(page);
     s = await sheetZustand(page);
@@ -402,7 +403,6 @@ await pruefe("D5", "Fenster „Neuer Termin“: Lücken als Knöpfe → „Termi
     }
   } finally {
     await page.evaluate(() => {
-      window.naechsteFreieLuecken = window.__lueckenOrig;
       if (window.__dfsOrig) window.dayFreeSlots = window.__dfsOrig;
       try { closeSheet(); } catch (e) {}
     });

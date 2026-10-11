@@ -7089,11 +7089,7 @@ document.querySelector(".drawer-nav").addEventListener("click",(e)=>{
   if(!b)return;
   const nav=b.dataset.nav;closeDrawer();
   document.getElementById("fsCalTiles")?.remove();
-  setTimeout(()=>{if(nav==="new")formView(null);else if(nav==="home")routeHome();
-    else if(nav==="dash")routeDashboard();
-    else if(nav==="pruef")routePruefungen();
-    else if(nav==="kalender")routeKalender();
-    else if(nav==="todos")routeTodos();
+  setTimeout(()=>{if(nav==="todos")routeTodos();
     else if(nav==="stats")routeStats("cur");
     else if(nav==="archive")routeArchive();
     else if(nav==="draw")routeDraw();
@@ -7128,11 +7124,14 @@ function tabGo(k){
 // Plus-Knopf "Termin": die nächsten freien Lücken, ein Tipp öffnet "Termin vergeben".
 function openNeuerTerminSheet(){
   ensureDB();
-  const imKal=($("#tbTitle")&&$("#tbTitle").textContent)==="Kalender"&&_calDate&&_calDate>todayISO();
+  const imKal=($("#tbTitle")&&$("#tbTitle").textContent)==="Kalender";
   const heute=todayISO(), jetzt=new Date().getHours()*60+new Date().getMinutes();
-  let luecken=naechsteFreieLuecken();
-  if(imKal){ const ab=[]; let cur=_calDate; for(let i=0;i<7&&ab.length<5;i++){ dayFreeSlots(cur).forEach(x=>{ if(ab.length<5)ab.push({date:cur,von:x.von,bis:x.bis,art:x.art}); }); cur=addDays(cur,1); } luecken=ab; }
-  luecken=luecken.filter(l=>l.date>heute||(l.date===heute&&hm2min(l.von)>jetzt)); // keine vergangenen Zeiten
+  // Ab heute (im Kalender ab dem gewählten künftigen Tag) die nächsten 5 freien Lücken, vergangene Zeiten von heute zählen nicht mit.
+  const luecken=[]; let cur=(imKal&&_calDate&&_calDate>heute)?_calDate:heute;
+  for(let i=0;i<7&&luecken.length<5;i++){
+    dayFreeSlots(cur).forEach(x=>{ if(luecken.length<5&&(cur>heute||hm2min(x.von)>jetzt))luecken.push({date:cur,von:x.von,bis:x.bis,art:x.art}); });
+    cur=addDays(cur,1);
+  }
   const liste=luecken.length
     ? luecken.map(l=>`<button class="es-act nt-gap" data-freeslot="${l.date}|${l.von}|${l.bis}|${l.art}" style="display:flex;justify-content:space-between;align-items:center;text-align:left;min-height:48px;">
         <span>${deWeekday(l.date)} · ${isoDE(l.date)} · ${l.von}–${l.bis}</span><span style="color:var(--akzent);font-weight:700;">Vergeben ›</span></button>`).join("")
@@ -7142,7 +7141,7 @@ function openNeuerTerminSheet(){
     <div class="es-actions">${liste}</div>
     <div class="btn-row" style="flex-wrap:wrap;gap:8px;"><button class="btn btn-ghost" id="ntAndere" style="width:100%;">Andere Art (Theorie, Prüfung, Blocker …)</button><button class="btn btn-ghost" id="ntClose" style="width:100%;">Schließen</button></div>`);
   $("#ntClose").addEventListener("click",closeSheet);
-  $("#ntAndere").addEventListener("click",()=>{ if(!_calDate)_calDate=heute; closeSheet(); setTimeout(openAddSheet,200); });
+  $("#ntAndere").addEventListener("click",()=>{ if(!imKal||!_calDate)_calDate=heute; closeSheet(); setTimeout(openAddSheet,200); });
   document.querySelectorAll(".nt-gap").forEach(b=>b.addEventListener("click",()=>{
     const [date,von,bis,art]=b.dataset.freeslot.split("|"); closeSheet(); openAssignSlotSheet(date,von,bis,art);
   }));
