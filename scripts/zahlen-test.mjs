@@ -143,10 +143,11 @@ fall("5  Kachel 'Diese Woche verdient' zählt nur Vergangenes, keine Theorie", a
   const fn = await ruf(() => (typeof wocheVerdientEuro === "function" ? wocheVerdientEuro() : "fehlt"));
   await ruf(() => routeDashboard());
   const kachel = await page.evaluate(() => {
-    const t = [...document.querySelectorAll(".d-tile")].find((b) => /verdient/i.test(b.textContent));
+    // Seit dem Umbau (Schritt 2) steht die Zahl in der Kachel .h2-kachel[data-k="woche"] als „46 €“.
+    const t = document.querySelector('.h2-kachel[data-k="woche"]');
     if (!t) return null;
-    const n = t.querySelector(".dt-n");
-    return { attr: n && n.dataset.count, text: t.textContent.trim() };
+    const n = t.querySelector(".h2-k-w");
+    return { attr: n && n.textContent.replace(/[^0-9,-]/g, "").replace(",", "."), text: t.textContent.trim() };
   });
   if (!kachel) f("Kachel 'Diese Woche verdient' nicht gefunden");
   else if (+kachel.attr !== erwartet) f("Kachel zeigt " + kachel.attr + " €, erwartet " + erwartet + " (" + kachel.text.slice(0, 40) + ")");
