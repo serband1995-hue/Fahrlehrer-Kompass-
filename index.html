@@ -2059,7 +2059,7 @@ body:not(.light) .heute2{--h-karte:var(--surface);--h-rand:var(--line);--h-tinte
 .h2-jetzt-mitte{display:flex;align-items:center;gap:14px;min-width:0;}
 .h2-avatar{width:52px;height:52px;border-radius:16px;background:var(--k-akzent);display:flex;align-items:center;justify-content:center;font-family:var(--k-font-titel);font-size:20px;font-weight:700;flex:0 0 auto;}
 .h2-jetzt-text{display:flex;flex-direction:column;gap:3px;min-width:0;}
-.h2-jetzt-name{font-size:21px;font-weight:800;overflow-wrap:anywhere;}
+.h2-jetzt-name{font-size:21px;font-weight:800;overflow-wrap:anywhere;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;}
 .h2-jetzt-fokus{font-size:13.5px;color:#C8D6CC;overflow-wrap:anywhere;}
 .h2-jetzt-pct{margin-left:auto;font-family:var(--k-font-titel);font-size:22px;font-weight:700;color:var(--k-mint-hell);flex:0 0 auto;}
 .h2-kontakt{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px;}
@@ -13628,7 +13628,7 @@ function _h2DanachHTML(e){
   const heute=todayISO(), jetzt=_h2JetztMin();
   // Alle heutigen Termine, die noch nicht vorbei sind (auch Theorie/Blocker und Termine zur gleichen Zeit), außer dem in der Jetzt-Karte.
   const evs=dayEvents(heute).filter(ev=>ev.kind!=="examDone"&&!ev.doppelt&&ev.status!=="abgebrochen"&&ev.status!=="nicht erschienen"
-    &&(!e||ev.id!==e.id)&&hm2min(ev.bis)>jetzt)
+    &&(!e||!(ev.kind===e.kind&&ev.id===e.id&&ev.sid===e.sid))&&hm2min(ev.bis)>jetzt)
     .map(ev=>({t:hm2min(ev.von),ev}));
   // Freie Lücken: höchstens 2 als Zeile, der Rest als Hinweis. Ohne Schüler keine Lücken (erster Start).
   const alleFrei=activeStudents().length?dayFreeSlots(heute).filter(x=>hm2min(x.von)>jetzt):[];
@@ -13671,7 +13671,7 @@ function _h2KachelnHTML(){
 // Heute bleibt aktuell: wird die App wieder sichtbar oder vergeht eine Minute, und hat sich „Jetzt dran“ oder das Datum geändert,
 // wird die Seite neu gezeichnet – aber nie, während ein Fenster offen ist oder getippt wird.
 let _h2Stand="";
-function _h2Signatur(){ const e=nextLessonEvents(1)[0], j=_h2JetztMin(); return todayISO()+"|"+(e?e.id+"|"+e.date+"|"+(e.date===todayISO()&&hm2min(e.von)<=j):"-"); }
+function _h2Signatur(){ const e=nextLessonEvents(1)[0], j=_h2JetztMin(); return todayISO()+"|"+(e?e.id+"|"+e.sid+"|"+e.date+"|"+(e.date===todayISO()&&hm2min(e.von)<=j):"-")+"|"+_h2Hinweise().map(h=>h.name+h.text).join(","); }
 function _h2Auffrischen(){
   try{
     if(document.hidden||(($("#tbTitle")||{}).textContent)!=="Heute"||!document.querySelector("#view .heute2"))return;
