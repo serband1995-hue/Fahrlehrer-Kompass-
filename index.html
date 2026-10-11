@@ -2147,7 +2147,8 @@ body.light:has(#view .fertig2){background:var(--k-grund) !important;}
 .fm-themen{display:flex;flex-direction:column;gap:8px;}
 .fm-thema{min-height:56px;border-radius:16px;border:1px solid #263A2F;background:#15221B;color:#fff;font-size:15px;font-weight:700;display:flex;align-items:center;gap:12px;padding:6px 14px;text-align:left;width:100%;}
 .fm-thema-t{flex:1;min-width:0;overflow-wrap:anywhere;}
-.fm-punkt{width:14px;height:14px;border-radius:50%;flex:0 0 auto;background:#5E6E64;}
+.fm-punkt{width:14px;height:14px;border-radius:50%;flex:0 0 auto;background:transparent;border:2px solid #9DB0A4;box-sizing:border-box;}
+.fm-thema:not([data-wert="offen"]) .fm-punkt{border:0;}
 .fm-chip{font-size:12.5px;font-weight:800;padding:6px 12px;border-radius:999px;background:#263A2F;color:#C8D6CC;flex:0 0 auto;}
 .fm-thema[data-wert="gelb"] .fm-punkt{background:#F2B632;} .fm-thema[data-wert="gelb"] .fm-chip{background:#3D3016;color:#F7D37A;}
 .fm-thema[data-wert="gruen"] .fm-punkt{background:var(--k-mint);} .fm-thema[data-wert="gruen"] .fm-chip{background:#173A28;color:#9FE6BC;}
@@ -2157,8 +2158,13 @@ body.light:has(#view .fertig2){background:var(--k-grund) !important;}
 .fm-chips{display:flex;flex-wrap:wrap;gap:8px;}
 .fm-notiz{min-height:44px;padding:0 14px;border-radius:999px;border:1px solid #263A2F;background:#15221B;color:#E3EDE6;font-size:13.5px;font-weight:700;max-width:100%;overflow-wrap:anywhere;}
 .fm-notiz.an{background:#173A28;border-color:var(--k-mint);color:#9FE6BC;}
-.fm-fuss{display:flex;gap:10px;margin-top:6px;}
-.fm-abbrechen{flex:0 0 auto;min-height:56px;padding:0 18px;border-radius:18px;border:1px solid #3A2B22;background:#261B15;color:#F4C7A8;font-size:14px;font-weight:800;}
+.fm-fuss{display:flex;gap:10px;margin-top:6px;position:sticky;bottom:0;z-index:5;background:linear-gradient(180deg,rgba(15,26,20,0),#0F1A14 22%);padding:22px 0 calc(12px + env(safe-area-inset-bottom));}
+/* Kopfleiste im Modus dunkel, damit es ein ruhiges Bild ist und nicht blendet */
+body:has(#view .fahrmodus) .topbar{background:#0F1A14 !important;border-color:#1E2E25 !important;color:#E3EDE6;}
+body:has(#view .fahrmodus) .topbar .tb-title,body:has(#view .fahrmodus) .topbar .icon-btn,body:has(#view .fahrmodus) .topbar .theme-btn{color:#E3EDE6 !important;}
+/* Querformat: Karte „Heute üben“ knapp, Themen in zwei Spalten */
+@media (orientation:landscape) and (max-height:520px){ .fm-letzte{display:none;} .fm-ueben-t{font-size:16px;} .fm-themen{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));} .fm-mehr{grid-column:1/-1;} }
+.fm-abbrechen{flex:0 0 auto;min-height:56px;padding:0 16px;border-radius:18px;border:1px solid #2E4237;background:transparent;color:#C8D6CC;font-size:14px;font-weight:700;}
 .fm-fertig{flex:1;min-height:56px;border-radius:18px;border:0;background:var(--k-mint);color:#0E2A1B;font-size:17px;font-weight:800;}
 /* Nach der Stunde */
 .fertig2 .sf-kopf{display:flex;flex-direction:column;align-items:center;gap:8px;text-align:center;}
@@ -2167,7 +2173,10 @@ body.light:has(#view .fertig2){background:var(--k-grund) !important;}
 @media (prefers-reduced-motion:reduce){.sf-haken{animation:none;}}
 .heute2 .sf-titel{font-size:26px;margin:0;}
 .sf-info{font-size:14px;font-weight:600;color:var(--h-text2);}
-.sf-info b{color:var(--h-akzent);}
+.sf-info b{color:var(--h-tinte);} .sf-info b.hoch{color:var(--h-akzent);}
+.sf-unter{font-size:12.5px;font-weight:700;color:var(--h-text2);margin-top:-6px;}
+.sf-weitere{min-height:44px;background:none;border:0;color:var(--h-akzent);font-size:13.5px;font-weight:800;align-self:flex-start;padding:0;}
+.sf-knopf svg{width:22px;height:22px;flex:0 0 auto;}
 .sf-karte{background:var(--h-karte);border:1px solid var(--h-rand);border-radius:20px;padding:14px 16px;display:flex;flex-direction:column;gap:10px;}
 .sf-karte-t{font-size:15px;font-weight:800;}
 .sf-chips{display:flex;flex-wrap:wrap;gap:6px;}
@@ -2188,9 +2197,9 @@ body:not(.light) .sf-chip.gruen{background:#173A28;color:#9FE6BC;}
 .sf-slot{min-height:58px;border-radius:14px;background:var(--h-grund,var(--k-grund));border:1px solid var(--h-rand);color:var(--h-tinte);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;font-size:12px;font-weight:700;}
 body:not(.light) .sf-slot{background:var(--surface-2);}
 .sf-slot b{font-size:15px;font-weight:800;}
-.sf-heute{min-height:56px;border-radius:18px;background:var(--k-jetzt);color:#fff;font-size:16px;font-weight:800;border:0;width:100%;padding:8px 14px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;}
-.sf-heute-n{font-size:12.5px;font-weight:700;color:#B9C8BE;}
-body:not(.light) .sf-heute{background:#123A2A;}
+.sf-heute{min-height:56px;border-radius:18px;background:transparent;border:1.5px solid var(--h-rand) !important;color:var(--h-tinte);font-size:16px;font-weight:800;border:0;width:100%;padding:8px 14px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;}
+.sf-heute-n{font-size:12.5px;font-weight:700;color:var(--h-text2);}
+
 /* Tab-Leiste unten — ruft ausschließlich bestehende Routen auf */
 .tabbar{position:absolute;left:0;right:0;bottom:0;z-index:24;display:flex;gap:2px;
   padding:6px 10px calc(10px + env(safe-area-inset-bottom));
@@ -3424,7 +3433,7 @@ function _lokalerDatenEigentuemer() {
 // Entfernt alle personenbezogenen App-Daten vom Gerät (nicht die App-Version und Geräte-Einstellungen).
 function _lokaleNutzerdatenLoeschen() {
   ["serband-app-v1", "serband-sync-stamp", "serband-restore-stamp", "serband-session-cache", "serband-backup-stamp",
-   "serband-weather-cache", "serband-weather-forecast-cache", "serband-abgleich-v1", "serband-db-defekt", "serband-vor-import", "serband-snapbasis-v1", "serband-gefeiert", OWNER_KEY].forEach(k => {
+   "serband-weather-cache", "serband-weather-forecast-cache", "serband-abgleich-v1", "serband-db-defekt", "serband-vor-import", "serband-snapbasis-v1", "serband-gefeiert", "kompass-fahrstunde", OWNER_KEY].forEach(k => {
     try { localStorage.removeItem(k); } catch (e) {}
   });
   try { sessionStorage.removeItem("vd_unlocked"); } catch (e) {}
@@ -8292,6 +8301,8 @@ function spaetOffenWarnung(s){
   const namen=offen.map(sd=>sd.label).join(", ");
   return `<div style="padding:10px 14px;background:rgba(216,35,26,.08);border:1px solid rgba(216,35,26,.25);border-radius:12px;font-size:12.5px;color:#d8231a;font-weight:600;margin-bottom:2px;">⚠ ${esc(namen)} noch offen – Ausbildungsstand aber schon weit fortgeschritten.</div>`;
 }
+// Sonderfahrt-Notiz: vorn steht das Label, dahinter angehängte Notizen (z. B. aus dem Fahrstunden-Modus) bleiben erhalten.
+function _sonderNotiz(alt,label){ const t=String(alt||"").split(" · "); return t.length>1?[label].concat(t.slice(1)).join(" · "):label; }
 function buildSonder(s){
   const pl=s.plan;
   SONDER_DEF.forEach(sd=>{
@@ -8367,7 +8378,7 @@ function commitSonderZeit(s,grp,idx,date,von){
   const bis=min2hm(hm2min(von)+(DB.workCfg.blockMin||90));
   const ex=(DB.lessons||[]).find(l=>l.srcSonder===key);
   if(ex){
-    ex.date=date;ex.von=von;ex.bis=bis;ex.art="sonder";ex.note=label;
+    ex.date=date;ex.von=von;ex.bis=bis;ex.art="sonder";ex.note=_sonderNotiz(ex.note,label);
     save();refreshPlanRing(s);buildSonder(s);
     toast(`${label}-Termin aktualisiert`);
     return;
@@ -8375,7 +8386,7 @@ function commitSonderZeit(s,grp,idx,date,von){
   const kandidat=(DB.lessons||[]).find(l=>l.sid===s.id&&l.date===date&&!l.srcSonder&&["fahrstunde","sonder"].includes(l.art)&&l.status!=="abgebrochen"&&l.status!=="nicht erschienen");
   if(kandidat){
     const vorherLesson={art:kandidat.art,note:kandidat.note,von:kandidat.von,bis:kandidat.bis};
-    kandidat.art="sonder";kandidat.note=label;kandidat.von=von;kandidat.bis=bis;kandidat.srcSonder=key;
+    kandidat.art="sonder";kandidat.note=_sonderNotiz(kandidat.note,label);kandidat.von=von;kandidat.bis=bis;kandidat.srcSonder=key;
     save();refreshPlanRing(s);buildSonder(s);
     toastUndo(`Termin zu ${label} (${kuerzel}) umgewandelt`,()=>{
       Object.assign(kandidat,vorherLesson);delete kandidat.srcSonder;
@@ -13833,21 +13844,25 @@ function startFahrstunde(lid){
   const o=_fmLaden();
   if(!o||o.lid!==lid){
     if(o&&o.lid!==lid&&(Object.keys(o.stufe||{}).length||(o.notizen||[]).length)&&!confirm("Es läuft noch eine andere Fahrstunde mit Bewertungen. Diese verwerfen und die neue starten?"))return;
-    _fmSpeichern({lid,start:Date.now(),stufe:{},notizen:[],extra:[]});
+    _fmSpeichern({lid,sid:l.sid,start:Date.now(),stufe:{},notizen:[],extra:[]});
   }
   routeFahrstunde(lid);
 }
+// Neu zeichnen nach einem Tipp, ohne nach oben zu springen
+function _fmNeu(lid){ const y=view.scrollTop; routeFahrstunde(lid); view.scrollTop=y; }
 function routeFahrstunde(lid){
   ensureDB();
   const l=(DB.lessons||[]).find(x=>x.id===lid), s=l&&DB.students.find(x=>x.id===l.sid);
   let o=_fmLaden();
-  if(!l||!s){ _fmLoeschen(); toast("Diese Fahrstunde gibt es nicht mehr"); routeDashboard(); return; }
+  if(!l||!s){
+    if(o&&o.lid===lid&&(Object.keys(o.stufe||{}).length)&&confirm("Diese Fahrstunde gibt es nicht mehr (z. B. vom Büro gelöscht). Die Bewertungen trotzdem im Ausbildungsplan speichern?")){ fahrstundeAbschliessen(lid); return; }
+    _fmLoeschen(); toast("Diese Fahrstunde gibt es nicht mehr"); routeDashboard(); return; }
   if(!o||o.lid!==lid){
     // Über „Zurück“ (z. B. aus „Nach der Stunde“) nicht neu starten, sondern zu Heute.
     if(typeof _navFahrt!=="undefined"&&_navFahrt){
       if(_navStack.length>1&&_navStack[_navStack.length-1].name==="routeFahrstunde")_navStack.pop(); // sonst bräuchte es ein zweites Zurück
       routeDashboard(); return; }
-    o={lid,start:Date.now(),stufe:{},notizen:[],extra:[]}; _fmSpeichern(o);
+    o={lid,sid:l.sid,start:Date.now(),stufe:{},notizen:[],extra:[]}; _fmSpeichern(o);
   }
   $("#tbTitle").textContent="Fahrstunde"; setFab(false); view.scrollTop=0;
   const themen=_fmThemen(s,o), amp=(s.plan&&s.plan.ampeln)||{};
@@ -13878,12 +13893,14 @@ function routeFahrstunde(lid){
   document.querySelectorAll("#view .fm-thema").forEach(b=>b.addEventListener("click",()=>{
     const o2=_fmLaden()||o, id=b.dataset.item, w=_fmWert(s,o2,id);
     const i=FM_STUFEN.findIndex(x=>x.v===w), n=FM_STUFEN[(i+1)%FM_STUFEN.length];
-    o2.stufe=o2.stufe||{}; o2.stufe[id]=n.v; _fmSpeichern(o2); routeFahrstunde(lid);
+    o2.stufe=o2.stufe||{}; o2.basis=o2.basis||{};
+    if(!Object.prototype.hasOwnProperty.call(o2.basis,id))o2.basis[id]=((s.plan&&s.plan.ampeln)||{})[id]||null; // Ausgangswert für „Fertig“
+    o2.stufe[id]=n.v; _fmSpeichern(o2); _fmNeu(lid);
   }));
   document.querySelectorAll("#view .fm-notiz[data-notiz]").forEach(b=>b.addEventListener("click",()=>{
     const o2=_fmLaden()||o, n=b.dataset.notiz; o2.notizen=o2.notizen||[];
     const i=o2.notizen.indexOf(n); if(i>=0)o2.notizen.splice(i,1); else o2.notizen.push(n);
-    _fmSpeichern(o2); routeFahrstunde(lid);
+    _fmSpeichern(o2); _fmNeu(lid);
   }));
   $("#fmSprechen").addEventListener("click",()=>{
     const SR=window.SpeechRecognition||window.webkitSpeechRecognition;
@@ -13891,7 +13908,7 @@ function routeFahrstunde(lid){
     let rec; try{ rec=new SR(); }catch(e){ toast("Spracheingabe nicht verfügbar"); return; }
     rec.lang="de-DE"; rec.interimResults=false; rec.maxAlternatives=1;
     rec.onresult=e=>{ const t=(e.results&&e.results[0]&&e.results[0][0]&&e.results[0][0].transcript||"").trim(); if(!t)return;
-      const o2=_fmLaden()||o; o2.notizen=(o2.notizen||[]).concat([t]); _fmSpeichern(o2); routeFahrstunde(lid); };
+      const o2=_fmLaden()||o; o2.notizen=(o2.notizen||[]).concat([t]); _fmSpeichern(o2); _fmNeu(lid); };
     rec.onerror=()=>toast("Spracheingabe fehlgeschlagen");
     try{ rec.start(); toast("Sprich jetzt …"); }catch(e){}
   });
@@ -13903,34 +13920,43 @@ function routeFahrstunde(lid){
       <div class="btn-row"><button class="btn btn-ghost" id="fmMehrZu" style="width:100%;">Schließen</button></div>`);
     $("#fmMehrZu").addEventListener("click",closeSheet);
     document.querySelectorAll("#sheet [data-item]").forEach(b=>b.addEventListener("click",()=>{
-      const o2=_fmLaden()||o; o2.extra=(o2.extra||[]).concat([b.dataset.item]); _fmSpeichern(o2); closeSheet(); routeFahrstunde(lid);
+      const o2=_fmLaden()||o; o2.extra=(o2.extra||[]).concat([b.dataset.item]); _fmSpeichern(o2); closeSheet(); _fmNeu(lid);
     }));
   });
   $("#fmAbbrechen").addEventListener("click",()=>{
     const o2=_fmLaden()||o;
     const etwas=Object.keys(o2.stufe||{}).length||(o2.notizen||[]).length;
     if(etwas&&!confirm("Fahrstunde abbrechen? Die Bewertungen und Notizen dieser Stunde werden nicht gespeichert."))return;
-    _fmLoeschen(); clearInterval(_fmTimer); routeDashboard();
+    _fmLoeschen(); clearInterval(_fmTimer);
+    if(_navStack.length>1&&_navStack[_navStack.length-1].name==="routeFahrstunde")_navStack.pop();
+    routeDashboard();
   });
   $("#fmFertig").addEventListener("click",()=>fahrstundeAbschliessen(lid));
 }
 function fahrstundeAbschliessen(lid){
-  const l=(DB.lessons||[]).find(x=>x.id===lid), s=l&&DB.students.find(x=>x.id===l.sid);
   const o=_fmLaden();
-  if(!l||!s){ _fmLoeschen(); routeDashboard(); return; }
+  const l=(DB.lessons||[]).find(x=>x.id===lid);
+  const sid=l?l.sid:(o&&o.lid===lid?o.sid:null), s=sid&&DB.students.find(x=>x.id===sid);
+  if(!s||!s.plan){ _fmLoeschen(); toast("Schüler nicht mehr da – Bewertungen nicht gespeichert"); routeDashboard(); return; }
   const vorher=stand(s);
   if(o){
     const pl=s.plan; if(!pl.ampelnZeit)pl.ampelnZeit={};
-    const jetzt=new Date().toISOString();
+    // Zeitstempel am Tag der Stunde (wird erst nach Mitternacht „Fertig“ gedrückt, zählt es trotzdem zu dieser Stunde)
+    const jetzt=(l&&l.date!==todayISO())?new Date(l.date+"T"+(l.bis||"23:59")+":00").toISOString():new Date().toISOString();
     Object.keys(o.stufe||{}).forEach(id=>{
       const neu=o.stufe[id], alt=pl.ampeln[id]||null;
       if(neu===alt)return; // nur Geändertes bekommt einen neuen Zeitstempel
+      // Hat ein anderes Gerät das Thema inzwischen geändert und wurde hier nur „im Kreis“ getippt, gewinnt der neuere Stand.
+      if(o.basis&&Object.prototype.hasOwnProperty.call(o.basis,id)&&o.basis[id]!==alt&&neu===o.basis[id])return;
       if(neu){ pl.ampeln[id]=neu; pl.ampelnZeit[id]=jetzt; } else { delete pl.ampeln[id]; delete pl.ampelnZeit[id]; }
     });
-    const n=(o.notizen||[]).filter(Boolean);
-    if(n.length) l.note=[(l.note||"").trim(),n.join(" · ")].filter(Boolean).join(" · ");
+    // Notizen nur anhängen, wenn sie noch nicht in der Terminnotiz stehen (zweites „Fertig“ derselben Stunde)
+    const vorhanden=(l?(l.note||""):"").split(" · ").map(x=>x.trim());
+    const n=(o.notizen||[]).filter(x=>x&&vorhanden.indexOf(x)<0);
+    if(l&&n.length) l.note=[(l.note||"").trim(),n.join(" · ")].filter(Boolean).join(" · ");
   }
   save(); _fmLoeschen(); clearInterval(_fmTimer);
+  if(!l){ toast("Bewertungen gespeichert – der Termin selbst ist nicht mehr da"); routeDashboard(); return; }
   _sfVorher[lid]=vorher;
   routeStundeFertig(lid);
 }
@@ -13954,14 +13980,14 @@ function routeStundeFertig(lid){
   const nachsteS=nachste&&DB.students.find(x=>x.id===nachste.sid);
   view.innerHTML=`<div class="view-inner fertig2 heute2">
     <header class="sf-kopf"><div class="sf-haken">✓</div><h1 class="h2-titel sf-titel">Stunde mit ${esc(vn)} fertig</h1>
-      <div class="sf-info">${l.von}–${l.bis} · ${fmtUE(ueOf(l.art,l.von,l.bis,l.tatsaechlicheDauer))} UE · Stand jetzt <b>${pct} %</b>${plus}</div></header>
+      <div class="sf-info">${l.von}–${l.bis} · ${fmtUE(ueOf(l.art,l.von,l.bis,l.tatsaechlicheDauer))} UE · Stand jetzt <b class="${plus?"hoch":""}">${pct} %</b>${plus}</div></header>
     <section class="sf-karte"><div class="h2-ueber">Heute bewertet</div>
       ${chips.length?`<div class="sf-chips">${chips.map(c=>`<span class="sf-chip ${c.k}">${esc(c.it.t)} · ${c.lab}</span>`).join("")}</div>`:`<p class="h2-nichts">Heute wurde nichts bewertet.</p>`}</section>
-    <button class="sf-knopf sf-unterschrift" id="sfSig"><span>✍️</span><span class="sf-knopf-t">Unterschrift</span><span class="sf-status ${l.signed?"gruen":"gelb"}">${l.signed?"✓ vorhanden":"noch offen"}</span></button>
-    <button class="sf-knopf sf-protokoll${_sfGesendet[lid]?" gesendet":""}" id="sfProt"><span>💬</span><span class="sf-knopf-t">${_sfGesendet[lid]?"Protokoll gesendet ✓":`Protokoll per WhatsApp an ${esc(vn)}`}</span></button>
-    <section class="sf-karte"><div class="sf-karte-t">Nächster Termin für ${esc(vn)}</div>
+    <button class="sf-knopf sf-unterschrift" id="sfSig"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 17c3-1 4-6 6-6s1 5 3 5 3-4 4-4 2 3 5 3M3 21h18"/></svg><span class="sf-knopf-t">Unterschrift</span><span class="sf-status ${l.signed?"gruen":"gelb"}">${l.signed?"✓ vorhanden":"noch offen"}</span></button>
+    <button class="sf-knopf sf-protokoll${_sfGesendet[lid]?" gesendet":""}" id="sfProt"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 11.5a8.4 8.4 0 0 1-12.4 7.4L3 21l2.1-5.5A8.4 8.4 0 1 1 21 11.5z"/></svg><span class="sf-knopf-t">${_sfGesendet[lid]?"Protokoll gesendet ✓":`Protokoll per WhatsApp an ${esc(vn)}`}</span></button>
+    <section class="sf-karte"><div class="sf-karte-t">Nächster Termin für ${esc(vn)}</div><div class="sf-unter">Freie Lücken ab morgen</div>
       ${naechsterTermin?`<div class="sf-naechster">Nächster Termin: ${isoDE(naechsterTermin.date).slice(0,6)} ${naechsterTermin.von}</div>`:''}
-      ${luecken.length?`<div class="sf-slots">${luecken.map(x=>`<button class="sf-slot" data-freeslot="${x.date}|${x.von}|${x.bis}|${x.art||"fahrstunde"}"><span>${deWeekday(x.date)} ${parseISO(x.date).getDate()}.</span><b>${x.von}</b></button>`).join("")}</div>`:`<p class="h2-nichts">Keine freie Lücke in den nächsten 14 Tagen.</p>`}</section>
+      ${luecken.length?`<div class="sf-slots">${luecken.map(x=>`<button class="sf-slot" data-freeslot="${x.date}|${x.von}|${x.bis}|${x.art||"fahrstunde"}"><span>${deWeekday(x.date)} ${parseISO(x.date).getDate()}.</span><b>${x.von}</b></button>`).join("")}</div>`:`<p class="h2-nichts">Keine freie Lücke in den nächsten 14 Tagen.</p>`}<button class="sf-weitere" id="sfWeitere">Andere Zeit im Kalender ›</button></section>
     <button class="sf-heute" id="sfHeute"><span>Zurück zu Heute</span>${nachste?`<span class="sf-heute-n">· nächster: ${esc(nachsteS?nachsteS.name:"")} ${nachste.von}</span>`:""}</button>
   </div>`;
   $("#sfSig").addEventListener("click",()=>{
@@ -13969,12 +13995,13 @@ function routeStundeFertig(lid){
     // Nach dem Schließen des Fensters den Status neu zeigen
     const t=setInterval(()=>{ const sh=$("#sheet"); if(!sh||!sh.classList.contains("open")){ clearInterval(t); if((($("#tbTitle")||{}).textContent)==="Nach der Stunde")routeStundeFertig(lid); } },400);
   });
-  $("#sfProt").addEventListener("click",()=>{ sendeStundenProtokoll(s,l.date); _sfGesendet[lid]=true; routeStundeFertig(lid); });
+  $("#sfProt").addEventListener("click",()=>{ if(_sfGesendet[lid]&&!confirm("Protokoll schon gesendet. Nochmal senden?"))return; sendeStundenProtokoll(s,l.date); _sfGesendet[lid]=true; routeStundeFertig(lid); });
   document.querySelectorAll("#view .sf-slot").forEach(b=>b.addEventListener("click",()=>{
     const [date,von,bis,art]=b.dataset.freeslot.split("|");
     openAssignSlotSheet(date,von,bis,art,{sid:s.id,nachher:()=>routeStundeFertig(lid)});
   }));
   $("#sfHeute").addEventListener("click",()=>routeDashboard());
+  $("#sfWeitere").addEventListener("click",()=>{ _calView="woche"; _calDate=addDays(heute,1); routeKalender(); });
 }
 function _wocheVonBis(){
   const now=new Date(); const wd=(now.getDay()+6)%7;
