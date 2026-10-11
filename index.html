@@ -1613,7 +1613,7 @@ body:not(.light) .cw-col.today .cw-dnum{color:var(--gold);}
 .vd-offen{font-size:12.5px;color:#e3a294;background:rgba(207,90,72,.1);border:1px solid rgba(207,90,72,.25);border-radius:10px;padding:9px 12px;margin-bottom:12px;text-align:center;}
 .vd-offen b{color:#f0b5a8;}
 /* ===== AKTE-NAV (Icon-Leiste Schülerakte) ===== */
-.akte-nav{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-bottom:12px;}
+.akte-nav{display:grid;grid-template-columns:repeat(2,1fr);gap:8px;margin-bottom:12px;}
 .akte-btn{display:flex;flex-direction:column;align-items:center;gap:5px;padding:12px 6px;background:var(--surface);border:1px solid var(--line);border-radius:13px;transition:transform .12s var(--pop);}
 .akte-btn:active{background:var(--surface-2);transform:scale(.94);}
 .ab-ic{font-size:21px;line-height:1;}
@@ -2202,6 +2202,66 @@ body:not(.light) .sf-slot{background:var(--surface-2);}
 .sf-heute{min-height:56px;border-radius:18px;background:transparent;border:1.5px solid var(--h-rand) !important;color:var(--h-tinte);font-size:16px;font-weight:800;border:0;width:100%;padding:8px 14px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;}
 .sf-heute-n{font-size:12.5px;font-weight:700;color:var(--h-text2);}
 
+/* Umbau Schritt 4: Schülerliste und Akte mit Reitern (Formensprache wie Heute) */
+.schueler2{--sr-leer:#E7ECE6;--h-karte:var(--k-karte);--h-rand:var(--k-rand);--h-tinte:var(--k-tinte);--h-text2:var(--k-text2);}
+body:not(.light) .schueler2{--sr-leer:#24413a;--h-karte:var(--surface);--h-rand:var(--line);--h-tinte:var(--txt);--h-text2:#a9c2b7;}
+body.light:has(#view .schueler2),body.light:has(#view .akte2){background:var(--k-grund) !important;}
+body.light:has(#view .schueler2)::before,body.light:has(#view .schueler2)::after,body.light:has(#view .akte2)::before,body.light:has(#view .akte2)::after{display:none;}
+.schueler2,.schueler2 *:not(svg):not(svg *),.akte-kopf,.akte-kopf *,.akte2 .at-zeile *,.akte2 .ap-karte *{font-family:var(--k-font-text) !important;}
+.schueler2 .sl-titel,.akte-kopf .ak-name{font-family:var(--k-font-titel) !important;font-variant-numeric:lining-nums;}
+.sl-kopf{display:flex;align-items:baseline;justify-content:space-between;gap:10px;margin-bottom:12px;}
+.schueler2 .sl-titel{margin:0;font-size:30px;font-weight:700;color:var(--h-tinte);}
+.sl-zahl{font-size:13px;font-weight:700;color:var(--h-text2);white-space:nowrap;}
+.sl-sorten{display:flex;flex-wrap:nowrap;gap:8px;margin:0 calc(-1 * var(--pad,16px)) 12px;padding:0 var(--pad,16px) 2px;scrollbar-width:none;}
+.sl-sorten::-webkit-scrollbar{display:none;}
+.sl-sort{flex:0 0 auto;min-height:44px;padding:0 14px;border-radius:999px;font-size:13.5px;font-weight:700;background:var(--h-karte);color:var(--h-tinte);border:1px solid var(--h-rand);}
+.sl-sort.on{background:var(--k-tinte);color:#fff;border-color:var(--k-tinte);}
+body:not(.light) .sl-sort.on{background:#123A2A;border-color:var(--k-mint);}
+.schueler2 #studentGrid{display:flex;flex-direction:column;gap:8px;}
+.s-row{min-height:68px;width:100%;background:var(--h-karte);border:1px solid var(--h-rand);border-radius:18px;padding:10px 14px;display:flex;align-items:center;gap:12px;text-align:left;color:var(--h-tinte);}
+.sr-ring{flex:0 0 auto;width:46px;height:46px;border-radius:50%;display:flex;align-items:center;justify-content:center;}
+.sr-pct{width:36px;height:36px;border-radius:50%;background:var(--h-karte);display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:800;font-variant-numeric:lining-nums;}
+.sr-text{display:flex;flex-direction:column;gap:2px;min-width:0;flex:1;}
+.sr-name{font-size:15.5px;font-weight:800;overflow-wrap:anywhere;}
+.sr-dot{display:inline-block;width:8px;height:8px;border-radius:50%;vertical-align:middle;}
+.sr-form{font-size:11px;font-weight:700;color:var(--h-text2);border:1px solid var(--h-rand);border-radius:999px;padding:1px 6px;vertical-align:middle;}
+.sr-sub{font-size:13px;font-weight:600;color:var(--h-text2);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.sr-sub.rot{color:#9E2F22;} .sr-sub.gelb{color:#7A4508;} .sr-sub.heute{color:var(--k-akzent);font-weight:800;}
+body:not(.light) .sr-sub.heute{color:var(--mint-ok);}
+body:not(.light) .sr-sub.rot{color:#f6b0a3;} body:not(.light) .sr-sub.gelb{color:#f0c987;}
+.sr-pfeil{width:18px;height:18px;flex:0 0 auto;color:#8A988F;}
+/* Akte */
+.akte2{--h-karte:var(--k-karte);--h-rand:var(--k-rand);--h-tinte:var(--k-tinte);--h-text2:var(--k-text2);}
+body:not(.light) .akte2{--h-karte:var(--surface);--h-rand:var(--line);--h-tinte:var(--txt);--h-text2:#a9c2b7;}
+.akte2 .back-row .back-btn{display:none !important;}
+.akte2 .at-neu,.akte2 .at-hist,.akte2 .h2-ueber,.akte2 .h2-nichts,.akte2 .ap-karte,.akte2 .ap-karte *{font-family:var(--k-font-text) !important;}
+.akte2 .back-row:has(> .back-btn:only-child){display:none !important;}
+.akte2 .back-row{justify-content:flex-end;}
+.akte-kopf{display:flex;flex-direction:column;gap:10px;margin-bottom:14px;}
+.akte-kopf .ak-name{font-size:24px;font-weight:700;color:var(--h-tinte);overflow-wrap:anywhere;line-height:1.2;}
+.ak-pct{font-size:15px;color:var(--h-text2);font-weight:700;white-space:nowrap;}
+.ak-reiter{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:2px;border-bottom:1px solid var(--h-rand);}
+.ak-reiter::-webkit-scrollbar{display:none;}
+.ak-r{min-height:46px;padding:0 2px;font-size:12.5px;font-weight:700;background:none;color:var(--h-text2);border:0;border-bottom:3px solid transparent;margin-bottom:-1px;white-space:nowrap;overflow:hidden;text-overflow:clip;}
+.ak-r.on{color:var(--h-tinte);border-bottom-color:var(--k-akzent);font-weight:800;}
+body:not(.light) .ak-r.on{border-bottom-color:var(--mint-ok);}
+@media (min-width:400px){.ak-r{font-size:13.5px;}}
+.at-neu{min-height:52px;width:100%;border-radius:16px;border:0;background:var(--k-akzent);color:#fff;font-size:15px;font-weight:800;margin:6px 0 16px;position:sticky;bottom:calc(92px + env(safe-area-inset-bottom));z-index:6;box-shadow:0 6px 18px rgba(20,33,26,.18);}
+.at-ueber{margin:4px 0 8px;}
+.at-liste{background:var(--h-karte);border:1px solid var(--h-rand);border-radius:18px;padding:4px 14px;margin-bottom:16px;}
+.at-zeile{display:flex;align-items:center;gap:12px;min-height:52px;width:100%;border:0;border-bottom:1px solid var(--h-rand);background:none;color:var(--h-tinte);text-align:left;padding:0;}
+.at-liste>.at-zeile:last-child{border-bottom:0;}
+.at-zeile.weg{opacity:.6;text-decoration:line-through;}
+.at-datum{font-weight:800;font-size:14px;min-width:92px;}
+.at-zeit{font-weight:700;font-size:14px;color:var(--h-text2);}
+.at-art{margin-left:auto;font-size:13px;font-weight:700;color:var(--h-text2);text-align:right;}
+.at-hist{min-height:44px;background:none;border:0;color:var(--k-akzent);font-size:14px;font-weight:800;padding:0;}
+body:not(.light) .at-hist{color:var(--mint-ok);}
+.ap-karte{background:var(--h-karte);border:1px solid var(--h-rand);border-radius:18px;padding:14px 16px;display:flex;flex-direction:column;gap:6px;margin-bottom:14px;color:var(--h-tinte);}
+.ap-zeile{display:flex;justify-content:space-between;gap:10px;min-height:32px;align-items:center;font-size:14px;}
+.ap-zeile b.ok{color:var(--k-akzent);} .ap-zeile b.nein{color:#9E2F22;}
+body:not(.light) .ap-zeile b.ok{color:var(--mint-ok);} body:not(.light) .ap-zeile b.nein{color:#f6b0a3;}
+.schueler2 #homeFilterBtn{min-width:44px;min-height:44px;}
 /* Tab-Leiste unten — ruft ausschließlich bestehende Routen auf */
 .tabbar{position:absolute;left:0;right:0;bottom:0;z-index:24;display:flex;gap:2px;
   padding:6px 10px calc(10px + env(safe-area-inset-bottom));
@@ -4560,6 +4620,7 @@ async function pullSchuelerZuweisungen() {
     _schuelerAbgerufen = true;
     // Notizen erst jetzt: neue Schüler sind dann schon in DB.students, das Popup kann ihren Namen nennen
     try{ await pullBueroNotizen(supa,(rows||[]).map(r=>r.id)); }catch(e){ console.warn("[Kompass] Büro-Notizen nicht geladen:",e.message); }
+    try{ if(typeof _h2Auffrischen==="function")_h2Auffrischen(); }catch(e){} // Stopp/Fristen sofort auf „Heute“ zeigen
     const { data: weg, error: wegErr } = await supa.from("schueler_verschiebungen").select("*").eq("von_fahrlehrer_id", _authUser.id).eq("gesehen_von_alt", false);
     if (wegErr) throw wegErr;
     let entfernt = [];
@@ -4670,7 +4731,7 @@ async function pullTermineZuweisungen() {
     console.warn("[Kompass] Kalender-Abgleich fehlgeschlagen:", e.message);
     if (++_termineFehlversuche === 5) toast("⚠ Kalender-Abgleich mit dem Büro klappt gerade nicht");
   }
-  finally { _termineAbrufLaeuft = false; }
+  finally { _termineAbrufLaeuft = false; try{ if(typeof _h2Auffrischen==="function")_h2Auffrischen(); }catch(e){} }
 }
 /* ---- Logout ---- */
 /* opts.alleGeraete: Sitzung überall beenden (muss dann auch klappen).
@@ -6617,7 +6678,7 @@ window.addEventListener("load", () => {
 const STORE_KEY="serband-app-v1";
 /* Build-Version: bei jeder Auslieferung hier das Datum aktualisieren.
    Wird in den Einstellungen angezeigt + für den Update-Hinweis genutzt. */
-const APP_VERSION="2026.10.11.3";
+const APP_VERSION="2026.10.11.4";
 try{const f=document.getElementById("drawerFoot"); if(f)f.textContent="Fahrlehrer-Kompass · Version "+APP_VERSION;}catch(e){}
 // Nutzungsbedingungen & Haftungsausschluss (Bereich: rechtliche Absicherung) - Version hochzählen
 // und alle Nutzer müssen erneut zustimmen, sobald sich der Text inhaltlich ändert.
@@ -7323,7 +7384,7 @@ function _letzteAktivitaet(s){
   const l=(DB.lessons||[]).filter(x=>x.sid===s.id&&x.date).map(x=>x.date).sort();
   return l.length?l[l.length-1]:"";
 }
-let _homeSortMode="az";
+let _homeSortMode=null; // null = Standard: „Als Nächstes dran“ (Gesamtansicht: A–Z)
 let _homeFormFilter=[], _homeColorFilter=[], _homeOhneTelefon=false;
 // Telefonnummer ist in der Fahr-Akademie der Login. Fehlt sie, kann dort kein Zugang
 // angelegt werden - deshalb gilt auch eine leere Zeichenkette als "fehlt".
@@ -7337,8 +7398,13 @@ function routeHome(){
   if(_homeColorFilter.length) list=list.filter(s=>_homeColorFilter.includes(s.profil));
   if(_homeOhneTelefon) list=list.filter(telefonFehlt);
   const alle=activeStudents();
-  if(_homeSortMode==="stand") list.sort((a,b)=>stand(b)-stand(a));
-  else list.sort((a,b)=>(a.name||"").localeCompare(b.name||"","de"));
+  const modus=_homeSortMode||(_fsAgg?"az":"naechste");
+  const alpha=(a,b)=>(a.name||"").localeCompare(b.name||"","de");
+  if(modus==="stand") list.sort((a,b)=>stand(b)-stand(a)||alpha(a,b));
+  else if(modus==="naechste"){ const k=x=>{ const t=_slNaechster(x); return t?t.date+" "+t.von:"9999"; }; list.sort((a,b)=>k(a).localeCompare(k(b))||alpha(a,b)); }
+  else if(modus==="lange"){ const k=x=>_slLetzteFahrt(x)||"0000"; list.sort((a,b)=>k(a).localeCompare(k(b))||alpha(a,b)); }
+  else list.sort(alpha);
+  const hinweise={}; try{ _h2Hinweise().forEach(h=>{ if(h.sid&&!hinweise[h.sid])hinweise[h.sid]=h; }); }catch(e){}
   const filterAktiv=_homeFormFilter.length||_homeColorFilter.length||_homeOhneTelefon;
   if(!alle.length){
     view.innerHTML=`<div class="empty fade-up">
@@ -7349,7 +7415,7 @@ function routeHome(){
     </div>`;
     $("#emptyAdd").addEventListener("click",()=>formView(null));return;
   }
-  const sortiertAlpha=_homeSortMode==="az";
+  const sortiertAlpha=modus==="az";
   const gruppiertNachFahrlehrer=!!_fsAgg&&sortiertAlpha;
   let gridHTML="", letters=[], letterNav="";
   if(gruppiertNachFahrlehrer){
@@ -7359,32 +7425,29 @@ function routeHome(){
     Object.keys(byLehrer).sort((a,b)=>a.localeCompare(b,"de")).forEach(name=>{
       const gruppe=byLehrer[name].sort((a,b)=>(a.name||"").localeCompare(b.name||"","de"));
       gridHTML+=`<div class="alpha-anchor" style="font-size:12px;font-weight:800;color:var(--txt);padding:16px 0 6px;">${esc(name)} <span style="color:var(--muted);font-weight:600;">(${gruppe.length})</span></div>`;
-      gridHTML+=gruppe.map((s,i)=>cardHTML(s,i)).join("");
+      gridHTML+=gruppe.map((s,i)=>cardHTML2(s,i,hinweise)).join("");
     });
   } else if(sortiertAlpha){
     letters=[...new Set(list.map(s=>(s.name||"?")[0].toUpperCase()))].sort((a,b)=>a.localeCompare(b,"de"));
     letters.forEach(letter=>{
       const group=list.filter(s=>(s.name||"?")[0].toUpperCase()===letter);
       gridHTML+=`<div class="alpha-anchor" id="alpha-${letter}" style="font-size:11px;font-weight:800;color:var(--muted);letter-spacing:.1em;padding:14px 0 6px;text-transform:uppercase;">${letter}</div>`;
-      gridHTML+=group.map((s,i)=>cardHTML(s,i)).join("");
+      gridHTML+=group.map((s,i)=>cardHTML2(s,i,hinweise)).join("");
     });
     letterNav=letters.map(l=>`<button class="alpha-nav-btn" data-letter="${l}" style="display:block;font-size:11px;font-weight:800;color:var(--muted);padding:3px 0;background:none;border:none;cursor:pointer;line-height:1.4;">${l}</button>`).join("");
   } else {
-    gridHTML=list.map((s,i)=>cardHTML(s,i)).join("");
+    gridHTML=list.map((s,i)=>cardHTML2(s,i,hinweise)).join("");
   }
   if(!list.length)gridHTML=`<p class="muted-p" style="text-align:center;padding:20px;">${wartende.length&&!filterAktiv?"Alle deine Schüler warten gerade (siehe unten).":"Kein Treffer für diese Filter."}</p>`;
-  if(wartende.length)gridHTML+=`<details id="wartendBox" style="margin-top:18px;"><summary style="cursor:pointer;font-size:12px;font-weight:800;color:var(--muted);letter-spacing:.06em;text-transform:uppercase;padding:8px 0;">⏳ Wartet (${wartende.length}) – auf Theorie oder Praxisprüfung</summary><p class="muted-p" style="font-size:12px;margin:0 0 8px;">Diese Schüler zählen nicht in deiner Auslastung. Sobald neue Fahrstunden gebucht oder ein Prüfungstermin eingetragen ist, erscheinen sie wieder oben.</p>${wartende.map((s,i)=>cardHTML(s,i)).join("")}</details>`;
-  const sortBar=`<div class="seg" style="margin-bottom:12px;">
-    <button class="seg-i${_homeSortMode==='az'?' on':''}" data-sort="az">A–Z</button>
-    <button class="seg-i${_homeSortMode==='stand'?' on':''}" data-sort="stand">Fortschritt</button>
-  </div>`;
-  view.innerHTML=`<div class="view-inner view-wide fade-up" style="position:relative;padding-right:32px;">
-    <div class="row-between" style="margin-bottom:12px;"><div class="sec-h">Meine <span class="o">Schüler</span></div><div class="count-pill">${alle.length-wartende.length}</div></div>
-    ${sortBar}
+  if(wartende.length)gridHTML+=`<details id="wartendBox" style="margin-top:18px;"><summary style="cursor:pointer;font-size:12px;font-weight:800;color:var(--muted);letter-spacing:.06em;text-transform:uppercase;padding:8px 0;">⏳ Wartet (${wartende.length}) – auf Theorie oder Praxisprüfung</summary><p class="muted-p" style="font-size:12px;margin:0 0 8px;">Diese Schüler zählen nicht in deiner Auslastung. Sobald neue Fahrstunden gebucht oder ein Prüfungstermin eingetragen ist, erscheinen sie wieder oben.</p>${wartende.map((s,i)=>cardHTML2(s,i,hinweise)).join("")}</details>`;
+  const sortBar=`<div class="sl-sorten" role="group" aria-label="Sortierung" style="overflow-x:auto">${[["naechste","Als Nächstes dran"],["lange","Lange nicht gefahren"],["stand","Nach Stand"],["az","A–Z"]].map(([k,l])=>`<button class="sl-sort${modus===k?' on':''}" data-sort="${k}">${l}</button>`).join("")}</div>`;
+  view.innerHTML=`<div class="view-inner view-wide fade-up schueler2" style="position:relative;${sortiertAlpha&&!gruppiertNachFahrlehrer?'padding-right:32px;':''}">
+    <div class="sl-kopf"><h1 class="sl-titel">Schüler</h1><span class="sl-zahl">${alle.length-wartende.length} aktiv${wartende.length?` · ${wartende.length} warten`:''}</span></div>
     <div id="homeSearchRow" style="display:flex;gap:8px;align-items:center;margin-bottom:12px;">
       <div class="search-wrap" style="flex:1;margin:0;"><span class="search-ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="11" cy="11" r="7"/><path d="M21 21l-4.3-4.3"/></svg></span><input id="studentSearch" type="search" placeholder="Schüler suchen …" autocomplete="off"><button class="search-clear" id="searchClear" aria-label="Leeren" style="display:none;">✕</button></div>
       <button class="cal-search-btn" id="homeFilterBtn" aria-label="Filter" style="position:relative;flex:0 0 auto;"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 6h16M7 12h10M10 18h4"/></svg>${filterAktiv?'<span class="cal-filter-badge"></span>':''}</button>
     </div>
+    ${sortBar}
     <div id="studentGrid">${gridHTML}</div>
     <div class="no-hit" id="noHit" style="display:none;">Kein Schüler gefunden.</div>
     </div>
@@ -7493,6 +7556,140 @@ function cardHTML(s,i){
 /* ============================================================
    PRÜFUNGS-WARTELISTE
    ============================================================ */
+/* ===== Umbau Schritt 4: Schülerliste (Entwurf Schueler.dc.html) und Schülerakte mit Reitern.
+   Nur Anzeige und Wege – alle bisherigen Knöpfe bleiben, keine neue Datenlogik. ===== */
+// Nächster geplanter Termin eines Schülers ab jetzt (Fahrstunde/Sonder/Prüfung), sonst null
+function _slNaechster(s){
+  const heute=todayISO(), j=_h2JetztMin();
+  const l=(DB.lessons||[]).filter(x=>x.sid===s.id&&x.date&&x.status!=="abgebrochen"&&x.status!=="nicht erschienen"&&x.art!=="block"&&(x.date>heute||(x.date===heute&&hm2min(x.bis||x.von)>j)))
+    .map(x=>({date:x.date,von:x.von,art:x.art}));
+  (DB.termine||[]).forEach(t=>{ if((t.slots||[]).includes(s.id)&&t.date>=heute)l.push({date:t.date,von:t.von||"09:00",art:"pruefung"}); });
+  l.sort((a,b)=>(a.date+a.von).localeCompare(b.date+b.von));
+  return l[0]||null;
+}
+// Letzte stattgefundene Fahrstunde (Datum bis heute, nicht abgesagt), sonst ""
+function _slLetzteFahrt(s){
+  const heute=todayISO();
+  const j=_h2JetztMin();
+  const d=(DB.lessons||[]).filter(x=>x.sid===s.id&&x.date&&(x.date<heute||(x.date===heute&&hm2min(x.bis||x.von)<=j))&&x.status!=="abgebrochen"&&x.status!=="nicht erschienen"&&["fahrstunde","sonder","nacht","schalt"].indexOf(x.art||"fahrstunde")>=0).map(x=>x.date).sort();
+  return d.length?d[d.length-1]:"";
+}
+function _slTerminText(t){
+  const heute=todayISO();
+  const tag=t.date===heute?"Heute":t.date===addDays(heute,1)?"Morgen":`${deWeekday(t.date)} ${isoDE(t.date).slice(0,6)}`;
+  return `${tag} ${t.von}${t.art==="pruefung"?" · Prüfung":""}`;
+}
+function _slZusatz(s,hinweise){
+  const h=hinweise[s.id];
+  if(h&&h.farbe==="rot")return {text:h.text,k:"rot"};
+  if(h&&h.farbe==="gelb"&&!/Sonderfahrt|fahrt(en)? offen|keine Stunde/.test(h.text))return {text:h.text,k:"gelb"};
+  const t=_slNaechster(s);
+  if(t)return {text:_slTerminText(t)+(t.art!=="pruefung"?" · "+autoNext(s).text:""),k:t.date===todayISO()?"heute":""};
+  const lf=_slLetzteFahrt(s);
+  if(lf){ const tage=Math.round((parseISO(todayISO())-parseISO(lf))/864e5); if(tage>14)return {text:`Seit ${tage} Tagen nicht gefahren`,k:"gelb"}; }
+  if(h)return {text:h.text,k:h.farbe};
+  return {text:autoNext(s).text,k:""};
+}
+function _slRingFarbe(p){ return p>=90?"#1E6B46":p>=60?"#3E9A6A":p>=35?"#D99A1E":"#8FA79A"; } // wenig Stand ist kein „dringend“: kein Rot
+function cardHTML2(s,i,hinweise){
+  const pct=stand(s), z=_slZusatz(s,hinweise||{});
+  const istTurbo=_fsAgg&&s._paketId&&(_fsAgg.pakete||[]).some(pk=>pk.id===s._paketId&&pk.name==="Turboboost");
+  const p=s.profil?PROFILE[s.profil]:null;
+  return `<button class="s-card s-row" data-id="${s.id}" data-name="${esc(((s.name||'')+' '+(s.telefon||'').replace(/\s+/g,'')).toLowerCase())}" data-turbo="${istTurbo?'1':'0'}" style="animation-delay:${Math.min(i*30,300)}ms">
+    <span class="sr-ring" style="background:conic-gradient(${_slRingFarbe(pct)} ${pct*3.6}deg, var(--sr-leer) 0deg)"><span class="sr-pct">${pct}%</span></span>
+    <span class="sr-text"><span class="sr-name">${esc(s.name)}${p?` <span class="sr-dot" style="background:${p.color}" title="${esc(p.word)}"></span>`:''}${s.form&&s.form!=="B"?` <span class="sr-form">${esc(s.form)}</span>`:''}${s.sehhilfe?' <span title="Sehhilfe">👓</span>':''}${telefonFehlt(s)?' <span title="Telefonnummer fehlt">📵</span>':''}${s.pruefungsreifManuell?' <span title="Prüfungsreif">🏁</span>':''}${istTurbo?' <span title="Turboboost">⚡</span>':''}${_fsAgg&&s._fahrlehrerName?` <span class="sr-form">${esc(s._fahrlehrerName)}</span>`:''}</span>
+      <span class="sr-sub ${z.k}">${esc(z.text)}</span></span>
+    <svg class="sr-pfeil" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 6l6 6-6 6"/></svg>
+  </button>`;
+}
+/* ---- Akte: gemeinsamer Kopf mit Reitern ---- */
+const AKTE_REITER=[["ueberblick","Überblick","routeDetail"],["plan","Plan","routePlan"],["termine","Termine","routeAkteTermine"],["pruefung","Prüfung","routeAktePruefung"],["notizen","Notizen","routeNotes"]];
+function _akteKopf(id,aktiv){
+  const vi=document.querySelector("#view .view-inner"); const s=DB.students.find(x=>x.id===id); if(!vi||!s)return;
+  vi.classList.add("akte2");
+  const name=aktiv==="ueberblick"?"":`<div class="ak-name">${esc(s.name)} <span class="ak-pct">${stand(s)} %</span></div>`;
+  vi.insertAdjacentHTML("afterbegin",`<div class="akte-kopf"><nav class="ak-reiter" aria-label="Akte">${AKTE_REITER.map(([k,lab])=>`<button class="ak-r${k===aktiv?" on":""}" data-akte="${k}" aria-current="${k===aktiv?"page":"false"}">${lab}</button>`).join("")}</nav>${name}</div>`);
+  vi.querySelectorAll(".ak-r[data-akte]").forEach(b=>b.addEventListener("click",()=>{
+    const r=AKTE_REITER.find(x=>x[0]===b.dataset.akte); if(!r||r[0]===aktiv)return;
+    _akteWechsel(r[2],id);
+  }));
+}
+// Reiterwechsel: neue Seite zeigen und den vorigen Reiter aus dem Zurück-Stapel nehmen, damit Zurück direkt zur Liste geht.
+function _akteWechsel(fnName,id){
+  const namen=AKTE_REITER.map(r=>r[2]);
+  // Ungespeicherte Notiz nicht still verlieren: beim Reiterwechsel mitspeichern
+  const na=document.getElementById("noteArea"), st=DB.students.find(x=>x.id===id);
+  if(na&&st&&(na.value||"")!==(st.notiz||"")){ st.notiz=na.value; save(); toast("Notiz gespeichert"); }
+  window[fnName](id);
+  // Alle direkt davor liegenden Reiter-Seiten desselben Schülers entfernen: Zurück führt dann aus jedem Reiter zur Liste
+  while(_navStack.length>1){ const vor=_navStack[_navStack.length-2]; if(vor&&namen.indexOf(vor.name)>=0&&vor.args&&vor.args[0]===id)_navStack.splice(_navStack.length-2,1); else break; }
+  _navAktualisiereKnopf();
+}
+function _akteArtLab(art){ return art==="pruefung"?"Prüfung":(CAL_ARTEN[art]||{lab:"Termin"}).lab; }
+function routeAkteTermine(id){
+  ensureDB();
+  const s=DB.students.find(x=>x.id===id); if(!s){ routeHome(); return; }
+  $("#tbTitle").textContent="Termine"; setFab(false); view.scrollTop=0;
+  const heute=todayISO(), j=_h2JetztMin();
+  // Prüfung, die als Kalendertermin UND auf der Prüfungstafel steht, nur einmal zeigen (wie dayEvents)
+  const tafel=(DB.termine||[]).filter(t=>(t.slots||[]).includes(id)).map(t=>t.date);
+  const alle=(DB.lessons||[]).filter(l=>l.sid===id&&l.date&&!(l.art==="pruefung"&&tafel.some(d=>d>=l.date&&d<=addDays(l.date,3)))).map(l=>({kind:"lesson",id:l.id,sid:id,date:l.date,von:l.von,bis:l.bis,art:l.art||"fahrstunde",status:l.status||"geplant"}));
+  (DB.termine||[]).forEach(t=>{ if((t.slots||[]).includes(id))alle.push({kind:"pruefung",id:t.id,sid:id,date:t.date,von:t.von||"09:00",bis:t.bis||"",art:"pruefung",status:"geplant"}); });
+  // Prüfungen gelten bis zum Ergebnis als kommend (wie die Prüfungs-Seite und die Liste)
+  const kommt=x=>x.date>heute||(x.date===heute&&(x.kind==="pruefung"||hm2min(x.bis||x.von)>j));
+  const kommend=alle.filter(x=>kommt(x)&&x.status!=="abgebrochen").sort((a,b)=>(a.date+a.von).localeCompare(b.date+b.von));
+  const bisher=alle.filter(x=>!kommt(x)).sort((a,b)=>(b.date+b.von).localeCompare(a.date+a.von)).slice(0,10);
+  const zeile=x=>`<button class="at-zeile${x.status==="abgebrochen"||x.status==="nicht erschienen"?" weg":""}" data-atev="${x.kind}|${esc(x.id)}|${esc(id)}"><span class="at-datum">${deWeekday(x.date)} ${isoDE(x.date).slice(0,6)}</span><span class="at-zeit">${x.von}</span><span class="at-art">${esc(_akteArtLab(x.art))}${x.status==="abgebrochen"?" · abgebrochen":x.status==="nicht erschienen"?" · nicht erschienen":""}</span><svg class="sr-pfeil" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 6l6 6-6 6"/></svg></button>`;
+  view.innerHTML=`<div class="view-inner view-read fade-up">
+    <div class="h2-ueber at-ueber">Kommende Termine · ${kommend.length}</div>
+    <div class="at-liste">${kommend.length?kommend.map(zeile).join(""):`<p class="h2-nichts">Kein Termin geplant.</p>`}</div>
+    <div class="h2-ueber at-ueber">Bisher</div>
+    <div class="at-liste">${bisher.length?bisher.map(zeile).join(""):`<p class="h2-nichts">Noch keine Termine.</p>`}</div>
+    <button class="at-hist" id="atHist">Ganze Historie ansehen ›</button>
+    ${_fsAgg?"":`<button class="at-neu" id="atNeu">+ Termin vergeben</button>`}
+  </div>`;
+  _akteKopf(id,"termine");
+  document.querySelectorAll("#view [data-atev]").forEach(b=>b.addEventListener("click",()=>{ const [k,eid,sid]=b.dataset.atev.split("|"); openEventSheet(k,eid,sid); }));
+  $("#atHist").addEventListener("click",()=>routeHistorie(id));
+  // Gesamtansicht: kein „Termin vergeben“ (er hätte keinen Fahrlehrer); das Büro nutzt dafür den Büro-Plus im Kalender
+  if($("#atNeu"))$("#atNeu").addEventListener("click",()=>{
+    const luecken=[]; let d=heute;
+    for(let i=0;i<14&&luecken.length<6;i++){ dayFreeSlots(d).forEach(x=>{ if(luecken.length<6&&(d>heute||hm2min(x.von)>j))luecken.push({date:d,von:x.von,bis:x.bis,art:x.art}); }); d=addDays(d,1); }
+    openSheet(`<div class="sheet-h">Termin für ${esc(_fmVorname(s))}</div>
+      <p class="muted-p" style="font-size:13px;margin:-4px 0 10px;">Nächste freie Lücken</p>
+      <div class="es-actions">${luecken.length?luecken.map(l=>`<button class="es-act at-gap" data-freeslot="${l.date}|${l.von}|${l.bis}|${l.art||"fahrstunde"}" style="display:flex;justify-content:space-between;align-items:center;min-height:48px;"><span>${deWeekday(l.date)} · ${isoDE(l.date)} · ${l.von}–${l.bis}</span><span style="color:var(--akzent);font-weight:700;">Vergeben ›</span></button>`).join(""):`<p class="muted-p">Keine freie Lücke in den nächsten 14 Tagen. Im Kalender auf eine Uhrzeit tippen.</p>`}</div>
+      <div class="btn-row"><button class="btn btn-ghost" id="atZu" style="width:100%;">Schließen</button></div>`);
+    $("#atZu").addEventListener("click",closeSheet);
+    document.querySelectorAll(".at-gap").forEach(g=>g.addEventListener("click",()=>{ const [date,von,bis,art]=g.dataset.freeslot.split("|"); closeSheet(); setTimeout(()=>openAssignSlotSheet(date,von,bis,art,{sid:id,nachher:()=>routeAkteTermine(id)}),200); }));
+  });
+}
+function routeAktePruefung(id){
+  ensureDB();
+  const s=DB.students.find(x=>x.id===id); if(!s){ routeHome(); return; }
+  $("#tbTitle").textContent="Prüfung"; setFab(false); view.scrollTop=0;
+  const heute=todayISO();
+  const termine=(DB.termine||[]).filter(t=>(t.slots||[]).includes(id)&&t.date>=heute).sort((a,b)=>a.date<b.date?-1:1);
+  const ergebnisse=(DB.exams||[]).filter(e=>e.sid===id).sort((a,b)=>(""+b.date).localeCompare(""+a.date));
+  const wl=s.ready?waitlist().findIndex(x=>x.id===id):-1;
+  const theorie=s.plan&&s.plan.theorie;
+  view.innerHTML=`<div class="view-inner view-read fade-up">
+    <section class="ap-karte"><div class="h2-ueber">Stand</div>
+      <div class="ap-zeile"><span>Theorieprüfung</span> <b>${theorie?"bestanden ✓":`offen${s.theoriePct?` · ${s.theoriePct} % gelernt`:""}`}</b></div>
+      ${wl>=0?`<div class="ap-zeile"><span>Warteliste</span> <b>Platz ${wl+1}</b></div>`:""}
+    </section>
+    <section class="ap-karte"><div class="h2-ueber">Kommende Prüfung</div>
+      ${termine.length?termine.map(t=>`<div class="ap-zeile"><span>${deWeekday(t.date)} ${isoDE(t.date)}</span> <b>${esc(t.von||"")}</b></div>`).join(""):`<p class="h2-nichts">Kein Prüfungstermin eingetragen.</p>`}
+    </section>
+    <section class="ap-karte"><div class="h2-ueber">Ergebnisse</div>
+      ${ergebnisse.length?ergebnisse.map(e=>`<div class="ap-zeile"><span>${isoDE(e.date)}${e.b197?" · B197":""}${e.pruefer?` · Prüfer ${esc(e.pruefer)}`:""}</span> <b class="${e.result==="pass"?"ok":"nein"}">${e.result==="pass"?"bestanden":e.result==="fail"?"nicht bestanden":esc(e.result||"–")}</b></div>`).join(""):`<p class="h2-nichts">Noch keine Prüfung abgelegt.</p>`}
+    </section>
+    <button class="at-hist" id="apTafel">Zur Prüfungstafel ›</button>
+    <button class="at-neu" id="apEintragen">Prüfung eintragen</button>
+  </div>`;
+  _akteKopf(id,"pruefung");
+  $("#apEintragen").addEventListener("click",()=>routeExam(id));
+  $("#apTafel").addEventListener("click",()=>routePruefungen());
+}
 function routeWaitlist(){
   $("#tbTitle").textContent="Warteliste";setFab(false);view.scrollTop=0;
   const list=waitlist();
@@ -7638,7 +7835,6 @@ function routeDetail(id){
       <button class="theo-edit-btn ic ic-blau" id="theoEdit">${ICN.pencil}</button>
     </div>
     <div class="akte-nav">
-      <button class="akte-btn" data-go="plan"><div class="ab-ic">📋</div><div class="ab-lab">Plan</div></button>
       <button class="akte-btn" data-go="profil"><div class="ab-ic">🧠</div><div class="ab-lab">Bogen</div></button>
       <button class="akte-btn" data-go="hist"><div class="ab-ic">🕐</div><div class="ab-lab">Historie</div></button>
     </div>
@@ -7748,8 +7944,8 @@ function routeDetail(id){
   });
   bindExamReady(s,()=>routeDetail(id));
   if(_fsAgg)_fsInjectDetailExtras(id);
+  _akteKopf(id,"ueberblick");
 }
-/* ===== Schüler-Historie (Zeitleiste) ===== */
 function histIcon(typ){ return ({fc:"FC",pruefung:"Prüfung",theorie:"Theorie",ready:"Warteliste",del:"Termin",note:"Notiz"})[typ]||""; }
 function routeHistorie(id){
   const s=DB.students.find(x=>x.id===id); if(!s){ routeHome(); return; }
@@ -8251,6 +8447,7 @@ function routePlan(id){
   const _pp=$("#pdfPlanBtn");if(_pp)_pp.addEventListener("click",()=>printPlan(s));buildStunden(s);buildSonder(s);buildStufen(s);renderPlanActions(s);
   _fillUEProgFahrschule(ueBisherFuerSchueler(s));
   animateRings();
+  _akteKopf(id,"plan");
 }
 function refreshPlanRing(s){
   const pct=planProgress(s.plan, s.umschreiber, evalSkillsFor(s));
@@ -10298,7 +10495,8 @@ function routeNotes(id){
     <div class="btn-row"><button class="btn btn-primary btn-full" id="saveNote">Notiz speichern</button></div>
   </div>`;
   $("#backBtn").addEventListener("click",()=>routeDetail(id));
-  $("#saveNote").addEventListener("click",()=>{s.notiz=$("#noteArea").value;save();toast("Notiz gespeichert");routeDetail(id);});
+  $("#saveNote").addEventListener("click",()=>{s.notiz=$("#noteArea").value;save();toast("Notiz gespeichert");_akteWechsel("routeDetail",id);});
+  _akteKopf(id,"notizen");
 }
 function formView(existing){
   const isEdit=!!existing;
@@ -11209,6 +11407,10 @@ function openAssignSlotSheet(date,von,bis,art,opts){
   let asHalf=false;
   document.querySelectorAll("#asDur .dur-opt").forEach(b=>b.addEventListener("click",()=>{ asHalf=b.dataset.half==="1"; document.querySelectorAll("#asDur .dur-opt").forEach(x=>x.classList.toggle("on",x===b)); }));
   const finishBooking=(sid)=>{
+    // Büro-Stopp: gleiche Rückfrage wie beim Termin über den Kalender (Prüfer Büro, 11.10.2026)
+    const stoppN=(_bueroNotizen[sid]||[]).filter(n=>n.art==="stopp");
+    if(stoppN.length&&["fahrstunde","sonder","nacht","schalt"].indexOf(curArt)>=0){ const st=DB.students.find(x=>x.id===sid);
+      if(!confirm("STOPP vom Büro bei "+(st?st.name:"diesem Schüler")+":\n\n"+stoppN.map(n=>n.text).join("\n")+"\n\nTrotzdem eintragen?"))return; }
     const effBis=curArt==="schalt"?min2hm(hm2min(von)+15):(asHalf?min2hm(hm2min(von)+45):bis);
     const fzRelevant=["fahrstunde","sonder","nacht","schalt"].indexOf(curArt)>=0;
     const doBook=(fzName)=>{ addLesson({date,von,bis:effBis,art:curArt,sid,fahrzeug:fzName}); closeSheet(); toast("Termin vergeben ✓"); if(opts.nachher)opts.nachher(); else routeKalender(); };
@@ -13707,6 +13909,7 @@ function _h2JetztHTML(e){
       <div class="h2-jetzt-text"><div class="h2-jetzt-name">${esc(e.name)}</div>${s?`<div class="h2-jetzt-fokus">Fokus: ${esc(autoNext(s).text)}</div>`:''}${e.fahrzeug?`<div class="h2-jetzt-fz">🚗 ${esc(e.fahrzeug)}</div>`:''}</div>
       ${s?`<div class="h2-jetzt-pct">${stand(s)}%</div>`:''}
     </div>
+    ${s&&typeof fristenHinweisHTML==="function"?fristenHinweisHTML(e.sid):""}
     <div class="h2-kontakt">${kontakt}</div>
     ${s&&startbar?`<button class="h2-haupt h2-akte h2-start" data-h2start="${esc(e.id)}">${_fmLaeuft(e.id)?"Fahrstunde fortsetzen":"Fahrstunde starten"} <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M13 6l6 6-6 6"/></svg></button>`:''}
     ${s&&!startbar?`<button class="h2-haupt h2-akte" data-h2akte="${esc(e.sid)}">Schülerakte öffnen <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M13 6l6 6-6 6"/></svg></button>`:''}
@@ -13764,7 +13967,7 @@ function _h2KachelnHTML(){
 // Heute bleibt aktuell: wird die App wieder sichtbar oder vergeht eine Minute, und hat sich „Jetzt dran“ oder das Datum geändert,
 // wird die Seite neu gezeichnet – aber nie, während ein Fenster offen ist oder getippt wird.
 let _h2Stand="";
-function _h2Signatur(){ const e=nextLessonEvents(1)[0], j=_h2JetztMin(); return todayISO()+"|"+(e?e.id+"|"+e.sid+"|"+e.date+"|"+(e.date===todayISO()&&hm2min(e.von)<=j):"-")+"|"+_h2Hinweise().map(h=>h.name+h.text).join(","); }
+function _h2Signatur(){ const e=nextLessonEvents(1)[0], j=_h2JetztMin(); return todayISO()+"|"+(e?e.id+"|"+e.sid+"|"+e.date+"|"+(e.date===todayISO()&&hm2min(e.von)<=j):"-")+"|"+_h2Hinweise().map(h=>h.name+h.text).join(",")+"|"+dayEvents(todayISO()).map(x=>x.id+x.von+x.status).join(","); }
 function _h2Auffrischen(){
   try{
     if(document.hidden||(($("#tbTitle")||{}).textContent)!=="Heute"||!document.querySelector("#view .heute2"))return;
@@ -13776,6 +13979,8 @@ function _h2Auffrischen(){
 document.addEventListener("visibilitychange",_h2Auffrischen);
 setInterval(_h2Auffrischen,60000);
 function routeDashboard(){
+  // Gesamtansicht Büro/Leitung: „Heute“ ist die Fahrschul-Startseite (auch beim Zurück), nie die eines einzelnen Fahrlehrers
+  if(_fsAgg&&typeof routeFahrschuleDashboard==="function"){ routeFahrschuleDashboard(); return; }
   ensureDB();
   $("#tbTitle").textContent="Heute"; setFab("termin"); view.scrollTop=0;
   const heute=todayISO();
@@ -13850,7 +14055,14 @@ function _fmLetzteNotiz(l){
   return fr?fr.note.trim():"";
 }
 function startFahrstunde(lid){
+  if(_fsAgg){ toast("In der Gesamtansicht gibt es keinen Fahrstunden-Modus"); return; }
   const l=(DB.lessons||[]).find(x=>x.id===lid); if(!l)return;
+  // Büro-Stopp oder gesperrte Reaktivierung: erst bewusst bestätigen (wie beim Termin eintragen)
+  const stoppN=(_bueroNotizen[l.sid]||[]).filter(n=>n.art==="stopp");
+  const fr=_schuelerFristen[l.sid], gesperrt=!!(fr&&window.KR&&KR.reaktInfo(fr).gesperrt);
+  if((stoppN.length||gesperrt)&&!_fmLaeuft(lid)){ const st=DB.students.find(x=>x.id===l.sid);
+    const grund=[stoppN.length?"STOPP vom Büro: "+stoppN.map(n=>n.text).join(" / "):"",gesperrt?"Reaktivierung offen – keine weiteren Fahrstunden, bis im Büro bezahlt ist.":""].filter(Boolean).join("\n");
+    if(!confirm((st?st.name:"Schüler")+":\n\n"+grund+"\n\nFahrstunde trotzdem starten?"))return; }
   const o=_fmLaden();
   if(!o||o.lid!==lid){
     if(o&&o.lid!==lid&&(Object.keys(o.stufe||{}).length||(o.notizen||[]).length)){
@@ -13864,6 +14076,7 @@ function startFahrstunde(lid){
 // Neu zeichnen nach einem Tipp, ohne nach oben zu springen
 function _fmNeu(lid){ const y=view.scrollTop; routeFahrstunde(lid); view.scrollTop=y; }
 function routeFahrstunde(lid){
+  if(_fsAgg){ routeDashboard(); return; }
   ensureDB();
   const l=(DB.lessons||[]).find(x=>x.id===lid), s=l&&DB.students.find(x=>x.id===l.sid);
   let o=_fmLaden();
@@ -13890,6 +14103,7 @@ function routeFahrstunde(lid){
       <div class="fm-kopf-text"><span class="fm-laeuft"><span class="h2-live"></span>Fahrstunde läuft</span><span class="fm-name">${esc(s.name)}</span></div>
       <div class="fm-uhr"><div class="fm-zeit">${_fmDauer(Date.now()-o.start)}</div><div class="fm-von">von ${_fmDauer(dauer*60000)}</div></div>
     </header>
+    ${typeof fristenHinweisHTML==="function"?fristenHinweisHTML(s.id):""}
     <section class="fm-ueben"><div class="fm-ueber">Heute üben</div><div class="fm-ueben-t">${esc(titel)}</div>${letzte?`<div class="fm-letzte">Letztes Mal: ${esc(letzte)}</div>`:''}</section>
     <div class="fm-zeile"><span class="fm-ueber">Bewerten · antippen</span><span class="fm-gruen">${gruen} von ${themen.length} grün</span></div>
     <section class="fm-themen">${themen.map(it=>{ const w=_fmWert(s,o,it.id), st=FM_STUFEN.find(x=>x.v===w)||FM_STUFEN[0];
@@ -15371,7 +15585,7 @@ routeDashboard();
 <script>
 /* Redesign v2: markiert nur den aktiven Tab anhand des Seitentitels — reine Anzeige, keine Logik. */
 (function(){
-  const map={"Heute":"heute","Start":"heute","Fahrstunde":"heute","Nach der Stunde":"heute","Schüler":"schueler","Kalender":"kalender","Prüfungen":"pruefungen","Prüfer":"pruefungen","Warteliste":"schueler","Ausbildungsplan":"schueler","Notizen":"schueler","Persönlichkeitsbogen":"schueler","Persönlichkeitsprofil":"schueler","Prüfung eintragen":"schueler","Risiko-Themen":"schueler","Schülerdatei":"schueler","Historie":"schueler","Ergebnis eintragen":"schueler","Neuer Schüler":"schueler","Schüler bearbeiten":"schueler","Bestehens-Daten":"schueler"};
+  const map={"Heute":"heute","Start":"heute","Fahrstunde":"heute","Nach der Stunde":"heute","Termine":"schueler","Prüfung":"schueler","Schüler":"schueler","Kalender":"kalender","Prüfungen":"pruefungen","Prüfer":"pruefungen","Warteliste":"schueler","Ausbildungsplan":"schueler","Notizen":"schueler","Persönlichkeitsbogen":"schueler","Persönlichkeitsprofil":"schueler","Prüfung eintragen":"schueler","Risiko-Themen":"schueler","Schülerdatei":"schueler","Historie":"schueler","Ergebnis eintragen":"schueler","Neuer Schüler":"schueler","Schüler bearbeiten":"schueler","Bestehens-Daten":"schueler"};
   const t=document.getElementById("tbTitle"); if(!t)return;
   const paint=()=>{ const k=map[(t.textContent||"").trim()]||"mehr"; document.querySelectorAll(".tab-i").forEach(b=>b.classList.toggle("on",b.dataset.tab===k)); };
   new MutationObserver(paint).observe(t,{childList:true,characterData:true,subtree:true});
