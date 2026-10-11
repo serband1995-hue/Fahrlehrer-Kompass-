@@ -2069,7 +2069,8 @@ body:not(.light) .heute2{--h-karte:var(--surface);--h-rand:var(--line);--h-tinte
 @keyframes wxBlitz{0%,70%,100%{opacity:1}78%{opacity:.25}86%{opacity:1}}
 @keyframes wxFunkel{0%,100%{opacity:1}50%{opacity:.3}}
 @media (prefers-reduced-motion:reduce){.h2-wx *{animation:none !important;}}
-body:not(.light) .h2-wx .wx-wolke-f{fill:#DDE6E0;}
+body:not(.light) .h2-wx .wx-wolke-f{fill:#DDE6E0;stroke:#A9B8AF;}
+body:not(.light) .h2-wx.wx-nebel g{stroke:#B9C7BF;}
 /* Jetzt dran: immer dunkelgrün mit Mint */
 .h2-jetzt{background:var(--k-jetzt);color:#fff;border:1px solid #2E4237;border-radius:24px;padding:20px;display:flex;flex-direction:column;gap:14px;}
 .h2-jetzt-kopf{display:flex;align-items:center;justify-content:space-between;gap:10px;}
@@ -13855,21 +13856,25 @@ function _wetterArt(icon){
   if(p==="50")return "nebel";
   return "wolke";
 }
+function _wetterKurz(icon){
+  const p=(icon||"").slice(0,2), nacht=isNightIcon(icon);
+  return ({"01":nacht?"Klar":"Sonnig","02":nacht?"Wolkig":"Heiter","03":"Bewölkt","04":"Bedeckt","09":"Schauer","10":"Regen","11":"Gewitter","13":"Schnee","50":"Nebel"})[p]||"Wetter";
+}
 function _wetterIconSVG(icon){
   const art=_wetterArt(icon);
   const strahlen=(cx,cy,r1,r2)=>Array.from({length:8}).map((_,i)=>{ const a=i*Math.PI/4, c=Math.cos(a), si=Math.sin(a);
     return `<line x1="${(cx+c*r1).toFixed(1)}" y1="${(cy+si*r1).toFixed(1)}" x2="${(cx+c*r2).toFixed(1)}" y2="${(cy+si*r2).toFixed(1)}"/>`; }).join("");
-  const wolke=(dx,dy,k,extra)=>`<path class="wx-wolke-f" d="M${17+dx} ${31+dy}h13a4.5 4.5 0 0 0 0-9 6 6 0 0 0-11.4 1.6A3.8 3.8 0 0 0 ${17+dx} ${31+dy}z" fill="#FFFFFF" stroke="#B7C3BA" stroke-width="1.4" transform="${k?`translate(${20*(1-k)} ${20*(1-k)}) scale(${k})`:""}" ${extra||""}/>`;
+  const wolke=(dx,dy,k,extra)=>`<path class="wx-wolke-f" d="M${17+dx} ${31+dy}h13a4.5 4.5 0 0 0 0-9 6 6 0 0 0-11.4 1.6A3.8 3.8 0 0 0 ${17+dx} ${31+dy}z" fill="#E4EAE6" stroke="#6F8077" stroke-width="1.5" transform="${k?`translate(${20*(1-k)} ${20*(1-k)}) scale(${k})`:""}" ${extra||""}/>`;
   let innen="";
   if(art==="sonne") innen=`<g class="wx-strahlen" stroke="#D99A1E" stroke-width="2.2" stroke-linecap="round">${strahlen(20,20,11.5,16.5)}</g><circle cx="20" cy="20" r="7.5" fill="#F2B632"/>`;
   else if(art==="mond") innen=`<path d="M25 8a12 12 0 1 0 7 21A10 10 0 0 1 25 8z" fill="#E7C66A"/><circle class="wx-stern" cx="10" cy="10" r="1.4" fill="#E7C66A"/><circle class="wx-stern" cx="32" cy="12" r="1.1" fill="#E7C66A" style="animation-delay:1.4s"/>`;
   else if(art==="sonnewolke") innen=`<g class="wx-strahlen" stroke="#D99A1E" stroke-width="2" stroke-linecap="round">${strahlen(15,15,8.5,12.5)}</g><circle cx="15" cy="15" r="5.8" fill="#F2B632"/><g class="wx-wolkenteil">${wolke(0,0)}</g>`;
   else if(art==="wolke") innen=`<g class="wx-wolkenteil spaet" opacity=".7">${wolke(-9,-9,.8)}</g><g class="wx-wolkenteil">${wolke(-4,0)}</g>`;
-  else if(art==="nebel") innen=`<g stroke="#8FA39A" stroke-width="2.4" stroke-linecap="round"><line class="wx-wolkenteil" x1="8" y1="14" x2="30" y2="14"/><line class="wx-wolkenteil spaet" x1="11" y1="21" x2="33" y2="21"/><line class="wx-wolkenteil" x1="7" y1="28" x2="27" y2="28"/></g>`;
+  else if(art==="nebel") innen=`<g stroke="#6F8077" stroke-width="2.6" stroke-linecap="round"><line class="wx-wolkenteil" x1="8" y1="14" x2="30" y2="14"/><line class="wx-wolkenteil spaet" x1="11" y1="21" x2="33" y2="21"/><line class="wx-wolkenteil" x1="7" y1="28" x2="27" y2="28"/></g>`;
   else {
     const dunkel=art==="gewitter";
     const tropfen=art==="schnee"
-      ? [10,18,26].map((x,i)=>`<circle class="wx-fall f${i+1}" cx="${x+3}" cy="33" r="1.6" fill="#8FB4D9"/>`).join("")
+      ? [10,18,26].map((x,i)=>`<circle class="wx-fall f${i+1}" cx="${x+3}" cy="33" r="2" fill="#3F78B5"/>`).join("")
       : [10,18,26].map((x,i)=>`<line class="wx-fall f${i+1}" x1="${x+3}" y1="31" x2="${x+1}" y2="36" stroke="#4F86C6" stroke-width="2" stroke-linecap="round"/>`).join("");
     innen=`${tropfen}<g class="wx-wolkenteil">${wolke(-6,-6,1,dunkel?'style="fill:#C9D1CC"':"")}</g>${dunkel?`<path class="wx-blitz" d="M21 24l-4 7h4l-2 6 6-9h-4l2-4z" fill="#F2B632"/>`:""}`;
   }
@@ -14224,8 +14229,9 @@ function routeDashboard(){
   if(wetterAn){
     fetchWeather().then(w=>{ const b=$("#h2Wetter"); if(!b)return; if(!w){ b.remove(); return; }
       const d=String(w.desc||""); const dGross=d?d.charAt(0).toUpperCase()+d.slice(1):"";
+      // In der Pille nur ein kurzes Wort (passt bei 360 px ganz hinein); die volle Beschreibung steht im Vorlesetext und auf der Wetter-Seite
       b.querySelector(".h2-wetter-ic").innerHTML=_wetterIconSVG(w.icon); const grad=Math.round(+w.temp)||0; b.querySelector(".h2-wetter-t").textContent=`${grad}°`;
-      b.querySelector(".h2-wetter-d").textContent=dGross; b.setAttribute("aria-label",`Wetter: ${grad} Grad${dGross?", "+dGross:""}`);
+      b.querySelector(".h2-wetter-d").textContent=_wetterKurz(w.icon); b.setAttribute("aria-label",`Wetter: ${grad} Grad${dGross?", "+dGross:""}`);
       b.addEventListener("click",()=>routeWetter(w)); }).catch(()=>{ const b=$("#h2Wetter"); if(b)b.remove(); });
   }
 }
