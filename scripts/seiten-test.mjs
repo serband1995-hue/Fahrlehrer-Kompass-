@@ -626,6 +626,22 @@ await pruefe("S1e", "Zurück (navZurueck) setzt data-seite2 passend: Kalender �
   if (await seite2(p)) f.push("Akte → Zurück auf Heute: data-seite2 bleibt stehen");
   return f;
 });
+// S15 (Fund Richter): Abschnittsnamen der Einstellungen nicht mehr in Großbuchstaben
+await pruefe("S15", "Einstellungen: Abschnittsnamen in normaler Schreibweise (text-transform none)", async () => {
+  const p = haupt.page;
+  await setze(p, basisSzenario());
+  await p.evaluate(() => routeSettings()); await warte(p, 300);
+  const r = await p.evaluate(() => [...document.querySelectorAll("#view .acc-h > span")].filter((e) => e.textContent.trim().length > 2 && !e.querySelector("svg")).map((e) => ({ t: e.textContent.trim().slice(0, 20), tt: getComputedStyle(e).textTransform })));
+  if (!r.length) return "keine Abschnittsnamen gefunden";
+  return r.filter((x) => x.tt !== "none").map((x) => `„${x.t}“ ${x.tt}`);
+});
+// S16 (Hinweis Richter): leitet eine Seite intern um (Akte ohne Schüler → Liste), gilt das Merkmal der Zielseite
+await pruefe("S16", "Akte mit unbekannter ID leitet zur Liste: dort kein data-seite2", async () => {
+  const p = haupt.page;
+  await setze(p, basisSzenario());
+  await p.evaluate(() => routeDetail("gibt-es-nicht")); await warte(p, 300);
+  return (await seite2(p)) ? "Liste hat data-seite2" : [];
+});
 await pruefe("S2", "hell: Grund von body rgb(243, 245, 241) auf allen Seiten", () => kurz(sammel.S2 || []));
 await pruefe("S3", "Seitentitel (h1/h2/.sec-h/.display/.detail-name/.plan-title) in Playfair Display und einfarbig (.o wie der Rest)", () => kurz(sammel.S3 || []));
 await pruefe("S4", "Text in #view .view-inner in Manrope (Playfair nur Titel/große Zahlen ≥ 22 px)", () => kurz(sammel.S4 || []));
