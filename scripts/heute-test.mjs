@@ -108,6 +108,8 @@ function ruhigSzenario() {
   const sz = basisSzenario();
   sz.students.forEach((s) => { s.sonder = SONDER_VOLL; });
   sz.fristen = {}; sz.notizen = {}; sz.backup = "frisch";
+  // Auch keine Prüfungstermine: sonst melden die Prüfungs-Hinweise (keine Stunde bis zur Prüfung, mehrere am selben Tag) zu Recht etwas.
+  sz.termine = [];
   return sz;
 }
 
@@ -411,7 +413,7 @@ await pruefe("H2l", "alle Knöpfe der „Jetzt dran“-Karte ≥ 44 px hoch", as
 
 // H3 Achtung-Streifen
 const chipVon = (cs, wort) => cs.find((c) => c.text.includes(wort));
-await pruefe("H3a", "Überschrift „Achtung · N“, N = Anzahl Chips = 8", async () => {
+await pruefe("H3a", "Überschrift „Achtung · N“, N = Anzahl Chips = 10", async () => {
   await setze(page, basisSzenario());
   const r = await page.evaluate(() => { const a = document.querySelector(".heute2 .h2-achtung"); return a ? (a.textContent || "").replace(/\s+/g, " ") : null; });
   if (r === null) return ".h2-achtung fehlt" + ((await da(page, ".heute2")) ? "" : " (" + KEIN_H2 + ")");
@@ -420,7 +422,8 @@ await pruefe("H3a", "Überschrift „Achtung · N“, N = Anzahl Chips = 8", asy
   const f = [];
   if (!m) f.push(`Überschrift ohne „Achtung · N“: „${r.slice(0, 40)}“`);
   else if (+m[1] !== cs.length) f.push(`N=${m[1]}, aber ${cs.length} Chips`);
-  if (cs.length !== 8) f.push(`${cs.length} Chips statt 8: ${cs.map((c) => c.text).join(" | ")}`);
+  // 10 = 4 rot, 3 gelb (Fristen/Sonderfahrten), Achtperson „keine Stunde bis zur Prüfung“, „2 Prüfungen am selben Tag“, Backup
+  if (cs.length !== 10) f.push(`${cs.length} Chips statt 10: ${cs.map((c) => c.text).join(" | ")}`);
   return f;
 });
 await pruefe("H3b", "ohne Hinweise: kein .h2-achtung", async () => {
@@ -451,7 +454,12 @@ await pruefe("H3i", "gelb: Prüfung in 5 Tagen + Sonderfahrten offen (Testperson
 await pruefe("H3j", "kein Chip für Umschreiber (Achtperson) und Prüfung > 21 Tage (Neuntperson)", async () => {
   const cs = await chips(page);
   if (!cs.length) return "keine .h2-chip" + ((await da(page, ".heute2")) ? "" : " (" + KEIN_H2 + ")");
-  return ["Achtperson", "Neuntperson"].filter((w) => chipVon(cs, w)).map((w) => `Chip für ${w} vorhanden`);
+  // Achtperson (Umschreiber) darf einen Prüfungs-Hinweis haben, aber keinen Sonderfahrten-Chip; Neuntperson (Prüfung > 21 Tage) gar keinen.
+  const f = [];
+  const acht = cs.filter((c) => c.text.includes("Achtperson"));
+  if (acht.some((c) => /fahrt/i.test(c.text))) f.push("Sonderfahrten-Chip für Umschreiber Achtperson");
+  if (chipVon(cs, "Neuntperson")) f.push("Chip für Neuntperson vorhanden");
+  return f;
 });
 await pruefe("H3k", "gelb: Backup fehlt / älter als 7 Tage → Chip „Backup“; frisch → keiner", async () => {
   const f = [];
@@ -715,6 +723,42 @@ await pruefe("H7d", "keine alte .next-stud-Karte", async () => { if (await da(pa
 
 // H9a (Hauptlauf): JS-Fehler
 await pruefe("H9a", "keine JS-Fehler im Hauptlauf", async () => { if (jsFehler.length) return `${jsFehler.length} JS-Fehler, z. B. ${jsFehler[0]}`; });
+// H10: Funde des Prüf-Teams (Schritt 2)
+await pruefe("H10a", "„Danach“ zeigt einen zweiten Termin zur gleichen Startzeit und eine Theorie vor der nächsten Stunde", async () => {
+  await setze(page, basisSzenario());
+  const z = await page.evaluate(() => {
+    DB.lessons.push({ id: "Lgleich", date: todayISO(), von: "10:00", bis: "11:30", art: "fahrstunde", sid: "t6", status: "geplant" },
+      { id: "Ltheo", date: todayISO(), von: "11:45", bis: "13:15", art: "theorie", status: "geplant" });
+    routeDashboard();
+    return [...document.querySelectorAll(".heute2 .h2-danach .h2-zeile")].map((x) => x.textContent.replace(/\s+/g, " "));
+  });
+  const f = [];
+  if (!z.some((t) => t.includes("Sechstperson"))) f.push("Termin zur gleichen Zeit fehlt: " + z.join(" | "));
+  if (!z.some((t) => t.includes("11:45"))) f.push("Theorie 11:45 fehlt");
+  await setze(page, basisSzenario());
+  return f;
+});
+await pruefe("H10b", "Heute frischt sich auf: nach Ende der Stunde und Sichtbar-Werden steht die nächste Stunde in der Karte", async () => {
+  await setze(page, basisSzenario());
+  const vorher = await text(page, ".heute2 .h2-jetzt-name");
+  await page.clock.setFixedTime(new Date("2026-10-14T13:40:00+02:00"));
+  await page.evaluate(() => document.dispatchEvent(new Event("visibilitychange")));
+  await page.waitForTimeout(150);
+  const nachher = await text(page, ".heute2 .h2-jetzt-name");
+  await page.clock.setFixedTime(JETZT);
+  await setze(page, basisSzenario());
+  if (vorher === nachher) return `Karte zeigt weiter „${nachher}“`;
+  if (!/Zweitperson/.test(nachher || "")) return `nach 13:40 erwartet Zweitperson, steht „${nachher}“`;
+});
+await pruefe("H10c", "Titel nur einmal sichtbar, Zahlen in Kacheln mit Normalziffern", async () => {
+  await setze(page, basisSzenario());
+  const r = await page.evaluate(() => ({ oben: getComputedStyle(document.getElementById("tbTitle")).visibility, ziff: getComputedStyle(document.querySelector(".heute2 .h2-k-w")).fontVariantNumeric }));
+  const f = [];
+  if (r.oben !== "hidden") f.push("Titel oben noch sichtbar");
+  if (!/lining-nums/.test(r.ziff)) f.push("Kachel-Zahlen ohne lining-nums: " + r.ziff);
+  return f;
+});
+
 await ctx.close();
 
 // ---------- H8 Handy: Größen × hell/dunkel ----------

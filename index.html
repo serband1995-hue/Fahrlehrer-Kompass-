@@ -2067,8 +2067,8 @@ body:not(.light) .heute2{--h-karte:var(--surface);--h-rand:var(--line);--h-tinte
 .h2-knopf svg{width:18px;height:18px;}
 .h2-haupt{min-height:54px;border-radius:16px;background:var(--k-mint);color:#0E2A1B;font-size:16px;font-weight:800;display:flex;align-items:center;justify-content:center;gap:10px;border:0;width:100%;}
 .h2-haupt svg{width:20px;height:20px;}
-.h2-schnell{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:6px;margin-top:-4px;}
-.h2-mini{min-height:44px;padding:4px 4px;border-radius:12px;background:transparent;border:0;color:#B9C8BE;font-size:12px;font-weight:700;line-height:1.2;text-decoration:underline;text-decoration-color:rgba(185,200,190,.4);text-underline-offset:3px;}
+.h2-schnell{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:6px;}
+.h2-mini{min-height:48px;padding:4px 6px;border-radius:12px;background:#1D2E25;border:1px solid #2E4237;color:#C8D6CC;font-size:12px;font-weight:700;line-height:1.2;display:flex;align-items:center;justify-content:center;text-align:center;}
 .h2-leer{align-items:flex-start;}
 .h2-leer-t{font-size:18px;font-weight:800;}
 .h2-knopf-hell{min-height:48px;padding:0 18px;border-radius:14px;background:var(--k-mint);color:#0E2A1B;font-weight:800;font-size:15px;border:0;}
@@ -2102,10 +2102,26 @@ body:not(.light) .heute2{--h-karte:var(--surface);--h-rand:var(--line);--h-tinte
 .h2-k-s{font-size:12px;font-weight:600;color:var(--h-text2);}
 /* Die App setzt überall Source Serif mit !important – hier gilt die Schrift aus dem Entwurf. */
 .heute2,.heute2 *:not(svg):not(svg *){font-family:var(--k-font-text) !important;}
-.heute2 .h2-titel,.heute2 .h2-avatar,.heute2 .h2-jetzt-pct,.heute2 .h2-k-w{font-family:var(--k-font-titel) !important;}
+.heute2 .h2-titel,.heute2 .h2-avatar,.heute2 .h2-jetzt-pct,.heute2 .h2-k-w{font-family:var(--k-font-titel) !important;font-variant-numeric:lining-nums tabular-nums;}
+/* Titel nur einmal: auf Heute steht er groß in der Seite, oben bleibt nur das Logo (der Text bleibt für die Reiter-Markierung) */
+body:has(#view .heute2) #tbTitle{visibility:hidden;}
+/* Plus-Knopf auf Heute nur als runder Knopf, damit er wenig verdeckt */
+body:has(#view .heute2) #fab{width:56px;height:56px !important;padding:0 !important;justify-content:center;}
+body:has(#view .heute2) #fab span{display:none;}
+.h2-jetzt-fz{font-size:12.5px;color:#B9C8BE;margin-top:2px;}
+body:not(.light) .h2-jetzt{background:#123A2A;border-color:#2B6A4C;}
+body:not(.light) .h2-knopf,body:not(.light) .h2-mini{background:#0F2E22;border-color:#2B6A4C;}
+.h2-weitere{justify-content:center;color:var(--h-akzent);}
+.h2-weitere .h2-wer{font-size:13px;font-weight:800;}
+/* Auslastung im gleichen Kartenstil wie die Kacheln */
+.heute2 .cap-card{background:var(--h-karte) !important;border:1px solid var(--h-rand) !important;border-radius:18px !important;box-shadow:none !important;margin:0;padding:14px;color:var(--h-tinte);}
+.heute2 .cap-card::before{display:none;}
+.heute2 .cap-title{color:var(--h-text2);}
+.heute2 .cap-pct{color:var(--h-tinte) !important;font-weight:800;font-variant-numeric:lining-nums;}
+.heute2 .cap-foot{color:var(--h-text2);}
 .heute2 .fc-missing-link,.heute2 .cap-card,.heute2 #capCard{min-height:48px;}
 /* Querformat: rechts Platz für den Plus-Knopf, damit er keine Knöpfe verdeckt */
-@media (orientation:landscape) and (max-height:520px){ .heute2{padding-right:calc(var(--pad,16px) + 150px) !important;} }
+@media (orientation:landscape) and (max-height:520px){ .heute2{padding-right:calc(var(--pad,16px) + 72px) !important;} .tabbar{background:var(--bg) !important;} }
 /* Tab-Leiste unten — ruft ausschließlich bestehende Routen auf */
 .tabbar{position:absolute;left:0;right:0;bottom:0;z-index:24;display:flex;gap:2px;
   padding:6px 10px calc(10px + env(safe-area-inset-bottom));
@@ -10383,11 +10399,9 @@ function routeSettings(){
         <div class="res-block" style="animation:none;"><h4><span class="ic ic-muted" style="font-size:14px;">${ICN.gear}</span> Dashboard anpassen</h4>
           <p>Welche Kacheln auf deiner Startseite erscheinen sollen.</p>
           <div class="field"><div class="toggle-row"><div><div class="tc-name" style="font-weight:800;font-size:14px;">Nächste-Prüfung-Karte</div></div><button class="check-toggle${sichtbar('dash_nextexam')?' on':''}" data-vis="dash_nextexam"></button></div></div>
-          <div class="field"><div class="toggle-row"><div><div class="tc-name" style="font-weight:800;font-size:14px;">Nächster-Schüler-Karte</div></div><button class="check-toggle${sichtbar('dash_nextstudent')?' on':''}" data-vis="dash_nextstudent"></button></div></div>
           <div class="field"><div class="toggle-row"><div><div class="tc-name" style="font-weight:800;font-size:14px;">FC-vergessen-Karte</div></div><button class="check-toggle${sichtbar('dash_fcpending')?' on':''}" data-vis="dash_fcpending"></button></div></div>
           <div class="field"><div class="toggle-row"><div><div class="tc-name" style="font-weight:800;font-size:14px;">Auslastungs-Karte</div></div><button class="check-toggle${sichtbar('dash_capacity')?' on':''}" data-vis="dash_capacity"></button></div></div>
           <div class="field"><div class="toggle-row"><div><div class="tc-name" style="font-weight:800;font-size:14px;">Diese Woche verdient</div></div><button class="check-toggle${sichtbar('dash_wocheverdienst')?' on':''}" data-vis="dash_wocheverdienst"></button></div></div>
-          <div class="field"><div class="toggle-row"><div><div class="tc-name" style="font-weight:800;font-size:14px;">Nächste Theorie</div></div><button class="check-toggle${sichtbar('dash_naechstetheorie')?' on':''}" data-vis="dash_naechstetheorie"></button></div></div>
         </div>
         <div class="res-block" style="animation:none;"><h4><span class="ic ic-muted" style="font-size:14px;">${ICN.gear}</span> Sichtbare Funktionen</h4>
           <p>Einzelne Funktionen ausblenden, die du nicht brauchst.</p>
@@ -13557,7 +13571,11 @@ function _h2Hinweise(){
       else if(!f.inaktiv_seit&&a&&a.stufe==="bald") out.push({sid:s.id,name:s.name,text:`Antrag bis ${isoDE(a.ablauf).slice(0,6)}`,farbe:"gelb"});
     }
     // Offene Sonderfahrten nur, wenn eine Prüfung in den nächsten 21 Tagen ansteht (Umschreiber brauchen keine).
-    const pruefungBald=(DB.termine||[]).some(t=>t.date>=heute&&t.date<=in21&&(t.slots||[]).includes(s.id));
+    const pTermin=(DB.termine||[]).filter(t=>t.date>=heute&&t.date<=in21&&(t.slots||[]).includes(s.id)).sort((a,b)=>a.date<b.date?-1:1)[0];
+    const pruefungBald=!!pTermin;
+    // Wie die alte Karte „Nächste Prüfung“: Prüfung steht an, aber bis dahin keine Fahrstunde geplant.
+    if(pTermin&&pTermin.date>heute&&!(DB.lessons||[]).some(l=>l.sid===s.id&&l.date>=heute&&l.date<pTermin.date&&l.status!=="abgebrochen"&&l.status!=="nicht erschienen"&&["fahrstunde","sonder","nacht"].indexOf(l.art)>=0))
+      out.push({sid:s.id,name:s.name,text:`Prüfung ${isoDE(pTermin.date).slice(0,6)}, keine Stunde geplant`,farbe:"gelb"});
     if(pruefungBald&&!s.umschreiber&&s.plan&&s.plan.sonder){
       const fehlt=SONDER_DEF.map(sd=>({sd,n:Math.max(0,sd.soll-sfCount(s.plan.sonder[sd.key]))})).filter(x=>x.n>0);
       if(fehlt.length){
@@ -13567,8 +13585,12 @@ function _h2Hinweise(){
       }
     }
   });
+  // Mehrere Prüfungen am selben Tag (wie die alte Karte): rechtzeitig Zeiten planen.
+  const pt=futureTermine().filter(t=>(t.slots||[]).some(Boolean));
+  if(pt.length){ const tag=pt[0].date, n=new Set(pt.filter(t=>t.date===tag).flatMap(t=>(t.slots||[]).filter(Boolean))).size;
+    if(n>1) out.push({pruef:true,name:`Prüfungen ${isoDE(tag).slice(0,6)}`,text:`${n} am selben Tag`,farbe:"gelb"}); }
   let stamp=0; try{ stamp=parseInt(localStorage.getItem("serband-backup-stamp")||"0"); }catch(e){}
-  if(!stamp) out.push({backup:true,name:"Backup",text:"Noch keins erstellt",farbe:"gelb"});
+  if(!stamp) out.push({backup:true,name:"Backup",text:"Fehlt noch",farbe:"gelb"});
   else { const tage=Math.floor((Date.now()-stamp)/864e5); if(tage>=7) out.push({backup:true,name:"Backup",text:`Vor ${tage} Tagen`,farbe:"gelb"}); }
   return out.filter(h=>h.farbe==="rot").concat(out.filter(h=>h.farbe!=="rot"));
 }
@@ -13590,7 +13612,7 @@ function _h2JetztHTML(e){
     <div class="h2-jetzt-kopf"><div class="h2-jetzt-label">${live?'<span class="h2-live"></span>':''}${esc(label)} · ${e.von}–${e.bis}</div><span class="h2-jetzt-ue">${fmtUE(ue)} UE</span></div>
     <div class="h2-jetzt-mitte">
       <div class="h2-avatar">${esc(_h2Initialen(e.name))}</div>
-      <div class="h2-jetzt-text"><div class="h2-jetzt-name">${esc(e.name)}</div>${s?`<div class="h2-jetzt-fokus">Fokus: ${esc(autoNext(s).text)}</div>`:''}</div>
+      <div class="h2-jetzt-text"><div class="h2-jetzt-name">${esc(e.name)}</div>${s?`<div class="h2-jetzt-fokus">Fokus: ${esc(autoNext(s).text)}</div>`:''}${e.fahrzeug?`<div class="h2-jetzt-fz">🚗 ${esc(e.fahrzeug)}</div>`:''}</div>
       ${s?`<div class="h2-jetzt-pct">${stand(s)}%</div>`:''}
     </div>
     <div class="h2-kontakt">${kontakt}</div>
@@ -13604,20 +13626,22 @@ function _h2JetztHTML(e){
 }
 function _h2DanachHTML(e){
   const heute=todayISO(), jetzt=_h2JetztMin();
-  const abVon=e&&e.date===heute?hm2min(e.von):null;
+  // Alle heutigen Termine, die noch nicht vorbei sind (auch Theorie/Blocker und Termine zur gleichen Zeit), außer dem in der Jetzt-Karte.
   const evs=dayEvents(heute).filter(ev=>ev.kind!=="examDone"&&!ev.doppelt&&ev.status!=="abgebrochen"&&ev.status!=="nicht erschienen"
-    &&(!e||ev.id!==e.id)&&(abVon!=null?hm2min(ev.von)>abVon:hm2min(ev.bis)>jetzt))
+    &&(!e||ev.id!==e.id)&&hm2min(ev.bis)>jetzt)
     .map(ev=>({t:hm2min(ev.von),ev}));
-  const frei=dayFreeSlots(heute).filter(x=>hm2min(x.von)>jetzt&&(abVon==null||hm2min(x.von)>abVon)).map(x=>({t:hm2min(x.von),frei:x}));
+  // Freie Lücken: höchstens 2 als Zeile, der Rest als Hinweis. Ohne Schüler keine Lücken (erster Start).
+  const alleFrei=activeStudents().length?dayFreeSlots(heute).filter(x=>hm2min(x.von)>jetzt):[];
+  const frei=alleFrei.slice(0,2).map(x=>({t:hm2min(x.von),frei:x}));
   const zeilen=evs.concat(frei).sort((a,b)=>a.t-b.t);
   const ueHeute=ueRange(heute,heute).total;
-  const info=`${fmtUE(ueHeute)} UE heute${frei.length?` · ${frei.length} ${frei.length===1?"Lücke":"Lücken"}`:""}`;
+  const info=`${fmtUE(ueHeute)} UE heute${alleFrei.length?` · ${alleFrei.length} ${alleFrei.length===1?"Lücke":"Lücken"}`:""}`;
   const liste=zeilen.length?zeilen.map(z=>{
     if(z.frei) return `<div class="h2-zeile h2-frei"><span class="h2-zeit">${z.frei.von}</span><span class="h2-balken"></span><span class="h2-wer">frei</span>
       <button class="h2-vergeben" data-freeslot="${z.frei.date||heute}|${z.frei.von}|${z.frei.bis}|${z.frei.art||"fahrstunde"}">+ vergeben</button></div>`;
     const ev=z.ev, art=CAL_ARTEN[ev.art]||{lab:"Termin",col:"var(--k-akzent)"};
     return `<button class="h2-zeile" data-h2ev="${esc(ev.kind)}|${esc(ev.id)}|${esc(ev.sid||"")}"><span class="h2-zeit">${ev.von}</span><span class="h2-balken" style="background:${art.col}"></span><span class="h2-wer">${esc(ev.sid?ev.name:art.lab)}</span><span class="h2-art">${esc(ev.kind==="pruefung"?"Prüfung":art.lab)}</span></button>`;
-  }).join(""):`<p class="h2-nichts">Heute ist danach nichts mehr geplant</p>`;
+  }).join("")+(alleFrei.length>2?`<button class="h2-zeile h2-weitere" id="h2Weitere"><span class="h2-wer">+ ${alleFrei.length-2} weitere ${alleFrei.length-2===1?"Lücke":"Lücken"} im Kalender</span></button>`:""):`<p class="h2-nichts">Heute ist danach nichts mehr geplant</p>`;
   return `<section class="h2-danach"><div class="h2-kopfzeile"><span class="h2-ueber">Danach</span><span class="h2-danach-info">${info}</span></div><div class="h2-liste">${liste}</div></section>`;
 }
 function _h2KachelnHTML(){
@@ -13630,7 +13654,9 @@ function _h2KachelnHTML(){
   const [moA,moE]=monthRangeOf(heute); const prognose=ueRange(moA,moE).fcCounted;
   // gleiche Rundung wie im Verdienst-Modul (aufrunden, sonst stünde „noch 0 UE“ bei 239,6 von 240)
   const rest=Math.max(0,Math.ceil(Math.round((bonusUE-prognose)*1000)/10)/100);
-  k.push(`<button class="h2-kachel" data-k="bonus"><span class="h2-k-l">Bonus noch</span><span class="h2-k-w">${rest>0?fmtUE(rest)+" UE":"erreicht"}</span></button>`);
+  const gefahren=ueRange(moA,moE).fcDone;
+  const bonusSub=rest>0?"bis zum Bonus":gefahren>=bonusUE?"diesen Monat":"mit geplanten Stunden";
+  k.push(`<button class="h2-kachel" data-k="bonus"><span class="h2-k-l">Bonus noch</span><span class="h2-k-w">${rest>0?fmtUE(rest)+" UE":"erreicht"}</span><span class="h2-k-s">${bonusSub}</span></button>`);
   if(sichtbar('dash_nextexam')){
     const t=futureTermine().find(x=>(x.slots||[]).some(Boolean));
     let sub="";
@@ -13639,9 +13665,23 @@ function _h2KachelnHTML(){
   }
   ensureTodos();
   const offen=(DB.todos||[]).filter(t=>!t.done).length+activeStudents().reduce((a,s)=>a+(Array.isArray(s.todos)?s.todos.filter(t=>!t.done).length:0),0);
-  k.push(`<button class="h2-kachel" data-k="todos"><span class="h2-k-l">To-dos</span><span class="h2-k-w">${offen}</span><span class="h2-k-s">${offen===1?"offen":"offen"}</span></button>`);
+  k.push(`<button class="h2-kachel" data-k="todos"><span class="h2-k-l">To-dos</span><span class="h2-k-w">${offen}</span><span class="h2-k-s">offen</span></button>`);
   return `<section class="h2-kacheln">${k.join("")}</section>`;
 }
+// Heute bleibt aktuell: wird die App wieder sichtbar oder vergeht eine Minute, und hat sich „Jetzt dran“ oder das Datum geändert,
+// wird die Seite neu gezeichnet – aber nie, während ein Fenster offen ist oder getippt wird.
+let _h2Stand="";
+function _h2Signatur(){ const e=nextLessonEvents(1)[0], j=_h2JetztMin(); return todayISO()+"|"+(e?e.id+"|"+e.date+"|"+(e.date===todayISO()&&hm2min(e.von)<=j):"-"); }
+function _h2Auffrischen(){
+  try{
+    if(document.hidden||(($("#tbTitle")||{}).textContent)!=="Heute"||!document.querySelector("#view .heute2"))return;
+    const sh=$("#sheet"); if(sh&&sh.classList.contains("open"))return;
+    const a=document.activeElement; if(a&&/^(INPUT|TEXTAREA|SELECT)$/.test(a.tagName))return;
+    if(_h2Signatur()!==_h2Stand){ const y=view.scrollTop; routeDashboard(); view.scrollTop=y; }
+  }catch(e){}
+}
+document.addEventListener("visibilitychange",_h2Auffrischen);
+setInterval(_h2Auffrischen,60000);
 function routeDashboard(){
   ensureDB();
   $("#tbTitle").textContent="Heute"; setFab("termin"); view.scrollTop=0;
@@ -13655,14 +13695,19 @@ function routeDashboard(){
       ${wetterAn?`<button class="h2-wetter" id="h2Wetter" aria-label="Wetter"><span class="h2-wetter-ic">⛅</span><span class="h2-wetter-t">…</span></button>`:''}
     </header>
     ${_h2JetztHTML(e)}
-    ${hinweise.length?`<section class="h2-achtung"><div class="h2-ueber">Achtung · ${hinweise.length}</div><div class="h2-chips">${hinweise.map(h=>`<button class="h2-chip ${h.farbe}" ${h.backup?'data-h2backup="1"':`data-h2akte="${esc(h.sid)}"`}><b>${esc(h.name)}</b><span>${esc(h.text)}</span></button>`).join("")}</div></section>`:''}
+    ${hinweise.length?`<section class="h2-achtung"><div class="h2-ueber">Achtung · ${hinweise.length}</div><div class="h2-chips">${hinweise.map(h=>`<button class="h2-chip ${h.farbe}" ${h.backup?'data-h2backup="1"':h.pruef?'data-h2pruef="1"':`data-h2akte="${esc(h.sid)}"`}><b>${esc(h.name)}</b><span>${esc(h.text)}</span></button>`).join("")}</div></section>`:''}
     ${_h2DanachHTML(e)}
     ${_h2KachelnHTML()}
     ${sichtbar('dash_fcpending')?fcPendingCardHTML():''}
+    ${_whatsNewBannerHTML()}
     ${sichtbar('dash_capacity')?capacityCardHTML():''}
   </div>`;
+  _bindWasNeuBanner();
+  _h2Stand=_h2Signatur();
   document.querySelectorAll("#view [data-h2akte]").forEach(b=>b.addEventListener("click",()=>routeDetail(b.dataset.h2akte)));
   document.querySelectorAll("#view [data-h2backup]").forEach(b=>b.addEventListener("click",()=>routeSettings()));
+  document.querySelectorAll("#view [data-h2pruef]").forEach(b=>b.addEventListener("click",()=>routePruefungen()));
+  const wl=$("#h2Weitere"); if(wl)wl.addEventListener("click",()=>{ _calView="tag"; _calDate=heute; routeKalender(); });
   document.querySelectorAll("#view .h2-jetzt [data-nsact]").forEach(b=>b.addEventListener("click",ev=>{ ev.stopPropagation(); nsQuickAction(b.dataset.nsact,b.dataset.lid,b.dataset.kind); }));
   const nt=$("#h2NeuTermin"); if(nt)nt.addEventListener("click",openNeuerTerminSheet);
   document.querySelectorAll("#view .h2-vergeben").forEach(b=>b.addEventListener("click",()=>{ const [date,von,bis,art]=b.dataset.freeslot.split("|"); openAssignSlotSheet(date,von,bis,art); }));
