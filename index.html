@@ -2438,12 +2438,11 @@ body.light #view[data-seite2] .todo-item.done .todo-txt{color:#6B776F !important
 .wx2-mondscheibe{position:absolute;inset:30px;border-radius:50%;background:radial-gradient(circle at 35% 32%,#FFFBEA 0%,#F3E7C0 55%,#D9C68E 100%);
   box-shadow:inset -10px -8px 0 rgba(160,140,90,.18),0 0 30px rgba(240,230,190,.45);}
 .wx-stage .wx-star{position:absolute;width:2.5px;height:2.5px;border-radius:50%;background:#fff;animation:wx2Funkel 3s ease-in-out infinite;}
-.wx2-wolke{position:absolute;left:0;width:62%;max-width:280px;animation:wx2Zug 52s linear infinite;filter:drop-shadow(0 8px 14px rgba(20,30,40,.18));}
-.wx2-wolke svg{display:block;width:100%;height:auto;}
+.wx2-wolke{position:absolute;left:0;width:62%;max-width:280px;animation:wx2Zug 52s linear infinite;will-change:transform;}
+.wx2-wolke svg{display:block;width:100%;height:auto;overflow:visible;}
 .wx2-wolke.e2{width:44%;max-width:200px;opacity:.8;animation-duration:78s;}
 .wx-stage.wx-bedeckt{background:linear-gradient(180deg,#8D9AA6 0%,#A9B4BD 55%,#C6CDD3 100%) !important;}
 .wx-stage.wx-bedeckt:not(.wx-night) .wx-bgphoto{filter:brightness(.86) saturate(.35) contrast(.95);}
-.wx2-wolke.dunkel{filter:drop-shadow(0 10px 16px rgba(10,15,25,.32));}
 .wx2-tropfen{position:absolute;top:-24px;width:2px;height:20px;border-radius:2px;background:linear-gradient(180deg,rgba(255,255,255,0),rgba(225,236,248,.95));animation:wx2Regen .9s linear infinite;}
 .wx2-flocke{position:absolute;top:-10px;border-radius:50%;background:rgba(255,255,255,.92);box-shadow:0 0 3px rgba(255,255,255,.45);animation:wx2Schnee 7s linear infinite;}
 .wx2-blitz{position:absolute;top:10%;left:58%;width:44px;opacity:0;animation:wx2Blitz 5.5s ease-out infinite;filter:drop-shadow(0 0 10px rgba(255,226,122,.9));}
@@ -14006,7 +14005,8 @@ function routeWetter(w){
   const grauHimmel=["03","04","13"].includes((w.icon||"").slice(0,2));
   const wolke=(k,ebene,dunkel)=>{ const ton=dunkel?["#9AA5AE","#5F6A74"]:grauHimmel?["#EEF1F3","#B4BEC6"]:["#FFFFFF","#D5DEE6"];
     return `<div class="wx2-wolke e${ebene}${dunkel?" dunkel":""}" style="top:${[6,22,12,30][k%4]}%;animation-delay:-${([.152,.45,.39,.223][k%4]*(ebene===2?78:52)).toFixed(1)}s">
-      <svg viewBox="0 0 220 110" aria-hidden="true"><defs><linearGradient id="wxbw${k}" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="${ton[0]}"/><stop offset="1" stop-color="${ton[1]}"/></linearGradient></defs>
+      <svg viewBox="0 -26 220 140" aria-hidden="true"><defs><linearGradient id="wxbw${k}" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="${ton[0]}"/><stop offset="1" stop-color="${ton[1]}"/></linearGradient></defs>
+      <path d="M48 96h128a34 34 0 0 0 4-67.7A46 46 0 0 0 92 22a38 38 0 0 0-44 74z" fill="rgba(15,25,35,${dunkel?.16:.07})" transform="translate(0 4)"/>
       <path d="M48 96h128a34 34 0 0 0 4-67.7A46 46 0 0 0 92 22a38 38 0 0 0-44 74z" fill="url(#wxbw${k})"/></svg></div>`; };
   const tropfen=(n)=>Array.from({length:n}).map((_,i)=>`<i class="wx2-tropfen" style="left:${r(i,100,29)}%;animation-duration:${(.72+(i%5)*.09).toFixed(2)}s;animation-delay:-${((i*.137)%1).toFixed(2)}s;opacity:${(.55+(i%3)*.15).toFixed(2)}"></i>`).join("");
   let deco=`<div class="wx-bgphoto"></div>`;
