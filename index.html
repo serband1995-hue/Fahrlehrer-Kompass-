@@ -14199,7 +14199,7 @@ function routeDashboard(){
   view.innerHTML=`<div class="view-inner heute2 fade-up">
     <header class="h2-kopf">
       <div><div class="h2-datum">${esc(_h2DatumZeile(heute))}</div><h1 class="h2-titel">Heute</h1></div>
-      ${wetterAn?`<button class="h2-wetter" id="h2Wetter" aria-label="Wetter"><span class="h2-wetter-ic"></span><span class="h2-wetter-text"><span class="h2-wetter-t">…</span><span class="h2-wetter-d"></span></span></button>`:''}
+      ${wetterAn?`<button class="h2-wetter" id="h2Wetter" aria-label="Wetter" style="visibility:hidden"><span class="h2-wetter-ic"></span><span class="h2-wetter-text"><span class="h2-wetter-t">…</span><span class="h2-wetter-d"></span></span></button>`:''}
     </header>
     ${_h2FortsetzenHTML(e)}
     ${_h2JetztHTML(e)}
@@ -14231,7 +14231,7 @@ function routeDashboard(){
       const d=String(w.desc||""); const dGross=d?d.charAt(0).toUpperCase()+d.slice(1):"";
       // In der Pille nur ein kurzes Wort (passt bei 360 px ganz hinein); die volle Beschreibung steht im Vorlesetext und auf der Wetter-Seite
       b.querySelector(".h2-wetter-ic").innerHTML=_wetterIconSVG(w.icon); const grad=Math.round(+w.temp)||0; b.querySelector(".h2-wetter-t").textContent=`${grad}°`;
-      b.querySelector(".h2-wetter-d").textContent=_wetterKurz(w.icon); b.setAttribute("aria-label",`Wetter: ${grad} Grad${dGross?", "+dGross:""}`);
+      b.querySelector(".h2-wetter-d").textContent=_wetterKurz(w.icon); b.style.visibility=""; /* erst sichtbar (und antippbar), wenn die Daten da sind */ b.setAttribute("aria-label",`Wetter: ${grad} Grad${dGross?", "+dGross:""}`);
       b.addEventListener("click",()=>routeWetter(w)); }).catch(()=>{ const b=$("#h2Wetter"); if(b)b.remove(); });
   }
 }
