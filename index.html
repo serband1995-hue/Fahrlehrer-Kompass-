@@ -2054,21 +2054,25 @@ body:not(.light) .heute2{--h-karte:var(--surface);--h-rand:var(--line);--h-tinte
 @media (max-width:380px){.h2-wetter{padding:5px 12px 5px 8px;gap:6px;}.h2-wetter-d{max-width:84px;}}
 .h2-kopf>div:first-child{min-width:0;}
 .h2-wx{width:38px;height:38px;display:block;overflow:visible;}
-.h2-wx .wx-strahlen{transform-box:view-box;transform-origin:20px 20px;animation:wxDreh 18s linear infinite;}
-.h2-wx.wx-sonnewolke .wx-strahlen{transform-origin:15px 15px;}
-.h2-wx .wx-wolkenteil{animation:wxZieh 4s ease-in-out infinite;}
-.h2-wx .wx-wolkenteil.spaet{animation-duration:5.5s;animation-direction:alternate-reverse;}
-.h2-wx .wx-fall{animation:wxFall 1.6s linear infinite;}
-.h2-wx .wx-fall.f2{animation-delay:.55s;} .h2-wx .wx-fall.f3{animation-delay:1.1s;}
-.h2-wx.wx-schnee .wx-fall{animation-duration:2.8s;}
-.h2-wx .wx-blitz{animation:wxBlitz 3.2s ease-in-out infinite;}
-.h2-wx .wx-stern{animation:wxFunkel 3s ease-in-out infinite;}
+.h2-wx *{will-change:auto;}
+.h2-wx .wx-strahlen{animation:wxDreh 24s linear infinite;}
+.h2-wx .wx-kern{animation:wxAtmen 4s ease-in-out infinite;}
+.h2-wx .wx-wolkenteil{animation:wxZieh 5s ease-in-out infinite;}
+.h2-wx .wx-wolkenteil.spaet{animation-duration:7s;animation-direction:alternate-reverse;}
+.h2-wx .wx-fall{animation:wxFall 1.4s cubic-bezier(.45,0,.75,1) infinite;opacity:0;}
+.h2-wx .wx-fall.f2{animation-delay:.47s;} .h2-wx .wx-fall.f3{animation-delay:.94s;}
+.h2-wx.wx-schnee .wx-fall{animation:wxFlocke 3.2s ease-in-out infinite;}
+.h2-wx.wx-schnee .wx-fall.f2{animation-delay:1.05s;} .h2-wx.wx-schnee .wx-fall.f3{animation-delay:2.1s;}
+.h2-wx .wx-blitz{animation:wxBlitz 3.6s ease-in-out infinite;}
+.h2-wx .wx-stern{animation:wxFunkel 3.2s ease-in-out infinite;}
 @keyframes wxDreh{from{transform:rotate(0deg)}to{transform:rotate(360deg)}}
-@keyframes wxZieh{0%,100%{transform:translateX(0)}50%{transform:translateX(4px)}}
-@keyframes wxFall{0%{transform:translateY(-3px);opacity:0}20%{opacity:1}100%{transform:translateY(7px);opacity:0}}
-@keyframes wxBlitz{0%,70%,100%{opacity:1}78%{opacity:.25}86%{opacity:1}}
+@keyframes wxAtmen{0%,100%{transform:scale(1)}50%{transform:scale(1.07)}}
+@keyframes wxZieh{0%,100%{transform:translateX(0)}50%{transform:translateX(3.5px)}}
+@keyframes wxFall{0%{transform:translateY(-4px);opacity:0}25%{opacity:1}80%{opacity:1}100%{transform:translateY(7px);opacity:0}}
+@keyframes wxFlocke{0%{transform:translate(0,-4px);opacity:0}25%{opacity:1}50%{transform:translate(1.5px,2px)}80%{opacity:1}100%{transform:translate(-1px,7px);opacity:0}}
+@keyframes wxBlitz{0%,68%,100%{opacity:1}74%{opacity:.2}80%{opacity:1}84%{opacity:.4}88%{opacity:1}}
 @keyframes wxFunkel{0%,100%{opacity:1}50%{opacity:.3}}
-@media (prefers-reduced-motion:reduce){.h2-wx *{animation:none !important;}}
+@media (prefers-reduced-motion:reduce){.h2-wx *{animation:none !important;opacity:1 !important;}}
 body:not(.light) .h2-wx .wx-wolke-f{fill:#DDE6E0;stroke:#A9B8AF;}
 body:not(.light) .h2-wx.wx-nebel g{stroke:#B9C7BF;}
 /* Jetzt dran: immer dunkelgrün mit Mint */
@@ -2418,9 +2422,54 @@ body:has(#view[data-seite2] #calBody) #fab span{display:none;}
 /* Einstellungen: Abschnittsnamen in normaler Schreibweise, fett */
 #view[data-seite2] .acc-h .ti,#view[data-seite2] .set-acc .acc-h > span[style*="uppercase"]{text-transform:none !important;letter-spacing:0 !important;font-weight:800 !important;font-size:16px !important;}
 /* Zurück-Zeile in der Seite nur, wenn oben kein Zurück-Pfeil steht (sonst zwei Wege für dasselbe) */
-body:has(#navBackBtn:not([hidden])) #view:is([data-seite2="routePruefungenWoche"],[data-seite2="routePrueferListe"],[data-seite2="routeNichtBesteher"],[data-seite2="routeArbeitszeit"],[data-seite2="routeHistorie"]) .back-row:has(> .back-btn:only-child){display:none !important;}
+body:has(#navBackBtn:not([hidden])) #view:is([data-seite2="routePruefungenWoche"],[data-seite2="routePrueferListe"],[data-seite2="routeNichtBesteher"],[data-seite2="routeArbeitszeit"],[data-seite2="routeHistorie"],[data-seite2="routeWetter"]) .back-row:has(> .back-btn:only-child){display:none !important;}
 /* Erledigte To-dos lesbarer */
 body.light #view[data-seite2] .todo-item.done .todo-txt{color:#6B776F !important;}
+/* Umbau Schritt 6a: Wetter-Seite – weich und flüssig (nur transform/opacity animiert) */
+.wx-stage{height:clamp(220px,46vh,340px) !important;border-radius:24px !important;isolation:isolate;}
+.wx-stage > *{pointer-events:none;}
+.wx2-sonne{position:absolute;top:36%;left:50%;width:150px;height:150px;margin:-75px 0 0 -75px;}
+.wx2-glow{position:absolute;inset:-40px;border-radius:50%;background:radial-gradient(circle,rgba(255,228,140,.75) 0%,rgba(255,206,92,.35) 35%,rgba(255,206,92,0) 68%);animation:wx2Atmen 6s ease-in-out infinite;}
+.wx2-kranz{position:absolute;inset:-8px;border-radius:50%;background:repeating-conic-gradient(from 0deg,rgba(255,236,170,.55) 0deg 6deg,rgba(255,236,170,0) 6deg 30deg);
+  -webkit-mask:radial-gradient(circle,transparent 38%,#000 44%,#000 58%,transparent 72%);mask:radial-gradient(circle,transparent 38%,#000 44%,#000 58%,transparent 72%);animation:wx2Dreh 60s linear infinite;}
+.wx2-kern{position:absolute;inset:38px;border-radius:50%;background:radial-gradient(circle at 38% 35%,#FFF4C2 0%,#FFD45E 45%,#F2A81E 100%);box-shadow:0 0 40px rgba(255,200,80,.55);}
+.wx2-mond{position:absolute;top:34%;left:50%;width:120px;height:120px;margin:-60px 0 0 -60px;}
+.wx2-glow.mond{background:radial-gradient(circle,rgba(220,232,255,.45) 0%,rgba(200,215,255,.15) 40%,rgba(200,215,255,0) 68%);}
+.wx2-mondscheibe{position:absolute;inset:30px;border-radius:50%;background:radial-gradient(circle at 35% 32%,#FFFBEA 0%,#F3E7C0 55%,#D9C68E 100%);
+  box-shadow:inset -10px -8px 0 rgba(160,140,90,.18),0 0 30px rgba(240,230,190,.45);}
+.wx-stage .wx-star{position:absolute;width:2.5px;height:2.5px;border-radius:50%;background:#fff;animation:wx2Funkel 3s ease-in-out infinite;}
+.wx2-wolke{position:absolute;left:0;width:62%;max-width:280px;animation:wx2Zug 52s linear infinite;filter:drop-shadow(0 8px 14px rgba(20,30,40,.18));}
+.wx2-wolke svg{display:block;width:100%;height:auto;}
+.wx2-wolke.e2{width:44%;max-width:200px;opacity:.8;animation-duration:78s;}
+.wx-stage.wx-bedeckt{background:linear-gradient(180deg,#8D9AA6 0%,#A9B4BD 55%,#C6CDD3 100%) !important;}
+.wx-stage.wx-bedeckt:not(.wx-night) .wx-bgphoto{filter:brightness(.86) saturate(.35) contrast(.95);}
+.wx2-wolke.dunkel{filter:drop-shadow(0 10px 16px rgba(10,15,25,.32));}
+.wx2-tropfen{position:absolute;top:-24px;width:2px;height:20px;border-radius:2px;background:linear-gradient(180deg,rgba(255,255,255,0),rgba(225,236,248,.95));animation:wx2Regen .9s linear infinite;}
+.wx2-flocke{position:absolute;top:-10px;border-radius:50%;background:#fff;box-shadow:0 0 6px rgba(255,255,255,.8);animation:wx2Schnee 7s linear infinite;}
+.wx2-blitz{position:absolute;top:10%;left:58%;width:44px;opacity:0;animation:wx2Blitz 5.5s ease-out infinite;filter:drop-shadow(0 0 10px rgba(255,226,122,.9));}
+.wx2-blitz svg{display:block;width:100%;height:auto;}
+.wx2-hell{position:absolute;inset:0;background:#fff;opacity:0;animation:wx2Hell 5.5s ease-out infinite;}
+.wx2-nebel{position:absolute;left:-20%;width:140%;height:46px;border-radius:40px;background:radial-gradient(ellipse at center,rgba(255,255,255,.8),rgba(255,255,255,0) 72%);height:64px;animation:wx2Nebel 16s ease-in-out infinite alternate;}
+.wx2-nebel.n0{top:18%;} .wx2-nebel.n1{top:40%;animation-duration:21s;animation-delay:-6s;} .wx2-nebel.n2{top:60%;animation-duration:18s;animation-delay:-11s;} .wx2-nebel.n3{top:78%;animation-duration:24s;animation-delay:-3s;}
+@keyframes wx2Atmen{0%,100%{transform:scale(1);opacity:.9}50%{transform:scale(1.08);opacity:1}}
+@keyframes wx2Dreh{from{transform:rotate(0deg)}to{transform:rotate(360deg)}}
+@keyframes wx2Funkel{0%,100%{opacity:.25}50%{opacity:1}}
+@keyframes wx2Zug{from{transform:translate3d(-100%,0,0)}to{transform:translate3d(400%,0,0)}}
+@keyframes wx2Regen{from{transform:translate3d(0,0,0) rotate(10deg)}to{transform:translate3d(-60px,400px,0) rotate(10deg)}}
+@keyframes wx2Schnee{0%{transform:translate3d(0,0,0)}25%{transform:translate3d(10px,95px,0)}50%{transform:translate3d(-6px,190px,0)}75%{transform:translate3d(8px,285px,0)}100%{transform:translate3d(0,380px,0)}}
+@keyframes wx2Blitz{0%,82%,100%{opacity:0}84%{opacity:1}86%{opacity:.2}88%{opacity:1}92%{opacity:0}}
+@keyframes wx2Hell{0%,82%,100%{opacity:0}84%{opacity:.35}86%{opacity:.05}88%{opacity:.25}92%{opacity:0}}
+@keyframes wx2Nebel{from{transform:translate3d(-6%,0,0);opacity:.55}to{transform:translate3d(6%,0,0);opacity:.95}}
+@media (prefers-reduced-motion:reduce){.wx-stage *{animation:none !important;}.wx2-blitz,.wx2-hell{display:none;}}
+/* Text unter der Bühne im Stil der anderen Seiten */
+#view[data-seite2="routeWetter"] .view-inner .wx-temp{font-family:var(--k-font-titel) !important;font-size:clamp(56px,16vw,76px);font-weight:700;color:var(--s2-tinte);letter-spacing:-.02em;font-variant-numeric:lining-nums;}
+#view[data-seite2="routeWetter"] .wx-desc{font-size:16px;font-weight:700;color:var(--s2-text2) !important;text-transform:none;}
+#view[data-seite2="routeWetter"] .wx-city{font-size:14px;font-weight:800;letter-spacing:.06em;text-transform:uppercase;color:var(--s2-akzent);margin-top:6px;}
+#view[data-seite2="routeWetter"] .wx-fc-day{background:var(--s2-karte);border:1px solid var(--s2-rand);border-radius:18px;}
+#view[data-seite2="routeWetter"] .wx-fc-ic{display:flex;justify-content:center;margin:6px 0;}
+#view[data-seite2="routeWetter"] .wx-fc-lbl{color:var(--s2-text2);}
+#view[data-seite2="routeWetter"] .wx-fc-t b{color:var(--s2-tinte);}
+#view[data-seite2="routeWetter"] .wx-fc-t span{color:var(--s2-text2);}
 /* Kopfleisten-Titel: nie mitten im Wort umbrechen (z. B. „Ausbildungsplan“ bei 360 px) */
 .topbar .tb-title{overflow-wrap:normal !important;word-break:normal !important;font-family:var(--k-font-text) !important;font-weight:800 !important;}
 @media (max-width:380px){.topbar .tb-title.tb-lang{font-size:12px !important;letter-spacing:-.02em !important;}}
@@ -6846,7 +6895,7 @@ window.addEventListener("load", () => {
 const STORE_KEY="serband-app-v1";
 /* Build-Version: bei jeder Auslieferung hier das Datum aktualisieren.
    Wird in den Einstellungen angezeigt + für den Update-Hinweis genutzt. */
-const APP_VERSION="2026.10.11.6";
+const APP_VERSION="2026.10.11.7";
 try{const f=document.getElementById("drawerFoot"); if(f)f.textContent="Fahrlehrer-Kompass · Version "+APP_VERSION;}catch(e){}
 // Nutzungsbedingungen & Haftungsausschluss (Bereich: rechtliche Absicherung) - Version hochzählen
 // und alle Nutzer müssen erneut zustimmen, sobald sich der Text inhaltlich ändert.
@@ -13860,25 +13909,30 @@ function _wetterKurz(icon){
   const p=(icon||"").slice(0,2), nacht=isNightIcon(icon);
   return ({"01":nacht?"Klar":"Sonnig","02":nacht?"Wolkig":"Heiter","03":"Bewölkt","04":"Bedeckt","09":"Schauer","10":"Regen","11":"Gewitter","13":"Schnee","50":"Nebel"})[p]||"Wetter";
 }
+let _wxId=0;
 function _wetterIconSVG(icon){
-  const art=_wetterArt(icon);
+  const art=_wetterArt(icon), n=++_wxId, sg=`wxs${n}`, wg=`wxw${n}`, dg=`wxd${n}`;
   const strahlen=(cx,cy,r1,r2)=>Array.from({length:8}).map((_,i)=>{ const a=i*Math.PI/4, c=Math.cos(a), si=Math.sin(a);
     return `<line x1="${(cx+c*r1).toFixed(1)}" y1="${(cy+si*r1).toFixed(1)}" x2="${(cx+c*r2).toFixed(1)}" y2="${(cy+si*r2).toFixed(1)}"/>`; }).join("");
-  const wolke=(dx,dy,k,extra)=>`<path class="wx-wolke-f" d="M${17+dx} ${31+dy}h13a4.5 4.5 0 0 0 0-9 6 6 0 0 0-11.4 1.6A3.8 3.8 0 0 0 ${17+dx} ${31+dy}z" fill="#E4EAE6" stroke="#6F8077" stroke-width="1.5" transform="${k?`translate(${20*(1-k)} ${20*(1-k)}) scale(${k})`:""}" ${extra||""}/>`;
+  const defs=`<defs><radialGradient id="${sg}" cx="38%" cy="35%" r="70%"><stop offset="0" stop-color="#FFE48A"/><stop offset=".6" stop-color="#F6BD34"/><stop offset="1" stop-color="#E89A16"/></radialGradient>`
+    +`<linearGradient id="${wg}" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#FFFFFF"/><stop offset="1" stop-color="#D9E2DC"/></linearGradient>`
+    +`<linearGradient id="${dg}" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#C5CEC8"/><stop offset="1" stop-color="#8F9C94"/></linearGradient></defs>`;
+  const wolke=(dx,dy,k,dunkel)=>`<path class="wx-wolke-f" d="M${17+dx} ${31+dy}h13a4.5 4.5 0 0 0 0-9 6 6 0 0 0-11.4 1.6A3.8 3.8 0 0 0 ${17+dx} ${31+dy}z" fill="url(#${dunkel?dg:wg})" stroke="#6F8077" stroke-width="1.4" stroke-linejoin="round" ${k?`transform="translate(${20*(1-k)} ${20*(1-k)}) scale(${k})"`:""}/>`;
+  const sonne=(cx,cy,r,r1,r2,sw)=>`<g class="wx-strahlen" stroke="#E8A21C" stroke-width="${sw}" stroke-linecap="round" style="transform-origin:${cx}px ${cy}px">${strahlen(cx,cy,r1,r2)}</g><circle class="wx-kern" cx="${cx}" cy="${cy}" r="${r}" fill="url(#${sg})" style="transform-origin:${cx}px ${cy}px"/>`;
   let innen="";
-  if(art==="sonne") innen=`<g class="wx-strahlen" stroke="#D99A1E" stroke-width="2.2" stroke-linecap="round">${strahlen(20,20,11.5,16.5)}</g><circle cx="20" cy="20" r="7.5" fill="#F2B632"/>`;
-  else if(art==="mond") innen=`<path d="M25 8a12 12 0 1 0 7 21A10 10 0 0 1 25 8z" fill="#E7C66A"/><circle class="wx-stern" cx="10" cy="10" r="1.4" fill="#E7C66A"/><circle class="wx-stern" cx="32" cy="12" r="1.1" fill="#E7C66A" style="animation-delay:1.4s"/>`;
-  else if(art==="sonnewolke") innen=`<g class="wx-strahlen" stroke="#D99A1E" stroke-width="2" stroke-linecap="round">${strahlen(15,15,8.5,12.5)}</g><circle cx="15" cy="15" r="5.8" fill="#F2B632"/><g class="wx-wolkenteil">${wolke(0,0)}</g>`;
-  else if(art==="wolke") innen=`<g class="wx-wolkenteil spaet" opacity=".7">${wolke(-9,-9,.8)}</g><g class="wx-wolkenteil">${wolke(-4,0)}</g>`;
-  else if(art==="nebel") innen=`<g stroke="#6F8077" stroke-width="2.6" stroke-linecap="round"><line class="wx-wolkenteil" x1="8" y1="14" x2="30" y2="14"/><line class="wx-wolkenteil spaet" x1="11" y1="21" x2="33" y2="21"/><line class="wx-wolkenteil" x1="7" y1="28" x2="27" y2="28"/></g>`;
+  if(art==="sonne") innen=sonne(20,20,7.6,11.5,16.5,2.2);
+  else if(art==="mond") innen=`<path d="M25 8a12 12 0 1 0 7 21A10 10 0 0 1 25 8z" fill="url(#${sg})"/><circle class="wx-stern" cx="10" cy="10" r="1.4" fill="#D9A531"/><circle class="wx-stern" cx="32" cy="12" r="1.1" fill="#D9A531" style="animation-delay:1.4s"/>`;
+  else if(art==="sonnewolke") innen=`${sonne(15,15,5.8,8.5,12.5,2)}<g class="wx-wolkenteil">${wolke(0,0)}</g>`;
+  else if(art==="wolke") innen=`<g class="wx-wolkenteil spaet" opacity=".75">${wolke(-9,-9,.8)}</g><g class="wx-wolkenteil">${wolke(-4,0)}</g>`;
+  else if(art==="nebel") innen=`<g class="wx-wolkenteil spaet" opacity=".8">${wolke(-6,-12,.85)}</g><g stroke="#6F8077" stroke-width="2.4" stroke-linecap="round"><line class="wx-wolkenteil" x1="9" y1="27" x2="31" y2="27"/><line class="wx-wolkenteil spaet" x1="12" y1="33" x2="34" y2="33"/></g>`;
   else {
     const dunkel=art==="gewitter";
     const tropfen=art==="schnee"
-      ? [10,18,26].map((x,i)=>`<circle class="wx-fall f${i+1}" cx="${x+3}" cy="33" r="2" fill="#3F78B5"/>`).join("")
-      : [10,18,26].map((x,i)=>`<line class="wx-fall f${i+1}" x1="${x+3}" y1="31" x2="${x+1}" y2="36" stroke="#4F86C6" stroke-width="2" stroke-linecap="round"/>`).join("");
-    innen=`${tropfen}<g class="wx-wolkenteil">${wolke(-6,-6,1,dunkel?'style="fill:#C9D1CC"':"")}</g>${dunkel?`<path class="wx-blitz" d="M21 24l-4 7h4l-2 6 6-9h-4l2-4z" fill="#F2B632"/>`:""}`;
+      ? [10,18,26].map((x,i)=>`<circle class="wx-fall f${i+1}" cx="${x+3}" cy="32" r="2" fill="#3F78B5"/>`).join("")
+      : [10,18,26].map((x,i)=>`<line class="wx-fall f${i+1}" x1="${x+3}" y1="30" x2="${x+1.5}" y2="35" stroke="#3F78B5" stroke-width="2" stroke-linecap="round"/>`).join("");
+    innen=`${tropfen}<g class="wx-wolkenteil">${wolke(-6,-6,1,dunkel)}</g>${dunkel?`<path class="wx-blitz" d="M21 24l-4 7h4l-2 6 6-9h-4l2-4z" fill="#F2B632" stroke="#C98A12" stroke-width=".6" stroke-linejoin="round"/>`:""}`;
   }
-  return `<svg class="h2-wx wx-${art}" viewBox="0 0 40 40" aria-hidden="true" focusable="false">${innen}</svg>`;
+  return `<svg class="h2-wx wx-${art}" viewBox="0 0 40 40" aria-hidden="true" focusable="false">${defs}${innen}</svg>`;
 }
 function weatherCategory(icon){
   const p=(icon||"").slice(0,2);
@@ -13941,29 +13995,36 @@ function routeWetter(w){
   const cat=weatherCategory(w.icon);
   const night=isNightIcon(w.icon);
   const cityLabel=((DB.weatherCfg&&DB.weatherCfg.city)||"Offenbach,DE").split(",")[0];
-  const stars=(n)=>Array.from({length:n}).map((_,i)=>`<div class="wx-star" style="left:${(i*37+11)%100}%;top:${(i*23+7)%55}%;animation-delay:${(i%5)*.5}s"></div>`).join("");
+  // Umbau Schritt 6a: ruhige, flüssige Bühne – nur transform/opacity werden bewegt (läuft auf dem Handy ohne Ruckeln)
+  const r=(i,m,a)=>((i*a+7)%m); // feste, gleichmäßig gestreute Werte (keine Zufallszahlen: Bild bleibt beim Neuzeichnen gleich)
+  const stars=(n)=>Array.from({length:n}).map((_,i)=>`<i class="wx-star" style="left:${r(i,97,37)+1}%;top:${r(i,52,23)+3}%;animation-delay:-${(i%7)*.45}s;animation-duration:${2.6+(i%4)*.6}s"></i>`).join("");
+  const wolke=(k,ebene,dunkel)=>`<div class="wx2-wolke e${ebene}${dunkel?" dunkel":""}" style="top:${[6,22,12,30][k%4]}%;animation-delay:-${([.32,.58,.12,.8][k%4]*(ebene===2?78:52)).toFixed(1)}s">
+      <svg viewBox="0 0 220 110" aria-hidden="true"><defs><linearGradient id="wxbw${k}" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="${dunkel?"#9AA5AE":"#FFFFFF"}"/><stop offset="1" stop-color="${dunkel?"#5F6A74":"#D5DEE6"}"/></linearGradient></defs>
+      <path d="M48 96h128a34 34 0 0 0 4-67.7A46 46 0 0 0 92 22a38 38 0 0 0-44 74z" fill="url(#wxbw${k})"/></svg></div>`;
+  const tropfen=(n)=>Array.from({length:n}).map((_,i)=>`<i class="wx2-tropfen" style="left:${r(i,100,29)}%;animation-duration:${(.72+(i%5)*.09).toFixed(2)}s;animation-delay:-${((i*.137)%1).toFixed(2)}s;opacity:${(.55+(i%3)*.15).toFixed(2)}"></i>`).join("");
   let deco=`<div class="wx-bgphoto"></div>`;
+  const sonne=`<div class="wx2-sonne"><div class="wx2-glow"></div><div class="wx2-kranz"></div><div class="wx2-kern"></div></div>`;
   if(cat==="sun"){
-    deco+= night
-      ? `${stars(18)}<div class="wx-moon"></div>`
-      : `<div class="wx-sun">${Array.from({length:8}).map((_,i)=>`<div class="wx-ray" style="transform:rotate(${i*45}deg) translate(0,-50px)"></div>`).join("")}<div class="wx-sun-core"></div></div>`;
+    deco+= night ? `${stars(18)}<div class="wx2-mond"><div class="wx2-glow mond"></div><div class="wx2-mondscheibe"></div></div>` : sonne;
   } else if(cat==="clouds"){
-    deco+=(night?stars(10):"")+`<div class="wx-cloud c1"></div><div class="wx-cloud c2"></div><div class="wx-cloud c3"></div>`;
+    const p2=(w.icon||"").slice(0,2)==="02";
+    deco+=(night?stars(12):(p2?sonne:""))+wolke(0,1)+wolke(1,2)+wolke(2,1)+(p2?"":wolke(3,2));
   } else if(cat==="rain"){
-    deco+=`<div class="wx-cloud c1"></div><div class="wx-cloud c2"></div>`+Array.from({length:14}).map((_,i)=>`<div class="wx-drop" style="left:${(i*7+3)%100}%;animation-delay:${(i%5)*.18}s"></div>`).join("");
+    deco+=wolke(0,1,true)+wolke(1,2,true)+wolke(2,1,true)+wolke(3,2)+tropfen(34);
   } else if(cat==="storm"){
-    deco+=`<div class="wx-cloud c1 dark"></div><div class="wx-cloud c2 dark"></div><div class="wx-bolt"></div>`+Array.from({length:10}).map((_,i)=>`<div class="wx-drop" style="left:${(i*9+4)%100}%;animation-delay:${(i%4)*.22}s"></div>`).join("");
+    deco+=wolke(0,1,true)+wolke(1,2,true)+wolke(2,1,true)+tropfen(30)+`<div class="wx2-blitz"><svg viewBox="0 0 60 120" aria-hidden="true"><path d="M34 2L10 64h18l-8 54 30-70H32L44 2z" fill="#FFE27A" stroke="#F5C53C" stroke-width="2" stroke-linejoin="round"/></svg></div><div class="wx2-hell"></div>`;
   } else if(cat==="snow"){
-    deco+=(night?stars(8):"")+`<div class="wx-cloud c1"></div><div class="wx-cloud c2"></div>`+Array.from({length:16}).map((_,i)=>`<div class="wx-flake" style="left:${(i*6+2)%100}%;animation-delay:${(i%6)*.4}s;animation-duration:${5+(i%4)}s">❄</div>`).join("");
+    deco+=(night?stars(8):"")+wolke(0,1)+wolke(1,2)+Array.from({length:26}).map((_,i)=>`<i class="wx2-flocke" style="left:${r(i,100,31)}%;width:${4+(i%3)*1.5}px;height:${4+(i%3)*1.5}px;animation-duration:${(6+(i%5)*.9).toFixed(1)}s;animation-delay:-${((i*.53)%8).toFixed(2)}s"></i>`).join("");
   } else if(cat==="fog"){
-    deco+=`<div class="wx-fogband f1"></div><div class="wx-fogband f2"></div><div class="wx-fogband f3"></div>`;
+    deco+=[0,1,2,3].map(i=>`<div class="wx2-nebel n${i}"></div>`).join("");
   }
+  const descText=String(w.desc||""); const descGross=descText?descText.charAt(0).toUpperCase()+descText.slice(1):"";
   view.innerHTML=`<div class="view-inner fade-up wx-screen">
     <div class="back-row"><button class="back-btn" id="backBtn">${ICN.back} Heute</button></div>
-    <div class="wx-stage wx-cat-${cat}${night?' wx-night':''}">${deco}</div>
+    <div class="wx-stage wx-cat-${cat}${night?' wx-night':''}${["03","04"].includes((w.icon||"").slice(0,2))?' wx-bedeckt':''}">${deco}</div>
     <div class="wx-info">
-      <div class="wx-temp">${w.temp}°</div>
-      <div class="wx-desc">${esc(w.desc)}</div>
+      <div class="wx-temp">${Math.round(+w.temp)}°</div>
+      <div class="wx-desc">${esc(descGross)}</div>
       <div class="wx-city">${esc(cityLabel)}</div>
     </div>
     <div class="wx-forecast" id="wxForecast"><div class="wx-fc-loading">Vorschau lädt …</div></div>
@@ -13976,7 +14037,7 @@ function routeWetter(w){
       const dayLabel=["Mo","Di","Mi","Do","Fr","Sa","So"][weekdayMon0(d.date)];
       return `<div class="wx-fc-day">
         <div class="wx-fc-lbl">${dayLabel}</div>
-        <div class="wx-fc-ic">${weatherEmoji(d.icon)}</div>
+        <div class="wx-fc-ic">${_wetterIconSVG(d.icon)}</div>
         <div class="wx-fc-t"><b>${d.max}°</b><span>${d.min}°</span></div>
       </div>`;
     }).join("");
@@ -15736,7 +15797,7 @@ function navZurueck(){
 // Das Merkmal sitzt an #view, damit es ein Neuzeichnen innerhalb der Seite übersteht.
 const SEITE2_ROUTEN=new Set(["routeKalender","routePruefungen","routePruefungenWoche","routeTodos","routeStats","routeNichtBesteher","routeArchive","routeSettings",
   "routeWaitlist","routeArbeitszeit","routeDetail","routePlan","routeNotes","routeHistorie","routeExam","routeAkteTermine","routeAktePruefung",
-  "routePrueferListe","routePruefer","routePrueferAkte","routeFCMissing","routeFCAbgabe","routeSchuelerTexte","routePlanVorlagen","routePlanVorlageEdit"]);
+  "routePrueferListe","routePruefer","routePrueferAkte","routeFCMissing","routeFCAbgabe","routeSchuelerTexte","routePlanVorlagen","routePlanVorlageEdit","routeWetter"]);
 let _seite2Zaehler=0;
 function _seite2Markieren(name){
   _seite2Zaehler++;
