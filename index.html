@@ -2393,7 +2393,7 @@ body:has(#view[data-seite2] #calBody) #fab span{display:none;}
 /* Suchfeld: nur eine Pille (das Eingabefeld darin randlos) */
 #view[data-seite2] .view-inner .search-wrap input:not([type="checkbox"]):not([type="radio"]):not([type="range"]),.schueler2 .search-wrap input{border:0 !important;background:transparent !important;box-shadow:none !important;}
 /* Einstellungen: Abschnittsnamen in normaler Schreibweise, fett */
-#view[data-seite2] .acc-h .ti{text-transform:none !important;letter-spacing:0 !important;font-weight:800 !important;font-size:16px !important;}
+#view[data-seite2] .acc-h .ti,#view[data-seite2] .set-acc .acc-h > span[style*="uppercase"]{text-transform:none !important;letter-spacing:0 !important;font-weight:800 !important;font-size:16px !important;}
 /* Zurück-Zeile in der Seite nur, wenn oben kein Zurück-Pfeil steht (sonst zwei Wege für dasselbe) */
 body:has(#navBackBtn:not([hidden])) #view:is([data-seite2="routePruefungenWoche"],[data-seite2="routePrueferListe"],[data-seite2="routeNichtBesteher"],[data-seite2="routeArbeitszeit"],[data-seite2="routeHistorie"]) .back-row:has(> .back-btn:only-child){display:none !important;}
 /* Erledigte To-dos lesbarer */
@@ -15676,7 +15676,9 @@ function navZurueck(){
 const SEITE2_ROUTEN=new Set(["routeKalender","routePruefungen","routePruefungenWoche","routeTodos","routeStats","routeNichtBesteher","routeArchive","routeSettings",
   "routeWaitlist","routeArbeitszeit","routeDetail","routePlan","routeNotes","routeHistorie","routeExam","routeAkteTermine","routeAktePruefung",
   "routePrueferListe","routePruefer","routePrueferAkte","routeFCMissing","routeFCAbgabe","routeSchuelerTexte","routePlanVorlagen","routePlanVorlageEdit"]);
+let _seite2Zaehler=0;
 function _seite2Markieren(name){
+  _seite2Zaehler++;
   const v=document.getElementById("view"); if(!v)return;
   // Nur die zuletzt aufgerufene Seite zählt: eine Seite, die intern eine andere aufruft, setzt das Merkmal danach neu.
   if(SEITE2_ROUTEN.has(name))v.setAttribute("data-seite2",name); else v.removeAttribute("data-seite2");
@@ -15699,8 +15701,10 @@ function _seite2Markieren(name){
           if(gleich)_navStack[_navStack.length-1]={name,fn:orig,args};
           else{ _navStack.push({name,fn:orig,args}); if(_navStack.length>_NAV_MAX)_navStack.shift(); }
         }
+        const vorher=_seite2Zaehler;
         const r=orig.apply(this,arguments);
-        _seite2Markieren(name);
+        // Hat die Seite intern auf eine andere Seite umgeleitet (z. B. Akte ohne Schüler → Liste), gilt deren Merkmal
+        if(_seite2Zaehler===vorher)_seite2Markieren(name);
         _navAktualisiereKnopf();
         return r;
       };
