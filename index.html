@@ -14,6 +14,7 @@
 <link href="https://fonts.googleapis.com/css2?family=Source+Serif+4:ital,opsz,wght@0,8..60,400;0,8..60,600;0,8..60,700;1,8..60,400;1,8..60,600&display=swap" rel="stylesheet">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&display=swap" rel="stylesheet">
 <link href="https://fonts.googleapis.com/css2?family=Anton&family=Kaushan+Script&family=Playfair+Display:ital,wght@0,400;0,500;0,600;0,700;1,500;1,600&family=Barlow:wght@400;500;600;700;800&display=swap" rel="stylesheet">
 <style>
 :root{
@@ -2027,6 +2028,11 @@ body:not(.light) .nav-item.primary svg,body:not(.light) .nav-item.primary{color:
 .toast{background:var(--txt) !important;color:var(--bg) !important;border-radius:24px !important;font-weight:600 !important;box-shadow:var(--elev-3) !important;
   bottom:calc(104px + env(safe-area-inset-bottom)) !important;}
 .view-inner{padding-bottom:160px !important;}
+/* Umbau 2026-10: Farb- und Schrift-Grundlagen aus dem freigegebenen Entwurf (werden ab Schritt 2 genutzt) */
+:root{--k-grund:#F3F5F1;--k-tinte:#14211A;--k-text2:#55645A;--k-rand:#E1E7DF;--k-karte:#FFFFFF;
+  --k-akzent:#1E6B46;--k-akzent-hell:#E3EFE7;--k-jetzt:#14211A;--k-mint:#5BD18E;--k-mint-hell:#9FD3B4;
+  --k-gelb:#FBEFD9;--k-gelb-text:#7A4508;--k-rot:#F8E3DF;--k-rot-text:#8E2A1E;--k-whatsapp:#0F7D6E;
+  --k-font-titel:"Playfair Display",Georgia,serif;--k-font-text:"Manrope",system-ui,sans-serif;--k-radius:16px;--k-tipp:44px;}
 /* Tab-Leiste unten — ruft ausschließlich bestehende Routen auf */
 .tabbar{position:absolute;left:0;right:0;bottom:0;z-index:24;display:flex;gap:2px;
   padding:6px 10px calc(10px + env(safe-area-inset-bottom));
@@ -2165,10 +2171,11 @@ body.light .fc-miss-sum b{color:#7a2a1e !important;}
   </header>
   <main class="view" id="view"></main>
   <nav class="tabbar" id="tabbar" aria-label="Hauptnavigation">
-    <button class="tab-i on" data-tab="heute" onclick="closeDrawer();routeDashboard()"><span class="tab-ic"><svg viewBox="0 0 24 24" fill="none" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4 5h16v15H4zM4 10h16M9 3v4M15 3v4M8 14h4"/></svg></span><span>Heute</span></button>
-    <button class="tab-i" data-tab="schueler" onclick="closeDrawer();routeHome()"><span class="tab-ic"><svg viewBox="0 0 24 24" fill="none" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 11a3.5 3.5 0 1 0 0-7 3.5 3.5 0 0 0 0 7zM5 20c0-3.3 3.1-5.5 7-5.5s7 2.2 7 5.5"/></svg></span><span>Schüler</span></button>
-    <button class="tab-i" data-tab="kalender" onclick="closeDrawer();routeKalender()"><span class="tab-ic"><svg viewBox="0 0 24 24" fill="none" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4 6h16v14H4zM8 3v4M16 3v4M4 11h16M8 15h3M13 15h3"/></svg></span><span>Kalender</span></button>
-    <button class="tab-i" data-tab="mehr" onclick="openDrawer()"><span class="tab-ic"><svg viewBox="0 0 24 24" fill="none" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4 7h16M4 12h16M4 17h10"/></svg></span><span>Mehr</span></button>
+    <button class="tab-i on" data-tab="heute" onclick="tabGo('heute')"><span class="tab-ic"><svg viewBox="0 0 24 24" fill="none" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3 11l9-7 9 7M5 10v10h14V10M10 20v-5h4v5"/></svg></span><span>Heute</span></button>
+    <button class="tab-i" data-tab="kalender" onclick="tabGo('kalender')"><span class="tab-ic"><svg viewBox="0 0 24 24" fill="none" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4 6h16v14H4zM8 3v4M16 3v4M4 11h16M8 15h3M13 15h3"/></svg></span><span>Kalender</span></button>
+    <button class="tab-i" data-tab="schueler" onclick="tabGo('schueler')"><span class="tab-ic"><svg viewBox="0 0 24 24" fill="none" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 11a3.5 3.5 0 1 0 0-7 3.5 3.5 0 0 0 0 7zM5 20c0-3.3 3.1-5.5 7-5.5s7 2.2 7 5.5"/></svg></span><span>Schüler</span></button>
+    <button class="tab-i" data-tab="pruefungen" onclick="tabGo('pruefungen')"><span class="tab-ic"><svg viewBox="0 0 24 24" fill="none" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M8 21h8M12 17v4M7 4h10v6a5 5 0 0 1-10 0zM7 6H4a3 3 0 0 0 3 5M17 6h3a3 3 0 0 1-3 5"/></svg></span><span>Prüfungen</span></button>
+    <button class="tab-i" data-tab="mehr" onclick="tabGo('mehr')"><span class="tab-ic"><svg viewBox="0 0 24 24" fill="none" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4 7h16M4 12h16M4 17h10"/></svg></span><span>Mehr</span></button>
   </nav>
   <button class="fab" id="fab">
     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg>
@@ -2188,34 +2195,19 @@ body.light .fc-miss-sum b{color:#7a2a1e !important;}
     </div>
   </div>
   <nav class="drawer-nav">
-    <button class="nav-item" data-nav="dash">
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="9" rx="1.5"/><rect x="14" y="3" width="7" height="5" rx="1.5"/><rect x="14" y="12" width="7" height="9" rx="1.5"/><rect x="3" y="16" width="7" height="5" rx="1.5"/></svg>
-      Dashboard</button>
-    <button class="nav-item primary" data-nav="new">
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg>
-      Neuer Schüler</button>
-    <button class="nav-item" data-nav="home">
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 6h16M4 12h16M4 18h10"/></svg>
-      Alle Schüler</button>
-    <button class="nav-item" data-nav="pruef">
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M8 21h8M12 17v4M7 4h10v6a5 5 0 0 1-10 0z"/><path d="M7 6H4a3 3 0 0 0 3 5M17 6h3a3 3 0 0 1-3 5"/></svg>
-      Prüfungen</button>
-    <button class="nav-item" data-nav="kalender">
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2"/><path d="M16 2v4M8 2v4M3 10h18"/></svg>
-      Kalender</button>
     <button class="nav-item" data-nav="todos">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 11l3 3L22 4"/><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/></svg>
       To-Dos</button>
     <button class="nav-item" data-nav="stats">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 20V10M10 20V4M16 20v-7M21 20H3"/></svg>
-      Statistik</button>
+      Verdienst &amp; Statistik</button>
     <button class="nav-item" data-nav="archive">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="4" rx="1"/><path d="M5 8v11a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1V8M10 12h4"/></svg>
       Archiv</button>
     <div class="nav-sep"></div>
-    <button class="nav-item primary" data-nav="draw">
+    <button class="nav-item" data-nav="draw">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 20l4-1L18.5 6.5l-3-3L4 15l-1 5z"/><path d="M14 6l3 3"/></svg>
-      Zeichenfläche</button>
+      Verkehrstafel</button>
     <div class="nav-sep"></div>
     <button class="nav-item" data-nav="settings" style="color:var(--akzent-bright)">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
@@ -6457,7 +6449,7 @@ window.addEventListener("load", () => {
 const STORE_KEY="serband-app-v1";
 /* Build-Version: bei jeder Auslieferung hier das Datum aktualisieren.
    Wird in den Einstellungen angezeigt + für den Update-Hinweis genutzt. */
-const APP_VERSION="2026.10.10.5";
+const APP_VERSION="2026.10.11.1";
 try{const f=document.getElementById("drawerFoot"); if(f)f.textContent="Fahrlehrer-Kompass · Version "+APP_VERSION;}catch(e){}
 // Nutzungsbedingungen & Haftungsausschluss (Bereich: rechtliche Absicherung) - Version hochzählen
 // und alle Nutzer müssen erneut zustimmen, sobald sich der Text inhaltlich ändert.
@@ -7115,8 +7107,44 @@ document.querySelector(".drawer-nav").addEventListener("click",(e)=>{
     else if(nav==="fs_kalender"){routeKalender();if(_fsAgg)setFab(false);}
     else if(nav==="fs_exit")_fsExitAggMode();},170);
 });
-function setFab(on){$("#fab").style.display=on?"flex":"none";}
-$("#fab").addEventListener("click",()=>formView(null));
+// Plus-Knopf je nach Seite: "termin" (Heute, Kalender) oder true = neuer Schüler (Schülerliste).
+let _fabArt="schueler";
+function setFab(on){
+  const f=$("#fab"); if(!f)return;
+  if(on==="termin"&&_fsAgg)on=false; // Gesamtansicht: kein eigener Termin
+  _fabArt=on==="termin"?"termin":"schueler";
+  const t=f.querySelector("span"); if(t)t.textContent=_fabArt==="termin"?"Termin":"Neuer Schüler";
+  f.style.display=on?"flex":"none";
+}
+$("#fab").addEventListener("click",()=>{ if(_fabArt==="termin")openNeuerTerminSheet(); else formView(null); });
+// Reiter unten. In der Gesamtansicht (Büro/Leitung) führt "Heute" zur Fahrschul-Startseite.
+function tabGo(k){
+  if(k==="mehr"){ openDrawer(); return; }
+  closeDrawer();
+  if(k==="heute"){ if(_fsAgg&&typeof routeFahrschuleDashboard==="function")routeFahrschuleDashboard(); else routeDashboard(); }
+  else if(k==="kalender")routeKalender();
+  else if(k==="schueler")routeHome();
+  else if(k==="pruefungen")routePruefungen();
+}
+// Plus-Knopf "Termin": die nächsten freien Lücken, ein Tipp öffnet "Termin vergeben".
+function openNeuerTerminSheet(){
+  ensureDB();
+  const imKal=($("#tbTitle")&&$("#tbTitle").textContent)==="Kalender"&&_calDate&&_calDate>todayISO();
+  let luecken=naechsteFreieLuecken();
+  if(imKal){ const ab=[]; let cur=_calDate; for(let i=0;i<7&&ab.length<5;i++){ dayFreeSlots(cur).forEach(x=>{ if(ab.length<5)ab.push({date:cur,von:x.von,bis:x.bis,art:x.art}); }); cur=addDays(cur,1); } luecken=ab; }
+  const liste=luecken.length
+    ? luecken.map(l=>`<button class="es-act nt-gap" data-freeslot="${l.date}|${l.von}|${l.bis}|${l.art}" style="display:flex;justify-content:space-between;align-items:center;text-align:left;min-height:48px;">
+        <span>${deWeekday(l.date)} · ${isoDE(l.date)} · ${l.von}</span><span style="color:var(--akzent);font-weight:700;">Vergeben ›</span></button>`).join("")
+    : `<p class="muted-p" style="font-size:13px;">Keine freie Lücke in den nächsten 7 Tagen. Im Kalender auf eine Uhrzeit tippen, um trotzdem einen Termin einzutragen.</p>`;
+  openSheet(`<div class="sheet-h">Neuer Termin</div>
+    <p class="muted-p" style="font-size:13px;margin:-4px 0 10px;">Nächste freie Lücken</p>
+    <div class="es-actions">${liste}</div>
+    <div class="btn-row"><button class="btn btn-ghost" id="ntClose" style="width:100%;">Schließen</button></div>`);
+  $("#ntClose").addEventListener("click",closeSheet);
+  document.querySelectorAll(".nt-gap").forEach(b=>b.addEventListener("click",()=>{
+    const [date,von,bis,art]=b.dataset.freeslot.split("|"); closeSheet(); openAssignSlotSheet(date,von,bis,art);
+  }));
+}
 
 /* ============================================================
    HOME
@@ -11300,7 +11328,7 @@ function openCalFilterSheet(){
 function routeKalender(){
   ensureDB();
   if(!_calDate)_calDate=todayISO();
-  $("#tbTitle").textContent="Kalender"; setFab(false); view.scrollTop=0;
+  $("#tbTitle").textContent="Kalender"; setFab("termin"); view.scrollTop=0;
   const viewLabels={tag:"Tagesansicht",woche:"Wochenansicht",monat:"Monatsansicht"};
   let html=`<div class="view-inner view-read fade-up cal-wrap">
     <div class="cal-head">
@@ -13438,7 +13466,7 @@ function _bindWasNeuBanner(){
 function routeDashboard(){
   ensureDB();
   // KAPAZITÄTS-RECHNUNG vorbereiten (wird unten als Card gerendert)
-  $("#tbTitle").textContent="Heute"; setFab(true); view.scrollTop=0;
+  $("#tbTitle").textContent="Heute"; setFab("termin"); view.scrollTop=0;
   const act=activeStudents().filter(s=>!isDummyStudent(s)).length; const ready=waitlist().filter(s=>!isDummyStudent(s)).length; const q=quoteOf(examsIn('cur'));
   const today=todayISO();
   const heuteCount=(DB.lessons||[]).filter(l=>l.date===today&&l.status!=="abgebrochen"&&l.status!=="nicht erschienen"&&["fahrstunde","sonder","nacht","schalt"].indexOf(l.art)>=0).length;
@@ -14849,7 +14877,7 @@ routeDashboard();
 <script>
 /* Redesign v2: markiert nur den aktiven Tab anhand des Seitentitels — reine Anzeige, keine Logik. */
 (function(){
-  const map={"Heute":"heute","Start":"heute","Schüler":"schueler","Kalender":"kalender","Warteliste":"schueler","Ausbildungsplan":"schueler","Notizen":"schueler","Persönlichkeitsbogen":"schueler","Persönlichkeitsprofil":"schueler","Prüfung eintragen":"schueler","Risiko-Themen":"schueler","Schülerdatei":"schueler","Historie":"schueler","Ergebnis eintragen":"schueler","Neuer Schüler":"schueler","Schüler bearbeiten":"schueler","Bestehens-Daten":"schueler"};
+  const map={"Heute":"heute","Start":"heute","Schüler":"schueler","Kalender":"kalender","Prüfungen":"pruefungen","Prüfer":"pruefungen","Warteliste":"schueler","Ausbildungsplan":"schueler","Notizen":"schueler","Persönlichkeitsbogen":"schueler","Persönlichkeitsprofil":"schueler","Prüfung eintragen":"schueler","Risiko-Themen":"schueler","Schülerdatei":"schueler","Historie":"schueler","Ergebnis eintragen":"schueler","Neuer Schüler":"schueler","Schüler bearbeiten":"schueler","Bestehens-Daten":"schueler"};
   const t=document.getElementById("tbTitle"); if(!t)return;
   const paint=()=>{ const k=map[(t.textContent||"").trim()]||"mehr"; document.querySelectorAll(".tab-i").forEach(b=>b.classList.toggle("on",b.dataset.tab===k)); };
   new MutationObserver(paint).observe(t,{childList:true,characterData:true,subtree:true});
