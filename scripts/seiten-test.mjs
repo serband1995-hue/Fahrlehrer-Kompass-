@@ -614,6 +614,18 @@ await pruefe("S1d", "Wechsel zu Heute nimmt data-seite2 weg (Kalender → Heute,
   }
   return f;
 });
+// S1e (Fund Prüfer Büro): Zurück-Pfeil/Android-Zurück ruft die Seite ohne Hülle auf – das Merkmal muss trotzdem stimmen.
+await pruefe("S1e", "Zurück (navZurueck) setzt data-seite2 passend: Kalender → Heute → Zurück = an; Heute → Akte → Zurück = aus", async () => {
+  const p = haupt.page, f = [];
+  await setze(p, basisSzenario());
+  await p.evaluate(() => { routeKalender(); routeDashboard(); }); await warte(p, 250);
+  await p.evaluate(() => navZurueck()); await warte(p, 300);
+  if (!(await seite2(p))) f.push("Heute → Zurück auf Kalender: data-seite2 fehlt");
+  await p.evaluate(() => { routeDashboard(); routeDetail("s1"); }); await warte(p, 250);
+  await p.evaluate(() => navZurueck()); await warte(p, 300);
+  if (await seite2(p)) f.push("Akte → Zurück auf Heute: data-seite2 bleibt stehen");
+  return f;
+});
 await pruefe("S2", "hell: Grund von body rgb(243, 245, 241) auf allen Seiten", () => kurz(sammel.S2 || []));
 await pruefe("S3", "Seitentitel (h1/h2/.sec-h/.display/.detail-name/.plan-title) in Playfair Display und einfarbig (.o wie der Rest)", () => kurz(sammel.S3 || []));
 await pruefe("S4", "Text in #view .view-inner in Manrope (Playfair nur Titel/große Zahlen ≥ 22 px)", () => kurz(sammel.S4 || []));
@@ -777,7 +789,9 @@ await pruefe("B2g", "bleibt: Prüfungen „Diese Woche“ öffnet die Wochenansi
   const t1 = await titel(p);
   const f = [];
   if (!(await p.evaluate(() => document.getElementById("view").textContent.includes("Bernd Erfunden")))) f.push("Wochenansicht ohne Bernd (Prüfung morgen)");
-  e = await klick(p, "#view #backBtn"); if (e) f.push(e);
+  // Seit 5a steht dort nur noch der Zurück-Pfeil oben (keine doppelte Zurück-Zeile); ohne Pfeil oben gibt es die Zeile in der Seite.
+  const oben = await p.evaluate(() => { const b = document.getElementById("navBackBtn"); return !!b && !b.hidden; });
+  e = await klick(p, oben ? "#navBackBtn" : "#view #backBtn"); if (e) f.push(e);
   else if ((await titel(p)) !== "Prüfungen") f.push(`Zurück → „${await titel(p)}“ (vorher „${t1}“)`);
   return f;
 });
