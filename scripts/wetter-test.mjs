@@ -307,23 +307,23 @@ await pruefe("W4b", "Temperatur gerundet: 13.6 → „14°“, −0.4 → „0°
   }
   return f;
 });
-await pruefe("W4c", "Beschreibung: .h2-wetter-d „leichter regen“ → erster Buchstabe groß („Leichter regen“/„Leichter Regen“), unter der Temperatur", async () => {
-  await setze(page, { ...basisSzenario(), wetter: wetterVon("10d", 14, "leichter regen") });
-  const p = await pille(page);
-  if (!p) return "keine Pille";
-  if (p.d === null) return ".h2-wetter-d fehlt";
+// Geändert nach Design-Prüfung 5b: Die rohe Beschreibung der Wetter-Schnittstelle wurde bei 360 px fast immer abgeschnitten.
+// In der Pille steht jetzt ein kurzes festes Wort je Wetterlage; die volle Beschreibung steht im Vorlesetext (aria-label).
+await pruefe("W4c", "Kurzwort: .h2-wetter-d zeigt „Regen“ (10d), „Bewölkt“ (03d), „Sonnig“ (01d), „Klar“ (01n) unter der Temperatur; volle Beschreibung im aria-label", async () => {
   const f = [];
-  // sichtbare Schreibweise: Text plus text-transform (auch über ::first-letter)
-  let sicht = p.d;
-  if (p.dStil.tt === "uppercase") sicht = sicht.toUpperCase();
-  else if (p.dStil.tt === "capitalize") sicht = sicht.replace(/(^|\s)(\p{L})/gu, (m, a, b) => a + b.toUpperCase());
-  if (p.dStil.ttFL === "uppercase" || p.dStil.ttFL === "capitalize") sicht = sicht.charAt(0).toUpperCase() + sicht.slice(1);
-  if (sicht.toLowerCase() !== "leichter regen") f.push(`Text „${p.d}“`);
-  else if (!["Leichter regen", "Leichter Regen"].includes(sicht)) f.push(`sichtbar „${sicht}“`);
-  if (p.tRect && p.dRect && p.dRect.top < p.tRect.bottom - 2) f.push("steht nicht unter der Temperatur");
+  for (const [ic, wort] of [["10d", "Regen"], ["03d", "Bewölkt"], ["01d", "Sonnig"], ["01n", "Klar"], ["13d", "Schnee"], ["11d", "Gewitter"]]) {
+    await setze(page, { ...basisSzenario(), wetter: wetterVon(ic, 14, "leichter regen") });
+    const p = await pille(page);
+    if (!p) { f.push(`${ic}: keine Pille`); continue; }
+    if (p.d === null) { f.push(`${ic}: .h2-wetter-d fehlt`); continue; }
+    if (p.d !== wort) f.push(`${ic}: „${p.d}“ statt „${wort}“`);
+    if (p.tRect && p.dRect && p.dRect.top < p.tRect.bottom - 2) f.push(`${ic}: steht nicht unter der Temperatur`);
+    const al = await page.evaluate(() => (document.getElementById("h2Wetter") || {}).getAttribute?.("aria-label") || "");
+    if (!/Leichter regen/.test(al)) f.push(`${ic}: aria-label ohne volle Beschreibung („${al}“)`);
+  }
   return f;
 });
-await pruefe("W4d", "lange Beschreibung bei 360 px: einzeilig, mit „…“ abgeschnitten (nowrap + ellipsis), Pille im Bild", async () => {
+await pruefe("W4d", "lange Beschreibung bei 360 px: Kurzwort steht ganz da (nicht gekürzt, einzeilig), Pille im Bild", async () => {
   const s = await neueSeite(360, 740);
   try {
     await setze(s.page, { ...basisSzenario(), wetter: wetterVon("04d", 14, "überwiegend bewölkt mit gelegentlichem leichtem nieselregen am nachmittag") });
@@ -331,13 +331,11 @@ await pruefe("W4d", "lange Beschreibung bei 360 px: einzeilig, mit „…“ abg
     if (!p) return "keine Pille";
     if (p.d === null) return ".h2-wetter-d fehlt";
     const f = [];
-    if (p.dStil.ws !== "nowrap" && p.dStil.ws !== "pre") f.push(`white-space ${p.dStil.ws}`);
-    if (p.dStil.to !== "ellipsis") f.push(`text-overflow ${p.dStil.to}`);
-    if (p.dStil.ov === "visible") f.push("overflow visible (nichts wird abgeschnitten)");
+    if (p.d !== "Bedeckt") f.push(`Text „${p.d}“ statt „Bedeckt“`);
+    if (p.dStil.sw > p.dStil.cw + 1) f.push("Kurzwort wird abgeschnitten");
     if (p.dRect.height > p.dStil.lh * 1.5) f.push(`zwei Zeilen hoch (${Math.round(p.dRect.height)} px)`);
-    if (!(p.dStil.sw > p.dStil.cw)) f.push("Text wird nicht gekürzt (Pille wächst mit?)");
     if (p.right > 360 + 1) f.push(`Pille ragt ${Math.round(p.right - 360)} px über den Rand`);
-    info(`W4d 360 px lange Beschreibung: Pille ${Math.round(p.w)}×${Math.round(p.h)} px, rechts ${Math.round(p.right)}`);
+    info(`W4d 360 px: Pille ${Math.round(p.w)}×${Math.round(p.h)} px, rechts ${Math.round(p.right)}`);
     return f;
   } finally { await s.ctx.close(); }
 });
