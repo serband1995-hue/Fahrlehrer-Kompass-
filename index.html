@@ -2212,7 +2212,7 @@ body.light:has(#view .schueler2)::before,body.light:has(#view .schueler2)::after
 .sl-kopf{display:flex;align-items:baseline;justify-content:space-between;gap:10px;margin-bottom:12px;}
 .schueler2 .sl-titel{margin:0;font-size:30px;font-weight:700;color:var(--h-tinte);}
 .sl-zahl{font-size:13px;font-weight:700;color:var(--h-text2);white-space:nowrap;}
-.sl-sorten{display:flex;flex-wrap:wrap;gap:8px;margin:0 0 12px;}
+.sl-sorten{display:flex;flex-wrap:nowrap;gap:8px;margin:0 calc(-1 * var(--pad,16px)) 12px;padding:0 var(--pad,16px) 2px;scrollbar-width:none;}
 .sl-sorten::-webkit-scrollbar{display:none;}
 .sl-sort{flex:0 0 auto;min-height:44px;padding:0 14px;border-radius:999px;font-size:13.5px;font-weight:700;background:var(--h-karte);color:var(--h-tinte);border:1px solid var(--h-rand);}
 .sl-sort.on{background:var(--k-tinte);color:#fff;border-color:var(--k-tinte);}
@@ -2226,21 +2226,27 @@ body:not(.light) .sl-sort.on{background:#123A2A;border-color:var(--k-mint);}
 .sr-dot{display:inline-block;width:8px;height:8px;border-radius:50%;vertical-align:middle;}
 .sr-form{font-size:11px;font-weight:700;color:var(--h-text2);border:1px solid var(--h-rand);border-radius:999px;padding:1px 6px;vertical-align:middle;}
 .sr-sub{font-size:13px;font-weight:600;color:var(--h-text2);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
-.sr-sub.rot{color:#9E2F22;} .sr-sub.gelb{color:#7A4508;}
+.sr-sub.rot{color:#9E2F22;} .sr-sub.gelb{color:#7A4508;} .sr-sub.heute{color:var(--k-akzent);font-weight:800;}
+body:not(.light) .sr-sub.heute{color:var(--mint-ok);}
 body:not(.light) .sr-sub.rot{color:#f6b0a3;} body:not(.light) .sr-sub.gelb{color:#f0c987;}
 .sr-pfeil{width:18px;height:18px;flex:0 0 auto;color:#8A988F;}
 /* Akte */
 .akte2{--h-karte:var(--k-karte);--h-rand:var(--k-rand);--h-tinte:var(--k-tinte);--h-text2:var(--k-text2);}
 body:not(.light) .akte2{--h-karte:var(--surface);--h-rand:var(--line);--h-tinte:var(--txt);--h-text2:#a9c2b7;}
-.akte2 .back-row{display:none !important;}
+.akte2 .back-row .back-btn{display:none !important;}
+.akte2 .at-neu,.akte2 .at-hist,.akte2 .h2-ueber,.akte2 .h2-nichts,.akte2 .ap-karte,.akte2 .ap-karte *{font-family:var(--k-font-text) !important;}
+.akte2 .back-row:has(> .back-btn:only-child){display:none !important;}
+.akte2 .back-row{justify-content:flex-end;}
 .akte-kopf{display:flex;flex-direction:column;gap:10px;margin-bottom:14px;}
 .akte-kopf .ak-name{font-size:24px;font-weight:700;color:var(--h-tinte);overflow-wrap:anywhere;line-height:1.2;}
-.ak-pct{font-size:15px;color:var(--h-text2);font-weight:700;}
-.ak-reiter{display:flex;gap:6px;overflow-x:auto;scrollbar-width:none;margin:0 calc(-1 * var(--pad,16px));padding:0 var(--pad,16px) 2px;}
+.ak-pct{font-size:15px;color:var(--h-text2);font-weight:700;white-space:nowrap;}
+.ak-reiter{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:2px;border-bottom:1px solid var(--h-rand);}
 .ak-reiter::-webkit-scrollbar{display:none;}
-.ak-r{flex:0 0 auto;min-height:44px;padding:0 16px;border-radius:999px;font-size:14px;font-weight:700;background:var(--h-karte);color:var(--h-tinte);border:1px solid var(--h-rand);}
-.ak-r.on{background:var(--k-akzent);border-color:var(--k-akzent);color:#fff;}
-.at-neu{min-height:52px;width:100%;border-radius:16px;border:0;background:var(--k-akzent);color:#fff;font-size:15px;font-weight:800;margin-bottom:16px;}
+.ak-r{min-height:46px;padding:0 2px;font-size:12.5px;font-weight:700;background:none;color:var(--h-text2);border:0;border-bottom:3px solid transparent;margin-bottom:-1px;white-space:nowrap;overflow:hidden;text-overflow:clip;}
+.ak-r.on{color:var(--h-tinte);border-bottom-color:var(--k-akzent);font-weight:800;}
+body:not(.light) .ak-r.on{border-bottom-color:var(--mint-ok);}
+@media (min-width:400px){.ak-r{font-size:13.5px;}}
+.at-neu{min-height:52px;width:100%;border-radius:16px;border:0;background:var(--k-akzent);color:#fff;font-size:15px;font-weight:800;margin:6px 0 16px;position:sticky;bottom:calc(92px + env(safe-area-inset-bottom));z-index:6;box-shadow:0 6px 18px rgba(20,33,26,.18);}
 .at-ueber{margin:4px 0 8px;}
 .at-liste{background:var(--h-karte);border:1px solid var(--h-rand);border-radius:18px;padding:4px 14px;margin-bottom:16px;}
 .at-zeile{display:flex;align-items:center;gap:12px;min-height:52px;width:100%;border:0;border-bottom:1px solid var(--h-rand);background:none;color:var(--h-tinte);text-align:left;padding:0;}
@@ -7434,7 +7440,7 @@ function routeHome(){
   }
   if(!list.length)gridHTML=`<p class="muted-p" style="text-align:center;padding:20px;">${wartende.length&&!filterAktiv?"Alle deine Schüler warten gerade (siehe unten).":"Kein Treffer für diese Filter."}</p>`;
   if(wartende.length)gridHTML+=`<details id="wartendBox" style="margin-top:18px;"><summary style="cursor:pointer;font-size:12px;font-weight:800;color:var(--muted);letter-spacing:.06em;text-transform:uppercase;padding:8px 0;">⏳ Wartet (${wartende.length}) – auf Theorie oder Praxisprüfung</summary><p class="muted-p" style="font-size:12px;margin:0 0 8px;">Diese Schüler zählen nicht in deiner Auslastung. Sobald neue Fahrstunden gebucht oder ein Prüfungstermin eingetragen ist, erscheinen sie wieder oben.</p>${wartende.map((s,i)=>cardHTML2(s,i,hinweise)).join("")}</details>`;
-  const sortBar=`<div class="sl-sorten" role="group" aria-label="Sortierung">${[["naechste","Als Nächstes dran"],["lange","Lange nicht gefahren"],["stand","Nach Stand"],["az","A–Z"]].map(([k,l])=>`<button class="sl-sort${modus===k?' on':''}" data-sort="${k}">${l}</button>`).join("")}</div>`;
+  const sortBar=`<div class="sl-sorten" role="group" aria-label="Sortierung" style="overflow-x:auto">${[["naechste","Als Nächstes dran"],["lange","Lange nicht gefahren"],["stand","Nach Stand"],["az","A–Z"]].map(([k,l])=>`<button class="sl-sort${modus===k?' on':''}" data-sort="${k}">${l}</button>`).join("")}</div>`;
   view.innerHTML=`<div class="view-inner view-wide fade-up schueler2" style="position:relative;${sortiertAlpha&&!gruppiertNachFahrlehrer?'padding-right:32px;':''}">
     <div class="sl-kopf"><h1 class="sl-titel">Schüler</h1><span class="sl-zahl">${alle.length-wartende.length} aktiv${wartende.length?` · ${wartende.length} warten`:''}</span></div>
     <div id="homeSearchRow" style="display:flex;gap:8px;align-items:center;margin-bottom:12px;">
@@ -7564,7 +7570,8 @@ function _slNaechster(s){
 // Letzte stattgefundene Fahrstunde (Datum bis heute, nicht abgesagt), sonst ""
 function _slLetzteFahrt(s){
   const heute=todayISO();
-  const d=(DB.lessons||[]).filter(x=>x.sid===s.id&&x.date&&x.date<=heute&&x.status!=="abgebrochen"&&x.status!=="nicht erschienen"&&["fahrstunde","sonder","nacht","schalt"].indexOf(x.art||"fahrstunde")>=0).map(x=>x.date).sort();
+  const j=_h2JetztMin();
+  const d=(DB.lessons||[]).filter(x=>x.sid===s.id&&x.date&&(x.date<heute||(x.date===heute&&hm2min(x.bis||x.von)<=j))&&x.status!=="abgebrochen"&&x.status!=="nicht erschienen"&&["fahrstunde","sonder","nacht","schalt"].indexOf(x.art||"fahrstunde")>=0).map(x=>x.date).sort();
   return d.length?d[d.length-1]:"";
 }
 function _slTerminText(t){
@@ -7577,13 +7584,13 @@ function _slZusatz(s,hinweise){
   if(h&&h.farbe==="rot")return {text:h.text,k:"rot"};
   if(h&&h.farbe==="gelb"&&!/Sonderfahrt|fahrt(en)? offen|keine Stunde/.test(h.text))return {text:h.text,k:"gelb"};
   const t=_slNaechster(s);
-  if(t)return {text:_slTerminText(t)+(t.art!=="pruefung"?" · "+autoNext(s).text:""),k:""};
+  if(t)return {text:_slTerminText(t)+(t.art!=="pruefung"?" · "+autoNext(s).text:""),k:t.date===todayISO()?"heute":""};
   const lf=_slLetzteFahrt(s);
   if(lf){ const tage=Math.round((parseISO(todayISO())-parseISO(lf))/864e5); if(tage>14)return {text:`Seit ${tage} Tagen nicht gefahren`,k:"gelb"}; }
   if(h)return {text:h.text,k:h.farbe};
   return {text:autoNext(s).text,k:""};
 }
-function _slRingFarbe(p){ return p>=90?"#1E6B46":p>=60?"#3E9A6A":p>=35?"#D99A1E":"#C0563F"; }
+function _slRingFarbe(p){ return p>=90?"#1E6B46":p>=60?"#3E9A6A":p>=35?"#D99A1E":"#8FA79A"; } // wenig Stand ist kein „dringend“: kein Rot
 function cardHTML2(s,i,hinweise){
   const pct=stand(s), z=_slZusatz(s,hinweise||{});
   const istTurbo=_fsAgg&&s._paketId&&(_fsAgg.pakete||[]).some(pk=>pk.id===s._paketId&&pk.name==="Turboboost");
@@ -7601,8 +7608,7 @@ function _akteKopf(id,aktiv){
   const vi=document.querySelector("#view .view-inner"); const s=DB.students.find(x=>x.id===id); if(!vi||!s)return;
   vi.classList.add("akte2");
   const name=aktiv==="ueberblick"?"":`<div class="ak-name">${esc(s.name)} <span class="ak-pct">${stand(s)} %</span></div>`;
-  vi.insertAdjacentHTML("afterbegin",`<div class="akte-kopf">${name}<nav class="ak-reiter" aria-label="Akte" style="overflow-x:auto">${AKTE_REITER.map(([k,lab])=>`<button class="ak-r${k===aktiv?" on":""}" data-akte="${k}" aria-current="${k===aktiv?"page":"false"}">${lab}</button>`).join("")}</nav></div>`);
-  const on=vi.querySelector(".ak-r.on"); if(on&&on.scrollIntoView)try{ on.scrollIntoView({block:"nearest",inline:"center"}); }catch(e){}
+  vi.insertAdjacentHTML("afterbegin",`<div class="akte-kopf"><nav class="ak-reiter" aria-label="Akte">${AKTE_REITER.map(([k,lab])=>`<button class="ak-r${k===aktiv?" on":""}" data-akte="${k}" aria-current="${k===aktiv?"page":"false"}">${lab}</button>`).join("")}</nav>${name}</div>`);
   vi.querySelectorAll(".ak-r[data-akte]").forEach(b=>b.addEventListener("click",()=>{
     const r=AKTE_REITER.find(x=>x[0]===b.dataset.akte); if(!r||r[0]===aktiv)return;
     _akteWechsel(r[2],id);
@@ -7611,8 +7617,12 @@ function _akteKopf(id,aktiv){
 // Reiterwechsel: neue Seite zeigen und den vorigen Reiter aus dem Zurück-Stapel nehmen, damit Zurück direkt zur Liste geht.
 function _akteWechsel(fnName,id){
   const namen=AKTE_REITER.map(r=>r[2]);
+  // Ungespeicherte Notiz nicht still verlieren: beim Reiterwechsel mitspeichern
+  const na=document.getElementById("noteArea"), st=DB.students.find(x=>x.id===id);
+  if(na&&st&&(na.value||"")!==(st.notiz||"")){ st.notiz=na.value; save(); toast("Notiz gespeichert"); }
   window[fnName](id);
-  if(_navStack.length>1){ const vor=_navStack[_navStack.length-2]; if(vor&&namen.indexOf(vor.name)>=0&&vor.args&&vor.args[0]===id)_navStack.splice(_navStack.length-2,1); }
+  // Alle direkt davor liegenden Reiter-Seiten desselben Schülers entfernen: Zurück führt dann aus jedem Reiter zur Liste
+  while(_navStack.length>1){ const vor=_navStack[_navStack.length-2]; if(vor&&namen.indexOf(vor.name)>=0&&vor.args&&vor.args[0]===id)_navStack.splice(_navStack.length-2,1); else break; }
   _navAktualisiereKnopf();
 }
 function _akteArtLab(art){ return art==="pruefung"?"Prüfung":(CAL_ARTEN[art]||{lab:"Termin"}).lab; }
@@ -7621,19 +7631,22 @@ function routeAkteTermine(id){
   const s=DB.students.find(x=>x.id===id); if(!s){ routeHome(); return; }
   $("#tbTitle").textContent="Termine"; setFab(false); view.scrollTop=0;
   const heute=todayISO(), j=_h2JetztMin();
-  const alle=(DB.lessons||[]).filter(l=>l.sid===id&&l.date).map(l=>({kind:"lesson",id:l.id,sid:id,date:l.date,von:l.von,bis:l.bis,art:l.art||"fahrstunde",status:l.status||"geplant"}));
+  // Prüfung, die als Kalendertermin UND auf der Prüfungstafel steht, nur einmal zeigen (wie dayEvents)
+  const tafel=(DB.termine||[]).filter(t=>(t.slots||[]).includes(id)).map(t=>t.date);
+  const alle=(DB.lessons||[]).filter(l=>l.sid===id&&l.date&&!(l.art==="pruefung"&&tafel.some(d=>d>=l.date&&d<=addDays(l.date,3)))).map(l=>({kind:"lesson",id:l.id,sid:id,date:l.date,von:l.von,bis:l.bis,art:l.art||"fahrstunde",status:l.status||"geplant"}));
   (DB.termine||[]).forEach(t=>{ if((t.slots||[]).includes(id))alle.push({kind:"pruefung",id:t.id,sid:id,date:t.date,von:t.von||"09:00",bis:t.bis||"",art:"pruefung",status:"geplant"}); });
-  const kommt=x=>x.date>heute||(x.date===heute&&hm2min(x.bis||x.von)>j);
+  // Prüfungen gelten bis zum Ergebnis als kommend (wie die Prüfungs-Seite und die Liste)
+  const kommt=x=>x.date>heute||(x.date===heute&&(x.kind==="pruefung"||hm2min(x.bis||x.von)>j));
   const kommend=alle.filter(x=>kommt(x)&&x.status!=="abgebrochen").sort((a,b)=>(a.date+a.von).localeCompare(b.date+b.von));
   const bisher=alle.filter(x=>!kommt(x)).sort((a,b)=>(b.date+b.von).localeCompare(a.date+a.von)).slice(0,10);
-  const zeile=x=>`<button class="at-zeile${x.status==="abgebrochen"||x.status==="nicht erschienen"?" weg":""}" data-atev="${x.kind}|${esc(x.id)}|${esc(id)}"><span class="at-datum">${deWeekday(x.date)} ${isoDE(x.date).slice(0,6)}</span><span class="at-zeit">${x.von}</span><span class="at-art">${esc(_akteArtLab(x.art))}${x.status==="abgebrochen"?" · abgebrochen":x.status==="nicht erschienen"?" · nicht erschienen":""}</span></button>`;
+  const zeile=x=>`<button class="at-zeile${x.status==="abgebrochen"||x.status==="nicht erschienen"?" weg":""}" data-atev="${x.kind}|${esc(x.id)}|${esc(id)}"><span class="at-datum">${deWeekday(x.date)} ${isoDE(x.date).slice(0,6)}</span><span class="at-zeit">${x.von}</span><span class="at-art">${esc(_akteArtLab(x.art))}${x.status==="abgebrochen"?" · abgebrochen":x.status==="nicht erschienen"?" · nicht erschienen":""}</span><svg class="sr-pfeil" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 6l6 6-6 6"/></svg></button>`;
   view.innerHTML=`<div class="view-inner view-read fade-up">
-    <button class="at-neu" id="atNeu">+ Termin vergeben</button>
     <div class="h2-ueber at-ueber">Kommende Termine · ${kommend.length}</div>
     <div class="at-liste">${kommend.length?kommend.map(zeile).join(""):`<p class="h2-nichts">Kein Termin geplant.</p>`}</div>
     <div class="h2-ueber at-ueber">Bisher</div>
     <div class="at-liste">${bisher.length?bisher.map(zeile).join(""):`<p class="h2-nichts">Noch keine Termine.</p>`}</div>
     <button class="at-hist" id="atHist">Ganze Historie ansehen ›</button>
+    <button class="at-neu" id="atNeu">+ Termin vergeben</button>
   </div>`;
   _akteKopf(id,"termine");
   document.querySelectorAll("#view [data-atev]").forEach(b=>b.addEventListener("click",()=>{ const [k,eid,sid]=b.dataset.atev.split("|"); openEventSheet(k,eid,sid); }));
@@ -7661,7 +7674,6 @@ function routeAktePruefung(id){
   view.innerHTML=`<div class="view-inner view-read fade-up">
     <section class="ap-karte"><div class="h2-ueber">Stand</div>
       <div class="ap-zeile"><span>Theorieprüfung</span> <b>${theorie?"bestanden ✓":`offen${s.theoriePct?` · ${s.theoriePct} % gelernt`:""}`}</b></div>
-      <div class="ap-zeile"><span>Ausbildungsstand</span> <b>${stand(s)} %</b></div>
       ${wl>=0?`<div class="ap-zeile"><span>Warteliste</span> <b>Platz ${wl+1}</b></div>`:""}
     </section>
     <section class="ap-karte"><div class="h2-ueber">Kommende Prüfung</div>
@@ -7670,8 +7682,8 @@ function routeAktePruefung(id){
     <section class="ap-karte"><div class="h2-ueber">Ergebnisse</div>
       ${ergebnisse.length?ergebnisse.map(e=>`<div class="ap-zeile"><span>${isoDE(e.date)}${e.b197?" · B197":""}${e.pruefer?` · Prüfer ${esc(e.pruefer)}`:""}</span> <b class="${e.result==="pass"?"ok":"nein"}">${e.result==="pass"?"bestanden":e.result==="fail"?"nicht bestanden":esc(e.result||"–")}</b></div>`).join(""):`<p class="h2-nichts">Noch keine Prüfung abgelegt.</p>`}
     </section>
-    <button class="at-neu" id="apEintragen">Prüfung eintragen</button>
     <button class="at-hist" id="apTafel">Zur Prüfungstafel ›</button>
+    <button class="at-neu" id="apEintragen">Prüfung eintragen</button>
   </div>`;
   _akteKopf(id,"pruefung");
   $("#apEintragen").addEventListener("click",()=>routeExam(id));
@@ -10482,7 +10494,7 @@ function routeNotes(id){
     <div class="btn-row"><button class="btn btn-primary btn-full" id="saveNote">Notiz speichern</button></div>
   </div>`;
   $("#backBtn").addEventListener("click",()=>routeDetail(id));
-  $("#saveNote").addEventListener("click",()=>{s.notiz=$("#noteArea").value;save();toast("Notiz gespeichert");routeDetail(id);});
+  $("#saveNote").addEventListener("click",()=>{s.notiz=$("#noteArea").value;save();toast("Notiz gespeichert");_akteWechsel("routeDetail",id);});
   _akteKopf(id,"notizen");
 }
 function formView(existing){

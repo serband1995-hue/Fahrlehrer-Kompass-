@@ -516,17 +516,54 @@ await pruefe("A2d", "Reiterwechsel verlängert den Zurück-Stapel (_navStack) ni
   const nachher = await page.evaluate(() => _navStack.length);
   if (nachher !== vorher) return `Stapel ${vorher} → ${nachher}`;
 });
-await pruefe("A3", "alte .back-row auf allen 5 Akte-Seiten ausgeblendet, kein JS-Fehler", async () => {
+// Prüf-Team Schritt 4: Die Zeile darf bleiben, wenn andere Knöpfe darin stehen (Plan: „Als PDF“), nur der alte Zurück-Knopf muss weg.
+await pruefe("A3", "alter Zurück-Knopf (.back-row .back-btn) auf allen 5 Akte-Seiten ausgeblendet, PDF im Plan bleibt, kein JS-Fehler", async () => {
   await setze(page, basisSzenario());
   const f = [], vorher = jsFehler.length;
+  const sichtbar = "(b) => { const r = b.getBoundingClientRect(); return r.height > 0 && getComputedStyle(b).visibility !== 'hidden'; }";
   for (const [key] of REITER) {
     const e = await oeffne(page, key, "s1"); if (e) { f.push(e); continue; }
-    const sicht = await page.evaluate(() => [...document.querySelectorAll("#view .back-row")].some((b) => { const r = b.getBoundingClientRect(); return r.height > 0 && getComputedStyle(b).visibility !== "hidden"; }));
-    if (sicht) f.push(`${key}: .back-row sichtbar`);
+    const r = await page.evaluate((sb) => { const sicht = eval(sb); return { zurueck: [...document.querySelectorAll("#view .back-row .back-btn")].some(sicht), pdf: !!document.getElementById("pdfPlanBtn") && sicht(document.getElementById("pdfPlanBtn")) }; }, sichtbar);
+    if (r.zurueck) f.push(`${key}: alter Zurück-Knopf sichtbar`);
+    if (key === "plan" && !r.pdf) f.push("plan: Knopf „Als PDF“ fehlt");
   }
   if (jsFehler.length > vorher) f.push(`JS-Fehler: ${jsFehler[vorher]}`);
   return f;
 });
+// P: Funde des Prüf-Teams Schritt 4
+await pruefe("P1", "Notiz tippen, dann Reiter wechseln: Notiz wird gespeichert; nach „Notiz speichern“ führt Zurück zur Liste", async () => {
+  await setze(page, basisSzenario());
+  const r = await page.evaluate(async () => {
+    const w = (ms) => new Promise((k) => setTimeout(k, ms));
+    routeHome(); await w(100); routeDetail("s1"); await w(100);
+    document.querySelector('#view .ak-r[data-akte="notizen"]').click(); await w(150);
+    document.getElementById("noteArea").value = "Erfundene Notiz Reiter"; document.querySelector('#view .ak-r[data-akte="plan"]').click(); await w(150);
+    const gespeichert = DB.students.find((x) => x.id === "s1").notiz;
+    document.querySelector('#view .ak-r[data-akte="notizen"]').click(); await w(150);
+    document.getElementById("saveNote").click(); await w(150);
+    document.querySelector('#view .ak-r[data-akte="termine"]').click(); await w(150);
+    navZurueck(); await w(150);
+    return { gespeichert, titel: $("#tbTitle").textContent };
+  });
+  const f = [];
+  if (r.gespeichert !== "Erfundene Notiz Reiter") f.push("Notiz beim Reiterwechsel verloren: " + r.gespeichert);
+  if (r.titel !== "Schüler") f.push("Zurück nach dem Speichern führt zu „" + r.titel + "“");
+  await setze(page, basisSzenario());
+  return f;
+});
+await pruefe("P2", "Termine: Prüfung als Kalendertermin und auf der Tafel steht nur einmal", async () => {
+  await setze(page, basisSzenario());
+  const n = await page.evaluate(async () => {
+    const t = DB.termine.find((x) => (x.slots || []).includes("s2"));
+    DB.lessons.push({ id: "LPdoppelt", date: t.date, von: t.von || "09:00", bis: "10:00", art: "pruefung", sid: "s2", status: "geplant" });
+    routeAkteTermine("s2"); await new Promise((k) => setTimeout(k, 150));
+    const d = isoDE(t.date).slice(0, 6);
+    return [...document.querySelectorAll("#view .at-zeile")].filter((z) => z.textContent.includes(d) && /Prüfung/.test(z.textContent)).length;
+  });
+  await setze(page, basisSzenario());
+  if (n !== 1) return `Prüfung steht ${n}×`;
+});
+
 await pruefe("A4a", "Überblick: .akte-nav ohne „Plan“, mit Bogen und Historie", async () => {
   await oeffne(page, "ueberblick", "s1");
   const r = await page.evaluate(() => { const n = document.querySelector("#view .akte-nav"); return n ? [...n.querySelectorAll("[data-go]")].map((b) => b.dataset.go) : null; });
