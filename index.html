@@ -2070,6 +2070,8 @@ body:not(.light) .heute2{--h-karte:var(--surface);--h-rand:var(--line);--h-tinte
 .h2-schnell{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:6px;}
 .h2-mini{min-height:48px;padding:4px 6px;border-radius:12px;background:#1D2E25;border:1px solid #2E4237;color:#C8D6CC;font-size:12px;font-weight:700;line-height:1.2;display:flex;align-items:center;justify-content:center;text-align:center;}
 .h2-leer{align-items:flex-start;}
+.h2-fortsetzen{display:flex;align-items:center;gap:10px;min-height:52px;padding:0 16px;border-radius:16px;border:1px solid var(--k-mint);background:#123A2A;color:#fff;font-size:15px;font-weight:800;text-align:left;width:100%;}
+.h2-fortsetzen .h2-fs-zeit{margin-left:auto;font-size:12.5px;font-weight:700;color:#B9C8BE;}
 .h2-leer-t{font-size:18px;font-weight:800;}
 .h2-knopf-hell{min-height:48px;padding:0 18px;border-radius:14px;background:var(--k-mint);color:#0E2A1B;font-weight:800;font-size:15px;border:0;}
 /* Überschriften der Abschnitte */
@@ -8386,7 +8388,7 @@ function commitSonderZeit(s,grp,idx,date,von){
   const kandidat=(DB.lessons||[]).find(l=>l.sid===s.id&&l.date===date&&!l.srcSonder&&["fahrstunde","sonder"].includes(l.art)&&l.status!=="abgebrochen"&&l.status!=="nicht erschienen");
   if(kandidat){
     const vorherLesson={art:kandidat.art,note:kandidat.note,von:kandidat.von,bis:kandidat.bis};
-    kandidat.art="sonder";kandidat.note=_sonderNotiz(kandidat.note,label);kandidat.von=von;kandidat.bis=bis;kandidat.srcSonder=key;
+    kandidat.art="sonder";kandidat.note=[label,(kandidat.note||"").trim()].filter(Boolean).join(" · ");kandidat.von=von;kandidat.bis=bis;kandidat.srcSonder=key;
     save();refreshPlanRing(s);buildSonder(s);
     toastUndo(`Termin zu ${label} (${kuerzel}) umgewandelt`,()=>{
       Object.assign(kandidat,vorherLesson);delete kandidat.srcSonder;
@@ -13676,6 +13678,12 @@ function _h2Hinweise(){
   else { const tage=Math.floor((Date.now()-stamp)/864e5); if(tage>=7) out.push({backup:true,name:"Backup",text:`Vor ${tage} Tagen`,farbe:"gelb"}); }
   return out.filter(h=>h.farbe==="rot").concat(out.filter(h=>h.farbe!=="rot"));
 }
+// Läuft noch eine Fahrstunde (Merker), die nicht in der Karte steht – z. B. weil ihre Zeit schon vorbei ist –, oben einen Weg zurück zeigen.
+function _h2FortsetzenHTML(e){
+  const o=typeof _fmLaden==="function"?_fmLaden():null; if(!o||(e&&e.id===o.lid&&e.kind==="lesson"))return "";
+  const l=(DB.lessons||[]).find(x=>x.id===o.lid), s=l&&DB.students.find(x=>x.id===l.sid); if(!l||!s)return "";
+  return `<button class="h2-fortsetzen h2-start" data-h2fortsetzen="${esc(o.lid)}"><span class="h2-live"></span><span>Fahrstunde mit ${esc(_fmVorname(s))} fortsetzen</span><span class="h2-fs-zeit">${l.von}–${l.bis}</span></button>`;
+}
 function _h2JetztHTML(e){
   if(!e) return `<section class="h2-jetzt h2-leer"><div class="h2-leer-t">Keine Fahrstunde geplant</div>
     <button class="h2-knopf-hell" id="h2NeuTermin">Termin vergeben</button></section>`;
@@ -13779,6 +13787,7 @@ function routeDashboard(){
       <div><div class="h2-datum">${esc(_h2DatumZeile(heute))}</div><h1 class="h2-titel">Heute</h1></div>
       ${wetterAn?`<button class="h2-wetter" id="h2Wetter" aria-label="Wetter"><span class="h2-wetter-ic">⛅</span><span class="h2-wetter-t">…</span></button>`:''}
     </header>
+    ${_h2FortsetzenHTML(e)}
     ${_h2JetztHTML(e)}
     ${hinweise.length?`<section class="h2-achtung"><div class="h2-ueber">Achtung · ${hinweise.length}</div><div class="h2-chips">${hinweise.map(h=>`<button class="h2-chip ${h.farbe}" ${h.backup?'data-h2backup="1"':h.pruef?'data-h2pruef="1"':`data-h2akte="${esc(h.sid)}"`}><b>${esc(h.name)}</b><span>${esc(h.text)}</span></button>`).join("")}</div></section>`:''}
     ${_h2DanachHTML(e)}
@@ -13790,6 +13799,7 @@ function routeDashboard(){
   _bindWasNeuBanner();
   _h2Stand=_h2Signatur();
   document.querySelectorAll("#view [data-h2akte]").forEach(b=>b.addEventListener("click",()=>routeDetail(b.dataset.h2akte)));
+  document.querySelectorAll("#view [data-h2fortsetzen]").forEach(b=>b.addEventListener("click",()=>routeFahrstunde(b.dataset.h2fortsetzen)));
   document.querySelectorAll("#view [data-h2start]").forEach(b=>b.addEventListener("click",()=>startFahrstunde(b.dataset.h2start)));
   document.querySelectorAll("#view [data-h2backup]").forEach(b=>b.addEventListener("click",()=>routeSettings()));
   document.querySelectorAll("#view [data-h2pruef]").forEach(b=>b.addEventListener("click",()=>routePruefungen()));
@@ -13835,7 +13845,7 @@ function _fmThemen(s,o){
 function _fmWert(s,o,id){ return Object.prototype.hasOwnProperty.call(o.stufe||{},id)?o.stufe[id]:(((s.plan&&s.plan.ampeln)||{})[id]||null); }
 function _fmDauer(ms){ const m=Math.max(0,Math.floor(ms/60000)); return Math.floor(m/60)+":"+String(m%60).padStart(2,"0"); }
 function _fmLetzteNotiz(l){
-  const fr=(DB.lessons||[]).filter(x=>x.sid===l.sid&&x.id!==l.id&&(x.date<l.date||(x.date===l.date&&hm2min(x.von)<hm2min(l.von)))&&x.status!=="abgebrochen"&&(x.note||"").trim())
+  const fr=(DB.lessons||[]).filter(x=>x.sid===l.sid&&x.id!==l.id&&(x.date<l.date||(x.date===l.date&&hm2min(x.von)<hm2min(l.von)))&&x.status!=="abgebrochen"&&x.status!=="nicht erschienen"&&(x.note||"").trim())
     .sort((a,b)=>(b.date+b.von).localeCompare(a.date+a.von))[0];
   return fr?fr.note.trim():"";
 }
@@ -13843,7 +13853,10 @@ function startFahrstunde(lid){
   const l=(DB.lessons||[]).find(x=>x.id===lid); if(!l)return;
   const o=_fmLaden();
   if(!o||o.lid!==lid){
-    if(o&&o.lid!==lid&&(Object.keys(o.stufe||{}).length||(o.notizen||[]).length)&&!confirm("Es läuft noch eine andere Fahrstunde mit Bewertungen. Diese verwerfen und die neue starten?"))return;
+    if(o&&o.lid!==lid&&(Object.keys(o.stufe||{}).length||(o.notizen||[]).length)){
+      const al=(DB.lessons||[]).find(x=>x.id===o.lid), as=al&&DB.students.find(x=>x.id===al.sid);
+      if(!confirm(`Die Fahrstunde mit ${as?_fmVorname(as):"einem anderen Schüler"}${al?` (${al.von}–${al.bis})`:""} hat noch ungespeicherte Bewertungen. Diese verwerfen und die neue starten?\n\nTipp: „Abbrechen“ wählen und oben auf „Fahrstunde fortsetzen“ tippen, um sie abzuschließen.`))return;
+    }
     _fmSpeichern({lid,sid:l.sid,start:Date.now(),stufe:{},notizen:[],extra:[]});
   }
   routeFahrstunde(lid);
