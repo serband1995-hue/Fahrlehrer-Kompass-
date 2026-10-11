@@ -843,6 +843,34 @@ await pruefe("F5d", "Abmelden löscht den Merker „kompass-fahrstunde“; Sonde
   return f;
 });
 
+await pruefe("F5e", "Stunde vorbei, Modus verlassen: Heute zeigt „Fahrstunde mit … fortsetzen“, Bewertungen sind wieder da (Richter-Fund)", async () => {
+  await setze(page, basisSzenario());
+  const r = await page.evaluate(async () => {
+    const w = (ms) => new Promise((k) => setTimeout(k, ms));
+    localStorage.removeItem("kompass-fahrstunde"); routeFahrstunde("L1"); await w(100);
+    const b = [...document.querySelectorAll("#view .fm-thema")].find((x) => x.dataset.wert === "offen"); const id = b.dataset.item; b.click(); await w(100);
+    return id;
+  });
+  await page.clock.setFixedTime(new Date("2026-10-14T16:00:00+02:00"));
+  const z = await page.evaluate(async (id) => {
+    const w = (ms) => new Promise((k) => setTimeout(k, ms));
+    routeDashboard(); await w(100);
+    const k = document.querySelector("#view .h2-fortsetzen"); if (!k) return { knopf: false };
+    const text = k.textContent; k.click(); await w(150);
+    const t = document.querySelector(`#view .fm-thema[data-item="${id}"]`);
+    return { knopf: true, text, titel: $("#tbTitle").textContent, wert: t ? t.dataset.wert : null };
+  }, r);
+  await page.clock.setFixedTime(JETZT);
+  await page.evaluate(() => localStorage.removeItem("kompass-fahrstunde"));
+  await setze(page, basisSzenario());
+  if (!z.knopf) return "kein „fortsetzen“ auf Heute nach dem Ende der Stunde";
+  const f = [];
+  if (!/fortsetzen/.test(z.text)) f.push("Text: " + z.text);
+  if (z.titel !== "Fahrstunde") f.push("Tipp öffnet „" + z.titel + "“");
+  if (z.wert !== "gelb") f.push("Bewertung nicht mehr da: " + z.wert);
+  return f;
+});
+
 await pruefe("F4a", "openAssignSlotSheet ohne neue Angaben: alphabetische Liste, nach dem Buchen in den Kalender", async () => {
   await setze(page, basisSzenario());
   await page.evaluate((d) => openAssignSlotSheet(d, "09:30", "11:00"), MORGEN); await warte(page, 300);
