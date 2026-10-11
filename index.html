@@ -2445,7 +2445,7 @@ body.light #view[data-seite2] .todo-item.done .todo-txt{color:#6B776F !important
 .wx-stage.wx-bedeckt:not(.wx-night) .wx-bgphoto{filter:brightness(.86) saturate(.35) contrast(.95);}
 .wx2-wolke.dunkel{filter:drop-shadow(0 10px 16px rgba(10,15,25,.32));}
 .wx2-tropfen{position:absolute;top:-24px;width:2px;height:20px;border-radius:2px;background:linear-gradient(180deg,rgba(255,255,255,0),rgba(225,236,248,.95));animation:wx2Regen .9s linear infinite;}
-.wx2-flocke{position:absolute;top:-10px;border-radius:50%;background:#fff;box-shadow:0 0 6px rgba(255,255,255,.8);animation:wx2Schnee 7s linear infinite;}
+.wx2-flocke{position:absolute;top:-10px;border-radius:50%;background:rgba(255,255,255,.92);box-shadow:0 0 3px rgba(255,255,255,.45);animation:wx2Schnee 7s linear infinite;}
 .wx2-blitz{position:absolute;top:10%;left:58%;width:44px;opacity:0;animation:wx2Blitz 5.5s ease-out infinite;filter:drop-shadow(0 0 10px rgba(255,226,122,.9));}
 .wx2-blitz svg{display:block;width:100%;height:auto;}
 .wx2-hell{position:absolute;inset:0;background:#fff;opacity:0;animation:wx2Hell 5.5s ease-out infinite;}
@@ -2469,7 +2469,7 @@ body.light #view[data-seite2] .todo-item.done .todo-txt{color:#6B776F !important
 #view[data-seite2="routeWetter"] .wx-fc-day{background:var(--s2-karte);border:1px solid var(--s2-rand);border-radius:18px;min-width:0;padding:10px 2px;}
 #view[data-seite2="routeWetter"] .wx-fc-t b{font-size:13.5px;}
 #view[data-seite2="routeWetter"] .wx-fc-t span{font-size:11.5px;margin-left:3px;}
-@media (max-width:380px){#view[data-seite2="routeWetter"] .wx-fc-t span{display:block;margin:0;}}
+#view[data-seite2="routeWetter"] .wx-fc-t span{display:block;margin:2px 0 0;font-size:12px;font-weight:700;}
 #view[data-seite2="routeWetter"] .wx-fc-ic{display:flex;justify-content:center;margin:6px 0;}
 #view[data-seite2="routeWetter"] .wx-fc-lbl{color:var(--s2-text2);}
 #view[data-seite2="routeWetter"] .wx-fc-t b{color:var(--s2-tinte);}
@@ -13928,11 +13928,11 @@ function _wetterIconSVG(icon){
   else if(art==="mond") innen=`<path d="M25 8a12 12 0 1 0 7 21A10 10 0 0 1 25 8z" fill="url(#${sg})"/><circle class="wx-stern" cx="10" cy="10" r="1.4" fill="#D9A531"/><circle class="wx-stern" cx="32" cy="12" r="1.1" fill="#D9A531" style="animation-delay:1.4s"/>`;
   else if(art==="sonnewolke") innen=`${sonne(15,15,5.8,8.5,12.5,2)}<g class="wx-wolkenteil">${wolke(0,0)}</g>`;
   else if(art==="wolke") innen=`<g class="wx-wolkenteil spaet" opacity=".75">${wolke(-9,-9,.8)}</g><g class="wx-wolkenteil">${wolke(-4,0)}</g>`;
-  else if(art==="nebel") innen=`<g class="wx-wolkenteil spaet" opacity=".8">${wolke(-6,-12,.85)}</g><g stroke="#6F8077" stroke-width="2.4" stroke-linecap="round"><line class="wx-wolkenteil" x1="9" y1="27" x2="31" y2="27"/><line class="wx-wolkenteil spaet" x1="12" y1="33" x2="34" y2="33"/></g>`;
+  else if(art==="nebel") innen=`<g class="wx-wolkenteil spaet" opacity=".8">${wolke(-6,-12,.85)}</g><g stroke="#56665D" stroke-width="2.6" stroke-linecap="round"><line class="wx-wolkenteil" x1="9" y1="27" x2="31" y2="27"/><line class="wx-wolkenteil spaet" x1="12" y1="33" x2="34" y2="33"/></g>`;
   else {
     const dunkel=art==="gewitter";
     const tropfen=art==="schnee"
-      ? [10,18,26].map((x,i)=>`<circle class="wx-fall f${i+1}" cx="${x+3}" cy="32" r="2" fill="#3F78B5"/>`).join("")
+      ? [10,18,26].map((x,i)=>{ const cx=x+3, cy=32; return `<g class="wx-fall f${i+1}" stroke="#3F78B5" stroke-width="1.3" stroke-linecap="round"><path d="M${cx-2.4} ${cy}h4.8M${cx} ${cy-2.4}v4.8M${cx-1.7} ${cy-1.7}l3.4 3.4M${cx-1.7} ${cy+1.7}l3.4-3.4"/></g>`; }).join("")
       : [10,18,26].map((x,i)=>`<line class="wx-fall f${i+1}" x1="${x+3}" y1="30" x2="${x+1.5}" y2="35" stroke="#3F78B5" stroke-width="2" stroke-linecap="round"/>`).join("");
     innen=`${tropfen}<g class="wx-wolkenteil">${wolke(-6,-6,1,dunkel)}</g>${dunkel?`<path class="wx-blitz" d="M21 24l-4 7h4l-2 6 6-9h-4l2-4z" fill="#F2B632" stroke="#C98A12" stroke-width=".6" stroke-linejoin="round"/>`:""}`;
   }
@@ -14002,9 +14002,12 @@ function routeWetter(w){
   // Umbau Schritt 6a: ruhige, flüssige Bühne – nur transform/opacity werden bewegt (läuft auf dem Handy ohne Ruckeln)
   const r=(i,m,a)=>((i*a+7)%m); // feste, gleichmäßig gestreute Werte (keine Zufallszahlen: Bild bleibt beim Neuzeichnen gleich)
   const stars=(n)=>Array.from({length:n}).map((_,i)=>`<i class="wx-star" style="left:${r(i,97,37)+1}%;top:${r(i,52,23)+3}%;animation-delay:-${(i%7)*.45}s;animation-duration:${2.6+(i%4)*.6}s"></i>`).join("");
-  const wolke=(k,ebene,dunkel)=>`<div class="wx2-wolke e${ebene}${dunkel?" dunkel":""}" style="top:${[6,22,12,30][k%4]}%;animation-delay:-${([.32,.58,.12,.8][k%4]*(ebene===2?78:52)).toFixed(1)}s">
-      <svg viewBox="0 0 220 110" aria-hidden="true"><defs><linearGradient id="wxbw${k}" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="${dunkel?"#9AA5AE":"#FFFFFF"}"/><stop offset="1" stop-color="${dunkel?"#5F6A74":"#D5DEE6"}"/></linearGradient></defs>
-      <path d="M48 96h128a34 34 0 0 0 4-67.7A46 46 0 0 0 92 22a38 38 0 0 0-44 74z" fill="url(#wxbw${k})"/></svg></div>`;
+  // dunkel = Regen/Gewitter, grau = bedeckt/Schnee, sonst weiß. Start so verteilt, dass keine Wolke halb am Rand klebt.
+  const grauHimmel=["03","04","13"].includes((w.icon||"").slice(0,2));
+  const wolke=(k,ebene,dunkel)=>{ const ton=dunkel?["#9AA5AE","#5F6A74"]:grauHimmel?["#EEF1F3","#B4BEC6"]:["#FFFFFF","#D5DEE6"];
+    return `<div class="wx2-wolke e${ebene}${dunkel?" dunkel":""}" style="top:${[6,22,12,30][k%4]}%;animation-delay:-${([.152,.45,.39,.223][k%4]*(ebene===2?78:52)).toFixed(1)}s">
+      <svg viewBox="0 0 220 110" aria-hidden="true"><defs><linearGradient id="wxbw${k}" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="${ton[0]}"/><stop offset="1" stop-color="${ton[1]}"/></linearGradient></defs>
+      <path d="M48 96h128a34 34 0 0 0 4-67.7A46 46 0 0 0 92 22a38 38 0 0 0-44 74z" fill="url(#wxbw${k})"/></svg></div>`; };
   const tropfen=(n)=>Array.from({length:n}).map((_,i)=>`<i class="wx2-tropfen" style="left:${r(i,100,29)}%;animation-duration:${(.72+(i%5)*.09).toFixed(2)}s;animation-delay:-${((i*.137)%1).toFixed(2)}s;opacity:${(.55+(i%3)*.15).toFixed(2)}"></i>`).join("");
   let deco=`<div class="wx-bgphoto"></div>`;
   const sonne=`<div class="wx2-sonne"><div class="wx2-glow"></div><div class="wx2-kranz"></div><div class="wx2-kern"></div></div>`;
@@ -14018,7 +14021,7 @@ function routeWetter(w){
   } else if(cat==="storm"){
     deco+=wolke(0,1,true)+wolke(1,2,true)+wolke(2,1,true)+tropfen(30)+`<div class="wx2-blitz"><svg viewBox="0 0 60 120" aria-hidden="true"><path d="M34 2L10 64h18l-8 54 30-70H32L44 2z" fill="#FFE27A" stroke="#F5C53C" stroke-width="2" stroke-linejoin="round"/></svg></div><div class="wx2-hell"></div>`;
   } else if(cat==="snow"){
-    deco+=(night?stars(8):"")+wolke(0,1)+wolke(1,2)+Array.from({length:26}).map((_,i)=>`<i class="wx2-flocke" style="left:${r(i,100,31)}%;width:${4+(i%3)*1.5}px;height:${4+(i%3)*1.5}px;animation-duration:${(6+(i%5)*.9).toFixed(1)}s;animation-delay:-${((i*.53)%8).toFixed(2)}s"></i>`).join("");
+    deco+=(night?stars(8):"")+wolke(0,1)+wolke(1,2)+Array.from({length:26}).map((_,i)=>`<i class="wx2-flocke" style="left:${r(i,100,31)}%;width:${3+(i%3)}px;height:${3+(i%3)}px;animation-duration:${(6+(i%5)*.9).toFixed(1)}s;animation-delay:-${((i*.53)%8).toFixed(2)}s"></i>`).join("");
   } else if(cat==="fog"){
     deco+=[0,1,2,3].map(i=>`<div class="wx2-nebel n${i}"></div>`).join("");
   }
