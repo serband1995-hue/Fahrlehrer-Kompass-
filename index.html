@@ -2146,7 +2146,7 @@ body.light .fc-miss-sum b{color:#7a2a1e !important;}
 <div class="app">
   <header class="topbar">
     <div class="tb-side tb-left">
-      <button class="icon-btn" id="menuBtn" aria-label="Menü">
+      <button class="icon-btn" id="menuBtn" aria-label="Menü" hidden>
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M4 7h16M4 12h16M4 17h16"/></svg>
       </button>
       <button class="icon-btn" id="navBackBtn" aria-label="Zurück" hidden>
@@ -2204,12 +2204,11 @@ body.light .fc-miss-sum b{color:#7a2a1e !important;}
     <button class="nav-item" data-nav="archive">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="4" rx="1"/><path d="M5 8v11a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1V8M10 12h4"/></svg>
       Archiv</button>
-    <div class="nav-sep"></div>
     <button class="nav-item" data-nav="draw">
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 20l4-1L18.5 6.5l-3-3L4 15l-1 5z"/><path d="M14 6l3 3"/></svg>
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3l9.5 16.5h-19z"/><path d="M12 10v4M12 17h.01"/></svg>
       Verkehrstafel</button>
     <div class="nav-sep"></div>
-    <button class="nav-item" data-nav="settings" style="color:var(--akzent-bright)">
+    <button class="nav-item" data-nav="settings">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
       Einstellungen</button>
   </nav>
@@ -7130,17 +7129,20 @@ function tabGo(k){
 function openNeuerTerminSheet(){
   ensureDB();
   const imKal=($("#tbTitle")&&$("#tbTitle").textContent)==="Kalender"&&_calDate&&_calDate>todayISO();
+  const heute=todayISO(), jetzt=new Date().getHours()*60+new Date().getMinutes();
   let luecken=naechsteFreieLuecken();
   if(imKal){ const ab=[]; let cur=_calDate; for(let i=0;i<7&&ab.length<5;i++){ dayFreeSlots(cur).forEach(x=>{ if(ab.length<5)ab.push({date:cur,von:x.von,bis:x.bis,art:x.art}); }); cur=addDays(cur,1); } luecken=ab; }
+  luecken=luecken.filter(l=>l.date>heute||(l.date===heute&&hm2min(l.von)>jetzt)); // keine vergangenen Zeiten
   const liste=luecken.length
     ? luecken.map(l=>`<button class="es-act nt-gap" data-freeslot="${l.date}|${l.von}|${l.bis}|${l.art}" style="display:flex;justify-content:space-between;align-items:center;text-align:left;min-height:48px;">
-        <span>${deWeekday(l.date)} · ${isoDE(l.date)} · ${l.von}</span><span style="color:var(--akzent);font-weight:700;">Vergeben ›</span></button>`).join("")
+        <span>${deWeekday(l.date)} · ${isoDE(l.date)} · ${l.von}–${l.bis}</span><span style="color:var(--akzent);font-weight:700;">Vergeben ›</span></button>`).join("")
     : `<p class="muted-p" style="font-size:13px;">Keine freie Lücke in den nächsten 7 Tagen. Im Kalender auf eine Uhrzeit tippen, um trotzdem einen Termin einzutragen.</p>`;
   openSheet(`<div class="sheet-h">Neuer Termin</div>
     <p class="muted-p" style="font-size:13px;margin:-4px 0 10px;">Nächste freie Lücken</p>
     <div class="es-actions">${liste}</div>
-    <div class="btn-row"><button class="btn btn-ghost" id="ntClose" style="width:100%;">Schließen</button></div>`);
+    <div class="btn-row" style="flex-wrap:wrap;gap:8px;"><button class="btn btn-ghost" id="ntAndere" style="width:100%;">Andere Art (Theorie, Prüfung, Blocker …)</button><button class="btn btn-ghost" id="ntClose" style="width:100%;">Schließen</button></div>`);
   $("#ntClose").addEventListener("click",closeSheet);
+  $("#ntAndere").addEventListener("click",()=>{ if(!_calDate)_calDate=heute; closeSheet(); setTimeout(openAddSheet,200); });
   document.querySelectorAll(".nt-gap").forEach(b=>b.addEventListener("click",()=>{
     const [date,von,bis,art]=b.dataset.freeslot.split("|"); closeSheet(); openAssignSlotSheet(date,von,bis,art);
   }));
@@ -11352,7 +11354,7 @@ function routeKalender(){
     </div>
     <div id="calBody">${_calView==="monat"?calMonthHTML():_calView==="woche"?calWeekHTML():calDayHTML()}</div>
     </div>
-    <button class="cal-fab" id="calFab" aria-label="Hinzufügen"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg></button>`;
+    ${_fsAgg?`<button class="cal-fab" id="calFab" aria-label="Hinzufügen"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg></button>`:''}`;
   view.innerHTML=html;
   bindCalControls();
   if(_fsAgg)_fsInjectFilterTiles();
@@ -11389,7 +11391,7 @@ function bindCalControls(){
   $("#calGear").addEventListener("click",routeArbeitszeit);
   $("#calSearch").addEventListener("click",openCalSearchSheet);
   const _cfb=$("#calFilterBtn"); if(_cfb)_cfb.addEventListener("click",openCalFilterSheet);
-  $("#calFab").addEventListener("click",openAddSheet);
+  { const cf=$("#calFab"); if(cf)cf.addEventListener("click",openAddSheet); }
   $("#calViewBtn").addEventListener("click",openCalViewSheet);
   $("#calPrev").addEventListener("click",()=>{ _calDate=calShift(-1); routeKalender(); });
   $("#calNext").addEventListener("click",()=>{ _calDate=calShift(1); routeKalender(); });
@@ -14799,7 +14801,10 @@ const _NAV_MAX=25;
 
 function _navAktualisiereKnopf(){
   const b=document.getElementById("navBackBtn");
-  if(b)b.hidden=_navStack.length<2;
+  // Auf den Hauptseiten der Reiter kein Zurück-Pfeil (Reiterwechsel ist kein Zurück); Android-Zurück geht weiter.
+  const t=(($("#tbTitle")&&$("#tbTitle").textContent)||"").trim();
+  const haupt=["Heute","Start","Kalender","Schüler","Prüfungen"].indexOf(t)>=0;
+  if(b)b.hidden=_navStack.length<2||haupt;
 }
 function navZurueck(){
   if(_navStack.length<2)return;

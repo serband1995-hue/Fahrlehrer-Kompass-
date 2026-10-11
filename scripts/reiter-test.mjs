@@ -152,17 +152,46 @@ await pruefe("A4", "aktiver Reiter passt zur Seite (genau einer)", async () => {
   return f;
 });
 
-await pruefe("A6", "Zurück-Knopf nach Heute → Prüfungen führt zu Heute", async () => {
+await pruefe("A6", "Zurück: auf Hauptseiten kein Pfeil, Android-Zurück Prüfungen → Heute, Pfeil in der Akte führt zurück", async () => {
   await aufraeumen(page);
   let e = await reiterKlick(page, "heute"); if (e) return e;
   e = await reiterKlick(page, "pruefungen"); if (e) return e;
   if ((await titel(page)) !== "Prüfungen") return "Prüfungen-Reiter öffnet nicht „Prüfungen“";
   const btn = page.locator("#navBackBtn");
-  if (!(await btn.isVisible())) return "Zurück-Knopf nicht sichtbar";
+  if (await btn.isVisible()) return "Zurück-Pfeil auf der Hauptseite Prüfungen sichtbar";
+  if (await page.locator("#menuBtn").isVisible()) return "Menü-Knopf oben noch sichtbar (doppelt zu „Mehr“)";
+  await page.evaluate(() => window.dispatchEvent(new PopStateEvent("popstate")));
+  await warte(page);
+  let ti = await titel(page);
+  if (ti !== "Heute") return `nach Android-Zurück Titel „${ti}“`;
+  e = await reiterKlick(page, "schueler"); if (e) return e;
+  await page.evaluate(() => routeDetail("t1"));
+  await warte(page);
+  if (!(await btn.isVisible())) return "Zurück-Pfeil in der Schülerakte fehlt";
   await btn.click();
   await warte(page);
-  const ti = await titel(page);
-  if (ti !== "Heute") return `nach Zurück Titel „${ti}“`;
+  ti = await titel(page);
+  if (ti !== "Schüler") return `Pfeil in der Akte führt zu „${ti}“`;
+});
+
+await pruefe("A7", "Kalender: nur ein Plus-Knopf; „Neuer Termin“ ohne vergangene Zeiten, mit Ende und „Andere Art“", async () => {
+  await aufraeumen(page);
+  let e = await reiterKlick(page, "kalender"); if (e) return e;
+  const plus = await page.evaluate(() => [...document.querySelectorAll("#fab,#calFab")].filter((x) => { const r = x.getBoundingClientRect(); return r.width > 0 && getComputedStyle(x).display !== "none"; }).length);
+  if (plus !== 1) return `${plus} Plus-Knöpfe sichtbar`;
+  const r = await page.evaluate(async () => {
+    const orig = naechsteFreieLuecken, h = todayISO(), m = addDays(h, 1);
+    naechsteFreieLuecken = () => [{ date: h, von: "00:00", bis: "00:45", art: "fahrstunde" }, { date: m, von: "10:00", bis: "11:30", art: "fahrstunde" }];
+    try { routeDashboard(); openNeuerTerminSheet(); } finally { naechsteFreieLuecken = orig; }
+    await new Promise((k) => setTimeout(k, 150));
+    const t = [...document.querySelectorAll("#sheet .nt-gap")].map((b) => b.textContent);
+    const andere = !!document.getElementById("ntAndere");
+    closeSheet();
+    return { t, andere };
+  });
+  if (r.t.some((x) => x.includes("00:00"))) return "vergangene Uhrzeit von heute wird angeboten";
+  if (!r.t.some((x) => x.includes("10:00–11:30"))) return "Lücke ohne Ende-Zeit: " + r.t.join(" | ");
+  if (!r.andere) return "Knopf „Andere Art“ fehlt";
 });
 
 // B. Menü „Mehr“
