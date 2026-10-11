@@ -564,6 +564,19 @@ await pruefe("P2", "Termine: Prüfung als Kalendertermin und auf der Tafel steht
   if (n !== 1) return `Prüfung steht ${n}×`;
 });
 
+await pruefe("P3", "Gesamtansicht: Termine-Reiter ohne „Termin vergeben“ (Prüfer Büro), Liste bleibt", async () => {
+  await setze(page, basisSzenario());
+  const r = await page.evaluate(async () => {
+    _fsAgg = { fahrschuleId: "x", fahrschule: { name: "Test" }, lehrer: [] };
+    try { routeAkteTermine("s2"); await new Promise((k) => setTimeout(k, 120)); return { knopf: !!document.getElementById("atNeu"), liste: !!document.querySelector("#view .at-liste") }; }
+    finally { _fsAgg = null; }
+  });
+  await setze(page, basisSzenario());
+  const f = [];
+  if (r.knopf) f.push("Knopf „Termin vergeben“ in der Gesamtansicht da");
+  if (!r.liste) f.push("Termine-Liste fehlt");
+  return f;
+});
 await pruefe("A4a", "Überblick: .akte-nav ohne „Plan“, mit Bogen und Historie", async () => {
   await oeffne(page, "ueberblick", "s1");
   const r = await page.evaluate(() => { const n = document.querySelector("#view .akte-nav"); return n ? [...n.querySelectorAll("[data-go]")].map((b) => b.dataset.go) : null; });
