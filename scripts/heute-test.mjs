@@ -352,13 +352,14 @@ await pruefe("H2h", "ohne Telefonnummer: kein tel-/wa-Link, Hinweis „Nummer fe
   if (!/Nummer fehlt/.test(r.txt)) f.push("Hinweis „Nummer fehlt“ fehlt");
   return f;
 });
-await pruefe("H2i", "Hauptknopf .h2-akte „Schülerakte öffnen“ → Titel „Schülerdatei“", async () => {
+await pruefe("H2i", "Hauptknopf: heutige Fahrstunde → „Fahrstunde starten“ (.h2-start, seit Schritt 3); Name/Bild → Titel „Schülerdatei“", async () => {
   await setze(page, basisSzenario());
   const t = await text(page, ".heute2 .h2-jetzt .h2-akte");
   if (t === null) return ".h2-akte fehlt" + ((await da(page, ".heute2")) ? "" : " (" + KEIN_H2 + ")");
   const f = [];
-  if (!/Schülerakte öffnen/.test(t)) f.push(`Beschriftung „${t}“`);
-  const e = await klickTitel(page, ".heute2 .h2-jetzt .h2-akte", "Schülerdatei"); if (e) f.push(e);
+  if (!/Fahrstunde starten/.test(t)) f.push(`Beschriftung „${t}“`);
+  if (!(await da(page, ".heute2 .h2-jetzt .h2-akte.h2-start"))) f.push(".h2-start fehlt");
+  const e = await klickTitel(page, ".heute2 .h2-jetzt .h2-jetzt-mitte", "Schülerdatei"); if (e) f.push(e);
   await setze(page, basisSzenario());
   return f;
 });
