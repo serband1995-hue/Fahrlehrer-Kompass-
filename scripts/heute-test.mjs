@@ -738,6 +738,20 @@ await pruefe("H10a", "„Danach“ zeigt einen zweiten Termin zur gleichen Start
   await setze(page, basisSzenario());
   return f;
 });
+await pruefe("H10d", "Prüfungstermin mit zwei eigenen Schülern: der zweite steht in „Danach“ (Richter-Fund)", async () => {
+  const sz = basisSzenario();
+  sz.lessons = sz.lessons.filter((l) => l.date !== TAG);
+  sz.termine.push({ id: "PX", date: TAG, von: "10:15", slots: ["t6", "t7"] });
+  await setze(page, sz);
+  const r = await page.evaluate(() => ({ karte: (document.querySelector(".heute2 .h2-jetzt-name") || {}).textContent || "",
+    danach: [...document.querySelectorAll(".heute2 .h2-danach .h2-zeile")].map((x) => x.textContent).join(" | ") }));
+  await setze(page, basisSzenario());
+  const beide = (r.karte + " " + r.danach);
+  const f = [];
+  if (!beide.includes("Sechstperson")) f.push("Sechstperson fehlt");
+  if (!beide.includes("Siebtperson")) f.push("Siebtperson fehlt (Karte: " + r.karte + ", Danach: " + r.danach + ")");
+  return f;
+});
 await pruefe("H10b", "Heute frischt sich auf: nach Ende der Stunde und Sichtbar-Werden steht die nächste Stunde in der Karte", async () => {
   await setze(page, basisSzenario());
   const vorher = await text(page, ".heute2 .h2-jetzt-name");
