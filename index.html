@@ -7646,12 +7646,13 @@ function routeAkteTermine(id){
     <div class="h2-ueber at-ueber">Bisher</div>
     <div class="at-liste">${bisher.length?bisher.map(zeile).join(""):`<p class="h2-nichts">Noch keine Termine.</p>`}</div>
     <button class="at-hist" id="atHist">Ganze Historie ansehen ›</button>
-    <button class="at-neu" id="atNeu">+ Termin vergeben</button>
+    ${_fsAgg?"":`<button class="at-neu" id="atNeu">+ Termin vergeben</button>`}
   </div>`;
   _akteKopf(id,"termine");
   document.querySelectorAll("#view [data-atev]").forEach(b=>b.addEventListener("click",()=>{ const [k,eid,sid]=b.dataset.atev.split("|"); openEventSheet(k,eid,sid); }));
   $("#atHist").addEventListener("click",()=>routeHistorie(id));
-  $("#atNeu").addEventListener("click",()=>{
+  // Gesamtansicht: kein „Termin vergeben“ (er hätte keinen Fahrlehrer); das Büro nutzt dafür den Büro-Plus im Kalender
+  if($("#atNeu"))$("#atNeu").addEventListener("click",()=>{
     const luecken=[]; let d=heute;
     for(let i=0;i<14&&luecken.length<6;i++){ dayFreeSlots(d).forEach(x=>{ if(luecken.length<6&&(d>heute||hm2min(x.von)>j))luecken.push({date:d,von:x.von,bis:x.bis,art:x.art}); }); d=addDays(d,1); }
     openSheet(`<div class="sheet-h">Termin für ${esc(_fmVorname(s))}</div>
