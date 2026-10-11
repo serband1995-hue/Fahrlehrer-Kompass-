@@ -2212,7 +2212,7 @@ body.light:has(#view .schueler2)::before,body.light:has(#view .schueler2)::after
 .sl-kopf{display:flex;align-items:baseline;justify-content:space-between;gap:10px;margin-bottom:12px;}
 .schueler2 .sl-titel{margin:0;font-size:30px;font-weight:700;color:var(--h-tinte);}
 .sl-zahl{font-size:13px;font-weight:700;color:var(--h-text2);white-space:nowrap;}
-.sl-sorten{display:flex;gap:8px;overflow-x:auto;scrollbar-width:none;margin:0 0 12px;padding-bottom:2px;}
+.sl-sorten{display:flex;flex-wrap:wrap;gap:8px;margin:0 0 12px;}
 .sl-sorten::-webkit-scrollbar{display:none;}
 .sl-sort{flex:0 0 auto;min-height:44px;padding:0 14px;border-radius:999px;font-size:13.5px;font-weight:700;background:var(--h-karte);color:var(--h-tinte);border:1px solid var(--h-rand);}
 .sl-sort.on{background:var(--k-tinte);color:#fff;border-color:var(--k-tinte);}
@@ -4614,6 +4614,7 @@ async function pullSchuelerZuweisungen() {
     _schuelerAbgerufen = true;
     // Notizen erst jetzt: neue Schüler sind dann schon in DB.students, das Popup kann ihren Namen nennen
     try{ await pullBueroNotizen(supa,(rows||[]).map(r=>r.id)); }catch(e){ console.warn("[Kompass] Büro-Notizen nicht geladen:",e.message); }
+    try{ if(typeof _h2Auffrischen==="function")_h2Auffrischen(); }catch(e){} // Stopp/Fristen sofort auf „Heute“ zeigen
     const { data: weg, error: wegErr } = await supa.from("schueler_verschiebungen").select("*").eq("von_fahrlehrer_id", _authUser.id).eq("gesehen_von_alt", false);
     if (wegErr) throw wegErr;
     let entfernt = [];
@@ -4724,7 +4725,7 @@ async function pullTermineZuweisungen() {
     console.warn("[Kompass] Kalender-Abgleich fehlgeschlagen:", e.message);
     if (++_termineFehlversuche === 5) toast("⚠ Kalender-Abgleich mit dem Büro klappt gerade nicht");
   }
-  finally { _termineAbrufLaeuft = false; }
+  finally { _termineAbrufLaeuft = false; try{ if(typeof _h2Auffrischen==="function")_h2Auffrischen(); }catch(e){} }
 }
 /* ---- Logout ---- */
 /* opts.alleGeraete: Sitzung überall beenden (muss dann auch klappen).
@@ -7600,7 +7601,7 @@ function _akteKopf(id,aktiv){
   const vi=document.querySelector("#view .view-inner"); const s=DB.students.find(x=>x.id===id); if(!vi||!s)return;
   vi.classList.add("akte2");
   const name=aktiv==="ueberblick"?"":`<div class="ak-name">${esc(s.name)} <span class="ak-pct">${stand(s)} %</span></div>`;
-  vi.insertAdjacentHTML("afterbegin",`<div class="akte-kopf">${name}<nav class="ak-reiter" aria-label="Akte">${AKTE_REITER.map(([k,lab])=>`<button class="ak-r${k===aktiv?" on":""}" data-akte="${k}" aria-current="${k===aktiv?"page":"false"}">${lab}</button>`).join("")}</nav></div>`);
+  vi.insertAdjacentHTML("afterbegin",`<div class="akte-kopf">${name}<nav class="ak-reiter" aria-label="Akte" style="overflow-x:auto">${AKTE_REITER.map(([k,lab])=>`<button class="ak-r${k===aktiv?" on":""}" data-akte="${k}" aria-current="${k===aktiv?"page":"false"}">${lab}</button>`).join("")}</nav></div>`);
   const on=vi.querySelector(".ak-r.on"); if(on&&on.scrollIntoView)try{ on.scrollIntoView({block:"nearest",inline:"center"}); }catch(e){}
   vi.querySelectorAll(".ak-r[data-akte]").forEach(b=>b.addEventListener("click",()=>{
     const r=AKTE_REITER.find(x=>x[0]===b.dataset.akte); if(!r||r[0]===aktiv)return;
@@ -7659,15 +7660,15 @@ function routeAktePruefung(id){
   const theorie=s.plan&&s.plan.theorie;
   view.innerHTML=`<div class="view-inner view-read fade-up">
     <section class="ap-karte"><div class="h2-ueber">Stand</div>
-      <div class="ap-zeile"><span>Theorieprüfung</span><b>${theorie?"bestanden ✓":`offen${s.theoriePct?` · ${s.theoriePct} % gelernt`:""}`}</b></div>
-      <div class="ap-zeile"><span>Ausbildungsstand</span><b>${stand(s)} %</b></div>
-      ${wl>=0?`<div class="ap-zeile"><span>Warteliste</span><b>Platz ${wl+1}</b></div>`:""}
+      <div class="ap-zeile"><span>Theorieprüfung</span> <b>${theorie?"bestanden ✓":`offen${s.theoriePct?` · ${s.theoriePct} % gelernt`:""}`}</b></div>
+      <div class="ap-zeile"><span>Ausbildungsstand</span> <b>${stand(s)} %</b></div>
+      ${wl>=0?`<div class="ap-zeile"><span>Warteliste</span> <b>Platz ${wl+1}</b></div>`:""}
     </section>
     <section class="ap-karte"><div class="h2-ueber">Kommende Prüfung</div>
-      ${termine.length?termine.map(t=>`<div class="ap-zeile"><span>${deWeekday(t.date)} ${isoDE(t.date)}</span><b>${esc(t.von||"")}</b></div>`).join(""):`<p class="h2-nichts">Kein Prüfungstermin eingetragen.</p>`}
+      ${termine.length?termine.map(t=>`<div class="ap-zeile"><span>${deWeekday(t.date)} ${isoDE(t.date)}</span> <b>${esc(t.von||"")}</b></div>`).join(""):`<p class="h2-nichts">Kein Prüfungstermin eingetragen.</p>`}
     </section>
     <section class="ap-karte"><div class="h2-ueber">Ergebnisse</div>
-      ${ergebnisse.length?ergebnisse.map(e=>`<div class="ap-zeile"><span>${isoDE(e.date)}${e.b197?" · B197":""}${e.pruefer?` · Prüfer ${esc(e.pruefer)}`:""}</span><b class="${e.result==="pass"?"ok":"nein"}">${e.result==="pass"?"bestanden":e.result==="fail"?"nicht bestanden":esc(e.result||"–")}</b></div>`).join(""):`<p class="h2-nichts">Noch keine Prüfung abgelegt.</p>`}
+      ${ergebnisse.length?ergebnisse.map(e=>`<div class="ap-zeile"><span>${isoDE(e.date)}${e.b197?" · B197":""}${e.pruefer?` · Prüfer ${esc(e.pruefer)}`:""}</span> <b class="${e.result==="pass"?"ok":"nein"}">${e.result==="pass"?"bestanden":e.result==="fail"?"nicht bestanden":esc(e.result||"–")}</b></div>`).join(""):`<p class="h2-nichts">Noch keine Prüfung abgelegt.</p>`}
     </section>
     <button class="at-neu" id="apEintragen">Prüfung eintragen</button>
     <button class="at-hist" id="apTafel">Zur Prüfungstafel ›</button>
@@ -11393,6 +11394,10 @@ function openAssignSlotSheet(date,von,bis,art,opts){
   let asHalf=false;
   document.querySelectorAll("#asDur .dur-opt").forEach(b=>b.addEventListener("click",()=>{ asHalf=b.dataset.half==="1"; document.querySelectorAll("#asDur .dur-opt").forEach(x=>x.classList.toggle("on",x===b)); }));
   const finishBooking=(sid)=>{
+    // Büro-Stopp: gleiche Rückfrage wie beim Termin über den Kalender (Prüfer Büro, 11.10.2026)
+    const stoppN=(_bueroNotizen[sid]||[]).filter(n=>n.art==="stopp");
+    if(stoppN.length&&["fahrstunde","sonder","nacht","schalt"].indexOf(curArt)>=0){ const st=DB.students.find(x=>x.id===sid);
+      if(!confirm("STOPP vom Büro bei "+(st?st.name:"diesem Schüler")+":\n\n"+stoppN.map(n=>n.text).join("\n")+"\n\nTrotzdem eintragen?"))return; }
     const effBis=curArt==="schalt"?min2hm(hm2min(von)+15):(asHalf?min2hm(hm2min(von)+45):bis);
     const fzRelevant=["fahrstunde","sonder","nacht","schalt"].indexOf(curArt)>=0;
     const doBook=(fzName)=>{ addLesson({date,von,bis:effBis,art:curArt,sid,fahrzeug:fzName}); closeSheet(); toast("Termin vergeben ✓"); if(opts.nachher)opts.nachher(); else routeKalender(); };
@@ -13891,6 +13896,7 @@ function _h2JetztHTML(e){
       <div class="h2-jetzt-text"><div class="h2-jetzt-name">${esc(e.name)}</div>${s?`<div class="h2-jetzt-fokus">Fokus: ${esc(autoNext(s).text)}</div>`:''}${e.fahrzeug?`<div class="h2-jetzt-fz">🚗 ${esc(e.fahrzeug)}</div>`:''}</div>
       ${s?`<div class="h2-jetzt-pct">${stand(s)}%</div>`:''}
     </div>
+    ${s&&typeof fristenHinweisHTML==="function"?fristenHinweisHTML(e.sid):""}
     <div class="h2-kontakt">${kontakt}</div>
     ${s&&startbar?`<button class="h2-haupt h2-akte h2-start" data-h2start="${esc(e.id)}">${_fmLaeuft(e.id)?"Fahrstunde fortsetzen":"Fahrstunde starten"} <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M13 6l6 6-6 6"/></svg></button>`:''}
     ${s&&!startbar?`<button class="h2-haupt h2-akte" data-h2akte="${esc(e.sid)}">Schülerakte öffnen <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M13 6l6 6-6 6"/></svg></button>`:''}
@@ -13948,7 +13954,7 @@ function _h2KachelnHTML(){
 // Heute bleibt aktuell: wird die App wieder sichtbar oder vergeht eine Minute, und hat sich „Jetzt dran“ oder das Datum geändert,
 // wird die Seite neu gezeichnet – aber nie, während ein Fenster offen ist oder getippt wird.
 let _h2Stand="";
-function _h2Signatur(){ const e=nextLessonEvents(1)[0], j=_h2JetztMin(); return todayISO()+"|"+(e?e.id+"|"+e.sid+"|"+e.date+"|"+(e.date===todayISO()&&hm2min(e.von)<=j):"-")+"|"+_h2Hinweise().map(h=>h.name+h.text).join(","); }
+function _h2Signatur(){ const e=nextLessonEvents(1)[0], j=_h2JetztMin(); return todayISO()+"|"+(e?e.id+"|"+e.sid+"|"+e.date+"|"+(e.date===todayISO()&&hm2min(e.von)<=j):"-")+"|"+_h2Hinweise().map(h=>h.name+h.text).join(",")+"|"+dayEvents(todayISO()).map(x=>x.id+x.von+x.status).join(","); }
 function _h2Auffrischen(){
   try{
     if(document.hidden||(($("#tbTitle")||{}).textContent)!=="Heute"||!document.querySelector("#view .heute2"))return;
@@ -13960,6 +13966,8 @@ function _h2Auffrischen(){
 document.addEventListener("visibilitychange",_h2Auffrischen);
 setInterval(_h2Auffrischen,60000);
 function routeDashboard(){
+  // Gesamtansicht Büro/Leitung: „Heute“ ist die Fahrschul-Startseite (auch beim Zurück), nie die eines einzelnen Fahrlehrers
+  if(_fsAgg&&typeof routeFahrschuleDashboard==="function"){ routeFahrschuleDashboard(); return; }
   ensureDB();
   $("#tbTitle").textContent="Heute"; setFab("termin"); view.scrollTop=0;
   const heute=todayISO();
@@ -14034,7 +14042,14 @@ function _fmLetzteNotiz(l){
   return fr?fr.note.trim():"";
 }
 function startFahrstunde(lid){
+  if(_fsAgg){ toast("In der Gesamtansicht gibt es keinen Fahrstunden-Modus"); return; }
   const l=(DB.lessons||[]).find(x=>x.id===lid); if(!l)return;
+  // Büro-Stopp oder gesperrte Reaktivierung: erst bewusst bestätigen (wie beim Termin eintragen)
+  const stoppN=(_bueroNotizen[l.sid]||[]).filter(n=>n.art==="stopp");
+  const fr=_schuelerFristen[l.sid], gesperrt=!!(fr&&window.KR&&KR.reaktInfo(fr).gesperrt);
+  if((stoppN.length||gesperrt)&&!_fmLaeuft(lid)){ const st=DB.students.find(x=>x.id===l.sid);
+    const grund=[stoppN.length?"STOPP vom Büro: "+stoppN.map(n=>n.text).join(" / "):"",gesperrt?"Reaktivierung offen – keine weiteren Fahrstunden, bis im Büro bezahlt ist.":""].filter(Boolean).join("\n");
+    if(!confirm((st?st.name:"Schüler")+":\n\n"+grund+"\n\nFahrstunde trotzdem starten?"))return; }
   const o=_fmLaden();
   if(!o||o.lid!==lid){
     if(o&&o.lid!==lid&&(Object.keys(o.stufe||{}).length||(o.notizen||[]).length)){
@@ -14048,6 +14063,7 @@ function startFahrstunde(lid){
 // Neu zeichnen nach einem Tipp, ohne nach oben zu springen
 function _fmNeu(lid){ const y=view.scrollTop; routeFahrstunde(lid); view.scrollTop=y; }
 function routeFahrstunde(lid){
+  if(_fsAgg){ routeDashboard(); return; }
   ensureDB();
   const l=(DB.lessons||[]).find(x=>x.id===lid), s=l&&DB.students.find(x=>x.id===l.sid);
   let o=_fmLaden();
@@ -14074,6 +14090,7 @@ function routeFahrstunde(lid){
       <div class="fm-kopf-text"><span class="fm-laeuft"><span class="h2-live"></span>Fahrstunde läuft</span><span class="fm-name">${esc(s.name)}</span></div>
       <div class="fm-uhr"><div class="fm-zeit">${_fmDauer(Date.now()-o.start)}</div><div class="fm-von">von ${_fmDauer(dauer*60000)}</div></div>
     </header>
+    ${typeof fristenHinweisHTML==="function"?fristenHinweisHTML(s.id):""}
     <section class="fm-ueben"><div class="fm-ueber">Heute üben</div><div class="fm-ueben-t">${esc(titel)}</div>${letzte?`<div class="fm-letzte">Letztes Mal: ${esc(letzte)}</div>`:''}</section>
     <div class="fm-zeile"><span class="fm-ueber">Bewerten · antippen</span><span class="fm-gruen">${gruen} von ${themen.length} grün</span></div>
     <section class="fm-themen">${themen.map(it=>{ const w=_fmWert(s,o,it.id), st=FM_STUFEN.find(x=>x.v===w)||FM_STUFEN[0];
