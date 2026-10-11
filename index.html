@@ -2262,6 +2262,121 @@ body:not(.light) .at-hist{color:var(--mint-ok);}
 .ap-zeile b.ok{color:var(--k-akzent);} .ap-zeile b.nein{color:#9E2F22;}
 body:not(.light) .ap-zeile b.ok{color:var(--mint-ok);} body:not(.light) .ap-zeile b.nein{color:#f6b0a3;}
 .schueler2 #homeFilterBtn{min-width:44px;min-height:44px;}
+/* Umbau Schritt 5a: übrige Seiten im gleichen Stil wie Heute/Schüler. Nur Aussehen.
+   #view bekommt data-seite2 (gesetzt in navInstallieren, siehe SEITE2_ROUTEN); die ID-Stärke schlägt die alten !important-Regeln. */
+#view[data-seite2]{--s2-karte:var(--k-karte);--s2-rand:var(--k-rand);--s2-tinte:var(--k-tinte);--s2-text2:var(--k-text2);--s2-on:var(--k-tinte);--s2-on-t:#fff;--s2-akzent:var(--k-akzent);--s2-trenn:#EEF2EC;}
+body:not(.light) #view[data-seite2]{--s2-karte:var(--surface);--s2-rand:var(--line);--s2-tinte:var(--txt);--s2-text2:#a9c2b7;--s2-on:#123A2A;--s2-on-t:#fff;--s2-akzent:var(--mint-ok,#7fbf95);--s2-trenn:var(--line-soft);}
+body.light:has(#view[data-seite2]){background:var(--k-grund) !important;}
+body.light:has(#view[data-seite2])::before{background:var(--k-grund) !important;}
+#view[data-seite2] .view-inner,#view[data-seite2] .view-inner *:not(svg):not(svg *){font-family:var(--k-font-text) !important;}
+#view[data-seite2] .view-inner{color:var(--s2-tinte);}
+/* Titel: Playfair, einfarbig */
+#view[data-seite2] .view-inner :is(.sec-h,.display,.detail-name,.plan-title,.empty h2),#view[data-seite2] .view-inner :is(.sec-h,.display,.detail-name,.plan-title,.empty h2) *{
+  font-family:var(--k-font-titel) !important;font-variant-numeric:lining-nums;color:var(--s2-tinte) !important;font-style:normal !important;}
+#view[data-seite2] .sec-h,#view[data-seite2] .display{font-size:30px !important;font-weight:700 !important;letter-spacing:-.01em !important;line-height:1.15 !important;}
+#view[data-seite2] .detail-name,#view[data-seite2] .plan-title{font-weight:700 !important;letter-spacing:-.01em !important;}
+/* Kleine Abschnitts-Überschriften wie auf Heute */
+#view[data-seite2] .blk-h,#view[data-seite2] .res-block h4,#view[data-seite2] .tm-label,#view[data-seite2] .ns-label,#view[data-seite2] .nav-tag,#view[data-seite2] .pf-block-h,
+#view[data-seite2] .az-sec-h,#view[data-seite2] .lage-lab,#view[data-seite2] .cc-h,#view[data-seite2] .pr-sub{
+  font-size:12px !important;font-weight:800 !important;letter-spacing:.08em !important;text-transform:uppercase;color:var(--s2-text2) !important;}
+#view[data-seite2] .muted-p,#view[data-seite2] .tc-sub,#view[data-seite2] .na-sub,#view[data-seite2] .rc-sub,#view[data-seite2] .wait-since,#view[data-seite2] .pr-meta{color:var(--s2-text2) !important;}
+/* Karten: weiß, feiner Rand, runde Ecken, kein Schatten */
+#view[data-seite2] :is(.s-card,.res-block,.acc,.tile,.toggle-row,.d-tile,.stat,.mini-stat,.termin-card,.wait-card,.month-bars,.na-card,.nav-action,.theorie-card,.heute-card,.nex-card,.mini-dash,.cc-card,.az-block,.pf-block,.ready-card,.q-card,.cd-card,.pr-summary,.todo-item,.std){
+  background:var(--s2-karte) !important;border:1px solid var(--s2-rand) !important;box-shadow:none !important;border-radius:18px !important;}
+#view[data-seite2] .std{border-radius:14px !important;}
+#view[data-seite2] .std.filled{background:var(--k-akzent-hell) !important;border-color:var(--s2-akzent) !important;}
+body:not(.light) #view[data-seite2] .std.filled{background:var(--orange-soft) !important;}
+#view[data-seite2] .sonder-row .std.filled{background:var(--clay-soft) !important;border-color:var(--clay) !important;}
+#view[data-seite2] .nex-card::before{background:var(--s2-akzent) !important;}
+/* Chips und Reiter: weiß mit Rand, aktiv dunkel (wie die Sortierung der Schülerliste) */
+#view[data-seite2] :is(.pill,.f-chip,.pr-chip,.pt-tab,.chip,.mini-btn,.s-form-chip,.cal-kw){
+  background:var(--s2-karte) !important;border:1px solid var(--s2-rand) !important;color:var(--s2-tinte) !important;box-shadow:none !important;font-weight:700 !important;}
+#view[data-seite2] :is(button.pill,button.f-chip,button.pr-chip,button.pt-tab,button.chip,a.chip,.mini-btn,button.s-form-chip){min-height:44px;}
+#view[data-seite2] a.chip{display:inline-flex;align-items:center;}
+#view[data-seite2] :is(.pill,.f-chip,.pr-chip,.pt-tab,.chip,.s-form-chip,.seg-i):is(.on,.sel),#view[data-seite2] .chip.chip-goal{
+  background:var(--s2-on) !important;border-color:var(--s2-on) !important;color:var(--s2-on-t) !important;}
+body:not(.light) #view[data-seite2] :is(.pill,.f-chip,.pr-chip,.pt-tab,.chip,.s-form-chip,.seg-i):is(.on,.sel){border-color:var(--k-mint) !important;}
+#view[data-seite2] :is(.pill,.f-chip,.pr-chip,.pt-tab,.chip,.seg-i):is(.on,.sel) *{color:inherit !important;}
+#view[data-seite2] .seg{background:var(--s2-karte) !important;border:1px solid var(--s2-rand) !important;box-shadow:none !important;}
+#view[data-seite2] .seg{display:flex;gap:2px;}
+#view[data-seite2] .seg-i{min-height:44px;flex:1 1 auto;min-width:0;padding:0 6px;font-size:13px;font-weight:700 !important;background:transparent !important;border:0;color:var(--s2-tinte) !important;}
+#view[data-seite2] .seg-i.on{background:var(--s2-on) !important;border-color:var(--s2-on) !important;color:var(--s2-on-t) !important;}
+/* Knöpfe: Hauptknopf grün, eckig-rund wie auf Heute */
+#view[data-seite2] .btn{min-height:48px;border-radius:16px !important;font-weight:800 !important;}
+#view[data-seite2] .btn-primary{background:var(--k-akzent) !important;color:#fff !important;}
+#view[data-seite2] .btn-ghost{background:var(--s2-karte) !important;border:1px solid var(--s2-rand) !important;color:var(--s2-tinte) !important;}
+#view[data-seite2] .back-btn{min-height:44px;}
+#view[data-seite2] .search-wrap{background:var(--s2-karte) !important;border:1px solid var(--s2-rand) !important;box-shadow:none !important;min-height:48px;}
+#view[data-seite2] input:not([type="checkbox"]):not([type="radio"]):not([type="range"]),#view[data-seite2] select,#view[data-seite2] textarea{background:var(--s2-karte) !important;border:1px solid var(--s2-rand) !important;color:var(--s2-tinte) !important;border-radius:14px !important;}
+#view[data-seite2] .o{color:inherit !important;}
+/* 5a Feinheiten: breitere Schrift darf nichts über den Rand schieben */
+#view[data-seite2] .az-times input[type=time]{min-width:0;padding:10px 8px;}
+#view[data-seite2] .cal-counter{gap:8px;}
+#view[data-seite2] .cc-card{padding:12px;min-width:0;}
+#view[data-seite2] .cc-row{flex-wrap:wrap;row-gap:6px;}
+#view[data-seite2] .cc-big{font-family:var(--k-font-text) !important;font-weight:800;font-size:24px;line-height:1.15;color:var(--s2-tinte);}
+#view[data-seite2] .cc-big.free{color:var(--s2-akzent);}
+#view[data-seite2] .cc-sep{background:var(--s2-rand);}
+/* Archiv-Filter und To-do-Reiter: Chips wie überall */
+#view[data-seite2] .pause-days{flex-wrap:wrap;}
+#view[data-seite2] .pday,#view[data-seite2] .todo-tab{min-height:44px;border-radius:999px !important;white-space:nowrap;background:var(--s2-karte) !important;border:1px solid var(--s2-rand) !important;color:var(--s2-tinte) !important;font-weight:700;}
+#view[data-seite2] .pday.on,#view[data-seite2] .todo-tab.on{background:var(--s2-on) !important;border-color:var(--s2-on) !important;color:var(--s2-on-t) !important;}
+/* Lage-Karten der Akte (Stand, Fokus) als ruhige Karten */
+#view[data-seite2] .lage{background:var(--s2-karte) !important;border:1px solid var(--s2-rand) !important;border-radius:18px !important;}
+#view[data-seite2] .lage-focus{border-left:4px solid var(--s2-akzent) !important;}
+#view[data-seite2] svg text{font-family:var(--k-font-text);}
+#view[data-seite2] .lage-focus{background:var(--s2-karte) !important;border:1px solid var(--s2-rand);border-left:4px solid var(--s2-akzent);border-radius:14px !important;}
+#view[data-seite2] .lage-miss{background:var(--s2-karte) !important;border:1px solid var(--s2-rand);border-left:4px solid var(--rot);border-radius:14px !important;}
+#view[data-seite2] .cal-fchip{min-height:44px;border-radius:999px !important;background:var(--s2-karte) !important;border:1px solid var(--s2-rand) !important;color:var(--s2-tinte) !important;}
+#view[data-seite2] .cal-fchip.on{background:var(--s2-on) !important;border-color:var(--s2-on) !important;color:var(--s2-on-t) !important;}
+#view[data-seite2] .search-wrap input{border:0 !important;background:transparent !important;}
+/* Plus-Knöpfe in der Schrift des Entwurfs */
+.fab,.fab *:not(svg):not(svg *),.cal-fab,.cal-fab *:not(svg):not(svg *){font-family:var(--k-font-text) !important;font-weight:800 !important;}
+/* Verdienst-Karte */
+#view[data-seite2] .vd-card,#view[data-seite2] .thi-card,#view[data-seite2] .th-goal{border-radius:18px !important;background:var(--s2-karte) !important;border:1px solid var(--s2-rand) !important;box-shadow:none !important;}
+#view[data-seite2] .thi-card.future{border-style:dashed !important;}
+/* 5a: lange Wörter und Namen dürfen nicht über den Rand (breitere Schrift) */
+#view[data-seite2] .sec-h,#view[data-seite2] .detail-name{white-space:normal !important;overflow-wrap:break-word;hyphens:auto;min-width:0;}
+#view[data-seite2] .skill>div:first-child{min-width:0;}
+#view[data-seite2] .skill .sk-t{overflow-wrap:break-word;hyphens:auto;min-width:0;}
+#view[data-seite2] .cal-filters{flex-wrap:wrap;overflow-x:visible;}
+
+/* 5a Kontrast: blasse Nebentexte auf den neuen weißen Karten gut lesbar (hell ≥ 4.5:1) */
+body.light #view[data-seite2]{--muted:#55645A;--faint:#5C6A61;--gruen-bright:#1E6B46;--orange:#1E6B46;--akzent-bright:#1E6B46;--mint-ok:#1E6B46;--gold:#7E5410;}
+body:not(.light) #view[data-seite2]{--faint:#a3b2a8;--gold:#e3bd55;}
+body:not(.light) #view[data-seite2] :is(.acc-h .nr,.slot-free,.sim-plus,.iBtn,#histAddBtn,.cw-free-p,.cw-fz){color:#8fd3a6 !important;}
+#view[data-seite2] .cw-fz{opacity:1;}
+#view[data-seite2] .az-times label,#view[data-seite2] .cw-wd,#view[data-seite2] .ct-hl,#view[data-seite2] .cm-num,#view[data-seite2] .th-val,#view[data-seite2] .thi-k,#view[data-seite2] .ms-s,#view[data-seite2] .wd-l{color:var(--s2-text2) !important;}
+#view[data-seite2] .th-mark.t-cur .th-val{color:var(--s2-akzent) !important;}
+body.light #view[data-seite2] .th-mark.t-gold .th-val,body.light #view[data-seite2] .th-mark.t-bonus .th-val{color:#7E5410 !important;}
+#view[data-seite2] .thermo-base{background:#3f4a51 !important;color:#fff !important;}
+body.light #view[data-seite2] .btn-danger{color:#9E2F22 !important;border-color:rgba(158,47,34,.45) !important;}
+body.light #view[data-seite2] .ready-pct.ok{color:#1E6B46 !important;background:var(--k-akzent-hell) !important;}
+#view[data-seite2] .wait-days[style*="--gruen"] .wd-n,#view[data-seite2] .wait-days[style*="--gruen"] .wd-l{color:#fff !important;opacity:1 !important;}
+body:not(.light) #view[data-seite2] .wait-days:not([style*="--gruen"]) .wd-n{color:#8fd3a6 !important;}
+body.light #view[data-seite2] .wait-days:not([style*="--gruen"]) .wd-l{color:var(--s2-text2) !important;}
+#view[data-seite2] .vortest-big .vb-sub{color:#fff !important;}
+/* Zugeklappte Abschnitte: Innenabstand weg, sonst schaut unten eine Kante der inneren Karte heraus */
+#view[data-seite2] .acc:not(.open) .acc-inner{padding-top:0 !important;padding-bottom:0 !important;}
+/* Historie: Vergangenes nicht mehr auf halbe Deckkraft (unlesbar), sondern ruhig grau – „vergangen“ steht im Text */
+#view[data-seite2] .htl-item[style*="opacity:.5"]{opacity:1 !important;}
+#view[data-seite2] .htl-item[style*="opacity:.5"] .htl-text{color:var(--s2-text2);}
+#view[data-seite2] .htl-date{color:var(--s2-text2) !important;}
+#view[data-seite2] .wait-days[style*="--gruen"]{background:var(--k-akzent) !important;}
+#view[data-seite2] .hist-add button{background:var(--k-akzent) !important;color:#fff !important;min-height:44px;}
+body:not(.light) #view[data-seite2] #histAddBtn{color:#fff !important;}
+#view[data-seite2] .az-add-pause{color:var(--s2-akzent) !important;}
+#view[data-seite2] .mb-val,#view[data-seite2] .cw-fz[style]{color:var(--s2-tinte) !important;}
+body.light #view[data-seite2] span[style*="color:var(--gelb)"]{color:#7A4508 !important;}
+body.light #view[data-seite2] span[style*="color:var(--gruen)"]{color:#1E6B46 !important;}
+body.light #view[data-seite2] span[style*="color:var(--rot)"]{color:#9E2F22 !important;}
+/* Kopfleisten-Titel: nie mitten im Wort umbrechen (z. B. „Ausbildungsplan“ bei 360 px) */
+.topbar .tb-title{overflow-wrap:normal !important;word-break:normal !important;font-family:var(--k-font-text) !important;font-weight:800 !important;}
+@media (max-width:380px){.topbar .tb-title.tb-lang{font-size:12px !important;letter-spacing:-.02em !important;}}
+@media (max-width:420px){.topbar .tb-title{font-size:14px !important;font-weight:700 !important;letter-spacing:-.01em !important;hyphens:auto !important;-webkit-hyphens:auto !important;}}
+/* Reiterleiste unten in Manrope wie der Entwurf */
+.tabbar .tab-i,.tabbar .tab-i *:not(svg):not(svg *){font-family:var(--k-font-text) !important;}
+.tabbar .tab-i{font-weight:700 !important;letter-spacing:0 !important;}
 /* Tab-Leiste unten — ruft ausschließlich bestehende Routen auf */
 .tabbar{position:absolute;left:0;right:0;bottom:0;z-index:24;display:flex;gap:2px;
   padding:6px 10px calc(10px + env(safe-area-inset-bottom));
@@ -6678,7 +6793,7 @@ window.addEventListener("load", () => {
 const STORE_KEY="serband-app-v1";
 /* Build-Version: bei jeder Auslieferung hier das Datum aktualisieren.
    Wird in den Einstellungen angezeigt + für den Update-Hinweis genutzt. */
-const APP_VERSION="2026.10.11.4";
+const APP_VERSION="2026.10.11.5";
 try{const f=document.getElementById("drawerFoot"); if(f)f.textContent="Fahrlehrer-Kompass · Version "+APP_VERSION;}catch(e){}
 // Nutzungsbedingungen & Haftungsausschluss (Bereich: rechtliche Absicherung) - Version hochzählen
 // und alle Nutzer müssen erneut zustimmen, sobald sich der Text inhaltlich ändert.
@@ -10789,7 +10904,7 @@ function routeSettings(){
       </div></div>
     </div>
 
-    <div style="text-align:center;padding:14px 0 4px;color:var(--muted);font-size:11.5px;opacity:.6;">Kompass · Version ${APP_VERSION}</div>
+    <div style="text-align:center;padding:14px 0 4px;color:var(--muted);font-size:11.5px;">Kompass · Version ${APP_VERSION}</div>
   </div>`;
   $("#expBtn").addEventListener("click",()=>{
     try{ _backupHerunterladen(""); localStorage.setItem("serband-backup-stamp",Date.now()+""); toast("Backup erstellt ✓"); }
@@ -13147,6 +13262,7 @@ function routePruefungen(){
 // Serien-Ansicht 'Alle Prüfungen diese Woche' (Bereich 7, Punkt 7): kompakter Überblick für die
 // Wochenplanung, tagesweise gruppiert. Tage mit mehreren Prüfungen werden hervorgehoben.
 function routePruefungenWoche(){
+  $("#tbTitle").textContent="Diese Woche"; setFab(false); // vorher blieb der Titel der vorigen Seite stehen
   const wk=_wocheVonBis();
   const tage=[]; let cur=wk.von;
   while(cur<=wk.bis){ tage.push(cur); cur=addDays(cur,1); }
@@ -13980,7 +14096,11 @@ document.addEventListener("visibilitychange",_h2Auffrischen);
 setInterval(_h2Auffrischen,60000);
 function routeDashboard(){
   // Gesamtansicht Büro/Leitung: „Heute“ ist die Fahrschul-Startseite (auch beim Zurück), nie die eines einzelnen Fahrlehrers
-  if(_fsAgg&&typeof routeFahrschuleDashboard==="function"){ routeFahrschuleDashboard(); return; }
+  if(_fsAgg&&typeof routeFahrschuleDashboard==="function"){
+    // Den eben gemerkten „routeDashboard“ nicht doppelt im Zurück-Stapel lassen: ein Zurück soll genügen
+    try{ if(!_navFahrt&&_navStack.length&&_navStack[_navStack.length-1].name==="routeDashboard")_navStack.pop(); }catch(e){}
+    routeFahrschuleDashboard(); return;
+  }
   ensureDB();
   $("#tbTitle").textContent="Heute"; setFab("termin"); view.scrollTop=0;
   const heute=todayISO();
@@ -14381,7 +14501,7 @@ function _verdienstModulHTMLContent(){
   const curBot=Math.round(Math.min(verdientUE,MAX)/MAX*TUBE)+26;
   const marksHTML=marks.map(ue=>{
     const bot=Math.round(ue/MAX*TUBE)+26;
-    const tooClose=Math.abs(ue-Math.min(verdientUE,MAX))<18&&ue!==0&&ue!==300;
+    const tooClose=Math.abs(ue-Math.min(verdientUE,MAX))<18&&ue!==300; // auch „0 UE“ ausblenden, sonst liegt es unter dem aktuellen Wert
     if(tooClose)return '';
     const cls=ue===_bonusUE?'t-bonus':ue===MAX?'t-gold':'';
     return `<div class="th-mark ${cls}" style="bottom:${bot}px"><div class="th-tick"></div><div class="th-val">${ue} UE</div></div>`;
@@ -15520,6 +15640,16 @@ function navZurueck(){
   _navFahrt=false;
   _navAktualisiereKnopf();
 }
+// Umbau Schritt 5a: diese Seiten bekommen den neuen Look (nur Aussehen, siehe CSS „#view[data-seite2]“).
+// Das Merkmal sitzt an #view, damit es ein Neuzeichnen innerhalb der Seite übersteht.
+const SEITE2_ROUTEN=new Set(["routeKalender","routePruefungen","routePruefungenWoche","routeTodos","routeStats","routeNichtBesteher","routeArchive","routeSettings",
+  "routeWaitlist","routeArbeitszeit","routeDetail","routePlan","routeNotes","routeHistorie","routeExam","routeAkteTermine","routeAktePruefung",
+  "routePrueferListe","routePruefer","routePrueferAkte","routeFCMissing","routeFCAbgabe","routeSchuelerTexte","routePlanVorlagen","routePlanVorlageEdit"]);
+function _seite2Markieren(name){
+  const v=document.getElementById("view"); if(!v)return;
+  // Nur die zuletzt aufgerufene Seite zählt: eine Seite, die intern eine andere aufruft, setzt das Merkmal danach neu.
+  if(SEITE2_ROUTEN.has(name))v.setAttribute("data-seite2",""); else v.removeAttribute("data-seite2");
+}
 (function navInstallieren(){
   const ueberspringen=new Set(["routeKalenderRefresh"]);
   Object.getOwnPropertyNames(window)
@@ -15539,6 +15669,7 @@ function navZurueck(){
           else{ _navStack.push({name,fn:orig,args}); if(_navStack.length>_NAV_MAX)_navStack.shift(); }
         }
         const r=orig.apply(this,arguments);
+        _seite2Markieren(name);
         _navAktualisiereKnopf();
         return r;
       };
@@ -15585,9 +15716,9 @@ routeDashboard();
 <script>
 /* Redesign v2: markiert nur den aktiven Tab anhand des Seitentitels — reine Anzeige, keine Logik. */
 (function(){
-  const map={"Heute":"heute","Start":"heute","Fahrstunde":"heute","Nach der Stunde":"heute","Termine":"schueler","Prüfung":"schueler","Schüler":"schueler","Kalender":"kalender","Prüfungen":"pruefungen","Prüfer":"pruefungen","Warteliste":"schueler","Ausbildungsplan":"schueler","Notizen":"schueler","Persönlichkeitsbogen":"schueler","Persönlichkeitsprofil":"schueler","Prüfung eintragen":"schueler","Risiko-Themen":"schueler","Schülerdatei":"schueler","Historie":"schueler","Ergebnis eintragen":"schueler","Neuer Schüler":"schueler","Schüler bearbeiten":"schueler","Bestehens-Daten":"schueler"};
+  const map={"Heute":"heute","Start":"heute","Fahrstunde":"heute","Nach der Stunde":"heute","Termine":"schueler","Prüfung":"schueler","Schüler":"schueler","Kalender":"kalender","Prüfungen":"pruefungen","Diese Woche":"pruefungen","Prüfer":"pruefungen","Warteliste":"schueler","Ausbildungsplan":"schueler","Notizen":"schueler","Persönlichkeitsbogen":"schueler","Persönlichkeitsprofil":"schueler","Prüfung eintragen":"schueler","Risiko-Themen":"schueler","Schülerdatei":"schueler","Historie":"schueler","Ergebnis eintragen":"schueler","Neuer Schüler":"schueler","Schüler bearbeiten":"schueler","Bestehens-Daten":"schueler"};
   const t=document.getElementById("tbTitle"); if(!t)return;
-  const paint=()=>{ const k=map[(t.textContent||"").trim()]||"mehr"; document.querySelectorAll(".tab-i").forEach(b=>b.classList.toggle("on",b.dataset.tab===k)); };
+  const paint=()=>{ const k=map[(t.textContent||"").trim()]||"mehr"; t.classList.toggle("tb-lang",!/\s/.test((t.textContent||"").trim())&&(t.textContent||"").trim().length>13); /* langes Einzelwort: etwas kleiner statt abschneiden */ document.querySelectorAll(".tab-i").forEach(b=>b.classList.toggle("on",b.dataset.tab===k)); };
   new MutationObserver(paint).observe(t,{childList:true,characterData:true,subtree:true});
   paint();
 })();
