@@ -2401,6 +2401,8 @@ body.light #view[data-seite2] .todo-item.done .todo-txt{color:#6B776F !important
 /* Kopfleisten-Titel: nie mitten im Wort umbrechen (z. B. „Ausbildungsplan“ bei 360 px) */
 .topbar .tb-title{overflow-wrap:normal !important;word-break:normal !important;font-family:var(--k-font-text) !important;font-weight:800 !important;}
 @media (max-width:380px){.topbar .tb-title.tb-lang{font-size:12px !important;letter-spacing:-.02em !important;}}
+/* Sehr lange Einzelwörter („Persönlichkeitsbogen“) passen bis 400 px nicht in eine Zeile: dort wie früher zweizeilig, mit Trennstrich */
+@media (max-width:400px){.topbar .tb-title.tb-sehrlang{font-size:13px !important;overflow-wrap:anywhere !important;hyphens:auto !important;-webkit-hyphens:auto !important;white-space:normal !important;}}
 @media (max-width:420px){.topbar .tb-title{font-size:14px !important;font-weight:700 !important;letter-spacing:-.01em !important;hyphens:auto !important;-webkit-hyphens:auto !important;}}
 /* Reiterleiste unten in Manrope wie der Entwurf */
 .tabbar .tab-i,.tabbar .tab-i *:not(svg):not(svg *){font-family:var(--k-font-text) !important;}
@@ -7482,6 +7484,7 @@ function setFab(on){
   if(on==="termin"&&_fsAgg)on=false; // Gesamtansicht: kein eigener Termin
   _fabArt=on==="termin"?"termin":"schueler";
   const t=f.querySelector("span"); if(t)t.textContent=_fabArt==="termin"?"Termin":"Neuer Schüler";
+  f.setAttribute("aria-label",_fabArt==="termin"?"Neuer Termin":"Neuer Schüler"); // auch wenn nur das Plus sichtbar ist
   f.style.display=on?"flex":"none";
 }
 $("#fab").addEventListener("click",()=>{ if(_fabArt==="termin")openNeuerTerminSheet(); else formView(null); });
@@ -15663,7 +15666,7 @@ function navZurueck(){
   const ziel=_navStack[_navStack.length-1];
   if(!ziel)return;
   _navFahrt=true;
-  try{ ziel.fn.apply(null,ziel.args); }
+  try{ ziel.fn.apply(null,ziel.args); _seite2Markieren(ziel.name); } // Look der Zielseite auch beim Zurück setzen
   catch(e){ console.warn("[Kompass] Zurueck fehlgeschlagen:",e.message); }
   _navFahrt=false;
   _navAktualisiereKnopf();
@@ -15746,7 +15749,7 @@ routeDashboard();
 (function(){
   const map={"Heute":"heute","Start":"heute","Fahrstunde":"heute","Nach der Stunde":"heute","Termine":"schueler","Prüfung":"schueler","Schüler":"schueler","Kalender":"kalender","Prüfungen":"pruefungen","Diese Woche":"pruefungen","Prüfer":"pruefungen","Warteliste":"schueler","Ausbildungsplan":"schueler","Notizen":"schueler","Persönlichkeitsbogen":"schueler","Persönlichkeitsprofil":"schueler","Prüfung eintragen":"schueler","Risiko-Themen":"schueler","Schülerdatei":"schueler","Historie":"schueler","Ergebnis eintragen":"schueler","Neuer Schüler":"schueler","Schüler bearbeiten":"schueler","Bestehens-Daten":"schueler"};
   const t=document.getElementById("tbTitle"); if(!t)return;
-  const paint=()=>{ const k=map[(t.textContent||"").trim()]||"mehr"; t.classList.toggle("tb-lang",!/\s/.test((t.textContent||"").trim())&&(t.textContent||"").trim().length>13); /* langes Einzelwort: etwas kleiner statt abschneiden */ document.querySelectorAll(".tab-i").forEach(b=>b.classList.toggle("on",b.dataset.tab===k)); };
+  const paint=()=>{ const k=map[(t.textContent||"").trim()]||"mehr"; t.classList.toggle("tb-lang",!/\s/.test((t.textContent||"").trim())&&(t.textContent||"").trim().length>13); t.classList.toggle("tb-sehrlang",!/\s/.test((t.textContent||"").trim())&&(t.textContent||"").trim().length>=19); /* langes Einzelwort: etwas kleiner statt abschneiden */ document.querySelectorAll(".tab-i").forEach(b=>b.classList.toggle("on",b.dataset.tab===k)); };
   new MutationObserver(paint).observe(t,{childList:true,characterData:true,subtree:true});
   paint();
 })();
