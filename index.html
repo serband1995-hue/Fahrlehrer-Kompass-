@@ -2122,6 +2122,75 @@ body:not(.light) .h2-knopf,body:not(.light) .h2-mini{background:#0F2E22;border-c
 .heute2 .fc-missing-link,.heute2 .cap-card,.heute2 #capCard{min-height:48px;}
 /* Querformat: rechts Platz für den Plus-Knopf, damit er keine Knöpfe verdeckt */
 @media (orientation:landscape) and (max-height:520px){ .heute2{padding-right:calc(var(--pad,16px) + 72px) !important;} .tabbar{background:var(--bg) !important;} }
+/* Umbau Schritt 3: Fahrstunden-Modus (dunkel, ohne Reiterleiste) und „Nach der Stunde“ (hell wie Heute) */
+body:has(#view .fahrmodus) .tabbar,body:has(#view .fahrmodus) #fab{display:none !important;}
+body:has(#view .fahrmodus){background:#0F1A14 !important;}
+body:has(#view .fahrmodus)::before,body:has(#view .fahrmodus)::after{display:none;}
+body:has(#view .fertig2) #tbTitle{visibility:visible;}
+body.light:has(#view .fertig2){background:var(--k-grund) !important;}
+.fahrmodus{background:#0F1A14;color:#fff;display:flex;flex-direction:column;gap:14px;padding-top:16px !important;padding-bottom:40px !important;min-height:100%;}
+.fahrmodus,.fahrmodus *:not(svg):not(svg *){font-family:var(--k-font-text) !important;}
+.fahrmodus .fm-zeit,.fahrmodus .fm-ueben-t{font-family:var(--k-font-titel) !important;font-variant-numeric:lining-nums tabular-nums;}
+.fm-kopf{display:flex;align-items:center;gap:12px;}
+.fm-kopf-text{display:flex;flex-direction:column;min-width:0;}
+.fm-laeuft{display:flex;align-items:center;gap:6px;font-size:12px;font-weight:800;letter-spacing:.08em;text-transform:uppercase;color:var(--k-mint-hell);}
+.fm-name{font-size:20px;font-weight:800;overflow-wrap:anywhere;}
+.fm-uhr{margin-left:auto;text-align:right;flex:0 0 auto;}
+.fm-zeit{font-size:26px;font-weight:700;}
+.fm-von{font-size:11.5px;font-weight:700;color:#B9C8BE;}
+.fm-ueben{background:#1A2A21;border-radius:22px;padding:16px;display:flex;flex-direction:column;gap:6px;}
+.fm-ueber{font-size:12px;font-weight:800;letter-spacing:.08em;text-transform:uppercase;color:var(--k-mint-hell);}
+.fm-ueben-t{font-size:22px;font-weight:700;line-height:1.25;}
+.fm-letzte{font-size:13.5px;color:#C8D6CC;overflow-wrap:anywhere;}
+.fm-zeile{display:flex;justify-content:space-between;align-items:baseline;gap:10px;}
+.fm-gruen{font-size:12px;font-weight:700;color:#B9C8BE;}
+.fm-themen{display:flex;flex-direction:column;gap:8px;}
+.fm-thema{min-height:56px;border-radius:16px;border:1px solid #263A2F;background:#15221B;color:#fff;font-size:15px;font-weight:700;display:flex;align-items:center;gap:12px;padding:6px 14px;text-align:left;width:100%;}
+.fm-thema-t{flex:1;min-width:0;overflow-wrap:anywhere;}
+.fm-punkt{width:14px;height:14px;border-radius:50%;flex:0 0 auto;background:#5E6E64;}
+.fm-chip{font-size:12.5px;font-weight:800;padding:6px 12px;border-radius:999px;background:#263A2F;color:#C8D6CC;flex:0 0 auto;}
+.fm-thema[data-wert="gelb"] .fm-punkt{background:#F2B632;} .fm-thema[data-wert="gelb"] .fm-chip{background:#3D3016;color:#F7D37A;}
+.fm-thema[data-wert="gruen"] .fm-punkt{background:var(--k-mint);} .fm-thema[data-wert="gruen"] .fm-chip{background:#173A28;color:#9FE6BC;}
+.fm-thema[data-wert="rot"] .fm-punkt{background:#E5715E;} .fm-thema[data-wert="rot"] .fm-chip{background:#3D1E19;color:#F6B0A3;}
+.fm-mehr{min-height:48px;border-radius:14px;border:1px dashed #2E4237;background:transparent;color:var(--k-mint-hell);font-size:14px;font-weight:800;}
+.fm-notizen{display:flex;flex-direction:column;gap:8px;}
+.fm-chips{display:flex;flex-wrap:wrap;gap:8px;}
+.fm-notiz{min-height:44px;padding:0 14px;border-radius:999px;border:1px solid #263A2F;background:#15221B;color:#E3EDE6;font-size:13.5px;font-weight:700;max-width:100%;overflow-wrap:anywhere;}
+.fm-notiz.an{background:#173A28;border-color:var(--k-mint);color:#9FE6BC;}
+.fm-fuss{display:flex;gap:10px;margin-top:6px;}
+.fm-abbrechen{flex:0 0 auto;min-height:56px;padding:0 18px;border-radius:18px;border:1px solid #3A2B22;background:#261B15;color:#F4C7A8;font-size:14px;font-weight:800;}
+.fm-fertig{flex:1;min-height:56px;border-radius:18px;border:0;background:var(--k-mint);color:#0E2A1B;font-size:17px;font-weight:800;}
+/* Nach der Stunde */
+.fertig2 .sf-kopf{display:flex;flex-direction:column;align-items:center;gap:8px;text-align:center;}
+.sf-haken{width:64px;height:64px;border-radius:22px;background:var(--k-akzent);color:#fff;display:flex;align-items:center;justify-content:center;font-size:30px;font-weight:800;animation:sfRein .5s cubic-bezier(.2,.9,.3,1.3) both;}
+@keyframes sfRein{from{transform:scale(.6);opacity:0}to{transform:scale(1);opacity:1}}
+@media (prefers-reduced-motion:reduce){.sf-haken{animation:none;}}
+.heute2 .sf-titel{font-size:26px;margin:0;}
+.sf-info{font-size:14px;font-weight:600;color:var(--h-text2);}
+.sf-info b{color:var(--h-akzent);}
+.sf-karte{background:var(--h-karte);border:1px solid var(--h-rand);border-radius:20px;padding:14px 16px;display:flex;flex-direction:column;gap:10px;}
+.sf-karte-t{font-size:15px;font-weight:800;}
+.sf-chips{display:flex;flex-wrap:wrap;gap:6px;}
+.sf-chip{padding:6px 10px;border-radius:999px;font-size:13px;font-weight:700;}
+.sf-chip.gruen{background:var(--k-akzent-hell);color:#14502F;}
+.sf-chip.gelb{background:var(--h-gelb);color:var(--h-gelb-t);}
+.sf-chip.rot{background:var(--h-rot);color:var(--h-rot-t);}
+body:not(.light) .sf-chip.gruen{background:#173A28;color:#9FE6BC;}
+.sf-knopf{min-height:58px;border-radius:18px;border:1px solid var(--h-rand);background:var(--h-karte);color:var(--h-tinte);font-size:15px;font-weight:800;display:flex;align-items:center;gap:12px;padding:0 16px;text-align:left;width:100%;}
+.sf-knopf-t{flex:1;}
+.sf-status{font-size:12.5px;font-weight:800;padding:6px 10px;border-radius:999px;}
+.sf-status.gruen{background:var(--k-akzent-hell);color:#14502F;}
+.sf-status.gelb{background:var(--h-gelb);color:var(--h-gelb-t);}
+.sf-protokoll{background:var(--k-whatsapp);color:#fff;border:0;}
+.sf-protokoll.gesendet{background:var(--k-akzent-hell);color:#14502F;}
+.sf-naechster{font-size:14px;font-weight:700;color:var(--h-akzent);}
+.sf-slots{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px;}
+.sf-slot{min-height:58px;border-radius:14px;background:var(--h-grund,var(--k-grund));border:1px solid var(--h-rand);color:var(--h-tinte);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;font-size:12px;font-weight:700;}
+body:not(.light) .sf-slot{background:var(--surface-2);}
+.sf-slot b{font-size:15px;font-weight:800;}
+.sf-heute{min-height:56px;border-radius:18px;background:var(--k-jetzt);color:#fff;font-size:16px;font-weight:800;border:0;width:100%;padding:8px 14px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;}
+.sf-heute-n{font-size:12.5px;font-weight:700;color:#B9C8BE;}
+body:not(.light) .sf-heute{background:#123A2A;}
 /* Tab-Leiste unten — ruft ausschließlich bestehende Routen auf */
 .tabbar{position:absolute;left:0;right:0;bottom:0;z-index:24;display:flex;gap:2px;
   padding:6px 10px calc(10px + env(safe-area-inset-bottom));
@@ -6537,7 +6606,7 @@ window.addEventListener("load", () => {
 const STORE_KEY="serband-app-v1";
 /* Build-Version: bei jeder Auslieferung hier das Datum aktualisieren.
    Wird in den Einstellungen angezeigt + für den Update-Hinweis genutzt. */
-const APP_VERSION="2026.10.11.2";
+const APP_VERSION="2026.10.11.3";
 try{const f=document.getElementById("drawerFoot"); if(f)f.textContent="Fahrlehrer-Kompass · Version "+APP_VERSION;}catch(e){}
 // Nutzungsbedingungen & Haftungsausschluss (Bereich: rechtliche Absicherung) - Version hochzählen
 // und alle Nutzer müssen erneut zustimmen, sobald sich der Text inhaltlich ändert.
@@ -11105,10 +11174,12 @@ function openEventEdit(id,overrides){
   });
 }
 /* Freien Slot an Schüler vergeben */
-function openAssignSlotSheet(date,von,bis,art){
-  ensureDB();
+function openAssignSlotSheet(date,von,bis,art,opts){
+  ensureDB(); opts=opts||{};
   let curArt=art||"fahrstunde";
   const cand=activeStudents().sort((a,b)=>a.name.localeCompare(b.name,'de'));
+  // Aus „Nach der Stunde“: dieser Schüler steht oben, nach dem Buchen geht es dorthin zurück.
+  if(opts.sid){ const i=cand.findIndex(x=>x.id===opts.sid); if(i>0)cand.unshift(cand.splice(i,1)[0]); }
   const artOpts=["fahrstunde","sonder","schalt"];
   const artChips=artOpts.map(a=>`<button class="seg-i${a===curArt?' on':''}" data-art="${a}">${CAL_ARTEN[a].lab}</button>`).join("");
   openSheet(`<div class="sheet-h">Termin vergeben</div>
@@ -11127,7 +11198,7 @@ function openAssignSlotSheet(date,von,bis,art){
   const finishBooking=(sid)=>{
     const effBis=curArt==="schalt"?min2hm(hm2min(von)+15):(asHalf?min2hm(hm2min(von)+45):bis);
     const fzRelevant=["fahrstunde","sonder","nacht","schalt"].indexOf(curArt)>=0;
-    const doBook=(fzName)=>{ addLesson({date,von,bis:effBis,art:curArt,sid,fahrzeug:fzName}); closeSheet(); toast("Termin vergeben ✓"); routeKalender(); };
+    const doBook=(fzName)=>{ addLesson({date,von,bis:effBis,art:curArt,sid,fahrzeug:fzName}); closeSheet(); toast("Termin vergeben ✓"); if(opts.nachher)opts.nachher(); else routeKalender(); };
     if(fzRelevant) openVehiclePicker({sub:`${isoDE(date)} · ${von}`},doBook);
     else doBook(null);
   };
@@ -13601,6 +13672,8 @@ function _h2JetztHTML(e){
   const s=DB.students.find(x=>x.id===e.sid);
   const label=e.date!==heute?`Nächste Fahrstunde · ${deWeekday(e.date)} ${isoDE(e.date).slice(0,6)}`:(hm2min(e.von)<=jetzt?"Jetzt dran":"Als Nächstes");
   const live=label==="Jetzt dran";
+  // Fahrstunden-Modus nur für heutige Fahrstunden mit Schüler (nicht für Prüfungen oder andere Tage)
+  const startbar=e.date===heute&&e.kind==="lesson"&&["fahrstunde","sonder","nacht","schalt"].indexOf(e.art)>=0;
   const ue=ueOf(e.art,e.von,e.bis,e.tatsaechlicheDauer);
   const tel=s&&(s.telefon||"").trim()?s.telefon.replace(/\s+/g,""):"";
   const wa=tel?formatPhoneForWa(s.telefon):"";
@@ -13610,13 +13683,14 @@ function _h2JetztHTML(e){
     : `<button class="h2-knopf h2-nummer-fehlt" data-h2akte="${esc(e.sid)}" style="grid-column:1/-1;">📵 Nummer fehlt – in der Akte eintragen</button>`;
   return `<section class="h2-jetzt">
     <div class="h2-jetzt-kopf"><div class="h2-jetzt-label">${live?'<span class="h2-live"></span>':''}${esc(label)} · ${e.von}–${e.bis}</div><span class="h2-jetzt-ue">${fmtUE(ue)} UE</span></div>
-    <div class="h2-jetzt-mitte">
+    <div class="h2-jetzt-mitte"${s?` data-h2akte="${esc(e.sid)}" role="button" tabindex="0" aria-label="Schülerakte öffnen"`:''}>
       <div class="h2-avatar">${esc(_h2Initialen(e.name))}</div>
       <div class="h2-jetzt-text"><div class="h2-jetzt-name">${esc(e.name)}</div>${s?`<div class="h2-jetzt-fokus">Fokus: ${esc(autoNext(s).text)}</div>`:''}${e.fahrzeug?`<div class="h2-jetzt-fz">🚗 ${esc(e.fahrzeug)}</div>`:''}</div>
       ${s?`<div class="h2-jetzt-pct">${stand(s)}%</div>`:''}
     </div>
     <div class="h2-kontakt">${kontakt}</div>
-    ${s?`<button class="h2-haupt h2-akte" data-h2akte="${esc(e.sid)}">Schülerakte öffnen <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M13 6l6 6-6 6"/></svg></button>`:''}
+    ${s&&startbar?`<button class="h2-haupt h2-akte h2-start" data-h2start="${esc(e.id)}">${_fmLaeuft(e.id)?"Fahrstunde fortsetzen":"Fahrstunde starten"} <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M13 6l6 6-6 6"/></svg></button>`:''}
+    ${s&&!startbar?`<button class="h2-haupt h2-akte" data-h2akte="${esc(e.sid)}">Schülerakte öffnen <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M13 6l6 6-6 6"/></svg></button>`:''}
     <div class="h2-schnell">
       <button class="h2-mini" data-nsact="other" data-lid="${esc(e.id)}" data-kind="${esc(e.kind)}">Anderer Schüler</button>
       <button class="h2-mini" data-nsact="noshow" data-lid="${esc(e.id)}" data-kind="${esc(e.kind)}">Nicht erschienen</button>
@@ -13705,6 +13779,7 @@ function routeDashboard(){
   _bindWasNeuBanner();
   _h2Stand=_h2Signatur();
   document.querySelectorAll("#view [data-h2akte]").forEach(b=>b.addEventListener("click",()=>routeDetail(b.dataset.h2akte)));
+  document.querySelectorAll("#view [data-h2start]").forEach(b=>b.addEventListener("click",()=>startFahrstunde(b.dataset.h2start)));
   document.querySelectorAll("#view [data-h2backup]").forEach(b=>b.addEventListener("click",()=>routeSettings()));
   document.querySelectorAll("#view [data-h2pruef]").forEach(b=>b.addEventListener("click",()=>routePruefungen()));
   const wl=$("#h2Weitere"); if(wl)wl.addEventListener("click",()=>{ _calView="tag"; _calDate=heute; routeKalender(); });
@@ -13721,6 +13796,185 @@ function routeDashboard(){
       b.querySelector(".h2-wetter-ic").textContent=weatherEmoji(w.icon); b.querySelector(".h2-wetter-t").textContent=`${w.temp}°`;
       b.addEventListener("click",()=>routeWetter(w)); }).catch(()=>{ const b=$("#h2Wetter"); if(b)b.remove(); });
   }
+}
+/* ===== Umbau Schritt 3: Fahrstunden-Modus und „Nach der Stunde“ (Entwurf Fahrstunde.dc.html / Abschluss.dc.html).
+   Während der Stunde wird nur auf diesem Gerät gemerkt (localStorage „kompass-fahrstunde“). Erst „Fertig“ schreibt in den Plan
+   (gleicher Weg wie im Ausbildungsplan: plan.ampeln + plan.ampelnZeit) und hängt Notizen an die Terminnotiz. ===== */
+const FM_KEY="kompass-fahrstunde";
+const _sfVorher={}, _sfGesendet={};
+const FM_NOTIZEN=["Zu schnell","Blinker vergessen","Schulterblick vergessen","Sehr gut gemacht"];
+const FM_STUFEN=[{v:null,lab:"offen"},{v:"gelb",lab:"gelb"},{v:"gruen",lab:"grün"},{v:"rot",lab:"rot"}];
+let _fmTimer=null;
+function _fmLaden(){ try{ const o=JSON.parse(localStorage.getItem(FM_KEY)||"null"); return o&&o.lid?o:null; }catch(e){ return null; } }
+function _fmSpeichern(o){ try{ localStorage.setItem(FM_KEY,JSON.stringify(o)); }catch(e){} }
+function _fmLoeschen(){ try{ localStorage.removeItem(FM_KEY); }catch(e){} }
+function _fmLaeuft(lid){ const o=_fmLaden(); return !!(o&&o.lid===lid); }
+function _fmVorname(s){ return String((s&&s.name)||"").trim().split(/\s+/)[0]||""; }
+function _fmAlleItems(s){ const out=[]; stufenFor(s).forEach(st=>st.items.forEach(it=>out.push(it))); return out; }
+// Bis zu 5 Themen: erst gelbe/rote (Plan-Reihenfolge), dann die nächsten offenen. Dazu selbst hinzugefügte.
+function _fmThemen(s,o){
+  const amp=(s.plan&&s.plan.ampeln)||{}, alle=_fmAlleItems(s);
+  const wahl=alle.filter(it=>amp[it.id]==="gelb"||amp[it.id]==="rot");
+  alle.forEach(it=>{ if(wahl.length<5&&!amp[it.id]&&!wahl.includes(it))wahl.push(it); });
+  const liste=wahl.slice(0,5);
+  (o.extra||[]).forEach(id=>{ const it=alle.find(x=>x.id===id); if(it&&!liste.includes(it))liste.push(it); });
+  Object.keys(o.stufe||{}).forEach(id=>{ const it=alle.find(x=>x.id===id); if(it&&!liste.includes(it))liste.push(it); });
+  return liste;
+}
+function _fmWert(s,o,id){ return Object.prototype.hasOwnProperty.call(o.stufe||{},id)?o.stufe[id]:(((s.plan&&s.plan.ampeln)||{})[id]||null); }
+function _fmDauer(ms){ const m=Math.max(0,Math.floor(ms/60000)); return Math.floor(m/60)+":"+String(m%60).padStart(2,"0"); }
+function _fmLetzteNotiz(l){
+  const fr=(DB.lessons||[]).filter(x=>x.sid===l.sid&&x.id!==l.id&&(x.date<l.date||(x.date===l.date&&hm2min(x.von)<hm2min(l.von)))&&x.status!=="abgebrochen"&&(x.note||"").trim())
+    .sort((a,b)=>(b.date+b.von).localeCompare(a.date+a.von))[0];
+  return fr?fr.note.trim():"";
+}
+function startFahrstunde(lid){
+  const l=(DB.lessons||[]).find(x=>x.id===lid); if(!l)return;
+  const o=_fmLaden();
+  if(!o||o.lid!==lid){
+    if(o&&o.lid!==lid&&(Object.keys(o.stufe||{}).length||(o.notizen||[]).length)&&!confirm("Es läuft noch eine andere Fahrstunde mit Bewertungen. Diese verwerfen und die neue starten?"))return;
+    _fmSpeichern({lid,start:Date.now(),stufe:{},notizen:[],extra:[]});
+  }
+  routeFahrstunde(lid);
+}
+function routeFahrstunde(lid){
+  ensureDB();
+  const l=(DB.lessons||[]).find(x=>x.id===lid), s=l&&DB.students.find(x=>x.id===l.sid);
+  let o=_fmLaden();
+  if(!l||!s){ _fmLoeschen(); toast("Diese Fahrstunde gibt es nicht mehr"); routeDashboard(); return; }
+  if(!o||o.lid!==lid){
+    // Über „Zurück“ (z. B. aus „Nach der Stunde“) nicht neu starten, sondern zu Heute.
+    if(typeof _navFahrt!=="undefined"&&_navFahrt){
+      if(_navStack.length>1&&_navStack[_navStack.length-1].name==="routeFahrstunde")_navStack.pop(); // sonst bräuchte es ein zweites Zurück
+      routeDashboard(); return; }
+    o={lid,start:Date.now(),stufe:{},notizen:[],extra:[]}; _fmSpeichern(o);
+  }
+  $("#tbTitle").textContent="Fahrstunde"; setFab(false); view.scrollTop=0;
+  const themen=_fmThemen(s,o), amp=(s.plan&&s.plan.ampeln)||{};
+  // Überschrift: die ersten zwei nicht-grünen Themen in der Reihenfolge der Bewertungsliste
+  const nichtGruen=themen.filter(it=>amp[it.id]!=="gruen").concat(_fmAlleItems(s).filter(it=>amp[it.id]!=="gruen"&&!themen.includes(it)));
+  const titel=nichtGruen.slice(0,2).map(it=>it.t).join(" · ")||"Alles grün – Generalprobe";
+  const letzte=_fmLetzteNotiz(l);
+  const gruen=themen.filter(it=>_fmWert(s,o,it.id)==="gruen").length;
+  const dauer=Math.max(0,hm2min(l.bis)-hm2min(l.von));
+  view.innerHTML=`<div class="view-inner fahrmodus">
+    <header class="fm-kopf">
+      <div class="fm-kopf-text"><span class="fm-laeuft"><span class="h2-live"></span>Fahrstunde läuft</span><span class="fm-name">${esc(s.name)}</span></div>
+      <div class="fm-uhr"><div class="fm-zeit">${_fmDauer(Date.now()-o.start)}</div><div class="fm-von">von ${_fmDauer(dauer*60000)}</div></div>
+    </header>
+    <section class="fm-ueben"><div class="fm-ueber">Heute üben</div><div class="fm-ueben-t">${esc(titel)}</div>${letzte?`<div class="fm-letzte">Letztes Mal: ${esc(letzte)}</div>`:''}</section>
+    <div class="fm-zeile"><span class="fm-ueber">Bewerten · antippen</span><span class="fm-gruen">${gruen} von ${themen.length} grün</span></div>
+    <section class="fm-themen">${themen.map(it=>{ const w=_fmWert(s,o,it.id), st=FM_STUFEN.find(x=>x.v===w)||FM_STUFEN[0];
+      return `<button class="fm-thema" data-item="${esc(it.id)}" data-wert="${w||"offen"}" aria-label="${esc(it.t)}: ${st.lab} – antippen zum Ändern"><span class="fm-punkt"></span><span class="fm-thema-t">${esc(it.t)}</span><span class="fm-chip">${st.lab}</span></button>`; }).join("")}
+      <button class="fm-mehr" id="fmMehr">Anderes Thema …</button></section>
+    <section class="fm-notizen"><div class="fm-ueber">Schnell-Notiz</div><div class="fm-chips">
+      ${FM_NOTIZEN.map(n=>`<button class="fm-notiz${(o.notizen||[]).includes(n)?" an":""}" data-notiz="${esc(n)}" aria-pressed="${(o.notizen||[]).includes(n)}">${esc(n)}</button>`).join("")}
+      ${(o.notizen||[]).filter(n=>FM_NOTIZEN.indexOf(n)<0).map(n=>`<button class="fm-notiz an" data-notiz="${esc(n)}" aria-pressed="true">${esc(n)}</button>`).join("")}
+      <button class="fm-notiz fm-sprechen" id="fmSprechen">🎤 Sprechen</button></div></section>
+    <footer class="fm-fuss"><button class="fm-abbrechen" id="fmAbbrechen">Abbrechen</button><button class="fm-fertig" id="fmFertig">✓ Fertig</button></footer>
+  </div>`;
+  clearInterval(_fmTimer);
+  _fmTimer=setInterval(()=>{ const z=document.querySelector("#view .fm-zeit"); if(!z){ clearInterval(_fmTimer); return; } const o2=_fmLaden(); if(o2)z.textContent=_fmDauer(Date.now()-o2.start); },15000);
+  document.querySelectorAll("#view .fm-thema").forEach(b=>b.addEventListener("click",()=>{
+    const o2=_fmLaden()||o, id=b.dataset.item, w=_fmWert(s,o2,id);
+    const i=FM_STUFEN.findIndex(x=>x.v===w), n=FM_STUFEN[(i+1)%FM_STUFEN.length];
+    o2.stufe=o2.stufe||{}; o2.stufe[id]=n.v; _fmSpeichern(o2); routeFahrstunde(lid);
+  }));
+  document.querySelectorAll("#view .fm-notiz[data-notiz]").forEach(b=>b.addEventListener("click",()=>{
+    const o2=_fmLaden()||o, n=b.dataset.notiz; o2.notizen=o2.notizen||[];
+    const i=o2.notizen.indexOf(n); if(i>=0)o2.notizen.splice(i,1); else o2.notizen.push(n);
+    _fmSpeichern(o2); routeFahrstunde(lid);
+  }));
+  $("#fmSprechen").addEventListener("click",()=>{
+    const SR=window.SpeechRecognition||window.webkitSpeechRecognition;
+    if(!SR){ toast("Spracheingabe kann dieser Browser nicht"); return; }
+    let rec; try{ rec=new SR(); }catch(e){ toast("Spracheingabe nicht verfügbar"); return; }
+    rec.lang="de-DE"; rec.interimResults=false; rec.maxAlternatives=1;
+    rec.onresult=e=>{ const t=(e.results&&e.results[0]&&e.results[0][0]&&e.results[0][0].transcript||"").trim(); if(!t)return;
+      const o2=_fmLaden()||o; o2.notizen=(o2.notizen||[]).concat([t]); _fmSpeichern(o2); routeFahrstunde(lid); };
+    rec.onerror=()=>toast("Spracheingabe fehlgeschlagen");
+    try{ rec.start(); toast("Sprich jetzt …"); }catch(e){}
+  });
+  $("#fmMehr").addEventListener("click",()=>{
+    const drin=new Set(_fmThemen(s,_fmLaden()||o).map(it=>it.id));
+    const rest=_fmAlleItems(s).filter(it=>!drin.has(it.id)&&amp[it.id]!=="gruen");
+    openSheet(`<div class="sheet-h">Anderes Thema</div>
+      ${rest.length?`<div class="as-list">${rest.map(it=>`<button class="as-item" data-item="${esc(it.id)}"><span class="as-nm">${esc(it.t)}</span></button>`).join("")}</div>`:`<p class="muted-p">Alle übrigen Themen sind schon grün.</p>`}
+      <div class="btn-row"><button class="btn btn-ghost" id="fmMehrZu" style="width:100%;">Schließen</button></div>`);
+    $("#fmMehrZu").addEventListener("click",closeSheet);
+    document.querySelectorAll("#sheet [data-item]").forEach(b=>b.addEventListener("click",()=>{
+      const o2=_fmLaden()||o; o2.extra=(o2.extra||[]).concat([b.dataset.item]); _fmSpeichern(o2); closeSheet(); routeFahrstunde(lid);
+    }));
+  });
+  $("#fmAbbrechen").addEventListener("click",()=>{
+    const o2=_fmLaden()||o;
+    const etwas=Object.keys(o2.stufe||{}).length||(o2.notizen||[]).length;
+    if(etwas&&!confirm("Fahrstunde abbrechen? Die Bewertungen und Notizen dieser Stunde werden nicht gespeichert."))return;
+    _fmLoeschen(); clearInterval(_fmTimer); routeDashboard();
+  });
+  $("#fmFertig").addEventListener("click",()=>fahrstundeAbschliessen(lid));
+}
+function fahrstundeAbschliessen(lid){
+  const l=(DB.lessons||[]).find(x=>x.id===lid), s=l&&DB.students.find(x=>x.id===l.sid);
+  const o=_fmLaden();
+  if(!l||!s){ _fmLoeschen(); routeDashboard(); return; }
+  const vorher=stand(s);
+  if(o){
+    const pl=s.plan; if(!pl.ampelnZeit)pl.ampelnZeit={};
+    const jetzt=new Date().toISOString();
+    Object.keys(o.stufe||{}).forEach(id=>{
+      const neu=o.stufe[id], alt=pl.ampeln[id]||null;
+      if(neu===alt)return; // nur Geändertes bekommt einen neuen Zeitstempel
+      if(neu){ pl.ampeln[id]=neu; pl.ampelnZeit[id]=jetzt; } else { delete pl.ampeln[id]; delete pl.ampelnZeit[id]; }
+    });
+    const n=(o.notizen||[]).filter(Boolean);
+    if(n.length) l.note=[(l.note||"").trim(),n.join(" · ")].filter(Boolean).join(" · ");
+  }
+  save(); _fmLoeschen(); clearInterval(_fmTimer);
+  _sfVorher[lid]=vorher;
+  routeStundeFertig(lid);
+}
+function routeStundeFertig(lid){
+  ensureDB();
+  const l=(DB.lessons||[]).find(x=>x.id===lid), s=l&&DB.students.find(x=>x.id===l.sid);
+  if(!l||!s){ routeDashboard(); return; }
+  $("#tbTitle").textContent="Nach der Stunde"; setFab(false); view.scrollTop=0;
+  const vn=_fmVorname(s), pct=stand(s), vor=_sfVorher[lid];
+  const plus=vor!=null&&pct>vor?` (+${pct-vor})`:"";
+  const {gut,ueben}=themenDesTages(s,l.date);
+  const amp=s.plan.ampeln||{};
+  const chips=[...gut.map(it=>({it,k:"gruen",lab:"grün"})),...ueben.map(it=>({it,k:amp[it.id]==="rot"?"rot":"gelb",lab:amp[it.id]==="rot"?"rot":"gelb"}))];
+  const heute=todayISO(), jetzt=_h2JetztMin();
+  // freie Lücken ab morgen, höchstens 3
+  const luecken=[]; let d=addDays(heute,1);
+  for(let i=0;i<14&&luecken.length<3;i++){ dayFreeSlots(d).forEach(x=>{ if(luecken.length<3)luecken.push({date:d,von:x.von,bis:x.bis,art:x.art}); }); d=addDays(d,1); }
+  const {next}=findLastNextLesson(s.id);
+  const naechsterTermin=next&&(next.date>l.date||(next.date===l.date&&hm2min(next.von)>hm2min(l.von)))?next:null;
+  const nachste=(DB.lessons||[]).filter(x=>x.date===heute&&x.id!==lid&&x.sid&&hm2min(x.von)>=jetzt&&x.status!=="abgebrochen"&&x.status!=="nicht erschienen").sort((a,b)=>a.von.localeCompare(b.von))[0];
+  const nachsteS=nachste&&DB.students.find(x=>x.id===nachste.sid);
+  view.innerHTML=`<div class="view-inner fertig2 heute2">
+    <header class="sf-kopf"><div class="sf-haken">✓</div><h1 class="h2-titel sf-titel">Stunde mit ${esc(vn)} fertig</h1>
+      <div class="sf-info">${l.von}–${l.bis} · ${fmtUE(ueOf(l.art,l.von,l.bis,l.tatsaechlicheDauer))} UE · Stand jetzt <b>${pct} %</b>${plus}</div></header>
+    <section class="sf-karte"><div class="h2-ueber">Heute bewertet</div>
+      ${chips.length?`<div class="sf-chips">${chips.map(c=>`<span class="sf-chip ${c.k}">${esc(c.it.t)} · ${c.lab}</span>`).join("")}</div>`:`<p class="h2-nichts">Heute wurde nichts bewertet.</p>`}</section>
+    <button class="sf-knopf sf-unterschrift" id="sfSig"><span>✍️</span><span class="sf-knopf-t">Unterschrift</span><span class="sf-status ${l.signed?"gruen":"gelb"}">${l.signed?"✓ vorhanden":"noch offen"}</span></button>
+    <button class="sf-knopf sf-protokoll${_sfGesendet[lid]?" gesendet":""}" id="sfProt"><span>💬</span><span class="sf-knopf-t">${_sfGesendet[lid]?"Protokoll gesendet ✓":`Protokoll per WhatsApp an ${esc(vn)}`}</span></button>
+    <section class="sf-karte"><div class="sf-karte-t">Nächster Termin für ${esc(vn)}</div>
+      ${naechsterTermin?`<div class="sf-naechster">Nächster Termin: ${isoDE(naechsterTermin.date).slice(0,6)} ${naechsterTermin.von}</div>`:''}
+      ${luecken.length?`<div class="sf-slots">${luecken.map(x=>`<button class="sf-slot" data-freeslot="${x.date}|${x.von}|${x.bis}|${x.art||"fahrstunde"}"><span>${deWeekday(x.date)} ${parseISO(x.date).getDate()}.</span><b>${x.von}</b></button>`).join("")}</div>`:`<p class="h2-nichts">Keine freie Lücke in den nächsten 14 Tagen.</p>`}</section>
+    <button class="sf-heute" id="sfHeute"><span>Zurück zu Heute</span>${nachste?`<span class="sf-heute-n">· nächster: ${esc(nachsteS?nachsteS.name:"")} ${nachste.von}</span>`:""}</button>
+  </div>`;
+  $("#sfSig").addEventListener("click",()=>{
+    openSignatureSheet(lid);
+    // Nach dem Schließen des Fensters den Status neu zeigen
+    const t=setInterval(()=>{ const sh=$("#sheet"); if(!sh||!sh.classList.contains("open")){ clearInterval(t); if((($("#tbTitle")||{}).textContent)==="Nach der Stunde")routeStundeFertig(lid); } },400);
+  });
+  $("#sfProt").addEventListener("click",()=>{ sendeStundenProtokoll(s,l.date); _sfGesendet[lid]=true; routeStundeFertig(lid); });
+  document.querySelectorAll("#view .sf-slot").forEach(b=>b.addEventListener("click",()=>{
+    const [date,von,bis,art]=b.dataset.freeslot.split("|");
+    openAssignSlotSheet(date,von,bis,art,{sid:s.id,nachher:()=>routeStundeFertig(lid)});
+  }));
+  $("#sfHeute").addEventListener("click",()=>routeDashboard());
 }
 function _wocheVonBis(){
   const now=new Date(); const wd=(now.getDay()+6)%7;
@@ -15077,7 +15331,7 @@ routeDashboard();
 <script>
 /* Redesign v2: markiert nur den aktiven Tab anhand des Seitentitels — reine Anzeige, keine Logik. */
 (function(){
-  const map={"Heute":"heute","Start":"heute","Schüler":"schueler","Kalender":"kalender","Prüfungen":"pruefungen","Prüfer":"pruefungen","Warteliste":"schueler","Ausbildungsplan":"schueler","Notizen":"schueler","Persönlichkeitsbogen":"schueler","Persönlichkeitsprofil":"schueler","Prüfung eintragen":"schueler","Risiko-Themen":"schueler","Schülerdatei":"schueler","Historie":"schueler","Ergebnis eintragen":"schueler","Neuer Schüler":"schueler","Schüler bearbeiten":"schueler","Bestehens-Daten":"schueler"};
+  const map={"Heute":"heute","Start":"heute","Fahrstunde":"heute","Nach der Stunde":"heute","Schüler":"schueler","Kalender":"kalender","Prüfungen":"pruefungen","Prüfer":"pruefungen","Warteliste":"schueler","Ausbildungsplan":"schueler","Notizen":"schueler","Persönlichkeitsbogen":"schueler","Persönlichkeitsprofil":"schueler","Prüfung eintragen":"schueler","Risiko-Themen":"schueler","Schülerdatei":"schueler","Historie":"schueler","Ergebnis eintragen":"schueler","Neuer Schüler":"schueler","Schüler bearbeiten":"schueler","Bestehens-Daten":"schueler"};
   const t=document.getElementById("tbTitle"); if(!t)return;
   const paint=()=>{ const k=map[(t.textContent||"").trim()]||"mehr"; document.querySelectorAll(".tab-i").forEach(b=>b.classList.toggle("on",b.dataset.tab===k)); };
   new MutationObserver(paint).observe(t,{childList:true,characterData:true,subtree:true});
