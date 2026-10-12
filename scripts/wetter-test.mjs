@@ -363,7 +363,8 @@ await pruefe("W7b", "Zurück aus „Wetter“ führt nach „Heute“ (Knopf in 
     if (weg === "#backBtn") {
       const b = page.locator("#view #backBtn");
       if (!(await b.count())) { f.push("#backBtn fehlt"); continue; }
-      await b.click();
+      // Seit 6a ist die Zurück-Zeile in der Seite ausgeblendet, solange oben der Pfeil steht (keine doppelten Wege) – dann den Knopf per Skript auslösen
+      if (await b.isVisible()) await b.click(); else await page.evaluate(() => document.querySelector("#view #backBtn").click());
     } else {
       const sichtbar = await page.evaluate(() => { const b = document.getElementById("navBackBtn"); return !!b && !b.hidden && b.getBoundingClientRect().width > 0; });
       if (sichtbar) await page.locator("#navBackBtn").click(); else await page.evaluate(() => navZurueck());
