@@ -14045,7 +14045,7 @@ function routeWetter(w){
       return `<div class="wx-fc-day">
         <div class="wx-fc-lbl">${dayLabel}</div>
         <div class="wx-fc-ic">${_wetterIconSVG(d.icon)}</div>
-        <div class="wx-fc-t"><b>${d.max}°</b><span>${d.min}°</span></div>
+        <div class="wx-fc-t"><b>${Math.round(+d.max)}°</b><span>${Math.round(+d.min)}°</span></div>
       </div>`;
     }).join("");
   });
