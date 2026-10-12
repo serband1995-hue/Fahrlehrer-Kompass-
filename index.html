@@ -2510,6 +2510,19 @@ body.light #view[data-seite2] .todo-item.done .todo-txt{color:#6B776F !important
 #view[data-seite2] .cc-big{font-size:17px !important;line-height:1.2 !important;}
 #view[data-seite2] .cc-lbl{font-size:11px;white-space:nowrap;}
 #view[data-seite2] .cal-nav{margin-bottom:8px;}
+/* 6b nach Design-Kritik: Plan ohne doppelten Titel und doppelte Prozentzahl, Notizen ohne zweiten Namen, Wochen-Karten ohne Überlauf, „heute“ immer grün */
+#view[data-seite2] .akte2 .plan-title{display:none !important;}
+#view[data-seite2] .akte-kopf.ak-plan .ak-pct{display:none;}
+#view[data-seite2="routePlan"] .akte2 svg:has(.ring-fg){width:88px !important;height:88px !important;}
+#view[data-seite2="routeNotes"] .akte2 > .sec-h{display:none !important;}
+#view[data-seite2] .cw-ev{overflow:hidden;padding:4px 4px 4px 5px !important;min-width:0;}
+#view[data-seite2] .cw-evt{font-size:9.5px !important;white-space:nowrap;overflow:hidden;text-overflow:clip;letter-spacing:-.02em;font-variant-numeric:tabular-nums;}
+#view[data-seite2] .cw-col{padding-left:3px !important;padding-right:3px !important;}
+#view[data-seite2] .cw-ev{border-left-width:2px !important;}
+#view[data-seite2] .cw-evn{font-size:11px !important;}
+#view[data-seite2] .cw-col.today{background:var(--k-akzent-hell) !important;border-color:var(--s2-akzent) !important;}
+body:not(.light) #view[data-seite2] .cw-col.today{background:rgba(91,209,142,.10) !important;}
+#view[data-seite2] .cw-col.today :is(.cw-dnum,.cw-wd){color:var(--s2-akzent) !important;}
 /* Kopfleisten-Titel: nie mitten im Wort umbrechen (z. B. „Ausbildungsplan“ bei 360 px) */
 .topbar .tb-title{overflow-wrap:normal !important;word-break:normal !important;font-family:var(--k-font-text) !important;font-weight:800 !important;}
 @media (max-width:380px){.topbar .tb-title.tb-lang{font-size:12px !important;letter-spacing:-.02em !important;}}
@@ -7866,7 +7879,7 @@ function _akteKopf(id,aktiv){
   const vi=document.querySelector("#view .view-inner"); const s=DB.students.find(x=>x.id===id); if(!vi||!s)return;
   vi.classList.add("akte2");
   const name=aktiv==="ueberblick"?"":`<div class="ak-name">${esc(s.name)} <span class="ak-pct">${stand(s)} %</span></div>`;
-  vi.insertAdjacentHTML("afterbegin",`<div class="akte-kopf"><nav class="ak-reiter" aria-label="Akte">${AKTE_REITER.map(([k,lab])=>`<button class="ak-r${k===aktiv?" on":""}" data-akte="${k}" aria-current="${k===aktiv?"page":"false"}">${lab}</button>`).join("")}</nav>${name}</div>`);
+  vi.insertAdjacentHTML("afterbegin",`<div class="akte-kopf ak-${aktiv}"><nav class="ak-reiter" aria-label="Akte">${AKTE_REITER.map(([k,lab])=>`<button class="ak-r${k===aktiv?" on":""}" data-akte="${k}" aria-current="${k===aktiv?"page":"false"}">${lab}</button>`).join("")}</nav>${name}</div>`);
   vi.querySelectorAll(".ak-r[data-akte]").forEach(b=>b.addEventListener("click",()=>{
     const r=AKTE_REITER.find(x=>x[0]===b.dataset.akte); if(!r||r[0]===aktiv)return;
     _akteWechsel(r[2],id);
