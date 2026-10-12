@@ -274,6 +274,7 @@ function messenImBrowser(arg) {
   // --- S10 Kopfleisten-Titel: kein Umbruch mitten im Wort, höchstens 2 Zeilen, nicht abgeschnitten
   const tb = document.getElementById("tbTitle");
   out.tb = null;
+  out.tbDoppelt = !!(document.getElementById("tbTitle") && document.getElementById("tbTitle").classList.contains("tb-doppelt"));
   if (tb && sicht(tb)) {
     const txt = tb.textContent;
     const tops = [];   // je Zeichen die Zeilen-Oberkante
@@ -544,8 +545,9 @@ for (const g of GROESSEN) {
       if (m.ueberlapp.length) merk("S8", `${wo}: ${erste(m.ueberlapp, 3)}`);
       if (m.wisch) merk("S9a", `${wo}: seitlich wischbar`);
       if (m.rand.length) merk("S9a", `${wo}: über den Rand ${m.rand.slice(0, 2).join(", ")}`);
-      if (!m.tb) merk("S10", `${wo}: #tbTitle nicht sichtbar`);
-      else {
+      // Seit 6b: Steht derselbe Titel groß in der Seite, ist #tbTitle absichtlich unsichtbar (Klasse tb-doppelt) – dann nichts zu prüfen
+      if (!m.tb && !m.tbDoppelt) merk("S10", `${wo}: #tbTitle nicht sichtbar`);
+      else if (m.tb) {
         const f = [];
         if (m.tb.gebrochen.length) f.push(`Wort umbrochen: ${m.tb.gebrochen.join(", ")}`);
         if (m.tb.zeilen > 2) f.push(`${m.tb.zeilen} Zeilen`);
