@@ -6949,7 +6949,7 @@ window.addEventListener("load", () => {
 const STORE_KEY="serband-app-v1";
 /* Build-Version: bei jeder Auslieferung hier das Datum aktualisieren.
    Wird in den Einstellungen angezeigt + für den Update-Hinweis genutzt. */
-const APP_VERSION="2026.10.12.1";
+const APP_VERSION="2026.10.12.2";
 try{const f=document.getElementById("drawerFoot"); if(f)f.textContent="Fahrlehrer-Kompass · Version "+APP_VERSION;}catch(e){}
 // Nutzungsbedingungen & Haftungsausschluss (Bereich: rechtliche Absicherung) - Version hochzählen
 // und alle Nutzer müssen erneut zustimmen, sobald sich der Text inhaltlich ändert.
@@ -8839,8 +8839,19 @@ function openSonderKalenderSheet(sid,grp,idx){
     closeSheet();toast("Kalendereintrag entfernt");buildSonder(s);
   });
 }
+// Büro-Stopp: vor jedem NEUEN Fahrtermin nachfragen, genau wie beim normalen „Termin vergeben“ (finishBooking). true = eintragen.
+function _stoppErlaubt(sid){
+  const stoppN=((typeof _bueroNotizen!=="undefined"&&_bueroNotizen&&_bueroNotizen[sid])||[]).filter(n=>n&&n.art==="stopp");
+  if(!stoppN.length)return true;
+  const st=DB.students.find(x=>x.id===sid);
+  return confirm("STOPP vom Büro bei "+(st?st.name:"diesem Schüler")+":\n\n"+stoppN.map(n=>n.text).join("\n")+"\n\nTrotzdem eintragen?");
+}
 function commitSonderZeit(s,grp,idx,date,von){
   ensure(s);
+  // Nur wenn wirklich ein neuer Termin entsteht (kein verknüpfter, kein umwandelbarer am selben Tag), bei Büro-Stopp nachfragen – vor jeder Änderung
+  { const k0=s.id+":"+grp+":"+idx;
+    const schonDa=(DB.lessons||[]).some(l=>l.srcSonder===k0)||(DB.lessons||[]).some(l=>l.sid===s.id&&l.date===date&&!l.srcSonder&&["fahrstunde","sonder"].includes(l.art)&&l.status!=="abgebrochen"&&l.status!=="nicht erschienen");
+    if(!schonDa&&!_stoppErlaubt(s.id)){ buildSonder(s); return; } }
   const arr=s.plan.sonder[grp]||(s.plan.sonder[grp]=[]);
   const vorherPlan=arr[idx]?Object.assign({},arr[idx]):null;
   arr[idx]={d:isoToShort(date),iso:date};
@@ -9000,6 +9011,7 @@ function openMultiTerminErgebnis(sid,cfg,treffer){
 }
 function buchMultiTermine(sid,cfg,ausgewaehlt){
   const s=DB.students.find(x=>x.id===sid);if(!s)return;
+  if(ausgewaehlt&&ausgewaehlt.length&&!_stoppErlaubt(sid))return; // Büro-Stopp: erst nachfragen
   ensure(s);
   const erstellteIds=[];
   const vorherPlan=[];
@@ -12587,6 +12599,7 @@ function syncSonderToKalender(s,grp,idx,iso){
   if(ex){ if(ex.date!==iso){ ex.date=iso; save(); } return; } // Datum aktualisieren falls geändert
   const kuerzel=SF_KUERZEL[grp]||"SF";
   const von=grp==="nacht"?"19:30":"10:00";
+  if(!_stoppErlaubt(s.id)){ toast("Nicht in den Kalender übernommen (Stopp vom Büro)"); return; }
   addLesson({date:iso,von,art:"sonder",sid:s.id,note:SF_LABEL[grp]||"Sonderfahrt",srcSonder:key});
   toast(`${SF_LABEL[grp]||"Sonderfahrt"} in den Kalender übernommen`);
 }
