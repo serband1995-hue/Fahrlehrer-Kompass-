@@ -2523,6 +2523,7 @@ body.light #view[data-seite2] .todo-item.done .todo-txt{color:#6B776F !important
 #view[data-seite2] .cw-col.today{background:var(--k-akzent-hell) !important;border-color:var(--s2-akzent) !important;}
 body:not(.light) #view[data-seite2] .cw-col.today{background:rgba(91,209,142,.10) !important;}
 #view[data-seite2] .cw-col.today :is(.cw-dnum,.cw-wd){color:var(--s2-akzent) !important;}
+.szBtn{display:inline-flex !important;align-items:center;justify-content:center;}
 /* Kopfleisten-Titel: nie mitten im Wort umbrechen (z. B. „Ausbildungsplan“ bei 360 px) */
 .topbar .tb-title{overflow-wrap:normal !important;word-break:normal !important;font-family:var(--k-font-text) !important;font-weight:800 !important;}
 @media (max-width:380px){.topbar .tb-title.tb-lang{font-size:12px !important;letter-spacing:-.02em !important;}}
@@ -14463,7 +14464,7 @@ function routeFahrstunde(lid){
     <section class="fm-notizen"><div class="fm-ueber">Schnell-Notiz</div><div class="fm-chips">
       ${FM_NOTIZEN.map(n=>`<button class="fm-notiz${(o.notizen||[]).includes(n)?" an":""}" data-notiz="${esc(n)}" aria-pressed="${(o.notizen||[]).includes(n)}">${esc(n)}</button>`).join("")}
       ${(o.notizen||[]).filter(n=>FM_NOTIZEN.indexOf(n)<0).map(n=>`<button class="fm-notiz an" data-notiz="${esc(n)}" aria-pressed="true">${esc(n)}</button>`).join("")}
-      <button class="fm-notiz fm-sprechen" id="fmSprechen">🎤 Sprechen</button></div></section>
+      <button class="fm-notiz fm-sprechen" id="fmSprechen">${_li("mikro")} Sprechen</button></div></section>
     <footer class="fm-fuss"><button class="fm-abbrechen" id="fmAbbrechen">Abbrechen</button><button class="fm-fertig" id="fmFertig">✓ Fertig</button></footer>
   </div>`;
   clearInterval(_fmTimer);
