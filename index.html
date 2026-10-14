@@ -1637,6 +1637,7 @@ body:not(.light) .cw-col.today .cw-dnum{color:var(--gold);}
 .tb-zahl{font-size:15px;margin:2px 0;} .tb-zahl b{font-size:20px;}
 .tb-fehlt{display:block;color:var(--gold,#9a6b12);font-weight:600;font-size:12px;}
 .tb-liste summary{cursor:pointer;font-size:13px;color:var(--muted);min-height:44px;display:flex;align-items:center;}
+.tb-leer{font-size:12.5px;margin:6px 0 0;}
 .tb-zeile{display:flex;align-items:center;gap:8px;font-size:13px;margin-top:9px;padding:6px 2px;}
 .ta-lekt-zeile{display:flex;align-items:center;justify-content:space-between;gap:10px;margin:2px 0 8px;font-weight:700;}
 .ta-lekt-zeile .btn{min-height:44px;padding:8px 16px;flex:0 0 auto;}
@@ -5094,10 +5095,12 @@ async function pullSchuelerZuweisungen() {
       const bekannt = memS.schueler[r.id];
       if (bekannt && bekannt !== (vorherWert[r.id] !== undefined ? vorherWert[r.id] : _abglWertVon("schueler", lok))) continue; // selbst geändert: eigener Stand gilt
       const erwartet = nachherWert[r.id] || vorherWert[r.id];
-      if (erwartet !== undefined && _abglWertVon("schueler", lok) !== erwartet) continue; // während des Abrufs selbst getippt: eigener Stand gilt (wie oben)
+      // Während des Abrufs selbst getippt: Namen vom Büro trotzdem übernehmen, aber nicht als „hochgeladen“ merken –
+      // die Brücke lädt dann den neuen Namen zusammen mit der eigenen Änderung hoch (nichts geht verloren)
+      const getippt = erwartet !== undefined && _abglWertVon("schueler", lok) !== erwartet;
       const n = (r.name && !(r.name === "(ohne Namen)" && !lok.name)) ? r.name : lok.name, t = r.telefon || "";
-      if (n !== lok.name || t !== (lok.telefon || "")) { lok.name = n; lok.telefon = t; memS.schueler[r.id] = _abglWertVon("schueler", lok); namenNeu = true; }
-      else if (bekannt && bekannt === vorherWert[r.id] && nachherWert[r.id]) memS.schueler[r.id] = nachherWert[r.id]; // Übernahmen vom Büro gelten nicht als eigene Änderung (spätere eigene Änderungen schon)
+      if (n !== lok.name || t !== (lok.telefon || "")) { lok.name = n; lok.telefon = t; if (!getippt) memS.schueler[r.id] = _abglWertVon("schueler", lok); namenNeu = true; }
+      else if (!getippt && bekannt && bekannt === vorherWert[r.id] && nachherWert[r.id]) memS.schueler[r.id] = nachherWert[r.id]; // Übernahmen vom Büro gelten nicht als eigene Änderung (spätere eigene Änderungen schon)
     }
     _abglSpeichern(memS);
     _schuelerAbgerufen = true;
@@ -8889,7 +8892,7 @@ function openBehoerdeSheet(s){
 /* Theorie-Besuch (🗣 Serband 14.10.2026, Antwort 2a): Der Fahrlehrer tippt im Theorie-Termin an, wer da war.
    Gespeichert in theorie_teilnahme (je Schüler, Lektion, Tag); Soll nach Gesetz aus KR.theorieSoll. */
 let _theorieBesuch = null; // schueler_id -> [{lektion, datum}]; null = noch nicht geladen
-let _theorieLadeNr = 0;
+let _theorieLadeNr = 0; const _theorieNrJe = {};
 async function _ladeTheorieBesuch(supa, ids){
   const nr=++_theorieLadeNr;
   try{
@@ -8902,8 +8905,9 @@ async function _ladeTheorieBesuch(supa, ids){
       teil.forEach(sid=>{ neu[sid]=[]; });
       data.forEach(x=>{ (neu[x.schueler_id]=neu[x.schueler_id]||[]).push({lektion:String(x.lektion),datum:x.datum}); });
     }
-    if(nr!==_theorieLadeNr&&_theorieBesuch) return; // ein neuerer Abruf läuft: dessen Stand gilt
-    _theorieBesuch=Object.assign(_theorieBesuch||{},neu); // je Schüler zusammenführen (Gesamtansicht und eigene Schüler)
+    // je Schüler zusammenführen (Gesamtansicht und eigene Schüler); hat ein neuerer Abruf den Schüler schon geladen, gilt dessen Stand
+    _theorieBesuch=_theorieBesuch||{};
+    for(const sid in neu){ if((_theorieNrJe[sid]||0)<=nr){ _theorieBesuch[sid]=neu[sid]; _theorieNrJe[sid]=nr; } }
   }catch(e){ /* z. B. offline: alten Stand behalten */ }
 }
 function theorieStandFuer(s){
@@ -8916,6 +8920,8 @@ function theorieCard(s){
   if(_theorieBesuch===null||!_schuelerFristen[s.id])return ""; // nur mit Verbindung zur Fahrschule
   const st=theorieStandFuer(s); if(!st)return "";
   if(!st.pflicht) return `<div class="tb-zeile muted-p">${_li("schule")} Theorieunterricht: ${esc(st.grund)}</div>`;
+  // Theorieprüfung bestanden: Der Pflichtunterricht war die Voraussetzung (Altbestand hat meist keine Einträge)
+  if(_schuelerFristen[s.id].theorie_bestanden_am&&!st.fertig) return `<div class="tb-zeile">${_li("schule")} Theorieunterricht: Theorieprüfung bestanden ✓</div>`;
   const pct=st.soll?Math.round(st.ist/st.soll*100):0;
   const teil=t=>`<div class="mini-dash-row"><span>${esc(t.titel)}${t.fehlt&&t.fehlt.length&&t.fehlt.length<=6?` <small class="tb-fehlt">fehlt: ${t.fehlt.map(esc).join(", ")}</small>`:""}</span><b>${t.ist}/${t.soll}${t.ist>=t.soll?" ✓":""}</b></div>`;
   const besuch=((_theorieBesuch&&_theorieBesuch[s.id])||[]).slice().sort((a,b)=>String(b.datum).localeCompare(String(a.datum)));
@@ -8924,7 +8930,8 @@ function theorieCard(s){
     <div class="tb-zahl"><b>${st.ist} von ${st.soll}</b> Pflicht-Lektionen${st.fertig?" ✓ vollständig":""}</div>
     <div class="tb-balken${st.fertig?" fertig":""}" role="img" aria-label="${st.ist} von ${st.soll} Lektionen besucht"><span style="width:${pct}%"></span></div>
     ${st.teile.map(teil).join("")}
-    ${besuch.length?`<details class="tb-liste"><summary>Besuchte Lektionen (${besuch.length})</summary>${besuch.map(b=>`<div class="mini-dash-row"><span>Lektion ${esc(b.lektion)}</span><span>${isoDE(b.datum)}</span></div>`).join("")}</details>`:""}
+    ${besuch.length?"":`<p class="muted-p tb-leer">Noch keine Anwesenheit erfasst. Sie wird im Theorie-Termin eingetragen („Anwesenheit eintragen“).</p>`}
+    ${besuch.length?`<details class="tb-liste"><summary>Besuchte Lektionen (${new Set(besuch.map(b=>String(b.lektion))).size})</summary>${besuch.map(b=>`<div class="mini-dash-row"><span>Lektion ${esc(b.lektion)}</span><span>${isoDE(b.datum)}</span></div>`).join("")}</details>`:""}
   </div>`;
 }
 // Lektionen eines Abends: alle Theorie-Blöcke des Tages; ist nur eine Lektion bekannt, kommt die zweite des Abends dazu (1+2, 3+4 …, C1+C2, CE1+CE2)
@@ -8932,7 +8939,12 @@ function _lektOrd(k){ const m=String(k).match(/^(CE|C)?(\d+)$/); return m?({"":0
 function _lektGruppe(k){ const m=String(k).match(/^(CE|C)?\d+$/); return m?(m[1]||"B"):""; }
 function _abendLektionen(datum,l){
   const g=l&&l.lektion!=null&&l.lektion!==""?_lektGruppe(l.lektion):"";
-  const set=[...new Set((DB.lessons||[]).filter(x=>x.art==="theorie"&&x.date===datum&&x.lektion!=null&&x.lektion!==""&&(!g||_lektGruppe(x.lektion)===g)).map(x=>String(x.lektion)))];
+  let tag=(DB.lessons||[]).filter(x=>x.art==="theorie"&&x.date===datum&&x.lektion!=null&&x.lektion!==""&&(!g||_lektGruppe(x.lektion)===g));
+  // zwei Sitzungen am selben Tag: nur Blöcke, die ohne lange Pause (bis 30 Min) am angetippten Termin hängen
+  if(l&&l.von&&l.bis){ let von=hm2min(l.von), bis=hm2min(l.bis), mehr=true; const im=new Set();
+    while(mehr){ mehr=false; tag.forEach(x=>{ if(im.has(x)||!x.von||!x.bis)return; const a=hm2min(x.von), b=hm2min(x.bis); if(a<=bis+30&&b>=von-30){ im.add(x); von=Math.min(von,a); bis=Math.max(bis,b); mehr=true; } }); }
+    tag=tag.filter(x=>im.has(x)); }
+  const set=[...new Set(tag.map(x=>String(x.lektion)))];
   if(set.length===1){
     const m=set[0].match(/^(CE|C)?(\d+)$/); if(m){ const pre=m[1]||"", n=+m[2], p2=n%2?n+1:n-1, k=pre+p2;
       if(_lektionFinde(k)) set.push(k); }
@@ -8951,10 +8963,13 @@ async function openTheorieAnwesenheit(l){
   if(!nochAktuell())return;
   if(error||!Array.isArray(liste)){ closeSheet(); toast("Schülerliste nicht geladen – bitte später nochmal"); return; }
   // Wer ist schon eingetragen? Ohne sichere Antwort wird nicht gespeichert (sonst gingen Einträge verloren).
-  let da=new Set(), daGeladen=false;
-  const ladeDa=async()=>{ daGeladen=false; da=new Set(); if(!lekt.length){ daGeladen=true; return; }
-    const {data,error:e2}=await supa.rpc("theorie_teilnahme_tag",{p_datum:datum,p_lektionen:lekt});
-    if(e2||!Array.isArray(data)) return; data.forEach(x=>da.add(x.schueler_id)); daGeladen=true; };
+  // Zähler: Wechselt der Fahrlehrer schnell die Lektionen, zählt nur die Antwort zur zuletzt gewählten Auswahl
+  let da=new Set(), daGeladen=false, daNr=0;
+  const ladeDa=async()=>{ const meinNr=++daNr; daGeladen=false;
+    if(!lekt.length){ da=new Set(); daGeladen=true; return true; }
+    const {data,error:e2}=await supa.rpc("theorie_teilnahme_tag",{p_datum:datum,p_lektionen:lekt.slice()});
+    if(meinNr!==daNr) return false;
+    if(e2||!Array.isArray(data)) return true; da=new Set(data.map(x=>x.schueler_id)); daGeladen=true; return true; };
   await ladeDa();
   if(!nochAktuell())return;
   if(!daGeladen){ closeSheet(); toast("Eingetragene nicht geladen – bitte später nochmal"); return; }
@@ -8980,7 +8995,7 @@ async function openTheorieAnwesenheit(l){
       const k=b.dataset.k;
       if(lekt.includes(k)) lekt=lekt.filter(x=>x!==k); else { if(lekt.length>=4){ toast("Höchstens 4 Lektionen je Abend"); return; } lekt.push(k); }
       lekt.sort((a,c)=>_lektOrd(a)-_lektOrd(c));
-      await ladeDa(); if(!nochAktuell())return;
+      const aktuell=await ladeDa(); if(!nochAktuell()||!aktuell)return;
       if(!daGeladen){ toast("Eingetragene nicht geladen – bitte nochmal"); }
       da.forEach(id=>{ if(!aus.has(id)&&liste.some(x=>x.id===id)) an.add(id); });
       zeichne();

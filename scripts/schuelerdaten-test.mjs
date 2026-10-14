@@ -156,6 +156,14 @@ await pruefe("D7", "Theorie-Besuch in der Akte: B 12/14 mit „fehlt: 5, 11“, 
   routeDetail("u1");
   const t3 = document.querySelector(".tb-zeile") ? document.querySelector(".tb-zeile").textContent : "";
   if (!/keine Pflicht-Theorie/.test(t3)) f.push("Umschreiber: " + t3.slice(0, 80));
+  // Richter Schritt 3: Theorieprüfung bestanden, aber (Altbestand) keine Einträge → kein „0 von 14 … fehlt“
+  _schuelerFristen.b1 = { vorbesitz: [], theorie_bestanden_am: h }; _theorieBesuch = { b1: [] };
+  routeDetail("b1");
+  const t4 = (document.querySelector(".tb-zeile") || {}).textContent || "";
+  if (!/Theorieprüfung bestanden/.test(t4) || document.querySelector(".theorie-besuch")) f.push("bestanden: " + t4.slice(0, 80));
+  // ohne Einträge: Hinweis wie im Büro
+  _schuelerFristen.b1 = { vorbesitz: [] }; routeDetail("b1");
+  if (!/Noch keine Anwesenheit erfasst/.test((document.querySelector(".theorie-besuch") || {}).textContent || "")) f.push("Hinweis ohne Einträge fehlt");
   return f;
 }));
 await pruefe("D8", "Anwesenheit im Theorie-Termin: Abend mit Lektion 7 wählt 7 + 8 vor, Antippen und Speichern ruft theorie_teilnahme_setzen", async () => {
@@ -215,6 +223,15 @@ await pruefe("D8b", "Anwesenheit: Laden der Eingetragenen schlägt fehl → Blat
   if (await page.evaluate(() => window.__rpc.some((x) => x.name === "theorie_teilnahme_setzen"))) f.push("es wurde gespeichert");
   return f;
 });
+await pruefe("D8c", "Zwei Theorie-Sitzungen am selben Tag: Vorwahl nur aus den Blöcken am angetippten Termin", () => page.evaluate(() => {
+  const h = KR.todayISO(), alt = DB.lessons;
+  DB.lessons = [{ id: "v1", date: h, von: "09:00", bis: "10:30", art: "theorie", lektion: 1 }, { id: "n1", date: h, von: "15:00", bis: "16:30", art: "theorie", lektion: 3 }, { id: "n2", date: h, von: "16:30", bis: "18:00", art: "theorie", lektion: 4 }];
+  const f = [], a = _abendLektionen(h, DB.lessons[0]).join("+"), b = _abendLektionen(h, DB.lessons[1]).join("+");
+  if (a !== "1+2") f.push("vormittags: " + a);
+  if (b !== "3+4") f.push("nachmittags: " + b);
+  DB.lessons = alt;
+  return f;
+}));
 await pruefe("D9", "Theorie eintragen: Lkw-Lektion C3 wählbar und am Termin gespeichert", async () => {
   await page.evaluate(() => { closeSheet(); DB.lessons = []; openTheorieSheet(); });
   await page.waitForTimeout(200);
