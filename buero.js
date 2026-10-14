@@ -15,6 +15,8 @@ if (!KR.theorieFristInfo) KR.theorieFristInfo = () => ({ stufe: "ohne_datum", ab
 if (!KR.umschreibInfo) KR.umschreibInfo = () => ({ stufe: "kein", bis: null, tage: null, drittstaat: false });
 if (!KR.EU_EWR) KR.EU_EWR = [];
 if (!KR.DRITTSTAATEN) KR.DRITTSTAATEN = [];
+if (!KR.fahrlehrerFristen) { KR.fahrlehrerFristen = () => []; KR.ausbildungsKlassen = () => []; }
+if (!KR.sonderSoll) KR.sonderSoll = () => [0, 0, 0];
 if (!KR.theorieSoll) { KR.theorieSoll = () => ({ pflicht: false, grund: "Seite bitte neu laden", teile: [] }); KR.theorieStand = (soll) => ({ pflicht: false, grund: soll.grund, teile: [], ist: 0, soll: 0, fertig: false }); }
 
 const ARTEN = {
