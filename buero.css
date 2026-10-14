@@ -553,4 +553,8 @@ a.kachel:hover,a.kachel:focus-visible{border-color:var(--akzent);}
 .warnhinweis{color:var(--rot);font-weight:700;margin:0;}
 .warnhinweis:empty{display:none;}
 .anwesenheit h3{margin:4px 0 6px;}
+.besuch-liste{list-style:none;padding:0;margin:6px 0;display:grid;gap:2px;}
+.anw-namen{columns:3 180px;margin:4px 0 10px;padding-left:18px;}
+.theorie-teile .fehlt{color:var(--pill-gelb, #7a5410);}
+.warnhinweis{color:var(--pill-gelb, #7a5410);background:var(--gelb-soft);border-radius:10px;padding:8px 12px;font-weight:600;}
 
