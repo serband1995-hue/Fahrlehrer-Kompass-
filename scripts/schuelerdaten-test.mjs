@@ -82,7 +82,7 @@ await pruefe("D1", "Akte Umschreiber: Karte „Behörde“ mit Bewerbernummer, F
   if (!/Ausländischer Führerschein gilt nur noch bis/.test(t)) f.push("Warnung Führerschein fehlt");
   return f;
 }));
-await pruefe("D2", "Bearbeiten-Blatt: speichert Bewerbernummer, Vorbesitz, Führerschein, Wohnsitz direkt in schueler", async () => {
+await pruefe("D2", "Bearbeiten-Blatt: speichert nur Geändertes (Bewerbernummer, Vorbesitz, Übersetzung) direkt in schueler", async () => {
   await page.evaluate(() => { routeDetail("u1"); document.querySelector("#behoerdeBearb").click(); });
   await page.waitForTimeout(200);
   await page.fill("#bhNr", "RL-0816");
@@ -94,7 +94,7 @@ await pruefe("D2", "Bearbeiten-Blatt: speichert Bewerbernummer, Vorbesitz, Führ
     const f = [];
     if (w.bewerbernummer !== "RL-0816") f.push("Bewerbernummer " + w.bewerbernummer);
     if (JSON.stringify(w.vorbesitz) !== '["B"]') f.push("Vorbesitz " + JSON.stringify(w.vorbesitz));
-    if (!w.auslands_fs || w.auslands_fs[0].land !== "Syrien" || w.uebersetzung_vorhanden !== true) f.push("Führerschein/Übersetzung " + JSON.stringify(w));
+    if ("auslands_fs" in w || w.uebersetzung_vorhanden !== true) f.push("nur Geändertes senden (Führerschein unverändert, Übersetzung neu): " + JSON.stringify(w));
     if ("theorie_frist_bis" in w) f.push("App schreibt die Theorie-Frist (nur Büro)");
     if (_schuelerFristen.u1.bewerbernummer !== "RL-0816") f.push("Akte nicht aktualisiert");
     return f;
