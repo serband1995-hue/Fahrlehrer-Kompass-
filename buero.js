@@ -186,7 +186,7 @@ function renderHeute() {
   if (f.bald) aufgaben.push(`<a class="aufgabe gelb" href="#fristen"><b>${f.bald}</b> Reaktivierung${f.bald === 1 ? "" : "en"} in den nächsten 30 Tagen fällig</a>`);
   if (f.theorie) aufgaben.push(`<a class="aufgabe gelb" href="#fristen?ansicht=theorie"><b>${f.theorie}</b> Theorie läuft in 60 Tagen ab oder ist abgelaufen</a>`);
   const pz = zaehlePruefungen();
-  if (pz.ohneErgebnis) aufgaben.push(`<a class="aufgabe rot" href="#pruefungen"><b>${pz.ohneErgebnis}</b> Prüfung${pz.ohneErgebnis === 1 ? "" : "en"} ohne Ergebnis eingetragen</a>`);
+  if (pz.ohneErgebnis) aufgaben.push(`<a class="aufgabe rot" href="#pruefungen?ansicht=ergebnis"><b>${pz.ohneErgebnis}</b> Prüfung${pz.ohneErgebnis === 1 ? "" : "en"} ohne Ergebnis eingetragen</a>`);
   if (pz.offeneHaken) aufgaben.push(`<a class="aufgabe gelb" href="#pruefungen"><b>${pz.offeneHaken}</b> Prüfung${pz.offeneHaken === 1 ? "" : "en"} in den nächsten 14 Tagen mit offenen Haken (Entgelt, TÜV, AS-Portal)</a>`);
   const fcOffen = fcOffeneAbgaben();
   if (fcOffen.length) aufgaben.push(`<a class="aufgabe gelb" href="#fahrchecks?z=vor"><b>${fcOffen.length}</b> Fahrcheck-Abgabe${fcOffen.length === 1 ? "" : "n"} für ${esc(datumDE(fcOffen[0].von))}–${esc(datumDE(fcOffen[0].bis))} noch nicht bestätigt</a>`);
@@ -510,7 +510,7 @@ function fristenDialog(id) {
   fdlg.querySelectorAll("input[name=reakt_status]").forEach((r) => r.addEventListener("change", () => { faellig.disabled = r.value !== "bezahlt" || !r.checked; }));
   ladeProtokoll("schueler", id);
 }
-const FELD_NAMEN = { vertrag_am: "Vertragsdatum", klasse: "Klasse", ausbildungsart: "Ausbildungsart", reakt_status: "Reaktivierung", reakt_bezahlt_bis: "fällig am", reakt_notiz: "Notiz", theorie_abgeschlossen_am: "Theorie abgeschlossen", theorie_bestanden_am: "Theorieprüfung bestanden", antrag_am: "Führerscheinantrag eingereicht", reakt_betrag: "Reaktivierung bezahlt (€)", b197_testfahrt_am: "B197 Testfahrt abgegeben", inaktiv_seit: "Inaktiv seit" };
+const FELD_NAMEN = { vertrag_am: "Vertragsdatum", klasse: "Klasse", ausbildungsart: "Ausbildungsart", reakt_status: "Reaktivierung", reakt_bezahlt_bis: "fällig am", reakt_notiz: "Notiz", theorie_abgeschlossen_am: "Theorie abgeschlossen", theorie_bestanden_am: "Theorieprüfung bestanden", praxis_bestanden_am: "Praxisprüfung bestanden", antrag_am: "Führerscheinantrag eingereicht", reakt_betrag: "Reaktivierung bezahlt (€)", b197_testfahrt_am: "B197 Testfahrt abgegeben", inaktiv_seit: "Inaktiv seit" };
 async function ladeProtokoll(tabelle, id) {
   const ziel = $("protokoll");
   const res = await supa.from("aenderungsprotokoll").select("*").eq("tabelle", tabelle).eq("datensatz_id", id).order("geaendert_am", { ascending: false }).limit(20);
@@ -550,7 +550,36 @@ function hakenHTML(p, gross) {
   return `<div class="haken-reihe${gross ? " gross" : ""}">${HAKEN.map(([k, farbe, titel]) =>
     `<button type="button" class="haken ${farbe}${p[k] ? " an" : ""}" data-haken="${k}" data-id="${esc(p.id)}" aria-pressed="${p[k] ? "true" : "false"}" title="${titel}" aria-label="${titel}"${p.status !== "geplant" ? " disabled" : ""}>✓</button>`).join("")}</div>`;
 }
-const P_ANSICHTEN = [["kommend", "Kommende"], ["vergangen", "Vergangene"], ["alle", "Alle"]];
+const P_ANSICHTEN = [["kommend", "Kommende"], ["ergebnis", "Ergebnisse eintragen"], ["vergangen", "Vergangene"], ["alle", "Alle"]];
+// Prüfungen von heute und davor ohne Ergebnis (plus die eben eingetragenen, damit „Rückgängig“ sichtbar bleibt)
+function ergebnisOffen() {
+  const heute = KR.todayISO();
+  return S.pruefungstermine.filter((p) => p.datum <= heute && (p.status === "geplant" || ERGEBNIS_RUECK[p.id]));
+}
+function renderErgebnisListe(art, suche) {
+  let l = ergebnisOffen();
+  if (art !== "alle") l = l.filter((p) => p.art === art);
+  if (suche) l = l.filter((p) => String((S.schueler.find((x) => x.id === p.schueler_id) || {}).name || "").toLowerCase().includes(suche));
+  l.sort((a, b) => (b.datum + (a.von || "")).localeCompare(a.datum + (b.von || "")));
+  if (!l.length) return `<p class="leer">Alle Prüfungen bis heute haben ein Ergebnis. Sehr gut.</p>`;
+  const heute = KR.todayISO(), tage = {};
+  for (const p of l) (tage[p.datum] = tage[p.datum] || []).push(p);
+  const zeile = (p) => {
+    const s = S.schueler.find((x) => x.id === p.schueler_id) || {};
+    const r = ERGEBNIS_RUECK[p.id];
+    const ergebnis = p.status === "geplant"
+      ? `<button class="knopf ergebnis-ja" data-eja="${esc(p.id)}" type="button">✓ Bestanden</button><button class="knopf ergebnis-nein" data-enein="${esc(p.id)}" type="button">✗ Nicht bestanden</button>`
+      : `<span class="marke-pill ${p.status === "bestanden" ? "gruen" : "rot"}">${p.status === "bestanden" ? "✓ bestanden" : "✗ nicht bestanden"}</span>${r ? `<button class="knopf klein" data-erueck="${esc(p.id)}" type="button">Rückgängig</button>` : ""}${p.status === "bestanden" && p.art === "praxis" && istAktiv(s) ? `<button class="knopf klein" data-earchiv="${esc(s.id)}" type="button">Ins Archiv</button>` : ""}`;
+    return `<tr><td class="zeitspalte">${esc(p.von || "–")}</td>
+      <td><span class="marke-pill ${p.art === "praxis" ? "gruen" : "blau"}">${p.art === "praxis" ? "Praxis" : "Theorie"}</span>${p.klasse ? ` <span class="leise klein">${esc(p.klasse)}</span>` : ""}</td>
+      <td><b>${esc(s.name || "(Schüler gelöscht)")}</b></td><td>${esc(p.fahrlehrer_id ? lehrerName(p.fahrlehrer_id) : "–")}</td>
+      <td class="aktionen"><div class="ergebnis-knoepfe">${ergebnis}</div></td></tr>`;
+  };
+  return `<p class="leise">Für jede Prüfung einmal tippen. Das Ergebnis steht danach sofort in der Akte des Schülers und beim Fahrlehrer in der App.</p>` +
+    Object.keys(tage).map((d) => `<h3 class="tag-titel${d === heute ? " heute" : ""}">${d === heute ? "Heute" : esc(wochentag(d))}, ${esc(datumDE(d))}</h3>
+    <table class="tabelle ptabelle ergebnis-tabelle"><colgroup><col class="c-zeit"><col class="c-art"><col><col class="c-lehrer"><col class="c-ergebnis"></colgroup>
+    <thead><tr><th>Zeit</th><th>Art</th><th>Schüler</th><th>Fahrlehrer</th><th>Ergebnis</th></tr></thead><tbody>${tage[d].map(zeile).join("")}</tbody></table>`).join("");
+}
 // Link innerhalb der Prüfungstafel; Suche, Datum und Sortierung bleiben beim Wechsel der Reiter erhalten
 function pLink(aender) {
   const p = new URLSearchParams((location.hash.split("?")[1]) || "");
@@ -612,7 +641,8 @@ function renderPruefungen() {
     return `<div class="kiosk-kopf"><h2>Prüfungen der nächsten 14 Tage</h2><a class="knopf" href="#pruefungen">Großansicht beenden</a></div>${legende}
       ${tabellen || `<p class="leer">Keine Prüfungen in den nächsten 14 Tagen.</p>`}`;
   }
-  const tabs = P_ANSICHTEN.map(([id, n]) => `<a class="tab" href="${pLink({ ansicht: id === "kommend" ? "" : id })}"${id === ansicht ? ' aria-current="page"' : ""}>${n}</a>`).join("");
+  const nErg = ergebnisOffen().filter((p) => p.status === "geplant").length;
+  const tabs = P_ANSICHTEN.map(([id, n]) => `<a class="tab" href="${pLink({ ansicht: id === "kommend" ? "" : id })}"${id === ansicht ? ' aria-current="page"' : ""}>${n}${id === "ergebnis" && nErg ? ` (${nErg})` : ""}</a>`).join("");
   const arten = [["alle", "Alle"], ["praxis", "Praxis"], ["theorie", "Theorie"]].map(([id, n]) => `<a class="tab" href="${pLink({ art: id === "alle" ? "" : id })}"${id === art ? ' aria-current="page"' : ""}>${n}</a>`).join("");
   const filterAktiv = suche || vonF || bisF;
   const filterZeile = `<div class="filterzeile">
@@ -623,7 +653,7 @@ function renderPruefungen() {
       ${filterAktiv ? `<a class="knopf klein" href="${pLink({ suche: "", von: "", bis: "" })}">Filter löschen</a>` : ""}
     </div>`;
   const warn = offen.length && ansicht === "kommend" && !filterAktiv
-    ? `<div class="karte warnkarte"><h2>${offen.length} Prüfung${offen.length === 1 ? "" : "en"} ohne Ergebnis</h2><table class="tabelle ptabelle"><colgroup><col class="c-zeit breit"><col class="c-art"><col><col class="c-lehrer"><col class="c-haken"><col class="c-akt"></colgroup><tbody>${offen.map((p) => zeile(p).replace("<td class=\"zeitspalte\">", `<td class="zeitspalte">${esc(datumDE(p.datum))} `)).join("")}</tbody></table></div>` : "";
+    ? `<div class="karte warnkarte"><div class="karte-kopf"><h2>${offen.length} Prüfung${offen.length === 1 ? "" : "en"} ohne Ergebnis</h2><a class="knopf haupt" href="#pruefungen?ansicht=ergebnis">Ergebnisse eintragen</a></div><table class="tabelle ptabelle"><colgroup><col class="c-zeit breit"><col class="c-art"><col><col class="c-lehrer"><col class="c-haken"><col class="c-akt"></colgroup><tbody>${offen.map((p) => zeile(p).replace("<td class=\"zeitspalte\">", `<td class="zeitspalte">${esc(datumDE(p.datum))} `)).join("")}</tbody></table></div>` : "";
   return `<div class="kacheln">
       <div class="kachel"><div class="wert">${z.woche}</div><div class="name">Prüfungen in den nächsten 7 Tagen</div></div>
       <div class="kachel${z.offeneHaken ? " gold" : ""}"><div class="wert">${z.offeneHaken}</div><div class="name">mit offenen Haken (14 Tage)</div></div>
@@ -633,8 +663,8 @@ function renderPruefungen() {
       <div class="karte-kopf"><div class="tabs">${tabs}<span class="trenner"></span>${arten}</div>
         <div class="knopfreihe"><a class="knopf" href="#pruefungen?gross=1">Großansicht für die Küche</a><button class="knopf haupt" id="pNeu" type="button">+ Prüfung planen</button></div></div>
       ${filterZeile}
-      ${legende}
-      ${tabellen || `<p class="leer">${filterAktiv ? "Keine Prüfung passt zu dieser Suche." : (ansicht === "kommend" ? "Keine kommenden Prüfungen geplant." : "Noch keine Prüfungen in dieser Ansicht.")}</p>`}
+      ${ansicht === "ergebnis" ? "" : legende}
+      ${ansicht === "ergebnis" ? renderErgebnisListe(art, suche) : tabellen || `<p class="leer">${filterAktiv ? "Keine Prüfung passt zu dieser Suche." : (ansicht === "kommend" ? "Keine kommenden Prüfungen geplant." : "Noch keine Prüfungen in dieser Ansicht.")}</p>`}
     </div>`;
 }
 function bindePruefungen(ziel) {
@@ -657,6 +687,15 @@ function bindePruefungen(ziel) {
   ziel.querySelectorAll("[data-haken]").forEach((b) => b.addEventListener("click", () => setzeHaken(b.dataset.id, b.dataset.haken)));
   ziel.querySelectorAll("[data-pbearb]").forEach((b) => b.addEventListener("click", () => pruefungDialog(b.dataset.pbearb)));
   ziel.querySelectorAll("[data-ergebnis]").forEach((b) => b.addEventListener("click", () => ergebnisDialog(b.dataset.ergebnis)));
+  const tippe = async (b, id, neu) => {
+    b.closest(".ergebnis-knoepfe").querySelectorAll("button").forEach((x) => { x.disabled = true; });
+    if (await setzeErgebnis(id, neu)) toast(neu === "bestanden" ? "✓ Bestanden eingetragen" : "✗ Nicht bestanden eingetragen · Aufgabe „Neuen Termin planen“ angelegt");
+    zeichne();
+  };
+  ziel.querySelectorAll("[data-eja]").forEach((b) => b.addEventListener("click", () => tippe(b, b.dataset.eja, "bestanden")));
+  ziel.querySelectorAll("[data-enein]").forEach((b) => b.addEventListener("click", () => tippe(b, b.dataset.enein, "nicht_bestanden")));
+  ziel.querySelectorAll("[data-erueck]").forEach((b) => b.addEventListener("click", () => { b.disabled = true; ergebnisRueckgaengig(b.dataset.erueck); }));
+  ziel.querySelectorAll("[data-earchiv]").forEach((b) => b.addEventListener("click", () => insArchiv(b.dataset.earchiv)));
 }
 window.addEventListener("hashchange", () => { if (aktuellerBereich().id !== "pruefungen") document.body.classList.remove("kiosk"); });
 async function speicherePruefung(id, werte) {
@@ -723,7 +762,7 @@ function pruefungDialog(id) {
       <label class="voll">Notiz<input type="text" name="notiz" maxlength="200" value="${esc(p.notiz || "")}"></label>
       ${id && p.status === "geplant" ? `<label class="voll wahl"><input type="checkbox" name="absagen"> Prüfung absagen</label>` : ""}
       ${id && p.status !== "geplant" ? `<label class="voll">Ergebnis korrigieren<select name="status">${Object.entries(P_STATUS).map(([k, v]) => `<option value="${k}"${k === p.status ? " selected" : ""}>${v[1]}</option>`).join("")}</select></label>
-        <p class="leise klein voll">Eine Korrektur ändert nur die Prüfungstafel. Reaktivierung und Theorie-Datum des Schülers bitte danach unter „Fristen“ prüfen.</p>` : ""}
+        <p class="leise klein voll">Eine Korrektur ändert auch die Akte des Schülers (Datum „bestanden“). Wird eine bestandene Praxisprüfung zurückgenommen, bitte die Reaktivierung unter „Fristen“ prüfen.</p>` : ""}
     </div>
     <p class="leise klein">Praxisprüfungen mit Fahrlehrer und Uhrzeit erscheinen automatisch im Kalender des Fahrlehrers.</p>`;
   const dlg = oeffneDialog(id ? "Prüfung bearbeiten" : "Prüfung planen", body, async (form) => {
@@ -746,6 +785,7 @@ function pruefungDialog(id) {
       S.pruefungstermine.push(gespeichert);
     }
     if (!gespeichert) return false;
+    if (id && werte.status && werte.status !== p.status) await uebertrageErgebnis(gespeichert, werte.status, p.status);
     await abgleichKalender(gespeichert);
     toast(d.absagen ? "Prüfung abgesagt" : "Prüfung gespeichert");
     zeichne();
@@ -760,6 +800,92 @@ function pruefungDialog(id) {
     if (s.klasse) dlg.querySelector("select[name=klasse]").value = s.klasse;
   });
 }
+/* Prüfungsergebnis → Schülerakte (🗣 Serband 13.10.2026: Haken setzen, landet automatisch beim Schüler)
+   Theorie bestanden → theorie_bestanden_am, Praxis bestanden → praxis_bestanden_am + Reaktivierung entfällt.
+   Nicht bestanden → Aufgabe „Neuen Termin planen“ für alle im Büro. Alles lässt sich rückgängig machen. */
+const ERGEBNIS_RUECK = {}; // pruefung_id -> { status, schueler: {…vorher}, aufgabeId }
+async function uebertrageErgebnis(p, neu, alt) {
+  const s = S.schueler.find((x) => x.id === p.schueler_id);
+  if (!s) return {};
+  const feld = p.art === "theorie" ? "theorie_bestanden_am" : "praxis_bestanden_am";
+  const werte = {};
+  if (neu === "bestanden") {
+    werte[feld] = p.datum;
+    if (p.art === "praxis" && s.reakt_status !== "befreit") Object.assign(werte, { reakt_status: "befreit", reakt_notiz: `Praxisprüfung bestanden am ${datumDE(p.datum)}` });
+  } else if (alt === "bestanden" && s[feld] === p.datum) werte[feld] = null; // Korrektur: Datum wieder weg
+  const vorher = {};
+  for (const k of Object.keys(werte)) vorher[k] = s[k] == null ? null : s[k];
+  if (Object.keys(werte).length) {
+    const res = await supa.from("schueler").update(werte).eq("id", s.id).select("id");
+    if (res.error || !res.data || !res.data.length) toast("Ergebnis steht auf der Tafel, aber nicht in der Akte: " + (res.error ? res.error.message : "keine Berechtigung"), true);
+    else Object.assign(s, werte);
+  }
+  let aufgabeId = null;
+  if (neu === "nicht_bestanden" && alt !== "nicht_bestanden") {
+    const text = `Neuen Termin für die ${p.art === "praxis" ? "Praxis" : "Theorie"}prüfung planen: ${s.name}`;
+    const res = await supa.from("schueler_aufgaben").insert({ fahrschule_id: S.fsId, schueler_id: s.id, text, heute: false, faellig_am: KR.addDaysISO(KR.todayISO(), 3), erstellt_von: S.user.id }).select("*");
+    if (!res.error && res.data && res.data.length) { S.aufgaben.unshift(res.data[0]); aufgabeId = res.data[0].id; }
+  }
+  return { vorher, aufgabeId };
+}
+async function setzeErgebnis(id, neu) {
+  const p = S.pruefungstermine.find((x) => x.id === id);
+  if (!p || p.status === neu) return false;
+  const alt = p.status;
+  const gespeichert = await speicherePruefung(id, { status: neu });
+  if (!gespeichert) return false;
+  const r = await uebertrageErgebnis(gespeichert, neu, alt);
+  ERGEBNIS_RUECK[id] = { status: alt, schueler: r.vorher || {}, aufgabeId: r.aufgabeId };
+  return true;
+}
+async function ergebnisRueckgaengig(id) {
+  const r = ERGEBNIS_RUECK[id], p = S.pruefungstermine.find((x) => x.id === id);
+  if (!r || !p) return;
+  if (!(await speicherePruefung(id, { status: r.status }))) return;
+  const s = S.schueler.find((x) => x.id === p.schueler_id);
+  if (s && Object.keys(r.schueler).length) {
+    const res = await supa.from("schueler").update(r.schueler).eq("id", s.id).select("id");
+    if (!res.error && res.data && res.data.length) Object.assign(s, r.schueler);
+  }
+  if (r.aufgabeId) {
+    const res = await supa.from("schueler_aufgaben").delete().eq("id", r.aufgabeId).select("id");
+    if (!res.error) S.aufgaben = S.aufgaben.filter((a) => a.id !== r.aufgabeId);
+  }
+  delete ERGEBNIS_RUECK[id];
+  toast("Rückgängig gemacht");
+  zeichne();
+}
+async function insArchiv(sid) {
+  const s = S.schueler.find((x) => x.id === sid);
+  if (!s || !istAktiv(s)) return;
+  if (await bestaetige(`${s.name} ins Archiv legen?`, "Der Schüler hat bestanden. Archivierte Schüler stehen im Reiter „Archiv“, sind überall ausgeblendet und zählen nicht mehr bei Fristen, Reaktivierung und Auslastung. Du kannst das jederzeit rückgängig machen.", "Ja, ins Archiv")) {
+    await speichereSchueler(s.id, { inaktiv_seit: KR.todayISO() }, `${s.name} liegt jetzt im Archiv.`);
+  }
+}
+// Akte: alle Prüfungen des Schülers (Tafel und App), gleicher Tag und gleiche Art nur einmal
+function pruefungenAkteHTML(sid) {
+  const x = S.schueler.find((y) => y.id === sid) || {};
+  const map = {};
+  for (const e of S.pruefungen) {
+    if (e.schueler_id !== sid || !e.datum) continue;
+    const ok = e.result === "pass" || e.result === "bestanden", nein = e.result === "fail" || e.result === "nicht_bestanden";
+    map["praxis|" + e.datum] = { art: "praxis", datum: e.datum, status: ok ? "bestanden" : nein ? "nicht_bestanden" : "geplant", quelle: "App" };
+  }
+  for (const p of S.pruefungstermine) {
+    if (p.schueler_id !== sid || p.status === "abgesagt") continue;
+    map[p.art + "|" + p.datum] = { art: p.art, datum: p.datum, status: p.status, lehrer: p.fahrlehrer_id, pruefer: p.pruefer, quelle: "Tafel" };
+  }
+  const l = Object.values(map).sort((a, b) => b.datum.localeCompare(a.datum));
+  const versuche = (art) => l.filter((e) => e.art === art && e.status !== "geplant").length;
+  const kopf = [x.theorie_bestanden_am ? `<span class="marke-pill gruen">✓ Theorie bestanden ${esc(datumDE(x.theorie_bestanden_am))}</span>` : "",
+    x.praxis_bestanden_am ? `<span class="marke-pill gruen">✓ Praxis bestanden ${esc(datumDE(x.praxis_bestanden_am))}</span>` : ""].join(" ");
+  const kurz = (n) => String(n || "").split(/\s+/).filter(Boolean).map((w) => w[0].toUpperCase() + ".").join(""); // Prüfer nur mit Initialen
+  return `<h3>Prüfungen</h3>${kopf ? `<p>${kopf}</p>` : ""}
+    ${l.length ? `<ul class="pruef-akte">${l.map((e) => {
+      const [f, t] = P_STATUS[e.status] || P_STATUS.geplant;
+      return `<li><span class="marke-pill ${e.art === "praxis" ? "gruen" : "blau"}">${e.art === "praxis" ? "Praxis" : "Theorie"}</span> ${esc(datumDE(e.datum))} <span class="marke-pill ${f}">${esc(t)}</span><span class="leise klein">${e.lehrer ? esc(lehrerName(e.lehrer)) + " · " : ""}${e.pruefer ? "Prüfer " + esc(kurz(e.pruefer)) + " · " : ""}${e.quelle}</span></li>`;
+    }).join("")}</ul><p class="leise klein">Versuche: Theorie ${versuche("theorie")}, Praxis ${versuche("praxis")}.</p>` : `<p class="leise klein">Noch keine Prüfung eingetragen.</p>`}`;
+}
 function ergebnisDialog(id) {
   const p = S.pruefungstermine.find((x) => x.id === id);
   if (!p) return;
@@ -769,23 +895,14 @@ function ergebnisDialog(id) {
       <label class="wahl"><input type="radio" name="ergebnis" value="bestanden"> bestanden</label>
       <label class="wahl"><input type="radio" name="ergebnis" value="nicht_bestanden"> nicht bestanden</label>
     </fieldset></div>
-    <p class="leise klein">${p.art === "theorie" ? "Bei „bestanden“ wird das Datum beim Schüler eingetragen: Ab dann hat er 12 Monate für die Praxisprüfung." : "Bei „bestanden“ entfällt die Reaktivierung für diesen Schüler."}</p>`;
+    <p class="leise klein">${p.art === "theorie" ? "Bei „bestanden“ wird das Datum in der Akte eingetragen: Ab dann hat er 12 Monate für die Praxisprüfung." : "Bei „bestanden“ steht das Datum in der Akte und die Reaktivierung entfällt."} Bei „nicht bestanden“ entsteht die Aufgabe „Neuen Termin planen“.</p>`;
   oeffneDialog("Ergebnis eintragen", body, async (form) => {
     const e = new FormData(form).get("ergebnis");
     if (!e) { toast("Bitte bestanden oder nicht bestanden wählen.", true); return false; }
-    if (!(await speicherePruefung(id, { status: e }))) return false;
-    if (e === "bestanden" && s.id) {
-      if (p.art === "theorie") await speichereSchueler(s.id, { theorie_bestanden_am: p.datum }, "Ergebnis gespeichert");
-      else {
-        await speichereSchueler(s.id, { reakt_status: "befreit", reakt_notiz: `Praxisprüfung bestanden am ${datumDE(p.datum)}` }, "Glückwunsch! Ergebnis gespeichert.");
-        // Erst nach dem Schließen dieses Fensters fragen (sonst liegen zwei Fenster übereinander)
-        if (istAktiv(s)) setTimeout(async () => {
-          if (await bestaetige(`${s.name} ins Archiv legen?`, "Der Schüler hat bestanden. Archivierte Schüler stehen im Reiter „Archiv“, sind überall ausgeblendet und zählen nicht mehr bei Fristen, Reaktivierung und Auslastung. Du kannst das jederzeit rückgängig machen.", "Ja, ins Archiv")) {
-            await speichereSchueler(s.id, { inaktiv_seit: KR.todayISO() }, `${s.name} liegt jetzt im Archiv.`);
-          }
-        }, 150);
-      }
-    } else { toast("Ergebnis gespeichert"); zeichne(); }
+    if (!(await setzeErgebnis(id, e))) return false;
+    toast(e === "bestanden" ? "Glückwunsch! Ergebnis gespeichert." : "Ergebnis gespeichert");
+    zeichne();
+    if (e === "bestanden" && p.art === "praxis" && istAktiv(s)) setTimeout(() => insArchiv(s.id), 150); // nach dem Schließen fragen
     return true;
   }, "Speichern");
 }
@@ -1212,6 +1329,7 @@ function schuelerDialog(id) {
         <label class="datum-klein">am<input type="date" name="testfahrt_am" value="${esc(x.b197_testfahrt_am || "")}"></label>
       </div>
       ${id ? `<div class="voll schalter-zeile"><label class="schalter"><input type="checkbox" name="aktiv" role="switch"${istAktiv(x) ? " checked" : ""}><span class="schalter-bahn" aria-hidden="true"></span><span class="schalter-text"><b id="aktivText">${istAktiv(x) ? "Aktiv" : "Im Archiv"}</b><span class="leise klein"> Archiv heißt: bestanden oder nicht mehr dabei. Der Schüler verschwindet überall (auch aus der Fahrlehrer-App) und zählt nicht bei Fristen, Reaktivierung und Auslastung. Jederzeit zurückholbar.</span></span></label></div>` : ""}
+      ${id ? `<div class="voll">${pruefungenAkteHTML(id)}</div>` : ""}
       ${id ? `<div class="voll" id="notizBlock">${notizBlockHTML(id, x.fahrlehrer_id)}</div>` : ""}
       <label class="voll">Interne Notiz (nur Büro, der Fahrlehrer sieht sie nicht)<input type="text" name="buero_notiz" maxlength="500" value="${esc(x.buero_notiz || "")}"></label>
       ${id ? `<div class="voll" id="aufgabenBlock">${aufgabenBlockHTML(id)}</div>` : ""}
@@ -2479,7 +2597,7 @@ async function ladeDaten() {
       supa.from("kalender_pruefungen").select("*").eq("fahrschule_id", fsId).eq("geloescht", false),
       supa.from("fahrschule_fahrzeuge").select("*").eq("fahrschule_id", fsId).eq("aktiv", true).order("erstellt_am"),
       supa.from("fahrschule_pakete").select("*").eq("fahrschule_id", fsId),
-      supa.from("pruefungstermine").select("*").eq("fahrschule_id", fsId).gte("datum", KR.addDaysISO(KR.todayISO(), -120)).order("datum").order("von"),
+      supa.from("pruefungstermine").select("*").eq("fahrschule_id", fsId).gte("datum", KR.addDaysISO(KR.todayISO(), -400)).order("datum").order("von"),
       supa.from("fc_abgaben").select("*").eq("fahrschule_id", fsId).gte("zeitraum_von", KR.addDaysISO(KR.todayISO(), -200)).order("bestaetigt_am", { ascending: false }),
       supa.from("fahrschule_empfehlungen").select("*").eq("fahrschule_id", fsId).order("erstellt_am", { ascending: false }).limit(1000),
       supa.from("provisionen").select("*").eq("fahrschule_id", fsId).order("erstellt_am", { ascending: false }).limit(2000),

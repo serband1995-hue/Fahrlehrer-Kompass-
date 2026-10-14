@@ -510,3 +510,15 @@ details summary{cursor:pointer;font-weight:700;margin:6px 0;}
 a.kachel{display:block;color:inherit;text-decoration:none;transition:border-color .15s;}
 a.kachel:hover,a.kachel:focus-visible{border-color:var(--akzent);}
 .ag-zeile{display:flex;flex-wrap:wrap;gap:10px 16px;align-items:flex-end;}
+
+/* Ergebnisse eintragen: zwei große Knöpfe je Prüfung */
+.ergebnis-knoepfe{display:flex;flex-wrap:nowrap;gap:8px;justify-content:flex-end;align-items:center;}
+.ergebnis-tabelle col.c-ergebnis{width:360px;}
+.ergebnis-tabelle .aktionen{white-space:nowrap;}
+@media (max-width:1200px){.ergebnis-knoepfe{flex-wrap:wrap;}}
+.knopf.ergebnis-ja{border-color:var(--gruen);color:var(--gruen);font-weight:700;}
+.knopf.ergebnis-ja:hover{background:var(--gruen-soft);}
+.knopf.ergebnis-nein{border-color:var(--rot);color:var(--rot);font-weight:700;}
+.knopf.ergebnis-nein:hover{background:var(--rot-soft);}
+.pruef-akte{list-style:none;margin:0;padding:0;display:grid;gap:6px;}
+.pruef-akte li{display:flex;flex-wrap:wrap;gap:8px;align-items:center;}

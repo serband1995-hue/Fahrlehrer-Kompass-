@@ -1054,6 +1054,48 @@ for (const [breite, hoehe] of [[1920, 1080], [1366, 768], [1024, 768]]) {
   await ctx.close();
 }
 
+// 4m) Prüfungsergebnisse eintragen (13.10.2026): Haken je Prüfung, landet in der Akte, Rückgängig, Korrektur
+{
+  const gestern = (() => { const d = new Date(); d.setDate(d.getDate() - 1); return d.toISOString().slice(0, 10); })();
+  const { page, ctx, konsole } = await oeffne({ nutzer: "bu-1", hash: "#pruefungen?ansicht=ergebnis", breite: 1366, hoehe: 900, vorbereiten: function () {
+    const h = new Date().toISOString().slice(0, 10), g = new Date(); g.setDate(g.getDate() - 1);
+    F.tabellen.pruefungstermine.push(
+      { id: "pt-6", fahrschule_id: "fs-test-1", schueler_id: "s11", fahrlehrer_id: "fl-1", art: "theorie", klasse: "B", datum: h, von: "08:00", status: "geplant" },
+      { id: "pt-7", fahrschule_id: "fs-test-1", schueler_id: "s12", fahrlehrer_id: "fl-2", art: "praxis", klasse: "B", datum: g.toISOString().slice(0, 10), von: "11:00", status: "geplant" });
+  } });
+  const zeilen = await page.$$("[data-eja]");
+  if (zeilen.length !== 3) fehler("Ergebnisse: erwartet 3 offene Prüfungen, gefunden " + zeilen.length);
+  await pruefeLayout(page, "Ergebnisse eintragen");
+  if (FOTOS) await page.screenshot({ path: join(FOTOS, "ergebnisse.png"), fullPage: true });
+  const schueler = (id) => page.evaluate((i) => Object.assign({}, window.__FAKE.tabellen.schueler.find((x) => x.id === i)), id);
+  const vorher = (await schueler("s11")).theorie_bestanden_am || null;
+  await page.click('[data-eja="pt-6"]'); await page.waitForTimeout(300);
+  if ((await schueler("s11")).theorie_bestanden_am !== HEUTE) fehler("Ergebnisse: Theorie bestanden nicht in der Akte");
+  if (!(await page.isVisible('[data-erueck="pt-6"]'))) fehler("Ergebnisse: kein Rückgängig");
+  await page.click('[data-erueck="pt-6"]'); await page.waitForTimeout(300);
+  const pt6 = await page.evaluate(() => window.__FAKE.tabellen.pruefungstermine.find((p) => p.id === "pt-6").status);
+  if (pt6 !== "geplant" || ((await schueler("s11")).theorie_bestanden_am || null) !== vorher) fehler("Ergebnisse: Rückgängig stellt nicht wieder her");
+  await page.click('[data-enein="pt-7"]'); await page.waitForTimeout(300);
+  if (!(await page.evaluate(() => (window.__FAKE.tabellen.schueler_aufgaben || []).some((a) => a.schueler_id === "s12" && /Praxisprüfung planen/.test(a.text))))) fehler("Ergebnisse: keine Aufgabe „Neuen Termin planen“");
+  await page.click('[data-eja="pt-4"]'); await page.waitForTimeout(300);
+  const s8 = await schueler("s8");
+  if (s8.praxis_bestanden_am !== gestern || s8.reakt_status !== "befreit") fehler("Ergebnisse: Praxis bestanden nicht in der Akte " + JSON.stringify([s8.praxis_bestanden_am, s8.reakt_status]));
+  if (!(await page.isVisible('[data-earchiv="s8"]'))) fehler("Ergebnisse: „Ins Archiv“ fehlt");
+  // Korrektur über „Bearbeiten“: bestanden → nicht bestanden nimmt das Datum aus der Akte
+  await page.goto(page.url().split("#")[0] + "#pruefungen?ansicht=vergangen"); await page.waitForTimeout(300);
+  await page.click('[data-pbearb="pt-4"] >> nth=0');
+  await page.selectOption("dialog select[name=status]", "nicht_bestanden");
+  await page.click("dialog button[value=ok]"); await page.waitForTimeout(300);
+  if ((await schueler("s8")).praxis_bestanden_am) fehler("Ergebnisse: Korrektur ändert die Akte nicht");
+  // Akte zeigt die Prüfungen
+  await page.evaluate(() => schuelerDialog("s8")); await page.waitForTimeout(200);
+  const akte = await page.textContent("dialog[open]");
+  if (!/Prüfungen/.test(akte) || !/Versuche: Theorie \d+, Praxis \d+/.test(akte)) fehler("Akte: Prüfungsblock fehlt");
+  await pruefeLayout(page, "Akte mit Prüfungen");
+  if (konsole.length) fehler("Ergebnisse: Konsole: " + konsole.join(" | "));
+  await ctx.close();
+}
+
 // Leitung und Super-Admin haben eigene Konten: keine PIN-Abfrage
 for (const nutzer of ["ad-1", "sa-1"]) {
   const { page, ctx } = await oeffne({ nutzer, wer: null });
