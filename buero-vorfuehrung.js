@@ -12,10 +12,10 @@ function addMonate(iso, n) { const d = new Date(iso + "T12:00:00"); d.setMonth(d
 function bauDaten(heute) {
   const FS = "fs-test-1";
   const lehrer = [
-    { id: "fl-1", name: "Fahrlehrer Anton", email: "anton@example.org", rolle: "fahrlehrer", fahrschule_id: FS, aktiv: true, agb_akzeptiert_version: "1.0" },
+    { id: "fl-1", name: "Fahrlehrer Anton", email: "anton@example.org", rolle: "fahrlehrer", fahrschule_id: FS, aktiv: true, agb_akzeptiert_version: "1.0", klassen: ["B", "BE"] },
     { id: "fl-2", name: "Fahrlehrerin Berta", email: "berta@example.org", rolle: "fahrlehrer", fahrschule_id: FS, aktiv: true, agb_akzeptiert_version: "1.0" },
     { id: "fl-3", name: "Fahrlehrer Cem", email: "cem@example.org", rolle: "fahrlehrer", fahrschule_id: FS, aktiv: true, agb_akzeptiert_version: "1.0" },
-    { id: "fl-4", name: "Fahrlehrer Dario (extern)", email: "dario@example.org", rolle: "fahrlehrer", fahrschule_id: FS, aktiv: true, agb_akzeptiert_version: "1.0" },
+    { id: "fl-4", name: "Fahrlehrer Dario (extern)", email: "dario@example.org", rolle: "fahrlehrer", fahrschule_id: FS, aktiv: true, agb_akzeptiert_version: "1.0", klassen: ["C1", "C1E", "C", "CE"], ohne_app: true },
   ];
   const buero = [
     { id: "bu-1", name: "Büro Testperson", email: "buero@example.org", rolle: "buero", fahrschule_id: FS, aktiv: true, agb_akzeptiert_version: "1.0" },
@@ -183,6 +183,10 @@ if (typeof module !== "undefined" && module.exports) { module.exports = { bauDat
       Object.assign(p, { name, telefon: p_telefon || null, aktiv: p_aktiv !== false });
       if (chef && p_darf_verwalten != null) p.darf_verwalten = !!p_darf_verwalten;
       return { ok: true, id: p.id };
+    },
+    buero_fahrlehrer_klassen: ({ p_id, p_klassen }) => {
+      const p = (F.tabellen.profiles || []).find((x) => x.id === p_id); if (!p) return { fehler: "unbekannt" };
+      p.klassen = [...new Set(p_klassen || [])].sort(); return { ok: true };
     },
     buero_pin_zuruecksetzen: ({ p_person }) => {
       if (!darfVerwalten()) return { fehler: "keine_berechtigung" };

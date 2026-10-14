@@ -528,3 +528,5 @@ a.kachel:hover,a.kachel:focus-visible{border-color:var(--akzent);}
 .d-punkt.klickbar:hover .d-balken,.d-punkt.klickbar:focus .d-balken{opacity:.75;}
 .hb-zeile.klickbar:hover .hb-name,.hb-zeile.klickbar:focus .hb-name{text-decoration:underline;}
 .abstand-oben{margin-top:22px;margin-bottom:6px;}
+.klassen-wahl{display:flex;flex-wrap:wrap;gap:6px 18px;border:1px solid var(--line-soft);border-radius:var(--r-klein);padding:10px 14px;}
+.klassen-wahl legend{padding:0 6px;color:var(--muted);font-size:15px;}
