@@ -65,6 +65,10 @@
         <div class="marke-schule" id="schulName"></div>
       </div>
     </div>
+    <!-- Wer gerade bedient (gemeinsames Büro-Konto): immer oben sichtbar -->
+    <div class="wer-zeile" id="werZeile" hidden>
+      <div class="wer-kopf">Bedient gerade: <b id="werAnzeige"></b></div>
+      <div class="wer-knoepfe"><button type="button" class="knopf klein" id="werSperren" title="Platz verlassen: Seite sperren, beim Zurückkommen PIN eingeben">🔒 Sperren</button><button type="button" class="knopf klein" id="werWechseln">Wechseln</button><button type="button" class="knopf klein" id="werPinAendern">PIN ändern</button></div></div>
     <label class="schulwahl" id="schulWahlWrap" hidden>Fahrschule
       <select id="schulWahl"></select>
     </label>
@@ -76,8 +80,6 @@
       </div>
       <button class="knopf klein" id="abmelden" type="button">Abmelden</button>
     </div>
-    <div class="wer-zeile" id="werZeile" hidden><span id="werAnzeige" hidden></span>
-      <div class="wer-knoepfe"><button type="button" class="textknopf" id="werWechseln">wechseln</button><button type="button" class="textknopf" id="werSperren" title="Platz verlassen: Seite sperren, beim Zurückkommen PIN eingeben">🔒 Sperren</button><button type="button" class="textknopf" id="werPinAendern">PIN ändern</button></div></div>
     <div class="seite-links"><a class="knopf klein" id="zurApp" href="index.html">← Zur Fahrlehrer-Ansicht (Kompass-App)</a></div>
     <button class="knopf klein installieren" id="installieren" type="button" hidden>Als App auf diesem PC installieren</button>
   </aside>
@@ -117,11 +119,11 @@
         <button type="button" data-ziffer="1">1</button><button type="button" data-ziffer="2">2</button><button type="button" data-ziffer="3">3</button>
         <button type="button" data-ziffer="4">4</button><button type="button" data-ziffer="5">5</button><button type="button" data-ziffer="6">6</button>
         <button type="button" data-ziffer="7">7</button><button type="button" data-ziffer="8">8</button><button type="button" data-ziffer="9">9</button>
-        <button type="button" class="pin-leise" id="pinZurueck">Zurück</button><button type="button" data-ziffer="0">0</button><button type="button" class="pin-leise" id="pinLoeschen" aria-label="Letzte Ziffer löschen">⌫</button>
+        <button type="button" class="pin-leise" id="pinZurueck">← Name</button><button type="button" data-ziffer="0">0</button><button type="button" class="pin-leise" id="pinLoeschen" aria-label="Letzte Ziffer löschen">⌫</button>
       </div>
     </div>
     <button class="knopf" type="button" id="werZu" hidden>Abbrechen</button>
-    <button class="textknopf" type="button" data-abmelden>Ganz abmelden (gemeinsames Büro-Konto)</button>
+    <button class="textknopf wer-ganz-ab" type="button" data-abmelden>Büro-Konto an diesem PC ganz abmelden</button>
   </div>
 </div>
 
