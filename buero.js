@@ -213,7 +213,7 @@ function renderHeute() {
   if (f.umPruefen) aufgaben.push(`<a class="aufgabe gelb" href="#fristen?ansicht=umschreiber"><b>${f.umPruefen}</b> Umschreiber: Land oder „Wohnsitz seit“ prüfen (sonst keine 6-Monats-Warnung)</a>`);
   if (f.umAb) aufgaben.push(`<a class="aufgabe rot" href="#fristen?ansicht=umschreiber"><b>${f.umAb}</b> Umschreiber: ausländischer Führerschein gilt nicht mehr (darf nicht selbst fahren)</a>`);
   if (f.umBald) aufgaben.push(`<a class="aufgabe gelb" href="#fristen?ansicht=umschreiber"><b>${f.umBald}</b> Umschreiber: ausländischer Führerschein gilt nur noch bis zu 30 Tage</a>`);
-  const flFr = S.lehrer.flatMap((l) => KR.fahrlehrerFristen(l, heute).filter((x) => x.stufe !== "ok").map((x) => Object.assign({ name: l.name || l.email }, x)));
+  const flFr = S.lehrer.filter((l) => l.aktiv !== false).flatMap((l) => KR.fahrlehrerFristen(l, heute).filter((x) => x.stufe !== "ok").map((x) => Object.assign({ name: l.name || l.email }, x)));
   flFr.forEach((x) => aufgaben.push(`<a class="aufgabe ${x.stufe === "abgelaufen" ? "rot" : "gelb"}" href="#team"><b>${esc(x.name)}</b>: ${esc(x.titel)} ${x.stufe === "abgelaufen" ? "abgelaufen seit" : "läuft ab am"} ${esc(datumDE(x.bis))}</a>`));
   if (f.ohneDatum) aufgaben.push(`<a class="aufgabe" href="#fristen?ansicht=ohne"><b>${f.ohneDatum}</b> Schüler ohne Vertragsdatum</a>`);
   // 1) Für dich: Aufgaben an mich (oder an alle), Überfälliges und Dringendes zuerst
@@ -1590,14 +1590,19 @@ function sonderZaehlerHTML(x) {
   const fl = S.lehrer.find((l) => l.id === x.fahrlehrer_id);
   if (!fl || !fl.ohne_app || istUmschreiber(x)) return "";
   const soll = KR.sonderSoll(formAusKlasse(klasseVon(x) || "B"), lkwWegBuero(x)), heute = KR.todayISO(), ist = { ueberland: 0, autobahn: 0, nacht: 0 };
+  const jetztMin = new Date().getHours() * 60 + new Date().getMinutes();
+  let ohneArt = 0;
   for (const t of S.termine) {
     if (t.schueler_id !== x.id || !t.datum || t.datum > heute || !t.von || !t.bis) continue;
+    if (t.datum === heute && KR.hm2min(t.bis) > jetztMin) continue; // heutige Stunde zählt erst, wenn sie vorbei ist
     const st = (t.payload || {}).status || t.status; if (st === "abgebrochen" || st === "nicht erschienen") continue;
     const a = t.art === "nacht" ? "nacht" : t.art === "sonder" ? ((t.payload || {}).sonderArt || "") : "";
     if (ist[a] != null) ist[a] += Math.floor((KR.hm2min(t.bis) - KR.hm2min(t.von)) / 45);
+    else if (t.art === "sonder") ohneArt++;
   }
   return `<h3>Sonderfahrten (aus dem Kalender, je 45 Minuten)</h3><p>${SONDER_ARTEN.map(([k, n], i) => `<span class="marke-pill${ist[k] >= soll[i] ? " gruen" : ""}">${n} ${ist[k]}/${soll[i]}</span>`).join(" ")}</p>
-    <p class="leise klein">${esc(lehrerName(x.fahrlehrer_id))} nutzt keine App: Bitte bei jeder Sonderfahrt im Termin die Art wählen.</p>`;
+    ${ohneArt ? `<p class="fl-warnung bald">${ohneArt} ${ohneArt === 1 ? "Sonderfahrt" : "Sonderfahrten"} ohne Art – bitte im Termin Überland, Autobahn oder Nacht wählen.</p>` : ""}
+    <p class="leise klein">${esc(lehrerName(x.fahrlehrer_id))} nutzt keine App: Bitte bei jeder Sonderfahrt im Termin die Art wählen. Dieser Zähler sieht nur die Termine im Büro-Kalender.</p>`;
 }
 function anwesenheitTerminHTML(t) {
   if (!S.theorie) return `<div class="voll anwesenheit"><h3>Anwesenheit</h3><p class="leise klein">Anwesenheit konnte nicht geladen werden.</p></div>`;
@@ -1930,7 +1935,7 @@ function terminDialog(id, vorgabe) {
       <label>Von<input type="time" name="von" required value="${esc(t.von || "")}"></label>
       <label>Bis<input type="time" name="bis" required value="${esc(t.bis || "")}"></label>
       <div class="voll raster-zwei" id="ohneAppFeld" hidden>
-        <label id="sonderArtFeld">Art der Sonderfahrt<select name="sonderArt">${SONDER_ARTEN.map(([k, n]) => `<option value="${k}"${(t.payload || {}).sonderArt === k ? " selected" : ""}>${n}</option>`).join("")}</select></label>
+        <label id="sonderArtFeld">Art der Sonderfahrt<select name="sonderArt"><option value="">– bitte wählen –</option>${SONDER_ARTEN.map(([k, n]) => `<option value="${k}"${(t.payload || {}).sonderArt === k ? " selected" : ""}>${n}</option>`).join("")}</select></label>
         <label id="lkwKlasseFeld">Klasse dieser Stunde<select name="lkwKlasse"></select></label>
         <p class="voll leise klein">Fahrlehrer ohne App: Das Büro trägt hier ein, was die App sonst selbst zählt (Sonderfahrten nach Anlage 4).</p>
       </div>
@@ -2936,7 +2941,11 @@ function fahrlehrerAkte(id) {
   const erg = pruefErgebnisse("praxis").filter((e) => e.datum >= vor12 && (e.fahrlehrer_id || (S.schueler.find((x) => x.id === e.schueler_id) || {}).fahrlehrer_id) === id);
   const ok = erg.filter((e) => e.ok).length;
   const naechste = S.pruefungstermine.filter((x) => x.fahrlehrer_id === id && x.datum >= heute && x.status === "geplant").length;
-  const fl = p.fahrlehrerlaubnis || [], fk = p.fuehrerschein_klassen || [], zs = p.fahrlehrer_zusatz || [];
+  const fk = p.fuehrerschein_klassen || [], zs = p.fahrlehrer_zusatz || [];
+  // Altbestand: nur Klassen eingetragen, noch keine Fahrlehrerlaubnis → aus den Klassen vorschlagen, damit Speichern nichts wegnimmt
+  const altKl = p.klassen || [], altLkw = altKl.some((k) => ["C1", "C1E", "C", "CE"].includes(k));
+  const vorschlag = !(p.fahrlehrerlaubnis || []).length && altKl.length;
+  const fl = vorschlag ? [...(altLkw || altKl.some((k) => ["B", "BE"].includes(k)) ? ["BE"] : []), ...(altLkw ? ["CE"] : [])] : (p.fahrlehrerlaubnis || []);
   const dis = darf ? "" : " disabled";
   const fristen = KR.fahrlehrerFristen(p);
   const body = `<div class="kacheln fl-kacheln">
@@ -2950,7 +2959,8 @@ function fahrlehrerAkte(id) {
     <div class="formular">
       <fieldset class="voll"><legend>Fahrlehrerlaubnis (was er ausbilden darf)</legend>
         ${["BE", "A", "CE", "DE"].map((k) => `<label class="wahl"><input type="checkbox" name="fl" value="${k}"${fl.includes(k) ? " checked" : ""}${dis}> ${k}</label>`).join("")}
-        <p class="leise klein voll" id="flDarf">Darf ausbilden: ${esc(KR.ausbildungsKlassen(fl).join(", ") || "noch nichts eingetragen")}</p></fieldset>
+        <p class="leise klein voll" id="flDarf">Darf ausbilden: ${esc(KR.ausbildungsKlassen(fl).join(", ") || "noch nichts eingetragen")}</p>
+        ${vorschlag ? `<p class="leise klein voll">Vorschlag aus den bisher eingetragenen Klassen (${esc(altKl.join(", "))}). Bitte prüfen${darf ? " und speichern" : ""}.</p>` : ""}</fieldset>
       <fieldset class="voll"><legend>Eigener Führerschein</legend>
         <div class="vorbesitz-wahl">${FS_KLASSEN.map((k) => `<label class="wahl"><input type="checkbox" name="fk" value="${k}"${fk.includes(k) ? " checked" : ""}${dis}> ${k}</label>`).join("")}</div></fieldset>
       <label>Führerschein C/CE gültig bis<input type="date" name="fuehrerschein_c_bis" value="${esc(p.fuehrerschein_c_bis || "")}"${dis}></label>
@@ -2999,18 +3009,6 @@ function zeigePasswort(email, passwort) {
 const LEHR_KLASSEN = ["B", "BE", "C1", "C1E", "C", "CE"];
 function klassenHaken(gewaehlt) {
   return `<fieldset class="voll klassen-wahl"><legend>Klassen, die er/sie unterrichtet</legend>${LEHR_KLASSEN.map((k) => `<label class="wahl"><input type="checkbox" name="kl" value="${k}"${(gewaehlt || []).includes(k) ? " checked" : ""}> ${k}</label>`).join("")}</fieldset>`;
-}
-function klassenDialog(id) {
-  const p = teamPerson(id);
-  if (!p) return;
-  oeffneDialog(`Klassen von ${p.name || p.email}`, `<div class="formular">${klassenHaken(p.klassen)}</div>
-    <p class="leise klein">Bei der Zuteilung von Schülern stehen passende Fahrlehrer dann oben.</p>`, async (form) => {
-    const kl = [...form.querySelectorAll("input[name=kl]:checked")].map((x) => x.value);
-    const { data, error } = await supa.rpc("buero_fahrlehrer_klassen", { p_id: id, p_klassen: kl });
-    if (error || (data && data.fehler)) { toast("Nicht gespeichert: " + (error ? error.message : data.fehler === "keine_berechtigung" ? "keine Berechtigung" : data.fehler), true); return false; }
-    for (const l of [S.team, S.lehrer]) { const x = l.find((y) => y.id === id); if (x) x.klassen = kl; }
-    toast("Klassen gespeichert"); zeichne(); return true;
-  });
 }
 function zugangDialog(rolle) {
   // Super-Admin kann auch die Fahrschul-Leitung (Inhaber, Prokuristin) anlegen

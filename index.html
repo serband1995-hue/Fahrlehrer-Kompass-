@@ -3857,10 +3857,12 @@ function colorChartBlock(cp,vorname){
 }
 const FORMS=["B","BE","B197","Automatik","C1","C1E","C","CE"];
 /* Lkw-Klassen nur für Fahrlehrer mit Fahrlehrerlaubnis CE (🗣 Serband 14.10.2026). Die Klassen pflegt das Büro in der
-   Fahrlehrer-Akte (profiles.klassen). Ohne Fahrschule (eigene App) und in der Gesamtansicht: alle Klassen. */
+   Fahrlehrer-Akte (profiles.klassen). Ohne Fahrschule (eigene App), in der Gesamtansicht und solange das Büro noch
+   keine Klassen eingetragen hat: alle Klassen wie bisher. */
 function lkwErlaubt(){
   if(_fsAgg||!_authProfile||!_authProfile.fahrschule_id)return true;
-  return (_authProfile.klassen||[]).some(k=>["C1","C1E","C","CE"].includes(k));
+  const kl=_authProfile.klassen||[];
+  return !kl.length||kl.some(k=>["C1","C1E","C","CE"].includes(k));
 }
 function formsFuer(s){ return FORMS.filter(f=>!["C1","C1E","C","CE"].includes(f)||lkwErlaubt()||(s&&s.form===f)); }
 const FORM_LABEL={B:"B Schalter",BE:"BE",B197:"B197",Automatik:"Automatik",C1:"C1 Lkw",C1E:"C1E Zug",C:"C Lkw",CE:"CE Zug"};
@@ -5031,6 +5033,12 @@ async function pullSchuelerZuweisungen() {
     if (schErr) throw schErr;
     _merkeFristen(rows);
     _ladeTheorieBesuch(supa, (rows||[]).map(r=>r.id));
+    // Klassen des Fahrlehrers neu lesen: trägt das Büro CE ein, sind die Lkw-Klassen ohne neues Anmelden frei
+    const uidKl = _authUser.id;
+    supa.from("profiles").select("klassen,fahrlehrerlaubnis").eq("id", uidKl).maybeSingle().then(({ data: pr, error: prErr }) => {
+      if (prErr || !pr || !_authProfile || _authProfile.id !== uidKl) return;
+      _authProfile.klassen = pr.klassen || []; _authProfile.fahrlehrerlaubnis = pr.fahrlehrerlaubnis || null;
+    }, () => {});
     const lokaleIds = new Set((DB.students||[]).map(s=>s.id));
     let neu = [];
     ensureAusbildungsplaene();

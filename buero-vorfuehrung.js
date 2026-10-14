@@ -191,7 +191,8 @@ if (typeof module !== "undefined" && module.exports) { module.exports = { bauDat
       if (!darfVerwalten()) return { fehler: "keine_berechtigung" };
       const p = (F.tabellen.profiles || []).find((x) => x.id === p_id); if (!p) return { fehler: "unbekannt" };
       const fl = (p_daten.fahrlehrerlaubnis || []).filter((k) => ["A", "BE", "CE", "DE"].includes(k)).sort();
-      const kl = [...new Set(fl.flatMap((k) => ({ BE: ["B", "BE"], A: ["A"], CE: ["C1", "C1E", "C", "CE"], DE: ["D1", "D1E", "D", "DE"] })[k]))].sort();
+      // wie in der Datenbank: ohne Fahrlehrerlaubnis bleiben die bisherigen Klassen (Altbestand)
+      const kl = fl.length ? [...new Set(fl.flatMap((k) => ({ BE: ["B", "BE"], A: ["A"], CE: ["C1", "C1E", "C", "CE"], DE: ["D1", "D1E", "D", "DE"] })[k]))].sort() : (p.klassen || []);
       Object.assign(p, p_daten, { fahrlehrerlaubnis: fl, klassen: kl }); return { ok: true, klassen: kl };
     },
     buero_fahrlehrer_klassen: ({ p_id, p_klassen }) => {
