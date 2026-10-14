@@ -21,7 +21,9 @@ const ARTEN = {
 // Änderungsprotokoll, in Notizen, Aufgaben und Fahrcheck-Quittungen. Einen frei getippten Namen gibt es nicht mehr.
 function bueroFetch(url, opts) {
   const o = Object.assign({}, opts || {});
-  if (S.sitzung && S.sitzung.token && String(url).includes("/rest/v1/")) { const h = new Headers(o.headers || {}); h.set("x-buero-sitzung", S.sitzung.token); o.headers = h; }
+  let tok = S.sitzung && S.sitzung.token;
+  if (String(url).includes("/rpc/buero_sitzung_beenden")) { try { tok = sessionStorage.getItem("buero-abmelden") || tok; } catch (e) { /* egal */ } }
+  if (tok && String(url).includes("/rest/v1/")) { const h = new Headers(o.headers || {}); h.set("x-buero-sitzung", tok); o.headers = h; }
   return fetch(url, o);
 }
 const supa = window.supabase.createClient(SUPA_URL, SUPA_KEY, { global: { fetch: (url, opts) => bueroFetch(url, opts) } });
@@ -2133,7 +2135,8 @@ function renderTeam() {
 function personStatus(p) {
   if (p.aktiv === false) return '<span class="marke-pill">ausgetreten</span>';
   if (p.gesperrt_bis && new Date(p.gesperrt_bis).getTime() > Date.now()) return `<span class="marke-pill rot">gesperrt bis ${esc(zeitHM(p.gesperrt_bis))}</span>`;
-  return p.hat_pin ? '<span class="marke-pill gruen">PIN aktiv</span>' : '<span class="marke-pill gelb">noch keine PIN</span>';
+  if (p.hat_pin) return '<span class="marke-pill gruen">PIN aktiv</span>';
+  return pinFrei(p) ? `<span class="marke-pill gelb">wartet auf PIN bis ${esc(zeitHM(p.pin_frei_bis))}</span>` : '<span class="marke-pill">PIN nicht freigegeben</span>';
 }
 function renderPersonen() {
   const darf = darfPersonenVerwalten();
@@ -2145,9 +2148,9 @@ function renderPersonen() {
       <td>${p.darf_verwalten ? "darf verwalten" : '<span class="leise">–</span>'}</td>
       <td class="aktionen"><div class="aktionen-box">${darf ? (p.aktiv === false
         ? `<button class="knopf klein" data-pzurueck="${esc(p.id)}" type="button">Zurückholen</button>`
-        : `<button class="knopf klein" data-pbearb="${esc(p.id)}" type="button">Bearbeiten</button>${p.hat_pin ? `<button class="knopf klein" data-preset="${esc(p.id)}" type="button">PIN zurücksetzen</button>` : ""}`) : ""}</div></td></tr>`;
+        : `<button class="knopf klein" data-pbearb="${esc(p.id)}" type="button">Bearbeiten</button><button class="knopf klein" data-preset="${esc(p.id)}" type="button">${p.hat_pin ? "PIN zurücksetzen" : "PIN freigeben"}</button>`) : ""}</div></td></tr>`;
   return `<div class="karte"><div class="karte-kopf"><h2>Büro-Personen und PIN (${aktiv.length})</h2>${darf ? '<button class="knopf" id="pNeu" type="button">+ Person</button>' : ""}</div>
-      <p class="leise klein">Alle im Büro nutzen das gemeinsame Konto. Wer gerade bedient, tippt seinen Namen an und gibt seine eigene 4-stellige PIN ein. Beim ersten Mal legt jede Person ihre PIN selbst fest. PIN vergessen: ${esc(verwalterNamen())} drückt „PIN zurücksetzen“, dann legt die Person sofort eine neue fest.</p>
+      <p class="leise klein">Alle im Büro nutzen das gemeinsame Konto. Wer gerade bedient, tippt seinen Namen an und gibt seine eigene 4-stellige PIN ein. Neue Person oder PIN vergessen: ${esc(verwalterNamen())} drückt „PIN freigeben“ bzw. „PIN zurücksetzen“. Danach hat die Person 15 Minuten Zeit, selbst eine neue PIN festzulegen.</p>
       ${S.personen.length ? `<table class="tabelle"><thead><tr><th>Name</th><th>Telefon</th><th>PIN</th><th>Rechte</th><th></th></tr></thead><tbody>${aktiv.concat(weg).map(zeile).join("")}</tbody></table>` : `<p class="leer">Noch keine Büro-Personen angelegt.</p>`}
       ${darf ? "" : `<p class="leise klein">Personen anlegen und PINs zurücksetzen dürfen ${esc(verwalterNamen())}.</p>`}</div>`;
 }
@@ -2166,7 +2169,7 @@ function personDialog(id) {
       <label>Vorname<input type="text" name="name" maxlength="30" required value="${esc(p.name)}"></label>
       <label>Telefon (nur zum Erkennen)<input type="tel" name="telefon" maxlength="30" value="${esc(p.telefon || "")}"></label>
       ${chef ? `<label class="voll login-zeig"><input type="checkbox" name="verwalten"${p.darf_verwalten ? " checked" : ""}> Darf Personen anlegen und PINs zurücksetzen</label>` : ""}</div>
-      ${id ? `<div class="knopfreihe"><button class="knopf" type="button" id="pAustritt">Ist ausgetreten</button></div>` : `<p class="leise klein">Die Person legt ihre PIN beim ersten Antippen ihres Namens selbst fest.</p>`}`, async (form) => {
+      ${id ? `<div class="knopfreihe"><button class="knopf" type="button" id="pAustritt">Ist ausgetreten</button></div>` : `<p class="leise klein">Danach „PIN freigeben“ drücken, wenn die Person da ist: Sie legt ihre PIN dann selbst fest.</p>`}`, async (form) => {
     try {
       await personRpc("buero_person_speichern", { p_id: id || null, p_fahrschule: S.fsId, p_name: form.name.value, p_telefon: form.telefon.value, p_darf_verwalten: form.verwalten ? form.verwalten.checked : null, p_aktiv: true });
       await ladePersonen(); toast(id ? "Gespeichert" : "Person angelegt"); zeichne(); return true;
@@ -2195,10 +2198,12 @@ function bindePersonen(ziel) {
   }));
   ziel.querySelectorAll("[data-preset]").forEach((b) => b.addEventListener("click", async () => {
     const p = (S.personen || []).find((x) => x.id === b.dataset.preset);
-    if (!p || !(await bestaetige("PIN zurücksetzen?", `Die PIN von ${p.name} gilt dann nicht mehr. ${p.name} tippt danach auf den eigenen Namen und legt sofort eine neue PIN fest. Am besten jetzt, solange ${p.name} da ist.`, "Ja, zurücksetzen"))) return;
+    if (!p) return;
+    const titel = p.hat_pin ? `PIN von ${p.name} zurücksetzen?` : `PIN für ${p.name} freigeben?`;
+    if (!(await bestaetige(titel, `${p.hat_pin ? `Die alte PIN von ${p.name} gilt dann nicht mehr. ` : ""}${p.name} hat danach 15 Minuten Zeit, auf den eigenen Namen zu tippen und selbst eine neue PIN festzulegen. Bitte nur machen, wenn ${p.name} jetzt da ist.`, p.hat_pin ? "Ja, zurücksetzen" : "Ja, freigeben"))) return;
     try { await personRpc("buero_pin_zuruecksetzen", { p_person: p.id }); }
     catch (e) { toast("Nicht möglich: " + e.message, true); return; }
-    await ladePersonen(); toast(`PIN von ${p.name} zurückgesetzt`); zeichne();
+    await ladePersonen(); toast(`${p.name} kann jetzt 15 Minuten lang eine neue PIN festlegen`); zeichne();
     if (S.sitzung && S.sitzung.id === p.id) { vergissSitzung(); zeigeWer(); }
   }));
 }
@@ -2387,7 +2392,7 @@ async function ladeDaten() {
       supa.from("schueler_notizen").select("*").eq("fahrschule_id", fsId).order("erstellt_am", { ascending: false }).limit(2000),
       supa.from("schueler_notiz_gelesen").select("*").limit(5000),
       supa.from("schueler_aufgaben").select("*").eq("fahrschule_id", fsId).order("erstellt_am", { ascending: false }).limit(3000),
-      supa.from("buero_personen").select("id,name,telefon,hat_pin,pin_neu_noetig,darf_verwalten,aktiv,gesperrt_bis").eq("fahrschule_id", fsId).order("name"),
+      supa.from("buero_personen").select("id,name,telefon,hat_pin,pin_neu_noetig,pin_frei_bis,darf_verwalten,aktiv,gesperrt_bis").eq("fahrschule_id", fsId).order("name"),
     ]);
     if (nr !== S.ladeNr) return; // inzwischen wurde neu geladen oder die Fahrschule gewechselt
     S.fs = pruefe(fs, "Fahrschule");
@@ -2446,7 +2451,7 @@ function pinZuEinfach(p) {
 }
 async function ladePersonen() {
   if (!S.fsId) return;
-  const res = await supa.from("buero_personen").select("id,name,telefon,hat_pin,pin_neu_noetig,darf_verwalten,aktiv,gesperrt_bis").eq("fahrschule_id", S.fsId).order("name");
+  const res = await supa.from("buero_personen").select("id,name,telefon,hat_pin,pin_neu_noetig,pin_frei_bis,darf_verwalten,aktiv,gesperrt_bis").eq("fahrschule_id", S.fsId).order("name");
   if (!res.error) S.personen = res.data || [];
 }
 // Unten links steht die Person, die gerade bedient (nicht der Name des gemeinsamen Kontos)
@@ -2474,23 +2479,37 @@ function vergissSitzung() {
   zeigeWerAnzeige();
 }
 // Sitzung in der Datenbank beenden (Sperren, Wechsel, Leerlauf, Abmelden)
+// Zuerst sperren, dann der Datenbank Bescheid geben (auch wenn die Leitung langsam ist, ist der Platz sofort zu)
 async function beendeSitzung() {
-  if (S.sitzung) { try { await supa.rpc("buero_sitzung_beenden"); } catch (e) { /* läuft spätestens nach 12 Stunden ab */ } }
+  const alt = S.sitzung;
   vergissSitzung();
+  if (alt && alt.token) {
+    try { sessionStorage.setItem("buero-abmelden", alt.token); } catch (e) { /* egal */ }
+    supa.rpc("buero_sitzung_beenden").catch(() => { /* läuft spätestens nach 12 Stunden ab */ })
+      .finally(() => { try { sessionStorage.removeItem("buero-abmelden"); } catch (e) { /* egal */ } });
+  }
 }
+// PIN-Fenster zeigen/verstecken. Solange es offen ist, ist die Seite dahinter nicht bedienbar (auch nicht per Tab)
+// und ohne Anmeldung stark verwischt (Schülerdaten, viele minderjährig).
+function werZeigen(an) {
+  $("wer").hidden = !an;
+  $("app").inert = !!an;
+  $("wer").classList.toggle("ohne-sitzung", !S.sitzung);
+}
+function pinFrei(p) { return !p.hat_pin && p.pin_frei_bis && new Date(p.pin_frei_bis).getTime() > Date.now(); }
 function zeitHM(iso) { return new Date(iso).toLocaleTimeString("de-DE", { hour: "2-digit", minute: "2-digit" }); }
 async function zeigeWer(abbrechbar) {
   document.querySelectorAll("dialog[open]").forEach((d) => d.close()); // ein offenes Fenster würde das Overlay verdecken
   PIN.abbrechbar = !!(abbrechbar && S.sitzung);
   $("werZu").hidden = !PIN.abbrechbar;
   $("werNamen").hidden = false; $("werPin").hidden = true;
-  $("wer").hidden = false;
+  werZeigen(true);
   if (!(S.personen || []).length) await ladePersonen();
   const liste = aktivePersonen();
   const jetzt = Date.now();
   $("werListe").innerHTML = liste.length ? liste.map((p) => {
     const gesperrt = p.gesperrt_bis && new Date(p.gesperrt_bis).getTime() > jetzt;
-    const unter = gesperrt ? `gesperrt bis ${esc(zeitHM(p.gesperrt_bis))}` : (p.hat_pin ? "" : "PIN festlegen");
+    const unter = gesperrt ? `gesperrt bis ${esc(zeitHM(p.gesperrt_bis))}` : (p.hat_pin ? "" : (pinFrei(p) ? "neu: PIN festlegen" : "PIN noch nicht freigegeben"));
     return `<button type="button" class="knopf gross${gesperrt ? " gesperrt" : ""}" data-wer="${esc(p.id)}">${esc(p.name)}${unter ? `<small>${unter}</small>` : ""}</button>`;
   }).join("") : `<p class="leer">Für diese Fahrschule sind noch keine Büro-Personen angelegt. Bitte bei Serband melden.</p>`;
 }
@@ -2509,10 +2528,10 @@ function pinText() {
   $("pinZurueck").disabled = !$("pinZurueck").textContent;
 }
 function zeigePin(modus, fehlerText, gesperrt) {
-  PIN.modus = modus; PIN.eingabe = "";
+  PIN.modus = modus; PIN.eingabe = ""; PIN.ab = Date.now() + 400; // der zweite Klick eines Doppelklicks zählt nicht als Ziffer
   $("werPin").classList.toggle("pin-gesperrt", !!gesperrt);
   if (modus === "festlegen1" || modus === "aendern1") PIN.erste = "";
-  $("werNamen").hidden = true; $("werPin").hidden = false; $("wer").hidden = false;
+  $("werNamen").hidden = true; $("werPin").hidden = false; werZeigen(true);
   $("werZu").hidden = true;
   pinText();
   $("pinFehler").textContent = fehlerText || "";
@@ -2562,13 +2581,13 @@ async function pinFertig(pin) {
         pinBeschaeftigt(false); zeigePin("aendern1", t); return;
       }
       pinBeschaeftigt(false);
-      $("wer").hidden = true; letzteAktion = Date.now();
+      werZeigen(false); letzteAktion = Date.now();
       toast("Deine neue PIN ist gespeichert ✓");
       return;
     }
     // anmelden oder erste PIN festlegen (die Datenbank speichert sie beim ersten Mal)
     const alt = S.sitzung;
-    const { data, error } = await supa.rpc("buero_pin_anmelden", { p_person: PIN.person.id, p_pin: pin });
+    const { data, error } = await supa.rpc("buero_pin_anmelden", { p_person: PIN.person.id, p_pin: pin, p_erste: PIN.modus === "festlegen2" });
     if (error) throw error;
     pinBeschaeftigt(false);
     if (data && data.fehler) {
@@ -2579,6 +2598,16 @@ async function pinFertig(pin) {
         return;
       }
       if (data.fehler === "zu_einfach") { zeigePin("festlegen1", "Diese PIN ist zu leicht zu erraten. Bitte eine andere nehmen."); return; }
+      // Die Liste war veraltet (PIN inzwischen gesetzt, zurückgesetzt oder Freigabe abgelaufen)
+      if (["keine_pin", "hat_pin", "nicht_freigegeben"].includes(data.fehler)) {
+        await ladePersonen();
+        const p = aktivePersonen().find((x) => x.id === PIN.person.id) || PIN.person;
+        PIN.person = p;
+        if (p.hat_pin) { zeigePin("anmelden", "Für dich ist schon eine PIN gespeichert. Bitte diese eingeben."); return; }
+        if (pinFrei(p)) { zeigePin("festlegen1", "Bitte zuerst eine eigene PIN festlegen."); return; }
+        zeigePin("anmelden", `Deine PIN ist nicht (mehr) freigegeben. Bitte ${verwalterNamen(p.id)} fragen: „PIN freigeben“.`, true);
+        return;
+      }
       pinWackeln("Anmelden ging nicht. Bitte die Seite neu laden.");
       return;
     }
@@ -2587,7 +2616,7 @@ async function pinFertig(pin) {
     setzeSitzung(data);
     if (data.erste_pin) { PIN.person.hat_pin = true; toast("Deine PIN ist gespeichert ✓ Ab jetzt meldest du dich damit an."); }
     if (data.pin_neu_noetig) { PIN.abbrechbar = false; zeigePin("aendern1"); return; }
-    $("wer").hidden = true;
+    werZeigen(false);
     zeichne();
   } catch (e) {
     console.error(e);
@@ -2600,7 +2629,7 @@ function sperrText(bis) {
 }
 function pinZurueck() {
   if (PIN.beschaeftigt) return;
-  if (PIN.modus.startsWith("aendern")) { if (PIN.abbrechbar) { $("wer").hidden = true; letzteAktion = Date.now(); } return; }
+  if (PIN.modus.startsWith("aendern")) { if (PIN.abbrechbar) { werZeigen(false); letzteAktion = Date.now(); } return; }
   zeigeWer(PIN.abbrechbar);
 }
 async function starteWer() {
@@ -2610,25 +2639,34 @@ async function starteWer() {
   if (alt && alt.token && Date.now() - alt.t < WER_LEERLAUF_MS) {
     S.sitzung = alt; // damit die Prüfung den Schlüssel mitschickt
     try {
-      const { data } = await supa.rpc("buero_sitzung_pruefen");
+      const { data, error } = await supa.rpc("buero_sitzung_pruefen");
+      if (error) throw error;
       if (data && data.gueltig) {
         setzeSitzung({ token: alt.token, id: data.id, name: data.name, darf_verwalten: data.darf_verwalten });
         if (data.pin_neu_noetig) { PIN.person = { id: data.id, name: data.name }; PIN.abbrechbar = false; zeigePin("aendern1"); }
         return;
       }
-    } catch (e) { /* neu anmelden */ }
+    } catch (e) {
+      // Keine Verbindung: Anmeldung behalten, die Datenbank prüft beim Speichern ohnehin
+      setzeSitzung({ token: alt.token, id: alt.id, name: alt.name, darf_verwalten: alt.verwalten });
+      return;
+    }
   }
   vergissSitzung();
   zeigeWer();
 }
 $("werListe").addEventListener("click", (e) => {
   const b = e.target.closest("[data-wer]");
-  if (!b) return;
+  if (!b || e.detail > 1) return;
   const p = aktivePersonen().find((x) => x.id === b.dataset.wer);
   if (!p) return;
   PIN.person = p;
   if (p.gesperrt_bis && new Date(p.gesperrt_bis).getTime() > Date.now()) {
     zeigePin("anmelden", sperrText(p.gesperrt_bis), true);
+    return;
+  }
+  if (!p.hat_pin && !pinFrei(p)) {
+    zeigePin("anmelden", `${p.name} hat noch keine PIN. Bitte ${verwalterNamen(p.id)} fragen: „PIN freigeben“ unter Fahrlehrer & Zugänge. Danach hier eine eigene PIN festlegen.`, true);
     return;
   }
   zeigePin(p.hat_pin ? "anmelden" : "festlegen1");
@@ -2641,25 +2679,33 @@ async function pruefeSitzungNoch() {
   } catch (e) { /* ohne Verbindung: später erneut */ }
 }
 document.addEventListener("visibilitychange", () => { if (!document.hidden) pruefeSitzungNoch(); });
-$("pinFeld").addEventListener("click", (e) => { const b = e.target.closest("[data-ziffer]"); if (b) pinZiffer(b.dataset.ziffer); });
+$("pinFeld").addEventListener("click", (e) => { const b = e.target.closest("[data-ziffer]"); if (b && Date.now() >= (PIN.ab || 0)) pinZiffer(b.dataset.ziffer); });
 $("pinLoeschen").addEventListener("click", () => { if (PIN.beschaeftigt) return; PIN.eingabe = PIN.eingabe.slice(0, -1); zeichnePunkte(); });
 $("pinZurueck").addEventListener("click", pinZurueck);
 $("werWechseln").addEventListener("click", () => zeigeWer(true));
-$("werSperren").addEventListener("click", async () => { await beendeSitzung(); zeigeWer(); });
-$("kopfWer").addEventListener("click", async () => { await beendeSitzung(); zeigeWer(); });
+$("werSperren").addEventListener("click", () => { beendeSitzung(); zeigeWer(); });
+$("kopfWer").addEventListener("click", () => { beendeSitzung(); zeigeWer(); });
 $("werPinAendern").addEventListener("click", () => { if (!S.sitzung) return; PIN.person = { id: S.sitzung.id, name: S.sitzung.name }; PIN.abbrechbar = true; zeigePin("aendern1"); });
-$("werZu").addEventListener("click", () => { $("wer").hidden = true; letzteAktion = Date.now(); });
+$("werZu").addEventListener("click", () => { werZeigen(false); letzteAktion = Date.now(); });
 document.addEventListener("keydown", (e) => {
   if ($("wer").hidden) return;
+  if (e.repeat || e.ctrlKey || e.metaKey || e.altKey) return;
   if (!$("werPin").hidden) {
     if (/^[0-9]$/.test(e.key)) { e.preventDefault(); pinZiffer(e.key); return; }
     if (e.key === "Backspace") { e.preventDefault(); if (!PIN.beschaeftigt) { PIN.eingabe = PIN.eingabe.slice(0, -1); zeichnePunkte(); } return; }
     if (e.key === "Escape") { e.preventDefault(); pinZurueck(); return; }
-  } else if (e.key === "Escape" && PIN.abbrechbar) { $("wer").hidden = true; letzteAktion = Date.now(); }
+  } else if (e.key === "Escape" && PIN.abbrechbar) { werZeigen(false); letzteAktion = Date.now(); }
 });
-for (const ev of ["pointerdown", "keydown"]) document.addEventListener(ev, () => { letzteAktion = Date.now(); }, { passive: true });
+let gemerktAm = 0;
+for (const ev of ["pointerdown", "keydown"]) document.addEventListener(ev, () => {
+  letzteAktion = Date.now();
+  if (S.sitzung && letzteAktion - gemerktAm > 30000) {
+    gemerktAm = letzteAktion;
+    try { sessionStorage.setItem("buero-sitzung", JSON.stringify(Object.assign({}, S.sitzung, { t: letzteAktion }))); } catch (e) { /* egal */ }
+  }
+}, { passive: true });
 setInterval(async () => {
-  if (werNoetig() && S.sitzung && $("wer").hidden && Date.now() - letzteAktion > WER_LEERLAUF_MS) { await beendeSitzung(); zeigeWer(); }
+  if (werNoetig() && S.sitzung && $("wer").hidden && Date.now() - letzteAktion > WER_LEERLAUF_MS) { beendeSitzung(); zeigeWer(); }
 }, 30000);
 
 /* ---------- Anmeldung ---------- */
