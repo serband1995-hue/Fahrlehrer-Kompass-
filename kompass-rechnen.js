@@ -174,7 +174,7 @@
     const vb = vorbesitz || [];
     if (form === "C") return vb.includes("C1") ? "C1" : "B";
     if (form === "CE") return vb.includes("C") ? "C" : (vb.length ? "C+CE" : "C");
-    if (form === "C1E") return vb.includes("C1") ? "C1" : (vb.length ? "C1+C1E" : "C1");
+    if (form === "C1E") return vb.some((k) => ["C1", "C", "CE"].includes(k)) ? "C1" : (vb.length ? "C1+C1E" : "C1"); // C schließt C1 ein
     return null;
   }
   // o: { klasse | form, weg, vorbesitz, ausbildungsart } → { pflicht, grund, teile: [{ key, titel, lektionen, soll }] }
@@ -193,7 +193,7 @@
     const teile = [{ key: "grund", titel: "Grundstoff", lektionen: LEKT_GRUND, soll: lkw || vb.length ? 6 : 12 }];
     if (k === "B") teile.push({ key: "B", titel: "Zusatzstoff B", lektionen: LEKT_B, soll: 2 });
     if (k === "C1" || k === "C1E") teile.push({ key: "C", titel: "Klasse C1", lektionen: LEKT_C, soll: 6 });
-    if (k === "C" || (k === "CE" && weg === "C+CE")) teile.push({ key: "C", titel: "Klasse C", lektionen: LEKT_C, soll: vb.includes("C1") ? 4 : 10 });
+    if (k === "C" || (k === "CE" && weg === "C+CE")) teile.push({ key: "C", titel: "Klasse C", lektionen: LEKT_C, soll: vb.includes("C1") || (k === "C" && weg === "C1") ? 4 : 10 });
     if (k === "CE") teile.push({ key: "CE", titel: "Klasse CE", lektionen: LEKT_CE, soll: 4 });
     return { pflicht: true, grund: null, teile };
   }
