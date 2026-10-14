@@ -1296,7 +1296,7 @@ for (const [breite, hoehe] of [[1920, 1080], [1366, 768], [1024, 768]]) {
   const t = await page.textContent("#ansicht");
   if (!/Gabriel/.test(t) || !/ohne App/.test(t)) fehler("Gabriel: steht nicht in der Liste");
   // Klassen eines Fahrlehrers ändern
-  await page.click('[data-klassen="fl-2"]'); await page.check('dialog input[name=kl][value="BE"]');
+  await page.click('button.knopf[data-flakte="fl-2"]'); await page.check('dialog input[name=fl][value="BE"]');
   await page.click("dialog button[value=ok]"); await page.waitForTimeout(300);
   if (!(await page.evaluate(() => (window.__FAKE.tabellen.profiles.find((p) => p.id === "fl-2").klassen || []).includes("BE")))) fehler("Klassen: nicht gespeichert");
   if (FOTOS) await page.screenshot({ path: join(FOTOS, "team-klassen.png"), fullPage: true });
@@ -1325,7 +1325,38 @@ for (const [breite, hoehe] of [[1920, 1080], [1366, 768], [1024, 768]]) {
 // Endprüfung 14.10.: ohne Verwalten-Recht kein Knopf „Klassen“ (die Datenbank lehnt es ohnehin ab)
 {
   const { page, ctx } = await oeffne({ nutzer: "bu-1", hash: "#team", wer: "Kristina" });
-  if (await page.$("[data-klassen]")) fehler("Klassen: Kristina (ohne Verwalten-Recht) sieht den Knopf „Klassen“");
+  await page.click('button.knopf[data-flakte] >> nth=0'); await page.waitForTimeout(200);
+  if (!(await page.isDisabled("dialog[open] input[name=fl] >> nth=0"))) fehler("Klassen: Kristina (ohne Verwalten-Recht) kann die Fahrlehrerlaubnis ändern");
+  await ctx.close();
+}
+
+// Schritt 4 (14.10.2026): Fahrlehrer-Akte – Kennzahlen, Fahrlehrerlaubnis → Ausbildungsklassen, Fristen-Warnung, Protokoll
+{
+  const { page, ctx, konsole } = await oeffne({ nutzer: "bu-1", hash: "#team", breite: 1366, hoehe: 900, wer: "Jelena", vorbereiten: function () {
+    const p = F.tabellen.profiles.find((x) => x.id === "fl-4"); const d = new Date(); d.setDate(d.getDate() + 30); p.fuehrerschein_c_bis = d.toISOString().slice(0, 10);
+  } });
+  if (!/Führerschein C\/CE bis/.test(await page.textContent("#ansicht"))) fehler("Fahrlehrer-Akte: Fristen-Warnung in der Liste fehlt");
+  await page.click('button.knopf[data-flakte="fl-4"]'); await page.waitForTimeout(250);
+  const t = await page.textContent("dialog[open]");
+  if (!/Schüler aktiv/.test(t) || !/UE im/.test(t) || !/Läuft bald ab: Führerschein C\/CE/.test(t)) fehler("Fahrlehrer-Akte: Kennzahlen oder Warnung fehlen");
+  await page.check('dialog[open] input[name=fl][value="BE"]'); await page.check('dialog[open] input[name=fl][value="CE"]');
+  if (!/C1, C1E, C, CE/.test(await page.textContent("#flDarf"))) fehler("Fahrlehrer-Akte: abgeleitete Klassen werden nicht angezeigt");
+  await page.check('dialog[open] input[name=fk][value="CE"]');
+  await pruefeLayout(page, "Fahrlehrer-Akte");
+  if (FOTOS) await page.screenshot({ path: join(FOTOS, "fahrlehrer-akte.png"), fullPage: true });
+  await page.click("dialog[open] button[value=ok]"); await page.waitForTimeout(300);
+  const p4 = await page.evaluate(() => window.__FAKE.tabellen.profiles.find((x) => x.id === "fl-4"));
+  if (JSON.stringify(p4.fahrlehrerlaubnis) !== '["BE","CE"]' || !p4.klassen.includes("CE") || !(p4.fuehrerschein_klassen || []).includes("CE")) fehler("Fahrlehrer-Akte: nicht gespeichert " + JSON.stringify(p4.fahrlehrerlaubnis));
+  // CE ohne BE ist nicht erlaubt
+  await page.click('button.knopf[data-flakte="fl-4"]'); await page.waitForTimeout(250);
+  await page.uncheck('dialog[open] input[name=fl][value="BE"]');
+  await page.click("dialog[open] button[value=ok]"); await page.waitForTimeout(200);
+  if (!(await page.isVisible("dialog[open]"))) fehler("Fahrlehrer-Akte: CE ohne BE wurde gespeichert");
+  await page.keyboard.press("Escape");
+  await page.goto(page.url().split("#")[0] + "#heute"); await page.waitForTimeout(300);
+  if (await page.$("dialog[open] button[value=ok]")) { await page.click("dialog[open] button[value=ok]"); await page.waitForTimeout(200); }
+  if (!/Führerschein C\/CE läuft ab/.test(await page.textContent("#ansicht"))) fehler("Heute: Fahrlehrer-Frist fehlt");
+  if (konsole.length) fehler("Fahrlehrer-Akte: Konsole: " + konsole.join(" | "));
   await ctx.close();
 }
 

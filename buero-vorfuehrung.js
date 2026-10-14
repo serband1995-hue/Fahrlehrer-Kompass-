@@ -187,6 +187,13 @@ if (typeof module !== "undefined" && module.exports) { module.exports = { bauDat
       if (chef && p_darf_verwalten != null) p.darf_verwalten = !!p_darf_verwalten;
       return { ok: true, id: p.id };
     },
+    buero_fahrlehrer_akte: ({ p_id, p_daten }) => {
+      if (!darfVerwalten()) return { fehler: "keine_berechtigung" };
+      const p = (F.tabellen.profiles || []).find((x) => x.id === p_id); if (!p) return { fehler: "unbekannt" };
+      const fl = (p_daten.fahrlehrerlaubnis || []).filter((k) => ["A", "BE", "CE", "DE"].includes(k)).sort();
+      const kl = [...new Set(fl.flatMap((k) => ({ BE: ["B", "BE"], A: ["A"], CE: ["C1", "C1E", "C", "CE"], DE: ["D1", "D1E", "D", "DE"] })[k]))].sort();
+      Object.assign(p, p_daten, { fahrlehrerlaubnis: fl, klassen: kl }); return { ok: true, klassen: kl };
+    },
     buero_fahrlehrer_klassen: ({ p_id, p_klassen }) => {
       if (!darfVerwalten()) return { fehler: "keine_berechtigung" }; // wie in der Datenbank: nur mit Verwalten-Recht
       const p = (F.tabellen.profiles || []).find((x) => x.id === p_id); if (!p) return { fehler: "unbekannt" };

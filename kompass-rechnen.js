@@ -189,6 +189,19 @@
     const ist = teile.reduce((a, t) => a + t.ist, 0), sollSumme = teile.reduce((a, t) => a + t.soll, 0);
     return { pflicht: soll.pflicht, grund: soll.grund, teile, ist, soll: sollSumme, fertig: soll.pflicht && ist >= sollSumme };
   }
+  /* Fahrlehrer-Akte (🗣 Serband 14.10.2026): Fahrlehrerlaubnis → was er ausbilden darf (FahrlG § 1 Abs. 2),
+     Fristen: Führerschein C/CE und D (§ 23 FeV, 5 Jahre), Schlüsselzahl 95 (§ 5 BKrFQG), Fortbildung (FahrlG § 53). */
+  const FAHRLEHRERLAUBNIS = { BE: ["B", "BE"], A: ["A"], CE: ["C1", "C1E", "C", "CE"], DE: ["D1", "D1E", "D", "DE"] };
+  function ausbildungsKlassen(fl) { return [...new Set((fl || []).flatMap((k) => FAHRLEHRERLAUBNIS[k] || []))]; }
+  // stufe je Frist: abgelaufen | bald (≤90 Tage) | ok
+  function fahrlehrerFristen(p, heute) {
+    heute = heute || todayISO();
+    const liste = [["fuehrerschein_c_bis", "Führerschein C/CE"], ["fuehrerschein_d_bis", "Führerschein D"], ["sz95_bis", "Schlüsselzahl 95"], ["fortbildung_bis", "Fortbildung"]];
+    return liste.filter(([k]) => p && p[k]).map(([k, titel]) => {
+      const bis = String(p[k]).slice(0, 10), tage = daysBetweenISO(heute, bis);
+      return { key: k, titel, bis, tage, stufe: tage < 0 ? "abgelaufen" : tage <= 90 ? "bald" : "ok" };
+    });
+  }
   // Fahrcheck-Zettel (Übungs-, Sonder- und Testfahrten) verfallen 12 Monate nach dem Datum der Stunde (Kristina, 09.10.2026)
   function fcGueltigBis(datum) { return datum ? addMonthsISO(datum, 12) : null; }
   // stufe: verfallen | bald (≤60 Tage) | ok
@@ -277,7 +290,7 @@
     return out;
   }
 
-  const api = { FS_BUERO_ARTEN, pad2, hm2min, parseISO, dateISO, todayISO, ueOf, addMonthsISO, addDaysISO, daysBetweenISO, reaktFaellig, reaktNachZahlung, reaktInfo, theorieInfo, antragInfo, theorieFristInfo, umschreibInfo, istEuEwr, EU_EWR, UMSCHREIB_MONATE, theorieSoll, theorieStand, lkwWegAusVorbesitz, LEKT_GRUND, LEKT_B, LEKT_C, LEKT_CE, fcGebucht, fcErhalten, fcGueltigBis, fcGueltigkeit, fcZeitraum, fcVorZeitraum, fcSoll, aufteilung, FAHR_ARTEN, wartetInfo };
+  const api = { FS_BUERO_ARTEN, pad2, hm2min, parseISO, dateISO, todayISO, ueOf, addMonthsISO, addDaysISO, daysBetweenISO, reaktFaellig, reaktNachZahlung, reaktInfo, theorieInfo, antragInfo, theorieFristInfo, umschreibInfo, istEuEwr, EU_EWR, UMSCHREIB_MONATE, theorieSoll, theorieStand, FAHRLEHRERLAUBNIS, ausbildungsKlassen, fahrlehrerFristen, lkwWegAusVorbesitz, LEKT_GRUND, LEKT_B, LEKT_C, LEKT_CE, fcGebucht, fcErhalten, fcGueltigBis, fcGueltigkeit, fcZeitraum, fcVorZeitraum, fcSoll, aufteilung, FAHR_ARTEN, wartetInfo };
   if (typeof module !== "undefined" && module.exports) module.exports = api;
   else root.KR = api;
 })(typeof self !== "undefined" ? self : this);
