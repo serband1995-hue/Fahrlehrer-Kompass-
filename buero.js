@@ -81,7 +81,7 @@ function istAdmin() { return S.profil && (S.profil.rolle === "fahrschule_admin" 
 /* ---------- Bereiche ---------- */
 // schritt = Bauplan-Schritt, in dem der Bereich fertig wird (nur Hinweis, solange er noch fehlt)
 const BEREICHE = [
-  { id: "heute", titel: "Heute zu tun", gruppe: "Arbeit", render: renderHeute, nachher: bindeHeute, zahl: () => fuerMich().filter((a) => aufgabeStufe(a) !== "spaeter").length || "" },
+  { id: "heute", titel: "Heute zu tun", gruppe: "Arbeit", render: renderHeute, nachher: bindeHeute, zahl: () => fuerMich().filter((a) => aufgabeStufe(a) !== "spaeter" || !a.faellig_am).length || "" },
   { id: "pruefungen", titel: "Prüfungstafel", gruppe: "Arbeit", render: renderPruefungen, nachher: bindePruefungen, zahl: () => zaehlePruefungen().handeln || "" },
   { id: "fahrchecks", titel: "Fahrchecks", gruppe: "Arbeit", render: renderFahrchecks, nachher: bindeFahrchecks, zahl: () => fcOffeneAbgaben().length || "" },
   { id: "fristen", titel: "Fristen & Reaktivierung", gruppe: "Arbeit", render: renderFristen, nachher: bindeFristen, zahl: () => zaehleFristen().handeln || "" },
@@ -145,6 +145,8 @@ function zeichne() {
   if (b.nachher) b.nachher(ziel);
 }
 window.addEventListener("hashchange", () => {
+  // Zurück-Taste (oder Link) wechselt die Seite: offene Fenster ohne Eingaben schließen, damit nichts über der falschen Seite stehen bleibt
+  document.querySelectorAll("dialog[open]").forEach((d) => { if (!d.dataset.festhalten && !d.dataset.geaendert) d.close(); });
   const g = aktuellerBereich().gruppe;
   if (navZu().includes(g)) setzeNavZu(navZu().filter((x) => x !== g));
   zeichne(); $("ansicht").focus({ preventScroll: true }); window.scrollTo(0, 0);
@@ -207,11 +209,18 @@ function renderHeute() {
   const spaeter = fuer.length - zeigen.length;
   const vonMir = S.sitzung ? sortiereAufgaben(offeneAufgabenAlle().filter((a) => a.von_person_id === S.sitzung.id && a.fuer_person_id && a.fuer_person_id !== S.sitzung.id)) : [];
   const hallo = S.sitzung ? `Hallo ${esc(S.sitzung.name)}` : "Aufgaben";
-  const fuerKarte = `<div class="karte fuer-dich"><div class="karte-kopf"><h2>${hallo}${S.sitzung ? " – für dich" : ""} (${fuer.length})</h2>
+  const grenze7 = KR.addDaysISO(heute, -7), aktiveIds = new Set(aktiveSchueler().map((x) => x.id));
+  const kuerzlich = S.aufgaben.filter((a) => a.erledigt_am && String(a.erledigt_am).slice(0, 10) >= grenze7 && (!a.schueler_id || aktiveIds.has(a.schueler_id))
+    && (alleZeigen || !S.sitzung || !a.fuer_person_id || a.fuer_person_id === S.sitzung.id || a.von_person_id === S.sitzung.id))
+    .sort((a, b) => String(b.erledigt_am).localeCompare(String(a.erledigt_am))).slice(0, 15);
+  const fuerKarte = `<div class="karte fuer-dich"><div class="karte-kopf"><h2>${hallo}${S.sitzung ? " – für dich" : ""} (${zeigen.length})</h2>
       <div class="knopfreihe"><div class="tabs klein" role="tablist"><a class="tab" href="#heute"${alleZeigen ? "" : ' aria-current="page"'}>${S.sitzung ? "Für mich" : "Wichtig"}</a><a class="tab" href="#heute?alle=1"${alleZeigen ? ' aria-current="page"' : ""}>Alle offenen</a></div>
       <button class="knopf haupt" id="agNeu" type="button">+ Aufgabe</button></div></div>
     ${zeigen.length ? `<ul class="notizliste">${zeigen.map((a) => aufgabeZeile(a, true)).join("")}</ul>` : `<p class="leer">Keine offene Aufgabe. Sehr gut.</p>`}
     ${spaeter ? `<p class="leise klein"><a href="#heute?alle=1">${spaeter} ${spaeter === 1 ? "Aufgabe" : "Aufgaben"} mit späterem Datum anzeigen</a></p>` : ""}
+    ${kuerzlich.length ? `<details class="von-mir"><summary>Kürzlich erledigt, 7 Tage (${kuerzlich.length})</summary><ul class="notizliste">${kuerzlich.map((a) => `<li class="notiz aufgabe-zeile erledigt"><div>${a.schueler_id ? `<b>${esc(schuelerName(a.schueler_id) || "Schüler")}:</b> ` : ""}<span class="notiz-text">${esc(a.text)}</span></div>
+      <div class="unter">${esc(aufgabeWerAn(a))} · erledigt ${esc(datumDE(String(a.erledigt_am).slice(0, 10)))}${a.erledigt_bearbeiter ? " von " + esc(a.erledigt_bearbeiter) : ""}</div>
+      <div class="notiz-aktion"><button type="button" class="knopf klein" data-hagoeffnen="${esc(a.id)}">Wieder öffnen</button></div></li>`).join("")}</ul></details>` : ""}
     ${vonMir.length ? `<details class="von-mir"><summary>Von dir an andere vergeben, noch offen (${vonMir.length})</summary><ul class="notizliste">${vonMir.map((a) => aufgabeZeile(a, true)).join("")}</ul></details>` : ""}
     <p class="leise klein legende"><span class="punkt-rot"></span> rot = überfällig oder dringend · <span class="punkt-orange"></span> orange = heute fällig · grau = später</p></div>`;
   const todo = `<div class="karte"><div class="karte-kopf"><h2>Fristen und Warnungen</h2></div>${aufgaben.length ? `<div class="aufgaben">${aufgaben.join("")}</div>` : `<p class="leer">Gerade ist nichts offen.</p>`}</div>`;
@@ -552,6 +561,12 @@ function hakenHTML(p, gross) {
 }
 const P_ANSICHTEN = [["kommend", "Kommende"], ["ergebnis", "Ergebnisse eintragen"], ["vergangen", "Vergangene"], ["alle", "Alle"]];
 // Prüfungen von heute und davor ohne Ergebnis (plus die eben eingetragenen, damit „Rückgängig“ sichtbar bleibt)
+// Ergebnis, das der Fahrlehrer in der App eingetragen hat (gleicher Schüler, gleicher Tag): „bestanden“, „nicht_bestanden“ oder ""
+function appErgebnis(sid, datum) {
+  const e = S.pruefungen.find((x) => x.schueler_id === sid && x.datum === datum && x.result);
+  if (!e) return "";
+  return e.result === "pass" || e.result === "bestanden" ? "bestanden" : e.result === "fail" || e.result === "nicht_bestanden" ? "nicht_bestanden" : "";
+}
 function ergebnisOffen() {
   const heute = KR.todayISO();
   return S.pruefungstermine.filter((p) => p.datum <= heute && (p.status === "geplant" || ERGEBNIS_RUECK[p.id]));
@@ -567,8 +582,9 @@ function renderErgebnisListe(art, suche) {
   const zeile = (p) => {
     const s = S.schueler.find((x) => x.id === p.schueler_id) || {};
     const r = ERGEBNIS_RUECK[p.id];
+    const ausApp = p.status === "geplant" && p.art === "praxis" ? appErgebnis(p.schueler_id, p.datum) : "";
     const ergebnis = p.status === "geplant"
-      ? `<button class="knopf ergebnis-ja" data-eja="${esc(p.id)}" type="button">✓ Bestanden</button><button class="knopf ergebnis-nein" data-enein="${esc(p.id)}" type="button">✗ Nicht bestanden</button>`
+      ? `${ausApp ? `<span class="leise klein">In der App: ${ausApp === "bestanden" ? "✓ bestanden" : "✗ nicht bestanden"}</span> ` : ""}<button class="knopf ergebnis-ja" data-eja="${esc(p.id)}" type="button">✓ Bestanden</button><button class="knopf ergebnis-nein" data-enein="${esc(p.id)}" type="button">✗ Nicht bestanden</button>`
       : `<span class="marke-pill ${p.status === "bestanden" ? "gruen" : "rot"}">${p.status === "bestanden" ? "✓ bestanden" : "✗ nicht bestanden"}</span>${r ? `<button class="knopf klein" data-erueck="${esc(p.id)}" type="button">Rückgängig</button>` : ""}${p.status === "bestanden" && p.art === "praxis" && istAktiv(s) ? `<button class="knopf klein" data-earchiv="${esc(s.id)}" type="button">Ins Archiv</button>` : ""}`;
     return `<tr><td class="zeitspalte">${esc(p.von || "–")}</td>
       <td><span class="marke-pill ${p.art === "praxis" ? "gruen" : "blau"}">${p.art === "praxis" ? "Praxis" : "Theorie"}</span>${p.klasse ? ` <span class="leise klein">${esc(p.klasse)}</span>` : ""}</td>
@@ -748,11 +764,11 @@ function formAusKlasse(k) {
   return ["B197", "BE", "C1", "C1E", "C", "CE"].includes(k) ? k : "B";
 }
 // Unterrichtet der Fahrlehrer diese Klasse? Ohne eingetragene Klassen: unbekannt (null).
-// „B“ deckt B78 und B197 ab, „BE“ auch B + BE, „CE“ auch C, „C1E“ auch C1.
+// Fahrlehrerlaubnis BE deckt B mit ab, CE deckt C1, C1E und C ab (FahrlG § 1); „C1E“ auch C1, „C“ auch C1.
 function lehrtKlasse(l, k) {
   const ks = (l && l.klassen) || [];
   if (!ks.length || !k) return null;
-  const deckt = { B: ["B", "B78", "B197"], BE: ["BE", "B+BE"], C1: ["C1"], C1E: ["C1E", "C1"], C: ["C"], CE: ["CE", "C"], BKF: ["BKF"] };
+  const deckt = { B: ["B", "B78", "B197"], BE: ["BE", "B+BE", "B", "B78", "B197"], C1: ["C1"], C1E: ["C1E", "C1"], C: ["C", "C1"], CE: ["CE", "C", "C1E", "C1"], BKF: ["BKF"] };
   return ks.some((x) => (deckt[x] || [x]).includes(k));
 }
 function lehrerOptionen(gewaehlt, mitAuslastung, klasse) {
@@ -801,6 +817,16 @@ function pruefungDialog(id) {
     }
     if (!gespeichert) return false;
     if (id && werte.status && werte.status !== p.status) await uebertrageErgebnis(gespeichert, werte.status, p.status);
+    else if (id && gespeichert.status === "bestanden" && gespeichert.datum !== p.datum) {
+      // Datum einer bestandenen Prüfung korrigiert: Datum in der Akte mitziehen (nur wenn es von dieser Prüfung stammt)
+      const sx = S.schueler.find((x) => x.id === gespeichert.schueler_id), feld = gespeichert.art === "theorie" ? "theorie_bestanden_am" : "praxis_bestanden_am";
+      if (sx && sx[feld] === p.datum) {
+        const neuW = { [feld]: gespeichert.datum };
+        if (gespeichert.art === "praxis" && sx.reakt_notiz === `Praxisprüfung bestanden am ${datumDE(p.datum)}`) neuW.reakt_notiz = `Praxisprüfung bestanden am ${datumDE(gespeichert.datum)}`;
+        const res = await supa.from("schueler").update(neuW).eq("id", sx.id).select("id");
+        if (!res.error && res.data && res.data.length) Object.assign(sx, neuW);
+      }
+    }
     await abgleichKalender(gespeichert);
     toast(d.absagen ? "Prüfung abgesagt" : "Prüfung gespeichert");
     zeichne();
@@ -827,7 +853,11 @@ async function uebertrageErgebnis(p, neu, alt) {
   if (neu === "bestanden") {
     werte[feld] = p.datum;
     if (p.art === "praxis" && s.reakt_status !== "befreit") Object.assign(werte, { reakt_status: "befreit", reakt_notiz: `Praxisprüfung bestanden am ${datumDE(p.datum)}` });
-  } else if (alt === "bestanden" && s[feld] === p.datum) werte[feld] = null; // Korrektur: Datum wieder weg
+  } else if (alt === "bestanden") {
+    if (s[feld] === p.datum) werte[feld] = null; // Korrektur: Datum wieder weg
+    // Befreiung von der Reaktivierung, die nur durch diese Prüfung kam, wieder aufheben
+    if (p.art === "praxis" && s.reakt_status === "befreit" && s.reakt_notiz === `Praxisprüfung bestanden am ${datumDE(p.datum)}`) Object.assign(werte, { reakt_status: "pruefen", reakt_notiz: null });
+  }
   const vorher = {};
   for (const k of Object.keys(werte)) vorher[k] = s[k] == null ? null : s[k];
   if (Object.keys(werte).length) {
@@ -836,8 +866,11 @@ async function uebertrageErgebnis(p, neu, alt) {
     else Object.assign(s, werte);
   }
   let aufgabeId = null;
-  if (neu === "nicht_bestanden" && alt !== "nicht_bestanden") {
-    const text = `Neuen Termin für die ${p.art === "praxis" ? "Praxis" : "Theorie"}prüfung planen: ${s.name}`;
+  const text = `Neuen Termin für die ${p.art === "praxis" ? "Praxis" : "Theorie"}prüfung planen: ${s.name}`;
+  const offenGleich = S.aufgaben.filter((a) => a.schueler_id === s.id && !a.erledigt_am && a.text === text);
+  // Korrektur auf „bestanden“: die Aufgabe „Neuen Termin planen“ ist erledigt
+  if (neu === "bestanden") for (const a of offenGleich) await aendereAufgabe(a.id, { erledigt_am: new Date().toISOString(), erledigt_von: S.user.id, heute: false });
+  if (neu === "nicht_bestanden" && alt !== "nicht_bestanden" && !offenGleich.length) {
     const res = await supa.from("schueler_aufgaben").insert({ fahrschule_id: S.fsId, schueler_id: s.id, text, heute: false, faellig_am: KR.addDaysISO(KR.todayISO(), 3), erstellt_von: S.user.id }).select("*");
     if (!res.error && res.data && res.data.length) { S.aufgaben.unshift(res.data[0]); aufgabeId = res.data[0].id; }
   }
@@ -888,7 +921,10 @@ function pruefungenAkteHTML(sid) {
   }
   for (const p of S.pruefungstermine) {
     if (p.schueler_id !== sid || p.status === "abgesagt") continue;
-    map[p.art + "|" + p.datum] = { art: p.art, datum: p.datum, status: p.status, lehrer: p.fahrlehrer_id, pruefer: p.pruefer, quelle: "Tafel" };
+    const app = map[p.art + "|" + p.datum];
+    // Tafel noch „geplant“, aber der Fahrlehrer hat in der App schon ein Ergebnis: das Ergebnis zeigen
+    const status = p.status === "geplant" && app && app.status !== "geplant" ? app.status : p.status;
+    map[p.art + "|" + p.datum] = { art: p.art, datum: p.datum, status, lehrer: p.fahrlehrer_id, pruefer: p.pruefer, quelle: status !== p.status ? "App (Tafel noch offen)" : "Tafel" };
   }
   const l = Object.values(map).sort((a, b) => b.datum.localeCompare(a.datum));
   const versuche = (art) => l.filter((e) => e.art === art && e.status !== "geplant").length;
@@ -1205,7 +1241,7 @@ function aufgabeZeile(a, mitSchueler) {
   const gelesen = a.fuer_person_id && S.sitzung && a.von_person_id === S.sitzung.id && a.fuer_person_id !== S.sitzung.id
     ? (a.gelesen_am ? ' · <span class="gelesen">✓ gelesen</span>' : " · noch nicht gelesen") : "";
   return `<li class="notiz aufgabe-zeile ${st}">
-      <div>${a.dringend ? '<span class="marke-pill rot">dringend</span> ' : ""}${mitSchueler && a.schueler_id ? `<button type="button" class="knopf klein" data-hagschueler="${esc(a.schueler_id)}">${esc(schuelerName(a.schueler_id) || "Schüler")}</button> ` : ""}<span class="notiz-text">${esc(a.text)}</span></div>
+      <div>${a.dringend ? '<span class="marke-pill rot">dringend</span> ' : ""}${mitSchueler === "text" && a.schueler_id ? `<b>${esc(schuelerName(a.schueler_id) || "Schüler")}:</b> ` : mitSchueler && a.schueler_id ? `<button type="button" class="knopf klein" data-hagschueler="${esc(a.schueler_id)}">${esc(schuelerName(a.schueler_id) || "Schüler")}</button> ` : ""}<span class="notiz-text">${esc(a.text)}</span></div>
       <div class="unter">${esc(aufgabeWerAn(a))} · ${esc(notizZeit(a))}${faellig ? ` · <b class="faellig">${esc(faellig)}</b>` : ""}${gelesen}</div>
       <div class="notiz-aktion"><button type="button" class="knopf klein" data-hagerledigt="${esc(a.id)}">Erledigt</button></div></li>`;
 }
@@ -1242,8 +1278,9 @@ async function zeigeNeueAufgaben() {
   if (!neu.length) return;
   const ids = neu.map((a) => a.id);
   oeffneDialog(neu.length === 1 ? "Neue Aufgabe für dich" : `${neu.length} neue Aufgaben für dich`,
-    `<ul class="notizliste">${neu.map((a) => aufgabeZeile(a, true)).join("")}</ul>`, async () => {
+    `<ul class="notizliste">${neu.map((a) => aufgabeZeile(a, "text")).join("")}</ul>`, async () => {
       const res = await supa.from("schueler_aufgaben").update({ gelesen_am: new Date().toISOString() }).in("id", ids).select("id,gelesen_am");
+      if (res.error) toast("„Gelesen“ nicht gespeichert, der Hinweis kommt beim nächsten Laden wieder: " + res.error.message, true);
       for (const r of (res.data || [])) { const a = S.aufgaben.find((x) => x.id === r.id); if (a) a.gelesen_am = r.gelesen_am; }
       zeichne();
       return true;
@@ -1265,7 +1302,7 @@ function aufgabenBlockHTML(sid) {
     return `<li class="notiz aufgabe-zeile ${st}">
       <div>${a.dringend && !a.erledigt_am ? '<span class="marke-pill rot">dringend</span> ' : ""}${st === "heute" ? `<span class="marke-pill orange">Heute zu tun</span> ` : ""}<span class="notiz-text">${esc(a.text)}</span></div>
       <div class="unter">${esc(aufgabeWerAn(a))} · ${esc(notizZeit(a))}${a.faellig_am && !a.erledigt_am ? ` · fällig ${esc(datumDE(a.faellig_am))}` : ""}${a.erledigt_am ? ` · erledigt${a.erledigt_bearbeiter ? " von " + esc(a.erledigt_bearbeiter) : ""}` : ""}</div>
-      ${a.erledigt_am ? "" : `<div class="notiz-aktion"><button type="button" class="knopf klein" data-agheute="${esc(a.id)}">${a.heute ? "Nicht mehr heute" : "Heute zu tun"}</button><button type="button" class="knopf klein" data-agerledigt="${esc(a.id)}">Erledigt</button></div>`}</li>`;
+      ${a.erledigt_am ? `<div class="notiz-aktion"><button type="button" class="knopf klein" data-agoeffnen="${esc(a.id)}">Wieder öffnen</button></div>` : `<div class="notiz-aktion">${a.heute || aufgabeStufe(a) === "spaeter" ? `<button type="button" class="knopf klein" data-agheute="${esc(a.id)}">${a.heute ? "Nicht mehr heute" : "Heute zu tun"}</button>` : ""}<button type="button" class="knopf klein" data-agerledigt="${esc(a.id)}">Erledigt</button></div>`}</li>`;
   };
   return `<h3>Interne Aufgaben (nur Büro)</h3>
     <div class="notiz-neu">
@@ -1311,6 +1348,10 @@ function bindeAufgabenBlock(dlg, sid) {
       const a = S.aufgaben.find((x) => x.id === b.dataset.agheute);
       if (await aendereAufgabe(b.dataset.agheute, { heute: !(a && a.heute) })) neu(); else b.disabled = false;
     }));
+    block.querySelectorAll("[data-agoeffnen]").forEach((b) => b.addEventListener("click", async () => {
+      b.disabled = true;
+      if (await aendereAufgabe(b.dataset.agoeffnen, { erledigt_am: null, erledigt_von: null }, "Aufgabe wieder offen")) neu(); else b.disabled = false;
+    }));
     block.querySelectorAll("[data-agerledigt]").forEach((b) => b.addEventListener("click", async () => {
       b.disabled = true;
       if (await aendereAufgabe(b.dataset.agerledigt, { erledigt_am: new Date().toISOString(), erledigt_von: S.user.id, heute: false })) neu(); else b.disabled = false;
@@ -1325,6 +1366,10 @@ function bindeHeute(ziel) {
     b.disabled = true;
     if (await aendereAufgabe(b.dataset.hagerledigt, { erledigt_am: new Date().toISOString(), erledigt_von: S.user.id, heute: false }, "Aufgabe erledigt ✓")) zeichne(); else b.disabled = false;
   }));
+  ziel.querySelectorAll("[data-hagoeffnen]").forEach((b) => b.addEventListener("click", async () => {
+    b.disabled = true;
+    if (await aendereAufgabe(b.dataset.hagoeffnen, { erledigt_am: null, erledigt_von: null }, "Aufgabe wieder offen")) zeichne(); else b.disabled = false;
+  }));
   ziel.querySelectorAll("[data-hagschueler]").forEach((b) => b.addEventListener("click", () => schuelerDialog(b.dataset.hagschueler)));
 }
 function schuelerDialog(id) {
@@ -1334,7 +1379,7 @@ function schuelerDialog(id) {
       <label class="voll">Name<input type="text" name="name" required maxlength="100" value="${esc(x.name || "")}"></label>
       <label>Telefon (Login für die Fahr-Akademie)<input type="tel" name="telefon" maxlength="40" value="${esc(x.telefon || "")}"></label>
       <label>E-Mail<input type="email" name="email" maxlength="200" value="${esc(x.email || "")}"></label>
-      <label>Fahrlehrer (passende Klasse und viel Platz zuerst)<select name="fahrlehrer_id">${lehrerOptionen(x.fahrlehrer_id, true, x.klasse || "B")}</select></label>
+      <label>Fahrlehrer (passende Klasse und viel Platz zuerst)<select name="fahrlehrer_id">${lehrerOptionen(x.fahrlehrer_id, true, klasseVon(x) || "B")}</select></label>
       <label>Paket<select name="paket_id"><option value="">– ohne Paket –</option>${S.pakete.map((p) => `<option value="${esc(p.id)}"${p.id === x.paket_id ? " selected" : ""}>${esc(p.name)}</option>`).join("")}</select></label>
       <label>Ausbildungsart<select name="ausbildungsart">${artOptionen(x.ausbildungsart)}</select></label>
       <label>Klasse<select name="klasse">${klassenOptionen(x.klasse)}</select></label>
@@ -2256,6 +2301,7 @@ function tabelleAus(kopf, zeilen) {
 }
 /* Zahlen: jeder Balken und jede Kachel ist anklickbar und führt zu einer Detailseite
    (🗣 Serband 13.10.2026: „wer hat bestanden, wer nicht, in welchem Zeitraum“). Filter: Zeitraum, Klasse, Fahrlehrer. */
+const DATEN_TAGE = 400; // so weit zurück werden Termine und Prüfungstafel geladen
 function zahlenFilter() {
   const zr = /^\d{4}$/.test(fristenParam("zr") || "") ? fristenParam("zr") : "12";
   return { zr, klasse: fristenParam("klasse") || "", lehrer: fristenParam("lehrer") || "" };
@@ -2280,6 +2326,13 @@ function anmeldeDatum(x) {
 }
 function schuelerPasst(x, f) {
   return (!f.klasse || klasseVon(x) === f.klasse) && (!f.lehrer || x.fahrlehrer_id === f.lehrer);
+}
+// Termin passt zum Filter: Fahrlehrer des Termins, Klasse über den Schüler (Interessenten nur ohne Klassenfilter)
+function terminPasst(t, f) {
+  if (f.lehrer && t.fahrlehrer_id !== f.lehrer) return false;
+  if (!f.klasse) return true;
+  const x = t.schueler_id && S.schueler.find((y) => y.id === t.schueler_id);
+  return !!x && klasseVon(x) === f.klasse;
 }
 // Prüfungsergebnisse (Praxis: App und Tafel, Theorie: Tafel), je Schüler, Art und Tag nur einmal
 function pruefErgebnisse(art) {
@@ -2324,7 +2377,7 @@ function renderZahlen() {
   const summe = (q, ms) => ms.reduce((a, m) => ({ ok: a.ok + ((q[m] || {}).ok || 0), n: a.n + ((q[m] || {}).n || 0) }), { ok: 0, n: 0 });
   const q3 = summe(quote, letzte3), t3 = summe(quoteT, letzte3);
   const ue = {}, ueGesamt = { v: 0 };
-  ueJeFahrlehrer(S.termine.filter((t) => t.datum && t.datum.slice(0, 7) === dieser && t.datum <= heute), (fl, u) => { ue[fl] = (ue[fl] || 0) + u; ueGesamt.v += u; });
+  ueJeFahrlehrer(S.termine.filter((t) => t.datum && t.datum.slice(0, 7) === dieser && t.datum <= heute && terminPasst(t, f)), (fl, u) => { ue[fl] = (ue[fl] || 0) + u; ueGesamt.v += u; });
   const fr = zaehleFristen();
   const provOffen = S.provisionen.filter((p) => p.status === "offen").reduce((a, p) => a + Number(p.betrag || 0), 0);
   const fcFehlt = S.fcAbgaben.filter((q) => q.ist < q.soll).reduce((a, q) => a + (q.soll - q.ist), 0);
@@ -2342,13 +2395,17 @@ function renderZahlen() {
   const qp = (q, art) => monate.map((m) => { const v = q[m]; return { x: monatKurz(m), wert: v ? Math.round(v.ok / v.n * 100) : null, text: v ? Math.round(v.ok / v.n * 100) + " %" : "", zeigen: !!v && letzte3.includes(m), tip: v ? `${monatKurz(m)}: ${Math.round(v.ok / v.n * 100)} % (${v.ok} von ${v.n} bestanden) · anklicken für die Namen` : `${monatKurz(m)}: keine Prüfungen`, link: v ? zLink({ liste: art, monat: m }) : "" }; });
   const lehrerZeilen = S.lehrer.filter((l) => !f.lehrer || l.id === f.lehrer).map((l) => ({ name: l.name || l.email, wert: ue[l.id] || 0, text: zahlDE(ue[l.id] || 0, 0) + " UE", tip: `${l.name || l.email}: ${zahlDE(ue[l.id] || 0, 1)} Unterrichtseinheiten · anklicken für die Termine`, link: zLink({ liste: "ue", monat: dieser, lehrer: l.id }) })).sort((a, b) => b.wert - a.wert);
   const hinweis = S.lehrer.length <= 1 ? `<p class="leise klein">Hinweis: Zahlen sind nur so vollständig wie die Daten im Kompass. Solange nicht alle Fahrlehrer den Kompass nutzen, fehlen ihre Stunden.</p>` : "";
-  const jahre = [...new Set([heute.slice(0, 4), String(Number(heute.slice(0, 4)) - 1), String(Number(heute.slice(0, 4)) - 2)])];
+  // Termine und Prüfungstafel werden nur für ~400 Tage geladen: ältere Jahre nicht anbieten, angeschnittene mit Hinweis
+  const grenze = KR.addDaysISO(heute, -DATEN_TAGE);
+  const jahre = [heute.slice(0, 4), String(Number(heute.slice(0, 4)) - 1), String(Number(heute.slice(0, 4)) - 2)].filter((j) => `${j}-12-31` >= grenze);
+  const angeschnitten = f.zr !== "12" && `${f.zr}-01-01` < grenze;
   const filterZeile = `<div class="filterzeile nicht-drucken">
       <select class="suche" id="zZr" aria-label="Zeitraum"><option value="12">Letzte 12 Monate</option>${jahre.map((j) => `<option value="${j}"${f.zr === j ? " selected" : ""}>Jahr ${j}</option>`).join("")}</select>
       <select class="suche" id="zKlasse" aria-label="Klasse"><option value="">Alle Klassen</option>${KLASSEN.map(([k, n]) => `<option value="${k}"${k === f.klasse ? " selected" : ""}>${esc(n)}</option>`).join("")}</select>
       <select class="suche" id="zLehrer" aria-label="Fahrlehrer"><option value="">Alle Fahrlehrer</option>${S.lehrer.map((l) => `<option value="${esc(l.id)}"${l.id === f.lehrer ? " selected" : ""}>${esc(l.name || l.email)}</option>`).join("")}</select>
       ${f.zr !== "12" || f.klasse || f.lehrer ? `<a class="knopf klein" href="#zahlen">Filter löschen</a>` : ""}
-      <span class="leise klein">Tipp: Jeden Balken und jede Kachel kann man anklicken.</span></div>`;
+      <span class="leise klein">Tipp: Jeden Balken und jede Kachel kann man anklicken.</span></div>
+    ${angeschnitten ? `<p class="leise klein">Für ${esc(f.zr)} sind Termine, Unterrichtseinheiten und die Prüfungstafel erst ab ${esc(datumDE(grenze))} geladen. Zahlen davor sind unvollständig.</p>` : ""}`;
   return filterZeile + kacheln + `<div class="raster zwei">
     <div class="karte"><h2>Anmeldungen je Monat</h2>${saeulenSVG(anmPunkte, { titel: "Anmeldungen je Monat" })}
       ${ohneDatum ? `<p class="leise klein">${ohneDatum} Schüler ohne Vertragsdatum oder Ausbildungsbeginn sind nicht mitgezählt.</p>` : ""}
@@ -2374,14 +2431,15 @@ function renderZahlen() {
 }
 // Detailseite hinter einem Balken oder einer Kachel
 function renderZahlenListe() {
-  const f = zahlenFilter(), liste = fristenParam("liste"), raw = fristenParam("monat") || KR.todayISO().slice(0, 7);
+  const f = zahlenFilter(), liste = fristenParam("liste"), roh = fristenParam("monat") || "";
+  const raw = /^\d{4}-(0[1-9]|1[0-2])(\.\.\d{4}-(0[1-9]|1[0-2]))?$/.test(roh) ? roh : KR.todayISO().slice(0, 7);
   const [von, bis] = raw.includes("..") ? raw.split("..") : [raw, raw];
   const imZeitraum = (d) => d && d.slice(0, 7) >= von && d.slice(0, 7) <= bis;
   const zurueck = `<a class="knopf nicht-drucken" href="${zLink({ liste: "", monat: "" })}">← Zurück zu Zahlen</a>`;
-  const filterText = [f.klasse ? "Klasse " + f.klasse : "", f.lehrer ? lehrerName(f.lehrer) : ""].filter(Boolean).join(" · ");
+  const filterText = [f.zr && f.zr !== "12" ? "Jahr " + f.zr : "", f.klasse ? "Klasse " + f.klasse : "", f.lehrer ? lehrerName(f.lehrer) : ""].filter(Boolean).join(" · ");
   const kopf = (titel, zusatz) => `<div class="karte"><div class="karte-kopf"><h2>${esc(titel)}</h2>${zurueck}</div>
     <p class="leise">${esc(zeitraumText(von, bis))}${filterText ? " · " + esc(filterText) : ""}</p>${zusatz || ""}`;
-  const name = (sid) => { const x = S.schueler.find((y) => y.id === sid); return x ? `<button type="button" class="textknopf" data-zschueler="${esc(sid)}">${esc(x.name)}</button>` : "(Schüler gelöscht)"; };
+  const name = (sid) => { const x = S.schueler.find((y) => y.id === sid); return x ? `<button type="button" class="textknopf namenknopf" data-zschueler="${esc(sid)}">${esc(x.name)}</button>` : "(Schüler gelöscht)"; };
   if (liste === "anmeldungen") {
     const l = S.schueler.filter((x) => schuelerPasst(x, f) && imZeitraum(anmeldeDatum(x))).sort((a, b) => anmeldeDatum(a).localeCompare(anmeldeDatum(b)));
     const nachArt = {};
@@ -2407,12 +2465,17 @@ function renderZahlenListe() {
   }
   if (liste === "ue") {
     const heute = KR.todayISO();
-    const l = S.termine.filter((t) => imZeitraum(t.datum) && t.datum <= heute && t.art !== "block" && (!f.lehrer || t.fahrlehrer_id === f.lehrer)).sort((a, b) => (a.datum + (a.von || "")).localeCompare(b.datum + (b.von || "")));
+    const l = S.termine.filter((t) => imZeitraum(t.datum) && t.datum <= heute && t.art !== "block" && terminPasst(t, f)).sort((a, b) => (a.datum + (a.von || "")).localeCompare(b.datum + (b.von || "")));
     let summe = 0;
-    const zeilen = l.map((t) => { let u = 0; ueJeFahrlehrer([t], (fl, x) => { u += x; }); summe += u; return `<tr>
+    const gezaehlt = new Set();
+    const zeilen = l.map((t) => {
+      let u = 0, doppelt = false;
+      const k = t.art === "pruefung" && t.schueler_id ? t.schueler_id + "|" + t.datum : "";
+      if (k && gezaehlt.has(k)) doppelt = true; else { if (k) gezaehlt.add(k); ueJeFahrlehrer([t], (fl, x) => { u += x; }); }
+      summe += u; return `<tr>
       <td class="zeitspalte">${esc(datumDE(t.datum))} ${esc(t.von || "")}</td><td>${esc(lehrerName(t.fahrlehrer_id))}</td><td>${t.schueler_id ? name(t.schueler_id) : esc(t.interessent_name || "")}</td>
-      <td><span class="marke-pill">${esc(ARTEN[t.art] || t.art || "")}</span></td><td class="zahlspalte">${zahlDE(u, 1)}</td></tr>`; }).join("");
-    return kopf(`Unterrichtseinheiten (${zahlDE(summe, 1)} UE)`, `<p class="leise klein">Gefahren bis heute, ohne Blocker und abgebrochene Termine. Jede Prüfung zählt einmal je Schüler und Tag (in der Liste je Termin gerechnet).</p>`) +
+      <td><span class="marke-pill">${esc(ARTEN[t.art] || t.art || "")}</span></td><td class="zahlspalte">${zahlDE(u, 1)}${doppelt ? ' <span class="leise klein">(zählt nicht doppelt)</span>' : ""}</td></tr>`; }).join("");
+    return kopf(`Unterrichtseinheiten (${zahlDE(summe, 1)} UE)`, `<p class="leise klein">Gefahren bis heute, ohne Blocker und abgebrochene Termine. Jede Prüfung zählt einmal je Schüler und Tag.</p>`) +
       (l.length ? `<table class="tabelle"><thead><tr><th>Datum</th><th>Fahrlehrer</th><th>Schüler</th><th>Art</th><th class="zahlspalte">UE</th></tr></thead><tbody>${zeilen}</tbody></table>` : `<p class="leer">Keine Termine in diesem Zeitraum.</p>`) + "</div>";
   }
   return kopf("Unbekannte Liste") + "</div>";
@@ -2478,7 +2541,7 @@ function renderTeam() {
       <td>${esc(ROLLEN[p.rolle] || (p.rolle === "fahrlehrer" ? "Fahrlehrer" : p.rolle))}${mitZahlen ? `<div class="unter">${(p.klassen || []).length ? (p.klassen || []).map((k) => `<span class="marke-pill">${esc(k)}</span>`).join(" ") : "Klassen nicht eingetragen"}</div>` : ""}</td>
       ${mitZahlen ? `<td class="zahlspalte">${schuelerZahl[p.id] || 0}</td><td class="zahlspalte">${zahlDE(ue[p.id] || 0)}</td>` : ""}
       <td>${p.aktiv === false ? '<span class="marke-pill rot">gesperrt</span>' : p.ohne_app ? '<span class="marke-pill">ohne App</span>' : '<span class="marke-pill gruen">aktiv</span>'}</td>
-      <td class="aktionen"><div class="aktionen-box">${mitZahlen ? `<button class="knopf klein" data-klassen="${esc(p.id)}" type="button">Klassen</button>` : ""}${admin && p.rolle !== "super_admin" && p.id !== S.user.id ? `${p.ohne_app ? "" : `<button class="knopf klein" data-pwreset="${esc(p.id)}" type="button">Neues Passwort</button>`}
+      <td class="aktionen"><div class="aktionen-box">${mitZahlen && darfPersonenVerwalten() ? `<button class="knopf klein" data-klassen="${esc(p.id)}" type="button">Klassen</button>` : ""}${admin && p.rolle !== "super_admin" && p.id !== S.user.id ? `${p.ohne_app ? "" : `<button class="knopf klein" data-pwreset="${esc(p.id)}" type="button">Neues Passwort</button>`}
         <button class="knopf klein" data-sperren="${esc(p.id)}" type="button">${p.aktiv === false ? "Freischalten" : "Sperren"}</button>` : ""}</div></td></tr>`;
   const lehrer = S.lehrer;
   const buero = S.team.filter((p) => p.rolle === "buero" || p.rolle === "fahrschule_admin");
@@ -2735,7 +2798,8 @@ function oeffneDialog(titel, inhalt, speichern, knopfText, optionen) {
   dlg.addEventListener("close", () => dlg.remove());
   // Immer schließbar: Abbrechen, ✕ (ohne Pflichtfeld-Prüfung), Esc, und ein Klick neben das Fenster (nur solange nichts eingegeben wurde)
   let geaendert = false;
-  form.addEventListener("input", () => { geaendert = true; });
+  form.addEventListener("input", () => { geaendert = true; dlg.dataset.geaendert = "1"; });
+  if (optionen && optionen.festhalten) dlg.dataset.festhalten = "1";
   if (optionen && optionen.festhalten) dlg.addEventListener("cancel", (e) => e.preventDefault()); // Zugangsdaten: nicht versehentlich wegklicken
   else dlg.addEventListener("mousedown", (e) => { if (e.target === dlg && !geaendert) dlg.close(); });
   dlg.showModal();
@@ -2772,11 +2836,11 @@ async function ladeDaten() {
       supa.from("fahrschulen").select("*").eq("id", fsId).single(),
       supa.from("profiles").select("*").eq("fahrschule_id", fsId).in("rolle", ["fahrlehrer", "super_admin"]).order("name"),
       supa.from("schueler").select("*").eq("fahrschule_id", fsId).neq("status", "geloescht").order("name"),
-      alleSeiten(() => supa.from("kalender_termine").select("*").eq("fahrschule_id", fsId).eq("geloescht", false).gte("datum", KR.addDaysISO(KR.todayISO(), -400)).order("datum").order("id")),
+      alleSeiten(() => supa.from("kalender_termine").select("*").eq("fahrschule_id", fsId).eq("geloescht", false).gte("datum", KR.addDaysISO(KR.todayISO(), -DATEN_TAGE)).order("datum").order("id")),
       supa.from("kalender_pruefungen").select("*").eq("fahrschule_id", fsId).eq("geloescht", false),
       supa.from("fahrschule_fahrzeuge").select("*").eq("fahrschule_id", fsId).eq("aktiv", true).order("erstellt_am"),
       supa.from("fahrschule_pakete").select("*").eq("fahrschule_id", fsId),
-      supa.from("pruefungstermine").select("*").eq("fahrschule_id", fsId).gte("datum", KR.addDaysISO(KR.todayISO(), -400)).order("datum").order("von"),
+      supa.from("pruefungstermine").select("*").eq("fahrschule_id", fsId).gte("datum", KR.addDaysISO(KR.todayISO(), -DATEN_TAGE)).order("datum").order("von"),
       supa.from("fc_abgaben").select("*").eq("fahrschule_id", fsId).gte("zeitraum_von", KR.addDaysISO(KR.todayISO(), -200)).order("bestaetigt_am", { ascending: false }),
       supa.from("fahrschule_empfehlungen").select("*").eq("fahrschule_id", fsId).order("erstellt_am", { ascending: false }).limit(1000),
       supa.from("provisionen").select("*").eq("fahrschule_id", fsId).order("erstellt_am", { ascending: false }).limit(2000),

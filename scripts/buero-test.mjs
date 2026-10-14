@@ -1035,13 +1035,15 @@ for (const [breite, hoehe] of [[1920, 1080], [1366, 768], [1024, 768]]) {
   await page.click("#werWechseln"); await meldePinAn(page, "Kristina"); await page.waitForTimeout(250);
   if (!(await page.isVisible("dialog[open]")) || !/2 neue Aufgaben/.test(await page.textContent("dialog[open]"))) fehler("Aufgaben: kein Hinweis-Fenster nach der PIN");
   await pruefeLayout(page, "Hinweis neue Aufgaben");
+  if (await page.$("dialog[open] [data-hagschueler]")) fehler("Aufgaben: Hinweis-Fenster hat einen Knopf ohne Wirkung");
   if (FOTOS) await page.screenshot({ path: join(FOTOS, "aufgaben-hinweis.png") });
   await page.click("dialog[open] button[value=ok]"); await page.waitForTimeout(250);
   const gel = await page.evaluate(() => window.__FAKE.tabellen.schueler_aufgaben.filter((a) => a.gelesen_am).map((a) => a.id).sort().join());
   if (!/ag-1/.test(gel) || gel.split(",").length !== 2) fehler("Aufgaben: „Gelesen“ nicht gespeichert " + gel);
   const zeilen = await page.$$eval(".fuer-dich > .notizliste li", (l) => l.map((x) => x.className.split(" ").pop() + ":" + x.querySelector(".notiz-text").textContent));
   if (zeilen.length !== 3 || !zeilen[0].startsWith("rot") || !zeilen[1].startsWith("rot") || !zeilen[2].includes("Ordner")) fehler("Aufgaben: Reihenfolge/Farbe falsch " + JSON.stringify(zeilen));
-  if ((await page.$$eval(".nav-punkt[href='#heute'] .zahl, a[href='#heute'] .zahl", (z) => z.map((x) => x.textContent).join())) !== "2") fehler("Aufgaben: Zahl in der Seitenleiste falsch");
+  if ((await page.$$eval(".nav-punkt[href='#heute'] .zahl, a[href='#heute'] .zahl", (z) => z.map((x) => x.textContent).join())) !== "3") fehler("Aufgaben: Zahl in der Seitenleiste ≠ sichtbare Liste");
+  if (!/für dich \(3\)/.test(await page.textContent(".fuer-dich h2"))) fehler("Aufgaben: Zahl in der Überschrift ≠ sichtbare Liste");
   await pruefeLayout(page, "Für dich");
   if (FOTOS) await page.screenshot({ path: join(FOTOS, "aufgaben-heute.png"), fullPage: true });
   // Erledigen
@@ -1135,6 +1137,25 @@ for (const [breite, hoehe] of [[1920, 1080], [1366, 768], [1024, 768]]) {
   if (konsole.length) fehler("Zahlen: Konsole: " + konsole.join(" | "));
   await ctx.close();
 }
+// Endprüfung 14.10.: Kachel UE mit Fahrlehrer-Filter = Detailseite, auch bei zwei Prüfungsterminen am selben Tag; Druck mit Namen; falscher Monat
+{
+  const { page, ctx, konsole } = await oeffne({ nutzer: "bu-1", hash: "#zahlen?lehrer=fl-1", vorbereiten: function () {
+    const h = new Date().toISOString().slice(0, 10), sid = F.tabellen.schueler.find((x) => x.fahrlehrer_id === "fl-1").id;
+    F.tabellen.kalender_termine.push({ id: "pd1", fahrschule_id: "fs-test-1", fahrlehrer_id: "fl-1", schueler_id: sid, datum: h, von: "06:00", bis: "06:45", art: "pruefung", status: "geplant", geloescht: false, payload: {} },
+      { id: "pd2", fahrschule_id: "fs-test-1", fahrlehrer_id: "fl-1", schueler_id: sid, datum: h, von: "06:45", bis: "07:30", art: "pruefung", status: "geplant", geloescht: false, payload: {} });
+  } });
+  const ueKachel = (await page.textContent('a.kachel[href*="liste=ue"] .wert')).trim();
+  await page.click('a.kachel[href*="liste=ue"]'); await page.waitForTimeout(300);
+  const ueDetail = ((await page.textContent("#ansicht h2")).match(/\(([\d.,]+) UE\)/) || [])[1] || "";
+  if (ueDetail.replace(/,0$/, "") !== ueKachel) fehler(`Zahlen: UE-Kachel ${ueKachel} ≠ Detailseite ${ueDetail} (Fahrlehrer-Filter/doppelte Prüfung)`);
+  await page.emulateMedia({ media: "print" });
+  if (!(await page.isVisible("#ansicht .namenknopf >> nth=0"))) fehler("Zahlen: im Druck fehlen die Schülernamen");
+  await page.emulateMedia({ media: "screen" });
+  await page.goto(page.url().split("#")[0] + "#zahlen?liste=praxis&monat=quark"); await page.waitForTimeout(250);
+  if (/Invalid/.test(await page.textContent("#ansicht"))) fehler("Zahlen: ungültiger Monat zeigt „Invalid Date“");
+  if (konsole.length) fehler("Zahlen: Konsole: " + konsole.join(" | "));
+  await ctx.close();
+}
 
 // 4o) Gabriel und Lkw-Klassen (13.10.2026): Fahrlehrer ohne App, Klassen je Fahrlehrer, Lkw-Fahrzeuge
 {
@@ -1185,6 +1206,12 @@ for (const [breite, hoehe] of [[1920, 1080], [1366, 768], [1024, 768]]) {
   if (!fz || fz.typ !== "lkw" || fz.klasse !== "C") fehler("Fahrzeuge: Lkw falsch gespeichert " + JSON.stringify(fz));
   await pruefeLayout(page, "Fahrzeuge mit Lkw");
   if (konsole.length) fehler("Gabriel/Klassen: Konsole: " + konsole.join(" | "));
+  await ctx.close();
+}
+// Endprüfung 14.10.: ohne Verwalten-Recht kein Knopf „Klassen“ (die Datenbank lehnt es ohnehin ab)
+{
+  const { page, ctx } = await oeffne({ nutzer: "bu-1", hash: "#team", wer: "Kristina" });
+  if (await page.$("[data-klassen]")) fehler("Klassen: Kristina (ohne Verwalten-Recht) sieht den Knopf „Klassen“");
   await ctx.close();
 }
 

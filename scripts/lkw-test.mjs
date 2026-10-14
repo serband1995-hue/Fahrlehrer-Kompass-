@@ -119,7 +119,7 @@ await pruefe("L7", "Praxisprüfung bestanden (Büro) steht grün in der Akte", (
   return /Praxisprüfung bestanden am 12\.10\./.test(h) && /Theorieprüfung bestanden/.test(h) ? null : "fehlt: " + h.slice(0, 120);
 }));
 await pruefe("L8", "Hinweis „Vom Büro eingetragen“ nur bei neuen Ergebnissen, nicht beim ersten Abgleich", () => page.evaluate(() => {
-  localStorage.removeItem("serband-buero-ergebnisse");
+  Object.keys(localStorage).filter((k) => k.startsWith("serband-buero-ergebnisse")).forEach((k) => localStorage.removeItem(k));
   const meldungen = []; const alt = window.toast; window.toast = (m) => meldungen.push(m);
   _meldeBueroErgebnisse([{ id: "b1", name: "Bea Erfunden", theorie_bestanden_am: "2026-09-01" }]);
   const nachErstem = meldungen.length;
@@ -128,6 +128,28 @@ await pruefe("L8", "Hinweis „Vom Büro eingetragen“ nur bei neuen Ergebnisse
   window.toast = alt;
   if (nachErstem !== 0) return "Hinweis schon beim ersten Abgleich";
   if (meldungen.length !== 1 || !/Praxisprüfung bestanden/.test(meldungen[0])) return "Hinweise: " + JSON.stringify(meldungen);
+  return null;
+}));
+await pruefe("L8b", "erstes Büro-Ergebnis wird gemeldet, auch wenn beim ersten Abgleich noch keins da war", () => page.evaluate(() => {
+  Object.keys(localStorage).filter((k) => k.startsWith("serband-buero-ergebnisse")).forEach((k) => localStorage.removeItem(k));
+  const meldungen = []; const alt = window.toast; window.toast = (m) => meldungen.push(m);
+  _meldeBueroErgebnisse([{ id: "b1", name: "Bea Erfunden" }]);
+  _meldeBueroErgebnisse([{ id: "b1", name: "Bea Erfunden", praxis_bestanden_am: "2026-10-13" }]);
+  window.toast = alt;
+  return meldungen.length === 1 ? null : "Hinweise: " + JSON.stringify(meldungen);
+}));
+await pruefe("L10", "C und CE zusammen: Grundfahraufgaben C und Abfahrtkontrolle gehören dazu; Zugwahl blendet 2 CE-Aufgaben aus", () => page.evaluate(() => {
+  const ids = (s) => lkwStufen(s).flatMap((st) => st.items.map((it) => it.id));
+  const allein = ids({ form: "CE", lkwWeg: "C" }), zusammen = ids({ form: "CE", lkwWeg: "C+CE" });
+  if (allein.includes("lk_gfa_rampe_r") || allein.includes("lk_ak_fts")) return "CE allein hat C-Aufgaben";
+  if (!zusammen.includes("lk_gfa_rampe_r") || !zusammen.includes("lk_ak_fts") || !zusammen.includes("lk_vt_an")) return "C+CE unvollständig";
+  const c1e = ids({ form: "C1E", lkwWeg: "C1+C1E" });
+  if (!c1e.includes("lk_gfa_laengs") || !c1e.includes("lk_ak_brems")) return "C1+C1E unvollständig";
+  const sattel = ids({ form: "CE", lkwWeg: "C", lkwZug: "sattel" });
+  if (!sattel.includes("lk_gfa_ce_ecke") || sattel.includes("lk_gfa_ce_umk")) return "Sattelzug falsch";
+  const glieder = ids({ form: "CE", lkwWeg: "C", lkwZug: "glieder" });
+  if (glieder.includes("lk_gfa_ce_ecke") || !glieder.includes("lk_gfa_ce_gerade")) return "Gliederzug falsch";
+  if (ids({ form: "CE" }).filter((i) => i.startsWith("lk_gfa_ce_")).length !== 4) return "ohne Wahl nicht alle 4";
   return null;
 }));
 await pruefe("L9", "keine JS-Fehler", () => (jsFehler.length ? jsFehler.slice(0, 5) : null));
