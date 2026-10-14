@@ -1096,6 +1096,46 @@ for (const [breite, hoehe] of [[1920, 1080], [1366, 768], [1024, 768]]) {
   await ctx.close();
 }
 
+// 4n) Zahlen zum Anklicken (13.10.2026): Balken → Detailseite mit Namen, Filter, Zurück
+{
+  const { page, ctx, konsole } = await oeffne({ nutzer: "bu-1", hash: "#zahlen", breite: 1366, hoehe: 900 });
+  const balken = await page.$$(".d-punkt.klickbar");
+  if (balken.length < 12) fehler("Zahlen: Balken sind nicht anklickbar (" + balken.length + ")");
+  await pruefeLayout(page, "Zahlen mit Filtern");
+  // Anmeldungen: letzter Balken mit Wert
+  const ziel = await page.$$eval(".diagramm >> nth=0", () => null).catch(() => null);
+  const links = await page.$$eval(".d-punkt.klickbar", (g) => g.map((x) => x.dataset.link));
+  const anmLink = links.find((l) => /liste=anmeldungen/.test(l));
+  await page.evaluate((l) => { document.querySelector(`.d-punkt[data-link="${l}"]`).dispatchEvent(new MouseEvent("click", { bubbles: true })); }, anmLink);
+  await page.waitForTimeout(300);
+  if (!/liste=anmeldungen/.test(page.url()) || !(await page.isVisible("text=← Zurück zu Zahlen"))) fehler("Zahlen: Klick auf Balken öffnet keine Detailseite");
+  await pruefeLayout(page, "Zahlen Anmeldungen");
+  // Praxis-Quote über die Kachel
+  await page.goto(page.url().split("#")[0] + "#zahlen"); await page.waitForTimeout(250);
+  await page.click('a.kachel[href*="liste=praxis"]'); await page.waitForTimeout(300);
+  const txt = await page.textContent("#ansicht");
+  if (!/Praxisprüfungen/.test(txt) || !/bestanden/.test(txt) || !/Je Fahrlehrer/.test(txt)) fehler("Zahlen: Detailseite Praxis unvollständig");
+  if (FOTOS) await page.screenshot({ path: join(FOTOS, "zahlen-praxis.png"), fullPage: true });
+  await pruefeLayout(page, "Zahlen Praxis");
+  // Name anklicken öffnet die Akte
+  const n = await page.$("[data-zschueler]");
+  if (n) { await n.click(); await page.waitForTimeout(200); if (!(await page.isVisible("dialog[open]"))) fehler("Zahlen: Name öffnet die Akte nicht"); await page.keyboard.press("Escape"); }
+  // Zurück und Filter
+  await page.click("text=← Zurück zu Zahlen"); await page.waitForTimeout(250);
+  if (/liste=/.test(page.url())) fehler("Zahlen: Zurück geht nicht");
+  await page.selectOption("#zKlasse", "CE"); await page.waitForTimeout(250);
+  if (!/klasse=CE/.test(page.url())) fehler("Zahlen: Filter Klasse wirkt nicht");
+  await page.click('a.kachel[href*="liste=anmeldungen"]'); await page.waitForTimeout(250);
+  const klassen = await page.$$eval("#ansicht tbody tr td:nth-child(3)", (t) => [...new Set(t.map((x) => x.textContent.trim()))]);
+  if (klassen.some((k) => k !== "CE")) fehler("Zahlen: Filter Klasse gilt nicht auf der Detailseite " + klassen.join());
+  // Auslastung: Balken je Fahrlehrer
+  await page.goto(page.url().split("#")[0] + "#zahlen"); await page.waitForTimeout(250);
+  await page.click(".hb-zeile.klickbar >> nth=0"); await page.waitForTimeout(250);
+  if (!/liste=ue/.test(page.url()) || !/Unterrichtseinheiten/.test(await page.textContent("#ansicht"))) fehler("Zahlen: Auslastung öffnet keine Termine");
+  if (konsole.length) fehler("Zahlen: Konsole: " + konsole.join(" | "));
+  await ctx.close();
+}
+
 // Leitung und Super-Admin haben eigene Konten: keine PIN-Abfrage
 for (const nutzer of ["ad-1", "sa-1"]) {
   const { page, ctx } = await oeffne({ nutzer, wer: null });

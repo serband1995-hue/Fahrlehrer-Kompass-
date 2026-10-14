@@ -522,3 +522,9 @@ a.kachel:hover,a.kachel:focus-visible{border-color:var(--akzent);}
 .knopf.ergebnis-nein:hover{background:var(--rot-soft);}
 .pruef-akte{list-style:none;margin:0;padding:0;display:grid;gap:6px;}
 .pruef-akte li{display:flex;flex-wrap:wrap;gap:8px;align-items:center;}
+
+/* Zahlen: anklickbare Balken */
+.d-punkt.klickbar,.hb-zeile.klickbar{cursor:pointer;}
+.d-punkt.klickbar:hover .d-balken,.d-punkt.klickbar:focus .d-balken{opacity:.75;}
+.hb-zeile.klickbar:hover .hb-name,.hb-zeile.klickbar:focus .hb-name{text-decoration:underline;}
+.abstand-oben{margin-top:22px;margin-bottom:6px;}

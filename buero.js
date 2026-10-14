@@ -2223,80 +2223,205 @@ function saeulenSVG(punkte, opt) {
     const hoch = p.wert == null ? 0 : Math.max(H - unten - y(p.wert), p.wert > 0 ? 3 : 0);
     const rect = !p.wert ? "" : `<path class="d-balken" d="M${cx - balken / 2},${H - unten} v${-Math.max(hoch - 4, 0)} q0,-4 4,-4 h${balken - 8} q4,0 4,4 v${Math.max(hoch - 4, 0)} z"/>`;
     const label = p.zeigen && p.wert != null ? `<text x="${cx}" y="${y(p.wert) - 7}" class="d-wert">${esc(p.text)}</text>` : "";
-    return `<g class="d-punkt" tabindex="0" data-tip="${esc(p.tip)}"><rect x="${breite * i}" y="0" width="${breite}" height="${H}" fill="transparent"/>${rect}${label}<text x="${cx}" y="${H - 8}" class="d-achse">${esc(p.x)}</text></g>`;
+    return `<g class="d-punkt${p.link ? " klickbar" : ""}" tabindex="0" data-tip="${esc(p.tip)}"${p.link ? ` data-link="${esc(p.link)}" role="link"` : ""}><rect x="${breite * i}" y="0" width="${breite}" height="${H}" fill="transparent"/>${rect}${label}<text x="${cx}" y="${H - 8}" class="d-achse">${esc(p.x)}</text></g>`;
   }).join("");
   return `<svg viewBox="0 0 ${B} ${H}" class="diagramm" role="img" aria-label="${esc(opt.titel)}">${linien}${saeulen}</svg>`;
 }
 function balkenListe(zeilen, max) {
   max = Math.max(max || 0, ...zeilen.map((z) => z.wert), 1);
-  return `<div class="hbalken">${zeilen.map((z) => `<div class="hb-zeile" data-tip="${esc(z.tip)}" tabindex="0">
+  return `<div class="hbalken">${zeilen.map((z) => `<div class="hb-zeile${z.link ? " klickbar" : ""}" data-tip="${esc(z.tip)}" tabindex="0"${z.link ? ` data-link="${esc(z.link)}" role="link"` : ""}>
     <span class="hb-name">${esc(z.name)}</span><span class="hb-spur"><span class="hb-balken" style="width:${(z.wert / max) * 100}%"></span></span><span class="hb-wert">${esc(z.text)}</span></div>`).join("")}</div>`;
 }
 function tabelleAus(kopf, zeilen) {
   return `<details class="als-tabelle"><summary>Als Tabelle</summary><table class="tabelle"><thead><tr>${kopf.map((k, i) => `<th${i ? ' class="zahlspalte"' : ""}>${esc(k)}</th>`).join("")}</tr></thead><tbody>${zeilen.map((z) => `<tr>${z.map((v, i) => `<td${i ? ' class="zahlspalte"' : ""}>${esc(v)}</td>`).join("")}</tr>`).join("")}</tbody></table></details>`;
 }
+/* Zahlen: jeder Balken und jede Kachel ist anklickbar und führt zu einer Detailseite
+   (🗣 Serband 13.10.2026: „wer hat bestanden, wer nicht, in welchem Zeitraum“). Filter: Zeitraum, Klasse, Fahrlehrer. */
+function zahlenFilter() {
+  const zr = /^\d{4}$/.test(fristenParam("zr") || "") ? fristenParam("zr") : "12";
+  return { zr, klasse: fristenParam("klasse") || "", lehrer: fristenParam("lehrer") || "" };
+}
+function zahlenMonate(zr) {
+  if (zr === "12") return letzteMonate(12);
+  return Array.from({ length: 12 }, (_, i) => `${zr}-${String(i + 1).padStart(2, "0")}`);
+}
+function zLink(werte) {
+  const f = zahlenFilter(), p = new URLSearchParams();
+  const alle = Object.assign({ zr: f.zr === "12" ? "" : f.zr, klasse: f.klasse, lehrer: f.lehrer }, werte);
+  for (const [k, v] of Object.entries(alle)) if (v) p.set(k, v);
+  const q = p.toString();
+  return "#zahlen" + (q ? "?" + q : "");
+}
+// Monat der Anmeldung: Vertragsdatum, sonst Ausbildungsbeginn aus der Fahrlehrer-App (TT.MM.JJJJ).
+// Nicht der Tag der Eingabe im Kompass: beim ersten Übertragen wären sonst alle im selben Monat.
+function anmeldeDatum(x) {
+  if (x.vertrag_am) return String(x.vertrag_am).slice(0, 10);
+  const b = x.ausbildung && String(x.ausbildung.beginn || "").match(/^(\d{1,2})\.(\d{1,2})\.(\d{4})$/);
+  return b ? `${b[3]}-${b[2].padStart(2, "0")}-${b[1].padStart(2, "0")}` : "";
+}
+function schuelerPasst(x, f) {
+  return (!f.klasse || klasseVon(x) === f.klasse) && (!f.lehrer || x.fahrlehrer_id === f.lehrer);
+}
+// Prüfungsergebnisse (Praxis: App und Tafel, Theorie: Tafel), je Schüler, Art und Tag nur einmal
+function pruefErgebnisse(art) {
+  const map = {};
+  if (art === "praxis") for (const e of S.pruefungen) {
+    const ok = e.result === "pass" || e.result === "bestanden", nein = e.result === "fail" || e.result === "nicht_bestanden";
+    if ((ok || nein) && e.datum) map[e.schueler_id + "|" + e.datum] = { datum: e.datum, ok, schueler_id: e.schueler_id, fahrlehrer_id: e.fahrlehrer_id || null, klasse: null, pruefer: null, quelle: "App" };
+  }
+  for (const p of S.pruefungstermine) {
+    if (p.art !== art || (p.status !== "bestanden" && p.status !== "nicht_bestanden")) continue;
+    map[p.schueler_id + "|" + p.datum] = { datum: p.datum, ok: p.status === "bestanden", schueler_id: p.schueler_id, fahrlehrer_id: p.fahrlehrer_id, klasse: p.klasse, pruefer: p.pruefer, quelle: "Tafel" };
+  }
+  return Object.values(map);
+}
+function ergebnisPasst(e, f) {
+  const x = S.schueler.find((y) => y.id === e.schueler_id) || {};
+  return (!f.klasse || (e.klasse || klasseVon(x)) === f.klasse) && (!f.lehrer || (e.fahrlehrer_id || x.fahrlehrer_id) === f.lehrer);
+}
+function initialen(n) { return String(n || "").split(/\s+/).filter(Boolean).map((w) => w[0].toUpperCase() + ".").join(""); }
+function monatLang(m) { return KR.parseISO(m + "-01").toLocaleDateString("de-DE", { month: "long", year: "numeric" }); }
+function zeitraumText(von, bis) { return von === bis ? monatLang(von) : `${monatLang(von)} bis ${monatLang(bis)}`; }
+
 function renderZahlen() {
-  const heute = KR.todayISO(), monate = letzteMonate(12), dieser = monate[11], vorher = monate[10];
-  // Anmeldungen: Vertragsdatum, sonst Ausbildungsbeginn aus der Fahrlehrer-App (TT.MM.JJJJ).
-  // Nicht der Tag der Eingabe im Kompass: beim ersten Übertragen wären sonst alle im selben Monat.
+  if (fristenParam("liste")) return renderZahlenListe();
+  const heute = KR.todayISO(), f = zahlenFilter(), monate = zahlenMonate(f.zr);
+  const dieser = f.zr === "12" ? monate[11] : (monate.includes(heute.slice(0, 7)) ? heute.slice(0, 7) : monate[11]);
+  const vorher = monate[monate.indexOf(dieser) - 1];
   const anm = {};
   let ohneDatum = 0;
   for (const x of S.schueler) {
-    let m = x.vertrag_am ? String(x.vertrag_am).slice(0, 7) : "";
-    const b = !m && x.ausbildung && String(x.ausbildung.beginn || "").match(/^(\d{1,2})\.(\d{1,2})\.(\d{4})$/);
-    if (b) m = `${b[3]}-${b[2].padStart(2, "0")}`;
-    if (m) anm[m] = (anm[m] || 0) + 1; else ohneDatum++;
+    if (!schuelerPasst(x, f)) continue;
+    const d = anmeldeDatum(x);
+    if (d) anm[d.slice(0, 7)] = (anm[d.slice(0, 7)] || 0) + 1; else ohneDatum++;
   }
-  // Bestehensquote Praxis je Monat
-  const erg = praxisErgebnisse(), quote = {};
-  for (const e of erg) { const m = e.datum.slice(0, 7); quote[m] = quote[m] || { ok: 0, n: 0 }; quote[m].n++; if (e.ok) quote[m].ok++; }
-  const q3 = monate.slice(9).reduce((a, m) => ({ ok: a.ok + ((quote[m] || {}).ok || 0), n: a.n + ((quote[m] || {}).n || 0) }), { ok: 0, n: 0 });
-  // Auslastung: Unterrichtseinheiten je Fahrlehrer in diesem Monat (gefahren bis heute)
+  const quoteVon = (art) => {
+    const q = {};
+    for (const e of pruefErgebnisse(art)) { if (!ergebnisPasst(e, f)) continue; const m = e.datum.slice(0, 7); q[m] = q[m] || { ok: 0, n: 0 }; q[m].n++; if (e.ok) q[m].ok++; }
+    return q;
+  };
+  const quote = quoteVon("praxis"), quoteT = quoteVon("theorie");
+  const letzte3 = monate.slice(Math.max(0, monate.indexOf(dieser) - 2), monate.indexOf(dieser) + 1);
+  const summe = (q, ms) => ms.reduce((a, m) => ({ ok: a.ok + ((q[m] || {}).ok || 0), n: a.n + ((q[m] || {}).n || 0) }), { ok: 0, n: 0 });
+  const q3 = summe(quote, letzte3), t3 = summe(quoteT, letzte3);
   const ue = {}, ueGesamt = { v: 0 };
   ueJeFahrlehrer(S.termine.filter((t) => t.datum && t.datum.slice(0, 7) === dieser && t.datum <= heute), (fl, u) => { ue[fl] = (ue[fl] || 0) + u; ueGesamt.v += u; });
-  const f = zaehleFristen();
+  const fr = zaehleFristen();
   const provOffen = S.provisionen.filter((p) => p.status === "offen").reduce((a, p) => a + Number(p.betrag || 0), 0);
   const fcFehlt = S.fcAbgaben.filter((q) => q.ist < q.soll).reduce((a, q) => a + (q.soll - q.ist), 0);
   const verkaufMonat = S.verkaeufe.filter((v) => v.status === "bezahlt" && monatVon(v.aktualisiert_am || v.erstellt_am) === dieser);
   const diff = (anm[dieser] || 0) - (anm[vorher] || 0);
+  const bereich3 = letzte3[0] + ".." + letzte3[letzte3.length - 1];
   const kacheln = `<div class="kacheln">
-    <div class="kachel"><div class="wert">${anm[dieser] || 0}</div><div class="name">Anmeldungen im ${esc(monatKurz(dieser))}${anm[vorher] != null || diff ? ` <span class="leise">(${diff >= 0 ? "+" : ""}${diff} zum Vormonat)</span>` : ""}</div></div>
-    <div class="kachel gruen"><div class="wert">${q3.n ? Math.round(q3.ok / q3.n * 100) + " %" : "–"}</div><div class="name">Bestehensquote Praxis, 3 Monate (${q3.ok} von ${q3.n})</div></div>
-    <div class="kachel"><div class="wert">${zahlDE(ueGesamt.v)}</div><div class="name">Unterrichtseinheiten im ${esc(monatKurz(dieser))} (bis heute)</div></div>
-    <div class="kachel${f.gesperrt ? " rot" : ""}"><div class="wert">${euro(f.gesperrt * reaktBetrag())}</div><div class="name">offene Reaktivierungen</div></div>
+    <a class="kachel" href="${zLink({ liste: "anmeldungen", monat: dieser })}"><div class="wert">${anm[dieser] || 0}</div><div class="name">Anmeldungen im ${esc(monatKurz(dieser))}${vorher ? ` <span class="leise">(${diff >= 0 ? "+" : ""}${diff} zum Vormonat)</span>` : ""}</div></a>
+    <a class="kachel gruen" href="${zLink({ liste: "praxis", monat: bereich3 })}"><div class="wert">${q3.n ? Math.round(q3.ok / q3.n * 100) + " %" : "–"}</div><div class="name">Bestehensquote Praxis, 3 Monate (${q3.ok} von ${q3.n})</div></a>
+    <a class="kachel gruen" href="${zLink({ liste: "theorie", monat: bereich3 })}"><div class="wert">${t3.n ? Math.round(t3.ok / t3.n * 100) + " %" : "–"}</div><div class="name">Bestehensquote Theorie, 3 Monate (${t3.ok} von ${t3.n})</div></a>
+    <a class="kachel" href="${zLink({ liste: "ue", monat: dieser })}"><div class="wert">${zahlDE(ueGesamt.v)}</div><div class="name">Unterrichtseinheiten im ${esc(monatKurz(dieser))}${dieser === heute.slice(0, 7) ? " (bis heute)" : ""}</div></a>
+    <a class="kachel${fr.gesperrt ? " rot" : ""}" href="#fristen"><div class="wert">${euro(fr.gesperrt * reaktBetrag())}</div><div class="name">offene Reaktivierungen</div></a>
   </div>`;
-  const anmPunkte = monate.map((m, i) => ({ x: monatKurz(m), wert: anm[m] || 0, text: String(anm[m] || 0), zeigen: i === 11 || i === 10, tip: `${monatKurz(m)}: ${anm[m] || 0} Anmeldungen` }));
-  const qPunkte = monate.map((m, i) => { const v = quote[m]; return { x: monatKurz(m), wert: v ? Math.round(v.ok / v.n * 100) : null, text: v ? Math.round(v.ok / v.n * 100) + " %" : "", zeigen: !!v && i >= 9, tip: v ? `${monatKurz(m)}: ${Math.round(v.ok / v.n * 100)} % (${v.ok} von ${v.n} bestanden)` : `${monatKurz(m)}: keine Prüfungen` }; });
-  const lehrerZeilen = S.lehrer.map((l) => ({ name: l.name || l.email, wert: ue[l.id] || 0, text: zahlDE(ue[l.id] || 0, 0) + " UE", tip: `${l.name || l.email}: ${zahlDE(ue[l.id] || 0, 1)} Unterrichtseinheiten` })).sort((a, b) => b.wert - a.wert);
+  const anmPunkte = monate.map((m) => ({ x: monatKurz(m), wert: anm[m] || 0, text: String(anm[m] || 0), zeigen: m === dieser || m === vorher, tip: `${monatKurz(m)}: ${anm[m] || 0} Anmeldungen · anklicken für die Namen`, link: zLink({ liste: "anmeldungen", monat: m }) }));
+  const qp = (q, art) => monate.map((m) => { const v = q[m]; return { x: monatKurz(m), wert: v ? Math.round(v.ok / v.n * 100) : null, text: v ? Math.round(v.ok / v.n * 100) + " %" : "", zeigen: !!v && letzte3.includes(m), tip: v ? `${monatKurz(m)}: ${Math.round(v.ok / v.n * 100)} % (${v.ok} von ${v.n} bestanden) · anklicken für die Namen` : `${monatKurz(m)}: keine Prüfungen`, link: v ? zLink({ liste: art, monat: m }) : "" }; });
+  const lehrerZeilen = S.lehrer.filter((l) => !f.lehrer || l.id === f.lehrer).map((l) => ({ name: l.name || l.email, wert: ue[l.id] || 0, text: zahlDE(ue[l.id] || 0, 0) + " UE", tip: `${l.name || l.email}: ${zahlDE(ue[l.id] || 0, 1)} Unterrichtseinheiten · anklicken für die Termine`, link: zLink({ liste: "ue", monat: dieser, lehrer: l.id }) })).sort((a, b) => b.wert - a.wert);
   const hinweis = S.lehrer.length <= 1 ? `<p class="leise klein">Hinweis: Zahlen sind nur so vollständig wie die Daten im Kompass. Solange nicht alle Fahrlehrer den Kompass nutzen, fehlen ihre Stunden.</p>` : "";
-  return kacheln + `<div class="raster zwei">
-    <div class="karte"><h2>Anmeldungen je Monat</h2>${saeulenSVG(anmPunkte, { titel: "Anmeldungen je Monat, letzte 12 Monate" })}
+  const jahre = [...new Set([heute.slice(0, 4), String(Number(heute.slice(0, 4)) - 1), String(Number(heute.slice(0, 4)) - 2)])];
+  const filterZeile = `<div class="filterzeile nicht-drucken">
+      <select class="suche" id="zZr" aria-label="Zeitraum"><option value="12">Letzte 12 Monate</option>${jahre.map((j) => `<option value="${j}"${f.zr === j ? " selected" : ""}>Jahr ${j}</option>`).join("")}</select>
+      <select class="suche" id="zKlasse" aria-label="Klasse"><option value="">Alle Klassen</option>${KLASSEN.map(([k, n]) => `<option value="${k}"${k === f.klasse ? " selected" : ""}>${esc(n)}</option>`).join("")}</select>
+      <select class="suche" id="zLehrer" aria-label="Fahrlehrer"><option value="">Alle Fahrlehrer</option>${S.lehrer.map((l) => `<option value="${esc(l.id)}"${l.id === f.lehrer ? " selected" : ""}>${esc(l.name || l.email)}</option>`).join("")}</select>
+      ${f.zr !== "12" || f.klasse || f.lehrer ? `<a class="knopf klein" href="#zahlen">Filter löschen</a>` : ""}
+      <span class="leise klein">Tipp: Jeden Balken und jede Kachel kann man anklicken.</span></div>`;
+  return filterZeile + kacheln + `<div class="raster zwei">
+    <div class="karte"><h2>Anmeldungen je Monat</h2>${saeulenSVG(anmPunkte, { titel: "Anmeldungen je Monat" })}
       ${ohneDatum ? `<p class="leise klein">${ohneDatum} Schüler ohne Vertragsdatum oder Ausbildungsbeginn sind nicht mitgezählt.</p>` : ""}
       ${tabelleAus(["Monat", "Anmeldungen"], monate.map((m) => [monatKurz(m) + " " + m.slice(0, 4), anm[m] || 0]))}</div>
-    <div class="karte"><h2>Bestehensquote Praxis</h2>${saeulenSVG(qPunkte, { titel: "Bestehensquote Praxisprüfung je Monat in Prozent", max: 100 })}
+    <div class="karte"><h2>Bestehensquote Praxis</h2>${saeulenSVG(qp(quote, "praxis"), { titel: "Bestehensquote Praxisprüfung je Monat in Prozent", max: 100 })}
       ${tabelleAus(["Monat", "Bestanden", "Prüfungen", "Quote"], monate.map((m) => { const v = quote[m] || { ok: 0, n: 0 }; return [monatKurz(m) + " " + m.slice(0, 4), v.ok, v.n, v.n ? Math.round(v.ok / v.n * 100) + " %" : "–"]; }))}</div>
   </div>
   <div class="raster zwei">
+    <div class="karte"><h2>Bestehensquote Theorie</h2>${saeulenSVG(qp(quoteT, "theorie"), { titel: "Bestehensquote Theorieprüfung je Monat in Prozent", max: 100 })}
+      ${tabelleAus(["Monat", "Bestanden", "Prüfungen", "Quote"], monate.map((m) => { const v = quoteT[m] || { ok: 0, n: 0 }; return [monatKurz(m) + " " + m.slice(0, 4), v.ok, v.n, v.n ? Math.round(v.ok / v.n * 100) + " %" : "–"]; }))}
+      <p class="leise klein">Theorie zählt nur, was auf der Prüfungstafel ein Ergebnis hat.</p></div>
     <div class="karte"><h2>Auslastung der Fahrlehrer im ${esc(monatKurz(dieser))}</h2>${balkenListe(lehrerZeilen)}${hinweis}</div>
-    <div class="karte"><h2>Offenes Geld und Verkäufe</h2>
+  </div>
+  <div class="karte"><h2>Offenes Geld und Verkäufe</h2>
       <table class="tabelle"><tbody>
-        <tr><td>Reaktivierungen überfällig (${f.gesperrt} × ${euro(reaktBetrag())})</td><td class="zahlspalte"><b>${euro(f.gesperrt * reaktBetrag())}</b></td></tr>
-        <tr><td>Reaktivierung fällig, noch nicht geprüft</td><td class="zahlspalte">${f.pruefen} Schüler</td></tr>
-        <tr><td>Fahrchecks fehlend laut Quittungen</td><td class="zahlspalte">${fcFehlt}</td></tr>
-        <tr><td>Provision an Fahrlehrer offen</td><td class="zahlspalte">${euro(provOffen)}</td></tr>
-        <tr><td>Akademie & Simulator verkauft im ${esc(monatKurz(dieser))}</td><td class="zahlspalte">${verkaufMonat.length} · ${euro(verkaufMonat.reduce((a, v) => a + Number(v.betrag || 0), 0))}</td></tr>
+        <tr><td><a href="#fristen">Reaktivierungen überfällig</a> (${fr.gesperrt} × ${euro(reaktBetrag())})</td><td class="zahlspalte"><b>${euro(fr.gesperrt * reaktBetrag())}</b></td></tr>
+        <tr><td><a href="#fristen">Reaktivierung fällig, noch nicht geprüft</a></td><td class="zahlspalte">${fr.pruefen} Schüler</td></tr>
+        <tr><td><a href="#fahrchecks">Fahrchecks fehlend laut Quittungen</a></td><td class="zahlspalte">${fcFehlt}</td></tr>
+        <tr><td><a href="#verkaeufe">Provision an Fahrlehrer offen</a></td><td class="zahlspalte">${euro(provOffen)}</td></tr>
+        <tr><td><a href="#verkaeufe">Akademie & Simulator verkauft im ${esc(monatKurz(dieser))}</a></td><td class="zahlspalte">${verkaufMonat.length} · ${euro(verkaufMonat.reduce((a, v) => a + Number(v.betrag || 0), 0))}</td></tr>
       </tbody></table></div>
-  </div><div id="tip" class="tip" hidden></div>`;
+  <div id="tip" class="tip" hidden></div>`;
+}
+// Detailseite hinter einem Balken oder einer Kachel
+function renderZahlenListe() {
+  const f = zahlenFilter(), liste = fristenParam("liste"), raw = fristenParam("monat") || KR.todayISO().slice(0, 7);
+  const [von, bis] = raw.includes("..") ? raw.split("..") : [raw, raw];
+  const imZeitraum = (d) => d && d.slice(0, 7) >= von && d.slice(0, 7) <= bis;
+  const zurueck = `<a class="knopf nicht-drucken" href="${zLink({ liste: "", monat: "" })}">← Zurück zu Zahlen</a>`;
+  const filterText = [f.klasse ? "Klasse " + f.klasse : "", f.lehrer ? lehrerName(f.lehrer) : ""].filter(Boolean).join(" · ");
+  const kopf = (titel, zusatz) => `<div class="karte"><div class="karte-kopf"><h2>${esc(titel)}</h2>${zurueck}</div>
+    <p class="leise">${esc(zeitraumText(von, bis))}${filterText ? " · " + esc(filterText) : ""}</p>${zusatz || ""}`;
+  const name = (sid) => { const x = S.schueler.find((y) => y.id === sid); return x ? `<button type="button" class="textknopf" data-zschueler="${esc(sid)}">${esc(x.name)}</button>` : "(Schüler gelöscht)"; };
+  if (liste === "anmeldungen") {
+    const l = S.schueler.filter((x) => schuelerPasst(x, f) && imZeitraum(anmeldeDatum(x))).sort((a, b) => anmeldeDatum(a).localeCompare(anmeldeDatum(b)));
+    const nachArt = {};
+    for (const x of l) nachArt[artName(x.ausbildungsart)] = (nachArt[artName(x.ausbildungsart)] || 0) + 1;
+    return kopf(`Anmeldungen (${l.length})`, `<p>${Object.entries(nachArt).map(([k, v]) => `<span class="marke-pill">${esc(k)}: ${v}</span>`).join(" ")}</p>`) +
+      (l.length ? `<table class="tabelle"><thead><tr><th>Datum</th><th>Schüler</th><th>Klasse</th><th>Ausbildungsart</th><th>Fahrlehrer</th><th>Paket</th><th>Stand</th></tr></thead><tbody>${l.map((x) => `<tr>
+        <td class="zeitspalte">${esc(datumDE(anmeldeDatum(x)))}</td><td>${name(x.id)}</td><td>${esc(klasseVon(x))}</td><td>${esc(artName(x.ausbildungsart))}</td>
+        <td>${esc(x.fahrlehrer_id ? lehrerName(x.fahrlehrer_id) : "–")}</td><td>${esc(x.paket_id ? paketName(x.paket_id) : "–")}</td>
+        <td>${istAktiv(x) ? (x.praxis_bestanden_am ? '<span class="marke-pill gruen">bestanden</span>' : '<span class="marke-pill">aktiv</span>') : '<span class="marke-pill">Archiv</span>'}</td></tr>`).join("")}</tbody></table>` : `<p class="leer">Keine Anmeldungen in diesem Zeitraum.</p>`) + "</div>";
+  }
+  if (liste === "praxis" || liste === "theorie") {
+    const l = pruefErgebnisse(liste).filter((e) => ergebnisPasst(e, f) && imZeitraum(e.datum)).sort((a, b) => a.datum.localeCompare(b.datum));
+    const ok = l.filter((e) => e.ok).length, nein = l.length - ok;
+    const jeLehrer = {};
+    for (const e of l) { const x = S.schueler.find((y) => y.id === e.schueler_id) || {}; const k = e.fahrlehrer_id || x.fahrlehrer_id || ""; jeLehrer[k] = jeLehrer[k] || { ok: 0, n: 0 }; jeLehrer[k].n++; if (e.ok) jeLehrer[k].ok++; }
+    const lehrerTab = Object.entries(jeLehrer).map(([k, v]) => [k ? lehrerName(k) : "ohne Fahrlehrer", v.ok, v.n - v.ok, v.n ? Math.round(v.ok / v.n * 100) + " %" : "–"]);
+    return kopf(`${liste === "praxis" ? "Praxisprüfungen" : "Theorieprüfungen"} (${l.length})`,
+      `<div class="kacheln"><div class="kachel gruen"><div class="wert">${ok}</div><div class="name">bestanden</div></div><div class="kachel${nein ? " rot" : ""}"><div class="wert">${nein}</div><div class="name">nicht bestanden</div></div><div class="kachel"><div class="wert">${l.length ? Math.round(ok / l.length * 100) + " %" : "–"}</div><div class="name">Bestehensquote</div></div></div>`) +
+      (l.length ? `<table class="tabelle"><thead><tr><th>Datum</th><th>Schüler</th><th>Klasse</th><th>Fahrlehrer</th><th>Prüfer</th><th>Ergebnis</th></tr></thead><tbody>${l.map((e) => { const x = S.schueler.find((y) => y.id === e.schueler_id) || {}; return `<tr>
+        <td class="zeitspalte">${esc(datumDE(e.datum))}</td><td>${name(e.schueler_id)}</td><td>${esc(e.klasse || klasseVon(x))}</td><td>${esc((e.fahrlehrer_id || x.fahrlehrer_id) ? lehrerName(e.fahrlehrer_id || x.fahrlehrer_id) : "–")}</td>
+        <td>${esc(initialen(e.pruefer) || "–")}</td><td>${e.ok ? '<span class="marke-pill gruen">✓ bestanden</span>' : '<span class="marke-pill rot">✗ nicht bestanden</span>'}</td></tr>`; }).join("")}</tbody></table>
+        <h3 class="abstand-oben">Je Fahrlehrer</h3><table class="tabelle"><thead><tr><th>Fahrlehrer</th><th class="zahlspalte">bestanden</th><th class="zahlspalte">nicht bestanden</th><th class="zahlspalte">Quote</th></tr></thead><tbody>${lehrerTab.map((z) => `<tr><td>${esc(z[0])}</td><td class="zahlspalte">${z[1]}</td><td class="zahlspalte">${z[2]}</td><td class="zahlspalte">${z[3]}</td></tr>`).join("")}</tbody></table>` : `<p class="leer">Keine Prüfungen mit Ergebnis in diesem Zeitraum.</p>`) + "</div>";
+  }
+  if (liste === "ue") {
+    const heute = KR.todayISO();
+    const l = S.termine.filter((t) => imZeitraum(t.datum) && t.datum <= heute && t.art !== "block" && (!f.lehrer || t.fahrlehrer_id === f.lehrer)).sort((a, b) => (a.datum + (a.von || "")).localeCompare(b.datum + (b.von || "")));
+    let summe = 0;
+    const zeilen = l.map((t) => { let u = 0; ueJeFahrlehrer([t], (fl, x) => { u += x; }); summe += u; return `<tr>
+      <td class="zeitspalte">${esc(datumDE(t.datum))} ${esc(t.von || "")}</td><td>${esc(lehrerName(t.fahrlehrer_id))}</td><td>${t.schueler_id ? name(t.schueler_id) : esc(t.interessent_name || "")}</td>
+      <td><span class="marke-pill">${esc(ARTEN[t.art] || t.art || "")}</span></td><td class="zahlspalte">${zahlDE(u, 1)}</td></tr>`; }).join("");
+    return kopf(`Unterrichtseinheiten (${zahlDE(summe, 1)} UE)`, `<p class="leise klein">Gefahren bis heute, ohne Blocker und abgebrochene Termine. Jede Prüfung zählt einmal je Schüler und Tag (in der Liste je Termin gerechnet).</p>`) +
+      (l.length ? `<table class="tabelle"><thead><tr><th>Datum</th><th>Fahrlehrer</th><th>Schüler</th><th>Art</th><th class="zahlspalte">UE</th></tr></thead><tbody>${zeilen}</tbody></table>` : `<p class="leer">Keine Termine in diesem Zeitraum.</p>`) + "</div>";
+  }
+  return kopf("Unbekannte Liste") + "</div>";
 }
 function bindeZahlen(ziel) {
   const tip = ziel.querySelector("#tip");
-  const zeig = (el, x, y) => { tip.textContent = el.dataset.tip; tip.hidden = false; tip.style.left = x + 14 + "px"; tip.style.top = y + 14 + "px"; };
-  ziel.querySelectorAll("[data-tip]").forEach((el) => {
-    el.addEventListener("mousemove", (e) => zeig(el, e.clientX, e.clientY));
-    el.addEventListener("mouseleave", () => { tip.hidden = true; });
-    el.addEventListener("focus", () => { const r = el.getBoundingClientRect(); zeig(el, r.left, r.top); });
-    el.addEventListener("blur", () => { tip.hidden = true; });
+  if (tip) {
+    const zeig = (el, x, y) => { tip.textContent = el.dataset.tip; tip.hidden = false; tip.style.left = x + 14 + "px"; tip.style.top = y + 14 + "px"; };
+    ziel.querySelectorAll("[data-tip]").forEach((el) => {
+      el.addEventListener("mousemove", (e) => zeig(el, e.clientX, e.clientY));
+      el.addEventListener("mouseleave", () => { tip.hidden = true; });
+      el.addEventListener("focus", () => { const r = el.getBoundingClientRect(); zeig(el, r.left, r.top); });
+      el.addEventListener("blur", () => { tip.hidden = true; });
+    });
+  }
+  // Balken anklicken (Maus oder Enter) → Detailseite
+  ziel.querySelectorAll("[data-link]").forEach((el) => {
+    const geh = () => { if (el.dataset.link) location.hash = el.dataset.link; };
+    el.addEventListener("click", geh);
+    el.addEventListener("keydown", (e) => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); geh(); } });
   });
+  const zr = ziel.querySelector("#zZr");
+  if (zr) {
+    zr.addEventListener("change", (e) => setzeFilter("zahlen", { zr: e.target.value === "12" ? "" : e.target.value }));
+    ziel.querySelector("#zKlasse").addEventListener("change", (e) => setzeFilter("zahlen", { klasse: e.target.value }));
+    ziel.querySelector("#zLehrer").addEventListener("change", (e) => setzeFilter("zahlen", { lehrer: e.target.value }));
+  }
+  ziel.querySelectorAll("[data-zschueler]").forEach((b) => b.addEventListener("click", () => schuelerDialog(b.dataset.zschueler)));
 }
 
 /* ---------- Fahrlehrer & Zugänge ---------- */
