@@ -2998,6 +2998,99 @@ const STUFEN = [
     { id:"t_schloss",t:"Lenkradschloss", group:"Bedienung" }
   ]}
 ];
+/* ===== Lkw-Ausbildung C1, C1E, C, CE (🗣 Serband 13.10.2026; Fahrlehrer Gabriel) =====
+   Grundfahraufgaben: amtliche Namen aus dem Fahraufgabenkatalog (PrüfRL 2021, 2.3.3.2 / 2.3.5.2, FAK-GFA 4.1/4.2).
+   Abfahrtkontrolle: die 6 Sachgebiete der Aufgabenkarten (PrüfRL 2021 Teil A 2.1, nur C und C1).
+   Verbinden und Trennen: eigener Prüfungsteil bei C1E und CE (PrüfRL 2021 Teil A 2.2). */
+const LKW_FORMS=["C1","C1E","C","CE"];
+function istLkw(s){ return !!s&&LKW_FORMS.includes(s.form); }
+// Klasse aus dem Büro → Form in der App (B78 heißt hier „Automatik“)
+function formAusKlasse(k){ if(k==="B78")return "Automatik"; return ["B197","BE","C1","C1E","C","CE"].includes(k)?k:"B"; }
+const LKW_STUFEN = [
+  { key:"lkw_grund", nr:"01", titel:"Grundstufe Lkw", sub:"Das große Fahrzeug beherrschen", items:[
+    { id:"lk_sitz",    t:"Sitz, Lenkrad, Spiegel bzw. Kamera-Monitore einstellen" },
+    { id:"lk_luft",    t:"Druckluft, Kontrollleuchten & Anzeigen vor dem Losfahren" },
+    { id:"lk_anfahr",  t:"Anfahren & Anhalten mit Getriebe und Feststellbremse" },
+    { id:"lk_dauer",   t:"Dosiert bremsen, Dauerbremse (Retarder) richtig nutzen" },
+    { id:"lk_mass",    t:"Abmessungen einschätzen: Breite, Länge, Höhe" },
+    { id:"lk_kurve",   t:"Abbiegen mit Schleppkurve: ausholen, Heck im Blick" }
+  ]},
+  { key:"lkw_aufbau", nr:"02", titel:"Aufbaustufe Lkw", sub:"Stadtverkehr mit Lkw", items:[
+    { id:"lk_rechts",  t:"Rechts abbiegen: toter Winkel, Radfahrer, Schrittgeschwindigkeit" },
+    { id:"lk_wechsel", t:"Fahrstreifenwechsel mit Spiegelblick links und rechts" },
+    { id:"lk_hoehe",   t:"Durchfahrtshöhe, -breite & Gewichtsgrenzen beachten" },
+    { id:"lk_berg",    t:"Berganfahren ohne Zurückrollen" },
+    { id:"lk_kreis",   t:"Kreisverkehr und enge Einfahrten mit Lkw" },
+    { id:"lk_bahn",    t:"Bahnübergang: Platz hinter den Schienen prüfen" }
+  ]},
+  { key:"lkw_leistung", nr:"03", titel:"Leistungsstufe Lkw", sub:"Wie im Berufsalltag", items:[
+    { id:"lk_voraus",  t:"Vorausschauend & spritsparend fahren (rollen lassen)" },
+    { id:"lk_tempo",   t:"Geschwindigkeiten für Lkw kennen und einhalten" },
+    { id:"lk_ueberhol",t:"Überholverbot für Lkw & langes Überholen" },
+    { id:"lk_abstand", t:"Großen Sicherheitsabstand halten (Bremsweg Lkw)" },
+    { id:"lk_ladung",  t:"Ladung & Gewichtsverteilung beachten" },
+    { id:"lk_zeiten",  t:"Lenk- und Ruhezeiten, Fahrtenschreiber bedienen" }
+  ]},
+  { key:"sonder", nr:"04", titel:"Sonderfahrten", sub:"Die gesetzlichen Pflichtstunden", items:STUFEN.find(st=>st.key==="sonder").items },
+  { key:"lkw_gfa", nr:"05", titel:"Grundfahraufgaben Lkw", sub:"Amtliche Aufgaben der Prüfung", items:[
+    { id:"lk_gfa_rampe_r", t:"Rückwärtsfahren und versetzen nach rechts an eine Rampe (C, C1: Pflicht)", group:"C und C1", nur:["C","C1"] },
+    { id:"lk_gfa_einm",    t:"Nach rechts rückwärts in eine Einmündung, Kreuzung oder Einfahrt", group:"C und C1", nur:["C","C1"] },
+    { id:"lk_gfa_laengs",  t:"Rückwärts in eine Parklücke (Längsaufstellung)", group:"C und C1", nur:["C","C1"] },
+    { id:"lk_gfa_quer",    t:"Rückwärts quer oder schräg einparken", group:"C und C1", nur:["C","C1"] },
+    { id:"lk_gfa_ce_ecke", t:"Rückwärtsfahren um eine Ecke nach links (Starrdeichsel- oder Sattelzug)", group:"CE", nur:["CE"], zug:"sattel" },
+    { id:"lk_gfa_ce_rampe",t:"Rückwärtsfahren und versetzen nach rechts an eine Rampe (Starrdeichsel- oder Sattelzug)", group:"CE", nur:["CE"], zug:"sattel" },
+    { id:"lk_gfa_ce_umk",  t:"Umkehren durch Rückwärtsfahren nach links (Gliederzug mit Drehschemel)", group:"CE", nur:["CE"], zug:"glieder" },
+    { id:"lk_gfa_ce_gerade",t:"Rückwärtsfahren geradeaus an eine Rampe (Gliederzug mit Drehschemel)", group:"CE", nur:["CE"], zug:"glieder" },
+    { id:"lk_gfa_c1e_ecke",t:"Rückwärtsfahren um eine Ecke nach links", group:"C1E", nur:["C1E"] },
+    { id:"lk_gfa_c1e_rampe",t:"Rückwärtsfahren geradeaus an eine Rampe", group:"C1E", nur:["C1E"] },
+    { id:"lk_gfa_sicher",  t:"Vor jeder Rückwärtsfahrt: sichernde Person einweisen", group:"Alle Klassen" }
+  ]},
+  { key:"lkw_technik", nr:"06", titel:"Abfahrtkontrolle & Verbinden", sub:"Prüfungsteile neben der Fahrt", eval:false, items:[
+    { id:"lk_ak_fts",   t:"Fahrtenschreiber: Anmelden, Symbole, Ausdruck lesen", group:"Abfahrtkontrolle (C, C1)", nur:["C","C1"] },
+    { id:"lk_ak_brems", t:"Bremsen: Druckluft, Kontrolle, Feststellbremse", group:"Abfahrtkontrolle (C, C1)", nur:["C","C1"] },
+    { id:"lk_ak_raeder",t:"Räder, Reifen, Federung, Lenkung", group:"Abfahrtkontrolle (C, C1)", nur:["C","C1"] },
+    { id:"lk_ak_licht", t:"Beleuchtung, Elektrik & Kontrolleinrichtungen", group:"Abfahrtkontrolle (C, C1)", nur:["C","C1"] },
+    { id:"lk_ak_motor", t:"Motor & Betriebsstoffe", group:"Abfahrtkontrolle (C, C1)", nur:["C","C1"] },
+    { id:"lk_ak_aufbau",t:"Ausrüstung, Aufbau & Zusatzeinrichtungen", group:"Abfahrtkontrolle (C, C1)", nur:["C","C1"] },
+    { id:"lk_vt_an",    t:"Ankuppeln bzw. Aufsatteln (erst Brems-, dann Vorratsschlauch)", group:"Verbinden und Trennen (C1E, CE)", nur:["C1E","CE"] },
+    { id:"lk_vt_ab",    t:"Abkuppeln bzw. Absatteln (erst Vorrats-, dann Bremsschlauch)", group:"Verbinden und Trennen (C1E, CE)", nur:["C1E","CE"] },
+    { id:"lk_vt_probe", t:"Bremsprobe nach dem Verbinden (Schrittgeschwindigkeit)", group:"Verbinden und Trennen (C1E, CE)", nur:["C1E","CE"] },
+    { id:"lk_vt_sicher",t:"Sicherheitskontrolle am Anhänger (Ladung, Aufbau, Türen, Keile)", group:"Verbinden und Trennen (C1E, CE)", nur:["C1E","CE"] }
+  ]}
+];
+// Lkw-Plan je Klasse: nur die Aufgaben, die für diese Klasse gelten.
+// Gemeinsamer Weg (C und CE / C1 und C1E): erst kommt die Prüfung der Grundklasse, deren Aufgaben gehören dazu.
+// CE: geprüft werden nur 2 der 4 Grundfahraufgaben, je nach Zug (FeV Anlage 7 Nr. 2.1.4.5) – ohne Wahl alle 4.
+function lkwStufen(s){
+  const klassen=[s.form];
+  if(s.form==="CE"&&s.lkwWeg==="C+CE")klassen.push("C");
+  if(s.form==="C1E"&&s.lkwWeg==="C1+C1E")klassen.push("C1");
+  const passt=it=>(!it.nur||it.nur.some(k=>klassen.includes(k)))&&(!it.zug||!s.lkwZug||it.zug===s.lkwZug);
+  return LKW_STUFEN.map(st=>Object.assign({},st,{items:st.items.filter(passt)})).filter(st=>st.items.length);
+}
+const LKW_ZUEGE=[["sattel","Sattel- oder Starrdeichselzug"],["glieder","Gliederzug (Drehschemel)"]];
+// Sonderfahrten je Klasse (Anlage 4 FahrschAusbO, je 45 Minuten: Überland / Autobahn / Nacht).
+// Bei Lkw zählt der Weg: welche Fahrerlaubnis schon da ist, oder ob zwei Klassen zusammen ausgebildet werden.
+const SONDER_SOLL={B:[5,4,3],B197:[5,4,3],Automatik:[5,4,3],BE:[3,1,1],C1:[3,1,1]};
+const LKW_WEGE={
+  C:  [["B","von B nach C",[5,2,3]],["C1","von C1 nach C",[3,1,1]]],
+  CE: [["C","von C nach CE",[5,2,3]],["C+CE","C und CE zusammen",[8,3,3]]],
+  C1E:[["C1","von C1 nach C1E",[3,1,1]],["C1+C1E","C1 und C1E zusammen",[4,2,2]]]
+};
+function sonderWerte(s){
+  const f=(s&&s.form)||"B";
+  if(LKW_WEGE[f]){ const w=LKW_WEGE[f].find(x=>x[0]===s.lkwWeg)||LKW_WEGE[f][0]; return w[2]; }
+  return SONDER_SOLL[f]||SONDER_SOLL.B;
+}
+function sonderDefFuer(s){ const w=sonderWerte(s); return SONDER_DEF.map((d,i)=>Object.assign({},d,{soll:w[i]})); }
+function lkwWegHTML(s){
+  const wege=LKW_WEGE[s.form]; if(!wege)return "";
+  const akt=(wege.find(x=>x[0]===s.lkwWeg)||wege[0])[0];
+  const zug=s.form==="CE"?`<div class="form-pick" style="margin-top:8px;"><div class="fpc-label">Zug in der Prüfung</div><div class="pills" id="dashLkwZug">${LKW_ZUEGE.map(z=>`<button class="pill ${s.lkwZug===z[0]?'sel':''}" data-zug="${z[0]}">${z[1]}</button>`).join("")}</div></div>`:"";
+  return `<div class="form-pick" style="margin-top:8px;"><div class="fpc-label">Weg</div><div class="pills" id="dashLkwWeg">${wege.map(w=>`<button class="pill ${akt===w[0]?'sel':''}" data-weg="${w[0]}">${w[1]}</button>`).join("")}</div></div>${zug}`;
+}
+// Prüfungsdauer: Pkw 55 Minuten im Kalender, Lkw mindestens 85 Minuten (FeV Anlage 7 Nr. 2.3)
+function pruefMinFuer(s){ return istLkw(s)?85:PRUEF_MIN; }
 /* ===== Fahr-Akademie Deep-Link (Schnittstelle Kompass <-> Fahr-Akademie) =====
    Fahr-Akademie ist noch nicht gehostet -> Platzhalter, sobald Serband die echte
    URL liefert, HIER eintragen (siehe Projektwissen SCHNITTSTELLE_FAHR_AKADEMIE_KOMPASS.md).
@@ -3706,8 +3799,8 @@ function colorChartBlock(cp,vorname){
     <div class="pc-bars">${order.map(c=>colorBarRow(c,cp[c]||0)).join("")}</div></div>
     <p class="pc-foot">Jede Farbe wird unabhängig bewertet (0–100 %) – die Werte zeigen, wie stark dieses Verhaltensmuster bei ${esc(vorname)} ausgeprägt ist.</p></div>`;
 }
-const FORMS=["B","BE","B197","Automatik"];
-const FORM_LABEL={B:"B Schalter",BE:"BE",B197:"B197",Automatik:"Automatik"};
+const FORMS=["B","BE","B197","Automatik","C1","C1E","C","CE"];
+const FORM_LABEL={B:"B Schalter",BE:"BE",B197:"B197",Automatik:"Automatik",C1:"C1 Lkw",C1E:"C1E Zug",C:"C Lkw",CE:"CE Zug"};
 function formLabel(f){return FORM_LABEL[f]||f||"B Schalter";}
 const SONDER_DEF=[{key:"ueberland",label:"Überlandfahrt",soll:5},{key:"autobahn",label:"Autobahnfahrt",soll:4},{key:"nacht",label:"Nachtfahrt",soll:3}];
 
@@ -4771,7 +4864,27 @@ let _termineFehlversuche = 0;
 let _schuelerFristen = {};
 function _merkeFristen(rows){
   (rows||[]).forEach(r=>{ _schuelerFristen[r.id]={reakt_status:r.reakt_status,vertrag_am:r.vertrag_am,reakt_bezahlt_bis:r.reakt_bezahlt_bis,
-    theorie_abgeschlossen_am:r.theorie_abgeschlossen_am,theorie_bestanden_am:r.theorie_bestanden_am,antrag_am:r.antrag_am,inaktiv_seit:r.inaktiv_seit}; });
+    theorie_abgeschlossen_am:r.theorie_abgeschlossen_am,theorie_bestanden_am:r.theorie_bestanden_am,praxis_bestanden_am:r.praxis_bestanden_am||null,antrag_am:r.antrag_am,inaktiv_seit:r.inaktiv_seit}; });
+  _meldeBueroErgebnisse(rows);
+}
+/* Prüfungsergebnis vom Büro (Prüfungstafel): einmal als Hinweis melden, danach steht es in der Akte */
+function _meldeBueroErgebnisse(rows){
+  if(_fsAgg) return; // Fahrschul-Gesamtansicht: keine Meldungen für alle Schüler
+  // Merker je Konto. Beim allerersten Abgleich nur den Grundstand merken (alte Ergebnisse nicht melden),
+  // danach jedes neue Ergebnis – auch wenn der Grundstand leer war.
+  const schl="serband-buero-ergebnisse"+(_authUser&&_authUser.id?"-"+_authUser.id:"");
+  let gesehen={}; try{ gesehen=JSON.parse(localStorage.getItem(schl)||"{}")||{}; }catch(e){ gesehen={}; }
+  const basis=!!gesehen.__basis;
+  const neu=[];
+  (rows||[]).forEach(r=>{
+    for(const [feld,art] of [["theorie_bestanden_am","Theorieprüfung"],["praxis_bestanden_am","Praxisprüfung"]]){
+      const k=r.id+"|"+feld;
+      if(r[feld]&&gesehen[k]!==r[feld]){ if(basis) neu.push(`${r.name||"Schüler"}: ${art} bestanden`); gesehen[k]=r[feld]; }
+    }
+  });
+  gesehen.__basis=1;
+  try{ localStorage.setItem(schl,JSON.stringify(gesehen)); }catch(e){}
+  if(neu.length) toast("🎉 Vom Büro eingetragen: "+neu.slice(0,3).join(" · ")+(neu.length>3?` (+${neu.length-3})`:""));
 }
 /* Notizen vom Büro zu einem Schüler (Info oder Stopp). Sie poppen beim nächsten Abgleich auf, bis der Fahrlehrer
    „Gelesen“ tippt, und bleiben danach als Hinweis in der Akte und im Terminblatt stehen, bis das Büro sie erledigt. */
@@ -4828,9 +4941,13 @@ function fristenHinweisHTML(sid){
   const stopp=(_bueroNotizen[sid]||[]).filter(n=>n.art==="stopp"), infos=(_bueroNotizen[sid]||[]).filter(n=>n.art!=="stopp");
   stopp.forEach(n=>teile.push(`<b>STOPP vom Büro:</b> ${esc(n.text)}`));
   infos.forEach(n=>teile.push(`<b>Büro:</b> ${esc(n.text)}`));
-  if(!teile.length)return "";
+  const gut=[];
+  if(f.theorie_bestanden_am) gut.push(`✓ Theorieprüfung bestanden am ${isoDE(f.theorie_bestanden_am)} (Büro)`);
+  if(f.praxis_bestanden_am) gut.push(`✓ Praxisprüfung bestanden am ${isoDE(f.praxis_bestanden_am)} (Büro)`);
+  const gutHTML=gut.length?`<div style="margin:10px 0;padding:10px 14px;border-radius:14px;font-size:14px;line-height:1.45;background:rgba(76,175,114,.14);border:1px solid rgba(76,175,114,.4);">${gut.join("<br>")}</div>`:"";
+  if(!teile.length)return gutHTML;
   const rot=r.gesperrt||t.stufe==="abgelaufen"||stopp.length>0||(a&&a.stufe==="abgelaufen");
-  return `<div role="alert" style="margin:10px 0;padding:12px 14px;border-radius:14px;font-size:14px;line-height:1.45;background:${rot?"rgba(207,90,72,.14)":"rgba(207,154,62,.16)"};border:1px solid ${rot?"rgba(207,90,72,.45)":"rgba(207,154,62,.45)"};">⚠️ ${teile.join("<br>")}</div>`;
+  return gutHTML+`<div role="alert" style="margin:10px 0;padding:12px 14px;border-radius:14px;font-size:14px;line-height:1.45;background:${rot?"rgba(207,90,72,.14)":"rgba(207,154,62,.16)"};border:1px solid ${rot?"rgba(207,90,72,.45)":"rgba(207,154,62,.45)"};">⚠️ ${teile.join("<br>")}</div>`;
 }
 async function pullSchuelerZuweisungen() {
   if (!_authUser || !_authProfile || !_authProfile.fahrschule_id || _fsAgg || _schuelerAbrufLaeuft) return;
@@ -4852,12 +4969,31 @@ async function pullSchuelerZuweisungen() {
         const lok = DB.students.find(x => x.id === r.id);
         if (lok && !lok.umschreiber) { lok.umschreiber = true; umschreiberNeu = true; }
       }
+      // Klasse pflegt das Büro (z. B. CE für den Lkw-Fahrlehrer): nur übernehmen, wenn sie sich im Büro geändert hat
+      if (lokaleIds.has(r.id) && r.klasse) {
+        const lok = DB.students.find(x => x.id === r.id);
+        if (lok && lok.klasseBuero !== r.klasse) {
+          // Erster Abgleich (noch keine Büro-Klasse gemerkt): nur merken – die Form, die der Fahrlehrer gewählt hat
+          // (Automatik, BE, B197 …), bleibt. Nur eine Lkw-Klasse aus dem Büro stellt die Form gleich um.
+          const erstes = !lok.klasseBuero;
+          lok.klasseBuero = r.klasse; umschreiberNeu = true;
+          const f = r.klasse === "BKF" ? lok.form : formAusKlasse(r.klasse);
+          if (lok.form !== f && (!erstes || LKW_FORMS.includes(f))) lok.form = f;
+        }
+      }
       if (!lokaleIds.has(r.id)) {
         const a = r.ausbildung || {};
         const nst = Object.assign({
           id: r.id, created: Date.now(), notiz: "", bogen: null, plan: newPlan(), profil: null, form: "B", beginn: "",
           planId: chosenPlan.id, planSnapshot: JSON.parse(JSON.stringify(chosenPlan.stufen))
         }, a, { id: r.id, name: r.name, telefon: r.telefon || "" });
+        // Übergabe: dieselbe Regel wie oben – die Form des bisherigen Fahrlehrers bleibt, außer das Büro hat die Klasse
+        // seitdem geändert oder es ist eine Lkw-Klasse (im Büro neu angelegte Schüler bekommen ihre Form schon beim Anlegen)
+        if (r.klasse) {
+          const f = r.klasse === "BKF" ? nst.form : formAusKlasse(r.klasse);
+          if (nst.form !== f && (a.klasseBuero ? a.klasseBuero !== r.klasse : LKW_FORMS.includes(f))) nst.form = f;
+          nst.klasseBuero = r.klasse;
+        }
         // Übergabe: Fragebogen und die Fahrstunden/Prüfungen bei bisherigen Fahrlehrern mitnehmen.
         try {
           const { data: priv } = await supa.from("schueler_privat").select("bogen").eq("schueler_id", r.id).maybeSingle();
@@ -6949,7 +7085,7 @@ window.addEventListener("load", () => {
 const STORE_KEY="serband-app-v1";
 /* Build-Version: bei jeder Auslieferung hier das Datum aktualisieren.
    Wird in den Einstellungen angezeigt + für den Update-Hinweis genutzt. */
-const APP_VERSION="2026.10.14.1";
+const APP_VERSION="2026.10.14.3";
 try{const f=document.getElementById("drawerFoot"); if(f)f.textContent="Fahrlehrer-Kompass · Version "+APP_VERSION;}catch(e){}
 // Nutzungsbedingungen & Haftungsausschluss (Bereich: rechtliche Absicherung) - Version hochzählen
 // und alle Nutzer müssen erneut zustimmen, sobald sich der Text inhaltlich ändert.
@@ -7273,6 +7409,7 @@ function standardPlan(){
 // Kombiniert die eingefrorene Kopie eines Schülers (Grund/Aufbau/Leistung)
 // mit den festen, für alle gleichen Stufen (Sonderfahrten/Grundfahraufgaben/Technik).
 function stufenFor(s){
+  if(istLkw(s)) return lkwStufen(s);
   const fixed=STUFEN.filter(st=>FIXED_STUFEN_KEYS.includes(st.key));
   const custom=(s.planSnapshot&&s.planSnapshot.length)?s.planSnapshot:STUFEN.filter(st=>EDITABLE_STUFEN_KEYS.includes(st.key));
   return [...custom,...fixed];
@@ -7378,8 +7515,8 @@ function heute(){const d=new Date();return {d:pad2(d.getDate())+"."+pad2(d.getMo
 // Alteinträge {d:"",iso:""} oder null dürfen NICHT mitzählen.
 function sfDone(o){return !!(o&&o.iso);}
 function sfCount(arr){return (arr||[]).filter(sfDone).length;}
-function sfSoll(key){ const d=SONDER_DEF.find(x=>x.key===key); return d?d.soll:0; }
-function sfOffen(s,key){ return Math.max(0,sfSoll(key)-sfCount(s&&s.plan&&s.plan.sonder&&s.plan.sonder[key])); }
+function sfSoll(key,s){ const d=sonderDefFuer(s).find(x=>x.key===key); return d?d.soll:0; }
+function sfOffen(s,key){ return Math.max(0,sfSoll(key,s)-sfCount(s&&s.plan&&s.plan.sonder&&s.plan.sonder[key])); }
 function isoToShort(iso){const p=iso.split("-");return p[2]+"."+p[1]+"."+p[0].slice(2);}
 function fmtDateDE(iso){const d=new Date(iso);if(isNaN(d.getTime()))return "—";return pad2(d.getDate())+"."+pad2(d.getMonth()+1)+"."+d.getFullYear();}
 /* daysSince() ist weiter unten einmal zentral definiert (Mitternachts-normalisiert) – Duplikat hier entfernt. */
@@ -8043,7 +8180,7 @@ function routeDetail(id){
   const letzteStundeHTML=letzteStunde?`<div class="mini-dash-row"><span>🚗 Letzte Fahrstunde</span><b>${isoDE(letzteStunde.date)} · ${letzteStunde.von} Uhr</b></div>`:"";
   // Standort-Satz: ein Satz statt Zahlensalat (Schülermaske-Umbau, Abschnitt E)
   let sonderDoneD=0,sonderTotD=0;
-  SONDER_DEF.forEach(d=>{ sonderTotD+=d.soll; sonderDoneD+=Math.min(sfCount(pl.sonder[d.key]),d.soll); });
+  sonderDefFuer(s).forEach(d=>{ sonderTotD+=d.soll; sonderDoneD+=Math.min(sfCount(pl.sonder[d.key]),d.soll); });
   const sonderOffenD=sonderTotD-sonderDoneD;
   const standortSatz=s.umschreiber
     ?`${pct}% Ausbildungsstand · Umschreiber – Sonderfahrten entfallen`
@@ -8075,7 +8212,7 @@ function routeDetail(id){
       <span style="font-size:13px;color:var(--orange);font-weight:700;">⏳ Warteliste</span>
       <span style="font-size:12.5px;color:var(--muted);">Platz ${wlPos} · seit ${wlTage} ${wlTage===1?'Tag':'Tagen'}</span>
     </button>`:""}
-    <div class="form-pick" style="margin-top:10px;"><div class="fpc-label">Fährt</div><div class="pills" id="dashFormPills">${FORMS.map(f=>`<button class="pill ${s.form===f?'sel':''}" data-form="${f}">${formLabel(f)}</button>`).join("")}</div></div>
+    <div class="form-pick" style="margin-top:10px;"><div class="fpc-label">Fährt</div><div class="pills" id="dashFormPills">${FORMS.map(f=>`<button class="pill ${s.form===f?'sel':''}" data-form="${f}">${formLabel(f)}</button>`).join("")}</div></div>${lkwWegHTML(s)}
     <div class="theorie-card" style="margin-top:9px;">
       <div class="tc-body"><div class="tc-name">Theorieprüfung</div><div class="tc-sub">bestanden – einfach umschalten</div></div>
       <button class="check-toggle ${pl.theorie?'on':''}" id="dashTheoToggle" aria-label="Theorie bestanden"></button>
@@ -8163,6 +8300,8 @@ function routeDetail(id){
   const wl=$("#wlLeiste"); if(wl)wl.addEventListener("click",routeWaitlist);
   // Fährt/Klasse
   document.querySelectorAll("#dashFormPills .pill").forEach(b=>b.addEventListener("click",()=>{ s.form=b.dataset.form; save(); toast("Klasse: "+formLabel(s.form)); routeDetail(id); }));
+  document.querySelectorAll("#dashLkwWeg .pill").forEach(b=>b.addEventListener("click",()=>{ s.lkwWeg=b.dataset.weg; save(); toast("Sonderfahrten: "+sonderWerte(s).join(" / ")+" (Überland / Autobahn / Nacht)"); routeDetail(id); }));
+  document.querySelectorAll("#dashLkwZug .pill").forEach(b=>b.addEventListener("click",()=>{ s.lkwZug=s.lkwZug===b.dataset.zug?"":b.dataset.zug; save(); toast(s.lkwZug?"Grundfahraufgaben für "+LKW_ZUEGE.find(z=>z[0]===s.lkwZug)[1]:"Alle 4 Grundfahraufgaben"); routeDetail(id); }));
   // Theorie-/Umschreiber-/Pausiert-Toggles (aus dem Ausbildungsplan hierher verschoben)
   const dtt=$("#dashTheoToggle"); if(dtt)dtt.addEventListener("click",()=>{
     pl.theorie=!pl.theorie; if(pl.theorie){ delete s.wartelisteRaus; if(!s.theoryPassed)s.theoryPassed=new Date().toISOString(); if(!(s.hist||[]).some(h=>h.typ==="theorie"||h.type==="theorie"))logHist(s,"theorie","Theorieprüfung bestanden"); if(stand(s)>=90&&!s.ready&&!s.passed){ s.ready=s.theoryPassed; toast("Theorie bestanden – auf die Praxis-Warteliste gesetzt"); } else if(stand(s)<90&&!s.ready&&!s.passed){ toast("Theorie bestanden – erst ab 90 % kommt er auf die Warteliste"); } if(s.theorieWait)s.theorieWaitBis=new Date().toISOString(); delete s.theorieWait; } else { if(s.ready&&s.ready===s.theoryPassed&&!s.pruefungsreifManuell)delete s.ready; delete s.theoryPassed; delete s.theorieWaitBis; } save(); routeDetail(id);
@@ -8701,7 +8840,7 @@ function routePlan(id){
         <div class="acc-body"><div class="acc-inner">
           <div class="sonder">${s.umschreiber?`<div style="padding:12px 14px;background:var(--surface);border:1px dashed var(--line);border-radius:12px;font-size:13px;color:var(--muted);font-weight:700;">✓ Umschreiber – Sonderfahrten nicht erforderlich</div>`:''}
           ${spaetOffenWarnung(s)}
-          ${SONDER_DEF.map(sd=>`
+          ${sonderDefFuer(s).map(sd=>`
             <div class="sonder-row"${s.umschreiber?' style="opacity:.4;pointer-events:none;"':''}>
               <div class="top"><span>${sd.label}</span><span class="soll"><b id="c_${sd.key}">0</b> / ${sd.soll} Std.</span></div>
               <div class="std-grid" data-sgrid="${sd.key}" style="grid-template-columns:repeat(auto-fill,minmax(84px,1fr));"></div>
@@ -8767,7 +8906,7 @@ function spaetOffenWarnung(s){
   if(s.umschreiber)return "";
   const spaet=!!(s.ready||s.pruefungsreifManuell||stand(s)>=85);
   if(!spaet)return "";
-  const offen=SONDER_DEF.filter(sd=>sfOffen(s,sd.key)>0);
+  const offen=sonderDefFuer(s).filter(sd=>sfOffen(s,sd.key)>0);
   if(!offen.length)return "";
   const namen=offen.map(sd=>sd.label).join(", ");
   return `<div style="padding:10px 14px;background:rgba(216,35,26,.08);border:1px solid rgba(216,35,26,.25);border-radius:12px;font-size:12.5px;color:#d8231a;font-weight:600;margin-bottom:2px;">⚠ ${esc(namen)} noch offen – Ausbildungsstand aber schon weit fortgeschritten.</div>`;
@@ -8776,7 +8915,7 @@ function spaetOffenWarnung(s){
 function _sonderNotiz(alt,label){ const t=String(alt||"").split(" · "); return t.length>1?[label].concat(t.slice(1)).join(" · "):label; }
 function buildSonder(s){
   const pl=s.plan;
-  SONDER_DEF.forEach(sd=>{
+  sonderDefFuer(s).forEach(sd=>{
     const g=document.querySelector(`[data-sgrid="${sd.key}"]`);if(!g)return;
     const arr=pl.sonder[sd.key]||(pl.sonder[sd.key]=[]);
     let html="";for(let i=0;i<sd.soll;i++){
@@ -8933,7 +9072,7 @@ function findeMultiSlots(sid,cfg){
 function openMultiTerminSheet(sid){
   const s=DB.students.find(x=>x.id===sid);if(!s)return;
   ensure(s);
-  const offeneGruppen=SONDER_DEF.filter(sd=>!s.umschreiber&&sfOffen(s,sd.key)>0);
+  const offeneGruppen=sonderDefFuer(s).filter(sd=>!s.umschreiber&&sfOffen(s,sd.key)>0);
   let art=offeneGruppen.length?"sonder":"fahrstunde", grp=offeneGruppen[0]?offeneGruppen[0].key:null, fzTyp="egal";
   const heute=todayISO();
   openSheet(`<div class="sheet-h">Mehrere Termine planen</div>
@@ -9020,7 +9159,7 @@ function buchMultiTermine(sid,cfg,ausgewaehlt){
   const label=cfg.art==="sonder"?(SF_LABEL[cfg.grp]||"Sonderfahrt"):"Übungsfahrt";
   ausgewaehlt.forEach(t=>{
     if(cfg.art==="sonder"){
-      const soll=sfSoll(cfg.grp)||arr.length;
+      const soll=sfSoll(cfg.grp,s)||arr.length;
       while(idxCursor<soll&&sfDone(arr[idxCursor]))idxCursor++;
       if(idxCursor>=soll)return;
       vorherPlan.push({idx:idxCursor,vorher:arr[idxCursor]?Object.assign({},arr[idxCursor]):null});
@@ -11512,7 +11651,7 @@ function openSFPickerForLesson(lessonId,sid,date,von,bis,note,newArt,fahrzeug){
   ensure(s);
   const SF_LAB={ueberland:"Überlandfahrt",autobahn:"Autobahnfahrt",nacht:"Nachtfahrt"};
   let opts='';
-  SONDER_DEF.forEach(sd=>{
+  sonderDefFuer(s).forEach(sd=>{
     const arr=s.plan.sonder[sd.key]||(s.plan.sonder[sd.key]=[]);
     for(let i=0;i<sd.soll;i++){
       const done=sfDone(arr[i]);
@@ -12538,9 +12677,9 @@ function dayEvents(iso){
   // NUR solange noch kein Ergebnis eingetragen ist – sonst zählt die Prüfung über exams.earnAt (s. ueRange).
   // Prüfungstermine: Block beginnt genau zur eingetragenen Prüfungszeit und dauert PRUEF_MIN (55) Minuten.
   const doneOnDay=new Set((DB.exams||[]).filter(ex=>ex.date===iso&&istPruefung(ex)).map(ex=>ex.sid));
-  (DB.termine||[]).filter(t=>t.date===iso).forEach(t=>{ (t.slots||[]).forEach(sid=>{ if(sid&&!doneOnDay.has(sid)){ const st=DB.students.find(s=>s.id===sid); const rawVon=t.von||"09:00"; const blockVon=rawVon; const blockBis=min2hm(hm2min(rawVon)+PRUEF_MIN); ev.push({kind:"pruefung",id:t.id,von:blockVon,bis:blockBis,art:"pruefung",sid,name:st?st.name:"—",status:"geplant",pruefTime:rawVon,_fahrlehrerId:t._fahrlehrerId,_fahrlehrerName:t._fahrlehrerName}); } }); });
+  (DB.termine||[]).filter(t=>t.date===iso).forEach(t=>{ (t.slots||[]).forEach(sid=>{ if(sid&&!doneOnDay.has(sid)){ const st=DB.students.find(s=>s.id===sid); const rawVon=t.von||"09:00"; const blockVon=rawVon; const blockBis=min2hm(hm2min(rawVon)+pruefMinFuer(st)); ev.push({kind:"pruefung",id:t.id,von:blockVon,bis:blockBis,art:"pruefung",sid,name:st?st.name:"—",status:"geplant",pruefTime:rawVon,_fahrlehrerId:t._fahrlehrerId,_fahrlehrerName:t._fahrlehrerName}); } }); });
   // Erledigte Prüfungen (Ergebnis liegt vor): bleiben dauerhaft im Kalender als Erfolgs-/Misserfolgs-Marker.
-  (DB.exams||[]).filter(ex=>ex.date===iso).forEach(ex=>{ const rawVon=ex.von||"09:00"; const blockVon=rawVon; const blockBis=min2hm(hm2min(rawVon)+PRUEF_MIN); ev.push({kind:"examDone",b197:!!ex.b197,id:ex.id,von:blockVon,bis:blockBis,art:"pruefung",sid:ex.sid,name:ex.name||"—",status:"erledigt",result:ex.result,pruefTime:rawVon,pruefer:ex.pruefer||"",_fahrlehrerId:ex._fahrlehrerId,_fahrlehrerName:ex._fahrlehrerName}); });
+  (DB.exams||[]).filter(ex=>ex.date===iso).forEach(ex=>{ const rawVon=ex.von||"09:00"; const blockVon=rawVon; const blockBis=min2hm(hm2min(rawVon)+pruefMinFuer(DB.students.find(x=>x.id===ex.sid))); ev.push({kind:"examDone",b197:!!ex.b197,id:ex.id,von:blockVon,bis:blockBis,art:"pruefung",sid:ex.sid,name:ex.name||"—",status:"erledigt",result:ex.result,pruefTime:rawVon,pruefer:ex.pruefer||"",_fahrlehrerId:ex._fahrlehrerId,_fahrlehrerName:ex._fahrlehrerName}); });
   // Dieselbe Prüfung kann doppelt im Kalender stehen: als Kalendertermin (z.B. vom Büro geplant) UND auf der
   // Prüfungstafel bzw. schon mit Ergebnis. Sie zählt nur einmal (2 UE): der Kalendertermin wird als "doppelt"
   // markiert, bleibt sichtbar (zum Löschen) und zählt nicht mit.
@@ -13128,7 +13267,7 @@ function openExamPlanSheet(s){
     // Gleicher Tag UND gleiche Uhrzeit = derselbe Termin; andere Uhrzeit = eigener Termin (die gewählte Zeit gilt).
     let t=DB.termine.find(x=>x.date===d&&(x.von||"09:00")===von);
     if(alt&&alt!==t&&Array.isArray(alt.slots)&&alt.slots.every(x=>!x))DB.termine=DB.termine.filter(x=>x!==alt);
-    if(!t){ t={id:uid(),date:d,plaetze:1,slots:[s.id],von,bis:min2hm(hm2min(von)+PRUEF_MIN)}; DB.termine.push(t); }
+    if(!t){ t={id:uid(),date:d,plaetze:1,slots:[s.id],von,bis:min2hm(hm2min(von)+pruefMinFuer(s))}; DB.termine.push(t); }
     else { const free=t.slots.indexOf(null); if(free>=0)t.slots[free]=s.id; else {t.plaetze++;t.slots.push(s.id);} }
     save(); closeSheet(); toast("Prüfungstermin am "+isoDE(d)+" gesetzt"); routeDetail(s.id);
   });
@@ -13513,7 +13652,8 @@ function openTerminEdit(tid,retFn){
   $("#teSave").addEventListener("click",()=>{
     const d=$("#teDate").value; if(!d){toast("Bitte Datum wählen");return;}
     const von=$("#teTime").value||"09:00";
-    t.date=d; t.von=von; t.bis=min2hm(hm2min(von)+PRUEF_MIN);
+    const lang=Math.max(PRUEF_MIN,...(t.slots||[]).map(sid=>pruefMinFuer(DB.students.find(x=>x.id===sid))));
+    t.date=d; t.von=von; t.bis=min2hm(hm2min(von)+lang);
     save(); closeSheet(); toast("Termin aktualisiert ✓"); retFn();
   });
   $("#teDel").addEventListener("click",()=>{ if(confirm("Termin löschen? Die Einteilung wird aufgehoben.")){ DB.termine=DB.termine.filter(x=>x.id!==tid); save(); closeSheet(); toast("Termin gelöscht"); retFn(); } });
@@ -14221,7 +14361,7 @@ function _h2Hinweise(){
     if(pTermin&&pTermin.date>heute&&!(DB.lessons||[]).some(l=>l.sid===s.id&&l.date>=heute&&l.date<pTermin.date&&l.status!=="abgebrochen"&&l.status!=="nicht erschienen"&&["fahrstunde","sonder","nacht"].indexOf(l.art)>=0))
       out.push({sid:s.id,name:s.name,text:`Prüfung ${isoDE(pTermin.date).slice(0,6)}, keine Stunde geplant`,farbe:"gelb"});
     if(pruefungBald&&!s.umschreiber&&s.plan&&s.plan.sonder){
-      const fehlt=SONDER_DEF.map(sd=>({sd,n:Math.max(0,sd.soll-sfCount(s.plan.sonder[sd.key]))})).filter(x=>x.n>0);
+      const fehlt=sonderDefFuer(s).map(sd=>({sd,n:Math.max(0,sd.soll-sfCount(s.plan.sonder[sd.key]))})).filter(x=>x.n>0);
       if(fehlt.length){
         const gesamt=fehlt.reduce((a,x)=>a+x.n,0);
         const text=fehlt.length===1?`${gesamt} ${fehlt[0].sd.label}${gesamt>1?"en":""} offen`:`${gesamt} Sonderfahrten offen`;
@@ -15286,7 +15426,7 @@ function printPlan(s){
   ensure(s);
   const pl=s.plan; const pct=planProgress(pl,s.umschreiber,evalSkillsFor(s));
   const std=[]; for(let i=1;i<=30;i++){ if(pl.stunden[i])std.push(`${pad2(i)}. ${esc(pl.stunden[i].d)}${pl.fahrcheck[i]?" (FC)":""}`); }
-  const sonder=SONDER_DEF.map(sd=>{ const arr=pl.sonder[sd.key]||[]; return `${sd.label}: ${sfCount(arr)}/${sd.soll}`; }).join(" · ");
+  const sonder=sonderDefFuer(s).map(sd=>{ const arr=pl.sonder[sd.key]||[]; return `${sd.label}: ${sfCount(arr)}/${sd.soll}`; }).join(" · ");
   const VL={rot:"Rot",gelb:"Gelb",gruen:"Grün"};
   const stufenHtml=stufenFor(s).map(st=>{
     const rows=st.items.map(it=>{ const v=pl.ampeln[it.id]; const lab=v?VL[v]:"–"; return `<tr><td>${esc(it.t)}${it.ort?` <span class="pr-ort">(${esc(it.ort)})</span>`:""}</td><td class="pr-${v||"none"}">${lab}</td></tr>`; }).join("");
@@ -15334,7 +15474,7 @@ function printGesamtakte(s){
   }
   // 3. Fahrstunden + Sonderfahrten
   const std=[]; for(let i=1;i<=30;i++){ if(pl.stunden[i])std.push(`${pad2(i)}. ${esc(pl.stunden[i].d)}${pl.fahrcheck[i]?" (FC)":""}`); }
-  const sonderRows=SONDER_DEF.map(sd=>{
+  const sonderRows=sonderDefFuer(s).map(sd=>{
     const arr=pl.sonder[sd.key]||[];
     const dates=arr.filter(sfDone).map(o=>esc(o.d)).join(", ")||"—";
     return `<tr><td>${esc(sd.label)}</td><td>${sfCount(arr)}/${sd.soll}</td><td>${dates}</td></tr>`;
@@ -15463,7 +15603,7 @@ function examReadiness(s){
   const pct=stand(s);
   const skillOpen=evalSkillsFor(s).filter(id=>(s.plan.ampeln[id]||null)!=="gruen").length;
   let sonderDone=0,sonderTot=0;
-  SONDER_DEF.forEach(d=>{ sonderTot+=d.soll; sonderDone+=Math.min(sfCount(s.plan.sonder[d.key]),d.soll); });
+  sonderDefFuer(s).forEach(d=>{ sonderTot+=d.soll; sonderDone+=Math.min(sfCount(s.plan.sonder[d.key]),d.soll); });
   // Umschreiber brauchen keine Sonderfahrten (Entscheidung Serband 08.10.2026)
   const sonderOk=!!s.umschreiber||sonderDone>=sonderTot, theoOk=!!s.plan.theorie;
   const skillOk=pct>=READY_MIN;
@@ -15664,7 +15804,7 @@ function shareStandWhatsApp(s){
   } else if(pct>=70){
     // Kurz vor der Prüfung: jetzt dürfen Sonderfahrten & Theorie mit rein, plus die echten Lücken beim Namen.
     let sonderDoneS=0,sonderTotS=0;
-    SONDER_DEF.forEach(d=>{ sonderTotS+=d.soll; sonderDoneS+=Math.min(sfCount(s.plan.sonder[d.key]),d.soll); });
+    sonderDefFuer(s).forEach(d=>{ sonderTotS+=d.soll; sonderDoneS+=Math.min(sfCount(s.plan.sonder[d.key]),d.soll); });
     msg+=`Du bist schon richtig weit – ${pct}% sitzen sicher.\n`;
     if(weak.length) msg+=`\nDas ist noch offen:\n`+weak.map(w=>`• ${w}`).join("\n")+"\n";
     if(!s.umschreiber) msg+=`\n🛣️ Sonderfahrten: ${sonderDoneS}/${sonderTotS}\n`;

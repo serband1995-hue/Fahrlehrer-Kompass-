@@ -1006,6 +1006,251 @@ for (const [breite, hoehe] of [[1920, 1080], [1366, 768], [1024, 768]]) {
   if (konsole.length) fehler("PIN: Konsole: " + konsole.join(" | "));
   await ctx.close();
 }
+// 4l) Aufgaben der Büroleute untereinander (13.10.2026): an eine Person, Fälligkeit, dringend, Hinweis nach der PIN
+{
+  const gestern = (() => { const d = new Date(); d.setDate(d.getDate() - 1); return d.toISOString().slice(0, 10); })();
+  const { page, ctx, konsole } = await oeffne({ nutzer: "bu-1", hash: "#heute", breite: 1366, hoehe: 900, wer: "Jelena", vorbereiten: function () {
+    const g = new Date(); g.setDate(g.getDate() - 1);
+    F.tabellen.schueler_aufgaben = [
+      { id: "ag-1", fahrschule_id: "fs-test-1", schueler_id: null, text: "Rechnung Werkstatt anrufen", heute: false, faellig_am: g.toISOString().slice(0, 10), fuer_person_id: "bp-3", von_person_id: "bp-1", dringend: false, erstellt_am: new Date().toISOString() },
+      { id: "ag-2", fahrschule_id: "fs-test-1", schueler_id: null, text: "Ordner sortieren", heute: false, faellig_am: null, fuer_person_id: null, von_person_id: "bp-2", dringend: false, erstellt_am: new Date().toISOString() },
+      { id: "ag-3", fahrschule_id: "fs-test-1", schueler_id: null, text: "Nur für Murat", heute: false, faellig_am: null, fuer_person_id: "bp-2", von_person_id: "bp-1", dringend: false, erstellt_am: new Date().toISOString() },
+    ];
+  } });
+  // Jelena schickt Kristina eine dringende Aufgabe für heute
+  await page.click("#agNeu");
+  await page.fill("dialog textarea[name=text]", "Mutter von Lena zurückrufen");
+  await page.selectOption("dialog select[name=fuer]", "bp-3");
+  await page.fill("dialog input[name=faellig]", HEUTE);
+  await page.check("dialog input[name=dringend]");
+  await pruefeLayout(page, "Neue Aufgabe");
+  await page.click("dialog button[value=ok]"); await page.waitForTimeout(300);
+  const neu = await page.evaluate(() => window.__FAKE.tabellen.schueler_aufgaben.find((a) => a.text === "Mutter von Lena zurückrufen"));
+  if (!neu || neu.fuer_person_id !== "bp-3" || !neu.dringend || neu.von_person_id !== "bp-1" || neu.schueler_id !== null) fehler("Aufgabe an Kollegin falsch gespeichert: " + JSON.stringify(neu));
+  // Jelena sieht sie unter „Von dir vergeben“ als „noch nicht gelesen“, nicht in ihrer eigenen Liste
+  let t = await page.textContent(".fuer-dich");
+  if (!/noch nicht gelesen/.test(t)) fehler("Aufgaben: „noch nicht gelesen“ fehlt bei der Absenderin");
+  if (/Nur für Murat/.test((await page.$$eval(".fuer-dich > .notizliste li", (l) => l.map((x) => x.textContent))).join("|"))) fehler("Aufgaben: fremde Aufgabe in „Für mich“");
+  // Kristina meldet sich an: Hinweis-Fenster mit beiden Aufgaben, dringend/überfällig rot
+  await page.click("#werWechseln"); await meldePinAn(page, "Kristina"); await page.waitForTimeout(250);
+  if (!(await page.isVisible("dialog[open]")) || !/2 neue Aufgaben/.test(await page.textContent("dialog[open]"))) fehler("Aufgaben: kein Hinweis-Fenster nach der PIN");
+  await pruefeLayout(page, "Hinweis neue Aufgaben");
+  if (await page.$("dialog[open] [data-hagschueler]")) fehler("Aufgaben: Hinweis-Fenster hat einen Knopf ohne Wirkung");
+  if (FOTOS) await page.screenshot({ path: join(FOTOS, "aufgaben-hinweis.png") });
+  await page.click("dialog[open] button[value=ok]"); await page.waitForTimeout(250);
+  const gel = await page.evaluate(() => window.__FAKE.tabellen.schueler_aufgaben.filter((a) => a.gelesen_am).map((a) => a.id).sort().join());
+  if (!/ag-1/.test(gel) || gel.split(",").length !== 2) fehler("Aufgaben: „Gelesen“ nicht gespeichert " + gel);
+  const zeilen = await page.$$eval(".fuer-dich > .notizliste li", (l) => l.map((x) => x.className.split(" ").pop() + ":" + x.querySelector(".notiz-text").textContent));
+  if (zeilen.length !== 3 || !zeilen[0].startsWith("rot") || !zeilen[1].startsWith("rot") || !zeilen[2].includes("Ordner")) fehler("Aufgaben: Reihenfolge/Farbe falsch " + JSON.stringify(zeilen));
+  if ((await page.$$eval(".nav-punkt[href='#heute'] .zahl, a[href='#heute'] .zahl", (z) => z.map((x) => x.textContent).join())) !== "3") fehler("Aufgaben: Zahl in der Seitenleiste ≠ sichtbare Liste");
+  if (!/für dich \(3\)/.test(await page.textContent(".fuer-dich h2"))) fehler("Aufgaben: Zahl in der Überschrift ≠ sichtbare Liste");
+  await pruefeLayout(page, "Für dich");
+  if (FOTOS) await page.screenshot({ path: join(FOTOS, "aufgaben-heute.png"), fullPage: true });
+  // Erledigen
+  await page.click(".fuer-dich [data-hagerledigt] >> nth=0"); await page.waitForTimeout(300);
+  if ((await page.$$(".fuer-dich > .notizliste li")).length !== 2) fehler("Aufgaben: Erledigt entfernt die Aufgabe nicht");
+  // Endprüfung 14.10.: versehentlich erledigt → unter „Kürzlich erledigt“ wieder öffnen
+  await page.click(".fuer-dich details summary:has-text('Kürzlich erledigt')"); await page.waitForTimeout(150);
+  await page.click(".fuer-dich [data-hagoeffnen] >> nth=0"); await page.waitForTimeout(300);
+  if ((await page.$$(".fuer-dich > .notizliste li")).length !== 3) fehler("Aufgaben: „Wieder öffnen“ bringt die Aufgabe nicht zurück");
+  await page.click(".fuer-dich [data-hagerledigt] >> nth=0"); await page.waitForTimeout(300);
+  // Alle offenen
+  await page.click('.fuer-dich a.tab[href="#heute?alle=1"]'); await page.waitForTimeout(250);
+  if (!/Nur für Murat/.test(await page.textContent(".fuer-dich"))) fehler("Aufgaben: „Alle offenen“ zeigt nicht alle");
+  if (konsole.length) fehler("Aufgaben: Konsole: " + konsole.join(" | "));
+  await ctx.close();
+}
+
+// 4m) Prüfungsergebnisse eintragen (13.10.2026): Haken je Prüfung, landet in der Akte, Rückgängig, Korrektur
+{
+  const gestern = (() => { const d = new Date(); d.setDate(d.getDate() - 1); return d.toISOString().slice(0, 10); })();
+  const { page, ctx, konsole } = await oeffne({ nutzer: "bu-1", hash: "#pruefungen?ansicht=ergebnis", breite: 1366, hoehe: 900, vorbereiten: function () {
+    const h = new Date().toISOString().slice(0, 10), g = new Date(); g.setDate(g.getDate() - 1);
+    F.tabellen.pruefungstermine.push(
+      { id: "pt-6", fahrschule_id: "fs-test-1", schueler_id: "s11", fahrlehrer_id: "fl-1", art: "theorie", klasse: "B", datum: h, von: "08:00", status: "geplant" },
+      { id: "pt-7", fahrschule_id: "fs-test-1", schueler_id: "s12", fahrlehrer_id: "fl-2", art: "praxis", klasse: "B", datum: g.toISOString().slice(0, 10), von: "11:00", status: "geplant" });
+  } });
+  const zeilen = await page.$$("[data-eja]");
+  if (zeilen.length !== 3) fehler("Ergebnisse: erwartet 3 offene Prüfungen, gefunden " + zeilen.length);
+  await pruefeLayout(page, "Ergebnisse eintragen");
+  if (FOTOS) await page.screenshot({ path: join(FOTOS, "ergebnisse.png"), fullPage: true });
+  const schueler = (id) => page.evaluate((i) => Object.assign({}, window.__FAKE.tabellen.schueler.find((x) => x.id === i)), id);
+  const vorher = (await schueler("s11")).theorie_bestanden_am || null;
+  await page.click('[data-eja="pt-6"]'); await page.waitForTimeout(300);
+  if ((await schueler("s11")).theorie_bestanden_am !== HEUTE) fehler("Ergebnisse: Theorie bestanden nicht in der Akte");
+  if (!(await page.isVisible('[data-erueck="pt-6"]'))) fehler("Ergebnisse: kein Rückgängig");
+  await page.click('[data-erueck="pt-6"]'); await page.waitForTimeout(300);
+  const pt6 = await page.evaluate(() => window.__FAKE.tabellen.pruefungstermine.find((p) => p.id === "pt-6").status);
+  if (pt6 !== "geplant" || ((await schueler("s11")).theorie_bestanden_am || null) !== vorher) fehler("Ergebnisse: Rückgängig stellt nicht wieder her");
+  await page.click('[data-enein="pt-7"]'); await page.waitForTimeout(300);
+  if (!(await page.evaluate(() => (window.__FAKE.tabellen.schueler_aufgaben || []).some((a) => a.schueler_id === "s12" && /Praxisprüfung planen/.test(a.text))))) fehler("Ergebnisse: keine Aufgabe „Neuen Termin planen“");
+  await page.click('[data-eja="pt-4"]'); await page.waitForTimeout(300);
+  const s8 = await schueler("s8");
+  if (s8.praxis_bestanden_am !== gestern || s8.reakt_status !== "befreit") fehler("Ergebnisse: Praxis bestanden nicht in der Akte " + JSON.stringify([s8.praxis_bestanden_am, s8.reakt_status]));
+  if (!(await page.isVisible('[data-earchiv="s8"]'))) fehler("Ergebnisse: „Ins Archiv“ fehlt");
+  // Korrektur über „Bearbeiten“: bestanden → nicht bestanden nimmt das Datum aus der Akte
+  await page.goto(page.url().split("#")[0] + "#pruefungen?ansicht=vergangen"); await page.waitForTimeout(300);
+  await page.click('[data-pbearb="pt-4"] >> nth=0');
+  await page.selectOption("dialog select[name=status]", "nicht_bestanden");
+  await page.click("dialog button[value=ok]"); await page.waitForTimeout(300);
+  if ((await schueler("s8")).praxis_bestanden_am) fehler("Ergebnisse: Korrektur ändert die Akte nicht");
+  // Akte zeigt die Prüfungen
+  await page.evaluate(() => schuelerDialog("s8")); await page.waitForTimeout(200);
+  const akte = await page.textContent("dialog[open]");
+  if (!/Prüfungen/.test(akte) || !/Versuche: Theorie \d+, Praxis \d+/.test(akte)) fehler("Akte: Prüfungsblock fehlt");
+  await pruefeLayout(page, "Akte mit Prüfungen");
+  if (konsole.length) fehler("Ergebnisse: Konsole: " + konsole.join(" | "));
+  await ctx.close();
+}
+
+// 4n) Zahlen zum Anklicken (13.10.2026): Balken → Detailseite mit Namen, Filter, Zurück
+{
+  const { page, ctx, konsole } = await oeffne({ nutzer: "bu-1", hash: "#zahlen", breite: 1366, hoehe: 900 });
+  const balken = await page.$$(".d-punkt.klickbar");
+  if (balken.length < 12) fehler("Zahlen: Balken sind nicht anklickbar (" + balken.length + ")");
+  await pruefeLayout(page, "Zahlen mit Filtern");
+  // Anmeldungen: letzter Balken mit Wert
+  const ziel = await page.$$eval(".diagramm >> nth=0", () => null).catch(() => null);
+  const links = await page.$$eval(".d-punkt.klickbar", (g) => g.map((x) => x.dataset.link));
+  const anmLink = links.find((l) => /liste=anmeldungen/.test(l));
+  await page.evaluate((l) => { document.querySelector(`.d-punkt[data-link="${l}"]`).dispatchEvent(new MouseEvent("click", { bubbles: true })); }, anmLink);
+  await page.waitForTimeout(300);
+  if (!/liste=anmeldungen/.test(page.url()) || !(await page.isVisible("text=← Zurück zu Zahlen"))) fehler("Zahlen: Klick auf Balken öffnet keine Detailseite");
+  await pruefeLayout(page, "Zahlen Anmeldungen");
+  // Praxis-Quote über die Kachel
+  await page.goto(page.url().split("#")[0] + "#zahlen"); await page.waitForTimeout(250);
+  await page.click('a.kachel[href*="liste=praxis"]'); await page.waitForTimeout(300);
+  const txt = await page.textContent("#ansicht");
+  if (!/Praxisprüfungen/.test(txt) || !/bestanden/.test(txt) || !/Je Fahrlehrer/.test(txt)) fehler("Zahlen: Detailseite Praxis unvollständig");
+  if (FOTOS) await page.screenshot({ path: join(FOTOS, "zahlen-praxis.png"), fullPage: true });
+  await pruefeLayout(page, "Zahlen Praxis");
+  // Name anklicken öffnet die Akte
+  const n = await page.$("[data-zschueler]");
+  if (n) { await n.click(); await page.waitForTimeout(200); if (!(await page.isVisible("dialog[open]"))) fehler("Zahlen: Name öffnet die Akte nicht"); await page.keyboard.press("Escape"); }
+  // Zurück und Filter
+  await page.click("text=← Zurück zu Zahlen"); await page.waitForTimeout(250);
+  if (/liste=/.test(page.url())) fehler("Zahlen: Zurück geht nicht");
+  await page.selectOption("#zKlasse", "CE"); await page.waitForTimeout(250);
+  if (!/klasse=CE/.test(page.url())) fehler("Zahlen: Filter Klasse wirkt nicht");
+  await page.click('a.kachel[href*="liste=anmeldungen"]'); await page.waitForTimeout(250);
+  const klassen = await page.$$eval("#ansicht tbody tr td:nth-child(3)", (t) => [...new Set(t.map((x) => x.textContent.trim()))]);
+  if (klassen.some((k) => k !== "CE")) fehler("Zahlen: Filter Klasse gilt nicht auf der Detailseite " + klassen.join());
+  // Auslastung: Balken je Fahrlehrer
+  await page.goto(page.url().split("#")[0] + "#zahlen"); await page.waitForTimeout(250);
+  await page.click(".hb-zeile.klickbar >> nth=0"); await page.waitForTimeout(250);
+  if (!/liste=ue/.test(page.url()) || !/Unterrichtseinheiten/.test(await page.textContent("#ansicht"))) fehler("Zahlen: Auslastung öffnet keine Termine");
+  if (konsole.length) fehler("Zahlen: Konsole: " + konsole.join(" | "));
+  await ctx.close();
+}
+// Endprüfung 14.10.: Kachel UE mit Fahrlehrer-Filter = Detailseite, auch bei zwei Prüfungsterminen am selben Tag; Druck mit Namen; falscher Monat
+{
+  const { page, ctx, konsole } = await oeffne({ nutzer: "bu-1", hash: "#zahlen?lehrer=fl-1", vorbereiten: function () {
+    const h = new Date().toISOString().slice(0, 10), sid = F.tabellen.schueler.find((x) => x.fahrlehrer_id === "fl-1").id;
+    F.tabellen.kalender_termine.push({ id: "pd1", fahrschule_id: "fs-test-1", fahrlehrer_id: "fl-1", schueler_id: sid, datum: h, von: "06:00", bis: "06:45", art: "pruefung", status: "geplant", geloescht: false, payload: {} },
+      { id: "pd2", fahrschule_id: "fs-test-1", fahrlehrer_id: "fl-1", schueler_id: sid, datum: h, von: "06:45", bis: "07:30", art: "pruefung", status: "geplant", geloescht: false, payload: {} });
+  } });
+  const ueKachel = (await page.textContent('a.kachel[href*="liste=ue"] .wert')).trim();
+  await page.click('a.kachel[href*="liste=ue"]'); await page.waitForTimeout(300);
+  const ueDetail = ((await page.textContent("#ansicht h2")).match(/\(([\d.,]+) UE\)/) || [])[1] || "";
+  if (ueDetail.replace(/,0$/, "") !== ueKachel) fehler(`Zahlen: UE-Kachel ${ueKachel} ≠ Detailseite ${ueDetail} (Fahrlehrer-Filter/doppelte Prüfung)`);
+  await page.emulateMedia({ media: "print" });
+  if (!(await page.isVisible("#ansicht .namenknopf >> nth=0"))) fehler("Zahlen: im Druck fehlen die Schülernamen");
+  await page.emulateMedia({ media: "screen" });
+  await page.goto(page.url().split("#")[0] + "#zahlen?liste=praxis&monat=quark"); await page.waitForTimeout(250);
+  if (/Invalid/.test(await page.textContent("#ansicht"))) fehler("Zahlen: ungültiger Monat zeigt „Invalid Date“");
+  if (konsole.length) fehler("Zahlen: Konsole: " + konsole.join(" | "));
+  await ctx.close();
+}
+
+// Endprüfung 14.10.: Korrektur einer bestandenen Praxisprüfung über „Bearbeiten“ räumt die Akte auf (auch Status + Datum zugleich)
+{
+  const { page, ctx, konsole } = await oeffne({ nutzer: "bu-1", hash: "#pruefungen?ansicht=alle", wer: "Jelena", vorbereiten: function () {
+    const pt = F.tabellen.pruefungstermine.find((x) => x.id === "pt-5"); const s = F.tabellen.schueler.find((x) => x.id === "s9");
+    const [j, m, t] = pt.datum.split("-"); s.praxis_bestanden_am = pt.datum; s.reakt_status = "befreit"; s.reakt_notiz = `Praxisprüfung bestanden am ${t}.${m}.${j}`;
+  } });
+  if (await page.$("dialog[open] button[value=ok]")) { await page.click("dialog[open] button[value=ok]"); await page.waitForTimeout(250); }
+  const s9 = () => page.evaluate(() => { const s = window.__FAKE.tabellen.schueler.find((x) => x.id === "s9"); return { pb: s.praxis_bestanden_am || null, rs: s.reakt_status }; });
+  const offen = () => page.evaluate(() => window.__FAKE.tabellen.schueler_aufgaben.filter((a) => a.schueler_id === "s9" && !a.erledigt_am && /Neuen Termin/.test(a.text)).length);
+  const bearbeite = async (status, datum) => {
+    await page.evaluate(() => pruefungDialog("pt-5")); await page.waitForTimeout(200);
+    if (datum) await page.fill("dialog[open] input[name=datum]", datum);
+    if (status) await page.selectOption("dialog[open] select[name=status]", status);
+    await page.click("dialog[open] button[value=ok]"); await page.waitForTimeout(400);
+  };
+  await bearbeite("nicht_bestanden");
+  let z = await s9();
+  if (z.pb || z.rs !== "pruefen" || (await offen()) !== 1) fehler("Korrektur bestanden→nicht: " + JSON.stringify(z) + " Aufgaben " + (await offen()));
+  await bearbeite("bestanden");
+  z = await s9();
+  if (!z.pb || z.rs !== "befreit" || (await offen()) !== 0) fehler("Korrektur nicht→bestanden: " + JSON.stringify(z) + " Aufgaben " + (await offen()));
+  const d1 = await page.evaluate(() => KR.addDaysISO(KR.todayISO(), -5));
+  await bearbeite(null, d1);
+  if ((await s9()).pb !== d1) fehler("Korrektur Datum zieht nicht mit: " + JSON.stringify(await s9()));
+  await bearbeite("nicht_bestanden", await page.evaluate(() => KR.addDaysISO(KR.todayISO(), -4)));
+  z = await s9();
+  if (z.pb || z.rs !== "pruefen") fehler("Korrektur Status + Datum zugleich lässt „bestanden“ stehen: " + JSON.stringify(z));
+  if (konsole.length) fehler("Korrektur: Konsole: " + konsole.join(" | "));
+  await ctx.close();
+}
+
+// 4o) Gabriel und Lkw-Klassen (13.10.2026): Fahrlehrer ohne App, Klassen je Fahrlehrer, Lkw-Fahrzeuge
+{
+  const { page, ctx, konsole } = await oeffne({ nutzer: "bu-1", hash: "#team", breite: 1366, hoehe: 900, wer: "Jelena", vorbereiten: function () {
+    F.functions = F.functions || {};
+    F.functions["admin-create-account"] = (b) => {
+      F.letzteAnlage = b;
+      if (b.ohne_app) { F.tabellen.profiles.push({ id: "fl-g", name: b.name, email: "ohne-app@ohne-app.invalid", rolle: "fahrlehrer", fahrschule_id: "fs-test-1", aktiv: true, ohne_app: true, klassen: b.klassen }); return { ohne_app: true, id: "fl-g" }; }
+      return { email: b.email, passwort: "Test-1234" };
+    };
+  } });
+  if (!(await page.isVisible("#tNeuFl"))) fehler("Gabriel: Jelena (Verwalten-Recht) kann keinen Fahrlehrer anlegen");
+  await page.click("#tNeuFl");
+  await page.fill("dialog input[name=name]", "Gabriel");
+  await page.check("dialog input[name=ohneapp]");
+  if (await page.isVisible("dialog input[name=email]")) fehler("Gabriel: E-Mail-Feld bleibt bei „ohne App“ sichtbar");
+  for (const k of ["B"]) await page.uncheck(`dialog input[name=kl][value="${k}"]`);
+  for (const k of ["C1", "C1E", "C", "CE"]) await page.check(`dialog input[name=kl][value="${k}"]`);
+  await pruefeLayout(page, "Fahrlehrer ohne App anlegen");
+  await page.click("dialog button[value=ok]"); await page.waitForTimeout(500);
+  const an = await page.evaluate(() => window.__FAKE.letzteAnlage);
+  if (!an || an.ohne_app !== true || an.email || an.klassen.join() !== "C1,C1E,C,CE" || !an.buero_sitzung) fehler("Gabriel: Anlage falsch " + JSON.stringify(an));
+  if (await page.isVisible("dialog[open]")) fehler("Gabriel: es erscheint ein Passwort-Fenster");
+  const t = await page.textContent("#ansicht");
+  if (!/Gabriel/.test(t) || !/ohne App/.test(t)) fehler("Gabriel: steht nicht in der Liste");
+  // Klassen eines Fahrlehrers ändern
+  await page.click('[data-klassen="fl-2"]'); await page.check('dialog input[name=kl][value="BE"]');
+  await page.click("dialog button[value=ok]"); await page.waitForTimeout(300);
+  if (!(await page.evaluate(() => (window.__FAKE.tabellen.profiles.find((p) => p.id === "fl-2").klassen || []).includes("BE")))) fehler("Klassen: nicht gespeichert");
+  if (FOTOS) await page.screenshot({ path: join(FOTOS, "team-klassen.png"), fullPage: true });
+  // Schüler mit Klasse CE: Fahrlehrer ohne CE stehen mit Hinweis unten, Form in der App bleibt CE
+  await page.goto(page.url().split("#")[0] + "#schueler"); await page.waitForTimeout(300);
+  await page.click("#sNeu");
+  await page.fill("dialog input[name=name]", "Test Lkw");
+  await page.selectOption("dialog select[name=klasse]", "CE");
+  const opts = await page.$$eval("dialog select[name=fahrlehrer_id] option", (o) => o.map((x) => x.textContent));
+  if (!opts.some((o) => /Anton.*\(nicht CE\)/.test(o)) || /nicht CE/.test(opts[1] || "")) fehler("Klassen: Auswahl der Fahrlehrer nicht nach Klasse " + JSON.stringify(opts));
+  await page.click("dialog button[value=ok]"); await page.waitForTimeout(300);
+  const neu = await page.evaluate(() => window.__FAKE.tabellen.schueler.find((x) => x.name === "Test Lkw"));
+  if (!neu || neu.klasse !== "CE" || neu.ausbildung.form !== "CE") fehler("Klassen: CE wird in der App zu " + (neu && neu.ausbildung.form));
+  // Lkw als Fahrzeug
+  await page.goto(page.url().split("#")[0] + "#flotte"); await page.waitForTimeout(300);
+  await page.click("#fzNeu"); await page.fill("dialog input[name=name]", "Actros");
+  await page.selectOption("dialog select[name=typ]", "lkw");
+  if ((await page.inputValue("dialog select[name=klasse]")) !== "C") fehler("Fahrzeuge: Lkw schlägt nicht Klasse C vor");
+  await page.click("dialog button[value=ok]"); await page.waitForTimeout(300);
+  const fz = await page.evaluate(() => window.__FAKE.tabellen.fahrschule_fahrzeuge.find((f) => f.name === "Actros"));
+  if (!fz || fz.typ !== "lkw" || fz.klasse !== "C") fehler("Fahrzeuge: Lkw falsch gespeichert " + JSON.stringify(fz));
+  await pruefeLayout(page, "Fahrzeuge mit Lkw");
+  if (konsole.length) fehler("Gabriel/Klassen: Konsole: " + konsole.join(" | "));
+  await ctx.close();
+}
+// Endprüfung 14.10.: ohne Verwalten-Recht kein Knopf „Klassen“ (die Datenbank lehnt es ohnehin ab)
+{
+  const { page, ctx } = await oeffne({ nutzer: "bu-1", hash: "#team", wer: "Kristina" });
+  if (await page.$("[data-klassen]")) fehler("Klassen: Kristina (ohne Verwalten-Recht) sieht den Knopf „Klassen“");
+  await ctx.close();
+}
+
 // Leitung und Super-Admin haben eigene Konten: keine PIN-Abfrage
 for (const nutzer of ["ad-1", "sa-1"]) {
   const { page, ctx } = await oeffne({ nutzer, wer: null });
