@@ -505,7 +505,8 @@ async function ladeProtokoll(tabelle, id) {
   if (!ziel || !ziel.isConnected) return;
   if (res.error) { ziel.innerHTML = ""; return; }
   const zeilen = (res.data || []).map((p) => {
-    const wer = p.bearbeiter || (S.lehrer.find((l) => l.id === p.geaendert_von) || {}).name || (p.geaendert_von === S.user.id ? "du" : "Büro");
+    // Gemeinsames Büro-Konto ohne PIN (z. B. aus der Fahrschul-Ansicht der App): kein Name bekannt
+    const wer = p.bearbeiter || (S.lehrer.find((l) => l.id === p.geaendert_von) || {}).name || (p.geaendert_von === S.user.id ? (werNoetig() ? "Büro (ohne PIN)" : "du") : "Büro");
     const wann = new Date(p.geaendert_am).toLocaleString("de-DE", { dateStyle: "short", timeStyle: "short" });
     const wert = (v) => (/^\d{4}-\d\d-\d\d$/.test(v || "") ? datumDE(v) : (v || "–"));
     return `<li>${esc(wann)} · ${esc(wer)}: ${esc(FELD_NAMEN[p.feld] || p.feld)} ${esc(wert(p.alt))} → ${esc(wert(p.neu))}</li>`;
@@ -1003,7 +1004,7 @@ function bindeNotizBlock(dlg, sid, fahrlehrerId) {
       e.target.disabled = true;
       const res = await supa.from("schueler_notizen").insert({ fahrschule_id: S.fsId, schueler_id: sid, text, art: block.querySelector("#nzArt").value, erstellt_von: S.user.id }).select("*");
       if (res.error || !res.data || !res.data.length) { toast("Notiz nicht gesendet: " + (res.error ? res.error.message : "keine Berechtigung"), true); e.target.disabled = false; return; }
-      S.notizen.unshift(Object.assign({}, res.data[0], { bearbeiter: res.data[0].bearbeiter || S.werAnzeige || null }));
+      S.notizen.unshift(Object.assign({}, res.data[0], { bearbeiter: res.data[0].bearbeiter || null }));
       toast("Notiz gesendet. Der Fahrlehrer sieht sie innerhalb einer Minute.");
       neu();
     });
@@ -1013,7 +1014,7 @@ function bindeNotizBlock(dlg, sid, fahrlehrerId) {
       const res = await supa.from("schueler_notizen").update({ erledigt_am: jetzt, erledigt_von: S.user.id }).eq("id", b.dataset.notizerledigt).select("*");
       if (res.error || !res.data || !res.data.length) { toast("Nicht gespeichert: " + (res.error ? res.error.message : "keine Berechtigung"), true); b.disabled = false; return; }
       const n = S.notizen.find((x) => x.id === b.dataset.notizerledigt);
-      if (n) Object.assign(n, res.data[0], { erledigt_bearbeiter: res.data[0].erledigt_bearbeiter || S.werAnzeige || null });
+      if (n) Object.assign(n, res.data[0], { erledigt_bearbeiter: res.data[0].erledigt_bearbeiter || null });
       neu();
     }));
   };
@@ -1056,7 +1057,7 @@ async function aendereAufgabe(id, werte, hinweis) {
   const res = await supa.from("schueler_aufgaben").update(werte).eq("id", id).select("*");
   if (res.error || !res.data || !res.data.length) { toast("Nicht gespeichert: " + (res.error ? res.error.message : "keine Berechtigung"), true); return false; }
   const a = S.aufgaben.find((x) => x.id === id);
-  if (a) Object.assign(a, res.data[0], werte.erledigt_am ? { erledigt_bearbeiter: werte.erledigt_bearbeiter } : {});
+  if (a) Object.assign(a, res.data[0]);
   if (hinweis) toast(hinweis);
   return true;
 }
@@ -1068,7 +1069,7 @@ function bindeAufgabenBlock(dlg, sid) {
     if (!text) { toast("Bitte einen Text eintragen.", true); return; }
     knopf.disabled = true;
     const faellig = block.querySelector("#agDatum").value || null;
-    const res = await supa.from("schueler_aufgaben").insert({ fahrschule_id: S.fsId, schueler_id: sid, text, heute, faellig_am: faellig, erstellt_von: S.user.id, bearbeiter: S.werAnzeige || null }).select("*");
+    const res = await supa.from("schueler_aufgaben").insert({ fahrschule_id: S.fsId, schueler_id: sid, text, heute, faellig_am: faellig, erstellt_von: S.user.id }).select("*");
     if (res.error || !res.data || !res.data.length) { toast("Aufgabe nicht gespeichert: " + (res.error ? res.error.message : "keine Berechtigung"), true); knopf.disabled = false; return; }
     S.aufgaben.unshift(res.data[0]);
     toast(heute ? "Aufgabe steht jetzt unter „Heute zu tun“." : "Aufgabe gespeichert.");
@@ -1085,7 +1086,7 @@ function bindeAufgabenBlock(dlg, sid) {
     }));
     block.querySelectorAll("[data-agerledigt]").forEach((b) => b.addEventListener("click", async () => {
       b.disabled = true;
-      if (await aendereAufgabe(b.dataset.agerledigt, { erledigt_am: new Date().toISOString(), erledigt_von: S.user.id, erledigt_bearbeiter: S.werAnzeige || null, heute: false })) neu(); else b.disabled = false;
+      if (await aendereAufgabe(b.dataset.agerledigt, { erledigt_am: new Date().toISOString(), erledigt_von: S.user.id, heute: false })) neu(); else b.disabled = false;
     }));
   };
   bind();
@@ -1093,7 +1094,7 @@ function bindeAufgabenBlock(dlg, sid) {
 function bindeHeute(ziel) {
   ziel.querySelectorAll("[data-hagerledigt]").forEach((b) => b.addEventListener("click", async () => {
     b.disabled = true;
-    if (await aendereAufgabe(b.dataset.hagerledigt, { erledigt_am: new Date().toISOString(), erledigt_von: S.user.id, erledigt_bearbeiter: S.werAnzeige || null, heute: false }, "Aufgabe erledigt ✓")) zeichne(); else b.disabled = false;
+    if (await aendereAufgabe(b.dataset.hagerledigt, { erledigt_am: new Date().toISOString(), erledigt_von: S.user.id, heute: false }, "Aufgabe erledigt ✓")) zeichne(); else b.disabled = false;
   }));
   ziel.querySelectorAll("[data-hagschueler]").forEach((b) => b.addEventListener("click", () => schuelerDialog(b.dataset.hagschueler)));
 }
@@ -2409,6 +2410,7 @@ async function ladeDaten() {
     $("schulName").textContent = S.fs ? S.fs.name : "";
     setStatus("ok", "verbunden · " + S.geladenAm.toLocaleTimeString("de-DE", { hour: "2-digit", minute: "2-digit" }));
     zeichne();
+    pruefeSitzungNoch(); // alle 2 Minuten mit: PIN zurückgesetzt oder Person ausgetreten → neu anmelden
   } catch (e) {
     if (nr !== S.ladeNr) return;
     console.error(e);
@@ -2631,6 +2633,14 @@ $("werListe").addEventListener("click", (e) => {
   }
   zeigePin(p.hat_pin ? "anmelden" : "festlegen1");
 });
+async function pruefeSitzungNoch() {
+  if (!werNoetig() || !S.sitzung || !$("wer").hidden) return;
+  try {
+    const { data, error } = await supa.rpc("buero_sitzung_pruefen");
+    if (!error && data && data.gueltig === false) { vergissSitzung(); zeigeWer(); toast("Bitte neu mit deiner PIN anmelden.", true); }
+  } catch (e) { /* ohne Verbindung: später erneut */ }
+}
+document.addEventListener("visibilitychange", () => { if (!document.hidden) pruefeSitzungNoch(); });
 $("pinFeld").addEventListener("click", (e) => { const b = e.target.closest("[data-ziffer]"); if (b) pinZiffer(b.dataset.ziffer); });
 $("pinLoeschen").addEventListener("click", () => { if (PIN.beschaeftigt) return; PIN.eingabe = PIN.eingabe.slice(0, -1); zeichnePunkte(); });
 $("pinZurueck").addEventListener("click", pinZurueck);
