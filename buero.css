@@ -552,4 +552,6 @@ a.kachel:hover,a.kachel:focus-visible{border-color:var(--akzent);}
 .fl-kacheln{margin-bottom:12px;}
 .fl-warnung{font-weight:700;margin:4px 0;}
 .fl-warnung.abgelaufen{color:var(--rot);} .fl-warnung.bald{color:var(--gold, #8a5f10);}
+.formular .raster-zwei{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px 20px;}
+.formular .raster-zwei[hidden]{display:none;}
 

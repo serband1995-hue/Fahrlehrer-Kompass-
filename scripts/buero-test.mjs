@@ -1360,6 +1360,36 @@ for (const [breite, hoehe] of [[1920, 1080], [1366, 768], [1024, 768]]) {
   await ctx.close();
 }
 
+// Schritt 5 (14.10.2026): Fahrlehrer ohne App – Art der Sonderfahrt und Klasse der Stunde im Termin, Zähler in der Akte
+{
+  const { page, ctx, konsole } = await oeffne({ nutzer: "bu-1", hash: "#kalender", breite: 1366, hoehe: 900, vorbereiten: function () {
+    F.tabellen.profiles.push({ id: "fl-g", name: "Gabriel Muster", email: "ohne-app@ohne-app.invalid", rolle: "fahrlehrer", fahrschule_id: "fs-test-1", aktiv: true, ohne_app: true, klassen: ["C1", "C1E", "C", "CE"], fahrlehrerlaubnis: ["BE", "CE"] });
+    const sx = F.tabellen.schueler.find((x) => x.id === "s3"); sx.fahrlehrer_id = "fl-g"; sx.klasse = "CE"; sx.vorbesitz = ["B"]; sx.ausbildungsart = "erweiterung";
+    const d = new Date(); d.setDate(d.getDate() - 2); const tag = d.toISOString().slice(0, 10);
+    F.tabellen.kalender_termine.push({ id: "g-1", fahrschule_id: "fs-test-1", fahrlehrer_id: "fl-g", schueler_id: "s3", datum: tag, von: "08:00", bis: "09:30", art: "sonder", status: "geplant", geloescht: false, payload: { sonderArt: "autobahn" } });
+  } });
+  const d2 = await page.evaluate(() => KR.addDaysISO(KR.todayISO(), -1));
+  await page.evaluate((tag) => terminDialog(null, { datum: tag, von: "10:00", fahrlehrer_id: "fl-g" }), d2); await page.waitForTimeout(200);
+  await page.selectOption("dialog[open] select[name=schueler_id]", "s3");
+  await page.selectOption("dialog[open] select[name=fahrlehrer_id]", "fl-g");
+  await page.selectOption("dialog[open] select[name=art]", "sonder"); await page.waitForTimeout(100);
+  if (await page.isHidden("dialog[open] #sonderArtFeld")) fehler("Ohne App: Art der Sonderfahrt fehlt");
+  const klassen = await page.$$eval("dialog[open] select[name=lkwKlasse] option", (o) => o.map((x) => x.value).join("+"));
+  if (klassen !== "C+CE") fehler("Ohne App: Klasse der Stunde bei C und CE zusammen: " + klassen);
+  await page.selectOption("dialog[open] select[name=sonderArt]", "nacht");
+  await page.selectOption("dialog[open] select[name=lkwKlasse]", "CE");
+  await pruefeLayout(page, "Termin ohne App");
+  await page.click("dialog[open] button[value=ok]"); await page.waitForTimeout(300);
+  if (await page.isVisible("dialog[open]")) { await page.click("dialog[open] button[value=ok]"); await page.waitForTimeout(300); } // Rückfrage (z. B. Reaktivierung) bestätigen
+  const neu = await page.evaluate(() => window.__FAKE.tabellen.kalender_termine.find((t) => t.schueler_id === "s3" && t.von === "10:00"));
+  if (!neu || !neu.payload || neu.payload.sonderArt !== "nacht" || neu.payload.lkwKlasse !== "CE") fehler("Ohne App: Termin ohne Sonderfahrt-Art/Klasse gespeichert " + JSON.stringify(neu && neu.payload));
+  await page.evaluate(() => schuelerDialog("s3")); await page.waitForTimeout(200);
+  const akte = await page.textContent("dialog[open]");
+  if (!/Sonderfahrten \(aus dem Kalender/.test(akte) || !/Autobahn 2\/3/.test(akte) || !/Dämmerung\/Nacht 2\/3/.test(akte)) fehler("Ohne App: Sonderfahrten-Zähler falsch: " + (akte.match(/Überland[^]*?Nacht \d+\/\d+/) || [""])[0]);
+  if (konsole.length) fehler("Ohne App: Konsole: " + konsole.join(" | "));
+  await ctx.close();
+}
+
 // Leitung und Super-Admin haben eigene Konten: keine PIN-Abfrage
 for (const nutzer of ["ad-1", "sa-1"]) {
   const { page, ctx } = await oeffne({ nutzer, wer: null });
