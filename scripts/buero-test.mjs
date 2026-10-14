@@ -919,7 +919,7 @@ for (const [breite, hoehe] of [[1920, 1080], [1366, 768], [1024, 768]]) {
   await meldePinAn(page, "Kristina");
   if (await page.isVisible("#wer:not([hidden])")) fehler("PIN: richtige PIN öffnet nicht");
   if ((await page.textContent("#werAnzeige")) !== "Kristina" || (await page.textContent("#nutzerName")) !== "Kristina") fehler("PIN: Name in der Seitenleiste fehlt");
-  if ((await page.textContent("#kopfWer")) !== "🔒 Kristina · Sperren") fehler("PIN: Sperren-Knopf oben fehlt");
+  if ((await page.textContent("#kopfWer")) !== "🔒 Sperren") fehler("PIN: Sperren-Knopf oben fehlt");
   // Kristina darf nicht verwalten
   await page.goto(page.url().split("#")[0] + "#team"); await page.waitForTimeout(300);
   if (await page.isVisible("#pNeu, [data-preset]")) fehler("PIN: Kristina sieht Verwalten-Knöpfe");
@@ -976,7 +976,7 @@ for (const [breite, hoehe] of [[1920, 1080], [1366, 768], [1024, 768]]) {
   await page.click('#werListe button:has-text("Murat")');
   for (let i = 0; i < 5; i++) { await page.keyboard.type("0" + (i + 1) + "00"); await page.waitForTimeout(80); }
   t = await page.textContent("#pinFehler");
-  if (!/Gesperrt bis/.test(t) || !/Jelena/.test(t)) fehler("PIN: Sperre nach 5 Versuchen fehlt: " + t);
+  if (!/gesperrt bis/.test(t) || !/Jelena/.test(t) || /Murat/.test(t) || !(await page.evaluate(() => document.getElementById("werPin").classList.contains("pin-gesperrt")))) fehler("PIN: Sperre nach 5 Versuchen fehlt: " + t);
   await page.keyboard.type(TEST_PIN.Murat); await page.waitForTimeout(150);
   if (await page.evaluate(() => !!S.sitzung)) fehler("PIN: gesperrte Person kommt trotzdem rein");
   // Leerlauf: nach 20 Minuten endet die Sitzung von selbst

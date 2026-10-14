@@ -2429,8 +2429,8 @@ const PIN = { person: null, modus: "", eingabe: "", erste: "", abbrechbar: false
 function werNoetig() { return !!(S.profil && S.profil.rolle === "buero"); }
 function aktivePersonen() { return (S.personen || []).filter((p) => p.aktiv !== false); }
 function darfPersonenVerwalten() { return istAdmin() || !!(S.sitzung && S.sitzung.verwalten); }
-function verwalterNamen() {
-  const n = aktivePersonen().filter((p) => p.darf_verwalten).map((p) => p.name);
+function verwalterNamen(ohneId) {
+  const n = aktivePersonen().filter((p) => p.darf_verwalten && p.id !== ohneId).map((p) => p.name);
   return ["Serband", ...n].join(", ").replace(/, ([^,]*)$/, " oder $1");
 }
 // Gleiche Regel wie in der Datenbank: keine 0000, 1234, 9876, 1212, 1122
@@ -2452,11 +2452,11 @@ function zeigeWerAnzeige() {
   $("werAnzeige").textContent = S.werAnzeige || "";
   $("werZeile").hidden = !S.sitzung;
   if (werNoetig()) {
-    $("nutzerName").textContent = S.sitzung ? S.werAnzeige : "niemand angemeldet";
+    $("nutzerName").textContent = S.sitzung ? S.werAnzeige : "Bitte anmelden";
     $("nutzerRolle").textContent = "Büro";
   }
   $("kopfWer").hidden = !S.sitzung;
-  $("kopfWer").textContent = S.sitzung ? `🔒 ${S.werAnzeige} · Sperren` : "";
+  $("kopfWer").textContent = S.sitzung ? "🔒 Sperren" : "";
 }
 function setzeSitzung(r) {
   S.sitzung = { token: r.token, id: r.id, name: r.name, verwalten: !!r.darf_verwalten };
@@ -2491,25 +2491,24 @@ async function zeigeWer(abbrechbar) {
     const unter = gesperrt ? `gesperrt bis ${esc(zeitHM(p.gesperrt_bis))}` : (p.hat_pin ? "" : "PIN festlegen");
     return `<button type="button" class="knopf gross${gesperrt ? " gesperrt" : ""}" data-wer="${esc(p.id)}">${esc(p.name)}${unter ? `<small>${unter}</small>` : ""}</button>`;
   }).join("") : `<p class="leer">Für diese Fahrschule sind noch keine Büro-Personen angelegt. Bitte bei Serband melden.</p>`;
-  const erster = $("werListe").querySelector("button");
-  if (erster) erster.focus();
 }
 function pinText() {
   const name = PIN.person ? PIN.person.name : "";
   const t = {
     anmelden: [`Hallo ${name}`, "Gib deine 4-stellige PIN ein."],
-    festlegen1: [`${name}: PIN festlegen`, "Denk dir 4 Ziffern aus, die nur du kennst. Nicht 1234, 0000 und nicht deine Telefonnummer."],
-    festlegen2: [`${name}: PIN festlegen`, "Bitte zur Bestätigung noch einmal eingeben."],
-    aendern1: ["Neue PIN festlegen", "Denk dir 4 neue Ziffern aus, die nur du kennst."],
-    aendern2: ["Neue PIN festlegen", "Bitte zur Bestätigung noch einmal eingeben."],
+    festlegen1: [`${name}: eigene PIN festlegen`, "Schritt 1 von 2: Denk dir 4 Ziffern aus, die nur du kennst. Nicht 1234, 0000 und nicht deine Telefonnummer."],
+    festlegen2: [`${name}: eigene PIN festlegen`, "Schritt 2 von 2: Bitte dieselbe PIN noch einmal eingeben."],
+    aendern1: ["Neue PIN festlegen", "Schritt 1 von 2: Denk dir 4 neue Ziffern aus, die nur du kennst."],
+    aendern2: ["Neue PIN festlegen", "Schritt 2 von 2: Bitte dieselbe PIN noch einmal eingeben."],
   }[PIN.modus];
   $("pinTitel").textContent = t[0];
   $("pinHinweis").textContent = t[1];
-  $("pinZurueck").textContent = PIN.modus.startsWith("aendern") ? (PIN.abbrechbar ? "Abbrechen" : "") : "Zurück";
+  $("pinZurueck").textContent = PIN.modus.startsWith("aendern") ? (PIN.abbrechbar ? "Abbrechen" : "") : "← Name";
   $("pinZurueck").disabled = !$("pinZurueck").textContent;
 }
-function zeigePin(modus, fehlerText) {
+function zeigePin(modus, fehlerText, gesperrt) {
   PIN.modus = modus; PIN.eingabe = "";
+  $("werPin").classList.toggle("pin-gesperrt", !!gesperrt);
   if (modus === "festlegen1" || modus === "aendern1") PIN.erste = "";
   $("werNamen").hidden = true; $("werPin").hidden = false; $("wer").hidden = false;
   $("werZu").hidden = true;
@@ -2533,7 +2532,7 @@ function pinBeschaeftigt(an) {
   $("pinFeld").querySelectorAll("button").forEach((b) => { b.disabled = an || (b.id === "pinZurueck" && !b.textContent); });
 }
 async function pinZiffer(z) {
-  if (PIN.beschaeftigt || PIN.eingabe.length >= 4) return;
+  if (PIN.beschaeftigt || PIN.eingabe.length >= 4 || $("werPin").classList.contains("pin-gesperrt")) return;
   PIN.eingabe += z; zeichnePunkte();
   $("pinFehler").textContent = "";
   if (PIN.eingabe.length === 4) await pinFertig(PIN.eingabe);
@@ -2574,7 +2573,7 @@ async function pinFertig(pin) {
       if (data.fehler === "falsch") { pinWackeln(`PIN stimmt nicht. Noch ${data.rest} Versuch${data.rest === 1 ? "" : "e"}.`); return; }
       if (data.fehler === "gesperrt") {
         await ladePersonen();
-        pinWackeln(`Zu viele falsche Versuche. Gesperrt bis ${zeitHM(data.bis)} Uhr. Wer die PIN vergessen hat: ${verwalterNamen()} kann sie zurücksetzen.`);
+        zeigePin("anmelden", sperrText(data.bis), true);
         return;
       }
       if (data.fehler === "zu_einfach") { zeigePin("festlegen1", "Diese PIN ist zu leicht zu erraten. Bitte eine andere nehmen."); return; }
@@ -2593,6 +2592,9 @@ async function pinFertig(pin) {
     pinBeschaeftigt(false);
     pinWackeln("Keine Verbindung. Bitte Internet prüfen.");
   }
+}
+function sperrText(bis) {
+  return `Zu viele falsche Versuche: gesperrt bis ${zeitHM(bis)} Uhr. PIN vergessen? Bitte ${verwalterNamen(PIN.person && PIN.person.id)} fragen.`;
 }
 function pinZurueck() {
   if (PIN.beschaeftigt) return;
@@ -2624,7 +2626,7 @@ $("werListe").addEventListener("click", (e) => {
   if (!p) return;
   PIN.person = p;
   if (p.gesperrt_bis && new Date(p.gesperrt_bis).getTime() > Date.now()) {
-    zeigePin("anmelden", `Zu viele falsche Versuche. Gesperrt bis ${zeitHM(p.gesperrt_bis)} Uhr. ${verwalterNamen()} kann die PIN zurücksetzen.`);
+    zeigePin("anmelden", sperrText(p.gesperrt_bis), true);
     return;
   }
   zeigePin(p.hat_pin ? "anmelden" : "festlegen1");
