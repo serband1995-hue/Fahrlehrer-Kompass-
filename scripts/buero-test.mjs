@@ -1349,11 +1349,20 @@ for (const [breite, hoehe] of [[1920, 1080], [1366, 768], [1024, 768]]) {
 {
   const { page, ctx, konsole } = await oeffne({ nutzer: "bu-1", hash: "#team", breite: 1366, hoehe: 900, wer: "Jelena", vorbereiten: function () {
     const p = F.tabellen.profiles.find((x) => x.id === "fl-4"); const d = new Date(); d.setDate(d.getDate() + 30); p.fuehrerschein_c_bis = d.toISOString().slice(0, 10);
+    // Daten-Prüfer: B197-Schaltkompetenz zählt nicht in der Praxis-Quote, Theorieprüfungen nicht bei „Praxisprüfungen geplant“
+    const tag = (n) => { const x = new Date(); x.setDate(x.getDate() + n); return x.toISOString().slice(0, 10); };
+    F.tabellen.kalender_pruefungen.push({ id: "pr-b197", fahrschule_id: "fs-test-1", fahrlehrer_id: "fl-4", schueler_id: "s1", datum: tag(-5), result: "pass", attempt: 1, geloescht: false, payload: { b197: true } },
+      { id: "pr-fl4", fahrschule_id: "fs-test-1", fahrlehrer_id: "fl-4", schueler_id: "s2", datum: tag(-4), result: "fail", attempt: 1, geloescht: false, payload: {} });
+    F.tabellen.pruefungstermine.push({ id: "pt-th4", fahrschule_id: "fs-test-1", schueler_id: "s1", fahrlehrer_id: "fl-4", art: "theorie", klasse: "B", datum: tag(3), von: "10:00", status: "geplant" },
+      { id: "pt-pr4", fahrschule_id: "fs-test-1", schueler_id: "s2", fahrlehrer_id: "fl-4", art: "praxis", klasse: "B", datum: tag(4), von: "10:00", status: "geplant" });
   } });
   if (!/Führerschein C\/CE bis/.test(await page.textContent("#ansicht"))) fehler("Fahrlehrer-Akte: Fristen-Warnung in der Liste fehlt");
   await page.click('button.knopf[data-flakte="fl-4"]'); await page.waitForTimeout(250);
   const t = await page.textContent("dialog[open]");
   if (!/Schüler aktiv/.test(t) || !/UE im/.test(t) || !/Läuft bald ab: Führerschein C\/CE/.test(t)) fehler("Fahrlehrer-Akte: Kennzahlen oder Warnung fehlen");
+  const kachel = (name) => page.evaluate((n) => { const k = [...document.querySelectorAll("dialog[open] .kachel")].find((x) => x.querySelector(".name").textContent.startsWith(n)); return k ? k.textContent : ""; }, name);
+  if (!/0 von 1\)/.test(await kachel("Praxis bestanden"))) fehler("Fahrlehrer-Akte: Praxis-Quote zählt B197 mit: " + (await kachel("Praxis bestanden")));
+  if (!/^1/.test(await kachel("Praxisprüfungen geplant").then((x) => x.trim()))) fehler("Fahrlehrer-Akte: geplante Prüfungen zählen Theorie mit: " + (await kachel("Praxisprüfungen geplant")));
   await page.check('dialog[open] input[name=fl][value="BE"]'); await page.check('dialog[open] input[name=fl][value="CE"]');
   if (!/C1, C1E, C, CE/.test(await page.textContent("#flDarf"))) fehler("Fahrlehrer-Akte: abgeleitete Klassen werden nicht angezeigt");
   await page.check('dialog[open] input[name=fk][value="CE"]');
