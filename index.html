@@ -1631,6 +1631,8 @@ body:not(.light) .cw-col.today .cw-dnum{color:var(--gold);}
 .chip.sehhilfe:active{transform:scale(.93);}
 .s-sehhilfe{font-size:12px;opacity:.85;}
 .afs-app{border-top:1px dashed var(--line-soft);padding-top:8px;margin-top:4px;}
+.lkw-zaehler{margin-top:8px;font-size:13px;color:var(--muted);}
+.lkw-zaehler b{color:var(--txt);}
 .tb-balken{height:8px;border-radius:6px;background:var(--surface-2);overflow:hidden;margin:6px 0 4px;}
 .tb-balken span{display:block;height:100%;background:var(--akzent,#2f5d3f);border-radius:6px;}
 .tb-balken.fertig span{background:var(--gruen);}
@@ -3127,11 +3129,23 @@ function sonderWerte(s){
   return SONDER_SOLL[f]||SONDER_SOLL.B;
 }
 function sonderDefFuer(s){ const w=sonderWerte(s); return SONDER_DEF.map((d,i)=>Object.assign({},d,{soll:w[i]})); }
+// Gemeinsame Ausbildung (C und CE / C1 und C1E): je Fahrstunde festhalten, welche Klasse gefahren wurde
+function lkwZweiKlassen(s){ const w=lkwWegVon(s); return w==="C+CE"?["C","CE"]:w==="C1+C1E"?["C1","C1E"]:null; }
+function lkwStundenKlasse(s,l){ const k=lkwZweiKlassen(s); return k&&k.includes(l.lkwKlasse)?l.lkwKlasse:(k?k[0]:s.form); } // ohne Angabe: zuerst die Grundklasse (C bzw. C1)
+function lkwKlKnopf(s,l){ const k=lkwZweiKlassen(s)||[], akt=lkwStundenKlasse(s,l), anders=akt===k[0]?k[1]:k[0]; return `Klasse dieser Stunde · <b>${esc(akt)}</b>${anders?` · tippen für ${esc(anders)}`:""}`; }
+function lkwStundenZaehler(s){
+  const k=lkwZweiKlassen(s); if(!k)return "";
+  const z={}; k.forEach(x=>z[x]=0);
+  (DB.lessons||[]).filter(l=>l.sid===s.id&&["fahrstunde","sonder","nacht"].includes(l.art)&&!["abgebrochen","nicht erschienen"].includes(l.status)&&isAbsolved(l.date,l.bis))
+    .forEach(l=>{ z[lkwStundenKlasse(s,l)]+=ueOf(l.art,l.von,l.bis,l.tatsaechlicheDauer); });
+  return `<div class="lkw-zaehler">Gefahren: ${k.map(x=>`Klasse ${x} <b>${zahlKurz(z[x])} UE</b>`).join(" · ")} <small>(im Termin umstellbar)</small></div>`;
+}
+function zahlKurz(n){ return (Math.round(n*10)/10).toLocaleString("de-DE"); }
 function lkwWegHTML(s){
   const wege=LKW_WEGE[s.form]; if(!wege)return "";
   const akt=lkwWegVon(s);
   const zug=s.form==="CE"?`<div class="form-pick" style="margin-top:8px;"><div class="fpc-label">Zug in der Prüfung</div><div class="pills" id="dashLkwZug">${LKW_ZUEGE.map(z=>`<button class="pill ${s.lkwZug===z[0]?'sel':''}" data-zug="${z[0]}">${z[1]}</button>`).join("")}</div></div>`:"";
-  return `<div class="form-pick" style="margin-top:8px;"><div class="fpc-label">Weg</div><div class="pills" id="dashLkwWeg">${wege.map(w=>`<button class="pill ${akt===w[0]?'sel':''}" data-weg="${w[0]}">${w[1]}</button>`).join("")}</div></div>${zug}`;
+  return `<div class="form-pick" style="margin-top:8px;"><div class="fpc-label">Weg</div><div class="pills" id="dashLkwWeg">${wege.map(w=>`<button class="pill ${akt===w[0]?'sel':''}" data-weg="${w[0]}">${w[1]}</button>`).join("")}</div></div>${zug}${lkwStundenZaehler(s)}`;
 }
 // Prüfungsdauer: Pkw 55 Minuten im Kalender, Lkw mindestens 85 Minuten (FeV Anlage 7 Nr. 2.3)
 function pruefMinFuer(s){ return istLkw(s)?85:PRUEF_MIN; }
@@ -3844,6 +3858,21 @@ function colorChartBlock(cp,vorname){
     <p class="pc-foot">Jede Farbe wird unabhängig bewertet (0–100 %) – die Werte zeigen, wie stark dieses Verhaltensmuster bei ${esc(vorname)} ausgeprägt ist.</p></div>`;
 }
 const FORMS=["B","BE","B197","Automatik","C1","C1E","C","CE"];
+/* Lkw-Klassen nur für Fahrlehrer mit Fahrlehrerlaubnis CE (🗣 Serband 14.10.2026). Die Klassen pflegt das Büro in der
+   Fahrlehrer-Akte (profiles.klassen). Ohne Fahrschule (eigene App), in der Gesamtansicht und solange das Büro noch
+   keine Klassen eingetragen hat: alle Klassen wie bisher. */
+function lkwErlaubt(){
+  if(_fsAgg||!_authProfile||!_authProfile.fahrschule_id)return true;
+  const kl=_authProfile.klassen||[];
+  return !kl.length||kl.some(k=>["C1","C1E","C","CE"].includes(k));
+}
+// Ohne Lkw-Erlaubnis bleibt die Lkw-Klasse des Schülers wählbar (aktuelle Form, Büro-Klasse, Form beim ersten Öffnen),
+// damit ein Fehltipp auf „B“ sie nicht verschwinden lässt
+const _formStart={};
+function formsFuer(s){
+  if(s&&s.id&&!(s.id in _formStart))_formStart[s.id]=s.form;
+  return FORMS.filter(f=>!["C1","C1E","C","CE"].includes(f)||lkwErlaubt()||(s&&(s.form===f||s.klasseBuero===f||_formStart[s.id]===f)));
+}
 const FORM_LABEL={B:"B Schalter",BE:"BE",B197:"B197",Automatik:"Automatik",C1:"C1 Lkw",C1E:"C1E Zug",C:"C Lkw",CE:"CE Zug"};
 function formLabel(f){return FORM_LABEL[f]||f||"B Schalter";}
 const SONDER_DEF=[{key:"ueberland",label:"Überlandfahrt",soll:5},{key:"autobahn",label:"Autobahnfahrt",soll:4},{key:"nacht",label:"Nachtfahrt",soll:3}];
@@ -5012,6 +5041,12 @@ async function pullSchuelerZuweisungen() {
     if (schErr) throw schErr;
     _merkeFristen(rows);
     _ladeTheorieBesuch(supa, (rows||[]).map(r=>r.id));
+    // Klassen des Fahrlehrers neu lesen: trägt das Büro CE ein, sind die Lkw-Klassen ohne neues Anmelden frei
+    const uidKl = _authUser.id;
+    supa.from("profiles").select("klassen,fahrlehrerlaubnis").eq("id", uidKl).maybeSingle().then(({ data: pr, error: prErr }) => {
+      if (prErr || !pr || !_authProfile || _authProfile.id !== uidKl) return;
+      _authProfile.klassen = pr.klassen || []; _authProfile.fahrlehrerlaubnis = pr.fahrlehrerlaubnis || null;
+    }, () => {});
     const lokaleIds = new Set((DB.students||[]).map(s=>s.id));
     let neu = [];
     ensureAusbildungsplaene();
@@ -7166,7 +7201,7 @@ window.addEventListener("load", () => {
 const STORE_KEY="serband-app-v1";
 /* Build-Version: bei jeder Auslieferung hier das Datum aktualisieren.
    Wird in den Einstellungen angezeigt + für den Update-Hinweis genutzt. */
-const APP_VERSION="2026.10.14.5";
+const APP_VERSION="2026.10.14.6";
 try{const f=document.getElementById("drawerFoot"); if(f)f.textContent="Fahrlehrer-Kompass · Version "+APP_VERSION;}catch(e){}
 // Nutzungsbedingungen & Haftungsausschluss (Bereich: rechtliche Absicherung) - Version hochzählen
 // und alle Nutzer müssen erneut zustimmen, sobald sich der Text inhaltlich ändert.
@@ -8293,7 +8328,7 @@ function routeDetail(id){
       <span style="font-size:13px;color:var(--orange);font-weight:700;">⏳ Warteliste</span>
       <span style="font-size:12.5px;color:var(--muted);">Platz ${wlPos} · seit ${wlTage} ${wlTage===1?'Tag':'Tagen'}</span>
     </button>`:""}
-    <div class="form-pick" style="margin-top:10px;"><div class="fpc-label">Fährt</div><div class="pills" id="dashFormPills">${FORMS.map(f=>`<button class="pill ${s.form===f?'sel':''}" data-form="${f}">${formLabel(f)}</button>`).join("")}</div></div>${lkwWegHTML(s)}
+    <div class="form-pick" style="margin-top:10px;"><div class="fpc-label">Fährt</div><div class="pills" id="dashFormPills">${formsFuer(s).map(f=>`<button class="pill ${s.form===f?'sel':''}" data-form="${f}">${formLabel(f)}</button>`).join("")}</div></div>${lkwWegHTML(s)}
     <div class="theorie-card" style="margin-top:9px;">
       <div class="tc-body"><div class="tc-name">Theorieprüfung</div><div class="tc-sub">bestanden – einfach umschalten</div></div>
       <button class="check-toggle ${pl.theorie?'on':''}" id="dashTheoToggle" aria-label="Theorie bestanden"></button>
@@ -11251,7 +11286,7 @@ function formView(existing){
       <div class="field"><label>Vollständiger Name</label>
         <input id="f_name" type="text" placeholder="Vor- und Nachname" value="${esc(s.name)}" autocomplete="off"></div>
       <div class="field"><label>Ausbildungsform</label>
-        <div class="pills" id="formPills">${FORMS.map(f=>`<button class="pill ${s.form===f?'sel':''}" data-form="${f}">${formLabel(f)}</button>`).join("")}</div></div>
+        <div class="pills" id="formPills">${formsFuer(s).map(f=>`<button class="pill ${s.form===f?'sel':''}" data-form="${f}">${formLabel(f)}</button>`).join("")}</div></div>
       <div class="field"><label>Beginn der Ausbildung <span style="font-size:11.5px;font-weight:600;color:var(--faint);background:var(--surface-2);padding:2px 8px;border-radius:6px;">optional</span></label>
         <input id="f_beginn" type="text" placeholder="TT.MM.JJJJ" value="${esc(s.beginn||"")}" autocomplete="off"></div>
       <div class="field"><label>Geburtsdatum <span style="font-size:11.5px;font-weight:600;color:var(--faint);background:var(--surface-2);padding:2px 8px;border-radius:6px;">optional</span></label>
@@ -11867,6 +11902,7 @@ function openEventSheet(kind,id,sid){
       })():''}
       ${st?`<button class="es-act primary" id="esAkte">Schülerakte öffnen</button>`:''}
       ${l.art==="theorie"&&_authProfile&&_authProfile.fahrschule_id?`<button class="es-act primary" id="esAnwesend">Anwesenheit eintragen</button>`:''}
+      ${fcRelevant&&st&&lkwZweiKlassen(st)?`<button class="es-act" id="esLkwKl">${lkwKlKnopf(st,l)}</button>`:''}
       ${fcRelevant&&sichtbar("fahrcheck")?`<button class="es-act" id="esFC">Fahrcheck · <b>${fcLab}</b></button>`:''}
       ${fcRelevant&&st?`<button class="es-act" id="esSig">Unterschrift · <b>${l.signed?'✓ vorhanden':'noch offen'}</b></button>`:''}
       ${l.art==="block"?'':`<button class="es-act" id="esEdit">Bearbeiten / verschieben</button>
@@ -11880,6 +11916,7 @@ function openEventSheet(kind,id,sid){
   const prot=$("#esProtokoll"); if(prot)prot.addEventListener("click",()=>{ closeSheet(); sendeStundenProtokoll(st,l.date); });
   const ak=$("#esAkte"); if(ak)ak.addEventListener("click",()=>{ closeSheet(); routeDetail(l.sid); });
   const anw=$("#esAnwesend"); if(anw)anw.addEventListener("click",()=>openTheorieAnwesenheit(l));
+  const lkwKl=$("#esLkwKl"); if(lkwKl)lkwKl.addEventListener("click",()=>{ const k=lkwZweiKlassen(st); l.lkwKlasse=lkwStundenKlasse(st,l)===k[0]?k[1]:k[0]; save(); lkwKl.innerHTML=lkwKlKnopf(st,l); });
   const fcb=$("#esFC"); if(fcb)fcb.addEventListener("click",()=>{ closeSheet(); openFCMenu(id); });
   const sigb=$("#esSig"); if(sigb)sigb.addEventListener("click",()=>{ closeSheet(); openSignatureSheet(id); });
   // Urlaub/Blocker (ganze Tage) nur löschen, nicht bearbeiten - sonst gingen sie kaputt.

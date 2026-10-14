@@ -307,7 +307,7 @@ details summary{cursor:pointer;font-weight:700;margin:6px 0;}
 @media (max-width:1200px){
   :root{--seite:236px;} .inhalt{padding:24px 26px 50px;}
   .tabelle td,.tabelle th{padding:10px 8px;}
-  .aktionen-box{flex-direction:column;align-items:stretch;min-width:120px;}
+  .aktionen-box{flex-direction:column;align-items:stretch;min-width:0;}
   .stand{min-width:96px;gap:6px;}
   .tabelle .marke-pill{white-space:normal;}
   .suche{min-width:200px;}
@@ -553,6 +553,16 @@ a.kachel:hover,a.kachel:focus-visible{border-color:var(--akzent);}
 .warnhinweis{color:var(--rot);font-weight:700;margin:0;}
 .warnhinweis:empty{display:none;}
 .anwesenheit h3{margin:4px 0 6px;}
+/* Fahrlehrer-Akte (14.10.2026) */
+.fl-kacheln{margin-bottom:12px;}
+.fl-warnung{font-weight:700;margin:4px 0;}
+.fl-warnung.abgelaufen{color:var(--pill-rot);} .fl-warnung.bald{color:var(--pill-gelb);}
+.fl-frist{display:block;font-weight:600;} .fl-frist.abgelaufen{color:var(--pill-rot);} .fl-frist.bald{color:var(--pill-gelb);}
+.tabelle .textknopf{text-align:left;}
+.aufgabe .fl-name{font-weight:700;}
+.dialog-meldung{margin:0;padding:10px 24px;background:var(--rot-soft);color:var(--pill-rot);font-weight:700;border-top:1px solid var(--line-soft);}
+.formular .raster-zwei{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px 20px;}
+.formular .raster-zwei[hidden]{display:none;}
 .besuch-liste{list-style:none;padding:0;margin:6px 0;display:grid;gap:2px;}
 .anw-namen{columns:3 180px;margin:4px 0 10px;padding-left:18px;}
 .theorie-teile .fehlt{color:var(--pill-gelb, #7a5410);}

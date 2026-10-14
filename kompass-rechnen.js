@@ -208,6 +208,28 @@
     const ist = teile.reduce((a, t) => a + t.ist, 0), sollSumme = teile.reduce((a, t) => a + t.soll, 0);
     return { pflicht: soll.pflicht, grund: soll.grund, teile, ist, soll: sollSumme, fertig: soll.pflicht && ist >= sollSumme };
   }
+  /* Sonderfahrten nach Anlage 4 FahrschAusbO (Überland / Autobahn / Nacht, je 45 Minuten) – gleiche Werte wie
+     SONDER_SOLL und LKW_WEGE in index.html (scripts/rechnen-test.mjs prüft das). Für das Büro bei Fahrlehrern ohne App. */
+  const SONDER_SOLL = { B: [5, 4, 3], B197: [5, 4, 3], Automatik: [5, 4, 3], BE: [3, 1, 1], C1: [3, 1, 1] };
+  const LKW_WEGE = { C: [["B", [5, 2, 3]], ["C1", [3, 1, 1]]], CE: [["C", [5, 2, 3]], ["C+CE", [8, 3, 3]]], C1E: [["C1", [3, 1, 1]], ["C1+C1E", [4, 2, 2]]] };
+  function sonderSoll(form, weg) {
+    const f = form === "B78" ? "Automatik" : (form || "B");
+    if (LKW_WEGE[f]) { const w = LKW_WEGE[f].find((x) => x[0] === weg) || LKW_WEGE[f][0]; return w[1]; }
+    return SONDER_SOLL[f] || SONDER_SOLL.B;
+  }
+  /* Fahrlehrer-Akte (🗣 Serband 14.10.2026): Fahrlehrerlaubnis → was er ausbilden darf (FahrlG § 1 Abs. 2),
+     Fristen: Führerschein C/CE und D (§ 23 FeV, 5 Jahre), Schlüsselzahl 95 (§ 5 BKrFQG), Fortbildung (FahrlG § 53). */
+  const FAHRLEHRERLAUBNIS = { BE: ["B", "BE"], A: ["A"], CE: ["C1", "C1E", "C", "CE"], DE: ["D1", "D1E", "D", "DE"] };
+  function ausbildungsKlassen(fl) { return [...new Set((fl || []).flatMap((k) => FAHRLEHRERLAUBNIS[k] || []))]; }
+  // stufe je Frist: abgelaufen | bald (≤90 Tage) | ok
+  function fahrlehrerFristen(p, heute) {
+    heute = heute || todayISO();
+    const liste = [["fuehrerschein_c_bis", "Führerschein C/CE"], ["fuehrerschein_d_bis", "Führerschein D"], ["sz95_bis", "Schlüsselzahl 95"], ["fortbildung_bis", "Fortbildung"]];
+    return liste.filter(([k]) => p && p[k]).map(([k, titel]) => {
+      const bis = String(p[k]).slice(0, 10), tage = daysBetweenISO(heute, bis);
+      return { key: k, titel, bis, tage, stufe: tage < 0 ? "abgelaufen" : tage <= 90 ? "bald" : "ok" };
+    });
+  }
   // Fahrcheck-Zettel (Übungs-, Sonder- und Testfahrten) verfallen 12 Monate nach dem Datum der Stunde (Kristina, 09.10.2026)
   function fcGueltigBis(datum) { return datum ? addMonthsISO(datum, 12) : null; }
   // stufe: verfallen | bald (≤60 Tage) | ok
@@ -296,7 +318,7 @@
     return out;
   }
 
-  const api = { FS_BUERO_ARTEN, pad2, hm2min, parseISO, dateISO, todayISO, ueOf, addMonthsISO, addDaysISO, daysBetweenISO, reaktFaellig, reaktNachZahlung, reaktInfo, theorieInfo, antragInfo, theorieFristInfo, umschreibInfo, istEuEwr, EU_EWR, UMSCHREIB_MONATE, theorieSoll, theorieStand, lkwWegAusVorbesitz, LEKT_GRUND, LEKT_B, LEKT_C, LEKT_CE, fcGebucht, fcErhalten, fcGueltigBis, fcGueltigkeit, fcZeitraum, fcVorZeitraum, fcSoll, aufteilung, FAHR_ARTEN, wartetInfo, istDrittstaat, landKey, DRITTSTAATEN };
+  const api = { FS_BUERO_ARTEN, pad2, hm2min, parseISO, dateISO, todayISO, ueOf, addMonthsISO, addDaysISO, daysBetweenISO, reaktFaellig, reaktNachZahlung, reaktInfo, theorieInfo, antragInfo, theorieFristInfo, umschreibInfo, istEuEwr, EU_EWR, UMSCHREIB_MONATE, theorieSoll, theorieStand, sonderSoll, FAHRLEHRERLAUBNIS, ausbildungsKlassen, fahrlehrerFristen, lkwWegAusVorbesitz, LEKT_GRUND, LEKT_B, LEKT_C, LEKT_CE, fcGebucht, fcErhalten, fcGueltigBis, fcGueltigkeit, fcZeitraum, fcVorZeitraum, fcSoll, aufteilung, FAHR_ARTEN, wartetInfo, istDrittstaat, landKey, DRITTSTAATEN };
   if (typeof module !== "undefined" && module.exports) module.exports = api;
   else root.KR = api;
 })(typeof self !== "undefined" ? self : this);
