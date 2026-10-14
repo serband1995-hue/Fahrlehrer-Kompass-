@@ -103,7 +103,7 @@ function bauDaten(heute) {
         { id: "bp-1", fahrschule_id: FS, name: "Jelena", telefon: null, hat_pin: true, _pin: "6204", darf_verwalten: true, aktiv: true, gesperrt_bis: null, fehlversuche: 0 },
         { id: "bp-2", fahrschule_id: FS, name: "Murat", telefon: null, hat_pin: true, _pin: "7391", darf_verwalten: true, aktiv: true, gesperrt_bis: null, fehlversuche: 0 },
         { id: "bp-3", fahrschule_id: FS, name: "Kristina", telefon: "0170 0000000", hat_pin: true, _pin: "4826", darf_verwalten: false, aktiv: true, gesperrt_bis: null, fehlversuche: 0 },
-        { id: "bp-4", fahrschule_id: FS, name: "Isra", telefon: null, hat_pin: false, _pin: null, darf_verwalten: false, aktiv: true, gesperrt_bis: null, fehlversuche: 0 },
+        { id: "bp-4", fahrschule_id: FS, name: "Isra", telefon: null, hat_pin: false, _pin: null, pin_frei_bis: new Date(Date.now() + 15 * 60000).toISOString(), darf_verwalten: false, aktiv: true, gesperrt_bis: null, fehlversuche: 0 },
       ],
     },
   };
@@ -136,19 +136,24 @@ if (typeof module !== "undefined" && module.exports) { module.exports = { bauDat
   const personen = () => tabelle("buero_personen");
   const meineSitzung = () => {
     let t = null;
-    try { t = (JSON.parse(sessionStorage.getItem("buero-sitzung") || "null") || {}).token; } catch (e) { /* keine */ }
+    try { t = sessionStorage.getItem("buero-abmelden") || (JSON.parse(sessionStorage.getItem("buero-sitzung") || "null") || {}).token; } catch (e) { /* keine */ }
     return t && F.sitzungen[t] ? Object.assign({ token: t }, F.sitzungen[t]) : null;
   };
   const meinProfil = () => (F.tabellen.profiles || []).find((p) => F.session && p.id === F.session.user.id) || {};
   const darfVerwalten = () => { const r = meinProfil().rolle; if (r === "super_admin" || r === "fahrschule_admin") return true; const s = meineSitzung(); const p = s && personen().find((x) => x.id === s.person); return !!(p && p.darf_verwalten); };
   const R = {
-    buero_pin_anmelden: ({ p_person, p_pin }) => {
+    buero_pin_anmelden: ({ p_person, p_pin, p_erste }) => {
       const p = personen().find((x) => x.id === p_person && x.aktiv !== false);
       if (!p) return { fehler: "unbekannt" };
       if (p.gesperrt_bis && new Date(p.gesperrt_bis) > new Date()) return { fehler: "gesperrt", bis: p.gesperrt_bis };
       if (!/^[0-9]{4}$/.test(p_pin || "")) return { fehler: "format" };
       let erst = false;
-      if (!p._pin) { if (zuEinfach(p_pin)) return { fehler: "zu_einfach" }; p._pin = p_pin; p.hat_pin = true; erst = true; }
+      if (!p._pin) {
+        if (!p_erste) return { fehler: "keine_pin" };
+        if (!p.pin_frei_bis || new Date(p.pin_frei_bis) < new Date()) return { fehler: "nicht_freigegeben" };
+        if (zuEinfach(p_pin)) return { fehler: "zu_einfach" };
+        p._pin = p_pin; p.hat_pin = true; p.pin_frei_bis = null; erst = true;
+      } else if (p_erste) return { fehler: "hat_pin" };
       else if (p._pin !== p_pin) {
         p.fehlversuche = (p.fehlversuche || 0) + 1;
         if (p.fehlversuche >= 5) { p.fehlversuche = 0; p.gesperrt_bis = new Date(Date.now() + 15 * 60000).toISOString(); return { fehler: "gesperrt", bis: p.gesperrt_bis }; }
@@ -182,7 +187,7 @@ if (typeof module !== "undefined" && module.exports) { module.exports = { bauDat
     buero_pin_zuruecksetzen: ({ p_person }) => {
       if (!darfVerwalten()) return { fehler: "keine_berechtigung" };
       const p = personen().find((x) => x.id === p_person); if (!p) return { fehler: "unbekannt" };
-      Object.assign(p, { _pin: null, hat_pin: false, pin_neu_noetig: false, fehlversuche: 0, gesperrt_bis: null });
+      Object.assign(p, { _pin: null, hat_pin: false, pin_neu_noetig: false, fehlversuche: 0, gesperrt_bis: null, pin_frei_bis: new Date(Date.now() + 15 * 60000).toISOString() });
       for (const [t, s] of Object.entries(F.sitzungen)) if (s.person === p.id) delete F.sitzungen[t];
       return { ok: true, name: p.name };
     },

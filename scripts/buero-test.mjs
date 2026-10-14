@@ -897,6 +897,11 @@ for (const [breite, hoehe] of [[1920, 1080], [1366, 768], [1024, 768]]) {
   if (await page.isVisible("#werAnderer, #werName")) fehler("PIN: frei getippter Name ist noch möglich");
   const kacheln = await page.$$eval("#werListe button", (b) => b.map((x) => x.textContent.trim()));
   if (kacheln.length !== 4 || !kacheln.some((t) => t.includes("Isra") && t.includes("PIN festlegen"))) fehler("PIN: Namenskacheln falsch " + JSON.stringify(kacheln));
+  if (!(await page.evaluate(() => document.getElementById("app").inert))) fehler("PIN: Seite hinter dem PIN-Fenster ist bedienbar");
+  // Doppelklick auf den Namen tippt keine Ziffer mit
+  await page.dblclick('#werListe button:has-text("Kristina")'); await page.waitForTimeout(150);
+  if ((await page.$$eval("#pinPunkte .voll", (x) => x.length)) !== 0) fehler("PIN: Doppelklick auf den Namen gibt eine Ziffer ein");
+  await page.keyboard.press("Escape");
   await pruefeLayout(page, "PIN Namen");
   if (FOTOS) await page.screenshot({ path: join(FOTOS, "pin-namen.png") });
   // Falsche PIN: Hinweis mit Restversuchen, Seite bleibt gesperrt
@@ -905,6 +910,7 @@ for (const [breite, hoehe] of [[1920, 1080], [1366, 768], [1024, 768]]) {
   if (!(await page.isVisible("#werPin"))) fehler("PIN: Ziffernfeld erscheint nicht");
   await pruefeLayout(page, "PIN Ziffernfeld");
   if (FOTOS) await page.screenshot({ path: join(FOTOS, "pin-ziffern.png") });
+  await page.waitForTimeout(400); // Schutz gegen Doppelklick: Ziffern-Klicks erst nach 0,4 s
   for (const z of "1357") await page.click(`#pinFeld [data-ziffer="${z}"]`);
   await page.waitForTimeout(150);
   let t = await page.textContent("#pinFehler");
@@ -918,6 +924,7 @@ for (const [breite, hoehe] of [[1920, 1080], [1366, 768], [1024, 768]]) {
   // Richtige PIN
   await meldePinAn(page, "Kristina");
   if (await page.isVisible("#wer:not([hidden])")) fehler("PIN: richtige PIN öffnet nicht");
+  if (await page.evaluate(() => document.getElementById("app").inert)) fehler("PIN: Seite bleibt nach der Anmeldung gesperrt");
   if ((await page.textContent("#werAnzeige")) !== "Kristina" || (await page.textContent("#nutzerName")) !== "Kristina") fehler("PIN: Name in der Seitenleiste fehlt");
   if ((await page.textContent("#kopfWer")) !== "🔒 Sperren") fehler("PIN: Sperren-Knopf oben fehlt");
   // Kristina darf nicht verwalten
@@ -946,6 +953,11 @@ for (const [breite, hoehe] of [[1920, 1080], [1366, 768], [1024, 768]]) {
   await page.fill("dialog input[name=name]", "Testperson"); await page.click("dialog button[value=ok]"); await page.waitForTimeout(300);
   if (!(await page.evaluate(() => S.personen.some((p) => p.name === "Testperson")))) fehler("PIN: Person nicht angelegt");
   if (await page.isVisible("dialog input[name=verwalten]")) fehler("PIN: Büro-Person darf Verwalten-Recht vergeben");
+  // Neue Person ohne Freigabe kann keine PIN festlegen (sonst könnte jeder sie übernehmen)
+  await page.click("#werWechseln"); await page.click('#werListe button:has-text("Testperson")'); await page.waitForTimeout(100);
+  await page.keyboard.type("3817"); await page.waitForTimeout(150);
+  if (!/noch keine PIN/.test(await page.textContent("#pinFehler")) || (await page.$$eval("#pinPunkte .voll", (x) => x.length)) !== 0) fehler("PIN: Person ohne Freigabe kann PIN festlegen");
+  await page.keyboard.press("Escape"); await page.click("#werZu");
   // PIN von Kristina zurücksetzen
   await page.click(`[data-preset="bp-3"]`); await page.click("dialog[open] button[value=ok]"); await page.waitForTimeout(300);
   if (await page.evaluate(() => window.__FAKE.tabellen.buero_personen.find((p) => p.id === "bp-3").hat_pin)) fehler("PIN: Zurücksetzen wirkt nicht");
