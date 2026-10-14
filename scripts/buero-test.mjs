@@ -1182,7 +1182,7 @@ for (const [breite, hoehe] of [[1920, 1080], [1366, 768], [1024, 768]]) {
   await page.fill("dialog[open] input[name=wohnsitz_de_seit]", wohnsitz); await page.waitForTimeout(100);
   const hinweis = await page.textContent("#afsHinweis");
   if (!/nur noch bis/.test(hinweis)) fehler("Umschreiber: Hinweis zur 6-Monats-Frist fehlt: " + hinweis);
-  await page.click("#afsNeu"); await page.fill('dialog[open] .afs-zeile >> nth=1 >> [data-afs="land"]', "Polen");
+  await page.click("#afsNeu"); await page.fill('dialog[open] .afs-zeile >> nth=1 >> [data-afs="land"]', "Türkei");
   await pruefeLayout(page, "Schüler mit Behörde und Umschreiber");
   if (FOTOS) await page.screenshot({ path: join(FOTOS, "schueler-behoerde.png"), fullPage: true });
   await page.click("dialog[open] button[value=ok]"); await page.waitForTimeout(400);
@@ -1195,7 +1195,7 @@ for (const [breite, hoehe] of [[1920, 1080], [1366, 768], [1024, 768]]) {
   if (!/Syrien/.test(um) || !/darf bald nicht mehr fahren/.test(um)) fehler("Fristen: Umschreiber-Ansicht zeigt die Frist nicht");
   await pruefeLayout(page, "Fristen Umschreiber");
   await page.goto(page.url().split("#")[0] + "#fristen?ansicht=antrag"); await page.waitForTimeout(300);
-  if (!/Theorie-Frist bald/.test(await page.textContent("#ansicht"))) fehler("Fristen: Theorie-Frist fehlt in „Antrag & Theorie-Frist“");
+  if (!/Behörden-Frist Theorie bald/.test(await page.textContent("#ansicht"))) fehler("Fristen: Theorie-Frist fehlt in „Antrag & Behörden-Frist“");
   await page.goto(page.url().split("#")[0] + "#heute"); await page.waitForTimeout(300);
   if (await page.$("dialog[open] button[value=ok]")) { await page.click("dialog[open] button[value=ok]"); await page.waitForTimeout(200); }
   const heuteTxt = await page.textContent("#ansicht");
