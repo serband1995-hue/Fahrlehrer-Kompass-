@@ -91,6 +91,9 @@ function bauDaten(heute) {
       fahrschulen: [{ id: FS, name: "Vorführ-Fahrschule", slug: "test", aktiv: true, konfiguration: { akademieVermittlung: { betragAkademie: 100, betragSimulator: 149, splitKollege: { fahrlehrer: 15, fahrschule: 45, plattform: 20, akademie: 20 } } } }, { id: "fs-test-2", name: "Zweite Testschule", slug: "test2", aktiv: true, konfiguration: {} }],
       profiles: [...lehrer, ...buero],
       schueler, kalender_termine: termine, kalender_pruefungen: pruefungen, pruefungstermine,
+      // Theorie-Besuch (14.10.2026): s1 hat 13 von 14 Lektionen (es fehlt 14), s2 hat Lektion 7 + 8 am selben Abend
+      theorie_teilnahme: ["1", "2", "3", "4", "5", "6", "7", "8", "9", "10", "11", "12", "13"].map((l, i) => ({ id: "tt-" + i, fahrschule_id: FS, schueler_id: "s1", lektion: l, datum: addTage(heute, -40 + i), bearbeiter: "Fahrlehrer Anton", entfernt_am: null }))
+        .concat([{ id: "tt-a", fahrschule_id: FS, schueler_id: "s2", lektion: "7", datum: addTage(heute, -3), bearbeiter: "Fahrlehrer Anton", entfernt_am: null }, { id: "tt-b", fahrschule_id: FS, schueler_id: "s2", lektion: "8", datum: addTage(heute, -3), bearbeiter: "Fahrlehrer Anton", entfernt_am: null }]),
       fahrschule_fahrzeuge: [
         { id: "fz-1", fahrschule_id: FS, name: "Golf Schalter 1", typ: "schalt", aktiv: true, erstellt_am: "2026-01-01" },
         { id: "fz-2", fahrschule_id: FS, name: "Golf Schalter 2", typ: "schalt", aktiv: true, erstellt_am: "2026-01-02" },

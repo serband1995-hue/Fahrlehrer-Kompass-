@@ -1223,6 +1223,38 @@ for (const [breite, hoehe] of [[1920, 1080], [1366, 768], [1024, 768]]) {
   await ctx.close();
 }
 
+// Schritt 3 (14.10.2026): Theorie-Besuch – Stand in der Akte, Filter, Anwesenheit im Theorie-Termin, Druck, Hinweis bei Theorieprüfung
+{
+  const { page, ctx, konsole } = await oeffne({ nutzer: "bu-1", hash: "#schueler", breite: 1366, hoehe: 900, vorbereiten: function () {
+    const h = new Date(); h.setDate(h.getDate() - 3); const d = h.toISOString().slice(0, 10);
+    F.tabellen.kalender_termine.push({ id: "th-1", fahrschule_id: "fs-test-1", fahrlehrer_id: "fl-1", schueler_id: null, datum: d, von: "18:00", bis: "19:30", art: "theorie", status: "geplant", geloescht: false, payload: { lektion: 7 } });
+  } });
+  await page.evaluate(() => schuelerDialog("s1")); await page.waitForTimeout(200);
+  const akte = await page.textContent("dialog[open]");
+  if (!/Theorieunterricht/.test(akte) || !/13\/14/.test(akte) || !/fehlt: 14/.test(akte)) fehler("Theorie: Akte zeigt 13/14 und „fehlt: 14“ nicht");
+  await pruefeLayout(page, "Akte mit Theorie-Besuch");
+  await page.keyboard.press("Escape"); await page.waitForTimeout(150);
+  await page.goto(page.url().split("#")[0] + "#schueler?notiz=theorie"); await page.waitForTimeout(300);
+  const liste = await page.textContent("#ansicht");
+  const s2 = await page.evaluate(() => window.__FAKE.tabellen.schueler.find((x) => x.id === "s2").name);
+  if (!liste.includes(s2)) fehler("Theorie: Filter „Theorie noch nicht vollständig“ zeigt den Schüler nicht");
+  // Theorie-Termin: Anwesenheit und Druck
+  await page.evaluate(() => terminDialog("th-1")); await page.waitForTimeout(200);
+  const td = await page.textContent("dialog[open]");
+  if (!/Anwesenheit · 1 Teilnehmer/.test(td) || !td.includes(s2) || !/Lektion 7 \+ 8/.test(td)) fehler("Theorie: Termin zeigt die Anwesenheit nicht: " + td.slice(0, 160));
+  const gedruckt = await page.evaluate(() => { let html = ""; const alt = window.open; window.open = () => ({ document: { write: (x) => { html += x; }, close() {} }, focus() {}, print() {} }); document.querySelector("dialog[open] [data-anwdruck]").click(); window.open = alt; return html; });
+  if (!gedruckt.includes(s2) || !/Unterschrift/.test(gedruckt)) fehler("Theorie: Druckliste unvollständig");
+  await page.keyboard.press("Escape"); await page.waitForTimeout(150);
+  // Theorieprüfung planen für s2 (2/14) → Hinweis
+  await page.evaluate(() => pruefungDialog(null)); await page.waitForTimeout(200);
+  await page.selectOption("dialog[open] select[name=schueler_id]", "s2");
+  await page.selectOption("dialog[open] select[name=art]", "theorie"); await page.waitForTimeout(100);
+  if (!/erst 2 von 14/.test(await page.textContent("#pTheorieHinweis"))) fehler("Theorie: Hinweis bei Theorieprüfung fehlt");
+  await page.keyboard.press("Escape");
+  if (konsole.length) fehler("Theorie: Konsole: " + konsole.join(" | "));
+  await ctx.close();
+}
+
 // Endprüfung 14.10.: Korrektur einer bestandenen Praxisprüfung über „Bearbeiten“ räumt die Akte auf (auch Status + Datum zugleich)
 {
   const { page, ctx, konsole } = await oeffne({ nutzer: "bu-1", hash: "#pruefungen?ansicht=alle", wer: "Jelena", vorbereiten: function () {

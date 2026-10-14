@@ -1631,6 +1631,25 @@ body:not(.light) .cw-col.today .cw-dnum{color:var(--gold);}
 .chip.sehhilfe:active{transform:scale(.93);}
 .s-sehhilfe{font-size:12px;opacity:.85;}
 .afs-app{border-top:1px dashed var(--line-soft);padding-top:8px;margin-top:4px;}
+.tb-balken{height:8px;border-radius:6px;background:var(--surface-2);overflow:hidden;margin:6px 0 4px;}
+.tb-balken span{display:block;height:100%;background:var(--akzent,#2f5d3f);border-radius:6px;}
+.tb-balken.fertig span{background:var(--gruen);}
+.tb-zahl{font-size:15px;margin:2px 0;} .tb-zahl b{font-size:20px;}
+.tb-fehlt{display:block;color:var(--gold,#9a6b12);font-weight:600;font-size:12px;}
+.tb-liste summary{cursor:pointer;font-size:13px;color:var(--muted);min-height:44px;display:flex;align-items:center;}
+.tb-leer{font-size:12.5px;margin:6px 0 0;}
+.tb-zeile{display:flex;align-items:center;gap:8px;font-size:13px;margin-top:9px;padding:6px 2px;}
+.ta-lekt-zeile{display:flex;align-items:center;justify-content:space-between;gap:10px;margin:2px 0 8px;font-weight:700;}
+.ta-lekt-zeile .btn{min-height:44px;padding:8px 16px;flex:0 0 auto;}
+.field select{width:100%;max-width:100%;}
+.ta-lekt .pill{min-width:44px;}
+.ta-zahl{float:right;font-weight:600;color:var(--muted);font-size:12.5px;}
+.ta-liste{max-height:46vh;overflow-y:auto;border:1px solid var(--line-soft);border-radius:12px;margin-bottom:12px;}
+.ta-zeile{display:flex;align-items:center;gap:12px;padding:10px 12px;border-bottom:1px solid var(--line-soft);font-size:15px;min-height:48px;}
+.ta-zeile:last-child{border-bottom:none;}
+.ta-zeile input{width:22px;height:22px;flex:0 0 auto;accent-color:var(--akzent,#2f5d3f);}
+.ta-zeile span{flex:1;min-width:0;overflow-wrap:anywhere;}
+.ta-zeile small{color:var(--muted);font-size:12px;white-space:nowrap;}
 /* Pills in Blättern (Vorbesitz, Lektionen): wie die Pills der Akte, 44 px, gewählt dunkel gefüllt */
 #sheet .sheet-pills{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:8px;}
 #sheet .sheet-pills .pill{min-height:44px;padding:8px 4px;text-align:center;background:var(--k-karte,var(--surface)) !important;border:1px solid var(--k-rand,var(--line)) !important;color:var(--k-tinte,var(--txt)) !important;font-weight:700;}
@@ -4890,7 +4909,7 @@ let _schuelerFristen = {};
 function _merkeFristen(rows){
   (rows||[]).forEach(r=>{ _schuelerFristen[r.id]={reakt_status:r.reakt_status,vertrag_am:r.vertrag_am,reakt_bezahlt_bis:r.reakt_bezahlt_bis,
     theorie_abgeschlossen_am:r.theorie_abgeschlossen_am,theorie_bestanden_am:r.theorie_bestanden_am,praxis_bestanden_am:r.praxis_bestanden_am||null,antrag_am:r.antrag_am,inaktiv_seit:r.inaktiv_seit,
-    ausbildungsart:r.ausbildungsart||null,bewerbernummer:r.bewerbernummer||null,theorie_frist_bis:r.theorie_frist_bis||null,sehhilfe:r.sehhilfe==null?null:!!r.sehhilfe,
+    ausbildungsart:r.ausbildungsart||null,klasse:r.klasse||null,bewerbernummer:r.bewerbernummer||null,theorie_frist_bis:r.theorie_frist_bis||null,sehhilfe:r.sehhilfe==null?null:!!r.sehhilfe,
     vorbesitz:Array.isArray(r.vorbesitz)?r.vorbesitz:[],auslands_fs:Array.isArray(r.auslands_fs)?r.auslands_fs:[],wohnsitz_de_seit:r.wohnsitz_de_seit||null,uebersetzung_vorhanden:!!r.uebersetzung_vorhanden}; });
   _meldeBueroErgebnisse(rows);
 }
@@ -4992,6 +5011,7 @@ async function pullSchuelerZuweisungen() {
     const { data: rows, error: schErr } = await supa.from("schueler").select("*").eq("fahrlehrer_id", _authUser.id).eq("status", "aktiv");
     if (schErr) throw schErr;
     _merkeFristen(rows);
+    _ladeTheorieBesuch(supa, (rows||[]).map(r=>r.id));
     const lokaleIds = new Set((DB.students||[]).map(s=>s.id));
     let neu = [];
     ensureAusbildungsplaene();
@@ -5075,10 +5095,12 @@ async function pullSchuelerZuweisungen() {
       const bekannt = memS.schueler[r.id];
       if (bekannt && bekannt !== (vorherWert[r.id] !== undefined ? vorherWert[r.id] : _abglWertVon("schueler", lok))) continue; // selbst geändert: eigener Stand gilt
       const erwartet = nachherWert[r.id] || vorherWert[r.id];
-      if (erwartet !== undefined && _abglWertVon("schueler", lok) !== erwartet) continue; // während des Abrufs selbst getippt: eigener Stand gilt (wie oben)
+      // Während des Abrufs selbst getippt: Namen vom Büro trotzdem übernehmen, aber nicht als „hochgeladen“ merken –
+      // die Brücke lädt dann den neuen Namen zusammen mit der eigenen Änderung hoch (nichts geht verloren)
+      const getippt = erwartet !== undefined && _abglWertVon("schueler", lok) !== erwartet;
       const n = (r.name && !(r.name === "(ohne Namen)" && !lok.name)) ? r.name : lok.name, t = r.telefon || "";
-      if (n !== lok.name || t !== (lok.telefon || "")) { lok.name = n; lok.telefon = t; memS.schueler[r.id] = _abglWertVon("schueler", lok); namenNeu = true; }
-      else if (bekannt && bekannt === vorherWert[r.id] && nachherWert[r.id]) memS.schueler[r.id] = nachherWert[r.id]; // Übernahmen vom Büro gelten nicht als eigene Änderung (spätere eigene Änderungen schon)
+      if (n !== lok.name || t !== (lok.telefon || "")) { lok.name = n; lok.telefon = t; if (!getippt) memS.schueler[r.id] = _abglWertVon("schueler", lok); namenNeu = true; }
+      else if (!getippt && bekannt && bekannt === vorherWert[r.id] && nachherWert[r.id]) memS.schueler[r.id] = nachherWert[r.id]; // Übernahmen vom Büro gelten nicht als eigene Änderung (spätere eigene Änderungen schon)
     }
     _abglSpeichern(memS);
     _schuelerAbgerufen = true;
@@ -5520,6 +5542,7 @@ async function _fsLoadAggData(fahrschuleId){
   const lehrerName=id=>{ const l=lehrer.find(x=>x.id===id); return l?(l.name||l.email):"Unbekannt"; };
   DB.students=(schuelerR.data||[]).map(r=>_fsMapSchueler(r,lehrerName));
   _merkeFristen(schuelerR.data);
+  _ladeTheorieBesuch(supa, (schuelerR.data||[]).map(r=>r.id));
   DB.lessons=(termineR.data||[]).map(r=>_fsMapTermin(r,lehrerName));
   DB.exams=(pruefungenR.data||[]).map(r=>_fsMapPruefung(r,lehrerName));
   // Urlaub als künstliche "Blockiert"-Termine einspeisen - Namensabgleich, da fahrschule_urlaub
@@ -7143,7 +7166,7 @@ window.addEventListener("load", () => {
 const STORE_KEY="serband-app-v1";
 /* Build-Version: bei jeder Auslieferung hier das Datum aktualisieren.
    Wird in den Einstellungen angezeigt + für den Update-Hinweis genutzt. */
-const APP_VERSION="2026.10.14.4";
+const APP_VERSION="2026.10.14.5";
 try{const f=document.getElementById("drawerFoot"); if(f)f.textContent="Fahrlehrer-Kompass · Version "+APP_VERSION;}catch(e){}
 // Nutzungsbedingungen & Haftungsausschluss (Bereich: rechtliche Absicherung) - Version hochzählen
 // und alle Nutzer müssen erneut zustimmen, sobald sich der Text inhaltlich ändert.
@@ -8287,6 +8310,7 @@ function routeDetail(id){
     ${fristenHinweisHTML(s.id)}
     ${uebernahmeCard(s)}
     ${behoerdeCard(s)}
+    ${theorieCard(s)}
     <!-- Mini-Dashboard: alles Wichtige auf einen Blick (Bereich 3, Punkt 8) -->
     <div class="mini-dash">
       <div class="mini-dash-row"><span>📊 Ausbildungsstand</span><b>${pct}%</b></div>
@@ -8297,7 +8321,7 @@ function routeDetail(id){
       <div id="akademieFortschrittSlot"></div>
     </div>
     <div class="theo-row">
-      <div class="theo-label">📚 Theorie</div>
+      <div class="theo-label">📚 Lernstand Theorie</div>
       <div class="theo-track"><div class="theo-fill" id="theoFill" style="width:${s.theoriePct||0}%"></div></div>
       <div class="theo-pct" id="theoPct">${s.theoriePct||0} %</div>
       <button class="theo-edit-btn ic ic-blau" id="theoEdit">${ICN.pencil}</button>
@@ -8864,6 +8888,134 @@ function openBehoerdeSheet(s){
     toast("Gespeichert ✓ – das Büro sieht es sofort");
     if(nochOffen){ closeSheet(); const y=view.scrollTop; routeDetail(s.id); view.scrollTop=y; }
   });
+}
+/* Theorie-Besuch (🗣 Serband 14.10.2026, Antwort 2a): Der Fahrlehrer tippt im Theorie-Termin an, wer da war.
+   Gespeichert in theorie_teilnahme (je Schüler, Lektion, Tag); Soll nach Gesetz aus KR.theorieSoll. */
+let _theorieBesuch = null; // schueler_id -> [{lektion, datum}]; null = noch nicht geladen
+let _theorieLadeNr = 0; const _theorieNrJe = {};
+async function _ladeTheorieBesuch(supa, ids){
+  const nr=++_theorieLadeNr;
+  try{
+    if(!supa||!ids||!ids.length){ _theorieBesuch=_theorieBesuch||{}; return; }
+    const neu={};
+    for(let i=0;i<ids.length;i+=150){
+      const teil=ids.slice(i,i+150);
+      // seitenweise: mehr als 1000 Zeilen (150 Schüler × bis zu 26 Lektionen) dürfen nicht still fehlen
+      const data=await _alleSeiten(()=>supa.from("theorie_teilnahme").select("id,schueler_id,lektion,datum").in("schueler_id",teil).is("entfernt_am",null));
+      teil.forEach(sid=>{ neu[sid]=[]; });
+      data.forEach(x=>{ (neu[x.schueler_id]=neu[x.schueler_id]||[]).push({lektion:String(x.lektion),datum:x.datum}); });
+    }
+    // je Schüler zusammenführen (Gesamtansicht und eigene Schüler); hat ein neuerer Abruf den Schüler schon geladen, gilt dessen Stand
+    _theorieBesuch=_theorieBesuch||{};
+    for(const sid in neu){ if((_theorieNrJe[sid]||0)<=nr){ _theorieBesuch[sid]=neu[sid]; _theorieNrJe[sid]=nr; } }
+  }catch(e){ /* z. B. offline: alten Stand behalten */ }
+}
+function theorieStandFuer(s){
+  if(!window.KR||!KR.theorieSoll)return null;
+  const f=_schuelerFristen[s.id]||{};
+  const soll=KR.theorieSoll({klasse:f.klasse||s.klasseBuero||s.form||"B",form:s.form,weg:lkwWegVon(s),vorbesitz:f.vorbesitz||s.vorbesitzBuero||[],ausbildungsart:istUmschreiberAkte(s)?"umschreibung":f.ausbildungsart});
+  return KR.theorieStand(soll,((_theorieBesuch&&_theorieBesuch[s.id])||[]).map(x=>x.lektion));
+}
+function theorieCard(s){
+  if(_theorieBesuch===null||!_schuelerFristen[s.id])return ""; // nur mit Verbindung zur Fahrschule
+  const st=theorieStandFuer(s); if(!st)return "";
+  if(!st.pflicht) return `<div class="tb-zeile muted-p">${_li("schule")} Theorieunterricht: ${esc(st.grund)}</div>`;
+  // Theorieprüfung bestanden: Der Pflichtunterricht war die Voraussetzung (Altbestand hat meist keine Einträge)
+  if(_schuelerFristen[s.id].theorie_bestanden_am&&!st.fertig) return `<div class="tb-zeile">${_li("schule")} Theorieunterricht: Theorieprüfung bestanden ✓</div>`;
+  const pct=st.soll?Math.round(st.ist/st.soll*100):0;
+  const teil=t=>`<div class="mini-dash-row"><span>${esc(t.titel)}${t.fehlt&&t.fehlt.length&&t.fehlt.length<=6?` <small class="tb-fehlt">fehlt: ${t.fehlt.map(esc).join(", ")}</small>`:""}</span><b>${t.ist}/${t.soll}${t.ist>=t.soll?" ✓":""}</b></div>`;
+  const besuch=((_theorieBesuch&&_theorieBesuch[s.id])||[]).slice().sort((a,b)=>String(b.datum).localeCompare(String(a.datum)));
+  return `<div class="res-block theorie-besuch" style="animation:none;margin-top:9px;">
+    <h4>${_li("schule")} Theorieunterricht</h4>
+    <div class="tb-zahl"><b>${st.ist} von ${st.soll}</b> Pflicht-Lektionen${st.fertig?" ✓ vollständig":""}</div>
+    <div class="tb-balken${st.fertig?" fertig":""}" role="img" aria-label="${st.ist} von ${st.soll} Lektionen besucht"><span style="width:${pct}%"></span></div>
+    ${st.teile.map(teil).join("")}
+    ${besuch.length?"":`<p class="muted-p tb-leer">Noch keine Anwesenheit erfasst. Sie wird im Theorie-Termin eingetragen („Anwesenheit eintragen“).</p>`}
+    ${besuch.length?`<details class="tb-liste"><summary>Besuchte Lektionen (${new Set(besuch.map(b=>String(b.lektion))).size})</summary>${besuch.map(b=>`<div class="mini-dash-row"><span>Lektion ${esc(b.lektion)}</span><span>${isoDE(b.datum)}</span></div>`).join("")}</details>`:""}
+  </div>`;
+}
+// Lektionen eines Abends: alle Theorie-Blöcke des Tages; ist nur eine Lektion bekannt, kommt die zweite des Abends dazu (1+2, 3+4 …, C1+C2, CE1+CE2)
+function _lektOrd(k){ const m=String(k).match(/^(CE|C)?(\d+)$/); return m?({"":0,C:100,CE:200}[m[1]||""]+(+m[2])):999; }
+function _lektGruppe(k){ const m=String(k).match(/^(CE|C)?\d+$/); return m?(m[1]||"B"):""; }
+function _abendLektionen(datum,l){
+  const g=l&&l.lektion!=null&&l.lektion!==""?_lektGruppe(l.lektion):"";
+  let tag=(DB.lessons||[]).filter(x=>x.art==="theorie"&&x.date===datum&&x.lektion!=null&&x.lektion!==""&&(!g||_lektGruppe(x.lektion)===g));
+  // zwei Sitzungen am selben Tag: nur Blöcke, die ohne lange Pause (bis 30 Min) am angetippten Termin hängen
+  if(l&&l.von&&l.bis){ let von=hm2min(l.von), bis=hm2min(l.bis), mehr=true; const im=new Set();
+    while(mehr){ mehr=false; tag.forEach(x=>{ if(im.has(x)||!x.von||!x.bis)return; const a=hm2min(x.von), b=hm2min(x.bis); if(a<=bis+30&&b>=von-30){ im.add(x); von=Math.min(von,a); bis=Math.max(bis,b); mehr=true; } }); }
+    tag=tag.filter(x=>im.has(x)); }
+  const set=[...new Set(tag.map(x=>String(x.lektion)))];
+  if(set.length===1){
+    const m=set[0].match(/^(CE|C)?(\d+)$/); if(m){ const pre=m[1]||"", n=+m[2], p2=n%2?n+1:n-1, k=pre+p2;
+      if(_lektionFinde(k)) set.push(k); }
+  }
+  return set.filter(k=>_lektionFinde(k)).sort((a,b)=>_lektOrd(a)-_lektOrd(b)).slice(0,4);
+}
+let _taNr=0;
+async function openTheorieAnwesenheit(l){
+  const supa=getSupa(); const datum=l.date; const nr=++_taNr;
+  if(!supa||!navigator.onLine){ toast("Keine Verbindung – Anwesenheit nur online eintragen"); return; }
+  if(datum>todayISO()){ toast("Anwesenheit erst am Tag des Unterrichts eintragen"); return; }
+  let lekt=_abendLektionen(datum,l); if(!lekt.length&&l.lektion!=null&&l.lektion!=="")lekt=[String(l.lektion)];
+  const nochAktuell=()=>nr===_taNr&&$("#sheet").classList.contains("open");
+  openSheet(`<div class="sheet-h">Anwesenheit · ${isoDE(datum)}</div><p class="muted-p" style="font-size:13px;">Wird geladen …</p>`);
+  const {data:liste,error}=await supa.rpc("theorie_schuelerliste");
+  if(!nochAktuell())return;
+  if(error||!Array.isArray(liste)){ closeSheet(); toast("Schülerliste nicht geladen – bitte später nochmal"); return; }
+  // Wer ist schon eingetragen? Ohne sichere Antwort wird nicht gespeichert (sonst gingen Einträge verloren).
+  // Zähler: Wechselt der Fahrlehrer schnell die Lektionen, zählt nur die Antwort zur zuletzt gewählten Auswahl
+  let da=new Set(), daGeladen=false, daNr=0;
+  const ladeDa=async()=>{ const meinNr=++daNr; daGeladen=false;
+    if(!lekt.length){ da=new Set(); daGeladen=true; return true; }
+    const {data,error:e2}=await supa.rpc("theorie_teilnahme_tag",{p_datum:datum,p_lektionen:lekt.slice()});
+    if(meinNr!==daNr) return false;
+    if(e2||!Array.isArray(data)) return true; da=new Set(data.map(x=>x.schueler_id)); daGeladen=true; return true; };
+  await ladeDa();
+  if(!nochAktuell())return;
+  if(!daGeladen){ closeSheet(); toast("Eingetragene nicht geladen – bitte später nochmal"); return; }
+  const meineId=_authUser&&_authUser.id;
+  const sortiert=liste.slice().sort((a,b)=>(a.fahrlehrer_id===meineId?0:1)-(b.fahrlehrer_id===meineId?0:1)||String(a.name).localeCompare(String(b.name),"de"));
+  const an=new Set([...da].filter(id=>liste.some(x=>x.id===id))); // angehakt (nur Schüler, die in der Liste stehen)
+  const aus=new Set(); // vom Fahrlehrer abgewählt: bleibt aus, auch wenn die Lektionen wechseln
+  let pillsOffen=!lekt.length;
+  const alleLekt=LEKTIONEN.map(x=>String(x.n)).concat(LKW_LEKTIONEN.map(x=>x.n));
+  const zeichne=()=>{
+    const titel=lekt.length?lekt.map(k=>"Lektion "+k).join(" + "):"Lektion wählen";
+    $("#sheet").innerHTML=`<div class="sheet-h">Anwesenheit · ${isoDE(datum)}${l.von?" · "+esc(l.von):""}</div>
+      <div class="ta-lekt-zeile"><span>${esc(titel)}</span><button type="button" class="btn btn-ghost" id="taLektAuf">${pillsOffen?"fertig":"ändern"}</button></div>
+      ${pillsOffen?`<div class="pills ta-lekt sheet-pills" id="taLekt">${alleLekt.map(k=>`<button type="button" class="pill ${lekt.includes(k)?"sel":""}" data-k="${k}" title="${esc(lektionTitel(k))}">${k}</button>`).join("")}</div>`:""}
+      <div class="field" style="margin-top:8px;"><label>Wer war da? <span class="ta-zahl" id="taZahl">${an.size} anwesend</span></label><input type="search" id="taSuche" placeholder="Name suchen" autocomplete="off"></div>
+      <div id="taListe" class="ta-liste">${sortiert.map(x=>`<label class="ta-zeile" data-name="${esc(String(x.name||"").toLowerCase())}"><input type="checkbox" value="${esc(x.id)}"${an.has(x.id)?" checked":""}><span>${esc(x.name||"")}</span><small>${esc(x.klasse||"")}${x.fahrlehrer_id===meineId?" · deiner":""}</small></label>`).join("")||'<p class="muted-p" style="padding:12px;">Keine aktiven Schüler.</p>'}<p class="muted-p ta-leer" id="taLeer" hidden style="padding:12px;">Kein Name gefunden.</p></div>
+      <div class="btn-row sheet-knoepfe"><button class="btn btn-ghost" id="taAbbr" style="flex:0;padding:13px 18px;">Abbrechen</button><button class="btn btn-primary" id="taSpeichern">Speichern</button></div>`;
+    $("#taAbbr").addEventListener("click",closeSheet);
+    $("#taLektAuf").addEventListener("click",()=>{ pillsOffen=!pillsOffen; zeichne(); });
+    document.querySelectorAll("#taListe input").forEach(i=>i.addEventListener("change",()=>{ if(i.checked){ an.add(i.value); aus.delete(i.value); } else { an.delete(i.value); aus.add(i.value); } $("#taZahl").textContent=an.size+" anwesend"; }));
+    $("#taSuche").addEventListener("input",e=>{ const q=e.target.value.trim().toLowerCase(); let n=0; document.querySelectorAll("#taListe .ta-zeile").forEach(z=>{ const zeig=!q||z.dataset.name.includes(q); z.style.display=zeig?"":"none"; if(zeig)n++; }); $("#taLeer").hidden=n>0; });
+    document.querySelectorAll("#taLekt .pill").forEach(b=>b.addEventListener("click",async()=>{
+      const k=b.dataset.k;
+      if(lekt.includes(k)) lekt=lekt.filter(x=>x!==k); else { if(lekt.length>=4){ toast("Höchstens 4 Lektionen je Abend"); return; } lekt.push(k); }
+      lekt.sort((a,c)=>_lektOrd(a)-_lektOrd(c));
+      const aktuell=await ladeDa(); if(!nochAktuell()||!aktuell)return;
+      if(!daGeladen){ toast("Eingetragene nicht geladen – bitte nochmal"); }
+      da.forEach(id=>{ if(!aus.has(id)&&liste.some(x=>x.id===id)) an.add(id); });
+      zeichne();
+    }));
+    $("#taSpeichern").addEventListener("click",async()=>{
+      if(!lekt.length){ toast("Bitte die Lektion(en) des Abends wählen"); pillsOffen=true; zeichne(); return; }
+      if(!daGeladen){ toast("Eingetragene nicht geladen – bitte Lektion nochmal antippen"); return; }
+      const ids=[...an];
+      if(!ids.length&&da.size&&!confirm("Niemand angehakt – sollen alle bisherigen Einträge dieses Abends entfernt werden?"))return;
+      const b=$("#taSpeichern"); b.disabled=true; b.textContent="Speichert …";
+      const {data,error}=await supa.rpc("theorie_teilnahme_setzen",{p_datum:datum,p_lektionen:lekt,p_schueler:ids});
+      if(!nochAktuell()){ if(!error&&data&&!data.fehler) toast(`✓ Anwesenheit gespeichert (${ids.length})`); return; }
+      b.disabled=false; b.textContent="Speichern";
+      if(error||!data||data.fehler){ toast("Nicht gespeichert"+(data&&data.fehler?" ("+data.fehler+")":"")+" – bitte nochmal"); return; }
+      // eigene Schüler sofort in der Akte aktualisieren
+      if(_theorieBesuch){ (DB.students||[]).forEach(st=>{ const sid=st.id; const alt=(_theorieBesuch[sid]||[]).filter(x=>!(x.datum===datum&&lekt.includes(x.lektion))); if(ids.includes(sid)) lekt.forEach(k=>alt.push({lektion:k,datum})); _theorieBesuch[sid]=alt; }); }
+      closeSheet(); toast(`✓ ${ids.length} Schüler für ${lekt.map(k=>"Lektion "+k).join(" + ")} eingetragen`);
+    });
+  };
+  zeichne();
 }
 function uebernahmeCard(s){
   const u=s.uebernahme; if(!u)return "";
@@ -11519,7 +11671,8 @@ function openTheorieSheet(){
   const defDate=_calView==="tag"?_calDate:todayISO();
   const wd=weekdayMon0(defDate); const win=(wd<=4?DB.workCfg.theorieWoche:DB.workCfg.theorieSamstag)||{von:"18:00",bis:"21:00"};
   const blk=DB.workCfg.blockMin||90;
-  const lektOpts=`<option value="">– keine bestimmte –</option>`+LEKTIONEN.map(l=>`<option value="${l.n}">Lektion ${l.n} – ${esc(l.t)}</option>`).join("");
+  const lektOpts=`<option value="">– keine bestimmte –</option><optgroup label="Klasse B (Grundstoff 1–12, Zusatzstoff 13–14)">`+LEKTIONEN.map(l=>`<option value="${l.n}">Lektion ${l.n} – ${esc(l.t)}</option>`).join("")
+    +`</optgroup><optgroup label="Lkw (Klasse C/C1 und CE)">`+LKW_LEKTIONEN.map(l=>`<option value="${l.n}">Lektion ${l.n} – ${esc(l.t)}</option>`).join("")+`</optgroup>`;
   openSheet(`<div class="sheet-h">Theorie</div>
     <p class="muted-p" style="font-size:12.5px;margin:-4px 0 10px;">Wird immer als zwei einzelne 90-Minuten-Termine hintereinander eingetragen.</p>
     <div class="field"><label>Datum</label><input type="date" id="thDate" value="${defDate}"></div>
@@ -11531,7 +11684,7 @@ function openTheorieSheet(){
   $("#thSave").addEventListener("click",()=>{
     const date=$("#thDate").value, von=$("#thVon").value;
     if(!date||!von){toast("Datum & Zeit wählen");return;}
-    const lektion=$("#thLektion").value?+$("#thLektion").value:null;
+    const lv=$("#thLektion").value, lektion=lv?(/^\d+$/.test(lv)?+lv:lv):null;
     const note=$("#thNote").value.trim();
     const b1Von=von, b1Bis=min2hm(hm2min(von)+blk);
     const b2Von=b1Bis, b2Bis=min2hm(hm2min(von)+2*blk);
@@ -11713,6 +11866,7 @@ function openEventSheet(kind,id,sid){
         return `<button class="es-act primary" id="esProtokoll" style="background:#0f7d6e;border-color:#0f7d6e;color:#fff;">📤 Stunde abschließen · Protokoll schicken${n?` <b>(${n} Thema${n===1?"":"en"})</b>`:""}</button>`;
       })():''}
       ${st?`<button class="es-act primary" id="esAkte">Schülerakte öffnen</button>`:''}
+      ${l.art==="theorie"&&_authProfile&&_authProfile.fahrschule_id?`<button class="es-act primary" id="esAnwesend">Anwesenheit eintragen</button>`:''}
       ${fcRelevant&&sichtbar("fahrcheck")?`<button class="es-act" id="esFC">Fahrcheck · <b>${fcLab}</b></button>`:''}
       ${fcRelevant&&st?`<button class="es-act" id="esSig">Unterschrift · <b>${l.signed?'✓ vorhanden':'noch offen'}</b></button>`:''}
       ${l.art==="block"?'':`<button class="es-act" id="esEdit">Bearbeiten / verschieben</button>
@@ -11725,6 +11879,7 @@ function openEventSheet(kind,id,sid){
     </div>`);
   const prot=$("#esProtokoll"); if(prot)prot.addEventListener("click",()=>{ closeSheet(); sendeStundenProtokoll(st,l.date); });
   const ak=$("#esAkte"); if(ak)ak.addEventListener("click",()=>{ closeSheet(); routeDetail(l.sid); });
+  const anw=$("#esAnwesend"); if(anw)anw.addEventListener("click",()=>openTheorieAnwesenheit(l));
   const fcb=$("#esFC"); if(fcb)fcb.addEventListener("click",()=>{ closeSheet(); openFCMenu(id); });
   const sigb=$("#esSig"); if(sigb)sigb.addEventListener("click",()=>{ closeSheet(); openSignatureSheet(id); });
   // Urlaub/Blocker (ganze Tage) nur löschen, nicht bearbeiten - sonst gingen sie kaputt.
@@ -12213,8 +12368,19 @@ const LEKTIONEN=[
  {n:13,t:"Technische Bedingungen, Personen- und Güterbeförderung, umweltbewusster Umgang",teil:"zusatz"},
  {n:14,t:"Fahren mit Solokraftfahrzeugen und Zügen",teil:"zusatz"}
 ];
-function lektionLabel(n){ const l=LEKTIONEN.find(x=>x.n===+n); return l?("Lektion "+l.n):""; }
-function lektionTitel(n){ const l=LEKTIONEN.find(x=>x.n===+n); return l?l.t:""; }
+// Lkw-Theorie (Serbands Folien, Stand 03.10.2026): Klasse C bzw. C1 = C1–C10, Klasse CE = CE1–CE4
+const LKW_LEKTIONEN=[
+ {n:"C1",t:"Persönliche Voraussetzungen und Arbeitsplatz",teil:"C"},{n:"C2",t:"Besondere Vorschriften aus der StVO / Transportvorschriften",teil:"C"},
+ {n:"C3",t:"Kraftstrang",teil:"C"},{n:"C4",t:"Fahrwerk / Elektrische Anlagen",teil:"C"},{n:"C5",t:"Lkw-Bremsen",teil:"C"},
+ {n:"C6",t:"Lkw-Bremsen und Fahrzeuguntersuchungen; Geschwindigkeitsregler",teil:"C"},{n:"C7",t:"Wirkung von Kräften beim Fahren",teil:"C"},
+ {n:"C8",t:"Ausrüstungs-, Beförderungs- und Sicherheitsbestimmungen",teil:"C"},{n:"C9",t:"Ladungssicherung / Abfahrtkontrolle",teil:"C"},
+ {n:"C10",t:"Wirtschaftliches und umweltschonendes Fahren; Straßenkarten, Streckenplanung",teil:"C"},
+ {n:"CE1",t:"Zusammenstellung von Zügen",teil:"CE"},{n:"CE2",t:"Lastzugbremsen (Auflaufbremse, Zweileitungs-Druckluftbremse)",teil:"CE"},
+ {n:"CE3",t:"Lastzugbremsen (Bremskraftregelung, ABV, Feststellbremse, Dauerbremse, Untersuchungen)",teil:"CE"},{n:"CE4",t:"Fahren mit Zügen",teil:"CE"}
+];
+function _lektionFinde(n){ const k=String(n); return LEKTIONEN.find(x=>String(x.n)===k)||LKW_LEKTIONEN.find(x=>x.n===k); }
+function lektionLabel(n){ const l=_lektionFinde(n); return l?("Lektion "+l.n):""; }
+function lektionTitel(n){ const l=_lektionFinde(n); return l?l.t:""; }
 let _fsCalFahrzeugFilter=[], _fsCalLehrerFilter=[], _fsCalBueroFilter=[];
 const FS_BUERO_ARTEN=["beratung","ersthilfe","vortest","simulator"];
 let _fsKalenderModus="fahrlehrer"; // "fahrlehrer" | "buero"
