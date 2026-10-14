@@ -705,7 +705,8 @@ function bindePruefungen(ziel) {
   ziel.querySelectorAll("[data-ergebnis]").forEach((b) => b.addEventListener("click", () => ergebnisDialog(b.dataset.ergebnis)));
   const tippe = async (b, id, neu) => {
     b.closest(".ergebnis-knoepfe").querySelectorAll("button").forEach((x) => { x.disabled = true; });
-    if (await setzeErgebnis(id, neu)) toast(neu === "bestanden" ? "✓ Bestanden eingetragen" : "✗ Nicht bestanden eingetragen · Aufgabe „Neuen Termin planen“ angelegt");
+    const erg = await setzeErgebnis(id, neu);
+    if (erg) toast(neu === "bestanden" ? "✓ Bestanden eingetragen" : "✗ Nicht bestanden eingetragen" + (erg.aufgabeNeu ? " · Aufgabe „Neuen Termin planen“ angelegt" : ""));
     zeichne();
   };
   ziel.querySelectorAll("[data-eja]").forEach((b) => b.addEventListener("click", () => tippe(b, b.dataset.eja, "bestanden")));
@@ -816,7 +817,7 @@ function pruefungDialog(id) {
       S.pruefungstermine.push(gespeichert);
     }
     if (!gespeichert) return false;
-    if (id && werte.status && werte.status !== p.status) await uebertrageErgebnis(gespeichert, werte.status, p.status);
+    if (id && werte.status && werte.status !== p.status) await uebertrageErgebnis(gespeichert, werte.status, p.status, p);
     else if (id && gespeichert.status === "bestanden" && gespeichert.datum !== p.datum) {
       // Datum einer bestandenen Prüfung korrigiert: Datum in der Akte mitziehen (nur wenn es von dieser Prüfung stammt)
       const sx = S.schueler.find((x) => x.id === gespeichert.schueler_id), feld = gespeichert.art === "theorie" ? "theorie_bestanden_am" : "praxis_bestanden_am";
@@ -845,7 +846,8 @@ function pruefungDialog(id) {
    Theorie bestanden → theorie_bestanden_am, Praxis bestanden → praxis_bestanden_am + Reaktivierung entfällt.
    Nicht bestanden → Aufgabe „Neuen Termin planen“ für alle im Büro. Alles lässt sich rückgängig machen. */
 const ERGEBNIS_RUECK = {}; // pruefung_id -> { status, schueler: {…vorher}, aufgabeId }
-async function uebertrageErgebnis(p, neu, alt) {
+// vorher = die Prüfung vor dem Speichern (Datum/Art können im selben Fenster mitgeändert worden sein)
+async function uebertrageErgebnis(p, neu, alt, vorher) {
   const s = S.schueler.find((x) => x.id === p.schueler_id);
   if (!s) return {};
   const feld = p.art === "theorie" ? "theorie_bestanden_am" : "praxis_bestanden_am";
@@ -854,12 +856,13 @@ async function uebertrageErgebnis(p, neu, alt) {
     werte[feld] = p.datum;
     if (p.art === "praxis" && s.reakt_status !== "befreit") Object.assign(werte, { reakt_status: "befreit", reakt_notiz: `Praxisprüfung bestanden am ${datumDE(p.datum)}` });
   } else if (alt === "bestanden") {
-    if (s[feld] === p.datum) werte[feld] = null; // Korrektur: Datum wieder weg
+    const v = vorher || p, vFeld = v.art === "theorie" ? "theorie_bestanden_am" : "praxis_bestanden_am";
+    if (s[vFeld] === v.datum) werte[vFeld] = null; // Korrektur: Datum wieder weg
     // Befreiung von der Reaktivierung, die nur durch diese Prüfung kam, wieder aufheben
-    if (p.art === "praxis" && s.reakt_status === "befreit" && s.reakt_notiz === `Praxisprüfung bestanden am ${datumDE(p.datum)}`) Object.assign(werte, { reakt_status: "pruefen", reakt_notiz: null });
+    if (v.art === "praxis" && s.reakt_status === "befreit" && s.reakt_notiz === `Praxisprüfung bestanden am ${datumDE(v.datum)}`) Object.assign(werte, { reakt_status: "pruefen", reakt_notiz: null });
   }
-  const vorher = {};
-  for (const k of Object.keys(werte)) vorher[k] = s[k] == null ? null : s[k];
+  const alteWerte = {};
+  for (const k of Object.keys(werte)) alteWerte[k] = s[k] == null ? null : s[k];
   if (Object.keys(werte).length) {
     const res = await supa.from("schueler").update(werte).eq("id", s.id).select("id");
     if (res.error || !res.data || !res.data.length) toast("Ergebnis steht auf der Tafel, aber nicht in der Akte: " + (res.error ? res.error.message : "keine Berechtigung"), true);
@@ -874,7 +877,7 @@ async function uebertrageErgebnis(p, neu, alt) {
     const res = await supa.from("schueler_aufgaben").insert({ fahrschule_id: S.fsId, schueler_id: s.id, text, heute: false, faellig_am: KR.addDaysISO(KR.todayISO(), 3), erstellt_von: S.user.id }).select("*");
     if (!res.error && res.data && res.data.length) { S.aufgaben.unshift(res.data[0]); aufgabeId = res.data[0].id; }
   }
-  return { vorher, aufgabeId };
+  return { vorher: alteWerte, aufgabeId };
 }
 async function setzeErgebnis(id, neu) {
   const p = S.pruefungstermine.find((x) => x.id === id);
@@ -884,7 +887,7 @@ async function setzeErgebnis(id, neu) {
   if (!gespeichert) return false;
   const r = await uebertrageErgebnis(gespeichert, neu, alt);
   ERGEBNIS_RUECK[id] = { status: alt, schueler: r.vorher || {}, aufgabeId: r.aufgabeId };
-  return true;
+  return { aufgabeNeu: !!r.aufgabeId };
 }
 async function ergebnisRueckgaengig(id) {
   const r = ERGEBNIS_RUECK[id], p = S.pruefungstermine.find((x) => x.id === id);
@@ -2471,7 +2474,8 @@ function renderZahlenListe() {
     const zeilen = l.map((t) => {
       let u = 0, doppelt = false;
       const k = t.art === "pruefung" && t.schueler_id ? t.schueler_id + "|" + t.datum : "";
-      if (k && gezaehlt.has(k)) doppelt = true; else { if (k) gezaehlt.add(k); ueJeFahrlehrer([t], (fl, x) => { u += x; }); }
+      const abgebrochen = ((t.payload || {}).status || t.status) === "abgebrochen"; // zählt nicht, belegt also auch nicht den Tag
+      if (k && gezaehlt.has(k)) doppelt = true; else { if (k && !abgebrochen) gezaehlt.add(k); ueJeFahrlehrer([t], (fl, x) => { u += x; }); }
       summe += u; return `<tr>
       <td class="zeitspalte">${esc(datumDE(t.datum))} ${esc(t.von || "")}</td><td>${esc(lehrerName(t.fahrlehrer_id))}</td><td>${t.schueler_id ? name(t.schueler_id) : esc(t.interessent_name || "")}</td>
       <td><span class="marke-pill">${esc(ARTEN[t.art] || t.art || "")}</span></td><td class="zahlspalte">${zahlDE(u, 1)}${doppelt ? ' <span class="leise klein">(zählt nicht doppelt)</span>' : ""}</td></tr>`; }).join("");

@@ -152,6 +152,31 @@ await pruefe("L10", "C und CE zusammen: Grundfahraufgaben C und Abfahrtkontrolle
   if (ids({ form: "CE" }).filter((i) => i.startsWith("lk_gfa_ce_")).length !== 4) return "ohne Wahl nicht alle 4";
   return null;
 }));
+await pruefe("L11", "erster Abgleich nach dem Update: Büro-Klasse B überschreibt Automatik/BE/B197 nicht; spätere Büro-Änderung und Lkw-Klasse wirken", () => page.evaluate(async () => {
+  const altSupa = window.getSupa, altUser = _authUser, altProfil = _authProfile, altStudents = DB.students;
+  const c = DB.ausbildungsplaene.find((p) => p.standard) || DB.ausbildungsplaene[0];
+  const mk = (id, name, form) => { const s = { id, name, form, created: Date.now(), plan: newPlan(), planId: c.id, planSnapshot: JSON.parse(JSON.stringify(c.stufen)), telefon: "" }; ensure(s); return s; };
+  DB.students = [mk("x1", "Anna Erfunden", "Automatik"), mk("x2", "Ben Erfunden", "BE"), mk("x3", "Cem Erfunden", "B197"), mk("x4", "Dana Erfunden", "B")];
+  let rows = [["x1", "B"], ["x2", "B"], ["x3", "B"], ["x4", "CE"]].map(([id, klasse]) => ({ id, name: "Erfunden", klasse, status: "aktiv", fahrlehrer_id: "me" }));
+  const mkq = (tab) => { const res = async () => ({ data: tab === "schueler" ? rows : [], error: null });
+    const q = new Proxy(function () {}, { get: (_t, k) => (k === "then" ? (ok, no) => res().then(ok, no) : k === "single" || k === "maybeSingle" ? res : () => q), apply: () => q }); return q; };
+  window.getSupa = () => ({ from: (t) => mkq(t), rpc: async () => ({ data: null, error: null }), auth: { getUser: async () => ({ data: {}, error: null }), getSession: async () => ({ data: {}, error: null }) }, functions: { invoke: async () => ({}) } });
+  _authUser = { id: "me", email: "me@example.org" }; _authProfile = { id: "me", fahrschule_id: "fs-x", rolle: "fahrlehrer" };
+  let fehler = null;
+  try {
+    await pullSchuelerZuweisungen();
+    const erst = DB.students.map((s) => s.form).join(",");
+    if (erst !== "Automatik,BE,B197,CE") fehler = "erster Abgleich: " + erst;
+    else {
+      rows = rows.map((r) => r.id === "x1" ? Object.assign({}, r, { klasse: "BE" }) : r);
+      await pullSchuelerZuweisungen();
+      const dann = DB.students.map((s) => s.form).join(",");
+      if (dann !== "BE,BE,B197,CE") fehler = "nach Büro-Änderung: " + dann;
+    }
+  } catch (e) { fehler = "Ausnahme: " + e.message; }
+  window.getSupa = altSupa; _authUser = altUser; _authProfile = altProfil; DB.students = altStudents; save();
+  return fehler;
+}));
 await pruefe("L9", "keine JS-Fehler", () => (jsFehler.length ? jsFehler.slice(0, 5) : null));
 
 await browser.close();

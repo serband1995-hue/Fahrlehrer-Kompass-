@@ -4972,7 +4972,14 @@ async function pullSchuelerZuweisungen() {
       // Klasse pflegt das Büro (z. B. CE für den Lkw-Fahrlehrer): nur übernehmen, wenn sie sich im Büro geändert hat
       if (lokaleIds.has(r.id) && r.klasse) {
         const lok = DB.students.find(x => x.id === r.id);
-        if (lok && lok.klasseBuero !== r.klasse) { lok.klasseBuero = r.klasse; const f = r.klasse === "BKF" ? lok.form : formAusKlasse(r.klasse); if (lok.form !== f) { lok.form = f; umschreiberNeu = true; } }
+        if (lok && lok.klasseBuero !== r.klasse) {
+          // Erster Abgleich (noch keine Büro-Klasse gemerkt): nur merken – die Form, die der Fahrlehrer gewählt hat
+          // (Automatik, BE, B197 …), bleibt. Nur eine Lkw-Klasse aus dem Büro stellt die Form gleich um.
+          const erstes = !lok.klasseBuero;
+          lok.klasseBuero = r.klasse; umschreiberNeu = true;
+          const f = r.klasse === "BKF" ? lok.form : formAusKlasse(r.klasse);
+          if (lok.form !== f && (!erstes || LKW_FORMS.includes(f))) lok.form = f;
+        }
       }
       if (!lokaleIds.has(r.id)) {
         const a = r.ausbildung || {};
@@ -4980,7 +4987,7 @@ async function pullSchuelerZuweisungen() {
           id: r.id, created: Date.now(), notiz: "", bogen: null, plan: newPlan(), profil: null, form: "B", beginn: "",
           planId: chosenPlan.id, planSnapshot: JSON.parse(JSON.stringify(chosenPlan.stufen))
         }, a, { id: r.id, name: r.name, telefon: r.telefon || "" });
-        if (r.klasse) { nst.form = formAusKlasse(r.klasse); nst.klasseBuero = r.klasse; }
+        if (r.klasse) { if (r.klasse !== "BKF") nst.form = formAusKlasse(r.klasse); nst.klasseBuero = r.klasse; }
         // Übergabe: Fragebogen und die Fahrstunden/Prüfungen bei bisherigen Fahrlehrern mitnehmen.
         try {
           const { data: priv } = await supa.from("schueler_privat").select("bogen").eq("schueler_id", r.id).maybeSingle();

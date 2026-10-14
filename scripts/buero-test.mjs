@@ -1049,6 +1049,11 @@ for (const [breite, hoehe] of [[1920, 1080], [1366, 768], [1024, 768]]) {
   // Erledigen
   await page.click(".fuer-dich [data-hagerledigt] >> nth=0"); await page.waitForTimeout(300);
   if ((await page.$$(".fuer-dich > .notizliste li")).length !== 2) fehler("Aufgaben: Erledigt entfernt die Aufgabe nicht");
+  // Endprüfung 14.10.: versehentlich erledigt → unter „Kürzlich erledigt“ wieder öffnen
+  await page.click(".fuer-dich details summary:has-text('Kürzlich erledigt')"); await page.waitForTimeout(150);
+  await page.click(".fuer-dich [data-hagoeffnen] >> nth=0"); await page.waitForTimeout(300);
+  if ((await page.$$(".fuer-dich > .notizliste li")).length !== 3) fehler("Aufgaben: „Wieder öffnen“ bringt die Aufgabe nicht zurück");
+  await page.click(".fuer-dich [data-hagerledigt] >> nth=0"); await page.waitForTimeout(300);
   // Alle offenen
   await page.click('.fuer-dich a.tab[href="#heute?alle=1"]'); await page.waitForTimeout(250);
   if (!/Nur für Murat/.test(await page.textContent(".fuer-dich"))) fehler("Aufgaben: „Alle offenen“ zeigt nicht alle");
@@ -1154,6 +1159,37 @@ for (const [breite, hoehe] of [[1920, 1080], [1366, 768], [1024, 768]]) {
   await page.goto(page.url().split("#")[0] + "#zahlen?liste=praxis&monat=quark"); await page.waitForTimeout(250);
   if (/Invalid/.test(await page.textContent("#ansicht"))) fehler("Zahlen: ungültiger Monat zeigt „Invalid Date“");
   if (konsole.length) fehler("Zahlen: Konsole: " + konsole.join(" | "));
+  await ctx.close();
+}
+
+// Endprüfung 14.10.: Korrektur einer bestandenen Praxisprüfung über „Bearbeiten“ räumt die Akte auf (auch Status + Datum zugleich)
+{
+  const { page, ctx, konsole } = await oeffne({ nutzer: "bu-1", hash: "#pruefungen?ansicht=alle", wer: "Jelena", vorbereiten: function () {
+    const pt = F.tabellen.pruefungstermine.find((x) => x.id === "pt-5"); const s = F.tabellen.schueler.find((x) => x.id === "s9");
+    const [j, m, t] = pt.datum.split("-"); s.praxis_bestanden_am = pt.datum; s.reakt_status = "befreit"; s.reakt_notiz = `Praxisprüfung bestanden am ${t}.${m}.${j}`;
+  } });
+  if (await page.$("dialog[open] button[value=ok]")) { await page.click("dialog[open] button[value=ok]"); await page.waitForTimeout(250); }
+  const s9 = () => page.evaluate(() => { const s = window.__FAKE.tabellen.schueler.find((x) => x.id === "s9"); return { pb: s.praxis_bestanden_am || null, rs: s.reakt_status }; });
+  const offen = () => page.evaluate(() => window.__FAKE.tabellen.schueler_aufgaben.filter((a) => a.schueler_id === "s9" && !a.erledigt_am && /Neuen Termin/.test(a.text)).length);
+  const bearbeite = async (status, datum) => {
+    await page.evaluate(() => pruefungDialog("pt-5")); await page.waitForTimeout(200);
+    if (datum) await page.fill("dialog[open] input[name=datum]", datum);
+    if (status) await page.selectOption("dialog[open] select[name=status]", status);
+    await page.click("dialog[open] button[value=ok]"); await page.waitForTimeout(400);
+  };
+  await bearbeite("nicht_bestanden");
+  let z = await s9();
+  if (z.pb || z.rs !== "pruefen" || (await offen()) !== 1) fehler("Korrektur bestanden→nicht: " + JSON.stringify(z) + " Aufgaben " + (await offen()));
+  await bearbeite("bestanden");
+  z = await s9();
+  if (!z.pb || z.rs !== "befreit" || (await offen()) !== 0) fehler("Korrektur nicht→bestanden: " + JSON.stringify(z) + " Aufgaben " + (await offen()));
+  const d1 = await page.evaluate(() => KR.addDaysISO(KR.todayISO(), -5));
+  await bearbeite(null, d1);
+  if ((await s9()).pb !== d1) fehler("Korrektur Datum zieht nicht mit: " + JSON.stringify(await s9()));
+  await bearbeite("nicht_bestanden", await page.evaluate(() => KR.addDaysISO(KR.todayISO(), -4)));
+  z = await s9();
+  if (z.pb || z.rs !== "pruefen") fehler("Korrektur Status + Datum zugleich lässt „bestanden“ stehen: " + JSON.stringify(z));
+  if (konsole.length) fehler("Korrektur: Konsole: " + konsole.join(" | "));
   await ctx.close();
 }
 
