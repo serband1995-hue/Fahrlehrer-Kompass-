@@ -198,6 +198,31 @@ await pruefe("D9", "Theorie eintragen: Lkw-Lektion C3 wählbar und am Termin ges
   await page.click("#thSave"); await page.waitForTimeout(200);
   return page.evaluate(() => { const l = DB.lessons.filter((x) => x.art === "theorie"); return l.length === 2 && l.every((x) => x.lektion === "C3") && lektionTitel("C3") === "Kraftstrang" ? null : JSON.stringify(l.map((x) => x.lektion)); });
 });
+await pruefe("D10", "Lkw-Klassen nur mit Fahrlehrerlaubnis CE: ohne CE keine Lkw-Pills (außer der Schüler fährt schon Lkw), mit CE alle", () => page.evaluate(() => {
+  const f = [], pills = () => [...document.querySelectorAll("#dashFormPills .pill")].map((b) => b.dataset.form).join(",");
+  _authProfile = { id: "me", fahrschule_id: "fs-x", rolle: "fahrlehrer", klassen: ["B", "BE"] };
+  routeDetail("b1");
+  if (/C1|CE|\bC\b/.test(pills())) f.push("B-Fahrlehrer sieht Lkw: " + pills());
+  routeDetail("ce1");
+  if (!pills().split(",").includes("CE")) f.push("bestehender CE-Schüler verliert seine Klasse");
+  _authProfile = { id: "me", fahrschule_id: "fs-x", rolle: "fahrlehrer", klassen: ["B", "BE", "C1", "C1E", "C", "CE"] };
+  routeDetail("b1");
+  if (!pills().includes("C1E")) f.push("CE-Fahrlehrer sieht keine Lkw-Klassen: " + pills());
+  return f;
+}));
+await pruefe("D11", "C und CE zusammen: Klasse je Fahrstunde umstellbar, Zähler in der Akte", () => page.evaluate(() => {
+  const h = KR.addDaysISO(KR.todayISO(), -1), f = [];
+  DB.lessons = [{ id: "fs1", sid: "ce2", date: h, von: "08:00", bis: "09:30", art: "fahrstunde" }, { id: "fs2", sid: "ce2", date: h, von: "10:00", bis: "11:30", art: "fahrstunde" }];
+  openEventSheet("lesson", "fs2", "ce2");
+  const b = document.querySelector("#esLkwKl");
+  if (!b) return "kein Knopf „Klasse dieser Stunde“";
+  b.click();
+  if (DB.lessons.find((l) => l.id === "fs2").lkwKlasse !== "CE") f.push("Umstellen auf CE klappt nicht");
+  closeSheet(); routeDetail("ce2");
+  const z = (document.querySelector(".lkw-zaehler") || {}).textContent || "";
+  if (!/Klasse C 2 UE/.test(z) || !/Klasse CE 2 UE/.test(z)) f.push("Zähler: " + z);
+  return f;
+}));
 await pruefe("D6", "keine JS-Fehler", () => (jsFehler.length ? jsFehler.slice(0, 5) : null));
 
 await browser.close();
