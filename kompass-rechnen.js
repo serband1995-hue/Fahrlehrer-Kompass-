@@ -181,6 +181,7 @@
   function theorieSoll(o) {
     o = o || {};
     const art = !o.ausbildungsart || o.ausbildungsart === "neu" ? "ersterwerb" : o.ausbildungsart;
+    if (art === "auffrischung") return { pflicht: false, grund: "Auffrischung: keine Pflicht-Theorie", teile: [] };
     if (art === "umschreibung" || art === "neuerteilung") return { pflicht: false, grund: art === "umschreibung" ? "Umschreibung: keine Pflicht-Theorie" : "Neuerteilung: keine Pflicht-Theorie", teile: [] };
     let k = String(o.klasse || o.form || "B");
     if (["B78", "Automatik", "B197", "B96", "B+BE"].includes(k)) k = "B";
@@ -190,7 +191,7 @@
     if (k === "BE" || (k === "C1E" && weg !== "C1+C1E")) return { pflicht: false, grund: "Anhängerklasse: nur praktische Prüfung", teile: [] };
     if (k === "BKF" || !["B", "C1", "C1E", "C", "CE"].includes(k)) return { pflicht: false, grund: "keine Regel hinterlegt", teile: [] };
     const lkw = k !== "B"; // Lkw-Klassen setzen Klasse B voraus
-    const teile = [{ key: "grund", titel: "Grundstoff", lektionen: LEKT_GRUND, soll: lkw || vb.length ? 6 : 12 }];
+    const teile = [{ key: "grund", titel: "Grundstoff", lektionen: LEKT_GRUND, soll: lkw || vb.length || art === "erweiterung" ? 6 : 12 }]; // Erweiterung: er hat schon eine Fahrerlaubnis (§ 4 Abs. 3 FahrschAusbO)
     if (k === "B") teile.push({ key: "B", titel: "Zusatzstoff B", lektionen: LEKT_B, soll: 2 });
     if (k === "C1" || k === "C1E") teile.push({ key: "C", titel: "Klasse C1", lektionen: LEKT_C, soll: 6 });
     if (k === "C" || (k === "CE" && weg === "C+CE")) teile.push({ key: "C", titel: "Klasse C", lektionen: LEKT_C, soll: vb.includes("C1") || (k === "C" && weg === "C1") ? 4 : 10 });

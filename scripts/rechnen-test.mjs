@@ -60,6 +60,10 @@ for (const [von, m, soll] of datum) gleich(`addMonthsISO(${von},${m})`, soll, KR
 gleich("daysBetweenISO Sommerzeit", 1, KR.daysBetweenISO("2026-03-28", "2026-03-29"));
 gleich("daysBetweenISO rückwärts", -30, KR.daysBetweenISO("2026-10-31", "2026-10-01"));
 gleich("addDaysISO Jahreswechsel", "2027-01-02", KR.addDaysISO("2026-12-31", 2));
+// Theorie-Soll (§ 4 FahrschAusbO, Anlage 2.8): Erweiterung = Grundstoff 6, Auffrischung ohne Pflicht-Theorie
+gleich("Theorie-Soll B Ersterwerb", 12, KR.theorieSoll({ klasse: "B" }).teile[0].soll);
+gleich("Theorie-Soll B Erweiterung ohne Vorbesitz", 6, KR.theorieSoll({ klasse: "B", ausbildungsart: "erweiterung" }).teile[0].soll);
+gleich("Theorie-Soll Auffrischung", false, KR.theorieSoll({ klasse: "B", ausbildungsart: "auffrischung" }).pflicht);
 
 // Fristen: Reaktivierung und Theorie
 const H = "2026-10-08";
