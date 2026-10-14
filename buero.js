@@ -81,7 +81,7 @@ function istAdmin() { return S.profil && (S.profil.rolle === "fahrschule_admin" 
 /* ---------- Bereiche ---------- */
 // schritt = Bauplan-Schritt, in dem der Bereich fertig wird (nur Hinweis, solange er noch fehlt)
 const BEREICHE = [
-  { id: "heute", titel: "Heute zu tun", gruppe: "Arbeit", render: renderHeute, nachher: bindeHeute, zahl: () => heuteAufgaben().length || "" },
+  { id: "heute", titel: "Heute zu tun", gruppe: "Arbeit", render: renderHeute, nachher: bindeHeute, zahl: () => fuerMich().filter((a) => aufgabeStufe(a) !== "spaeter" || !a.faellig_am).length || "" },
   { id: "pruefungen", titel: "Prüfungstafel", gruppe: "Arbeit", render: renderPruefungen, nachher: bindePruefungen, zahl: () => zaehlePruefungen().handeln || "" },
   { id: "fahrchecks", titel: "Fahrchecks", gruppe: "Arbeit", render: renderFahrchecks, nachher: bindeFahrchecks, zahl: () => fcOffeneAbgaben().length || "" },
   { id: "fristen", titel: "Fristen & Reaktivierung", gruppe: "Arbeit", render: renderFristen, nachher: bindeFristen, zahl: () => zaehleFristen().handeln || "" },
@@ -145,6 +145,8 @@ function zeichne() {
   if (b.nachher) b.nachher(ziel);
 }
 window.addEventListener("hashchange", () => {
+  // Zurück-Taste (oder Link) wechselt die Seite: offene Fenster ohne Eingaben schließen, damit nichts über der falschen Seite stehen bleibt
+  document.querySelectorAll("dialog[open]").forEach((d) => { if (!d.dataset.festhalten && !d.dataset.geaendert) d.close(); });
   const g = aktuellerBereich().gruppe;
   if (navZu().includes(g)) setzeNavZu(navZu().filter((x) => x !== g));
   zeichne(); $("ansicht").focus({ preventScroll: true }); window.scrollTo(0, 0);
@@ -164,10 +166,10 @@ function renderHeute() {
     .filter((t) => t.datum === heute && t.art !== "block")
     .sort((a, b) => String(a.von || "").localeCompare(String(b.von || "")));
   const kacheln = `<div class="kacheln">
-    <div class="kachel"><div class="wert">${zahlDE(anzahlAktiv)}</div><div class="name">aktive Schüler</div></div>
-    <div class="kachel"><div class="wert">${zahlDE(S.lehrer.filter((l) => l.aktiv !== false).length)}</div><div class="name">Fahrlehrer</div></div>
-    <div class="kachel"><div class="wert">${zahlDE(termineHeute.length)}</div><div class="name">Termine heute</div></div>
-    <div class="kachel${ohneLehrer ? " rot" : ""}"><div class="wert">${zahlDE(ohneLehrer)}</div><div class="name">Schüler ohne Fahrlehrer</div></div>
+    <a class="kachel" href="#schueler"><div class="wert">${zahlDE(anzahlAktiv)}</div><div class="name">aktive Schüler</div></a>
+    <a class="kachel" href="#team"><div class="wert">${zahlDE(S.lehrer.filter((l) => l.aktiv !== false).length)}</div><div class="name">Fahrlehrer</div></a>
+    <a class="kachel" href="#kalender"><div class="wert">${zahlDE(termineHeute.length)}</div><div class="name">Termine heute</div></a>
+    <a class="kachel${ohneLehrer ? " rot" : ""}" href="#schueler"><div class="wert">${zahlDE(ohneLehrer)}</div><div class="name">Schüler ohne Fahrlehrer</div></a>
   </div>`;
   const zeilen = termineHeute.map((t) => `<tr>
       <td class="zeitspalte">${esc(t.von || "")}${t.bis ? "–" + esc(t.bis) : ""}</td>
@@ -186,7 +188,7 @@ function renderHeute() {
   if (f.bald) aufgaben.push(`<a class="aufgabe gelb" href="#fristen"><b>${f.bald}</b> Reaktivierung${f.bald === 1 ? "" : "en"} in den nächsten 30 Tagen fällig</a>`);
   if (f.theorie) aufgaben.push(`<a class="aufgabe gelb" href="#fristen?ansicht=theorie"><b>${f.theorie}</b> Theorie läuft in 60 Tagen ab oder ist abgelaufen</a>`);
   const pz = zaehlePruefungen();
-  if (pz.ohneErgebnis) aufgaben.push(`<a class="aufgabe rot" href="#pruefungen"><b>${pz.ohneErgebnis}</b> Prüfung${pz.ohneErgebnis === 1 ? "" : "en"} ohne Ergebnis eingetragen</a>`);
+  if (pz.ohneErgebnis) aufgaben.push(`<a class="aufgabe rot" href="#pruefungen?ansicht=ergebnis"><b>${pz.ohneErgebnis}</b> Prüfung${pz.ohneErgebnis === 1 ? "" : "en"} ohne Ergebnis eingetragen</a>`);
   if (pz.offeneHaken) aufgaben.push(`<a class="aufgabe gelb" href="#pruefungen"><b>${pz.offeneHaken}</b> Prüfung${pz.offeneHaken === 1 ? "" : "en"} in den nächsten 14 Tagen mit offenen Haken (Entgelt, TÜV, AS-Portal)</a>`);
   const fcOffen = fcOffeneAbgaben();
   if (fcOffen.length) aufgaben.push(`<a class="aufgabe gelb" href="#fahrchecks?z=vor"><b>${fcOffen.length}</b> Fahrcheck-Abgabe${fcOffen.length === 1 ? "" : "n"} für ${esc(datumDE(fcOffen[0].von))}–${esc(datumDE(fcOffen[0].bis))} noch nicht bestätigt</a>`);
@@ -199,13 +201,30 @@ function renderHeute() {
   if (f.antragAb) aufgaben.push(`<a class="aufgabe rot" href="#fristen?ansicht=antrag"><b>${f.antragAb}</b> ${f.antragAb === 1 ? "Führerscheinantrag" : "Führerscheinanträge"} abgelaufen: neu stellen</a>`);
   if (f.antragBald) aufgaben.push(`<a class="aufgabe gelb" href="#fristen?ansicht=antrag"><b>${f.antragBald}</b> ${f.antragBald === 1 ? "Führerscheinantrag läuft" : "Führerscheinanträge laufen"} in den nächsten 60 Tagen ab</a>`);
   if (f.ohneDatum) aufgaben.push(`<a class="aufgabe" href="#fristen?ansicht=ohne"><b>${f.ohneDatum}</b> Schüler ohne Vertragsdatum</a>`);
-  const ha = heuteAufgaben();
-  const heuteKarte = ha.length ? `<div class="karte"><div class="karte-kopf"><h2>Meine Aufgaben für heute (${ha.length})</h2></div><ul class="notizliste">${ha.map((a) => `<li class="notiz stopp">
-      <div><button type="button" class="knopf klein" data-hagschueler="${esc(a.schueler_id)}">${esc(schuelerName(a.schueler_id) || "Schüler")}</button> <span class="notiz-text">${esc(a.text)}</span></div>
-      <div class="unter">${esc(a.bearbeiter || "Büro")} · ${esc(notizZeit(a))}${a.faellig_am ? ` · fällig ${esc(datumDE(a.faellig_am))}` : ""}</div>
-      <div class="notiz-aktion"><button type="button" class="knopf klein" data-hagerledigt="${esc(a.id)}">Erledigt</button></div></li>`).join("")}</ul></div>` : "";
-  const todo = `<div class="karte"><div class="karte-kopf"><h2>Zu erledigen</h2></div>${aufgaben.length ? `<div class="aufgaben">${aufgaben.join("")}</div>` : `<p class="leer">Gerade ist nichts offen.</p>`}</div>`;
-  return kacheln + heuteKarte + todo + liste;
+  // 1) Für dich: Aufgaben an mich (oder an alle), Überfälliges und Dringendes zuerst
+  const alleZeigen = fristenParam("alle") === "1";
+  const fuer = alleZeigen ? sortiereAufgaben(offeneAufgabenAlle()) : fuerMich();
+  // Aufgaben mit späterem Datum erscheinen erst an dem Tag (alle sieht man unter „Alle offenen“)
+  const zeigen = fuer.filter((a) => alleZeigen || aufgabeStufe(a) !== "spaeter" || !a.faellig_am);
+  const spaeter = fuer.length - zeigen.length;
+  const vonMir = S.sitzung ? sortiereAufgaben(offeneAufgabenAlle().filter((a) => a.von_person_id === S.sitzung.id && a.fuer_person_id && a.fuer_person_id !== S.sitzung.id)) : [];
+  const hallo = S.sitzung ? `Hallo ${esc(S.sitzung.name)}` : "Aufgaben";
+  const grenze7 = KR.addDaysISO(heute, -7), aktiveIds = new Set(aktiveSchueler().map((x) => x.id));
+  const kuerzlich = S.aufgaben.filter((a) => a.erledigt_am && String(a.erledigt_am).slice(0, 10) >= grenze7 && (!a.schueler_id || aktiveIds.has(a.schueler_id))
+    && (alleZeigen || !S.sitzung || !a.fuer_person_id || a.fuer_person_id === S.sitzung.id || a.von_person_id === S.sitzung.id))
+    .sort((a, b) => String(b.erledigt_am).localeCompare(String(a.erledigt_am))).slice(0, 15);
+  const fuerKarte = `<div class="karte fuer-dich"><div class="karte-kopf"><h2>${hallo}${S.sitzung ? " – für dich" : ""} (${zeigen.length})</h2>
+      <div class="knopfreihe"><div class="tabs klein" role="tablist"><a class="tab" href="#heute"${alleZeigen ? "" : ' aria-current="page"'}>${S.sitzung ? "Für mich" : "Wichtig"}</a><a class="tab" href="#heute?alle=1"${alleZeigen ? ' aria-current="page"' : ""}>Alle offenen</a></div>
+      <button class="knopf haupt" id="agNeu" type="button">+ Aufgabe</button></div></div>
+    ${zeigen.length ? `<ul class="notizliste">${zeigen.map((a) => aufgabeZeile(a, true)).join("")}</ul>` : `<p class="leer">Keine offene Aufgabe. Sehr gut.</p>`}
+    ${spaeter ? `<p class="leise klein"><a href="#heute?alle=1">${spaeter} ${spaeter === 1 ? "Aufgabe" : "Aufgaben"} mit späterem Datum anzeigen</a></p>` : ""}
+    ${kuerzlich.length ? `<details class="von-mir"><summary>Kürzlich erledigt, 7 Tage (${kuerzlich.length})</summary><ul class="notizliste">${kuerzlich.map((a) => `<li class="notiz aufgabe-zeile erledigt"><div>${a.schueler_id ? `<b>${esc(schuelerName(a.schueler_id) || "Schüler")}:</b> ` : ""}<span class="notiz-text">${esc(a.text)}</span></div>
+      <div class="unter">${esc(aufgabeWerAn(a))} · erledigt ${esc(datumDE(String(a.erledigt_am).slice(0, 10)))}${a.erledigt_bearbeiter ? " von " + esc(a.erledigt_bearbeiter) : ""}</div>
+      <div class="notiz-aktion"><button type="button" class="knopf klein" data-hagoeffnen="${esc(a.id)}">Wieder öffnen</button></div></li>`).join("")}</ul></details>` : ""}
+    ${vonMir.length ? `<details class="von-mir"><summary>Von dir an andere vergeben, noch offen (${vonMir.length})</summary><ul class="notizliste">${vonMir.map((a) => aufgabeZeile(a, true)).join("")}</ul></details>` : ""}
+    <p class="leise klein legende"><span class="punkt-rot"></span> rot = überfällig oder dringend · <span class="punkt-orange"></span> orange = heute fällig · grau = später</p></div>`;
+  const todo = `<div class="karte"><div class="karte-kopf"><h2>Fristen und Warnungen</h2></div>${aufgaben.length ? `<div class="aufgaben">${aufgaben.join("")}</div>` : `<p class="leer">Gerade ist nichts offen.</p>`}</div>`;
+  return fuerKarte + todo + liste + kacheln;
 }
 
 /* ---------- Fristen & Reaktivierung ---------- */
@@ -500,7 +519,7 @@ function fristenDialog(id) {
   fdlg.querySelectorAll("input[name=reakt_status]").forEach((r) => r.addEventListener("change", () => { faellig.disabled = r.value !== "bezahlt" || !r.checked; }));
   ladeProtokoll("schueler", id);
 }
-const FELD_NAMEN = { vertrag_am: "Vertragsdatum", klasse: "Klasse", ausbildungsart: "Ausbildungsart", reakt_status: "Reaktivierung", reakt_bezahlt_bis: "fällig am", reakt_notiz: "Notiz", theorie_abgeschlossen_am: "Theorie abgeschlossen", theorie_bestanden_am: "Theorieprüfung bestanden", antrag_am: "Führerscheinantrag eingereicht", reakt_betrag: "Reaktivierung bezahlt (€)", b197_testfahrt_am: "B197 Testfahrt abgegeben", inaktiv_seit: "Inaktiv seit" };
+const FELD_NAMEN = { vertrag_am: "Vertragsdatum", klasse: "Klasse", ausbildungsart: "Ausbildungsart", reakt_status: "Reaktivierung", reakt_bezahlt_bis: "fällig am", reakt_notiz: "Notiz", theorie_abgeschlossen_am: "Theorie abgeschlossen", theorie_bestanden_am: "Theorieprüfung bestanden", praxis_bestanden_am: "Praxisprüfung bestanden", antrag_am: "Führerscheinantrag eingereicht", reakt_betrag: "Reaktivierung bezahlt (€)", b197_testfahrt_am: "B197 Testfahrt abgegeben", inaktiv_seit: "Inaktiv seit" };
 async function ladeProtokoll(tabelle, id) {
   const ziel = $("protokoll");
   const res = await supa.from("aenderungsprotokoll").select("*").eq("tabelle", tabelle).eq("datensatz_id", id).order("geaendert_am", { ascending: false }).limit(20);
@@ -540,7 +559,43 @@ function hakenHTML(p, gross) {
   return `<div class="haken-reihe${gross ? " gross" : ""}">${HAKEN.map(([k, farbe, titel]) =>
     `<button type="button" class="haken ${farbe}${p[k] ? " an" : ""}" data-haken="${k}" data-id="${esc(p.id)}" aria-pressed="${p[k] ? "true" : "false"}" title="${titel}" aria-label="${titel}"${p.status !== "geplant" ? " disabled" : ""}>✓</button>`).join("")}</div>`;
 }
-const P_ANSICHTEN = [["kommend", "Kommende"], ["vergangen", "Vergangene"], ["alle", "Alle"]];
+const P_ANSICHTEN = [["kommend", "Kommende"], ["ergebnis", "Ergebnisse eintragen"], ["vergangen", "Vergangene"], ["alle", "Alle"]];
+// Prüfungen von heute und davor ohne Ergebnis (plus die eben eingetragenen, damit „Rückgängig“ sichtbar bleibt)
+// Ergebnis, das der Fahrlehrer in der App eingetragen hat (gleicher Schüler, gleicher Tag): „bestanden“, „nicht_bestanden“ oder ""
+function appErgebnis(sid, datum) {
+  const e = S.pruefungen.find((x) => x.schueler_id === sid && x.datum === datum && x.result);
+  if (!e) return "";
+  return e.result === "pass" || e.result === "bestanden" ? "bestanden" : e.result === "fail" || e.result === "nicht_bestanden" ? "nicht_bestanden" : "";
+}
+function ergebnisOffen() {
+  const heute = KR.todayISO();
+  return S.pruefungstermine.filter((p) => p.datum <= heute && (p.status === "geplant" || ERGEBNIS_RUECK[p.id]));
+}
+function renderErgebnisListe(art, suche) {
+  let l = ergebnisOffen();
+  if (art !== "alle") l = l.filter((p) => p.art === art);
+  if (suche) l = l.filter((p) => String((S.schueler.find((x) => x.id === p.schueler_id) || {}).name || "").toLowerCase().includes(suche));
+  l.sort((a, b) => (b.datum + (a.von || "")).localeCompare(a.datum + (b.von || "")));
+  if (!l.length) return `<p class="leer">Alle Prüfungen bis heute haben ein Ergebnis. Sehr gut.</p>`;
+  const heute = KR.todayISO(), tage = {};
+  for (const p of l) (tage[p.datum] = tage[p.datum] || []).push(p);
+  const zeile = (p) => {
+    const s = S.schueler.find((x) => x.id === p.schueler_id) || {};
+    const r = ERGEBNIS_RUECK[p.id];
+    const ausApp = p.status === "geplant" && p.art === "praxis" ? appErgebnis(p.schueler_id, p.datum) : "";
+    const ergebnis = p.status === "geplant"
+      ? `${ausApp ? `<span class="leise klein">In der App: ${ausApp === "bestanden" ? "✓ bestanden" : "✗ nicht bestanden"}</span> ` : ""}<button class="knopf ergebnis-ja" data-eja="${esc(p.id)}" type="button">✓ Bestanden</button><button class="knopf ergebnis-nein" data-enein="${esc(p.id)}" type="button">✗ Nicht bestanden</button>`
+      : `<span class="marke-pill ${p.status === "bestanden" ? "gruen" : "rot"}">${p.status === "bestanden" ? "✓ bestanden" : "✗ nicht bestanden"}</span>${r ? `<button class="knopf klein" data-erueck="${esc(p.id)}" type="button">Rückgängig</button>` : ""}${p.status === "bestanden" && p.art === "praxis" && istAktiv(s) ? `<button class="knopf klein" data-earchiv="${esc(s.id)}" type="button">Ins Archiv</button>` : ""}`;
+    return `<tr><td class="zeitspalte">${esc(p.von || "–")}</td>
+      <td><span class="marke-pill ${p.art === "praxis" ? "gruen" : "blau"}">${p.art === "praxis" ? "Praxis" : "Theorie"}</span>${p.klasse ? ` <span class="leise klein">${esc(p.klasse)}</span>` : ""}</td>
+      <td><b>${esc(s.name || "(Schüler gelöscht)")}</b></td><td>${esc(p.fahrlehrer_id ? lehrerName(p.fahrlehrer_id) : "–")}</td>
+      <td class="aktionen"><div class="ergebnis-knoepfe">${ergebnis}</div></td></tr>`;
+  };
+  return `<p class="leise">Für jede Prüfung einmal tippen. Das Ergebnis steht danach sofort in der Akte des Schülers und beim Fahrlehrer in der App.</p>` +
+    Object.keys(tage).map((d) => `<h3 class="tag-titel${d === heute ? " heute" : ""}">${d === heute ? "Heute" : esc(wochentag(d))}, ${esc(datumDE(d))}</h3>
+    <table class="tabelle ptabelle ergebnis-tabelle"><colgroup><col class="c-zeit"><col class="c-art"><col><col class="c-lehrer"><col class="c-ergebnis"></colgroup>
+    <thead><tr><th>Zeit</th><th>Art</th><th>Schüler</th><th>Fahrlehrer</th><th>Ergebnis</th></tr></thead><tbody>${tage[d].map(zeile).join("")}</tbody></table>`).join("");
+}
 // Link innerhalb der Prüfungstafel; Suche, Datum und Sortierung bleiben beim Wechsel der Reiter erhalten
 function pLink(aender) {
   const p = new URLSearchParams((location.hash.split("?")[1]) || "");
@@ -602,7 +657,8 @@ function renderPruefungen() {
     return `<div class="kiosk-kopf"><h2>Prüfungen der nächsten 14 Tage</h2><a class="knopf" href="#pruefungen">Großansicht beenden</a></div>${legende}
       ${tabellen || `<p class="leer">Keine Prüfungen in den nächsten 14 Tagen.</p>`}`;
   }
-  const tabs = P_ANSICHTEN.map(([id, n]) => `<a class="tab" href="${pLink({ ansicht: id === "kommend" ? "" : id })}"${id === ansicht ? ' aria-current="page"' : ""}>${n}</a>`).join("");
+  const nErg = ergebnisOffen().filter((p) => p.status === "geplant").length;
+  const tabs = P_ANSICHTEN.map(([id, n]) => `<a class="tab" href="${pLink({ ansicht: id === "kommend" ? "" : id })}"${id === ansicht ? ' aria-current="page"' : ""}>${n}${id === "ergebnis" && nErg ? ` (${nErg})` : ""}</a>`).join("");
   const arten = [["alle", "Alle"], ["praxis", "Praxis"], ["theorie", "Theorie"]].map(([id, n]) => `<a class="tab" href="${pLink({ art: id === "alle" ? "" : id })}"${id === art ? ' aria-current="page"' : ""}>${n}</a>`).join("");
   const filterAktiv = suche || vonF || bisF;
   const filterZeile = `<div class="filterzeile">
@@ -613,7 +669,7 @@ function renderPruefungen() {
       ${filterAktiv ? `<a class="knopf klein" href="${pLink({ suche: "", von: "", bis: "" })}">Filter löschen</a>` : ""}
     </div>`;
   const warn = offen.length && ansicht === "kommend" && !filterAktiv
-    ? `<div class="karte warnkarte"><h2>${offen.length} Prüfung${offen.length === 1 ? "" : "en"} ohne Ergebnis</h2><table class="tabelle ptabelle"><colgroup><col class="c-zeit breit"><col class="c-art"><col><col class="c-lehrer"><col class="c-haken"><col class="c-akt"></colgroup><tbody>${offen.map((p) => zeile(p).replace("<td class=\"zeitspalte\">", `<td class="zeitspalte">${esc(datumDE(p.datum))} `)).join("")}</tbody></table></div>` : "";
+    ? `<div class="karte warnkarte"><div class="karte-kopf"><h2>${offen.length} Prüfung${offen.length === 1 ? "" : "en"} ohne Ergebnis</h2><a class="knopf haupt" href="#pruefungen?ansicht=ergebnis">Ergebnisse eintragen</a></div><table class="tabelle ptabelle"><colgroup><col class="c-zeit breit"><col class="c-art"><col><col class="c-lehrer"><col class="c-haken"><col class="c-akt"></colgroup><tbody>${offen.map((p) => zeile(p).replace("<td class=\"zeitspalte\">", `<td class="zeitspalte">${esc(datumDE(p.datum))} `)).join("")}</tbody></table></div>` : "";
   return `<div class="kacheln">
       <div class="kachel"><div class="wert">${z.woche}</div><div class="name">Prüfungen in den nächsten 7 Tagen</div></div>
       <div class="kachel${z.offeneHaken ? " gold" : ""}"><div class="wert">${z.offeneHaken}</div><div class="name">mit offenen Haken (14 Tage)</div></div>
@@ -623,8 +679,8 @@ function renderPruefungen() {
       <div class="karte-kopf"><div class="tabs">${tabs}<span class="trenner"></span>${arten}</div>
         <div class="knopfreihe"><a class="knopf" href="#pruefungen?gross=1">Großansicht für die Küche</a><button class="knopf haupt" id="pNeu" type="button">+ Prüfung planen</button></div></div>
       ${filterZeile}
-      ${legende}
-      ${tabellen || `<p class="leer">${filterAktiv ? "Keine Prüfung passt zu dieser Suche." : (ansicht === "kommend" ? "Keine kommenden Prüfungen geplant." : "Noch keine Prüfungen in dieser Ansicht.")}</p>`}
+      ${ansicht === "ergebnis" ? "" : legende}
+      ${ansicht === "ergebnis" ? renderErgebnisListe(art, suche) : tabellen || `<p class="leer">${filterAktiv ? "Keine Prüfung passt zu dieser Suche." : (ansicht === "kommend" ? "Keine kommenden Prüfungen geplant." : "Noch keine Prüfungen in dieser Ansicht.")}</p>`}
     </div>`;
 }
 function bindePruefungen(ziel) {
@@ -647,6 +703,16 @@ function bindePruefungen(ziel) {
   ziel.querySelectorAll("[data-haken]").forEach((b) => b.addEventListener("click", () => setzeHaken(b.dataset.id, b.dataset.haken)));
   ziel.querySelectorAll("[data-pbearb]").forEach((b) => b.addEventListener("click", () => pruefungDialog(b.dataset.pbearb)));
   ziel.querySelectorAll("[data-ergebnis]").forEach((b) => b.addEventListener("click", () => ergebnisDialog(b.dataset.ergebnis)));
+  const tippe = async (b, id, neu) => {
+    b.closest(".ergebnis-knoepfe").querySelectorAll("button").forEach((x) => { x.disabled = true; });
+    const erg = await setzeErgebnis(id, neu);
+    if (erg) toast(neu === "bestanden" ? "✓ Bestanden eingetragen" : "✗ Nicht bestanden eingetragen" + (erg.aufgabeNeu ? " · Aufgabe „Neuen Termin planen“ angelegt" : ""));
+    zeichne();
+  };
+  ziel.querySelectorAll("[data-eja]").forEach((b) => b.addEventListener("click", () => tippe(b, b.dataset.eja, "bestanden")));
+  ziel.querySelectorAll("[data-enein]").forEach((b) => b.addEventListener("click", () => tippe(b, b.dataset.enein, "nicht_bestanden")));
+  ziel.querySelectorAll("[data-erueck]").forEach((b) => b.addEventListener("click", () => { b.disabled = true; ergebnisRueckgaengig(b.dataset.erueck); }));
+  ziel.querySelectorAll("[data-earchiv]").forEach((b) => b.addEventListener("click", () => insArchiv(b.dataset.earchiv)));
 }
 window.addEventListener("hashchange", () => { if (aktuellerBereich().id !== "pruefungen") document.body.classList.remove("kiosk"); });
 async function speicherePruefung(id, werte) {
@@ -693,10 +759,25 @@ function schuelerOptionen(gewaehlt) {
   return S.schueler.filter((x) => istAktiv(x) || x.id === gewaehlt).sort((a, b) => String(a.name).localeCompare(String(b.name), "de"))
     .map((s) => `<option value="${esc(s.id)}"${s.id === gewaehlt ? " selected" : ""}>${esc(s.name)}${s.fahrlehrer_id ? " · " + esc(lehrerName(s.fahrlehrer_id)) : ""}</option>`).join("");
 }
-function lehrerOptionen(gewaehlt, mitAuslastung) {
+// Form in der Fahrlehrer-App aus der Klasse (Lkw-Klassen bleiben, was sie sind; B78 heißt in der App „Automatik“)
+function formAusKlasse(k) {
+  if (k === "B78") return "Automatik";
+  return ["B197", "BE", "C1", "C1E", "C", "CE"].includes(k) ? k : "B";
+}
+// Unterrichtet der Fahrlehrer diese Klasse? Ohne eingetragene Klassen: unbekannt (null).
+// Fahrlehrerlaubnis BE deckt B mit ab, CE deckt C1, C1E und C ab (FahrlG § 1); „C1E“ auch C1, „C“ auch C1.
+function lehrtKlasse(l, k) {
+  const ks = (l && l.klassen) || [];
+  if (!ks.length || !k) return null;
+  const deckt = { B: ["B", "B78", "B197"], BE: ["BE", "B+BE", "B", "B78", "B197"], C1: ["C1"], C1E: ["C1E", "C1"], C: ["C", "C1"], CE: ["CE", "C", "C1E", "C1"], BKF: ["BKF"] };
+  return ks.some((x) => (deckt[x] || [x]).includes(k));
+}
+function lehrerOptionen(gewaehlt, mitAuslastung, klasse) {
   let l2 = S.lehrer.filter((l) => l.aktiv !== false || l.id === gewaehlt);
   if (mitAuslastung) { const rang = auslastungListe().map((x) => x.l.id); l2 = l2.slice().sort((a, b) => (rang.indexOf(a.id) + 1 || 999) - (rang.indexOf(b.id) + 1 || 999)); }
-  return `<option value="">– kein Fahrlehrer –</option>` + l2.map((l) => `<option value="${esc(l.id)}"${l.id === gewaehlt ? " selected" : ""}>${esc(l.name || l.email)}${mitAuslastung ? esc(auslastungKurz(l.id)) : ""}</option>`).join("");
+  // Wer die Klasse unterrichtet, steht oben; wer sie sicher nicht unterrichtet, unten mit Hinweis
+  if (klasse) l2 = l2.slice().sort((a, b) => (lehrtKlasse(a, klasse) === false) - (lehrtKlasse(b, klasse) === false));
+  return `<option value="">– kein Fahrlehrer –</option>` + l2.map((l) => `<option value="${esc(l.id)}"${l.id === gewaehlt ? " selected" : ""}>${esc(l.name || l.email)}${mitAuslastung ? esc(auslastungKurz(l.id)) : ""}${klasse && lehrtKlasse(l, klasse) === false ? ` (nicht ${esc(klasse)})` : ""}</option>`).join("");
 }
 function pruefungDialog(id) {
   const p = id ? S.pruefungstermine.find((x) => x.id === id) : { art: "praxis", datum: KR.addDaysISO(KR.todayISO(), 7), status: "geplant" };
@@ -707,13 +788,13 @@ function pruefungDialog(id) {
       <label>Klasse<select name="klasse">${klassenOptionen(p.klasse)}</select></label>
       <label>Datum<input type="date" name="datum" required value="${esc(p.datum || "")}"></label>
       <label>Uhrzeit<input type="time" name="von" value="${esc(p.von || "")}"></label>
-      <label>Fahrlehrer<select name="fahrlehrer_id">${lehrerOptionen(p.fahrlehrer_id)}</select></label>
+      <label>Fahrlehrer<select name="fahrlehrer_id">${lehrerOptionen(p.fahrlehrer_id, false, p.klasse)}</select></label>
       <label>Prüfer (nur Initialen)<input type="text" name="pruefer" maxlength="10" value="${esc(p.pruefer || "")}"></label>
       <fieldset class="voll"><legend>Haken</legend>${HAKEN.map(([k, , t]) => `<label class="wahl"><input type="checkbox" name="${k}"${p[k] ? " checked" : ""}> ${t}</label>`).join("")}</fieldset>
       <label class="voll">Notiz<input type="text" name="notiz" maxlength="200" value="${esc(p.notiz || "")}"></label>
       ${id && p.status === "geplant" ? `<label class="voll wahl"><input type="checkbox" name="absagen"> Prüfung absagen</label>` : ""}
       ${id && p.status !== "geplant" ? `<label class="voll">Ergebnis korrigieren<select name="status">${Object.entries(P_STATUS).map(([k, v]) => `<option value="${k}"${k === p.status ? " selected" : ""}>${v[1]}</option>`).join("")}</select></label>
-        <p class="leise klein voll">Eine Korrektur ändert nur die Prüfungstafel. Reaktivierung und Theorie-Datum des Schülers bitte danach unter „Fristen“ prüfen.</p>` : ""}
+        <p class="leise klein voll">Eine Korrektur ändert auch die Akte des Schülers (Datum „bestanden“). Wird eine bestandene Praxisprüfung zurückgenommen, bitte die Reaktivierung unter „Fristen“ prüfen.</p>` : ""}
     </div>
     <p class="leise klein">Praxisprüfungen mit Fahrlehrer und Uhrzeit erscheinen automatisch im Kalender des Fahrlehrers.</p>`;
   const dlg = oeffneDialog(id ? "Prüfung bearbeiten" : "Prüfung planen", body, async (form) => {
@@ -736,6 +817,17 @@ function pruefungDialog(id) {
       S.pruefungstermine.push(gespeichert);
     }
     if (!gespeichert) return false;
+    if (id && werte.status && werte.status !== p.status) await uebertrageErgebnis(gespeichert, werte.status, p.status, p);
+    else if (id && gespeichert.status === "bestanden" && gespeichert.datum !== p.datum) {
+      // Datum einer bestandenen Prüfung korrigiert: Datum in der Akte mitziehen (nur wenn es von dieser Prüfung stammt)
+      const sx = S.schueler.find((x) => x.id === gespeichert.schueler_id), feld = gespeichert.art === "theorie" ? "theorie_bestanden_am" : "praxis_bestanden_am";
+      if (sx && sx[feld] === p.datum) {
+        const neuW = { [feld]: gespeichert.datum };
+        if (gespeichert.art === "praxis" && sx.reakt_notiz === `Praxisprüfung bestanden am ${datumDE(p.datum)}`) neuW.reakt_notiz = `Praxisprüfung bestanden am ${datumDE(gespeichert.datum)}`;
+        const res = await supa.from("schueler").update(neuW).eq("id", sx.id).select("id");
+        if (!res.error && res.data && res.data.length) Object.assign(sx, neuW);
+      }
+    }
     await abgleichKalender(gespeichert);
     toast(d.absagen ? "Prüfung abgesagt" : "Prüfung gespeichert");
     zeichne();
@@ -750,6 +842,104 @@ function pruefungDialog(id) {
     if (s.klasse) dlg.querySelector("select[name=klasse]").value = s.klasse;
   });
 }
+/* Prüfungsergebnis → Schülerakte (🗣 Serband 13.10.2026: Haken setzen, landet automatisch beim Schüler)
+   Theorie bestanden → theorie_bestanden_am, Praxis bestanden → praxis_bestanden_am + Reaktivierung entfällt.
+   Nicht bestanden → Aufgabe „Neuen Termin planen“ für alle im Büro. Alles lässt sich rückgängig machen. */
+const ERGEBNIS_RUECK = {}; // pruefung_id -> { status, schueler: {…vorher}, aufgabeId }
+// vorher = die Prüfung vor dem Speichern (Datum/Art können im selben Fenster mitgeändert worden sein)
+async function uebertrageErgebnis(p, neu, alt, vorher) {
+  const s = S.schueler.find((x) => x.id === p.schueler_id);
+  if (!s) return {};
+  const feld = p.art === "theorie" ? "theorie_bestanden_am" : "praxis_bestanden_am";
+  const werte = {};
+  if (neu === "bestanden") {
+    werte[feld] = p.datum;
+    if (p.art === "praxis" && s.reakt_status !== "befreit") Object.assign(werte, { reakt_status: "befreit", reakt_notiz: `Praxisprüfung bestanden am ${datumDE(p.datum)}` });
+  } else if (alt === "bestanden") {
+    const v = vorher || p, vFeld = v.art === "theorie" ? "theorie_bestanden_am" : "praxis_bestanden_am";
+    if (s[vFeld] === v.datum) werte[vFeld] = null; // Korrektur: Datum wieder weg
+    // Befreiung von der Reaktivierung, die nur durch diese Prüfung kam, wieder aufheben
+    if (v.art === "praxis" && s.reakt_status === "befreit" && s.reakt_notiz === `Praxisprüfung bestanden am ${datumDE(v.datum)}`) Object.assign(werte, { reakt_status: "pruefen", reakt_notiz: null });
+  }
+  const alteWerte = {};
+  for (const k of Object.keys(werte)) alteWerte[k] = s[k] == null ? null : s[k];
+  if (Object.keys(werte).length) {
+    const res = await supa.from("schueler").update(werte).eq("id", s.id).select("id");
+    if (res.error || !res.data || !res.data.length) toast("Ergebnis steht auf der Tafel, aber nicht in der Akte: " + (res.error ? res.error.message : "keine Berechtigung"), true);
+    else Object.assign(s, werte);
+  }
+  let aufgabeId = null;
+  const text = `Neuen Termin für die ${p.art === "praxis" ? "Praxis" : "Theorie"}prüfung planen: ${s.name}`;
+  const offenGleich = S.aufgaben.filter((a) => a.schueler_id === s.id && !a.erledigt_am && a.text === text);
+  // Korrektur auf „bestanden“: die Aufgabe „Neuen Termin planen“ ist erledigt
+  if (neu === "bestanden") for (const a of offenGleich) await aendereAufgabe(a.id, { erledigt_am: new Date().toISOString(), erledigt_von: S.user.id, heute: false });
+  if (neu === "nicht_bestanden" && alt !== "nicht_bestanden" && !offenGleich.length) {
+    const res = await supa.from("schueler_aufgaben").insert({ fahrschule_id: S.fsId, schueler_id: s.id, text, heute: false, faellig_am: KR.addDaysISO(KR.todayISO(), 3), erstellt_von: S.user.id }).select("*");
+    if (!res.error && res.data && res.data.length) { S.aufgaben.unshift(res.data[0]); aufgabeId = res.data[0].id; }
+  }
+  return { vorher: alteWerte, aufgabeId };
+}
+async function setzeErgebnis(id, neu) {
+  const p = S.pruefungstermine.find((x) => x.id === id);
+  if (!p || p.status === neu) return false;
+  const alt = p.status;
+  const gespeichert = await speicherePruefung(id, { status: neu });
+  if (!gespeichert) return false;
+  const r = await uebertrageErgebnis(gespeichert, neu, alt);
+  ERGEBNIS_RUECK[id] = { status: alt, schueler: r.vorher || {}, aufgabeId: r.aufgabeId };
+  return { aufgabeNeu: !!r.aufgabeId };
+}
+async function ergebnisRueckgaengig(id) {
+  const r = ERGEBNIS_RUECK[id], p = S.pruefungstermine.find((x) => x.id === id);
+  if (!r || !p) return;
+  if (!(await speicherePruefung(id, { status: r.status }))) return;
+  const s = S.schueler.find((x) => x.id === p.schueler_id);
+  if (s && Object.keys(r.schueler).length) {
+    const res = await supa.from("schueler").update(r.schueler).eq("id", s.id).select("id");
+    if (!res.error && res.data && res.data.length) Object.assign(s, r.schueler);
+  }
+  if (r.aufgabeId) {
+    const res = await supa.from("schueler_aufgaben").delete().eq("id", r.aufgabeId).select("id");
+    if (!res.error) S.aufgaben = S.aufgaben.filter((a) => a.id !== r.aufgabeId);
+  }
+  delete ERGEBNIS_RUECK[id];
+  toast("Rückgängig gemacht");
+  zeichne();
+}
+async function insArchiv(sid) {
+  const s = S.schueler.find((x) => x.id === sid);
+  if (!s || !istAktiv(s)) return;
+  if (await bestaetige(`${s.name} ins Archiv legen?`, "Der Schüler hat bestanden. Archivierte Schüler stehen im Reiter „Archiv“, sind überall ausgeblendet und zählen nicht mehr bei Fristen, Reaktivierung und Auslastung. Du kannst das jederzeit rückgängig machen.", "Ja, ins Archiv")) {
+    await speichereSchueler(s.id, { inaktiv_seit: KR.todayISO() }, `${s.name} liegt jetzt im Archiv.`);
+  }
+}
+// Akte: alle Prüfungen des Schülers (Tafel und App), gleicher Tag und gleiche Art nur einmal
+function pruefungenAkteHTML(sid) {
+  const x = S.schueler.find((y) => y.id === sid) || {};
+  const map = {};
+  for (const e of S.pruefungen) {
+    if (e.schueler_id !== sid || !e.datum) continue;
+    const ok = e.result === "pass" || e.result === "bestanden", nein = e.result === "fail" || e.result === "nicht_bestanden";
+    map["praxis|" + e.datum] = { art: "praxis", datum: e.datum, status: ok ? "bestanden" : nein ? "nicht_bestanden" : "geplant", quelle: "App" };
+  }
+  for (const p of S.pruefungstermine) {
+    if (p.schueler_id !== sid || p.status === "abgesagt") continue;
+    const app = map[p.art + "|" + p.datum];
+    // Tafel noch „geplant“, aber der Fahrlehrer hat in der App schon ein Ergebnis: das Ergebnis zeigen
+    const status = p.status === "geplant" && app && app.status !== "geplant" ? app.status : p.status;
+    map[p.art + "|" + p.datum] = { art: p.art, datum: p.datum, status, lehrer: p.fahrlehrer_id, pruefer: p.pruefer, quelle: status !== p.status ? "App (Tafel noch offen)" : "Tafel" };
+  }
+  const l = Object.values(map).sort((a, b) => b.datum.localeCompare(a.datum));
+  const versuche = (art) => l.filter((e) => e.art === art && e.status !== "geplant").length;
+  const kopf = [x.theorie_bestanden_am ? `<span class="marke-pill gruen">✓ Theorie bestanden ${esc(datumDE(x.theorie_bestanden_am))}</span>` : "",
+    x.praxis_bestanden_am ? `<span class="marke-pill gruen">✓ Praxis bestanden ${esc(datumDE(x.praxis_bestanden_am))}</span>` : ""].join(" ");
+  const kurz = (n) => String(n || "").split(/\s+/).filter(Boolean).map((w) => w[0].toUpperCase() + ".").join(""); // Prüfer nur mit Initialen
+  return `<h3>Prüfungen</h3>${kopf ? `<p>${kopf}</p>` : ""}
+    ${l.length ? `<ul class="pruef-akte">${l.map((e) => {
+      const [f, t] = P_STATUS[e.status] || P_STATUS.geplant;
+      return `<li><span class="marke-pill ${e.art === "praxis" ? "gruen" : "blau"}">${e.art === "praxis" ? "Praxis" : "Theorie"}</span> ${esc(datumDE(e.datum))} <span class="marke-pill ${f}">${esc(t)}</span><span class="leise klein">${e.lehrer ? esc(lehrerName(e.lehrer)) + " · " : ""}${e.pruefer ? "Prüfer " + esc(kurz(e.pruefer)) + " · " : ""}${e.quelle}</span></li>`;
+    }).join("")}</ul><p class="leise klein">Versuche: Theorie ${versuche("theorie")}, Praxis ${versuche("praxis")}.</p>` : `<p class="leise klein">Noch keine Prüfung eingetragen.</p>`}`;
+}
 function ergebnisDialog(id) {
   const p = S.pruefungstermine.find((x) => x.id === id);
   if (!p) return;
@@ -759,23 +949,14 @@ function ergebnisDialog(id) {
       <label class="wahl"><input type="radio" name="ergebnis" value="bestanden"> bestanden</label>
       <label class="wahl"><input type="radio" name="ergebnis" value="nicht_bestanden"> nicht bestanden</label>
     </fieldset></div>
-    <p class="leise klein">${p.art === "theorie" ? "Bei „bestanden“ wird das Datum beim Schüler eingetragen: Ab dann hat er 12 Monate für die Praxisprüfung." : "Bei „bestanden“ entfällt die Reaktivierung für diesen Schüler."}</p>`;
+    <p class="leise klein">${p.art === "theorie" ? "Bei „bestanden“ wird das Datum in der Akte eingetragen: Ab dann hat er 12 Monate für die Praxisprüfung." : "Bei „bestanden“ steht das Datum in der Akte und die Reaktivierung entfällt."} Bei „nicht bestanden“ entsteht die Aufgabe „Neuen Termin planen“.</p>`;
   oeffneDialog("Ergebnis eintragen", body, async (form) => {
     const e = new FormData(form).get("ergebnis");
     if (!e) { toast("Bitte bestanden oder nicht bestanden wählen.", true); return false; }
-    if (!(await speicherePruefung(id, { status: e }))) return false;
-    if (e === "bestanden" && s.id) {
-      if (p.art === "theorie") await speichereSchueler(s.id, { theorie_bestanden_am: p.datum }, "Ergebnis gespeichert");
-      else {
-        await speichereSchueler(s.id, { reakt_status: "befreit", reakt_notiz: `Praxisprüfung bestanden am ${datumDE(p.datum)}` }, "Glückwunsch! Ergebnis gespeichert.");
-        // Erst nach dem Schließen dieses Fensters fragen (sonst liegen zwei Fenster übereinander)
-        if (istAktiv(s)) setTimeout(async () => {
-          if (await bestaetige(`${s.name} ins Archiv legen?`, "Der Schüler hat bestanden. Archivierte Schüler stehen im Reiter „Archiv“, sind überall ausgeblendet und zählen nicht mehr bei Fristen, Reaktivierung und Auslastung. Du kannst das jederzeit rückgängig machen.", "Ja, ins Archiv")) {
-            await speichereSchueler(s.id, { inaktiv_seit: KR.todayISO() }, `${s.name} liegt jetzt im Archiv.`);
-          }
-        }, 150);
-      }
-    } else { toast("Ergebnis gespeichert"); zeichne(); }
+    if (!(await setzeErgebnis(id, e))) return false;
+    toast(e === "bestanden" ? "Glückwunsch! Ergebnis gespeichert." : "Ergebnis gespeichert");
+    zeichne();
+    if (e === "bestanden" && p.art === "praxis" && istAktiv(s)) setTimeout(() => insArchiv(s.id), 150); // nach dem Schließen fragen
     return true;
   }, "Speichern");
 }
@@ -1026,8 +1207,89 @@ function bindeNotizBlock(dlg, sid, fahrlehrerId) {
 function offeneAufgaben(sid) { return S.aufgaben.filter((a) => a.schueler_id === sid && !a.erledigt_am); }
 // „Heute zu tun“: ausdrücklich so markiert, oder das Fälligkeitsdatum ist heute oder früher
 function heuteAufgaben() {
-  const h = KR.todayISO(), aktive = new Set(aktiveSchueler().map((x) => x.id));
-  return S.aufgaben.filter((a) => !a.erledigt_am && aktive.has(a.schueler_id) && (a.heute || (a.faellig_am && a.faellig_am <= h)));
+  return offeneAufgabenAlle().filter((a) => aufgabeStufe(a) !== "spaeter");
+}
+// Offene Aufgaben: ohne Schüler (Büro untereinander) oder zu einem aktiven Schüler
+function offeneAufgabenAlle() {
+  const aktive = new Set(aktiveSchueler().map((x) => x.id));
+  return S.aufgaben.filter((a) => !a.erledigt_am && (!a.schueler_id || aktive.has(a.schueler_id)));
+}
+// Farbe = Dringlichkeit: rot = überfällig oder dringend, orange = heute, grau = später (🗣 Serband 13.10.2026: rot nur dafür)
+function aufgabeStufe(a) {
+  const h = KR.todayISO();
+  if (a.dringend || (a.faellig_am && a.faellig_am < h)) return "rot";
+  if (a.heute || a.faellig_am === h) return "heute";
+  return "spaeter";
+}
+const STUFE_RANG = { rot: 0, heute: 1, spaeter: 2 };
+function sortiereAufgaben(l) {
+  return l.slice().sort((a, b) => (STUFE_RANG[aufgabeStufe(a)] - STUFE_RANG[aufgabeStufe(b)])
+    || String(a.faellig_am || "9999").localeCompare(String(b.faellig_am || "9999"))
+    || String(b.erstellt_am || "").localeCompare(String(a.erstellt_am || "")));
+}
+// Für mich: an mich oder an alle. Ohne PIN-Sitzung (Leitung, Super-Admin) sieht man alle offenen.
+function fuerMich() {
+  const ich = S.sitzung && S.sitzung.id;
+  return sortiereAufgaben(offeneAufgabenAlle().filter((a) => !ich || !a.fuer_person_id || a.fuer_person_id === ich));
+}
+function personName(id) { const p = (S.personen || []).find((x) => x.id === id); return p ? p.name : ""; }
+function aufgabeWerAn(a) {
+  const von = personName(a.von_person_id) || a.bearbeiter || "Büro";
+  const an = a.fuer_person_id ? personName(a.fuer_person_id) || "?" : "alle";
+  return `${von} → ${an}`;
+}
+function aufgabeZeile(a, mitSchueler) {
+  const st = aufgabeStufe(a), h = KR.todayISO();
+  const faellig = a.faellig_am ? (a.faellig_am < h ? `überfällig seit ${datumDE(a.faellig_am)}` : a.faellig_am === h ? "heute fällig" : `fällig ${datumDE(a.faellig_am)}`) : (a.heute ? "heute" : "");
+  const gelesen = a.fuer_person_id && S.sitzung && a.von_person_id === S.sitzung.id && a.fuer_person_id !== S.sitzung.id
+    ? (a.gelesen_am ? ' · <span class="gelesen">✓ gelesen</span>' : " · noch nicht gelesen") : "";
+  return `<li class="notiz aufgabe-zeile ${st}">
+      <div>${a.dringend ? '<span class="marke-pill rot">dringend</span> ' : ""}${mitSchueler === "text" && a.schueler_id ? `<b>${esc(schuelerName(a.schueler_id) || "Schüler")}:</b> ` : mitSchueler && a.schueler_id ? `<button type="button" class="knopf klein" data-hagschueler="${esc(a.schueler_id)}">${esc(schuelerName(a.schueler_id) || "Schüler")}</button> ` : ""}<span class="notiz-text">${esc(a.text)}</span></div>
+      <div class="unter">${esc(aufgabeWerAn(a))} · ${esc(notizZeit(a))}${faellig ? ` · <b class="faellig">${esc(faellig)}</b>` : ""}${gelesen}</div>
+      <div class="notiz-aktion"><button type="button" class="knopf klein" data-hagerledigt="${esc(a.id)}">Erledigt</button></div></li>`;
+}
+// Neue Aufgabe (auch ohne Schüler, an eine Kollegin oder an alle)
+function aufgabeDialog(vorgabe) {
+  const v = vorgabe || {};
+  const personen = aktivePersonen().filter((p) => !S.sitzung || p.id !== S.sitzung.id);
+  const ich = S.sitzung ? `<option value="${esc(S.sitzung.id)}">mich selbst</option>` : "";
+  const schuelerOpt = `<option value="">– kein Schüler –</option>` + aktiveSchueler().slice().sort((a, b) => String(a.name).localeCompare(String(b.name), "de"))
+    .map((x) => `<option value="${esc(x.id)}"${x.id === v.schueler_id ? " selected" : ""}>${esc(x.name)}</option>`).join("");
+  oeffneDialog("Neue Aufgabe", `<div class="formular">
+      <label class="voll">Was ist zu tun?<textarea name="text" rows="3" maxlength="500" required placeholder="z. B. Rechnung Werkstatt anrufen, Unterlagen von … nachfordern"></textarea></label>
+      <label>Für wen?<select name="fuer"><option value="">alle im Büro</option>${ich}${personen.map((p) => `<option value="${esc(p.id)}">${esc(p.name)}</option>`).join("")}</select></label>
+      <label>Fällig am (optional)<input type="date" name="faellig"></label>
+      <label class="voll">Schüler (optional)<select name="schueler">${schuelerOpt}</select></label>
+      <label class="voll login-zeig"><input type="checkbox" name="dringend"> Dringend (wird rot angezeigt)</label></div>
+      <p class="leise klein">Keine Gesundheits- oder Privatdaten. Die Person sieht die Aufgabe nach ihrer PIN sofort.</p>`, async (form) => {
+    const text = form.text.value.trim();
+    if (!text) { toast("Bitte eintragen, was zu tun ist.", true); return false; }
+    const zeile = { fahrschule_id: S.fsId, schueler_id: form.schueler.value || null, text, heute: false, faellig_am: form.faellig.value || null,
+      fuer_person_id: form.fuer.value || null, dringend: form.dringend.checked, erstellt_von: S.user.id };
+    const res = await supa.from("schueler_aufgaben").insert(zeile).select("*");
+    if (res.error || !res.data || !res.data.length) { toast("Aufgabe nicht gespeichert: " + (res.error ? res.error.message : "keine Berechtigung"), true); return false; }
+    S.aufgaben.unshift(res.data[0]);
+    toast(zeile.fuer_person_id && (!S.sitzung || zeile.fuer_person_id !== S.sitzung.id) ? `Aufgabe an ${personName(zeile.fuer_person_id)} geschickt` : "Aufgabe gespeichert");
+    zeichne();
+    return true;
+  }, "Aufgabe speichern");
+}
+// Nach der PIN (und beim Neuladen der Daten): neue Aufgaben, die an mich gehen, einmal anzeigen
+async function zeigeNeueAufgaben() {
+  if (!S.sitzung || !$("wer").hidden || document.querySelector("dialog[open]")) return;
+  const neu = sortiereAufgaben(offeneAufgabenAlle().filter((a) => a.fuer_person_id === S.sitzung.id && !a.gelesen_am && a.von_person_id !== S.sitzung.id));
+  if (!neu.length) return;
+  const ids = neu.map((a) => a.id);
+  oeffneDialog(neu.length === 1 ? "Neue Aufgabe für dich" : `${neu.length} neue Aufgaben für dich`,
+    `<ul class="notizliste">${neu.map((a) => aufgabeZeile(a, "text")).join("")}</ul>`, async () => {
+      const res = await supa.from("schueler_aufgaben").update({ gelesen_am: new Date().toISOString() }).in("id", ids).select("id,gelesen_am");
+      if (res.error) toast("„Gelesen“ nicht gespeichert, der Hinweis kommt beim nächsten Laden wieder: " + res.error.message, true);
+      for (const r of (res.data || [])) { const a = S.aufgaben.find((x) => x.id === r.id); if (a) a.gelesen_am = r.gelesen_am; }
+      zeichne();
+      return true;
+    }, "Gelesen", { festhalten: true });
+  const dlg = document.querySelector("dialog[open]");
+  if (dlg) dlg.querySelectorAll(".notiz-aktion").forEach((x) => x.remove()); // Erledigen geht danach auf der Startseite
 }
 function aufgabePill(sid) {
   const o = offeneAufgaben(sid);
@@ -1039,21 +1301,23 @@ function aufgabenBlockHTML(sid) {
   const alle = S.aufgaben.filter((a) => a.schueler_id === sid), heute = KR.todayISO();
   const offen = alle.filter((a) => !a.erledigt_am), erledigt = alle.filter((a) => a.erledigt_am);
   const zeile = (a) => {
-    const jetzt = a.heute || (a.faellig_am && a.faellig_am <= heute);
-    return `<li class="notiz${jetzt && !a.erledigt_am ? " stopp" : ""}">
-      <div>${jetzt && !a.erledigt_am ? `<span class="marke-pill gelb">Heute zu tun</span> ` : ""}<span class="notiz-text">${esc(a.text)}</span></div>
-      <div class="unter">${esc(a.bearbeiter || "Büro")} · ${esc(notizZeit(a))}${a.faellig_am && !a.erledigt_am ? ` · fällig ${esc(datumDE(a.faellig_am))}` : ""}${a.erledigt_am ? ` · erledigt${a.erledigt_bearbeiter ? " von " + esc(a.erledigt_bearbeiter) : ""}` : ""}</div>
-      ${a.erledigt_am ? "" : `<div class="notiz-aktion"><button type="button" class="knopf klein" data-agheute="${esc(a.id)}">${a.heute ? "Nicht mehr heute" : "Heute zu tun"}</button><button type="button" class="knopf klein" data-agerledigt="${esc(a.id)}">Erledigt</button></div>`}</li>`;
+    const st = a.erledigt_am ? "" : aufgabeStufe(a);
+    return `<li class="notiz aufgabe-zeile ${st}">
+      <div>${a.dringend && !a.erledigt_am ? '<span class="marke-pill rot">dringend</span> ' : ""}${st === "heute" ? `<span class="marke-pill orange">Heute zu tun</span> ` : ""}<span class="notiz-text">${esc(a.text)}</span></div>
+      <div class="unter">${esc(aufgabeWerAn(a))} · ${esc(notizZeit(a))}${a.faellig_am && !a.erledigt_am ? ` · fällig ${esc(datumDE(a.faellig_am))}` : ""}${a.erledigt_am ? ` · erledigt${a.erledigt_bearbeiter ? " von " + esc(a.erledigt_bearbeiter) : ""}` : ""}</div>
+      ${a.erledigt_am ? `<div class="notiz-aktion"><button type="button" class="knopf klein" data-agoeffnen="${esc(a.id)}">Wieder öffnen</button></div>` : `<div class="notiz-aktion">${a.heute || aufgabeStufe(a) === "spaeter" ? `<button type="button" class="knopf klein" data-agheute="${esc(a.id)}">${a.heute ? "Nicht mehr heute" : "Heute zu tun"}</button>` : ""}<button type="button" class="knopf klein" data-agerledigt="${esc(a.id)}">Erledigt</button></div>`}</li>`;
   };
   return `<h3>Interne Aufgaben (nur Büro)</h3>
     <div class="notiz-neu">
       <textarea id="agText" rows="2" maxlength="500" placeholder="z. B. Unterlagen nachfordern, Mutter zurückrufen" aria-label="Text der Aufgabe"></textarea>
-      <label class="datum-klein">Fällig am (optional)<input type="date" id="agDatum"></label>
+      <div class="ag-zeile"><label class="datum-klein">Fällig am (optional)<input type="date" id="agDatum"></label>
+      <label class="datum-klein">Für wen?<select id="agFuer"><option value="">alle im Büro</option>${aktivePersonen().map((p) => `<option value="${esc(p.id)}"${S.sitzung && p.id === S.sitzung.id ? " selected" : ""}>${esc(p.name)}</option>`).join("")}</select></label>
+      <label class="login-zeig"><input type="checkbox" id="agDringend"> Dringend</label></div>
       <div class="knopfreihe"><button type="button" class="knopf haupt" id="agSpeichern">Aufgabe speichern</button><button type="button" class="knopf" id="agHeute">📌 Heute zu tun</button></div>
     </div>
     ${offen.length ? `<ul class="notizliste">${offen.map(zeile).join("")}</ul>` : `<p class="leise klein">Keine offene Aufgabe.</p>`}
     ${erledigt.length ? `<details><summary>Erledigt (${erledigt.length})</summary><ul class="notizliste">${erledigt.slice(0, 20).map(zeile).join("")}</ul></details>` : ""}
-    <p class="leise klein">Aufgaben mit „Heute zu tun“ oder einem Datum von heute stehen auf der Startseite „Heute zu tun“. Keine Gesundheits- oder Privatdaten.</p>`;
+    <p class="leise klein">Offene Aufgaben stehen bei der gewählten Person auf der Startseite „Heute zu tun“ (rot = überfällig oder dringend, orange = heute). Keine Gesundheits- oder Privatdaten.</p>`;
 }
 async function aendereAufgabe(id, werte, hinweis) {
   const res = await supa.from("schueler_aufgaben").update(werte).eq("id", id).select("*");
@@ -1071,7 +1335,8 @@ function bindeAufgabenBlock(dlg, sid) {
     if (!text) { toast("Bitte einen Text eintragen.", true); return; }
     knopf.disabled = true;
     const faellig = block.querySelector("#agDatum").value || null;
-    const res = await supa.from("schueler_aufgaben").insert({ fahrschule_id: S.fsId, schueler_id: sid, text, heute, faellig_am: faellig, erstellt_von: S.user.id }).select("*");
+    const res = await supa.from("schueler_aufgaben").insert({ fahrschule_id: S.fsId, schueler_id: sid, text, heute, faellig_am: faellig, erstellt_von: S.user.id,
+      fuer_person_id: block.querySelector("#agFuer").value || null, dringend: block.querySelector("#agDringend").checked }).select("*");
     if (res.error || !res.data || !res.data.length) { toast("Aufgabe nicht gespeichert: " + (res.error ? res.error.message : "keine Berechtigung"), true); knopf.disabled = false; return; }
     S.aufgaben.unshift(res.data[0]);
     toast(heute ? "Aufgabe steht jetzt unter „Heute zu tun“." : "Aufgabe gespeichert.");
@@ -1086,6 +1351,10 @@ function bindeAufgabenBlock(dlg, sid) {
       const a = S.aufgaben.find((x) => x.id === b.dataset.agheute);
       if (await aendereAufgabe(b.dataset.agheute, { heute: !(a && a.heute) })) neu(); else b.disabled = false;
     }));
+    block.querySelectorAll("[data-agoeffnen]").forEach((b) => b.addEventListener("click", async () => {
+      b.disabled = true;
+      if (await aendereAufgabe(b.dataset.agoeffnen, { erledigt_am: null, erledigt_von: null }, "Aufgabe wieder offen")) neu(); else b.disabled = false;
+    }));
     block.querySelectorAll("[data-agerledigt]").forEach((b) => b.addEventListener("click", async () => {
       b.disabled = true;
       if (await aendereAufgabe(b.dataset.agerledigt, { erledigt_am: new Date().toISOString(), erledigt_von: S.user.id, heute: false })) neu(); else b.disabled = false;
@@ -1094,9 +1363,15 @@ function bindeAufgabenBlock(dlg, sid) {
   bind();
 }
 function bindeHeute(ziel) {
+  const neu = ziel.querySelector("#agNeu");
+  if (neu) neu.addEventListener("click", () => aufgabeDialog());
   ziel.querySelectorAll("[data-hagerledigt]").forEach((b) => b.addEventListener("click", async () => {
     b.disabled = true;
     if (await aendereAufgabe(b.dataset.hagerledigt, { erledigt_am: new Date().toISOString(), erledigt_von: S.user.id, heute: false }, "Aufgabe erledigt ✓")) zeichne(); else b.disabled = false;
+  }));
+  ziel.querySelectorAll("[data-hagoeffnen]").forEach((b) => b.addEventListener("click", async () => {
+    b.disabled = true;
+    if (await aendereAufgabe(b.dataset.hagoeffnen, { erledigt_am: null, erledigt_von: null }, "Aufgabe wieder offen")) zeichne(); else b.disabled = false;
   }));
   ziel.querySelectorAll("[data-hagschueler]").forEach((b) => b.addEventListener("click", () => schuelerDialog(b.dataset.hagschueler)));
 }
@@ -1107,7 +1382,7 @@ function schuelerDialog(id) {
       <label class="voll">Name<input type="text" name="name" required maxlength="100" value="${esc(x.name || "")}"></label>
       <label>Telefon (Login für die Fahr-Akademie)<input type="tel" name="telefon" maxlength="40" value="${esc(x.telefon || "")}"></label>
       <label>E-Mail<input type="email" name="email" maxlength="200" value="${esc(x.email || "")}"></label>
-      <label>Fahrlehrer (der mit dem meisten Platz steht oben)<select name="fahrlehrer_id">${lehrerOptionen(x.fahrlehrer_id, true)}</select></label>
+      <label>Fahrlehrer (passende Klasse und viel Platz zuerst)<select name="fahrlehrer_id">${lehrerOptionen(x.fahrlehrer_id, true, klasseVon(x) || "B")}</select></label>
       <label>Paket<select name="paket_id"><option value="">– ohne Paket –</option>${S.pakete.map((p) => `<option value="${esc(p.id)}"${p.id === x.paket_id ? " selected" : ""}>${esc(p.name)}</option>`).join("")}</select></label>
       <label>Ausbildungsart<select name="ausbildungsart">${artOptionen(x.ausbildungsart)}</select></label>
       <label>Klasse<select name="klasse">${klassenOptionen(x.klasse)}</select></label>
@@ -1117,6 +1392,7 @@ function schuelerDialog(id) {
         <label class="datum-klein">am<input type="date" name="testfahrt_am" value="${esc(x.b197_testfahrt_am || "")}"></label>
       </div>
       ${id ? `<div class="voll schalter-zeile"><label class="schalter"><input type="checkbox" name="aktiv" role="switch"${istAktiv(x) ? " checked" : ""}><span class="schalter-bahn" aria-hidden="true"></span><span class="schalter-text"><b id="aktivText">${istAktiv(x) ? "Aktiv" : "Im Archiv"}</b><span class="leise klein"> Archiv heißt: bestanden oder nicht mehr dabei. Der Schüler verschwindet überall (auch aus der Fahrlehrer-App) und zählt nicht bei Fristen, Reaktivierung und Auslastung. Jederzeit zurückholbar.</span></span></label></div>` : ""}
+      ${id ? `<div class="voll">${pruefungenAkteHTML(id)}</div>` : ""}
       ${id ? `<div class="voll" id="notizBlock">${notizBlockHTML(id, x.fahrlehrer_id)}</div>` : ""}
       <label class="voll">Interne Notiz (nur Büro, der Fahrlehrer sieht sie nicht)<input type="text" name="buero_notiz" maxlength="500" value="${esc(x.buero_notiz || "")}"></label>
       ${id ? `<div class="voll" id="aufgabenBlock">${aufgabenBlockHTML(id)}</div>` : ""}
@@ -1144,7 +1420,7 @@ function schuelerDialog(id) {
     if (!id) {
       const neueId = neueSchuelerId();
       const zeile = Object.assign({ id: neueId, fahrschule_id: S.fsId, fahrlehrer_id: neuerLehrer, status: "aktiv", erstellt_von: S.user.id,
-        ausbildung: { form: werte.klasse === "B78" ? "Automatik" : (["B197", "BE"].includes(werte.klasse) ? werte.klasse : "B"), umschreiber: werte.ausbildungsart === "umschreibung" } }, werte);
+        ausbildung: { form: formAusKlasse(werte.klasse), umschreiber: werte.ausbildungsart === "umschreibung" } }, werte);
       const res = await supa.from("schueler").insert(zeile).select("*");
       if (res.error || !res.data || !res.data.length) { toast("Nicht angelegt: " + (res.error ? res.error.message : "keine Berechtigung"), true); return false; }
       S.schueler.push(res.data[0]);
@@ -1163,7 +1439,11 @@ function schuelerDialog(id) {
   if (id) bindeNotizBlock(dlg, id, x.fahrlehrer_id);
   if (id) bindeAufgabenBlock(dlg, id);
   const klasseSel = dlg.querySelector("select[name=klasse]"), testBox = dlg.querySelector("input[name=testfahrt]"), testDat = dlg.querySelector("input[name=testfahrt_am]");
-  klasseSel.addEventListener("change", () => { dlg.querySelector("#b197Feld").hidden = klasseSel.value !== "B197"; });
+  klasseSel.addEventListener("change", () => {
+    dlg.querySelector("#b197Feld").hidden = klasseSel.value !== "B197";
+    const fl = dlg.querySelector("select[name=fahrlehrer_id]"), wahl = fl.value;
+    fl.innerHTML = lehrerOptionen(wahl, true, klasseSel.value);
+  });
   testBox.addEventListener("change", () => { if (testBox.checked && !testDat.value) testDat.value = KR.todayISO(); if (!testBox.checked) testDat.value = ""; });
   const aktivBox = dlg.querySelector("input[name=aktiv]");
   if (aktivBox) aktivBox.addEventListener("change", () => { dlg.querySelector("#aktivText").textContent = aktivBox.checked ? "Aktiv" : "Im Archiv"; });
@@ -2010,87 +2290,232 @@ function saeulenSVG(punkte, opt) {
     const hoch = p.wert == null ? 0 : Math.max(H - unten - y(p.wert), p.wert > 0 ? 3 : 0);
     const rect = !p.wert ? "" : `<path class="d-balken" d="M${cx - balken / 2},${H - unten} v${-Math.max(hoch - 4, 0)} q0,-4 4,-4 h${balken - 8} q4,0 4,4 v${Math.max(hoch - 4, 0)} z"/>`;
     const label = p.zeigen && p.wert != null ? `<text x="${cx}" y="${y(p.wert) - 7}" class="d-wert">${esc(p.text)}</text>` : "";
-    return `<g class="d-punkt" tabindex="0" data-tip="${esc(p.tip)}"><rect x="${breite * i}" y="0" width="${breite}" height="${H}" fill="transparent"/>${rect}${label}<text x="${cx}" y="${H - 8}" class="d-achse">${esc(p.x)}</text></g>`;
+    return `<g class="d-punkt${p.link ? " klickbar" : ""}" tabindex="0" data-tip="${esc(p.tip)}"${p.link ? ` data-link="${esc(p.link)}" role="link"` : ""}><rect x="${breite * i}" y="0" width="${breite}" height="${H}" fill="transparent"/>${rect}${label}<text x="${cx}" y="${H - 8}" class="d-achse">${esc(p.x)}</text></g>`;
   }).join("");
   return `<svg viewBox="0 0 ${B} ${H}" class="diagramm" role="img" aria-label="${esc(opt.titel)}">${linien}${saeulen}</svg>`;
 }
 function balkenListe(zeilen, max) {
   max = Math.max(max || 0, ...zeilen.map((z) => z.wert), 1);
-  return `<div class="hbalken">${zeilen.map((z) => `<div class="hb-zeile" data-tip="${esc(z.tip)}" tabindex="0">
+  return `<div class="hbalken">${zeilen.map((z) => `<div class="hb-zeile${z.link ? " klickbar" : ""}" data-tip="${esc(z.tip)}" tabindex="0"${z.link ? ` data-link="${esc(z.link)}" role="link"` : ""}>
     <span class="hb-name">${esc(z.name)}</span><span class="hb-spur"><span class="hb-balken" style="width:${(z.wert / max) * 100}%"></span></span><span class="hb-wert">${esc(z.text)}</span></div>`).join("")}</div>`;
 }
 function tabelleAus(kopf, zeilen) {
   return `<details class="als-tabelle"><summary>Als Tabelle</summary><table class="tabelle"><thead><tr>${kopf.map((k, i) => `<th${i ? ' class="zahlspalte"' : ""}>${esc(k)}</th>`).join("")}</tr></thead><tbody>${zeilen.map((z) => `<tr>${z.map((v, i) => `<td${i ? ' class="zahlspalte"' : ""}>${esc(v)}</td>`).join("")}</tr>`).join("")}</tbody></table></details>`;
 }
+/* Zahlen: jeder Balken und jede Kachel ist anklickbar und führt zu einer Detailseite
+   (🗣 Serband 13.10.2026: „wer hat bestanden, wer nicht, in welchem Zeitraum“). Filter: Zeitraum, Klasse, Fahrlehrer. */
+const DATEN_TAGE = 400; // so weit zurück werden Termine und Prüfungstafel geladen
+function zahlenFilter() {
+  const zr = /^\d{4}$/.test(fristenParam("zr") || "") ? fristenParam("zr") : "12";
+  return { zr, klasse: fristenParam("klasse") || "", lehrer: fristenParam("lehrer") || "" };
+}
+function zahlenMonate(zr) {
+  if (zr === "12") return letzteMonate(12);
+  return Array.from({ length: 12 }, (_, i) => `${zr}-${String(i + 1).padStart(2, "0")}`);
+}
+function zLink(werte) {
+  const f = zahlenFilter(), p = new URLSearchParams();
+  const alle = Object.assign({ zr: f.zr === "12" ? "" : f.zr, klasse: f.klasse, lehrer: f.lehrer }, werte);
+  for (const [k, v] of Object.entries(alle)) if (v) p.set(k, v);
+  const q = p.toString();
+  return "#zahlen" + (q ? "?" + q : "");
+}
+// Monat der Anmeldung: Vertragsdatum, sonst Ausbildungsbeginn aus der Fahrlehrer-App (TT.MM.JJJJ).
+// Nicht der Tag der Eingabe im Kompass: beim ersten Übertragen wären sonst alle im selben Monat.
+function anmeldeDatum(x) {
+  if (x.vertrag_am) return String(x.vertrag_am).slice(0, 10);
+  const b = x.ausbildung && String(x.ausbildung.beginn || "").match(/^(\d{1,2})\.(\d{1,2})\.(\d{4})$/);
+  return b ? `${b[3]}-${b[2].padStart(2, "0")}-${b[1].padStart(2, "0")}` : "";
+}
+function schuelerPasst(x, f) {
+  return (!f.klasse || klasseVon(x) === f.klasse) && (!f.lehrer || x.fahrlehrer_id === f.lehrer);
+}
+// Termin passt zum Filter: Fahrlehrer des Termins, Klasse über den Schüler (Interessenten nur ohne Klassenfilter)
+function terminPasst(t, f) {
+  if (f.lehrer && t.fahrlehrer_id !== f.lehrer) return false;
+  if (!f.klasse) return true;
+  const x = t.schueler_id && S.schueler.find((y) => y.id === t.schueler_id);
+  return !!x && klasseVon(x) === f.klasse;
+}
+// Prüfungsergebnisse (Praxis: App und Tafel, Theorie: Tafel), je Schüler, Art und Tag nur einmal
+function pruefErgebnisse(art) {
+  const map = {};
+  if (art === "praxis") for (const e of S.pruefungen) {
+    const ok = e.result === "pass" || e.result === "bestanden", nein = e.result === "fail" || e.result === "nicht_bestanden";
+    if ((ok || nein) && e.datum) map[e.schueler_id + "|" + e.datum] = { datum: e.datum, ok, schueler_id: e.schueler_id, fahrlehrer_id: e.fahrlehrer_id || null, klasse: null, pruefer: null, quelle: "App" };
+  }
+  for (const p of S.pruefungstermine) {
+    if (p.art !== art || (p.status !== "bestanden" && p.status !== "nicht_bestanden")) continue;
+    map[p.schueler_id + "|" + p.datum] = { datum: p.datum, ok: p.status === "bestanden", schueler_id: p.schueler_id, fahrlehrer_id: p.fahrlehrer_id, klasse: p.klasse, pruefer: p.pruefer, quelle: "Tafel" };
+  }
+  return Object.values(map);
+}
+function ergebnisPasst(e, f) {
+  const x = S.schueler.find((y) => y.id === e.schueler_id) || {};
+  return (!f.klasse || (e.klasse || klasseVon(x)) === f.klasse) && (!f.lehrer || (e.fahrlehrer_id || x.fahrlehrer_id) === f.lehrer);
+}
+function initialen(n) { return String(n || "").split(/\s+/).filter(Boolean).map((w) => w[0].toUpperCase() + ".").join(""); }
+function monatLang(m) { return KR.parseISO(m + "-01").toLocaleDateString("de-DE", { month: "long", year: "numeric" }); }
+function zeitraumText(von, bis) { return von === bis ? monatLang(von) : `${monatLang(von)} bis ${monatLang(bis)}`; }
+
 function renderZahlen() {
-  const heute = KR.todayISO(), monate = letzteMonate(12), dieser = monate[11], vorher = monate[10];
-  // Anmeldungen: Vertragsdatum, sonst Ausbildungsbeginn aus der Fahrlehrer-App (TT.MM.JJJJ).
-  // Nicht der Tag der Eingabe im Kompass: beim ersten Übertragen wären sonst alle im selben Monat.
+  if (fristenParam("liste")) return renderZahlenListe();
+  const heute = KR.todayISO(), f = zahlenFilter(), monate = zahlenMonate(f.zr);
+  const dieser = f.zr === "12" ? monate[11] : (monate.includes(heute.slice(0, 7)) ? heute.slice(0, 7) : monate[11]);
+  const vorher = monate[monate.indexOf(dieser) - 1];
   const anm = {};
   let ohneDatum = 0;
   for (const x of S.schueler) {
-    let m = x.vertrag_am ? String(x.vertrag_am).slice(0, 7) : "";
-    const b = !m && x.ausbildung && String(x.ausbildung.beginn || "").match(/^(\d{1,2})\.(\d{1,2})\.(\d{4})$/);
-    if (b) m = `${b[3]}-${b[2].padStart(2, "0")}`;
-    if (m) anm[m] = (anm[m] || 0) + 1; else ohneDatum++;
+    if (!schuelerPasst(x, f)) continue;
+    const d = anmeldeDatum(x);
+    if (d) anm[d.slice(0, 7)] = (anm[d.slice(0, 7)] || 0) + 1; else ohneDatum++;
   }
-  // Bestehensquote Praxis je Monat
-  const erg = praxisErgebnisse(), quote = {};
-  for (const e of erg) { const m = e.datum.slice(0, 7); quote[m] = quote[m] || { ok: 0, n: 0 }; quote[m].n++; if (e.ok) quote[m].ok++; }
-  const q3 = monate.slice(9).reduce((a, m) => ({ ok: a.ok + ((quote[m] || {}).ok || 0), n: a.n + ((quote[m] || {}).n || 0) }), { ok: 0, n: 0 });
-  // Auslastung: Unterrichtseinheiten je Fahrlehrer in diesem Monat (gefahren bis heute)
+  const quoteVon = (art) => {
+    const q = {};
+    for (const e of pruefErgebnisse(art)) { if (!ergebnisPasst(e, f)) continue; const m = e.datum.slice(0, 7); q[m] = q[m] || { ok: 0, n: 0 }; q[m].n++; if (e.ok) q[m].ok++; }
+    return q;
+  };
+  const quote = quoteVon("praxis"), quoteT = quoteVon("theorie");
+  const letzte3 = monate.slice(Math.max(0, monate.indexOf(dieser) - 2), monate.indexOf(dieser) + 1);
+  const summe = (q, ms) => ms.reduce((a, m) => ({ ok: a.ok + ((q[m] || {}).ok || 0), n: a.n + ((q[m] || {}).n || 0) }), { ok: 0, n: 0 });
+  const q3 = summe(quote, letzte3), t3 = summe(quoteT, letzte3);
   const ue = {}, ueGesamt = { v: 0 };
-  ueJeFahrlehrer(S.termine.filter((t) => t.datum && t.datum.slice(0, 7) === dieser && t.datum <= heute), (fl, u) => { ue[fl] = (ue[fl] || 0) + u; ueGesamt.v += u; });
-  const f = zaehleFristen();
+  ueJeFahrlehrer(S.termine.filter((t) => t.datum && t.datum.slice(0, 7) === dieser && t.datum <= heute && terminPasst(t, f)), (fl, u) => { ue[fl] = (ue[fl] || 0) + u; ueGesamt.v += u; });
+  const fr = zaehleFristen();
   const provOffen = S.provisionen.filter((p) => p.status === "offen").reduce((a, p) => a + Number(p.betrag || 0), 0);
   const fcFehlt = S.fcAbgaben.filter((q) => q.ist < q.soll).reduce((a, q) => a + (q.soll - q.ist), 0);
   const verkaufMonat = S.verkaeufe.filter((v) => v.status === "bezahlt" && monatVon(v.aktualisiert_am || v.erstellt_am) === dieser);
   const diff = (anm[dieser] || 0) - (anm[vorher] || 0);
+  const bereich3 = letzte3[0] + ".." + letzte3[letzte3.length - 1];
   const kacheln = `<div class="kacheln">
-    <div class="kachel"><div class="wert">${anm[dieser] || 0}</div><div class="name">Anmeldungen im ${esc(monatKurz(dieser))}${anm[vorher] != null || diff ? ` <span class="leise">(${diff >= 0 ? "+" : ""}${diff} zum Vormonat)</span>` : ""}</div></div>
-    <div class="kachel gruen"><div class="wert">${q3.n ? Math.round(q3.ok / q3.n * 100) + " %" : "–"}</div><div class="name">Bestehensquote Praxis, 3 Monate (${q3.ok} von ${q3.n})</div></div>
-    <div class="kachel"><div class="wert">${zahlDE(ueGesamt.v)}</div><div class="name">Unterrichtseinheiten im ${esc(monatKurz(dieser))} (bis heute)</div></div>
-    <div class="kachel${f.gesperrt ? " rot" : ""}"><div class="wert">${euro(f.gesperrt * reaktBetrag())}</div><div class="name">offene Reaktivierungen</div></div>
+    <a class="kachel" href="${zLink({ liste: "anmeldungen", monat: dieser })}"><div class="wert">${anm[dieser] || 0}</div><div class="name">Anmeldungen im ${esc(monatKurz(dieser))}${vorher ? ` <span class="leise">(${diff >= 0 ? "+" : ""}${diff} zum Vormonat)</span>` : ""}</div></a>
+    <a class="kachel gruen" href="${zLink({ liste: "praxis", monat: bereich3 })}"><div class="wert">${q3.n ? Math.round(q3.ok / q3.n * 100) + " %" : "–"}</div><div class="name">Bestehensquote Praxis, 3 Monate (${q3.ok} von ${q3.n})</div></a>
+    <a class="kachel gruen" href="${zLink({ liste: "theorie", monat: bereich3 })}"><div class="wert">${t3.n ? Math.round(t3.ok / t3.n * 100) + " %" : "–"}</div><div class="name">Bestehensquote Theorie, 3 Monate (${t3.ok} von ${t3.n})</div></a>
+    <a class="kachel" href="${zLink({ liste: "ue", monat: dieser })}"><div class="wert">${zahlDE(ueGesamt.v)}</div><div class="name">Unterrichtseinheiten im ${esc(monatKurz(dieser))}${dieser === heute.slice(0, 7) ? " (bis heute)" : ""}</div></a>
+    <a class="kachel${fr.gesperrt ? " rot" : ""}" href="#fristen"><div class="wert">${euro(fr.gesperrt * reaktBetrag())}</div><div class="name">offene Reaktivierungen</div></a>
   </div>`;
-  const anmPunkte = monate.map((m, i) => ({ x: monatKurz(m), wert: anm[m] || 0, text: String(anm[m] || 0), zeigen: i === 11 || i === 10, tip: `${monatKurz(m)}: ${anm[m] || 0} Anmeldungen` }));
-  const qPunkte = monate.map((m, i) => { const v = quote[m]; return { x: monatKurz(m), wert: v ? Math.round(v.ok / v.n * 100) : null, text: v ? Math.round(v.ok / v.n * 100) + " %" : "", zeigen: !!v && i >= 9, tip: v ? `${monatKurz(m)}: ${Math.round(v.ok / v.n * 100)} % (${v.ok} von ${v.n} bestanden)` : `${monatKurz(m)}: keine Prüfungen` }; });
-  const lehrerZeilen = S.lehrer.map((l) => ({ name: l.name || l.email, wert: ue[l.id] || 0, text: zahlDE(ue[l.id] || 0, 0) + " UE", tip: `${l.name || l.email}: ${zahlDE(ue[l.id] || 0, 1)} Unterrichtseinheiten` })).sort((a, b) => b.wert - a.wert);
+  const anmPunkte = monate.map((m) => ({ x: monatKurz(m), wert: anm[m] || 0, text: String(anm[m] || 0), zeigen: m === dieser || m === vorher, tip: `${monatKurz(m)}: ${anm[m] || 0} Anmeldungen · anklicken für die Namen`, link: zLink({ liste: "anmeldungen", monat: m }) }));
+  const qp = (q, art) => monate.map((m) => { const v = q[m]; return { x: monatKurz(m), wert: v ? Math.round(v.ok / v.n * 100) : null, text: v ? Math.round(v.ok / v.n * 100) + " %" : "", zeigen: !!v && letzte3.includes(m), tip: v ? `${monatKurz(m)}: ${Math.round(v.ok / v.n * 100)} % (${v.ok} von ${v.n} bestanden) · anklicken für die Namen` : `${monatKurz(m)}: keine Prüfungen`, link: v ? zLink({ liste: art, monat: m }) : "" }; });
+  const lehrerZeilen = S.lehrer.filter((l) => !f.lehrer || l.id === f.lehrer).map((l) => ({ name: l.name || l.email, wert: ue[l.id] || 0, text: zahlDE(ue[l.id] || 0, 0) + " UE", tip: `${l.name || l.email}: ${zahlDE(ue[l.id] || 0, 1)} Unterrichtseinheiten · anklicken für die Termine`, link: zLink({ liste: "ue", monat: dieser, lehrer: l.id }) })).sort((a, b) => b.wert - a.wert);
   const hinweis = S.lehrer.length <= 1 ? `<p class="leise klein">Hinweis: Zahlen sind nur so vollständig wie die Daten im Kompass. Solange nicht alle Fahrlehrer den Kompass nutzen, fehlen ihre Stunden.</p>` : "";
-  return kacheln + `<div class="raster zwei">
-    <div class="karte"><h2>Anmeldungen je Monat</h2>${saeulenSVG(anmPunkte, { titel: "Anmeldungen je Monat, letzte 12 Monate" })}
+  // Termine und Prüfungstafel werden nur für ~400 Tage geladen: ältere Jahre nicht anbieten, angeschnittene mit Hinweis
+  const grenze = KR.addDaysISO(heute, -DATEN_TAGE);
+  const jahre = [heute.slice(0, 4), String(Number(heute.slice(0, 4)) - 1), String(Number(heute.slice(0, 4)) - 2)].filter((j) => `${j}-12-31` >= grenze);
+  const angeschnitten = f.zr !== "12" && `${f.zr}-01-01` < grenze;
+  const filterZeile = `<div class="filterzeile nicht-drucken">
+      <select class="suche" id="zZr" aria-label="Zeitraum"><option value="12">Letzte 12 Monate</option>${jahre.map((j) => `<option value="${j}"${f.zr === j ? " selected" : ""}>Jahr ${j}</option>`).join("")}</select>
+      <select class="suche" id="zKlasse" aria-label="Klasse"><option value="">Alle Klassen</option>${KLASSEN.map(([k, n]) => `<option value="${k}"${k === f.klasse ? " selected" : ""}>${esc(n)}</option>`).join("")}</select>
+      <select class="suche" id="zLehrer" aria-label="Fahrlehrer"><option value="">Alle Fahrlehrer</option>${S.lehrer.map((l) => `<option value="${esc(l.id)}"${l.id === f.lehrer ? " selected" : ""}>${esc(l.name || l.email)}</option>`).join("")}</select>
+      ${f.zr !== "12" || f.klasse || f.lehrer ? `<a class="knopf klein" href="#zahlen">Filter löschen</a>` : ""}
+      <span class="leise klein">Tipp: Jeden Balken und jede Kachel kann man anklicken.</span></div>
+    ${angeschnitten ? `<p class="leise klein">Für ${esc(f.zr)} sind Termine, Unterrichtseinheiten und die Prüfungstafel erst ab ${esc(datumDE(grenze))} geladen. Zahlen davor sind unvollständig.</p>` : ""}`;
+  return filterZeile + kacheln + `<div class="raster zwei">
+    <div class="karte"><h2>Anmeldungen je Monat</h2>${saeulenSVG(anmPunkte, { titel: "Anmeldungen je Monat" })}
       ${ohneDatum ? `<p class="leise klein">${ohneDatum} Schüler ohne Vertragsdatum oder Ausbildungsbeginn sind nicht mitgezählt.</p>` : ""}
       ${tabelleAus(["Monat", "Anmeldungen"], monate.map((m) => [monatKurz(m) + " " + m.slice(0, 4), anm[m] || 0]))}</div>
-    <div class="karte"><h2>Bestehensquote Praxis</h2>${saeulenSVG(qPunkte, { titel: "Bestehensquote Praxisprüfung je Monat in Prozent", max: 100 })}
+    <div class="karte"><h2>Bestehensquote Praxis</h2>${saeulenSVG(qp(quote, "praxis"), { titel: "Bestehensquote Praxisprüfung je Monat in Prozent", max: 100 })}
       ${tabelleAus(["Monat", "Bestanden", "Prüfungen", "Quote"], monate.map((m) => { const v = quote[m] || { ok: 0, n: 0 }; return [monatKurz(m) + " " + m.slice(0, 4), v.ok, v.n, v.n ? Math.round(v.ok / v.n * 100) + " %" : "–"]; }))}</div>
   </div>
   <div class="raster zwei">
+    <div class="karte"><h2>Bestehensquote Theorie</h2>${saeulenSVG(qp(quoteT, "theorie"), { titel: "Bestehensquote Theorieprüfung je Monat in Prozent", max: 100 })}
+      ${tabelleAus(["Monat", "Bestanden", "Prüfungen", "Quote"], monate.map((m) => { const v = quoteT[m] || { ok: 0, n: 0 }; return [monatKurz(m) + " " + m.slice(0, 4), v.ok, v.n, v.n ? Math.round(v.ok / v.n * 100) + " %" : "–"]; }))}
+      <p class="leise klein">Theorie zählt nur, was auf der Prüfungstafel ein Ergebnis hat.</p></div>
     <div class="karte"><h2>Auslastung der Fahrlehrer im ${esc(monatKurz(dieser))}</h2>${balkenListe(lehrerZeilen)}${hinweis}</div>
-    <div class="karte"><h2>Offenes Geld und Verkäufe</h2>
+  </div>
+  <div class="karte"><h2>Offenes Geld und Verkäufe</h2>
       <table class="tabelle"><tbody>
-        <tr><td>Reaktivierungen überfällig (${f.gesperrt} × ${euro(reaktBetrag())})</td><td class="zahlspalte"><b>${euro(f.gesperrt * reaktBetrag())}</b></td></tr>
-        <tr><td>Reaktivierung fällig, noch nicht geprüft</td><td class="zahlspalte">${f.pruefen} Schüler</td></tr>
-        <tr><td>Fahrchecks fehlend laut Quittungen</td><td class="zahlspalte">${fcFehlt}</td></tr>
-        <tr><td>Provision an Fahrlehrer offen</td><td class="zahlspalte">${euro(provOffen)}</td></tr>
-        <tr><td>Akademie & Simulator verkauft im ${esc(monatKurz(dieser))}</td><td class="zahlspalte">${verkaufMonat.length} · ${euro(verkaufMonat.reduce((a, v) => a + Number(v.betrag || 0), 0))}</td></tr>
+        <tr><td><a href="#fristen">Reaktivierungen überfällig</a> (${fr.gesperrt} × ${euro(reaktBetrag())})</td><td class="zahlspalte"><b>${euro(fr.gesperrt * reaktBetrag())}</b></td></tr>
+        <tr><td><a href="#fristen">Reaktivierung fällig, noch nicht geprüft</a></td><td class="zahlspalte">${fr.pruefen} Schüler</td></tr>
+        <tr><td><a href="#fahrchecks">Fahrchecks fehlend laut Quittungen</a></td><td class="zahlspalte">${fcFehlt}</td></tr>
+        <tr><td><a href="#verkaeufe">Provision an Fahrlehrer offen</a></td><td class="zahlspalte">${euro(provOffen)}</td></tr>
+        <tr><td><a href="#verkaeufe">Akademie & Simulator verkauft im ${esc(monatKurz(dieser))}</a></td><td class="zahlspalte">${verkaufMonat.length} · ${euro(verkaufMonat.reduce((a, v) => a + Number(v.betrag || 0), 0))}</td></tr>
       </tbody></table></div>
-  </div><div id="tip" class="tip" hidden></div>`;
+  <div id="tip" class="tip" hidden></div>`;
+}
+// Detailseite hinter einem Balken oder einer Kachel
+function renderZahlenListe() {
+  const f = zahlenFilter(), liste = fristenParam("liste"), roh = fristenParam("monat") || "";
+  const raw = /^\d{4}-(0[1-9]|1[0-2])(\.\.\d{4}-(0[1-9]|1[0-2]))?$/.test(roh) ? roh : KR.todayISO().slice(0, 7);
+  const [von, bis] = raw.includes("..") ? raw.split("..") : [raw, raw];
+  const imZeitraum = (d) => d && d.slice(0, 7) >= von && d.slice(0, 7) <= bis;
+  const zurueck = `<a class="knopf nicht-drucken" href="${zLink({ liste: "", monat: "" })}">← Zurück zu Zahlen</a>`;
+  const filterText = [f.zr && f.zr !== "12" ? "Jahr " + f.zr : "", f.klasse ? "Klasse " + f.klasse : "", f.lehrer ? lehrerName(f.lehrer) : ""].filter(Boolean).join(" · ");
+  const kopf = (titel, zusatz) => `<div class="karte"><div class="karte-kopf"><h2>${esc(titel)}</h2>${zurueck}</div>
+    <p class="leise">${esc(zeitraumText(von, bis))}${filterText ? " · " + esc(filterText) : ""}</p>${zusatz || ""}`;
+  const name = (sid) => { const x = S.schueler.find((y) => y.id === sid); return x ? `<button type="button" class="textknopf namenknopf" data-zschueler="${esc(sid)}">${esc(x.name)}</button>` : "(Schüler gelöscht)"; };
+  if (liste === "anmeldungen") {
+    const l = S.schueler.filter((x) => schuelerPasst(x, f) && imZeitraum(anmeldeDatum(x))).sort((a, b) => anmeldeDatum(a).localeCompare(anmeldeDatum(b)));
+    const nachArt = {};
+    for (const x of l) nachArt[artName(x.ausbildungsart)] = (nachArt[artName(x.ausbildungsart)] || 0) + 1;
+    return kopf(`Anmeldungen (${l.length})`, `<p>${Object.entries(nachArt).map(([k, v]) => `<span class="marke-pill">${esc(k)}: ${v}</span>`).join(" ")}</p>`) +
+      (l.length ? `<table class="tabelle"><thead><tr><th>Datum</th><th>Schüler</th><th>Klasse</th><th>Ausbildungsart</th><th>Fahrlehrer</th><th>Paket</th><th>Stand</th></tr></thead><tbody>${l.map((x) => `<tr>
+        <td class="zeitspalte">${esc(datumDE(anmeldeDatum(x)))}</td><td>${name(x.id)}</td><td>${esc(klasseVon(x))}</td><td>${esc(artName(x.ausbildungsart))}</td>
+        <td>${esc(x.fahrlehrer_id ? lehrerName(x.fahrlehrer_id) : "–")}</td><td>${esc(x.paket_id ? paketName(x.paket_id) : "–")}</td>
+        <td>${istAktiv(x) ? (x.praxis_bestanden_am ? '<span class="marke-pill gruen">bestanden</span>' : '<span class="marke-pill">aktiv</span>') : '<span class="marke-pill">Archiv</span>'}</td></tr>`).join("")}</tbody></table>` : `<p class="leer">Keine Anmeldungen in diesem Zeitraum.</p>`) + "</div>";
+  }
+  if (liste === "praxis" || liste === "theorie") {
+    const l = pruefErgebnisse(liste).filter((e) => ergebnisPasst(e, f) && imZeitraum(e.datum)).sort((a, b) => a.datum.localeCompare(b.datum));
+    const ok = l.filter((e) => e.ok).length, nein = l.length - ok;
+    const jeLehrer = {};
+    for (const e of l) { const x = S.schueler.find((y) => y.id === e.schueler_id) || {}; const k = e.fahrlehrer_id || x.fahrlehrer_id || ""; jeLehrer[k] = jeLehrer[k] || { ok: 0, n: 0 }; jeLehrer[k].n++; if (e.ok) jeLehrer[k].ok++; }
+    const lehrerTab = Object.entries(jeLehrer).map(([k, v]) => [k ? lehrerName(k) : "ohne Fahrlehrer", v.ok, v.n - v.ok, v.n ? Math.round(v.ok / v.n * 100) + " %" : "–"]);
+    return kopf(`${liste === "praxis" ? "Praxisprüfungen" : "Theorieprüfungen"} (${l.length})`,
+      `<div class="kacheln"><div class="kachel gruen"><div class="wert">${ok}</div><div class="name">bestanden</div></div><div class="kachel${nein ? " rot" : ""}"><div class="wert">${nein}</div><div class="name">nicht bestanden</div></div><div class="kachel"><div class="wert">${l.length ? Math.round(ok / l.length * 100) + " %" : "–"}</div><div class="name">Bestehensquote</div></div></div>`) +
+      (l.length ? `<table class="tabelle"><thead><tr><th>Datum</th><th>Schüler</th><th>Klasse</th><th>Fahrlehrer</th><th>Prüfer</th><th>Ergebnis</th></tr></thead><tbody>${l.map((e) => { const x = S.schueler.find((y) => y.id === e.schueler_id) || {}; return `<tr>
+        <td class="zeitspalte">${esc(datumDE(e.datum))}</td><td>${name(e.schueler_id)}</td><td>${esc(e.klasse || klasseVon(x))}</td><td>${esc((e.fahrlehrer_id || x.fahrlehrer_id) ? lehrerName(e.fahrlehrer_id || x.fahrlehrer_id) : "–")}</td>
+        <td>${esc(initialen(e.pruefer) || "–")}</td><td>${e.ok ? '<span class="marke-pill gruen">✓ bestanden</span>' : '<span class="marke-pill rot">✗ nicht bestanden</span>'}</td></tr>`; }).join("")}</tbody></table>
+        <h3 class="abstand-oben">Je Fahrlehrer</h3><table class="tabelle"><thead><tr><th>Fahrlehrer</th><th class="zahlspalte">bestanden</th><th class="zahlspalte">nicht bestanden</th><th class="zahlspalte">Quote</th></tr></thead><tbody>${lehrerTab.map((z) => `<tr><td>${esc(z[0])}</td><td class="zahlspalte">${z[1]}</td><td class="zahlspalte">${z[2]}</td><td class="zahlspalte">${z[3]}</td></tr>`).join("")}</tbody></table>` : `<p class="leer">Keine Prüfungen mit Ergebnis in diesem Zeitraum.</p>`) + "</div>";
+  }
+  if (liste === "ue") {
+    const heute = KR.todayISO();
+    const l = S.termine.filter((t) => imZeitraum(t.datum) && t.datum <= heute && t.art !== "block" && terminPasst(t, f)).sort((a, b) => (a.datum + (a.von || "")).localeCompare(b.datum + (b.von || "")));
+    let summe = 0;
+    const gezaehlt = new Set();
+    const zeilen = l.map((t) => {
+      let u = 0, doppelt = false;
+      const k = t.art === "pruefung" && t.schueler_id ? t.schueler_id + "|" + t.datum : "";
+      const abgebrochen = ((t.payload || {}).status || t.status) === "abgebrochen"; // zählt nicht, belegt also auch nicht den Tag
+      if (k && gezaehlt.has(k)) doppelt = true; else { if (k && !abgebrochen) gezaehlt.add(k); ueJeFahrlehrer([t], (fl, x) => { u += x; }); }
+      summe += u; return `<tr>
+      <td class="zeitspalte">${esc(datumDE(t.datum))} ${esc(t.von || "")}</td><td>${esc(lehrerName(t.fahrlehrer_id))}</td><td>${t.schueler_id ? name(t.schueler_id) : esc(t.interessent_name || "")}</td>
+      <td><span class="marke-pill">${esc(ARTEN[t.art] || t.art || "")}</span></td><td class="zahlspalte">${zahlDE(u, 1)}${doppelt ? ' <span class="leise klein">(zählt nicht doppelt)</span>' : ""}</td></tr>`; }).join("");
+    return kopf(`Unterrichtseinheiten (${zahlDE(summe, 1)} UE)`, `<p class="leise klein">Gefahren bis heute, ohne Blocker und abgebrochene Termine. Jede Prüfung zählt einmal je Schüler und Tag.</p>`) +
+      (l.length ? `<table class="tabelle"><thead><tr><th>Datum</th><th>Fahrlehrer</th><th>Schüler</th><th>Art</th><th class="zahlspalte">UE</th></tr></thead><tbody>${zeilen}</tbody></table>` : `<p class="leer">Keine Termine in diesem Zeitraum.</p>`) + "</div>";
+  }
+  return kopf("Unbekannte Liste") + "</div>";
 }
 function bindeZahlen(ziel) {
   const tip = ziel.querySelector("#tip");
-  const zeig = (el, x, y) => { tip.textContent = el.dataset.tip; tip.hidden = false; tip.style.left = x + 14 + "px"; tip.style.top = y + 14 + "px"; };
-  ziel.querySelectorAll("[data-tip]").forEach((el) => {
-    el.addEventListener("mousemove", (e) => zeig(el, e.clientX, e.clientY));
-    el.addEventListener("mouseleave", () => { tip.hidden = true; });
-    el.addEventListener("focus", () => { const r = el.getBoundingClientRect(); zeig(el, r.left, r.top); });
-    el.addEventListener("blur", () => { tip.hidden = true; });
+  if (tip) {
+    const zeig = (el, x, y) => { tip.textContent = el.dataset.tip; tip.hidden = false; tip.style.left = x + 14 + "px"; tip.style.top = y + 14 + "px"; };
+    ziel.querySelectorAll("[data-tip]").forEach((el) => {
+      el.addEventListener("mousemove", (e) => zeig(el, e.clientX, e.clientY));
+      el.addEventListener("mouseleave", () => { tip.hidden = true; });
+      el.addEventListener("focus", () => { const r = el.getBoundingClientRect(); zeig(el, r.left, r.top); });
+      el.addEventListener("blur", () => { tip.hidden = true; });
+    });
+  }
+  // Balken anklicken (Maus oder Enter) → Detailseite
+  ziel.querySelectorAll("[data-link]").forEach((el) => {
+    const geh = () => { if (el.dataset.link) location.hash = el.dataset.link; };
+    el.addEventListener("click", geh);
+    el.addEventListener("keydown", (e) => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); geh(); } });
   });
+  const zr = ziel.querySelector("#zZr");
+  if (zr) {
+    zr.addEventListener("change", (e) => setzeFilter("zahlen", { zr: e.target.value === "12" ? "" : e.target.value }));
+    ziel.querySelector("#zKlasse").addEventListener("change", (e) => setzeFilter("zahlen", { klasse: e.target.value }));
+    ziel.querySelector("#zLehrer").addEventListener("change", (e) => setzeFilter("zahlen", { lehrer: e.target.value }));
+  }
+  ziel.querySelectorAll("[data-zschueler]").forEach((b) => b.addEventListener("click", () => schuelerDialog(b.dataset.zschueler)));
 }
 
 /* ---------- Fahrlehrer & Zugänge ---------- */
 async function adminFunktion(body) {
   const { data: sd } = await supa.auth.getSession();
   const token = sd && sd.session ? sd.session.access_token : null;
-  const { data, error } = await supa.functions.invoke("admin-create-account", { body: Object.assign({}, body, { requester_token: token }) });
+  // Büro-Person mit Verwalten-Recht (Jelena, Murat): die PIN-Sitzung geht mit, die Funktion prüft sie
+  const { data, error } = await supa.functions.invoke("admin-create-account", { body: Object.assign({}, body, { requester_token: token, buero_sitzung: S.sitzung ? S.sitzung.token : undefined }) });
   if (error) throw error;
   if (data && data.error) throw new Error(data.error);
   return data;
@@ -2116,15 +2541,15 @@ function renderTeam() {
   for (const x of aktiveSchueler()) if (x.fahrlehrer_id) schuelerZahl[x.fahrlehrer_id] = (schuelerZahl[x.fahrlehrer_id] || 0) + 1;
   const admin = istAdmin();
   const zeile = (p, mitZahlen) => `<tr>
-      <td><b>${esc(p.name || "–")}</b><div class="unter">${esc(p.email || "")}</div></td>
-      <td>${esc(ROLLEN[p.rolle] || (p.rolle === "fahrlehrer" ? "Fahrlehrer" : p.rolle))}</td>
+      <td><b>${esc(p.name || "–")}</b><div class="unter">${p.ohne_app ? "ohne App · das Büro trägt alles ein" : esc(p.email || "")}</div></td>
+      <td>${esc(ROLLEN[p.rolle] || (p.rolle === "fahrlehrer" ? "Fahrlehrer" : p.rolle))}${mitZahlen ? `<div class="unter">${(p.klassen || []).length ? (p.klassen || []).map((k) => `<span class="marke-pill">${esc(k)}</span>`).join(" ") : "Klassen nicht eingetragen"}</div>` : ""}</td>
       ${mitZahlen ? `<td class="zahlspalte">${schuelerZahl[p.id] || 0}</td><td class="zahlspalte">${zahlDE(ue[p.id] || 0)}</td>` : ""}
-      <td>${p.aktiv === false ? '<span class="marke-pill rot">gesperrt</span>' : '<span class="marke-pill gruen">aktiv</span>'}</td>
-      <td class="aktionen"><div class="aktionen-box">${admin && p.rolle !== "super_admin" && p.id !== S.user.id ? `<button class="knopf klein" data-pwreset="${esc(p.id)}" type="button">Neues Passwort</button>
+      <td>${p.aktiv === false ? '<span class="marke-pill rot">gesperrt</span>' : p.ohne_app ? '<span class="marke-pill">ohne App</span>' : '<span class="marke-pill gruen">aktiv</span>'}</td>
+      <td class="aktionen"><div class="aktionen-box">${mitZahlen && darfPersonenVerwalten() ? `<button class="knopf klein" data-klassen="${esc(p.id)}" type="button">Klassen</button>` : ""}${admin && p.rolle !== "super_admin" && p.id !== S.user.id ? `${p.ohne_app ? "" : `<button class="knopf klein" data-pwreset="${esc(p.id)}" type="button">Neues Passwort</button>`}
         <button class="knopf klein" data-sperren="${esc(p.id)}" type="button">${p.aktiv === false ? "Freischalten" : "Sperren"}</button>` : ""}</div></td></tr>`;
   const lehrer = S.lehrer;
   const buero = S.team.filter((p) => p.rolle === "buero" || p.rolle === "fahrschule_admin");
-  return `<div class="karte"><div class="karte-kopf"><h2>Fahrlehrer (${lehrer.length})</h2>${admin ? '<button class="knopf haupt" id="tNeuFl" type="button">+ Fahrlehrer anlegen</button>' : ""}</div>
+  return `<div class="karte"><div class="karte-kopf"><h2>Fahrlehrer (${lehrer.length})</h2>${admin || darfPersonenVerwalten() ? '<button class="knopf haupt" id="tNeuFl" type="button">+ Fahrlehrer anlegen</button>' : ""}</div>
       <table class="tabelle"><thead><tr><th>Name</th><th>Rolle</th><th class="zahlspalte">Schüler</th><th class="zahlspalte">UE im Monat</th><th>Zugang</th><th></th></tr></thead><tbody>${lehrer.map((p) => zeile(p, true)).join("")}</tbody></table></div>
     <div class="karte"><div class="karte-kopf"><h2>Büro und Leitung</h2>${admin ? `<button class="knopf" id="tNeuBu" type="button">+ ${S.profil.rolle === "super_admin" ? "Büro- oder Leitungs-Zugang" : "Büro-Zugang"} anlegen</button>` : ""}</div>
       ${buero.length ? `<table class="tabelle"><thead><tr><th>Name</th><th>Rolle</th><th>Zugang</th><th></th></tr></thead><tbody>${buero.map((p) => zeile(p, false)).join("")}</tbody></table>` : `<p class="leer">Keine weiteren Zugänge sichtbar.</p>`}
@@ -2210,6 +2635,7 @@ function bindePersonen(ziel) {
 function bindeTeam(ziel) {
   const fl = ziel.querySelector("#tNeuFl"), bu = ziel.querySelector("#tNeuBu");
   if (fl) fl.addEventListener("click", () => zugangDialog("fahrlehrer"));
+  ziel.querySelectorAll("[data-klassen]").forEach((b) => b.addEventListener("click", () => klassenDialog(b.dataset.klassen)));
   if (bu) bu.addEventListener("click", () => zugangDialog("buero"));
   ziel.querySelectorAll("[data-pwreset]").forEach((b) => b.addEventListener("click", () => passwortNeu(b.dataset.pwreset)));
   ziel.querySelectorAll("[data-sperren]").forEach((b) => b.addEventListener("click", () => zugangSperren(b.dataset.sperren)));
@@ -2230,24 +2656,49 @@ function zeigePasswort(email, passwort) {
     return true;
   }, "Kopieren und schließen", { festhalten: true });
 }
+const LEHR_KLASSEN = ["B", "BE", "C1", "C1E", "C", "CE"];
+function klassenHaken(gewaehlt) {
+  return `<fieldset class="voll klassen-wahl"><legend>Klassen, die er/sie unterrichtet</legend>${LEHR_KLASSEN.map((k) => `<label class="wahl"><input type="checkbox" name="kl" value="${k}"${(gewaehlt || []).includes(k) ? " checked" : ""}> ${k}</label>`).join("")}</fieldset>`;
+}
+function klassenDialog(id) {
+  const p = teamPerson(id);
+  if (!p) return;
+  oeffneDialog(`Klassen von ${p.name || p.email}`, `<div class="formular">${klassenHaken(p.klassen)}</div>
+    <p class="leise klein">Bei der Zuteilung von Schülern stehen passende Fahrlehrer dann oben.</p>`, async (form) => {
+    const kl = [...form.querySelectorAll("input[name=kl]:checked")].map((x) => x.value);
+    const { data, error } = await supa.rpc("buero_fahrlehrer_klassen", { p_id: id, p_klassen: kl });
+    if (error || (data && data.fehler)) { toast("Nicht gespeichert: " + (error ? error.message : data.fehler === "keine_berechtigung" ? "keine Berechtigung" : data.fehler), true); return false; }
+    for (const l of [S.team, S.lehrer]) { const x = l.find((y) => y.id === id); if (x) x.klassen = kl; }
+    toast("Klassen gespeichert"); zeichne(); return true;
+  });
+}
 function zugangDialog(rolle) {
   // Super-Admin kann auch die Fahrschul-Leitung (Inhaber, Prokuristin) anlegen
   const wahl = rolle === "buero" && S.profil.rolle === "super_admin"
     ? `<label class="voll">Rolle<select name="rolle"><option value="buero">Büro</option><option value="fahrschule_admin">Fahrschul-Leitung (Inhaber, Prokura)</option></select></label>` : "";
-  oeffneDialog(rolle === "buero" ? "Zugang für Büro oder Leitung anlegen" : "Fahrlehrer anlegen", `<div class="formular">
-      <label class="voll">E-Mail<input type="email" name="email" required></label>
-      <label class="voll">Name<input type="text" name="name" maxlength="100"></label>${wahl}</div>
-      <p class="leise klein">Das Passwort erscheint danach einmal zum Weitergeben. Die Person kann es später über „Passwort vergessen?“ selbst ändern.</p>`, async (form) => {
+  const fl = rolle === "fahrlehrer";
+  const dlg = oeffneDialog(rolle === "buero" ? "Zugang für Büro oder Leitung anlegen" : "Fahrlehrer anlegen", `<div class="formular">
+      <label class="voll">Name<input type="text" name="name" maxlength="100"${fl ? " required" : ""}></label>
+      ${fl ? `<label class="voll login-zeig"><input type="checkbox" name="ohneapp"> Ohne App: Fahrlehrer nutzt den Kompass nicht, das Büro trägt alles ein (keine E-Mail nötig)</label>` : ""}
+      <label class="voll" id="zMail">E-Mail<input type="email" name="email"${fl ? "" : " required"}></label>${wahl}
+      ${fl ? klassenHaken(["B"]) : ""}</div>
+      <p class="leise klein" id="zHinweis">Das Passwort erscheint danach einmal zum Weitergeben. Die Person kann es später über „Passwort vergessen?“ selbst ändern.</p>`, async (form) => {
     if (form.rolle) rolle = form.rolle.value;
+    const ohneApp = !!(form.ohneapp && form.ohneapp.checked);
     const email = form.email.value.trim(), name = form.name.value.trim();
-    if (!email) { toast("Bitte eine E-Mail eintragen.", true); return false; }
+    if (!ohneApp && !email) { toast("Bitte eine E-Mail eintragen.", true); return false; }
+    if (ohneApp && !name) { toast("Bitte einen Namen eintragen.", true); return false; }
+    const klassen = fl ? [...form.querySelectorAll("input[name=kl]:checked")].map((x) => x.value) : [];
     try {
-      const res = await adminFunktion({ action: "create_account", email, name, rolle, fahrschule_id: S.fsId });
-      setTimeout(() => zeigePasswort(res.email || email, res.passwort), 50);
+      const res = await adminFunktion({ action: "create_account", email: ohneApp ? undefined : email, name, rolle, fahrschule_id: S.fsId, ohne_app: ohneApp, klassen });
+      if (ohneApp) toast(`${name} ist angelegt (ohne App). Er steht jetzt überall in den Listen.`);
+      else setTimeout(() => zeigePasswort(res.email || email, res.passwort), 50);
       ladeDaten();
       return true;
     } catch (e) { toast("Nicht angelegt: " + e.message, true); return false; }
   }, "Anlegen");
+  const oa = dlg.querySelector("input[name=ohneapp]");
+  if (oa) oa.addEventListener("change", () => { dlg.querySelector("#zMail").hidden = oa.checked; dlg.querySelector("#zHinweis").hidden = oa.checked; });
 }
 async function passwortNeu(id) {
   const p = teamPerson(id);
@@ -2288,28 +2739,36 @@ function renderFlotte() {
   const nutzung = {};
   for (const t of S.termine) if (t.fahrzeug && t.datum >= heute && t.datum <= bis && t.art !== "block") nutzung[t.fahrzeug] = (nutzung[t.fahrzeug] || 0) + 1;
   const konf = fahrzeugKonflikte();
-  const admin = istAdmin();
-  const typName = { schalt: "Schaltung", automatik: "Automatik" };
+  const admin = istAdmin() || darfPersonenVerwalten();
+  const typName = FZ_TYPEN;
   return `${konf.length ? `<div class="karte warnkarte"><h2>${konf.length} Doppelbelegung${konf.length === 1 ? "" : "en"} in den nächsten 14 Tagen</h2><table class="tabelle"><tbody>${konf.map(([a, b]) => `<tr>
       <td class="zeitspalte">${esc(datumDE(a.datum))}</td><td><b>${esc(a.fahrzeug)}</b></td>
       <td>${esc(a.von)}–${esc(a.bis)} ${esc(lehrerName(a.fahrlehrer_id))}</td><td>${esc(b.von)}–${esc(b.bis)} ${esc(lehrerName(b.fahrlehrer_id))}</td></tr>`).join("")}</tbody></table></div>` : ""}
     <div class="karte"><div class="karte-kopf"><h2>Fahrzeuge (${S.fahrzeuge.length})</h2>${admin ? '<button class="knopf haupt" id="fzNeu" type="button">+ Fahrzeug</button>' : ""}</div>
       ${S.fahrzeuge.length ? `<table class="tabelle"><thead><tr><th>Fahrzeug</th><th>Typ</th><th class="zahlspalte">Termine in 7 Tagen</th><th></th></tr></thead><tbody>${S.fahrzeuge.map((f) => `<tr>
-        <td><b>${esc(f.name || f.bezeichnung || "")}</b></td><td>${esc(typName[f.typ] || f.typ || "")}</td><td class="zahlspalte">${nutzung[f.name || f.bezeichnung] || 0}</td>
+        <td><b>${esc(f.name || f.bezeichnung || "")}</b></td><td>${esc(typName[String(f.typ || "").toLowerCase()] || f.typ || "")}${f.klasse ? ` <span class="marke-pill">${esc(f.klasse)}</span>` : ""}</td><td class="zahlspalte">${nutzung[f.name || f.bezeichnung] || 0}</td>
         <td class="aktionen"><div class="aktionen-box">${admin ? `<button class="knopf klein" data-fzweg="${esc(f.id)}" type="button">Entfernen</button>` : ""}</div></td></tr>`).join("")}</tbody></table>` : `<p class="leer">Noch keine Fahrzeuge eingetragen.</p>`}
-      ${admin ? "" : `<p class="leise klein">Fahrzeuge anlegen und entfernen darf die Fahrschul-Leitung.</p>`}</div>`;
+      ${admin ? "" : `<p class="leise klein">Fahrzeuge anlegen und entfernen dürfen die Fahrschul-Leitung, ${esc(verwalterNamen())}.</p>`}</div>`;
 }
+// Fahrzeug-Arten (Pkw wie bisher, dazu Lkw, Transporter C1 und Anhänger je Klasse)
+const FZ_TYPEN = { schalt: "Schaltung", schalter: "Schaltung", automatik: "Automatik", lkw: "Lkw", transporter: "Transporter", anhaenger: "Anhänger" };
+const FZ_KLASSE_VORSCHLAG = { schalt: "B", automatik: "B", lkw: "C", transporter: "C1", anhaenger: "BE" };
 function bindeFlotte(ziel) {
   const neu = ziel.querySelector("#fzNeu");
-  if (neu) neu.addEventListener("click", () => oeffneDialog("Fahrzeug anlegen", `<div class="formular">
+  if (neu) neu.addEventListener("click", () => { const dlg = oeffneDialog("Fahrzeug anlegen", `<div class="formular">
       <label class="voll">Bezeichnung (z. B. „Golf Schalter“)<input type="text" name="name" required maxlength="60"></label>
-      <label>Typ<select name="typ"><option value="schalt">Schaltung</option><option value="automatik">Automatik</option></select></label></div>`, async (form) => {
+      <label>Art<select name="typ"><option value="schalt">Pkw Schaltung</option><option value="automatik">Pkw Automatik</option><option value="lkw">Lkw (C)</option><option value="transporter">Transporter (C1)</option><option value="anhaenger">Anhänger</option></select></label>
+      <label>Für Klasse<select name="klasse">${["B", "BE", "C1", "C1E", "C", "CE"].map((k) => `<option value="${k}">${k}</option>`).join("")}</select></label></div>
+      <p class="leise klein">Anhänger: die Klasse wählen, für die er gebraucht wird (BE, C1E oder CE).</p>`, async (form) => {
     const name = form.name.value.trim();
     if (!name) { toast("Bitte eine Bezeichnung eintragen.", true); return false; }
-    const res = await supa.from("fahrschule_fahrzeuge").insert({ fahrschule_id: S.fsId, name, typ: form.typ.value, aktiv: true }).select("*");
+    const res = await supa.from("fahrschule_fahrzeuge").insert({ fahrschule_id: S.fsId, name, typ: form.typ.value, klasse: form.klasse.value, aktiv: true }).select("*");
     if (res.error || !res.data || !res.data.length) { toast("Nicht gespeichert: " + (res.error ? res.error.message : "keine Berechtigung"), true); return false; }
     S.fahrzeuge.push(res.data[0]); toast("Fahrzeug angelegt"); zeichne(); return true;
-  }, "Anlegen"));
+  }, "Anlegen");
+    const typ = dlg.querySelector("select[name=typ]"), kl = dlg.querySelector("select[name=klasse]");
+    typ.addEventListener("change", () => { kl.value = FZ_KLASSE_VORSCHLAG[typ.value] || "B"; });
+  });
   ziel.querySelectorAll("[data-fzweg]").forEach((b) => b.addEventListener("click", async () => {
     const f = S.fahrzeuge.find((x) => x.id === b.dataset.fzweg);
     if (!f || !(await bestaetige("Fahrzeug entfernen?", `${f.name || ""} wird aus der Liste genommen. Alte Termine bleiben unverändert.`, "Ja, entfernen"))) return;
@@ -2343,7 +2802,8 @@ function oeffneDialog(titel, inhalt, speichern, knopfText, optionen) {
   dlg.addEventListener("close", () => dlg.remove());
   // Immer schließbar: Abbrechen, ✕ (ohne Pflichtfeld-Prüfung), Esc, und ein Klick neben das Fenster (nur solange nichts eingegeben wurde)
   let geaendert = false;
-  form.addEventListener("input", () => { geaendert = true; });
+  form.addEventListener("input", () => { geaendert = true; dlg.dataset.geaendert = "1"; });
+  if (optionen && optionen.festhalten) dlg.dataset.festhalten = "1";
   if (optionen && optionen.festhalten) dlg.addEventListener("cancel", (e) => e.preventDefault()); // Zugangsdaten: nicht versehentlich wegklicken
   else dlg.addEventListener("mousedown", (e) => { if (e.target === dlg && !geaendert) dlg.close(); });
   dlg.showModal();
@@ -2380,11 +2840,11 @@ async function ladeDaten() {
       supa.from("fahrschulen").select("*").eq("id", fsId).single(),
       supa.from("profiles").select("*").eq("fahrschule_id", fsId).in("rolle", ["fahrlehrer", "super_admin"]).order("name"),
       supa.from("schueler").select("*").eq("fahrschule_id", fsId).neq("status", "geloescht").order("name"),
-      alleSeiten(() => supa.from("kalender_termine").select("*").eq("fahrschule_id", fsId).eq("geloescht", false).gte("datum", KR.addDaysISO(KR.todayISO(), -400)).order("datum").order("id")),
+      alleSeiten(() => supa.from("kalender_termine").select("*").eq("fahrschule_id", fsId).eq("geloescht", false).gte("datum", KR.addDaysISO(KR.todayISO(), -DATEN_TAGE)).order("datum").order("id")),
       supa.from("kalender_pruefungen").select("*").eq("fahrschule_id", fsId).eq("geloescht", false),
       supa.from("fahrschule_fahrzeuge").select("*").eq("fahrschule_id", fsId).eq("aktiv", true).order("erstellt_am"),
       supa.from("fahrschule_pakete").select("*").eq("fahrschule_id", fsId),
-      supa.from("pruefungstermine").select("*").eq("fahrschule_id", fsId).gte("datum", KR.addDaysISO(KR.todayISO(), -120)).order("datum").order("von"),
+      supa.from("pruefungstermine").select("*").eq("fahrschule_id", fsId).gte("datum", KR.addDaysISO(KR.todayISO(), -DATEN_TAGE)).order("datum").order("von"),
       supa.from("fc_abgaben").select("*").eq("fahrschule_id", fsId).gte("zeitraum_von", KR.addDaysISO(KR.todayISO(), -200)).order("bestaetigt_am", { ascending: false }),
       supa.from("fahrschule_empfehlungen").select("*").eq("fahrschule_id", fsId).order("erstellt_am", { ascending: false }).limit(1000),
       supa.from("provisionen").select("*").eq("fahrschule_id", fsId).order("erstellt_am", { ascending: false }).limit(2000),
@@ -2416,6 +2876,7 @@ async function ladeDaten() {
     setStatus("ok", "verbunden · " + S.geladenAm.toLocaleTimeString("de-DE", { hour: "2-digit", minute: "2-digit" }));
     zeichne();
     pruefeSitzungNoch(); // alle 2 Minuten mit: PIN zurückgesetzt oder Person ausgetreten → neu anmelden
+    zeigeNeueAufgaben(); // neue Aufgabe von einer Kollegin erscheint ohne Neuladen
   } catch (e) {
     if (nr !== S.ladeNr) return;
     console.error(e);
@@ -2618,6 +3079,7 @@ async function pinFertig(pin) {
     if (data.pin_neu_noetig) { PIN.abbrechbar = false; zeigePin("aendern1"); return; }
     werZeigen(false);
     zeichne();
+    zeigeNeueAufgaben();
   } catch (e) {
     console.error(e);
     pinBeschaeftigt(false);

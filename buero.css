@@ -5,6 +5,7 @@
   --line:#ddd5bd; --line-soft:#e8e2cd;
   --txt:#23261d; --muted:#5f5e4b; --faint:#8d8a6a;
   --akzent:#3a7350; --akzent-dark:#2f5d3f; --akzent-soft:rgba(58,115,80,.12); --akzent-line:rgba(58,115,80,.28);
+  --orange:#d2782a; --orange-soft:rgba(226,132,48,.16);
   --gold:#b8873a; --gold-soft:rgba(184,135,58,.14);
   --rot:#c0503f; --rot-soft:rgba(192,80,63,.12);
   --gelb:#b9862f; --gelb-soft:rgba(207,154,62,.16);
@@ -22,6 +23,7 @@
     --line:#2e3f35; --line-soft:#223029;
     --txt:#eef3ef; --muted:#b1bfb5; --faint:#7d8d82;
     --akzent:#4a8b5c; --akzent-dark:#7fbf95; --akzent-soft:rgba(74,139,92,.2); --akzent-line:rgba(120,170,140,.38);
+    --orange:#ec9a4f; --orange-soft:rgba(236,154,79,.2);
     --gold:#c9a227; --gold-soft:rgba(201,162,39,.16);
     --rot:#e07060; --rot-soft:rgba(207,90,72,.18);
     --gelb:#d9a64a; --gelb-soft:rgba(207,154,62,.2);
@@ -446,6 +448,7 @@ details summary{cursor:pointer;font-weight:700;margin:6px 0;}
   html,body{background:#fff !important;color:#111 !important;font-size:11pt;}
   .app{display:block;min-height:0;}
   .seite,.kopf,.toast,.wer,dialog,.filterzeile,.tabs,.chips,.knopf,.textknopf,.nicht-drucken,.aktionen,th:empty,.k-suche-erg,.installieren,.wer-zeile{display:none !important;}
+  .textknopf.namenknopf{display:inline !important;color:#111;text-decoration:none;}
   .inhalt{padding:0 !important;max-width:none !important;}
   #ansicht select,#ansicht input[type=search],#ansicht input[type=date],#ansicht textarea{display:none !important;}
   .druckkopf{display:block;margin:0 0 10pt;padding-bottom:6pt;border-bottom:1.5pt solid #333;}
@@ -491,3 +494,40 @@ details summary{cursor:pointer;font-weight:700;margin:6px 0;}
 @media (max-width:1100px){ .k-lname{font-size:14px;} }
 
 @media (max-height:700px){.pin-feld button{height:50px;}.wer-karte{padding:20px;gap:10px;}.pin-fehler{min-height:52px;}}
+
+/* Aufgaben (Büro untereinander): rot = überfällig/dringend, orange = heute, grau = später */
+.aufgabe-zeile{border-left:6px solid var(--line);}
+.aufgabe-zeile.rot{border-color:var(--rot-soft);border-left-color:var(--rot);background:var(--rot-soft);}
+.aufgabe-zeile.heute{border-color:var(--orange-soft);border-left-color:var(--orange);background:var(--orange-soft);}
+.aufgabe-zeile.rot .faellig{color:var(--rot);} .aufgabe-zeile.heute .faellig{color:var(--orange);}
+.aufgabe-zeile .gelesen{color:var(--gruen);font-weight:600;}
+.marke-pill.orange{background:var(--orange-soft);color:var(--orange);}
+.fuer-dich .karte-kopf{flex-wrap:wrap;gap:10px;}
+.fuer-dich .tabs{margin:0;}
+.von-mir{margin-top:12px;} .von-mir summary{cursor:pointer;font-weight:600;color:var(--muted);}
+.legende{display:flex;align-items:center;gap:6px;flex-wrap:wrap;margin-top:12px;}
+.punkt-rot,.punkt-orange{display:inline-block;width:10px;height:10px;border-radius:50%;}
+.punkt-rot{background:var(--rot);} .punkt-orange{background:var(--orange);margin-left:8px;}
+a.kachel{display:block;color:inherit;text-decoration:none;transition:border-color .15s;}
+a.kachel:hover,a.kachel:focus-visible{border-color:var(--akzent);}
+.ag-zeile{display:flex;flex-wrap:wrap;gap:10px 16px;align-items:flex-end;}
+
+/* Ergebnisse eintragen: zwei große Knöpfe je Prüfung */
+.ergebnis-knoepfe{display:flex;flex-wrap:nowrap;gap:8px;justify-content:flex-end;align-items:center;}
+.ergebnis-tabelle col.c-ergebnis{width:360px;}
+.ergebnis-tabelle .aktionen{white-space:nowrap;}
+@media (max-width:1200px){.ergebnis-knoepfe{flex-wrap:wrap;}}
+.knopf.ergebnis-ja{border-color:var(--gruen);color:var(--gruen);font-weight:700;}
+.knopf.ergebnis-ja:hover{background:var(--gruen-soft);}
+.knopf.ergebnis-nein{border-color:var(--rot);color:var(--rot);font-weight:700;}
+.knopf.ergebnis-nein:hover{background:var(--rot-soft);}
+.pruef-akte{list-style:none;margin:0;padding:0;display:grid;gap:6px;}
+.pruef-akte li{display:flex;flex-wrap:wrap;gap:8px;align-items:center;}
+
+/* Zahlen: anklickbare Balken */
+.d-punkt.klickbar,.hb-zeile.klickbar{cursor:pointer;}
+.d-punkt.klickbar:hover .d-balken,.d-punkt.klickbar:focus .d-balken{opacity:.75;}
+.hb-zeile.klickbar:hover .hb-name,.hb-zeile.klickbar:focus .hb-name{text-decoration:underline;}
+.abstand-oben{margin-top:22px;margin-bottom:6px;}
+.klassen-wahl{display:flex;flex-wrap:wrap;gap:6px 18px;border:1px solid var(--line-soft);border-radius:var(--r-klein);padding:10px 14px;}
+.klassen-wahl legend{padding:0 6px;color:var(--muted);font-size:15px;}
