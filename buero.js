@@ -81,7 +81,7 @@ function istAdmin() { return S.profil && (S.profil.rolle === "fahrschule_admin" 
 /* ---------- Bereiche ---------- */
 // schritt = Bauplan-Schritt, in dem der Bereich fertig wird (nur Hinweis, solange er noch fehlt)
 const BEREICHE = [
-  { id: "heute", titel: "Heute zu tun", gruppe: "Arbeit", render: renderHeute, nachher: bindeHeute, zahl: () => heuteAufgaben().length || "" },
+  { id: "heute", titel: "Heute zu tun", gruppe: "Arbeit", render: renderHeute, nachher: bindeHeute, zahl: () => fuerMich().filter((a) => aufgabeStufe(a) !== "spaeter").length || "" },
   { id: "pruefungen", titel: "Prüfungstafel", gruppe: "Arbeit", render: renderPruefungen, nachher: bindePruefungen, zahl: () => zaehlePruefungen().handeln || "" },
   { id: "fahrchecks", titel: "Fahrchecks", gruppe: "Arbeit", render: renderFahrchecks, nachher: bindeFahrchecks, zahl: () => fcOffeneAbgaben().length || "" },
   { id: "fristen", titel: "Fristen & Reaktivierung", gruppe: "Arbeit", render: renderFristen, nachher: bindeFristen, zahl: () => zaehleFristen().handeln || "" },
@@ -164,10 +164,10 @@ function renderHeute() {
     .filter((t) => t.datum === heute && t.art !== "block")
     .sort((a, b) => String(a.von || "").localeCompare(String(b.von || "")));
   const kacheln = `<div class="kacheln">
-    <div class="kachel"><div class="wert">${zahlDE(anzahlAktiv)}</div><div class="name">aktive Schüler</div></div>
-    <div class="kachel"><div class="wert">${zahlDE(S.lehrer.filter((l) => l.aktiv !== false).length)}</div><div class="name">Fahrlehrer</div></div>
-    <div class="kachel"><div class="wert">${zahlDE(termineHeute.length)}</div><div class="name">Termine heute</div></div>
-    <div class="kachel${ohneLehrer ? " rot" : ""}"><div class="wert">${zahlDE(ohneLehrer)}</div><div class="name">Schüler ohne Fahrlehrer</div></div>
+    <a class="kachel" href="#schueler"><div class="wert">${zahlDE(anzahlAktiv)}</div><div class="name">aktive Schüler</div></a>
+    <a class="kachel" href="#team"><div class="wert">${zahlDE(S.lehrer.filter((l) => l.aktiv !== false).length)}</div><div class="name">Fahrlehrer</div></a>
+    <a class="kachel" href="#kalender"><div class="wert">${zahlDE(termineHeute.length)}</div><div class="name">Termine heute</div></a>
+    <a class="kachel${ohneLehrer ? " rot" : ""}" href="#schueler"><div class="wert">${zahlDE(ohneLehrer)}</div><div class="name">Schüler ohne Fahrlehrer</div></a>
   </div>`;
   const zeilen = termineHeute.map((t) => `<tr>
       <td class="zeitspalte">${esc(t.von || "")}${t.bis ? "–" + esc(t.bis) : ""}</td>
@@ -199,13 +199,23 @@ function renderHeute() {
   if (f.antragAb) aufgaben.push(`<a class="aufgabe rot" href="#fristen?ansicht=antrag"><b>${f.antragAb}</b> ${f.antragAb === 1 ? "Führerscheinantrag" : "Führerscheinanträge"} abgelaufen: neu stellen</a>`);
   if (f.antragBald) aufgaben.push(`<a class="aufgabe gelb" href="#fristen?ansicht=antrag"><b>${f.antragBald}</b> ${f.antragBald === 1 ? "Führerscheinantrag läuft" : "Führerscheinanträge laufen"} in den nächsten 60 Tagen ab</a>`);
   if (f.ohneDatum) aufgaben.push(`<a class="aufgabe" href="#fristen?ansicht=ohne"><b>${f.ohneDatum}</b> Schüler ohne Vertragsdatum</a>`);
-  const ha = heuteAufgaben();
-  const heuteKarte = ha.length ? `<div class="karte"><div class="karte-kopf"><h2>Meine Aufgaben für heute (${ha.length})</h2></div><ul class="notizliste">${ha.map((a) => `<li class="notiz stopp">
-      <div><button type="button" class="knopf klein" data-hagschueler="${esc(a.schueler_id)}">${esc(schuelerName(a.schueler_id) || "Schüler")}</button> <span class="notiz-text">${esc(a.text)}</span></div>
-      <div class="unter">${esc(a.bearbeiter || "Büro")} · ${esc(notizZeit(a))}${a.faellig_am ? ` · fällig ${esc(datumDE(a.faellig_am))}` : ""}</div>
-      <div class="notiz-aktion"><button type="button" class="knopf klein" data-hagerledigt="${esc(a.id)}">Erledigt</button></div></li>`).join("")}</ul></div>` : "";
-  const todo = `<div class="karte"><div class="karte-kopf"><h2>Zu erledigen</h2></div>${aufgaben.length ? `<div class="aufgaben">${aufgaben.join("")}</div>` : `<p class="leer">Gerade ist nichts offen.</p>`}</div>`;
-  return kacheln + heuteKarte + todo + liste;
+  // 1) Für dich: Aufgaben an mich (oder an alle), Überfälliges und Dringendes zuerst
+  const alleZeigen = fristenParam("alle") === "1";
+  const fuer = alleZeigen ? sortiereAufgaben(offeneAufgabenAlle()) : fuerMich();
+  // Aufgaben mit späterem Datum erscheinen erst an dem Tag (alle sieht man unter „Alle offenen“)
+  const zeigen = fuer.filter((a) => alleZeigen || aufgabeStufe(a) !== "spaeter" || !a.faellig_am);
+  const spaeter = fuer.length - zeigen.length;
+  const vonMir = S.sitzung ? sortiereAufgaben(offeneAufgabenAlle().filter((a) => a.von_person_id === S.sitzung.id && a.fuer_person_id && a.fuer_person_id !== S.sitzung.id)) : [];
+  const hallo = S.sitzung ? `Hallo ${esc(S.sitzung.name)}` : "Aufgaben";
+  const fuerKarte = `<div class="karte fuer-dich"><div class="karte-kopf"><h2>${hallo}${S.sitzung ? " – für dich" : ""} (${fuer.length})</h2>
+      <div class="knopfreihe"><div class="tabs klein" role="tablist"><a class="tab" href="#heute"${alleZeigen ? "" : ' aria-current="page"'}>${S.sitzung ? "Für mich" : "Wichtig"}</a><a class="tab" href="#heute?alle=1"${alleZeigen ? ' aria-current="page"' : ""}>Alle offenen</a></div>
+      <button class="knopf haupt" id="agNeu" type="button">+ Aufgabe</button></div></div>
+    ${zeigen.length ? `<ul class="notizliste">${zeigen.map((a) => aufgabeZeile(a, true)).join("")}</ul>` : `<p class="leer">Keine offene Aufgabe. Sehr gut.</p>`}
+    ${spaeter ? `<p class="leise klein"><a href="#heute?alle=1">${spaeter} ${spaeter === 1 ? "Aufgabe" : "Aufgaben"} mit späterem Datum anzeigen</a></p>` : ""}
+    ${vonMir.length ? `<details class="von-mir"><summary>Von dir an andere vergeben, noch offen (${vonMir.length})</summary><ul class="notizliste">${vonMir.map((a) => aufgabeZeile(a, true)).join("")}</ul></details>` : ""}
+    <p class="leise klein legende"><span class="punkt-rot"></span> rot = überfällig oder dringend · <span class="punkt-orange"></span> orange = heute fällig · grau = später</p></div>`;
+  const todo = `<div class="karte"><div class="karte-kopf"><h2>Fristen und Warnungen</h2></div>${aufgaben.length ? `<div class="aufgaben">${aufgaben.join("")}</div>` : `<p class="leer">Gerade ist nichts offen.</p>`}</div>`;
+  return fuerKarte + todo + liste + kacheln;
 }
 
 /* ---------- Fristen & Reaktivierung ---------- */
@@ -1026,8 +1036,88 @@ function bindeNotizBlock(dlg, sid, fahrlehrerId) {
 function offeneAufgaben(sid) { return S.aufgaben.filter((a) => a.schueler_id === sid && !a.erledigt_am); }
 // „Heute zu tun“: ausdrücklich so markiert, oder das Fälligkeitsdatum ist heute oder früher
 function heuteAufgaben() {
-  const h = KR.todayISO(), aktive = new Set(aktiveSchueler().map((x) => x.id));
-  return S.aufgaben.filter((a) => !a.erledigt_am && aktive.has(a.schueler_id) && (a.heute || (a.faellig_am && a.faellig_am <= h)));
+  return offeneAufgabenAlle().filter((a) => aufgabeStufe(a) !== "spaeter");
+}
+// Offene Aufgaben: ohne Schüler (Büro untereinander) oder zu einem aktiven Schüler
+function offeneAufgabenAlle() {
+  const aktive = new Set(aktiveSchueler().map((x) => x.id));
+  return S.aufgaben.filter((a) => !a.erledigt_am && (!a.schueler_id || aktive.has(a.schueler_id)));
+}
+// Farbe = Dringlichkeit: rot = überfällig oder dringend, orange = heute, grau = später (🗣 Serband 13.10.2026: rot nur dafür)
+function aufgabeStufe(a) {
+  const h = KR.todayISO();
+  if (a.dringend || (a.faellig_am && a.faellig_am < h)) return "rot";
+  if (a.heute || a.faellig_am === h) return "heute";
+  return "spaeter";
+}
+const STUFE_RANG = { rot: 0, heute: 1, spaeter: 2 };
+function sortiereAufgaben(l) {
+  return l.slice().sort((a, b) => (STUFE_RANG[aufgabeStufe(a)] - STUFE_RANG[aufgabeStufe(b)])
+    || String(a.faellig_am || "9999").localeCompare(String(b.faellig_am || "9999"))
+    || String(b.erstellt_am || "").localeCompare(String(a.erstellt_am || "")));
+}
+// Für mich: an mich oder an alle. Ohne PIN-Sitzung (Leitung, Super-Admin) sieht man alle offenen.
+function fuerMich() {
+  const ich = S.sitzung && S.sitzung.id;
+  return sortiereAufgaben(offeneAufgabenAlle().filter((a) => !ich || !a.fuer_person_id || a.fuer_person_id === ich));
+}
+function personName(id) { const p = (S.personen || []).find((x) => x.id === id); return p ? p.name : ""; }
+function aufgabeWerAn(a) {
+  const von = personName(a.von_person_id) || a.bearbeiter || "Büro";
+  const an = a.fuer_person_id ? personName(a.fuer_person_id) || "?" : "alle";
+  return `${von} → ${an}`;
+}
+function aufgabeZeile(a, mitSchueler) {
+  const st = aufgabeStufe(a), h = KR.todayISO();
+  const faellig = a.faellig_am ? (a.faellig_am < h ? `überfällig seit ${datumDE(a.faellig_am)}` : a.faellig_am === h ? "heute fällig" : `fällig ${datumDE(a.faellig_am)}`) : (a.heute ? "heute" : "");
+  const gelesen = a.fuer_person_id && S.sitzung && a.von_person_id === S.sitzung.id && a.fuer_person_id !== S.sitzung.id
+    ? (a.gelesen_am ? ' · <span class="gelesen">✓ gelesen</span>' : " · noch nicht gelesen") : "";
+  return `<li class="notiz aufgabe-zeile ${st}">
+      <div>${a.dringend ? '<span class="marke-pill rot">dringend</span> ' : ""}${mitSchueler && a.schueler_id ? `<button type="button" class="knopf klein" data-hagschueler="${esc(a.schueler_id)}">${esc(schuelerName(a.schueler_id) || "Schüler")}</button> ` : ""}<span class="notiz-text">${esc(a.text)}</span></div>
+      <div class="unter">${esc(aufgabeWerAn(a))} · ${esc(notizZeit(a))}${faellig ? ` · <b class="faellig">${esc(faellig)}</b>` : ""}${gelesen}</div>
+      <div class="notiz-aktion"><button type="button" class="knopf klein" data-hagerledigt="${esc(a.id)}">Erledigt</button></div></li>`;
+}
+// Neue Aufgabe (auch ohne Schüler, an eine Kollegin oder an alle)
+function aufgabeDialog(vorgabe) {
+  const v = vorgabe || {};
+  const personen = aktivePersonen().filter((p) => !S.sitzung || p.id !== S.sitzung.id);
+  const ich = S.sitzung ? `<option value="${esc(S.sitzung.id)}">mich selbst</option>` : "";
+  const schuelerOpt = `<option value="">– kein Schüler –</option>` + aktiveSchueler().slice().sort((a, b) => String(a.name).localeCompare(String(b.name), "de"))
+    .map((x) => `<option value="${esc(x.id)}"${x.id === v.schueler_id ? " selected" : ""}>${esc(x.name)}</option>`).join("");
+  oeffneDialog("Neue Aufgabe", `<div class="formular">
+      <label class="voll">Was ist zu tun?<textarea name="text" rows="3" maxlength="500" required placeholder="z. B. Rechnung Werkstatt anrufen, Unterlagen von … nachfordern"></textarea></label>
+      <label>Für wen?<select name="fuer"><option value="">alle im Büro</option>${ich}${personen.map((p) => `<option value="${esc(p.id)}">${esc(p.name)}</option>`).join("")}</select></label>
+      <label>Fällig am (optional)<input type="date" name="faellig"></label>
+      <label class="voll">Schüler (optional)<select name="schueler">${schuelerOpt}</select></label>
+      <label class="voll login-zeig"><input type="checkbox" name="dringend"> Dringend (wird rot angezeigt)</label></div>
+      <p class="leise klein">Keine Gesundheits- oder Privatdaten. Die Person sieht die Aufgabe nach ihrer PIN sofort.</p>`, async (form) => {
+    const text = form.text.value.trim();
+    if (!text) { toast("Bitte eintragen, was zu tun ist.", true); return false; }
+    const zeile = { fahrschule_id: S.fsId, schueler_id: form.schueler.value || null, text, heute: false, faellig_am: form.faellig.value || null,
+      fuer_person_id: form.fuer.value || null, dringend: form.dringend.checked, erstellt_von: S.user.id };
+    const res = await supa.from("schueler_aufgaben").insert(zeile).select("*");
+    if (res.error || !res.data || !res.data.length) { toast("Aufgabe nicht gespeichert: " + (res.error ? res.error.message : "keine Berechtigung"), true); return false; }
+    S.aufgaben.unshift(res.data[0]);
+    toast(zeile.fuer_person_id && (!S.sitzung || zeile.fuer_person_id !== S.sitzung.id) ? `Aufgabe an ${personName(zeile.fuer_person_id)} geschickt` : "Aufgabe gespeichert");
+    zeichne();
+    return true;
+  }, "Aufgabe speichern");
+}
+// Nach der PIN (und beim Neuladen der Daten): neue Aufgaben, die an mich gehen, einmal anzeigen
+async function zeigeNeueAufgaben() {
+  if (!S.sitzung || !$("wer").hidden || document.querySelector("dialog[open]")) return;
+  const neu = sortiereAufgaben(offeneAufgabenAlle().filter((a) => a.fuer_person_id === S.sitzung.id && !a.gelesen_am && a.von_person_id !== S.sitzung.id));
+  if (!neu.length) return;
+  const ids = neu.map((a) => a.id);
+  oeffneDialog(neu.length === 1 ? "Neue Aufgabe für dich" : `${neu.length} neue Aufgaben für dich`,
+    `<ul class="notizliste">${neu.map((a) => aufgabeZeile(a, true)).join("")}</ul>`, async () => {
+      const res = await supa.from("schueler_aufgaben").update({ gelesen_am: new Date().toISOString() }).in("id", ids).select("id,gelesen_am");
+      for (const r of (res.data || [])) { const a = S.aufgaben.find((x) => x.id === r.id); if (a) a.gelesen_am = r.gelesen_am; }
+      zeichne();
+      return true;
+    }, "Gelesen", { festhalten: true });
+  const dlg = document.querySelector("dialog[open]");
+  if (dlg) dlg.querySelectorAll(".notiz-aktion").forEach((x) => x.remove()); // Erledigen geht danach auf der Startseite
 }
 function aufgabePill(sid) {
   const o = offeneAufgaben(sid);
@@ -1039,21 +1129,23 @@ function aufgabenBlockHTML(sid) {
   const alle = S.aufgaben.filter((a) => a.schueler_id === sid), heute = KR.todayISO();
   const offen = alle.filter((a) => !a.erledigt_am), erledigt = alle.filter((a) => a.erledigt_am);
   const zeile = (a) => {
-    const jetzt = a.heute || (a.faellig_am && a.faellig_am <= heute);
-    return `<li class="notiz${jetzt && !a.erledigt_am ? " stopp" : ""}">
-      <div>${jetzt && !a.erledigt_am ? `<span class="marke-pill gelb">Heute zu tun</span> ` : ""}<span class="notiz-text">${esc(a.text)}</span></div>
-      <div class="unter">${esc(a.bearbeiter || "Büro")} · ${esc(notizZeit(a))}${a.faellig_am && !a.erledigt_am ? ` · fällig ${esc(datumDE(a.faellig_am))}` : ""}${a.erledigt_am ? ` · erledigt${a.erledigt_bearbeiter ? " von " + esc(a.erledigt_bearbeiter) : ""}` : ""}</div>
+    const st = a.erledigt_am ? "" : aufgabeStufe(a);
+    return `<li class="notiz aufgabe-zeile ${st}">
+      <div>${a.dringend && !a.erledigt_am ? '<span class="marke-pill rot">dringend</span> ' : ""}${st === "heute" ? `<span class="marke-pill orange">Heute zu tun</span> ` : ""}<span class="notiz-text">${esc(a.text)}</span></div>
+      <div class="unter">${esc(aufgabeWerAn(a))} · ${esc(notizZeit(a))}${a.faellig_am && !a.erledigt_am ? ` · fällig ${esc(datumDE(a.faellig_am))}` : ""}${a.erledigt_am ? ` · erledigt${a.erledigt_bearbeiter ? " von " + esc(a.erledigt_bearbeiter) : ""}` : ""}</div>
       ${a.erledigt_am ? "" : `<div class="notiz-aktion"><button type="button" class="knopf klein" data-agheute="${esc(a.id)}">${a.heute ? "Nicht mehr heute" : "Heute zu tun"}</button><button type="button" class="knopf klein" data-agerledigt="${esc(a.id)}">Erledigt</button></div>`}</li>`;
   };
   return `<h3>Interne Aufgaben (nur Büro)</h3>
     <div class="notiz-neu">
       <textarea id="agText" rows="2" maxlength="500" placeholder="z. B. Unterlagen nachfordern, Mutter zurückrufen" aria-label="Text der Aufgabe"></textarea>
-      <label class="datum-klein">Fällig am (optional)<input type="date" id="agDatum"></label>
+      <div class="ag-zeile"><label class="datum-klein">Fällig am (optional)<input type="date" id="agDatum"></label>
+      <label class="datum-klein">Für wen?<select id="agFuer"><option value="">alle im Büro</option>${aktivePersonen().map((p) => `<option value="${esc(p.id)}"${S.sitzung && p.id === S.sitzung.id ? " selected" : ""}>${esc(p.name)}</option>`).join("")}</select></label>
+      <label class="login-zeig"><input type="checkbox" id="agDringend"> Dringend</label></div>
       <div class="knopfreihe"><button type="button" class="knopf haupt" id="agSpeichern">Aufgabe speichern</button><button type="button" class="knopf" id="agHeute">📌 Heute zu tun</button></div>
     </div>
     ${offen.length ? `<ul class="notizliste">${offen.map(zeile).join("")}</ul>` : `<p class="leise klein">Keine offene Aufgabe.</p>`}
     ${erledigt.length ? `<details><summary>Erledigt (${erledigt.length})</summary><ul class="notizliste">${erledigt.slice(0, 20).map(zeile).join("")}</ul></details>` : ""}
-    <p class="leise klein">Aufgaben mit „Heute zu tun“ oder einem Datum von heute stehen auf der Startseite „Heute zu tun“. Keine Gesundheits- oder Privatdaten.</p>`;
+    <p class="leise klein">Offene Aufgaben stehen bei der gewählten Person auf der Startseite „Heute zu tun“ (rot = überfällig oder dringend, orange = heute). Keine Gesundheits- oder Privatdaten.</p>`;
 }
 async function aendereAufgabe(id, werte, hinweis) {
   const res = await supa.from("schueler_aufgaben").update(werte).eq("id", id).select("*");
@@ -1071,7 +1163,8 @@ function bindeAufgabenBlock(dlg, sid) {
     if (!text) { toast("Bitte einen Text eintragen.", true); return; }
     knopf.disabled = true;
     const faellig = block.querySelector("#agDatum").value || null;
-    const res = await supa.from("schueler_aufgaben").insert({ fahrschule_id: S.fsId, schueler_id: sid, text, heute, faellig_am: faellig, erstellt_von: S.user.id }).select("*");
+    const res = await supa.from("schueler_aufgaben").insert({ fahrschule_id: S.fsId, schueler_id: sid, text, heute, faellig_am: faellig, erstellt_von: S.user.id,
+      fuer_person_id: block.querySelector("#agFuer").value || null, dringend: block.querySelector("#agDringend").checked }).select("*");
     if (res.error || !res.data || !res.data.length) { toast("Aufgabe nicht gespeichert: " + (res.error ? res.error.message : "keine Berechtigung"), true); knopf.disabled = false; return; }
     S.aufgaben.unshift(res.data[0]);
     toast(heute ? "Aufgabe steht jetzt unter „Heute zu tun“." : "Aufgabe gespeichert.");
@@ -1094,6 +1187,8 @@ function bindeAufgabenBlock(dlg, sid) {
   bind();
 }
 function bindeHeute(ziel) {
+  const neu = ziel.querySelector("#agNeu");
+  if (neu) neu.addEventListener("click", () => aufgabeDialog());
   ziel.querySelectorAll("[data-hagerledigt]").forEach((b) => b.addEventListener("click", async () => {
     b.disabled = true;
     if (await aendereAufgabe(b.dataset.hagerledigt, { erledigt_am: new Date().toISOString(), erledigt_von: S.user.id, heute: false }, "Aufgabe erledigt ✓")) zeichne(); else b.disabled = false;
@@ -2416,6 +2511,7 @@ async function ladeDaten() {
     setStatus("ok", "verbunden · " + S.geladenAm.toLocaleTimeString("de-DE", { hour: "2-digit", minute: "2-digit" }));
     zeichne();
     pruefeSitzungNoch(); // alle 2 Minuten mit: PIN zurückgesetzt oder Person ausgetreten → neu anmelden
+    zeigeNeueAufgaben(); // neue Aufgabe von einer Kollegin erscheint ohne Neuladen
   } catch (e) {
     if (nr !== S.ladeNr) return;
     console.error(e);
@@ -2618,6 +2714,7 @@ async function pinFertig(pin) {
     if (data.pin_neu_noetig) { PIN.abbrechbar = false; zeigePin("aendern1"); return; }
     werZeigen(false);
     zeichne();
+    zeigeNeueAufgaben();
   } catch (e) {
     console.error(e);
     pinBeschaeftigt(false);

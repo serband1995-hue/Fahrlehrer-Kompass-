@@ -1006,6 +1006,54 @@ for (const [breite, hoehe] of [[1920, 1080], [1366, 768], [1024, 768]]) {
   if (konsole.length) fehler("PIN: Konsole: " + konsole.join(" | "));
   await ctx.close();
 }
+// 4l) Aufgaben der Büroleute untereinander (13.10.2026): an eine Person, Fälligkeit, dringend, Hinweis nach der PIN
+{
+  const gestern = (() => { const d = new Date(); d.setDate(d.getDate() - 1); return d.toISOString().slice(0, 10); })();
+  const { page, ctx, konsole } = await oeffne({ nutzer: "bu-1", hash: "#heute", breite: 1366, hoehe: 900, wer: "Jelena", vorbereiten: function () {
+    const g = new Date(); g.setDate(g.getDate() - 1);
+    F.tabellen.schueler_aufgaben = [
+      { id: "ag-1", fahrschule_id: "fs-test-1", schueler_id: null, text: "Rechnung Werkstatt anrufen", heute: false, faellig_am: g.toISOString().slice(0, 10), fuer_person_id: "bp-3", von_person_id: "bp-1", dringend: false, erstellt_am: new Date().toISOString() },
+      { id: "ag-2", fahrschule_id: "fs-test-1", schueler_id: null, text: "Ordner sortieren", heute: false, faellig_am: null, fuer_person_id: null, von_person_id: "bp-2", dringend: false, erstellt_am: new Date().toISOString() },
+      { id: "ag-3", fahrschule_id: "fs-test-1", schueler_id: null, text: "Nur für Murat", heute: false, faellig_am: null, fuer_person_id: "bp-2", von_person_id: "bp-1", dringend: false, erstellt_am: new Date().toISOString() },
+    ];
+  } });
+  // Jelena schickt Kristina eine dringende Aufgabe für heute
+  await page.click("#agNeu");
+  await page.fill("dialog textarea[name=text]", "Mutter von Lena zurückrufen");
+  await page.selectOption("dialog select[name=fuer]", "bp-3");
+  await page.fill("dialog input[name=faellig]", HEUTE);
+  await page.check("dialog input[name=dringend]");
+  await pruefeLayout(page, "Neue Aufgabe");
+  await page.click("dialog button[value=ok]"); await page.waitForTimeout(300);
+  const neu = await page.evaluate(() => window.__FAKE.tabellen.schueler_aufgaben.find((a) => a.text === "Mutter von Lena zurückrufen"));
+  if (!neu || neu.fuer_person_id !== "bp-3" || !neu.dringend || neu.von_person_id !== "bp-1" || neu.schueler_id !== null) fehler("Aufgabe an Kollegin falsch gespeichert: " + JSON.stringify(neu));
+  // Jelena sieht sie unter „Von dir vergeben“ als „noch nicht gelesen“, nicht in ihrer eigenen Liste
+  let t = await page.textContent(".fuer-dich");
+  if (!/noch nicht gelesen/.test(t)) fehler("Aufgaben: „noch nicht gelesen“ fehlt bei der Absenderin");
+  if (/Nur für Murat/.test((await page.$$eval(".fuer-dich > .notizliste li", (l) => l.map((x) => x.textContent))).join("|"))) fehler("Aufgaben: fremde Aufgabe in „Für mich“");
+  // Kristina meldet sich an: Hinweis-Fenster mit beiden Aufgaben, dringend/überfällig rot
+  await page.click("#werWechseln"); await meldePinAn(page, "Kristina"); await page.waitForTimeout(250);
+  if (!(await page.isVisible("dialog[open]")) || !/2 neue Aufgaben/.test(await page.textContent("dialog[open]"))) fehler("Aufgaben: kein Hinweis-Fenster nach der PIN");
+  await pruefeLayout(page, "Hinweis neue Aufgaben");
+  if (FOTOS) await page.screenshot({ path: join(FOTOS, "aufgaben-hinweis.png") });
+  await page.click("dialog[open] button[value=ok]"); await page.waitForTimeout(250);
+  const gel = await page.evaluate(() => window.__FAKE.tabellen.schueler_aufgaben.filter((a) => a.gelesen_am).map((a) => a.id).sort().join());
+  if (!/ag-1/.test(gel) || gel.split(",").length !== 2) fehler("Aufgaben: „Gelesen“ nicht gespeichert " + gel);
+  const zeilen = await page.$$eval(".fuer-dich > .notizliste li", (l) => l.map((x) => x.className.split(" ").pop() + ":" + x.querySelector(".notiz-text").textContent));
+  if (zeilen.length !== 3 || !zeilen[0].startsWith("rot") || !zeilen[1].startsWith("rot") || !zeilen[2].includes("Ordner")) fehler("Aufgaben: Reihenfolge/Farbe falsch " + JSON.stringify(zeilen));
+  if ((await page.$$eval(".nav-punkt[href='#heute'] .zahl, a[href='#heute'] .zahl", (z) => z.map((x) => x.textContent).join())) !== "2") fehler("Aufgaben: Zahl in der Seitenleiste falsch");
+  await pruefeLayout(page, "Für dich");
+  if (FOTOS) await page.screenshot({ path: join(FOTOS, "aufgaben-heute.png"), fullPage: true });
+  // Erledigen
+  await page.click(".fuer-dich [data-hagerledigt] >> nth=0"); await page.waitForTimeout(300);
+  if ((await page.$$(".fuer-dich > .notizliste li")).length !== 2) fehler("Aufgaben: Erledigt entfernt die Aufgabe nicht");
+  // Alle offenen
+  await page.click('.fuer-dich a.tab[href="#heute?alle=1"]'); await page.waitForTimeout(250);
+  if (!/Nur für Murat/.test(await page.textContent(".fuer-dich"))) fehler("Aufgaben: „Alle offenen“ zeigt nicht alle");
+  if (konsole.length) fehler("Aufgaben: Konsole: " + konsole.join(" | "));
+  await ctx.close();
+}
+
 // Leitung und Super-Admin haben eigene Konten: keine PIN-Abfrage
 for (const nutzer of ["ad-1", "sa-1"]) {
   const { page, ctx } = await oeffne({ nutzer, wer: null });
