@@ -1204,6 +1204,21 @@ for (const [breite, hoehe] of [[1920, 1080], [1366, 768], [1024, 768]]) {
   await page.goto(page.url().split("#")[0] + "#schueler"); await page.waitForTimeout(300);
   await page.fill("#sSuche", "4711"); await page.waitForTimeout(500);
   if (!(await page.textContent("#ansicht")).includes((await sx("s7")).name)) fehler("Suche nach Bewerbernummer findet den Schüler nicht");
+  // Richter R1: „noch nicht bekannt“ → „nein“ wird gespeichert (nein ist nicht dasselbe wie unbekannt)
+  await page.evaluate(() => { for (const x of [window.__FAKE.tabellen.schueler.find((y) => y.id === "s7"), S.schueler.find((y) => y.id === "s7")]) x.sehhilfe = null; });
+  await page.evaluate(() => schuelerDialog("s7")); await page.waitForTimeout(200);
+  await page.selectOption("dialog[open] select[name=sehhilfe]", "nein");
+  await page.click("dialog[open] button[value=ok]"); await page.waitForTimeout(400);
+  if ((await sx("s7")).sehhilfe !== false) fehler("Sehhilfe: „nein“ nach „noch nicht bekannt“ nicht gespeichert: " + (await sx("s7")).sehhilfe);
+  // Richter R2: Die Datenbank liefert jsonb-Schlüssel in eigener Reihenfolge. Ein Führerschein, den die App inzwischen
+  // ergänzt hat, darf beim Speichern einer anderen Angabe (Telefon) nicht verloren gehen.
+  await page.evaluate(() => { const afs = () => [{ land: "Syrien", klasse: "B", nummer: "SY-1", behoerde: "Damaskus", erteilt_am: "2020-01-01" }];
+    for (const x of [window.__FAKE.tabellen.schueler.find((y) => y.id === "s7"), S.schueler.find((y) => y.id === "s7")]) x.auslands_fs = afs(); });
+  await page.evaluate(() => schuelerDialog("s7")); await page.waitForTimeout(200);
+  await page.evaluate(() => window.__FAKE.tabellen.schueler.find((y) => y.id === "s7").auslands_fs.push({ land: "Türkei", klasse: "B" }));
+  await page.fill("dialog[open] input[name=telefon]", "0170 5550001");
+  await page.click("dialog[open] button[value=ok]"); await page.waitForTimeout(400);
+  if (((await sx("s7")).auslands_fs || []).length !== 2) fehler("Umschreiber: Führerschein aus der App ging beim Speichern verloren " + JSON.stringify((await sx("s7")).auslands_fs));
   if (konsole.length) fehler("Behörde: Konsole: " + konsole.join(" | "));
   await ctx.close();
 }

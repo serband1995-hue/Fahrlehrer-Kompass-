@@ -407,7 +407,7 @@ function renderFristen() {
       <input type="search" class="suche" id="fristenSuche" placeholder="Name, Telefon, Bewerbernr." value="${esc(fristenParam("suche"))}" aria-label="Schüler suchen"></div>
     ${ansicht === "antrag" ? (liste.length ? `<table class="tabelle"><thead><tr><th>Schüler</th><th class="nur-sehr-breit">Fahrlehrer</th><th>Eingereicht</th><th>Gültig bis</th><th>Status</th><th></th></tr></thead><tbody>${antragZeilen}</tbody></table><p class="leise klein">Der Führerscheinantrag bei der Führerscheinstelle gilt 12 Monate. Nach bestandener Theorieprüfung gilt er 12 Monate ab dem Prüfungsdatum. Danach muss er neu gestellt werden: „Neu eingereicht“ setzt das heutige Datum. ${ohneAntrag} aktive Schüler haben noch kein Antragsdatum (im Fenster „Bearbeiten“ eintragen).</p>` : `<p class="leer">Keine Schüler.</p>`) : ""}
     ${ansicht === "umschreiber" ? (liste.length ? `<table class="tabelle"><thead><tr><th>Schüler</th><th>Land</th><th class="nur-breit">Wohnsitz seit</th><th>Führerschein</th><th class="nur-breit">Übersetzung</th><th></th></tr></thead><tbody>${umschreibZeilen}</tbody></table>
-      <p class="leise klein">Führerscheine aus Ländern außerhalb der EU/des EWR gelten in Deutschland nur 6 Monate ab Wohnsitz (§ 29 FeV). Danach darf der Schüler nicht mehr selbst fahren, bis der deutsche Führerschein da ist. Die Behörde kann auf Antrag um bis zu 6 Monate verlängern.</p>` : `<p class="leer">Keine Umschreiber.</p>`) : ""}
+      <p class="leise klein">Führerscheine aus Ländern außerhalb der EU/des EWR gelten in Deutschland nur 6 Monate ab Wohnsitz (§ 29 FeV). Danach darf der Schüler nicht mehr selbst fahren, bis der deutsche Führerschein da ist. Verlängern kann die Behörde nur, wenn er höchstens 12 Monate in Deutschland bleibt, bei Umschreibern also meist nicht.</p>` : `<p class="leer">Keine Umschreiber.</p>`) : ""}
     ${ansicht === "antrag" || ansicht === "umschreiber" ? "" : liste.length ? `<table class="tabelle"><thead><tr><th>Schüler</th><th>Fahrlehrer</th><th class="nur-breit">Vertrag</th><th>Reaktivierung</th><th>Theorie</th><th></th></tr></thead><tbody>${zeilen}</tbody></table>`
       : `<p class="leer">${ansicht === "handeln" ? "Kein Handlungsbedarf. Sehr gut." : "Keine Schüler in dieser Ansicht."}</p>`}
     <p class="leise klein">Reaktivierung: ${euro(reaktBetrag())}, fällig 12 Monate nach Vertragsabschluss und dann jährlich. „Gesperrt“ heißt: keine weiteren Leistungen, bis bezahlt ist. Jede Änderung wird mit Name und Uhrzeit protokolliert.</p>
@@ -1482,7 +1482,7 @@ function umschreibText(info) {
   if (info.stufe === "land_pruefen") return "Land nicht erkannt: Bitte die Schreibweise prüfen oder das Land aus der Liste wählen (davon hängt die 6-Monats-Frist ab).";
   if (info.stufe === "ohne_datum") return "Führerschein aus einem Land außerhalb der EU: Er darf nur 6 Monate ab Wohnsitz in Deutschland damit fahren. Bitte „Wohnsitz seit“ eintragen.";
   if (info.stufe === "abgelaufen") return `Achtung: Der ausländische Führerschein gilt in Deutschland seit ${datumDE(info.bis)} nicht mehr. Er darf nicht mehr selbst fahren.`;
-  if (info.stufe === "bald" || info.stufe === "ok") return `Führerschein aus einem Land außerhalb der EU: Er darf damit nur noch bis ${datumDE(info.bis)} fahren (die Behörde kann auf Antrag um bis zu 6 Monate verlängern).`;
+  if (info.stufe === "bald" || info.stufe === "ok") return `Führerschein aus einem Land außerhalb der EU: Er darf damit nur noch bis ${datumDE(info.bis)} fahren (verlängern kann die Behörde nur bei einem Aufenthalt von höchstens 12 Monaten).`;
   return "";
 }
 function bindeBehoerde(dlg, x) {
@@ -1510,6 +1510,14 @@ function bindeBehoerde(dlg, x) {
   neuRechnen();
 }
 // Werte aus dem Fenster; Umschreiber-Felder nur, wenn „Umschreibung“ gewählt ist (sonst bleiben alte Angaben stehen)
+// „Unverändert?“ für Behörde-Felder: Reihenfolge der Schlüssel egal (die Datenbank sortiert jsonb um), leere Werte wie
+// fehlend. Bei der Sehhilfe ist „nein“ (false) nicht dasselbe wie „noch nicht bekannt“ (null).
+function gleicherWert(a, b, k) {
+  const nz = (v) => (v == null || v === "" || (v === false && k !== "sehhilfe") || (Array.isArray(v) && !v.length) ? null : v);
+  const s = (v) => JSON.stringify(nz(v), (kk, w) => (w && typeof w === "object" && !Array.isArray(w))
+    ? Object.keys(w).sort().reduce((o, q) => { if (w[q] != null && w[q] !== "") o[q] = w[q]; return o; }, {}) : w);
+  return s(a) === s(b);
+}
 function behoerdeWerte(form, dlg, d) {
   const w = {
     bewerbernummer: (d.bewerbernummer || "").trim() || null,
@@ -1622,8 +1630,7 @@ function schuelerDialog(id) {
     Object.assign(werte, behoerdeWerte(form, dlg, d));
     // Nur geänderte Behörde-Felder senden: sonst überschriebe ein länger offenes Fenster neuere Eingaben des Fahrlehrers
     if (id) for (const k of ["bewerbernummer", "sehhilfe", "vorbesitz", "auslands_fs", "wohnsitz_de_seit", "uebersetzung_vorhanden"]) {
-      if (!(k in werte)) continue; const nz = (v) => (v == null || v === false || (Array.isArray(v) && !v.length) ? null : v);
-      if (JSON.stringify(nz(werte[k])) === JSON.stringify(nz(k === "sehhilfe" ? sehhilfeVon(x) : x[k]))) delete werte[k];
+      if ((k in werte) && gleicherWert(werte[k], k === "sehhilfe" ? sehhilfeVon(x) : x[k], k)) delete werte[k];
     }
     const ohneLand = [...dlg.querySelectorAll(".afs-zeile")].find((z) => [...z.querySelectorAll("[data-afs]")].some((i) => i.value.trim()) && !z.querySelector('[data-afs="land"]').value.trim());
     if (ohneLand && !dlg.querySelector("#umschreiberFeld").hidden) {
