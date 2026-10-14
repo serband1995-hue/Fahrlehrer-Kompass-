@@ -548,4 +548,8 @@ a.kachel:hover,a.kachel:focus-visible{border-color:var(--akzent);}
 .warnhinweis{color:var(--rot);font-weight:700;margin:0;}
 .warnhinweis:empty{display:none;}
 .anwesenheit h3{margin:4px 0 6px;}
+/* Fahrlehrer-Akte (14.10.2026) */
+.fl-kacheln{margin-bottom:12px;}
+.fl-warnung{font-weight:700;margin:4px 0;}
+.fl-warnung.abgelaufen{color:var(--rot);} .fl-warnung.bald{color:var(--gold, #8a5f10);}
 

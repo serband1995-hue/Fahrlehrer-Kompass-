@@ -203,6 +203,8 @@ function renderHeute() {
   if (f.fristAb) aufgaben.push(`<a class="aufgabe rot" href="#fristen?ansicht=antrag"><b>${f.fristAb}</b> ${f.fristAb === 1 ? "Schüler hat" : "Schüler haben"} die Theorie-Frist der Behörde überschritten</a>`);
   if (f.fristBald) aufgaben.push(`<a class="aufgabe gelb" href="#fristen?ansicht=antrag"><b>${f.fristBald}</b> Theorie-Frist${f.fristBald === 1 ? " läuft" : "en laufen"} in 30 Tagen ab</a>`);
   if (f.umBald || f.umAb) aufgaben.push(`<a class="aufgabe ${f.umAb ? "rot" : "gelb"}" href="#fristen?ansicht=umschreiber"><b>${f.umBald + f.umAb}</b> Umschreiber: ausländischer Führerschein gilt bald nicht mehr oder schon nicht mehr</a>`);
+  const flFr = S.lehrer.flatMap((l) => KR.fahrlehrerFristen(l, heute).filter((x) => x.stufe !== "ok").map((x) => Object.assign({ name: l.name || l.email }, x)));
+  flFr.forEach((x) => aufgaben.push(`<a class="aufgabe ${x.stufe === "abgelaufen" ? "rot" : "gelb"}" href="#team"><b>${esc(x.name)}</b>: ${esc(x.titel)} ${x.stufe === "abgelaufen" ? "abgelaufen seit" : "läuft ab am"} ${esc(datumDE(x.bis))}</a>`));
   if (f.ohneDatum) aufgaben.push(`<a class="aufgabe" href="#fristen?ansicht=ohne"><b>${f.ohneDatum}</b> Schüler ohne Vertragsdatum</a>`);
   // 1) Für dich: Aufgaben an mich (oder an alle), Überfälliges und Dringendes zuerst
   const alleZeigen = fristenParam("alle") === "1";
@@ -550,7 +552,9 @@ function fristenDialog(id) {
 }
 const FELD_NAMEN = { vertrag_am: "Vertragsdatum", klasse: "Klasse", ausbildungsart: "Ausbildungsart", reakt_status: "Reaktivierung", reakt_bezahlt_bis: "fällig am", reakt_notiz: "Notiz", theorie_abgeschlossen_am: "Theorie abgeschlossen", theorie_bestanden_am: "Theorieprüfung bestanden", praxis_bestanden_am: "Praxisprüfung bestanden", antrag_am: "Führerscheinantrag eingereicht", reakt_betrag: "Reaktivierung bezahlt (€)", b197_testfahrt_am: "B197 Testfahrt abgegeben", inaktiv_seit: "Inaktiv seit",
   bewerbernummer: "Bewerbernummer", theorie_frist_bis: "Theorie-Frist", sehhilfe: "Sehhilfe", vorbesitz: "Vorbesitz", auslands_fs: "Ausländischer Führerschein",
-  wohnsitz_de_seit: "Wohnsitz in Deutschland seit", uebersetzung_vorhanden: "Übersetzung liegt vor" };
+  wohnsitz_de_seit: "Wohnsitz in Deutschland seit", uebersetzung_vorhanden: "Übersetzung liegt vor",
+  fahrlehrerlaubnis: "Fahrlehrerlaubnis", klassen: "Ausbildungsklassen", fuehrerschein_klassen: "Eigener Führerschein", fuehrerschein_c_bis: "Führerschein C/CE bis",
+  fuehrerschein_d_bis: "Führerschein D bis", sz95_bis: "Schlüsselzahl 95 bis", fortbildung_bis: "Fortbildung bis", fahrlehrer_zusatz: "Weitere Erlaubnisse" };
 async function ladeProtokoll(tabelle, id) {
   const ziel = $("protokoll");
   const res = await supa.from("aenderungsprotokoll").select("*").eq("tabelle", tabelle).eq("datensatz_id", id).order("geaendert_am", { ascending: false }).limit(20);
@@ -2726,11 +2730,11 @@ function renderTeam() {
   for (const x of aktiveSchueler()) if (x.fahrlehrer_id) schuelerZahl[x.fahrlehrer_id] = (schuelerZahl[x.fahrlehrer_id] || 0) + 1;
   const admin = istAdmin();
   const zeile = (p, mitZahlen) => `<tr>
-      <td><b>${esc(p.name || "–")}</b><div class="unter">${p.ohne_app ? "ohne App · das Büro trägt alles ein" : esc(p.email || "")}</div></td>
-      <td>${esc(ROLLEN[p.rolle] || (p.rolle === "fahrlehrer" ? "Fahrlehrer" : p.rolle))}${mitZahlen ? `<div class="unter">${(p.klassen || []).length ? (p.klassen || []).map((k) => `<span class="marke-pill">${esc(k)}</span>`).join(" ") : "Klassen nicht eingetragen"}</div>` : ""}</td>
+      <td>${mitZahlen ? `<button type="button" class="textknopf" data-flakte="${esc(p.id)}"><b>${esc(p.name || "–")}</b></button>` : `<b>${esc(p.name || "–")}</b>`}<div class="unter">${p.ohne_app ? "ohne App · das Büro trägt alles ein" : esc(p.email || "")}</div>${mitZahlen ? flFristPills(p) : ""}</td>
+      <td>${esc(ROLLEN[p.rolle] || (p.rolle === "fahrlehrer" ? "Fahrlehrer" : p.rolle))}${mitZahlen ? `<div class="unter">${(p.fahrlehrerlaubnis || []).length ? "Fahrlehrerlaubnis " + p.fahrlehrerlaubnis.map((k) => `<span class="marke-pill">${esc(k)}</span>`).join(" ") : (p.klassen || []).length ? (p.klassen || []).map((k) => `<span class="marke-pill">${esc(k)}</span>`).join(" ") : "Klassen nicht eingetragen"}</div>` : ""}</td>
       ${mitZahlen ? `<td class="zahlspalte">${schuelerZahl[p.id] || 0}</td><td class="zahlspalte">${zahlDE(ue[p.id] || 0)}</td>` : ""}
       <td>${p.aktiv === false ? '<span class="marke-pill rot">gesperrt</span>' : p.ohne_app ? '<span class="marke-pill">ohne App</span>' : '<span class="marke-pill gruen">aktiv</span>'}</td>
-      <td class="aktionen"><div class="aktionen-box">${mitZahlen && darfPersonenVerwalten() ? `<button class="knopf klein" data-klassen="${esc(p.id)}" type="button">Klassen</button>` : ""}${admin && p.rolle !== "super_admin" && p.id !== S.user.id ? `${p.ohne_app ? "" : `<button class="knopf klein" data-pwreset="${esc(p.id)}" type="button">Neues Passwort</button>`}
+      <td class="aktionen"><div class="aktionen-box">${mitZahlen ? `<button class="knopf klein" data-flakte="${esc(p.id)}" type="button">${darfPersonenVerwalten() ? "Akte & Klassen" : "Akte"}</button>` : ""}${admin && p.rolle !== "super_admin" && p.id !== S.user.id ? `${p.ohne_app ? "" : `<button class="knopf klein" data-pwreset="${esc(p.id)}" type="button">Neues Passwort</button>`}
         <button class="knopf klein" data-sperren="${esc(p.id)}" type="button">${p.aktiv === false ? "Freischalten" : "Sperren"}</button>` : ""}</div></td></tr>`;
   const lehrer = S.lehrer;
   const buero = S.team.filter((p) => p.rolle === "buero" || p.rolle === "fahrschule_admin");
@@ -2820,11 +2824,73 @@ function bindePersonen(ziel) {
 function bindeTeam(ziel) {
   const fl = ziel.querySelector("#tNeuFl"), bu = ziel.querySelector("#tNeuBu");
   if (fl) fl.addEventListener("click", () => zugangDialog("fahrlehrer"));
-  ziel.querySelectorAll("[data-klassen]").forEach((b) => b.addEventListener("click", () => klassenDialog(b.dataset.klassen)));
+  ziel.querySelectorAll("[data-flakte]").forEach((b) => b.addEventListener("click", () => fahrlehrerAkte(b.dataset.flakte)));
   if (bu) bu.addEventListener("click", () => zugangDialog("buero"));
   ziel.querySelectorAll("[data-pwreset]").forEach((b) => b.addEventListener("click", () => passwortNeu(b.dataset.pwreset)));
   ziel.querySelectorAll("[data-sperren]").forEach((b) => b.addEventListener("click", () => zugangSperren(b.dataset.sperren)));
   bindePersonen(ziel);
+}
+/* ---------- Fahrlehrer-Akte (🗣 Serband 14.10.2026): Kennzahlen, Fahrlehrerlaubnis, eigener Führerschein, Fristen ---------- */
+const FS_KLASSEN = ["AM", "A1", "A2", "A", "B", "BE", "C1", "C1E", "C", "CE", "D1", "D1E", "D", "DE", "L", "T"];
+const FL_ZUSATZ = [["ASF", "Seminarerlaubnis ASF"], ["FES", "Seminarerlaubnis FES"], ["AUSBILDUNG", "Ausbildungsfahrlehrer"], ["BKF", "BKF-Weiterbildung"], ["ANWAERTER", "Fahrlehreranwärter"]];
+function flFristPills(p) {
+  const f = KR.fahrlehrerFristen(p).filter((x) => x.stufe !== "ok");
+  return f.length ? `<div class="unter">${f.map((x) => `<span class="marke-pill ${x.stufe === "abgelaufen" ? "rot" : "gelb"}">${esc(x.titel)} ${x.stufe === "abgelaufen" ? "abgelaufen" : "bis " + esc(datumDE(x.bis))}</span>`).join(" ")}</div>` : "";
+}
+function fahrlehrerAkte(id) {
+  const p = teamPerson(id); if (!p) return;
+  const darf = darfPersonenVerwalten(), heute = KR.todayISO(), monat = heute.slice(0, 7);
+  const meine = aktiveSchueler().filter((x) => x.fahrlehrer_id === id);
+  const warte = meine.filter((x) => wartetArt(x)).length;
+  let ue = 0; ueJeFahrlehrer(S.termine.filter((t) => t.fahrlehrer_id === id && t.datum && t.datum.slice(0, 7) === monat && t.datum <= heute), (fl, u) => { ue += u; });
+  const vor12 = KR.addDaysISO(heute, -365);
+  const erg = pruefErgebnisse("praxis").filter((e) => e.datum >= vor12 && (e.fahrlehrer_id || (S.schueler.find((x) => x.id === e.schueler_id) || {}).fahrlehrer_id) === id);
+  const ok = erg.filter((e) => e.ok).length;
+  const naechste = S.pruefungstermine.filter((x) => x.fahrlehrer_id === id && x.datum >= heute && x.status === "geplant").length;
+  const fl = p.fahrlehrerlaubnis || [], fk = p.fuehrerschein_klassen || [], zs = p.fahrlehrer_zusatz || [];
+  const dis = darf ? "" : " disabled";
+  const fristen = KR.fahrlehrerFristen(p);
+  const body = `<div class="kacheln fl-kacheln">
+      <div class="kachel"><div class="wert">${meine.length - warte}</div><div class="name">Schüler aktiv</div></div>
+      <div class="kachel"><div class="wert">${warte}</div><div class="name">auf der Warteliste</div></div>
+      <div class="kachel"><div class="wert">${zahlDE(ue)}</div><div class="name">UE im ${esc(monatKurz(monat))}</div></div>
+      <div class="kachel gruen"><div class="wert">${erg.length ? Math.round(ok / erg.length * 100) + " %" : "–"}</div><div class="name">Praxis bestanden, 12 Monate (${ok} von ${erg.length})</div></div>
+      <div class="kachel"><div class="wert">${naechste}</div><div class="name">Prüfungen geplant</div></div>
+    </div>
+    ${fristen.filter((x) => x.stufe !== "ok").map((x) => `<p class="fl-warnung ${x.stufe}">${x.stufe === "abgelaufen" ? "Abgelaufen" : "Läuft bald ab"}: ${esc(x.titel)} ${x.stufe === "abgelaufen" ? "seit" : "am"} ${esc(datumDE(x.bis))}</p>`).join("")}
+    <div class="formular">
+      <fieldset class="voll"><legend>Fahrlehrerlaubnis (was er ausbilden darf)</legend>
+        ${["BE", "A", "CE", "DE"].map((k) => `<label class="wahl"><input type="checkbox" name="fl" value="${k}"${fl.includes(k) ? " checked" : ""}${dis}> ${k}</label>`).join("")}
+        <p class="leise klein voll" id="flDarf">Darf ausbilden: ${esc(KR.ausbildungsKlassen(fl).join(", ") || "noch nichts eingetragen")}</p></fieldset>
+      <fieldset class="voll"><legend>Eigener Führerschein</legend>
+        <div class="vorbesitz-wahl">${FS_KLASSEN.map((k) => `<label class="wahl"><input type="checkbox" name="fk" value="${k}"${fk.includes(k) ? " checked" : ""}${dis}> ${k}</label>`).join("")}</div></fieldset>
+      <label>Führerschein C/CE gültig bis<input type="date" name="fuehrerschein_c_bis" value="${esc(p.fuehrerschein_c_bis || "")}"${dis}></label>
+      <label>Führerschein D gültig bis<input type="date" name="fuehrerschein_d_bis" value="${esc(p.fuehrerschein_d_bis || "")}"${dis}></label>
+      <label>Schlüsselzahl 95 gültig bis<input type="date" name="sz95_bis" value="${esc(p.sz95_bis || "")}"${dis}></label>
+      <label>Fortbildung (FahrlG § 53) fällig bis<input type="date" name="fortbildung_bis" value="${esc(p.fortbildung_bis || "")}"${dis}></label>
+      <fieldset class="voll"><legend>Weitere Erlaubnisse</legend>
+        ${FL_ZUSATZ.map(([k, t]) => `<label class="wahl"><input type="checkbox" name="zs" value="${k}"${zs.includes(k) ? " checked" : ""}${dis}> ${esc(t)}</label>`).join("")}</fieldset>
+    </div>
+    <p class="leise klein">${darf ? "Die Klassen bestimmen, welche Schüler ihm zugeteilt werden und welche Klassen er in der App eintragen kann (Lkw nur mit Fahrlehrerlaubnis CE). Warnung 90 Tage vor Ablauf." : `Ändern dürfen ${esc(verwalterNamen())} (nach PIN) und die Leitung.`}</p>
+    <div class="protokoll" id="protokoll"><p class="leise klein">Verlauf wird geladen …</p></div>`;
+  const dlg = oeffneDialog(`Fahrlehrer: ${p.name || p.email}`, body, async (form) => {
+    if (!darf) return true;
+    const werte = (n) => [...form.querySelectorAll(`input[name=${n}]:checked`)].map((i) => i.value);
+    const daten = { fahrlehrerlaubnis: werte("fl"), fuehrerschein_klassen: werte("fk"), fahrlehrer_zusatz: werte("zs"),
+      fuehrerschein_c_bis: form.fuehrerschein_c_bis.value || null, fuehrerschein_d_bis: form.fuehrerschein_d_bis.value || null,
+      sz95_bis: form.sz95_bis.value || null, fortbildung_bis: form.fortbildung_bis.value || null };
+    if (daten.fahrlehrerlaubnis.some((k) => k !== "BE") && !daten.fahrlehrerlaubnis.includes("BE")) { toast("A, CE und DE gibt es nur zusätzlich zur Fahrlehrerlaubnis BE (FahrlG § 1).", true); return false; }
+    const { data, error } = await supa.rpc("buero_fahrlehrer_akte", { p_id: id, p_daten: daten });
+    if (error || (data && data.fehler)) { toast("Nicht gespeichert: " + (error ? error.message : data.fehler === "keine_berechtigung" ? "keine Berechtigung" : data.fehler === "datum" ? "ein Datum ist ungültig" : data.fehler), true); return false; }
+    const kl = (data && data.klassen) || KR.ausbildungsKlassen(daten.fahrlehrerlaubnis);
+    for (const l of [S.team, S.lehrer]) { const x = l.find((y) => y.id === id); if (x) Object.assign(x, daten, { klassen: kl }); }
+    toast("Fahrlehrer-Akte gespeichert"); zeichne(); return true;
+  }, darf ? "Speichern" : "Schließen");
+  dlg.querySelectorAll("input[name=fl]").forEach((i) => i.addEventListener("change", () => {
+    const fl2 = [...dlg.querySelectorAll("input[name=fl]:checked")].map((x) => x.value);
+    dlg.querySelector("#flDarf").textContent = "Darf ausbilden: " + (KR.ausbildungsKlassen(fl2).join(", ") || "noch nichts eingetragen");
+  }));
+  ladeProtokoll("profiles", id);
 }
 function teamPerson(id) { return S.team.find((p) => p.id === id) || S.lehrer.find((p) => p.id === id); }
 function zeigePasswort(email, passwort) {
