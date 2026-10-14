@@ -4771,7 +4771,22 @@ let _termineFehlversuche = 0;
 let _schuelerFristen = {};
 function _merkeFristen(rows){
   (rows||[]).forEach(r=>{ _schuelerFristen[r.id]={reakt_status:r.reakt_status,vertrag_am:r.vertrag_am,reakt_bezahlt_bis:r.reakt_bezahlt_bis,
-    theorie_abgeschlossen_am:r.theorie_abgeschlossen_am,theorie_bestanden_am:r.theorie_bestanden_am,antrag_am:r.antrag_am,inaktiv_seit:r.inaktiv_seit}; });
+    theorie_abgeschlossen_am:r.theorie_abgeschlossen_am,theorie_bestanden_am:r.theorie_bestanden_am,praxis_bestanden_am:r.praxis_bestanden_am||null,antrag_am:r.antrag_am,inaktiv_seit:r.inaktiv_seit}; });
+  _meldeBueroErgebnisse(rows);
+}
+/* Prüfungsergebnis vom Büro (Prüfungstafel): einmal als Hinweis melden, danach steht es in der Akte */
+function _meldeBueroErgebnisse(rows){
+  if(_fsAgg) return; // Fahrschul-Gesamtansicht: keine Meldungen für alle Schüler
+  let gesehen={}; try{ gesehen=JSON.parse(localStorage.getItem("serband-buero-ergebnisse")||"{}")||{}; }catch(e){ gesehen={}; }
+  const neu=[];
+  (rows||[]).forEach(r=>{
+    for(const [feld,art] of [["theorie_bestanden_am","Theorieprüfung"],["praxis_bestanden_am","Praxisprüfung"]]){
+      const k=r.id+"|"+feld;
+      if(r[feld]&&gesehen[k]!==r[feld]){ if(k in gesehen||Object.keys(gesehen).length) neu.push(`${r.name||"Schüler"}: ${art} bestanden`); gesehen[k]=r[feld]; }
+    }
+  });
+  try{ localStorage.setItem("serband-buero-ergebnisse",JSON.stringify(gesehen)); }catch(e){}
+  if(neu.length) toast("🎉 Vom Büro eingetragen: "+neu.slice(0,3).join(" · ")+(neu.length>3?` (+${neu.length-3})`:""));
 }
 /* Notizen vom Büro zu einem Schüler (Info oder Stopp). Sie poppen beim nächsten Abgleich auf, bis der Fahrlehrer
    „Gelesen“ tippt, und bleiben danach als Hinweis in der Akte und im Terminblatt stehen, bis das Büro sie erledigt. */
@@ -4828,9 +4843,13 @@ function fristenHinweisHTML(sid){
   const stopp=(_bueroNotizen[sid]||[]).filter(n=>n.art==="stopp"), infos=(_bueroNotizen[sid]||[]).filter(n=>n.art!=="stopp");
   stopp.forEach(n=>teile.push(`<b>STOPP vom Büro:</b> ${esc(n.text)}`));
   infos.forEach(n=>teile.push(`<b>Büro:</b> ${esc(n.text)}`));
-  if(!teile.length)return "";
+  const gut=[];
+  if(f.theorie_bestanden_am) gut.push(`✓ Theorieprüfung bestanden am ${isoDE(f.theorie_bestanden_am)} (Büro)`);
+  if(f.praxis_bestanden_am) gut.push(`✓ Praxisprüfung bestanden am ${isoDE(f.praxis_bestanden_am)} (Büro)`);
+  const gutHTML=gut.length?`<div style="margin:10px 0;padding:10px 14px;border-radius:14px;font-size:14px;line-height:1.45;background:rgba(76,175,114,.14);border:1px solid rgba(76,175,114,.4);">${gut.join("<br>")}</div>`:"";
+  if(!teile.length)return gutHTML;
   const rot=r.gesperrt||t.stufe==="abgelaufen"||stopp.length>0||(a&&a.stufe==="abgelaufen");
-  return `<div role="alert" style="margin:10px 0;padding:12px 14px;border-radius:14px;font-size:14px;line-height:1.45;background:${rot?"rgba(207,90,72,.14)":"rgba(207,154,62,.16)"};border:1px solid ${rot?"rgba(207,90,72,.45)":"rgba(207,154,62,.45)"};">⚠️ ${teile.join("<br>")}</div>`;
+  return gutHTML+`<div role="alert" style="margin:10px 0;padding:12px 14px;border-radius:14px;font-size:14px;line-height:1.45;background:${rot?"rgba(207,90,72,.14)":"rgba(207,154,62,.16)"};border:1px solid ${rot?"rgba(207,90,72,.45)":"rgba(207,154,62,.45)"};">⚠️ ${teile.join("<br>")}</div>`;
 }
 async function pullSchuelerZuweisungen() {
   if (!_authUser || !_authProfile || !_authProfile.fahrschule_id || _fsAgg || _schuelerAbrufLaeuft) return;
