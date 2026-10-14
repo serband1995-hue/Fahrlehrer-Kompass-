@@ -30,7 +30,7 @@ const supa = window.supabase.createClient(SUPA_URL, SUPA_KEY, { global: { fetch:
 const S = {
   user: null, profil: null, fsId: null, fs: null, schulen: [],
   lehrer: [], team: [], schueler: [], termine: [], pruefungen: [], pruefungstermine: [], fcAbgaben: [], verkaeufe: [], provisionen: [], fahrzeuge: [], pakete: [],
-  geladenAm: null, ladeNr: 0, wer: "", notizen: [], gelesen: [], aufgaben: [], personen: [], sitzung: null
+  geladenAm: null, ladeNr: 0, wer: "", notizen: [], gelesen: [], aufgaben: [], personen: [], sitzung: null, theorie: []
 };
 
 /* ---------- Hilfen ---------- */
@@ -820,6 +820,7 @@ function pruefungDialog(id) {
   if (!p) return;
   const body = `<div class="formular">
       <label class="voll">Schüler<select name="schueler_id" required>${id ? "" : '<option value="">– bitte wählen –</option>'}${schuelerOptionen(p.schueler_id)}</select></label>
+      <p class="voll warnhinweis" id="pTheorieHinweis" aria-live="polite"></p>
       <label>Art<select name="art"><option value="praxis"${p.art === "praxis" ? " selected" : ""}>Praxisprüfung</option><option value="theorie"${p.art === "theorie" ? " selected" : ""}>Theorieprüfung</option></select></label>
       <label>Klasse<select name="klasse">${klassenOptionen(p.klasse)}</select></label>
       <label>Datum<input type="date" name="datum" required value="${esc(p.datum || "")}"></label>
@@ -869,6 +870,16 @@ function pruefungDialog(id) {
     zeichne();
     return true;
   });
+  // Theorieprüfung: Hinweis, wenn der Theorieunterricht laut Anwesenheit noch nicht vollständig ist
+  const thHinweis = () => {
+    const el = dlg.querySelector("#pTheorieHinweis"); if (!el) return;
+    const sx = S.schueler.find((x) => x.id === dlg.querySelector("select[name=schueler_id]").value);
+    const st = sx && dlg.querySelector("select[name=art]").value === "theorie" ? theorieStandVon(sx) : null;
+    el.textContent = st && st.pflicht && !st.fertig ? `Achtung: Theorieunterricht laut Anwesenheit erst ${st.ist}/${st.soll}. Vor der Prüfung müssen alle Pflicht-Lektionen besucht sein.` : "";
+  };
+  dlg.querySelector("select[name=art]").addEventListener("change", thHinweis);
+  dlg.querySelector("select[name=schueler_id]").addEventListener("change", thHinweis);
+  thHinweis();
   // Neuer Schüler gewählt: Fahrlehrer und Klasse vom Schüler vorschlagen
   const sel = dlg.querySelector("select[name=schueler_id]");
   sel.addEventListener("change", () => {
@@ -1102,7 +1113,8 @@ function renderSchueler() {
   let liste = S.schueler.filter((x) => sicht === "alle" || (sicht === "inaktiv" ? !istAktiv(x) : sicht === "warte" ? !!wartetArt(x) : istAktiv(x) && !wartetArt(x)));
   if (klasseF) liste = liste.filter((x) => klasseVon(x) === klasseF);
   const notizF = ["offen", "ungelesen"].includes(fristenParam("notiz")) ? fristenParam("notiz") : "";
-  if (notizF) liste = liste.filter((x) => { const o = offeneNotizen(x.id); return notizF === "offen" ? o.length > 0 : o.some((n) => !S.gelesen.some((g) => g.notiz_id === n.id)); });
+  if (fristenParam("notiz") === "theorie") liste = liste.filter((x) => { const st = theorieStandVon(x); return st.pflicht && !st.fertig; });
+  else if (notizF) liste = liste.filter((x) => { const o = offeneNotizen(x.id); return notizF === "offen" ? o.length > 0 : o.some((n) => !S.gelesen.some((g) => g.notiz_id === n.id)); });
   if (lehrerFilter === "ohne") liste = liste.filter((x) => !x.fahrlehrer_id);
   else if (lehrerFilter) liste = liste.filter((x) => x.fahrlehrer_id === lehrerFilter);
   if (suche) liste = liste.filter((x) => (x.name || "").toLowerCase().includes(suche) || (x.telefon || "").replace(/\s/g, "").includes(suche.replace(/\s/g, ""))
@@ -1136,7 +1148,7 @@ function renderSchueler() {
   return `<div class="karte">
     <div class="tabs" style="margin-bottom:12px">${sichtTabs}</div>
     <div class="karte-kopf">
-      <div class="knopfreihe">${klassenFilter}<select class="suche" id="sNotiz" aria-label="Notizen filtern"><option value="">Alle Notizen</option><option value="offen"${notizF === "offen" ? " selected" : ""}>Mit offener Notiz</option><option value="ungelesen"${notizF === "ungelesen" ? " selected" : ""}>Notiz noch nicht gelesen</option></select><select class="suche" id="sLehrer" aria-label="Fahrlehrer filtern">${lehrerOpt}</select>
+      <div class="knopfreihe">${klassenFilter}<select class="suche" id="sNotiz" aria-label="Notizen filtern"><option value="">Alle Notizen</option><option value="offen"${notizF === "offen" ? " selected" : ""}>Mit offener Notiz</option><option value="ungelesen"${notizF === "ungelesen" ? " selected" : ""}>Notiz noch nicht gelesen</option><option value="theorie"${fristenParam("notiz") === "theorie" ? " selected" : ""}>Theorie noch nicht vollständig</option></select><select class="suche" id="sLehrer" aria-label="Fahrlehrer filtern">${lehrerOpt}</select>
         <input type="search" class="suche" id="sSuche" placeholder="Name, Telefon oder Bewerbernummer" value="${esc(fristenParam("suche"))}" aria-label="Schüler suchen"></div>
       <button class="knopf haupt" id="sNeu" type="button">+ Schüler anlegen</button>
     </div>
@@ -1503,6 +1515,43 @@ function behoerdeWerte(form, dlg, d) {
   }
   return w;
 }
+/* ---------- Theorie-Besuch (🗣 Serband 14.10.2026): eingetragen vom Fahrlehrer im Theorie-Termin der App ---------- */
+function theorieStandVon(x) {
+  const soll = KR.theorieSoll({ klasse: klasseVon(x) || "B", weg: (x.ausbildung || {}).lkwWeg || null, vorbesitz: x.vorbesitz || [],
+    ausbildungsart: (x.ausbildung || {}).umschreiber && artKey(x.ausbildungsart) === "ersterwerb" ? "umschreibung" : x.ausbildungsart });
+  return KR.theorieStand(soll, S.theorie.filter((t) => t.schueler_id === x.id).map((t) => String(t.lektion)));
+}
+function theorieAkteHTML(id) {
+  const x = S.schueler.find((y) => y.id === id); if (!x) return "";
+  const st = theorieStandVon(x);
+  if (!st.pflicht) return `<h3>Theorieunterricht</h3><p class="leise klein">${esc(st.grund)}.</p>`;
+  const besuche = S.theorie.filter((t) => t.schueler_id === id).sort((a, b) => String(b.datum).localeCompare(String(a.datum)));
+  return `<h3>Theorieunterricht <span class="marke-pill ${st.fertig ? "gruen" : ""}">${st.ist}/${st.soll}${st.fertig ? " ✓ vollständig" : ""}</span></h3>
+    <ul class="theorie-teile">${st.teile.map((t) => `<li><b>${esc(t.titel)}</b> ${t.ist}/${t.soll}${t.ist >= t.soll ? " ✓" : t.fehlt && t.fehlt.length ? ` · <span class="fehlt">fehlt: ${t.fehlt.map((l) => "Lektion " + esc(l)).join(", ")}</span>` : ""}</li>`).join("")}</ul>
+    ${besuche.length ? `<details><summary>Besuchte Lektionen (${besuche.length})</summary><ul class="notizliste">${besuche.map((b) => `<li class="notiz"><div>Lektion ${esc(b.lektion)} · ${esc(datumDE(b.datum))}</div><div class="unter">eingetragen von ${esc(b.bearbeiter || "Fahrlehrer")}</div></li>`).join("")}</ul></details>` : `<p class="leise klein">Noch keine Lektion eingetragen. Der Fahrlehrer tippt die Anwesenheit im Theorie-Termin der App an.</p>`}`;
+}
+// Anwesenheitsliste eines Tages zum Drucken (eigenes Fenster, weil der Druck offene Fenster ausblendet)
+function druckeAnwesenheit(datum) {
+  const zeilen = S.theorie.filter((t) => t.datum === datum);
+  const lekt = [...new Set(zeilen.map((t) => String(t.lektion)))];
+  const namen = [...new Set(zeilen.map((t) => t.schueler_id))].map((sid) => S.schueler.find((x) => x.id === sid)).filter(Boolean).sort((a, b) => String(a.name).localeCompare(String(b.name), "de"));
+  const w = window.open("", "_blank");
+  if (!w) { toast("Bitte Pop-ups für den Druck erlauben.", true); return; }
+  w.document.write(`<!doctype html><html lang="de"><head><meta charset="utf-8"><title>Anwesenheit ${esc(datumDE(datum))}</title>
+    <style>body{font-family:system-ui,sans-serif;margin:24px;color:#111}h1{font-size:20px}table{border-collapse:collapse;width:100%}th,td{border:1px solid #999;padding:6px 8px;text-align:left;font-size:13px}th{background:#eee}</style></head>
+    <body><h1>Theorieunterricht ${esc(datumDE(datum))} · ${esc(S.fs ? S.fs.name : "")}</h1><p>Lektion ${lekt.map(esc).join(" + ") || "–"} · ${namen.length} Teilnehmer</p>
+    <table><thead><tr><th>#</th><th>Name</th><th>Klasse</th>${lekt.map((l) => `<th>Lektion ${esc(l)}</th>`).join("")}</tr></thead><tbody>
+    ${namen.map((x, i) => `<tr><td>${i + 1}</td><td>${esc(x.name)}</td><td>${esc(klasseVon(x) || "")}</td>${lekt.map((l) => `<td>${zeilen.some((t) => t.schueler_id === x.id && String(t.lektion) === l) ? "✓" : ""}</td>`).join("")}</tr>`).join("")}
+    </tbody></table><p style="margin-top:24px">Unterschrift Fahrlehrer: ______________________</p></body></html>`);
+  w.document.close(); w.focus(); w.print();
+}
+function anwesenheitTerminHTML(t) {
+  const zeilen = S.theorie.filter((x) => x.datum === t.datum);
+  const namen = [...new Set(zeilen.map((x) => x.schueler_id))].map((sid) => (S.schueler.find((y) => y.id === sid) || {}).name).filter(Boolean).sort((a, b) => a.localeCompare(b, "de"));
+  const lekt = [...new Set(zeilen.map((x) => String(x.lektion)))];
+  return `<div class="voll anwesenheit"><h3>Anwesenheit am ${esc(datumDE(t.datum))}${lekt.length ? " · Lektion " + lekt.map(esc).join(" + ") : ""}</h3>
+    ${namen.length ? `<p>${namen.map(esc).join(", ")}</p><button type="button" class="knopf klein" data-anwdruck="${esc(t.datum)}">Anwesenheitsliste drucken</button>` : `<p class="leise klein">Noch niemand eingetragen. Der Fahrlehrer tippt die Anwesenheit im Theorie-Termin der App an.</p>`}</div>`;
+}
 function schuelerDialog(id) {
   const x = id ? S.schueler.find((y) => y.id === id) : { ausbildungsart: "ersterwerb", klasse: "B", vertrag_am: KR.todayISO() };
   if (!x) return;
@@ -1522,6 +1571,7 @@ function schuelerDialog(id) {
       </div>
       ${id ? `<div class="voll schalter-zeile"><label class="schalter"><input type="checkbox" name="aktiv" role="switch"${istAktiv(x) ? " checked" : ""}><span class="schalter-bahn" aria-hidden="true"></span><span class="schalter-text"><b id="aktivText">${istAktiv(x) ? "Aktiv" : "Im Archiv"}</b><span class="leise klein"> Archiv heißt: bestanden oder nicht mehr dabei. Der Schüler verschwindet überall (auch aus der Fahrlehrer-App) und zählt nicht bei Fristen, Reaktivierung und Auslastung. Jederzeit zurückholbar.</span></span></label></div>` : ""}
       ${id ? `<div class="voll">${pruefungenAkteHTML(id)}</div>` : ""}
+      ${id ? `<div class="voll">${theorieAkteHTML(id)}</div>` : ""}
       ${id ? `<div class="voll" id="notizBlock">${notizBlockHTML(id, x.fahrlehrer_id)}</div>` : ""}
       <label class="voll">Interne Notiz (nur Büro, der Fahrlehrer sieht sie nicht)<input type="text" name="buero_notiz" maxlength="500" value="${esc(x.buero_notiz || "")}"></label>
       ${id ? `<div class="voll" id="aufgabenBlock">${aufgabenBlockHTML(id)}</div>` : ""}
@@ -1813,9 +1863,10 @@ function terminDialog(id, vorgabe) {
       <label>Von<input type="time" name="von" required value="${esc(t.von || "")}"></label>
       <label>Bis<input type="time" name="bis" required value="${esc(t.bis || "")}"></label>
       ${id ? `<label class="voll wahl"><input type="checkbox" name="absagen"> Termin absagen (löschen)</label>` : ""}
+      ${id && t.art === "theorie" ? anwesenheitTerminHTML(t) : ""}
     </div>
     <p class="leise klein">Der Fahrlehrer sieht die Änderung innerhalb einer Minute in seiner App.${id && t.payload && t.payload.onlineBookingId ? " Online gebuchte Termine: Der Schüler bekommt eine E-Mail." : ""}</p>`;
-  oeffneDialog(id ? "Termin bearbeiten" : "Termin anlegen", body, async (form) => {
+  const tdlg = oeffneDialog(id ? "Termin bearbeiten" : "Termin anlegen", body, async (form) => {
     const d = Object.fromEntries(new FormData(form).entries());
     if (!d.fahrlehrer_id || !d.datum || !d.von || !d.bis) { toast("Bitte Fahrlehrer, Datum und Uhrzeit eintragen.", true); return false; }
     if (KR.hm2min(d.bis) <= KR.hm2min(d.von)) { toast("„Bis“ muss nach „Von“ liegen.", true); return false; }
@@ -1854,6 +1905,8 @@ function terminDialog(id, vorgabe) {
     }
     toast("Termin gespeichert"); zeichne(); return true;
   });
+  const druck = tdlg.querySelector("[data-anwdruck]");
+  if (druck) druck.addEventListener("click", () => druckeAnwesenheit(druck.dataset.anwdruck));
 }
 // Online gebuchte Termine: Schüler per E-Mail informieren (wie in index.html, läuft im Hintergrund)
 async function onlineBuchungMelden(lessonId, type, zeit) {
@@ -2968,7 +3021,7 @@ async function ladeDaten() {
   const fsId = S.fsId;
   setStatus("", "lade …");
   try {
-    const [fs, lehrer, schueler, termine, pruefungen, fahrzeuge, pakete, pTermine, fcAbg, verk, prov, team, notizen, gelesen, aufgaben, personen] = await Promise.all([
+    const [fs, lehrer, schueler, termine, pruefungen, fahrzeuge, pakete, pTermine, fcAbg, verk, prov, team, notizen, gelesen, aufgaben, personen, theorie] = await Promise.all([
       supa.from("fahrschulen").select("*").eq("id", fsId).single(),
       supa.from("profiles").select("*").eq("fahrschule_id", fsId).in("rolle", ["fahrlehrer", "super_admin"]).order("name"),
       supa.from("schueler").select("*").eq("fahrschule_id", fsId).neq("status", "geloescht").order("name"),
@@ -2985,6 +3038,7 @@ async function ladeDaten() {
       supa.from("schueler_notiz_gelesen").select("*").limit(5000),
       supa.from("schueler_aufgaben").select("*").eq("fahrschule_id", fsId).order("erstellt_am", { ascending: false }).limit(3000),
       supa.from("buero_personen").select("id,name,telefon,hat_pin,pin_neu_noetig,pin_frei_bis,darf_verwalten,aktiv,gesperrt_bis").eq("fahrschule_id", fsId).order("name"),
+      alleSeiten(() => supa.from("theorie_teilnahme").select("id,schueler_id,lektion,datum,bearbeiter").eq("fahrschule_id", fsId).is("entfernt_am", null).order("datum").order("id")).catch(() => null),
     ]);
     if (nr !== S.ladeNr) return; // inzwischen wurde neu geladen oder die Fahrschule gewechselt
     S.fs = pruefe(fs, "Fahrschule");
@@ -3003,6 +3057,7 @@ async function ladeDaten() {
     S.gelesen = (gelesen && !gelesen.error && gelesen.data) || [];
     S.aufgaben = (aufgaben && !aufgaben.error && aufgaben.data) || [];   // Aufgaben sind Zusatz: Fehler ignorieren
     if (personen && !personen.error) S.personen = personen.data || [];
+    if (theorie && !theorie.error) S.theorie = theorie.data || [];   // Theorie-Besuch ist Zusatz: Fehler ignorieren
     S.geladenAm = new Date();
     $("schulName").textContent = S.fs ? S.fs.name : "";
     setStatus("ok", "verbunden · " + S.geladenAm.toLocaleTimeString("de-DE", { hour: "2-digit", minute: "2-digit" }));

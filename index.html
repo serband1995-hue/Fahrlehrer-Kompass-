@@ -1631,6 +1631,18 @@ body:not(.light) .cw-col.today .cw-dnum{color:var(--gold);}
 .chip.sehhilfe:active{transform:scale(.93);}
 .s-sehhilfe{font-size:12px;opacity:.85;}
 .afs-app{border-top:1px dashed var(--line-soft);padding-top:8px;margin-top:4px;}
+.tb-balken{height:8px;border-radius:6px;background:var(--surface-2);overflow:hidden;margin:6px 0 4px;}
+.tb-balken span{display:block;height:100%;background:var(--gruen);border-radius:6px;}
+.tb-fehlt{display:block;color:var(--orange);font-weight:600;font-size:12px;}
+.tb-liste summary{cursor:pointer;font-size:13px;color:var(--muted);padding:6px 0;}
+.ta-lekt .pill{min-width:44px;}
+.ta-zahl{float:right;font-weight:600;color:var(--muted);font-size:12.5px;}
+.ta-liste{max-height:46vh;overflow-y:auto;border:1px solid var(--line-soft);border-radius:12px;margin-bottom:12px;}
+.ta-zeile{display:flex;align-items:center;gap:12px;padding:10px 12px;border-bottom:1px solid var(--line-soft);font-size:15px;min-height:48px;}
+.ta-zeile:last-child{border-bottom:none;}
+.ta-zeile input{width:22px;height:22px;flex:0 0 auto;}
+.ta-zeile span{flex:1;min-width:0;overflow-wrap:anywhere;}
+.ta-zeile small{color:var(--muted);font-size:12px;white-space:nowrap;}
 .afs-app:first-child{border-top:none;padding-top:0;margin-top:0;}
 .behoerde-card .mini-dash-row b{text-align:right;overflow-wrap:anywhere;max-width:62%;}
 /* Theorie-Progress in Akte */
@@ -4983,6 +4995,7 @@ async function pullSchuelerZuweisungen() {
     const { data: rows, error: schErr } = await supa.from("schueler").select("*").eq("fahrlehrer_id", _authUser.id).eq("status", "aktiv");
     if (schErr) throw schErr;
     _merkeFristen(rows);
+    _ladeTheorieBesuch(supa, (rows||[]).map(r=>r.id));
     const lokaleIds = new Set((DB.students||[]).map(s=>s.id));
     let neu = [];
     ensureAusbildungsplaene();
@@ -5495,6 +5508,7 @@ async function _fsLoadAggData(fahrschuleId){
   const lehrerName=id=>{ const l=lehrer.find(x=>x.id===id); return l?(l.name||l.email):"Unbekannt"; };
   DB.students=(schuelerR.data||[]).map(r=>_fsMapSchueler(r,lehrerName));
   _merkeFristen(schuelerR.data);
+  _ladeTheorieBesuch(supa, (schuelerR.data||[]).map(r=>r.id));
   DB.lessons=(termineR.data||[]).map(r=>_fsMapTermin(r,lehrerName));
   DB.exams=(pruefungenR.data||[]).map(r=>_fsMapPruefung(r,lehrerName));
   // Urlaub als künstliche "Blockiert"-Termine einspeisen - Namensabgleich, da fahrschule_urlaub
@@ -8262,6 +8276,7 @@ function routeDetail(id){
     ${fristenHinweisHTML(s.id)}
     ${uebernahmeCard(s)}
     ${behoerdeCard(s)}
+    ${theorieCard(s)}
     <!-- Mini-Dashboard: alles Wichtige auf einen Blick (Bereich 3, Punkt 8) -->
     <div class="mini-dash">
       <div class="mini-dash-row"><span>📊 Ausbildungsstand</span><b>${pct}%</b></div>
@@ -8822,6 +8837,93 @@ function openBehoerdeSheet(s){
     if(!ok){ toast(navigator.onLine?"Nicht gespeichert – bitte später nochmal":"Keine Verbindung – bitte online speichern"); return; }
     closeSheet(); toast("Gespeichert ✓ – das Büro sieht es sofort"); routeDetail(s.id);
   });
+}
+/* Theorie-Besuch (🗣 Serband 14.10.2026, Antwort 2a): Der Fahrlehrer tippt im Theorie-Termin an, wer da war.
+   Gespeichert in theorie_teilnahme (je Schüler, Lektion, Tag); Soll nach Gesetz aus KR.theorieSoll. */
+let _theorieBesuch = null; // schueler_id -> [{lektion, datum}]; null = noch nicht geladen
+async function _ladeTheorieBesuch(supa, ids){
+  try{
+    if(!supa||!ids||!ids.length){ _theorieBesuch=_theorieBesuch||{}; return; }
+    const neu={};
+    for(let i=0;i<ids.length;i+=150){
+      const {data,error}=await supa.from("theorie_teilnahme").select("schueler_id,lektion,datum").in("schueler_id",ids.slice(i,i+150)).is("entfernt_am",null);
+      if(error) return; // z. B. offline: alten Stand behalten
+      (data||[]).forEach(x=>{ (neu[x.schueler_id]=neu[x.schueler_id]||[]).push({lektion:String(x.lektion),datum:x.datum}); });
+    }
+    _theorieBesuch=neu;
+  }catch(e){}
+}
+function theorieStandFuer(s){
+  if(!window.KR||!KR.theorieSoll)return null;
+  const f=_schuelerFristen[s.id]||{};
+  const soll=KR.theorieSoll({form:s.form||"B",weg:lkwWegVon(s),vorbesitz:f.vorbesitz||[],ausbildungsart:istUmschreiberAkte(s)?"umschreibung":f.ausbildungsart});
+  return KR.theorieStand(soll,((_theorieBesuch&&_theorieBesuch[s.id])||[]).map(x=>x.lektion));
+}
+function theorieCard(s){
+  if(_theorieBesuch===null||!_schuelerFristen[s.id])return ""; // nur mit Verbindung zur Fahrschule
+  const st=theorieStandFuer(s); if(!st)return "";
+  if(!st.pflicht) return `<div class="res-block theorie-besuch" style="animation:none;margin-top:9px;"><h4>🎓 Theorieunterricht</h4><p class="muted-p" style="font-size:13px;">${esc(st.grund)}.</p></div>`;
+  const pct=st.soll?Math.round(st.ist/st.soll*100):0;
+  const teil=t=>`<div class="mini-dash-row"><span>${esc(t.titel)}${t.fehlt&&t.fehlt.length&&t.fehlt.length<=6?` <small class="tb-fehlt">fehlt: ${t.fehlt.map(esc).join(", ")}</small>`:""}</span><b>${t.ist}/${t.soll}${t.ist>=t.soll?" ✓":""}</b></div>`;
+  const besuch=((_theorieBesuch&&_theorieBesuch[s.id])||[]).slice().sort((a,b)=>String(b.datum).localeCompare(String(a.datum)));
+  return `<div class="res-block theorie-besuch" style="animation:none;margin-top:9px;">
+    <h4>🎓 Theorieunterricht · ${st.ist}/${st.soll}${st.fertig?" ✓":""}</h4>
+    <div class="tb-balken" role="img" aria-label="${st.ist} von ${st.soll} Lektionen besucht"><span style="width:${pct}%"></span></div>
+    ${st.teile.map(teil).join("")}
+    ${besuch.length?`<details class="tb-liste"><summary>Besucht (${besuch.length})</summary>${besuch.map(b=>`<div class="mini-dash-row"><span>Lektion ${esc(b.lektion)}</span><b>${isoDE(b.datum)}</b></div>`).join("")}</details>`:""}
+  </div>`;
+}
+// Lektionen eines Abends: alle Theorie-Blöcke des Tages; ist nur eine Lektion bekannt, kommt die zweite des Abends dazu (1+2, 3+4 …, C1+C2, CE1+CE2)
+function _abendLektionen(datum){
+  const set=[...new Set((DB.lessons||[]).filter(x=>x.art==="theorie"&&x.date===datum&&x.lektion!=null&&x.lektion!=="").map(x=>String(x.lektion)))];
+  if(set.length===1){
+    const m=set[0].match(/^(CE|C)?(\d+)$/); if(m){ const pre=m[1]||"", n=+m[2], p2=n%2?n+1:n-1, k=pre+p2;
+      if(_lektionFinde(k)) set.push(k); }
+  }
+  const ord=k=>{ const m=String(k).match(/^(CE|C)?(\d+)$/); return m?({"":0,C:100,CE:200}[m[1]||""]+(+m[2])):999; };
+  return set.filter(k=>_lektionFinde(k)).sort((a,b)=>ord(a)-ord(b)).slice(0,4);
+}
+async function openTheorieAnwesenheit(l){
+  const supa=getSupa(); const datum=l.date;
+  if(!supa||!navigator.onLine){ toast("Keine Verbindung – Anwesenheit nur online eintragen"); return; }
+  let lekt=_abendLektionen(datum); if(!lekt.length&&l.lektion!=null)lekt=[String(l.lektion)];
+  openSheet(`<div class="sheet-h">Anwesenheit · ${isoDE(datum)}</div><p class="muted-p" style="font-size:13px;">Wird geladen …</p>`);
+  const {data:liste,error}=await supa.rpc("theorie_schuelerliste");
+  if(error||!Array.isArray(liste)){ closeSheet(); toast("Schülerliste nicht geladen – bitte später nochmal"); return; }
+  let da=new Set();
+  const ladeDa=async()=>{ da=new Set(); if(!lekt.length)return; const {data}=await supa.rpc("theorie_teilnahme_tag",{p_datum:datum,p_lektionen:lekt}); (data||[]).forEach(x=>da.add(x.schueler_id)); };
+  await ladeDa();
+  const alleLekt=LEKTIONEN.map(x=>String(x.n)).concat(LKW_LEKTIONEN.map(x=>x.n));
+  const zeichne=()=>{
+    const sel=new Set([...document.querySelectorAll("#taListe input:checked")].map(i=>i.value));
+    const gewaehlt=new Set([...sel,...da]); // angetippte bleiben, schon Eingetragene der gewählten Lektionen kommen dazu
+    $("#sheet").innerHTML=`<div class="sheet-h">Anwesenheit · ${isoDE(datum)}</div>
+      <div class="field"><label>Lektionen an diesem Abend</label><div class="pills ta-lekt" id="taLekt">${alleLekt.map(k=>`<button type="button" class="pill ${lekt.includes(k)?"sel":""}" data-k="${k}" title="${esc(lektionTitel(k))}">${k}</button>`).join("")}</div></div>
+      <div class="field"><label>Wer war da? <span class="ta-zahl" id="taZahl">${gewaehlt.size} angetippt</span></label><input type="search" id="taSuche" placeholder="Name suchen" autocomplete="off"></div>
+      <div id="taListe" class="ta-liste">${liste.map(x=>`<label class="ta-zeile" data-name="${esc(String(x.name||"").toLowerCase())}"><input type="checkbox" value="${esc(x.id)}"${gewaehlt.has(x.id)?" checked":""}><span>${esc(x.name||"")}</span><small>${esc(x.klasse||"")}${x.fahrlehrer_id===(_authUser&&_authUser.id)?" · deiner":""}</small></label>`).join("")||'<p class="muted-p">Keine aktiven Schüler.</p>'}</div>
+      <div class="btn-row"><button class="btn btn-ghost" id="taAbbr" style="flex:0;padding:13px 18px;">Abbrechen</button><button class="btn btn-primary" id="taSpeichern">Speichern</button></div>`;
+    $("#taAbbr").addEventListener("click",closeSheet);
+    const zahl=()=>{ $("#taZahl").textContent=document.querySelectorAll("#taListe input:checked").length+" angetippt"; };
+    document.querySelectorAll("#taListe input").forEach(i=>i.addEventListener("change",zahl));
+    $("#taSuche").addEventListener("input",e=>{ const q=e.target.value.trim().toLowerCase(); document.querySelectorAll("#taListe .ta-zeile").forEach(z=>{ z.style.display=!q||z.dataset.name.includes(q)?"":"none"; }); });
+    document.querySelectorAll("#taLekt .pill").forEach(b=>b.addEventListener("click",async()=>{
+      const k=b.dataset.k;
+      if(lekt.includes(k)) lekt=lekt.filter(x=>x!==k); else { if(lekt.length>=4){ toast("Höchstens 4 Lektionen je Abend"); return; } lekt.push(k); }
+      await ladeDa(); zeichne();
+    }));
+    $("#taSpeichern").addEventListener("click",async()=>{
+      if(!lekt.length){ toast("Bitte die Lektion(en) des Abends wählen"); return; }
+      const ids=[...document.querySelectorAll("#taListe input:checked")].map(i=>i.value);
+      const b=$("#taSpeichern"); b.disabled=true;
+      const {data,error}=await supa.rpc("theorie_teilnahme_setzen",{p_datum:datum,p_lektionen:lekt,p_schueler:ids});
+      b.disabled=false;
+      if(error||!data||data.fehler){ toast("Nicht gespeichert"+(data&&data.fehler?" ("+data.fehler+")":"")+" – bitte nochmal"); return; }
+      // eigene Schüler sofort in der Akte aktualisieren
+      if(_theorieBesuch){ const meine=new Set((DB.students||[]).map(x=>x.id)); meine.forEach(sid=>{ const alt=(_theorieBesuch[sid]||[]).filter(x=>!(x.datum===datum&&lekt.includes(x.lektion))); if(ids.includes(sid)) lekt.forEach(k=>alt.push({lektion:k,datum})); _theorieBesuch[sid]=alt; }); }
+      closeSheet(); toast(`✓ ${ids.length} Schüler für Lektion ${lekt.join(" + ")} eingetragen`);
+    });
+  };
+  zeichne();
 }
 function uebernahmeCard(s){
   const u=s.uebernahme; if(!u)return "";
@@ -11477,7 +11579,8 @@ function openTheorieSheet(){
   const defDate=_calView==="tag"?_calDate:todayISO();
   const wd=weekdayMon0(defDate); const win=(wd<=4?DB.workCfg.theorieWoche:DB.workCfg.theorieSamstag)||{von:"18:00",bis:"21:00"};
   const blk=DB.workCfg.blockMin||90;
-  const lektOpts=`<option value="">– keine bestimmte –</option>`+LEKTIONEN.map(l=>`<option value="${l.n}">Lektion ${l.n} – ${esc(l.t)}</option>`).join("");
+  const lektOpts=`<option value="">– keine bestimmte –</option><optgroup label="Klasse B (Grundstoff 1–12, Zusatzstoff 13–14)">`+LEKTIONEN.map(l=>`<option value="${l.n}">Lektion ${l.n} – ${esc(l.t)}</option>`).join("")
+    +`</optgroup><optgroup label="Lkw (Klasse C/C1 und CE)">`+LKW_LEKTIONEN.map(l=>`<option value="${l.n}">Lektion ${l.n} – ${esc(l.t)}</option>`).join("")+`</optgroup>`;
   openSheet(`<div class="sheet-h">Theorie</div>
     <p class="muted-p" style="font-size:12.5px;margin:-4px 0 10px;">Wird immer als zwei einzelne 90-Minuten-Termine hintereinander eingetragen.</p>
     <div class="field"><label>Datum</label><input type="date" id="thDate" value="${defDate}"></div>
@@ -11489,7 +11592,7 @@ function openTheorieSheet(){
   $("#thSave").addEventListener("click",()=>{
     const date=$("#thDate").value, von=$("#thVon").value;
     if(!date||!von){toast("Datum & Zeit wählen");return;}
-    const lektion=$("#thLektion").value?+$("#thLektion").value:null;
+    const lv=$("#thLektion").value, lektion=lv?(/^\d+$/.test(lv)?+lv:lv):null;
     const note=$("#thNote").value.trim();
     const b1Von=von, b1Bis=min2hm(hm2min(von)+blk);
     const b2Von=b1Bis, b2Bis=min2hm(hm2min(von)+2*blk);
@@ -11671,6 +11774,7 @@ function openEventSheet(kind,id,sid){
         return `<button class="es-act primary" id="esProtokoll" style="background:#0f7d6e;border-color:#0f7d6e;color:#fff;">📤 Stunde abschließen · Protokoll schicken${n?` <b>(${n} Thema${n===1?"":"en"})</b>`:""}</button>`;
       })():''}
       ${st?`<button class="es-act primary" id="esAkte">Schülerakte öffnen</button>`:''}
+      ${l.art==="theorie"&&_authProfile&&_authProfile.fahrschule_id?`<button class="es-act primary" id="esAnwesend">👥 Anwesenheit eintragen</button>`:''}
       ${fcRelevant&&sichtbar("fahrcheck")?`<button class="es-act" id="esFC">Fahrcheck · <b>${fcLab}</b></button>`:''}
       ${fcRelevant&&st?`<button class="es-act" id="esSig">Unterschrift · <b>${l.signed?'✓ vorhanden':'noch offen'}</b></button>`:''}
       ${l.art==="block"?'':`<button class="es-act" id="esEdit">Bearbeiten / verschieben</button>
@@ -11683,6 +11787,7 @@ function openEventSheet(kind,id,sid){
     </div>`);
   const prot=$("#esProtokoll"); if(prot)prot.addEventListener("click",()=>{ closeSheet(); sendeStundenProtokoll(st,l.date); });
   const ak=$("#esAkte"); if(ak)ak.addEventListener("click",()=>{ closeSheet(); routeDetail(l.sid); });
+  const anw=$("#esAnwesend"); if(anw)anw.addEventListener("click",()=>openTheorieAnwesenheit(l));
   const fcb=$("#esFC"); if(fcb)fcb.addEventListener("click",()=>{ closeSheet(); openFCMenu(id); });
   const sigb=$("#esSig"); if(sigb)sigb.addEventListener("click",()=>{ closeSheet(); openSignatureSheet(id); });
   // Urlaub/Blocker (ganze Tage) nur löschen, nicht bearbeiten - sonst gingen sie kaputt.
@@ -12171,8 +12276,19 @@ const LEKTIONEN=[
  {n:13,t:"Technische Bedingungen, Personen- und Güterbeförderung, umweltbewusster Umgang",teil:"zusatz"},
  {n:14,t:"Fahren mit Solokraftfahrzeugen und Zügen",teil:"zusatz"}
 ];
-function lektionLabel(n){ const l=LEKTIONEN.find(x=>x.n===+n); return l?("Lektion "+l.n):""; }
-function lektionTitel(n){ const l=LEKTIONEN.find(x=>x.n===+n); return l?l.t:""; }
+// Lkw-Theorie (Serbands Folien, Stand 03.10.2026): Klasse C bzw. C1 = C1–C10, Klasse CE = CE1–CE4
+const LKW_LEKTIONEN=[
+ {n:"C1",t:"Persönliche Voraussetzungen und Arbeitsplatz",teil:"C"},{n:"C2",t:"Besondere Vorschriften aus der StVO / Transportvorschriften",teil:"C"},
+ {n:"C3",t:"Kraftstrang",teil:"C"},{n:"C4",t:"Fahrwerk / Elektrische Anlagen",teil:"C"},{n:"C5",t:"Lkw-Bremsen",teil:"C"},
+ {n:"C6",t:"Lkw-Bremsen und Fahrzeuguntersuchungen; Geschwindigkeitsregler",teil:"C"},{n:"C7",t:"Wirkung von Kräften beim Fahren",teil:"C"},
+ {n:"C8",t:"Ausrüstungs-, Beförderungs- und Sicherheitsbestimmungen",teil:"C"},{n:"C9",t:"Ladungssicherung / Abfahrtkontrolle",teil:"C"},
+ {n:"C10",t:"Wirtschaftliches und umweltschonendes Fahren; Straßenkarten, Streckenplanung",teil:"C"},
+ {n:"CE1",t:"Zusammenstellung von Zügen",teil:"CE"},{n:"CE2",t:"Lastzugbremsen (Auflaufbremse, Zweileitungs-Druckluftbremse)",teil:"CE"},
+ {n:"CE3",t:"Lastzugbremsen (Bremskraftregelung, ABV, Feststellbremse, Dauerbremse, Untersuchungen)",teil:"CE"},{n:"CE4",t:"Fahren mit Zügen",teil:"CE"}
+];
+function _lektionFinde(n){ const k=String(n); return LEKTIONEN.find(x=>String(x.n)===k)||LKW_LEKTIONEN.find(x=>x.n===k); }
+function lektionLabel(n){ const l=_lektionFinde(n); return l?("Lektion "+l.n):""; }
+function lektionTitel(n){ const l=_lektionFinde(n); return l?l.t:""; }
 let _fsCalFahrzeugFilter=[], _fsCalLehrerFilter=[], _fsCalBueroFilter=[];
 const FS_BUERO_ARTEN=["beratung","ersthilfe","vortest","simulator"];
 let _fsKalenderModus="fahrlehrer"; // "fahrlehrer" | "buero"
