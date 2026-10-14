@@ -152,7 +152,7 @@ await pruefe("L10", "C und CE zusammen: Grundfahraufgaben C und Abfahrtkontrolle
   if (ids({ form: "CE" }).filter((i) => i.startsWith("lk_gfa_ce_")).length !== 4) return "ohne Wahl nicht alle 4";
   return null;
 }));
-await pruefe("L11", "erster Abgleich nach dem Update: Büro-Klasse B überschreibt Automatik/BE/B197 nicht; spätere Büro-Änderung und Lkw-Klasse wirken", () => page.evaluate(async () => {
+await pruefe("L11", "erster Abgleich und Übergabe: Büro-Klasse B überschreibt Automatik/BE/B197 nicht; spätere Büro-Änderung und Lkw-Klasse wirken", () => page.evaluate(async () => {
   const altSupa = window.getSupa, altUser = _authUser, altProfil = _authProfile, altStudents = DB.students;
   const c = DB.ausbildungsplaene.find((p) => p.standard) || DB.ausbildungsplaene[0];
   const mk = (id, name, form) => { const s = { id, name, form, created: Date.now(), plan: newPlan(), planId: c.id, planSnapshot: JSON.parse(JSON.stringify(c.stufen)), telefon: "" }; ensure(s); return s; };
@@ -172,6 +172,17 @@ await pruefe("L11", "erster Abgleich nach dem Update: Büro-Klasse B überschrei
       await pullSchuelerZuweisungen();
       const dann = DB.students.map((s) => s.form).join(",");
       if (dann !== "BE,BE,B197,CE") fehler = "nach Büro-Änderung: " + dann;
+      else {
+        // Übergabe an diesen Fahrlehrer: Form des bisherigen Fahrlehrers bleibt, Lkw-Klasse und geänderte Büro-Klasse wirken
+        rows = rows.concat([
+          { id: "x5", name: "Erfunden", klasse: "B", status: "aktiv", fahrlehrer_id: "me", ausbildung: { form: "Automatik", klasseBuero: "B" } },
+          { id: "x6", name: "Erfunden", klasse: "B", status: "aktiv", fahrlehrer_id: "me", ausbildung: { form: "BE" } },
+          { id: "x7", name: "Erfunden", klasse: "CE", status: "aktiv", fahrlehrer_id: "me", ausbildung: { form: "B" } },
+          { id: "x8", name: "Erfunden", klasse: "B78", status: "aktiv", fahrlehrer_id: "me", ausbildung: { form: "B", klasseBuero: "B" } }]);
+        await pullSchuelerZuweisungen();
+        const ueb = ["x5", "x6", "x7", "x8"].map((id) => (DB.students.find((s) => s.id === id) || {}).form).join(",");
+        if (ueb !== "Automatik,BE,CE,Automatik") fehler = "Übergabe: " + ueb;
+      }
     }
   } catch (e) { fehler = "Ausnahme: " + e.message; }
   window.getSupa = altSupa; _authUser = altUser; _authProfile = altProfil; DB.students = altStudents; save();
