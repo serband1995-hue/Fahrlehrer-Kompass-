@@ -5128,6 +5128,8 @@ async function pullSchuelerZuweisungen() {
       if (neuIds.has(r.id)) continue;
       const bekannt = memS.schueler[r.id];
       if (bekannt && bekannt !== (vorherWert[r.id] !== undefined ? vorherWert[r.id] : _abglWertVon("schueler", lok))) continue; // selbst geändert: eigener Stand gilt
+      const erwartet = nachherWert[r.id] || vorherWert[r.id];
+      if (erwartet !== undefined && _abglWertVon("schueler", lok) !== erwartet) continue; // während des Abrufs selbst getippt: eigener Stand gilt (wie oben)
       const n = (r.name && !(r.name === "(ohne Namen)" && !lok.name)) ? r.name : lok.name, t = r.telefon || "";
       if (n !== lok.name || t !== (lok.telefon || "")) { lok.name = n; lok.telefon = t; memS.schueler[r.id] = _abglWertVon("schueler", lok); namenNeu = true; }
       else if (bekannt && bekannt === vorherWert[r.id] && nachherWert[r.id]) memS.schueler[r.id] = nachherWert[r.id]; // Übernahmen vom Büro gelten nicht als eigene Änderung (spätere eigene Änderungen schon)
@@ -8903,9 +8905,11 @@ function openBehoerdeSheet(s){
       werte.auslands_fs=liste.length?liste:null; werte.wohnsitz_de_seit=$("#bhWohnsitz").value||null; werte.uebersetzung_vorhanden=$("#bhUebers").classList.contains("on");
     }
     // Nur senden, was sich gegenüber dem Stand beim Öffnen geändert hat (das Büro könnte inzwischen etwas eingetragen haben)
-    const nz=v=>(v==null||v===false||(Array.isArray(v)&&!v.length)?null:v);
+    // Vergleich ohne Rücksicht auf die Reihenfolge der Schlüssel (die Datenbank sortiert jsonb um) und mit leer = fehlend
+    const nz=v=>(v==null||v===""||v===false||(Array.isArray(v)&&!v.length)?null:v);
+    const stabil=v=>JSON.stringify(nz(v),(kk,w)=>(w&&typeof w==="object"&&!Array.isArray(w))?Object.keys(w).sort().reduce((o,q)=>{ if(w[q]!=null&&w[q]!=="")o[q]=w[q]; return o; },{}):w);
     const vorher={bewerbernummer:f.bewerbernummer,vorbesitz:f.vorbesitz,auslands_fs:f.auslands_fs,wohnsitz_de_seit:f.wohnsitz_de_seit,uebersetzung_vorhanden:f.uebersetzung_vorhanden};
-    Object.keys(werte).forEach(k=>{ if(JSON.stringify(nz(werte[k]))===JSON.stringify(nz(vorher[k]))) delete werte[k]; });
+    Object.keys(werte).forEach(k=>{ if(stabil(werte[k])===stabil(vorher[k])) delete werte[k]; });
     if(!Object.keys(werte).length){ closeSheet(); toast("Nichts geändert"); return; }
     const b=$("#bhSpeichern"); b.disabled=true; b.textContent="Speichert …";
     const ok=await _schuelerServerSetzen(s.id,werte);
