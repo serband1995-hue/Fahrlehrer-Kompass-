@@ -1352,7 +1352,16 @@ for (const [breite, hoehe] of [[1920, 1080], [1366, 768], [1024, 768]]) {
   await page.uncheck('dialog[open] input[name=fl][value="BE"]');
   await page.click("dialog[open] button[value=ok]"); await page.waitForTimeout(200);
   if (!(await page.isVisible("dialog[open]"))) fehler("Fahrlehrer-Akte: CE ohne BE wurde gespeichert");
-  await page.keyboard.press("Escape");
+  await page.keyboard.press("Escape"); await page.waitForTimeout(150);
+  // Altbestand: nur Klassen (C, CE), keine Fahrlehrerlaubnis → Vorschlag BE + CE, Speichern nimmt nichts weg
+  await page.evaluate(() => { const p = window.__FAKE.tabellen.profiles.find((x) => x.id === "fl-2"); p.fahrlehrerlaubnis = null; p.klassen = ["C", "CE"];
+    for (const l of [S.team, S.lehrer]) { const x = l.find((y) => y.id === "fl-2"); if (x) { x.fahrlehrerlaubnis = null; x.klassen = ["C", "CE"]; } } });
+  await page.click('button.knopf[data-flakte="fl-2"]'); await page.waitForTimeout(250);
+  const vorschlag = await page.$$eval("dialog[open] input[name=fl]:checked", (o) => o.map((x) => x.value).join("+"));
+  if (vorschlag !== "BE+CE" || !/Vorschlag aus den bisher/.test(await page.textContent("dialog[open]"))) fehler("Fahrlehrer-Akte: kein Vorschlag aus den alten Klassen: " + vorschlag);
+  await page.click("dialog[open] button[value=ok]"); await page.waitForTimeout(300);
+  const p2 = await page.evaluate(() => window.__FAKE.tabellen.profiles.find((x) => x.id === "fl-2"));
+  if (!(p2.klassen || []).includes("CE")) fehler("Fahrlehrer-Akte: Speichern hat die alten Klassen gelöscht " + JSON.stringify(p2.klassen));
   await page.goto(page.url().split("#")[0] + "#heute"); await page.waitForTimeout(300);
   if (await page.$("dialog[open] button[value=ok]")) { await page.click("dialog[open] button[value=ok]"); await page.waitForTimeout(200); }
   if (!/Führerschein C\/CE läuft ab/.test(await page.textContent("#ansicht"))) fehler("Heute: Fahrlehrer-Frist fehlt");
@@ -1367,6 +1376,7 @@ for (const [breite, hoehe] of [[1920, 1080], [1366, 768], [1024, 768]]) {
     const sx = F.tabellen.schueler.find((x) => x.id === "s3"); sx.fahrlehrer_id = "fl-g"; sx.klasse = "CE"; sx.vorbesitz = ["B"]; sx.ausbildungsart = "erweiterung";
     const d = new Date(); d.setDate(d.getDate() - 2); const tag = d.toISOString().slice(0, 10);
     F.tabellen.kalender_termine.push({ id: "g-1", fahrschule_id: "fs-test-1", fahrlehrer_id: "fl-g", schueler_id: "s3", datum: tag, von: "08:00", bis: "09:30", art: "sonder", status: "geplant", geloescht: false, payload: { sonderArt: "autobahn" } });
+    F.tabellen.kalender_termine.push({ id: "g-2", fahrschule_id: "fs-test-1", fahrlehrer_id: "fl-g", schueler_id: "s3", datum: tag, von: "12:00", bis: "13:30", art: "sonder", status: "geplant", geloescht: false, payload: {} });
   } });
   const d2 = await page.evaluate(() => KR.addDaysISO(KR.todayISO(), -1));
   await page.evaluate((tag) => terminDialog(null, { datum: tag, von: "10:00", fahrlehrer_id: "fl-g" }), d2); await page.waitForTimeout(200);
@@ -1374,6 +1384,7 @@ for (const [breite, hoehe] of [[1920, 1080], [1366, 768], [1024, 768]]) {
   await page.selectOption("dialog[open] select[name=fahrlehrer_id]", "fl-g");
   await page.selectOption("dialog[open] select[name=art]", "sonder"); await page.waitForTimeout(100);
   if (await page.isHidden("dialog[open] #sonderArtFeld")) fehler("Ohne App: Art der Sonderfahrt fehlt");
+  if ((await page.inputValue("dialog[open] select[name=sonderArt]")) !== "") fehler("Ohne App: Art der Sonderfahrt ist schon vorgewählt");
   const klassen = await page.$$eval("dialog[open] select[name=lkwKlasse] option", (o) => o.map((x) => x.value).join("+"));
   if (klassen !== "C+CE") fehler("Ohne App: Klasse der Stunde bei C und CE zusammen: " + klassen);
   await page.selectOption("dialog[open] select[name=sonderArt]", "nacht");
@@ -1386,6 +1397,7 @@ for (const [breite, hoehe] of [[1920, 1080], [1366, 768], [1024, 768]]) {
   await page.evaluate(() => schuelerDialog("s3")); await page.waitForTimeout(200);
   const akte = await page.textContent("dialog[open]");
   if (!/Sonderfahrten \(aus dem Kalender/.test(akte) || !/Autobahn 2\/3/.test(akte) || !/Dämmerung\/Nacht 2\/3/.test(akte)) fehler("Ohne App: Sonderfahrten-Zähler falsch: " + (akte.match(/Überland[^]*?Nacht \d+\/\d+/) || [""])[0]);
+  if (!/1 Sonderfahrt ohne Art/.test(akte)) fehler("Ohne App: Hinweis auf Sonderfahrt ohne Art fehlt");
   if (konsole.length) fehler("Ohne App: Konsole: " + konsole.join(" | "));
   await ctx.close();
 }

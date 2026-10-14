@@ -232,6 +232,10 @@ await pruefe("D10", "Lkw-Klassen nur mit Fahrlehrerlaubnis CE: ohne CE keine Lkw
   _authProfile = { id: "me", fahrschule_id: "fs-x", rolle: "fahrlehrer", klassen: ["B", "BE", "C1", "C1E", "C", "CE"] };
   routeDetail("b1");
   if (!pills().includes("C1E")) f.push("CE-Fahrlehrer sieht keine Lkw-Klassen: " + pills());
+  // Büro hat noch keine Klassen eingetragen: nichts sperren (wie vor Schritt 5)
+  _authProfile = { id: "me", fahrschule_id: "fs-x", rolle: "fahrlehrer", klassen: [] };
+  routeDetail("b1");
+  if (!pills().includes("C1E")) f.push("leere Klassen sperren Lkw: " + pills());
   return f;
 }));
 await pruefe("D11", "C und CE zusammen: Klasse je Fahrstunde umstellbar, Zähler in der Akte", () => page.evaluate(() => {
