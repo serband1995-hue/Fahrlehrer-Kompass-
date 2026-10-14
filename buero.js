@@ -1549,6 +1549,28 @@ function druckeAnwesenheit(datum) {
     </tbody></table><p style="margin-top:24px">Unterschrift Fahrlehrer: ______________________</p></body></html>`);
   w.document.close(); w.focus(); w.print();
 }
+/* Sonderfahrten für Fahrlehrer ohne App (Gabriel): Zähler aus dem Kalender, Soll nach Anlage 4 (KR.sonderSoll) */
+const SONDER_ARTEN = [["ueberland", "Überland"], ["autobahn", "Autobahn"], ["nacht", "Dämmerung/Nacht"]];
+function lkwWegBuero(x) { const form = formAusKlasse(klasseVon(x) || "B"); return (x.ausbildung || {}).lkwWeg || KR.lkwWegAusVorbesitz(form, x.vorbesitz || []); }
+function lkwKlassenWahl(x) {
+  const k = klasseVon(x), w = lkwWegBuero(x);
+  if (k === "CE") return w === "C+CE" ? ["C", "CE"] : ["CE"];
+  if (k === "C1E") return w === "C1+C1E" ? ["C1", "C1E"] : ["C1E"];
+  return ["C", "C1"].includes(k) ? [k] : null;
+}
+function sonderZaehlerHTML(x) {
+  const fl = S.lehrer.find((l) => l.id === x.fahrlehrer_id);
+  if (!fl || !fl.ohne_app || istUmschreiber(x)) return "";
+  const soll = KR.sonderSoll(formAusKlasse(klasseVon(x) || "B"), lkwWegBuero(x)), heute = KR.todayISO(), ist = { ueberland: 0, autobahn: 0, nacht: 0 };
+  for (const t of S.termine) {
+    if (t.schueler_id !== x.id || !t.datum || t.datum > heute || !t.von || !t.bis) continue;
+    const st = (t.payload || {}).status || t.status; if (st === "abgebrochen" || st === "nicht erschienen") continue;
+    const a = t.art === "nacht" ? "nacht" : t.art === "sonder" ? ((t.payload || {}).sonderArt || "") : "";
+    if (ist[a] != null) ist[a] += Math.floor((KR.hm2min(t.bis) - KR.hm2min(t.von)) / 45);
+  }
+  return `<h3>Sonderfahrten (aus dem Kalender, je 45 Minuten)</h3><p>${SONDER_ARTEN.map(([k, n], i) => `<span class="marke-pill${ist[k] >= soll[i] ? " gruen" : ""}">${n} ${ist[k]}/${soll[i]}</span>`).join(" ")}</p>
+    <p class="leise klein">${esc(lehrerName(x.fahrlehrer_id))} nutzt keine App: Bitte bei jeder Sonderfahrt im Termin die Art wählen.</p>`;
+}
 function anwesenheitTerminHTML(t) {
   const zeilen = S.theorie.filter((x) => x.datum === t.datum);
   const namen = [...new Set(zeilen.map((x) => x.schueler_id))].map((sid) => (S.schueler.find((y) => y.id === sid) || {}).name).filter(Boolean).sort((a, b) => a.localeCompare(b, "de"));
@@ -1576,6 +1598,7 @@ function schuelerDialog(id) {
       ${id ? `<div class="voll schalter-zeile"><label class="schalter"><input type="checkbox" name="aktiv" role="switch"${istAktiv(x) ? " checked" : ""}><span class="schalter-bahn" aria-hidden="true"></span><span class="schalter-text"><b id="aktivText">${istAktiv(x) ? "Aktiv" : "Im Archiv"}</b><span class="leise klein"> Archiv heißt: bestanden oder nicht mehr dabei. Der Schüler verschwindet überall (auch aus der Fahrlehrer-App) und zählt nicht bei Fristen, Reaktivierung und Auslastung. Jederzeit zurückholbar.</span></span></label></div>` : ""}
       ${id ? `<div class="voll">${pruefungenAkteHTML(id)}</div>` : ""}
       ${id ? `<div class="voll">${theorieAkteHTML(id)}</div>` : ""}
+      ${id && sonderZaehlerHTML(x) ? `<div class="voll">${sonderZaehlerHTML(x)}</div>` : ""}
       ${id ? `<div class="voll" id="notizBlock">${notizBlockHTML(id, x.fahrlehrer_id)}</div>` : ""}
       <label class="voll">Interne Notiz (nur Büro, der Fahrlehrer sieht sie nicht)<input type="text" name="buero_notiz" maxlength="500" value="${esc(x.buero_notiz || "")}"></label>
       ${id ? `<div class="voll" id="aufgabenBlock">${aufgabenBlockHTML(id)}</div>` : ""}
@@ -1866,6 +1889,11 @@ function terminDialog(id, vorgabe) {
       <label>Fahrzeug<select name="fahrzeug"><option value="">–</option>${fahrzeuge.map((f) => `<option${t.fahrzeug === f ? " selected" : ""}>${esc(f)}</option>`).join("")}</select></label>
       <label>Von<input type="time" name="von" required value="${esc(t.von || "")}"></label>
       <label>Bis<input type="time" name="bis" required value="${esc(t.bis || "")}"></label>
+      <div class="voll raster-zwei" id="ohneAppFeld" hidden>
+        <label id="sonderArtFeld">Art der Sonderfahrt<select name="sonderArt">${SONDER_ARTEN.map(([k, n]) => `<option value="${k}"${(t.payload || {}).sonderArt === k ? " selected" : ""}>${n}</option>`).join("")}</select></label>
+        <label id="lkwKlasseFeld">Klasse dieser Stunde<select name="lkwKlasse"></select></label>
+        <p class="voll leise klein">Fahrlehrer ohne App: Das Büro trägt hier ein, was die App sonst selbst zählt (Sonderfahrten nach Anlage 4).</p>
+      </div>
       ${id ? `<label class="voll wahl"><input type="checkbox" name="absagen"> Termin absagen (löschen)</label>` : ""}
       ${id && t.art === "theorie" ? anwesenheitTerminHTML(t) : ""}
     </div>
@@ -1895,6 +1923,13 @@ function terminDialog(id, vorgabe) {
       && KR.hm2min(x.von) < KR.hm2min(d.bis) && KR.hm2min(x.bis) > KR.hm2min(d.von));
     if (kollision && !(await bestaetige("Zeit ist schon belegt", `${lehrerName(d.fahrlehrer_id)} hat um ${kollision.von}–${kollision.bis} schon einen Termin. Trotzdem speichern?`, "Trotzdem speichern"))) return false;
     const werte = { schueler_id: d.schueler_id || null, art: d.art, fahrlehrer_id: d.fahrlehrer_id, datum: d.datum, von: d.von, bis: d.bis, fahrzeug: d.fahrzeug || null, aktualisiert_am: jetzt };
+    // Fahrlehrer ohne App: Sonderfahrt-Art und Klasse der Stunde im payload (die App eines Fahrlehrers mit App führt das selbst)
+    if (!tdlg.querySelector("#ohneAppFeld").hidden) {
+      const zus = {};
+      if (!tdlg.querySelector("#sonderArtFeld").hidden) zus.sonderArt = d.sonderArt;
+      if (!tdlg.querySelector("#lkwKlasseFeld").hidden) zus.lkwKlasse = d.lkwKlasse;
+      werte.payload = Object.assign({}, t.payload || {}, zus);
+    }
     if (id) {
       const res = await supa.from("kalender_termine").update(werte).eq("id", id).select("*");
       if (res.error || !res.data || !res.data.length) { toast("Nicht gespeichert: " + (res.error ? res.error.message : "keine Berechtigung"), true); return false; }
@@ -1909,6 +1944,20 @@ function terminDialog(id, vorgabe) {
     }
     toast("Termin gespeichert"); zeichne(); return true;
   });
+  // Felder für Fahrlehrer ohne App ein- und ausblenden
+  const ohneAppNeu = () => {
+    const fl = S.lehrer.find((l) => l.id === tdlg.querySelector("select[name=fahrlehrer_id]").value) || {};
+    const art = tdlg.querySelector("select[name=art]").value;
+    const sx = S.schueler.find((x) => x.id === tdlg.querySelector("select[name=schueler_id]").value);
+    const kl = sx ? lkwKlassenWahl(sx) : null;
+    const zeigeSonder = art === "sonder", zeigeKl = !!kl && ["fahrstunde", "sonder", "nacht"].includes(art);
+    tdlg.querySelector("#ohneAppFeld").hidden = !fl.ohne_app || (!zeigeSonder && !zeigeKl);
+    tdlg.querySelector("#sonderArtFeld").hidden = !zeigeSonder;
+    tdlg.querySelector("#lkwKlasseFeld").hidden = !zeigeKl;
+    if (kl) { const sel = tdlg.querySelector("select[name=lkwKlasse]"), alt = sel.value || (t.payload || {}).lkwKlasse; sel.innerHTML = kl.map((k) => `<option${k === alt ? " selected" : ""}>${k}</option>`).join(""); }
+  };
+  ["fahrlehrer_id", "art", "schueler_id"].forEach((n) => tdlg.querySelector(`select[name=${n}]`).addEventListener("change", ohneAppNeu));
+  ohneAppNeu();
   const druck = tdlg.querySelector("[data-anwdruck]");
   if (druck) druck.addEventListener("click", () => druckeAnwesenheit(druck.dataset.anwdruck));
 }
