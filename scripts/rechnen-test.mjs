@@ -36,6 +36,18 @@ for (const art of arten) for (const [von, bis] of zeiten) for (const d of dauern
   gleich(`ueOf(${art},${von},${bis},${d})`, original.ueOf(art, von, bis, d), KR.ueOf(art, von, bis, d));
 }
 
+// Sonderfahrten nach Anlage 4: Büro (KR.sonderSoll) = App (SONDER_SOLL, LKW_WEGE, sonderWerte ohne Vorbesitz)
+{
+  const soll = new Function(html.match(/const SONDER_SOLL=\{[^\n]*\};/)[0] + html.match(/const LKW_WEGE=\{[\s\S]*?\n\};/)[0] + "return {SONDER_SOLL, LKW_WEGE};")();
+  for (const f of ["B", "B197", "Automatik", "BE", "C1", "C1E", "C", "CE"]) {
+    const wege = soll.LKW_WEGE[f] ? soll.LKW_WEGE[f].map((w) => w[0]).concat([undefined]) : [undefined];
+    for (const w of wege) {
+      const app = soll.LKW_WEGE[f] ? (soll.LKW_WEGE[f].find((x) => x[0] === w) || soll.LKW_WEGE[f][0])[2] : soll.SONDER_SOLL[f] || soll.SONDER_SOLL.B;
+      gleich(`sonderSoll(${f},${w})`, app.join("/"), KR.sonderSoll(f, w).join("/"));
+    }
+  }
+}
+
 // Datumsregeln (für Fristen und Reaktivierung)
 const datum = [
   ["2025-10-08", 12, "2026-10-08"],
