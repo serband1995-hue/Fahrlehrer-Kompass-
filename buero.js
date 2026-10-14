@@ -2672,7 +2672,7 @@ $("werListe").addEventListener("click", (e) => {
   zeigePin(p.hat_pin ? "anmelden" : "festlegen1");
 });
 async function pruefeSitzungNoch() {
-  if (!werNoetig() || !S.sitzung || !$("wer").hidden) return;
+  if (!werNoetig() || !S.sitzung || (!$("wer").hidden && !PIN.abbrechbar)) return;
   try {
     const { data, error } = await supa.rpc("buero_sitzung_pruefen");
     if (!error && data && data.gueltig === false) { vergissSitzung(); zeigeWer(); toast("Bitte neu mit deiner PIN anmelden.", true); }
@@ -2705,7 +2705,8 @@ for (const ev of ["pointerdown", "keydown"]) document.addEventListener(ev, () =>
   }
 }, { passive: true });
 setInterval(async () => {
-  if (werNoetig() && S.sitzung && $("wer").hidden && Date.now() - letzteAktion > WER_LEERLAUF_MS) { beendeSitzung(); zeigeWer(); }
+  // Auch wenn „Wechseln“ oder „PIN ändern“ offen geblieben ist: nach 20 Minuten ohne Klick ist die Sitzung zu Ende
+  if (werNoetig() && S.sitzung && ($("wer").hidden || PIN.abbrechbar) && Date.now() - letzteAktion > WER_LEERLAUF_MS) { beendeSitzung(); zeigeWer(); }
 }, 30000);
 
 /* ---------- Anmeldung ---------- */

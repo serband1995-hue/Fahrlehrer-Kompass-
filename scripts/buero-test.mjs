@@ -997,6 +997,12 @@ for (const [breite, hoehe] of [[1920, 1080], [1366, 768], [1024, 768]]) {
   await page.evaluate(() => { letzteAktion = Date.now() - 21 * 60 * 1000; });
   await page.waitForTimeout(31000);
   if (!(await page.isVisible("#werNamen")) || (await page.evaluate(() => !!S.sitzung))) fehler("PIN: Leerlauf beendet die Sitzung nicht");
+  // Leerlauf auch bei offen gelassenem „Wechseln“ (Fund Richter 14.10.2026)
+  await meldePinAn(page, "Jelena");
+  await page.click("#werWechseln");
+  await page.evaluate(() => { letzteAktion = Date.now() - 21 * 60 * 1000; });
+  await page.waitForTimeout(31000);
+  if ((await page.isVisible("#werZu")) || (await page.evaluate(() => !!S.sitzung))) fehler("PIN: offenes „Wechseln“ verhindert das Ende nach 20 Minuten");
   if (konsole.length) fehler("PIN: Konsole: " + konsole.join(" | "));
   await ctx.close();
 }
