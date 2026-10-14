@@ -448,6 +448,7 @@ details summary{cursor:pointer;font-weight:700;margin:6px 0;}
   html,body{background:#fff !important;color:#111 !important;font-size:11pt;}
   .app{display:block;min-height:0;}
   .seite,.kopf,.toast,.wer,dialog,.filterzeile,.tabs,.chips,.knopf,.textknopf,.nicht-drucken,.aktionen,th:empty,.k-suche-erg,.installieren,.wer-zeile{display:none !important;}
+  .textknopf.namenknopf{display:inline !important;color:#111;text-decoration:none;}
   .inhalt{padding:0 !important;max-width:none !important;}
   #ansicht select,#ansicht input[type=search],#ansicht input[type=date],#ansicht textarea{display:none !important;}
   .druckkopf{display:block;margin:0 0 10pt;padding-bottom:6pt;border-bottom:1.5pt solid #333;}
