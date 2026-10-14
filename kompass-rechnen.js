@@ -133,14 +133,31 @@
     "Lettland", "Litauen", "Luxemburg", "Malta", "Niederlande", "Österreich", "Polen", "Portugal", "Rumänien", "Schweden", "Slowakei",
     "Slowenien", "Spanien", "Tschechien", "Ungarn", "Zypern", "Island", "Liechtenstein", "Norwegen"];
   const UMSCHREIB_MONATE = 6;
-  function istEuEwr(land) { const l = String(land || "").trim().toLowerCase(); return !!l && EU_EWR.some((x) => x.toLowerCase() === l); }
-  // stufe: kein (kein Umschreiber oder ohne Führerschein-Angabe) | eu (EU/EWR, keine Frist) | ohne_datum (Drittstaat, Wohnsitz fehlt)
-  //        | abgelaufen | bald (≤30 Tage) | ok
+  // Ländernamen vergleichen: Groß/klein, Umlaute (ae/oe/ue), Leerzeichen und ein paar übliche andere Namen egal
+  const LAND_NAMEN = { "tschechische republik": "tschechien", "holland": "niederlande", "slowakische republik": "slowakei", "republik zypern": "zypern",
+    "grossbritannien": "vereinigtes koenigreich", "england": "vereinigtes koenigreich", "usa": "vereinigte staaten", "amerika": "vereinigte staaten",
+    "bosnien": "bosnien und herzegowina", "mazedonien": "nordmazedonien", "moldawien": "moldau" };
+  function landKey(land) {
+    let l = String(land || "").trim().toLowerCase().replace(/ä/g, "ae").replace(/ö/g, "oe").replace(/ü/g, "ue").replace(/ß/g, "ss").replace(/\s+/g, " ");
+    return LAND_NAMEN[l] || l;
+  }
+  function istEuEwr(land) { const l = landKey(land); return !!l && EU_EWR.some((x) => landKey(x) === l); }
+  // Länder außerhalb der EU/des EWR, die als Herkunft von Umschreibern vorkommen (unbekannte Namen → „Land prüfen“ statt Alarm)
+  const DRITTSTAATEN = ["Schweiz", "Vereinigtes Königreich", "Türkei", "Syrien", "Afghanistan", "Irak", "Iran", "Ukraine", "Russland",
+    "Serbien", "Bosnien und Herzegowina", "Kosovo", "Albanien", "Nordmazedonien", "Montenegro", "Moldau", "Georgien", "Marokko", "Tunesien",
+    "Algerien", "Ägypten", "Eritrea", "Äthiopien", "Somalia", "Nigeria", "Ghana", "Indien", "Pakistan", "Sri Lanka", "Vietnam", "China",
+    "Philippinen", "Vereinigte Staaten", "Kanada", "Brasilien", "Libanon", "Jordanien", "Belarus", "Armenien", "Aserbaidschan", "Kasachstan",
+    "Japan", "Südkorea", "Australien", "Neuseeland", "Südafrika", "Bangladesch", "Thailand", "Kolumbien", "Mexiko", "Argentinien", "Chile", "Peru"];
+  function istDrittstaat(land) { const l = landKey(land); return !!l && DRITTSTAATEN.some((x) => landKey(x) === l); }
+  // stufe: kein (kein Umschreiber oder ohne Führerschein-Angabe) | eu (EU/EWR, keine Frist) | land_pruefen (Land unbekannt/Tippfehler)
+  //        | ohne_datum (Drittstaat, Wohnsitz fehlt) | abgelaufen | bald (≤30 Tage) | ok
   function umschreibInfo(s, heute) {
     heute = heute || todayISO();
     const fs = (s && Array.isArray(s.auslands_fs)) ? s.auslands_fs.filter((f) => f && f.land) : [];
-    if (!s || s.ausbildungsart !== "umschreibung" || !fs.length) return { stufe: "kein", bis: null, tage: null, drittstaat: false };
-    if (fs.every((f) => istEuEwr(f.land))) return { stufe: "eu", bis: null, tage: null, drittstaat: false };
+    const umschreiber = s && (s.ausbildungsart === "umschreibung" || !!(s.ausbildung && s.ausbildung.umschreiber)); // auch nur in der App markiert
+    if (!umschreiber || !fs.length) return { stufe: "kein", bis: null, tage: null, drittstaat: false };
+    if (fs.some((f) => istEuEwr(f.land))) return { stufe: "eu", bis: null, tage: null, drittstaat: false }; // ein EU/EWR-Führerschein gilt weiter
+    if (!fs.some((f) => istDrittstaat(f.land))) return { stufe: "land_pruefen", bis: null, tage: null, drittstaat: false };
     if (!s.wohnsitz_de_seit) return { stufe: "ohne_datum", bis: null, tage: null, drittstaat: true };
     const bis = addMonthsISO(String(s.wohnsitz_de_seit).slice(0, 10), UMSCHREIB_MONATE), tage = daysBetweenISO(heute, bis);
     return { stufe: tage < 0 ? "abgelaufen" : tage <= 30 ? "bald" : "ok", bis, tage, drittstaat: true };
@@ -277,7 +294,7 @@
     return out;
   }
 
-  const api = { FS_BUERO_ARTEN, pad2, hm2min, parseISO, dateISO, todayISO, ueOf, addMonthsISO, addDaysISO, daysBetweenISO, reaktFaellig, reaktNachZahlung, reaktInfo, theorieInfo, antragInfo, theorieFristInfo, umschreibInfo, istEuEwr, EU_EWR, UMSCHREIB_MONATE, theorieSoll, theorieStand, lkwWegAusVorbesitz, LEKT_GRUND, LEKT_B, LEKT_C, LEKT_CE, fcGebucht, fcErhalten, fcGueltigBis, fcGueltigkeit, fcZeitraum, fcVorZeitraum, fcSoll, aufteilung, FAHR_ARTEN, wartetInfo };
+  const api = { FS_BUERO_ARTEN, pad2, hm2min, parseISO, dateISO, todayISO, ueOf, addMonthsISO, addDaysISO, daysBetweenISO, reaktFaellig, reaktNachZahlung, reaktInfo, theorieInfo, antragInfo, theorieFristInfo, umschreibInfo, istEuEwr, EU_EWR, UMSCHREIB_MONATE, theorieSoll, theorieStand, lkwWegAusVorbesitz, LEKT_GRUND, LEKT_B, LEKT_C, LEKT_CE, fcGebucht, fcErhalten, fcGueltigBis, fcGueltigkeit, fcZeitraum, fcVorZeitraum, fcSoll, aufteilung, FAHR_ARTEN, wartetInfo, istDrittstaat, landKey, DRITTSTAATEN };
   if (typeof module !== "undefined" && module.exports) module.exports = api;
   else root.KR = api;
 })(typeof self !== "undefined" ? self : this);
