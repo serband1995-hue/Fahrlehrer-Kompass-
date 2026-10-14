@@ -45,7 +45,7 @@ window.__t = {
     _authUser = { id: "me", email: "me@example.org" }; _authProfile = { id: "me", fahrschule_id: "fs-x", rolle: "fahrlehrer" };
     const h = KR.todayISO();
     _schuelerFristen.u1 = { ausbildungsart: "umschreibung", bewerbernummer: "RL-0815", theorie_frist_bis: KR.addDaysISO(h, 10), vorbesitz: [],
-      auslands_fs: [{ land: "Syrien", klasse: "B", erteilt_am: "2019-05-02", nummer: "SY-1", behoerde: "Damaskus" }], wohnsitz_de_seit: KR.addDaysISO(h, -175), uebersetzung_vorhanden: false };
+      auslands_fs: [{ land: "Syrien", klasse: "B", nummer: "SY-1", behoerde: "Damaskus", erteilt_am: "2019-05-02" }] /* Reihenfolge wie aus der Datenbank (jsonb) */, wohnsitz_de_seit: KR.addDaysISO(h, -175), uebersetzung_vorhanden: false };
     _schuelerFristen.ce1 = { vorbesitz: ["B", "C"] };
     _schuelerFristen.ce2 = { vorbesitz: ["B"] };
     _schuelerFristen.ce3 = { vorbesitz: ["B"] };
