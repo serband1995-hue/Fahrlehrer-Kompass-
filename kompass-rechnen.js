@@ -185,7 +185,8 @@
     let k = String(o.klasse || o.form || "B");
     if (["B78", "Automatik", "B197", "B96", "B+BE"].includes(k)) k = "B";
     const vb = o.vorbesitz || [];
-    const weg = o.weg || lkwWegAusVorbesitz(k, vb);
+    // Weg nur nehmen, wenn er zur Klasse passt (gleiche Regel wie lkwWegVon in index.html)
+    const weg = ({ C: ["B", "C1"], CE: ["C", "C+CE"], C1E: ["C1", "C1+C1E"] }[k] || []).includes(o.weg) ? o.weg : lkwWegAusVorbesitz(k, vb);
     if (k === "BE" || (k === "C1E" && weg !== "C1+C1E")) return { pflicht: false, grund: "Anhängerklasse: nur praktische Prüfung", teile: [] };
     if (k === "BKF" || !["B", "C1", "C1E", "C", "CE"].includes(k)) return { pflicht: false, grund: "keine Regel hinterlegt", teile: [] };
     const lkw = k !== "B"; // Lkw-Klassen setzen Klasse B voraus

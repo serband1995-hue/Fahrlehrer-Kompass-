@@ -1634,22 +1634,29 @@ body:not(.light) .cw-col.today .cw-dnum{color:var(--gold);}
 .lkw-zaehler{margin-top:8px;font-size:13px;color:var(--muted);}
 .lkw-zaehler b{color:var(--txt);}
 .tb-balken{height:8px;border-radius:6px;background:var(--surface-2);overflow:hidden;margin:6px 0 4px;}
-.tb-balken span{display:block;height:100%;background:var(--gruen);border-radius:6px;}
-.tb-fehlt{display:block;color:var(--orange);font-weight:600;font-size:12px;}
-.tb-liste summary{cursor:pointer;font-size:13px;color:var(--muted);padding:6px 0;}
+.tb-balken span{display:block;height:100%;background:var(--akzent,#2f5d3f);border-radius:6px;}
+.tb-balken.fertig span{background:var(--gruen);}
+.tb-zahl{font-size:15px;margin:2px 0;} .tb-zahl b{font-size:20px;}
+.tb-fehlt{display:block;color:var(--gold,#9a6b12);font-weight:600;font-size:12px;}
+.tb-liste summary{cursor:pointer;font-size:13px;color:var(--muted);min-height:44px;display:flex;align-items:center;}
+.tb-zeile{display:flex;align-items:center;gap:8px;font-size:13px;margin-top:9px;padding:6px 2px;}
+.ta-lekt-zeile{display:flex;align-items:center;justify-content:space-between;gap:10px;margin:2px 0 8px;font-weight:700;}
+.ta-lekt-zeile .btn{min-height:44px;padding:8px 16px;flex:0 0 auto;}
+.field select{width:100%;max-width:100%;}
 .ta-lekt .pill{min-width:44px;}
 .ta-zahl{float:right;font-weight:600;color:var(--muted);font-size:12.5px;}
 .ta-liste{max-height:46vh;overflow-y:auto;border:1px solid var(--line-soft);border-radius:12px;margin-bottom:12px;}
 .ta-zeile{display:flex;align-items:center;gap:12px;padding:10px 12px;border-bottom:1px solid var(--line-soft);font-size:15px;min-height:48px;}
 .ta-zeile:last-child{border-bottom:none;}
-.ta-zeile input{width:22px;height:22px;flex:0 0 auto;}
+.ta-zeile input{width:22px;height:22px;flex:0 0 auto;accent-color:var(--akzent,#2f5d3f);}
 .ta-zeile span{flex:1;min-width:0;overflow-wrap:anywhere;}
 .ta-zeile small{color:var(--muted);font-size:12px;white-space:nowrap;}
 /* Pills in Blättern (Vorbesitz, Lektionen): wie die Pills der Akte, 44 px, gewählt dunkel gefüllt */
 #sheet .sheet-pills{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:8px;}
 #sheet .sheet-pills .pill{min-height:44px;padding:8px 4px;text-align:center;background:var(--k-karte,var(--surface)) !important;border:1px solid var(--k-rand,var(--line)) !important;color:var(--k-tinte,var(--txt)) !important;font-weight:700;}
 #sheet .sheet-pills .pill.sel{background:var(--k-tinte,#173a2b) !important;border-color:var(--k-tinte,#173a2b) !important;color:#fff !important;}
-body:not(.light) #sheet .sheet-pills .pill.sel{background:#123A2A !important;border-color:var(--k-mint,#7fbf95) !important;}
+body:not(.light) #sheet .sheet-pills .pill{background:var(--surface) !important;border-color:var(--line) !important;color:var(--txt) !important;}
+body:not(.light) #sheet .sheet-pills .pill.sel{background:#123A2A !important;border-color:var(--k-mint,#7fbf95) !important;color:#fff !important;}
 #sheet .sheet-knoepfe{position:sticky;bottom:calc(-26px - env(safe-area-inset-bottom));background:inherit;padding:10px 0 calc(10px + env(safe-area-inset-bottom));margin-bottom:calc(-26px - env(safe-area-inset-bottom));z-index:2;}
 .bh-schalter{display:flex;align-items:center;justify-content:space-between;gap:12px;min-height:48px;margin:4px 0 12px;font-size:14.5px;}
 .afs-zwei{display:grid;grid-template-columns:1fr 1fr;gap:0 10px;}
@@ -8323,7 +8330,7 @@ function routeDetail(id){
       <div id="akademieFortschrittSlot"></div>
     </div>
     <div class="theo-row">
-      <div class="theo-label">📚 Theorie</div>
+      <div class="theo-label">📚 Lernstand Theorie</div>
       <div class="theo-track"><div class="theo-fill" id="theoFill" style="width:${s.theoriePct||0}%"></div></div>
       <div class="theo-pct" id="theoPct">${s.theoriePct||0} %</div>
       <button class="theo-edit-btn ic ic-blau" id="theoEdit">${ICN.pencil}</button>
@@ -8887,86 +8894,114 @@ function openBehoerdeSheet(s){
 /* Theorie-Besuch (🗣 Serband 14.10.2026, Antwort 2a): Der Fahrlehrer tippt im Theorie-Termin an, wer da war.
    Gespeichert in theorie_teilnahme (je Schüler, Lektion, Tag); Soll nach Gesetz aus KR.theorieSoll. */
 let _theorieBesuch = null; // schueler_id -> [{lektion, datum}]; null = noch nicht geladen
+let _theorieLadeNr = 0;
 async function _ladeTheorieBesuch(supa, ids){
+  const nr=++_theorieLadeNr;
   try{
     if(!supa||!ids||!ids.length){ _theorieBesuch=_theorieBesuch||{}; return; }
     const neu={};
     for(let i=0;i<ids.length;i+=150){
-      const {data,error}=await supa.from("theorie_teilnahme").select("schueler_id,lektion,datum").in("schueler_id",ids.slice(i,i+150)).is("entfernt_am",null);
-      if(error) return; // z. B. offline: alten Stand behalten
-      (data||[]).forEach(x=>{ (neu[x.schueler_id]=neu[x.schueler_id]||[]).push({lektion:String(x.lektion),datum:x.datum}); });
+      const teil=ids.slice(i,i+150);
+      // seitenweise: mehr als 1000 Zeilen (150 Schüler × bis zu 26 Lektionen) dürfen nicht still fehlen
+      const data=await _alleSeiten(()=>supa.from("theorie_teilnahme").select("id,schueler_id,lektion,datum").in("schueler_id",teil).is("entfernt_am",null));
+      teil.forEach(sid=>{ neu[sid]=[]; });
+      data.forEach(x=>{ (neu[x.schueler_id]=neu[x.schueler_id]||[]).push({lektion:String(x.lektion),datum:x.datum}); });
     }
-    _theorieBesuch=neu;
-  }catch(e){}
+    if(nr!==_theorieLadeNr&&_theorieBesuch) return; // ein neuerer Abruf läuft: dessen Stand gilt
+    _theorieBesuch=Object.assign(_theorieBesuch||{},neu); // je Schüler zusammenführen (Gesamtansicht und eigene Schüler)
+  }catch(e){ /* z. B. offline: alten Stand behalten */ }
 }
 function theorieStandFuer(s){
   if(!window.KR||!KR.theorieSoll)return null;
   const f=_schuelerFristen[s.id]||{};
-  const soll=KR.theorieSoll({form:s.form||"B",weg:lkwWegVon(s),vorbesitz:f.vorbesitz||[],ausbildungsart:istUmschreiberAkte(s)?"umschreibung":f.ausbildungsart});
+  const soll=KR.theorieSoll({klasse:s.klasseBuero||s.form||"B",form:s.form,weg:lkwWegVon(s),vorbesitz:f.vorbesitz||s.vorbesitzBuero||[],ausbildungsart:istUmschreiberAkte(s)?"umschreibung":f.ausbildungsart});
   return KR.theorieStand(soll,((_theorieBesuch&&_theorieBesuch[s.id])||[]).map(x=>x.lektion));
 }
 function theorieCard(s){
   if(_theorieBesuch===null||!_schuelerFristen[s.id])return ""; // nur mit Verbindung zur Fahrschule
   const st=theorieStandFuer(s); if(!st)return "";
-  if(!st.pflicht) return `<div class="res-block theorie-besuch" style="animation:none;margin-top:9px;"><h4>🎓 Theorieunterricht</h4><p class="muted-p" style="font-size:13px;">${esc(st.grund)}.</p></div>`;
+  if(!st.pflicht) return `<div class="tb-zeile muted-p">${_li("schule")} Theorieunterricht: ${esc(st.grund)}</div>`;
   const pct=st.soll?Math.round(st.ist/st.soll*100):0;
   const teil=t=>`<div class="mini-dash-row"><span>${esc(t.titel)}${t.fehlt&&t.fehlt.length&&t.fehlt.length<=6?` <small class="tb-fehlt">fehlt: ${t.fehlt.map(esc).join(", ")}</small>`:""}</span><b>${t.ist}/${t.soll}${t.ist>=t.soll?" ✓":""}</b></div>`;
   const besuch=((_theorieBesuch&&_theorieBesuch[s.id])||[]).slice().sort((a,b)=>String(b.datum).localeCompare(String(a.datum)));
   return `<div class="res-block theorie-besuch" style="animation:none;margin-top:9px;">
-    <h4>🎓 Theorieunterricht · ${st.ist}/${st.soll}${st.fertig?" ✓":""}</h4>
-    <div class="tb-balken" role="img" aria-label="${st.ist} von ${st.soll} Lektionen besucht"><span style="width:${pct}%"></span></div>
+    <h4>${_li("schule")} Theorieunterricht</h4>
+    <div class="tb-zahl"><b>${st.ist} von ${st.soll}</b> Pflicht-Lektionen${st.fertig?" ✓ vollständig":""}</div>
+    <div class="tb-balken${st.fertig?" fertig":""}" role="img" aria-label="${st.ist} von ${st.soll} Lektionen besucht"><span style="width:${pct}%"></span></div>
     ${st.teile.map(teil).join("")}
-    ${besuch.length?`<details class="tb-liste"><summary>Besucht (${besuch.length})</summary>${besuch.map(b=>`<div class="mini-dash-row"><span>Lektion ${esc(b.lektion)}</span><b>${isoDE(b.datum)}</b></div>`).join("")}</details>`:""}
+    ${besuch.length?`<details class="tb-liste"><summary>Besuchte Lektionen (${besuch.length})</summary>${besuch.map(b=>`<div class="mini-dash-row"><span>Lektion ${esc(b.lektion)}</span><span>${isoDE(b.datum)}</span></div>`).join("")}</details>`:""}
   </div>`;
 }
 // Lektionen eines Abends: alle Theorie-Blöcke des Tages; ist nur eine Lektion bekannt, kommt die zweite des Abends dazu (1+2, 3+4 …, C1+C2, CE1+CE2)
-function _abendLektionen(datum){
-  const set=[...new Set((DB.lessons||[]).filter(x=>x.art==="theorie"&&x.date===datum&&x.lektion!=null&&x.lektion!=="").map(x=>String(x.lektion)))];
+function _lektOrd(k){ const m=String(k).match(/^(CE|C)?(\d+)$/); return m?({"":0,C:100,CE:200}[m[1]||""]+(+m[2])):999; }
+function _lektGruppe(k){ const m=String(k).match(/^(CE|C)?\d+$/); return m?(m[1]||"B"):""; }
+function _abendLektionen(datum,l){
+  const g=l&&l.lektion!=null&&l.lektion!==""?_lektGruppe(l.lektion):"";
+  const set=[...new Set((DB.lessons||[]).filter(x=>x.art==="theorie"&&x.date===datum&&x.lektion!=null&&x.lektion!==""&&(!g||_lektGruppe(x.lektion)===g)).map(x=>String(x.lektion)))];
   if(set.length===1){
     const m=set[0].match(/^(CE|C)?(\d+)$/); if(m){ const pre=m[1]||"", n=+m[2], p2=n%2?n+1:n-1, k=pre+p2;
       if(_lektionFinde(k)) set.push(k); }
   }
-  const ord=k=>{ const m=String(k).match(/^(CE|C)?(\d+)$/); return m?({"":0,C:100,CE:200}[m[1]||""]+(+m[2])):999; };
-  return set.filter(k=>_lektionFinde(k)).sort((a,b)=>ord(a)-ord(b)).slice(0,4);
+  return set.filter(k=>_lektionFinde(k)).sort((a,b)=>_lektOrd(a)-_lektOrd(b)).slice(0,4);
 }
+let _taNr=0;
 async function openTheorieAnwesenheit(l){
-  const supa=getSupa(); const datum=l.date;
+  const supa=getSupa(); const datum=l.date; const nr=++_taNr;
   if(!supa||!navigator.onLine){ toast("Keine Verbindung – Anwesenheit nur online eintragen"); return; }
-  let lekt=_abendLektionen(datum); if(!lekt.length&&l.lektion!=null)lekt=[String(l.lektion)];
+  let lekt=_abendLektionen(datum,l); if(!lekt.length&&l.lektion!=null&&l.lektion!=="")lekt=[String(l.lektion)];
+  const nochAktuell=()=>nr===_taNr&&$("#sheet").classList.contains("open");
   openSheet(`<div class="sheet-h">Anwesenheit · ${isoDE(datum)}</div><p class="muted-p" style="font-size:13px;">Wird geladen …</p>`);
   const {data:liste,error}=await supa.rpc("theorie_schuelerliste");
+  if(!nochAktuell())return;
   if(error||!Array.isArray(liste)){ closeSheet(); toast("Schülerliste nicht geladen – bitte später nochmal"); return; }
-  let da=new Set();
-  const ladeDa=async()=>{ da=new Set(); if(!lekt.length)return; const {data}=await supa.rpc("theorie_teilnahme_tag",{p_datum:datum,p_lektionen:lekt}); (data||[]).forEach(x=>da.add(x.schueler_id)); };
+  // Wer ist schon eingetragen? Ohne sichere Antwort wird nicht gespeichert (sonst gingen Einträge verloren).
+  let da=new Set(), daGeladen=false;
+  const ladeDa=async()=>{ daGeladen=false; da=new Set(); if(!lekt.length){ daGeladen=true; return; }
+    const {data,error:e2}=await supa.rpc("theorie_teilnahme_tag",{p_datum:datum,p_lektionen:lekt});
+    if(e2||!Array.isArray(data)) return; data.forEach(x=>da.add(x.schueler_id)); daGeladen=true; };
   await ladeDa();
+  if(!nochAktuell())return;
+  if(!daGeladen){ closeSheet(); toast("Eingetragene nicht geladen – bitte später nochmal"); return; }
+  const meineId=_authUser&&_authUser.id;
+  const sortiert=liste.slice().sort((a,b)=>(a.fahrlehrer_id===meineId?0:1)-(b.fahrlehrer_id===meineId?0:1)||String(a.name).localeCompare(String(b.name),"de"));
+  const an=new Set([...da].filter(id=>liste.some(x=>x.id===id))); // angehakt (nur Schüler, die in der Liste stehen)
+  const aus=new Set(); // vom Fahrlehrer abgewählt: bleibt aus, auch wenn die Lektionen wechseln
+  let pillsOffen=!lekt.length;
   const alleLekt=LEKTIONEN.map(x=>String(x.n)).concat(LKW_LEKTIONEN.map(x=>x.n));
   const zeichne=()=>{
-    const sel=new Set([...document.querySelectorAll("#taListe input:checked")].map(i=>i.value));
-    const gewaehlt=new Set([...sel,...da]); // angetippte bleiben, schon Eingetragene der gewählten Lektionen kommen dazu
-    $("#sheet").innerHTML=`<div class="sheet-h">Anwesenheit · ${isoDE(datum)}</div>
-      <div class="field"><label>Lektionen an diesem Abend</label><div class="pills ta-lekt sheet-pills" id="taLekt">${alleLekt.map(k=>`<button type="button" class="pill ${lekt.includes(k)?"sel":""}" data-k="${k}" title="${esc(lektionTitel(k))}">${k}</button>`).join("")}</div></div>
-      <div class="field"><label>Wer war da? <span class="ta-zahl" id="taZahl">${gewaehlt.size} angetippt</span></label><input type="search" id="taSuche" placeholder="Name suchen" autocomplete="off"></div>
-      <div id="taListe" class="ta-liste">${liste.map(x=>`<label class="ta-zeile" data-name="${esc(String(x.name||"").toLowerCase())}"><input type="checkbox" value="${esc(x.id)}"${gewaehlt.has(x.id)?" checked":""}><span>${esc(x.name||"")}</span><small>${esc(x.klasse||"")}${x.fahrlehrer_id===(_authUser&&_authUser.id)?" · deiner":""}</small></label>`).join("")||'<p class="muted-p">Keine aktiven Schüler.</p>'}</div>
+    const titel=lekt.length?lekt.map(k=>"Lektion "+k).join(" + "):"Lektion wählen";
+    $("#sheet").innerHTML=`<div class="sheet-h">Anwesenheit · ${isoDE(datum)}${l.von?" · "+esc(l.von):""}</div>
+      <div class="ta-lekt-zeile"><span>${esc(titel)}</span><button type="button" class="btn btn-ghost" id="taLektAuf">${pillsOffen?"fertig":"ändern"}</button></div>
+      ${pillsOffen?`<div class="pills ta-lekt sheet-pills" id="taLekt">${alleLekt.map(k=>`<button type="button" class="pill ${lekt.includes(k)?"sel":""}" data-k="${k}" title="${esc(lektionTitel(k))}">${k}</button>`).join("")}</div>`:""}
+      <div class="field" style="margin-top:8px;"><label>Wer war da? <span class="ta-zahl" id="taZahl">${an.size} anwesend</span></label><input type="search" id="taSuche" placeholder="Name suchen" autocomplete="off"></div>
+      <div id="taListe" class="ta-liste">${sortiert.map(x=>`<label class="ta-zeile" data-name="${esc(String(x.name||"").toLowerCase())}"><input type="checkbox" value="${esc(x.id)}"${an.has(x.id)?" checked":""}><span>${esc(x.name||"")}</span><small>${esc(x.klasse||"")}${x.fahrlehrer_id===meineId?" · deiner":""}</small></label>`).join("")||'<p class="muted-p" style="padding:12px;">Keine aktiven Schüler.</p>'}<p class="muted-p ta-leer" id="taLeer" hidden style="padding:12px;">Kein Name gefunden.</p></div>
       <div class="btn-row sheet-knoepfe"><button class="btn btn-ghost" id="taAbbr" style="flex:0;padding:13px 18px;">Abbrechen</button><button class="btn btn-primary" id="taSpeichern">Speichern</button></div>`;
     $("#taAbbr").addEventListener("click",closeSheet);
-    const zahl=()=>{ $("#taZahl").textContent=document.querySelectorAll("#taListe input:checked").length+" angetippt"; };
-    document.querySelectorAll("#taListe input").forEach(i=>i.addEventListener("change",zahl));
-    $("#taSuche").addEventListener("input",e=>{ const q=e.target.value.trim().toLowerCase(); document.querySelectorAll("#taListe .ta-zeile").forEach(z=>{ z.style.display=!q||z.dataset.name.includes(q)?"":"none"; }); });
+    $("#taLektAuf").addEventListener("click",()=>{ pillsOffen=!pillsOffen; zeichne(); });
+    document.querySelectorAll("#taListe input").forEach(i=>i.addEventListener("change",()=>{ if(i.checked){ an.add(i.value); aus.delete(i.value); } else { an.delete(i.value); aus.add(i.value); } $("#taZahl").textContent=an.size+" anwesend"; }));
+    $("#taSuche").addEventListener("input",e=>{ const q=e.target.value.trim().toLowerCase(); let n=0; document.querySelectorAll("#taListe .ta-zeile").forEach(z=>{ const zeig=!q||z.dataset.name.includes(q); z.style.display=zeig?"":"none"; if(zeig)n++; }); $("#taLeer").hidden=n>0; });
     document.querySelectorAll("#taLekt .pill").forEach(b=>b.addEventListener("click",async()=>{
       const k=b.dataset.k;
       if(lekt.includes(k)) lekt=lekt.filter(x=>x!==k); else { if(lekt.length>=4){ toast("Höchstens 4 Lektionen je Abend"); return; } lekt.push(k); }
-      await ladeDa(); zeichne();
+      lekt.sort((a,c)=>_lektOrd(a)-_lektOrd(c));
+      await ladeDa(); if(!nochAktuell())return;
+      if(!daGeladen){ toast("Eingetragene nicht geladen – bitte nochmal"); }
+      da.forEach(id=>{ if(!aus.has(id)&&liste.some(x=>x.id===id)) an.add(id); });
+      zeichne();
     }));
     $("#taSpeichern").addEventListener("click",async()=>{
-      if(!lekt.length){ toast("Bitte die Lektion(en) des Abends wählen"); return; }
-      const ids=[...document.querySelectorAll("#taListe input:checked")].map(i=>i.value);
-      const b=$("#taSpeichern"); b.disabled=true;
+      if(!lekt.length){ toast("Bitte die Lektion(en) des Abends wählen"); pillsOffen=true; zeichne(); return; }
+      if(!daGeladen){ toast("Eingetragene nicht geladen – bitte Lektion nochmal antippen"); return; }
+      const ids=[...an];
+      if(!ids.length&&da.size&&!confirm("Niemand angehakt – sollen alle bisherigen Einträge dieses Abends entfernt werden?"))return;
+      const b=$("#taSpeichern"); b.disabled=true; b.textContent="Speichert …";
       const {data,error}=await supa.rpc("theorie_teilnahme_setzen",{p_datum:datum,p_lektionen:lekt,p_schueler:ids});
-      b.disabled=false;
+      if(!nochAktuell()){ if(!error&&data&&!data.fehler) toast(`✓ Anwesenheit gespeichert (${ids.length})`); return; }
+      b.disabled=false; b.textContent="Speichern";
       if(error||!data||data.fehler){ toast("Nicht gespeichert"+(data&&data.fehler?" ("+data.fehler+")":"")+" – bitte nochmal"); return; }
       // eigene Schüler sofort in der Akte aktualisieren
-      if(_theorieBesuch){ const meine=new Set((DB.students||[]).map(x=>x.id)); meine.forEach(sid=>{ const alt=(_theorieBesuch[sid]||[]).filter(x=>!(x.datum===datum&&lekt.includes(x.lektion))); if(ids.includes(sid)) lekt.forEach(k=>alt.push({lektion:k,datum})); _theorieBesuch[sid]=alt; }); }
-      closeSheet(); toast(`✓ ${ids.length} Schüler für Lektion ${lekt.join(" + ")} eingetragen`);
+      if(_theorieBesuch){ (DB.students||[]).forEach(st=>{ const sid=st.id; const alt=(_theorieBesuch[sid]||[]).filter(x=>!(x.datum===datum&&lekt.includes(x.lektion))); if(ids.includes(sid)) lekt.forEach(k=>alt.push({lektion:k,datum})); _theorieBesuch[sid]=alt; }); }
+      closeSheet(); toast(`✓ ${ids.length} Schüler für ${lekt.map(k=>"Lektion "+k).join(" + ")} eingetragen`);
     });
   };
   zeichne();
@@ -11820,7 +11855,7 @@ function openEventSheet(kind,id,sid){
         return `<button class="es-act primary" id="esProtokoll" style="background:#0f7d6e;border-color:#0f7d6e;color:#fff;">📤 Stunde abschließen · Protokoll schicken${n?` <b>(${n} Thema${n===1?"":"en"})</b>`:""}</button>`;
       })():''}
       ${st?`<button class="es-act primary" id="esAkte">Schülerakte öffnen</button>`:''}
-      ${l.art==="theorie"&&_authProfile&&_authProfile.fahrschule_id?`<button class="es-act primary" id="esAnwesend">👥 Anwesenheit eintragen</button>`:''}
+      ${l.art==="theorie"&&_authProfile&&_authProfile.fahrschule_id?`<button class="es-act primary" id="esAnwesend">Anwesenheit eintragen</button>`:''}
       ${fcRelevant&&st&&lkwZweiKlassen(st)?`<button class="es-act" id="esLkwKl">Klasse dieser Stunde · <b>${esc(lkwStundenKlasse(st,l))}</b></button>`:''}
       ${fcRelevant&&sichtbar("fahrcheck")?`<button class="es-act" id="esFC">Fahrcheck · <b>${fcLab}</b></button>`:''}
       ${fcRelevant&&st?`<button class="es-act" id="esSig">Unterschrift · <b>${l.signed?'✓ vorhanden':'noch offen'}</b></button>`:''}
