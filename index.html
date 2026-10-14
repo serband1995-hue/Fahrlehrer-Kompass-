@@ -1647,7 +1647,8 @@ body:not(.light) .cw-col.today .cw-dnum{color:var(--gold);}
 #sheet .sheet-pills{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:8px;}
 #sheet .sheet-pills .pill{min-height:44px;padding:8px 4px;text-align:center;background:var(--k-karte,var(--surface)) !important;border:1px solid var(--k-rand,var(--line)) !important;color:var(--k-tinte,var(--txt)) !important;font-weight:700;}
 #sheet .sheet-pills .pill.sel{background:var(--k-tinte,#173a2b) !important;border-color:var(--k-tinte,#173a2b) !important;color:#fff !important;}
-body:not(.light) #sheet .sheet-pills .pill.sel{background:#123A2A !important;border-color:var(--k-mint,#7fbf95) !important;}
+body:not(.light) #sheet .sheet-pills .pill{background:var(--surface) !important;border-color:var(--line) !important;color:var(--txt) !important;}
+body:not(.light) #sheet .sheet-pills .pill.sel{background:#123A2A !important;border-color:var(--k-mint,#7fbf95) !important;color:#fff !important;}
 #sheet .sheet-knoepfe{position:sticky;bottom:calc(-26px - env(safe-area-inset-bottom));background:inherit;padding:10px 0 calc(10px + env(safe-area-inset-bottom));margin-bottom:calc(-26px - env(safe-area-inset-bottom));z-index:2;}
 .bh-schalter{display:flex;align-items:center;justify-content:space-between;gap:12px;min-height:48px;margin:4px 0 12px;font-size:14.5px;}
 .afs-zwei{display:grid;grid-template-columns:1fr 1fr;gap:0 10px;}
