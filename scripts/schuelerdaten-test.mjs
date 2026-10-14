@@ -229,6 +229,12 @@ await pruefe("D10", "Lkw-Klassen nur mit Fahrlehrerlaubnis CE: ohne CE keine Lkw
   if (/C1|CE|\bC\b/.test(pills())) f.push("B-Fahrlehrer sieht Lkw: " + pills());
   routeDetail("ce1");
   if (!pills().split(",").includes("CE")) f.push("bestehender CE-Schüler verliert seine Klasse");
+  // Fehltipp auf „B“ und zurück: CE bleibt wählbar
+  const ceSt = DB.students.find((s) => s.id === "ce1"), formVorher = ceSt.form;
+  document.querySelector('#dashFormPills .pill[data-form="B"]').click();
+  if (!pills().split(",").includes("CE")) f.push("nach Tipp auf B ist CE verschwunden: " + pills());
+  else { document.querySelector('#dashFormPills .pill[data-form="CE"]').click(); if (ceSt.form !== "CE") f.push("Zurück auf CE klappt nicht: " + ceSt.form); }
+  ceSt.form = formVorher;
   _authProfile = { id: "me", fahrschule_id: "fs-x", rolle: "fahrlehrer", klassen: ["B", "BE", "C1", "C1E", "C", "CE"] };
   routeDetail("b1");
   if (!pills().includes("C1E")) f.push("CE-Fahrlehrer sieht keine Lkw-Klassen: " + pills());
