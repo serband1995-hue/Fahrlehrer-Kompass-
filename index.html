@@ -3116,7 +3116,7 @@ function lkwWegVon(s){
   if(vb.length){
     if(s.form==="C") return vb.includes("C1")?"C1":"B";
     if(s.form==="CE") return vb.includes("C")?"C":"C+CE";
-    if(s.form==="C1E") return vb.includes("C1")?"C1":"C1+C1E";
+    if(s.form==="C1E") return vb.some(k=>["C1","C","CE"].includes(k))?"C1":"C1+C1E"; // Klasse C schließt C1 ein
   }
   return wege[0][0];
 }
@@ -5018,6 +5018,7 @@ async function pullSchuelerZuweisungen() {
     let umschreiberNeu = false;
     // Prüfwert je Schüler VOR den Übernahmen vom Büro (Sehhilfe, Klasse …): sonst gälte eine Büro-Änderung als „selbst geändert“
     const vorherWert = {}; for (const r of (rows||[])) { const l0 = DB.students.find(x => x.id === r.id); if (l0) vorherWert[r.id] = _abglWertVon("schueler", l0); }
+    const nachherWert = {}; // Prüfwert direkt nach den Übernahmen vom Büro (nur Schüler, die der Abruf selbst geändert hat)
     for (const r of (rows||[])) {
       // Büro hat „Umschreibung“ eingetragen: Merkmal einmalig übernehmen (Sonderfahrten entfallen)
       if (lokaleIds.has(r.id) && r.ausbildungsart === "umschreibung") {
@@ -5046,6 +5047,11 @@ async function pullSchuelerZuweisungen() {
           if (lok.form !== f && (!erstes || LKW_FORMS.includes(f))) lok.form = f;
         }
       }
+      if (lokaleIds.has(r.id)) { const l1 = DB.students.find(x => x.id === r.id); if (l1) { const w = _abglWertVon("schueler", l1); if (w !== vorherWert[r.id]) nachherWert[r.id] = w; } }
+    }
+    // Erst jetzt die neuen Schüler (mit Netzabrufen): alle Übernahmen oben laufen ohne Pause, damit eine Eingabe
+    // des Fahrlehrers in der Zwischenzeit nicht als „vom Büro übernommen“ gilt.
+    for (const r of (rows||[])) {
       if (!lokaleIds.has(r.id)) {
         const a = r.ausbildung || {};
         const nst = Object.assign({
@@ -5089,7 +5095,7 @@ async function pullSchuelerZuweisungen() {
       if (bekannt && bekannt !== (vorherWert[r.id] !== undefined ? vorherWert[r.id] : _abglWertVon("schueler", lok))) continue; // selbst geändert: eigener Stand gilt
       const n = (r.name && !(r.name === "(ohne Namen)" && !lok.name)) ? r.name : lok.name, t = r.telefon || "";
       if (n !== lok.name || t !== (lok.telefon || "")) { lok.name = n; lok.telefon = t; memS.schueler[r.id] = _abglWertVon("schueler", lok); namenNeu = true; }
-      else if (bekannt && bekannt === vorherWert[r.id]) memS.schueler[r.id] = _abglWertVon("schueler", lok); // Übernahmen vom Büro gelten nicht als eigene Änderung
+      else if (bekannt && bekannt === vorherWert[r.id] && nachherWert[r.id]) memS.schueler[r.id] = nachherWert[r.id]; // Übernahmen vom Büro gelten nicht als eigene Änderung (spätere eigene Änderungen schon)
     }
     _abglSpeichern(memS);
     _schuelerAbgerufen = true;
@@ -8861,6 +8867,11 @@ function openBehoerdeSheet(s){
       if(ohneLand){ const fe=ohneLand.querySelector('[data-afs="land"]'); fe.scrollIntoView({block:"center"}); fe.focus(); toast("Bitte beim Führerschein das Land eintragen"); return; }
       werte.auslands_fs=liste.length?liste:null; werte.wohnsitz_de_seit=$("#bhWohnsitz").value||null; werte.uebersetzung_vorhanden=$("#bhUebers").classList.contains("on");
     }
+    // Nur senden, was sich gegenüber dem Stand beim Öffnen geändert hat (das Büro könnte inzwischen etwas eingetragen haben)
+    const nz=v=>(v==null||v===false||(Array.isArray(v)&&!v.length)?null:v);
+    const vorher={bewerbernummer:f.bewerbernummer,vorbesitz:f.vorbesitz,auslands_fs:f.auslands_fs,wohnsitz_de_seit:f.wohnsitz_de_seit,uebersetzung_vorhanden:f.uebersetzung_vorhanden};
+    Object.keys(werte).forEach(k=>{ if(JSON.stringify(nz(werte[k]))===JSON.stringify(nz(vorher[k]))) delete werte[k]; });
+    if(!Object.keys(werte).length){ closeSheet(); toast("Nichts geändert"); return; }
     const b=$("#bhSpeichern"); b.disabled=true; b.textContent="Speichert …";
     const ok=await _schuelerServerSetzen(s.id,werte);
     b.disabled=false; b.textContent="Speichern";

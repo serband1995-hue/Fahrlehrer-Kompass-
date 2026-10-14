@@ -208,6 +208,7 @@ function renderHeute() {
   if (f.antragBald) aufgaben.push(`<a class="aufgabe gelb" href="#fristen?ansicht=antrag"><b>${f.antragBald}</b> ${f.antragBald === 1 ? "Führerscheinantrag läuft" : "Führerscheinanträge laufen"} in den nächsten 60 Tagen ab</a>`);
   if (f.fristAb) aufgaben.push(`<a class="aufgabe rot" href="#fristen?ansicht=antrag"><b>${f.fristAb}</b> ${f.fristAb === 1 ? "Schüler hat" : "Schüler haben"} die Theorie-Frist der Behörde überschritten</a>`);
   if (f.fristBald) aufgaben.push(`<a class="aufgabe gelb" href="#fristen?ansicht=antrag"><b>${f.fristBald}</b> Theorie-Frist${f.fristBald === 1 ? " läuft" : "en laufen"} in 30 Tagen ab</a>`);
+  if (f.umPruefen) aufgaben.push(`<a class="aufgabe gelb" href="#fristen?ansicht=umschreiber"><b>${f.umPruefen}</b> Umschreiber: Land oder „Wohnsitz seit“ prüfen (sonst keine 6-Monats-Warnung)</a>`);
   if (f.umAb) aufgaben.push(`<a class="aufgabe rot" href="#fristen?ansicht=umschreiber"><b>${f.umAb}</b> Umschreiber: ausländischer Führerschein gilt nicht mehr (darf nicht selbst fahren)</a>`);
   if (f.umBald) aufgaben.push(`<a class="aufgabe gelb" href="#fristen?ansicht=umschreiber"><b>${f.umBald}</b> Umschreiber: ausländischer Führerschein gilt nur noch bis zu 30 Tage</a>`);
   if (f.ohneDatum) aufgaben.push(`<a class="aufgabe" href="#fristen?ansicht=ohne"><b>${f.ohneDatum}</b> Schüler ohne Vertragsdatum</a>`);
@@ -294,7 +295,7 @@ function arbeitendeSchueler() { return aktiveSchueler().filter((x) => !wartetArt
 function wartendeSchueler() { return aktiveSchueler().filter((x) => wartetArt(x)); }
 function zaehleFristen() {
   const heute = KR.todayISO();
-  const z = { gesperrt: 0, pruefen: 0, bald: 0, theorie: 0, ohneDatum: 0, handeln: 0, antragAb: 0, antragBald: 0, fristAb: 0, fristBald: 0, umAb: 0, umBald: 0 };
+  const z = { gesperrt: 0, pruefen: 0, bald: 0, theorie: 0, ohneDatum: 0, handeln: 0, antragAb: 0, antragBald: 0, fristAb: 0, fristBald: 0, umAb: 0, umBald: 0, umPruefen: 0 };
   for (const s of aktiveSchueler()) {
     const r = KR.reaktInfo(s, heute), t = KR.theorieInfo(s, heute);
     if (r.stufe === "gesperrt") z.gesperrt++;
@@ -307,7 +308,7 @@ function zaehleFristen() {
     else if (a.stufe === "bald") z.antragBald++;
     const tf = KR.theorieFristInfo(s, heute), u = KR.umschreibInfo(s, heute);
     if (tf.stufe === "abgelaufen") z.fristAb++; else if (tf.stufe === "bald") z.fristBald++;
-    if (u.stufe === "abgelaufen") z.umAb++; else if (u.stufe === "bald") z.umBald++;
+    if (u.stufe === "abgelaufen") z.umAb++; else if (u.stufe === "bald") z.umBald++; else if (u.stufe === "land_pruefen" || u.stufe === "ohne_datum") z.umPruefen++;
   }
   z.handeln = z.gesperrt + z.pruefen + z.antragAb + z.fristAb + z.umAb + z.umBald;
   return z;
@@ -1455,7 +1456,7 @@ function behoerdeHTML(x) {
   return `<fieldset class="voll raster-feld"><legend>Behörde</legend>
       <label>Bewerbernummer (Rücklaufnummer)<input type="text" name="bewerbernummer" maxlength="40" autocomplete="off" value="${esc(x.bewerbernummer || "")}"></label>
       <label>Theorie-Frist bis (laut Behörde)<input type="date" name="theorie_frist_bis" value="${esc(x.theorie_frist_bis || "")}"></label>
-      <label>Sehhilfe (Schlüsselzahl 01)<select name="sehhilfe"><option value=""${sh == null ? " selected" : ""}>nicht bekannt</option><option value="ja"${sh === true ? " selected" : ""}>ja</option><option value="nein"${sh === false ? " selected" : ""}>nein</option></select></label>
+      <label>Sehhilfe (Schlüsselzahl 01)<select name="sehhilfe">${sh == null ? '<option value="" selected>noch nicht bekannt</option>' : ""}<option value="ja"${sh === true ? " selected" : ""}>ja</option><option value="nein"${sh === false ? " selected" : ""}>nein</option></select></label>
       <div class="voll"><div class="feld-titel">Vorbesitz (Klassen, die er schon hat)</div>
         <div class="vorbesitz-wahl">${VORBESITZ_KLASSEN.map((k) => `<label class="wahl"><input type="checkbox" name="vorbesitz" value="${k}"${vb.includes(k) ? " checked" : ""}> ${k}</label>`).join("")}</div></div>
     </fieldset>
