@@ -1545,7 +1545,7 @@ function theorieAkteHTML(id) {
   const pill = st.fertig ? `<span class="marke-pill gruen">${st.ist}/${st.soll} ✓ vollständig</span>` : st.bestanden ? `<span class="marke-pill gruen">Theorieprüfung bestanden</span>` : `<span class="marke-pill">${st.ist}/${st.soll}</span>`;
   return `<h3>Theorieunterricht ${pill}</h3>
     ${st.erfasst ? `<ul class="theorie-teile">${st.teile.map((t) => `<li><b>${esc(t.titel)}</b> ${t.ist}/${t.soll}${t.ist >= t.soll ? " ✓" : t.fehlt && t.fehlt.length ? ` · <span class="fehlt">fehlt: ${t.fehlt.map(esc).join(", ")}</span>` : ""}</li>`).join("")}</ul>` : ""}
-    ${besuche.length ? `<details><summary>Besuchte Lektionen (${besuche.length})</summary><ul class="besuch-liste">${besuche.map((b) => `<li>Lektion ${esc(b.lektion)} · ${esc(datumDE(b.datum))} <span class="leise">· ${esc(b.bearbeiter || "Fahrlehrer")}</span></li>`).join("")}</ul></details>` : `<p class="leise klein">Noch keine Anwesenheit erfasst. Der Fahrlehrer tippt sie im Theorie-Termin der App an.</p>`}`;
+    ${besuche.length ? `<details><summary>Besuchte Lektionen (${new Set(besuche.map((b) => String(b.lektion))).size})</summary><ul class="besuch-liste">${besuche.map((b) => `<li>Lektion ${esc(b.lektion)} · ${esc(datumDE(b.datum))} <span class="leise">· ${esc(b.bearbeiter || "Fahrlehrer")}</span></li>`).join("")}</ul></details>` : `<p class="leise klein">Noch keine Anwesenheit erfasst. Der Fahrlehrer tippt sie im Theorie-Termin der App an.</p>`}`;
 }
 // Anwesenheitsliste eines Tages zum Drucken (eigenes Fenster, weil der Druck offene Fenster ausblendet)
 // Lektionen sortieren (1–14, C1–C10, CE1–CE4) und zur Gruppe des Termins filtern (Klasse B, Lkw C, Lkw CE)
