@@ -1630,6 +1630,18 @@ body:not(.light) .cw-col.today .cw-dnum{color:var(--gold);}
 .chip.sehhilfe.on{color:var(--akzent-bright);border-color:var(--akzent);background:var(--gruen-soft);}
 .chip.sehhilfe:active{transform:scale(.93);}
 .s-sehhilfe{font-size:12px;opacity:.85;}
+.afs-app{border-top:1px dashed var(--line-soft);padding-top:8px;margin-top:4px;}
+/* Pills in Blättern (Vorbesitz, Lektionen): wie die Pills der Akte, 44 px, gewählt dunkel gefüllt */
+#sheet .sheet-pills{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:8px;}
+#sheet .sheet-pills .pill{min-height:44px;padding:8px 4px;text-align:center;background:var(--k-karte,var(--surface)) !important;border:1px solid var(--k-rand,var(--line)) !important;color:var(--k-tinte,var(--txt)) !important;font-weight:700;}
+#sheet .sheet-pills .pill.sel{background:var(--k-tinte,#173a2b) !important;border-color:var(--k-tinte,#173a2b) !important;color:#fff !important;}
+body:not(.light) #sheet .sheet-pills .pill{background:var(--surface) !important;border-color:var(--line) !important;color:var(--txt) !important;}
+body:not(.light) #sheet .sheet-pills .pill.sel{background:#123A2A !important;border-color:var(--k-mint,#7fbf95) !important;color:#fff !important;}
+#sheet .sheet-knoepfe{position:sticky;bottom:calc(-26px - env(safe-area-inset-bottom));background:inherit;padding:10px 0 calc(10px + env(safe-area-inset-bottom));margin-bottom:calc(-26px - env(safe-area-inset-bottom));z-index:2;}
+.bh-schalter{display:flex;align-items:center;justify-content:space-between;gap:12px;min-height:48px;margin:4px 0 12px;font-size:14.5px;}
+.afs-zwei{display:grid;grid-template-columns:1fr 1fr;gap:0 10px;}
+.afs-app:first-child{border-top:none;padding-top:0;margin-top:0;}
+.behoerde-card .mini-dash-row b{text-align:right;overflow-wrap:anywhere;max-width:62%;}
 /* Theorie-Progress in Akte */
 .theo-row{display:flex;align-items:center;gap:10px;background:var(--surface);border:1px solid var(--line);border-radius:13px;padding:12px 14px;margin-bottom:12px;}
 .theo-label{font-size:12px;font-weight:800;color:var(--muted);flex:0 0 auto;white-space:nowrap;}
@@ -3063,8 +3075,9 @@ const LKW_STUFEN = [
 // CE: geprüft werden nur 2 der 4 Grundfahraufgaben, je nach Zug (FeV Anlage 7 Nr. 2.1.4.5) – ohne Wahl alle 4.
 function lkwStufen(s){
   const klassen=[s.form];
-  if(s.form==="CE"&&s.lkwWeg==="C+CE")klassen.push("C");
-  if(s.form==="C1E"&&s.lkwWeg==="C1+C1E")klassen.push("C1");
+  const weg=lkwWegVon(s);
+  if(s.form==="CE"&&weg==="C+CE")klassen.push("C");
+  if(s.form==="C1E"&&weg==="C1+C1E")klassen.push("C1");
   const passt=it=>(!it.nur||it.nur.some(k=>klassen.includes(k)))&&(!it.zug||!s.lkwZug||it.zug===s.lkwZug);
   return LKW_STUFEN.map(st=>Object.assign({},st,{items:st.items.filter(passt)})).filter(st=>st.items.length);
 }
@@ -3077,15 +3090,27 @@ const LKW_WEGE={
   CE: [["C","von C nach CE",[5,2,3]],["C+CE","C und CE zusammen",[8,3,3]]],
   C1E:[["C1","von C1 nach C1E",[3,1,1]],["C1+C1E","C1 und C1E zusammen",[4,2,2]]]
 };
+// Weg der Lkw-Ausbildung: selbst gewählt, sonst aus dem Vorbesitz (Büro/Akte), sonst der erste Weg der Klasse.
+function lkwWegVon(s){
+  const wege=LKW_WEGE[s&&s.form]; if(!wege)return null;
+  if(s.lkwWeg&&wege.some(w=>w[0]===s.lkwWeg))return s.lkwWeg;
+  const vb=((typeof _schuelerFristen!=="undefined"&&_schuelerFristen[s.id])||{}).vorbesitz||s.vorbesitzBuero||[];
+  if(vb.length){
+    if(s.form==="C") return vb.includes("C1")?"C1":"B";
+    if(s.form==="CE") return vb.includes("C")?"C":"C+CE";
+    if(s.form==="C1E") return vb.some(k=>["C1","C","CE"].includes(k))?"C1":"C1+C1E"; // Klasse C schließt C1 ein
+  }
+  return wege[0][0];
+}
 function sonderWerte(s){
   const f=(s&&s.form)||"B";
-  if(LKW_WEGE[f]){ const w=LKW_WEGE[f].find(x=>x[0]===s.lkwWeg)||LKW_WEGE[f][0]; return w[2]; }
+  if(LKW_WEGE[f]){ const w=LKW_WEGE[f].find(x=>x[0]===lkwWegVon(s))||LKW_WEGE[f][0]; return w[2]; }
   return SONDER_SOLL[f]||SONDER_SOLL.B;
 }
 function sonderDefFuer(s){ const w=sonderWerte(s); return SONDER_DEF.map((d,i)=>Object.assign({},d,{soll:w[i]})); }
 function lkwWegHTML(s){
   const wege=LKW_WEGE[s.form]; if(!wege)return "";
-  const akt=(wege.find(x=>x[0]===s.lkwWeg)||wege[0])[0];
+  const akt=lkwWegVon(s);
   const zug=s.form==="CE"?`<div class="form-pick" style="margin-top:8px;"><div class="fpc-label">Zug in der Prüfung</div><div class="pills" id="dashLkwZug">${LKW_ZUEGE.map(z=>`<button class="pill ${s.lkwZug===z[0]?'sel':''}" data-zug="${z[0]}">${z[1]}</button>`).join("")}</div></div>`:"";
   return `<div class="form-pick" style="margin-top:8px;"><div class="fpc-label">Weg</div><div class="pills" id="dashLkwWeg">${wege.map(w=>`<button class="pill ${akt===w[0]?'sel':''}" data-weg="${w[0]}">${w[1]}</button>`).join("")}</div></div>${zug}`;
 }
@@ -4253,7 +4278,7 @@ function _abglWert(x) {
 }
 // Die Zeilen, die in die Fahrschul-Tabellen gehen (ohne Zeitstempel - der kommt erst beim Schreiben dazu).
 function _schuelerZeile(s) {
-  const { id, name, telefon, bogen, ...rest } = s;
+  const { id, name, telefon, bogen, _sehhilfeOffen, ...rest } = s; // _sehhilfeOffen ist nur ein Merker dieses Geräts
   try { rest.standPct = stand(s); } catch (e) {}
   return { id: s.id, fahrschule_id: _authProfile.fahrschule_id, fahrlehrer_id: _authUser.id,
     name: s.name || "(ohne Namen)", telefon: s.telefon || null, bogen_ausgefuellt: !!s.bogen, status: "aktiv", ausbildung: rest };
@@ -4864,7 +4889,9 @@ let _termineFehlversuche = 0;
 let _schuelerFristen = {};
 function _merkeFristen(rows){
   (rows||[]).forEach(r=>{ _schuelerFristen[r.id]={reakt_status:r.reakt_status,vertrag_am:r.vertrag_am,reakt_bezahlt_bis:r.reakt_bezahlt_bis,
-    theorie_abgeschlossen_am:r.theorie_abgeschlossen_am,theorie_bestanden_am:r.theorie_bestanden_am,praxis_bestanden_am:r.praxis_bestanden_am||null,antrag_am:r.antrag_am,inaktiv_seit:r.inaktiv_seit}; });
+    theorie_abgeschlossen_am:r.theorie_abgeschlossen_am,theorie_bestanden_am:r.theorie_bestanden_am,praxis_bestanden_am:r.praxis_bestanden_am||null,antrag_am:r.antrag_am,inaktiv_seit:r.inaktiv_seit,
+    ausbildungsart:r.ausbildungsart||null,bewerbernummer:r.bewerbernummer||null,theorie_frist_bis:r.theorie_frist_bis||null,sehhilfe:r.sehhilfe==null?null:!!r.sehhilfe,
+    vorbesitz:Array.isArray(r.vorbesitz)?r.vorbesitz:[],auslands_fs:Array.isArray(r.auslands_fs)?r.auslands_fs:[],wohnsitz_de_seit:r.wohnsitz_de_seit||null,uebersetzung_vorhanden:!!r.uebersetzung_vorhanden}; });
   _meldeBueroErgebnisse(rows);
 }
 /* Prüfungsergebnis vom Büro (Prüfungstafel): einmal als Hinweis melden, danach steht es in der Akte */
@@ -4938,6 +4965,13 @@ function fristenHinweisHTML(sid){
   const a=KR.antragInfo?KR.antragInfo(f):null;
   if(!f.inaktiv_seit&&a&&a.stufe==="abgelaufen") teile.push(`<b>Führerscheinantrag abgelaufen seit ${isoDE(a.ablauf)}.</b> Muss neu gestellt werden, bitte mit dem Büro klären.`);
   else if(!f.inaktiv_seit&&a&&a.stufe==="bald") teile.push(`Führerscheinantrag gilt nur noch bis ${isoDE(a.ablauf)}.`);
+  const tf=KR.theorieFristInfo?KR.theorieFristInfo(f):null;
+  if(!f.inaktiv_seit&&tf&&tf.stufe==="abgelaufen") teile.push(`<b>Theorie-Frist der Behörde abgelaufen seit ${isoDE(tf.ablauf)}.</b> Bitte mit dem Büro klären.`);
+  else if(!f.inaktiv_seit&&tf&&tf.stufe==="bald") teile.push(`Theorieprüfung muss bis ${isoDE(tf.ablauf)} bestanden sein (Frist der Behörde).`);
+  const st=DB.students.find(x=>x.id===sid);
+  const um=!f.inaktiv_seit&&KR.umschreibInfo?KR.umschreibInfo(Object.assign({},f,{ausbildungsart:f.ausbildungsart==="umschreibung"||(st&&st.umschreiber)?"umschreibung":f.ausbildungsart})):null;
+  if(um&&um.stufe==="abgelaufen") teile.push(`<b>Ausländischer Führerschein gilt seit ${isoDE(um.bis)} nicht mehr.</b> Der Schüler darf nicht mehr selbst fahren.`);
+  else if(um&&um.stufe==="bald") teile.push(`Ausländischer Führerschein gilt nur noch bis ${isoDE(um.bis)} (danach darf er nicht mehr selbst fahren).`);
   const stopp=(_bueroNotizen[sid]||[]).filter(n=>n.art==="stopp"), infos=(_bueroNotizen[sid]||[]).filter(n=>n.art!=="stopp");
   stopp.forEach(n=>teile.push(`<b>STOPP vom Büro:</b> ${esc(n.text)}`));
   infos.forEach(n=>teile.push(`<b>Büro:</b> ${esc(n.text)}`));
@@ -4946,7 +4980,7 @@ function fristenHinweisHTML(sid){
   if(f.praxis_bestanden_am) gut.push(`✓ Praxisprüfung bestanden am ${isoDE(f.praxis_bestanden_am)} (Büro)`);
   const gutHTML=gut.length?`<div style="margin:10px 0;padding:10px 14px;border-radius:14px;font-size:14px;line-height:1.45;background:rgba(76,175,114,.14);border:1px solid rgba(76,175,114,.4);">${gut.join("<br>")}</div>`:"";
   if(!teile.length)return gutHTML;
-  const rot=r.gesperrt||t.stufe==="abgelaufen"||stopp.length>0||(a&&a.stufe==="abgelaufen");
+  const rot=r.gesperrt||t.stufe==="abgelaufen"||stopp.length>0||(a&&a.stufe==="abgelaufen")||(tf&&tf.stufe==="abgelaufen")||(um&&um.stufe==="abgelaufen");
   return gutHTML+`<div role="alert" style="margin:10px 0;padding:12px 14px;border-radius:14px;font-size:14px;line-height:1.45;background:${rot?"rgba(207,90,72,.14)":"rgba(207,154,62,.16)"};border:1px solid ${rot?"rgba(207,90,72,.45)":"rgba(207,154,62,.45)"};">⚠️ ${teile.join("<br>")}</div>`;
 }
 async function pullSchuelerZuweisungen() {
@@ -4963,11 +4997,24 @@ async function pullSchuelerZuweisungen() {
     ensureAusbildungsplaene();
     const chosenPlan = DB.ausbildungsplaene.find(p=>p.standard)||DB.ausbildungsplaene[0];
     let umschreiberNeu = false;
+    // Prüfwert je Schüler VOR den Übernahmen vom Büro (Sehhilfe, Klasse …): sonst gälte eine Büro-Änderung als „selbst geändert“
+    const vorherWert = {}; for (const r of (rows||[])) { const l0 = DB.students.find(x => x.id === r.id); if (l0) vorherWert[r.id] = _abglWertVon("schueler", l0); }
+    const nachherWert = {}; // Prüfwert direkt nach den Übernahmen vom Büro (nur Schüler, die der Abruf selbst geändert hat)
     for (const r of (rows||[])) {
       // Büro hat „Umschreibung“ eingetragen: Merkmal einmalig übernehmen (Sonderfahrten entfallen)
       if (lokaleIds.has(r.id) && r.ausbildungsart === "umschreibung") {
         const lok = DB.students.find(x => x.id === r.id);
         if (lok && !lok.umschreiber) { lok.umschreiber = true; umschreiberNeu = true; }
+      }
+      // Vorbesitz aus dem Büro auch auf dem Gerät merken: der Lkw-Weg (Sonderfahrten) bleibt so auch offline gleich
+      if (lokaleIds.has(r.id)) { const lok = DB.students.find(x => x.id === r.id); const vb = Array.isArray(r.vorbesitz) ? r.vorbesitz : [];
+        if (lok && JSON.stringify(lok.vorbesitzBuero || []) !== JSON.stringify(vb)) { lok.vorbesitzBuero = vb; umschreiberNeu = true; } }
+      // Sehhilfe: eine gemeinsame Angabe für Büro und App (Spalte schueler.sehhilfe). Noch nicht übertragene
+      // Änderung auf diesem Gerät geht vor; sonst gilt der Stand vom Server.
+      if (lokaleIds.has(r.id)) {
+        const lok = DB.students.find(x => x.id === r.id);
+        if (lok && (lok._sehhilfeOffen || (r.sehhilfe == null && lok.sehhilfe))) _schuelerServerSetzen(r.id, { sehhilfe: !!lok.sehhilfe }).then(ok => { if (ok && lok._sehhilfeOffen) { delete lok._sehhilfeOffen; save(); } });
+        else if (lok && r.sehhilfe != null && !!lok.sehhilfe !== r.sehhilfe) { lok.sehhilfe = r.sehhilfe; umschreiberNeu = true; }
       }
       // Klasse pflegt das Büro (z. B. CE für den Lkw-Fahrlehrer): nur übernehmen, wenn sie sich im Büro geändert hat
       if (lokaleIds.has(r.id) && r.klasse) {
@@ -4981,12 +5028,19 @@ async function pullSchuelerZuweisungen() {
           if (lok.form !== f && (!erstes || LKW_FORMS.includes(f))) lok.form = f;
         }
       }
+      if (lokaleIds.has(r.id)) { const l1 = DB.students.find(x => x.id === r.id); if (l1) { const w = _abglWertVon("schueler", l1); if (w !== vorherWert[r.id]) nachherWert[r.id] = w; } }
+    }
+    // Erst jetzt die neuen Schüler (mit Netzabrufen): alle Übernahmen oben laufen ohne Pause, damit eine Eingabe
+    // des Fahrlehrers in der Zwischenzeit nicht als „vom Büro übernommen“ gilt.
+    for (const r of (rows||[])) {
       if (!lokaleIds.has(r.id)) {
         const a = r.ausbildung || {};
         const nst = Object.assign({
           id: r.id, created: Date.now(), notiz: "", bogen: null, plan: newPlan(), profil: null, form: "B", beginn: "",
           planId: chosenPlan.id, planSnapshot: JSON.parse(JSON.stringify(chosenPlan.stufen))
         }, a, { id: r.id, name: r.name, telefon: r.telefon || "" });
+        if (r.sehhilfe != null) nst.sehhilfe = r.sehhilfe;
+        if (Array.isArray(r.vorbesitz)) nst.vorbesitzBuero = r.vorbesitz;
         // Übergabe: dieselbe Regel wie oben – die Form des bisherigen Fahrlehrers bleibt, außer das Büro hat die Klasse
         // seitdem geändert oder es ist eine Lkw-Klasse (im Büro neu angelegte Schüler bekommen ihre Form schon beim Anlegen)
         if (r.klasse) {
@@ -5019,9 +5073,12 @@ async function pullSchuelerZuweisungen() {
       const lok = DB.students.find(x => x.id === r.id); if (!lok) continue;
       if (neuIds.has(r.id)) continue;
       const bekannt = memS.schueler[r.id];
-      if (bekannt && bekannt !== _abglWertVon("schueler", lok)) continue; // selbst geändert: eigener Stand gilt
+      if (bekannt && bekannt !== (vorherWert[r.id] !== undefined ? vorherWert[r.id] : _abglWertVon("schueler", lok))) continue; // selbst geändert: eigener Stand gilt
+      const erwartet = nachherWert[r.id] || vorherWert[r.id];
+      if (erwartet !== undefined && _abglWertVon("schueler", lok) !== erwartet) continue; // während des Abrufs selbst getippt: eigener Stand gilt (wie oben)
       const n = (r.name && !(r.name === "(ohne Namen)" && !lok.name)) ? r.name : lok.name, t = r.telefon || "";
       if (n !== lok.name || t !== (lok.telefon || "")) { lok.name = n; lok.telefon = t; memS.schueler[r.id] = _abglWertVon("schueler", lok); namenNeu = true; }
+      else if (bekannt && bekannt === vorherWert[r.id] && nachherWert[r.id]) memS.schueler[r.id] = nachherWert[r.id]; // Übernahmen vom Büro gelten nicht als eigene Änderung (spätere eigene Änderungen schon)
     }
     _abglSpeichern(memS);
     _schuelerAbgerufen = true;
@@ -5413,6 +5470,7 @@ function _fsMapSchueler(row,lehrerName){
     _paketId:row.paket_id, _hatSimulator:row.hat_simulator, _hatTheorieApp:row.hat_theorie_app,
     _bogenAusgefuellt:row.bogen_ausgefuellt, _buero_notiz:row.buero_notiz||"", _buero_todo:row.buero_todo||"",
     _erstelltAm:row.erstellt_am||null,
+    sehhilfe:row.sehhilfe!=null?row.sehhilfe:!!(row.ausbildung||{}).sehhilfe, // gemeinsame Spalte vor altem Wert im jsonb
     id:row.id, name:row.name, telefon:row.telefon
   });
 }
@@ -7085,7 +7143,7 @@ window.addEventListener("load", () => {
 const STORE_KEY="serband-app-v1";
 /* Build-Version: bei jeder Auslieferung hier das Datum aktualisieren.
    Wird in den Einstellungen angezeigt + für den Update-Hinweis genutzt. */
-const APP_VERSION="2026.10.14.3";
+const APP_VERSION="2026.10.14.4";
 try{const f=document.getElementById("drawerFoot"); if(f)f.textContent="Fahrlehrer-Kompass · Version "+APP_VERSION;}catch(e){}
 // Nutzungsbedingungen & Haftungsausschluss (Bereich: rechtliche Absicherung) - Version hochzählen
 // und alle Nutzer müssen erneut zustimmen, sobald sich der Text inhaltlich ändert.
@@ -8228,6 +8286,7 @@ function routeDetail(id){
     <div id="dashEmpfehlungen" style="margin-top:9px;">${simCard(s)}${akademieCard(s)}</div>
     ${fristenHinweisHTML(s.id)}
     ${uebernahmeCard(s)}
+    ${behoerdeCard(s)}
     <!-- Mini-Dashboard: alles Wichtige auf einen Blick (Bereich 3, Punkt 8) -->
     <div class="mini-dash">
       <div class="mini-dash-row"><span>📊 Ausbildungsstand</span><b>${pct}%</b></div>
@@ -8291,13 +8350,15 @@ function routeDetail(id){
       DB.students=DB.students.filter(x=>x.id!==id);save();toast("Schüler gelöscht");routeHome();}});
   // Sehhilfe Toggle
   $("#sehhilfeBtn").addEventListener("click",()=>{
-    s.sehhilfe=!s.sehhilfe; save();
+    s.sehhilfe=!s.sehhilfe; s._sehhilfeOffen=true; save();
+    _schuelerServerSetzen(s.id,{sehhilfe:s.sehhilfe}).then(ok=>{ if(ok){ delete s._sehhilfeOffen; save(); } });
     const b=$("#sehhilfeBtn");
     b.classList.toggle("on",s.sehhilfe);
     b.innerHTML=_li("brille")+" "+(s.sehhilfe?"Sehhilfe":"keine");
     toast(s.sehhilfe?"Sehhilfe eingetragen ✓":"Sehhilfe entfernt");
   });
   const wl=$("#wlLeiste"); if(wl)wl.addEventListener("click",routeWaitlist);
+  const bhB=$("#behoerdeBearb"); if(bhB)bhB.addEventListener("click",()=>openBehoerdeSheet(s));
   // Fährt/Klasse
   document.querySelectorAll("#dashFormPills .pill").forEach(b=>b.addEventListener("click",()=>{ s.form=b.dataset.form; save(); toast("Klasse: "+formLabel(s.form)); routeDetail(id); }));
   document.querySelectorAll("#dashLkwWeg .pill").forEach(b=>b.addEventListener("click",()=>{ s.lkwWeg=b.dataset.weg; save(); toast("Sonderfahrten: "+sonderWerte(s).join(" / ")+" (Überland / Autobahn / Nacht)"); routeDetail(id); }));
@@ -8714,6 +8775,96 @@ function ueUebernommen(s){
     .reduce((sum,t)=>sum+ueOf(t.art,t.von,t.bis,typeof t.dauer==="number"?t.dauer:undefined),0);
 }
 function pruefungenUebernommen(s){ return ((s&&s.uebernahme&&s.uebernahme.pruefungen)||[]).filter(x=>!x.b197); }
+/* Behörde, Vorbesitz, ausländischer Führerschein (🗣 Serband 14.10.2026). Die Angaben liegen in der Tabelle schueler
+   (sehen dürfen sie nur Büro, Leitung und der eigene Fahrlehrer). Der Fahrlehrer pflegt sie mit, die Theorie-Frist nur das Büro. */
+async function _schuelerServerSetzen(sid,werte){
+  try{
+    const supa=getSupa(); if(!supa||!_authUser||!navigator.onLine)return false;
+    const {data,error}=await supa.from("schueler").update(werte).eq("id",sid).select("id");
+    if(error||!data||!data.length)return false;
+    _schuelerFristen[sid]=Object.assign(_schuelerFristen[sid]||{},werte);
+    return true;
+  }catch(e){ return false; }
+}
+const VORBESITZ_KLASSEN=["AM","A1","A2","A","B","BE","C1","C1E","C","CE","D1","D1E","D","DE","L","T"];
+function istUmschreiberAkte(s){ const f=_schuelerFristen[s.id]||{}; return !!s.umschreiber||f.ausbildungsart==="umschreibung"; }
+function behoerdeCard(s){
+  const f=_schuelerFristen[s.id]; if(!f)return ""; // nur mit Verbindung zur Fahrschule
+  const zeilen=[];
+  if(f.bewerbernummer) zeilen.push(["Bewerbernummer",esc(f.bewerbernummer)]);
+  if(f.theorie_frist_bis) zeilen.push(["Theorie bis",isoDE(f.theorie_frist_bis)+(f.theorie_bestanden_am?" ✓":"")]);
+  if((f.vorbesitz||[]).length) zeilen.push(["Vorbesitz",esc(f.vorbesitz.join(", "))]);
+  if(istUmschreiberAkte(s)){
+    (f.auslands_fs||[]).forEach(x=>zeilen.push(["Führerschein "+esc(x.land||""),esc([x.klasse,x.erteilt_am?isoDE(x.erteilt_am):"",x.nummer?"Nr. "+x.nummer:"",x.behoerde].filter(Boolean).join(" · "))]));
+    if(f.wohnsitz_de_seit) zeilen.push(["Wohnsitz in DE seit",isoDE(f.wohnsitz_de_seit)]);
+    const um=window.KR&&KR.umschreibInfo?KR.umschreibInfo(Object.assign({},f,{ausbildungsart:"umschreibung"})):{stufe:"kein"};
+    if(um.bis) zeilen.push(["Darf fahren bis",isoDE(um.bis)]);
+    else if(um.stufe==="eu") zeilen.push(["Führerschein","EU/EWR, gilt weiter"]);
+    else if(um.stufe==="land_pruefen") zeilen.push(["Land","bitte Schreibweise prüfen"]);
+    zeilen.push(["Übersetzung",f.uebersetzung_vorhanden?"liegt vor":"fehlt"]);
+  }
+  if(!zeilen.length&&!istUmschreiberAkte(s)) return `<button class="res-block behoerde-card behoerde-leer" id="behoerdeBearb" type="button" style="animation:none;margin-top:9px;width:100%;text-align:left;display:flex;justify-content:space-between;align-items:center;min-height:48px;"><span>${_li("datei")} Behörde & Vorbesitz</span><span class="muted-p" style="font-size:13px;">eintragen ›</span></button>`;
+  return `<div class="res-block behoerde-card" style="animation:none;margin-top:9px;">
+    <h4>${_li("datei")} Behörde${istUmschreiberAkte(s)?" & Führerschein":""}</h4>
+    ${zeilen.length?zeilen.map(z=>`<div class="mini-dash-row"><span>${z[0]}</span><b>${z[1]}</b></div>`).join(""):`<p class="muted-p" style="font-size:13px;">Noch nichts eingetragen (Bewerbernummer, Vorbesitz, ausländischer Führerschein).</p>`}
+    <button class="btn btn-ghost" id="behoerdeBearb" style="margin-top:8px;width:100%;min-height:44px;">Angaben bearbeiten</button>
+  </div>`;
+}
+function openBehoerdeSheet(s){
+  const f=_schuelerFristen[s.id]||{}, um=istUmschreiberAkte(s);
+  const vb=new Set(f.vorbesitz||[]);
+  const afs=(f.auslands_fs&&f.auslands_fs.length?f.auslands_fs:[{}]);
+  const afsZeile=(x,i)=>`<div class="afs-app" data-i="${i}">
+      <div class="afs-zwei"><div class="field"><label>Land</label><input type="text" data-afs="land" maxlength="60" list="laenderListeApp" value="${esc(x.land||"")}"></div>
+      <div class="field"><label>Klasse</label><input type="text" data-afs="klasse" maxlength="20" value="${esc(x.klasse||"")}"></div></div>
+      <div class="afs-zwei"><div class="field"><label>Datum der Lizenz</label><input type="date" data-afs="erteilt_am" value="${esc(x.erteilt_am||"")}"></div>
+      <div class="field"><label>Führerscheinnummer</label><input type="text" data-afs="nummer" maxlength="40" autocomplete="off" value="${esc(x.nummer||"")}"></div></div>
+      <div class="field"><label>Ausstellende Behörde</label><input type="text" data-afs="behoerde" maxlength="100" value="${esc(x.behoerde||"")}"></div>
+      <button type="button" class="btn btn-ghost afs-weg" style="width:100%;min-height:44px;margin-bottom:8px;">Diesen Führerschein entfernen</button>
+    </div>`;
+  openSheet(`<div class="sheet-h">Behörde${um?" & Führerschein":""}</div>
+    <div class="field"><label>Bewerbernummer (Rücklaufnummer)</label><input type="text" id="bhNr" maxlength="40" autocomplete="off" value="${esc(f.bewerbernummer||"")}"></div>
+    <div class="field"><label>Vorbesitz (Klassen, die er schon hat)</label><div class="pills sheet-pills" id="bhVorbesitz">${VORBESITZ_KLASSEN.map(k=>`<button type="button" class="pill ${vb.has(k)?"sel":""}" data-k="${k}">${k}</button>`).join("")}</div></div>
+    <p class="muted-p" style="font-size:12.5px;margin:-2px 0 10px;">Theorie-Frist: ${f.theorie_frist_bis?isoDE(f.theorie_frist_bis):"noch nicht eingetragen"} (trägt das Büro ein).</p>
+    ${um?`<div class="sheet-sub" style="font-weight:700;margin:6px 0;">Ausländischer Führerschein</div>
+      <div id="bhAfs">${afs.map(afsZeile).join("")}</div>
+      <button type="button" class="btn btn-ghost" id="bhAfsNeu" style="width:100%;margin-bottom:10px;">+ weiteren Führerschein</button>
+      <div class="field"><label>Wohnsitz in Deutschland seit</label><input type="date" id="bhWohnsitz" value="${esc(f.wohnsitz_de_seit||"")}"></div>
+      <div class="bh-schalter"><span>Übersetzung liegt vor</span><button type="button" class="check-toggle ${f.uebersetzung_vorhanden?"on":""}" id="bhUebers" role="switch" aria-checked="${f.uebersetzung_vorhanden?"true":"false"}" aria-label="Übersetzung liegt vor"></button></div>
+      <datalist id="laenderListeApp">${(KR.EU_EWR||[]).concat(KR.DRITTSTAATEN||[]).sort((a,b)=>a.localeCompare(b,"de")).map(l=>`<option value="${esc(l)}">`).join("")}</datalist>`:""}
+    <div class="btn-row sheet-knoepfe"><button class="btn btn-ghost" id="bhAbbr" style="flex:0;padding:13px 18px;">Abbrechen</button><button class="btn btn-primary" id="bhSpeichern">Speichern</button></div>`);
+  const ue=$("#bhUebers"); if(ue)ue.addEventListener("click",()=>{ const an=!ue.classList.contains("on"); ue.classList.toggle("on",an); ue.setAttribute("aria-checked",an?"true":"false"); });
+  $("#bhAbbr").addEventListener("click",closeSheet);
+  document.querySelectorAll("#bhVorbesitz .pill").forEach(b=>b.addEventListener("click",()=>b.classList.toggle("sel")));
+  const neu=$("#bhAfsNeu"); if(neu)neu.addEventListener("click",()=>{ const l=$("#bhAfs"); if(l.children.length>=5){toast("Höchstens 5 Führerscheine");return;} l.insertAdjacentHTML("beforeend",afsZeile({},l.children.length)); });
+  const afsL=$("#bhAfs"); if(afsL)afsL.addEventListener("click",e=>{ const b=e.target.closest(".afs-weg"); if(!b)return; const z=b.closest(".afs-app");
+    if(afsL.children.length>1) z.remove(); else z.querySelectorAll("input").forEach(i=>{ i.value=""; }); });
+  $("#bhSpeichern").addEventListener("click",async()=>{
+    const werte={ bewerbernummer:$("#bhNr").value.trim()||null,
+      vorbesitz:(()=>{ const v=[...document.querySelectorAll("#bhVorbesitz .pill.sel")].map(b=>b.dataset.k); return v.length?v:null; })() };
+    if(um){
+      const liste=[...document.querySelectorAll("#bhAfs .afs-app")].map(z=>{ const o={}; z.querySelectorAll("[data-afs]").forEach(i=>{ const v=i.value.trim(); if(v)o[i.dataset.afs]=v; }); return o; }).filter(o=>Object.keys(o).length);
+      const ohneLand=[...document.querySelectorAll("#bhAfs .afs-app")].find(z=>[...z.querySelectorAll("[data-afs]")].some(i=>i.value.trim())&&!z.querySelector('[data-afs="land"]').value.trim());
+      if(ohneLand){ const fe=ohneLand.querySelector('[data-afs="land"]'); fe.scrollIntoView({block:"center"}); fe.focus(); toast("Bitte beim Führerschein das Land eintragen"); return; }
+      werte.auslands_fs=liste.length?liste:null; werte.wohnsitz_de_seit=$("#bhWohnsitz").value||null; werte.uebersetzung_vorhanden=$("#bhUebers").classList.contains("on");
+    }
+    // Nur senden, was sich gegenüber dem Stand beim Öffnen geändert hat (das Büro könnte inzwischen etwas eingetragen haben)
+    // Vergleich ohne Rücksicht auf die Reihenfolge der Schlüssel (die Datenbank sortiert jsonb um) und mit leer = fehlend
+    const nz=v=>(v==null||v===""||v===false||(Array.isArray(v)&&!v.length)?null:v);
+    const stabil=v=>JSON.stringify(nz(v),(kk,w)=>(w&&typeof w==="object"&&!Array.isArray(w))?Object.keys(w).sort().reduce((o,q)=>{ if(w[q]!=null&&w[q]!=="")o[q]=w[q]; return o; },{}):w);
+    const vorher={bewerbernummer:f.bewerbernummer,vorbesitz:f.vorbesitz,auslands_fs:f.auslands_fs,wohnsitz_de_seit:f.wohnsitz_de_seit,uebersetzung_vorhanden:f.uebersetzung_vorhanden};
+    Object.keys(werte).forEach(k=>{ if(stabil(werte[k])===stabil(vorher[k])) delete werte[k]; });
+    if(!Object.keys(werte).length){ closeSheet(); toast("Nichts geändert"); return; }
+    const b=$("#bhSpeichern"); b.disabled=true; b.textContent="Speichert …";
+    const ok=await _schuelerServerSetzen(s.id,werte);
+    b.disabled=false; b.textContent="Speichern";
+    if(!ok){ toast(navigator.onLine?"Nicht gespeichert – bitte später nochmal":"Keine Verbindung – bitte online speichern"); return; }
+    // Nur zurück in die Akte, wenn das Blatt noch offen ist (sonst hat der Fahrlehrer inzwischen woanders hin getippt)
+    const nochOffen=b.isConnected&&$("#sheet").classList.contains("open");
+    toast("Gespeichert ✓ – das Büro sieht es sofort");
+    if(nochOffen){ closeSheet(); const y=view.scrollTop; routeDetail(s.id); view.scrollTop=y; }
+  });
+}
 function uebernahmeCard(s){
   const u=s.uebernahme; if(!u)return "";
   const f=(u.fahrstunden||[]).filter(t=>t.datum&&t.bis&&isAbsolved(t.datum,t.bis)&&!["abgebrochen","nicht erschienen"].includes(t.status));

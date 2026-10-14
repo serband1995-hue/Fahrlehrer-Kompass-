@@ -11,6 +11,7 @@
   --gelb:#b9862f; --gelb-soft:rgba(207,154,62,.16);
   --gruen:#3f9a62; --gruen-soft:rgba(76,175,114,.14);
   --blau:#2F7DD1; --blau-soft:rgba(47,125,209,.12);
+  --pill-gelb:#7a5410; --pill-gruen:#24693f; --pill-rot:#a03a2b; /* Pill-Text hell: Kontrast ≥ 4,5:1 */
   --schatten:0 1px 2px rgba(60,50,20,.06),0 6px 18px rgba(60,50,20,.07);
   --r:16px; --r-klein:10px;
   --seite:272px;
@@ -29,6 +30,7 @@
     --gelb:#d9a64a; --gelb-soft:rgba(207,154,62,.2);
     --gruen:#5cc283; --gruen-soft:rgba(76,175,114,.18);
     --blau:#5fa0e6; --blau-soft:rgba(47,125,209,.2);
+    --pill-gelb:var(--gelb); --pill-gruen:var(--gruen); --pill-rot:var(--rot);
     --schatten:0 1px 2px rgba(0,0,0,.3),0 6px 18px rgba(0,0,0,.3);
     --diagramm:#45a96c;
     color-scheme:dark;
@@ -134,9 +136,10 @@ nav{display:grid;gap:2px;}
 
 /* Marken */
 .marke-pill{display:inline-flex;align-items:center;gap:6px;padding:3px 10px;border-radius:999px;font-size:14px;font-weight:600;background:var(--surface-2);color:var(--muted);white-space:nowrap;}
-.marke-pill.rot{background:var(--rot-soft);color:var(--rot);}
-.marke-pill.gelb{background:var(--gelb-soft);color:var(--gelb);}
-.marke-pill.gruen{background:var(--gruen-soft);color:var(--gruen);}
+.marke-pill.rot{background:var(--rot-soft);color:var(--pill-rot);}
+.marke-pill.gelb{background:var(--gelb-soft);color:var(--pill-gelb);}
+.marke-pill.gruen{background:var(--gruen-soft);color:var(--pill-gruen);}
+.tabelle .marke-pill{white-space:normal;}
 .marke-pill.blau{background:var(--blau-soft);color:var(--blau);}
 
 /* Aufgaben, Reiter, Suche */
@@ -439,6 +442,7 @@ details summary{cursor:pointer;font-weight:700;margin:6px 0;}
   --gelb:#b9862f; --gelb-soft:rgba(207,154,62,.16);
   --gruen:#3f9a62; --gruen-soft:rgba(76,175,114,.14);
   --blau:#2F7DD1; --blau-soft:rgba(47,125,209,.12);
+  --pill-gelb:#7a5410; --pill-gruen:#24693f; --pill-rot:#a03a2b; /* Pill-Text hell: Kontrast ≥ 4,5:1 */
   --schatten:0 1px 2px rgba(60,50,20,.06),0 6px 18px rgba(60,50,20,.07);
   --r:16px; --r-klein:10px;
   --seite:272px;
@@ -531,3 +535,15 @@ a.kachel:hover,a.kachel:focus-visible{border-color:var(--akzent);}
 .abstand-oben{margin-top:22px;margin-bottom:6px;}
 .klassen-wahl{display:flex;flex-wrap:wrap;gap:6px 18px;border:1px solid var(--line-soft);border-radius:var(--r-klein);padding:10px 14px;}
 .klassen-wahl legend{padding:0 6px;color:var(--muted);font-size:15px;}
+/* Behörde, Vorbesitz, Umschreiber (14.10.2026) */
+.formular fieldset.raster-feld{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px 20px;}
+.feld-titel{font-weight:600;margin-bottom:6px;}
+.vorbesitz-wahl{display:flex;flex-wrap:wrap;gap:4px 16px;}
+.formular .vorbesitz-wahl .wahl{min-height:34px;}
+.afs-zeile{display:grid;grid-template-columns:repeat(auto-fit,minmax(190px,1fr));gap:10px 14px;align-items:end;padding:10px 0;border-bottom:1px dashed var(--line-soft);}
+.afs-zeile:last-child{border-bottom:none;}
+.afs-zeile .afs-weg{justify-self:start;}
+#afsHinweis.warnung{color:var(--pill-gelb);font-weight:700;}
+#afsHinweis.warnung.rot{color:var(--pill-rot);}
+
+.afs-zeile label{overflow-wrap:anywhere;}

@@ -1162,6 +1162,67 @@ for (const [breite, hoehe] of [[1920, 1080], [1366, 768], [1024, 768]]) {
   await ctx.close();
 }
 
+// Schritt 1+2 (14.10.2026): Behörde (Bewerbernummer, Theorie-Frist, Sehhilfe, Vorbesitz) und Umschreiber (ausländischer Führerschein)
+{
+  const { page, ctx, konsole } = await oeffne({ nutzer: "bu-1", hash: "#schueler", breite: 1366, hoehe: 900 });
+  const sx = (id) => page.evaluate((i) => window.__FAKE.tabellen.schueler.find((x) => x.id === i), id);
+  await page.evaluate(() => schuelerDialog("s7")); await page.waitForTimeout(200);
+  await page.fill("dialog[open] input[name=bewerbernummer]", "RL 4711-08");
+  await page.selectOption("dialog[open] select[name=sehhilfe]", "ja");
+  await page.check('dialog[open] input[name=vorbesitz][value="B"]');
+  const frist = await page.evaluate(() => KR.addDaysISO(KR.todayISO(), 20));
+  await page.fill("dialog[open] input[name=theorie_frist_bis]", frist);
+  if (!(await page.isHidden("dialog[open] #umschreiberFeld"))) fehler("Umschreiber-Feld ist sichtbar, obwohl keine Umschreibung");
+  await page.selectOption("dialog[open] select[name=ausbildungsart]", "umschreibung"); await page.waitForTimeout(100);
+  if (await page.isHidden("dialog[open] #umschreiberFeld")) fehler("Umschreiber-Feld erscheint nicht bei Umschreibung");
+  await page.fill('dialog[open] .afs-zeile [data-afs="land"]', "Syrien");
+  await page.fill('dialog[open] .afs-zeile [data-afs="klasse"]', "B");
+  await page.fill('dialog[open] .afs-zeile [data-afs="nummer"]', "SY-123456");
+  const wohnsitz = await page.evaluate(() => KR.addDaysISO(KR.todayISO(), -170));
+  await page.fill("dialog[open] input[name=wohnsitz_de_seit]", wohnsitz); await page.waitForTimeout(100);
+  const hinweis = await page.textContent("#afsHinweis");
+  if (!/nur noch bis/.test(hinweis)) fehler("Umschreiber: Hinweis zur 6-Monats-Frist fehlt: " + hinweis);
+  await page.click("#afsNeu"); await page.fill('dialog[open] .afs-zeile >> nth=1 >> [data-afs="land"]', "Türkei");
+  await pruefeLayout(page, "Schüler mit Behörde und Umschreiber");
+  if (FOTOS) await page.screenshot({ path: join(FOTOS, "schueler-behoerde.png"), fullPage: true });
+  await page.click("dialog[open] button[value=ok]"); await page.waitForTimeout(400);
+  const s7 = await sx("s7");
+  if (s7.bewerbernummer !== "RL 4711-08" || s7.sehhilfe !== true || JSON.stringify(s7.vorbesitz) !== '["B"]' || s7.theorie_frist_bis !== frist) fehler("Behörde: nicht gespeichert " + JSON.stringify({ b: s7.bewerbernummer, s: s7.sehhilfe, v: s7.vorbesitz, f: s7.theorie_frist_bis }));
+  if (!Array.isArray(s7.auslands_fs) || s7.auslands_fs.length !== 2 || s7.auslands_fs[0].nummer !== "SY-123456" || s7.wohnsitz_de_seit !== wohnsitz) fehler("Umschreiber: nicht gespeichert " + JSON.stringify(s7.auslands_fs));
+  // Fristen: Umschreiber-Ansicht und Theorie-Frist
+  await page.goto(page.url().split("#")[0] + "#fristen?ansicht=umschreiber"); await page.waitForTimeout(300);
+  const um = await page.textContent("#ansicht");
+  if (!/Syrien/.test(um) || !/darf bald nicht mehr fahren/.test(um)) fehler("Fristen: Umschreiber-Ansicht zeigt die Frist nicht");
+  await pruefeLayout(page, "Fristen Umschreiber");
+  await page.goto(page.url().split("#")[0] + "#fristen?ansicht=antrag"); await page.waitForTimeout(300);
+  if (!/Behörden-Frist Theorie bald/.test(await page.textContent("#ansicht"))) fehler("Fristen: Theorie-Frist fehlt in „Antrag & Behörden-Frist“");
+  await page.goto(page.url().split("#")[0] + "#heute"); await page.waitForTimeout(300);
+  if (await page.$("dialog[open] button[value=ok]")) { await page.click("dialog[open] button[value=ok]"); await page.waitForTimeout(200); }
+  const heuteTxt = await page.textContent("#ansicht");
+  if (!/Theorie-Frist/.test(heuteTxt) || !/Umschreiber/.test(heuteTxt)) fehler("Heute: Warnung Theorie-Frist/Umschreiber fehlt");
+  // Suche nach Bewerbernummer
+  await page.goto(page.url().split("#")[0] + "#schueler"); await page.waitForTimeout(300);
+  await page.fill("#sSuche", "4711"); await page.waitForTimeout(500);
+  if (!(await page.textContent("#ansicht")).includes((await sx("s7")).name)) fehler("Suche nach Bewerbernummer findet den Schüler nicht");
+  // Richter R1: „noch nicht bekannt“ → „nein“ wird gespeichert (nein ist nicht dasselbe wie unbekannt)
+  await page.evaluate(() => { for (const x of [window.__FAKE.tabellen.schueler.find((y) => y.id === "s7"), S.schueler.find((y) => y.id === "s7")]) x.sehhilfe = null; });
+  await page.evaluate(() => schuelerDialog("s7")); await page.waitForTimeout(200);
+  await page.selectOption("dialog[open] select[name=sehhilfe]", "nein");
+  await page.click("dialog[open] button[value=ok]"); await page.waitForTimeout(400);
+  if ((await sx("s7")).sehhilfe !== false) fehler("Sehhilfe: „nein“ nach „noch nicht bekannt“ nicht gespeichert: " + (await sx("s7")).sehhilfe);
+  // Richter R2: Die Datenbank liefert jsonb-Schlüssel in eigener Reihenfolge. Ein Führerschein, den die App inzwischen
+  // ergänzt hat, darf beim Speichern einer anderen Angabe (Telefon) nicht verloren gehen.
+  await page.evaluate(() => { const afs = () => [{ land: "Syrien", klasse: "B", nummer: "SY-1", behoerde: "Damaskus", erteilt_am: "2020-01-01" }];
+    for (const x of [window.__FAKE.tabellen.schueler.find((y) => y.id === "s7"), S.schueler.find((y) => y.id === "s7")]) x.auslands_fs = afs(); });
+  await page.evaluate(() => schuelerDialog("s7")); await page.waitForTimeout(200);
+  await page.evaluate(() => window.__FAKE.tabellen.schueler.find((y) => y.id === "s7").auslands_fs.push({ land: "Türkei", klasse: "B" }));
+  await page.fill("dialog[open] input[name=telefon]", "0170 5550001");
+  await page.click("dialog[open] button[value=ok]"); await page.waitForTimeout(400);
+  if (((await sx("s7")).auslands_fs || []).length !== 2) fehler("Umschreiber: Führerschein aus der App ging beim Speichern verloren " + JSON.stringify((await sx("s7")).auslands_fs));
+  if (konsole.length) fehler("Behörde: Konsole: " + konsole.join(" | "));
+  await ctx.close();
+}
+
 // Endprüfung 14.10.: Korrektur einer bestandenen Praxisprüfung über „Bearbeiten“ räumt die Akte auf (auch Status + Datum zugleich)
 {
   const { page, ctx, konsole } = await oeffne({ nutzer: "bu-1", hash: "#pruefungen?ansicht=alle", wer: "Jelena", vorbereiten: function () {
