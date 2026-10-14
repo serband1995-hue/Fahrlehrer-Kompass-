@@ -531,3 +531,14 @@ a.kachel:hover,a.kachel:focus-visible{border-color:var(--akzent);}
 .abstand-oben{margin-top:22px;margin-bottom:6px;}
 .klassen-wahl{display:flex;flex-wrap:wrap;gap:6px 18px;border:1px solid var(--line-soft);border-radius:var(--r-klein);padding:10px 14px;}
 .klassen-wahl legend{padding:0 6px;color:var(--muted);font-size:15px;}
+/* Behörde, Vorbesitz, Umschreiber (14.10.2026) */
+.formular fieldset.raster-feld{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px 20px;}
+.feld-titel{font-weight:600;margin-bottom:6px;}
+.vorbesitz-wahl{display:flex;flex-wrap:wrap;gap:4px 16px;}
+.formular .vorbesitz-wahl .wahl{min-height:34px;}
+.afs-zeile{display:grid;grid-template-columns:repeat(auto-fit,minmax(190px,1fr));gap:10px 14px;align-items:end;padding:10px 0;border-bottom:1px dashed var(--line-soft);}
+.afs-zeile:last-child{border-bottom:none;}
+.afs-zeile .afs-weg{justify-self:start;}
+#afsHinweis.warnung{color:var(--rot);font-weight:700;}
+
+.afs-zeile label{overflow-wrap:anywhere;}
