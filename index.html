@@ -4987,7 +4987,13 @@ async function pullSchuelerZuweisungen() {
           id: r.id, created: Date.now(), notiz: "", bogen: null, plan: newPlan(), profil: null, form: "B", beginn: "",
           planId: chosenPlan.id, planSnapshot: JSON.parse(JSON.stringify(chosenPlan.stufen))
         }, a, { id: r.id, name: r.name, telefon: r.telefon || "" });
-        if (r.klasse) { if (r.klasse !== "BKF") nst.form = formAusKlasse(r.klasse); nst.klasseBuero = r.klasse; }
+        // Übergabe: dieselbe Regel wie oben – die Form des bisherigen Fahrlehrers bleibt, außer das Büro hat die Klasse
+        // seitdem geändert oder es ist eine Lkw-Klasse (im Büro neu angelegte Schüler bekommen ihre Form schon beim Anlegen)
+        if (r.klasse) {
+          const f = r.klasse === "BKF" ? nst.form : formAusKlasse(r.klasse);
+          if (nst.form !== f && (a.klasseBuero ? a.klasseBuero !== r.klasse : LKW_FORMS.includes(f))) nst.form = f;
+          nst.klasseBuero = r.klasse;
+        }
         // Übergabe: Fragebogen und die Fahrstunden/Prüfungen bei bisherigen Fahrlehrern mitnehmen.
         try {
           const { data: priv } = await supa.from("schueler_privat").select("bogen").eq("schueler_id", r.id).maybeSingle();
