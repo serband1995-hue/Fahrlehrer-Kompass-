@@ -5075,7 +5075,7 @@ async function pullSchuelerZuweisungen() {
       const bekannt = memS.schueler[r.id];
       if (bekannt && bekannt !== (vorherWert[r.id] !== undefined ? vorherWert[r.id] : _abglWertVon("schueler", lok))) continue; // selbst geändert: eigener Stand gilt
       const erwartet = nachherWert[r.id] || vorherWert[r.id];
-      if (erwartet !== undefined && _abglWertVon("schueler", lok) !== erwartet) continue; // während des Abrufs selbst getippt: Namen erst nächste Runde
+      if (erwartet !== undefined && _abglWertVon("schueler", lok) !== erwartet) continue; // während des Abrufs selbst getippt: eigener Stand gilt (wie oben)
       const n = (r.name && !(r.name === "(ohne Namen)" && !lok.name)) ? r.name : lok.name, t = r.telefon || "";
       if (n !== lok.name || t !== (lok.telefon || "")) { lok.name = n; lok.telefon = t; memS.schueler[r.id] = _abglWertVon("schueler", lok); namenNeu = true; }
       else if (bekannt && bekannt === vorherWert[r.id] && nachherWert[r.id]) memS.schueler[r.id] = nachherWert[r.id]; // Übernahmen vom Büro gelten nicht als eigene Änderung (spätere eigene Änderungen schon)
