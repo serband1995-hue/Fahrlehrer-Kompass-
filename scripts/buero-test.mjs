@@ -1136,6 +1136,58 @@ for (const [breite, hoehe] of [[1920, 1080], [1366, 768], [1024, 768]]) {
   await ctx.close();
 }
 
+// 4o) Gabriel und Lkw-Klassen (13.10.2026): Fahrlehrer ohne App, Klassen je Fahrlehrer, Lkw-Fahrzeuge
+{
+  const { page, ctx, konsole } = await oeffne({ nutzer: "bu-1", hash: "#team", breite: 1366, hoehe: 900, wer: "Jelena", vorbereiten: function () {
+    F.functions = F.functions || {};
+    F.functions["admin-create-account"] = (b) => {
+      F.letzteAnlage = b;
+      if (b.ohne_app) { F.tabellen.profiles.push({ id: "fl-g", name: b.name, email: "ohne-app@ohne-app.invalid", rolle: "fahrlehrer", fahrschule_id: "fs-test-1", aktiv: true, ohne_app: true, klassen: b.klassen }); return { ohne_app: true, id: "fl-g" }; }
+      return { email: b.email, passwort: "Test-1234" };
+    };
+  } });
+  if (!(await page.isVisible("#tNeuFl"))) fehler("Gabriel: Jelena (Verwalten-Recht) kann keinen Fahrlehrer anlegen");
+  await page.click("#tNeuFl");
+  await page.fill("dialog input[name=name]", "Gabriel");
+  await page.check("dialog input[name=ohneapp]");
+  if (await page.isVisible("dialog input[name=email]")) fehler("Gabriel: E-Mail-Feld bleibt bei „ohne App“ sichtbar");
+  for (const k of ["B"]) await page.uncheck(`dialog input[name=kl][value="${k}"]`);
+  for (const k of ["C1", "C1E", "C", "CE"]) await page.check(`dialog input[name=kl][value="${k}"]`);
+  await pruefeLayout(page, "Fahrlehrer ohne App anlegen");
+  await page.click("dialog button[value=ok]"); await page.waitForTimeout(500);
+  const an = await page.evaluate(() => window.__FAKE.letzteAnlage);
+  if (!an || an.ohne_app !== true || an.email || an.klassen.join() !== "C1,C1E,C,CE" || !an.buero_sitzung) fehler("Gabriel: Anlage falsch " + JSON.stringify(an));
+  if (await page.isVisible("dialog[open]")) fehler("Gabriel: es erscheint ein Passwort-Fenster");
+  const t = await page.textContent("#ansicht");
+  if (!/Gabriel/.test(t) || !/ohne App/.test(t)) fehler("Gabriel: steht nicht in der Liste");
+  // Klassen eines Fahrlehrers ändern
+  await page.click('[data-klassen="fl-2"]'); await page.check('dialog input[name=kl][value="BE"]');
+  await page.click("dialog button[value=ok]"); await page.waitForTimeout(300);
+  if (!(await page.evaluate(() => (window.__FAKE.tabellen.profiles.find((p) => p.id === "fl-2").klassen || []).includes("BE")))) fehler("Klassen: nicht gespeichert");
+  if (FOTOS) await page.screenshot({ path: join(FOTOS, "team-klassen.png"), fullPage: true });
+  // Schüler mit Klasse CE: Fahrlehrer ohne CE stehen mit Hinweis unten, Form in der App bleibt CE
+  await page.goto(page.url().split("#")[0] + "#schueler"); await page.waitForTimeout(300);
+  await page.click("#sNeu");
+  await page.fill("dialog input[name=name]", "Test Lkw");
+  await page.selectOption("dialog select[name=klasse]", "CE");
+  const opts = await page.$$eval("dialog select[name=fahrlehrer_id] option", (o) => o.map((x) => x.textContent));
+  if (!opts.some((o) => /Anton.*\(nicht CE\)/.test(o)) || /nicht CE/.test(opts[1] || "")) fehler("Klassen: Auswahl der Fahrlehrer nicht nach Klasse " + JSON.stringify(opts));
+  await page.click("dialog button[value=ok]"); await page.waitForTimeout(300);
+  const neu = await page.evaluate(() => window.__FAKE.tabellen.schueler.find((x) => x.name === "Test Lkw"));
+  if (!neu || neu.klasse !== "CE" || neu.ausbildung.form !== "CE") fehler("Klassen: CE wird in der App zu " + (neu && neu.ausbildung.form));
+  // Lkw als Fahrzeug
+  await page.goto(page.url().split("#")[0] + "#flotte"); await page.waitForTimeout(300);
+  await page.click("#fzNeu"); await page.fill("dialog input[name=name]", "Actros");
+  await page.selectOption("dialog select[name=typ]", "lkw");
+  if ((await page.inputValue("dialog select[name=klasse]")) !== "C") fehler("Fahrzeuge: Lkw schlägt nicht Klasse C vor");
+  await page.click("dialog button[value=ok]"); await page.waitForTimeout(300);
+  const fz = await page.evaluate(() => window.__FAKE.tabellen.fahrschule_fahrzeuge.find((f) => f.name === "Actros"));
+  if (!fz || fz.typ !== "lkw" || fz.klasse !== "C") fehler("Fahrzeuge: Lkw falsch gespeichert " + JSON.stringify(fz));
+  await pruefeLayout(page, "Fahrzeuge mit Lkw");
+  if (konsole.length) fehler("Gabriel/Klassen: Konsole: " + konsole.join(" | "));
+  await ctx.close();
+}
+
 // Leitung und Super-Admin haben eigene Konten: keine PIN-Abfrage
 for (const nutzer of ["ad-1", "sa-1"]) {
   const { page, ctx } = await oeffne({ nutzer, wer: null });

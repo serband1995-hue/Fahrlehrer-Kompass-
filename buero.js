@@ -742,10 +742,25 @@ function schuelerOptionen(gewaehlt) {
   return S.schueler.filter((x) => istAktiv(x) || x.id === gewaehlt).sort((a, b) => String(a.name).localeCompare(String(b.name), "de"))
     .map((s) => `<option value="${esc(s.id)}"${s.id === gewaehlt ? " selected" : ""}>${esc(s.name)}${s.fahrlehrer_id ? " · " + esc(lehrerName(s.fahrlehrer_id)) : ""}</option>`).join("");
 }
-function lehrerOptionen(gewaehlt, mitAuslastung) {
+// Form in der Fahrlehrer-App aus der Klasse (Lkw-Klassen bleiben, was sie sind; B78 heißt in der App „Automatik“)
+function formAusKlasse(k) {
+  if (k === "B78") return "Automatik";
+  return ["B197", "BE", "C1", "C1E", "C", "CE"].includes(k) ? k : "B";
+}
+// Unterrichtet der Fahrlehrer diese Klasse? Ohne eingetragene Klassen: unbekannt (null).
+// „B“ deckt B78 und B197 ab, „BE“ auch B + BE, „CE“ auch C, „C1E“ auch C1.
+function lehrtKlasse(l, k) {
+  const ks = (l && l.klassen) || [];
+  if (!ks.length || !k) return null;
+  const deckt = { B: ["B", "B78", "B197"], BE: ["BE", "B+BE"], C1: ["C1"], C1E: ["C1E", "C1"], C: ["C"], CE: ["CE", "C"], BKF: ["BKF"] };
+  return ks.some((x) => (deckt[x] || [x]).includes(k));
+}
+function lehrerOptionen(gewaehlt, mitAuslastung, klasse) {
   let l2 = S.lehrer.filter((l) => l.aktiv !== false || l.id === gewaehlt);
   if (mitAuslastung) { const rang = auslastungListe().map((x) => x.l.id); l2 = l2.slice().sort((a, b) => (rang.indexOf(a.id) + 1 || 999) - (rang.indexOf(b.id) + 1 || 999)); }
-  return `<option value="">– kein Fahrlehrer –</option>` + l2.map((l) => `<option value="${esc(l.id)}"${l.id === gewaehlt ? " selected" : ""}>${esc(l.name || l.email)}${mitAuslastung ? esc(auslastungKurz(l.id)) : ""}</option>`).join("");
+  // Wer die Klasse unterrichtet, steht oben; wer sie sicher nicht unterrichtet, unten mit Hinweis
+  if (klasse) l2 = l2.slice().sort((a, b) => (lehrtKlasse(a, klasse) === false) - (lehrtKlasse(b, klasse) === false));
+  return `<option value="">– kein Fahrlehrer –</option>` + l2.map((l) => `<option value="${esc(l.id)}"${l.id === gewaehlt ? " selected" : ""}>${esc(l.name || l.email)}${mitAuslastung ? esc(auslastungKurz(l.id)) : ""}${klasse && lehrtKlasse(l, klasse) === false ? ` (nicht ${esc(klasse)})` : ""}</option>`).join("");
 }
 function pruefungDialog(id) {
   const p = id ? S.pruefungstermine.find((x) => x.id === id) : { art: "praxis", datum: KR.addDaysISO(KR.todayISO(), 7), status: "geplant" };
@@ -756,7 +771,7 @@ function pruefungDialog(id) {
       <label>Klasse<select name="klasse">${klassenOptionen(p.klasse)}</select></label>
       <label>Datum<input type="date" name="datum" required value="${esc(p.datum || "")}"></label>
       <label>Uhrzeit<input type="time" name="von" value="${esc(p.von || "")}"></label>
-      <label>Fahrlehrer<select name="fahrlehrer_id">${lehrerOptionen(p.fahrlehrer_id)}</select></label>
+      <label>Fahrlehrer<select name="fahrlehrer_id">${lehrerOptionen(p.fahrlehrer_id, false, p.klasse)}</select></label>
       <label>Prüfer (nur Initialen)<input type="text" name="pruefer" maxlength="10" value="${esc(p.pruefer || "")}"></label>
       <fieldset class="voll"><legend>Haken</legend>${HAKEN.map(([k, , t]) => `<label class="wahl"><input type="checkbox" name="${k}"${p[k] ? " checked" : ""}> ${t}</label>`).join("")}</fieldset>
       <label class="voll">Notiz<input type="text" name="notiz" maxlength="200" value="${esc(p.notiz || "")}"></label>
@@ -1319,7 +1334,7 @@ function schuelerDialog(id) {
       <label class="voll">Name<input type="text" name="name" required maxlength="100" value="${esc(x.name || "")}"></label>
       <label>Telefon (Login für die Fahr-Akademie)<input type="tel" name="telefon" maxlength="40" value="${esc(x.telefon || "")}"></label>
       <label>E-Mail<input type="email" name="email" maxlength="200" value="${esc(x.email || "")}"></label>
-      <label>Fahrlehrer (der mit dem meisten Platz steht oben)<select name="fahrlehrer_id">${lehrerOptionen(x.fahrlehrer_id, true)}</select></label>
+      <label>Fahrlehrer (passende Klasse und viel Platz zuerst)<select name="fahrlehrer_id">${lehrerOptionen(x.fahrlehrer_id, true, x.klasse || "B")}</select></label>
       <label>Paket<select name="paket_id"><option value="">– ohne Paket –</option>${S.pakete.map((p) => `<option value="${esc(p.id)}"${p.id === x.paket_id ? " selected" : ""}>${esc(p.name)}</option>`).join("")}</select></label>
       <label>Ausbildungsart<select name="ausbildungsart">${artOptionen(x.ausbildungsart)}</select></label>
       <label>Klasse<select name="klasse">${klassenOptionen(x.klasse)}</select></label>
@@ -1357,7 +1372,7 @@ function schuelerDialog(id) {
     if (!id) {
       const neueId = neueSchuelerId();
       const zeile = Object.assign({ id: neueId, fahrschule_id: S.fsId, fahrlehrer_id: neuerLehrer, status: "aktiv", erstellt_von: S.user.id,
-        ausbildung: { form: werte.klasse === "B78" ? "Automatik" : (["B197", "BE"].includes(werte.klasse) ? werte.klasse : "B"), umschreiber: werte.ausbildungsart === "umschreibung" } }, werte);
+        ausbildung: { form: formAusKlasse(werte.klasse), umschreiber: werte.ausbildungsart === "umschreibung" } }, werte);
       const res = await supa.from("schueler").insert(zeile).select("*");
       if (res.error || !res.data || !res.data.length) { toast("Nicht angelegt: " + (res.error ? res.error.message : "keine Berechtigung"), true); return false; }
       S.schueler.push(res.data[0]);
@@ -1376,7 +1391,11 @@ function schuelerDialog(id) {
   if (id) bindeNotizBlock(dlg, id, x.fahrlehrer_id);
   if (id) bindeAufgabenBlock(dlg, id);
   const klasseSel = dlg.querySelector("select[name=klasse]"), testBox = dlg.querySelector("input[name=testfahrt]"), testDat = dlg.querySelector("input[name=testfahrt_am]");
-  klasseSel.addEventListener("change", () => { dlg.querySelector("#b197Feld").hidden = klasseSel.value !== "B197"; });
+  klasseSel.addEventListener("change", () => {
+    dlg.querySelector("#b197Feld").hidden = klasseSel.value !== "B197";
+    const fl = dlg.querySelector("select[name=fahrlehrer_id]"), wahl = fl.value;
+    fl.innerHTML = lehrerOptionen(wahl, true, klasseSel.value);
+  });
   testBox.addEventListener("change", () => { if (testBox.checked && !testDat.value) testDat.value = KR.todayISO(); if (!testBox.checked) testDat.value = ""; });
   const aktivBox = dlg.querySelector("input[name=aktiv]");
   if (aktivBox) aktivBox.addEventListener("change", () => { dlg.querySelector("#aktivText").textContent = aktivBox.checked ? "Aktiv" : "Im Archiv"; });
@@ -2428,7 +2447,8 @@ function bindeZahlen(ziel) {
 async function adminFunktion(body) {
   const { data: sd } = await supa.auth.getSession();
   const token = sd && sd.session ? sd.session.access_token : null;
-  const { data, error } = await supa.functions.invoke("admin-create-account", { body: Object.assign({}, body, { requester_token: token }) });
+  // Büro-Person mit Verwalten-Recht (Jelena, Murat): die PIN-Sitzung geht mit, die Funktion prüft sie
+  const { data, error } = await supa.functions.invoke("admin-create-account", { body: Object.assign({}, body, { requester_token: token, buero_sitzung: S.sitzung ? S.sitzung.token : undefined }) });
   if (error) throw error;
   if (data && data.error) throw new Error(data.error);
   return data;
@@ -2454,15 +2474,15 @@ function renderTeam() {
   for (const x of aktiveSchueler()) if (x.fahrlehrer_id) schuelerZahl[x.fahrlehrer_id] = (schuelerZahl[x.fahrlehrer_id] || 0) + 1;
   const admin = istAdmin();
   const zeile = (p, mitZahlen) => `<tr>
-      <td><b>${esc(p.name || "–")}</b><div class="unter">${esc(p.email || "")}</div></td>
-      <td>${esc(ROLLEN[p.rolle] || (p.rolle === "fahrlehrer" ? "Fahrlehrer" : p.rolle))}</td>
+      <td><b>${esc(p.name || "–")}</b><div class="unter">${p.ohne_app ? "ohne App · das Büro trägt alles ein" : esc(p.email || "")}</div></td>
+      <td>${esc(ROLLEN[p.rolle] || (p.rolle === "fahrlehrer" ? "Fahrlehrer" : p.rolle))}${mitZahlen ? `<div class="unter">${(p.klassen || []).length ? (p.klassen || []).map((k) => `<span class="marke-pill">${esc(k)}</span>`).join(" ") : "Klassen nicht eingetragen"}</div>` : ""}</td>
       ${mitZahlen ? `<td class="zahlspalte">${schuelerZahl[p.id] || 0}</td><td class="zahlspalte">${zahlDE(ue[p.id] || 0)}</td>` : ""}
-      <td>${p.aktiv === false ? '<span class="marke-pill rot">gesperrt</span>' : '<span class="marke-pill gruen">aktiv</span>'}</td>
-      <td class="aktionen"><div class="aktionen-box">${admin && p.rolle !== "super_admin" && p.id !== S.user.id ? `<button class="knopf klein" data-pwreset="${esc(p.id)}" type="button">Neues Passwort</button>
+      <td>${p.aktiv === false ? '<span class="marke-pill rot">gesperrt</span>' : p.ohne_app ? '<span class="marke-pill">ohne App</span>' : '<span class="marke-pill gruen">aktiv</span>'}</td>
+      <td class="aktionen"><div class="aktionen-box">${mitZahlen ? `<button class="knopf klein" data-klassen="${esc(p.id)}" type="button">Klassen</button>` : ""}${admin && p.rolle !== "super_admin" && p.id !== S.user.id ? `${p.ohne_app ? "" : `<button class="knopf klein" data-pwreset="${esc(p.id)}" type="button">Neues Passwort</button>`}
         <button class="knopf klein" data-sperren="${esc(p.id)}" type="button">${p.aktiv === false ? "Freischalten" : "Sperren"}</button>` : ""}</div></td></tr>`;
   const lehrer = S.lehrer;
   const buero = S.team.filter((p) => p.rolle === "buero" || p.rolle === "fahrschule_admin");
-  return `<div class="karte"><div class="karte-kopf"><h2>Fahrlehrer (${lehrer.length})</h2>${admin ? '<button class="knopf haupt" id="tNeuFl" type="button">+ Fahrlehrer anlegen</button>' : ""}</div>
+  return `<div class="karte"><div class="karte-kopf"><h2>Fahrlehrer (${lehrer.length})</h2>${admin || darfPersonenVerwalten() ? '<button class="knopf haupt" id="tNeuFl" type="button">+ Fahrlehrer anlegen</button>' : ""}</div>
       <table class="tabelle"><thead><tr><th>Name</th><th>Rolle</th><th class="zahlspalte">Schüler</th><th class="zahlspalte">UE im Monat</th><th>Zugang</th><th></th></tr></thead><tbody>${lehrer.map((p) => zeile(p, true)).join("")}</tbody></table></div>
     <div class="karte"><div class="karte-kopf"><h2>Büro und Leitung</h2>${admin ? `<button class="knopf" id="tNeuBu" type="button">+ ${S.profil.rolle === "super_admin" ? "Büro- oder Leitungs-Zugang" : "Büro-Zugang"} anlegen</button>` : ""}</div>
       ${buero.length ? `<table class="tabelle"><thead><tr><th>Name</th><th>Rolle</th><th>Zugang</th><th></th></tr></thead><tbody>${buero.map((p) => zeile(p, false)).join("")}</tbody></table>` : `<p class="leer">Keine weiteren Zugänge sichtbar.</p>`}
@@ -2548,6 +2568,7 @@ function bindePersonen(ziel) {
 function bindeTeam(ziel) {
   const fl = ziel.querySelector("#tNeuFl"), bu = ziel.querySelector("#tNeuBu");
   if (fl) fl.addEventListener("click", () => zugangDialog("fahrlehrer"));
+  ziel.querySelectorAll("[data-klassen]").forEach((b) => b.addEventListener("click", () => klassenDialog(b.dataset.klassen)));
   if (bu) bu.addEventListener("click", () => zugangDialog("buero"));
   ziel.querySelectorAll("[data-pwreset]").forEach((b) => b.addEventListener("click", () => passwortNeu(b.dataset.pwreset)));
   ziel.querySelectorAll("[data-sperren]").forEach((b) => b.addEventListener("click", () => zugangSperren(b.dataset.sperren)));
@@ -2568,24 +2589,49 @@ function zeigePasswort(email, passwort) {
     return true;
   }, "Kopieren und schließen", { festhalten: true });
 }
+const LEHR_KLASSEN = ["B", "BE", "C1", "C1E", "C", "CE"];
+function klassenHaken(gewaehlt) {
+  return `<fieldset class="voll klassen-wahl"><legend>Klassen, die er/sie unterrichtet</legend>${LEHR_KLASSEN.map((k) => `<label class="wahl"><input type="checkbox" name="kl" value="${k}"${(gewaehlt || []).includes(k) ? " checked" : ""}> ${k}</label>`).join("")}</fieldset>`;
+}
+function klassenDialog(id) {
+  const p = teamPerson(id);
+  if (!p) return;
+  oeffneDialog(`Klassen von ${p.name || p.email}`, `<div class="formular">${klassenHaken(p.klassen)}</div>
+    <p class="leise klein">Bei der Zuteilung von Schülern stehen passende Fahrlehrer dann oben.</p>`, async (form) => {
+    const kl = [...form.querySelectorAll("input[name=kl]:checked")].map((x) => x.value);
+    const { data, error } = await supa.rpc("buero_fahrlehrer_klassen", { p_id: id, p_klassen: kl });
+    if (error || (data && data.fehler)) { toast("Nicht gespeichert: " + (error ? error.message : data.fehler === "keine_berechtigung" ? "keine Berechtigung" : data.fehler), true); return false; }
+    for (const l of [S.team, S.lehrer]) { const x = l.find((y) => y.id === id); if (x) x.klassen = kl; }
+    toast("Klassen gespeichert"); zeichne(); return true;
+  });
+}
 function zugangDialog(rolle) {
   // Super-Admin kann auch die Fahrschul-Leitung (Inhaber, Prokuristin) anlegen
   const wahl = rolle === "buero" && S.profil.rolle === "super_admin"
     ? `<label class="voll">Rolle<select name="rolle"><option value="buero">Büro</option><option value="fahrschule_admin">Fahrschul-Leitung (Inhaber, Prokura)</option></select></label>` : "";
-  oeffneDialog(rolle === "buero" ? "Zugang für Büro oder Leitung anlegen" : "Fahrlehrer anlegen", `<div class="formular">
-      <label class="voll">E-Mail<input type="email" name="email" required></label>
-      <label class="voll">Name<input type="text" name="name" maxlength="100"></label>${wahl}</div>
-      <p class="leise klein">Das Passwort erscheint danach einmal zum Weitergeben. Die Person kann es später über „Passwort vergessen?“ selbst ändern.</p>`, async (form) => {
+  const fl = rolle === "fahrlehrer";
+  const dlg = oeffneDialog(rolle === "buero" ? "Zugang für Büro oder Leitung anlegen" : "Fahrlehrer anlegen", `<div class="formular">
+      <label class="voll">Name<input type="text" name="name" maxlength="100"${fl ? " required" : ""}></label>
+      ${fl ? `<label class="voll login-zeig"><input type="checkbox" name="ohneapp"> Ohne App: Fahrlehrer nutzt den Kompass nicht, das Büro trägt alles ein (keine E-Mail nötig)</label>` : ""}
+      <label class="voll" id="zMail">E-Mail<input type="email" name="email"${fl ? "" : " required"}></label>${wahl}
+      ${fl ? klassenHaken(["B"]) : ""}</div>
+      <p class="leise klein" id="zHinweis">Das Passwort erscheint danach einmal zum Weitergeben. Die Person kann es später über „Passwort vergessen?“ selbst ändern.</p>`, async (form) => {
     if (form.rolle) rolle = form.rolle.value;
+    const ohneApp = !!(form.ohneapp && form.ohneapp.checked);
     const email = form.email.value.trim(), name = form.name.value.trim();
-    if (!email) { toast("Bitte eine E-Mail eintragen.", true); return false; }
+    if (!ohneApp && !email) { toast("Bitte eine E-Mail eintragen.", true); return false; }
+    if (ohneApp && !name) { toast("Bitte einen Namen eintragen.", true); return false; }
+    const klassen = fl ? [...form.querySelectorAll("input[name=kl]:checked")].map((x) => x.value) : [];
     try {
-      const res = await adminFunktion({ action: "create_account", email, name, rolle, fahrschule_id: S.fsId });
-      setTimeout(() => zeigePasswort(res.email || email, res.passwort), 50);
+      const res = await adminFunktion({ action: "create_account", email: ohneApp ? undefined : email, name, rolle, fahrschule_id: S.fsId, ohne_app: ohneApp, klassen });
+      if (ohneApp) toast(`${name} ist angelegt (ohne App). Er steht jetzt überall in den Listen.`);
+      else setTimeout(() => zeigePasswort(res.email || email, res.passwort), 50);
       ladeDaten();
       return true;
     } catch (e) { toast("Nicht angelegt: " + e.message, true); return false; }
   }, "Anlegen");
+  const oa = dlg.querySelector("input[name=ohneapp]");
+  if (oa) oa.addEventListener("change", () => { dlg.querySelector("#zMail").hidden = oa.checked; dlg.querySelector("#zHinweis").hidden = oa.checked; });
 }
 async function passwortNeu(id) {
   const p = teamPerson(id);
@@ -2626,28 +2672,36 @@ function renderFlotte() {
   const nutzung = {};
   for (const t of S.termine) if (t.fahrzeug && t.datum >= heute && t.datum <= bis && t.art !== "block") nutzung[t.fahrzeug] = (nutzung[t.fahrzeug] || 0) + 1;
   const konf = fahrzeugKonflikte();
-  const admin = istAdmin();
-  const typName = { schalt: "Schaltung", automatik: "Automatik" };
+  const admin = istAdmin() || darfPersonenVerwalten();
+  const typName = FZ_TYPEN;
   return `${konf.length ? `<div class="karte warnkarte"><h2>${konf.length} Doppelbelegung${konf.length === 1 ? "" : "en"} in den nächsten 14 Tagen</h2><table class="tabelle"><tbody>${konf.map(([a, b]) => `<tr>
       <td class="zeitspalte">${esc(datumDE(a.datum))}</td><td><b>${esc(a.fahrzeug)}</b></td>
       <td>${esc(a.von)}–${esc(a.bis)} ${esc(lehrerName(a.fahrlehrer_id))}</td><td>${esc(b.von)}–${esc(b.bis)} ${esc(lehrerName(b.fahrlehrer_id))}</td></tr>`).join("")}</tbody></table></div>` : ""}
     <div class="karte"><div class="karte-kopf"><h2>Fahrzeuge (${S.fahrzeuge.length})</h2>${admin ? '<button class="knopf haupt" id="fzNeu" type="button">+ Fahrzeug</button>' : ""}</div>
       ${S.fahrzeuge.length ? `<table class="tabelle"><thead><tr><th>Fahrzeug</th><th>Typ</th><th class="zahlspalte">Termine in 7 Tagen</th><th></th></tr></thead><tbody>${S.fahrzeuge.map((f) => `<tr>
-        <td><b>${esc(f.name || f.bezeichnung || "")}</b></td><td>${esc(typName[f.typ] || f.typ || "")}</td><td class="zahlspalte">${nutzung[f.name || f.bezeichnung] || 0}</td>
+        <td><b>${esc(f.name || f.bezeichnung || "")}</b></td><td>${esc(typName[String(f.typ || "").toLowerCase()] || f.typ || "")}${f.klasse ? ` <span class="marke-pill">${esc(f.klasse)}</span>` : ""}</td><td class="zahlspalte">${nutzung[f.name || f.bezeichnung] || 0}</td>
         <td class="aktionen"><div class="aktionen-box">${admin ? `<button class="knopf klein" data-fzweg="${esc(f.id)}" type="button">Entfernen</button>` : ""}</div></td></tr>`).join("")}</tbody></table>` : `<p class="leer">Noch keine Fahrzeuge eingetragen.</p>`}
-      ${admin ? "" : `<p class="leise klein">Fahrzeuge anlegen und entfernen darf die Fahrschul-Leitung.</p>`}</div>`;
+      ${admin ? "" : `<p class="leise klein">Fahrzeuge anlegen und entfernen dürfen die Fahrschul-Leitung, ${esc(verwalterNamen())}.</p>`}</div>`;
 }
+// Fahrzeug-Arten (Pkw wie bisher, dazu Lkw, Transporter C1 und Anhänger je Klasse)
+const FZ_TYPEN = { schalt: "Schaltung", schalter: "Schaltung", automatik: "Automatik", lkw: "Lkw", transporter: "Transporter", anhaenger: "Anhänger" };
+const FZ_KLASSE_VORSCHLAG = { schalt: "B", automatik: "B", lkw: "C", transporter: "C1", anhaenger: "BE" };
 function bindeFlotte(ziel) {
   const neu = ziel.querySelector("#fzNeu");
-  if (neu) neu.addEventListener("click", () => oeffneDialog("Fahrzeug anlegen", `<div class="formular">
+  if (neu) neu.addEventListener("click", () => { const dlg = oeffneDialog("Fahrzeug anlegen", `<div class="formular">
       <label class="voll">Bezeichnung (z. B. „Golf Schalter“)<input type="text" name="name" required maxlength="60"></label>
-      <label>Typ<select name="typ"><option value="schalt">Schaltung</option><option value="automatik">Automatik</option></select></label></div>`, async (form) => {
+      <label>Art<select name="typ"><option value="schalt">Pkw Schaltung</option><option value="automatik">Pkw Automatik</option><option value="lkw">Lkw (C)</option><option value="transporter">Transporter (C1)</option><option value="anhaenger">Anhänger</option></select></label>
+      <label>Für Klasse<select name="klasse">${["B", "BE", "C1", "C1E", "C", "CE"].map((k) => `<option value="${k}">${k}</option>`).join("")}</select></label></div>
+      <p class="leise klein">Anhänger: die Klasse wählen, für die er gebraucht wird (BE, C1E oder CE).</p>`, async (form) => {
     const name = form.name.value.trim();
     if (!name) { toast("Bitte eine Bezeichnung eintragen.", true); return false; }
-    const res = await supa.from("fahrschule_fahrzeuge").insert({ fahrschule_id: S.fsId, name, typ: form.typ.value, aktiv: true }).select("*");
+    const res = await supa.from("fahrschule_fahrzeuge").insert({ fahrschule_id: S.fsId, name, typ: form.typ.value, klasse: form.klasse.value, aktiv: true }).select("*");
     if (res.error || !res.data || !res.data.length) { toast("Nicht gespeichert: " + (res.error ? res.error.message : "keine Berechtigung"), true); return false; }
     S.fahrzeuge.push(res.data[0]); toast("Fahrzeug angelegt"); zeichne(); return true;
-  }, "Anlegen"));
+  }, "Anlegen");
+    const typ = dlg.querySelector("select[name=typ]"), kl = dlg.querySelector("select[name=klasse]");
+    typ.addEventListener("change", () => { kl.value = FZ_KLASSE_VORSCHLAG[typ.value] || "B"; });
+  });
   ziel.querySelectorAll("[data-fzweg]").forEach((b) => b.addEventListener("click", async () => {
     const f = S.fahrzeuge.find((x) => x.id === b.dataset.fzweg);
     if (!f || !(await bestaetige("Fahrzeug entfernen?", `${f.name || ""} wird aus der Liste genommen. Alte Termine bleiben unverändert.`, "Ja, entfernen"))) return;
