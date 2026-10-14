@@ -185,6 +185,7 @@ if (typeof module !== "undefined" && module.exports) { module.exports = { bauDat
       return { ok: true, id: p.id };
     },
     buero_fahrlehrer_klassen: ({ p_id, p_klassen }) => {
+      if (!darfVerwalten()) return { fehler: "keine_berechtigung" }; // wie in der Datenbank: nur mit Verwalten-Recht
       const p = (F.tabellen.profiles || []).find((x) => x.id === p_id); if (!p) return { fehler: "unbekannt" };
       p.klassen = [...new Set(p_klassen || [])].sort(); return { ok: true };
     },
