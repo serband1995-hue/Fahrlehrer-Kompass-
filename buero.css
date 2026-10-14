@@ -556,7 +556,11 @@ a.kachel:hover,a.kachel:focus-visible{border-color:var(--akzent);}
 /* Fahrlehrer-Akte (14.10.2026) */
 .fl-kacheln{margin-bottom:12px;}
 .fl-warnung{font-weight:700;margin:4px 0;}
-.fl-warnung.abgelaufen{color:var(--rot);} .fl-warnung.bald{color:var(--gold, #8a5f10);}
+.fl-warnung.abgelaufen{color:var(--pill-rot);} .fl-warnung.bald{color:var(--pill-gelb);}
 .formular .raster-zwei{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px 20px;}
 .formular .raster-zwei[hidden]{display:none;}
+.besuch-liste{list-style:none;padding:0;margin:6px 0;display:grid;gap:2px;}
+.anw-namen{columns:3 180px;margin:4px 0 10px;padding-left:18px;}
+.theorie-teile .fehlt{color:var(--pill-gelb, #7a5410);}
+.warnhinweis{color:var(--pill-gelb, #7a5410);background:var(--gelb-soft);border-radius:10px;padding:8px 12px;font-weight:600;}
 
