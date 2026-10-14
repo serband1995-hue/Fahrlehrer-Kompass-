@@ -98,6 +98,13 @@ function bauDaten(heute) {
         { id: "fz-4", fahrschule_id: FS, name: "Golf Automatik 2", typ: "automatik", aktiv: true, erstellt_am: "2026-01-04" },
       ],
       fahrschule_pakete: [{ id: "p-1", fahrschule_id: FS, name: "Boost-Paket 1" }, { id: "p-turbo", fahrschule_id: FS, name: "Turboboost" }],
+      // Büro-Personen (erfunden). _pin gibt es nur in der Attrappe; die echte Datenbank speichert die PIN verschlüsselt.
+      buero_personen: [
+        { id: "bp-1", fahrschule_id: FS, name: "Jelena", telefon: null, hat_pin: true, _pin: "6204", darf_verwalten: true, aktiv: true, gesperrt_bis: null, fehlversuche: 0 },
+        { id: "bp-2", fahrschule_id: FS, name: "Murat", telefon: null, hat_pin: true, _pin: "7391", darf_verwalten: true, aktiv: true, gesperrt_bis: null, fehlversuche: 0 },
+        { id: "bp-3", fahrschule_id: FS, name: "Kristina", telefon: "0170 0000000", hat_pin: true, _pin: "4826", darf_verwalten: false, aktiv: true, gesperrt_bis: null, fehlversuche: 0 },
+        { id: "bp-4", fahrschule_id: FS, name: "Isra", telefon: null, hat_pin: false, _pin: null, darf_verwalten: false, aktiv: true, gesperrt_bis: null, fehlversuche: 0 },
+      ],
     },
   };
 }
@@ -116,6 +123,71 @@ if (typeof module !== "undefined" && module.exports) { module.exports = { bauDat
   F.tabellen = F.tabellen || {};
   F.rpcs = F.rpcs || {};
   F.functions = F.functions || {};
+  // PIN-Funktionen wie in der Datenbank (vereinfacht). Der Schlüssel kommt hier aus dem Tab-Speicher statt aus der Kopfzeile.
+  F.sitzungen = F.sitzungen || {};
+  const zuEinfach = (p) => {
+    if (!/^[0-9]{4}$/.test(p)) return true;
+    const d = p.split("").map(Number);
+    if (d.every((x) => x === d[0])) return true;
+    let auf = true, ab = true;
+    for (let i = 0; i < 3; i++) { if (d[i + 1] !== (d[i] + 1) % 10) auf = false; if (d[i + 1] !== (d[i] + 9) % 10) ab = false; }
+    return auf || ab || (d[0] === d[2] && d[1] === d[3]) || (d[0] === d[1] && d[2] === d[3]);
+  };
+  const personen = () => tabelle("buero_personen");
+  const meineSitzung = () => {
+    let t = null;
+    try { t = (JSON.parse(sessionStorage.getItem("buero-sitzung") || "null") || {}).token; } catch (e) { /* keine */ }
+    return t && F.sitzungen[t] ? Object.assign({ token: t }, F.sitzungen[t]) : null;
+  };
+  const meinProfil = () => (F.tabellen.profiles || []).find((p) => F.session && p.id === F.session.user.id) || {};
+  const darfVerwalten = () => { const r = meinProfil().rolle; if (r === "super_admin" || r === "fahrschule_admin") return true; const s = meineSitzung(); const p = s && personen().find((x) => x.id === s.person); return !!(p && p.darf_verwalten); };
+  const R = {
+    buero_pin_anmelden: ({ p_person, p_pin }) => {
+      const p = personen().find((x) => x.id === p_person && x.aktiv !== false);
+      if (!p) return { fehler: "unbekannt" };
+      if (p.gesperrt_bis && new Date(p.gesperrt_bis) > new Date()) return { fehler: "gesperrt", bis: p.gesperrt_bis };
+      if (!/^[0-9]{4}$/.test(p_pin || "")) return { fehler: "format" };
+      let erst = false;
+      if (!p._pin) { if (zuEinfach(p_pin)) return { fehler: "zu_einfach" }; p._pin = p_pin; p.hat_pin = true; erst = true; }
+      else if (p._pin !== p_pin) {
+        p.fehlversuche = (p.fehlversuche || 0) + 1;
+        if (p.fehlversuche >= 5) { p.fehlversuche = 0; p.gesperrt_bis = new Date(Date.now() + 15 * 60000).toISOString(); return { fehler: "gesperrt", bis: p.gesperrt_bis }; }
+        return { fehler: "falsch", rest: 5 - p.fehlversuche };
+      }
+      p.fehlversuche = 0;
+      const token = "tok-" + p.id + "-" + Math.random().toString(36).slice(2, 8);
+      F.sitzungen[token] = { person: p.id, nurPin: !!p.pin_neu_noetig };
+      return { token, id: p.id, name: p.name, pin_neu_noetig: !!p.pin_neu_noetig, darf_verwalten: !!p.darf_verwalten, erste_pin: erst };
+    },
+    buero_sitzung_pruefen: () => { const s = meineSitzung(); const p = s && personen().find((x) => x.id === s.person && x.aktiv !== false); return p ? { gueltig: true, id: p.id, name: p.name, pin_neu_noetig: s.nurPin, darf_verwalten: p.darf_verwalten } : { gueltig: false }; },
+    buero_sitzung_beenden: () => { const s = meineSitzung(); if (s) delete F.sitzungen[s.token]; return { ok: true }; },
+    buero_pin_aendern: ({ p_neu }) => {
+      const s = meineSitzung(); if (!s) return { fehler: "keine_sitzung" };
+      if (zuEinfach(p_neu || "")) return { fehler: "zu_einfach" };
+      const p = personen().find((x) => x.id === s.person);
+      if (p._pin === p_neu) return { fehler: "gleich" };
+      p._pin = p_neu; p.hat_pin = true; p.pin_neu_noetig = false; F.sitzungen[s.token].nurPin = false; return { ok: true };
+    },
+    buero_person_speichern: ({ p_id, p_fahrschule, p_name, p_telefon, p_darf_verwalten, p_aktiv }) => {
+      if (!darfVerwalten()) return { fehler: "keine_berechtigung" };
+      const name = String(p_name || "").trim(); if (!name || name.length > 30) return { fehler: "name" };
+      if (p_aktiv !== false && personen().some((x) => x.aktiv !== false && x.id !== p_id && x.name.toLowerCase() === name.toLowerCase())) return { fehler: "doppelt" };
+      const chef = ["super_admin", "fahrschule_admin"].includes(meinProfil().rolle);
+      if (!p_id) { const n = { id: "bp-" + Math.random().toString(36).slice(2, 8), fahrschule_id: p_fahrschule, name, telefon: p_telefon || null, hat_pin: false, _pin: null, darf_verwalten: chef && !!p_darf_verwalten, aktiv: true, gesperrt_bis: null, fehlversuche: 0 }; personen().push(n); return { ok: true, id: n.id }; }
+      const p = personen().find((x) => x.id === p_id); if (!p) return { fehler: "unbekannt" };
+      Object.assign(p, { name, telefon: p_telefon || null, aktiv: p_aktiv !== false });
+      if (chef && p_darf_verwalten != null) p.darf_verwalten = !!p_darf_verwalten;
+      return { ok: true, id: p.id };
+    },
+    buero_pin_zuruecksetzen: ({ p_person }) => {
+      if (!darfVerwalten()) return { fehler: "keine_berechtigung" };
+      const p = personen().find((x) => x.id === p_person); if (!p) return { fehler: "unbekannt" };
+      Object.assign(p, { _pin: null, hat_pin: false, pin_neu_noetig: false, fehlversuche: 0, gesperrt_bis: null });
+      for (const [t, s] of Object.entries(F.sitzungen)) if (s.person === p.id) delete F.sitzungen[t];
+      return { ok: true, name: p.name };
+    },
+  };
+  for (const [k, f] of Object.entries(R)) if (!F.rpcs[k]) F.rpcs[k] = f;
   window.__FAKE = F;
 
   function kopie(x) { return JSON.parse(JSON.stringify(x)); }

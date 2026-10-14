@@ -326,9 +326,28 @@ details summary{cursor:pointer;font-weight:700;margin:6px 0;}
 .wer-karte h2{margin:0;}
 .wer-liste{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px;}
 .wer-liste .knopf{min-height:64px;font-size:20px;}
-.wer-anderer{display:flex;gap:10px;}
-.wer-anderer input{flex:1;min-width:0;min-height:48px;padding:0 14px;border:1px solid var(--line);border-radius:var(--r-klein);background:var(--bg);}
+#werNamen{display:grid;gap:14px;}
+.wer-liste .knopf{flex-direction:column;gap:2px;line-height:1.2;padding:8px 12px;}
+.wer-liste .knopf small{font-size:13px;font-weight:500;color:var(--muted);}
+.wer-liste .knopf.gesperrt small{color:var(--rot);}
+.wer-pin{display:grid;gap:12px;justify-items:center;text-align:center;}
+.wer-pin .leise{margin:0;}
+.pin-punkte{display:flex;gap:16px;margin:6px 0;}
+.pin-punkte span{width:20px;height:20px;border-radius:50%;border:2px solid var(--akzent);background:transparent;transition:background .12s;}
+.pin-punkte span.voll{background:var(--akzent);}
+.pin-punkte.wackeln{animation:wackeln .35s;}
+@keyframes wackeln{0%,100%{transform:translateX(0);}25%{transform:translateX(-8px);}75%{transform:translateX(8px);}}
+.pin-fehler{text-align:center;}
+.pin-feld{display:grid;grid-template-columns:repeat(3,80px);gap:12px;}
+.pin-feld button{height:64px;border-radius:16px;border:1px solid var(--line);background:var(--bg);font-size:26px;font-weight:600;cursor:pointer;}
+.pin-feld button:hover{border-color:var(--akzent);}
+.pin-feld button:focus-visible{outline:3px solid var(--akzent-line);outline-offset:2px;}
+.pin-feld button:disabled{opacity:.45;cursor:default;}
+.pin-feld .pin-leise{font-size:16px;font-weight:500;color:var(--muted);}
 .wer-zeile{font-size:15px;color:var(--muted);padding:0 6px;}
+.wer-knoepfe{display:flex;flex-wrap:wrap;gap:4px 12px;}
+.wer-knoepfe .textknopf{font-size:14px;}
+.kopf-wer{border-color:var(--akzent-line);color:var(--akzent-dark);}
 .textknopf{background:none;border:none;padding:0;font:inherit;color:var(--akzent-dark);text-decoration:underline;cursor:pointer;}
 /* Schalter Aktiv/Inaktiv, B197-Testfahrt */
 .schalter-zeile{padding:6px 0;}

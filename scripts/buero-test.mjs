@@ -52,9 +52,16 @@ async function oeffne({ nutzer, breite = 1366, hoehe = 860, hash = "", dunkel = 
   // Gemeinsamer Büro-Zugang: „Wer bedient gerade?“ beantworten (Super-Admin wird nicht gefragt)
   if (wer && nutzer) {
     const frage = await page.waitForSelector("#wer:not([hidden])", { timeout: 1200 }).catch(() => null);
-    if (frage) { await page.click(`[data-wer="${wer}"]`); await page.waitForTimeout(100); }
+    if (frage) { await meldePinAn(page, wer); }
   }
   return { page, ctx, konsole };
+}
+// Büro-Personen der Attrappe und ihre PINs (erfunden, siehe buero-vorfuehrung.js)
+const TEST_PIN = { Jelena: "6204", Murat: "7391", Kristina: "4826" };
+async function meldePinAn(page, name, pin) {
+  await page.click(`#werListe button:has-text("${name}")`);
+  await page.keyboard.type(pin || TEST_PIN[name], { delay: 20 });
+  await page.waitForTimeout(150);
 }
 // Sauberes Layout: nichts ragt aus seinem Kästchen, kein Text überlappt anderen Text,
 // kein Text wird ungewollt abgeschnitten (gewolltes „…“ nur in Kalender-Kacheln und Kalenderköpfen).
@@ -86,7 +93,9 @@ async function pruefeLayout(page, name) {
     }
     // 3) Text überlappt Text
     const blaetter = [];
-    const walker = document.createTreeWalker(document.body, NodeFilter.SHOW_TEXT);
+    // Ein offenes Vollbild-Fenster (PIN) verdeckt die Seite absichtlich: dann nur das Fenster prüfen
+    const ueber = document.querySelector("#wer:not([hidden])");
+    const walker = document.createTreeWalker(ueber || document.body, NodeFilter.SHOW_TEXT);
     while (walker.nextNode()) {
       const t = walker.currentNode;
       if (!t.textContent.trim() || !t.parentElement || !sichtbar(t.parentElement) || t.parentElement.closest("#toast, #tip, svg, dialog:not([open]), option, select, details:not([open]) > :not(summary)") || gewolltGekuerzt(t.parentElement)) continue;
@@ -493,19 +502,19 @@ for (const [breite, hoehe] of [[1920, 1080], [1366, 768], [1024, 768]]) {
   if ((await sichtbar()) !== alle - 2) fehler("Seitenleiste: Gruppe „Geld“ klappt nicht zu");
   await page.evaluate(() => zeichneNav());
   if ((await sichtbar()) !== alle - 2) fehler("Seitenleiste: zugeklappte Gruppe wird nicht gemerkt");
-  // „Wer bist du“ merkt sich der Browser-Tab (auch nach Neuladen), bis 20 Minuten nichts angeklickt wurde
-  await page.evaluate(() => { setzeWer("Isra"); S.wer = ""; starteWer(); });
-  if (await page.isVisible("#wer:not([hidden])")) fehler("Wer bist du: Name wird nach Neuladen nicht übernommen");
+  // PIN-Anmeldung merkt sich der Browser-Tab (auch nach Neuladen), bis 20 Minuten nichts angeklickt wurde
+  await page.evaluate(async () => { S.sitzung = null; S.wer = ""; await starteWer(); });
+  if (await page.isVisible("#wer:not([hidden])")) fehler("PIN: Anmeldung wird nach Neuladen nicht übernommen");
   await page.goto(page.url().split("#")[0] + "#zahlen");
   await page.waitForTimeout(300);
   if ((await sichtbar()) !== alle) fehler("Seitenleiste: Seite in zugeklappter Gruppe öffnet die Gruppe nicht");
   await pruefeLayout(page, "Seitenleiste");
   // Wer bedient: Name und Kopfzeile
   const wer = await page.evaluate(() => ({ s: S.wer, an: document.getElementById("werAnzeige").textContent }));
-  if (wer.s !== "Isra" || wer.an !== "Isra") fehler("Wer bist du: Name nicht übernommen " + JSON.stringify(wer));
-  const kopf = await page.evaluate(() => { window.__echt = window.fetch; window.fetch = (u, o) => ({ h: [...new Headers(o.headers)].filter(([k]) => k === "x-buero-bearbeiter").map(([, v]) => v), u }); S.wer = "Jelena"; const r = [bueroFetch("https://x/rest/v1/schueler", {}), bueroFetch("https://x/auth/v1/token", {})]; window.fetch = window.__echt; return r; });
-  if (kopf[0].h[0] !== "Jelena" || kopf[1].h.length) fehler("Wer bist du: Kopfzeile falsch " + JSON.stringify(kopf));
-  await page.evaluate(() => { S.wer = "Isra"; });
+  if (wer.s !== "Kristina" || wer.an !== "Kristina") fehler("PIN: Name nicht übernommen " + JSON.stringify(wer));
+  // Kopfzeile: nur der Sitzungsschlüssel, nur an die Datenbank, kein frei getippter Name mehr
+  const kopf = await page.evaluate(() => { window.__echt = window.fetch; window.fetch = (u, o) => ({ h: [...new Headers(o.headers)].filter(([k]) => k.startsWith("x-buero")), u }); const r = [bueroFetch("https://x/rest/v1/schueler", {}), bueroFetch("https://x/auth/v1/token", {})]; window.fetch = window.__echt; return { r, tok: S.sitzung.token }; });
+  if (kopf.r[0].h.length !== 1 || kopf.r[0].h[0][0] !== "x-buero-sitzung" || kopf.r[0].h[0][1] !== kopf.tok || kopf.r[1].h.length) fehler("PIN: Kopfzeile falsch " + JSON.stringify(kopf));
   // Ausbildungsart und Klasse
   await page.goto(page.url().split("#")[0] + "#schueler");
   await page.waitForTimeout(400);
@@ -636,14 +645,6 @@ for (const [breite, hoehe] of [[1920, 1080], [1366, 768], [1024, 768]]) {
   const fernDE = (() => { const d = new Date(); d.setDate(d.getDate() + 40); return d.toLocaleDateString("de-DE", { day: "2-digit", month: "2-digit", year: "numeric" }); })();
   if (fern.includes(fernDE)) fehler("Großansicht zeigt eine Prüfung in 40 Tagen");
   await page.goto(page.url().split("#")[0] + "#heute");
-  // „Wer bedient“: bewusst wechseln lässt sich abbrechen (Knopf und Esc)
-  await page.click("#werWechseln");
-  if (!(await page.isVisible("#werZu"))) fehler("Wer bist du: kein Abbrechen beim Wechseln");
-  await page.click("#werZu");
-  if (await page.isVisible("#wer:not([hidden])")) fehler("Wer bist du: Abbrechen schließt nicht");
-  await page.click("#werWechseln");
-  await page.keyboard.press("Escape");
-  if (await page.isVisible("#wer:not([hidden])")) fehler("Wer bist du: Esc schließt nicht");
   // Fokus bleibt in der Seitenleiste
   await page.focus('[data-gruppe="Geld"]');
   await page.keyboard.press("Enter");
@@ -886,6 +887,111 @@ for (const [breite, hoehe] of [[1920, 1080], [1366, 768], [1024, 768]]) {
 {
   const { page, ctx } = await oeffne({ nutzer: "bu-1", hash: "#team" });
   if (await page.isVisible("#tNeuFl")) fehler("Team: Büro darf keine Fahrlehrer anlegen");
+  await ctx.close();
+}
+
+// 4k) PIN je Büro-Person (13.10.2026): Namen antippen, PIN, falsche PIN, Sperre, erste PIN, Wechsel, Sperren, Verwalten
+{
+  const { page, ctx, konsole } = await oeffne({ nutzer: "bu-1", hash: "#heute", breite: 1366, hoehe: 900, wer: null });
+  if (!(await page.isVisible("#wer:not([hidden])"))) fehler("PIN: Büro wird nicht nach der Person gefragt");
+  if (await page.isVisible("#werAnderer, #werName")) fehler("PIN: frei getippter Name ist noch möglich");
+  const kacheln = await page.$$eval("#werListe button", (b) => b.map((x) => x.textContent.trim()));
+  if (kacheln.length !== 4 || !kacheln.some((t) => t.includes("Isra") && t.includes("PIN festlegen"))) fehler("PIN: Namenskacheln falsch " + JSON.stringify(kacheln));
+  await pruefeLayout(page, "PIN Namen");
+  if (FOTOS) await page.screenshot({ path: join(FOTOS, "pin-namen.png") });
+  // Falsche PIN: Hinweis mit Restversuchen, Seite bleibt gesperrt
+  await page.click('#werListe button:has-text("Kristina")');
+  await page.waitForTimeout(100);
+  if (!(await page.isVisible("#werPin"))) fehler("PIN: Ziffernfeld erscheint nicht");
+  await pruefeLayout(page, "PIN Ziffernfeld");
+  if (FOTOS) await page.screenshot({ path: join(FOTOS, "pin-ziffern.png") });
+  for (const z of "1357") await page.click(`#pinFeld [data-ziffer="${z}"]`);
+  await page.waitForTimeout(150);
+  let t = await page.textContent("#pinFehler");
+  if (!/Noch 4 Versuche/.test(t)) fehler("PIN: falsche PIN ohne Hinweis: " + t);
+  if (await page.evaluate(() => !!S.sitzung)) fehler("PIN: falsche PIN meldet trotzdem an");
+  // Löschtaste und Zurück
+  await page.keyboard.type("48"); await page.keyboard.press("Backspace");
+  if ((await page.$$eval("#pinPunkte .voll", (x) => x.length)) !== 1) fehler("PIN: Löschtaste geht nicht");
+  await page.keyboard.press("Escape");
+  if (!(await page.isVisible("#werNamen"))) fehler("PIN: Esc führt nicht zurück zu den Namen");
+  // Richtige PIN
+  await meldePinAn(page, "Kristina");
+  if (await page.isVisible("#wer:not([hidden])")) fehler("PIN: richtige PIN öffnet nicht");
+  if ((await page.textContent("#werAnzeige")) !== "Kristina" || (await page.textContent("#nutzerName")) !== "Kristina") fehler("PIN: Name in der Seitenleiste fehlt");
+  if ((await page.textContent("#kopfWer")) !== "🔒 Kristina · Sperren") fehler("PIN: Sperren-Knopf oben fehlt");
+  // Kristina darf nicht verwalten
+  await page.goto(page.url().split("#")[0] + "#team"); await page.waitForTimeout(300);
+  if (await page.isVisible("#pNeu, [data-preset]")) fehler("PIN: Kristina sieht Verwalten-Knöpfe");
+  // Wechseln mit Abbrechen
+  await page.click("#werWechseln");
+  if (!(await page.isVisible("#werZu"))) fehler("PIN: kein Abbrechen beim Wechseln");
+  await page.click("#werZu");
+  if (await page.isVisible("#wer:not([hidden])")) fehler("PIN: Abbrechen schließt nicht");
+  await page.click("#werWechseln"); await page.keyboard.press("Escape");
+  if (await page.isVisible("#wer:not([hidden])")) fehler("PIN: Esc schließt nicht");
+  // Wechsel zu Jelena: alte Sitzung endet, Jelena darf verwalten
+  const altTok = await page.evaluate(() => S.sitzung.token);
+  await page.click("#werWechseln");
+  await meldePinAn(page, "Jelena");
+  const w = await page.evaluate((a) => ({ name: S.sitzung && S.sitzung.name, alt: !!window.__FAKE.sitzungen[a] }), altTok);
+  if (w.name !== "Jelena" || w.alt) fehler("PIN: Wechsel falsch " + JSON.stringify(w));
+  await page.waitForTimeout(200);
+  if (!(await page.isVisible("#pNeu"))) fehler("PIN: Jelena sieht „+ Person“ nicht");
+  await pruefeLayout(page, "Team mit Personen");
+  if (FOTOS) await page.screenshot({ path: join(FOTOS, "pin-team.png"), fullPage: true });
+  // Person anlegen (doppelter Name wird abgelehnt)
+  await page.click("#pNeu"); await page.fill("dialog input[name=name]", "kristina"); await page.click("dialog button[value=ok]"); await page.waitForTimeout(200);
+  if (!(await page.isVisible("dialog[open]"))) fehler("PIN: doppelter Name wurde angenommen");
+  await page.fill("dialog input[name=name]", "Testperson"); await page.click("dialog button[value=ok]"); await page.waitForTimeout(300);
+  if (!(await page.evaluate(() => S.personen.some((p) => p.name === "Testperson")))) fehler("PIN: Person nicht angelegt");
+  if (await page.isVisible("dialog input[name=verwalten]")) fehler("PIN: Büro-Person darf Verwalten-Recht vergeben");
+  // PIN von Kristina zurücksetzen
+  await page.click(`[data-preset="bp-3"]`); await page.click("dialog[open] button[value=ok]"); await page.waitForTimeout(300);
+  if (await page.evaluate(() => window.__FAKE.tabellen.buero_personen.find((p) => p.id === "bp-3").hat_pin)) fehler("PIN: Zurücksetzen wirkt nicht");
+  // Sperren: Sitzung endet, Namen erscheinen ohne Abbrechen
+  await page.click("#werSperren"); await page.waitForTimeout(150);
+  if (!(await page.isVisible("#werNamen")) || (await page.isVisible("#werZu")) || (await page.evaluate(() => !!S.sitzung))) fehler("PIN: Sperren geht nicht");
+  // Isra: erste PIN festlegen (zu einfach → abgelehnt, verschieden → von vorn, dann gespeichert)
+  await page.click('#werListe button:has-text("Isra")');
+  await page.keyboard.type("1234"); await page.waitForTimeout(100);
+  if (!/zu leicht/.test(await page.textContent("#pinFehler"))) fehler("PIN: 1234 wird als erste PIN angenommen");
+  await page.keyboard.type("3817"); await page.waitForTimeout(100);
+  if (!/noch einmal/.test(await page.textContent("#pinHinweis"))) fehler("PIN: keine Bestätigung der ersten PIN");
+  await page.keyboard.type("3818"); await page.waitForTimeout(150);
+  if (!/verschieden/.test(await page.textContent("#pinFehler"))) fehler("PIN: verschiedene Eingaben nicht erkannt");
+  await page.keyboard.type("3817"); await page.keyboard.type("3817"); await page.waitForTimeout(200);
+  const isra = await page.evaluate(() => ({ s: S.sitzung && S.sitzung.name, pin: window.__FAKE.tabellen.buero_personen.find((p) => p.id === "bp-4")._pin }));
+  if (isra.s !== "Isra" || isra.pin !== "3817") fehler("PIN: erste PIN nicht gespeichert " + JSON.stringify(isra));
+  // Eigene PIN ändern, mit Abbrechen
+  await page.click("#werPinAendern");
+  if (!(await page.isVisible("#werPin"))) fehler("PIN ändern: Feld fehlt");
+  await page.click("#pinZurueck");
+  if (await page.isVisible("#wer:not([hidden])")) fehler("PIN ändern: Abbrechen geht nicht");
+  await page.click("#werPinAendern");
+  await page.keyboard.type("5096"); await page.keyboard.type("5096"); await page.waitForTimeout(200);
+  if (await page.evaluate(() => window.__FAKE.tabellen.buero_personen.find((p) => p.id === "bp-4")._pin) !== "5096") fehler("PIN ändern: nicht gespeichert");
+  // 5 falsche Versuche → gesperrt, auch die richtige PIN geht dann nicht
+  await page.click("#werSperren"); await page.waitForTimeout(100);
+  await page.click('#werListe button:has-text("Murat")');
+  for (let i = 0; i < 5; i++) { await page.keyboard.type("0" + (i + 1) + "00"); await page.waitForTimeout(80); }
+  t = await page.textContent("#pinFehler");
+  if (!/Gesperrt bis/.test(t) || !/Jelena/.test(t)) fehler("PIN: Sperre nach 5 Versuchen fehlt: " + t);
+  await page.keyboard.type(TEST_PIN.Murat); await page.waitForTimeout(150);
+  if (await page.evaluate(() => !!S.sitzung)) fehler("PIN: gesperrte Person kommt trotzdem rein");
+  // Leerlauf: nach 20 Minuten endet die Sitzung von selbst
+  await page.keyboard.press("Escape");
+  await meldePinAn(page, "Jelena");
+  await page.evaluate(() => { letzteAktion = Date.now() - 21 * 60 * 1000; });
+  await page.waitForTimeout(31000);
+  if (!(await page.isVisible("#werNamen")) || (await page.evaluate(() => !!S.sitzung))) fehler("PIN: Leerlauf beendet die Sitzung nicht");
+  if (konsole.length) fehler("PIN: Konsole: " + konsole.join(" | "));
+  await ctx.close();
+}
+// Leitung und Super-Admin haben eigene Konten: keine PIN-Abfrage
+for (const nutzer of ["ad-1", "sa-1"]) {
+  const { page, ctx } = await oeffne({ nutzer, wer: null });
+  if (await page.isVisible("#wer:not([hidden])")) fehler("PIN: " + nutzer + " wird nach PIN gefragt");
   await ctx.close();
 }
 
