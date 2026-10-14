@@ -3131,6 +3131,7 @@ function sonderDefFuer(s){ const w=sonderWerte(s); return SONDER_DEF.map((d,i)=>
 // Gemeinsame Ausbildung (C und CE / C1 und C1E): je Fahrstunde festhalten, welche Klasse gefahren wurde
 function lkwZweiKlassen(s){ const w=lkwWegVon(s); return w==="C+CE"?["C","CE"]:w==="C1+C1E"?["C1","C1E"]:null; }
 function lkwStundenKlasse(s,l){ const k=lkwZweiKlassen(s); return k&&k.includes(l.lkwKlasse)?l.lkwKlasse:(k?k[0]:s.form); } // ohne Angabe: zuerst die Grundklasse (C bzw. C1)
+function lkwKlKnopf(s,l){ const k=lkwZweiKlassen(s)||[], akt=lkwStundenKlasse(s,l), anders=akt===k[0]?k[1]:k[0]; return `Klasse dieser Stunde · <b>${esc(akt)}</b>${anders?` · tippen für ${esc(anders)}`:""}`; }
 function lkwStundenZaehler(s){
   const k=lkwZweiKlassen(s); if(!k)return "";
   const z={}; k.forEach(x=>z[x]=0);
@@ -3864,7 +3865,13 @@ function lkwErlaubt(){
   const kl=_authProfile.klassen||[];
   return !kl.length||kl.some(k=>["C1","C1E","C","CE"].includes(k));
 }
-function formsFuer(s){ return FORMS.filter(f=>!["C1","C1E","C","CE"].includes(f)||lkwErlaubt()||(s&&s.form===f)); }
+// Ohne Lkw-Erlaubnis bleibt die Lkw-Klasse des Schülers wählbar (aktuelle Form, Büro-Klasse, Form beim ersten Öffnen),
+// damit ein Fehltipp auf „B“ sie nicht verschwinden lässt
+const _formStart={};
+function formsFuer(s){
+  if(s&&s.id&&!(s.id in _formStart))_formStart[s.id]=s.form;
+  return FORMS.filter(f=>!["C1","C1E","C","CE"].includes(f)||lkwErlaubt()||(s&&(s.form===f||s.klasseBuero===f||_formStart[s.id]===f)));
+}
 const FORM_LABEL={B:"B Schalter",BE:"BE",B197:"B197",Automatik:"Automatik",C1:"C1 Lkw",C1E:"C1E Zug",C:"C Lkw",CE:"CE Zug"};
 function formLabel(f){return FORM_LABEL[f]||f||"B Schalter";}
 const SONDER_DEF=[{key:"ueberland",label:"Überlandfahrt",soll:5},{key:"autobahn",label:"Autobahnfahrt",soll:4},{key:"nacht",label:"Nachtfahrt",soll:3}];
@@ -11876,7 +11883,7 @@ function openEventSheet(kind,id,sid){
       })():''}
       ${st?`<button class="es-act primary" id="esAkte">Schülerakte öffnen</button>`:''}
       ${l.art==="theorie"&&_authProfile&&_authProfile.fahrschule_id?`<button class="es-act primary" id="esAnwesend">Anwesenheit eintragen</button>`:''}
-      ${fcRelevant&&st&&lkwZweiKlassen(st)?`<button class="es-act" id="esLkwKl">Klasse dieser Stunde · <b>${esc(lkwStundenKlasse(st,l))}</b></button>`:''}
+      ${fcRelevant&&st&&lkwZweiKlassen(st)?`<button class="es-act" id="esLkwKl">${lkwKlKnopf(st,l)}</button>`:''}
       ${fcRelevant&&sichtbar("fahrcheck")?`<button class="es-act" id="esFC">Fahrcheck · <b>${fcLab}</b></button>`:''}
       ${fcRelevant&&st?`<button class="es-act" id="esSig">Unterschrift · <b>${l.signed?'✓ vorhanden':'noch offen'}</b></button>`:''}
       ${l.art==="block"?'':`<button class="es-act" id="esEdit">Bearbeiten / verschieben</button>
@@ -11890,7 +11897,7 @@ function openEventSheet(kind,id,sid){
   const prot=$("#esProtokoll"); if(prot)prot.addEventListener("click",()=>{ closeSheet(); sendeStundenProtokoll(st,l.date); });
   const ak=$("#esAkte"); if(ak)ak.addEventListener("click",()=>{ closeSheet(); routeDetail(l.sid); });
   const anw=$("#esAnwesend"); if(anw)anw.addEventListener("click",()=>openTheorieAnwesenheit(l));
-  const lkwKl=$("#esLkwKl"); if(lkwKl)lkwKl.addEventListener("click",()=>{ const k=lkwZweiKlassen(st); l.lkwKlasse=lkwStundenKlasse(st,l)===k[0]?k[1]:k[0]; save(); lkwKl.innerHTML=`Klasse dieser Stunde · <b>${esc(l.lkwKlasse)}</b>`; toast("Stunde zählt für Klasse "+l.lkwKlasse); });
+  const lkwKl=$("#esLkwKl"); if(lkwKl)lkwKl.addEventListener("click",()=>{ const k=lkwZweiKlassen(st); l.lkwKlasse=lkwStundenKlasse(st,l)===k[0]?k[1]:k[0]; save(); lkwKl.innerHTML=lkwKlKnopf(st,l); });
   const fcb=$("#esFC"); if(fcb)fcb.addEventListener("click",()=>{ closeSheet(); openFCMenu(id); });
   const sigb=$("#esSig"); if(sigb)sigb.addEventListener("click",()=>{ closeSheet(); openSignatureSheet(id); });
   // Urlaub/Blocker (ganze Tage) nur löschen, nicht bearbeiten - sonst gingen sie kaputt.

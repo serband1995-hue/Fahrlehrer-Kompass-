@@ -1352,6 +1352,12 @@ for (const [breite, hoehe] of [[1920, 1080], [1366, 768], [1024, 768]]) {
   await page.uncheck('dialog[open] input[name=fl][value="BE"]');
   await page.click("dialog[open] button[value=ok]"); await page.waitForTimeout(200);
   if (!(await page.isVisible("dialog[open]"))) fehler("Fahrlehrer-Akte: CE ohne BE wurde gespeichert");
+  // Die Meldung muss im Fenster stehen (der Toast liegt unter dem offenen Fenster)
+  if (!(await page.isVisible("dialog[open] .dialog-meldung")) || !/nur zusätzlich/.test(await page.textContent("dialog[open] .dialog-meldung"))) fehler("Fahrlehrer-Akte: Meldung „CE ohne BE“ im Fenster nicht sichtbar");
+  await page.keyboard.press("Escape"); await page.waitForTimeout(150);
+  // Doppelklick auf „Akte & Klassen“: der zweite Klick schließt das Fenster nicht gleich wieder
+  await page.dblclick('td.aktionen button[data-flakte="fl-4"]'); await page.waitForTimeout(250);
+  if (!(await page.isVisible("dialog[open]"))) fehler("Fahrlehrer-Akte: Doppelklick schließt das Fenster sofort");
   await page.keyboard.press("Escape"); await page.waitForTimeout(150);
   // Altbestand: nur Klassen (C, CE), keine Fahrlehrerlaubnis → Vorschlag BE + CE, Speichern nimmt nichts weg
   await page.evaluate(() => { const p = window.__FAKE.tabellen.profiles.find((x) => x.id === "fl-2"); p.fahrlehrerlaubnis = null; p.klassen = ["C", "CE"];
