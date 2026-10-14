@@ -542,3 +542,10 @@ a.kachel:hover,a.kachel:focus-visible{border-color:var(--akzent);}
 #afsHinweis.warnung{color:var(--rot);font-weight:700;}
 
 .afs-zeile label{overflow-wrap:anywhere;}
+/* Theorie-Besuch (14.10.2026) */
+.theorie-teile{list-style:none;padding:0;margin:6px 0 8px;display:grid;gap:4px;}
+.theorie-teile .fehlt{color:var(--rot);font-weight:600;}
+.warnhinweis{color:var(--rot);font-weight:700;margin:0;}
+.warnhinweis:empty{display:none;}
+.anwesenheit h3{margin:4px 0 6px;}
+

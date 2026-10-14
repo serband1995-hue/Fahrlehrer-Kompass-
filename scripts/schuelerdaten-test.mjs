@@ -143,6 +143,61 @@ await pruefe("D5", "Sehhilfe: Tippen schreibt in schueler; ein Wert aus dem Bür
     return f;
   });
 });
+await pruefe("D7", "Theorie-Besuch in der Akte: B 12/14 mit „fehlt: 5, 11“, CE (Vorbesitz B,C) Grundstoff 6 + CE 4", () => page.evaluate(() => {
+  const h = KR.todayISO();
+  _schuelerFristen.b1 = { vorbesitz: [] };
+  _theorieBesuch = { b1: ["1", "2", "3", "4", "6", "7", "8", "9", "10", "12", "13", "14"].map((l) => ({ lektion: l, datum: h })), ce1: [{ lektion: "CE1", datum: h }] };
+  routeDetail("b1");
+  const f = [], t = document.querySelector(".theorie-besuch") ? document.querySelector(".theorie-besuch").textContent : "";
+  if (!/12\/14/.test(t) || !/fehlt: 5, 11/.test(t)) f.push("B: " + t.slice(0, 120));
+  routeDetail("ce1");
+  const t2 = document.querySelector(".theorie-besuch") ? document.querySelector(".theorie-besuch").textContent : "";
+  if (!/1\/10/.test(t2) || !/Grundstoff/.test(t2) || !/Klasse CE/.test(t2)) f.push("CE: " + t2.slice(0, 120));
+  routeDetail("u1");
+  const t3 = document.querySelector(".theorie-besuch") ? document.querySelector(".theorie-besuch").textContent : "";
+  if (!/keine Pflicht-Theorie/.test(t3)) f.push("Umschreiber: " + t3.slice(0, 80));
+  return f;
+}));
+await pruefe("D8", "Anwesenheit im Theorie-Termin: Abend mit Lektion 7 wählt 7 + 8 vor, Antippen und Speichern ruft theorie_teilnahme_setzen", async () => {
+  await page.evaluate(() => {
+    const h = KR.todayISO();
+    DB.lessons = [{ id: "th1", date: h, von: "18:00", bis: "19:30", art: "theorie", sid: null, lektion: 7 }, { id: "th2", date: h, von: "19:30", bis: "21:00", art: "theorie", sid: null, lektion: 7 }];
+    window.__rpc = [];
+    const alt = window.getSupa();
+    window.getSupa = () => Object.assign({}, alt, { rpc: async (name, args) => { window.__rpc.push({ name, args });
+      if (name === "theorie_schuelerliste") return { data: [{ id: "b1", name: "Bea Erfunden", klasse: "B", fahrlehrer_id: "me" }, { id: "x9", name: "Xaver Fremd", klasse: "B", fahrlehrer_id: "ander" }], error: null };
+      if (name === "theorie_teilnahme_tag") return { data: [{ schueler_id: "x9", lektion: "7" }], error: null };
+      return { data: { ok: true, eintraege: 4 }, error: null }; } });
+    openTheorieAnwesenheit(DB.lessons[0]);
+  });
+  await page.waitForTimeout(400);
+  const f = [];
+  const sel = await page.$$eval("#taLekt .pill.sel", (b) => b.map((x) => x.dataset.k).join("+"));
+  if (sel !== "7+8") f.push("vorgewählt: " + sel);
+  if (!(await page.isChecked('#taListe input[value="x9"]'))) f.push("schon Eingetragener ist nicht angehakt");
+  await page.check('#taListe input[value="b1"]');
+  await page.fill("#taSuche", "bea"); await page.waitForTimeout(100);
+  if (await page.isVisible('#taListe input[value="x9"]')) f.push("Suche filtert nicht");
+  for (const [w, h] of [[360, 780], [780, 360]]) {
+    await page.setViewportSize({ width: w, height: h }); await page.waitForTimeout(150);
+    const b = await page.evaluate(() => { const sh = document.querySelector("#sheet"); return Math.max(document.documentElement.scrollWidth - window.innerWidth, sh.scrollWidth - sh.clientWidth); });
+    if (b > 1) f.push(`${w}×${h}: ${b} px zu breit`);
+  }
+  await page.setViewportSize({ width: 412, height: 915 });
+  await page.click("#taSpeichern"); await page.waitForTimeout(300);
+  const setz = await page.evaluate(() => window.__rpc.find((x) => x.name === "theorie_teilnahme_setzen"));
+  if (!setz || setz.args.p_lektionen.join("+") !== "7+8" || setz.args.p_schueler.slice().sort().join() !== "b1,x9") f.push("Speichern: " + JSON.stringify(setz && setz.args));
+  const lokal = await page.evaluate(() => (_theorieBesuch.b1 || []).filter((x) => x.datum === KR.todayISO()).map((x) => x.lektion).sort().join("+"));
+  if (!lokal.includes("7") || !lokal.includes("8")) f.push("Akte nicht sofort aktualisiert: " + lokal);
+  return f;
+});
+await pruefe("D9", "Theorie eintragen: Lkw-Lektion C3 wählbar und am Termin gespeichert", async () => {
+  await page.evaluate(() => { closeSheet(); DB.lessons = []; openTheorieSheet(); });
+  await page.waitForTimeout(200);
+  await page.selectOption("#thLektion", "C3");
+  await page.click("#thSave"); await page.waitForTimeout(200);
+  return page.evaluate(() => { const l = DB.lessons.filter((x) => x.art === "theorie"); return l.length === 2 && l.every((x) => x.lektion === "C3") && lektionTitel("C3") === "Kraftstrang" ? null : JSON.stringify(l.map((x) => x.lektion)); });
+});
 await pruefe("D6", "keine JS-Fehler", () => (jsFehler.length ? jsFehler.slice(0, 5) : null));
 
 await browser.close();

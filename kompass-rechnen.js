@@ -145,6 +145,50 @@
     const bis = addMonthsISO(String(s.wohnsitz_de_seit).slice(0, 10), UMSCHREIB_MONATE), tage = daysBetweenISO(heute, bis);
     return { stufe: tage < 0 ? "abgelaufen" : tage <= 30 ? "bald" : "ok", bis, tage, drittstaat: true };
   }
+  /* Theorieunterricht: Soll nach FahrschAusbO (🗣 Serband 14.10.2026, Antwort 1a „automatisch nach Gesetz“).
+     § 4 Abs. 3: Grundstoff 12 Doppelstunden, mit vorhandener Fahrerlaubnis 6. Anlage 2.8 (Zusatzstoff): B 2, C1 6,
+     C 10 (mit C1: 4), CE 4. BE und C1E: nur praktische Prüfung (§ 15 Abs. 2 FeV), keine Theorie. Umschreibung und
+     Neuerteilung: keine Ausbildungspflicht (§ 7 Abs. 1). Lektionen: 1–12 Grundstoff, 13–14 Zusatzstoff B (Degener),
+     C1–C10 Klasse C/C1, CE1–CE4 Klasse CE (Serbands Folien). */
+  const LEKT_GRUND = ["1", "2", "3", "4", "5", "6", "7", "8", "9", "10", "11", "12"], LEKT_B = ["13", "14"];
+  const LEKT_C = ["C1", "C2", "C3", "C4", "C5", "C6", "C7", "C8", "C9", "C10"], LEKT_CE = ["CE1", "CE2", "CE3", "CE4"];
+  // Weg der Lkw-Ausbildung aus dem Vorbesitz (gleiche Regel wie lkwWegVon in index.html)
+  function lkwWegAusVorbesitz(form, vorbesitz) {
+    const vb = vorbesitz || [];
+    if (form === "C") return vb.includes("C1") ? "C1" : "B";
+    if (form === "CE") return vb.includes("C") ? "C" : (vb.length ? "C+CE" : "C");
+    if (form === "C1E") return vb.includes("C1") ? "C1" : (vb.length ? "C1+C1E" : "C1");
+    return null;
+  }
+  // o: { klasse | form, weg, vorbesitz, ausbildungsart } → { pflicht, grund, teile: [{ key, titel, lektionen, soll }] }
+  function theorieSoll(o) {
+    o = o || {};
+    const art = !o.ausbildungsart || o.ausbildungsart === "neu" ? "ersterwerb" : o.ausbildungsart;
+    if (art === "umschreibung" || art === "neuerteilung") return { pflicht: false, grund: art === "umschreibung" ? "Umschreibung: keine Pflicht-Theorie" : "Neuerteilung: keine Pflicht-Theorie", teile: [] };
+    let k = String(o.klasse || o.form || "B");
+    if (["B78", "Automatik", "B197", "B96", "B+BE"].includes(k)) k = "B";
+    const vb = o.vorbesitz || [];
+    const weg = o.weg || lkwWegAusVorbesitz(k, vb);
+    if (k === "BE" || (k === "C1E" && weg !== "C1+C1E")) return { pflicht: false, grund: "Anhängerklasse: nur praktische Prüfung", teile: [] };
+    if (k === "BKF" || !["B", "C1", "C1E", "C", "CE"].includes(k)) return { pflicht: false, grund: "keine Regel hinterlegt", teile: [] };
+    const lkw = k !== "B"; // Lkw-Klassen setzen Klasse B voraus
+    const teile = [{ key: "grund", titel: "Grundstoff", lektionen: LEKT_GRUND, soll: lkw || vb.length ? 6 : 12 }];
+    if (k === "B") teile.push({ key: "B", titel: "Zusatzstoff B", lektionen: LEKT_B, soll: 2 });
+    if (k === "C1" || k === "C1E") teile.push({ key: "C", titel: "Klasse C1", lektionen: LEKT_C, soll: 6 });
+    if (k === "C" || (k === "CE" && weg === "C+CE")) teile.push({ key: "C", titel: "Klasse C", lektionen: LEKT_C, soll: vb.includes("C1") ? 4 : 10 });
+    if (k === "CE") teile.push({ key: "CE", titel: "Klasse CE", lektionen: LEKT_CE, soll: 4 });
+    return { pflicht: true, grund: null, teile };
+  }
+  // besucht: Liste der Lektionen (z. B. ["1", "2", "C3"]) → Ist je Teil, fehlende Lektionen (nur wenn alle Lektionen des Teils Pflicht sind)
+  function theorieStand(soll, besucht) {
+    const b = new Set((besucht || []).map(String));
+    const teile = (soll.teile || []).map((t) => {
+      const da = t.lektionen.filter((l) => b.has(l));
+      return Object.assign({}, t, { ist: Math.min(da.length, t.soll), fehlt: t.soll === t.lektionen.length ? t.lektionen.filter((l) => !b.has(l)) : null });
+    });
+    const ist = teile.reduce((a, t) => a + t.ist, 0), sollSumme = teile.reduce((a, t) => a + t.soll, 0);
+    return { pflicht: soll.pflicht, grund: soll.grund, teile, ist, soll: sollSumme, fertig: soll.pflicht && ist >= sollSumme };
+  }
   // Fahrcheck-Zettel (Übungs-, Sonder- und Testfahrten) verfallen 12 Monate nach dem Datum der Stunde (Kristina, 09.10.2026)
   function fcGueltigBis(datum) { return datum ? addMonthsISO(datum, 12) : null; }
   // stufe: verfallen | bald (≤60 Tage) | ok
@@ -233,7 +277,7 @@
     return out;
   }
 
-  const api = { FS_BUERO_ARTEN, pad2, hm2min, parseISO, dateISO, todayISO, ueOf, addMonthsISO, addDaysISO, daysBetweenISO, reaktFaellig, reaktNachZahlung, reaktInfo, theorieInfo, antragInfo, theorieFristInfo, umschreibInfo, istEuEwr, EU_EWR, UMSCHREIB_MONATE, fcGebucht, fcErhalten, fcGueltigBis, fcGueltigkeit, fcZeitraum, fcVorZeitraum, fcSoll, aufteilung, FAHR_ARTEN, wartetInfo };
+  const api = { FS_BUERO_ARTEN, pad2, hm2min, parseISO, dateISO, todayISO, ueOf, addMonthsISO, addDaysISO, daysBetweenISO, reaktFaellig, reaktNachZahlung, reaktInfo, theorieInfo, antragInfo, theorieFristInfo, umschreibInfo, istEuEwr, EU_EWR, UMSCHREIB_MONATE, theorieSoll, theorieStand, lkwWegAusVorbesitz, LEKT_GRUND, LEKT_B, LEKT_C, LEKT_CE, fcGebucht, fcErhalten, fcGueltigBis, fcGueltigkeit, fcZeitraum, fcVorZeitraum, fcSoll, aufteilung, FAHR_ARTEN, wartetInfo };
   if (typeof module !== "undefined" && module.exports) module.exports = api;
   else root.KR = api;
 })(typeof self !== "undefined" ? self : this);
