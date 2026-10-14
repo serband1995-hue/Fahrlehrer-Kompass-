@@ -1607,6 +1607,7 @@ function lkwKlassenWahl(x) {
 function sonderZaehlerHTML(x) {
   const fl = S.lehrer.find((l) => l.id === x.fahrlehrer_id);
   if (!fl || !fl.ohne_app || istUmschreiber(x)) return "";
+  if (!["B", "B197", "B78", "BE", "C1", "C1E", "C", "CE"].includes(klasseVon(x) || "B")) return ""; // Soll nur für diese Klassen hinterlegt
   const soll = KR.sonderSoll(formAusKlasse(klasseVon(x) || "B"), lkwWegBuero(x)), heute = KR.todayISO(), ist = { ueberland: 0, autobahn: 0, nacht: 0 };
   const jetztMin = new Date().getHours() * 60 + new Date().getMinutes();
   let ohneArt = 0;
@@ -1990,7 +1991,8 @@ function terminDialog(id, vorgabe) {
       const zus = {};
       if (!tdlg.querySelector("#sonderArtFeld").hidden) zus.sonderArt = d.sonderArt;
       if (!tdlg.querySelector("#lkwKlasseFeld").hidden) zus.lkwKlasse = d.lkwKlasse;
-      werte.payload = Object.assign({}, t.payload || {}, zus);
+      const neuester = id ? (S.termine.find((y) => y.id === id) || t) : t; // inzwischen neu geladen? dann dessen payload (Unterschrift, Fahrcheck …)
+      werte.payload = Object.assign({}, neuester.payload || {}, zus);
     }
     if (id) {
       const res = await supa.from("kalender_termine").update(werte).eq("id", id).select("*");
@@ -2570,6 +2572,7 @@ function monatKurz(m) { return KR.parseISO(m + "-01").toLocaleDateString("de-DE"
 function praxisErgebnisse() {
   const map = {};
   for (const e of S.pruefungen) {
+    if ((e.payload || {}).b197) continue; // B197-Schaltkompetenz ist keine Praxisprüfung (wie in der App)
     const ok = e.result === "pass" || e.result === "bestanden", nein = e.result === "fail" || e.result === "nicht_bestanden";
     if ((ok || nein) && e.datum) map[e.schueler_id + "|" + e.datum] = { datum: e.datum, ok };
   }
@@ -2642,6 +2645,7 @@ function terminPasst(t, f) {
 function pruefErgebnisse(art) {
   const map = {};
   if (art === "praxis") for (const e of S.pruefungen) {
+    if ((e.payload || {}).b197) continue; // B197-Schaltkompetenz ist keine Praxisprüfung (wie in der App)
     const ok = e.result === "pass" || e.result === "bestanden", nein = e.result === "fail" || e.result === "nicht_bestanden";
     if ((ok || nein) && e.datum) map[e.schueler_id + "|" + e.datum] = { datum: e.datum, ok, schueler_id: e.schueler_id, fahrlehrer_id: e.fahrlehrer_id || null, klasse: null, pruefer: null, quelle: "App" };
   }
@@ -2958,7 +2962,7 @@ function fahrlehrerAkte(id) {
   const vor12 = KR.addDaysISO(heute, -365);
   const erg = pruefErgebnisse("praxis").filter((e) => e.datum >= vor12 && (e.fahrlehrer_id || (S.schueler.find((x) => x.id === e.schueler_id) || {}).fahrlehrer_id) === id);
   const ok = erg.filter((e) => e.ok).length;
-  const naechste = S.pruefungstermine.filter((x) => x.fahrlehrer_id === id && x.datum >= heute && x.status === "geplant").length;
+  const naechste = S.pruefungstermine.filter((x) => x.fahrlehrer_id === id && x.art === "praxis" && x.datum >= heute && x.status === "geplant").length;
   const fk = p.fuehrerschein_klassen || [], zs = p.fahrlehrer_zusatz || [];
   // Altbestand: nur Klassen eingetragen, noch keine Fahrlehrerlaubnis → aus den Klassen vorschlagen, damit Speichern nichts wegnimmt
   // (A, CE und DE gibt es nur zusätzlich zu BE, FahrlG § 1)
@@ -2972,7 +2976,7 @@ function fahrlehrerAkte(id) {
       <div class="kachel"><div class="wert">${warte}</div><div class="name">auf der Warteliste</div></div>
       <div class="kachel"><div class="wert">${zahlDE(ue)}</div><div class="name">UE im ${esc(monatKurz(monat))}</div></div>
       <div class="kachel${erg.length ? " gruen" : ""}"><div class="wert">${erg.length ? Math.round(ok / erg.length * 100) + " %" : "–"}</div><div class="name">Praxis bestanden, 12 Monate (${ok} von ${erg.length})</div></div>
-      <div class="kachel"><div class="wert">${naechste}</div><div class="name">Prüfungen geplant</div></div>
+      <div class="kachel"><div class="wert">${naechste}</div><div class="name">Praxisprüfungen geplant</div></div>
     </div>
     ${fristen.filter((x) => x.stufe !== "ok").map((x) => `<p class="fl-warnung ${x.stufe}">${x.stufe === "abgelaufen" ? "Abgelaufen" : "Läuft bald ab"}: ${esc(x.titel)} ${x.stufe === "abgelaufen" ? "seit" : "am"} ${esc(datumDE(x.bis))}</p>`).join("")}
     <div class="formular">
