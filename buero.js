@@ -10,6 +10,11 @@ const SUPA_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsI
 const AGB_VERSION = "1.0";
 const ROLLEN = { super_admin: "Super-Admin", fahrschule_admin: "Fahrschul-Leitung", buero: "Büro" };
 const NEU_LADEN_MS = 120000;
+// Bis zu 10 Minuten nach einem Update kann der Browser noch die alte kompass-rechnen.js haben: dann neue Regeln still ersetzen
+if (!KR.theorieFristInfo) KR.theorieFristInfo = () => ({ stufe: "ohne_datum", ablauf: null, tage: null });
+if (!KR.umschreibInfo) KR.umschreibInfo = () => ({ stufe: "kein", bis: null, tage: null, drittstaat: false });
+if (!KR.EU_EWR) KR.EU_EWR = [];
+if (!KR.DRITTSTAATEN) KR.DRITTSTAATEN = [];
 
 const ARTEN = {
   fahrstunde: "Fahrstunde", nacht: "Nachtfahrt", sonder: "Sonderfahrt", pruefung: "Prüfung", theorie: "Theorie",
@@ -200,6 +205,11 @@ function renderHeute() {
   if (beiGesperrten) aufgaben.push(`<a class="aufgabe rot" href="#schueler"><b>${beiGesperrten}</b> Schüler ${beiGesperrten === 1 ? "gehört" : "gehören"} zu einem gesperrten Fahrlehrer: neu zuweisen (Bereich „Auslastung“ zeigt, wer Platz hat)</a>`);
   if (f.antragAb) aufgaben.push(`<a class="aufgabe rot" href="#fristen?ansicht=antrag"><b>${f.antragAb}</b> ${f.antragAb === 1 ? "Führerscheinantrag" : "Führerscheinanträge"} abgelaufen: neu stellen</a>`);
   if (f.antragBald) aufgaben.push(`<a class="aufgabe gelb" href="#fristen?ansicht=antrag"><b>${f.antragBald}</b> ${f.antragBald === 1 ? "Führerscheinantrag läuft" : "Führerscheinanträge laufen"} in den nächsten 60 Tagen ab</a>`);
+  if (f.fristAb) aufgaben.push(`<a class="aufgabe rot" href="#fristen?ansicht=antrag"><b>${f.fristAb}</b> ${f.fristAb === 1 ? "Schüler hat" : "Schüler haben"} die Theorie-Frist der Behörde überschritten</a>`);
+  if (f.fristBald) aufgaben.push(`<a class="aufgabe gelb" href="#fristen?ansicht=antrag"><b>${f.fristBald}</b> Theorie-Frist${f.fristBald === 1 ? " läuft" : "en laufen"} in 30 Tagen ab</a>`);
+  if (f.umPruefen) aufgaben.push(`<a class="aufgabe gelb" href="#fristen?ansicht=umschreiber"><b>${f.umPruefen}</b> Umschreiber: Land oder „Wohnsitz seit“ prüfen (sonst keine 6-Monats-Warnung)</a>`);
+  if (f.umAb) aufgaben.push(`<a class="aufgabe rot" href="#fristen?ansicht=umschreiber"><b>${f.umAb}</b> Umschreiber: ausländischer Führerschein gilt nicht mehr (darf nicht selbst fahren)</a>`);
+  if (f.umBald) aufgaben.push(`<a class="aufgabe gelb" href="#fristen?ansicht=umschreiber"><b>${f.umBald}</b> Umschreiber: ausländischer Führerschein gilt nur noch bis zu 30 Tage</a>`);
   if (f.ohneDatum) aufgaben.push(`<a class="aufgabe" href="#fristen?ansicht=ohne"><b>${f.ohneDatum}</b> Schüler ohne Vertragsdatum</a>`);
   // 1) Für dich: Aufgaben an mich (oder an alle), Überfälliges und Dringendes zuerst
   const alleZeigen = fristenParam("alle") === "1";
@@ -284,7 +294,7 @@ function arbeitendeSchueler() { return aktiveSchueler().filter((x) => !wartetArt
 function wartendeSchueler() { return aktiveSchueler().filter((x) => wartetArt(x)); }
 function zaehleFristen() {
   const heute = KR.todayISO();
-  const z = { gesperrt: 0, pruefen: 0, bald: 0, theorie: 0, ohneDatum: 0, handeln: 0, antragAb: 0, antragBald: 0 };
+  const z = { gesperrt: 0, pruefen: 0, bald: 0, theorie: 0, ohneDatum: 0, handeln: 0, antragAb: 0, antragBald: 0, fristAb: 0, fristBald: 0, umAb: 0, umBald: 0, umPruefen: 0 };
   for (const s of aktiveSchueler()) {
     const r = KR.reaktInfo(s, heute), t = KR.theorieInfo(s, heute);
     if (r.stufe === "gesperrt") z.gesperrt++;
@@ -295,8 +305,11 @@ function zaehleFristen() {
     const a = KR.antragInfo(s, heute);
     if (a.stufe === "abgelaufen") z.antragAb++;
     else if (a.stufe === "bald") z.antragBald++;
+    const tf = KR.theorieFristInfo(s, heute), u = KR.umschreibInfo(s, heute);
+    if (tf.stufe === "abgelaufen") z.fristAb++; else if (tf.stufe === "bald") z.fristBald++;
+    if (u.stufe === "abgelaufen") z.umAb++; else if (u.stufe === "bald") z.umBald++; else if (u.stufe === "land_pruefen" || u.stufe === "ohne_datum") z.umPruefen++;
   }
-  z.handeln = z.gesperrt + z.pruefen + z.antragAb;
+  z.handeln = z.gesperrt + z.pruefen + z.antragAb + z.fristAb + z.umAb + z.umBald;
   return z;
 }
 const REAKT_TEXT = {
@@ -314,7 +327,9 @@ function fristenParam(name) {
   if (!m) return "";
   try { return decodeURIComponent(m[1].replace(/\+/g, " ")); } catch (e) { return ""; } // URLSearchParams schreibt Leerzeichen als „+“; kaputte Adresse ignorieren
 }
-const FRISTEN_ANSICHTEN = [["handeln", "Handlungsbedarf"], ["alle", "Alle Schüler"], ["ohne", "Ohne Vertragsdatum"], ["theorie", "Theorie-Fristen"], ["antrag", "Führerscheinantrag"]];
+const FRISTEN_ANSICHTEN = [["handeln", "Handlungsbedarf"], ["alle", "Alle Schüler"], ["ohne", "Ohne Vertragsdatum"], ["theorie", "Theorie-Fristen"], ["antrag", "Antrag & Frist"], ["umschreiber", "Umschreiber"]];
+const FRIST_TEXT = { abgelaufen: ["rot", "Behörden-Frist Theorie abgelaufen"], bald: ["gelb", "Behörden-Frist Theorie bald"], demnaechst: ["blau", "Behörden-Frist Theorie in 60 Tagen"], ok: ["gruen", "Behörden-Frist Theorie ok"], erledigt: ["gruen", "Theorie bestanden"], ohne_datum: ["", "–"] };
+const UMSCHREIB_TEXT = { abgelaufen: ["rot", "darf nicht mehr fahren"], bald: ["gelb", "darf bald nicht mehr fahren"], ok: ["gruen", "darf fahren"], ohne_datum: ["gelb", "Wohnsitz-Datum fehlt"], eu: ["gruen", "EU/EWR, keine Frist"], kein: ["", "Führerschein fehlt"], land_pruefen: ["gelb", "Land prüfen"] };
 const ANTRAG_TEXT = { abgelaufen: ["rot", "abgelaufen · neu stellen"], bald: ["gelb", "läuft bald ab"], ok: ["gruen", "gültig"], ohne_datum: ["", "Antragsdatum fehlt"] };
 const REAKT_RANG = { gesperrt: 0, pruefen_faellig: 1, bald: 2, demnaechst: 3, ohne_datum: 4, ok: 5, befreit: 6 };
 function renderFristen() {
@@ -328,33 +343,50 @@ function renderFristen() {
     <div class="kachel${f.bald ? " gold" : ""}"><div class="wert">${f.bald}</div><div class="name">in 30 Tagen fällig</div></div>
     <div class="kachel"><div class="wert">${f.ohneDatum}</div><div class="name">ohne Vertragsdatum</div></div>
     <div class="kachel${f.antragAb ? " rot" : (f.antragBald ? " gold" : "")}"><div class="wert">${f.antragAb + f.antragBald}</div><div class="name">Führerscheinanträge abgelaufen oder bald (${f.antragAb} abgelaufen)</div></div>
+    ${f.fristAb + f.fristBald + f.umAb + f.umBald ? `<a class="kachel${f.fristAb || f.umAb ? " rot" : " gold"}" href="#fristen?ansicht=${f.fristAb + f.fristBald ? "antrag" : "umschreiber"}"><div class="wert">${f.fristAb + f.fristBald + f.umAb + f.umBald}</div><div class="name">Theorie-Frist oder Umschreiber-Frist abgelaufen oder bald</div></a>` : ""}
   </div>`;
-  let liste = aktiveSchueler().map((s) => ({ s, r: KR.reaktInfo(s, heute), t: KR.theorieInfo(s, heute), a: KR.antragInfo(s, heute) }));
-  if (ansicht === "handeln") liste = liste.filter((x) => ["gesperrt", "pruefen_faellig", "bald"].includes(x.r.stufe) || ["abgelaufen", "bald"].includes(x.t.stufe) || x.a.stufe === "abgelaufen");
+  let liste = aktiveSchueler().map((s) => ({ s, r: KR.reaktInfo(s, heute), t: KR.theorieInfo(s, heute), a: KR.antragInfo(s, heute), tf: KR.theorieFristInfo(s, heute), u: KR.umschreibInfo(s, heute) }));
+  if (ansicht === "handeln") liste = liste.filter((x) => ["gesperrt", "pruefen_faellig", "bald"].includes(x.r.stufe) || ["abgelaufen", "bald"].includes(x.t.stufe) || x.a.stufe === "abgelaufen"
+    || ["abgelaufen", "bald"].includes(x.tf.stufe) || x.u.stufe === "bald" || x.u.stufe === "abgelaufen");
   const ohneAntrag = liste.filter((x) => x.a.stufe === "ohne_datum").length;
-  if (ansicht === "antrag") liste = liste.filter((x) => x.a.stufe !== "ohne_datum");
+  if (ansicht === "antrag") liste = liste.filter((x) => x.a.stufe !== "ohne_datum" || !["ohne_datum", "erledigt"].includes(x.tf.stufe));
+  if (ansicht === "umschreiber") liste = liste.filter((x) => istUmschreiber(x.s));
   if (ansicht === "ohne") liste = liste.filter((x) => x.r.stufe === "ohne_datum");
   if (ansicht === "theorie") liste = liste.filter((x) => x.t.stufe !== "ohne_datum");
-  if (suche) liste = liste.filter((x) => (x.s.name || "").toLowerCase().includes(suche) || (x.s.telefon || "").replace(/\s/g, "").includes(suche.replace(/\s/g, "")));
+  if (suche) liste = liste.filter((x) => (x.s.name || "").toLowerCase().includes(suche) || (x.s.telefon || "").replace(/\s/g, "").includes(suche.replace(/\s/g, ""))
+    || (x.s.bewerbernummer || "").toLowerCase().replace(/\s/g, "").includes(suche.replace(/\s/g, "")));
   const ANTRAG_RANG = { abgelaufen: 0, bald: 1, ok: 2, ohne_datum: 3 };
   if (ansicht === "theorie") liste.sort((a, b) => (a.t.tage ?? 99999) - (b.t.tage ?? 99999));
+  else if (ansicht === "umschreiber") liste.sort((a, b) => (a.u.tage ?? 99999) - (b.u.tage ?? 99999) || String(a.s.name).localeCompare(String(b.s.name), "de"));
   else if (ansicht === "antrag") liste.sort((a, b) => (ANTRAG_RANG[a.a.stufe] - ANTRAG_RANG[b.a.stufe]) || ((a.a.tage ?? 99999) - (b.a.tage ?? 99999)) || String(a.s.name).localeCompare(String(b.s.name), "de"));
   else liste.sort((a, b) => (REAKT_RANG[a.r.stufe] - REAKT_RANG[b.r.stufe]) || ((a.r.tage ?? 99999) - (b.r.tage ?? 99999)) || String(a.s.name).localeCompare(String(b.s.name), "de"));
   const tabs = FRISTEN_ANSICHTEN.map(([id, name]) => `<a class="tab" href="#fristen?ansicht=${id}"${id === ansicht ? ' aria-current="page"' : ""}>${name}</a>`).join("");
-  const antragZeilen = ansicht !== "antrag" ? "" : liste.map(({ s, a }) => {
-    const [af, at] = ANTRAG_TEXT[a.stufe];
+  const antragZeilen = ansicht !== "antrag" ? "" : liste.map(({ s, a, tf }) => {
+    const [af, at] = ANTRAG_TEXT[a.stufe], [ff, ft] = FRIST_TEXT[tf.stufe];
     return `<tr>
       <td><b>${esc(s.name)}</b><div class="unter">${esc(artName(s.ausbildungsart))}${s.klasse ? " · " + esc(s.klasse) : ""}</div><div class="unter nur-unter">${esc(lehrerName(s.fahrlehrer_id))}</div></td>
       <td class="nur-sehr-breit">${esc(lehrerName(s.fahrlehrer_id))}</td>
       <td class="zeitspalte">${s.antrag_am ? esc(datumDE(s.antrag_am)) : '<span class="leise">fehlt</span>'}</td>
       <td class="zeitspalte">${a.ablauf ? esc(datumDE(a.ablauf)) : "–"}${a.grund === "theorie" ? '<div class="unter">verlängert durch Theorie</div>' : ""}</td>
-      <td><span class="marke-pill ${af}">${at}</span></td>
+      <td><span class="marke-pill ${af}">${at}</span>${s.theorie_frist_bis ? `<div class="unter"><span class="marke-pill ${ff}">${ft}</span> ${esc(datumDE(s.theorie_frist_bis))}</div>` : ""}</td>
       <td class="aktionen"><div class="aktionen-box">${a.stufe === "abgelaufen" || a.stufe === "bald" ? `<button class="knopf klein haupt" data-antragneu="${esc(s.id)}" type="button">Neu eingereicht</button>` : ""}<button class="knopf klein" data-fristen="${esc(s.id)}" type="button">Bearbeiten</button></div></td>
     </tr>`;
   }).join("");
-  const zeilen = liste.map(({ s, r, t, a }) => {
+  const umschreibZeilen = ansicht !== "umschreiber" ? "" : liste.map(({ s, u }) => {
+    const [uf, ut] = UMSCHREIB_TEXT[u.stufe];
+    const laender = [...new Set((s.auslands_fs || []).map((f) => f.land).filter(Boolean))];
+    return `<tr>
+      <td><b>${esc(s.name)}</b><div class="unter">${esc(lehrerName(s.fahrlehrer_id))}</div></td>
+      <td>${laender.length ? esc(laender.join(", ")) : '<span class="leise">fehlt</span>'}${u.drittstaat ? '<div class="unter">außerhalb der EU</div>' : ""}</td>
+      <td class="zeitspalte nur-breit">${s.wohnsitz_de_seit ? esc(datumDE(s.wohnsitz_de_seit)) : '<span class="leise">–</span>'}</td>
+      <td><span class="marke-pill ${uf}">${ut}</span>${u.bis ? `<div class="unter">${u.tage < 0 ? "seit " : "bis "}${esc(datumDE(u.bis))}</div>` : ""}</td>
+      <td class="nur-breit">${s.uebersetzung_vorhanden ? '<span class="marke-pill gruen">liegt vor</span>' : '<span class="leise">nein</span>'}</td>
+      <td class="aktionen"><div class="aktionen-box"><button class="knopf klein" data-umschueler="${esc(s.id)}" type="button">Bearbeiten</button></div></td>
+    </tr>`;
+  }).join("");
+  const zeilen = liste.map(({ s, r, t, a, tf, u }) => {
     const [rf, rt] = reaktText(s, r);
-    const [tf, tt] = THEORIE_TEXT[t.stufe];
+    const [tfarbe, tt] = THEORIE_TEXT[t.stufe];
     const rDatum = r.faellig ? `<div class="unter">${r.tage < 0 ? "seit " + datumDE(r.faellig) : "am " + datumDE(r.faellig)}</div>` : "";
     const tDatum = t.ablauf ? `<div class="unter">${t.tage < 0 ? "seit " : "bis "}${datumDE(t.ablauf)}${t.grund === "praxis" ? " (Praxisprüfung)" : ""}</div>` : "";
     let zahlen = (r.stufe === "gesperrt" || r.stufe === "pruefen_faellig" || r.stufe === "bald")
@@ -365,15 +397,17 @@ function renderFristen() {
       <td>${esc(lehrerName(s.fahrlehrer_id))}</td>
       <td class="zeitspalte nur-breit">${s.vertrag_am ? esc(datumDE(s.vertrag_am)) : '<span class="leise">fehlt</span>'}</td>
       <td><span class="marke-pill ${rf}">${rt}</span>${rDatum}</td>
-      <td><span class="marke-pill ${tf}">${tt}</span>${tDatum}${a.stufe === "abgelaufen" || a.stufe === "bald" ? `<div class="unter"><span class="marke-pill ${ANTRAG_TEXT[a.stufe][0]}">Antrag ${a.stufe === "abgelaufen" ? "abgelaufen" : "bis " + esc(datumDE(a.ablauf))}</span></div>` : ""}</td>
+      <td><span class="marke-pill ${tfarbe}">${tt}</span>${tDatum}${tf.stufe === "abgelaufen" || tf.stufe === "bald" ? `<div class="unter"><span class="marke-pill ${FRIST_TEXT[tf.stufe][0]}">${FRIST_TEXT[tf.stufe][1]}</span> ${esc(datumDE(tf.ablauf))}</div>` : ""}${u.stufe === "abgelaufen" || u.stufe === "bald" ? `<div class="unter"><span class="marke-pill ${UMSCHREIB_TEXT[u.stufe][0]}">Umschreiber: ${UMSCHREIB_TEXT[u.stufe][1]}</span></div>` : ""}${a.stufe === "abgelaufen" || a.stufe === "bald" ? `<div class="unter"><span class="marke-pill ${ANTRAG_TEXT[a.stufe][0]}">Antrag ${a.stufe === "abgelaufen" ? "abgelaufen" : "bis " + esc(datumDE(a.ablauf))}</span></div>` : ""}</td>
       <td class="aktionen"><div class="aktionen-box">${zahlen}<button class="knopf klein" data-fristen="${esc(s.id)}" type="button">Bearbeiten</button></div></td>
     </tr>`;
   }).join("");
   return kacheln + `<div class="karte">
     <div class="karte-kopf"><div class="tabs">${tabs}</div>
-      <input type="search" class="suche" id="fristenSuche" placeholder="Name oder Telefon suchen" value="${esc(fristenParam("suche"))}" aria-label="Schüler suchen"></div>
+      <input type="search" class="suche" id="fristenSuche" placeholder="Name, Telefon, Bewerbernr." value="${esc(fristenParam("suche"))}" aria-label="Schüler suchen"></div>
     ${ansicht === "antrag" ? (liste.length ? `<table class="tabelle"><thead><tr><th>Schüler</th><th class="nur-sehr-breit">Fahrlehrer</th><th>Eingereicht</th><th>Gültig bis</th><th>Status</th><th></th></tr></thead><tbody>${antragZeilen}</tbody></table><p class="leise klein">Der Führerscheinantrag bei der Führerscheinstelle gilt 12 Monate. Nach bestandener Theorieprüfung gilt er 12 Monate ab dem Prüfungsdatum. Danach muss er neu gestellt werden: „Neu eingereicht“ setzt das heutige Datum. ${ohneAntrag} aktive Schüler haben noch kein Antragsdatum (im Fenster „Bearbeiten“ eintragen).</p>` : `<p class="leer">Keine Schüler.</p>`) : ""}
-    ${ansicht === "antrag" ? "" : liste.length ? `<table class="tabelle"><thead><tr><th>Schüler</th><th>Fahrlehrer</th><th class="nur-breit">Vertrag</th><th>Reaktivierung</th><th>Theorie</th><th></th></tr></thead><tbody>${zeilen}</tbody></table>`
+    ${ansicht === "umschreiber" ? (liste.length ? `<table class="tabelle"><thead><tr><th>Schüler</th><th>Land</th><th class="nur-breit">Wohnsitz seit</th><th>Führerschein</th><th class="nur-breit">Übersetzung</th><th></th></tr></thead><tbody>${umschreibZeilen}</tbody></table>
+      <p class="leise klein">Führerscheine aus Ländern außerhalb der EU/des EWR gelten in Deutschland nur 6 Monate ab Wohnsitz (§ 29 FeV). Danach darf der Schüler nicht mehr selbst fahren, bis der deutsche Führerschein da ist. Verlängern kann die Behörde nur, wenn er höchstens 12 Monate in Deutschland bleibt, bei Umschreibern also meist nicht.</p>` : `<p class="leer">Keine Umschreiber.</p>`) : ""}
+    ${ansicht === "antrag" || ansicht === "umschreiber" ? "" : liste.length ? `<table class="tabelle"><thead><tr><th>Schüler</th><th>Fahrlehrer</th><th class="nur-breit">Vertrag</th><th>Reaktivierung</th><th>Theorie</th><th></th></tr></thead><tbody>${zeilen}</tbody></table>`
       : `<p class="leer">${ansicht === "handeln" ? "Kein Handlungsbedarf. Sehr gut." : "Keine Schüler in dieser Ansicht."}</p>`}
     <p class="leise klein">Reaktivierung: ${euro(reaktBetrag())}, fällig 12 Monate nach Vertragsabschluss und dann jährlich. „Gesperrt“ heißt: keine weiteren Leistungen, bis bezahlt ist. Jede Änderung wird mit Name und Uhrzeit protokolliert.</p>
   </div>${renderBueroEinstellungen()}`;
@@ -423,6 +457,7 @@ function bindeFristen(ziel) {
   ziel.querySelectorAll("[data-zahlung]").forEach((b) => b.addEventListener("click", () => zahlungErhalten(b.dataset.zahlung)));
   ziel.querySelectorAll("[data-nichtbezahlt]").forEach((b) => b.addEventListener("click", () => nichtBezahlt(b.dataset.nichtbezahlt)));
   ziel.querySelectorAll("[data-fristen]").forEach((b) => b.addEventListener("click", () => fristenDialog(b.dataset.fristen)));
+  ziel.querySelectorAll("[data-umschueler]").forEach((b) => b.addEventListener("click", () => schuelerDialog(b.dataset.umschueler)));
   ziel.querySelectorAll("[data-antragneu]").forEach((b) => b.addEventListener("click", async () => {
     b.disabled = true;
     if (!(await speichereSchueler(b.dataset.antragneu, { antrag_am: KR.todayISO() }, "Antrag als neu eingereicht eingetragen ✓"))) b.disabled = false;
@@ -490,6 +525,7 @@ function fristenDialog(id) {
       <label>Nächste Reaktivierung fällig am (nur bei „bezahlt“)<input type="date" name="reakt_bezahlt_bis" value="${esc(s.reakt_bezahlt_bis || r.faellig || "")}"${s.reakt_status === "bezahlt" ? "" : " disabled"}></label>
       <label>Notiz (z. B. Grund für „befreit“)<input type="text" name="reakt_notiz" maxlength="200" value="${esc(s.reakt_notiz || "")}"></label>
       <label>Führerscheinantrag eingereicht am<span class="feld-mit-knopf"><input type="date" name="antrag_am" value="${esc(s.antrag_am || "")}"><button type="button" class="knopf klein" id="antragHeute">heute</button></span></label>
+      <label>Theorie-Frist bis (laut Behörde)<input type="date" name="theorie_frist_bis" value="${esc(s.theorie_frist_bis || "")}"></label>
       <label>Theorieunterricht abgeschlossen am<input type="date" name="theorie_abgeschlossen_am" value="${esc(s.theorie_abgeschlossen_am || "")}"></label>
       <label>Theorieprüfung bestanden am<input type="date" name="theorie_bestanden_am" value="${esc(s.theorie_bestanden_am || "")}"></label>
     </div>
@@ -506,6 +542,7 @@ function fristenDialog(id) {
       theorie_abgeschlossen_am: d.theorie_abgeschlossen_am || null,
       theorie_bestanden_am: d.theorie_bestanden_am || null,
       antrag_am: d.antrag_am || null,
+      theorie_frist_bis: d.theorie_frist_bis || null,
     };
     if (werte.reakt_status === "bezahlt" && !werte.reakt_bezahlt_bis) { toast("Bitte das Datum der nächsten Fälligkeit eintragen.", true); return false; }
     if (werte.reakt_status === "befreit" && !werte.reakt_notiz) { toast("Bitte einen Grund für „befreit“ eintragen.", true); return false; }
@@ -519,7 +556,9 @@ function fristenDialog(id) {
   fdlg.querySelectorAll("input[name=reakt_status]").forEach((r) => r.addEventListener("change", () => { faellig.disabled = r.value !== "bezahlt" || !r.checked; }));
   ladeProtokoll("schueler", id);
 }
-const FELD_NAMEN = { vertrag_am: "Vertragsdatum", klasse: "Klasse", ausbildungsart: "Ausbildungsart", reakt_status: "Reaktivierung", reakt_bezahlt_bis: "fällig am", reakt_notiz: "Notiz", theorie_abgeschlossen_am: "Theorie abgeschlossen", theorie_bestanden_am: "Theorieprüfung bestanden", praxis_bestanden_am: "Praxisprüfung bestanden", antrag_am: "Führerscheinantrag eingereicht", reakt_betrag: "Reaktivierung bezahlt (€)", b197_testfahrt_am: "B197 Testfahrt abgegeben", inaktiv_seit: "Inaktiv seit" };
+const FELD_NAMEN = { vertrag_am: "Vertragsdatum", klasse: "Klasse", ausbildungsart: "Ausbildungsart", reakt_status: "Reaktivierung", reakt_bezahlt_bis: "fällig am", reakt_notiz: "Notiz", theorie_abgeschlossen_am: "Theorie abgeschlossen", theorie_bestanden_am: "Theorieprüfung bestanden", praxis_bestanden_am: "Praxisprüfung bestanden", antrag_am: "Führerscheinantrag eingereicht", reakt_betrag: "Reaktivierung bezahlt (€)", b197_testfahrt_am: "B197 Testfahrt abgegeben", inaktiv_seit: "Inaktiv seit",
+  bewerbernummer: "Bewerbernummer", theorie_frist_bis: "Theorie-Frist", sehhilfe: "Sehhilfe", vorbesitz: "Vorbesitz", auslands_fs: "Ausländischer Führerschein",
+  wohnsitz_de_seit: "Wohnsitz in Deutschland seit", uebersetzung_vorhanden: "Übersetzung liegt vor" };
 async function ladeProtokoll(tabelle, id) {
   const ziel = $("protokoll");
   const res = await supa.from("aenderungsprotokoll").select("*").eq("tabelle", tabelle).eq("datensatz_id", id).order("geaendert_am", { ascending: false }).limit(20);
@@ -529,7 +568,12 @@ async function ladeProtokoll(tabelle, id) {
     // Gemeinsames Büro-Konto ohne PIN (z. B. aus der Fahrschul-Ansicht der App): kein Name bekannt
     const wer = p.bearbeiter || (S.lehrer.find((l) => l.id === p.geaendert_von) || {}).name || (p.geaendert_von === S.user.id ? (werNoetig() ? "Büro (ohne PIN)" : "du") : "Büro");
     const wann = new Date(p.geaendert_am).toLocaleString("de-DE", { dateStyle: "short", timeStyle: "short" });
-    const wert = (v) => (/^\d{4}-\d\d-\d\d$/.test(v || "") ? datumDE(v) : (v || "–"));
+    const wert = (v) => {
+      if (p.feld === "auslands_fs") return v ? "(Angaben)" : "–"; // Führerscheinnummern nicht im Verlauf ausschreiben
+      if (v === "true") return "ja"; if (v === "false") return "nein";
+      if (/^\{.*\}$/.test(v || "")) return v.slice(1, -1).split(",").join(", ") || "–";
+      return /^\d{4}-\d\d-\d\d$/.test(v || "") ? datumDE(v) : (v || "–");
+    };
     return `<li>${esc(wann)} · ${esc(wer)}: ${esc(FELD_NAMEN[p.feld] || p.feld)} ${esc(wert(p.alt))} → ${esc(wert(p.neu))}</li>`;
   }).join("");
   ziel.innerHTML = zeilen ? `<h3>Verlauf</h3><ul>${zeilen}</ul>` : `<p class="leise klein">Noch keine Änderungen protokolliert.</p>`;
@@ -1069,7 +1113,8 @@ function renderSchueler() {
   if (notizF) liste = liste.filter((x) => { const o = offeneNotizen(x.id); return notizF === "offen" ? o.length > 0 : o.some((n) => !S.gelesen.some((g) => g.notiz_id === n.id)); });
   if (lehrerFilter === "ohne") liste = liste.filter((x) => !x.fahrlehrer_id);
   else if (lehrerFilter) liste = liste.filter((x) => x.fahrlehrer_id === lehrerFilter);
-  if (suche) liste = liste.filter((x) => (x.name || "").toLowerCase().includes(suche) || (x.telefon || "").replace(/\s/g, "").includes(suche.replace(/\s/g, "")));
+  if (suche) liste = liste.filter((x) => (x.name || "").toLowerCase().includes(suche) || (x.telefon || "").replace(/\s/g, "").includes(suche.replace(/\s/g, ""))
+    || (x.bewerbernummer || "").toLowerCase().replace(/\s/g, "").includes(suche.replace(/\s/g, "")));
   liste.sort((a, b) => String(a.name).localeCompare(String(b.name), "de"));
   const heute = KR.todayISO();
   const naechster = {};
@@ -1100,7 +1145,7 @@ function renderSchueler() {
     <div class="tabs" style="margin-bottom:12px">${sichtTabs}</div>
     <div class="karte-kopf">
       <div class="knopfreihe">${klassenFilter}<select class="suche" id="sNotiz" aria-label="Notizen filtern"><option value="">Alle Notizen</option><option value="offen"${notizF === "offen" ? " selected" : ""}>Mit offener Notiz</option><option value="ungelesen"${notizF === "ungelesen" ? " selected" : ""}>Notiz noch nicht gelesen</option></select><select class="suche" id="sLehrer" aria-label="Fahrlehrer filtern">${lehrerOpt}</select>
-        <input type="search" class="suche" id="sSuche" placeholder="Name oder Telefon suchen" value="${esc(fristenParam("suche"))}" aria-label="Schüler suchen"></div>
+        <input type="search" class="suche" id="sSuche" placeholder="Name, Telefon, Bewerbernr." value="${esc(fristenParam("suche"))}" aria-label="Schüler suchen"></div>
       <button class="knopf haupt" id="sNeu" type="button">+ Schüler anlegen</button>
     </div>
     <p class="leise klein">${liste.length} Schüler${sicht === "inaktiv" ? " (Archiv: bestanden oder nicht mehr dabei; überall ausgeblendet, zählen nicht bei Fristen, Reaktivierung und Auslastung)" : ""}${sicht === "warte" ? " (warten auf Theorie oder Praxisprüfung; zählen nicht in der Auslastung. Wer auf die Praxisprüfung wartet, ist wieder aktiv, sobald eine neue Fahrstunde oder ein Prüfungstermin im Kalender steht. Die Pause „wartet auf Theorie“ hebt der Fahrlehrer in seiner App auf. Prüfungstermine, die ein Fahrlehrer nur in seiner App einträgt, sieht das Büro erst, wenn sie im Kalender stehen.)" : ""}</p>
@@ -1375,6 +1420,106 @@ function bindeHeute(ziel) {
   }));
   ziel.querySelectorAll("[data-hagschueler]").forEach((b) => b.addEventListener("click", () => schuelerDialog(b.dataset.hagschueler)));
 }
+/* ---------- Behörde, Vorbesitz, Umschreiber (🗣 Serband 14.10.2026) ----------
+   Spalten in schueler: sichtbar nur für Büro, Leitung und den eigenen Fahrlehrer (Regeln der Tabelle). */
+const VORBESITZ_KLASSEN = ["AM", "A1", "A2", "A", "B", "BE", "C1", "C1E", "C", "CE", "D1", "D1E", "D", "DE", "L", "T"];
+const LAENDER = KR.EU_EWR.concat(KR.DRITTSTAATEN).sort((a, b) => a.localeCompare(b, "de"));
+function istUmschreiber(x) { return artKey(x.ausbildungsart) === "umschreibung" || !!(x.ausbildung && x.ausbildung.umschreiber); }
+function sehhilfeVon(x) { return x.sehhilfe != null ? x.sehhilfe : (x.ausbildung && x.ausbildung.sehhilfe ? true : null); }
+function afsZeileHTML(f) {
+  f = f || {};
+  return `<div class="afs-zeile">
+      <label>Land<input type="text" data-afs="land" maxlength="60" list="laenderListe" value="${esc(f.land || "")}"></label>
+      <label>Klasse<input type="text" data-afs="klasse" maxlength="20" value="${esc(f.klasse || "")}" placeholder="z. B. B"></label>
+      <label>Datum der Lizenz<input type="date" data-afs="erteilt_am" value="${esc(f.erteilt_am || "")}"></label>
+      <label>Führerscheinnummer<input type="text" data-afs="nummer" maxlength="40" value="${esc(f.nummer || "")}" autocomplete="off"></label>
+      <label>Ausstellende Behörde<input type="text" data-afs="behoerde" maxlength="100" value="${esc(f.behoerde || "")}"></label>
+      <button type="button" class="knopf klein afs-weg" data-afsweg aria-label="Diesen Führerschein entfernen">Entfernen</button>
+    </div>`;
+}
+function behoerdeHTML(x) {
+  const sh = sehhilfeVon(x), vb = x.vorbesitz || [];
+  const afs = Array.isArray(x.auslands_fs) && x.auslands_fs.length ? x.auslands_fs : [{}];
+  return `<fieldset class="voll raster-feld"><legend>Behörde</legend>
+      <label>Bewerbernummer (Rücklaufnummer)<input type="text" name="bewerbernummer" maxlength="40" autocomplete="off" value="${esc(x.bewerbernummer || "")}"></label>
+      <label>Theorie-Frist bis (laut Behörde)<input type="date" name="theorie_frist_bis" value="${esc(x.theorie_frist_bis || "")}"></label>
+      <label>Sehhilfe (Schlüsselzahl 01)<select name="sehhilfe">${sh == null ? '<option value="" selected>noch nicht bekannt</option>' : ""}<option value="ja"${sh === true ? " selected" : ""}>ja</option><option value="nein"${sh === false ? " selected" : ""}>nein</option></select></label>
+      <div class="voll"><div class="feld-titel">Vorbesitz (Klassen, die er schon hat)</div>
+        <div class="vorbesitz-wahl">${VORBESITZ_KLASSEN.map((k) => `<label class="wahl"><input type="checkbox" name="vorbesitz" value="${k}"${vb.includes(k) ? " checked" : ""}> ${k}</label>`).join("")}</div></div>
+    </fieldset>
+    <fieldset class="voll raster-feld" id="umschreiberFeld"${istUmschreiber(x) ? "" : " hidden"}><legend>Umschreiber: ausländischer Führerschein</legend>
+      <div class="voll" id="afsListe">${afs.map(afsZeileHTML).join("")}</div>
+      <div class="voll"><button type="button" class="knopf klein" id="afsNeu">+ weiteren Führerschein</button></div>
+      <label>Wohnsitz in Deutschland seit<input type="date" name="wohnsitz_de_seit" value="${esc(x.wohnsitz_de_seit || "")}"></label>
+      <label class="wahl"><input type="checkbox" name="uebersetzung_vorhanden"${x.uebersetzung_vorhanden ? " checked" : ""}> Übersetzung liegt vor</label>
+      <p class="voll leise klein" id="afsHinweis" aria-live="polite"></p>
+      <datalist id="laenderListe">${LAENDER.map((l) => `<option value="${esc(l)}">`).join("")}</datalist>
+    </fieldset>`;
+}
+// Lesen aus dem Fenster: nur ausgefüllte Führerscheine
+function afsAusFenster(dlg) {
+  return [...dlg.querySelectorAll(".afs-zeile")].map((z) => {
+    const f = {};
+    z.querySelectorAll("[data-afs]").forEach((i) => { const v = i.value.trim(); if (v) f[i.dataset.afs] = v; });
+    return f;
+  }).filter((f) => Object.keys(f).length);
+}
+function umschreibText(info) {
+  if (info.stufe === "eu") return "EU/EWR-Führerschein: gilt in Deutschland weiter, keine 6-Monats-Frist.";
+  if (info.stufe === "land_pruefen") return "Land nicht erkannt: Bitte die Schreibweise prüfen oder das Land aus der Liste wählen (davon hängt die 6-Monats-Frist ab).";
+  if (info.stufe === "ohne_datum") return "Führerschein aus einem Land außerhalb der EU: Er darf nur 6 Monate ab Wohnsitz in Deutschland damit fahren. Bitte „Wohnsitz seit“ eintragen.";
+  if (info.stufe === "abgelaufen") return `Achtung: Der ausländische Führerschein gilt in Deutschland seit ${datumDE(info.bis)} nicht mehr. Er darf nicht mehr selbst fahren.`;
+  if (info.stufe === "bald" || info.stufe === "ok") return `Führerschein aus einem Land außerhalb der EU: Er darf damit nur noch bis ${datumDE(info.bis)} fahren (verlängern kann die Behörde nur bei einem Aufenthalt von höchstens 12 Monaten).`;
+  return "";
+}
+function bindeBehoerde(dlg, x) {
+  const liste = dlg.querySelector("#afsListe"), hinweis = dlg.querySelector("#afsHinweis");
+  const art = dlg.querySelector("select[name=ausbildungsart]");
+  const neuRechnen = () => {
+    const info = KR.umschreibInfo({ ausbildungsart: art.value, ausbildung: x.ausbildung, auslands_fs: afsAusFenster(dlg), wohnsitz_de_seit: dlg.querySelector("input[name=wohnsitz_de_seit]").value || null });
+    hinweis.textContent = umschreibText(info);
+    hinweis.classList.toggle("warnung", info.stufe === "abgelaufen" || info.stufe === "bald" || info.stufe === "land_pruefen");
+    hinweis.classList.toggle("rot", info.stufe === "abgelaufen");
+  };
+  const appUmschreiber = !!(x.ausbildung && x.ausbildung.umschreiber);
+  art.addEventListener("change", () => { dlg.querySelector("#umschreiberFeld").hidden = art.value !== "umschreibung" && !appUmschreiber; neuRechnen(); });
+  dlg.querySelector("#afsNeu").addEventListener("click", () => {
+    if (liste.querySelectorAll(".afs-zeile").length >= 5) { toast("Höchstens 5 Führerscheine.", true); return; }
+    liste.insertAdjacentHTML("beforeend", afsZeileHTML({})); liste.lastElementChild.querySelector("input").focus();
+  });
+  liste.addEventListener("click", (e) => {
+    const b = e.target.closest("[data-afsweg]"); if (!b) return;
+    const z = b.closest(".afs-zeile");
+    if (liste.querySelectorAll(".afs-zeile").length > 1) z.remove(); else z.querySelectorAll("input").forEach((i) => { i.value = ""; });
+    neuRechnen();
+  });
+  dlg.querySelector("#umschreiberFeld").addEventListener("input", neuRechnen);
+  neuRechnen();
+}
+// Werte aus dem Fenster; Umschreiber-Felder nur, wenn „Umschreibung“ gewählt ist (sonst bleiben alte Angaben stehen)
+// „Unverändert?“ für Behörde-Felder: Reihenfolge der Schlüssel egal (die Datenbank sortiert jsonb um), leere Werte wie
+// fehlend. Bei der Sehhilfe ist „nein“ (false) nicht dasselbe wie „noch nicht bekannt“ (null).
+function gleicherWert(a, b, k) {
+  const nz = (v) => (v == null || v === "" || (v === false && k !== "sehhilfe") || (Array.isArray(v) && !v.length) ? null : v);
+  const s = (v) => JSON.stringify(nz(v), (kk, w) => (w && typeof w === "object" && !Array.isArray(w))
+    ? Object.keys(w).sort().reduce((o, q) => { if (w[q] != null && w[q] !== "") o[q] = w[q]; return o; }, {}) : w);
+  return s(a) === s(b);
+}
+function behoerdeWerte(form, dlg, d) {
+  const w = {
+    bewerbernummer: (d.bewerbernummer || "").trim() || null,
+    theorie_frist_bis: d.theorie_frist_bis || null,
+    sehhilfe: d.sehhilfe === "ja" ? true : d.sehhilfe === "nein" ? false : null,
+    vorbesitz: (() => { const v = [...form.querySelectorAll("input[name=vorbesitz]:checked")].map((i) => i.value); return v.length ? v : null; })(),
+  };
+  if (d.ausbildungsart === "umschreibung" || !dlg.querySelector("#umschreiberFeld").hidden) {
+    const afs = afsAusFenster(dlg);
+    w.auslands_fs = afs.length ? afs : null;
+    w.wohnsitz_de_seit = d.wohnsitz_de_seit || null;
+    w.uebersetzung_vorhanden = !!d.uebersetzung_vorhanden;
+  }
+  return w;
+}
 function schuelerDialog(id) {
   const x = id ? S.schueler.find((y) => y.id === id) : { ausbildungsart: "ersterwerb", klasse: "B", vertrag_am: KR.todayISO() };
   if (!x) return;
@@ -1387,6 +1532,7 @@ function schuelerDialog(id) {
       <label>Ausbildungsart<select name="ausbildungsart">${artOptionen(x.ausbildungsart)}</select></label>
       <label>Klasse<select name="klasse">${klassenOptionen(x.klasse)}</select></label>
       <label>Vertrag abgeschlossen am<input type="date" name="vertrag_am" value="${esc(x.vertrag_am || "")}"></label>
+      ${behoerdeHTML(x)}
       <div class="voll b197-feld" id="b197Feld"${x.klasse === "B197" ? "" : " hidden"}>
         <label class="wahl"><input type="checkbox" name="testfahrt"${x.b197_testfahrt_am ? " checked" : ""}> B197: Testfahrt abgegeben</label>
         <label class="datum-klein">am<input type="date" name="testfahrt_am" value="${esc(x.b197_testfahrt_am || "")}"></label>
@@ -1413,6 +1559,18 @@ function schuelerDialog(id) {
       paket_id: d.paket_id || null, ausbildungsart: d.ausbildungsart || "ersterwerb", klasse: d.klasse || null, vertrag_am: d.vertrag_am || null,
       buero_notiz: (d.buero_notiz || "").trim() || null,
     };
+    Object.assign(werte, behoerdeWerte(form, dlg, d));
+    // Nur geänderte Behörde-Felder senden: sonst überschriebe ein länger offenes Fenster neuere Eingaben des Fahrlehrers
+    if (id) for (const k of ["bewerbernummer", "sehhilfe", "vorbesitz", "auslands_fs", "wohnsitz_de_seit", "uebersetzung_vorhanden"]) {
+      if ((k in werte) && gleicherWert(werte[k], k === "sehhilfe" ? sehhilfeVon(x) : x[k], k)) delete werte[k];
+    }
+    const ohneLand = [...dlg.querySelectorAll(".afs-zeile")].find((z) => [...z.querySelectorAll("[data-afs]")].some((i) => i.value.trim()) && !z.querySelector('[data-afs="land"]').value.trim());
+    if (ohneLand && !dlg.querySelector("#umschreiberFeld").hidden) {
+      const feld = ohneLand.querySelector('[data-afs="land"]');
+      feld.setCustomValidity("Bitte das Land eintragen, das den Führerschein ausgestellt hat."); feld.reportValidity(); feld.focus();
+      feld.addEventListener("input", () => feld.setCustomValidity(""), { once: true });
+      return false;
+    }
     const neuerLehrer = d.fahrlehrer_id || null;
     // B197-Testfahrt: Haken setzen = Datum (heute, wenn leer); Haken weg oder andere Klasse = leer
     werte.b197_testfahrt_am = werte.klasse === "B197" && d.testfahrt ? (d.testfahrt_am || x.b197_testfahrt_am || KR.todayISO()) : null;
@@ -1438,6 +1596,7 @@ function schuelerDialog(id) {
   });
   if (id) bindeNotizBlock(dlg, id, x.fahrlehrer_id);
   if (id) bindeAufgabenBlock(dlg, id);
+  bindeBehoerde(dlg, x);
   const klasseSel = dlg.querySelector("select[name=klasse]"), testBox = dlg.querySelector("input[name=testfahrt]"), testDat = dlg.querySelector("input[name=testfahrt_am]");
   klasseSel.addEventListener("change", () => {
     dlg.querySelector("#b197Feld").hidden = klasseSel.value !== "B197";

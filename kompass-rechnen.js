@@ -118,6 +118,50 @@
     const tage = daysBetweenISO(heute, ablauf);
     return { stufe: tage < 0 ? "abgelaufen" : (tage <= 60 ? "bald" : "ok"), ablauf, tage, grund };
   }
+  // Theorie-Frist der Behörde (schueler.theorie_frist_bis, 🗣 Serband 14.10.2026): bis dahin muss die Theorieprüfung bestanden sein.
+  // stufe: ohne_datum | erledigt (Theorie bestanden) | abgelaufen | bald (≤30 Tage) | demnaechst (≤60 Tage) | ok
+  function theorieFristInfo(s, heute) {
+    heute = heute || todayISO();
+    if (s && s.theorie_bestanden_am) return { stufe: "erledigt", ablauf: s.theorie_frist_bis || null, tage: null };
+    if (!s || !s.theorie_frist_bis) return { stufe: "ohne_datum", ablauf: null, tage: null };
+    const ablauf = String(s.theorie_frist_bis).slice(0, 10), tage = daysBetweenISO(heute, ablauf);
+    return { stufe: tage < 0 ? "abgelaufen" : tage <= 30 ? "bald" : tage <= 60 ? "demnaechst" : "ok", ablauf, tage };
+  }
+  // Umschreiber mit Führerschein aus einem Drittstaat (nicht EU/EWR): Er darf in Deutschland nur 6 Monate ab Wohnsitz
+  // mit dem ausländischen Führerschein fahren (§ 29 Abs. 1 FeV). EU/EWR-Führerscheine gelten weiter.
+  const EU_EWR = ["Belgien", "Bulgarien", "Dänemark", "Estland", "Finnland", "Frankreich", "Griechenland", "Irland", "Italien", "Kroatien",
+    "Lettland", "Litauen", "Luxemburg", "Malta", "Niederlande", "Österreich", "Polen", "Portugal", "Rumänien", "Schweden", "Slowakei",
+    "Slowenien", "Spanien", "Tschechien", "Ungarn", "Zypern", "Island", "Liechtenstein", "Norwegen"];
+  const UMSCHREIB_MONATE = 6;
+  // Ländernamen vergleichen: Groß/klein, Umlaute (ae/oe/ue), Leerzeichen und ein paar übliche andere Namen egal
+  const LAND_NAMEN = { "tschechische republik": "tschechien", "holland": "niederlande", "slowakische republik": "slowakei", "republik zypern": "zypern",
+    "grossbritannien": "vereinigtes koenigreich", "england": "vereinigtes koenigreich", "usa": "vereinigte staaten", "amerika": "vereinigte staaten",
+    "bosnien": "bosnien und herzegowina", "mazedonien": "nordmazedonien", "moldawien": "moldau" };
+  function landKey(land) {
+    let l = String(land || "").trim().toLowerCase().replace(/ä/g, "ae").replace(/ö/g, "oe").replace(/ü/g, "ue").replace(/ß/g, "ss").replace(/\s+/g, " ");
+    return LAND_NAMEN[l] || l;
+  }
+  function istEuEwr(land) { const l = landKey(land); return !!l && EU_EWR.some((x) => landKey(x) === l); }
+  // Länder außerhalb der EU/des EWR, die als Herkunft von Umschreibern vorkommen (unbekannte Namen → „Land prüfen“ statt Alarm)
+  const DRITTSTAATEN = ["Schweiz", "Vereinigtes Königreich", "Türkei", "Syrien", "Afghanistan", "Irak", "Iran", "Ukraine", "Russland",
+    "Serbien", "Bosnien und Herzegowina", "Kosovo", "Albanien", "Nordmazedonien", "Montenegro", "Moldau", "Georgien", "Marokko", "Tunesien",
+    "Algerien", "Ägypten", "Eritrea", "Äthiopien", "Somalia", "Nigeria", "Ghana", "Indien", "Pakistan", "Sri Lanka", "Vietnam", "China",
+    "Philippinen", "Vereinigte Staaten", "Kanada", "Brasilien", "Libanon", "Jordanien", "Belarus", "Armenien", "Aserbaidschan", "Kasachstan",
+    "Japan", "Südkorea", "Australien", "Neuseeland", "Südafrika", "Bangladesch", "Thailand", "Kolumbien", "Mexiko", "Argentinien", "Chile", "Peru"];
+  function istDrittstaat(land) { const l = landKey(land); return !!l && DRITTSTAATEN.some((x) => landKey(x) === l); }
+  // stufe: kein (kein Umschreiber oder ohne Führerschein-Angabe) | eu (EU/EWR, keine Frist) | land_pruefen (Land unbekannt/Tippfehler)
+  //        | ohne_datum (Drittstaat, Wohnsitz fehlt) | abgelaufen | bald (≤30 Tage) | ok
+  function umschreibInfo(s, heute) {
+    heute = heute || todayISO();
+    const fs = (s && Array.isArray(s.auslands_fs)) ? s.auslands_fs.filter((f) => f && f.land) : [];
+    const umschreiber = s && (s.ausbildungsart === "umschreibung" || !!(s.ausbildung && s.ausbildung.umschreiber)); // auch nur in der App markiert
+    if (!umschreiber || !fs.length) return { stufe: "kein", bis: null, tage: null, drittstaat: false };
+    if (fs.some((f) => istEuEwr(f.land))) return { stufe: "eu", bis: null, tage: null, drittstaat: false }; // ein EU/EWR-Führerschein gilt weiter
+    if (!fs.some((f) => istDrittstaat(f.land))) return { stufe: "land_pruefen", bis: null, tage: null, drittstaat: false };
+    if (!s.wohnsitz_de_seit) return { stufe: "ohne_datum", bis: null, tage: null, drittstaat: true };
+    const bis = addMonthsISO(String(s.wohnsitz_de_seit).slice(0, 10), UMSCHREIB_MONATE), tage = daysBetweenISO(heute, bis);
+    return { stufe: tage < 0 ? "abgelaufen" : tage <= 30 ? "bald" : "ok", bis, tage, drittstaat: true };
+  }
   // Fahrcheck-Zettel (Übungs-, Sonder- und Testfahrten) verfallen 12 Monate nach dem Datum der Stunde (Kristina, 09.10.2026)
   function fcGueltigBis(datum) { return datum ? addMonthsISO(datum, 12) : null; }
   // stufe: verfallen | bald (≤60 Tage) | ok
@@ -206,7 +250,7 @@
     return out;
   }
 
-  const api = { FS_BUERO_ARTEN, pad2, hm2min, parseISO, dateISO, todayISO, ueOf, addMonthsISO, addDaysISO, daysBetweenISO, reaktFaellig, reaktNachZahlung, reaktInfo, theorieInfo, antragInfo, fcGebucht, fcErhalten, fcGueltigBis, fcGueltigkeit, fcZeitraum, fcVorZeitraum, fcSoll, aufteilung, FAHR_ARTEN, wartetInfo };
+  const api = { FS_BUERO_ARTEN, pad2, hm2min, parseISO, dateISO, todayISO, ueOf, addMonthsISO, addDaysISO, daysBetweenISO, reaktFaellig, reaktNachZahlung, reaktInfo, theorieInfo, antragInfo, theorieFristInfo, umschreibInfo, istEuEwr, istDrittstaat, landKey, EU_EWR, DRITTSTAATEN, UMSCHREIB_MONATE, fcGebucht, fcErhalten, fcGueltigBis, fcGueltigkeit, fcZeitraum, fcVorZeitraum, fcSoll, aufteilung, FAHR_ARTEN, wartetInfo };
   if (typeof module !== "undefined" && module.exports) module.exports = api;
   else root.KR = api;
 })(typeof self !== "undefined" ? self : this);
