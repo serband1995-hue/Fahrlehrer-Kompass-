@@ -1,0 +1,52 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="robots" content="noindex">
+<meta name="referrer" content="no-referrer">
+<meta name="theme-color" content="#3a7350">
+<title>Willkommen im Fahrlehrer-Kompass</title>
+<link rel="icon" href="icon-192.png">
+<style>
+  :root{color-scheme:light;}
+  *{box-sizing:border-box;}
+  body{margin:0;min-height:100vh;display:grid;place-items:center;padding:20px;background:#f3f1e9;color:#2a2a24;font-family:-apple-system,"Segoe UI",Arial,sans-serif;line-height:1.5;}
+  .karte{width:100%;max-width:440px;background:#fffdf7;border:1px solid #e3dfd0;border-radius:18px;padding:28px 24px;text-align:center;box-shadow:0 6px 24px rgba(40,50,40,.08);}
+  img{width:72px;height:72px;border-radius:18px;}
+  h1{font-size:24px;margin:14px 0 8px;color:#2d5f43;}
+  p{margin:0 0 16px;font-size:17px;}
+  .klein{font-size:14px;color:#6a6a5f;}
+  .knopf{display:block;width:100%;border:0;border-radius:12px;padding:16px 18px;font-size:18px;font-weight:700;color:#fff;background:#3a7350;cursor:pointer;}
+  .knopf:active{transform:scale(.99);}
+  .fehler{color:#a23b2a;font-weight:600;}
+</style>
+</head>
+<body>
+<main class="karte">
+  <img src="icon-192.png" alt="">
+  <h1>Willkommen im Fahrlehrer-Kompass</h1>
+  <p id="text">Tippe auf den Knopf, um dein Passwort festzulegen. Danach bist du gleich angemeldet.</p>
+  <button class="knopf" id="los" type="button">Passwort festlegen</button>
+  <p class="klein" style="margin-top:16px;">Der Link funktioniert nur einmal. Ist er abgelaufen, tippe in der Anmeldung auf „Passwort vergessen?“.</p>
+</main>
+<script>
+// Der eigentliche Passwort-Link steckt hinter dem „#“ der Adresse (wird nie an einen Server geschickt) und wird erst
+// nach dem Tippen geöffnet. So verbrauchen Link-Prüfer von Mail-Programmen den einmaligen Link nicht vorab.
+(function () {
+  var ERLAUBT = "https://oectrvkjunntzsggyhxv.supabase.co/auth/v1/verify?";
+  var ziel = "";
+  try { ziel = decodeURIComponent((location.hash || "").slice(1)); } catch (e) { ziel = ""; }
+  var knopf = document.getElementById("los"), text = document.getElementById("text");
+  if (ziel.indexOf(ERLAUBT) !== 0) {
+    text.textContent = "Dieser Link ist nicht vollständig. Öffne ihn bitte noch einmal aus der E-Mail, oder tippe in der Kompass-App auf „Passwort vergessen?“.";
+    text.className = "fehler";
+    knopf.textContent = "Zur Kompass-App";
+    knopf.addEventListener("click", function () { location.href = "index.html"; });
+    return;
+  }
+  knopf.addEventListener("click", function () { knopf.disabled = true; location.href = ziel; });
+})();
+</script>
+</body>
+</html>
