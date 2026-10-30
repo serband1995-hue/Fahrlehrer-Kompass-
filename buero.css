@@ -569,12 +569,14 @@ a.kachel:hover,a.kachel:focus-visible{border-color:var(--akzent);}
 .warnhinweis{color:var(--pill-gelb, #7a5410);background:var(--gelb-soft);border-radius:10px;padding:8px 12px;font-weight:600;}
 
 /* Rollen-Streifen oben: immer sichtbar, damit klar ist, mit welchen Rechten man arbeitet */
-.rollen-streifen{position:sticky;top:0;z-index:60;display:flex;align-items:center;justify-content:center;flex-wrap:wrap;gap:4px 10px;min-height:38px;padding:6px 14px;font-size:14px;font-weight:700;letter-spacing:.02em;line-height:1.25;color:#fff;background:#1f4d38;border-bottom:3px solid #e0b84f;text-align:center;}
+.rollen-streifen{position:sticky;top:0;z-index:40;display:flex;align-items:center;justify-content:center;flex-wrap:wrap;gap:4px 10px;min-height:38px;padding:calc(6px + env(safe-area-inset-top)) 14px 6px;font-size:14px;font-weight:700;letter-spacing:.02em;line-height:1.25;color:#fff;background:#1f4d38;border-bottom:3px solid #e0b84f;text-align:center;}
 .rollen-streifen[hidden]{display:none;}
 .rollen-streifen svg{width:20px;height:20px;flex:0 0 auto;color:#f0cd72;}
 .rollen-streifen .rs-zusatz{font-weight:500;opacity:.92;}
 .rollen-streifen.rs-leitung{background:#2d5273;border-bottom-color:#9fc0de;}
 .rollen-streifen.rs-buero{background:#4b6455;border-bottom-color:#b9cdbf;}
+body.mit-streifen .seite{top:38px;height:calc(100vh - 38px);}
+@media (max-width:900px){body.mit-streifen .seite{top:auto;height:auto;}}
 @media print{.rollen-streifen{display:none !important;}}
 body.kiosk .rollen-streifen{display:none;}
 

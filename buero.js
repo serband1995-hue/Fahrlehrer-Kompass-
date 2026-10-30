@@ -3547,7 +3547,7 @@ setInterval(async () => {
 /* ---------- Anmeldung ---------- */
 function zeigeNur(id) {
   for (const x of ["login", "hinweis", "app"]) $(x).hidden = x !== id;
-  if (id !== "app") { const el = $("rollenStreifen"); if (el) el.hidden = true; } else zeigeRollenStreifen();
+  if (id !== "app") { const el = $("rollenStreifen"); if (el) el.hidden = true; document.body.classList.remove("mit-streifen"); } else zeigeRollenStreifen();
 }
 // Streifen oben: Super-Admin (alle Rechte), Fahrschul-Leitung oder Büro (mit dem Namen, der gerade bedient)
 const KRONE_SVG = '<svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M3 8l4.5 4L12 5l4.5 7L21 8l-2 11H5L3 8z"/><rect x="5" y="20" width="14" height="2" rx="1"/></svg>';
@@ -3570,6 +3570,7 @@ function zeigeRollenStreifen() {
   el.className = "rollen-streifen " + (rolle === "super_admin" ? "rs-super" : rolle === "fahrschule_admin" ? "rs-leitung" : "rs-buero");
   el.innerHTML = kopf + (zusatz ? `<span class="rs-zusatz">· ${esc(zusatz)}</span>` : "");
   el.hidden = false;
+  document.body.classList.add("mit-streifen");
 }
 function zeigeHinweis(titel, text, knoepfe) {
   $("hinweisTitel").textContent = titel;
