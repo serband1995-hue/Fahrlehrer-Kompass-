@@ -2850,7 +2850,7 @@ function renderTeam() {
       <td>${esc(ROLLEN[p.rolle] || (p.rolle === "fahrlehrer" ? "Fahrlehrer" : p.rolle))}${mitZahlen ? `<div class="unter">${(p.fahrlehrerlaubnis || []).length ? "Fahrlehrerlaubnis " + p.fahrlehrerlaubnis.map((k) => `<span class="marke-pill">${esc(k)}</span>`).join(" ") : (p.klassen || []).length ? (p.klassen || []).map((k) => `<span class="marke-pill">${esc(k)}</span>`).join(" ") : "Klassen nicht eingetragen"}</div>` : ""}</td>
       ${mitZahlen ? `<td class="zahlspalte">${schuelerZahl[p.id] || 0}</td><td class="zahlspalte">${zahlDE(ue[p.id] || 0)}</td>` : ""}
       <td>${p.aktiv === false ? '<span class="marke-pill rot">gesperrt</span>' : p.ohne_app ? '<span class="marke-pill">ohne App</span>' : '<span class="marke-pill gruen">aktiv</span>'}</td>
-      <td class="aktionen"><div class="aktionen-box">${mitZahlen ? `<button class="knopf klein" data-flakte="${esc(p.id)}" type="button">${darfPersonenVerwalten() ? "Akte & Klassen" : "Akte"}</button>` : ""}${admin && p.rolle !== "super_admin" && p.id !== S.user.id ? `${p.ohne_app ? "" : `<button class="knopf klein" data-pwreset="${esc(p.id)}" type="button">Neues Passwort</button>`}
+      <td class="aktionen"><div class="aktionen-box">${mitZahlen ? `<button class="knopf klein" data-flakte="${esc(p.id)}" type="button">${darfPersonenVerwalten() ? "Akte & Klassen" : "Akte"}</button>` : ""}${admin && p.rolle !== "super_admin" && p.id !== S.user.id ? `${p.ohne_app ? "" : `<button class="knopf klein" data-einladung="${esc(p.id)}" type="button">Einladung senden</button><button class="knopf klein" data-pwreset="${esc(p.id)}" type="button">Neues Passwort</button>`}
         <button class="knopf klein" data-sperren="${esc(p.id)}" type="button">${p.aktiv === false ? "Freischalten" : "Sperren"}</button>` : ""}</div></td></tr>`;
   const lehrer = S.lehrer;
   const buero = S.team.filter((p) => p.rolle === "buero" || p.rolle === "fahrschule_admin");
@@ -2943,6 +2943,7 @@ function bindeTeam(ziel) {
   ziel.querySelectorAll("[data-flakte]").forEach((b) => b.addEventListener("click", () => fahrlehrerAkte(b.dataset.flakte)));
   if (bu) bu.addEventListener("click", () => zugangDialog("buero"));
   ziel.querySelectorAll("[data-pwreset]").forEach((b) => b.addEventListener("click", () => passwortNeu(b.dataset.pwreset)));
+  ziel.querySelectorAll("[data-einladung]").forEach((b) => b.addEventListener("click", () => einladungSenden(b.dataset.einladung)));
   ziel.querySelectorAll("[data-sperren]").forEach((b) => b.addEventListener("click", () => zugangSperren(b.dataset.sperren)));
   bindePersonen(ziel);
 }
@@ -3042,7 +3043,7 @@ function zugangDialog(rolle) {
       ${fl ? `<label class="voll login-zeig"><input type="checkbox" name="ohneapp"> Ohne App: Fahrlehrer nutzt den Kompass nicht, das Büro trägt alles ein (keine E-Mail nötig)</label>` : ""}
       <label class="voll" id="zMail">E-Mail<input type="email" name="email"${fl ? "" : " required"}></label>${wahl}
       ${fl ? klassenHaken(["B"]) : ""}</div>
-      <p class="leise klein" id="zHinweis">Das Passwort erscheint danach einmal zum Weitergeben. Die Person kann es später über „Passwort vergessen?“ selbst ändern.</p>`, async (form) => {
+      <p class="leise klein" id="zHinweis">Die Person bekommt automatisch eine E-Mail mit Link zum Festlegen ihres Passworts und mit einer kurzen Anleitung. Du musst nichts weitergeben.</p>`, async (form) => {
     if (form.rolle) rolle = form.rolle.value;
     const ohneApp = !!(form.ohneapp && form.ohneapp.checked);
     const email = form.email.value.trim(), name = form.name.value.trim();
@@ -3050,9 +3051,10 @@ function zugangDialog(rolle) {
     if (ohneApp && !name) { toast("Bitte einen Namen eintragen.", true); return false; }
     const klassen = fl ? [...form.querySelectorAll("input[name=kl]:checked")].map((x) => x.value) : [];
     try {
-      const res = await adminFunktion({ action: "create_account", email: ohneApp ? undefined : email, name, rolle, fahrschule_id: S.fsId, ohne_app: ohneApp, klassen });
+      const res = await adminFunktion({ action: "create_account", email: ohneApp ? undefined : email, name, rolle, fahrschule_id: S.fsId, ohne_app: ohneApp, klassen, einladung_senden: true });
       if (ohneApp) toast(`${name} ist angelegt (ohne App). Er steht jetzt überall in den Listen.`);
-      else setTimeout(() => zeigePasswort(res.email || email, res.passwort), 50);
+      else if (res.mail_gesendet) toast(`Zugang angelegt. Die Einladung ist per E-Mail an ${res.email || email} unterwegs.`);
+      else setTimeout(() => { toast("Die E-Mail ging nicht raus. Bitte das Passwort selbst weitergeben.", true); zeigePasswort(res.email || email, res.passwort); }, 50);
       ladeDaten();
       return true;
     } catch (e) { toast("Nicht angelegt: " + e.message, true); return false; }
@@ -3065,6 +3067,12 @@ async function passwortNeu(id) {
   if (!p || !(await bestaetige("Neues Passwort?", `Für ${p.name || p.email} wird ein neues Passwort erzeugt. Das alte gilt dann nicht mehr.`, "Ja, neues Passwort"))) return;
   try { const res = await adminFunktion({ action: "reset_password", target_user_id: id }); zeigePasswort(res.email || p.email, res.passwort); }
   catch (e) { toast("Nicht möglich: " + e.message, true); }
+}
+async function einladungSenden(id) {
+  const p = teamPerson(id);
+  if (!p || !(await bestaetige("Einladung senden?", `${p.name || p.email} bekommt eine E-Mail mit einem neuen Link zum Festlegen des Passworts.`, "Ja, senden"))) return;
+  try { const res = await adminFunktion({ action: "send_invite", target_user_id: id }); toast(`Einladung an ${res.email} verschickt.`); }
+  catch (e) { toast("Nicht verschickt: " + e.message, true); }
 }
 async function zugangSperren(id) {
   const p = teamPerson(id);
@@ -3289,6 +3297,7 @@ function zeigeWerAnzeige() {
   }
   $("kopfWer").hidden = !S.sitzung;
   $("kopfWer").textContent = S.sitzung ? "🔒 Sperren" : "";
+  if (!$("app").hidden) zeigeRollenStreifen();
 }
 function setzeSitzung(r) {
   S.sitzung = { token: r.token, id: r.id, name: r.name, verwalten: !!r.darf_verwalten };
@@ -3538,6 +3547,29 @@ setInterval(async () => {
 /* ---------- Anmeldung ---------- */
 function zeigeNur(id) {
   for (const x of ["login", "hinweis", "app"]) $(x).hidden = x !== id;
+  if (id !== "app") { const el = $("rollenStreifen"); if (el) el.hidden = true; } else zeigeRollenStreifen();
+}
+// Streifen oben: Super-Admin (alle Rechte), Fahrschul-Leitung oder Büro (mit dem Namen, der gerade bedient)
+const KRONE_SVG = '<svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M3 8l4.5 4L12 5l4.5 7L21 8l-2 11H5L3 8z"/><rect x="5" y="20" width="14" height="2" rx="1"/></svg>';
+function zeigeRollenStreifen() {
+  const el = $("rollenStreifen");
+  if (!el || !S.profil || !ROLLEN[S.profil.rolle]) return;
+  const rolle = S.profil.rolle;
+  let kopf = "", zusatz = "";
+  if (rolle === "super_admin") {
+    kopf = KRONE_SVG + "<span>Super-Admin</span>";
+    zusatz = "alle Rechte";
+    const schule = (S.schulen || []).find((s) => s.id === S.fsId);
+    if (schule && (S.schulen || []).length > 1) zusatz += " · " + (schule.name || "");
+  } else if (rolle === "fahrschule_admin") {
+    kopf = "<span>Fahrschul-Leitung</span>";
+  } else {
+    kopf = "<span>Büro</span>";
+    zusatz = S.werAnzeige ? "bedient gerade: " + S.werAnzeige : "";
+  }
+  el.className = "rollen-streifen " + (rolle === "super_admin" ? "rs-super" : rolle === "fahrschule_admin" ? "rs-leitung" : "rs-buero");
+  el.innerHTML = kopf + (zusatz ? `<span class="rs-zusatz">· ${esc(zusatz)}</span>` : "");
+  el.hidden = false;
 }
 function zeigeHinweis(titel, text, knoepfe) {
   $("hinweisTitel").textContent = titel;
@@ -3613,6 +3645,7 @@ $("schulWahl").addEventListener("change", (e) => {
   S.fsId = e.target.value;
   try { localStorage.setItem("buero-fahrschule", S.fsId); } catch (err) { /* egal */ }
   S.geladenAm = null;
+  zeigeRollenStreifen();
   zeichne();
   ladeDaten();
 });

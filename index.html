@@ -185,6 +185,11 @@ input,select,textarea{font-family:inherit;font-size:15px;color:var(--txt);}
 @keyframes spIn{from{opacity:0;transform:scale(.94) translateY(12px);}to{opacity:1;transform:none;}}
 
 /* ===== SHELL ===== */
+.sa-streifen{flex:0 0 auto;display:flex;align-items:center;justify-content:center;gap:8px;padding:calc(6px + env(safe-area-inset-top)) 14px 6px;font-size:13.5px;font-weight:700;letter-spacing:.02em;line-height:1.2;color:#fff;background:#1f4d38;border-bottom:3px solid #e0b84f;position:relative;z-index:6;}
+.sa-streifen[hidden]{display:none;}
+.sa-streifen svg{width:18px;height:18px;flex:0 0 auto;color:#f0cd72;}
+.sa-streifen .sa-zusatz{font-weight:500;opacity:.92;}
+.app.mit-sa-streifen .topbar{padding-top:12px;}
 .app{display:flex;flex-direction:column;height:100dvh;position:relative;overflow:hidden;z-index:1;}
 .topbar{display:grid;grid-template-columns:auto minmax(0,1fr) auto;align-items:center;gap:10px;
   padding:calc(12px + env(safe-area-inset-top)) var(--pad) 12px;
@@ -2677,6 +2682,8 @@ body.light .fc-miss-sum b{color:#7a2a1e !important;}
 </div>
 
 <div class="app">
+  <!-- Streifen nur für den Super-Admin: zeigt, dass man mit allen Rechten angemeldet ist -->
+  <div class="sa-streifen" id="saStreifen" role="status" hidden><svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M3 8l4.5 4L12 5l4.5 7L21 8l-2 11H5L3 8z"/><rect x="5" y="20" width="14" height="2" rx="1"/></svg><span>Super-Admin</span><span class="sa-zusatz">· alle Rechte</span></div>
   <header class="topbar">
     <div class="tb-side tb-left">
       <button class="icon-btn" id="menuBtn" aria-label="Menü" hidden>
@@ -3913,6 +3920,15 @@ function _uidAus(sessionData) {
 function isSuperAdmin() {
   return _authProfile && _authProfile.rolle === "super_admin";
 }
+// Streifen oben „Super-Admin · alle Rechte“: nur sichtbar, wenn man als Super-Admin angemeldet ist
+function _zeigeSaStreifen() {
+  const el = document.getElementById("saStreifen");
+  if (!el) return;
+  const an = !!isSuperAdmin();
+  el.hidden = !an;
+  const app = document.querySelector(".app");
+  if (app) app.classList.toggle("mit-sa-streifen", an);
+}
 
 /* ---- Lokale Daten gehören genau einem Konto ----
    Auf einem Gerät können sich nacheinander verschiedene Personen anmelden. Das Gerät merkt sich,
@@ -4145,6 +4161,7 @@ async function afterLogin(user) {
   if (isSuperAdmin()) {
     _fsSetDrawer(false);
   }
+  _zeigeSaStreifen();
   // AGB-Zustimmungssperre: muss vor jedem weiteren App-Zugriff erfolgen, sobald sich der
   // Text inhaltlich ändert (AGB_VERSION hochzählen) müssen alle Nutzer erneut bestätigen.
   if (prof && prof.agb_akzeptiert_version !== AGB_VERSION) {
@@ -6015,8 +6032,9 @@ async function neuenFahrlehrerAnlegen(fahrschuleId){
   if(!email)return;
   const name=(prompt("Name (optional):")||"").trim();
   try{
-    const res=await _callAdminFn({action:"create_account",email,name,rolle:"fahrlehrer",fahrschule_id:fahrschuleId});
-    alert(`Zugang angelegt ✓\n\nE-Mail: ${res.email}\nPasswort: ${res.passwort}\n\nBitte jetzt weitergeben - wird nur einmal angezeigt!`);
+    const res=await _callAdminFn({action:"create_account",email,name,rolle:"fahrlehrer",fahrschule_id:fahrschuleId,einladung_senden:true});
+    if(res.mail_gesendet) toast("Zugang angelegt ✓ Die Einladung ist per E-Mail an "+res.email+" unterwegs.");
+    else alert(`Zugang angelegt ✓\n\nDie E-Mail ging nicht raus. Bitte selbst weitergeben:\nE-Mail: ${res.email}\nPasswort: ${res.passwort}\n\nWird nur einmal angezeigt!`);
     _fsNachFahrlehrerAktion(fahrschuleId);
   }catch(e){toast("Fehler: "+e.message);}
 }
@@ -6026,8 +6044,9 @@ async function neuenFahrschuleAdminAnlegen(fahrschuleId){
   if(!email)return;
   const name=(prompt("Name (optional):")||"").trim();
   try{
-    const res=await _callAdminFn({action:"create_account",email,name,rolle:"fahrschule_admin",fahrschule_id:fahrschuleId});
-    alert(`Zugang angelegt ✓\n\nE-Mail: ${res.email}\nPasswort: ${res.passwort}\n\nBitte jetzt weitergeben - wird nur einmal angezeigt!`);
+    const res=await _callAdminFn({action:"create_account",email,name,rolle:"fahrschule_admin",fahrschule_id:fahrschuleId,einladung_senden:true});
+    if(res.mail_gesendet) toast("Zugang angelegt ✓ Die Einladung ist per E-Mail an "+res.email+" unterwegs.");
+    else alert(`Zugang angelegt ✓\n\nDie E-Mail ging nicht raus. Bitte selbst weitergeben:\nE-Mail: ${res.email}\nPasswort: ${res.passwort}\n\nWird nur einmal angezeigt!`);
     _fsNachFahrlehrerAktion(fahrschuleId);
   }catch(e){toast("Fehler: "+e.message);}
 }
@@ -6149,8 +6168,9 @@ async function neuenBueroZugangAnlegen(fahrschuleId){
   if(!email)return;
   const name=(prompt("Name (optional):")||"").trim();
   try{
-    const res=await _callAdminFn({action:"create_account",email,name,rolle:"buero",fahrschule_id:fahrschuleId});
-    alert(`Büro-Zugang angelegt ✓\n\nE-Mail: ${res.email}\nPasswort: ${res.passwort}\n\nBitte jetzt weitergeben - wird nur einmal angezeigt!`);
+    const res=await _callAdminFn({action:"create_account",email,name,rolle:"buero",fahrschule_id:fahrschuleId,einladung_senden:true});
+    if(res.mail_gesendet) toast("Büro-Zugang angelegt ✓ Die Einladung ist per E-Mail an "+res.email+" unterwegs.");
+    else alert(`Büro-Zugang angelegt ✓\n\nDie E-Mail ging nicht raus. Bitte selbst weitergeben:\nE-Mail: ${res.email}\nPasswort: ${res.passwort}\n\nWird nur einmal angezeigt!`);
   }catch(e){toast("Fehler: "+e.message);}
 }
 
@@ -7201,7 +7221,7 @@ window.addEventListener("load", () => {
 const STORE_KEY="serband-app-v1";
 /* Build-Version: bei jeder Auslieferung hier das Datum aktualisieren.
    Wird in den Einstellungen angezeigt + für den Update-Hinweis genutzt. */
-const APP_VERSION="2026.10.14.6";
+const APP_VERSION="2026.10.30.1";
 try{const f=document.getElementById("drawerFoot"); if(f)f.textContent="Fahrlehrer-Kompass · Version "+APP_VERSION;}catch(e){}
 // Nutzungsbedingungen & Haftungsausschluss (Bereich: rechtliche Absicherung) - Version hochzählen
 // und alle Nutzer müssen erneut zustimmen, sobald sich der Text inhaltlich ändert.
