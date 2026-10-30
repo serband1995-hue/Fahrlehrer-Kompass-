@@ -69,12 +69,14 @@ function einladungsHtml(name: string, rolle: string, link: string, vonName: stri
   const vorname = esc(String(name || "").trim().split(" ")[0] || "");
   const knopf = `display:inline-block;background:#3a7350;color:#fff;text-decoration:none;font-weight:700;padding:13px 22px;border-radius:10px;font-size:16px;`;
   const schritt = `margin:22px 0 6px;font-size:16px;font-weight:700;color:#2a2a24;`;
-  const buero = rolle === "buero" || rolle === "fahrschule_admin";
-  const geraete = buero
-    ? `<p style="${schritt}">2. Büro-Seite öffnen</p>
-       <p>Die Büro-Seite ist für den PC gemacht. Öffne diese Adresse im Browser und melde dich mit deiner E-Mail und dem neuen Passwort an:</p>
+  const istBuero = rolle === "buero", istLeitung = rolle === "fahrschule_admin";
+  const geraete = istBuero || istLeitung
+    ? `<p style="${schritt}">2. Einmal in der Kompass-App anmelden</p>
+       <p>Öffne <a href="${APP_URL}" style="color:#3a7350;">${APP_URL}</a>, melde dich mit deiner E-Mail und dem neuen Passwort an und bestätige die Nutzungsbedingungen. Das musst du nur einmal tun. Danach geht die Büro-Seite.</p>
+       <p style="${schritt}">3. Büro-Seite öffnen</p>
+       <p>Die Büro-Seite ist für den PC gemacht. Öffne diese Adresse im Browser und melde dich an:</p>
        <p><a href="${APP_URL}buero.html" style="color:#3a7350;">${APP_URL}buero.html</a></p>
-       <p>Beim ersten Mal wählst du deinen Namen und legst eine eigene 4-stellige PIN fest. Wenn das nicht geht, bitte Serband oder Murat, die PIN für dich freizugeben.</p>
+       ${istBuero ? `<p>Dann wählst du deinen Namen und legst eine eigene 4-stellige PIN fest. Dafür muss Serband oder Murat vorher bei dir „PIN freigeben“ drücken. Du hast danach 15 Minuten Zeit.</p>` : ""}
        <p style="font-size:14px;color:#5a5a50;">Tipp: Im Browser kannst du die Seite als App installieren (Symbol in der Adresszeile oder Menü „App installieren“).</p>`
     : `<p style="${schritt}">2. App aufs Handy legen</p>
        <p><b>Android (Chrome):</b> Öffne <a href="${APP_URL}" style="color:#3a7350;">${APP_URL}</a>, tippe oben rechts auf die drei Punkte und dann auf „App installieren“.<br>
@@ -86,7 +88,7 @@ function einladungsHtml(name: string, rolle: string, link: string, vonName: stri
     <p>${esc(vonName || "Die Fahrschul-Leitung")} hat für dich einen Zugang angelegt. Es sind nur zwei Schritte:</p>
     <p style="${schritt}">1. Passwort festlegen</p>
     <p><a href="${esc(link)}" style="${knopf}">Passwort festlegen</a></p>
-    <p style="font-size:14px;color:#5a5a50;">Der Link funktioniert nur einmal und nur eine begrenzte Zeit. Ist er abgelaufen, tippe in der Anmeldung auf „Passwort vergessen?“ und gib diese E-Mail-Adresse ein. Beim ersten Anmelden bestätigst du die Nutzungsbedingungen.</p>
+    <p style="font-size:14px;color:#5a5a50;">Der Link funktioniert nur einmal und nur eine begrenzte Zeit. Ist er abgelaufen, tippe in der Anmeldung auf „Passwort vergessen?“ und gib diese E-Mail-Adresse ein. Das Festlegen des Passworts meldet dich gleich an.</p>
     ${geraete}
     <p style="font-size:12.5px;color:#8a8a80;margin-top:26px;">Diese Mail ging nur an dich. Wenn du sie nicht erwartet hast, antworte bitte nicht darauf, sondern sag der Fahrschul-Leitung Bescheid.</p>
   </div>`;
@@ -205,7 +207,7 @@ Deno.serve(async (req) => {
       if (zielProfil.rolle === "super_admin") return json({ error: "Für den Super-Admin gibt es keine Einladung" }, 403);
       if (!zielProfil.aktiv) return json({ error: "Dieser Zugang ist gesperrt" }, 400);
 
-      const gleicheSchule = zielProfil.fahrschule_id === requesterProfile.fahrschule_id;
+      const gleicheSchule = !!requesterProfile.fahrschule_id && zielProfil.fahrschule_id === requesterProfile.fahrschule_id;
       const darf = isSuperAdmin
         || (isFahrschuleAdmin && ["fahrlehrer", "buero"].includes(zielProfil.rolle) && gleicheSchule)
         || (isBueroVerwalter && zielProfil.rolle === "fahrlehrer" && gleicheSchule);
