@@ -2880,7 +2880,7 @@ function renderPersonen() {
         ? `<button class="knopf klein" data-pzurueck="${esc(p.id)}" type="button">Zurückholen</button>`
         : `<button class="knopf klein" data-pbearb="${esc(p.id)}" type="button">Bearbeiten</button><button class="knopf klein" data-preset="${esc(p.id)}" type="button">${p.hat_pin ? "PIN zurücksetzen" : "PIN freigeben"}</button>`) : ""}</div></td></tr>`;
   return `<div class="karte"><div class="karte-kopf"><h2>Büro-Personen und PIN (${aktiv.length})</h2>${darf ? '<button class="knopf" id="pNeu" type="button">+ Person</button>' : ""}</div>
-      <p class="leise klein">Alle im Büro nutzen das gemeinsame Konto. Wer gerade bedient, tippt seinen Namen an und gibt seine eigene 4-stellige PIN ein. Neue Person oder PIN vergessen: ${esc(verwalterNamen())} drückt „PIN freigeben“ bzw. „PIN zurücksetzen“. Danach hat die Person 15 Minuten Zeit, selbst eine neue PIN festzulegen.</p>
+      <p class="leise klein">Alle im Büro nutzen das gemeinsame Konto. Wer gerade bedient, tippt seinen Namen an und gibt seine eigene 4-stellige PIN ein. Neue Person oder PIN vergessen: ${esc(verwalterNamen())} drückt „PIN freigeben“ bzw. „PIN zurücksetzen“. Danach hat die Person 24 Stunden Zeit, selbst eine neue PIN festzulegen.</p>
       ${S.personen.length ? `<table class="tabelle"><thead><tr><th>Name</th><th>Telefon</th><th>PIN</th><th>Rechte</th><th></th></tr></thead><tbody>${aktiv.concat(weg).map(zeile).join("")}</tbody></table>` : `<p class="leer">Noch keine Büro-Personen angelegt.</p>`}
       ${darf ? "" : `<p class="leise klein">Personen anlegen und PINs zurücksetzen dürfen ${esc(verwalterNamen())}.</p>`}</div>`;
 }
@@ -2930,10 +2930,10 @@ function bindePersonen(ziel) {
     const p = (S.personen || []).find((x) => x.id === b.dataset.preset);
     if (!p) return;
     const titel = p.hat_pin ? `PIN von ${p.name} zurücksetzen?` : `PIN für ${p.name} freigeben?`;
-    if (!(await bestaetige(titel, `${p.hat_pin ? `Die alte PIN von ${p.name} gilt dann nicht mehr. ` : ""}${p.name} hat danach 15 Minuten Zeit, auf den eigenen Namen zu tippen und selbst eine neue PIN festzulegen. Bitte nur machen, wenn ${p.name} jetzt da ist.`, p.hat_pin ? "Ja, zurücksetzen" : "Ja, freigeben"))) return;
+    if (!(await bestaetige(titel, `${p.hat_pin ? `Die alte PIN von ${p.name} gilt dann nicht mehr. ` : ""}${p.name} hat danach 24 Stunden Zeit, auf den eigenen Namen zu tippen und selbst eine neue PIN festzulegen. Wer zuerst auf den Namen tippt, legt die PIN fest. Bitte nur machen, wenn ${p.name} die PIN heute selbst festlegt.`, p.hat_pin ? "Ja, zurücksetzen" : "Ja, freigeben"))) return;
     try { await personRpc("buero_pin_zuruecksetzen", { p_person: p.id }); }
     catch (e) { toast("Nicht möglich: " + e.message, true); return; }
-    await ladePersonen(); toast(`${p.name} kann jetzt 15 Minuten lang eine neue PIN festlegen`); zeichne();
+    await ladePersonen(); toast(`${p.name} kann jetzt 24 Stunden lang eine neue PIN festlegen`); zeichne();
     if (S.sitzung && S.sitzung.id === p.id) { vergissSitzung(); zeigeWer(); }
   }));
 }
