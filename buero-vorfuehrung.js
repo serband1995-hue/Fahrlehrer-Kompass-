@@ -106,7 +106,7 @@ function bauDaten(heute) {
         { id: "bp-1", fahrschule_id: FS, name: "Jelena", telefon: null, hat_pin: true, _pin: "6204", darf_verwalten: true, aktiv: true, gesperrt_bis: null, fehlversuche: 0 },
         { id: "bp-2", fahrschule_id: FS, name: "Murat", telefon: null, hat_pin: true, _pin: "7391", darf_verwalten: true, aktiv: true, gesperrt_bis: null, fehlversuche: 0 },
         { id: "bp-3", fahrschule_id: FS, name: "Kristina", telefon: "0170 0000000", hat_pin: true, _pin: "4826", darf_verwalten: false, aktiv: true, gesperrt_bis: null, fehlversuche: 0 },
-        { id: "bp-4", fahrschule_id: FS, name: "Isra", telefon: null, hat_pin: false, _pin: null, pin_frei_bis: new Date(Date.now() + 15 * 60000).toISOString(), darf_verwalten: false, aktiv: true, gesperrt_bis: null, fehlversuche: 0 },
+        { id: "bp-4", fahrschule_id: FS, name: "Isra", telefon: null, hat_pin: false, _pin: null, pin_frei_bis: new Date(Date.now() + 24 * 3600000).toISOString(), darf_verwalten: false, aktiv: true, gesperrt_bis: null, fehlversuche: 0 },
       ],
     },
   };
@@ -203,7 +203,7 @@ if (typeof module !== "undefined" && module.exports) { module.exports = { bauDat
     buero_pin_zuruecksetzen: ({ p_person }) => {
       if (!darfVerwalten()) return { fehler: "keine_berechtigung" };
       const p = personen().find((x) => x.id === p_person); if (!p) return { fehler: "unbekannt" };
-      Object.assign(p, { _pin: null, hat_pin: false, pin_neu_noetig: false, fehlversuche: 0, gesperrt_bis: null, pin_frei_bis: new Date(Date.now() + 15 * 60000).toISOString() });
+      Object.assign(p, { _pin: null, hat_pin: false, pin_neu_noetig: false, fehlversuche: 0, gesperrt_bis: null, pin_frei_bis: new Date(Date.now() + 24 * 3600000).toISOString() });
       for (const [t, s] of Object.entries(F.sitzungen)) if (s.person === p.id) delete F.sitzungen[t];
       return { ok: true, name: p.name };
     },
