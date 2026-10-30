@@ -1,6 +1,6 @@
 // Fahrlehrer-Kompass – Konten anlegen, Passwort neu erzeugen, Einladung per E-Mail senden.
 // Kopie der in Supabase laufenden Funktion (Projekt oectrvkjunntzsggyhxv, verify_jwt = false:
-// die Funktion prüft den Anmelde-Token und die Rolle selbst). Version 7 (30.10.2026): Einladungs-Mail.
+// die Funktion prüft den Anmelde-Token und die Rolle selbst). Version 9 (30.10.2026): Einladungs-Mail; Profil nach dem Anlegen ersetzen statt doppelt einfügen.
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 
 const SUPABASE_URL = Deno.env.get("SUPABASE_URL");
@@ -162,13 +162,23 @@ Deno.serve(async (req) => {
       const { data: neuerUser, error: createErr } = await supa.auth.admin.createUser({
         email, password: passwort, email_confirm: true,
       });
-      if (createErr || !neuerUser?.user) return json({ error: createErr?.message || "Anlegen fehlgeschlagen" }, 500);
+      if (createErr || !neuerUser?.user) {
+        const schonDa = /already|registered|exists/i.test(createErr?.message || "");
+        return json({ error: schonDa ? "Diese E-Mail hat schon einen Zugang." : (createErr?.message || "Anlegen fehlgeschlagen") }, schonDa ? 409 : 500);
+      }
 
+      // Der Datenbank-Trigger handle_new_user legt beim Anlegen sofort ein Standard-Profil an (Rolle Fahrlehrer,
+      // ohne Fahrschule). Ein Ändern verhindert profil_schutz, deshalb wird es gelöscht und richtig neu angelegt.
+      await supa.from("profiles").delete().eq("id", neuerUser.user.id);
       const { error: profilErr } = await supa.from("profiles").insert({
         id: neuerUser.user.id, email, name: name || null, rolle, fahrschule_id: zielFahrschuleId, aktiv: true,
         ohne_app: ohneApp, klassen: klassenListe(body.klassen),
       });
-      if (profilErr) return json({ error: profilErr.message }, 500);
+      if (profilErr) {
+        // Kein halbes Konto zurücklassen: ohne Profil wäre die Anmeldung ein Fahrlehrer ohne Fahrschule
+        await supa.auth.admin.deleteUser(neuerUser.user.id).catch(() => {});
+        return json({ error: "Profil konnte nicht angelegt werden: " + profilErr.message }, 500);
+      }
 
       if (ohneApp) return json({ ohne_app: true, id: neuerUser.user.id, rolle, fahrschule_id: zielFahrschuleId });
 

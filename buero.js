@@ -2821,7 +2821,12 @@ async function adminFunktion(body) {
   const token = sd && sd.session ? sd.session.access_token : null;
   // Büro-Person mit Verwalten-Recht (Jelena, Murat): die PIN-Sitzung geht mit, die Funktion prüft sie
   const { data, error } = await supa.functions.invoke("admin-create-account", { body: Object.assign({}, body, { requester_token: token, buero_sitzung: S.sitzung ? S.sitzung.token : undefined }) });
-  if (error) throw error;
+  if (error) {
+    // Die Funktion schickt bei Fehlern eine Erklärung mit; sonst stünde hier nur „non-2xx status code“
+    let text = error.message;
+    try { const b = await error.context.json(); if (b && b.error) text = b.error; } catch (e) { /* keine Erklärung */ }
+    throw new Error(text);
+  }
   if (data && data.error) throw new Error(data.error);
   return data;
 }

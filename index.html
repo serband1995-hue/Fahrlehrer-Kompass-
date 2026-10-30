@@ -5865,7 +5865,7 @@ async function _callAdminFn(body){
   const {data:sessionData}=await supa.auth.getSession();
   const token=sessionData&&sessionData.session?sessionData.session.access_token:null;
   const {data,error}=await supa.functions.invoke("admin-create-account",{body:Object.assign({},body,{requester_token:token})});
-  if(error) throw error;
+  if(error){ let text=error.message; try{ const b=await error.context.json(); if(b&&b.error) text=b.error; }catch(e){} throw new Error(text); }
   if(data&&data.error) throw new Error(data.error);
   return data;
 }
@@ -7221,7 +7221,7 @@ window.addEventListener("load", () => {
 const STORE_KEY="serband-app-v1";
 /* Build-Version: bei jeder Auslieferung hier das Datum aktualisieren.
    Wird in den Einstellungen angezeigt + für den Update-Hinweis genutzt. */
-const APP_VERSION="2026.10.30.2";
+const APP_VERSION="2026.10.30.3";
 try{const f=document.getElementById("drawerFoot"); if(f)f.textContent="Fahrlehrer-Kompass · Version "+APP_VERSION;}catch(e){}
 // Nutzungsbedingungen & Haftungsausschluss (Bereich: rechtliche Absicherung) - Version hochzählen
 // und alle Nutzer müssen erneut zustimmen, sobald sich der Text inhaltlich ändert.
