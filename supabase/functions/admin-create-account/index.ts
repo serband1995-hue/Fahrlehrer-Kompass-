@@ -76,7 +76,7 @@ function einladungsHtml(name: string, rolle: string, link: string, vonName: stri
        <p style="${schritt}">3. Büro-Seite öffnen</p>
        <p>Die Büro-Seite ist für den PC gemacht. Öffne diese Adresse im Browser und melde dich an:</p>
        <p><a href="${APP_URL}buero.html" style="color:#3a7350;">${APP_URL}buero.html</a></p>
-       ${istBuero ? `<p>Dann wählst du deinen Namen und legst eine eigene 4-stellige PIN fest. Dafür muss Serband oder Murat vorher bei dir „PIN freigeben“ drücken. Du hast danach 15 Minuten Zeit.</p>` : ""}
+       ${istBuero ? `<p>Dann wählst du deinen Namen und legst eine eigene 4-stellige PIN fest. Dafür muss Serband oder Murat vorher bei dir „PIN freigeben“ drücken. Du hast danach 24 Stunden Zeit.</p>` : ""}
        <p style="font-size:14px;color:#5a5a50;">Tipp: Im Browser kannst du die Seite als App installieren (Symbol in der Adresszeile oder Menü „App installieren“).</p>`
     : `<p style="${schritt}">2. App aufs Handy legen</p>
        <p><b>Android (Chrome):</b> Öffne <a href="${APP_URL}" style="color:#3a7350;">${APP_URL}</a>, tippe oben rechts auf die drei Punkte und dann auf „App installieren“.<br>
