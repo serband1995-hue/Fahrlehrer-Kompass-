@@ -85,7 +85,7 @@ function einladungsHtml(name: string, rolle: string, link: string, vonName: stri
   return `<div style="font-family:-apple-system,Arial,sans-serif;max-width:520px;margin:0 auto;padding:22px;background:#f3f1e9;color:#2a2a24;line-height:1.5;">
     <h2 style="color:#3a7350;margin:0 0 14px;">Willkommen im Fahrlehrer-Kompass</h2>
     <p>Hallo ${vorname},</p>
-    <p>${esc(vonName || "Die Fahrschul-Leitung")} hat für dich einen Zugang angelegt. Es sind nur zwei Schritte:</p>
+    <p>${esc(vonName || "Die Fahrschul-Leitung")} hat für dich einen Zugang angelegt. So geht es los:</p>
     <p style="${schritt}">1. Passwort festlegen</p>
     <p><a href="${esc(link)}" style="${knopf}">Passwort festlegen</a></p>
     <p style="font-size:14px;color:#5a5a50;">Der Link funktioniert nur einmal und nur eine begrenzte Zeit. Ist er abgelaufen, tippe in der Anmeldung auf „Passwort vergessen?“ und gib diese E-Mail-Adresse ein. Das Festlegen des Passworts meldet dich gleich an.</p>
