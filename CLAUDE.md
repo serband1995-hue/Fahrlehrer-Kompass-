@@ -20,3 +20,12 @@ Fahrlehrer-Kompass: PWA for driving instructors, plain HTML/CSS/JS (no build, al
 - End of a session or "Vault aktualisieren": run `/vault-abschluss`.
 - Video with captions/pictures/cinematic look: run `/video-overlay` (tools in `scripts/video-overlay/`).
 - Never write to the Fahr-Akademie Supabase project (`fxgljvhpikjcejhghgbp`) from here.
+
+## Agent-Team (seit 04.11.2026, Wunsch von Serband)
+- Agent-Teams sind in `.claude/settings.json` eingeschaltet (`CLAUDE_CODE_EXPERIMENTAL_AGENT_TEAMS=1`), Hauptsitzung auf Opus als **Lead**.
+- **Regel: Unabhängige Bau-Aufgaben an die Sonnet-Teammitglieder abgeben, damit der Kontext der Hauptsitzung klein bleibt.** Teammitglieder: `team-frontend` (Bildschirme), `team-backend` (Daten, Schnittstellen, Speicherung), `team-integration` (Testdaten, ganzer Ablauf). Dateibereiche stehen in `.claude/agents/team-*.md` und überschneiden sich nicht.
+- Schema- und Konfig-Änderungen bleiben beim Lead.
+- Besitz, Fortschritt und Abhängigkeiten laufen über die gemeinsame Aufgabenliste; Teammitglieder klären Schnittstellen und Blocker direkt untereinander per Nachricht.
+- Opus übernimmt an drei Punkten: **bevor ein Plan feststeht**, **wenn ein Teammitglied blockiert ist**, **bevor etwas „fertig“ heißt** (gesamten Diff ansehen, Ablauf prüfen).
+- Team nur bei Aufgaben mit mindestens zwei unabhängigen Teilen. Kleine Aufgaben macht der Lead allein (Teams kosten deutlich mehr Kontingent).
+- Bestehende Regeln gelten weiter: Prüf-Team/Richter vor dem Merge, Tests grün, selbst mergen nach Serbands Merge-Regel.
