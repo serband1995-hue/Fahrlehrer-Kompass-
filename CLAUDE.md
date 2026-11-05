@@ -2,6 +2,12 @@
 
 **Always reply to Serban in German**: simple, short, no jargon. He works on his phone.
 
+## Grundregel: OMNIA immer (R555, gilt für jede Sitzung)
+Serbands Wunsch vom 05.11.2026: Jede Sitzung, egal wann und wo, holt sich zuerst die Infos aus OMNIA und lädt am Ende alles Wichtige wieder hoch.
+1. **Beginn, vor jeder Arbeit:** Vault holen (`add_repo` owner `serband1995-hue`, repo `obsidian-vault`, Zugriff `push`, nach `/home/user/obsidian-vault` klonen). Dort `CLAUDE.md` lesen und im Abschnitt „OMNIA“ die Schritte „Beginn“ ausführen (Projekte, offene Entscheidungen, neue Ideen, `meta/heute`, `meta/euro` mit `ArtifactData` lesen). Die Adresse von OMNIA steht dort.
+2. **Am Ende, sobald sich etwas Wichtiges geändert hat** (Ergebnis, Entscheidung, Wunsch, Stand dieses Projekts): ohne Nachfrage in OMNIA hochladen (Projektkarte, Ideen beantworten, `meta/verlauf`, `meta/heute`, `meta/tokens`) und im Vault festhalten (Sitzungsprotokoll, Pull Request, selbst mergen). Ablauf: Vault `00 Start/Radar.md`, „Ende jeder Sitzung“.
+3. Fehlt `ArtifactData`: Serband das sagen und die Änderungen als Notiz im Vault (`Sitzungen/`) ablegen; die nächste Sitzung lädt sie hoch.
+
 ## Memory: Obsidian vault
 Serban's long-term memory lives in the private repo `serband1995-hue/obsidian-vault`.
 - **Run `/vault` at the start of every session.** It loads his profile, binding working rules and this project's overview (~6k tokens instead of re-reading code or old chats).
