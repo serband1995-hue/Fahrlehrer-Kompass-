@@ -1,0 +1,34 @@
+name: Prüfung vor dem Live-Gang
+
+# Läuft bei jedem Pull Request und nach dem Merge auf main. Nur schnelle Tests ohne Browser,
+# ohne Netz-Zugriff auf Datenbanken und ohne Geheimnisse.
+# Ändert nichts am Live-Gang (GitHub Pages aus dem Branch main).
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+
+concurrency:
+  group: pruefung-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+jobs:
+  pruefung:
+    name: Schnelle Tests
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0   # release-check.sh vergleicht mit origin/main
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Release-Check (Versionen, Geheimnisse, Hinweis auf fremde E-Mails)
+        run: bash scripts/release-check.sh
+      - name: Rechen-Test
+        run: node scripts/rechnen-test.mjs
