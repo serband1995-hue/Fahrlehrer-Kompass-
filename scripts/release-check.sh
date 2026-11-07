@@ -18,8 +18,8 @@ cache_alt=$(git show "$BASIS:sw.js" 2>/dev/null | grep -oP 'const CACHE_VERSION\
 echo "APP_VERSION    : ${app_alt:-?} -> ${app_neu:-?}"
 echo "CACHE_VERSION  : ${cache_alt:-?} -> ${cache_neu:-?}"
 
-# Nur prüfen, wenn sich ausgelieferte Dateien geändert haben (nicht bei reinen Skript- oder Doku-Änderungen).
-geaendert=$(git diff --name-only "$BASIS"...HEAD -- . ':!scripts' ':!.claude' ':!CLAUDE.md' 2>/dev/null; git diff --name-only -- . ':!scripts' ':!.claude' ':!CLAUDE.md')
+# Nur prüfen, wenn sich ausgelieferte Dateien geändert haben (nicht bei reinen Skript-, Workflow- oder Doku-Änderungen).
+geaendert=$(git diff --name-only "$BASIS"...HEAD -- . ':!scripts' ':!.claude' ':!.github' ':!CLAUDE.md' 2>/dev/null; git diff --name-only -- . ':!scripts' ':!.claude' ':!.github' ':!CLAUDE.md')
 if [ -n "$geaendert" ]; then
   [ "$app_neu" != "$app_alt" ] || { echo "FEHLER: APP_VERSION nicht erhöht."; fehler=1; }
   [ "$cache_neu" != "$cache_alt" ] || { echo "FEHLER: CACHE_VERSION nicht erhöht."; fehler=1; }
