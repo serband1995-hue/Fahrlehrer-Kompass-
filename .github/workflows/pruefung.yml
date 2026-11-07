@@ -1,0 +1,28 @@
+name: Prüfung vor dem Live-Gang
+
+# Läuft bei jedem Push und Pull Request. Nur schnelle Tests ohne Browser,
+# ohne Netz-Zugriff auf Datenbanken und ohne Geheimnisse.
+# Ändert nichts am Live-Gang (GitHub Pages aus dem Branch main).
+on:
+  push:
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  pruefung:
+    name: Schnelle Tests
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0   # release-check.sh vergleicht mit origin/main
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Release-Check (Versionen, Geheimnisse, Schülerdaten-Muster)
+        run: bash scripts/release-check.sh
+      - name: Rechen-Test
+        run: node scripts/rechnen-test.mjs
