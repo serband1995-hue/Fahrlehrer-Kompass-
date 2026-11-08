@@ -1916,6 +1916,8 @@ body:not(.light) #sheet .sheet-pills .pill.sel{background:#123A2A !important;bor
 }
 .lo-err.show{display:block;}
 body.light .lo-err{color:#a3271c;}
+.lo-err.ok{background:rgba(76,175,114,.15);border-color:rgba(76,175,114,.35);color:#8fdcab;}
+body.light .lo-err.ok{color:#1e6b46;}
 .lo-spinner{
   width:22px;height:22px;border:3px solid rgba(255,255,255,.2);
   border-top-color:#fff;border-radius:50%;
@@ -4017,7 +4019,7 @@ async function doForgotPassword(){
     const redirectTo=window.location.origin+window.location.pathname;
     const {error}=await supa.auth.resetPasswordForEmail(email,{redirectTo});
     if(error) throw error;
-    showLoginErr("E-Mail verschickt ✓ Schau in dein Postfach (auch Spam-Ordner) und folge dem Link.");
+    showLoginErr("E-Mail verschickt ✓ Schau in dein Postfach (auch Spam-Ordner) und folge dem Link.", true);
   }catch(e){
     const m=String((e&&e.message)||"");
     showLoginErr(/fetch|network|load failed/i.test(m) ? "Keine Internetverbindung. Bitte später nochmal auf „Passwort vergessen?“ tippen."
@@ -4096,9 +4098,10 @@ async function doLogin() {
   }
 }
 
-function showLoginErr(msg) {
+function showLoginErr(msg, ok) {
   const el = document.getElementById("loErr");
   el.textContent = msg; el.classList.add("show");
+  el.classList.toggle("ok", !!ok);   // Erfolgsmeldung grün statt rot
 }
 
 async function afterLogin(user) {
