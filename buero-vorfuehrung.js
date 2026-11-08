@@ -112,13 +112,49 @@ function bauDaten(heute) {
   };
 }
 
+// Vorführung „Fahrstunden verwalten“: Fahrlehrer Anton hat im aktuellen Monat genau 156 UE (Doppelstunden, vereinzelt 1 UE),
+// Fahrlehrerin Berta deutlich weniger. Nur erfundene Schüler mit Nachname Muster.
+function bauFahrstundenDemo(d, heute) {
+  const FS = d.FS, monat = heute.slice(0, 7), t = d.tabellen;
+  const vor = ["Elias", "Sofia", "Noah", "Emilia", "Ben", "Hanna", "Luca", "Ella", "Finn", "Lia", "Paul", "Ida"];
+  const neue = vor.map((v, i) => ({ id: "sm" + (i + 1), fahrschule_id: FS, fahrlehrer_id: i % 2 ? "fl-2" : "fl-1", name: v + " Muster", telefon: "0170 111" + String(i).padStart(4, "0"), status: "aktiv", paket_id: null, hat_simulator: false, hat_theorie_app: false, bogen_ausgefuellt: true, vertrag_am: addTage(heute, -60), reakt_status: "pruefen", ausbildungsart: "ersterwerb", klasse: "B", erstellt_am: addTage(heute, -60) + "T10:00:00Z", ausbildung: { form: "B" } }));
+  t.schueler.push(...neue);
+  const arten = ["fahrstunde", "fahrstunde", "fahrstunde", "sonder", "fahrstunde", "nacht"];
+  // alte Fahrstunden dieser beiden Fahrlehrer im Monat ersetzen
+  t.kalender_termine = t.kalender_termine.filter((x) => !(["fl-1", "fl-2"].includes(x.fahrlehrer_id) && x.datum.slice(0, 7) === monat && ["fahrstunde", "sonder", "nacht"].includes(x.art)));
+  const tageImMonat = [];
+  for (let i = 1; i <= 31; i++) { const dat = monat + "-" + String(i).padStart(2, "0"); const dd = new Date(dat + "T12:00:00"); if (dd.toISOString().slice(0, 7) !== monat) break; if (dd.getDay() >= 1 && dd.getDay() <= 5) tageImMonat.push(dat); }
+  const doppel = [["08:00", "09:30"], ["09:45", "11:15"], ["12:00", "13:30"], ["14:00", "15:30"]];
+  let n = 0;
+  const neu = (lehrer, datum, von, bis) => { n++; const s = neue.filter((x) => x.fahrlehrer_id === lehrer); t.kalender_termine.push({ id: "fv" + n, fahrschule_id: FS, fahrlehrer_id: lehrer, schueler_id: s[n % s.length].id, datum, von, bis, art: arten[n % arten.length], fahrzeug: "Golf Schalter 1", status: "geplant", geloescht: false, payload: {}, buero_fc_status: "offen" }); };
+  // Anton: Ziel genau 156 UE (Doppelstunde = 2 UE, 45 Minuten = 1 UE)
+  let ue = 0;
+  const erst = [];
+  tageImMonat.forEach((dat, i) => {
+    for (let k = 0; k < 3 + (i % 2 === 0 ? 1 : 0); k++) erst.push([dat, doppel[k][0], doppel[k][1], 2]);
+    if (i % 3 === 0 || i === tageImMonat.length - 1) erst.push([dat, "16:00", "16:45", 1]);
+  });
+  for (const [dat, von, bis, u] of erst) {
+    if (ue + u <= 156) { neu("fl-1", dat, von, bis); ue += u; }
+    else if (u === 2 && ue + 1 <= 156) { neu("fl-1", dat, von, von.slice(0, 3) + String(+von.slice(3) + 45 >= 60 ? 45 : +von.slice(3) + 45).padStart(2, "0")); ue += 1; }
+  }
+  for (let i = 0; ue < 156 && i < tageImMonat.length * 3; i++) { neu("fl-1", tageImMonat[i % tageImMonat.length], "17:00", "17:45"); ue += 1; }
+  // Berta: weniger
+  tageImMonat.forEach((dat, i) => { if (i % 2 === 1) { neu("fl-2", dat, "09:00", "10:30"); if (i % 4 === 1) neu("fl-2", dat, "11:00", "12:30"); } if (i % 5 === 0) neu("fl-2", dat, "14:00", "14:45"); });
+}
+
 if (typeof module !== "undefined" && module.exports) { module.exports = { bauDaten }; } else
 (function () {
   "use strict";
   // Ohne Test-Daten: Vorführung mit erfundener Fahrschule, angemeldet als Fahrschul-Leitung
   if (!window.__FAKE) {
-    const d = bauDaten(new Date().toISOString().slice(0, 10));
-    window.__FAKE = { tabellen: d.tabellen, konten: d.konten, session: { user: { id: "ad-1", email: "leitung@example.org" } }, vorfuehrung: true,
+    const heute = new Date().toISOString().slice(0, 10);
+    const d = bauDaten(heute);
+    bauFahrstundenDemo(d, heute);
+    // buero.html?vorfuehrung&rolle=buero (oder super) zeigt dieselben Daten mit anderen Rechten
+    const wahl = (new URLSearchParams(location.search).get("rolle") || "").toLowerCase();
+    const nutzer = wahl === "buero" ? { id: "bu-1", email: "buero@example.org" } : wahl === "super" ? { id: "sa-1", email: "super@example.org" } : { id: "ad-1", email: "leitung@example.org" };
+    window.__FAKE = { tabellen: d.tabellen, konten: d.konten, session: { user: nutzer }, vorfuehrung: true,
       functions: { "admin-create-account": (b) => ({ email: b.email || "beispiel@example.org", passwort: "Vorfuehrung-1234" }) } };
   }
   const F = window.__FAKE;
@@ -206,6 +242,23 @@ if (typeof module !== "undefined" && module.exports) { module.exports = { bauDat
       Object.assign(p, { _pin: null, hat_pin: false, pin_neu_noetig: false, fehlversuche: 0, gesperrt_bis: null, pin_frei_bis: new Date(Date.now() + 24 * 3600000).toISOString() });
       for (const [t, s] of Object.entries(F.sitzungen)) if (s.person === p.id) delete F.sitzungen[t];
       return { ok: true, name: p.name };
+    },
+    // Fahrstunden verwalten (wie in der Datenbank: nur Leitung, nur Fahrstunde/Sonderfahrt/Nachtfahrt, Anzahl der wirklich geänderten Termine)
+    fahrstunden_entfernen: ({ p_ids }) => {
+      if (!["super_admin", "fahrschule_admin"].includes(meinProfil().rolle)) throw new Error("Nur die Fahrschul-Leitung darf Fahrstunden entfernen.");
+      if (!Array.isArray(p_ids) || p_ids.length > 500) throw new Error("Bitte höchstens 500 Stunden auf einmal ändern.");
+      let n = 0;
+      tabelle("kalender_termine").forEach((t) => { if (p_ids.includes(t.id) && !t.geloescht && ["fahrstunde", "sonder", "nacht"].includes(t.art)) { t.geloescht = true; t.aktualisiert_am = new Date().toISOString(); n++; } });
+      return n;
+    },
+    fahrstunden_uebertragen: ({ p_ids, p_ziel }) => {
+      if (!["super_admin", "fahrschule_admin"].includes(meinProfil().rolle)) throw new Error("Nur die Fahrschul-Leitung darf Fahrstunden übertragen.");
+      if (!Array.isArray(p_ids) || p_ids.length > 500) throw new Error("Bitte höchstens 500 Stunden auf einmal ändern.");
+      const ziel = (F.tabellen.profiles || []).find((x) => x.id === p_ziel && x.aktiv !== false);
+      if (!ziel || ziel.fahrschule_id !== meinProfil().fahrschule_id) throw new Error("Der neue Fahrlehrer gehört nicht zu dieser Fahrschule.");
+      let n = 0;
+      tabelle("kalender_termine").forEach((t) => { if (p_ids.includes(t.id) && !t.geloescht && ["fahrstunde", "sonder", "nacht"].includes(t.art)) { t.fahrlehrer_id = p_ziel; t.aktualisiert_am = new Date().toISOString(); n++; } });
+      return n;
     },
   };
   for (const [k, f] of Object.entries(R)) if (!F.rpcs[k]) F.rpcs[k] = f;

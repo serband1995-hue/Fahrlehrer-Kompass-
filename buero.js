@@ -107,10 +107,20 @@ const BEREICHE = [
   { id: "zahlen", titel: "Zahlen", gruppe: "Geld", render: renderZahlen, nachher: bindeZahlen },
   { id: "team", titel: "Fahrlehrer & Zugänge", gruppe: "Verwaltung", render: renderTeam, nachher: bindeTeam },
   { id: "flotte", titel: "Fahrzeuge", gruppe: "Verwaltung", render: renderFlotte, nachher: bindeFlotte, zahl: () => fahrzeugKonflikte().length || "" },
+  { id: "fahrstunden", titel: "Fahrstunden verwalten", gruppe: "Verwaltung", render: renderFahrstunden, nachher: bindeFahrstunden, nurLeitung: true },
 ];
+// Bereiche, die diese Rolle sehen darf (nurLeitung: Fahrschul-Leitung und Super-Admin)
+function sichtbareBereiche() { return BEREICHE.filter((b) => !b.nurLeitung || istAdmin()); }
 function aktuellerBereich() {
   const id = (location.hash || "#heute").slice(1).split("?")[0];
-  return BEREICHE.find((b) => b.id === id) || BEREICHE[0];
+  const b = BEREICHE.find((x) => x.id === id);
+  if (b && b.nurLeitung && S.profil && !istAdmin()) {
+    // Direktaufruf ohne Recht: zurück zur Startseite
+    try { history.replaceState(null, "", "#heute"); } catch (e) { location.hash = "#heute"; }
+    toast("Diese Seite ist nur für die Fahrschul-Leitung.", true);
+    return BEREICHE[0];
+  }
+  return b && (!b.nurLeitung || istAdmin()) ? b : BEREICHE[0];
 }
 // Gruppen der Seitenleiste lassen sich auf- und zuklappen; wer eine Seite in einer zugeklappten Gruppe öffnet, sieht sie wieder offen
 function navZu() {
@@ -122,9 +132,9 @@ function setzeNavZu(liste) {
 function zeichneNav() {
   const aktiv = aktuellerBereich();
   const zu = navZu();
-  const gruppen = [...new Set(BEREICHE.map((b) => b.gruppe))];
+  const gruppen = [...new Set(sichtbareBereiche().map((b) => b.gruppe))];
   $("nav").innerHTML = gruppen.map((g) => {
-    const punkte = BEREICHE.filter((b) => b.gruppe === g);
+    const punkte = sichtbareBereiche().filter((b) => b.gruppe === g);
     const offen = !zu.includes(g);
     const summe = punkte.reduce((a, b) => a + (b.render && b.zahl && S.geladenAm ? Number(b.zahl()) || 0 : 0), 0);
     const liste = punkte.map((b) => {
@@ -3192,6 +3202,478 @@ function bestaetige(titel, text, jaText) {
     const dlg = oeffneDialog(titel, `<p>${esc(text)}</p>`, () => { ergebnis = true; }, jaText || "Ja");
     dlg.addEventListener("close", () => ok(ergebnis));
   });
+}
+
+/* ---------- Fahrstunden verwalten (nur Fahrschul-Leitung und Super-Admin) ----------
+   Murat entfernt Fahrstunden, die nicht stattgefunden haben, oder überträgt sie an einen anderen Fahrlehrer.
+   Ablauf: Fahrlehrer und Monat wählen → Obergrenze einstellen (alles danach wird markiert) → Vorschau mit Liste →
+   bestätigen. Geändert wird nur über die Datenbank-Funktionen fahrstunden_entfernen / fahrstunden_uebertragen
+   (die Datenbank prüft die Rolle noch einmal). Entfernt heißt: geloescht = true, auch auf den Handys. */
+const FV_ARTEN = ["fahrstunde", "sonder", "nacht"];
+const FV_BLOCK = 500; // so viele Stunden höchstens je Datenbank-Aufruf
+const FV = {
+  lehrer: null, monat: null, deckel: null, markiert: new Set(), schluessel: null,
+  erfolg: null, warnung: null, hilfeOffen: null, nachgeladen: {}, nachStand: null, beschaeftigt: false, balkenAnimieren: true
+};
+
+// Der Reihe nach (Datum, Uhrzeit) UE zusammenzählen. Ab der ersten Stunde, die die Obergrenze überschreitet,
+// ist diese und jede spätere markiert. liste: [{id, datum, von, ue}]. Ergebnis: Set der markierten ids.
+function fahrstundenUeberDeckel(liste, deckel) {
+  const sortiert = (liste || []).slice().sort((a, b) =>
+    String(a.datum || "").slice(0, 10).localeCompare(String(b.datum || "").slice(0, 10)) ||
+    String(a.von || "").localeCompare(String(b.von || "")) || String(a.id).localeCompare(String(b.id)));
+  const grenze = Number(deckel);
+  const markiert = new Set();
+  let summe = 0, ab = false;
+  for (const s of sortiert) {
+    const ue = Number(s.ue) || 0;
+    if (!ab && Math.round((summe + ue) * 100) / 100 > grenze) ab = true;
+    if (ab) markiert.add(s.id); else summe += ue;
+  }
+  return markiert;
+}
+function fvUE(n) { return (Math.round(Number(n || 0) * 100) / 100).toLocaleString("de-DE", { maximumFractionDigits: 2 }); }
+function fvSumme(liste) { return Math.round(liste.reduce((a, s) => a + s.ue, 0) * 100) / 100; }
+function fvMonatName(m) { const [j, mo] = m.split("-").map(Number); return new Date(j, mo - 1, 1).toLocaleDateString("de-DE", { month: "long", year: "numeric" }); }
+function fvMonatVerschieben(m, n) { return KR.addMonthsISO(m + "-01", n).slice(0, 7); }
+function fvKW(iso) {
+  const d = KR.parseISO(iso);
+  const t = new Date(Date.UTC(d.getFullYear(), d.getMonth(), d.getDate()));
+  const tag = t.getUTCDay() || 7;
+  t.setUTCDate(t.getUTCDate() + 4 - tag);
+  const j0 = new Date(Date.UTC(t.getUTCFullYear(), 0, 1));
+  return { jahr: t.getUTCFullYear(), kw: Math.ceil(((t - j0) / 86400000 + 1) / 7) };
+}
+const FV_TAGE = ["So", "Mo", "Di", "Mi", "Do", "Fr", "Sa"];
+const FV_TAGE_LANG = ["Sonntag", "Montag", "Dienstag", "Mittwoch", "Donnerstag", "Freitag", "Samstag"];
+function fvSpeicherLesen(k) { try { return localStorage.getItem(k); } catch (e) { return null; } }
+function fvSpeicherSchreiben(k, v) { try { if (v == null) localStorage.removeItem(k); else localStorage.setItem(k, String(v)); } catch (e) { /* ohne Speicher weiter */ } }
+function fvDeckelSchluessel() { return `buero-fv-deckel-${FV.lehrer}-${FV.monat}`; }
+
+// Termine des Monats (alle Fahrlehrer der Fahrschule). Liegt der Monat weiter zurück als die Büro-Daten reichen, wird er nachgeladen.
+function fvQuelle(monat) {
+  if (FV.nachStand !== S.geladenAm) { FV.nachgeladen = {}; FV.nachStand = S.geladenAm; }
+  const imMonat = (t) => t.datum && String(t.datum).slice(0, 7) === monat && FV_ARTEN.includes(t.art) && !t.geloescht;
+  if (monat + "-01" >= KR.addDaysISO(KR.todayISO(), -DATEN_TAGE)) return { liste: S.termine.filter(imMonat) };
+  const e = FV.nachgeladen[monat];
+  if (!e) { FV.nachgeladen[monat] = { laedt: true }; fvLadeMonat(monat, FV.nachStand); return { laedt: true }; }
+  if (e.laedt) return { laedt: true };
+  if (e.fehler) return { fehler: e.fehler };
+  return { liste: e.daten.filter(imMonat) };
+}
+async function fvLadeMonat(monat, stand) {
+  let eintrag;
+  try {
+    const bis = fvMonatVerschieben(monat, 1) + "-01";
+    const res = await alleSeiten(() => supa.from("kalender_termine").select("*").eq("fahrschule_id", S.fsId).eq("geloescht", false).in("art", FV_ARTEN).gte("datum", monat + "-01").lt("datum", bis).order("datum").order("id"));
+    if (res.error) throw new Error(res.error.message);
+    eintrag = { daten: res.data || [] };
+  } catch (e) { eintrag = { fehler: "Der Monat konnte nicht geladen werden. Bitte „Aktualisieren“ drücken." }; }
+  if (FV.nachStand !== stand) return;
+  FV.nachgeladen[monat] = eintrag;
+  if (aktuellerBereich().id === "fahrstunden") zeichne();
+}
+function fvStundenVon(termine, lehrerId) {
+  return termine.filter((t) => t.fahrlehrer_id === lehrerId).map((t) => {
+    const p = t.payload || {};
+    return { id: t.id, datum: String(t.datum).slice(0, 10), von: t.von || "", bis: t.bis || "", art: t.art, status: p.status || t.status || "", schueler_id: t.schueler_id, name: schuelerName(t.schueler_id) || t.interessent_name || "", ue: KR.ueOf(t.art, t.von, t.bis, p.tatsaechlicheDauer) };
+  }).sort((a, b) => a.datum.localeCompare(b.datum) || a.von.localeCompare(b.von) || String(a.id).localeCompare(String(b.id)));
+}
+function fvLehrerListe(termine) {
+  const hat = new Set((termine || []).map((t) => t.fahrlehrer_id));
+  return S.lehrer.filter((l) => l.aktiv !== false || hat.has(l.id)).slice().sort((a, b) => String(a.name || a.email).localeCompare(String(b.name || b.email), "de"));
+}
+
+// Alles, was die Seite für den gewählten Fahrlehrer und Monat braucht
+function fvZustand() {
+  if (!FV.monat) FV.monat = KR.todayISO().slice(0, 7);
+  const q = fvQuelle(FV.monat);
+  const lehrer = fvLehrerListe(q.liste);
+  if (!lehrer.some((l) => l.id === FV.lehrer)) FV.lehrer = lehrer.length ? lehrer[0].id : null;
+  const stunden = q.liste && FV.lehrer ? fvStundenVon(q.liste, FV.lehrer) : [];
+  const gesamt = fvSumme(stunden);
+  const max = Math.ceil(gesamt);
+  const key = FV.lehrer + "|" + FV.monat;
+  if (FV.schluessel !== key) {
+    FV.schluessel = key;
+    const gespeichert = Number(fvSpeicherLesen(fvDeckelSchluessel()));
+    FV.deckel = fvSpeicherLesen(fvDeckelSchluessel()) != null && isFinite(gespeichert) && gespeichert >= 0 ? Math.min(Math.round(gespeichert), max) : max;
+    FV.markiert = fahrstundenUeberDeckel(stunden, FV.deckel);
+  } else {
+    const ids = new Set(stunden.map((s) => s.id));
+    FV.markiert = new Set([...FV.markiert].filter((id) => ids.has(id)));
+  }
+  return { q, lehrer, stunden, gesamt, max };
+}
+function fvMarkiertUE(stunden) { return fvSumme(stunden.filter((s) => FV.markiert.has(s.id))); }
+function fvOhneAuto(stunden) {
+  const auto = fahrstundenUeberDeckel(stunden, FV.deckel);
+  return auto.size !== FV.markiert.size || [...auto].some((id) => !FV.markiert.has(id));
+}
+
+function renderFahrstunden() {
+  if (FV.hilfeOffen == null) {
+    FV.hilfeOffen = fvSpeicherLesen("buero-fv-hilfe-gesehen") !== "1";
+    fvSpeicherSchreiben("buero-fv-hilfe-gesehen", "1");
+  }
+  const hilfe = `<details id="fv-hilfe" class="fv-hilfe"${FV.hilfeOffen ? " open" : ""}>
+    <summary>So bedienst du diese Seite</summary>
+    <ol>
+      <li><b>Wähle</b> oben den Fahrlehrer und den Monat. Du siehst sofort, wie viele UE der Fahrlehrer hat.</li>
+      <li><b>Stelle die Obergrenze ein.</b> Die Stunden werden der Reihe nach gezählt. Alles, was über die Grenze hinausgeht, wird rot. Mit einem Klick auf einen Tag oder eine Woche wählst du Stunden dazu oder ab.</li>
+      <li><b>Prüfe die Vorschau.</b> Erst wenn du bestätigst, passiert etwas. Du kannst die Stunden entfernen oder an einen anderen Fahrlehrer übertragen.</li>
+    </ol></details>`;
+  const z = fvZustand();
+  const kopf = `<div class="fv-kopf">
+      <div class="fv-lehrer-reihe" role="group" aria-label="Fahrlehrer wählen">${z.lehrer.map((l) => {
+        const ue = fvSumme(z.q.liste ? fvStundenVon(z.q.liste, l.id) : []);
+        return `<button type="button" class="fv-lehrer" data-id="${esc(l.id)}" aria-pressed="${l.id === FV.lehrer}"><span class="fv-lehrer-name">${esc(l.name || l.email)}${l.aktiv === false ? " (gesperrt)" : ""}</span><span class="fv-lehrer-ue">${z.q.liste ? fvUE(ue) + " UE" : "…"}</span></button>`;
+      }).join("")}</div>
+      <div class="fv-monat" role="group" aria-label="Monat wählen">
+        <button type="button" class="knopf" id="fv-monat-zurueck" aria-label="Vorheriger Monat">‹</button>
+        <span class="fv-monat-name" id="fv-monat-name" aria-live="polite">${esc(fvMonatName(FV.monat))}</span>
+        <button type="button" class="knopf" id="fv-monat-vor" aria-label="Nächster Monat">›</button>
+      </div></div>`;
+  let inhalt;
+  if (!z.lehrer.length) {
+    inhalt = `<div class="karte fv-leer"><h2>Noch kein Fahrlehrer</h2><p class="leise">In dieser Fahrschule gibt es noch keine aktiven Fahrlehrer. Lege sie unter <a href="#team">Fahrlehrer &amp; Zugänge</a> an.</p></div>`;
+  } else if (z.q.laedt) {
+    inhalt = `<p class="leer">Der Monat wird geladen …</p>`;
+  } else if (z.q.fehler) {
+    inhalt = `<div class="karte fv-leer"><p class="fehler" role="alert">${esc(z.q.fehler)}</p></div>`;
+  } else if (!z.stunden.length) {
+    const andere = z.lehrer.some((l) => fvStundenVon(z.q.liste, l.id).length);
+    inhalt = `<div class="karte fv-leer"><h2>Keine Fahrstunden</h2><p class="leise">${esc(lehrerName(FV.lehrer))} hat im ${esc(fvMonatName(FV.monat))} keine Fahrstunden. ${andere ? "Wähle oben einen anderen Fahrlehrer." : "Wähle oben einen anderen Monat."}</p></div>`;
+  } else {
+    inhalt = fvHero(z) + `<div class="fv-wochen" id="fv-wochen">${fvWochenHtml(z.stunden)}</div>
+      <div class="fv-aktionen">
+        <button type="button" class="knopf gefahr gross" id="fv-entfernen"></button>
+        <button type="button" class="knopf gross" id="fv-uebertragen-oeffnen">An anderen Fahrlehrer übertragen …</button>
+        <p class="leise klein">Vorher siehst du eine Vorschau mit allen Stunden. Es wird nichts geändert, bevor du bestätigst.</p>
+      </div>`;
+  }
+  return `<div id="fv-seite" class="fv-seite">${hilfe}${kopf}${FV.warnung ? fvWarnungHtml() : ""}${FV.erfolg ? fvErfolgHtml() : ""}${inhalt}</div>`;
+}
+function fvHero(z) {
+  return `<section class="karte fv-hero" aria-label="Obergrenze für diesen Monat">
+    <div class="fv-hero-oben">
+      <div class="fv-hero-links">
+        <label class="fv-klein" for="fv-deckel-zahl">Obergrenze für diesen Monat</label>
+        <div class="fv-gross"><input type="number" id="fv-deckel-zahl" inputmode="numeric" min="0" max="${z.max}" step="1" value="${FV.deckel}"><span class="fv-einheit">UE</span></div>
+      </div>
+      <div class="fv-hero-rechts">
+        <div class="fv-klein">Gesamt</div>
+        <div class="fv-mittel"><b id="fv-gesamt">${fvUE(z.gesamt)}</b> <span class="fv-einheit">UE</span></div>
+        <div class="fv-darueber" id="fv-darueber"></div>
+      </div>
+    </div>
+    <input type="range" id="fv-regler" min="0" max="${z.max}" step="1" value="${Math.min(FV.deckel, z.max)}" aria-label="Obergrenze in UE einstellen">
+    <div class="fv-balken" id="fv-balken" role="img" aria-label="Anteil der markierten Stunden"><span class="fv-balken-gruen"></span><span class="fv-balken-rot"></span></div>
+    <p class="leise klein fv-regel">Die Stunden werden der Reihe nach gezählt. Ab der ersten Stunde, die über die Grenze geht, ist alles Spätere rot.</p>
+  </section>`;
+}
+function fvWochenHtml(stunden) {
+  const proTag = {};
+  for (const s of stunden) (proTag[s.datum] = proTag[s.datum] || []).push(s);
+  const maxTag = Math.max(1, ...Object.values(proTag).map(fvSumme));
+  const wochen = new Map();
+  for (const datum of Object.keys(proTag).sort()) {
+    const k = fvKW(datum), id = k.jahr + "-" + k.kw;
+    if (!wochen.has(id)) wochen.set(id, { kw: k.kw, tage: [], stunden: [] });
+    wochen.get(id).tage.push(datum); wochen.get(id).stunden.push(...proTag[datum]);
+  }
+  return [...wochen.values()].map((w) => {
+    const ue = fvSumme(w.stunden), mark = fvSumme(w.stunden.filter((s) => FV.markiert.has(s.id)));
+    const montag = KR.addDaysISO(w.tage[0], -((KR.parseISO(w.tage[0]).getDay() + 6) % 7));
+    const hatSonntag = w.tage.some((d) => KR.parseISO(d).getDay() === 0);
+    const zeilen = Array.from({ length: hatSonntag ? 7 : 6 }, (_, i) => {
+      const datum = KR.addDaysISO(montag, i);
+      if (datum.slice(0, 7) !== FV.monat && !proTag[datum]) return "";
+      const liste = proTag[datum];
+      const name = FV_TAGE[KR.parseISO(datum).getDay()] + " " + datum.slice(8) + ".";
+      if (!liste) return `<div class="fv-tag-leer"><span class="fv-tag-name">${esc(name)}</span><span class="fv-spur"></span><span class="fv-tag-ue">–</span></div>`;
+      const tUE = fvSumme(liste), mUE = fvSumme(liste.filter((s) => FV.markiert.has(s.id)));
+      const zustand = mUE === 0 ? "" : mUE >= tUE ? " ganz" : " teils";
+      return `<button type="button" class="fv-tag${zustand}" data-datum="${datum}" aria-pressed="${mUE >= tUE}" title="Alle Stunden dieses Tages markieren oder abwählen">
+        <span class="fv-tag-name">${esc(name)}</span><span class="fv-spur"><span class="fv-teil-gruen" style="width:${((tUE - mUE) / maxTag) * 100}%"></span><span class="fv-teil-rot" style="width:${(mUE / maxTag) * 100}%"></span></span><span class="fv-tag-ue">${fvUE(tUE)}</span></button>`;
+    }).join("");
+    return `<article class="fv-woche${mark ? " mit-markiert" : ""}" data-kw="${w.kw}">
+      <button type="button" class="fv-woche-kopf" data-kw="${w.kw}" aria-pressed="${mark >= ue}" title="Die ganze Woche markieren oder abwählen">
+        <span class="fv-woche-titel">KW ${w.kw}</span><span class="fv-woche-sub">${fvUE(ue)} UE${mark ? ` · <b class="rot">${fvUE(mark)} markiert</b>` : ""}</span></button>
+      <div class="fv-tage">${zeilen}</div></article>`;
+  }).join("");
+}
+function fvErfolgHtml() {
+  const e = FV.erfolg;
+  return `<div id="fv-erfolg" class="fv-erfolg" role="status">
+    <span class="fv-erfolg-haken" aria-hidden="true">✓</span>
+    <div class="fv-erfolg-text"><div id="fv-erfolg-text">${esc(e.text)}</div><div class="fv-erfolg-zahl" aria-hidden="true"><b data-von="${e.von}" data-nach="${e.nach}">${fvUE(e.nach)}</b> UE</div></div>
+    <button type="button" class="knopf haupt" id="fv-naechster">Nächster Fahrlehrer</button></div>`;
+}
+function fvWarnungHtml() {
+  return `<div id="fv-warnung" class="fv-warnung-karte" role="alert"><span>${esc(FV.warnung)}</span><button type="button" class="knopf klein" id="fv-warnung-zu">OK</button></div>`;
+}
+
+// Zahlen, Balken und Knöpfe aktualisieren, ohne die Seite neu zu zeichnen (der Regler behält den Fokus)
+function fvAktualisiere() {
+  const z = fvZustand();
+  const wochen = $("fv-wochen");
+  if (!wochen) return;
+  const mUE = fvMarkiertUE(z.stunden);
+  $("fv-gesamt").textContent = fvUE(z.gesamt);
+  const mark = $("fv-markiert");
+  const dar = $("fv-darueber");
+  dar.innerHTML = `<b id="fv-markiert">${fvUE(mUE)}</b> UE ${fvOhneAuto(z.stunden) ? "sind markiert" : "liegen darüber"}`;
+  dar.classList.toggle("keine", mUE === 0);
+  if (mark) mark.classList.remove("fv-pop");
+  const gruen = z.gesamt ? ((z.gesamt - mUE) / z.gesamt) * 100 : 100, rot = z.gesamt ? (mUE / z.gesamt) * 100 : 0;
+  const bal = $("fv-balken");
+  bal.querySelector(".fv-balken-gruen").style.width = gruen + "%";
+  bal.querySelector(".fv-balken-rot").style.width = rot + "%";
+  bal.setAttribute("aria-label", `${fvUE(z.gesamt - mUE)} UE bleiben, ${fvUE(mUE)} UE sind markiert`);
+  wochen.innerHTML = fvWochenHtml(z.stunden);
+  const knopf = $("fv-entfernen");
+  knopf.textContent = mUE ? `Markierte ${fvUE(mUE)} UE entfernen …` : "Keine Stunden markiert";
+  knopf.disabled = !z.stunden.some((s) => FV.markiert.has(s.id));
+  $("fv-uebertragen-oeffnen").disabled = knopf.disabled;
+}
+function fvDeckelSetzen(wert, quelle) {
+  const z = fvZustand();
+  FV.deckel = wert;
+  FV.markiert = fahrstundenUeberDeckel(z.stunden, wert);
+  fvSpeicherSchreiben(fvDeckelSchluessel(), wert);
+  const regler = $("fv-regler"), zahl = $("fv-deckel-zahl");
+  if (quelle !== "regler") regler.value = Math.min(Math.max(wert, 0), z.max);
+  if (quelle !== "zahl") zahl.value = wert;
+  fvAktualisiere();
+}
+function fvZeigeBalkenAnimiert() {
+  const bal = $("fv-balken");
+  if (!bal) return;
+  const g = bal.querySelector(".fv-balken-gruen"), r = bal.querySelector(".fv-balken-rot");
+  if (FV.balkenAnimieren && !window.matchMedia("(prefers-reduced-motion: reduce)").matches) {
+    g.style.width = "0%"; r.style.width = "0%";
+    requestAnimationFrame(() => requestAnimationFrame(() => fvAktualisiere()));
+  }
+  FV.balkenAnimieren = false;
+}
+function fvZaehle(el, von, nach) {
+  if (window.matchMedia("(prefers-reduced-motion: reduce)").matches || von === nach) { el.textContent = fvUE(nach); return; }
+  const start = performance.now(), dauer = 700;
+  const schritt = (jetzt) => {
+    const t = Math.min(1, (jetzt - start) / dauer), e = 1 - Math.pow(1 - t, 3);
+    el.textContent = fvUE(von + (nach - von) * e);
+    if (t < 1) requestAnimationFrame(schritt);
+  };
+  el.textContent = fvUE(von);
+  requestAnimationFrame(schritt);
+}
+
+function bindeFahrstunden(ziel) {
+  const seite = ziel.querySelector("#fv-seite");
+  if (!seite) return;
+  const hilfe = $("fv-hilfe");
+  if (hilfe) hilfe.addEventListener("toggle", () => { FV.hilfeOffen = hilfe.open; });
+  const wechsle = (aenderung, fokus) => {
+    aenderung(); FV.erfolg = null; FV.warnung = null; FV.schluessel = null; FV.balkenAnimieren = true;
+    zeichne();
+    const neu = fokus && document.querySelector(fokus);
+    if (neu) neu.focus({ preventScroll: true });
+  };
+  seite.querySelectorAll(".fv-lehrer").forEach((b) => b.addEventListener("click", () => { const id = b.dataset.id; if (id !== FV.lehrer) wechsle(() => { FV.lehrer = id; }, `.fv-lehrer[data-id="${CSS.escape(id)}"]`); }));
+  $("fv-monat-zurueck").addEventListener("click", () => wechsle(() => { FV.monat = fvMonatVerschieben(FV.monat, -1); }, "#fv-monat-zurueck"));
+  $("fv-monat-vor").addEventListener("click", () => wechsle(() => { FV.monat = fvMonatVerschieben(FV.monat, 1); }, "#fv-monat-vor"));
+  const zu = $("fv-warnung-zu");
+  if (zu) zu.addEventListener("click", () => { FV.warnung = null; $("fv-warnung").remove(); });
+  const naechster = $("fv-naechster");
+  if (naechster) {
+    const e = document.querySelector("#fv-erfolg b[data-nach]");
+    if (e && !FV.erfolg.gezaehlt) { FV.erfolg.gezaehlt = true; fvZaehle(e, Number(e.dataset.von), Number(e.dataset.nach)); }
+    naechster.addEventListener("click", () => {
+      const liste = fvLehrerListe(fvQuelle(FV.monat).liste || []);
+      const i = liste.findIndex((l) => l.id === FV.lehrer);
+      wechsle(() => { if (liste.length) FV.lehrer = liste[(i + 1) % liste.length].id; });
+    });
+  }
+  const regler = $("fv-regler");
+  if (!regler) return;
+  regler.addEventListener("input", () => fvDeckelSetzen(Number(regler.value), "regler"));
+  const zahl = $("fv-deckel-zahl");
+  zahl.addEventListener("input", () => {
+    if (zahl.value === "") return;
+    const v = Math.round(Number(zahl.value));
+    if (isFinite(v) && v >= 0) fvDeckelSetzen(v, "zahl");
+  });
+  zahl.addEventListener("change", () => {
+    const z = fvZustand();
+    const v = zahl.value === "" || !isFinite(Number(zahl.value)) ? z.max : Math.min(z.max, Math.max(0, Math.round(Number(zahl.value))));
+    fvDeckelSetzen(v);
+  });
+  seite.addEventListener("click", (e) => {
+    const z = fvZustand();
+    const tag = e.target.closest(".fv-tag"), woche = e.target.closest(".fv-woche-kopf");
+    let betroffen = null;
+    if (tag) betroffen = z.stunden.filter((s) => s.datum === tag.dataset.datum);
+    else if (woche) { const w = woche.closest(".fv-woche"); const tage = new Set([...w.querySelectorAll(".fv-tag")].map((t) => t.dataset.datum)); betroffen = z.stunden.filter((s) => tage.has(s.datum)); }
+    if (!betroffen) return;
+    const alleDrin = betroffen.every((s) => FV.markiert.has(s.id));
+    betroffen.forEach((s) => { if (alleDrin) FV.markiert.delete(s.id); else FV.markiert.add(s.id); });
+    const fokus = tag ? `.fv-tag[data-datum="${tag.dataset.datum}"]` : `.fv-woche[data-kw="${woche.dataset.kw}"] .fv-woche-kopf`;
+    fvAktualisiere();
+    const neu = document.querySelector(fokus); if (neu) neu.focus({ preventScroll: true });
+  });
+  $("fv-entfernen").addEventListener("click", () => fvVorschau("entfernen"));
+  $("fv-uebertragen-oeffnen").addEventListener("click", () => fvVorschau("uebertragen"));
+  fvAktualisiere();
+  fvZeigeBalkenAnimiert();
+}
+
+/* ----- Vorschau und Bestätigung ----- */
+function fvVorschau(modus) {
+  const z = fvZustand();
+  const stunden = z.stunden.filter((s) => FV.markiert.has(s.id));
+  if (!stunden.length) { toast("Bitte markiere zuerst Stunden.", true); return; }
+  const quelleLehrer = FV.lehrer, monat = FV.monat;
+  const jetzt = z.gesamt;
+  const gewaehlt = new Set(stunden.map((s) => s.id));
+  const andere = S.lehrer.filter((l) => l.aktiv !== false && l.id !== quelleLehrer).sort((a, b) => String(a.name || a.email).localeCompare(String(b.name || b.email), "de"));
+  const dlg = document.createElement("dialog");
+  dlg.id = "fv-vorschau";
+  dlg.className = "dialog fv-dialog";
+  const tage = [...new Set(stunden.map((s) => s.datum))];
+  const liste = tage.map((d) => {
+    const zeilen = stunden.filter((s) => s.datum === d);
+    return `<section class="fv-gruppe" data-datum="${d}"><header><b>${esc(FV_TAGE_LANG[KR.parseISO(d).getDay()])}, ${esc(datumDE(d).slice(0, 6))}</b><span class="fv-gruppe-ue"></span></header>
+      ${zeilen.map((s) => `<label class="fv-zeile"><input type="checkbox" class="fv-haken" data-id="${esc(s.id)}" checked>
+        <span class="fv-zeit">${esc(s.von)}${s.bis ? "–" + esc(s.bis) : ""}</span><span class="fv-schueler">${esc(s.name || "ohne Schüler")}</span>
+        <span class="fv-art">${esc(ARTEN[s.art] || s.art)}${s.status && /abgebrochen|nicht erschienen/.test(s.status) ? ` <em>(${esc(s.status)})</em>` : ""}</span><span class="fv-ue">${fvUE(s.ue)} UE</span></label>`).join("")}</section>`;
+  }).join("");
+  dlg.innerHTML = `<div class="dialog-form">
+    <header><h2>Das würde passieren</h2><button class="knopf klein" type="button" data-schliessen aria-label="Schließen">✕</button></header>
+    <div class="dialog-inhalt">
+      <p class="leise fv-vorschau-kopf">${esc(lehrerName(quelleLehrer))} · ${esc(fvMonatName(monat))}</p>
+      <div class="fv-jetzt-danach" aria-live="polite">
+        <div><span class="fv-klein">Jetzt</span><b id="fv-jetzt">${fvUE(jetzt)}</b><span class="fv-einheit">UE</span></div>
+        <span class="fv-pfeil" aria-hidden="true">→</span>
+        <div><span class="fv-klein">Danach</span><b id="fv-danach" class="gruen"></b><span class="fv-einheit">UE</span></div>
+      </div>
+      <p class="fv-achtung"><b>Achtung:</b> Entfernte Stunden sind sofort weg – auch auf den Handys der Fahrlehrer. Das lässt sich nicht rückgängig machen.</p>
+      <h3 class="fv-summe" id="fv-summe"></h3>
+      <p class="leise klein">Nimm bei einer Stunde das Häkchen weg, wenn sie bleiben soll.</p>
+      <div class="fv-liste">${liste}</div>
+      <section class="fv-abschnitt fv-entf" id="fv-bereich-entfernen">
+        <h3>Stunden entfernen</h3>
+        <label class="fv-pruef"><input type="checkbox" id="fv-geprueft"> Ich habe die Liste geprüft</label>
+        <div id="fv-anzahl-feld" class="fv-anzahl-feld" hidden>
+          <label for="fv-anzahl">Weil es viele Stunden sind: Tippe die Zahl der Stunden ein (<b id="fv-anzahl-soll"></b>).</label>
+          <input type="text" id="fv-anzahl" inputmode="numeric" autocomplete="off" aria-describedby="fv-anzahl-soll">
+        </div>
+        <button type="button" class="knopf gefahr gross" id="fv-bestaetigen" disabled></button>
+      </section>
+      <section class="fv-abschnitt fv-uebertr" id="fv-bereich-uebertragen">
+        <h3>Oder an einen anderen Fahrlehrer übertragen</h3>
+        <label for="fv-ziel" class="fv-klein">Neuer Fahrlehrer</label>
+        <select id="fv-ziel"${andere.length ? "" : " disabled"}><option value="">${andere.length ? "Fahrlehrer wählen …" : "Kein anderer aktiver Fahrlehrer"}</option>${andere.map((l) => `<option value="${esc(l.id)}">${esc(l.name || l.email)}</option>`).join("")}</select>
+        <p class="leise klein">Die Schüler bleiben beim bisherigen Fahrlehrer zugeordnet. Der neue Fahrlehrer sieht die Stunden im Kalender.</p>
+        <button type="button" class="knopf gross" id="fv-uebertragen" disabled></button>
+      </section>
+    </div>
+    <footer><button class="knopf" type="button" data-schliessen>Zurück</button></footer></div>`;
+  document.body.appendChild(dlg);
+  const q = (s) => dlg.querySelector(s);
+  const aktuell = () => stunden.filter((s) => gewaehlt.has(s.id));
+  const meldungWeg = () => { const m = dlg.querySelector(".dialog-meldung"); if (m) m.remove(); };
+  let busy = false;
+  const pruefe = () => {
+    const wahl = aktuell(), n = wahl.length, ue = fvSumme(wahl);
+    q("#fv-danach").textContent = fvUE(jetzt - ue);
+    q("#fv-summe").textContent = `${n} ${n === 1 ? "Stunde" : "Stunden"} · ${fvUE(ue)} UE`;
+    dlg.querySelectorAll(".fv-gruppe").forEach((g) => {
+      const zs = stunden.filter((s) => s.datum === g.dataset.datum && gewaehlt.has(s.id));
+      g.querySelector(".fv-gruppe-ue").textContent = fvUE(fvSumme(zs)) + " UE";
+      g.classList.toggle("leer", !zs.length);
+    });
+    const viele = n >= 5;
+    q("#fv-anzahl-feld").hidden = !viele;
+    q("#fv-anzahl-soll").textContent = n;
+    const geprueft = q("#fv-geprueft").checked;
+    const anzahlOk = !viele || q("#fv-anzahl").value.trim() === String(n);
+    const b = q("#fv-bestaetigen");
+    b.textContent = n ? `${n} ${n === 1 ? "Stunde" : "Stunden"} (${fvUE(ue)} UE) endgültig entfernen` : "Keine Stunde ausgewählt";
+    b.disabled = busy || !n || !geprueft || !anzahlOk;
+    const zielId = q("#fv-ziel").value, zielName = zielId ? lehrerName(zielId) : "";
+    const u = q("#fv-uebertragen");
+    u.textContent = n ? (zielName ? `${fvUE(ue)} UE an ${zielName} übertragen` : `${fvUE(ue)} UE übertragen`) : "Keine Stunde ausgewählt";
+    u.disabled = busy || !n || !zielId;
+  };
+  dlg.querySelectorAll(".fv-haken").forEach((h) => h.addEventListener("change", () => {
+    if (h.checked) gewaehlt.add(h.dataset.id); else gewaehlt.delete(h.dataset.id);
+    // Die Liste hat sich geändert: Prüfung und Zahl müssen neu bestätigt werden
+    q("#fv-geprueft").checked = false; q("#fv-anzahl").value = "";
+    meldungWeg(); pruefe();
+  }));
+  q("#fv-geprueft").addEventListener("change", () => { meldungWeg(); pruefe(); });
+  q("#fv-anzahl").addEventListener("input", pruefe);
+  q("#fv-ziel").addEventListener("change", () => { meldungWeg(); pruefe(); });
+  dlg.querySelectorAll("[data-schliessen]").forEach((b) => b.addEventListener("click", () => { if (!busy) dlg.close(); }));
+  dlg.addEventListener("cancel", (e) => { if (busy) e.preventDefault(); });
+  dlg.addEventListener("close", () => dlg.remove());
+  const ausfuehren = async (art) => {
+    if (busy) return;
+    const wahl = aktuell();
+    if (!wahl.length) return;
+    const zielId = art === "uebertragen" ? q("#fv-ziel").value : null;
+    if (art === "uebertragen" && !zielId) return;
+    busy = true; pruefe(); meldungWeg();
+    const ids = wahl.map((s) => s.id);
+    const ue = fvSumme(wahl);
+    let geaendert = 0, fehlerText = null;
+    try {
+      for (let i = 0; i < ids.length; i += FV_BLOCK) {
+        const teil = ids.slice(i, i + FV_BLOCK);
+        const res = art === "entfernen"
+          ? await supa.rpc("fahrstunden_entfernen", { p_ids: teil })
+          : await supa.rpc("fahrstunden_uebertragen", { p_ids: teil, p_ziel: zielId });
+        if (res.error) { fehlerText = res.error.message; break; }
+        geaendert += Number(res.data) || 0;
+      }
+    } catch (e) { fehlerText = e && e.message ? e.message : "Keine Verbindung."; }
+    if (fehlerText && geaendert === 0) {
+      // Nichts passiert: Fenster bleibt offen, der Fehler steht direkt über den Knöpfen
+      busy = false; pruefe();
+      toast(fehlerText, true);
+      return;
+    }
+    const vorher = S.geladenAm;
+    dlg.close();
+    await ladeDaten();
+    const neuGeladen = S.geladenAm !== vorher;
+    FV.schluessel = null; FV.balkenAnimieren = true;
+    fvSpeicherSchreiben("buero-fv-deckel-" + quelleLehrer + "-" + monat, null);
+    const nachher = fvSumme(fvStundenVon(fvQuelle(monat).liste || [], quelleLehrer));
+    if (fehlerText || geaendert !== ids.length) {
+      FV.erfolg = null;
+      FV.warnung = fehlerText
+        ? `Nur ${geaendert} von ${ids.length} Stunden geändert. ${fehlerText} Bitte prüfe die Liste und versuche es noch einmal.`
+        : `Nur ${geaendert} von ${ids.length} Stunden geändert. Vielleicht hat schon jemand anderes etwas geändert. Bitte prüfe die Liste.`;
+      toast(`Nur ${geaendert} von ${ids.length} Stunden geändert.`, true);
+    } else {
+      FV.warnung = neuGeladen ? null : "Die Stunden sind geändert. Die Seite konnte aber nicht neu laden. Bitte drücke „Aktualisieren“.";
+      const name = lehrerName(quelleLehrer);
+      const text = art === "entfernen"
+        ? `${fvUE(ue)} UE entfernt – ${name} hat jetzt ${fvUE(nachher)} UE`
+        : `${fvUE(ue)} UE an ${lehrerName(zielId)} übertragen – ${name} hat jetzt ${fvUE(nachher)} UE`;
+      FV.erfolg = { text, von: jetzt, nach: nachher };
+      toast(art === "entfernen" ? "Fahrstunden entfernt" : "Fahrstunden übertragen");
+    }
+    if (aktuellerBereich().id === "fahrstunden") { zeichne(); const e = $("fv-erfolg") || $("fv-warnung"); if (e) e.scrollIntoView({ block: "nearest", behavior: "smooth" }); }
+  };
+  q("#fv-bestaetigen").addEventListener("click", () => ausfuehren("entfernen"));
+  q("#fv-uebertragen").addEventListener("click", () => ausfuehren("uebertragen"));
+  pruefe();
+  dlg.showModal();
+  if (modus === "uebertragen") { const sel = q("#fv-ziel"); q("#fv-bereich-uebertragen").scrollIntoView({ block: "center" }); if (!sel.disabled) sel.focus({ preventScroll: true }); }
+  else q("#fv-geprueft").focus({ preventScroll: true });
 }
 
 /* ---------- Daten ---------- */
