@@ -5173,8 +5173,10 @@ async function pullSchuelerZuweisungen() {
       }
       // Theorie bestanden vom Büro (Prüfungstafel): einmal je neuem Datum in den Ausbildungsplan übernehmen –
       // Schalter an, „wartet auf Theorie“ beendet (T1). Schaltet der Fahrlehrer danach selbst um, gilt das.
-      if (lokaleIds.has(r.id) && "theorie_bestanden_am" in r) { const lok = DB.students.find(x => x.id === r.id); if (lok && _theorieVomBuero(lok, r.theorie_bestanden_am)) umschreiberNeu = true; }
-      if (lokaleIds.has(r.id)) { const l1 = DB.students.find(x => x.id === r.id); if (l1) { const w = _abglWertVon("schueler", l1); if (w !== vorherWert[r.id]) nachherWert[r.id] = w; } }
+      // Geändert wird hier der Ausbildungsstand – der soll ins Büro (ausbildung.ready usw.), darum nicht als „abgeglichen“ merken.
+      let theorieNeu = false;
+      if (lokaleIds.has(r.id) && "theorie_bestanden_am" in r) { const lok = DB.students.find(x => x.id === r.id); if (lok && _theorieVomBuero(lok, r.theorie_bestanden_am)) { umschreiberNeu = true; theorieNeu = true; } }
+      if (lokaleIds.has(r.id) && !theorieNeu) { const l1 = DB.students.find(x => x.id === r.id); if (l1) { const w = _abglWertVon("schueler", l1); if (w !== vorherWert[r.id]) nachherWert[r.id] = w; } }
     }
     // Erst jetzt die neuen Schüler (mit Netzabrufen): alle Übernahmen oben laufen ohne Pause, damit eine Eingabe
     // des Fahrlehrers in der Zwischenzeit nicht als „vom Büro übernommen“ gilt.
@@ -11677,9 +11679,12 @@ function routeSettings(){
         DB=j.data;ensureDB();
         // Abgleich-Gedächtnis gehört zum alten Stand: leeren, sonst hielte die Brücke alles, was nicht in der Datei
         // steht, für gelöscht und löschte es auf dem Server – auch Termine und Schüler vom Büro (D2).
-        if(_authUser){ _abglSpeichern({ user:_authUser.id, schueler:{}, termine:{}, pruefungen:{} }); _termineAbgerufen=false; _schuelerAbgerufen=false; }
+        // Ohne Merker gilt der Stand der Datei: die Brücken laden ihn sofort hoch (vor dem nächsten Abruf), löschen aber
+        // nichts, weil sie keinen Eintrag mehr kennen. Danach holt der Abruf zurück, was nur auf dem Server steht (Büro).
+        if(_authUser){ _abglSpeichern({ user:_authUser.id, schueler:{}, termine:{}, pruefungen:{} });
+          (DB.lessons||[]).forEach(l=>delete l._syncedAt); (DB.exams||[]).forEach(x=>delete x._syncedAt); }
         save();routeDashboard();
-        if(_authUser&&_pullOk){ try{ pullSchuelerZuweisungen(); pullTermineZuweisungen(); }catch(e3){} }
+        if(_authUser&&_pullOk){ _brueckenSofort(); setTimeout(()=>{ try{ pullSchuelerZuweisungen(); pullTermineZuweisungen(); }catch(e3){} },5000); }
         toastUndo("Backup eingespielt",()=>{ DB=JSON.parse(vorher);
           // Ohne Merker gelten die Einträge als nicht abgeglichen: der Abruf entfernt sie nicht, die Brücke lädt sie wieder hoch.
           (DB.lessons||[]).forEach(l=>delete l._syncedAt); (DB.exams||[]).forEach(x=>delete x._syncedAt);

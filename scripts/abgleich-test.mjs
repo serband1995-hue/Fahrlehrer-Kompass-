@@ -444,6 +444,26 @@ fall("13 Backup einspielen löscht auf dem Server nichts (D2)", async (f) => {
   if (!(await dbIds("lessons")).includes("T-buero")) f("Büro-Termin kam nach dem Einspielen nicht wieder aufs Gerät");
 });
 
+fall("13b Backup einspielen: Stand der Datei gilt für ihre eigenen Termine (D2)", async (f) => {
+  await neu();
+  await setzeLokal("lessons", [termin("L1"), termin("L2", { von: "11:00", bis: "12:30" })]);
+  await bruecke();
+  const datei = await ruf(() => JSON.parse(JSON.stringify(DB.lessons)));
+  // nach dem Backup: L1 verschoben, L2 gelöscht
+  await ruf(() => { DB.lessons = DB.lessons.filter((l) => l.id !== "L2"); DB.lessons[0].von = "15:00"; DB.lessons[0].bis = "16:30"; save(); });
+  await lauf();
+  await ruf(() => { ensureDB(); routeSettings(); });
+  const backup = { app: "serband", version: 1, datum: new Date().toISOString(), data: { students: [], lessons: datei, exams: [] } };
+  await page.setInputFiles("#impFile", { name: "backup.json", mimeType: "application/json", buffer: Buffer.from(JSON.stringify(backup)) });
+  await page.waitForTimeout(300);
+  await lauf(); await lauf(12000);
+  const l1 = await zeile("kalender_termine", "L1"), l2 = await zeile("kalender_termine", "L2");
+  if (!l1 || l1.von !== "09:00") f("L1 nicht auf den Stand der Datei zurück: " + (l1 && l1.von));
+  if (!l2 || l2.geloescht !== false) f("L2 aus der Datei nicht wiederhergestellt: " + JSON.stringify(l2 && l2.geloescht));
+  const ids = await dbIds("lessons");
+  if (!ids.includes("L1") || !ids.includes("L2")) f("Gerät hat nach dem Abruf nicht beide Termine: " + ids);
+});
+
 fall("14 Gelöschter Termin kommt vor dem Hochladen nicht als „neu“ zurück", async (f) => {
   await neu();
   await setzeLokal("lessons", [termin("L1"), termin("L2", { von: "11:00", bis: "12:30" })]);

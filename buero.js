@@ -2491,6 +2491,11 @@ function verkaufBezahltDialog(id) {
     // „Zurücknehmen → Wieder öffnen → Bezahlt“ wird sie neu gebucht (die alte ist storniert).
     let gebucht = false, fehler = false;
     if (auf && auf.fahrlehrer > 0) {
+      // Frisch vom Server: ein zweiter Büro-PC könnte dieselbe Zahlung gerade gebucht haben
+      try {
+        const fr = await supa.from("provisionen").select("*").eq("schueler_id", v.schueler_id).eq("typ", v.typ).eq("fahrlehrer_id", v.fahrlehrer_id);
+        if (!fr.error && Array.isArray(fr.data)) { const ids = new Set(fr.data.map((p) => p.id)); S.provisionen = fr.data.concat(S.provisionen.filter((p) => !ids.has(p.id) && !(p.schueler_id === v.schueler_id && p.typ === v.typ && p.fahrlehrer_id === v.fahrlehrer_id))); }
+      } catch (e) {}
       const gleich = (x) => x.schueler_id === v.schueler_id && x.typ === v.typ && x.fahrlehrer_id === v.fahrlehrer_id;
       const bezahlt = S.verkaeufe.filter((x) => gleich(x) && x.status === "bezahlt" && x.aufteilung && Number(x.aufteilung.fahrlehrer) > 0).length;
       const gueltig = S.provisionen.filter((p) => gleich(p) && p.status !== "storniert").length;
