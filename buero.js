@@ -2486,13 +2486,23 @@ function verkaufBezahltDialog(id) {
     const auf = v.fahrlehrer_id ? KR.aufteilung(betrag, split) : null;
     const neu = await verkaufStatus(id, { status: "bezahlt", betrag, aufteilung: auf });
     if (!neu) return false;
-    if (auf && auf.fahrlehrer > 0 && !S.provisionen.some((p) => p.empfehlung_id === id || (p.schueler_id === v.schueler_id && p.typ === v.typ && p.fahrlehrer_id === v.fahrlehrer_id))) {
-      const res = await supa.from("provisionen").insert({ fahrlehrer_id: v.fahrlehrer_id, fahrschule_id: S.fsId, typ: v.typ, schueler_id: v.schueler_id, betrag: auf.fahrlehrer, status: "offen" }).select("*");
-      if (res.error) toast("Zahlung gespeichert, Provision aber nicht: " + res.error.message, true);
-      else S.provisionen.unshift(res.data[0]);
+    // Je bezahltem Verkauf mit Provision genau eine nicht stornierte Provision (B1). Die Tabelle provisionen kennt den
+    // Verkauf nicht – darum zählen: so bekommt auch ein zweiter Verkauf gleicher Art seine Provision, und nach
+    // „Zurücknehmen → Wieder öffnen → Bezahlt“ wird sie neu gebucht (die alte ist storniert).
+    let gebucht = false, fehler = false;
+    if (auf && auf.fahrlehrer > 0) {
+      const gleich = (x) => x.schueler_id === v.schueler_id && x.typ === v.typ && x.fahrlehrer_id === v.fahrlehrer_id;
+      const bezahlt = S.verkaeufe.filter((x) => gleich(x) && x.status === "bezahlt" && x.aufteilung && Number(x.aufteilung.fahrlehrer) > 0).length;
+      const gueltig = S.provisionen.filter((p) => gleich(p) && p.status !== "storniert").length;
+      if (gueltig < bezahlt) {
+        const res = await supa.from("provisionen").insert({ fahrlehrer_id: v.fahrlehrer_id, fahrschule_id: S.fsId, typ: v.typ, schueler_id: v.schueler_id, betrag: auf.fahrlehrer, status: "offen" }).select("*");
+        if (res.error || !res.data || !res.data.length) { fehler = true; toast("Zahlung gespeichert, Provision aber nicht: " + (res.error ? res.error.message : "keine Berechtigung"), true); }
+        else { S.provisionen.unshift(res.data[0]); gebucht = true; }
+      }
     }
     if (v.typ === "simulator" && v.schueler_id) await supa.from("schueler").update({ hat_simulator: true }).eq("id", v.schueler_id);
-    toast(auf ? `Bezahlt. Provision ${euro(auf.fahrlehrer)} für ${lehrerName(v.fahrlehrer_id)} gebucht.` : "Bezahlt eingetragen");
+    if (!fehler) toast(gebucht ? `Bezahlt. Provision ${euro(auf.fahrlehrer)} für ${lehrerName(v.fahrlehrer_id)} gebucht.`
+      : (v.fahrlehrer_id && auf && auf.fahrlehrer > 0 ? "Bezahlt eingetragen. Die Provision dafür ist schon gebucht." : "Bezahlt eingetragen"));
     zeichne();
     return true;
   }, "Bezahlt speichern");
@@ -2517,15 +2527,17 @@ async function verkaufStorno(id) {
   if (!(await bestaetige(war ? "Zahlung zurücknehmen?" : "Empfehlung stornieren?", war ? "Betrag und Aufteilung werden zurückgesetzt. Eine schon gebuchte Provision bitte bei „Offene Provisionen“ prüfen." : "Die Empfehlung wird als storniert markiert.", "Ja"))) return;
   const neu = await verkaufStatus(id, { status: "storniert", betrag: null, aufteilung: null }, war ? "Zurückgenommen" : "Storniert");
   if (!neu) return;
-  // Eine noch nicht ausgezahlte Provision zu dieser Zahlung fällt mit weg; schon Ausgezahltes bleibt und wird gemeldet
+  // Nur eine bezahlte Zahlung hat eine Provision. Davon fällt genau EINE noch nicht ausgezahlte weg (bei zwei
+  // Verkäufen gleicher Art bleibt die andere stehen); ist keine mehr offen, aber schon ausgezahlt, wird das gemeldet.
+  if (!war || !v.aufteilung || !(Number(v.aufteilung.fahrlehrer) > 0)) return;
   const passend = S.provisionen.filter((p) => p.schueler_id === v.schueler_id && p.typ === v.typ && p.fahrlehrer_id === v.fahrlehrer_id);
   const offen = passend.filter((p) => p.status === "offen");
-  if (offen.length) {
-    const res = await supa.from("provisionen").update({ status: "storniert" }).in("id", offen.map((p) => p.id)).select("id");
+  const eine = offen.find((p) => Number(p.betrag) === Number(v.aufteilung.fahrlehrer)) || offen[0];
+  if (eine) {
+    const res = await supa.from("provisionen").update({ status: "storniert" }).eq("id", eine.id).select("id");
     if (res.error) toast("Zahlung zurückgenommen, Provision aber nicht: " + res.error.message, true);
-    else { offen.forEach((p) => { p.status = "storniert"; }); zeichne(); }
-  }
-  if (passend.some((p) => p.status === "ausgezahlt")) toast("Achtung: Die Provision wurde schon ausgezahlt und muss mit dem Fahrlehrer geklärt werden.", true);
+    else { eine.status = "storniert"; zeichne(); }
+  } else if (passend.some((p) => p.status === "ausgezahlt")) toast("Achtung: Die Provision wurde schon ausgezahlt und muss mit dem Fahrlehrer geklärt werden.", true);
 }
 async function verkaufWiederOeffnen(id) {
   await verkaufStatus(id, { status: "empfohlen" }, "Wieder geöffnet");
