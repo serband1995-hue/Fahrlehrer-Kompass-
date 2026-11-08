@@ -27,16 +27,19 @@
   .back{background:none;border:none;color:#9db3a8;font-size:13px;cursor:pointer;margin-bottom:10px;padding:0;}
   .err{color:#e08a7a;font-size:13px;margin-top:6px;}
   .spinner{text-align:center;padding:30px 0;color:#9db3a8;}
+  .netz{background:rgba(224,138,122,.12);border:1px solid rgba(224,138,122,.45);border-radius:12px;padding:12px 14px;margin:12px 0;text-align:center;font-size:14px;color:#f0c9c0;}
+  .netz button{margin-top:10px;background:#8fc98a;color:#0f1a14;border:none;border-radius:10px;padding:10px 18px;font-weight:700;cursor:pointer;min-height:44px;}
 </style></head><body><div class="wrap">
   <div class="head">
     <h1>Fahrstunde buchen</h1>
-    <div class="meta">Fahrlehrer Serband · 1,5 Std. (90 Min.) · Europe/Berlin</div>
+    <div class="meta" id="meta">1,5 Std. (90 Min.) · Europe/Berlin</div>
     <div class="fz-chip" id="fzChip">🚗 …</div>
   </div>
   <div id="step1">
     <div class="month-nav"><button id="mPrev">‹</button><div id="mLabel" style="font-weight:700;"></div><button id="mNext">›</button></div>
     <div class="cal-grid" id="calWd"></div>
     <div class="cal-grid" id="calGrid"></div>
+    <div class="netz" id="monthErr" style="display:none;" role="alert"></div>
     <div class="hint">Grün markierte Tage haben freie Termine.</div>
   </div>
   <div id="step2" style="display:none;">
@@ -77,6 +80,35 @@
 const API = "https://oectrvkjunntzsggyhxv.supabase.co/functions/v1/public-booking";
 const params = new URLSearchParams(window.location.search);
 const TYP = params.get("typ");
+// Buchungslink eines Fahrlehrers: ?lehrer=<slug>. Geht an jede Anfrage mit (sonst bucht man beim Standard-Fahrlehrer, Z5).
+const LEHRER = (params.get("lehrer") || "").trim();
+const LQ = LEHRER ? "&lehrer=" + encodeURIComponent(LEHRER) : "";
+function linkFalsch(){
+  ["step1","step2","step3","fzChip"].forEach(id=>{ const el=document.getElementById(id); if(el) el.style.display="none"; });
+  document.getElementById("stepErr").style.display="block";
+}
+// Name aus der Antwort der Buchungs-Schnittstelle (falls sie ihn liefert), sonst kein fester Name im Kopf
+function nameAusAntwort(d){
+  const n = d && (d.fahrlehrer_name || d.fahrlehrer || d.name);
+  if (n && typeof n === "string") document.getElementById("meta").textContent = "Fahrlehrer " + n + " · 1,5 Std. (90 Min.) · Europe/Berlin";
+}
+// Holt JSON; wirft bei Netz- oder Serverfehler. Unbekannter Fahrlehrer: "link"
+async function holeJson(url, opt){
+  let res;
+  try { res = await fetch(url, opt); } catch (e) { throw new Error("netz"); }
+  let data = null; try { data = await res.json(); } catch (e) {}
+  if (!res.ok) {
+    if (data && /nicht gefunden/i.test(data.error || "")) throw new Error("link");
+    const err = new Error("server"); err.data = data; err.status = res.status; throw err;
+  }
+  return data || {};
+}
+function netzMeldung(el, text, nochmal){
+  el.innerHTML = "";
+  const p = document.createElement("div"); p.textContent = text; el.appendChild(p);
+  const b = document.createElement("button"); b.type = "button"; b.textContent = "Nochmal versuchen"; b.addEventListener("click", nochmal); el.appendChild(b);
+  el.style.display = "block";
+}
 if(TYP !== "schalt" && TYP !== "automatik"){
   document.getElementById("step1").style.display="none";
   document.getElementById("stepErr").style.display="block";
@@ -94,8 +126,13 @@ function pad(n){ return String(n).padStart(2,"0"); }
 async function loadMonth(){
   document.getElementById("mLabel").textContent = curMonth.toLocaleDateString("de-DE",{month:"long",year:"numeric"});
   document.getElementById("calWd").innerHTML = WD.map(w=>'<div class="cal-wd">'+w+'</div>').join("");
-  const res = await fetch(API+"?action=availability&typ="+TYP+"&month="+monthKey(curMonth));
-  const {days} = await res.json();
+  const errBox = document.getElementById("monthErr"); errBox.style.display = "none";
+  let days = null;
+  try { const d = await holeJson(API+"?action=availability&typ="+TYP+"&month="+monthKey(curMonth)+LQ); nameAusAntwort(d); days = d.days; }
+  catch (e) {
+    if (e.message === "link") { linkFalsch(); return; }
+    netzMeldung(errBox, e.message === "netz" ? "Keine Verbindung – bitte prüfe dein Internet und versuche es nochmal." : "Die freien Termine konnten gerade nicht geladen werden. Bitte versuche es gleich nochmal.", loadMonth);
+  }
   const y = curMonth.getFullYear(), m = curMonth.getMonth();
   const dim = new Date(y,m+1,0).getDate();
   const firstWd = (new Date(y,m,1).getDay()+6)%7;
@@ -117,8 +154,14 @@ async function openDay(iso){
   document.getElementById("slotList").innerHTML = '<div class="spinner">Lade …</div>';
   const d = new Date(iso+"T00:00:00");
   document.getElementById("dayLabel").textContent = d.toLocaleDateString("de-DE",{weekday:"long",day:"numeric",month:"long"});
-  const res = await fetch(API+"?action=slots&typ="+TYP+"&date="+iso);
-  const {slots} = await res.json();
+  let slots;
+  try { const d = await holeJson(API+"?action=slots&typ="+TYP+"&date="+iso+LQ); nameAusAntwort(d); slots = d.slots; }
+  catch (e) {
+    if (e.message === "link") { linkFalsch(); return; }
+    const box = document.getElementById("slotList"); box.innerHTML = '<div class="netz" role="alert"></div>';
+    netzMeldung(box.firstChild, e.message === "netz" ? "Keine Verbindung – bitte prüfe dein Internet und versuche es nochmal." : "Die Uhrzeiten konnten gerade nicht geladen werden. Bitte versuche es gleich nochmal.", () => openDay(iso));
+    return;
+  }
   document.getElementById("slotList").innerHTML = (slots||[]).map(s=>
     '<button class="slot-btn" data-von="'+s.von+'" data-bis="'+s.bis+'">'+s.von+' – '+s.bis+' Uhr</button>'
   ).join("") || '<p class="hint">Keine freien Termine an diesem Tag.</p>';
@@ -147,7 +190,7 @@ if(TYP === "schalt" || TYP === "automatik"){
     const btn = document.getElementById("bookBtn");
     btn.disabled = true; btn.textContent = "Buchen …";
     try{
-      const res = await fetch(API+"?action=book", {
+      const res = await fetch(API+"?action=book"+LQ, {
         method:"POST", headers:{"Content-Type":"application/json"},
         body: JSON.stringify({
           typ: TYP, subtyp: document.getElementById("fSubtyp").value,
@@ -156,8 +199,8 @@ if(TYP === "schalt" || TYP === "automatik"){
           email: document.getElementById("fEmail").value.trim()
         })
       });
-      const data = await res.json();
-      if(!res.ok){ errEl.textContent = data.error || "Fehler beim Buchen."; btn.disabled=false; btn.textContent="Termin buchen"; return; }
+      let data = {}; try { data = await res.json(); } catch (e2) {}
+      if(!res.ok){ errEl.textContent = (data && data.error) || "Fehler beim Buchen. Bitte nochmal versuchen."; btn.disabled=false; btn.textContent="Termin buchen"; return; }
       document.getElementById("step3").style.display="none";
       document.getElementById("step4").style.display="block";
       const d = new Date(selDate+"T00:00:00");

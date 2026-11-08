@@ -4104,6 +4104,36 @@ function showLoginErr(msg, ok) {
   el.classList.toggle("ok", !!ok);   // Erfolgsmeldung grün statt rot
 }
 
+/* Z3: letztes gutes Profil je Konto merken (Rolle, Sperre, AGB-Stand – keine Schülerdaten) */
+const _PROFIL_KEY = "kompass-profil-cache";
+function _profilMerken(p){ try{ localStorage.setItem(_PROFIL_KEY, JSON.stringify(p)); }catch(e){} }
+function _profilAusSpeicher(uid){ try{ const p = JSON.parse(localStorage.getItem(_PROFIL_KEY) || "null"); return p && p.id === uid ? p : null; }catch(e){ return null; } }
+function _profilFehlerZeigen(user, err){
+  const btn = document.getElementById("loBtn"); if (btn) { btn.disabled = false; btn.innerHTML = "Einloggen"; }
+  const ov = document.getElementById("loginOverlay"); if (ov) ov.classList.remove("hidden");
+  showLoginErr("Dein Profil konnte nicht geladen werden" + (navigator.onLine === false ? " – keine Verbindung." : ".") + " Bitte prüfe das Internet und tippe auf „Nochmal“.");
+  const fehlerEl = document.getElementById("loErr");
+  if (fehlerEl && !document.getElementById("loNochmal")) {
+    const b = document.createElement("button"); b.id = "loNochmal"; b.type = "button"; b.className = "lo-btn"; b.textContent = "Nochmal";
+    b.style.cssText = "margin-top:10px;width:100%;min-height:44px;";
+    b.addEventListener("click", () => { b.disabled = true; b.textContent = "Lade …"; afterLogin(user); });
+    fehlerEl.insertAdjacentElement("afterend", b);
+  }
+  console.warn("[Kompass] Profil nicht geladen:", err && err.message);
+}
+// Mit gespeichertem Profil gestartet: alle 20 s nachladen; ist das Konto inzwischen gesperrt, abmelden.
+function _profilNachladen(uid){
+  setTimeout(async () => {
+    if (!_authUser || _authUser.id !== uid) return;
+    try {
+      const { data, error } = await getSupa().from("profiles").select("*").eq("id", uid).single();
+      if (error || !data) throw error || new Error("leer");
+      _profilMerken(data);
+      if (!data.aktiv || data.agb_akzeptiert_version !== AGB_VERSION || data.rolle !== (_authProfile && _authProfile.rolle)) { location.reload(); return; }
+      _authProfile = Object.assign({}, _authProfile, data);
+    } catch (e) { _profilNachladen(uid); }
+  }, 20000);
+}
 async function afterLogin(user) {
   const pwReset = _pwResetAusstehend; _pwResetAusstehend = false;
   // Lokale Daten eines anderen (oder unbekannten) Kontos werden vor jedem Abgleich vom Gerät entfernt,
@@ -4128,8 +4158,19 @@ async function afterLogin(user) {
   try { _dbEigentuemer = localStorage.getItem(OWNER_KEY); } catch (e) { _dbEigentuemer = null; }
   _authUser = user;
   const supa = getSupa();
-  // Profil laden
-  const { data: prof } = await supa.from("profiles").select("*").eq("id", user.id).single();
+  // Profil laden. Ohne Profil fehlen Sperre, AGB-Prüfung und Rolle – dann nicht einfach weiter (Z3).
+  let prof = null, profFehler = null;
+  try { const r = await supa.from("profiles").select("*").eq("id", user.id).single(); prof = r.data || null; profFehler = r.error || (prof ? null : { message: "leer" }); }
+  catch (e) { profFehler = e; }
+  const _nochmalWeg = document.getElementById("loNochmal"); if (_nochmalWeg) _nochmalWeg.remove();
+  if (prof) _profilMerken(prof);
+  else {
+    // Funkloch beim Start: mit dem zuletzt geladenen Profil dieses Kontos weiter (Sperre und AGB gelten wie gespeichert)
+    // und im Hintergrund nachladen. Ohne gespeichertes Profil: Meldung mit „Nochmal“.
+    prof = _profilAusSpeicher(user.id);
+    if (!prof) { _profilFehlerZeigen(user, profFehler); return; }
+    _profilNachladen(user.id);
+  }
   _authProfile = prof;
   // E-Mail ins Profil schreiben (falls noch nicht vorhanden)
   if (prof && !prof.email && user.email) {
@@ -16425,7 +16466,16 @@ function _navAktualisiereKnopf(){
   const haupt=["Heute","Start","Kalender","Schüler","Prüfungen"].indexOf(t)>=0;
   if(b)b.hidden=_navStack.length<2||haupt;
 }
+/* A5: Läuft der Persönlichkeitsbogen, blättert Zurück (Android-Taste, Pfeil oben) eine Seite zurück;
+   auf der ersten Seite kommt dieselbe Rückfrage wie bei „Abbrechen“. Liefert true, wenn erledigt. */
+function _wizZurueck(){
+  if(!WIZ||!document.querySelector("#view .wiz-nav"))return false;
+  if(WIZ.page>0){ WIZ.page--; wizPage(); return true; }
+  if(!Object.keys(WIZ.answers).length||confirm("Bogen abbrechen? Die Antworten gehen verloren.")){ const id=WIZ.id; WIZ=null; routeDetail(id); }
+  return true;
+}
 function navZurueck(){
+  if(_wizZurueck())return;
   if(_navStack.length<2)return;
   _navStack.pop();
   const ziel=_navStack[_navStack.length-1];
@@ -16495,6 +16545,7 @@ function _seite2Markieren(name){
     if(ff&&ff.classList.contains("open")){ try{_fsCloseFilterPanel();}catch(e){} sperre(); return; }
     if(typeof DRAW!=="undefined"&&DRAW&&DRAW.drawerOpen){ try{closeTafelDrawer();}catch(e){} sperre(); return; }
     if(dr&&dr.classList.contains("open")){ try{closeDrawer();}catch(e){} sperre(); return; }
+    if(_wizZurueck()){ sperre(); return; }
     if(_navStack.length>1){ navZurueck(); sperre(); return; }
     // Auf der ersten Seite: einmal Zurück zeigt einen Hinweis, ein zweites Zurück innerhalb von 2 s beendet die App
     // (dann ist keine Sperre mehr da - Android schließt selbst). Danach oder bei jeder anderen Aktion kommt die Sperre zurück.
