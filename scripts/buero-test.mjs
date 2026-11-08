@@ -896,6 +896,20 @@ for (const [breite, hoehe] of [[1920, 1080], [1366, 768], [1024, 768]]) {
   await ctx.close();
 }
 
+// 4f3) B7: Prüfungstafel zwischen 1301 und 1440 px – kein Schülername zerbricht in der Warnkarte
+for (const breite of [1301, 1366, 1420]) {
+  const { page, ctx, konsole } = await oeffne({ nutzer: "bu-1", hash: "#pruefungen", breite, hoehe: 800, vorbereiten: function () {
+    const g = new Date(); g.setDate(g.getDate() - 1);
+    F.tabellen.pruefungstermine.push({ id: "pt-b7", fahrschule_id: "fs-test-1", schueler_id: "s12", fahrlehrer_id: "fl-2", art: "praxis", klasse: "B", datum: g.toISOString().slice(0, 10), von: "11:00", status: "geplant" });
+  } });
+  const schmal = await page.evaluate(() => [...document.querySelectorAll(".ptabelle td")].filter((td) => td.textContent.trim().length > 6)
+    .map((td) => ({ w: Math.round(td.getBoundingClientRect().width), t: td.textContent.trim().slice(0, 20) })).filter((x) => x.w < 80));
+  if (!(await page.$(".warnkarte"))) fehler("B7 Vorbereitung: keine Warnkarte bei " + breite + " px");
+  if (schmal.length) fehler("B7 bei " + breite + " px zu schmale Spalte: " + JSON.stringify(schmal.slice(0, 3)));
+  if (konsole.length) fehler("B7: Konsole: " + konsole.join(" | "));
+  await ctx.close();
+}
+
 // 4g) Team und Fahrzeuge (Leitung)
 {
   const { page, ctx, konsole } = await oeffne({ nutzer: "ad-1", hash: "#team", breite: 1920, hoehe: 1080 });
