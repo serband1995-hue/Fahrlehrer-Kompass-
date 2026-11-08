@@ -481,6 +481,23 @@ fall("16 Beim Schließen der App laufen die Brücken sofort", async (f) => {
   if (!z || z.geloescht !== true) f("Löschung nicht sofort hochgeladen: " + JSON.stringify(z && z.geloescht));
 });
 
+fall("17 Theorie bestanden vom Büro setzt den Plan und beendet „wartet auf Theorie“ (T1)", async (f) => {
+  await neu();
+  await setzeLokal("students", [{ id: "S1", name: "Ben Muster", telefon: "", plan: { ampeln: {}, stunden: {}, fahrcheck: {}, sonder: { ueberland: [], autobahn: [], nacht: [] }, theorie: false, notes: {} }, theorieWait: "2026-10-01T10:00:00.000Z" }]);
+  await bruecke();
+  await aendereZeile("schueler", "S1", { theorie_bestanden_am: "2026-11-05", aktualisiert_am: "+1s" });
+  await ruf(() => pullSchuelerZuweisungen());
+  const s1 = await ruf(() => { const s = DB.students.find((x) => x.id === "S1"); return { t: s.plan.theorie, w: s.theorieWait || null, p: s.theoryPassed || null, warte: wartetBuero(s) }; });
+  if (!s1.t) f("plan.theorie nicht gesetzt");
+  if (s1.w) f("theorieWait noch gesetzt");
+  if (!s1.p || !s1.p.startsWith("2026-11-05")) f("theoryPassed falsch: " + s1.p);
+  if (s1.warte === "theorie") f("App sagt weiter „wartet auf Theorie“");
+  // Fahrlehrer schaltet selbst wieder aus: nächster Abruf schaltet NICHT wieder an
+  await ruf(() => { const s = DB.students.find((x) => x.id === "S1"); s.plan.theorie = false; delete s.theoryPassed; });
+  await ruf(() => pullSchuelerZuweisungen());
+  if (await ruf(() => DB.students.find((x) => x.id === "S1").plan.theorie)) f("Abruf überstimmt das Umschalten des Fahrlehrers");
+});
+
 /* ---------- Ausführen ---------- */
 let rot = 0;
 for (const { name, fn } of faelle) {

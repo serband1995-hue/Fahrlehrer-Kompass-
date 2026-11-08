@@ -137,6 +137,10 @@ gleich("Aufteilung Summe bleibt Betrag", 99, a2.fahrlehrer + a2.fahrschule + a2.
 gleich("Aufteilung ≠ 100 % abgelehnt", null, KR.aufteilung(100, { fahrlehrer: 50, fahrschule: 40, plattform: 0, akademie: 0 }));
 gleich("Aufteilung fehlt", null, KR.aufteilung(100, null));
 
+// Wartet auf Theorie: endet, wenn das Büro „Theorie bestanden“ eingetragen hat (T1)
+gleich("wartetInfo theorie ohne Büro", "theorie", KR.wartetInfo({ theorieWait: "2026-10-01T10:00:00Z" }, {}));
+gleich("wartetInfo theorie mit Büro bestanden", "", KR.wartetInfo({ theorieWait: "2026-10-01T10:00:00Z" }, { theorieBestanden: true }));
+
 // Büro-Seite muss dieselbe Version der Nutzungsbedingungen verlangen wie die App
 const agbApp = (html.match(/const AGB_VERSION="([^"]+)"/) || [])[1];
 const agbBuero = (readFileSync(join(ROOT, "buero.js"), "utf8").match(/const AGB_VERSION = "([^"]+)"/) || [])[1];

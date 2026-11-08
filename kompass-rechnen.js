@@ -297,7 +297,9 @@
     k = k || {};
     if (!a || a.passed) return "";
     const nach = (v) => typeof k.fahrstundeNach === "function" && k.fahrstundeNach(lokalMinute(v));
-    if (a.theorieWait && !a.theoryPassed) return "theorie";
+    // theorieBestanden: Büro hat „Theorie bestanden“ eingetragen (schueler.theorie_bestanden_am), auch wenn der
+    // Ausbildungsstand des Fahrlehrers das noch nicht weiß (T1)
+    if (a.theorieWait && !a.theoryPassed && !k.theorieBestanden) return "theorie";
     if (k.pruefungstermin) return "";
     if (a.theorieWaitBis && !nach(a.theorieWaitBis)) return "nach_theorie";
     if (a.ready && !nach(a.ready)) return "praxis";

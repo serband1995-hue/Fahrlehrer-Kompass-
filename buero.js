@@ -303,7 +303,7 @@ function wartDaten() {
 function wartetArt(x) {
   if (!istAktiv(x)) return "";
   const d = wartDaten();
-  return KR.wartetInfo(x.ausbildung || {}, { pruefungstermin: !!d.pruef[x.id], fahrstundeNach: (iso) => !!d.fahr[x.id] && d.fahr[x.id] > iso });
+  return KR.wartetInfo(x.ausbildung || {}, { pruefungstermin: !!d.pruef[x.id], fahrstundeNach: (iso) => !!d.fahr[x.id] && d.fahr[x.id] > iso, theorieBestanden: !!x.theorie_bestanden_am });
 }
 function arbeitendeSchueler() { return aktiveSchueler().filter((x) => !wartetArt(x)); }
 function wartendeSchueler() { return aktiveSchueler().filter((x) => wartetArt(x)); }

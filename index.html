@@ -5042,12 +5042,35 @@ function fristenHinweisHTML(sid){
   stopp.forEach(n=>teile.push(`<b>STOPP vom Büro:</b> ${esc(n.text)}`));
   infos.forEach(n=>teile.push(`<b>Büro:</b> ${esc(n.text)}`));
   const gut=[];
-  if(f.theorie_bestanden_am) gut.push(`✓ Theorieprüfung bestanden am ${isoDE(f.theorie_bestanden_am)} (Büro)`);
+  if(f.theorie_bestanden_am) gut.push(`✓ Theorieprüfung bestanden am ${isoDE(f.theorie_bestanden_am)} (vom Büro eingetragen)`);
   if(f.praxis_bestanden_am) gut.push(`✓ Praxisprüfung bestanden am ${isoDE(f.praxis_bestanden_am)} (Büro)`);
   const gutHTML=gut.length?`<div style="margin:10px 0;padding:10px 14px;border-radius:14px;font-size:14px;line-height:1.45;background:rgba(76,175,114,.14);border:1px solid rgba(76,175,114,.4);">${gut.join("<br>")}</div>`:"";
   if(!teile.length)return gutHTML;
   const rot=r.gesperrt||t.stufe==="abgelaufen"||stopp.length>0||(a&&a.stufe==="abgelaufen")||(tf&&tf.stufe==="abgelaufen")||(um&&um.stufe==="abgelaufen");
   return gutHTML+`<div role="alert" style="margin:10px 0;padding:12px 14px;border-radius:14px;font-size:14px;line-height:1.45;background:${rot?"rgba(207,90,72,.14)":"rgba(207,154,62,.16)"};border:1px solid ${rot?"rgba(207,90,72,.45)":"rgba(207,154,62,.45)"};">⚠️ ${teile.join("<br>")}</div>`;
+}
+/* T1: „Theorie bestanden“ vom Büro in den Ausbildungsplan übernehmen (wie der Schalter in der Akte).
+   Nur wenn sich das Datum im Büro geändert hat (Merker theorieBuero) – ein späteres Umschalten des Fahrlehrers bleibt.
+   Nimmt das Büro das Ergebnis zurück, wird auch die Übernahme zurückgenommen (nur, wenn sie vom Büro kam). */
+function _theorieVomBuero(s, datum){
+  datum = datum || null;
+  if ((s.theorieBuero || null) === datum) return false;
+  const vorher = s.theorieBuero || null; s.theorieBuero = datum;
+  const pl = s.plan || (s.plan = newPlan());
+  if (datum) {
+    if (!pl.theorie) {
+      pl.theorie = true; delete s.wartelisteRaus;
+      s.theoryPassed = datum + "T12:00:00.000Z"; s.theoryVomBuero = s.theoryPassed;
+      if (!(s.hist || []).some(h => h.typ === "theorie" || h.type === "theorie")) logHist(s, "theorie", "Theorieprüfung bestanden (vom Büro eingetragen)");
+      if (stand(s) >= 90 && !s.ready && !s.passed) s.ready = s.theoryPassed;
+    }
+    if (s.theorieWait) { s.theorieWaitBis = new Date().toISOString(); delete s.theorieWait; }
+  } else if (vorher && pl.theorie && s.theoryVomBuero && s.theoryPassed === s.theoryVomBuero) {
+    pl.theorie = false;
+    if (s.ready && s.ready === s.theoryPassed && !s.pruefungsreifManuell) delete s.ready;
+    delete s.theoryPassed; delete s.theoryVomBuero; delete s.theorieWaitBis;
+  }
+  return true;
 }
 async function pullSchuelerZuweisungen() {
   if (!_authUser || !_authProfile || !_authProfile.fahrschule_id || _fsAgg || _schuelerAbrufLaeuft) return;
@@ -5101,6 +5124,9 @@ async function pullSchuelerZuweisungen() {
           if (lok.form !== f && (!erstes || LKW_FORMS.includes(f))) lok.form = f;
         }
       }
+      // Theorie bestanden vom Büro (Prüfungstafel): einmal je neuem Datum in den Ausbildungsplan übernehmen –
+      // Schalter an, „wartet auf Theorie“ beendet (T1). Schaltet der Fahrlehrer danach selbst um, gilt das.
+      if (lokaleIds.has(r.id) && "theorie_bestanden_am" in r) { const lok = DB.students.find(x => x.id === r.id); if (lok && _theorieVomBuero(lok, r.theorie_bestanden_am)) umschreiberNeu = true; }
       if (lokaleIds.has(r.id)) { const l1 = DB.students.find(x => x.id === r.id); if (l1) { const w = _abglWertVon("schueler", l1); if (w !== vorherWert[r.id]) nachherWert[r.id] = w; } }
     }
     // Erst jetzt die neuen Schüler (mit Netzabrufen): alle Übernahmen oben laufen ohne Pause, damit eine Eingabe
@@ -13303,7 +13329,8 @@ function wartetBuero(s){
   let letzte="";
   (DB.lessons||[]).forEach(l=>{ if(l.sid===s.id&&KR.FAHR_ARTEN.includes(l.art||"fahrstunde")&&l.status!=="abgebrochen"&&l.status!=="nicht erschienen"){ const z=l.date+"T"+(l.von||"23:59"); if(z>letzte)letzte=z; } });
   const heute=todayISO(), hatPruefung=!!terminFor(s.id)||(DB.lessons||[]).some(l=>l.sid===s.id&&l.art==="pruefung"&&l.date>=heute&&l.status!=="abgebrochen");
-  return KR.wartetInfo(s,{pruefungstermin:hatPruefung,fahrstundeNach:iso=>!!letzte&&letzte>iso});
+  const fr=_schuelerFristen[s.id]||{};
+  return KR.wartetInfo(s,{pruefungstermin:hatPruefung,fahrstundeNach:iso=>!!letzte&&letzte>iso,theorieBestanden:!!fr.theorie_bestanden_am});
 }
 // Flexible Namenssuche: jedes eingegebene Wort muss irgendwo im Namen vorkommen (Vor-/Nachname egal)
 function matchStudent(name,q){
