@@ -11417,10 +11417,12 @@ function formView(existing){
     if(!hasBogen)data.profil=pick.profil||null;
     if(isEdit){Object.assign(existing,data);save();toast("Gespeichert");routeDetail(existing.id);}
     else{
+      if(!_doppelterSchuelerOk(data.name,data.telefon))return;
       const chosenPlan=DB.ausbildungsplaene.find(p=>p.id===pick.planId)||DB.ausbildungsplaene.find(p=>p.standard)||DB.ausbildungsplaene[0];
       const nst={id:uid(),created:Date.now(),notiz:"",bogen:null,plan:newPlan(),profil:data.profil||null,
         planId:chosenPlan.id,planSnapshot:JSON.parse(JSON.stringify(chosenPlan.stufen)),...data};
-      DB.students.push(nst);save();openBogenChoiceSheet(nst.id,nst.name,()=>routeDetail(nst.id));}
+      // A1: gleich zur Akte – das ausgefüllte Formular bleibt nicht stehen, ein zweites „Anlegen“ ist nicht möglich
+      DB.students.push(nst);save();routeDetail(nst.id);openBogenChoiceSheet(nst.id,nst.name,()=>{});}
   });
 }
 /* ===== Akademie-Vermittlung: Beträge/Split-Konfiguration =====
@@ -12290,6 +12292,14 @@ function openAssignSlotSheet(date,von,bis,art,opts){
 }
 /* Schlanke Inline-Anlage eines neuen Schülers direkt aus einem Sheet heraus (z.B. Kalender-Terminvergabe),
    ohne die aktuelle Ansicht zu verlassen. Ruft onCreated(newStudentId) nach dem Speichern auf. */
+/* A1: Warnung vor Doppelanlage – gleicher Name oder gleiche Telefonnummer schon vorhanden. true = anlegen. */
+function _doppelterSchuelerOk(name,tel){
+  const n=(name||"").trim().toLowerCase().replace(/\s+/g," "), t=(tel||"").replace(/\D/g,"");
+  const treffer=(DB.students||[]).find(x=>!x.passed&&((x.name||"").trim().toLowerCase().replace(/\s+/g," ")===n||(t.length>=6&&(x.telefon||"").replace(/\D/g,"")===t)));
+  if(!treffer)return true;
+  const gleich=(treffer.name||"").trim().toLowerCase().replace(/\s+/g," ")===n?"diesem Namen":"dieser Telefonnummer";
+  return confirm(`Es gibt schon einen Schüler mit ${gleich}: ${treffer.name}. Trotzdem neu anlegen?`);
+}
 function openQuickNewStudentSheet(onCreated){
   openSheet(`<div class="sheet-h">Neuer Schüler</div>
     <div class="field"><label>Vollständiger Name</label><input id="qnsName" type="text" placeholder="Vor- und Nachname" autocomplete="off" autofocus></div>
@@ -12300,6 +12310,7 @@ function openQuickNewStudentSheet(onCreated){
   $("#qnsSave").addEventListener("click",()=>{
     const name=$("#qnsName").value.trim();
     if(!name){toast("Bitte einen Namen eingeben");$("#qnsName").focus();return;}
+    if(!_doppelterSchuelerOk(name,$("#qnsTel").value))return;
     ensureAusbildungsplaene();
     const chosenPlan=DB.ausbildungsplaene.find(p=>p.standard)||DB.ausbildungsplaene[0];
     const nst={id:uid(),created:Date.now(),notiz:"",bogen:null,plan:newPlan(),profil:null,form:"B",beginn:"",
@@ -12319,9 +12330,12 @@ function openBogenChoiceSheet(sid,name,afterChoice){
       <button class="btn btn-ghost" id="bgLater" style="width:100%;">Später erinnern</button>
       <button class="btn btn-ghost" id="bgSkip" style="width:100%;">Überspringen</button>
     </div>`);
-  $("#bgNow").addEventListener("click",()=>{ closeSheet(); afterChoice(); routeBogen(sid,true); });
-  $("#bgLater").addEventListener("click",()=>{ closeSheet(); logHist(sid,"note","Fragebogen noch offen — später ausfüllen"); afterChoice(); });
-  $("#bgSkip").addEventListener("click",()=>{ closeSheet(); afterChoice(); });
+  // A12: auch wer das Fenster mit Zurück oder Tippen daneben schließt, bekommt den Abschluss (z. B. den Termin).
+  let fertig=false; const weiter=()=>{ if(fertig)return; fertig=true; afterChoice(); };
+  _sheetBeimSchliessen=weiter;
+  $("#bgNow").addEventListener("click",()=>{ _sheetBeimSchliessen=null; closeSheet(); weiter(); routeBogen(sid,true); });
+  $("#bgLater").addEventListener("click",()=>{ _sheetBeimSchliessen=null; closeSheet(); logHist(sid,"note","Fragebogen noch offen — später ausfüllen"); weiter(); });
+  $("#bgSkip").addEventListener("click",()=>{ _sheetBeimSchliessen=null; closeSheet(); weiter(); });
 }
 
 /* ===================== TO-DOS ===================== */
@@ -13572,8 +13586,11 @@ function showCalStudentDetail(sid){
   }));
 }
 function _zurueckSperreNachholen(){ if(window._zurueckOffen){ window._zurueckOffen=false; window._zurueckEnde=0; try{history.pushState(null,"",location.href);}catch(e){} } }
-function openSheet(html){ _zurueckSperreNachholen(); $("#sheet").innerHTML=html; $("#sheet").classList.add("open"); $("#sheetScrim").classList.add("open"); }
-function closeSheet(){ $("#sheet").classList.remove("open"); $("#sheetScrim").classList.remove("open"); }
+function openSheet(html){ _zurueckSperreNachholen(); _sheetBeimSchliessen=null; $("#sheet").innerHTML=html; $("#sheet").classList.add("open"); $("#sheetScrim").classList.add("open"); }
+// Ein Fenster kann einen Abschluss mitgeben, der beim Schließen auf jedem Weg läuft (Knopf, Zurück, Tippen daneben).
+let _sheetBeimSchliessen=null;
+function closeSheet(){ $("#sheet").classList.remove("open"); $("#sheetScrim").classList.remove("open");
+  const f=_sheetBeimSchliessen; _sheetBeimSchliessen=null; if(f){ try{ f(); }catch(e){ console.warn("[Kompass] Abschluss beim Schließen:",e.message); } } }
 
 /* ---------- geteilte Bausteine: Prüfungsreif + Simulator ---------- */
 function examReadyCard(s){

@@ -48,6 +48,34 @@ const logo = await page.evaluate(async () => {
 if (logo.pe !== "none") fehler("G5 Logo-Tipp: Startbild fängt Tipps ab (" + logo.pe + ")"); else ok("G5 Logo-Tipp: Tippen geht durch");
 if (logo.ms > 1500) fehler("G5 Logo-Tipp: Startbild " + logo.ms + " ms"); else ok("G5 Logo-Tipp: Startbild nach " + logo.ms + " ms weg");
 
+// A1/A12: keine Doppelanlage nach Zurück auf der Fragebogen-Frage, Warnung bei gleichem Namen
+const a1 = await page.evaluate(async () => {
+  const w = (ms) => new Promise((k) => setTimeout(k, ms));
+  const zur = async () => { window.dispatchEvent(new PopStateEvent("popstate")); await w(80); };
+  formView(null); await w(50);
+  document.getElementById("f_name").value = "Gustav Muster";
+  document.getElementById("saveBtn").click(); await w(80);
+  const sheetOffen = document.getElementById("sheet").classList.contains("open");
+  await zur();
+  const titel = document.getElementById("tbTitle").textContent;
+  const formularDa = !!document.getElementById("saveBtn");
+  formView(null); await w(50);
+  document.getElementById("f_name").value = "gustav  muster";
+  document.getElementById("saveBtn").click(); await w(80); // Rückfrage wird im Test abgelehnt
+  const anzahl = DB.students.filter((x) => x.name.toLowerCase().replace(/\s+/g, " ") === "gustav muster").length;
+  // A12: Schnell-Anlage, Fragebogen-Fenster mit Zurück schließen → Abschluss läuft trotzdem
+  let fertigId = null;
+  openQuickNewStudentSheet((id) => { fertigId = id; });
+  document.getElementById("qnsName").value = "Hanna Muster";
+  document.getElementById("qnsSave").click(); await w(80);
+  await zur();
+  return { sheetOffen, titel, formularDa, anzahl, fertig: !!fertigId };
+});
+if (!a1.sheetOffen) fehler("A1 Vorbereitung: Fragebogen-Fenster nicht offen");
+if (a1.formularDa || !/Schülerdatei/.test(a1.titel)) fehler("A1 nach Zurück steht das Formular noch da (" + a1.titel + ")"); else ok("A1 nach dem Anlegen gleich in der Akte");
+if (a1.anzahl !== 1) fehler("A1 Schüler " + a1.anzahl + "× angelegt"); else ok("A1 gleicher Name: Warnung, kein zweiter Eintrag");
+if (!a1.fertig) fehler("A12 Zurück auf der Fragebogen-Frage: Termin-Abschluss läuft nicht"); else ok("A12 Abschluss läuft auch nach Zurück");
+
 // Z3: Profil-Abfrage scheitert
 const fakeEinbauen = () => {
   const antwort = { data: null, error: { message: "503 Service Unavailable" } };
