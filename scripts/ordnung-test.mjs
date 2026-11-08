@@ -269,6 +269,9 @@ async function setze(page, sz) {
     DB.todos = JSON.parse(JSON.stringify(sz.todos));
     DB.pruefer = ["XY", "ZW"];
     DB.workCfg.fahrzeuge = [{ id: "fz1", name: "Erfundenes Testauto", typ: "schalt" }];
+    // Feste Testzeiten (seit T6 gibt es keine Boost-Zeiten mehr als Vorgabe; die Knopfzahlen der Vergleichsmessung beruhen auf diesen)
+    Object.assign(DB.workCfg, { vorMittag: { von: "10:00", bis: "14:30" }, nachMittag: { von: "15:00", bis: "19:30" }, nacht: { von: "19:30", bis: "21:00", an: true }, samstagAn: false });
+    delete DB.workCfg.zeitenVorgabe;
     if (!DB.workCfg.pausen || !DB.workCfg.pausen.length) DB.workCfg.pausen = [{ days: [0, 1, 2, 3, 4], von: "12:00", bis: "12:30" }];
     // Wetter ohne Netz: aus den Zwischenspeichern (wie wetter2-test.mjs)
     DB.weatherCfg = Object.assign({}, DB.weatherCfg, { apiKey: "erfundener-test-schluessel", city: STADT });
