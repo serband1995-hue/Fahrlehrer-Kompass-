@@ -15298,7 +15298,7 @@ function _druckAbsender(nachsatz){
 /* T6: Vertrag fehlt, solange weder Satz pro UE noch Fixum eingetragen sind */
 function _vertragFehlt(){ const v=DB.verdienst||{}; return !(+v.proUE>0)&&!(+v.fixum>0); }
 function _vertragFehltHTML(){
-  return `<div class="vd-card" style="text-align:left;"><div class="vd-head"><div class="vd-title">Verdienst</div></div>
+  return `<div class="vd-card" style="text-align:left;"><div class="vd-head"><div class="vd-title">Verdienst</div><button class="vd-gear" id="vdGear" aria-label="Einstellungen">${ICN.gear||"⚙"}</button></div>
     <p style="margin:6px 0 12px;font-size:14.5px;line-height:1.5;">Dein Vertrag fehlt noch. Ohne Satz und Fixum kann der Verdienst nicht berechnet werden.</p>
     <button class="btn btn-primary" onclick="openVerdienstSheet()" style="width:100%;">Vertrag eintragen</button></div>`;
 }

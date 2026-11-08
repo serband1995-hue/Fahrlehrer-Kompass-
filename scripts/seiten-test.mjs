@@ -420,6 +420,10 @@ async function setze(page, sz) {
     DB.todos = JSON.parse(JSON.stringify(sz.todos));
     DB.pruefer = ["XY", "ZW"];
     DB.workCfg.fahrzeuge = [{ id: "fz1", name: "Erfundenes Testauto", typ: "schalt" }];
+    // Feste, erfundene Testwerte (seit T6 gibt es keine Vorgaben mehr für Zeiten und Vertrag; die Vergleichsmessung beruht auf diesen)
+    Object.assign(DB.workCfg, { vorMittag: { von: "10:00", bis: "14:30" }, nachMittag: { von: "15:00", bis: "19:30" }, nacht: { von: "19:30", bis: "21:00", an: true }, samstagAn: false });
+    delete DB.workCfg.zeitenVorgabe;
+    DB.verdienst = { proUE: 20, fixum: 2000, fixUE: 140, bonusUE: 240, bonus: 400, ziel: 240, startUE: 0, startMonth: "2026-06" };
     if (!DB.workCfg.pausen || !DB.workCfg.pausen.length) DB.workCfg.pausen = [{ days: [0, 1, 2, 3, 4], von: "12:00", bis: "12:30" }];
     localStorage.setItem("serband-backup-stamp", String(Date.now()));
     localStorage.setItem(THEME_KEY, sz.theme || "light"); applyTheme();
