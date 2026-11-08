@@ -3536,7 +3536,8 @@ function fvVorschau(modus) {
   const quelleLehrer = FV.lehrer, monat = FV.monat;
   const jetzt = z.gesamt;
   const gewaehlt = new Set(stunden.map((s) => s.id));
-  const andere = S.lehrer.filter((l) => l.aktiv !== false && l.id !== quelleLehrer).sort((a, b) => String(a.name || a.email).localeCompare(String(b.name || b.email), "de"));
+  // Die Datenbank-Funktion nimmt als Ziel nur aktive Fahrlehrer (rolle fahrlehrer), keinen Super-Admin.
+  const andere = S.lehrer.filter((l) => l.aktiv !== false && l.rolle === "fahrlehrer" && l.id !== quelleLehrer).sort((a, b) => String(a.name || a.email).localeCompare(String(b.name || b.email), "de"));
   const dlg = document.createElement("dialog");
   dlg.id = "fv-vorschau";
   dlg.className = "dialog fv-dialog";

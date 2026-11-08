@@ -117,6 +117,12 @@ async function gehZurSeite(page) {
   return !!(await page.$("#fv-seite"));
 }
 const zahlIn = async (page, sel) => { const t = (await page.textContent(sel).catch(() => "")) || ""; const m = t.match(/\d+/); return m ? Number(m[0]) : NaN; };
+// Die Zahlen zählen animiert hoch/runter: bis zu 2,5 s auf den erwarteten Wert warten, sonst den letzten Wert liefern.
+async function erwarte(page, sel, soll) {
+  let z = NaN;
+  for (let i = 0; i < 25; i++) { z = await zahlIn(page, sel); if (z === soll) return z; await page.waitForTimeout(100); }
+  return z;
+}
 async function setzeDeckel(page, n) {
   await page.fill("#fv-deckel-zahl", String(n));
   await page.dispatchEvent("#fv-deckel-zahl", "change");
@@ -166,7 +172,7 @@ fall("2  Leitung: Seite sichtbar, 156 UE, Deckel 140 -> 16 markiert, Regler/Zahl
   if (!da) { await ctx.close(); return fehler("Seite „Fahrstunden verwalten“ nicht in der Navigation der Leitung oder #fv-seite fehlt"); }
   const gesamt = await zahlIn(page, "#fv-gesamt");
   if (gesamt !== 156) fehler("#fv-gesamt zeigt " + gesamt + " statt 156");
-  if (await zahlIn(page, "#fv-markiert") !== 16) fehler("#fv-markiert zeigt " + (await page.textContent("#fv-markiert")).trim() + " statt 16");
+  { const m = await erwarte(page, "#fv-markiert", 16); if (m !== 16) fehler("#fv-markiert zeigt " + (await page.textContent("#fv-markiert")).trim() + " statt 16"); }
   if (await page.$$eval(".fv-woche", (l) => l.length) < 3) fehler("Weniger als 3 Wochen (.fv-woche) sichtbar");
   const tage = await page.$$eval(".fv-tag", (l) => l.length);
   if (tage < 20) fehler("Nur " + tage + " Tage (.fv-tag)");
@@ -174,30 +180,31 @@ fall("2  Leitung: Seite sichtbar, 156 UE, Deckel 140 -> 16 markiert, Regler/Zahl
   await page.evaluate(() => { const r = document.getElementById("fv-regler"); r.value = "120"; r.dispatchEvent(new Event("input", { bubbles: true })); });
   await page.waitForTimeout(150);
   if ((await page.inputValue("#fv-deckel-zahl")) !== "120") fehler("Regler 120 -> Zahlenfeld zeigt " + (await page.inputValue("#fv-deckel-zahl")));
-  if (await zahlIn(page, "#fv-markiert") !== 36) fehler("Deckel 120 -> #fv-markiert " + (await page.textContent("#fv-markiert")).trim() + " statt 36");
+  { const m = await erwarte(page, "#fv-markiert", 36); if (m !== 36) fehler("Deckel 120 -> #fv-markiert " + (await page.textContent("#fv-markiert")).trim() + " statt 36"); }
   await setzeDeckel(page, 140);
   if ((await page.inputValue("#fv-regler")) !== "140") fehler("Zahlenfeld 140 -> Regler zeigt " + (await page.inputValue("#fv-regler")));
-  if (await zahlIn(page, "#fv-markiert") !== 16) fehler("Zurück auf 140 -> #fv-markiert nicht 16");
+  if (await erwarte(page, "#fv-markiert", 16) !== 16) fehler("Zurück auf 140 -> #fv-markiert nicht 16");
   // Tag-Klick: markiert/entmarkiert (Tage mit weniger als 6 UE im Monat gibt es kaum - nimm den ersten Tag)
-  const vor = await zahlIn(page, "#fv-markiert");
+  const vor = await erwarte(page, "#fv-markiert", 16);
   const ersterTag = page.locator(".fv-tag").first();
-  await ersterTag.click(); await page.waitForTimeout(150);
-  const nach1 = await zahlIn(page, "#fv-markiert");
-  if (nach1 === vor) fehler("Tag-Klick änderte #fv-markiert nicht (" + vor + ")");
-  await ersterTag.click(); await page.waitForTimeout(150);
-  const nach2 = await zahlIn(page, "#fv-markiert");
+  const tagUE = await ersterTag.evaluate((b) => Number((b.querySelector(".fv-tag-ue").textContent || "").replace(",", ".")));
+  await ersterTag.click();
+  const nach1 = await erwarte(page, "#fv-markiert", vor + tagUE);
+  if (nach1 !== vor + tagUE) fehler("Tag-Klick: #fv-markiert " + vor + " -> " + nach1 + " statt " + (vor + tagUE));
+  await ersterTag.click();
+  const nach2 = await erwarte(page, "#fv-markiert", vor);
   if (nach2 !== vor) fehler("Zweiter Tag-Klick stellt nicht zurück: " + vor + " -> " + nach1 + " -> " + nach2);
   // Fahrlehrer-Chip: fl-2 hat 20 UE, unter dem Deckel -> nichts markiert
   await waehleLehrer(page, "fl-2");
-  if (await zahlIn(page, "#fv-gesamt") !== 20) fehler("fl-2: #fv-gesamt nicht 20");
-  if (await zahlIn(page, "#fv-markiert") !== 0) fehler("fl-2 (20 UE) hat markierte Stunden unter dem Deckel");
+  if (await erwarte(page, "#fv-gesamt", 20) !== 20) fehler("fl-2: #fv-gesamt nicht 20");
+  if (await erwarte(page, "#fv-markiert", 0) !== 0) fehler("fl-2 (20 UE) hat markierte Stunden unter dem Deckel");
   const aus = await page.$eval("#fv-entfernen", (b) => b.disabled).catch(() => null);
   if (aus === false) fehler("#fv-entfernen ist bei 0 markierten Stunden nicht gesperrt");
   // Monat vor/zurück ist erreichbar
   if (!(await page.$("#fv-monat-zurueck")) || !(await page.$("#fv-monat-vor"))) fehler("Monatsknöpfe fehlen");
   else {
     await page.click("#fv-monat-zurueck"); await page.waitForTimeout(200);
-    if (await zahlIn(page, "#fv-gesamt") !== 0) fehler("Vormonat: #fv-gesamt nicht 0 (Testdaten nur im aktuellen Monat)");
+    { const g = await erwarte(page, "#fv-gesamt", 0); if (g !== 0) fehler("Vormonat: #fv-gesamt " + (await page.textContent("#fv-gesamt")).trim().slice(0, 40) + " statt 0 (Testdaten nur im aktuellen Monat)"); }
     await page.click("#fv-monat-vor"); await page.waitForTimeout(200);
   }
   await ctx.close();
@@ -207,7 +214,7 @@ fall("2b Reine Funktion fahrstundenUeberDeckel(liste, deckel)", async () => {
   const { page, ctx } = await oeffne({ nutzer: "ad-1" });
   const r = await page.evaluate(() => {
     if (typeof fahrstundenUeberDeckel !== "function") return { fehlt: true };
-    const mk = (n) => Array.from({ length: n }, (_, i) => ({ id: "x" + i, datum: "2026-11-" + String(1 + Math.floor(i / 6)).padStart(2, "0"), von: "0" + (8 + (i % 6)) + ":00", bis: "0" + (8 + (i % 6)) + ":45", art: "fahrstunde" }));
+    const mk = (n) => Array.from({ length: n }, (_, i) => ({ id: "x" + i, datum: "2026-11-" + String(1 + Math.floor(i / 6)).padStart(2, "0"), von: "0" + (8 + (i % 6)) + ":00", bis: "0" + (8 + (i % 6)) + ":45", art: "fahrstunde", ue: 1 }));
     const l = mk(156), kopie = JSON.stringify(l);
     const a = fahrstundenUeberDeckel(l, 140), b = fahrstundenUeberDeckel(l, 200), c = fahrstundenUeberDeckel(l, 0), d = fahrstundenUeberDeckel([], 140), e = fahrstundenUeberDeckel(l, 156);
     const laenge = (x) => (Array.isArray(x) ? x.length : x && x.size != null ? x.size : typeof x === "number" ? x : NaN);
@@ -250,7 +257,9 @@ fall("3  Vorschau: Liste = Markierung, Abwählen senkt die Zahl, Bestätigen ges
   const an = (await haken(page)).filter((x) => x.an).length;
   if (an !== 15) fehler("Nach Abwählen sind " + an + " statt 15 angehakt");
   if (!/\b15\b/.test(await page.textContent("#fv-vorschau"))) fehler("Dialog nennt nach Abwählen nicht die Zahl 15");
-  if (!(await bestaetigen())) fehler("Nach Abwählen (15) mit eingetippter 16 ist Bestätigen noch frei");
+  if (!(await bestaetigen())) fehler("Nach Abwählen (15) ist Bestätigen noch frei (Prüf-Haken/Zahl müssen neu bestätigt werden)");
+  await page.fill("#fv-anzahl", "16"); await page.check("#fv-geprueft"); await page.waitForTimeout(100);
+  if (!(await bestaetigen())) fehler("Nach Abwählen (15) mit eingetippter 16 ist Bestätigen frei");
   await page.fill("#fv-anzahl", "15"); await page.waitForTimeout(100);
   if (await bestaetigen()) fehler("Mit 15 und Zahl 15 bleibt Bestätigen gesperrt");
   // Auf 4 Stunden abwählen: unter der Schwelle von 5 genügt der Haken (Zahl nicht nötig) - Spezifikation: "ab 5 Stunden"
@@ -294,8 +303,8 @@ fall("4  Bestätigen: Stunden geloescht=true, Erfolgskarte „140“, Seite zeig
   if (!/140/.test(erfolg)) fehler("Erfolgskarte nennt nicht „140“: " + erfolg.trim().slice(0, 120));
   await page.screenshot({ path: join(FOTOS, "1280-erfolg.png"), fullPage: true });
   if (await page.$eval("#fv-vorschau", (d) => d.open).catch(() => false)) fehler("Dialog ist nach dem Erfolg noch offen");
-  if (await zahlIn(page, "#fv-gesamt") !== 140) fehler("Seite zeigt danach " + (await page.textContent("#fv-gesamt")).trim() + " statt 140 UE");
-  if (await zahlIn(page, "#fv-markiert") !== 0) fehler("Danach sind noch " + (await page.textContent("#fv-markiert")).trim() + " Stunden markiert");
+  if (await erwarte(page, "#fv-gesamt", 140) !== 140) fehler("Seite zeigt danach " + (await page.textContent("#fv-gesamt")).trim() + " statt 140 UE");
+  if (await erwarte(page, "#fv-markiert", 0) !== 0) fehler("Danach sind noch " + (await page.textContent("#fv-markiert")).trim() + " Stunden markiert");
   const rpcs = await page.evaluate(() => window.__FAKE.log.filter((x) => x.rpc).map((x) => x.rpc + ":" + ((x.args && x.args.p_ids) || []).length));
   if (rpcs.filter((x) => x.startsWith("fahrstunden_entfernen")).join() !== "fahrstunden_entfernen:16") fehler("RPC-Aufrufe: " + rpcs.join(","));
   if (konsole.length) fehler("Konsole: " + konsole.join(" | ").slice(0, 300));
@@ -305,6 +314,7 @@ fall("4  Bestätigen: Stunden geloescht=true, Erfolgskarte „140“, Seite zeig
 fall("5  Übertragen: Stunden wandern zum Ziel-Fahrlehrer, Ziel nicht der gleiche", async () => {
   const { page, ctx, da } = await bereitMitLeitung();
   if (!da) { await ctx.close(); return fehler("Seite fehlt"); }
+  await page.click("#fv-uebertragen-oeffnen"); await page.waitForTimeout(300);
   const optionen = await page.$$eval("#fv-ziel option", (l) => l.map((o) => o.value).filter(Boolean));
   if (!optionen.length) return fehler("#fv-ziel hat keine Ziele");
   if (optionen.includes("fl-1")) fehler("Ziel-Auswahl enthält den gleichen Fahrlehrer (fl-1)");
@@ -316,14 +326,10 @@ fall("5  Übertragen: Stunden wandern zum Ziel-Fahrlehrer, Ziel nicht der gleich
   if (ohneZiel === false) fehler("#fv-uebertragen ist ohne gewähltes Ziel nicht gesperrt");
   await page.selectOption("#fv-ziel", "fl-2"); await page.waitForTimeout(150);
   const markiert = (await tabelle(page)).filter((x) => x.fahrlehrer_id === "fl-1").length; // 156
-  await page.click("#fv-uebertragen"); await page.waitForTimeout(300);
-  // Wie beim Entfernen darf eine Sicherheits-Abfrage dazwischen kommen
-  if (await page.$eval("#fv-vorschau", (d) => d.open).catch(() => false)) {
-    const idsDialog = (await haken(page)).filter((x) => x.an).length;
-    if (idsDialog !== 16) fehler("Übertragen-Vorschau zeigt " + idsDialog + " statt 16 Stunden");
-    await bestaetigeDialog(page, idsDialog);
-    await page.click("#fv-bestaetigen"); await page.waitForTimeout(500);
-  }
+  const idsDialog = (await haken(page)).filter((x) => x.an).length;
+  if (idsDialog !== 16) fehler("Übertragen-Vorschau zeigt " + idsDialog + " statt 16 Stunden");
+  await page.screenshot({ path: join(FOTOS, "1280-uebertragen.png") });
+  await page.click("#fv-uebertragen"); await page.waitForTimeout(500);
   const t = await tabelle(page);
   const bei1 = t.filter((x) => x.fahrlehrer_id === "fl-1" && !x.geloescht).length;
   const bei2 = t.filter((x) => x.fahrlehrer_id === "fl-2" && !x.geloescht).length;
@@ -332,7 +338,7 @@ fall("5  Übertragen: Stunden wandern zum Ziel-Fahrlehrer, Ziel nicht der gleich
   if (t.some((x) => x.geloescht)) fehler("Beim Übertragen wurden Termine als gelöscht markiert");
   const erfolg = (await page.textContent("#fv-erfolg").catch(() => "")) || "";
   if (!/16/.test(erfolg)) fehler("Erfolgskarte nennt nicht „16“: " + erfolg.trim().slice(0, 120));
-  if (await zahlIn(page, "#fv-gesamt") !== 140) fehler("Seite zeigt nach dem Übertragen nicht 140 UE");
+  if (await erwarte(page, "#fv-gesamt", 140) !== 140) fehler("Seite zeigt nach dem Übertragen nicht 140 UE");
   await ctx.close();
 });
 
@@ -365,11 +371,12 @@ fall("6b Übertragen mit Fehler: Meldung, nichts geändert", async () => {
   if (!da) { await ctx.close(); return fehler("Seite fehlt"); }
   await page.evaluate(() => { window.__FAKE.rpcFehler = "Ziel-Fahrlehrer nicht gefunden oder nicht aktiv."; });
   const vorher = JSON.stringify(await tabelle(page));
-  await page.selectOption("#fv-ziel", "fl-2");
-  await page.click("#fv-uebertragen"); await page.waitForTimeout(300);
-  if (await page.$eval("#fv-vorschau", (d) => d.open).catch(() => false)) { await bestaetigeDialog(page, 16); await page.click("#fv-bestaetigen"); await page.waitForTimeout(500); }
+  await page.click("#fv-uebertragen-oeffnen"); await page.waitForTimeout(300);
+  await page.selectOption("#fv-ziel", "fl-2"); await page.waitForTimeout(100);
+  await page.click("#fv-uebertragen"); await page.waitForTimeout(500);
   if (JSON.stringify(await tabelle(page)) !== vorher) fehler("Termine wurden trotz Fehler verändert");
-  const sichtbar = await page.evaluate(() => document.body.innerText);
+  if (!(await page.$eval("#fv-vorschau", (d) => d.open).catch(() => false))) fehler("Dialog wurde bei Fehler geschlossen");
+  const sichtbar = (await page.textContent("#fv-vorschau").catch(() => "")) || "";
   if (!/Ziel-Fahrlehrer nicht gefunden/.test(sichtbar)) fehler("Fehlermeldung des Übertragens ist nirgends sichtbar");
   await ctx.close();
 });
