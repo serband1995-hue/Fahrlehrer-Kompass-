@@ -79,6 +79,7 @@ async function oeffne({ nutzer, breite = 1280, hoehe = 900, hash = "", wer = "Kr
   const session = nutzer ? { user: { id: nutzer, email: nutzer + "@example.org" } } : null;
   const ctx = await browser.newContext({ viewport: { width: breite, height: hoehe } });
   const page = await ctx.newPage();
+  page.setDefaultTimeout(6000);
   const konsole = [];
   page.on("console", (m) => { if (m.type() === "error") konsole.push(m.text()); });
   page.on("pageerror", (e) => konsole.push(String(e)));
@@ -116,7 +117,7 @@ async function gehZurSeite(page) {
   await page.waitForTimeout(250);
   return !!(await page.$("#fv-seite"));
 }
-const zahlIn = async (page, sel) => { const t = (await page.textContent(sel).catch(() => "")) || ""; const m = t.match(/\d+/); return m ? Number(m[0]) : NaN; };
+const zahlIn = async (page, sel) => { const t = await page.evaluate((x) => { const e = document.querySelector(x); return e ? e.textContent : null; }, sel); const m = (t || "").replace(/\./g, "").match(/\d+/); return m ? Number(m[0]) : NaN; };
 // Die Zahlen zählen animiert hoch/runter: bis zu 2,5 s auf den erwarteten Wert warten, sonst den letzten Wert liefern.
 async function erwarte(page, sel, soll) {
   let z = NaN;
@@ -188,6 +189,8 @@ fall("2  Leitung: Seite sichtbar, 156 UE, Deckel 140 -> 16 markiert, Regler/Zahl
   const vor = await erwarte(page, "#fv-markiert", 16);
   const ersterTag = page.locator(".fv-tag").first();
   const tagUE = await ersterTag.evaluate((b) => Number((b.querySelector(".fv-tag-ue").textContent || "").replace(",", ".")));
+  await page.evaluate(() => document.activeElement && document.activeElement.blur()); // siehe Fall 2c: Fokus im Zahlenfeld frisst den ersten Klick
+  await ersterTag.scrollIntoViewIfNeeded(); await page.waitForTimeout(700);
   await ersterTag.click();
   const nach1 = await erwarte(page, "#fv-markiert", vor + tagUE);
   if (nach1 !== vor + tagUE) fehler("Tag-Klick: #fv-markiert " + vor + " -> " + nach1 + " statt " + (vor + tagUE));
@@ -204,9 +207,31 @@ fall("2  Leitung: Seite sichtbar, 156 UE, Deckel 140 -> 16 markiert, Regler/Zahl
   if (!(await page.$("#fv-monat-zurueck")) || !(await page.$("#fv-monat-vor"))) fehler("Monatsknöpfe fehlen");
   else {
     await page.click("#fv-monat-zurueck"); await page.waitForTimeout(200);
-    { const g = await erwarte(page, "#fv-gesamt", 0); if (g !== 0) fehler("Vormonat: #fv-gesamt " + (await page.textContent("#fv-gesamt")).trim().slice(0, 40) + " statt 0 (Testdaten nur im aktuellen Monat)"); }
+    await page.waitForTimeout(800);
+    // Ohne Stunden darf die Seite die Bedienelemente weglassen (Entwurf); sonst muss 0 dastehen. Nie 156/140 aus dem Vormonat.
+    const gz = await zahlIn(page, "#fv-gesamt");
+    if (!Number.isNaN(gz) && gz !== 0) fehler("Vormonat: #fv-gesamt zeigt " + gz + " statt 0 (Testdaten nur im aktuellen Monat)");
+    if (await page.$(".fv-tag")) fehler("Vormonat zeigt Tage mit Stunden, obwohl es dort keine gibt");
+    const chip = await page.$eval('.fv-lehrer[data-id="fl-1"]', (b) => b.textContent.replace(/\s+/g, " ").trim()).catch(() => "");
+    if (!/(^|\D)0\s*UE/.test(chip)) fehler("Vormonat: Fahrlehrer-Chip nennt nicht 0 UE: " + chip);
     await page.click("#fv-monat-vor"); await page.waitForTimeout(200);
   }
+  await ctx.close();
+});
+
+fall("2c Zahl ins Feld getippt, dann sofort einen Tag antippen: der erste Tipp zählt", async () => {
+  const { page, ctx, da } = await bereitMitLeitung();
+  if (!da) { await ctx.close(); return fehler("Seite fehlt"); }
+  await page.evaluate(() => document.activeElement && document.activeElement.blur());
+  await page.click("#fv-deckel-zahl");
+  await page.fill("#fv-deckel-zahl", "130"); // Fokus bleibt im Zahlenfeld, wie bei einem Menschen
+  if (await erwarte(page, "#fv-markiert", 26) !== 26) fehler("Vorbereitung: Deckel 130 -> markiert nicht 26");
+  const ersterTag = page.locator(".fv-tag").first();
+  await ersterTag.scrollIntoViewIfNeeded(); await page.waitForTimeout(700);
+  const ue = await ersterTag.evaluate((b) => Number((b.querySelector(".fv-tag-ue").textContent || "").replace(",", ".")));
+  await ersterTag.click();
+  const z = await erwarte(page, "#fv-markiert", 26 + ue);
+  if (z !== 26 + ue) fehler("Erster Tipp auf den Tag nach dem Tippen im Zahlenfeld geht verloren (markiert " + z + " statt " + (26 + ue) + "). Ursache: das Zahlenfeld löst beim Verlassen „change“ aus, fvDeckelSetzen zeichnet die Wochen neu (wochen.innerHTML), der Tag wird zwischen Drücken und Loslassen ersetzt.");
   await ctx.close();
 });
 
@@ -425,6 +450,7 @@ fall("8  Layout bei 412 px: kein seitlicher Überlauf (Seite, Dialog, Erfolg)", 
 /* ---------- Ausführen ---------- */
 let rot = 0;
 for (const { name, fn } of faelle) {
+  if (process.env.FALL && !name.startsWith(process.env.FALL + " ")) continue;
   const vorher = probleme;
   try { await fn(); } catch (e) { fehler("Testfehler: " + String(e.message || e).split("\n")[0]); }
   if (probleme > vorher) { rot++; console.log("ROT   " + name); } else console.log("GRÜN  " + name);

@@ -3507,6 +3507,9 @@ function bindeFahrstunden(ziel) {
   zahl.addEventListener("change", () => {
     const z = fvZustand();
     const v = zahl.value === "" || !isFinite(Number(zahl.value)) ? z.max : Math.min(z.max, Math.max(0, Math.round(Number(zahl.value))));
+    // Schon durch „input“ übernommen: nicht neu zeichnen, sonst geht der erste Tipp auf einen Tag verloren
+    // (der Tag wird zwischen Drücken und Loslassen ausgetauscht).
+    if (v === FV.deckel) { if (zahl.value !== String(v)) zahl.value = v; return; }
     fvDeckelSetzen(v);
   });
   seite.addEventListener("click", (e) => {
