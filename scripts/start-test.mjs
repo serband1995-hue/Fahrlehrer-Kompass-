@@ -48,6 +48,38 @@ const logo = await page.evaluate(async () => {
 if (logo.pe !== "none") fehler("G5 Logo-Tipp: Startbild fängt Tipps ab (" + logo.pe + ")"); else ok("G5 Logo-Tipp: Tippen geht durch");
 if (logo.ms > 1500) fehler("G5 Logo-Tipp: Startbild " + logo.ms + " ms"); else ok("G5 Logo-Tipp: Startbild nach " + logo.ms + " ms weg");
 
+// T6: neuer Nutzer ohne fremde Vorgaben; gespeicherte Werte bleiben. T7: Absender aus dem Profil.
+await page.evaluate(() => { localStorage.clear(); });
+await page.reload(); await page.waitForTimeout(900);
+const t6 = await page.evaluate(async () => {
+  const w = (ms) => new Promise((k) => setTimeout(k, ms));
+  const v = DB.verdienst, fz = DB.workCfg.fahrzeuge.length, vorgabe = !!DB.workCfg.zeitenVorgabe, fehlt = _vertragFehlt();
+  routeStats("cur"); await w(150);
+  const stat = document.getElementById("view").innerText;
+  routeDashboard(); await w(150);
+  const heute = document.getElementById("view").innerText;
+  routeArbeitszeit(); await w(80);
+  const az = document.getElementById("view").innerText;
+  document.getElementById("azFzName").value = "Golf 8"; document.getElementById("azFzAdd").click(); await w(50);
+  const fzNeu = DB.workCfg.fahrzeuge.map((f) => f.name + "/" + f.typ).join();
+  return { proUE: v.proUE, fixum: v.fixum, fz, vorgabe, fehlt, stat2100: /2\.100/.test(stat), statHinweis: /Vertrag eintragen/.test(stat), heuteHinweis: /Vertrag eintragen/.test(heute), azHinweis: /noch nicht eingetragen/.test(az), fzNeu };
+});
+if (t6.proUE || t6.fixum || t6.stat2100) fehler("T6 neuer Nutzer sieht fremden Vertrag: " + JSON.stringify(t6)); else ok("T6 kein fremder Vertrag als Vorgabe");
+if (!t6.fehlt || !t6.statHinweis || !t6.heuteHinweis) fehler("T6 Hinweis „Vertrag eintragen“ fehlt: " + JSON.stringify(t6)); else ok("T6 Hinweis „Vertrag eintragen“ auf Statistik und Heute");
+if (t6.fz) fehler("T6 fest eingebaute Fahrzeuge für neuen Nutzer"); else ok("T6 keine fest eingebauten Fahrzeuge");
+if (!t6.vorgabe || !t6.azHinweis) fehler("T6 Hinweis Arbeitszeiten fehlt"); else ok("T6 Hinweis „Arbeitszeiten noch nicht eingetragen“");
+if (t6.fzNeu !== "Golf 8/schalt") fehler("T6 Fahrzeug anlegen klappt nicht: " + t6.fzNeu); else ok("T6 eigenes Fahrzeug anlegen");
+const t6b = await page.evaluate(() => {
+  DB.verdienst = { proUE: 23, fixum: 2100, fixUE: 140, bonusUE: 240, bonus: 500, ziel: 240, startUE: 0, startMonth: "2026-06" };
+  DB.workCfg.fahrzeuge = [{ id: "fz1", name: "Audi Q5", typ: "automatik" }]; delete DB.workCfg.zeitenVorgabe; save();
+  return true;
+});
+await page.reload(); await page.waitForTimeout(900);
+const t6c = await page.evaluate(() => ({ v: DB.verdienst.proUE + "/" + DB.verdienst.fixum, fz: DB.workCfg.fahrzeuge.map((f) => f.name).join(), vorgabe: !!DB.workCfg.zeitenVorgabe, fehlt: _vertragFehlt() }));
+if (t6c.v !== "23/2100" || t6c.fz !== "Audi Q5" || t6c.vorgabe || t6c.fehlt) fehler("T6 gespeicherte Werte verändert: " + JSON.stringify(t6c)); else ok("T6 gespeicherte Werte bestehender Nutzer bleiben");
+const t7 = await page.evaluate(() => { const alt = _authProfile; _authProfile = { name: "Anna Muster", fahrschule_name: "Testfahrschule" }; const a = _druckAbsender(); _authProfile = null; const b = _druckAbsender(); _authProfile = alt; return { a, b }; });
+if (t7.a !== "Testfahrschule · Fahrlehrer Anna Muster" || /Serband|Boost/.test(t7.b)) fehler("T7 Absender falsch: " + JSON.stringify(t7)); else ok("T7 Absender aus dem Profil, ohne festen Namen");
+
 // A1/A12: keine Doppelanlage nach Zurück auf der Fragebogen-Frage, Warnung bei gleichem Namen
 const a1 = await page.evaluate(async () => {
   const w = (ms) => new Promise((k) => setTimeout(k, ms));
