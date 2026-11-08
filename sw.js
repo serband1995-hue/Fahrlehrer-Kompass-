@@ -38,14 +38,14 @@ self.addEventListener("install", (event) => {
   self.skipWaiting();
 });
 
-/* Löscht nur eigene alte Caches (kompass-v…), also auch kompass-v1 mit den früher gespeicherten
+/* Löscht nur eigene alte Caches (kompass-v + Zahl), also auch kompass-v1 mit den früher gespeicherten
    Supabase-Antworten. Fremde Caches bleiben stehen: Fahr-Akademie und Kompass liegen beide unter
    serband1995-hue.github.io und teilen sich den Cache-Speicher. */
-const EIGENER_PRAEFIX = "kompass-v";
+const EIGENER_CACHE = /^kompass-v\d+$/;
 self.addEventListener("activate", (event) => {
   event.waitUntil(
     caches.keys().then((names) =>
-      Promise.all(names.filter((n) => n.startsWith(EIGENER_PRAEFIX) && n !== CACHE_VERSION).map((n) => caches.delete(n)))
+      Promise.all(names.filter((n) => EIGENER_CACHE.test(n) && n !== CACHE_VERSION).map((n) => caches.delete(n)))
     )
   );
   self.clients.claim();

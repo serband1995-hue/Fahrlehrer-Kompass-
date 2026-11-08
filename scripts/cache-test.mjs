@@ -39,7 +39,7 @@ function pruefe(name, ok, info) {
   else { fehler++; console.log("FEHLER", name, info || ""); }
 }
 
-const fremde = ["fahr-akademie-shell-v32", "fahr-akademie-daten-v5", "workbox-precache-v2-https://serband1995-hue.github.io/", "quiz-cache"];
+const fremde = ["fahr-akademie-shell-v32", "fahr-akademie-daten-v5", "workbox-precache-v2-https://serband1995-hue.github.io/", "quiz-cache", "kompass-vault", "kompass-v3-extra"];
 const alteKompass = ["kompass-v1", "kompass-v44", "kompass-v45"].filter((n) => n !== version);
 const nachher = await aufraeumen([...fremde, ...alteKompass, version]);
 
