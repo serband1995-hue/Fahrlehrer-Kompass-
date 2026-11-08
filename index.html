@@ -1679,12 +1679,6 @@ body:not(.light) #sheet .sheet-pills .pill.sel{background:#123A2A !important;bor
 /* Theorie mini bar auf s-card */
 .s-theo-bar{position:absolute;bottom:0;left:0;right:0;height:3px;background:transparent;}
 .s-theo-fill{height:100%;background:var(--gruen);border-radius:0 0 13px 13px;transition:width .5s var(--ease);}
-/* Backup-Banner */
-.backup-banner{display:flex;align-items:center;gap:10px;background:rgba(207,154,62,.1);border:1px solid rgba(207,154,62,.28);border-radius:12px;padding:11px 14px;margin-bottom:14px;cursor:pointer;}
-.backup-banner:active{opacity:.8;}
-.bb-txt{flex:1;font-size:13px;font-weight:700;color:var(--orange);}
-.bb-sub{font-size:11px;font-weight:600;color:var(--faint);margin-top:1px;}
-.bb-arr{font-size:14px;color:var(--orange);}
 .thermo-wrap{display:flex;gap:14px;margin-bottom:16px;}
 .thermo-left{display:flex;flex-direction:column;align-items:center;flex:0 0 52px;}
 .thermo-tube{width:100%;flex:1;min-height:200px;border-radius:10px 10px 6px 6px;background:var(--surface-2);border:1px solid var(--line);overflow:hidden;display:flex;flex-direction:column-reverse;position:relative;}
@@ -1921,6 +1915,9 @@ body:not(.light) #sheet .sheet-pills .pill.sel{background:#123A2A !important;bor
   display:none;font-family:'Barlow',sans-serif;
 }
 .lo-err.show{display:block;}
+body.light .lo-err{color:#a3271c;}
+.lo-err.ok{background:rgba(76,175,114,.15);border-color:rgba(76,175,114,.35);color:#8fdcab;}
+body.light .lo-err.ok{color:#1e6b46;}
 .lo-spinner{
   width:22px;height:22px;border:3px solid rgba(255,255,255,.2);
   border-top-color:#fff;border-radius:50%;
@@ -4022,9 +4019,12 @@ async function doForgotPassword(){
     const redirectTo=window.location.origin+window.location.pathname;
     const {error}=await supa.auth.resetPasswordForEmail(email,{redirectTo});
     if(error) throw error;
-    showLoginErr("E-Mail verschickt ✓ Schau in dein Postfach (auch Spam-Ordner) und folge dem Link.");
+    showLoginErr("E-Mail verschickt ✓ Schau in dein Postfach (auch Spam-Ordner) und folge dem Link.", true);
   }catch(e){
-    showLoginErr("Konnte keine E-Mail senden: "+(e.message||"unbekannter Fehler"));
+    const m=String((e&&e.message)||"");
+    showLoginErr(/fetch|network|load failed/i.test(m) ? "Keine Internetverbindung. Bitte später nochmal auf „Passwort vergessen?“ tippen."
+      : /rate limit|too many|429/i.test(m) ? "Zu viele Versuche. Bitte ein paar Minuten warten und dann nochmal tippen."
+      : "Konnte keine E-Mail senden: "+(m||"unbekannter Fehler"));
   }finally{
     btn.disabled=false; btn.textContent=altText;
   }
@@ -4098,9 +4098,10 @@ async function doLogin() {
   }
 }
 
-function showLoginErr(msg) {
+function showLoginErr(msg, ok) {
   const el = document.getElementById("loErr");
   el.textContent = msg; el.classList.add("show");
+  el.classList.toggle("ok", !!ok);   // Erfolgsmeldung grün statt rot
 }
 
 async function afterLogin(user) {
@@ -7221,7 +7222,7 @@ window.addEventListener("load", () => {
 const STORE_KEY="serband-app-v1";
 /* Build-Version: bei jeder Auslieferung hier das Datum aktualisieren.
    Wird in den Einstellungen angezeigt + für den Update-Hinweis genutzt. */
-const APP_VERSION="2026.11.08.1";
+const APP_VERSION="2026.11.08.2";
 try{const f=document.getElementById("drawerFoot"); if(f)f.textContent="Fahrlehrer-Kompass · Version "+APP_VERSION;}catch(e){}
 // Nutzungsbedingungen & Haftungsausschluss (Bereich: rechtliche Absicherung) - Version hochzählen
 // und alle Nutzer müssen erneut zustimmen, sobald sich der Text inhaltlich ändert.
@@ -8072,17 +8073,6 @@ function openHomeFilterSheet(){
     $("#hfDone").addEventListener("click",()=>{ closeSheet(); routeHome(); });
   };
   openSheet(render()); bind();
-}
-function backupBannerHTML(){
-  const stamp=parseInt(localStorage.getItem("serband-backup-stamp")||"0");
-  if(!stamp)return `<div class="backup-banner" id="backupBanner"><div><div class="bb-txt"><span class="ic ic-gold" style="font-size:13px;">${ICN.save}</span> Noch kein Backup erstellt</div><div class="bb-sub">Daten nur im Browser — jetzt sichern!</div></div><span class="bb-arr">›</span></div>`;
-  const days=Math.floor((Date.now()-stamp)/(1000*60*60*24));
-  if(days<7)return '';
-  return `<div class="backup-banner" id="backupBanner"><div><div class="bb-txt">⚠ Backup vor ${days} Tagen</div><div class="bb-sub">Kurz sichern, bevor Daten verloren gehen</div></div><span class="bb-arr">›</span></div>`;
-}
-function bindBackupBanner(){
-  const b=$("#backupBanner"); if(!b)return;
-  b.addEventListener("click",()=>{ const n=document.querySelector("[data-nav='einst']"); if(n)n.click(); else toast("Einstellungen → Backup"); });
 }
 function cardHTML(s,i){
   const p=s.profil?PROFILE[s.profil]:null;const col=p?p.color:"var(--orange)";
@@ -14882,7 +14872,7 @@ function routeDashboard(){
   document.querySelectorAll("#view [data-h2akte]").forEach(b=>b.addEventListener("click",()=>routeDetail(b.dataset.h2akte)));
   document.querySelectorAll("#view [data-h2fortsetzen]").forEach(b=>b.addEventListener("click",()=>routeFahrstunde(b.dataset.h2fortsetzen)));
   document.querySelectorAll("#view [data-h2start]").forEach(b=>b.addEventListener("click",()=>startFahrstunde(b.dataset.h2start)));
-  document.querySelectorAll("#view [data-h2backup]").forEach(b=>b.addEventListener("click",()=>routeSettings()));
+  document.querySelectorAll("#view [data-h2backup]").forEach(b=>b.addEventListener("click",()=>{ _settingsAccOpen="daten"; routeSettings(); }));
   document.querySelectorAll("#view [data-h2pruef]").forEach(b=>b.addEventListener("click",()=>routePruefungen()));
   const wl=$("#h2Weitere"); if(wl)wl.addEventListener("click",()=>{ _calView="tag"; _calDate=heute; routeKalender(); });
   document.querySelectorAll("#view .h2-jetzt [data-nsact]").forEach(b=>b.addEventListener("click",ev=>{ ev.stopPropagation(); nsQuickAction(b.dataset.nsact,b.dataset.lid,b.dataset.kind); }));
