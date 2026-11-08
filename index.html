@@ -7221,7 +7221,7 @@ window.addEventListener("load", () => {
 const STORE_KEY="serband-app-v1";
 /* Build-Version: bei jeder Auslieferung hier das Datum aktualisieren.
    Wird in den Einstellungen angezeigt + für den Update-Hinweis genutzt. */
-const APP_VERSION="2026.10.30.3";
+const APP_VERSION="2026.11.08.1";
 try{const f=document.getElementById("drawerFoot"); if(f)f.textContent="Fahrlehrer-Kompass · Version "+APP_VERSION;}catch(e){}
 // Nutzungsbedingungen & Haftungsausschluss (Bereich: rechtliche Absicherung) - Version hochzählen
 // und alle Nutzer müssen erneut zustimmen, sobald sich der Text inhaltlich ändert.
@@ -8719,7 +8719,7 @@ function wizPage(){
       <button class="btn btn-primary" id="wizNext">Weiter</button>
     </div>
   </div>`;
-  requestAnimationFrame(()=>requestAnimationFrame(()=>{$("#wizFill").style.width=pct+"%";}));
+  requestAnimationFrame(()=>requestAnimationFrame(()=>{const f=$("#wizFill"); if(f) f.style.width=pct+"%";}));
   document.querySelectorAll(".likert").forEach(row=>{
     row.querySelectorAll(".lk").forEach(b=>b.addEventListener("click",()=>{
       row.querySelectorAll(".lk").forEach(x=>x.classList.remove("sel"));

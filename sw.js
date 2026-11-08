@@ -2,7 +2,7 @@
    Cached nur die App-Hülle (HTML, Icons, Manifest) plus Schriften und die Supabase-Bibliothek.
    Antworten von Supabase (Schülerdaten) und anderen Diensten werden NIE gespeichert. */
 
-const CACHE_VERSION = "kompass-v45";
+const CACHE_VERSION = "kompass-v46";
 const CORE_FILES = [
   "./index.html",
   "./kompass-rechnen.js",
@@ -38,11 +38,14 @@ self.addEventListener("install", (event) => {
   self.skipWaiting();
 });
 
-/* Löscht jeden alten Cache, also auch kompass-v1 mit den früher gespeicherten Supabase-Antworten. */
+/* Löscht nur eigene alte Caches (kompass-v + Zahl), also auch kompass-v1 mit den früher gespeicherten
+   Supabase-Antworten. Fremde Caches bleiben stehen: Fahr-Akademie und Kompass liegen beide unter
+   serband1995-hue.github.io und teilen sich den Cache-Speicher. */
+const EIGENER_CACHE = /^kompass-v\d+$/;
 self.addEventListener("activate", (event) => {
   event.waitUntil(
     caches.keys().then((names) =>
-      Promise.all(names.filter((n) => n !== CACHE_VERSION).map((n) => caches.delete(n)))
+      Promise.all(names.filter((n) => EIGENER_CACHE.test(n) && n !== CACHE_VERSION).map((n) => caches.delete(n)))
     )
   );
   self.clients.claim();
