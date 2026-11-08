@@ -5105,8 +5105,12 @@ async function pullSchuelerZuweisungen() {
     }
     // Erst jetzt die neuen Schüler (mit Netzabrufen): alle Übernahmen oben laufen ohne Pause, damit eine Eingabe
     // des Fahrlehrers in der Zwischenzeit nicht als „vom Büro übernommen“ gilt.
+    const memVorher = _abglLaden();
     for (const r of (rows||[])) {
       if (!lokaleIds.has(r.id)) {
+        // Selbst gelöscht, aber noch nicht beim Server angekommen: nicht als „neu von der Fahrschule“ zurückholen
+        // (die Brücke markiert ihn gleich als gelöscht). Leere Liste: Sicherheitssperre wie in der Brücke.
+        if (memVorher.schueler[r.id] && lokaleIds.size) continue;
         const a = r.ausbildung || {};
         const nst = Object.assign({
           id: r.id, created: Date.now(), notiz: "", bogen: null, plan: newPlan(), profil: null, form: "B", beginn: "",
@@ -5170,6 +5174,8 @@ async function pullSchuelerZuweisungen() {
         // Eigene, schon gefahrene Stunden bleiben im Kalender - mit Namen, auch ohne Schülerdatei.
         (DB.lessons||[]).forEach(l => { if (l.sid === alt.id && !l.name) l.name = alt.name; });
         entfernt.push(alt.name); DB.students.splice(idx,1);
+        // Umverteilt ist nicht „selbst gelöscht“: vergessen, damit er bei einer Rückgabe wieder ankommt
+        const mU = _abglLaden(); if (mU.schueler[alt.id]) { delete mU.schueler[alt.id]; _abglSpeichern(mU); }
       }
       await supa.from("schueler_verschiebungen").update({ gesehen_von_alt: true }).eq("id", v.id);
     }
@@ -5221,6 +5227,10 @@ async function pullTermineZuweisungen() {
       const local = localById[r.id];
       const merged = Object.assign({ sid: r.schueler_id, date: r.datum, von: r.von, bis: r.bis, art: r.art, fahrzeug: r.fahrzeug, status: r.status }, r.payload || {});
       if (!local) {
+        // Kennt das Gerät den Termin schon, fehlt er lokal aber, hat der Fahrlehrer ihn gelöscht und die Brücke
+        // hat das noch nicht hochgeladen (4 s Wartezeit, Funkloch, App geschlossen): nicht als „neu“ zurückholen –
+        // die Brücke löscht ihn gleich auf dem Server. (Leerer Kalender: Sicherheitssperre wie in der Brücke.)
+        if (mem.termine[r.id] && DB.lessons.length) continue;
         const l = Object.assign({ id: r.id }, merged, { _syncedAt: remoteTime });
         DB.lessons.push(l); mem.termine[r.id] = _abglWertVon("termine", l);
         neu++;
@@ -7415,7 +7425,7 @@ async function _fsSyncAggJetzt(){
    Fahrschule, nicht dem Fahrlehrer, und werden bewusst nicht mit-upgedatet.
    Fire-and-forget, blockiert nie den normalen Arbeitsablauf. */
 let _schuelerSyncDebounce=null;
-function _syncSchuelerBridge(){
+function _syncSchuelerBridge(warte){
   if(!_authUser||!_pullOk||!_authProfile||!_authProfile.fahrschule_id||!DB.students)return;
   clearTimeout(_schuelerSyncDebounce);
   _schuelerSyncDebounce=setTimeout(async()=>{
@@ -7444,7 +7454,7 @@ function _syncSchuelerBridge(){
         await supa.from("profiles").update({auslastung_pct:cap.auslastung, aktive_schueler_anzahl:cap.fahrend}).eq("id",_authUser.id);
       }catch(e2){}
     }catch(e){ console.warn("[Kompass] Fahrschul-Sync fehlgeschlagen:",e.message); }
-  },4000);
+  },warte===0?0:4000);
 }
 
 /* ===== Kalender-Synchronisations-Brücke (gleiches Prinzip wie bei Schülern) =====
@@ -7452,7 +7462,7 @@ function _syncSchuelerBridge(){
    diesem Gerät geändert haben. Nach dem Schreiben bekommt der Termin _syncedAt = Schreibzeit,
    damit der nächste Abruf ihn nicht für eine Büro-Änderung hält (sonst lief der Abgleich im Kreis). */
 let _termineSyncDebounce=null;
-function _syncTermineBridge(){
+function _syncTermineBridge(warte){
   if(!_authUser||!_pullOk||!_authProfile||!_authProfile.fahrschule_id||!DB.lessons)return;
   clearTimeout(_termineSyncDebounce);
   _termineSyncDebounce=setTimeout(async()=>{
@@ -7463,12 +7473,12 @@ function _syncTermineBridge(){
         loeschWert:{geloescht:true}, aktivFilter:q=>q.eq("geloescht",false) });
       if(geschrieben.length) _lokalAblegen();
     }catch(e){ console.warn("[Kompass] Kalender-Sync fehlgeschlagen:",e.message); }
-  },4000);
+  },warte===0?0:4000);
 }
 
 /* ===== Prüfungen-Synchronisations-Brücke (gleiches Prinzip) ===== */
 let _pruefungenSyncDebounce=null;
-function _syncPruefungenBridge(){
+function _syncPruefungenBridge(warte){
   if(!_authUser||!_pullOk||!_authProfile||!_authProfile.fahrschule_id||!DB.exams)return;
   clearTimeout(_pruefungenSyncDebounce);
   _pruefungenSyncDebounce=setTimeout(async()=>{
@@ -7478,7 +7488,7 @@ function _syncPruefungenBridge(){
         loeschWert:{geloescht:true}, aktivFilter:q=>q.eq("geloescht",false) });
       if(geschrieben.length) _lokalAblegen();
     }catch(e){ console.warn("[Kompass] Prüfungen-Sync fehlgeschlagen:",e.message); }
-  },4000);
+  },warte===0?0:4000);
 }
 /* Einmalige Migration: entfernt Prüfungsplatz-Doppel-Einträge, die durch die frühere automatische
    Warteliste-Zuordnung entstehen konnten (z.B. derselbe Schüler in zwei Terminen gleichzeitig).
@@ -7494,13 +7504,18 @@ function _syncPruefungenBridge(){
 let _saveSyncDebounce=null;
 // Falls ein Push noch aussteht (4s-Debounce) und die App wird geschlossen/in den Hintergrund geschickt:
 // sofort pushen statt zu riskieren, dass der geplante Push nie mehr feuert.
+// Brücken genauso: ein Löschen, das noch wartet, erreicht den Server sofort (sonst käme es beim nächsten Start zurück).
+function _brueckenSofort(){ if(!_authUser||!_pullOk||_fsAgg||!_authProfile||!_authProfile.fahrschule_id)return;
+  try{ _syncSchuelerBridge(0); _syncTermineBridge(0); _syncPruefungenBridge(0); }catch(e){} }
 document.addEventListener("visibilitychange",()=>{
   if(document.visibilityState==="hidden"&&_saveSyncDebounce){ clearTimeout(_saveSyncDebounce); _saveSyncDebounce=null; pushToCloud(); }
+  if(document.visibilityState==="hidden") _brueckenSofort();
   // Zurück in der App (z.B. Tablet nach dem Handy): sofort Änderungen des anderen Geräts holen.
   if(document.visibilityState==="visible"&&_authUser&&_pullOk&&!_fsAgg) pushToCloud();
 });
 window.addEventListener("pagehide",()=>{
   if(_saveSyncDebounce){ clearTimeout(_saveSyncDebounce); _saveSyncDebounce=null; pushToCloud(); }
+  _brueckenSofort();
 });
 /* Bittet den Browser, die Daten als dauerhaft/wichtig einzustufen, damit sie auch bei
    Speicherplatz-Engpässen oder langer Nichtnutzung nicht automatisch gelöscht werden. */
@@ -11579,11 +11594,16 @@ function routeSettings(){
       if(!j||j.app!=="serband"||!j.data||typeof j.data!=="object"||!Array.isArray(j.data.students))throw 0;
       if(["lessons","exams","termine"].some(k=>k in j.data&&!Array.isArray(j.data[k])))throw 0;
       if(j.data.students.some(s=>!s||typeof s!=="object"||typeof s.id!=="string"||!/^[A-Za-z0-9_-]{1,64}$/.test(s.id)))throw 0;
-      if(confirm("Backup einspielen? Die aktuellen Daten werden ersetzt. Dein jetziger Stand wird vorher als Datei gesichert.")){
+      if(confirm("Backup einspielen? Die Daten auf diesem Gerät werden ersetzt. Dein jetziger Stand wird vorher als Datei gesichert. Termine und Schüler vom Büro bleiben erhalten und kommen beim nächsten Abgleich wieder dazu.")){
         // Erst den jetzigen Stand sichern - ohne Sicherung wird nichts ersetzt.
         try{ _backupHerunterladen("_vor-Einspielen"); }catch(e2){ toast("Sicherung fehlgeschlagen – nichts geändert"); return; }
         const vorher=JSON.stringify(DB);
-        DB=j.data;ensureDB();save();routeDashboard();
+        DB=j.data;ensureDB();
+        // Abgleich-Gedächtnis gehört zum alten Stand: leeren, sonst hielte die Brücke alles, was nicht in der Datei
+        // steht, für gelöscht und löschte es auf dem Server – auch Termine und Schüler vom Büro (D2).
+        if(_authUser){ _abglSpeichern({ user:_authUser.id, schueler:{}, termine:{}, pruefungen:{} }); _termineAbgerufen=false; _schuelerAbgerufen=false; }
+        save();routeDashboard();
+        if(_authUser&&_pullOk){ try{ pullSchuelerZuweisungen(); pullTermineZuweisungen(); }catch(e3){} }
         toastUndo("Backup eingespielt",()=>{ DB=JSON.parse(vorher);
           // Ohne Merker gelten die Einträge als nicht abgeglichen: der Abruf entfernt sie nicht, die Brücke lädt sie wieder hoch.
           (DB.lessons||[]).forEach(l=>delete l._syncedAt); (DB.exams||[]).forEach(x=>delete x._syncedAt);
