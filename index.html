@@ -160,17 +160,18 @@ input,select,textarea{font-family:inherit;font-size:15px;color:var(--txt);}
 @keyframes klStrasse{from{-webkit-mask-position:0 100%;mask-position:0 100%}to{-webkit-mask-position:0 0;mask-position:0 0}}
 @keyframes klGlanz{to{transform:translateX(80%)}}
 @media (prefers-reduced-motion:reduce){.kl-tile,.kl-tile i,.kl-tile::after{animation:none!important}.kl-tile .t-strasse{-webkit-mask:none;mask:none}}
-#splash.hide .kl-tile{animation:spOut .9s var(--ease) forwards}
+#splash.hide .kl-tile{animation:spOut .25s var(--ease) forwards}
 #splash .kl-tile{--kl-size:clamp(110px,30vw,148px)}
 /* ===== SPLASH ===== */
 #splash{position:fixed;inset:0;z-index:200;background:radial-gradient(120% 90% at 50% 20%,#12211a 0%,#0a110d 70%);
   display:flex;flex-direction:column;align-items:center;justify-content:center;gap:16px;
-  transition:opacity .9s var(--ease),visibility .9s var(--ease);}
-#splash.hide{opacity:0;visibility:hidden;}
+  transition:opacity .25s var(--ease),visibility 0s linear .25s;}
+#splash.hide{opacity:0;visibility:hidden;pointer-events:none;}
+#splash.kurz{pointer-events:none;} /* Logo-Tipp: Startbild nur kurz, Tippen geht durch */
 /* Beim Ausblenden lösen sich die Elemente fließend nach oben auf */
-#splash.hide img{animation:spOut .9s var(--ease) forwards;}
-#splash.hide .sp-name{animation:spOut .9s var(--ease) .06s forwards;}
-#splash.hide .sp-quote{animation:spOut .9s var(--ease) .12s forwards;}
+#splash.hide img{animation:spOut .25s var(--ease) forwards;}
+#splash.hide .sp-name{animation:spOut .25s var(--ease) forwards;}
+#splash.hide .sp-quote{animation:spOut .25s var(--ease) forwards;}
 @keyframes spOut{to{opacity:0;transform:translateY(-26px) scale(1.04);filter:blur(8px);}}
 #splash img{width:clamp(96px,26vw,128px);border-radius:26px;
   box-shadow:0 20px 50px rgba(0,0,0,.55), var(--inset-top), inset 0 -2px 8px rgba(0,0,0,.4);
@@ -7936,9 +7937,10 @@ function replaySplash(){
   const sp=$("#splash"); if(!sp)return;
   setSplashQuote();
   const kt=document.getElementById("splashTile"); if(kt){const c=kt.cloneNode(true); kt.replaceWith(c);}
-  sp.classList.remove("hide");
-  // 1,8s zeigen, dann wieder ausblenden
-  setTimeout(()=>sp.classList.add("hide"),3200);
+  sp.classList.add("kurz"); sp.classList.remove("hide");
+  // G5: nur kurz zeigen und nie blockieren (Tippen geht durch)
+  clearTimeout(replaySplash._t);
+  replaySplash._t=setTimeout(()=>{ sp.classList.add("hide"); setTimeout(()=>sp.classList.remove("kurz"),300); },700);
 }
 $("#sheetScrim").addEventListener("click",closeSheet);
 document.querySelector(".drawer-nav").addEventListener("click",(e)=>{
@@ -16564,9 +16566,11 @@ setInterval(()=>{ if((localStorage.getItem(THEME_KEY)||'dark')==='auto')applyThe
 $("#themeBtn").addEventListener("click",toggleTheme);
 routeDashboard();
 (function(){
-  const minWait=new Promise(r=>setTimeout(r,2700));
+  // G5: Startbild mit Spruch nur beim ersten Start nach einem Update etwas länger, sonst sofort weiter.
+  let ersterStart=false; try{ ersterStart=localStorage.getItem("kompass-startbild-version")!==APP_VERSION; localStorage.setItem("kompass-startbild-version",APP_VERSION); }catch(e){}
+  const minWait=new Promise(r=>setTimeout(r,ersterStart?1600:250));
   const fonts=(document.fonts&&document.fonts.ready)?document.fonts.ready:Promise.resolve();
-  const cap=new Promise(r=>setTimeout(r,3000));
+  const cap=new Promise(r=>setTimeout(r,ersterStart?2000:600));
   Promise.all([minWait,Promise.race([fonts,cap])]).then(()=>{
     const sp=$("#splash");if(sp)sp.classList.add("hide");
   });
