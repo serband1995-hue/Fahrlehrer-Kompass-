@@ -1,6 +1,6 @@
 # Notes for Claude
 
-**Always reply to Serban in German**: simple, short, no jargon. He works on his phone.
+**Always reply to Serband in German**: simple, short, no jargon. He works on his phone.
 
 ## Grundregel: OMNIA immer (R555, gilt für jede Sitzung)
 Serbands Wunsch vom 05.11.2026: Jede Sitzung, egal wann und wo, holt sich zuerst die Infos aus OMNIA und lädt am Ende alles Wichtige wieder hoch.
@@ -9,12 +9,12 @@ Serbands Wunsch vom 05.11.2026: Jede Sitzung, egal wann und wo, holt sich zuerst
 3. Fehlt `ArtifactData`: Serband das sagen und die Änderungen als Notiz im Vault (`Sitzungen/`) ablegen; die nächste Sitzung lädt sie hoch.
 
 ## Memory: Obsidian vault
-Serban's long-term memory lives in the private repo `serband1995-hue/obsidian-vault`.
+Serband's long-term memory lives in the private repo `serband1995-hue/obsidian-vault`.
 - **Run `/vault` at the start of every session.** It loads his profile, binding working rules and this project's overview (~6k tokens instead of re-reading code or old chats).
 - If the vault is missing: `add_repo` (owner `serband1995-hue`, repo `obsidian-vault`, access `push`), clone to `/home/user/obsidian-vault`, then `/vault`.
 - Read only the notes the task needs (start from the index). Never the whole vault.
 - Code beats vault: verify the real code before changing it; fix the vault if it is outdated.
-- End of a larger task, or when Serban says "Vault aktualisieren": follow `CLAUDE.md` in the vault (session log, update notes, push to vault `main`).
+- End of a larger task, or when Serband says "Vault aktualisieren": follow `CLAUDE.md` in the vault (session log, update notes, push to vault `main`).
 - New task = new session: suggest it when a session gets long and the next task is unrelated.
 
 ## Project
