@@ -5108,12 +5108,15 @@ function _theorieVomBuero(s, datum){
       if (!(s.hist || []).some(h => h.typ === "theorie" || h.type === "theorie")) logHist(s, "theorie", "Theorieprüfung bestanden (vom Büro eingetragen)");
       if (stand(s) >= 90 && !s.ready && !s.passed) s.ready = s.theoryPassed;
     }
-    if (s.theorieWait) { s.theorieWaitBis = new Date().toISOString(); delete s.theorieWait; }
+    if (s.theorieWait) { s.theorieWaitVorBuero = s.theorieWait; s.theorieWaitBis = new Date().toISOString(); delete s.theorieWait; }
   } else if (vorher && pl.theorie && s.theoryVomBuero && s.theoryPassed === s.theoryVomBuero) {
     pl.theorie = false;
     if (s.ready && s.ready === s.theoryPassed && !s.pruefungsreifManuell) delete s.ready;
     delete s.theoryPassed; delete s.theoryVomBuero; delete s.theorieWaitBis;
+    // Wartete er vorher auf die Theorie, wartet er wieder (Büro hat das Ergebnis zurückgenommen)
+    if (s.theorieWaitVorBuero) s.theorieWait = s.theorieWaitVorBuero;
   }
+  if (!s.theoryVomBuero) delete s.theorieWaitVorBuero;
   return true;
 }
 async function pullSchuelerZuweisungen() {
@@ -7003,12 +7006,12 @@ async function routeFahrschuleProvisionen(){
   const lehrer=_fsAgg.lehrer||[];
   const lehrerName=id=>{const l=lehrer.find(x=>x.id===id);return l?(l.name||l.email):"—";};
   const gesamt={};
-  (data||[]).filter(p=>p.status!=='ausgezahlt').forEach(p=>{gesamt[p.fahrlehrer_id]=(gesamt[p.fahrlehrer_id]||0)+Number(p.betrag||0);});
+  (data||[]).filter(p=>p.status==='offen').forEach(p=>{gesamt[p.fahrlehrer_id]=(gesamt[p.fahrlehrer_id]||0)+Number(p.betrag||0);});
   const eurCent=v=>Number(v||0).toLocaleString("de-DE",{style:"currency",currency:"EUR"});
   const uebersicht=Object.entries(gesamt).map(([id,sum])=>`<div class="fs-sub">${esc(lehrerName(id))}: <b style="color:var(--txt);">${eurCent(sum)}</b></div>`).join("")||'<p class="muted-p" style="font-size:13px;">Noch keine Provisionen erfasst.</p>';
   const liste=(data||[]).map(p=>`<div class="fs-card">
     <div class="fs-name">${esc(lehrerName(p.fahrlehrer_id))} — ${eurCent(p.betrag)}</div>
-    <div class="fs-sub">${esc(p.typ||"")} · ${isoDE(p.erstellt_am.slice(0,10))} · ${p.status==='ausgezahlt'?'<span class="fs-status-on">Ausgezahlt</span>':'<span style="color:var(--orange);">Offen</span>'}</div>
+    <div class="fs-sub">${esc(p.typ||"")} · ${isoDE(p.erstellt_am.slice(0,10))} · ${p.status==='ausgezahlt'?'<span class="fs-status-on">Ausgezahlt</span>':p.status==='storniert'?'<span style="color:var(--muted);">Storniert</span>':'<span style="color:var(--orange);">Offen</span>'}</div>
     ${p.status==='offen'?`<div class="fs-actions"><button class="fs-btn-activate" onclick="fsProvisionAuszahlen(${_jsArg(p.id)})">Als ausgezahlt markieren</button></div>`:''}
   </div>`).join("")||'';
   const wrap=$("#fsProvWrap");
@@ -13335,9 +13338,10 @@ function ensureDB(){ let _ensureDirty=false; if(!Array.isArray(DB.exams))DB.exam
   // gespeichert ist - verhindert, dass ein alter lokaler Stand serverseitige Korrekturen wieder
   // überschreibt (genau das ist am 19.08. passiert).
   if(Array.isArray(DB.workCfg.fahrzeuge)){
-    DB.workCfg.fahrzeuge.forEach(fz=>{ if(fz&&fz.name==="Cupra 1"){ fz.name="Audi Q5"; _ensureDirty=true; } });
+    // nur das alte fest eingebaute Fahrzeug (id fz1), kein selbst eingetragenes
+    DB.workCfg.fahrzeuge.forEach(fz=>{ if(fz&&fz.id==="fz1"&&fz.name==="Cupra 1"){ fz.name="Audi Q5"; _ensureDirty=true; } });
   }
-  if(Array.isArray(DB.lessons)){
+  if(Array.isArray(DB.lessons)&&!(DB.workCfg.fahrzeuge||[]).some(fz=>fz&&fz.name==="Cupra 1")){
     DB.lessons.forEach(l=>{ if(l&&l.fahrzeug==="Cupra 1"){ l.fahrzeug="Audi Q5"; _ensureDirty=true; } });
   }
   // T6: kein Vertrag als Vorgabe (sonst sähe jeder neue Fahrlehrer fremde Zahlen als seine). Bis Satz oder Fixum

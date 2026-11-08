@@ -2535,7 +2535,7 @@ async function verkaufStorno(id) {
   const eine = offen.find((p) => Number(p.betrag) === Number(v.aufteilung.fahrlehrer)) || offen[0];
   if (eine) {
     const res = await supa.from("provisionen").update({ status: "storniert" }).eq("id", eine.id).select("id");
-    if (res.error) toast("Zahlung zurückgenommen, Provision aber nicht: " + res.error.message, true);
+    if (res.error || !res.data || !res.data.length) toast("Zahlung zurückgenommen, Provision aber nicht: " + (res.error ? res.error.message : "keine Berechtigung"), true);
     else { eine.status = "storniert"; zeichne(); }
   } else if (passend.some((p) => p.status === "ausgezahlt")) toast("Achtung: Die Provision wurde schon ausgezahlt und muss mit dem Fahrlehrer geklärt werden.", true);
 }

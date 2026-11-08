@@ -498,6 +498,19 @@ fall("17 Theorie bestanden vom Büro setzt den Plan und beendet „wartet auf Th
   if (await ruf(() => DB.students.find((x) => x.id === "S1").plan.theorie)) f("Abruf überstimmt das Umschalten des Fahrlehrers");
 });
 
+fall("18 Büro nimmt „Theorie bestanden“ zurück: Plan zurück, wartet wieder auf Theorie (T1)", async (f) => {
+  await neu();
+  await setzeLokal("students", [{ id: "S1", name: "Ben Muster", telefon: "", plan: { ampeln: {}, stunden: {}, fahrcheck: {}, sonder: { ueberland: [], autobahn: [], nacht: [] }, theorie: false, notes: {} }, theorieWait: "2026-10-01T10:00:00.000Z" }]);
+  await bruecke();
+  await aendereZeile("schueler", "S1", { theorie_bestanden_am: "2026-11-05", aktualisiert_am: "+1s" });
+  await ruf(() => pullSchuelerZuweisungen());
+  await aendereZeile("schueler", "S1", { theorie_bestanden_am: null, aktualisiert_am: "+1s" });
+  await ruf(() => pullSchuelerZuweisungen());
+  const s1 = await ruf(() => { const s = DB.students.find((x) => x.id === "S1"); return { t: s.plan.theorie, w: s.theorieWait || null, p: s.theoryPassed || null }; });
+  if (s1.t || s1.p) f("Plan nach Rücknahme nicht zurückgesetzt: " + JSON.stringify(s1));
+  if (s1.w !== "2026-10-01T10:00:00.000Z") f("wartet nach Rücknahme nicht wieder auf Theorie: " + s1.w);
+});
+
 /* ---------- Ausführen ---------- */
 let rot = 0;
 for (const { name, fn } of faelle) {
