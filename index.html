@@ -5210,6 +5210,7 @@ async function pullSchuelerZuweisungen() {
           id: r.id, created: Date.now(), notiz: "", bogen: null, plan: newPlan(), profil: null, form: "B", beginn: "",
           planId: chosenPlan.id, planSnapshot: JSON.parse(JSON.stringify(chosenPlan.stufen))
         }, a, { id: r.id, name: r.name, telefon: r.telefon || "" });
+        delete nst.ausgeblendetAm; // „bei mir ausgeblendet“ galt nur beim bisherigen Fahrlehrer (D1)
         if (r.sehhilfe != null) nst.sehhilfe = r.sehhilfe;
         if (Array.isArray(r.vorbesitz)) nst.vorbesitzBuero = r.vorbesitz;
         // Übergabe: dieselbe Regel wie oben – die Form des bisherigen Fahrlehrers bleibt, außer das Büro hat die Klasse
@@ -5644,7 +5645,9 @@ function _fsSetDrawer(fahrschuleMode){
 }
 
 function _fsMapSchueler(row,lehrerName){
-  return Object.assign({id:row.id,name:row.name,telefon:row.telefon,bogen:null},row.ausbildung||{},{
+  // Gesamtansicht: „bei mir ausgeblendet“ eines Fahrlehrers gilt hier nicht (das Büro behält ihn ganz normal)
+  const {ausgeblendetAm:_ausgebl, ...ausb}=row.ausbildung||{};
+  return Object.assign({id:row.id,name:row.name,telefon:row.telefon,bogen:null},ausb,{
     _fahrlehrerId:row.fahrlehrer_id, _fahrlehrerName:lehrerName(row.fahrlehrer_id),
     _paketId:row.paket_id, _hatSimulator:row.hat_simulator, _hatTheorieApp:row.hat_theorie_app,
     _bogenAusgefuellt:row.bogen_ausgefuellt, _buero_notiz:row.buero_notiz||"", _buero_todo:row.buero_todo||"",
@@ -8346,6 +8349,7 @@ function routeAktePruefung(id){
    Versuchszähler an, damit keine zweiten Einträge zum „Überdecken“ nötig sind. */
 function _ergebnisAnwenden(s,ex,alt){
   if(!s)return;
+  if(alt.b197||(ex&&ex.b197))return; // Schaltkompetenz B197 ist keine Prüfung: Archiv und Versuche bleiben
   if(alt.result==="pass"&&s.passed===alt.date){ if(ex&&ex.result==="pass")s.passed=ex.date; else delete s.passed; }
   else if(ex&&ex.result==="pass"&&alt.result!=="pass"&&!ex.b197){ s.passed=ex.date; delete s.ready; delete s.waitOrder; }
   if(!ex||ex.b197||alt.b197)return;
@@ -8370,14 +8374,16 @@ function openErgebnisKorrektur(exId,nachher){
     document.querySelectorAll("#sheet [data-erg]").forEach(x=>x.classList.toggle("on",x===b)); }));
   $("#ekSpeichern").addEventListener("click",()=>{
     const datum=$("#ekDatum").value; if(!datum){ toast("Bitte ein Datum wählen"); return; }
-    const alt={result:ex.result,date:ex.date,pruefer:ex.pruefer,b197:ex.b197,earnAt:ex.earnAt};
+    const alt={result:ex.result,date:ex.date,pruefer:ex.pruefer,b197:ex.b197,earnAt:ex.earnAt,faults:ex.faults,eingriff:ex.eingriff,eingNote:ex.eingNote};
     ex.result=erg; ex.date=datum; ex.earnAt=datum; ex.pruefer=$("#ekPruefer").value;
-    if(erg==="pass"){ ex.faults=[]; ex.eingriff=false; }
+    // Fehlerliste nur ausblenden, nicht wegwerfen: bei „bestanden“ zählt sie nicht, wird aber für ein Zurückstellen gemerkt
+    if(erg==="pass"&&alt.result!=="pass"){ ex.faultsVorher={faults:alt.faults||[],eingriff:!!alt.eingriff,eingNote:alt.eingNote||""}; ex.faults=[]; ex.eingriff=false; }
+    if(erg==="fail"&&alt.result==="pass"&&ex.faultsVorher){ ex.faults=ex.faultsVorher.faults; ex.eingriff=ex.faultsVorher.eingriff; ex.eingNote=ex.faultsVorher.eingNote; delete ex.faultsVorher; }
     _ergebnisAnwenden(s,ex,alt);
     const geaendert=[alt.result!==ex.result?"Ergebnis":"",alt.date!==ex.date?"Datum":"",(alt.pruefer||"")!==(ex.pruefer||"")?"Prüfer":""].filter(Boolean);
     if(s&&geaendert.length)logHist(s,"note",`Prüfungsergebnis korrigiert (${geaendert.join(", ")})`);
     save(); closeSheet(); toastUndo("Ergebnis geändert",()=>{ const neu={result:ex.result,date:ex.date,b197:ex.b197};
-      Object.assign(ex,{result:alt.result,date:alt.date,pruefer:alt.pruefer,earnAt:alt.earnAt}); _ergebnisAnwenden(s,ex,neu); save(); nachher&&nachher(); toast("Wiederhergestellt ✓"); },6000);
+      Object.assign(ex,{result:alt.result,date:alt.date,pruefer:alt.pruefer,earnAt:alt.earnAt,faults:alt.faults,eingriff:alt.eingriff,eingNote:alt.eingNote}); delete ex.faultsVorher; _ergebnisAnwenden(s,ex,neu); save(); nachher&&nachher(); toast("Wiederhergestellt ✓"); },6000);
     nachher&&nachher();
   });
   $("#ekLoeschen").addEventListener("click",()=>{
@@ -12440,7 +12446,7 @@ function _doppelterSchuelerOk(name,tel){
   const treffer=(DB.students||[]).find(x=>!x.passed&&((x.name||"").trim().toLowerCase().replace(/\s+/g," ")===n||(t.length>=6&&nr(x.telefon)===t)));
   if(!treffer)return true;
   const gleich=(treffer.name||"").trim().toLowerCase().replace(/\s+/g," ")===n?"diesem Namen":"dieser Telefonnummer";
-  return confirm(`Es gibt schon einen Schüler mit ${gleich}: ${treffer.name}. Trotzdem neu anlegen?`);
+  return confirm(`Es gibt schon einen Schüler mit ${gleich}: ${treffer.name}${treffer.ausgeblendetAm?" (bei dir ausgeblendet – unter Mehr › Archiv › Ausgeblendet wieder einblendbar)":""}. Trotzdem neu anlegen?`);
 }
 function openQuickNewStudentSheet(onCreated){
   openSheet(`<div class="sheet-h">Neuer Schüler</div>
@@ -16117,10 +16123,10 @@ function renderRouteSheet(nm){
 let _archFormFilter=[], _archColorFilter=[];
 function routeArchive(){
   $("#tbTitle").textContent="Archiv"; setFab(false); view.scrollTop=0;
-  let list=DB.students.filter(s=>s.passed).sort((a,b)=>(a.name||"").localeCompare(b.name||"","de"));
+  let list=DB.students.filter(s=>s.passed&&!s.ausgeblendetAm).sort((a,b)=>(a.name||"").localeCompare(b.name||"","de"));
   if(_archFormFilter.length) list=list.filter(s=>_archFormFilter.includes(s.form||"B"));
   if(_archColorFilter.length) list=list.filter(s=>_archColorFilter.includes(s.profil));
-  const alle=DB.students.filter(s=>s.passed);
+  const alle=DB.students.filter(s=>s.passed&&!s.ausgeblendetAm);
   const formChips=FORMS.map(f=>`<button class="pday${_archFormFilter.includes(f)?' on':''}" data-archform="${f}" style="width:auto;padding:0 12px;">${formLabel(f)}</button>`).join("");
   const colorChips=["rot","gelb","gruen","blau"].map(c=>`<button class="pday${_archColorFilter.includes(c)?' on':''}" data-archcolor="${c}" style="width:auto;padding:0 12px;"><span class="pc-dot" style="background:${PROFILE[c].hex};display:inline-block;width:8px;height:8px;border-radius:50%;margin-right:5px;"></span>${PROFILE[c].word}</button>`).join("");
   const letters=[...new Set(list.map(s=>(s.name||"?")[0].toUpperCase()))].sort((a,b)=>a.localeCompare(b,"de"));
