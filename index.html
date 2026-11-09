@@ -11690,8 +11690,10 @@ function routeSettings(){
         if(_authUser){ _abglSpeichern({ user:_authUser.id, schueler:{}, termine:{}, pruefungen:{} });
           (DB.lessons||[]).forEach(l=>delete l._syncedAt); (DB.exams||[]).forEach(x=>delete x._syncedAt); }
         save();routeDashboard();
-        if(_authUser&&_pullOk){ _brueckenSofort(); setTimeout(()=>{ try{ pullSchuelerZuweisungen(); pullTermineZuweisungen(); }catch(e3){} },5000); }
+        if(_authUser&&_pullOk){ _brueckenSofort(); setTimeout(()=>{ try{ pullSchuelerZuweisungen(); pullTermineZuweisungen(); }catch(e3){} },11000); } // nach dem Rückgängig-Fenster (10 s)
         toastUndo("Backup eingespielt",()=>{ DB=JSON.parse(vorher);
+          // Auch hier: Gedächtnis leeren, damit die Brücke beim Zurückdrehen nichts auf dem Server löscht (z. B. inzwischen geholte Büro-Termine)
+          if(_authUser) _abglSpeichern({ user:_authUser.id, schueler:{}, termine:{}, pruefungen:{} });
           // Ohne Merker gelten die Einträge als nicht abgeglichen: der Abruf entfernt sie nicht, die Brücke lädt sie wieder hoch.
           (DB.lessons||[]).forEach(l=>delete l._syncedAt); (DB.exams||[]).forEach(x=>delete x._syncedAt);
           ensureDB(); save(); routeDashboard(); toast("Alter Stand wiederhergestellt"); },10000);
