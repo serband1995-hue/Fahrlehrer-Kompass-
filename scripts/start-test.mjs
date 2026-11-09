@@ -62,7 +62,7 @@ const t6 = await page.evaluate(async () => {
   const az = document.getElementById("view").innerText;
   document.getElementById("azFzName").value = "Golf 8"; document.getElementById("azFzAdd").click(); await w(50);
   const fzNeu = DB.workCfg.fahrzeuge.map((f) => f.name + "/" + f.typ).join();
-  return { proUE: v.proUE, fixum: v.fixum, fz, vorgabe, fehlt, stat2100: /2\.100/.test(stat), statHinweis: /Vertrag eintragen/.test(stat), heuteHinweis: /Vertrag eintragen/.test(heute), azHinweis: /noch nicht eingetragen/.test(az), fzNeu };
+  return { proUE: v.proUE, fixum: v.fixum, fz, vorgabe, fehlt, stat2100: /2\.100/.test(stat), statHinweis: /Vertrag eintragen/.test(stat), heuteHinweis: /Vertrag fehlt/.test(heute), azHinweis: /noch nicht eingetragen/.test(az), fzNeu };
 });
 if (t6.proUE || t6.fixum || t6.stat2100) fehler("T6 neuer Nutzer sieht fremden Vertrag: " + JSON.stringify(t6)); else ok("T6 kein fremder Vertrag als Vorgabe");
 if (!t6.fehlt || !t6.statHinweis || !t6.heuteHinweis) fehler("T6 Hinweis „Vertrag eintragen“ fehlt: " + JSON.stringify(t6)); else ok("T6 Hinweis „Vertrag eintragen“ auf Statistik und Heute");

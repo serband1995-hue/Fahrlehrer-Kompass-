@@ -1531,7 +1531,12 @@ body:not(.light) .cw-col.today .cw-dnum{color:var(--gold);}
 .azp-info{display:flex;flex-direction:column;gap:2px;}
 .azp-days{font-size:12px;color:var(--muted);font-weight:700;letter-spacing:.04em;}
 .azp-time{font-weight:800;font-size:15px;}
-.azp-del{width:28px;height:28px;border-radius:8px;background:var(--bg-soft);color:var(--muted);font-size:12px;flex:0 0 auto;}
+.azp-del{width:44px;height:44px;border-radius:10px;background:var(--bg-soft);color:var(--muted);font-size:13px;flex:0 0 auto;margin:-8px -8px -8px 6px;}
+.azf-name{font-weight:800;font-size:15px;}
+.azf-typ{font-size:12px;color:var(--muted);font-weight:700;letter-spacing:.04em;}
+.azf-neu{display:flex;gap:8px;align-items:stretch;margin-bottom:10px;}
+.azf-neu input{flex:1 1 auto;min-width:0;min-height:44px;}
+.azf-neu select{flex:0 0 auto;min-height:44px;}
 .pause-days{display:flex;gap:6px;flex-wrap:wrap;}
 .pday{flex:1;min-width:38px;padding:10px 4px;border-radius:9px;font-size:13px;font-weight:700;background:var(--surface);border:1px solid var(--line);color:var(--muted);}
 .pday.on{background:var(--gruen-soft);border-color:var(--gruen-line);color:var(--mint);}
@@ -12443,7 +12448,7 @@ function openPauseSheet(){
 function fahrzeugListHTML(){
   const fz=DB.workCfg.fahrzeuge||[];
   if(!fz.length)return `<p class="muted-p" style="font-size:13px;margin-bottom:10px;">Noch keine Fahrzeuge. Trag deine Fahrschulautos ein, dann kannst du sie bei jedem Termin wählen.</p>`;
-  return fz.map((f,i)=>`<div class="az-pause"><div class="azp-info"><span class="azp-days">${esc(f.name)}</span><span class="azp-time">${f.typ==="schalt"?"Schalter":"Automatik"}</span></div><button class="azp-del" data-fzdel="${i}" aria-label="${esc(f.name)} entfernen">✕</button></div>`).join("");
+  return fz.map((f,i)=>`<div class="az-pause"><div class="azp-info"><span class="azf-name">${esc(f.name)}</span><span class="azf-typ">${f.typ==="schalt"?"Schalter":"Automatik"}</span></div><button class="azp-del" data-fzdel="${i}" aria-label="${esc(f.name)} entfernen">✕</button></div>`).join("");
 }
 function bindFahrzeugDelete(){ document.querySelectorAll("[data-fzdel]").forEach(b=>b.addEventListener("click",()=>{
   const f=DB.workCfg.fahrzeuge[+b.dataset.fzdel]; if(!f)return;
@@ -12497,15 +12502,19 @@ function routeArbeitszeit(){
       <div class="az-times"><label>von</label>${tf("azThSaVon",c.theorieSamstag.von)}<label>bis</label>${tf("azThSaBis",c.theorieSamstag.bis)}</div>
     </div>
 
-    <div class="az-sec-h">Fahrzeuge</div>
-    <div id="azFahrzeuge">${fahrzeugListHTML()}</div>
-    <div class="az-block" style="display:flex;gap:8px;flex-wrap:wrap;align-items:center;">
-      <input type="text" id="azFzName" placeholder="z. B. Golf 8" autocomplete="off" style="flex:1 1 140px;min-height:44px;">
-      <select id="azFzTyp" style="min-height:44px;"><option value="schalt">Schalter</option><option value="automatik">Automatik</option></select>
-      <button class="btn btn-ghost" id="azFzAdd" style="flex:0 0 auto;min-height:44px;">+ Fahrzeug</button>
-    </div>
+    <div class="btn-row" style="margin-top:6px;"><button class="btn btn-primary" id="azSave">Zeiten speichern</button></div>
 
-    <div class="btn-row" style="margin-top:6px;"><button class="btn btn-primary" id="azSave">Speichern</button></div>
+    <div class="az-sec-h" style="margin-top:22px;">Fahrzeuge</div>
+    <p class="muted-p" style="font-size:13px;margin:-2px 0 10px;">Werden sofort gespeichert.</p>
+    <div id="azFahrzeuge">${fahrzeugListHTML()}</div>
+    <div class="az-block">
+      <label class="az-h" for="azFzName">Neues Fahrzeug</label>
+      <div class="azf-neu">
+        <input type="text" id="azFzName" placeholder="z. B. Golf 8" autocomplete="off">
+        <select id="azFzTyp" aria-label="Getriebe"><option value="schalt">Schalter</option><option value="automatik">Automatik</option></select>
+      </div>
+      <button class="btn btn-primary" id="azFzAdd" style="width:100%;">+ Fahrzeug hinzufügen</button>
+    </div>
     </div>`;
   $("#backBtn").addEventListener("click",routeKalender);
   bindFahrzeugDelete();
@@ -14957,7 +14966,7 @@ function _h2KachelnHTML(){
   const ohneVertrag=_vertragFehlt();
   if(sichtbar('dash_wocheverdienst')){
     const zeigen=_verdienstPinCheck();
-    k.push(ohneVertrag?`<button class="h2-kachel" data-k="woche"><span class="h2-k-l">Verdienst</span><span class="h2-k-w" style="font-size:15px;">Vertrag eintragen</span><span class="h2-k-s">fehlt noch</span></button>`
+    k.push(ohneVertrag?`<button class="h2-kachel" data-k="woche"><span class="h2-k-l">Verdienst</span><span class="h2-k-w" style="color:var(--gold,#b8873a);">Vertrag fehlt</span><span class="h2-k-s">Tippen zum Eintragen</span></button>`
       :`<button class="h2-kachel" data-k="woche"><span class="h2-k-l">Diese Woche verdient</span><span class="h2-k-w">${zeigen?wocheVerdientEuro().toLocaleString("de-DE")+" €":"••••"}</span></button>`);
   }
   const v=DB.verdienst||{}, bonusUE=v.bonusUE||250;
@@ -15307,8 +15316,8 @@ function _druckAbsender(nachsatz){
 /* T6: Vertrag fehlt, solange weder Satz pro UE noch Fixum eingetragen sind */
 function _vertragFehlt(){ const v=DB.verdienst||{}; return !(+v.proUE>0)&&!(+v.fixum>0); }
 function _vertragFehltHTML(){
-  return `<div class="vd-card" style="text-align:left;"><div class="vd-head"><div class="vd-title">Verdienst</div><button class="vd-gear" id="vdGear" aria-label="Einstellungen">${ICN.gear||"⚙"}</button></div>
-    <p style="margin:6px 0 12px;font-size:14.5px;line-height:1.5;">Dein Vertrag fehlt noch. Ohne Satz und Fixum kann der Verdienst nicht berechnet werden.</p>
+  return `<div class="vd-card" style="text-align:left;"><div class="vd-head" style="justify-content:space-between;"><div class="vd-title" style="text-align:left;flex:1;">Verdienst</div><button class="vd-gear" id="vdGear" aria-label="Einstellungen">${ICN.gear||"⚙"}</button></div>
+    <div role="note" style="margin:6px 0 12px;padding:12px 14px;border-radius:14px;font-size:14.5px;line-height:1.5;background:rgba(207,154,62,.16);border:1px solid rgba(207,154,62,.45);"><b>Dein Vertrag fehlt noch.</b> Trag ein, was du pro Fahrstunde und als festes Gehalt bekommst – dann rechnet die App deinen Verdienst aus.</div>
     <button class="btn btn-primary" onclick="openVerdienstSheet()" style="width:100%;">Vertrag eintragen</button></div>`;
 }
 /* ---------- Statistik ---------- */
