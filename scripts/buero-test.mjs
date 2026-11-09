@@ -864,6 +864,52 @@ for (const [breite, hoehe] of [[1920, 1080], [1366, 768], [1024, 768]]) {
   await ctx.close();
 }
 
+// 4f2) B1: Zurücknehmen → Wieder öffnen → Bezahlt bucht die Provision neu; Meldung nur bei echtem Buchen
+{
+  const { page, ctx, konsole } = await oeffne({ nutzer: "bu-1", hash: "#verkaeufe", breite: 1920, hoehe: 1080 });
+  const toastText = () => page.evaluate(() => [...document.querySelectorAll(".toast, #toast, [role=status]")].map((t) => t.textContent).join(" | "));
+  const gueltig = () => page.evaluate(() => {
+    const e = window.__FAKE.tabellen.fahrschule_empfehlungen.find((x) => x.id === "e1");
+    return window.__FAKE.tabellen.provisionen.filter((p) => p.schueler_id === e.schueler_id && p.typ === e.typ && p.fahrlehrer_id === e.fahrlehrer_id && p.status !== "storniert").length;
+  });
+  const vorher = await gueltig();
+  await page.click('[data-vbezahlt="e1"]'); await page.waitForSelector("#vSplit table");
+  await page.click("dialog button[value=ok]"); await page.waitForTimeout(400);
+  if (await gueltig() !== vorher + 1) fehler("B1: erste Zahlung bucht keine Provision");
+  await page.click('[data-vstorno="e1"]'); await page.waitForTimeout(200);
+  await page.click("dialog[open] button[value=ok]"); await page.waitForTimeout(400);
+  if (await gueltig() !== vorher) fehler("B1: Zurücknehmen storniert die Provision nicht");
+  await page.click('[data-vwieder="e1"]'); await page.waitForTimeout(400);
+  await page.click('[data-vbezahlt="e1"]'); await page.waitForSelector("#vSplit table");
+  await page.click("dialog button[value=ok]"); await page.waitForTimeout(400);
+  if (await gueltig() !== vorher + 1) fehler("B1: nach Wieder öffnen → Bezahlt keine neue Provision (" + (await gueltig()) + ")");
+  // 0 €: keine Provision, und die Meldung sagt nicht „gebucht“
+  await page.click('[data-vstorno="e1"]'); await page.waitForTimeout(200);
+  await page.click("dialog[open] button[value=ok]"); await page.waitForTimeout(400);
+  await page.click('[data-vwieder="e1"]'); await page.waitForTimeout(400);
+  await page.click('[data-vbezahlt="e1"]'); await page.waitForSelector("#vSplit");
+  await page.fill("dialog input[name=betrag]", "0");
+  await page.click("dialog button[value=ok]"); await page.waitForTimeout(400);
+  if (/gebucht/.test(await toastText())) fehler("B1: Meldung „gebucht“ bei 0 €: " + await toastText());
+  if (await gueltig() !== vorher) fehler("B1: bei 0 € wurde eine Provision gebucht");
+  if (konsole.length) fehler("B1: Konsole: " + konsole.join(" | "));
+  await ctx.close();
+}
+
+// 4f3) B7: Prüfungstafel zwischen 1301 und 1440 px – kein Schülername zerbricht in der Warnkarte
+for (const breite of [1301, 1366, 1420]) {
+  const { page, ctx, konsole } = await oeffne({ nutzer: "bu-1", hash: "#pruefungen", breite, hoehe: 800, vorbereiten: function () {
+    const g = new Date(); g.setDate(g.getDate() - 1);
+    F.tabellen.pruefungstermine.push({ id: "pt-b7", fahrschule_id: "fs-test-1", schueler_id: "s12", fahrlehrer_id: "fl-2", art: "praxis", klasse: "B", datum: g.toISOString().slice(0, 10), von: "11:00", status: "geplant" });
+  } });
+  const schmal = await page.evaluate(() => [...document.querySelectorAll(".ptabelle td")].filter((td) => td.textContent.trim().length > 6)
+    .map((td) => ({ w: Math.round(td.getBoundingClientRect().width), t: td.textContent.trim().slice(0, 20) })).filter((x) => x.w < 80));
+  if (!(await page.$(".warnkarte"))) fehler("B7 Vorbereitung: keine Warnkarte bei " + breite + " px");
+  if (schmal.length) fehler("B7 bei " + breite + " px zu schmale Spalte: " + JSON.stringify(schmal.slice(0, 3)));
+  if (konsole.length) fehler("B7: Konsole: " + konsole.join(" | "));
+  await ctx.close();
+}
+
 // 4g) Team und Fahrzeuge (Leitung)
 {
   const { page, ctx, konsole } = await oeffne({ nutzer: "ad-1", hash: "#team", breite: 1920, hoehe: 1080 });

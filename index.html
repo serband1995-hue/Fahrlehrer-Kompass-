@@ -160,17 +160,18 @@ input,select,textarea{font-family:inherit;font-size:15px;color:var(--txt);}
 @keyframes klStrasse{from{-webkit-mask-position:0 100%;mask-position:0 100%}to{-webkit-mask-position:0 0;mask-position:0 0}}
 @keyframes klGlanz{to{transform:translateX(80%)}}
 @media (prefers-reduced-motion:reduce){.kl-tile,.kl-tile i,.kl-tile::after{animation:none!important}.kl-tile .t-strasse{-webkit-mask:none;mask:none}}
-#splash.hide .kl-tile{animation:spOut .9s var(--ease) forwards}
+#splash.hide .kl-tile{animation:spOut .25s var(--ease) forwards}
 #splash .kl-tile{--kl-size:clamp(110px,30vw,148px)}
 /* ===== SPLASH ===== */
 #splash{position:fixed;inset:0;z-index:200;background:radial-gradient(120% 90% at 50% 20%,#12211a 0%,#0a110d 70%);
   display:flex;flex-direction:column;align-items:center;justify-content:center;gap:16px;
-  transition:opacity .9s var(--ease),visibility .9s var(--ease);}
-#splash.hide{opacity:0;visibility:hidden;}
+  transition:opacity .25s var(--ease),visibility 0s linear .25s;}
+#splash.hide{opacity:0;visibility:hidden;pointer-events:none;}
+#splash.kurz{pointer-events:none;} /* Logo-Tipp: Startbild nur kurz, Tippen geht durch */
 /* Beim Ausblenden lösen sich die Elemente fließend nach oben auf */
-#splash.hide img{animation:spOut .9s var(--ease) forwards;}
-#splash.hide .sp-name{animation:spOut .9s var(--ease) .06s forwards;}
-#splash.hide .sp-quote{animation:spOut .9s var(--ease) .12s forwards;}
+#splash.hide img{animation:spOut .25s var(--ease) forwards;}
+#splash.hide .sp-name{animation:spOut .25s var(--ease) forwards;}
+#splash.hide .sp-quote{animation:spOut .25s var(--ease) forwards;}
 @keyframes spOut{to{opacity:0;transform:translateY(-26px) scale(1.04);filter:blur(8px);}}
 #splash img{width:clamp(96px,26vw,128px);border-radius:26px;
   box-shadow:0 20px 50px rgba(0,0,0,.55), var(--inset-top), inset 0 -2px 8px rgba(0,0,0,.4);
@@ -1530,7 +1531,12 @@ body:not(.light) .cw-col.today .cw-dnum{color:var(--gold);}
 .azp-info{display:flex;flex-direction:column;gap:2px;}
 .azp-days{font-size:12px;color:var(--muted);font-weight:700;letter-spacing:.04em;}
 .azp-time{font-weight:800;font-size:15px;}
-.azp-del{width:28px;height:28px;border-radius:8px;background:var(--bg-soft);color:var(--muted);font-size:12px;flex:0 0 auto;}
+.azp-del{width:44px;height:44px;border-radius:10px;background:var(--bg-soft);color:var(--muted);font-size:13px;flex:0 0 auto;margin:-8px -8px -8px 6px;}
+.azf-name{font-weight:800;font-size:15px;}
+.azf-typ{font-size:12px;color:var(--muted);font-weight:700;letter-spacing:.04em;}
+.azf-neu{display:flex;gap:8px;align-items:stretch;margin-bottom:10px;}
+.azf-neu input{flex:1 1 auto;min-width:0;min-height:44px;}
+.azf-neu select{flex:0 0 auto;min-height:44px;}
 .pause-days{display:flex;gap:6px;flex-wrap:wrap;}
 .pday{flex:1;min-width:38px;padding:10px 4px;border-radius:9px;font-size:13px;font-weight:700;background:var(--surface);border:1px solid var(--line);color:var(--muted);}
 .pday.on{background:var(--gruen-soft);border-color:var(--gruen-line);color:var(--mint);}
@@ -2726,7 +2732,7 @@ body.light .fc-miss-sum b{color:#7a2a1e !important;}
     <div class="brand">
       <div class="brand-mark"><img id="drawerLogo" alt="Fahrlehrer-Kompass"></div>
       <div>
-        <div class="brand-eye">Fahrlehrer Serband</div>
+        <div class="brand-eye">Fahrlehrer</div>
         <div class="brand-script">Fahrlehrer-<b>Kompass</b></div>
       </div>
     </div>
@@ -4104,6 +4110,37 @@ function showLoginErr(msg, ok) {
   el.classList.toggle("ok", !!ok);   // Erfolgsmeldung grün statt rot
 }
 
+/* Z3: letztes gutes Profil je Konto merken (Rolle, Sperre, AGB-Stand – keine Schülerdaten) */
+const _PROFIL_KEY = "kompass-profil-cache";
+function _profilMerken(p){ try{ localStorage.setItem(_PROFIL_KEY, JSON.stringify(p)); }catch(e){} }
+function _profilAusSpeicher(uid){ try{ const p = JSON.parse(localStorage.getItem(_PROFIL_KEY) || "null"); return p && p.id === uid ? p : null; }catch(e){ return null; } }
+function _profilFehlerZeigen(user, err){
+  const btn = document.getElementById("loBtn"); if (btn) { btn.disabled = false; btn.innerHTML = "Einloggen"; }
+  const ov = document.getElementById("loginOverlay"); if (ov) ov.classList.remove("hidden");
+  showLoginErr("Dein Profil konnte nicht geladen werden" + (navigator.onLine === false ? " – keine Verbindung." : ".") + " Bitte prüfe das Internet und tippe auf „Nochmal“.");
+  const fehlerEl = document.getElementById("loErr");
+  if (fehlerEl && !document.getElementById("loNochmal")) {
+    const b = document.createElement("button"); b.id = "loNochmal"; b.type = "button"; b.className = "lo-btn"; b.textContent = "Nochmal";
+    b.style.cssText = "margin-top:10px;width:100%;min-height:44px;";
+    b.addEventListener("click", () => { b.disabled = true; b.textContent = "Lade …"; afterLogin(user); });
+    fehlerEl.insertAdjacentElement("afterend", b);
+  }
+  try { (document.getElementById("loNochmal") || fehlerEl).scrollIntoView({ block: "center" }); } catch (e) {}
+  console.warn("[Kompass] Profil nicht geladen:", err && err.message);
+}
+// Mit gespeichertem Profil gestartet: alle 20 s nachladen; ist das Konto inzwischen gesperrt, abmelden.
+function _profilNachladen(uid){
+  setTimeout(async () => {
+    if (!_authUser || _authUser.id !== uid) return;
+    try {
+      const { data, error } = await getSupa().from("profiles").select("*").eq("id", uid).single();
+      if (error || !data) throw error || new Error("leer");
+      _profilMerken(Object.assign({}, data, { fahrschule_name: _authProfile && _authProfile.fahrschule_name }));
+      if (!data.aktiv || data.agb_akzeptiert_version !== AGB_VERSION || data.rolle !== (_authProfile && _authProfile.rolle)) { location.reload(); return; }
+      _authProfile = Object.assign({}, _authProfile, data);
+    } catch (e) { _profilNachladen(uid); }
+  }, 20000);
+}
 async function afterLogin(user) {
   const pwReset = _pwResetAusstehend; _pwResetAusstehend = false;
   // Lokale Daten eines anderen (oder unbekannten) Kontos werden vor jedem Abgleich vom Gerät entfernt,
@@ -4128,8 +4165,19 @@ async function afterLogin(user) {
   try { _dbEigentuemer = localStorage.getItem(OWNER_KEY); } catch (e) { _dbEigentuemer = null; }
   _authUser = user;
   const supa = getSupa();
-  // Profil laden
-  const { data: prof } = await supa.from("profiles").select("*").eq("id", user.id).single();
+  // Profil laden. Ohne Profil fehlen Sperre, AGB-Prüfung und Rolle – dann nicht einfach weiter (Z3).
+  let prof = null, profFehler = null;
+  try { const r = await supa.from("profiles").select("*").eq("id", user.id).single(); prof = r.data || null; profFehler = r.error || (prof ? null : { message: "leer" }); }
+  catch (e) { profFehler = e; }
+  const _nochmalWeg = document.getElementById("loNochmal"); if (_nochmalWeg) _nochmalWeg.remove();
+  if (prof) _profilMerken(prof);
+  else {
+    // Funkloch beim Start: mit dem zuletzt geladenen Profil dieses Kontos weiter (Sperre und AGB gelten wie gespeichert)
+    // und im Hintergrund nachladen. Ohne gespeichertes Profil: Meldung mit „Nochmal“.
+    prof = _profilAusSpeicher(user.id);
+    if (!prof) { _profilFehlerZeigen(user, profFehler); return; }
+    _profilNachladen(user.id);
+  }
   _authProfile = prof;
   // E-Mail ins Profil schreiben (falls noch nicht vorhanden)
   if (prof && !prof.email && user.email) {
@@ -4142,13 +4190,15 @@ async function afterLogin(user) {
     _authUser = null; _authProfile = null;
     document.getElementById("loBtn").disabled = false;
     document.getElementById("loBtn").innerHTML = "Einloggen";
-    showLoginErr("Dein Zugang ist aktuell gesperrt. Bitte wende dich an deinen Fahrschul-Inhaber oder Serband.");
+    showLoginErr("Dein Zugang ist aktuell gesperrt. Bitte wende dich an deinen Fahrschul-Inhaber.");
     return;
   }
   // Kill-Switch prüfen (ganze Fahrschule) — fehlte bisher komplett, der Schalter im Admin-Panel
   // hat bis eben niemanden wirklich am Einloggen gehindert.
   if (prof && prof.fahrschule_id) {
-    const { data: fsRow } = await supa.from("fahrschulen").select("aktiv,name").eq("id", prof.fahrschule_id).maybeSingle();
+    let fsRow = null; try { ({ data: fsRow } = await supa.from("fahrschulen").select("aktiv,name").eq("id", prof.fahrschule_id).maybeSingle()); } catch (e) {}
+    // T7: Name der Fahrschule für PDFs merken (auch für den Start im Funkloch)
+    if (fsRow && fsRow.name && prof.fahrschule_name !== fsRow.name) { prof = Object.assign({}, prof, { fahrschule_name: fsRow.name }); _authProfile = Object.assign({}, _authProfile, { fahrschule_name: fsRow.name }); _profilMerken(prof); }
     if (fsRow && !fsRow.aktiv) {
       await supa.auth.signOut();
       _authUser = null; _authProfile = null;
@@ -5042,12 +5092,38 @@ function fristenHinweisHTML(sid){
   stopp.forEach(n=>teile.push(`<b>STOPP vom Büro:</b> ${esc(n.text)}`));
   infos.forEach(n=>teile.push(`<b>Büro:</b> ${esc(n.text)}`));
   const gut=[];
-  if(f.theorie_bestanden_am) gut.push(`✓ Theorieprüfung bestanden am ${isoDE(f.theorie_bestanden_am)} (Büro)`);
+  if(f.theorie_bestanden_am) gut.push(`✓ Theorieprüfung bestanden am ${isoDE(f.theorie_bestanden_am)} (vom Büro eingetragen)`);
   if(f.praxis_bestanden_am) gut.push(`✓ Praxisprüfung bestanden am ${isoDE(f.praxis_bestanden_am)} (Büro)`);
   const gutHTML=gut.length?`<div style="margin:10px 0;padding:10px 14px;border-radius:14px;font-size:14px;line-height:1.45;background:rgba(76,175,114,.14);border:1px solid rgba(76,175,114,.4);">${gut.join("<br>")}</div>`:"";
   if(!teile.length)return gutHTML;
   const rot=r.gesperrt||t.stufe==="abgelaufen"||stopp.length>0||(a&&a.stufe==="abgelaufen")||(tf&&tf.stufe==="abgelaufen")||(um&&um.stufe==="abgelaufen");
   return gutHTML+`<div role="alert" style="margin:10px 0;padding:12px 14px;border-radius:14px;font-size:14px;line-height:1.45;background:${rot?"rgba(207,90,72,.14)":"rgba(207,154,62,.16)"};border:1px solid ${rot?"rgba(207,90,72,.45)":"rgba(207,154,62,.45)"};">⚠️ ${teile.join("<br>")}</div>`;
+}
+/* T1: „Theorie bestanden“ vom Büro in den Ausbildungsplan übernehmen (wie der Schalter in der Akte).
+   Nur wenn sich das Datum im Büro geändert hat (Merker theorieBuero) – ein späteres Umschalten des Fahrlehrers bleibt.
+   Nimmt das Büro das Ergebnis zurück, wird auch die Übernahme zurückgenommen (nur, wenn sie vom Büro kam). */
+function _theorieVomBuero(s, datum){
+  datum = datum || null;
+  if ((s.theorieBuero || null) === datum) return false;
+  const vorher = s.theorieBuero || null; s.theorieBuero = datum;
+  const pl = s.plan || (s.plan = newPlan());
+  if (datum) {
+    if (!pl.theorie) {
+      pl.theorie = true; delete s.wartelisteRaus;
+      s.theoryPassed = datum + "T12:00:00.000Z"; s.theoryVomBuero = s.theoryPassed;
+      if (!(s.hist || []).some(h => h.typ === "theorie" || h.type === "theorie")) logHist(s, "theorie", "Theorieprüfung bestanden (vom Büro eingetragen)");
+      if (stand(s) >= 90 && !s.ready && !s.passed) s.ready = s.theoryPassed;
+    }
+    if (s.theorieWait) { s.theorieWaitVorBuero = s.theorieWait; s.theorieWaitBis = new Date().toISOString(); delete s.theorieWait; }
+  } else if (vorher && pl.theorie && s.theoryVomBuero && s.theoryPassed === s.theoryVomBuero) {
+    pl.theorie = false;
+    if (s.ready && s.ready === s.theoryPassed && !s.pruefungsreifManuell) delete s.ready;
+    delete s.theoryPassed; delete s.theoryVomBuero; delete s.theorieWaitBis;
+    // Wartete er vorher auf die Theorie, wartet er wieder (Büro hat das Ergebnis zurückgenommen)
+    if (s.theorieWaitVorBuero) s.theorieWait = s.theorieWaitVorBuero;
+  }
+  if (!s.theoryVomBuero) delete s.theorieWaitVorBuero;
+  return true;
 }
 async function pullSchuelerZuweisungen() {
   if (!_authUser || !_authProfile || !_authProfile.fahrschule_id || _fsAgg || _schuelerAbrufLaeuft) return;
@@ -5101,12 +5177,21 @@ async function pullSchuelerZuweisungen() {
           if (lok.form !== f && (!erstes || LKW_FORMS.includes(f))) lok.form = f;
         }
       }
-      if (lokaleIds.has(r.id)) { const l1 = DB.students.find(x => x.id === r.id); if (l1) { const w = _abglWertVon("schueler", l1); if (w !== vorherWert[r.id]) nachherWert[r.id] = w; } }
+      // Theorie bestanden vom Büro (Prüfungstafel): einmal je neuem Datum in den Ausbildungsplan übernehmen –
+      // Schalter an, „wartet auf Theorie“ beendet (T1). Schaltet der Fahrlehrer danach selbst um, gilt das.
+      // Geändert wird hier der Ausbildungsstand – der soll ins Büro (ausbildung.ready usw.), darum nicht als „abgeglichen“ merken.
+      let theorieNeu = false;
+      if (lokaleIds.has(r.id) && "theorie_bestanden_am" in r) { const lok = DB.students.find(x => x.id === r.id); if (lok && _theorieVomBuero(lok, r.theorie_bestanden_am)) { umschreiberNeu = true; theorieNeu = true; } }
+      if (lokaleIds.has(r.id) && !theorieNeu) { const l1 = DB.students.find(x => x.id === r.id); if (l1) { const w = _abglWertVon("schueler", l1); if (w !== vorherWert[r.id]) nachherWert[r.id] = w; } }
     }
     // Erst jetzt die neuen Schüler (mit Netzabrufen): alle Übernahmen oben laufen ohne Pause, damit eine Eingabe
     // des Fahrlehrers in der Zwischenzeit nicht als „vom Büro übernommen“ gilt.
+    const memVorher = _abglLaden();
     for (const r of (rows||[])) {
       if (!lokaleIds.has(r.id)) {
+        // Selbst gelöscht, aber noch nicht beim Server angekommen: nicht als „neu von der Fahrschule“ zurückholen
+        // (die Brücke markiert ihn gleich als gelöscht). Leere Liste: Sicherheitssperre wie in der Brücke.
+        if (memVorher.schueler[r.id] && lokaleIds.size) continue;
         const a = r.ausbildung || {};
         const nst = Object.assign({
           id: r.id, created: Date.now(), notiz: "", bogen: null, plan: newPlan(), profil: null, form: "B", beginn: "",
@@ -5170,6 +5255,8 @@ async function pullSchuelerZuweisungen() {
         // Eigene, schon gefahrene Stunden bleiben im Kalender - mit Namen, auch ohne Schülerdatei.
         (DB.lessons||[]).forEach(l => { if (l.sid === alt.id && !l.name) l.name = alt.name; });
         entfernt.push(alt.name); DB.students.splice(idx,1);
+        // Umverteilt ist nicht „selbst gelöscht“: vergessen, damit er bei einer Rückgabe wieder ankommt
+        const mU = _abglLaden(); if (mU.schueler[alt.id]) { delete mU.schueler[alt.id]; _abglSpeichern(mU); }
       }
       await supa.from("schueler_verschiebungen").update({ gesehen_von_alt: true }).eq("id", v.id);
     }
@@ -5221,6 +5308,10 @@ async function pullTermineZuweisungen() {
       const local = localById[r.id];
       const merged = Object.assign({ sid: r.schueler_id, date: r.datum, von: r.von, bis: r.bis, art: r.art, fahrzeug: r.fahrzeug, status: r.status }, r.payload || {});
       if (!local) {
+        // Kennt das Gerät den Termin schon, fehlt er lokal aber, hat der Fahrlehrer ihn gelöscht und die Brücke
+        // hat das noch nicht hochgeladen (4 s Wartezeit, Funkloch, App geschlossen): nicht als „neu“ zurückholen –
+        // die Brücke löscht ihn gleich auf dem Server. (Leerer Kalender: Sicherheitssperre wie in der Brücke.)
+        if (mem.termine[r.id] && DB.lessons.length) continue;
         const l = Object.assign({ id: r.id }, merged, { _syncedAt: remoteTime });
         DB.lessons.push(l); mem.termine[r.id] = _abglWertVon("termine", l);
         neu++;
@@ -5536,7 +5627,7 @@ function _fsSetDrawer(fahrschuleMode){
   if(_normalDrawerNavHTML===null) _normalDrawerNavHTML=navEl.innerHTML;
   navEl.innerHTML = fahrschuleMode ? _fsDrawerNavHTML(isSuperAdmin()) : (_normalDrawerNavHTML+_fsSuperAdminToggleBtn());
   const brandEye=document.querySelector(".brand-eye");
-  if(brandEye) brandEye.textContent = fahrschuleMode && _fsAgg ? (_fsAgg.fahrschule.name||"Fahrschule") : ("Fahrlehrer "+((_authProfile&&_authProfile.name)||"Serband"));
+  if(brandEye) brandEye.textContent = fahrschuleMode && _fsAgg ? (_fsAgg.fahrschule.name||"Fahrschule") : (_authProfile&&_authProfile.name?"Fahrlehrer "+_authProfile.name:"Fahrlehrer");
 }
 
 function _fsMapSchueler(row,lehrerName){
@@ -6923,12 +7014,12 @@ async function routeFahrschuleProvisionen(){
   const lehrer=_fsAgg.lehrer||[];
   const lehrerName=id=>{const l=lehrer.find(x=>x.id===id);return l?(l.name||l.email):"—";};
   const gesamt={};
-  (data||[]).filter(p=>p.status!=='ausgezahlt').forEach(p=>{gesamt[p.fahrlehrer_id]=(gesamt[p.fahrlehrer_id]||0)+Number(p.betrag||0);});
+  (data||[]).filter(p=>p.status==='offen').forEach(p=>{gesamt[p.fahrlehrer_id]=(gesamt[p.fahrlehrer_id]||0)+Number(p.betrag||0);});
   const eurCent=v=>Number(v||0).toLocaleString("de-DE",{style:"currency",currency:"EUR"});
   const uebersicht=Object.entries(gesamt).map(([id,sum])=>`<div class="fs-sub">${esc(lehrerName(id))}: <b style="color:var(--txt);">${eurCent(sum)}</b></div>`).join("")||'<p class="muted-p" style="font-size:13px;">Noch keine Provisionen erfasst.</p>';
   const liste=(data||[]).map(p=>`<div class="fs-card">
     <div class="fs-name">${esc(lehrerName(p.fahrlehrer_id))} — ${eurCent(p.betrag)}</div>
-    <div class="fs-sub">${esc(p.typ||"")} · ${isoDE(p.erstellt_am.slice(0,10))} · ${p.status==='ausgezahlt'?'<span class="fs-status-on">Ausgezahlt</span>':'<span style="color:var(--orange);">Offen</span>'}</div>
+    <div class="fs-sub">${esc(p.typ||"")} · ${isoDE(p.erstellt_am.slice(0,10))} · ${p.status==='ausgezahlt'?'<span class="fs-status-on">Ausgezahlt</span>':p.status==='storniert'?'<span style="color:var(--muted);">Storniert</span>':'<span style="color:var(--orange);">Offen</span>'}</div>
     ${p.status==='offen'?`<div class="fs-actions"><button class="fs-btn-activate" onclick="fsProvisionAuszahlen(${_jsArg(p.id)})">Als ausgezahlt markieren</button></div>`:''}
   </div>`).join("")||'';
   const wrap=$("#fsProvWrap");
@@ -7222,7 +7313,7 @@ window.addEventListener("load", () => {
 const STORE_KEY="serband-app-v1";
 /* Build-Version: bei jeder Auslieferung hier das Datum aktualisieren.
    Wird in den Einstellungen angezeigt + für den Update-Hinweis genutzt. */
-const APP_VERSION="2026.11.08.2";
+const APP_VERSION="2026.11.08.3";
 try{const f=document.getElementById("drawerFoot"); if(f)f.textContent="Fahrlehrer-Kompass · Version "+APP_VERSION;}catch(e){}
 // Nutzungsbedingungen & Haftungsausschluss (Bereich: rechtliche Absicherung) - Version hochzählen
 // und alle Nutzer müssen erneut zustimmen, sobald sich der Text inhaltlich ändert.
@@ -7415,7 +7506,7 @@ async function _fsSyncAggJetzt(){
    Fahrschule, nicht dem Fahrlehrer, und werden bewusst nicht mit-upgedatet.
    Fire-and-forget, blockiert nie den normalen Arbeitsablauf. */
 let _schuelerSyncDebounce=null;
-function _syncSchuelerBridge(){
+function _syncSchuelerBridge(warte){
   if(!_authUser||!_pullOk||!_authProfile||!_authProfile.fahrschule_id||!DB.students)return;
   clearTimeout(_schuelerSyncDebounce);
   _schuelerSyncDebounce=setTimeout(async()=>{
@@ -7444,7 +7535,7 @@ function _syncSchuelerBridge(){
         await supa.from("profiles").update({auslastung_pct:cap.auslastung, aktive_schueler_anzahl:cap.fahrend}).eq("id",_authUser.id);
       }catch(e2){}
     }catch(e){ console.warn("[Kompass] Fahrschul-Sync fehlgeschlagen:",e.message); }
-  },4000);
+  },warte===0?0:4000);
 }
 
 /* ===== Kalender-Synchronisations-Brücke (gleiches Prinzip wie bei Schülern) =====
@@ -7452,7 +7543,7 @@ function _syncSchuelerBridge(){
    diesem Gerät geändert haben. Nach dem Schreiben bekommt der Termin _syncedAt = Schreibzeit,
    damit der nächste Abruf ihn nicht für eine Büro-Änderung hält (sonst lief der Abgleich im Kreis). */
 let _termineSyncDebounce=null;
-function _syncTermineBridge(){
+function _syncTermineBridge(warte){
   if(!_authUser||!_pullOk||!_authProfile||!_authProfile.fahrschule_id||!DB.lessons)return;
   clearTimeout(_termineSyncDebounce);
   _termineSyncDebounce=setTimeout(async()=>{
@@ -7463,12 +7554,12 @@ function _syncTermineBridge(){
         loeschWert:{geloescht:true}, aktivFilter:q=>q.eq("geloescht",false) });
       if(geschrieben.length) _lokalAblegen();
     }catch(e){ console.warn("[Kompass] Kalender-Sync fehlgeschlagen:",e.message); }
-  },4000);
+  },warte===0?0:4000);
 }
 
 /* ===== Prüfungen-Synchronisations-Brücke (gleiches Prinzip) ===== */
 let _pruefungenSyncDebounce=null;
-function _syncPruefungenBridge(){
+function _syncPruefungenBridge(warte){
   if(!_authUser||!_pullOk||!_authProfile||!_authProfile.fahrschule_id||!DB.exams)return;
   clearTimeout(_pruefungenSyncDebounce);
   _pruefungenSyncDebounce=setTimeout(async()=>{
@@ -7478,7 +7569,7 @@ function _syncPruefungenBridge(){
         loeschWert:{geloescht:true}, aktivFilter:q=>q.eq("geloescht",false) });
       if(geschrieben.length) _lokalAblegen();
     }catch(e){ console.warn("[Kompass] Prüfungen-Sync fehlgeschlagen:",e.message); }
-  },4000);
+  },warte===0?0:4000);
 }
 /* Einmalige Migration: entfernt Prüfungsplatz-Doppel-Einträge, die durch die frühere automatische
    Warteliste-Zuordnung entstehen konnten (z.B. derselbe Schüler in zwei Terminen gleichzeitig).
@@ -7494,13 +7585,18 @@ function _syncPruefungenBridge(){
 let _saveSyncDebounce=null;
 // Falls ein Push noch aussteht (4s-Debounce) und die App wird geschlossen/in den Hintergrund geschickt:
 // sofort pushen statt zu riskieren, dass der geplante Push nie mehr feuert.
+// Brücken genauso: ein Löschen, das noch wartet, erreicht den Server sofort (sonst käme es beim nächsten Start zurück).
+function _brueckenSofort(){ if(!_authUser||!_pullOk||_fsAgg||!_authProfile||!_authProfile.fahrschule_id)return;
+  try{ _syncSchuelerBridge(0); _syncTermineBridge(0); _syncPruefungenBridge(0); }catch(e){} }
 document.addEventListener("visibilitychange",()=>{
   if(document.visibilityState==="hidden"&&_saveSyncDebounce){ clearTimeout(_saveSyncDebounce); _saveSyncDebounce=null; pushToCloud(); }
+  if(document.visibilityState==="hidden") _brueckenSofort();
   // Zurück in der App (z.B. Tablet nach dem Handy): sofort Änderungen des anderen Geräts holen.
   if(document.visibilityState==="visible"&&_authUser&&_pullOk&&!_fsAgg) pushToCloud();
 });
 window.addEventListener("pagehide",()=>{
   if(_saveSyncDebounce){ clearTimeout(_saveSyncDebounce); _saveSyncDebounce=null; pushToCloud(); }
+  _brueckenSofort();
 });
 /* Bittet den Browser, die Daten als dauerhaft/wichtig einzustufen, damit sie auch bei
    Speicherplatz-Engpässen oder langer Nichtnutzung nicht automatisch gelöscht werden. */
@@ -7721,7 +7817,7 @@ function icsFor(s){
   let hh="10",mi="00";const t=(s.nextTime||"").match(/(\d{1,2}):(\d{2})/);if(t){hh=t[1];mi=t[2];}
   const dt=new Date(+y,+mo-1,+d,+hh,+mi),end=new Date(dt.getTime()+90*60000);
   const f=x=>x.getFullYear()+pad2(x.getMonth()+1)+pad2(x.getDate())+"T"+pad2(x.getHours())+pad2(x.getMinutes())+"00";
-  const ics=["BEGIN:VCALENDAR","VERSION:2.0","PRODID:-//Serband//DE","BEGIN:VEVENT",
+  const ics=["BEGIN:VCALENDAR","VERSION:2.0","PRODID:-//Fahrlehrer-Kompass//DE","BEGIN:VEVENT",
     "UID:"+(s.id||"x")+"@serband","DTSTART:"+f(dt),"DTEND:"+f(end),
     "SUMMARY:Fahrstunde \u2013 "+(s.name||"Schüler"),"END:VEVENT","END:VCALENDAR"].join("\r\n");
   try{
@@ -7854,9 +7950,10 @@ function replaySplash(){
   const sp=$("#splash"); if(!sp)return;
   setSplashQuote();
   const kt=document.getElementById("splashTile"); if(kt){const c=kt.cloneNode(true); kt.replaceWith(c);}
-  sp.classList.remove("hide");
-  // 1,8s zeigen, dann wieder ausblenden
-  setTimeout(()=>sp.classList.add("hide"),3200);
+  sp.classList.add("kurz"); sp.classList.remove("hide");
+  // G5: nur kurz zeigen und nie blockieren (Tippen geht durch)
+  clearTimeout(replaySplash._t);
+  replaySplash._t=setTimeout(()=>{ sp.classList.add("hide"); setTimeout(()=>sp.classList.remove("kurz"),300); },700);
 }
 $("#sheetScrim").addEventListener("click",closeSheet);
 document.querySelector(".drawer-nav").addEventListener("click",(e)=>{
@@ -8607,7 +8704,7 @@ function buildSummary(s,E){
   const b=s.bogen,I=COLOR_INFO[E.top],I2=COLOR_INFO[E.second];
   const EX=COLOR_EXTRA[E.top],EX2=COLOR_EXTRA[E.second],L=LERN_INFO[E.lTop];
   const lines=[];
-  lines.push("TYP-PROFIL (Aufnahmebogen Fahrlehrer Serband)");
+  lines.push("TYP-PROFIL (Aufnahmebogen"+(_authProfile&&_authProfile.name?" "+_authProfile.name:"")+")");
   const head=E.pure?`${I.name} – ${I.label} (Zweittendenz ${I2.name})`:`${I.name}-${I2.name} · ${E.blend.label}`;
   lines.push(`${s.name||"Schüler"} · ${head}`);
   lines.push(`Grundausrichtung: ${axisDesc(E.extra,AXES.extra)}; ${axisDesc(E.bez,AXES.bez)}.`);
@@ -8740,7 +8837,7 @@ function wizOpen(){
       <button class="btn btn-primary" id="wizDone">Auswerten</button>
     </div>
   </div>`;
-  $("#wizBack").addEventListener("click",()=>{WIZ.page--;wizPage();});
+  $("#wizBack").addEventListener("click",()=>{_wizOffeneSichern();WIZ.page--;wizPage();});
   $("#wizDone").addEventListener("click",()=>{
     document.querySelectorAll("[data-open]").forEach(t=>WIZ.open[t.dataset.open]=t.value.trim());
     const s=DB.students.find(x=>x.id===WIZ.id);if(!s)return routeHome();
@@ -11333,10 +11430,12 @@ function formView(existing){
     if(!hasBogen)data.profil=pick.profil||null;
     if(isEdit){Object.assign(existing,data);save();toast("Gespeichert");routeDetail(existing.id);}
     else{
+      if(!_doppelterSchuelerOk(data.name,data.telefon))return;
       const chosenPlan=DB.ausbildungsplaene.find(p=>p.id===pick.planId)||DB.ausbildungsplaene.find(p=>p.standard)||DB.ausbildungsplaene[0];
       const nst={id:uid(),created:Date.now(),notiz:"",bogen:null,plan:newPlan(),profil:data.profil||null,
         planId:chosenPlan.id,planSnapshot:JSON.parse(JSON.stringify(chosenPlan.stufen)),...data};
-      DB.students.push(nst);save();openBogenChoiceSheet(nst.id,nst.name,()=>routeDetail(nst.id));}
+      // A1: gleich zur Akte – das ausgefüllte Formular bleibt nicht stehen, ein zweites „Anlegen“ ist nicht möglich
+      DB.students.push(nst);save();routeDetail(nst.id);openBogenChoiceSheet(nst.id,nst.name,()=>{});}
   });
 }
 /* ===== Akademie-Vermittlung: Beträge/Split-Konfiguration =====
@@ -11579,12 +11678,22 @@ function routeSettings(){
       if(!j||j.app!=="serband"||!j.data||typeof j.data!=="object"||!Array.isArray(j.data.students))throw 0;
       if(["lessons","exams","termine"].some(k=>k in j.data&&!Array.isArray(j.data[k])))throw 0;
       if(j.data.students.some(s=>!s||typeof s!=="object"||typeof s.id!=="string"||!/^[A-Za-z0-9_-]{1,64}$/.test(s.id)))throw 0;
-      if(confirm("Backup einspielen? Die aktuellen Daten werden ersetzt. Dein jetziger Stand wird vorher als Datei gesichert.")){
+      if(confirm("Backup einspielen? Die Daten auf diesem Gerät werden ersetzt. Dein jetziger Stand wird vorher als Datei gesichert. Termine und Schüler vom Büro bleiben erhalten und kommen beim nächsten Abgleich wieder dazu.")){
         // Erst den jetzigen Stand sichern - ohne Sicherung wird nichts ersetzt.
         try{ _backupHerunterladen("_vor-Einspielen"); }catch(e2){ toast("Sicherung fehlgeschlagen – nichts geändert"); return; }
         const vorher=JSON.stringify(DB);
-        DB=j.data;ensureDB();save();routeDashboard();
+        DB=j.data;ensureDB();
+        // Abgleich-Gedächtnis gehört zum alten Stand: leeren, sonst hielte die Brücke alles, was nicht in der Datei
+        // steht, für gelöscht und löschte es auf dem Server – auch Termine und Schüler vom Büro (D2).
+        // Ohne Merker gilt der Stand der Datei: die Brücken laden ihn sofort hoch (vor dem nächsten Abruf), löschen aber
+        // nichts, weil sie keinen Eintrag mehr kennen. Danach holt der Abruf zurück, was nur auf dem Server steht (Büro).
+        if(_authUser){ _abglSpeichern({ user:_authUser.id, schueler:{}, termine:{}, pruefungen:{} });
+          (DB.lessons||[]).forEach(l=>delete l._syncedAt); (DB.exams||[]).forEach(x=>delete x._syncedAt); }
+        save();routeDashboard();
+        if(_authUser&&_pullOk){ _brueckenSofort(); setTimeout(()=>{ try{ pullSchuelerZuweisungen(); pullTermineZuweisungen(); }catch(e3){} },11000); } // nach dem Rückgängig-Fenster (10 s)
         toastUndo("Backup eingespielt",()=>{ DB=JSON.parse(vorher);
+          // Auch hier: Gedächtnis leeren, damit die Brücke beim Zurückdrehen nichts auf dem Server löscht (z. B. inzwischen geholte Büro-Termine)
+          if(_authUser) _abglSpeichern({ user:_authUser.id, schueler:{}, termine:{}, pruefungen:{} });
           // Ohne Merker gelten die Einträge als nicht abgeglichen: der Abruf entfernt sie nicht, die Brücke lädt sie wieder hoch.
           (DB.lessons||[]).forEach(l=>delete l._syncedAt); (DB.exams||[]).forEach(x=>delete x._syncedAt);
           ensureDB(); save(); routeDashboard(); toast("Alter Stand wiederhergestellt"); },10000);
@@ -12201,6 +12310,15 @@ function openAssignSlotSheet(date,von,bis,art,opts){
 }
 /* Schlanke Inline-Anlage eines neuen Schülers direkt aus einem Sheet heraus (z.B. Kalender-Terminvergabe),
    ohne die aktuelle Ansicht zu verlassen. Ruft onCreated(newStudentId) nach dem Speichern auf. */
+/* A1: Warnung vor Doppelanlage – gleicher Name oder gleiche Telefonnummer schon vorhanden. true = anlegen. */
+function _doppelterSchuelerOk(name,tel){
+  const nr=v=>{ let d=(v||"").replace(/\D/g,""); if(d.startsWith("0049"))d="0"+d.slice(4); else if(d.startsWith("49")&&(v||"").trim().startsWith("+"))d="0"+d.slice(2); return d; };
+  const n=(name||"").trim().toLowerCase().replace(/\s+/g," "), t=nr(tel);
+  const treffer=(DB.students||[]).find(x=>!x.passed&&((x.name||"").trim().toLowerCase().replace(/\s+/g," ")===n||(t.length>=6&&nr(x.telefon)===t)));
+  if(!treffer)return true;
+  const gleich=(treffer.name||"").trim().toLowerCase().replace(/\s+/g," ")===n?"diesem Namen":"dieser Telefonnummer";
+  return confirm(`Es gibt schon einen Schüler mit ${gleich}: ${treffer.name}. Trotzdem neu anlegen?`);
+}
 function openQuickNewStudentSheet(onCreated){
   openSheet(`<div class="sheet-h">Neuer Schüler</div>
     <div class="field"><label>Vollständiger Name</label><input id="qnsName" type="text" placeholder="Vor- und Nachname" autocomplete="off" autofocus></div>
@@ -12211,6 +12329,7 @@ function openQuickNewStudentSheet(onCreated){
   $("#qnsSave").addEventListener("click",()=>{
     const name=$("#qnsName").value.trim();
     if(!name){toast("Bitte einen Namen eingeben");$("#qnsName").focus();return;}
+    if(!_doppelterSchuelerOk(name,$("#qnsTel").value))return;
     ensureAusbildungsplaene();
     const chosenPlan=DB.ausbildungsplaene.find(p=>p.standard)||DB.ausbildungsplaene[0];
     const nst={id:uid(),created:Date.now(),notiz:"",bogen:null,plan:newPlan(),profil:null,form:"B",beginn:"",
@@ -12230,9 +12349,15 @@ function openBogenChoiceSheet(sid,name,afterChoice){
       <button class="btn btn-ghost" id="bgLater" style="width:100%;">Später erinnern</button>
       <button class="btn btn-ghost" id="bgSkip" style="width:100%;">Überspringen</button>
     </div>`);
-  $("#bgNow").addEventListener("click",()=>{ closeSheet(); afterChoice(); routeBogen(sid,true); });
-  $("#bgLater").addEventListener("click",()=>{ closeSheet(); logHist(sid,"note","Fragebogen noch offen — später ausfüllen"); afterChoice(); });
-  $("#bgSkip").addEventListener("click",()=>{ closeSheet(); afterChoice(); });
+  // A12: auch wer das Fenster mit Zurück oder Tippen daneben schließt, bekommt den Abschluss (z. B. den Termin).
+  let fertig=false; const weiter=()=>{ if(fertig)return; fertig=true; afterChoice(); };
+  _sheetBeimSchliessen=weiter;
+  $("#bgNow").addEventListener("click",()=>{ _sheetBeimSchliessen=null; closeSheet(); weiter();
+    // Öffnet der Abschluss ein Fenster (z. B. Termin eintragen), nicht darunter den Bogen starten – sonst ginge er verloren
+    if($("#sheet").classList.contains("open")){ logHist(sid,"note","Fragebogen noch offen — später ausfüllen"); toast("Erst den Termin fertig eintragen – den Bogen startest du danach in der Akte"); return; }
+    routeBogen(sid,true); });
+  $("#bgLater").addEventListener("click",()=>{ _sheetBeimSchliessen=null; closeSheet(); logHist(sid,"note","Fragebogen noch offen — später ausfüllen"); weiter(); });
+  $("#bgSkip").addEventListener("click",()=>{ _sheetBeimSchliessen=null; closeSheet(); weiter(); });
 }
 
 /* ===================== TO-DOS ===================== */
@@ -12326,6 +12451,16 @@ function openPauseSheet(){
   $("#pauseCancel").addEventListener("click",closeSheet);
   $("#pauseSave").addEventListener("click",()=>{ if(!DB.workCfg.pausen)DB.workCfg.pausen=[]; DB.workCfg.pausen.push({days:sel.slice().sort(),von:$("#pauseVon").value,bis:$("#pauseBis").value}); save(); closeSheet(); const c=$("#azPausen"); if(c)c.innerHTML=pausenListHTML(); bindPausenDelete(); toast("Pause hinzugefügt ✓"); });
 }
+/* T6: eigene Fahrzeuge (statt fest eingebauter Liste). Termine behalten ihren Fahrzeugnamen, auch wenn das Fahrzeug entfernt wird. */
+function fahrzeugListHTML(){
+  const fz=DB.workCfg.fahrzeuge||[];
+  if(!fz.length)return `<p class="muted-p" style="font-size:13px;margin-bottom:10px;">Noch keine Fahrzeuge. Trag deine Fahrschulautos ein, dann kannst du sie bei jedem Termin wählen.</p>`;
+  return fz.map((f,i)=>`<div class="az-pause"><div class="azp-info"><span class="azf-name">${esc(f.name)}</span><span class="azf-typ">${f.typ==="schalt"?"Schalter":"Automatik"}</span></div><button class="azp-del" data-fzdel="${i}" aria-label="${esc(f.name)} entfernen">✕</button></div>`).join("");
+}
+function bindFahrzeugDelete(){ document.querySelectorAll("[data-fzdel]").forEach(b=>b.addEventListener("click",()=>{
+  const f=DB.workCfg.fahrzeuge[+b.dataset.fzdel]; if(!f)return;
+  if(!confirm(`${f.name} aus deiner Fahrzeugliste entfernen? Bestehende Termine behalten den Namen.`))return;
+  DB.workCfg.fahrzeuge.splice(+b.dataset.fzdel,1); save(); const c=$("#azFahrzeuge"); if(c)c.innerHTML=fahrzeugListHTML(); bindFahrzeugDelete(); })); }
 function routeArbeitszeit(){
   ensureDB(); const c=DB.workCfg;
   $("#tbTitle").textContent="Arbeitszeiten"; setFab(false); view.scrollTop=0;
@@ -12334,6 +12469,7 @@ function routeArbeitszeit(){
     <div class="back-row"><button class="back-btn" id="backBtn">${ICN.back} Kalender</button></div>
     <div class="sec-h" style="margin:4px 0 4px;">Arbeits<span class="o">zeiten</span></div>
     <p class="muted-p" style="font-size:13.5px;margin-bottom:18px;">Lege fest, wann du arbeitest. Daraus berechnet der Kalender deine 90-Minuten-Blöcke (= 2 Fahrstunden) und zeigt freie Termine.</p>
+    ${c.zeitenVorgabe?`<div role="note" style="margin:0 0 16px;padding:12px 14px;border-radius:14px;font-size:14px;line-height:1.45;background:rgba(207,154,62,.16);border:1px solid rgba(207,154,62,.45);">Deine Arbeitszeiten sind noch nicht eingetragen. Unten stehen nur Beispielzeiten – bitte anpassen und speichern.</div>`:""}
 
     <div class="az-block">
       <div class="az-h">Kalender-Zeitachse (Tagesansicht)</div>
@@ -12373,9 +12509,29 @@ function routeArbeitszeit(){
       <div class="az-times"><label>von</label>${tf("azThSaVon",c.theorieSamstag.von)}<label>bis</label>${tf("azThSaBis",c.theorieSamstag.bis)}</div>
     </div>
 
-    <div class="btn-row" style="margin-top:6px;"><button class="btn btn-primary" id="azSave">Speichern</button></div>
+    <div class="btn-row" style="margin-top:6px;"><button class="btn btn-primary" id="azSave">Zeiten speichern</button></div>
+
+    <div class="az-sec-h" style="margin-top:22px;">Fahrzeuge</div>
+    <p class="muted-p" style="font-size:13px;margin:-2px 0 10px;">Werden sofort gespeichert.</p>
+    <div id="azFahrzeuge">${fahrzeugListHTML()}</div>
+    <div class="az-block">
+      <label class="az-h" for="azFzName">Neues Fahrzeug</label>
+      <div class="azf-neu">
+        <input type="text" id="azFzName" placeholder="z. B. Golf 8" autocomplete="off">
+        <select id="azFzTyp" aria-label="Getriebe"><option value="schalt">Schalter</option><option value="automatik">Automatik</option></select>
+      </div>
+      <button class="btn btn-primary" id="azFzAdd" style="width:100%;">+ Fahrzeug hinzufügen</button>
+    </div>
     </div>`;
   $("#backBtn").addEventListener("click",routeKalender);
+  bindFahrzeugDelete();
+  $("#azFzAdd").addEventListener("click",()=>{
+    const name=$("#azFzName").value.trim(); if(!name){ toast("Bitte einen Namen für das Fahrzeug eingeben"); $("#azFzName").focus(); return; }
+    if((c.fahrzeuge||[]).some(f=>(f.name||"").toLowerCase()===name.toLowerCase())){ toast("Dieses Fahrzeug gibt es schon"); return; }
+    if(!Array.isArray(c.fahrzeuge))c.fahrzeuge=[];
+    c.fahrzeuge.push({id:"fz"+uid(),name,typ:$("#azFzTyp").value}); save();
+    $("#azFzName").value=""; $("#azFahrzeuge").innerHTML=fahrzeugListHTML(); bindFahrzeugDelete(); toast("Fahrzeug hinzugefügt ✓");
+  });
   $("#azAddPause").addEventListener("click",openPauseSheet);
   bindPausenDelete();
   $("#azNachtAn").addEventListener("click",()=>{ c.nacht.an=!c.nacht.an; $("#azNachtAn").classList.toggle("on",c.nacht.an); $("#azNachtTimes").style.cssText=c.nacht.an?"":"opacity:.4;pointer-events:none;"; });
@@ -12388,6 +12544,7 @@ function routeArbeitszeit(){
     c.theorieWoche={von:$("#azThWVon").value,bis:$("#azThWBis").value};
     c.theorieSamstag={von:$("#azThSaVon").value,bis:$("#azThSaBis").value};
     c.axis={von:$("#azAxisVon").value||"08:00",bis:$("#azAxisBis").value||"24:00"};
+    delete c.zeitenVorgabe;
     save(); toast("Arbeitszeiten gespeichert ✓"); routeKalender();
   });
 }
@@ -13180,34 +13337,39 @@ function ensureDB(){ let _ensureDirty=false; if(!Array.isArray(DB.exams))DB.exam
   });
   if(!DB.weatherCfg||typeof DB.weatherCfg!=="object"){ DB.weatherCfg={apiKey:"",city:"Offenbach,DE"}; }
   if(!DB.workCfg||typeof DB.workCfg!=="object"){ DB.workCfg={
+    // T6: neutrale Vorgabe für neue Nutzer (keine Zeiten einer bestimmten Fahrschule). Der Merker zeitenVorgabe
+    // zeigt den Hinweis „Arbeitszeiten eintragen“, bis der Nutzer seine Zeiten einmal gespeichert hat.
     // Vormittags- und Nachmittagsblock, Pause dazwischen. Zeiten in "HH:MM".
-    vorMittag:{von:"10:00",bis:"14:30"},
-    nachMittag:{von:"15:00",bis:"19:30"},
-    nacht:{von:"19:30",bis:"21:00",an:true},   // Nachtfahrt-Fenster Mo–Fr
-    samstagAn:false, samstag:{von:"10:00",bis:"14:30"},
+    vorMittag:{von:"08:00",bis:"12:30"},
+    nachMittag:{von:"13:00",bis:"17:30"},
+    nacht:{von:"19:30",bis:"21:00",an:false},  // Nachtfahrt-Fenster Mo–Fr
+    samstagAn:false, samstag:{von:"09:00",bis:"13:30"},
     theorieWoche:{von:"18:00",bis:"21:00"},     // Theorie Mo–Fr
     theorieSamstag:{von:"10:00",bis:"13:00"},   // Theorie Sa
-    blockMin:90                                  // ein Block = 90 Min = 2 Fahrstunden
+    blockMin:90,                                 // ein Block = 90 Min
+    zeitenVorgabe:true
   }; }
   if(!Array.isArray(DB.workCfg.pausen))DB.workCfg.pausen=[];
   if(!DB.workCfg.axis||typeof DB.workCfg.axis!=="object"){ DB.workCfg.axis={von:"08:00",bis:"24:00"}; }
-  if(!Array.isArray(DB.workCfg.fahrzeuge)||!DB.workCfg.fahrzeuge.length){
-    DB.workCfg.fahrzeuge=[{id:"fz1",name:"Audi Q5",typ:"automatik"},{id:"fz2",name:"Cupra 2",typ:"automatik"},{id:"fz3",name:"ID4",typ:"automatik"},{id:"fz4",name:"Audi A1",typ:"schalt"}];
-    _ensureDirty=true;
-  }
+  // T6: keine fest eingebauten Fahrzeuge mehr – jeder trägt seine eigenen unter Arbeitszeiten & Fahrzeuge ein.
+  // Gespeicherte Listen bleiben unverändert (auch eine selbst geleerte).
+  if(!Array.isArray(DB.workCfg.fahrzeuge)){ DB.workCfg.fahrzeuge=[]; _ensureDirty=true; }
   // Selbstheilende Korrektur: "Cupra 1" existiert nicht mehr, wurde durch "Audi Q5" ersetzt.
   // Greift bei JEDEM App-Start direkt im Code, unabhängig davon, was lokal auf dem Gerät noch
   // gespeichert ist - verhindert, dass ein alter lokaler Stand serverseitige Korrekturen wieder
   // überschreibt (genau das ist am 19.08. passiert).
   if(Array.isArray(DB.workCfg.fahrzeuge)){
-    DB.workCfg.fahrzeuge.forEach(fz=>{ if(fz&&fz.name==="Cupra 1"){ fz.name="Audi Q5"; _ensureDirty=true; } });
+    // nur das alte fest eingebaute Fahrzeug (id fz1), kein selbst eingetragenes
+    DB.workCfg.fahrzeuge.forEach(fz=>{ if(fz&&fz.id==="fz1"&&fz.name==="Cupra 1"){ fz.name="Audi Q5"; _ensureDirty=true; } });
   }
-  if(Array.isArray(DB.lessons)){
+  if(Array.isArray(DB.lessons)&&!(DB.workCfg.fahrzeuge||[]).some(fz=>fz&&fz.name==="Cupra 1")){
     DB.lessons.forEach(l=>{ if(l&&l.fahrzeug==="Cupra 1"){ l.fahrzeug="Audi Q5"; _ensureDirty=true; } });
   }
+  // T6: kein Vertrag als Vorgabe (sonst sähe jeder neue Fahrlehrer fremde Zahlen als seine). Bis Satz oder Fixum
+  // eingetragen sind, zeigt die App „Dein Vertrag fehlt noch“ statt eines Verdienstes.
   if(!DB.verdienst||typeof DB.verdienst!=="object"){ DB.verdienst={
-    proUE:23, fixum:2100, fixUE:140, bonusUE:240, bonus:500, ziel:240,
-    startUE:0, startMonth:"2026-06"
+    proUE:0, fixum:0, fixUE:0, bonusUE:0, bonus:0, ziel:0,
+    startUE:0, startMonth:todayISO().slice(0,7)
   }; }
   if(typeof DB.verdienst.startUE!=="number")DB.verdienst.startUE=0;
   if(!DB.verdienst.startMonth)DB.verdienst.startMonth="2026-06";
@@ -13283,7 +13445,8 @@ function wartetBuero(s){
   let letzte="";
   (DB.lessons||[]).forEach(l=>{ if(l.sid===s.id&&KR.FAHR_ARTEN.includes(l.art||"fahrstunde")&&l.status!=="abgebrochen"&&l.status!=="nicht erschienen"){ const z=l.date+"T"+(l.von||"23:59"); if(z>letzte)letzte=z; } });
   const heute=todayISO(), hatPruefung=!!terminFor(s.id)||(DB.lessons||[]).some(l=>l.sid===s.id&&l.art==="pruefung"&&l.date>=heute&&l.status!=="abgebrochen");
-  return KR.wartetInfo(s,{pruefungstermin:hatPruefung,fahrstundeNach:iso=>!!letzte&&letzte>iso});
+  const fr=_schuelerFristen[s.id]||{};
+  return KR.wartetInfo(s,{pruefungstermin:hatPruefung,fahrstundeNach:iso=>!!letzte&&letzte>iso,theorieBestanden:!!fr.theorie_bestanden_am});
 }
 // Flexible Namenssuche: jedes eingegebene Wort muss irgendwo im Namen vorkommen (Vor-/Nachname egal)
 function matchStudent(name,q){
@@ -13482,8 +13645,11 @@ function showCalStudentDetail(sid){
   }));
 }
 function _zurueckSperreNachholen(){ if(window._zurueckOffen){ window._zurueckOffen=false; window._zurueckEnde=0; try{history.pushState(null,"",location.href);}catch(e){} } }
-function openSheet(html){ _zurueckSperreNachholen(); $("#sheet").innerHTML=html; $("#sheet").classList.add("open"); $("#sheetScrim").classList.add("open"); }
-function closeSheet(){ $("#sheet").classList.remove("open"); $("#sheetScrim").classList.remove("open"); }
+function openSheet(html){ _zurueckSperreNachholen(); _sheetBeimSchliessen=null; $("#sheet").innerHTML=html; $("#sheet").classList.add("open"); $("#sheetScrim").classList.add("open"); }
+// Ein Fenster kann einen Abschluss mitgeben, der beim Schließen auf jedem Weg läuft (Knopf, Zurück, Tippen daneben).
+let _sheetBeimSchliessen=null;
+function closeSheet(){ $("#sheet").classList.remove("open"); $("#sheetScrim").classList.remove("open");
+  const f=_sheetBeimSchliessen; _sheetBeimSchliessen=null; if(f){ try{ f(); }catch(e){ console.warn("[Kompass] Abschluss beim Schließen:",e.message); } } }
 
 /* ---------- geteilte Bausteine: Prüfungsreif + Simulator ---------- */
 function examReadyCard(s){
@@ -14804,17 +14970,21 @@ function _h2DanachHTML(e){
 }
 function _h2KachelnHTML(){
   const heute=todayISO(), k=[];
+  const ohneVertrag=_vertragFehlt();
   if(sichtbar('dash_wocheverdienst')){
     const zeigen=_verdienstPinCheck();
-    k.push(`<button class="h2-kachel" data-k="woche"><span class="h2-k-l">Diese Woche verdient</span><span class="h2-k-w">${zeigen?wocheVerdientEuro().toLocaleString("de-DE")+" €":"••••"}</span></button>`);
+    k.push(ohneVertrag?`<button class="h2-kachel" data-k="woche"><span class="h2-k-l">Verdienst</span><span class="h2-k-w" style="color:var(--gold,#b8873a);">Vertrag fehlt</span><span class="h2-k-s">Tippen zum Eintragen</span></button>`
+      :`<button class="h2-kachel" data-k="woche"><span class="h2-k-l">Diese Woche verdient</span><span class="h2-k-w">${zeigen?wocheVerdientEuro().toLocaleString("de-DE")+" €":"••••"}</span></button>`);
   }
   const v=DB.verdienst||{}, bonusUE=v.bonusUE||250;
+  if(!ohneVertrag&&+v.bonusUE>0){
   const [moA,moE]=monthRangeOf(heute); const prognose=ueRange(moA,moE).fcCounted;
   // gleiche Rundung wie im Verdienst-Modul (aufrunden, sonst stünde „noch 0 UE“ bei 239,6 von 240)
   const rest=Math.max(0,Math.ceil(Math.round((bonusUE-prognose)*1000)/10)/100);
   const gefahren=ueRange(moA,moE).fcDone;
   const bonusSub=rest>0?"bis zum Bonus":gefahren>=bonusUE?"diesen Monat":"mit geplanten Stunden";
   k.push(`<button class="h2-kachel" data-k="bonus"><span class="h2-k-l">Bonus noch</span><span class="h2-k-w">${rest>0?fmtUE(rest)+" UE":"erreicht"}</span><span class="h2-k-s">${bonusSub}</span></button>`);
+  }
   if(sichtbar('dash_nextexam')){
     const t=futureTermine().find(x=>(x.slots||[]).some(Boolean));
     let sub="";
@@ -14879,7 +15049,7 @@ function routeDashboard(){
   const nt=$("#h2NeuTermin"); if(nt)nt.addEventListener("click",openNeuerTerminSheet);
   document.querySelectorAll("#view .h2-vergeben").forEach(b=>b.addEventListener("click",()=>{ const [date,von,bis,art]=b.dataset.freeslot.split("|"); openAssignSlotSheet(date,von,bis,art); }));
   document.querySelectorAll("#view [data-h2ev]").forEach(b=>b.addEventListener("click",()=>{ const [kind,id,sid]=b.dataset.h2ev.split("|"); openEventSheet(kind,id,sid); }));
-  const ziel={woche:()=>routeStats('cur'),bonus:()=>routeStats('cur'),pruefung:()=>routePruefungen(),todos:()=>routeTodos()};
+  const ziel={woche:()=>{ if(_vertragFehlt())openVerdienstSheet(); else routeStats('cur'); },bonus:()=>routeStats('cur'),pruefung:()=>routePruefungen(),todos:()=>routeTodos()};
   document.querySelectorAll("#view .h2-kachel").forEach(b=>b.addEventListener("click",()=>{ const f=ziel[b.dataset.k]; if(f)f(); }));
   const cap=$("#capCard"); if(cap)cap.addEventListener("click",openCapacitySheet);
   bindFC();
@@ -15141,6 +15311,22 @@ function nextExamDashCard(){
   return html;
 }
 
+/* T7: Absender in PDFs und Bildern aus dem Profil: „<Fahrschule> · Fahrlehrer <Name>“ (nichts fest eingebaut) */
+function _druckAbsender(nachsatz){
+  const p=_authProfile||{}, teile=[];
+  const fs=(_fsAgg&&_fsAgg.fahrschule&&_fsAgg.fahrschule.name)||p.fahrschule_name;
+  if(fs)teile.push(fs);
+  if(p.name&&!_fsAgg)teile.push("Fahrlehrer "+p.name);
+  if(nachsatz)teile.push(nachsatz);
+  return teile.join(" · ")||"Fahrlehrer-Kompass";
+}
+/* T6: Vertrag fehlt, solange weder Satz pro UE noch Fixum eingetragen sind */
+function _vertragFehlt(){ const v=DB.verdienst||{}; return !(+v.proUE>0)&&!(+v.fixum>0); }
+function _vertragFehltHTML(){
+  return `<div class="vd-card" style="text-align:left;"><div class="vd-head" style="justify-content:space-between;"><div class="vd-title" style="text-align:left;flex:1;">Verdienst</div><button class="vd-gear" id="vdGear" aria-label="Einstellungen">${ICN.gear||"⚙"}</button></div>
+    <div role="note" style="margin:6px 0 12px;padding:12px 14px;border-radius:14px;font-size:14.5px;line-height:1.5;background:rgba(207,154,62,.16);border:1px solid rgba(207,154,62,.45);"><b>Dein Vertrag fehlt noch.</b> Trag ein, was du pro Fahrstunde und als festes Gehalt bekommst – dann rechnet die App deinen Verdienst aus.</div>
+    <button class="btn btn-primary" onclick="openVerdienstSheet()" style="width:100%;">Vertrag eintragen</button></div>`;
+}
 /* ---------- Statistik ---------- */
 /* Verdienst-Einstellungen */
 function openVerdienstSheet(){
@@ -15156,8 +15342,8 @@ function openVerdienstSheet(){
     <div class="btn-row"><button class="btn btn-ghost" id="vdCancel" style="flex:0;padding:13px 18px;">Abbrechen</button><button class="btn btn-primary" id="vdSave">Speichern</button></div>`);
   $("#vdCancel").addEventListener("click",closeSheet);
   $("#vdSave").addEventListener("click",()=>{
-    v.proUE=+$("#vdProUE").value||23; v.fixum=+$("#vdFixum").value||0; v.fixUE=+$("#vdFixUE").value||0;
-    v.bonusUE=+$("#vdBonusUE").value||0; v.bonus=+$("#vdBonus").value||0; v.ziel=+$("#vdZiel").value||240;
+    v.proUE=+$("#vdProUE").value||0; v.fixum=+$("#vdFixum").value||0; v.fixUE=+$("#vdFixUE").value||0;
+    v.bonusUE=+$("#vdBonusUE").value||0; v.bonus=+$("#vdBonus").value||0; v.ziel=+$("#vdZiel").value||0;
     v.startUE=+$("#vdStartUE").value||0;
     save(); closeSheet(); toast("Gespeichert ✓"); routeStats('cur');
   });
@@ -15217,6 +15403,7 @@ function _vdAutoLockArm(){
 function _vdAutoLockDisarm(){ clearTimeout(_vdAutoLockTimer); }
 view.addEventListener("pointerdown",()=>{ if((($("#tbTitle")||{}).textContent)==="Statistik")_vdAutoLockArm(); });
 function _verdienstModulHTMLContent(){
+  if(_vertragFehlt())return _vertragFehltHTML();
   const v=DB.verdienst;
   const _base=parseISO(todayISO());
   const _shifted=new Date(_base.getFullYear(),_base.getMonth()+_vdMonthOffset,1);
@@ -15283,7 +15470,7 @@ function _verdienstModulHTMLContent(){
       <button class="vd-nav" onclick="vdShiftMonth(1)" aria-label="Nächster Monat" ${isCurMonth?'disabled style="opacity:.25;pointer-events:none;"':''}>${ICN.arrow}</button>
       <button class="vd-gear" id="vdGear" aria-label="Einstellungen">${ICN.gear||"⚙"}</button>
     </div>
-    <div class="thermo-wrap">
+    <div class="thermo-wrap"${(+v.fixUE>0||+v.bonusUE>0)?"":' hidden'}>
       <div class="thermo-left">
         <div class="thermo-tube">
           <div class="th-seg th-gruen" data-th="${gruenH}" style="flex-basis:0px"></div>
@@ -15303,7 +15490,7 @@ function _verdienstModulHTMLContent(){
       <div class="thg-lab"><span class="ic ic-gold" style="font-size:11px;">${ICN.chart}</span> Terminierte Fahrstunden diesen Monat</div>
       <div class="thg-val">${terminiertUE} UE</div>
     </div>
-    ${bisHtml}
+    ${+v.bonusUE>0?bisHtml:""}
   </div>
   <div class="res-block" style="animation:none;margin-top:10px;">
     <h4 style="margin-bottom:8px;">📊 Monats-Übersicht</h4>
@@ -15780,7 +15967,7 @@ body{font-family:Arial,Helvetica,sans-serif;font-size:12px;color:#111;background
 .pr-foot{margin-top:20px;border-top:1px solid #ccc;padding-top:8px;font-size:10px;color:#999;}
 @page{margin:14mm;size:A4 portrait;}
 @media print{body{padding:0;}}`;
-  const html=`<!DOCTYPE html><html lang="de"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>${title}</title><style>${PR_CSS}</style></head><body><div class="pr-doc"><div class="pr-top"><div class="pr-brand">Fahrschule Boost · Fahrlehrer Serband</div><div class="pr-title">${title}</div></div>${bodyHtml}<div class="pr-foot">Erstellt am ${isoDE(todayISO())} · Fahrlehrer-Kompass</div></div><script>window.onload=function(){window.print();}<\/script></body></html>`;
+  const html=`<!DOCTYPE html><html lang="de"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>${title}</title><style>${PR_CSS}</style></head><body><div class="pr-doc"><div class="pr-top"><div class="pr-brand">${esc(_druckAbsender())}</div><div class="pr-title">${title}</div></div>${bodyHtml}<div class="pr-foot">Erstellt am ${isoDE(todayISO())} · Fahrlehrer-Kompass</div></div><script>window.onload=function(){window.print();}<\/script></body></html>`;
   const win=window.open('','_blank');
   if(!win){toast("Pop-up blockiert – bitte im Browser-Menü erlauben");return;}
   win.document.write(html);
@@ -15893,7 +16080,7 @@ function bogenAlsBild(s,E,I,headline,who){
   ctx.fillStyle="#d8d8d0"; ctx.font="400 30px sans-serif";
   _wrapCanvasText(ctx,who,w/2,780,w-160,42,6);
   ctx.fillStyle="#8a8a80"; ctx.font="600 26px sans-serif";
-  ctx.fillText("Fahrschule Boost · Fahrlehrer-Kompass",w/2,h-60);
+  ctx.fillText(_druckAbsender("Fahrlehrer-Kompass"),w/2,h-60);
   canvas.toBlob(blob=>{
     if(!blob){toast("Bild konnte nicht erstellt werden");return;}
     const file=new File([blob],"mein-fahrtyp.png",{type:"image/png"});
@@ -16378,7 +16565,20 @@ function _navAktualisiereKnopf(){
   const haupt=["Heute","Start","Kalender","Schüler","Prüfungen"].indexOf(t)>=0;
   if(b)b.hidden=_navStack.length<2||haupt;
 }
+/* A5: Läuft der Persönlichkeitsbogen, blättert Zurück (Android-Taste, Pfeil oben) eine Seite zurück;
+   auf der ersten Seite kommt dieselbe Rückfrage wie bei „Abbrechen“. Liefert true, wenn erledigt. */
+function _wizOffeneSichern(){ if(WIZ) document.querySelectorAll("#view [data-open]").forEach(t=>{ WIZ.open[t.dataset.open]=t.value.trim(); }); }
+function _wizZurueck(){
+  if(!WIZ||!document.querySelector("#view .wiz-nav"))return false;
+  _wizOffeneSichern();
+  if(WIZ.page>0){ WIZ.page--; wizPage(); return true; }
+  if(!Object.keys(WIZ.answers).length||confirm("Bogen abbrechen? Die Antworten gehen verloren.")){ const id=WIZ.id; WIZ=null;
+    // Bogen-Seite aus dem Verlauf nehmen: das nächste Zurück verlässt die Akte, nicht wieder in den Bogen
+    if(_navStack.length>1&&_navStack[_navStack.length-1].name==="routeBogen"&&_navStack[_navStack.length-2].name==="routeDetail"){ _navStack.pop(); _navFahrt=true; try{ routeDetail(id); } finally{ _navFahrt=false; } _navAktualisiereKnopf(); } else routeDetail(id); }
+  return true;
+}
 function navZurueck(){
+  if(_wizZurueck())return;
   if(_navStack.length<2)return;
   _navStack.pop();
   const ziel=_navStack[_navStack.length-1];
@@ -16448,6 +16648,7 @@ function _seite2Markieren(name){
     if(ff&&ff.classList.contains("open")){ try{_fsCloseFilterPanel();}catch(e){} sperre(); return; }
     if(typeof DRAW!=="undefined"&&DRAW&&DRAW.drawerOpen){ try{closeTafelDrawer();}catch(e){} sperre(); return; }
     if(dr&&dr.classList.contains("open")){ try{closeDrawer();}catch(e){} sperre(); return; }
+    if(_wizZurueck()){ sperre(); return; }
     if(_navStack.length>1){ navZurueck(); sperre(); return; }
     // Auf der ersten Seite: einmal Zurück zeigt einen Hinweis, ein zweites Zurück innerhalb von 2 s beendet die App
     // (dann ist keine Sperre mehr da - Android schließt selbst). Danach oder bei jeder anderen Aktion kommt die Sperre zurück.
@@ -16466,9 +16667,11 @@ setInterval(()=>{ if((localStorage.getItem(THEME_KEY)||'dark')==='auto')applyThe
 $("#themeBtn").addEventListener("click",toggleTheme);
 routeDashboard();
 (function(){
-  const minWait=new Promise(r=>setTimeout(r,2700));
+  // G5: Startbild mit Spruch nur beim ersten Start nach einem Update etwas länger, sonst sofort weiter.
+  let ersterStart=false; try{ ersterStart=localStorage.getItem("kompass-startbild-version")!==APP_VERSION; localStorage.setItem("kompass-startbild-version",APP_VERSION); }catch(e){}
+  const minWait=new Promise(r=>setTimeout(r,ersterStart?1600:250));
   const fonts=(document.fonts&&document.fonts.ready)?document.fonts.ready:Promise.resolve();
-  const cap=new Promise(r=>setTimeout(r,3000));
+  const cap=new Promise(r=>setTimeout(r,ersterStart?2000:600));
   Promise.all([minWait,Promise.race([fonts,cap])]).then(()=>{
     const sp=$("#splash");if(sp)sp.classList.add("hide");
   });

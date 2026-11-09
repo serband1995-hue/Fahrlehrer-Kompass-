@@ -421,6 +421,116 @@ fall("12 Backup einspielen in der Fahrschul-Gesamtansicht ist gesperrt", async (
   await ruf(() => { _fsAgg = null; });
 });
 
+fall("13 Backup einspielen löscht auf dem Server nichts (D2)", async (f) => {
+  await neu();
+  await setzeTabelle("kalender_termine", [serverTermin("T-buero")]);
+  await setzeTabelle("schueler", [serverSchueler("S2", "Bea Muster")]);
+  await setzeLokal("students", [{ id: "S1", name: "Anna Muster", telefon: "" }]);
+  await setzeLokal("lessons", [termin("L1")]);
+  await ruf(() => pullSchuelerZuweisungen());
+  await ruf(() => pullTermineZuweisungen());
+  await bruecke();
+  const ids = await dbIds("lessons");
+  if (!ids.includes("T-buero")) return f("Vorbereitung: T-buero nicht abgerufen: " + ids);
+  await ruf(() => { ensureDB(); routeSettings(); });
+  const backup = { app: "serband", version: 1, datum: new Date().toISOString(), data: { students: [{ id: "S1", name: "Anna Muster" }], lessons: [termin("L1")], exams: [] } };
+  await page.setInputFiles("#impFile", { name: "backup.json", mimeType: "application/json", buffer: Buffer.from(JSON.stringify(backup)) });
+  await page.waitForTimeout(300);
+  await lauf(); await lauf(12000);
+  const z = await zeile("kalender_termine", "T-buero");
+  if (!z || z.geloescht !== false) f("Büro-Termin nach dem Einspielen auf dem Server gelöscht: " + JSON.stringify(z && z.geloescht));
+  const s2 = await zeile("schueler", "S2");
+  if (!s2 || s2.status !== "aktiv") f("Schüler S2 nach dem Einspielen nicht mehr aktiv: " + (s2 && s2.status));
+  if (!(await dbIds("lessons")).includes("T-buero")) f("Büro-Termin kam nach dem Einspielen nicht wieder aufs Gerät");
+});
+
+fall("13b Backup einspielen: Stand der Datei gilt für ihre eigenen Termine (D2)", async (f) => {
+  await neu();
+  await setzeLokal("lessons", [termin("L1"), termin("L2", { von: "11:00", bis: "12:30" })]);
+  await bruecke();
+  const datei = await ruf(() => JSON.parse(JSON.stringify(DB.lessons)));
+  // nach dem Backup: L1 verschoben, L2 gelöscht
+  await ruf(() => { DB.lessons = DB.lessons.filter((l) => l.id !== "L2"); DB.lessons[0].von = "15:00"; DB.lessons[0].bis = "16:30"; save(); });
+  await lauf();
+  await ruf(() => { ensureDB(); routeSettings(); });
+  const backup = { app: "serband", version: 1, datum: new Date().toISOString(), data: { students: [], lessons: datei, exams: [] } };
+  await page.setInputFiles("#impFile", { name: "backup.json", mimeType: "application/json", buffer: Buffer.from(JSON.stringify(backup)) });
+  await page.waitForTimeout(300);
+  await lauf(); await lauf(12000);
+  const l1 = await zeile("kalender_termine", "L1"), l2 = await zeile("kalender_termine", "L2");
+  if (!l1 || l1.von !== "09:00") f("L1 nicht auf den Stand der Datei zurück: " + (l1 && l1.von));
+  if (!l2 || l2.geloescht !== false) f("L2 aus der Datei nicht wiederhergestellt: " + JSON.stringify(l2 && l2.geloescht));
+  const ids = await dbIds("lessons");
+  if (!ids.includes("L1") || !ids.includes("L2")) f("Gerät hat nach dem Abruf nicht beide Termine: " + ids);
+});
+
+fall("14 Gelöschter Termin kommt vor dem Hochladen nicht als „neu“ zurück", async (f) => {
+  await neu();
+  await setzeLokal("lessons", [termin("L1"), termin("L2", { von: "11:00", bis: "12:30" })]);
+  await bruecke();
+  // Löschen und sofort (vor der Brücke) abrufen, z. B. Minuten-Abruf in den 4 Sekunden oder Neustart
+  await ruf(() => { DB.lessons = DB.lessons.filter((l) => l.id !== "L1"); });
+  await ruf(() => pullTermineZuweisungen());
+  if ((await dbIds("lessons")).includes("L1")) return f("L1 kam durch den Abruf als neuer Termin zurück");
+  await bruecke();
+  const z = await zeile("kalender_termine", "L1");
+  if (!z || z.geloescht !== true) f("L1 danach auf dem Server nicht gelöscht: " + JSON.stringify(z && z.geloescht));
+});
+
+fall("15 Gelöschter Schüler kommt vor dem Hochladen nicht als „neu“ zurück", async (f) => {
+  await neu();
+  await setzeLokal("students", [{ id: "S1", name: "Anna Muster", telefon: "" }, { id: "S3", name: "Xaver Muster", telefon: "" }]);
+  await bruecke();
+  if (!(await zeile("schueler", "S3"))) return f("Vorbereitung: S3 nicht hochgeladen");
+  await ruf(() => { DB.students = DB.students.filter((s) => s.id !== "S3"); });
+  await ruf(() => pullSchuelerZuweisungen());
+  if ((await dbIds("students")).includes("S3")) return f("S3 kam durch den Abruf als neuer Schüler zurück");
+  await bruecke();
+  const z = await zeile("schueler", "S3");
+  if (!z || z.status !== "geloescht") f("S3 danach auf dem Server nicht gelöscht: " + (z && z.status));
+});
+
+fall("16 Beim Schließen der App laufen die Brücken sofort", async (f) => {
+  await neu();
+  await setzeLokal("lessons", [termin("L1"), termin("L2", { von: "11:00", bis: "12:30" })]);
+  await bruecke();
+  await ruf(() => { DB.lessons = DB.lessons.filter((l) => l.id !== "L1"); save(); _brueckenSofort(); });
+  await page.clock.runFor(50); await page.waitForTimeout(150);
+  await page.waitForFunction(() => window.__fake.stats.inflight === 0);
+  const z = await zeile("kalender_termine", "L1");
+  if (!z || z.geloescht !== true) f("Löschung nicht sofort hochgeladen: " + JSON.stringify(z && z.geloescht));
+});
+
+fall("17 Theorie bestanden vom Büro setzt den Plan und beendet „wartet auf Theorie“ (T1)", async (f) => {
+  await neu();
+  await setzeLokal("students", [{ id: "S1", name: "Ben Muster", telefon: "", plan: { ampeln: {}, stunden: {}, fahrcheck: {}, sonder: { ueberland: [], autobahn: [], nacht: [] }, theorie: false, notes: {} }, theorieWait: "2026-10-01T10:00:00.000Z" }]);
+  await bruecke();
+  await aendereZeile("schueler", "S1", { theorie_bestanden_am: "2026-11-05", aktualisiert_am: "+1s" });
+  await ruf(() => pullSchuelerZuweisungen());
+  const s1 = await ruf(() => { const s = DB.students.find((x) => x.id === "S1"); return { t: s.plan.theorie, w: s.theorieWait || null, p: s.theoryPassed || null, warte: wartetBuero(s) }; });
+  if (!s1.t) f("plan.theorie nicht gesetzt");
+  if (s1.w) f("theorieWait noch gesetzt");
+  if (!s1.p || !s1.p.startsWith("2026-11-05")) f("theoryPassed falsch: " + s1.p);
+  if (s1.warte === "theorie") f("App sagt weiter „wartet auf Theorie“");
+  // Fahrlehrer schaltet selbst wieder aus: nächster Abruf schaltet NICHT wieder an
+  await ruf(() => { const s = DB.students.find((x) => x.id === "S1"); s.plan.theorie = false; delete s.theoryPassed; });
+  await ruf(() => pullSchuelerZuweisungen());
+  if (await ruf(() => DB.students.find((x) => x.id === "S1").plan.theorie)) f("Abruf überstimmt das Umschalten des Fahrlehrers");
+});
+
+fall("18 Büro nimmt „Theorie bestanden“ zurück: Plan zurück, wartet wieder auf Theorie (T1)", async (f) => {
+  await neu();
+  await setzeLokal("students", [{ id: "S1", name: "Ben Muster", telefon: "", plan: { ampeln: {}, stunden: {}, fahrcheck: {}, sonder: { ueberland: [], autobahn: [], nacht: [] }, theorie: false, notes: {} }, theorieWait: "2026-10-01T10:00:00.000Z" }]);
+  await bruecke();
+  await aendereZeile("schueler", "S1", { theorie_bestanden_am: "2026-11-05", aktualisiert_am: "+1s" });
+  await ruf(() => pullSchuelerZuweisungen());
+  await aendereZeile("schueler", "S1", { theorie_bestanden_am: null, aktualisiert_am: "+1s" });
+  await ruf(() => pullSchuelerZuweisungen());
+  const s1 = await ruf(() => { const s = DB.students.find((x) => x.id === "S1"); return { t: s.plan.theorie, w: s.theorieWait || null, p: s.theoryPassed || null }; });
+  if (s1.t || s1.p) f("Plan nach Rücknahme nicht zurückgesetzt: " + JSON.stringify(s1));
+  if (s1.w !== "2026-10-01T10:00:00.000Z") f("wartet nach Rücknahme nicht wieder auf Theorie: " + s1.w);
+});
+
 /* ---------- Ausführen ---------- */
 let rot = 0;
 for (const { name, fn } of faelle) {

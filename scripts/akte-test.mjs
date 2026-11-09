@@ -595,6 +595,29 @@ await pruefe("A4b", "bleibt: Bogen → „Persönlichkeitsbogen“, Historie →
   e = await klickTitel(page, '#view .akte-nav [data-go="hist"]', "Historie"); if (e) f.push(e);
   return f;
 });
+await pruefe("A5", "Android-Zurück im Persönlichkeitsbogen blättert zurück und fragt auf Seite 1 nach", async () => {
+  await oeffne(page, "ueberblick", "s1");
+  const f = [];
+  const r = await page.evaluate(async () => {
+    const w = (ms) => new Promise((k) => setTimeout(k, ms));
+    const zur = async () => { window.dispatchEvent(new PopStateEvent("popstate")); await w(80); };
+    const seite = () => { const m = document.querySelector(".wiz-meta span"); return m ? m.textContent : (document.getElementById("wizStart") ? "intro" : document.getElementById("tbTitle").textContent); };
+    routeBogen("s1"); await w(50);
+    document.getElementById("wizStart").click(); await w(50);
+    document.querySelectorAll(".likert").forEach((row) => row.querySelector('.lk[data-v="3"]').click());
+    document.getElementById("wizNext").click(); await w(50);
+    const a = seite();
+    await zur(); const b = seite(); const antworten = WIZ ? Object.keys(WIZ.answers).length : -1;
+    await zur(); const c = seite(); // Rückfrage wird im Test abgelehnt: bleibt im Bogen
+    return { a, b, c, antworten };
+  });
+  if (!/Seite 2/.test(r.a)) f.push("Vorbereitung: nicht auf Seite 2 (" + r.a + ")");
+  if (!/Seite 1/.test(r.b)) f.push("Zurück auf Seite 2 landet nicht auf Seite 1: " + r.b);
+  if (!(r.antworten > 0)) f.push("Antworten nach Zurück weg");
+  if (!/Seite 1/.test(r.c)) f.push("Zurück auf Seite 1 verlässt den Bogen ohne Rückfrage: " + r.c);
+  await page.evaluate(() => { WIZ = null; });
+  return f;
+});
 await pruefe("A4c", "bleibt: Knöpfe der Akte ohne JS-Fehler (#editBtn, #shareStandBtn, #waKontaktBtn, #sehhilfeBtn, #protokollBtn, #theoEdit, #pruefReifBtn, #delBtn)", async () => {
   const f = [], vorher = jsFehler.length;
   await oeffne(page, "ueberblick", "s1");

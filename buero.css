@@ -186,7 +186,8 @@ nav{display:grid;gap:2px;}
 .ptabelle .c-zeit{width:90px;} .ptabelle .c-zeit.breit{width:190px;} .ptabelle .c-art{width:140px;}
 .ptabelle .c-lehrer{width:22%;} .ptabelle .c-haken{width:170px;} .ptabelle .c-akt{width:182px;}
 .ptabelle td{overflow-wrap:break-word;}
-@media (max-width:1300px){
+/* B7: feste Spalten erst ab 1441 px – darunter (z. B. 1366er Laptops) bricht sonst der Schülername Buchstabe für Buchstabe */
+@media (max-width:1440px){
   .ptabelle{table-layout:auto;}
   .ptabelle col{width:auto !important;}
   .haken-reihe{gap:6px;} .haken{width:34px;height:34px;font-size:17px;}
