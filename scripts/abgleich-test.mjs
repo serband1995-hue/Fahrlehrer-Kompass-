@@ -531,6 +531,16 @@ fall("18 Büro nimmt „Theorie bestanden“ zurück: Plan zurück, wartet wiede
   if (s1.w !== "2026-10-01T10:00:00.000Z") f("wartet nach Rücknahme nicht wieder auf Theorie: " + s1.w);
 });
 
+fall("19 Übergebener Schüler, den der vorige Fahrlehrer ausgeblendet hatte, ist beim neuen sichtbar (D1)", async (f) => {
+  await neu();
+  await setzeLokal("students", [{ id: "S1", name: "Anna Muster", telefon: "" }]);
+  await setzeTabelle("schueler", [serverSchueler("S9", "Uwe Muster", { ausbildung: { ausgeblendetAm: "2026-11-01T10:00:00.000Z" } })]);
+  await ruf(() => pullSchuelerZuweisungen());
+  const r = await ruf(() => { const s = DB.students.find((x) => x.id === "S9"); return s ? { aus: s.ausgeblendetAm || null, aktiv: activeStudents().some((x) => x.id === "S9") } : null; });
+  if (!r) return f("Schüler nicht übernommen");
+  if (r.aus || !r.aktiv) f("Schüler beim neuen Fahrlehrer ausgeblendet: " + JSON.stringify(r));
+});
+
 /* ---------- Ausführen ---------- */
 let rot = 0;
 for (const { name, fn } of faelle) {

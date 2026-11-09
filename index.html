@@ -5080,6 +5080,8 @@ function zeigeBueroNotizPopup(){
   document.getElementById("bnGelesen").addEventListener("click",async()=>{
     const b=document.getElementById("bnGelesen"); b.disabled=true;
     const {error}=await getSupa().from("schueler_notiz_gelesen").upsert(offen.map(n=>({notiz_id:n.id,fahrlehrer_id:_authUser.id})),{onConflict:"notiz_id,fahrlehrer_id",ignoreDuplicates:true});
+    // Notiz inzwischen vom Büro gelöscht (Fremdschlüssel): Popup trotzdem schließen, nicht hängen bleiben
+    if(error&&error.code==="23503"){ box.remove(); toast("Die Nachricht wurde vom Büro inzwischen gelöscht"); try{ pullBueroNotizen(getSupa(),(DB.students||[]).map(x=>x.id)); }catch(e){} return; }
     if(error){ b.disabled=false; toast("Konnte nicht als gelesen eintragen. Internet prüfen."); return; }
     offen.forEach(n=>{ n.gelesen=true; });
     box.remove();
@@ -8382,7 +8384,7 @@ function openErgebnisKorrektur(exId,nachher){
     _ergebnisAnwenden(s,ex,alt);
     const geaendert=[alt.result!==ex.result?"Ergebnis":"",alt.date!==ex.date?"Datum":"",(alt.pruefer||"")!==(ex.pruefer||"")?"Prüfer":""].filter(Boolean);
     if(s&&geaendert.length)logHist(s,"note",`Prüfungsergebnis korrigiert (${geaendert.join(", ")})`);
-    save(); closeSheet(); toastUndo("Ergebnis geändert",()=>{ const neu={result:ex.result,date:ex.date,b197:ex.b197};
+    save(); closeSheet(); toastUndo(alt.date!==ex.date&&_authProfile&&_authProfile.fahrschule_id?"Ergebnis geändert – bitte auch die Prüfungstafel im Büro anpassen":"Ergebnis geändert",()=>{ const neu={result:ex.result,date:ex.date,b197:ex.b197};
       Object.assign(ex,{result:alt.result,date:alt.date,pruefer:alt.pruefer,earnAt:alt.earnAt,faults:alt.faults,eingriff:alt.eingriff,eingNote:alt.eingNote}); delete ex.faultsVorher; _ergebnisAnwenden(s,ex,neu); save(); nachher&&nachher(); toast("Wiederhergestellt ✓"); },6000);
     nachher&&nachher();
   });
@@ -11975,8 +11977,9 @@ function _blockAnlegen(von,bis,grund,typ,gruppe){
   while(cur<=bis&&guard++<370){ const l=addLesson({date:cur,von:"00:00",bis:"23:59",art:"block",sid:null}); l.name=grund; l.blockTyp=typ; l.blockGruppe=gruppe; n++; cur=addDays(cur,1); }
   return n;
 }
+function _istGanzerBlockTag(l){ return !!l&&l.art==="block"&&(l.von||"00:00")==="00:00"&&(l.bis||"23:59")==="23:59"&&!l.onlineBookingId; }
 function _blockZeitraum(l){
-  const alle=(DB.lessons||[]).filter(x=>x.art==="block");
+  const alle=(DB.lessons||[]).filter(x=>_istGanzerBlockTag(x));
   if(l.blockGruppe)return alle.filter(x=>x.blockGruppe===l.blockGruppe).sort((a,b)=>a.date<b.date?-1:1);
   const gleich=x=>!x.blockGruppe&&(x.name||"")===(l.name||"")&&(x.blockTyp||"")===(l.blockTyp||"");
   const amTag=d=>alle.find(x=>x.date===d&&gleich(x));
@@ -12129,7 +12132,8 @@ function openEventSheet(kind,id,sid){
     return;
   }
   const l=(DB.lessons||[]).find(x=>x.id===id); if(!l){ toast("Termin nicht gefunden"); return; }
-  if(l.art==="block")return openBlockEventSheet(l);
+  // Ganztags-Urlaub/Blocker dieses Fahrlehrers als Zeitraum; Sperrzeiten mit Uhrzeit (Büro) oder aus Google/Online wie bisher
+  if(l.art==="block"&&_istGanzerBlockTag(l))return openBlockEventSheet(l);
   const st=DB.students.find(s=>s.id===l.sid);
   const artLab=(CAL_ARTEN[l.art]||CAL_ARTEN.fahrstunde).lab;
   const titelTermin=(l.art==="theorie"&&l.lektion)?("Lektion "+l.lektion):"Termin";

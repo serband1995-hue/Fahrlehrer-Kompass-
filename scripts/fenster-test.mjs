@@ -260,6 +260,14 @@ await fall("A13 Urlaub über ein Wochenende: ein Zeitraum, ganz löschen inkl. S
   return f;
 });
 
+await fall("A13 Sperrzeit mit Uhrzeit (Büro) bleibt eigener Termin, wird kein Ganztags-Zeitraum", async () => {
+  await vorbereiten();
+  const r = await page.evaluate(() => { const d = addDays(todayISO(), 3);
+    DB.lessons.push({ id: "B1", date: d, von: "13:00", bis: "15:00", art: "block", sid: null, name: "", status: "geplant" }); save();
+    openEventSheet("lesson", "B1", null); return { zeitraum: !!document.getElementById("blAendern"), loeschen: !!document.getElementById("esDelete") }; });
+  return (!r.zeitraum && r.loeschen) ? [] : ["Sperrzeit mit Uhrzeit falsch behandelt: " + JSON.stringify(r)];
+});
+
 await browser.close(); server.close();
 console.log(rot ? `Fenster-Test: ${rot} rot, ${gruen} grün.` : `Fenster-Test: alles in Ordnung (${gruen} Fälle).`);
 process.exit(rot ? 1 : 0);
