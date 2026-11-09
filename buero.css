@@ -294,6 +294,11 @@ details summary{cursor:pointer;font-weight:700;margin:6px 0;}
 .toast{position:fixed;left:50%;bottom:28px;transform:translate(-50%,20px);background:var(--txt);color:var(--bg);padding:14px 22px;border-radius:12px;font-weight:600;opacity:0;pointer-events:none;transition:opacity .2s,transform .2s;z-index:50;max-width:min(640px,90vw);}
 .toast.zeigen{opacity:1;transform:translate(-50%,0);}
 .toast.fehler{background:var(--rot);color:#fff;}
+/* Rückgängig-Hinweis: klickbar, über dem normalen Hinweis, auch über einem offenen Fenster */
+.toast.toast-undo{pointer-events:auto;display:flex;align-items:center;gap:14px;bottom:84px;z-index:60;flex-wrap:wrap;justify-content:center;}
+.toast-undo .toast-knopf{font:inherit;font-weight:700;background:transparent;color:inherit;border:2px solid currentColor;border-radius:8px;padding:6px 14px;cursor:pointer;min-height:36px;}
+.toast-undo .toast-knopf:hover,.toast-undo .toast-knopf:focus-visible{background:rgba(255,255,255,.18);}
+.toast-undo .toast-knopf:disabled{opacity:.5;cursor:default;}
 
 /* Spalten, die bei schmalem Bildschirm in die Zeile darüber wandern */
 .nur-schmal{display:none;}
@@ -581,3 +586,7 @@ body.mit-streifen .seite{top:38px;height:calc(100vh - 38px);}
 @media print{.rollen-streifen{display:none !important;}}
 body.kiosk .rollen-streifen{display:none;}
 
+
+/* Hinweis: der Fahrlehrer hat den Schüler bei sich ausgeblendet (im Büro unverändert) */
+.hinweis-ausgeblendet{margin:0 0 14px;padding:10px 14px;border-radius:10px;background:var(--surface-2,rgba(0,0,0,.05));border:1px solid var(--line-soft);font-size:15px;color:var(--txt);}
+.hinweis-ausgeblendet-klein{font-style:italic;}
