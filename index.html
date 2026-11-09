@@ -7392,7 +7392,7 @@ function load(){
 let DB=load();
 if((DB.students&&DB.students.length)||(DB.lessons&&DB.lessons.length)) _sitzungHatteDaten=true;
 function save(){
-  _snapGeaendert=true; if(typeof _saveZaehler==="number")_saveZaehler++;
+  _snapGeaendert=true;
   if(_fsAgg){ _fsSyncAggChanges(); return; }
   if((DB.students&&DB.students.length)||(DB.lessons&&DB.lessons.length)) _sitzungHatteDaten=true;
   if(_lokalerSpeicherGehoertAnderem()){ location.reload(); return; } // anderer Tab hat anderes Konto angemeldet
@@ -7401,6 +7401,9 @@ function save(){
   if(_authUser&&_pullOk){clearTimeout(_saveSyncDebounce);_saveSyncDebounce=setTimeout(pushToCloud,4000);_syncSchuelerBridge();_syncTermineBridge();_syncPruefungenBridge();}
 }
 
+// Fenster-Stapel (Paket 2): jedes Speichern zählen – ein danach geöffnetes Fenster legt kein veraltetes Fenster in den Stapel.
+// Hülle statt Änderung in save() selbst: das Speichern und der Abgleich bleiben genau gleich.
+{ const _saveOhneZaehler=save; save=function(){ if(typeof _saveZaehler==="number")_saveZaehler++; return _saveOhneZaehler.apply(this,arguments); }; }
 /* ===== Stufe 2: Schreib-Umleitung im Fahrschul-Modus =====
    Vergleicht DB.students/lessons/exams gegen den zuletzt geladenen Stand (_fsBaseline) und
    schreibt NUR echte Änderungen - jede beim ursprünglichen (oder neu gewählten) Fahrlehrer,
@@ -13825,7 +13828,7 @@ function _zurueckSperreNachholen(){ if(window._zurueckOffen){ window._zurueckOff
    Eingaben im Stapel. Zurück-Taste, ✕, Tippen daneben, Wischen und Esc schließen genau EINE Ebene (sheetZurueck).
    Wurde seit dem Öffnen gespeichert, ist das vorige Fenster veraltet: dann kein Stapel (neues Fenster ersetzt).
    closeSheet() aus dem Code heißt „fertig“ und schließt alle Ebenen ohne Rückfrage. */
-let _sheetStapel=[], _sheetEbene=null, _saveZaehler=0;
+let _sheetStapel=[], _sheetEbene=null; var _saveZaehler=0; // var: save() kann vor dieser Zeile laufen
 // Ein Fenster kann einen Abschluss mitgeben, der beim Schließen auf jedem Weg läuft (Knopf, Zurück, Tippen daneben).
 let _sheetBeimSchliessen=null;
 const _SHEET_KOPF=`<div class="sheet-griff" aria-hidden="true"></div><button class="sheet-x" type="button" aria-label="Fenster schließen">✕</button>`;

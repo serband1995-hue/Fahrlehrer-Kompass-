@@ -249,19 +249,18 @@ fall("11 Urlaub/Blocker ist im Kalender nicht ziehbar", async (f) => {
   if (r.blockDrag) f("Block-Chip hat data-dragid (ist ziehbar)");
 });
 
-fall("12 'Hat nicht stattgefunden (löschen)' fragt erst nach", async (f) => {
+fall("12 'Hat nicht stattgefunden (löschen)' löscht sofort mit 6 s „Rückgängig“ (Paket 2, A18)", async (f) => {
   const mk = () => neu({ students: [schueler("S1", "Anna Muster")], lessons: [les("FS", "2026-11-10", "10:00", "11:30", { sid: "S1" })] });
   const offen = async () => { await ruf(() => openFCMenu("FS")); const b = await page.$("[data-fcdel]"); if (!b) throw new Error("data-fcdel nicht gefunden"); return b; };
   await mk();
-  dialogAntwort = false;
   await (await offen()).evaluate((el) => el.click());
   await page.waitForTimeout(150);
-  if (!(await ruf(() => DB.lessons.some((l) => l.id === "FS")))) f("Termin wurde trotz Abbrechen gelöscht (oder ohne Rückfrage)");
-  await mk();
-  dialogAntwort = true;
-  await (await offen()).evaluate((el) => el.click());
+  if (await ruf(() => DB.lessons.some((l) => l.id === "FS"))) f("Termin nicht gelöscht");
+  const knopf = await page.$("#toast .ut-btn");
+  if (!knopf) return f("kein „Rückgängig“");
+  await knopf.evaluate((el) => el.click());
   await page.waitForTimeout(150);
-  if (await ruf(() => DB.lessons.some((l) => l.id === "FS"))) f("Termin blieb trotz Bestätigen erhalten");
+  if (!(await ruf(() => DB.lessons.some((l) => l.id === "FS")))) f("„Rückgängig“ holt den Termin nicht zurück");
   dialogAntwort = true;
 });
 
