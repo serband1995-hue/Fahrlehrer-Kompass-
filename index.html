@@ -555,8 +555,9 @@ input,select,textarea{font-family:inherit;font-size:15px;color:var(--txt);}
 /* ===== FORM ===== */
 .form-block{display:flex;flex-direction:column;gap:20px;}
 .field label{display:block;font-size:12.5px;font-weight:700;color:var(--muted);margin-bottom:8px;letter-spacing:.02em;}
-.field input,.field textarea{width:100%;background:var(--surface);border:1px solid var(--line);border-radius:var(--r-field);
+.field input,.field textarea,.field select{width:100%;background:var(--surface);border:1px solid var(--line);border-radius:var(--r-field);
   padding:13px 15px;outline:none;transition:border-color .16s var(--ease),background .16s var(--ease);}
+.field select{min-height:48px;color:var(--txt);font:inherit;}
 .field input::placeholder,.field textarea::placeholder{color:var(--faint);}
 .field input:focus,.field textarea:focus{border-color:var(--orange);background:var(--bg-soft);}
 .field textarea{resize:vertical;min-height:110px;line-height:1.55;}
@@ -909,7 +910,10 @@ input,select,textarea{font-family:inherit;font-size:15px;color:var(--txt);}
 .toast.show{opacity:1;transform:translateX(-50%) translateY(0);}
 .toast.undo{display:flex;align-items:center;gap:14px;pointer-events:auto;}
 .toast.undo .ut-txt{font-weight:800;min-width:0;}
-.toast.undo .ut-btn{background:#1a1b1f;color:#fff;border:none;padding:7px 14px;border-radius:9px;font-weight:800;font-size:13px;cursor:pointer;flex:0 0 auto;}
+.toast.undo .ut-btn{background:#1a1b1f;color:#fff;border:none;padding:10px 16px;min-height:44px;border-radius:12px;font-weight:800;font-size:14px;cursor:pointer;flex:0 0 auto;}
+/* Rückgängig-Hinweis über einem offenen Fenster: oben statt über den Eingabefeldern */
+body:has(#sheet.open) .toast{bottom:auto;top:calc(14px + env(safe-area-inset-top));transform:translateX(-50%) translateY(-20px);}
+body:has(#sheet.open) .toast.show{transform:translateX(-50%) translateY(0);}
 .toast.undo .ut-btn:active{transform:scale(.95);}
 .fade-up{animation:fadeUp .32s var(--ease) both;}
 @keyframes fadeUp{from{opacity:0;transform:translateY(14px);}to{opacity:1;transform:translateY(0);}}
@@ -1248,6 +1252,16 @@ body.light .dt-n{background:linear-gradient(160deg,#1d3324 10%,#2f5d3f 90%);-web
 .sheet-scrim.open{opacity:1;pointer-events:auto}
 .sheet{position:fixed;left:0;right:0;bottom:0;z-index:61;background:var(--bg-soft);border-top:1px solid var(--line);border-radius:20px 20px 0 0;padding:22px var(--pad) calc(26px + env(safe-area-inset-bottom));transform:translateY(100%);transition:transform .26s var(--ease);max-height:80vh;overflow-y:auto}
 .sheet.open{transform:translateY(0)}
+/* Fenster-Stapel: Griff, ✕, Wechsel zwischen Ebenen */
+.sheet-griff{width:38px;height:5px;border-radius:3px;background:var(--line);margin:-10px auto 12px;opacity:.9}
+.sheet-x{position:sticky;top:-14px;float:right;margin:-14px -12px -44px 0;width:44px;height:44px;background:var(--surface);border-radius:22px;border:none;color:var(--muted);font-size:18px;line-height:44px;text-align:center;cursor:pointer;z-index:2}
+.sheet-x:active{background:var(--bg-soft)}
+.sheet .sheet-h{padding-right:40px}
+.sheet.sheet-wechsel>*:not(.sheet-x){animation:shEbeneRein .2s var(--ease)}
+.sheet.sheet-wechsel-zurueck>*:not(.sheet-x){animation:shEbeneZurueck .2s var(--ease)}
+@keyframes shEbeneRein{from{opacity:0;transform:translateX(18px)}}
+@keyframes shEbeneZurueck{from{opacity:0;transform:translateX(-18px)}}
+@media (prefers-reduced-motion:reduce){.sheet.sheet-wechsel>*,.sheet.sheet-wechsel-zurueck>*{animation:none}}
 .sheet-h{font-family:'Anton',sans-serif;text-transform:uppercase;font-size:16px;letter-spacing:.04em;margin-bottom:16px}
 .sheet-list{display:flex;flex-direction:column;gap:8px;margin-bottom:16px}
 .sl-item{display:flex;flex-direction:column;align-items:flex-start;gap:2px;background:var(--surface);border:1px solid var(--line);border-radius:11px;padding:13px 15px;text-align:left}
@@ -1514,7 +1528,7 @@ body:not(.light) .cw-col.today .cw-dnum{color:var(--gold);}
 .ct-free-p{font-size:11px;color:var(--mint-soft);font-weight:800;}
 /* Event-Sheet */
 .es-arten,.es-actions{display:flex;gap:8px;}
-.es-art{flex:1;padding:11px 6px;border-radius:10px;font-size:13px;font-weight:700;background:var(--surface);border:1px solid var(--line);color:var(--muted);}
+.es-art{flex:1;padding:11px 6px;min-height:44px;border-radius:10px;font-size:13px;font-weight:700;background:var(--surface);border:1px solid var(--line);color:var(--muted);}
 .es-art.on{background:var(--gruen-soft);border-color:var(--gruen-line);color:var(--mint);}
 .es-actions{flex-direction:column;}
 .es-act{padding:14px;border-radius:11px;font-size:14px;font-weight:700;background:var(--surface);border:1px solid var(--line);color:var(--txt);text-align:left;}
@@ -2327,6 +2341,9 @@ body:not(.light) .ak-r.on{border-bottom-color:var(--mint-ok);}
 body:not(.light) .at-hist{color:var(--mint-ok);}
 .ap-karte{background:var(--h-karte);border:1px solid var(--h-rand);border-radius:18px;padding:14px 16px;display:flex;flex-direction:column;gap:6px;margin-bottom:14px;color:var(--h-tinte);}
 .ap-zeile{display:flex;justify-content:space-between;gap:10px;min-height:32px;align-items:center;font-size:14px;}
+.ap-erg{min-height:48px;cursor:pointer;border-radius:12px;margin:0 -8px;padding:0 8px;}
+.ap-erg:active,.ap-erg:focus-visible{background:var(--bg-soft);}
+.ap-erg b{margin-left:auto;white-space:nowrap;} .ap-pfeil{color:var(--muted);font-size:18px;}
 .ap-zeile b.ok{color:var(--k-akzent);} .ap-zeile b.nein{color:#9E2F22;}
 body:not(.light) .ap-zeile b.ok{color:var(--mint-ok);} body:not(.light) .ap-zeile b.nein{color:#f6b0a3;}
 .schueler2 #homeFilterBtn{min-width:44px;min-height:44px;}
@@ -5067,6 +5084,8 @@ function zeigeBueroNotizPopup(){
   document.getElementById("bnGelesen").addEventListener("click",async()=>{
     const b=document.getElementById("bnGelesen"); b.disabled=true;
     const {error}=await getSupa().from("schueler_notiz_gelesen").upsert(offen.map(n=>({notiz_id:n.id,fahrlehrer_id:_authUser.id})),{onConflict:"notiz_id,fahrlehrer_id",ignoreDuplicates:true});
+    // Notiz inzwischen vom Büro gelöscht (Fremdschlüssel): Popup trotzdem schließen, nicht hängen bleiben
+    if(error&&error.code==="23503"){ box.remove(); toast("Die Nachricht wurde vom Büro inzwischen gelöscht"); try{ pullBueroNotizen(getSupa(),(DB.students||[]).map(x=>x.id)); }catch(e){} return; }
     if(error){ b.disabled=false; toast("Konnte nicht als gelesen eintragen. Internet prüfen."); return; }
     offen.forEach(n=>{ n.gelesen=true; });
     box.remove();
@@ -5197,6 +5216,7 @@ async function pullSchuelerZuweisungen() {
           id: r.id, created: Date.now(), notiz: "", bogen: null, plan: newPlan(), profil: null, form: "B", beginn: "",
           planId: chosenPlan.id, planSnapshot: JSON.parse(JSON.stringify(chosenPlan.stufen))
         }, a, { id: r.id, name: r.name, telefon: r.telefon || "" });
+        delete nst.ausgeblendetAm; // „bei mir ausgeblendet“ galt nur beim bisherigen Fahrlehrer (D1)
         if (r.sehhilfe != null) nst.sehhilfe = r.sehhilfe;
         if (Array.isArray(r.vorbesitz)) nst.vorbesitzBuero = r.vorbesitz;
         // Übergabe: dieselbe Regel wie oben – die Form des bisherigen Fahrlehrers bleibt, außer das Büro hat die Klasse
@@ -5631,7 +5651,9 @@ function _fsSetDrawer(fahrschuleMode){
 }
 
 function _fsMapSchueler(row,lehrerName){
-  return Object.assign({id:row.id,name:row.name,telefon:row.telefon,bogen:null},row.ausbildung||{},{
+  // Gesamtansicht: „bei mir ausgeblendet“ eines Fahrlehrers gilt hier nicht (das Büro behält ihn ganz normal)
+  const {ausgeblendetAm:_ausgebl, ...ausb}=row.ausbildung||{};
+  return Object.assign({id:row.id,name:row.name,telefon:row.telefon,bogen:null},ausb,{_fahrlehrerAusgeblendetAm:_ausgebl||null,
     _fahrlehrerId:row.fahrlehrer_id, _fahrlehrerName:lehrerName(row.fahrlehrer_id),
     _paketId:row.paket_id, _hatSimulator:row.hat_simulator, _hatTheorieApp:row.hat_theorie_app,
     _bogenAusgefuellt:row.bogen_ausgefuellt, _buero_notiz:row.buero_notiz||"", _buero_todo:row.buero_todo||"",
@@ -7313,7 +7335,7 @@ window.addEventListener("load", () => {
 const STORE_KEY="serband-app-v1";
 /* Build-Version: bei jeder Auslieferung hier das Datum aktualisieren.
    Wird in den Einstellungen angezeigt + für den Update-Hinweis genutzt. */
-const APP_VERSION="2026.11.08.3";
+const APP_VERSION="2026.11.09.1";
 try{const f=document.getElementById("drawerFoot"); if(f)f.textContent="Fahrlehrer-Kompass · Version "+APP_VERSION;}catch(e){}
 // Nutzungsbedingungen & Haftungsausschluss (Bereich: rechtliche Absicherung) - Version hochzählen
 // und alle Nutzer müssen erneut zustimmen, sobald sich der Text inhaltlich ändert.
@@ -7388,6 +7410,11 @@ function save(){
   if(_authUser&&_pullOk){clearTimeout(_saveSyncDebounce);_saveSyncDebounce=setTimeout(pushToCloud,4000);_syncSchuelerBridge();_syncTermineBridge();_syncPruefungenBridge();}
 }
 
+// Fenster-Stapel (Paket 2): jedes Speichern zählen – ein danach geöffnetes Fenster legt kein veraltetes Fenster in den Stapel.
+// Hülle statt Änderung in save() selbst: das Speichern und der Abgleich bleiben genau gleich.
+// Gezählt wird nur Speichern kurz nach einer Bedienung (Tippen/Taste) – ein Abruf im Hintergrund macht das Fenster darunter nicht veraltet.
+var _letzteBedienung=0; ["pointerdown","keydown"].forEach(ev=>document.addEventListener(ev,()=>{ _letzteBedienung=Date.now(); },true));
+{ const _saveOhneZaehler=save; save=function(){ if(typeof _saveZaehler==="number"&&Date.now()-_letzteBedienung<3000)_saveZaehler++; return _saveOhneZaehler.apply(this,arguments); }; }
 /* ===== Stufe 2: Schreib-Umleitung im Fahrschul-Modus =====
    Vergleicht DB.students/lessons/exams gegen den zuletzt geladenen Stand (_fsBaseline) und
    schreibt NUR echte Änderungen - jede beim ursprünglichen (oder neu gewählten) Fahrlehrer,
@@ -7425,7 +7452,8 @@ async function _fsSyncAggJetzt(){
       snap.students.forEach(s=>{
         const b=baseS[s.id];
         if(!b||JSON.stringify(s)!==JSON.stringify(b)){
-          const {id,name,telefon,_fahrlehrerId,_fahrlehrerName,_paketId,_hatSimulator,_hatTheorieApp,_bogenAusgefuellt,bogen,...rest}=s;
+          const {id,name,telefon,_fahrlehrerId,_fahrlehrerName,_paketId,_hatSimulator,_hatTheorieApp,_bogenAusgefuellt,bogen,_fahrlehrerAusgeblendetAm,...rest}=s;
+          if(_fahrlehrerAusgeblendetAm)rest.ausgeblendetAm=_fahrlehrerAusgeblendetAm; // „bei mir ausgeblendet“ des Fahrlehrers bleibt
           schuelerUpserts.push({
             id:s.id, fahrschule_id:_fsAgg.fahrschuleId, fahrlehrer_id:s._fahrlehrerId||null,
             name:s.name||"(ohne Namen)", telefon:s.telefon||null, status:"aktiv",
@@ -7589,6 +7617,7 @@ let _saveSyncDebounce=null;
 function _brueckenSofort(){ if(!_authUser||!_pullOk||_fsAgg||!_authProfile||!_authProfile.fahrschule_id)return;
   try{ _syncSchuelerBridge(0); _syncTermineBridge(0); _syncPruefungenBridge(0); }catch(e){} }
 document.addEventListener("visibilitychange",()=>{
+  if(document.visibilityState==="hidden"&&_notizSofort){ try{ _notizSofort(); }catch(e){} }
   if(document.visibilityState==="hidden"&&_saveSyncDebounce){ clearTimeout(_saveSyncDebounce); _saveSyncDebounce=null; pushToCloud(); }
   if(document.visibilityState==="hidden") _brueckenSofort();
   // Zurück in der App (z.B. Tablet nach dem Handy): sofort Änderungen des anderen Geräts holen.
@@ -7793,10 +7822,17 @@ function _backupHerunterladen(zusatz){
 }
 function toastUndo(msg,onUndo,ms){
   const t=$("#toast"); ms=ms||5000;
+  // Läuft noch ein Rückgängig: zusammenfassen, ein Tipp macht beides rückgängig (neueste zuerst)
+  if(t._undos&&t._undos.length&&t.classList.contains("undo")&&t.classList.contains("show")){
+    const vorige=t._undos.slice(), alle=[onUndo].concat(vorige.map(x=>x.fn));
+    t._undos=[{fn:onUndo}].concat(vorige);
+    msg=`${t._undos.length} Änderungen`;
+    onUndo=()=>alle.forEach(f=>{ try{ f&&f(); }catch(e){} });
+  } else t._undos=[{fn:onUndo}];
   t.classList.add("undo","show");
   t.innerHTML=`<span class="ut-txt"></span><button class="ut-btn" type="button">Rückgängig</button>`;
   t.querySelector(".ut-txt").textContent=msg;
-  const close=()=>{ t.classList.remove("show"); setTimeout(()=>{ if(t.classList.contains("show"))return; t.classList.remove("undo");t.innerHTML="";},300); };
+  const close=()=>{ t._undos=null; t.classList.remove("show"); setTimeout(()=>{ if(t.classList.contains("show"))return; t.classList.remove("undo");t.innerHTML="";},300); };
   t.querySelector(".ut-btn").onclick=()=>{ clearTimeout(t._t); close(); try{onUndo&&onUndo();}catch(e){} };
   clearTimeout(t._t); t._t=setTimeout(close,ms);
 }
@@ -7955,10 +7991,11 @@ function replaySplash(){
   clearTimeout(replaySplash._t);
   replaySplash._t=setTimeout(()=>{ sp.classList.add("hide"); setTimeout(()=>sp.classList.remove("kurz"),300); },700);
 }
-$("#sheetScrim").addEventListener("click",closeSheet);
+$("#sheetScrim").addEventListener("click",()=>sheetZurueck());
 document.querySelector(".drawer-nav").addEventListener("click",(e)=>{
   const b=e.target.closest(".nav-item[data-nav]");
   if(!b)return;
+  if(!_seiteVerlassenOk())return; // ungespeicherte Formular-Eingaben: erst fragen (wie Zurück und Reiterleiste)
   const nav=b.dataset.nav;closeDrawer();
   document.getElementById("fsCalTiles")?.remove();
   setTimeout(()=>{if(nav==="todos")routeTodos();
@@ -7984,10 +8021,11 @@ function setFab(on){
   f.setAttribute("aria-label",_fabArt==="termin"?"Neuer Termin":"Neuer Schüler"); // auch wenn nur das Plus sichtbar ist
   f.style.display=on?"flex":"none";
 }
-$("#fab").addEventListener("click",()=>{ if(_fabArt==="termin")openNeuerTerminSheet(); else formView(null); });
+$("#fab").addEventListener("click",()=>{ if(_fabArt==="termin")openNeuerTerminSheet(); else routeSchuelerForm(null); });
 // Reiter unten. In der Gesamtansicht (Büro/Leitung) führt "Heute" zur Fahrschul-Startseite.
 function tabGo(k){
   if(k==="mehr"){ openDrawer(); return; }
+  if(!_seiteVerlassenOk())return;
   closeDrawer();
   if(k==="heute"){ if(_fsAgg&&typeof routeFahrschuleDashboard==="function")routeFahrschuleDashboard(); else routeDashboard(); }
   else if(k==="kalender")routeKalender();
@@ -8014,7 +8052,7 @@ function openNeuerTerminSheet(){
     <div class="es-actions">${liste}</div>
     <div class="btn-row" style="flex-wrap:wrap;gap:8px;"><button class="btn btn-ghost" id="ntAndere" style="width:100%;">Andere Art (Theorie, Prüfung, Blocker …)</button><button class="btn btn-ghost" id="ntClose" style="width:100%;">Schließen</button></div>`);
   $("#ntClose").addEventListener("click",closeSheet);
-  $("#ntAndere").addEventListener("click",()=>{ if(!imKal||!_calDate)_calDate=heute; closeSheet(); setTimeout(openAddSheet,200); });
+  $("#ntAndere").addEventListener("click",()=>{ if(!imKal||!_calDate)_calDate=heute; openAddSheet(); }); // Unterfenster: Zurück führt wieder zu „Neuer Termin“
   document.querySelectorAll(".nt-gap").forEach(b=>b.addEventListener("click",()=>{
     const [date,von,bis,art]=b.dataset.freeslot.split("|"); closeSheet(); openAssignSlotSheet(date,von,bis,art);
   }));
@@ -8056,7 +8094,7 @@ function routeHome(){
       <p>Leg deinen ersten Schüler an. Er füllt den Persönlichkeitsbogen aus, und du hast sofort seine Datei mit Profil und Ausbildungsstand.</p>
       <button class="btn btn-primary" id="emptyAdd" style="flex:0;padding-left:28px;padding-right:28px;">Ersten Schüler anlegen</button>
     </div>`;
-    $("#emptyAdd").addEventListener("click",()=>formView(null));return;
+    $("#emptyAdd").addEventListener("click",()=>routeSchuelerForm(null));return;
   }
   const sortiertAlpha=modus==="az";
   const gruppiertNachFahrlehrer=!!_fsAgg&&sortiertAlpha;
@@ -8313,7 +8351,7 @@ function routeAktePruefung(id){
       ${termine.length?termine.map(t=>`<div class="ap-zeile"><span>${deWeekday(t.date)} ${isoDE(t.date)}</span> <b>${esc(t.von||"")}</b></div>`).join(""):`<p class="h2-nichts">Kein Prüfungstermin eingetragen.</p>`}
     </section>
     <section class="ap-karte"><div class="h2-ueber">Ergebnisse</div>
-      ${ergebnisse.length?ergebnisse.map(e=>`<div class="ap-zeile"><span>${isoDE(e.date)}${e.b197?" · B197":""}${e.pruefer?` · Prüfer ${esc(e.pruefer)}`:""}</span> <b class="${e.result==="pass"?"ok":"nein"}">${e.result==="pass"?"bestanden":e.result==="fail"?"nicht bestanden":esc(e.result||"–")}</b></div>`).join(""):`<p class="h2-nichts">Noch keine Prüfung abgelegt.</p>`}
+      ${ergebnisse.length?ergebnisse.map(e=>`<div class="ap-zeile ap-erg" role="button" tabindex="0" data-exid="${esc(e.id)}" aria-label="Ergebnis ändern oder löschen"><span>${isoDE(e.date)}${e.b197?" · B197":""}${e.pruefer?` · Prüfer ${esc(e.pruefer)}`:""}</span> <b class="${e.result==="pass"?"ok":"nein"}">${e.result==="pass"?"bestanden":e.result==="fail"?"nicht bestanden":esc(e.result||"–")}</b><span class="ap-pfeil" aria-hidden="true">›</span></div>`).join("")+`<p class="muted-p" style="font-size:12.5px;margin:6px 0 0;">Antippen zum Ändern oder Löschen.</p>`:`<p class="h2-nichts">Noch keine Prüfung abgelegt.</p>`}
     </section>
     <button class="at-hist" id="apTafel">Zur Prüfungstafel ›</button>
     <button class="at-neu" id="apEintragen">Prüfung eintragen</button>
@@ -8321,6 +8359,61 @@ function routeAktePruefung(id){
   _akteKopf(id,"pruefung");
   $("#apEintragen").addEventListener("click",()=>routeExam(id));
   $("#apTafel").addEventListener("click",()=>routePruefungen());
+  document.querySelectorAll("#view .ap-erg").forEach(z=>{ const auf=()=>openErgebnisKorrektur(z.dataset.exid,()=>routeAktePruefung(id));
+    z.addEventListener("click",auf); z.addEventListener("keydown",e=>{ if(e.key==="Enter"||e.key===" "){ e.preventDefault(); auf(); } }); });
+}
+/* A4: Prüfungsergebnis nachträglich ändern (Datum, Prüfer, Ergebnis) oder löschen. Passt Archiv (passed) und
+   Versuchszähler an, damit keine zweiten Einträge zum „Überdecken“ nötig sind. */
+function _ergebnisAnwenden(s,ex,alt){
+  if(!s)return;
+  if(alt.b197||(ex&&ex.b197))return; // Schaltkompetenz B197 ist keine Prüfung: Archiv und Versuche bleiben
+  if(alt.result==="pass"&&s.passed===alt.date){ if(ex&&ex.result==="pass")s.passed=ex.date; else delete s.passed; }
+  else if(ex&&ex.result==="pass"&&alt.result!=="pass"&&!ex.b197){ s.passed=ex.date; delete s.ready; delete s.waitOrder; }
+  if(!ex||ex.b197||alt.b197)return;
+  if(alt.result==="fail"&&ex.result!=="fail")s.attempts=Math.max(0,(s.attempts||0)-1);
+  if(alt.result!=="fail"&&ex.result==="fail")s.attempts=(s.attempts||0)+1;
+}
+function openErgebnisKorrektur(exId,nachher){
+  const ex=(DB.exams||[]).find(e=>e.id===exId); if(!ex){ toast("Eintrag nicht gefunden"); return; }
+  const s=DB.students.find(x=>x.id===ex.sid);
+  const pruefer=[...new Set([ex.pruefer,...(DB.pruefer||[])].filter(Boolean))];
+  let erg=ex.result;
+  openSheet(`<div class="sheet-h">Prüfungsergebnis${ex.b197?" · B197":""}</div>
+    <p class="muted-p" style="font-size:13.5px;margin:-4px 0 14px;">${esc(s?s.name:(ex.name||""))}${ex.attempt?` · ${ex.attempt}. Versuch`:""}</p>
+    <div class="field"><label>Ergebnis</label><div class="dur-row">
+      <button class="dur-opt${erg==="pass"?" on":""}" data-erg="pass" type="button">bestanden</button>
+      <button class="dur-opt${erg==="fail"?" on":""}" data-erg="fail" type="button">nicht bestanden</button></div></div>
+    <div class="field"><label for="ekDatum">Datum</label><input type="date" id="ekDatum" value="${esc(ex.date||"")}"></div>
+    <div class="field"><label for="ekPruefer">Prüfer</label><select id="ekPruefer"><option value="">– ohne –</option>${pruefer.map(p=>`<option value="${esc(p)}"${p===ex.pruefer?" selected":""}>${esc(p)}</option>`).join("")}</select></div>
+    <div class="btn-row"><button class="btn btn-primary" id="ekSpeichern" style="flex:1;">Speichern</button></div>
+    <button class="es-act danger" id="ekLoeschen" style="margin-top:10px;width:100%;">Eintrag löschen</button>`);
+  document.querySelectorAll("#sheet [data-erg]").forEach(b=>b.addEventListener("click",()=>{ erg=b.dataset.erg; _sheetEbene&&(_sheetEbene.geaendert=true);
+    document.querySelectorAll("#sheet [data-erg]").forEach(x=>x.classList.toggle("on",x===b)); }));
+  $("#ekSpeichern").addEventListener("click",()=>{
+    const datum=$("#ekDatum").value; if(!datum){ toast("Bitte ein Datum wählen"); return; }
+    const alt={result:ex.result,date:ex.date,pruefer:ex.pruefer,b197:ex.b197,earnAt:ex.earnAt,faults:ex.faults,eingriff:ex.eingriff,eingNote:ex.eingNote};
+    const stAlt=s?{ready:s.ready,waitOrder:s.waitOrder}:null;
+    ex.result=erg; ex.date=datum; ex.earnAt=datum; ex.pruefer=$("#ekPruefer").value;
+    // Fehlerliste nur ausblenden, nicht wegwerfen: bei „bestanden“ zählt sie nicht, wird aber für ein Zurückstellen gemerkt
+    if(erg==="pass"&&alt.result!=="pass"){ ex.faultsVorher={faults:alt.faults||[],eingriff:!!alt.eingriff,eingNote:alt.eingNote||""}; ex.faults=[]; ex.eingriff=false; }
+    if(erg==="fail"&&alt.result==="pass"&&ex.faultsVorher){ ex.faults=ex.faultsVorher.faults; ex.eingriff=ex.faultsVorher.eingriff; ex.eingNote=ex.faultsVorher.eingNote; delete ex.faultsVorher; }
+    _ergebnisAnwenden(s,ex,alt);
+    const geaendert=[alt.result!==ex.result?"Ergebnis":"",alt.date!==ex.date?"Datum":"",(alt.pruefer||"")!==(ex.pruefer||"")?"Prüfer":""].filter(Boolean);
+    if(s&&geaendert.length)logHist(s,"note",`Prüfungsergebnis korrigiert (${geaendert.join(", ")})`);
+    save(); closeSheet(); toastUndo(alt.date!==ex.date&&_authProfile&&_authProfile.fahrschule_id?"Ergebnis geändert – bitte auch die Prüfungstafel im Büro anpassen":"Ergebnis geändert",()=>{ const neu={result:ex.result,date:ex.date,b197:ex.b197};
+      Object.assign(ex,{result:alt.result,date:alt.date,pruefer:alt.pruefer,earnAt:alt.earnAt,faults:alt.faults,eingriff:alt.eingriff,eingNote:alt.eingNote}); delete ex.faultsVorher; _ergebnisAnwenden(s,ex,neu);
+      if(s&&stAlt){ if(stAlt.ready)s.ready=stAlt.ready; else delete s.ready; if(typeof stAlt.waitOrder==="number")s.waitOrder=stAlt.waitOrder; else delete s.waitOrder; } save(); nachher&&nachher(); toast("Wiederhergestellt ✓"); },6000);
+    nachher&&nachher();
+  });
+  $("#ekLoeschen").addEventListener("click",()=>{
+    if(!confirm("Diesen Prüfungseintrag löschen? Er zählt dann nicht mehr in Quote, Versuchen und Verdienst."))return;
+    const alt={result:ex.result,date:ex.date,b197:ex.b197};
+    _sheetEbene&&(_sheetEbene.geaendert=false); closeSheet();
+    _ergebnisAnwenden(s,null,alt);
+    if(s&&!ex.b197&&alt.result==="fail")s.attempts=Math.max(0,(s.attempts||0)-1);
+    if(s)logHist(s,"note","Prüfungseintrag gelöscht");
+    _loeschenMitRueckgaengig(()=>DB.exams,ex,"Prüfungseintrag gelöscht",nachher,null,()=>{ if(s){ if(alt.result==="pass"&&!ex.b197&&!s.passed)s.passed=alt.date; if(!ex.b197&&alt.result==="fail")s.attempts=(s.attempts||0)+1; } });
+  });
 }
 function routeWaitlist(){
   $("#tbTitle").textContent="Warteliste";setFab(false);view.scrollTop=0;
@@ -8494,7 +8587,7 @@ function routeDetail(id){
     </a>`:""}
     <div class="btn-row" style="margin-top:18px;">
       <button class="btn btn-ghost" id="editBtn">Bearbeiten</button>
-      <button class="btn btn-danger" id="delBtn">Löschen</button>
+      ${s.ausgeblendetAm?`<button class="btn btn-primary" id="einblendBtn">Wieder einblenden</button>`:`<button class="btn btn-danger" id="delBtn">Bei mir ausblenden</button>`}
     </div>
   </div>`;
   animateRings();
@@ -8504,16 +8597,12 @@ function routeDetail(id){
   if(done&&!gefeiert[s.id]){ gefeiert[s.id]=1; try{localStorage.setItem("serband-gefeiert",JSON.stringify(gefeiert));}catch(e){} setTimeout(()=>celebrate(),420); }
   if(!done&&gefeiert[s.id]){ delete gefeiert[s.id]; try{localStorage.setItem("serband-gefeiert",JSON.stringify(gefeiert));}catch(e){} }
   $("#backBtn").addEventListener("click",routeHome);
-  $("#editBtn").addEventListener("click",()=>formView(s));
+  $("#editBtn").addEventListener("click",()=>routeSchuelerForm(s.id));
   const prb=$("#pruefReifBtn"); if(prb)prb.addEventListener("click",()=>{ s.pruefungsreifManuell=!s.pruefungsreifManuell; save(); routeDetail(id); });
-  const tfb=$("#telFehltBtn"); if(tfb)tfb.addEventListener("click",()=>formView(s));
+  const tfb=$("#telFehltBtn"); if(tfb)tfb.addEventListener("click",()=>routeSchuelerForm(s.id));
   _fillAkademieFortschritt(s);
-  $("#delBtn").addEventListener("click",()=>{
-    if(confirm("Diesen Schüler wirklich löschen? Das kann nicht rückgängig gemacht werden.")){
-      // Termine und Prüfungen bleiben im Kalender - mit Namen, auch ohne Schülerdatei.
-      clearSlot(id); // Platz auf der Prüfungstafel freigeben
-      const weg=DB.students.find(x=>x.id===id); if(weg){ (DB.lessons||[]).forEach(l=>{ if(l.sid===id&&!l.name)l.name=weg.name; }); (DB.exams||[]).forEach(ex=>{ if(ex.sid===id&&!ex.name)ex.name=weg.name; }); }
-      DB.students=DB.students.filter(x=>x.id!==id);save();toast("Schüler gelöscht");routeHome();}});
+  const dlb=$("#delBtn"); if(dlb)dlb.addEventListener("click",()=>schuelerAusblenden(id));
+  const ebb=$("#einblendBtn"); if(ebb)ebb.addEventListener("click",()=>schuelerEinblenden(id));
   // Sehhilfe Toggle
   $("#sehhilfeBtn").addEventListener("click",()=>{
     s.sehhilfe=!s.sehhilfe; s._sehhilfeOffen=true; save();
@@ -8645,8 +8734,7 @@ function routeHistorie(id){
     const i=s.hist.findIndex(x=>x.t===t);
     if(i<0)return;
     const entry=s.hist[i];
-    if(!entry.manual&&!confirm("Diesen automatischen Eintrag löschen? Das kann nicht rückgängig gemacht werden."))return;
-    s.hist.splice(i,1); save(); routeHistorie(id);
+    _loeschenMitRueckgaengig(()=>s.hist,entry,"Eintrag gelöscht",()=>routeHistorie(id));
   }));
 }
 function tileHTML(key,name,sub,icon){
@@ -9123,7 +9211,7 @@ async function openTheorieAnwesenheit(l){
   const alleLekt=LEKTIONEN.map(x=>String(x.n)).concat(LKW_LEKTIONEN.map(x=>x.n));
   const zeichne=()=>{
     const titel=lekt.length?lekt.map(k=>"Lektion "+k).join(" + "):"Lektion wählen";
-    $("#sheet").innerHTML=`<div class="sheet-h">Anwesenheit · ${isoDE(datum)}${l.von?" · "+esc(l.von):""}</div>
+    $("#sheet").innerHTML=_SHEET_KOPF+`<div class="sheet-h">Anwesenheit · ${isoDE(datum)}${l.von?" · "+esc(l.von):""}</div>
       <div class="ta-lekt-zeile"><span>${esc(titel)}</span><button type="button" class="btn btn-ghost" id="taLektAuf">${pillsOffen?"fertig":"ändern"}</button></div>
       ${pillsOffen?`<div class="pills ta-lekt sheet-pills" id="taLekt">${alleLekt.map(k=>`<button type="button" class="pill ${lekt.includes(k)?"sel":""}" data-k="${k}" title="${esc(lektionTitel(k))}">${k}</button>`).join("")}</div>`:""}
       <div class="field" style="margin-top:8px;"><label>Wer war da? <span class="ta-zahl" id="taZahl">${an.size} anwesend</span></label><input type="search" id="taSuche" placeholder="Name suchen" autocomplete="off"></div>
@@ -9565,10 +9653,12 @@ function openMultiTerminErgebnis(sid,cfg,treffer){
   const gewuenscht=cfg.art==="sonder"?sfOffen(s,cfg.grp):null;
   const hinweis=cfg.art==="sonder"&&gewuenscht!=null?`<p class="muted-p" style="font-size:12px;margin:-4px 0 10px;">Automatisch gedeckelt auf ${gewuenscht} noch offene ${SF_LABEL[cfg.grp]||"Sonderfahrt"}${gewuenscht===1?'':'en'}.</p>`:'';
   if(!treffer.length){
+    const ohneFz=!(DB.workCfg.fahrzeuge||[]).length;
     openSheet(`<div class="sheet-h">Keine freien Slots gefunden</div>
       <p class="muted-p" style="font-size:13px;">Im gewählten Zeitraum/Uhrzeitfenster war nichts frei — Zeitraum oder Fenster erweitern und nochmal versuchen.</p>
+      ${ohneFz?`<p class="muted-p" style="font-size:13px;">Hinweis: Du hast noch keine Fahrzeuge eingetragen. Für „Schalter“ oder „Automatik“ trag sie unter Kalender › Zahnrad › Fahrzeuge ein – oder wähle „egal“.</p>`:""}
       <div class="btn-row"><button class="btn btn-ghost btn-full" id="mtZurueck">Zurück</button></div>`);
-    $("#mtZurueck").addEventListener("click",()=>openMultiTerminSheet(sid));
+    $("#mtZurueck").addEventListener("click",()=>{ if(sheetZurueck(true)==="leer")openMultiTerminSheet(sid); });
     return;
   }
   const label=cfg.art==="sonder"?(SF_LABEL[cfg.grp]||"Sonderfahrt"):"Übungsfahrt";
@@ -11352,6 +11442,7 @@ function bindDraw(){
 /* ============================================================
    NOTIZEN / FORM / SETTINGS / COMING
    ============================================================ */
+let _notizTimer=null, _notizSofort=null; // offene Notiz-Speicherung, wird vor jedem Seitenwechsel ausgeführt
 function routeNotes(id){
   const s=DB.students.find(x=>x.id===id);if(!s)return routeHome();
   $("#tbTitle").textContent="Notizen";setFab(false);view.scrollTop=0;
@@ -11363,9 +11454,17 @@ function routeNotes(id){
     <div class="btn-row"><button class="btn btn-primary btn-full" id="saveNote">Notiz speichern</button></div>
   </div>`;
   $("#backBtn").addEventListener("click",()=>routeDetail(id));
-  $("#saveNote").addEventListener("click",()=>{s.notiz=$("#noteArea").value;save();toast("Notiz gespeichert");_akteWechsel("routeDetail",id);});
+  $("#saveNote").addEventListener("click",()=>{clearTimeout(_notizTimer);s.notiz=$("#noteArea").value;save();toast("Notiz gespeichert");_akteWechsel("routeDetail",id);});
+  // A8: speichert beim Tippen (0,5 s nach der letzten Taste) und beim Verlassen des Felds – nichts geht beim Zurück verloren
+  const na=$("#noteArea"), jetzt=()=>{ clearTimeout(_notizTimer); _notizTimer=null; if(na.value!==(s.notiz||"")){ s.notiz=na.value; save(); } };
+  na.addEventListener("input",()=>{ clearTimeout(_notizTimer); _notizTimer=setTimeout(jetzt,500); });
+  na.addEventListener("blur",jetzt);
+  _notizSofort=jetzt;
   _akteKopf(id,"notizen");
 }
+/* A7: Formular und Ergebnis als eigene Seiten im Verlauf (Zurück führt eine Seite zurück, nicht zwei) */
+function routeSchuelerForm(id){ const s=id?DB.students.find(x=>x.id===id):null; if(id&&!s)return routeHome(); formView(s||null); }
+function routeErgebnis(id){ openResultFlow(id); }
 function formView(existing){
   const isEdit=!!existing;
   const s=existing||{name:"",form:"B",beginn:"",profil:null,next:"",nextDate:"",nextTime:"",telefon:""};
@@ -11386,7 +11485,7 @@ function formView(existing){
           <span class="co-dot" style="background:${p.hex}"></span>
           <span><span class="co-name">${p.word}</span><br><span class="co-sub">${COLOR_INFO[k].label}</span></span></button>`).join("")}</div></div>`;
   }
-  view.innerHTML=`<div class="view-inner view-read fade-up">
+  view.innerHTML=`<div class="view-inner view-read fade-up" data-entwurf>
     <div class="back-row"><button class="back-btn" id="backBtn">${ICN.back} Zurück</button></div>
     <div class="sec-h" style="margin-bottom:22px;">${isEdit?"Schüler <span class='o'>bearbeiten</span>":"Neuer <span class='o'>Schüler</span>"}</div>
     <div class="form-block">
@@ -11410,8 +11509,8 @@ function formView(existing){
         ${isEdit?"":`<button class="btn btn-ghost" id="cancelBtn">Abbrechen</button>`}</div>
     </div></div>`;
   let pick={form:s.form,profil:s.profil,planId:(DB.ausbildungsplaene.find(p=>p.standard)||DB.ausbildungsplaene[0]).id};
-  $("#backBtn").addEventListener("click",()=>isEdit?routeDetail(s.id):routeHome());
-  const cb=$("#cancelBtn");if(cb)cb.addEventListener("click",routeHome);
+  $("#backBtn").addEventListener("click",()=>{ if(_navStack.length>1)navZurueck(); else if(isEdit)routeDetail(s.id); else routeHome(); });
+  const cb=$("#cancelBtn");if(cb)cb.addEventListener("click",()=>{ if(_navStack.length>1)navZurueck(); else if(_seiteVerlassenOk())routeHome(); });
   document.querySelectorAll("#formPills .pill").forEach(b=>b.addEventListener("click",()=>{
     document.querySelectorAll("#formPills .pill").forEach(x=>x.classList.remove("sel"));
     b.classList.add("sel");pick.form=b.dataset.form;}));
@@ -11428,14 +11527,16 @@ function formView(existing){
     if(!name){toast("Bitte einen Namen eingeben");$("#f_name").focus();return;}
     const data={name,form:pick.form||"B",beginn:$("#f_beginn").value.trim(),telefon:$("#f_telefon").value.trim(),geburtsdatum:$("#f_geburtsdatum").value||"",email:$("#f_email").value.trim()};
     if(!hasBogen)data.profil=pick.profil||null;
-    if(isEdit){Object.assign(existing,data);save();toast("Gespeichert");routeDetail(existing.id);}
+    // Gespeichert: das Formular aus dem Verlauf nehmen – Zurück führt nicht wieder hinein (sonst Doppelanlage möglich)
+    const formRaus=()=>{ const o=_navStack[_navStack.length-1]; if(o&&o.name==="routeSchuelerForm")_navStack.pop(); };
+    if(isEdit){Object.assign(existing,data);save();toast("Gespeichert");formRaus();routeDetail(existing.id);}
     else{
       if(!_doppelterSchuelerOk(data.name,data.telefon))return;
       const chosenPlan=DB.ausbildungsplaene.find(p=>p.id===pick.planId)||DB.ausbildungsplaene.find(p=>p.standard)||DB.ausbildungsplaene[0];
       const nst={id:uid(),created:Date.now(),notiz:"",bogen:null,plan:newPlan(),profil:data.profil||null,
         planId:chosenPlan.id,planSnapshot:JSON.parse(JSON.stringify(chosenPlan.stufen)),...data};
       // A1: gleich zur Akte – das ausgefüllte Formular bleibt nicht stehen, ein zweites „Anlegen“ ist nicht möglich
-      DB.students.push(nst);save();routeDetail(nst.id);openBogenChoiceSheet(nst.id,nst.name,()=>{});}
+      DB.students.push(nst);save();formRaus();routeDetail(nst.id);openBogenChoiceSheet(nst.id,nst.name,()=>{});}
   });
 }
 /* ===== Akademie-Vermittlung: Beträge/Split-Konfiguration =====
@@ -11881,19 +11982,68 @@ function openBlockSheet(){
     if(!vonDatum){toast("Bitte ein Datum wählen");return;}
     if(bisDatum<vonDatum){toast("Bis-Datum liegt vor dem Von-Datum");return;}
     const grund=$("#blGrund").value.trim()||(typ==="urlaub"?"Urlaub":"Sonstiges");
-    let cur=vonDatum,guard=0,anzahl=0;
-    while(cur<=bisDatum&&guard++<370){
-      const l=addLesson({date:cur,von:"00:00",bis:"23:59",art:"block",sid:null});
-      l.name=grund; l.blockTyp=typ;
-      anzahl++;
-      cur=addDays(cur,1);
-    }
+    const anzahl=_blockAnlegen(vonDatum,bisDatum,grund,typ,uid());
     save(); closeSheet();
     toast((typ==="urlaub"?"Urlaub":"Zeit")+" für "+anzahl+" Tag"+(anzahl===1?"":"e")+" blockiert ✓");
     routeKalender();
   });
 }
 
+/* A13: Urlaub/Blocker als EIN Zeitraum. Je Tag ein Eintrag (Kalender, Büro), verbunden über blockGruppe.
+   Alte Einträge ohne Gruppe: aufeinanderfolgende Tage mit gleichem Grund gelten als ein Zeitraum. */
+function _blockAnlegen(von,bis,grund,typ,gruppe){
+  let cur=von,guard=0,n=0;
+  while(cur<=bis&&guard++<370){ const l=addLesson({date:cur,von:"00:00",bis:"23:59",art:"block",sid:null}); l.name=grund; l.blockTyp=typ; l.blockGruppe=gruppe; n++; cur=addDays(cur,1); }
+  return n;
+}
+function _istGanzerBlockTag(l){ return !!l&&l.art==="block"&&(l.von||"00:00")==="00:00"&&(l.bis||"23:59")==="23:59"&&!l.onlineBookingId; }
+function _blockZeitraum(l){
+  const alle=(DB.lessons||[]).filter(x=>_istGanzerBlockTag(x));
+  if(l.blockGruppe)return alle.filter(x=>x.blockGruppe===l.blockGruppe).sort((a,b)=>a.date<b.date?-1:1);
+  const gleich=x=>!x.blockGruppe&&(x.name||"")===(l.name||"")&&(x.blockTyp||"")===(l.blockTyp||"");
+  const amTag=d=>alle.find(x=>x.date===d&&gleich(x));
+  const out=[l]; let d=addDays(l.date,-1),g=0; while(g++<370){ const x=amTag(d); if(!x)break; out.unshift(x); d=addDays(d,-1); }
+  d=addDays(l.date,1); g=0; while(g++<370){ const x=amTag(d); if(!x)break; out.push(x); d=addDays(d,1); }
+  return out;
+}
+function openBlockEventSheet(l){
+  const tage=_blockZeitraum(l), von=tage[0].date, bis=tage[tage.length-1].date;
+  const icon=l.blockTyp==="urlaub"?"🏖️ ":"";
+  const titel=`${icon}${esc(l.name||"Blockiert")}`;
+  const zr=von===bis?isoDE(von):`${isoDE(von).slice(0,6)}–${isoDE(bis)}`;
+  openSheet(`<div class="sheet-h">${titel}</div>
+    <p class="muted-p" style="font-size:13.5px;margin:-4px 0 16px;">${zr} · ${tage.length} Tag${tage.length===1?"":"e"} blockiert</p>
+    <div class="es-actions">
+      <button class="es-act primary" id="blAendern">Zeitraum oder Grund ändern</button>
+      ${tage.length>1?`<button class="es-act" id="blTagWeg">Nur diesen Tag (${isoDE(l.date)}) löschen</button>`:""}
+      <button class="es-act danger" id="blAlleWeg" style="margin-top:10px;">${tage.length>1?`Ganzen Zeitraum löschen (${tage.length} Tage)`:"Löschen"}</button>
+    </div>`);
+  const nachher=()=>routeKalender();
+  $("#blAlleWeg").addEventListener("click",()=>{ closeSheet(); const weg=new Set(tage); const vorher=(DB.lessons||[]).slice();
+    DB.lessons=(DB.lessons||[]).filter(x=>!weg.has(x)); save(); nachher();
+    toastUndo(`${tage.length>1?tage.length+" Tage":"Eintrag"} gelöscht`,()=>{ tage.forEach(x=>{ delete x._syncedAt; if(!DB.lessons.includes(x))DB.lessons.push(x); }); save(); nachher(); toast("Wiederhergestellt ✓"); },6000); });
+  const tw=$("#blTagWeg"); if(tw)tw.addEventListener("click",()=>{ closeSheet(); _loeschenMitRueckgaengig(()=>DB.lessons,l,`${isoDE(l.date)} gelöscht`,nachher); });
+  $("#blAendern").addEventListener("click",()=>{
+    let typ=l.blockTyp==="urlaub"?"urlaub":"sonstiges";
+    openSheet(`<div class="sheet-h">Zeitraum ändern</div>
+      <div class="field"><label>Was?</label><div class="seg">
+        <button class="seg-i${typ==="urlaub"?" on":""}" data-bt="urlaub" type="button">🏖️ Urlaub</button>
+        <button class="seg-i${typ!=="urlaub"?" on":""}" data-bt="sonstiges" type="button">Sonstiges</button></div></div>
+      <div class="field"><label for="bzVon">Von (Datum)</label><input type="date" id="bzVon" value="${von}"></div>
+      <div class="field"><label for="bzBis">Bis (Datum)</label><input type="date" id="bzBis" value="${bis}"></div>
+      <div class="field"><label for="bzGrund">Grund</label><input type="text" id="bzGrund" value="${esc(l.name||"")}" autocomplete="off"></div>
+      <div class="btn-row"><button class="btn btn-primary" id="bzSpeichern" style="flex:1;">Speichern</button></div>`);
+    document.querySelectorAll("#sheet [data-bt]").forEach(b=>b.addEventListener("click",()=>{ typ=b.dataset.bt; document.querySelectorAll("#sheet [data-bt]").forEach(x=>x.classList.toggle("on",x===b)); }));
+    $("#bzSpeichern").addEventListener("click",()=>{
+      const v=$("#bzVon").value, b=$("#bzBis").value||v; if(!v){ toast("Bitte ein Datum wählen"); return; }
+      if(b<v){ toast("Bis-Datum liegt vor dem Von-Datum"); return; }
+      const grund=$("#bzGrund").value.trim()||(typ==="urlaub"?"Urlaub":"Sonstiges");
+      const weg=new Set(tage); DB.lessons=(DB.lessons||[]).filter(x=>!weg.has(x));
+      const n=_blockAnlegen(v,b,grund,typ,l.blockGruppe||uid());
+      save(); closeSheet(); toast(`Geändert: ${n} Tag${n===1?"":"e"} blockiert ✓`); nachher();
+    });
+  });
+}
 /* Fahrstunde/Theorie/Nacht hinzufügen */
 /* Gemeinsame Fahrzeug-Auswahl — von JEDEM Ort benutzt, der ein Fahrzeug braucht (keine eigenen Kopien mehr).
    onPick(fahrzeugNameOderNull) wird nach der Wahl aufgerufen. Ohne konfigurierte Fahrzeuge: sofort null. */
@@ -11945,7 +12095,7 @@ function openAddLessonSheet(art){
       <div class="btn-row"><button class="btn btn-ghost" id="alBack" style="flex:0;padding:13px 16px;">Zurück</button><button class="btn btn-primary" id="alSave">Eintragen</button></div>`);
     let dur=1;
     document.querySelectorAll(".dur-opt").forEach(b=>b.addEventListener("click",()=>{ dur=+b.dataset.dur; document.querySelectorAll(".dur-opt").forEach(x=>x.classList.toggle("on",x===b)); }));
-    $("#alBack").addEventListener("click",()=>openAddLessonSheet(art));
+    $("#alBack").addEventListener("click",()=>{ if(sheetZurueck(true)==="leer")openAddLessonSheet(art); });
     $("#alSave").addEventListener("click",()=>{
       const date=$("#alDate").value, von=$("#alTime").value, note=$("#alNote").value.trim();
       if(!date||!von){toast("Datum & Zeit wählen");return;}
@@ -11994,13 +12144,15 @@ function openEventSheet(kind,id,sid){
         <button class="es-act danger" id="esDelP">Termin löschen</button>
       </div>`);
     const ak=$("#esAkte"); if(ak)ak.addEventListener("click",()=>{ closeSheet(); routeDetail(sid); });
-    $("#esResult").addEventListener("click",()=>{ closeSheet(); openResultFlow(sid); });
+    $("#esResult").addEventListener("click",()=>{ closeSheet(); routeErgebnis(sid); });
     $("#esTime").addEventListener("click",()=>{ closeSheet(); openTerminEdit(id,routeKalender); });
     $("#esToPruef").addEventListener("click",()=>{ closeSheet(); routePruefungen(); });
-    $("#esDelP").addEventListener("click",()=>{ if(confirm("Prüfungstermin löschen? Die Einteilung wird aufgehoben.")){ DB.termine=DB.termine.filter(x=>x.id!==id); save(); closeSheet(); toast("Prüfungstermin gelöscht"); routeKalender(); } });
+    $("#esDelP").addEventListener("click",()=>{ if(confirm("Prüfungstermin löschen? Die Einteilung wird aufgehoben.")){ const t=DB.termine.find(x=>x.id===id); closeSheet(); if(t)_loeschenMitRueckgaengig(()=>DB.termine,t,"Prüfungstermin gelöscht",()=>routeKalender()); } });
     return;
   }
   const l=(DB.lessons||[]).find(x=>x.id===id); if(!l){ toast("Termin nicht gefunden"); return; }
+  // Ganztags-Urlaub/Blocker dieses Fahrlehrers als Zeitraum; Sperrzeiten mit Uhrzeit (Büro) oder aus Google/Online wie bisher
+  if(l.art==="block"&&_istGanzerBlockTag(l))return openBlockEventSheet(l);
   const st=DB.students.find(s=>s.id===l.sid);
   const artLab=(CAL_ARTEN[l.art]||CAL_ARTEN.fahrstunde).lab;
   const titelTermin=(l.art==="theorie"&&l.lektion)?("Lektion "+l.lektion):"Termin";
@@ -12045,7 +12197,7 @@ function openEventSheet(kind,id,sid){
   if($("#esCancel"))$("#esCancel").addEventListener("click",()=>{ l.status="abgebrochen"; save(); _notifyOnlineBookingChange(id,"cancelled"); closeSheet(); toast("Als abgebrochen vermerkt"); routeKalender(); });
   const gb=$("#esGift"); if(gb)gb.addEventListener("click",()=>openGiftTimeSheet(id,routeKalender));
   const rs=$("#esReset"); if(rs)rs.addEventListener("click",()=>{ l.status="geplant"; save(); closeSheet(); toast("Status zurückgesetzt"); routeKalender(); });
-  $("#esDelete").addEventListener("click",()=>{ if(confirm("Diesen Termin löschen?")){ deleteLesson(id); closeSheet(); toast("Termin gelöscht"); routeKalender(); } });
+  $("#esDelete").addEventListener("click",()=>{ closeSheet(); deleteLessonMitRueckgaengig(id,()=>routeKalender()); });
 }
 /* ===== Digitale Unterschrift für Fahrstundennachweis =====
    Master-Unterschrift wird einmal pro Schüler gespeichert (s.signature).
@@ -12252,9 +12404,11 @@ function openEventEdit(id,overrides){
   if(fzBtn)fzBtn.addEventListener("click",()=>{
     const snap={date:$("#esDate").value||cur.date,von:$("#esTime").value||cur.von,art:newArt,note:$("#esNote").value,fahrzeug:newFahrzeug};
     const st=DB.students.find(s=>s.id===l.sid);
-    openVehiclePicker({title:st?st.name:"",sub:`${isoDE(snap.date)} · ${snap.von}`},fzName=>{ snap.fahrzeug=fzName; openEventEdit(id,snap); });
+    openVehiclePicker({title:st?st.name:"",sub:`${isoDE(snap.date)} · ${snap.von}`},fzName=>{ snap.fahrzeug=fzName;
+      // Fahrzeug- und alte Bearbeiten-Ebene verlassen, Bearbeiten mit Fahrzeug neu öffnen (Zurück führt dann zum Termin)
+      sheetZurueck(true); if(_sheetEbene)_sheetEbene.geaendert=false; sheetZurueck(true); openEventEdit(id,snap); });
   });
-  $("#esBack").addEventListener("click",()=>openEventSheet("lesson",id,l.sid));
+  $("#esBack").addEventListener("click",()=>{ if(sheetZurueck(true)==="leer")openEventSheet("lesson",id,l.sid); });
   $("#esSave").addEventListener("click",()=>{
     const date=$("#esDate").value||cur.date; const von=$("#esTime").value||cur.von;
     // Bisherige Dauer behalten (45 Min, 3 Std, Theorie …); Standardlänge nur, wenn die Art wechselt.
@@ -12317,7 +12471,7 @@ function _doppelterSchuelerOk(name,tel){
   const treffer=(DB.students||[]).find(x=>!x.passed&&((x.name||"").trim().toLowerCase().replace(/\s+/g," ")===n||(t.length>=6&&nr(x.telefon)===t)));
   if(!treffer)return true;
   const gleich=(treffer.name||"").trim().toLowerCase().replace(/\s+/g," ")===n?"diesem Namen":"dieser Telefonnummer";
-  return confirm(`Es gibt schon einen Schüler mit ${gleich}: ${treffer.name}. Trotzdem neu anlegen?`);
+  return confirm(`Es gibt schon einen Schüler mit ${gleich}: ${treffer.name}${treffer.ausgeblendetAm?" (bei dir ausgeblendet – unter Mehr › Archiv › Ausgeblendet wieder einblendbar)":""}. Trotzdem neu anlegen?`);
 }
 function openQuickNewStudentSheet(onCreated){
   openSheet(`<div class="sheet-h">Neuer Schüler</div>
@@ -12410,7 +12564,7 @@ function todoListHTML(list,scope){
 function currentTodoList(){ if(_todoTab==="global")return DB.todos; const s=DB.students.find(x=>x.id===_todoStudent); return s?studentTodos(s):[]; }
 function bindTodoList(){
   document.querySelectorAll("[data-tcheck]").forEach(b=>b.addEventListener("click",()=>{ const list=currentTodoList(); const t=list.find(x=>x.id===b.dataset.tcheck); if(t){ t.done=!t.done; save(); routeTodos(); } }));
-  document.querySelectorAll("[data-tdel]").forEach(b=>b.addEventListener("click",()=>{ let list=currentTodoList(); const i=list.findIndex(x=>x.id===b.dataset.tdel); if(i>=0){ list.splice(i,1); save(); routeTodos(); } }));
+  document.querySelectorAll("[data-tdel]").forEach(b=>b.addEventListener("click",()=>{ const list=currentTodoList(); const t=list.find(x=>x.id===b.dataset.tdel); if(t)_loeschenMitRueckgaengig(()=>list,t,"Aufgabe gelöscht",()=>routeTodos()); }));
 }
 function openTodoAdd(){
   openSheet(`<div class="sheet-h">Neue Aufgabe</div>
@@ -12433,7 +12587,8 @@ function pausenListHTML(){
   const WD=["Mo","Di","Mi","Do","Fr","Sa","So"];
   return ps.map((p,i)=>`<div class="az-pause"><div class="azp-info"><span class="azp-days">${(p.days||[]).map(d=>WD[d]).join(" ")||"täglich"}</span><span class="azp-time">${p.von}–${p.bis}</span></div><button class="azp-del" data-pdel="${i}">✕</button></div>`).join("");
 }
-function bindPausenDelete(){ document.querySelectorAll("[data-pdel]").forEach(b=>b.addEventListener("click",()=>{ DB.workCfg.pausen.splice(+b.dataset.pdel,1); save(); const c=$("#azPausen"); if(c)c.innerHTML=pausenListHTML(); bindPausenDelete(); })); }
+function bindPausenDelete(){ document.querySelectorAll("[data-pdel]").forEach(b=>b.addEventListener("click",()=>{ const p=DB.workCfg.pausen[+b.dataset.pdel]; if(!p)return;
+  _loeschenMitRueckgaengig(()=>DB.workCfg.pausen,p,"Pause entfernt",()=>{ const c=$("#azPausen"); if(c){ c.innerHTML=pausenListHTML(); bindPausenDelete(); } }); })); }
 function openPauseSheet(){
   const WD=[["0","Mo"],["1","Di"],["2","Mi"],["3","Do"],["4","Fr"],["5","Sa"],["6","So"]];
   let sel=[0,1,2,3,4];
@@ -12459,8 +12614,7 @@ function fahrzeugListHTML(){
 }
 function bindFahrzeugDelete(){ document.querySelectorAll("[data-fzdel]").forEach(b=>b.addEventListener("click",()=>{
   const f=DB.workCfg.fahrzeuge[+b.dataset.fzdel]; if(!f)return;
-  if(!confirm(`${f.name} aus deiner Fahrzeugliste entfernen? Bestehende Termine behalten den Namen.`))return;
-  DB.workCfg.fahrzeuge.splice(+b.dataset.fzdel,1); save(); const c=$("#azFahrzeuge"); if(c)c.innerHTML=fahrzeugListHTML(); bindFahrzeugDelete(); })); }
+  _loeschenMitRueckgaengig(()=>DB.workCfg.fahrzeuge,f,`${f.name} entfernt`,()=>{ const c=$("#azFahrzeuge"); if(c){ c.innerHTML=fahrzeugListHTML(); bindFahrzeugDelete(); } }); })); }
 function routeArbeitszeit(){
   ensureDB(); const c=DB.workCfg;
   $("#tbTitle").textContent="Arbeitszeiten"; setFab(false); view.scrollTop=0;
@@ -12644,8 +12798,10 @@ function openCalFilterSheet(){
   };
   openSheet(render()); bind();
 }
-function routeKalender(){
+function routeKalender(ansicht,datum){
   ensureDB();
+  // A24: Ansicht und Tag stehen im Verlauf – Zurück führt von „Tag“ wieder zur Woche bzw. zum vorigen Zeitraum
+  if(ansicht)_calView=ansicht; if(datum)_calDate=datum;
   if(!_calDate)_calDate=todayISO();
   $("#tbTitle").textContent="Kalender"; setFab("termin"); view.scrollTop=0;
   const viewLabels={tag:"Tagesansicht",woche:"Wochenansicht",monat:"Monatsansicht"};
@@ -13306,6 +13462,39 @@ function updateLesson(id,patch){ const l=(DB.lessons||[]).find(x=>x.id===id); if
   // Den Schüler nur benachrichtigen, wenn sich Datum oder Uhrzeit wirklich ändern (nicht bei Notiz, Fahrzeug …).
   const zeit={}; ["date","von","bis"].forEach(k=>{ if(k in patch&&patch[k]&&patch[k]!==l[k])zeit[k]=patch[k]; });
   Object.assign(l,patch); save(); if(Object.keys(zeit).length) _notifyOnlineBookingChange(id,"changed",zeit); } return l; }
+// Nach „Rückgängig“ nur neu zeichnen, wenn der Nutzer noch auf derselben Seite ist – sonst die aktuelle Seite auffrischen
+function _undoNeuZeichnen(seite,neuZeichnen){
+  return ()=>{ try{ if(_navStack[_navStack.length-1]===seite){ if(neuZeichnen)neuZeichnen(); } else if(!sheetOffen()&&typeof refreshCurrentView==="function")refreshCurrentView(); }catch(e){} };
+}
+/* Paket 2 (A18): Löschen sofort ausführen, 6 s „Rückgängig“. Entfernt eintrag aus der Liste (holen() liefert sie,
+   weil DB.* neu zugewiesen werden kann) und setzt ihn bei Rückgängig an derselben Stelle wieder ein.
+   nachAblauf läuft nur, wenn nicht rückgängig gemacht wurde (z. B. Absage-Mail). */
+function _loeschenMitRueckgaengig(holen, eintrag, text, neuZeichnen, nachAblauf, beiRueckgaengig){
+  const a=holen(); const i=a.indexOf(eintrag); if(i<0)return;
+  a.splice(i,1); save(); try{ neuZeichnen&&neuZeichnen(); }catch(e){}
+  const seite=_navStack[_navStack.length-1]; const zeichne=_undoNeuZeichnen(seite,neuZeichnen);
+  let rueck=false;
+  toastUndo(text,()=>{ rueck=true; const b=holen(); const gleich=x=>x===eintrag||(eintrag&&eintrag.id&&x&&x.id===eintrag.id);
+    if(!b.some(gleich))b.splice(Math.min(i,b.length),0,eintrag);
+    // Ohne Merker gilt der Eintrag als „nicht abgeglichen“: der nächste Abruf entfernt ihn nicht, die Brücke lädt ihn wieder hoch
+    if(eintrag&&typeof eintrag==="object")delete eintrag._syncedAt;
+    try{ beiRueckgaengig&&beiRueckgaengig(); }catch(e){}
+    save(); zeichne(); toast("Wiederhergestellt ✓"); },6000);
+  if(nachAblauf)setTimeout(()=>{ if(!rueck)try{ nachAblauf(); }catch(e){} },6300);
+}
+// Termin löschen mit Rückgängig. Online gebuchte Termine: Absage geht sofort raus, darum dort Rückfrage statt Rückgängig.
+function deleteLessonMitRueckgaengig(id, neuZeichnen){
+  const l=(DB.lessons||[]).find(x=>x.id===id); if(!l)return false;
+  if(l.onlineBookingId){
+    if(!confirm("Termin löschen? Der Schüler hat online gebucht und bekommt sofort eine Absage."))return false;
+    deleteLesson(id); toast("Termin gelöscht"); try{ neuZeichnen&&neuZeichnen(); }catch(e){} return true;
+  }
+  let sonderAlt;
+  if(l.srcSonder){ const [sid,grp,idx]=l.srcSonder.split(":"); const st=DB.students.find(x=>x.id===sid); if(st&&st.plan&&st.plan.sonder&&st.plan.sonder[grp]){ sonderAlt=st.plan.sonder[grp][+idx]; st.plan.sonder[grp][+idx]=null; } }
+  _loeschenMitRueckgaengig(()=>DB.lessons||(DB.lessons=[]), l, "Termin gelöscht", neuZeichnen, null, ()=>{
+    if(l.srcSonder&&sonderAlt!==undefined){ const [sid,grp,idx]=l.srcSonder.split(":"); const st=DB.students.find(x=>x.id===sid); if(st&&st.plan&&st.plan.sonder&&st.plan.sonder[grp])st.plan.sonder[grp][+idx]=sonderAlt; } });
+  return true;
+}
 function deleteLesson(id){
   const l=(DB.lessons||[]).find(x=>x.id===id); if(!l)return;
   if(l.srcSonder){ const [sid,grp,idx]=l.srcSonder.split(":"); const s=DB.students.find(x=>x.id===sid); if(s&&s.plan&&s.plan.sonder&&s.plan.sonder[grp])s.plan.sonder[grp][+idx]=null; }
@@ -13436,7 +13625,32 @@ FAULTS.forEach(g=>g.items.forEach(([id,lab])=>{FAULT_LABEL[id]=lab;}));
 function todayISO(){const d=new Date();return d.getFullYear()+"-"+pad2(d.getMonth()+1)+"-"+pad2(d.getDate());}
 function isoDE(iso){ if(!iso)return ""; const p=(""+iso).slice(0,10).split("-"); return p.length===3?`${p[2]}.${p[1]}.${p[0].slice(2)}`:iso; }
 /* Archiv (Büro hat den Schüler auf „inaktiv“ gesetzt): überall ausgeblendet, Daten und alte Termine bleiben erhalten. */
-function istArchiviert(s){ const f=_schuelerFristen[s.id]; return !!(f&&f.inaktiv_seit); }
+function istArchiviert(s){ if(s&&s.ausgeblendetAm)return true; const f=_schuelerFristen[s.id]; return !!(f&&f.inaktiv_seit); }
+/* D1: „Löschen“ in der App blendet den Schüler nur bei diesem Fahrlehrer aus (Merker ausgeblendetAm, geht mit dem
+   Ausbildungsstand ans Büro). Das Büro behält Akte, Fristen und Notizen. Wieder einblenden: Archiv › Ausgeblendet. */
+function schuelerAusblenden(id){
+  const s=DB.students.find(x=>x.id===id); if(!s)return;
+  if(!confirm(`${s.name} bei dir ausblenden?\n\nDu siehst ${s.name.split(" ")[0]} dann nicht mehr in deinen Listen.${_authProfile&&_authProfile.fahrschule_id?" Die Fahrschule (Büro) behält den Schüler mit Akte, Fristen und Notizen.":""}\nWieder einblenden: Mehr › Archiv › Ausgeblendet.`))return;
+  const heute=todayISO(), _d=new Date(), jetzt=String(_d.getHours()).padStart(2,"0")+":"+String(_d.getMinutes()).padStart(2,"0");
+  const kuenftig=(DB.lessons||[]).filter(l=>l.sid===id&&(l.status||"geplant")==="geplant"&&(l.date>heute||(l.date===heute&&(l.von||"00:00")>jetzt)));
+  let abgesagt=[];
+  if(kuenftig.length&&confirm(`${kuenftig.length} künftige${kuenftig.length===1?"r Termin":" Termine"} von ${s.name.split(" ")[0]} auch absagen?\n\nOK = absagen · Abbrechen = im Kalender lassen`)){
+    abgesagt=kuenftig.slice();
+  }
+  const plaetze=[]; (DB.termine||[]).forEach(t=>(t.slots||[]).forEach((x,i)=>{ if(x===id)plaetze.push({t,i}); }));
+  s.ausgeblendetAm=new Date().toISOString(); logHist(s,"note","Bei mir ausgeblendet");
+  clearSlot(id); // Platz auf der Prüfungstafel freigeben
+  const online=abgesagt.filter(l=>l.onlineBookingId), ohne=abgesagt.filter(l=>!l.onlineBookingId);
+  online.forEach(l=>deleteLesson(l.id)); // Online-Buchungen: Absage geht sofort raus
+  DB.lessons=(DB.lessons||[]).filter(l=>!ohne.includes(l)); save(); routeHome();
+  toastUndo(`${s.name} ausgeblendet`+(abgesagt.length?` · ${abgesagt.length} Termin${abgesagt.length===1?"":"e"} abgesagt`:""),()=>{
+    delete s.ausgeblendetAm; logHist(s,"note","Wieder eingeblendet");
+    ohne.forEach(l=>{ delete l._syncedAt; if(!DB.lessons.some(x=>x.id===l.id))DB.lessons.push(l); });
+    plaetze.forEach(({t,i})=>{ if(t.slots&&!t.slots[i]&&(DB.termine||[]).includes(t))t.slots[i]=id; }); // nur den eigenen Platz zurück
+    save(); if(_navStack[_navStack.length-1]&&_navStack[_navStack.length-1].name==="routeHome")routeDetail(id); else if(!sheetOffen())refreshCurrentView(); toast("Wiederhergestellt ✓"+(online.length?` – ${online.length} online gebuchte Termin${online.length===1?"":"e"} bleiben abgesagt`:""));
+  },6000);
+}
+function schuelerEinblenden(id){ const s=DB.students.find(x=>x.id===id); if(!s)return; delete s.ausgeblendetAm; logHist(s,"note","Wieder eingeblendet"); save(); toast(`${s.name} ist wieder da ✓`); routeDetail(id); }
 function activeStudents(){return DB.students.filter(s=>!s.passed&&!istArchiviert(s));}
 /* Wartet auf Theorie oder Praxis und hat weder neue Fahrstunden noch Prüfungstermin: kommt in den Abschnitt „Wartet“
    (gleiche Regel wie in der Büro-Auslastung, siehe KR.wartetInfo in kompass-rechnen.js). */
@@ -13535,7 +13749,7 @@ function offerNextExam(date,excludeId){
     <p class="muted-p" style="font-size:13px;margin:-4px 0 12px;">Heute noch ${weitere.length} Prüfung${weitere.length===1?'':'en'} offen.</p>
     <div class="as-list">${weitere.map(st=>`<button class="as-item" data-nid="${st.id}"><span class="as-nm">${esc(st.name)}</span></button>`).join("")}</div>
     <div class="btn-row" style="margin-top:12px;"><button class="btn btn-ghost" id="neDone" style="flex:1;">Fertig für heute</button></div>`);
-  document.querySelectorAll("#sheet [data-nid]").forEach(b=>b.addEventListener("click",()=>{ closeSheet(); openResultFlow(b.dataset.nid); }));
+  document.querySelectorAll("#sheet [data-nid]").forEach(b=>b.addEventListener("click",()=>{ closeSheet(); routeErgebnis(b.dataset.nid); }));
   $("#neDone").addEventListener("click",closeSheet);
 }
 function undoExam(s,snap,after){
@@ -13585,8 +13799,8 @@ function openCalSearchSheet(){
   openSheet(`<div class="sheet-h">Schüler suchen</div>
     <div class="search-wrap" style="margin-bottom:10px;"><span class="search-ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="11" cy="11" r="7"/><path d="M21 21l-4.3-4.3"/></svg></span><input id="csInput" type="search" placeholder="Name eingeben …" autocomplete="off"></div>
     <div style="display:flex;gap:8px;margin-bottom:14px;">
-      <div class="field" style="flex:1;margin-bottom:0;"><label style="font-size:11px;">Von (optional)</label><input type="date" id="csVon"></div>
-      <div class="field" style="flex:1;margin-bottom:0;"><label style="font-size:11px;">Bis (optional)</label><input type="date" id="csBis"></div>
+      <div class="field" style="flex:1;margin-bottom:0;"><label style="font-size:11px;">Von (optional)</label><input type="date" id="csVon" data-kein-entwurf></div>
+      <div class="field" style="flex:1;margin-bottom:0;"><label style="font-size:11px;">Bis (optional)</label><input type="date" id="csBis" data-kein-entwurf></div>
     </div>
     <div id="csList"></div>`);
   const inp=$("#csInput"), list=$("#csList"), vonI=$("#csVon"), bisI=$("#csBis");
@@ -13639,17 +13853,79 @@ function showCalStudentDetail(sid){
   openSheet(`<div class="cs-stud-head"><button class="cs-back" id="csBack">← Zurück</button><div class="cs-stud-name">${esc(s.name)}</div></div>
     ${totalF?`<div class="cs-section-h future">Geplant · ${totalF}</div>${futureItems.map(i=>i.html).join("")}`:`<div class="cs-empty">Keine geplanten Termine</div>`}
     ${totalP?`<div class="cs-section-h past">Vergangene Termine · ${totalP}</div>${pastItems.map(i=>i.html).join("")}`:""}`);
-  $("#csBack").addEventListener("click",openCalSearchSheet);
+  $("#csBack").addEventListener("click",()=>{ if(sheetZurueck(true)==="leer")openCalSearchSheet(); });
   document.querySelectorAll(".cs-item[data-date]").forEach(b=>b.addEventListener("click",()=>{
     _calDate=b.dataset.date; _calView="tag"; closeSheet(); routeKalender();
   }));
 }
 function _zurueckSperreNachholen(){ if(window._zurueckOffen){ window._zurueckOffen=false; window._zurueckEnde=0; try{history.pushState(null,"",location.href);}catch(e){} } }
-function openSheet(html){ _zurueckSperreNachholen(); _sheetBeimSchliessen=null; $("#sheet").innerHTML=html; $("#sheet").classList.add("open"); $("#sheetScrim").classList.add("open"); }
+/* ===== Fenster-Stapel (Paket 2, 🗣 Serband: „Fenster schließen immer nur bis zur nächsten Seite“) =====
+   Öffnet ein Fenster ein weiteres (z. B. Termin → Bearbeiten, Fahrstunde → Fahrzeug), bleibt das vorige samt
+   Eingaben im Stapel. Zurück-Taste, ✕, Tippen daneben, Wischen und Esc schließen genau EINE Ebene (sheetZurueck).
+   Wurde seit dem Öffnen gespeichert, ist das vorige Fenster veraltet: dann kein Stapel (neues Fenster ersetzt).
+   closeSheet() aus dem Code heißt „fertig“ und schließt alle Ebenen ohne Rückfrage. */
+let _sheetStapel=[], _sheetEbene=null; var _saveZaehler=0; // var: save() kann vor dieser Zeile laufen
 // Ein Fenster kann einen Abschluss mitgeben, der beim Schließen auf jedem Weg läuft (Knopf, Zurück, Tippen daneben).
 let _sheetBeimSchliessen=null;
-function closeSheet(){ $("#sheet").classList.remove("open"); $("#sheetScrim").classList.remove("open");
+const _SHEET_KOPF=`<button class="sheet-x" type="button" aria-label="Fenster schließen">✕</button><div class="sheet-griff" aria-hidden="true"></div>`;
+function openSheet(html,opts){
+  _zurueckSperreNachholen();
+  const sh=$("#sheet"), offen=sh.classList.contains("open");
+  if(offen&&_sheetEbene&&!(opts&&opts.neu)&&_sheetEbene.saveGen===_saveZaehler&&sh.firstChild){
+    const frag=document.createDocumentFragment(); while(sh.firstChild)frag.appendChild(sh.firstChild);
+    _sheetStapel.push({frag,ebene:_sheetEbene,scroll:sh.scrollTop,hook:_sheetBeimSchliessen});
+    if(_sheetStapel.length>8)_sheetStapel.shift();
+  } else _sheetStapel=[];
+  _sheetBeimSchliessen=null;
+  _sheetEbene={saveGen:_saveZaehler,geaendert:false};
+  sh.innerHTML=_SHEET_KOPF+html; sh.scrollTop=0;
+  if(offen){ sh.classList.remove("sheet-wechsel"); void sh.offsetWidth; sh.classList.add("sheet-wechsel"); }
+  sh.classList.add("open"); $("#sheetScrim").classList.add("open");
+}
+function closeSheet(){ const sh=$("#sheet"); sh.classList.remove("open","sheet-wechsel"); sh.style.transform=""; $("#sheetScrim").classList.remove("open");
+  _sheetStapel=[]; _sheetEbene=null;
   const f=_sheetBeimSchliessen; _sheetBeimSchliessen=null; if(f){ try{ f(); }catch(e){ console.warn("[Kompass] Abschluss beim Schließen:",e.message); } } }
+function sheetOffen(){ return $("#sheet").classList.contains("open"); }
+/* Eine Ebene zurück (für Nutzer-Gesten). Rückgabe: "zurueck" (vorige Ebene gezeigt), "zu" (ganz geschlossen),
+   "bleibt" (Rückfrage abgelehnt), "leer" (nurEbene gesetzt und keine vorige Ebene – nichts getan). */
+function sheetZurueck(nurEbene){
+  const sh=$("#sheet"); if(!sh.classList.contains("open"))return "zu";
+  const vor=_sheetStapel[_sheetStapel.length-1];
+  const kannZurueck=!!vor&&vor.ebene.saveGen===_saveZaehler;
+  if(nurEbene&&!kannZurueck)return "leer";
+  if(_sheetEbene&&_sheetEbene.geaendert&&!confirm("Deine Eingaben in diesem Fenster sind noch nicht gespeichert. Verwerfen?"))return "bleibt";
+  if(!kannZurueck){ closeSheet(); return "zu"; }
+  _sheetStapel.pop();
+  const f=_sheetBeimSchliessen;
+  sh.innerHTML=""; sh.appendChild(vor.frag); sh.scrollTop=vor.scroll||0;
+  _sheetEbene=vor.ebene; _sheetBeimSchliessen=vor.hook;
+  sh.classList.remove("sheet-wechsel","sheet-wechsel-zurueck"); void sh.offsetWidth; sh.classList.add("sheet-wechsel-zurueck");
+  if(f){ try{ f(); }catch(e){ console.warn("[Kompass] Abschluss beim Schließen:",e.message); } }
+  return "zurueck";
+}
+(function sheetGesten(){
+  const sh=document.getElementById("sheet"); if(!sh)return;
+  // Eingaben merken (Suchfelder zählen nicht)
+  const zaehlt=t=>t&&/^(INPUT|TEXTAREA|SELECT)$/.test(t.tagName)&&t.type!=="search"&&!/such|search|filter/i.test((t.id||"")+" "+(t.className||"")+" "+(t.placeholder||""))&&!t.closest("[data-kein-entwurf]")&&!t.hasAttribute("data-kein-entwurf");
+  const merk=e=>{ if(_sheetEbene&&zaehlt(e.target))_sheetEbene.geaendert=true; };
+  sh.addEventListener("input",merk); sh.addEventListener("change",merk);
+  sh.addEventListener("click",e=>{ if(e.target.closest(".sheet-x"))sheetZurueck(); });
+  // Wischen nach unten am oberen Rand (Griff/Kopf) schließt eine Ebene
+  let y0=null, dy=0, t0=0;
+  sh.addEventListener("touchstart",e=>{ if(!sh.classList.contains("open")||e.touches.length!==1)return;
+    const r=sh.getBoundingClientRect(), y=e.touches[0].clientY;
+    if(sh.scrollTop>0||y-r.top>64||/^(INPUT|TEXTAREA|SELECT|CANVAS)$/.test(e.target.tagName)){ y0=null; return; }
+    y0=y; dy=0; t0=Date.now(); },{passive:true});
+  sh.addEventListener("touchmove",e=>{ if(y0==null)return; dy=Math.max(0,e.touches[0].clientY-y0);
+    if(dy>4){ sh.style.transition="none"; sh.style.transform=`translateY(${dy}px)`; } },{passive:true});
+  const ende=()=>{ if(y0==null)return; y0=null; sh.style.transition=""; sh.style.transform="";
+    const schnell=dy>40&&(Date.now()-t0)<250; if(dy>80||schnell)sheetZurueck(); };
+  sh.addEventListener("touchend",ende); sh.addEventListener("touchcancel",ende);
+  // Esc (Tablet/PC mit Tastatur)
+  document.addEventListener("keydown",e=>{ if(e.key!=="Escape")return;
+    if(sh.classList.contains("open")){ e.preventDefault(); sheetZurueck(); return; }
+    const dr=document.getElementById("drawer"); if(dr&&dr.classList.contains("open")){ try{closeDrawer();}catch(x){} } });
+})();
 
 /* ---------- geteilte Bausteine: Prüfungsreif + Simulator ---------- */
 function examReadyCard(s){
@@ -13843,7 +14119,7 @@ function renderResultStep(s){
       </div>
       <p class="rf-hint" id="prHint" style="display:none;">Bitte zuerst den Prüfer auswählen.</p>
       </div>`;
-    $("#backBtn").addEventListener("click",routePruefungen);
+    $("#backBtn").addEventListener("click",()=>{ if(_navStack.length>1)navZurueck(); else routePruefungen(); });
     document.querySelectorAll("#prWrap .pr-chip[data-pr]").forEach(c=>c.addEventListener("click",()=>{ _examPr=(_examPr===c.dataset.pr)?null:c.dataset.pr; document.querySelectorAll("#prWrap .pr-chip[data-pr]").forEach(x=>x.classList.toggle("on",x.dataset.pr===_examPr)); const h=$("#prHint"); if(h&&_examPr)h.style.display="none"; const pi=$("#prInfo"); if(pi)pi.innerHTML=prueferHintHTML(_examPr); }));
     $("#prAdd").addEventListener("click",()=>{ const name=(prompt("Name des Prüfers")||"").trim(); if(!name)return; if(!DB.pruefer.includes(name)){DB.pruefer.push(name);DB.pruefer.sort((a,b)=>a.localeCompare(b,'de'));save();} _examPr=name; renderResultStep(s); });
     const needPr=()=>{ if(!_examPr){ const h=$("#prHint"); if(h)h.style.display="block"; const w=$("#prWrap"); if(w){w.classList.remove("shake");void w.offsetWidth;w.classList.add("shake");} return false; } return true; };
@@ -13854,7 +14130,7 @@ function renderResultStep(s){
   // Schritt 3: Details (bei Bestanden nur Notiz, bei Durchfall Fehler+Eingriff)
   const defDate=t?t.date:todayISO();
   const pass=_examChoice==='pass';
-  view.innerHTML=`<div class="view-inner view-read fade-up">
+  view.innerHTML=`<div class="view-inner view-read fade-up" data-entwurf>
     <div class="back-row"><button class="back-btn" id="backBtn">${ICN.back} Zurück</button></div>
     <div class="sec-h" style="margin:4px 0 6px;">${pass?'<span class="o">Bestanden</span>':'Nicht <span class="o">bestanden</span>'}</div>
     <p style="color:var(--muted);font-size:13.5px;margin-bottom:16px;">${esc(s.name)} · Prüfer: <b style="color:var(--txt)">${esc(_examPr)}</b></p>
@@ -13874,6 +14150,7 @@ function renderResultStep(s){
       <button class="btn btn-primary" id="saveExam">${pass?'Als bestanden eintragen':'Als nicht bestanden eintragen'}</button>
     </div></div>`;
   $("#backBtn").addEventListener("click",()=>{_examChoice=null;renderResultStep(s);});
+  _seiteZurueckFn=()=>{ _examChoice=null; renderResultStep(s); return true; }; // Android-Zurück: erst zu Schritt 1
   if(!pass){
     document.querySelectorAll("#faultAcc .facc-h").forEach(h=>h.addEventListener("click",()=>h.parentElement.classList.toggle("open")));
     document.querySelectorAll("#faultAcc .f-chip").forEach(c=>c.addEventListener("click",()=>{ const f=c.dataset.f; const i=_examFaults.indexOf(f); if(i>=0)_examFaults.splice(i,1);else _examFaults.push(f); c.classList.toggle("on",i<0);
@@ -13917,7 +14194,7 @@ function renderPassedEdit(s){
   let curPr=(ex?ex.pruefer:s.passedPruefer)||"";
   const curStrecke=(ex?ex.note:s.passedStrecke)||"";
   const chips=()=>DB.pruefer.map(p=>`<button class="pr-chip${p===curPr?' on':''}" data-pr="${esc(p)}">${esc(p)}</button>`).join("")+`<button class="pr-chip add" id="prAdd">+ Neuer Prüfer</button>`;
-  view.innerHTML=`<div class="view-inner view-read fade-up">
+  view.innerHTML=`<div class="view-inner view-read fade-up" data-entwurf>
     <div class="back-row"><button class="back-btn" id="backBtn">${ICN.back} ${esc(s.name)}</button></div>
     <div class="sec-h" style="margin:4px 0 6px;"><span class="o">Bestanden</span></div>
     <p class="muted-p" style="font-size:13px;margin-bottom:16px;">Bestehens-Daten von ${esc(s.name)}</p>
@@ -14093,10 +14370,10 @@ function routePruefungen(){
   $("#openPruefWoche").addEventListener("click",routePruefungenWoche);
   $("#openPruefer").addEventListener("click",routePrueferListe);
   document.querySelectorAll(".wait-card").forEach(c=>c.addEventListener("click",()=>routeDetail(c.dataset.id)));
-  document.querySelectorAll(".tb-del").forEach(b=>b.addEventListener("click",()=>{ if(confirm("Termin löschen? Die Einteilung wird aufgehoben.")){ DB.termine=DB.termine.filter(x=>x.id!==b.dataset.del); save(); routePruefungen(); } }));
+  document.querySelectorAll(".tb-del").forEach(b=>b.addEventListener("click",()=>{ if(confirm("Termin löschen? Die Einteilung wird aufgehoben.")){ const t=DB.termine.find(x=>x.id===b.dataset.del); if(t)_loeschenMitRueckgaengig(()=>DB.termine,t,"Prüfungstermin gelöscht",()=>routePruefungen()); } }));
   document.querySelectorAll(".tb-edit").forEach(b=>b.addEventListener("click",()=>openTerminEdit(b.dataset.tedit)));
   document.querySelectorAll(".slot-x").forEach(b=>b.addEventListener("click",e=>{ e.stopPropagation(); const t=DB.termine.find(x=>x.id===b.dataset.tid); if(t){ t.slots[+b.dataset.slot]=null; save(); routePruefungen(); } }));
-  document.querySelectorAll(".slot-result").forEach(b=>b.addEventListener("click",e=>{ e.stopPropagation(); openResultFlow(b.dataset.result); }));
+  document.querySelectorAll(".slot-result").forEach(b=>b.addEventListener("click",e=>{ e.stopPropagation(); routeErgebnis(b.dataset.result); }));
   document.querySelectorAll(".slot.free").forEach(sl=>sl.addEventListener("click",()=>openSlotSheet(sl.dataset.tid,+sl.dataset.slot)));
 }
 // Serien-Ansicht 'Alle Prüfungen diese Woche' (Bereich 7, Punkt 7): kompakter Überblick für die
@@ -14186,7 +14463,7 @@ function openTerminEdit(tid,retFn){
     t.date=d; t.von=von; t.bis=min2hm(hm2min(von)+lang);
     save(); closeSheet(); toast("Termin aktualisiert ✓"); retFn();
   });
-  $("#teDel").addEventListener("click",()=>{ if(confirm("Termin löschen? Die Einteilung wird aufgehoben.")){ DB.termine=DB.termine.filter(x=>x.id!==tid); save(); closeSheet(); toast("Termin gelöscht"); retFn(); } });
+  $("#teDel").addEventListener("click",()=>{ if(confirm("Termin löschen? Die Einteilung wird aufgehoben.")){ const t=DB.termine.find(x=>x.id===tid); closeSheet(); if(t)_loeschenMitRueckgaengig(()=>DB.termine,t,"Prüfungstermin gelöscht",()=>retFn()); } });
 }
 function openSlotSheet(tid,slot){
   const taken=assignedSet();
@@ -14322,7 +14599,7 @@ function openFCMenu(id){
     <p class="muted-p" style="font-size:12.5px;margin:-6px 0 14px;color:var(--faint);">Standard ist „2 FC erhalten“ – hier nur Ausnahmen vermerken.</p>
     <div class="es-actions">${acts}</div>`);
   document.querySelectorAll("[data-fcset]").forEach(b=>b.addEventListener("click",()=>{ closeSheet(); setFC(id,b.dataset.fcset); }));
-  document.querySelectorAll("[data-fcdel]").forEach(b=>b.addEventListener("click",()=>{ if(!confirm("Termin wirklich löschen? Ein online gebuchter Schüler bekommt eine Absage."))return; deleteLesson(b.dataset.fcdel); closeSheet(); toast("Termin gelöscht"); refreshCurrentView(); }));
+  document.querySelectorAll("[data-fcdel]").forEach(b=>b.addEventListener("click",()=>{ closeSheet(); deleteLessonMitRueckgaengig(b.dataset.fcdel,()=>refreshCurrentView()); }));
 }
 
 /* Übersicht „FC vergessen“ – welche Schüler, wie oft, wie viel Geld entgeht */
@@ -14974,6 +15251,7 @@ function _h2KachelnHTML(){
   if(sichtbar('dash_wocheverdienst')){
     const zeigen=_verdienstPinCheck();
     k.push(ohneVertrag?`<button class="h2-kachel" data-k="woche"><span class="h2-k-l">Verdienst</span><span class="h2-k-w" style="color:var(--gold,#b8873a);">Vertrag fehlt</span><span class="h2-k-s">Tippen zum Eintragen</span></button>`
+      :!(+(DB.verdienst||{}).proUE>0)?(()=>{ const wk=_wocheVonBis(); return `<button class="h2-kachel" data-k="woche"><span class="h2-k-l">Diese Woche gefahren</span><span class="h2-k-w">${fmtUE(ueRange(wk.von,wk.bis).fcDone)} UE</span><span class="h2-k-s">Festgehalt</span></button>`; })() // nur Fixum: Euro je Woche gibt es nicht
       :`<button class="h2-kachel" data-k="woche"><span class="h2-k-l">Diese Woche verdient</span><span class="h2-k-w">${zeigen?wocheVerdientEuro().toLocaleString("de-DE")+" €":"••••"}</span></button>`);
   }
   const v=DB.verdienst||{}, bonusUE=v.bonusUE||250;
@@ -15618,7 +15896,7 @@ function routeStats(period){
   view.innerHTML=`<div class="view-inner view-read fade-up">
     <div class="row-between" style="margin-bottom:14px;"><div class="sec-h">Stat<span class="o">istik</span></div></div>
     <div id="vdModWrap">${verdienstModulHTML()}</div>
-    <div class="res-block" style="animation:none;margin-top:10px;"><div id="vdYearWrap">${jahresRueckblickHTML()}</div></div>
+    ${_vertragFehlt()?"":`<div class="res-block" style="animation:none;margin-top:10px;"><div id="vdYearWrap">${jahresRueckblickHTML()}</div></div>`}
     ${periodChips(period)}
     <div class="stat-grid4" style="margin-bottom:18px;">
       ${miniStatAnim("Quote",q.pct==null?"–":q.pct,"%",q.total?q.pass+"/"+q.total+" bestanden":"keine Prüfung")}
@@ -15875,10 +16153,10 @@ function renderRouteSheet(nm){
 let _archFormFilter=[], _archColorFilter=[];
 function routeArchive(){
   $("#tbTitle").textContent="Archiv"; setFab(false); view.scrollTop=0;
-  let list=DB.students.filter(s=>s.passed).sort((a,b)=>(a.name||"").localeCompare(b.name||"","de"));
+  let list=DB.students.filter(s=>s.passed&&!s.ausgeblendetAm).sort((a,b)=>(a.name||"").localeCompare(b.name||"","de"));
   if(_archFormFilter.length) list=list.filter(s=>_archFormFilter.includes(s.form||"B"));
   if(_archColorFilter.length) list=list.filter(s=>_archColorFilter.includes(s.profil));
-  const alle=DB.students.filter(s=>s.passed);
+  const alle=DB.students.filter(s=>s.passed&&!s.ausgeblendetAm);
   const formChips=FORMS.map(f=>`<button class="pday${_archFormFilter.includes(f)?' on':''}" data-archform="${f}" style="width:auto;padding:0 12px;">${formLabel(f)}</button>`).join("");
   const colorChips=["rot","gelb","gruen","blau"].map(c=>`<button class="pday${_archColorFilter.includes(c)?' on':''}" data-archcolor="${c}" style="width:auto;padding:0 12px;"><span class="pc-dot" style="background:${PROFILE[c].hex};display:inline-block;width:8px;height:8px;border-radius:50%;margin-right:5px;"></span>${PROFILE[c].word}</button>`).join("");
   const letters=[...new Set(list.map(s=>(s.name||"?")[0].toUpperCase()))].sort((a,b)=>a.localeCompare(b,"de"));
@@ -15901,10 +16179,22 @@ function routeArchive(){
     <div class="pause-days" style="margin:0 0 12px;">${colorChips}</div>
     ${(_archFormFilter.length||_archColorFilter.length)?`<button class="btn btn-ghost" id="archFilterReset" style="width:100%;margin-bottom:10px;">Filter zurücksetzen</button>`:''}
     <div id="archGrid">${gridHTML}</div>
+    ${(()=>{ const weg=DB.students.filter(x=>x.ausgeblendetAm).sort((a,b)=>(a.name||"").localeCompare(b.name||"","de")); if(!weg.length)return "";
+      return `<div class="sec-h" style="margin:26px 0 6px;font-size:20px;">Ausgeblendet</div>
+      <p class="muted-p" style="font-size:13px;margin-bottom:10px;">Bei dir ausgeblendet${_authProfile&&_authProfile.fahrschule_id?", im Büro weiter vorhanden":""}.</p>
+      ${weg.map(x=>`<div class="wait-card" style="cursor:default;display:block;"><div class="wait-body"><div class="wait-name">${esc(x.name)}</div><div class="wait-since">ausgeblendet am ${isoDE(x.ausgeblendetAm)}</div></div>
+        <div style="display:flex;gap:8px;margin-top:10px;"><button class="btn btn-primary" data-einblenden="${esc(x.id)}" style="flex:1;min-height:44px;">Einblenden</button>
+        ${_authProfile&&_authProfile.fahrschule_id?"":`<button class="btn btn-danger" data-endgueltig="${esc(x.id)}" style="flex:1;min-height:44px;">Endgültig löschen</button>`}</div></div>`).join("")}`; })()}
     <div class="no-hit" id="archNoHit" style="display:none;">Keine Treffer.</div>
   </div>
   <div style="position:fixed;right:6px;top:50%;transform:translateY(-50%);z-index:30;display:flex;flex-direction:column;align-items:center;background:var(--surface);border-radius:12px;padding:4px 3px;box-shadow:var(--elev-2);${list.length?'':'display:none;'}" id="archAlphaNav">${letterNav}</div>`;
-  document.querySelectorAll(".wait-card").forEach(c=>c.addEventListener("click",()=>routeDetail(c.dataset.id)));
+  document.querySelectorAll(".wait-card[data-id]").forEach(c=>c.addEventListener("click",()=>routeDetail(c.dataset.id)));
+  document.querySelectorAll("[data-einblenden]").forEach(b=>b.addEventListener("click",()=>schuelerEinblenden(b.dataset.einblenden)));
+  // Ohne Fahrschule (kein Büro): endgültig löschen möglich, Termine und Prüfungen bleiben mit Namen im Kalender
+  document.querySelectorAll("[data-endgueltig]").forEach(b=>b.addEventListener("click",()=>{ const x=DB.students.find(y=>y.id===b.dataset.endgueltig); if(!x)return;
+    if(!confirm(`${x.name} endgültig löschen? Termine und Prüfungen bleiben mit Namen im Kalender.`))return;
+    (DB.lessons||[]).forEach(l=>{ if(l.sid===x.id&&!l.name)l.name=x.name; }); (DB.exams||[]).forEach(ex=>{ if(ex.sid===x.id&&!ex.name)ex.name=x.name; });
+    _loeschenMitRueckgaengig(()=>DB.students,x,`${x.name} gelöscht`,()=>routeArchive()); }));
   document.querySelectorAll("[data-archform]").forEach(b=>b.addEventListener("click",()=>{
     const f=b.dataset.archform; const i=_archFormFilter.indexOf(f);
     if(i>=0)_archFormFilter.splice(i,1); else _archFormFilter.push(f);
@@ -16577,8 +16867,22 @@ function _wizZurueck(){
     if(_navStack.length>1&&_navStack[_navStack.length-1].name==="routeBogen"&&_navStack[_navStack.length-2].name==="routeDetail"){ _navStack.pop(); _navFahrt=true; try{ routeDetail(id); } finally{ _navFahrt=false; } _navAktualisiereKnopf(); } else routeDetail(id); }
   return true;
 }
+/* Seiten mit Formular (data-entwurf): Eingaben merken; Zurück und Reiterleiste fragen vor dem Verwerfen.
+   _seiteZurueckFn: eine Seite mit Unterschritten führt Zurück erst einen Schritt zurück. Beides setzt jede route* zurück. */
+let _seiteGeaendert=false, _seiteZurueckFn=null;
+function _seiteVerlassenOk(){
+  if(!_seiteGeaendert||!document.querySelector("#view [data-entwurf]"))return true;
+  if(!confirm("Deine Eingaben auf dieser Seite sind noch nicht gespeichert. Verwerfen?"))return false;
+  _seiteGeaendert=false; return true;
+}
+(function(){ const v=document.getElementById("view"); if(!v)return;
+  const merk=e=>{ const t=e.target; if(!t||!/^(INPUT|TEXTAREA|SELECT)$/.test(t.tagName)||t.type==="search"||/such|search|filter/i.test((t.id||"")+" "+(t.placeholder||"")))return;
+    if(t.closest("[data-entwurf]"))_seiteGeaendert=true; };
+  v.addEventListener("input",merk); v.addEventListener("change",merk); })();
 function navZurueck(){
   if(_wizZurueck())return;
+  if(_seiteZurueckFn){ const f=_seiteZurueckFn; _seiteZurueckFn=null; if(f())return; }
+  if(!_seiteVerlassenOk())return;
   if(_navStack.length<2)return;
   _navStack.pop();
   const ziel=_navStack[_navStack.length-1];
@@ -16616,7 +16920,9 @@ function _seite2Markieren(name){
     .forEach(name=>{
       const orig=window[name];
       window[name]=function(){
-        const args=Array.prototype.slice.call(arguments);
+        let args=Array.prototype.slice.call(arguments);
+        // Kalender ohne Angaben: den Zustand (Ansicht, Tag) merken, damit Zurück genau dorthin führt
+        if(name==="routeKalender"&&!args.length)args=[_calView,_calDate||todayISO()];
         if(!_navFahrt){
           _zurueckSperreNachholen();
           const letzte=_navStack[_navStack.length-1];
@@ -16628,7 +16934,9 @@ function _seite2Markieren(name){
           else{ _navStack.push({name,fn:orig,args}); if(_navStack.length>_NAV_MAX)_navStack.shift(); }
         }
         const vorher=_seite2Zaehler;
-        const r=orig.apply(this,arguments);
+        if(_notizSofort){ const f=_notizSofort; _notizSofort=null; try{ f(); }catch(e){} }
+        _seiteGeaendert=false; _seiteZurueckFn=null;
+        const r=orig.apply(this,name==="routeKalender"?args:arguments);
         // Hat die Seite intern auf eine andere Seite umgeleitet (z. B. Akte ohne Schüler → Liste), gilt deren Merkmal
         if(_seite2Zaehler===vorher)_seite2Markieren(name);
         _navAktualisiereKnopf();
@@ -16643,7 +16951,7 @@ function _seite2Markieren(name){
     const sperre=()=>{ window._zurueckEnde=0; window._zurueckOffen=false; try{history.pushState(null,"",location.href);}catch(e){} };
     const sh=document.getElementById("sheet"), dr=document.getElementById("drawer"), ap=document.getElementById("adminPanel"), ff=document.getElementById("fsFilterDrawer");
     if(document.getElementById("bueroNotizPopup")){ sperre(); return; } // Büro-Nachricht muss bewusst bestätigt werden
-    if(sh&&sh.classList.contains("open")){ closeSheet(); sperre(); return; }
+    if(sh&&sh.classList.contains("open")){ sheetZurueck(); sperre(); return; } // genau eine Fenster-Ebene
     if(ap&&ap.classList.contains("open")){ try{closeAdminPanel();}catch(e){} sperre(); return; }
     if(ff&&ff.classList.contains("open")){ try{_fsCloseFilterPanel();}catch(e){} sperre(); return; }
     if(typeof DRAW!=="undefined"&&DRAW&&DRAW.drawerOpen){ try{closeTafelDrawer();}catch(e){} sperre(); return; }

@@ -72,6 +72,46 @@ function toast(text, fehler = false) {
     m.textContent = text;
   }
 }
+/* ---------- Rückgängig-Hinweis (einheitlich für alles, was man versehentlich antippen kann) ----------
+   toastUndo(text, rueckgaengig, { ms, nachAblauf }): zeigt den Hinweis mit dem Knopf „Rückgängig“.
+   - Knopf: rueckgaengig() läuft, nachAblauf() läuft NICHT.
+   - Zeit um (Standard 6 s), neuer Rückgängig-Hinweis oder Seite wird verlassen: nachAblauf() läuft (z. B. die Absage-Mail).
+   Der Hinweis hängt im obersten offenen Fenster (sonst läge er unter dem Fenster) und zieht beim Schließen um. */
+const UNDO = { offen: null };
+function undoPlatzieren() {
+  const u = UNDO.offen;
+  if (!u) return;
+  const ziel = [...document.querySelectorAll("dialog[open]")].pop() || document.body;
+  if (u.el.parentNode !== ziel) ziel.appendChild(u.el);
+}
+function undoAblaufen(ev) {
+  const keepalive = !!(ev && ev.type === "pagehide");
+  const u = UNDO.offen;
+  if (!u) return;
+  UNDO.offen = null;
+  clearTimeout(u.timer);
+  u.el.remove();
+  if (u.nachAblauf) { try { const r = u.nachAblauf(keepalive); if (r && r.catch) r.catch(() => {}); } catch (e) { /* Zusatz, die Änderung selbst ist gespeichert */ } }
+}
+function toastUndo(text, rueckgaengig, optionen) {
+  const o = optionen || {};
+  undoAblaufen(); // ein früherer Hinweis ist damit endgültig
+  const el = document.createElement("div");
+  el.className = "toast toast-undo zeigen";
+  el.setAttribute("role", "status");
+  el.innerHTML = `<span class="toast-text"></span><button type="button" class="toast-knopf" data-undo>Rückgängig</button>`;
+  el.querySelector(".toast-text").textContent = text;
+  const u = UNDO.offen = { el, ids: o.ids || null, nachAblauf: o.nachAblauf || null, timer: setTimeout(undoAblaufen, o.ms || 6000) };
+  el.querySelector("[data-undo]").addEventListener("click", async (e) => {
+    if (UNDO.offen !== u) return;
+    e.target.disabled = true;
+    UNDO.offen = null; clearTimeout(u.timer); el.remove();
+    try { await rueckgaengig(); } catch (err) { toast("Rückgängig ging nicht: " + (err && err.message ? err.message : "Fehler"), true); }
+  });
+  undoPlatzieren();
+  return u;
+}
+window.addEventListener("pagehide", undoAblaufen); // die Absage-Mail wird dabei mit keepalive versucht, sonst holt sie der nächste Start nach
 function setStatus(art, text) {
   const s = $("status");
   s.classList.remove("ok", "warn", "fehler");
@@ -161,7 +201,7 @@ function zeichne() {
 }
 window.addEventListener("hashchange", () => {
   // Zurück-Taste (oder Link) wechselt die Seite: offene Fenster ohne Eingaben schließen, damit nichts über der falschen Seite stehen bleibt
-  document.querySelectorAll("dialog[open]").forEach((d) => { if (!d.dataset.festhalten && !d.dataset.geaendert) d.close(); });
+  document.querySelectorAll("dialog[open]").forEach((d) => { if (!d.dataset.festhalten && !hatEingabe(d)) { d._verlauf = false; d.close(); } });
   const g = aktuellerBereich().gruppe;
   if (navZu().includes(g)) setzeNavZu(navZu().filter((x) => x !== g));
   zeichne(); $("ansicht").focus({ preventScroll: true }); window.scrollTo(0, 0);
@@ -982,7 +1022,10 @@ async function insArchiv(sid) {
   const s = S.schueler.find((x) => x.id === sid);
   if (!s || !istAktiv(s)) return;
   if (await bestaetige(`${s.name} ins Archiv legen?`, "Der Schüler hat bestanden. Archivierte Schüler stehen im Reiter „Archiv“, sind überall ausgeblendet und zählen nicht mehr bei Fristen, Reaktivierung und Auslastung. Du kannst das jederzeit rückgängig machen.", "Ja, ins Archiv")) {
-    await speichereSchueler(s.id, { inaktiv_seit: KR.todayISO() }, `${s.name} liegt jetzt im Archiv.`);
+    const absagen = await frageKuenftigeTermine(s);
+    if (absagen === null) return;
+    if (!(await speichereSchueler(s.id, { inaktiv_seit: KR.todayISO() }, `${s.name} liegt jetzt im Archiv.`)) || !absagen.length) return;
+    await sageTermineAb(absagen, `${s.name} liegt im Archiv, ${absagen.length === 1 ? "1 Termin" : absagen.length + " Termine"} abgesagt`);
   }
 }
 // Akte: alle Prüfungen des Schülers (Tafel und App), gleicher Tag und gleiche Art nur einmal
@@ -1156,7 +1199,7 @@ function renderSchueler() {
     const b197 = x.klasse === "B197";
     const testfahrt = b197 ? (x.b197_testfahrt_am ? `<span class="marke-pill gruen">Testfahrt ✓ ${esc(datumDE(x.b197_testfahrt_am).slice(0, 6))}</span>` : `<span class="marke-pill gelb">Testfahrt offen</span>`) : "";
     return `<tr${istAktiv(x) ? "" : ' class="inaktivzeile"'}>
-      <td><div class="name-zeile">${farbPunkt(a)}<b>${esc(x.name)}</b></div><div class="unter">${istAktiv(x) ? "" : `im Archiv seit ${esc(datumDE(x.inaktiv_seit))} · `}${wartetArt(x) ? `<span class="marke-pill gelb">${esc(WARTE_TEXT[wartetArt(x)])}</span> ` : ""}${esc(x.telefon || "")}${x.email ? " · " + esc(x.email) : ""}</div><div class="unter nur-unter">${esc(klasseVon(x))} · ${esc(artName(x.ausbildungsart))}${x.paket_id ? " · " + esc(paketName(x.paket_id)) : ""}</div></td>
+      <td><div class="name-zeile">${farbPunkt(a)}<b>${esc(x.name)}</b></div><div class="unter">${istAktiv(x) ? "" : `im Archiv seit ${esc(datumDE(x.inaktiv_seit))} · `}${ausgeblendetAm(x) ? `<span class="hinweis-ausgeblendet-klein">vom Fahrlehrer ausgeblendet am ${esc(datumDE(ausgeblendetAm(x).slice(0, 10)))}</span> · ` : ""}${wartetArt(x) ? `<span class="marke-pill gelb">${esc(WARTE_TEXT[wartetArt(x)])}</span> ` : ""}${esc(x.telefon || "")}${x.email ? " · " + esc(x.email) : ""}</div><div class="unter nur-unter">${esc(klasseVon(x))} · ${esc(artName(x.ausbildungsart))}${x.paket_id ? " · " + esc(paketName(x.paket_id)) : ""}</div></td>
       <td>${x.fahrlehrer_id ? esc(lehrerName(x.fahrlehrer_id)) : '<span class="marke-pill rot">ohne Fahrlehrer</span>'}</td>
       <td class="nur-sehr-breit">${esc(klasseVon(x))}<div class="unter">${esc(artName(x.ausbildungsart))}${x.paket_id ? " · " + esc(paketName(x.paket_id)) : ""}${a.beginn ? ` · seit <span class="datum">${esc(datumDE(a.beginn))}</span>` : ""}</div></td>
       <td>${standHTML(a)}<div class="unter">Theorie ${esc(theo)}</div></td>
@@ -1239,7 +1282,7 @@ function notizBlockHTML(sid, fahrlehrerId) {
   const zeile = (n) => `<li class="notiz ${n.art === "stopp" ? "stopp" : ""}">
       <div><span class="marke-pill ${n.art === "stopp" ? "rot" : "gelb"}">${n.art === "stopp" ? "Stopp" : "Info"}</span> <span class="notiz-text">${esc(n.text)}</span></div>
       <div class="unter">${esc(n.bearbeiter || "Büro")} · ${esc(notizZeit(n))}${n.erledigt_am ? ` · erledigt${n.erledigt_bearbeiter ? " von " + esc(n.erledigt_bearbeiter) : ""}` : ""}</div>
-      ${n.erledigt_am ? "" : `<div class="notiz-aktion">${notizGelesenText(n)}<button type="button" class="knopf klein" data-notizerledigt="${esc(n.id)}">Erledigt</button></div>`}</li>`;
+      <div class="notiz-aktion">${n.erledigt_am ? "" : notizGelesenText(n)}<button type="button" class="knopf klein" data-notizbearb="${esc(n.id)}">Bearbeiten</button><button type="button" class="knopf klein" data-notizweg="${esc(n.id)}">Löschen</button>${n.erledigt_am ? `<button type="button" class="knopf klein" data-notizoeffnen="${esc(n.id)}">Wieder öffnen</button>` : `<button type="button" class="knopf klein" data-notizerledigt="${esc(n.id)}">Erledigt</button>`}</div></li>`;
   return `<h3>Notiz an den Fahrlehrer</h3>
     ${fahrlehrerId ? "" : `<p class="leise klein">Dieser Schüler hat noch keinen Fahrlehrer. Die Notiz erscheint, sobald einer zugeteilt ist.</p>`}
     <div class="notiz-neu">
@@ -1250,6 +1293,30 @@ function notizBlockHTML(sid, fahrlehrerId) {
     ${offen.length ? `<ul class="notizliste">${offen.map(zeile).join("")}</ul>` : `<p class="leise klein">Keine offene Notiz.</p>`}
     ${erledigt.length ? `<details><summary>Erledigt (${erledigt.length})</summary><ul class="notizliste">${erledigt.slice(0, 20).map(zeile).join("")}</ul></details>` : ""}
     <p class="leise klein">Nur kurze Arbeitsanweisungen. Keine Gesundheits- oder Privatdaten. Der Fahrlehrer sieht die Notiz innerhalb einer Minute als Meldung und danach im Schülerblatt.</p>`;
+}
+// Gelesene Zeile für ein erneutes Einfügen (Rückgängig nach Löschen): abgeleitete Namensfelder weglassen, die setzt die Datenbank selbst
+function zeileFuerInsert(z) {
+  const o = {};
+  for (const [k, v] of Object.entries(z)) if (!/bearbeiter$/.test(k)) o[k] = v;
+  return o;
+}
+// Fahrlehrer soll die geänderte/wieder geöffnete Notiz wieder als neu sehen: Gelesen-Zeilen weg (neue ID würde den Rückgängig-Weg und die Historie zerreißen)
+async function notizUngelesen(id, spaet) {
+  const res = await supa.from("schueler_notiz_gelesen").delete().eq("notiz_id", id).select("notiz_id");
+  if (res.error) {
+    const t = "Notiz gespeichert, aber der Fahrlehrer bekommt keinen neuen Hinweis (" + res.error.message + "). Bitte ihm Bescheid geben.";
+    if (spaet) setTimeout(() => toast(t, true), 120); else toast(t, true); // spät: erst nach dem Schließen des Bearbeiten-Fensters, damit die Meldung im Schüler-Fenster steht
+    return false;
+  }
+  S.gelesen = S.gelesen.filter((g) => g.notiz_id !== id);
+  return true;
+}
+async function aendereNotiz(id, werte) {
+  const res = await supa.from("schueler_notizen").update(werte).eq("id", id).select("*");
+  if (res.error || !res.data || !res.data.length) { toast("Nicht gespeichert: " + (res.error ? res.error.message : "keine Berechtigung"), true); return false; }
+  const n = S.notizen.find((x) => x.id === id);
+  if (n) Object.assign(n, res.data[0], { bearbeiter: res.data[0].bearbeiter || n.bearbeiter || null, erledigt_bearbeiter: "erledigt_am" in werte && !werte.erledigt_am ? null : (res.data[0].erledigt_bearbeiter || n.erledigt_bearbeiter || null) });
+  return true;
 }
 function bindeNotizBlock(dlg, sid, fahrlehrerId) {
   const block = dlg.querySelector("#notizBlock");
@@ -1273,6 +1340,43 @@ function bindeNotizBlock(dlg, sid, fahrlehrerId) {
       const n = S.notizen.find((x) => x.id === b.dataset.notizerledigt);
       if (n) Object.assign(n, res.data[0], { erledigt_bearbeiter: res.data[0].erledigt_bearbeiter || null });
       neu();
+      toastUndo("Notiz erledigt", async () => {
+        if (await aendereNotiz(b.dataset.notizerledigt, { erledigt_am: null, erledigt_von: null })) { toast("Notiz ist wieder offen"); neu(); }
+      });
+    }));
+    block.querySelectorAll("[data-notizoeffnen]").forEach((b) => b.addEventListener("click", async () => {
+      b.disabled = true;
+      if (await aendereNotiz(b.dataset.notizoeffnen, { erledigt_am: null, erledigt_von: null })) { if (await notizUngelesen(b.dataset.notizoeffnen)) toast("Notiz ist wieder offen. Der Fahrlehrer sieht sie wieder als neu."); neu(); } else b.disabled = false;
+    }));
+    block.querySelectorAll("[data-notizbearb]").forEach((b) => b.addEventListener("click", () => {
+      const n = S.notizen.find((x) => x.id === b.dataset.notizbearb);
+      if (!n) return;
+      oeffneDialog("Notiz bearbeiten", `<div class="formular">
+          <label class="voll">Art<select name="art"><option value="info"${n.art === "stopp" ? "" : " selected"}>Info</option><option value="stopp"${n.art === "stopp" ? " selected" : ""}>Stopp: keine Fahrstunden anbieten</option></select></label>
+          <label class="voll">Text<textarea name="text" rows="3" maxlength="500" required>${esc(n.text || "")}</textarea></label></div>
+          <p class="leise klein">Der Fahrlehrer sieht die geänderte Notiz beim nächsten Laden. Keine Gesundheits- oder Privatdaten.</p>`, async (form) => {
+        const text = form.text.value.trim();
+        if (!text) { toast("Bitte einen Text eintragen.", true); return false; }
+        if (text === n.text && form.art.value === n.art) return true;
+        if (!(await aendereNotiz(n.id, { text, art: form.art.value }))) return false;
+        if (await notizUngelesen(n.id, true)) toast("Notiz geändert. Der Fahrlehrer sieht sie wieder als neu.");
+        neu();
+        return true;
+      });
+    }));
+    block.querySelectorAll("[data-notizweg]").forEach((b) => b.addEventListener("click", async () => {
+      const n = S.notizen.find((x) => x.id === b.dataset.notizweg);
+      if (!n || !(await bestaetige("Notiz löschen?", `„${String(n.text || "").slice(0, 80)}${String(n.text || "").length > 80 ? " …" : ""}“ wird gelöscht und verschwindet auch beim Fahrlehrer. Danach hast du 6 Sekunden, es rückgängig zu machen.`, "Ja, löschen"))) return;
+      const res = await supa.from("schueler_notizen").delete().eq("id", n.id).select("id");
+      if (res.error || !res.data || !res.data.length) { toast("Nicht gelöscht: " + (res.error ? res.error.message : "keine Berechtigung"), true); return; }
+      S.notizen = S.notizen.filter((x) => x.id !== n.id);
+      neu();
+      toastUndo("Notiz gelöscht", async () => {
+        const r = await supa.from("schueler_notizen").insert(zeileFuerInsert(n)).select("*");
+        if (r.error || !r.data || !r.data.length) { toast("Rückgängig ging nicht: " + (r.error ? r.error.message : "keine Berechtigung"), true); return; }
+        S.notizen.unshift(Object.assign({}, r.data[0], { bearbeiter: r.data[0].bearbeiter || n.bearbeiter || null }));
+        toast("Notiz ist wieder da"); neu();
+      });
     }));
   };
   bind();
@@ -1320,7 +1424,7 @@ function aufgabeZeile(a, mitSchueler) {
   return `<li class="notiz aufgabe-zeile ${st}">
       <div>${a.dringend ? '<span class="marke-pill rot">dringend</span> ' : ""}${mitSchueler === "text" && a.schueler_id ? `<b>${esc(schuelerName(a.schueler_id) || "Schüler")}:</b> ` : mitSchueler && a.schueler_id ? `<button type="button" class="knopf klein" data-hagschueler="${esc(a.schueler_id)}">${esc(schuelerName(a.schueler_id) || "Schüler")}</button> ` : ""}<span class="notiz-text">${esc(a.text)}</span></div>
       <div class="unter">${esc(aufgabeWerAn(a))} · ${esc(notizZeit(a))}${faellig ? ` · <b class="faellig">${esc(faellig)}</b>` : ""}${gelesen}</div>
-      <div class="notiz-aktion"><button type="button" class="knopf klein" data-hagerledigt="${esc(a.id)}">Erledigt</button></div></li>`;
+      <div class="notiz-aktion"><button type="button" class="knopf klein" data-hagbearb="${esc(a.id)}">Bearbeiten</button><button type="button" class="knopf klein" data-hagweg="${esc(a.id)}">Löschen</button><button type="button" class="knopf klein" data-hagerledigt="${esc(a.id)}">Erledigt</button></div></li>`;
 }
 // Neue Aufgabe (auch ohne Schüler, an eine Kollegin oder an alle)
 function aufgabeDialog(vorgabe) {
@@ -1379,7 +1483,7 @@ function aufgabenBlockHTML(sid) {
     return `<li class="notiz aufgabe-zeile ${st}">
       <div>${a.dringend && !a.erledigt_am ? '<span class="marke-pill rot">dringend</span> ' : ""}${st === "heute" ? `<span class="marke-pill orange">Heute zu tun</span> ` : ""}<span class="notiz-text">${esc(a.text)}</span></div>
       <div class="unter">${esc(aufgabeWerAn(a))} · ${esc(notizZeit(a))}${a.faellig_am && !a.erledigt_am ? ` · fällig ${esc(datumDE(a.faellig_am))}` : ""}${a.erledigt_am ? ` · erledigt${a.erledigt_bearbeiter ? " von " + esc(a.erledigt_bearbeiter) : ""}` : ""}</div>
-      ${a.erledigt_am ? `<div class="notiz-aktion"><button type="button" class="knopf klein" data-agoeffnen="${esc(a.id)}">Wieder öffnen</button></div>` : `<div class="notiz-aktion">${a.heute || aufgabeStufe(a) === "spaeter" ? `<button type="button" class="knopf klein" data-agheute="${esc(a.id)}">${a.heute ? "Nicht mehr heute" : "Heute zu tun"}</button>` : ""}<button type="button" class="knopf klein" data-agerledigt="${esc(a.id)}">Erledigt</button></div>`}</li>`;
+      ${a.erledigt_am ? `<div class="notiz-aktion"><button type="button" class="knopf klein" data-agbearb="${esc(a.id)}">Bearbeiten</button><button type="button" class="knopf klein" data-agweg="${esc(a.id)}">Löschen</button><button type="button" class="knopf klein" data-agoeffnen="${esc(a.id)}">Wieder öffnen</button></div>` : `<div class="notiz-aktion"><button type="button" class="knopf klein" data-agbearb="${esc(a.id)}">Bearbeiten</button><button type="button" class="knopf klein" data-agweg="${esc(a.id)}">Löschen</button>${a.heute || aufgabeStufe(a) === "spaeter" ? `<button type="button" class="knopf klein" data-agheute="${esc(a.id)}">${a.heute ? "Nicht mehr heute" : "Heute zu tun"}</button>` : ""}<button type="button" class="knopf klein" data-agerledigt="${esc(a.id)}">Erledigt</button></div>`}</li>`;
   };
   return `<h3>Interne Aufgaben (nur Büro)</h3>
     <div class="notiz-neu">
@@ -1400,6 +1504,56 @@ async function aendereAufgabe(id, werte, hinweis) {
   if (a) Object.assign(a, res.data[0]);
   if (hinweis) toast(hinweis);
   return true;
+}
+// Aufgabe erledigen mit 6 Sekunden „Rückgängig“ (stellt auch „heute“ wieder her)
+async function erledigeAufgabe(id, nachher) {
+  const a = S.aufgaben.find((x) => x.id === id);
+  const warHeute = !!(a && a.heute);
+  if (!(await aendereAufgabe(id, { erledigt_am: new Date().toISOString(), erledigt_von: S.user.id, heute: false }))) return false;
+  nachher();
+  toastUndo("Aufgabe erledigt ✓", async () => {
+    if (await aendereAufgabe(id, { erledigt_am: null, erledigt_von: null, heute: warHeute }, "Aufgabe ist wieder offen")) nachher();
+  });
+  return true;
+}
+async function loescheAufgabe(id, nachher) {
+  const a = S.aufgaben.find((x) => x.id === id);
+  if (!a || !(await bestaetige("Aufgabe löschen?", `„${String(a.text || "").slice(0, 80)}${String(a.text || "").length > 80 ? " …" : ""}“ wird gelöscht. Danach hast du 6 Sekunden, es rückgängig zu machen.`, "Ja, löschen"))) return false;
+  const res = await supa.from("schueler_aufgaben").delete().eq("id", id).select("id");
+  if (res.error || !res.data || !res.data.length) { toast("Nicht gelöscht: " + (res.error ? res.error.message : "keine Berechtigung"), true); return false; }
+  S.aufgaben = S.aufgaben.filter((x) => x.id !== id);
+  nachher();
+  toastUndo("Aufgabe gelöscht", async () => {
+    const r = await supa.from("schueler_aufgaben").insert(zeileFuerInsert(a)).select("*");
+    if (r.error || !r.data || !r.data.length) { toast("Rückgängig ging nicht: " + (r.error ? r.error.message : "keine Berechtigung"), true); return; }
+    S.aufgaben.unshift(r.data[0]);
+    toast("Aufgabe ist wieder da"); nachher();
+  });
+  return true;
+}
+// Aufgabe ändern: Text, Person, Datum (und „dringend“)
+function bearbeiteAufgabe(id, nachher) {
+  const a = S.aufgaben.find((x) => x.id === id);
+  if (!a) return;
+  const personen = aktivePersonen();
+  const opt = personen.map((p) => `<option value="${esc(p.id)}"${p.id === a.fuer_person_id ? " selected" : ""}>${esc(p.name)}</option>`).join("")
+    + (a.fuer_person_id && !personen.some((p) => p.id === a.fuer_person_id) ? `<option value="${esc(a.fuer_person_id)}" selected>${esc(personName(a.fuer_person_id) || "(ausgetreten)")}</option>` : "");
+  oeffneDialog("Aufgabe bearbeiten", `<div class="formular">
+      <label class="voll">Was ist zu tun?<textarea name="text" rows="3" maxlength="500" required>${esc(a.text || "")}</textarea></label>
+      <label>Für wen?<select name="fuer"><option value="">alle im Büro</option>${opt}</select></label>
+      <label>Fällig am (optional)<input type="date" name="faellig" value="${esc(a.faellig_am || "")}"></label>
+      <label class="voll login-zeig"><input type="checkbox" name="dringend"${a.dringend ? " checked" : ""}> Dringend (wird rot angezeigt)</label></div>
+      <p class="leise klein">Keine Gesundheits- oder Privatdaten.</p>`, async (form) => {
+    const text = form.text.value.trim();
+    if (!text) { toast("Bitte eintragen, was zu tun ist.", true); return false; }
+    const werte = { text, fuer_person_id: form.fuer.value || null, faellig_am: form.faellig.value || null, dringend: form.dringend.checked };
+    if (werte.text === a.text && werte.fuer_person_id === (a.fuer_person_id || null) && werte.faellig_am === (a.faellig_am || null) && werte.dringend === !!a.dringend) return true;
+    // Neue Person: die Aufgabe ist für sie wieder ungelesen
+    if (werte.fuer_person_id !== (a.fuer_person_id || null)) werte.gelesen_am = null;
+    if (!(await aendereAufgabe(id, werte, "Aufgabe geändert"))) return false;
+    nachher();
+    return true;
+  });
 }
 function bindeAufgabenBlock(dlg, sid) {
   const block = dlg.querySelector("#aufgabenBlock");
@@ -1431,8 +1585,10 @@ function bindeAufgabenBlock(dlg, sid) {
     }));
     block.querySelectorAll("[data-agerledigt]").forEach((b) => b.addEventListener("click", async () => {
       b.disabled = true;
-      if (await aendereAufgabe(b.dataset.agerledigt, { erledigt_am: new Date().toISOString(), erledigt_von: S.user.id, heute: false })) neu(); else b.disabled = false;
+      if (!(await erledigeAufgabe(b.dataset.agerledigt, neu))) b.disabled = false;
     }));
+    block.querySelectorAll("[data-agbearb]").forEach((b) => b.addEventListener("click", () => bearbeiteAufgabe(b.dataset.agbearb, neu)));
+    block.querySelectorAll("[data-agweg]").forEach((b) => b.addEventListener("click", () => loescheAufgabe(b.dataset.agweg, neu)));
   };
   bind();
 }
@@ -1441,8 +1597,10 @@ function bindeHeute(ziel) {
   if (neu) neu.addEventListener("click", () => aufgabeDialog());
   ziel.querySelectorAll("[data-hagerledigt]").forEach((b) => b.addEventListener("click", async () => {
     b.disabled = true;
-    if (await aendereAufgabe(b.dataset.hagerledigt, { erledigt_am: new Date().toISOString(), erledigt_von: S.user.id, heute: false }, "Aufgabe erledigt ✓")) zeichne(); else b.disabled = false;
+    if (!(await erledigeAufgabe(b.dataset.hagerledigt, zeichne))) b.disabled = false;
   }));
+  ziel.querySelectorAll("[data-hagbearb]").forEach((b) => b.addEventListener("click", () => bearbeiteAufgabe(b.dataset.hagbearb, zeichne)));
+  ziel.querySelectorAll("[data-hagweg]").forEach((b) => b.addEventListener("click", () => loescheAufgabe(b.dataset.hagweg, zeichne)));
   ziel.querySelectorAll("[data-hagoeffnen]").forEach((b) => b.addEventListener("click", async () => {
     b.disabled = true;
     if (await aendereAufgabe(b.dataset.hagoeffnen, { erledigt_am: null, erledigt_von: null }, "Aufgabe wieder offen")) zeichne(); else b.disabled = false;
@@ -1631,10 +1789,12 @@ function anwesenheitTerminHTML(t) {
   return `<div class="voll anwesenheit"><h3>Anwesenheit · ${namen.length} Teilnehmer${lekt.length ? " · Lektion " + lekt.map(esc).join(" + ") : ""}</h3>
     ${namen.length ? `<ul class="anw-namen">${namen.map((n) => `<li>${esc(n)}</li>`).join("")}</ul><button type="button" class="knopf" data-anwdruck="${esc(t.datum)}">Anwesenheitsliste drucken</button>` : `<p class="leise klein">Noch niemand eingetragen. Der Fahrlehrer tippt die Anwesenheit im Theorie-Termin der App an.</p>`}</div>`;
 }
+// Der Fahrlehrer hat den Schüler in seiner App „gelöscht“ (nur bei ihm ausgeblendet). Im Büro bleibt alles wie es ist.
+function ausgeblendetAm(x) { const a = x && x.ausbildung; return a && a.ausgeblendetAm ? String(a.ausgeblendetAm) : ""; }
 function schuelerDialog(id) {
   const x = id ? S.schueler.find((y) => y.id === id) : { ausbildungsart: "ersterwerb", klasse: "B", vertrag_am: KR.todayISO() };
   if (!x) return;
-  const body = `<div class="formular">
+  const body = `${ausgeblendetAm(x) ? `<p class="hinweis-ausgeblendet" id="ausgeblendetHinweis">Vom Fahrlehrer ausgeblendet am ${esc(datumDE(ausgeblendetAm(x).slice(0, 10)))}. Im Büro bleibt der Schüler ganz normal.</p>` : ""}<div class="formular">
       <label class="voll">Name<input type="text" name="name" required maxlength="100" value="${esc(x.name || "")}"></label>
       <label>Telefon (Login für die Fahr-Akademie)<input type="tel" name="telefon" maxlength="40" value="${esc(x.telefon || "")}"></label>
       <label>E-Mail<input type="email" name="email" maxlength="200" value="${esc(x.email || "")}"></label>
@@ -1652,9 +1812,9 @@ function schuelerDialog(id) {
       ${id ? `<div class="voll">${pruefungenAkteHTML(id)}</div>` : ""}
       ${id ? `<div class="voll">${theorieAkteHTML(id)}</div>` : ""}
       ${id && sonderZaehlerHTML(x) ? `<div class="voll">${sonderZaehlerHTML(x)}</div>` : ""}
-      ${id ? `<div class="voll" id="notizBlock">${notizBlockHTML(id, x.fahrlehrer_id)}</div>` : ""}
+      ${id ? `<div class="voll" id="notizBlock" data-entwurf>${notizBlockHTML(id, x.fahrlehrer_id)}</div>` : ""}
       <label class="voll">Interne Notiz (nur Büro, der Fahrlehrer sieht sie nicht)<input type="text" name="buero_notiz" maxlength="500" value="${esc(x.buero_notiz || "")}"></label>
-      ${id ? `<div class="voll" id="aufgabenBlock">${aufgabenBlockHTML(id)}</div>` : ""}
+      ${id ? `<div class="voll" id="aufgabenBlock" data-entwurf>${aufgabenBlockHTML(id)}</div>` : ""}
     </div>
     <p class="leise klein">Umschreiber brauchen keine Sonderfahrten. Ein neuer Schüler mit Fahrlehrer erscheint innerhalb einer Minute in dessen App.</p>`;
   const dlg = oeffneDialog(id ? `Schüler: ${x.name}` : "Schüler anlegen", body, async (form) => {
@@ -1702,9 +1862,11 @@ function schuelerDialog(id) {
     // Umschreiber: die Fahrlehrer-App liest die Spalte ausbildungsart selbst (nicht ins jsonb schreiben,
     // sonst überschreibt der nächste Abgleich des Fahrlehrers den Wert)
     const wirdArchiviert = istAktiv(x) && !!werte.inaktiv_seit;
-    const offeneTermine = wirdArchiviert ? S.termine.filter((t) => t.schueler_id === id && t.datum >= KR.todayISO() && t.art !== "block").length : 0;
-    if (!(await speichereSchueler(id, werte, wirdArchiviert ? `${name} liegt jetzt im Archiv.${offeneTermine ? ` Achtung: ${offeneTermine} künftige Termine stehen noch im Kalender.` : ""}` : "Gespeichert"))) return false;
+    let absagen = [];
+    if (wirdArchiviert) { absagen = await frageKuenftigeTermine(x); if (absagen === null) return false; } // Abbrechen: Fenster bleibt offen
+    if (!(await speichereSchueler(id, werte, wirdArchiviert ? `${name} liegt jetzt im Archiv.` : "Gespeichert"))) return false;
     if ((x.fahrlehrer_id || null) !== neuerLehrer) await verschiebeSchueler(x, neuerLehrer);
+    if (absagen.length) await sageTermineAb(absagen, `${name} liegt im Archiv, ${absagen.length === 1 ? "1 Termin" : absagen.length + " Termine"} abgesagt`);
     return true;
   });
   if (id) bindeNotizBlock(dlg, id, x.fahrlehrer_id);
@@ -1968,11 +2130,7 @@ function terminDialog(id, vorgabe) {
     const jetzt = new Date().toISOString();
     if (d.absagen) {
       if (!(await bestaetige("Termin absagen?", "Der Termin wird gelöscht und verschwindet beim Fahrlehrer.", "Ja, absagen"))) return false;
-      const res = await supa.from("kalender_termine").update({ geloescht: true, aktualisiert_am: jetzt }).eq("id", id).select("id");
-      if (res.error || !res.data || !res.data.length) { toast("Nicht abgesagt: " + (res.error ? res.error.message : "keine Berechtigung"), true); return false; }
-      S.termine = S.termine.filter((x) => x.id !== id);
-      onlineBuchungMelden(id, "cancelled");
-      toast("Termin abgesagt"); zeichne(); return true;
+      return sageTermineAb([t], "Termin abgesagt");
     }
     // Stopp-Notiz oder offene Reaktivierung: Büro vor dem Buchen warnen (wie in der Fahrlehrer-App)
     if (!id && d.schueler_id && ["fahrstunde", "sonder", "nacht", "schalt"].includes(d.art)) {
@@ -2026,20 +2184,76 @@ function terminDialog(id, vorgabe) {
   const druck = tdlg.querySelector("[data-anwdruck]");
   if (druck) druck.addEventListener("click", () => druckeAnwesenheit(druck.dataset.anwdruck, (t.payload || {}).lektion, t));
 }
+// Termine absagen (geloescht: true). 6 Sekunden „Rückgängig“; die Absage-Mail an Online-Buchende geht erst nach Ablauf raus
+async function sageTermineAb(termine, text) {
+  const res = await supa.from("kalender_termine").update({ geloescht: true, aktualisiert_am: new Date().toISOString() }).in("id", termine.map((t) => t.id)).select("id");
+  if (res.error || !res.data || !res.data.length) { toast("Nicht abgesagt: " + (res.error ? res.error.message : "keine Berechtigung"), true); return false; }
+  const weg = new Set(res.data.map((r) => r.id));
+  const echt = termine.filter((t) => weg.has(t.id));
+  S.termine = S.termine.filter((x) => !weg.has(x.id));
+  zeichne();
+  toastUndo(text, async () => {
+    const r = await supa.from("kalender_termine").update({ geloescht: false, aktualisiert_am: new Date().toISOString() }).in("id", echt.map((t) => t.id)).select("id");
+    if (r.error || !r.data || !r.data.length) { toast("Rückgängig ging nicht: " + (r.error ? r.error.message : "keine Berechtigung"), true); return; }
+    vergissAbsagen(echt.map((t) => t.id));
+    for (const t of echt) if (!S.termine.some((x) => x.id === t.id)) S.termine.push(t);
+    toast(echt.length === 1 ? "Termin ist wieder da" : `${echt.length} Termine sind wieder da`);
+    zeichne();
+  }, { ids: echt.map((t) => t.id), nachAblauf: (ka) => sendeAbsagen(echt.map((t) => t.id), ka) });
+  merkeAbsagen(echt.map((t) => t.id));
+  return true;
+}
+// Offene Absage-Mails überleben Neuladen und Schließen: Termin-IDs in localStorage, bis die Mail raus ist (die Function prüft status = bestätigt, doppelt geht nichts raus)
+const ABSAGE_KEY = "buero-offene-absagen";
+function absagenLesen() { try { const l = JSON.parse(localStorage.getItem(ABSAGE_KEY) || "[]"); return Array.isArray(l) ? l : []; } catch (e) { return []; } }
+function absagenSchreiben(l) { try { if (l.length) localStorage.setItem(ABSAGE_KEY, JSON.stringify(l)); else localStorage.removeItem(ABSAGE_KEY); } catch (e) { /* ohne Speicher weiter */ } }
+function merkeAbsagen(ids) { const l = absagenLesen(); for (const id of ids) if (!l.some((x) => x.id === id)) l.push({ id, t: Date.now() }); absagenSchreiben(l); }
+function vergissAbsagen(ids) { absagenSchreiben(absagenLesen().filter((x) => !ids.includes(x.id))); }
+const ABSAGE_LAEUFT = new Set();
+async function sendeAbsagen(ids, keepalive) {
+  for (const id of ids) {
+    if (ABSAGE_LAEUFT.has(id)) continue;
+    ABSAGE_LAEUFT.add(id);
+    try { if (await onlineBuchungMelden(id, "cancelled", null, keepalive)) vergissAbsagen([id]); } finally { ABSAGE_LAEUFT.delete(id); }
+  }
+}
+// Beim Start: Absagen nachholen, die vor dem Schließen nicht mehr rausgingen (Rückgängig entfernt den Merker sofort)
+function holeAbsagenNach() {
+  const l = absagenLesen().filter((x) => !(UNDO.offen && UNDO.offen.ids && UNDO.offen.ids.includes(x.id)));
+  if (l.length) sendeAbsagen(l.map((x) => x.id));
+}
+// Künftige Termine eines Schülers (heute noch nicht vorbei oder später), ohne Sperrzeiten
+function kuenftigeTermineVon(sid) {
+  const heute = KR.todayISO(), jetzt = KR.pad2(new Date().getHours()) + ":" + KR.pad2(new Date().getMinutes());
+  return S.termine.filter((t) => t.schueler_id === sid && t.art !== "block" && (t.datum > heute || (t.datum === heute && (!t.bis || t.bis > jetzt))));
+}
+// Schüler wird archiviert: künftige Termine auch absagen? Ergebnis: null = abgebrochen, sonst die abzusagenden Termine (leer = keine)
+async function frageKuenftigeTermine(x) {
+  const l = kuenftigeTermineVon(x.id);
+  if (!l.length) return [];
+  const w = await frageDrei(`${l.length === 1 ? "1 künftigen Termin" : l.length + " künftige Termine"} auch absagen?`,
+    `${x.name} hat noch ${l.length === 1 ? "1 künftigen Termin" : l.length + " künftige Termine"} im Kalender (der nächste am ${datumDE(l.map((t) => t.datum).sort()[0])}). Wenn du sie absagst, verschwinden sie beim Fahrlehrer, und online gebuchte Schüler bekommen eine E-Mail. Du kannst die Absage 6 Sekunden lang rückgängig machen.`,
+    l.length === 1 ? "Ja, Termin absagen" : "Ja, alle absagen", "Nein, nur archivieren", "Abbrechen");
+  if (w === null) return null;
+  return w === "ja" ? l : [];
+}
+
 // Online gebuchte Termine: Schüler per E-Mail informieren (wie in index.html, läuft im Hintergrund)
-async function onlineBuchungMelden(lessonId, type, zeit) {
+// Gibt true zurück, wenn nichts mehr zu tun ist (gesendet oder keine Online-Buchung), false bei Fehler (später nochmal)
+async function onlineBuchungMelden(lessonId, type, zeit, keepalive) {
   try {
     const { data } = await supa.from("public_bookings").select("id, lc_termin_id, art").eq("merged_lesson_id", lessonId).eq("status", "bestaetigt").maybeSingle();
-    if (!data) return;
-    if (data.art || data.lc_termin_id) { toast("Hinweis: Termin stammt aus Auda/Google-Kalender, bitte dort ebenfalls ändern."); return; }
+    if (!data) return true;
+    if (data.art || data.lc_termin_id) { toast("Hinweis: Termin stammt aus Auda/Google-Kalender, bitte dort ebenfalls ändern."); return true; }
     const { data: sd } = await supa.auth.getSession();
     const token = sd && sd.session && sd.session.access_token;
-    if (!token) return;
-    fetch(SUPA_URL + "/functions/v1/public-booking?action=teacher_update", {
-      method: "POST", headers: { "Content-Type": "application/json", Authorization: "Bearer " + token },
+    if (!token) return false;
+    const r = await fetch(SUPA_URL + "/functions/v1/public-booking?action=teacher_update", {
+      method: "POST", headers: { "Content-Type": "application/json", Authorization: "Bearer " + token }, keepalive: !!keepalive,
       body: JSON.stringify(Object.assign({ merged_lesson_id: lessonId, type }, zeit || {})),
-    }).catch(() => {});
-  } catch (e) { /* Benachrichtigung ist Zusatz, die Änderung selbst ist gespeichert */ }
+    });
+    return r.ok;
+  } catch (e) { return false; /* Benachrichtigung ist Zusatz, die Änderung selbst ist gespeichert */ }
 }
 
 /* ---------- Fahrchecks ---------- */
@@ -2554,8 +2768,13 @@ async function provisionAusgezahlt(lehrerId) {
   const res = await supa.from("provisionen").update({ status: "ausgezahlt" }).in("id", offen.map((p) => p.id)).select("id");
   if (res.error) { toast("Nicht gespeichert: " + res.error.message, true); return; }
   offen.forEach((p) => { p.status = "ausgezahlt"; });
-  toast(`${euro(summe)} als ausgezahlt vermerkt`);
   zeichne();
+  toastUndo(`${euro(summe)} als ausgezahlt vermerkt`, async () => {
+    const r = await supa.from("provisionen").update({ status: "offen" }).in("id", offen.map((p) => p.id)).select("id");
+    if (r.error) { toast("Rückgängig ging nicht: " + r.error.message, true); return; }
+    offen.forEach((p) => { p.status = "offen"; });
+    toast("Wieder offen"); zeichne();
+  });
 }
 function verkaufNeuDialog() {
   const body = `<div class="formular">
@@ -3137,50 +3356,199 @@ function renderFlotte() {
     <div class="karte"><div class="karte-kopf"><h2>Fahrzeuge (${S.fahrzeuge.length})</h2>${admin ? '<button class="knopf haupt" id="fzNeu" type="button">+ Fahrzeug</button>' : ""}</div>
       ${S.fahrzeuge.length ? `<table class="tabelle"><thead><tr><th>Fahrzeug</th><th>Typ</th><th class="zahlspalte">Termine in 7 Tagen</th><th></th></tr></thead><tbody>${S.fahrzeuge.map((f) => `<tr>
         <td><b>${esc(f.name || f.bezeichnung || "")}</b></td><td>${esc(typName[String(f.typ || "").toLowerCase()] || f.typ || "")}${f.klasse ? ` <span class="marke-pill">${esc(f.klasse)}</span>` : ""}</td><td class="zahlspalte">${nutzung[f.name || f.bezeichnung] || 0}</td>
-        <td class="aktionen"><div class="aktionen-box">${admin ? `<button class="knopf klein" data-fzweg="${esc(f.id)}" type="button">Entfernen</button>` : ""}</div></td></tr>`).join("")}</tbody></table>` : `<p class="leer">Noch keine Fahrzeuge eingetragen.</p>`}
+        <td class="aktionen"><div class="aktionen-box">${admin ? `<button class="knopf klein" data-fzbearb="${esc(f.id)}" type="button">Bearbeiten</button><button class="knopf klein" data-fzweg="${esc(f.id)}" type="button">Entfernen</button>` : ""}</div></td></tr>`).join("")}</tbody></table>` : `<p class="leer">Noch keine Fahrzeuge eingetragen.</p>`}
+      ${(S.fahrzeugeWeg || []).length ? `<details class="fz-weg"><summary>Entfernte Fahrzeuge (${S.fahrzeugeWeg.length})</summary><table class="tabelle"><tbody>${S.fahrzeugeWeg.map((f) => `<tr>
+        <td><b>${esc(f.name || f.bezeichnung || "")}</b></td><td>${esc(typName[String(f.typ || "").toLowerCase()] || f.typ || "")}${f.klasse ? ` <span class="marke-pill">${esc(f.klasse)}</span>` : ""}</td>
+        <td class="aktionen"><div class="aktionen-box">${admin ? `<button class="knopf klein" data-fzzurueck="${esc(f.id)}" type="button">Zurückholen</button>` : ""}</div></td></tr>`).join("")}</tbody></table></details>` : ""}
       ${admin ? "" : `<p class="leise klein">Fahrzeuge anlegen und entfernen dürfen die Fahrschul-Leitung, ${esc(verwalterNamen())}.</p>`}</div>`;
 }
 // Fahrzeug-Arten (Pkw wie bisher, dazu Lkw, Transporter C1 und Anhänger je Klasse)
 const FZ_TYPEN = { schalt: "Schaltung", schalter: "Schaltung", automatik: "Automatik", lkw: "Lkw", transporter: "Transporter", anhaenger: "Anhänger" };
 const FZ_KLASSE_VORSCHLAG = { schalt: "B", automatik: "B", lkw: "C", transporter: "C1", anhaenger: "BE" };
-function bindeFlotte(ziel) {
-  const neu = ziel.querySelector("#fzNeu");
-  if (neu) neu.addEventListener("click", () => { const dlg = oeffneDialog("Fahrzeug anlegen", `<div class="formular">
-      <label class="voll">Bezeichnung (z. B. „Golf Schalter“)<input type="text" name="name" required maxlength="60"></label>
-      <label>Art<select name="typ"><option value="schalt">Pkw Schaltung</option><option value="automatik">Pkw Automatik</option><option value="lkw">Lkw (C)</option><option value="transporter">Transporter (C1)</option><option value="anhaenger">Anhänger</option></select></label>
-      <label>Für Klasse<select name="klasse">${["B", "BE", "C1", "C1E", "C", "CE"].map((k) => `<option value="${k}">${k}</option>`).join("")}</select></label></div>
-      <p class="leise klein">Anhänger: die Klasse wählen, für die er gebraucht wird (BE, C1E oder CE).</p>`, async (form) => {
+function fzGleicherName(name, ohneId) {
+  const n = String(name || "").trim().toLowerCase();
+  return S.fahrzeuge.find((x) => x.id !== ohneId && String(x.name || x.bezeichnung || "").trim().toLowerCase() === n) || null;
+}
+// Fahrzeug anlegen (f leer) oder ändern (f gesetzt)
+function fahrzeugDialog(f) {
+  const typen = [["schalt", "Pkw Schaltung"], ["automatik", "Pkw Automatik"], ["lkw", "Lkw (C)"], ["transporter", "Transporter (C1)"], ["anhaenger", "Anhänger"]];
+  const typAlt = f ? (String(f.typ || "").toLowerCase() === "schalter" ? "schalt" : String(f.typ || "").toLowerCase()) : "schalt";
+  const dlg = oeffneDialog(f ? "Fahrzeug bearbeiten" : "Fahrzeug anlegen", `<div class="formular">
+      <label class="voll">Bezeichnung (z. B. „Golf Schalter“)<input type="text" name="name" required maxlength="60" value="${esc(f ? (f.name || f.bezeichnung || "") : "")}"></label>
+      <label>Art<select name="typ">${typen.map(([k, n]) => `<option value="${k}"${k === typAlt ? " selected" : ""}>${n}</option>`).join("")}</select></label>
+      <label>Für Klasse<select name="klasse">${["B", "BE", "C1", "C1E", "C", "CE"].map((k) => `<option value="${k}"${f && f.klasse === k ? " selected" : ""}>${k}</option>`).join("")}</select></label></div>
+      <p class="leise klein">Anhänger: die Klasse wählen, für die er gebraucht wird (BE, C1E oder CE).${f ? " Bei einer Umbenennung wirst du gefragt, ob künftige Termine mitgehen." : ""}</p>`, async (form) => {
     const name = form.name.value.trim();
     if (!name) { toast("Bitte eine Bezeichnung eintragen.", true); return false; }
+    const gleich = fzGleicherName(name, f && f.id);
+    if (gleich && !(await bestaetige("Name gibt es schon", `Ein Fahrzeug „${gleich.name || gleich.bezeichnung}“ ist schon in der Liste. Trotzdem ${f ? "so benennen" : "neu anlegen"}?`, f ? "Ja, so benennen" : "Ja, anlegen"))) return false;
+    if (f) {
+      const alt = f.name || f.bezeichnung || "";
+      const heute = KR.todayISO();
+      const betroffen = name !== alt ? S.termine.filter((t) => t.fahrzeug === alt && t.datum >= heute && !t.geloescht) : [];
+      let umbenennen = false;
+      if (betroffen.length) {
+        const w = await frageDrei(`${betroffen.length === 1 ? "1 künftigen Termin" : betroffen.length + " künftige Termine"} auch umbenennen?`,
+          `„${alt}“ steht noch in ${betroffen.length === 1 ? "1 künftigen Termin" : betroffen.length + " künftigen Terminen"}. Mit dem neuen Namen „${name}“ stimmen Nutzung und Doppelbelegung auch dort. Vergangene Termine bleiben unverändert.`,
+          "Ja, umbenennen", "Nein, nur das Fahrzeug", "Abbrechen");
+        if (w === null) return false;
+        umbenennen = w === "ja";
+      }
+      const werte = { name, typ: form.typ.value, klasse: form.klasse.value };
+      const res = await supa.from("fahrschule_fahrzeuge").update(werte).eq("id", f.id).select("*");
+      if (res.error || !res.data || !res.data.length) { toast("Nicht gespeichert: " + (res.error ? res.error.message : "keine Berechtigung"), true); return false; }
+      Object.assign(f, res.data[0]);
+      let hinweis = "Fahrzeug geändert";
+      if (umbenennen) {
+        const r = await supa.from("kalender_termine").update({ fahrzeug: name, aktualisiert_am: new Date().toISOString() }).eq("fahrschule_id", S.fsId).eq("fahrzeug", alt).gte("datum", heute).eq("geloescht", false).select("id");
+        if (r.error) toast("Fahrzeug geändert, die Termine aber nicht: " + r.error.message, true);
+        else { const ids = new Set((r.data || []).map((x) => x.id)); S.termine.forEach((t) => { if (ids.has(t.id)) t.fahrzeug = name; }); hinweis = `Fahrzeug geändert, ${ids.size} künftige Termine umbenannt`; }
+      }
+      toast(hinweis); zeichne(); return true;
+    }
     const res = await supa.from("fahrschule_fahrzeuge").insert({ fahrschule_id: S.fsId, name, typ: form.typ.value, klasse: form.klasse.value, aktiv: true }).select("*");
     if (res.error || !res.data || !res.data.length) { toast("Nicht gespeichert: " + (res.error ? res.error.message : "keine Berechtigung"), true); return false; }
     S.fahrzeuge.push(res.data[0]); toast("Fahrzeug angelegt"); zeichne(); return true;
-  }, "Anlegen");
-    const typ = dlg.querySelector("select[name=typ]"), kl = dlg.querySelector("select[name=klasse]");
-    typ.addEventListener("change", () => { kl.value = FZ_KLASSE_VORSCHLAG[typ.value] || "B"; });
-  });
+  }, f ? "Speichern" : "Anlegen");
+  const typ = dlg.querySelector("select[name=typ]"), kl = dlg.querySelector("select[name=klasse]");
+  typ.addEventListener("change", () => { kl.value = FZ_KLASSE_VORSCHLAG[typ.value] || "B"; });
+}
+function bindeFlotte(ziel) {
+  const neu = ziel.querySelector("#fzNeu");
+  if (neu) neu.addEventListener("click", () => fahrzeugDialog(null));
+  ziel.querySelectorAll("[data-fzbearb]").forEach((b) => b.addEventListener("click", () => {
+    const f = S.fahrzeuge.find((x) => x.id === b.dataset.fzbearb);
+    if (f) fahrzeugDialog(f);
+  }));
   ziel.querySelectorAll("[data-fzweg]").forEach((b) => b.addEventListener("click", async () => {
     const f = S.fahrzeuge.find((x) => x.id === b.dataset.fzweg);
-    if (!f || !(await bestaetige("Fahrzeug entfernen?", `${f.name || ""} wird aus der Liste genommen. Alte Termine bleiben unverändert.`, "Ja, entfernen"))) return;
+    if (!f || !(await bestaetige("Fahrzeug entfernen?", `${f.name || ""} wird aus der Liste genommen. Alte Termine bleiben unverändert. Unter „Entfernte Fahrzeuge“ kannst du es zurückholen.`, "Ja, entfernen"))) return;
     const res = await supa.from("fahrschule_fahrzeuge").update({ aktiv: false }).eq("id", f.id).select("id");
     if (res.error || !res.data || !res.data.length) { toast("Nicht gespeichert: " + (res.error ? res.error.message : "keine Berechtigung"), true); return; }
-    S.fahrzeuge = S.fahrzeuge.filter((x) => x.id !== f.id); toast("Entfernt"); zeichne();
+    S.fahrzeuge = S.fahrzeuge.filter((x) => x.id !== f.id); S.fahrzeugeWeg = (S.fahrzeugeWeg || []).concat(Object.assign(f, { aktiv: false }));
+    zeichne();
+    toastUndo("Fahrzeug entfernt", async () => { if (await fahrzeugZurueck(f.id)) toast("Fahrzeug ist wieder da"); });
+  }));
+  ziel.querySelectorAll("[data-fzzurueck]").forEach((b) => b.addEventListener("click", async () => {
+    b.disabled = true;
+    const f = (S.fahrzeugeWeg || []).find((x) => x.id === b.dataset.fzzurueck);
+    if (f && fzGleicherName(f.name || f.bezeichnung, f.id) && !(await bestaetige("Name gibt es schon", `Ein Fahrzeug „${f.name || f.bezeichnung}“ ist schon in der Liste. Trotzdem zurückholen?`, "Ja, zurückholen"))) { b.disabled = false; return; }
+    if (await fahrzeugZurueck(b.dataset.fzzurueck)) toast("Fahrzeug ist wieder da"); else b.disabled = false;
   }));
 }
+async function fahrzeugZurueck(id) {
+  const f = (S.fahrzeugeWeg || []).find((x) => x.id === id);
+  if (!f) return false;
+  const res = await supa.from("fahrschule_fahrzeuge").update({ aktiv: true }).eq("id", id).select("id");
+  if (res.error || !res.data || !res.data.length) { toast("Nicht gespeichert: " + (res.error ? res.error.message : "keine Berechtigung"), true); return false; }
+  S.fahrzeugeWeg = S.fahrzeugeWeg.filter((x) => x.id !== id);
+  f.aktiv = true;
+  if (!S.fahrzeuge.some((x) => x.id === id)) S.fahrzeuge.push(f);
+  zeichne();
+  return true;
+}
 
-/* ---------- Dialoge ---------- */
+/* ---------- Dialoge ----------
+   Jedes Fenster bekommt beim Öffnen einen eigenen Verlaufseintrag (history.pushState): Die Zurück-Taste des Browsers
+   schließt dann nur das oberste Fenster, nicht die Seite. Hat das Fenster Eingaben, wird vorher gefragt.
+   Schließt man es anders (✕, Speichern, Abbrechen), nimmt es seinen Eintrag wieder zurück.
+   Beim Sperren (PIN) werden Fenster mit Eingaben nur versteckt und nach der PIN derselben Person wieder gezeigt. */
+const FENSTER = [];   // offene Fenster, das oberste zuletzt
+const GEPARKT = [];   // Fenster mit Eingaben, die beim Sperren nur versteckt wurden: { dlg, wer }
+let fensterZaehler = 0, ignorierePop = 0, ignoriereTimer = null, rueckSchritte = 0, rueckTimer = null;
+function verlaufPush(dlg) {
+  try { history.pushState({ fenster: dlg._nr }, ""); dlg._verlauf = true; } catch (e) { dlg._verlauf = false; }
+}
+// Eigenen Verlaufseintrag zurücknehmen, ohne die Seite zu wechseln. Mehrere Fenster, die zugleich zugehen, werden ein einziger Schritt.
+function verlaufZurueck(dlg) {
+  if (!dlg._verlauf) return;
+  dlg._verlauf = false;
+  rueckSchritte++;
+  clearTimeout(rueckTimer);
+  rueckTimer = setTimeout(() => {
+    const n = rueckSchritte; rueckSchritte = 0;
+    if (!(history.state && history.state.fenster != null)) return; // wir stehen schon nicht mehr auf einem Fenster-Eintrag
+    ignorierePop++;
+    clearTimeout(ignoriereTimer);
+    ignoriereTimer = setTimeout(() => { ignorierePop = 0; }, 1500);
+    history.go(-n);
+  }, 0);
+}
+// Eingaben, die verloren gingen: etwas im Formular geändert, oder ein angefangener (noch nicht gesendeter) Text in Notiz-/Aufgaben-Block
+// (die Blöcke speichern sich selbst; nur ihr Entwurfstext zählt)
+function hatEingabe(d) {
+  return !!d.dataset.geaendert || [...d.querySelectorAll("[data-entwurf] textarea")].some((t) => t.value.trim());
+}
+function hatEingaben() {
+  return FENSTER.concat(GEPARKT.map((g) => g.dlg)).some((d) => hatEingabe(d) && !d.dataset.festhalten);
+}
+// Nutzer will ein Fenster schließen (✕, Abbrechen, Esc, Zurück-Taste): bei Eingaben erst fragen
+async function versucheSchliessen(dlg) {
+  if (!dlg.open) return true;
+  if (dlg.dataset.festhalten) return false;
+  if (hatEingabe(dlg)) {
+    if (dlg._fragt) return false;
+    dlg._fragt = true;
+    let ok = false;
+    try { ok = await bestaetige("Eingaben verwerfen?", "Was du eingegeben hast, ist noch nicht gespeichert und geht verloren.", "Ja, verwerfen", "Weiter bearbeiten", true); } finally { dlg._fragt = false; }
+    if (!ok) return false;
+  }
+  if (dlg.open) dlg.close();
+  return true;
+}
+// Sperre/Leerlauf: alle Fenster zu, aber Eingaben bleiben im Hintergrund erhalten
+function parkeFenster() {
+  const offen = [...document.querySelectorAll("dialog[open]")].reverse();
+  for (const d of offen) {
+    if (hatEingabe(d) && !d.dataset.festhalten) d._geparkt = true;
+    d.close();
+  }
+}
+function stelleFensterWieder() {
+  const liste = GEPARKT.splice(0).sort((a, b) => a.dlg._nr - b.dlg._nr);
+  if (!liste.length) return;
+  const ich = (S.sitzung && S.sitzung.id) || null;
+  let da = 0;
+  for (const g of liste) {
+    if (g.wer !== ich) { g.dlg.remove(); continue; } // eine andere Person hat sich angemeldet: fremde Eingaben nicht zeigen
+    FENSTER.push(g.dlg); verlaufPush(g.dlg); g.dlg.showModal(); da++;
+  }
+  if (da) toast(da === 1 ? "Dein Fenster mit den Eingaben ist wieder da." : "Deine Fenster mit den Eingaben sind wieder da.");
+}
+function verwirfGeparkt() { GEPARKT.splice(0).forEach((g) => g.dlg.remove()); }
+window.addEventListener("popstate", async () => {
+  if (ignorierePop > 0) { ignorierePop--; return; }
+  const oben = FENSTER[FENSTER.length - 1];
+  if (!oben) return; // gewöhnliche Navigation
+  oben._verlauf = false; // dieser Eintrag ist gerade verbraucht
+  if (oben.dataset.festhalten || (hatEingabe(oben) && oben.open)) {
+    // bleibt vorerst offen: Eintrag wieder hinlegen, dann bei Eingaben fragen
+    verlaufPush(oben);
+    if (!oben.dataset.festhalten) await versucheSchliessen(oben);
+    return;
+  }
+  if (oben.open) oben.close();
+});
+window.addEventListener("beforeunload", (e) => {
+  if (hatEingaben()) { e.preventDefault(); e.returnValue = ""; }
+});
+// Nach dem Neuladen steht noch ein Fenster-Eintrag im Verlauf: einmal zurück, damit „Zurück“ nicht ins Leere läuft
+if (history.state && history.state.fenster != null) { ignorierePop++; setTimeout(() => { ignorierePop = 0; }, 1500); try { history.back(); } catch (e) { /* egal */ } }
+
 function oeffneDialog(titel, inhalt, speichern, knopfText, optionen) {
+  const o = optionen || {};
   const dlg = document.createElement("dialog");
   dlg.className = "dialog";
+  dlg._nr = ++fensterZaehler;
   dlg.innerHTML = `<form method="dialog" class="dialog-form">
-      <header><h2>${esc(titel)}</h2>${optionen && optionen.festhalten ? "" : '<button class="knopf klein" type="button" data-schliessen aria-label="Schließen">✕</button>'}</header>
+      <header><h2>${esc(titel)}</h2>${o.festhalten ? "" : '<button class="knopf klein" type="button" data-schliessen aria-label="Schließen">✕</button>'}</header>
       <div class="dialog-inhalt">${inhalt}</div>
-      <footer>${optionen && optionen.festhalten ? "" : '<button class="knopf" type="button" data-schliessen>Abbrechen</button>'}<button class="knopf haupt" value="ok" type="submit">${esc(knopfText || "Speichern")}</button></footer>
+      <footer>${o.festhalten ? "" : `<button class="knopf" type="button" data-schliessen>${esc(o.abbrechenText || "Abbrechen")}</button>`}<button class="knopf haupt" value="ok" type="submit">${esc(knopfText || "Speichern")}</button></footer>
     </form>`;
   document.body.appendChild(dlg);
   const form = dlg.querySelector("form");
   // Abbrechen und ✕ sind keine Absende-Knöpfe: Enter speichert, und das Schließen klappt auch bei leeren Pflichtfeldern
-  dlg.querySelectorAll("[data-schliessen]").forEach((b) => b.addEventListener("click", () => dlg.close()));
+  dlg.querySelectorAll("[data-schliessen]").forEach((b) => b.addEventListener("click", () => versucheSchliessen(dlg)));
   let laeuft = false;
   form.addEventListener("submit", async (e) => {
     e.preventDefault();
@@ -3190,23 +3558,53 @@ function oeffneDialog(titel, inhalt, speichern, knopfText, optionen) {
     const knopf = dlg.querySelector("footer button[value=ok]");
     try { if ((await speichern(form)) !== false) dlg.close(); } finally { knopf.disabled = false; laeuft = false; }
   });
-  dlg.addEventListener("close", () => dlg.remove());
-  // Immer schließbar: Abbrechen, ✕ (ohne Pflichtfeld-Prüfung), Esc, und ein Klick neben das Fenster (nur solange nichts eingegeben wurde)
-  let geaendert = false;
-  form.addEventListener("input", () => { geaendert = true; dlg.dataset.geaendert = "1"; });
-  if (optionen && optionen.festhalten) dlg.dataset.festhalten = "1";
-  if (optionen && optionen.festhalten) dlg.addEventListener("cancel", (e) => e.preventDefault()); // Zugangsdaten: nicht versehentlich wegklicken
+  dlg.addEventListener("close", () => {
+    const i = FENSTER.indexOf(dlg); if (i >= 0) FENSTER.splice(i, 1);
+    verlaufZurueck(dlg);
+    undoPlatzieren();
+    if (dlg._geparkt) { dlg._geparkt = false; GEPARKT.push({ dlg, wer: (S.sitzung && S.sitzung.id) || S.zuletztWer || null }); return; }
+    dlg.remove();
+  });
+  // Immer schließbar: Abbrechen, ✕ (ohne Pflichtfeld-Prüfung), Esc, und ein Klick neben das Fenster (nur solange nichts eingegeben wurde).
+  // Mit Eingaben fragen ✕, Abbrechen, Esc und Zurück-Taste vorher „Eingaben verwerfen?“.
+  form.addEventListener("input", (e) => { if (!e.target.closest("[data-entwurf]")) dlg.dataset.geaendert = "1"; });
+  if (o.festhalten) dlg.dataset.festhalten = "1";
+  dlg.addEventListener("cancel", (e) => { e.preventDefault(); if (!o.festhalten) versucheSchliessen(dlg); }); // Zugangsdaten: nicht versehentlich wegklicken
+  dlg.addEventListener("keydown", (e) => { if (e.key === "Escape") { e.preventDefault(); if (!o.festhalten) versucheSchliessen(dlg); } });
   // Doppelklick auf den Öffnen-Knopf: der zweite Klick landet neben dem Fenster und darf es nicht gleich wieder schließen
-  if (!(optionen && optionen.festhalten)) dlg.addEventListener("mousedown", (e) => { if (e.target === dlg && !geaendert && e.detail < 2) dlg.close(); });
+  if (!o.festhalten) dlg.addEventListener("mousedown", (e) => { if (e.target === dlg && !hatEingabe(dlg) && e.detail < 2) dlg.close(); });
+  FENSTER.push(dlg);
+  verlaufPush(dlg);
   dlg.showModal();
+  undoPlatzieren();
   const erstes = dlg.querySelector(".dialog-inhalt input, .dialog-inhalt select");
   if (erstes) erstes.focus();
   return dlg;
 }
-function bestaetige(titel, text, jaText) {
+function bestaetige(titel, text, jaText, neinText, vorsichtig) {
   return new Promise((ok) => {
     let ergebnis = false;
-    const dlg = oeffneDialog(titel, `<p>${esc(text)}</p>`, () => { ergebnis = true; }, jaText || "Ja");
+    const dlg = oeffneDialog(titel, `<p>${esc(text)}</p>`, () => { ergebnis = true; }, jaText || "Ja", neinText ? { abbrechenText: neinText } : undefined);
+    // vorsichtig: die zerstörende Antwort ist nicht der Hauptknopf, „Nein“ hat den Fokus (Enter verwirft nichts)
+    if (vorsichtig) {
+      const ja = dlg.querySelector("footer .haupt");
+      const nein = [...dlg.querySelectorAll("footer button")].find((b) => b !== ja && b.textContent.trim() === (neinText || "").trim());
+      if (ja) ja.classList.remove("haupt");
+      if (nein) { nein.classList.add("haupt"); setTimeout(() => nein.focus(), 0); }
+    }
+    dlg.addEventListener("close", () => ok(ergebnis));
+  });
+}
+// Drei Wege: „ja“, „nein“ oder null (abgebrochen: ✕, Esc, Abbrechen, Zurück)
+function frageDrei(titel, text, jaText, neinText, abbrechenText) {
+  return new Promise((ok) => {
+    let ergebnis = null;
+    const dlg = oeffneDialog(titel, `<p>${esc(text)}</p>`, () => { ergebnis = "ja"; }, jaText, { abbrechenText: abbrechenText || "Abbrechen" });
+    const fuss = dlg.querySelector("footer .haupt");
+    const nein = document.createElement("button");
+    nein.type = "button"; nein.className = "knopf"; nein.textContent = neinText; nein.dataset.nein = "1";
+    nein.addEventListener("click", () => { ergebnis = "nein"; dlg.close(); });
+    fuss.before(nein);
     dlg.addEventListener("close", () => ok(ergebnis));
   });
 }
@@ -3228,7 +3626,7 @@ async function ladeDaten() {
   const fsId = S.fsId;
   setStatus("", "lade …");
   try {
-    const [fs, lehrer, schueler, termine, pruefungen, fahrzeuge, pakete, pTermine, fcAbg, verk, prov, team, notizen, gelesen, aufgaben, personen, theorie] = await Promise.all([
+    const [fs, lehrer, schueler, termine, pruefungen, fahrzeuge, pakete, pTermine, fcAbg, verk, prov, team, notizen, gelesen, aufgaben, personen, theorie, fahrzeugeWeg] = await Promise.all([
       supa.from("fahrschulen").select("*").eq("id", fsId).single(),
       supa.from("profiles").select("*").eq("fahrschule_id", fsId).in("rolle", ["fahrlehrer", "super_admin"]).order("name"),
       supa.from("schueler").select("*").eq("fahrschule_id", fsId).neq("status", "geloescht").order("name"),
@@ -3246,6 +3644,7 @@ async function ladeDaten() {
       supa.from("schueler_aufgaben").select("*").eq("fahrschule_id", fsId).order("erstellt_am", { ascending: false }).limit(3000),
       supa.from("buero_personen").select("id,name,telefon,hat_pin,pin_neu_noetig,pin_frei_bis,darf_verwalten,aktiv,gesperrt_bis").eq("fahrschule_id", fsId).order("name"),
       alleSeiten(() => supa.from("theorie_teilnahme").select("id,schueler_id,lektion,datum,bearbeiter").eq("fahrschule_id", fsId).is("entfernt_am", null).order("datum").order("id")).catch(() => null),
+      supa.from("fahrschule_fahrzeuge").select("*").eq("fahrschule_id", fsId).eq("aktiv", false).order("erstellt_am"),
     ]);
     if (nr !== S.ladeNr) return; // inzwischen wurde neu geladen oder die Fahrschule gewechselt
     S.fs = pruefe(fs, "Fahrschule");
@@ -3254,6 +3653,7 @@ async function ladeDaten() {
     S.termine = pruefe(termine, "Termine") || [];
     S.pruefungen = pruefe(pruefungen, "Prüfungen") || [];
     S.fahrzeuge = pruefe(fahrzeuge, "Fahrzeuge") || [];
+    S.fahrzeugeWeg = (fahrzeugeWeg && !fahrzeugeWeg.error && fahrzeugeWeg.data) || [];   // entfernte Fahrzeuge: Zusatz, zum Zurückholen
     S.pakete = pruefe(pakete, "Pakete") || [];
     S.pruefungstermine = pruefe(pTermine, "Prüfungstafel") || [];
     S.fcAbgaben = pruefe(fcAbg, "Fahrcheck-Abgaben") || [];
@@ -3270,6 +3670,7 @@ async function ladeDaten() {
     setStatus("ok", "verbunden · " + S.geladenAm.toLocaleTimeString("de-DE", { hour: "2-digit", minute: "2-digit" }));
     zeichne();
     pruefeSitzungNoch(); // alle 2 Minuten mit: PIN zurückgesetzt oder Person ausgetreten → neu anmelden
+    holeAbsagenNach();
     zeigeNeueAufgaben(); // neue Aufgabe von einer Kollegin erscheint ohne Neuladen
   } catch (e) {
     if (nr !== S.ladeNr) return;
@@ -3330,6 +3731,7 @@ function setzeSitzung(r) {
   zeigeWerAnzeige();
 }
 function vergissSitzung() {
+  if (S.sitzung) S.zuletztWer = S.sitzung.id; // für Fenster mit Eingaben, die beim Sperren nur versteckt werden
   S.sitzung = null; S.wer = ""; S.werAnzeige = "";
   try { sessionStorage.removeItem("buero-sitzung"); sessionStorage.removeItem("buero-wer"); } catch (e) { /* egal */ }
   zeigeWerAnzeige();
@@ -3351,11 +3753,12 @@ function werZeigen(an) {
   $("wer").hidden = !an;
   $("app").inert = !!an;
   $("wer").classList.toggle("ohne-sitzung", !S.sitzung);
+  if (!an) stelleFensterWieder();
 }
 function pinFrei(p) { return !p.hat_pin && p.pin_frei_bis && new Date(p.pin_frei_bis).getTime() > Date.now(); }
 function zeitHM(iso) { return new Date(iso).toLocaleTimeString("de-DE", { hour: "2-digit", minute: "2-digit" }); }
 async function zeigeWer(abbrechbar) {
-  document.querySelectorAll("dialog[open]").forEach((d) => d.close()); // ein offenes Fenster würde das Overlay verdecken
+  parkeFenster(); // ein offenes Fenster würde das Overlay verdecken; Eingaben bleiben versteckt erhalten und kommen nach der PIN zurück
   PIN.abbrechbar = !!(abbrechbar && S.sitzung);
   $("werZu").hidden = !PIN.abbrechbar;
   $("werNamen").hidden = false; $("werPin").hidden = true;
@@ -3601,6 +4004,7 @@ function zeigeHinweis(titel, text, knoepfe) {
   zeigeNur("hinweis");
 }
 async function abmelden() {
+  verwirfGeparkt(); // sonst fragt der Browser beim Neuladen nach versteckten Eingaben
   await beendeSitzung();
   try { await supa.auth.signOut(); } catch (e) { /* trotzdem neu laden */ }
   location.hash = "";
