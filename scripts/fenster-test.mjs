@@ -268,6 +268,35 @@ await fall("A13 Sperrzeit mit Uhrzeit (Büro) bleibt eigener Termin, wird kein G
   return (!r.zeitraum && r.loeschen) ? [] : ["Sperrzeit mit Uhrzeit falsch behandelt: " + JSON.stringify(r)];
 });
 
+await fall("Neuer Schüler gespeichert → Zurück führt nicht wieder ins Formular", async () => {
+  await vorbereiten();
+  await page.evaluate(() => { routeHome(); routeSchuelerForm(null); }); await w();
+  await page.fill("#f_name", "Zora Neu");
+  await page.evaluate(() => document.getElementById("saveBtn").click()); await w(200);
+  await zur(); await w(200); // schließt Fragebogen-Fenster
+  await zur(); await w(200);
+  const t = await titel();
+  return t === "Neuer Schüler" ? ["Zurück führt wieder ins Formular"] : [];
+});
+await fall("Zwei Löschungen hintereinander: ein Rückgängig holt beide zurück", async () => {
+  await vorbereiten();
+  await page.evaluate(() => { DB.lessons.push({ id: "L3", sid: "s1", date: addDays(todayISO(), 4), von: "12:00", bis: "13:30", art: "fahrstunde", status: "geplant", note: "" }); save(); routeKalender();
+    deleteLessonMitRueckgaengig("L1", () => routeKalender()); deleteLessonMitRueckgaengig("L3", () => routeKalender()); }); await w(200);
+  await page.evaluate(() => document.querySelector("#toast .ut-btn").click()); await w(200);
+  const r = await page.evaluate(() => ["L1", "L3"].filter((id) => DB.lessons.some((l) => l.id === id)).length);
+  return r === 2 ? [] : ["nur " + r + " von 2 zurück"];
+});
+await fall("✕ bleibt beim Scrollen im Fenster sichtbar", async () => {
+  await vorbereiten();
+  await page.setViewportSize({ width: 360, height: 560 });
+  await page.evaluate(() => openEventSheet("lesson", "L1", "s1")); await w();
+  const r = await page.evaluate(() => { const sh = document.getElementById("sheet"); sh.scrollTop = 9999; const x = sh.querySelector(".sheet-x").getBoundingClientRect(), s = sh.getBoundingClientRect(); return { x: Math.round(x.top), s: Math.round(s.top), scroll: sh.scrollTop }; });
+  await page.setViewportSize({ width: 390, height: 800 });
+  await page.evaluate(() => closeSheet());
+  if (!r.scroll) return []; // Fenster nicht scrollbar: nichts zu prüfen
+  return r.x >= r.s - 2 ? [] : ["✕ aus dem Bild: " + JSON.stringify(r)];
+});
+
 await browser.close(); server.close();
 console.log(rot ? `Fenster-Test: ${rot} rot, ${gruen} grün.` : `Fenster-Test: alles in Ordnung (${gruen} Fälle).`);
 process.exit(rot ? 1 : 0);
