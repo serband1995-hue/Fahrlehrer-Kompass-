@@ -4125,6 +4125,7 @@ function _profilFehlerZeigen(user, err){
     b.addEventListener("click", () => { b.disabled = true; b.textContent = "Lade …"; afterLogin(user); });
     fehlerEl.insertAdjacentElement("afterend", b);
   }
+  try { (document.getElementById("loNochmal") || fehlerEl).scrollIntoView({ block: "center" }); } catch (e) {}
   console.warn("[Kompass] Profil nicht geladen:", err && err.message);
 }
 // Mit gespeichertem Profil gestartet: alle 20 s nachladen; ist das Konto inzwischen gesperrt, abmelden.
@@ -8836,7 +8837,7 @@ function wizOpen(){
       <button class="btn btn-primary" id="wizDone">Auswerten</button>
     </div>
   </div>`;
-  $("#wizBack").addEventListener("click",()=>{WIZ.page--;wizPage();});
+  $("#wizBack").addEventListener("click",()=>{_wizOffeneSichern();WIZ.page--;wizPage();});
   $("#wizDone").addEventListener("click",()=>{
     document.querySelectorAll("[data-open]").forEach(t=>WIZ.open[t.dataset.open]=t.value.trim());
     const s=DB.students.find(x=>x.id===WIZ.id);if(!s)return routeHome();
@@ -12309,8 +12310,9 @@ function openAssignSlotSheet(date,von,bis,art,opts){
    ohne die aktuelle Ansicht zu verlassen. Ruft onCreated(newStudentId) nach dem Speichern auf. */
 /* A1: Warnung vor Doppelanlage – gleicher Name oder gleiche Telefonnummer schon vorhanden. true = anlegen. */
 function _doppelterSchuelerOk(name,tel){
-  const n=(name||"").trim().toLowerCase().replace(/\s+/g," "), t=(tel||"").replace(/\D/g,"");
-  const treffer=(DB.students||[]).find(x=>!x.passed&&((x.name||"").trim().toLowerCase().replace(/\s+/g," ")===n||(t.length>=6&&(x.telefon||"").replace(/\D/g,"")===t)));
+  const nr=v=>{ let d=(v||"").replace(/\D/g,""); if(d.startsWith("0049"))d="0"+d.slice(4); else if(d.startsWith("49")&&(v||"").trim().startsWith("+"))d="0"+d.slice(2); return d; };
+  const n=(name||"").trim().toLowerCase().replace(/\s+/g," "), t=nr(tel);
+  const treffer=(DB.students||[]).find(x=>!x.passed&&((x.name||"").trim().toLowerCase().replace(/\s+/g," ")===n||(t.length>=6&&nr(x.telefon)===t)));
   if(!treffer)return true;
   const gleich=(treffer.name||"").trim().toLowerCase().replace(/\s+/g," ")===n?"diesem Namen":"dieser Telefonnummer";
   return confirm(`Es gibt schon einen Schüler mit ${gleich}: ${treffer.name}. Trotzdem neu anlegen?`);
@@ -12348,7 +12350,10 @@ function openBogenChoiceSheet(sid,name,afterChoice){
   // A12: auch wer das Fenster mit Zurück oder Tippen daneben schließt, bekommt den Abschluss (z. B. den Termin).
   let fertig=false; const weiter=()=>{ if(fertig)return; fertig=true; afterChoice(); };
   _sheetBeimSchliessen=weiter;
-  $("#bgNow").addEventListener("click",()=>{ _sheetBeimSchliessen=null; closeSheet(); weiter(); routeBogen(sid,true); });
+  $("#bgNow").addEventListener("click",()=>{ _sheetBeimSchliessen=null; closeSheet(); weiter();
+    // Öffnet der Abschluss ein Fenster (z. B. Termin eintragen), nicht darunter den Bogen starten – sonst ginge er verloren
+    if($("#sheet").classList.contains("open")){ logHist(sid,"note","Fragebogen noch offen — später ausfüllen"); toast("Erst den Termin fertig eintragen – den Bogen startest du danach in der Akte"); return; }
+    routeBogen(sid,true); });
   $("#bgLater").addEventListener("click",()=>{ _sheetBeimSchliessen=null; closeSheet(); logHist(sid,"note","Fragebogen noch offen — später ausfüllen"); weiter(); });
   $("#bgSkip").addEventListener("click",()=>{ _sheetBeimSchliessen=null; closeSheet(); weiter(); });
 }
@@ -15463,7 +15468,7 @@ function _verdienstModulHTMLContent(){
       <button class="vd-nav" onclick="vdShiftMonth(1)" aria-label="Nächster Monat" ${isCurMonth?'disabled style="opacity:.25;pointer-events:none;"':''}>${ICN.arrow}</button>
       <button class="vd-gear" id="vdGear" aria-label="Einstellungen">${ICN.gear||"⚙"}</button>
     </div>
-    <div class="thermo-wrap">
+    <div class="thermo-wrap"${(+v.fixUE>0||+v.bonusUE>0)?"":' hidden'}>
       <div class="thermo-left">
         <div class="thermo-tube">
           <div class="th-seg th-gruen" data-th="${gruenH}" style="flex-basis:0px"></div>
@@ -15483,7 +15488,7 @@ function _verdienstModulHTMLContent(){
       <div class="thg-lab"><span class="ic ic-gold" style="font-size:11px;">${ICN.chart}</span> Terminierte Fahrstunden diesen Monat</div>
       <div class="thg-val">${terminiertUE} UE</div>
     </div>
-    ${bisHtml}
+    ${+v.bonusUE>0?bisHtml:""}
   </div>
   <div class="res-block" style="animation:none;margin-top:10px;">
     <h4 style="margin-bottom:8px;">📊 Monats-Übersicht</h4>
@@ -16560,10 +16565,14 @@ function _navAktualisiereKnopf(){
 }
 /* A5: Läuft der Persönlichkeitsbogen, blättert Zurück (Android-Taste, Pfeil oben) eine Seite zurück;
    auf der ersten Seite kommt dieselbe Rückfrage wie bei „Abbrechen“. Liefert true, wenn erledigt. */
+function _wizOffeneSichern(){ if(WIZ) document.querySelectorAll("#view [data-open]").forEach(t=>{ WIZ.open[t.dataset.open]=t.value.trim(); }); }
 function _wizZurueck(){
   if(!WIZ||!document.querySelector("#view .wiz-nav"))return false;
+  _wizOffeneSichern();
   if(WIZ.page>0){ WIZ.page--; wizPage(); return true; }
-  if(!Object.keys(WIZ.answers).length||confirm("Bogen abbrechen? Die Antworten gehen verloren.")){ const id=WIZ.id; WIZ=null; routeDetail(id); }
+  if(!Object.keys(WIZ.answers).length||confirm("Bogen abbrechen? Die Antworten gehen verloren.")){ const id=WIZ.id; WIZ=null;
+    // Bogen-Seite aus dem Verlauf nehmen: das nächste Zurück verlässt die Akte, nicht wieder in den Bogen
+    if(_navStack.length>1&&_navStack[_navStack.length-1].name==="routeBogen"&&_navStack[_navStack.length-2].name==="routeDetail"){ _navStack.pop(); _navFahrt=true; try{ routeDetail(id); } finally{ _navFahrt=false; } _navAktualisiereKnopf(); } else routeDetail(id); }
   return true;
 }
 function navZurueck(){
