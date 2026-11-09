@@ -555,8 +555,9 @@ input,select,textarea{font-family:inherit;font-size:15px;color:var(--txt);}
 /* ===== FORM ===== */
 .form-block{display:flex;flex-direction:column;gap:20px;}
 .field label{display:block;font-size:12.5px;font-weight:700;color:var(--muted);margin-bottom:8px;letter-spacing:.02em;}
-.field input,.field textarea{width:100%;background:var(--surface);border:1px solid var(--line);border-radius:var(--r-field);
+.field input,.field textarea,.field select{width:100%;background:var(--surface);border:1px solid var(--line);border-radius:var(--r-field);
   padding:13px 15px;outline:none;transition:border-color .16s var(--ease),background .16s var(--ease);}
+.field select{min-height:48px;color:var(--txt);font:inherit;}
 .field input::placeholder,.field textarea::placeholder{color:var(--faint);}
 .field input:focus,.field textarea:focus{border-color:var(--orange);background:var(--bg-soft);}
 .field textarea{resize:vertical;min-height:110px;line-height:1.55;}
@@ -909,7 +910,10 @@ input,select,textarea{font-family:inherit;font-size:15px;color:var(--txt);}
 .toast.show{opacity:1;transform:translateX(-50%) translateY(0);}
 .toast.undo{display:flex;align-items:center;gap:14px;pointer-events:auto;}
 .toast.undo .ut-txt{font-weight:800;min-width:0;}
-.toast.undo .ut-btn{background:#1a1b1f;color:#fff;border:none;padding:7px 14px;border-radius:9px;font-weight:800;font-size:13px;cursor:pointer;flex:0 0 auto;}
+.toast.undo .ut-btn{background:#1a1b1f;color:#fff;border:none;padding:10px 16px;min-height:44px;border-radius:12px;font-weight:800;font-size:14px;cursor:pointer;flex:0 0 auto;}
+/* Rückgängig-Hinweis über einem offenen Fenster: oben statt über den Eingabefeldern */
+body:has(#sheet.open) .toast{bottom:auto;top:calc(14px + env(safe-area-inset-top));transform:translateX(-50%) translateY(-20px);}
+body:has(#sheet.open) .toast.show{transform:translateX(-50%) translateY(0);}
 .toast.undo .ut-btn:active{transform:scale(.95);}
 .fade-up{animation:fadeUp .32s var(--ease) both;}
 @keyframes fadeUp{from{opacity:0;transform:translateY(14px);}to{opacity:1;transform:translateY(0);}}
@@ -1524,7 +1528,7 @@ body:not(.light) .cw-col.today .cw-dnum{color:var(--gold);}
 .ct-free-p{font-size:11px;color:var(--mint-soft);font-weight:800;}
 /* Event-Sheet */
 .es-arten,.es-actions{display:flex;gap:8px;}
-.es-art{flex:1;padding:11px 6px;border-radius:10px;font-size:13px;font-weight:700;background:var(--surface);border:1px solid var(--line);color:var(--muted);}
+.es-art{flex:1;padding:11px 6px;min-height:44px;border-radius:10px;font-size:13px;font-weight:700;background:var(--surface);border:1px solid var(--line);color:var(--muted);}
 .es-art.on{background:var(--gruen-soft);border-color:var(--gruen-line);color:var(--mint);}
 .es-actions{flex-direction:column;}
 .es-act{padding:14px;border-radius:11px;font-size:14px;font-weight:700;background:var(--surface);border:1px solid var(--line);color:var(--txt);text-align:left;}
@@ -2339,7 +2343,7 @@ body:not(.light) .at-hist{color:var(--mint-ok);}
 .ap-zeile{display:flex;justify-content:space-between;gap:10px;min-height:32px;align-items:center;font-size:14px;}
 .ap-erg{min-height:48px;cursor:pointer;border-radius:12px;margin:0 -8px;padding:0 8px;}
 .ap-erg:active,.ap-erg:focus-visible{background:var(--bg-soft);}
-.ap-erg b{margin-left:auto;} .ap-pfeil{color:var(--muted);font-size:18px;}
+.ap-erg b{margin-left:auto;white-space:nowrap;} .ap-pfeil{color:var(--muted);font-size:18px;}
 .ap-zeile b.ok{color:var(--k-akzent);} .ap-zeile b.nein{color:#9E2F22;}
 body:not(.light) .ap-zeile b.ok{color:var(--mint-ok);} body:not(.light) .ap-zeile b.nein{color:#f6b0a3;}
 .schueler2 #homeFilterBtn{min-width:44px;min-height:44px;}
@@ -11996,8 +12000,8 @@ function openBlockEventSheet(l){
     <p class="muted-p" style="font-size:13.5px;margin:-4px 0 16px;">${zr} · ${tage.length} Tag${tage.length===1?"":"e"} blockiert</p>
     <div class="es-actions">
       <button class="es-act primary" id="blAendern">Zeitraum oder Grund ändern</button>
-      <button class="es-act danger" id="blAlleWeg">${tage.length>1?`Ganzen Zeitraum löschen (${tage.length} Tage)`:"Löschen"}</button>
       ${tage.length>1?`<button class="es-act" id="blTagWeg">Nur diesen Tag (${isoDE(l.date)}) löschen</button>`:""}
+      <button class="es-act danger" id="blAlleWeg" style="margin-top:10px;">${tage.length>1?`Ganzen Zeitraum löschen (${tage.length} Tage)`:"Löschen"}</button>
     </div>`);
   const nachher=()=>routeKalender();
   $("#blAlleWeg").addEventListener("click",()=>{ closeSheet(); const weg=new Set(tage); const vorher=(DB.lessons||[]).slice();
@@ -16156,9 +16160,9 @@ function routeArchive(){
     ${(()=>{ const weg=DB.students.filter(x=>x.ausgeblendetAm).sort((a,b)=>(a.name||"").localeCompare(b.name||"","de")); if(!weg.length)return "";
       return `<div class="sec-h" style="margin:26px 0 6px;font-size:20px;">Ausgeblendet</div>
       <p class="muted-p" style="font-size:13px;margin-bottom:10px;">Bei dir ausgeblendet${_authProfile&&_authProfile.fahrschule_id?", im Büro weiter vorhanden":""}.</p>
-      ${weg.map(x=>`<div class="wait-card" style="cursor:default;"><div class="wait-body"><div class="wait-name">${esc(x.name)}</div><div class="wait-since">ausgeblendet am ${isoDE(x.ausgeblendetAm)}</div></div>
-        <button class="btn btn-ghost" data-einblenden="${esc(x.id)}" style="flex:0 0 auto;min-height:44px;">Einblenden</button>
-        ${_authProfile&&_authProfile.fahrschule_id?"":`<button class="btn btn-danger" data-endgueltig="${esc(x.id)}" style="flex:0 0 auto;min-height:44px;margin-left:6px;">Löschen</button>`}</div>`).join("")}`; })()}
+      ${weg.map(x=>`<div class="wait-card" style="cursor:default;display:block;"><div class="wait-body"><div class="wait-name">${esc(x.name)}</div><div class="wait-since">ausgeblendet am ${isoDE(x.ausgeblendetAm)}</div></div>
+        <div style="display:flex;gap:8px;margin-top:10px;"><button class="btn btn-primary" data-einblenden="${esc(x.id)}" style="flex:1;min-height:44px;">Einblenden</button>
+        ${_authProfile&&_authProfile.fahrschule_id?"":`<button class="btn btn-danger" data-endgueltig="${esc(x.id)}" style="flex:1;min-height:44px;">Endgültig löschen</button>`}</div></div>`).join("")}`; })()}
     <div class="no-hit" id="archNoHit" style="display:none;">Keine Treffer.</div>
   </div>
   <div style="position:fixed;right:6px;top:50%;transform:translateY(-50%);z-index:30;display:flex;flex-direction:column;align-items:center;background:var(--surface);border-radius:12px;padding:4px 3px;box-shadow:var(--elev-2);${list.length?'':'display:none;'}" id="archAlphaNav">${letterNav}</div>`;

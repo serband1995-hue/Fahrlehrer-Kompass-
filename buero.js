@@ -3490,7 +3490,7 @@ async function versucheSchliessen(dlg) {
     if (dlg._fragt) return false;
     dlg._fragt = true;
     let ok = false;
-    try { ok = await bestaetige("Eingaben verwerfen?", "Was du eingegeben hast, ist noch nicht gespeichert und geht verloren.", "Ja, verwerfen", "Weiter bearbeiten"); } finally { dlg._fragt = false; }
+    try { ok = await bestaetige("Eingaben verwerfen?", "Was du eingegeben hast, ist noch nicht gespeichert und geht verloren.", "Ja, verwerfen", "Weiter bearbeiten", true); } finally { dlg._fragt = false; }
     if (!ok) return false;
   }
   if (dlg.open) dlg.close();
@@ -3581,10 +3581,17 @@ function oeffneDialog(titel, inhalt, speichern, knopfText, optionen) {
   if (erstes) erstes.focus();
   return dlg;
 }
-function bestaetige(titel, text, jaText, neinText) {
+function bestaetige(titel, text, jaText, neinText, vorsichtig) {
   return new Promise((ok) => {
     let ergebnis = false;
     const dlg = oeffneDialog(titel, `<p>${esc(text)}</p>`, () => { ergebnis = true; }, jaText || "Ja", neinText ? { abbrechenText: neinText } : undefined);
+    // vorsichtig: die zerstörende Antwort ist nicht der Hauptknopf, „Nein“ hat den Fokus (Enter verwirft nichts)
+    if (vorsichtig) {
+      const ja = dlg.querySelector("footer .haupt");
+      const nein = [...dlg.querySelectorAll("footer button")].find((b) => b !== ja && b.textContent.trim() === (neinText || "").trim());
+      if (ja) ja.classList.remove("haupt");
+      if (nein) { nein.classList.add("haupt"); setTimeout(() => nein.focus(), 0); }
+    }
     dlg.addEventListener("close", () => ok(ergebnis));
   });
 }
