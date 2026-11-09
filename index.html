@@ -9625,8 +9625,10 @@ function openMultiTerminErgebnis(sid,cfg,treffer){
   const gewuenscht=cfg.art==="sonder"?sfOffen(s,cfg.grp):null;
   const hinweis=cfg.art==="sonder"&&gewuenscht!=null?`<p class="muted-p" style="font-size:12px;margin:-4px 0 10px;">Automatisch gedeckelt auf ${gewuenscht} noch offene ${SF_LABEL[cfg.grp]||"Sonderfahrt"}${gewuenscht===1?'':'en'}.</p>`:'';
   if(!treffer.length){
+    const ohneFz=!(DB.workCfg.fahrzeuge||[]).length;
     openSheet(`<div class="sheet-h">Keine freien Slots gefunden</div>
       <p class="muted-p" style="font-size:13px;">Im gewählten Zeitraum/Uhrzeitfenster war nichts frei — Zeitraum oder Fenster erweitern und nochmal versuchen.</p>
+      ${ohneFz?`<p class="muted-p" style="font-size:13px;">Hinweis: Du hast noch keine Fahrzeuge eingetragen. Für „Schalter“ oder „Automatik“ trag sie unter Kalender › Zahnrad › Fahrzeuge ein – oder wähle „egal“.</p>`:""}
       <div class="btn-row"><button class="btn btn-ghost btn-full" id="mtZurueck">Zurück</button></div>`);
     $("#mtZurueck").addEventListener("click",()=>{ if(sheetZurueck(true)==="leer")openMultiTerminSheet(sid); });
     return;
@@ -15210,6 +15212,7 @@ function _h2KachelnHTML(){
   if(sichtbar('dash_wocheverdienst')){
     const zeigen=_verdienstPinCheck();
     k.push(ohneVertrag?`<button class="h2-kachel" data-k="woche"><span class="h2-k-l">Verdienst</span><span class="h2-k-w" style="color:var(--gold,#b8873a);">Vertrag fehlt</span><span class="h2-k-s">Tippen zum Eintragen</span></button>`
+      :!(+(DB.verdienst||{}).proUE>0)?(()=>{ const wk=_wocheVonBis(); return `<button class="h2-kachel" data-k="woche"><span class="h2-k-l">Diese Woche gefahren</span><span class="h2-k-w">${fmtUE(ueRange(wk.von,wk.bis).fcDone)} UE</span><span class="h2-k-s">Festgehalt</span></button>`; })() // nur Fixum: Euro je Woche gibt es nicht
       :`<button class="h2-kachel" data-k="woche"><span class="h2-k-l">Diese Woche verdient</span><span class="h2-k-w">${zeigen?wocheVerdientEuro().toLocaleString("de-DE")+" €":"••••"}</span></button>`);
   }
   const v=DB.verdienst||{}, bonusUE=v.bonusUE||250;
@@ -15854,7 +15857,7 @@ function routeStats(period){
   view.innerHTML=`<div class="view-inner view-read fade-up">
     <div class="row-between" style="margin-bottom:14px;"><div class="sec-h">Stat<span class="o">istik</span></div></div>
     <div id="vdModWrap">${verdienstModulHTML()}</div>
-    <div class="res-block" style="animation:none;margin-top:10px;"><div id="vdYearWrap">${jahresRueckblickHTML()}</div></div>
+    ${_vertragFehlt()?"":`<div class="res-block" style="animation:none;margin-top:10px;"><div id="vdYearWrap">${jahresRueckblickHTML()}</div></div>`}
     ${periodChips(period)}
     <div class="stat-grid4" style="margin-bottom:18px;">
       ${miniStatAnim("Quote",q.pct==null?"–":q.pct,"%",q.total?q.pass+"/"+q.total+" bestanden":"keine Prüfung")}

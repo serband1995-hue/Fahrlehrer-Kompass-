@@ -77,6 +77,9 @@ const t6b = await page.evaluate(() => {
 await page.reload(); await page.waitForTimeout(900);
 const t6c = await page.evaluate(() => ({ v: DB.verdienst.proUE + "/" + DB.verdienst.fixum, fz: DB.workCfg.fahrzeuge.map((f) => f.name).join(), vorgabe: !!DB.workCfg.zeitenVorgabe, fehlt: _vertragFehlt() }));
 if (t6c.v !== "23/2100" || t6c.fz !== "Audi Q5" || t6c.vorgabe || t6c.fehlt) fehler("T6 gespeicherte Werte verändert: " + JSON.stringify(t6c)); else ok("T6 gespeicherte Werte bestehender Nutzer bleiben");
+const fix = await page.evaluate(async () => { const alt = DB.verdienst; DB.verdienst = Object.assign({}, alt, { proUE: 0, fixum: 2000 }); routeDashboard(); await new Promise((k) => setTimeout(k, 150));
+  const t = document.getElementById("view").innerText; DB.verdienst = alt; return { gefahren: /Diese Woche gefahren/.test(t), nullEuro: /Diese Woche verdient\s*0 €/.test(t) }; });
+if (!fix.gefahren || fix.nullEuro) fehler("Nur-Fixum-Vertrag zeigt 0 € statt gefahrener UE: " + JSON.stringify(fix)); else ok("Nur-Fixum-Vertrag: Heute zeigt gefahrene UE statt 0 €");
 const t7 = await page.evaluate(() => { const alt = _authProfile; _authProfile = { name: "Anna Muster", fahrschule_name: "Testfahrschule" }; const a = _druckAbsender(); _authProfile = null; const b = _druckAbsender(); _authProfile = alt; return { a, b }; });
 if (t7.a !== "Testfahrschule · Fahrlehrer Anna Muster" || /Serband|Boost/.test(t7.b)) fehler("T7 Absender falsch: " + JSON.stringify(t7)); else ok("T7 Absender aus dem Profil, ohne festen Namen");
 
