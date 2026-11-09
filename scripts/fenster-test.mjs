@@ -297,6 +297,32 @@ await fall("✕ bleibt beim Scrollen im Fenster sichtbar", async () => {
   return r.x >= r.s - 2 ? [] : ["✕ aus dem Bild: " + JSON.stringify(r)];
 });
 
+await fall("Richter: Mehr-Menü fragt bei ungespeicherten Formular-Eingaben", async () => {
+  await vorbereiten();
+  await page.evaluate(() => { routeHome(); routeSchuelerForm(null); }); await w();
+  await page.fill("#f_name", "Yara Neu");
+  dialogAntwort = false;
+  await page.evaluate(() => document.querySelector('.drawer-nav .nav-item[data-nav="todos"]').click()); await w(400);
+  const t = await titel(); dialogAntwort = true;
+  return t === "Neuer Schüler" ? [] : ["ohne Rückfrage zu „" + t + "“ gewechselt"];
+});
+await fall("Termin → Bearbeiten → Fahrzeug gewählt → Zurück führt zum Termin", async () => {
+  await vorbereiten();
+  await page.evaluate(() => openEventSheet("lesson", "L1", "s1")); await w();
+  const t1 = await sheetTitel();
+  await page.click("#esEdit"); await w();
+  if (!(await page.$("#esFzBtn"))) return []; // Termin ohne Fahrzeugwahl: nichts zu prüfen
+  await page.click("#esFzBtn"); await w();
+  await page.evaluate(() => document.querySelector(".fz-opt").click()); await w(300);
+  const bearbeiten = !!(await page.$("#esSave"));
+  await zur(); await w(300);
+  const t2 = await sheetTitel();
+  const f = [];
+  if (!bearbeiten) f.push("nach der Wahl nicht im Bearbeiten-Fenster");
+  if (t2 !== t1) f.push("Zurück: „" + t2 + "“ statt „" + t1 + "“");
+  return f;
+});
+
 await browser.close(); server.close();
 console.log(rot ? `Fenster-Test: ${rot} rot, ${gruen} grün.` : `Fenster-Test: alles in Ordnung (${gruen} Fälle).`);
 process.exit(rot ? 1 : 0);

@@ -1254,7 +1254,7 @@ body.light .dt-n{background:linear-gradient(160deg,#1d3324 10%,#2f5d3f 90%);-web
 .sheet.open{transform:translateY(0)}
 /* Fenster-Stapel: Griff, ✕, Wechsel zwischen Ebenen */
 .sheet-griff{width:38px;height:5px;border-radius:3px;background:var(--line);margin:-10px auto 12px;opacity:.9}
-.sheet-x{position:sticky;top:-14px;float:right;margin:-14px -12px -44px 0;width:44px;height:44px;background:var(--surface) !important;border-radius:22px !important;border-radius:12px;border:none;background:transparent;color:var(--muted);font-size:18px;line-height:44px;text-align:center;cursor:pointer;z-index:2}
+.sheet-x{position:sticky;top:-14px;float:right;margin:-14px -12px -44px 0;width:44px;height:44px;background:var(--surface);border-radius:22px;border:none;color:var(--muted);font-size:18px;line-height:44px;text-align:center;cursor:pointer;z-index:2}
 .sheet-x:active{background:var(--bg-soft)}
 .sheet .sheet-h{padding-right:40px}
 .sheet.sheet-wechsel>*:not(.sheet-x){animation:shEbeneRein .2s var(--ease)}
@@ -5653,7 +5653,7 @@ function _fsSetDrawer(fahrschuleMode){
 function _fsMapSchueler(row,lehrerName){
   // Gesamtansicht: „bei mir ausgeblendet“ eines Fahrlehrers gilt hier nicht (das Büro behält ihn ganz normal)
   const {ausgeblendetAm:_ausgebl, ...ausb}=row.ausbildung||{};
-  return Object.assign({id:row.id,name:row.name,telefon:row.telefon,bogen:null},ausb,{
+  return Object.assign({id:row.id,name:row.name,telefon:row.telefon,bogen:null},ausb,{_fahrlehrerAusgeblendetAm:_ausgebl||null,
     _fahrlehrerId:row.fahrlehrer_id, _fahrlehrerName:lehrerName(row.fahrlehrer_id),
     _paketId:row.paket_id, _hatSimulator:row.hat_simulator, _hatTheorieApp:row.hat_theorie_app,
     _bogenAusgefuellt:row.bogen_ausgefuellt, _buero_notiz:row.buero_notiz||"", _buero_todo:row.buero_todo||"",
@@ -7452,7 +7452,8 @@ async function _fsSyncAggJetzt(){
       snap.students.forEach(s=>{
         const b=baseS[s.id];
         if(!b||JSON.stringify(s)!==JSON.stringify(b)){
-          const {id,name,telefon,_fahrlehrerId,_fahrlehrerName,_paketId,_hatSimulator,_hatTheorieApp,_bogenAusgefuellt,bogen,...rest}=s;
+          const {id,name,telefon,_fahrlehrerId,_fahrlehrerName,_paketId,_hatSimulator,_hatTheorieApp,_bogenAusgefuellt,bogen,_fahrlehrerAusgeblendetAm,...rest}=s;
+          if(_fahrlehrerAusgeblendetAm)rest.ausgeblendetAm=_fahrlehrerAusgeblendetAm; // „bei mir ausgeblendet“ des Fahrlehrers bleibt
           schuelerUpserts.push({
             id:s.id, fahrschule_id:_fsAgg.fahrschuleId, fahrlehrer_id:s._fahrlehrerId||null,
             name:s.name||"(ohne Namen)", telefon:s.telefon||null, status:"aktiv",
@@ -7994,6 +7995,7 @@ $("#sheetScrim").addEventListener("click",()=>sheetZurueck());
 document.querySelector(".drawer-nav").addEventListener("click",(e)=>{
   const b=e.target.closest(".nav-item[data-nav]");
   if(!b)return;
+  if(!_seiteVerlassenOk())return; // ungespeicherte Formular-Eingaben: erst fragen (wie Zurück und Reiterleiste)
   const nav=b.dataset.nav;closeDrawer();
   document.getElementById("fsCalTiles")?.remove();
   setTimeout(()=>{if(nav==="todos")routeTodos();
@@ -8390,6 +8392,7 @@ function openErgebnisKorrektur(exId,nachher){
   $("#ekSpeichern").addEventListener("click",()=>{
     const datum=$("#ekDatum").value; if(!datum){ toast("Bitte ein Datum wählen"); return; }
     const alt={result:ex.result,date:ex.date,pruefer:ex.pruefer,b197:ex.b197,earnAt:ex.earnAt,faults:ex.faults,eingriff:ex.eingriff,eingNote:ex.eingNote};
+    const stAlt=s?{ready:s.ready,waitOrder:s.waitOrder}:null;
     ex.result=erg; ex.date=datum; ex.earnAt=datum; ex.pruefer=$("#ekPruefer").value;
     // Fehlerliste nur ausblenden, nicht wegwerfen: bei „bestanden“ zählt sie nicht, wird aber für ein Zurückstellen gemerkt
     if(erg==="pass"&&alt.result!=="pass"){ ex.faultsVorher={faults:alt.faults||[],eingriff:!!alt.eingriff,eingNote:alt.eingNote||""}; ex.faults=[]; ex.eingriff=false; }
@@ -8398,7 +8401,8 @@ function openErgebnisKorrektur(exId,nachher){
     const geaendert=[alt.result!==ex.result?"Ergebnis":"",alt.date!==ex.date?"Datum":"",(alt.pruefer||"")!==(ex.pruefer||"")?"Prüfer":""].filter(Boolean);
     if(s&&geaendert.length)logHist(s,"note",`Prüfungsergebnis korrigiert (${geaendert.join(", ")})`);
     save(); closeSheet(); toastUndo(alt.date!==ex.date&&_authProfile&&_authProfile.fahrschule_id?"Ergebnis geändert – bitte auch die Prüfungstafel im Büro anpassen":"Ergebnis geändert",()=>{ const neu={result:ex.result,date:ex.date,b197:ex.b197};
-      Object.assign(ex,{result:alt.result,date:alt.date,pruefer:alt.pruefer,earnAt:alt.earnAt,faults:alt.faults,eingriff:alt.eingriff,eingNote:alt.eingNote}); delete ex.faultsVorher; _ergebnisAnwenden(s,ex,neu); save(); nachher&&nachher(); toast("Wiederhergestellt ✓"); },6000);
+      Object.assign(ex,{result:alt.result,date:alt.date,pruefer:alt.pruefer,earnAt:alt.earnAt,faults:alt.faults,eingriff:alt.eingriff,eingNote:alt.eingNote}); delete ex.faultsVorher; _ergebnisAnwenden(s,ex,neu);
+      if(s&&stAlt){ if(stAlt.ready)s.ready=stAlt.ready; else delete s.ready; if(typeof stAlt.waitOrder==="number")s.waitOrder=stAlt.waitOrder; else delete s.waitOrder; } save(); nachher&&nachher(); toast("Wiederhergestellt ✓"); },6000);
     nachher&&nachher();
   });
   $("#ekLoeschen").addEventListener("click",()=>{
@@ -12400,7 +12404,9 @@ function openEventEdit(id,overrides){
   if(fzBtn)fzBtn.addEventListener("click",()=>{
     const snap={date:$("#esDate").value||cur.date,von:$("#esTime").value||cur.von,art:newArt,note:$("#esNote").value,fahrzeug:newFahrzeug};
     const st=DB.students.find(s=>s.id===l.sid);
-    openVehiclePicker({title:st?st.name:"",sub:`${isoDE(snap.date)} · ${snap.von}`},fzName=>{ snap.fahrzeug=fzName; openEventEdit(id,snap); });
+    openVehiclePicker({title:st?st.name:"",sub:`${isoDE(snap.date)} · ${snap.von}`},fzName=>{ snap.fahrzeug=fzName;
+      // Fahrzeug- und alte Bearbeiten-Ebene verlassen, Bearbeiten mit Fahrzeug neu öffnen (Zurück führt dann zum Termin)
+      sheetZurueck(true); if(_sheetEbene)_sheetEbene.geaendert=false; sheetZurueck(true); openEventEdit(id,snap); });
   });
   $("#esBack").addEventListener("click",()=>{ if(sheetZurueck(true)==="leer")openEventSheet("lesson",id,l.sid); });
   $("#esSave").addEventListener("click",()=>{
