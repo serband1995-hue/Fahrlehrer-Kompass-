@@ -63,6 +63,11 @@ async function meldePinAn(page, name, pin) {
   await page.keyboard.type(pin || TEST_PIN[name], { delay: 20 });
   await page.waitForTimeout(150);
 }
+// „Eingaben verwerfen?“ im obersten Fenster mit Ja beantworten
+async function verwerfenJa(page) {
+  await page.locator("dialog[open]").last().locator("button[value=ok]").click();
+  await page.waitForTimeout(150);
+}
 // Sauberes Layout: nichts ragt aus seinem Kästchen, kein Text überlappt anderen Text,
 // kein Text wird ungewollt abgeschnitten (gewolltes „…“ nur in Kalender-Kacheln und Kalenderköpfen).
 async function pruefeLayout(page, name) {
@@ -95,10 +100,13 @@ async function pruefeLayout(page, name) {
     const blaetter = [];
     // Ein offenes Vollbild-Fenster (PIN) verdeckt die Seite absichtlich: dann nur das Fenster prüfen
     const ueber = document.querySelector("#wer:not([hidden])");
+    // Mehrere Fenster übereinander: nur das oberste ist zu sehen, die darunter liegenden zählen nicht
+    const fenster = [...document.querySelectorAll("dialog[open]")], oberstes = fenster[fenster.length - 1];
     const walker = document.createTreeWalker(ueber || document.body, NodeFilter.SHOW_TEXT);
     while (walker.nextNode()) {
       const t = walker.currentNode;
-      if (!t.textContent.trim() || !t.parentElement || !sichtbar(t.parentElement) || t.parentElement.closest("#toast, #tip, svg, dialog:not([open]), option, select, details:not([open]) > :not(summary)") || gewolltGekuerzt(t.parentElement)) continue;
+      if (oberstes && t.parentElement && t.parentElement.closest("dialog[open]") && t.parentElement.closest("dialog[open]") !== oberstes) continue;
+      if (!t.textContent.trim() || !t.parentElement || !sichtbar(t.parentElement) || t.parentElement.closest("#toast, .toast-undo, #tip, svg, dialog:not([open]), option, select, details:not([open]) > :not(summary)") || gewolltGekuerzt(t.parentElement)) continue;
       // Text, der in einem Scrollbereich gerade verdeckt ist, zählt nicht
       let clip = null;
       for (let a = t.parentElement; a && a !== document.body; a = a.parentElement) { const o = getComputedStyle(a).overflowY; if (o === "auto" || o === "scroll" || o === "hidden") { clip = a.getBoundingClientRect(); break; } }
@@ -1425,6 +1433,7 @@ for (const breite of [1301, 1366, 1420]) {
   // Die Meldung muss im Fenster stehen (der Toast liegt unter dem offenen Fenster)
   if (!(await page.isVisible("dialog[open] .dialog-meldung")) || !/nur zusätzlich/.test(await page.textContent("dialog[open] .dialog-meldung"))) fehler("Fahrlehrer-Akte: Meldung „CE ohne BE“ im Fenster nicht sichtbar");
   await page.keyboard.press("Escape"); await page.waitForTimeout(150);
+  await verwerfenJa(page); // Paket 2: mit Eingaben fragt Esc erst „Eingaben verwerfen?“
   // Doppelklick auf „Akte & Klassen“: der zweite Klick schließt das Fenster nicht gleich wieder
   await page.dblclick('td.aktionen button[data-flakte="fl-4"]'); await page.waitForTimeout(250);
   if (!(await page.isVisible("dialog[open]"))) fehler("Fahrlehrer-Akte: Doppelklick schließt das Fenster sofort");
@@ -1500,6 +1509,424 @@ for (const nutzer of ["ad-1", "sa-1"]) {
   if (cdn) fehler("Vorführung: lädt die echte Datenbank-Bibliothek");
   if (FOTOS) await page.screenshot({ path: join(FOTOS, "vorfuehrung-heute.png"), fullPage: true });
   if (konsole.length) fehler("Vorführung: " + konsole.join(" | "));
+  await ctx.close();
+}
+
+// ===== Paket 2 (Büro): Löschen und Zurück =====
+// P2-1) B2: Eingaben in Fenstern gehen nicht ohne Rückfrage verloren (✕, Abbrechen, Esc)
+{
+  const { page, ctx, konsole } = await oeffne({ nutzer: "bu-1", hash: "#schueler", breite: 1366, hoehe: 900 });
+  const anzahl = () => page.locator("dialog[open]").count();
+  const kopf = () => page.locator("dialog[open]").first().locator("header [data-schliessen]");
+  const abbr = () => page.locator("dialog[open]").first().locator("footer [data-schliessen]");
+  // ohne Eingabe: ✕ schließt sofort
+  await page.click("[data-sbearb] >> nth=0"); await page.waitForTimeout(150);
+  await kopf().click(); await page.waitForTimeout(150);
+  if (await anzahl() !== 0) fehler("P2 B2: ✕ ohne Eingabe schließt nicht sofort");
+  for (const weg of ["✕", "Abbrechen", "Esc"]) {
+    await page.click("[data-sbearb] >> nth=0"); await page.waitForTimeout(150);
+    await page.fill("dialog input[name=email]", "tippfehler@example.org");
+    if (weg === "✕") await kopf().click(); else if (weg === "Abbrechen") await abbr().click(); else await page.keyboard.press("Escape");
+    await page.waitForTimeout(200);
+    if (await anzahl() !== 2) fehler(`P2 B2: ${weg} mit Eingabe fragt nicht (${await anzahl()} Fenster)`);
+    else {
+      const t = await page.locator("dialog[open]").last().textContent();
+      if (!/Eingaben verwerfen\?/.test(t)) fehler(`P2 B2: ${weg}: falsche Frage: ${t.slice(0, 60)}`);
+      if (weg === "Abbrechen") await pruefeLayout(page, "Eingaben verwerfen");
+      // „Weiter bearbeiten“: Fenster und Eingabe bleiben
+      await page.locator("dialog[open]").last().locator("footer [data-schliessen]").click(); await page.waitForTimeout(200);
+      if (await anzahl() !== 1 || await page.inputValue("dialog input[name=email]") !== "tippfehler@example.org") fehler(`P2 B2: ${weg}: „Weiter bearbeiten“ verliert die Eingabe`);
+      // Mehrfach Esc hintereinander: das Fenster mit Eingaben darf nicht ohne „Ja“ zugehen
+      await page.keyboard.press("Escape"); await page.waitForTimeout(150);
+      await page.keyboard.press("Escape"); await page.waitForTimeout(150);
+      await page.keyboard.press("Escape"); await page.waitForTimeout(150);
+      if (await anzahl() < 1) fehler(`P2 B2: ${weg}: mehrfach Esc schließt das Fenster mit Eingaben ohne Ja`);
+      while (await anzahl() > 1) { await page.locator("dialog[open]").last().locator("footer [data-schliessen]").click(); await page.waitForTimeout(150); }
+      // Verwerfen: zu
+      if (weg === "✕") await kopf().click(); else if (weg === "Abbrechen") await abbr().click(); else await page.keyboard.press("Escape");
+      await page.waitForTimeout(200);
+      await verwerfenJa(page);
+      if (await anzahl() !== 0) fehler(`P2 B2: ${weg}: nach „Ja, verwerfen“ noch ${await anzahl()} Fenster`);
+    }
+    for (let i = 0; i < 4 && await anzahl() > 0; i++) { await page.keyboard.press("Escape"); await page.waitForTimeout(120); if (await anzahl() > 0) await verwerfenJa(page); }
+  }
+  // Ein gesendeter Notiztext zählt nicht als ungespeicherte Eingabe; ein angefangener schon
+  await page.click("[data-sbearb] >> nth=0"); await page.waitForTimeout(150);
+  await page.fill("#nzText", "Kurze Notiz");
+  await page.click("#nzSenden"); await page.waitForTimeout(250);
+  await kopf().click(); await page.waitForTimeout(150);
+  if (await anzahl() !== 0) fehler("P2 B2: gesendete Notiz löst trotzdem „Eingaben verwerfen?“ aus");
+  await page.click("[data-sbearb] >> nth=0"); await page.waitForTimeout(150);
+  await page.fill("#nzText", "angefangen");
+  await kopf().click(); await page.waitForTimeout(150);
+  if (await anzahl() !== 2) fehler("P2 B2: angefangene Notiz geht ohne Rückfrage verloren");
+  if (konsole.length) fehler("P2 B2: Konsole: " + konsole.join(" | "));
+  await ctx.close();
+}
+
+// P2-2) B2: Leerlauf-PIN verwirft offene Eingaben nicht; nach der PIN derselben Person ist das Fenster wieder da
+{
+  const { page, ctx, konsole } = await oeffne({ nutzer: "bu-1", hash: "#schueler", breite: 1366, hoehe: 900 });
+  const anzahl = () => page.locator("dialog[open]").count();
+  await page.click("[data-sbearb] >> nth=0"); await page.waitForTimeout(150);
+  await page.fill("dialog input[name=email]", "leerlauf@example.org");
+  await page.evaluate(() => { letzteAktion = Date.now() - 21 * 60 * 1000; beendeSitzung(); zeigeWer(); });
+  await page.waitForTimeout(300);
+  if (await anzahl() !== 0 || !(await page.isVisible("#wer:not([hidden])"))) fehler("P2 B2: Leerlauf zeigt die PIN-Abfrage nicht (Fenster " + await anzahl() + ")");
+  if (await page.evaluate(() => GEPARKT.length) !== 1) fehler("P2 B2: Leerlauf merkt sich das Fenster mit Eingaben nicht");
+  if (await page.evaluate(() => document.getElementById("app").inert !== true)) fehler("P2 B2: Seite hinter der PIN ist nicht gesperrt");
+  await meldePinAn(page, "Kristina"); await page.waitForTimeout(500);
+  if (await anzahl() !== 1) fehler("P2 B2: Fenster nach der PIN nicht wieder da (" + await anzahl() + ")");
+  else if (await page.inputValue("dialog input[name=email]") !== "leerlauf@example.org") fehler("P2 B2: Eingabe nach der PIN weg");
+  // Es läuft danach ganz normal weiter: ✕ fragt wieder
+  await page.locator("dialog[open]").first().locator("header [data-schliessen]").click(); await page.waitForTimeout(150);
+  if (await anzahl() !== 2) fehler("P2 B2: wiederhergestelltes Fenster fragt nicht mehr beim Schließen");
+  await verwerfenJa(page);
+  // Eine andere Person sieht fremde Eingaben nicht
+  await page.click("[data-sbearb] >> nth=0"); await page.waitForTimeout(150);
+  await page.fill("dialog input[name=email]", "fremd@example.org");
+  await page.evaluate(() => { beendeSitzung(); zeigeWer(); }); await page.waitForTimeout(300);
+  await meldePinAn(page, "Jelena"); await page.waitForTimeout(500);
+  if (await anzahl() !== 0 || await page.evaluate(() => GEPARKT.length) !== 0) fehler("P2 B2: Eingaben von Kristina tauchen bei Jelena auf");
+  // Ohne Eingabe: wie bisher, Fenster ist nach der PIN weg
+  await page.click("[data-sbearb] >> nth=0"); await page.waitForTimeout(150);
+  await page.evaluate(() => { beendeSitzung(); zeigeWer(); }); await page.waitForTimeout(300);
+  await meldePinAn(page, "Jelena"); await page.waitForTimeout(500);
+  if (await anzahl() !== 0) fehler("P2 B2: Fenster ohne Eingabe taucht nach der PIN wieder auf");
+  if (konsole.length) fehler("P2 B2 Leerlauf: Konsole: " + konsole.join(" | "));
+  await ctx.close();
+}
+
+// P2-3) B3: Browser-Zurück schließt nur das oberste Fenster, nicht die Seite
+{
+  const { page, ctx, konsole } = await oeffne({ nutzer: "bu-1", hash: "#heute", breite: 1366, hoehe: 900 });
+  const anzahl = () => page.locator("dialog[open]").count();
+  const hash = () => page.evaluate(() => location.hash);
+  await page.evaluate(() => { location.hash = "#schueler"; }); await page.waitForTimeout(300);
+  // ohne Eingabe: Zurück schließt das Fenster, bleibt auf „Schüler“
+  await page.click("[data-sbearb] >> nth=0"); await page.waitForTimeout(150);
+  await page.goBack(); await page.waitForTimeout(300);
+  if (await anzahl() !== 0 || await hash() !== "#schueler") fehler(`P2 B3: Zurück ohne Eingabe: ${await anzahl()} Fenster, ${await hash()}`);
+  // ✕ nimmt den eigenen Verlaufseintrag zurück
+  await page.click("[data-sbearb] >> nth=0"); await page.waitForTimeout(150);
+  await page.locator("dialog[open]").first().locator("header [data-schliessen]").click(); await page.waitForTimeout(300);
+  if (await page.evaluate(() => history.state && history.state.fenster != null)) fehler("P2 B3: ✕ lässt einen Fenster-Eintrag im Verlauf stehen");
+  if (await hash() !== "#schueler") fehler("P2 B3: ✕ wechselt die Seite: " + await hash());
+  // Speichern nimmt den Eintrag ebenfalls zurück
+  await page.click("[data-sbearb] >> nth=0"); await page.waitForTimeout(150);
+  await page.click("dialog button[value=ok]"); await page.waitForTimeout(500);
+  if (await anzahl() !== 0 || await hash() !== "#schueler" || await page.evaluate(() => history.state && history.state.fenster != null)) fehler("P2 B3: Speichern: Fenster/Seite/Verlauf stimmt nicht");
+  // Fenster im Fenster: Zurück schließt nur das oberste
+  await page.click("[data-sbearb] >> nth=0"); await page.waitForTimeout(150);
+  await page.fill("#agText", "Aufgabe zum Bearbeiten"); await page.click("#agSpeichern"); await page.waitForTimeout(250);
+  await page.click("[data-agbearb]"); await page.waitForTimeout(150);
+  if (await anzahl() !== 2) fehler("P2 B3: Aufgabe-bearbeiten-Fenster geht nicht auf");
+  await page.goBack(); await page.waitForTimeout(300);
+  if (await anzahl() !== 1 || await hash() !== "#schueler") fehler(`P2 B3: Zurück im Fenster im Fenster: ${await anzahl()} Fenster, ${await hash()}`);
+  await page.goBack(); await page.waitForTimeout(300);
+  if (await anzahl() !== 0 || await hash() !== "#schueler") fehler(`P2 B3: zweites Zurück: ${await anzahl()} Fenster, ${await hash()}`);
+  // Und danach führt Zurück wie gewohnt auf die Seite davor
+  await page.goBack(); await page.waitForTimeout(300);
+  if (await hash() !== "#heute") fehler("P2 B3: Zurück ohne Fenster führt nicht auf die vorige Seite: " + await hash());
+  await page.goForward(); await page.waitForTimeout(300);
+  // mit Eingabe: Zurück fragt, „Weiter bearbeiten“ behält alles, zweites Zurück + Ja schließt
+  await page.click("[data-sbearb] >> nth=0"); await page.waitForTimeout(150);
+  await page.fill("dialog input[name=email]", "zurueck@example.org");
+  await page.goBack(); await page.waitForTimeout(300);
+  if (await anzahl() !== 2 || await hash() !== "#schueler") fehler(`P2 B3: Zurück mit Eingabe: ${await anzahl()} Fenster, ${await hash()}`);
+  await page.locator("dialog[open]").last().locator("footer [data-schliessen]").click(); await page.waitForTimeout(300);
+  if (await anzahl() !== 1 || await page.inputValue("dialog input[name=email]") !== "zurueck@example.org") fehler("P2 B3: „Weiter bearbeiten“ nach Zurück verliert die Eingabe");
+  if (!(await page.evaluate(() => history.state && history.state.fenster != null))) fehler("P2 B3: nach „Weiter bearbeiten“ fehlt der Fenster-Eintrag (nächstes Zurück würde die Seite verlassen)");
+  await page.goBack(); await page.waitForTimeout(300);
+  if (await anzahl() !== 2) fehler("P2 B3: zweites Zurück mit Eingabe fragt nicht erneut");
+  await verwerfenJa(page); await page.waitForTimeout(300);
+  if (await anzahl() !== 0 || await hash() !== "#schueler") fehler(`P2 B3: nach Verwerfen: ${await anzahl()} Fenster, ${await hash()}`);
+  // Eingaben lösen die Browser-Warnung beim Verlassen aus
+  await page.click("[data-sbearb] >> nth=0"); await page.waitForTimeout(150);
+  await page.fill("dialog input[name=email]", "warnung@example.org");
+  const warnt = await page.evaluate(() => { const e = new Event("beforeunload", { cancelable: true }); window.dispatchEvent(e); return e.defaultPrevented; });
+  if (!warnt) fehler("P2 B3: beforeunload warnt bei Eingaben nicht");
+  await page.locator("dialog[open]").first().locator("header [data-schliessen]").click(); await page.waitForTimeout(150); await verwerfenJa(page);
+  const warnt2 = await page.evaluate(() => { const e = new Event("beforeunload", { cancelable: true }); window.dispatchEvent(e); return e.defaultPrevented; });
+  if (warnt2) fehler("P2 B3: beforeunload warnt ohne Eingaben");
+  if (konsole.length) fehler("P2 B3: Konsole: " + konsole.join(" | "));
+  await ctx.close();
+}
+{
+  // erste Seite (Verlauf: leere Seite, Büro): Zurück mit Fenster verlässt das Büro nicht
+  const { page, ctx } = await oeffne({ nutzer: "bu-1", hash: "#schueler", breite: 1366, hoehe: 900 });
+  await page.click("[data-sbearb] >> nth=0"); await page.waitForTimeout(150);
+  await page.fill("dialog input[name=email]", "erste@example.org");
+  await page.goBack(); await page.waitForTimeout(300);
+  if (!/buero\.html/.test(page.url()) || await page.locator("dialog[open]").count() !== 2) fehler("P2 B3: erste Seite: Zurück verlässt das Büro oder fragt nicht (" + page.url() + ")");
+  await ctx.close();
+}
+
+// P2-4) B9 + B12 + D1: Termin absagen mit Rückgängig (Mail erst nach Ablauf), Schüler archivieren mit Terminen, Hinweis „ausgeblendet“
+{
+  let mails = 0;
+  const { page, ctx, konsole } = await oeffne({ nutzer: "bu-1", hash: "#kalender", breite: 1920, hoehe: 1080, vorbereiten: function () {
+    const tag = (n) => { const d = new Date(); d.setDate(d.getDate() + n); return d.toISOString().slice(0, 10); };
+    F.session.access_token = "tok";
+    const T = F.tabellen;
+    T.public_bookings = [{ id: "pb1", merged_lesson_id: "t-ob", status: "bestaetigt", art: null, lc_termin_id: null }];
+    const termin = (id, sid, n, von, bis, extra) => T.kalender_termine.push(Object.assign({ id, fahrschule_id: "fs-test-1", fahrlehrer_id: "fl-1", schueler_id: sid, datum: tag(n), von, bis, art: "fahrstunde", status: "geplant", geloescht: false, payload: {} }, extra || {}));
+    termin("t-ob", "s1", 4, "20:00", "20:45", { payload: { onlineBookingId: "pb1" } });
+    const schueler = (id, name, extra) => T.schueler.push(Object.assign({ id, fahrschule_id: "fs-test-1", fahrlehrer_id: "fl-1", name, telefon: "0171 55" + Math.floor(Math.random() * 90000 + 10000), status: "aktiv", ausbildungsart: "ersterwerb", klasse: "B", vertrag_am: tag(-30), ausbildung: { form: "B" }, inaktiv_seit: null, reakt_status: "pruefen" }, extra || {}));
+    for (const k of ["a", "b", "c"]) {
+      schueler("s-b12" + k, "Zora " + k.toUpperCase() + "Zukunft");
+      termin("t-b12" + k + "1", "s-b12" + k, 3, "20:00", "20:45");
+      termin("t-b12" + k + "2", "s-b12" + k, 5, "20:00", "20:45");
+      termin("t-b12" + k + "p", "s-b12" + k, -3, "20:00", "20:45"); // vergangen: bleibt immer
+      termin("t-b12" + k + "b", "s-b12" + k, 4, "00:00", "23:59", { art: "block" });
+    }
+    schueler("s-d1", "Dora Ausgeblendet", { ausbildung: { form: "B", ausgeblendetAm: tag(-2) + "T09:00:00Z" } });
+  } });
+  await page.route("**/functions/v1/public-booking**", (r) => { mails++; r.fulfill({ status: 200, contentType: "application/json", body: "{}" }); });
+  const T = (id) => page.evaluate((i) => window.__FAKE.tabellen.kalender_termine.find((x) => x.id === i), id);
+  const undoDa = () => page.locator(".toast-undo").isVisible();
+  // B9: Absagen → Rückgängig: Termin wieder da, keine Mail
+  await page.evaluate(() => terminDialog("t-ob")); await page.waitForTimeout(200);
+  await page.check("dialog input[name=absagen]");
+  await page.click("dialog button[value=ok]"); await page.waitForTimeout(150);
+  await page.locator("dialog[open]").last().locator("button[value=ok]").click(); await page.waitForTimeout(400);
+  if (!(await T("t-ob")).geloescht) fehler("P2 B9: Absage nicht gespeichert");
+  if (!(await undoDa()) || !/Termin abgesagt/.test(await page.textContent(".toast-undo"))) fehler("P2 B9: kein Rückgängig-Hinweis nach dem Absagen");
+  if (await page.evaluate(() => S.termine.some((x) => x.id === "t-ob"))) fehler("P2 B9: abgesagter Termin steht noch im Büro");
+  if (mails !== 0) fehler("P2 B9: Absage-Mail geht sofort raus statt nach Ablauf");
+  await pruefeLayout(page, "Rückgängig-Hinweis Kalender"); await pruefeBreite(page, "Rückgängig-Hinweis Kalender");
+  await page.click(".toast-undo [data-undo]"); await page.waitForTimeout(400);
+  if ((await T("t-ob")).geloescht) fehler("P2 B9: Rückgängig setzt geloescht nicht zurück");
+  if (!(await page.evaluate(() => S.termine.some((x) => x.id === "t-ob")))) fehler("P2 B9: Rückgängig bringt den Termin nicht ins Büro zurück");
+  // Absagen und nichts tun: Mail kommt erst nach den 6 Sekunden, genau einmal
+  await page.evaluate(() => terminDialog("t-ob")); await page.waitForTimeout(200);
+  await page.check("dialog input[name=absagen]");
+  await page.click("dialog button[value=ok]"); await page.waitForTimeout(150);
+  await page.locator("dialog[open]").last().locator("button[value=ok]").click(); await page.waitForTimeout(3000);
+  if (mails !== 0) fehler("P2 B9: Mail schon nach 3 Sekunden");
+  await page.waitForTimeout(4000);
+  if (mails !== 1) fehler(`P2 B9: Absage-Mail nach Ablauf: ${mails} statt 1`);
+  if (await undoDa()) fehler("P2 B9: Hinweis bleibt nach Ablauf stehen");
+  if (!(await T("t-ob")).geloescht) fehler("P2 B9: Absage nach Ablauf nicht mehr gespeichert");
+  mails = 0;
+
+  // B12: Archivieren mit künftigen Terminen
+  const kuenftig = (sid) => page.evaluate((i) => kuenftigeTermineVon(i).length, sid);
+  if (await kuenftig("s-b12a") !== 2) fehler("P2 B12 Vorbereitung: künftige Termine " + await kuenftig("s-b12a"));
+  const archivDialog = async (sid) => {
+    await page.evaluate((i) => schuelerDialog(i), sid); await page.waitForTimeout(250);
+    await page.locator("dialog[open] input[name=aktiv]").setChecked(false, { force: true });
+    await page.click("dialog button[value=ok]"); await page.waitForTimeout(250);
+  };
+  // Abbrechen: nichts passiert, Fenster bleibt offen
+  await archivDialog("s-b12c");
+  if (!/künftige Termine auch absagen/.test(await page.locator("dialog[open]").last().textContent())) fehler("P2 B12: keine Frage nach den künftigen Terminen");
+  await pruefeLayout(page, "Archiv-Frage");
+  await page.locator("dialog[open]").last().locator("footer [data-schliessen]").click(); await page.waitForTimeout(300);
+  const c = await page.evaluate(() => window.__FAKE.tabellen.schueler.find((x) => x.id === "s-b12c"));
+  if (c.inaktiv_seit) fehler("P2 B12: Abbrechen archiviert trotzdem");
+  if (await page.locator("dialog[open]").count() !== 1) fehler("P2 B12: Abbrechen schließt das Schüler-Fenster");
+  await page.keyboard.press("Escape"); await page.waitForTimeout(150); await verwerfenJa(page);
+  // Nein: nur archivieren
+  await archivDialog("s-b12b");
+  await page.locator("dialog[open]").last().locator("[data-nein]").click(); await page.waitForTimeout(400);
+  const b = await page.evaluate(() => window.__FAKE.tabellen.schueler.find((x) => x.id === "s-b12b"));
+  const bt = await page.evaluate(() => window.__FAKE.tabellen.kalender_termine.filter((x) => x.schueler_id === "s-b12b" && x.geloescht).length);
+  if (!b.inaktiv_seit || bt !== 0) fehler(`P2 B12 „Nein“: archiviert=${!!b.inaktiv_seit}, abgesagt=${bt}`);
+  // Ja: alle künftigen Termine in einem Schritt absagen (nicht die vergangenen, nicht die Sperrzeit)
+  await archivDialog("s-b12a");
+  await page.locator("dialog[open]").last().locator("button[value=ok]").click(); await page.waitForTimeout(500);
+  const a = await page.evaluate(() => window.__FAKE.tabellen.schueler.find((x) => x.id === "s-b12a"));
+  const at = await page.evaluate(() => window.__FAKE.tabellen.kalender_termine.filter((x) => x.schueler_id === "s-b12a" && x.geloescht).map((x) => x.id).sort());
+  if (!a.inaktiv_seit || JSON.stringify(at) !== JSON.stringify(["t-b12a1", "t-b12a2"])) fehler(`P2 B12 „Ja“: archiviert=${!!a.inaktiv_seit}, abgesagt=${JSON.stringify(at)}`);
+  if (!(await undoDa())) fehler("P2 B12: kein Rückgängig-Hinweis nach dem Absagen");
+  // Rückgängig bringt die Termine zurück (Archiv bleibt)
+  await page.click(".toast-undo [data-undo]"); await page.waitForTimeout(400);
+  const at2 = await page.evaluate(() => window.__FAKE.tabellen.kalender_termine.filter((x) => x.schueler_id === "s-b12a" && x.geloescht).length);
+  if (at2 !== 0) fehler("P2 B12: Rückgängig bringt die Termine nicht zurück");
+  // „ins Archiv“ (insArchiv) fragt ebenso
+  await page.evaluate(() => { insArchiv("s-b12c"); }); await page.waitForTimeout(250);
+  await page.locator("dialog[open]").last().locator("button[value=ok]").click(); await page.waitForTimeout(300);
+  if (!/künftige Termine auch absagen/.test(await page.locator("dialog[open]").last().textContent())) fehler("P2 B12: insArchiv fragt nicht nach den Terminen");
+  await page.locator("dialog[open]").last().locator("button[value=ok]").click(); await page.waitForTimeout(500);
+  const ct = await page.evaluate(() => window.__FAKE.tabellen.kalender_termine.filter((x) => x.schueler_id === "s-b12c" && x.geloescht).length);
+  if (ct !== 2) fehler("P2 B12: insArchiv sagt die Termine nicht ab (" + ct + ")");
+  await page.evaluate(() => undoAblaufen());
+  if (mails !== 0) fehler("P2 B12: Mail ohne Online-Buchung");
+
+  // D1: Hinweis „vom Fahrlehrer ausgeblendet“
+  await page.goto(page.url().split("#")[0] + "#schueler"); await page.waitForTimeout(500);
+  await page.fill("#sSuche", "Ausgeblendet"); await page.waitForTimeout(500);
+  const zeile = await page.textContent(".schuelertab tbody");
+  if (!/vom Fahrlehrer ausgeblendet am \d\d\.\d\d\.\d{4}/.test(zeile)) fehler("P2 D1: Hinweis in der Liste fehlt: " + zeile.slice(0, 120));
+  await page.fill("#sSuche", ""); await page.waitForTimeout(400);
+  if ((await page.$$(".hinweis-ausgeblendet-klein")).length !== 1) fehler("P2 D1: Hinweis erscheint bei mehr als einem Schüler");
+  await page.evaluate(() => schuelerDialog("s-d1")); await page.waitForTimeout(250);
+  if (!(await page.isVisible("#ausgeblendetHinweis"))) fehler("P2 D1: Hinweis in der Akte fehlt");
+  await pruefeLayout(page, "Akte mit Hinweis ausgeblendet");
+  await page.keyboard.press("Escape"); await page.waitForTimeout(150);
+  await page.evaluate(() => schuelerDialog("s1")); await page.waitForTimeout(250);
+  if (await page.isVisible("#ausgeblendetHinweis")) fehler("P2 D1: Hinweis bei einem nicht ausgeblendeten Schüler");
+  if (konsole.length) fehler("P2 B9/B12/D1: Konsole: " + konsole.join(" | "));
+  await ctx.close();
+}
+
+// P2-5) Notizen und Aufgaben: bearbeiten, löschen, wieder öffnen, Rückgängig
+{
+  const { page, ctx, konsole } = await oeffne({ nutzer: "bu-1", hash: "#schueler", breite: 1366, hoehe: 900 });
+  const tab = (t) => page.evaluate((n) => window.__FAKE.tabellen[n] || [], t);
+  const undo = () => page.locator(".toast-undo");
+  await page.evaluate(() => schuelerDialog("s1")); await page.waitForTimeout(250);
+  // Notiz anlegen, bearbeiten (Text, Art)
+  await page.fill("#nzText", "Erste Notiz"); await page.click("#nzSenden"); await page.waitForTimeout(300);
+  await page.click("[data-notizbearb]"); await page.waitForTimeout(200);
+  if (await page.locator("dialog[open]").count() !== 2) fehler("P2 D13: Notiz-Bearbeiten-Fenster geht nicht auf");
+  const nd = page.locator("dialog[open]").last();
+  await nd.locator("textarea[name=text]").fill("Geänderte Notiz");
+  await nd.locator("select[name=art]").selectOption("stopp");
+  await nd.locator("button[value=ok]").click(); await page.waitForTimeout(300);
+  let n = (await tab("schueler_notizen"))[0];
+  if (n.text !== "Geänderte Notiz" || n.art !== "stopp") fehler("P2 D13: Notiz bearbeiten nicht gespeichert " + JSON.stringify(n));
+  if (!/Geänderte Notiz/.test(await page.textContent("#notizBlock")) || !/Stopp/.test(await page.textContent("#notizBlock"))) fehler("P2 D13: bearbeitete Notiz nicht sichtbar");
+  // Erledigt → Rückgängig
+  await page.click("[data-notizerledigt]"); await page.waitForTimeout(300);
+  if (!(await tab("schueler_notizen"))[0].erledigt_am) fehler("P2: Notiz erledigt nicht gespeichert");
+  if (!(await undo().isVisible())) fehler("P2: kein Rückgängig nach Notiz erledigt");
+  await undo().locator("[data-undo]").click(); await page.waitForTimeout(300);
+  n = (await tab("schueler_notizen"))[0];
+  if (n.erledigt_am || n.erledigt_von) fehler("P2: Rückgängig setzt die Notiz nicht zurück " + JSON.stringify(n));
+  if (!(await page.$("[data-notizerledigt]"))) fehler("P2: Notiz nach Rückgängig nicht wieder offen sichtbar");
+  // Erledigt, Hinweis läuft ab, dann „Wieder öffnen“
+  await page.click("[data-notizerledigt]"); await page.waitForTimeout(300);
+  await page.evaluate(() => undoAblaufen()); await page.waitForTimeout(100);
+  await page.click("#notizBlock details summary"); await page.waitForTimeout(100);
+  if (!(await page.isVisible("[data-notizoeffnen]"))) fehler("P2 B10: erledigte Notiz hat kein „Wieder öffnen“");
+  else {
+    await page.click("[data-notizoeffnen]"); await page.waitForTimeout(300);
+    if ((await tab("schueler_notizen"))[0].erledigt_am) fehler("P2 B10: Wieder öffnen setzt erledigt_am nicht zurück");
+  }
+  // Löschen mit Rückfrage, dann Rückgängig (gleiche Notiz kommt zurück)
+  const nid = (await tab("schueler_notizen"))[0].id;
+  await page.click("[data-notizweg]"); await page.waitForTimeout(200);
+  if (!/Notiz löschen\?/.test(await page.locator("dialog[open]").last().textContent())) fehler("P2 D13: Löschen ohne Rückfrage");
+  await page.locator("dialog[open]").last().locator("footer [data-schliessen]").click(); await page.waitForTimeout(200);
+  if ((await tab("schueler_notizen")).length !== 1) fehler("P2 D13: Abbrechen löscht trotzdem");
+  await page.click("[data-notizweg]"); await page.waitForTimeout(200);
+  await page.locator("dialog[open]").last().locator("button[value=ok]").click(); await page.waitForTimeout(300);
+  if ((await tab("schueler_notizen")).length !== 0) fehler("P2 D13: Notiz nicht gelöscht");
+  if (await page.evaluate(() => S.notizen.length) !== 0) fehler("P2 D13: gelöschte Notiz steht noch im Büro");
+  await undo().locator("[data-undo]").click(); await page.waitForTimeout(300);
+  const nz = await tab("schueler_notizen");
+  if (nz.length !== 1 || nz[0].id !== nid || nz[0].text !== "Geänderte Notiz" || nz[0].art !== "stopp") fehler("P2 D13: Rückgängig nach Löschen stellt die Notiz nicht her " + JSON.stringify(nz));
+  await page.click("[data-notizweg]"); await page.waitForTimeout(200);
+  await page.locator("dialog[open]").last().locator("button[value=ok]").click(); await page.waitForTimeout(300);
+  await page.evaluate(() => undoAblaufen()); await page.waitForTimeout(200);
+  if ((await tab("schueler_notizen")).length !== 0) fehler("P2 D13: Notiz nach Ablauf wieder da");
+
+  // Aufgaben: anlegen, bearbeiten (Text, Person, Datum), erledigen mit Rückgängig, löschen mit Rückgängig
+  await page.fill("#agText", "Rechnung prüfen"); await page.click("#agSpeichern"); await page.waitForTimeout(300);
+  await page.click("[data-agbearb]"); await page.waitForTimeout(200);
+  const fd = page.locator("dialog[open]").last();
+  await fd.locator("textarea[name=text]").fill("Rechnung prüfen und ablegen");
+  await fd.locator("input[name=faellig]").fill("2999-05-05");
+  await fd.locator("select[name=fuer]").selectOption("bp-2");
+  await pruefeLayout(page, "Aufgabe bearbeiten");
+  await fd.locator("button[value=ok]").click(); await page.waitForTimeout(300);
+  let a = (await tab("schueler_aufgaben"))[0];
+  if (a.text !== "Rechnung prüfen und ablegen" || a.faellig_am !== "2999-05-05" || a.fuer_person_id !== "bp-2") fehler("P2 D13: Aufgabe bearbeiten nicht gespeichert " + JSON.stringify(a));
+  await page.click("[data-agerledigt]"); await page.waitForTimeout(300);
+  if (!(await tab("schueler_aufgaben"))[0].erledigt_am) fehler("P2: Aufgabe erledigt nicht gespeichert");
+  await undo().locator("[data-undo]").click(); await page.waitForTimeout(300);
+  a = (await tab("schueler_aufgaben"))[0];
+  if (a.erledigt_am || a.erledigt_von) fehler("P2: Rückgängig bei Aufgabe erledigt " + JSON.stringify(a));
+  const aid = a.id;
+  await page.click("[data-agweg]"); await page.waitForTimeout(200);
+  if (!/Aufgabe löschen\?/.test(await page.locator("dialog[open]").last().textContent())) fehler("P2 D13: Aufgabe löschen ohne Rückfrage");
+  await page.locator("dialog[open]").last().locator("button[value=ok]").click(); await page.waitForTimeout(300);
+  if ((await tab("schueler_aufgaben")).length !== 0) fehler("P2 D13: Aufgabe nicht gelöscht");
+  await undo().locator("[data-undo]").click(); await page.waitForTimeout(300);
+  const ag = await tab("schueler_aufgaben");
+  if (ag.length !== 1 || ag[0].id !== aid || ag[0].faellig_am !== "2999-05-05") fehler("P2 D13: Rückgängig nach Aufgabe löschen " + JSON.stringify(ag));
+  await page.keyboard.press("Escape"); await page.waitForTimeout(150);
+
+  // „Heute zu tun“: Erledigt → Rückgängig stellt „heute“ wieder her; Bearbeiten und Löschen auch dort
+  await page.evaluate(async () => { window.__FAKE.tabellen.schueler_aufgaben.length = 0; await supa.from("schueler_aufgaben").insert({ fahrschule_id: S.fsId, schueler_id: null, text: "Heute anrufen", heute: true, faellig_am: null, erstellt_von: S.user.id }); await ladeDaten(); });
+  await page.goto(page.url().split("#")[0] + "#heute"); await page.waitForTimeout(500);
+  await page.click("[data-hagerledigt]"); await page.waitForTimeout(300);
+  if (!(await undo().isVisible())) fehler("P2: kein Rückgängig bei „Heute zu tun“ erledigt");
+  await pruefeLayout(page, "Heute mit Rückgängig");
+  await undo().locator("[data-undo]").click(); await page.waitForTimeout(300);
+  a = (await tab("schueler_aufgaben"))[0];
+  if (a.erledigt_am || a.heute !== true) fehler("P2: Rückgängig stellt „heute“ nicht her " + JSON.stringify(a));
+  await page.click("[data-hagbearb]"); await page.waitForTimeout(200);
+  await page.locator("dialog[open]").last().locator("textarea[name=text]").fill("Heute zurückrufen");
+  await page.locator("dialog[open]").last().locator("button[value=ok]").click(); await page.waitForTimeout(300);
+  if ((await tab("schueler_aufgaben"))[0].text !== "Heute zurückrufen") fehler("P2: Aufgabe auf „Heute zu tun“ bearbeiten klappt nicht");
+  await page.click("[data-hagweg]"); await page.waitForTimeout(200);
+  await page.locator("dialog[open]").last().locator("button[value=ok]").click(); await page.waitForTimeout(300);
+  if ((await tab("schueler_aufgaben")).length !== 0) fehler("P2: Aufgabe auf „Heute zu tun“ löschen klappt nicht");
+  if (konsole.length) fehler("P2 Notizen/Aufgaben: Konsole: " + konsole.join(" | "));
+  await ctx.close();
+}
+
+// P2-6) Fahrzeuge (bearbeiten, gleicher Name, Entfernen mit Rückgängig, Zurückholen) und Provision ausgezahlt mit Rückgängig
+for (const breite of [1280, 1366, 1920]) {
+  const { page, ctx, konsole } = await oeffne({ nutzer: "ad-1", hash: "#flotte", breite, hoehe: 900 });
+  const fz = (id) => page.evaluate((i) => window.__FAKE.tabellen.fahrschule_fahrzeuge.find((f) => f.id === i), id);
+  const undo = () => page.locator(".toast-undo");
+  // gleicher Name beim Umbenennen: Warnung, Abbrechen ändert nichts
+  await page.click('[data-fzbearb="fz-1"]'); await page.waitForTimeout(200);
+  await page.fill("dialog input[name=name]", "golf schalter 2");
+  await page.click("dialog button[value=ok]"); await page.waitForTimeout(250);
+  if (!/Name gibt es schon/.test(await page.locator("dialog[open]").last().textContent())) fehler(`P2 B10 (${breite}): keine Warnung bei gleichem Namen`);
+  await page.locator("dialog[open]").last().locator("footer [data-schliessen]").click(); await page.waitForTimeout(200);
+  if ((await fz("fz-1")).name !== "Golf Schalter 1") fehler("P2 B10: Name trotz Abbrechen geändert");
+  await page.fill("dialog input[name=name]", "Golf Schalter Eins");
+  await page.selectOption("dialog select[name=typ]", "automatik");
+  await page.click("dialog button[value=ok]"); await page.waitForTimeout(300);
+  const f1 = await fz("fz-1");
+  if (f1.name !== "Golf Schalter Eins" || f1.typ !== "automatik") fehler("P2 B10: Fahrzeug bearbeiten nicht gespeichert " + JSON.stringify(f1));
+  if (!/Golf Schalter Eins/.test(await page.textContent("#ansicht"))) fehler("P2 B10: neuer Name nicht in der Liste");
+  // Anlegen mit gleichem Namen: Warnung
+  await page.click("#fzNeu"); await page.fill("dialog input[name=name]", "Golf Automatik 1");
+  await page.click("dialog button[value=ok]"); await page.waitForTimeout(250);
+  if (!/Name gibt es schon/.test(await page.locator("dialog[open]").last().textContent())) fehler("P2 B10: Anlegen mit gleichem Namen ohne Warnung");
+  await page.locator("dialog[open]").last().locator("footer [data-schliessen]").click(); await page.waitForTimeout(150);
+  await page.locator("dialog[open]").first().locator("header [data-schliessen]").click(); await page.waitForTimeout(150); await verwerfenJa(page);
+  if ((await page.evaluate(() => window.__FAKE.tabellen.fahrschule_fahrzeuge.length)) !== 4) fehler("P2 B10: Fahrzeug trotz Warnung/Abbrechen angelegt");
+  // Entfernen → Rückgängig
+  await page.click('[data-fzweg="fz-4"]'); await page.waitForTimeout(200);
+  await page.locator("dialog[open]").last().locator("button[value=ok]").click(); await page.waitForTimeout(300);
+  if ((await fz("fz-4")).aktiv !== false) fehler("P2 B10: Fahrzeug nicht entfernt");
+  if (!(await undo().isVisible())) fehler("P2 B10: kein Rückgängig nach Entfernen");
+  await pruefeLayout(page, `Flotte mit Rückgängig ${breite}`); await pruefeBreite(page, `Flotte mit Rückgängig ${breite}`);
+  const ub = await undo().boundingBox();
+  if (ub.x < 0 || ub.x + ub.width > breite) fehler(`P2: Rückgängig-Hinweis ragt bei ${breite} px aus dem Bild`);
+  await undo().locator("[data-undo]").click(); await page.waitForTimeout(300);
+  if ((await fz("fz-4")).aktiv !== true || !(await page.$('[data-fzweg="fz-4"]'))) fehler("P2 B10: Rückgängig bringt das Fahrzeug nicht zurück");
+  // Entfernen, Hinweis läuft ab: Liste „Entfernte Fahrzeuge“ mit „Zurückholen“
+  await page.click('[data-fzweg="fz-4"]'); await page.waitForTimeout(200);
+  await page.locator("dialog[open]").last().locator("button[value=ok]").click(); await page.waitForTimeout(300);
+  await page.evaluate(() => undoAblaufen());
+  await page.click(".fz-weg summary"); await page.waitForTimeout(150);
+  if (!/Golf Automatik 2/.test(await page.textContent(".fz-weg"))) fehler("P2 B10: entferntes Fahrzeug nicht in der Liste");
+  await pruefeLayout(page, `Entfernte Fahrzeuge ${breite}`); await pruefeBreite(page, `Entfernte Fahrzeuge ${breite}`);
+  await page.click('[data-fzzurueck="fz-4"]'); await page.waitForTimeout(300);
+  if ((await fz("fz-4")).aktiv !== true || !(await page.$('[data-fzweg="fz-4"]'))) fehler("P2 B10: Zurückholen klappt nicht");
+  if (konsole.length) fehler(`P2 Fahrzeuge ${breite}: Konsole: ` + konsole.join(" | "));
+  await ctx.close();
+}
+{
+  const { page, ctx, konsole } = await oeffne({ nutzer: "bu-1", hash: "#verkaeufe", breite: 1366, hoehe: 900 });
+  const prov = () => page.evaluate(() => window.__FAKE.tabellen.provisionen.filter((p) => p.fahrlehrer_id === "fl-1").map((p) => p.status));
+  await page.click('[data-pausz="fl-1"]');
+  await page.click("dialog button[value=ok]"); await page.waitForTimeout(300);
+  if ((await prov()).some((s) => s === "offen")) fehler("P2: ausgezahlt nicht gespeichert");
+  if (!(await page.locator(".toast-undo").isVisible())) fehler("P2: kein Rückgängig nach ausgezahlt");
+  await pruefeLayout(page, "Verkäufe mit Rückgängig");
+  await page.click(".toast-undo [data-undo]"); await page.waitForTimeout(300);
+  if (!(await prov()).includes("offen") || (await prov()).includes("ausgezahlt")) fehler("P2: Rückgängig setzt ausgezahlt nicht auf offen zurück " + JSON.stringify(await prov()));
+  if (konsole.length) fehler("P2 Provision: Konsole: " + konsole.join(" | "));
   await ctx.close();
 }
 
