@@ -1248,6 +1248,16 @@ body.light .dt-n{background:linear-gradient(160deg,#1d3324 10%,#2f5d3f 90%);-web
 .sheet-scrim.open{opacity:1;pointer-events:auto}
 .sheet{position:fixed;left:0;right:0;bottom:0;z-index:61;background:var(--bg-soft);border-top:1px solid var(--line);border-radius:20px 20px 0 0;padding:22px var(--pad) calc(26px + env(safe-area-inset-bottom));transform:translateY(100%);transition:transform .26s var(--ease);max-height:80vh;overflow-y:auto}
 .sheet.open{transform:translateY(0)}
+/* Fenster-Stapel: Griff, ✕, Wechsel zwischen Ebenen */
+.sheet-griff{width:38px;height:5px;border-radius:3px;background:var(--line);margin:-10px auto 12px;opacity:.9}
+.sheet-x{position:absolute;top:8px;right:10px;width:44px;height:44px;border-radius:12px;border:none;background:transparent;color:var(--muted);font-size:18px;line-height:44px;text-align:center;cursor:pointer;z-index:2}
+.sheet-x:active{background:var(--bg-soft)}
+.sheet .sheet-h{padding-right:40px}
+.sheet.sheet-wechsel>*:not(.sheet-x){animation:shEbeneRein .2s var(--ease)}
+.sheet.sheet-wechsel-zurueck>*:not(.sheet-x){animation:shEbeneZurueck .2s var(--ease)}
+@keyframes shEbeneRein{from{opacity:0;transform:translateX(18px)}}
+@keyframes shEbeneZurueck{from{opacity:0;transform:translateX(-18px)}}
+@media (prefers-reduced-motion:reduce){.sheet.sheet-wechsel>*,.sheet.sheet-wechsel-zurueck>*{animation:none}}
 .sheet-h{font-family:'Anton',sans-serif;text-transform:uppercase;font-size:16px;letter-spacing:.04em;margin-bottom:16px}
 .sheet-list{display:flex;flex-direction:column;gap:8px;margin-bottom:16px}
 .sl-item{display:flex;flex-direction:column;align-items:flex-start;gap:2px;background:var(--surface);border:1px solid var(--line);border-radius:11px;padding:13px 15px;text-align:left}
@@ -7379,7 +7389,7 @@ function load(){
 let DB=load();
 if((DB.students&&DB.students.length)||(DB.lessons&&DB.lessons.length)) _sitzungHatteDaten=true;
 function save(){
-  _snapGeaendert=true;
+  _snapGeaendert=true; if(typeof _saveZaehler==="number")_saveZaehler++;
   if(_fsAgg){ _fsSyncAggChanges(); return; }
   if((DB.students&&DB.students.length)||(DB.lessons&&DB.lessons.length)) _sitzungHatteDaten=true;
   if(_lokalerSpeicherGehoertAnderem()){ location.reload(); return; } // anderer Tab hat anderes Konto angemeldet
@@ -7955,7 +7965,7 @@ function replaySplash(){
   clearTimeout(replaySplash._t);
   replaySplash._t=setTimeout(()=>{ sp.classList.add("hide"); setTimeout(()=>sp.classList.remove("kurz"),300); },700);
 }
-$("#sheetScrim").addEventListener("click",closeSheet);
+$("#sheetScrim").addEventListener("click",()=>sheetZurueck());
 document.querySelector(".drawer-nav").addEventListener("click",(e)=>{
   const b=e.target.closest(".nav-item[data-nav]");
   if(!b)return;
@@ -8014,7 +8024,7 @@ function openNeuerTerminSheet(){
     <div class="es-actions">${liste}</div>
     <div class="btn-row" style="flex-wrap:wrap;gap:8px;"><button class="btn btn-ghost" id="ntAndere" style="width:100%;">Andere Art (Theorie, Prüfung, Blocker …)</button><button class="btn btn-ghost" id="ntClose" style="width:100%;">Schließen</button></div>`);
   $("#ntClose").addEventListener("click",closeSheet);
-  $("#ntAndere").addEventListener("click",()=>{ if(!imKal||!_calDate)_calDate=heute; closeSheet(); setTimeout(openAddSheet,200); });
+  $("#ntAndere").addEventListener("click",()=>{ if(!imKal||!_calDate)_calDate=heute; openAddSheet(); }); // Unterfenster: Zurück führt wieder zu „Neuer Termin“
   document.querySelectorAll(".nt-gap").forEach(b=>b.addEventListener("click",()=>{
     const [date,von,bis,art]=b.dataset.freeslot.split("|"); closeSheet(); openAssignSlotSheet(date,von,bis,art);
   }));
@@ -9123,7 +9133,7 @@ async function openTheorieAnwesenheit(l){
   const alleLekt=LEKTIONEN.map(x=>String(x.n)).concat(LKW_LEKTIONEN.map(x=>x.n));
   const zeichne=()=>{
     const titel=lekt.length?lekt.map(k=>"Lektion "+k).join(" + "):"Lektion wählen";
-    $("#sheet").innerHTML=`<div class="sheet-h">Anwesenheit · ${isoDE(datum)}${l.von?" · "+esc(l.von):""}</div>
+    $("#sheet").innerHTML=_SHEET_KOPF+`<div class="sheet-h">Anwesenheit · ${isoDE(datum)}${l.von?" · "+esc(l.von):""}</div>
       <div class="ta-lekt-zeile"><span>${esc(titel)}</span><button type="button" class="btn btn-ghost" id="taLektAuf">${pillsOffen?"fertig":"ändern"}</button></div>
       ${pillsOffen?`<div class="pills ta-lekt sheet-pills" id="taLekt">${alleLekt.map(k=>`<button type="button" class="pill ${lekt.includes(k)?"sel":""}" data-k="${k}" title="${esc(lektionTitel(k))}">${k}</button>`).join("")}</div>`:""}
       <div class="field" style="margin-top:8px;"><label>Wer war da? <span class="ta-zahl" id="taZahl">${an.size} anwesend</span></label><input type="search" id="taSuche" placeholder="Name suchen" autocomplete="off"></div>
@@ -9568,7 +9578,7 @@ function openMultiTerminErgebnis(sid,cfg,treffer){
     openSheet(`<div class="sheet-h">Keine freien Slots gefunden</div>
       <p class="muted-p" style="font-size:13px;">Im gewählten Zeitraum/Uhrzeitfenster war nichts frei — Zeitraum oder Fenster erweitern und nochmal versuchen.</p>
       <div class="btn-row"><button class="btn btn-ghost btn-full" id="mtZurueck">Zurück</button></div>`);
-    $("#mtZurueck").addEventListener("click",()=>openMultiTerminSheet(sid));
+    $("#mtZurueck").addEventListener("click",()=>{ if(sheetZurueck(true)==="leer")openMultiTerminSheet(sid); });
     return;
   }
   const label=cfg.art==="sonder"?(SF_LABEL[cfg.grp]||"Sonderfahrt"):"Übungsfahrt";
@@ -11945,7 +11955,7 @@ function openAddLessonSheet(art){
       <div class="btn-row"><button class="btn btn-ghost" id="alBack" style="flex:0;padding:13px 16px;">Zurück</button><button class="btn btn-primary" id="alSave">Eintragen</button></div>`);
     let dur=1;
     document.querySelectorAll(".dur-opt").forEach(b=>b.addEventListener("click",()=>{ dur=+b.dataset.dur; document.querySelectorAll(".dur-opt").forEach(x=>x.classList.toggle("on",x===b)); }));
-    $("#alBack").addEventListener("click",()=>openAddLessonSheet(art));
+    $("#alBack").addEventListener("click",()=>{ if(sheetZurueck(true)==="leer")openAddLessonSheet(art); });
     $("#alSave").addEventListener("click",()=>{
       const date=$("#alDate").value, von=$("#alTime").value, note=$("#alNote").value.trim();
       if(!date||!von){toast("Datum & Zeit wählen");return;}
@@ -12254,7 +12264,7 @@ function openEventEdit(id,overrides){
     const st=DB.students.find(s=>s.id===l.sid);
     openVehiclePicker({title:st?st.name:"",sub:`${isoDE(snap.date)} · ${snap.von}`},fzName=>{ snap.fahrzeug=fzName; openEventEdit(id,snap); });
   });
-  $("#esBack").addEventListener("click",()=>openEventSheet("lesson",id,l.sid));
+  $("#esBack").addEventListener("click",()=>{ if(sheetZurueck(true)==="leer")openEventSheet("lesson",id,l.sid); });
   $("#esSave").addEventListener("click",()=>{
     const date=$("#esDate").value||cur.date; const von=$("#esTime").value||cur.von;
     // Bisherige Dauer behalten (45 Min, 3 Std, Theorie …); Standardlänge nur, wenn die Art wechselt.
@@ -13639,17 +13649,79 @@ function showCalStudentDetail(sid){
   openSheet(`<div class="cs-stud-head"><button class="cs-back" id="csBack">← Zurück</button><div class="cs-stud-name">${esc(s.name)}</div></div>
     ${totalF?`<div class="cs-section-h future">Geplant · ${totalF}</div>${futureItems.map(i=>i.html).join("")}`:`<div class="cs-empty">Keine geplanten Termine</div>`}
     ${totalP?`<div class="cs-section-h past">Vergangene Termine · ${totalP}</div>${pastItems.map(i=>i.html).join("")}`:""}`);
-  $("#csBack").addEventListener("click",openCalSearchSheet);
+  $("#csBack").addEventListener("click",()=>{ if(sheetZurueck(true)==="leer")openCalSearchSheet(); });
   document.querySelectorAll(".cs-item[data-date]").forEach(b=>b.addEventListener("click",()=>{
     _calDate=b.dataset.date; _calView="tag"; closeSheet(); routeKalender();
   }));
 }
 function _zurueckSperreNachholen(){ if(window._zurueckOffen){ window._zurueckOffen=false; window._zurueckEnde=0; try{history.pushState(null,"",location.href);}catch(e){} } }
-function openSheet(html){ _zurueckSperreNachholen(); _sheetBeimSchliessen=null; $("#sheet").innerHTML=html; $("#sheet").classList.add("open"); $("#sheetScrim").classList.add("open"); }
+/* ===== Fenster-Stapel (Paket 2, 🗣 Serband: „Fenster schließen immer nur bis zur nächsten Seite“) =====
+   Öffnet ein Fenster ein weiteres (z. B. Termin → Bearbeiten, Fahrstunde → Fahrzeug), bleibt das vorige samt
+   Eingaben im Stapel. Zurück-Taste, ✕, Tippen daneben, Wischen und Esc schließen genau EINE Ebene (sheetZurueck).
+   Wurde seit dem Öffnen gespeichert, ist das vorige Fenster veraltet: dann kein Stapel (neues Fenster ersetzt).
+   closeSheet() aus dem Code heißt „fertig“ und schließt alle Ebenen ohne Rückfrage. */
+let _sheetStapel=[], _sheetEbene=null, _saveZaehler=0;
 // Ein Fenster kann einen Abschluss mitgeben, der beim Schließen auf jedem Weg läuft (Knopf, Zurück, Tippen daneben).
 let _sheetBeimSchliessen=null;
-function closeSheet(){ $("#sheet").classList.remove("open"); $("#sheetScrim").classList.remove("open");
+const _SHEET_KOPF=`<div class="sheet-griff" aria-hidden="true"></div><button class="sheet-x" type="button" aria-label="Fenster schließen">✕</button>`;
+function openSheet(html,opts){
+  _zurueckSperreNachholen();
+  const sh=$("#sheet"), offen=sh.classList.contains("open");
+  if(offen&&_sheetEbene&&!(opts&&opts.neu)&&_sheetEbene.saveGen===_saveZaehler&&sh.firstChild){
+    const frag=document.createDocumentFragment(); while(sh.firstChild)frag.appendChild(sh.firstChild);
+    _sheetStapel.push({frag,ebene:_sheetEbene,scroll:sh.scrollTop,hook:_sheetBeimSchliessen});
+    if(_sheetStapel.length>8)_sheetStapel.shift();
+  } else _sheetStapel=[];
+  _sheetBeimSchliessen=null;
+  _sheetEbene={saveGen:_saveZaehler,geaendert:false};
+  sh.innerHTML=_SHEET_KOPF+html; sh.scrollTop=0;
+  if(offen){ sh.classList.remove("sheet-wechsel"); void sh.offsetWidth; sh.classList.add("sheet-wechsel"); }
+  sh.classList.add("open"); $("#sheetScrim").classList.add("open");
+}
+function closeSheet(){ const sh=$("#sheet"); sh.classList.remove("open","sheet-wechsel"); sh.style.transform=""; $("#sheetScrim").classList.remove("open");
+  _sheetStapel=[]; _sheetEbene=null;
   const f=_sheetBeimSchliessen; _sheetBeimSchliessen=null; if(f){ try{ f(); }catch(e){ console.warn("[Kompass] Abschluss beim Schließen:",e.message); } } }
+function sheetOffen(){ return $("#sheet").classList.contains("open"); }
+/* Eine Ebene zurück (für Nutzer-Gesten). Rückgabe: "zurueck" (vorige Ebene gezeigt), "zu" (ganz geschlossen),
+   "bleibt" (Rückfrage abgelehnt), "leer" (nurEbene gesetzt und keine vorige Ebene – nichts getan). */
+function sheetZurueck(nurEbene){
+  const sh=$("#sheet"); if(!sh.classList.contains("open"))return "zu";
+  const vor=_sheetStapel[_sheetStapel.length-1];
+  const kannZurueck=!!vor&&vor.ebene.saveGen===_saveZaehler;
+  if(nurEbene&&!kannZurueck)return "leer";
+  if(_sheetEbene&&_sheetEbene.geaendert&&!confirm("Deine Eingaben in diesem Fenster sind noch nicht gespeichert. Verwerfen?"))return "bleibt";
+  if(!kannZurueck){ closeSheet(); return "zu"; }
+  _sheetStapel.pop();
+  const f=_sheetBeimSchliessen;
+  sh.innerHTML=""; sh.appendChild(vor.frag); sh.scrollTop=vor.scroll||0;
+  _sheetEbene=vor.ebene; _sheetBeimSchliessen=vor.hook;
+  sh.classList.remove("sheet-wechsel","sheet-wechsel-zurueck"); void sh.offsetWidth; sh.classList.add("sheet-wechsel-zurueck");
+  if(f){ try{ f(); }catch(e){ console.warn("[Kompass] Abschluss beim Schließen:",e.message); } }
+  return "zurueck";
+}
+(function sheetGesten(){
+  const sh=document.getElementById("sheet"); if(!sh)return;
+  // Eingaben merken (Suchfelder zählen nicht)
+  const zaehlt=t=>t&&/^(INPUT|TEXTAREA|SELECT)$/.test(t.tagName)&&t.type!=="search"&&!/such|search|filter/i.test((t.id||"")+" "+(t.className||"")+" "+(t.placeholder||""))&&!t.closest("[data-kein-entwurf]");
+  const merk=e=>{ if(_sheetEbene&&zaehlt(e.target))_sheetEbene.geaendert=true; };
+  sh.addEventListener("input",merk); sh.addEventListener("change",merk);
+  sh.addEventListener("click",e=>{ if(e.target.closest(".sheet-x"))sheetZurueck(); });
+  // Wischen nach unten am oberen Rand (Griff/Kopf) schließt eine Ebene
+  let y0=null, dy=0, t0=0;
+  sh.addEventListener("touchstart",e=>{ if(!sh.classList.contains("open")||e.touches.length!==1)return;
+    const r=sh.getBoundingClientRect(), y=e.touches[0].clientY;
+    if(sh.scrollTop>0||y-r.top>64||/^(INPUT|TEXTAREA|SELECT|CANVAS)$/.test(e.target.tagName)){ y0=null; return; }
+    y0=y; dy=0; t0=Date.now(); },{passive:true});
+  sh.addEventListener("touchmove",e=>{ if(y0==null)return; dy=Math.max(0,e.touches[0].clientY-y0);
+    if(dy>4){ sh.style.transition="none"; sh.style.transform=`translateY(${dy}px)`; } },{passive:true});
+  const ende=()=>{ if(y0==null)return; y0=null; sh.style.transition=""; sh.style.transform="";
+    const schnell=dy>40&&(Date.now()-t0)<250; if(dy>80||schnell)sheetZurueck(); };
+  sh.addEventListener("touchend",ende); sh.addEventListener("touchcancel",ende);
+  // Esc (Tablet/PC mit Tastatur)
+  document.addEventListener("keydown",e=>{ if(e.key!=="Escape")return;
+    if(sh.classList.contains("open")){ e.preventDefault(); sheetZurueck(); return; }
+    const dr=document.getElementById("drawer"); if(dr&&dr.classList.contains("open")){ try{closeDrawer();}catch(x){} } });
+})();
 
 /* ---------- geteilte Bausteine: Prüfungsreif + Simulator ---------- */
 function examReadyCard(s){
@@ -16643,7 +16715,7 @@ function _seite2Markieren(name){
     const sperre=()=>{ window._zurueckEnde=0; window._zurueckOffen=false; try{history.pushState(null,"",location.href);}catch(e){} };
     const sh=document.getElementById("sheet"), dr=document.getElementById("drawer"), ap=document.getElementById("adminPanel"), ff=document.getElementById("fsFilterDrawer");
     if(document.getElementById("bueroNotizPopup")){ sperre(); return; } // Büro-Nachricht muss bewusst bestätigt werden
-    if(sh&&sh.classList.contains("open")){ closeSheet(); sperre(); return; }
+    if(sh&&sh.classList.contains("open")){ sheetZurueck(); sperre(); return; } // genau eine Fenster-Ebene
     if(ap&&ap.classList.contains("open")){ try{closeAdminPanel();}catch(e){} sperre(); return; }
     if(ff&&ff.classList.contains("open")){ try{_fsCloseFilterPanel();}catch(e){} sperre(); return; }
     if(typeof DRAW!=="undefined"&&DRAW&&DRAW.drawerOpen){ try{closeTafelDrawer();}catch(e){} sperre(); return; }
