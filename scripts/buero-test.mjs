@@ -1884,6 +1884,8 @@ for (const breite of [1280, 1366, 1920]) {
   await page.fill("dialog input[name=name]", "Golf Schalter Eins");
   await page.selectOption("dialog select[name=typ]", "automatik");
   await page.click("dialog button[value=ok]"); await page.waitForTimeout(300);
+  if (/künftige Termine auch umbenennen/.test(await page.locator("dialog[open]").last().textContent())) await page.locator("dialog[open]").last().locator("[data-nein]").click();
+  await page.waitForTimeout(300);
   const f1 = await fz("fz-1");
   if (f1.name !== "Golf Schalter Eins" || f1.typ !== "automatik") fehler("P2 B10: Fahrzeug bearbeiten nicht gespeichert " + JSON.stringify(f1));
   if (!/Golf Schalter Eins/.test(await page.textContent("#ansicht"))) fehler("P2 B10: neuer Name nicht in der Liste");
@@ -1927,6 +1929,116 @@ for (const breite of [1280, 1366, 1920]) {
   await page.click(".toast-undo [data-undo]"); await page.waitForTimeout(300);
   if (!(await prov()).includes("offen") || (await prov()).includes("ausgezahlt")) fehler("P2: Rückgängig setzt ausgezahlt nicht auf offen zurück " + JSON.stringify(await prov()));
   if (konsole.length) fehler("P2 Provision: Konsole: " + konsole.join(" | "));
+  await ctx.close();
+}
+
+
+// P2-7) Prüf-Team: Absage-Mail übersteht Neuladen, Notiz ändern/öffnen macht sie für den Fahrlehrer wieder neu, Fahrzeug umbenennen zieht Termine mit
+{
+  let mails = 0;
+  const { page, ctx, konsole } = await oeffne({ nutzer: "bu-1", hash: "#kalender", breite: 1366, hoehe: 900, vorbereiten: function () {
+    const d = new Date(); d.setDate(d.getDate() + 4);
+    F.session.access_token = "tok";
+    F.tabellen.public_bookings = [{ id: "pb1", merged_lesson_id: "t-ob", status: "bestaetigt", art: null, lc_termin_id: null }];
+    F.tabellen.kalender_termine.push({ id: "t-ob", fahrschule_id: "fs-test-1", fahrlehrer_id: "fl-1", schueler_id: "s1", datum: d.toISOString().slice(0, 10), von: "20:00", bis: "20:45", art: "fahrstunde", status: "geplant", geloescht: false, payload: { onlineBookingId: "pb1" } });
+  } });
+  await page.route("**/functions/v1/public-booking**", (r) => { mails++; r.fulfill({ status: 200, contentType: "application/json", body: "{}" }); });
+  await page.evaluate(() => terminDialog("t-ob")); await page.waitForTimeout(200);
+  await page.check("dialog input[name=absagen]");
+  await page.click("dialog button[value=ok]"); await page.waitForTimeout(150);
+  await page.locator("dialog[open]").last().locator("button[value=ok]").click(); await page.waitForTimeout(500);
+  if (await page.evaluate(() => JSON.parse(localStorage.getItem("buero-offene-absagen") || "[]").length) !== 1) fehler("P2 Mail: offene Absage wird nicht gemerkt");
+  // Seite stirbt innerhalb der 6 Sekunden (Hinweis samt Zeitgeber weg, keine Mail): der nächste Start holt die Mail nach
+  await page.evaluate(() => { clearTimeout(UNDO.offen.timer); UNDO.offen.el.remove(); UNDO.offen = null; });
+  await page.waitForTimeout(300);
+  if (mails !== 0) fehler("P2 Mail: Mail vor dem Nachholen");
+  await page.evaluate(() => holeAbsagenNach()); await page.waitForTimeout(1200);
+  if (mails !== 1) fehler("P2 Mail: nach Neustart geht die Absage-Mail nicht raus (" + mails + ")");
+  if (await page.evaluate(() => JSON.parse(localStorage.getItem("buero-offene-absagen") || "[]").length) !== 0) fehler("P2 Mail: Merker bleibt nach dem Senden stehen");
+  await page.evaluate(() => holeAbsagenNach()); await page.waitForTimeout(800);
+  if (mails !== 1) fehler("P2 Mail: zweiter Start schickt dieselbe Mail nochmal (" + mails + ")");
+  // pagehide innerhalb der 6 Sekunden: Mail wird sofort versucht, Merker danach weg
+  await page.evaluate(async () => { await supa.from("kalender_termine").update({ geloescht: false }).eq("id", "t-ob"); await ladeDaten(); });
+  await page.evaluate(() => terminDialog("t-ob")); await page.waitForTimeout(200);
+  await page.check("dialog input[name=absagen]");
+  await page.click("dialog button[value=ok]"); await page.waitForTimeout(150);
+  await page.locator("dialog[open]").last().locator("button[value=ok]").click(); await page.waitForTimeout(400);
+  await page.evaluate(() => window.dispatchEvent(new Event("pagehide"))); await page.waitForTimeout(1200);
+  if (mails !== 2) fehler("P2 Mail: pagehide schickt die Mail nicht (" + mails + ")");
+  if (await page.evaluate(() => JSON.parse(localStorage.getItem("buero-offene-absagen") || "[]").length) !== 0) fehler("P2 Mail: Merker nach pagehide nicht gelöscht");
+  const vorher = mails;
+  await page.waitForTimeout(7000);
+  if (mails !== vorher) fehler("P2 Mail: weitere Mails ohne Absage");
+  // Rückgängig löscht den Merker
+  await page.evaluate(async () => { await supa.from("kalender_termine").update({ geloescht: false }).eq("id", "t-ob"); await ladeDaten(); });
+  await page.evaluate(() => terminDialog("t-ob")); await page.waitForTimeout(200);
+  await page.check("dialog input[name=absagen]");
+  await page.click("dialog button[value=ok]"); await page.waitForTimeout(150);
+  await page.locator("dialog[open]").last().locator("button[value=ok]").click(); await page.waitForTimeout(400);
+  await page.click(".toast-undo [data-undo]"); await page.waitForTimeout(300);
+  if (await page.evaluate(() => JSON.parse(localStorage.getItem("buero-offene-absagen") || "[]").length) !== 0) fehler("P2 Mail: Rückgängig löscht den Merker nicht");
+  if (konsole.length) fehler("P2 Mail: Konsole: " + konsole.join(" | "));
+  await ctx.close();
+}
+{
+  const { page, ctx, konsole } = await oeffne({ nutzer: "bu-1", hash: "#schueler", breite: 1366, hoehe: 900 });
+  const gel = () => page.evaluate(() => (window.__FAKE.tabellen.schueler_notiz_gelesen || []).length);
+  await page.evaluate(() => schuelerDialog("s1")); await page.waitForTimeout(250);
+  await page.fill("#nzText", "Notiz zum Lesen"); await page.click("#nzSenden"); await page.waitForTimeout(300);
+  const markiereGelesen = () => page.evaluate(() => { const n = S.notizen[0]; const z = { notiz_id: n.id, person_id: "fl-1", gelesen_am: new Date().toISOString() }; (window.__FAKE.tabellen.schueler_notiz_gelesen = window.__FAKE.tabellen.schueler_notiz_gelesen || []).push(z); S.gelesen.push(z); });
+  await markiereGelesen();
+  await page.click("[data-notizbearb]"); await page.waitForTimeout(200);
+  const nd = page.locator("dialog[open]").last();
+  await nd.locator("textarea[name=text]").fill("Notiz geändert");
+  await nd.locator("button[value=ok]").click(); await page.waitForTimeout(400);
+  if (await gel() !== 0 || await page.evaluate(() => S.gelesen.length) !== 0) fehler("P2 Notiz: Bearbeiten löscht die Gelesen-Zeilen nicht");
+  // Wieder öffnen: ebenfalls
+  await page.click("[data-notizerledigt]"); await page.waitForTimeout(300);
+  await page.evaluate(() => undoAblaufen());
+  await markiereGelesen();
+  await page.click("#notizBlock details summary"); await page.click("[data-notizoeffnen]"); await page.waitForTimeout(400);
+  if (await gel() !== 0) fehler("P2 Notiz: Wieder öffnen löscht die Gelesen-Zeilen nicht");
+  // Policy verbietet es: saubere Meldung im Fenster, Notiz bleibt gespeichert
+  await markiereGelesen();
+  await page.evaluate(() => { window.__FAKE.fehler = { schueler_notiz_gelesen: "keine Berechtigung" }; });
+  await page.click("[data-notizbearb]"); await page.waitForTimeout(200);
+  const nd2 = page.locator("dialog[open]").last();
+  await nd2.locator("textarea[name=text]").fill("Nochmal geändert");
+  await nd2.locator("button[value=ok]").click(); await page.waitForTimeout(400);
+  if (!/keinen neuen Hinweis/.test(await page.locator("dialog[open]").first().textContent())) fehler("P2 Notiz: keine Meldung im Fenster, wenn Gelesen nicht gelöscht werden darf");
+  if ((await page.evaluate(() => window.__FAKE.tabellen.schueler_notizen[0].text)) !== "Nochmal geändert") fehler("P2 Notiz: Text bei Policy-Fehler nicht gespeichert");
+  if (konsole.length) fehler("P2 Notiz Gelesen: Konsole: " + konsole.join(" | "));
+  await ctx.close();
+}
+{
+  const { page, ctx, konsole } = await oeffne({ nutzer: "ad-1", hash: "#flotte", breite: 1366, hoehe: 900, vorbereiten: function () {
+    const t = (n) => { const d = new Date(); d.setDate(d.getDate() + n); return d.toISOString().slice(0, 10); };
+    for (const [id, n] of [["t-fz-alt", -3], ["t-fz-neu1", 2], ["t-fz-neu2", 5]]) F.tabellen.kalender_termine.push({ id, fahrschule_id: "fs-test-1", fahrlehrer_id: "fl-1", schueler_id: "s1", datum: t(n), von: "21:10", bis: "21:50", art: "fahrstunde", fahrzeug: "Golf Schalter 2", status: "geplant", geloescht: false, payload: {} });
+  } });
+  const zaehle = (name, ab) => page.evaluate(([nm, a]) => window.__FAKE.tabellen.kalender_termine.filter((x) => x.fahrzeug === nm && (a === "kuenftig" ? x.datum >= new Date().toISOString().slice(0, 10) : x.datum < new Date().toISOString().slice(0, 10))).length, [name, ab]);
+  const vorher = await zaehle("Golf Schalter 2", "kuenftig"), vergangen = await zaehle("Golf Schalter 2", "alt");
+  const vor3 = await zaehle("Golf Automatik 1", "kuenftig");
+  if (vorher < 2 || vor3 < 1) fehler("P2 Fahrzeug Vorbereitung: zu wenige Termine " + vorher + "/" + vor3);
+  // Abbrechen und „Nein“ (Fahrzeug 3): nur das Fahrzeug
+  await page.click('[data-fzbearb="fz-3"]'); await page.waitForTimeout(200);
+  await page.fill("dialog input[name=name]", "Golf Auto Neu");
+  await page.click("dialog button[value=ok]"); await page.waitForTimeout(250);
+  if (!/künftige Termine auch umbenennen/.test(await page.locator("dialog[open]").last().textContent())) fehler("P2 Fahrzeug: keine Frage nach den Terminen");
+  await pruefeLayout(page, "Fahrzeug umbenennen Frage");
+  await page.locator("dialog[open]").last().locator("footer [data-schliessen]").click(); await page.waitForTimeout(250);
+  if ((await page.evaluate(() => window.__FAKE.tabellen.fahrschule_fahrzeuge.find((f) => f.id === "fz-3").name)) !== "Golf Automatik 1") fehler("P2 Fahrzeug: Abbrechen benennt trotzdem um");
+  await page.locator("dialog[open]").last().locator("button[value=ok]").click(); await page.waitForTimeout(250);
+  await page.locator("dialog[open]").last().locator("[data-nein]").click(); await page.waitForTimeout(400);
+  if (await zaehle("Golf Automatik 1", "kuenftig") !== vor3 || await zaehle("Golf Auto Neu", "kuenftig") !== 0) fehler("P2 Fahrzeug: „Nein“ ändert doch Termine");
+  // Ja (Fahrzeug 2): künftige Termine mit, vergangene nicht
+  await page.click('[data-fzbearb="fz-2"]'); await page.waitForTimeout(200);
+  await page.fill("dialog input[name=name]", "Golf Drei");
+  await page.click("dialog button[value=ok]"); await page.waitForTimeout(250);
+  await page.locator("dialog[open]").last().locator("button[value=ok]").click(); await page.waitForTimeout(500);
+  if (await zaehle("Golf Drei", "kuenftig") !== vorher || await zaehle("Golf Schalter 2", "kuenftig") !== 0) fehler("P2 Fahrzeug: „Ja“ benennt die künftigen Termine nicht um");
+  if (await zaehle("Golf Schalter 2", "alt") !== vergangen || await zaehle("Golf Drei", "alt") !== 0) fehler("P2 Fahrzeug: „Ja“ ändert vergangene Termine");
+  if (await page.evaluate(() => S.termine.filter((t) => t.fahrzeug === "Golf Drei").length) < vorher) fehler("P2 Fahrzeug: Büro-Daten nach Umbenennen nicht aktuell");
+  if (konsole.length) fehler("P2 Fahrzeug umbenennen: Konsole: " + konsole.join(" | "));
   await ctx.close();
 }
 

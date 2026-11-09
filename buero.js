@@ -84,13 +84,14 @@ function undoPlatzieren() {
   const ziel = [...document.querySelectorAll("dialog[open]")].pop() || document.body;
   if (u.el.parentNode !== ziel) ziel.appendChild(u.el);
 }
-function undoAblaufen() {
+function undoAblaufen(ev) {
+  const keepalive = !!(ev && ev.type === "pagehide");
   const u = UNDO.offen;
   if (!u) return;
   UNDO.offen = null;
   clearTimeout(u.timer);
   u.el.remove();
-  if (u.nachAblauf) { try { const r = u.nachAblauf(); if (r && r.catch) r.catch(() => {}); } catch (e) { /* Zusatz, die Änderung selbst ist gespeichert */ } }
+  if (u.nachAblauf) { try { const r = u.nachAblauf(keepalive); if (r && r.catch) r.catch(() => {}); } catch (e) { /* Zusatz, die Änderung selbst ist gespeichert */ } }
 }
 function toastUndo(text, rueckgaengig, optionen) {
   const o = optionen || {};
@@ -100,7 +101,7 @@ function toastUndo(text, rueckgaengig, optionen) {
   el.setAttribute("role", "status");
   el.innerHTML = `<span class="toast-text"></span><button type="button" class="toast-knopf" data-undo>Rückgängig</button>`;
   el.querySelector(".toast-text").textContent = text;
-  const u = UNDO.offen = { el, nachAblauf: o.nachAblauf || null, timer: setTimeout(undoAblaufen, o.ms || 6000) };
+  const u = UNDO.offen = { el, ids: o.ids || null, nachAblauf: o.nachAblauf || null, timer: setTimeout(undoAblaufen, o.ms || 6000) };
   el.querySelector("[data-undo]").addEventListener("click", async (e) => {
     if (UNDO.offen !== u) return;
     e.target.disabled = true;
@@ -110,7 +111,7 @@ function toastUndo(text, rueckgaengig, optionen) {
   undoPlatzieren();
   return u;
 }
-window.addEventListener("pagehide", undoAblaufen);
+window.addEventListener("pagehide", undoAblaufen); // die Absage-Mail wird dabei mit keepalive versucht, sonst holt sie der nächste Start nach
 function setStatus(art, text) {
   const s = $("status");
   s.classList.remove("ok", "warn", "fehler");
@@ -1299,6 +1300,17 @@ function zeileFuerInsert(z) {
   for (const [k, v] of Object.entries(z)) if (!/bearbeiter$/.test(k)) o[k] = v;
   return o;
 }
+// Fahrlehrer soll die geänderte/wieder geöffnete Notiz wieder als neu sehen: Gelesen-Zeilen weg (neue ID würde den Rückgängig-Weg und die Historie zerreißen)
+async function notizUngelesen(id, spaet) {
+  const res = await supa.from("schueler_notiz_gelesen").delete().eq("notiz_id", id).select("notiz_id");
+  if (res.error) {
+    const t = "Notiz gespeichert, aber der Fahrlehrer bekommt keinen neuen Hinweis (" + res.error.message + "). Bitte ihm Bescheid geben.";
+    if (spaet) setTimeout(() => toast(t, true), 120); else toast(t, true); // spät: erst nach dem Schließen des Bearbeiten-Fensters, damit die Meldung im Schüler-Fenster steht
+    return false;
+  }
+  S.gelesen = S.gelesen.filter((g) => g.notiz_id !== id);
+  return true;
+}
 async function aendereNotiz(id, werte) {
   const res = await supa.from("schueler_notizen").update(werte).eq("id", id).select("*");
   if (res.error || !res.data || !res.data.length) { toast("Nicht gespeichert: " + (res.error ? res.error.message : "keine Berechtigung"), true); return false; }
@@ -1334,7 +1346,7 @@ function bindeNotizBlock(dlg, sid, fahrlehrerId) {
     }));
     block.querySelectorAll("[data-notizoeffnen]").forEach((b) => b.addEventListener("click", async () => {
       b.disabled = true;
-      if (await aendereNotiz(b.dataset.notizoeffnen, { erledigt_am: null, erledigt_von: null })) { toast("Notiz ist wieder offen"); neu(); } else b.disabled = false;
+      if (await aendereNotiz(b.dataset.notizoeffnen, { erledigt_am: null, erledigt_von: null })) { if (await notizUngelesen(b.dataset.notizoeffnen)) toast("Notiz ist wieder offen. Der Fahrlehrer sieht sie wieder als neu."); neu(); } else b.disabled = false;
     }));
     block.querySelectorAll("[data-notizbearb]").forEach((b) => b.addEventListener("click", () => {
       const n = S.notizen.find((x) => x.id === b.dataset.notizbearb);
@@ -1347,7 +1359,8 @@ function bindeNotizBlock(dlg, sid, fahrlehrerId) {
         if (!text) { toast("Bitte einen Text eintragen.", true); return false; }
         if (text === n.text && form.art.value === n.art) return true;
         if (!(await aendereNotiz(n.id, { text, art: form.art.value }))) return false;
-        toast("Notiz geändert"); neu();
+        if (await notizUngelesen(n.id, true)) toast("Notiz geändert. Der Fahrlehrer sieht sie wieder als neu.");
+        neu();
         return true;
       });
     }));
@@ -2182,11 +2195,32 @@ async function sageTermineAb(termine, text) {
   toastUndo(text, async () => {
     const r = await supa.from("kalender_termine").update({ geloescht: false, aktualisiert_am: new Date().toISOString() }).in("id", echt.map((t) => t.id)).select("id");
     if (r.error || !r.data || !r.data.length) { toast("Rückgängig ging nicht: " + (r.error ? r.error.message : "keine Berechtigung"), true); return; }
+    vergissAbsagen(echt.map((t) => t.id));
     for (const t of echt) if (!S.termine.some((x) => x.id === t.id)) S.termine.push(t);
     toast(echt.length === 1 ? "Termin ist wieder da" : `${echt.length} Termine sind wieder da`);
     zeichne();
-  }, { nachAblauf: () => echt.forEach((t) => onlineBuchungMelden(t.id, "cancelled")) });
+  }, { ids: echt.map((t) => t.id), nachAblauf: (ka) => sendeAbsagen(echt.map((t) => t.id), ka) });
+  merkeAbsagen(echt.map((t) => t.id));
   return true;
+}
+// Offene Absage-Mails überleben Neuladen und Schließen: Termin-IDs in localStorage, bis die Mail raus ist (die Function prüft status = bestätigt, doppelt geht nichts raus)
+const ABSAGE_KEY = "buero-offene-absagen";
+function absagenLesen() { try { const l = JSON.parse(localStorage.getItem(ABSAGE_KEY) || "[]"); return Array.isArray(l) ? l : []; } catch (e) { return []; } }
+function absagenSchreiben(l) { try { if (l.length) localStorage.setItem(ABSAGE_KEY, JSON.stringify(l)); else localStorage.removeItem(ABSAGE_KEY); } catch (e) { /* ohne Speicher weiter */ } }
+function merkeAbsagen(ids) { const l = absagenLesen(); for (const id of ids) if (!l.some((x) => x.id === id)) l.push({ id, t: Date.now() }); absagenSchreiben(l); }
+function vergissAbsagen(ids) { absagenSchreiben(absagenLesen().filter((x) => !ids.includes(x.id))); }
+const ABSAGE_LAEUFT = new Set();
+async function sendeAbsagen(ids, keepalive) {
+  for (const id of ids) {
+    if (ABSAGE_LAEUFT.has(id)) continue;
+    ABSAGE_LAEUFT.add(id);
+    try { if (await onlineBuchungMelden(id, "cancelled", null, keepalive)) vergissAbsagen([id]); } finally { ABSAGE_LAEUFT.delete(id); }
+  }
+}
+// Beim Start: Absagen nachholen, die vor dem Schließen nicht mehr rausgingen (Rückgängig entfernt den Merker sofort)
+function holeAbsagenNach() {
+  const l = absagenLesen().filter((x) => !(UNDO.offen && UNDO.offen.ids && UNDO.offen.ids.includes(x.id)));
+  if (l.length) sendeAbsagen(l.map((x) => x.id));
 }
 // Künftige Termine eines Schülers (heute noch nicht vorbei oder später), ohne Sperrzeiten
 function kuenftigeTermineVon(sid) {
@@ -2205,19 +2239,21 @@ async function frageKuenftigeTermine(x) {
 }
 
 // Online gebuchte Termine: Schüler per E-Mail informieren (wie in index.html, läuft im Hintergrund)
-async function onlineBuchungMelden(lessonId, type, zeit) {
+// Gibt true zurück, wenn nichts mehr zu tun ist (gesendet oder keine Online-Buchung), false bei Fehler (später nochmal)
+async function onlineBuchungMelden(lessonId, type, zeit, keepalive) {
   try {
     const { data } = await supa.from("public_bookings").select("id, lc_termin_id, art").eq("merged_lesson_id", lessonId).eq("status", "bestaetigt").maybeSingle();
-    if (!data) return;
-    if (data.art || data.lc_termin_id) { toast("Hinweis: Termin stammt aus Auda/Google-Kalender, bitte dort ebenfalls ändern."); return; }
+    if (!data) return true;
+    if (data.art || data.lc_termin_id) { toast("Hinweis: Termin stammt aus Auda/Google-Kalender, bitte dort ebenfalls ändern."); return true; }
     const { data: sd } = await supa.auth.getSession();
     const token = sd && sd.session && sd.session.access_token;
-    if (!token) return;
-    fetch(SUPA_URL + "/functions/v1/public-booking?action=teacher_update", {
-      method: "POST", headers: { "Content-Type": "application/json", Authorization: "Bearer " + token },
+    if (!token) return false;
+    const r = await fetch(SUPA_URL + "/functions/v1/public-booking?action=teacher_update", {
+      method: "POST", headers: { "Content-Type": "application/json", Authorization: "Bearer " + token }, keepalive: !!keepalive,
       body: JSON.stringify(Object.assign({ merged_lesson_id: lessonId, type }, zeit || {})),
-    }).catch(() => {});
-  } catch (e) { /* Benachrichtigung ist Zusatz, die Änderung selbst ist gespeichert */ }
+    });
+    return r.ok;
+  } catch (e) { return false; /* Benachrichtigung ist Zusatz, die Änderung selbst ist gespeichert */ }
 }
 
 /* ---------- Fahrchecks ---------- */
@@ -3341,16 +3377,34 @@ function fahrzeugDialog(f) {
       <label class="voll">Bezeichnung (z. B. „Golf Schalter“)<input type="text" name="name" required maxlength="60" value="${esc(f ? (f.name || f.bezeichnung || "") : "")}"></label>
       <label>Art<select name="typ">${typen.map(([k, n]) => `<option value="${k}"${k === typAlt ? " selected" : ""}>${n}</option>`).join("")}</select></label>
       <label>Für Klasse<select name="klasse">${["B", "BE", "C1", "C1E", "C", "CE"].map((k) => `<option value="${k}"${f && f.klasse === k ? " selected" : ""}>${k}</option>`).join("")}</select></label></div>
-      <p class="leise klein">Anhänger: die Klasse wählen, für die er gebraucht wird (BE, C1E oder CE).${f ? " Schon eingetragene Termine behalten den alten Namen." : ""}</p>`, async (form) => {
+      <p class="leise klein">Anhänger: die Klasse wählen, für die er gebraucht wird (BE, C1E oder CE).${f ? " Bei einer Umbenennung wirst du gefragt, ob künftige Termine mitgehen." : ""}</p>`, async (form) => {
     const name = form.name.value.trim();
     if (!name) { toast("Bitte eine Bezeichnung eintragen.", true); return false; }
     const gleich = fzGleicherName(name, f && f.id);
     if (gleich && !(await bestaetige("Name gibt es schon", `Ein Fahrzeug „${gleich.name || gleich.bezeichnung}“ ist schon in der Liste. Trotzdem ${f ? "so benennen" : "neu anlegen"}?`, f ? "Ja, so benennen" : "Ja, anlegen"))) return false;
     if (f) {
+      const alt = f.name || f.bezeichnung || "";
+      const heute = KR.todayISO();
+      const betroffen = name !== alt ? S.termine.filter((t) => t.fahrzeug === alt && t.datum >= heute && !t.geloescht) : [];
+      let umbenennen = false;
+      if (betroffen.length) {
+        const w = await frageDrei(`${betroffen.length === 1 ? "1 künftigen Termin" : betroffen.length + " künftige Termine"} auch umbenennen?`,
+          `„${alt}“ steht noch in ${betroffen.length === 1 ? "1 künftigen Termin" : betroffen.length + " künftigen Terminen"}. Mit dem neuen Namen „${name}“ stimmen Nutzung und Doppelbelegung auch dort. Vergangene Termine bleiben unverändert.`,
+          "Ja, umbenennen", "Nein, nur das Fahrzeug", "Abbrechen");
+        if (w === null) return false;
+        umbenennen = w === "ja";
+      }
       const werte = { name, typ: form.typ.value, klasse: form.klasse.value };
       const res = await supa.from("fahrschule_fahrzeuge").update(werte).eq("id", f.id).select("*");
       if (res.error || !res.data || !res.data.length) { toast("Nicht gespeichert: " + (res.error ? res.error.message : "keine Berechtigung"), true); return false; }
-      Object.assign(f, res.data[0]); toast("Fahrzeug geändert"); zeichne(); return true;
+      Object.assign(f, res.data[0]);
+      let hinweis = "Fahrzeug geändert";
+      if (umbenennen) {
+        const r = await supa.from("kalender_termine").update({ fahrzeug: name, aktualisiert_am: new Date().toISOString() }).eq("fahrschule_id", S.fsId).eq("fahrzeug", alt).gte("datum", heute).eq("geloescht", false).select("id");
+        if (r.error) toast("Fahrzeug geändert, die Termine aber nicht: " + r.error.message, true);
+        else { const ids = new Set((r.data || []).map((x) => x.id)); S.termine.forEach((t) => { if (ids.has(t.id)) t.fahrzeug = name; }); hinweis = `Fahrzeug geändert, ${ids.size} künftige Termine umbenannt`; }
+      }
+      toast(hinweis); zeichne(); return true;
     }
     const res = await supa.from("fahrschule_fahrzeuge").insert({ fahrschule_id: S.fsId, name, typ: form.typ.value, klasse: form.klasse.value, aktiv: true }).select("*");
     if (res.error || !res.data || !res.data.length) { toast("Nicht gespeichert: " + (res.error ? res.error.message : "keine Berechtigung"), true); return false; }
@@ -3609,6 +3663,7 @@ async function ladeDaten() {
     setStatus("ok", "verbunden · " + S.geladenAm.toLocaleTimeString("de-DE", { hour: "2-digit", minute: "2-digit" }));
     zeichne();
     pruefeSitzungNoch(); // alle 2 Minuten mit: PIN zurückgesetzt oder Person ausgetreten → neu anmelden
+    holeAbsagenNach();
     zeigeNeueAufgaben(); // neue Aufgabe von einer Kollegin erscheint ohne Neuladen
   } catch (e) {
     if (nr !== S.ladeNr) return;
