@@ -1988,7 +1988,8 @@ body.light .lo-err.ok{color:#1e6b46;}
 .fs-sub{font-size:12px;color:var(--muted);margin-top:2px;}
 .fs-status-on{color:#4a8b45;font-weight:700;}
 .fs-status-off{color:#a52a2a;font-weight:700;}
-body:not(.light) .fs-status-off{color:#ff8a80;} /* K2: „GESPERRT“ dunkel 2,85:1 war zu blass */
+body:not(.light) .fs-status-off{color:#ff8a80;}
+body:not(.light) .fs-btn-kill{color:#ff8a80;} /* K3: „Sperren“ dunkel lesbar (Richter K2) */ /* K2: „GESPERRT“ dunkel 2,85:1 war zu blass */
 .fs-actions{display:flex;gap:8px;margin-top:10px;flex-wrap:wrap;}
 .fs-btn-kill{min-height:44px;background:rgba(200,60,60,.12);color:#c83c3c;border:1px solid rgba(200,60,60,.3);border-radius:10px;padding:7px 14px;font-size:12px;font-weight:700;cursor:pointer;}
 .fs-btn-activate{min-height:44px;background:rgba(74,139,69,.12);color:#4a8b45;border:1px solid rgba(74,139,69,.3);border-radius:10px;padding:7px 14px;font-size:12px;font-weight:700;cursor:pointer;}
@@ -5851,12 +5852,14 @@ function _fsSuperAdminToggleBtn(){
 // K2: Knopf „Zur Büro-Seite“ nur für Leitung, Büro und Super-Admin
 function _fsDarfBueroSeite(){ const r=_authProfile&&_authProfile.rolle; return r==="fahrschule_admin"||r==="buero"||isSuperAdmin(); }
 let _fsZurBueroLaeuft=false;
+let _fsBedienZaehler=0; ["pointerdown","keydown"].forEach(e=>document.addEventListener(e,()=>{ _fsBedienZaehler++; },true)); // zählt Tipps/Tasten (K3)
 async function _fsZurBueroSeite(ev){
   if(ev)ev.preventDefault();
   if(_fsZurBueroLaeuft)return false; // Doppeltipp: der erste Tipp speichert noch
   if(!_seiteVerlassenOk())return false;
   _fsZurBueroLaeuft=true;
   const knopf=document.getElementById("fsBueroLink"); let hinweisAn=false;
+  const seiteVorher=view.firstElementChild, bedienVorher=_fsBedienZaehler; // K3: auch der Menü-Eintrag bricht ab, wenn der Nutzer inzwischen woanders ist
   try{
     // Noch nicht geschriebene Änderungen der Gesamtansicht erst speichern (wie beim Umschalten in die eigene Ansicht).
     // Auch ein Speichern, das gerade unterwegs ist, wird abgewartet: Der Seitenwechsel würde es sonst abbrechen.
@@ -5877,6 +5880,7 @@ async function _fsZurBueroSeite(ev){
       if(_fsSyncLaeuftP||_fsSyncDebounce||_fsUngespeichert)ok=false;
       // Ist der Nutzer inzwischen auf eine andere Seite gegangen, nicht mehr plötzlich wegspringen
       if(knopf&&!document.contains(knopf))return false;
+      if(view.firstElementChild!==seiteVorher&&_fsBedienZaehler!==bedienVorher)return false;
       if(!ok&&!confirm("Nicht alle Änderungen konnten gespeichert werden. Trotzdem zur Büro-Seite? Ungespeichertes geht dann verloren."))return false;
     }
     location.href="buero.html";
