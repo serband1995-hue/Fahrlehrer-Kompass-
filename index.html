@@ -125,7 +125,11 @@ body::after{content:"";position:fixed;inset:0;z-index:0;pointer-events:none;opac
   background-size:48px 48px,48px 48px;
   -webkit-mask-image:radial-gradient(80% 60% at 50% 25%,#000 0%,transparent 75%);mask-image:radial-gradient(80% 60% at 50% 25%,#000 0%,transparent 75%);}
 button{font-family:inherit;color:inherit;cursor:pointer;border:none;background:none;}
-input,select,textarea{font-family:inherit;font-size:15px;color:var(--txt);}
+input,select,textarea{font-family:inherit;font-size:16px;color:var(--txt);}
+/* K3 (GK16): iPhones vergrößern die Seite beim Antippen eines Feldes unter 16 px. Grundregel oben überall 16 px;
+   zusätzlich nur auf iPhone/iPad (Safari kennt -webkit-touch-callout) auch Felder mit eigener kleinerer Schrift
+   (!important). Schreibgeschützte Felder bleiben klein. */
+@supports (-webkit-touch-callout:none){input:not([type=checkbox]):not([type=radio]):not([type=range]):not([readonly]),select,textarea:not([readonly]){font-size:16px !important;}}
 ::selection{background:rgba(74,139,92,.32);}
 .display{font-family:'Anton',sans-serif;font-weight:400;text-transform:uppercase;letter-spacing:.02em;}
 .script{font-family:'Kaushan Script',cursive;}
@@ -1278,7 +1282,8 @@ body.light .dt-n{background:linear-gradient(160deg,#1d3324 10%,#2f5d3f 90%);-web
 .search-wrap:focus-within{border-color:var(--orange-line)}
 .search-ic{color:var(--muted);display:flex;flex:0 0 auto}
 .search-ic svg{width:18px;height:18px}
-.search-wrap input{flex:1;background:transparent;border:none;padding:13px 0;font-size:15px;color:var(--txt)}
+.search-wrap input{flex:1;min-width:0;background:transparent;border:none;padding:13px 0;font-size:16px;color:var(--txt)}
+#homeSearchRow .search-wrap{min-width:0;} /* K3: mit 16 px Schrift sonst Filter-Knopf bei 360 px über dem Rand */
 .search-wrap input:focus{outline:none}
 .search-clear{width:26px;height:26px;border-radius:8px;background:var(--surface-2);color:var(--muted);font-size:12px;flex:0 0 auto}
 .no-hit{color:var(--muted);font-size:14px;text-align:center;padding:30px 0}
@@ -1422,6 +1427,14 @@ body.light .dt-n{background:linear-gradient(160deg,#1d3324 10%,#2f5d3f 90%);-web
 .clb-item{display:inline-flex;align-items:center;gap:5px;font-size:11px;font-weight:700;color:var(--muted);}
 .clb-item i{width:9px;height:9px;border-radius:2px;flex:0 0 auto;}
 .cal-nav{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:16px;}
+/* K3 (GK23): In der Tagesansicht bleibt die Datumszeile beim Wischen oben stehen (nach dem Sprung zur Jetzt-Linie sichtbar) */
+.cal-wrap.cal-tag>.cal-nav{position:sticky;top:0;z-index:6;background:var(--bg);padding-top:3px;padding-bottom:3px;margin-bottom:10px;box-shadow:0 1px 0 var(--line);}
+#view[data-seite2] .cal-wrap.cal-tag>.cal-nav{margin-bottom:2px;} /* Innenabstand der festen Zeile ausgleichen: Kalender beginnt so hoch wie vorher */
+body.light:has(#view[data-seite2]) .cal-wrap.cal-tag>.cal-nav{background:var(--k-grund);}
+/* K3: Meldungen nach dem Video-Tipp mit fester Farbbedeutung (grün angekommen, gelb gespeichert, rot nicht geschickt) */
+.toast.t-ok{box-shadow:inset 6px 0 0 var(--gruen),var(--elev-3) !important;}
+.toast.t-info{box-shadow:inset 6px 0 0 var(--gelb),var(--elev-3) !important;}
+.toast.t-fehler{box-shadow:inset 6px 0 0 var(--rot),var(--elev-3) !important;}
 .cal-arrow{width:40px;height:40px;border-radius:12px;display:flex;align-items:center;justify-content:center;background:var(--glass);border:1px solid var(--glass-brd);color:var(--txt);box-shadow:var(--inset-top);}
 .cal-arrow:active{transform:scale(.9);}
 .cal-arrow svg{width:20px;height:20px;}
@@ -1926,7 +1939,7 @@ body:not(.light) #sheet .sheet-pills .pill.sel{background:#123A2A !important;bor
   width:100%;padding:14px 48px 14px 16px;
   background:rgba(255,255,255,.06);
   border:1px solid rgba(255,255,255,.1);
-  border-radius:14px;color:#e8f0eb;font-size:15px;
+  border-radius:14px;color:#e8f0eb;font-size:16px;
   outline:none;box-sizing:border-box;
   font-family:'Barlow',sans-serif;
   transition:border-color .2s;
@@ -1985,7 +1998,8 @@ body.light .lo-err.ok{color:#1e6b46;}
 .fs-sub{font-size:12px;color:var(--muted);margin-top:2px;}
 .fs-status-on{color:#4a8b45;font-weight:700;}
 .fs-status-off{color:#a52a2a;font-weight:700;}
-body:not(.light) .fs-status-off{color:#ff8a80;} /* K2: „GESPERRT“ dunkel 2,85:1 war zu blass */
+body:not(.light) .fs-status-off{color:#ff8a80;}
+body:not(.light) .fs-btn-kill{color:#ff8a80;} /* K3: „Sperren“ dunkel lesbar (Richter K2) */ /* K2: „GESPERRT“ dunkel 2,85:1 war zu blass */
 .fs-actions{display:flex;gap:8px;margin-top:10px;flex-wrap:wrap;}
 .fs-btn-kill{min-height:44px;background:rgba(200,60,60,.12);color:#c83c3c;border:1px solid rgba(200,60,60,.3);border-radius:10px;padding:7px 14px;font-size:12px;font-weight:700;cursor:pointer;}
 .fs-btn-activate{min-height:44px;background:rgba(74,139,69,.12);color:#4a8b45;border:1px solid rgba(74,139,69,.3);border-radius:10px;padding:7px 14px;font-size:12px;font-weight:700;cursor:pointer;}
@@ -3529,27 +3543,67 @@ function faLink(entry){
   if(entry.tag) url+="&tag="+encodeURIComponent(entry.tag);
   return url;
 }
-// Löst beim Video-Klick zusätzlich eine Push-Benachrichtigung beim Schüler aus (Fahr-Akademie-
-// Brücke). Läuft im Hintergrund, blockiert nie das Öffnen des Links, schlägt still fehl, falls
-// Akademie mal nicht erreichbar ist oder der Schüler noch keinen Zugang hat.
+// Löst beim Video-Klick zusätzlich einen Video-Tipp beim Schüler aus (Fahr-Akademie-Brücke). Läuft im
+// Hintergrund und blockiert nie das Öffnen des Links. K3 (BR11): sagt danach klar, was beim Schüler ankommt.
+// Antworten der Akademie (academy-send-notification v5): ok+push_gesendet_an>0 | ok+hinweis "kein_push_abo" |
+// ok+empfehlung_geparkt+grund (kein_zugang, zugang_gesperrt, zugang_abgelaufen) | 429 cooldown_aktiv |
+// 403 fahrlehrer_stimmt_nicht; von der Kompass-Function: 403 konto_gesperrt/keine_fahrschule.
+// Kurz, Ergebnis zuerst (Design K3): [Text, Art] mit Art ok (angekommen) / info (gespeichert, kommt später) / fehler (nicht geschickt)
+function _akademieTippText(vn,res){
+  const d=res||{};
+  if(d.ok){
+    if(Number(d.push_gesendet_an)>0)return ["📲 Video-Tipp an "+vn+" geschickt ✓","ok"];
+    if(d.empfehlung_geparkt){
+      if(d.grund==="zugang_gesperrt")return ["Tipp gespeichert · Zugang von "+vn+" ist gesperrt","info"];
+      if(d.grund==="zugang_abgelaufen")return ["Tipp gespeichert · Zugang von "+vn+" ist abgelaufen","info"];
+      return ["Tipp gespeichert · "+vn+" hat noch keinen Akademie-Zugang","info"];
+    }
+    return ["Tipp gespeichert · "+vn+" hat Handy-Nachrichten aus","info"];
+  }
+  if(d.error==="cooldown_aktiv")return ["Nicht geschickt · "+vn+" bekam vor 2 Min. schon einen","fehler"];
+  if(d.error==="fahrlehrer_stimmt_nicht")return ["Nicht geschickt · "+vn+" hat dort einen anderen Fahrlehrer","fehler"];
+  if(d.error==="nicht_eingeloggt")return ["Nicht geschickt · bitte neu anmelden","fehler"];
+  if(d.error==="telefon_fehlt")return ["Nicht geschickt · Handynummer von "+vn+" ungültig","fehler"];
+  if(d.error==="konto_gesperrt"||d.error==="keine_fahrschule")return ["Nicht geschickt · dein Konto ist für die Akademie nicht frei","fehler"];
+  return ["Nicht geschickt · Akademie nicht erreichbar","fehler"];
+}
+// Meldung erst zeigen, wenn die App wieder im Vordergrund ist (das Video öffnet sich in einem neuen Tab)
+function _toastSichtbar(m,art){
+  const zeige=()=>{ toast(m); if(art)$("#toast").classList.add("t-"+art); };
+  if(!document.hidden){ zeige(); return; }
+  const zeig=()=>{ if(document.hidden)return; document.removeEventListener("visibilitychange",zeig); zeige(); };
+  document.addEventListener("visibilitychange",zeig);
+}
+const _akTippLaeuft=new Set(), _akTippOk={}; // je Schüler: Anfrage unterwegs / Zeit des letzten geschickten Tipps
 async function _pushAkademieVideo(s,entry){
-  if(!entry||!s||!s.telefon)return;
+  if(!entry||!s)return;
+  const vn=String(s.name||"Schüler").trim().split(/\s+/)[0]||"Schüler";
+  if(!s.telefon){ _toastSichtbar("Nicht geschickt · bei "+vn+" fehlt die Handynummer","fehler"); return; }
+  const key=String(s.id||s.telefon);
+  if(_akTippLaeuft.has(key))return; // Doppeltipp: die erste Anfrage meldet sich selbst
+  _akTippLaeuft.add(key);
+  let res=null;
   try{
     const supa=getSupa();
     const{data,error}=await supa.functions.invoke("trigger-akademie-push",{
       body:{ telefon:s.telefon, tag_id:entry.tag||undefined, stufe:entry.stufe||undefined }
     });
-    if(error)return; // Netzwerk-/Serverfehler: still, Video-Link hat trotzdem funktioniert
-    if(!data)return;
-    if(data.ok&&data.push_gesendet_an>0){
-      toast("📲 Push an "+(s.name||"Schüler").split(" ")[0]+" gesendet ✓");
-    }else if(data.error==="schueler_nicht_gefunden"){
-      toast("Hinweis: "+(s.name||"Schüler").split(" ")[0]+" hat noch keinen Akademie-Zugang");
-    }else if(data.error==="zugang_gesperrt"||data.error==="zugang_abgelaufen"){
-      toast("Hinweis: Akademie-Zugang von "+(s.name||"Schüler").split(" ")[0]+" ist aktuell gesperrt/abgelaufen");
-    }
-    // cooldown_aktiv, kein_push_abo, sonstige: bewusst kein Toast, um nicht zu nerven
-  }catch(e){ /* still - Video-Link ist das Wichtigere, das hat schon funktioniert */ }
+    res=data;
+    // Bei Status 4xx/5xx liefert invoke kein data, sondern error.context (die Antwort) - daraus den Grund lesen
+    if(error){ res=null; try{ if(error.context&&typeof error.context.json==="function")res=await error.context.json(); }catch(e2){ res=null; } }
+  }catch(e){ res=null; }
+  finally{ _akTippLaeuft.delete(key); }
+  const thema=String(entry.tag||entry.stufe||"");
+  if(res&&res.ok)_akTippOk[key]={zeit:Date.now(),thema};
+  // Sperre der Akademie (2 Minuten) direkt nach eigenem erfolgreichem Tipp: der erste ist angekommen
+  // Gleiches Video: der erste Tipp ist angekommen. Anderes Video: das ist NICHT angekommen (Akademie speichert dann nichts).
+  const zuletzt=_akTippOk[key];
+  if(res&&res.error==="cooldown_aktiv"&&zuletzt&&Date.now()-zuletzt.zeit<130000){
+    if(zuletzt.thema===thema){ _toastSichtbar("Schon geschickt · nächster Tipp an "+vn+" in 2 Min.","ok"); return; }
+    _toastSichtbar("Nicht geschickt · nächster Tipp an "+vn+" erst in 2 Min.","fehler"); return;
+  }
+  const [text,art]=_akademieTippText(vn,res);
+  _toastSichtbar(text,art);
 }
 const INFO = {
   g_sitz:[
@@ -5833,12 +5887,14 @@ function _fsSuperAdminToggleBtn(){
 // K2: Knopf „Zur Büro-Seite“ nur für Leitung, Büro und Super-Admin
 function _fsDarfBueroSeite(){ const r=_authProfile&&_authProfile.rolle; return r==="fahrschule_admin"||r==="buero"||isSuperAdmin(); }
 let _fsZurBueroLaeuft=false;
+let _fsBedienZaehler=0; ["pointerdown","keydown"].forEach(e=>document.addEventListener(e,()=>{ _fsBedienZaehler++; },true)); // zählt Tipps/Tasten (K3)
 async function _fsZurBueroSeite(ev){
   if(ev)ev.preventDefault();
   if(_fsZurBueroLaeuft)return false; // Doppeltipp: der erste Tipp speichert noch
   if(!_seiteVerlassenOk())return false;
   _fsZurBueroLaeuft=true;
   const knopf=document.getElementById("fsBueroLink"); let hinweisAn=false;
+  const seiteVorher=view.firstElementChild, bedienVorher=_fsBedienZaehler; // K3: auch der Menü-Eintrag bricht ab, wenn der Nutzer inzwischen woanders ist
   try{
     // Noch nicht geschriebene Änderungen der Gesamtansicht erst speichern (wie beim Umschalten in die eigene Ansicht).
     // Auch ein Speichern, das gerade unterwegs ist, wird abgewartet: Der Seitenwechsel würde es sonst abbrechen.
@@ -5859,6 +5915,7 @@ async function _fsZurBueroSeite(ev){
       if(_fsSyncLaeuftP||_fsSyncDebounce||_fsUngespeichert)ok=false;
       // Ist der Nutzer inzwischen auf eine andere Seite gegangen, nicht mehr plötzlich wegspringen
       if(knopf&&!document.contains(knopf))return false;
+      if(view.firstElementChild!==seiteVorher&&_fsBedienZaehler!==bedienVorher){ toast("Wechsel zur Büro-Seite abgebrochen, weil inzwischen weitergetippt wurde. Bitte noch einmal tippen."); return false; }
       if(!ok&&!confirm("Nicht alle Änderungen konnten gespeichert werden. Trotzdem zur Büro-Seite? Ungespeichertes geht dann verloren."))return false;
     }
     location.href="buero.html";
@@ -7432,7 +7489,7 @@ window.addEventListener("load", () => {
 const STORE_KEY="serband-app-v1";
 /* Build-Version: bei jeder Auslieferung hier das Datum aktualisieren.
    Wird in den Einstellungen angezeigt + für den Update-Hinweis genutzt. */
-const APP_VERSION="2026.11.11.2";
+const APP_VERSION="2026.11.11.3";
 try{const f=document.getElementById("drawerFoot"); if(f)f.textContent="Fahrlehrer-Kompass · Version "+APP_VERSION;}catch(e){}
 // Nutzungsbedingungen & Haftungsausschluss (Bereich: rechtliche Absicherung) - Version hochzählen
 // und alle Nutzer müssen erneut zustimmen, sobald sich der Text inhaltlich ändert.
@@ -7920,7 +7977,7 @@ function countUp(el,target,suffix){
     if(k<1)requestAnimationFrame(step);}
   requestAnimationFrame(step);
 }
-function toast(m){const t=$("#toast");t.textContent=m;t.classList.remove("undo");t.classList.add("show");clearTimeout(t._t);t._t=setTimeout(()=>t.classList.remove("show"),Math.min(6000,Math.max(1900,String(m).length*65)));}
+function toast(m){const t=$("#toast");t.textContent=m;t.classList.remove("undo","t-ok","t-info","t-fehler");t.classList.add("show");clearTimeout(t._t);t._t=setTimeout(()=>t.classList.remove("show"),Math.min(6000,Math.max(1900,String(m).length*65)));}
 /* Undo-Toast: zeigt kurz eine Aktion + "Rückgängig"-Link (ca. 5s). onUndo wird bei Klick ausgeführt. */
 // Lädt den aktuellen Stand als Backup-Datei herunter (zusatz landet im Dateinamen).
 function _backupHerunterladen(zusatz){
@@ -7930,7 +7987,7 @@ function _backupHerunterladen(zusatz){
   setTimeout(()=>URL.revokeObjectURL(a.href),60000);
 }
 function toastUndo(msg,onUndo,ms){
-  const t=$("#toast"); ms=ms||5000;
+  const t=$("#toast"); ms=ms||5000; t.classList.remove("t-ok","t-info","t-fehler");
   // Läuft noch ein Rückgängig: zusammenfassen, ein Tipp macht beides rückgängig (neueste zuerst)
   if(t._undos&&t._undos.length&&t.classList.contains("undo")&&t.classList.contains("show")){
     const vorige=t._undos.slice(), alle=[onUndo].concat(vorige.map(x=>x.fn));
@@ -8581,13 +8638,14 @@ async function _fillAkademieFortschritt(s){
     const supa=getSupa();
     const{data,error}=await supa.functions.invoke("trigger-akademie-fortschritt",{body:{telefon:s.telefon}});
     if(error||!data||!data.ok||!data.fortschritt)return;
-    const box2=document.getElementById("akademieFortschrittSlot"); if(!box2)return;
-    const {gesehen,gesamt}=data.fortschritt;
-    // Defensive Klemme: gesehen darf gesamt nie übersteigen. Falls doch (Datenfehler auf
-    // Akademie-Seite, z.B. gelöschte Videos noch in der Verlauf-Historie), lieber eine plausible
-    // Meldung zeigen als eine unmögliche Zahl. Die eigentliche Ursache liegt außerhalb dieser Datei.
-    const gesehenSafe=Math.min(gesehen,gesamt);
-    const txt=gesehenSafe>=gesamt&&gesamt>0?`Alle ${gesamt} Videos gesehen ✓`:`${gesehenSafe} von ${gesamt} Videos gesehen`;
+    // Antwort kommt spät: nur in die Akte schreiben, die noch offen ist (nicht in die nächste Akte)
+    const box2=document.getElementById("akademieFortschrittSlot"); if(!box2||box2.dataset.sid!==String(s.id))return;
+    // K3 (Entscheidung 3b): Zahlen erzwingen, Text „geöffnet“ (die Akademie zählt das Öffnen eines Videos,
+    // nicht, ob es zu Ende geschaut wurde). Klemme bleibt: geöffnet darf gesamt nie übersteigen.
+    const gesamt=Math.floor(Number(data.fortschritt.gesamt)), geoeffnet=Math.floor(Number(data.fortschritt.gesehen));
+    if(!Number.isFinite(gesamt)||!Number.isFinite(geoeffnet)||gesamt<=0||geoeffnet<0)return;
+    const anz=Math.min(geoeffnet,gesamt);
+    const txt=anz>=gesamt?`Alle ${gesamt} Videos geöffnet ✓`:`${anz} von ${gesamt} Videos geöffnet`;
     box2.innerHTML=`<div class="mini-dash-row"><span>🎓 Fahr-Akademie</span><b>${txt}</b></div>`;
   }catch(e){ /* still - Akademie-Fortschritt ist ein Bonus, kein Muss */ }
 }
@@ -8663,7 +8721,7 @@ function routeDetail(id){
       ${naechsteStunde?`<div class="mini-dash-row"><span>${_li("kalender")} Nächster Termin</span><b>${isoDE(naechsteStunde.date)} · ${esc(naechsteStunde.von)} Uhr</b></div>`:""}
       ${s.email?`<div class="mini-dash-row"><span>✉️ E-Mail</span><b>${esc(s.email)}</b></div>`:""}
       ${s.geburtsdatum?`<div class="mini-dash-row"><span>🎂 Geburtstag</span><b>${isoDE(s.geburtsdatum).slice(0,5)}</b></div>`:""}
-      <div id="akademieFortschrittSlot"></div>
+      <div id="akademieFortschrittSlot" data-sid="${esc(String(s.id))}"></div>
     </div>
     <div class="theo-row">
       <div class="theo-label">📚 Lernstand Theorie</div>
@@ -10175,6 +10233,7 @@ function buildStufen(s){
   }));
   wrap.querySelectorAll(".vidBtn").forEach(b=>b.addEventListener("click",e=>{
     e.stopPropagation();
+    if(b._zuletzt&&Date.now()-b._zuletzt<1500)return; b._zuletzt=Date.now(); // Doppeltipp: nur ein Tab, nur ein Tipp (K3)
     const entry=FA_VIDEO_MAP[b.dataset.faid];
     if(entry) window.open(faLink(entry),"_blank");
     _pushAkademieVideo(s,entry);
@@ -12909,14 +12968,16 @@ function openCalFilterSheet(){
   };
   openSheet(render()); bind();
 }
+let _calZuletzt=null, _calSpringJetzt=false;
 function routeKalender(ansicht,datum){
   ensureDB();
+  const _calWarDa=!!$("#calBody"), _calVorher=_calZuletzt, _calY=view.scrollTop;
   // A24: Ansicht und Tag stehen im Verlauf – Zurück führt von „Tag“ wieder zur Woche bzw. zum vorigen Zeitraum
   if(ansicht)_calView=ansicht; if(datum)_calDate=datum;
   if(!_calDate)_calDate=todayISO();
   $("#tbTitle").textContent="Kalender"; setFab("termin"); view.scrollTop=0;
   const viewLabels={tag:"Tagesansicht",woche:"Wochenansicht",monat:"Monatsansicht"};
-  let html=`<div class="view-inner view-read fade-up cal-wrap">
+  let html=`<div class="view-inner view-read fade-up cal-wrap${_calView==="tag"?" cal-tag":""}">
     <div class="cal-head">
       <button class="cal-viewbtn" id="calViewBtn">${viewLabels[_calView]} <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" style="width:14px;height:14px;"><path d="M6 9l6 6 6-6"/></svg></button>
       <div style="display:flex;gap:8px;align-items:center;">
@@ -12943,6 +13004,28 @@ function routeKalender(ansicht,datum){
   view.innerHTML=html;
   bindCalControls();
   if(_fsAgg)_fsInjectFilterTiles();
+  // K3 (GK23): Zur Jetzt-Linie nur beim Öffnen des Kalenders, beim Wechsel in die Tagesansicht und bei „Heute“.
+  // Gleicher Tag neu gezeichnet (Abgleich, neue Buchung): Stelle halten. Mit ‹ › geblättert: oben (Datum und Pfeile sichtbar).
+  const _calJetzt=_calView+"|"+_calDate;
+  if(_calSpringJetzt||!_calWarDa||!_calVorher||_calVorher.split("|")[0]!==_calView)_calZurJetztLinie();
+  else if(_calVorher===_calJetzt)view.scrollTop=_calY;
+  _calSpringJetzt=false; _calZuletzt=_calJetzt;
+}
+// K3 (GK23): Tagesansicht von heute springt zur Jetzt-Linie (vorher immer 08:00 oben). Unter der festen Datumszeile
+// bleibt etwa ein Viertel des Bildschirms (mindestens 48 px) über der Linie, damit die laufende Stunde zu sehen ist.
+function _calZurJetztLinie(){
+  if(_calView!=="tag"||_calDate!==todayISO())return;
+  // Ziel: Linie unter der festen Datumszeile, mit Luft für die laufende Stunde
+  const spring=()=>{
+    const n=view.querySelector(".ct-now"); if(!n)return null;
+    const nav=view.querySelector(".cal-wrap.cal-tag>.cal-nav"), navH=nav?nav.getBoundingClientRect().height:0;
+    const ziel=Math.round(n.getBoundingClientRect().top-view.getBoundingClientRect().top+view.scrollTop-navH-Math.max(48,(view.clientHeight-navH)*0.25));
+    if(ziel>0)view.scrollTop=ziel;
+    return view.scrollTop;
+  };
+  const gesetzt=spring(); if(gesetzt===null)return;
+  // Nach der Einblend-Animation (0,32 s) noch einmal genau nachziehen, außer der Nutzer hat inzwischen selbst gewischt
+  setTimeout(()=>{ if(view.scrollTop===gesetzt&&_calView==="tag"&&_calDate===todayISO())spring(); },400);
 }
 function calCounterHTML(){
   // Ab heute bis Ende der laufenden Woche (Sa, kein Sonntag) / des laufenden Monats
@@ -12972,7 +13055,7 @@ function calKW(){
   return `KW ${isoWeekNo(_calDate)}`;
 }
 function bindCalControls(){
-  $("#calToday").addEventListener("click",()=>{ _calDate=todayISO(); routeKalender(); });
+  $("#calToday").addEventListener("click",()=>{ _calDate=todayISO(); _calSpringJetzt=true; routeKalender(); });
   $("#calGear").addEventListener("click",routeArbeitszeit);
   $("#calSearch").addEventListener("click",openCalSearchSheet);
   const _cfb=$("#calFilterBtn"); if(_cfb)_cfb.addEventListener("click",openCalFilterSheet);
@@ -13388,6 +13471,7 @@ function leistungAusUE(ue){ return Math.round(ue*DB.verdienst.proUE); }
 function monthRangeOf(iso){ return isoMonthRange(iso); }
 function yearRange(iso){ const y=parseISO(iso).getFullYear(); return [y+"-01-01",y+"-12-31"]; }
 
+// Neu zeichnen nach Filter-Wechsel: routeKalender hält bei gleichem Tag die Stelle (K3, GK23)
 function routeKalenderRefresh(){ if($("#calBody"))routeKalender(); }
 
 

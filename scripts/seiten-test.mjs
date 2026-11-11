@@ -135,8 +135,10 @@ const AUSNAHMEN_TIPP = [
 ];
 // Text-Überlappungen, die gewollt sind. a/b = Selektoren der beiden Textträger (Reihenfolge egal).
 const AUSNAHMEN_UEBERLAPP = [
-  // keine. (Kalender-Termine mit „…“ werden schon richtig gemessen: Text, den ein Kästchen abschneidet, zählt nicht.)
+  // (Kalender-Termine mit „…“ werden schon richtig gemessen: Text, den ein Kästchen abschneidet, zählt nicht.)
   // Form: { a: "Selektor", b: "Selektor", grund: "…" }
+  { a: ".cal-wrap.cal-tag > .cal-nav, .cal-wrap.cal-tag > .cal-nav *", b: ".cal-wrap.cal-tag > :not(.cal-nav), .cal-wrap.cal-tag > :not(.cal-nav) *",
+    grund: "K3: feste Datumszeile der Tagesansicht (deckender Hintergrund) liegt nach dem Sprung zur Jetzt-Linie über weggewischtem Inhalt" },
 ];
 // Texte mit zu wenig Kontrast, die so bleiben dürfen.
 const AUSNAHMEN_KONTRAST = [

@@ -628,6 +628,38 @@ await pruefe("G5", "langes Speichern (3 s): Hinweis bleibt stehen, Knopf zeigt �
   } finally { await ctx.close(); }
 });
 
+await pruefe("G6", "Menü-Eintrag „Büro-Seite am PC öffnen“ (ohne Knopf auf der Seite): ohne Bedienung Wechsel nach dem Speichern, nach Tipp auf eine andere Seite kein Sprung", async () => {
+  const f = [];
+  for (const mitTipp of [false, true]) {
+    const ctx = await browser.newContext({ viewport: { width: 412, height: 915 }, isMobile: true, hasTouch: true, timezoneId: "Europe/Berlin", locale: "de-DE" });
+    const page = await ctx.newPage();
+    page.on("dialog", (d) => d.dismiss().catch(() => {}));
+    await page.clock.setFixedTime(JETZT);
+    await page.route("**/*", (r) => (r.request().url().startsWith(basis) ? r.continue() : r.abort()));
+    await page.goto(basis + "index.html", { waitUntil: "load", timeout: 20000 });
+    await warte(page, 600);
+    await page.evaluate(() => { for (const id of ["loginOverlay", "splash"]) { const e = document.getElementById(id); if (e) e.style.display = "none"; } });
+    try {
+      await daten(page, "fs");
+      await ev(page, `routeFahrschuleDashboard(); routeFahrschuleLehrer()`); await warte(page, 300);
+      let gesprungen = false;
+      page.on("framenavigated", (fr) => { if (fr === page.mainFrame() && /buero\.html/.test(fr.url())) gesprungen = true; });
+      await page.evaluate(() => {
+        window._fsSyncAggJetztKern = async () => { _fsSyncDebounce = null; await new Promise((ok) => setTimeout(ok, 1500)); return true; };
+        _fsSyncAggJetzt();
+        if (document.getElementById("fsBueroLink")) throw new Error("Knopf darf hier nicht da sein");
+        _fsZurBueroSeite(null);
+      });
+      await warte(page, 400);
+      if (mitTipp) await page.evaluate(() => { document.dispatchEvent(new PointerEvent("pointerdown", { bubbles: true })); routeFahrschuleDashboard(); });
+      await warte(page, 2200);
+      if (!mitTipp && !gesprungen) f.push("ohne Bedienung nicht zur Büro-Seite gewechselt");
+      if (mitTipp && gesprungen) f.push("nach Tipp auf eine andere Seite trotzdem gesprungen");
+    } finally { await ctx.close(); }
+  }
+  return f;
+});
+
 await browser.close();
 server.close();
 console.log(`Chef-Sicht-Test: ${okZahl + fehlerZahl} Prüfungen, ${fehlerZahl} Fehler`);

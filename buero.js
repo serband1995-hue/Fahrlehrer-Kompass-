@@ -1849,6 +1849,65 @@ function anwesenheitTerminHTML(t) {
 }
 // Der Fahrlehrer hat den Schüler in seiner App „gelöscht“ (nur bei ihm ausgeblendet). Im Büro bleibt alles wie es ist.
 function ausgeblendetAm(x) { const a = x && x.ausbildung; return a && a.ausgeblendetAm ? String(a.ausgeblendetAm) : ""; }
+// K3: Knopf „Akademie-Zugang anlegen“. Schnittstelle (mit der Akademie abgesprochen, wörtlich): localStorage
+// „fa_vorbelegung_v1“ = {name, telefon, email, klasse, sprache, zeit}; danach die Akademie-Verwaltung öffnen.
+// Beide Apps liegen unter derselben Adresse (github.io), teilen also den Browser-Speicher. Die Akademie liest den
+// Eintrag erst nach dem Login beim Öffnen von „Schüler anlegen“, nur wenn er jünger als 5 Minuten ist, und löscht ihn.
+const AKADEMIE_ADMIN_URL = "https://serband1995-hue.github.io/Fahr-Akademie-/#admin";
+const AKADEMIE_KLASSEN = ["B", "BE", "C", "CE"];
+const AKADEMIE_SPRACHEN = [["de", "Deutsch"], ["tr", "Türkçe"], ["en", "English"], ["ar", "العربية"], ["es", "Español"], ["ru", "Русский"], ["sr", "Srpski"], ["ckb", "کوردی (سۆرانی)"], ["kmr", "Kurdî (Kurmancî)"], ["hi", "हिन्दी"], ["ur", "اردو"], ["vi", "Tiếng Việt"], ["rif", "Tarifit"], ["fa", "فارسی"], ["ps", "پښتو"], ["el", "Ελληνικά"], ["am", "አማርኛ"], ["ti", "ትግርኛ"], ["ro", "Română"], ["pl", "Polski"], ["hr", "Hrvatski"], ["bs", "Bosanski"], ["sq", "Shqip"], ["uk", "Українська"], ["bg", "Български"], ["mk", "Македонски"], ["bn", "বাংলা"], ["it", "Italiano"], ["pt", "Português"], ["hu", "Magyar"]];
+function akademieZugangHTML() {
+  return `<div class="voll akademie-zugang" data-entwurf><h3>Fahr-Akademie</h3>
+    <div class="akademie-zeile"><label>Sprache des Schülers<select id="akSprache">${AKADEMIE_SPRACHEN.map(([c, n]) => `<option value="${esc(c)}">${esc(n)}</option>`).join("")}</select></label>
+    <button type="button" class="knopf" id="akZugangKnopf">Akademie-Zugang anlegen</button></div>
+    <p class="akademie-meldung" id="akMeldung" role="status" hidden></p>
+    <p class="leise klein">Öffnet die Akademie-Verwaltung. Dort anmelden und „Schüler anlegen“ tippen: Name, Telefon, E-Mail und Klasse sind 5 Minuten lang schon eingetragen.</p></div>`;
+}
+// Felder der Akte zuerst (auch ungespeichert); was die Fahrlehrer-App nur in „ausbildung“ ablegt (E-Mail, Form), als Ersatz.
+// B78 (Automatik) und B197 sind eine B-Ausbildung: in der Akademie „B“. Andere Klassen kennt die Akademie nicht: leer.
+function akademieVorbelegung(form, sprache, x) {
+  const wert = (n) => ((form.querySelector(`[name=${n}]`) || {}).value || "").trim();
+  const aus = (x && x.ausbildung) || {};
+  let klasse = (wert("klasse") || (x ? klasseVon(x) : "") || "").toUpperCase();
+  if (klasse === "B78" || klasse === "B197") klasse = "B";
+  return { name: wert("name"), telefon: wert("telefon"), email: wert("email") || String(aus.email || "").trim(),
+    klasse: AKADEMIE_KLASSEN.includes(klasse) ? klasse : "",
+    sprache: AKADEMIE_SPRACHEN.some(([c]) => c === sprache) ? sprache : "de",
+    zeit: new Date().toISOString() };
+}
+// Nicht abgeholte Vorbelegung (Pop-up gesperrt, Akademie nie geöffnet) nach 5 Minuten löschen: Name und Nummer
+// sollen nicht im Browser des Büro-PCs liegen bleiben. Läuft auch beim Start der Büro-Seite.
+function akademieVorbelegungAufraeumen() {
+  try {
+    const roh = localStorage.getItem("fa_vorbelegung_v1"); if (roh === null) return;
+    let z = NaN; try { const d = JSON.parse(roh); z = typeof d.zeit === "number" ? d.zeit : Date.parse(d.zeit); } catch (e) { /* kaputt: weg */ }
+    if (!isFinite(z) || Date.now() - z >= 5 * 60 * 1000) localStorage.removeItem("fa_vorbelegung_v1");
+  } catch (e) { /* Speicher gesperrt: nichts zu tun */ }
+}
+akademieVorbelegungAufraeumen();
+function bindeAkademieZugang(dlg, x) {
+  const knopf = dlg.querySelector("#akZugangKnopf"); if (!knopf) return;
+  // Meldungen stehen im Block selbst: das Fenster liegt über dem Toast der Seite
+  const melde = (text, fehler) => {
+    toast(text);
+    const m = dlg.querySelector("#akMeldung"); if (m) { m.textContent = text; m.hidden = false; m.classList.toggle("fehler", !!fehler); }
+    if (!fehler) { const alt = dlg.querySelector(".dialog-meldung"); if (alt) alt.remove(); } // alter Hinweis (z. B. Telefon fehlt) ist erledigt
+  };
+  knopf.addEventListener("click", () => {
+    if (knopf.disabled) return;
+    const v = akademieVorbelegung(dlg, dlg.querySelector("#akSprache").value, x);
+    if (!v.name) { melde("Bitte zuerst einen Namen eintragen.", true); return; }
+    if (!v.telefon) { melde("Für den Akademie-Zugang braucht der Schüler eine Telefonnummer (sie ist sein Login).", true); dlg.querySelector("[name=telefon]").focus(); return; }
+    try { localStorage.setItem("fa_vorbelegung_v1", JSON.stringify(v)); setTimeout(akademieVorbelegungAufraeumen, 5 * 60 * 1000 + 1000); }
+    catch (e) { melde("Der Browser lässt das Speichern nicht zu. Bitte die Daten in der Akademie von Hand eintragen.", true); return; }
+    // Ohne „noopener“ im Aufruf, denn dann liefert window.open immer null und ein gesperrtes Fenster wäre nicht erkennbar
+    const fenster = window.open(AKADEMIE_ADMIN_URL, "_blank");
+    if (fenster) try { fenster.opener = null; } catch (e) { /* egal */ }
+    if (!fenster) { melde("Pop-up gesperrt: Bitte Pop-ups für diese Seite erlauben oder die Akademie-Verwaltung selbst öffnen. Die Daten liegen 5 Minuten bereit.", true); return; }
+    knopf.disabled = true; setTimeout(() => { knopf.disabled = false; }, 1500); // Doppeltipp öffnet die Akademie nicht zweimal (nur nach Erfolg)
+    melde(`Akademie geöffnet ✓ Die Daten liegen 5 Minuten bereit.${v.klasse ? "" : " Klasse dort bitte selbst wählen."}${x && v.telefon.replace(/\D/g, "") !== String(x.telefon || "").replace(/\D/g, "") ? " Die Telefonnummer ist neu: bitte die Akte auch speichern." : ""}`);
+  });
+}
 function schuelerDialog(id) {
   const x = id ? S.schueler.find((y) => y.id === id) : { ausbildungsart: "ersterwerb", klasse: "B", vertrag_am: KR.todayISO() };
   if (!x) return;
@@ -1867,6 +1926,7 @@ function schuelerDialog(id) {
         <label class="datum-klein">am<input type="date" name="testfahrt_am" value="${esc(x.b197_testfahrt_am || "")}"></label>
       </div>
       ${id ? `<div class="voll schalter-zeile"><label class="schalter"><input type="checkbox" name="aktiv" role="switch"${istAktiv(x) ? " checked" : ""}><span class="schalter-bahn" aria-hidden="true"></span><span class="schalter-text"><b id="aktivText">${istAktiv(x) ? "Aktiv" : "Im Archiv"}</b><span class="leise klein"> Archiv heißt: bestanden oder nicht mehr dabei. Der Schüler verschwindet überall (auch aus der Fahrlehrer-App) und zählt nicht bei Fristen, Reaktivierung und Auslastung. Jederzeit zurückholbar.</span></span></label></div>` : ""}
+      ${id ? akademieZugangHTML() : ""}
       ${id ? `<div class="voll">${pruefungenAkteHTML(id)}</div>` : ""}
       ${id ? `<div class="voll">${theorieAkteHTML(id)}</div>` : ""}
       ${id && sonderZaehlerHTML(x) ? `<div class="voll">${sonderZaehlerHTML(x)}</div>` : ""}
@@ -1939,6 +1999,7 @@ function schuelerDialog(id) {
   testBox.addEventListener("change", () => { if (testBox.checked && !testDat.value) testDat.value = KR.todayISO(); if (!testBox.checked) testDat.value = ""; });
   const aktivBox = dlg.querySelector("input[name=aktiv]");
   if (aktivBox) aktivBox.addEventListener("change", () => { dlg.querySelector("#aktivText").textContent = aktivBox.checked ? "Aktiv" : "Im Archiv"; });
+  if (id) bindeAkademieZugang(dlg, x);
 }
 // Wie schuelerVerschieben in index.html: erst künftige Termine (auf Wunsch), dann Schüler, dann Übergabe-Eintrag
 async function verschiebeSchueler(x, neuerLehrer) {

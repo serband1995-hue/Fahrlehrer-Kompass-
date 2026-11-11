@@ -2288,6 +2288,97 @@ async function k2Kontrast(page, sel) {
   }
 }
 
+// ---------- K3: Knopf „Akademie-Zugang anlegen“ in der Akte (Schnittstelle fa_vorbelegung_v1) ----------
+for (const [breite, hoehe] of [[1366, 860], [390, 844]]) {
+  const { page, ctx, konsole } = await oeffne({ nutzer: "bu-1", breite, hoehe, hash: "#schueler" });
+  const P = `K3 Akademie (${breite} px)`;
+  await page.evaluate(() => { window.__geoeffnet = []; window.open = (u, z) => { window.__geoeffnet.push([u, z]); return {}; }; });
+  await page.evaluate(() => schuelerDialog("s1")); await page.waitForTimeout(250);
+  if (!(await page.isVisible("dialog[open] #akZugangKnopf"))) fehler(P + ": Knopf fehlt in der Akte");
+  else {
+    const anzSpr = await page.$$eval("dialog[open] #akSprache option", (o) => o.map((x) => x.value));
+    if (anzSpr.length !== 30 || anzSpr[0] !== "de" || new Set(anzSpr).size !== 30) fehler(P + ": Sprachliste nicht 30 Codes mit Deutsch vorn: " + anzSpr.join(","));
+    const kh = await page.$eval("dialog[open] #akZugangKnopf", (b) => b.getBoundingClientRect().height);
+    if (kh < 44) fehler(P + ": Knopf kleiner als 44 px (" + kh + ")");
+    // Ungespeicherte Eingaben in der Akte zählen; Klasse BE wird übernommen
+    await page.fill("dialog[open] input[name=email]", "lena.k3@example.org");
+    await page.selectOption("dialog[open] select[name=klasse]", "BE");
+    await page.selectOption("dialog[open] #akSprache", "tr");
+    const vorher = Date.now();
+    await page.click("dialog[open] #akZugangKnopf"); await page.waitForTimeout(200);
+    const r = await page.evaluate(() => ({ v: localStorage.getItem("fa_vorbelegung_v1"), o: window.__geoeffnet, offen: !!document.querySelector("dialog[open]"), name: document.querySelector("dialog[open] input[name=name]").value, tel: document.querySelector("dialog[open] input[name=telefon]").value }));
+    let v = null; try { v = JSON.parse(r.v); } catch {}
+    if (!v) fehler(P + ": nichts in fa_vorbelegung_v1");
+    else {
+      const schl = Object.keys(v).sort().join(",");
+      if (schl !== "email,klasse,name,sprache,telefon,zeit") fehler(P + ": falsche Schlüssel " + schl);
+      if (v.name !== r.name || v.telefon !== r.tel || v.email !== "lena.k3@example.org" || v.klasse !== "BE" || v.sprache !== "tr") fehler(P + ": falsche Werte " + r.v);
+      const z = Date.parse(v.zeit); if (!(z >= vorher - 2000 && z <= Date.now() + 2000)) fehler(P + ": zeit falsch " + v.zeit);
+    }
+    if (!r.o.length || r.o[0][0] !== "https://serband1995-hue.github.io/Fahr-Akademie-/#admin") fehler(P + ": Akademie-Verwaltung nicht geöffnet " + JSON.stringify(r.o));
+    if (!r.offen) fehler(P + ": Akte hat sich geschlossen (Knopf darf nicht speichern)");
+    // Neue, noch nicht gespeicherte Telefonnummer: Hinweis „Akte auch speichern“
+    await page.fill("dialog[open] input[name=telefon]", "0170 9999999");
+    await page.click("dialog[open] #akZugangKnopf"); await page.waitForTimeout(150);
+    if (!/Akte auch speichern/.test(await page.textContent("#toast"))) fehler(P + ": kein Hinweis bei neuer Telefonnummer");
+    // Aufräumen: ein abgelaufener Eintrag verschwindet, ein frischer bleibt
+    const aufr = await page.evaluate(() => {
+      localStorage.setItem("fa_vorbelegung_v1", JSON.stringify({ name: "X Muster", zeit: new Date(Date.now() - 6 * 60000).toISOString() })); akademieVorbelegungAufraeumen();
+      const alt = localStorage.getItem("fa_vorbelegung_v1");
+      localStorage.setItem("fa_vorbelegung_v1", JSON.stringify({ name: "X Muster", zeit: new Date().toISOString() })); akademieVorbelegungAufraeumen();
+      return { alt, frisch: localStorage.getItem("fa_vorbelegung_v1") };
+    });
+    if (aufr.alt !== null || !aufr.frisch) fehler(P + ": Aufräumen der Vorbelegung falsch " + JSON.stringify(aufr));
+    // Pop-up gesperrt: Hinweis steht sichtbar im Fenster (nicht nur im Toast unter dem Fenster)
+    await page.evaluate(() => { window.open = () => null; });
+    await page.waitForTimeout(1600);
+    await page.click("dialog[open] #akZugangKnopf"); await page.waitForTimeout(150);
+    const pm = await page.evaluate(() => { const m = document.querySelector("dialog[open] #akMeldung"); if (!m || m.hidden) return ""; const b = m.getBoundingClientRect(); return b.height > 0 && b.bottom <= innerHeight + 400 ? m.textContent : ""; });
+    if (!/Pop-up/.test(pm)) fehler(P + ": Hinweis „Pop-up gesperrt“ nicht im Fenster: " + pm);
+    await page.evaluate(() => { window.open = (u, z) => { window.__geoeffnet.push([u, z]); return {}; }; });
+    await page.waitForTimeout(1600);
+    // B78 ist eine B-Ausbildung („B“), eine Klasse, die die Akademie nicht kennt, bleibt leer; ohne Telefon kein Eintrag
+    for (const [kl, soll] of [["B78", "B"], ["B197", "B"], ["C1", ""]]) {
+      await page.evaluate(() => localStorage.removeItem("fa_vorbelegung_v1"));
+      await page.selectOption("dialog[open] select[name=klasse]", kl);
+      await page.click("dialog[open] #akZugangKnopf"); await page.waitForTimeout(150);
+      const v2 = await page.evaluate(() => JSON.parse(localStorage.getItem("fa_vorbelegung_v1") || "{}"));
+      if (v2.klasse !== soll) fehler(P + `: Klasse ${kl} → „${v2.klasse}“ statt „${soll}“`);
+    }
+    await page.evaluate(() => localStorage.removeItem("fa_vorbelegung_v1"));
+    await page.fill("dialog[open] input[name=telefon]", "");
+    await page.click("dialog[open] #akZugangKnopf"); await page.waitForTimeout(150);
+    if (await page.evaluate(() => localStorage.getItem("fa_vorbelegung_v1"))) fehler(P + ": ohne Telefon trotzdem vorbelegt");
+    if (!/Telefonnummer/.test(await page.textContent("#toast").catch(() => ""))) fehler(P + ": kein Hinweis auf fehlende Telefonnummer");
+    if (breite > 900) await pruefeLayout(page, P);
+    else {
+      // Handy: die Liste hinter dem Fenster ist absichtlich wischbar; hier zählt das Fenster mit dem Knopf
+      const r = await page.evaluate(() => { const w = innerWidth, d = document.querySelector("dialog[open]").getBoundingClientRect(), k = document.getElementById("akZugangKnopf").getBoundingClientRect(), s = document.getElementById("akSprache").getBoundingClientRect(); return { d: d.left >= -1 && d.right <= w + 1, k: k.left >= d.left - 1 && k.right <= d.right + 1, s: s.right <= d.right + 1, seite: document.documentElement.scrollWidth <= w + 1 }; });
+      if (!r.d || !r.k || !r.s) fehler(P + ": Fenster, Knopf oder Sprachwahl ragt über den Rand " + JSON.stringify(r));
+      if (!r.seite) fehler(P + ": Seite breiter als der Bildschirm");
+    }
+  }
+  // Neuer Schüler: kein Knopf (erst nach dem Anlegen)
+  await page.keyboard.press("Escape"); await page.waitForTimeout(150);
+  if (await page.isVisible("dialog[open] button[value=ok]")) { await verwerfenJa(page).catch(() => {}); }
+  // Nur die Sprache wählen und den Knopf tippen ist keine Änderung der Akte: Escape schließt ohne Rückfrage
+  await page.evaluate(() => { document.querySelectorAll("dialog[open]").forEach((d) => d.close()); schuelerDialog("s2"); }); await page.waitForTimeout(250);
+  await page.selectOption("dialog[open] #akSprache", "ar");
+  await page.click("dialog[open] #akZugangKnopf"); await page.waitForTimeout(150);
+  await page.keyboard.press("Escape"); await page.waitForTimeout(250);
+  if (await page.isVisible("dialog[open]")) { fehler(P + ": nur Sprache gewählt, trotzdem Rückfrage oder Fenster bleibt offen"); await verwerfenJa(page).catch(() => {}); }
+  // Vom Fahrlehrer angelegt: E-Mail und Form stehen nur in „ausbildung“ → trotzdem in der Vorbelegung
+  await page.evaluate(() => { const x = S.schueler.find((y) => y.id === "s3"); x.email = null; x.klasse = null; x.ausbildung = Object.assign({}, x.ausbildung, { email: "app.k3@example.org", form: "Automatik" }); localStorage.removeItem("fa_vorbelegung_v1"); schuelerDialog("s3"); }); await page.waitForTimeout(250);
+  await page.click("dialog[open] #akZugangKnopf"); await page.waitForTimeout(150);
+  const v3 = await page.evaluate(() => JSON.parse(localStorage.getItem("fa_vorbelegung_v1") || "{}"));
+  if (v3.email !== "app.k3@example.org" || v3.klasse !== "B") fehler(P + ": Ersatz aus der App fehlt: " + JSON.stringify(v3));
+  await page.evaluate(() => document.querySelectorAll("dialog[open]").forEach((d) => d.close()));
+  await page.evaluate(() => { document.querySelectorAll("dialog[open]").forEach((d) => d.close()); schuelerDialog(); }); await page.waitForTimeout(200);
+  if (await page.isVisible("dialog[open] #akZugangKnopf")) fehler(P + ": Knopf schon beim Anlegen eines neuen Schülers");
+  if (konsole.length) fehler(P + ": Konsole: " + konsole.join(" | "));
+  await ctx.close();
+}
+
 await browser.close();
 server.close();
 console.log(probleme ? `Büro-Test: ${probleme} Problem(e).` : "Büro-Test: alles in Ordnung.");
