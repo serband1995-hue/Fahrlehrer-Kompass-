@@ -6263,8 +6263,8 @@ function routeFahrschuleLehrer(){
       <div class="fs-sub">${l.aktiv?'<span class="fs-status-on">Aktiv</span>':'<span class="fs-status-off">GESPERRT</span>'} &nbsp;·&nbsp; Auslastung ${l.auslastung_pct!=null?`<span style="color:${l.auslastung_pct>=100?'#c83c3c':l.auslastung_pct>=85?'#cf9a3e':'inherit'};font-weight:${l.auslastung_pct>=85?'700':'400'};">${l.auslastung_pct}%</span>`:'—'} &nbsp;·&nbsp; ${meineSchueler.length} Schüler &nbsp;·&nbsp; ${q.pct==null?'Quote —':'Quote '+q.pct+'%'}</div>
       ${(istSuperAdmin||buero)?'':`<div class="fs-actions">
         ${l.aktiv
-          ?(isSuperAdmin()?`<button class="fs-btn-kill" onclick="toggleFahrlehrerAktiv(${_jsArg(l.id)},false,${_jsArg(_fsAgg.fahrschuleId)})">Sperren</button>`:`<span class="muted-p" style="font-size:12px;">Sperren kann im Moment nur der Betreiber. Bitte „Passwort zurücksetzen“ drücken.</span>`)
-          :(isSuperAdmin()?`<button class="fs-btn-activate" onclick="toggleFahrlehrerAktiv(${_jsArg(l.id)},true,${_jsArg(_fsAgg.fahrschuleId)})">Freischalten</button>`:`<span class="muted-p" style="font-size:12px;">Freischalten kann im Moment nur der Betreiber.</span>`)}
+          ?(isSuperAdmin()?`<button class="fs-btn-kill" onclick="toggleFahrlehrerAktiv(${_jsArg(l.id)},false,${_jsArg(_fsAgg.fahrschuleId)})">Sperren</button>`:`<span class="muted-p">Sperren kann im Moment nur der Betreiber. Bitte „Passwort zurücksetzen“ drücken.</span>`)
+          :(isSuperAdmin()?`<button class="fs-btn-activate" onclick="toggleFahrlehrerAktiv(${_jsArg(l.id)},true,${_jsArg(_fsAgg.fahrschuleId)})">Freischalten</button>`:`<span class="muted-p">Freischalten kann im Moment nur der Betreiber.</span>`)}
         <button class="fs-btn-activate" onclick="fahrlehrerPasswortZuruecksetzen(${_jsArg(l.id)})">Passwort zurücksetzen</button>
       </div>`}
       ${l.slug?`<div class="fs-actions"><button class="fs-btn-activate" onclick="document.getElementById(${_jsArg(linksId)}).style.display=document.getElementById(${_jsArg(linksId)}).style.display==='none'?'block':'none';">🔗 Buchungslinks</button></div>
