@@ -105,7 +105,7 @@ function bauDaten(heute) {
       buero_personen: [
         { id: "bp-1", fahrschule_id: FS, name: "Mia Muster", telefon: null, hat_pin: true, _pin: "5917", darf_verwalten: true, aktiv: true, gesperrt_bis: null, fehlversuche: 0 },
         { id: "bp-2", fahrschule_id: FS, name: "Noah Muster", telefon: null, hat_pin: true, _pin: "2846", darf_verwalten: true, aktiv: true, gesperrt_bis: null, fehlversuche: 0 },
-        { id: "bp-3", fahrschule_id: FS, name: "Lea Muster", telefon: "0171 3920012", hat_pin: true, _pin: "7352", darf_verwalten: false, aktiv: true, gesperrt_bis: null, fehlversuche: 0 },
+        { id: "bp-3", fahrschule_id: FS, name: "Paula Muster", telefon: "0171 3920012", hat_pin: true, _pin: "7352", darf_verwalten: false, aktiv: true, gesperrt_bis: null, fehlversuche: 0 },
         { id: "bp-4", fahrschule_id: FS, name: "Tom Muster", telefon: null, hat_pin: false, _pin: null, pin_frei_bis: new Date(Date.now() + 24 * 3600000).toISOString(), darf_verwalten: false, aktiv: true, gesperrt_bis: null, fehlversuche: 0 },
       ],
     },
@@ -115,12 +115,8 @@ function bauDaten(heute) {
 /* Nur für die sichtbare Vorführung (buero.html?vorfuehrung ohne Test-Daten): ohne Test-Sonderfälle,
    dafür mit ein paar Aufgaben, Notizen und Fahrcheck-Quittungen, damit „Heute zu tun“ nach echtem Alltag aussieht.
    Die Tests (scripts/buero-test.mjs) nutzen bauDaten ohne diesen Zusatz und legen ihre Fälle selbst an. */
-const TEST_KONTEN = ["gesperrt-1", "agb-1"];
-function fcZeitraum(iso) {
-  const d = new Date(iso + "T12:00:00"), j = d.getFullYear(), m = d.getMonth();
-  const tag = (x) => `${x.getFullYear()}-${String(x.getMonth() + 1).padStart(2, "0")}-${String(x.getDate()).padStart(2, "0")}`;
-  return d.getDate() <= 15 ? [tag(new Date(j, m, 1)), tag(new Date(j, m, 15))] : [tag(new Date(j, m, 16)), tag(new Date(j, m + 1, 0))];
-}
+// Test-Sonderfälle (gesperrt, ohne AGB, Fahrlehrer-Konto im Büro) und der Super-Admin: in der Vorführung nicht zeigen
+const TEST_KONTEN = ["gesperrt-1", "agb-1", "fl-x", "sa-1"];
 function vorfuehrZusatz(tab, heute) {
   const FS = "fs-test-1";
   tab.profiles = tab.profiles.filter((p) => !TEST_KONTEN.includes(p.id));
@@ -130,29 +126,46 @@ function vorfuehrZusatz(tab, heute) {
   // Aufgaben: überfällig, heute, dringend, an eine Büro-Person, ohne Datum, eine für später, eine gestern erledigt
   tab.schueler_aufgaben = [
     { id: "va-1", fahrschule_id: FS, schueler_id: "s3", text: "Zurückrufen wegen Termin für die Praxisprüfung", heute: false, faellig_am: addTage(heute, -2), fuer_person_id: null, von_person_id: "bp-1", bearbeiter: "Mia Muster", dringend: false, erstellt_am: vor(4, "09:10") },
-    { id: "va-2", fahrschule_id: FS, schueler_id: "s5", text: "Sehtest und Erste-Hilfe-Nachweis nachfordern", heute: true, faellig_am: heute, fuer_person_id: null, von_person_id: "bp-2", bearbeiter: "Noah Muster", dringend: false, erstellt_am: vor(1, "15:40") },
-    { id: "va-3", fahrschule_id: FS, schueler_id: "s7", text: "Antrag bei der Führerscheinstelle abgeben", heute: false, faellig_am: null, fuer_person_id: null, von_person_id: "bp-1", bearbeiter: "Mia Muster", dringend: true, erstellt_am: vor(1, "11:05") },
+    { id: "va-2", fahrschule_id: FS, schueler_id: "s6", text: "Sehtest und Erste-Hilfe-Nachweis nachfordern", heute: true, faellig_am: heute, fuer_person_id: null, von_person_id: "bp-2", bearbeiter: "Noah Muster", dringend: false, erstellt_am: vor(1, "15:40") },
+    { id: "va-3", fahrschule_id: FS, schueler_id: "s13", text: "Antrag bei der Führerscheinstelle abgeben", heute: false, faellig_am: null, fuer_person_id: null, von_person_id: "bp-1", bearbeiter: "Mia Muster", dringend: true, erstellt_am: vor(1, "11:05") },
     { id: "va-4", fahrschule_id: FS, schueler_id: null, text: "Rechnung der Werkstatt für Golf Schalter 2 prüfen", heute: false, faellig_am: null, fuer_person_id: "bp-3", von_person_id: "bp-2", bearbeiter: "Noah Muster", dringend: false, erstellt_am: vor(2, "10:20") },
-    { id: "va-5", fahrschule_id: FS, schueler_id: null, text: "Ordner mit den Verträgen vom Oktober ablegen", heute: false, faellig_am: null, fuer_person_id: null, von_person_id: "bp-3", bearbeiter: "Lea Muster", dringend: false, erstellt_am: vor(3, "08:45") },
-    { id: "va-6", fahrschule_id: FS, schueler_id: "s12", text: "Nach der Theorieprüfung fragen", heute: false, faellig_am: addTage(heute, 5), fuer_person_id: null, von_person_id: "bp-1", bearbeiter: "Mia Muster", dringend: false, erstellt_am: vor(1, "16:30") },
-    { id: "va-7", fahrschule_id: FS, schueler_id: "s2", text: "Ratenplan an die Eltern schicken", heute: false, faellig_am: addTage(heute, -1), fuer_person_id: null, von_person_id: "bp-2", bearbeiter: "Noah Muster", dringend: false, erstellt_am: vor(5, "13:00"), erledigt_am: vor(1, "12:15"), erledigt_bearbeiter: "Lea Muster" },
+    { id: "va-5", fahrschule_id: FS, schueler_id: null, text: "Ordner mit den Verträgen vom Oktober ablegen", heute: false, faellig_am: null, fuer_person_id: null, von_person_id: "bp-3", bearbeiter: "Paula Muster", dringend: false, erstellt_am: vor(3, "08:45") },
+    { id: "va-6", fahrschule_id: FS, schueler_id: "s7", text: "Nach der Theorieprüfung fragen", heute: false, faellig_am: addTage(heute, 6), fuer_person_id: null, von_person_id: "bp-1", bearbeiter: "Mia Muster", dringend: false, erstellt_am: vor(1, "16:30") },
+    { id: "va-7", fahrschule_id: FS, schueler_id: "s2", text: "Ratenplan an die Eltern schicken", heute: false, faellig_am: addTage(heute, -1), fuer_person_id: null, von_person_id: "bp-2", bearbeiter: "Noah Muster", dringend: false, erstellt_am: vor(5, "13:00"), erledigt_am: vor(1, "12:15"), erledigt_bearbeiter: "Paula Muster" },
   ];
   // Notizen an die Fahrlehrer: eine gelesen, zwei noch nicht gelesen, eine erledigt
   tab.schueler_notizen = [
-    { id: "vn-1", fahrschule_id: FS, schueler_id: "s4", text: "Reaktivierung noch nicht bezahlt. Bitte keine neuen Fahrstunden planen.", art: "stopp", bearbeiter: "Mia Muster", erstellt_am: vor(1, "09:30"), erledigt_am: null },
-    { id: "vn-2", fahrschule_id: FS, schueler_id: "s5", text: "Hat eine neue Handynummer, steht schon im Profil.", art: "info", bearbeiter: "Lea Muster", erstellt_am: vor(2, "14:10"), erledigt_am: null },
-    { id: "vn-3", fahrschule_id: FS, schueler_id: "s6", text: "Prüfungstermin bestätigt. Bitte an die Brille erinnern.", art: "info", bearbeiter: "Noah Muster", erstellt_am: vor(0, "08:20"), erledigt_am: null },
-    { id: "vn-4", fahrschule_id: FS, schueler_id: "s12", text: "Mutter ruft wegen Ratenzahlung an, bitte kurz Bescheid geben.", art: "info", bearbeiter: "Mia Muster", erstellt_am: vor(6, "11:00"), erledigt_am: vor(3, "17:45"), erledigt_bearbeiter: "Lea Muster" },
+    { id: "vn-1", fahrschule_id: FS, schueler_id: "s2", text: "Reaktivierung wird gerade geprüft. Bitte vorerst keine neuen Fahrstunden planen.", art: "stopp", bearbeiter: "Mia Muster", erstellt_am: vor(1, "09:30"), erledigt_am: null },
+    { id: "vn-2", fahrschule_id: FS, schueler_id: "s4", text: "Hat eine neue Handynummer, steht schon im Profil.", art: "info", bearbeiter: "Paula Muster", erstellt_am: vor(2, "14:10"), erledigt_am: null },
+    { id: "vn-3", fahrschule_id: FS, schueler_id: "s5", text: "Prüfungstermin bestätigt. Bitte an die Brille erinnern.", art: "info", bearbeiter: "Noah Muster", erstellt_am: vor(0, "08:20"), erledigt_am: null },
+    { id: "vn-4", fahrschule_id: FS, schueler_id: "s12", text: "Mutter ruft wegen Ratenzahlung an, bitte kurz Bescheid geben.", art: "info", bearbeiter: "Mia Muster", erstellt_am: vor(6, "11:00"), erledigt_am: vor(3, "17:45"), erledigt_bearbeiter: "Paula Muster" },
   ];
-  tab.schueler_notiz_gelesen = [{ notiz_id: "vn-2", fahrlehrer_id: lehrerVon("s5"), gelesen_am: vor(1, "18:05") }];
-  // Fahrcheck-Quittungen der letzten beiden Zeiträume: einmal vollständig, einmal fehlt ein Zettel
-  const [v1] = fcZeitraum(heute);
-  const z1 = fcZeitraum(addTage(v1, -1)), z2 = fcZeitraum(addTage(z1[0], -1));
+  tab.schueler_notiz_gelesen = [{ notiz_id: "vn-2", fahrlehrer_id: lehrerVon("s4"), gelesen_am: vor(1, "18:05") }];
+  /* Fahrcheck-Quittungen im letzten abgeschlossenen Zeitraum: Anton vollständig, Berta mit einem fehlenden Zettel.
+     „Erwartet“ kommt aus derselben Rechnung wie auf der Seite (KR.fcSoll). KR wird erst nach dieser Datei geladen,
+     deshalb entstehen die Quittungen beim ersten Lesen der Tabelle. */
   const am = (bis) => { const t = new Date(addTage(bis, 1) + "T09:30:00").getTime(); return new Date(Math.min(t, jetzt - 3600000)).toISOString(); };
-  tab.fc_abgaben = [
-    { id: "vq-1", fahrschule_id: FS, fahrlehrer_id: "fl-1", zeitraum_von: z1[0], zeitraum_bis: z1[1], soll: 6, ist: 6, fehlend: [], notiz: null, bestaetigt_von: "bu-1", bestaetigt_am: am(z1[1]) },
-    { id: "vq-2", fahrschule_id: FS, fahrlehrer_id: "fl-2", zeitraum_von: z2[0], zeitraum_bis: z2[1], soll: 5, ist: 4, fehlend: [], notiz: "Ein Zettel kommt nach.", bestaetigt_von: "bu-1", bestaetigt_am: am(z2[1]) },
-  ];
+  const quittungen = () => {
+    if (typeof KR === "undefined") return null;
+    const [von, bis] = KR.fcVorZeitraum(KR.fcZeitraum(KR.todayISO())[0]);
+    const liste = [];
+    for (const [id, lid, fehltEiner] of [["vq-1", "fl-1", false], ["vq-2", "fl-2", true]]) {
+      // wie fcTermin in buero.js
+      const termine = tab.kalender_termine.filter((t) => t.fahrlehrer_id === lid && !t.geloescht).map((t) => { const p = t.payload || {}; return { id: t.id, datum: t.datum, von: t.von, bis: t.bis, art: t.art, status: p.status || t.status, fc: p.fc || null, nachAm: p.nachAm || null, schueler_id: t.schueler_id }; });
+      const r = KR.fcSoll(termine, von, bis);
+      if (!r.soll) continue;
+      const mit = r.posten.filter((x) => x.n && x.fc !== "nachgereicht");
+      const weg = fehltEiner ? (mit.find((x) => x.n === 1) || mit[0]) : null;
+      const ist = weg ? r.soll - weg.n : r.soll;
+      liste.push({ id, fahrschule_id: FS, fahrlehrer_id: lid, zeitraum_von: von, zeitraum_bis: bis, soll: r.soll, ist, fehlend: weg ? [weg.id] : [], notiz: weg ? "Ein Zettel kommt nach." : null, bestaetigt_von: "bu-1", bestaetigt_am: am(bis) });
+      // Büro-Status der Stunden wie nach „Abgabe bestätigen“
+      for (const x of mit) { const t = tab.kalender_termine.find((y) => y.id === x.id); if (t) t.buero_fc_status = weg && weg.id === x.id ? "fehlt" : "abgegeben"; }
+    }
+    return liste;
+  };
+  let fcListe = null;
+  Object.defineProperty(tab, "fc_abgaben", { configurable: true, enumerable: true,
+    get() { if (!fcListe) fcListe = quittungen(); return fcListe || []; }, set(v) { fcListe = v; } });
   return tab;
 }
 

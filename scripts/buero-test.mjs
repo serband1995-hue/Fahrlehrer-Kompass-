@@ -33,7 +33,7 @@ const browser = await chromium.launch({ executablePath: process.env.CHROMIUM_PAT
 let probleme = 0;
 function fehler(text) { probleme++; console.log("FEHLER:", text); }
 
-async function oeffne({ nutzer, breite = 1366, hoehe = 860, hash = "", dunkel = false, vorbereiten, wer = "Lea Muster" }) {
+async function oeffne({ nutzer, breite = 1366, hoehe = 860, hash = "", dunkel = false, vorbereiten, wer = "Paula Muster" }) {
   const daten = bauDaten(HEUTE);
   const session = nutzer ? { user: { id: nutzer, email: nutzer + "@example.org" } } : null;
   const ctx = await browser.newContext({ viewport: { width: breite, height: hoehe }, colorScheme: dunkel ? "dark" : "light" });
@@ -57,7 +57,7 @@ async function oeffne({ nutzer, breite = 1366, hoehe = 860, hash = "", dunkel = 
   return { page, ctx, konsole };
 }
 // Büro-Personen der Attrappe und ihre PINs (erfunden, siehe buero-vorfuehrung.js)
-const TEST_PIN = { "Mia Muster": "5917", "Noah Muster": "2846", "Lea Muster": "7352" };
+const TEST_PIN = { "Mia Muster": "5917", "Noah Muster": "2846", "Paula Muster": "7352" };
 async function meldePinAn(page, name, pin) {
   await page.click(`#werListe button:has-text("${name}")`);
   await page.keyboard.type(pin || TEST_PIN[name], { delay: 20 });
@@ -519,7 +519,7 @@ for (const [breite, hoehe] of [[1920, 1080], [1366, 768], [1024, 768]]) {
   await pruefeLayout(page, "Seitenleiste");
   // Wer bedient: Name und Kopfzeile
   const wer = await page.evaluate(() => ({ s: S.wer, an: document.getElementById("werAnzeige").textContent }));
-  if (wer.s !== "Lea Muster" || wer.an !== "Lea Muster") fehler("PIN: Name nicht übernommen " + JSON.stringify(wer));
+  if (wer.s !== "Paula Muster" || wer.an !== "Paula Muster") fehler("PIN: Name nicht übernommen " + JSON.stringify(wer));
   // Kopfzeile: nur der Sitzungsschlüssel, nur an die Datenbank, kein frei getippter Name mehr
   const kopf = await page.evaluate(() => { window.__echt = window.fetch; window.fetch = (u, o) => ({ h: [...new Headers(o.headers)].filter(([k]) => k.startsWith("x-buero")), u }); const r = [bueroFetch("https://x/rest/v1/schueler", {}), bueroFetch("https://x/auth/v1/token", {})]; window.fetch = window.__echt; return { r, tok: S.sitzung.token }; });
   if (kopf.r[0].h.length !== 1 || kopf.r[0].h[0][0] !== "x-buero-sitzung" || kopf.r[0].h[0][1] !== kopf.tok || kopf.r[1].h.length) fehler("PIN: Kopfzeile falsch " + JSON.stringify(kopf));
@@ -963,13 +963,13 @@ for (const breite of [1301, 1366, 1420]) {
   if (kacheln.length !== 4 || !kacheln.some((t) => t.includes("Tom Muster") && t.includes("PIN festlegen"))) fehler("PIN: Namenskacheln falsch " + JSON.stringify(kacheln));
   if (!(await page.evaluate(() => document.getElementById("app").inert))) fehler("PIN: Seite hinter dem PIN-Fenster ist bedienbar");
   // Doppelklick auf den Namen tippt keine Ziffer mit
-  await page.dblclick('#werListe button:has-text("Lea Muster")'); await page.waitForTimeout(150);
+  await page.dblclick('#werListe button:has-text("Paula Muster")'); await page.waitForTimeout(150);
   if ((await page.$$eval("#pinPunkte .voll", (x) => x.length)) !== 0) fehler("PIN: Doppelklick auf den Namen gibt eine Ziffer ein");
   await page.keyboard.press("Escape");
   await pruefeLayout(page, "PIN Namen");
   if (FOTOS) await page.screenshot({ path: join(FOTOS, "pin-namen.png") });
   // Falsche PIN: Hinweis mit Restversuchen, Seite bleibt gesperrt
-  await page.click('#werListe button:has-text("Lea Muster")');
+  await page.click('#werListe button:has-text("Paula Muster")');
   await page.waitForTimeout(100);
   if (!(await page.isVisible("#werPin"))) fehler("PIN: Ziffernfeld erscheint nicht");
   await pruefeLayout(page, "PIN Ziffernfeld");
@@ -986,14 +986,14 @@ for (const breite of [1301, 1366, 1420]) {
   await page.keyboard.press("Escape");
   if (!(await page.isVisible("#werNamen"))) fehler("PIN: Esc führt nicht zurück zu den Namen");
   // Richtige PIN
-  await meldePinAn(page, "Lea Muster");
+  await meldePinAn(page, "Paula Muster");
   if (await page.isVisible("#wer:not([hidden])")) fehler("PIN: richtige PIN öffnet nicht");
   if (await page.evaluate(() => document.getElementById("app").inert)) fehler("PIN: Seite bleibt nach der Anmeldung gesperrt");
-  if ((await page.textContent("#werAnzeige")) !== "Lea Muster" || (await page.textContent("#nutzerName")) !== "Lea Muster") fehler("PIN: Name in der Seitenleiste fehlt");
+  if ((await page.textContent("#werAnzeige")) !== "Paula Muster" || (await page.textContent("#nutzerName")) !== "Paula Muster") fehler("PIN: Name in der Seitenleiste fehlt");
   if ((await page.textContent("#kopfWer")) !== "🔒 Sperren") fehler("PIN: Sperren-Knopf oben fehlt");
-  // Lea Muster darf nicht verwalten
+  // Paula Muster darf nicht verwalten
   await page.goto(page.url().split("#")[0] + "#team"); await page.waitForTimeout(300);
-  if (await page.isVisible("#pNeu, [data-preset]")) fehler("PIN: Lea Muster sieht Verwalten-Knöpfe");
+  if (await page.isVisible("#pNeu, [data-preset]")) fehler("PIN: Paula Muster sieht Verwalten-Knöpfe");
   // Wechseln mit Abbrechen
   await page.click("#werWechseln");
   if (!(await page.isVisible("#werZu"))) fehler("PIN: kein Abbrechen beim Wechseln");
@@ -1012,7 +1012,7 @@ for (const breite of [1301, 1366, 1420]) {
   await pruefeLayout(page, "Team mit Personen");
   if (FOTOS) await page.screenshot({ path: join(FOTOS, "pin-team.png"), fullPage: true });
   // Person anlegen (doppelter Name wird abgelehnt)
-  await page.click("#pNeu"); await page.fill("dialog input[name=name]", "lea muster"); await page.click("dialog button[value=ok]"); await page.waitForTimeout(200);
+  await page.click("#pNeu"); await page.fill("dialog input[name=name]", "paula muster"); await page.click("dialog button[value=ok]"); await page.waitForTimeout(200);
   if (!(await page.isVisible("dialog[open]"))) fehler("PIN: doppelter Name wurde angenommen");
   await page.fill("dialog input[name=name]", "Testperson"); await page.click("dialog button[value=ok]"); await page.waitForTimeout(300);
   if (!(await page.evaluate(() => S.personen.some((p) => p.name === "Testperson")))) fehler("PIN: Person nicht angelegt");
@@ -1022,7 +1022,7 @@ for (const breite of [1301, 1366, 1420]) {
   await page.keyboard.type("3817"); await page.waitForTimeout(150);
   if (!/noch keine PIN/.test(await page.textContent("#pinFehler")) || (await page.$$eval("#pinPunkte .voll", (x) => x.length)) !== 0) fehler("PIN: Person ohne Freigabe kann PIN festlegen");
   await page.keyboard.press("Escape"); await page.click("#werZu");
-  // PIN von Lea Muster zurücksetzen
+  // PIN von Paula Muster zurücksetzen
   await page.click(`[data-preset="bp-3"]`); await page.click("dialog[open] button[value=ok]"); await page.waitForTimeout(300);
   if (await page.evaluate(() => window.__FAKE.tabellen.buero_personen.find((p) => p.id === "bp-3").hat_pin)) fehler("PIN: Zurücksetzen wirkt nicht");
   // Sperren: Sitzung endet, Namen erscheinen ohne Abbrechen
@@ -1081,7 +1081,7 @@ for (const breite of [1301, 1366, 1420]) {
       { id: "ag-3", fahrschule_id: "fs-test-1", schueler_id: null, text: "Nur für Noah", heute: false, faellig_am: null, fuer_person_id: "bp-2", von_person_id: "bp-1", dringend: false, erstellt_am: new Date().toISOString() },
     ];
   } });
-  // Mia Muster schickt Lea Muster eine dringende Aufgabe für heute
+  // Mia Muster schickt Paula Muster eine dringende Aufgabe für heute
   await page.click("#agNeu");
   await page.fill("dialog textarea[name=text]", "Mutter von Lena zurückrufen");
   await page.selectOption("dialog select[name=fuer]", "bp-3");
@@ -1095,8 +1095,8 @@ for (const breite of [1301, 1366, 1420]) {
   let t = await page.textContent(".fuer-dich");
   if (!/noch nicht gelesen/.test(t)) fehler("Aufgaben: „noch nicht gelesen“ fehlt bei der Absenderin");
   if (/Nur für Noah/.test((await page.$$eval(".fuer-dich > .notizliste li", (l) => l.map((x) => x.textContent))).join("|"))) fehler("Aufgaben: fremde Aufgabe in „Für mich“");
-  // Lea Muster meldet sich an: Hinweis-Fenster mit beiden Aufgaben, dringend/überfällig rot
-  await page.click("#werWechseln"); await meldePinAn(page, "Lea Muster"); await page.waitForTimeout(250);
+  // Paula Muster meldet sich an: Hinweis-Fenster mit beiden Aufgaben, dringend/überfällig rot
+  await page.click("#werWechseln"); await meldePinAn(page, "Paula Muster"); await page.waitForTimeout(250);
   if (!(await page.isVisible("dialog[open]")) || !/2 neue Aufgaben/.test(await page.textContent("dialog[open]"))) fehler("Aufgaben: kein Hinweis-Fenster nach der PIN");
   await pruefeLayout(page, "Hinweis neue Aufgaben");
   if (await page.$("dialog[open] [data-hagschueler]")) fehler("Aufgaben: Hinweis-Fenster hat einen Knopf ohne Wirkung");
@@ -1403,9 +1403,9 @@ for (const breite of [1301, 1366, 1420]) {
 }
 // Endprüfung 14.10.: ohne Verwalten-Recht kein Knopf „Klassen“ (die Datenbank lehnt es ohnehin ab)
 {
-  const { page, ctx } = await oeffne({ nutzer: "bu-1", hash: "#team", wer: "Lea Muster" });
+  const { page, ctx } = await oeffne({ nutzer: "bu-1", hash: "#team", wer: "Paula Muster" });
   await page.click('button.knopf[data-flakte] >> nth=0'); await page.waitForTimeout(200);
-  if (!(await page.isDisabled("dialog[open] input[name=fl] >> nth=0"))) fehler("Klassen: Lea Muster (ohne Verwalten-Recht) kann die Fahrlehrerlaubnis ändern");
+  if (!(await page.isDisabled("dialog[open] input[name=fl] >> nth=0"))) fehler("Klassen: Paula Muster (ohne Verwalten-Recht) kann die Fahrlehrerlaubnis ändern");
   await ctx.close();
 }
 
@@ -1585,7 +1585,7 @@ for (const nutzer of ["ad-1", "sa-1"]) {
   if (await anzahl() !== 0 || !(await page.isVisible("#wer:not([hidden])"))) fehler("P2 B2: Leerlauf zeigt die PIN-Abfrage nicht (Fenster " + await anzahl() + ")");
   if (await page.evaluate(() => GEPARKT.length) !== 1) fehler("P2 B2: Leerlauf merkt sich das Fenster mit Eingaben nicht");
   if (await page.evaluate(() => document.getElementById("app").inert !== true)) fehler("P2 B2: Seite hinter der PIN ist nicht gesperrt");
-  await meldePinAn(page, "Lea Muster"); await page.waitForTimeout(500);
+  await meldePinAn(page, "Paula Muster"); await page.waitForTimeout(500);
   if (await anzahl() !== 1) fehler("P2 B2: Fenster nach der PIN nicht wieder da (" + await anzahl() + ")");
   else if (await page.inputValue("dialog input[name=email]") !== "leerlauf@example.org") fehler("P2 B2: Eingabe nach der PIN weg");
   // Es läuft danach ganz normal weiter: ✕ fragt wieder
@@ -1597,7 +1597,7 @@ for (const nutzer of ["ad-1", "sa-1"]) {
   await page.fill("dialog input[name=email]", "fremd@example.org");
   await page.evaluate(() => { beendeSitzung(); zeigeWer(); }); await page.waitForTimeout(300);
   await meldePinAn(page, "Mia Muster"); await page.waitForTimeout(500);
-  if (await anzahl() !== 0 || await page.evaluate(() => GEPARKT.length) !== 0) fehler("P2 B2: Eingaben von Lea Muster tauchen bei Mia Muster auf");
+  if (await anzahl() !== 0 || await page.evaluate(() => GEPARKT.length) !== 0) fehler("P2 B2: Eingaben von Paula Muster tauchen bei Mia Muster auf");
   // Ohne Eingabe: wie bisher, Fenster ist nach der PIN weg
   await page.click("[data-sbearb] >> nth=0"); await page.waitForTimeout(150);
   await page.evaluate(() => { beendeSitzung(); zeigeWer(); }); await page.waitForTimeout(300);
@@ -2122,7 +2122,7 @@ async function k2Fenster(page, name) {
     if (modus === "vorf-dunkel" && w !== 412) continue; // dunkel einmal am Handy reicht
     const name = `${mname} ${w}×${h}`;
     const { page, ctx, konsole } = modus.startsWith("vorf") ? await oeffneVorfuehrung({ breite: w, hoehe: h, dunkel: modus === "vorf-dunkel" })
-      : await oeffne({ nutzer: modus, breite: w, hoehe: h, hash: "#heute", wer: modus === "bu-1" ? "Lea Muster" : null });
+      : await oeffne({ nutzer: modus, breite: w, hoehe: h, hash: "#heute", wer: modus === "bu-1" ? "Paula Muster" : null });
     // Start: Inhalt (Seitentitel) höchstens etwa 200 px unter dem oberen Rand (Hochformat), Menü zu, „Drucken“ weg
     const start = await page.evaluate(() => ({ top: document.getElementById("titel").getBoundingClientRect().top, offen: document.body.classList.contains("menue-offen"), drucken: !!document.getElementById("drucken").offsetParent, menue: !!document.getElementById("menueKnopf").offsetParent }));
     if (h > w && start.top > 200) fehler(`K2 ${name}: Inhalt beginnt erst bei ${Math.round(start.top)} px`);
@@ -2158,6 +2158,19 @@ async function k2Fenster(page, name) {
     if (konsole.length) fehler(`K2 ${name}: Konsole: ${konsole.join(" | ")}`);
     await ctx.close();
   }
+  // Tablet: Menü offen, quer drehen (über 900 px), Bereich wechseln, zurückdrehen → Menü ist zu
+  {
+    const { page, ctx, konsole } = await oeffne({ nutzer: "bu-1", breite: 768, hoehe: 1024, hash: "#heute" });
+    await page.click("#menueKnopf"); await page.waitForTimeout(100);
+    await page.setViewportSize({ width: 1024, height: 768 }); await page.waitForTimeout(150);
+    await page.click('.nav-punkt[href="#schueler"]'); await page.waitForTimeout(300);
+    await page.setViewportSize({ width: 768, height: 1024 }); await page.waitForTimeout(150);
+    const r = await page.evaluate(() => ({ offen: document.body.classList.contains("menue-offen"), aria: document.getElementById("menueKnopf").getAttribute("aria-expanded"), titel: document.getElementById("titel").textContent }));
+    if (r.offen || r.aria !== "false") fehler("K2 Drehen: Menü bleibt nach Bereichswechsel offen");
+    if (r.titel !== "Schüler") fehler("K2 Drehen: Bereich nicht gewechselt (" + r.titel + ")");
+    if (konsole.length) fehler("K2 Drehen: Konsole: " + konsole.join(" | "));
+    await ctx.close();
+  }
   // PC: Menü wie bisher sichtbar, kein Menü-Knopf, „Drucken“ da (ab 901 px)
   for (const [w, h] of [[901, 800], [1366, 860]]) {
     const { page, ctx } = await oeffne({ nutzer: "bu-1", breite: w, hoehe: h, hash: "#heute" });
@@ -2178,9 +2191,26 @@ async function k2Fenster(page, name) {
     if (!d.personen.length || d.personen.some((n) => !/^\S+ Muster$/.test(n))) fehler("K2 Vorführung: Büro-Personen nicht alle „… Muster“: " + d.personen.length);
     if (d.notizen < 3 || d.quitt < 1) fehler(`K2 Vorführung: zu wenig Notizen (${d.notizen}) oder Quittungen (${d.quitt})`);
     if (!/noch nicht gelesen/.test(await page.textContent("#ansicht"))) fehler("K2 Vorführung: Hinweis auf ungelesene Notizen fehlt");
+    // Quittungen: im letzten abgeschlossenen Zeitraum, „Erwartet“ wie die Seite rechnet, eine vollständig, eine mit einem fehlenden Zettel
+    const q = await page.evaluate(() => { const [von] = KR.fcVorZeitraum(KR.fcZeitraum(KR.todayISO())[0]); return S.fcAbgaben.map((x) => ({ id: x.id, imZeitraum: x.zeitraum_von === von, soll: x.soll, ist: x.ist, rech: fcFuerLehrer(x.fahrlehrer_id, x.zeitraum_von, x.zeitraum_bis).soll, fehlend: (x.fehlend || []).length })); });
+    if (q.length !== 2) fehler("K2 Vorführung: erwartet 2 Quittungen, da sind " + q.length);
+    for (const x of q) {
+      if (!x.imZeitraum) fehler(`K2 Vorführung: Quittung ${x.id} nicht im letzten Zeitraum`);
+      if (x.soll !== x.rech || !x.soll) fehler(`K2 Vorführung: Quittung ${x.id} sagt ${x.soll} erwartet, die Seite rechnet ${x.rech}`);
+      if (x.ist !== x.soll && !x.fehlend) fehler(`K2 Vorführung: Quittung ${x.id} mit Fehlbetrag ohne fehlende Stunde`);
+    }
+    if (!q.some((x) => x.ist === x.soll) || !q.some((x) => x.ist < x.soll)) fehler("K2 Vorführung: Quittungen nicht einmal vollständig und einmal mit Fehlbetrag");
+    // Notizen passen zum Schüler: „Prüfungstermin bestätigt“ nur bei Schüler mit Praxisprüfung, „Reaktivierung“ nur bei fälliger Reaktivierung
+    const nz = await page.evaluate(() => S.notizen.map((n) => { const s = S.schueler.find((x) => x.id === n.schueler_id); return { t: n.text, reakt: KR.reaktInfo(s, KR.todayISO()).stufe, praxis: S.pruefungstermine.some((p) => p.schueler_id === s.id && p.art === "praxis" && p.datum >= KR.todayISO()) }; }));
+    for (const n of nz) {
+      if (/Prüfungstermin/.test(n.t) && !n.praxis) fehler("K2 Vorführung: Notiz zum Prüfungstermin bei Schüler ohne Praxisprüfung");
+      if (/Reaktivierung/.test(n.t) && !["gesperrt", "pruefen_faellig"].includes(n.reakt)) fehler("K2 Vorführung: Notiz zur Reaktivierung bei Schüler ohne fällige Reaktivierung (" + n.reakt + ")");
+    }
     await page.evaluate(() => { location.hash = "#team"; }); await page.waitForTimeout(400);
     const team = await page.textContent("#ansicht");
-    if (/Gesperrt Test|Ohne AGB/.test(team)) fehler("K2 Vorführung: Test-Konten in „Fahrlehrer & Zugänge“ sichtbar");
+    if (/Gesperrt Test|Ohne AGB|Super-Admin|Elif/.test(team)) fehler("K2 Vorführung: Test-Konten oder Super-Admin in „Fahrlehrer & Zugänge“ sichtbar");
+    await page.evaluate(() => { location.hash = "#kalender"; }); await page.waitForTimeout(400);
+    if (/Super-Admin|Elif/.test(await page.textContent("#ansicht"))) fehler("K2 Vorführung: Super-Admin oder Test-Fahrlehrerin im Kalender");
     const zeilen = await page.$$eval("#ansicht table.tabelle tbody tr td:first-child", (l) => l.map((x) => x.textContent.trim()));
     if (zeilen.some((t) => /Testperson|Gesperrt|Ohne AGB/.test(t))) fehler("K2 Vorführung: Test-Name in der Zugangsliste");
     await page.evaluate(() => { location.hash = "#fahrchecks"; }); await page.waitForTimeout(400);
