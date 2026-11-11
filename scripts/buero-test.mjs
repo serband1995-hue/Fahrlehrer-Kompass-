@@ -2317,12 +2317,14 @@ for (const [breite, hoehe] of [[1366, 860], [390, 844]]) {
     }
     if (!r.o.length || r.o[0][0] !== "https://serband1995-hue.github.io/Fahr-Akademie-/#admin") fehler(P + ": Akademie-Verwaltung nicht geöffnet " + JSON.stringify(r.o));
     if (!r.offen) fehler(P + ": Akte hat sich geschlossen (Knopf darf nicht speichern)");
-    // Klasse, die die Akademie nicht kennt, bleibt leer; ohne Telefon kein Eintrag
-    await page.evaluate(() => localStorage.removeItem("fa_vorbelegung_v1"));
-    await page.selectOption("dialog[open] select[name=klasse]", "B78");
-    await page.click("dialog[open] #akZugangKnopf"); await page.waitForTimeout(150);
-    const v2 = await page.evaluate(() => JSON.parse(localStorage.getItem("fa_vorbelegung_v1") || "{}"));
-    if (v2.klasse !== "") fehler(P + ": Klasse B78 hätte leer bleiben müssen: " + v2.klasse);
+    // B78 ist eine B-Ausbildung („B“), eine Klasse, die die Akademie nicht kennt, bleibt leer; ohne Telefon kein Eintrag
+    for (const [kl, soll] of [["B78", "B"], ["B197", "B"], ["C1", ""]]) {
+      await page.evaluate(() => localStorage.removeItem("fa_vorbelegung_v1"));
+      await page.selectOption("dialog[open] select[name=klasse]", kl);
+      await page.click("dialog[open] #akZugangKnopf"); await page.waitForTimeout(150);
+      const v2 = await page.evaluate(() => JSON.parse(localStorage.getItem("fa_vorbelegung_v1") || "{}"));
+      if (v2.klasse !== soll) fehler(P + `: Klasse ${kl} → „${v2.klasse}“ statt „${soll}“`);
+    }
     await page.evaluate(() => localStorage.removeItem("fa_vorbelegung_v1"));
     await page.fill("dialog[open] input[name=telefon]", "");
     await page.click("dialog[open] #akZugangKnopf"); await page.waitForTimeout(150);
@@ -2339,6 +2341,18 @@ for (const [breite, hoehe] of [[1366, 860], [390, 844]]) {
   // Neuer Schüler: kein Knopf (erst nach dem Anlegen)
   await page.keyboard.press("Escape"); await page.waitForTimeout(150);
   if (await page.isVisible("dialog[open] button[value=ok]")) { await verwerfenJa(page).catch(() => {}); }
+  // Nur die Sprache wählen und den Knopf tippen ist keine Änderung der Akte: Escape schließt ohne Rückfrage
+  await page.evaluate(() => { document.querySelectorAll("dialog[open]").forEach((d) => d.close()); schuelerDialog("s2"); }); await page.waitForTimeout(250);
+  await page.selectOption("dialog[open] #akSprache", "ar");
+  await page.click("dialog[open] #akZugangKnopf"); await page.waitForTimeout(150);
+  await page.keyboard.press("Escape"); await page.waitForTimeout(250);
+  if (await page.isVisible("dialog[open]")) { fehler(P + ": nur Sprache gewählt, trotzdem Rückfrage oder Fenster bleibt offen"); await verwerfenJa(page).catch(() => {}); }
+  // Vom Fahrlehrer angelegt: E-Mail und Form stehen nur in „ausbildung“ → trotzdem in der Vorbelegung
+  await page.evaluate(() => { const x = S.schueler.find((y) => y.id === "s3"); x.email = null; x.klasse = null; x.ausbildung = Object.assign({}, x.ausbildung, { email: "app.k3@example.org", form: "Automatik" }); localStorage.removeItem("fa_vorbelegung_v1"); schuelerDialog("s3"); }); await page.waitForTimeout(250);
+  await page.click("dialog[open] #akZugangKnopf"); await page.waitForTimeout(150);
+  const v3 = await page.evaluate(() => JSON.parse(localStorage.getItem("fa_vorbelegung_v1") || "{}"));
+  if (v3.email !== "app.k3@example.org" || v3.klasse !== "B") fehler(P + ": Ersatz aus der App fehlt: " + JSON.stringify(v3));
+  await page.evaluate(() => document.querySelectorAll("dialog[open]").forEach((d) => d.close()));
   await page.evaluate(() => { document.querySelectorAll("dialog[open]").forEach((d) => d.close()); schuelerDialog(); }); await page.waitForTimeout(200);
   if (await page.isVisible("dialog[open] #akZugangKnopf")) fehler(P + ": Knopf schon beim Anlegen eines neuen Schülers");
   if (konsole.length) fehler(P + ": Konsole: " + konsole.join(" | "));

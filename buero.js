@@ -1857,23 +1857,27 @@ const AKADEMIE_ADMIN_URL = "https://serband1995-hue.github.io/Fahr-Akademie-/#ad
 const AKADEMIE_KLASSEN = ["B", "BE", "C", "CE"];
 const AKADEMIE_SPRACHEN = [["de", "Deutsch"], ["tr", "Türkçe"], ["en", "English"], ["ar", "العربية"], ["es", "Español"], ["ru", "Русский"], ["sr", "Srpski"], ["ckb", "کوردی (سۆرانی)"], ["kmr", "Kurdî (Kurmancî)"], ["hi", "हिन्दी"], ["ur", "اردو"], ["vi", "Tiếng Việt"], ["rif", "Tarifit"], ["fa", "فارسی"], ["ps", "پښتو"], ["el", "Ελληνικά"], ["am", "አማርኛ"], ["ti", "ትግርኛ"], ["ro", "Română"], ["pl", "Polski"], ["hr", "Hrvatski"], ["bs", "Bosanski"], ["sq", "Shqip"], ["uk", "Українська"], ["bg", "Български"], ["mk", "Македонски"], ["bn", "বাংলা"], ["it", "Italiano"], ["pt", "Português"], ["hu", "Magyar"]];
 function akademieZugangHTML() {
-  return `<div class="voll akademie-zugang"><h3>Fahr-Akademie</h3>
+  return `<div class="voll akademie-zugang" data-entwurf><h3>Fahr-Akademie</h3>
     <div class="akademie-zeile"><label>Sprache des Schülers<select id="akSprache">${AKADEMIE_SPRACHEN.map(([c, n]) => `<option value="${esc(c)}">${esc(n)}</option>`).join("")}</select></label>
     <button type="button" class="knopf" id="akZugangKnopf">Akademie-Zugang anlegen</button></div>
     <p class="leise klein">Öffnet die Akademie-Verwaltung. Dort anmelden und „Schüler anlegen“ tippen: Name, Telefon, E-Mail und Klasse sind 5 Minuten lang schon eingetragen.</p></div>`;
 }
-function akademieVorbelegung(form, sprache) {
+// Felder der Akte zuerst (auch ungespeichert); was die Fahrlehrer-App nur in „ausbildung“ ablegt (E-Mail, Form), als Ersatz.
+// B78 (Automatik) und B197 sind eine B-Ausbildung: in der Akademie „B“. Andere Klassen kennt die Akademie nicht: leer.
+function akademieVorbelegung(form, sprache, x) {
   const wert = (n) => ((form.querySelector(`[name=${n}]`) || {}).value || "").trim();
-  const klasse = wert("klasse").toUpperCase();
-  return { name: wert("name"), telefon: wert("telefon"), email: wert("email"),
+  const aus = (x && x.ausbildung) || {};
+  let klasse = (wert("klasse") || (x ? klasseVon(x) : "") || "").toUpperCase();
+  if (klasse === "B78" || klasse === "B197") klasse = "B";
+  return { name: wert("name"), telefon: wert("telefon"), email: wert("email") || String(aus.email || "").trim(),
     klasse: AKADEMIE_KLASSEN.includes(klasse) ? klasse : "",
     sprache: AKADEMIE_SPRACHEN.some(([c]) => c === sprache) ? sprache : "de",
     zeit: new Date().toISOString() };
 }
-function bindeAkademieZugang(dlg) {
+function bindeAkademieZugang(dlg, x) {
   const knopf = dlg.querySelector("#akZugangKnopf"); if (!knopf) return;
   knopf.addEventListener("click", () => {
-    const v = akademieVorbelegung(dlg, dlg.querySelector("#akSprache").value);
+    const v = akademieVorbelegung(dlg, dlg.querySelector("#akSprache").value, x);
     if (!v.name) { toast("Bitte zuerst einen Namen eintragen.", true); return; }
     if (!v.telefon) { toast("Für den Akademie-Zugang braucht der Schüler eine Telefonnummer (sie ist sein Login).", true); dlg.querySelector("[name=telefon]").focus(); return; }
     try { localStorage.setItem("fa_vorbelegung_v1", JSON.stringify(v)); }
@@ -1976,7 +1980,7 @@ function schuelerDialog(id) {
   testBox.addEventListener("change", () => { if (testBox.checked && !testDat.value) testDat.value = KR.todayISO(); if (!testBox.checked) testDat.value = ""; });
   const aktivBox = dlg.querySelector("input[name=aktiv]");
   if (aktivBox) aktivBox.addEventListener("change", () => { dlg.querySelector("#aktivText").textContent = aktivBox.checked ? "Aktiv" : "Im Archiv"; });
-  if (id) bindeAkademieZugang(dlg);
+  if (id) bindeAkademieZugang(dlg, x);
 }
 // Wie schuelerVerschieben in index.html: erst künftige Termine (auf Wunsch), dann Schüler, dann Übergabe-Eintrag
 async function verschiebeSchueler(x, neuerLehrer) {
