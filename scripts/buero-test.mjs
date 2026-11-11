@@ -2317,6 +2317,18 @@ for (const [breite, hoehe] of [[1366, 860], [390, 844]]) {
     }
     if (!r.o.length || r.o[0][0] !== "https://serband1995-hue.github.io/Fahr-Akademie-/#admin") fehler(P + ": Akademie-Verwaltung nicht geöffnet " + JSON.stringify(r.o));
     if (!r.offen) fehler(P + ": Akte hat sich geschlossen (Knopf darf nicht speichern)");
+    // Neue, noch nicht gespeicherte Telefonnummer: Hinweis „Akte auch speichern“
+    await page.fill("dialog[open] input[name=telefon]", "0170 9999999");
+    await page.click("dialog[open] #akZugangKnopf"); await page.waitForTimeout(150);
+    if (!/Akte auch speichern/.test(await page.textContent("#toast"))) fehler(P + ": kein Hinweis bei neuer Telefonnummer");
+    // Aufräumen: ein abgelaufener Eintrag verschwindet, ein frischer bleibt
+    const aufr = await page.evaluate(() => {
+      localStorage.setItem("fa_vorbelegung_v1", JSON.stringify({ name: "X Muster", zeit: new Date(Date.now() - 6 * 60000).toISOString() })); akademieVorbelegungAufraeumen();
+      const alt = localStorage.getItem("fa_vorbelegung_v1");
+      localStorage.setItem("fa_vorbelegung_v1", JSON.stringify({ name: "X Muster", zeit: new Date().toISOString() })); akademieVorbelegungAufraeumen();
+      return { alt, frisch: localStorage.getItem("fa_vorbelegung_v1") };
+    });
+    if (aufr.alt !== null || !aufr.frisch) fehler(P + ": Aufräumen der Vorbelegung falsch " + JSON.stringify(aufr));
     // B78 ist eine B-Ausbildung („B“), eine Klasse, die die Akademie nicht kennt, bleibt leer; ohne Telefon kein Eintrag
     for (const [kl, soll] of [["B78", "B"], ["B197", "B"], ["C1", ""]]) {
       await page.evaluate(() => localStorage.removeItem("fa_vorbelegung_v1"));

@@ -101,11 +101,12 @@ async function seite(w, h, jetzt) {
     ["A1", "Push angekommen", { data: { ok: true, push_gesendet_an: 2, empfehlung_gespeichert: true }, error: null }, /Video-Tipp an Lena geschickt/],
     ["A2", "ohne Push-Abo", { data: { ok: true, push_gesendet_an: 0, hinweis: "kein_push_abo", empfehlung_gespeichert: true }, error: null }, /Handy-Nachrichten sind aus.*nächsten Anmelden/],
     ["A3", "kein Zugang (geparkt)", { data: { ok: true, push_gesendet_an: 0, empfehlung_geparkt: true, grund: "kein_zugang" }, error: null }, /noch keinen Akademie-Zugang.*liegt bereit/],
-    ["A4", "Zugang gesperrt (geparkt)", { data: { ok: true, push_gesendet_an: 0, empfehlung_geparkt: true, grund: "zugang_gesperrt" }, error: null }, /gesperrt.*liegt bereit/],
-    ["A5", "Zugang abgelaufen (geparkt)", { data: { ok: true, push_gesendet_an: 0, empfehlung_geparkt: true, grund: "zugang_abgelaufen" }, error: null }, /abgelaufen.*verlängert/],
+    ["A4", "Zugang gesperrt (geparkt)", { data: { ok: true, push_gesendet_an: 0, empfehlung_geparkt: true, grund: "zugang_gesperrt" }, error: null }, /gesperrt.*gespeichert.*wieder frei/],
+    ["A5", "Zugang abgelaufen (geparkt)", { data: { ok: true, push_gesendet_an: 0, empfehlung_geparkt: true, grund: "zugang_abgelaufen" }, error: null }, /abgelaufen.*gespeichert.*Verlängerung/],
     ["A6", "Sperre 2 Minuten (429)", ctxAntwort(429, { ok: false, error: "cooldown_aktiv" }), /nicht geschickt.*2 Minuten/],
     ["A7", "anderer Fahrlehrer (403)", ctxAntwort(403, { ok: false, error: "fahrlehrer_stimmt_nicht" }), /nicht geschickt.*anderen Fahrlehrer/],
     ["A8", "eigenes Konto ohne Fahrschule (403)", ctxAntwort(403, { ok: false, error: "keine_fahrschule" }), /Konto ist für die Akademie nicht freigeschaltet/],
+    ["A14", "Anmeldung abgelaufen (401)", ctxAntwort(401, { ok: false, error: "nicht_eingeloggt" }), /nicht geschickt.*neu anmelden/],
     ["A9", "ohne Netz", { wirf: true }, /nicht geschickt.*nicht erreichbar/],
     ["A10", "Fehler ohne lesbare Antwort", { data: null, error: { name: "FunctionsFetchError" } }, /nicht geschickt.*nicht erreichbar/],
   ];
@@ -129,6 +130,7 @@ async function seite(w, h, jetzt) {
   const lern = async (fortschritt, ok = true) => page.evaluate(async ({ fortschritt, ok }) => {
     let box = document.getElementById("akademieFortschrittSlot");
     if (!box) { box = document.createElement("div"); box.id = "akademieFortschrittSlot"; document.body.appendChild(box); }
+    box.dataset.sid = "s1";
     box.innerHTML = "";
     window.__antwort = { data: { ok, fortschritt }, error: null };
     await _fillAkademieFortschritt({ id: "s1", telefon: "0170 1234567" });
@@ -150,6 +152,15 @@ async function seite(w, h, jetzt) {
       if (/gesehen/.test(t)) return "noch „gesehen“: " + t;
     });
   }
+  await pruefe("B9", "späte Antwort für Schüler A landet nicht in der Akte von Schüler B", async () => {
+    const t = await page.evaluate(async () => {
+      const box = document.getElementById("akademieFortschrittSlot"); box.innerHTML = ""; box.dataset.sid = "s2";
+      window.__antwort = { data: { ok: true, fortschritt: { gesehen: 5, gesamt: 42 } }, error: null };
+      await _fillAkademieFortschritt({ id: "s1", telefon: "0170 1234567" });
+      return box.innerText.trim();
+    });
+    if (t) return "fremder Lernstand geschrieben: " + t;
+  });
   await pruefe("B8", "im ganzen Code kein „Videos gesehen“ mehr", async () => {
     const quelle = await (await fetch(basis + "index.html")).text();
     if (/Videos gesehen/.test(quelle)) return "„Videos gesehen“ steht noch im Code";

@@ -1874,19 +1874,29 @@ function akademieVorbelegung(form, sprache, x) {
     sprache: AKADEMIE_SPRACHEN.some(([c]) => c === sprache) ? sprache : "de",
     zeit: new Date().toISOString() };
 }
+// Nicht abgeholte Vorbelegung (Pop-up gesperrt, Akademie nie geöffnet) nach 5 Minuten löschen: Name und Nummer
+// sollen nicht im Browser des Büro-PCs liegen bleiben. Läuft auch beim Start der Büro-Seite.
+function akademieVorbelegungAufraeumen() {
+  try {
+    const roh = localStorage.getItem("fa_vorbelegung_v1"); if (roh === null) return;
+    let z = NaN; try { const d = JSON.parse(roh); z = typeof d.zeit === "number" ? d.zeit : Date.parse(d.zeit); } catch (e) { /* kaputt: weg */ }
+    if (!isFinite(z) || Date.now() - z >= 5 * 60 * 1000) localStorage.removeItem("fa_vorbelegung_v1");
+  } catch (e) { /* Speicher gesperrt: nichts zu tun */ }
+}
+akademieVorbelegungAufraeumen();
 function bindeAkademieZugang(dlg, x) {
   const knopf = dlg.querySelector("#akZugangKnopf"); if (!knopf) return;
   knopf.addEventListener("click", () => {
     const v = akademieVorbelegung(dlg, dlg.querySelector("#akSprache").value, x);
     if (!v.name) { toast("Bitte zuerst einen Namen eintragen.", true); return; }
     if (!v.telefon) { toast("Für den Akademie-Zugang braucht der Schüler eine Telefonnummer (sie ist sein Login).", true); dlg.querySelector("[name=telefon]").focus(); return; }
-    try { localStorage.setItem("fa_vorbelegung_v1", JSON.stringify(v)); }
+    try { localStorage.setItem("fa_vorbelegung_v1", JSON.stringify(v)); setTimeout(akademieVorbelegungAufraeumen, 5 * 60 * 1000 + 1000); }
     catch (e) { toast("Der Browser lässt das Speichern nicht zu. Bitte die Daten in der Akademie von Hand eintragen.", true); return; }
     // Ohne „noopener“ im Aufruf, denn dann liefert window.open immer null und ein gesperrtes Fenster wäre nicht erkennbar
     const fenster = window.open(AKADEMIE_ADMIN_URL, "_blank");
     if (fenster) try { fenster.opener = null; } catch (e) { /* egal */ }
     toast(!fenster ? "Bitte Pop-ups für diese Seite erlauben oder die Akademie-Verwaltung selbst öffnen: die Daten liegen 5 Minuten bereit."
-      : `Akademie geöffnet. Dort anmelden und „Schüler anlegen“ tippen: ${v.klasse ? "" : "Klasse bitte selbst wählen. "}Die Daten liegen 5 Minuten bereit.`);
+      : `Akademie geöffnet. Dort anmelden und „Schüler anlegen“ tippen: ${v.klasse ? "" : "Klasse bitte selbst wählen. "}Die Daten liegen 5 Minuten bereit.${x && v.telefon.replace(/\D/g, "") !== String(x.telefon || "").replace(/\D/g, "") ? " Die Telefonnummer ist neu: bitte die Akte auch speichern." : ""}`);
   });
 }
 function schuelerDialog(id) {

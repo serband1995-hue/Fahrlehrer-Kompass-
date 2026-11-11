@@ -3543,14 +3543,15 @@ function _akademieTippText(vn,res){
   if(d.ok){
     if(Number(d.push_gesendet_an)>0)return "📲 Video-Tipp an "+vn+" geschickt ✓";
     if(d.empfehlung_geparkt){
-      if(d.grund==="zugang_gesperrt")return "Akademie-Zugang von "+vn+" ist gesperrt. Der Video-Tipp liegt bereit, bis er wieder frei ist.";
-      if(d.grund==="zugang_abgelaufen")return "Akademie-Zugang von "+vn+" ist abgelaufen. Der Video-Tipp liegt bereit, bis er verlängert ist.";
+      if(d.grund==="zugang_gesperrt")return "Akademie-Zugang von "+vn+" ist gesperrt. Der Video-Tipp ist gespeichert und erscheint, wenn der Zugang wieder frei ist und "+vn+" sich anmeldet.";
+      if(d.grund==="zugang_abgelaufen")return "Akademie-Zugang von "+vn+" ist abgelaufen. Der Video-Tipp ist gespeichert und erscheint nach der Verlängerung und der nächsten Anmeldung.";
       return vn+" hat noch keinen Akademie-Zugang. Der Video-Tipp liegt bereit, bis der Zugang freigeschaltet ist.";
     }
     return "Video-Tipp für "+vn+" gespeichert. Handy-Nachrichten sind aus: "+vn+" sieht ihn beim nächsten Anmelden in der Akademie.";
   }
   if(d.error==="cooldown_aktiv")return "Video-Tipp nicht geschickt: "+vn+" hat vor weniger als 2 Minuten schon einen bekommen.";
   if(d.error==="fahrlehrer_stimmt_nicht")return "Video-Tipp nicht geschickt: "+vn+" ist in der Akademie einem anderen Fahrlehrer zugeordnet.";
+  if(d.error==="nicht_eingeloggt")return "Video-Tipp nicht geschickt: Bitte neu anmelden.";
   if(d.error==="konto_gesperrt"||d.error==="keine_fahrschule")return "Video-Tipp nicht geschickt: Dein Konto ist für die Akademie nicht freigeschaltet.";
   return "Video-Tipp an "+vn+" nicht geschickt: Akademie gerade nicht erreichbar.";
 }
@@ -5880,7 +5881,7 @@ async function _fsZurBueroSeite(ev){
       if(_fsSyncLaeuftP||_fsSyncDebounce||_fsUngespeichert)ok=false;
       // Ist der Nutzer inzwischen auf eine andere Seite gegangen, nicht mehr plötzlich wegspringen
       if(knopf&&!document.contains(knopf))return false;
-      if(view.firstElementChild!==seiteVorher&&_fsBedienZaehler!==bedienVorher)return false;
+      if(view.firstElementChild!==seiteVorher&&_fsBedienZaehler!==bedienVorher){ toast("Wechsel zur Büro-Seite abgebrochen, weil inzwischen weitergetippt wurde. Bitte noch einmal tippen."); return false; }
       if(!ok&&!confirm("Nicht alle Änderungen konnten gespeichert werden. Trotzdem zur Büro-Seite? Ungespeichertes geht dann verloren."))return false;
     }
     location.href="buero.html";
@@ -8603,7 +8604,8 @@ async function _fillAkademieFortschritt(s){
     const supa=getSupa();
     const{data,error}=await supa.functions.invoke("trigger-akademie-fortschritt",{body:{telefon:s.telefon}});
     if(error||!data||!data.ok||!data.fortschritt)return;
-    const box2=document.getElementById("akademieFortschrittSlot"); if(!box2)return;
+    // Antwort kommt spät: nur in die Akte schreiben, die noch offen ist (nicht in die nächste Akte)
+    const box2=document.getElementById("akademieFortschrittSlot"); if(!box2||box2.dataset.sid!==String(s.id))return;
     // K3 (Entscheidung 3b): Zahlen erzwingen, Text „geöffnet“ (die Akademie zählt das Öffnen eines Videos,
     // nicht, ob es zu Ende geschaut wurde). Klemme bleibt: geöffnet darf gesamt nie übersteigen.
     const gesamt=Math.floor(Number(data.fortschritt.gesamt)), geoeffnet=Math.floor(Number(data.fortschritt.gesehen));
@@ -8685,7 +8687,7 @@ function routeDetail(id){
       ${naechsteStunde?`<div class="mini-dash-row"><span>${_li("kalender")} Nächster Termin</span><b>${isoDE(naechsteStunde.date)} · ${esc(naechsteStunde.von)} Uhr</b></div>`:""}
       ${s.email?`<div class="mini-dash-row"><span>✉️ E-Mail</span><b>${esc(s.email)}</b></div>`:""}
       ${s.geburtsdatum?`<div class="mini-dash-row"><span>🎂 Geburtstag</span><b>${isoDE(s.geburtsdatum).slice(0,5)}</b></div>`:""}
-      <div id="akademieFortschrittSlot"></div>
+      <div id="akademieFortschrittSlot" data-sid="${esc(String(s.id))}"></div>
     </div>
     <div class="theo-row">
       <div class="theo-label">📚 Lernstand Theorie</div>
@@ -13419,7 +13421,7 @@ function leistungAusUE(ue){ return Math.round(ue*DB.verdienst.proUE); }
 function monthRangeOf(iso){ return isoMonthRange(iso); }
 function yearRange(iso){ const y=parseISO(iso).getFullYear(); return [y+"-01-01",y+"-12-31"]; }
 
-// Auffrischen im Hintergrund (Abgleich): in der Tagesansicht die Stelle halten, statt neu zu springen (K3, GK23)
+// Neu zeichnen nach Filter-Wechsel: in der Tagesansicht die Stelle halten, statt neu zu springen (K3, GK23)
 function routeKalenderRefresh(){ if(!$("#calBody"))return; const y=view.scrollTop, warTag=_calView==="tag"; routeKalender(); if(warTag&&_calView==="tag")view.scrollTop=y; }
 
 
