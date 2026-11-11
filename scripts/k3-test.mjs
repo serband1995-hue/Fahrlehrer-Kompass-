@@ -97,32 +97,34 @@ async function seite(w, h, jetzt) {
     for (const k in _akTippOk) delete _akTippOk[k]; // jeder Fall für sich (A15 prüft die Sperre nach Erfolg)
     const t = document.getElementById("toast"); t.textContent = ""; t.classList.remove("show");
     await _pushAkademieVideo(s || { id: "s1", name: "Lena Muster", telefon: "0170 1234567" }, { stufe: "Grundstufe", tag: "t1" });
-    return { text: t.textContent, sichtbar: t.classList.contains("show") };
+    return { text: t.textContent, sichtbar: t.classList.contains("show"), art: ["ok", "info", "fehler"].find((a) => t.classList.contains("t-" + a)) || "", schrift: getComputedStyle(t).fontFamily };
   }, { antwort, s });
   const ctxAntwort = (status, body) => ({ httpStatus: status, httpBody: body });
   const faelle = [
-    ["A1", "Push angekommen", { data: { ok: true, push_gesendet_an: 2, empfehlung_gespeichert: true }, error: null }, /Video-Tipp an Lena geschickt/],
-    ["A2", "ohne Push-Abo", { data: { ok: true, push_gesendet_an: 0, hinweis: "kein_push_abo", empfehlung_gespeichert: true }, error: null }, /Handy-Nachrichten sind aus.*nächsten Anmelden/],
-    ["A3", "kein Zugang (geparkt)", { data: { ok: true, push_gesendet_an: 0, empfehlung_geparkt: true, grund: "kein_zugang" }, error: null }, /noch keinen Akademie-Zugang.*liegt bereit/],
-    ["A4", "Zugang gesperrt (geparkt)", { data: { ok: true, push_gesendet_an: 0, empfehlung_geparkt: true, grund: "zugang_gesperrt" }, error: null }, /gesperrt.*gespeichert.*wieder frei/],
-    ["A5", "Zugang abgelaufen (geparkt)", { data: { ok: true, push_gesendet_an: 0, empfehlung_geparkt: true, grund: "zugang_abgelaufen" }, error: null }, /abgelaufen.*gespeichert.*Verlängerung/],
-    ["A6", "Sperre 2 Minuten (429)", ctxAntwort(429, { ok: false, error: "cooldown_aktiv" }), /nicht geschickt.*2 Minuten/],
-    ["A7", "anderer Fahrlehrer (403)", ctxAntwort(403, { ok: false, error: "fahrlehrer_stimmt_nicht" }), /nicht geschickt.*anderen Fahrlehrer/],
-    ["A8", "eigenes Konto ohne Fahrschule (403)", ctxAntwort(403, { ok: false, error: "keine_fahrschule" }), /Konto ist für die Akademie nicht freigeschaltet/],
-    ["A14", "Anmeldung abgelaufen (401)", ctxAntwort(401, { ok: false, error: "nicht_eingeloggt" }), /nicht geschickt.*neu anmelden/],
-    ["A9", "ohne Netz", { wirf: true }, /nicht geschickt.*nicht erreichbar/],
-    ["A10", "Fehler ohne lesbare Antwort", { data: null, error: { name: "FunctionsFetchError" } }, /nicht geschickt.*nicht erreichbar/],
+    ["A1", "Push angekommen", { data: { ok: true, push_gesendet_an: 2, empfehlung_gespeichert: true }, error: null }, /Video-Tipp an Lena geschickt/, "ok"],
+    ["A2", "ohne Push-Abo", { data: { ok: true, push_gesendet_an: 0, hinweis: "kein_push_abo", empfehlung_gespeichert: true }, error: null }, /Tipp gespeichert.*Handy-Nachrichten aus/, "info"],
+    ["A3", "kein Zugang (geparkt)", { data: { ok: true, push_gesendet_an: 0, empfehlung_geparkt: true, grund: "kein_zugang" }, error: null }, /Tipp gespeichert.*noch keinen Akademie-Zugang/, "info"],
+    ["A4", "Zugang gesperrt (geparkt)", { data: { ok: true, push_gesendet_an: 0, empfehlung_geparkt: true, grund: "zugang_gesperrt" }, error: null }, /Tipp gespeichert.*gesperrt/, "info"],
+    ["A5", "Zugang abgelaufen (geparkt)", { data: { ok: true, push_gesendet_an: 0, empfehlung_geparkt: true, grund: "zugang_abgelaufen" }, error: null }, /Tipp gespeichert.*abgelaufen/, "info"],
+    ["A6", "Sperre 2 Minuten (429)", ctxAntwort(429, { ok: false, error: "cooldown_aktiv" }), /Nicht geschickt.*2 Min/, "fehler"],
+    ["A7", "anderer Fahrlehrer (403)", ctxAntwort(403, { ok: false, error: "fahrlehrer_stimmt_nicht" }), /Nicht geschickt.*anderen Fahrlehrer/, "fehler"],
+    ["A8", "eigenes Konto ohne Fahrschule (403)", ctxAntwort(403, { ok: false, error: "keine_fahrschule" }), /Nicht geschickt.*Konto.*nicht frei/, "fehler"],
+    ["A14", "Anmeldung abgelaufen (401)", ctxAntwort(401, { ok: false, error: "nicht_eingeloggt" }), /Nicht geschickt.*neu anmelden/, "fehler"],
+    ["A9", "ohne Netz", { wirf: true }, /Nicht geschickt.*nicht erreichbar/, "fehler"],
+    ["A10", "Fehler ohne lesbare Antwort", { data: null, error: { name: "FunctionsFetchError" } }, /Nicht geschickt.*nicht erreichbar/, "fehler"],
   ];
-  for (const [id, n, antwort, muster] of faelle) {
-    await pruefe(id, `Video-Tipp: ${n} → klare Meldung`, async () => {
+  for (const [id, n, antwort, muster, art] of faelle) {
+    await pruefe(id, `Video-Tipp: ${n} → klare, kurze Meldung mit Farbe „${art}“`, async () => {
       const r = await tipp(antwort);
       if (!r.sichtbar) return "keine Meldung sichtbar";
       if (!muster.test(r.text)) return "Text: " + r.text;
+      if (r.text.length > 70) return "zu lang (" + r.text.length + " Zeichen): " + r.text;
+      if (r.art !== art) return "Farbe „" + r.art + "“ statt „" + art + "“";
     });
   }
   await pruefe("A11", "ohne Handynummer: Hinweis statt stillem Abbruch", async () => {
     const r = await tipp({ data: { ok: true, push_gesendet_an: 1 }, error: null }, { id: "s2", name: "Max Muster", telefon: "" });
-    if (!/keine Handynummer/.test(r.text) || !/Max/.test(r.text)) return "Text: " + r.text;
+    if (!/fehlt die Handynummer/.test(r.text) || !/Max/.test(r.text)) return "Text: " + r.text;
   });
   await pruefe("A15", "Doppeltipp: nur eine Anfrage; Sperre direkt nach eigenem Erfolg heißt „gerade schon geschickt“", async () => {
     const r = await page.evaluate(async () => {
@@ -136,12 +138,12 @@ async function seite(w, h, jetzt) {
     });
     const f = [];
     if (r.n !== 1) f.push(r.n + " Anfragen statt 1");
-    if (!/gerade schon geschickt/.test(r.t)) f.push("Text: " + r.t);
+    if (!/Schon geschickt/.test(r.t)) f.push("Text: " + r.t);
     return f;
   });
   await pruefe("A16", "ungültige Nummer (400) → eigener Text", async () => {
     const r = await tipp(ctxAntwort(400, { ok: false, error: "telefon_fehlt" }));
-    if (!/Handynummer.*ungültig/.test(r.text)) return "Text: " + r.text;
+    if (!/Handynummer.*ungültig/.test(r.text) || r.art !== "fehler") return "Text/Farbe: " + r.text + " " + r.art;
   });
   await pruefe("A12", "Name mit Sonderzeichen wird als Text gezeigt (kein HTML)", async () => {
     const r = await tipp({ data: { ok: true, push_gesendet_an: 1 }, error: null }, { id: "s3", name: "<b>Zoë</b> Muster", telefon: "0170 1" });
@@ -230,6 +232,16 @@ for (const [w, h, n] of [[360, 780, "360 hoch"], [412, 915, "412 hoch"], [740, 3
     const f = [];
     if (a.scroll !== 0) f.push("nach ‹ nicht oben: " + a.scroll);
     if (!(b.scroll > 0)) f.push("„Heute“ springt nicht");
+    return f;
+  });
+  await pruefe(`C7 [${n}]`, "nach dem Sprung steht die Datumszeile (‹ Datum ›) oben im Bild", async () => {
+    await page.evaluate(() => routeKalender("woche", "2026-11-11")); await page.waitForTimeout(100);
+    await page.evaluate((t) => routeKalender("tag", t), TAG); await page.waitForTimeout(250);
+    const r = await page.evaluate(() => { const v = document.getElementById("view").getBoundingClientRect(), nav = document.querySelector(".cal-nav").getBoundingClientRect(), now = document.querySelector(".ct-now").getBoundingClientRect(), s = document.getElementById("view").scrollTop; return { s, oben: nav.top - v.top, unten: nav.bottom - v.top, now: now.top - v.top, h: v.height }; });
+    const f = [];
+    if (!(r.s > 0)) f.push("nicht gesprungen");
+    if (r.oben < -1 || r.unten > 120) f.push(`Datumszeile nicht oben (${Math.round(r.oben)}–${Math.round(r.unten)} px)`);
+    if (r.now < r.unten || r.now > r.h - 10) f.push(`Jetzt-Linie verdeckt/außerhalb (${Math.round(r.now)} px)`);
     return f;
   });
   await pruefe(`C4 [${n}]`, "keine Seite breiter als der Bildschirm, keine JS-Fehler", async () => {

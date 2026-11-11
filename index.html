@@ -1426,6 +1426,13 @@ body.light .dt-n{background:linear-gradient(160deg,#1d3324 10%,#2f5d3f 90%);-web
 .clb-item{display:inline-flex;align-items:center;gap:5px;font-size:11px;font-weight:700;color:var(--muted);}
 .clb-item i{width:9px;height:9px;border-radius:2px;flex:0 0 auto;}
 .cal-nav{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:16px;}
+/* K3 (GK23): In der Tagesansicht bleibt die Datumszeile beim Wischen oben stehen (nach dem Sprung zur Jetzt-Linie sichtbar) */
+.cal-wrap.cal-tag>.cal-nav{position:sticky;top:0;z-index:6;background:var(--bg);padding-top:6px;padding-bottom:6px;box-shadow:0 1px 0 var(--line);}
+body.light:has(#view[data-seite2]) .cal-wrap.cal-tag>.cal-nav{background:var(--k-grund);}
+/* K3: Meldungen nach dem Video-Tipp mit fester Farbbedeutung (grün angekommen, gelb gespeichert, rot nicht geschickt) */
+.toast.t-ok{box-shadow:inset 6px 0 0 var(--gruen),var(--elev-3) !important;}
+.toast.t-info{box-shadow:inset 6px 0 0 var(--gelb),var(--elev-3) !important;}
+.toast.t-fehler{box-shadow:inset 6px 0 0 var(--rot),var(--elev-3) !important;}
 .cal-arrow{width:40px;height:40px;border-radius:12px;display:flex;align-items:center;justify-content:center;background:var(--glass);border:1px solid var(--glass-brd);color:var(--txt);box-shadow:var(--inset-top);}
 .cal-arrow:active{transform:scale(.9);}
 .cal-arrow svg{width:20px;height:20px;}
@@ -3539,35 +3546,37 @@ function faLink(entry){
 // Antworten der Akademie (academy-send-notification v5): ok+push_gesendet_an>0 | ok+hinweis "kein_push_abo" |
 // ok+empfehlung_geparkt+grund (kein_zugang, zugang_gesperrt, zugang_abgelaufen) | 429 cooldown_aktiv |
 // 403 fahrlehrer_stimmt_nicht; von der Kompass-Function: 403 konto_gesperrt/keine_fahrschule.
+// Kurz, Ergebnis zuerst (Design K3): [Text, Art] mit Art ok (angekommen) / info (gespeichert, kommt später) / fehler (nicht geschickt)
 function _akademieTippText(vn,res){
   const d=res||{};
   if(d.ok){
-    if(Number(d.push_gesendet_an)>0)return "📲 Video-Tipp an "+vn+" geschickt ✓";
+    if(Number(d.push_gesendet_an)>0)return ["📲 Video-Tipp an "+vn+" geschickt ✓","ok"];
     if(d.empfehlung_geparkt){
-      if(d.grund==="zugang_gesperrt")return "Akademie-Zugang von "+vn+" ist gesperrt. Der Video-Tipp ist gespeichert und erscheint, wenn der Zugang wieder frei ist und "+vn+" sich anmeldet.";
-      if(d.grund==="zugang_abgelaufen")return "Akademie-Zugang von "+vn+" ist abgelaufen. Der Video-Tipp ist gespeichert und erscheint nach der Verlängerung und der nächsten Anmeldung.";
-      return vn+" hat noch keinen Akademie-Zugang. Der Video-Tipp liegt bereit, bis der Zugang freigeschaltet ist.";
+      if(d.grund==="zugang_gesperrt")return ["Tipp gespeichert · Zugang von "+vn+" ist gesperrt","info"];
+      if(d.grund==="zugang_abgelaufen")return ["Tipp gespeichert · Zugang von "+vn+" ist abgelaufen","info"];
+      return ["Tipp gespeichert · "+vn+" hat noch keinen Akademie-Zugang","info"];
     }
-    return "Video-Tipp für "+vn+" gespeichert. Handy-Nachrichten sind aus: "+vn+" sieht ihn beim nächsten Anmelden in der Akademie.";
+    return ["Tipp gespeichert · "+vn+" hat Handy-Nachrichten aus","info"];
   }
-  if(d.error==="cooldown_aktiv")return "Video-Tipp nicht geschickt: "+vn+" hat vor weniger als 2 Minuten schon einen bekommen.";
-  if(d.error==="fahrlehrer_stimmt_nicht")return "Video-Tipp nicht geschickt: "+vn+" ist in der Akademie einem anderen Fahrlehrer zugeordnet.";
-  if(d.error==="nicht_eingeloggt")return "Video-Tipp nicht geschickt: Bitte neu anmelden.";
-  if(d.error==="telefon_fehlt")return "Video-Tipp nicht geschickt: Die Handynummer von "+vn+" ist ungültig.";
-  if(d.error==="konto_gesperrt"||d.error==="keine_fahrschule")return "Video-Tipp nicht geschickt: Dein Konto ist für die Akademie nicht freigeschaltet.";
-  return "Video-Tipp an "+vn+" nicht geschickt: Akademie gerade nicht erreichbar.";
+  if(d.error==="cooldown_aktiv")return ["Nicht geschickt · "+vn+" bekam vor 2 Min. schon einen","fehler"];
+  if(d.error==="fahrlehrer_stimmt_nicht")return ["Nicht geschickt · "+vn+" hat dort einen anderen Fahrlehrer","fehler"];
+  if(d.error==="nicht_eingeloggt")return ["Nicht geschickt · bitte neu anmelden","fehler"];
+  if(d.error==="telefon_fehlt")return ["Nicht geschickt · Handynummer von "+vn+" ungültig","fehler"];
+  if(d.error==="konto_gesperrt"||d.error==="keine_fahrschule")return ["Nicht geschickt · dein Konto ist für die Akademie nicht frei","fehler"];
+  return ["Nicht geschickt · Akademie nicht erreichbar","fehler"];
 }
 // Meldung erst zeigen, wenn die App wieder im Vordergrund ist (das Video öffnet sich in einem neuen Tab)
-function _toastSichtbar(m){
-  if(!document.hidden){ toast(m); return; }
-  const zeig=()=>{ if(document.hidden)return; document.removeEventListener("visibilitychange",zeig); toast(m); };
+function _toastSichtbar(m,art){
+  const zeige=()=>{ toast(m); if(art)$("#toast").classList.add("t-"+art); };
+  if(!document.hidden){ zeige(); return; }
+  const zeig=()=>{ if(document.hidden)return; document.removeEventListener("visibilitychange",zeig); zeige(); };
   document.addEventListener("visibilitychange",zeig);
 }
 const _akTippLaeuft=new Set(), _akTippOk={}; // je Schüler: Anfrage unterwegs / Zeit des letzten geschickten Tipps
 async function _pushAkademieVideo(s,entry){
   if(!entry||!s)return;
   const vn=String(s.name||"Schüler").trim().split(/\s+/)[0]||"Schüler";
-  if(!s.telefon){ _toastSichtbar("Video-Tipp nicht geschickt: Bei "+vn+" ist keine Handynummer eingetragen."); return; }
+  if(!s.telefon){ _toastSichtbar("Nicht geschickt · bei "+vn+" fehlt die Handynummer","fehler"); return; }
   const key=String(s.id||s.telefon);
   if(_akTippLaeuft.has(key))return; // Doppeltipp: die erste Anfrage meldet sich selbst
   _akTippLaeuft.add(key);
@@ -3584,8 +3593,9 @@ async function _pushAkademieVideo(s,entry){
   finally{ _akTippLaeuft.delete(key); }
   if(res&&res.ok)_akTippOk[key]=Date.now();
   // Sperre der Akademie (2 Minuten) direkt nach eigenem erfolgreichem Tipp: der erste ist angekommen
-  if(res&&res.error==="cooldown_aktiv"&&_akTippOk[key]&&Date.now()-_akTippOk[key]<130000){ _toastSichtbar("Video-Tipp an "+vn+" wurde gerade schon geschickt. Ein weiterer geht erst nach 2 Minuten."); return; }
-  _toastSichtbar(_akademieTippText(vn,res));
+  if(res&&res.error==="cooldown_aktiv"&&_akTippOk[key]&&Date.now()-_akTippOk[key]<130000){ _toastSichtbar("Schon geschickt · nächster Tipp an "+vn+" in 2 Min.","ok"); return; }
+  const [text,art]=_akademieTippText(vn,res);
+  _toastSichtbar(text,art);
 }
 const INFO = {
   g_sitz:[
@@ -7959,7 +7969,7 @@ function countUp(el,target,suffix){
     if(k<1)requestAnimationFrame(step);}
   requestAnimationFrame(step);
 }
-function toast(m){const t=$("#toast");t.textContent=m;t.classList.remove("undo");t.classList.add("show");clearTimeout(t._t);t._t=setTimeout(()=>t.classList.remove("show"),Math.min(6000,Math.max(1900,String(m).length*65)));}
+function toast(m){const t=$("#toast");t.textContent=m;t.classList.remove("undo","t-ok","t-info","t-fehler");t.classList.add("show");clearTimeout(t._t);t._t=setTimeout(()=>t.classList.remove("show"),Math.min(6000,Math.max(1900,String(m).length*65)));}
 /* Undo-Toast: zeigt kurz eine Aktion + "Rückgängig"-Link (ca. 5s). onUndo wird bei Klick ausgeführt. */
 // Lädt den aktuellen Stand als Backup-Datei herunter (zusatz landet im Dateinamen).
 function _backupHerunterladen(zusatz){
@@ -12959,7 +12969,7 @@ function routeKalender(ansicht,datum){
   if(!_calDate)_calDate=todayISO();
   $("#tbTitle").textContent="Kalender"; setFab("termin"); view.scrollTop=0;
   const viewLabels={tag:"Tagesansicht",woche:"Wochenansicht",monat:"Monatsansicht"};
-  let html=`<div class="view-inner view-read fade-up cal-wrap">
+  let html=`<div class="view-inner view-read fade-up cal-wrap${_calView==="tag"?" cal-tag":""}">
     <div class="cal-head">
       <button class="cal-viewbtn" id="calViewBtn">${viewLabels[_calView]} <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" style="width:14px;height:14px;"><path d="M6 9l6 6 6-6"/></svg></button>
       <div style="display:flex;gap:8px;align-items:center;">

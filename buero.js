@@ -1900,12 +1900,12 @@ function bindeAkademieZugang(dlg, x) {
     if (!v.telefon) { melde("Für den Akademie-Zugang braucht der Schüler eine Telefonnummer (sie ist sein Login).", true); dlg.querySelector("[name=telefon]").focus(); return; }
     try { localStorage.setItem("fa_vorbelegung_v1", JSON.stringify(v)); setTimeout(akademieVorbelegungAufraeumen, 5 * 60 * 1000 + 1000); }
     catch (e) { melde("Der Browser lässt das Speichern nicht zu. Bitte die Daten in der Akademie von Hand eintragen.", true); return; }
-    knopf.disabled = true; setTimeout(() => { knopf.disabled = false; }, 1500); // Doppeltipp öffnet die Akademie nicht zweimal
     // Ohne „noopener“ im Aufruf, denn dann liefert window.open immer null und ein gesperrtes Fenster wäre nicht erkennbar
     const fenster = window.open(AKADEMIE_ADMIN_URL, "_blank");
     if (fenster) try { fenster.opener = null; } catch (e) { /* egal */ }
     if (!fenster) { melde("Pop-up gesperrt: Bitte Pop-ups für diese Seite erlauben oder die Akademie-Verwaltung selbst öffnen. Die Daten liegen 5 Minuten bereit.", true); return; }
-    melde(`Akademie geöffnet. Dort anmelden und „Schüler anlegen“ tippen: ${v.klasse ? "" : "Klasse bitte selbst wählen. "}Die Daten liegen 5 Minuten bereit.${x && v.telefon.replace(/\D/g, "") !== String(x.telefon || "").replace(/\D/g, "") ? " Die Telefonnummer ist neu: bitte die Akte auch speichern." : ""}`);
+    knopf.disabled = true; setTimeout(() => { knopf.disabled = false; }, 1500); // Doppeltipp öffnet die Akademie nicht zweimal (nur nach Erfolg)
+    melde(`Akademie geöffnet ✓ Die Daten liegen 5 Minuten bereit.${v.klasse ? "" : " Klasse dort bitte selbst wählen."}${x && v.telefon.replace(/\D/g, "") !== String(x.telefon || "").replace(/\D/g, "") ? " Die Telefonnummer ist neu: bitte die Akte auch speichern." : ""}`);
   });
 }
 function schuelerDialog(id) {
