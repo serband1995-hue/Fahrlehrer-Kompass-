@@ -5622,7 +5622,7 @@ let _normalDrawerNavHTML=null;
 
 function _fsDrawerNavHTML(zeigeZurueck){
   return `
-    <a class="nav-item" href="buero.html" style="text-decoration:none;font-weight:700;">
+    <a class="nav-item" href="buero.html" onclick="return _fsZurBueroSeite(event)" style="text-decoration:none;font-weight:700;">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="4" width="20" height="13" rx="2"/><path d="M8 21h8M12 17v4"/></svg>
       Büro-Seite am PC öffnen</a>
     <button class="nav-item" data-nav="fs_dash">
@@ -5816,17 +5816,27 @@ function _fsSuperAdminToggleBtn(){
 
 // K2: Knopf „Zur Büro-Seite“ nur für Leitung, Büro und Super-Admin
 function _fsDarfBueroSeite(){ const r=_authProfile&&_authProfile.rolle; return r==="fahrschule_admin"||r==="buero"||isSuperAdmin(); }
+let _fsZurBueroLaeuft=false;
 async function _fsZurBueroSeite(ev){
   if(ev)ev.preventDefault();
+  if(_fsZurBueroLaeuft)return false; // Doppeltipp: der erste Tipp speichert noch
   if(!_seiteVerlassenOk())return false;
-  // Noch nicht geschriebene Änderungen der Gesamtansicht erst speichern (wie beim Umschalten in die eigene Ansicht)
-  if(_fsAgg&&(_fsSyncDebounce||_fsUngespeichert)){
-    clearTimeout(_fsSyncDebounce);
-    let ok=false; try{ ok=await _fsSyncAggJetzt(); }catch(e){}
-    if(!ok&&!confirm("Nicht alle Änderungen konnten gespeichert werden. Trotzdem zur Büro-Seite? Ungespeichertes geht dann verloren."))return false;
-  }
-  location.href="buero.html";
-  return false;
+  _fsZurBueroLaeuft=true;
+  try{
+    // Noch nicht geschriebene Änderungen der Gesamtansicht erst speichern (wie beim Umschalten in die eigene Ansicht).
+    // Auch ein Speichern, das gerade unterwegs ist, wird abgewartet: Der Seitenwechsel würde es sonst abbrechen.
+    if(_fsAgg){
+      let ok=true;
+      if(_fsSyncLaeuftP){ try{ ok=(await _fsSyncLaeuftP)!==false; }catch(e){ ok=false; } }
+      if(_fsSyncDebounce||_fsUngespeichert||!ok){
+        clearTimeout(_fsSyncDebounce);
+        try{ ok=(await _fsSyncAggJetzt())!==false; }catch(e){ ok=false; }
+      }
+      if(!ok&&!confirm("Nicht alle Änderungen konnten gespeichert werden. Trotzdem zur Büro-Seite? Ungespeichertes geht dann verloren."))return false;
+    }
+    location.href="buero.html";
+    return false;
+  }finally{ _fsZurBueroLaeuft=false; }
 }
 function routeFahrschuleDashboard(){
   if(!_fsAgg)return;
@@ -7487,7 +7497,16 @@ function _fsSyncAggChanges(){
 // damit weder "Gespeichert ✓" erscheint noch die Vergleichsbasis weiterrückt.
 function _fsPruefe(r){ if(r&&r.error) throw r.error; return r; }
 // Liefert true, wenn alles geschrieben ist (oder nichts zu schreiben war), sonst false.
-async function _fsSyncAggJetzt(){
+// Laufendes Speichern merken, damit ein Seitenwechsel (z. B. zur Büro-Seite) darauf warten kann.
+let _fsSyncLaeuftP=null;
+function _fsSyncAggJetzt(){
+  const p=_fsSyncAggJetztKern();
+  _fsSyncLaeuftP=p;
+  const fertig=()=>{ if(_fsSyncLaeuftP===p)_fsSyncLaeuftP=null; };
+  p.then(fertig,fertig);
+  return p;
+}
+async function _fsSyncAggJetztKern(){
     _fsSyncDebounce=null;
     if(!_fsAgg||!_fsBaseline)return true;
     try{

@@ -190,7 +190,7 @@ function zeichne() {
   wartIndex = null; // Warteliste neu rechnen (Termine können sich geändert haben)
   const b = aktuellerBereich();
   $("titel").textContent = b.titel;
-  $("menueKnopf").innerHTML = `<span>Menü · ${esc(b.titel)}</span><span class="pfeil" aria-hidden="true"></span>`;
+  if ($("menueKnopf")) $("menueKnopf").innerHTML = `<span>Menü · ${esc(b.titel)}</span><span class="pfeil" aria-hidden="true"></span>`;
   document.body.dataset.bereich = b.id;
   $("drucken").hidden = b.id === "team"; // Zugangsliste wird nicht gedruckt
   document.title = b.titel + " · Kompass Büro";
@@ -214,14 +214,15 @@ window.addEventListener("hashchange", () => {
 function istSchmal() { return window.matchMedia("(max-width:900px)").matches; }
 function menueOffen(an) {
   document.body.classList.toggle("menue-offen", !!an);
-  $("menueKnopf").setAttribute("aria-expanded", an ? "true" : "false");
+  if ($("menueKnopf")) $("menueKnopf").setAttribute("aria-expanded", an ? "true" : "false");
 }
 function springeZumTitel() {
   const st = $("rollenStreifen");
   const oben = st && !st.hidden && getComputedStyle(st).position === "sticky" ? st.getBoundingClientRect().height : 0;
   window.scrollTo(0, Math.max(0, $("titel").getBoundingClientRect().top + window.scrollY - oben - 8));
 }
-$("menueKnopf").addEventListener("click", () => menueOffen(!document.body.classList.contains("menue-offen")));
+// Schutz: Kommt buero.html noch alt aus dem Zwischenspeicher (ohne den Knopf), darf die Seite nicht stehen bleiben
+if ($("menueKnopf")) $("menueKnopf").addEventListener("click", () => menueOffen(!document.body.classList.contains("menue-offen")));
 document.addEventListener("click", (e) => {
   const a = e.target.closest(".nav-punkt");
   if (!a || !istSchmal()) return;
@@ -349,7 +350,7 @@ function klassenOptionen(gewaehlt) {
   if (gewaehlt && !liste.some(([k]) => k === gewaehlt)) liste.push([gewaehlt, gewaehlt]);
   return `<option value="">–</option>` + liste.map(([k, n]) => `<option value="${esc(k)}"${gewaehlt === k ? " selected" : ""}>${esc(n)}</option>`).join("");
 }
-// Standardbetrag der Reaktivierung: 240 € (Kristina, 09.10.2026); einstellbar durch den Super-Admin, im Einzelfall je Zahlung änderbar
+// Standardbetrag der Reaktivierung: 240 € (Vorgabe des Büros, 09.10.2026); einstellbar durch den Super-Admin, im Einzelfall je Zahlung änderbar
 const REAKT_STANDARD = 240;
 function reaktBetrag() {
   const k = (S.fs && S.fs.konfiguration) || {};
@@ -1120,7 +1121,7 @@ function ergebnisDialog(id) {
 }
 
 /* ---------- Auslastung je Fahrlehrer ---------- */
-// Regel (Serband/Kristina, 09.10.2026): 12 UE am Tag, 5 Tage = 60 UE pro Woche. „Voll“ ist ein Fahrlehrer erst, wenn er
+// Regel (Serband und Büro, 09.10.2026): 12 UE am Tag, 5 Tage = 60 UE pro Woche. „Voll“ ist ein Fahrlehrer erst, wenn er
 // demselben Schüler in der Woche nicht mehr zwei Termine (je 90 Minuten) geben kann.
 const UE_PRO_WOCHE_STANDARD = 60, UE_PRO_TAG = 12;
 function ueProWoche() {
@@ -3106,7 +3107,7 @@ function bindeZahlen(ziel) {
 async function adminFunktion(body) {
   const { data: sd } = await supa.auth.getSession();
   const token = sd && sd.session ? sd.session.access_token : null;
-  // Büro-Person mit Verwalten-Recht (Jelena, Murat): die PIN-Sitzung geht mit, die Funktion prüft sie
+  // Büro-Person mit Verwalten-Recht: die PIN-Sitzung geht mit, die Funktion prüft sie
   const { data, error } = await supa.functions.invoke("admin-create-account", { body: Object.assign({}, body, { requester_token: token, buero_sitzung: S.sitzung ? S.sitzung.token : undefined }) });
   if (error) {
     // Die Funktion schickt bei Fehlern eine Erklärung mit; sonst stünde hier nur „non-2xx status code“
