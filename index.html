@@ -5841,12 +5841,15 @@ async function _fsZurBueroSeite(ev){
     // Noch nicht geschriebene Änderungen der Gesamtansicht erst speichern (wie beim Umschalten in die eigene Ansicht).
     // Auch ein Speichern, das gerade unterwegs ist, wird abgewartet: Der Seitenwechsel würde es sonst abbrechen.
     if(_fsAgg){
-      let ok=true;
-      if(_fsSyncLaeuftP){ try{ ok=(await _fsSyncLaeuftP)!==false; }catch(e){ ok=false; } }
-      if(_fsSyncDebounce||_fsUngespeichert||!ok){
-        clearTimeout(_fsSyncDebounce);
-        try{ ok=(await _fsSyncAggJetzt())!==false; }catch(e){ ok=false; }
+      let ok=true, fehlversuch=false;
+      // Warten, bis wirklich nichts mehr offen ist: Während ein Speichern läuft, kann schon das nächste anstehen.
+      for(let runde=0; runde<6 && (_fsSyncLaeuftP||_fsSyncDebounce||_fsUngespeichert); runde++){
+        const lief=_fsSyncLaeuftP;
+        if(!lief){ clearTimeout(_fsSyncDebounce); _fsSyncDebounce=null; }
+        try{ ok=(await (lief||_fsSyncAggJetzt()))!==false; }catch(e){ ok=false; }
+        if(!ok){ if(fehlversuch)break; fehlversuch=true; } // nach einem Fehler genau einmal neu versuchen
       }
+      if(_fsSyncLaeuftP||_fsSyncDebounce||_fsUngespeichert)ok=false;
       if(!ok&&!confirm("Nicht alle Änderungen konnten gespeichert werden. Trotzdem zur Büro-Seite? Ungespeichertes geht dann verloren."))return false;
     }
     location.href="buero.html";
