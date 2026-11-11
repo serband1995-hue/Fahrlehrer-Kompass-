@@ -2,12 +2,14 @@
 -- Alle Namen sind erfunden (Nachname „Muster“), die Telefonnummern stammen aus dem Bereich, den die Bundesnetzagentur
 -- für Film und Fernsehen freihält (0171 39200xx). Kein Anmelde-Konto, kein Fahrlehrer zugeordnet.
 -- Die Test-Fahrschule hat den Akademie-Export aus (Migration k1_01): Diese Zeilen gehen NICHT an die Fahr-Akademie.
+-- Hinweis: Live lief zuerst eine Fassung mit beginn als JJJJ-MM-TT und leerem plan; Migration k1_06 hat das angeglichen
+-- (die App erwartet TT.MM.JJJJ und legt den Ausbildungsplan selbst an, wenn keiner da ist).
 -- Rückweg: supabase/rueckweg/20261111_k1_rueckweg.sql, Abschnitt 2.
 insert into public.schueler (id, fahrschule_id, name, telefon, status, klasse, ausbildungsart, vertrag_am, ausbildung)
 select v.id, f.id, v.name, v.telefon, 'aktiv', v.klasse, 'ersterwerb', v.vertrag_am::date,
        jsonb_build_object('form', v.form, 'created', (extract(epoch from v.vertrag_am::timestamptz) * 1000)::bigint,
-                          'beginn', v.vertrag_am, 'notiz', '', 'plan', '{}'::jsonb, 'risk', '{}'::jsonb,
-                          'planSnapshot', '[]'::jsonb, 'standPct', v.stand, 'theoriePct', v.theorie)
+                          'beginn', to_char(v.vertrag_am::date, 'DD.MM.YYYY'), 'notiz', '',
+                          'standPct', v.stand, 'theoriePct', v.theorie)
   from public.fahrschulen f,
        (values
          ('muster-01', 'Anna Muster',    '0171 3920001', 'B', 'B',         '2026-08-03', 20, 40),

@@ -6178,7 +6178,7 @@ async function fahrlehrerPasswortZuruecksetzen(userId){
 }
 
 async function toggleFahrlehrerAktiv(userId,aktiv,fahrschuleId){
-  if(!aktiv&&!isSuperAdmin()){toast("Sperren kann im Moment nur der Betreiber. Bitte Passwort neu setzen.");return;}
+  if(!isSuperAdmin()){toast(aktiv?"Freischalten kann im Moment nur der Betreiber.":"Sperren kann im Moment nur der Betreiber. Bitte Passwort neu setzen.");return;}
   if(!aktiv&&!confirm("Diesen Fahrlehrer wirklich sperren?\n\nEr kann die App beim nächsten Start nicht mehr öffnen. Ein Gerät, auf dem die App gerade offen ist, arbeitet bis dahin weiter. Bei Austritt zusätzlich das Passwort neu setzen."))return;
   const supa=getSupa();
   const {error}=await supa.from("profiles").update({aktiv}).eq("id",userId);

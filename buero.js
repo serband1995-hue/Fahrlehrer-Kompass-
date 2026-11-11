@@ -1311,6 +1311,7 @@ async function notizUngelesen(id, spaet) {
   // Hatte schon jemand gelesen und wurde trotzdem keine Zeile entfernt, fehlt das Löschrecht: ehrlich melden statt still „ungelesen“ zeigen
   const hatte = S.gelesen.some((g) => g.notiz_id === id);
   if (hatte && !(res.data && res.data.length)) {
+    S.gelesen = S.gelesen.filter((g) => g.notiz_id !== id); // in der Datenbank steht keine Marke mehr (z. B. von einem zweiten Büro-Gerät entfernt): Anzeige angleichen
     const t = "Notiz gespeichert, aber der Fahrlehrer bekommt keinen neuen Hinweis. Bitte ihm Bescheid geben.";
     if (spaet) setTimeout(() => toast(t, true), 120); else toast(t, true);
     return false;
