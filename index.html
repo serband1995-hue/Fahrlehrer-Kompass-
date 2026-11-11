@@ -5299,6 +5299,10 @@ async function pullSchuelerZuweisungen() {
 }
 /* Holt Kalender-Änderungen von der Fahrschule (neue/geänderte/gelöschte Termine) ab.
    "Zuletzt geändert gewinnt" pro Termin, via aktualisiert_am - dein Kalender bleibt sonst unangetastet. */
+/* Termin aus Datenbankzeile: erst die Nutzlast, dann die geprüften Spalten (die Spalten gewinnen, wie in _fsMapTermin). */
+function _terminMerge(r) {
+  return Object.assign({}, r.payload || {}, { id: r.id, sid: r.schueler_id, date: r.datum, von: r.von, bis: r.bis, art: r.art, fahrzeug: r.fahrzeug, status: r.status });
+}
 async function pullTermineZuweisungen() {
   if (!_authUser || !_authProfile || !_authProfile.fahrschule_id || !DB.lessons || _fsAgg || _termineAbrufLaeuft) return;
   _termineAbrufLaeuft = true;
@@ -5326,7 +5330,7 @@ async function pullTermineZuweisungen() {
     for (const r of rows) {
       const remoteTime = new Date(r.aktualisiert_am).getTime();
       const local = localById[r.id];
-      const merged = Object.assign({ sid: r.schueler_id, date: r.datum, von: r.von, bis: r.bis, art: r.art, fahrzeug: r.fahrzeug, status: r.status }, r.payload || {});
+      const merged = _terminMerge(r);
       if (!local) {
         // Kennt das Gerät den Termin schon, fehlt er lokal aber, hat der Fahrlehrer ihn gelöscht und die Brücke
         // hat das noch nicht hochgeladen (4 s Wartezeit, Funkloch, App geschlossen): nicht als „neu“ zurückholen –
@@ -5588,7 +5592,7 @@ async function renderAdminPanel() {
 }
 
 async function toggleUser(userId, aktiv) {
-  if (!aktiv && !confirm("Diesen Zugang wirklich sperren? Die Person kann sich dann nicht mehr anmelden.")) return;
+  if (!aktiv && !confirm("Diesen Zugang wirklich sperren?\n\nDie Person kann die App beim nächsten Start nicht mehr öffnen. Ein Gerät, auf dem die App gerade offen ist, arbeitet bis dahin weiter. Bei Austritt zusätzlich das Passwort neu setzen.")) return;
   const supa = getSupa();
   const { error } = await supa.from("profiles").update({ aktiv }).eq("id", userId);
   if (error) { toast("Nicht geändert: " + error.message); return; }
@@ -5874,7 +5878,7 @@ async function renderFsEmpfehlungenListe(){
   })();
   el2.innerHTML=platSummeHTML+data.map(e=>`<div class="fs-card" data-empf="${e.id}">
     <div class="fs-name">${e.typ==="simulator"?"🕹️":"🎓"} ${esc(e.schueler_name)} <span style="font-size:11px;color:var(--muted);font-weight:400;">· ${e.typ==="simulator"?"Simulator":"Videoakademie"}</span></div>
-    <div class="fs-sub">von ${esc(e.fahrlehrer_name)} · ${isoDE((e.erstellt_am||"").slice(0,10))} · <b>${STATUS_LABEL[e.status]||e.status}</b>${e.betrag!=null?` · ${eur(e.betrag)}`:''}</div>
+    <div class="fs-sub">von ${esc(e.fahrlehrer_name)} · ${isoDE((e.erstellt_am||"").slice(0,10))} · <b>${esc(STATUS_LABEL[e.status]||e.status)}</b>${e.betrag!=null?` · ${eur(e.betrag)}`:''}</div>
     <div class="fs-actions">
       ${e.status==="empfohlen"?`<button class="fs-btn-kill" style="background:var(--surface-2);color:var(--txt);" data-empf-zugang="${e.id}">Zugangsdaten ausgegeben</button>`:''}
       ${e.status!=="bezahlt"?`<button class="fs-btn-kill" style="background:#4a8b45;color:#fff;" data-empf-bezahlt="${e.id}">Bezahlt eintragen</button>`:''}
@@ -6027,7 +6031,7 @@ async function neueFahrschuleAnlegen(){
 }
 
 async function toggleFahrschuleAktiv(id,aktiv){
-  if(!aktiv&&!confirm("Die GANZE Fahrschule sperren? Alle Fahrlehrer und das Büro können sich dann nicht mehr anmelden."))return;
+  if(!aktiv&&!confirm("Die GANZE Fahrschule sperren?\n\nAlle Fahrlehrer und das Büro können die App beim nächsten Start nicht mehr öffnen. Geräte, auf denen die App gerade offen ist, arbeiten bis dahin weiter."))return;
   const supa=getSupa();
   const {error}=await supa.from("fahrschulen").update({aktiv}).eq("id",id);
   if(error){toast("Nicht geändert: "+error.message);return;}
@@ -6174,7 +6178,8 @@ async function fahrlehrerPasswortZuruecksetzen(userId){
 }
 
 async function toggleFahrlehrerAktiv(userId,aktiv,fahrschuleId){
-  if(!aktiv&&!confirm("Diesen Fahrlehrer wirklich sperren?"))return;
+  if(!aktiv&&!isSuperAdmin()){toast("Sperren kann im Moment nur der Betreiber. Bitte Passwort neu setzen.");return;}
+  if(!aktiv&&!confirm("Diesen Fahrlehrer wirklich sperren?\n\nEr kann die App beim nächsten Start nicht mehr öffnen. Ein Gerät, auf dem die App gerade offen ist, arbeitet bis dahin weiter. Bei Austritt zusätzlich das Passwort neu setzen."))return;
   const supa=getSupa();
   const {error}=await supa.from("profiles").update({aktiv}).eq("id",userId);
   if(error){toast("Fehler: "+error.message);return;}
@@ -6258,7 +6263,7 @@ function routeFahrschuleLehrer(){
       <div class="fs-sub">${l.aktiv?'<span class="fs-status-on">Aktiv</span>':'<span class="fs-status-off">GESPERRT</span>'} &nbsp;·&nbsp; Auslastung ${l.auslastung_pct!=null?`<span style="color:${l.auslastung_pct>=100?'#c83c3c':l.auslastung_pct>=85?'#cf9a3e':'inherit'};font-weight:${l.auslastung_pct>=85?'700':'400'};">${l.auslastung_pct}%</span>`:'—'} &nbsp;·&nbsp; ${meineSchueler.length} Schüler &nbsp;·&nbsp; ${q.pct==null?'Quote —':'Quote '+q.pct+'%'}</div>
       ${(istSuperAdmin||buero)?'':`<div class="fs-actions">
         ${l.aktiv
-          ?`<button class="fs-btn-kill" onclick="toggleFahrlehrerAktiv(${_jsArg(l.id)},false,${_jsArg(_fsAgg.fahrschuleId)})">Sperren</button>`
+          ?(isSuperAdmin()?`<button class="fs-btn-kill" onclick="toggleFahrlehrerAktiv(${_jsArg(l.id)},false,${_jsArg(_fsAgg.fahrschuleId)})">Sperren</button>`:`<span class="muted-p" style="font-size:12px;">Sperren kann im Moment nur der Betreiber. Bitte Passwort neu setzen.</span>`)
           :`<button class="fs-btn-activate" onclick="toggleFahrlehrerAktiv(${_jsArg(l.id)},true,${_jsArg(_fsAgg.fahrschuleId)})">Freischalten</button>`}
         <button class="fs-btn-activate" onclick="fahrlehrerPasswortZuruecksetzen(${_jsArg(l.id)})">Passwort zurücksetzen</button>
       </div>`}
@@ -8044,8 +8049,8 @@ function openNeuerTerminSheet(){
     cur=addDays(cur,1);
   }
   const liste=luecken.length
-    ? luecken.map(l=>`<button class="es-act nt-gap" data-freeslot="${l.date}|${l.von}|${l.bis}|${l.art}" style="display:flex;justify-content:space-between;align-items:center;text-align:left;min-height:48px;">
-        <span>${deWeekday(l.date)} · ${isoDE(l.date)} · ${l.von}–${l.bis}</span><span style="color:var(--akzent);font-weight:700;">Vergeben ›</span></button>`).join("")
+    ? luecken.map(l=>`<button class="es-act nt-gap" data-freeslot="${esc(l.date)}|${esc(l.von)}|${esc(l.bis)}|${esc(l.art)}" style="display:flex;justify-content:space-between;align-items:center;text-align:left;min-height:48px;">
+        <span>${deWeekday(l.date)} · ${isoDE(l.date)} · ${esc(l.von)}–${esc(l.bis)}</span><span style="color:var(--akzent);font-weight:700;">Vergeben ›</span></button>`).join("")
     : `<p class="muted-p" style="font-size:13px;">Keine freie Lücke in den nächsten 7 Tagen. Im Kalender auf eine Uhrzeit tippen, um trotzdem einen Termin einzutragen.</p>`;
   openSheet(`<div class="sheet-h">Neuer Termin</div>
     <p class="muted-p" style="font-size:13px;margin:-4px 0 10px;">Nächste freie Lücken</p>
@@ -8211,7 +8216,7 @@ function openHomeFilterSheet(){
 }
 function cardHTML(s,i){
   const p=s.profil?PROFILE[s.profil]:null;const col=p?p.color:"var(--orange)";
-  const pct=s.theoriePct||0;
+  const pct=Number(s.theoriePct)||0;
   const istTurbo=_fsAgg&&s._paketId&&(_fsAgg.pakete||[]).some(pk=>pk.id===s._paketId&&pk.name==="Turboboost");
   return `<button class="s-card" data-id="${s.id}" data-name="${esc(((s.name||'')+' '+(s.telefon||'').replace(/\s+/g,'')).toLowerCase())}" data-turbo="${istTurbo?'1':'0'}" style="animation-delay:${Math.min(i*45,360)}ms">
     <div>${ring(stand(s),50,3,col)}</div>
@@ -8246,7 +8251,7 @@ function _slLetzteFahrt(s){
 }
 function _slTerminText(t){
   const heute=todayISO();
-  const tag=t.date===heute?"Heute":t.date===addDays(heute,1)?"Morgen":`${deWeekday(t.date)} ${isoDE(t.date).slice(0,6)}`;
+  const tag=t.date===heute?"Heute":t.date===addDays(heute,1)?"Morgen":`${deWeekday(t.date)} ${isoDERoh(t.date).slice(0,6)}`;
   return `${tag} ${t.von}${t.art==="pruefung"?" · Prüfung":""}`;
 }
 function _slZusatz(s,hinweise){
@@ -8309,7 +8314,7 @@ function routeAkteTermine(id){
   const kommt=x=>x.date>heute||(x.date===heute&&(x.kind==="pruefung"||hm2min(x.bis||x.von)>j));
   const kommend=alle.filter(x=>kommt(x)&&x.status!=="abgebrochen").sort((a,b)=>(a.date+a.von).localeCompare(b.date+b.von));
   const bisher=alle.filter(x=>!kommt(x)).sort((a,b)=>(b.date+b.von).localeCompare(a.date+a.von)).slice(0,10);
-  const zeile=x=>`<button class="at-zeile${x.status==="abgebrochen"||x.status==="nicht erschienen"?" weg":""}" data-atev="${x.kind}|${esc(x.id)}|${esc(id)}"><span class="at-datum">${deWeekday(x.date)} ${isoDE(x.date).slice(0,6)}</span><span class="at-zeit">${x.von}</span><span class="at-art">${esc(_akteArtLab(x.art))}${x.status==="abgebrochen"?" · abgebrochen":x.status==="nicht erschienen"?" · nicht erschienen":""}</span><svg class="sr-pfeil" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 6l6 6-6 6"/></svg></button>`;
+  const zeile=x=>`<button class="at-zeile${x.status==="abgebrochen"||x.status==="nicht erschienen"?" weg":""}" data-atev="${x.kind}|${esc(x.id)}|${esc(id)}"><span class="at-datum">${deWeekday(x.date)} ${isoDE(x.date).slice(0,6)}</span><span class="at-zeit">${esc(x.von)}</span><span class="at-art">${esc(_akteArtLab(x.art))}${x.status==="abgebrochen"?" · abgebrochen":x.status==="nicht erschienen"?" · nicht erschienen":""}</span><svg class="sr-pfeil" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 6l6 6-6 6"/></svg></button>`;
   view.innerHTML=`<div class="view-inner view-read fade-up">
     <div class="h2-ueber at-ueber">Kommende Termine · ${kommend.length}</div>
     <div class="at-liste">${kommend.length?kommend.map(zeile).join(""):`<p class="h2-nichts">Kein Termin geplant.</p>`}</div>
@@ -8327,7 +8332,7 @@ function routeAkteTermine(id){
     for(let i=0;i<14&&luecken.length<6;i++){ dayFreeSlots(d).forEach(x=>{ if(luecken.length<6&&(d>heute||hm2min(x.von)>j))luecken.push({date:d,von:x.von,bis:x.bis,art:x.art}); }); d=addDays(d,1); }
     openSheet(`<div class="sheet-h">Termin für ${esc(_fmVorname(s))}</div>
       <p class="muted-p" style="font-size:13px;margin:-4px 0 10px;">Nächste freie Lücken</p>
-      <div class="es-actions">${luecken.length?luecken.map(l=>`<button class="es-act at-gap" data-freeslot="${l.date}|${l.von}|${l.bis}|${l.art||"fahrstunde"}" style="display:flex;justify-content:space-between;align-items:center;min-height:48px;"><span>${deWeekday(l.date)} · ${isoDE(l.date)} · ${l.von}–${l.bis}</span><span style="color:var(--akzent);font-weight:700;">Vergeben ›</span></button>`).join(""):`<p class="muted-p">Keine freie Lücke in den nächsten 14 Tagen. Im Kalender auf eine Uhrzeit tippen.</p>`}</div>
+      <div class="es-actions">${luecken.length?luecken.map(l=>`<button class="es-act at-gap" data-freeslot="${esc(l.date)}|${esc(l.von)}|${esc(l.bis)}|${esc(l.art||"fahrstunde")}" style="display:flex;justify-content:space-between;align-items:center;min-height:48px;"><span>${deWeekday(l.date)} · ${isoDE(l.date)} · ${esc(l.von)}–${esc(l.bis)}</span><span style="color:var(--akzent);font-weight:700;">Vergeben ›</span></button>`).join(""):`<p class="muted-p">Keine freie Lücke in den nächsten 14 Tagen. Im Kalender auf eine Uhrzeit tippen.</p>`}</div>
       <div class="btn-row"><button class="btn btn-ghost" id="atZu" style="width:100%;">Schließen</button></div>`);
     $("#atZu").addEventListener("click",closeSheet);
     document.querySelectorAll(".at-gap").forEach(g=>g.addEventListener("click",()=>{ const [date,von,bis,art]=g.dataset.freeslot.split("|"); closeSheet(); setTimeout(()=>openAssignSlotSheet(date,von,bis,art,{sid:id,nachher:()=>routeAkteTermine(id)}),200); }));
@@ -8344,7 +8349,7 @@ function routeAktePruefung(id){
   const theorie=s.plan&&s.plan.theorie;
   view.innerHTML=`<div class="view-inner view-read fade-up">
     <section class="ap-karte"><div class="h2-ueber">Stand</div>
-      <div class="ap-zeile"><span>Theorieprüfung</span> <b>${theorie?"bestanden ✓":`offen${s.theoriePct?` · ${s.theoriePct} % gelernt`:""}`}</b></div>
+      <div class="ap-zeile"><span>Theorieprüfung</span> <b>${theorie?"bestanden ✓":`offen${Number(s.theoriePct)?` · ${Number(s.theoriePct)} % gelernt`:""}`}</b></div>
       ${wl>=0?`<div class="ap-zeile"><span>Warteliste</span> <b>Platz ${wl+1}</b></div>`:""}
     </section>
     <section class="ap-karte"><div class="h2-ueber">Kommende Prüfung</div>
@@ -8493,7 +8498,7 @@ function routeDetail(id){
   const profSub=E?(E.pure?`${PROFILE[E.top].word} · ${COLOR_INFO[E.top].label}`:`${PROFILE[E.top].word}-${PROFILE[E.second].word} · ${E.blend.label}`):"Bogen ausfüllen";
   // Letzte/nächste Fahrstunde direkt oben zusammengefasst (Bereich 3, Punkt 5)
   const {last:letzteStunde,next:naechsteStunde}=findLastNextLesson(s.id);
-  const letzteStundeHTML=letzteStunde?`<div class="mini-dash-row"><span>🚗 Letzte Fahrstunde</span><b>${isoDE(letzteStunde.date)} · ${letzteStunde.von} Uhr</b></div>`:"";
+  const letzteStundeHTML=letzteStunde?`<div class="mini-dash-row"><span>🚗 Letzte Fahrstunde</span><b>${isoDE(letzteStunde.date)} · ${esc(letzteStunde.von)} Uhr</b></div>`:"";
   // Standort-Satz: ein Satz statt Zahlensalat (Schülermaske-Umbau, Abschnitt E)
   let sonderDoneD=0,sonderTotD=0;
   sonderDefFuer(s).forEach(d=>{ sonderTotD+=d.soll; sonderDoneD+=Math.min(sfCount(pl.sonder[d.key]),d.soll); });
@@ -8550,15 +8555,15 @@ function routeDetail(id){
     <div class="mini-dash">
       <div class="mini-dash-row"><span>📊 Ausbildungsstand</span><b>${pct}%</b></div>
       ${letzteStundeHTML}
-      ${naechsteStunde?`<div class="mini-dash-row"><span>${_li("kalender")} Nächster Termin</span><b>${isoDE(naechsteStunde.date)} · ${naechsteStunde.von} Uhr</b></div>`:""}
+      ${naechsteStunde?`<div class="mini-dash-row"><span>${_li("kalender")} Nächster Termin</span><b>${isoDE(naechsteStunde.date)} · ${esc(naechsteStunde.von)} Uhr</b></div>`:""}
       ${s.email?`<div class="mini-dash-row"><span>✉️ E-Mail</span><b>${esc(s.email)}</b></div>`:""}
       ${s.geburtsdatum?`<div class="mini-dash-row"><span>🎂 Geburtstag</span><b>${isoDE(s.geburtsdatum).slice(0,5)}</b></div>`:""}
       <div id="akademieFortschrittSlot"></div>
     </div>
     <div class="theo-row">
       <div class="theo-label">📚 Lernstand Theorie</div>
-      <div class="theo-track"><div class="theo-fill" id="theoFill" style="width:${s.theoriePct||0}%"></div></div>
-      <div class="theo-pct" id="theoPct">${s.theoriePct||0} %</div>
+      <div class="theo-track"><div class="theo-fill" id="theoFill" style="width:${Number(s.theoriePct)||0}%"></div></div>
+      <div class="theo-pct" id="theoPct">${Number(s.theoriePct)||0} %</div>
       <button class="theo-edit-btn ic ic-blau" id="theoEdit">${ICN.pencil}</button>
     </div>
     <div class="akte-nav">
@@ -8637,8 +8642,8 @@ function routeDetail(id){
     openSheet(`<div class="sheet-h">Theorie-Fortschritt</div>
       <p class="muted-p" style="margin-bottom:16px;">Wie weit ist ${esc(s.name)} in der Theorie? (0–100%)</p>
       <div style="display:flex;align-items:center;gap:12px;margin-bottom:20px;">
-        <input id="theoSlider" type="range" min="0" max="100" step="5" value="${s.theoriePct||0}" style="flex:1;accent-color:var(--akzent);">
-        <div id="theoSliderVal" style="font-family:'Playfair Display',serif;font-size:24px;font-weight:700;min-width:54px;text-align:right;">${s.theoriePct||0} %</div>
+        <input id="theoSlider" type="range" min="0" max="100" step="5" value="${Number(s.theoriePct)||0}" style="flex:1;accent-color:var(--akzent);">
+        <div id="theoSliderVal" style="font-family:'Playfair Display',serif;font-size:24px;font-weight:700;min-width:54px;text-align:right;">${Number(s.theoriePct)||0} %</div>
       </div>
       <div class="btn-row"><button class="btn btn-primary" id="theoSave">Speichern</button><button class="btn btn-ghost" id="theoCancel">Abbrechen</button></div>`);
     const sl=$("#theoSlider"),vl=$("#theoSliderVal");
@@ -8693,7 +8698,7 @@ function routeHistorie(id){
       <div class="acc-body"><div class="acc-inner">
         <div class="htl">${termine.map(l=>{ const past=l.date<todayIso; const off=l.status&&l.status!=="geplant"; return `
           <div class="htl-item" style="opacity:${past?'.5':'1'};">
-            <div class="htl-date">${isoDE(l.date)} · ${l.von}</div>
+            <div class="htl-date">${isoDE(l.date)} · ${esc(l.von)}</div>
             <div class="htl-text">${esc(artLab(l))}${off?` · ${esc(l.status)}`:""}${past?" · vergangen":" · geplant"}</div>
           </div>`; }).join("")}</div>
       </div></div>
@@ -9049,7 +9054,7 @@ function behoerdeCard(s){
   if(f.theorie_frist_bis) zeilen.push(["Theorie bis",isoDE(f.theorie_frist_bis)+(f.theorie_bestanden_am?" ✓":"")]);
   if((f.vorbesitz||[]).length) zeilen.push(["Vorbesitz",esc(f.vorbesitz.join(", "))]);
   if(istUmschreiberAkte(s)){
-    (f.auslands_fs||[]).forEach(x=>zeilen.push(["Führerschein "+esc(x.land||""),esc([x.klasse,x.erteilt_am?isoDE(x.erteilt_am):"",x.nummer?"Nr. "+x.nummer:"",x.behoerde].filter(Boolean).join(" · "))]));
+    (f.auslands_fs||[]).forEach(x=>zeilen.push(["Führerschein "+esc(x.land||""),[esc(x.klasse),x.erteilt_am?isoDE(x.erteilt_am):"",x.nummer?"Nr. "+esc(x.nummer):"",esc(x.behoerde)].filter(Boolean).join(" · ")]));
     if(f.wohnsitz_de_seit) zeilen.push(["Wohnsitz in DE seit",isoDE(f.wohnsitz_de_seit)]);
     const um=window.KR&&KR.umschreibInfo?KR.umschreibInfo(Object.assign({},f,{ausbildungsart:"umschreibung"})):{stufe:"kein"};
     if(um.bis) zeilen.push(["Darf fahren bis",isoDE(um.bis)]);
@@ -9213,7 +9218,7 @@ async function openTheorieAnwesenheit(l){
     const titel=lekt.length?lekt.map(k=>"Lektion "+k).join(" + "):"Lektion wählen";
     $("#sheet").innerHTML=_SHEET_KOPF+`<div class="sheet-h">Anwesenheit · ${isoDE(datum)}${l.von?" · "+esc(l.von):""}</div>
       <div class="ta-lekt-zeile"><span>${esc(titel)}</span><button type="button" class="btn btn-ghost" id="taLektAuf">${pillsOffen?"fertig":"ändern"}</button></div>
-      ${pillsOffen?`<div class="pills ta-lekt sheet-pills" id="taLekt">${alleLekt.map(k=>`<button type="button" class="pill ${lekt.includes(k)?"sel":""}" data-k="${k}" title="${esc(lektionTitel(k))}">${k}</button>`).join("")}</div>`:""}
+      ${pillsOffen?`<div class="pills ta-lekt sheet-pills" id="taLekt">${alleLekt.map(k=>`<button type="button" class="pill ${lekt.includes(k)?"sel":""}" data-k="${esc(k)}" title="${esc(lektionTitel(k))}">${esc(k)}</button>`).join("")}</div>`:""}
       <div class="field" style="margin-top:8px;"><label>Wer war da? <span class="ta-zahl" id="taZahl">${an.size} anwesend</span></label><input type="search" id="taSuche" placeholder="Name suchen" autocomplete="off"></div>
       <div id="taListe" class="ta-liste">${sortiert.map(x=>`<label class="ta-zeile" data-name="${esc(String(x.name||"").toLowerCase())}"><input type="checkbox" value="${esc(x.id)}"${an.has(x.id)?" checked":""}><span>${esc(x.name||"")}</span><small>${esc(x.klasse||"")}${x.fahrlehrer_id===meineId?" · deiner":""}</small></label>`).join("")||'<p class="muted-p" style="padding:12px;">Keine aktiven Schüler.</p>'}<p class="muted-p ta-leer" id="taLeer" hidden style="padding:12px;">Kein Name gefunden.</p></div>
       <div class="btn-row sheet-knoepfe"><button class="btn btn-ghost" id="taAbbr" style="flex:0;padding:13px 18px;">Abbrechen</button><button class="btn btn-primary" id="taSpeichern">Speichern</button></div>`;
@@ -9492,7 +9497,7 @@ function openSonderKalenderSheet(sid,grp,idx){
   const defTime=(ex&&ex.von)||(grp==="nacht"?"19:30":"10:00");
   const kandidat=!ex&&(DB.lessons||[]).find(l=>l.sid===sid&&l.date===defDate&&!l.srcSonder&&["fahrstunde","sonder"].includes(l.art)&&l.status!=="abgebrochen"&&l.status!=="nicht erschienen");
   openSheet(`<div class="sheet-h">${esc(label)} — Kalendertermin</div>
-    <p class="muted-p" style="margin:-4px 0 14px;font-size:13px;">${ex?"Termin verschieben oder Uhrzeit ändern.":kandidat?`Am ${esc(isoDE(defDate))} steht bereits ein Termin (${esc(kandidat.note||"Übungsfahrt")}) — der wird bei Bestätigung zu „${esc(label)}" umgewandelt.`:"Datum und Uhrzeit für den neuen Kalendereintrag."}</p>
+    <p class="muted-p" style="margin:-4px 0 14px;font-size:13px;">${ex?"Termin verschieben oder Uhrzeit ändern.":kandidat?`Am ${isoDE(defDate)} steht bereits ein Termin (${esc(kandidat.note||"Übungsfahrt")}) — der wird bei Bestätigung zu „${esc(label)}" umgewandelt.`:"Datum und Uhrzeit für den neuen Kalendereintrag."}</p>
     <div class="field"><label>Datum</label><input type="date" id="sfkDate" value="${esc(defDate)}"></div>
     <div class="field"><label>Uhrzeit</label><input type="time" id="sfkTime" value="${esc(defTime)}"></div>
     <div class="btn-row"><button class="btn btn-ghost" id="sfkCancel" style="flex:0;padding:13px 18px;">Abbrechen</button>
@@ -9664,7 +9669,7 @@ function openMultiTerminErgebnis(sid,cfg,treffer){
   const label=cfg.art==="sonder"?(SF_LABEL[cfg.grp]||"Sonderfahrt"):"Übungsfahrt";
   const renderList=()=>treffer.map((t,i)=>`<label class="es-act" style="display:flex;align-items:center;gap:10px;cursor:pointer;">
     <input type="checkbox" class="mtChk" data-i="${i}" checked style="width:18px;height:18px;flex:0;">
-    <span style="flex:1;">${deWeekday(t.date)}. ${isoDE(t.date)} · ${t.von}–${t.bis}${t.fahrzeug&&t.fahrzeug!=='—'?` · 🚗 ${esc(t.fahrzeug)}`:''}</span>
+    <span style="flex:1;">${deWeekday(t.date)}. ${isoDE(t.date)} · ${esc(t.von)}–${esc(t.bis)}${t.fahrzeug&&t.fahrzeug!=='—'?` · 🚗 ${esc(t.fahrzeug)}`:''}</span>
   </label>`).join("");
   openSheet(`<div class="sheet-h">${treffer.length} Termine gefunden</div>
     ${hinweis}
@@ -11930,8 +11935,8 @@ function openTheorieSheet(){
     +`</optgroup><optgroup label="Lkw (Klasse C/C1 und CE)">`+LKW_LEKTIONEN.map(l=>`<option value="${l.n}">Lektion ${l.n} – ${esc(l.t)}</option>`).join("")+`</optgroup>`;
   openSheet(`<div class="sheet-h">Theorie</div>
     <p class="muted-p" style="font-size:12.5px;margin:-4px 0 10px;">Wird immer als zwei einzelne 90-Minuten-Termine hintereinander eingetragen.</p>
-    <div class="field"><label>Datum</label><input type="date" id="thDate" value="${defDate}"></div>
-    <div class="field"><label>Start (1. Block)</label><input type="time" id="thVon" value="${win.von}"></div>
+    <div class="field"><label>Datum</label><input type="date" id="thDate" value="${esc(defDate)}"></div>
+    <div class="field"><label>Start (1. Block)</label><input type="time" id="thVon" value="${esc(win.von)}"></div>
     <div class="field"><label>Lektion (optional)</label><select id="thLektion">${lektOpts}</select></div>
     <div class="field"><label>Notiz (optional)</label><textarea id="thNote" rows="2" placeholder="z. B. Thema des Abends …"></textarea></div>
     <div class="btn-row"><button class="btn btn-ghost" id="thCancel" style="flex:0;padding:13px 18px;">Abbrechen</button><button class="btn btn-primary" id="thSave">Eintragen</button></div>`);
@@ -11961,8 +11966,8 @@ function openBlockSheet(){
         <button class="seg-i" id="blTypSonstiges" data-blocktyp="sonstiges">Sonstiges</button>
       </div>
     </div>
-    <div class="field"><label>Von (Datum)</label><input type="date" id="blVonDatum" value="${defDate}"></div>
-    <div class="field"><label>Bis (Datum)</label><input type="date" id="blBisDatum" value="${defDate}"></div>
+    <div class="field"><label>Von (Datum)</label><input type="date" id="blVonDatum" value="${esc(defDate)}"></div>
+    <div class="field"><label>Bis (Datum)</label><input type="date" id="blBisDatum" value="${esc(defDate)}"></div>
     <div class="field"><label>Grund (optional)</label><input type="text" id="blGrund" placeholder="z. B. Arzttermin, Fortbildung …" autocomplete="off"></div>
     <p class="muted-p" style="font-size:12px;margin-top:-4px;" id="blHinweis">Urlaub blockiert die ganzen Tage im Kalender.</p>
     <div class="btn-row"><button class="btn btn-ghost" id="blCancel" style="flex:0;padding:13px 18px;">Abbrechen</button><button class="btn btn-primary" id="blSave">Blockieren</button></div>`);
@@ -12029,8 +12034,8 @@ function openBlockEventSheet(l){
       <div class="field"><label>Was?</label><div class="seg">
         <button class="seg-i${typ==="urlaub"?" on":""}" data-bt="urlaub" type="button">🏖️ Urlaub</button>
         <button class="seg-i${typ!=="urlaub"?" on":""}" data-bt="sonstiges" type="button">Sonstiges</button></div></div>
-      <div class="field"><label for="bzVon">Von (Datum)</label><input type="date" id="bzVon" value="${von}"></div>
-      <div class="field"><label for="bzBis">Bis (Datum)</label><input type="date" id="bzBis" value="${bis}"></div>
+      <div class="field"><label for="bzVon">Von (Datum)</label><input type="date" id="bzVon" value="${esc(von)}"></div>
+      <div class="field"><label for="bzBis">Bis (Datum)</label><input type="date" id="bzBis" value="${esc(bis)}"></div>
       <div class="field"><label for="bzGrund">Grund</label><input type="text" id="bzGrund" value="${esc(l.name||"")}" autocomplete="off"></div>
       <div class="btn-row"><button class="btn btn-primary" id="bzSpeichern" style="flex:1;">Speichern</button></div>`);
     document.querySelectorAll("#sheet [data-bt]").forEach(b=>b.addEventListener("click",()=>{ typ=b.dataset.bt; document.querySelectorAll("#sheet [data-bt]").forEach(x=>x.classList.toggle("on",x===b)); }));
@@ -12087,7 +12092,7 @@ function openAddLessonSheet(art){
     const durOpts=isSchalt?"":`<div class="field"><label>Dauer</label><div class="dur-row">${[[0.5,"½ (45 Min)"],[1,"1× (90 Min)"],[2,"2× (3 Std)"],[3,"3× (4,5 Std)"]].map(([n,l])=>`<button class="dur-opt${n===1?' on':''}" data-dur="${n}">${l}</button>`).join("")}</div></div>`;
     openSheet(`<div class="sheet-h">${lab}</div>
       <p class="muted-p" style="font-size:13.5px;margin:-4px 0 14px;">${esc(st?st.name:"")}</p>
-      <div class="field"><label>Datum</label><input type="date" id="alDate" value="${defDate}"></div>
+      <div class="field"><label>Datum</label><input type="date" id="alDate" value="${esc(defDate)}"></div>
       <div class="field"><label>Uhrzeit (Beginn)</label><input type="time" id="alTime" value="${defTime}"></div>
       ${durOpts}
       ${isSchalt?`<p class="muted-p" style="font-size:12.5px;margin:-6px 0 12px;">Schaltkompetenz wird als 15-Minuten-Termin geblockt.</p>`:''}
@@ -12108,7 +12113,7 @@ function openAddLessonSheet(art){
         closeSheet(); toast(lab+" eingetragen ✓"); routeKalender();
       };
       const fzRelevant=["fahrstunde","sonder","nacht","schalt"].indexOf(art)>=0;
-      if(fzRelevant) openVehiclePicker({title:st?st.name:"",sub:`${isoDE(date)} · ${von}`},doBook);
+      if(fzRelevant) openVehiclePicker({title:st?st.name:"",sub:`${isoDERoh(date)} · ${von}`},doBook);
       else doBook(null);
     });
   }
@@ -12122,7 +12127,7 @@ function openEventSheet(kind,id,sid){
     const st=DB.students.find(s=>s.id===sid);
     const pass=ex&&ex.result==="pass";
     openSheet(`<div class="sheet-h">${pass?"Prüfung bestanden ✓":"Prüfung nicht bestanden"}</div>
-      <p class="muted-p" style="font-size:13.5px;margin:-4px 0 14px;">${ex?esc(ex.name):"—"} · ${ex?isoDE(ex.date):""}${ex&&ex.von?` · ${ex.von}`:""}${ex&&ex.pruefer?` · ${esc(ex.pruefer)}`:""}</p>
+      <p class="muted-p" style="font-size:13.5px;margin:-4px 0 14px;">${ex?esc(ex.name):"—"} · ${ex?isoDE(ex.date):""}${ex&&ex.von?` · ${esc(ex.von)}`:""}${ex&&ex.pruefer?` · ${esc(ex.pruefer)}`:""}</p>
       <div class="es-actions">
         ${st?`<button class="es-act primary" id="esAkte">Schülerakte öffnen</button>`:''}
         <button class="es-act" id="esToStats">In Statistik öffnen</button>
@@ -12135,7 +12140,7 @@ function openEventSheet(kind,id,sid){
     const st=DB.students.find(s=>s.id===sid);
     const t=DB.termine.find(x=>x.id===id);
     openSheet(`<div class="sheet-h">Prüfungstermin</div>
-      <p class="muted-p" style="font-size:13.5px;margin:-4px 0 14px;">${st?esc(st.name):"—"} · Prüfung${t?` · ${isoDE(t.date)}${t.von?` · ${t.von}`:""}`:""}</p>
+      <p class="muted-p" style="font-size:13.5px;margin:-4px 0 14px;">${st?esc(st.name):"—"} · Prüfung${t?` · ${isoDE(t.date)}${t.von?` · ${esc(t.von)}`:""}`:""}</p>
       <div class="es-actions">
         ${sid?`<button class="es-act" id="esAkte">Schülerakte öffnen</button>`:''}
         <button class="es-act primary" id="esResult">Ergebnis eintragen ›</button>
@@ -12155,13 +12160,13 @@ function openEventSheet(kind,id,sid){
   if(l.art==="block"&&_istGanzerBlockTag(l))return openBlockEventSheet(l);
   const st=DB.students.find(s=>s.id===l.sid);
   const artLab=(CAL_ARTEN[l.art]||CAL_ARTEN.fahrstunde).lab;
-  const titelTermin=(l.art==="theorie"&&l.lektion)?("Lektion "+l.lektion):"Termin";
+  const titelTermin=(l.art==="theorie"&&l.lektion)?esc("Lektion "+l.lektion):"Termin";
   const statusInfo=l.status&&l.status!=="geplant"?`<span class="es-badge">${esc(l.status)}</span>`:"";
   const fcRelevant=["fahrstunde","sonder","nacht"].indexOf(l.art)>=0;
   const fcLab={v1:"1 FC vergessen",v2:"2 FC vergessen",geschenkt:"geschenkt",nachgereicht:"FC nachgereicht",eins_ok:"1 FC (abgeschlossen)",halb_bewusst:"1 FC (bewusst)"}[l.fc]||"2 FC erhalten";
   // SCHRITT 1: Optionen-Übersicht
   openSheet(`<div class="sheet-h">${st?esc(st.name):titelTermin}</div>
-    <p class="muted-p" style="font-size:13.5px;margin:-4px 0 ${l.note?'8px':'16px'};">${isoDE(l.date)} · ${l.von}–${l.bis} · ${l.lektion?lektionTitel(l.lektion):artLab} ${statusInfo}</p>
+    <p class="muted-p" style="font-size:13.5px;margin:-4px 0 ${l.note?'8px':'16px'};">${isoDE(l.date)} · ${esc(l.von)}–${esc(l.bis)} · ${l.lektion?lektionTitel(l.lektion):artLab} ${statusInfo}</p>
     ${st?fristenHinweisHTML(st.id):""}
     ${(()=>{ const ev=dayEvents(l.date).find(e=>e.kind==="lesson"&&e.id===l.id); return ev&&ev.doppelt?`<div class="es-note">ℹ️ Doppelt: Diese Prüfung steht auch auf der Prüfungstafel bzw. hat schon ein Ergebnis. Sie zählt nur einmal (2 UE) – dieser Eintrag zählt nicht mit.</div>`:""; })()}
     ${l.note?`<div class="es-note">${esc(l.note)}</div>`:''}
@@ -12269,7 +12274,7 @@ function openSFPickerForLesson(lessonId,sid,date,von,bis,note,newArt,fahrzeug){
     const arr=s.plan.sonder[sd.key]||(s.plan.sonder[sd.key]=[]);
     for(let i=0;i<sd.soll;i++){
       const done=sfDone(arr[i]);
-      opts+=`<button class="sf-opt${done?' done':''}" data-grp="${sd.key}" data-idx="${i}">${sd.label} ${i+1}${done?` · ✓ ${arr[i].d}`:''}</button>`;
+      opts+=`<button class="sf-opt${done?' done':''}" data-grp="${sd.key}" data-idx="${i}">${sd.label} ${i+1}${done?` · ✓ ${esc(arr[i].d)}`:''}</button>`;
     }
   });
   openSheet(`<div class="sheet-h">Welche Sonderfahrt?</div>
@@ -12307,7 +12312,7 @@ function openNoshowChoice(id,retFn){
   const ueFull=ueOf(l.art,l.von,l.bis,l.tatsaechlicheDauer);
   const eur1=Math.round(ueFull/2*DB.verdienst.proUE), eur2=Math.round(ueFull*DB.verdienst.proUE);
   openSheet(`<div class="sheet-h">Nicht erschienen</div>
-    <p class="muted-p" style="font-size:13px;margin:-4px 0 14px;">${st?esc(st.name)+' · ':''}${isoDE(l.date)} · ${l.von}–${l.bis}<br>Die Zeit war blockiert – wie viel berechnest du?</p>
+    <p class="muted-p" style="font-size:13px;margin:-4px 0 14px;">${st?esc(st.name)+' · ':''}${isoDE(l.date)} · ${esc(l.von)}–${esc(l.bis)}<br>Die Zeit war blockiert – wie viel berechnest du?</p>
     <div class="es-actions">
       <button class="es-act" id="ns1">1 Einheit berechnen · <b>${eur1} €</b></button>
       <button class="es-act" id="ns2">Beide Einheiten berechnen · <b>${eur2} €</b></button>
@@ -12380,8 +12385,8 @@ function openEventEdit(id,overrides){
   const konflikt=(_fsAgg&&cur.fahrzeug)?_fsFahrzeugKonflikt(id,cur.date,cur.von,cur.fahrzeug):null;
   const konfliktBlock=konflikt?`<p class="muted-p" style="font-size:12px;color:#cf9a3e;margin:-4px 0 8px;">⚠ ${esc(cur.fahrzeug)} ist zu dieser Zeit schon bei ${esc(konflikt)} eingetragen — nur ein Hinweis, buchen geht trotzdem.</p>`:'';
   openSheet(`<div class="sheet-h">Bearbeiten</div>
-    <div class="field"><label>Datum</label><input type="date" id="esDate" value="${cur.date}"></div>
-    <div class="field"><label>Uhrzeit (Beginn)</label><input type="time" id="esTime" value="${cur.von}"></div>
+    <div class="field"><label>Datum</label><input type="date" id="esDate" value="${esc(cur.date)}"></div>
+    <div class="field"><label>Uhrzeit (Beginn)</label><input type="time" id="esTime" value="${esc(cur.von)}"></div>
     <div class="field"><label>Art</label>
       <div class="es-arten">${[["fahrstunde","Fahrstunde"],["sonder","Sonderfahrt"],["schalt","Schaltk."],["theorie","Theorie"]].map(([k,la])=>`<button class="es-art${cur.art===k?' on':''}" data-art="${k}">${la}</button>`).join("")}</div>
     </div>
@@ -12404,7 +12409,7 @@ function openEventEdit(id,overrides){
   if(fzBtn)fzBtn.addEventListener("click",()=>{
     const snap={date:$("#esDate").value||cur.date,von:$("#esTime").value||cur.von,art:newArt,note:$("#esNote").value,fahrzeug:newFahrzeug};
     const st=DB.students.find(s=>s.id===l.sid);
-    openVehiclePicker({title:st?st.name:"",sub:`${isoDE(snap.date)} · ${snap.von}`},fzName=>{ snap.fahrzeug=fzName;
+    openVehiclePicker({title:st?st.name:"",sub:`${isoDERoh(snap.date)} · ${snap.von}`},fzName=>{ snap.fahrzeug=fzName;
       // Fahrzeug- und alte Bearbeiten-Ebene verlassen, Bearbeiten mit Fahrzeug neu öffnen (Zurück führt dann zum Termin)
       sheetZurueck(true); if(_sheetEbene)_sheetEbene.geaendert=false; sheetZurueck(true); openEventEdit(id,snap); });
   });
@@ -12434,7 +12439,7 @@ function openAssignSlotSheet(date,von,bis,art,opts){
   const artOpts=["fahrstunde","sonder","schalt"];
   const artChips=artOpts.map(a=>`<button class="seg-i${a===curArt?' on':''}" data-art="${a}">${CAL_ARTEN[a].lab}</button>`).join("");
   openSheet(`<div class="sheet-h">Termin vergeben</div>
-    <p class="muted-p" style="font-size:13px;margin:-4px 0 10px;">${deWeekdayLong(date)}, ${parseISO(date).getDate()}. ${deMonth(parseISO(date).getMonth())} · ${von}</p>
+    <p class="muted-p" style="font-size:13px;margin:-4px 0 10px;">${deWeekdayLong(date)}, ${parseISO(date).getDate()}. ${deMonth(parseISO(date).getMonth())} · ${esc(von)}</p>
     <div class="seg" style="margin-bottom:12px;">${artChips}</div>
     <div class="dur-row" id="asDur" style="margin-bottom:12px;"><button class="dur-opt on" data-half="0">90 Min · 2 UE</button><button class="dur-opt" data-half="1">45 Min · 1 UE</button></div>
     <div class="field"><input type="text" id="asSearch" placeholder="Schüler suchen …" autocomplete="off"></div>
@@ -12454,7 +12459,7 @@ function openAssignSlotSheet(date,von,bis,art,opts){
     const effBis=curArt==="schalt"?min2hm(hm2min(von)+15):(asHalf?min2hm(hm2min(von)+45):bis);
     const fzRelevant=["fahrstunde","sonder","nacht","schalt"].indexOf(curArt)>=0;
     const doBook=(fzName)=>{ addLesson({date,von,bis:effBis,art:curArt,sid,fahrzeug:fzName}); closeSheet(); toast("Termin vergeben ✓"); if(opts.nachher)opts.nachher(); else routeKalender(); };
-    if(fzRelevant) openVehiclePicker({sub:`${isoDE(date)} · ${von}`},doBook);
+    if(fzRelevant) openVehiclePicker({sub:`${isoDERoh(date)} · ${von}`},doBook);
     else doBook(null);
   };
   const bindAs=()=>{ document.querySelectorAll("#asList .as-item").forEach(b=>b.addEventListener("click",()=>finishBooking(b.dataset.sid))); };
@@ -12585,7 +12590,7 @@ function pausenListHTML(){
   const ps=DB.workCfg.pausen||[];
   if(!ps.length)return `<p class="muted-p" style="font-size:13px;margin-bottom:10px;">Noch keine feste Pause. Die Zeit zwischen Vor- und Nachmittag ist automatisch frei.</p>`;
   const WD=["Mo","Di","Mi","Do","Fr","Sa","So"];
-  return ps.map((p,i)=>`<div class="az-pause"><div class="azp-info"><span class="azp-days">${(p.days||[]).map(d=>WD[d]).join(" ")||"täglich"}</span><span class="azp-time">${p.von}–${p.bis}</span></div><button class="azp-del" data-pdel="${i}">✕</button></div>`).join("");
+  return ps.map((p,i)=>`<div class="az-pause"><div class="azp-info"><span class="azp-days">${(p.days||[]).map(d=>WD[d]).join(" ")||"täglich"}</span><span class="azp-time">${esc(p.von)}–${esc(p.bis)}</span></div><button class="azp-del" data-pdel="${i}">✕</button></div>`).join("");
 }
 function bindPausenDelete(){ document.querySelectorAll("[data-pdel]").forEach(b=>b.addEventListener("click",()=>{ const p=DB.workCfg.pausen[+b.dataset.pdel]; if(!p)return;
   _loeschenMitRueckgaengig(()=>DB.workCfg.pausen,p,"Pause entfernt",()=>{ const c=$("#azPausen"); if(c){ c.innerHTML=pausenListHTML(); bindPausenDelete(); } }); })); }
@@ -12618,7 +12623,7 @@ function bindFahrzeugDelete(){ document.querySelectorAll("[data-fzdel]").forEach
 function routeArbeitszeit(){
   ensureDB(); const c=DB.workCfg;
   $("#tbTitle").textContent="Arbeitszeiten"; setFab(false); view.scrollTop=0;
-  const tf=(id,val)=>`<input type="time" id="${id}" value="${val}">`;
+  const tf=(id,val)=>`<input type="time" id="${id}" value="${esc(val)}">`;
   view.innerHTML=`<div class="view-inner view-read fade-up">
     <div class="back-row"><button class="back-btn" id="backBtn">${ICN.back} Kalender</button></div>
     <div class="sec-h" style="margin:4px 0 4px;">Arbeits<span class="o">zeiten</span></div>
@@ -13073,7 +13078,7 @@ function weekDayRowsHTML(iso){
     const alreadyCovered=[...used].some(e=>{ const ev=hm2min(e.von),eb=hm2min(e.bis); return sv<eb&&sb>ev; });
     if(alreadyCovered)return;
     const match=evs.find(e=>{ if(used.has(e))return false; const ev=hm2min(e.von),eb=hm2min(e.bis); return sv<eb&&sb>ev; });
-    if(match){ used.add(match); items.push({t:hm2min(match.von),html:calEventChip(match,iso)}); } else if(!istBelegt(sv,sb)){ items.push({t:hm2min(s.von),html:`<button class="cw-free" data-freeslot="${iso}|${s.von}|${s.bis}|${s.art}"><span class="cw-free-t">${s.von}</span><span class="cw-free-p">+ frei</span></button>`}); }
+    if(match){ used.add(match); items.push({t:hm2min(match.von),html:calEventChip(match,iso)}); } else if(!istBelegt(sv,sb)){ items.push({t:hm2min(s.von),html:`<button class="cw-free" data-freeslot="${esc(iso)}|${esc(s.von)}|${esc(s.bis)}|${esc(s.art)}"><span class="cw-free-t">${esc(s.von)}</span><span class="cw-free-p">+ frei</span></button>`}); }
   });
   // Events außerhalb des Rasters ebenfalls nach Zeit einsortieren
   evs.forEach(e=>{ if(!used.has(e)) items.push({t:hm2min(e.von),html:calEventChip(e,iso)}); });
@@ -13091,18 +13096,18 @@ function calEventChip(e,iso){
     const col=pass?"#4caf72":"#d94f4f";
     const icon=pass?"✓":"✕";
     const lbl=pass?"bestanden":"nicht bestanden";
-    return `<div class="cw-ev exam-done ${pass?'exam-pass':'exam-fail'}" style="border-left-color:${col}" data-evedit="${e.kind}|${e.id}|${e.sid||''}"><span class="cw-evt">${e.pruefTime||e.von} · Prüfung</span><span class="cw-evn"><span class="exd-strike">${esc(e.name||"")}</span> <span class="exd-mark" style="color:${col}">${icon} ${lbl}</span></span></div>`;
+    return `<div class="cw-ev exam-done ${pass?'exam-pass':'exam-fail'}" style="border-left-color:${col}" data-evedit="${esc(e.kind)}|${esc(e.id)}|${esc(e.sid||'')}"><span class="cw-evt">${esc(e.pruefTime||e.von)} · Prüfung</span><span class="cw-evn"><span class="exd-strike">${esc(e.name||"")}</span> <span class="exd-mark" style="color:${col}">${icon} ${lbl}</span></span></div>`;
   }
   const stat=e.status&&e.status!=="geplant"?` <span class="cw-evstat">${esc(e.status)}</span>`:"";
   const off=e.status&&e.status!=="geplant";
   const sf=c.sf?`<span class="cw-sf">${sfKuerzel(e)}</span>`:'';
   const examSoon=e.sid&&!!terminFor(e.sid);
   const fzTag=e.fahrzeug?`<span class="cw-fz">${esc(e.fahrzeug)}</span>`:'';
-  const pruefLabel=e.pruefTime?`<span class="cw-fz" style="color:${c.col}">Prüfung ${e.pruefTime}</span>`:'';
+  const pruefLabel=e.pruefTime?`<span class="cw-fz" style="color:${c.col}">Prüfung ${esc(e.pruefTime)}</span>`:'';
   // Urlaub/Blocker sind ganze Tage (00:00–23:59) und nicht ziehbar - beim Verschieben gingen sie kaputt.
   const draggable=e.kind==="lesson"&&e.status==="geplant"&&e.art!=="block"&&!e.doppelt;
-  const dispName=(e.art==="theorie"&&e.lektion)?("Lektion "+e.lektion):esc(e.name||"");
-  return `<div class="cw-ev${off?' off':''}${examSoon?' exam-soon':''}${draggable?' cw-draggable':''}" style="border-left-color:${c.col}" data-evedit="${e.kind}|${e.id}|${e.sid||''}"${draggable?` data-dragid="${e.id}"`:''}><span class="cw-evt">${e.von}</span><span class="cw-evn">${dispName}${sf}${stat}${fzTag}${pruefLabel}</span></div>`;
+  const dispName=(e.art==="theorie"&&e.lektion)?esc("Lektion "+e.lektion):esc(e.name||"");
+  return `<div class="cw-ev${off?' off':''}${examSoon?' exam-soon':''}${draggable?' cw-draggable':''}" style="border-left-color:${c.col}" data-evedit="${esc(e.kind)}|${esc(e.id)}|${esc(e.sid||'')}"${draggable?` data-dragid="${esc(e.id)}"`:''}><span class="cw-evt">${esc(e.von)}</span><span class="cw-evn">${dispName}${sf}${stat}${fzTag}${pruefLabel}</span></div>`;
 }
 // TAGESANSICHT
 function calDayHTML(){
@@ -13131,16 +13136,16 @@ function calDayHTML(){
     if(it.type==="ev"){ const e=it.e; const c=CAL_ARTEN[e.art]||CAL_ARTEN.fahrstunde;
       if(e.kind==="examDone"){
         const pass=e.result==="pass"; const col=pass?"#4caf72":"#d94f4f"; const icon=pass?"✓":"✕"; const lbl=pass?"bestanden":"nicht bestanden";
-        blocks+=`<div class="ct-ev exam-done ${pass?'exam-pass':'exam-fail'}" style="top:${top}px;height:${h}px;border-left-color:${col}" data-evedit="${e.kind}|${e.id}|${e.sid||''}"><div class="ct-ev-t">${e.pruefTime||min2hm(it.von)}</div><div class="ct-ev-n"><span class="exd-strike">${esc(e.name)}</span></div><div class="ct-ev-a" style="color:${col};font-weight:800">${icon} Prüfung ${lbl}</div></div>`;
+        blocks+=`<div class="ct-ev exam-done ${pass?'exam-pass':'exam-fail'}" style="top:${top}px;height:${h}px;border-left-color:${col}" data-evedit="${esc(e.kind)}|${esc(e.id)}|${esc(e.sid||'')}"><div class="ct-ev-t">${esc(e.pruefTime||min2hm(it.von))}</div><div class="ct-ev-n"><span class="exd-strike">${esc(e.name)}</span></div><div class="ct-ev-a" style="color:${col};font-weight:800">${icon} Prüfung ${lbl}</div></div>`;
         return;
       }
       const off=e.status&&e.status!=="geplant"; const stat=off?`<span class="cd-stat">${esc(e.status)}</span>`:"";
       const sf=c.sf?`<span class="ct-sf">${sfKuerzel(e)}</span>`:'';
       const examSoon=e.sid&&!!terminFor(e.sid);
-      const dispNameDay=(e.art==="theorie"&&e.lektion)?("Lektion "+e.lektion):esc(e.name);
-      blocks+=`<div class="ct-ev${off?' off':''}${examSoon?' exam-soon':''}" style="top:${top}px;height:${h}px;border-left-color:${c.col}" data-evedit="${e.kind}|${e.id}|${e.sid||''}"><div class="ct-ev-t">${min2hm(it.von)}</div><div class="ct-ev-n">${dispNameDay}${sf}</div><div class="ct-ev-a">${c.lab}${stat}</div></div>`;
+      const dispNameDay=(e.art==="theorie"&&e.lektion)?esc("Lektion "+e.lektion):esc(e.name);
+      blocks+=`<div class="ct-ev${off?' off':''}${examSoon?' exam-soon':''}" style="top:${top}px;height:${h}px;border-left-color:${c.col}" data-evedit="${esc(e.kind)}|${esc(e.id)}|${esc(e.sid||'')}"><div class="ct-ev-t">${min2hm(it.von)}</div><div class="ct-ev-n">${dispNameDay}${sf}</div><div class="ct-ev-a">${c.lab}${stat}</div></div>`;
     } else if(it.type==="free"){ const s=it.s; const c=CAL_ARTEN[s.art]||CAL_ARTEN.fahrstunde;
-      blocks+=`<button class="ct-free" style="top:${top}px;height:${h}px" data-freeslot="${iso}|${s.von}|${s.bis}|${s.art}"><span>${min2hm(it.von)} · frei</span><span class="ct-free-p">+ vergeben</span></button>`;
+      blocks+=`<button class="ct-free" style="top:${top}px;height:${h}px" data-freeslot="${esc(iso)}|${esc(s.von)}|${esc(s.bis)}|${esc(s.art)}"><span>${min2hm(it.von)} · frei</span><span class="ct-free-p">+ vergeben</span></button>`;
     } else { const c=CAL_ARTEN.theorie;
       blocks+=`<div class="ct-ev" style="top:${top}px;height:${h}px;border-left-color:${c.col}"><div class="ct-ev-t">${min2hm(it.von)}</div><div class="ct-ev-n">Theorieunterricht</div><div class="ct-ev-a">Theorie</div></div>`;
     }
@@ -13623,7 +13628,8 @@ const FAULT_LABEL={};
 FAULTS.forEach(g=>g.items.forEach(([id,lab])=>{FAULT_LABEL[id]=lab;}));
 
 function todayISO(){const d=new Date();return d.getFullYear()+"-"+pad2(d.getMonth()+1)+"-"+pad2(d.getDate());}
-function isoDE(iso){ if(!iso)return ""; const p=(""+iso).slice(0,10).split("-"); return p.length===3?`${p[2]}.${p[1]}.${p[0].slice(2)}`:iso; }
+function isoDERoh(iso){ if(!iso)return ""; const t=""+iso; if(!/^\d{4}-\d{2}-\d{2}/.test(t))return t; const p=t.slice(0,10).split("-"); return `${p[2]}.${p[1]}.${p[0].slice(2)}`; }
+function isoDE(iso){ if(!iso)return ""; const t=""+iso; if(!/^\d{4}-\d{2}-\d{2}/.test(t))return esc(t); const p=t.slice(0,10).split("-"); return `${p[2]}.${p[1]}.${p[0].slice(2)}`; }
 /* Archiv (Büro hat den Schüler auf „inaktiv“ gesetzt): überall ausgeblendet, Daten und alte Termine bleiben erhalten. */
 function istArchiviert(s){ if(s&&s.ausgeblendetAm)return true; const f=_schuelerFristen[s.id]; return !!(f&&f.inaktiv_seit); }
 /* D1: „Löschen“ in der App blendet den Schüler nur bei diesem Fahrlehrer aus (Merker ausgeblendetAm, geht mit dem
@@ -13780,14 +13786,14 @@ function avgAttempts(ex){ const p=ex.filter(e=>e.result==='pass'); if(!p.length)
 function eingriffQuote(ex){ const f=ex.filter(e=>e.result==='fail'); if(!f.length)return null; return Math.round(f.filter(e=>e.eingriff).length/f.length*100); }
 function faultCounts(ex){ const c={}; ex.filter(e=>e.result==='fail').forEach(e=>(e.faults||[]).forEach(f=>{c[f]=(c[f]||0)+1;})); return Object.entries(c).sort((a,b)=>b[1]-a[1]); }
 
-function barRow(label,pct,sub,color){ color=color||"var(--orange)"; const w=Math.max(0,Math.min(100,pct||0)); return `<div class="bar-row"><div class="bar-top"><span class="bar-lab">${label}</span><span class="bar-val">${sub!=null?sub:(pct==null?"–":w+" %")}</span></div><div class="bar-track"><div class="bar-fill" style="width:${w}%;background:${color}"></div></div></div>`; }
+function barRow(label,pct,sub,color){ color=color||"var(--orange)"; const w=Math.max(0,Math.min(100,pct||0)); return `<div class="bar-row"><div class="bar-top"><span class="bar-lab">${esc(label)}</span><span class="bar-val">${sub!=null?sub:(pct==null?"–":w+" %")}</span></div><div class="bar-track"><div class="bar-fill" style="width:${w}%;background:${color}"></div></div></div>`; }
 function miniStat(label,val,sub){ return `<div class="mini-stat"><div class="ms-v">${val}</div><div class="ms-l">${label}</div><div class="ms-s">${sub}</div></div>`; }
 function miniStatAnim(label,val,suffix,sub){
   const isNum=val!==null&&val!=="–"&&!isNaN(+val);
   const disp=isNum?`<div class="ms-v" data-count="${Math.round(+val)}" data-suffix="${suffix||''}">${Math.round(+val)}${suffix||''}</div>`:`<div class="ms-v">${val==null?"–":val}</div>`;
   return `<div class="mini-stat">${disp}<div class="ms-l">${label}</div><div class="ms-s">${sub}</div></div>`;
 }
-function barRowAnim(label,pct,sub,color){ color=color||"var(--akzent)"; const w=Math.max(0,Math.min(100,pct||0)); return `<div class="bar-row"><div class="bar-top"><span class="bar-lab">${label}</span><span class="bar-val">${sub!=null?sub:w+" %"}</span></div><div class="bar-track"><div class="bar-fill" data-w="${w}" style="width:0%;background:${color}"></div></div></div>`; }
+function barRowAnim(label,pct,sub,color){ color=color||"var(--akzent)"; const w=Math.max(0,Math.min(100,pct||0)); return `<div class="bar-row"><div class="bar-top"><span class="bar-lab">${esc(label)}</span><span class="bar-val">${sub!=null?sub:w+" %"}</span></div><div class="bar-track"><div class="bar-fill" data-w="${w}" style="width:0%;background:${color}"></div></div></div>`; }
 function periodChips(active){ return `<div class="seg">${PERIODS.map(([k,l])=>`<button class="seg-i${k===active?' on':''}" data-period="${k}">${l}</button>`).join("")}</div>`; }
 function bindPeriod(fn){ document.querySelectorAll(".seg-i[data-period]").forEach(b=>b.addEventListener("click",()=>fn(b.dataset.period))); }
 
@@ -13841,13 +13847,13 @@ function showCalStudentDetail(sid){
   const futureEx=(DB.termine||[]).filter(t=>(t.slots||[]).includes(sid)).sort((a,b)=>a.date.localeCompare(b.date));
   // Merge future: lessons + exam slots, sorted asc
   const futureItems=[
-    ...futureL.map(l=>({ date:l.date, html:`<button class="cs-item future" data-date="${l.date}"><div class="csi-date">${deWeekday(l.date)} · ${isoDE(l.date)}</div><div class="csi-info">${l.von} · ${artLabel[l.art]||l.art}</div></button>` })),
-    ...futureEx.map(t=>({ date:t.date, html:`<button class="cs-item future" data-date="${t.date}"><div class="csi-date">${deWeekday(t.date)} · ${isoDE(t.date)}</div><div class="csi-info exam-future"><span class="ic ic-gold" style="font-size:11px;">${ICN.trophy}</span> Prüfung · ${t.von||"?"}</div></button>` }))
+    ...futureL.map(l=>({ date:l.date, html:`<button class="cs-item future" data-date="${esc(l.date)}"><div class="csi-date">${deWeekday(l.date)} · ${isoDE(l.date)}</div><div class="csi-info">${esc(l.von)} · ${esc(artLabel[l.art]||l.art)}</div></button>` })),
+    ...futureEx.map(t=>({ date:t.date, html:`<button class="cs-item future" data-date="${esc(t.date)}"><div class="csi-date">${deWeekday(t.date)} · ${isoDE(t.date)}</div><div class="csi-info exam-future"><span class="ic ic-gold" style="font-size:11px;">${ICN.trophy}</span> Prüfung · ${esc(t.von||"?")}</div></button>` }))
   ].sort((a,b)=>a.date.localeCompare(b.date));
   // Merge past: lessons + done exams, sorted desc
   const pastItems=[
-    ...pastL.map(l=>({ date:l.date, html:`<button class="cs-item past" data-date="${l.date}"><div class="csi-date">${deWeekday(l.date)} · ${isoDE(l.date)}</div><div class="csi-info">${l.von} · ${artLabel[l.art]||l.art}</div></button>` })),
-    ...pastEx.map(ex=>({ date:ex.date, html:`<button class="cs-item past" data-date="${ex.date}"><div class="csi-date">${deWeekday(ex.date)} · ${isoDE(ex.date)}</div><div class="csi-info ${ex.result==="pass"?"exam-pass":"exam-fail"}">${ex.result==="pass"?"✓ Bestanden":"✕ Nicht bestanden"}</div></button>` }))
+    ...pastL.map(l=>({ date:l.date, html:`<button class="cs-item past" data-date="${esc(l.date)}"><div class="csi-date">${deWeekday(l.date)} · ${isoDE(l.date)}</div><div class="csi-info">${esc(l.von)} · ${esc(artLabel[l.art]||l.art)}</div></button>` })),
+    ...pastEx.map(ex=>({ date:ex.date, html:`<button class="cs-item past" data-date="${esc(ex.date)}"><div class="csi-date">${deWeekday(ex.date)} · ${isoDE(ex.date)}</div><div class="csi-info ${ex.result==="pass"?"exam-pass":"exam-fail"}">${ex.result==="pass"?"✓ Bestanden":"✕ Nicht bestanden"}</div></button>` }))
   ].sort((a,b)=>b.date.localeCompare(a.date));
   const totalF=futureItems.length, totalP=pastItems.length;
   openSheet(`<div class="cs-stud-head"><button class="cs-back" id="csBack">← Zurück</button><div class="cs-stud-name">${esc(s.name)}</div></div>
@@ -13945,7 +13951,7 @@ function examReadyCard(s){
       <div class="ready-head">
         <div class="rc-ic">${ICN.trophy}</div>
         <div class="rc-body"><div class="rc-name">${t?"Prüfung geplant":"Auf der Warteliste"}</div>
-          <div class="rc-sub">${t?`am ${isoDE(t.date)}`:`seit ${fmtDateDE(s.ready)} · ${waitText(s.ready)}`}${s.theoryPassed?` · Theorie ${isoDE(s.theoryPassed)}`:""}${s.attempts?` · ${s.attempts+1}. Versuch`:""}</div></div>
+          <div class="rc-sub">${t?`am ${isoDE(t.date)}`:`seit ${fmtDateDE(s.ready)} · ${waitText(s.ready)}`}${s.theoryPassed?` · Theorie ${isoDE(s.theoryPassed)}`:""}${Number(s.attempts)?` · ${(Number(s.attempts)||0)+1}. Versuch`:""}</div></div>
       </div>
       <div style="margin-top:11px;">${badge}</div>
       <div class="btn-row" style="margin-top:13px;">
@@ -14058,8 +14064,8 @@ function openExamPlanSheet(s){
   const cur=terminFor(s.id);
   openSheet(`<div class="sheet-h">Prüfungstermin planen</div>
     <p class="muted-p" style="margin:-4px 0 14px;font-size:13px;">${esc(s.name)} bekommt einen Termin. Der Schüler wird dabei automatisch auf die Warteliste gesetzt und dem Termin zugeteilt.</p>
-    <div class="field"><label>Datum</label><input type="date" id="epDate" value="${cur?cur.date:todayISO()}"></div>
-    <div class="field"><label>Uhrzeit</label><input type="time" id="epTime" value="${cur&&cur.von?cur.von:'09:00'}"></div>
+    <div class="field"><label>Datum</label><input type="date" id="epDate" value="${esc(cur?cur.date:todayISO())}"></div>
+    <div class="field"><label>Uhrzeit</label><input type="time" id="epTime" value="${esc(cur&&cur.von?cur.von:'09:00')}"></div>
     <div class="btn-row"><button class="btn btn-ghost" id="epCancel" style="flex:0;padding:13px 18px;">Abbrechen</button><button class="btn btn-primary" id="epSave">Termin setzen</button></div>`);
   $("#epCancel").addEventListener("click",closeSheet);
   $("#epSave").addEventListener("click",()=>{
@@ -14134,7 +14140,7 @@ function renderResultStep(s){
     <div class="back-row"><button class="back-btn" id="backBtn">${ICN.back} Zurück</button></div>
     <div class="sec-h" style="margin:4px 0 6px;">${pass?'<span class="o">Bestanden</span>':'Nicht <span class="o">bestanden</span>'}</div>
     <p style="color:var(--muted);font-size:13.5px;margin-bottom:16px;">${esc(s.name)} · Prüfer: <b style="color:var(--txt)">${esc(_examPr)}</b></p>
-    <div class="field"><label>Datum</label><input type="date" id="exDate" value="${defDate}"></div>
+    <div class="field"><label>Datum</label><input type="date" id="exDate" value="${esc(defDate)}"></div>
     ${t?`<p class="muted-p" style="font-size:12px;margin:-6px 0 12px;">Übernommen vom Prüfungstermin am ${isoDE(t.date)}${t.date<todayISO()?" (vergangen)":""} — bei Bedarf ändern.</p>`:`<p class="muted-p" style="font-size:12px;margin:-6px 0 12px;">Kein Prüfungstermin gefunden — heutiges Datum eingesetzt. <b>Bitte prüfen.</b></p>`}
     ${pass?`<div class="field"><label>Notiz (optional)</label><div class="mic-wrap"><textarea id="exNote" rows="3" placeholder="Worauf hat der Prüfer geachtet?"></textarea>${micIcon()}</div></div>`
     :`<div class="field"><label>Fehler (Mehrfachauswahl)</label><div class="facc" id="faultAcc">${FAULTS.map((g,gi)=>{const cnt=g.items.filter(([fid])=>_examFaults.indexOf(fid)>=0).length;return `
@@ -14255,7 +14261,7 @@ function renderExam(s){
   view.innerHTML=`<div class="view-inner view-read fade-up">
     <div class="back-row"><button class="back-btn" id="backBtn">${ICN.back} Zurück</button></div>
     <div class="sec-h" style="margin:4px 0 16px;">${pass?'<span class="o">Bestanden</span>':'Nicht <span class="o">bestanden</span>'}</div>
-    <div class="field"><label>Datum</label><input type="date" id="exDate" value="${defDate}"></div>
+    <div class="field"><label>Datum</label><input type="date" id="exDate" value="${esc(defDate)}"></div>
     ${datumHinweis}
     <div class="field"><label>Prüfer</label>
       <div class="pr-wrap" id="prWrap">${prChips}<button class="pr-chip add" id="prAdd">+ Neuer Prüfer</button></div></div>
@@ -14314,7 +14320,7 @@ function routePruefungen(){
       html+=`<div class="blk-h">Termine</div>`;
       ts.forEach(t=>{
         const belegt=(t.slots||[]).filter(Boolean).length;
-        html+=`<div class="termin-blk"><div class="tb-row"><div class="tb-date">${isoDE(t.date)}${t.von?` · ${t.von}`:""}</div><div class="tb-meta">${belegt}/${t.plaetze} belegt</div>
+        html+=`<div class="termin-blk"><div class="tb-row"><div class="tb-date">${isoDE(t.date)}${t.von?` · ${esc(t.von)}`:""}</div><div class="tb-meta">${belegt}/${t.plaetze} belegt</div>
           <button class="tb-edit" data-tedit="${t.id}" aria-label="Termin bearbeiten">✎</button>
           <button class="tb-del" data-del="${t.id}" aria-label="Termin löschen">✕</button></div>
           <div class="slots">${(t.slots||[]).map((sid,i)=>{ const st=sid?DB.students.find(x=>x.id===sid):null;
@@ -14330,7 +14336,7 @@ function routePruefungen(){
         html+=`<button class="wait-card" data-id="${s.id}">
           <div class="wait-days"><div class="wd-n">${n}</div><div class="wd-l">${n===1?'Tag':'Tage'}</div></div>
           <div class="wait-body"><div class="wait-name">${esc(s.name)}</div>
-            <div class="wait-since">wartet seit ${fmtDateDE(s.ready)} · ${esc(s.form||'B')}${s.attempts?` · ${s.attempts+1}. Versuch`:""}</div></div>
+            <div class="wait-since">wartet seit ${fmtDateDE(s.ready)} · ${esc(s.form||'B')}${Number(s.attempts)?` · ${(Number(s.attempts)||0)+1}. Versuch`:""}</div></div>
           <span class="ready-pct ${pr>=90?'ok':''}">${pr}%</span></button>`;
       });
     }
@@ -14398,7 +14404,7 @@ function routePruefungenWoche(){
       const mehrere=list.length>1;
       html+=`<div class="termin-blk"${mehrere?' style="border-color:var(--orange-line);"':''}>
         <div class="tb-row"><div class="tb-date">${deWeekday(d)} · ${isoDE(d)}</div><div class="tb-meta"${mehrere?' style="color:var(--orange);font-weight:800;"':''}>${list.length} Prüfung${list.length===1?'':'en'}</div></div>
-        <div class="slots">${list.map(({s,von})=>`<div class="slot" data-id="${s.id}"><span class="slot-name">${von} · ${esc(s.name)}</span></div>`).join("")}</div>
+        <div class="slots">${list.map(({s,von})=>`<div class="slot" data-id="${s.id}"><span class="slot-name">${esc(von)} · ${esc(s.name)}</span></div>`).join("")}</div>
       </div>`;
     });
   }
@@ -14453,8 +14459,8 @@ function openTerminEdit(tid,retFn){
   retFn=retFn||routePruefungen;
   const t=DB.termine.find(x=>x.id===tid); if(!t)return;
   openSheet(`<div class="sheet-h">Prüfungstermin ändern</div>
-    <div class="field"><label>Datum</label><input type="date" id="teDate" value="${t.date}"></div>
-    <div class="field"><label>Uhrzeit</label><input type="time" id="teTime" value="${t.von||'09:00'}" step="60"></div>
+    <div class="field"><label>Datum</label><input type="date" id="teDate" value="${esc(t.date)}"></div>
+    <div class="field"><label>Uhrzeit</label><input type="time" id="teTime" value="${esc(t.von||'09:00')}" step="60"></div>
     <div class="btn-row"><button class="btn btn-ghost" id="teDel" style="flex:0;padding:13px 16px;color:#ff7a6b;">Löschen</button><button class="btn btn-primary" id="teSave">Speichern</button></div>`);
   $("#teSave").addEventListener("click",()=>{
     const d=$("#teDate").value; if(!d){toast("Bitte Datum wählen");return;}
@@ -14595,7 +14601,7 @@ function openFCMenu(id){
   if(cur==="v1"||cur==="v2"||cur==="halb_bewusst"){ acts+=tag("nachgereicht","FC nachgereicht","Verdienst kommt zurück (akt. Monat)","good"); }
   acts+=`<button class="es-act danger" data-fcdel="${id}">Hat nicht stattgefunden (löschen)</button>`;
   openSheet(`<div class="sheet-h">Fahrcheck · ${esc(st?st.name:"")}</div>
-    <p class="muted-p" style="font-size:13px;margin:-4px 0 14px;">${isoDE(l.date)} · ${l.von} · ${(CAL_ARTEN[l.art]||CAL_ARTEN.fahrstunde).lab}</p>
+    <p class="muted-p" style="font-size:13px;margin:-4px 0 14px;">${isoDE(l.date)} · ${esc(l.von)} · ${(CAL_ARTEN[l.art]||CAL_ARTEN.fahrstunde).lab}</p>
     <p class="muted-p" style="font-size:12.5px;margin:-6px 0 14px;color:var(--faint);">Standard ist „2 FC erhalten“ – hier nur Ausnahmen vermerken.</p>
     <div class="es-actions">${acts}</div>`);
   document.querySelectorAll("[data-fcset]").forEach(b=>b.addEventListener("click",()=>{ closeSheet(); setFC(id,b.dataset.fcset); }));
@@ -14619,7 +14625,7 @@ function routeFCMissing(){
   else groups.forEach(g=>{ const st=DB.students.find(s=>s.id===g.sid); const cnt=g.lessons.length; const euro=Math.round(g.ue*DB.verdienst.proUE);
     h+=`<div class="fc-grp"><div class="fc-grp-head"><div class="fc-nm">${esc(st?st.name:"—")}</div><div class="fc-grp-eur">−${eurFmt(euro)} · ${cnt}×</div></div>`;
     g.lessons.forEach(l=>{ h+=`<div class="fc-miss-row">
-        <div class="fc-info"><div class="fc-meta">${isoDE(l.date)} · ${l.von} · ${l.fc==="v1"?"1 FC fehlt":"2 FC fehlen"}</div></div>
+        <div class="fc-info"><div class="fc-meta">${isoDE(l.date)} · ${esc(l.von)} · ${l.fc==="v1"?"1 FC fehlt":"2 FC fehlen"}</div></div>
         <button class="fc-yes" data-fcnach="${l.id}">Nachgereicht</button>
         <button class="fc-more" data-fcmore2="${l.id}" aria-label="Optionen">⋯</button>
       </div>`; });
@@ -14651,12 +14657,12 @@ function nextStudentCardHTML(){
   const weiterehtml=events.slice(1).map(ev2=>{
     const isT2=ev2.date===todayISO();
     const dl2=isT2?"heute":deWeekday(ev2.date);
-    return `<div class="ns-next-row" data-nsopen2="${ev2.sid}"><span>${dl2} ${ev2.von}</span><span class="ns-next-name">${esc(ev2.name)}</span></div>`;
+    return `<div class="ns-next-row" data-nsopen2="${ev2.sid}"><span>${dl2} ${esc(ev2.von)}</span><span class="ns-next-name">${esc(ev2.name)}</span></div>`;
   }).join("");
   return `<div class="next-stud" data-nsopen="${e.sid}">
     <div class="ns-top">
       <div class="ns-label">Nächster Schüler${isToday?' · heute':''}</div>
-      <div class="ns-time">${e.von}<span>–${e.bis}</span></div>
+      <div class="ns-time">${esc(e.von)}<span>–${esc(e.bis)}</span></div>
     </div>
     <div class="ns-name">${esc(e.name)}</div>
     <div class="ns-meta">${dlabel} · ${artLab}${fzName?` · 🚗 ${fzName}`:''}</div>
@@ -14819,8 +14825,8 @@ function openCapacitySheet(){
   const trendHtml=`<div class="cap-drow"><span>Trend letzte 4 Wochen</span><b>${trend.map(t=>t.pct+"%").join(" → ")}</b></div>`;
   const naechsteFreieDatum=luecken.length?deWeekday(luecken[0].date)+" "+isoDE(luecken[0].date):null;
   const lueckenHtml=luecken.length
-    ? luecken.map(l=>`<button class="es-act cap-gap" data-freeslot="${l.date}|${l.von}|${l.bis}|${l.art}" style="display:flex;justify-content:space-between;align-items:center;text-align:left;">
-        <span>${deWeekday(l.date)} · ${isoDE(l.date)} · ${l.von}</span><span style="color:var(--gruen-bright,#4a8b45);font-weight:700;">Vergeben ›</span>
+    ? luecken.map(l=>`<button class="es-act cap-gap" data-freeslot="${esc(l.date)}|${esc(l.von)}|${esc(l.bis)}|${esc(l.art)}" style="display:flex;justify-content:space-between;align-items:center;text-align:left;">
+        <span>${deWeekday(l.date)} · ${isoDE(l.date)} · ${esc(l.von)}</span><span style="color:var(--gruen-bright,#4a8b45);font-weight:700;">Vergeben ›</span>
       </button>`).join("")
     : `<p class="muted-p" style="font-size:12.5px;">Keine freien Lücken in den nächsten 7 Tagen — gut ausgelastet.</p>`;
   openSheet(`<div class="sheet-h">Auslastung</div>
@@ -15189,7 +15195,7 @@ function _h2Hinweise(){
 function _h2FortsetzenHTML(e){
   const o=typeof _fmLaden==="function"?_fmLaden():null; if(!o||(e&&e.id===o.lid&&e.kind==="lesson"))return "";
   const l=(DB.lessons||[]).find(x=>x.id===o.lid), s=l&&DB.students.find(x=>x.id===l.sid); if(!l||!s)return "";
-  return `<button class="h2-fortsetzen h2-start" data-h2fortsetzen="${esc(o.lid)}"><span class="h2-live"></span><span>Fahrstunde mit ${esc(_fmVorname(s))} fortsetzen</span><span class="h2-fs-zeit">${l.von}–${l.bis}</span></button>`;
+  return `<button class="h2-fortsetzen h2-start" data-h2fortsetzen="${esc(o.lid)}"><span class="h2-live"></span><span>Fahrstunde mit ${esc(_fmVorname(s))} fortsetzen</span><span class="h2-fs-zeit">${esc(l.von)}–${esc(l.bis)}</span></button>`;
 }
 function _h2JetztHTML(e){
   if(!e) return `<section class="h2-jetzt h2-leer"><div class="h2-leer-t">Keine Fahrstunde geplant</div>
@@ -15208,7 +15214,7 @@ function _h2JetztHTML(e){
        <a class="h2-knopf h2-binda" href="https://wa.me/${esc(wa)}?text=${encodeURIComponent("Bin da! Ich warte am Treffpunkt.")}" target="_blank" rel="noopener">„Bin da“</a>`
     : `<button class="h2-knopf h2-nummer-fehlt" data-h2akte="${esc(e.sid)}" style="grid-column:1/-1;">📵 Nummer fehlt – in der Akte eintragen</button>`;
   return `<section class="h2-jetzt">
-    <div class="h2-jetzt-kopf"><div class="h2-jetzt-label">${live?'<span class="h2-live"></span>':''}${esc(label)} · ${e.von}–${e.bis}</div><span class="h2-jetzt-ue">${fmtUE(ue)} UE</span></div>
+    <div class="h2-jetzt-kopf"><div class="h2-jetzt-label">${live?'<span class="h2-live"></span>':''}${esc(label)} · ${esc(e.von)}–${esc(e.bis)}</div><span class="h2-jetzt-ue">${fmtUE(ue)} UE</span></div>
     <div class="h2-jetzt-mitte"${s?` data-h2akte="${esc(e.sid)}" role="button" tabindex="0" aria-label="Schülerakte öffnen"`:''}>
       <div class="h2-avatar">${esc(_h2Initialen(e.name))}</div>
       <div class="h2-jetzt-text"><div class="h2-jetzt-name">${esc(e.name)}</div>${s?`<div class="h2-jetzt-fokus">Fokus: ${esc(autoNext(s).text)}</div>`:''}${e.fahrzeug?`<div class="h2-jetzt-fz">🚗 ${esc(e.fahrzeug)}</div>`:''}</div>
@@ -15238,10 +15244,10 @@ function _h2DanachHTML(e){
   const ueHeute=ueRange(heute,heute).total;
   const info=`${fmtUE(ueHeute)} UE heute${alleFrei.length?` · ${alleFrei.length} ${alleFrei.length===1?"Lücke":"Lücken"}`:""}`;
   const liste=zeilen.length?zeilen.map(z=>{
-    if(z.frei) return `<div class="h2-zeile h2-frei"><span class="h2-zeit">${z.frei.von}</span><span class="h2-balken"></span><span class="h2-wer">frei</span>
-      <button class="h2-vergeben" data-freeslot="${z.frei.date||heute}|${z.frei.von}|${z.frei.bis}|${z.frei.art||"fahrstunde"}">+ vergeben</button></div>`;
+    if(z.frei) return `<div class="h2-zeile h2-frei"><span class="h2-zeit">${esc(z.frei.von)}</span><span class="h2-balken"></span><span class="h2-wer">frei</span>
+      <button class="h2-vergeben" data-freeslot="${esc(z.frei.date||heute)}|${esc(z.frei.von)}|${esc(z.frei.bis)}|${esc(z.frei.art||"fahrstunde")}">+ vergeben</button></div>`;
     const ev=z.ev, art=CAL_ARTEN[ev.art]||{lab:"Termin",col:"var(--k-akzent)"};
-    return `<button class="h2-zeile" data-h2ev="${esc(ev.kind)}|${esc(ev.id)}|${esc(ev.sid||"")}"><span class="h2-zeit">${ev.von}</span><span class="h2-balken" style="background:${art.col}"></span><span class="h2-wer">${esc(ev.sid?ev.name:art.lab)}</span><span class="h2-art">${esc(ev.kind==="pruefung"?"Prüfung":art.lab)}</span></button>`;
+    return `<button class="h2-zeile" data-h2ev="${esc(ev.kind)}|${esc(ev.id)}|${esc(ev.sid||"")}"><span class="h2-zeit">${esc(ev.von)}</span><span class="h2-balken" style="background:${art.col}"></span><span class="h2-wer">${esc(ev.sid?ev.name:art.lab)}</span><span class="h2-art">${esc(ev.kind==="pruefung"?"Prüfung":art.lab)}</span></button>`;
   }).join("")+(alleFrei.length>2?`<button class="h2-zeile h2-weitere" id="h2Weitere"><span class="h2-wer">+ ${alleFrei.length-2} weitere ${alleFrei.length-2===1?"Lücke":"Lücken"} im Kalender</span></button>`:""):`<p class="h2-nichts">Heute ist danach nichts mehr geplant</p>`;
   return `<section class="h2-danach"><div class="h2-kopfzeile"><span class="h2-ueber">Danach</span><span class="h2-danach-info">${info}</span></div><div class="h2-liste">${liste}</div></section>`;
 }
@@ -15524,15 +15530,15 @@ function routeStundeFertig(lid){
   const nachsteS=nachste&&DB.students.find(x=>x.id===nachste.sid);
   view.innerHTML=`<div class="view-inner fertig2 heute2">
     <header class="sf-kopf"><div class="sf-haken">✓</div><h1 class="h2-titel sf-titel">Stunde mit ${esc(vn)} fertig</h1>
-      <div class="sf-info">${l.von}–${l.bis} · ${fmtUE(ueOf(l.art,l.von,l.bis,l.tatsaechlicheDauer))} UE · Stand jetzt <b class="${plus?"hoch":""}">${pct} %</b>${plus}</div></header>
+      <div class="sf-info">${esc(l.von)}–${esc(l.bis)} · ${fmtUE(ueOf(l.art,l.von,l.bis,l.tatsaechlicheDauer))} UE · Stand jetzt <b class="${plus?"hoch":""}">${pct} %</b>${plus}</div></header>
     <section class="sf-karte"><div class="h2-ueber">Heute bewertet</div>
       ${chips.length?`<div class="sf-chips">${chips.map(c=>`<span class="sf-chip ${c.k}">${esc(c.it.t)} · ${c.lab}</span>`).join("")}</div>`:`<p class="h2-nichts">Heute wurde nichts bewertet.</p>`}</section>
     <button class="sf-knopf sf-unterschrift" id="sfSig"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 17c3-1 4-6 6-6s1 5 3 5 3-4 4-4 2 3 5 3M3 21h18"/></svg><span class="sf-knopf-t">Unterschrift</span><span class="sf-status ${l.signed?"gruen":"gelb"}">${l.signed?"✓ vorhanden":"noch offen"}</span></button>
     <button class="sf-knopf sf-protokoll${_sfGesendet[lid]?" gesendet":""}" id="sfProt"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 11.5a8.4 8.4 0 0 1-12.4 7.4L3 21l2.1-5.5A8.4 8.4 0 1 1 21 11.5z"/></svg><span class="sf-knopf-t">${_sfGesendet[lid]?"Protokoll gesendet ✓":`Protokoll per WhatsApp an ${esc(vn)}`}</span></button>
     <section class="sf-karte"><div class="sf-karte-t">Nächster Termin für ${esc(vn)}</div><div class="sf-unter">Freie Lücken ab morgen</div>
-      ${naechsterTermin?`<div class="sf-naechster">Nächster Termin: ${isoDE(naechsterTermin.date).slice(0,6)} ${naechsterTermin.von}</div>`:''}
-      ${luecken.length?`<div class="sf-slots">${luecken.map(x=>`<button class="sf-slot" data-freeslot="${x.date}|${x.von}|${x.bis}|${x.art||"fahrstunde"}"><span>${deWeekday(x.date)} ${parseISO(x.date).getDate()}.</span><b>${x.von}</b></button>`).join("")}</div>`:`<p class="h2-nichts">Keine freie Lücke in den nächsten 14 Tagen.</p>`}<button class="sf-weitere" id="sfWeitere">Andere Zeit im Kalender ›</button></section>
-    <button class="sf-heute" id="sfHeute"><span>Zurück zu Heute</span>${nachste?`<span class="sf-heute-n">· nächster: ${esc(nachsteS?nachsteS.name:"")} ${nachste.von}</span>`:""}</button>
+      ${naechsterTermin?`<div class="sf-naechster">Nächster Termin: ${isoDE(naechsterTermin.date).slice(0,6)} ${esc(naechsterTermin.von)}</div>`:''}
+      ${luecken.length?`<div class="sf-slots">${luecken.map(x=>`<button class="sf-slot" data-freeslot="${esc(x.date)}|${esc(x.von)}|${esc(x.bis)}|${esc(x.art||"fahrstunde")}"><span>${deWeekday(x.date)} ${parseISO(x.date).getDate()}.</span><b>${esc(x.von)}</b></button>`).join("")}</div>`:`<p class="h2-nichts">Keine freie Lücke in den nächsten 14 Tagen.</p>`}<button class="sf-weitere" id="sfWeitere">Andere Zeit im Kalender ›</button></section>
+    <button class="sf-heute" id="sfHeute"><span>Zurück zu Heute</span>${nachste?`<span class="sf-heute-n">· nächster: ${esc(nachsteS?nachsteS.name:"")} ${esc(nachste.von)}</span>`:""}</button>
   </div>`;
   $("#sfSig").addEventListener("click",()=>{
     openSignatureSheet(lid);
@@ -15572,7 +15578,7 @@ function nextExamDashCard(){
   const mehrfach=eintraege.length>1;
   let html=`<div class="nex-card" data-go="pruef">
     <div class="nex-top">
-      <div><div class="nex-label">Nächste Prüfung${mehrfach?` · ${eintraege.length} Schüler`:""}</div><div class="nex-date">${isoDE(naechstesDatum)}${eintraege.length===1&&eintraege[0].von?` · ${eintraege[0].von}`:""}</div></div>
+      <div><div class="nex-label">Nächste Prüfung${mehrfach?` · ${eintraege.length} Schüler`:""}</div><div class="nex-date">${isoDE(naechstesDatum)}${eintraege.length===1&&eintraege[0].von?` · ${esc(eintraege[0].von)}`:""}</div></div>
       <div class="nex-days"><span class="nex-dn">${daysLeft}</span><span class="nex-dl">${daysLeft===1?"Tag":"Tage"}</span></div>
     </div>
     ${mehrfach?`<div class="lage-warn" style="margin:2px 0 8px;">${ICN.bolt||"⚠"}<span>${eintraege.length} Prüfungen am selben Tag – Fahrten/Zeiten früh genug einplanen.</span></div>`:""}`;
@@ -15581,7 +15587,7 @@ function nextExamDashCard(){
     const geplant=(DB.lessons||[]).filter(l=>l.sid===s.id&&l.date>today&&l.date<naechstesDatum&&l.status!=="abgebrochen"&&l.status!=="nicht erschienen"&&["fahrstunde","sonder","nacht"].indexOf(l.art)>=0).sort((a,b)=>a.date.localeCompare(b.date));
     const gDates=geplant.map(l=>`${deWeekday(l.date)} ${isoDE(l.date).slice(0,5)}`);
     html+=`<div class="nex-student">
-      <div class="nex-name">${mehrfach&&von?`${von} · `:""}${esc(s.name)}</div>
+      <div class="nex-name">${mehrfach&&von?`${esc(von)} · `:""}${esc(s.name)}</div>
       ${geplant.length?`<div class="nex-lessons"><b>${geplant.length}</b> Fahrstunde${geplant.length===1?"":"n"} geplant: ${gDates.slice(0,4).join(" · ")}${gDates.length>4?` +${gDates.length-4}`:""}</div>`:`<div class="nex-lessons warn">Noch keine Fahrstunden geplant!</div>`}
     </div>`;
   });
@@ -16453,9 +16459,9 @@ function examReadiness(s){
     {label:s.umschreiber?"Sonderfahrten entfallen (Umschreiber)":`Sonderfahrten ${sonderDone}/${sonderTot}`, ok:sonderOk, detail:sonderOk?null:"Pflichtfahrten noch nicht komplett."},
     {label:"Theorieprüfung bestanden", ok:theoOk, detail:theoOk?null:"Im Ausbildungsplan noch nicht abgehakt."}
   ];
-  if(s.attempts>0){
+  if(Number(s.attempts)>0){
     const fset=new Set();
-    (DB.exams||[]).forEach(e=>{ if(e.sid===s.id&&e.result==="fail"&&Array.isArray(e.faults)) e.faults.forEach(fc=>fset.add(FAULT_LABEL[fc]||fc)); });
+    (DB.exams||[]).forEach(e=>{ if(e.sid===s.id&&e.result==="fail"&&Array.isArray(e.faults)) e.faults.forEach(fc=>fset.add(esc(FAULT_LABEL[fc]||fc))); });
     if(fset.size) items.push({label:"Aus früherem Versuch beachten", ok:null, detail:[...fset].slice(0,4).join(", ")});
   }
   const ready=skillOk&&sonderOk&&theoOk;
@@ -16538,7 +16544,7 @@ function openBellSheet(){
     const msg=encodeURIComponent(`Hey ${s.name.split(" ")[0]}! Kurze Erinnerung: morgen um ${l.von} Uhr ist deine Fahrstunde. Bis dann! 🚗`);
     const url=phone?`https://wa.me/${phone}?text=${msg}`:`https://wa.me/?text=${msg}`;
     return `<a class="es-act" href="${url}" target="_blank" rel="noopener" style="display:flex;justify-content:space-between;align-items:center;text-decoration:none;">
-      <span>${esc(s.name)} · ${l.von} Uhr</span><span style="color:#0f7d6e;font-weight:700;">WhatsApp ›</span>
+      <span>${esc(s.name)} · ${esc(l.von)} Uhr</span><span style="color:#0f7d6e;font-weight:700;">WhatsApp ›</span>
     </a>`;
   }).join("") : "";
   const pruefRows=pruefList.length? pruefList.map(p=>{
@@ -16548,7 +16554,7 @@ function openBellSheet(){
     const msg=encodeURIComponent(`Hey ${s.name.split(" ")[0]}! Kurze Erinnerung: morgen um ${p.von} Uhr ist deine Prüfung. Viel Erfolg! 🍀🚗`);
     const url=phone?`https://wa.me/${phone}?text=${msg}`:`https://wa.me/?text=${msg}`;
     return `<a class="es-act" href="${url}" target="_blank" rel="noopener" style="display:flex;justify-content:space-between;align-items:center;text-decoration:none;">
-      <span>🏆 ${esc(s.name)} · ${p.von} Uhr</span><span style="color:#0f7d6e;font-weight:700;">WhatsApp ›</span>
+      <span>🏆 ${esc(s.name)} · ${esc(p.von)} Uhr</span><span style="color:#0f7d6e;font-weight:700;">WhatsApp ›</span>
     </a>`;
   }).join("") : "";
   const alleRows=geburtstagRows+rows+pruefRows;
