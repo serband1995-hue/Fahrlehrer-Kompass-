@@ -1428,7 +1428,8 @@ body.light .dt-n{background:linear-gradient(160deg,#1d3324 10%,#2f5d3f 90%);-web
 .clb-item i{width:9px;height:9px;border-radius:2px;flex:0 0 auto;}
 .cal-nav{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:16px;}
 /* K3 (GK23): In der Tagesansicht bleibt die Datumszeile beim Wischen oben stehen (nach dem Sprung zur Jetzt-Linie sichtbar) */
-.cal-wrap.cal-tag>.cal-nav{position:sticky;top:0;z-index:6;background:var(--bg);padding-top:6px;padding-bottom:6px;box-shadow:0 1px 0 var(--line);}
+.cal-wrap.cal-tag>.cal-nav{position:sticky;top:0;z-index:6;background:var(--bg);padding-top:3px;padding-bottom:3px;margin-bottom:10px;box-shadow:0 1px 0 var(--line);}
+#view[data-seite2] .cal-wrap.cal-tag>.cal-nav{margin-bottom:2px;} /* Innenabstand der festen Zeile ausgleichen: Kalender beginnt so hoch wie vorher */
 body.light:has(#view[data-seite2]) .cal-wrap.cal-tag>.cal-nav{background:var(--k-grund);}
 /* K3: Meldungen nach dem Video-Tipp mit fester Farbbedeutung (grün angekommen, gelb gespeichert, rot nicht geschickt) */
 .toast.t-ok{box-shadow:inset 6px 0 0 var(--gruen),var(--elev-3) !important;}
