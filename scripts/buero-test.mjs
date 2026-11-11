@@ -2328,11 +2328,19 @@ for (const [breite, hoehe] of [[1366, 860], [390, 844]]) {
     await page.click("dialog[open] #akZugangKnopf"); await page.waitForTimeout(150);
     if (await page.evaluate(() => localStorage.getItem("fa_vorbelegung_v1"))) fehler(P + ": ohne Telefon trotzdem vorbelegt");
     if (!/Telefonnummer/.test(await page.textContent("#toast").catch(() => ""))) fehler(P + ": kein Hinweis auf fehlende Telefonnummer");
-    await pruefeLayout(page, P);
+    if (breite > 900) await pruefeLayout(page, P);
+    else {
+      // Handy: die Liste hinter dem Fenster ist absichtlich wischbar; hier zählt das Fenster mit dem Knopf
+      const r = await page.evaluate(() => { const w = innerWidth, d = document.querySelector("dialog[open]").getBoundingClientRect(), k = document.getElementById("akZugangKnopf").getBoundingClientRect(), s = document.getElementById("akSprache").getBoundingClientRect(); return { d: d.left >= -1 && d.right <= w + 1, k: k.left >= d.left - 1 && k.right <= d.right + 1, s: s.right <= d.right + 1, seite: document.documentElement.scrollWidth <= w + 1 }; });
+      if (!r.d || !r.k || !r.s) fehler(P + ": Fenster, Knopf oder Sprachwahl ragt über den Rand " + JSON.stringify(r));
+      if (!r.seite) fehler(P + ": Seite breiter als der Bildschirm");
+    }
   }
   // Neuer Schüler: kein Knopf (erst nach dem Anlegen)
   await page.keyboard.press("Escape"); await page.waitForTimeout(150);
   if (await page.isVisible("dialog[open] button[value=ok]")) { await verwerfenJa(page).catch(() => {}); }
+  await page.evaluate(() => { document.querySelectorAll("dialog[open]").forEach((d) => d.close()); schuelerDialog(); }); await page.waitForTimeout(200);
+  if (await page.isVisible("dialog[open] #akZugangKnopf")) fehler(P + ": Knopf schon beim Anlegen eines neuen Schülers");
   if (konsole.length) fehler(P + ": Konsole: " + konsole.join(" | "));
   await ctx.close();
 }

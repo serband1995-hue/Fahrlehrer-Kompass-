@@ -51,7 +51,11 @@ async function seite(w, h, jetzt) {
     const q = new Proxy(function () {}, { get: (_t, k) => (k === "then" ? (ok) => ok({ data: [], error: null }) : k === "single" || k === "maybeSingle" ? leer : () => q), apply: () => q });
     window.__antwort = null;
     window.getSupa = () => ({ from: () => q, rpc: leer, auth: { getUser: leer, getSession: leer },
-      functions: { invoke: async () => { const a = window.__antwort; if (a && a.wirf) throw new Error("offline"); return a; } } });
+      functions: { invoke: async () => {
+        const a = window.__antwort; if (a && a.wirf) throw new Error("offline");
+        // wie supabase-js bei Status 4xx/5xx: kein data, error.context ist die Antwort
+        if (a && a.httpStatus) return { data: null, error: { name: "FunctionsHttpError", message: "Edge Function returned a non-2xx status code", context: new Response(JSON.stringify(a.httpBody), { status: a.httpStatus, headers: { "Content-Type": "application/json" } }) } };
+        return a; } } });
   });
   return { ctx, page, jsFehler };
 }
@@ -92,7 +96,7 @@ async function seite(w, h, jetzt) {
     await _pushAkademieVideo(s || { id: "s1", name: "Lena Muster", telefon: "0170 1234567" }, { stufe: "Grundstufe", tag: "t1" });
     return { text: t.textContent, sichtbar: t.classList.contains("show") };
   }, { antwort, s });
-  const ctxAntwort = (status, body) => ({ data: null, error: { name: "FunctionsHttpError", context: { status, json: async () => body } } });
+  const ctxAntwort = (status, body) => ({ httpStatus: status, httpBody: body });
   const faelle = [
     ["A1", "Push angekommen", { data: { ok: true, push_gesendet_an: 2, empfehlung_gespeichert: true }, error: null }, /Video-Tipp an Lena geschickt/],
     ["A2", "ohne Push-Abo", { data: { ok: true, push_gesendet_an: 0, hinweis: "kein_push_abo", empfehlung_gespeichert: true }, error: null }, /Handy-Nachrichten sind aus.*nächsten Anmelden/],
