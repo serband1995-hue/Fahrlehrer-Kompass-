@@ -1984,10 +1984,11 @@ body.light .lo-err.ok{color:#1e6b46;}
 .fs-name{font-size:14px;font-weight:700;color:var(--txt);}
 .fs-sub{font-size:12px;color:var(--muted);margin-top:2px;}
 .fs-status-on{color:#4a8b45;font-weight:700;}
-.fs-status-off{color:#c83c3c;font-weight:700;}
+.fs-status-off{color:#a52a2a;font-weight:700;}
+body:not(.light) .fs-status-off{color:#ff8a80;} /* K2: „GESPERRT“ dunkel 2,85:1 war zu blass */
 .fs-actions{display:flex;gap:8px;margin-top:10px;flex-wrap:wrap;}
-.fs-btn-kill{background:rgba(200,60,60,.12);color:#c83c3c;border:1px solid rgba(200,60,60,.3);border-radius:10px;padding:7px 14px;font-size:12px;font-weight:700;cursor:pointer;}
-.fs-btn-activate{background:rgba(74,139,69,.12);color:#4a8b45;border:1px solid rgba(74,139,69,.3);border-radius:10px;padding:7px 14px;font-size:12px;font-weight:700;cursor:pointer;}
+.fs-btn-kill{min-height:44px;background:rgba(200,60,60,.12);color:#c83c3c;border:1px solid rgba(200,60,60,.3);border-radius:10px;padding:7px 14px;font-size:12px;font-weight:700;cursor:pointer;}
+.fs-btn-activate{min-height:44px;background:rgba(74,139,69,.12);color:#4a8b45;border:1px solid rgba(74,139,69,.3);border-radius:10px;padding:7px 14px;font-size:12px;font-weight:700;cursor:pointer;}
 .ap-actions{display:flex;gap:8px;margin-top:12px;}
 .ap-kill{background:rgba(200,60,60,.15);border:1px solid rgba(200,60,60,.3);color:#f08080;border-radius:8px;padding:7px 14px;font-size:12px;font-weight:700;cursor:pointer;}
 .ap-activate{background:rgba(63,174,107,.12);border:1px solid rgba(63,174,107,.25);color:#3fae6b;border-radius:8px;padding:7px 14px;font-size:12px;font-weight:700;cursor:pointer;}
@@ -5837,12 +5838,17 @@ async function _fsZurBueroSeite(ev){
   if(_fsZurBueroLaeuft)return false; // Doppeltipp: der erste Tipp speichert noch
   if(!_seiteVerlassenOk())return false;
   _fsZurBueroLaeuft=true;
+  const knopf=document.getElementById("fsBueroLink"); let hinweisAn=false;
   try{
     // Noch nicht geschriebene Änderungen der Gesamtansicht erst speichern (wie beim Umschalten in die eigene Ansicht).
     // Auch ein Speichern, das gerade unterwegs ist, wird abgewartet: Der Seitenwechsel würde es sonst abbrechen.
     if(_fsAgg){
       let ok=true, fehlversuch=false;
-      if(_fsSyncLaeuftP||_fsSyncDebounce||_fsUngespeichert)toast("Speichere Änderungen …"); // Rückmeldung, während gewartet wird
+      // Rückmeldung, solange gewartet wird: Hinweis bleibt stehen, Knopf zeigt „Speichere …“ und ist gesperrt
+      if(_fsSyncLaeuftP||_fsSyncDebounce||_fsUngespeichert){
+        toast("Speichere Änderungen …"); const t=$("#toast"); clearTimeout(t._t); hinweisAn=true;
+        if(knopf){ knopf.setAttribute("aria-busy","true"); knopf.style.opacity=".6"; knopf.style.pointerEvents="none"; const u=knopf.querySelector(".fbl-s"); if(u){ u.dataset.alt=u.textContent; u.textContent="Speichere Änderungen …"; } }
+      }
       // Warten, bis wirklich nichts mehr offen ist: Während ein Speichern läuft, kann schon das nächste anstehen.
       for(let runde=0; runde<6 && (_fsSyncLaeuftP||_fsSyncDebounce||_fsUngespeichert); runde++){
         const lief=_fsSyncLaeuftP;
@@ -5851,11 +5857,17 @@ async function _fsZurBueroSeite(ev){
         if(!ok){ if(fehlversuch)break; fehlversuch=true; } // nach einem Fehler genau einmal neu versuchen
       }
       if(_fsSyncLaeuftP||_fsSyncDebounce||_fsUngespeichert)ok=false;
+      // Ist der Nutzer inzwischen auf eine andere Seite gegangen, nicht mehr plötzlich wegspringen
+      if(knopf&&!document.contains(knopf))return false;
       if(!ok&&!confirm("Nicht alle Änderungen konnten gespeichert werden. Trotzdem zur Büro-Seite? Ungespeichertes geht dann verloren."))return false;
     }
     location.href="buero.html";
     return false;
-  }finally{ _fsZurBueroLaeuft=false; }
+  }finally{
+    _fsZurBueroLaeuft=false;
+    if(hinweisAn){ const t=$("#toast"); if(t.textContent==="Speichere Änderungen …")t.classList.remove("show"); }
+    if(knopf){ knopf.removeAttribute("aria-busy"); knopf.style.opacity=""; knopf.style.pointerEvents=""; const u=knopf.querySelector(".fbl-s"); if(u&&u.dataset.alt!=null){ u.textContent=u.dataset.alt; delete u.dataset.alt; } }
+  }
 }
 function routeFahrschuleDashboard(){
   if(!_fsAgg)return;

@@ -596,6 +596,37 @@ await pruefe("G4", "„Zur Büro-Seite“ während Speichern (1200 ms) + anstehe
     return f;
   } finally { await ctx.close(); }
 });
+await pruefe("G5", "langes Speichern (3 s): Hinweis bleibt stehen, Knopf zeigt „Speichere …“ und ist gesperrt; andere Seite gewählt: kein Sprung mehr, Hinweis weg", async () => {
+  const ctx = await browser.newContext({ viewport: { width: 412, height: 915 }, isMobile: true, hasTouch: true, timezoneId: "Europe/Berlin", locale: "de-DE" });
+  const page = await ctx.newPage();
+  page.on("dialog", (d) => d.dismiss().catch(() => {}));
+  await page.clock.setFixedTime(JETZT);
+  await page.route("**/*", (r) => (r.request().url().startsWith(basis) ? r.continue() : r.abort()));
+  await page.goto(basis + "index.html", { waitUntil: "load", timeout: 20000 });
+  await warte(page, 600);
+  await page.evaluate(() => { for (const id of ["loginOverlay", "splash"]) { const e = document.getElementById(id); if (e) e.style.display = "none"; } });
+  try {
+    await daten(page, "fs");
+    await ev(page, `routeFahrschuleDashboard()`); await warte(page, 300);
+    await page.evaluate(() => {
+      window._fsSyncAggJetztKern = async () => { _fsSyncDebounce = null; await new Promise((ok) => setTimeout(ok, 3000)); return true; };
+      _fsSyncAggJetzt();
+    });
+    let gesprungen = false;
+    page.on("framenavigated", (fr) => { if (fr === page.mainFrame() && /buero\.html/.test(fr.url())) gesprungen = true; });
+    await page.locator("#fsBueroLink").click(); await warte(page, 2200);
+    const f = [];
+    const mitte = await page.evaluate(() => { const t = document.getElementById("toast"), k = document.getElementById("fsBueroLink"); return { zeigt: t.classList.contains("show") && /Speichere/.test(t.textContent), busy: !!k && k.getAttribute("aria-busy") === "true" && /Speichere/.test(k.innerText) && getComputedStyle(k).pointerEvents === "none" }; });
+    if (!mitte.zeigt) f.push("Hinweis „Speichere …“ nach 2 s schon weg");
+    if (!mitte.busy) f.push("Knopf zeigt beim Warten nicht „Speichere …“ oder ist nicht gesperrt");
+    await ev(page, `routeFahrschuleLehrer()`);
+    await warte(page, 1500);
+    if (gesprungen || /buero\.html/.test(page.url())) f.push("ist trotzdem zur Büro-Seite gesprungen");
+    const t = await page.evaluate(() => { const t = document.getElementById("toast"); return t.classList.contains("show") ? t.textContent : ""; });
+    if (/Speichere/.test(t)) f.push("Hinweis „Speichere …“ bleibt stehen");
+    return f;
+  } finally { await ctx.close(); }
+});
 
 await browser.close();
 server.close();
