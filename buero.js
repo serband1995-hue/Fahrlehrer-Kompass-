@@ -224,6 +224,11 @@ function springeZumTitel() {
 }
 // Schutz: Kommt buero.html noch alt aus dem Zwischenspeicher (ohne den Knopf), darf die Seite nicht stehen bleiben
 if ($("menueKnopf")) $("menueKnopf").addEventListener("click", () => menueOffen(!document.body.classList.contains("menue-offen")));
+// Escape klappt das offene Menü zu (nur wenn kein Fenster offen ist, das Escape selbst braucht)
+document.addEventListener("keydown", (e) => {
+  if (e.key !== "Escape" || !document.body.classList.contains("menue-offen") || document.querySelector("dialog[open]")) return;
+  menueOffen(false); if ($("menueKnopf")) $("menueKnopf").focus();
+});
 document.addEventListener("click", (e) => {
   const a = e.target.closest(".nav-punkt");
   if (!a || !istSchmal()) return;

@@ -564,6 +564,39 @@ await pruefe("G3", "Tipp auf „Zur Büro-Seite“ öffnet buero.html im selben 
   } finally { await ctx.close(); }
 });
 
+// ---------- (g) Speichern läuft, das nächste steht schon an: erst wechseln, wenn nichts mehr offen ist ----------
+await pruefe("G4", "„Zur Büro-Seite“ während Speichern (1200 ms) + anstehendem Speichern: Wechsel erst danach, „Speichere …“ sichtbar", async () => {
+  const ctx = await browser.newContext({ viewport: { width: 412, height: 915 }, isMobile: true, hasTouch: true, timezoneId: "Europe/Berlin", locale: "de-DE" });
+  const page = await ctx.newPage();
+  page.on("dialog", (d) => d.dismiss().catch(() => {}));
+  await page.clock.setFixedTime(JETZT);
+  await page.route("**/*", (r) => (r.request().url().startsWith(basis) ? r.continue() : r.abort()));
+  await page.goto(basis + "index.html", { waitUntil: "load", timeout: 20000 });
+  await warte(page, 600);
+  await page.evaluate(() => { for (const id of ["loginOverlay", "splash"]) { const e = document.getElementById(id); if (e) e.style.display = "none"; } localStorage.removeItem("__k2probe"); });
+  try {
+    await daten(page, "fs");
+    await ev(page, `routeFahrschuleDashboard()`); await warte(page, 300);
+    if (!(await page.locator("#fsBueroLink").count())) return "Knopf fehlt";
+    // Speichern-Attrappe: jedes Speichern dauert 1200 ms; beim Verlassen der Seite den Stand festhalten
+    await page.evaluate(() => {
+      window.__laeuft = 0; window.__fertig = 0;
+      window._fsSyncAggJetztKern = async () => { _fsSyncDebounce = null; __laeuft++; await new Promise((ok) => setTimeout(ok, 1200)); __laeuft--; __fertig++; return true; };
+      window.addEventListener("beforeunload", () => localStorage.setItem("__k2probe", JSON.stringify({ laeuft: __laeuft, fertig: __fertig, ansteht: !!_fsSyncDebounce, p: !!_fsSyncLaeuftP, toast: document.getElementById("toast").textContent })));
+      _fsSyncAggJetzt(); _fsSyncDebounce = setTimeout(_fsSyncAggJetzt, 400);
+    });
+    await Promise.all([page.waitForURL(/buero\.html/, { timeout: 8000 }), page.locator("#fsBueroLink").click()]);
+    const r = await page.evaluate(() => JSON.parse(localStorage.getItem("__k2probe") || "null"));
+    if (!r) return "kein Stand beim Seitenwechsel festgehalten";
+    const f = [];
+    if (r.laeuft || r.p) f.push("beim Wechsel lief noch ein Speichern");
+    if (r.ansteht) f.push("beim Wechsel stand noch ein Speichern an");
+    if (r.fertig < 2) f.push("nur " + r.fertig + " Speichern fertig (erwartet 2)");
+    if (!/Speichere/.test(r.toast)) f.push("keine Rückmeldung „Speichere …“ (Toast: " + r.toast + ")");
+    return f;
+  } finally { await ctx.close(); }
+});
+
 await browser.close();
 server.close();
 console.log(`Chef-Sicht-Test: ${okZahl + fehlerZahl} Prüfungen, ${fehlerZahl} Fehler`);

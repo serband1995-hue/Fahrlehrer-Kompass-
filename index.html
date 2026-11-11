@@ -5842,6 +5842,7 @@ async function _fsZurBueroSeite(ev){
     // Auch ein Speichern, das gerade unterwegs ist, wird abgewartet: Der Seitenwechsel würde es sonst abbrechen.
     if(_fsAgg){
       let ok=true, fehlversuch=false;
+      if(_fsSyncLaeuftP||_fsSyncDebounce||_fsUngespeichert)toast("Speichere Änderungen …"); // Rückmeldung, während gewartet wird
       // Warten, bis wirklich nichts mehr offen ist: Während ein Speichern läuft, kann schon das nächste anstehen.
       for(let runde=0; runde<6 && (_fsSyncLaeuftP||_fsSyncDebounce||_fsUngespeichert); runde++){
         const lief=_fsSyncLaeuftP;

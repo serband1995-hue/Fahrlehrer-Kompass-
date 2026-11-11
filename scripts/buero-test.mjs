@@ -2203,6 +2203,18 @@ async function k2Kontrast(page, sel) {
     if (konsole.length) fehler(`K2 ${name}: Konsole: ${konsole.join(" | ")}`);
     await ctx.close();
   }
+  // Escape klappt das offene Menü zu, der Bereich bleibt
+  {
+    const { page, ctx, konsole } = await oeffne({ nutzer: "bu-1", breite: 412, hoehe: 915, hash: "#heute" });
+    await page.click("#menueKnopf"); await page.waitForTimeout(100);
+    await page.keyboard.press("Escape"); await page.waitForTimeout(100);
+    const r = await page.evaluate(() => ({ offen: document.body.classList.contains("menue-offen"), aria: document.getElementById("menueKnopf").getAttribute("aria-expanded"), fokus: document.activeElement && document.activeElement.id, hash: location.hash }));
+    if (r.offen || r.aria !== "false") fehler("K2 Escape: Menü bleibt offen");
+    if (r.fokus !== "menueKnopf") fehler("K2 Escape: Fokus nicht auf dem Menü-Knopf (" + r.fokus + ")");
+    if (r.hash !== "#heute") fehler("K2 Escape: Bereich gewechselt (" + r.hash + ")");
+    if (konsole.length) fehler("K2 Escape: Konsole: " + konsole.join(" | "));
+    await ctx.close();
+  }
   // Tablet: Menü offen, quer drehen (über 900 px), Bereich wechseln, zurückdrehen → Menü ist zu
   {
     const { page, ctx, konsole } = await oeffne({ nutzer: "bu-1", breite: 768, hoehe: 1024, hash: "#heute" });
