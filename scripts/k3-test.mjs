@@ -236,12 +236,12 @@ for (const [w, h, n] of [[360, 780, "360 hoch"], [412, 915, "412 hoch"], [740, 3
   });
   await pruefe(`C7 [${n}]`, "nach dem Sprung steht die Datumszeile (‹ Datum ›) oben im Bild", async () => {
     await page.evaluate(() => routeKalender("woche", "2026-11-11")); await page.waitForTimeout(100);
-    await page.evaluate((t) => routeKalender("tag", t), TAG); await page.waitForTimeout(250);
+    await page.evaluate((t) => routeKalender("tag", t), TAG); await page.waitForTimeout(700);
     const r = await page.evaluate(() => { const v = document.getElementById("view").getBoundingClientRect(), nav = document.querySelector(".cal-nav").getBoundingClientRect(), now = document.querySelector(".ct-now").getBoundingClientRect(), s = document.getElementById("view").scrollTop; return { s, oben: nav.top - v.top, unten: nav.bottom - v.top, now: now.top - v.top, h: v.height }; });
     const f = [];
     if (!(r.s > 0)) f.push("nicht gesprungen");
     if (r.oben < -1 || r.unten > 120) f.push(`Datumszeile nicht oben (${Math.round(r.oben)}–${Math.round(r.unten)} px)`);
-    if (r.now < r.unten || r.now > r.h - 10) f.push(`Jetzt-Linie verdeckt/außerhalb (${Math.round(r.now)} px)`);
+    if (r.now < r.unten + 30 || r.now > r.h - 10) f.push(`Jetzt-Linie verdeckt/zu knapp unter der Datumszeile (Linie ${Math.round(r.now)} px, Zeile bis ${Math.round(r.unten)} px)`);
     return f;
   });
   await pruefe(`C4 [${n}]`, "keine Seite breiter als der Bildschirm, keine JS-Fehler", async () => {

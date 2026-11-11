@@ -13003,13 +13003,21 @@ function routeKalender(ansicht,datum){
   else if(_calVorher===_calJetzt)view.scrollTop=_calY;
   _calSpringJetzt=false; _calZuletzt=_calJetzt;
 }
-// K3 (GK23): Tagesansicht von heute springt zur Jetzt-Linie (vorher immer 08:00 oben). Etwa ein Drittel des
-// Bildschirms bleibt über der Linie, damit die gerade laufende Stunde zu sehen ist.
+// K3 (GK23): Tagesansicht von heute springt zur Jetzt-Linie (vorher immer 08:00 oben). Unter der festen Datumszeile
+// bleibt etwa ein Viertel des Bildschirms (mindestens 48 px) über der Linie, damit die laufende Stunde zu sehen ist.
 function _calZurJetztLinie(){
   if(_calView!=="tag"||_calDate!==todayISO())return;
-  const n=view.querySelector(".ct-now"); if(!n)return;
-  const ziel=Math.round(n.getBoundingClientRect().top-view.getBoundingClientRect().top+view.scrollTop-view.clientHeight*0.3);
-  if(ziel>0)view.scrollTop=ziel;
+  // Ziel: Linie unter der festen Datumszeile, mit Luft für die laufende Stunde
+  const spring=()=>{
+    const n=view.querySelector(".ct-now"); if(!n)return null;
+    const nav=view.querySelector(".cal-wrap.cal-tag>.cal-nav"), navH=nav?nav.getBoundingClientRect().height:0;
+    const ziel=Math.round(n.getBoundingClientRect().top-view.getBoundingClientRect().top+view.scrollTop-navH-Math.max(48,(view.clientHeight-navH)*0.25));
+    if(ziel>0)view.scrollTop=ziel;
+    return view.scrollTop;
+  };
+  const gesetzt=spring(); if(gesetzt===null)return;
+  // Nach der Einblend-Animation (0,32 s) noch einmal genau nachziehen, außer der Nutzer hat inzwischen selbst gewischt
+  setTimeout(()=>{ if(view.scrollTop===gesetzt&&_calView==="tag"&&_calDate===todayISO())spring(); },400);
 }
 function calCounterHTML(){
   // Ab heute bis Ende der laufenden Woche (Sa, kein Sonntag) / des laufenden Monats
