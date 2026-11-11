@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 # Versions-Wächter: vor dem Ausliefern aufrufen.
 # Prüft: 1) APP_VERSION und CACHE_VERSION wurden gegenüber origin/main erhöht,
-#        2) keine geheimen Schlüssel im Code, 3) keine Schülerdaten-Muster.
+#        2) keine geheimen Schlüssel im Code (auch in supabase/**/*.ts und *.sql), 3) keine Schülerdaten-Muster.
 # Aufruf:  bash scripts/release-check.sh
 set -u
 cd "$(dirname "$0")/.."
@@ -28,12 +28,15 @@ else
 fi
 
 # Geheimnisse: Der öffentliche Supabase-anon-Schlüssel (SUPA_KEY) ist erlaubt, alles andere nicht.
-treffer=$(grep -rnIE 'sk_live_|sk-ant-|service_role|BEGIN (RSA |EC )?PRIVATE KEY|ghp_[A-Za-z0-9]{20,}|ELEVENLABS_API_KEY\s*=\s*["'\'']' \
-  --include='*.html' --include='*.js' --include='*.json' --include='*.md' --include='*.sql' . 2>/dev/null | grep -v '^./scripts/release-check.sh' || true)
+# Das Wort service_role allein ist in SQL (Rechtevergabe) und in Server-Funktionen (*.ts) kein Geheimnis; dort zählen
+# nur echte Schlüssel-Muster (Dienst-Schlüssel als JWT, sb_secret_, fest eingetragene Schlüssel).
+ECHT='sk_live_|sk-ant-|sb_secret_[A-Za-z0-9_]{8,}|c2VydmljZV9yb2xl|NlcnZpY2Vfcm9sZ|zZXJ2aWNlX3JvbG|BEGIN (RSA |EC )?PRIVATE KEY|ghp_[A-Za-z0-9]{20,}|github_pat_[A-Za-z0-9_]{20,}|(ELEVENLABS_API_KEY|SERVICE_ROLE_KEY|SERVICE_KEY|BRIDGE_SECRET|bridge_secret|RESEND_API_KEY)\s*[:=]\s*["'\''][A-Za-z0-9_.\-]{16,}'
+treffer=$( { grep -rnIE "service_role|$ECHT" --include='*.html' --include='*.js' --include='*.mjs' --include='*.json' --include='*.md' . 2>/dev/null;
+             grep -rnIE "$ECHT" --include='*.sql' --include='*.ts' . 2>/dev/null; } | grep -v '^./scripts/release-check.sh' || true)
 if [ -n "$treffer" ]; then echo "FEHLER: möglicher Geheimschlüssel:"; echo "$treffer" | head -5; fehler=1; fi
 
 # Schülerdaten: grobe Muster (E-Mail-Adressen außer eigener, Telefonnummern).
-mails=$(grep -rnIoE '[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[a-z]{2,}' --include='*.html' --include='*.js' --include='*.sql' . 2>/dev/null \
+mails=$(grep -rnIoE '[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[a-z]{2,}' --include='*.html' --include='*.js' --include='*.sql' --include='*.ts' . 2>/dev/null \
   | grep -viE 'example\.|noreply@|@anthropic\.com|serband' | head -5 || true)
 if [ -n "$mails" ]; then echo "HINWEIS: fremde E-Mail-Adressen im Code, bitte prüfen:"; echo "$mails"; fi
 
