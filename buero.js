@@ -1308,6 +1308,14 @@ async function notizUngelesen(id, spaet) {
     if (spaet) setTimeout(() => toast(t, true), 120); else toast(t, true); // spät: erst nach dem Schließen des Bearbeiten-Fensters, damit die Meldung im Schüler-Fenster steht
     return false;
   }
+  // Hatte schon jemand gelesen und wurde trotzdem keine Zeile entfernt, fehlt das Löschrecht: ehrlich melden statt still „ungelesen“ zeigen
+  const hatte = S.gelesen.some((g) => g.notiz_id === id);
+  if (hatte && !(res.data && res.data.length)) {
+    S.gelesen = S.gelesen.filter((g) => g.notiz_id !== id); // in der Datenbank steht keine Marke mehr (z. B. von einem zweiten Büro-Gerät entfernt): Anzeige angleichen
+    const t = "Notiz gespeichert, aber der Fahrlehrer bekommt keinen neuen Hinweis. Bitte ihm Bescheid geben.";
+    if (spaet) setTimeout(() => toast(t, true), 120); else toast(t, true);
+    return false;
+  }
   S.gelesen = S.gelesen.filter((g) => g.notiz_id !== id);
   return true;
 }
@@ -3092,7 +3100,7 @@ function renderTeam() {
       ${mitZahlen ? `<td class="zahlspalte">${schuelerZahl[p.id] || 0}</td><td class="zahlspalte">${zahlDE(ue[p.id] || 0)}</td>` : ""}
       <td>${p.aktiv === false ? '<span class="marke-pill rot">gesperrt</span>' : p.ohne_app ? '<span class="marke-pill">ohne App</span>' : '<span class="marke-pill gruen">aktiv</span>'}</td>
       <td class="aktionen"><div class="aktionen-box">${mitZahlen ? `<button class="knopf klein" data-flakte="${esc(p.id)}" type="button">${darfPersonenVerwalten() ? "Akte & Klassen" : "Akte"}</button>` : ""}${admin && p.rolle !== "super_admin" && p.id !== S.user.id ? `${p.ohne_app ? "" : `<button class="knopf klein" data-einladung="${esc(p.id)}" type="button">Einladung senden</button><button class="knopf klein" data-pwreset="${esc(p.id)}" type="button">Neues Passwort</button>`}
-        <button class="knopf klein" data-sperren="${esc(p.id)}" type="button">${p.aktiv === false ? "Freischalten" : "Sperren"}</button>` : ""}</div></td></tr>`;
+        ${S.profil.rolle === "super_admin" ? `<button class="knopf klein" data-sperren="${esc(p.id)}" type="button">${p.aktiv === false ? "Freischalten" : "Sperren"}</button>` : ""}` : ""}</div></td></tr>`;
   const lehrer = S.lehrer;
   const buero = S.team.filter((p) => p.rolle === "buero" || p.rolle === "fahrschule_admin");
   return `<div class="karte"><div class="karte-kopf"><h2>Fahrlehrer (${lehrer.length})</h2>${admin || darfPersonenVerwalten() ? '<button class="knopf haupt" id="tNeuFl" type="button">+ Fahrlehrer anlegen</button>' : ""}</div>
@@ -3149,7 +3157,7 @@ function personDialog(id) {
   const aus = document.querySelector("dialog[open] #pAustritt");
   if (aus) aus.addEventListener("click", async () => {
     document.querySelector("dialog[open]").close();
-    if (!(await bestaetige("Ausgetreten?", `${p.name} kann sich dann nicht mehr anmelden. Im Protokoll bleibt der Name erhalten. Zurückholen geht jederzeit.`, "Ja, ausgetreten"))) return;
+    if (!(await bestaetige("Ausgetreten?", `${p.name} kann sich dann nicht mehr mit der eigenen PIN anmelden. Zurückholen geht jederzeit. Das gemeinsame Büro-Passwort gilt weiter: Die Leitung setzt es unter „Fahrlehrer & Zugänge“ neu.`, "Ja, ausgetreten"))) return;
     try { await personRpc("buero_person_speichern", { p_id: p.id, p_fahrschule: S.fsId, p_name: p.name, p_telefon: p.telefon, p_darf_verwalten: null, p_aktiv: false }); }
     catch (e) { toast("Nicht gespeichert: " + e.message, true); return; }
     await ladePersonen(); toast("Gespeichert"); zeichne();
@@ -3319,7 +3327,9 @@ async function zugangSperren(id) {
   const p = teamPerson(id);
   if (!p) return;
   const sperren = p.aktiv !== false;
-  if (!(await bestaetige(sperren ? "Zugang sperren?" : "Zugang freischalten?", sperren ? `${p.name || p.email} wird sofort abgemeldet und kann sich nicht mehr anmelden.` : `${p.name || p.email} kann sich wieder anmelden.`, sperren ? "Ja, sperren" : "Ja, freischalten"))) return;
+  // Die Datenbank lässt „aktiv“ nur den Betreiber (Super-Admin) ändern. Der Leitung das vorher klar sagen statt einer Fehlermeldung danach.
+  if (!S.profil || S.profil.rolle !== "super_admin") { toast(sperren ? "Sperren kann im Moment nur der Betreiber. Bitte „Neues Passwort“ drücken: Dann kommt die Person nicht mehr hinein." : "Freischalten kann im Moment nur der Betreiber.", true); return; }
+  if (!(await bestaetige(sperren ? "Zugang sperren?" : "Zugang freischalten?", sperren ? `${p.name || p.email} kann die App beim nächsten Start nicht mehr öffnen. Ist sie gerade offen, läuft sie bis dahin weiter. Bei Austritt zusätzlich „Neues Passwort“ drücken.` : `${p.name || p.email} kann sich wieder anmelden.`, sperren ? "Ja, sperren" : "Ja, freischalten"))) return;
   const res = await supa.from("profiles").update({ aktiv: !sperren }).eq("id", id).select("id");
   if (res.error || !res.data || !res.data.length) { toast("Nicht gespeichert: " + (res.error ? res.error.message : "keine Berechtigung"), true); return; }
   for (const l of [S.team, S.lehrer]) { const x = l.find((y) => y.id === id); if (x) x.aktiv = !sperren; }

@@ -920,12 +920,22 @@ for (const breite of [1301, 1366, 1420]) {
 
 // 4g) Team und Fahrzeuge (Leitung)
 {
+  // K1: Sperren darf in der Datenbank nur der Betreiber. Die Leitung sieht den Knopf deshalb nicht mehr, „Neues Passwort“ bleibt.
   const { page, ctx, konsole } = await oeffne({ nutzer: "ad-1", hash: "#team", breite: 1920, hoehe: 1080 });
-  await page.click('[data-sperren="fl-3"]');
-  await page.click("dialog button[value=ok]");
-  await page.waitForTimeout(300);
-  const fl3 = await page.evaluate(() => window.__FAKE.tabellen.profiles.find((p) => p.id === "fl-3"));
-  if (fl3.aktiv !== false) fehler("Team: Sperren nicht gespeichert");
+  if (await page.$('[data-sperren="fl-3"]')) fehler("Team: Leitung sieht den Sperren-Knopf, obwohl er bei ihr nie wirkt");
+  if (!(await page.$('[data-pwreset="fl-3"]'))) fehler("Team: Leitung sieht „Neues Passwort“ nicht mehr");
+  {
+    const sa = await oeffne({ nutzer: "sa-1", hash: "#team", breite: 1920, hoehe: 1080 });
+    await sa.page.click('[data-sperren="fl-3"]');
+    const text = await sa.page.evaluate(() => (document.querySelector("dialog[open]") || {}).textContent || "");
+    if (!/beim nächsten Start/.test(text) || /sofort abgemeldet/.test(text)) fehler("Team: Sperren-Text ist nicht ehrlich: " + text.slice(0, 160));
+    await sa.page.click("dialog button[value=ok]");
+    await sa.page.waitForTimeout(300);
+    const fl3 = await sa.page.evaluate(() => window.__FAKE.tabellen.profiles.find((p) => p.id === "fl-3"));
+    if (fl3.aktiv !== false) fehler("Team: Sperren (Betreiber) nicht gespeichert");
+    if (sa.konsole.length) fehler("Team (Betreiber): Konsole: " + sa.konsole.join(" | "));
+    await sa.ctx.close();
+  }
   await page.goto(page.url().split("#")[0] + "#flotte");
   await page.waitForTimeout(300);
   await page.click("#fzNeu");
