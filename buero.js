@@ -206,7 +206,8 @@ window.addEventListener("hashchange", () => {
   const g = aktuellerBereich().gruppe;
   if (navZu().includes(g)) setzeNavZu(navZu().filter((x) => x !== g));
   zeichne(); $("ansicht").focus({ preventScroll: true });
-  if (istSchmal()) { menueOffen(false); springeZumTitel(); } else window.scrollTo(0, 0);
+  menueOffen(false); // immer zu, auch wenn das Gerät inzwischen gedreht wurde (am PC ohne sichtbare Wirkung)
+  if (istSchmal()) springeZumTitel(); else window.scrollTo(0, 0);
 });
 
 /* Handy und kleines Tablet (bis 900 px): Das Menü ist ein Block zum Aufklappen, beim Start zu.
