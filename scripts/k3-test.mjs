@@ -134,11 +134,18 @@ async function seite(w, h, jetzt) {
       const n = window.__aufrufe;
       window.__antwort = { httpStatus: 429, httpBody: { ok: false, error: "cooldown_aktiv" } };
       await _pushAkademieVideo(s, e);
-      return { n, t: document.getElementById("toast").textContent };
+      const t1 = document.getElementById("toast").textContent;
+      await _pushAkademieVideo(s, { stufe: "Aufbaustufe", tag: "anderes" });
+      const t2 = document.getElementById("toast").textContent, f2 = document.getElementById("toast").classList.contains("t-fehler");
+      toastUndo("Rückgängig-Probe", () => {});
+      const rest = ["t-ok", "t-info", "t-fehler"].some((k) => document.getElementById("toast").classList.contains(k));
+      return { n, t: t1, t2, f2, rest };
     });
     const f = [];
     if (r.n !== 1) f.push(r.n + " Anfragen statt 1");
     if (!/Schon geschickt/.test(r.t)) f.push("Text: " + r.t);
+    if (!/Nicht geschickt.*2 Min/.test(r.t2) || !r.f2) f.push("anderes Video in der Sperre: " + r.t2 + (r.f2 ? "" : " (nicht rot)"));
+    if (r.rest) f.push("Rückgängig-Hinweis behält den Farbbalken");
     return f;
   });
   await pruefe("A16", "ungültige Nummer (400) → eigener Text", async () => {

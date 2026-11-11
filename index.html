@@ -126,8 +126,9 @@ body::after{content:"";position:fixed;inset:0;z-index:0;pointer-events:none;opac
   -webkit-mask-image:radial-gradient(80% 60% at 50% 25%,#000 0%,transparent 75%);mask-image:radial-gradient(80% 60% at 50% 25%,#000 0%,transparent 75%);}
 button{font-family:inherit;color:inherit;cursor:pointer;border:none;background:none;}
 input,select,textarea{font-family:inherit;font-size:16px;color:var(--txt);}
-/* K3 (GK16): iPhones vergrößern die Seite beim Antippen eines Feldes unter 16 px. Nur auf iPhone/iPad (Safari kennt
-   -webkit-touch-callout), damit Android und PC unverändert bleiben; schreibgeschützte Felder bleiben klein. */
+/* K3 (GK16): iPhones vergrößern die Seite beim Antippen eines Feldes unter 16 px. Grundregel oben überall 16 px;
+   zusätzlich nur auf iPhone/iPad (Safari kennt -webkit-touch-callout) auch Felder mit eigener kleinerer Schrift
+   (!important). Schreibgeschützte Felder bleiben klein. */
 @supports (-webkit-touch-callout:none){input:not([type=checkbox]):not([type=radio]):not([type=range]):not([readonly]),select,textarea:not([readonly]){font-size:16px !important;}}
 ::selection{background:rgba(74,139,92,.32);}
 .display{font-family:'Anton',sans-serif;font-weight:400;text-transform:uppercase;letter-spacing:.02em;}
@@ -3591,9 +3592,15 @@ async function _pushAkademieVideo(s,entry){
     if(error){ res=null; try{ if(error.context&&typeof error.context.json==="function")res=await error.context.json(); }catch(e2){ res=null; } }
   }catch(e){ res=null; }
   finally{ _akTippLaeuft.delete(key); }
-  if(res&&res.ok)_akTippOk[key]=Date.now();
+  const thema=String(entry.tag||entry.stufe||"");
+  if(res&&res.ok)_akTippOk[key]={zeit:Date.now(),thema};
   // Sperre der Akademie (2 Minuten) direkt nach eigenem erfolgreichem Tipp: der erste ist angekommen
-  if(res&&res.error==="cooldown_aktiv"&&_akTippOk[key]&&Date.now()-_akTippOk[key]<130000){ _toastSichtbar("Schon geschickt · nächster Tipp an "+vn+" in 2 Min.","ok"); return; }
+  // Gleiches Video: der erste Tipp ist angekommen. Anderes Video: das ist NICHT angekommen (Akademie speichert dann nichts).
+  const zuletzt=_akTippOk[key];
+  if(res&&res.error==="cooldown_aktiv"&&zuletzt&&Date.now()-zuletzt.zeit<130000){
+    if(zuletzt.thema===thema){ _toastSichtbar("Schon geschickt · nächster Tipp an "+vn+" in 2 Min.","ok"); return; }
+    _toastSichtbar("Nicht geschickt · nächster Tipp an "+vn+" erst in 2 Min.","fehler"); return;
+  }
   const [text,art]=_akademieTippText(vn,res);
   _toastSichtbar(text,art);
 }
@@ -7979,7 +7986,7 @@ function _backupHerunterladen(zusatz){
   setTimeout(()=>URL.revokeObjectURL(a.href),60000);
 }
 function toastUndo(msg,onUndo,ms){
-  const t=$("#toast"); ms=ms||5000;
+  const t=$("#toast"); ms=ms||5000; t.classList.remove("t-ok","t-info","t-fehler");
   // Läuft noch ein Rückgängig: zusammenfassen, ein Tipp macht beides rückgängig (neueste zuerst)
   if(t._undos&&t._undos.length&&t.classList.contains("undo")&&t.classList.contains("show")){
     const vorige=t._undos.slice(), alle=[onUndo].concat(vorige.map(x=>x.fn));
