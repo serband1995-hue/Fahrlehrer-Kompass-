@@ -3,8 +3,10 @@
    nichts verlässt den Browser. Alle Namen sind erfunden (keine echten Schüler).
    - Vorführung: buero.html?vorfuehrung  (für das Teammeeting, auch ohne Internet-Datenbank)
    - Tests:      scripts/buero-test.mjs setzt vorher window.__FAKE mit eigenen Daten. */
-const VORNAMEN = ["Lena", "Jonas", "Mira", "Elias", "Sofia", "Noah", "Emilia", "Ben", "Hanna", "Luca", "Ella", "Finn", "Lia", "Paul", "Ida", "Emil", "Nora", "Theo", "Clara", "Anton", "Maja", "Leon", "Frida", "Karl"];
-const NACHNAMEN = ["Testmann", "Beispiel", "Muster", "Probe", "Demo", "Vorlage", "Platzhalter", "Fiktiv"];
+// 24 verschiedene Vornamen, keiner gleich oder ähnlich wie bei Fahrlehrern oder Büro-Personen der Vorführung
+const VORNAMEN = ["Lena", "Jonas", "Greta", "Elias", "Sofia", "Max", "Emilia", "Ben", "Hanna", "Luca", "Ella", "Finn", "Lia", "Jakob", "Ida", "Emil", "Nora", "Theo", "Clara", "Oskar", "Maja", "Leon", "Frida", "Karl"];
+// Nachnamen, die die Schüler klar als erfunden kennzeichnen (im Wechsel)
+const NACHNAMEN = ["Beispiel", "Probe", "Vorlage", "Muster"];
 
 function addTage(iso, n) { const d = new Date(iso + "T12:00:00"); d.setDate(d.getDate() + n); return d.toISOString().slice(0, 10); }
 function addMonate(iso, n) { const d = new Date(iso + "T12:00:00"); d.setMonth(d.getMonth() + n); return d.toISOString().slice(0, 10); }
@@ -12,23 +14,24 @@ function addMonate(iso, n) { const d = new Date(iso + "T12:00:00"); d.setMonth(d
 function bauDaten(heute) {
   const FS = "fs-test-1";
   const lehrer = [
-    { id: "fl-1", name: "Fahrlehrer Anton", email: "anton@example.org", rolle: "fahrlehrer", fahrschule_id: FS, aktiv: true, agb_akzeptiert_version: "1.0", klassen: ["B", "BE"] },
-    { id: "fl-2", name: "Fahrlehrerin Berta", email: "berta@example.org", rolle: "fahrlehrer", fahrschule_id: FS, aktiv: true, agb_akzeptiert_version: "1.0" },
-    { id: "fl-3", name: "Fahrlehrer Cem", email: "cem@example.org", rolle: "fahrlehrer", fahrschule_id: FS, aktiv: true, agb_akzeptiert_version: "1.0" },
-    { id: "fl-4", name: "Fahrlehrer Dario (extern)", email: "dario@example.org", rolle: "fahrlehrer", fahrschule_id: FS, aktiv: true, agb_akzeptiert_version: "1.0", klassen: ["C1", "C1E", "C", "CE"], ohne_app: true },
+    { id: "fl-1", name: "Anton Muster", email: "anton@example.org", rolle: "fahrlehrer", fahrschule_id: FS, aktiv: true, agb_akzeptiert_version: "1.0", klassen: ["B", "BE"] },
+    { id: "fl-2", name: "Berta Muster", email: "berta@example.org", rolle: "fahrlehrer", fahrschule_id: FS, aktiv: true, agb_akzeptiert_version: "1.0" },
+    { id: "fl-3", name: "Cem Muster", email: "cem@example.org", rolle: "fahrlehrer", fahrschule_id: FS, aktiv: true, agb_akzeptiert_version: "1.0" },
+    { id: "fl-4", name: "Dario Muster (extern)", email: "dario@example.org", rolle: "fahrlehrer", fahrschule_id: FS, aktiv: true, agb_akzeptiert_version: "1.0", klassen: ["C1", "C1E", "C", "CE"], ohne_app: true },
   ];
   const buero = [
-    { id: "bu-1", name: "Büro Testperson", email: "buero@example.org", rolle: "buero", fahrschule_id: FS, aktiv: true, agb_akzeptiert_version: "1.0" },
-    { id: "ad-1", name: "Leitung Testperson", email: "leitung@example.org", rolle: "fahrschule_admin", fahrschule_id: FS, aktiv: true, agb_akzeptiert_version: "1.0" },
+    { id: "bu-1", name: "Büro Muster", email: "buero@example.org", rolle: "buero", fahrschule_id: FS, aktiv: true, agb_akzeptiert_version: "1.0" },
+    { id: "ad-1", name: "Leitung Muster", email: "leitung@example.org", rolle: "fahrschule_admin", fahrschule_id: FS, aktiv: true, agb_akzeptiert_version: "1.0" },
     { id: "sa-1", name: "Super-Admin", email: "super@example.org", rolle: "super_admin", fahrschule_id: FS, aktiv: true, agb_akzeptiert_version: "1.0" },
-    { id: "fl-x", name: "Fahrlehrerin Elif", email: "fl@example.org", rolle: "fahrlehrer", fahrschule_id: FS, aktiv: true, agb_akzeptiert_version: "1.0" },
+    { id: "fl-x", name: "Elif Muster", email: "fl@example.org", rolle: "fahrlehrer", fahrschule_id: FS, aktiv: true, agb_akzeptiert_version: "1.0" },
     { id: "gesperrt-1", name: "Gesperrt Test", email: "gesperrt@example.org", rolle: "buero", fahrschule_id: FS, aktiv: false, agb_akzeptiert_version: "1.0" },
     { id: "agb-1", name: "Ohne AGB", email: "agb@example.org", rolle: "buero", fahrschule_id: FS, aktiv: true, agb_akzeptiert_version: null },
   ];
   const schueler = [];
   let n = 0;
-  for (const nach of NACHNAMEN) for (const vor of VORNAMEN.slice(0, 3)) {
+  for (let i = 0; i < 24; i++) {
     n++;
+    const vor = VORNAMEN[i], nach = NACHNAMEN[i % NACHNAMEN.length];
     const fl = n % 9 === 0 ? null : lehrer[n % lehrer.length].id;
     schueler.push({
       id: "s" + n, fahrschule_id: FS, fahrlehrer_id: fl, name: `${vor} ${nach}`, telefon: "0170 000" + String(n).padStart(4, "0"),
@@ -76,11 +79,12 @@ function bauDaten(heute) {
     { id: "pt-4", fahrschule_id: FS, schueler_id: "s8", fahrlehrer_id: "fl-3", art: "praxis", klasse: "CE", datum: addTage(heute, -1), von: "10:00", status: "geplant", entgelt_bezahlt: true, tuev_gutschein: true, as_portal: true },
     { id: "pt-5", fahrschule_id: FS, schueler_id: "s9", fahrlehrer_id: "fl-1", art: "praxis", klasse: "B", datum: addTage(heute, -6), von: "10:00", status: "bestanden", entgelt_bezahlt: true, tuev_gutschein: true, as_portal: true },
   ];
+  const sName = (id) => (schueler.find((x) => x.id === id) || {}).name || "";
   const jetztMonat = heute.slice(0, 7) + "-03T10:00:00Z";
   const fahrschule_empfehlungen = [
-    { id: "e1", fahrschule_id: FS, schueler_id: "s4", schueler_name: "Jonas Muster", fahrlehrer_id: "fl-1", fahrlehrer_name: "Fahrlehrer Anton", typ: "akademie", status: "empfohlen", erstellt_am: jetztMonat },
-    { id: "e2", fahrschule_id: FS, schueler_id: "s6", schueler_name: "Jonas Beispiel", fahrlehrer_id: "fl-2", fahrlehrer_name: "Fahrlehrerin Berta", typ: "simulator", status: "zugangsdaten_ausgegeben", erstellt_am: jetztMonat },
-    { id: "e3", fahrschule_id: FS, schueler_id: "s10", schueler_name: "Lena Demo", fahrlehrer_id: "fl-1", fahrlehrer_name: "Fahrlehrer Anton", typ: "akademie", status: "bezahlt", betrag: 100, aufteilung: { fahrlehrer: 15, fahrschule: 45, plattform: 20, akademie: 20 }, erstellt_am: jetztMonat, aktualisiert_am: jetztMonat },
+    { id: "e1", fahrschule_id: FS, schueler_id: "s4", schueler_name: sName("s4"), fahrlehrer_id: "fl-1", fahrlehrer_name: "Anton Muster", typ: "akademie", status: "empfohlen", erstellt_am: jetztMonat },
+    { id: "e2", fahrschule_id: FS, schueler_id: "s6", schueler_name: sName("s6"), fahrlehrer_id: "fl-2", fahrlehrer_name: "Berta Muster", typ: "simulator", status: "zugangsdaten_ausgegeben", erstellt_am: jetztMonat },
+    { id: "e3", fahrschule_id: FS, schueler_id: "s10", schueler_name: sName("s10"), fahrlehrer_id: "fl-1", fahrlehrer_name: "Anton Muster", typ: "akademie", status: "bezahlt", betrag: 100, aufteilung: { fahrlehrer: 15, fahrschule: 45, plattform: 20, akademie: 20 }, erstellt_am: jetztMonat, aktualisiert_am: jetztMonat },
   ];
   const provisionen = [{ id: "pv1", fahrlehrer_id: "fl-1", fahrschule_id: FS, typ: "akademie", schueler_id: "s10", betrag: 15, status: "offen", erstellt_am: jetztMonat }];
   return {
@@ -92,8 +96,8 @@ function bauDaten(heute) {
       profiles: [...lehrer, ...buero],
       schueler, kalender_termine: termine, kalender_pruefungen: pruefungen, pruefungstermine,
       // Theorie-Besuch (14.10.2026): s1 hat 13 von 14 Lektionen (es fehlt 14), s2 hat Lektion 7 + 8 am selben Abend
-      theorie_teilnahme: ["1", "2", "3", "4", "5", "6", "7", "8", "9", "10", "11", "12", "13"].map((l, i) => ({ id: "tt-" + i, fahrschule_id: FS, schueler_id: "s1", lektion: l, datum: addTage(heute, -40 + i), bearbeiter: "Fahrlehrer Anton", entfernt_am: null }))
-        .concat([{ id: "tt-a", fahrschule_id: FS, schueler_id: "s2", lektion: "7", datum: addTage(heute, -3), bearbeiter: "Fahrlehrer Anton", entfernt_am: null }, { id: "tt-b", fahrschule_id: FS, schueler_id: "s2", lektion: "8", datum: addTage(heute, -3), bearbeiter: "Fahrlehrer Anton", entfernt_am: null }]),
+      theorie_teilnahme: ["1", "2", "3", "4", "5", "6", "7", "8", "9", "10", "11", "12", "13"].map((l, i) => ({ id: "tt-" + i, fahrschule_id: FS, schueler_id: "s1", lektion: l, datum: addTage(heute, -40 + i), bearbeiter: "Anton Muster", entfernt_am: null }))
+        .concat([{ id: "tt-a", fahrschule_id: FS, schueler_id: "s2", lektion: "7", datum: addTage(heute, -3), bearbeiter: "Anton Muster", entfernt_am: null }, { id: "tt-b", fahrschule_id: FS, schueler_id: "s2", lektion: "8", datum: addTage(heute, -3), bearbeiter: "Anton Muster", entfernt_am: null }]),
       fahrschule_fahrzeuge: [
         { id: "fz-1", fahrschule_id: FS, name: "Golf Schalter 1", typ: "schalt", aktiv: true, erstellt_am: "2026-01-01" },
         { id: "fz-2", fahrschule_id: FS, name: "Golf Schalter 2", typ: "schalt", aktiv: true, erstellt_am: "2026-01-02" },
@@ -103,22 +107,80 @@ function bauDaten(heute) {
       fahrschule_pakete: [{ id: "p-1", fahrschule_id: FS, name: "Boost-Paket 1" }, { id: "p-turbo", fahrschule_id: FS, name: "Turboboost" }],
       // Büro-Personen (erfunden). _pin gibt es nur in der Attrappe; die echte Datenbank speichert die PIN verschlüsselt.
       buero_personen: [
-        { id: "bp-1", fahrschule_id: FS, name: "Jelena", telefon: null, hat_pin: true, _pin: "6204", darf_verwalten: true, aktiv: true, gesperrt_bis: null, fehlversuche: 0 },
-        { id: "bp-2", fahrschule_id: FS, name: "Murat", telefon: null, hat_pin: true, _pin: "7391", darf_verwalten: true, aktiv: true, gesperrt_bis: null, fehlversuche: 0 },
-        { id: "bp-3", fahrschule_id: FS, name: "Kristina", telefon: "0170 0000000", hat_pin: true, _pin: "4826", darf_verwalten: false, aktiv: true, gesperrt_bis: null, fehlversuche: 0 },
-        { id: "bp-4", fahrschule_id: FS, name: "Isra", telefon: null, hat_pin: false, _pin: null, pin_frei_bis: new Date(Date.now() + 24 * 3600000).toISOString(), darf_verwalten: false, aktiv: true, gesperrt_bis: null, fehlversuche: 0 },
+        { id: "bp-1", fahrschule_id: FS, name: "Mia Muster", telefon: null, hat_pin: true, _pin: "5917", darf_verwalten: true, aktiv: true, gesperrt_bis: null, fehlversuche: 0 },
+        { id: "bp-2", fahrschule_id: FS, name: "Noah Muster", telefon: null, hat_pin: true, _pin: "2846", darf_verwalten: true, aktiv: true, gesperrt_bis: null, fehlversuche: 0 },
+        { id: "bp-3", fahrschule_id: FS, name: "Paula Muster", telefon: "0171 3920012", hat_pin: true, _pin: "7352", darf_verwalten: false, aktiv: true, gesperrt_bis: null, fehlversuche: 0 },
+        { id: "bp-4", fahrschule_id: FS, name: "Tom Muster", telefon: null, hat_pin: false, _pin: null, pin_frei_bis: new Date(Date.now() + 24 * 3600000).toISOString(), darf_verwalten: false, aktiv: true, gesperrt_bis: null, fehlversuche: 0 },
       ],
     },
   };
 }
 
-if (typeof module !== "undefined" && module.exports) { module.exports = { bauDaten }; } else
+/* Nur für die sichtbare Vorführung (buero.html?vorfuehrung ohne Test-Daten): ohne Test-Sonderfälle,
+   dafür mit ein paar Aufgaben, Notizen und Fahrcheck-Quittungen, damit „Heute zu tun“ nach echtem Alltag aussieht.
+   Die Tests (scripts/buero-test.mjs) nutzen bauDaten ohne diesen Zusatz und legen ihre Fälle selbst an. */
+// Test-Sonderfälle (gesperrt, ohne AGB, Fahrlehrer-Konto im Büro) und der Super-Admin: in der Vorführung nicht zeigen
+const TEST_KONTEN = ["gesperrt-1", "agb-1", "fl-x", "sa-1"];
+function vorfuehrZusatz(tab, heute) {
+  const FS = "fs-test-1";
+  tab.profiles = tab.profiles.filter((p) => !TEST_KONTEN.includes(p.id));
+  const jetzt = Date.now();
+  const vor = (tage, uhr) => { const t = new Date(addTage(heute, -tage) + "T" + uhr + ":00").getTime(); return new Date(Math.min(t, jetzt - 3600000)).toISOString(); };
+  const lehrerVon = (sid) => (tab.schueler.find((s) => s.id === sid) || {}).fahrlehrer_id || null;
+  // Aufgaben: überfällig, heute, dringend, an eine Büro-Person, ohne Datum, eine für später, eine gestern erledigt
+  tab.schueler_aufgaben = [
+    { id: "va-1", fahrschule_id: FS, schueler_id: "s3", text: "Zurückrufen wegen Termin für die Praxisprüfung", heute: false, faellig_am: addTage(heute, -2), fuer_person_id: null, von_person_id: "bp-1", bearbeiter: "Mia Muster", dringend: false, erstellt_am: vor(4, "09:10") },
+    { id: "va-2", fahrschule_id: FS, schueler_id: "s6", text: "Sehtest und Erste-Hilfe-Nachweis nachfordern", heute: true, faellig_am: heute, fuer_person_id: null, von_person_id: "bp-2", bearbeiter: "Noah Muster", dringend: false, erstellt_am: vor(1, "15:40") },
+    { id: "va-3", fahrschule_id: FS, schueler_id: "s13", text: "Antrag bei der Führerscheinstelle abgeben", heute: false, faellig_am: null, fuer_person_id: null, von_person_id: "bp-1", bearbeiter: "Mia Muster", dringend: true, erstellt_am: vor(1, "11:05") },
+    { id: "va-4", fahrschule_id: FS, schueler_id: null, text: "Rechnung der Werkstatt für Golf Schalter 2 prüfen", heute: false, faellig_am: null, fuer_person_id: "bp-3", von_person_id: "bp-2", bearbeiter: "Noah Muster", dringend: false, erstellt_am: vor(2, "10:20") },
+    { id: "va-5", fahrschule_id: FS, schueler_id: null, text: "Ordner mit den Verträgen vom Oktober ablegen", heute: false, faellig_am: null, fuer_person_id: null, von_person_id: "bp-3", bearbeiter: "Paula Muster", dringend: false, erstellt_am: vor(3, "08:45") },
+    { id: "va-6", fahrschule_id: FS, schueler_id: "s7", text: "Nach der Theorieprüfung fragen", heute: false, faellig_am: addTage(heute, 6), fuer_person_id: null, von_person_id: "bp-1", bearbeiter: "Mia Muster", dringend: false, erstellt_am: vor(1, "16:30") },
+    { id: "va-7", fahrschule_id: FS, schueler_id: "s2", text: "Ratenplan an die Eltern schicken", heute: false, faellig_am: addTage(heute, -1), fuer_person_id: null, von_person_id: "bp-2", bearbeiter: "Noah Muster", dringend: false, erstellt_am: vor(5, "13:00"), erledigt_am: vor(1, "12:15"), erledigt_bearbeiter: "Paula Muster" },
+  ];
+  // Notizen an die Fahrlehrer: eine gelesen, zwei noch nicht gelesen, eine erledigt
+  tab.schueler_notizen = [
+    { id: "vn-1", fahrschule_id: FS, schueler_id: "s2", text: "Reaktivierung wird gerade geprüft. Bitte vorerst keine neuen Fahrstunden planen.", art: "stopp", bearbeiter: "Mia Muster", erstellt_am: vor(1, "09:30"), erledigt_am: null },
+    { id: "vn-2", fahrschule_id: FS, schueler_id: "s4", text: "Hat eine neue Handynummer, steht schon im Profil.", art: "info", bearbeiter: "Paula Muster", erstellt_am: vor(2, "14:10"), erledigt_am: null },
+    { id: "vn-3", fahrschule_id: FS, schueler_id: "s5", text: "Prüfungstermin bestätigt. Bitte an die Brille erinnern.", art: "info", bearbeiter: "Noah Muster", erstellt_am: vor(0, "08:20"), erledigt_am: null },
+    { id: "vn-4", fahrschule_id: FS, schueler_id: "s12", text: "Mutter ruft wegen Ratenzahlung an, bitte kurz Bescheid geben.", art: "info", bearbeiter: "Mia Muster", erstellt_am: vor(6, "11:00"), erledigt_am: vor(3, "17:45"), erledigt_bearbeiter: "Paula Muster" },
+  ];
+  tab.schueler_notiz_gelesen = [{ notiz_id: "vn-2", fahrlehrer_id: lehrerVon("s4"), gelesen_am: vor(1, "18:05") }];
+  /* Fahrcheck-Quittungen im letzten abgeschlossenen Zeitraum: Anton vollständig, Berta mit einem fehlenden Zettel.
+     „Erwartet“ kommt aus derselben Rechnung wie auf der Seite (KR.fcSoll). KR wird erst nach dieser Datei geladen,
+     deshalb entstehen die Quittungen beim ersten Lesen der Tabelle. */
+  const am = (bis) => { const t = new Date(addTage(bis, 1) + "T09:30:00").getTime(); return new Date(Math.min(t, jetzt - 3600000)).toISOString(); };
+  const quittungen = () => {
+    if (typeof KR === "undefined") return null;
+    const [von, bis] = KR.fcVorZeitraum(KR.fcZeitraum(KR.todayISO())[0]);
+    const liste = [];
+    for (const [id, lid, fehltEiner] of [["vq-1", "fl-1", false], ["vq-2", "fl-2", true]]) {
+      // wie fcTermin in buero.js
+      const termine = tab.kalender_termine.filter((t) => t.fahrlehrer_id === lid && !t.geloescht).map((t) => { const p = t.payload || {}; return { id: t.id, datum: t.datum, von: t.von, bis: t.bis, art: t.art, status: p.status || t.status, fc: p.fc || null, nachAm: p.nachAm || null, schueler_id: t.schueler_id }; });
+      const r = KR.fcSoll(termine, von, bis);
+      if (!r.soll) continue;
+      const mit = r.posten.filter((x) => x.n && x.fc !== "nachgereicht");
+      const weg = fehltEiner ? (mit.find((x) => x.n === 1) || mit[0]) : null;
+      const ist = weg ? r.soll - weg.n : r.soll;
+      liste.push({ id, fahrschule_id: FS, fahrlehrer_id: lid, zeitraum_von: von, zeitraum_bis: bis, soll: r.soll, ist, fehlend: weg ? [weg.id] : [], notiz: weg ? "Ein Zettel kommt nach." : null, bestaetigt_von: "bu-1", bestaetigt_am: am(bis) });
+      // Büro-Status der Stunden wie nach „Abgabe bestätigen“
+      for (const x of mit) { const t = tab.kalender_termine.find((y) => y.id === x.id); if (t) t.buero_fc_status = weg && weg.id === x.id ? "fehlt" : "abgegeben"; }
+    }
+    return liste;
+  };
+  let fcListe = null;
+  Object.defineProperty(tab, "fc_abgaben", { configurable: true, enumerable: true,
+    get() { if (!fcListe) fcListe = quittungen(); return fcListe || []; }, set(v) { fcListe = v; } });
+  return tab;
+}
+
+if (typeof module !== "undefined" && module.exports) { module.exports = { bauDaten, vorfuehrZusatz }; } else
 (function () {
   "use strict";
   // Ohne Test-Daten: Vorführung mit erfundener Fahrschule, angemeldet als Fahrschul-Leitung
   if (!window.__FAKE) {
-    const d = bauDaten(new Date().toISOString().slice(0, 10));
-    window.__FAKE = { tabellen: d.tabellen, konten: d.konten, session: { user: { id: "ad-1", email: "leitung@example.org" } }, vorfuehrung: true,
+    const h = new Date().toISOString().slice(0, 10);
+    const d = bauDaten(h);
+    window.__FAKE = { tabellen: vorfuehrZusatz(d.tabellen, h), konten: d.konten, session: { user: { id: "ad-1", email: "leitung@example.org" } }, vorfuehrung: true,
       functions: { "admin-create-account": (b) => ({ email: b.email || "beispiel@example.org", passwort: "Vorfuehrung-1234" }) } };
   }
   const F = window.__FAKE;

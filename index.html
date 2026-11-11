@@ -292,6 +292,9 @@ input,select,textarea{font-family:inherit;font-size:15px;color:var(--txt);}
   background:linear-gradient(150deg,#244134,#15231b);box-shadow:var(--inset-top),inset 0 -3px 8px rgba(0,0,0,.35),0 4px 12px rgba(0,0,0,.3);
   display:flex;align-items:center;justify-content:center;}
 .stat .badge svg{width:22px;height:22px;color:#bcd6c5;}
+/* K2 GK5: Symbole der Start-Kacheln (Gesamtansicht und Heute) haben eine feste Größe, sonst fehlen sie */
+.d-tile .badge{position:relative;z-index:1;display:flex;align-items:center;justify-content:center;min-height:22px;color:var(--akzent,var(--muted));}
+.d-tile .badge svg{width:22px;height:22px;flex:0 0 auto;}
 .stat .sv{font-family:'Playfair Display',serif;font-weight:600;font-size:30px;line-height:1;letter-spacing:.01em;position:relative;z-index:1;
   background:linear-gradient(160deg,#fff 10%,var(--mint) 90%);-webkit-background-clip:text;background-clip:text;color:transparent;}
 .stat .sl{font-size:11.5px;color:var(--muted);margin-top:4px;font-weight:600;letter-spacing:.02em;position:relative;z-index:1;}
@@ -1487,6 +1490,21 @@ body:not(.light) .cw-col.today .cw-dnum{color:var(--gold);}
 .cw-ev.theorie{border-left-color:#9b7dc4;}
 .cw-evt{display:block;font-size:10px;color:var(--muted);font-weight:700;}
 .cw-evn{display:block;font-size:11.5px;font-weight:700;line-height:1.3;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.cw-fl{display:block;font-size:10px;font-weight:700;color:var(--muted);line-height:1.25;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.ct-ev-t.mit-fl{white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+/* K2: Gesamtansicht ohne Auswahl: Gitter blasser, Karte frei von Filter-Reiter (quer) */
+#calBody.fs-leer{opacity:.55;}
+.fs-leer-titel{font-size:16px;font-weight:800;color:var(--txt);line-height:1.3;margin-bottom:6px;}
+@media (orientation:landscape) and (max-height:560px){#fsKeineAuswahl{margin-right:48px !important;}}
+/* K2: Knopf „Zur Büro-Seite“ */
+.fs-buero-link{display:flex;align-items:center;gap:12px;width:100%;min-height:56px;margin-top:14px;padding:14px 16px;border-radius:var(--r-card);background:var(--orange-soft);border:1.5px solid var(--orange-line);color:var(--txt);text-decoration:none;text-align:left;cursor:pointer;}
+.fs-buero-link .fbl-ic{width:40px;height:40px;border-radius:12px;display:flex;align-items:center;justify-content:center;background:var(--surface);color:var(--akzent);flex:0 0 auto;}
+.fs-buero-link .fbl-ic svg{width:22px;height:22px;}
+.fs-buero-link .fbl-txt{flex:1;min-width:0;display:flex;flex-direction:column;gap:2px;}
+.fs-buero-link .fbl-t{font-size:15px;font-weight:800;color:var(--txt);}
+.fs-buero-link .fbl-s{font-size:13px;color:var(--muted);line-height:1.35;}
+.fs-buero-link .fbl-pfeil{font-size:28px;line-height:1;font-weight:700;color:var(--akzent);flex:0 0 auto;}
+body:not(.light) .fs-buero-link .fbl-ic,body:not(.light) .fs-buero-link .fbl-pfeil{color:var(--akzent-bright);}
 .cw-fz{display:block;font-size:10px;font-weight:800;color:var(--gruen-bright,#4a8b45);opacity:.85;margin-top:1px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
 .cw-evstat{color:var(--rot);font-size:9px;}
 .cw-empty{text-align:center;color:var(--faint);font-size:12px;padding:8px 0;}
@@ -1567,8 +1585,8 @@ body:not(.light) .cw-col.today .cw-dnum{color:var(--gold);}
 .fs-filter-tab-badge{background:var(--orange);color:#fff;font-size:10.5px;font-weight:800;border-radius:50%;min-width:16px;height:16px;display:flex;align-items:center;justify-content:center;padding:0 3px;}
 .fs-filter-scrim{position:fixed;inset:0;background:rgba(0,0,0,.45);opacity:0;pointer-events:none;transition:opacity .22s var(--ease);z-index:61;}
 .fs-filter-scrim.open{opacity:1;pointer-events:auto;}
-.fs-filter-drawer{position:fixed;top:0;right:0;bottom:0;width:min(86vw,338px);background:var(--bg-soft);border-left:1px solid var(--line);z-index:62;transform:translateX(100%);transition:transform .28s var(--ease);overflow-y:auto;-webkit-overflow-scrolling:touch;padding:18px 16px calc(24px + env(safe-area-inset-bottom));box-shadow:-10px 0 30px rgba(0,0,0,.4);}
-.fs-filter-drawer.open{transform:translateX(0);}
+.fs-filter-drawer{position:fixed;top:0;right:0;bottom:0;width:min(86vw,338px);background:var(--bg-soft);border-left:1px solid var(--line);z-index:62;transform:translateX(100%);transition:transform .28s var(--ease);overflow-y:auto;-webkit-overflow-scrolling:touch;padding:18px 16px calc(24px + env(safe-area-inset-bottom));box-shadow:none;}
+.fs-filter-drawer.open{transform:translateX(0);box-shadow:-10px 0 30px rgba(0,0,0,.4);}
 .fs-filter-drawer-head{display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;}
 .fs-filter-close{width:32px;height:32px;border-radius:50%;background:var(--surface);border:1px solid var(--line);color:var(--txt);font-size:15px;display:flex;align-items:center;justify-content:center;flex-shrink:0;}
 .fs-filter-close:active{transform:scale(.9);}
@@ -1966,10 +1984,11 @@ body.light .lo-err.ok{color:#1e6b46;}
 .fs-name{font-size:14px;font-weight:700;color:var(--txt);}
 .fs-sub{font-size:12px;color:var(--muted);margin-top:2px;}
 .fs-status-on{color:#4a8b45;font-weight:700;}
-.fs-status-off{color:#c83c3c;font-weight:700;}
+.fs-status-off{color:#a52a2a;font-weight:700;}
+body:not(.light) .fs-status-off{color:#ff8a80;} /* K2: „GESPERRT“ dunkel 2,85:1 war zu blass */
 .fs-actions{display:flex;gap:8px;margin-top:10px;flex-wrap:wrap;}
-.fs-btn-kill{background:rgba(200,60,60,.12);color:#c83c3c;border:1px solid rgba(200,60,60,.3);border-radius:10px;padding:7px 14px;font-size:12px;font-weight:700;cursor:pointer;}
-.fs-btn-activate{background:rgba(74,139,69,.12);color:#4a8b45;border:1px solid rgba(74,139,69,.3);border-radius:10px;padding:7px 14px;font-size:12px;font-weight:700;cursor:pointer;}
+.fs-btn-kill{min-height:44px;background:rgba(200,60,60,.12);color:#c83c3c;border:1px solid rgba(200,60,60,.3);border-radius:10px;padding:7px 14px;font-size:12px;font-weight:700;cursor:pointer;}
+.fs-btn-activate{min-height:44px;background:rgba(74,139,69,.12);color:#4a8b45;border:1px solid rgba(74,139,69,.3);border-radius:10px;padding:7px 14px;font-size:12px;font-weight:700;cursor:pointer;}
 .ap-actions{display:flex;gap:8px;margin-top:12px;}
 .ap-kill{background:rgba(200,60,60,.15);border:1px solid rgba(200,60,60,.3);color:#f08080;border-radius:8px;padding:7px 14px;font-size:12px;font-weight:700;cursor:pointer;}
 .ap-activate{background:rgba(63,174,107,.12);border:1px solid rgba(63,174,107,.25);color:#3fae6b;border-radius:8px;padding:7px 14px;font-size:12px;font-weight:700;cursor:pointer;}
@@ -2559,6 +2578,7 @@ body.light #view[data-seite2] .todo-item.done .todo-txt{color:#6B776F !important
 #view[data-seite2] .cal-wrap > #calBody{order:5;}
 #view[data-seite2] .cal-wrap > .cal-legend-bar{order:6;margin:12px 0 0;padding-bottom:72px;}
 #view[data-seite2] .cal-wrap > :not(.cal-head):not(.cal-filters):not(.cal-counter):not(.cal-nav):not(#calBody):not(.cal-legend-bar){order:7;}
+#view[data-seite2] .cal-wrap > #fsKeineAuswahl{order:2 !important;} /* K2: Karte „Noch kein Fahrlehrer gewählt“ oben, vor den Art-Knöpfen */
 #view[data-seite2] .cal-viewbtn{font-size:22px !important;}
 #view[data-seite2] .cal-counter{grid-template-columns:1fr !important;gap:6px;margin-bottom:8px;}
 #view[data-seite2] .cc-card{padding:5px 12px !important;display:flex;align-items:center;gap:10px;min-height:32px;}
@@ -2626,6 +2646,8 @@ body:not(.light) .tab-i.on{color:var(--akzent-bright);}
 .fs-status-on,.fs-btn-activate{color:var(--akzent-dark) !important;}
 .fs-btn-activate{background:var(--orange-soft) !important;border-color:var(--orange-line) !important;border-radius:999px !important;}
 .fs-btn-kill,.ap-kill{border-radius:999px !important;}
+/* K2: dunkel war Dunkelgrün auf Dunkelgrün kaum lesbar */
+body:not(.light) .fs-status-on,body:not(.light) .fs-btn-activate{color:var(--akzent-bright) !important;}
 .mini-btn,.pt-tab,.cal-kw,.seg-i,.tab-i span{white-space:nowrap !important;}
 /* Login / AGB-Overlay im selben Look (Logik unverändert) */
 #loginOverlay{background:var(--bg) !important;}
@@ -5616,12 +5638,12 @@ let _normalDrawerNavHTML=null;
 
 function _fsDrawerNavHTML(zeigeZurueck){
   return `
-    <a class="nav-item" href="buero.html" style="text-decoration:none;font-weight:700;">
+    <a class="nav-item" href="buero.html" onclick="return _fsZurBueroSeite(event)" style="text-decoration:none;font-weight:700;">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="4" width="20" height="13" rx="2"/><path d="M8 21h8M12 17v4"/></svg>
       Büro-Seite am PC öffnen</a>
     <button class="nav-item" data-nav="fs_dash">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="9" rx="1.5"/><rect x="14" y="3" width="7" height="5" rx="1.5"/><rect x="14" y="12" width="7" height="9" rx="1.5"/><rect x="3" y="16" width="7" height="5" rx="1.5"/></svg>
-      Dashboard</button>
+      Übersicht</button>
     <button class="nav-item" data-nav="fs_kalender">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2"/><path d="M16 2v4M8 2v4M3 10h18"/></svg>
       Kalender</button>
@@ -5808,6 +5830,45 @@ function _fsSuperAdminToggleBtn(){
     ${_fsAgg?'Zu meiner Fahrlehrer-Ansicht':'Admin-Gesamtübersicht'}</button>`;
 }
 
+// K2: Knopf „Zur Büro-Seite“ nur für Leitung, Büro und Super-Admin
+function _fsDarfBueroSeite(){ const r=_authProfile&&_authProfile.rolle; return r==="fahrschule_admin"||r==="buero"||isSuperAdmin(); }
+let _fsZurBueroLaeuft=false;
+async function _fsZurBueroSeite(ev){
+  if(ev)ev.preventDefault();
+  if(_fsZurBueroLaeuft)return false; // Doppeltipp: der erste Tipp speichert noch
+  if(!_seiteVerlassenOk())return false;
+  _fsZurBueroLaeuft=true;
+  const knopf=document.getElementById("fsBueroLink"); let hinweisAn=false;
+  try{
+    // Noch nicht geschriebene Änderungen der Gesamtansicht erst speichern (wie beim Umschalten in die eigene Ansicht).
+    // Auch ein Speichern, das gerade unterwegs ist, wird abgewartet: Der Seitenwechsel würde es sonst abbrechen.
+    if(_fsAgg){
+      let ok=true, fehlversuch=false;
+      // Rückmeldung, solange gewartet wird: Hinweis bleibt stehen, Knopf zeigt „Speichere …“ und ist gesperrt
+      if(_fsSyncLaeuftP||_fsSyncDebounce||_fsUngespeichert){
+        toast("Speichere Änderungen …"); const t=$("#toast"); clearTimeout(t._t); hinweisAn=true;
+        if(knopf){ knopf.setAttribute("aria-busy","true"); knopf.style.opacity=".6"; knopf.style.pointerEvents="none"; const u=knopf.querySelector(".fbl-s"); if(u){ u.dataset.alt=u.textContent; u.textContent="Speichere Änderungen …"; } }
+      }
+      // Warten, bis wirklich nichts mehr offen ist: Während ein Speichern läuft, kann schon das nächste anstehen.
+      for(let runde=0; runde<6 && (_fsSyncLaeuftP||_fsSyncDebounce||_fsUngespeichert); runde++){
+        const lief=_fsSyncLaeuftP;
+        if(!lief){ clearTimeout(_fsSyncDebounce); _fsSyncDebounce=null; }
+        try{ ok=(await (lief||_fsSyncAggJetzt()))!==false; }catch(e){ ok=false; }
+        if(!ok){ if(fehlversuch)break; fehlversuch=true; } // nach einem Fehler genau einmal neu versuchen
+      }
+      if(_fsSyncLaeuftP||_fsSyncDebounce||_fsUngespeichert)ok=false;
+      // Ist der Nutzer inzwischen auf eine andere Seite gegangen, nicht mehr plötzlich wegspringen
+      if(knopf&&!document.contains(knopf))return false;
+      if(!ok&&!confirm("Nicht alle Änderungen konnten gespeichert werden. Trotzdem zur Büro-Seite? Ungespeichertes geht dann verloren."))return false;
+    }
+    location.href="buero.html";
+    return false;
+  }finally{
+    _fsZurBueroLaeuft=false;
+    if(hinweisAn){ const t=$("#toast"); if(t.textContent==="Speichere Änderungen …")t.classList.remove("show"); }
+    if(knopf){ knopf.removeAttribute("aria-busy"); knopf.style.opacity=""; knopf.style.pointerEvents=""; const u=knopf.querySelector(".fbl-s"); if(u&&u.dataset.alt!=null){ u.textContent=u.dataset.alt; delete u.dataset.alt; } }
+  }
+}
 function routeFahrschuleDashboard(){
   if(!_fsAgg)return;
   const name=_fsAgg.fahrschule.name||"Fahrschule";
@@ -5823,17 +5884,22 @@ function routeFahrschuleDashboard(){
     <div class="hero compact"><div class="greet">Guten Tag,</div><div class="hero-brand">${esc(name)}</div><div class="hero-tag">${lehrer.length} Fahrlehrer · ${act} aktive Schüler · ${heuteCount} Termine heute</div></div>
     <button class="res-block" style="animation:none;width:100%;text-align:left;cursor:pointer;background:var(--surface);border:1.5px solid var(--akzent,var(--orange));" onclick="routeKalender()">
       <h4 style="margin-bottom:4px;">📅 Kalender</h4>
-      <p style="font-size:13.5px;color:var(--muted);">Alle Termine aller Fahrlehrer — antippen zum Öffnen</p>
+      <p style="font-size:13.5px;color:var(--muted);">Termine je Fahrlehrer oder Fahrzeug</p>
     </button>
-    <div class="dash-tiles" style="grid-template-columns:repeat(2,1fr);">
+    ${_fsDarfBueroSeite()?`<a class="fs-buero-link" id="fsBueroLink" href="buero.html" onclick="return _fsZurBueroSeite(event)">
+      <span class="fbl-ic">${ICN.folder}</span>
+      <span class="fbl-txt"><span class="fbl-t">Zur Büro-Seite</span><span class="fbl-s">Kalender aller Fahrlehrer, Prüfungstafel, Fristen</span></span>
+      <span class="fbl-pfeil" aria-hidden="true">›</span>
+    </a>`:''}
+    <div class="dash-tiles" style="grid-template-columns:repeat(2,1fr);margin-top:14px;">
       <button class="d-tile" data-fsgo="schueler"><div class="badge">${ICN.users}</div><div class="dt-n" data-count="${act}">0</div><div class="dt-l">Alle Schüler</div></button>
       <button class="d-tile" data-fsgo="lehrer"><div class="badge">${ICN.profile}</div><div class="dt-n" data-count="${lehrer.length}">0</div><div class="dt-l">Fahrlehrer</div></button>
-      <button class="d-tile" data-fsgo="fahrzeuge"><div class="badge">${ICN.cal}</div><div class="dt-n" data-count="${fahrzeugAnzahl}">0</div><div class="dt-l">Fahrzeugflotte</div></button>
-      <button class="d-tile" data-fsgo="stats">${q.pct==null?'<div class="dt-n">–</div>':`<div class="dt-n" data-count="${q.pct}" data-suffix="%">0</div>`}<div class="dt-l">Statistik · Quote</div></button>
+      <button class="d-tile" data-fsgo="fahrzeuge"><div class="badge">${ICN.car}</div><div class="dt-n" data-count="${fahrzeugAnzahl}">0</div><div class="dt-l">Fahrzeugflotte</div></button>
+      <button class="d-tile" data-fsgo="stats"><div class="badge">${ICN.chart}</div>${q.pct==null?'<div class="dt-n">–</div>':`<div class="dt-n" data-count="${q.pct}" data-suffix="%">0</div>`}<div class="dt-l">Statistik · Quote</div></button>
     </div>
     ${poolAnzahl?`<div class="res-block" style="animation:none;background:rgba(207,154,62,.1);border-color:rgba(207,154,62,.35);">
       <h4>⚠ ${poolAnzahl} Schüler ohne Fahrlehrer</h4>
-      <p style="font-size:13px;color:var(--muted);">Noch keinem Fahrlehrer zugeordnet — jetzt verteilen.</p>
+      <p style="font-size:13px;color:var(--muted);">Noch keinem Fahrlehrer zugeordnet. Jetzt verteilen.</p>
       <div class="btn-row"><button class="btn btn-ghost" data-fsgo="schueler">Ansehen</button></div>
     </div>`:''}
     <div class="res-block" style="animation:none;"><h4>📋 Empfehlungen (Simulator/Videoakademie)</h4>
@@ -5957,7 +6023,7 @@ function routeFahrschuleVerwaltung(){
   if(!_fsAgg)return;
   $("#tbTitle").textContent="Verwaltung"; setFab(false); view.scrollTop=0;
   view.innerHTML=`<div class="view-inner view-read fade-up">
-  <button class="btn btn-ghost" style="margin-bottom:10px;" onclick="routeFahrschuleDashboard()">← Zurück zum Dashboard</button>
+  <button class="btn btn-ghost" style="margin-bottom:10px;" onclick="routeFahrschuleDashboard()">← Zurück zur Übersicht</button>
   <div class="res-block" style="animation:none;">
     <div class="btn-row" style="flex-wrap:wrap;">
       <button class="btn btn-ghost" onclick="routeFahrschuleKategorie('theorie_pruefung')">📘 Theorie-Prüfung</button>
@@ -6268,17 +6334,16 @@ function routeFahrschuleLehrer(){
         <button class="fs-btn-activate" onclick="fahrlehrerPasswortZuruecksetzen(${_jsArg(l.id)})">Passwort zurücksetzen</button>
       </div>`}
       ${l.slug?`<div class="fs-actions"><button class="fs-btn-activate" onclick="document.getElementById(${_jsArg(linksId)}).style.display=document.getElementById(${_jsArg(linksId)}).style.display==='none'?'block':'none';">🔗 Buchungslinks</button></div>
-      <div id="${linksId}" style="display:none;margin-top:6px;">${_fsBuchungslinksHTML(l.slug,l.name||l.email)}</div>`:'<p class="muted-p" style="font-size:11.5px;margin-top:4px;">Kein Slug hinterlegt — Buchungslinks nicht verfügbar.</p>'}
+      <div id="${linksId}" style="display:none;margin-top:6px;">${_fsBuchungslinksHTML(l.slug,l.name||l.email)}</div>`:'<p class="muted-p" style="margin-top:4px;">Noch kein Buchungslink eingerichtet.</p>'}
     </div>`;
   }).join("")||'<p class="muted-p">Noch keine Fahrlehrer.</p>';
   view.innerHTML=`<div class="view-inner view-read fade-up">
-  <button class="btn btn-ghost" style="margin-bottom:10px;" onclick="routeFahrschuleDashboard()">← Zurück zum Dashboard</button>
   <div class="res-block" style="animation:none;">
     <h4>👥 Fahrlehrer (${lehrer.length})</h4>${rows}
     ${buero?'':`<div class="btn-row" style="margin-top:10px;"><button class="btn btn-primary" onclick="neuenFahrlehrerAnlegen(${_jsArg(_fsAgg.fahrschuleId)})">+ Neuen Fahrlehrer anlegen</button></div>`}
   </div>
   ${buero?'':`<div class="res-block" style="animation:none;"><h4>🗂️ Büro-Zugänge</h4>
-    <p style="font-size:13px;color:var(--muted);">Für Mitarbeiterinnen wie Christina — sehen Kalender-Kategorien, Fahrcheck-Kontrolle, Schichtplan, Notizen. Kein Zugriff auf Fahrlehrer-Konten oder Kill-Switch.</p>
+    <p style="font-size:13px;color:var(--muted);">Für Mitarbeiter im Büro. Sie sehen Kalender, Fahrcheck-Kontrolle, Schichtplan und Notizen.</p>
     <div class="btn-row" style="margin-top:8px;"><button class="btn btn-primary" onclick="neuenBueroZugangAnlegen(${_jsArg(_fsAgg.fahrschuleId)})">+ Büro-Zugang anlegen</button></div>
   </div>`}</div>`;
 }
@@ -6324,7 +6389,7 @@ function routeFahrschuleFahrzeuge(){
     </div>`;
   }).join("")||'<p class="muted-p">Noch keine Fahrzeuge in der Flotte.</p>';
   view.innerHTML=`<div class="view-inner view-read fade-up">
-  <button class="btn btn-ghost" style="margin-bottom:10px;" onclick="routeFahrschuleDashboard()">← Zurück zum Dashboard</button>
+  <button class="btn btn-ghost" style="margin-bottom:10px;" onclick="routeFahrschuleDashboard()">← Zurück zur Übersicht</button>
   ${typRows?`<div class="res-block" style="animation:none;"><h4>📊 Kapazität nach Fahrzeug-Typ</h4>${typRows}</div>`:''}
   <div class="res-block" style="animation:none;">
     <h4>🚗 Fahrzeugflotte (${flotte.length})</h4>
@@ -6385,7 +6450,7 @@ function routeFahrschuleStatistik(){
   });
 
   view.innerHTML=`<div class="view-inner view-read fade-up">
-    <button class="btn btn-ghost" style="margin-bottom:10px;" onclick="routeFahrschuleDashboard()">← Zurück zum Dashboard</button>
+    <button class="btn btn-ghost" style="margin-bottom:10px;" onclick="routeFahrschuleDashboard()">← Zurück zur Übersicht</button>
     <div class="res-block" style="animation:none;"><h4>📊 Kennzahlen im Überblick</h4>
       <div class="dash-tiles">
         <button class="d-tile" style="cursor:default;"><div class="dt-n" data-count="${act}">0</div><div class="dt-l">Aktive Schüler</div></button>
@@ -6446,6 +6511,33 @@ function routeFahrschuleStatistik(){
    hinweg erhalten (wird NUR beim Ein-/Ausklappen selbst gesetzt, nicht beim
    Anklicken einzelner Checkboxen) - hängt sich additiv an routeKalender() an. */
 let _fsFilterPanelOpen=false;
+// K2 GK4: Filter-Knopf, Abdunklung und Schublade gehören nur zum Kalender. Beim Verlassen alles entfernen,
+// die Schublade beim nächsten Öffnen zugeklappt zeigen; die gewählten Fahrlehrer und Fahrzeuge bleiben.
+function _fsFilterWeg(){
+  const el=document.getElementById("fsCalTiles");
+  if(el){ el.remove(); _fsFilterPanelOpen=false; }
+}
+// Jeder Seitenwechsel (Reiter, Mehr-Menü, Zurück-Pfeil, Android-Zurück, Knöpfe in Seiten) ersetzt #view.
+// Steht danach kein Kalender mehr darin, verschwindet der Filter.
+(function(){ const v=document.getElementById("view"); if(!v||typeof MutationObserver!=="function")return;
+  new MutationObserver(()=>{ if(document.getElementById("fsCalTiles")&&!document.getElementById("calBody"))_fsFilterWeg(); }).observe(v,{childList:true});
+})();
+// K2 GK1: Gesamtansicht ohne gewählten Fahrlehrer oder Fahrzeug zeigt keine Termine. Statt eines leeren Kalenders
+// eine deutliche Karte mit Knopf, der die Filter-Schublade öffnet. Alle vorzuwählen wäre zu voll (Fund GK2).
+function _fsKeineAuswahl(){ return !!_fsAgg&&!_fsCalLehrerFilter.length&&!_fsCalFahrzeugFilter.length; }
+function _fsKeineAuswahlKarteHTML(){
+  if(!_fsKeineAuswahl())return "";
+  return `<div class="res-block" id="fsKeineAuswahl" style="animation:none;text-align:center;margin:4px 0 14px;border:1.5px solid var(--akzent,var(--orange));">
+    <div class="fs-leer-titel">Noch kein Fahrlehrer gewählt</div>
+    <p class="muted-p" style="margin:0 0 12px;">Wähle einen Fahrlehrer oder ein Fahrzeug.</p>
+    <button class="btn btn-primary" id="fsKeineAuswahlBtn" style="min-height:44px;" onclick="_fsOpenFilterPanel()">Fahrlehrer wählen</button>
+  </div>`;
+}
+// K2 GK3: Vorname des Fahrlehrers für die Termin-Kacheln, nur in der Gesamtansicht
+function _fsFlVorname(e){
+  if(!_fsAgg||!e||!e._fahrlehrerName)return "";
+  return firstName(String(e._fahrlehrerName).split("@")[0].trim());
+}
 function _fsInjectFilterTiles(){
   if(!_fsAgg)return;
   document.getElementById("fsCalTiles")?.remove();
@@ -6458,7 +6550,7 @@ function _fsInjectFilterTiles(){
   </label>`;
   const isBuero=_fsKalenderModus==="buero";
   const activeCount=_fsCalLehrerFilter.length+_fsCalFahrzeugFilter.length+(isBuero?_fsCalBueroFilter.length:0);
-  const keinFilterAktiv=!isBuero&&!_fsCalLehrerFilter.length&&!_fsCalFahrzeugFilter.length;
+  const keinFilterAktiv=!_fsCalLehrerFilter.length&&!_fsCalFahrzeugFilter.length; // ohne Fahrlehrer/Fahrzeug zeigt auch der Büro-Kalender nichts
   const open=_fsFilterPanelOpen;
   const html=`<div id="fsCalTiles">
     <button class="fs-filter-tab${open?' hide':''}" id="fsFilterTabBtn" aria-label="Filter öffnen">
@@ -6484,7 +6576,7 @@ function _fsInjectFilterTiles(){
       <p class="muted-p" style="font-size:11.5px;margin:-2px 0 4px;">Leer = alle anzeigen</p>
       ${FS_BUERO_ARTEN.map(a=>checkRow("fsbuero",a,bueroLabels[a]||a,_fsCalBueroFilter.includes(a))).join("")}`:''}
       ${(_fsCalFahrzeugFilter.length||_fsCalLehrerFilter.length||(isBuero&&_fsCalBueroFilter.length))?`<button class="btn btn-ghost" style="width:100%;margin-top:12px;" onclick="_fsResetKalFilter()">Filter zurücksetzen</button>`:''}
-      ${keinFilterAktiv?`<div class="res-block" style="animation:none;background:rgba(207,154,62,.1);border-color:rgba(207,154,62,.35);text-align:center;margin-top:12px;"><p style="font-size:13px;color:var(--muted);margin:0;">👆 Wähle einen Fahrlehrer oder ein Fahrzeug, um Termine zu sehen.</p></div>`:''}
+      ${keinFilterAktiv?`<div class="res-block" style="animation:none;background:rgba(207,154,62,.1);border-color:rgba(207,154,62,.35);text-align:center;margin-top:12px;"><p style="font-size:13px;color:var(--muted);margin:0;">Wähle einen Fahrlehrer oder ein Fahrzeug, um Termine zu sehen.</p></div>`:''}
     </aside>
   </div>`;
   document.body.insertAdjacentHTML("beforeend",html);
@@ -6618,7 +6710,7 @@ async function routeFahrschuleBackups(){
   window._fsAktuelleRoute=routeFahrschuleBackups;
   $("#tbTitle").textContent="Backups"; setFab(false); view.scrollTop=0;
   view.innerHTML=`<div class="view-inner view-read fade-up" id="fsBackupWrap">
-    <button class="btn btn-ghost" style="margin-bottom:10px;" onclick="routeFahrschuleDashboard()">← Zurück zum Dashboard</button>
+    <button class="btn btn-ghost" style="margin-bottom:10px;" onclick="routeFahrschuleDashboard()">← Zurück zur Übersicht</button>
     <div class="res-block" style="animation:none;text-align:center;color:var(--muted);">Lade…</div>
   </div>`;
   await _fsLadeBackups();
@@ -6633,7 +6725,7 @@ async function _fsLadeBackups(){
   </div>`).join("")||'<p class="muted-p">Noch keine Backups vorhanden.</p>';
   const wrap=document.getElementById("fsBackupWrap");
   if(wrap)wrap.innerHTML=`
-    <button class="btn btn-ghost" style="margin-bottom:10px;" onclick="routeFahrschuleDashboard()">← Zurück zum Dashboard</button>
+    <button class="btn btn-ghost" style="margin-bottom:10px;" onclick="routeFahrschuleDashboard()">← Zurück zur Übersicht</button>
     <div class="res-block" style="animation:none;">
       <h4>💾 Backups</h4>
       <p style="font-size:13px;color:var(--muted);">Läuft automatisch jeden Sonntag um 23 Uhr. Du kannst jederzeit zusätzlich manuell sichern.</p>
@@ -6708,7 +6800,7 @@ function routeFahrschuleKategorie(key){
     </div>`;
   }).join("")||`<p class="muted-p">Noch keine Termine dieser Art.</p>`;
   view.innerHTML=`<div class="view-inner view-read fade-up">
-    <button class="btn btn-ghost" style="margin-bottom:10px;" onclick="routeFahrschuleDashboard()">← Zurück zum Dashboard</button>
+    <button class="btn btn-ghost" style="margin-bottom:10px;" onclick="routeFahrschuleDashboard()">← Zurück zur Übersicht</button>
     <div class="res-block" style="animation:none;"><h4>${cfg.icon} ${cfg.titel} (${termine.length})</h4>${rows}</div>
   </div>`;
 }
@@ -6766,7 +6858,7 @@ function routeFahrschuleFahrcheckKontrolle(){
     <div class="fs-sub">Echten Kalender öffnen — dort direkt am Termin abhaken, bearbeiten, neu anlegen</div>
   </button>`).join("")||'<p class="muted-p">Noch keine Fahrlehrer.</p>';
   view.innerHTML=`<div class="view-inner view-read fade-up">
-    <button class="btn btn-ghost" style="margin-bottom:10px;" onclick="routeFahrschuleDashboard()">← Zurück zum Dashboard</button>
+    <button class="btn btn-ghost" style="margin-bottom:10px;" onclick="routeFahrschuleDashboard()">← Zurück zur Übersicht</button>
     <div class="res-block" style="animation:none;"><h4>📅 Kalender eines Fahrlehrers öffnen</h4>${lehrerRows}</div>
     ${fehlt.length?`<div class="res-block" style="animation:none;background:rgba(200,60,60,.08);border-color:rgba(200,60,60,.3);">
       <h4>❌ Fehlliste — alle Fahrlehrer (${fehlt.length})</h4>${fehlt.map(t=>zeile(t,true)).join("")}
@@ -6820,7 +6912,7 @@ async function _fsLadeSchichtplan(){
     </div>`;
   }
   const wrap=$("#fsSchichtWrap");
-  if(wrap)wrap.innerHTML=`<button class="btn btn-ghost" style="margin-bottom:10px;" onclick="routeFahrschuleDashboard()">← Zurück zum Dashboard</button><div class="res-block" style="animation:none;"><h4>🗓️ Schichtplan (2 Wochen)</h4>${html}</div>`;
+  if(wrap)wrap.innerHTML=`<button class="btn btn-ghost" style="margin-bottom:10px;" onclick="routeFahrschuleDashboard()">← Zurück zur Übersicht</button><div class="res-block" style="animation:none;"><h4>🗓️ Schichtplan (2 Wochen)</h4>${html}</div>`;
 }
 async function fsSchichtHinzufuegen(datum){
   const name=(prompt("Name der Mitarbeiterin/des Mitarbeiters:")||"").trim();
@@ -6864,7 +6956,7 @@ async function _fsLadeUrlaub(){
     <div class="fs-actions"><button class="fs-btn-kill" onclick="fsUrlaubLoeschen(${_jsArg(u.id)})">Löschen</button></div>
   </div>`).join("")||'<p class="muted-p">Aktuell kein eingetragener Urlaub.</p>';
   const wrap=$("#fsUrlaubWrap");
-  if(wrap)wrap.innerHTML=`<button class="btn btn-ghost" style="margin-bottom:10px;" onclick="routeFahrschuleDashboard()">← Zurück zum Dashboard</button><div class="res-block" style="animation:none;"><h4>🏖️ Urlaub (anstehend)</h4>${rows}
+  if(wrap)wrap.innerHTML=`<button class="btn btn-ghost" style="margin-bottom:10px;" onclick="routeFahrschuleDashboard()">← Zurück zur Übersicht</button><div class="res-block" style="animation:none;"><h4>🏖️ Urlaub (anstehend)</h4>${rows}
     <div class="btn-row" style="margin-top:10px;"><button class="btn btn-primary" onclick="fsUrlaubHinzufuegen()">+ Urlaub eintragen</button></div>
   </div>`;
 }
@@ -7051,7 +7143,7 @@ async function routeFahrschuleProvisionen(){
   </div>`).join("")||'';
   const wrap=$("#fsProvWrap");
   if(wrap)wrap.innerHTML=`
-    <button class="btn btn-ghost" style="margin-bottom:10px;" onclick="routeFahrschuleDashboard()">← Zurück zum Dashboard</button>
+    <button class="btn btn-ghost" style="margin-bottom:10px;" onclick="routeFahrschuleDashboard()">← Zurück zur Übersicht</button>
     <div class="res-block" style="animation:none;"><h4>💰 Provisionen — Übersicht offen</h4>${uebersicht}</div>
     <div class="res-block" style="animation:none;"><h4>+ Neue Provision erfassen</h4>
       <div class="btn-row"><button class="btn btn-primary" onclick="fsProvisionErfassen()">Verkauf erfassen</button></div>
@@ -7340,7 +7432,7 @@ window.addEventListener("load", () => {
 const STORE_KEY="serband-app-v1";
 /* Build-Version: bei jeder Auslieferung hier das Datum aktualisieren.
    Wird in den Einstellungen angezeigt + für den Update-Hinweis genutzt. */
-const APP_VERSION="2026.11.11.1";
+const APP_VERSION="2026.11.11.2";
 try{const f=document.getElementById("drawerFoot"); if(f)f.textContent="Fahrlehrer-Kompass · Version "+APP_VERSION;}catch(e){}
 // Nutzungsbedingungen & Haftungsausschluss (Bereich: rechtliche Absicherung) - Version hochzählen
 // und alle Nutzer müssen erneut zustimmen, sobald sich der Text inhaltlich ändert.
@@ -7437,7 +7529,16 @@ function _fsSyncAggChanges(){
 // damit weder "Gespeichert ✓" erscheint noch die Vergleichsbasis weiterrückt.
 function _fsPruefe(r){ if(r&&r.error) throw r.error; return r; }
 // Liefert true, wenn alles geschrieben ist (oder nichts zu schreiben war), sonst false.
-async function _fsSyncAggJetzt(){
+// Laufendes Speichern merken, damit ein Seitenwechsel (z. B. zur Büro-Seite) darauf warten kann.
+let _fsSyncLaeuftP=null;
+function _fsSyncAggJetzt(){
+  const p=_fsSyncAggJetztKern();
+  _fsSyncLaeuftP=p;
+  const fertig=()=>{ if(_fsSyncLaeuftP===p)_fsSyncLaeuftP=null; };
+  p.then(fertig,fertig);
+  return p;
+}
+async function _fsSyncAggJetztKern(){
     _fsSyncDebounce=null;
     if(!_fsAgg||!_fsBaseline)return true;
     try{
@@ -7735,7 +7836,10 @@ function planLastDate(plan){
 }
 function autoNext(s){
   if(s.next) return {text:s.next,auto:false};
-  if(s.plan){ for(const st of stufenFor(s)){ for(const it of st.items){ if(s.plan.ampeln[it.id]!=="gruen") return {text:it.t+" · "+st.titel,auto:true}; } } }
+  // K2 GK25: ohne Plan (z. B. neu im Büro angelegt) ist noch nichts begonnen, nicht „alles grün“
+  if(!s.plan||!s.plan.ampeln) return {text:"Noch nicht begonnen",auto:true};
+  for(const st of stufenFor(s)){ for(const it of st.items){ if(s.plan.ampeln[it.id]!=="gruen") return {text:it.t+" · "+st.titel,auto:true}; } }
+  if(!stand(s)) return {text:"Noch nicht begonnen",auto:true};
   return {text:"Alles grün – Generalprobe!",auto:true};
 }
 
@@ -7986,7 +8090,7 @@ function openDrawer(){_zurueckSperreNachholen();$("#drawer").classList.add("open
 function closeDrawer(){$("#drawer").classList.remove("open");$("#scrim").classList.remove("open");}
 $("#menuBtn").addEventListener("click",openDrawer);
 $("#scrim").addEventListener("click",closeDrawer);
-$("#homeBtn").addEventListener("click",()=>{ replaySplash(); document.getElementById("fsCalTiles")?.remove(); if(_fsAgg)routeFahrschuleDashboard(); else routeDashboard(); });
+$("#homeBtn").addEventListener("click",()=>{ replaySplash(); _fsFilterWeg(); if(_fsAgg)routeFahrschuleDashboard(); else routeDashboard(); });
 function replaySplash(){
   const sp=$("#splash"); if(!sp)return;
   setSplashQuote();
@@ -8002,7 +8106,7 @@ document.querySelector(".drawer-nav").addEventListener("click",(e)=>{
   if(!b)return;
   if(!_seiteVerlassenOk())return; // ungespeicherte Formular-Eingaben: erst fragen (wie Zurück und Reiterleiste)
   const nav=b.dataset.nav;closeDrawer();
-  document.getElementById("fsCalTiles")?.remove();
+  _fsFilterWeg();
   setTimeout(()=>{if(nav==="todos")routeTodos();
     else if(nav==="stats")routeStats("cur");
     else if(nav==="archive")routeArchive();
@@ -8032,6 +8136,7 @@ function tabGo(k){
   if(k==="mehr"){ openDrawer(); return; }
   if(!_seiteVerlassenOk())return;
   closeDrawer();
+  if(k!=="kalender")_fsFilterWeg(); // K2 GK4: Filter-Knopf und Schublade gehören nur zum Kalender
   if(k==="heute"){ if(_fsAgg&&typeof routeFahrschuleDashboard==="function")routeFahrschuleDashboard(); else routeDashboard(); }
   else if(k==="kalender")routeKalender();
   else if(k==="schueler")routeHome();
@@ -12772,6 +12877,7 @@ function eventMatchesFilter(e,iso){
 // Freie Slots: Fahrzeug/Fahrcheck-Filter gelten nur für echte Termine, nicht für unbelegte Zeit —
 // bei aktivem Fahrzeug- oder FC-Filter werden freie Slots daher ausgeblendet (kein Treffer möglich).
 function slotMatchesFilter(s){
+  if(_fsKeineAuswahl())return false; // K2: Gesamtansicht ohne Fahrlehrer/Fahrzeug: keine „+ frei“-Felder (Termin ohne Fahrlehrer)
   if(_calFzFilter||_calFcOffen)return false;
   if(_calFilter!=="alle"&&s.art!==_calFilter)return false;
   return true;
@@ -12821,6 +12927,7 @@ function routeKalender(ansicht,datum){
       </div>
     </div>
     ${_fsAgg?'':calCounterHTML()}
+    ${_fsKeineAuswahlKarteHTML()}
     <div class="cal-filters" id="calFilters">
       ${[["alle","Alle"],["fahrstunde","Fahrstunden"],["pruefung","Prüfungen"],["theorie","Theorie"]].map(([k,l])=>`<button class="cal-fchip${_calFilter===k?' on':''}" data-f="${k}">${l}</button>`).join("")}
     </div>
@@ -12830,9 +12937,9 @@ function routeKalender(ansicht,datum){
       <div class="cal-title-wrap"><div class="cal-title" id="calTitle">${calTitle()}</div><div class="cal-kw" id="calKW">${calKW()}</div></div>
       <button class="cal-arrow" id="calNext"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M9 18l6-6-6-6"/></svg></button>
     </div>
-    <div id="calBody">${_calView==="monat"?calMonthHTML():_calView==="woche"?calWeekHTML():calDayHTML()}</div>
+    <div id="calBody"${_fsKeineAuswahl()?' class="fs-leer"':''}>${_calView==="monat"?calMonthHTML():_calView==="woche"?calWeekHTML():calDayHTML()}</div>
     </div>
-    ${_fsAgg?`<button class="cal-fab" id="calFab" aria-label="Hinzufügen"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg></button>`:''}`;
+    ${_fsAgg&&!_fsKeineAuswahl()?`<button class="cal-fab" id="calFab" aria-label="Hinzufügen"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg></button>`:''}`;
   view.innerHTML=html;
   bindCalControls();
   if(_fsAgg)_fsInjectFilterTiles();
@@ -13090,13 +13197,14 @@ function sfKuerzel(e){ if(e.srcSonder){ const grp=e.srcSonder.split(":")[1]; ret
 function firstName(n){ return (n||"").split(" ")[0]; }
 function calEventChip(e,iso){
   const c=CAL_ARTEN[e.art]||CAL_ARTEN.fahrstunde;
+  const flName=_fsFlVorname(e), flTag=flName?`<span class="cw-fl">${esc(flName)}</span>`:'';
   // Erledigte Prüfung: eigene Optik (bestanden = grün + Häkchen + durchgestrichen, nicht bestanden = rot + durchgestrichen)
   if(e.kind==="examDone"){
     const pass=e.result==="pass";
     const col=pass?"#4caf72":"#d94f4f";
     const icon=pass?"✓":"✕";
     const lbl=pass?"bestanden":"nicht bestanden";
-    return `<div class="cw-ev exam-done ${pass?'exam-pass':'exam-fail'}" style="border-left-color:${col}" data-evedit="${esc(e.kind)}|${esc(e.id)}|${esc(e.sid||'')}"><span class="cw-evt">${esc(e.pruefTime||e.von)} · Prüfung</span><span class="cw-evn"><span class="exd-strike">${esc(e.name||"")}</span> <span class="exd-mark" style="color:${col}">${icon} ${lbl}</span></span></div>`;
+    return `<div class="cw-ev exam-done ${pass?'exam-pass':'exam-fail'}" style="border-left-color:${col}" data-evedit="${esc(e.kind)}|${esc(e.id)}|${esc(e.sid||'')}"><span class="cw-evt">${esc(e.pruefTime||e.von)} · Prüfung</span><span class="cw-evn"><span class="exd-strike">${esc(e.name||"")}</span> <span class="exd-mark" style="color:${col}">${icon} ${lbl}</span></span>${flTag}</div>`;
   }
   const stat=e.status&&e.status!=="geplant"?` <span class="cw-evstat">${esc(e.status)}</span>`:"";
   const off=e.status&&e.status!=="geplant";
@@ -13107,7 +13215,7 @@ function calEventChip(e,iso){
   // Urlaub/Blocker sind ganze Tage (00:00–23:59) und nicht ziehbar - beim Verschieben gingen sie kaputt.
   const draggable=e.kind==="lesson"&&e.status==="geplant"&&e.art!=="block"&&!e.doppelt;
   const dispName=(e.art==="theorie"&&e.lektion)?esc("Lektion "+e.lektion):esc(e.name||"");
-  return `<div class="cw-ev${off?' off':''}${examSoon?' exam-soon':''}${draggable?' cw-draggable':''}" style="border-left-color:${c.col}" data-evedit="${esc(e.kind)}|${esc(e.id)}|${esc(e.sid||'')}"${draggable?` data-dragid="${esc(e.id)}"`:''}><span class="cw-evt">${esc(e.von)}</span><span class="cw-evn">${dispName}${sf}${stat}${fzTag}${pruefLabel}</span></div>`;
+  return `<div class="cw-ev${off?' off':''}${examSoon?' exam-soon':''}${draggable?' cw-draggable':''}" style="border-left-color:${c.col}" data-evedit="${esc(e.kind)}|${esc(e.id)}|${esc(e.sid||'')}"${draggable?` data-dragid="${esc(e.id)}"`:''}><span class="cw-evt">${esc(e.von)}</span><span class="cw-evn">${dispName}${sf}${stat}${fzTag}${pruefLabel}</span>${flTag}</div>`;
 }
 // TAGESANSICHT
 function calDayHTML(){
@@ -13134,16 +13242,17 @@ function calDayHTML(){
   items.forEach(it=>{
     const top=(it.von-startH*60)*pxPerMin; const h=Math.max(34,(it.bis-it.von)*pxPerMin-3);
     if(it.type==="ev"){ const e=it.e; const c=CAL_ARTEN[e.art]||CAL_ARTEN.fahrstunde;
+      const flName=_fsFlVorname(e), tKl=flName?"ct-ev-t mit-fl":"ct-ev-t", flTxt=flName?`<span class="ct-fl"> · ${esc(flName)}</span>`:'';
       if(e.kind==="examDone"){
         const pass=e.result==="pass"; const col=pass?"#4caf72":"#d94f4f"; const icon=pass?"✓":"✕"; const lbl=pass?"bestanden":"nicht bestanden";
-        blocks+=`<div class="ct-ev exam-done ${pass?'exam-pass':'exam-fail'}" style="top:${top}px;height:${h}px;border-left-color:${col}" data-evedit="${esc(e.kind)}|${esc(e.id)}|${esc(e.sid||'')}"><div class="ct-ev-t">${esc(e.pruefTime||min2hm(it.von))}</div><div class="ct-ev-n"><span class="exd-strike">${esc(e.name)}</span></div><div class="ct-ev-a" style="color:${col};font-weight:800">${icon} Prüfung ${lbl}</div></div>`;
+        blocks+=`<div class="ct-ev exam-done ${pass?'exam-pass':'exam-fail'}" style="top:${top}px;height:${h}px;border-left-color:${col}" data-evedit="${esc(e.kind)}|${esc(e.id)}|${esc(e.sid||'')}"><div class="${tKl}">${esc(e.pruefTime||min2hm(it.von))}${flTxt}</div><div class="ct-ev-n"><span class="exd-strike">${esc(e.name)}</span></div><div class="ct-ev-a" style="color:${col};font-weight:800">${icon} Prüfung ${lbl}</div></div>`;
         return;
       }
       const off=e.status&&e.status!=="geplant"; const stat=off?`<span class="cd-stat">${esc(e.status)}</span>`:"";
       const sf=c.sf?`<span class="ct-sf">${sfKuerzel(e)}</span>`:'';
       const examSoon=e.sid&&!!terminFor(e.sid);
       const dispNameDay=(e.art==="theorie"&&e.lektion)?esc("Lektion "+e.lektion):esc(e.name);
-      blocks+=`<div class="ct-ev${off?' off':''}${examSoon?' exam-soon':''}" style="top:${top}px;height:${h}px;border-left-color:${c.col}" data-evedit="${esc(e.kind)}|${esc(e.id)}|${esc(e.sid||'')}"><div class="ct-ev-t">${min2hm(it.von)}</div><div class="ct-ev-n">${dispNameDay}${sf}</div><div class="ct-ev-a">${c.lab}${stat}</div></div>`;
+      blocks+=`<div class="ct-ev${off?' off':''}${examSoon?' exam-soon':''}" style="top:${top}px;height:${h}px;border-left-color:${c.col}" data-evedit="${esc(e.kind)}|${esc(e.id)}|${esc(e.sid||'')}"><div class="${tKl}">${min2hm(it.von)}${flTxt}</div><div class="ct-ev-n">${dispNameDay}${sf}</div><div class="ct-ev-a">${c.lab}${stat}</div></div>`;
     } else if(it.type==="free"){ const s=it.s; const c=CAL_ARTEN[s.art]||CAL_ARTEN.fahrstunde;
       blocks+=`<button class="ct-free" style="top:${top}px;height:${h}px" data-freeslot="${esc(iso)}|${esc(s.von)}|${esc(s.bis)}|${esc(s.art)}"><span>${min2hm(it.von)} · frei</span><span class="ct-free-p">+ vergeben</span></button>`;
     } else { const c=CAL_ARTEN.theorie;
@@ -13153,7 +13262,7 @@ function calDayHTML(){
   const cnt=countRange(iso,iso);
   const doneUE=dayUE(iso,true), planUE=dayUE(iso,false);
   const hol=holidayName(iso);
-  return `${hol?`<div class="cd-holiday">🎌 ${esc(hol)} · Feiertag in Hessen</div>`:''}<div class="cd-summary"><span><b>${evs.filter(e=>!e.doppelt&&e.art!=="block").length}</b> belegt</span><span><b>${free.length}</b> frei</span>${_fsAgg?'':`<span><b>${planUE}</b> UE</span>`}</div>
+  return `${hol?`<div class="cd-holiday">🎌 ${esc(hol)} · Feiertag in Hessen</div>`:''}${_fsKeineAuswahl()?'':`<div class="cd-summary"><span><b>${evs.filter(e=>!e.doppelt&&e.art!=="block").length}</b> belegt</span><span><b>${free.length}</b> frei</span>${_fsAgg?'':`<span><b>${planUE}</b> UE</span>`}</div>`}
     <div class="ct-wrap" style="height:${totalH}px">${hourLines}${nowLine}<div class="ct-events">${blocks}</div></div>`;
 }
 // UE eines Tages (done=nur absolvierte)

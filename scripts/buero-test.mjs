@@ -33,7 +33,7 @@ const browser = await chromium.launch({ executablePath: process.env.CHROMIUM_PAT
 let probleme = 0;
 function fehler(text) { probleme++; console.log("FEHLER:", text); }
 
-async function oeffne({ nutzer, breite = 1366, hoehe = 860, hash = "", dunkel = false, vorbereiten, wer = "Kristina" }) {
+async function oeffne({ nutzer, breite = 1366, hoehe = 860, hash = "", dunkel = false, vorbereiten, wer = "Paula Muster" }) {
   const daten = bauDaten(HEUTE);
   const session = nutzer ? { user: { id: nutzer, email: nutzer + "@example.org" } } : null;
   const ctx = await browser.newContext({ viewport: { width: breite, height: hoehe }, colorScheme: dunkel ? "dark" : "light" });
@@ -57,7 +57,7 @@ async function oeffne({ nutzer, breite = 1366, hoehe = 860, hash = "", dunkel = 
   return { page, ctx, konsole };
 }
 // Büro-Personen der Attrappe und ihre PINs (erfunden, siehe buero-vorfuehrung.js)
-const TEST_PIN = { Jelena: "6204", Murat: "7391", Kristina: "4826" };
+const TEST_PIN = { "Mia Muster": "5917", "Noah Muster": "2846", "Paula Muster": "7352" };
 async function meldePinAn(page, name, pin) {
   await page.click(`#werListe button:has-text("${name}")`);
   await page.keyboard.type(pin || TEST_PIN[name], { delay: 20 });
@@ -519,7 +519,7 @@ for (const [breite, hoehe] of [[1920, 1080], [1366, 768], [1024, 768]]) {
   await pruefeLayout(page, "Seitenleiste");
   // Wer bedient: Name und Kopfzeile
   const wer = await page.evaluate(() => ({ s: S.wer, an: document.getElementById("werAnzeige").textContent }));
-  if (wer.s !== "Kristina" || wer.an !== "Kristina") fehler("PIN: Name nicht übernommen " + JSON.stringify(wer));
+  if (wer.s !== "Paula Muster" || wer.an !== "Paula Muster") fehler("PIN: Name nicht übernommen " + JSON.stringify(wer));
   // Kopfzeile: nur der Sitzungsschlüssel, nur an die Datenbank, kein frei getippter Name mehr
   const kopf = await page.evaluate(() => { window.__echt = window.fetch; window.fetch = (u, o) => ({ h: [...new Headers(o.headers)].filter(([k]) => k.startsWith("x-buero")), u }); const r = [bueroFetch("https://x/rest/v1/schueler", {}), bueroFetch("https://x/auth/v1/token", {})]; window.fetch = window.__echt; return { r, tok: S.sitzung.token }; });
   if (kopf.r[0].h.length !== 1 || kopf.r[0].h[0][0] !== "x-buero-sitzung" || kopf.r[0].h[0][1] !== kopf.tok || kopf.r[1].h.length) fehler("PIN: Kopfzeile falsch " + JSON.stringify(kopf));
@@ -577,12 +577,12 @@ for (const [breite, hoehe] of [[1920, 1080], [1366, 768], [1024, 768]]) {
     await page.click("dialog button[value=ok]");
     await page.waitForTimeout(300);
     if (!(await page.isVisible("dialog[open]"))) fehler("Reaktivierung: abweichender Betrag ohne Absprache wurde gespeichert");
-    await page.selectOption("dialog select[name=absprache]", "Murat");
+    await page.selectOption("dialog select[name=absprache]", "Noah Muster");
     await pruefeLayout(page, "Reaktivierung-Dialog");
     await page.click("dialog button[value=ok]");
     await page.waitForTimeout(400);
     const z = await page.evaluate((id) => window.__FAKE.tabellen.schueler.find((x) => x.id === id), sid);
-    if (z.reakt_betrag !== 200 || !/Absprache mit Murat/.test(z.reakt_notiz) || z.reakt_status !== "bezahlt") fehler("Reaktivierung gespeichert falsch: " + JSON.stringify([z.reakt_betrag, z.reakt_notiz, z.reakt_status]));
+    if (z.reakt_betrag !== 200 || !/Absprache mit Noah Muster/.test(z.reakt_notiz) || z.reakt_status !== "bezahlt") fehler("Reaktivierung gespeichert falsch: " + JSON.stringify([z.reakt_betrag, z.reakt_notiz, z.reakt_status]));
   }
   // Einstellungen: nur Super-Admin ändert
   if (!(await page.$("#einstForm input[name=betrag][disabled]"))) fehler("Einstellungen: Büro darf den Standardbetrag ändern");
@@ -960,16 +960,16 @@ for (const breite of [1301, 1366, 1420]) {
   if (!(await page.isVisible("#wer:not([hidden])"))) fehler("PIN: Büro wird nicht nach der Person gefragt");
   if (await page.isVisible("#werAnderer, #werName")) fehler("PIN: frei getippter Name ist noch möglich");
   const kacheln = await page.$$eval("#werListe button", (b) => b.map((x) => x.textContent.trim()));
-  if (kacheln.length !== 4 || !kacheln.some((t) => t.includes("Isra") && t.includes("PIN festlegen"))) fehler("PIN: Namenskacheln falsch " + JSON.stringify(kacheln));
+  if (kacheln.length !== 4 || !kacheln.some((t) => t.includes("Tom Muster") && t.includes("PIN festlegen"))) fehler("PIN: Namenskacheln falsch " + JSON.stringify(kacheln));
   if (!(await page.evaluate(() => document.getElementById("app").inert))) fehler("PIN: Seite hinter dem PIN-Fenster ist bedienbar");
   // Doppelklick auf den Namen tippt keine Ziffer mit
-  await page.dblclick('#werListe button:has-text("Kristina")'); await page.waitForTimeout(150);
+  await page.dblclick('#werListe button:has-text("Paula Muster")'); await page.waitForTimeout(150);
   if ((await page.$$eval("#pinPunkte .voll", (x) => x.length)) !== 0) fehler("PIN: Doppelklick auf den Namen gibt eine Ziffer ein");
   await page.keyboard.press("Escape");
   await pruefeLayout(page, "PIN Namen");
   if (FOTOS) await page.screenshot({ path: join(FOTOS, "pin-namen.png") });
   // Falsche PIN: Hinweis mit Restversuchen, Seite bleibt gesperrt
-  await page.click('#werListe button:has-text("Kristina")');
+  await page.click('#werListe button:has-text("Paula Muster")');
   await page.waitForTimeout(100);
   if (!(await page.isVisible("#werPin"))) fehler("PIN: Ziffernfeld erscheint nicht");
   await pruefeLayout(page, "PIN Ziffernfeld");
@@ -986,14 +986,14 @@ for (const breite of [1301, 1366, 1420]) {
   await page.keyboard.press("Escape");
   if (!(await page.isVisible("#werNamen"))) fehler("PIN: Esc führt nicht zurück zu den Namen");
   // Richtige PIN
-  await meldePinAn(page, "Kristina");
+  await meldePinAn(page, "Paula Muster");
   if (await page.isVisible("#wer:not([hidden])")) fehler("PIN: richtige PIN öffnet nicht");
   if (await page.evaluate(() => document.getElementById("app").inert)) fehler("PIN: Seite bleibt nach der Anmeldung gesperrt");
-  if ((await page.textContent("#werAnzeige")) !== "Kristina" || (await page.textContent("#nutzerName")) !== "Kristina") fehler("PIN: Name in der Seitenleiste fehlt");
+  if ((await page.textContent("#werAnzeige")) !== "Paula Muster" || (await page.textContent("#nutzerName")) !== "Paula Muster") fehler("PIN: Name in der Seitenleiste fehlt");
   if ((await page.textContent("#kopfWer")) !== "🔒 Sperren") fehler("PIN: Sperren-Knopf oben fehlt");
-  // Kristina darf nicht verwalten
+  // Paula Muster darf nicht verwalten
   await page.goto(page.url().split("#")[0] + "#team"); await page.waitForTimeout(300);
-  if (await page.isVisible("#pNeu, [data-preset]")) fehler("PIN: Kristina sieht Verwalten-Knöpfe");
+  if (await page.isVisible("#pNeu, [data-preset]")) fehler("PIN: Paula Muster sieht Verwalten-Knöpfe");
   // Wechseln mit Abbrechen
   await page.click("#werWechseln");
   if (!(await page.isVisible("#werZu"))) fehler("PIN: kein Abbrechen beim Wechseln");
@@ -1001,18 +1001,18 @@ for (const breite of [1301, 1366, 1420]) {
   if (await page.isVisible("#wer:not([hidden])")) fehler("PIN: Abbrechen schließt nicht");
   await page.click("#werWechseln"); await page.keyboard.press("Escape");
   if (await page.isVisible("#wer:not([hidden])")) fehler("PIN: Esc schließt nicht");
-  // Wechsel zu Jelena: alte Sitzung endet, Jelena darf verwalten
+  // Wechsel zu Mia Muster: alte Sitzung endet, Mia Muster darf verwalten
   const altTok = await page.evaluate(() => S.sitzung.token);
   await page.click("#werWechseln");
-  await meldePinAn(page, "Jelena");
+  await meldePinAn(page, "Mia Muster");
   const w = await page.evaluate((a) => ({ name: S.sitzung && S.sitzung.name, alt: !!window.__FAKE.sitzungen[a] }), altTok);
-  if (w.name !== "Jelena" || w.alt) fehler("PIN: Wechsel falsch " + JSON.stringify(w));
+  if (w.name !== "Mia Muster" || w.alt) fehler("PIN: Wechsel falsch " + JSON.stringify(w));
   await page.waitForTimeout(200);
-  if (!(await page.isVisible("#pNeu"))) fehler("PIN: Jelena sieht „+ Person“ nicht");
+  if (!(await page.isVisible("#pNeu"))) fehler("PIN: Mia Muster sieht „+ Person“ nicht");
   await pruefeLayout(page, "Team mit Personen");
   if (FOTOS) await page.screenshot({ path: join(FOTOS, "pin-team.png"), fullPage: true });
   // Person anlegen (doppelter Name wird abgelehnt)
-  await page.click("#pNeu"); await page.fill("dialog input[name=name]", "kristina"); await page.click("dialog button[value=ok]"); await page.waitForTimeout(200);
+  await page.click("#pNeu"); await page.fill("dialog input[name=name]", "paula muster"); await page.click("dialog button[value=ok]"); await page.waitForTimeout(200);
   if (!(await page.isVisible("dialog[open]"))) fehler("PIN: doppelter Name wurde angenommen");
   await page.fill("dialog input[name=name]", "Testperson"); await page.click("dialog button[value=ok]"); await page.waitForTimeout(300);
   if (!(await page.evaluate(() => S.personen.some((p) => p.name === "Testperson")))) fehler("PIN: Person nicht angelegt");
@@ -1022,14 +1022,14 @@ for (const breite of [1301, 1366, 1420]) {
   await page.keyboard.type("3817"); await page.waitForTimeout(150);
   if (!/noch keine PIN/.test(await page.textContent("#pinFehler")) || (await page.$$eval("#pinPunkte .voll", (x) => x.length)) !== 0) fehler("PIN: Person ohne Freigabe kann PIN festlegen");
   await page.keyboard.press("Escape"); await page.click("#werZu");
-  // PIN von Kristina zurücksetzen
+  // PIN von Paula Muster zurücksetzen
   await page.click(`[data-preset="bp-3"]`); await page.click("dialog[open] button[value=ok]"); await page.waitForTimeout(300);
   if (await page.evaluate(() => window.__FAKE.tabellen.buero_personen.find((p) => p.id === "bp-3").hat_pin)) fehler("PIN: Zurücksetzen wirkt nicht");
   // Sperren: Sitzung endet, Namen erscheinen ohne Abbrechen
   await page.click("#werSperren"); await page.waitForTimeout(150);
   if (!(await page.isVisible("#werNamen")) || (await page.isVisible("#werZu")) || (await page.evaluate(() => !!S.sitzung))) fehler("PIN: Sperren geht nicht");
-  // Isra: erste PIN festlegen (zu einfach → abgelehnt, verschieden → von vorn, dann gespeichert)
-  await page.click('#werListe button:has-text("Isra")');
+  // Tom Muster: erste PIN festlegen (zu einfach → abgelehnt, verschieden → von vorn, dann gespeichert)
+  await page.click('#werListe button:has-text("Tom Muster")');
   await page.keyboard.type("1234"); await page.waitForTimeout(100);
   if (!/zu leicht/.test(await page.textContent("#pinFehler"))) fehler("PIN: 1234 wird als erste PIN angenommen");
   await page.keyboard.type("3817"); await page.waitForTimeout(100);
@@ -1037,8 +1037,8 @@ for (const breite of [1301, 1366, 1420]) {
   await page.keyboard.type("3818"); await page.waitForTimeout(150);
   if (!/verschieden/.test(await page.textContent("#pinFehler"))) fehler("PIN: verschiedene Eingaben nicht erkannt");
   await page.keyboard.type("3817"); await page.keyboard.type("3817"); await page.waitForTimeout(200);
-  const isra = await page.evaluate(() => ({ s: S.sitzung && S.sitzung.name, pin: window.__FAKE.tabellen.buero_personen.find((p) => p.id === "bp-4")._pin }));
-  if (isra.s !== "Isra" || isra.pin !== "3817") fehler("PIN: erste PIN nicht gespeichert " + JSON.stringify(isra));
+  const erstePin = await page.evaluate(() => ({ s: S.sitzung && S.sitzung.name, pin: window.__FAKE.tabellen.buero_personen.find((p) => p.id === "bp-4")._pin }));
+  if (erstePin.s !== "Tom Muster" || erstePin.pin !== "3817") fehler("PIN: erste PIN nicht gespeichert " + JSON.stringify(erstePin));
   // Eigene PIN ändern, mit Abbrechen
   await page.click("#werPinAendern");
   if (!(await page.isVisible("#werPin"))) fehler("PIN ändern: Feld fehlt");
@@ -1049,20 +1049,20 @@ for (const breite of [1301, 1366, 1420]) {
   if (await page.evaluate(() => window.__FAKE.tabellen.buero_personen.find((p) => p.id === "bp-4")._pin) !== "5096") fehler("PIN ändern: nicht gespeichert");
   // 5 falsche Versuche → gesperrt, auch die richtige PIN geht dann nicht
   await page.click("#werSperren"); await page.waitForTimeout(100);
-  await page.click('#werListe button:has-text("Murat")');
+  await page.click('#werListe button:has-text("Noah Muster")');
   for (let i = 0; i < 5; i++) { await page.keyboard.type("0" + (i + 1) + "00"); await page.waitForTimeout(80); }
   t = await page.textContent("#pinFehler");
-  if (!/gesperrt bis/.test(t) || !/Jelena/.test(t) || /Murat/.test(t) || !(await page.evaluate(() => document.getElementById("werPin").classList.contains("pin-gesperrt")))) fehler("PIN: Sperre nach 5 Versuchen fehlt: " + t);
-  await page.keyboard.type(TEST_PIN.Murat); await page.waitForTimeout(150);
+  if (!/gesperrt bis/.test(t) || !/Mia Muster/.test(t) || /Noah Muster/.test(t) || !(await page.evaluate(() => document.getElementById("werPin").classList.contains("pin-gesperrt")))) fehler("PIN: Sperre nach 5 Versuchen fehlt: " + t);
+  await page.keyboard.type(TEST_PIN["Noah Muster"]); await page.waitForTimeout(150);
   if (await page.evaluate(() => !!S.sitzung)) fehler("PIN: gesperrte Person kommt trotzdem rein");
   // Leerlauf: nach 20 Minuten endet die Sitzung von selbst
   await page.keyboard.press("Escape");
-  await meldePinAn(page, "Jelena");
+  await meldePinAn(page, "Mia Muster");
   await page.evaluate(() => { letzteAktion = Date.now() - 21 * 60 * 1000; });
   await page.waitForTimeout(31000);
   if (!(await page.isVisible("#werNamen")) || (await page.evaluate(() => !!S.sitzung))) fehler("PIN: Leerlauf beendet die Sitzung nicht");
   // Leerlauf auch bei offen gelassenem „Wechseln“ (Fund Richter 14.10.2026)
-  await meldePinAn(page, "Jelena");
+  await meldePinAn(page, "Mia Muster");
   await page.click("#werWechseln");
   await page.evaluate(() => { letzteAktion = Date.now() - 21 * 60 * 1000; });
   await page.waitForTimeout(31000);
@@ -1073,15 +1073,15 @@ for (const breite of [1301, 1366, 1420]) {
 // 4l) Aufgaben der Büroleute untereinander (13.10.2026): an eine Person, Fälligkeit, dringend, Hinweis nach der PIN
 {
   const gestern = (() => { const d = new Date(); d.setDate(d.getDate() - 1); return d.toISOString().slice(0, 10); })();
-  const { page, ctx, konsole } = await oeffne({ nutzer: "bu-1", hash: "#heute", breite: 1366, hoehe: 900, wer: "Jelena", vorbereiten: function () {
+  const { page, ctx, konsole } = await oeffne({ nutzer: "bu-1", hash: "#heute", breite: 1366, hoehe: 900, wer: "Mia Muster", vorbereiten: function () {
     const g = new Date(); g.setDate(g.getDate() - 1);
     F.tabellen.schueler_aufgaben = [
       { id: "ag-1", fahrschule_id: "fs-test-1", schueler_id: null, text: "Rechnung Werkstatt anrufen", heute: false, faellig_am: g.toISOString().slice(0, 10), fuer_person_id: "bp-3", von_person_id: "bp-1", dringend: false, erstellt_am: new Date().toISOString() },
       { id: "ag-2", fahrschule_id: "fs-test-1", schueler_id: null, text: "Ordner sortieren", heute: false, faellig_am: null, fuer_person_id: null, von_person_id: "bp-2", dringend: false, erstellt_am: new Date().toISOString() },
-      { id: "ag-3", fahrschule_id: "fs-test-1", schueler_id: null, text: "Nur für Murat", heute: false, faellig_am: null, fuer_person_id: "bp-2", von_person_id: "bp-1", dringend: false, erstellt_am: new Date().toISOString() },
+      { id: "ag-3", fahrschule_id: "fs-test-1", schueler_id: null, text: "Nur für Noah", heute: false, faellig_am: null, fuer_person_id: "bp-2", von_person_id: "bp-1", dringend: false, erstellt_am: new Date().toISOString() },
     ];
   } });
-  // Jelena schickt Kristina eine dringende Aufgabe für heute
+  // Mia Muster schickt Paula Muster eine dringende Aufgabe für heute
   await page.click("#agNeu");
   await page.fill("dialog textarea[name=text]", "Mutter von Lena zurückrufen");
   await page.selectOption("dialog select[name=fuer]", "bp-3");
@@ -1091,12 +1091,12 @@ for (const breite of [1301, 1366, 1420]) {
   await page.click("dialog button[value=ok]"); await page.waitForTimeout(300);
   const neu = await page.evaluate(() => window.__FAKE.tabellen.schueler_aufgaben.find((a) => a.text === "Mutter von Lena zurückrufen"));
   if (!neu || neu.fuer_person_id !== "bp-3" || !neu.dringend || neu.von_person_id !== "bp-1" || neu.schueler_id !== null) fehler("Aufgabe an Kollegin falsch gespeichert: " + JSON.stringify(neu));
-  // Jelena sieht sie unter „Von dir vergeben“ als „noch nicht gelesen“, nicht in ihrer eigenen Liste
+  // Mia Muster sieht sie unter „Von dir vergeben“ als „noch nicht gelesen“, nicht in ihrer eigenen Liste
   let t = await page.textContent(".fuer-dich");
   if (!/noch nicht gelesen/.test(t)) fehler("Aufgaben: „noch nicht gelesen“ fehlt bei der Absenderin");
-  if (/Nur für Murat/.test((await page.$$eval(".fuer-dich > .notizliste li", (l) => l.map((x) => x.textContent))).join("|"))) fehler("Aufgaben: fremde Aufgabe in „Für mich“");
-  // Kristina meldet sich an: Hinweis-Fenster mit beiden Aufgaben, dringend/überfällig rot
-  await page.click("#werWechseln"); await meldePinAn(page, "Kristina"); await page.waitForTimeout(250);
+  if (/Nur für Noah/.test((await page.$$eval(".fuer-dich > .notizliste li", (l) => l.map((x) => x.textContent))).join("|"))) fehler("Aufgaben: fremde Aufgabe in „Für mich“");
+  // Paula Muster meldet sich an: Hinweis-Fenster mit beiden Aufgaben, dringend/überfällig rot
+  await page.click("#werWechseln"); await meldePinAn(page, "Paula Muster"); await page.waitForTimeout(250);
   if (!(await page.isVisible("dialog[open]")) || !/2 neue Aufgaben/.test(await page.textContent("dialog[open]"))) fehler("Aufgaben: kein Hinweis-Fenster nach der PIN");
   await pruefeLayout(page, "Hinweis neue Aufgaben");
   if (await page.$("dialog[open] [data-hagschueler]")) fehler("Aufgaben: Hinweis-Fenster hat einen Knopf ohne Wirkung");
@@ -1120,7 +1120,7 @@ for (const breite of [1301, 1366, 1420]) {
   await page.click(".fuer-dich [data-hagerledigt] >> nth=0"); await page.waitForTimeout(300);
   // Alle offenen
   await page.click('.fuer-dich a.tab[href="#heute?alle=1"]'); await page.waitForTimeout(250);
-  if (!/Nur für Murat/.test(await page.textContent(".fuer-dich"))) fehler("Aufgaben: „Alle offenen“ zeigt nicht alle");
+  if (!/Nur für Noah/.test(await page.textContent(".fuer-dich"))) fehler("Aufgaben: „Alle offenen“ zeigt nicht alle");
   if (konsole.length) fehler("Aufgaben: Konsole: " + konsole.join(" | "));
   await ctx.close();
 }
@@ -1321,7 +1321,7 @@ for (const breite of [1301, 1366, 1420]) {
 
 // Endprüfung 14.10.: Korrektur einer bestandenen Praxisprüfung über „Bearbeiten“ räumt die Akte auf (auch Status + Datum zugleich)
 {
-  const { page, ctx, konsole } = await oeffne({ nutzer: "bu-1", hash: "#pruefungen?ansicht=alle", wer: "Jelena", vorbereiten: function () {
+  const { page, ctx, konsole } = await oeffne({ nutzer: "bu-1", hash: "#pruefungen?ansicht=alle", wer: "Mia Muster", vorbereiten: function () {
     const pt = F.tabellen.pruefungstermine.find((x) => x.id === "pt-5"); const s = F.tabellen.schueler.find((x) => x.id === "s9");
     const [j, m, t] = pt.datum.split("-"); s.praxis_bestanden_am = pt.datum; s.reakt_status = "befreit"; s.reakt_notiz = `Praxisprüfung bestanden am ${t}.${m}.${j}`;
   } });
@@ -1352,7 +1352,7 @@ for (const breite of [1301, 1366, 1420]) {
 
 // 4o) Gabriel und Lkw-Klassen (13.10.2026): Fahrlehrer ohne App, Klassen je Fahrlehrer, Lkw-Fahrzeuge
 {
-  const { page, ctx, konsole } = await oeffne({ nutzer: "bu-1", hash: "#team", breite: 1366, hoehe: 900, wer: "Jelena", vorbereiten: function () {
+  const { page, ctx, konsole } = await oeffne({ nutzer: "bu-1", hash: "#team", breite: 1366, hoehe: 900, wer: "Mia Muster", vorbereiten: function () {
     F.functions = F.functions || {};
     F.functions["admin-create-account"] = (b) => {
       F.letzteAnlage = b;
@@ -1360,7 +1360,7 @@ for (const breite of [1301, 1366, 1420]) {
       return { email: b.email, passwort: "Test-1234" };
     };
   } });
-  if (!(await page.isVisible("#tNeuFl"))) fehler("Gabriel: Jelena (Verwalten-Recht) kann keinen Fahrlehrer anlegen");
+  if (!(await page.isVisible("#tNeuFl"))) fehler("Gabriel: Mia Muster (Verwalten-Recht) kann keinen Fahrlehrer anlegen");
   await page.click("#tNeuFl");
   await page.fill("dialog input[name=name]", "Gabriel");
   await page.check("dialog input[name=ohneapp]");
@@ -1403,15 +1403,15 @@ for (const breite of [1301, 1366, 1420]) {
 }
 // Endprüfung 14.10.: ohne Verwalten-Recht kein Knopf „Klassen“ (die Datenbank lehnt es ohnehin ab)
 {
-  const { page, ctx } = await oeffne({ nutzer: "bu-1", hash: "#team", wer: "Kristina" });
+  const { page, ctx } = await oeffne({ nutzer: "bu-1", hash: "#team", wer: "Paula Muster" });
   await page.click('button.knopf[data-flakte] >> nth=0'); await page.waitForTimeout(200);
-  if (!(await page.isDisabled("dialog[open] input[name=fl] >> nth=0"))) fehler("Klassen: Kristina (ohne Verwalten-Recht) kann die Fahrlehrerlaubnis ändern");
+  if (!(await page.isDisabled("dialog[open] input[name=fl] >> nth=0"))) fehler("Klassen: Paula Muster (ohne Verwalten-Recht) kann die Fahrlehrerlaubnis ändern");
   await ctx.close();
 }
 
 // Schritt 4 (14.10.2026): Fahrlehrer-Akte – Kennzahlen, Fahrlehrerlaubnis → Ausbildungsklassen, Fristen-Warnung, Protokoll
 {
-  const { page, ctx, konsole } = await oeffne({ nutzer: "bu-1", hash: "#team", breite: 1366, hoehe: 900, wer: "Jelena", vorbereiten: function () {
+  const { page, ctx, konsole } = await oeffne({ nutzer: "bu-1", hash: "#team", breite: 1366, hoehe: 900, wer: "Mia Muster", vorbereiten: function () {
     const p = F.tabellen.profiles.find((x) => x.id === "fl-4"); const d = new Date(); d.setDate(d.getDate() + 30); p.fuehrerschein_c_bis = d.toISOString().slice(0, 10);
     // Daten-Prüfer: B197-Schaltkompetenz zählt nicht in der Praxis-Quote, Theorieprüfungen nicht bei „Praxisprüfungen geplant“
     const tag = (n) => { const x = new Date(); x.setDate(x.getDate() + n); return x.toISOString().slice(0, 10); };
@@ -1585,7 +1585,7 @@ for (const nutzer of ["ad-1", "sa-1"]) {
   if (await anzahl() !== 0 || !(await page.isVisible("#wer:not([hidden])"))) fehler("P2 B2: Leerlauf zeigt die PIN-Abfrage nicht (Fenster " + await anzahl() + ")");
   if (await page.evaluate(() => GEPARKT.length) !== 1) fehler("P2 B2: Leerlauf merkt sich das Fenster mit Eingaben nicht");
   if (await page.evaluate(() => document.getElementById("app").inert !== true)) fehler("P2 B2: Seite hinter der PIN ist nicht gesperrt");
-  await meldePinAn(page, "Kristina"); await page.waitForTimeout(500);
+  await meldePinAn(page, "Paula Muster"); await page.waitForTimeout(500);
   if (await anzahl() !== 1) fehler("P2 B2: Fenster nach der PIN nicht wieder da (" + await anzahl() + ")");
   else if (await page.inputValue("dialog input[name=email]") !== "leerlauf@example.org") fehler("P2 B2: Eingabe nach der PIN weg");
   // Es läuft danach ganz normal weiter: ✕ fragt wieder
@@ -1596,12 +1596,12 @@ for (const nutzer of ["ad-1", "sa-1"]) {
   await page.click("[data-sbearb] >> nth=0"); await page.waitForTimeout(150);
   await page.fill("dialog input[name=email]", "fremd@example.org");
   await page.evaluate(() => { beendeSitzung(); zeigeWer(); }); await page.waitForTimeout(300);
-  await meldePinAn(page, "Jelena"); await page.waitForTimeout(500);
-  if (await anzahl() !== 0 || await page.evaluate(() => GEPARKT.length) !== 0) fehler("P2 B2: Eingaben von Kristina tauchen bei Jelena auf");
+  await meldePinAn(page, "Mia Muster"); await page.waitForTimeout(500);
+  if (await anzahl() !== 0 || await page.evaluate(() => GEPARKT.length) !== 0) fehler("P2 B2: Eingaben von Paula Muster tauchen bei Mia Muster auf");
   // Ohne Eingabe: wie bisher, Fenster ist nach der PIN weg
   await page.click("[data-sbearb] >> nth=0"); await page.waitForTimeout(150);
   await page.evaluate(() => { beendeSitzung(); zeigeWer(); }); await page.waitForTimeout(300);
-  await meldePinAn(page, "Jelena"); await page.waitForTimeout(500);
+  await meldePinAn(page, "Mia Muster"); await page.waitForTimeout(500);
   if (await anzahl() !== 0) fehler("P2 B2: Fenster ohne Eingabe taucht nach der PIN wieder auf");
   if (konsole.length) fehler("P2 B2 Leerlauf: Konsole: " + konsole.join(" | "));
   await ctx.close();
@@ -2062,6 +2062,230 @@ for (const breite of [1280, 1366, 1920]) {
   const { page, ctx } = await oeffne({ nutzer: "bu-1" });
   if (await page.isVisible("#schulWahlWrap")) fehler("Büro: Fahrschul-Auswahl sichtbar");
   await ctx.close();
+}
+
+// ===== K2 Handy: Büro-Seite bis 900 px (Menü zum Aufklappen, Inhalt oben, nichts breiter als der Bildschirm) =====
+async function oeffneVorfuehrung({ breite, hoehe, dunkel = false, hash = "#heute" }) {
+  const ctx = await browser.newContext({ viewport: { width: breite, height: hoehe }, colorScheme: dunkel ? "dark" : "light" });
+  const page = await ctx.newPage();
+  const konsole = [];
+  page.on("console", (m) => { if (m.type() === "error") konsole.push(m.text()); });
+  page.on("pageerror", (e) => konsole.push(String(e)));
+  await page.route(/fonts\.(googleapis|gstatic)\.com/, (r) => r.fulfill({ status: 200, body: "" }));
+  await page.goto(basis + "buero.html?vorfuehrung" + hash);
+  await page.waitForTimeout(500);
+  return { page, ctx, konsole };
+}
+async function k2Breite(page, name) {
+  const r = await page.evaluate(() => {
+    const w = window.innerWidth, v = document.getElementById("vorfuehrung");
+    const vb = v && !v.hidden ? v.getBoundingClientRect() : null;
+    return { sw: document.documentElement.scrollWidth, w, vorf: vb && vb.width > 0 ? Math.round(vb.right) : 0 };
+  });
+  if (r.sw > r.w) fehler(`K2 ${name}: Seite ${r.sw} px breit bei ${r.w} px Bildschirm`);
+  if (r.vorf > r.w) fehler(`K2 ${name}: Vorführ-Hinweis steht über (${r.vorf} px)`);
+}
+async function k2TitelImBild(page, name, erwartet) {
+  const r = await page.evaluate(() => {
+    const t = document.getElementById("titel").getBoundingClientRect(), st = document.getElementById("rollenStreifen");
+    const oben = st && !st.hidden ? st.getBoundingClientRect().bottom : 0;
+    return { top: t.top, bottom: t.bottom, oben, h: window.innerHeight, text: document.getElementById("titel").textContent };
+  });
+  if (r.top < r.oben - 1 || r.bottom > r.h) fehler(`K2 ${name}: Seitentitel nach Tipp nicht im Bild (oben ${Math.round(r.top)} px, Kopfleiste bis ${Math.round(r.oben)} px, Höhe ${r.h})`);
+  if (erwartet && r.text !== erwartet) fehler(`K2 ${name}: falscher Titel „${r.text}“ statt „${erwartet}“`);
+}
+// Wichtige Fenster: Schüler-Fenster, Rückfrage „Eingaben verwerfen?“, Termin-Fenster
+async function k2Fenster(page, name) {
+  const zu = async () => { for (let i = 0; i < 3 && await page.locator("dialog[open]").count(); i++) { await page.keyboard.press("Escape"); await page.waitForTimeout(150); if (await page.locator("dialog[open] button[value=ok]").count() && /verwerfen/i.test(await page.locator("dialog[open]").last().textContent())) await verwerfenJa(page); } };
+  await page.evaluate(() => { location.hash = "#schueler"; }); await page.waitForTimeout(300);
+  await page.locator("[data-sbearb]").first().click(); await page.waitForTimeout(250);
+  if (!(await page.locator("dialog[open]").count())) fehler(`K2 ${name}: Schüler-Fenster geht nicht auf`);
+  await k2Breite(page, name + " Schüler-Fenster");
+  await page.locator("dialog[open] input[name=name]").first().fill("Geänderter Name Muster");
+  await page.keyboard.press("Escape"); await page.waitForTimeout(250);
+  if (await page.locator("dialog[open]").count() < 2) fehler(`K2 ${name}: Rückfrage beim Schließen fehlt`);
+  await k2Breite(page, name + " Rückfrage");
+  await verwerfenJa(page); await zu();
+  await page.evaluate(() => { location.hash = "#kalender"; }); await page.waitForTimeout(400);
+  const termin = page.locator(".k-termin:not(.block)").first();
+  if (await termin.count()) {
+    await termin.click(); await page.waitForTimeout(250);
+    if (!(await page.locator("dialog[open]").count())) fehler(`K2 ${name}: Termin-Fenster geht nicht auf`);
+    await k2Breite(page, name + " Termin-Fenster");
+    await zu();
+  } else fehler(`K2 ${name}: kein Termin im Kalender zum Antippen`);
+}
+// Knöpfe und Haken in Tabellenzellen: Höhe (und Breite der Haken) in px
+async function k2TabellenKnoepfe(page, grenze = 43.5) {
+  return page.evaluate((g) => {
+    const l = [...document.querySelectorAll(".tabelle td .knopf, .tabelle td .haken:not(.mini)")].filter((e) => e.offsetParent);
+    const klein = l.filter((e) => { const b = e.getBoundingClientRect(); return b.height < g || (e.classList.contains("haken") && b.width < g); }).map((e) => (e.textContent.trim() || e.className) + " " + Math.round(e.getBoundingClientRect().height));
+    return { anzahl: l.length, klein, hoehen: [...new Set(l.map((e) => (e.classList.contains("haken") ? "h" : "k") + Math.round(e.getBoundingClientRect().height)))] };
+  }, grenze);
+}
+// Kontrast Text zu Hintergrund (Hintergrund durch alle Ebenen zusammengesetzt)
+async function k2Kontrast(page, sel) {
+  return page.evaluate((sel) => {
+    const rgba = (c) => { const m = c.match(/[\d.]+/g).map(Number); return [m[0], m[1], m[2], m.length > 3 ? m[3] : 1]; };
+    const el = document.querySelector(sel); const ebenen = [];
+    for (let a = el; a; a = a.parentElement) ebenen.push(rgba(getComputedStyle(a).backgroundColor));
+    let bg = [255, 255, 255];
+    for (const e of ebenen.reverse()) bg = bg.map((x, i) => e[i] * e[3] + x * (1 - e[3]));
+    const fg = rgba(getComputedStyle(el).color);
+    const lum = (c) => { const v = c.slice(0, 3).map((x) => { x /= 255; return x <= 0.03928 ? x / 12.92 : ((x + 0.055) / 1.055) ** 2.4; }); return 0.2126 * v[0] + 0.7152 * v[1] + 0.0722 * v[2]; };
+    const a = lum(fg), b = lum(bg);
+    return (Math.max(a, b) + 0.05) / (Math.min(a, b) + 0.05);
+  }, sel);
+}
+{
+  const GROESSEN = [[360, 740], [412, 915], [740, 360], [768, 1024]];
+  const MODI = [["bu-1", "Büro"], ["ad-1", "Leitung"], ["vorf", "Vorführung"], ["vorf-dunkel", "Vorführung dunkel"]];
+  for (const [w, h] of GROESSEN) for (const [modus, mname] of MODI) {
+    if (modus === "vorf-dunkel" && w !== 412) continue; // dunkel einmal am Handy reicht
+    const name = `${mname} ${w}×${h}`;
+    const { page, ctx, konsole } = modus.startsWith("vorf") ? await oeffneVorfuehrung({ breite: w, hoehe: h, dunkel: modus === "vorf-dunkel" })
+      : await oeffne({ nutzer: modus, breite: w, hoehe: h, hash: "#heute", wer: modus === "bu-1" ? "Paula Muster" : null });
+    if (modus.startsWith("vorf")) { const k = await k2Kontrast(page, "#vorfuehrung"); if (k < 4.5) fehler(`K2 ${name}: Vorführ-Hinweis Kontrast nur ${k.toFixed(2)}:1`); }
+    // Start: Inhalt (Seitentitel) höchstens etwa 200 px unter dem oberen Rand (Hochformat), Menü zu, „Drucken“ weg
+    const start = await page.evaluate(() => ({ top: document.getElementById("titel").getBoundingClientRect().top, offen: document.body.classList.contains("menue-offen"), drucken: !!document.getElementById("drucken").offsetParent, menue: !!document.getElementById("menueKnopf").offsetParent }));
+    if (h > w && start.top > 200) fehler(`K2 ${name}: Inhalt beginnt erst bei ${Math.round(start.top)} px`);
+    if (start.offen) fehler(`K2 ${name}: Menü ist beim Start offen`);
+    if (!start.menue) fehler(`K2 ${name}: Knopf „Menü“ fehlt`);
+    if (start.drucken) fehler(`K2 ${name}: „Drucken“ ist sichtbar`);
+    if (!/Menü · Heute zu tun/.test(await page.textContent("#menueKnopf"))) fehler(`K2 ${name}: Menü-Knopf nennt den Bereich nicht`);
+    // Tippflächen mindestens 44 px (Menü offen: Menüpunkte und Gruppen; Kopf-Knöpfe)
+    await page.click("#menueKnopf"); await page.waitForTimeout(100);
+    const klein = await page.evaluate(() => [...document.querySelectorAll(".nav-punkt, .nav-gruppe, .kopf .knopf, #menueKnopf")].filter((e) => e.offsetParent && e.getBoundingClientRect().height < 43.5).map((e) => e.textContent.trim().slice(0, 20)));
+    if (klein.length) fehler(`K2 ${name}: Tippflächen unter 44 px: ${klein.join(", ")}`);
+    await k2Breite(page, name + " Menü offen");
+    const bereiche = await page.$$eval(".nav-punkt", (l) => l.map((a) => [a.getAttribute("href"), a.textContent.replace(/\d+$/, "").trim()]));
+    if (bereiche.length < 8) fehler(`K2 ${name}: nur ${bereiche.length} Menüpunkte`);
+    for (const [href, titel] of bereiche) {
+      if (!(await page.evaluate(() => document.body.classList.contains("menue-offen")))) await page.click("#menueKnopf");
+      await page.click(`.nav-punkt[href="${href}"]`); await page.waitForTimeout(300);
+      const zu = await page.evaluate(() => !document.body.classList.contains("menue-offen"));
+      if (!zu) fehler(`K2 ${name} ${href}: Menü bleibt nach dem Tipp offen`);
+      await k2TitelImBild(page, `${name} ${href}`, titel);
+      await k2Breite(page, `${name} ${href}`);
+      if (href === "#schueler") {
+        const z = await page.evaluate(() => [...document.querySelectorAll(".schuelertab tbody td.namenspalte")].map((td) => { const b = td.querySelector("b"); return { w: td.getBoundingClientRect().width, zeilen: b ? b.getClientRects().length : 0, hoch: b ? b.getBoundingClientRect().height : 0, n: b ? b.textContent : "" }; }));
+        if (!z.length) fehler(`K2 ${name}: keine Namenszellen in der Schüler-Tabelle`);
+        const schmal = z.filter((x) => x.w < 150), mehrzeilig = z.filter((x) => x.zeilen !== 1 || x.hoch > 32);
+        if (schmal.length) fehler(`K2 ${name}: Namensspalte schmaler als 150 px (${Math.round(schmal[0].w)} px)`);
+        if (mehrzeilig.length) fehler(`K2 ${name}: Name auf mehreren Zeilen: ${mehrzeilig[0].n}`);
+      }
+      if (href === "#heute" && modus.startsWith("vorf")) await page.evaluate(() => window.scrollTo(0, 0));
+      // Tippflächen in Tabellen: Knöpfe und Haken mindestens 44 px
+      if (["#schueler", "#pruefungen", "#fristen", "#fahrchecks"].includes(href)) {
+        const k = await k2TabellenKnoepfe(page);
+        if (!k.anzahl) fehler(`K2 ${name} ${href}: keine Knöpfe in Tabellen gefunden`);
+        if (k.klein.length) fehler(`K2 ${name} ${href}: Knöpfe/Haken in Tabellen unter 44 px: ${k.klein.slice(0, 3).join(", ")}`);
+      }
+      // Kalender am Handy: ganzer Vorname im Spaltenkopf, in den Termin-Kacheln mindestens der Vorname des Schülers
+      if (href === "#kalender" && (w === 360 || w === 412)) {
+        const kal = await page.evaluate(() => {
+          const koepfe = [...document.querySelectorAll(".k-spalte .k-kopf .k-lname")].filter((e) => e.offsetParent).map((e) => ({ t: e.textContent.trim(), ab: e.scrollWidth > e.clientWidth + 1 || /…$/.test(e.textContent.trim()) }));
+          const kacheln = [...document.querySelectorAll(".k-termin .k-name")].filter((e) => e.offsetParent && e.firstChild).map((e) => {
+            const txt = e.firstChild.textContent, r = document.createRange(); r.setStart(e.firstChild, 0); r.setEnd(e.firstChild, (txt.indexOf(" ") + 1 || txt.length + 1) - 1);
+            return { t: txt, passt: r.getBoundingClientRect().width <= e.clientWidth + 1 };
+          });
+          return { koepfe, kacheln, tag: !!document.querySelector(".k-flaeche[data-lehrer]") };
+        });
+        if (!kal.tag) fehler(`K2 ${name}: Kalender nicht in der Tagesansicht`);
+        const ab = kal.koepfe.filter((x) => x.ab || /^Fahrlehrer/.test(x.t));
+        if (!kal.koepfe.length || ab.length) fehler(`K2 ${name}: Kalender-Spaltenkopf abgeschnitten oder mit „Fahrlehrer“: ${JSON.stringify(ab.slice(0, 2))}`);
+        const zu = kal.kacheln.filter((x) => !x.passt);
+        if (!kal.kacheln.length || zu.length) fehler(`K2 ${name}: Vorname in Termin-Kachel abgeschnitten: ${zu.slice(0, 2).map((x) => x.t).join(", ")}`);
+      }
+    }
+    if (w !== 768 || modus === "bu-1") await k2Fenster(page, name);
+    if (FOTOS && (modus === "vorf" || modus === "vorf-dunkel")) { await page.evaluate(() => { location.hash = "#schueler"; }); await page.waitForTimeout(300); await page.screenshot({ path: join(FOTOS, `k2-${modus}-schueler-${w}x${h}.png`) }); }
+    if (konsole.length) fehler(`K2 ${name}: Konsole: ${konsole.join(" | ")}`);
+    await ctx.close();
+  }
+  // Escape klappt das offene Menü zu, der Bereich bleibt
+  {
+    const { page, ctx, konsole } = await oeffne({ nutzer: "bu-1", breite: 412, hoehe: 915, hash: "#heute" });
+    await page.click("#menueKnopf"); await page.waitForTimeout(100);
+    await page.keyboard.press("Escape"); await page.waitForTimeout(100);
+    const r = await page.evaluate(() => ({ offen: document.body.classList.contains("menue-offen"), aria: document.getElementById("menueKnopf").getAttribute("aria-expanded"), fokus: document.activeElement && document.activeElement.id, hash: location.hash }));
+    if (r.offen || r.aria !== "false") fehler("K2 Escape: Menü bleibt offen");
+    if (r.fokus !== "menueKnopf") fehler("K2 Escape: Fokus nicht auf dem Menü-Knopf (" + r.fokus + ")");
+    if (r.hash !== "#heute") fehler("K2 Escape: Bereich gewechselt (" + r.hash + ")");
+    if (konsole.length) fehler("K2 Escape: Konsole: " + konsole.join(" | "));
+    await ctx.close();
+  }
+  // Tablet: Menü offen, quer drehen (über 900 px), Bereich wechseln, zurückdrehen → Menü ist zu
+  {
+    const { page, ctx, konsole } = await oeffne({ nutzer: "bu-1", breite: 768, hoehe: 1024, hash: "#heute" });
+    await page.click("#menueKnopf"); await page.waitForTimeout(100);
+    await page.setViewportSize({ width: 1024, height: 768 }); await page.waitForTimeout(150);
+    await page.click('.nav-punkt[href="#schueler"]'); await page.waitForTimeout(300);
+    await page.setViewportSize({ width: 768, height: 1024 }); await page.waitForTimeout(150);
+    const r = await page.evaluate(() => ({ offen: document.body.classList.contains("menue-offen"), aria: document.getElementById("menueKnopf").getAttribute("aria-expanded"), titel: document.getElementById("titel").textContent }));
+    if (r.offen || r.aria !== "false") fehler("K2 Drehen: Menü bleibt nach Bereichswechsel offen");
+    if (r.titel !== "Schüler") fehler("K2 Drehen: Bereich nicht gewechselt (" + r.titel + ")");
+    if (konsole.length) fehler("K2 Drehen: Konsole: " + konsole.join(" | "));
+    await ctx.close();
+  }
+  // PC: Menü wie bisher sichtbar, kein Menü-Knopf, „Drucken“ da (ab 901 px)
+  for (const [w, h] of [[901, 800], [1366, 860]]) {
+    const { page, ctx } = await oeffne({ nutzer: "bu-1", breite: w, hoehe: h, hash: "#heute" });
+    const r = await page.evaluate(() => ({ nav: [...document.querySelectorAll(".nav-punkt")].filter((a) => a.offsetParent).length, menue: !!document.getElementById("menueKnopf").offsetParent, drucken: !!document.getElementById("drucken").offsetParent, wer: !!document.getElementById("werZeile").offsetParent, seite: Math.round(document.querySelector(".seite").getBoundingClientRect().width) }));
+    if (r.nav < 8) fehler(`K2 PC ${w}: Menü nicht sichtbar (${r.nav} Punkte)`);
+    if (r.menue) fehler(`K2 PC ${w}: Knopf „Menü“ sichtbar`);
+    if (!r.drucken) fehler(`K2 PC ${w}: „Drucken“ fehlt`);
+    if (!r.wer) fehler(`K2 PC ${w}: „Bedient gerade“ fehlt in der Seitenleiste`);
+    if (w === 1366 && r.seite !== 272) fehler(`K2 PC 1366: Seitenleiste ${r.seite} px statt 272 px`);
+    if (w === 1366) {
+      // Knöpfe und Haken in Tabellen am PC wie bisher (Knopf klein 36 px, Haken 34 px)
+      for (const h of ["#schueler", "#pruefungen"]) {
+        await page.evaluate((x) => { location.hash = x; }, h); await page.waitForTimeout(350);
+        const k = await k2TabellenKnoepfe(page, 0);
+        if (k.hoehen.some((x) => !["k36", "k44", "h34"].includes(x))) fehler(`K2 PC 1366 ${h}: Höhen in Tabellen geändert: ${k.hoehen.join(", ")}`);
+      }
+      await page.evaluate(() => { location.hash = "#kalender"; }); await page.waitForTimeout(350);
+      if (await page.evaluate(() => [...document.querySelectorAll(".k-lname .k-kurz")].some((e) => e.offsetParent))) fehler("K2 PC 1366: Kalender zeigt nur den Vornamen");
+    }
+    await ctx.close();
+  }
+  // Vorführung: nur erfundene Büro-Personen „… Muster“, keine Test-Konten, „Heute zu tun“ mit Aufgaben, Notizen und Quittungen
+  {
+    const { page, ctx, konsole } = await oeffneVorfuehrung({ breite: 1366, hoehe: 900 });
+    const aufgaben = await page.locator(".fuer-dich > .notizliste li").count();
+    if (aufgaben < 4) fehler(`K2 Vorführung: „Heute zu tun“ zeigt nur ${aufgaben} Aufgaben`);
+    const d = await page.evaluate(() => ({ personen: window.__FAKE.tabellen.buero_personen.map((p) => p.name), notizen: (window.__FAKE.tabellen.schueler_notizen || []).length, quitt: (window.__FAKE.tabellen.fc_abgaben || []).length }));
+    if (!d.personen.length || d.personen.some((n) => !/^\S+ Muster$/.test(n))) fehler("K2 Vorführung: Büro-Personen nicht alle „… Muster“: " + d.personen.length);
+    if (d.notizen < 3 || d.quitt < 1) fehler(`K2 Vorführung: zu wenig Notizen (${d.notizen}) oder Quittungen (${d.quitt})`);
+    if (!/noch nicht gelesen/.test(await page.textContent("#ansicht"))) fehler("K2 Vorführung: Hinweis auf ungelesene Notizen fehlt");
+    // Quittungen: im letzten abgeschlossenen Zeitraum, „Erwartet“ wie die Seite rechnet, eine vollständig, eine mit einem fehlenden Zettel
+    const q = await page.evaluate(() => { const [von] = KR.fcVorZeitraum(KR.fcZeitraum(KR.todayISO())[0]); return S.fcAbgaben.map((x) => ({ id: x.id, imZeitraum: x.zeitraum_von === von, soll: x.soll, ist: x.ist, rech: fcFuerLehrer(x.fahrlehrer_id, x.zeitraum_von, x.zeitraum_bis).soll, fehlend: (x.fehlend || []).length })); });
+    if (q.length !== 2) fehler("K2 Vorführung: erwartet 2 Quittungen, da sind " + q.length);
+    for (const x of q) {
+      if (!x.imZeitraum) fehler(`K2 Vorführung: Quittung ${x.id} nicht im letzten Zeitraum`);
+      if (x.soll !== x.rech || !x.soll) fehler(`K2 Vorführung: Quittung ${x.id} sagt ${x.soll} erwartet, die Seite rechnet ${x.rech}`);
+      if (x.ist !== x.soll && !x.fehlend) fehler(`K2 Vorführung: Quittung ${x.id} mit Fehlbetrag ohne fehlende Stunde`);
+    }
+    if (!q.some((x) => x.ist === x.soll) || !q.some((x) => x.ist < x.soll)) fehler("K2 Vorführung: Quittungen nicht einmal vollständig und einmal mit Fehlbetrag");
+    // Notizen passen zum Schüler: „Prüfungstermin bestätigt“ nur bei Schüler mit Praxisprüfung, „Reaktivierung“ nur bei fälliger Reaktivierung
+    const nz = await page.evaluate(() => S.notizen.map((n) => { const s = S.schueler.find((x) => x.id === n.schueler_id); return { t: n.text, reakt: KR.reaktInfo(s, KR.todayISO()).stufe, praxis: S.pruefungstermine.some((p) => p.schueler_id === s.id && p.art === "praxis" && p.datum >= KR.todayISO()) }; }));
+    for (const n of nz) {
+      if (/Prüfungstermin/.test(n.t) && !n.praxis) fehler("K2 Vorführung: Notiz zum Prüfungstermin bei Schüler ohne Praxisprüfung");
+      if (/Reaktivierung/.test(n.t) && !["gesperrt", "pruefen_faellig"].includes(n.reakt)) fehler("K2 Vorführung: Notiz zur Reaktivierung bei Schüler ohne fällige Reaktivierung (" + n.reakt + ")");
+    }
+    await page.evaluate(() => { location.hash = "#team"; }); await page.waitForTimeout(400);
+    const team = await page.textContent("#ansicht");
+    if (/Gesperrt Test|Ohne AGB|Super-Admin|Elif/.test(team)) fehler("K2 Vorführung: Test-Konten oder Super-Admin in „Fahrlehrer & Zugänge“ sichtbar");
+    await page.evaluate(() => { location.hash = "#kalender"; }); await page.waitForTimeout(400);
+    if (/Super-Admin|Elif/.test(await page.textContent("#ansicht"))) fehler("K2 Vorführung: Super-Admin oder Test-Fahrlehrerin im Kalender");
+    const zeilen = await page.$$eval("#ansicht table.tabelle tbody tr td:first-child", (l) => l.map((x) => x.textContent.trim()));
+    if (zeilen.some((t) => /Testperson|Gesperrt|Ohne AGB/.test(t))) fehler("K2 Vorführung: Test-Name in der Zugangsliste");
+    await page.evaluate(() => { location.hash = "#fahrchecks"; }); await page.waitForTimeout(400);
+    if (!/Letzte Quittungen/.test(await page.textContent("#ansicht"))) fehler("K2 Vorführung: keine Fahrcheck-Quittung zu sehen");
+    if (!(await page.isVisible("#vorfuehrung")) || !/erfundene Daten/.test(await page.textContent("#vorfuehrung"))) fehler("K2 Vorführung: Hinweis „erfundene Daten“ fehlt");
+    if (konsole.length) fehler("K2 Vorführung: Konsole: " + konsole.join(" | "));
+    await ctx.close();
+  }
 }
 
 await browser.close();

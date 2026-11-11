@@ -104,7 +104,9 @@ nav{display:grid;gap:2px;}
 .kopf{display:flex;align-items:center;justify-content:space-between;gap:20px;margin-bottom:24px;}
 .kopf h1{font-size:34px;}
 .kopf-rechts{display:flex;align-items:center;gap:14px;}
-.vorfuehrung{background:var(--gold-soft);color:var(--gold);border:1px solid var(--gold);padding:6px 12px;border-radius:999px;font-weight:700;font-size:14px;}
+.vorfuehrung{background:var(--gold-soft);color:#7a5410;border:1px solid var(--gold);padding:6px 12px;border-radius:999px;font-weight:700;font-size:14px;}
+/* hell: dunklere Schrift (Kontrast über 4,5:1), dunkel wie bisher */
+@media (prefers-color-scheme:dark){ .vorfuehrung{color:var(--gold);} }
 .status{display:inline-flex;align-items:center;gap:8px;color:var(--muted);font-size:15px;}
 .status .punkt{width:10px;height:10px;border-radius:50%;background:var(--faint);}
 .status.ok .punkt{background:var(--gruen);}
@@ -590,3 +592,47 @@ body.kiosk .rollen-streifen{display:none;}
 /* Hinweis: der Fahrlehrer hat den Schüler bei sich ausgeblendet (im Büro unverändert) */
 .hinweis-ausgeblendet{margin:0 0 14px;padding:10px 14px;border-radius:10px;background:var(--surface-2,rgba(0,0,0,.05));border:1px solid var(--line-soft);font-size:15px;color:var(--txt);}
 .hinweis-ausgeblendet-klein{font-style:italic;}
+
+/* K2 Handy (bis 900 px), erster Schritt: Menü als Block zum Aufklappen, Inhalt oben, nichts breiter als der Bildschirm.
+   Ab 901 px gilt nichts davon, der PC sieht aus wie vorher. */
+.menue-knopf{display:none;}
+@media screen and (max-width:900px){
+  .seite{flex-direction:row;flex-wrap:wrap;align-items:center;gap:10px 12px;padding:10px 16px;border-right:none;border-bottom:1px solid var(--line-soft);}
+  .seite>*{flex:1 1 100%;min-width:0;}
+  .seite>.marke{flex:0 1 auto;padding:0;}
+  .menue-knopf{display:inline-flex;flex:1 1 0;justify-content:space-between;text-align:left;white-space:normal;line-height:1.2;padding:6px 14px;}
+  .menue-knopf .pfeil{width:9px;height:9px;border-right:2px solid currentColor;border-bottom:2px solid currentColor;transform:rotate(45deg) translate(-2px,-2px);transition:transform .15s;flex:0 0 auto;margin-left:10px;}
+  .menue-offen .menue-knopf .pfeil{transform:rotate(-135deg) translate(-2px,-2px);}
+  .menue-offen .menue-knopf{border-color:var(--akzent-line);background:var(--akzent-soft);}
+  body:not(.menue-offen) .seite>:not(.marke):not(.menue-knopf){display:none !important;}
+  .seite-fuss{margin-top:0;}
+  .nav-punkt,.nav-gruppe,.seite .knopf,.kopf .knopf,.wer-knoepfe .knopf{min-height:44px;}
+  .kopf{gap:10px 14px;margin-bottom:18px;}
+  .kopf-rechts{flex-wrap:wrap;gap:8px 10px;max-width:100%;}
+  #drucken{display:none !important;}
+  .vorfuehrung{border-radius:12px;max-width:100%;}
+  .raster.zwei{grid-template-columns:minmax(0,1fr);}
+  /* Tabellen: in ihrem Kasten seitlich wischbar, die Namensspalte bleibt lesbar und beim Wischen stehen */
+  .tabelle .namenspalte{min-width:150px;white-space:nowrap;}
+  .tabelle .namenspalte .unter{white-space:normal;}
+  .tabelle .namenspalte b,.name-zeile b{overflow-wrap:normal;}
+  .tabelle[data-namen="1"] .namenspalte{position:sticky;left:0;z-index:1;background:var(--surface);}
+  .tabelle[data-namen="1"] .warnzeile .namenspalte{background:linear-gradient(var(--rot-soft),var(--rot-soft)),var(--surface);}
+  /* Tippflächen in Tabellen: Knöpfe und Haken mindestens 44 px */
+  .tabelle td .knopf{min-height:44px;}
+  .tabelle td .haken:not(.mini){width:44px;height:44px;}
+  /* Kalender: Spalten mindestens 120 px, der Kalender ist in seinem Kasten seitlich wischbar, die Uhrzeiten bleiben links stehen.
+     Im Spaltenkopf steht nur der Vorname. */
+  .kalender{overflow-x:auto;}
+  .k-spalten{grid-template-columns:repeat(var(--spalten),minmax(120px,1fr));}
+  .k-achse{position:sticky;left:0;z-index:2;background:var(--surface);box-shadow:0 -44px 0 var(--surface);}
+  .k-lname .k-voll{display:none;}
+}
+.k-lname .k-kurz{display:none;}
+@media screen and (max-width:900px){ .k-lname .k-kurz{display:inline;} }
+@media (max-width:600px){
+  .seite>.marke>div{display:none;}
+  /* Formulare am Handy einspaltig, sonst ragen Eingabefelder mit langer Beschriftung über den Rand */
+  .formular,.formular .raster-zwei,.formular fieldset.raster-feld{grid-template-columns:minmax(0,1fr);}
+  .formular label{min-width:0;}
+}

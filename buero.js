@@ -190,6 +190,7 @@ function zeichne() {
   wartIndex = null; // Warteliste neu rechnen (Termine können sich geändert haben)
   const b = aktuellerBereich();
   $("titel").textContent = b.titel;
+  if ($("menueKnopf")) $("menueKnopf").innerHTML = `<span>Menü · ${esc(b.titel)}</span><span class="pfeil" aria-hidden="true"></span>`;
   document.body.dataset.bereich = b.id;
   $("drucken").hidden = b.id === "team"; // Zugangsliste wird nicht gedruckt
   document.title = b.titel + " · Kompass Büro";
@@ -204,8 +205,57 @@ window.addEventListener("hashchange", () => {
   document.querySelectorAll("dialog[open]").forEach((d) => { if (!d.dataset.festhalten && !hatEingabe(d)) { d._verlauf = false; d.close(); } });
   const g = aktuellerBereich().gruppe;
   if (navZu().includes(g)) setzeNavZu(navZu().filter((x) => x !== g));
-  zeichne(); $("ansicht").focus({ preventScroll: true }); window.scrollTo(0, 0);
+  zeichne(); $("ansicht").focus({ preventScroll: true });
+  menueOffen(false); // immer zu, auch wenn das Gerät inzwischen gedreht wurde (am PC ohne sichtbare Wirkung)
+  if (istSchmal()) springeZumTitel(); else window.scrollTo(0, 0);
 });
+
+/* Handy und kleines Tablet (bis 900 px): Das Menü ist ein Block zum Aufklappen, beim Start zu.
+   Nach dem Tipp auf einen Bereich klappt es zu und die Seite springt zum Titel des Bereichs. */
+function istSchmal() { return window.matchMedia("(max-width:900px)").matches; }
+function menueOffen(an) {
+  document.body.classList.toggle("menue-offen", !!an);
+  if ($("menueKnopf")) $("menueKnopf").setAttribute("aria-expanded", an ? "true" : "false");
+}
+function springeZumTitel() {
+  const st = $("rollenStreifen");
+  const oben = st && !st.hidden && getComputedStyle(st).position === "sticky" ? st.getBoundingClientRect().height : 0;
+  window.scrollTo(0, Math.max(0, $("titel").getBoundingClientRect().top + window.scrollY - oben - 8));
+}
+// Schutz: Kommt buero.html noch alt aus dem Zwischenspeicher (ohne den Knopf), darf die Seite nicht stehen bleiben
+if ($("menueKnopf")) $("menueKnopf").addEventListener("click", () => menueOffen(!document.body.classList.contains("menue-offen")));
+// Escape klappt das offene Menü zu (nur wenn kein Fenster offen ist, das Escape selbst braucht)
+document.addEventListener("keydown", (e) => {
+  if (e.key !== "Escape" || !document.body.classList.contains("menue-offen") || document.querySelector("dialog[open]")) return;
+  menueOffen(false); if ($("menueKnopf")) $("menueKnopf").focus();
+});
+document.addEventListener("click", (e) => {
+  const a = e.target.closest(".nav-punkt");
+  if (!a || !istSchmal()) return;
+  // gleicher Bereich: es gibt kein hashchange, also hier zuklappen und zum Titel springen
+  if (a.getAttribute("href") === location.hash) { menueOffen(false); springeZumTitel(); }
+});
+/* Tabellen bis 900 px: die Namensspalte (Schüler, sonst Name, sonst Fahrlehrer) bekommt eine Mindestbreite und bricht nicht mitten im Wort.
+   Die Spalte wird hier einmal je Tabelle markiert; die Regeln dazu stehen in buero.css (nur bis 900 px wirksam). */
+function markiereNamensspalten() {
+  document.querySelectorAll("table.tabelle").forEach((t) => {
+    if (t.dataset.namen == null) {
+      const koepfe = [...t.querySelectorAll(":scope > thead > tr > th")].map((th) => (th.firstChild ? th.firstChild.textContent : "").trim());
+      let i = -1;
+      for (const k of ["Schüler", "Name", "Fahrlehrer"]) { i = koepfe.indexOf(k); if (i >= 0) break; }
+      t.dataset.namen = i < 0 ? "" : String(i + 1);
+    }
+    const n = t.dataset.namen;
+    if (!n) return;
+    t.querySelectorAll(`:scope > thead > tr > th:nth-child(${n}):not(.namenspalte), :scope > tbody > tr > td:nth-child(${n}):not(.namenspalte):not([colspan])`).forEach((z) => z.classList.add("namenspalte"));
+  });
+}
+let namenGeplant = false;
+new MutationObserver(() => {
+  if (namenGeplant) return;
+  namenGeplant = true;
+  requestAnimationFrame(() => { namenGeplant = false; markiereNamensspalten(); });
+}).observe(document.body, { childList: true, subtree: true });
 
 function renderBald(b) {
   return `<div class="karte"><h2>${esc(b.titel)}</h2>
@@ -306,14 +356,14 @@ function klassenOptionen(gewaehlt) {
   if (gewaehlt && !liste.some(([k]) => k === gewaehlt)) liste.push([gewaehlt, gewaehlt]);
   return `<option value="">–</option>` + liste.map(([k, n]) => `<option value="${esc(k)}"${gewaehlt === k ? " selected" : ""}>${esc(n)}</option>`).join("");
 }
-// Standardbetrag der Reaktivierung: 240 € (Kristina, 09.10.2026); einstellbar durch den Super-Admin, im Einzelfall je Zahlung änderbar
+// Standardbetrag der Reaktivierung: 240 € (Vorgabe des Büros, 09.10.2026); einstellbar durch den Super-Admin, im Einzelfall je Zahlung änderbar
 const REAKT_STANDARD = 240;
 function reaktBetrag() {
   const k = (S.fs && S.fs.konfiguration) || {};
   return Number(k.reaktivierungBetrag) > 0 ? Number(k.reaktivierungBetrag) : REAKT_STANDARD;
 }
 // Wer im Büro bedient: Namen für „Wer bist du?“ (einstellbar durch den Super-Admin)
-const PERSONEN_STANDARD = ["Jelena", "Murat", "Kristina", "Isra"];
+const PERSONEN_STANDARD = []; // keine festen Namen im Code: Büro-Personen kommen aus der Datenbank oder aus konfiguration.bueroPersonen
 function bueroPersonen() {
   const akt = aktivePersonen().map((p) => p.name);
   if (akt.length) return akt;
@@ -1077,7 +1127,7 @@ function ergebnisDialog(id) {
 }
 
 /* ---------- Auslastung je Fahrlehrer ---------- */
-// Regel (Serband/Kristina, 09.10.2026): 12 UE am Tag, 5 Tage = 60 UE pro Woche. „Voll“ ist ein Fahrlehrer erst, wenn er
+// Regel (Serband und Büro, 09.10.2026): 12 UE am Tag, 5 Tage = 60 UE pro Woche. „Voll“ ist ein Fahrlehrer erst, wenn er
 // demselben Schüler in der Woche nicht mehr zwei Termine (je 90 Minuten) geben kann.
 const UE_PRO_WOCHE_STANDARD = 60, UE_PRO_TAG = 12;
 function ueProWoche() {
@@ -1991,6 +2041,11 @@ function kopfKalender(ansicht, tag, titel, schritt) {
 function kLehrerChips(gewaehlt) {
   return `<div class="chips">${S.lehrer.filter((l) => l.aktiv !== false).map((l) => `<label class="chip"><input type="checkbox" data-klehrer="${esc(l.id)}"${!gewaehlt.length || gewaehlt.includes(l.id) ? " checked" : ""}> ${esc(l.name || l.email)}</label>`).join("")}</div>`;
 }
+// Am Handy steht im Spaltenkopf nur der Vorname (ohne „Fahrlehrer“/„Fahrlehrerin“ davor)
+function kVorname(l) {
+  const n = String(l.name || l.email || "").replace(/^Fahrlehrer(in)?\s+/i, "").trim();
+  return n.split(/\s+/)[0] || n;
+}
 function renderKalender() {
   const ansicht = kAnsicht(), tag = kTag();
   if (ansicht === "woche") return kalenderWoche(tag);
@@ -2003,7 +2058,7 @@ function renderKalender() {
   const hoehe = (K_ENDE - K_START) * K_PX;
   const spalten = lehrer.map((l) => {
     const eigene = termine.filter((t) => t.fahrlehrer_id === l.id && t.von && t.bis);
-    return `<div class="k-spalte"><div class="k-kopf"><span class="k-lname" title="${esc(l.name || l.email)}">${esc(l.name || l.email)}</span><span class="k-anz">${eigene.filter((t) => t.art !== "block").length} Termine</span></div>
+    return `<div class="k-spalte"><div class="k-kopf"><span class="k-lname" title="${esc(l.name || l.email)}"><span class="k-voll">${esc(l.name || l.email)}</span><span class="k-kurz">${esc(kVorname(l))}</span></span><span class="k-anz">${eigene.filter((t) => t.art !== "block").length} Termine</span></div>
       <div class="k-flaeche" data-lehrer="${esc(l.id)}" data-datum="${esc(tag)}" style="height:${hoehe}px">${eigene.map(kTerminBlock).join("")}</div></div>`;
   }).join("");
   const wtag = KR.parseISO(tag).toLocaleDateString("de-DE", { weekday: "long", day: "numeric", month: "long", year: "numeric" });
@@ -3063,7 +3118,7 @@ function bindeZahlen(ziel) {
 async function adminFunktion(body) {
   const { data: sd } = await supa.auth.getSession();
   const token = sd && sd.session ? sd.session.access_token : null;
-  // Büro-Person mit Verwalten-Recht (Jelena, Murat): die PIN-Sitzung geht mit, die Funktion prüft sie
+  // Büro-Person mit Verwalten-Recht: die PIN-Sitzung geht mit, die Funktion prüft sie
   const { data, error } = await supa.functions.invoke("admin-create-account", { body: Object.assign({}, body, { requester_token: token, buero_sitzung: S.sitzung ? S.sitzung.token : undefined }) });
   if (error) {
     // Die Funktion schickt bei Fehlern eine Erklärung mit; sonst stünde hier nur „non-2xx status code“
