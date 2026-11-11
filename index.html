@@ -125,7 +125,10 @@ body::after{content:"";position:fixed;inset:0;z-index:0;pointer-events:none;opac
   background-size:48px 48px,48px 48px;
   -webkit-mask-image:radial-gradient(80% 60% at 50% 25%,#000 0%,transparent 75%);mask-image:radial-gradient(80% 60% at 50% 25%,#000 0%,transparent 75%);}
 button{font-family:inherit;color:inherit;cursor:pointer;border:none;background:none;}
-input,select,textarea{font-family:inherit;font-size:15px;color:var(--txt);}
+input,select,textarea{font-family:inherit;font-size:16px;color:var(--txt);}
+/* K3 (GK16): iPhones vergrößern die Seite beim Antippen eines Feldes unter 16 px. Nur auf iPhone/iPad (Safari kennt
+   -webkit-touch-callout), damit Android und PC unverändert bleiben; schreibgeschützte Felder bleiben klein. */
+@supports (-webkit-touch-callout:none){input:not([type=checkbox]):not([type=radio]):not([type=range]):not([readonly]),select,textarea:not([readonly]){font-size:16px !important;}}
 ::selection{background:rgba(74,139,92,.32);}
 .display{font-family:'Anton',sans-serif;font-weight:400;text-transform:uppercase;letter-spacing:.02em;}
 .script{font-family:'Kaushan Script',cursive;}
@@ -1278,7 +1281,7 @@ body.light .dt-n{background:linear-gradient(160deg,#1d3324 10%,#2f5d3f 90%);-web
 .search-wrap:focus-within{border-color:var(--orange-line)}
 .search-ic{color:var(--muted);display:flex;flex:0 0 auto}
 .search-ic svg{width:18px;height:18px}
-.search-wrap input{flex:1;background:transparent;border:none;padding:13px 0;font-size:15px;color:var(--txt)}
+.search-wrap input{flex:1;background:transparent;border:none;padding:13px 0;font-size:16px;color:var(--txt)}
 .search-wrap input:focus{outline:none}
 .search-clear{width:26px;height:26px;border-radius:8px;background:var(--surface-2);color:var(--muted);font-size:12px;flex:0 0 auto}
 .no-hit{color:var(--muted);font-size:14px;text-align:center;padding:30px 0}
@@ -1926,7 +1929,7 @@ body:not(.light) #sheet .sheet-pills .pill.sel{background:#123A2A !important;bor
   width:100%;padding:14px 48px 14px 16px;
   background:rgba(255,255,255,.06);
   border:1px solid rgba(255,255,255,.1);
-  border-radius:14px;color:#e8f0eb;font-size:15px;
+  border-radius:14px;color:#e8f0eb;font-size:16px;
   outline:none;box-sizing:border-box;
   font-family:'Barlow',sans-serif;
   transition:border-color .2s;
@@ -3529,27 +3532,42 @@ function faLink(entry){
   if(entry.tag) url+="&tag="+encodeURIComponent(entry.tag);
   return url;
 }
-// Löst beim Video-Klick zusätzlich eine Push-Benachrichtigung beim Schüler aus (Fahr-Akademie-
-// Brücke). Läuft im Hintergrund, blockiert nie das Öffnen des Links, schlägt still fehl, falls
-// Akademie mal nicht erreichbar ist oder der Schüler noch keinen Zugang hat.
+// Löst beim Video-Klick zusätzlich einen Video-Tipp beim Schüler aus (Fahr-Akademie-Brücke). Läuft im
+// Hintergrund und blockiert nie das Öffnen des Links. K3 (BR11): sagt danach klar, was beim Schüler ankommt.
+// Antworten der Akademie (academy-send-notification v5): ok+push_gesendet_an>0 | ok+hinweis "kein_push_abo" |
+// ok+empfehlung_geparkt+grund (kein_zugang, zugang_gesperrt, zugang_abgelaufen) | 429 cooldown_aktiv |
+// 403 fahrlehrer_stimmt_nicht; von der Kompass-Function: 403 konto_gesperrt/keine_fahrschule.
+function _akademieTippText(vn,res){
+  const d=res||{};
+  if(d.ok){
+    if(Number(d.push_gesendet_an)>0)return "📲 Video-Tipp an "+vn+" geschickt ✓";
+    if(d.empfehlung_geparkt){
+      if(d.grund==="zugang_gesperrt")return "Akademie-Zugang von "+vn+" ist gesperrt. Der Video-Tipp liegt bereit, bis er wieder frei ist.";
+      if(d.grund==="zugang_abgelaufen")return "Akademie-Zugang von "+vn+" ist abgelaufen. Der Video-Tipp liegt bereit, bis er verlängert ist.";
+      return vn+" hat noch keinen Akademie-Zugang. Der Video-Tipp liegt bereit, bis der Zugang freigeschaltet ist.";
+    }
+    return "Video-Tipp für "+vn+" gespeichert. Handy-Nachrichten sind aus: "+vn+" sieht ihn beim nächsten Anmelden in der Akademie.";
+  }
+  if(d.error==="cooldown_aktiv")return "Video-Tipp nicht geschickt: "+vn+" hat vor weniger als 2 Minuten schon einen bekommen.";
+  if(d.error==="fahrlehrer_stimmt_nicht")return "Video-Tipp nicht geschickt: "+vn+" ist in der Akademie einem anderen Fahrlehrer zugeordnet.";
+  if(d.error==="konto_gesperrt"||d.error==="keine_fahrschule")return "Video-Tipp nicht geschickt: Dein Konto ist für die Akademie nicht freigeschaltet.";
+  return "Video-Tipp an "+vn+" nicht geschickt: Akademie gerade nicht erreichbar.";
+}
 async function _pushAkademieVideo(s,entry){
-  if(!entry||!s||!s.telefon)return;
+  if(!entry||!s)return;
+  const vn=String(s.name||"Schüler").trim().split(/\s+/)[0]||"Schüler";
+  if(!s.telefon){ toast("Video-Tipp nicht geschickt: Bei "+vn+" ist keine Handynummer eingetragen."); return; }
+  let res=null;
   try{
     const supa=getSupa();
     const{data,error}=await supa.functions.invoke("trigger-akademie-push",{
       body:{ telefon:s.telefon, tag_id:entry.tag||undefined, stufe:entry.stufe||undefined }
     });
-    if(error)return; // Netzwerk-/Serverfehler: still, Video-Link hat trotzdem funktioniert
-    if(!data)return;
-    if(data.ok&&data.push_gesendet_an>0){
-      toast("📲 Push an "+(s.name||"Schüler").split(" ")[0]+" gesendet ✓");
-    }else if(data.error==="schueler_nicht_gefunden"){
-      toast("Hinweis: "+(s.name||"Schüler").split(" ")[0]+" hat noch keinen Akademie-Zugang");
-    }else if(data.error==="zugang_gesperrt"||data.error==="zugang_abgelaufen"){
-      toast("Hinweis: Akademie-Zugang von "+(s.name||"Schüler").split(" ")[0]+" ist aktuell gesperrt/abgelaufen");
-    }
-    // cooldown_aktiv, kein_push_abo, sonstige: bewusst kein Toast, um nicht zu nerven
-  }catch(e){ /* still - Video-Link ist das Wichtigere, das hat schon funktioniert */ }
+    res=data;
+    // Bei Status 4xx/5xx liefert invoke kein data, sondern error.context (die Antwort) - daraus den Grund lesen
+    if(error){ res=null; try{ if(error.context&&typeof error.context.json==="function")res=await error.context.json(); }catch(e2){ res=null; } }
+  }catch(e){ res=null; }
+  toast(_akademieTippText(vn,res));
 }
 const INFO = {
   g_sitz:[
@@ -8582,12 +8600,12 @@ async function _fillAkademieFortschritt(s){
     const{data,error}=await supa.functions.invoke("trigger-akademie-fortschritt",{body:{telefon:s.telefon}});
     if(error||!data||!data.ok||!data.fortschritt)return;
     const box2=document.getElementById("akademieFortschrittSlot"); if(!box2)return;
-    const {gesehen,gesamt}=data.fortschritt;
-    // Defensive Klemme: gesehen darf gesamt nie übersteigen. Falls doch (Datenfehler auf
-    // Akademie-Seite, z.B. gelöschte Videos noch in der Verlauf-Historie), lieber eine plausible
-    // Meldung zeigen als eine unmögliche Zahl. Die eigentliche Ursache liegt außerhalb dieser Datei.
-    const gesehenSafe=Math.min(gesehen,gesamt);
-    const txt=gesehenSafe>=gesamt&&gesamt>0?`Alle ${gesamt} Videos gesehen ✓`:`${gesehenSafe} von ${gesamt} Videos gesehen`;
+    // K3 (Entscheidung 3b): Zahlen erzwingen, Text „geöffnet“ (die Akademie zählt das Öffnen eines Videos,
+    // nicht, ob es zu Ende geschaut wurde). Klemme bleibt: geöffnet darf gesamt nie übersteigen.
+    const gesamt=Math.floor(Number(data.fortschritt.gesamt)), geoeffnet=Math.floor(Number(data.fortschritt.gesehen));
+    if(!Number.isFinite(gesamt)||!Number.isFinite(geoeffnet)||gesamt<=0||geoeffnet<0)return;
+    const anz=Math.min(geoeffnet,gesamt);
+    const txt=anz>=gesamt?`Alle ${gesamt} Videos geöffnet ✓`:`${anz} von ${gesamt} Videos geöffnet`;
     box2.innerHTML=`<div class="mini-dash-row"><span>🎓 Fahr-Akademie</span><b>${txt}</b></div>`;
   }catch(e){ /* still - Akademie-Fortschritt ist ein Bonus, kein Muss */ }
 }
@@ -12943,6 +12961,15 @@ function routeKalender(ansicht,datum){
   view.innerHTML=html;
   bindCalControls();
   if(_fsAgg)_fsInjectFilterTiles();
+  _calZurJetztLinie();
+}
+// K3 (GK23): Tagesansicht von heute springt zur Jetzt-Linie (vorher immer 08:00 oben). Etwa ein Drittel des
+// Bildschirms bleibt über der Linie, damit die gerade laufende Stunde zu sehen ist.
+function _calZurJetztLinie(){
+  if(_calView!=="tag"||_calDate!==todayISO())return;
+  const n=view.querySelector(".ct-now"); if(!n)return;
+  const ziel=Math.round(n.getBoundingClientRect().top-view.getBoundingClientRect().top+view.scrollTop-view.clientHeight*0.3);
+  if(ziel>0)view.scrollTop=ziel;
 }
 function calCounterHTML(){
   // Ab heute bis Ende der laufenden Woche (Sa, kein Sonntag) / des laufenden Monats
@@ -13388,7 +13415,8 @@ function leistungAusUE(ue){ return Math.round(ue*DB.verdienst.proUE); }
 function monthRangeOf(iso){ return isoMonthRange(iso); }
 function yearRange(iso){ const y=parseISO(iso).getFullYear(); return [y+"-01-01",y+"-12-31"]; }
 
-function routeKalenderRefresh(){ if($("#calBody"))routeKalender(); }
+// Auffrischen im Hintergrund (Abgleich): in der Tagesansicht die Stelle halten, statt neu zu springen (K3, GK23)
+function routeKalenderRefresh(){ if(!$("#calBody"))return; const y=view.scrollTop, warTag=_calView==="tag"; routeKalender(); if(warTag&&_calView==="tag")view.scrollTop=y; }
 
 
 // Zeit-Helfer

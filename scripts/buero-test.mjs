@@ -2288,6 +2288,55 @@ async function k2Kontrast(page, sel) {
   }
 }
 
+// ---------- K3: Knopf „Akademie-Zugang anlegen“ in der Akte (Schnittstelle fa_vorbelegung_v1) ----------
+for (const [breite, hoehe] of [[1366, 860], [390, 844]]) {
+  const { page, ctx, konsole } = await oeffne({ nutzer: "bu-1", breite, hoehe, hash: "#schueler" });
+  const P = `K3 Akademie (${breite} px)`;
+  await page.evaluate(() => { window.__geoeffnet = []; window.open = (u, z) => { window.__geoeffnet.push([u, z]); return {}; }; });
+  await page.evaluate(() => schuelerDialog("s1")); await page.waitForTimeout(250);
+  if (!(await page.isVisible("dialog[open] #akZugangKnopf"))) fehler(P + ": Knopf fehlt in der Akte");
+  else {
+    const anzSpr = await page.$$eval("dialog[open] #akSprache option", (o) => o.map((x) => x.value));
+    if (anzSpr.length !== 30 || anzSpr[0] !== "de" || new Set(anzSpr).size !== 30) fehler(P + ": Sprachliste nicht 30 Codes mit Deutsch vorn: " + anzSpr.join(","));
+    const kh = await page.$eval("dialog[open] #akZugangKnopf", (b) => b.getBoundingClientRect().height);
+    if (kh < 44) fehler(P + ": Knopf kleiner als 44 px (" + kh + ")");
+    // Ungespeicherte Eingaben in der Akte zählen; Klasse BE wird übernommen
+    await page.fill("dialog[open] input[name=email]", "lena.k3@example.org");
+    await page.selectOption("dialog[open] select[name=klasse]", "BE");
+    await page.selectOption("dialog[open] #akSprache", "tr");
+    const vorher = Date.now();
+    await page.click("dialog[open] #akZugangKnopf"); await page.waitForTimeout(200);
+    const r = await page.evaluate(() => ({ v: localStorage.getItem("fa_vorbelegung_v1"), o: window.__geoeffnet, offen: !!document.querySelector("dialog[open]"), name: document.querySelector("dialog[open] input[name=name]").value, tel: document.querySelector("dialog[open] input[name=telefon]").value }));
+    let v = null; try { v = JSON.parse(r.v); } catch {}
+    if (!v) fehler(P + ": nichts in fa_vorbelegung_v1");
+    else {
+      const schl = Object.keys(v).sort().join(",");
+      if (schl !== "email,klasse,name,sprache,telefon,zeit") fehler(P + ": falsche Schlüssel " + schl);
+      if (v.name !== r.name || v.telefon !== r.tel || v.email !== "lena.k3@example.org" || v.klasse !== "BE" || v.sprache !== "tr") fehler(P + ": falsche Werte " + r.v);
+      const z = Date.parse(v.zeit); if (!(z >= vorher - 2000 && z <= Date.now() + 2000)) fehler(P + ": zeit falsch " + v.zeit);
+    }
+    if (!r.o.length || r.o[0][0] !== "https://serband1995-hue.github.io/Fahr-Akademie-/#admin") fehler(P + ": Akademie-Verwaltung nicht geöffnet " + JSON.stringify(r.o));
+    if (!r.offen) fehler(P + ": Akte hat sich geschlossen (Knopf darf nicht speichern)");
+    // Klasse, die die Akademie nicht kennt, bleibt leer; ohne Telefon kein Eintrag
+    await page.evaluate(() => localStorage.removeItem("fa_vorbelegung_v1"));
+    await page.selectOption("dialog[open] select[name=klasse]", "B78");
+    await page.click("dialog[open] #akZugangKnopf"); await page.waitForTimeout(150);
+    const v2 = await page.evaluate(() => JSON.parse(localStorage.getItem("fa_vorbelegung_v1") || "{}"));
+    if (v2.klasse !== "") fehler(P + ": Klasse B78 hätte leer bleiben müssen: " + v2.klasse);
+    await page.evaluate(() => localStorage.removeItem("fa_vorbelegung_v1"));
+    await page.fill("dialog[open] input[name=telefon]", "");
+    await page.click("dialog[open] #akZugangKnopf"); await page.waitForTimeout(150);
+    if (await page.evaluate(() => localStorage.getItem("fa_vorbelegung_v1"))) fehler(P + ": ohne Telefon trotzdem vorbelegt");
+    if (!/Telefonnummer/.test(await page.textContent("#toast").catch(() => ""))) fehler(P + ": kein Hinweis auf fehlende Telefonnummer");
+    await pruefeLayout(page, P);
+  }
+  // Neuer Schüler: kein Knopf (erst nach dem Anlegen)
+  await page.keyboard.press("Escape"); await page.waitForTimeout(150);
+  if (await page.isVisible("dialog[open] button[value=ok]")) { await verwerfenJa(page).catch(() => {}); }
+  if (konsole.length) fehler(P + ": Konsole: " + konsole.join(" | "));
+  await ctx.close();
+}
+
 await browser.close();
 server.close();
 console.log(probleme ? `Büro-Test: ${probleme} Problem(e).` : "Büro-Test: alles in Ordnung.");
