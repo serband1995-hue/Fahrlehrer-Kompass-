@@ -2329,6 +2329,14 @@ for (const [breite, hoehe] of [[1366, 860], [390, 844]]) {
       return { alt, frisch: localStorage.getItem("fa_vorbelegung_v1") };
     });
     if (aufr.alt !== null || !aufr.frisch) fehler(P + ": Aufräumen der Vorbelegung falsch " + JSON.stringify(aufr));
+    // Pop-up gesperrt: Hinweis steht sichtbar im Fenster (nicht nur im Toast unter dem Fenster)
+    await page.evaluate(() => { window.open = () => null; });
+    await page.waitForTimeout(1600);
+    await page.click("dialog[open] #akZugangKnopf"); await page.waitForTimeout(150);
+    const pm = await page.evaluate(() => { const m = document.querySelector("dialog[open] #akMeldung"); if (!m || m.hidden) return ""; const b = m.getBoundingClientRect(); return b.height > 0 && b.bottom <= innerHeight + 400 ? m.textContent : ""; });
+    if (!/Pop-up/.test(pm)) fehler(P + ": Hinweis „Pop-up gesperrt“ nicht im Fenster: " + pm);
+    await page.evaluate(() => { window.open = (u, z) => { window.__geoeffnet.push([u, z]); return {}; }; });
+    await page.waitForTimeout(1600);
     // B78 ist eine B-Ausbildung („B“), eine Klasse, die die Akademie nicht kennt, bleibt leer; ohne Telefon kein Eintrag
     for (const [kl, soll] of [["B78", "B"], ["B197", "B"], ["C1", ""]]) {
       await page.evaluate(() => localStorage.removeItem("fa_vorbelegung_v1"));

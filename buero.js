@@ -1860,6 +1860,7 @@ function akademieZugangHTML() {
   return `<div class="voll akademie-zugang" data-entwurf><h3>Fahr-Akademie</h3>
     <div class="akademie-zeile"><label>Sprache des Schülers<select id="akSprache">${AKADEMIE_SPRACHEN.map(([c, n]) => `<option value="${esc(c)}">${esc(n)}</option>`).join("")}</select></label>
     <button type="button" class="knopf" id="akZugangKnopf">Akademie-Zugang anlegen</button></div>
+    <p class="akademie-meldung" id="akMeldung" role="status" hidden></p>
     <p class="leise klein">Öffnet die Akademie-Verwaltung. Dort anmelden und „Schüler anlegen“ tippen: Name, Telefon, E-Mail und Klasse sind 5 Minuten lang schon eingetragen.</p></div>`;
 }
 // Felder der Akte zuerst (auch ungespeichert); was die Fahrlehrer-App nur in „ausbildung“ ablegt (E-Mail, Form), als Ersatz.
@@ -1886,17 +1887,25 @@ function akademieVorbelegungAufraeumen() {
 akademieVorbelegungAufraeumen();
 function bindeAkademieZugang(dlg, x) {
   const knopf = dlg.querySelector("#akZugangKnopf"); if (!knopf) return;
+  // Meldungen stehen im Block selbst: das Fenster liegt über dem Toast der Seite
+  const melde = (text, fehler) => {
+    toast(text);
+    const m = dlg.querySelector("#akMeldung"); if (m) { m.textContent = text; m.hidden = false; m.classList.toggle("fehler", !!fehler); }
+    if (!fehler) { const alt = dlg.querySelector(".dialog-meldung"); if (alt) alt.remove(); } // alter Hinweis (z. B. Telefon fehlt) ist erledigt
+  };
   knopf.addEventListener("click", () => {
+    if (knopf.disabled) return;
     const v = akademieVorbelegung(dlg, dlg.querySelector("#akSprache").value, x);
-    if (!v.name) { toast("Bitte zuerst einen Namen eintragen.", true); return; }
-    if (!v.telefon) { toast("Für den Akademie-Zugang braucht der Schüler eine Telefonnummer (sie ist sein Login).", true); dlg.querySelector("[name=telefon]").focus(); return; }
+    if (!v.name) { melde("Bitte zuerst einen Namen eintragen.", true); return; }
+    if (!v.telefon) { melde("Für den Akademie-Zugang braucht der Schüler eine Telefonnummer (sie ist sein Login).", true); dlg.querySelector("[name=telefon]").focus(); return; }
     try { localStorage.setItem("fa_vorbelegung_v1", JSON.stringify(v)); setTimeout(akademieVorbelegungAufraeumen, 5 * 60 * 1000 + 1000); }
-    catch (e) { toast("Der Browser lässt das Speichern nicht zu. Bitte die Daten in der Akademie von Hand eintragen.", true); return; }
+    catch (e) { melde("Der Browser lässt das Speichern nicht zu. Bitte die Daten in der Akademie von Hand eintragen.", true); return; }
+    knopf.disabled = true; setTimeout(() => { knopf.disabled = false; }, 1500); // Doppeltipp öffnet die Akademie nicht zweimal
     // Ohne „noopener“ im Aufruf, denn dann liefert window.open immer null und ein gesperrtes Fenster wäre nicht erkennbar
     const fenster = window.open(AKADEMIE_ADMIN_URL, "_blank");
     if (fenster) try { fenster.opener = null; } catch (e) { /* egal */ }
-    toast(!fenster ? "Bitte Pop-ups für diese Seite erlauben oder die Akademie-Verwaltung selbst öffnen: die Daten liegen 5 Minuten bereit."
-      : `Akademie geöffnet. Dort anmelden und „Schüler anlegen“ tippen: ${v.klasse ? "" : "Klasse bitte selbst wählen. "}Die Daten liegen 5 Minuten bereit.${x && v.telefon.replace(/\D/g, "") !== String(x.telefon || "").replace(/\D/g, "") ? " Die Telefonnummer ist neu: bitte die Akte auch speichern." : ""}`);
+    if (!fenster) { melde("Pop-up gesperrt: Bitte Pop-ups für diese Seite erlauben oder die Akademie-Verwaltung selbst öffnen. Die Daten liegen 5 Minuten bereit.", true); return; }
+    melde(`Akademie geöffnet. Dort anmelden und „Schüler anlegen“ tippen: ${v.klasse ? "" : "Klasse bitte selbst wählen. "}Die Daten liegen 5 Minuten bereit.${x && v.telefon.replace(/\D/g, "") !== String(x.telefon || "").replace(/\D/g, "") ? " Die Telefonnummer ist neu: bitte die Akte auch speichern." : ""}`);
   });
 }
 function schuelerDialog(id) {

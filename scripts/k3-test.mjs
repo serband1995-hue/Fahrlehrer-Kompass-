@@ -52,6 +52,8 @@ async function seite(w, h, jetzt) {
     window.__antwort = null;
     window.getSupa = () => ({ from: () => q, rpc: leer, auth: { getUser: leer, getSession: leer },
       functions: { invoke: async () => {
+        window.__aufrufe = (window.__aufrufe || 0) + 1;
+        await new Promise((ok) => setTimeout(ok, 30));
         const a = window.__antwort; if (a && a.wirf) throw new Error("offline");
         // wie supabase-js bei Status 4xx/5xx: kein data, error.context ist die Antwort
         if (a && a.httpStatus) return { data: null, error: { name: "FunctionsHttpError", message: "Edge Function returned a non-2xx status code", context: new Response(JSON.stringify(a.httpBody), { status: a.httpStatus, headers: { "Content-Type": "application/json" } }) } };
@@ -92,6 +94,7 @@ async function seite(w, h, jetzt) {
   await page.evaluate(() => { for (const id of ["loginOverlay", "splash"]) { const e = document.getElementById(id); if (e) e.style.display = "none"; } });
   const tipp = async (antwort, s) => page.evaluate(async ({ antwort, s }) => {
     window.__antwort = antwort;
+    for (const k in _akTippOk) delete _akTippOk[k]; // jeder Fall für sich (A15 prüft die Sperre nach Erfolg)
     const t = document.getElementById("toast"); t.textContent = ""; t.classList.remove("show");
     await _pushAkademieVideo(s || { id: "s1", name: "Lena Muster", telefon: "0170 1234567" }, { stufe: "Grundstufe", tag: "t1" });
     return { text: t.textContent, sichtbar: t.classList.contains("show") };
@@ -120,6 +123,25 @@ async function seite(w, h, jetzt) {
   await pruefe("A11", "ohne Handynummer: Hinweis statt stillem Abbruch", async () => {
     const r = await tipp({ data: { ok: true, push_gesendet_an: 1 }, error: null }, { id: "s2", name: "Max Muster", telefon: "" });
     if (!/keine Handynummer/.test(r.text) || !/Max/.test(r.text)) return "Text: " + r.text;
+  });
+  await pruefe("A15", "Doppeltipp: nur eine Anfrage; Sperre direkt nach eigenem Erfolg heißt „gerade schon geschickt“", async () => {
+    const r = await page.evaluate(async () => {
+      window.__aufrufe = 0; window.__antwort = { data: { ok: true, push_gesendet_an: 1 }, error: null };
+      const s = { id: "sd", name: "Dora Muster", telefon: "0170 7" }, e = { stufe: "Grundstufe" };
+      await Promise.all([_pushAkademieVideo(s, e), _pushAkademieVideo(s, e)]);
+      const n = window.__aufrufe;
+      window.__antwort = { httpStatus: 429, httpBody: { ok: false, error: "cooldown_aktiv" } };
+      await _pushAkademieVideo(s, e);
+      return { n, t: document.getElementById("toast").textContent };
+    });
+    const f = [];
+    if (r.n !== 1) f.push(r.n + " Anfragen statt 1");
+    if (!/gerade schon geschickt/.test(r.t)) f.push("Text: " + r.t);
+    return f;
+  });
+  await pruefe("A16", "ungültige Nummer (400) → eigener Text", async () => {
+    const r = await tipp(ctxAntwort(400, { ok: false, error: "telefon_fehlt" }));
+    if (!/Handynummer.*ungültig/.test(r.text)) return "Text: " + r.text;
   });
   await pruefe("A12", "Name mit Sonderzeichen wird als Text gezeigt (kein HTML)", async () => {
     const r = await tipp({ data: { ok: true, push_gesendet_an: 1 }, error: null }, { id: "s3", name: "<b>Zoë</b> Muster", telefon: "0170 1" });
@@ -197,6 +219,18 @@ for (const [w, h, n] of [[360, 780, "360 hoch"], [412, 915, "412 hoch"], [740, 3
     await page.evaluate(() => routeKalender("tag", "2026-11-12")); await page.waitForTimeout(150);
     const r = await lage();
     if (r.scroll !== 0) return "scrollTop " + r.scroll;
+  });
+  await pruefe(`C6 [${n}]`, "mit ‹ von morgen auf heute: oben (Datum und Pfeile sichtbar); „Heute“ springt zur Jetzt-Linie", async () => {
+    await page.evaluate(() => routeKalender("tag", "2026-11-12")); await page.waitForTimeout(150);
+    await page.evaluate(() => document.getElementById("calPrev").click()); await page.waitForTimeout(200);
+    const a = await lage();
+    await page.evaluate(() => { document.getElementById("view").scrollTop = 0; routeKalender("tag", "2026-11-12"); }); await page.waitForTimeout(150);
+    await page.evaluate(() => document.getElementById("calToday").click()); await page.waitForTimeout(200);
+    const b = await lage();
+    const f = [];
+    if (a.scroll !== 0) f.push("nach ‹ nicht oben: " + a.scroll);
+    if (!(b.scroll > 0)) f.push("„Heute“ springt nicht");
+    return f;
   });
   await pruefe(`C4 [${n}]`, "keine Seite breiter als der Bildschirm, keine JS-Fehler", async () => {
     await page.evaluate((t) => routeKalender("tag", t), TAG); await page.waitForTimeout(150);

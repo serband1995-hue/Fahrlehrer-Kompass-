@@ -1281,7 +1281,8 @@ body.light .dt-n{background:linear-gradient(160deg,#1d3324 10%,#2f5d3f 90%);-web
 .search-wrap:focus-within{border-color:var(--orange-line)}
 .search-ic{color:var(--muted);display:flex;flex:0 0 auto}
 .search-ic svg{width:18px;height:18px}
-.search-wrap input{flex:1;background:transparent;border:none;padding:13px 0;font-size:16px;color:var(--txt)}
+.search-wrap input{flex:1;min-width:0;background:transparent;border:none;padding:13px 0;font-size:16px;color:var(--txt)}
+#homeSearchRow .search-wrap{min-width:0;} /* K3: mit 16 px Schrift sonst Filter-Knopf bei 360 px über dem Rand */
 .search-wrap input:focus{outline:none}
 .search-clear{width:26px;height:26px;border-radius:8px;background:var(--surface-2);color:var(--muted);font-size:12px;flex:0 0 auto}
 .no-hit{color:var(--muted);font-size:14px;text-align:center;padding:30px 0}
@@ -3552,13 +3553,24 @@ function _akademieTippText(vn,res){
   if(d.error==="cooldown_aktiv")return "Video-Tipp nicht geschickt: "+vn+" hat vor weniger als 2 Minuten schon einen bekommen.";
   if(d.error==="fahrlehrer_stimmt_nicht")return "Video-Tipp nicht geschickt: "+vn+" ist in der Akademie einem anderen Fahrlehrer zugeordnet.";
   if(d.error==="nicht_eingeloggt")return "Video-Tipp nicht geschickt: Bitte neu anmelden.";
+  if(d.error==="telefon_fehlt")return "Video-Tipp nicht geschickt: Die Handynummer von "+vn+" ist ungültig.";
   if(d.error==="konto_gesperrt"||d.error==="keine_fahrschule")return "Video-Tipp nicht geschickt: Dein Konto ist für die Akademie nicht freigeschaltet.";
   return "Video-Tipp an "+vn+" nicht geschickt: Akademie gerade nicht erreichbar.";
 }
+// Meldung erst zeigen, wenn die App wieder im Vordergrund ist (das Video öffnet sich in einem neuen Tab)
+function _toastSichtbar(m){
+  if(!document.hidden){ toast(m); return; }
+  const zeig=()=>{ if(document.hidden)return; document.removeEventListener("visibilitychange",zeig); toast(m); };
+  document.addEventListener("visibilitychange",zeig);
+}
+const _akTippLaeuft=new Set(), _akTippOk={}; // je Schüler: Anfrage unterwegs / Zeit des letzten geschickten Tipps
 async function _pushAkademieVideo(s,entry){
   if(!entry||!s)return;
   const vn=String(s.name||"Schüler").trim().split(/\s+/)[0]||"Schüler";
-  if(!s.telefon){ toast("Video-Tipp nicht geschickt: Bei "+vn+" ist keine Handynummer eingetragen."); return; }
+  if(!s.telefon){ _toastSichtbar("Video-Tipp nicht geschickt: Bei "+vn+" ist keine Handynummer eingetragen."); return; }
+  const key=String(s.id||s.telefon);
+  if(_akTippLaeuft.has(key))return; // Doppeltipp: die erste Anfrage meldet sich selbst
+  _akTippLaeuft.add(key);
   let res=null;
   try{
     const supa=getSupa();
@@ -3569,7 +3581,11 @@ async function _pushAkademieVideo(s,entry){
     // Bei Status 4xx/5xx liefert invoke kein data, sondern error.context (die Antwort) - daraus den Grund lesen
     if(error){ res=null; try{ if(error.context&&typeof error.context.json==="function")res=await error.context.json(); }catch(e2){ res=null; } }
   }catch(e){ res=null; }
-  toast(_akademieTippText(vn,res));
+  finally{ _akTippLaeuft.delete(key); }
+  if(res&&res.ok)_akTippOk[key]=Date.now();
+  // Sperre der Akademie (2 Minuten) direkt nach eigenem erfolgreichem Tipp: der erste ist angekommen
+  if(res&&res.error==="cooldown_aktiv"&&_akTippOk[key]&&Date.now()-_akTippOk[key]<130000){ _toastSichtbar("Video-Tipp an "+vn+" wurde gerade schon geschickt. Ein weiterer geht erst nach 2 Minuten."); return; }
+  _toastSichtbar(_akademieTippText(vn,res));
 }
 const INFO = {
   g_sitz:[
@@ -10199,6 +10215,7 @@ function buildStufen(s){
   }));
   wrap.querySelectorAll(".vidBtn").forEach(b=>b.addEventListener("click",e=>{
     e.stopPropagation();
+    if(b._zuletzt&&Date.now()-b._zuletzt<1500)return; b._zuletzt=Date.now(); // Doppeltipp: nur ein Tab, nur ein Tipp (K3)
     const entry=FA_VIDEO_MAP[b.dataset.faid];
     if(entry) window.open(faLink(entry),"_blank");
     _pushAkademieVideo(s,entry);
@@ -12933,8 +12950,10 @@ function openCalFilterSheet(){
   };
   openSheet(render()); bind();
 }
+let _calZuletzt=null, _calSpringJetzt=false;
 function routeKalender(ansicht,datum){
   ensureDB();
+  const _calWarDa=!!$("#calBody"), _calVorher=_calZuletzt, _calY=view.scrollTop;
   // A24: Ansicht und Tag stehen im Verlauf – Zurück führt von „Tag“ wieder zur Woche bzw. zum vorigen Zeitraum
   if(ansicht)_calView=ansicht; if(datum)_calDate=datum;
   if(!_calDate)_calDate=todayISO();
@@ -12967,7 +12986,12 @@ function routeKalender(ansicht,datum){
   view.innerHTML=html;
   bindCalControls();
   if(_fsAgg)_fsInjectFilterTiles();
-  _calZurJetztLinie();
+  // K3 (GK23): Zur Jetzt-Linie nur beim Öffnen des Kalenders, beim Wechsel in die Tagesansicht und bei „Heute“.
+  // Gleicher Tag neu gezeichnet (Abgleich, neue Buchung): Stelle halten. Mit ‹ › geblättert: oben (Datum und Pfeile sichtbar).
+  const _calJetzt=_calView+"|"+_calDate;
+  if(_calSpringJetzt||!_calWarDa||!_calVorher||_calVorher.split("|")[0]!==_calView)_calZurJetztLinie();
+  else if(_calVorher===_calJetzt)view.scrollTop=_calY;
+  _calSpringJetzt=false; _calZuletzt=_calJetzt;
 }
 // K3 (GK23): Tagesansicht von heute springt zur Jetzt-Linie (vorher immer 08:00 oben). Etwa ein Drittel des
 // Bildschirms bleibt über der Linie, damit die gerade laufende Stunde zu sehen ist.
@@ -13005,7 +13029,7 @@ function calKW(){
   return `KW ${isoWeekNo(_calDate)}`;
 }
 function bindCalControls(){
-  $("#calToday").addEventListener("click",()=>{ _calDate=todayISO(); routeKalender(); });
+  $("#calToday").addEventListener("click",()=>{ _calDate=todayISO(); _calSpringJetzt=true; routeKalender(); });
   $("#calGear").addEventListener("click",routeArbeitszeit);
   $("#calSearch").addEventListener("click",openCalSearchSheet);
   const _cfb=$("#calFilterBtn"); if(_cfb)_cfb.addEventListener("click",openCalFilterSheet);
@@ -13421,8 +13445,8 @@ function leistungAusUE(ue){ return Math.round(ue*DB.verdienst.proUE); }
 function monthRangeOf(iso){ return isoMonthRange(iso); }
 function yearRange(iso){ const y=parseISO(iso).getFullYear(); return [y+"-01-01",y+"-12-31"]; }
 
-// Neu zeichnen nach Filter-Wechsel: in der Tagesansicht die Stelle halten, statt neu zu springen (K3, GK23)
-function routeKalenderRefresh(){ if(!$("#calBody"))return; const y=view.scrollTop, warTag=_calView==="tag"; routeKalender(); if(warTag&&_calView==="tag")view.scrollTop=y; }
+// Neu zeichnen nach Filter-Wechsel: routeKalender hält bei gleichem Tag die Stelle (K3, GK23)
+function routeKalenderRefresh(){ if($("#calBody"))routeKalender(); }
 
 
 // Zeit-Helfer
