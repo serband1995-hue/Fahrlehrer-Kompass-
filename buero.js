@@ -190,6 +190,7 @@ function zeichne() {
   wartIndex = null; // Warteliste neu rechnen (Termine können sich geändert haben)
   const b = aktuellerBereich();
   $("titel").textContent = b.titel;
+  $("menueKnopf").innerHTML = `<span>Menü · ${esc(b.titel)}</span><span class="pfeil" aria-hidden="true"></span>`;
   document.body.dataset.bereich = b.id;
   $("drucken").hidden = b.id === "team"; // Zugangsliste wird nicht gedruckt
   document.title = b.titel + " · Kompass Büro";
@@ -204,8 +205,50 @@ window.addEventListener("hashchange", () => {
   document.querySelectorAll("dialog[open]").forEach((d) => { if (!d.dataset.festhalten && !hatEingabe(d)) { d._verlauf = false; d.close(); } });
   const g = aktuellerBereich().gruppe;
   if (navZu().includes(g)) setzeNavZu(navZu().filter((x) => x !== g));
-  zeichne(); $("ansicht").focus({ preventScroll: true }); window.scrollTo(0, 0);
+  zeichne(); $("ansicht").focus({ preventScroll: true });
+  if (istSchmal()) { menueOffen(false); springeZumTitel(); } else window.scrollTo(0, 0);
 });
+
+/* Handy und kleines Tablet (bis 900 px): Das Menü ist ein Block zum Aufklappen, beim Start zu.
+   Nach dem Tipp auf einen Bereich klappt es zu und die Seite springt zum Titel des Bereichs. */
+function istSchmal() { return window.matchMedia("(max-width:900px)").matches; }
+function menueOffen(an) {
+  document.body.classList.toggle("menue-offen", !!an);
+  $("menueKnopf").setAttribute("aria-expanded", an ? "true" : "false");
+}
+function springeZumTitel() {
+  const st = $("rollenStreifen");
+  const oben = st && !st.hidden && getComputedStyle(st).position === "sticky" ? st.getBoundingClientRect().height : 0;
+  window.scrollTo(0, Math.max(0, $("titel").getBoundingClientRect().top + window.scrollY - oben - 8));
+}
+$("menueKnopf").addEventListener("click", () => menueOffen(!document.body.classList.contains("menue-offen")));
+document.addEventListener("click", (e) => {
+  const a = e.target.closest(".nav-punkt");
+  if (!a || !istSchmal()) return;
+  // gleicher Bereich: es gibt kein hashchange, also hier zuklappen und zum Titel springen
+  if (a.getAttribute("href") === location.hash) { menueOffen(false); springeZumTitel(); }
+});
+/* Tabellen bis 900 px: die Namensspalte (Schüler, sonst Name, sonst Fahrlehrer) bekommt eine Mindestbreite und bricht nicht mitten im Wort.
+   Die Spalte wird hier einmal je Tabelle markiert; die Regeln dazu stehen in buero.css (nur bis 900 px wirksam). */
+function markiereNamensspalten() {
+  document.querySelectorAll("table.tabelle").forEach((t) => {
+    if (t.dataset.namen == null) {
+      const koepfe = [...t.querySelectorAll(":scope > thead > tr > th")].map((th) => (th.firstChild ? th.firstChild.textContent : "").trim());
+      let i = -1;
+      for (const k of ["Schüler", "Name", "Fahrlehrer"]) { i = koepfe.indexOf(k); if (i >= 0) break; }
+      t.dataset.namen = i < 0 ? "" : String(i + 1);
+    }
+    const n = t.dataset.namen;
+    if (!n) return;
+    t.querySelectorAll(`:scope > thead > tr > th:nth-child(${n}):not(.namenspalte), :scope > tbody > tr > td:nth-child(${n}):not(.namenspalte):not([colspan])`).forEach((z) => z.classList.add("namenspalte"));
+  });
+}
+let namenGeplant = false;
+new MutationObserver(() => {
+  if (namenGeplant) return;
+  namenGeplant = true;
+  requestAnimationFrame(() => { namenGeplant = false; markiereNamensspalten(); });
+}).observe(document.body, { childList: true, subtree: true });
 
 function renderBald(b) {
   return `<div class="karte"><h2>${esc(b.titel)}</h2>
@@ -313,7 +356,7 @@ function reaktBetrag() {
   return Number(k.reaktivierungBetrag) > 0 ? Number(k.reaktivierungBetrag) : REAKT_STANDARD;
 }
 // Wer im Büro bedient: Namen für „Wer bist du?“ (einstellbar durch den Super-Admin)
-const PERSONEN_STANDARD = ["Jelena", "Murat", "Kristina", "Isra"];
+const PERSONEN_STANDARD = []; // keine festen Namen im Code: Büro-Personen kommen aus der Datenbank oder aus konfiguration.bueroPersonen
 function bueroPersonen() {
   const akt = aktivePersonen().map((p) => p.name);
   if (akt.length) return akt;

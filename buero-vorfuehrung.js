@@ -18,8 +18,8 @@ function bauDaten(heute) {
     { id: "fl-4", name: "Fahrlehrer Dario (extern)", email: "dario@example.org", rolle: "fahrlehrer", fahrschule_id: FS, aktiv: true, agb_akzeptiert_version: "1.0", klassen: ["C1", "C1E", "C", "CE"], ohne_app: true },
   ];
   const buero = [
-    { id: "bu-1", name: "Büro Testperson", email: "buero@example.org", rolle: "buero", fahrschule_id: FS, aktiv: true, agb_akzeptiert_version: "1.0" },
-    { id: "ad-1", name: "Leitung Testperson", email: "leitung@example.org", rolle: "fahrschule_admin", fahrschule_id: FS, aktiv: true, agb_akzeptiert_version: "1.0" },
+    { id: "bu-1", name: "Büro Muster", email: "buero@example.org", rolle: "buero", fahrschule_id: FS, aktiv: true, agb_akzeptiert_version: "1.0" },
+    { id: "ad-1", name: "Leitung Muster", email: "leitung@example.org", rolle: "fahrschule_admin", fahrschule_id: FS, aktiv: true, agb_akzeptiert_version: "1.0" },
     { id: "sa-1", name: "Super-Admin", email: "super@example.org", rolle: "super_admin", fahrschule_id: FS, aktiv: true, agb_akzeptiert_version: "1.0" },
     { id: "fl-x", name: "Fahrlehrerin Elif", email: "fl@example.org", rolle: "fahrlehrer", fahrschule_id: FS, aktiv: true, agb_akzeptiert_version: "1.0" },
     { id: "gesperrt-1", name: "Gesperrt Test", email: "gesperrt@example.org", rolle: "buero", fahrschule_id: FS, aktiv: false, agb_akzeptiert_version: "1.0" },
@@ -103,22 +103,67 @@ function bauDaten(heute) {
       fahrschule_pakete: [{ id: "p-1", fahrschule_id: FS, name: "Boost-Paket 1" }, { id: "p-turbo", fahrschule_id: FS, name: "Turboboost" }],
       // Büro-Personen (erfunden). _pin gibt es nur in der Attrappe; die echte Datenbank speichert die PIN verschlüsselt.
       buero_personen: [
-        { id: "bp-1", fahrschule_id: FS, name: "Jelena", telefon: null, hat_pin: true, _pin: "6204", darf_verwalten: true, aktiv: true, gesperrt_bis: null, fehlversuche: 0 },
-        { id: "bp-2", fahrschule_id: FS, name: "Murat", telefon: null, hat_pin: true, _pin: "7391", darf_verwalten: true, aktiv: true, gesperrt_bis: null, fehlversuche: 0 },
-        { id: "bp-3", fahrschule_id: FS, name: "Kristina", telefon: "0170 0000000", hat_pin: true, _pin: "4826", darf_verwalten: false, aktiv: true, gesperrt_bis: null, fehlversuche: 0 },
-        { id: "bp-4", fahrschule_id: FS, name: "Isra", telefon: null, hat_pin: false, _pin: null, pin_frei_bis: new Date(Date.now() + 24 * 3600000).toISOString(), darf_verwalten: false, aktiv: true, gesperrt_bis: null, fehlversuche: 0 },
+        { id: "bp-1", fahrschule_id: FS, name: "Mia Muster", telefon: null, hat_pin: true, _pin: "5917", darf_verwalten: true, aktiv: true, gesperrt_bis: null, fehlversuche: 0 },
+        { id: "bp-2", fahrschule_id: FS, name: "Noah Muster", telefon: null, hat_pin: true, _pin: "2846", darf_verwalten: true, aktiv: true, gesperrt_bis: null, fehlversuche: 0 },
+        { id: "bp-3", fahrschule_id: FS, name: "Lea Muster", telefon: "0171 3920012", hat_pin: true, _pin: "7352", darf_verwalten: false, aktiv: true, gesperrt_bis: null, fehlversuche: 0 },
+        { id: "bp-4", fahrschule_id: FS, name: "Tom Muster", telefon: null, hat_pin: false, _pin: null, pin_frei_bis: new Date(Date.now() + 24 * 3600000).toISOString(), darf_verwalten: false, aktiv: true, gesperrt_bis: null, fehlversuche: 0 },
       ],
     },
   };
 }
 
-if (typeof module !== "undefined" && module.exports) { module.exports = { bauDaten }; } else
+/* Nur für die sichtbare Vorführung (buero.html?vorfuehrung ohne Test-Daten): ohne Test-Sonderfälle,
+   dafür mit ein paar Aufgaben, Notizen und Fahrcheck-Quittungen, damit „Heute zu tun“ nach echtem Alltag aussieht.
+   Die Tests (scripts/buero-test.mjs) nutzen bauDaten ohne diesen Zusatz und legen ihre Fälle selbst an. */
+const TEST_KONTEN = ["gesperrt-1", "agb-1"];
+function fcZeitraum(iso) {
+  const d = new Date(iso + "T12:00:00"), j = d.getFullYear(), m = d.getMonth();
+  const tag = (x) => `${x.getFullYear()}-${String(x.getMonth() + 1).padStart(2, "0")}-${String(x.getDate()).padStart(2, "0")}`;
+  return d.getDate() <= 15 ? [tag(new Date(j, m, 1)), tag(new Date(j, m, 15))] : [tag(new Date(j, m, 16)), tag(new Date(j, m + 1, 0))];
+}
+function vorfuehrZusatz(tab, heute) {
+  const FS = "fs-test-1";
+  tab.profiles = tab.profiles.filter((p) => !TEST_KONTEN.includes(p.id));
+  const jetzt = Date.now();
+  const vor = (tage, uhr) => { const t = new Date(addTage(heute, -tage) + "T" + uhr + ":00").getTime(); return new Date(Math.min(t, jetzt - 3600000)).toISOString(); };
+  const lehrerVon = (sid) => (tab.schueler.find((s) => s.id === sid) || {}).fahrlehrer_id || null;
+  // Aufgaben: überfällig, heute, dringend, an eine Büro-Person, ohne Datum, eine für später, eine gestern erledigt
+  tab.schueler_aufgaben = [
+    { id: "va-1", fahrschule_id: FS, schueler_id: "s3", text: "Zurückrufen wegen Termin für die Praxisprüfung", heute: false, faellig_am: addTage(heute, -2), fuer_person_id: null, von_person_id: "bp-1", bearbeiter: "Mia Muster", dringend: false, erstellt_am: vor(4, "09:10") },
+    { id: "va-2", fahrschule_id: FS, schueler_id: "s5", text: "Sehtest und Erste-Hilfe-Nachweis nachfordern", heute: true, faellig_am: heute, fuer_person_id: null, von_person_id: "bp-2", bearbeiter: "Noah Muster", dringend: false, erstellt_am: vor(1, "15:40") },
+    { id: "va-3", fahrschule_id: FS, schueler_id: "s7", text: "Antrag bei der Führerscheinstelle abgeben", heute: false, faellig_am: null, fuer_person_id: null, von_person_id: "bp-1", bearbeiter: "Mia Muster", dringend: true, erstellt_am: vor(1, "11:05") },
+    { id: "va-4", fahrschule_id: FS, schueler_id: null, text: "Rechnung der Werkstatt für Golf Schalter 2 prüfen", heute: false, faellig_am: null, fuer_person_id: "bp-3", von_person_id: "bp-2", bearbeiter: "Noah Muster", dringend: false, erstellt_am: vor(2, "10:20") },
+    { id: "va-5", fahrschule_id: FS, schueler_id: null, text: "Ordner mit den Verträgen vom Oktober ablegen", heute: false, faellig_am: null, fuer_person_id: null, von_person_id: "bp-3", bearbeiter: "Lea Muster", dringend: false, erstellt_am: vor(3, "08:45") },
+    { id: "va-6", fahrschule_id: FS, schueler_id: "s12", text: "Nach der Theorieprüfung fragen", heute: false, faellig_am: addTage(heute, 5), fuer_person_id: null, von_person_id: "bp-1", bearbeiter: "Mia Muster", dringend: false, erstellt_am: vor(1, "16:30") },
+    { id: "va-7", fahrschule_id: FS, schueler_id: "s2", text: "Ratenplan an die Eltern schicken", heute: false, faellig_am: addTage(heute, -1), fuer_person_id: null, von_person_id: "bp-2", bearbeiter: "Noah Muster", dringend: false, erstellt_am: vor(5, "13:00"), erledigt_am: vor(1, "12:15"), erledigt_bearbeiter: "Lea Muster" },
+  ];
+  // Notizen an die Fahrlehrer: eine gelesen, zwei noch nicht gelesen, eine erledigt
+  tab.schueler_notizen = [
+    { id: "vn-1", fahrschule_id: FS, schueler_id: "s4", text: "Reaktivierung noch nicht bezahlt. Bitte keine neuen Fahrstunden planen.", art: "stopp", bearbeiter: "Mia Muster", erstellt_am: vor(1, "09:30"), erledigt_am: null },
+    { id: "vn-2", fahrschule_id: FS, schueler_id: "s5", text: "Hat eine neue Handynummer, steht schon im Profil.", art: "info", bearbeiter: "Lea Muster", erstellt_am: vor(2, "14:10"), erledigt_am: null },
+    { id: "vn-3", fahrschule_id: FS, schueler_id: "s6", text: "Prüfungstermin bestätigt. Bitte an die Brille erinnern.", art: "info", bearbeiter: "Noah Muster", erstellt_am: vor(0, "08:20"), erledigt_am: null },
+    { id: "vn-4", fahrschule_id: FS, schueler_id: "s12", text: "Mutter ruft wegen Ratenzahlung an, bitte kurz Bescheid geben.", art: "info", bearbeiter: "Mia Muster", erstellt_am: vor(6, "11:00"), erledigt_am: vor(3, "17:45"), erledigt_bearbeiter: "Lea Muster" },
+  ];
+  tab.schueler_notiz_gelesen = [{ notiz_id: "vn-2", fahrlehrer_id: lehrerVon("s5"), gelesen_am: vor(1, "18:05") }];
+  // Fahrcheck-Quittungen der letzten beiden Zeiträume: einmal vollständig, einmal fehlt ein Zettel
+  const [v1] = fcZeitraum(heute);
+  const z1 = fcZeitraum(addTage(v1, -1)), z2 = fcZeitraum(addTage(z1[0], -1));
+  const am = (bis) => { const t = new Date(addTage(bis, 1) + "T09:30:00").getTime(); return new Date(Math.min(t, jetzt - 3600000)).toISOString(); };
+  tab.fc_abgaben = [
+    { id: "vq-1", fahrschule_id: FS, fahrlehrer_id: "fl-1", zeitraum_von: z1[0], zeitraum_bis: z1[1], soll: 6, ist: 6, fehlend: [], notiz: null, bestaetigt_von: "bu-1", bestaetigt_am: am(z1[1]) },
+    { id: "vq-2", fahrschule_id: FS, fahrlehrer_id: "fl-2", zeitraum_von: z2[0], zeitraum_bis: z2[1], soll: 5, ist: 4, fehlend: [], notiz: "Ein Zettel kommt nach.", bestaetigt_von: "bu-1", bestaetigt_am: am(z2[1]) },
+  ];
+  return tab;
+}
+
+if (typeof module !== "undefined" && module.exports) { module.exports = { bauDaten, vorfuehrZusatz }; } else
 (function () {
   "use strict";
   // Ohne Test-Daten: Vorführung mit erfundener Fahrschule, angemeldet als Fahrschul-Leitung
   if (!window.__FAKE) {
-    const d = bauDaten(new Date().toISOString().slice(0, 10));
-    window.__FAKE = { tabellen: d.tabellen, konten: d.konten, session: { user: { id: "ad-1", email: "leitung@example.org" } }, vorfuehrung: true,
+    const h = new Date().toISOString().slice(0, 10);
+    const d = bauDaten(h);
+    window.__FAKE = { tabellen: vorfuehrZusatz(d.tabellen, h), konten: d.konten, session: { user: { id: "ad-1", email: "leitung@example.org" } }, vorfuehrung: true,
       functions: { "admin-create-account": (b) => ({ email: b.email || "beispiel@example.org", passwort: "Vorfuehrung-1234" }) } };
   }
   const F = window.__FAKE;
