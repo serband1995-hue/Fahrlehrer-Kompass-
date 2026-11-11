@@ -3099,7 +3099,7 @@ function renderTeam() {
       ${mitZahlen ? `<td class="zahlspalte">${schuelerZahl[p.id] || 0}</td><td class="zahlspalte">${zahlDE(ue[p.id] || 0)}</td>` : ""}
       <td>${p.aktiv === false ? '<span class="marke-pill rot">gesperrt</span>' : p.ohne_app ? '<span class="marke-pill">ohne App</span>' : '<span class="marke-pill gruen">aktiv</span>'}</td>
       <td class="aktionen"><div class="aktionen-box">${mitZahlen ? `<button class="knopf klein" data-flakte="${esc(p.id)}" type="button">${darfPersonenVerwalten() ? "Akte & Klassen" : "Akte"}</button>` : ""}${admin && p.rolle !== "super_admin" && p.id !== S.user.id ? `${p.ohne_app ? "" : `<button class="knopf klein" data-einladung="${esc(p.id)}" type="button">Einladung senden</button><button class="knopf klein" data-pwreset="${esc(p.id)}" type="button">Neues Passwort</button>`}
-        <button class="knopf klein" data-sperren="${esc(p.id)}" type="button">${p.aktiv === false ? "Freischalten" : "Sperren"}</button>` : ""}</div></td></tr>`;
+        ${S.profil.rolle === "super_admin" ? `<button class="knopf klein" data-sperren="${esc(p.id)}" type="button">${p.aktiv === false ? "Freischalten" : "Sperren"}</button>` : ""}` : ""}</div></td></tr>`;
   const lehrer = S.lehrer;
   const buero = S.team.filter((p) => p.rolle === "buero" || p.rolle === "fahrschule_admin");
   return `<div class="karte"><div class="karte-kopf"><h2>Fahrlehrer (${lehrer.length})</h2>${admin || darfPersonenVerwalten() ? '<button class="knopf haupt" id="tNeuFl" type="button">+ Fahrlehrer anlegen</button>' : ""}</div>
@@ -3327,8 +3327,8 @@ async function zugangSperren(id) {
   if (!p) return;
   const sperren = p.aktiv !== false;
   // Die Datenbank lässt „aktiv“ nur den Betreiber (Super-Admin) ändern. Der Leitung das vorher klar sagen statt einer Fehlermeldung danach.
-  if (!S.profil || S.profil.rolle !== "super_admin") { toast(sperren ? "Sperren kann im Moment nur der Betreiber. Bitte „Passwort neu“ drücken: Dann kommt die Person nicht mehr hinein." : "Freischalten kann im Moment nur der Betreiber.", true); return; }
-  if (!(await bestaetige(sperren ? "Zugang sperren?" : "Zugang freischalten?", sperren ? `${p.name || p.email} kann die App beim nächsten Start nicht mehr öffnen. Ein Gerät, auf dem sie gerade offen ist, arbeitet bis dahin weiter. Bei einem Austritt bitte zusätzlich „Passwort neu“ drücken.` : `${p.name || p.email} kann sich wieder anmelden.`, sperren ? "Ja, sperren" : "Ja, freischalten"))) return;
+  if (!S.profil || S.profil.rolle !== "super_admin") { toast(sperren ? "Sperren kann im Moment nur der Betreiber. Bitte „Neues Passwort“ drücken: Dann kommt die Person nicht mehr hinein." : "Freischalten kann im Moment nur der Betreiber.", true); return; }
+  if (!(await bestaetige(sperren ? "Zugang sperren?" : "Zugang freischalten?", sperren ? `${p.name || p.email} kann die App beim nächsten Start nicht mehr öffnen. Ein Gerät, auf dem sie gerade offen ist, arbeitet bis dahin weiter. Bei einem Austritt bitte zusätzlich „Neues Passwort“ drücken.` : `${p.name || p.email} kann sich wieder anmelden.`, sperren ? "Ja, sperren" : "Ja, freischalten"))) return;
   const res = await supa.from("profiles").update({ aktiv: !sperren }).eq("id", id).select("id");
   if (res.error || !res.data || !res.data.length) { toast("Nicht gespeichert: " + (res.error ? res.error.message : "keine Berechtigung"), true); return; }
   for (const l of [S.team, S.lehrer]) { const x = l.find((y) => y.id === id); if (x) x.aktiv = !sperren; }
