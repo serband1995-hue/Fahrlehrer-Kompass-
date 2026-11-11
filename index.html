@@ -1492,6 +1492,19 @@ body:not(.light) .cw-col.today .cw-dnum{color:var(--gold);}
 .cw-evn{display:block;font-size:11.5px;font-weight:700;line-height:1.3;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
 .cw-fl{display:block;font-size:10px;font-weight:700;color:var(--muted);line-height:1.25;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
 .ct-ev-t.mit-fl{white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+/* K2: Gesamtansicht ohne Auswahl: Gitter blasser, Karte frei von Filter-Reiter (quer) */
+#calBody.fs-leer{opacity:.55;}
+.fs-leer-titel{font-size:16px;font-weight:800;color:var(--txt);line-height:1.3;margin-bottom:6px;}
+@media (orientation:landscape) and (max-height:560px){#fsKeineAuswahl{margin-right:48px !important;}}
+/* K2: Knopf „Zur Büro-Seite“ */
+.fs-buero-link{display:flex;align-items:center;gap:12px;width:100%;min-height:56px;margin-top:14px;padding:14px 16px;border-radius:var(--r-card);background:var(--orange-soft);border:1.5px solid var(--orange-line);color:var(--txt);text-decoration:none;text-align:left;cursor:pointer;}
+.fs-buero-link .fbl-ic{width:40px;height:40px;border-radius:12px;display:flex;align-items:center;justify-content:center;background:var(--surface);color:var(--akzent);flex:0 0 auto;}
+.fs-buero-link .fbl-ic svg{width:22px;height:22px;}
+.fs-buero-link .fbl-txt{flex:1;min-width:0;display:flex;flex-direction:column;gap:2px;}
+.fs-buero-link .fbl-t{font-size:15px;font-weight:800;color:var(--txt);}
+.fs-buero-link .fbl-s{font-size:13px;color:var(--muted);line-height:1.35;}
+.fs-buero-link .fbl-pfeil{font-size:28px;line-height:1;font-weight:700;color:var(--akzent);flex:0 0 auto;}
+body:not(.light) .fs-buero-link .fbl-ic,body:not(.light) .fs-buero-link .fbl-pfeil{color:var(--akzent-bright);}
 .cw-fz{display:block;font-size:10px;font-weight:800;color:var(--gruen-bright,#4a8b45);opacity:.85;margin-top:1px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
 .cw-evstat{color:var(--rot);font-size:9px;}
 .cw-empty{text-align:center;color:var(--faint);font-size:12px;padding:8px 0;}
@@ -2632,6 +2645,8 @@ body:not(.light) .tab-i.on{color:var(--akzent-bright);}
 .fs-status-on,.fs-btn-activate{color:var(--akzent-dark) !important;}
 .fs-btn-activate{background:var(--orange-soft) !important;border-color:var(--orange-line) !important;border-radius:999px !important;}
 .fs-btn-kill,.ap-kill{border-radius:999px !important;}
+/* K2: dunkel war Dunkelgrün auf Dunkelgrün kaum lesbar */
+body:not(.light) .fs-status-on,body:not(.light) .fs-btn-activate{color:var(--akzent-bright) !important;}
 .mini-btn,.pt-tab,.cal-kw,.seg-i,.tab-i span{white-space:nowrap !important;}
 /* Login / AGB-Overlay im selben Look (Logik unverändert) */
 #loginOverlay{background:var(--bg) !important;}
@@ -5855,9 +5870,10 @@ function routeFahrschuleDashboard(){
       <h4 style="margin-bottom:4px;">📅 Kalender</h4>
       <p style="font-size:13.5px;color:var(--muted);">Termine je Fahrlehrer oder Fahrzeug</p>
     </button>
-    ${_fsDarfBueroSeite()?`<a class="res-block" id="fsBueroLink" href="buero.html" onclick="return _fsZurBueroSeite(event)" style="animation:none;display:block;width:100%;text-align:left;text-decoration:none;color:inherit;cursor:pointer;border:1.5px solid var(--akzent,var(--orange));">
-      <h4 style="margin-bottom:4px;">🖥️ Zur Büro-Seite</h4>
-      <p style="font-size:13.5px;color:var(--muted);">Kalender aller Fahrlehrer, Prüfungstafel, Fristen</p>
+    ${_fsDarfBueroSeite()?`<a class="fs-buero-link" id="fsBueroLink" href="buero.html" onclick="return _fsZurBueroSeite(event)">
+      <span class="fbl-ic">${ICN.folder}</span>
+      <span class="fbl-txt"><span class="fbl-t">Zur Büro-Seite</span><span class="fbl-s">Kalender aller Fahrlehrer, Prüfungstafel, Fristen</span></span>
+      <span class="fbl-pfeil" aria-hidden="true">›</span>
     </a>`:''}
     <div class="dash-tiles" style="grid-template-columns:repeat(2,1fr);margin-top:14px;">
       <button class="d-tile" data-fsgo="schueler"><div class="badge">${ICN.users}</div><div class="dt-n" data-count="${act}">0</div><div class="dt-l">Alle Schüler</div></button>
@@ -6311,7 +6327,7 @@ function routeFahrschuleLehrer(){
     ${buero?'':`<div class="btn-row" style="margin-top:10px;"><button class="btn btn-primary" onclick="neuenFahrlehrerAnlegen(${_jsArg(_fsAgg.fahrschuleId)})">+ Neuen Fahrlehrer anlegen</button></div>`}
   </div>
   ${buero?'':`<div class="res-block" style="animation:none;"><h4>🗂️ Büro-Zugänge</h4>
-    <p style="font-size:13px;color:var(--muted);">Für Mitarbeiterinnen wie Christina — sehen Kalender-Kategorien, Fahrcheck-Kontrolle, Schichtplan, Notizen. Kein Zugriff auf Fahrlehrer-Konten oder Kill-Switch.</p>
+    <p style="font-size:13px;color:var(--muted);">Für Mitarbeiter im Büro. Sie sehen Kalender, Fahrcheck-Kontrolle, Schichtplan und Notizen.</p>
     <div class="btn-row" style="margin-top:8px;"><button class="btn btn-primary" onclick="neuenBueroZugangAnlegen(${_jsArg(_fsAgg.fahrschuleId)})">+ Büro-Zugang anlegen</button></div>
   </div>`}</div>`;
 }
@@ -6496,8 +6512,8 @@ function _fsKeineAuswahl(){ return !!_fsAgg&&!_fsCalLehrerFilter.length&&!_fsCal
 function _fsKeineAuswahlKarteHTML(){
   if(!_fsKeineAuswahl())return "";
   return `<div class="res-block" id="fsKeineAuswahl" style="animation:none;text-align:center;margin:4px 0 14px;border:1.5px solid var(--akzent,var(--orange));">
-    <h4 style="margin-bottom:6px;">Noch kein Fahrlehrer gewählt</h4>
-    <p class="muted-p" style="margin:0 0 12px;">Wähle einen Fahrlehrer oder ein Fahrzeug. Dann siehst du die Termine.</p>
+    <div class="fs-leer-titel">Noch kein Fahrlehrer gewählt</div>
+    <p class="muted-p" style="margin:0 0 12px;">Wähle einen Fahrlehrer oder ein Fahrzeug.</p>
     <button class="btn btn-primary" id="fsKeineAuswahlBtn" style="min-height:44px;" onclick="_fsOpenFilterPanel()">Fahrlehrer wählen</button>
   </div>`;
 }
@@ -12845,6 +12861,7 @@ function eventMatchesFilter(e,iso){
 // Freie Slots: Fahrzeug/Fahrcheck-Filter gelten nur für echte Termine, nicht für unbelegte Zeit —
 // bei aktivem Fahrzeug- oder FC-Filter werden freie Slots daher ausgeblendet (kein Treffer möglich).
 function slotMatchesFilter(s){
+  if(_fsKeineAuswahl())return false; // K2: Gesamtansicht ohne Fahrlehrer/Fahrzeug: keine „+ frei“-Felder (Termin ohne Fahrlehrer)
   if(_calFzFilter||_calFcOffen)return false;
   if(_calFilter!=="alle"&&s.art!==_calFilter)return false;
   return true;
@@ -12904,9 +12921,9 @@ function routeKalender(ansicht,datum){
       <div class="cal-title-wrap"><div class="cal-title" id="calTitle">${calTitle()}</div><div class="cal-kw" id="calKW">${calKW()}</div></div>
       <button class="cal-arrow" id="calNext"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M9 18l6-6-6-6"/></svg></button>
     </div>
-    <div id="calBody">${_calView==="monat"?calMonthHTML():_calView==="woche"?calWeekHTML():calDayHTML()}</div>
+    <div id="calBody"${_fsKeineAuswahl()?' class="fs-leer"':''}>${_calView==="monat"?calMonthHTML():_calView==="woche"?calWeekHTML():calDayHTML()}</div>
     </div>
-    ${_fsAgg?`<button class="cal-fab" id="calFab" aria-label="Hinzufügen"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg></button>`:''}`;
+    ${_fsAgg&&!_fsKeineAuswahl()?`<button class="cal-fab" id="calFab" aria-label="Hinzufügen"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg></button>`:''}`;
   view.innerHTML=html;
   bindCalControls();
   if(_fsAgg)_fsInjectFilterTiles();
@@ -13229,7 +13246,7 @@ function calDayHTML(){
   const cnt=countRange(iso,iso);
   const doneUE=dayUE(iso,true), planUE=dayUE(iso,false);
   const hol=holidayName(iso);
-  return `${hol?`<div class="cd-holiday">🎌 ${esc(hol)} · Feiertag in Hessen</div>`:''}<div class="cd-summary"><span><b>${evs.filter(e=>!e.doppelt&&e.art!=="block").length}</b> belegt</span><span><b>${free.length}</b> frei</span>${_fsAgg?'':`<span><b>${planUE}</b> UE</span>`}</div>
+  return `${hol?`<div class="cd-holiday">🎌 ${esc(hol)} · Feiertag in Hessen</div>`:''}${_fsKeineAuswahl()?'':`<div class="cd-summary"><span><b>${evs.filter(e=>!e.doppelt&&e.art!=="block").length}</b> belegt</span><span><b>${free.length}</b> frei</span>${_fsAgg?'':`<span><b>${planUE}</b> UE</span>`}</div>`}
     <div class="ct-wrap" style="height:${totalH}px">${hourLines}${nowLine}<div class="ct-events">${blocks}</div></div>`;
 }
 // UE eines Tages (done=nur absolvierte)

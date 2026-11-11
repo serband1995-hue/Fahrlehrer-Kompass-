@@ -2115,6 +2115,28 @@ async function k2Fenster(page, name) {
     await zu();
   } else fehler(`K2 ${name}: kein Termin im Kalender zum Antippen`);
 }
+// Knöpfe und Haken in Tabellenzellen: Höhe (und Breite der Haken) in px
+async function k2TabellenKnoepfe(page, grenze = 43.5) {
+  return page.evaluate((g) => {
+    const l = [...document.querySelectorAll(".tabelle td .knopf, .tabelle td .haken:not(.mini)")].filter((e) => e.offsetParent);
+    const klein = l.filter((e) => { const b = e.getBoundingClientRect(); return b.height < g || (e.classList.contains("haken") && b.width < g); }).map((e) => (e.textContent.trim() || e.className) + " " + Math.round(e.getBoundingClientRect().height));
+    return { anzahl: l.length, klein, hoehen: [...new Set(l.map((e) => (e.classList.contains("haken") ? "h" : "k") + Math.round(e.getBoundingClientRect().height)))] };
+  }, grenze);
+}
+// Kontrast Text zu Hintergrund (Hintergrund durch alle Ebenen zusammengesetzt)
+async function k2Kontrast(page, sel) {
+  return page.evaluate((sel) => {
+    const rgba = (c) => { const m = c.match(/[\d.]+/g).map(Number); return [m[0], m[1], m[2], m.length > 3 ? m[3] : 1]; };
+    const el = document.querySelector(sel); const ebenen = [];
+    for (let a = el; a; a = a.parentElement) ebenen.push(rgba(getComputedStyle(a).backgroundColor));
+    let bg = [255, 255, 255];
+    for (const e of ebenen.reverse()) bg = bg.map((x, i) => e[i] * e[3] + x * (1 - e[3]));
+    const fg = rgba(getComputedStyle(el).color);
+    const lum = (c) => { const v = c.slice(0, 3).map((x) => { x /= 255; return x <= 0.03928 ? x / 12.92 : ((x + 0.055) / 1.055) ** 2.4; }); return 0.2126 * v[0] + 0.7152 * v[1] + 0.0722 * v[2]; };
+    const a = lum(fg), b = lum(bg);
+    return (Math.max(a, b) + 0.05) / (Math.min(a, b) + 0.05);
+  }, sel);
+}
 {
   const GROESSEN = [[360, 740], [412, 915], [740, 360], [768, 1024]];
   const MODI = [["bu-1", "Büro"], ["ad-1", "Leitung"], ["vorf", "Vorführung"], ["vorf-dunkel", "Vorführung dunkel"]];
@@ -2123,6 +2145,7 @@ async function k2Fenster(page, name) {
     const name = `${mname} ${w}×${h}`;
     const { page, ctx, konsole } = modus.startsWith("vorf") ? await oeffneVorfuehrung({ breite: w, hoehe: h, dunkel: modus === "vorf-dunkel" })
       : await oeffne({ nutzer: modus, breite: w, hoehe: h, hash: "#heute", wer: modus === "bu-1" ? "Paula Muster" : null });
+    if (modus.startsWith("vorf")) { const k = await k2Kontrast(page, "#vorfuehrung"); if (k < 4.5) fehler(`K2 ${name}: Vorführ-Hinweis Kontrast nur ${k.toFixed(2)}:1`); }
     // Start: Inhalt (Seitentitel) höchstens etwa 200 px unter dem oberen Rand (Hochformat), Menü zu, „Drucken“ weg
     const start = await page.evaluate(() => ({ top: document.getElementById("titel").getBoundingClientRect().top, offen: document.body.classList.contains("menue-offen"), drucken: !!document.getElementById("drucken").offsetParent, menue: !!document.getElementById("menueKnopf").offsetParent }));
     if (h > w && start.top > 200) fehler(`K2 ${name}: Inhalt beginnt erst bei ${Math.round(start.top)} px`);
@@ -2152,6 +2175,28 @@ async function k2Fenster(page, name) {
         if (mehrzeilig.length) fehler(`K2 ${name}: Name auf mehreren Zeilen: ${mehrzeilig[0].n}`);
       }
       if (href === "#heute" && modus.startsWith("vorf")) await page.evaluate(() => window.scrollTo(0, 0));
+      // Tippflächen in Tabellen: Knöpfe und Haken mindestens 44 px
+      if (["#schueler", "#pruefungen", "#fristen", "#fahrchecks"].includes(href)) {
+        const k = await k2TabellenKnoepfe(page);
+        if (!k.anzahl) fehler(`K2 ${name} ${href}: keine Knöpfe in Tabellen gefunden`);
+        if (k.klein.length) fehler(`K2 ${name} ${href}: Knöpfe/Haken in Tabellen unter 44 px: ${k.klein.slice(0, 3).join(", ")}`);
+      }
+      // Kalender am Handy: ganzer Vorname im Spaltenkopf, in den Termin-Kacheln mindestens der Vorname des Schülers
+      if (href === "#kalender" && (w === 360 || w === 412)) {
+        const kal = await page.evaluate(() => {
+          const koepfe = [...document.querySelectorAll(".k-spalte .k-kopf .k-lname")].filter((e) => e.offsetParent).map((e) => ({ t: e.textContent.trim(), ab: e.scrollWidth > e.clientWidth + 1 || /…$/.test(e.textContent.trim()) }));
+          const kacheln = [...document.querySelectorAll(".k-termin .k-name")].filter((e) => e.offsetParent && e.firstChild).map((e) => {
+            const txt = e.firstChild.textContent, r = document.createRange(); r.setStart(e.firstChild, 0); r.setEnd(e.firstChild, (txt.indexOf(" ") + 1 || txt.length + 1) - 1);
+            return { t: txt, passt: r.getBoundingClientRect().width <= e.clientWidth + 1 };
+          });
+          return { koepfe, kacheln, tag: !!document.querySelector(".k-flaeche[data-lehrer]") };
+        });
+        if (!kal.tag) fehler(`K2 ${name}: Kalender nicht in der Tagesansicht`);
+        const ab = kal.koepfe.filter((x) => x.ab || /^Fahrlehrer/.test(x.t));
+        if (!kal.koepfe.length || ab.length) fehler(`K2 ${name}: Kalender-Spaltenkopf abgeschnitten oder mit „Fahrlehrer“: ${JSON.stringify(ab.slice(0, 2))}`);
+        const zu = kal.kacheln.filter((x) => !x.passt);
+        if (!kal.kacheln.length || zu.length) fehler(`K2 ${name}: Vorname in Termin-Kachel abgeschnitten: ${zu.slice(0, 2).map((x) => x.t).join(", ")}`);
+      }
     }
     if (w !== 768 || modus === "bu-1") await k2Fenster(page, name);
     if (FOTOS && (modus === "vorf" || modus === "vorf-dunkel")) { await page.evaluate(() => { location.hash = "#schueler"; }); await page.waitForTimeout(300); await page.screenshot({ path: join(FOTOS, `k2-${modus}-schueler-${w}x${h}.png`) }); }
@@ -2180,6 +2225,16 @@ async function k2Fenster(page, name) {
     if (!r.drucken) fehler(`K2 PC ${w}: „Drucken“ fehlt`);
     if (!r.wer) fehler(`K2 PC ${w}: „Bedient gerade“ fehlt in der Seitenleiste`);
     if (w === 1366 && r.seite !== 272) fehler(`K2 PC 1366: Seitenleiste ${r.seite} px statt 272 px`);
+    if (w === 1366) {
+      // Knöpfe und Haken in Tabellen am PC wie bisher (Knopf klein 36 px, Haken 34 px)
+      for (const h of ["#schueler", "#pruefungen"]) {
+        await page.evaluate((x) => { location.hash = x; }, h); await page.waitForTimeout(350);
+        const k = await k2TabellenKnoepfe(page, 0);
+        if (k.hoehen.some((x) => !["k36", "k44", "h34"].includes(x))) fehler(`K2 PC 1366 ${h}: Höhen in Tabellen geändert: ${k.hoehen.join(", ")}`);
+      }
+      await page.evaluate(() => { location.hash = "#kalender"; }); await page.waitForTimeout(350);
+      if (await page.evaluate(() => [...document.querySelectorAll(".k-lname .k-kurz")].some((e) => e.offsetParent))) fehler("K2 PC 1366: Kalender zeigt nur den Vornamen");
+    }
     await ctx.close();
   }
   // Vorführung: nur erfundene Büro-Personen „… Muster“, keine Test-Konten, „Heute zu tun“ mit Aufgaben, Notizen und Quittungen

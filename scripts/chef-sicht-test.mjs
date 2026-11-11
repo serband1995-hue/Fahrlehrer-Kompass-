@@ -41,6 +41,7 @@ await new Promise((ok) => server.listen(0, "127.0.0.1", ok));
 const basis = `http://127.0.0.1:${server.address().port}/`;
 const browser = await chromium.launch(process.env.CHROMIUM_PATH ? { executablePath: process.env.CHROMIUM_PATH } : {});
 const BILDER = process.env.CHEF_BILDER || "";
+const BILDER2 = process.env.CHEF_BILDER2 || ""; // Nacharbeit: Bilder bei 412 hell/dunkel und 740×360
 
 let fehlerZahl = 0, okZahl = 0;
 async function pruefe(id, text, fn) {
@@ -147,6 +148,7 @@ for (const g of GROESSEN) {
       if (r.f) return r.f;
       const f = [];
       if (!/Noch kein Fahrlehrer gewählt/i.test(r.t)) f.push("Text fehlt: " + r.t);
+      else if (!r.t.includes("Noch kein Fahrlehrer gewählt")) f.push("Überschrift in Großbuchstaben: " + r.t);
       if (/[–—]/.test(r.t)) f.push("Gedankenstrich im Text");
       if (!r.hatKnopf) f.push("Knopf „Fahrlehrer wählen“ fehlt");
       else if (r.hoehe < 44) f.push(`Knopf nur ${r.hoehe} px hoch`);
@@ -184,6 +186,43 @@ for (const g of GROESSEN) {
     const f = [];
     if (!a) f.push("Büro-Kalender ohne Karte");
     if (b) f.push("Karte trotz Fahrzeug-Auswahl");
+    return f;
+  });
+
+  for (const ansicht of ["woche", "tag", "monat"]) {
+    await pruefe(`A5 ${P}`, `ohne Auswahl (${ansicht}): keine „+ frei“-Felder, keine Zählkacheln, kein „+“-Knopf; nach Auswahl wieder da`, async () => {
+      const zaehle = () => page.evaluate(() => ({ frei: document.querySelectorAll("#calBody .cw-free, #calBody .ct-free").length, zahl: document.querySelectorAll("#calBody .cd-summary").length, fab: !!document.querySelector("#calFab") && getComputedStyle(document.querySelector("#calFab")).display !== "none" }));
+      await ev(page, `_fsCalLehrerFilter=[];_fsCalFahrzeugFilter=[]; routeKalender("${ansicht}","${TAG}")`); await warte(page);
+      const leer = await zaehle();
+      await ev(page, `_fsCalLehrerFilter=["L1"]; routeKalender("${ansicht}","${TAG}")`); await warte(page);
+      const voll = await zaehle();
+      await ev(page, `_fsCalLehrerFilter=[];`);
+      const f = [];
+      if (leer.frei) f.push(`${leer.frei} „+ frei“-Felder ohne Auswahl`);
+      if (leer.zahl) f.push("Zählkacheln ohne Auswahl");
+      if (leer.fab) f.push("„+“-Knopf ohne Auswahl");
+      if (!voll.fab) f.push("„+“-Knopf nach Auswahl fehlt");
+      if (ansicht === "woche" && !voll.frei) f.push("„+ frei“-Felder nach Auswahl fehlen");
+      if (ansicht === "tag" && !voll.zahl) f.push("Zählkacheln nach Auswahl fehlen");
+      return f;
+    });
+  }
+  await pruefe(`A6 ${P}`, "Karte wird von Filter-Reiter und „+“-Knopf nicht überdeckt (Woche und Tag)", async () => {
+    const f = [];
+    for (const ansicht of ["woche", "tag"]) {
+      await ev(page, `_fsCalLehrerFilter=[];_fsCalFahrzeugFilter=[]; routeKalender("${ansicht}","${TAG}")`); await warte(page);
+      const r = await page.evaluate(() => {
+        const k = document.getElementById("fsKeineAuswahl"); if (!k) return ["keine Karte"];
+        const a = k.getBoundingClientRect(); const o = [];
+        for (const sel of [".fs-filter-tab", "#calFab", "#fab"]) {
+          const e = document.querySelector(sel); if (!e || getComputedStyle(e).display === "none") continue;
+          const b = e.getBoundingClientRect(); if (!b.width || !b.height) continue;
+          if (a.left < b.right && a.right > b.left && a.top < b.bottom && a.bottom > b.top) o.push(sel + " überdeckt die Karte");
+        }
+        return o;
+      });
+      f.push(...r.map((x) => ansicht + ": " + x));
+    }
     return f;
   });
 
@@ -231,11 +270,14 @@ for (const g of GROESSEN) {
     await ev(page, `routeKalender("woche","${TAG}")`); await warte(page);
     const w = await page.evaluate(() => ({ n: document.querySelectorAll("#calBody .cw-ev").length, fl: document.querySelectorAll(".cw-fl,.ct-fl").length, karte: !!document.getElementById("fsKeineAuswahl"), filter: !!document.getElementById("fsCalTiles") }));
     await ev(page, `routeKalender("tag","${TAG}")`); await warte(page);
-    const t = await page.evaluate(() => ({ n: document.querySelectorAll("#calBody .ct-ev").length, fl: document.querySelectorAll(".cw-fl,.ct-fl").length, text: document.getElementById("calBody").innerText }));
+    const t = await page.evaluate(() => ({ n: document.querySelectorAll("#calBody .ct-ev").length, fl: document.querySelectorAll(".cw-fl,.ct-fl").length, text: document.getElementById("calBody").innerText, zahl: document.querySelectorAll("#calBody .cd-summary").length }));
+    const wFrei = await (async () => { await ev(page, `routeKalender("woche","${TAG}")`); await warte(page); return page.evaluate(() => document.querySelectorAll("#calBody .cw-free").length); })();
     const f = [];
     if (!w.n || !t.n) f.push(`Termine fehlen (Woche ${w.n}, Tag ${t.n})`);
     if (w.fl || t.fl || /\bAnna\b|\bBernd\b/.test(t.text)) f.push("Fahrlehrer-Name in der normalen App");
     if (w.karte || w.filter) f.push("Karte oder Gesamtansicht-Filter in der normalen App");
+    if (!wFrei) f.push("„+ frei“-Felder fehlen in der normalen App");
+    if (!t.zahl) f.push("Zählkacheln fehlen in der normalen App");
     return f;
   });
   await pruefe(`H1 ${P}`, "Kalender (normal, Woche/Tag) nicht breiter als der Bildschirm", () => zuBreit(page));
@@ -347,7 +389,8 @@ for (const g of GROESSEN) {
       const a = [...document.querySelectorAll("#view a, #view button")].find((x) => /Zur Büro-Seite/i.test(x.innerText));
       if (!a) return null;
       const b = a.getBoundingClientRect();
-      return { href: a.getAttribute("href"), h: b.height, w: b.width, t: a.innerText.replace(/\s+/g, " ") };
+      const pf = a.querySelector(".fbl-pfeil"); const ic = a.querySelector("svg");
+      return { href: a.getAttribute("href"), h: b.height, w: b.width, t: a.innerText.replace(/\s+/g, " "), pfeil: !!pf && pf.textContent.trim() === "›" && pf.getBoundingClientRect().width > 0, svg: !!ic && ic.getBoundingClientRect().width > 0, bg: getComputedStyle(a).backgroundColor, emoji: /🖥/.test(a.innerText) };
     });
     if (!r) return "Knopf fehlt";
     const f = [];
@@ -355,6 +398,10 @@ for (const g of GROESSEN) {
     if (r.h < 44 || r.w <= 0) f.push(`Größe ${r.w}×${r.h}`);
     if (!/Kalender aller Fahrlehrer, Prüfungstafel, Fristen/i.test(r.t)) f.push("Untertitel fehlt");
     if (/[–—]/.test(r.t)) f.push("Gedankenstrich");
+    if (!r.pfeil) f.push("Pfeil „›“ fehlt");
+    if (!r.svg) f.push("Strichsymbol fehlt");
+    if (r.emoji) f.push("noch Emoji 🖥️");
+    if (/rgba\(0, 0, 0, 0\)|rgb\(255, 255, 255\)/.test(r.bg)) f.push("Hintergrund weiß/leer: " + r.bg);
     return f;
   });
   await pruefe(`H3 ${P}`, "Start der Gesamtansicht nicht breiter als der Bildschirm", () => zuBreit(page));
@@ -402,16 +449,42 @@ for (const g of GROESSEN) {
       try { await ev(page, s); } catch (e) { f.push(s + " scheiterte: " + String(e.message || e).split("\n")[0]); continue; }
       await warte(page, 300);
       const t = await page.evaluate(() => (document.getElementById("view").innerText || "") + " " + (document.getElementById("fsCalTiles")?.innerText || ""));
-      const m = t.match(/.{0,20}(Slug|Dashboard).{0,20}/i);
+      const m = t.match(/.{0,20}(Slug|Dashboard|Kill-Switch).{0,20}/i);
       if (m) f.push(`${s}: „${m[0].replace(/\s+/g, " ")}“`);
     }
     await ev(page, `openDrawer()`); await warte(page, 300);
     const d = await page.evaluate(() => document.querySelector(".drawer-nav").innerText);
     await ev(page, `closeDrawer()`);
-    const m = d.match(/.{0,20}(Slug|Dashboard).{0,20}/i);
+    const m = d.match(/.{0,20}(Slug|Dashboard|Kill-Switch).{0,20}/i);
     if (m) f.push(`Mehr-Menü: „${m[0].replace(/\s+/g, " ")}“`);
     return f;
   });
+  for (const hell of [true, false]) {
+    await pruefe(`E3 ${P}`, `Fahrlehrer-Seite (${hell ? "hell" : "dunkel"}): Knöpfe „Passwort zurücksetzen“/„Buchungslinks“ und „Aktiv“ mit Kontrast mind. 4,5:1; Büro-Hinweis ohne Namen und Gedankenstrich`, async () => {
+      await page.evaluate((h) => document.body.classList.toggle("light", h), hell);
+      await ev(page, `routeFahrschuleLehrer()`); await warte(page, 400);
+      if (BILDER2 && g.w === 412) await page.screenshot({ path: join(BILDER2, `fahrlehrer-${hell ? "hell" : "dunkel"}-412.png`), fullPage: false });
+      const r = await page.evaluate(() => {
+        const rgb = (c) => { const m = c.match(/[\d.]+/g) || []; return { r: +m[0] || 0, g: +m[1] || 0, b: +m[2] || 0, a: m[3] == null ? 1 : +m[3] }; };
+        const lum = (c) => { const f = (v) => { v /= 255; return v <= 0.03928 ? v / 12.92 : Math.pow((v + 0.055) / 1.055, 2.4); }; return 0.2126 * f(c.r) + 0.7152 * f(c.g) + 0.0722 * f(c.b); };
+        const hinter = (el) => { const schichten = []; for (let e = el; e; e = e.parentElement) { const c = rgb(getComputedStyle(e).backgroundColor); if (c.a > 0) schichten.push(c); if (c.a >= 1) break; }
+          let erg = schichten.length && schichten[schichten.length - 1].a >= 1 ? schichten.pop() : rgb(getComputedStyle(document.body).backgroundColor);
+          while (schichten.length) { const c = schichten.pop(); erg = { r: c.r * c.a + erg.r * (1 - c.a), g: c.g * c.a + erg.g * (1 - c.a), b: c.b * c.a + erg.b * (1 - c.a), a: 1 }; } return erg; };
+        const kontrast = (el) => { const a = lum(rgb(getComputedStyle(el).color)), b = lum(hinter(el)); return (Math.max(a, b) + 0.05) / (Math.min(a, b) + 0.05); };
+        const els = [...document.querySelectorAll("#view .fs-btn-activate, #view .fs-status-on")];
+        const t = document.getElementById("view").innerText;
+        return { werte: els.map((e) => [e.innerText.trim(), Math.round(kontrast(e) * 100) / 100]), christina: /Christina/.test(t), strich: /Büro[^]{0,200}[—–]/.test(t) || /Mitarbeiter[^.]*[—–]/.test(t), kill: /Kill-Switch/i.test(t) };
+      });
+      const f = [];
+      if (!r.werte.length) f.push("keine Knöpfe gefunden");
+      r.werte.filter((x) => x[1] < 4.5).forEach((x) => f.push(`„${x[0]}“ Kontrast ${x[1]}:1`));
+      if (r.christina) f.push("echter Vorname im Hinweis");
+      if (r.strich) f.push("Gedankenstrich im Büro-Hinweis");
+      if (r.kill) f.push("„Kill-Switch“ sichtbar");
+      return f;
+    });
+  }
+  await page.evaluate(() => document.body.classList.add("light"));
   await pruefe(`H4 ${P}`, "Seiten der Gesamtansicht nicht breiter als der Bildschirm", async () => {
     const f = [];
     for (const s of ["routeFahrschuleDashboard()", "routeFahrschuleLehrer()", "routeHome()"]) { await ev(page, s); await warte(page, 300); const z = await zuBreit(page); if (z) f.push(s + ": " + z); }
@@ -453,6 +526,18 @@ for (const g of GROESSEN) {
     });
   });
 
+  if (BILDER2 && (g.w === 412 || g.w === 740)) {
+    for (const hell of [true, false]) {
+      const th = hell ? "hell" : "dunkel", gr = g.w === 412 ? "412" : "740x360";
+      await daten(page, "fs");
+      await page.evaluate((h) => document.body.classList.toggle("light", h), hell);
+      for (const [name, code] of [["kalender-woche-leer", `routeKalender("woche","${TAG}")`], ["kalender-tag-leer", `routeKalender("tag","${TAG}")`], ["kalender-woche-anna", `_fsCalLehrerFilter=["L1"]; routeKalender("woche","${TAG}")`], ["start-buero-knopf", `_fsCalLehrerFilter=[]; routeFahrschuleDashboard()`]]) {
+        await ev(page, code); await warte(page, 900);
+        await page.screenshot({ path: join(BILDER2, `${name}-${th}-${gr}.png`) });
+      }
+    }
+    await page.evaluate(() => document.body.classList.add("light"));
+  }
   await pruefe(`H5 ${P}`, "keine JS-Fehler", async () => (jsFehler.length ? jsFehler.slice(0, 3) : null));
   await ctx.close();
 }

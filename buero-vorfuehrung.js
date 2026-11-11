@@ -3,8 +3,10 @@
    nichts verlässt den Browser. Alle Namen sind erfunden (keine echten Schüler).
    - Vorführung: buero.html?vorfuehrung  (für das Teammeeting, auch ohne Internet-Datenbank)
    - Tests:      scripts/buero-test.mjs setzt vorher window.__FAKE mit eigenen Daten. */
-const VORNAMEN = ["Lena", "Jonas", "Mira", "Elias", "Sofia", "Noah", "Emilia", "Ben", "Hanna", "Luca", "Ella", "Finn", "Lia", "Paul", "Ida", "Emil", "Nora", "Theo", "Clara", "Anton", "Maja", "Leon", "Frida", "Karl"];
-const NACHNAMEN = ["Testmann", "Beispiel", "Muster", "Probe", "Demo", "Vorlage", "Platzhalter", "Fiktiv"];
+// 24 verschiedene Vornamen, keiner gleich oder ähnlich wie bei Fahrlehrern oder Büro-Personen der Vorführung
+const VORNAMEN = ["Lena", "Jonas", "Greta", "Elias", "Sofia", "Max", "Emilia", "Ben", "Hanna", "Luca", "Ella", "Finn", "Lia", "Jakob", "Ida", "Emil", "Nora", "Theo", "Clara", "Oskar", "Maja", "Leon", "Frida", "Karl"];
+// Nachnamen, die die Schüler klar als erfunden kennzeichnen (im Wechsel)
+const NACHNAMEN = ["Beispiel", "Probe", "Vorlage", "Muster"];
 
 function addTage(iso, n) { const d = new Date(iso + "T12:00:00"); d.setDate(d.getDate() + n); return d.toISOString().slice(0, 10); }
 function addMonate(iso, n) { const d = new Date(iso + "T12:00:00"); d.setMonth(d.getMonth() + n); return d.toISOString().slice(0, 10); }
@@ -12,23 +14,24 @@ function addMonate(iso, n) { const d = new Date(iso + "T12:00:00"); d.setMonth(d
 function bauDaten(heute) {
   const FS = "fs-test-1";
   const lehrer = [
-    { id: "fl-1", name: "Fahrlehrer Anton", email: "anton@example.org", rolle: "fahrlehrer", fahrschule_id: FS, aktiv: true, agb_akzeptiert_version: "1.0", klassen: ["B", "BE"] },
-    { id: "fl-2", name: "Fahrlehrerin Berta", email: "berta@example.org", rolle: "fahrlehrer", fahrschule_id: FS, aktiv: true, agb_akzeptiert_version: "1.0" },
-    { id: "fl-3", name: "Fahrlehrer Cem", email: "cem@example.org", rolle: "fahrlehrer", fahrschule_id: FS, aktiv: true, agb_akzeptiert_version: "1.0" },
-    { id: "fl-4", name: "Fahrlehrer Dario (extern)", email: "dario@example.org", rolle: "fahrlehrer", fahrschule_id: FS, aktiv: true, agb_akzeptiert_version: "1.0", klassen: ["C1", "C1E", "C", "CE"], ohne_app: true },
+    { id: "fl-1", name: "Anton Muster", email: "anton@example.org", rolle: "fahrlehrer", fahrschule_id: FS, aktiv: true, agb_akzeptiert_version: "1.0", klassen: ["B", "BE"] },
+    { id: "fl-2", name: "Berta Muster", email: "berta@example.org", rolle: "fahrlehrer", fahrschule_id: FS, aktiv: true, agb_akzeptiert_version: "1.0" },
+    { id: "fl-3", name: "Cem Muster", email: "cem@example.org", rolle: "fahrlehrer", fahrschule_id: FS, aktiv: true, agb_akzeptiert_version: "1.0" },
+    { id: "fl-4", name: "Dario Muster (extern)", email: "dario@example.org", rolle: "fahrlehrer", fahrschule_id: FS, aktiv: true, agb_akzeptiert_version: "1.0", klassen: ["C1", "C1E", "C", "CE"], ohne_app: true },
   ];
   const buero = [
     { id: "bu-1", name: "Büro Muster", email: "buero@example.org", rolle: "buero", fahrschule_id: FS, aktiv: true, agb_akzeptiert_version: "1.0" },
     { id: "ad-1", name: "Leitung Muster", email: "leitung@example.org", rolle: "fahrschule_admin", fahrschule_id: FS, aktiv: true, agb_akzeptiert_version: "1.0" },
     { id: "sa-1", name: "Super-Admin", email: "super@example.org", rolle: "super_admin", fahrschule_id: FS, aktiv: true, agb_akzeptiert_version: "1.0" },
-    { id: "fl-x", name: "Fahrlehrerin Elif", email: "fl@example.org", rolle: "fahrlehrer", fahrschule_id: FS, aktiv: true, agb_akzeptiert_version: "1.0" },
+    { id: "fl-x", name: "Elif Muster", email: "fl@example.org", rolle: "fahrlehrer", fahrschule_id: FS, aktiv: true, agb_akzeptiert_version: "1.0" },
     { id: "gesperrt-1", name: "Gesperrt Test", email: "gesperrt@example.org", rolle: "buero", fahrschule_id: FS, aktiv: false, agb_akzeptiert_version: "1.0" },
     { id: "agb-1", name: "Ohne AGB", email: "agb@example.org", rolle: "buero", fahrschule_id: FS, aktiv: true, agb_akzeptiert_version: null },
   ];
   const schueler = [];
   let n = 0;
-  for (const nach of NACHNAMEN) for (const vor of VORNAMEN.slice(0, 3)) {
+  for (let i = 0; i < 24; i++) {
     n++;
+    const vor = VORNAMEN[i], nach = NACHNAMEN[i % NACHNAMEN.length];
     const fl = n % 9 === 0 ? null : lehrer[n % lehrer.length].id;
     schueler.push({
       id: "s" + n, fahrschule_id: FS, fahrlehrer_id: fl, name: `${vor} ${nach}`, telefon: "0170 000" + String(n).padStart(4, "0"),
@@ -76,11 +79,12 @@ function bauDaten(heute) {
     { id: "pt-4", fahrschule_id: FS, schueler_id: "s8", fahrlehrer_id: "fl-3", art: "praxis", klasse: "CE", datum: addTage(heute, -1), von: "10:00", status: "geplant", entgelt_bezahlt: true, tuev_gutschein: true, as_portal: true },
     { id: "pt-5", fahrschule_id: FS, schueler_id: "s9", fahrlehrer_id: "fl-1", art: "praxis", klasse: "B", datum: addTage(heute, -6), von: "10:00", status: "bestanden", entgelt_bezahlt: true, tuev_gutschein: true, as_portal: true },
   ];
+  const sName = (id) => (schueler.find((x) => x.id === id) || {}).name || "";
   const jetztMonat = heute.slice(0, 7) + "-03T10:00:00Z";
   const fahrschule_empfehlungen = [
-    { id: "e1", fahrschule_id: FS, schueler_id: "s4", schueler_name: "Jonas Muster", fahrlehrer_id: "fl-1", fahrlehrer_name: "Fahrlehrer Anton", typ: "akademie", status: "empfohlen", erstellt_am: jetztMonat },
-    { id: "e2", fahrschule_id: FS, schueler_id: "s6", schueler_name: "Jonas Beispiel", fahrlehrer_id: "fl-2", fahrlehrer_name: "Fahrlehrerin Berta", typ: "simulator", status: "zugangsdaten_ausgegeben", erstellt_am: jetztMonat },
-    { id: "e3", fahrschule_id: FS, schueler_id: "s10", schueler_name: "Lena Demo", fahrlehrer_id: "fl-1", fahrlehrer_name: "Fahrlehrer Anton", typ: "akademie", status: "bezahlt", betrag: 100, aufteilung: { fahrlehrer: 15, fahrschule: 45, plattform: 20, akademie: 20 }, erstellt_am: jetztMonat, aktualisiert_am: jetztMonat },
+    { id: "e1", fahrschule_id: FS, schueler_id: "s4", schueler_name: sName("s4"), fahrlehrer_id: "fl-1", fahrlehrer_name: "Anton Muster", typ: "akademie", status: "empfohlen", erstellt_am: jetztMonat },
+    { id: "e2", fahrschule_id: FS, schueler_id: "s6", schueler_name: sName("s6"), fahrlehrer_id: "fl-2", fahrlehrer_name: "Berta Muster", typ: "simulator", status: "zugangsdaten_ausgegeben", erstellt_am: jetztMonat },
+    { id: "e3", fahrschule_id: FS, schueler_id: "s10", schueler_name: sName("s10"), fahrlehrer_id: "fl-1", fahrlehrer_name: "Anton Muster", typ: "akademie", status: "bezahlt", betrag: 100, aufteilung: { fahrlehrer: 15, fahrschule: 45, plattform: 20, akademie: 20 }, erstellt_am: jetztMonat, aktualisiert_am: jetztMonat },
   ];
   const provisionen = [{ id: "pv1", fahrlehrer_id: "fl-1", fahrschule_id: FS, typ: "akademie", schueler_id: "s10", betrag: 15, status: "offen", erstellt_am: jetztMonat }];
   return {
@@ -92,8 +96,8 @@ function bauDaten(heute) {
       profiles: [...lehrer, ...buero],
       schueler, kalender_termine: termine, kalender_pruefungen: pruefungen, pruefungstermine,
       // Theorie-Besuch (14.10.2026): s1 hat 13 von 14 Lektionen (es fehlt 14), s2 hat Lektion 7 + 8 am selben Abend
-      theorie_teilnahme: ["1", "2", "3", "4", "5", "6", "7", "8", "9", "10", "11", "12", "13"].map((l, i) => ({ id: "tt-" + i, fahrschule_id: FS, schueler_id: "s1", lektion: l, datum: addTage(heute, -40 + i), bearbeiter: "Fahrlehrer Anton", entfernt_am: null }))
-        .concat([{ id: "tt-a", fahrschule_id: FS, schueler_id: "s2", lektion: "7", datum: addTage(heute, -3), bearbeiter: "Fahrlehrer Anton", entfernt_am: null }, { id: "tt-b", fahrschule_id: FS, schueler_id: "s2", lektion: "8", datum: addTage(heute, -3), bearbeiter: "Fahrlehrer Anton", entfernt_am: null }]),
+      theorie_teilnahme: ["1", "2", "3", "4", "5", "6", "7", "8", "9", "10", "11", "12", "13"].map((l, i) => ({ id: "tt-" + i, fahrschule_id: FS, schueler_id: "s1", lektion: l, datum: addTage(heute, -40 + i), bearbeiter: "Anton Muster", entfernt_am: null }))
+        .concat([{ id: "tt-a", fahrschule_id: FS, schueler_id: "s2", lektion: "7", datum: addTage(heute, -3), bearbeiter: "Anton Muster", entfernt_am: null }, { id: "tt-b", fahrschule_id: FS, schueler_id: "s2", lektion: "8", datum: addTage(heute, -3), bearbeiter: "Anton Muster", entfernt_am: null }]),
       fahrschule_fahrzeuge: [
         { id: "fz-1", fahrschule_id: FS, name: "Golf Schalter 1", typ: "schalt", aktiv: true, erstellt_am: "2026-01-01" },
         { id: "fz-2", fahrschule_id: FS, name: "Golf Schalter 2", typ: "schalt", aktiv: true, erstellt_am: "2026-01-02" },

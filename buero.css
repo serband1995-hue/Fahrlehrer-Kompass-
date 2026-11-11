@@ -104,7 +104,9 @@ nav{display:grid;gap:2px;}
 .kopf{display:flex;align-items:center;justify-content:space-between;gap:20px;margin-bottom:24px;}
 .kopf h1{font-size:34px;}
 .kopf-rechts{display:flex;align-items:center;gap:14px;}
-.vorfuehrung{background:var(--gold-soft);color:var(--gold);border:1px solid var(--gold);padding:6px 12px;border-radius:999px;font-weight:700;font-size:14px;}
+.vorfuehrung{background:var(--gold-soft);color:#7a5410;border:1px solid var(--gold);padding:6px 12px;border-radius:999px;font-weight:700;font-size:14px;}
+/* hell: dunklere Schrift (Kontrast über 4,5:1), dunkel wie bisher */
+@media (prefers-color-scheme:dark){ .vorfuehrung{color:var(--gold);} }
 .status{display:inline-flex;align-items:center;gap:8px;color:var(--muted);font-size:15px;}
 .status .punkt{width:10px;height:10px;border-radius:50%;background:var(--faint);}
 .status.ok .punkt{background:var(--gruen);}
@@ -616,7 +618,18 @@ body.kiosk .rollen-streifen{display:none;}
   .tabelle .namenspalte b,.name-zeile b{overflow-wrap:normal;}
   .tabelle[data-namen="1"] .namenspalte{position:sticky;left:0;z-index:1;background:var(--surface);}
   .tabelle[data-namen="1"] .warnzeile .namenspalte{background:linear-gradient(var(--rot-soft),var(--rot-soft)),var(--surface);}
+  /* Tippflächen in Tabellen: Knöpfe und Haken mindestens 44 px */
+  .tabelle td .knopf{min-height:44px;}
+  .tabelle td .haken:not(.mini){width:44px;height:44px;}
+  /* Kalender: Spalten mindestens 120 px, der Kalender ist in seinem Kasten seitlich wischbar, die Uhrzeiten bleiben links stehen.
+     Im Spaltenkopf steht nur der Vorname. */
+  .kalender{overflow-x:auto;}
+  .k-spalten{grid-template-columns:repeat(var(--spalten),minmax(120px,1fr));}
+  .k-achse{position:sticky;left:0;z-index:2;background:var(--surface);box-shadow:0 -44px 0 var(--surface);}
+  .k-lname .k-voll{display:none;}
 }
+.k-lname .k-kurz{display:none;}
+@media screen and (max-width:900px){ .k-lname .k-kurz{display:inline;} }
 @media (max-width:600px){
   .seite>.marke>div{display:none;}
   /* Formulare am Handy einspaltig, sonst ragen Eingabefelder mit langer Beschriftung über den Rand */

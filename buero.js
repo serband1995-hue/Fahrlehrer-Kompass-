@@ -2036,6 +2036,11 @@ function kopfKalender(ansicht, tag, titel, schritt) {
 function kLehrerChips(gewaehlt) {
   return `<div class="chips">${S.lehrer.filter((l) => l.aktiv !== false).map((l) => `<label class="chip"><input type="checkbox" data-klehrer="${esc(l.id)}"${!gewaehlt.length || gewaehlt.includes(l.id) ? " checked" : ""}> ${esc(l.name || l.email)}</label>`).join("")}</div>`;
 }
+// Am Handy steht im Spaltenkopf nur der Vorname (ohne „Fahrlehrer“/„Fahrlehrerin“ davor)
+function kVorname(l) {
+  const n = String(l.name || l.email || "").replace(/^Fahrlehrer(in)?\s+/i, "").trim();
+  return n.split(/\s+/)[0] || n;
+}
 function renderKalender() {
   const ansicht = kAnsicht(), tag = kTag();
   if (ansicht === "woche") return kalenderWoche(tag);
@@ -2048,7 +2053,7 @@ function renderKalender() {
   const hoehe = (K_ENDE - K_START) * K_PX;
   const spalten = lehrer.map((l) => {
     const eigene = termine.filter((t) => t.fahrlehrer_id === l.id && t.von && t.bis);
-    return `<div class="k-spalte"><div class="k-kopf"><span class="k-lname" title="${esc(l.name || l.email)}">${esc(l.name || l.email)}</span><span class="k-anz">${eigene.filter((t) => t.art !== "block").length} Termine</span></div>
+    return `<div class="k-spalte"><div class="k-kopf"><span class="k-lname" title="${esc(l.name || l.email)}"><span class="k-voll">${esc(l.name || l.email)}</span><span class="k-kurz">${esc(kVorname(l))}</span></span><span class="k-anz">${eigene.filter((t) => t.art !== "block").length} Termine</span></div>
       <div class="k-flaeche" data-lehrer="${esc(l.id)}" data-datum="${esc(tag)}" style="height:${hoehe}px">${eigene.map(kTerminBlock).join("")}</div></div>`;
   }).join("");
   const wtag = KR.parseISO(tag).toLocaleDateString("de-DE", { weekday: "long", day: "numeric", month: "long", year: "numeric" });
