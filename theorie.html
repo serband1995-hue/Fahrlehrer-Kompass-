@@ -255,7 +255,7 @@ function renderBib(){
   let html = `<div class="chips">${chips}</div>
     <div class="row" style="justify-content:space-between"><div><h2 style="font-size:1.3rem">${esc(k.titel)}</h2><div class="hint">${esc(k.beschreibung||"")}</div></div></div>
     <details class="how"><summary>So startest du den Unterricht</summary>
-      <p><b>In PowerPoint starten</b> öffnet die Original-Präsentation mit allen Animationen und Videos direkt als Bildschirmpräsentation (Laptop mit PowerPoint). Fragt Windows „PowerPoint öffnen?“, mit Ja bestätigen. Zeigt PowerPoint oben „Geschützte Ansicht“, einmal auf <b>Bearbeitung aktivieren</b> tippen, sonst laufen Videos nicht.</p>
+      <p><b>In PowerPoint starten</b> öffnet die Original-Präsentation mit allen Animationen und Videos in PowerPoint (Laptop mit PowerPoint). Mit <b>F5</b> startest du die Präsentation. Fragt Windows „PowerPoint öffnen?“, mit Ja bestätigen. Zeigt PowerPoint oben „Geschützte Ansicht“, einmal auf <b>Bearbeitung aktivieren</b> tippen, sonst laufen Videos nicht.</p>
       <p>Startet PowerPoint nicht, nimm <b>Herunterladen</b> und öffne die Datei. <b>Im Browser</b> zeigt die Folien ohne PowerPoint, aber ohne Animationen, mit deinen Notizen und einem zweiten Fenster für das Smartboard.</p>
     </details>`;
   const lek = lektionenVon(k.klasse);
@@ -685,7 +685,7 @@ function renderDateien(){
     if (ins.error) {
       const da = await supa.from("theorie_dateien").select("id").eq("id", id).maybeSingle();
       if (da.data) { await ladeDateien(); render(); toast("Hochgeladen."); return; }
-      await supa.storage.from(BUCKET).remove([pfad]); b.disabled = false; b.textContent = "Hochladen"; e.textContent = "Speichern hat nicht geklappt."; return; }
+      await supa.storage.from(BUCKET).remove([pfad]); b.disabled = false; b.textContent = "Hochladen"; e.textContent = /höchstens/.test((ins.error && ins.error.message) || "") ? ins.error.message : "Speichern hat nicht geklappt."; return; }
     await ladeDateien(); render(); toast("Hochgeladen.");
   };
   bindDateien(p);
