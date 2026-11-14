@@ -172,6 +172,12 @@ input,select,textarea{font-family:inherit;font-size:16px;color:var(--txt);}
   transition:opacity .25s var(--ease),visibility 0s linear .25s;}
 #splash.hide{opacity:0;visibility:hidden;pointer-events:none;}
 #splash.kurz{pointer-events:none;} /* Logo-Tipp: Startbild nur kurz, Tippen geht durch */
+/* Logo-Tipp (14.11.2026): 1,5 s sichtbar. Die Straße startet früher, damit das Zeichen in 1,5 s ganz fertig ist */
+#splash.kurz .kl-tile .t-strasse{animation-delay:.7s}
+/* Einblenden ohne Verzögerung der Sichtbarkeit (vorher 0,25 s unsichtbar, dann harter Sprung); Ausblenden wie bisher */
+#splash:not(.hide){transition:opacity .25s var(--ease),visibility 0s}
+/* Beim Logo-Tipp: Zitat gleich einblenden (sonst nur ca. 0,4 s ganz lesbar) */
+#splash.kurz .sp-quote{animation-delay:0s;animation-duration:.6s}
 /* Beim Ausblenden lösen sich die Elemente fließend nach oben auf */
 #splash.hide img{animation:spOut .25s var(--ease) forwards;}
 #splash.hide .sp-name{animation:spOut .25s var(--ease) forwards;}
@@ -913,7 +919,7 @@ input,select,textarea{font-family:inherit;font-size:16px;color:var(--txt);}
 .toast{position:fixed;left:50%;bottom:calc(30px + env(safe-area-inset-bottom));transform:translateX(-50%) translateY(20px);
   background:#f2efe9;color:#1a1b1f;padding:13px 22px;border-radius:14px;font-weight:800;font-size:14px;
   width:max-content;max-width:calc(100vw - 32px);box-sizing:border-box;text-align:center;line-height:1.35;overflow-wrap:anywhere;
-  box-shadow:0 12px 34px rgba(0,0,0,.45);opacity:0;pointer-events:none;transition:all .3s var(--ease);z-index:80;}
+  box-shadow:0 12px 34px rgba(0,0,0,.45);opacity:0;pointer-events:none;transition:all .3s var(--ease);z-index:210;} /* über dem Startbild (200): Zurück- und Rückgängig-Hinweise bleiben beim Logo-Tipp sichtbar */
 .toast.show{opacity:1;transform:translateX(-50%) translateY(0);}
 .toast.undo{display:flex;align-items:center;gap:14px;pointer-events:auto;}
 .toast.undo .ut-txt{font-weight:800;min-width:0;}
@@ -7489,7 +7495,7 @@ window.addEventListener("load", () => {
 const STORE_KEY="serband-app-v1";
 /* Build-Version: bei jeder Auslieferung hier das Datum aktualisieren.
    Wird in den Einstellungen angezeigt + für den Update-Hinweis genutzt. */
-const APP_VERSION="2026.11.11.3";
+const APP_VERSION="2026.11.14.1";
 try{const f=document.getElementById("drawerFoot"); if(f)f.textContent="Fahrlehrer-Kompass · Version "+APP_VERSION;}catch(e){}
 // Nutzungsbedingungen & Haftungsausschluss (Bereich: rechtliche Absicherung) - Version hochzählen
 // und alle Nutzer müssen erneut zustimmen, sobald sich der Text inhaltlich ändert.
@@ -8152,10 +8158,13 @@ function replaySplash(){
   const sp=$("#splash"); if(!sp)return;
   setSplashQuote();
   const kt=document.getElementById("splashTile"); if(kt){const c=kt.cloneNode(true); kt.replaceWith(c);}
+  // G5: nie blockieren (Tippen geht durch). Ein noch ausstehendes „kurz entfernen“ vom letzten Tipp abbrechen,
+  // sonst stünde das Startbild bei schnellem zweitem Tipp ohne „kurz“ da und finge Tipps ab
+  clearTimeout(replaySplash._t); clearTimeout(replaySplash._t2);
   sp.classList.add("kurz"); sp.classList.remove("hide");
-  // G5: nur kurz zeigen und nie blockieren (Tippen geht durch)
-  clearTimeout(replaySplash._t);
-  replaySplash._t=setTimeout(()=>{ sp.classList.add("hide"); setTimeout(()=>sp.classList.remove("kurz"),300); },700);
+  // 14.11.2026 (Serband): Animation 1,5 s zeigen; ohne Bewegung (Bedienungshilfe) reicht das kurze Standbild
+  const ohneBewegung=window.matchMedia&&window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+  replaySplash._t=setTimeout(()=>{ sp.classList.add("hide"); replaySplash._t2=setTimeout(()=>sp.classList.remove("kurz"),300); },ohneBewegung?700:1500);
 }
 $("#sheetScrim").addEventListener("click",()=>sheetZurueck());
 document.querySelector(".drawer-nav").addEventListener("click",(e)=>{
