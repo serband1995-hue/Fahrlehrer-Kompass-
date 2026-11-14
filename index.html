@@ -172,6 +172,8 @@ input,select,textarea{font-family:inherit;font-size:16px;color:var(--txt);}
   transition:opacity .25s var(--ease),visibility 0s linear .25s;}
 #splash.hide{opacity:0;visibility:hidden;pointer-events:none;}
 #splash.kurz{pointer-events:none;} /* Logo-Tipp: Startbild nur kurz, Tippen geht durch */
+/* Logo-Tipp (14.11.2026): 1,5 s sichtbar. Die Straße startet früher, damit das Zeichen in 1,5 s ganz fertig ist */
+#splash.kurz .kl-tile .t-strasse{animation-delay:.7s}
 /* Beim Ausblenden lösen sich die Elemente fließend nach oben auf */
 #splash.hide img{animation:spOut .25s var(--ease) forwards;}
 #splash.hide .sp-name{animation:spOut .25s var(--ease) forwards;}
@@ -7489,7 +7491,7 @@ window.addEventListener("load", () => {
 const STORE_KEY="serband-app-v1";
 /* Build-Version: bei jeder Auslieferung hier das Datum aktualisieren.
    Wird in den Einstellungen angezeigt + für den Update-Hinweis genutzt. */
-const APP_VERSION="2026.11.11.3";
+const APP_VERSION="2026.11.14.1";
 try{const f=document.getElementById("drawerFoot"); if(f)f.textContent="Fahrlehrer-Kompass · Version "+APP_VERSION;}catch(e){}
 // Nutzungsbedingungen & Haftungsausschluss (Bereich: rechtliche Absicherung) - Version hochzählen
 // und alle Nutzer müssen erneut zustimmen, sobald sich der Text inhaltlich ändert.
@@ -8152,10 +8154,13 @@ function replaySplash(){
   const sp=$("#splash"); if(!sp)return;
   setSplashQuote();
   const kt=document.getElementById("splashTile"); if(kt){const c=kt.cloneNode(true); kt.replaceWith(c);}
+  // G5: nie blockieren (Tippen geht durch). Ein noch ausstehendes „kurz entfernen“ vom letzten Tipp abbrechen,
+  // sonst stünde das Startbild bei schnellem zweitem Tipp ohne „kurz“ da und finge Tipps ab
+  clearTimeout(replaySplash._t); clearTimeout(replaySplash._t2);
   sp.classList.add("kurz"); sp.classList.remove("hide");
-  // G5: nur kurz zeigen und nie blockieren (Tippen geht durch)
-  clearTimeout(replaySplash._t);
-  replaySplash._t=setTimeout(()=>{ sp.classList.add("hide"); setTimeout(()=>sp.classList.remove("kurz"),300); },700);
+  // 14.11.2026 (Serband): Animation 1,5 s zeigen; ohne Bewegung (Bedienungshilfe) reicht das kurze Standbild
+  const ohneBewegung=window.matchMedia&&window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+  replaySplash._t=setTimeout(()=>{ sp.classList.add("hide"); replaySplash._t2=setTimeout(()=>sp.classList.remove("kurz"),300); },ohneBewegung?700:1500);
 }
 $("#sheetScrim").addEventListener("click",()=>sheetZurueck());
 document.querySelector(".drawer-nav").addEventListener("click",(e)=>{

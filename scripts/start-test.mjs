@@ -38,15 +38,60 @@ await page.reload();
 await page.waitForFunction(() => { const s = document.getElementById("splash"); return !s || s.classList.contains("hide"); }, null, { timeout: 5000 });
 const dauer = Date.now() - t0;
 if (dauer > 1500) fehler("G5 Startbild beim zweiten Start " + dauer + " ms"); else ok("G5 Startbild beim zweiten Start nach " + dauer + " ms weg");
-// Logo-Tipp: Startbild blockiert nicht und ist nach unter 1,5 s weg
+// Logo-Tipp (14.11.2026, Serband: „Animation 1,5 Sekunden“): Startbild blockiert nie, die Animation läuft wirklich
+// und das Bild ist nach ca. 1,5 s weg; Doppeltipp startet sauber neu; Weg zum Dashboard bleibt
 const logo = await page.evaluate(async () => {
+  const w = (ms) => new Promise((k) => setTimeout(k, ms));
   const sp = document.getElementById("splash"); replaySplash();
   const pe = getComputedStyle(sp).pointerEvents; const t = performance.now();
-  while (!sp.classList.contains("hide") && performance.now() - t < 5000) await new Promise((k) => setTimeout(k, 50));
-  return { pe, ms: Math.round(performance.now() - t) };
+  await w(300);
+  const tile = document.getElementById("splashTile");
+  const laeuft = tile ? tile.getAnimations({ subtree: true }).filter((a) => a.playState === "running").length : 0;
+  while (!sp.classList.contains("hide") && performance.now() - t < 5000) await w(20);
+  const ms = Math.round(performance.now() - t);
+  // Strasse ist beim Ausblenden fertig (Zeichen komplett), nicht mitten im Aufbau abgeschnitten
+  const str = document.querySelector("#splashTile .t-strasse");
+  const strFertig = !str || str.getAnimations().every((a) => a.playState === "finished");
+  return { pe, ms, laeuft, strFertig };
 });
 if (logo.pe !== "none") fehler("G5 Logo-Tipp: Startbild fängt Tipps ab (" + logo.pe + ")"); else ok("G5 Logo-Tipp: Tippen geht durch");
-if (logo.ms > 1500) fehler("G5 Logo-Tipp: Startbild " + logo.ms + " ms"); else ok("G5 Logo-Tipp: Startbild nach " + logo.ms + " ms weg");
+if (logo.ms < 1400 || logo.ms > 1700) fehler("Logo-Tipp: Startbild " + logo.ms + " ms statt ca. 1500"); else ok("Logo-Tipp: Animation " + logo.ms + " ms sichtbar (Ziel 1,5 s)");
+if (logo.laeuft < 3) fehler("Logo-Tipp: Animation läuft nicht (" + logo.laeuft + " laufende Teile nach 0,3 s)"); else ok("Logo-Tipp: Animation läuft (" + logo.laeuft + " Teile)");
+if (!logo.strFertig) fehler("Logo-Tipp: Straße beim Ausblenden noch nicht fertig"); else ok("Logo-Tipp: Zeichen beim Ausblenden fertig");
+const doppel = await page.evaluate(async () => {
+  const w = (ms) => new Promise((k) => setTimeout(k, ms));
+  const sp = document.getElementById("splash");
+  replaySplash(); await w(1600);           // gerade ausgeblendet, „kurz entfernen“ steht noch aus
+  replaySplash(); await w(400);            // zweiter Tipp: läuft neu, darf nicht blockieren
+  const r = { sichtbar: !sp.classList.contains("hide"), pe: getComputedStyle(sp).pointerEvents };
+  replaySplash(); await w(200); replaySplash(); // schneller Doppeltipp mitten in der Animation
+  const t = performance.now(); while (!sp.classList.contains("hide") && performance.now() - t < 5000) await w(20);
+  r.ms2 = Math.round(performance.now() - t); await w(400); r.kurzWeg = !sp.classList.contains("kurz");
+  return r;
+});
+if (!doppel.sichtbar || doppel.pe !== "none") fehler("G5 Doppeltipp: Startbild " + JSON.stringify(doppel)); else ok("G5 Doppeltipp nach dem Ausblenden: läuft neu, Tippen geht durch");
+if (doppel.ms2 < 1400 || doppel.ms2 > 1700 || !doppel.kurzWeg) fehler("Doppeltipp mitten in der Animation: " + JSON.stringify(doppel)); else ok("Doppeltipp mitten in der Animation: startet neu, wieder 1,5 s");
+// Echter Tipp auf das Logo: Dashboard kommt, und ein Tipp während der Animation erreicht die Seite darunter
+const weg = await page.evaluate(async () => {
+  const w = (ms) => new Promise((k) => setTimeout(k, ms));
+  for (const id of ["loginOverlay"]) { const e = document.getElementById(id); if (e) e.style.display = "none"; }
+  document.getElementById("homeBtn").click(); await w(300);
+  const sp = document.getElementById("splash"), mitte = document.elementFromPoint(innerWidth / 2, innerHeight / 2);
+  const r = { titel: document.getElementById("tbTitle").textContent, durch: !!mitte && !sp.contains(mitte), offen: !sp.classList.contains("hide") };
+  await w(1700); return r;
+});
+if (!weg.offen || !weg.durch) fehler("Logo-Tipp: Startbild nicht sichtbar oder fängt den Tipp " + JSON.stringify(weg)); else ok("Logo-Tipp: während der Animation trifft ein Tipp die Seite darunter");
+if (weg.titel !== "Heute") fehler("Logo-Tipp: kein Dashboard (" + weg.titel + ")"); else ok("Logo-Tipp: Dashboard („" + weg.titel + "“)");
+{
+  // Bewegung reduzieren (Bedienungshilfe): kein Warten auf eine Animation, die nicht läuft
+  const c2 = await browser.newContext({ viewport: { width: 390, height: 780 }, reducedMotion: "reduce" });
+  const p2 = await c2.newPage();
+  await p2.route(/cdn\.jsdelivr|fonts\.(googleapis|gstatic)/, (r) => r.abort());
+  await p2.goto(basis + "index.html"); await p2.waitForTimeout(2500);
+  const rm = await p2.evaluate(async () => { const sp = document.getElementById("splash"); replaySplash(); const pe = getComputedStyle(sp).pointerEvents; const t = performance.now(); while (!sp.classList.contains("hide") && performance.now() - t < 5000) await new Promise((k) => setTimeout(k, 20)); return { ms: Math.round(performance.now() - t), pe }; });
+  if (rm.ms > 900 || rm.pe !== "none") fehler("Bewegung reduziert: Startbild " + JSON.stringify(rm)); else ok("Bewegung reduziert: Standbild nur " + rm.ms + " ms, Tippen geht durch");
+  await c2.close();
+}
 
 // T6: neuer Nutzer ohne fremde Vorgaben; gespeicherte Werte bleiben. T7: Absender aus dem Profil.
 await page.evaluate(() => { localStorage.clear(); });
