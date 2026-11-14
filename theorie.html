@@ -46,16 +46,26 @@ header.top .wrap{display:flex;align-items:center;gap:10px;padding-top:12px;paddi
 .chip .n{font-weight:500;color:var(--muted);font-size:.8rem;margin-left:4px}
 .hint{color:var(--muted);font-size:.92rem}
 .box{background:var(--surface);border:1px solid var(--line);border-radius:var(--r);padding:16px}
-.abend{margin:20px 0 8px;font-size:.8rem;letter-spacing:.08em;text-transform:uppercase;color:var(--gold);font-weight:700}
+.abend{margin:22px 0 8px;font-size:.9rem;letter-spacing:.06em;text-transform:uppercase;color:var(--akzent-dark);font-weight:700}
 .grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:14px}
 .card{background:var(--surface);border:1px solid var(--line);border-radius:var(--r);overflow:hidden;display:flex;flex-direction:column}
 .card .thumb{aspect-ratio:16/9;background:#1c2b24 center/cover no-repeat;position:relative}
-.card .thumb .code{position:absolute;left:10px;top:10px;background:rgba(0,0,0,.6);color:#fff;font-weight:700;border-radius:8px;padding:3px 9px;font-size:.85rem}
+.card .thumb .code{position:absolute;left:10px;bottom:10px;background:rgba(0,0,0,.6);color:#fff;font-weight:700;border-radius:8px;padding:3px 9px;font-size:.85rem}
 .card .body{padding:12px 14px 14px;display:flex;flex-direction:column;gap:8px;flex:1}
 .card h3{font-size:1.08rem}
 .card .meta{font-size:.85rem;color:var(--muted)}
 .card .acts{display:flex;gap:8px;flex-wrap:wrap;margin-top:auto}
 .card .acts .btn{flex:1 1 auto}
+.card .more summary{cursor:pointer;color:var(--akzent-dark);font-weight:600;font-size:.92rem;padding:8px 0;min-height:36px;list-style:none}
+.card .more summary::-webkit-details-marker{display:none}
+.card .more summary::before{content:"▸ "}.card .more[open] summary::before{content:"▾ "}
+.card .more .acts{margin-top:2px}
+.filewahl{position:relative;display:flex;align-items:center;gap:10px;flex-wrap:wrap}
+.filewahl input{position:absolute;left:0;top:0;width:1px;height:1px;min-height:0;padding:0;opacity:0;pointer-events:none}
+.filewahl .fname{color:var(--muted);font-size:.9rem;overflow-wrap:anywhere}
+.haken{display:flex;gap:10px;align-items:flex-start;padding:10px 0;min-height:44px;cursor:pointer;font-size:.92rem}
+.haken input{width:24px;height:24px;flex:none;accent-color:var(--akzent)}
+@media(max-width:600px){.btn.small{min-height:44px}.user .uname{display:none}}
 .empty{padding:28px 18px;text-align:center;border:2px dashed var(--line);border-radius:var(--r);color:var(--muted)}
 .row{display:flex;gap:10px;align-items:center;flex-wrap:wrap}
 .list{display:flex;flex-direction:column;gap:10px}
@@ -69,7 +79,7 @@ textarea{min-height:80px;resize:vertical}
 input[type=file]{width:100%;max-width:100%;min-height:44px;padding:8px 0}
 .login{max-width:420px;margin:40px auto}
 .err{color:var(--rot);font-size:.9rem;margin-top:8px;min-height:1.2em}
-.toast{position:fixed;left:50%;bottom:22px;transform:translateX(-50%);background:#2a2c22;color:#fff;padding:12px 18px;border-radius:12px;z-index:200;max-width:calc(100vw - 32px);box-shadow:0 8px 30px rgba(0,0,0,.25);font-size:.95rem}
+.toast{position:fixed;left:50%;top:14px;cursor:pointer;transform:translateX(-50%);background:#2a2c22;color:#fff;padding:12px 18px;border-radius:12px;z-index:200;max-width:calc(100vw - 32px);box-shadow:0 8px 30px rgba(0,0,0,.25);font-size:.95rem}
 /* Fenster */
 .modal{position:fixed;inset:0;background:rgba(20,24,20,.55);z-index:100;display:flex;align-items:flex-end;justify-content:center}
 .modal .sheet{background:var(--bg);width:100%;max-width:760px;max-height:92vh;overflow:auto;border-radius:20px 20px 0 0;padding:18px var(--pad) 26px}
@@ -79,7 +89,8 @@ input[type=file]{width:100%;max-width:100%;min-height:44px;padding:8px 0}
 .x{border:0;background:var(--surface-2);border-radius:10px;width:44px;height:44px;font-size:1.3rem}
 .pick{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:10px}
 .pick label{position:relative;display:block;border-radius:10px;overflow:hidden;border:3px solid var(--akzent);cursor:pointer;background:#1c2b24}
-.pick label.off{border-color:var(--line);opacity:.45}
+.pick label.off{border-color:var(--line);opacity:.35;filter:grayscale(1)}
+.pick label.off::after{content:"aus";position:absolute;inset:auto 6px 6px auto;background:#b4483a;color:#fff;font-size:.75rem;font-weight:700;border-radius:6px;padding:1px 6px}
 .pick img{display:block;width:100%;aspect-ratio:16/9;object-fit:cover}
 .pick input{position:absolute;right:6px;top:6px;width:22px;height:22px;accent-color:var(--akzent)}
 .pick .nr{position:absolute;left:6px;bottom:6px;background:rgba(0,0,0,.65);color:#fff;font-size:.75rem;border-radius:6px;padding:1px 6px}
@@ -87,15 +98,20 @@ input[type=file]{width:100%;max-width:100%;min-height:44px;padding:8px 0}
 .viewer{position:fixed;inset:0;background:#0b0f0d;z-index:150;display:flex;flex-direction:column;color:#eee}
 .viewer .stage{flex:1;display:flex;align-items:center;justify-content:center;min-height:0;position:relative}
 .viewer .stage img{max-width:100%;max-height:100%;object-fit:contain;user-select:none}
-.viewer .bar{display:flex;gap:8px;align-items:center;padding:10px 12px;background:#141a17;flex-wrap:wrap}
-.viewer .bar .btn{background:#2a3a32}
+.viewer .bar{display:flex;gap:8px;align-items:center;padding:8px 10px;background:#141a17;flex:none}
+.viewer .mehr{display:none;gap:8px;padding:0 10px 8px;background:#141a17;flex-wrap:wrap;justify-content:flex-end;flex:none}
+.viewer.mehr-auf .mehr{display:flex}
+body.viewer-offen{overflow:hidden}
+.viewer .bar .btn,.viewer .mehr .btn{min-height:44px}
+.viewer .bar .btn,.viewer .mehr .btn{background:#2a3a32}
 .viewer .bar .btn:hover{background:#3a4f44}
 .viewer .count{flex:1;text-align:center;min-width:80px;font-variant-numeric:tabular-nums}
-.viewer .notes{background:#141a17;border-top:1px solid #2a3a32;padding:12px 16px;max-height:30vh;overflow:auto;white-space:pre-wrap;font-size:.95rem;line-height:1.5}
+.viewer .notes{flex:none;background:#141a17;border-top:1px solid #2a3a32;padding:10px 16px;max-height:24vh;overflow:auto;white-space:pre-wrap;font-size:.95rem;line-height:1.5}
 .viewer .navzone{position:absolute;top:0;bottom:0;width:30%;cursor:pointer}
 .viewer .navzone.l{left:0}.viewer .navzone.r{right:0}
-.viewer .note-flag{position:absolute;left:12px;top:12px;background:rgba(201,162,39,.9);color:#111;font-size:.8rem;border-radius:8px;padding:3px 8px}
-body.board .viewer .bar,body.board .viewer .notes{display:none}
+.viewer .note-flag{position:absolute;left:12px;top:12px;background:rgba(255,255,255,.14);color:#dfe8e2;font-size:.8rem;border-radius:8px;padding:3px 8px}
+body.board .viewer .bar,body.board .viewer .notes,body.board .viewer .mehr,body.board .viewer .note-flag{display:none}
+.viewer .stage{overflow:hidden}
 .how{font-size:.9rem;color:var(--muted);margin-top:6px}
 .how summary{cursor:pointer;color:var(--akzent-dark);font-weight:600}
 .badge{display:inline-block;font-size:.75rem;font-weight:700;border-radius:6px;padding:2px 7px;background:var(--akzent-soft);color:var(--akzent-dark)}
@@ -124,7 +140,12 @@ const S = { user:null, profil:null, klassen:[], lektionen:[], darfBib:false, tab
             unterrichte:[], dateien:[], folienCache:{}, urlCache:{} };
 const $ = (s, el=document) => el.querySelector(s);
 const esc = (v) => String(v ?? "").replace(/[&<>"']/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
-function toast(msg, ms=3200){ const t=document.createElement("div"); t.className="toast"; t.textContent=msg; document.body.appendChild(t); setTimeout(()=>t.remove(), ms); }
+let _toastZeit = null;
+function toast(msg, ms=3200){
+  document.querySelectorAll(".toast").forEach(x => x.remove()); clearTimeout(_toastZeit);
+  const t = document.createElement("div"); t.className = "toast"; t.setAttribute("role","status"); t.textContent = msg;
+  t.onclick = () => t.remove(); document.body.appendChild(t); _toastZeit = setTimeout(() => t.remove(), ms);
+}
 const mb = (b) => (b/1048576).toLocaleString("de-DE",{maximumFractionDigits:1}) + " MB";
 const istHandy = () => /Android|iPhone|iPad|iPod/i.test(navigator.userAgent);
 
@@ -190,7 +211,7 @@ async function ladeAlles(){
     S.lektionen = data || [];
   }
   await Promise.all([ladeUnterrichte(), ladeDateien()]);
-  $("#userBox").innerHTML = `<span>${esc(S.profil.name || S.profil.email || S.user.email)}</span><button class="btn ghost small" id="logout">Abmelden</button>`;
+  $("#userBox").innerHTML = `<span class="uname">${esc(S.profil.name || S.profil.email || S.user.email)}</span><button class="btn ghost small" id="logout">Abmelden</button>`;
   $("#logout").onclick = async () => { await supa.auth.signOut(); location.reload(); };
   const merk = (() => { try { return JSON.parse(localStorage.getItem("theorie-ansicht")||"{}"); } catch(e){ return {}; } })();
   S.tab = merk.tab || "bib";
@@ -265,12 +286,15 @@ function karte(l){
       <h3>${esc(l.titel)}</h3>
       <div class="meta">${l.folien_anzahl} Folien · ${mb(l.datei_bytes||0)}${l.untertitel?" · "+esc(l.untertitel):""}</div>
       <div class="acts">
-        <button class="btn" data-a="ppt">▶ In PowerPoint starten</button>
-        <button class="btn ghost small" data-a="browser">Im Browser</button>
-        <button class="btn ghost small" data-a="dl">Herunterladen</button>
-        ${l.quiz_lektion?`<button class="btn ghost small" data-a="quiz">Lernzielkontrolle</button>`:""}
-        <button class="btn ghost small" data-a="add">＋ Zu meinem Unterricht</button>
+        ${istHandy()
+          ? `<button class="btn" data-a="browser">▶ Folien ansehen</button><button class="btn ghost small" data-a="ppt">PowerPoint-Datei</button>`
+          : `<button class="btn" data-a="ppt">▶ In PowerPoint starten</button><button class="btn ghost small" data-a="browser">Im Browser</button>`}
       </div>
+      <details class="more"><summary>Mehr</summary><div class="acts">
+        <button class="btn ghost small" data-a="add">＋ Zu meinem Unterricht</button>
+        ${l.quiz_lektion?`<button class="btn ghost small" data-a="quiz">Lernzielkontrolle</button>`:""}
+        <button class="btn ghost small" data-a="dl">Herunterladen</button>
+      </div></details>
     </div></article>`;
 }
 async function ladeTitelbilder(lek){
@@ -324,27 +348,32 @@ async function oeffneViewer(lektionId, aus, startNr){
   if (!folien.length) { toast("Keine Folien ausgewählt."); return; }
   const urls = await bildUrls(folien.map(f => f.bild_pfad));
   const l = S.lektionen.find(x => x.id === lektionId) || {};
-  V = { lektionId, aus:aus||[], folien, urls, i: 0, notizen: !document.body.classList.contains("board") };
+  V = { lektionId, aus:aus||[], folien, urls, i: 0, notizen: !document.body.classList.contains("board") && !istHandy() };
   if (startNr) { const j = folien.findIndex(f => f.nr === startNr); if (j >= 0) V.i = j; }
   const v = document.createElement("div"); v.className = "viewer"; v.id = "viewer";
-  v.innerHTML = `<div class="stage"><img id="vImg" alt=""><div class="navzone l" id="vL"></div><div class="navzone r" id="vR"></div><span class="note-flag">Ohne Animationen</span></div>
+  v.innerHTML = `<div class="stage"><img id="vImg" alt=""><div class="navzone l" id="vL"></div><div class="navzone r" id="vR"></div><span class="note-flag">Browser-Ansicht: ohne Animationen</span></div>
     <div class="notes" id="vNotes"></div>
     <div class="bar">
-      <button class="btn small" id="vX">✕ Schließen</button>
-      <button class="btn small" id="vPrev">←</button>
+      <button class="btn small" id="vX" aria-label="Schließen">✕</button>
+      <button class="btn small" id="vPrev" aria-label="Zurück">←</button>
       <span class="count" id="vCount"></span>
-      <button class="btn small" id="vNext">→</button>
-      <button class="btn small" id="vN">Notizen</button>
-      <button class="btn small" id="vBoard" title="Zweites Fenster nur mit der Folie, z. B. für das Smartboard">Fenster fürs Smartboard</button>
+      <button class="btn small" id="vNext" aria-label="Weiter">→</button>
+      <button class="btn small" id="vMehr" aria-expanded="false">Mehr</button>
+    </div>
+    <div class="mehr">
+      <button class="btn small" id="vN">Notizen an/aus</button>
+      ${istHandy() ? "" : `<button class="btn small" id="vBoard" title="Zweites Fenster nur mit der Folie, z. B. für das Smartboard">Fenster fürs Smartboard</button>`}
       <button class="btn small" id="vFull">Vollbild</button>
     </div>`;
+  document.body.classList.add("viewer-offen");
   document.body.appendChild(v);
   $("#vX").onclick = schliesseViewer;
   $("#vPrev").onclick = $("#vL").onclick = () => geheZu(V.i - 1);
   $("#vNext").onclick = $("#vR").onclick = () => geheZu(V.i + 1);
+  $("#vMehr").onclick = () => { const auf = v.classList.toggle("mehr-auf"); $("#vMehr").setAttribute("aria-expanded", auf); };
   $("#vN").onclick = () => { V.notizen = !V.notizen; zeige(); };
   $("#vFull").onclick = () => { if (!document.fullscreenElement) v.requestFullscreen && v.requestFullscreen(); else document.exitFullscreen(); };
-  $("#vBoard").onclick = () => {
+  if ($("#vBoard")) $("#vBoard").onclick = () => {
     const w = window.open(`theorie.html?tafel=${encodeURIComponent(lektionId)}&aus=${encodeURIComponent(V.aus.join(","))}&nr=${folien[V.i].nr}`, "kompass-tafel", "popup,width=1280,height=720");
     if (!w) toast("Bitte Pop-ups für diese Seite erlauben.");
     else toast("Fenster aufs Smartboard ziehen und dort Vollbild (F11). Hier blätterst du weiter.", 5500);
@@ -367,7 +396,7 @@ function tasten(e){
   else if (["ArrowLeft","PageUp","Backspace"].includes(e.key)) { e.preventDefault(); geheZu(V.i - 1); }
   else if (e.key === "Escape" && !document.fullscreenElement) schliesseViewer();
 }
-function schliesseViewer(){ const v = $("#viewer"); if (v) v.remove(); document.removeEventListener("keydown", tasten); V = null; document.title = "Theorieunterricht – Fahrlehrer-Kompass"; }
+function schliesseViewer(){ const v = $("#viewer"); if (v) v.remove(); document.body.classList.remove("viewer-offen"); document.removeEventListener("keydown", tasten); V = null; document.title = "Theorieunterricht – Fahrlehrer-Kompass"; }
 if (kanal) kanal.onmessage = (ev) => {
   if (!V || ev.data.lektionId !== V.lektionId) return;
   const j = V.folien.findIndex(f => f.nr === ev.data.nr); if (j >= 0 && j !== V.i) { V.i = j; zeige(); }
@@ -380,7 +409,7 @@ function renderUnterrichte(){
       <p class="hint" style="margin:0;max-width:640px">Stell dir deinen Unterricht zusammen: Lektionen aus der Bibliothek und eigene Dateien, in deiner Reihenfolge. Folien, die du abwählst, blendet PowerPoint beim Zeigen aus.</p>
       <button class="btn" id="neuU">＋ Neuer Unterricht</button></div>
     ${S.unterrichte.length ? `<div class="list">${S.unterrichte.map(u => `<div class="item">
-        <div class="t"><b>${esc(u.titel)}</b><span>${u.klasse?("Klasse "+esc(u.klasse)+" · "):""}${(u.teile||[]).length} Teile · geändert ${new Date(u.geaendert).toLocaleDateString("de-DE")}</span></div>
+        <div class="t"><b>${esc(u.titel)}</b><span>${u.klasse?("Klasse "+esc(u.klasse)+" · "):""}${(u.teile||[]).length} ${(u.teile||[]).length===1?"Teil":"Teile"} · geändert ${new Date(u.geaendert).toLocaleDateString("de-DE")}</span></div>
         <button class="btn small" data-u="${esc(u.id)}" data-a="start">▶ Starten</button>
         <button class="btn ghost small" data-u="${esc(u.id)}" data-a="edit">Bearbeiten</button></div>`).join("")}</div>`
       : `<div class="empty">Noch kein eigener Unterricht. Tipp in der Bibliothek bei einer Lektion auf „＋ Zu meinem Unterricht“ oder lege hier einen neuen an.</div>`}`;
@@ -595,17 +624,17 @@ function renderDateien(){
   p.innerHTML = `<div class="box" style="margin:14px 0">
       <h2 style="font-size:1.15rem">Eigene Präsentation hochladen</h2>
       <p class="hint">PowerPoint (.pptx) oder PDF, höchstens 50 MB. Nur du siehst deine Dateien.</p>
-      <label class="f" for="uF">Datei</label><input type="file" id="uF" accept=".pptx,.pdf,${PPTX_MIME},application/pdf">
+      <label class="f">Datei</label><div class="filewahl"><label class="btn ghost" for="uF">Datei wählen</label><input type="file" id="uF" accept=".pptx,.pdf,${PPTX_MIME},application/pdf"><span class="fname" id="uFn">Noch keine Datei gewählt</span></div>
       <label class="f" for="uN">Name</label><input type="text" id="uN" maxlength="160" placeholder="z. B. Lektion 5 – meine Fassung">
       <label class="f" for="uK">Klasse</label><select id="uK"><option value="">ohne Klasse</option>${S.klassen.map(k => `<option value="${esc(k.klasse)}"${k.klasse===S.klasse?" selected":""}>${esc(k.titel)}</option>`).join("")}</select>
-      <label class="row" style="margin-top:12px;font-size:.92rem;gap:8px;align-items:flex-start"><input type="checkbox" id="uR" style="width:22px;height:22px;flex:none"><span>Ich darf diese Datei verwenden (eigene Inhalte oder Inhalte mit Erlaubnis, keine Schülerdaten).</span></label>
+      <label class="haken"><input type="checkbox" id="uR"><span>Ich darf diese Datei verwenden (eigene Inhalte oder Inhalte mit Erlaubnis, keine Schülerdaten).</span></label>
       <div class="err" id="uE"></div>
       <button class="btn" id="uGo" style="margin-top:6px">Hochladen</button>
       <p class="hint" style="margin-top:10px">Folien ändern: Lektion aus der Bibliothek herunterladen, in PowerPoint anpassen und hier als eigene Fassung hochladen.</p>
     </div>
     ${S.dateien.length ? `<div class="list">${S.dateien.map(dateiZeile).join("")}</div>` : `<div class="empty">Noch keine eigenen Dateien.</div>`}`;
   const f = $("#uF"), n = $("#uN");
-  f.onchange = () => { if (f.files[0] && !n.value) n.value = f.files[0].name.replace(/\.(pptx|pdf)$/i, ""); };
+  f.onchange = () => { $("#uFn").textContent = f.files[0] ? f.files[0].name + " · " + mb(f.files[0].size) : "Noch keine Datei gewählt"; if (f.files[0] && !n.value) n.value = f.files[0].name.replace(/\.(pptx|pdf)$/i, ""); };
   $("#uGo").onclick = async () => {
     const e = $("#uE"); e.textContent = "";
     const file = f.files[0];

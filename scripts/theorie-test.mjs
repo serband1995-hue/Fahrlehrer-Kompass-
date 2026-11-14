@@ -113,7 +113,7 @@ const quer = (page) => page.evaluate(() => document.documentElement.scrollWidth 
   const { ctx, page, js } = await neueSeite();
   await punkt("T5 Klasse B zeigt 2 Lektionen mit Abend-Überschrift", async () => { await page.click('.chip[data-k="B"]'); const n = await page.locator(".card").count(); const a = await page.textContent(".abend"); return (n === 2 && /Abend 1/.test(a)) || `Karten ${n}, ${a}`; });
   await punkt("T6 Klassen A und D da, leer mit Hinweis", async () => { await page.click('.chip[data-k="A"]'); const t = await page.textContent("#pane"); await page.click('.chip[data-k="D"]'); const t2 = await page.textContent("#pane"); return (/noch keine Folien/.test(t) && /noch keine Folien/.test(t2)) || "kein Hinweis"; });
-  await punkt("T7 Karte hat PowerPoint, Browser, Herunterladen, Lernzielkontrolle, Unterricht", async () => { await page.click('.chip[data-k="B"]'); const a = await page.locator('.card').first().locator("[data-a]").evaluateAll(b => b.map(x => x.dataset.a).join(",")); return a === "ppt,browser,dl,quiz,add" || a; });
+  await punkt("T7 Karte: PowerPoint und Browser vorne, Unterricht, Lernzielkontrolle, Herunterladen unter „Mehr“", async () => { await page.click('.chip[data-k="B"]'); const a = await page.locator('.card').first().locator("[data-a]").evaluateAll(b => b.map(x => x.dataset.a).join(",")); return a === "ppt,browser,add,quiz,dl" || a; });
   await punkt("T8 C-Lektion ohne Lernzielkontrolle-Knopf", async () => { await page.click('.chip[data-k="C"]'); return (await page.locator('.card [data-a="quiz"]').count()) === 0 || "Knopf da"; });
   await punkt("T9 In PowerPoint starten: Office-Adresse ms-powerpoint:ofs|u|…", async () => {
     await page.click('.chip[data-k="B"]');
@@ -129,7 +129,7 @@ const quer = (page) => page.evaluate(() => document.documentElement.scrollWidth 
   });
   await punkt("T11 Esc schließt die Ansicht", async () => { await page.keyboard.press("Escape"); await page.waitForTimeout(100); return (await page.locator("#viewer").count()) === 0 || "noch offen"; });
   await punkt("T12 Neuer Unterricht über Karte, Folien 2 und 4 abwählen, gespeichert", async () => {
-    await page.locator('.card').first().locator('[data-a="add"]').click(); await page.click("#zNeu"); await page.waitForTimeout(300);
+    await page.locator('.card').first().locator('summary').click(); await page.locator('.card').first().locator('[data-a="add"]').click(); await page.click("#zNeu"); await page.waitForTimeout(300);
     await page.click('[data-a="edit"]'); await page.waitForTimeout(200);
     await page.fill("#eT", "Abend 1 Muster"); await page.click('[data-a="folien"]'); await page.waitForTimeout(300);
     await page.click('.pick input[data-nr="2"]'); await page.click('.pick input[data-nr="4"]');
