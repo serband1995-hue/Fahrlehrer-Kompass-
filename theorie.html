@@ -1,0 +1,646 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#3a7350">
+<meta name="robots" content="noindex">
+<title>Theorieunterricht – Fahrlehrer-Kompass</title>
+<link rel="icon" href="icon-192.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Source+Serif+4:opsz,wght@8..60,600;8..60,700&display=swap" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
+<style>
+:root{
+  --bg:#f3f1e9; --surface:#fffdf7; --surface-2:#ece7d8; --line:#ddd5bd;
+  --txt:#2a2c22; --muted:#6b6a55; --akzent:#3a7350; --akzent-dark:#2f5d3f; --akzent-soft:rgba(58,115,80,.12);
+  --gold:#b8873a; --rot:#b4483a; --r:16px; --pad:clamp(16px,4vw,32px);
+}
+*{box-sizing:border-box}
+html,body{margin:0;background:var(--bg);color:var(--txt);font:16px/1.45 system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;-webkit-text-size-adjust:100%}
+body{min-height:100vh;overflow-x:hidden}
+h1,h2,h3{font-family:"Source Serif 4",Georgia,serif;margin:0;line-height:1.2}
+button,input,select,textarea{font:inherit;color:inherit}
+button{cursor:pointer}
+.wrap{max-width:1100px;margin:0 auto;padding:0 var(--pad) 60px}
+header.top{position:sticky;top:0;z-index:20;background:var(--bg);border-bottom:1px solid var(--line)}
+header.top .wrap{display:flex;align-items:center;gap:10px;padding-top:12px;padding-bottom:12px;flex-wrap:wrap}
+.top h1{font-size:1.35rem;flex:1;min-width:150px}
+.back{display:inline-flex;align-items:center;gap:6px;text-decoration:none;color:var(--akzent-dark);font-weight:600;padding:8px 10px;border-radius:10px;background:var(--akzent-soft)}
+.user{font-size:.85rem;color:var(--muted);display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+.btn{border:0;border-radius:12px;padding:11px 16px;font-weight:600;background:var(--akzent);color:#fff;min-height:44px;display:inline-flex;align-items:center;justify-content:center;gap:6px;text-decoration:none}
+.btn:hover{background:var(--akzent-dark)}
+.btn.ghost{background:transparent;color:var(--akzent-dark);border:1px solid var(--line)}
+.btn.ghost:hover{background:var(--akzent-soft)}
+.btn.small{padding:7px 12px;min-height:36px;font-size:.9rem}
+.btn.danger{background:transparent;color:var(--rot);border:1px solid rgba(180,72,58,.35)}
+.btn:disabled{opacity:.5;cursor:not-allowed}
+.tabs{display:flex;gap:6px;margin:18px 0 6px;flex-wrap:wrap}
+.tab{border:1px solid var(--line);background:var(--surface);border-radius:999px;padding:9px 16px;font-weight:600;white-space:nowrap;min-height:42px}
+.tab.on{background:var(--akzent);border-color:var(--akzent);color:#fff}
+.chips{display:flex;gap:8px;flex-wrap:wrap;margin:14px 0}
+.chip{border:1px solid var(--line);background:var(--surface);border-radius:12px;padding:8px 14px;font-weight:700;min-width:56px;min-height:44px}
+.chip.on{border-color:var(--akzent);background:var(--akzent-soft);color:var(--akzent-dark)}
+.chip .n{font-weight:500;color:var(--muted);font-size:.8rem;margin-left:4px}
+.hint{color:var(--muted);font-size:.92rem}
+.box{background:var(--surface);border:1px solid var(--line);border-radius:var(--r);padding:16px}
+.abend{margin:20px 0 8px;font-size:.8rem;letter-spacing:.08em;text-transform:uppercase;color:var(--gold);font-weight:700}
+.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:14px}
+.card{background:var(--surface);border:1px solid var(--line);border-radius:var(--r);overflow:hidden;display:flex;flex-direction:column}
+.card .thumb{aspect-ratio:16/9;background:#1c2b24 center/cover no-repeat;position:relative}
+.card .thumb .code{position:absolute;left:10px;top:10px;background:rgba(0,0,0,.6);color:#fff;font-weight:700;border-radius:8px;padding:3px 9px;font-size:.85rem}
+.card .body{padding:12px 14px 14px;display:flex;flex-direction:column;gap:8px;flex:1}
+.card h3{font-size:1.08rem}
+.card .meta{font-size:.85rem;color:var(--muted)}
+.card .acts{display:flex;gap:8px;flex-wrap:wrap;margin-top:auto}
+.card .acts .btn{flex:1 1 auto}
+.empty{padding:28px 18px;text-align:center;border:2px dashed var(--line);border-radius:var(--r);color:var(--muted)}
+.row{display:flex;gap:10px;align-items:center;flex-wrap:wrap}
+.list{display:flex;flex-direction:column;gap:10px}
+.item{background:var(--surface);border:1px solid var(--line);border-radius:14px;padding:12px 14px;display:flex;gap:12px;align-items:center;flex-wrap:wrap}
+.item .t{flex:1;min-width:180px;overflow-wrap:anywhere}
+.item .t b{display:block}
+.item .t span{font-size:.85rem;color:var(--muted)}
+label.f{display:block;font-weight:600;font-size:.9rem;margin:12px 0 4px}
+input[type=text],input[type=email],input[type=password],select,textarea{width:100%;border:1px solid var(--line);background:#fff;border-radius:12px;padding:11px 12px;min-height:44px}
+textarea{min-height:80px;resize:vertical}
+input[type=file]{width:100%;max-width:100%;min-height:44px;padding:8px 0}
+.login{max-width:420px;margin:40px auto}
+.err{color:var(--rot);font-size:.9rem;margin-top:8px;min-height:1.2em}
+.toast{position:fixed;left:50%;bottom:22px;transform:translateX(-50%);background:#2a2c22;color:#fff;padding:12px 18px;border-radius:12px;z-index:200;max-width:calc(100vw - 32px);box-shadow:0 8px 30px rgba(0,0,0,.25);font-size:.95rem}
+/* Fenster */
+.modal{position:fixed;inset:0;background:rgba(20,24,20,.55);z-index:100;display:flex;align-items:flex-end;justify-content:center}
+.modal .sheet{background:var(--bg);width:100%;max-width:760px;max-height:92vh;overflow:auto;border-radius:20px 20px 0 0;padding:18px var(--pad) 26px}
+@media(min-width:700px){.modal{align-items:center}.modal .sheet{border-radius:20px}}
+.sheet .head{display:flex;align-items:center;gap:10px;margin-bottom:10px}
+.sheet .head h2{flex:1;font-size:1.25rem}
+.x{border:0;background:var(--surface-2);border-radius:10px;width:44px;height:44px;font-size:1.3rem}
+.pick{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:10px}
+.pick label{position:relative;display:block;border-radius:10px;overflow:hidden;border:3px solid var(--akzent);cursor:pointer;background:#1c2b24}
+.pick label.off{border-color:var(--line);opacity:.45}
+.pick img{display:block;width:100%;aspect-ratio:16/9;object-fit:cover}
+.pick input{position:absolute;right:6px;top:6px;width:22px;height:22px;accent-color:var(--akzent)}
+.pick .nr{position:absolute;left:6px;bottom:6px;background:rgba(0,0,0,.65);color:#fff;font-size:.75rem;border-radius:6px;padding:1px 6px}
+/* Folien-Ansicht */
+.viewer{position:fixed;inset:0;background:#0b0f0d;z-index:150;display:flex;flex-direction:column;color:#eee}
+.viewer .stage{flex:1;display:flex;align-items:center;justify-content:center;min-height:0;position:relative}
+.viewer .stage img{max-width:100%;max-height:100%;object-fit:contain;user-select:none}
+.viewer .bar{display:flex;gap:8px;align-items:center;padding:10px 12px;background:#141a17;flex-wrap:wrap}
+.viewer .bar .btn{background:#2a3a32}
+.viewer .bar .btn:hover{background:#3a4f44}
+.viewer .count{flex:1;text-align:center;min-width:80px;font-variant-numeric:tabular-nums}
+.viewer .notes{background:#141a17;border-top:1px solid #2a3a32;padding:12px 16px;max-height:30vh;overflow:auto;white-space:pre-wrap;font-size:.95rem;line-height:1.5}
+.viewer .navzone{position:absolute;top:0;bottom:0;width:30%;cursor:pointer}
+.viewer .navzone.l{left:0}.viewer .navzone.r{right:0}
+.viewer .note-flag{position:absolute;left:12px;top:12px;background:rgba(201,162,39,.9);color:#111;font-size:.8rem;border-radius:8px;padding:3px 8px}
+body.board .viewer .bar,body.board .viewer .notes{display:none}
+.how{font-size:.9rem;color:var(--muted);margin-top:6px}
+.how summary{cursor:pointer;color:var(--akzent-dark);font-weight:600}
+.badge{display:inline-block;font-size:.75rem;font-weight:700;border-radius:6px;padding:2px 7px;background:var(--akzent-soft);color:var(--akzent-dark)}
+.badge.gold{background:rgba(184,135,58,.15);color:#8a6223}
+@media(max-width:420px){.grid{grid-template-columns:1fr}.card .acts .btn{flex:1 1 100%}}
+</style>
+</head>
+<body>
+<header class="top"><div class="wrap">
+  <a class="back" href="./" aria-label="Zurück zum Kompass">← Kompass</a>
+  <h1>Theorieunterricht</h1>
+  <div class="user" id="userBox"></div>
+</div></header>
+<main class="wrap" id="app"><p class="hint" style="margin-top:30px">Lade …</p></main>
+
+<script>
+"use strict";
+const SUPA_URL = "https://oectrvkjunntzsggyhxv.supabase.co";
+const SUPA_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im9lY3RydmtqdW5udHpzZ2d5aHh2Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODI1ODkyMjYsImV4cCI6MjA5ODE2NTIyNn0.8zmIzvyKh9x_WvykSO9LJczhff_eztl3rSycqmlPHPY";
+const BUCKET = "theorie";
+const PPTX_MIME = "application/vnd.openxmlformats-officedocument.presentationml.presentation";
+const MAX_BYTES = 50 * 1024 * 1024;
+const supa = window.supabase.createClient(SUPA_URL, SUPA_KEY);
+
+const S = { user:null, profil:null, klassen:[], lektionen:[], darfBib:false, tab:"bib", klasse:null,
+            unterrichte:[], dateien:[], folienCache:{}, urlCache:{} };
+const $ = (s, el=document) => el.querySelector(s);
+const esc = (v) => String(v ?? "").replace(/[&<>"']/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+function toast(msg, ms=3200){ const t=document.createElement("div"); t.className="toast"; t.textContent=msg; document.body.appendChild(t); setTimeout(()=>t.remove(), ms); }
+const mb = (b) => (b/1048576).toLocaleString("de-DE",{maximumFractionDigits:1}) + " MB";
+const istHandy = () => /Android|iPhone|iPad|iPod/i.test(navigator.userAgent);
+
+/* ---------- Speicher-Adressen ---------- */
+async function signedUrl(pfad, opts={}){
+  const key = pfad + "|" + (opts.download||"");
+  const c = S.urlCache[key]; if (c && c.bis > Date.now()) return c.url;
+  const { data, error } = await supa.storage.from(BUCKET).createSignedUrl(pfad, 4*3600, opts.download ? { download: opts.download } : undefined);
+  if (error || !data) throw new Error("Datei nicht erreichbar");
+  S.urlCache[key] = { url: data.signedUrl, bis: Date.now() + 3.5*3600*1000 };
+  return data.signedUrl;
+}
+async function bildUrls(pfade){
+  const offen = pfade.filter(p => !(S.urlCache[p+"|"] && S.urlCache[p+"|"].bis > Date.now()));
+  for (let i=0; i<offen.length; i+=100){
+    const teil = offen.slice(i, i+100);
+    const { data } = await supa.storage.from(BUCKET).createSignedUrls(teil, 4*3600);
+    (data||[]).forEach(d => { if (d.signedUrl) S.urlCache[d.path+"|"] = { url:d.signedUrl, bis:Date.now()+3.5*3600*1000 }; });
+  }
+  return pfade.map(p => (S.urlCache[p+"|"]||{}).url || "");
+}
+const dateiName = (l) => `${l.code} – ${l.titel}.pptx`.replace(/[\\/:*?"<>|]/g, "-");
+
+/* ---------- Start und Anmeldung ---------- */
+async function start(){
+  const { data } = await supa.auth.getSession();
+  S.user = data && data.session ? data.session.user : null;
+  if (!S.user) return zeigeLogin();
+  await ladeAlles();
+}
+function zeigeLogin(){
+  $("#userBox").innerHTML = "";
+  $("#app").innerHTML = `<div class="login box">
+    <h2>Anmelden</h2>
+    <p class="hint">Mit deinem Zugang zum Fahrlehrer-Kompass.</p>
+    <form id="lf">
+      <label class="f" for="lm">E-Mail</label><input type="email" id="lm" autocomplete="username" required>
+      <label class="f" for="lp">Passwort</label><input type="password" id="lp" autocomplete="current-password" required>
+      <div class="err" id="le"></div>
+      <button class="btn" style="width:100%;margin-top:8px" type="submit">Anmelden</button>
+    </form>
+    <p class="hint" style="margin-top:14px">Noch kein Zugang? Dein Büro oder deine Fahrschulleitung lädt dich ein.</p>
+  </div>`;
+  $("#lf").addEventListener("submit", async (e) => {
+    e.preventDefault(); $("#le").textContent = "";
+    const { error } = await supa.auth.signInWithPassword({ email: $("#lm").value.trim(), password: $("#lp").value });
+    if (error) { $("#le").textContent = "Anmeldung fehlgeschlagen. E-Mail und Passwort prüfen."; return; }
+    start();
+  });
+}
+async function ladeAlles(){
+  const [prof, kl, darf] = await Promise.all([
+    supa.from("profiles").select("name,email,aktiv").eq("id", S.user.id).maybeSingle(),
+    supa.from("theorie_klassen").select("*").order("sort"),
+    supa.rpc("theorie_darf_bibliothek")
+  ]);
+  S.profil = prof.data || {};
+  if (S.profil.aktiv === false) { $("#app").innerHTML = `<div class="login box"><h2>Zugang gesperrt</h2><p class="hint">Dein Zugang ist nicht aktiv. Bitte wende dich an dein Büro.</p></div>`; return; }
+  S.klassen = kl.data || [];
+  S.darfBib = darf.data === true;
+  if (S.darfBib) {
+    const { data } = await supa.from("theorie_lektionen").select("*").order("klasse").order("nr");
+    S.lektionen = data || [];
+  }
+  await Promise.all([ladeUnterrichte(), ladeDateien()]);
+  $("#userBox").innerHTML = `<span>${esc(S.profil.name || S.profil.email || S.user.email)}</span><button class="btn ghost small" id="logout">Abmelden</button>`;
+  $("#logout").onclick = async () => { await supa.auth.signOut(); location.reload(); };
+  const merk = (() => { try { return JSON.parse(localStorage.getItem("theorie-ansicht")||"{}"); } catch(e){ return {}; } })();
+  S.tab = merk.tab || "bib";
+  S.klasse = merk.klasse || (S.lektionen[0] && "B") || "B";
+  render();
+}
+async function ladeUnterrichte(){
+  const { data } = await supa.from("theorie_unterrichte").select("*").order("geaendert", { ascending:false });
+  S.unterrichte = data || [];
+}
+async function ladeDateien(){
+  const { data } = await supa.from("theorie_dateien").select("*").order("erstellt", { ascending:false });
+  S.dateien = data || [];
+}
+function merke(){ try { localStorage.setItem("theorie-ansicht", JSON.stringify({ tab:S.tab, klasse:S.klasse })); } catch(e){} }
+
+/* ---------- Oberfläche ---------- */
+function render(){
+  merke();
+  const t = (k, txt) => `<button class="tab${S.tab===k?" on":""}" data-tab="${k}">${txt}</button>`;
+  $("#app").innerHTML = `<div class="tabs" role="tablist">
+      ${t("bib","Bibliothek")}${t("unt","Meine Unterrichte ("+S.unterrichte.length+")")}${t("dat","Eigene Dateien ("+S.dateien.length+")")}
+    </div><div id="pane"></div>`;
+  document.querySelectorAll(".tab").forEach(b => b.onclick = () => { S.tab = b.dataset.tab; render(); });
+  if (S.tab === "bib") renderBib(); else if (S.tab === "unt") renderUnterrichte(); else renderDateien();
+}
+
+function lektionenVon(k){ return S.lektionen.filter(l => l.klasse === k); }
+function eigeneVon(k){ return S.dateien.filter(d => d.klasse === k); }
+
+function renderBib(){
+  const p = $("#pane");
+  const chips = S.klassen.map(k => {
+    const n = lektionenVon(k.klasse).length;
+    return `<button class="chip${S.klasse===k.klasse?" on":""}" data-k="${esc(k.klasse)}">${esc(k.klasse)}<span class="n">${n||"–"}</span></button>`;
+  }).join("");
+  const k = S.klassen.find(x => x.klasse === S.klasse) || S.klassen[0] || { klasse:"B", titel:"Klasse B" };
+  let html = `<div class="chips">${chips}</div>
+    <div class="row" style="justify-content:space-between"><div><h2 style="font-size:1.3rem">${esc(k.titel)}</h2><div class="hint">${esc(k.beschreibung||"")}</div></div></div>
+    <details class="how"><summary>So startest du den Unterricht</summary>
+      <p><b>In PowerPoint starten</b> öffnet die Original-Präsentation mit allen Animationen und Videos direkt als Bildschirmpräsentation (Laptop mit PowerPoint). Fragt Windows „PowerPoint öffnen?“, mit Ja bestätigen. Zeigt PowerPoint oben „Geschützte Ansicht“, einmal auf <b>Bearbeitung aktivieren</b> tippen, sonst laufen Videos nicht.</p>
+      <p>Startet PowerPoint nicht, nimm <b>Herunterladen</b> und öffne die Datei. <b>Im Browser</b> zeigt die Folien ohne PowerPoint, aber ohne Animationen, mit deinen Notizen und einem zweiten Fenster für das Smartboard.</p>
+    </details>`;
+  const lek = lektionenVon(k.klasse);
+  if (!S.darfBib) {
+    html += `<div class="empty" style="margin-top:16px">Die Folien-Bibliothek ist für deine Fahrschule noch nicht freigeschaltet.<br>Eigene Präsentationen kannst du unter „Eigene Dateien“ hochladen.</div>`;
+  } else if (!lek.length) {
+    html += `<div class="empty" style="margin-top:16px">Für ${esc(k.titel)} gibt es noch keine Folien in der Bibliothek.<br><br><button class="btn" id="zuDat">Eigene Präsentation hochladen</button></div>`;
+  } else {
+    let abend = null, gruppe = "";
+    const gruppen = [];
+    lek.forEach(l => {
+      const key = l.abend ? "Abend " + l.abend : (l.bereich || "");
+      if (key !== abend) { if (gruppe) gruppen.push(gruppe + "</div>"); abend = key; gruppe = `<div class="abend">${esc(key)}</div><div class="grid">`; }
+      gruppe += karte(l);
+    });
+    if (gruppe) gruppen.push(gruppe + "</div>");
+    html += gruppen.join("");
+  }
+  const eig = eigeneVon(k.klasse);
+  if (eig.length) html += `<div class="abend">Deine eigenen Dateien für ${esc(k.klasse)}</div><div class="list">${eig.map(dateiZeile).join("")}</div>`;
+  p.innerHTML = html;
+  p.querySelectorAll(".chip").forEach(b => b.onclick = () => { S.klasse = b.dataset.k; render(); });
+  const zd = $("#zuDat"); if (zd) zd.onclick = () => { S.tab = "dat"; render(); };
+  bindKarten(p); bindDateien(p);
+  ladeTitelbilder(lek);
+}
+function karte(l){
+  return `<article class="card" data-l="${esc(l.id)}">
+    <div class="thumb" data-bild="${esc(l.id)}"><span class="code">${esc(l.code)}</span></div>
+    <div class="body">
+      <h3>${esc(l.titel)}</h3>
+      <div class="meta">${l.folien_anzahl} Folien · ${mb(l.datei_bytes||0)}${l.untertitel?" · "+esc(l.untertitel):""}</div>
+      <div class="acts">
+        <button class="btn" data-a="ppt">▶ In PowerPoint starten</button>
+        <button class="btn ghost small" data-a="browser">Im Browser</button>
+        <button class="btn ghost small" data-a="dl">Herunterladen</button>
+        ${l.quiz_lektion?`<button class="btn ghost small" data-a="quiz">Lernzielkontrolle</button>`:""}
+        <button class="btn ghost small" data-a="add">＋ Zu meinem Unterricht</button>
+      </div>
+    </div></article>`;
+}
+async function ladeTitelbilder(lek){
+  const pfade = lek.map(l => `bibliothek/${l.klasse}/${l.id}/f001.webp`);
+  if (!pfade.length) return;
+  const urls = await bildUrls(pfade);
+  lek.forEach((l,i) => { const el = document.querySelector(`[data-bild="${CSS.escape(l.id)}"]`); if (el && urls[i]) el.style.backgroundImage = `url("${urls[i]}")`; });
+}
+function bindKarten(root){
+  root.querySelectorAll(".card[data-l]").forEach(c => {
+    const l = S.lektionen.find(x => x.id === c.dataset.l);
+    c.querySelectorAll("[data-a]").forEach(b => b.onclick = () => aktionLektion(l, b.dataset.a, b));
+  });
+}
+async function aktionLektion(l, a, btn){
+  try {
+    if (a === "ppt") return starteInPowerPoint(l.datei_pfad, dateiName(l));
+    if (a === "dl") { location.href = await signedUrl(l.datei_pfad, { download: dateiName(l) }); return; }
+    if (a === "browser") return oeffneViewer(l.id, []);
+    if (a === "quiz") { window.open("quiz-tafel.html?l=" + l.quiz_lektion, "lernzielkontrolle"); return; }
+    if (a === "add") return zuUnterricht({ typ:"lektion", lektion_id:l.id, aus:[] }, l.klasse);
+  } catch(e) { toast(e.message || "Das hat nicht geklappt."); }
+}
+
+/* PowerPoint: Office öffnet die Datei direkt aus der Adresse als Bildschirmpräsentation. */
+async function starteInPowerPoint(pfad, name){
+  if (istHandy()) {
+    toast("Am Handy wird die Datei heruntergeladen. Für den Unterricht am besten den Laptop nehmen.", 4500);
+    location.href = await signedUrl(pfad, { download: name }); return;
+  }
+  const url = await signedUrl(pfad);
+  const a = document.createElement("a");
+  a.href = "ms-powerpoint:ofs|u|" + url;
+  document.body.appendChild(a); a.click(); a.remove();
+  toast("PowerPoint startet … Falls nichts passiert: „Herunterladen“ nehmen.", 5000);
+}
+
+/* ---------- Folien-Ansicht im Browser ---------- */
+async function folienVon(lektionId){
+  if (S.folienCache[lektionId]) return S.folienCache[lektionId];
+  const { data, error } = await supa.from("theorie_folien").select("nr,titel,notiz,bild_pfad").eq("lektion_id", lektionId).order("nr");
+  if (error) throw new Error("Folien nicht ladbar");
+  S.folienCache[lektionId] = data || [];
+  return S.folienCache[lektionId];
+}
+let V = null;
+const kanal = ("BroadcastChannel" in window) ? new BroadcastChannel("kompass-theorie") : null;
+async function oeffneViewer(lektionId, aus, startNr){
+  const alle = await folienVon(lektionId);
+  const folien = alle.filter(f => !(aus||[]).includes(f.nr));
+  if (!folien.length) { toast("Keine Folien ausgewählt."); return; }
+  const urls = await bildUrls(folien.map(f => f.bild_pfad));
+  const l = S.lektionen.find(x => x.id === lektionId) || {};
+  V = { lektionId, aus:aus||[], folien, urls, i: 0, notizen: !document.body.classList.contains("board") };
+  if (startNr) { const j = folien.findIndex(f => f.nr === startNr); if (j >= 0) V.i = j; }
+  const v = document.createElement("div"); v.className = "viewer"; v.id = "viewer";
+  v.innerHTML = `<div class="stage"><img id="vImg" alt=""><div class="navzone l" id="vL"></div><div class="navzone r" id="vR"></div><span class="note-flag">Ohne Animationen</span></div>
+    <div class="notes" id="vNotes"></div>
+    <div class="bar">
+      <button class="btn small" id="vX">✕ Schließen</button>
+      <button class="btn small" id="vPrev">←</button>
+      <span class="count" id="vCount"></span>
+      <button class="btn small" id="vNext">→</button>
+      <button class="btn small" id="vN">Notizen</button>
+      <button class="btn small" id="vBoard" title="Zweites Fenster nur mit der Folie, z. B. für das Smartboard">Fenster fürs Smartboard</button>
+      <button class="btn small" id="vFull">Vollbild</button>
+    </div>`;
+  document.body.appendChild(v);
+  $("#vX").onclick = schliesseViewer;
+  $("#vPrev").onclick = $("#vL").onclick = () => geheZu(V.i - 1);
+  $("#vNext").onclick = $("#vR").onclick = () => geheZu(V.i + 1);
+  $("#vN").onclick = () => { V.notizen = !V.notizen; zeige(); };
+  $("#vFull").onclick = () => { if (!document.fullscreenElement) v.requestFullscreen && v.requestFullscreen(); else document.exitFullscreen(); };
+  $("#vBoard").onclick = () => {
+    const w = window.open(`theorie.html?tafel=${encodeURIComponent(lektionId)}&aus=${encodeURIComponent(V.aus.join(","))}&nr=${folien[V.i].nr}`, "kompass-tafel", "popup,width=1280,height=720");
+    if (!w) toast("Bitte Pop-ups für diese Seite erlauben.");
+    else toast("Fenster aufs Smartboard ziehen und dort Vollbild (F11). Hier blätterst du weiter.", 5500);
+  };
+  document.addEventListener("keydown", tasten);
+  zeige();
+  document.title = (l.code ? l.code + " – " : "") + "Theorie";
+}
+function geheZu(i){ if (!V) return; V.i = Math.max(0, Math.min(V.folien.length - 1, i)); zeige(); if (kanal) kanal.postMessage({ lektionId:V.lektionId, nr:V.folien[V.i].nr }); }
+function zeige(){
+  const f = V.folien[V.i];
+  $("#vImg").src = V.urls[V.i];
+  $("#vCount").textContent = `Folie ${V.i+1} von ${V.folien.length}`;
+  const n = $("#vNotes"); n.style.display = V.notizen && f.notiz ? "block" : "none"; n.textContent = f.notiz || "";
+  if (V.urls[V.i+1]) { const im = new Image(); im.src = V.urls[V.i+1]; }
+}
+function tasten(e){
+  if (!V) return;
+  if (["ArrowRight","PageDown"," ","Enter"].includes(e.key)) { e.preventDefault(); geheZu(V.i + 1); }
+  else if (["ArrowLeft","PageUp","Backspace"].includes(e.key)) { e.preventDefault(); geheZu(V.i - 1); }
+  else if (e.key === "Escape" && !document.fullscreenElement) schliesseViewer();
+}
+function schliesseViewer(){ const v = $("#viewer"); if (v) v.remove(); document.removeEventListener("keydown", tasten); V = null; document.title = "Theorieunterricht – Fahrlehrer-Kompass"; }
+if (kanal) kanal.onmessage = (ev) => {
+  if (!V || ev.data.lektionId !== V.lektionId) return;
+  const j = V.folien.findIndex(f => f.nr === ev.data.nr); if (j >= 0 && j !== V.i) { V.i = j; zeige(); }
+};
+
+/* ---------- Eigene Unterrichte ---------- */
+function renderUnterrichte(){
+  const p = $("#pane");
+  p.innerHTML = `<div class="row" style="justify-content:space-between;margin:14px 0">
+      <p class="hint" style="margin:0;max-width:640px">Stell dir deinen Unterricht zusammen: Lektionen aus der Bibliothek und eigene Dateien, in deiner Reihenfolge. Folien, die du abwählst, blendet PowerPoint beim Zeigen aus.</p>
+      <button class="btn" id="neuU">＋ Neuer Unterricht</button></div>
+    ${S.unterrichte.length ? `<div class="list">${S.unterrichte.map(u => `<div class="item">
+        <div class="t"><b>${esc(u.titel)}</b><span>${u.klasse?("Klasse "+esc(u.klasse)+" · "):""}${(u.teile||[]).length} Teile · geändert ${new Date(u.geaendert).toLocaleDateString("de-DE")}</span></div>
+        <button class="btn small" data-u="${esc(u.id)}" data-a="start">▶ Starten</button>
+        <button class="btn ghost small" data-u="${esc(u.id)}" data-a="edit">Bearbeiten</button></div>`).join("")}</div>`
+      : `<div class="empty">Noch kein eigener Unterricht. Tipp in der Bibliothek bei einer Lektion auf „＋ Zu meinem Unterricht“ oder lege hier einen neuen an.</div>`}`;
+  $("#neuU").onclick = () => editor(null);
+  p.querySelectorAll("[data-u]").forEach(b => b.onclick = () => {
+    const u = S.unterrichte.find(x => x.id === b.dataset.u);
+    if (b.dataset.a === "edit") editor(u); else startAnsicht(u);
+  });
+}
+function teilName(t){
+  if (t.typ === "lektion") { const l = S.lektionen.find(x => x.id === t.lektion_id); return l ? `${l.code} – ${l.titel}` : "Lektion nicht mehr verfügbar"; }
+  const d = S.dateien.find(x => x.id === t.datei_id); return d ? d.name : "Datei gelöscht";
+}
+function teilInfo(t){
+  if (t.typ === "lektion") { const l = S.lektionen.find(x => x.id === t.lektion_id); if (!l) return ""; const n = l.folien_anzahl - (t.aus||[]).length; return `Bibliothek · ${n} von ${l.folien_anzahl} Folien`; }
+  const d = S.dateien.find(x => x.id === t.datei_id); return d ? `Eigene Datei · ${d.mime === "application/pdf" ? "PDF" : "PowerPoint"}` : "";
+}
+function modal(titel, inner){
+  const m = document.createElement("div"); m.className = "modal";
+  m.innerHTML = `<div class="sheet" role="dialog" aria-modal="true"><div class="head"><h2>${esc(titel)}</h2><button class="x" aria-label="Schließen">✕</button></div><div class="mbody">${inner}</div></div>`;
+  document.body.appendChild(m);
+  const zu = () => { m.remove(); document.removeEventListener("keydown", escZu); };
+  const escZu = (e) => { if (e.key === "Escape" && !V) zu(); };
+  m.querySelector(".x").onclick = zu; m.addEventListener("click", e => { if (e.target === m) zu(); });
+  document.addEventListener("keydown", escZu);
+  return { el:m, zu };
+}
+function editor(u){
+  const neu = !u;
+  const E = { titel: u ? u.titel : "", klasse: u ? u.klasse : S.klasse, notiz: u ? (u.notiz||"") : "", teile: u ? JSON.parse(JSON.stringify(u.teile||[])) : [] };
+  const m = modal(neu ? "Neuer Unterricht" : "Unterricht bearbeiten", `<div id="ed"></div>`);
+  const zeichne = () => {
+    const ed = m.el.querySelector("#ed");
+    ed.innerHTML = `<label class="f" for="eT">Name</label><input type="text" id="eT" maxlength="120" placeholder="z. B. Abend 1 – Klasse B" value="${esc(E.titel)}">
+      <label class="f" for="eK">Klasse</label><select id="eK">${S.klassen.map(k => `<option value="${esc(k.klasse)}"${k.klasse===E.klasse?" selected":""}>${esc(k.titel)}</option>`).join("")}</select>
+      <label class="f">Teile (Reihenfolge = Ablauf)</label>
+      <div class="list">${E.teile.length ? E.teile.map((t,i) => `<div class="item">
+          <div class="t"><b>${i+1}. ${esc(teilName(t))}</b><span>${esc(teilInfo(t))}</span></div>
+          ${t.typ==="lektion"?`<button class="btn ghost small" data-i="${i}" data-a="folien">Folien wählen</button>`:""}
+          <button class="btn ghost small" data-i="${i}" data-a="hoch" ${i===0?"disabled":""} aria-label="nach oben">↑</button>
+          <button class="btn ghost small" data-i="${i}" data-a="runter" ${i===E.teile.length-1?"disabled":""} aria-label="nach unten">↓</button>
+          <button class="btn danger small" data-i="${i}" data-a="weg" aria-label="entfernen">✕</button></div>`).join("") : `<div class="empty">Noch leer.</div>`}</div>
+      <div class="row" style="margin-top:10px"><button class="btn ghost small" id="addL">＋ Lektion aus der Bibliothek</button><button class="btn ghost small" id="addD">＋ Eigene Datei</button></div>
+      <label class="f" for="eN">Notiz für dich (optional)</label><textarea id="eN" maxlength="2000">${esc(E.notiz)}</textarea>
+      <div class="err" id="eErr"></div>
+      <div class="row" style="margin-top:12px;justify-content:space-between">
+        ${neu?"<span></span>":`<button class="btn danger" id="eDel">Unterricht löschen</button>`}
+        <button class="btn" id="eSave">Speichern</button></div>`;
+    const lies = () => { E.titel = ed.querySelector("#eT").value; E.klasse = ed.querySelector("#eK").value; E.notiz = ed.querySelector("#eN").value; };
+    ed.querySelectorAll("[data-i]").forEach(b => b.onclick = () => {
+      lies(); const i = +b.dataset.i, a = b.dataset.a;
+      if (a === "hoch") [E.teile[i-1], E.teile[i]] = [E.teile[i], E.teile[i-1]];
+      if (a === "runter") [E.teile[i+1], E.teile[i]] = [E.teile[i], E.teile[i+1]];
+      if (a === "weg") E.teile.splice(i, 1);
+      if (a === "folien") return folienWahl(E.teile[i], zeichne);
+      zeichne();
+    });
+    ed.querySelector("#addL").onclick = () => { lies(); waehleLektion(E.klasse, (id) => { E.teile.push({ typ:"lektion", lektion_id:id, aus:[] }); zeichne(); }); };
+    ed.querySelector("#addD").onclick = () => { lies(); waehleDatei((id) => { E.teile.push({ typ:"datei", datei_id:id }); zeichne(); }); };
+    ed.querySelector("#eSave").onclick = async () => {
+      lies(); const err = ed.querySelector("#eErr");
+      if (!E.titel.trim()) { err.textContent = "Bitte einen Namen eingeben."; return; }
+      const row = { titel:E.titel.trim(), klasse:E.klasse, notiz:E.notiz.trim()||null, teile:E.teile, geaendert:new Date().toISOString() };
+      const res = neu ? await supa.from("theorie_unterrichte").insert(row) : await supa.from("theorie_unterrichte").update(row).eq("id", u.id);
+      if (res.error) { err.textContent = "Speichern hat nicht geklappt. Bitte erneut versuchen."; return; }
+      await ladeUnterrichte(); m.zu(); S.tab = "unt"; render(); toast("Gespeichert.");
+    };
+    const d = ed.querySelector("#eDel");
+    if (d) d.onclick = async () => {
+      if (!confirm(`„${u.titel}“ wirklich löschen? Die Folien in der Bibliothek bleiben erhalten.`)) return;
+      const { error } = await supa.from("theorie_unterrichte").delete().eq("id", u.id);
+      if (error) { toast("Löschen hat nicht geklappt."); return; }
+      await ladeUnterrichte(); m.zu(); render(); toast("Gelöscht.");
+    };
+  };
+  zeichne();
+}
+function waehleLektion(klasse, fertig){
+  const liste = S.lektionen;
+  if (!liste.length) { toast("Die Bibliothek ist noch leer oder nicht freigeschaltet."); return; }
+  const kl = [...new Set(liste.map(l => l.klasse))];
+  const m = modal("Lektion wählen", `<div class="chips" id="wk">${kl.map(k => `<button class="chip${k===klasse?" on":""}" data-k="${esc(k)}">${esc(k)}</button>`).join("")}</div><div class="list" id="wl"></div>`);
+  const zeig = (k) => {
+    m.el.querySelectorAll("#wk .chip").forEach(c => c.classList.toggle("on", c.dataset.k === k));
+    m.el.querySelector("#wl").innerHTML = liste.filter(l => l.klasse === k).map(l => `<div class="item"><div class="t"><b>${esc(l.code)} – ${esc(l.titel)}</b><span>${l.folien_anzahl} Folien</span></div><button class="btn small" data-id="${esc(l.id)}">Hinzufügen</button></div>`).join("");
+    m.el.querySelectorAll("[data-id]").forEach(b => b.onclick = () => { m.zu(); fertig(b.dataset.id); });
+  };
+  m.el.querySelectorAll("#wk .chip").forEach(c => c.onclick = () => zeig(c.dataset.k));
+  zeig(kl.includes(klasse) ? klasse : kl[0]);
+}
+function waehleDatei(fertig){
+  if (!S.dateien.length) { toast("Lade zuerst unter „Eigene Dateien“ eine Präsentation hoch."); return; }
+  const m = modal("Eigene Datei wählen", `<div class="list">${S.dateien.map(d => `<div class="item"><div class="t"><b>${esc(d.name)}</b><span>${d.klasse?"Klasse "+esc(d.klasse)+" · ":""}${mb(d.bytes)}</span></div><button class="btn small" data-id="${esc(d.id)}">Hinzufügen</button></div>`).join("")}</div>`);
+  m.el.querySelectorAll("[data-id]").forEach(b => b.onclick = () => { m.zu(); fertig(b.dataset.id); });
+}
+async function folienWahl(teil, fertig){
+  const folien = await folienVon(teil.lektion_id);
+  const urls = await bildUrls(folien.map(f => f.bild_pfad));
+  const aus = new Set(teil.aus || []);
+  const m = modal("Folien wählen", `<p class="hint">Abgewählte Folien werden beim Zeigen übersprungen. Die Original-Datei bleibt unverändert.</p>
+    <div class="row" style="margin-bottom:10px"><button class="btn ghost small" id="fa">Alle an</button><button class="btn ghost small" id="fk">Alle aus</button><span class="hint" id="fz"></span></div>
+    <div class="pick">${folien.map((f,i) => `<label class="${aus.has(f.nr)?"off":""}" title="${esc(f.titel||"")}"><img loading="lazy" src="${esc(urls[i])}" alt="Folie ${f.nr}"><input type="checkbox" data-nr="${f.nr}" ${aus.has(f.nr)?"":"checked"}><span class="nr">${f.nr}</span></label>`).join("")}</div>
+    <div class="row" style="justify-content:flex-end;margin-top:14px"><button class="btn" id="fok">Übernehmen</button></div>`);
+  const zahl = () => { m.el.querySelector("#fz").textContent = `${folien.length - aus.size} von ${folien.length} Folien`; };
+  m.el.querySelectorAll(".pick input").forEach(c => c.onchange = () => { const nr = +c.dataset.nr; c.checked ? aus.delete(nr) : aus.add(nr); c.parentElement.classList.toggle("off", !c.checked); zahl(); });
+  m.el.querySelector("#fa").onclick = () => { aus.clear(); m.el.querySelectorAll(".pick input").forEach(c => { c.checked = true; c.parentElement.classList.remove("off"); }); zahl(); };
+  m.el.querySelector("#fk").onclick = () => { folien.forEach(f => aus.add(f.nr)); m.el.querySelectorAll(".pick input").forEach(c => { c.checked = false; c.parentElement.classList.add("off"); }); zahl(); };
+  m.el.querySelector("#fok").onclick = () => { teil.aus = [...aus].sort((a,b) => a-b); m.zu(); fertig(); };
+  zahl();
+}
+function zuUnterricht(teil, klasse){
+  const passende = S.unterrichte;
+  const m = modal("Zu welchem Unterricht?", `<div class="list">${passende.map(u => `<div class="item"><div class="t"><b>${esc(u.titel)}</b><span>${(u.teile||[]).length} Teile</span></div><button class="btn small" data-id="${esc(u.id)}">Hinzufügen</button></div>`).join("")}</div>
+    <div class="row" style="margin-top:12px"><button class="btn" id="zNeu">＋ Neuer Unterricht damit</button></div>`);
+  m.el.querySelectorAll("[data-id]").forEach(b => b.onclick = async () => {
+    const u = S.unterrichte.find(x => x.id === b.dataset.id);
+    const teile = [...(u.teile||[]), teil];
+    const { error } = await supa.from("theorie_unterrichte").update({ teile, geaendert:new Date().toISOString() }).eq("id", u.id);
+    if (error) { toast("Hat nicht geklappt."); return; }
+    await ladeUnterrichte(); m.zu(); toast(`Zu „${u.titel}“ hinzugefügt.`);
+  });
+  m.el.querySelector("#zNeu").onclick = async () => {
+    const l = teil.typ === "lektion" ? S.lektionen.find(x => x.id === teil.lektion_id) : null;
+    const titel = l ? `Mein Unterricht ${l.code}` : "Mein Unterricht";
+    const { error } = await supa.from("theorie_unterrichte").insert({ titel, klasse, teile:[teil] });
+    if (error) { toast("Hat nicht geklappt."); return; }
+    await ladeUnterrichte(); m.zu(); S.tab = "unt"; render(); toast("Unterricht angelegt. Unter „Bearbeiten“ kannst du ihn umbenennen.");
+  };
+}
+function startAnsicht(u){
+  const teile = u.teile || [];
+  const m = modal(u.titel, `${u.notiz?`<div class="box" style="margin-bottom:12px;white-space:pre-wrap">${esc(u.notiz)}</div>`:""}
+    <p class="hint">Teil für Teil starten. Bei ausgewählten Folien lädt der Kompass eine angepasste PowerPoint-Datei herunter: Die abgewählten Folien sind darin ausgeblendet, alle Animationen bleiben.</p>
+    <div class="list">${teile.length ? teile.map((t,i) => `<div class="item"><div class="t"><b>${i+1}. ${esc(teilName(t))}</b><span>${esc(teilInfo(t))}</span></div>
+      <button class="btn small" data-i="${i}" data-a="ppt">▶ PowerPoint</button>
+      ${t.typ==="lektion"?`<button class="btn ghost small" data-i="${i}" data-a="browser">Im Browser</button>`:""}</div>`).join("") : `<div class="empty">Dieser Unterricht hat noch keine Teile.</div>`}</div>`);
+  m.el.querySelectorAll("[data-i]").forEach(b => b.onclick = async () => {
+    const t = teile[+b.dataset.i];
+    try {
+      if (t.typ === "lektion") {
+        const l = S.lektionen.find(x => x.id === t.lektion_id); if (!l) { toast("Diese Lektion ist nicht mehr verfügbar."); return; }
+        if (b.dataset.a === "browser") { m.zu(); return oeffneViewer(l.id, t.aus||[]); }
+        if (!(t.aus||[]).length) return starteInPowerPoint(l.datei_pfad, dateiName(l));
+        b.disabled = true; b.textContent = "Wird vorbereitet …";
+        await ladeAngepasst(l, t.aus); b.disabled = false; b.textContent = "▶ PowerPoint";
+      } else {
+        const d = S.dateien.find(x => x.id === t.datei_id); if (!d) { toast("Diese Datei wurde gelöscht."); return; }
+        oeffneDatei(d);
+      }
+    } catch(e) { b.disabled = false; b.textContent = "▶ PowerPoint"; toast(e.message || "Das hat nicht geklappt."); }
+  });
+}
+/* Abgewählte Folien als „ausgeblendet“ markieren (show="0"), Datei sonst unverändert. */
+async function ladeAngepasst(l, aus){
+  const url = await signedUrl(l.datei_pfad);
+  const r = await fetch(url); if (!r.ok) throw new Error("Datei nicht ladbar");
+  const zip = await JSZip.loadAsync(await r.arrayBuffer());
+  const pres = await zip.file("ppt/presentation.xml").async("string");
+  const rels = await zip.file("ppt/_rels/presentation.xml.rels").async("string");
+  const ziel = {}; rels.replace(/<Relationship\b[^>]*>/g, tag => { const id = (tag.match(/\bId="([^"]+)"/)||[])[1]; const t = (tag.match(/\bTarget="([^"]+)"/)||[])[1]; if (id && t) ziel[id] = t; return tag; });
+  const reihe = []; (pres.match(/<p:sldIdLst>[\s\S]*?<\/p:sldIdLst>/)||[""])[0].replace(/<p:sldId\b[^>]*r:id="([^"]+)"/g, (_, rid) => { reihe.push(ziel[rid]); return _; });
+  const aussen = new Set(aus);
+  for (let i=0; i<reihe.length; i++){
+    if (!aussen.has(i+1) || !reihe[i]) continue;
+    const pfad = "ppt/" + reihe[i].replace(/^\/?ppt\//, "").replace(/^\.\//, "");
+    const f = zip.file(pfad); if (!f) continue;
+    let xml = await f.async("string");
+    xml = xml.replace(/<p:sld\b([^>]*)>/, (m0, attr) => `<p:sld${attr.replace(/\sshow="[^"]*"/, "")} show="0">`);
+    zip.file(pfad, xml);
+  }
+  const blob = await zip.generateAsync({ type:"blob", mimeType:PPTX_MIME, compression:"DEFLATE" });
+  const a = document.createElement("a"); a.href = URL.createObjectURL(blob);
+  a.download = `${l.code} – ${l.titel} (eigene Auswahl).pptx`.replace(/[\\/:*?"<>|]/g, "-");
+  document.body.appendChild(a); a.click(); a.remove(); setTimeout(() => URL.revokeObjectURL(a.href), 60000);
+  toast(`Heruntergeladen: ${reihe.length - aussen.size} von ${reihe.length} Folien sichtbar. Datei öffnen und mit F5 starten.`, 6000);
+}
+
+/* ---------- Eigene Dateien ---------- */
+function dateiZeile(d){
+  return `<div class="item" data-d="${esc(d.id)}"><div class="t"><b>${esc(d.name)}</b><span>${d.mime==="application/pdf"?"PDF":"PowerPoint"} · ${mb(d.bytes)}${d.klasse?" · Klasse "+esc(d.klasse):""}</span></div>
+    <button class="btn small" data-a="open">${d.mime==="application/pdf"?"Öffnen":"▶ PowerPoint"}</button>
+    <button class="btn ghost small" data-a="dl">Herunterladen</button>
+    <button class="btn ghost small" data-a="add">＋ Unterricht</button>
+    <button class="btn danger small" data-a="del" aria-label="löschen">Löschen</button></div>`;
+}
+function bindDateien(root){
+  root.querySelectorAll(".item[data-d]").forEach(it => {
+    const d = S.dateien.find(x => x.id === it.dataset.d);
+    it.querySelectorAll("[data-a]").forEach(b => b.onclick = async () => {
+      try {
+        if (b.dataset.a === "open") return oeffneDatei(d);
+        if (b.dataset.a === "dl") { location.href = await signedUrl(d.pfad, { download: d.name + (d.mime==="application/pdf"?".pdf":".pptx") }); return; }
+        if (b.dataset.a === "add") return zuUnterricht({ typ:"datei", datei_id:d.id }, d.klasse || S.klasse);
+        if (b.dataset.a === "del") {
+          if (!confirm(`„${d.name}“ endgültig löschen?`)) return;
+          const s = await supa.storage.from(BUCKET).remove([d.pfad]);
+          if (s.error) { toast("Löschen hat nicht geklappt."); return; }
+          const { error } = await supa.from("theorie_dateien").delete().eq("id", d.id);
+          if (error) { toast("Löschen hat nicht geklappt."); return; }
+          await ladeDateien(); render(); toast("Gelöscht.");
+        }
+      } catch(e) { toast(e.message || "Das hat nicht geklappt."); }
+    });
+  });
+}
+async function oeffneDatei(d){
+  if (d.mime === "application/pdf") { window.open(await signedUrl(d.pfad), "_blank", "noopener"); return; }
+  return starteInPowerPoint(d.pfad, d.name + ".pptx");
+}
+function renderDateien(){
+  const p = $("#pane");
+  p.innerHTML = `<div class="box" style="margin:14px 0">
+      <h2 style="font-size:1.15rem">Eigene Präsentation hochladen</h2>
+      <p class="hint">PowerPoint (.pptx) oder PDF, höchstens 50 MB. Nur du siehst deine Dateien.</p>
+      <label class="f" for="uF">Datei</label><input type="file" id="uF" accept=".pptx,.pdf,${PPTX_MIME},application/pdf">
+      <label class="f" for="uN">Name</label><input type="text" id="uN" maxlength="160" placeholder="z. B. Lektion 5 – meine Fassung">
+      <label class="f" for="uK">Klasse</label><select id="uK"><option value="">ohne Klasse</option>${S.klassen.map(k => `<option value="${esc(k.klasse)}"${k.klasse===S.klasse?" selected":""}>${esc(k.titel)}</option>`).join("")}</select>
+      <label class="row" style="margin-top:12px;font-size:.92rem;gap:8px;align-items:flex-start"><input type="checkbox" id="uR" style="width:22px;height:22px;flex:none"><span>Ich darf diese Datei verwenden (eigene Inhalte oder Inhalte mit Erlaubnis, keine Schülerdaten).</span></label>
+      <div class="err" id="uE"></div>
+      <button class="btn" id="uGo" style="margin-top:6px">Hochladen</button>
+      <p class="hint" style="margin-top:10px">Folien ändern: Lektion aus der Bibliothek herunterladen, in PowerPoint anpassen und hier als eigene Fassung hochladen.</p>
+    </div>
+    ${S.dateien.length ? `<div class="list">${S.dateien.map(dateiZeile).join("")}</div>` : `<div class="empty">Noch keine eigenen Dateien.</div>`}`;
+  const f = $("#uF"), n = $("#uN");
+  f.onchange = () => { if (f.files[0] && !n.value) n.value = f.files[0].name.replace(/\.(pptx|pdf)$/i, ""); };
+  $("#uGo").onclick = async () => {
+    const e = $("#uE"); e.textContent = "";
+    const file = f.files[0];
+    if (!file) { e.textContent = "Bitte eine Datei wählen."; return; }
+    const istPdf = /\.pdf$/i.test(file.name), istPptx = /\.pptx$/i.test(file.name);
+    if (!istPdf && !istPptx) { e.textContent = "Nur .pptx oder .pdf. Alte .ppt-Dateien bitte in PowerPoint als .pptx speichern."; return; }
+    if (file.size > MAX_BYTES) { e.textContent = `Die Datei ist ${mb(file.size)} groß. Erlaubt sind höchstens 50 MB (Videos in PowerPoint komprimieren).`; return; }
+    if (!$("#uR").checked) { e.textContent = "Bitte bestätigen, dass du die Datei verwenden darfst."; return; }
+    const name = (n.value || file.name).trim().slice(0,160);
+    const id = crypto.randomUUID();
+    const pfad = `eigene/${S.user.id}/${id}.${istPdf?"pdf":"pptx"}`;
+    const mime = istPdf ? "application/pdf" : PPTX_MIME;
+    const b = $("#uGo"); b.disabled = true; b.textContent = "Lädt hoch …";
+    const up = await supa.storage.from(BUCKET).upload(pfad, file, { contentType:mime, upsert:false });
+    if (up.error) { b.disabled = false; b.textContent = "Hochladen"; e.textContent = "Hochladen hat nicht geklappt. Bitte Verbindung prüfen und erneut versuchen."; return; }
+    const ins = await supa.from("theorie_dateien").insert({ id, name, klasse: $("#uK").value || null, pfad, mime, bytes:file.size });
+    if (ins.error) { await supa.storage.from(BUCKET).remove([pfad]); b.disabled = false; b.textContent = "Hochladen"; e.textContent = "Speichern hat nicht geklappt."; return; }
+    await ladeDateien(); render(); toast("Hochgeladen.");
+  };
+  bindDateien(p);
+}
+
+/* ---------- Tafel-Fenster (zweiter Bildschirm) ---------- */
+async function startTafel(){
+  const q = new URLSearchParams(location.search);
+  document.body.classList.add("board");
+  const { data } = await supa.auth.getSession();
+  if (!data || !data.session) { document.body.innerHTML = "<p style='padding:30px'>Bitte im Hauptfenster anmelden.</p>"; return; }
+  S.user = data.session.user;
+  const aus = (q.get("aus")||"").split(",").filter(Boolean).map(Number);
+  await oeffneViewer(q.get("tafel"), aus, +q.get("nr") || 1);
+  $("#vX").onclick = () => window.close();
+}
+
+if (new URLSearchParams(location.search).get("tafel")) startTafel(); else start();
+</script>
+</body>
+</html>
