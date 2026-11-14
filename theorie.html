@@ -212,7 +212,10 @@ async function ladeAlles(){
   }
   await Promise.all([ladeUnterrichte(), ladeDateien()]);
   $("#userBox").innerHTML = `<span class="uname">${esc(S.profil.name || S.profil.email || S.user.email)}</span><button class="btn ghost small" id="logout">Abmelden</button>`;
-  $("#logout").onclick = async () => { await supa.auth.signOut(); location.reload(); };
+  $("#logout").onclick = async () => {
+    if (!confirm("Abmelden? Du wirst damit auf diesem Gerät auch im Kompass abgemeldet.")) return;
+    await supa.auth.signOut({ scope: "local" }); location.reload();
+  };
   const merk = (() => { try { return JSON.parse(localStorage.getItem("theorie-ansicht")||"{}"); } catch(e){ return {}; } })();
   S.tab = merk.tab || "bib";
   S.klasse = merk.klasse || (S.lektionen[0] && "B") || "B";

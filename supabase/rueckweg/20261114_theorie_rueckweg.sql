@@ -1,4 +1,4 @@
--- Rückweg Theorie-Modus (14.11.2026): entfernt alles aus theorie_01 und theorie_02.
+-- Rückweg Theorie-Modus (14.11.2026): entfernt alles aus theorie_01, theorie_02 und theorie_03.
 -- Bestehende Tabellen und Funktionen des Kompass sind davon nicht betroffen.
 -- Achtung: löscht auch eigene Unterrichte/Dateien der Fahrlehrer. Vorher sichern, falls schon genutzt.
 -- Die Dateien im Bucket "theorie" vorher über das Dashboard (Storage > theorie > alles auswählen > Löschen)
