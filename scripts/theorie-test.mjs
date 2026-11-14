@@ -115,11 +115,11 @@ const quer = (page) => page.evaluate(() => document.documentElement.scrollWidth 
   await punkt("T6 Klassen A und D da, leer mit Hinweis", async () => { await page.click('.chip[data-k="A"]'); const t = await page.textContent("#pane"); await page.click('.chip[data-k="D"]'); const t2 = await page.textContent("#pane"); return (/noch keine Folien/.test(t) && /noch keine Folien/.test(t2)) || "kein Hinweis"; });
   await punkt("T7 Karte: PowerPoint und Browser vorne, Unterricht, Lernzielkontrolle, Herunterladen unter „Mehr“", async () => { await page.click('.chip[data-k="B"]'); const a = await page.locator('.card').first().locator("[data-a]").evaluateAll(b => b.map(x => x.dataset.a).join(",")); return a === "ppt,browser,add,quiz,dl" || a; });
   await punkt("T8 C-Lektion ohne Lernzielkontrolle-Knopf", async () => { await page.click('.chip[data-k="C"]'); return (await page.locator('.card [data-a="quiz"]').count()) === 0 || "Knopf da"; });
-  await punkt("T9 In PowerPoint starten: Office-Adresse ms-powerpoint:ofs|u|…", async () => {
+  await punkt("T9 In PowerPoint starten: Office-Adresse ms-powerpoint:ofv|u|…", async () => {
     await page.click('.chip[data-k="B"]');
     await page.evaluate(() => { window.__href = null; const o = HTMLAnchorElement.prototype.click; HTMLAnchorElement.prototype.click = function(){ window.__href = this.href || this.getAttribute("href"); }; });
     await page.locator('.card').first().locator('[data-a="ppt"]').click(); await page.waitForTimeout(150);
-    const h = await page.evaluate(() => window.__href); return (h && h.startsWith("ms-powerpoint:ofs|u|https://speicher.muster.test/bibliothek/B/B01.pptx")) || h;
+    const h = await page.evaluate(() => window.__href); return (h && h.startsWith("ms-powerpoint:ofv|u|https://speicher.muster.test/bibliothek/B/B01.pptx")) || h;
   });
   await punkt("T10 Im Browser: Folie 1 von 5, Pfeil weiter, Notiz auf Folie 2", async () => {
     await page.locator('.card').first().locator('[data-a="browser"]').click(); await page.waitForTimeout(300);
@@ -180,7 +180,35 @@ const quer = (page) => page.evaluate(() => document.documentElement.scrollWidth 
     await page.evaluate(async () => { await ladeUnterrichte(); S.tab = "unt"; render(); }); await page.waitForTimeout(200);
     return (await page.evaluate(() => window.__boom)) === undefined || "Code lief";
   });
+  await punkt("T22 Esc schließt nur das oberste Fenster (Editor bleibt mit Text)", async () => {
+    await page.click('.tab[data-tab="unt"]'); await page.click("#neuU"); await page.fill("#eT", "Muster Text"); await page.click("#addL"); await page.waitForTimeout(150);
+    const vor = await page.locator(".modal").count(); await page.keyboard.press("Escape"); await page.waitForTimeout(100);
+    const nach = await page.locator(".modal").count(); const t = await page.inputValue("#eT").catch(() => "");
+    await page.keyboard.press("Escape"); return (vor === 2 && nach === 1 && t === "Muster Text") || `${vor}→${nach}, ${t}`;
+  });
+  await punkt("T23 Zurück-Taste schließt die Folienansicht, Seite bleibt", async () => {
+    await page.click('.tab[data-tab="bib"]'); await page.locator('.card').first().locator('[data-a="browser"]').click(); await page.waitForTimeout(250);
+    await page.goBack(); await page.waitForTimeout(250);
+    return ((await page.locator("#viewer").count()) === 0 && /theorie\.html/.test(page.url()) && (await page.locator(".card").count()) > 0) || page.url();
+  });
+  await punkt("T24 Enter auf „Mehr“ in der Folienansicht öffnet das Menü statt weiterzublättern", async () => {
+    await page.locator('.card').first().locator('[data-a="browser"]').click(); await page.waitForTimeout(250);
+    await page.focus("#vMehr"); await page.keyboard.press("Enter"); await page.waitForTimeout(100);
+    const c = await page.textContent("#vCount"); const auf = await page.evaluate(() => document.querySelector("#viewer").classList.contains("mehr-auf"));
+    await page.keyboard.press("Escape"); return (c === "Folie 1 von 5" && auf) || `${c} ${auf}`;
+  });
   await punkt("T18 keine Programmfehler (Bibliothek)", async () => js.length === 0 || js.join(" | "));
+  await ctx.close();
+}
+// Tafel-Fenster mit unbekannter Lektion
+{
+  const ctx = await browser.newContext({ viewport: { width: 1280, height: 720 } });
+  await ctx.route(/cdn\.jsdelivr\.net\/npm\/@supabase/, r => r.fulfill({ contentType: "text/javascript", body: ATTRAPPE }));
+  await ctx.route(/fonts\.(googleapis|gstatic)\.com/, r => r.fulfill({ body: "" }));
+  await ctx.addInitScript(() => sessionStorage.setItem("eingeloggt", "1"));
+  const page = await ctx.newPage(); const js = []; page.on("pageerror", e => js.push(e.message));
+  await page.goto(basis + "theorie.html?tafel=XX9&aus=&nr=1"); await page.waitForTimeout(400);
+  await punkt("T25 Tafel-Fenster mit unbekannter Lektion: Hinweis statt Fehler", async () => (js.length === 0 && /nicht verfügbar/.test(await page.textContent("#app"))) || js.join(" | "));
   await ctx.close();
 }
 // 3 Handy-Größen
