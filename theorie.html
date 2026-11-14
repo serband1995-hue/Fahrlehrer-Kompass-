@@ -431,7 +431,7 @@ function teilName(t){
   const d = S.dateien.find(x => x.id === t.datei_id); return d ? d.name : "Datei gelöscht";
 }
 function teilInfo(t){
-  if (t.typ === "lektion") { const l = S.lektionen.find(x => x.id === t.lektion_id); if (!l) return ""; const n = l.folien_anzahl - (t.aus||[]).length; return `Bibliothek · ${n} von ${l.folien_anzahl} Folien`; }
+  if (t.typ === "lektion") { const l = S.lektionen.find(x => x.id === t.lektion_id); if (!l) return ""; const ab = new Set((t.aus||[]).filter(x => x >= 1 && x <= l.folien_anzahl)).size; return `Bibliothek · ${l.folien_anzahl - ab} von ${l.folien_anzahl} Folien`; }
   const d = S.dateien.find(x => x.id === t.datei_id); return d ? `Eigene Datei · ${d.mime === "application/pdf" ? "PDF" : "PowerPoint"}` : "";
 }
 /* Offene Ebenen (Fenster, Folienansicht): Esc und die Zurück-Taste schließen immer nur die oberste. */
@@ -496,6 +496,10 @@ function editor(u){
       lies(); const err = ed.querySelector("#eErr");
       if (!E.titel.trim()) { err.textContent = "Bitte einen Namen eingeben."; return; }
       const row = { titel:E.titel.trim(), klasse:E.klasse, notiz:E.notiz.trim()||null, teile:E.teile, geaendert:new Date().toISOString() };
+      if (!neu) {
+        const jetzt = await supa.from("theorie_unterrichte").select("geaendert").eq("id", u.id).maybeSingle();
+        if (jetzt.data && jetzt.data.geaendert !== u.geaendert && !confirm("Dieser Unterricht wurde inzwischen auf einem anderen Gerät geändert. Trotzdem mit deinem Stand überschreiben?")) return;
+      }
       const res = neu ? await supa.from("theorie_unterrichte").insert(row) : await supa.from("theorie_unterrichte").update(row).eq("id", u.id);
       if (res.error) { err.textContent = "Speichern hat nicht geklappt. Bitte erneut versuchen."; return; }
       await ladeUnterrichte(); m.zu(); S.tab = "unt"; render(); toast("Gespeichert.");
@@ -549,7 +553,9 @@ function zuUnterricht(teil, klasse){
     <div class="row" style="margin-top:12px"><button class="btn" id="zNeu">＋ Neuer Unterricht damit</button></div>`);
   m.el.querySelectorAll("[data-id]").forEach(b => b.onclick = async (ev) => { const _b = ev.currentTarget; if (_b.disabled) return; _b.disabled = true; setTimeout(() => { if (_b.isConnected) _b.disabled = false; }, 2000);
     const u = S.unterrichte.find(x => x.id === b.dataset.id);
-    const teile = [...(u.teile||[]), teil];
+    const frisch = await supa.from("theorie_unterrichte").select("teile").eq("id", u.id).maybeSingle();
+    if (frisch.error || !frisch.data) { toast("Hat nicht geklappt."); return; }
+    const teile = [...(frisch.data.teile||[]), teil];
     const { error } = await supa.from("theorie_unterrichte").update({ teile, geaendert:new Date().toISOString() }).eq("id", u.id);
     if (error) { toast("Hat nicht geklappt."); return; }
     await ladeUnterrichte(); m.zu(); toast(`Zu „${u.titel}“ hinzugefügt.`);
@@ -594,13 +600,15 @@ async function ladeAngepasst(l, aus){
   const rels = await zip.file("ppt/_rels/presentation.xml.rels").async("string");
   const ziel = {}; rels.replace(/<Relationship\b[^>]*>/g, tag => { const id = (tag.match(/\bId="([^"]+)"/)||[])[1]; const t = (tag.match(/\bTarget="([^"]+)"/)||[])[1]; if (id && t) ziel[id] = t; return tag; });
   const reihe = []; (pres.match(/<p:sldIdLst>[\s\S]*?<\/p:sldIdLst>/)||[""])[0].replace(/<p:sldId\b[^>]*r:id="([^"]+)"/g, (_, rid) => { reihe.push(ziel[rid]); return _; });
-  const aussen = new Set(aus);
+  const aussen = new Set(aus.filter(n => n >= 1 && n <= reihe.length));
+  if (aussen.size >= reihe.length) throw new Error("Keine Folien ausgewählt.");
   for (let i=0; i<reihe.length; i++){
-    if (!aussen.has(i+1) || !reihe[i]) continue;
+    if (!reihe[i]) continue;
     const pfad = "ppt/" + reihe[i].replace(/^\/?ppt\//, "").replace(/^\.\//, "");
     const f = zip.file(pfad); if (!f) continue;
     let xml = await f.async("string");
-    xml = xml.replace(/<p:sld\b([^>]*)>/, (m0, attr) => `<p:sld${attr.replace(/\sshow="[^"]*"/, "")} show="0">`);
+    const weg = aussen.has(i+1);
+    xml = xml.replace(/<p:sld\b([^>]*)>/, (m0, attr) => `<p:sld${attr.replace(/\sshow="[^"]*"/, "")}${weg ? ' show="0"' : ""}>`);
     zip.file(pfad, xml);
   }
   const blob = await zip.generateAsync({ type:"blob", mimeType:PPTX_MIME, compression:"DEFLATE" });
@@ -674,7 +682,10 @@ function renderDateien(){
     const up = await supa.storage.from(BUCKET).upload(pfad, file, { contentType:mime, upsert:false });
     if (up.error) { b.disabled = false; b.textContent = "Hochladen"; e.textContent = "Hochladen hat nicht geklappt. Bitte Verbindung prüfen und erneut versuchen."; return; }
     const ins = await supa.from("theorie_dateien").insert({ id, name, klasse: $("#uK").value || null, pfad, mime, bytes:file.size });
-    if (ins.error) { await supa.storage.from(BUCKET).remove([pfad]); b.disabled = false; b.textContent = "Hochladen"; e.textContent = "Speichern hat nicht geklappt."; return; }
+    if (ins.error) {
+      const da = await supa.from("theorie_dateien").select("id").eq("id", id).maybeSingle();
+      if (da.data) { await ladeDateien(); render(); toast("Hochgeladen."); return; }
+      await supa.storage.from(BUCKET).remove([pfad]); b.disabled = false; b.textContent = "Hochladen"; e.textContent = "Speichern hat nicht geklappt."; return; }
     await ladeDateien(); render(); toast("Hochgeladen.");
   };
   bindDateien(p);

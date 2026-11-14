@@ -1,4 +1,4 @@
--- Rückweg Theorie-Modus (14.11.2026): entfernt alles aus theorie_01, theorie_02 und theorie_03.
+-- Rückweg Theorie-Modus (14.11.2026): entfernt alles aus theorie_01, theorie_02, theorie_03 und theorie_04.
 -- Bestehende Tabellen und Funktionen des Kompass sind davon nicht betroffen.
 -- Achtung: löscht auch eigene Unterrichte/Dateien der Fahrlehrer. Vorher sichern, falls schon genutzt.
 -- Die Dateien im Bucket "theorie" vorher über das Dashboard (Storage > theorie > alles auswählen > Löschen)
@@ -9,7 +9,8 @@ drop policy if exists theorie_bib_lesen on storage.objects;
 drop policy if exists theorie_eigene_lesen on storage.objects;
 drop policy if exists theorie_eigene_hochladen on storage.objects;
 drop policy if exists theorie_eigene_loeschen on storage.objects;
-delete from storage.buckets where id = 'theorie';   -- erst nach dem Leeren des Buckets
+-- Bucket "theorie" danach im Dashboard löschen (Storage > theorie > Delete bucket); ein direktes
+-- delete from storage.buckets lehnt Supabase ab.
 
 drop table if exists public.theorie_unterrichte;
 drop table if exists public.theorie_dateien;
@@ -20,3 +21,4 @@ drop table if exists public.theorie_freigabe;
 drop table if exists public.theorie_import_schluessel;
 drop function if exists public.theorie_darf_bibliothek();
 drop function if exists public.theorie_aktiv();
+drop function if exists public.theorie_dateien_grenze();

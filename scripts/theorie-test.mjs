@@ -142,13 +142,14 @@ const quer = (page) => page.evaluate(() => document.documentElement.scrollWidth 
     await page.click('[data-a="start"]'); await page.waitForTimeout(200); await page.click('.modal [data-a="browser"]'); await page.waitForTimeout(300);
     const c = await page.textContent("#vCount"); await page.keyboard.press("Escape"); return c === "Folie 1 von 3" || c;
   });
-  await punkt("T14 Ausblenden in der PowerPoint-Datei: Folien 2 und 4 bekommen show=\"0\", Rest unverändert", async () => {
+  await punkt("T14 Ausblenden in der PowerPoint-Datei: nur Folien 2 und 4 ausgeblendet, angewählte (auch im Original versteckte) sichtbar", async () => {
     const erg = await page.evaluate(async () => {
       const z = new JSZip();
       const slide = (n) => `<?xml version="1.0"?><p:sld xmlns:p="p" xmlns:a="a" xmlns:r="r"><p:cSld><p:spTree/></p:cSld></p:sld>`;
       z.file("ppt/presentation.xml", `<p:presentation xmlns:p="p" xmlns:r="r"><p:sldIdLst><p:sldId id="256" r:id="rId7"/><p:sldId id="257" r:id="rId3"/><p:sldId id="258" r:id="rId5"/><p:sldId id="259" r:id="rId4"/><p:sldId id="260" r:id="rId6"/></p:sldIdLst></p:presentation>`);
       z.file("ppt/_rels/presentation.xml.rels", `<Relationships><Relationship Id="rId7" Target="slides/slide5.xml"/><Relationship Id="rId3" Target="slides/slide1.xml"/><Relationship Id="rId5" Target="slides/slide3.xml"/><Relationship Id="rId4" Target="slides/slide2.xml"/><Relationship Id="rId6" Target="slides/slide4.xml"/></Relationships>`);
       for (let i=1;i<=5;i++) z.file(`ppt/slides/slide${i}.xml`, slide(i));
+      z.file("ppt/slides/slide3.xml", `<?xml version="1.0"?><p:sld xmlns:p="p" show="0"><p:cSld><p:spTree/></p:cSld></p:sld>`); // im Original ausgeblendet, aber angewählt
       const buf = await z.generateAsync({ type:"arraybuffer" });
       const altFetch = window.fetch; window.fetch = async () => new Response(buf);
       let blob = null; const altURL = URL.createObjectURL; URL.createObjectURL = (b) => { blob = b; return "blob:muster"; };
