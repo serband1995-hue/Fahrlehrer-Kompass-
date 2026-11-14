@@ -44,7 +44,10 @@ const logo = await page.evaluate(async () => {
   const w = (ms) => new Promise((k) => setTimeout(k, ms));
   const sp = document.getElementById("splash"); replaySplash();
   const pe = getComputedStyle(sp).pointerEvents; const t = performance.now();
-  await w(300);
+  await w(60);
+  const frueh = { vis: getComputedStyle(sp).visibility, op: parseFloat(getComputedStyle(sp).opacity) };
+  toast("Probe"); const tz = parseInt(getComputedStyle(document.getElementById("toast")).zIndex, 10), sz = parseInt(getComputedStyle(sp).zIndex, 10);
+  await w(240);
   const tile = document.getElementById("splashTile");
   const laeuft = tile ? tile.getAnimations({ subtree: true }).filter((a) => a.playState === "running").length : 0;
   while (!sp.classList.contains("hide") && performance.now() - t < 5000) await w(20);
@@ -52,11 +55,13 @@ const logo = await page.evaluate(async () => {
   // Strasse ist beim Ausblenden fertig (Zeichen komplett), nicht mitten im Aufbau abgeschnitten
   const str = document.querySelector("#splashTile .t-strasse");
   const strFertig = !str || str.getAnimations().every((a) => a.playState === "finished");
-  return { pe, ms, laeuft, strFertig };
+  return { pe, ms, laeuft, strFertig, frueh, toastOben: tz > sz };
 });
 if (logo.pe !== "none") fehler("G5 Logo-Tipp: Startbild fängt Tipps ab (" + logo.pe + ")"); else ok("G5 Logo-Tipp: Tippen geht durch");
 if (logo.ms < 1400 || logo.ms > 1700) fehler("Logo-Tipp: Startbild " + logo.ms + " ms statt ca. 1500"); else ok("Logo-Tipp: Animation " + logo.ms + " ms sichtbar (Ziel 1,5 s)");
 if (logo.laeuft < 3) fehler("Logo-Tipp: Animation läuft nicht (" + logo.laeuft + " laufende Teile nach 0,3 s)"); else ok("Logo-Tipp: Animation läuft (" + logo.laeuft + " Teile)");
+if (logo.frueh.vis !== "visible" || !(logo.frueh.op > 0)) fehler("Logo-Tipp: nach 60 ms noch unsichtbar " + JSON.stringify(logo.frueh)); else ok("Logo-Tipp: sofort sichtbar, blendet sanft ein");
+if (!logo.toastOben) fehler("Logo-Tipp: Hinweis (Toast) liegt unter dem Startbild"); else ok("Logo-Tipp: Hinweise liegen über dem Startbild");
 if (!logo.strFertig) fehler("Logo-Tipp: Straße beim Ausblenden noch nicht fertig"); else ok("Logo-Tipp: Zeichen beim Ausblenden fertig");
 const doppel = await page.evaluate(async () => {
   const w = (ms) => new Promise((k) => setTimeout(k, ms));
