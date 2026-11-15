@@ -45,7 +45,8 @@ const ATTRAPPE = `
     theorie_klassen: [["A","Klasse A","Motorrad – Folien folgen",10],["B","Klasse B","Grundstoff",20],["BE","Klasse BE","folgen",30],["C","Klasse C","Zusatzstoff C",40],["CE","Klasse CE","Zusatzstoff CE",50],["D","Klasse D","Bus – Folien folgen",60]].map(([klasse,titel,beschreibung,sort])=>({klasse,titel,beschreibung,sort})),
     theorie_lektionen: lek, theorie_folien: fol, theorie_unterrichte: [], theorie_dateien: []
   };
-  window.__DB = DB; window.__dateien = {};
+  if (window.__SEED) Object.assign(DB, JSON.parse(JSON.stringify(window.__SEED))); // anderes Gerät: gleicher Stand in der Datenbank
+  window.__DB = DB; window.__dateien = {}; window.__updates = 0;
   let session = null;
   function q(table) {
     let rows = null, filt = [], op = "select", payload = null, single = false;
@@ -62,7 +63,7 @@ const ATTRAPPE = `
       const t = DB[table] || [];
       const m = (r) => filt.every(([k,v]) => r[k] === v);
       if (op === "insert") { (Array.isArray(payload)?payload:[payload]).forEach(p => t.push(Object.assign({ id: p.id || ("id"+Math.random().toString(36).slice(2)), erstellt:new Date().toISOString(), geaendert:new Date().toISOString(), teile:[] }, p))); return { data:null, error:null }; }
-      if (op === "update") { t.filter(m).forEach(r => Object.assign(r, payload)); return { data:null, error:null }; }
+      if (op === "update") { window.__updates++; t.filter(m).forEach(r => Object.assign(r, payload)); return { data:null, error:null }; }
       if (op === "delete") { DB[table] = t.filter(r => !m(r)); return { data:null, error:null }; }
       let d = t.filter(m); if (table === "profiles") d = d.map(x => x);
       return { data: single ? (d[0]||null) : JSON.parse(JSON.stringify(d)), error:null };
@@ -87,8 +88,9 @@ const ATTRAPPE = `
   sessionStorage.getItem("eingeloggt") && (session = { user:{ id:"u1", email:"max@muster.test" } });
 })();`;
 
-async function neueSeite(breite = 1280, hoehe = 800, eingeloggt = true) {
+async function neueSeite(breite = 1280, hoehe = 800, eingeloggt = true, seed = null) {
   const ctx = await browser.newContext({ viewport: { width: breite, height: hoehe }, acceptDownloads: true });
+  if (seed) await ctx.addInitScript((s) => { window.__SEED = s; }, seed);
   await ctx.route(/cdn\.jsdelivr\.net\/npm\/@supabase/, r => r.fulfill({ contentType: "text/javascript", body: ATTRAPPE }));
   await ctx.route(/fonts\.(googleapis|gstatic)\.com/, r => r.fulfill({ body: "" }));
   if (eingeloggt) await ctx.addInitScript(() => sessionStorage.setItem("eingeloggt", "1"));
@@ -201,6 +203,59 @@ const quer = (page) => page.evaluate(() => document.documentElement.scrollWidth 
   await punkt("T18 keine Programmfehler (Bibliothek)", async () => js.length === 0 || js.join(" | "));
   await ctx.close();
 }
+// 2b Weiter, wo ich war (T2): Position je Teil in der Datenbank, gedrosselt, auf anderem Gerät
+{
+  const { ctx, page, js } = await neueSeite();
+  const ALT = "2026-11-01T10:00:00.000Z";
+  await page.evaluate((alt) => { window.__DB.theorie_unterrichte.push({ id:"w1", titel:"Abend Weiter", klasse:"B", teile:[{ typ:"lektion", lektion_id:"B02", aus:[] }, { typ:"lektion", lektion_id:"B01", aus:[2] }], geaendert:alt }); }, ALT);
+  await page.evaluate(async () => { await ladeUnterrichte(); S.tab = "unt"; render(); }); await page.waitForTimeout(150);
+  await punkt("T26 ohne Position: kein Weiter-Knopf, nur Starten", async () => ((await page.locator('[data-a="weiter"]').count()) === 0 && (await page.locator('[data-a="start"]').count()) === 1) || "Knopf falsch");
+  await punkt("T27 Teil 2 im Browser bis Folie 3 (von 4) blättern, schließen: Position gespeichert, „geändert“ bleibt", async () => {
+    await page.click('[data-a="start"]'); await page.waitForTimeout(150); await page.locator('.modal [data-a="browser"]').nth(1).click(); await page.waitForTimeout(300);
+    await page.keyboard.press("ArrowRight"); await page.keyboard.press("ArrowRight"); await page.waitForTimeout(100);
+    const c = await page.textContent("#vCount"); await page.keyboard.press("Escape"); await page.waitForTimeout(300);
+    const u = await page.evaluate(() => window.__DB.theorie_unterrichte.find(x => x.id === "w1"));
+    return (c === "Folie 3 von 4" && u.teile[1].zuletzt === 4 && u.teile[1].zuletzt_am && !u.teile[0].zuletzt_am && u.geaendert === ALT) || JSON.stringify({ c, u });
+  });
+  await punkt("T28 Knopf „Weiter bei Teil 2, Folie 3“ erscheint", async () => { const t = (await page.textContent('[data-a="weiter"]').catch(() => "")).trim(); return t === "▶ Weiter bei Teil 2, Folie 3" || t; });
+  await punkt("T29 schnelles Blättern wird gedrosselt (höchstens 2 Schreibvorgänge bei 4 Folienwechseln in 1 s)", async () => {
+    await page.evaluate(() => { window.__updates = 0; }); await page.click('[data-a="weiter"]'); await page.waitForTimeout(250);
+    for (let i = 0; i < 3; i++) { await page.keyboard.press("ArrowLeft"); await page.waitForTimeout(80); }
+    const n = await page.evaluate(() => window.__updates); const c = await page.textContent("#vCount");
+    return (n <= 2 && c === "Folie 1 von 4") || `${n} Schreibvorgänge, ${c}`;
+  });
+  await punkt("T30 Seite in den Hintergrund: letzte Folie sofort gespeichert", async () => {
+    await page.keyboard.press("ArrowRight"); await page.waitForTimeout(50);
+    await page.evaluate(() => { Object.defineProperty(document, "visibilityState", { configurable:true, get:() => "hidden" }); document.dispatchEvent(new Event("visibilitychange")); });
+    await page.waitForTimeout(150); await page.evaluate(() => { delete document.visibilityState; });
+    const u = await page.evaluate(() => window.__DB.theorie_unterrichte.find(x => x.id === "w1"));
+    await page.keyboard.press("Escape"); await page.waitForTimeout(200);
+    return u.teile[1].zuletzt === 3 || JSON.stringify(u.teile[1]); // Folie 2 der Auswahl = Originalfolie 3
+  });
+  await punkt("T31 Bearbeiten-Speichern überschreibt neuere Position (anderes Gerät) nicht", async () => {
+    await page.click('[data-a="edit"]'); await page.waitForTimeout(150);
+    await page.evaluate(() => { const u = window.__DB.theorie_unterrichte.find(x => x.id === "w1"); u.teile = JSON.parse(JSON.stringify(u.teile)); u.teile[1].zuletzt = 5; u.teile[1].zuletzt_am = "2099-01-01T00:00:00.000Z"; });
+    await page.fill("#eT", "Abend Weiter neu"); await page.click("#eSave"); await page.waitForTimeout(300);
+    const u = await page.evaluate(() => window.__DB.theorie_unterrichte.find(x => x.id === "w1"));
+    return (u.titel === "Abend Weiter neu" && u.teile[1].zuletzt === 5 && u.teile.length === 2) || JSON.stringify(u);
+  });
+  const stand = await page.evaluate(() => window.__DB);
+  await punkt("T32 keine Programmfehler (Weiter)", async () => js.length === 0 || js.join(" | "));
+  await ctx.close();
+  // anderes Gerät: nur die Datenbank ist gleich, kein lokaler Speicher
+  const g2 = await neueSeite(1920, 1080, true, { theorie_unterrichte: stand.theorie_unterrichte });
+  await punkt("T33 anderes Gerät nach Neuladen: Weiter öffnet an der zuletzt gezeigten Folie", async () => {
+    await g2.page.click('.tab[data-tab="unt"]'); await g2.page.waitForTimeout(150);
+    const t = (await g2.page.textContent('[data-a="weiter"]')).trim(); await g2.page.click('[data-a="weiter"]'); await g2.page.waitForTimeout(300);
+    const c = await g2.page.textContent("#vCount");
+    return (t === "▶ Weiter bei Teil 2, Folie 4" && c === "Folie 4 von 4" && g2.js.length === 0) || `${t} / ${c} / ${g2.js.join("|")}`;
+  });
+  await g2.ctx.close();
+}
+await punkt("T34 Kompass-Menü hat „Theorieunterricht“ → theorie.html", async () => {
+  const html = await readFile(join(REPO, "index.html"), "utf8");
+  return /<a class="nav-item" href="theorie\.html"[^>]*>[\s\S]{0,400}?Theorieunterricht<\/a>/.test(html) || "kein Menüeintrag";
+});
 // Tafel-Fenster mit unbekannter Lektion
 {
   const ctx = await browser.newContext({ viewport: { width: 1280, height: 720 } });
@@ -210,6 +265,46 @@ const quer = (page) => page.evaluate(() => document.documentElement.scrollWidth 
   const page = await ctx.newPage(); const js = []; page.on("pageerror", e => js.push(e.message));
   await page.goto(basis + "theorie.html?tafel=XX9&aus=&nr=1"); await page.waitForTimeout(400);
   await punkt("T25 Tafel-Fenster mit unbekannter Lektion: Hinweis statt Fehler", async () => (js.length === 0 && /nicht verfügbar/.test(await page.textContent("#app"))) || js.join(" | "));
+  await ctx.close();
+}
+// 4 Smartboard (T2): 1920×1080 und 3840×2160 mit Touch. Bildschirmfotos, wenn SHOT_DIR gesetzt ist.
+for (const [b, h] of [[1920, 1080], [3840, 2160]]) {
+  const name = `${b}×${h} Touch`;
+  const ctx = await browser.newContext({ viewport: { width: b, height: h }, hasTouch: true, isMobile: false });
+  await ctx.route(/cdn\.jsdelivr\.net\/npm\/@supabase/, r => r.fulfill({ contentType: "text/javascript", body: ATTRAPPE }));
+  await ctx.route(/fonts\.(googleapis|gstatic)\.com/, r => r.fulfill({ body: "" }));
+  await ctx.addInitScript(() => sessionStorage.setItem("eingeloggt", "1"));
+  const page = await ctx.newPage(); const js = []; page.on("pageerror", e => js.push(e.message));
+  const foto = async (n) => { if (process.env.SHOT_DIR) await page.screenshot({ path: join(process.env.SHOT_DIR, `smartboard-${b}-${n}.png`) }); };
+  await page.goto(basis + "theorie.html"); await page.waitForTimeout(400);
+  await punkt(`T35 ${name}: Bibliothek ohne Querlage, Knöpfe per Tippen bedienbar`, async () => {
+    await page.tap('.chip[data-k="B"]'); await page.waitForTimeout(150); await foto("bibliothek");
+    const q = await quer(page); const klein = await page.evaluate(() => [...document.querySelectorAll("#app button")].filter(x => x.offsetParent && x.getBoundingClientRect().height < 35.5).length);
+    return (q <= 0 && klein === 0 && (await page.locator(".card").count()) === 2) || `quer ${q}, kleine Knöpfe ${klein}`;
+  });
+  await punkt(`T36 ${name}: Folienansicht füllt den Schirm, Tippen rechts blättert weiter, links zurück`, async () => {
+    await page.locator('.card').first().locator('[data-a="browser"]').tap(); await page.waitForTimeout(350);
+    const r = await page.evaluate(() => { const i = document.querySelector("#vImg").getBoundingClientRect(); return { w: i.width / innerWidth, h: i.height / innerHeight }; });
+    const zr = await page.locator("#vR").boundingBox(); await page.touchscreen.tap(zr.x + zr.width / 2, zr.y + zr.height / 2); await page.waitForTimeout(120);
+    const c2 = await page.textContent("#vCount"); await foto("folie");
+    const zl = await page.locator("#vL").boundingBox(); await page.touchscreen.tap(zl.x + zl.width / 2, zl.y + zl.height / 2); await page.waitForTimeout(120);
+    const c1 = await page.textContent("#vCount"); const q = await quer(page);
+    await page.tap("#vX"); await page.waitForTimeout(100);
+    return ((r.w > 0.6 || r.h > 0.6) && c2 === "Folie 2 von 5" && c1 === "Folie 1 von 5" && q <= 0) || JSON.stringify({ r, c2, c1, q });
+  });
+  await punkt(`T37 ${name}: Tafel-Fenster zeigt nur die Folie, Tippen blättert`, async () => {
+    const t = await ctx.newPage(); const tjs = []; t.on("pageerror", e => tjs.push(e.message));
+    await t.goto(basis + "theorie.html?tafel=B01&aus=2&nr=3"); await t.waitForTimeout(400);
+    const c = await t.textContent("#vCount"); const board = await t.evaluate(() => document.body.classList.contains("board"));
+    const zr = await t.locator("#vR").boundingBox(); await t.touchscreen.tap(zr.x + zr.width / 2, zr.y + zr.height / 2); await t.waitForTimeout(120);
+    const c2 = await t.textContent("#vCount"); if (process.env.SHOT_DIR) await t.screenshot({ path: join(process.env.SHOT_DIR, `smartboard-${b}-tafel.png`) });
+    await t.close(); return (board && c === "Folie 2 von 4" && c2 === "Folie 3 von 4" && tjs.length === 0) || JSON.stringify({ board, c, c2, tjs });
+  });
+  await punkt(`T38 ${name}: Meine Unterrichte mit Weiter-Knopf, keine Programmfehler`, async () => {
+    await page.evaluate(() => { window.__DB.theorie_unterrichte.push({ id:"s1", titel:"Abend 1 Smartboard", klasse:"B", teile:[{ typ:"lektion", lektion_id:"B01", aus:[], zuletzt:3, zuletzt_am:new Date().toISOString() }], geaendert:new Date().toISOString() }); });
+    await page.evaluate(async () => { await ladeUnterrichte(); S.tab = "unt"; render(); }); await page.waitForTimeout(150); await foto("unterrichte");
+    const t = (await page.textContent('[data-a="weiter"]')).trim(); return (t === "▶ Weiter bei Teil 1, Folie 3" && js.length === 0) || `${t} ${js.join("|")}`;
+  });
   await ctx.close();
 }
 // 3 Handy-Größen
