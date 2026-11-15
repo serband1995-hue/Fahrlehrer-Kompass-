@@ -1640,7 +1640,7 @@
     const offen = root.querySelector(".lz-parpop");
     if (offen) { schliessePar(); return; }
     const liste = parToken(btn.dataset.regel); if (!liste) return;
-    const links = [...new Set(liste.map(x => x.par))].map(n => `<a href="https://www.gesetze-im-internet.de/stvo_2013/__${esc(n)}.html" target="_blank" rel="noopener">§ ${esc(n)} StVO – Gesetzestext lesen ↗</a>`).join("<br>");
+    const links = [...new Set(liste.map(x => x.par))].map(n => `<a href="https://www.gesetze-im-internet.de/stvo_2013/__${esc(n)}.html" target="_blank" rel="noopener">§ ${esc(n)} StVO – Gesetzestext lesen ↗</a>`).join("");
     const d = el(`<div class="lz-parpop" role="note"><b>${esc(btn.dataset.regel)}</b>${links}</div>`);
     $("#lzStage").appendChild(d); btn.setAttribute("aria-expanded", "true"); btn.textContent = "✕";
   }
@@ -1654,7 +1654,7 @@
   function zeigeToast(t) { const s = $("#lzStage"); if (!s) return; const d = el(`<div class="lz-toast">${esc(t)}</div>`); s.appendChild(d); setTimeout(() => d.remove(), 2600); }
   function zeigeCoach(t) { const s = $("#lzStage"); if (!s) return; s.querySelectorAll(".lz-coach").forEach(x => x.remove()); const d = el(`<div class="lz-coach">💡 ${esc(t)}</div>`); s.appendChild(d); setTimeout(() => d.remove(), 6000); }
   function schliesseSheet() { const s = root && root.querySelector(".lz-sheet"); if (s) s.remove(); }
-  function sheet(html) { schliesseSheet(); const d = el(`<div class="lz-sheet"><div class="lz-card">${html}</div></div>`); $("#lzStage").appendChild(d); return d; }
+  function sheet(html) { schliessePar(); schliesseSheet(); const d = el(`<div class="lz-sheet"><div class="lz-card">${html}</div></div>`); $("#lzStage").appendChild(d); return d; }
   function zeigeFrage(ph) {
     if (ph.frage.art === "reihenfolge") return zeigeReihenfolge(ph);
     const f = ph.frage; const d = sheet(`<h2>Was ist richtig?</h2><p class="lz-erkl" style="margin-top:2px;">${esc(f.text)}</p>${f.optionen.map((o, i) => `<button class="lz-opt" data-i="${i}">${esc(o)}</button>`).join("")}<div id="lzErkl"></div>`);
