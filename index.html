@@ -2748,6 +2748,11 @@ body.light .fc-miss-sum b{color:#7a2a1e !important;}
   <div class="sp-quote" id="spQuote"></div>
 </div>
 
+<script>/* Block 3: Von der Theorie zurück in die App blitzte kurz die Anmeldeseite (sie stand bis zum load-Ereignis sichtbar). Ist lokal eine Sitzung gespeichert, wird sie sofort versteckt; schlägt der Start fehl, zeigt checkSession() sie wieder (_loginZeigen). */
+try{ var _tok=false,_bio=false; for(var _i=0;_i<localStorage.length;_i++){ var _k=localStorage.key(_i)||""; if(/^kompass-bio-cred-/.test(_k)){ _bio=true; } else if(/^sb-.+-auth-token$/.test(_k)){ try{ var _j=JSON.parse(localStorage.getItem(_k)||"null"); var _s=_j&&(_j.currentSession||_j); var _u=(_s&&_s.user)||{}; if(!_u.id){try{var _ju=JSON.parse(localStorage.getItem(_k+"-user")||"null");_u=(_ju&&(_ju.user||_ju))||{};}catch(e){}} var _o=localStorage.getItem("serband-data-owner"); if(!_o){try{_o=(JSON.parse(localStorage.getItem("serband-session-cache")||"null")||{}).id||null;}catch(e){}} if(_s&&_s.refresh_token&&_u.id&&(_o===_u.id||(!_o&&localStorage.getItem("serband-app-v1")===null)))_tok=true; }catch(e){} } }
+/* Mit aktiver Schnell-Entsperrung (Bio-Sperre) bleibt die Anmeldeseite sichtbar, bis die Sperre erscheint: sonst wäre die App kurz ungesperrt zu sehen. */
+if(_tok&&!_bio){ document.getElementById("loginOverlay").classList.add("hidden"); window._loginVersteckt=true; } }catch(e){}
+</script>
 <div class="app">
   <!-- Streifen nur für den Super-Admin: zeigt, dass man mit allen Rechten angemeldet ist -->
   <div class="sa-streifen" id="saStreifen" role="status" hidden><svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M3 8l4.5 4L12 5l4.5 7L21 8l-2 11H5L3 8z"/><rect x="5" y="20" width="14" height="2" rx="1"/></svg><span>Super-Admin</span><span class="sa-zusatz">· alle Rechte</span></div>
@@ -4212,6 +4217,7 @@ async function doLogin() {
 }
 
 function showLoginErr(msg, ok) {
+  _loginZeigen(); // eine Meldung (z. B. „Zugang gesperrt“) muss sichtbar sein, auch wenn die Anmeldeseite beim Start versteckt wurde
   const el = document.getElementById("loErr");
   el.textContent = msg; el.classList.add("show");
   el.classList.toggle("ok", !!ok);   // Erfolgsmeldung grün statt rot
@@ -5596,7 +5602,10 @@ async function _bioVerifyOnUnlock(userId){
   });
 }
 
+function _loginZeigen(){ const ov=document.getElementById("loginOverlay"); if(ov) ov.classList.remove("hidden"); }
 async function checkSession() {
+  // Sicherheitsnetz: bleibt die Anmeldung nach 15 s ohne Ergebnis offen (Netz hängt), Anmeldeseite zeigen statt leerer App.
+  setTimeout(()=>{ if(!_authUser) _loginZeigen(); }, 15000);
   document.getElementById("loPass").addEventListener("keydown", e => { if (e.key === "Enter") doLogin(); });
   document.getElementById("loEmail").addEventListener("keydown", e => { if (e.key === "Enter") document.getElementById("loPass").focus(); });
   // Merker aus afterLogin(), falls die App direkt nach einer Anmeldung neu gestartet wurde.
@@ -5605,7 +5614,7 @@ async function checkSession() {
   const supa = getSupa();
   if (!supa) {
     // Anmeldedienst nicht geladen (z.B. offline ohne Cache): nur mit bestehender Sitzung weiter.
-    if (!(await _tryOfflineSession())) showLoginErr("Anmeldedienst gerade nicht erreichbar. Bitte Internetverbindung prüfen und die App neu laden.");
+    if (!(await _tryOfflineSession())) { _loginZeigen(); showLoginErr("Anmeldedienst gerade nicht erreichbar. Bitte Internetverbindung prüfen und die App neu laden."); }
     return;
   }
   // Ohne Netz versucht supabase-js ein abgelaufenes Token rund 25 s lang zu erneuern. Ist das Gerät
@@ -5620,13 +5629,13 @@ async function checkSession() {
   if (session && session.user) {
     const direkt = !!(nachAnmeldung && nachAnmeldung.uid === session.user.id);
     const darfRein = direkt || await _bioVerifyOnUnlock(session.user.id);
-    if (darfRein) await afterLogin(session.user);
+    if (darfRein) await afterLogin(session.user); else _loginZeigen();
     if (direkt && nachAnmeldung.pwReset && _authUser) _openNeuesPasswortSheet();
     return;
   }
   // Keine abrufbare Sitzung. Ist trotzdem noch eine gespeichert (die Erneuerung scheitert nur am Netz),
   // geht es offline weiter - sonst bleibt der Login sichtbar.
-  await _tryOfflineSession();
+  if (!(await _tryOfflineSession())) _loginZeigen();
 }
 /* Offline-Zugang nur mit einer auf diesem Gerät noch bestehenden, nicht abgemeldeten Sitzung, deren Konto
    auch die lokalen Daten gehören. Die Biometrie-Sperre gilt hier genauso. */
@@ -7503,7 +7512,7 @@ window.addEventListener("load", () => {
 const STORE_KEY="serband-app-v1";
 /* Build-Version: bei jeder Auslieferung hier das Datum aktualisieren.
    Wird in den Einstellungen angezeigt + für den Update-Hinweis genutzt. */
-const APP_VERSION="2026.11.15.4";
+const APP_VERSION="2026.11.15.8";
 try{const f=document.getElementById("drawerFoot"); if(f)f.textContent="Fahrlehrer-Kompass · Version "+APP_VERSION;}catch(e){}
 // Nutzungsbedingungen & Haftungsausschluss (Bereich: rechtliche Absicherung) - Version hochzählen
 // und alle Nutzer müssen erneut zustimmen, sobald sich der Text inhaltlich ändert.
@@ -13758,16 +13767,35 @@ function ensureDB(){ let _ensureDirty=false; if(!Array.isArray(DB.exams))DB.exam
   // T6: keine fest eingebauten Fahrzeuge mehr – jeder trägt seine eigenen unter Arbeitszeiten & Fahrzeuge ein.
   // Gespeicherte Listen bleiben unverändert (auch eine selbst geleerte).
   if(!Array.isArray(DB.workCfg.fahrzeuge)){ DB.workCfg.fahrzeuge=[]; _ensureDirty=true; }
-  // Selbstheilende Korrektur: "Cupra 1" existiert nicht mehr, wurde durch "Audi Q5" ersetzt.
+  // Selbstheilende Korrektur: "Cupra 1" existiert nicht mehr, wurde durch den Audi A3 ersetzt (vorher kurz Audi Q5, seit 15.11.2026 Audi A3).
   // Greift bei JEDEM App-Start direkt im Code, unabhängig davon, was lokal auf dem Gerät noch
   // gespeichert ist - verhindert, dass ein alter lokaler Stand serverseitige Korrekturen wieder
   // überschreibt (genau das ist am 19.08. passiert).
   if(Array.isArray(DB.workCfg.fahrzeuge)){
     // nur das alte fest eingebaute Fahrzeug (id fz1), kein selbst eingetragenes
-    DB.workCfg.fahrzeuge.forEach(fz=>{ if(fz&&fz.id==="fz1"&&fz.name==="Cupra 1"){ fz.name="Audi Q5"; _ensureDirty=true; } });
+    DB.workCfg.fahrzeuge.forEach(fz=>{ if(fz&&fz.id==="fz1"&&fz.name==="Cupra 1"){ fz.name=(fz.typ==="schalt")?"Audi A3 Schalter":"Audi A3 Automatik"; _ensureDirty=true; } });
   }
   if(Array.isArray(DB.lessons)&&!(DB.workCfg.fahrzeuge||[]).some(fz=>fz&&fz.name==="Cupra 1")){
-    DB.lessons.forEach(l=>{ if(l&&l.fahrzeug==="Cupra 1"){ l.fahrzeug="Audi Q5"; _ensureDirty=true; } });
+    DB.lessons.forEach(l=>{ if(l&&l.fahrzeug==="Cupra 1"){ l.fahrzeug="Audi A3 Automatik"; _ensureDirty=true; } });
+  }
+  // 🗣 Serband 15.11.2026: „Audi Q5“ überall entfernen und durch „Audi A3 Automatik“ bzw. „Audi A3 Schalter“ ersetzen
+  // (je nach Getriebe-Typ des gespeicherten Fahrzeugs). Greift bei jedem Start, auch bei alten lokalen Ständen.
+  {
+    const _istQ5=(n)=>String(n||"").trim().toLowerCase()==="audi q5";
+    let _a3Name=null;
+    if(Array.isArray(DB.workCfg.fahrzeuge)){
+      DB.workCfg.fahrzeuge.forEach(fz=>{ if(fz&&_istQ5(fz.name)){
+        let n=(fz.typ==="schalt")?"Audi A3 Schalter":"Audi A3 Automatik";
+        // gibt es den Namen schon bei einem anderen Fahrzeug (Termine werden nach Namen zugeordnet), nummerieren
+        const belegt=(x)=>DB.workCfg.fahrzeuge.some(o=>o&&o!==fz&&o.name===x);
+        if(belegt(n)){ let i=2; while(belegt(n+" ("+i+")"))i++; n=n+" ("+i+")"; }
+        fz.name=n; _a3Name=_a3Name||n; _ensureDirty=true; } });
+    }
+    // Gibt es kein Q5-Fahrzeug (mehr), aber schon einen Audi A3 in der Liste, ziehen die Termine auf dessen Namen (Zuordnung läuft über den Namen)
+    const _a3Vorhanden=((DB.workCfg.fahrzeuge||[]).find(fz=>fz&&/^audi a3/i.test(String(fz.name||"")))||{}).name||null;
+    if(Array.isArray(DB.lessons)){
+      DB.lessons.forEach(l=>{ if(l&&_istQ5(l.fahrzeug)){ l.fahrzeug=_a3Name||_a3Vorhanden||"Audi A3 Automatik"; _ensureDirty=true; } });
+    }
   }
   // T6: kein Vertrag als Vorgabe (sonst sähe jeder neue Fahrlehrer fremde Zahlen als seine). Bis Satz oder Fixum
   // eingetragen sind, zeigt die App „Dein Vertrag fehlt noch“ statt eines Verdienstes.
