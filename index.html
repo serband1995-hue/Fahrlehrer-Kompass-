@@ -2121,6 +2121,8 @@ body:not(.light) .nav-item.primary svg,body:not(.light) .nav-item.primary{color:
 .sheet-scrim,.scrim{background:rgba(12,20,16,.40) !important;backdrop-filter:blur(2px) !important;}
 .toast{background:var(--txt) !important;color:var(--bg) !important;border-radius:24px !important;font-weight:600 !important;box-shadow:var(--elev-3) !important;
   bottom:calc(104px + env(safe-area-inset-bottom)) !important;}
+/* Block 1: bei offenem Fenster (Sheet) oben statt unten – die !important-Regel darüber hatte die Sheet-Regel (Zeile ~928) überstimmt */
+body:has(#sheet.open) .toast{bottom:auto !important;top:calc(14px + env(safe-area-inset-top)) !important;}
 .view-inner{padding-bottom:160px !important;}
 /* Umbau 2026-10: Farb- und Schrift-Grundlagen aus dem freigegebenen Entwurf (werden ab Schritt 2 genutzt) */
 :root{--k-grund:#F3F5F1;--k-tinte:#14211A;--k-text2:#55645A;--k-rand:#E1E7DF;--k-karte:#FFFFFF;
