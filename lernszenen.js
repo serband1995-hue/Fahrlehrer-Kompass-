@@ -1650,7 +1650,7 @@
     if (STIMME.index) { fertig(); return; }
     if (!STIMME.laden) {
       const fehl = () => { STIMME.laden = null; };
-      try { STIMME.laden = fetch("stimme/index.json", { cache: "no-cache" }).then(r => r.ok ? r.json() : null).then(j => { STIMME.index = j; if (!j) fehl(); }).catch(fehl); } catch (e) { STIMME.laden = Promise.resolve(); fehl(); }
+      try { STIMME.laden = fetch("stimme/index.json", { cache: "no-cache" }).then(r => r.ok ? r.json() : null).then(j => { STIMME.index = j; if (!j) fehl(); }).catch(fehl); } catch (e) { fertig(); return; }
     }
     STIMME.laden.then(fertig, fertig);   // alle Aufrufer warten auf denselben Ladevorgang
   }
