@@ -1384,7 +1384,7 @@
         zeit = Math.min(szene.dauer, zeit + schritt);
         for (const ph of szene.phasen.filter(p => p.t > vorher && p.t <= zeit)) {
           zeigePhase(ph); stimmeSpiele(ph);
-          if (modus === "mitdenken" && ph.frage && !beantwortet.has(ph.t)) { zeit = ph.t; laeuft = false; zeigeFrage(ph); break; }
+          if (modus === "mitdenken" && ph.frage && !beantwortet.has(ph.t)) { zeit = ph.t; laeuft = false; zeigeFrage(ph); stimmeStopp(); break; }
         }
         if (zeit >= szene.dauer) { laeuft = false; if (modus === "mitdenken") zeigeErgebnisMitdenken(); }
       }
@@ -1430,8 +1430,9 @@
   .lz-caption h3{margin:0 0 3px;font-size:15.5px;}
   .lz-caption p{margin:0;font-size:13.5px;line-height:1.45;color:#dce6df;}
   .lz-nochmal{display:inline-flex;align-items:center;gap:6px;margin-top:8px;min-height:44px;padding:0 12px;border-radius:10px;border:1px solid #2e4a40;background:#1a2f28;color:#eef3ef;font-size:13.5px;font-weight:600;cursor:pointer;pointer-events:auto;}
+  @media (max-height:480px){ .lz-nochmal{min-height:32px;margin-top:4px;padding:0 10px;font-size:12.5px;} }
   .lz-info{margin:14px 0 0;padding:0 14px 12px;font-size:13px;color:#b1bfb5;}
-  #lzStimme{min-height:44px;min-width:44px;}
+  @media (min-height:481px){ #lzStimme{min-height:44px;min-width:44px;} }
   #lzStimme[aria-pressed="true"]{background:#2f6b4f;border-color:#4fae80;}
   #lzStimme[aria-pressed="false"]{opacity:.6;}
   .lz-parb{position:absolute;right:8px;top:8px;width:34px;height:34px;border-radius:50%;border:2px solid #e0b84a;background:#e0b84a;color:#0c1410;font:800 17px/1 'Anton',sans-serif;cursor:pointer;pointer-events:auto;padding:0;box-shadow:0 2px 8px rgba(0,0,0,.4);}
@@ -1439,7 +1440,7 @@
   .lz-parb[aria-expanded="true"]{background:#0c1410;color:#e0b84a;}
   .lz-caption.mit-par{padding-right:50px;}
   .lz-parpop{position:absolute;left:12px;bottom:12px;max-width:min(320px,calc(100% - 140px));background:rgba(10,18,14,.95);border:1px solid #e0b84a;border-radius:12px;padding:10px 12px;box-shadow:0 8px 24px rgba(0,0,0,.45);z-index:3;font-size:14px;line-height:1.45;color:#dce6df;}
-  @media (max-height:480px){.lz-parpop{left:auto;right:12px;top:10px;bottom:auto;max-width:min(260px,calc(100% - 410px));padding:6px 10px;}.lz-parpop a{min-height:40px;padding:0;}}
+  @media (max-height:480px){.lz-parpop{left:auto;right:12px;top:10px;bottom:auto;max-width:min(260px,calc(100% - 410px));padding:6px 10px;}.lz-parpop{line-height:1.3;}.lz-parpop a{min-height:34px;padding:0;}}
   @media (max-height:340px){.lz-stage.par-offen .lz-hud{visibility:hidden;}}
   .lz-parpop b{display:block;color:#e0b84a;margin-bottom:4px;}
   .lz-parpop a{color:#9fd5b0;font-weight:700;display:flex;align-items:center;min-height:44px;padding:4px 0;}
@@ -1596,11 +1597,11 @@
     const marks = $("#lzTime"); szene.phasen.forEach(p => { const m = document.createElement("span"); m.className = "lz-mark"; m.style.left = `calc(${(p.t / szene.dauer) * 100}% - 1px)`; marks.appendChild(m); });
     $("#lzStage").addEventListener("click", e => { const nm = e.target.closest && e.target.closest("[data-nochmal]"); if (nm) { e.stopPropagation(); stimmeNochmal(); return; } const b = e.target.closest && e.target.closest(".lz-parb"); if (b) { e.stopPropagation(); togglePar(b); } else if (!(e.target.closest && e.target.closest(".lz-parpop"))) schliessePar(); });
     $("#lzZu").onclick = schliessen; $("#lzZurueck").onclick = zeigeAuswahl; $("#lzRegeln").onclick = zeigeRegeln;
-    stimmeLade(() => { if (!szene) return; stimmeSchalter(); const ph = aktuellePhase() || szene.phasen[0]; if (modus === "vorfuehren" && !laeuft && ph && !root.querySelector("#lzCap .lz-nochmal")) zeigePhase(ph); });
+    stimmeLade(() => { if (!szene) return; stimmeSchalter(); stimmeNachholen(); const ph = aktuellePhase() || szene.phasen[0]; if (modus === "vorfuehren" && !laeuft && ph && !root.querySelector("#lzCap .lz-nochmal")) zeigePhase(ph); });
     $("#lzStimme").onclick = () => { const an = !stimmeAn(); try { localStorage.setItem("lz_stimme", an ? "1" : "0"); } catch (e) {} if (!an) stimmeStopp(); stimmeSchalter(); const ph = aktuellePhase() || szene.phasen[0]; if (ph && modus !== "fahren" && !laeuft) { const c = $("#lzCap"); if (c && !c.hidden && c.querySelector("h3")) zeigeCap(ph.titel, ph.text, ph.regel, ph); } };
     $("#lzPlay").onclick = () => { schliessePar(); if ((root.querySelector(".lz-sheet .lz-opt") && !root.querySelector("#lzWeiter")) || tippFrage) return;
       if (modus === "fahren") { const c = $("#lzCap"); if (c) c.hidden = true; }
-      if (modus === "fahren" && fahr && fahr.ende) { schliesseSheet(); if (szene.reaktion) starteReaktion(fahr.vWahl); else starteFahren(); } if (!laeuft && zeit >= szene.dauer && modus !== "fahren") { zeit = 0; beantwortet = new Set(); } laeuft = !laeuft; if (modus !== "fahren") stimmePause(!laeuft); if (laeuft) { schliesseSheet(); ansicht.folgen = true; } };
+      if (modus === "fahren" && fahr && fahr.ende) { schliesseSheet(); if (szene.reaktion) starteReaktion(fahr.vWahl); else starteFahren(); } if (!laeuft && zeit >= szene.dauer && modus !== "fahren") { zeit = 0; beantwortet = new Set(); } laeuft = !laeuft; if (modus !== "fahren") { stimmePause(!laeuft); stimmeNachholen(); } if (laeuft) { schliesseSheet(); ansicht.folgen = true; } };
     const tippZu = () => { if (!tippFrage) return; tippFrage = null; const b = root.querySelector("#lzTipp"); if (b) b.remove(); ansicht.folgen = true; ansicht.zoom = grundZoom(); };
     $("#lzSlider").oninput = e => { tippZu(); zeit = +e.target.value; laeuft = false; const ph = aktuellePhase(); if (ph) zeigePhase(ph); };
     $("#lzPrev").onclick = () => { tippZu(); springe(-1); }; $("#lzNext").onclick = () => { tippZu(); springe(1); };
@@ -1648,7 +1649,7 @@
   function stimmeLade(fertig) {
     if (STIMME.geladen) { fertig(); return; }
     STIMME.geladen = true;
-    try { fetch("stimme/index.json", { cache: "no-cache" }).then(r => r.ok ? r.json() : null).then(j => { STIMME.index = j; fertig(); }).catch(() => fertig()); } catch (e) { fertig(); }
+    try { fetch("stimme/index.json", { cache: "no-cache" }).then(r => r.ok ? r.json() : null).then(j => { STIMME.index = j; if (!j) STIMME.geladen = false; fertig(); }).catch(() => { STIMME.geladen = false; fertig(); }); } catch (e) { STIMME.geladen = false; fertig(); }
   }
   const stimmeFuer = ph => { const i = STIMME.index && szene && STIMME.index[szene.id]; return (i && ph && i[stimmeStand(ph.text)]) || null; };
   const stimmeSzene = () => !!(STIMME.index && szene && STIMME.index[szene.id]);
@@ -1665,9 +1666,13 @@
     const a = { el, ph, d: e.d / tempoFaktor, fertig: false };
     el.addEventListener("ended", () => { a.fertig = true; });
     el.addEventListener("error", () => { a.fertig = true; });
+    el.addEventListener("playing", () => { a.laeuft = true; });
+    setTimeout(() => { if (!a.laeuft && !STIMME.pausiert) a.fertig = true; }, 4000);   // Ton kommt nicht (Funkloch): Szene nicht aufhalten
     STIMME.aktiv = a;
     const pr = el.play(); if (pr && pr.catch) pr.catch(() => { a.fertig = true; });
   }
+  // nach Sprung / Umschalten / spät geladenem Index: Satz der aktuellen Phase nachholen
+  function stimmeNachholen() { if (!szene || modus === "fahren" || !laeuft || STIMME.aktiv) return; const ph = aktuellePhase(); if (ph) stimmeSpiele(ph); }
   const stimmeLaeuft = () => !!(STIMME.aktiv && !STIMME.aktiv.fertig && !STIMME.pausiert);
   // Zeit-Faktor: während des Sprechens so langsam, dass die Phase etwa so lang dauert wie der Satz (nicht unter ¼)
   function stimmeFaktor() {
