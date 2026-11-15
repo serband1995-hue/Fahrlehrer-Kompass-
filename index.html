@@ -7512,7 +7512,7 @@ window.addEventListener("load", () => {
 const STORE_KEY="serband-app-v1";
 /* Build-Version: bei jeder Auslieferung hier das Datum aktualisieren.
    Wird in den Einstellungen angezeigt + für den Update-Hinweis genutzt. */
-const APP_VERSION="2026.11.15.9";
+const APP_VERSION="2026.11.15.10";
 try{const f=document.getElementById("drawerFoot"); if(f)f.textContent="Fahrlehrer-Kompass · Version "+APP_VERSION;}catch(e){}
 // Nutzungsbedingungen & Haftungsausschluss (Bereich: rechtliche Absicherung) - Version hochzählen
 // und alle Nutzer müssen erneut zustimmen, sobald sich der Text inhaltlich ändert.
@@ -9354,8 +9354,8 @@ function theorieCard(s){
     <div class="tb-zahl"><b>${st.ist} von ${st.soll}</b> Pflicht-Lektionen${st.fertig?" ✓ vollständig":""}</div>
     <div class="tb-balken${st.fertig?" fertig":""}" role="img" aria-label="${st.ist} von ${st.soll} Lektionen besucht"><span style="width:${pct}%"></span></div>
     ${st.teile.map(teil).join("")}
+    ${besuch.length?"":`<p class="muted-p tb-leer">Noch keine Anwesenheit erfasst. Trage sie hier nach oder im Theorie-Termin ein („Anwesenheit eintragen“).</p>`}
     <button type="button" class="btn btn-ghost tb-nachtragen" data-tb="neu" style="margin-top:8px;min-height:44px;">＋ Lektion nachtragen</button>
-    ${besuch.length?"":`<p class="muted-p tb-leer">Noch keine Anwesenheit erfasst. Sie wird im Theorie-Termin eingetragen („Anwesenheit eintragen“).</p>`}
     ${besuch.length?`<details class="tb-liste"><summary>Besuchte Lektionen (${new Set(besuch.map(b=>String(b.lektion))).size})</summary>${besuch.map(b=>`<div class="mini-dash-row"><span>Lektion ${esc(b.lektion)}</span><span>${isoDE(b.datum)} <button type="button" class="mini-btn" data-tb="weg" data-lektion="${esc(b.lektion)}" data-datum="${esc(b.datum)}" aria-label="Lektion ${esc(b.lektion)} vom ${isoDE(b.datum)} entfernen" style="min-width:44px;min-height:44px;">✕</button></span></div>`).join("")}</details>`:""}
   </div>`;
 }
@@ -9423,10 +9423,11 @@ function openTheorieNachtragen(sid){
   const alleLekt=(_rel.length?_rel.filter((k,i)=>_rel.indexOf(k)===i):LEKTIONEN.map(x=>String(x.n)).concat(LKW_LEKTIONEN.map(x=>x.n))).sort((a,c)=>_lektOrd(a)-_lektOrd(c));
   const da=new Set(((_theorieBesuch&&_theorieBesuch[sid])||[]).map(x=>String(x.lektion)));
   const gewaehlt=[];
-  openSheet(`<div class="sheet-h">Theorie nachtragen · ${esc(st.name||"")}</div>
+  openSheet(`<div class="sheet-h">Lektion nachtragen</div><div class="muted-p" style="margin:-6px 0 8px;font-size:14px;">${esc(st.name||"")}</div>
     <div class="field"><label>Datum des Unterrichts</label><input type="date" id="tnDatum" value="${heute}" min="${frueh}" max="${heute}"></div>
-    <p class="muted-p" style="font-size:13px;">Welche Lektion(en) hat der Schüler besucht? (bis 4 an einem Tag) ✓ = schon eingetragen</p>
+    <p style="margin:6px 0;font-size:15px;font-weight:700;">Welche Lektionen? <span style="font-weight:500;">(höchstens 4 am Tag)</span></p>
     <div class="pills ta-lekt sheet-pills" id="tnLekt">${alleLekt.map(k=>`<button type="button" class="pill" data-k="${esc(k)}" title="${esc(lektionTitel(k))}">${esc(k)}${da.has(k)?" ✓":""}</button>`).join("")}</div>
+    <p class="muted-p" style="margin:8px 0 0;font-size:13px;">✓ = schon eingetragen</p>
     <div class="btn-row sheet-knoepfe"><button class="btn btn-ghost" id="tnAbbr" style="flex:0;padding:13px 18px;">Abbrechen</button><button class="btn btn-primary" id="tnSpeichern">Speichern</button></div>`);
   $("#tnAbbr").addEventListener("click",closeSheet);
   document.querySelectorAll("#tnLekt .pill").forEach(b=>b.addEventListener("click",()=>{
