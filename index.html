@@ -2749,7 +2749,7 @@ body.light .fc-miss-sum b{color:#7a2a1e !important;}
 </div>
 
 <script>/* Block 3: Von der Theorie zurück in die App blitzte kurz die Anmeldeseite (sie stand bis zum load-Ereignis sichtbar). Ist lokal eine Sitzung gespeichert, wird sie sofort versteckt; schlägt der Start fehl, zeigt checkSession() sie wieder (_loginZeigen). */
-try{ var _tok=false,_bio=false; for(var _i=0;_i<localStorage.length;_i++){ var _k=localStorage.key(_i)||""; if(/^kompass-bio-cred-/.test(_k)){ _bio=true; } else if(/^sb-.+-auth-token$/.test(_k)){ try{ var _j=JSON.parse(localStorage.getItem(_k)||"null"); var _s=_j&&(_j.currentSession||_j); if(_s&&_s.refresh_token)_tok=true; }catch(e){} } }
+try{ var _tok=false,_bio=false; for(var _i=0;_i<localStorage.length;_i++){ var _k=localStorage.key(_i)||""; if(/^kompass-bio-cred-/.test(_k)){ _bio=true; } else if(/^sb-.+-auth-token$/.test(_k)){ try{ var _j=JSON.parse(localStorage.getItem(_k)||"null"); var _s=_j&&(_j.currentSession||_j); var _u=(_s&&_s.user)||{}; if(!_u.id){try{var _ju=JSON.parse(localStorage.getItem(_k+"-user")||"null");_u=(_ju&&(_ju.user||_ju))||{};}catch(e){}} var _o=localStorage.getItem("serband-data-owner"); if(!_o){try{_o=(JSON.parse(localStorage.getItem("serband-session-cache")||"null")||{}).id||null;}catch(e){}} if(_s&&_s.refresh_token&&_u.id&&(_o===_u.id||(!_o&&localStorage.getItem("serband-app-v1")===null)))_tok=true; }catch(e){} } }
 /* Mit aktiver Schnell-Entsperrung (Bio-Sperre) bleibt die Anmeldeseite sichtbar, bis die Sperre erscheint: sonst wäre die App kurz ungesperrt zu sehen. */
 if(_tok&&!_bio){ document.getElementById("loginOverlay").classList.add("hidden"); window._loginVersteckt=true; } }catch(e){}
 </script>
@@ -7512,7 +7512,7 @@ window.addEventListener("load", () => {
 const STORE_KEY="serband-app-v1";
 /* Build-Version: bei jeder Auslieferung hier das Datum aktualisieren.
    Wird in den Einstellungen angezeigt + für den Update-Hinweis genutzt. */
-const APP_VERSION="2026.11.15.7";
+const APP_VERSION="2026.11.15.8";
 try{const f=document.getElementById("drawerFoot"); if(f)f.textContent="Fahrlehrer-Kompass · Version "+APP_VERSION;}catch(e){}
 // Nutzungsbedingungen & Haftungsausschluss (Bereich: rechtliche Absicherung) - Version hochzählen
 // und alle Nutzer müssen erneut zustimmen, sobald sich der Text inhaltlich ändert.
