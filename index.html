@@ -7512,7 +7512,7 @@ window.addEventListener("load", () => {
 const STORE_KEY="serband-app-v1";
 /* Build-Version: bei jeder Auslieferung hier das Datum aktualisieren.
    Wird in den Einstellungen angezeigt + für den Update-Hinweis genutzt. */
-const APP_VERSION="2026.11.15.6";
+const APP_VERSION="2026.11.15.7";
 try{const f=document.getElementById("drawerFoot"); if(f)f.textContent="Fahrlehrer-Kompass · Version "+APP_VERSION;}catch(e){}
 // Nutzungsbedingungen & Haftungsausschluss (Bereich: rechtliche Absicherung) - Version hochzählen
 // und alle Nutzer müssen erneut zustimmen, sobald sich der Text inhaltlich ändert.
@@ -13791,8 +13791,10 @@ function ensureDB(){ let _ensureDirty=false; if(!Array.isArray(DB.exams))DB.exam
         if(belegt(n)){ let i=2; while(belegt(n+" ("+i+")"))i++; n=n+" ("+i+")"; }
         fz.name=n; _a3Name=_a3Name||n; _ensureDirty=true; } });
     }
+    // Gibt es kein Q5-Fahrzeug (mehr), aber schon einen Audi A3 in der Liste, ziehen die Termine auf dessen Namen (Zuordnung läuft über den Namen)
+    const _a3Vorhanden=((DB.workCfg.fahrzeuge||[]).find(fz=>fz&&/^audi a3/i.test(String(fz.name||"")))||{}).name||null;
     if(Array.isArray(DB.lessons)){
-      DB.lessons.forEach(l=>{ if(l&&_istQ5(l.fahrzeug)){ l.fahrzeug=_a3Name||"Audi A3 Automatik"; _ensureDirty=true; } });
+      DB.lessons.forEach(l=>{ if(l&&_istQ5(l.fahrzeug)){ l.fahrzeug=_a3Name||_a3Vorhanden||"Audi A3 Automatik"; _ensureDirty=true; } });
     }
   }
   // T6: kein Vertrag als Vorgabe (sonst sähe jeder neue Fahrlehrer fremde Zahlen als seine). Bis Satz oder Fixum
