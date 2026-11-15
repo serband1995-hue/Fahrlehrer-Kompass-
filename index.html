@@ -1951,7 +1951,7 @@ body:not(.light) #sheet .sheet-pills .pill.sel{background:#123A2A !important;bor
   transition:border-color .2s;
 }
 .lo-field input:focus{border-color:#4a8b45;background:rgba(74,139,69,.08);}
-.lo-eye{position:absolute;right:14px;top:50%;transform:translateY(-50%);background:none;border:none;color:#6a9b7a;cursor:pointer;padding:4px;display:flex;align-items:center;}
+.lo-eye{position:absolute;right:6px;top:50%;transform:translateY(-50%);background:none;border:none;color:#6a9b7a;cursor:pointer;padding:4px;display:flex;align-items:center;justify-content:center;min-width:44px;min-height:44px;}
 .lo-eye:active{color:var(--mint-soft);}
 .lo-btn{
   width:100%;padding:15px;
@@ -2122,6 +2122,7 @@ body:not(.light) .nav-item.primary svg,body:not(.light) .nav-item.primary{color:
 .toast{background:var(--txt) !important;color:var(--bg) !important;border-radius:24px !important;font-weight:600 !important;box-shadow:var(--elev-3) !important;
   bottom:calc(104px + env(safe-area-inset-bottom)) !important;}
 /* Block 1: bei offenem Fenster (Sheet) oben statt unten – die !important-Regel darüber hatte die Sheet-Regel (Zeile ~928) überstimmt */
+.toast{bottom:calc(156px + env(safe-area-inset-bottom)) !important;} /* F3: über dem Plus-Knopf (Oberkante ~146 px) */
 body:has(#sheet.open) .toast{bottom:auto !important;top:calc(14px + env(safe-area-inset-top)) !important;}
 .view-inner{padding-bottom:160px !important;}
 /* Umbau 2026-10: Farb- und Schrift-Grundlagen aus dem freigegebenen Entwurf (werden ab Schritt 2 genutzt) */
@@ -2720,7 +2721,7 @@ body.light .fc-miss-sum b{color:#7a2a1e !important;}
       </div>
     </div>
     <button class="lo-btn" id="loBtn" onclick="doLogin()">Einloggen</button>
-    <button type="button" id="loForgotBtn" style="background:none;border:none;color:var(--muted);font-size:12.5px;margin-top:10px;text-decoration:underline;cursor:pointer;width:100%;">Passwort vergessen?</button>
+    <button type="button" id="loForgotBtn" style="background:none;border:none;color:var(--muted);font-size:12.5px;margin-top:10px;text-decoration:underline;cursor:pointer;width:100%;min-height:44px;">Passwort vergessen?</button>
     <div class="lo-err" id="loErr"></div>
     <div class="lo-buero"><span>Du arbeitest im Büro oder in der Leitung?</span><a href="buero.html">Büro-Anmeldung (am PC)</a></div>
   </div>
@@ -7500,7 +7501,7 @@ window.addEventListener("load", () => {
 const STORE_KEY="serband-app-v1";
 /* Build-Version: bei jeder Auslieferung hier das Datum aktualisieren.
    Wird in den Einstellungen angezeigt + für den Update-Hinweis genutzt. */
-const APP_VERSION="2026.11.15.1";
+const APP_VERSION="2026.11.15.2";
 try{const f=document.getElementById("drawerFoot"); if(f)f.textContent="Fahrlehrer-Kompass · Version "+APP_VERSION;}catch(e){}
 // Nutzungsbedingungen & Haftungsausschluss (Bereich: rechtliche Absicherung) - Version hochzählen
 // und alle Nutzer müssen erneut zustimmen, sobald sich der Text inhaltlich ändert.

@@ -66,7 +66,7 @@
   const host = { id: h.get("r"), key: h.get("k") };
   let L = null, daten = null, beob = null, takt = null, aufgeloest = -1, beschaeftigt = false;
 
-  if (!host.id || !host.key) { $("#app").innerHTML = '<div class="fehlt">Bitte den QR-Code „Lehrer-Handy“ an der Tafel scannen.</div>'; return; }
+  if (!host.id || !host.key) { $("#app").innerHTML = '<div class="fehlt"><b>Lernzielkontrolle – Lehrer</b><br>Bitte den QR-Code „Lehrer-Handy“ an der Tafel scannen.<br><br><a href="index.html" style="display:inline-block;min-height:44px;line-height:44px;padding:0 16px;border-radius:12px;background:var(--surface);border:1px solid var(--line);color:inherit;font-weight:800;text-decoration:none;">← Zurück zum Kompass</a></div>'; return; }
 
   async function steuern(aktion, frage, still) {
     try { await Quiz.rpc("quiz_steuern", { p_raum: host.id, p_key: host.key, p_aktion: aktion, p_frage: frage == null ? null : frage }); beob.jetzt(); }
