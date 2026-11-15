@@ -1379,10 +1379,12 @@
     if (laeuft) {
       if (modus === "fahren") { const n = Math.ceil(dt * tempoFaktor / 0.04) || 1; for (let i = 0; i < n && laeuft; i++) fahrSchritt(dt * tempoFaktor / n); }
       else {
-        const vorher = zeit; zeit = Math.min(szene.dauer, zeit + dt * tempoFaktor);
+        const vorher = zeit; let schritt = dt * tempoFaktor * stimmeFaktor();
+        if (stimmeLaeuft()) { const nxt = szene.phasen.find(p => p.t > zeit); if (nxt && zeit + schritt >= nxt.t) schritt = Math.max(0, nxt.t - 0.001 - zeit); }   // am Phasenende warten, bis der Satz fertig ist
+        zeit = Math.min(szene.dauer, zeit + schritt);
         for (const ph of szene.phasen.filter(p => p.t > vorher && p.t <= zeit)) {
-          zeigePhase(ph);
-          if (modus === "mitdenken" && ph.frage && !beantwortet.has(ph.t)) { zeit = ph.t; laeuft = false; zeigeFrage(ph); break; }
+          zeigePhase(ph); stimmeSpiele(ph);
+          if (modus === "mitdenken" && ph.frage && !beantwortet.has(ph.t)) { zeit = ph.t; laeuft = false; zeigeFrage(ph); stimmeStopp(); break; }
         }
         if (zeit >= szene.dauer) { laeuft = false; if (modus === "mitdenken") zeigeErgebnisMitdenken(); }
       }
@@ -1427,12 +1429,18 @@
   .lz-caption{position:absolute;left:12px;top:10px;max-width:min(470px,calc(100% - 24px));background:rgba(10,18,14,.88);border:1px solid rgba(120,170,140,.35);border-radius:14px;padding:11px 14px;box-shadow:0 8px 24px rgba(0,0,0,.35);pointer-events:none;transition:opacity .25s;}
   .lz-caption h3{margin:0 0 3px;font-size:15.5px;}
   .lz-caption p{margin:0;font-size:13.5px;line-height:1.45;color:#dce6df;}
+  .lz-nochmal{display:inline-flex;align-items:center;gap:6px;margin-top:8px;min-height:44px;padding:0 12px;border-radius:10px;border:1px solid #2e4a40;background:#1a2f28;color:#eef3ef;font-size:13.5px;font-weight:600;cursor:pointer;pointer-events:auto;}
+  @media (max-height:480px){ .lz-nochmal{min-height:32px;margin-top:4px;padding:0 10px;font-size:12.5px;} }
+  .lz-info{margin:14px 0 0;padding:0 14px 12px;font-size:13px;color:#b1bfb5;}
+  @media (min-height:481px){ #lzStimme{min-height:44px;min-width:44px;} }
+  #lzStimme[aria-pressed="true"]{background:#2f6b4f;border-color:#4fae80;}
+  #lzStimme[aria-pressed="false"]{opacity:.6;}
   .lz-parb{position:absolute;right:8px;top:8px;width:34px;height:34px;border-radius:50%;border:2px solid #e0b84a;background:#e0b84a;color:#0c1410;font:800 17px/1 'Anton',sans-serif;cursor:pointer;pointer-events:auto;padding:0;box-shadow:0 2px 8px rgba(0,0,0,.4);}
   .lz-parb::after{content:"";position:absolute;inset:-6px;}
   .lz-parb[aria-expanded="true"]{background:#0c1410;color:#e0b84a;}
   .lz-caption.mit-par{padding-right:50px;}
   .lz-parpop{position:absolute;left:12px;bottom:12px;max-width:min(320px,calc(100% - 140px));background:rgba(10,18,14,.95);border:1px solid #e0b84a;border-radius:12px;padding:10px 12px;box-shadow:0 8px 24px rgba(0,0,0,.45);z-index:3;font-size:14px;line-height:1.45;color:#dce6df;}
-  @media (max-height:480px){.lz-parpop{left:auto;right:12px;top:10px;bottom:auto;max-width:min(260px,calc(100% - 410px));padding:6px 10px;}.lz-parpop a{min-height:40px;padding:0;}}
+  @media (max-height:480px){.lz-parpop{left:auto;right:12px;top:10px;bottom:auto;max-width:min(260px,calc(100% - 410px));padding:6px 10px;}.lz-parpop{line-height:1.3;}.lz-parpop a{min-height:34px;padding:0;}}
   @media (max-height:340px){.lz-stage.par-offen .lz-hud{visibility:hidden;}}
   .lz-parpop b{display:block;color:#e0b84a;margin-bottom:4px;}
   .lz-parpop a{color:#9fd5b0;font-weight:700;display:flex;align-items:center;min-height:44px;padding:4px 0;}
@@ -1499,7 +1507,7 @@
     if (szene) zeigeAuswahl(); else schliessen();
   }
   function schliessen() {
-    cancelAnimationFrame(raf); raf = 0; laeuft = false; fahr = null; szene = null;
+    stimmeStopp(); cancelAnimationFrame(raf); raf = 0; laeuft = false; fahr = null; szene = null;
     window.removeEventListener("resize", beiResize);
     window.removeEventListener("popstate", beiZurueck, true);
     if (beob) { beob.disconnect(); beob = null; }
@@ -1507,7 +1515,7 @@
     if (onCloseCb) try { onCloseCb(); } catch (e) {}
   }
   function zeigeAuswahl() {
-    cancelAnimationFrame(raf); raf = 0; laeuft = false; szene = null; fahr = null; versatzFz = {}; tippFrage = null;
+    stimmeStopp(); cancelAnimationFrame(raf); raf = 0; laeuft = false; szene = null; fahr = null; versatzFz = {}; tippFrage = null;
     if (beob) { beob.disconnect(); beob = null; }
     const kats = KATEGORIEN.filter(k => SZENEN.some(s => (s.kategorie || "autobahn") === k[0]));
     if (!kats.some(k => k[0] === katAktiv)) katAktiv = kats.length ? kats[0][0] : "autobahn";
@@ -1520,6 +1528,7 @@
           <h3>${esc(s.titel)}</h3><p>${esc(s.kurz)}</p>
           <div class="lz-chips"><span class="lz-chip">Vorführen</span><span class="lz-chip">Mitdenken</span>${s.fahren || s.rangieren || s.reaktion ? `<span class="lz-chip">${s.rangieren ? "Selbst rangieren" : s.reaktion ? "Reaktionstest" : "Selbst fahren"}</span>` : ""}<span class="lz-chip">3D</span></div>
         </button>`).join("")}</div>`;
+    { const r0 = root; stimmeLade(() => { if (root !== r0 || szene) return; const g = root.querySelector("#lzGrid"); if (g && !root.querySelector(".lz-info")) g.insertAdjacentHTML("afterend", stimmeInfo()); }); }
     $("#lzZu").onclick = schliessen;
     root.querySelectorAll("[data-kat]").forEach(b => b.onclick = () => { katAktiv = b.dataset.kat; zeigeAuswahl(); });
     { const a = root.querySelector("#lzAlle"); if (a) a.onclick = () => { nurListe = null; zeigeAuswahl(); }; }
@@ -1544,6 +1553,7 @@
       <div class="lz-top">
         <button class="lz-btn" id="lzZurueck" aria-label="Zur Auswahl">‹</button>
         <div class="lz-title">${esc(szene.titel)}</div>
+        <button class="lz-btn" id="lzStimme" hidden aria-pressed="true" aria-label="Stimme ausschalten">🔊</button>
         <button class="lz-btn" id="lzRegeln">§ Regeln</button>
         <button class="lz-btn" id="lzZu" aria-label="Schließen">✕</button>
       </div>
@@ -1585,11 +1595,13 @@
     cv = $("#lzCanvas"); ctx = cv.getContext("2d"); beiResize(); ansicht.zoom = grundZoom();
     if (window.ResizeObserver) { beob = new ResizeObserver(() => beiResize()); beob.observe($("#lzStage")); }   // z. B. wenn die Fahrleiste erscheint
     const marks = $("#lzTime"); szene.phasen.forEach(p => { const m = document.createElement("span"); m.className = "lz-mark"; m.style.left = `calc(${(p.t / szene.dauer) * 100}% - 1px)`; marks.appendChild(m); });
-    $("#lzStage").addEventListener("click", e => { const b = e.target.closest && e.target.closest(".lz-parb"); if (b) { e.stopPropagation(); togglePar(b); } else if (!(e.target.closest && e.target.closest(".lz-parpop"))) schliessePar(); });
+    $("#lzStage").addEventListener("click", e => { const nm = e.target.closest && e.target.closest("[data-nochmal]"); if (nm) { e.stopPropagation(); stimmeNochmal(); return; } const b = e.target.closest && e.target.closest(".lz-parb"); if (b) { e.stopPropagation(); togglePar(b); } else if (!(e.target.closest && e.target.closest(".lz-parpop"))) schliessePar(); });
     $("#lzZu").onclick = schliessen; $("#lzZurueck").onclick = zeigeAuswahl; $("#lzRegeln").onclick = zeigeRegeln;
+    stimmeLade(() => { if (!szene) return; stimmeSchalter(); stimmeNachholen(); const ph = aktuellePhase() || szene.phasen[0]; if (modus === "vorfuehren" && !laeuft && ph && !root.querySelector("#lzCap .lz-nochmal")) zeigePhase(ph); });
+    $("#lzStimme").onclick = () => { const an = !stimmeAn(); try { localStorage.setItem("lz_stimme", an ? "1" : "0"); } catch (e) {} if (!an) stimmeStopp(); stimmeSchalter(); if (an) stimmeNachholen(); const ph = aktuellePhase() || szene.phasen[0]; if (ph && modus !== "fahren" && !laeuft) { const c = $("#lzCap"); if (c && !c.hidden && c.querySelector("h3")) zeigeCap(ph.titel, ph.text, ph.regel, ph); } };
     $("#lzPlay").onclick = () => { schliessePar(); if ((root.querySelector(".lz-sheet .lz-opt") && !root.querySelector("#lzWeiter")) || tippFrage) return;
       if (modus === "fahren") { const c = $("#lzCap"); if (c) c.hidden = true; }
-      if (modus === "fahren" && fahr && fahr.ende) { schliesseSheet(); if (szene.reaktion) starteReaktion(fahr.vWahl); else starteFahren(); } if (!laeuft && zeit >= szene.dauer && modus !== "fahren") { zeit = 0; beantwortet = new Set(); } laeuft = !laeuft; if (laeuft) { schliesseSheet(); ansicht.folgen = true; } };
+      if (modus === "fahren" && fahr && fahr.ende) { schliesseSheet(); if (szene.reaktion) starteReaktion(fahr.vWahl); else starteFahren(); } if (!laeuft && zeit >= szene.dauer && modus !== "fahren") { zeit = 0; beantwortet = new Set(); } laeuft = !laeuft; if (modus !== "fahren") { stimmePause(!laeuft); stimmeNachholen(); } if (laeuft) { schliesseSheet(); ansicht.folgen = true; } };
     const tippZu = () => { if (!tippFrage) return; tippFrage = null; const b = root.querySelector("#lzTipp"); if (b) b.remove(); ansicht.folgen = true; ansicht.zoom = grundZoom(); };
     $("#lzSlider").oninput = e => { tippZu(); zeit = +e.target.value; laeuft = false; const ph = aktuellePhase(); if (ph) zeigePhase(ph); };
     $("#lzPrev").onclick = () => { tippZu(); springe(-1); }; $("#lzNext").onclick = () => { tippZu(); springe(1); };
@@ -1602,7 +1614,7 @@
   }
   function grundZoom() { const b = cv ? cv.getBoundingClientRect().width : window.innerWidth; return szene.kamera.zoom * clamp(b / 1000, 0.55, 1.6); }
   function setzeModus(m) {
-    tippFrage = null; { const b = root.querySelector("#lzTipp"); if (b) b.remove(); }
+    stimmeStopp(); tippFrage = null; { const b = root.querySelector("#lzTipp"); if (b) b.remove(); }
     modus = m; laeuft = false; versatzFz = {}; zeit = 0; beantwortet = new Set(); punkte = { richtig: 0, gesamt: 0 }; schliesseSheet(); _hGlatt = null;
     { const c = $("#lzCap"); if (c) c.hidden = false; }
     root.querySelectorAll("[data-modus]").forEach(x => x.classList.toggle("on", x.dataset.modus === m));
@@ -1628,6 +1640,61 @@
     zeit = ziel.t; laeuft = false; zeigePhase(ziel); ansicht.folgen = true;
   }
   function aktuellePhase() { let a = null; szene.phasen.forEach(p => { if (p.t <= zeit + 0.001) a = p; }); return a; }
+  // ---------------------------------------------------------------- Stimme (Sprecherstimme mit KI erzeugt)
+  // Ein Satz je Phase, im Takt mit der Szene: die Szene läuft während des Sprechens langsamer und wartet am Phasenende, bis der Satz fertig ist.
+  // Dateien liegen unter stimme/ (index.json: Szene -> Stand des Phasentexts -> Datei, Dauer). Ändert sich ein Text, passt der Stand nicht mehr: dann spricht nichts.
+  const STIMME = { index: null, laden: null, aktiv: null, fenster: 0, pausiert: false };
+  const stimmeAn = () => { try { return localStorage.getItem("lz_stimme") !== "0"; } catch (e) { return true; } };
+  function stimmeStand(t) { let h = 5381; t = String(t); for (let i = 0; i < t.length; i++) h = ((h << 5) + h + t.charCodeAt(i)) | 0; return (h >>> 0).toString(36); }
+  function stimmeLade(fertig) {
+    if (STIMME.index) { fertig(); return; }
+    if (!STIMME.laden) {
+      const fehl = () => { STIMME.laden = null; };
+      try { STIMME.laden = fetch("stimme/index.json", { cache: "no-cache" }).then(r => r.ok ? r.json() : null).then(j => { STIMME.index = j; if (!j) fehl(); }).catch(fehl); } catch (e) { fertig(); return; }
+    }
+    STIMME.laden.then(fertig, fertig);   // alle Aufrufer warten auf denselben Ladevorgang
+  }
+  const stimmeFuer = ph => { const i = STIMME.index && szene && STIMME.index[szene.id]; return (i && ph && i[stimmeStand(ph.text)]) || null; };
+  const stimmeSzene = () => !!(STIMME.index && szene && STIMME.index[szene.id]);
+  function stimmeStopp() {
+    const a = STIMME.aktiv; STIMME.aktiv = null; STIMME.pausiert = false;
+    if (!a) return;
+    let v = a.el.volume; const t = setInterval(() => { v -= 0.25; if (v <= 0) { clearInterval(t); try { a.el.pause(); } catch (e) {} } else { try { a.el.volume = v; } catch (e) {} } }, 30);
+  }
+  function stimmeSpiele(ph) {
+    stimmeStopp();
+    if (!stimmeAn() || modus === "fahren" || !szene) return;
+    const e = stimmeFuer(ph); if (!e) return;
+    const el = new Audio("stimme/" + e.f); el.preload = "auto"; try { el.playbackRate = tempoFaktor; } catch (x) {}
+    const a = { el, ph, d: e.d / tempoFaktor, fertig: false };
+    el.addEventListener("ended", () => { a.fertig = true; });
+    el.addEventListener("error", () => { a.fertig = true; });
+    el.addEventListener("playing", () => { a.laeuft = true; });
+    setTimeout(() => { if (!a.laeuft && !STIMME.pausiert) a.fertig = true; }, 4000);   // Ton kommt nicht (Funkloch): Szene nicht aufhalten
+    STIMME.aktiv = a;
+    const pr = el.play(); if (pr && pr.catch) pr.catch(() => { a.fertig = true; });
+  }
+  // nach Sprung / Umschalten / spät geladenem Index: Satz der aktuellen Phase nachholen
+  function stimmeNachholen() { if (!szene || modus === "fahren" || !laeuft || STIMME.aktiv) return; const ph = aktuellePhase(); if (ph) stimmeSpiele(ph); }
+  const stimmeLaeuft = () => !!(STIMME.aktiv && !STIMME.aktiv.fertig && !STIMME.pausiert);
+  // Zeit-Faktor: während des Sprechens so langsam, dass die Phase etwa so lang dauert wie der Satz (nicht unter ¼)
+  function stimmeFaktor() {
+    const a = STIMME.aktiv; if (!a || a.fertig || !szene) return 1;
+    const nxt = szene.phasen.find(p => p.t > a.ph.t); const fenster = (nxt ? nxt.t : szene.dauer) - a.ph.t;
+    return clamp(fenster / Math.max(0.5, a.d), 0.25, 1);
+  }
+  function stimmePause(pause) {
+    const a = STIMME.aktiv; if (!a || a.fertig) return;
+    STIMME.pausiert = !!pause;
+    try { if (pause) a.el.pause(); else { const pr = a.el.play(); if (pr && pr.catch) pr.catch(() => { a.fertig = true; }); } } catch (e) {}
+  }
+  function stimmeNochmal() { const ph = aktuellePhase(); if (ph) stimmeSpiele(ph); }
+  function stimmeSchalter() {
+    const b = $("#lzStimme"); if (!b) return;
+    b.hidden = !stimmeSzene();
+    const an = stimmeAn(); b.textContent = an ? "🔊" : "🔇"; b.setAttribute("aria-label", an ? "Stimme ausschalten" : "Stimme einschalten"); b.setAttribute("aria-pressed", String(an));
+  }
+  const stimmeInfo = () => (STIMME.index && Object.keys(STIMME.index).length) ? `<p class="lz-info">🔊 Sprecherstimme mit KI erzeugt.</p>` : "";
   // Geprüfte Fundstellen (15.11.2026 gegen StVO-Text, Prüfbericht Block 3; § 9a gibt es nicht, Kreisverkehr = § 8 Abs. 1a): nur diese bekommen das antippbare §. Neue Fundstellen erst nach Prüfung am Gesetzestext aufnehmen.
   const PAR_GEPRUEFT = new Set(["1/2", "11/2", "11/3", "12/", "18/2", "18/3", "18/7", "2/2", "20/3", "20/4", "20/5", "26/1", "26/2", "26/3", "3/1", "3/2a", "3/3", "37/2", "38/1", "4/1", "5/2", "5/4", "5/4a", "6/", "7/4", "7/5", "7a/2", "7a/3", "8/1", "8/1a", "8/2", "9/1", "9/3", "9/4", "9/5"]);
   function parToken(regel) {
@@ -1646,13 +1713,14 @@
     const d = el(`<div class="lz-parpop" role="note"><b>${esc(btn.dataset.regel)}</b>${links}</div>`);
     $("#lzStage").appendChild(d); btn.setAttribute("aria-expanded", "true"); btn.textContent = "✕"; $("#lzStage").classList.add("par-offen");
   }
-  function zeigeCap(titel, text, regel) {
+  function zeigeCap(titel, text, regel, ph) {
     const c = $("#lzCap"); if (!c) return; schliessePar();
     const ok = regel && parToken(regel);
     c.classList.toggle("mit-par", !!ok);
-    c.innerHTML = `<h3>${esc(titel)}</h3><p>${esc(text)}</p>${ok ? `<button class="lz-parb" type="button" aria-label="Gesetzestext anzeigen" aria-expanded="false" data-regel="${esc(regel)}">§</button>` : ""}`;
+    const nochmal = ph && stimmeAn() && stimmeFuer(ph) ? `<button class="lz-nochmal" type="button" data-nochmal>🔊 Nochmal hören</button>` : "";
+    c.innerHTML = `<h3>${esc(titel)}</h3><p>${esc(text)}</p>${nochmal}${ok ? `<button class="lz-parb" type="button" aria-label="Gesetzestext anzeigen" aria-expanded="false" data-regel="${esc(regel)}">§</button>` : ""}`;
   }
-  function zeigePhase(p) { zeigeCap(p.titel, p.text, p.regel); }
+  function zeigePhase(p) { stimmeStopp(); zeigeCap(p.titel, p.text, p.regel, p); }
   function zeigeToast(t) { const s = $("#lzStage"); if (!s) return; const d = el(`<div class="lz-toast">${esc(t)}</div>`); s.appendChild(d); setTimeout(() => d.remove(), 2600); }
   function zeigeCoach(t) { const s = $("#lzStage"); if (!s) return; s.querySelectorAll(".lz-coach").forEach(x => x.remove()); const d = el(`<div class="lz-coach">💡 ${esc(t)}</div>`); s.appendChild(d); setTimeout(() => d.remove(), 6000); }
   function schliesseSheet() { const s = root && root.querySelector(".lz-sheet"); if (s) s.remove(); }
@@ -1710,7 +1778,7 @@
   function zeigeRegeln() {
     const regeln = szene.phasen.map(p => `<li><b>${esc(p.titel)}</b><br>${esc(p.text)}<br><span class="lz-par">${esc(p.regel)}</span></li>`).join("");
     const schilder = [...new Set((szene.strasse.schilder || []).map(s => s.typ))].map(t => SCHILD_NAME[t]).filter(Boolean);
-    const d = sheet(`<h2>§ Regeln: ${esc(szene.titel)}</h2><ul class="lz-list">${regeln}</ul>${schilder.length ? `<p class="lz-erkl"><b>Schilder in dieser Szene:</b> ${schilder.map(esc).join(" · ")}</p>` : ""}<button class="lz-btn on" id="lzOk" style="width:100%;margin-top:8px;">Schließen</button>`);
+    const d = sheet(`<h2>§ Regeln: ${esc(szene.titel)}</h2><ul class="lz-list">${regeln}</ul>${schilder.length ? `<p class="lz-erkl"><b>Schilder in dieser Szene:</b> ${schilder.map(esc).join(" · ")}</p>` : ""}${stimmeSzene() ? stimmeInfo() : ""}<button class="lz-btn on" id="lzOk" style="width:100%;margin-top:8px;">Schließen</button>`);
     d.querySelector("#lzOk").onclick = schliesseSheet;
   }
   function aktualisiereHud() {
