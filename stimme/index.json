@@ -1,0 +1,72 @@
+{
+ "stop": {
+  "c6ezuu": {
+   "f": "stop-0.mp3",
+   "d": 6.3
+  },
+  "pfavg4": {
+   "f": "stop-1.mp3",
+   "d": 5.56
+  },
+  "uzc4ol": {
+   "f": "stop-2.mp3",
+   "d": 4.55
+  },
+  "4ltjg4": {
+   "f": "stop-3.mp3",
+   "d": 5.09
+  }
+ },
+ "zebra": {
+  "1uesb0j": {
+   "f": "zebra-0.mp3",
+   "d": 5.25
+  },
+  "v9vah": {
+   "f": "zebra-1.mp3",
+   "d": 7.37
+  },
+  "ieahra": {
+   "f": "zebra-2.mp3",
+   "d": 5.75
+  },
+  "19owrgk": {
+   "f": "zebra-3.mp3",
+   "d": 4.96
+  }
+ },
+ "auffahren": {
+  "1qj3kv4": {
+   "f": "auffahren-0.mp3",
+   "d": 8.31
+  },
+  "1su8skp": {
+   "f": "auffahren-1.mp3",
+   "d": 8.49
+  },
+  "jq3i8g": {
+   "f": "auffahren-2.mp3",
+   "d": 4.41
+  },
+  "18ccmyq": {
+   "f": "auffahren-3.mp3",
+   "d": 10.45
+  },
+  "19b4iz7": {
+   "f": "auffahren-4.mp3",
+   "d": 6.45
+  },
+  "74qjsg": {
+   "f": "auffahren-5.mp3",
+   "d": 9.27
+  },
+  "1yly1us": {
+   "f": "auffahren-6.mp3",
+   "d": 6.22
+  },
+  "13efoof": {
+   "f": "auffahren-7.mp3",
+   "d": 10.03
+  }
+ }
+}
