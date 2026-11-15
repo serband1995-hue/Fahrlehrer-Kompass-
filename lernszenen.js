@@ -1428,11 +1428,12 @@
   .lz-caption h3{margin:0 0 3px;font-size:15.5px;}
   .lz-caption p{margin:0;font-size:13.5px;line-height:1.45;color:#dce6df;}
   .lz-parb{position:absolute;right:8px;top:8px;width:34px;height:34px;border-radius:50%;border:2px solid #e0b84a;background:#e0b84a;color:#0c1410;font:800 17px/1 'Anton',sans-serif;cursor:pointer;pointer-events:auto;padding:0;box-shadow:0 2px 8px rgba(0,0,0,.4);}
+  .lz-parb::after{content:"";position:absolute;inset:-6px;}
   .lz-parb[aria-expanded="true"]{background:#0c1410;color:#e0b84a;}
   .lz-caption.mit-par{padding-right:50px;}
-  .lz-parpop{position:absolute;left:12px;bottom:12px;max-width:min(320px,calc(100% - 140px));background:rgba(10,18,14,.95);border:1px solid #e0b84a;border-radius:12px;padding:10px 12px;box-shadow:0 8px 24px rgba(0,0,0,.45);z-index:3;font-size:13px;line-height:1.45;color:#dce6df;}
+  .lz-parpop{position:absolute;left:12px;bottom:12px;max-width:min(320px,calc(100% - 140px));background:rgba(10,18,14,.95);border:1px solid #e0b84a;border-radius:12px;padding:10px 12px;box-shadow:0 8px 24px rgba(0,0,0,.45);z-index:3;font-size:14px;line-height:1.45;color:#dce6df;}
   .lz-parpop b{display:block;color:#e0b84a;margin-bottom:4px;}
-  .lz-parpop a{color:#9fd5b0;font-weight:700;display:inline-block;padding:6px 0;}
+  .lz-parpop a{color:#9fd5b0;font-weight:700;display:flex;align-items:center;min-height:44px;padding:4px 0;}
   .lz-par{display:inline-block;margin-top:6px;font-size:11.5px;font-weight:700;color:#0c1410;background:#e0b84a;border-radius:6px;padding:2px 7px;}
   .lz-hud{position:absolute;right:12px;bottom:12px;background:rgba(10,18,14,.85);border:1px solid #2e4a40;border-radius:12px;padding:8px 12px;text-align:center;min-width:92px;pointer-events:none;}
   .lz-hud b{font-size:24px;display:block;line-height:1;}
@@ -1582,7 +1583,7 @@
     cv = $("#lzCanvas"); ctx = cv.getContext("2d"); beiResize(); ansicht.zoom = grundZoom();
     if (window.ResizeObserver) { beob = new ResizeObserver(() => beiResize()); beob.observe($("#lzStage")); }   // z. B. wenn die Fahrleiste erscheint
     const marks = $("#lzTime"); szene.phasen.forEach(p => { const m = document.createElement("span"); m.className = "lz-mark"; m.style.left = `calc(${(p.t / szene.dauer) * 100}% - 1px)`; marks.appendChild(m); });
-    $("#lzStage").addEventListener("click", e => { const b = e.target.closest && e.target.closest(".lz-parb"); if (b) { e.stopPropagation(); togglePar(b); } });
+    $("#lzStage").addEventListener("click", e => { const b = e.target.closest && e.target.closest(".lz-parb"); if (b) { e.stopPropagation(); togglePar(b); } else if (!(e.target.closest && e.target.closest(".lz-parpop"))) schliessePar(); });
     $("#lzZu").onclick = schliessen; $("#lzZurueck").onclick = zeigeAuswahl; $("#lzRegeln").onclick = zeigeRegeln;
     $("#lzPlay").onclick = () => { if ((root.querySelector(".lz-sheet .lz-opt") && !root.querySelector("#lzWeiter")) || tippFrage) return;
       if (modus === "fahren") { const c = $("#lzCap"); if (c) c.hidden = true; }
@@ -1634,14 +1635,14 @@
     if (!liste.length) return null;
     return liste.every(x => PAR_GEPRUEFT.has(x.key)) ? liste : null;
   }
-  function schliessePar() { const p = root && root.querySelector(".lz-parpop"); if (p) p.remove(); const b = root && root.querySelector(".lz-parb"); if (b) b.setAttribute("aria-expanded", "false"); }
+  function schliessePar() { const p = root && root.querySelector(".lz-parpop"); if (p) p.remove(); const b = root && root.querySelector(".lz-parb"); if (b) { b.setAttribute("aria-expanded", "false"); b.textContent = "§"; } }
   function togglePar(btn) {
     const offen = root.querySelector(".lz-parpop");
     if (offen) { schliessePar(); return; }
     const liste = parToken(btn.dataset.regel); if (!liste) return;
     const links = [...new Set(liste.map(x => x.par))].map(n => `<a href="https://www.gesetze-im-internet.de/stvo_2013/__${esc(n)}.html" target="_blank" rel="noopener">§ ${esc(n)} StVO – Gesetzestext lesen ↗</a>`).join("<br>");
     const d = el(`<div class="lz-parpop" role="note"><b>${esc(btn.dataset.regel)}</b>${links}</div>`);
-    $("#lzStage").appendChild(d); btn.setAttribute("aria-expanded", "true");
+    $("#lzStage").appendChild(d); btn.setAttribute("aria-expanded", "true"); btn.textContent = "✕";
   }
   function zeigeCap(titel, text, regel) {
     const c = $("#lzCap"); if (!c) return; schliessePar();
