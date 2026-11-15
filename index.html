@@ -7512,7 +7512,7 @@ window.addEventListener("load", () => {
 const STORE_KEY="serband-app-v1";
 /* Build-Version: bei jeder Auslieferung hier das Datum aktualisieren.
    Wird in den Einstellungen angezeigt + für den Update-Hinweis genutzt. */
-const APP_VERSION="2026.11.15.8";
+const APP_VERSION="2026.11.15.9";
 try{const f=document.getElementById("drawerFoot"); if(f)f.textContent="Fahrlehrer-Kompass · Version "+APP_VERSION;}catch(e){}
 // Nutzungsbedingungen & Haftungsausschluss (Bereich: rechtliche Absicherung) - Version hochzählen
 // und alle Nutzer müssen erneut zustimmen, sobald sich der Text inhaltlich ändert.
@@ -9349,14 +9349,103 @@ function theorieCard(s){
   const pct=st.soll?Math.round(st.ist/st.soll*100):0;
   const teil=t=>`<div class="mini-dash-row"><span>${esc(t.titel)}${t.fehlt&&t.fehlt.length&&t.fehlt.length<=6?` <small class="tb-fehlt">fehlt: ${t.fehlt.map(esc).join(", ")}</small>`:""}</span><b>${t.ist}/${t.soll}${t.ist>=t.soll?" ✓":""}</b></div>`;
   const besuch=((_theorieBesuch&&_theorieBesuch[s.id])||[]).slice().sort((a,b)=>String(b.datum).localeCompare(String(a.datum)));
-  return `<div class="res-block theorie-besuch" style="animation:none;margin-top:9px;">
+  return `<div class="res-block theorie-besuch" data-sid="${esc(s.id)}" onclick="_tbAkteKlick(event)" style="animation:none;margin-top:9px;">
     <h4>${_li("schule")} Theorieunterricht</h4>
     <div class="tb-zahl"><b>${st.ist} von ${st.soll}</b> Pflicht-Lektionen${st.fertig?" ✓ vollständig":""}</div>
     <div class="tb-balken${st.fertig?" fertig":""}" role="img" aria-label="${st.ist} von ${st.soll} Lektionen besucht"><span style="width:${pct}%"></span></div>
     ${st.teile.map(teil).join("")}
+    <button type="button" class="btn btn-ghost tb-nachtragen" data-tb="neu" style="margin-top:8px;min-height:44px;">＋ Lektion nachtragen</button>
     ${besuch.length?"":`<p class="muted-p tb-leer">Noch keine Anwesenheit erfasst. Sie wird im Theorie-Termin eingetragen („Anwesenheit eintragen“).</p>`}
-    ${besuch.length?`<details class="tb-liste"><summary>Besuchte Lektionen (${new Set(besuch.map(b=>String(b.lektion))).size})</summary>${besuch.map(b=>`<div class="mini-dash-row"><span>Lektion ${esc(b.lektion)}</span><span>${isoDE(b.datum)}</span></div>`).join("")}</details>`:""}
+    ${besuch.length?`<details class="tb-liste"><summary>Besuchte Lektionen (${new Set(besuch.map(b=>String(b.lektion))).size})</summary>${besuch.map(b=>`<div class="mini-dash-row"><span>Lektion ${esc(b.lektion)}</span><span>${isoDE(b.datum)} <button type="button" class="mini-btn" data-tb="weg" data-lektion="${esc(b.lektion)}" data-datum="${esc(b.datum)}" aria-label="Lektion ${esc(b.lektion)} vom ${isoDE(b.datum)} entfernen" style="min-width:44px;min-height:44px;">✕</button></span></div>`).join("")}</details>`:""}
   </div>`;
+}
+/* 🗣 Serband 15.11.2026 (Block 4): Der Fahrlehrer bestätigt in der Schülerakte, welche Theorie-Lektionen der Schüler besucht hat.
+   Geschrieben wird NUR über die vorhandene Datenbankfunktion theorie_teilnahme_setzen (keine Migration). Wichtig: Die Funktion
+   nimmt je Datum+Lektion den VOLLEN Stand der Anwesenden – wer fehlt, wird abgewählt. Darum erst den Tagesstand holen
+   (theorie_teilnahme_tag), nur diesen einen Schüler ändern, dann setzen, und danach zur Kontrolle neu lesen. Je Lektion einzeln,
+   weil die Funktion dieselbe Schülerliste auf alle übergebenen Lektionen anwendet. */
+const _TB_FEHLER={keine_berechtigung:"Keine Berechtigung für die Theorie-Anwesenheit",datum:"Datum nicht erlaubt (höchstens 400 Tage zurück, nicht nach morgen)",lektion:"Lektion nicht erlaubt",zu_viele:"Zu viele Anwesende an dem Abend",unbekannter_schueler:"Schüler nicht in der Fahrschule gefunden"};
+async function _tbSetzen(sid,datum,lekt,an){
+  const supa=getSupa();
+  if(!supa||!navigator.onLine) return {fehler:"Keine Verbindung – Theorie-Besuch nur online ändern"};
+  if(!/^\d{4}-\d{2}-\d{2}$/.test(String(datum||""))) return {fehler:"Bitte ein Datum wählen"};
+  if(datum>todayISO()) return {fehler:"Besuch erst am Tag des Unterrichts eintragen"};
+  const erledigt=[];
+  for(const k of lekt){
+    const {data,error}=await supa.rpc("theorie_teilnahme_tag",{p_datum:datum,p_lektionen:[k]});
+    if(error||!Array.isArray(data)) return {fehler:"Eingetragene nicht geladen – bitte später nochmal",erledigt};
+    const ids=new Set(data.map(x=>x.schueler_id));
+    if(an) ids.add(sid); else ids.delete(sid);
+    if(ids.size>80) return {fehler:_TB_FEHLER.zu_viele,erledigt};
+    const {data:r,error:e2}=await supa.rpc("theorie_teilnahme_setzen",{p_datum:datum,p_lektionen:[k],p_schueler:[...ids]});
+    if(e2||!r||r.fehler) return {fehler:"Nicht gespeichert"+(r&&r.fehler?" ("+(_TB_FEHLER[r.fehler]||r.fehler)+")":" – bitte nochmal"),erledigt};
+    // Kontrolle: steht der Schüler jetzt so da, wie gewollt? (Archivierte Schüler lassen sich nicht abwählen.)
+    const {data:d2,error:e3}=await supa.rpc("theorie_teilnahme_tag",{p_datum:datum,p_lektionen:[k]});
+    if(!e3&&Array.isArray(d2)&&d2.some(x=>x.schueler_id===sid)!==an) return {fehler:an?"Nicht gespeichert – bitte nochmal":"Konnte nicht entfernt werden (Schüler archiviert?)",erledigt};
+    erledigt.push(k);
+  }
+  return {ok:true,erledigt};
+}
+function _tbLokal(sid,datum,erledigt,an){
+  if(!_theorieBesuch)return;
+  let liste=(_theorieBesuch[sid]||[]).filter(x=>!(x.datum===datum&&erledigt.includes(String(x.lektion))));
+  if(an) erledigt.forEach(k=>liste.push({lektion:String(k),datum}));
+  _theorieBesuch[sid]=liste;
+}
+function _tbCardNeu(sid){
+  const st=(DB.students||[]).find(x=>x.id===sid); const el=document.querySelector(".theorie-besuch"); if(!st||!el)return;
+  const t=document.createElement("div"); t.innerHTML=theorieCard(st); const n=t.firstElementChild; if(n) el.replaceWith(n);
+}
+function _tbAkteKlick(ev){
+  const b=ev.target.closest("[data-tb]"); if(!b)return;
+  const sid=b.closest(".theorie-besuch").dataset.sid;
+  if(b.dataset.tb==="neu") openTheorieNachtragen(sid);
+  else if(b.dataset.tb==="weg") _tbEntfernen(sid,b.dataset.lektion,b.dataset.datum,b);
+}
+let _tbBusy=false;
+async function _tbEntfernen(sid,lektion,datum,btn){
+  if(_tbBusy)return;
+  if(!confirm("Lektion "+lektion+" vom "+isoDE(datum)+" wirklich entfernen?"))return;
+  _tbBusy=true; if(btn)btn.disabled=true;
+  try{
+    const r=await _tbSetzen(sid,datum,[String(lektion)],false);
+    if(r.erledigt&&r.erledigt.length) _tbLokal(sid,datum,r.erledigt,false);
+    if(!r.ok){ toast(r.fehler); if(btn)btn.disabled=false; return; }
+    toast("✓ Lektion "+lektion+" entfernt");
+  } finally { _tbBusy=false; }
+  _tbCardNeu(sid);
+}
+function openTheorieNachtragen(sid){
+  const st=(DB.students||[]).find(x=>x.id===sid); if(!st)return;
+  const heute=todayISO(); const d0=new Date(); d0.setDate(d0.getDate()-399); const frueh=d0.getFullYear()+"-"+pad2(d0.getMonth()+1)+"-"+pad2(d0.getDate());
+  // nur die Lektionen, die zur Klasse des Schülers gehören (B: 1–14; Lkw-Klassen mit C/CE); ohne Regel alle
+  const _stand=theorieStandFuer(st); const _rel=(_stand&&_stand.pflicht)?[].concat(...(_stand.teile||[]).map(t=>(t.lektionen||[]).map(String))):[];
+  const alleLekt=(_rel.length?_rel.filter((k,i)=>_rel.indexOf(k)===i):LEKTIONEN.map(x=>String(x.n)).concat(LKW_LEKTIONEN.map(x=>x.n))).sort((a,c)=>_lektOrd(a)-_lektOrd(c));
+  const da=new Set(((_theorieBesuch&&_theorieBesuch[sid])||[]).map(x=>String(x.lektion)));
+  const gewaehlt=[];
+  openSheet(`<div class="sheet-h">Theorie nachtragen · ${esc(st.name||"")}</div>
+    <div class="field"><label>Datum des Unterrichts</label><input type="date" id="tnDatum" value="${heute}" min="${frueh}" max="${heute}"></div>
+    <p class="muted-p" style="font-size:13px;">Welche Lektion(en) hat der Schüler besucht? (bis 4 an einem Tag) ✓ = schon eingetragen</p>
+    <div class="pills ta-lekt sheet-pills" id="tnLekt">${alleLekt.map(k=>`<button type="button" class="pill" data-k="${esc(k)}" title="${esc(lektionTitel(k))}">${esc(k)}${da.has(k)?" ✓":""}</button>`).join("")}</div>
+    <div class="btn-row sheet-knoepfe"><button class="btn btn-ghost" id="tnAbbr" style="flex:0;padding:13px 18px;">Abbrechen</button><button class="btn btn-primary" id="tnSpeichern">Speichern</button></div>`);
+  $("#tnAbbr").addEventListener("click",closeSheet);
+  document.querySelectorAll("#tnLekt .pill").forEach(b=>b.addEventListener("click",()=>{
+    const k=b.dataset.k, i=gewaehlt.indexOf(k);
+    if(i>=0){ gewaehlt.splice(i,1); b.classList.remove("sel"); }
+    else { if(gewaehlt.length>=4){ toast("Höchstens 4 Lektionen je Tag"); return; } gewaehlt.push(k); b.classList.add("sel"); }
+  }));
+  $("#tnSpeichern").addEventListener("click",async()=>{
+    if(!gewaehlt.length){ toast("Bitte mindestens eine Lektion wählen"); return; }
+    const datum=($("#tnDatum")||{}).value||"";
+    if(datum<frueh||datum>heute){ toast(datum>heute?"Besuch erst am Tag des Unterrichts eintragen":"Datum zu weit zurück (höchstens 400 Tage)"); return; }
+    if(_tbBusy)return; _tbBusy=true;
+    const b=$("#tnSpeichern"); b.disabled=true; b.textContent="Speichert …";
+    let r; try{ r=await _tbSetzen(sid,datum,gewaehlt.slice().sort((a,c)=>_lektOrd(a)-_lektOrd(c)),true); } finally { _tbBusy=false; }
+    if(r.erledigt&&r.erledigt.length) _tbLokal(sid,datum,r.erledigt,true);
+    if(!r.ok){ b.disabled=false; b.textContent="Speichern"; toast(r.fehler); _tbCardNeu(sid); return; }
+    closeSheet(); _tbCardNeu(sid);
+    toast("✓ "+r.erledigt.map(k=>"Lektion "+k).join(" + ")+" am "+isoDE(datum)+" eingetragen");
+  });
 }
 // Lektionen eines Abends: alle Theorie-Blöcke des Tages; ist nur eine Lektion bekannt, kommt die zweite des Abends dazu (1+2, 3+4 …, C1+C2, CE1+CE2)
 function _lektOrd(k){ const m=String(k).match(/^(CE|C)?(\d+)$/); return m?({"":0,C:100,CE:200}[m[1]||""]+(+m[2])):999; }
