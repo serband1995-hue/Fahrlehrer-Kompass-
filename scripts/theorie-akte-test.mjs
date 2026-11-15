@@ -165,6 +165,19 @@ await pruefe("A8", "Entfernen bei archiviertem Schüler (Datenbank wählt nicht 
   if (lokal !== "8") f.push("lokal: " + lokal);
   return f;
 });
+await pruefe("A8b", "Karte-Ersetzen trifft nur den eigenen Schüler (Wechsel der Akte während des Speicherns) und die offene Liste bleibt offen", async () => {
+  const f = await page.evaluate(async () => {
+    const r = [];
+    _theorieBesuch.b1 = [{ lektion: "1", datum: KR.todayISO() }, { lektion: "2", datum: KR.todayISO() }]; _theorieBesuch.b2 = [];
+    routeDetail("b1"); document.querySelector(".tb-liste").open = true;
+    _tbCardNeu("b1"); if (!document.querySelector(".tb-liste").open) r.push("Liste klappt zu");
+    routeDetail("b2"); const vorher = document.querySelector(".theorie-besuch").textContent;
+    _tbCardNeu("b1");   // Antwort für Bea kommt, während Bruno offen ist
+    const nachher = document.querySelector(".theorie-besuch"); if (nachher.textContent !== vorher || nachher.dataset.sid !== "b2") r.push("Brunos Karte wurde verändert");
+    return r;
+  });
+  return f;
+});
 await pruefe("A9", "keine JS-Fehler", () => (jsFehler.length ? jsFehler.slice(0, 5) : null));
 
 await browser.close();

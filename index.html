@@ -7512,7 +7512,7 @@ window.addEventListener("load", () => {
 const STORE_KEY="serband-app-v1";
 /* Build-Version: bei jeder Auslieferung hier das Datum aktualisieren.
    Wird in den Einstellungen angezeigt + für den Update-Hinweis genutzt. */
-const APP_VERSION="2026.11.15.10";
+const APP_VERSION="2026.11.15.11";
 try{const f=document.getElementById("drawerFoot"); if(f)f.textContent="Fahrlehrer-Kompass · Version "+APP_VERSION;}catch(e){}
 // Nutzungsbedingungen & Haftungsausschluss (Bereich: rechtliche Absicherung) - Version hochzählen
 // und alle Nutzer müssen erneut zustimmen, sobald sich der Text inhaltlich ändert.
@@ -9393,8 +9393,12 @@ function _tbLokal(sid,datum,erledigt,an){
   _theorieBesuch[sid]=liste;
 }
 function _tbCardNeu(sid){
-  const st=(DB.students||[]).find(x=>x.id===sid); const el=document.querySelector(".theorie-besuch"); if(!st||!el)return;
-  const t=document.createElement("div"); t.innerHTML=theorieCard(st); const n=t.firstElementChild; if(n) el.replaceWith(n);
+  // nur die Karte DIESES Schülers ersetzen (wurde inzwischen eine andere Akte geöffnet, bleibt sie unberührt); aufgeklappte Liste bleibt offen
+  const st=(DB.students||[]).find(x=>x.id===sid); if(!st)return;
+  const el=[...document.querySelectorAll(".theorie-besuch")].find(x=>x.dataset.sid===sid); if(!el)return;
+  const offen=!!(el.querySelector(".tb-liste")||{}).open;
+  const t=document.createElement("div"); t.innerHTML=theorieCard(st); const n=t.firstElementChild;
+  if(n){ if(offen){ const d=n.querySelector(".tb-liste"); if(d)d.open=true; } el.replaceWith(n); }
 }
 function _tbAkteKlick(ev){
   const b=ev.target.closest("[data-tb]"); if(!b)return;
@@ -9404,7 +9408,7 @@ function _tbAkteKlick(ev){
 }
 let _tbBusy=false;
 async function _tbEntfernen(sid,lektion,datum,btn){
-  if(_tbBusy)return;
+  if(_tbBusy){ toast("Einen Moment … die letzte Änderung wird noch gespeichert"); return; }
   if(!confirm("Lektion "+lektion+" vom "+isoDE(datum)+" wirklich entfernen?"))return;
   _tbBusy=true; if(btn)btn.disabled=true;
   try{
@@ -9438,13 +9442,15 @@ function openTheorieNachtragen(sid){
   $("#tnSpeichern").addEventListener("click",async()=>{
     if(!gewaehlt.length){ toast("Bitte mindestens eine Lektion wählen"); return; }
     const datum=($("#tnDatum")||{}).value||"";
+    if(!datum){ toast("Bitte ein Datum wählen"); return; }
     if(datum<frueh||datum>heute){ toast(datum>heute?"Besuch erst am Tag des Unterrichts eintragen":"Datum zu weit zurück (höchstens 400 Tage)"); return; }
-    if(_tbBusy)return; _tbBusy=true;
+    if(_tbBusy){ toast("Einen Moment … die letzte Änderung wird noch gespeichert"); return; } _tbBusy=true;
     const b=$("#tnSpeichern"); b.disabled=true; b.textContent="Speichert …";
     let r; try{ r=await _tbSetzen(sid,datum,gewaehlt.slice().sort((a,c)=>_lektOrd(a)-_lektOrd(c)),true); } finally { _tbBusy=false; }
     if(r.erledigt&&r.erledigt.length) _tbLokal(sid,datum,r.erledigt,true);
     if(!r.ok){ b.disabled=false; b.textContent="Speichern"; toast(r.fehler); _tbCardNeu(sid); return; }
-    closeSheet(); _tbCardNeu(sid);
+    if(b.isConnected) closeSheet(); // nicht ein inzwischen geöffnetes anderes Blatt schließen
+    _tbCardNeu(sid);
     toast("✓ "+r.erledigt.map(k=>"Lektion "+k).join(" + ")+" am "+isoDE(datum)+" eingetragen");
   });
 }
