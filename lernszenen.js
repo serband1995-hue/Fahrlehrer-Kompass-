@@ -301,7 +301,7 @@
         { t: 0.2, titel: "Anschlussstelle", text: "Die Auffahrt führt in einem eigenen Bogen zur Autobahn. Schon hier den Verkehr auf der Autobahn beobachten: Wie schnell ist er, wo sind Lücken?", regel: "Zeichen 330.1 · § 18 Abs. 2 StVO", frage: { text: "Wer hat gleich beim Einfädeln Vorfahrt?", optionen: ["Ich – ich bin auf dem Beschleunigungsstreifen", "Der Verkehr auf der durchgehenden Fahrbahn", "Wer schneller ist"], richtig: 1, erklaerung: "§ 18 Abs. 3 StVO: Der Verkehr auf der durchgehenden Fahrbahn hat Vorfahrt." } },
         { t: tx(-12), titel: "Einfädelungsstreifen: beschleunigen", text: "Auf dem Einfädelungsstreifen zügig auf das Tempo des Verkehrs beschleunigen. Hier darf man schneller fahren als auf den durchgehenden Fahrstreifen – das ist gewollt.", regel: "§ 7a Abs. 2 StVO", frage: { text: "Was ist jetzt die wichtigste Aufgabe?", optionen: ["Langsam fahren und abwarten", "Zügig auf die Geschwindigkeit des Verkehrs beschleunigen", "Sofort nach links ziehen"], richtig: 1, erklaerung: "Mit ähnlichem Tempo wie der Verkehr lässt es sich sicher einfädeln. Zu langsames Einfädeln zwingt andere zum Bremsen." } },
         { t: tx(15), titel: "Blinker links", text: "Den Fahrstreifenwechsel rechtzeitig und deutlich ankündigen – Blinker links setzen.", regel: "§ 7 Abs. 5 StVO", frage: { text: "Wann blinke ich?", optionen: ["Erst wenn ich schon wechsle", "Rechtzeitig vorher", "Gar nicht, es ist ja klar"], richtig: 1, erklaerung: "Jeder Fahrstreifenwechsel ist rechtzeitig und deutlich anzukündigen (§ 7 Abs. 5 StVO)." } },
-        { t: tx(50), titel: "Lücke wählen", text: "Der Lkw fährt rechts vorne, der rote Pkw hat großen Abstand. Die Lücke dahinter passt: Tempo angleichen und genug Abstand halten (Faustregel: halber Tacho in Metern).", regel: "§ 18 Abs. 3 · § 4 Abs. 1 StVO", frage: { text: "Wo fädle ich ein?", optionen: ["Neben dem Lkw", "In die Lücke hinter dem Lkw", "Vor den Lkw, ich gebe Gas"], richtig: 1, erklaerung: "Die Lücke hinter dem Lkw ist groß genug. Vor ihm würde es knapp, und er hat Vorfahrt." } },
+        { t: tx(50), hinweis: { luecke: t => { const a = rohPos(fahrzeuge[3], t), b = rohPos(fahrzeuge[1], t); return { x0: a.x + 2.3 + 6, x1: b.x - 8.25 - 6, spur: yR }; } }, titel: "Lücke wählen", text: "Der Lkw fährt rechts vorne, der rote Pkw hat großen Abstand. Die Lücke dahinter passt: Tempo angleichen und genug Abstand halten (Faustregel: halber Tacho in Metern).", regel: "§ 18 Abs. 3 · § 4 Abs. 1 StVO", frage: { text: "Wo fädle ich ein?", optionen: ["Neben dem Lkw", "In die Lücke hinter dem Lkw", "Vor den Lkw, ich gebe Gas"], richtig: 1, erklaerung: "Die Lücke hinter dem Lkw ist groß genug. Vor ihm würde es knapp, und er hat Vorfahrt." } },
         { t: tx(86), titel: "Spiegel und Schulterblick", text: "Kurz vor dem Wechsel: Innen- und Außenspiegel, dann Schulterblick nach links – der tote Winkel ist sonst unsichtbar.", regel: "§ 7 Abs. 5 StVO: Gefährdung ausschließen", frage: { text: "Was kommt direkt vor dem Spurwechsel?", optionen: ["Radio leiser machen", "Spiegel und Schulterblick links", "Hupen"], richtig: 1, erklaerung: "Nur mit Schulterblick siehst du ein Fahrzeug im toten Winkel." } },
         { t: tx(110), titel: "Einfädeln", text: "Über die breite Leitlinie wechseln – nicht über die durchgehende Linie oder die Sperrfläche. Zügig und gleichmäßig hinüberfahren, nicht bis zum Ende des Streifens warten.", regel: "Zeichen 340 · Zeichen 295 · Zeichen 298 · § 7 Abs. 5 StVO" },
         { t: tx(178), titel: "Blinker aus, Abstand halten", text: "Nach dem Wechsel Blinker aus und rechts weiterfahren. Abstand zum Lkw vorne: mindestens halber Tacho in Metern.", regel: "§ 2 Abs. 2 · § 4 Abs. 1 StVO", frage: { text: "Und jetzt?", optionen: ["Gleich links überholen", "Blinker aus, rechts fahren, Abstand halten", "Auf dem Seitenstreifen weiter"], richtig: 1, erklaerung: "Rechtsfahrgebot (§ 2 Abs. 2 StVO) und ausreichender Abstand (§ 4 Abs. 1 StVO)." } },
@@ -431,7 +431,7 @@
       phasen: [
         { t: 0.3, titel: "Fahrstreifen endet", text: "Die Einengungstafel kündigt an: Der rechte Fahrstreifen endet. Beide Fahrstreifen werden bis zur Engstelle weiter genutzt.", regel: "Zeichen 531 · § 7 Abs. 4 StVO", frage: { text: "Wann wechsle ich nach links?", optionen: ["Sofort, wenn ich das Schild sehe", "Unmittelbar vor Beginn der Verengung", "Gar nicht, die anderen müssen warten"], richtig: 1, erklaerung: "§ 7 Abs. 4 StVO: Einordnen unmittelbar vor Beginn der Verengung, jeweils im Wechsel." } },
         { t: tx(-5), titel: "Bis vorne fahren", text: "Nicht zu früh wechseln: Wer rechts bis zur Engstelle fährt, nutzt die Straße richtig und hilft, den Stau kurz zu halten.", regel: "§ 7 Abs. 4 StVO" },
-        { t: tx(WX - 45), titel: "Blinken und Lücke ansehen", text: "Links blinken, Tempo an die linke Kolonne anpassen und das Fahrzeug suchen, hinter dem man sich einordnet.", regel: "§ 7 Abs. 5 StVO" },
+        { t: tx(WX - 45), hinweis: { luecke: t => { const a = fz.find(f => f.id === "l2"), b = fz.find(f => f.id === "l3"), pa = rohPos(a, t), pb = rohPos(b, t); return { x0: pb.x + TYPEN[b.typ].l / 2 + 1, x1: pa.x - TYPEN[a.typ].l / 2 - 1, spur: yLi }; } }, titel: "Blinken und Lücke ansehen", text: "Links blinken, Tempo an die linke Kolonne anpassen und das Fahrzeug suchen, hinter dem man sich einordnet.", regel: "§ 7 Abs. 5 StVO" },
         { t: tx(WX - 8), titel: "Im Wechsel einordnen", text: "Unmittelbar vor der Engstelle: Schulterblick – und im Wechsel nach einem Fahrzeug links einfädeln. Links Fahrende lassen jeweils ein Fahrzeug herein.", regel: "§ 7 Abs. 4 · § 7 Abs. 5 StVO", frage: { text: "Wer muss wen hereinlassen?", optionen: ["Niemand, wer zuerst kommt", "Links Fahrende lassen jeweils ein Fahrzeug im Wechsel herein", "Rechts Fahrende müssen warten, bis alles frei ist"], richtig: 1, erklaerung: "Reißverschluss: abwechselnd, einer von links, einer von rechts." } },
         { t: tx(ENG + 25), titel: "Merke", text: "Reißverschluss gilt, wenn ein Fahrstreifen endet oder blockiert ist. Beim Einfädelungsstreifen einer Autobahnauffahrt gilt er NICHT – dort hat der durchgehende Verkehr Vorfahrt.", regel: "§ 7 Abs. 4 · § 18 Abs. 3 StVO" }
       ]
@@ -498,6 +498,7 @@
   let versatzFz = {};                  // im Pause-Modus verschobene Fahrzeuge: id -> {dx, dy, frei:true}
   let ansicht = { zoom: 5, px: 0, py: 0, folgen: true };
   let fahr = null;                     // Zustand im Selbst-fahren-Modus
+  let zoomUser = false;                // Nutzer hat selbst gezoomt: keine automatische Kamera-Zoomfahrt mehr
   let onCloseCb = null, beob = null, tippFrage = null;
   const KATEGORIEN = [["innerorts", "Innerorts"], ["ueberland", "Überland"], ["grundfahr", "Grundfahraufgaben"], ["autobahn", "Autobahn"]];
   let katAktiv = "innerorts", nurListe = null;
@@ -603,7 +604,7 @@
     g.beginPath(); g.moveTo(x0 + rh, -hw); g.lineTo(x1 - rv * 1.4, -hw); g.quadraticCurveTo(x1, -hw, x1, -hw + rv); g.lineTo(x1, hw - rv); g.quadraticCurveTo(x1, hw, x1 - rv * 1.4, hw);
     g.lineTo(x0 + rh, hw); g.quadraticCurveTo(x0, hw, x0, hw - rh); g.lineTo(x0, -hw + rh); g.quadraticCurveTo(x0, -hw, x0 + rh, -hw); g.closePath();
   }
-  function raeder(g, xs, hw, lang, dick) { g.fillStyle = "#0d0f11"; for (const x of xs) for (const sd of [-1, 1]) { rrg(g, x - lang / 2, sd * (hw - 0.03) - dick / 2, lang, dick, 0.1); g.fill(); } }
+  function radSatz(g, xs, hw, lang, dick) { g.fillStyle = "#0d0f11"; for (const x of xs) for (const sd of [-1, 1]) { rrg(g, x - lang / 2, sd * (hw - 0.03) - dick / 2, lang, dick, 0.1); g.fill(); } }
   function glasFl(g, x0, x1) { const gr = g.createLinearGradient(x0, 0, x1, 0); gr.addColorStop(0, "#10161d"); gr.addColorStop(0.4, "#2a3a4c"); gr.addColorStop(0.75, "#3e566e"); gr.addColorStop(1, "#86a2ba"); return gr; }
   function spiegel(g, col, x, hw, gross) { for (const sd of [-1, 1]) { rrg(g, x - 0.06, sd * (hw + 0.07 * gross) - 0.08 * gross, 0.3 * gross, 0.16 * gross, 0.07); g.fillStyle = ton(col, -0.12); g.fill(); g.fillStyle = "rgba(130,160,190,.85)"; rrg(g, x + 0.06, sd * (hw + 0.07 * gross) - 0.06 * gross, 0.1 * gross, 0.12 * gross, 0.03); g.fill(); } }
   function lampenAus(g, T, hw, yT, yF) {
@@ -613,7 +614,7 @@
   }
   function bildPkw(g, f, T) {
     const l = T.l, b = T.b, hw = b / 2, col = f.farbe;
-    raeder(g, [l * 0.31, -l * 0.3], hw, 0.72, 0.3);
+    radSatz(g, [l * 0.31, -l * 0.3], hw, 0.72, 0.3);
     karosserie(g, -l / 2, l / 2, hw, 0.55, 0.42); g.fillStyle = quer(g, col, hw); g.fill(); g.lineWidth = 0.035; g.strokeStyle = "rgba(0,0,0,.4)"; g.stroke();
     g.save(); karosserie(g, -l / 2, l / 2, hw, 0.55, 0.42); g.clip();
     const hg = g.createLinearGradient(0, -hw, 0, hw); hg.addColorStop(0.14, "rgba(255,255,255,0)"); hg.addColorStop(0.3, "rgba(255,255,255,.22)"); hg.addColorStop(0.42, "rgba(255,255,255,0)"); hg.addColorStop(0.58, "rgba(255,255,255,0)"); hg.addColorStop(0.7, "rgba(255,255,255,.12)"); hg.addColorStop(0.86, "rgba(255,255,255,0)");
@@ -631,7 +632,7 @@
   }
   function bildKasten(g, f, T) {
     const l = T.l, b = T.b, hw = b / 2, col = f.farbe, rtw = f.typ === "rtw";
-    raeder(g, [l * 0.3, -l * 0.3], hw, 0.8, 0.32);
+    radSatz(g, [l * 0.3, -l * 0.3], hw, 0.8, 0.32);
     karosserie(g, -l / 2, l / 2, hw, 0.45, 0.22); g.fillStyle = quer(g, col, hw); g.fill(); g.lineWidth = 0.04; g.strokeStyle = "rgba(0,0,0,.4)"; g.stroke();
     g.save(); karosserie(g, -l / 2, l / 2, hw, 0.45, 0.22); g.clip(); g.fillStyle = "rgba(255,255,255,.12)"; g.fillRect(l * 0.36, -hw, l * 0.14, b); g.restore();
     spiegel(g, col, l * 0.3, hw, 1.3);
@@ -647,7 +648,7 @@
   }
   function bildBus(g, f, T) {
     const l = T.l, b = T.b, hw = b / 2, col = f.farbe;
-    raeder(g, [l * 0.32, -l * 0.27], hw, 1.0, 0.32);
+    radSatz(g, [l * 0.32, -l * 0.27], hw, 1.0, 0.32);
     karosserie(g, -l / 2, l / 2, hw, 0.5, 0.35); g.fillStyle = quer(g, col, hw); g.fill(); g.lineWidth = 0.04; g.strokeStyle = "rgba(0,0,0,.42)"; g.stroke();
     g.strokeStyle = "rgba(24,34,46,.62)"; g.lineWidth = 0.16; g.beginPath(); for (const sd of [-1, 1]) { g.moveTo(-l / 2 + 0.5, sd * (hw - 0.11)); g.lineTo(l / 2 - 1.0, sd * (hw - 0.11)); } g.stroke();
     rrg(g, -l / 2 + 0.25, -hw + 0.24, l - 1.1, b - 0.48, 0.25); g.fillStyle = quer(g, f.schulbus ? "#f2c21a" : "#d8dde2", hw - 0.24, 0.04); g.fill(); g.strokeStyle = "rgba(0,0,0,.28)"; g.lineWidth = 0.035; g.stroke();
@@ -659,7 +660,7 @@
   }
   function bildLkw(g, f, T) {
     const l = T.l, b = T.b, hw = b / 2, col = f.farbe, lAuf = 12.9, lKab = 3.15, xA = -l / 2;
-    raeder(g, [-6.7, -5.45, -4.2], hw, 1.0, 0.34); raeder(g, [4.2, 6.3], hw, 1.0, 0.34);
+    radSatz(g, [-6.7, -5.45, -4.2], hw, 1.0, 0.34); radSatz(g, [4.2, 6.3], hw, 1.0, 0.34);
     g.fillStyle = "#2a2d31"; g.fillRect(xA + lAuf - 0.3, -0.5, 1.0, 1.0);
     rrg(g, xA, -hw, lAuf, b, 0.2); g.fillStyle = quer(g, "#e9e9e9", hw, 0.03); g.fill(); g.strokeStyle = "rgba(0,0,0,.35)"; g.lineWidth = 0.04; g.stroke();
     g.save(); g.clip(); g.strokeStyle = "rgba(0,0,0,.15)"; g.lineWidth = 0.05; g.beginPath(); for (let x = xA + 1.6; x < xA + lAuf; x += 1.6) { g.moveTo(x, -hw); g.lineTo(x, hw); } g.stroke();
@@ -693,6 +694,24 @@
   const ART = { gruen: ["#5f8a45", 20], gruen2: ["#6a9a52", 20], insel: ["#6c9a50", 18], asphalt: ["#4b4f54", 14], asphalt2: ["#595d61", 14], sperr: ["#4b4f54", 14], baustelle: ["#4b4f54", 14], parken: ["#55595e", 14], pflaster: ["#8b8d91", 14], beton: ["#9a9c9f", 10], gehweg: ["#b9b6ae", 9], rad: ["#b2573c", 12], weiss: ["#f2f2ee", 5] };
   const STRASSE = { asphalt: 1, asphalt2: 1, sperr: 1, baustelle: 1, parken: 1, pflaster: 1, beton: 1 };
   function wiese(boden, X, Y, BS) { musterStil(ctx, boden, 22, X(0), Y(0), BS); ctx.fillRect(0, 0, Wpx, Hpx); }
+  // Lern-Hinweis „Lücke“: grüne Fläche mit Pfeil, solange die Phase ein Feld hinweis: { luecke: {x0,x1,spur} oder t => {x0,x1,spur} } hat (nur Vorführen/Mitdenken)
+  function hinweisLuecke(X, Y, s) {
+    const ph = aktuellePhase(); if (!ph || !ph.hinweis || !ph.hinweis.luecke) return;
+    const hl = ph.hinweis.luecke, Lk = typeof hl === "function" ? hl(zeit) : hl; if (!Lk || !(Lk.x1 > Lk.x0)) return;
+    const a = clamp((zeit - ph.t) / 0.6, 0, 1), pulse = 0.5 + 0.5 * Math.sin(performance.now() / 260), hb = 1.7;
+    ctx.save(); ctx.globalAlpha = a;
+    ctx.fillStyle = "rgba(52,199,106," + (0.2 + 0.1 * pulse) + ")"; ctx.fillRect(X(Lk.x0), Y(Lk.spur - hb), (Lk.x1 - Lk.x0) * s, 2 * hb * s);
+    ctx.strokeStyle = "rgba(130,245,170,.95)"; ctx.lineWidth = Math.max(1.5, 0.12 * s); ctx.setLineDash([0.8 * s, 0.5 * s]); ctx.strokeRect(X(Lk.x0), Y(Lk.spur - hb), (Lk.x1 - Lk.x0) * s, 2 * hb * s); ctx.setLineDash([]);
+    const fk = fahrzeugListe().find(e => e.f.fokus), cx = (Lk.x0 + Lk.x1) / 2;
+    let ux = 1, uy = 0; if (fk) { const dx = cx - fk.p.x, dy = Lk.spur - fk.p.y, d = Math.hypot(dx, dy); if (d > 1) { ux = dx / d; uy = dy / d; } }
+    const nx = -uy, ny = ux, P = (u, n) => [X(cx + ux * u + nx * n), Y(Lk.spur + uy * u + ny * n)];
+    const pts = [P(-2.6, -0.3), P(0.9, -0.3), P(0.9, -0.85), P(2.7, 0), P(0.9, 0.85), P(0.9, 0.3), P(-2.6, 0.3)];
+    ctx.beginPath(); pts.forEach((q, i) => i ? ctx.lineTo(q[0], q[1]) : ctx.moveTo(q[0], q[1])); ctx.closePath();
+    ctx.fillStyle = "rgba(40,190,95,.95)"; ctx.fill(); ctx.strokeStyle = "#fff"; ctx.lineWidth = Math.max(1.5, 0.1 * s); ctx.stroke();
+    ctx.font = "bold " + Math.max(11 * dpr, 0.9 * s) + "px sans-serif"; ctx.textAlign = "center"; ctx.textBaseline = "middle"; ctx.lineWidth = 3 * dpr; ctx.strokeStyle = "rgba(10,30,15,.85)";
+    ctx.strokeText("Lücke", X(cx), Y(Lk.spur) + 1.35 * s); ctx.fillStyle = "#fff"; ctx.fillText("Lücke", X(cx), Y(Lk.spur) + 1.35 * s);
+    ctx.restore();
+  }
   function zeichneOben() {
     const s = ansicht.zoom * dpr;
     const cx = Wpx / 2, cy = Hpx / 2;
@@ -703,7 +722,7 @@
     fl.forEach((f, i) => {
       polyPfad(f.poly, X, Y);
       if (STRASSE[f.art] && !(i && STRASSE[fl[i - 1].art])) {            // weicher Randschatten (Böschung) einmal je zusammenhängender Straßenfläche
-        for (let j = i; j < fl.length && STRASSE[fl[j].art]; j++) { polyPfad(fl[j].poly, X, Y); ctx.strokeStyle = "rgba(14,30,7,.035)"; for (const w of [4.4, 3.4, 2.4, 1.5]) { ctx.lineWidth = w * s; ctx.stroke(); } }
+        for (let j = i; j < fl.length && STRASSE[fl[j].art]; j++) { polyPfad(fl[j].poly, X, Y); ctx.strokeStyle = "rgba(14,30,7,.045)"; for (const w of [4, 2.6, 1.4]) { ctx.lineWidth = w * s; ctx.stroke(); } }
         polyPfad(f.poly, X, Y);
       }
       const a = ART[f.art] || ART.asphalt; musterStil(ctx, a[0], a[1], X(0), Y(0), BS); ctx.fill();
@@ -722,6 +741,7 @@
       ctx.drawImage(img, bx - gr / 2, by - gr - 0.4 * s, gr, gr);
     });
     if (szene.overlayUnten) try { szene.overlayUnten(ctx, X, Y, s, zeit, fahr); } catch (e) {}
+    if (modus !== "fahren") hinweisLuecke(X, Y, s);
     if (szene.rangieren && modus === "fahren") zielOben(ctx, X, Y, s);
     if (szene.reaktion && modus === "fahren" && fahr) wegeOben(ctx, X, Y, s, fahr, szene.reaktion.start.y, 1.2);
     (st.objekte || []).filter(o => o.art !== "haus" && o.art !== "baum").forEach(o => objektOben(o, X, Y, s));
@@ -826,15 +846,39 @@
       for (const sd of [-1, 1]) if ((sd < 0) === (ph === 0)) { ctx.fillStyle = "#6f9bff"; ctx.beginPath(); ctx.arc(xb, sd * hw * 0.4, 0.2, 0, 7); ctx.fill(); leuchte(xb, sd * hw * 0.4, 2.4, "#3d7bff", 0.75); } }
     ctx.restore();
     if (sig.rueck) { ctx.fillStyle = "rgba(255,255,255,.25)"; ctx.beginPath(); ctx.moveTo(hinten, -B / 2); ctx.lineTo(hinten - 2.5 * s, -B / 2 - 0.6 * s); ctx.lineTo(hinten - 2.5 * s, B / 2 + 0.6 * s); ctx.lineTo(hinten, B / 2); ctx.closePath(); ctx.fill(); }
-    // Schulterblick: Sichtkegel in den toten Winkel
-    if (sig.schulter) {
-      const seite = sig.schulter.seite === "links" ? -1 : 1;
-      ctx.fillStyle = "rgba(255,230,120,.28)"; ctx.beginPath(); ctx.moveTo(0, 0);
-      if (sig.schulter.seite === "rundum") ctx.arc(0, 0, 9 * s, 0, 7);
-      else if (sig.schulter.seite === "hinten") ctx.arc(0, 0, 12 * s, Math.PI * 0.8, Math.PI * 1.2);
+    // Blinker-Pfeil (Lern-Hinweis): leuchtender Pfeil vor dem Fokus-Auto in Blinkrichtung (nur Vorführen/Mitdenken)
+    if (f.fokus && modus !== "fahren" && sig.blinker && !sig.warn) {
+      const sd = sig.blinker === "links" ? -1 : 1, an = blinkAn();
+      ctx.save(); ctx.translate(L / 2 + 2.3 * s, sd * 1.1 * s); ctx.rotate(sd * 0.55); ctx.globalAlpha *= an ? 0.95 : 0.35;
+      leuchte(0.3 * s, 0, 2.4 * s, "#ffae1a", 0.55);
+      ctx.beginPath(); [[-1.4, -0.38], [0.2, -0.38], [0.2, -0.9], [1.5, 0], [0.2, 0.9], [0.2, 0.38], [-1.4, 0.38]].forEach(([x, y], i) => i ? ctx.lineTo(x * s, y * s) : ctx.moveTo(x * s, y * s)); ctx.closePath();
+      ctx.fillStyle = "#ffb21f"; ctx.fill(); ctx.strokeStyle = "#fff4d0"; ctx.lineWidth = Math.max(1.5, 0.1 * s); ctx.stroke(); ctx.restore();
+    }
+    // Schulterblick: Sichtkegel in den toten Winkel (Vorführen/Mitdenken: pulsierend rot mit Beschriftung, nach dem Blick grün „frei“)
+    let sc = sig.schulter, farbe = "rgba(255,230,120,.28)", beschr = null;
+    if (modus !== "fahren" && f.schulter) {
+      const puls = 0.22 + 0.1 * Math.sin(performance.now() / 170);
+      for (const x of f.schulter) {
+        if (zeit >= x.von - 1.6 && zeit < x.bis) { sc = x; farbe = x.seite === "rundum" || x.seite === "hinten" ? "rgba(255,200,60," + puls + ")" : "rgba(255,80,60," + puls + ")"; beschr = x.seite === "rundum" ? "Rundumblick" : x.seite === "hinten" ? "Blick zurück" : "toter Winkel"; }
+        else if (zeit >= x.bis && zeit < x.bis + 2.4) { sc = x; farbe = "rgba(50,210,110,.3)"; beschr = "frei"; }
+      }
+    }
+    if (sc) {
+      const seite = sc.seite === "links" ? -1 : 1;
+      ctx.fillStyle = farbe; ctx.beginPath(); ctx.moveTo(0, 0);
+      if (sc.seite === "rundum") ctx.arc(0, 0, 9 * s, 0, 7);
+      else if (sc.seite === "hinten") ctx.arc(0, 0, 12 * s, Math.PI * 0.8, Math.PI * 1.2);
       else ctx.arc(0, 0, 14 * s, seite < 0 ? -Math.PI * 0.95 : Math.PI * 0.62, seite < 0 ? -Math.PI * 0.62 : Math.PI * 0.95, false);
       ctx.closePath(); ctx.fill();
-      ctx.rotate(-p.h); ctx.font = `${Math.max(12, 1.6 * s)}px sans-serif`; ctx.textAlign = "center"; ctx.fillText("👀", 0, -2.2 * s);
+      ctx.rotate(-p.h);
+      if (beschr) {
+        const am = seite < 0 ? -Math.PI * 0.785 : Math.PI * 0.785, lx = Math.cos(am) * 8 * s, ly = Math.sin(am) * 8 * s, ox = lx * Math.cos(p.h) - ly * Math.sin(p.h), oy = lx * Math.sin(p.h) + ly * Math.cos(p.h);
+        const fs2 = Math.max(11 * dpr, 0.9 * s), tw = ctx.measureText ? (ctx.font = "bold " + fs2 + "px sans-serif", ctx.measureText(beschr).width) : 60;
+        rundRect(ox - tw / 2 - 7 * dpr, oy - fs2 * 0.85, tw + 14 * dpr, fs2 * 1.7, fs2 * 0.85); ctx.fillStyle = beschr === "frei" ? "rgba(20,110,55,.92)" : beschr === "toter Winkel" ? "rgba(150,30,20,.92)" : "rgba(130,90,10,.92)"; ctx.fill();
+        ctx.fillStyle = "#fff"; ctx.textAlign = "center"; ctx.textBaseline = "middle"; ctx.fillText(beschr, ox, oy + 1);
+      }
+      ctx.font = `${Math.max(12, 1.6 * s)}px sans-serif`; ctx.textAlign = "center"; ctx.textBaseline = "alphabetic"; ctx.fillText("👀", 0, -2.2 * s);
+      ctx.rotate(p.h);
     }
     ctx.restore();
   }
@@ -1587,6 +1631,7 @@
         if (zeit >= szene.dauer) { laeuft = false; if (modus === "mitdenken") zeigeErgebnisMitdenken(); }
       }
     }
+    if (!zoomUser && modus !== "fahren" && kameraModus === "oben" && ansicht.folgen && !tippFrage && !szene.rangieren) ansicht.zoom += (zoomZiel() - ansicht.zoom) * (1 - Math.exp(-dt / 0.2));   // weich, ca. 0,6 s
     // Kamera folgt dem Fokus-Fahrzeug
     const fokus = fahrzeugListe().find(e => e.f.fokus);
     if (fokus && ansicht.folgen) {
@@ -1596,7 +1641,72 @@
       ansicht.px += (zx - ansicht.px) * 0.15; ansicht.py += (zy - ansicht.py) * 0.15;
     }
     if (kameraModus === "oben") zeichneOben(); else zeichne3d();
+    fahrerEinsatz(dt);
     aktualisiereHud();
+  }
+
+  // ---------------------------------------------------------------- Fahrer-Einsatz (Blick ins Auto)
+  // Kleiner Einsatz nur in Phasen mit Schulterblick/Spiegel/Rundumblick im Titel, Ansicht „Oben“, Vorführen/Mitdenken.
+  // Position: Hochformat rechts unter dem Erklärkasten, Querformat unten links; sonst ausgeblendet. Nichts anderes wird verdeckt.
+  let kopfW = 0;
+  function ueberlapptR(a, b, m) { return a.left < b.right + m && a.right > b.left - m && a.top < b.bottom + m && a.bottom > b.top - m; }
+  function platziereFahrer(cvF) {
+    const st = $("#lzStage"); if (!st) return false; const S = st.getBoundingClientRect(), w = 112, h = 96, hoch = S.height > S.width * 1.05;
+    const sperr = ["#lzCap", "#lzHud", ".lz-parpop", ".lz-parb", ".lz-tipp", ".lz-coach", ".lz-toast"].map(q => root.querySelector(q)).filter(e => e && !e.hidden).map(e => e.getBoundingClientRect());
+    const cap = root.querySelector("#lzCap"), cr = cap ? cap.getBoundingClientRect() : null;
+    const kand = hoch ? [[S.width - w - 10, (cr ? cr.bottom - S.top : 0) + 8]] : [[10, S.height - h - 10], [S.width * 0.38, S.height - h - 10]];
+    for (const [x, y] of kand) {
+      const r = { left: S.left + x, top: S.top + y, right: S.left + x + w, bottom: S.top + y + h };
+      if (x < 0 || y < 0 || r.right > S.right || r.bottom > S.bottom) continue;
+      if (sperr.some(q => ueberlapptR(r, q, 6))) continue;
+      const k = Math.round(x) + "," + Math.round(y); if (k !== cvF.dataset.p) { cvF.dataset.p = k; cvF.style.left = Math.round(x) + "px"; cvF.style.top = Math.round(y) + "px"; }
+      return true;
+    }
+    return false;
+  }
+  function fahrerEinsatz(dt) {
+    const cvF = root && root.querySelector("#lzFahrer"); if (!cvF) return;
+    const ph = szene && modus !== "fahren" && kameraModus === "oben" ? aktuellePhase() : null;
+    const an = !!(ph && SPIEGEL_RE.test(ph.titel)) && !tippFrage;
+    if (!an || !platziereFahrer(cvF)) { if (!cvF.hidden) cvF.hidden = true; return; }
+    if (cvF.hidden) cvF.hidden = false;
+    const fk = fahrzeugListe().find(e => e.f.fokus); if (!fk) return;
+    let ziel = -0.28, seite = -1, txt = "Spiegel";                       // Blick in den Spiegel (nach links/außen)
+    const sl = fk.f.schulter && fk.f.schulter.find(x => zeit >= x.von - 0.2 && zeit < x.bis + 0.3);
+    if (fk.f.schulter) seite = fk.f.schulter[0].seite === "rechts" ? 1 : -1;
+    if (sl) { seite = sl.seite === "rechts" ? 1 : -1; ziel = seite * 1.45; txt = "Schulterblick"; } else ziel = seite * 0.3;
+    if (!sl && fk.f.schulter && fk.f.schulter.every(x => zeit >= x.bis + 0.3)) ziel = 0;
+    kopfW += (ziel - kopfW) * (1 - Math.exp(-dt / 0.08));
+    zeichneFahrer(cvF.getContext("2d"), cvF.width, cvF.height, kopfW, txt, seite);
+  }
+  function zeichneFahrer(g, W, H, th, txt, seite) {
+    const k = W / 112, sn = Math.sin(th);
+    g.save(); g.scale(k, k); const w = 112, h = 96;
+    let gr = g.createLinearGradient(0, 0, 0, h); gr.addColorStop(0, "#8fb4d4"); gr.addColorStop(0.42, "#6f93b0"); gr.addColorStop(0.43, "#2d333a"); gr.addColorStop(1, "#171b20"); g.fillStyle = gr; g.fillRect(0, 0, w, h);
+    g.fillStyle = "#5d7f55"; g.beginPath(); g.moveTo(0, 36); g.lineTo(40, 28); g.lineTo(w, 34); g.lineTo(w, 41); g.lineTo(0, 41); g.fill();              // Straße voraus
+    g.fillStyle = "#3a3f46"; g.beginPath(); g.moveTo(34, 41); g.lineTo(78, 41); g.lineTo(100, 58); g.lineTo(12, 58); g.closePath(); g.fill();
+    g.fillStyle = "#1c2025"; g.fillRect(0, 56, w, 40);
+    // Außenspiegel (Seite des Schulterblicks) und Innenspiegel
+    g.fillStyle = "#222"; rrg(g, seite < 0 ? 3 : w - 25, 12, 22, 14, 4); g.fill(); g.fillStyle = "#9db8cf"; rrg(g, seite < 0 ? 5 : w - 23, 14, 18, 10, 3); g.fill();
+    g.fillStyle = "#222"; rrg(g, 44, 4, 26, 9, 3); g.fill(); g.fillStyle = "#9db8cf"; rrg(g, 46, 5.5, 22, 6, 2); g.fill();
+    if (txt === "Spiegel") { g.strokeStyle = "#ffd84a"; g.lineWidth = 2; rrg(g, seite < 0 ? 1.5 : w - 26.5, 10.5, 25, 17, 5); g.stroke(); }
+    // Lenkrad
+    g.strokeStyle = "#0b0d0f"; g.lineWidth = 5; g.beginPath(); g.ellipse(56, 86, 28, 13, 0, 0, 7); g.stroke();
+    // Schultern/Oberkörper (dreht leicht mit), Arme am Lenkrad
+    const sx = 56 + sn * 4; g.fillStyle = "#4b79b8"; rrg(g, sx - 24, 56, 48, 34, 14); g.fill();
+    g.strokeStyle = "#3d679f"; g.lineWidth = 7; g.lineCap = "round"; g.beginPath(); g.moveTo(sx - 20, 66); g.lineTo(38, 84); g.moveTo(sx + 20, 66); g.lineTo(74, 84); g.stroke();
+    g.fillStyle = "#e8b995"; g.beginPath(); g.arc(37, 86, 4.2, 0, 7); g.arc(75, 86, 4.2, 0, 7); g.fill();
+    // Hals + Kopf: Blickrichtung th (negativ = nach links), Nase und Ohr zeigen die Drehung
+    const hx = 56 + sn * 7, hy = 40;
+    g.fillStyle = "#d9a883"; g.fillRect(hx - 5, 48, 10, 11);
+    g.fillStyle = "#e8b995"; g.beginPath(); g.arc(hx, hy, 15, 0, 7); g.fill();
+    g.fillStyle = "#3b2a20"; g.beginPath(); g.arc(hx - sn * 2.5, hy - 1.5, 14.2, 0, 7); g.fill();
+    g.fillStyle = "#e8b995"; g.beginPath(); g.ellipse(hx + sn * 9, hy + 1, 5 + 6 * Math.abs(sn) * 0, 9 * Math.abs(Math.cos(th)) + 5, 0, 0, 7); g.fill();
+    g.fillStyle = "#d9a883"; g.beginPath(); g.ellipse(hx + sn * 4, hy + 3, 3, 5, 0, 0, 7); g.fill();                                  // Ohr
+    if (Math.abs(sn) > 0.35) { g.fillStyle = "#e8b995"; g.beginPath(); g.moveTo(hx + sn * 14, hy + 2); g.lineTo(hx + sn * 22, hy + 7); g.lineTo(hx + sn * 14, hy + 9); g.closePath(); g.fill(); g.fillStyle = "#222"; g.beginPath(); g.arc(hx + sn * 12, hy - 2, 1.3, 0, 7); g.fill(); }
+    g.font = "bold 10px sans-serif"; g.textAlign = "left"; g.textBaseline = "middle"; const tw = g.measureText(txt).width;
+    g.fillStyle = txt === "Schulterblick" ? "rgba(200,60,40,.92)" : "rgba(20,30,25,.8)"; rrg(g, 5, h - 18, tw + 14, 14, 7); g.fill(); g.fillStyle = "#fff"; g.fillText(txt, 12, h - 11);
+    g.restore();
   }
 
   // ---------------------------------------------------------------- Oberfläche
@@ -1637,6 +1747,7 @@
   .lz-parpop b{display:block;color:#e0b84a;margin-bottom:4px;}
   .lz-parpop a{color:#9fd5b0;font-weight:700;display:flex;align-items:center;min-height:44px;padding:4px 0;}
   .lz-par{display:inline-block;margin-top:6px;font-size:11.5px;font-weight:700;color:#0c1410;background:#e0b84a;border-radius:6px;padding:2px 7px;}
+  .lz-stage .lz-fahrer{position:absolute;inset:auto;left:0;top:0;width:112px;height:96px;border-radius:14px;border:1px solid rgba(255,255,255,.28);box-shadow:0 6px 18px rgba(0,0,0,.45);pointer-events:none;z-index:1;}
   .lz-hud{position:absolute;right:12px;bottom:12px;background:rgba(10,18,14,.85);border:1px solid #2e4a40;border-radius:12px;padding:8px 12px;text-align:center;min-width:92px;pointer-events:none;}
   .lz-hud b{font-size:24px;display:block;line-height:1;}
   .lz-hud span{font-size:11px;color:#b1bfb5;}
@@ -1736,7 +1847,7 @@
     });
   }
   function starteSzene(id) {
-    szene = SZENEN.find(s => s.id === id); zeit = 0; laeuft = false; versatzFz = {}; beantwortet = new Set(); punkte = { richtig: 0, gesamt: 0 }; fahr = null; _hGlatt = null;
+    szene = SZENEN.find(s => s.id === id); zeit = 0; laeuft = false; versatzFz = {}; beantwortet = new Set(); punkte = { richtig: 0, gesamt: 0 }; fahr = null; _hGlatt = null; zoomUser = false;
     modus = "vorfuehren"; kameraModus = "oben"; tempoFaktor = 1;
     ansicht = { zoom: grundZoom(), px: 0, py: 0, folgen: true };
     const fk = szene.fahrzeuge.find(f => f.fokus); const fp = fzPos(fk, 0); ansicht.px = fp.x; ansicht.py = fp.y;
@@ -1749,6 +1860,7 @@
       </div>
       <div class="lz-stage" id="lzStage"><canvas id="lzCanvas" aria-label="Animierte Verkehrsszene"></canvas>
         <div class="lz-caption" id="lzCap"><h3>${esc(szene.titel)}</h3><p>Auf ▶ tippen – die Szene spielt sich von selbst ab. Mit ⏸ anhalten und Fahrzeuge verschieben.</p></div>
+        <canvas class="lz-fahrer" id="lzFahrer" width="224" height="192" hidden aria-hidden="true"></canvas>
         <div class="lz-hud" id="lzHud"><b id="lzV">0</b><span>km/h</span><div class="lz-blink"><span id="lzBL">◀</span><span id="lzBR">▶</span></div></div>
       </div>
       <div class="lz-bar">
@@ -1800,7 +1912,22 @@
     bindeFahren(); bindeZiehen();
     letzterFrame = 0; cancelAnimationFrame(raf); raf = requestAnimationFrame(frame);
   }
-  function grundZoom() { const b = cv ? cv.getBoundingClientRect().width : window.innerWidth; return szene.kamera.zoom * clamp(b / 1000, 0.55, 1.6); }
+  // Standard-Ansicht näher am Fokus-Auto: NAH = Pixel je Meter bei 412 px Bildmaß (Fokus-Auto ca. 70–110 px lang), WEIT = Faktor für Überblick bei Lücken-Phasen
+  const NAH = { auffahren: 17, abfahren: 15, reissverschluss: 14, rettungsgasse: 7.5, laengs: 11, quer_rueck: 12, quer_vor: 12, wenden: 14, ecke: 9, gefahr: 13, ueberholen: 8,
+    schulbus: 12, rvl: 12, links_gegen: 11, voreinander: 12, rechts_rad: 10, doppel: 10, kreisel: 10.5, zebra: 14, eng: 14, stop: 11, gruenpfeil: 10 };
+  const WEIT = { auffahren: 0.4, reissverschluss: 0.6, ueberholen: 0.7 };
+  function grundZoom() {
+    const r = cv ? cv.getBoundingClientRect() : null, b = r ? r.width : window.innerWidth;
+    if (modus === "fahren" || !NAH[szene.id]) return szene.kamera.zoom * clamp(b / 1000, 0.55, 1.6);
+    return NAH[szene.id] * clamp(Math.min(b, (r ? r.height : window.innerHeight) * 1.25) / 412, 0.8, 1.6);
+  }
+  const SPIEGEL_RE = /Schulterblick|Spiegel|Rundumblick/;
+  function zoomZiel() {
+    const ph = aktuellePhase(); let f = 1;
+    if (ph && SPIEGEL_RE.test(ph.titel)) f = 1.3; else if (ph && ph.hinweis && ph.hinweis.luecke) f = WEIT[szene.id] || 1;
+    else if (ph && WEIT[szene.id] && WEIT[szene.id + ":" + ph.titel]) f = WEIT[szene.id + ":" + ph.titel];
+    return clamp(grundZoom() * f, 1, 14);
+  }
   function setzeModus(m) {
     tippFrage = null; { const b = root.querySelector("#lzTipp"); if (b) b.remove(); }
     modus = m; laeuft = false; versatzFz = {}; zeit = 0; beantwortet = new Set(); punkte = { richtig: 0, gesamt: 0 }; schliesseSheet(); _hGlatt = null;
@@ -1808,8 +1935,9 @@
     root.querySelectorAll("[data-modus]").forEach(x => x.classList.toggle("on", x.dataset.modus === m));
     $("#lzDrive").hidden = !(m === "fahren" && szene.fahren); $("#lzRang").hidden = !(m === "fahren" && szene.rangieren); $("#lzReak").hidden = !(m === "fahren" && szene.reaktion);
     $("#lzPrev").hidden = $("#lzNext").hidden = $("#lzTime").hidden = m === "fahren";
+    zoomUser = false;
     if (m === "fahren") {
-      starteFahren();
+      starteFahren(); ansicht.zoom = grundZoom();
       if (szene.fahren) kameraModus = kameraModus === "oben" ? "3d" : kameraModus;
       if (szene.rangieren) { kameraModus = "oben"; ansicht.zoom = grundZoom() * (szene.rangieren.zoomFaktor || 1); }
       root.querySelectorAll("[data-kam]").forEach(x => x.classList.toggle("on", x.dataset.kam === kameraModus));
@@ -1969,14 +2097,14 @@
     });
     stage.addEventListener("pointermove", e => {
       if (!zeiger.has(e.pointerId)) return; zeiger.set(e.pointerId, { x: e.clientX, y: e.clientY });
-      if (pinch && zeiger.size === 2) { const [a, b] = [...zeiger.values()]; ansicht.zoom = clamp(pinch.z * Math.hypot(a.x - b.x, a.y - b.y) / pinch.d, 1, 14); return; }
+      if (pinch && zeiger.size === 2) { const [a, b] = [...zeiger.values()]; ansicht.zoom = clamp(pinch.z * Math.hypot(a.x - b.x, a.y - b.y) / pinch.d, 1, 14); zoomUser = true; return; }
       if (!zug) return;
       if (zug.art === "fz") { const w = welt(e.clientX, e.clientY); zug.o.dx = zug.dx0 + (w.x - zug.sx); zug.o.dy = zug.dy0 + (w.y - zug.sy); }
       else { ansicht.px = zug.px - (e.clientX - zug.sx) / ansicht.zoom; ansicht.py = zug.py - (e.clientY - zug.sy) / ansicht.zoom; }
     });
     const ende = e => { zeiger.delete(e.pointerId); if (zeiger.size < 2) pinch = null; if (zug && zug.art === "fz" && (Math.abs(zug.o.dx - zug.dx0) > 0.5 || Math.abs(zug.o.dy - zug.dy0) > 0.3)) zeigeToast("Fahrzeug verschoben – ▶ zeigt, wie es weitergeht. ↺ setzt zurück."); zug = null; };
     stage.addEventListener("pointerup", ende); stage.addEventListener("pointercancel", ende);
-    stage.addEventListener("wheel", e => { e.preventDefault(); ansicht.zoom = clamp(ansicht.zoom * (e.deltaY < 0 ? 1.1 : 0.9), 1, 14); }, { passive: false });
+    stage.addEventListener("wheel", e => { e.preventDefault(); ansicht.zoom = clamp(ansicht.zoom * (e.deltaY < 0 ? 1.1 : 0.9), 1, 14); zoomUser = true; }, { passive: false });
   }
   function beiResize() {
     if (!cv || !root) return;
