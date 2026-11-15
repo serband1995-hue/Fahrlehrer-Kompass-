@@ -126,7 +126,12 @@ const t6b = await page.evaluate(() => {
 });
 await page.reload(); await page.waitForTimeout(900);
 const t6c = await page.evaluate(() => ({ v: DB.verdienst.proUE + "/" + DB.verdienst.fixum, fz: DB.workCfg.fahrzeuge.map((f) => f.name).join(), vorgabe: !!DB.workCfg.zeitenVorgabe, fehlt: _vertragFehlt() }));
-if (t6c.v !== "23/2100" || t6c.fz !== "Audi Q5" || t6c.vorgabe || t6c.fehlt) fehler("T6 gespeicherte Werte verändert: " + JSON.stringify(t6c)); else ok("T6 gespeicherte Werte bestehender Nutzer bleiben");
+// 15.11.2026 (Wunsch Serband): „Audi Q5“ wird beim Start zu „Audi A3 Automatik“ (Typ automatik) bzw. „Audi A3 Schalter“ (Typ schalt); alles andere bleibt.
+if (t6c.v !== "23/2100" || t6c.fz !== "Audi A3 Automatik" || t6c.vorgabe || t6c.fehlt) fehler("T6 gespeicherte Werte verändert: " + JSON.stringify(t6c)); else ok("T6 gespeicherte Werte bestehender Nutzer bleiben (Audi Q5 → Audi A3 Automatik)");
+await page.evaluate(() => { DB.workCfg.fahrzeuge = [{ id: "fz1", name: "Audi Q5", typ: "schalt" }, { id: "fz2", name: "Golf 8", typ: "schalt" }]; DB.lessons = (DB.lessons || []).concat([{ id: "q5x", date: "2026-10-14", von: "08:00", bis: "08:45", sid: "s1", fahrzeug: "Audi Q5" }]); save(); });
+await page.reload(); await page.waitForTimeout(900);
+const t6d = await page.evaluate(() => ({ fz: DB.workCfg.fahrzeuge.map((f) => f.name).join(), les: (DB.lessons.find((l) => l.id === "q5x") || {}).fahrzeug, rest: JSON.stringify(DB).includes("Audi Q5") }));
+if (t6d.fz !== "Audi A3 Schalter,Golf 8" || t6d.les !== "Audi A3 Schalter" || t6d.rest) fehler("Audi Q5 nicht (überall) ersetzt: " + JSON.stringify(t6d)); else ok("Audi Q5 → Audi A3 Schalter (Typ schalt), Termine mitgezogen, nichts mehr mit Q5");
 const fix = await page.evaluate(async () => { const alt = DB.verdienst; DB.verdienst = Object.assign({}, alt, { proUE: 0, fixum: 2000 }); routeDashboard(); await new Promise((k) => setTimeout(k, 150));
   const t = document.getElementById("view").innerText; DB.verdienst = alt; return { gefahren: /Diese Woche gefahren/.test(t), nullEuro: /Diese Woche verdient\s*0 €/.test(t) }; });
 if (!fix.gefahren || fix.nullEuro) fehler("Nur-Fixum-Vertrag zeigt 0 € statt gefahrener UE: " + JSON.stringify(fix)); else ok("Nur-Fixum-Vertrag: Heute zeigt gefahrene UE statt 0 €");
