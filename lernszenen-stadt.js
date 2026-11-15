@@ -429,7 +429,7 @@
         { t: 4.5, titel: "Wer fährt zuerst?", text: "Alle drei stehen. Jeder schaut nach rechts: Wer dort niemanden hat, darf zuerst fahren.", regel: "§ 8 Abs. 1 · § 8 Abs. 2 StVO", frage: { art: "reihenfolge", text: "Tippe die Autos in der Reihenfolge an, in der sie fahren dürfen.", ids: ["b", "fs", "c"], namen: { b: "Blau (von rechts)", fs: "Fahrschule", c: "Rot (links abbiegend)" }, erklaerung: "Blau hat rechts niemanden und fährt zuerst. Dann die Fahrschule (Blau war ihr Rechter). Rot kommt zuletzt – rechts von Rot stand die Fahrschule." } },
         { t: 5, titel: "Blau fährt", text: "Das blaue Auto hat niemanden von rechts und fährt als Erstes.", regel: "§ 8 Abs. 1 StVO" },
         { t: 8, titel: "Dann die Fahrschule", text: "Jetzt ist rechts frei – die Fahrschule fährt geradeaus über die Kreuzung.", regel: "§ 8 Abs. 1 StVO" },
-        { t: 11, titel: "Zuletzt Rot", text: "Rot biegt links ab. Es musste warten, weil die Fahrschule von rechts kam.", regel: "§ 8 Abs. 1 · § 9 Abs. 1 StVO" },
+        { t: 11, titel: "Zuletzt Rot", text: "Rot biegt links ab. Es musste warten, weil die Fahrschule von rechts kam.", regel: "§ 8 Abs. 1 StVO" },
         { t: 14.5, titel: "Merke", text: "Wer warten muss, zeigt das durch mäßige Geschwindigkeit. Stehen an allen vier Seiten Autos, verständigen sich die Fahrer – einer verzichtet.", regel: "§ 8 Abs. 2 · § 11 Abs. 3 StVO" }
       ]
     });
@@ -528,7 +528,7 @@
       fahrzeuge: [fs, n, h1],
       phasen: [
         { t: 0.2, titel: "Zwei Linksabbiegestreifen", text: "Beide Fahrstreifen führen nach links (Pfeile, Zeichen 297), die Ampel zeigt Grün. Rechtzeitig einordnen, blinken – und die gewählte Spur beibehalten.", regel: "Zeichen 297 · § 9 Abs. 1 StVO", frage: { text: "Die Fahrschule ist auf dem rechten der beiden Linksabbiegestreifen. In welche Spur biegt sie ein?", optionen: ["In die rechte Spur der Zielstraße", "In die linke Spur", "Egal"], richtig: 0, erklaerung: "Links bleibt links, rechts bleibt rechts – so gibt es keinen Konflikt mit dem Nachbarn." } },
-        { t: 5, titel: "Im Bogen die Spur halten", text: "Gleichmäßig nebeneinander abbiegen. Die gestrichelten Leitlinien im Knoten zeigen den Weg. Kein Fahrstreifenwechsel in der Kreuzung!", regel: "§ 7 Abs. 5 · § 9 Abs. 1 StVO" },
+        { t: 5, titel: "Im Bogen die Spur halten", text: "Gleichmäßig nebeneinander abbiegen. Die gestrichelten Leitlinien im Knoten zeigen den Weg. Kein Fahrstreifenwechsel in der Kreuzung!", regel: "Zeichen 297" },
         { t: 9, titel: "Nach dem Abbiegen", text: "Erst hinter der Kreuzung – mit Blinker, Spiegel und Schulterblick – bei Bedarf die Spur wechseln.", regel: "§ 7 Abs. 5 StVO" }
       ]
     });
@@ -586,9 +586,9 @@
       dauer: Math.ceil(tBeiS(fs, sZebra + 25)), strasse: { flaechen: fl, linien: li, objekte: obj, schilder, bereich: [-L, L], boden: "#6a9a52", boden3d: "#6f9a55" }, kamera: { fest: [-2, 2], zoom: 6.5 },
       fahrzeuge: [fs, k, fg],
       phasen: [
-        { t: 0.2, titel: "Zeichen 215 unter Zeichen 205", text: "Kreisverkehr mit „Vorfahrt gewähren“: Der Verkehr auf der Kreisfahrbahn hat Vorfahrt. Langsam heranfahren und nach links schauen.", regel: "Zeichen 215 · Zeichen 205 · § 9a Abs. 1 StVO", frage: { text: "Blinke ich beim Einfahren in den Kreisverkehr?", optionen: ["Ja, rechts", "Ja, links", "Nein – Blinken beim Einfahren ist unzulässig"], richtig: 2, erklaerung: "§ 9a Abs. 1 StVO: Bei der Einfahrt ist die Benutzung des Fahrtrichtungsanzeigers unzulässig." } },
-        { t: tA + 0.1, titel: "Vorfahrt gewähren", text: "Das blaue Auto ist schon im Kreis und hat Vorfahrt. An der Wartelinie halten und es vorbeilassen.", regel: "§ 9a Abs. 1 StVO · Zeichen 341" },
-        { t: tA + 2.5, titel: "Einfahren", text: "Frei – ohne Blinker einfahren. Im Kreis wird gegen den Uhrzeigersinn gefahren; Halten auf der Kreisfahrbahn ist verboten.", regel: "§ 9a Abs. 1 StVO" },
+        { t: 0.2, titel: "Zeichen 215 unter Zeichen 205", text: "Kreisverkehr mit „Vorfahrt gewähren“: Der Verkehr auf der Kreisfahrbahn hat Vorfahrt. Langsam heranfahren und nach links schauen.", regel: "Zeichen 215 · Zeichen 205 · § 8 Abs. 1a StVO", frage: { text: "Blinke ich beim Einfahren in den Kreisverkehr?", optionen: ["Ja, rechts", "Ja, links", "Nein – Blinken beim Einfahren ist unzulässig"], richtig: 2, erklaerung: "§ 8 Abs. 1a StVO: Bei der Einfahrt ist die Benutzung des Fahrtrichtungsanzeigers unzulässig." } },
+        { t: tA + 0.1, titel: "Vorfahrt gewähren", text: "Das blaue Auto ist schon im Kreis und hat Vorfahrt. An der Wartelinie halten und es vorbeilassen.", regel: "§ 8 Abs. 1a StVO · Zeichen 341" },
+        { t: tA + 2.5, titel: "Einfahren", text: "Frei – ohne Blinker einfahren. Im Kreis wird gegen den Uhrzeigersinn gefahren; Halten auf der Kreisfahrbahn ist verboten.", regel: "§ 8 Abs. 1a StVO · Zeichen 215" },
         { t: tBl, titel: "Blinker rechts zum Ausfahren", text: "Nach der vorletzten Ausfahrt rechts blinken, Spiegel und Schulterblick rechts – Radfahrer und Fußgänger!", regel: "§ 9 Abs. 1 StVO", frage: { text: "Wann blinke ich zum Ausfahren?", optionen: ["Gar nicht", "Nach der Ausfahrt vor meiner – rechtzeitig vor dem Ausfahren", "Schon beim Einfahren"], richtig: 1, erklaerung: "Das Ausfahren wird angekündigt: rechts blinken, sobald man die Ausfahrt vor der eigenen passiert hat." } },
         { t: tZ + 0.1, titel: "Fußgänger am Überweg", text: "Hinter der Ausfahrt liegt ein Zebrastreifen. Wer ihn benutzen will, hat Vorrang – mäßig heranfahren und warten.", regel: "§ 26 Abs. 1 StVO", frage: { text: "Die Fußgängerin will über den Zebrastreifen. Wer hat Vorrang?", optionen: ["Ich – ich komme aus dem Kreisverkehr", "Die Fußgängerin", "Wer schneller ist"], richtig: 1, erklaerung: "§ 26 Abs. 1 StVO: Zu Fuß Gehenden, die den Überweg erkennbar benutzen wollen, ist das Überqueren zu ermöglichen." } }
       ]
@@ -611,7 +611,7 @@
       fahrzeuge: [fs, vor, fg, kind, gg],
       phasen: [
         { t: 0.2, titel: "Zeichen 350 – Überweg voraus", text: "Früh vom Gas und die Gehwege beobachten: Will jemand hinüber? Kinder sind klein und schwer zu sehen.", regel: "Zeichen 350 · § 26 Abs. 1 StVO", frage: { text: "Wie fahre ich an einen Zebrastreifen heran, wenn jemand erkennbar hinüber will?", optionen: ["Normal weiter, er muss warten", "Nur mit mäßiger Geschwindigkeit, wenn nötig warten", "Hupen und durchfahren"], richtig: 1, erklaerung: "§ 26 Abs. 1 StVO: Zu Fuß Gehenden das Überqueren ermöglichen, nur mäßig heranfahren, wenn nötig warten." } },
-        { t: 6.6, titel: "Anhalten", text: "Die Fußgänger gehen los – vor dem Überweg anhalten, nicht auf ihm. Überholen und Vorbeifahren am wartenden Auto ist verboten.", regel: "§ 26 Abs. 1 · § 26 Abs. 3 StVO", frage: { text: "Das Auto vor mir hält am Zebrastreifen. Darf ich es links überholen?", optionen: ["Ja, wenn ich schnell bin", "Nein – an Überwegen darf nicht überholt werden", "Ja, mit Hupe"], richtig: 1, erklaerung: "§ 26 Abs. 3 StVO: An Überwegen darf nicht überholt werden." } },
+        { t: 6.6, titel: "Anhalten", text: "Die Fußgänger gehen los – vor dem Überweg anhalten, nicht auf ihm. Überholen und Vorbeifahren am wartenden Auto ist verboten.", regel: "§ 26 Abs. 1 StVO", frage: { text: "Das Auto vor mir hält am Zebrastreifen. Darf ich es links überholen?", optionen: ["Ja, wenn ich schnell bin", "Nein – an Überwegen darf nicht überholt werden", "Ja, mit Hupe"], richtig: 1, erklaerung: "§ 26 Abs. 3 StVO: An Überwegen darf nicht überholt werden." } },
         { t: 12.4, titel: "Erst wenn frei ist", text: "Erst weiterfahren, wenn alle den Überweg sicher verlassen haben – auch auf der Gegenseite. Blickkontakt hilft.", regel: "§ 26 Abs. 1 StVO" },
         { t: 16, titel: "Merke", text: "Stockt der Verkehr hinter dem Überweg, nicht auf den Zebrastreifen fahren, wenn man dort warten müsste.", regel: "§ 26 Abs. 2 StVO" }
       ]
@@ -633,7 +633,7 @@
       phasen: [
         { t: 0.2, titel: "Hindernis voraus", text: "Ein Lkw steht mit Warnblinklicht auf meiner Seite. Die Straße ist zu schmal für zwei Fahrzeuge nebeneinander.", regel: "§ 6 StVO", frage: { text: "Wer darf zuerst durch die Engstelle?", optionen: ["Ich – ich war zuerst da", "Der Gegenverkehr – das Hindernis ist auf meiner Seite", "Wer schneller ist"], richtig: 1, erklaerung: "§ 6 StVO: Wer an einem Hindernis links vorbeifahren will, muss entgegenkommende Fahrzeuge durchfahren lassen." } },
         { t: 5.2, titel: "Mit Abstand warten", text: "Rechtzeitig und mit Abstand zum Hindernis halten – so bleibt Platz zum Vorbeifahren und man sieht den Gegenverkehr besser.", regel: "§ 6 StVO" },
-        { t: 8.6, titel: "Ausscheren ankündigen", text: "Wenn frei ist: Spiegel, Schulterblick links, links blinken und mit genügend Seitenabstand am Lkw vorbei – auf Personen achten, die aussteigen.", regel: "§ 6 · § 7 Abs. 5 StVO" },
+        { t: 8.6, titel: "Ausscheren ankündigen", text: "Wenn frei ist: Spiegel, Schulterblick links, links blinken und mit genügend Seitenabstand am Lkw vorbei – auf Personen achten, die aussteigen.", regel: "§ 6 StVO" },
         { t: fs._tE - 0.6, titel: "Wieder einordnen", text: "Hinter dem Hindernis rechts blinken und wieder rechts einordnen.", regel: "§ 6 · § 2 Abs. 2 StVO" }
       ]
     });
