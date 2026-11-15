@@ -230,6 +230,7 @@ input,select,textarea{font-family:inherit;font-size:16px;color:var(--txt);}
 /* Titel neben dem Logo in der Mitte: dort hat er auch bei 360 px genug Platz (rechts waren es nur ~35 px). */
 .tb-mitte{display:flex;align-items:center;justify-content:center;gap:0;min-width:0;}
 /* Block 2: Logo exakt mittig (Spalten links/rechts gleich breit); der Seitentitel steht links neben dem Zurück-Pfeil */
+.tb-left .icon-btn{flex:0 0 auto;} /* Pfeil bleibt voll breit (44-px-Tippfläche), auch bei langem Titel */
 .tb-left .tb-title{flex:1 1 auto;margin-left:8px;}
 .tb-left:has(#navBackBtn[hidden]) .tb-title{margin-left:2px;}
 /* Platz für Menü + Zurück immer reservieren, damit das Logo beim Seitenwechsel nicht springt. */
