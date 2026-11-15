@@ -60,6 +60,7 @@ const ATTRAPPE = `
       then(res, rej){ return Promise.resolve(run()).then(res, rej); }
     };
     function run(){
+      if (window.__netzWeg) return { data:null, error:{ message:"Failed to fetch" } };
       const t = DB[table] || [];
       const m = (r) => filt.every(([k,v]) => r[k] === v);
       if (op === "insert") { (Array.isArray(payload)?payload:[payload]).forEach(p => t.push(Object.assign({ id: p.id || ("id"+Math.random().toString(36).slice(2)), erstellt:new Date().toISOString(), geaendert:new Date().toISOString(), teile:[] }, p))); return { data:null, error:null }; }
@@ -257,6 +258,25 @@ const quer = (page) => page.evaluate(() => document.documentElement.scrollWidth 
     const u = await page.evaluate(() => window.__DB.theorie_unterrichte.find(x => x.id === "d1"));
     const t = (await page.locator(".item", { hasText: "Doppelt" }).locator('[data-a="weiter"]').textContent()).trim();
     return (!u.teile[0].zuletzt_am && u.teile[2].zuletzt === 5 && t === "▶ Weiter bei Teil 3, Folie 3") || JSON.stringify({ t, teile:u.teile });
+  });
+  await punkt("T41 Rückkehr auf die Seite ohne Netz: Liste bleibt stehen (nicht leer)", async () => {
+    const vor = await page.locator(".item").count();
+    await page.evaluate(() => { window.__netzWeg = true; document.dispatchEvent(new Event("visibilitychange")); }); await page.waitForTimeout(200);
+    const nach = await page.locator(".item").count(); await page.evaluate(() => { window.__netzWeg = false; });
+    return (vor >= 2 && nach === vor) || `${vor} → ${nach}`;
+  });
+  await punkt("T42 Doppeltipp auf Weiter öffnet nur eine Folienansicht", async () => {
+    await page.evaluate(() => { const alt = window.bildUrls; window.bildUrls = async (p) => { await new Promise(r => setTimeout(r, 400)); return alt(p); }; S.folienCache = {}; });
+    const k = page.locator(".item", { hasText: "Doppelt" }).locator('[data-a="weiter"]'); await k.click(); await k.click({ force:true }).catch(() => {}); await page.waitForTimeout(700);
+    const n = await page.locator(".viewer").count(); await page.keyboard.press("Escape"); await page.waitForTimeout(200);
+    return (n === 1 && (await page.locator(".viewer").count()) === 0) || `${n} Ansichten`;
+  });
+  await punkt("T43 Start-Fenster: „Im Browser“ beim zuletzt genutzten Teil beginnt an der gemerkten Folie", async () => {
+    await page.locator(".item", { hasText: "Doppelt" }).locator('[data-a="start"]').click(); await page.waitForTimeout(150);
+    const hinweis = await page.locator(".modal .item").nth(2).textContent();
+    await page.locator('.modal [data-a="browser"]').nth(2).click(); await page.waitForTimeout(400);
+    const c = await page.textContent("#vCount"); await page.keyboard.press("Escape"); await page.waitForTimeout(200);
+    return (/zuletzt hier · Folie 3/.test(hinweis) && c === "Folie 3 von 3") || `${hinweis} / ${c}`;
   });
   const stand = await page.evaluate(() => window.__DB);
   await punkt("T32 keine Programmfehler (Weiter)", async () => js.length === 0 || js.join(" | "));

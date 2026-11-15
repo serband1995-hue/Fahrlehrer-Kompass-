@@ -66,6 +66,9 @@ header.top .wrap{display:flex;align-items:center;gap:10px;padding-top:12px;paddi
 .haken{display:flex;gap:10px;align-items:flex-start;padding:10px 0;min-height:44px;cursor:pointer;font-size:.92rem}
 .haken input{width:24px;height:24px;flex:none;accent-color:var(--akzent)}
 @media(max-width:600px){.btn.small{min-height:44px}.user .uname{display:none}}
+/* Smartboard/Touch: Fingertipp braucht 44 px; 4K bei 100 % Skalierung: alles doppelt so groß (T2) */
+@media(pointer:coarse){.btn.small{min-height:44px;min-width:44px}}
+@media(min-width:2560px){html{zoom:2}}
 .empty{padding:28px 18px;text-align:center;border:2px dashed var(--line);border-radius:var(--r);color:var(--muted)}
 .row{display:flex;gap:10px;align-items:center;flex-wrap:wrap}
 .list{display:flex;flex-direction:column;gap:10px}
@@ -73,6 +76,7 @@ header.top .wrap{display:flex;align-items:center;gap:10px;padding-top:12px;paddi
 .item .t{flex:1;min-width:180px;overflow-wrap:anywhere}
 .item .t b{display:block}
 .item .t span{font-size:.85rem;color:var(--muted)}
+.item .t span.zuletzt{display:block;margin-top:2px;color:var(--akzent-dark);font-weight:600}
 label.f{display:block;font-weight:600;font-size:.9rem;margin:12px 0 4px}
 input[type=text],input[type=email],input[type=password],select,textarea{width:100%;border:1px solid var(--line);background:#fff;border-radius:12px;padding:11px 12px;min-height:44px}
 textarea{min-height:80px;resize:vertical}
@@ -98,6 +102,7 @@ input[type=file]{width:100%;max-width:100%;min-height:44px;padding:8px 0}
 .viewer{position:fixed;inset:0;background:#0b0f0d;z-index:150;display:flex;flex-direction:column;color:#eee}
 .viewer .stage{flex:1;display:flex;align-items:center;justify-content:center;min-height:0;position:relative}
 .viewer .stage img{width:100%;height:100%;max-width:100%;max-height:100%;object-fit:contain;user-select:none}
+.viewer .stage img:not([src]),.viewer .stage img.kaputt{visibility:hidden}
 .viewer .bar{display:flex;gap:8px;align-items:center;padding:8px 10px;background:#141a17;flex:none}
 .viewer .mehr{display:none;gap:8px;padding:0 10px 8px;background:#141a17;flex-wrap:wrap;justify-content:flex-end;flex:none}
 .viewer.mehr-auf .mehr{display:flex}
@@ -222,8 +227,9 @@ async function ladeAlles(){
   render();
 }
 async function ladeUnterrichte(){
-  const { data } = await supa.from("theorie_unterrichte").select("*").order("geaendert", { ascending:false });
-  S.unterrichte = data || [];
+  const { data, error } = await supa.from("theorie_unterrichte").select("*").order("geaendert", { ascending:false });
+  if (error) return false; // kein Netz: alten Stand behalten statt leerer Liste
+  S.unterrichte = data || []; return true;
 }
 async function ladeDateien(){
   const { data } = await supa.from("theorie_dateien").select("*").order("erstellt", { ascending:false });
@@ -347,13 +353,20 @@ async function folienVon(lektionId){
 }
 let V = null;
 const kanal = ("BroadcastChannel" in window) ? new BroadcastChannel("kompass-theorie") : null;
+let _vLaedt = false;
 async function oeffneViewer(lektionId, aus, startNr, ort){
+  if (V || _vLaedt) return; // Doppeltipp: nur eine Folienansicht
+  _vLaedt = true;
+  try { await _oeffneViewer(lektionId, aus, startNr, ort); } finally { _vLaedt = false; }
+}
+async function _oeffneViewer(lektionId, aus, startNr, ort){
   const alle = await folienVon(lektionId);
   const folien = alle.filter(f => !(aus||[]).includes(f.nr));
   if (!folien.length) { toast("Keine Folien ausgewählt."); return; }
   const urls = await bildUrls(folien.map(f => f.bild_pfad));
   const l = S.lektionen.find(x => x.id === lektionId) || {};
-  V = { lektionId, aus:aus||[], folien, urls, i: 0, notizen: !document.body.classList.contains("board") && !istHandy(), ort: istTafel() ? null : (ort || null) };
+  V = { lektionId, aus:aus||[], folien, urls, i: 0, notizen: !document.body.classList.contains("board") && !istHandy() && !(matchMedia("(pointer:coarse)").matches && innerWidth >= 1280), ort: istTafel() ? null : (ort || null) };
+  // großer Touch-Schirm = Smartboard: Notizen anfangs aus (Klasse liest sonst mit), Schalter unter „Mehr“
   if (startNr) { let j = folien.findIndex(f => f.nr === startNr); if (j < 0) j = folien.findIndex(f => f.nr > startNr); V.i = j >= 0 ? j : folien.length - 1; }
   const v = document.createElement("div"); v.className = "viewer"; v.id = "viewer";
   v.innerHTML = `<div class="stage"><img id="vImg" alt=""><div class="navzone l" id="vL"></div><div class="navzone r" id="vR"></div><span class="note-flag">Browser-Ansicht: ohne Animationen</span></div>
@@ -391,7 +404,7 @@ async function oeffneViewer(lektionId, aus, startNr, ort){
 function geheZu(i){ if (!V) return; V.i = Math.max(0, Math.min(V.folien.length - 1, i)); zeige(); if (kanal) kanal.postMessage({ lektionId:V.lektionId, nr:V.folien[V.i].nr }); }
 function zeige(){
   const f = V.folien[V.i];
-  $("#vImg").src = V.urls[V.i];
+  const img = $("#vImg"); img.classList.remove("kaputt"); img.onerror = () => img.classList.add("kaputt"); img.src = V.urls[V.i];
   $("#vCount").textContent = `Folie ${V.i+1} von ${V.folien.length}`;
   const n = $("#vNotes"); n.style.display = V.notizen && f.notiz ? "block" : "none"; n.textContent = f.notiz || "";
   if (V.urls[V.i+1]) { const im = new Image(); im.src = V.urls[V.i+1]; }
@@ -468,7 +481,8 @@ async function schreibePosition(){
 document.addEventListener("visibilitychange", () => {
   if (document.visibilityState === "hidden") { schreibePosition(); return; }
   // Zurück auf der Seite (z. B. Smartboard tagelang offen): Liste frisch holen, wenn nichts offen ist
-  if (S.user && S.tab === "unt" && !EBENEN.length && !istTafel()) ladeUnterrichte().then(() => { if (S.tab === "unt" && !EBENEN.length) render(); });
+  if (S.user && S.tab === "unt" && !EBENEN.length && !istTafel() && !POS.offen && !POS.laeuft && navigator.onLine !== false)
+    ladeUnterrichte().then((ok) => { if (ok && S.tab === "unt" && !EBENEN.length) render(); });
 });
 window.addEventListener("pagehide", () => schreibePosition());
 /* Teil, an dem zuletzt gearbeitet wurde (neuestes zuletzt_am). */
@@ -487,6 +501,14 @@ function weiterText(u, i){
   const t = u.teile[i]; const y = t.typ === "lektion" ? folienStelle(t) : 0;
   return `Weiter bei Teil ${i+1}` + (y ? `, Folie ${y}` : "");
 }
+function zuletztText(u, i){
+  const t = u.teile[i]; let s = "Zuletzt: " + teilName(t);
+  if (t.typ === "lektion" && t.zuletzt) {
+    const l = S.lektionen.find(x => x.id === t.lektion_id);
+    if (l) { const n = l.folien_anzahl - new Set((t.aus||[]).filter(x => x >= 1 && x <= l.folien_anzahl)).size; s += ` · Folie ${folienStelle(t)} von ${n} · Weiter öffnet die Browser-Ansicht`; }
+  }
+  return s;
+}
 function weiterMachen(u){
   const i = letzterTeil(u); if (i < 0) return startAnsicht(u);
   const t = u.teile[i];
@@ -504,8 +526,8 @@ function renderUnterrichte(){
       <p class="hint" style="margin:0;max-width:640px">Stell dir deinen Unterricht zusammen: Lektionen aus der Bibliothek und eigene Dateien, in deiner Reihenfolge. Folien, die du abwählst, blendet PowerPoint beim Zeigen aus.</p>
       <button class="btn" id="neuU">＋ Neuer Unterricht</button></div>
     ${S.unterrichte.length ? `<div class="list">${S.unterrichte.map(u => `<div class="item">
-        <div class="t"><b>${esc(u.titel)}</b><span>${u.klasse?("Klasse "+esc(u.klasse)+" · "):""}${(u.teile||[]).length} ${(u.teile||[]).length===1?"Teil":"Teile"} · geändert ${new Date(u.geaendert).toLocaleDateString("de-DE")}</span></div>
-        ${letzterTeil(u) >= 0 ? `<button class="btn small" data-u="${esc(u.id)}" data-a="weiter">▶ ${esc(weiterText(u, letzterTeil(u)))}</button>` : ""}
+        <div class="t"><b>${esc(u.titel)}</b><span>${u.klasse?("Klasse "+esc(u.klasse)+" · "):""}${(u.teile||[]).length} ${(u.teile||[]).length===1?"Teil":"Teile"} · geändert ${new Date(u.geaendert).toLocaleDateString("de-DE")}</span>${letzterTeil(u) >= 0 ? `<span class="zuletzt">${esc(zuletztText(u, letzterTeil(u)))}</span>` : ""}</div>
+        ${letzterTeil(u) >= 0 ? `<button class="btn" data-u="${esc(u.id)}" data-a="weiter">▶ ${esc(weiterText(u, letzterTeil(u)))}</button>` : ""}
         <button class="btn ${letzterTeil(u) >= 0 ? "ghost " : ""}small" data-u="${esc(u.id)}" data-a="start">▶ Starten</button>
         <button class="btn ghost small" data-u="${esc(u.id)}" data-a="edit">Bearbeiten</button></div>`).join("")}</div>`
       : `<div class="empty">Noch kein eigener Unterricht. Tipp in der Bibliothek bei einer Lektion auf „＋ Zu meinem Unterricht“ oder lege hier einen neuen an.</div>`}`;
@@ -540,11 +562,11 @@ document.addEventListener("keydown", (e) => {
   if (EBENEN.length) { e.preventDefault(); EBENEN[EBENEN.length - 1](); }
 });
 
-function modal(titel, inner){
+function modal(titel, inner, nachZu){
   const m = document.createElement("div"); m.className = "modal";
   m.innerHTML = `<div class="sheet" role="dialog" aria-modal="true"><div class="head"><h2>${esc(titel)}</h2><button class="x" aria-label="Schließen">✕</button></div><div class="mbody">${inner}</div></div>`;
   document.body.appendChild(m);
-  const zu = () => { m.remove(); ebeneZu(zu); };
+  const zu = () => { m.remove(); ebeneZu(zu); if (nachZu) nachZu(); };
   m.querySelector(".x").onclick = zu; m.addEventListener("click", e => { if (e.target === m) zu(); });
   ebeneAuf(zu);
   return { el:m, zu };
@@ -669,14 +691,15 @@ function startAnsicht(u){
     <div class="list">${teile.length ? teile.map((t,i) => `<div class="item"><div class="t"><b>${i+1}. ${esc(teilName(t))}</b><span>${esc(teilInfo(t))}</span></div>
       ${i===letzterTeil(u)?`<span class="hint" style="margin:0">zuletzt hier${t.typ==="lektion"&&folienStelle(t)?` · Folie ${folienStelle(t)}`:""}</span>`:""}
       <button class="btn small" data-i="${i}" data-a="ppt">▶ PowerPoint</button>
-      ${t.typ==="lektion"?`<button class="btn ghost small" data-i="${i}" data-a="browser">Im Browser</button>`:""}</div>`).join("") : `<div class="empty">Dieser Unterricht hat noch keine Teile.</div>`}</div>`);
+      ${t.typ==="lektion"?`<button class="btn ghost small" data-i="${i}" data-a="browser">Im Browser</button>`:""}</div>`).join("") : `<div class="empty">Dieser Unterricht hat noch keine Teile.</div>`}</div>`,
+    () => { if (S.tab === "unt" && !EBENEN.length && !V && $("#pane")) renderUnterrichte(); });
   m.el.querySelectorAll("[data-i]").forEach(b => b.onclick = async () => {
     const t = teile[+b.dataset.i];
     const ort = ortVon(u, +b.dataset.i);
     try {
       if (t.typ === "lektion") {
         const l = S.lektionen.find(x => x.id === t.lektion_id); if (!l) { toast("Diese Lektion ist nicht mehr verfügbar."); return; }
-        if (b.dataset.a === "browser") { m.zu(); return oeffneViewer(l.id, t.aus||[], 0, ort); }
+        if (b.dataset.a === "browser") { m.zu(); return oeffneViewer(l.id, t.aus||[], +b.dataset.i === letzterTeil(u) ? (t.zuletzt || 0) : 0, ort); }
         merkePosition(ort, null);
         if (!(t.aus||[]).length) return starteInPowerPoint(l.datei_pfad, dateiName(l));
         b.disabled = true; b.textContent = "Wird vorbereitet …";
