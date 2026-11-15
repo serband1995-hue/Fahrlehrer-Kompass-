@@ -1598,7 +1598,7 @@
     $("#lzStage").addEventListener("click", e => { const nm = e.target.closest && e.target.closest("[data-nochmal]"); if (nm) { e.stopPropagation(); stimmeNochmal(); return; } const b = e.target.closest && e.target.closest(".lz-parb"); if (b) { e.stopPropagation(); togglePar(b); } else if (!(e.target.closest && e.target.closest(".lz-parpop"))) schliessePar(); });
     $("#lzZu").onclick = schliessen; $("#lzZurueck").onclick = zeigeAuswahl; $("#lzRegeln").onclick = zeigeRegeln;
     stimmeLade(() => { if (!szene) return; stimmeSchalter(); stimmeNachholen(); const ph = aktuellePhase() || szene.phasen[0]; if (modus === "vorfuehren" && !laeuft && ph && !root.querySelector("#lzCap .lz-nochmal")) zeigePhase(ph); });
-    $("#lzStimme").onclick = () => { const an = !stimmeAn(); try { localStorage.setItem("lz_stimme", an ? "1" : "0"); } catch (e) {} if (!an) stimmeStopp(); stimmeSchalter(); const ph = aktuellePhase() || szene.phasen[0]; if (ph && modus !== "fahren" && !laeuft) { const c = $("#lzCap"); if (c && !c.hidden && c.querySelector("h3")) zeigeCap(ph.titel, ph.text, ph.regel, ph); } };
+    $("#lzStimme").onclick = () => { const an = !stimmeAn(); try { localStorage.setItem("lz_stimme", an ? "1" : "0"); } catch (e) {} if (!an) stimmeStopp(); stimmeSchalter(); if (an) stimmeNachholen(); const ph = aktuellePhase() || szene.phasen[0]; if (ph && modus !== "fahren" && !laeuft) { const c = $("#lzCap"); if (c && !c.hidden && c.querySelector("h3")) zeigeCap(ph.titel, ph.text, ph.regel, ph); } };
     $("#lzPlay").onclick = () => { schliessePar(); if ((root.querySelector(".lz-sheet .lz-opt") && !root.querySelector("#lzWeiter")) || tippFrage) return;
       if (modus === "fahren") { const c = $("#lzCap"); if (c) c.hidden = true; }
       if (modus === "fahren" && fahr && fahr.ende) { schliesseSheet(); if (szene.reaktion) starteReaktion(fahr.vWahl); else starteFahren(); } if (!laeuft && zeit >= szene.dauer && modus !== "fahren") { zeit = 0; beantwortet = new Set(); } laeuft = !laeuft; if (modus !== "fahren") { stimmePause(!laeuft); stimmeNachholen(); } if (laeuft) { schliesseSheet(); ansicht.folgen = true; } };
@@ -1643,13 +1643,16 @@
   // ---------------------------------------------------------------- Stimme (Sprecherstimme mit KI erzeugt)
   // Ein Satz je Phase, im Takt mit der Szene: die Szene läuft während des Sprechens langsamer und wartet am Phasenende, bis der Satz fertig ist.
   // Dateien liegen unter stimme/ (index.json: Szene -> Stand des Phasentexts -> Datei, Dauer). Ändert sich ein Text, passt der Stand nicht mehr: dann spricht nichts.
-  const STIMME = { index: null, geladen: false, aktiv: null, fenster: 0, pausiert: false };
+  const STIMME = { index: null, laden: null, aktiv: null, fenster: 0, pausiert: false };
   const stimmeAn = () => { try { return localStorage.getItem("lz_stimme") !== "0"; } catch (e) { return true; } };
   function stimmeStand(t) { let h = 5381; t = String(t); for (let i = 0; i < t.length; i++) h = ((h << 5) + h + t.charCodeAt(i)) | 0; return (h >>> 0).toString(36); }
   function stimmeLade(fertig) {
-    if (STIMME.geladen) { fertig(); return; }
-    STIMME.geladen = true;
-    try { fetch("stimme/index.json", { cache: "no-cache" }).then(r => r.ok ? r.json() : null).then(j => { STIMME.index = j; if (!j) STIMME.geladen = false; fertig(); }).catch(() => { STIMME.geladen = false; fertig(); }); } catch (e) { STIMME.geladen = false; fertig(); }
+    if (STIMME.index) { fertig(); return; }
+    if (!STIMME.laden) {
+      const fehl = () => { STIMME.laden = null; };
+      try { STIMME.laden = fetch("stimme/index.json", { cache: "no-cache" }).then(r => r.ok ? r.json() : null).then(j => { STIMME.index = j; if (!j) fehl(); }).catch(fehl); } catch (e) { STIMME.laden = Promise.resolve(); fehl(); }
+    }
+    STIMME.laden.then(fertig, fertig);   // alle Aufrufer warten auf denselben Ladevorgang
   }
   const stimmeFuer = ph => { const i = STIMME.index && szene && STIMME.index[szene.id]; return (i && ph && i[stimmeStand(ph.text)]) || null; };
   const stimmeSzene = () => !!(STIMME.index && szene && STIMME.index[szene.id]);

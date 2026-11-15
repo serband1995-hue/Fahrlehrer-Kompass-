@@ -66,6 +66,18 @@ await page.waitForSelector("#lzCap"); await page.waitForTimeout(500);
 pruefe("rvl (mit Aufnahme): Stimmen-Knopf sichtbar", !(await page.$eval("#lzStimme", e => e.hidden)));
 await page.evaluate(() => document.querySelector("#lzZu").click());
 
+// Langsames Netz: Index kommt erst nach dem Antippen der Szene – Knopf muss trotzdem erscheinen
+await page.route("**/stimme/index.json", async route => { await new Promise(r => setTimeout(r, 1500)); await route.continue(); });
+await page.reload(); await page.waitForFunction(() => window.Lernszenen && window.Lernszenen.open, null, { timeout: 15000 });
+await page.evaluate(() => window.Lernszenen.open({}));
+await page.waitForSelector("#lzGrid");
+await page.evaluate(() => window.Lernszenen.open({ szene: "stop" }));
+await page.waitForSelector("#lzCap"); await page.waitForTimeout(2500);
+pruefe("langsamer Index: Stimmen-Knopf erscheint trotzdem", !(await page.$eval("#lzStimme", e => e.hidden)));
+await page.evaluate(() => document.querySelector("#lzZu").click());
+await page.unroute("**/stimme/index.json");
+await page.reload(); await page.waitForFunction(() => window.Lernszenen && window.Lernszenen.open, null, { timeout: 15000 });
+
 // Szene mit Stimme (Stoppschild: Phasen bei 0,2 / 4,8 / 6,6 / 9 s)
 await page.evaluate(() => { try { localStorage.removeItem("lz_stimme"); } catch (e) {} window.__au.length = 0; window.Lernszenen.open({ szene: "stop" }); });
 await page.waitForSelector("#lzCap"); await page.waitForTimeout(500);
