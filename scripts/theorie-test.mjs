@@ -49,9 +49,9 @@ const ATTRAPPE = `
   window.__DB = DB; window.__dateien = {}; window.__updates = 0;
   let session = null;
   function q(table) {
-    let rows = null, filt = [], op = "select", payload = null, single = false;
+    let rows = null, filt = [], op = "select", payload = null, single = false, zurueck = false;
     const api = {
-      select(){ return api; }, order(){ return api; },
+      select(){ if (op !== "select") zurueck = true; return api; }, order(){ return api; },
       eq(k,v){ filt.push([k,v]); return api; },
       maybeSingle(){ single = true; return api; },
       insert(p){ op = "insert"; payload = p; return api; },
@@ -63,7 +63,8 @@ const ATTRAPPE = `
       const t = DB[table] || [];
       const m = (r) => filt.every(([k,v]) => r[k] === v);
       if (op === "insert") { (Array.isArray(payload)?payload:[payload]).forEach(p => t.push(Object.assign({ id: p.id || ("id"+Math.random().toString(36).slice(2)), erstellt:new Date().toISOString(), geaendert:new Date().toISOString(), teile:[] }, p))); return { data:null, error:null }; }
-      if (op === "update") { window.__updates++; t.filter(m).forEach(r => Object.assign(r, payload)); return { data:null, error:null }; }
+      if (op === "update" && window.__vorUpdate) { const f = window.__vorUpdate; window.__vorUpdate = null; f(); } // anderes Gerät speichert genau dazwischen
+      if (op === "update") { window.__updates++; const z = t.filter(m); z.forEach(r => Object.assign(r, payload)); return { data: zurueck ? z.map(r => ({ id:r.id })) : null, error:null }; }
       if (op === "delete") { DB[table] = t.filter(r => !m(r)); return { data:null, error:null }; }
       let d = t.filter(m); if (table === "profiles") d = d.map(x => x);
       return { data: single ? (d[0]||null) : JSON.parse(JSON.stringify(d)), error:null };
@@ -239,16 +240,34 @@ const quer = (page) => page.evaluate(() => document.documentElement.scrollWidth 
     const u = await page.evaluate(() => window.__DB.theorie_unterrichte.find(x => x.id === "w1"));
     return (u.titel === "Abend Weiter neu" && u.teile[1].zuletzt === 5 && u.teile.length === 2) || JSON.stringify(u);
   });
+  await punkt("T39 Bearbeitung von anderem Gerät zwischen Lesen und Schreiben der Position geht nicht verloren", async () => {
+    await page.evaluate(() => { window.__vorUpdate = () => { const u = window.__DB.theorie_unterrichte.find(x => x.id === "w1"); u.teile = JSON.parse(JSON.stringify(u.teile)); u.teile[1].aus = [2, 5]; u.teile.push({ typ:"lektion", lektion_id:"C01", aus:[] }); u.geaendert = "2026-11-15T12:00:00.000Z"; }; });
+    await page.evaluate(() => { POS.letzt = 0; }); await page.click('[data-a="weiter"]'); await page.waitForTimeout(300);
+    await page.keyboard.press("Escape"); await page.waitForTimeout(300);
+    const u = await page.evaluate(() => window.__DB.theorie_unterrichte.find(x => x.id === "w1"));
+    return (JSON.stringify(u.teile[1].aus) === "[2,5]" && u.teile.length === 3 && u.teile[1].zuletzt_am && u.geaendert === "2026-11-15T12:00:00.000Z") || JSON.stringify(u);
+  });
+  await punkt("T40 gleiche Lektion zweimal: Position landet nur im gezeigten Teil, auch nach Bearbeiten-Speichern", async () => {
+    await page.evaluate(() => { window.__DB.theorie_unterrichte.push({ id:"d1", titel:"Doppelt", klasse:"B", teile:[{ typ:"lektion", lektion_id:"B01", aus:[] }, { typ:"lektion", lektion_id:"B02", aus:[] }, { typ:"lektion", lektion_id:"B01", aus:[1,2] }], geaendert:"2026-11-02T10:00:00.000Z" }); });
+    await page.evaluate(async () => { await ladeUnterrichte(); S.tab = "unt"; render(); POS.letzt = 0; }); await page.waitForTimeout(150);
+    const zeile = page.locator(".item", { hasText: "Doppelt" });
+    await zeile.locator('[data-a="edit"]').click(); await page.waitForTimeout(150); // Editor mit altem Stand offen lassen
+    await page.evaluate(() => { const u = window.__DB.theorie_unterrichte.find(x => x.id === "d1"); u.teile = JSON.parse(JSON.stringify(u.teile)); u.teile[2].zuletzt = 5; u.teile[2].zuletzt_am = "2099-01-01T00:00:00.000Z"; });
+    await page.click("#eSave"); await page.waitForTimeout(300);
+    const u = await page.evaluate(() => window.__DB.theorie_unterrichte.find(x => x.id === "d1"));
+    const t = (await page.locator(".item", { hasText: "Doppelt" }).locator('[data-a="weiter"]').textContent()).trim();
+    return (!u.teile[0].zuletzt_am && u.teile[2].zuletzt === 5 && t === "▶ Weiter bei Teil 3, Folie 3") || JSON.stringify({ t, teile:u.teile });
+  });
   const stand = await page.evaluate(() => window.__DB);
   await punkt("T32 keine Programmfehler (Weiter)", async () => js.length === 0 || js.join(" | "));
   await ctx.close();
   // anderes Gerät: nur die Datenbank ist gleich, kein lokaler Speicher
-  const g2 = await neueSeite(1920, 1080, true, { theorie_unterrichte: stand.theorie_unterrichte });
+  const g2 = await neueSeite(1920, 1080, true, { theorie_unterrichte: stand.theorie_unterrichte.filter(u => u.id === "w1") }); // Stand nach T39: Folien 2 und 5 abgewählt, zuletzt Folie 4 = Stelle 3 von 3
   await punkt("T33 anderes Gerät nach Neuladen: Weiter öffnet an der zuletzt gezeigten Folie", async () => {
     await g2.page.click('.tab[data-tab="unt"]'); await g2.page.waitForTimeout(150);
     const t = (await g2.page.textContent('[data-a="weiter"]')).trim(); await g2.page.click('[data-a="weiter"]'); await g2.page.waitForTimeout(300);
     const c = await g2.page.textContent("#vCount");
-    return (t === "▶ Weiter bei Teil 2, Folie 4" && c === "Folie 4 von 4" && g2.js.length === 0) || `${t} / ${c} / ${g2.js.join("|")}`;
+    return (t === "▶ Weiter bei Teil 2, Folie 3" && c === "Folie 3 von 3" && g2.js.length === 0) || `${t} / ${c} / ${g2.js.join("|")}`;
   });
   await g2.ctx.close();
 }

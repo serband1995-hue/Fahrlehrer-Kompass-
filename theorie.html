@@ -416,8 +416,18 @@ if (kanal) kanal.onmessage = (ev) => {
    Steht in theorie_unterrichte.teile, also auf jedem Gerät gleich. Höchstens alle 5 s ein Schreiben, sofort beim
    Schließen der Ansicht und wenn die Seite in den Hintergrund geht. Vor dem Schreiben frisch lesen, nur diesen Teil
    ändern; „geaendert“ bleibt (Blättern ist keine Bearbeitung). */
-const POS = { offen:null, timer:null, letzt:0, laeuft:false };
+const POS = { offen:null, timer:null, letzt:0, laeuft:false, pause:5000 };
 const teilPasst = (t, ort) => !!t && t.typ === ort.typ && (ort.typ === "lektion" ? t.lektion_id === ort.id : t.datei_id === ort.id);
+const teilOrt = (t) => ({ typ:t.typ, id: t.typ === "lektion" ? t.lektion_id : t.datei_id });
+/* Dieselbe Lektion kann mehrmals im Unterricht stehen: das wievielte Vorkommen ist Teil i? */
+function vorkommen(teile, i){ const o = teilOrt(teile[i]); let k = 0; for (let j = 0; j < i; j++) if (teilPasst(teile[j], o)) k++; return k; }
+/* Teil im (frischen) Stand wiederfinden: gleiche Stelle, sonst gleiches Vorkommen. */
+function findeTeil(teile, ort){
+  if (teilPasst(teile[ort.idx], ort) && vorkommen(teile, ort.idx) === (ort.k || 0)) return ort.idx;
+  let k = 0; for (let j = 0; j < teile.length; j++) if (teilPasst(teile[j], ort)) { if (k === (ort.k || 0)) return j; k++; }
+  return -1;
+}
+function ortVon(u, i){ return Object.assign({ uid:u.id, idx:i, k: vorkommen(u.teile, i) }, teilOrt(u.teile[i])); }
 function merkePosition(ort, nr){
   POS.offen = { ort, nr: nr == null ? null : nr, am: new Date().toISOString() };
   const u = S.unterrichte.find(x => x.id === ort.uid), t = u && (u.teile||[])[ort.idx];
@@ -432,18 +442,27 @@ async function schreibePosition(){
   if (POS.laeuft) { POS.timer = setTimeout(schreibePosition, 1000); return; }
   POS.offen = null; POS.laeuft = true; POS.letzt = Date.now();
   try {
-    const frisch = await supa.from("theorie_unterrichte").select("teile").eq("id", p.ort.uid).maybeSingle();
-    if (frisch.error) throw frisch.error;
-    if (!frisch.data) return; // Unterricht inzwischen gelöscht
-    const teile = Array.isArray(frisch.data.teile) ? frisch.data.teile : [];
-    let i = p.ort.idx; if (!teilPasst(teile[i], p.ort)) i = teile.findIndex(t => teilPasst(t, p.ort));
-    if (i < 0) return; // Teil inzwischen entfernt
-    teile[i] = Object.assign({}, teile[i], { zuletzt: p.nr, zuletzt_am: p.am });
-    const { error } = await supa.from("theorie_unterrichte").update({ teile }).eq("id", p.ort.uid);
-    if (error) throw error;
-    const u = S.unterrichte.find(x => x.id === p.ort.uid); if (u && !POS.offen) u.teile = teile; // neuere Position wartet noch: die lokale bleibt
+    // Nur schreiben, wenn seit dem Lesen niemand den Unterricht bearbeitet hat (geaendert gleich), sonst neu lesen.
+    // So überschreibt das Blättern nie eine Bearbeitung von einem anderen Gerät.
+    for (let versuch = 0; versuch < 3; versuch++) {
+      const frisch = await supa.from("theorie_unterrichte").select("teile,geaendert").eq("id", p.ort.uid).maybeSingle();
+      if (frisch.error) throw frisch.error;
+      if (!frisch.data) return; // Unterricht inzwischen gelöscht
+      const teile = Array.isArray(frisch.data.teile) ? frisch.data.teile : [];
+      const i = findeTeil(teile, p.ort);
+      if (i < 0) return; // Teil inzwischen entfernt
+      teile[i] = Object.assign({}, teile[i], { zuletzt: p.nr, zuletzt_am: p.am });
+      const res = await supa.from("theorie_unterrichte").update({ teile }).eq("id", p.ort.uid).eq("geaendert", frisch.data.geaendert).select("id");
+      if (res.error) { if (res.error.code === "23514") return; throw res.error; } // Größengrenze: nicht endlos wiederholen
+      if (!res.data || !res.data.length) continue; // dazwischen bearbeitet: frisch lesen
+      POS.pause = 5000;
+      const u = S.unterrichte.find(x => x.id === p.ort.uid);
+      if (u && !POS.offen) { u.teile = teile; if (!V && S.tab === "unt" && !EBENEN.length && $("#pane")) renderUnterrichte(); } // neuere Position wartet noch: die lokale bleibt
+      return;
+    }
   } catch(e) {
-    if (!POS.offen) { POS.offen = p; POS.timer = setTimeout(schreibePosition, 5000); } // später noch einmal
+    // später noch einmal, mit wachsender Pause (höchstens 1 Minute)
+    if (!POS.offen) { POS.offen = p; POS.timer = setTimeout(schreibePosition, POS.pause); POS.pause = Math.min(POS.pause * 2, 60000); }
   } finally { POS.laeuft = false; }
 }
 document.addEventListener("visibilitychange", () => {
@@ -473,7 +492,7 @@ function weiterMachen(u){
   const t = u.teile[i];
   if (t.typ === "lektion" && t.zuletzt) {
     const l = S.lektionen.find(x => x.id === t.lektion_id); if (!l) { toast("Diese Lektion ist nicht mehr verfügbar."); return; }
-    return oeffneViewer(l.id, t.aus||[], t.zuletzt, { uid:u.id, idx:i, typ:"lektion", id:l.id }).catch(e => toast(e.message || "Das hat nicht geklappt."));
+    return oeffneViewer(l.id, t.aus||[], t.zuletzt, ortVon(u, i)).catch(e => toast(e.message || "Das hat nicht geklappt."));
   }
   startAnsicht(u);
 }
@@ -571,8 +590,8 @@ function editor(u){
         if (jetzt.data && jetzt.data.geaendert !== u.geaendert && !confirm("Dieser Unterricht wurde inzwischen auf einem anderen Gerät geändert. Trotzdem mit deinem Stand überschreiben?")) return;
         // „Weiter, wo ich war“ nicht mit einem alten Stand überschreiben: neuere Position je Teil übernehmen
         const frischT = (jetzt.data && Array.isArray(jetzt.data.teile)) ? jetzt.data.teile : [];
-        row.teile = E.teile.map(t => { const ort = { typ:t.typ, id: t.typ === "lektion" ? t.lektion_id : t.datei_id };
-          const f = frischT.find(x => teilPasst(x, ort) && x.zuletzt_am && (!t.zuletzt_am || x.zuletzt_am > t.zuletzt_am));
+        row.teile = E.teile.map((t, i) => { const ort = Object.assign({ idx:i, k: vorkommen(E.teile, i) }, teilOrt(t));
+          const fi = findeTeil(frischT, ort), f = fi >= 0 && frischT[fi].zuletzt_am && (!t.zuletzt_am || frischT[fi].zuletzt_am > t.zuletzt_am) ? frischT[fi] : null;
           return f ? Object.assign({}, t, { zuletzt: f.zuletzt == null ? null : f.zuletzt, zuletzt_am: f.zuletzt_am }) : t; });
       }
       const res = neu ? await supa.from("theorie_unterrichte").insert(row) : await supa.from("theorie_unterrichte").update(row).eq("id", u.id);
@@ -653,7 +672,7 @@ function startAnsicht(u){
       ${t.typ==="lektion"?`<button class="btn ghost small" data-i="${i}" data-a="browser">Im Browser</button>`:""}</div>`).join("") : `<div class="empty">Dieser Unterricht hat noch keine Teile.</div>`}</div>`);
   m.el.querySelectorAll("[data-i]").forEach(b => b.onclick = async () => {
     const t = teile[+b.dataset.i];
-    const ort = { uid:u.id, idx:+b.dataset.i, typ:t.typ, id: t.typ === "lektion" ? t.lektion_id : t.datei_id };
+    const ort = ortVon(u, +b.dataset.i);
     try {
       if (t.typ === "lektion") {
         const l = S.lektionen.find(x => x.id === t.lektion_id); if (!l) { toast("Diese Lektion ist nicht mehr verfügbar."); return; }
