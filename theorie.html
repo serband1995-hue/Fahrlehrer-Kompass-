@@ -66,6 +66,9 @@ header.top .wrap{display:flex;align-items:center;gap:10px;padding-top:12px;paddi
 .haken{display:flex;gap:10px;align-items:flex-start;padding:10px 0;min-height:44px;cursor:pointer;font-size:.92rem}
 .haken input{width:24px;height:24px;flex:none;accent-color:var(--akzent)}
 @media(max-width:600px){.btn.small{min-height:44px}.user .uname{display:none}}
+/* Smartboard/Touch: Fingertipp braucht 44 px; 4K bei 100 % Skalierung: alles doppelt so groß (T2) */
+@media(pointer:coarse){.btn.small{min-height:44px;min-width:44px}}
+@media(min-width:2560px){html{zoom:2}}
 .empty{padding:28px 18px;text-align:center;border:2px dashed var(--line);border-radius:var(--r);color:var(--muted)}
 .row{display:flex;gap:10px;align-items:center;flex-wrap:wrap}
 .list{display:flex;flex-direction:column;gap:10px}
@@ -73,6 +76,7 @@ header.top .wrap{display:flex;align-items:center;gap:10px;padding-top:12px;paddi
 .item .t{flex:1;min-width:180px;overflow-wrap:anywhere}
 .item .t b{display:block}
 .item .t span{font-size:.85rem;color:var(--muted)}
+.item .t span.zuletzt{display:block;margin-top:2px;color:var(--akzent-dark);font-weight:600}
 label.f{display:block;font-weight:600;font-size:.9rem;margin:12px 0 4px}
 input[type=text],input[type=email],input[type=password],select,textarea{width:100%;border:1px solid var(--line);background:#fff;border-radius:12px;padding:11px 12px;min-height:44px}
 textarea{min-height:80px;resize:vertical}
@@ -97,7 +101,8 @@ input[type=file]{width:100%;max-width:100%;min-height:44px;padding:8px 0}
 /* Folien-Ansicht */
 .viewer{position:fixed;inset:0;background:#0b0f0d;z-index:150;display:flex;flex-direction:column;color:#eee}
 .viewer .stage{flex:1;display:flex;align-items:center;justify-content:center;min-height:0;position:relative}
-.viewer .stage img{max-width:100%;max-height:100%;object-fit:contain;user-select:none}
+.viewer .stage img{width:100%;height:100%;max-width:100%;max-height:100%;object-fit:contain;user-select:none}
+.viewer .stage img:not([src]),.viewer .stage img.kaputt{visibility:hidden}
 .viewer .bar{display:flex;gap:8px;align-items:center;padding:8px 10px;background:#141a17;flex:none}
 .viewer .mehr{display:none;gap:8px;padding:0 10px 8px;background:#141a17;flex-wrap:wrap;justify-content:flex-end;flex:none}
 .viewer.mehr-auf .mehr{display:flex}
@@ -222,8 +227,9 @@ async function ladeAlles(){
   render();
 }
 async function ladeUnterrichte(){
-  const { data } = await supa.from("theorie_unterrichte").select("*").order("geaendert", { ascending:false });
-  S.unterrichte = data || [];
+  const { data, error } = await supa.from("theorie_unterrichte").select("*").order("geaendert", { ascending:false });
+  if (error) return false; // kein Netz: alten Stand behalten statt leerer Liste
+  S.unterrichte = data || []; return true;
 }
 async function ladeDateien(){
   const { data } = await supa.from("theorie_dateien").select("*").order("erstellt", { ascending:false });
@@ -347,14 +353,21 @@ async function folienVon(lektionId){
 }
 let V = null;
 const kanal = ("BroadcastChannel" in window) ? new BroadcastChannel("kompass-theorie") : null;
-async function oeffneViewer(lektionId, aus, startNr){
+let _vLaedt = false;
+async function oeffneViewer(lektionId, aus, startNr, ort){
+  if (V || _vLaedt) return; // Doppeltipp: nur eine Folienansicht
+  _vLaedt = true;
+  try { await _oeffneViewer(lektionId, aus, startNr, ort); } finally { _vLaedt = false; }
+}
+async function _oeffneViewer(lektionId, aus, startNr, ort){
   const alle = await folienVon(lektionId);
   const folien = alle.filter(f => !(aus||[]).includes(f.nr));
   if (!folien.length) { toast("Keine Folien ausgewählt."); return; }
   const urls = await bildUrls(folien.map(f => f.bild_pfad));
   const l = S.lektionen.find(x => x.id === lektionId) || {};
-  V = { lektionId, aus:aus||[], folien, urls, i: 0, notizen: !document.body.classList.contains("board") && !istHandy() };
-  if (startNr) { const j = folien.findIndex(f => f.nr === startNr); if (j >= 0) V.i = j; }
+  V = { lektionId, aus:aus||[], folien, urls, i: 0, notizen: !document.body.classList.contains("board") && !istHandy() && !(matchMedia("(pointer:coarse)").matches && innerWidth >= 1280), ort: istTafel() ? null : (ort || null) };
+  // großer Touch-Schirm = Smartboard: Notizen anfangs aus (Klasse liest sonst mit), Schalter unter „Mehr“
+  if (startNr) { let j = folien.findIndex(f => f.nr === startNr); if (j < 0) j = folien.findIndex(f => f.nr > startNr); V.i = j >= 0 ? j : folien.length - 1; }
   const v = document.createElement("div"); v.className = "viewer"; v.id = "viewer";
   v.innerHTML = `<div class="stage"><img id="vImg" alt=""><div class="navzone l" id="vL"></div><div class="navzone r" id="vR"></div><span class="note-flag">Browser-Ansicht: ohne Animationen</span></div>
     <div class="notes" id="vNotes"></div>
@@ -391,10 +404,11 @@ async function oeffneViewer(lektionId, aus, startNr){
 function geheZu(i){ if (!V) return; V.i = Math.max(0, Math.min(V.folien.length - 1, i)); zeige(); if (kanal) kanal.postMessage({ lektionId:V.lektionId, nr:V.folien[V.i].nr }); }
 function zeige(){
   const f = V.folien[V.i];
-  $("#vImg").src = V.urls[V.i];
+  const img = $("#vImg"); img.classList.remove("kaputt"); img.onerror = () => img.classList.add("kaputt"); img.src = V.urls[V.i];
   $("#vCount").textContent = `Folie ${V.i+1} von ${V.folien.length}`;
   const n = $("#vNotes"); n.style.display = V.notizen && f.notiz ? "block" : "none"; n.textContent = f.notiz || "";
   if (V.urls[V.i+1]) { const im = new Image(); im.src = V.urls[V.i+1]; }
+  if (V.ort) merkePosition(V.ort, f.nr);
 }
 function tasten(e){
   if (!V) return;
@@ -403,11 +417,107 @@ function tasten(e){
   if (["ArrowRight","PageDown"," ","Enter"].includes(e.key)) { e.preventDefault(); geheZu(V.i + 1); }
   else if (["ArrowLeft","PageUp","Backspace"].includes(e.key)) { e.preventDefault(); geheZu(V.i - 1); }
 }
-function schliesseViewer(){ ebeneZu(schliesseViewer); const v = $("#viewer"); if (v) v.remove(); document.body.classList.remove("viewer-offen"); document.removeEventListener("keydown", tasten); V = null; document.title = "Theorieunterricht – Fahrlehrer-Kompass"; }
+function schliesseViewer(){ const mitOrt = !!(V && V.ort); schreibePosition(); ebeneZu(schliesseViewer); const v = $("#viewer"); if (v) v.remove(); document.body.classList.remove("viewer-offen"); document.removeEventListener("keydown", tasten); V = null; document.title = "Theorieunterricht – Fahrlehrer-Kompass";
+  if (mitOrt && S.tab === "unt" && !EBENEN.length && $("#pane")) renderUnterrichte(); }
 if (kanal) kanal.onmessage = (ev) => {
   if (!V || ev.data.lektionId !== V.lektionId) return;
   const j = V.folien.findIndex(f => f.nr === ev.data.nr); if (j >= 0 && j !== V.i) { V.i = j; zeige(); }
 };
+
+/* ---------- Weiter, wo ich war (T2, 15.11.2026) ----------
+   Je Teil eines Unterrichts: zuletzt (Foliennummer der Lektion, null bei PowerPoint/Datei) und zuletzt_am (Zeit).
+   Steht in theorie_unterrichte.teile, also auf jedem Gerät gleich. Höchstens alle 5 s ein Schreiben, sofort beim
+   Schließen der Ansicht und wenn die Seite in den Hintergrund geht. Vor dem Schreiben frisch lesen, nur diesen Teil
+   ändern; „geaendert“ bleibt (Blättern ist keine Bearbeitung). */
+const POS = { offen:null, timer:null, letzt:0, laeuft:false, pause:5000 };
+const teilPasst = (t, ort) => !!t && t.typ === ort.typ && (ort.typ === "lektion" ? t.lektion_id === ort.id : t.datei_id === ort.id);
+const teilOrt = (t) => ({ typ:t.typ, id: t.typ === "lektion" ? t.lektion_id : t.datei_id });
+/* Dieselbe Lektion kann mehrmals im Unterricht stehen: das wievielte Vorkommen ist Teil i? */
+function vorkommen(teile, i){ const o = teilOrt(teile[i]); let k = 0; for (let j = 0; j < i; j++) if (teilPasst(teile[j], o)) k++; return k; }
+/* Teil im (frischen) Stand wiederfinden: gleiche Stelle, sonst gleiches Vorkommen. */
+function findeTeil(teile, ort){
+  if (teilPasst(teile[ort.idx], ort) && vorkommen(teile, ort.idx) === (ort.k || 0)) return ort.idx;
+  let k = 0; for (let j = 0; j < teile.length; j++) if (teilPasst(teile[j], ort)) { if (k === (ort.k || 0)) return j; k++; }
+  return -1;
+}
+function ortVon(u, i){ return Object.assign({ uid:u.id, idx:i, k: vorkommen(u.teile, i) }, teilOrt(u.teile[i])); }
+function merkePosition(ort, nr){
+  POS.offen = { ort, nr: nr == null ? null : nr, am: new Date().toISOString() };
+  const u = S.unterrichte.find(x => x.id === ort.uid), t = u && (u.teile||[])[ort.idx];
+  if (teilPasst(t, ort)) { t.zuletzt = POS.offen.nr; t.zuletzt_am = POS.offen.am; } // sofort im Knopf sichtbar
+  clearTimeout(POS.timer);
+  const warte = POS.letzt + 5000 - Date.now();
+  if (warte <= 0) schreibePosition(); else POS.timer = setTimeout(schreibePosition, warte);
+}
+async function schreibePosition(){
+  clearTimeout(POS.timer); POS.timer = null;
+  const p = POS.offen; if (!p) return;
+  if (POS.laeuft) { POS.timer = setTimeout(schreibePosition, 1000); return; }
+  POS.offen = null; POS.laeuft = true; POS.letzt = Date.now();
+  try {
+    // Nur schreiben, wenn seit dem Lesen niemand den Unterricht bearbeitet hat (geaendert gleich), sonst neu lesen.
+    // So überschreibt das Blättern nie eine Bearbeitung von einem anderen Gerät.
+    for (let versuch = 0; versuch < 3; versuch++) {
+      const frisch = await supa.from("theorie_unterrichte").select("teile,geaendert").eq("id", p.ort.uid).maybeSingle();
+      if (frisch.error) throw frisch.error;
+      if (!frisch.data) return; // Unterricht inzwischen gelöscht
+      const teile = Array.isArray(frisch.data.teile) ? frisch.data.teile : [];
+      const i = findeTeil(teile, p.ort);
+      if (i < 0) return; // Teil inzwischen entfernt
+      teile[i] = Object.assign({}, teile[i], { zuletzt: p.nr, zuletzt_am: p.am });
+      const res = await supa.from("theorie_unterrichte").update({ teile }).eq("id", p.ort.uid).eq("geaendert", frisch.data.geaendert).select("id");
+      if (res.error) { if (res.error.code === "23514") return; throw res.error; } // Größengrenze: nicht endlos wiederholen
+      if (!res.data || !res.data.length) continue; // dazwischen bearbeitet: frisch lesen
+      POS.pause = 5000;
+      const u = S.unterrichte.find(x => x.id === p.ort.uid);
+      if (u && !POS.offen) { u.teile = teile; if (!V && S.tab === "unt" && !EBENEN.length && $("#pane")) renderUnterrichte(); } // neuere Position wartet noch: die lokale bleibt
+      return;
+    }
+  } catch(e) {
+    // später noch einmal, mit wachsender Pause (höchstens 1 Minute)
+    if (!POS.offen) { POS.offen = p; POS.timer = setTimeout(schreibePosition, POS.pause); POS.pause = Math.min(POS.pause * 2, 60000); }
+  } finally { POS.laeuft = false; }
+}
+document.addEventListener("visibilitychange", () => {
+  if (document.visibilityState === "hidden") { schreibePosition(); return; }
+  // Zurück auf der Seite (z. B. Smartboard tagelang offen): Liste frisch holen, wenn nichts offen ist
+  if (S.user && S.tab === "unt" && !EBENEN.length && !istTafel() && !POS.offen && !POS.laeuft && navigator.onLine !== false)
+    ladeUnterrichte().then((ok) => { if (ok && S.tab === "unt" && !EBENEN.length) render(); });
+});
+window.addEventListener("pagehide", () => schreibePosition());
+/* Teil, an dem zuletzt gearbeitet wurde (neuestes zuletzt_am). */
+function letzterTeil(u){
+  let best = -1; (u.teile||[]).forEach((t, i) => { if (t && t.zuletzt_am && (best < 0 || t.zuletzt_am > u.teile[best].zuletzt_am)) best = i; });
+  return best;
+}
+/* Folie y von n in der gezeigten Auswahl (abgewählte Folien zählen nicht). */
+function folienStelle(t){
+  const l = S.lektionen.find(x => x.id === t.lektion_id); if (!l || !t.zuletzt) return 0;
+  const aus = new Set(t.aus || []); let y = 0;
+  for (let n = 1; n <= l.folien_anzahl; n++) if (!aus.has(n)) { y++; if (n >= t.zuletzt) return y; }
+  return y;
+}
+function weiterText(u, i){
+  const t = u.teile[i]; const y = t.typ === "lektion" ? folienStelle(t) : 0;
+  return `Weiter bei Teil ${i+1}` + (y ? `, Folie ${y}` : "");
+}
+function zuletztText(u, i){
+  const t = u.teile[i]; let s = "Zuletzt: " + teilName(t);
+  if (t.typ === "lektion" && t.zuletzt) {
+    const l = S.lektionen.find(x => x.id === t.lektion_id);
+    if (l) { const n = l.folien_anzahl - new Set((t.aus||[]).filter(x => x >= 1 && x <= l.folien_anzahl)).size; s += ` · Folie ${folienStelle(t)} von ${n} · Weiter öffnet die Browser-Ansicht`; }
+  }
+  return s;
+}
+function weiterMachen(u){
+  const i = letzterTeil(u); if (i < 0) return startAnsicht(u);
+  const t = u.teile[i];
+  if (t.typ === "lektion" && t.zuletzt) {
+    const l = S.lektionen.find(x => x.id === t.lektion_id); if (!l) { toast("Diese Lektion ist nicht mehr verfügbar."); return; }
+    return oeffneViewer(l.id, t.aus||[], t.zuletzt, ortVon(u, i)).catch(e => toast(e.message || "Das hat nicht geklappt."));
+  }
+  startAnsicht(u);
+}
 
 /* ---------- Eigene Unterrichte ---------- */
 function renderUnterrichte(){
@@ -416,14 +526,15 @@ function renderUnterrichte(){
       <p class="hint" style="margin:0;max-width:640px">Stell dir deinen Unterricht zusammen: Lektionen aus der Bibliothek und eigene Dateien, in deiner Reihenfolge. Folien, die du abwählst, blendet PowerPoint beim Zeigen aus.</p>
       <button class="btn" id="neuU">＋ Neuer Unterricht</button></div>
     ${S.unterrichte.length ? `<div class="list">${S.unterrichte.map(u => `<div class="item">
-        <div class="t"><b>${esc(u.titel)}</b><span>${u.klasse?("Klasse "+esc(u.klasse)+" · "):""}${(u.teile||[]).length} ${(u.teile||[]).length===1?"Teil":"Teile"} · geändert ${new Date(u.geaendert).toLocaleDateString("de-DE")}</span></div>
-        <button class="btn small" data-u="${esc(u.id)}" data-a="start">▶ Starten</button>
+        <div class="t"><b>${esc(u.titel)}</b><span>${u.klasse?("Klasse "+esc(u.klasse)+" · "):""}${(u.teile||[]).length} ${(u.teile||[]).length===1?"Teil":"Teile"} · geändert ${new Date(u.geaendert).toLocaleDateString("de-DE")}</span>${letzterTeil(u) >= 0 ? `<span class="zuletzt">${esc(zuletztText(u, letzterTeil(u)))}</span>` : ""}</div>
+        ${letzterTeil(u) >= 0 ? `<button class="btn" data-u="${esc(u.id)}" data-a="weiter">▶ ${esc(weiterText(u, letzterTeil(u)))}</button>` : ""}
+        <button class="btn ${letzterTeil(u) >= 0 ? "ghost " : ""}small" data-u="${esc(u.id)}" data-a="start">▶ Starten</button>
         <button class="btn ghost small" data-u="${esc(u.id)}" data-a="edit">Bearbeiten</button></div>`).join("")}</div>`
       : `<div class="empty">Noch kein eigener Unterricht. Tipp in der Bibliothek bei einer Lektion auf „＋ Zu meinem Unterricht“ oder lege hier einen neuen an.</div>`}`;
   $("#neuU").onclick = () => editor(null);
   p.querySelectorAll("[data-u]").forEach(b => b.onclick = () => {
     const u = S.unterrichte.find(x => x.id === b.dataset.u);
-    if (b.dataset.a === "edit") editor(u); else startAnsicht(u);
+    if (b.dataset.a === "edit") editor(u); else if (b.dataset.a === "weiter") weiterMachen(u); else startAnsicht(u);
   });
 }
 function teilName(t){
@@ -451,11 +562,11 @@ document.addEventListener("keydown", (e) => {
   if (EBENEN.length) { e.preventDefault(); EBENEN[EBENEN.length - 1](); }
 });
 
-function modal(titel, inner){
+function modal(titel, inner, nachZu){
   const m = document.createElement("div"); m.className = "modal";
   m.innerHTML = `<div class="sheet" role="dialog" aria-modal="true"><div class="head"><h2>${esc(titel)}</h2><button class="x" aria-label="Schließen">✕</button></div><div class="mbody">${inner}</div></div>`;
   document.body.appendChild(m);
-  const zu = () => { m.remove(); ebeneZu(zu); };
+  const zu = () => { m.remove(); ebeneZu(zu); if (nachZu) nachZu(); };
   m.querySelector(".x").onclick = zu; m.addEventListener("click", e => { if (e.target === m) zu(); });
   ebeneAuf(zu);
   return { el:m, zu };
@@ -497,8 +608,13 @@ function editor(u){
       if (!E.titel.trim()) { err.textContent = "Bitte einen Namen eingeben."; return; }
       const row = { titel:E.titel.trim(), klasse:E.klasse, notiz:E.notiz.trim()||null, teile:E.teile, geaendert:new Date().toISOString() };
       if (!neu) {
-        const jetzt = await supa.from("theorie_unterrichte").select("geaendert").eq("id", u.id).maybeSingle();
+        const jetzt = await supa.from("theorie_unterrichte").select("geaendert,teile").eq("id", u.id).maybeSingle();
         if (jetzt.data && jetzt.data.geaendert !== u.geaendert && !confirm("Dieser Unterricht wurde inzwischen auf einem anderen Gerät geändert. Trotzdem mit deinem Stand überschreiben?")) return;
+        // „Weiter, wo ich war“ nicht mit einem alten Stand überschreiben: neuere Position je Teil übernehmen
+        const frischT = (jetzt.data && Array.isArray(jetzt.data.teile)) ? jetzt.data.teile : [];
+        row.teile = E.teile.map((t, i) => { const ort = Object.assign({ idx:i, k: vorkommen(E.teile, i) }, teilOrt(t));
+          const fi = findeTeil(frischT, ort), f = fi >= 0 && frischT[fi].zuletzt_am && (!t.zuletzt_am || frischT[fi].zuletzt_am > t.zuletzt_am) ? frischT[fi] : null;
+          return f ? Object.assign({}, t, { zuletzt: f.zuletzt == null ? null : f.zuletzt, zuletzt_am: f.zuletzt_am }) : t; });
       }
       const res = neu ? await supa.from("theorie_unterrichte").insert(row) : await supa.from("theorie_unterrichte").update(row).eq("id", u.id);
       if (res.error) { err.textContent = "Speichern hat nicht geklappt. Bitte erneut versuchen."; return; }
@@ -573,20 +689,24 @@ function startAnsicht(u){
   const m = modal(u.titel, `${u.notiz?`<div class="box" style="margin-bottom:12px;white-space:pre-wrap">${esc(u.notiz)}</div>`:""}
     <p class="hint">Teil für Teil starten. Bei ausgewählten Folien lädt der Kompass eine angepasste PowerPoint-Datei herunter: Die abgewählten Folien sind darin ausgeblendet, alle Animationen bleiben.</p>
     <div class="list">${teile.length ? teile.map((t,i) => `<div class="item"><div class="t"><b>${i+1}. ${esc(teilName(t))}</b><span>${esc(teilInfo(t))}</span></div>
+      ${i===letzterTeil(u)?`<span class="hint" style="margin:0">zuletzt hier${t.typ==="lektion"&&folienStelle(t)?` · Folie ${folienStelle(t)}`:""}</span>`:""}
       <button class="btn small" data-i="${i}" data-a="ppt">▶ PowerPoint</button>
-      ${t.typ==="lektion"?`<button class="btn ghost small" data-i="${i}" data-a="browser">Im Browser</button>`:""}</div>`).join("") : `<div class="empty">Dieser Unterricht hat noch keine Teile.</div>`}</div>`);
+      ${t.typ==="lektion"?`<button class="btn ghost small" data-i="${i}" data-a="browser">Im Browser</button>`:""}</div>`).join("") : `<div class="empty">Dieser Unterricht hat noch keine Teile.</div>`}</div>`,
+    () => { if (S.tab === "unt" && !EBENEN.length && !V && $("#pane")) renderUnterrichte(); });
   m.el.querySelectorAll("[data-i]").forEach(b => b.onclick = async () => {
     const t = teile[+b.dataset.i];
+    const ort = ortVon(u, +b.dataset.i);
     try {
       if (t.typ === "lektion") {
         const l = S.lektionen.find(x => x.id === t.lektion_id); if (!l) { toast("Diese Lektion ist nicht mehr verfügbar."); return; }
-        if (b.dataset.a === "browser") { m.zu(); return oeffneViewer(l.id, t.aus||[]); }
+        if (b.dataset.a === "browser") { m.zu(); return oeffneViewer(l.id, t.aus||[], +b.dataset.i === letzterTeil(u) ? (t.zuletzt || 0) : 0, ort); }
+        merkePosition(ort, null);
         if (!(t.aus||[]).length) return starteInPowerPoint(l.datei_pfad, dateiName(l));
         b.disabled = true; b.textContent = "Wird vorbereitet …";
         await ladeAngepasst(l, t.aus); b.disabled = false; b.textContent = "▶ PowerPoint";
       } else {
         const d = S.dateien.find(x => x.id === t.datei_id); if (!d) { toast("Diese Datei wurde gelöscht."); return; }
-        oeffneDatei(d);
+        merkePosition(ort, null); oeffneDatei(d);
       }
     } catch(e) { b.disabled = false; b.textContent = "▶ PowerPoint"; toast(e.message || "Das hat nicht geklappt."); }
   });
