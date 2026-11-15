@@ -19,7 +19,7 @@ const basis = `http://127.0.0.1:${server.address().port}/`;
 const browser = await chromium.launch({ executablePath: process.env.CHROMIUM_PATH || "/opt/pw-browsers/chromium" });
 let fehler = 0, ok = 0, mitPar = 0, ohnePar = 0;
 const pruefe = (n, c, g = "") => { if (c) { ok++; } else { fehler++; console.log("FEHLER " + n + (g ? " – " + g : "")); } };
-for (const [w, h] of [[360, 640], [412, 915], [640, 360]]) {
+for (const [w, h] of [[360, 640], [412, 915], [640, 360], [568, 320]]) {
   const ctx = await browser.newContext({ viewport: { width: w, height: h }, hasTouch: true, isMobile: w < 500 });
   const page = await ctx.newPage(); const konsole = [];
   page.on("pageerror", e => konsole.push("pageerror " + e.message));
@@ -49,7 +49,8 @@ for (const [w, h] of [[360, 640], [412, 915], [640, 360]]) {
     pruefe(t + "Popover im Bild", pop.x >= st.x - 1 && pop.x + pop.width <= st.x + st.width + 1 && pop.y >= st.y - 1 && pop.y + pop.height <= st.y + st.height + 1, JSON.stringify({ pop, st }));
     pruefe(t + "Popover überlappt Erklärkasten nicht", pop.y >= cap.y + cap.height - 1 || pop.x >= cap.x + cap.width - 1 || pop.x + pop.width <= cap.x + 1, JSON.stringify({ pop, cap }));
     const hud = await (await page.$("#lzHud")).boundingBox();
-    pruefe(t + "Popover überlappt Tacho nicht", pop.x + pop.width <= hud.x + 1 || pop.x >= hud.x + hud.width - 1 || pop.y + pop.height <= hud.y + 1 || pop.y >= hud.y + hud.height - 1, JSON.stringify({ pop, hud }));
+    const hudSichtbar = await page.$eval("#lzHud", e => getComputedStyle(e).visibility !== "hidden");
+    pruefe(t + "Popover überlappt Tacho nicht", !hudSichtbar || pop.x + pop.width <= hud.x + 1 || pop.x >= hud.x + hud.width - 1 || pop.y + pop.height <= hud.y + 1 || pop.y >= hud.y + hud.height - 1, JSON.stringify({ pop, hud }));
     pruefe(t + "Link zum Gesetzestext", !!(await page.$(".lz-parpop a[href*='gesetze-im-internet.de/stvo_2013/__']")));
     if (w === 360 && h === 640 && szene === "auffahren") await page.screenshot({ path: process.env.PAR_BILD || "/tmp/par-360.png" });
     await btn.tap(); await page.waitForTimeout(120);

@@ -1433,6 +1433,7 @@
   .lz-caption.mit-par{padding-right:50px;}
   .lz-parpop{position:absolute;left:12px;bottom:12px;max-width:min(320px,calc(100% - 140px));background:rgba(10,18,14,.95);border:1px solid #e0b84a;border-radius:12px;padding:10px 12px;box-shadow:0 8px 24px rgba(0,0,0,.45);z-index:3;font-size:14px;line-height:1.45;color:#dce6df;}
   @media (max-height:480px){.lz-parpop{left:auto;right:12px;top:10px;bottom:auto;max-width:min(260px,calc(100% - 410px));padding:6px 10px;}.lz-parpop a{min-height:40px;padding:0;}}
+  @media (max-height:340px){.lz-stage.par-offen .lz-hud{visibility:hidden;}}
   .lz-parpop b{display:block;color:#e0b84a;margin-bottom:4px;}
   .lz-parpop a{color:#9fd5b0;font-weight:700;display:flex;align-items:center;min-height:44px;padding:4px 0;}
   .lz-par{display:inline-block;margin-top:6px;font-size:11.5px;font-weight:700;color:#0c1410;background:#e0b84a;border-radius:6px;padding:2px 7px;}
@@ -1586,7 +1587,7 @@
     const marks = $("#lzTime"); szene.phasen.forEach(p => { const m = document.createElement("span"); m.className = "lz-mark"; m.style.left = `calc(${(p.t / szene.dauer) * 100}% - 1px)`; marks.appendChild(m); });
     $("#lzStage").addEventListener("click", e => { const b = e.target.closest && e.target.closest(".lz-parb"); if (b) { e.stopPropagation(); togglePar(b); } else if (!(e.target.closest && e.target.closest(".lz-parpop"))) schliessePar(); });
     $("#lzZu").onclick = schliessen; $("#lzZurueck").onclick = zeigeAuswahl; $("#lzRegeln").onclick = zeigeRegeln;
-    $("#lzPlay").onclick = () => { if ((root.querySelector(".lz-sheet .lz-opt") && !root.querySelector("#lzWeiter")) || tippFrage) return;
+    $("#lzPlay").onclick = () => { schliessePar(); if ((root.querySelector(".lz-sheet .lz-opt") && !root.querySelector("#lzWeiter")) || tippFrage) return;
       if (modus === "fahren") { const c = $("#lzCap"); if (c) c.hidden = true; }
       if (modus === "fahren" && fahr && fahr.ende) { schliesseSheet(); if (szene.reaktion) starteReaktion(fahr.vWahl); else starteFahren(); } if (!laeuft && zeit >= szene.dauer && modus !== "fahren") { zeit = 0; beantwortet = new Set(); } laeuft = !laeuft; if (laeuft) { schliesseSheet(); ansicht.folgen = true; } };
     const tippZu = () => { if (!tippFrage) return; tippFrage = null; const b = root.querySelector("#lzTipp"); if (b) b.remove(); ansicht.folgen = true; ansicht.zoom = grundZoom(); };
@@ -1628,7 +1629,7 @@
   }
   function aktuellePhase() { let a = null; szene.phasen.forEach(p => { if (p.t <= zeit + 0.001) a = p; }); return a; }
   // Geprüfte Fundstellen (15.11.2026 gegen StVO-Text, Prüfbericht Block 3; § 9a gibt es nicht, Kreisverkehr = § 8 Abs. 1a): nur diese bekommen das antippbare §. Neue Fundstellen erst nach Prüfung am Gesetzestext aufnehmen.
-  const PAR_GEPRUEFT = new Set(["1/2", "11/2", "11/3", "12/", "18/2", "18/3", "18/7", "2/2", "20/3", "20/4", "20/5", "26/1", "26/2", "3/1", "3/2a", "3/3", "37/2", "38/1", "4/1", "5/2", "5/4", "5/4a", "6/", "7/4", "7/5", "7a/2", "7a/3", "8/1", "8/1a", "8/2", "9/1", "9/3", "9/4", "9/5"]);
+  const PAR_GEPRUEFT = new Set(["1/2", "11/2", "11/3", "12/", "18/2", "18/3", "18/7", "2/2", "20/3", "20/4", "20/5", "26/1", "26/2", "26/3", "3/1", "3/2a", "3/3", "37/2", "38/1", "4/1", "5/2", "5/4", "5/4a", "6/", "7/4", "7/5", "7a/2", "7a/3", "8/1", "8/1a", "8/2", "9/1", "9/3", "9/4", "9/5"]);
   function parToken(regel) {
     // "§ 9 Abs. 1 · § 9 Abs. 3 StVO", "Zeichen 340 · § 7 Abs. 5 StVO" -> Liste der §-Stellen; null, wenn eine nicht geprüft ist
     const liste = []; const re = /§\s*(\d+[a-z]?)(?:\s*Abs\.\s*(\d+[a-z]?))?/g; let m;
@@ -1636,14 +1637,14 @@
     if (!liste.length) return null;
     return liste.every(x => PAR_GEPRUEFT.has(x.key)) ? liste : null;
   }
-  function schliessePar() { const p = root && root.querySelector(".lz-parpop"); if (p) p.remove(); const b = root && root.querySelector(".lz-parb"); if (b) { b.setAttribute("aria-expanded", "false"); b.textContent = "§"; } }
+  function schliessePar() { const p = root && root.querySelector(".lz-parpop"); if (p) p.remove(); const b = root && root.querySelector(".lz-parb"); if (b) { b.setAttribute("aria-expanded", "false"); b.textContent = "§"; } const st = root && root.querySelector("#lzStage"); if (st) st.classList.remove("par-offen"); }
   function togglePar(btn) {
     const offen = root.querySelector(".lz-parpop");
     if (offen) { schliessePar(); return; }
     const liste = parToken(btn.dataset.regel); if (!liste) return;
     const links = [...new Set(liste.map(x => x.par))].map(n => `<a href="https://www.gesetze-im-internet.de/stvo_2013/__${esc(n)}.html" target="_blank" rel="noopener">§ ${esc(n)} StVO – Gesetzestext lesen ↗</a>`).join("");
     const d = el(`<div class="lz-parpop" role="note"><b>${esc(btn.dataset.regel)}</b>${links}</div>`);
-    $("#lzStage").appendChild(d); btn.setAttribute("aria-expanded", "true"); btn.textContent = "✕";
+    $("#lzStage").appendChild(d); btn.setAttribute("aria-expanded", "true"); btn.textContent = "✕"; $("#lzStage").classList.add("par-offen");
   }
   function zeigeCap(titel, text, regel) {
     const c = $("#lzCap"); if (!c) return; schliessePar();
