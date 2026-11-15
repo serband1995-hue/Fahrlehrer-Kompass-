@@ -22,7 +22,7 @@ const basis = `http://127.0.0.1:${server.address().port}/`;
 const browser = await chromium.launch({ executablePath: process.env.CHROMIUM_PATH || "/opt/pw-browsers/chromium", args: ["--autoplay-policy=no-user-gesture-required"] });
 let fehler = 0, ok = 0;
 const pruefe = (n, c, g = "") => { if (c) { ok++; console.log("ok     " + n); } else { fehler++; console.log("FEHLER " + n + (g ? " – " + g : "")); } };
-const ctx = await browser.newContext({ viewport: { width: 360, height: 640 }, hasTouch: true, isMobile: true });
+const ctx = await browser.newContext({ viewport: { width: 360, height: 640 }, hasTouch: true, isMobile: true, serviceWorkers: "block" });
 const page = await ctx.newPage(); const konsole = [];
 page.on("pageerror", e => konsole.push("pageerror " + e.message));
 page.on("console", m => { if (m.type() === "error" && !/Failed to load resource|supabase|net::ERR/i.test(m.text())) konsole.push(m.text()); });
@@ -34,6 +34,15 @@ const zeitSlider = () => page.evaluate(() => +document.querySelector("#lzSlider"
 const anzahl = () => page.evaluate(() => window.__au.length);
 const spielt = () => page.evaluate(() => window.__au.length ? !window.__au[window.__au.length - 1].paused : false);
 
+// Jede Phase jeder Szene hat ihre Aufnahme (Stand des Phasentexts passt) und die Datei ist abrufbar
+const luecken = await page.evaluate(async () => {
+  const stand = t => { let h = 5381; t = String(t); for (let i = 0; i < t.length; i++) h = ((h << 5) + h + t.charCodeAt(i)) | 0; return (h >>> 0).toString(36); };
+  const idx = await (await fetch("stimme/index.json")).json(); const fehlt = []; let n = 0;
+  for (const sz of window.Lernszenen._szenen) for (const ph of sz.phasen) { n++; const e = idx[sz.id] && idx[sz.id][stand(ph.text)]; if (!e) { fehlt.push(sz.id + ": " + ph.titel); continue; } const r = await fetch("stimme/" + e.f, { method: "HEAD" }); if (!r.ok) fehlt.push(sz.id + ": Datei fehlt " + e.f); }
+  return { n, fehlt };
+});
+pruefe(`alle ${luecken.n} Phasen aller Szenen haben Ton`, luecken.fehlt.length === 0, luecken.fehlt.slice(0, 6).join(" | "));
+
 // Auswahl: Info-Satz
 await page.evaluate(() => window.Lernszenen.open({}));
 await page.waitForSelector("#lzGrid");
@@ -41,12 +50,20 @@ await page.waitForFunction(() => document.querySelector(".lz-info"), null, { tim
 pruefe("Auswahl zeigt Info-Satz „mit KI erzeugt“", !!(await page.$(".lz-info")) && /KI erzeugt/.test(await page.$eval(".lz-info", e => e.textContent)));
 await page.evaluate(() => document.querySelector("#lzZu").click());
 
-// Szene ohne Dateien bleibt stumm
+// Szene ohne Aufnahme bleibt stumm (Probe: Index ohne „rvl“ ausliefern)
+await page.route("**/stimme/index.json", async route => { const r = await route.fetch(); const j = await r.json(); delete j.rvl; await route.fulfill({ response: r, json: j }); });
+await page.reload(); await page.waitForFunction(() => window.Lernszenen && window.Lernszenen.open, null, { timeout: 15000 });
 await page.evaluate(() => window.Lernszenen.open({ szene: "rvl" }));
-await page.waitForSelector("#lzCap"); await page.waitForTimeout(400);
-pruefe("rvl (ohne Stimme): Stimmen-Knopf versteckt", await page.$eval("#lzStimme", e => e.hidden));
+await page.waitForSelector("#lzCap"); await page.waitForTimeout(500);
+pruefe("rvl (ohne Aufnahme): Stimmen-Knopf versteckt", await page.$eval("#lzStimme", e => e.hidden));
 await page.click("#lzPlay"); await page.waitForTimeout(1500);
-pruefe("rvl: kein Ton gestartet", (await anzahl()) === 0);
+pruefe("rvl (ohne Aufnahme): kein Ton gestartet", (await anzahl()) === 0);
+await page.evaluate(() => document.querySelector("#lzZu").click());
+await page.unroute("**/stimme/index.json");
+await page.reload(); await page.waitForFunction(() => window.Lernszenen && window.Lernszenen.open, null, { timeout: 15000 });
+await page.evaluate(() => window.Lernszenen.open({ szene: "rvl" }));
+await page.waitForSelector("#lzCap"); await page.waitForTimeout(500);
+pruefe("rvl (mit Aufnahme): Stimmen-Knopf sichtbar", !(await page.$eval("#lzStimme", e => e.hidden)));
 await page.evaluate(() => document.querySelector("#lzZu").click());
 
 // Szene mit Stimme (Stoppschild: Phasen bei 0,2 / 4,8 / 6,6 / 9 s)
