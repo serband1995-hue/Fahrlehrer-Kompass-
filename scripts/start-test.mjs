@@ -132,6 +132,10 @@ await page.evaluate(() => { DB.workCfg.fahrzeuge = [{ id: "fz1", name: "Audi Q5"
 await page.reload(); await page.waitForTimeout(900);
 const t6d = await page.evaluate(() => ({ fz: DB.workCfg.fahrzeuge.map((f) => f.name).join(), les: (DB.lessons.find((l) => l.id === "q5x") || {}).fahrzeug, rest: JSON.stringify(DB).includes("Audi Q5") }));
 if (t6d.fz !== "Audi A3 Schalter,Golf 8" || t6d.les !== "Audi A3 Schalter" || t6d.rest) fehler("Audi Q5 nicht (überall) ersetzt: " + JSON.stringify(t6d)); else ok("Audi Q5 → Audi A3 Schalter (Typ schalt), Termine mitgezogen, nichts mehr mit Q5");
+await page.evaluate(() => { DB.workCfg.fahrzeuge = [{ id: "fz1", name: "Audi Q5", typ: "automatik" }, { id: "fz2", name: "Audi A3 Automatik", typ: "automatik" }]; save(); });
+await page.reload(); await page.waitForTimeout(900);
+const t6e = await page.evaluate(() => DB.workCfg.fahrzeuge.map((f) => f.name).join());
+if (t6e !== "Audi A3 Automatik (2),Audi A3 Automatik") fehler("Doppelter Fahrzeugname nach Umbenennung: " + t6e); else ok("Audi Q5 neben vorhandenem Audi A3 Automatik: kein doppelter Name");
 const fix = await page.evaluate(async () => { const alt = DB.verdienst; DB.verdienst = Object.assign({}, alt, { proUE: 0, fixum: 2000 }); routeDashboard(); await new Promise((k) => setTimeout(k, 150));
   const t = document.getElementById("view").innerText; DB.verdienst = alt; return { gefahren: /Diese Woche gefahren/.test(t), nullEuro: /Diese Woche verdient\s*0 €/.test(t) }; });
 if (!fix.gefahren || fix.nullEuro) fehler("Nur-Fixum-Vertrag zeigt 0 € statt gefahrener UE: " + JSON.stringify(fix)); else ok("Nur-Fixum-Vertrag: Heute zeigt gefahrene UE statt 0 €");

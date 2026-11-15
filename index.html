@@ -2749,7 +2749,9 @@ body.light .fc-miss-sum b{color:#7a2a1e !important;}
 </div>
 
 <script>/* Block 3: Von der Theorie zurück in die App blitzte kurz die Anmeldeseite (sie stand bis zum load-Ereignis sichtbar). Ist lokal eine Sitzung gespeichert, wird sie sofort versteckt; schlägt der Start fehl, zeigt checkSession() sie wieder (_loginZeigen). */
-try{ for(var _i=0;_i<localStorage.length;_i++){ if(/^sb-.+-auth-token$/.test(localStorage.key(_i)||"")){ document.getElementById("loginOverlay").classList.add("hidden"); window._loginVersteckt=true; break; } } }catch(e){}
+try{ var _tok=false,_bio=false; for(var _i=0;_i<localStorage.length;_i++){ var _k=localStorage.key(_i)||""; if(/^kompass-bio-cred-/.test(_k)){ _bio=true; } else if(/^sb-.+-auth-token$/.test(_k)){ try{ var _j=JSON.parse(localStorage.getItem(_k)||"null"); var _s=_j&&(_j.currentSession||_j); if(_s&&_s.refresh_token)_tok=true; }catch(e){} } }
+/* Mit aktiver Schnell-Entsperrung (Bio-Sperre) bleibt die Anmeldeseite sichtbar, bis die Sperre erscheint: sonst wäre die App kurz ungesperrt zu sehen. */
+if(_tok&&!_bio){ document.getElementById("loginOverlay").classList.add("hidden"); window._loginVersteckt=true; } }catch(e){}
 </script>
 <div class="app">
   <!-- Streifen nur für den Super-Admin: zeigt, dass man mit allen Rechten angemeldet ist -->
@@ -7510,7 +7512,7 @@ window.addEventListener("load", () => {
 const STORE_KEY="serband-app-v1";
 /* Build-Version: bei jeder Auslieferung hier das Datum aktualisieren.
    Wird in den Einstellungen angezeigt + für den Update-Hinweis genutzt. */
-const APP_VERSION="2026.11.15.5";
+const APP_VERSION="2026.11.15.6";
 try{const f=document.getElementById("drawerFoot"); if(f)f.textContent="Fahrlehrer-Kompass · Version "+APP_VERSION;}catch(e){}
 // Nutzungsbedingungen & Haftungsausschluss (Bereich: rechtliche Absicherung) - Version hochzählen
 // und alle Nutzer müssen erneut zustimmen, sobald sich der Text inhaltlich ändert.
@@ -13782,7 +13784,12 @@ function ensureDB(){ let _ensureDirty=false; if(!Array.isArray(DB.exams))DB.exam
     const _istQ5=(n)=>String(n||"").trim().toLowerCase()==="audi q5";
     let _a3Name=null;
     if(Array.isArray(DB.workCfg.fahrzeuge)){
-      DB.workCfg.fahrzeuge.forEach(fz=>{ if(fz&&_istQ5(fz.name)){ fz.name=(fz.typ==="schalt")?"Audi A3 Schalter":"Audi A3 Automatik"; _a3Name=_a3Name||fz.name; _ensureDirty=true; } });
+      DB.workCfg.fahrzeuge.forEach(fz=>{ if(fz&&_istQ5(fz.name)){
+        let n=(fz.typ==="schalt")?"Audi A3 Schalter":"Audi A3 Automatik";
+        // gibt es den Namen schon bei einem anderen Fahrzeug (Termine werden nach Namen zugeordnet), nummerieren
+        const belegt=(x)=>DB.workCfg.fahrzeuge.some(o=>o&&o!==fz&&o.name===x);
+        if(belegt(n)){ let i=2; while(belegt(n+" ("+i+")"))i++; n=n+" ("+i+")"; }
+        fz.name=n; _a3Name=_a3Name||n; _ensureDirty=true; } });
     }
     if(Array.isArray(DB.lessons)){
       DB.lessons.forEach(l=>{ if(l&&_istQ5(l.fahrzeug)){ l.fahrzeug=_a3Name||"Audi A3 Automatik"; _ensureDirty=true; } });
