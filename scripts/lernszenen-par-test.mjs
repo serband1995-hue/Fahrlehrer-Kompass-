@@ -49,7 +49,7 @@ for (const [w, h] of [[360, 640], [412, 915], [640, 360]]) {
     pruefe(t + "Popover im Bild", pop.x >= st.x - 1 && pop.x + pop.width <= st.x + st.width + 1 && pop.y >= st.y - 1 && pop.y + pop.height <= st.y + st.height + 1, JSON.stringify({ pop, st }));
     pruefe(t + "Popover überlappt Erklärkasten nicht", pop.y >= cap.y + cap.height - 1 || pop.x >= cap.x + cap.width - 1 || pop.x + pop.width <= cap.x + 1, JSON.stringify({ pop, cap }));
     pruefe(t + "Link zum Gesetzestext", !!(await page.$(".lz-parpop a[href*='gesetze-im-internet.de/stvo_2013/__']")));
-    if (w === 360 && h === 640 && szene === "auffahren") await page.screenshot({ path: process.env.PAR_BILD || "par-360.png" });
+    if (w === 360 && h === 640 && szene === "auffahren") await page.screenshot({ path: process.env.PAR_BILD || "/tmp/par-360.png" });
     await btn.tap(); await page.waitForTimeout(120);
     pruefe(t + "2. Tippen schließt", !(await page.$(".lz-parpop")));
     await page.evaluate(() => document.querySelector("#lzZu").click());
