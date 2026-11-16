@@ -19,10 +19,10 @@ const browser = await chromium.launch({ executablePath: process.env.CHROMIUM_PAT
 const ZEIGE = { rechts_rad: ["rad", "rad2"], kreisel: ["k"], strassenbahn: ["tram"], abstand: ["fs", "lr"], einsatz: ["q"] };
 // Querformat, neue Szenen mit kamera.quer: Fokus-Auto und wichtige Beteiligte liegen im Bild UND nicht unter dem sichtbaren Erklaerkasten (#lzCap)
 const NEU = ["abknick", "vorfahrt_gewaehren", "rechts_fussg", "grundstueck", "ampel_gelb", "bahnuebergang", "strassenbahn", "abstand", "halteverbot", "einsatz"];
-const QUER = { abknick: [[1, ["c"]], [3, ["b", "c"]]], vorfahrt_gewaehren: [[3, ["b", "c"]]], rechts_fussg: [[0, ["fg", "kd"]], [1, ["fg", "kd"]], [2, ["fg", "kd"]]], grundstueck: [[2, ["fg", "ew"]], [4, ["b"]]], ampel_gelb: [[2, ["b"]]], abstand: [[1, ["f2", "lf"]], [2, ["f2", "lf"]], [3, ["f2", "lf"]], [4, ["f2", "lf"]], [5, ["f2", "lf"]]] };
+const QUER = { abknick: [[1, ["c"]], [3, ["b", "c"]]], vorfahrt_gewaehren: [[3, ["b", "c"]]], rechts_fussg: [[0, ["fg", "kd"]], [1, ["fg", "kd"]], [2, ["fg", "kd"]]], grundstueck: [[2, ["fg", "ew"]], [4, ["b"]]], ampel_gelb: [[2, ["b"]]], einsatz: [[1, ["rtw"]], [2, ["rtw"]], [3, ["rtw"]]], abstand: [[1, ["f2", "lf"]], [2, ["f2", "lf"]], [3, ["f2", "lf"]], [4, ["f2", "lf"]], [5, ["f2", "lf"]]] };
 // Feste Punkte der Szene (Ampel, Zusatzzeichen), die in den genannten Phasen im Bild und nicht unter dem Erklaerkasten liegen muessen
 const PUNKTE = { ampel_gelb: { phasen: [1, 2], punkte: [["Ampel", 4.4, 14.3]] }, abknick: { phasen: [0, 1], punkte: [["Zusatzzeichen", 4.9, 12]] } };
-const IMMER = ["ampel_gelb", "rechts_fussg", "grundstueck"];          // kamera.quer.immer: auch im Hochformat
+const IMMER = ["ampel_gelb", "rechts_fussg", "grundstueck", "einsatz", "bahnuebergang", "strassenbahn", "abstand", "halteverbot"];          // kamera.quer.immer: auch im Hochformat
 let ok = 0, fehler = 0;
 const pruefe = (n, c, g = "") => { if (c) ok++; else { fehler++; console.log("FEHLER " + n + (g ? " – " + g : "")); } };
 for (const [w, h] of [[360, 640], [640, 360], [568, 320]]) {
@@ -41,7 +41,8 @@ for (const [w, h] of [[360, 640], [640, 360], [568, 320]]) {
       await page.waitForTimeout(900);
       const r = await page.evaluate(zeige => {
         const L = window.Lernszenen, z = L._intern.zustand(), s = L._szenen.find(x => x.id === z.szene), st = document.querySelector("#lzCanvas").getBoundingClientRect(), out = [];
-        for (const f of s.fahrzeuge) { if (!f.fokus && !(zeige || []).includes(f.id)) continue; const p = L._intern.rohPos(f, z.zeit); const sx = st.width / 2 + (p.x - z.ansicht.px) * z.ansicht.zoom, sy = st.height / 2 + (p.y - z.ansicht.py) * z.ansicht.zoom; out.push([f.id, Math.round(sx), Math.round(sy), sx >= 0 && sx <= st.width && sy >= 0 && sy <= st.height]); }
+        const floor = z.ansicht.zoom <= 0.66 * z.grund;   // Untergrenze der festen Kamera: Mitspieler fern der Kreuzung duerfen aus dem Bild
+        for (const f of s.fahrzeuge) { if (!f.fokus && (floor || !(zeige || []).includes(f.id))) continue; const p = L._intern.rohPos(f, z.zeit); const sx = st.width / 2 + (p.x - z.ansicht.px) * z.ansicht.zoom, sy = st.height / 2 + (p.y - z.ansicht.py) * z.ansicht.zoom; out.push([f.id, Math.round(sx), Math.round(sy), sx >= 0 && sx <= st.width && sy >= 0 && sy <= st.height]); }
         return { out, b: [Math.round(st.width), Math.round(st.height)], zeit: z.zeit };
       }, ZEIGE[id]);
       if (NEU.includes(id) && (w > h || IMMER.includes(id))) {

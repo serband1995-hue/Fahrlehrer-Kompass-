@@ -169,7 +169,7 @@
     K.linien.push({ art: "voll", b: 0.5, pts: [[0.1, HL], [3.2, HL]] });
     // Phasenlisten: [bis, Farbe]. Fahrtrichtung Nord (S-Zufahrt): Grün bis tY, Gelb bis tRot, Rot bis tRg, Rot-Gelb bis tG, dann Grün. Querverkehr gegengleich.
     const sPh = [[tY, "gruen"], [tRot, "gelb"], [tRg, "rot"], [tG, "rotgelb"], [99, "gruen"]], qPh = [[tCg, "rot"], [tCy, "gruen"], [tCr, "gelb"], [99, "rot"]], gross = 4;
-    K.objekte.push({ art: "ampel", k: gross, x: 4.4, y: HL + 0.3, h: PI / 2, phasen: sPh }, { art: "ampel", k: gross, x: -4.4, y: -HL, h: -PI / 2, phasen: sPh },
+    K.objekte.push({ art: "ampel", k: gross, k3d: 4, x: 4.4, y: HL + 0.3, h: PI / 2, phasen: sPh }, { art: "ampel", k: gross, x: -4.4, y: -HL, h: -PI / 2, phasen: sPh },
       { art: "ampel", k: gross, x: -12.8, y: 4.4, h: PI, phasen: qPh }, { art: "ampel", k: gross, x: 12.8, y: -4.4, h: 0, phasen: qPh });
     const A = 25, tB = 15 / (50 / KMH);                    // Bremsweg 25 m, Reaktionszeit ≈ 1,08 s (15 m bei 50 km/h)
     const vS = 50 / KMH, tD = tY + tB, tStop = tD + vS / (vS * vS / (2 * A));
@@ -186,7 +186,7 @@
     }
     neu({
       id: "ampel_gelb", plan: ["g_brems", "a_stadt"], titel: "Ampel: Gelb und Rot-Gelb", kurz: "Bei Gelb vor der Kreuzung halten, wenn es sicher geht. Rot-Gelb ist noch Rot",
-      dauer: Math.ceil(tG + 5), strasse: K, kamera: { fokus: "fs", zoom: 8, vor: 0.16, quer: { immer: true, zeige: ["b", "q"], radius: 45, punkte: [[4.4, 14.3]] } },
+      dauer: Math.ceil(tG + 5), strasse: K, kamera: { fokus: "fs", zoom: 8, vor: 0.16, kam3d: { ab: 40, hoch: 11, nick: -0.2, nickF: -0.4, quer: { ab: 46, hoch: 11, nick: -0.14, nickF: -0.35 } }, quer: { immer: true, zeige: ["b", "q"], radius: 45, punkte: [[4.4, 14.3]] } },
       fahrzeuge: [fs, bl, q],
       overlayUnten: (c, X, Y, s, z) => {
         if (z < tY || z > tRg) return;
