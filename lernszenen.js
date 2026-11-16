@@ -1790,7 +1790,7 @@
   .lz-caption h3{margin:0 0 3px;font-size:15.5px;}
   .lz-caption p{margin:0;font-size:13.5px;line-height:1.45;color:#dce6df;}
   .lz-nochmal{display:inline-flex;align-items:center;gap:6px;margin-top:8px;min-height:44px;padding:0 12px;border-radius:10px;border:1px solid #2e4a40;background:#1a2f28;color:#eef3ef;font-size:13.5px;font-weight:600;cursor:pointer;pointer-events:auto;}
-  @media (max-height:480px){ .lz-nochmal{position:absolute;top:3px;right:50px;min-height:26px;min-width:38px;justify-content:center;margin:0;padding:0 8px;font-size:12px;} .lz-nochmal::after{content:"";position:absolute;inset:-9px -6px;} .lz-nm-t{display:none;} .lz-caption:has(.lz-nochmal) h3{padding-right:96px;} }
+  @media (max-height:480px){ .lz-caption.mit-par .lz-nochmal{right:90px;} .lz-caption.mit-par h3{padding-right:136px !important;} .lz-nochmal{position:absolute;top:3px;right:50px;min-height:26px;min-width:38px;justify-content:center;margin:0;padding:0 8px;font-size:12px;} .lz-nochmal::after{content:"";position:absolute;inset:-9px -6px;} .lz-nm-t{display:none;} .lz-caption:has(.lz-nochmal) h3{padding-right:96px;} }
   .lz-info{margin:14px 0 0;padding:0 14px 12px;font-size:13px;color:#b1bfb5;}
   @media (min-height:481px){ #lzStimme{min-height:44px;min-width:44px;} }
   #lzStimme[aria-pressed="true"]{background:#2f6b4f;border-color:#4fae80;}
@@ -1799,6 +1799,14 @@
   .lz-parb::after{content:"";position:absolute;inset:-6px;}
   .lz-parb[aria-expanded="true"]{background:#0c1410;color:#e0b84a;}
   .lz-caption.mit-par{padding-right:50px;}
+  .lz-capx{position:absolute;right:8px;top:8px;width:34px;height:34px;border-radius:50%;border:1px solid rgba(160,200,175,.55);background:rgba(30,50,42,.95);color:#eef3ef;font:700 16px/1 system-ui,sans-serif;cursor:pointer;pointer-events:auto;padding:0;}
+  .lz-capx::after{content:"";position:absolute;inset:-6px;}
+  .lz-caption{padding-right:50px;} .lz-caption.mit-par{padding-right:90px;} .lz-caption.mit-par .lz-parb{right:48px;}
+  .lz-capopen{position:absolute;left:12px;top:10px;min-height:44px;padding:0 14px;border-radius:12px;border:1px solid rgba(160,200,175,.55);background:rgba(10,18,14,.92);color:#eef3ef;font:600 13.5px system-ui,sans-serif;cursor:pointer;z-index:2;}
+  .lz-capopen[hidden]{display:none;}
+  .lz-parx{position:absolute;right:4px;top:4px;width:36px;height:36px;border:0;background:transparent;color:#e0b84a;font:700 18px/1 system-ui,sans-serif;cursor:pointer;padding:0;}
+  .lz-parx::after{content:"";position:absolute;inset:-4px;}
+  .lz-parpop{padding-right:40px !important;}
   .lz-parpop{position:absolute;left:12px;bottom:12px;max-width:min(320px,calc(100% - 140px));background:rgba(10,18,14,.95);border:1px solid #e0b84a;border-radius:12px;padding:10px 12px;box-shadow:0 8px 24px rgba(0,0,0,.45);z-index:3;font-size:14px;line-height:1.45;color:#dce6df;}
   @media (max-height:480px){.lz-parpop{left:auto;right:12px;top:10px;bottom:auto;max-width:min(260px,calc(100% - 410px));padding:6px 10px;}.lz-parpop{line-height:1.3;}.lz-parpop a{min-height:34px;padding:0;}}
   @media (max-height:340px){.lz-stage.par-offen .lz-hud{visibility:hidden;}}
@@ -1910,7 +1918,7 @@
     });
   }
   function starteSzene(id) {
-    szene = SZENEN.find(s => s.id === id); zeit = 0; laeuft = false; versatzFz = {}; beantwortet = new Set(); punkte = { richtig: 0, gesamt: 0 }; fahr = null; _hGlatt = null; zoomUser = false;
+    szene = SZENEN.find(s => s.id === id); zeit = 0; laeuft = false; versatzFz = {}; beantwortet = new Set(); punkte = { richtig: 0, gesamt: 0 }; fahr = null; _hGlatt = null; zoomUser = false; capZu = false;
     modus = "vorfuehren"; kameraModus = "oben"; tempoFaktor = 1;
     ansicht = { zoom: grundZoom(), px: 0, py: 0, folgen: true };
     const fk = szene.fahrzeuge.find(f => f.fokus); const fp = fzPos(fk, 0); ansicht.px = fp.x; ansicht.py = fp.y;
@@ -1923,6 +1931,7 @@
         <button class="lz-btn" id="lzZu" aria-label="Schließen">✕</button>
       </div>
       <div class="lz-stage" id="lzStage"><canvas id="lzCanvas" aria-label="Animierte Verkehrsszene"></canvas>
+        <button class="lz-capopen" id="lzCapOpen" type="button" data-capopen hidden>▤ Text anzeigen</button>
         <div class="lz-caption" id="lzCap"><h3>${esc(szene.titel)}</h3><p>Auf ▶ tippen – die Szene spielt sich von selbst ab. Mit ⏸ anhalten und Fahrzeuge verschieben.</p></div>
         <canvas class="lz-fahrer" id="lzFahrer" width="224" height="192" hidden aria-hidden="true"></canvas>
         <div class="lz-hud" id="lzHud"><b id="lzV">0</b><span>km/h</span><div class="lz-blink"><span id="lzBL">◀</span><span id="lzBR">▶</span></div></div>
@@ -1961,12 +1970,12 @@
     cv = $("#lzCanvas"); ctx = cv.getContext("2d"); beiResize(); ansicht.zoom = grundZoom();
     if (window.ResizeObserver) { beob = new ResizeObserver(() => beiResize()); beob.observe($("#lzStage")); }   // z. B. wenn die Fahrleiste erscheint
     const marks = $("#lzTime"); szene.phasen.forEach(p => { const m = document.createElement("span"); m.className = "lz-mark"; m.style.left = `calc(${(p.t / szene.dauer) * 100}% - 1px)`; marks.appendChild(m); });
-    $("#lzStage").addEventListener("click", e => { const nm = e.target.closest && e.target.closest("[data-nochmal]"); if (nm) { e.stopPropagation(); stimmeNochmal(); return; } const b = e.target.closest && e.target.closest(".lz-parb"); if (b) { e.stopPropagation(); togglePar(b); } else if (!(e.target.closest && e.target.closest(".lz-parpop"))) schliessePar(); });
+    $("#lzStage").addEventListener("click", e => { const nm = e.target.closest && e.target.closest("[data-nochmal]"); if (nm) { e.stopPropagation(); stimmeNochmal(); return; } const cx = e.target.closest && e.target.closest("[data-capx],[data-capopen]"); if (cx) { e.stopPropagation(); capZu = cx.hasAttribute("data-capx"); schliessePar(); capSync(); return; } if (e.target.closest && e.target.closest("[data-parx]")) { e.stopPropagation(); schliessePar(); return; } const b = e.target.closest && e.target.closest(".lz-parb"); if (b) { e.stopPropagation(); togglePar(b); } else if (!(e.target.closest && e.target.closest(".lz-parpop"))) schliessePar(); });
     $("#lzZu").onclick = schliessen; $("#lzZurueck").onclick = zeigeAuswahl; $("#lzRegeln").onclick = zeigeRegeln;
     stimmeLade(() => { if (!szene) return; stimmeSchalter(); stimmeNachholen(); const ph = aktuellePhase() || szene.phasen[0]; if (modus === "vorfuehren" && !laeuft && ph && !root.querySelector("#lzCap .lz-nochmal")) zeigePhase(ph); });
     $("#lzStimme").onclick = () => { const an = !stimmeAn(); try { localStorage.setItem("lz_stimme", an ? "1" : "0"); } catch (e) {} if (!an) stimmeStopp(); stimmeSchalter(); if (an) stimmeNachholen(); const ph = aktuellePhase() || szene.phasen[0]; if (ph && modus !== "fahren" && !laeuft) { const c = $("#lzCap"); if (c && !c.hidden && c.querySelector("h3")) zeigeCap(ph.titel, ph.text, ph.regel, ph); } };
     $("#lzPlay").onclick = () => { schliessePar(); if ((root.querySelector(".lz-sheet .lz-opt") && !root.querySelector("#lzWeiter")) || tippFrage) return;
-      if (modus === "fahren") { const c = $("#lzCap"); if (c) c.hidden = true; }
+      if (modus === "fahren") capSync();
       if (modus === "fahren" && fahr && fahr.ende) { schliesseSheet(); if (szene.reaktion) starteReaktion(fahr.vWahl); else starteFahren(); } if (!laeuft && zeit >= szene.dauer && modus !== "fahren") { zeit = 0; beantwortet = new Set(); } laeuft = !laeuft; if (modus !== "fahren") { stimmePause(!laeuft); stimmeNachholen(); } if (laeuft) { schliesseSheet(); ansicht.folgen = true; } };
     const tippZu = () => { if (!tippFrage) return; tippFrage = null; const b = root.querySelector("#lzTipp"); if (b) b.remove(); ansicht.folgen = true; ansicht.zoom = grundZoom(); };
     $("#lzSlider").oninput = e => { tippZu(); ansicht.folgen = true; zoomUser = false; zeit = +e.target.value; laeuft = false; const ph = aktuellePhase(); if (ph) zeigePhase(ph); };
@@ -2031,7 +2040,7 @@
   function setzeModus(m) {
     stimmeStopp(); tippFrage = null; { const b = root.querySelector("#lzTipp"); if (b) b.remove(); }
     modus = m; laeuft = false; versatzFz = {}; zeit = 0; beantwortet = new Set(); punkte = { richtig: 0, gesamt: 0 }; schliesseSheet(); _hGlatt = null;
-    { const c = $("#lzCap"); if (c) c.hidden = false; }
+    capSync();
     root.querySelectorAll("[data-modus]").forEach(x => x.classList.toggle("on", x.dataset.modus === m));
     $("#lzDrive").hidden = !(m === "fahren" && szene.fahren); $("#lzRang").hidden = !(m === "fahren" && szene.rangieren); $("#lzReak").hidden = !(m === "fahren" && szene.reaktion);
     $("#lzPrev").hidden = $("#lzNext").hidden = $("#lzTime").hidden = m === "fahren";
@@ -2120,21 +2129,25 @@
     if (!liste.length) return null;
     return liste.every(x => PAR_GEPRUEFT.has(x.key)) ? liste : null;
   }
-  function schliessePar() { const p = root && root.querySelector(".lz-parpop"); if (p) p.remove(); const b = root && root.querySelector(".lz-parb"); if (b) { b.setAttribute("aria-expanded", "false"); b.textContent = "§"; } const st = root && root.querySelector("#lzStage"); if (st) st.classList.remove("par-offen"); }
+  function schliessePar() { const p = root && root.querySelector(".lz-parpop"); if (p) p.remove(); const b = root && root.querySelector(".lz-parb"); if (b) { b.setAttribute("aria-expanded", "false"); } const st = root && root.querySelector("#lzStage"); if (st) st.classList.remove("par-offen"); }
   function togglePar(btn) {
     const offen = root.querySelector(".lz-parpop");
     if (offen) { schliessePar(); return; }
     const liste = parToken(btn.dataset.regel); if (!liste) return;
     const links = [...new Set(liste.map(x => x.par))].map(n => `<a href="https://www.gesetze-im-internet.de/stvo_2013/__${esc(n)}.html" target="_blank" rel="noopener">§ ${esc(n)} StVO – Gesetzestext lesen ↗</a>`).join("");
-    const d = el(`<div class="lz-parpop" role="note"><b>${esc(btn.dataset.regel)}</b>${links}</div>`);
-    $("#lzStage").appendChild(d); btn.setAttribute("aria-expanded", "true"); btn.textContent = "✕"; $("#lzStage").classList.add("par-offen");
+    const d = el(`<div class="lz-parpop" role="note"><button class="lz-parx" type="button" data-parx aria-label="Schließen">✕</button><b>${esc(btn.dataset.regel)}</b>${links}</div>`);
+    $("#lzStage").appendChild(d); btn.setAttribute("aria-expanded", "true"); $("#lzStage").classList.add("par-offen");
+    if (window.innerHeight <= 480) { const st = $("#lzStage").getBoundingClientRect(), cp = $("#lzCap").getBoundingClientRect(), fr = st.right - cp.right - 20; if (fr >= 180) { d.style.left = Math.round(cp.right - st.left + 8) + "px"; d.style.right = "auto"; d.style.maxWidth = Math.min(260, fr) + "px"; } } else { const st = $("#lzStage").getBoundingClientRect(), cp = $("#lzCap").getBoundingClientRect(); d.style.left = "12px"; d.style.bottom = "auto"; d.style.top = Math.round(cp.bottom - st.top + 8) + "px"; d.style.maxWidth = "min(340px,calc(100% - 24px))"; }
   }
+  let capZu = false;
+  function capSync() { const c = $("#lzCap"), o = $("#lzCapOpen"); if (!c || !o) return; const weg = modus === "fahren"; c.hidden = capZu || weg; o.hidden = !capZu || weg; }
   function zeigeCap(titel, text, regel, ph) {
     const c = $("#lzCap"); if (!c) return; schliessePar();
     const ok = regel && parToken(regel);
     c.classList.toggle("mit-par", !!ok);
     const nochmal = ph && stimmeAn() && stimmeFuer(ph) ? `<button class="lz-nochmal" type="button" data-nochmal aria-label="Nochmal hören">🔊<span class="lz-nm-t"> Nochmal hören</span></button>` : "";
-    c.innerHTML = `<h3>${esc(titel)}</h3><p>${esc(text)}</p>${nochmal}${ok ? `<button class="lz-parb" type="button" aria-label="Gesetzestext anzeigen" aria-expanded="false" data-regel="${esc(regel)}">§</button>` : ""}`;
+    c.innerHTML = `<h3>${esc(titel)}</h3><p>${esc(text)}</p>${nochmal}<button class="lz-capx" type="button" data-capx aria-label="Text ausblenden">✕</button>${ok ? `<button class="lz-parb" type="button" aria-label="Gesetzestext anzeigen" aria-expanded="false" data-regel="${esc(regel)}">§</button>` : ""}`;
+    capSync();
   }
   function zeigePhase(p) { stimmeStopp(); zeigeCap(p.titel, p.text, p.regel, p); }
   function zeigeToast(t) { const s = $("#lzStage"); if (!s) return; const d = el(`<div class="lz-toast">${esc(t)}</div>`); s.appendChild(d); setTimeout(() => d.remove(), 2600); }
