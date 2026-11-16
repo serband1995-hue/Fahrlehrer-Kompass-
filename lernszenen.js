@@ -844,6 +844,7 @@
     const kreise = [];
     liste.forEach(e => { const T = TYPEN[e.f.typ]; if (!T || T.person || (e.f.unsichtbar && e.f.unsichtbar(zeit))) return; const n = Math.max(1, Math.round(T.l / 2.3)); for (let i = 0; i < n; i++) { const u = (i - (n - 1) / 2) * 2.3; kreise.push([X(e.p.x + Math.cos(e.p.h) * u), Y(e.p.y + Math.sin(e.p.h) * u), Math.max(0.9, T.b * 0.55) * s]); } });
     const prio = t => t === "toter Winkel" ? 3 : t === "frei" ? 1 : 2, belegt = [];
+    { const cap = root && root.querySelector("#lzCap"), r = cv.getBoundingClientRect(); if (cap && !cap.hidden) { const c = cap.getBoundingClientRect(); belegt.push([(c.left - r.left) * dpr, (c.top - r.top) * dpr, (c.right - r.left) * dpr, (c.bottom - r.top) * dpr]); } }
     etiketten.sort((a, b) => prio(b.beschr) - prio(a.beschr));
     const fs2 = Math.max(12 * dpr, 0.9 * s); ctx.font = "bold " + fs2 + "px sans-serif"; ctx.textAlign = "center"; ctx.textBaseline = "middle";
     for (const et of etiketten) {
@@ -1671,7 +1672,7 @@
     const fokus = fahrzeugListe().find(e => e.f.fokus);
     if (fokus && ansicht.folgen) {
       let zx, zy;
-      if (szene.kamera.fest) { zx = szene.kamera.fest[0]; zy = szene.kamera.fest[1] - kameraVersatz(false) / ansicht.zoom; }
+      if (szene.kamera.fest) { zx = szene.kamera.fest[0]; zy = szene.kamera.fest[1]; }
       else { const vor = (szene.kamera.vor ?? 0.12) * (Wpx / dpr) / ansicht.zoom, hoch = kameraVersatz(true) / ansicht.zoom, hh = szene.kamera.richtung ? fokus.p.h : 0; zx = fokus.p.x + Math.cos(hh) * vor; zy = fokus.p.y + Math.sin(hh) * vor - hoch; }
       ansicht.px += (zx - ansicht.px) * 0.15; ansicht.py += (zy - ansicht.py) * 0.15;
     }
@@ -1690,14 +1691,15 @@
     const sperr = ["#lzCap", "#lzHud", ".lz-parpop", ".lz-parb", ".lz-tipp", ".lz-coach", ".lz-toast"].map(q => root.querySelector(q)).filter(e => e && !e.hidden).map(e => e.getBoundingClientRect());
     const cap = root.querySelector("#lzCap"), cr = cap ? cap.getBoundingClientRect() : null;
     // Fahrzeuge als kleine Quadrate (CSS-Pixel), damit der Einsatz sie nicht verdeckt
-    const cvr = cv.getBoundingClientRect(), z = ansicht.zoom, fz = [];
-    fahrzeugListe().forEach(e => { const T = TYPEN[e.f.typ]; if (!T || (e.f.unsichtbar && e.f.unsichtbar(zeit))) return; const n = Math.max(1, Math.round(T.l / 2.3)), hb = Math.max(1.2, T.b * 0.6) * z; for (let i = 0; i < n; i++) { const u = (i - (n - 1) / 2) * 2.3, cx = cvr.left + cvr.width / 2 + (e.p.x + Math.cos(e.p.h) * u - ansicht.px) * z, cy = cvr.top + cvr.height / 2 + (e.p.y + Math.sin(e.p.h) * u - ansicht.py) * z; fz.push({ left: cx - hb, right: cx + hb, top: cy - hb, bottom: cy + hb }); } });
+    const cvr = cv.getBoundingClientRect(), z = ansicht.zoom, fz = [], fzF = [];
+    fahrzeugListe().forEach(e => { const T = TYPEN[e.f.typ]; if (!T || (e.f.unsichtbar && e.f.unsichtbar(zeit))) return; const n = Math.max(1, Math.round(T.l / 2.3)), hb = Math.max(1.2, T.b * 0.6) * z; for (let i = 0; i < n; i++) { const u = (i - (n - 1) / 2) * 2.3, cx = cvr.left + cvr.width / 2 + (e.p.x + Math.cos(e.p.h) * u - ansicht.px) * z, cy = cvr.top + cvr.height / 2 + (e.p.y + Math.sin(e.p.h) * u - ansicht.py) * z; const q = { left: cx - hb, right: cx + hb, top: cy - hb, bottom: cy + hb }; fz.push(q); if (e.f.fokus) fzF.push(q); } });
     const kand = hoch ? [[S.width - w - 10, (cr ? cr.bottom - S.top : 0) + 8]] : [[10, S.height - h - 10], [S.width * 0.38, S.height - h - 10]];
     for (const [x, y, mitFz] of kand.map(k => [k[0], k[1], true]).concat(kand.map(k => [k[0], k[1], false]))) {
       const r = { left: S.left + x, top: S.top + y, right: S.left + x + w, bottom: S.top + y + h };
       if (x < 0 || y < 0 || r.right > S.right || r.bottom > S.bottom) continue;
       if (sperr.some(q => ueberlapptR(r, q, 6))) continue;
       if (mitFz && fz.some(q => ueberlapptR(r, q, 4))) continue;
+      if (fzF.some(q => ueberlapptR(r, q, 4))) continue;                // das eigene Auto wird nie verdeckt: dann lieber ausblenden
       cvF.style.opacity = mitFz ? "1" : "0.5";       // deckt es doch ein Fahrzeug ab: halbtransparent
       const k = Math.round(x) + "," + Math.round(y) + "," + w; if (k !== cvF.dataset.p) { cvF.style.width = w + "px"; cvF.style.height = h + "px"; cvF.dataset.p = k; cvF.style.left = Math.round(x) + "px"; cvF.style.top = Math.round(y) + "px"; }
       return true;
@@ -1715,7 +1717,7 @@
     let ziel = -0.28, seite = -1, txt = "Spiegel";                       // Blick in den Spiegel (nach links/außen)
     const sl = fk.f.schulter && fk.f.schulter.find(x => zeit >= x.von - 0.2 && zeit < x.bis + 0.3);
     if (fk.f.schulter) seite = fk.f.schulter[0].seite === "rechts" ? 1 : -1;
-    if (sl) { seite = sl.seite === "rechts" ? 1 : -1; ziel = seite * 1.45; txt = "Schulterblick"; } else ziel = seite * 0.3;
+    if (sl) { seite = sl.seite === "rechts" ? 1 : -1; ziel = seite * (sl.seite === "rundum" || sl.seite === "hinten" ? 1.2 : 1.45); txt = sl.seite === "rundum" ? "Rundumblick" : sl.seite === "hinten" ? "Blick zurück" : "Schulterblick"; } else ziel = seite * 0.3;
     if (!sl && fk.f.schulter && fk.f.schulter.every(x => zeit >= x.bis + 0.3)) ziel = 0;
     kopfW += (ziel - kopfW) * (1 - Math.exp(-dt / 0.08));
     zeichneFahrer(cvF.getContext("2d"), cvF.width, cvF.height, kopfW, txt, seite);
@@ -1746,7 +1748,7 @@
     g.fillStyle = "#d9a883"; g.beginPath(); g.ellipse(hx + sn * 4, hy + 3, 3, 5, 0, 0, 7); g.fill();                                  // Ohr
     if (Math.abs(sn) > 0.35) { g.fillStyle = "#e8b995"; g.beginPath(); g.moveTo(hx + sn * 14, hy + 2); g.lineTo(hx + sn * 22, hy + 7); g.lineTo(hx + sn * 14, hy + 9); g.closePath(); g.fill(); g.fillStyle = "#222"; g.beginPath(); g.arc(hx + sn * 12, hy - 2, 1.3, 0, 7); g.fill(); }
     g.font = "bold 10px sans-serif"; g.textAlign = "left"; g.textBaseline = "middle"; const tw = g.measureText(txt).width;
-    g.fillStyle = txt === "Schulterblick" ? "rgba(200,60,40,.92)" : "rgba(20,30,25,.8)"; rrg(g, 5, h - 18, tw + 14, 14, 7); g.fill(); g.fillStyle = "#fff"; g.fillText(txt, 12, h - 11);
+    g.fillStyle = txt !== "Spiegel" ? "rgba(200,60,40,.92)" : "rgba(20,30,25,.8)"; rrg(g, 5, h - 18, tw + 14, 14, 7); g.fill(); g.fillStyle = "#fff"; g.fillText(txt, 12, h - 11);
     g.restore();
   }
 
@@ -1966,16 +1968,17 @@
   // Standard-Ansicht näher am Fokus-Auto: NAH = Pixel je Meter bei 412 px Bildmaß (Fokus-Auto ca. 70–110 px lang), WEIT = Faktor für Überblick bei Lücken-Phasen
   const NAH = { auffahren: 17, abfahren: 15, reissverschluss: 14, rettungsgasse: 7.5, laengs: 11, quer_rueck: 12, quer_vor: 12, wenden: 14, ecke: 9, gefahr: 13, ueberholen: 8,
     schulbus: 12, rvl: 12, links_gegen: 11, voreinander: 12, rechts_rad: 10, doppel: 10, kreisel: 10.5, zebra: 14, eng: 14, stop: 11, gruenpfeil: 10 };
-  const WEIT = { auffahren: 0.4, reissverschluss: 0.6, ueberholen: 0.7 };
+  const WEIT = { auffahren: 0.4, reissverschluss: 0.6 }, ZEIGE = { rechts_rad: ["rad", "rad2"], kreisel: ["k"] };
   function grundZoom() {
     const r = cv ? cv.getBoundingClientRect() : null, b = r ? r.width : window.innerWidth;
     if (modus === "fahren" || !NAH[szene.id]) return szene.kamera.zoom * clamp(b / 1000, 0.55, 1.6);
-    return NAH[szene.id] * clamp(Math.min(b, (r ? r.height : window.innerHeight) * 1.25) / 412, 0.8, 1.6);
+    const nah = szene.kamera.fest ? Math.min(NAH[szene.id], 0.88 * szene.kamera.zoom) : NAH[szene.id];     // feste Kamera: höchstens ca. 1,6 × alter Wert
+    return nah * clamp(Math.min(b, (r ? r.height : window.innerHeight) * 1.25) / 412, 0.8, 1.6);
   }
   // Bild nach unten rücken (CSS-px): Standard 10 % der Höhe. Im niedrigen Querformat so weit, dass das Auto unter dem Erklärkasten bleibt.
   function kameraVersatz(standard) {
     const H = Hpx / dpr, basis = standard ? 0.1 * H : 0; let dy = basis;
-    if (window.innerHeight <= 480 && root) {
+    if (window.innerHeight <= 480 && root && modus !== "fahren") {
       const cap = root.querySelector("#lzCap");
       if (cap && !cap.hidden) { const c = cap.getBoundingClientRect(), r = cv.getBoundingClientRect(); if (c.right - r.left > r.width / 2 - 40) dy = Math.max(dy, Math.min(H / 2 - 40, c.bottom - r.top + 24 - H / 2)); }
     }
@@ -1986,7 +1989,16 @@
     const ph = aktuellePhase(); let f = 1;
     if (ph && SPIEGEL_RE.test(ph.titel)) f = 1.3; else if (ph && ph.hinweis && ph.hinweis.luecke) f = WEIT[szene.id] || 1;
     else if (ph && WEIT[szene.id] && WEIT[szene.id + ":" + ph.titel]) f = WEIT[szene.id + ":" + ph.titel];
-    return clamp(grundZoom() * f, 1, 14);
+    let z = grundZoom() * f;
+    if (szene.kamera.fest && cv) {        // feste Kamera: Fokus-Auto (und genannte Mitspieler) bleiben immer im Bild, Zoom passt sich an
+      const r = cv.getBoundingClientRect(), fest = szene.kamera.fest, m = 34, ids = ZEIGE[szene.id] || [];
+      for (const e of fahrzeugListe()) {
+        if (!e.f.fokus && !ids.includes(e.f.id)) continue;
+        const dx = Math.abs(e.p.x - fest[0]), dy = Math.abs(e.p.y - fest[1]);
+        if (dx > 0.01) z = Math.min(z, (r.width / 2 - m) / dx); if (dy > 0.01) z = Math.min(z, (r.height / 2 - m) / dy);
+      }
+    }
+    return clamp(z, 1, 14);
   }
   function setzeModus(m) {
     stimmeStopp(); tippFrage = null; { const b = root.querySelector("#lzTipp"); if (b) b.remove(); }
