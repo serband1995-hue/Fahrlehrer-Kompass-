@@ -506,5 +506,261 @@
    "f": "quer_vor-2.mp3",
    "d": 6.53
   }
+ },
+ "abknick": {
+  "1wapwz2": {
+   "f": "abknick-0.mp3",
+   "d": 11.5
+  },
+  "xn6og0": {
+   "f": "abknick-1.mp3",
+   "d": 10.3
+  },
+  "15tpj0h": {
+   "f": "abknick-2.mp3",
+   "d": 9.1
+  },
+  "t2rlu7": {
+   "f": "abknick-3.mp3",
+   "d": 8.9
+  },
+  "tsiulz": {
+   "f": "abknick-4.mp3",
+   "d": 6.3
+  }
+ },
+ "vorfahrt_gewaehren": {
+  "1uailmn": {
+   "f": "vorfahrt_gewaehren-0.mp3",
+   "d": 11.0
+  },
+  "jsg4iw": {
+   "f": "vorfahrt_gewaehren-1.mp3",
+   "d": 6.2
+  },
+  "5t44py": {
+   "f": "vorfahrt_gewaehren-2.mp3",
+   "d": 8.7
+  },
+  "gsp8s7": {
+   "f": "vorfahrt_gewaehren-3.mp3",
+   "d": 6.1
+  },
+  "1b0gcgj": {
+   "f": "vorfahrt_gewaehren-4.mp3",
+   "d": 5.6
+  }
+ },
+ "rechts_fussg": {
+  "xfe0bh": {
+   "f": "rechts_fussg-0.mp3",
+   "d": 7.1
+  },
+  "1563cyw": {
+   "f": "rechts_fussg-1.mp3",
+   "d": 8.5
+  },
+  "749a8r": {
+   "f": "rechts_fussg-2.mp3",
+   "d": 6.6
+  },
+  "1say3vh": {
+   "f": "rechts_fussg-3.mp3",
+   "d": 6.5
+  },
+  "19ylid1": {
+   "f": "rechts_fussg-4.mp3",
+   "d": 6.3
+  }
+ },
+ "grundstueck": {
+  "1svctoo": {
+   "f": "grundstueck-0.mp3",
+   "d": 11.2
+  },
+  "c9lczw": {
+   "f": "grundstueck-1.mp3",
+   "d": 13.0
+  },
+  "ap464n": {
+   "f": "grundstueck-2.mp3",
+   "d": 6.7
+  },
+  "1gk85fi": {
+   "f": "grundstueck-3.mp3",
+   "d": 7.4
+  },
+  "16shxz": {
+   "f": "grundstueck-4.mp3",
+   "d": 7.2
+  },
+  "8o27nt": {
+   "f": "grundstueck-5.mp3",
+   "d": 7.7
+  }
+ },
+ "ampel_gelb": {
+  "1kx7199": {
+   "f": "ampel_gelb-0.mp3",
+   "d": 9.7
+  },
+  "h44dtz": {
+   "f": "ampel_gelb-1.mp3",
+   "d": 9.0
+  },
+  "mh690t": {
+   "f": "ampel_gelb-2.mp3",
+   "d": 9.6
+  },
+  "1alhwxy": {
+   "f": "ampel_gelb-3.mp3",
+   "d": 14.2
+  },
+  "vsetwf": {
+   "f": "ampel_gelb-4.mp3",
+   "d": 8.2
+  },
+  "uah4m5": {
+   "f": "ampel_gelb-5.mp3",
+   "d": 5.0
+  }
+ },
+ "bahnuebergang": {
+  "1x7buzh": {
+   "f": "bahnuebergang-0.mp3",
+   "d": 7.1
+  },
+  "1w48l97": {
+   "f": "bahnuebergang-1.mp3",
+   "d": 6.9
+  },
+  "aubasu": {
+   "f": "bahnuebergang-2.mp3",
+   "d": 6.1
+  },
+  "1a3ci3x": {
+   "f": "bahnuebergang-3.mp3",
+   "d": 5.7
+  },
+  "v7xv82": {
+   "f": "bahnuebergang-4.mp3",
+   "d": 8.9
+  },
+  "1gq9s32": {
+   "f": "bahnuebergang-5.mp3",
+   "d": 5.1
+  },
+  "12d4sjh": {
+   "f": "bahnuebergang-6.mp3",
+   "d": 9.6
+  },
+  "1lcjnuj": {
+   "f": "bahnuebergang-7.mp3",
+   "d": 12.1
+  }
+ },
+ "strassenbahn": {
+  "101dfh": {
+   "f": "strassenbahn-0.mp3",
+   "d": 13.2
+  },
+  "93khbb": {
+   "f": "strassenbahn-1.mp3",
+   "d": 6.4
+  },
+  "1agn9zm": {
+   "f": "strassenbahn-2.mp3",
+   "d": 8.0
+  },
+  "ozv2d2": {
+   "f": "strassenbahn-3.mp3",
+   "d": 10.6
+  },
+  "9c8hs": {
+   "f": "strassenbahn-4.mp3",
+   "d": 8.2
+  }
+ },
+ "abstand": {
+  "1x0qntm": {
+   "f": "abstand-0.mp3",
+   "d": 13.3
+  },
+  "1hqtpor": {
+   "f": "abstand-1.mp3",
+   "d": 9.5
+  },
+  "nyw7sq": {
+   "f": "abstand-2.mp3",
+   "d": 14.3
+  },
+  "1amyepa": {
+   "f": "abstand-3.mp3",
+   "d": 8.2
+  },
+  "c5cgon": {
+   "f": "abstand-4.mp3",
+   "d": 11.7
+  },
+  "3w2nkj": {
+   "f": "abstand-5.mp3",
+   "d": 14.0
+  }
+ },
+ "halteverbot": {
+  "1bzxxq": {
+   "f": "halteverbot-0.mp3",
+   "d": 10.0
+  },
+  "k5lojm": {
+   "f": "halteverbot-1.mp3",
+   "d": 9.3
+  },
+  "4fynpn": {
+   "f": "halteverbot-2.mp3",
+   "d": 7.4
+  },
+  "ra9ba": {
+   "f": "halteverbot-3.mp3",
+   "d": 8.2
+  },
+  "mdgymw": {
+   "f": "halteverbot-4.mp3",
+   "d": 4.6
+  },
+  "14a6fs7": {
+   "f": "halteverbot-5.mp3",
+   "d": 13.5
+  },
+  "4e78p2": {
+   "f": "halteverbot-6.mp3",
+   "d": 12.7
+  },
+  "1wis2jq": {
+   "f": "halteverbot-7.mp3",
+   "d": 7.8
+  }
+ },
+ "einsatz": {
+  "74kcjt": {
+   "f": "einsatz-0.mp3",
+   "d": 9.4
+  },
+  "1epezpp": {
+   "f": "einsatz-1.mp3",
+   "d": 9.0
+  },
+  "1aqax6k": {
+   "f": "einsatz-2.mp3",
+   "d": 5.9
+  },
+  "1sfx8fl": {
+   "f": "einsatz-3.mp3",
+   "d": 6.2
+  },
+  "100row6": {
+   "f": "einsatz-4.mp3",
+   "d": 7.2
+  }
  }
 }
