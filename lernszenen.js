@@ -2088,7 +2088,7 @@
   }
   const stimmeInfo = () => (STIMME.index && Object.keys(STIMME.index).length) ? `<p class="lz-info">🔊 Sprecherstimme mit KI erzeugt.</p>` : "";
   // Geprüfte Fundstellen (15.11.2026 gegen StVO-Text, Prüfbericht Block 3; § 9a gibt es nicht, Kreisverkehr = § 8 Abs. 1a): nur diese bekommen das antippbare §. Neue Fundstellen erst nach Prüfung am Gesetzestext aufnehmen.
-  const PAR_GEPRUEFT = new Set(["1/2", "11/2", "11/3", "12/", "18/2", "18/3", "18/7", "2/2", "20/3", "20/4", "20/5", "26/1", "26/2", "26/3", "3/1", "3/2a", "3/3", "37/2", "38/1", "4/1", "5/2", "5/4", "5/4a", "6/", "7/4", "7/5", "7a/2", "7a/3", "8/1", "8/1a", "8/2", "9/1", "9/3", "9/4", "9/5"]);
+  const PAR_GEPRUEFT = new Set(["1/2", "11/2", "11/3", "12/", "18/2", "18/3", "18/7", "2/2", "20/3", "20/4", "20/5", "26/1", "26/2", "26/3", "3/1", "3/2a", "3/3", "37/2", "38/1", "4/1", "5/2", "5/4", "5/4a", "6/", "7/4", "7/5", "7a/2", "7a/3", "8/1", "8/1a", "8/2", "9/1", "9/3", "9/4", "9/5", "10/", "19/1", "19/2", "19/3", "20/1", "20/2", "2/3", "12/1", "12/2", "12/3"]);
   function parToken(regel) {
     // "§ 9 Abs. 1 · § 9 Abs. 3 StVO", "Zeichen 340 · § 7 Abs. 5 StVO" -> Liste der §-Stellen; null, wenn eine nicht geprüft ist
     const liste = []; const re = /§\s*(\d+[a-z]?)(?:\s*Abs\.\s*(\d+[a-z]?))?/g; let m;
