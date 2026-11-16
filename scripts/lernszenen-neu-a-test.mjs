@@ -49,6 +49,17 @@ for (const [w, h] of [[360, 640], [412, 915], [640, 360], [568, 320]]) {
       const r = await page.evaluate(ids => { const L = window.Lernszenen, z = L._intern.zustand(), sz = L._szenen.find(x => x.id === z.szene), st = document.querySelector("#lzCanvas").getBoundingClientRect(); return ids.map(i => { const f = sz.fahrzeuge.find(x => x.id === i), q = L._intern.rohPos(f, z.zeit), sx = st.width / 2 + (q.x - z.ansicht.px) * z.ansicht.zoom, sy = st.height / 2 + (q.y - z.ansicht.py) * z.ansicht.zoom; return [i, sx >= 0 && sx <= st.width && sy >= 0 && sy <= st.height]; }); }, ids);
       for (const [i, drin] of r) pruefe(t + `Phase ${pi}: ${i} im Bild`, drin);
     }
+    if (id === "ampel_gelb") {   // Ampel (mittleres Licht, Gelb) in den Entscheidungsphasen in 3D und Fahrer im Bild und nicht unter dem Erklaerkasten
+      for (const k of ["3d", "fahrer"]) {
+        await page.click(`[data-kam="${k}"]`);
+        for (const pi of (k === "fahrer" ? [1] : [1, 2])) {
+          await page.evaluate(v => { const sl = document.querySelector("#lzSlider"); sl.value = v; sl.dispatchEvent(new Event("input")); }, s.ph[pi].t + 0.3); await page.waitForTimeout(1200);
+          const r = await page.evaluate(() => { const L = window.Lernszenen, cv = document.querySelector("#lzCanvas").getBoundingClientRect(), cap = document.querySelector("#lzCap"), c = cap && !cap.hidden ? cap.getBoundingClientRect() : null, p = L._intern.punkt3d(4.4, 14.3, 12.1); if (!p) return null; const x = cv.left + p[0], y = cv.top + p[1]; return { x: Math.round(x), y: Math.round(y), tief: Math.round(p[2]), drin: x >= cv.left && x <= cv.right && y >= cv.top && y <= cv.bottom, frei: !(c && x >= c.left && x <= c.right && y >= c.top && y <= c.bottom), cap: c && [Math.round(c.bottom)] }; });
+          pruefe(t + `Phase ${pi}: Ampel in ${k} im Bild und nicht unter dem Erklaerkasten`, !!r && r.drin && r.frei, JSON.stringify(r));
+        }
+      }
+      await page.click('[data-kam="oben"]');
+    }
     for (const k of ["3d", "fahrer", "oben"]) {
       await page.click(`[data-kam="${k}"]`); await page.waitForTimeout(400);
       const farben = await page.evaluate(() => { const cv = document.querySelector("#lzCanvas"), g = cv.getContext("2d"), f = new Set(); for (let i = 0; i < 16; i++) for (let j = 0; j < 16; j++) { const d = g.getImageData(Math.floor((i + .5) * cv.width / 16), Math.floor((j + .5) * cv.height / 16), 1, 1).data; f.add((d[0] >> 4) + "," + (d[1] >> 4) + "," + (d[2] >> 4)); } return f.size; });

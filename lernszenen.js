@@ -950,11 +950,11 @@
     const p = fokus.p;
     if (kameraModus === "fahrer") {
       const h = p.h, dx = Math.cos(h), dy = Math.sin(h);
-      return mkCam(p.x + dx * 0.2 + Math.sin(h) * 0.35, p.y + dy * 0.2 - Math.cos(h) * 0.35, 1.2, h, 0.05, 1.05);
+      return mkCam(p.x + dx * 0.2 + Math.sin(h) * 0.35, p.y + dy * 0.2 - Math.cos(h) * 0.35, 1.2, h, (szene.kamera.kam3d || {}).nickF ?? 0.05, 1.05);
     }
-    const h = fokus.hGlatt, dx = Math.cos(h), dy = Math.sin(h);
-    const ab = 26, hoch = 11;
-    return mkCam(p.x - dx * ab, p.y - dy * ab, hoch, h, 0.36, 0.95);
+    const h = fokus.hGlatt, dx = Math.cos(h), dy = Math.sin(h), k3 = szene.kamera.kam3d || {};     // kamera.kam3d { ab, hoch, nick, nickF }: Szenen mit weit entfernten Zielen (Ampel) legen den Horizont tiefer
+    const ab = k3.ab ?? 26, hoch = k3.hoch ?? 11;
+    return mkCam(p.x - dx * ab, p.y - dy * ab, hoch, h, k3.nick ?? 0.36, 0.95);
   }
   function mkCam(x, y, z, h, pitch, fovF) {
     const f = [Math.cos(pitch) * Math.cos(h), Math.cos(pitch) * Math.sin(h), -Math.sin(pitch)];
@@ -1185,7 +1185,7 @@
       quader(c, o.x, o.y, 0, 0.35, 0.35, 0, 2.2, "#6b4a2f");
       const r = o.r || 2.2; quader(c, o.x, o.y, 0.6, r * 1.5, r * 1.5, 2, 2 + r * 1.7, "#3f7a34"); quader(c, o.x, o.y, 0, r, r, 2 + r * 1.2, 2 + r * 2.1, "#4d8a3e");
     } else if (o.art === "ampel") {
-      const kk = o.k || 1, z0 = 2.3 + (kk - 1) * 0.6;
+      const kk = o.k3d || o.k || 1, z0 = 2.3 + (kk - 1) * 0.6;
       quader(c, o.x, o.y, o.h || 0, 0.14 * kk, 0.14 * kk, 0, z0, "#55595e");
       const n = o.fuss ? 2 : 3, f = LAMPE[ampelFarbe(o, zeit)] || LAMPE.aus, farben = o.fuss ? [f[0], f[2]] : f, leer = o.fuss ? ["#3a1210", "#0f3219"] : ["#3a1210", "#3a2e0c", "#0f3219"];
       const hk = (n * 0.33 + 0.1) * kk; quader(c, o.x, o.y, o.h || 0, 0.3 * kk, 0.35 * kk, z0, z0 + hk, "#1c1e21");
@@ -1790,7 +1790,7 @@
   .lz-caption h3{margin:0 0 3px;font-size:15.5px;}
   .lz-caption p{margin:0;font-size:13.5px;line-height:1.45;color:#dce6df;}
   .lz-nochmal{display:inline-flex;align-items:center;gap:6px;margin-top:8px;min-height:44px;padding:0 12px;border-radius:10px;border:1px solid #2e4a40;background:#1a2f28;color:#eef3ef;font-size:13.5px;font-weight:600;cursor:pointer;pointer-events:auto;}
-  @media (max-height:480px){ .lz-nochmal{min-height:32px;margin-top:4px;padding:0 10px;font-size:12.5px;} }
+  @media (max-height:480px){ .lz-nochmal{position:absolute;top:7px;right:50px;min-height:30px;margin:0;padding:0 8px;font-size:12px;} .lz-caption:has(.lz-nochmal) h3{padding-right:140px;} }
   .lz-info{margin:14px 0 0;padding:0 14px 12px;font-size:13px;color:#b1bfb5;}
   @media (min-height:481px){ #lzStimme{min-height:44px;min-width:44px;} }
   #lzStimme[aria-pressed="true"]{background:#2f6b4f;border-color:#4fae80;}
@@ -1826,6 +1826,7 @@
   .lz-sheet{position:absolute;inset:0;background:rgba(0,0,0,.55);display:flex;align-items:flex-end;justify-content:center;z-index:5;}
   .lz-card{background:#132420;border:1px solid #2e4a40;border-radius:18px 18px 0 0;width:100%;max-width:640px;max-height:82%;overflow:auto;padding:16px 16px calc(16px + env(safe-area-inset-bottom));}
   #lzErkl{display:contents;}
+  @media (max-height:340px){ .lz-caption p{font-size:12px;line-height:1.3;} .lz-caption h3{font-size:14.5px;} }
   .lz-weiter{margin-top:12px;position:sticky;bottom:0;background:#132420;padding:6px 0 2px;}
   @media (max-height:480px){ .lz-card{max-height:100%;border-radius:0;padding:8px 14px 8px;} .lz-card h2{font-size:15px;margin-bottom:2px;} .lz-opt{padding:7px 11px;margin:4px 0;font-size:13px;} .lz-erkl{margin:4px 0 2px;font-size:12.5px;line-height:1.4;} .lz-weiter{margin-top:6px;padding-top:4px;} }
   .lz-card h2{margin:0 0 6px;font-family:'Anton',sans-serif;text-transform:uppercase;font-size:20px;letter-spacing:.02em;}
@@ -2003,12 +2004,15 @@
     else if (ph && WEIT[szene.id] && WEIT[szene.id + ":" + ph.titel]) f = WEIT[szene.id + ":" + ph.titel];
     let z = grundZoom() * f;
     if (szene.kamera.fest && cv) {        // feste Kamera: Fokus-Auto (und genannte Mitspieler) bleiben immer im Bild, Zoom passt sich an
-      const r = cv.getBoundingClientRect(), fest = szene.kamera.fest, m = 34, ids = ZEIGE[szene.id] || [];
+      const r = cv.getBoundingClientRect(), fest = szene.kamera.fest, m = 34, ids = ZEIGE[szene.id] || [], z0 = z, nah = 1.6 * Math.hypot(r.width, r.height) / 2 / z0; let zm = z0;   // Mitspieler zählen nur nahe der Kreuzung, mit Untergrenze 0,5 × Grundzoom
       for (const e of fahrzeugListe()) {
         if (!e.f.fokus && !ids.includes(e.f.id)) continue;
         const dx = Math.abs(e.p.x - fest[0]), dy = Math.abs(e.p.y - fest[1]);
-        if (dx > 0.01) z = Math.min(z, (r.width / 2 - m) / dx); if (dy > 0.01) z = Math.min(z, (r.height / 2 - m) / dy);
+        if (!e.f.fokus && Math.hypot(dx, dy) > nah) continue;
+        let zz = z0; if (dx > 0.01) zz = Math.min(zz, (r.width / 2 - m) / dx); if (dy > 0.01) zz = Math.min(zz, (r.height / 2 - m) / dy);
+        if (e.f.fokus) z = Math.min(z, zz); else zm = Math.min(zm, zz);
       }
+      z = Math.min(z, Math.max(zm, 0.5 * z0));
     }
     return clamp(z, 1, 14);
   }
@@ -2017,12 +2021,12 @@
     const q = szene && szene.kamera && szene.kamera.quer; if (!q || !cv || !root || (window.innerHeight > 480 && !q.immer)) return null;
     const cap = root.querySelector("#lzCap"); if (!cap || cap.hidden) return null;
     const r = cv.getBoundingClientRect(), c = cap.getBoundingClientRect(), W = r.width, H = r.height, m = 12; if (!W || !H) return null;
-    const top = clamp(c.bottom - r.top + 6, 0, H - 70), liste = fahrzeugListe(), fk = liste.find(e => e.f.fokus); if (!fk) return null;
+    const hud = 100, top = clamp(c.bottom - r.top + 14, 0, H - 40), liste = fahrzeugListe(), fk = liste.find(e => e.f.fokus); if (!fk) return null;
     const mb = q.immer ? 44 : m, pad = q.pad ?? 3, rad = q.radius ?? 30, ids = q.zeige || []; let x0 = 1e9, x1 = -1e9, y0 = 1e9, y1 = -1e9;
     liste.forEach(e => { if (!(e.f.fokus || (ids.includes(e.f.id) && Math.hypot(e.p.x - fk.p.x, e.p.y - fk.p.y) <= rad))) return; x0 = Math.min(x0, e.p.x); x1 = Math.max(x1, e.p.x); y0 = Math.min(y0, e.p.y); y1 = Math.max(y1, e.p.y); });
     (q.punkte || []).forEach(([px2, py2]) => { x0 = Math.min(x0, px2); x1 = Math.max(x1, px2); y0 = Math.min(y0, py2); y1 = Math.max(y1, py2); });
-    const bw = x1 - x0 + 2 * pad, bh = y1 - y0 + 2 * pad, z = clamp(Math.min((W - 2 * m) / bw, (H - top - mb) / bh, grundZoom()), 1, 14), bandMitte = (top + H - mb) / 2;
-    return { z, px: (x0 + x1) / 2, py: (y0 + y1) / 2 - (bandMitte - H / 2) / z };
+    const bw = x1 - x0 + 2 * pad, bh = y1 - y0 + 2 * pad, z = clamp(Math.min((W - hud - 2 * m) / bw, (H - top - mb) / bh, grundZoom()), 1, 14), bandMitte = (top + H - mb) / 2;
+    return { z, px: (x0 + x1) / 2 + hud / 2 / z, py: (y0 + y1) / 2 - (bandMitte - H / 2) / z };
   }
   function setzeModus(m) {
     stimmeStopp(); tippFrage = null; { const b = root.querySelector("#lzTipp"); if (b) b.remove(); }
@@ -2268,5 +2272,5 @@
   function szenenFuerPlan(planId) { return SZENEN.filter(x => (x.plan || []).includes(planId)).map(x => ({ id: x.id, titel: x.titel })); }
   const vorschau = { an: false };
   const bau = { vorschau, W, KMH, clamp, lerp, smooth, pfad, spurPfad, bezier, versatz, band, tempoProfil, tempoStrecke, konstant, gerade, tBeiX, rohPos, TYPEN, EXT, rangierBahn, mitteAus, achseAus, ecken, raeder, bordAbstand, RAD, wegeOben, H: { rrg, quer, ton, leuchte, blinkAn, quader, poly3d, zuCam, proj, mkCv, SCHILD_BILD, SCHILD_NAME }, schildBilder: SCHILD_BILD, schildNamen: SCHILD_NAME };
-  window.Lernszenen = { open, registriere, szenenFuerPlan, bau, _szenen: SZENEN, _intern: { messeOben: n => { const t0 = performance.now(); for (let i = 0; i < n; i++) { zeichneOben(); ctx.getImageData(0, 0, 1, 1); } return (performance.now() - t0) / n; }, rohPos, tBeiX, TYPEN, bewerte: () => bewerte(), zustand: () => ({ szene: szene && szene.id, zeit, modus, kameraModus, laeuft, fahr, ansicht: { ...ansicht } }) } };
+  window.Lernszenen = { open, registriere, szenenFuerPlan, bau, _szenen: SZENEN, _intern: { messeOben: n => { const t0 = performance.now(); for (let i = 0; i < n; i++) { zeichneOben(); ctx.getImageData(0, 0, 1, 1); } return (performance.now() - t0) / n; }, rohPos, tBeiX, TYPEN, bewerte: () => bewerte(), zustand: () => ({ szene: szene && szene.id, zeit, modus, kameraModus, laeuft, fahr, ansicht: { ...ansicht }, grund: grundZoom(), nah: cv && szene && szene.kamera.fest ? 1.6 * Math.hypot(cv.getBoundingClientRect().width, cv.getBoundingClientRect().height) / 2 / grundZoom() : 0, fest: szene && szene.kamera.fest }), punkt3d: (x, y, z) => { const l = fahrzeugListe(), f = l.find(e => e.f.fokus) || l[0]; f.hGlatt = _hGlatt === null ? f.p.h : _hGlatt; const c = kamera3d(f), q = zuCam(c, x, y, z); if (q[2] < c.near) return null; const pp = proj(c, q); return [pp[0] / dpr, pp[1] / dpr, q[2]]; } } };
 })();
