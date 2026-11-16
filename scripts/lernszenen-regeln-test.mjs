@@ -64,6 +64,16 @@ for (const [w, h, mobil] of [[360, 780, true], [780, 360, true], [568, 320, true
     pruefe(t + "Kasten hat Text", (await page.$eval("#lzCap", e => e.textContent.length)) > 20);
     await page.screenshot({ path: `/tmp/claude-0/b6/regeln_${szene}_${modus}_${w}x${h}.png` });
   }
+  { // Selbst fahren: Anleitung vor dem Start sichtbar, nach ▶ weg; Zurück-Taste schließt zuerst das §-Fenster
+    const t = `${w}×${h} auffahren fahren: `;
+    await page.evaluate(() => window.Lernszenen.open({ szene: "auffahren" })); await page.waitForSelector("#lzCap");
+    const fb = await page.$('[data-modus="fahren"]');
+    if (fb) { await fb.tap(); await page.waitForTimeout(500); pruefe(t + "Anleitung vor dem Start sichtbar", await sichtbar(page, "#lzCap")); await (await page.$("#lzPlay")).tap(); await page.waitForTimeout(400); pruefe(t + "nach ▶ ausgeblendet", !(await sichtbar(page, "#lzCap"))); }
+    await page.evaluate(() => window.Lernszenen.open({ szene: "rvl" })); await page.waitForSelector("#lzCap");
+    const ph2 = await page.evaluate(() => window.Lernszenen._szenen.find(x => x.id === "rvl").phasen.map(p => p.t));
+    for (const tp of ph2) { await page.evaluate(v => { const s = document.querySelector("#lzSlider"); s.value = v; s.dispatchEvent(new Event("input")); }, tp + 0.3); await page.waitForTimeout(300); if (await page.$("#lzCap .lz-parb")) break; }
+    if (await page.$("#lzCap .lz-parb")) { await (await page.$("#lzCap .lz-parb")).tap(); await page.waitForTimeout(200); await page.evaluate(() => history.back()); await page.waitForTimeout(400); pruefe(t + "Zurück schließt §-Fenster, Szene bleibt", !(await page.$(".lz-parpop")) && !!(await page.$("#lzCap"))); }
+  }
   pruefe(`${w}×${h}: keine Konsolenfehler`, konsole.length === 0, konsole.join(" | ").slice(0, 200));
   await ctx.close();
 }

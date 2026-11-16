@@ -1799,15 +1799,15 @@
   .lz-parb::after{content:"";position:absolute;inset:-6px;}
   .lz-parb[aria-expanded="true"]{background:#0c1410;color:#e0b84a;}
   .lz-caption.mit-par{padding-right:50px;}
-  .lz-capx{position:absolute;right:8px;top:8px;width:34px;height:34px;border-radius:50%;border:1px solid rgba(160,200,175,.55);background:rgba(30,50,42,.95);color:#eef3ef;font:700 16px/1 system-ui,sans-serif;cursor:pointer;pointer-events:auto;padding:0;}
+  .lz-capx{position:absolute;right:8px;top:8px;width:38px;height:38px;border-radius:50%;border:1px solid rgba(160,200,175,.55);background:rgba(30,50,42,.95);color:#eef3ef;font:700 16px/1 system-ui,sans-serif;cursor:pointer;pointer-events:auto;padding:0;}
   .lz-capx::after{content:"";position:absolute;inset:-6px;}
-  .lz-caption{padding-right:50px;} .lz-caption.mit-par{padding-right:90px;} .lz-caption.mit-par .lz-parb{right:48px;}
+  .lz-caption{padding-right:54px;} .lz-caption.mit-par{padding-right:98px;} .lz-caption.mit-par .lz-parb{right:54px;width:38px;height:38px;}
   .lz-capopen{position:absolute;left:12px;top:10px;min-height:44px;padding:0 14px;border-radius:12px;border:1px solid rgba(160,200,175,.55);background:rgba(10,18,14,.92);color:#eef3ef;font:600 13.5px system-ui,sans-serif;cursor:pointer;z-index:2;}
   .lz-capopen[hidden]{display:none;}
   .lz-parx{position:absolute;right:4px;top:4px;width:36px;height:36px;border:0;background:transparent;color:#e0b84a;font:700 18px/1 system-ui,sans-serif;cursor:pointer;padding:0;}
   .lz-parx::after{content:"";position:absolute;inset:-4px;}
   .lz-parpop{padding-right:40px !important;}
-  @media (max-height:480px){ .lz-caption,.lz-caption.mit-par{padding-right:14px;} .lz-caption h3{padding-right:44px;} .lz-caption.mit-par h3{padding-right:84px;} .lz-caption p{margin-top:6px;} .lz-capx{width:32px;height:32px;right:6px;top:6px;} .lz-caption.mit-par .lz-parb{right:44px;width:32px;height:32px;} }
+  @media (max-height:480px){ .lz-caption,.lz-caption.mit-par{padding-right:14px;} .lz-caption h3{padding-right:44px;} .lz-caption.mit-par h3{padding-right:90px;} .lz-caption p{margin-top:8px;} .lz-capx{width:36px;height:36px;right:6px;top:4px;} .lz-caption.mit-par .lz-parb{right:46px;width:36px;height:36px;top:4px;} }
   .lz-parpop{position:absolute;left:12px;bottom:12px;max-width:min(320px,calc(100% - 140px));background:rgba(10,18,14,.95);border:1px solid #e0b84a;border-radius:12px;padding:10px 12px;box-shadow:0 8px 24px rgba(0,0,0,.45);z-index:3;font-size:14px;line-height:1.45;color:#dce6df;}
   @media (max-height:480px){.lz-parpop{left:auto;right:12px;top:10px;bottom:auto;max-width:min(260px,calc(100% - 410px));padding:6px 10px;}.lz-parpop{line-height:1.3;}.lz-parpop a{min-height:34px;padding:0;}}
   @media (max-height:340px){.lz-stage.par-offen .lz-hud{visibility:hidden;}}
@@ -1877,6 +1877,7 @@
     if (!root) return;
     e.stopImmediatePropagation();
     try { history.pushState(null, "", location.href); } catch (err) {}
+    if (root.querySelector(".lz-parpop")) { schliessePar(); return; }
     if (root.querySelector(".lz-sheet")) { schliesseSheet(); return; }
     if (szene) zeigeAuswahl(); else schliessen();
   }
@@ -1919,7 +1920,7 @@
     });
   }
   function starteSzene(id) {
-    szene = SZENEN.find(s => s.id === id); zeit = 0; laeuft = false; versatzFz = {}; beantwortet = new Set(); punkte = { richtig: 0, gesamt: 0 }; fahr = null; _hGlatt = null; zoomUser = false; capZu = false;
+    szene = SZENEN.find(s => s.id === id); zeit = 0; laeuft = false; versatzFz = {}; beantwortet = new Set(); punkte = { richtig: 0, gesamt: 0 }; fahr = null; _hGlatt = null; zoomUser = false; capZu = false; fahrStart = false;
     modus = "vorfuehren"; kameraModus = "oben"; tempoFaktor = 1;
     ansicht = { zoom: grundZoom(), px: 0, py: 0, folgen: true };
     const fk = szene.fahrzeuge.find(f => f.fokus); const fp = fzPos(fk, 0); ansicht.px = fp.x; ansicht.py = fp.y;
@@ -1976,7 +1977,7 @@
     stimmeLade(() => { if (!szene) return; stimmeSchalter(); stimmeNachholen(); const ph = aktuellePhase() || szene.phasen[0]; if (modus === "vorfuehren" && !laeuft && ph && !root.querySelector("#lzCap .lz-nochmal")) zeigePhase(ph); });
     $("#lzStimme").onclick = () => { const an = !stimmeAn(); try { localStorage.setItem("lz_stimme", an ? "1" : "0"); } catch (e) {} if (!an) stimmeStopp(); stimmeSchalter(); if (an) stimmeNachholen(); const ph = aktuellePhase() || szene.phasen[0]; if (ph && modus !== "fahren" && !laeuft) { const c = $("#lzCap"); if (c && !c.hidden && c.querySelector("h3")) zeigeCap(ph.titel, ph.text, ph.regel, ph); } };
     $("#lzPlay").onclick = () => { schliessePar(); if ((root.querySelector(".lz-sheet .lz-opt") && !root.querySelector("#lzWeiter")) || tippFrage) return;
-      if (modus === "fahren") capSync();
+      if (modus === "fahren") { fahrStart = true; capSync(); }
       if (modus === "fahren" && fahr && fahr.ende) { schliesseSheet(); if (szene.reaktion) starteReaktion(fahr.vWahl); else starteFahren(); } if (!laeuft && zeit >= szene.dauer && modus !== "fahren") { zeit = 0; beantwortet = new Set(); } laeuft = !laeuft; if (modus !== "fahren") { stimmePause(!laeuft); stimmeNachholen(); } if (laeuft) { schliesseSheet(); ansicht.folgen = true; } };
     const tippZu = () => { if (!tippFrage) return; tippFrage = null; const b = root.querySelector("#lzTipp"); if (b) b.remove(); ansicht.folgen = true; ansicht.zoom = grundZoom(); };
     $("#lzSlider").oninput = e => { tippZu(); ansicht.folgen = true; zoomUser = false; zeit = +e.target.value; laeuft = false; const ph = aktuellePhase(); if (ph) zeigePhase(ph); };
@@ -2041,7 +2042,7 @@
   function setzeModus(m) {
     stimmeStopp(); tippFrage = null; { const b = root.querySelector("#lzTipp"); if (b) b.remove(); }
     modus = m; laeuft = false; versatzFz = {}; zeit = 0; beantwortet = new Set(); punkte = { richtig: 0, gesamt: 0 }; schliesseSheet(); _hGlatt = null;
-    capSync();
+    fahrStart = false; capSync();
     root.querySelectorAll("[data-modus]").forEach(x => x.classList.toggle("on", x.dataset.modus === m));
     $("#lzDrive").hidden = !(m === "fahren" && szene.fahren); $("#lzRang").hidden = !(m === "fahren" && szene.rangieren); $("#lzReak").hidden = !(m === "fahren" && szene.reaktion);
     $("#lzPrev").hidden = $("#lzNext").hidden = $("#lzTime").hidden = m === "fahren";
@@ -2140,8 +2141,8 @@
     $("#lzStage").appendChild(d); btn.setAttribute("aria-expanded", "true"); $("#lzStage").classList.add("par-offen");
     if (window.innerHeight <= 480) { const st = $("#lzStage").getBoundingClientRect(), cp = $("#lzCap").getBoundingClientRect(), fr = st.right - cp.right - 20; if (fr >= 180) { d.style.left = Math.round(cp.right - st.left + 8) + "px"; d.style.right = "auto"; d.style.maxWidth = Math.min(260, fr) + "px"; } } else { const st = $("#lzStage").getBoundingClientRect(), cp = $("#lzCap").getBoundingClientRect(); d.style.left = "12px"; d.style.bottom = "auto"; d.style.top = Math.round(cp.bottom - st.top + 8) + "px"; d.style.maxWidth = "min(340px,calc(100% - 24px))"; for (const q of ["#lzHud", "#lzFahrer"]) { const hu = root.querySelector(q); if (hu && !hu.hidden) { const pr = d.getBoundingClientRect(), hr = hu.getBoundingClientRect(); if (hr.width > 0 && pr.right > hr.left - 6 && pr.bottom > hr.top && pr.top < hr.bottom) d.style.maxWidth = Math.max(150, Math.round(hr.left - st.left - 12 - 8)) + "px"; } } }
   }
-  let capZu = false;
-  function capSync() { const c = $("#lzCap"), o = $("#lzCapOpen"); if (!c || !o) return; const weg = modus === "fahren"; c.hidden = capZu || weg; o.hidden = !capZu || weg; }
+  let capZu = false, fahrStart = false;
+  function capSync() { const c = $("#lzCap"), o = $("#lzCapOpen"); if (!c || !o) return; const weg = modus === "fahren" && fahrStart; c.hidden = capZu || weg; o.hidden = !capZu || weg; }
   function zeigeCap(titel, text, regel, ph) {
     const c = $("#lzCap"); if (!c) return; schliessePar();
     const ok = regel && parToken(regel);
