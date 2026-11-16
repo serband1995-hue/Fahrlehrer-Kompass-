@@ -708,8 +708,11 @@
     const pts = [P(-2.6, -0.3), P(0.9, -0.3), P(0.9, -0.85), P(2.7, 0), P(0.9, 0.85), P(0.9, 0.3), P(-2.6, 0.3)];
     ctx.beginPath(); pts.forEach((q, i) => i ? ctx.lineTo(q[0], q[1]) : ctx.moveTo(q[0], q[1])); ctx.closePath();
     ctx.fillStyle = "rgba(40,190,95,.95)"; ctx.fill(); ctx.strokeStyle = "#fff"; ctx.lineWidth = Math.max(1.5, 0.1 * s); ctx.stroke();
-    ctx.font = "bold " + Math.max(11 * dpr, 0.9 * s) + "px sans-serif"; ctx.textAlign = "center"; ctx.textBaseline = "middle"; ctx.lineWidth = 3 * dpr; ctx.strokeStyle = "rgba(10,30,15,.85)";
-    ctx.strokeText("Lücke", X(cx), Y(Lk.spur) + 1.35 * s); ctx.fillStyle = "#fff"; ctx.fillText("Lücke", X(cx), Y(Lk.spur) + 1.35 * s);
+    const zu = fk && schulterZustand(fk.f, fk.sig);
+    if (!(zu && zu.beschr)) {     // nie zwei Etiketten übereinander: „toter Winkel“ ist wichtiger als „Lücke“
+      ctx.font = "bold " + Math.max(12 * dpr, 0.9 * s) + "px sans-serif"; ctx.textAlign = "center"; ctx.textBaseline = "middle"; ctx.lineWidth = 3 * dpr; ctx.strokeStyle = "rgba(10,30,15,.85)";
+      ctx.strokeText("Lücke", X(cx), Y(Lk.spur) + 1.35 * s); ctx.fillStyle = "#fff"; ctx.fillText("Lücke", X(cx), Y(Lk.spur) + 1.35 * s);
+    }
     ctx.restore();
   }
   function zeichneOben() {
@@ -747,7 +750,7 @@
     (st.objekte || []).filter(o => o.art !== "haus" && o.art !== "baum").forEach(o => objektOben(o, X, Y, s));
     // Fahrzeuge
     const liste = fahrzeugListe();
-    liste.forEach(e => zeichneFahrzeugOben(e, X, Y, s));
+    etiketten = []; liste.forEach(e => zeichneFahrzeugOben(e, X, Y, s)); zeichneEtiketten(liste, X, Y, s);
     (st.objekte || []).filter(o => o.art === "haus" || o.art === "baum").forEach(o => objektOben(o, X, Y, s));
     if (szene.overlay) try { szene.overlay(ctx, X, Y, s, zeit, fahr); } catch (e) {}
     if (modus === "fahren" && fahr && fahr.rang) hilfslinien(ctx, X, Y, s, fahr);
@@ -822,6 +825,48 @@
     if (modus === "fahren" && fahr) return fahr.liste();
     return szene.fahrzeuge.map(f => { const p = fzPos(f, zeit); return { f, p, sig: signale(f, zeit, p) }; });
   }
+  // Zustand des Schulterblick-Kegels (Vorführen/Mitdenken: rot pulsierend mit Beschriftung, danach grün „frei“)
+  function schulterZustand(f, sig) {
+    let sc = sig.schulter, farbe = "rgba(255,230,120,.28)", beschr = null;
+    if (modus !== "fahren" && f.schulter) {
+      const puls = 0.22 + 0.1 * Math.sin(performance.now() / 170);
+      for (const x of f.schulter) {
+        if (zeit >= x.von - 1.6 && zeit < x.bis) { sc = x; farbe = x.seite === "rundum" || x.seite === "hinten" ? "rgba(255,200,60," + puls + ")" : "rgba(255,80,60," + puls + ")"; beschr = x.seite === "rundum" ? "Rundumblick" : x.seite === "hinten" ? "Blick zurück" : "toter Winkel"; }
+        else if (zeit >= x.bis && zeit < x.bis + 2.4) { sc = x; farbe = "rgba(50,210,110,.3)"; beschr = "frei"; }
+      }
+    }
+    return { sc, farbe, beschr };
+  }
+  // Etiketten werden nach allen Fahrzeugen gezeichnet: nie auf anderen Fahrzeugen, nie übereinander (das wichtigere gewinnt), immer im Bild
+  let etiketten = [], fahrerAn = false;
+  function zeichneEtiketten(liste, X, Y, s) {
+    if (!etiketten.length) return;
+    const kreise = [];
+    liste.forEach(e => { const T = TYPEN[e.f.typ]; if (!T || T.person || (e.f.unsichtbar && e.f.unsichtbar(zeit))) return; const n = Math.max(1, Math.round(T.l / 2.3)); for (let i = 0; i < n; i++) { const u = (i - (n - 1) / 2) * 2.3; kreise.push([X(e.p.x + Math.cos(e.p.h) * u), Y(e.p.y + Math.sin(e.p.h) * u), Math.max(0.9, T.b * 0.55) * s]); } });
+    const prio = t => t === "toter Winkel" ? 3 : t === "frei" ? 1 : 2, belegt = [];
+    etiketten.sort((a, b) => prio(b.beschr) - prio(a.beschr));
+    const fs2 = Math.max(12 * dpr, 0.9 * s); ctx.font = "bold " + fs2 + "px sans-serif"; ctx.textAlign = "center"; ctx.textBaseline = "middle";
+    for (const et of etiketten) {
+      const bw = ctx.measureText(et.beschr).width + 14 * dpr, bh = fs2 * 1.7;
+      const wk = et.seite === "links" ? [-0.785, -0.9, -0.65, -0.5] : et.seite === "rechts" ? [0.785, 0.9, 0.65, 0.5] : [1, 0.8, 1.2, 0.5, -0.5];
+      let best = null, frei = false;
+      for (const r of [8, 11, 14, 5]) { for (const w of wk) {
+        const lx = Math.cos(w * Math.PI) * r * s, ly = Math.sin(w * Math.PI) * r * s;
+        let cx = et.px + lx * Math.cos(et.h) - ly * Math.sin(et.h), cy = et.py + lx * Math.sin(et.h) + ly * Math.cos(et.h);
+        cx = clamp(cx, bw / 2 + 4, Wpx - bw / 2 - 4); cy = clamp(cy, bh / 2 + 4, Hpx - bh / 2 - 4);
+        const x0 = cx - bw / 2, x1 = cx + bw / 2, y0 = cy - bh / 2, y1 = cy + bh / 2;
+        if (belegt.some(q => x0 < q[2] && x1 > q[0] && y0 < q[3] && y1 > q[1])) continue;
+        if (!best) best = [cx, cy, x0, y0, x1, y1];
+        if (kreise.some(c => { const dx = Math.max(x0 - c[0], 0, c[0] - x1), dy = Math.max(y0 - c[1], 0, c[1] - y1); return dx * dx + dy * dy < c[2] * c[2]; })) continue;
+        best = [cx, cy, x0, y0, x1, y1]; frei = true; break; }
+        if (frei) break; }
+      if (!best) continue;
+      belegt.push([best[2], best[3], best[4], best[5]]);
+      ctx.save(); if (!frei) ctx.globalAlpha = 0.6;
+      rundRect(best[2], best[3], bw, bh, bh / 2); ctx.fillStyle = et.beschr === "frei" ? "rgba(20,110,55,.92)" : et.beschr === "toter Winkel" ? "rgba(150,30,20,.92)" : "rgba(255,206,60,.96)"; ctx.fill();
+      ctx.fillStyle = et.beschr === "toter Winkel" || et.beschr === "frei" ? "#fff" : "#2a1d00"; ctx.fillText(et.beschr, best[0], best[1] + 1); ctx.restore();
+    }
+  }
   function zeichneFahrzeugOben(e, X, Y, s) {
     const { f, p, sig } = e, T = TYPEN[f.typ];
     if (f.unsichtbar && f.unsichtbar(zeit)) return;
@@ -855,14 +900,7 @@
       ctx.fillStyle = "#ffb21f"; ctx.fill(); ctx.strokeStyle = "#fff4d0"; ctx.lineWidth = Math.max(1.5, 0.1 * s); ctx.stroke(); ctx.restore();
     }
     // Schulterblick: Sichtkegel in den toten Winkel (Vorführen/Mitdenken: pulsierend rot mit Beschriftung, nach dem Blick grün „frei“)
-    let sc = sig.schulter, farbe = "rgba(255,230,120,.28)", beschr = null;
-    if (modus !== "fahren" && f.schulter) {
-      const puls = 0.22 + 0.1 * Math.sin(performance.now() / 170);
-      for (const x of f.schulter) {
-        if (zeit >= x.von - 1.6 && zeit < x.bis) { sc = x; farbe = x.seite === "rundum" || x.seite === "hinten" ? "rgba(255,200,60," + puls + ")" : "rgba(255,80,60," + puls + ")"; beschr = x.seite === "rundum" ? "Rundumblick" : x.seite === "hinten" ? "Blick zurück" : "toter Winkel"; }
-        else if (zeit >= x.bis && zeit < x.bis + 2.4) { sc = x; farbe = "rgba(50,210,110,.3)"; beschr = "frei"; }
-      }
-    }
+    const zu = schulterZustand(f, sig), sc = zu.sc, farbe = zu.farbe, beschr = zu.beschr;
     if (sc) {
       const seite = sc.seite === "links" ? -1 : 1;
       ctx.fillStyle = farbe; ctx.beginPath(); ctx.moveTo(0, 0);
@@ -870,14 +908,9 @@
       else if (sc.seite === "hinten") ctx.arc(0, 0, 12 * s, Math.PI * 0.8, Math.PI * 1.2);
       else ctx.arc(0, 0, 14 * s, seite < 0 ? -Math.PI * 0.95 : Math.PI * 0.62, seite < 0 ? -Math.PI * 0.62 : Math.PI * 0.95, false);
       ctx.closePath(); ctx.fill();
-      ctx.rotate(-p.h);
-      if (beschr) {
-        const am = seite < 0 ? -Math.PI * 0.785 : Math.PI * 0.785, lx = Math.cos(am) * 8 * s, ly = Math.sin(am) * 8 * s, ox = lx * Math.cos(p.h) - ly * Math.sin(p.h), oy = lx * Math.sin(p.h) + ly * Math.cos(p.h);
-        const fs2 = Math.max(11 * dpr, 0.9 * s), tw = ctx.measureText ? (ctx.font = "bold " + fs2 + "px sans-serif", ctx.measureText(beschr).width) : 60;
-        rundRect(ox - tw / 2 - 7 * dpr, oy - fs2 * 0.85, tw + 14 * dpr, fs2 * 1.7, fs2 * 0.85); ctx.fillStyle = beschr === "frei" ? "rgba(20,110,55,.92)" : beschr === "toter Winkel" ? "rgba(150,30,20,.92)" : "rgba(130,90,10,.92)"; ctx.fill();
-        ctx.fillStyle = "#fff"; ctx.textAlign = "center"; ctx.textBaseline = "middle"; ctx.fillText(beschr, ox, oy + 1);
-      }
-      ctx.font = `${Math.max(12, 1.6 * s)}px sans-serif`; ctx.textAlign = "center"; ctx.textBaseline = "alphabetic"; ctx.fillText("👀", 0, -2.2 * s);
+      if (beschr) etiketten.push({ beschr, px, py, h: p.h, seite: sc.seite });
+      if (!fahrerAn) { ctx.rotate(-p.h); ctx.font = `${Math.max(12, 1.6 * s)}px sans-serif`; ctx.textAlign = "center"; ctx.textBaseline = "alphabetic"; ctx.fillText("👀", 0, -2.2 * s); }
+      else ctx.rotate(-p.h);
       ctx.rotate(p.h);
     }
     ctx.restore();
@@ -1638,8 +1671,8 @@
     const fokus = fahrzeugListe().find(e => e.f.fokus);
     if (fokus && ansicht.folgen) {
       let zx, zy;
-      if (szene.kamera.fest) { zx = szene.kamera.fest[0]; zy = szene.kamera.fest[1]; }
-      else { const vor = (szene.kamera.vor ?? 0.12) * (Wpx / dpr) / ansicht.zoom, hoch = 0.1 * (Hpx / dpr) / ansicht.zoom, hh = szene.kamera.richtung ? fokus.p.h : 0; zx = fokus.p.x + Math.cos(hh) * vor; zy = fokus.p.y + Math.sin(hh) * vor - hoch; }
+      if (szene.kamera.fest) { zx = szene.kamera.fest[0]; zy = szene.kamera.fest[1] - kameraVersatz(false) / ansicht.zoom; }
+      else { const vor = (szene.kamera.vor ?? 0.12) * (Wpx / dpr) / ansicht.zoom, hoch = kameraVersatz(true) / ansicht.zoom, hh = szene.kamera.richtung ? fokus.p.h : 0; zx = fokus.p.x + Math.cos(hh) * vor; zy = fokus.p.y + Math.sin(hh) * vor - hoch; }
       ansicht.px += (zx - ansicht.px) * 0.15; ansicht.py += (zy - ansicht.py) * 0.15;
     }
     if (kameraModus === "oben") zeichneOben(); else zeichne3d();
@@ -1656,11 +1689,16 @@
     const st = $("#lzStage"); if (!st) return false; const S = st.getBoundingClientRect(), klein = S.height < 260, w = klein ? 84 : 112, h = klein ? 72 : 96, hoch = window.innerHeight > 480;   // wie das CSS des §-Fensters: unten links, bei max. 480 px Fensterhöhe oben rechts
     const sperr = ["#lzCap", "#lzHud", ".lz-parpop", ".lz-parb", ".lz-tipp", ".lz-coach", ".lz-toast"].map(q => root.querySelector(q)).filter(e => e && !e.hidden).map(e => e.getBoundingClientRect());
     const cap = root.querySelector("#lzCap"), cr = cap ? cap.getBoundingClientRect() : null;
+    // Fahrzeuge als kleine Quadrate (CSS-Pixel), damit der Einsatz sie nicht verdeckt
+    const cvr = cv.getBoundingClientRect(), z = ansicht.zoom, fz = [];
+    fahrzeugListe().forEach(e => { const T = TYPEN[e.f.typ]; if (!T || (e.f.unsichtbar && e.f.unsichtbar(zeit))) return; const n = Math.max(1, Math.round(T.l / 2.3)), hb = Math.max(1.2, T.b * 0.6) * z; for (let i = 0; i < n; i++) { const u = (i - (n - 1) / 2) * 2.3, cx = cvr.left + cvr.width / 2 + (e.p.x + Math.cos(e.p.h) * u - ansicht.px) * z, cy = cvr.top + cvr.height / 2 + (e.p.y + Math.sin(e.p.h) * u - ansicht.py) * z; fz.push({ left: cx - hb, right: cx + hb, top: cy - hb, bottom: cy + hb }); } });
     const kand = hoch ? [[S.width - w - 10, (cr ? cr.bottom - S.top : 0) + 8]] : [[10, S.height - h - 10], [S.width * 0.38, S.height - h - 10]];
-    for (const [x, y] of kand) {
+    for (const [x, y, mitFz] of kand.map(k => [k[0], k[1], true]).concat(kand.map(k => [k[0], k[1], false]))) {
       const r = { left: S.left + x, top: S.top + y, right: S.left + x + w, bottom: S.top + y + h };
       if (x < 0 || y < 0 || r.right > S.right || r.bottom > S.bottom) continue;
       if (sperr.some(q => ueberlapptR(r, q, 6))) continue;
+      if (mitFz && fz.some(q => ueberlapptR(r, q, 4))) continue;
+      cvF.style.opacity = mitFz ? "1" : "0.5";       // deckt es doch ein Fahrzeug ab: halbtransparent
       const k = Math.round(x) + "," + Math.round(y) + "," + w; if (k !== cvF.dataset.p) { cvF.style.width = w + "px"; cvF.style.height = h + "px"; cvF.dataset.p = k; cvF.style.left = Math.round(x) + "px"; cvF.style.top = Math.round(y) + "px"; }
       return true;
     }
@@ -1670,7 +1708,8 @@
     const cvF = root && root.querySelector("#lzFahrer"); if (!cvF) return;
     const ph = szene && modus !== "fahren" && kameraModus === "oben" ? aktuellePhase() : null;
     const an = !!(ph && SPIEGEL_RE.test(ph.titel)) && !tippFrage;
-    if (!an || !platziereFahrer(cvF)) { if (!cvF.hidden) cvF.hidden = true; return; }
+    if (!an || !platziereFahrer(cvF)) { if (!cvF.hidden) cvF.hidden = true; fahrerAn = false; return; }
+    fahrerAn = true;
     if (cvF.hidden) cvF.hidden = false;
     const fk = fahrzeugListe().find(e => e.f.fokus); if (!fk) return;
     let ziel = -0.28, seite = -1, txt = "Spiegel";                       // Blick in den Spiegel (nach links/außen)
@@ -1915,10 +1954,10 @@
       if (modus === "fahren") { const c = $("#lzCap"); if (c) c.hidden = true; }
       if (modus === "fahren" && fahr && fahr.ende) { schliesseSheet(); if (szene.reaktion) starteReaktion(fahr.vWahl); else starteFahren(); } if (!laeuft && zeit >= szene.dauer && modus !== "fahren") { zeit = 0; beantwortet = new Set(); } laeuft = !laeuft; if (modus !== "fahren") { stimmePause(!laeuft); stimmeNachholen(); } if (laeuft) { schliesseSheet(); ansicht.folgen = true; } };
     const tippZu = () => { if (!tippFrage) return; tippFrage = null; const b = root.querySelector("#lzTipp"); if (b) b.remove(); ansicht.folgen = true; ansicht.zoom = grundZoom(); };
-    $("#lzSlider").oninput = e => { tippZu(); zeit = +e.target.value; laeuft = false; const ph = aktuellePhase(); if (ph) zeigePhase(ph); };
-    $("#lzPrev").onclick = () => { tippZu(); springe(-1); }; $("#lzNext").onclick = () => { tippZu(); springe(1); };
+    $("#lzSlider").oninput = e => { tippZu(); ansicht.folgen = true; zoomUser = false; zeit = +e.target.value; laeuft = false; const ph = aktuellePhase(); if (ph) zeigePhase(ph); };
+    $("#lzPrev").onclick = () => { tippZu(); zoomUser = false; springe(-1); }; $("#lzNext").onclick = () => { tippZu(); zoomUser = false; springe(1); };
     $("#lzTempo").onclick = () => { tempoFaktor = tempoFaktor === 1 ? 0.5 : tempoFaktor === 0.5 ? 2 : 1; $("#lzTempo").textContent = (tempoFaktor === 0.5 ? "½" : tempoFaktor) + "×"; };
-    $("#lzReset").onclick = () => { schliesseSheet(); tippFrage = null; { const b = root.querySelector("#lzTipp"); if (b) b.remove(); } _hGlatt = null; versatzFz = {}; zeit = 0; laeuft = false; beantwortet = new Set(); punkte = { richtig: 0, gesamt: 0 }; if (modus === "fahren") { starteFahren(); const c = $("#lzCap"); if (c) c.hidden = false; setzeModus("fahren"); } else zeigePhase(szene.phasen[0]); ansicht.folgen = true; };
+    $("#lzReset").onclick = () => { zoomUser = false; ansicht.folgen = true; ansicht.zoom = grundZoom(); schliesseSheet(); tippFrage = null; { const b = root.querySelector("#lzTipp"); if (b) b.remove(); } _hGlatt = null; versatzFz = {}; zeit = 0; laeuft = false; beantwortet = new Set(); punkte = { richtig: 0, gesamt: 0 }; if (modus === "fahren") { starteFahren(); const c = $("#lzCap"); if (c) c.hidden = false; setzeModus("fahren"); } else zeigePhase(szene.phasen[0]); ansicht.folgen = true; };
     root.querySelectorAll("[data-kam]").forEach(b => b.onclick = () => { if (tippFrage) { zeigeToast("Zum Antippen bleibt die Ansicht von oben."); return; } kameraModus = b.dataset.kam; _hGlatt = null; root.querySelectorAll("[data-kam]").forEach(x => x.classList.toggle("on", x === b)); });
     root.querySelectorAll("[data-modus]").forEach(b => b.onclick = () => setzeModus(b.dataset.modus));
     bindeFahren(); bindeZiehen();
@@ -1932,6 +1971,15 @@
     const r = cv ? cv.getBoundingClientRect() : null, b = r ? r.width : window.innerWidth;
     if (modus === "fahren" || !NAH[szene.id]) return szene.kamera.zoom * clamp(b / 1000, 0.55, 1.6);
     return NAH[szene.id] * clamp(Math.min(b, (r ? r.height : window.innerHeight) * 1.25) / 412, 0.8, 1.6);
+  }
+  // Bild nach unten rücken (CSS-px): Standard 10 % der Höhe. Im niedrigen Querformat so weit, dass das Auto unter dem Erklärkasten bleibt.
+  function kameraVersatz(standard) {
+    const H = Hpx / dpr, basis = standard ? 0.1 * H : 0; let dy = basis;
+    if (window.innerHeight <= 480 && root) {
+      const cap = root.querySelector("#lzCap");
+      if (cap && !cap.hidden) { const c = cap.getBoundingClientRect(), r = cv.getBoundingClientRect(); if (c.right - r.left > r.width / 2 - 40) dy = Math.max(dy, Math.min(H / 2 - 40, c.bottom - r.top + 24 - H / 2)); }
+    }
+    return dy;
   }
   const SPIEGEL_RE = /Schulterblick|Spiegel|Rundumblick/;
   function zoomZiel() {

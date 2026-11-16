@@ -54,6 +54,13 @@ for (const [w, h] of [[360, 640], [640, 360]]) {
       }
       const selbst = await page.$("#lzSelbst");
       if (selbst) { await selbst.click(); await page.waitForTimeout(1200); const s3 = await stich(page); pruefe(t + "Selbst fahren zeichnet", s3.farben >= 6, JSON.stringify(s3)); }
+      // eigener Zoom schaltet die Auto-Kamera ab; ↺ stellt sie wieder her
+      const zz = () => page.evaluate(() => window.Lernszenen._intern.zustand().ansicht.zoom);
+      const z0 = await zz();
+      await page.evaluate(() => { const st = document.querySelector("#lzStage"); for (let i = 0; i < 6; i++) st.dispatchEvent(new WheelEvent("wheel", { deltaY: 100, cancelable: true })); });
+      const z1 = await zz(); pruefe(t + "eigener Zoom wirkt", z1 < z0 * 0.7, z0 + " -> " + z1);
+      await page.click("#lzReset"); await page.waitForTimeout(400);
+      const z2 = await zz(); pruefe(t + "↺ stellt Standard-Zoom wieder her", Math.abs(z2 - z0) / z0 < 0.35, z0 + " / " + z2);
       pruefe(t + "Ansichten ohne Konsolenfehler", konsole.length === 0, konsole.join(" | "));
     }
     await page.evaluate(() => document.querySelector("#lzZu").click());
