@@ -16,7 +16,7 @@ const server = createServer(async (req, res) => {
 await new Promise(ok => server.listen(0, "127.0.0.1", ok));
 const basis = `http://127.0.0.1:${server.address().port}/`;
 const browser = await chromium.launch({ executablePath: process.env.CHROMIUM_PATH || "/opt/pw-browsers/chromium" });
-const ZEIGE = { rechts_rad: ["rad", "rad2"], kreisel: ["k"], strassenbahn: ["tram"], abstand: ["f2", "lr"] };
+const ZEIGE = { rechts_rad: ["rad", "rad2"], kreisel: ["k"], strassenbahn: ["tram"], abstand: ["fs", "lr"], einsatz: ["q"] };
 // Querformat, neue Szenen mit kamera.quer: Fokus-Auto und wichtige Beteiligte liegen im Bild UND nicht unter dem sichtbaren Erklaerkasten (#lzCap)
 const NEU = ["abknick", "vorfahrt_gewaehren", "rechts_fussg", "grundstueck", "ampel_gelb", "bahnuebergang", "strassenbahn", "abstand", "halteverbot", "einsatz"];
 const QUER = { abknick: [[2, ["c"]], [3, ["b", "c"]]], vorfahrt_gewaehren: [[3, ["b", "c"]]], rechts_fussg: [[0, ["fg", "kd"]], [1, ["fg", "kd"]], [2, ["fg", "kd"]]], grundstueck: [[2, ["fg", "ew"]], [4, ["b"]]], ampel_gelb: [[3, ["b"]]], abstand: [[1, ["f2", "lf"]], [2, ["f2", "lf"]], [3, ["f2", "lf"]], [4, ["f2", "lf"]], [5, ["f2", "lf"]]] };

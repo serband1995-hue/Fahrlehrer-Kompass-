@@ -12,6 +12,15 @@
   const PI = Math.PI;
   const rect = (x0, y0, x1, y1) => [[x0, y0], [x1, y0], [x1, y1], [x0, y1]];
   const aktiv = (a, t) => (a || []).some(([v, b]) => t >= v && t < b);
+  const dprVon = c => c.canvas.width / (c.canvas.getBoundingClientRect().width || c.canvas.width);
+  // Beschriftung als Pille (Schrift in Bildschirmpixeln, bleibt im Bild); liefert [links, rechts, Höhe]
+  function pille(c, text, cx, cy, bg, fg, gr) {
+    const d = dprVon(c), f = Math.round((gr || 12) * d); c.save(); c.font = "bold " + f + "px sans-serif";
+    const w = c.measureText(text).width + 14 * d, h = f + 8 * d; cx = Math.max(w / 2 + 4 * d, Math.min(c.canvas.width - w / 2 - 4 * d, cx));
+    c.fillStyle = bg; c.beginPath(); if (c.roundRect) c.roundRect(cx - w / 2, cy - h / 2, w, h, h / 2); else c.rect(cx - w / 2, cy - h / 2, w, h); c.fill();
+    c.fillStyle = fg || "#fff"; c.textAlign = "center"; c.textBaseline = "middle"; c.fillText(text, cx, cy + 0.5 * d); c.restore(); return [cx - w / 2, cx + w / 2, h];
+  }
+  const SCHIENE = "#eef1f4";
 
   // ------------------------------------------------------------ Fahrzeug- und Personen-Helfer
   function fahrt(id, typ, farbe, punkte, keys, sBei, tBei, extra) {
@@ -32,9 +41,9 @@
   }
   schild("z201", "Zeichen 201 · Andreaskreuz", g => {
     g.translate(64, 64); g.rotate(PI / 4);
-    [[112, 26, "#d02a28"], [96, 14, "#fff"]].forEach(([l, b, f]) => { g.fillStyle = f; g.fillRect(-l / 2, -b / 2, l, b); g.fillRect(-b / 2, -l / 2, b, l); });
-    g.fillStyle = "#d02a28"; g.fillRect(-48, -7, 96, 14); g.fillRect(-7, -48, 14, 96); g.fillStyle = "#fff"; g.fillRect(-46, -5, 92, 10); g.fillRect(-5, -46, 10, 92);
+    [[150, 28, "#d02a28"], [138, 17, "#fff"]].forEach(([l, b, f]) => { g.fillStyle = f; g.fillRect(-l / 2, -b / 2, l, b); g.fillRect(-b / 2, -l / 2, b, l); });
   });
+  schild("z224g", "Zeichen 224 · Haltestelle", g => { g.beginPath(); g.arc(64, 64, 62, 0, 7); g.fillStyle = "#f4c800"; g.fill(); g.lineWidth = 5; g.strokeStyle = "#333"; g.stroke(); g.fillStyle = "#1e8a3c"; g.font = "bold 104px sans-serif"; g.textAlign = "center"; g.textBaseline = "middle"; g.fillText("H", 64, 70); });
   const haltverbot = (g, kreuz) => {
     g.beginPath(); g.arc(64, 64, 56, 0, 7); g.fillStyle = "#d02a28"; g.fill(); g.beginPath(); g.arc(64, 64, 46, 0, 7); g.fillStyle = "#1f5fa8"; g.fill();
     g.strokeStyle = "#d02a28"; g.lineWidth = 11; g.lineCap = "butt"; g.beginPath(); g.moveTo(34, 34); g.lineTo(94, 94); if (kreuz) { g.moveTo(94, 34); g.lineTo(34, 94); } g.stroke();
@@ -57,7 +66,7 @@
     }
     g.fillStyle = "#26292d"; for (let i = 1; i < n; i++) g.fillRect(-l / 2 + i * sl - 0.2, -hw * 0.78, 0.4, b * 0.78);
     for (const sd of [-1, 1]) { g.fillStyle = "rgba(24,34,48,.92)"; H.rrg(g, sd > 0 ? l / 2 - 1.0 : -l / 2 + 0.25, -hw * 0.78, 0.75, b * 0.78, 0.2); g.fill();
-      g.fillStyle = "#fff8dc"; for (const q of [-1, 1]) { g.beginPath(); g.ellipse(sd * (l / 2 - 0.1), q * hw * 0.62, 0.1, 0.17, 0, 0, 7); g.fill(); } }
+      for (const q of [-1, 1]) { const gx = sd * (l / 2 - 0.05), gy = q * hw * 0.55, gl = g.createRadialGradient(gx, gy, 0.05, gx, gy, 1.5); gl.addColorStop(0, "rgba(255,248,200,.85)"); gl.addColorStop(1, "rgba(255,248,200,0)"); g.fillStyle = gl; g.beginPath(); g.arc(gx, gy, 1.5, 0, 7); g.fill(); g.fillStyle = "#fffbe6"; g.beginPath(); g.ellipse(sd * (l / 2 - 0.12), gy, 0.16, 0.26, 0, 0, 7); g.fill(); } }
     g.strokeStyle = "#555a60"; g.lineWidth = 0.1; g.beginPath(); g.moveTo(-l / 2 + sl * 0.55, -0.55); g.lineTo(-l / 2 + sl * 0.55 + 0.9, 0); g.lineTo(-l / 2 + sl * 0.55, 0.55); g.stroke();   // Stromabnehmer
   };
   EXT.k3d.strassenbahn = EXT.k3d.zug = function (c, p, f, T) {
@@ -91,8 +100,8 @@
       for (let i = 0; i < st; i++) { ctx.strokeStyle = i % 2 ? "#f4f4f0" : "#d02a28"; ctx.lineWidth = 0.3 * s; ctx.beginPath(); ctx.moveTo(x0 + dx * L * s * i / st, y0 + dy * L * s * i / st); ctx.lineTo(x0 + dx * L * s * (i + 1) / st, y0 + dy * L * s * (i + 1) / st); ctx.stroke(); }
       ctx.fillStyle = "#3a3e43"; ctx.beginPath(); ctx.arc(x0, y0, 0.32 * s, 0, 7); ctx.fill();
       const hx = Math.cos(o.h), hy = Math.sin(o.h), px = -hy, py = hx;
-      [-1, 1].forEach((sd, i) => { const lx = x0 + hx * 0.5 * s + px * sd * 0.4 * s, ly = y0 + hy * 0.5 * s + py * sd * 0.4 * s, an = on && (i === 0) === alt;
-        ctx.fillStyle = an ? "#ff3b2f" : "#4a1512"; ctx.beginPath(); ctx.arc(lx, ly, 0.24 * s, 0, 7); ctx.fill(); if (an) H.leuchte(lx, ly, 1.4 * s, "#ff3b2f", 0.75); });
+      [-1, 1].forEach((sd, i) => { const lx = x0 + hx * 0.6 * s + px * sd * 0.6 * s, ly = y0 + hy * 0.6 * s + py * sd * 0.6 * s, an = on && (i === 0) === alt;
+        ctx.fillStyle = an ? "#ff3b2f" : "#4a1512"; ctx.beginPath(); ctx.arc(lx, ly, 0.42 * s, 0, 7); ctx.fill(); ctx.strokeStyle = "#1c1e21"; ctx.lineWidth = Math.max(1, 0.08 * s); ctx.stroke(); if (an) H.leuchte(lx, ly, 3 * s, "#ff3b2f", 0.9); });
       ctx.restore();
     },
     d3(c, o, t) {
@@ -112,7 +121,7 @@
     li.push({ art: "voll", b: 0.12, farbe: "#d8d6d0", pts: [[-90, -3.3], [90, -3.3]] }, { art: "voll", b: 0.12, farbe: "#d8d6d0", pts: [[-90, 3.3], [90, 3.3]] },
       { art: "leit_io", b: 0.12, pts: [[-90, 0], [-10, 0]] }, { art: "leit_io", b: 0.12, pts: [[10, 0], [90, 0]] },
       { art: "warte", b: 2.6, farbe: "#6d5a48", pts: [[0, -45], [0, -7]] }, { art: "warte", b: 2.6, farbe: "#6d5a48", pts: [[0, 7], [0, 45]] },
-      { art: "voll", b: 0.14, farbe: "#aeb4ba", pts: [[-0.72, -45], [-0.72, 45]] }, { art: "voll", b: 0.14, farbe: "#aeb4ba", pts: [[0.72, -45], [0.72, 45]] });
+      { art: "voll", b: 0.2, farbe: SCHIENE, pts: [[-0.72, -45], [-0.72, 45]] }, { art: "voll", b: 0.2, farbe: SCHIENE, pts: [[0.72, -45], [0.72, 45]] });
     sch.push({ typ: "z201", x: -5.6, y: 9.6, seite: 1 }, { typ: "z201", x: 5.6, y: -5.2, seite: 1 });
     const T_AN = 3.0, T_AUS = 22.0, SCHR = [5.0, 7.5, 19.0, 21.5], TZ = 13.5;
     obj.push({ art: "bue", x: -5.0, y: 5.0, h: PI, arm: -PI / 2, L: 4.7, an: [[T_AN, T_AUS]], schr: SCHR }, { art: "bue", x: 5.0, y: -5.0, h: 0, arm: PI / 2, L: 4.7, an: [[T_AN, T_AUS]], schr: SCHR });
@@ -120,16 +129,16 @@
     const WEG = [[-120, 1.65], [120, 1.65]], sHalt = -9.75 + 120;
     const fs = fahrt("fs", "fahrschule", "#f2f2ee", WEG, fahrplan({ vMax: 25, v0: 15, grenzen: [{ von: 0, bis: sHalt + 1, v: 15 }], halte: [{ s: sHalt, bis: 22.6 }], dauer: 30, s0: 90 }), 90, 0, { fokus: true, bremsStand: true, blinker: [] });
     const g = fahrt("g", "pkw", "#b3322c", [[120, -1.65], [-120, -1.65]], fahrplan({ vMax: 25, v0: 15, grenzen: [{ von: 0, bis: 111, v: 15 }], halte: [{ s: 120 - 9.9, bis: 22.8 }], dauer: 30, s0: 94 }), 94, 0, { bremsStand: true });
-    const zug = fahrt("zug", "zug", "#e4e4e6", [[0, -300], [0, 300]], [[0, 50]], 300, TZ);
+    const zug = fahrt("zug", "zug", "#e4e4e6", [[0, 300], [0, -300]], [[0, 50]], 300, TZ);
     szene({
       id: "bahnuebergang", plan: ["l_bahn"], titel: "Bahnübergang (Andreaskreuz)", kurz: "Rotes Blinklicht und Schranke: warten – auch nach dem Zug nicht um die Schranke herum",
-      dauer: 29, strasse: { flaechen: fl, linien: li, objekte: obj, schilder: sch, bordsteine: [], bereich: [-90, 90], boden: "#6a9a52", boden3d: "#6f9a55" }, kamera: { fest: [-2, -10], zoom: 9, quer: { zeige: ["g", "zug"], radius: 70 } },
+      dauer: 29, strasse: { flaechen: fl, linien: li, objekte: obj, schilder: sch, bordsteine: [], bereich: [-90, 90], boden: "#6a9a52", boden3d: "#6f9a55" }, kamera: { fest: [-2, -4], zoom: 11, quer: { zeige: ["g", "zug"], radius: 70 } },
       fahrzeuge: [fs, g, zug],
       phasen: [
         { t: 0.2, titel: "Andreaskreuz: Schienenfahrzeuge haben Vorrang", text: "Vor dem Bahnübergang steht ein Andreaskreuz. Das Tempo senken, bremsbereit bleiben und nach beiden Seiten auf das Gleis schauen.", regel: "Zeichen 201 · § 19 Abs. 1 StVO", frage: { text: "Was bedeutet das Andreaskreuz?", optionen: ["Schienenfahrzeuge haben Vorrang", "Ich habe Vorfahrt, der Zug muss bremsen", "Hier gilt rechts vor links"], richtig: 0, erklaerung: "Das Andreaskreuz (Zeichen 201) zeigt: Schienenfahrzeuge haben Vorrang. Ein Zug kann nicht ausweichen und bremst nur sehr langsam." } },
         { t: 3.2, titel: "Rotes Blinklicht: anhalten", text: "Das rote Blinklicht blinkt. Das heißt: Halt! Rechtzeitig vor dem Andreaskreuz anhalten, nicht noch schnell drüberfahren.", regel: "§ 19 Abs. 2 StVO", frage: { text: "Das rote Licht beginnt zu blinken. Was tust du?", optionen: ["Schnell noch drüberfahren", "Vor dem Andreaskreuz anhalten", "Hupen und durchrollen"], richtig: 1, erklaerung: "Rotes Blinklicht heißt: warten. Wer noch schnell hinüberfährt, riskiert sein Leben und das der Mitfahrer." } },
         { t: 5.6, titel: "Die Schranke senkt sich", text: "Die Halbschranke geht herunter. Ich halte mit Abstand davor an – nicht auf den Gleisen, nicht unter der Schranke, nicht daneben.", regel: "§ 19 Abs. 2 StVO" },
-        { t: 10.6, titel: "Der Zug kommt", text: "Von der Seite nähert sich ein Zug. Er ist schnell und kann nicht anhalten. Ich bleibe ruhig stehen und warte.", regel: "§ 19 Abs. 2 StVO" },
+        { t: 10.6, titel: "Der Zug kommt", text: "Von Süden nähert sich ein Zug. Er ist schnell und kann nicht anhalten. Ich bleibe ruhig stehen und warte.", regel: "§ 19 Abs. 2 StVO" },
         { t: 15.4, titel: "Zug vorbei – trotzdem warten", text: "Die Schranke ist noch unten und das Licht blinkt noch. Auf einem zweiten Gleis kann ein weiterer Zug kommen. Erst fahren, wenn die Schranke offen ist.", regel: "§ 19 Abs. 2 StVO", frage: { text: "Der Zug ist vorbei, die Schranke ist noch unten. Darf ich um die Schranke herumfahren?", optionen: ["Ja, der Zug ist ja weg", "Nein – warten, bis die Schranke offen ist", "Ja, aber nur langsam"], richtig: 1, erklaerung: "Nie um Schranken herum- oder unter ihnen hindurchfahren. Erst wenn die Schranke offen ist und das Licht ausgeht, ist der Weg frei." } },
         { t: 19.4, titel: "Die Schranke geht auf", text: "Die Schranke hebt sich, das Blinklicht ist noch an. Noch einen Moment warten, bis es aus ist.", regel: "§ 19 Abs. 2 StVO" },
         { t: 22.3, titel: "Frei: Platz dahinter prüfen", text: "Licht aus, Schranke offen. Bevor ich fahre: Habe ich hinter dem Gleis Platz? Ich fahre nur los, wenn ich den Bahnübergang ganz verlassen kann.", regel: "§ 19 Abs. 3 StVO · § 12 Abs. 1 StVO", frage: { text: "Hinter dem Übergang staut sich der Verkehr. Fahre ich auf den Übergang?", optionen: ["Ja, es geht gleich weiter", "Nein – nur fahren, wenn ich den Übergang ganz verlassen kann", "Ja, die Schranke ist ja offen"], richtig: 1, erklaerung: "Auf dem Bahnübergang darf man nicht halten. Wer im Stau auf dem Gleis stehen bleibt, ist in Lebensgefahr." } },
@@ -142,7 +151,7 @@
   (function () {
     const fl = [{ art: "gehweg", poly: rect(-80, -8.5, 80, 8.5) }, { art: "asphalt", poly: rect(-80, -4.85, 80, 4.85) }, { art: "pflaster", poly: rect(-80, -1.55, 80, 1.55) }].concat([{ art: "gruen2", zeigen3d: true, poly: rect(-80, -45, 80, -8.5) }, { art: "gruen2", zeigen3d: true, poly: rect(-80, 8.5, 80, 45) }]), obj = [], li = [];
     li.push({ art: "voll", b: 0.12, farbe: "#d8d6d0", pts: [[-80, -4.85], [80, -4.85]] }, { art: "voll", b: 0.12, farbe: "#d8d6d0", pts: [[-80, 4.85], [80, 4.85]] },
-      { art: "voll", b: 0.14, farbe: "#aeb4ba", pts: [[-80, -0.72], [80, -0.72]] }, { art: "voll", b: 0.14, farbe: "#aeb4ba", pts: [[-80, 0.72], [80, 0.72]] });
+      { art: "voll", b: 0.2, farbe: SCHIENE, pts: [[-80, -0.72], [80, -0.72]] }, { art: "voll", b: 0.2, farbe: SCHIENE, pts: [[-80, 0.72], [80, 0.72]] });
     haeuser(obj, [[-20, 14, 11, 9, 8], [-4, 14, 10, 9, 7, "#e3d7c3"], [16, 14, 11, 9, 9, "#cdd3d8"], [34, 14, 10, 9, 7], [-10, -14, 11, 9, 7, "#e3d7c3"], [14, -14, 10, 9, 8]]); baeume(obj, [[-12, 6.6, 1.5], [26, 6.6, 1.5]]);
     // Bahn: hält mit der Mitte bei x = 8 (Weg ab x = -150)
     const WT = [[-150, 0], [150, 0]];
@@ -161,8 +170,8 @@
     const gg = fahrt("gg", "pkw", "#2c5aa0", [[150, -3.2], [-150, -3.2]], [[0, 35]], 150 - 40, 0);
     szene({
       id: "strassenbahn", plan: ["a_stadt"], titel: "Straßenbahn an der Haltestelle", kurz: "Bahn hält: Fahrgäste laufen über die Fahrbahn – anhalten, dann nur Schritttempo",
-      dauer: Math.ceil(tAb + 3.5), strasse: { flaechen: fl, linien: li, objekte: obj, schilder: [{ typ: "z224", x: -7, y: 9.8, seite: 1 }], bordsteine: [{ pts: [[-80, 4.85], [80, 4.85]], seite: 1 }, { pts: [[-80, -4.85], [80, -4.85]], seite: -1 }], bereich: [-80, 80], boden: "#6a9a52", boden3d: "#6f9a55" },
-      kamera: { fest: [6, -6], zoom: 13, quer: { zeige: ["tram", "gg", "p1", "p2", "p3", "p4"], radius: 30 } }, fahrzeuge: [fs, tram, gg, p1, p2, p3, p4],
+      dauer: Math.ceil(tAb + 3.5), strasse: { flaechen: fl, linien: li, objekte: obj, schilder: [{ typ: "z224g", x: -7, y: 9.6, seite: 1 }], bordsteine: [{ pts: [[-80, 4.85], [80, 4.85]], seite: 1 }, { pts: [[-80, -4.85], [80, -4.85]], seite: -1 }], bereich: [-80, 80], boden: "#6a9a52", boden3d: "#6f9a55" },
+      kamera: { fest: [6, -6], zoom: 13, quer: { zeige: ["tram", "gg", "fa", "fb", "fc", "fd"], radius: 30 }, }, fahrzeuge: [fs, tram, gg, p1, p2, p3, p4], overlay: (c, X, Y, s, t) => { const d = dprVon(c); [p1, p2, p3, p4].forEach(f => { if (f.unsichtbar && f.unsichtbar(t)) return; const p = rohPos(f, t), r = Math.max(0.8 * s, 9 * d); c.fillStyle = "rgba(255,255,255,.3)"; c.beginPath(); c.arc(X(p.x), Y(p.y), r, 0, 7); c.fill(); c.strokeStyle = "#fff"; c.lineWidth = Math.max(2, 2 * d); c.stroke(); c.fillStyle = f.farbe; c.beginPath(); c.arc(X(p.x), Y(p.y), r * 0.42, 0, 7); c.fill(); }); },
       phasen: [
         { t: 0.2, titel: "Haltestelle mit Straßenbahn", text: "Die Straßenbahn fährt auf ihren Gleisen in der Mitte der Fahrbahn. Schienenfahrzeuge lasse ich in Längsrichtung durchfahren. An der Haltestelle (Zeichen 224) fahre ich nur vorsichtig vorbei und rechne mit Fahrgästen auf der Fahrbahn.", regel: "Zeichen 224 · § 20 Abs. 1 StVO", frage: { text: "Die Bahn bremst vor der Haltestelle. Was erwarte ich?", optionen: ["Fahrgäste, die zur Bahn und von ihr weg über die Fahrbahn laufen", "Nichts – die Bahn fährt ja auf Schienen", "Freie Fahrt für mich"], richtig: 0, erklaerung: "An Haltestellen steigen Fahrgäste ein und aus und laufen oft über die Fahrspur. Darauf stelle ich mich schon beim Heranfahren ein." } },
         { t: tAnk - 0.2, titel: "Bahn hält mit Warnblinklicht", text: "Die Bahn steht und hat Warnblinklicht an. Fahrgäste steigen ein und aus und kommen über meine Fahrspur. Ich halte an und lasse sie durch.", regel: "§ 20 Abs. 2 StVO", frage: { text: "Fahrgäste laufen über deine Fahrspur. Was tust du?", optionen: ["Hupen und durchfahren", "Anhalten und warten, bis die Fahrgäste auf dem Gehweg oder in der Bahn sind", "Langsam an ihnen vorbeidrängeln"], richtig: 1, erklaerung: "Wenn nötig, muss gewartet werden. Fahrgäste dürfen nicht gefährdet werden – das gilt auch, wenn sie es eilig haben." } },
@@ -187,37 +196,40 @@
       }
       return { kl, kf, ct, rest: xl - xf - LZ_ };
     }
-    const sR = sim(25), sF = sim(10), yN = -3.4, yS = 3.4, X0 = 300;
+    const sR = sim(25), sF = sim(10), yN = -4.6, yS = 4.6, X0 = 300;
     const WN = [[-X0, yN], [700, yN]], WS = [[-X0, yS], [700, yS]];
-    const fs = fahrt("fs", "fahrschule", "#f2f2ee", WS, sR.kf, X0, 0, { fokus: true });
-    const lr = fahrt("lr", "pkw", "#2c5aa0", WS, sR.kl, X0 + 25 + LZ_, 0), f2 = fahrt("f2", "pkw", "#b3322c", WN, sF.kf, X0, 0), lf = fahrt("lf", "pkw", "#e7e3d6", WN, sF.kl, X0 + 10 + LZ_, 0);
-    const fl = [{ art: "gehweg", poly: rect(-300, -7.2, 700, 7.2) }, { art: "asphalt", poly: rect(-300, -5.2, 700, -1.6) }, { art: "asphalt", poly: rect(-300, 1.6, 700, 5.2) }, { art: "gruen2", poly: rect(-300, -1.6, 700, 1.6), zeigen3d: true }, { art: "gruen2", poly: rect(-300, 7.2, 700, 40), zeigen3d: true }, { art: "gruen2", poly: rect(-300, -40, 700, -7.2), zeigen3d: true }];
+    const fs = fahrt("fs", "fahrschule", "#f2f2ee", WN, sR.kf, X0, 0);
+    const lr = fahrt("lr", "pkw", "#2c5aa0", WN, sR.kl, X0 + 25 + LZ_, 0), f2 = fahrt("f2", "pkw", "#b3322c", WS, sF.kf, X0, 0, { fokus: true }), lf = fahrt("lf", "pkw", "#e7e3d6", WS, sF.kl, X0 + 10 + LZ_, 0);
+    const fl = [{ art: "gruen2", poly: rect(-300, -40, 700, 40), zeigen3d: true }, { art: "asphalt", poly: rect(-300, -6.4, 700, -2.8) }, { art: "asphalt", poly: rect(-300, 2.8, 700, 6.4) }];
     const li = []; [yN, yS].forEach(y => { li.push({ art: "voll", b: 0.12, farbe: "#d8d6d0", pts: [[-300, y - 1.8], [700, y - 1.8]] }, { art: "voll", b: 0.12, farbe: "#d8d6d0", pts: [[-300, y + 1.8], [700, y + 1.8]] }); });
     const obj = []; for (let x = -280; x < 700; x += 40) obj.push({ art: "baum", x, y: 0, r: 1.8 });
-    // Overlay: Abstandsklammer (live), Anhalteweg des Folgenden (Reaktionsweg gelb, Bremsweg rot), Aufprall
-    const paar = [{ f: fs, l: lr, y: yS, yb: yS + 2.8, yt: yS + 4.2, s: sR, n: "Richtig", farbe: "#39d06a" }, { f: f2, l: lf, y: yN, yb: yN + 2.6, yt: yN + 3.9, s: sF, n: "Zu dicht", farbe: "#ff5a4a" }];
-    function bar(c, X, Y, s, x0, x1, y, farbe, text) { c.fillStyle = farbe; c.fillRect(X(x0), Y(y) - 0.45 * s, (x1 - x0) * s, 0.9 * s); if (LZ.bau.vorschau.an) return; c.fillStyle = "#fff"; c.font = `bold ${Math.max(10, 0.85 * s)}px sans-serif`; c.textAlign = "center"; c.textBaseline = "middle"; c.fillText(text, X((x0 + x1) / 2), Y(y)); }
-    const unten = (c, X, Y, s, t) => { if (t < TB) return; paar.forEach(p => { const x0 = rohPos(p.f, TB).x + TYPEN[p.f.typ].l / 2, r = V0 * TR, b = V0 * V0 / (2 * A); c.globalAlpha = 0.6; bar(c, X, Y, s, x0, x0 + r, p.y, "#d9a400", "Reaktion " + Math.round(r) + " m"); bar(c, X, Y, s, x0 + r, x0 + r + b, p.y, "#c62f26", "Bremsen " + Math.round(b) + " m"); c.globalAlpha = 1; }); };
+    // Overlay: Abstandsklammer (live), Anhalteweg als Balken neben dem Auto (Reaktion gelb, Bremsen rot), je Spur eine Pille, Aufprall
+    const paar = [{ f: fs, l: lr, y: yN, yb: yN + 1.45, yt: -1.4, s: sR, n: "Richtig", farbe: "#1f9d4d" }, { f: f2, l: lf, y: yS, yb: yS - 1.45, yt: 1.4, s: sF, n: "Zu dicht", farbe: "#c62f26" }];
+    const unten = (c, X, Y, s, t) => { if (t < TB) return; paar.forEach(p => { const x0 = rohPos(p.f, TB).x + TYPEN[p.f.typ].l / 2, r = V0 * TR, b = V0 * V0 / (2 * A), yy = p.y + (p.y < 0 ? -1.35 : 1.35), h = 0.6 * s;
+      c.globalAlpha = 0.85; c.fillStyle = "#e0a800"; c.fillRect(X(x0), Y(yy) - h / 2, r * s, h); c.fillStyle = "#d8392d"; c.fillRect(X(x0 + r), Y(yy) - h / 2, b * s, h); c.globalAlpha = 1; }); };
     const oben = (c, X, Y, s, t) => {
+      const d = dprVon(c); let mitte = 0, n = 0;
       paar.forEach(p => {
-        const a = rohPos(p.f, t).x + TYPEN[p.f.typ].l / 2, b = rohPos(p.l, t).x - TYPEN[p.l.typ].l / 2, yy = p.yb, g = Math.max(0, b - a);
-        c.strokeStyle = p.farbe; c.lineWidth = Math.max(2, 0.22 * s); c.beginPath(); c.moveTo(X(a), Y(yy)); c.lineTo(X(b), Y(yy)); c.moveTo(X(a), Y(yy) - 0.5 * s); c.lineTo(X(a), Y(yy) + 0.5 * s); c.moveTo(X(b), Y(yy) - 0.5 * s); c.lineTo(X(b), Y(yy) + 0.5 * s); c.stroke();
-        if (!LZ.bau.vorschau.an) { c.fillStyle = "rgba(0,0,0,.6)"; const w = 7 * s; c.fillRect(X((a + b) / 2) - w / 2, Y(p.yt) - 0.8 * s, w, 1.6 * s);
-        c.fillStyle = "#fff"; c.font = `bold ${Math.max(11, 1.05 * s)}px sans-serif`; c.textAlign = "center"; c.textBaseline = "middle"; c.fillText(p.n + " " + Math.round(g) + " m", X((a + b) / 2), Y(p.yt)); }
-        if (p.s.ct && t >= p.s.ct.t) { const px = X(rohPos(p.f, p.s.ct.t).x + 2.25), py = Y(p.y); c.fillStyle = "rgba(255,70,50,.85)"; c.beginPath(); for (let i = 0; i < 16; i++) { const r = (i % 2 ? 1.3 : 2.5) * s, an = i * PI / 8; c.lineTo(px + Math.cos(an) * r, py + Math.sin(an) * r); } c.fill(); }
+        const a = rohPos(p.f, t).x + TYPEN[p.f.typ].l / 2, b = rohPos(p.l, t).x - TYPEN[p.l.typ].l / 2, g = Math.max(0, b - a), v = rohPos(p.f, t).v, ct = p.s.ct;
+        c.strokeStyle = p.farbe; c.lineWidth = Math.max(2, 2 * d); c.beginPath(); c.moveTo(X(a), Y(p.yb)); c.lineTo(X(b), Y(p.yb)); c.moveTo(X(a), Y(p.yb) - 4 * d); c.lineTo(X(a), Y(p.yb) + 4 * d); c.moveTo(X(b), Y(p.yb) - 4 * d); c.lineTo(X(b), Y(p.yb) + 4 * d); c.stroke();
+        if (ct && t >= ct.t) { const px = X(rohPos(p.f, ct.t).x + 2.25), py = Y(p.y); c.fillStyle = "rgba(255,90,40,.9)"; c.beginPath(); for (let i = 0; i < 16; i++) { const r = (i % 2 ? 0.8 : 1.6) * s, an = i * PI / 8; c.lineTo(px + Math.cos(an) * r, py + Math.sin(an) * r); } c.fill(); }
+        if (LZ.bau.vorschau.an) return;
+        const txt = ct && t >= ct.t ? "Aufprall mit ca. " + Math.round(ct.v) + " km/h" : t < TB ? p.n + ": " + Math.round(g) + " m Abstand" : v > 0.05 ? "Reaktion 14 m + Bremsen 12 m" : "Stillstand, " + Math.round(g) + " m Abstand";
+        pille(c, txt, X((a + b) / 2), Y(p.yt), p.farbe); mitte += X((a + b) / 2); n++;
       });
+      if (!LZ.bau.vorschau.an) pille(c, "Vergleich: beide fahren nach rechts →", c.canvas.width * 0.3, Y(yS + 4.6), "rgba(30,34,40,.85)", "#fff", 11);
     };
     const aufprall = Math.round(sF.ct ? sF.ct.v : 0);
     szene({
       id: "abstand", plan: ["s_ueb_abstand", "s_ab_abst"], titel: "Sicherheitsabstand", kurz: "Halber Tachowert: Vordermann bremst – wer zu dicht fährt, fährt auf",
-      dauer: 17, strasse: { flaechen: fl, linien: li, objekte: obj, schilder: [], bordsteine: [], bereich: [-300, 700], boden: "#6a9a52", boden3d: "#6f9a55" }, kamera: { fokus: "fs", zoom: 13.5, vor: 0.2, quer: { zeige: ["lr", "f2", "lf"], radius: 60, pad: 4 } },
+      dauer: 17, strasse: { flaechen: fl, linien: li, objekte: obj, schilder: [], bordsteine: [], bereich: [-300, 700], boden: "#6a9a52", boden3d: "#6f9a55" }, kamera: { fokus: "f2", zoom: 13.5, vor: 0.2, quer: { zeige: ["fs", "lr", "lf"], radius: 60, pad: 4 } },
       fahrzeuge: [fs, lr, f2, lf], overlayUnten: unten, overlay: oben,
       phasen: [
         { t: 0.2, titel: "Halber Tachowert", text: "Zwei Fahrer folgen ihrem Vordermann mit 50 km/h. Faustregel für den Abstand: der halbe Tachowert in Metern. Bei 50 km/h sind das 25 m, bei 100 km/h 50 m.", regel: "§ 4 Abs. 1 StVO", frage: { text: "Du fährst 80 km/h. Wie groß ist der Abstand nach der Faustregel?", optionen: ["8 m", "40 m", "80 m"], richtig: 1, erklaerung: "Halber Tachowert: 80 : 2 = 40 m. Bei Regen und Nässe deutlich mehr." } },
         { t: 2.8, titel: "Rot hängt zu dicht", text: "Das rote Auto fährt nur 10 m hinter dem weißen Auto – das ist bei 50 km/h weniger als eine Sekunde Abstand. Es sieht gut aus, solange nichts passiert.", regel: "§ 4 Abs. 1 StVO" },
         { t: TB - 0.1, titel: "Der Vordermann bremst", text: "Beide Vordermänner bremsen plötzlich. Bis ich reagiert habe, vergeht etwa eine Sekunde – und das Auto rollt dabei bei 50 km/h rund 14 m weiter (gelb), erst danach beginnt der Bremsweg einer Gefahrbremsung (rot).", regel: "§ 4 Abs. 1 StVO", frage: { text: "Wie weit rollt dein Auto bei 50 km/h während einer Sekunde Reaktionszeit?", optionen: ["Etwa 5 m", "Etwa 14 m", "Etwa 25 m"], richtig: 1, erklaerung: "50 km/h sind rund 14 m pro Sekunde. In der Reaktionszeit rollst du also schon 14 m – ohne zu bremsen." } },
         { t: TB + 1.8, titel: "Reaktionsweg plus Bremsweg", text: "Die Fahrschule bremst mit 25 m Abstand und bleibt mit Platz stehen. Beim roten Auto reicht der Abstand nicht: Der Anhalteweg ist länger als die Lücke.", regel: "§ 4 Abs. 1 StVO" },
-        { t: TB + 4.5, titel: "Ergebnis: zu dicht = Auffahrunfall", text: "Rot fährt mit etwa " + aufprall + " km/h auf. Der Abstand muss so groß sein, dass ich auch bei plötzlichem Bremsen des Vordermanns noch hinter ihm halten kann.", regel: "§ 4 Abs. 1 StVO" },
+        { t: TB + 4.5, titel: "Ergebnis: zu dicht = Auffahrunfall", text: "Rot (das Auto, dessen Tacho du siehst) fährt mit etwa " + aufprall + " km/h auf. Der Abstand muss so groß sein, dass ich auch bei plötzlichem Bremsen des Vordermanns noch hinter ihm halten kann.", regel: "§ 4 Abs. 1 StVO" },
         { t: 12.2, titel: "Merke: Zwei-Sekunden-Regel", text: "Zähle „einundzwanzig, zweiundzwanzig“, nachdem der Vordermann eine Stelle passiert hat: Du erreichst sie nicht früher. Halber Tachowert: 25 m bei 50 km/h, 50 m bei 100 km/h. Bei Nässe, Dunkelheit und Anhänger mehr.", regel: "§ 4 Abs. 1 StVO" }
       ]
     });
@@ -257,7 +269,7 @@
     const tZu = x => tBeiS(fs, x - X0);
     const ph = [{ t: 0.2, titel: "Wo darf ich halten?", text: "Ich suche einen Platz zum Parken. Rot: kein Halten und kein Parken. Rosa: nur Parken verboten, kurzes Halten erlaubt. Wir gehen die Strecke Schritt für Schritt durch.", regel: "§ 12 StVO" }];
     let letzte = null;
-    ZONEN.forEach(z => { if (z.titel) { z.tp = Math.max(1, tZu(z.a - 16)); ph.push({ t: z.tp, titel: z.titel, text: z.text, regel: z.regel, frage: z.fr }); } else { z.tp = letzte.tp; } letzte = z; });
+    ZONEN.forEach(z => { if (z.titel) { z.tp = Math.max(1, tZu(z.a - 12)); ph.push({ t: z.tp, titel: z.titel, text: z.text, regel: z.regel, frage: z.fr }); } else { z.tp = letzte.tp; } letzte = z; });
     const tp = z => z.tp;
     const farbe = z => z.rot ? "255,60,48" : z.nurP ? "235,90,160" : z.orange ? "255,170,30" : "50,200,100";
     function zonenOben(c, X, Y, s, t) {
@@ -265,16 +277,26 @@
         const akt = t >= z.tp, vorbei = t > z.tp + 9, a = akt ? (vorbei ? 0.28 : 0.46) : 0.14;
         c.fillStyle = "rgba(" + farbe(z) + "," + a + ")"; c.fillRect(X(z.a), Y(3.4), (z.b - z.a) * s, (KANTE - 3.4) * s);
         c.strokeStyle = "rgba(" + farbe(z) + "," + (akt ? 0.95 : 0.3) + ")"; c.lineWidth = Math.max(1.5, 0.18 * s); c.strokeRect(X(z.a), Y(3.4), (z.b - z.a) * s, (KANTE - 3.4) * s);
-        if (akt && z.titel && !LZ.bau.vorschau.an) { c.fillStyle = "#fff"; c.font = `bold ${Math.max(11, 1.05 * s)}px sans-serif`; c.textAlign = "center"; c.textBaseline = "middle"; c.fillText(z.rot ? "kein Halten/Parken" : z.nurP ? "kein Parken" : z.orange ? "Halten ≤ 3 min" : "frei", X((z.a + z.b) / 2), Y(4.45)); }
       });
+    }
+    const KURZ = z => z.rot ? "kein Halten" : z.nurP ? "kein Parken" : z.orange ? "Halten ≤ 3 min" : "frei", FPUNKT = ["255,60,48", "235,90,160", "255,170,30", "50,200,100"], FTEXT = ["kein Halten/Parken", "nur kein Parken", "Halten bis 3 min", "frei"];
+    function obenText(c, X, Y, s, t) {
+      if (LZ.bau.vorschau.an) return; const d = dprVon(c); let rechts = [-1e9, -1e9];
+      ZONEN.forEach(z => { if (!z.titel || t < z.tp || t > z.tp + 9) return; const mx = X((z.a + z.b) / 2), reihe = mx - 40 * d < rechts[0] ? 1 : 0; const r = pille(c, KURZ(z), mx, Y(6.7 + reihe * 2), "rgba(" + farbe(z) + ",.95)", z.orange || z.gruen ? "#111" : "#fff", 11); rechts[reihe] = r[1]; if (!reihe) rechts[0] = r[1]; });
+      // feste Mini-Legende links unten
+      const W = c.canvas.width, H = c.canvas.height, zw = H / d < 330 ? 2 : 1, zh = 15 * d; c.save(); c.font = "bold " + Math.round(11 * d) + "px sans-serif"; c.textBaseline = "middle"; c.textAlign = "left";
+      const cw = 138 * d, rows = Math.ceil(4 / zw), bx = 6 * d, by = H - 6 * d - rows * zh - 4 * d;
+      c.fillStyle = "rgba(20,24,28,.78)"; c.fillRect(bx, by, zw * cw + 6 * d, rows * zh + 8 * d);
+      FTEXT.forEach((tx, i) => { const cx = bx + 6 * d + (zw === 2 ? (i % 2) * cw : 0), cy = by + 4 * d + (zw === 2 ? Math.floor(i / 2) : i) * zh + zh / 2; c.fillStyle = "rgb(" + FPUNKT[i] + ")"; c.beginPath(); c.arc(cx + 5 * d, cy, 4.5 * d, 0, 7); c.fill(); c.fillStyle = "#fff"; c.fillText(tx, cx + 14 * d, cy); });
+      c.restore();
     }
     function zonen3d(c, h, t) { ZONEN.forEach(z => { const akt = t >= z.tp; h.poly3d(c, [[z.a, 3.4, 0.03], [z.b, 3.4, 0.03], [z.b, KANTE, 0.03], [z.a, KANTE, 0.03]], "rgba(" + farbe(z) + "," + (akt ? 0.5 : 0.18) + ")"); }); }
     szene({
       id: "halteverbot", plan: ["gf_laengs"], titel: "Halten und Parken verboten", kurz: "Entlang einer Straße: Wo darf ich halten – und wo nicht?",
-      dauer: Math.ceil(tBeiS(fs, sStop) + 3), strasse: { flaechen: fl, linien: li, objekte: obj, schilder: sch, bordsteine: [{ pts: [[X0, 3.3], [X1, 3.3]], seite: 1 }], bereich: [X0, X1], boden: "#6a9a52", boden3d: "#6f9a55" },
-      kamera: { fokus: "fs", zoom: 15, vor: 0.2, quer: { zeige: [], pad: 12 } }, fahrzeuge: [fs].concat(parked.map(([x, f], i) => parkt("p" + i, "pkw", f, x, 4.4, 0))),
-      overlayUnten: zonenOben, overlay3d: (c, h, t) => zonen3d(c, h, t),
-      phasen: ph.concat([{ t: tBeiS(fs, sStop) - 1.5, titel: "Merke", text: "Zum Parken brauche ich Abstand zu Kreuzungen, Überwegen und Einfahrten und kein Haltverbotsschild. Bin ich unsicher: lieber einen Meter weiter fahren.", regel: "§ 12 StVO" }])
+      dauer: Math.ceil(tBeiS(fs, sStop - 0.5) + 3), strasse: { flaechen: fl, linien: li, objekte: obj, schilder: sch, bordsteine: [{ pts: [[X0, 3.3], [X1, 3.3]], seite: 1 }], bereich: [X0, X1], boden: "#6a9a52", boden3d: "#6f9a55" },
+      kamera: { fokus: "fs", zoom: 15, vor: 0.2, quer: { zeige: [], pad: 14 } }, fahrzeuge: [fs].concat(parked.map(([x, f], i) => parkt("p" + i, "pkw", f, x, 4.4, 0))),
+      overlayUnten: zonenOben, overlay: obenText, overlay3d: (c, h, t) => zonen3d(c, h, t),
+      phasen: ph.concat([{ t: tBeiS(fs, sStop - 0.5) - 1.5, titel: "Merke", text: "Zum Parken brauche ich Abstand zu Kreuzungen, Überwegen und Einfahrten und kein Haltverbotsschild. Bin ich unsicher: lieber einen Meter weiter fahren.", regel: "§ 12 StVO" }])
     });
   })();
 
@@ -284,22 +306,37 @@
     haeuser(K.objekte, [[d + 4, d + 3, 11, 9, 9, "#d9cfbf"], [d + 18, d + 4, 10, 10, 7, "#e3d7c3", "#8a4a36"], [-d - 4, d + 3, 11, 9, 8, "#cdd3d8", "#6d5a4a"], [-d - 18, d + 3, 10, 9, 10, "#e3d7c3"], [d + 4, -d - 3, 11, 9, 8, "#e3d7c3"], [d + 18, -d - 4, 10, 10, 10, "#d4c7b6", "#6d5a4a"], [-d - 4, -d - 3, 11, 9, 7, "#d9cfbf", "#8a4a36"], [-d - 18, -d - 3, 10, 9, 9, "#cdd3d8"]]);
     K.linien.push({ art: "leit_io", b: 0.12, pts: [[-90, 0], [-12, 0]] }, { art: "leit_io", b: 0.12, pts: [[12, 0], [90, 0]] }, { art: "leit_io", b: 0.12, pts: [[0, 90], [0, 12]] }, { art: "leit_io", b: 0.12, pts: [[0, -12], [0, -90]] });
     Object.assign(K, { schilder: [], bereich: [-K.L, K.L], boden: "#6a9a52", boden3d: "#6f9a55" });
+    TYPEN.rtwb = { l: 8.8, b: 3.0, h: 3.5 };                                  // Rettungswagen, größer und besser zu erkennen
+    EXT.bild.rtwb = function (g, f, T) {
+      const l = T.l, b = T.b, hw = b / 2; H.rrg(g, -l / 2, -hw, l, b, 0.5); g.fillStyle = H.quer(g, f.farbe, hw, 0.05); g.fill(); g.lineWidth = 0.06; g.strokeStyle = "rgba(0,0,0,.5)"; g.stroke();
+      g.fillStyle = "#e0c000"; g.fillRect(-l / 2 + 0.2, -hw + 0.25, l * 0.7, 0.32); g.fillRect(-l / 2 + 0.2, hw - 0.57, l * 0.7, 0.32);
+      g.fillStyle = "#d02a28"; g.fillRect(-l * 0.3, -0.3, 1.5, 0.6); g.fillRect(-l * 0.3 + 0.45, -0.75, 0.6, 1.5);
+      H.rrg(g, l / 2 - 1.7, -hw * 0.82, 1.1, b * 0.82, 0.25); g.fillStyle = "rgba(24,36,50,.92)"; g.fill();
+      for (const sd of [-1, 1]) { g.fillStyle = "#1b3f9a"; H.rrg(g, 0.9, sd * hw * 0.4 - 0.32, 0.9, 0.64, 0.12); g.fill(); g.fillStyle = "#6f9bff"; H.rrg(g, 1.0, sd * hw * 0.4 - 0.2, 0.7, 0.4, 0.1); g.fill(); }
+      g.fillStyle = "#fffbe6"; for (const q of [-1, 1]) { g.beginPath(); g.ellipse(l / 2 - 0.1, q * hw * 0.62, 0.12, 0.22, 0, 0, 7); g.fill(); }
+    };
+    EXT.k3d.rtwb = function (c, p, f, T) {
+      const ch = Math.cos(p.h), sh = Math.sin(p.h), on = H.blinkAn();
+      H.quader(c, p.x, p.y, p.h, T.l, T.b, 0.5, T.h, f.farbe, 1, (fl, v) => { if (fl.name === "vorn" || fl.name === "links" || fl.name === "rechts") { const a = fl.i.map(j => v[j]), z0 = a[0][2], dz = a[3][2] - z0, P = (t, zt) => [lerp(a[0][0], a[1][0], t), lerp(a[0][1], a[1][1], t), z0 + dz * zt]; H.poly3d(c, [P(0.04, 0.5), P(0.96, 0.5), P(0.96, 0.85), P(0.04, 0.85)], "#2b3945"); H.poly3d(c, [P(0, 0.08), P(1, 0.08), P(1, 0.22), P(0, 0.22)], "#e0c000"); } });
+      H.quader(c, p.x + ch * 1.4, p.y + sh * 1.4, p.h, 0.6, T.b * 0.75, T.h, T.h + 0.3, on ? "#6f9bff" : "#1b3c80");
+    };
     const XS = -17;                                                           // Halteposition der Fahrschule (Mitte): weit vor der Kreuzung
     const WF = [[-150, 1.625], [-34, 1.625], [-24, 2.15], [150, 2.15]], sS = XS + 150;
     const fs = fahrt("fs", "fahrschule", "#f2f2ee", WF, fahrplan({ vMax: 20, v0: 20, b: 2.8, halte: [{ s: sS, bis: 9.2 }], dauer: 20, s0: 120 }), 120, 0, { fokus: true, bremsStand: true, blinker: [{ von: 0.8, bis: 11.5, seite: "rechts" }] });
-    const rtw = fahrt("rtw", "rtw", "#f5f2e8", [[-300, 1.625], [-62, 1.625], [-50, -1.6], [300, -1.6]], [[0, 22], [6, 45], [30, 45]], 300 - 56, 0, { blau: true });
-    const q = fahrt("q", "pkw", "#2c5aa0", [[1.625, 150], [1.625, -150]], fahrplan({ vMax: 30, v0: 30, halte: [{ s: 150 - 15.2, bis: 7.6 }], dauer: 20, s0: 106 }), 106, 0, { bremsStand: true });
+    const rtw = fahrt("rtw", "rtwb", "#f5f2e8", [[-300, 1.625], [-52, 1.625], [-40, -1.6], [300, -1.6]], [[0, 18], [7, 46], [30, 46]], 300 - 44, 0, { blau: true });
+    const q = fahrt("q", "pkw", "#2c5aa0", [[1.625, 150], [1.625, -150]], fahrplan({ vMax: 30, v0: 30, halte: [{ s: 150 - 15.2, bis: 7.6 }], dauer: 20, s0: 113 }), 113, 0, { bremsStand: true });
     const tBeiX = xz => { let a = 0, b = 30; for (let i = 0; i < 40; i++) { const m = (a + b) / 2; if (rohPos(rtw, m).x < xz) a = m; else b = m; } return a; };
     const tMitte = tBeiX(0), tFs = tBeiX(XS);
-    // Einsatzhorn: Schallringe um den Rettungswagen
+    // Einsatzhorn: Schallringe und wechselndes Blaulicht um den Rettungswagen
     const ringe = (c, X, Y, s, t) => {
-      const p = rohPos(rtw, t); if (t > tMitte + 4.5) return;
-      c.save(); c.lineWidth = Math.max(1.5, 0.2 * s); for (let i = 0; i < 3; i++) { const ph = (t * 0.9 + i / 3) % 1; c.strokeStyle = "rgba(61,123,255," + (0.5 * (1 - ph)).toFixed(2) + ")"; c.beginPath(); c.arc(X(p.x), Y(p.y), (3 + ph * 14) * s, 0, 7); c.stroke(); }
-      c.fillStyle = "rgba(0,0,0,.6)"; c.fillRect(X(p.x) - 5.4 * s, Y(p.y) - 5.6 * s, 10.8 * s, 1.9 * s); c.fillStyle = "#fff"; c.font = `bold ${Math.max(10, 1.05 * s)}px sans-serif`; c.textAlign = "center"; c.textBaseline = "middle"; c.fillText("Blaulicht + Einsatzhorn", X(p.x), Y(p.y) - 4.65 * s); c.restore();
+      const p = rohPos(rtw, t); if (t > tMitte + 4.5) return; const d = dprVon(c), px = X(p.x), py = Y(p.y);
+      c.save(); c.lineWidth = Math.max(3 * d, 0.4 * s); for (let i = 0; i < 3; i++) { const ph = (t * 0.9 + i / 3) % 1; c.strokeStyle = "rgba(70,130,255," + (0.85 * (1 - ph)).toFixed(2) + ")"; c.beginPath(); c.arc(px, py, (3 + ph * 15) * s, 0, 7); c.stroke(); }
+      const w = Math.floor(performance.now() / 190) % 2; H.leuchte(px + Math.cos(p.h) * 1.4 * s - Math.sin(p.h) * (w ? 1.1 : -1.1) * s, py + Math.sin(p.h) * 1.4 * s + Math.cos(p.h) * (w ? 1.1 : -1.1) * s, 4.5 * s, "#3d7bff", 0.95); c.restore();
+      if (!LZ.bau.vorschau.an) pille(c, "Blaulicht + Einsatzhorn", px, py + 6 * s, "rgba(20,50,140,.92)", "#fff", 13);
     };
     szene({
       id: "einsatz", plan: ["a_stadt"], titel: "Einsatzfahrzeug mit Blaulicht", kurz: "Blaulicht und Einsatzhorn: sofort freie Bahn schaffen, rechts halten, Kreuzung nicht blockieren",
-      dauer: 14, strasse: K, kamera: { fest: [-22, -6], zoom: 10, quer: { zeige: ["rtw", "q"], radius: 80 } }, fahrzeuge: [fs, rtw, q], overlay: ringe,
+      dauer: 14, strasse: K, kamera: { fest: [-12, 4], zoom: 8.5, quer: { zeige: ["rtw", "q"], radius: 80 } }, fahrzeuge: [fs, rtw, q], overlay: ringe,
       phasen: [
         { t: 0.2, titel: "Blaulicht und Einsatzhorn", text: "Hinter mir nähert sich ein Rettungswagen mit Blaulicht und Einsatzhorn. Das bedeutet: Alle anderen müssen sofort freie Bahn schaffen – egal, wer sonst Vorfahrt hätte.", regel: "§ 38 Abs. 1 StVO", frage: { text: "Hinter dir kommt ein Rettungswagen mit Blaulicht und Einsatzhorn. Was tust du?", optionen: ["Weiterfahren und Gas geben", "Ruhig bleiben, rechts blinken, an den rechten Rand fahren und anhalten", "Mitten auf der Fahrbahn stehen bleiben"], richtig: 1, erklaerung: "Sofort freie Bahn schaffen: rechts blinken, so weit rechts wie möglich fahren und anhalten, damit der Rettungswagen vorbei kann." } },
         { t: 1.2, titel: "Rechts heranfahren", text: "Rechts blinken, nach rechts an den Rand fahren und anhalten – aber vor der Kreuzung, nicht mitten drin. Wer in der Kreuzung steht, versperrt dem Einsatzfahrzeug den Weg.", regel: "§ 38 Abs. 1 StVO" },

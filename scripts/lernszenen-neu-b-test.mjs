@@ -16,7 +16,7 @@ const basis = `http://127.0.0.1:${server.address().port}/`;
 const browser = await chromium.launch({ executablePath: process.env.CHROMIUM_PATH || "/opt/pw-browsers/chromium" });
 let ok = 0, fehler = 0;
 const pruefe = (n, c, g = "") => { if (c) ok++; else { fehler++; console.log("FEHLER " + n + (g ? " – " + g : "")); } };
-const IDS = ["bahnuebergang", "strassenbahn", "abstand", "halteverbot", "einsatz"], ZEIGE = { strassenbahn: ["tram"], abstand: ["f2", "lr"] };   // der Rettungswagen ist nur in den ersten Phasen im Bild (fährt dann durch)
+const IDS = ["bahnuebergang", "strassenbahn", "abstand", "halteverbot", "einsatz"], ZEIGE = { strassenbahn: ["tram"], abstand: ["fs", "lr"], einsatz: ["q"] };   // der Rettungswagen ist nur in den ersten Phasen im Bild (fährt dann durch)
 for (const [w, h] of [[360, 640], [412, 915], [640, 360], [568, 320]]) {
   const ctx = await browser.newContext({ viewport: { width: w, height: h }, deviceScaleFactor: 1, hasTouch: true, isMobile: w < 500 });
   const page = await ctx.newPage(); const konsole = [];
@@ -33,11 +33,12 @@ for (const [w, h] of [[360, 640], [412, 915], [640, 360], [568, 320]]) {
       await page.evaluate(v => { const sl = document.querySelector("#lzSlider"); sl.value = v; sl.dispatchEvent(new Event("input")); }, tm); await page.waitForTimeout(700);
       const r = await page.evaluate(zeige => {
         const L = window.Lernszenen, z = L._intern.zustand(), s = L._szenen.find(x => x.id === z.szene), st = document.querySelector("#lzCanvas").getBoundingClientRect(), out = [];
-        for (const f of s.fahrzeuge) { if (!f.fokus && !(zeige || []).includes(f.id)) continue; const p = L._intern.rohPos(f, z.zeit), sx = st.width / 2 + (p.x - z.ansicht.px) * z.ansicht.zoom, sy = st.height / 2 + (p.y - z.ansicht.py) * z.ansicht.zoom; out.push([f.id, sx > 0 && sx < st.width && sy > 0 && sy < st.height]); }
+        const dec = ["#lzCap", "#lzHud"].map(q => document.querySelector(q)).filter(e => e && !e.hidden).map(e => e.getBoundingClientRect());
+        for (const f of s.fahrzeuge) { if (!f.fokus && !(zeige || []).includes(f.id)) continue; const p = L._intern.rohPos(f, z.zeit), sx = st.width / 2 + (p.x - z.ansicht.px) * z.ansicht.zoom, sy = st.height / 2 + (p.y - z.ansicht.py) * z.ansicht.zoom, ax = st.left + sx, ay = st.top + sy, drin = sx > 0 && sx < st.width && sy > 0 && sy < st.height, frei = !dec.some(r => ax > r.left && ax < r.right && ay > r.top && ay < r.bottom); out.push([f.id, drin, frei]); }
         return { out, kasten: (document.querySelector("#lzCap") || {}).textContent || "" };
-      }, ZEIGE[id] || (id === "einsatz" && i <= 2 ? ["rtw"] : []));
+      }, (ZEIGE[id] || []).concat(id === "einsatz" && i <= 2 ? ["rtw"] : []));
       pruefe(t + `Phase ${i} erreichbar („${titel}“ im Kasten)`, r.kasten.includes(titel));
-      for (const [fid, drin] of r.out) pruefe(t + `Phase ${i}: ${fid} im Bild`, drin);
+      for (const [fid, drin, frei] of r.out) { pruefe(t + `Phase ${i}: ${fid} im Bild`, drin); if (drin) pruefe(t + `Phase ${i}: ${fid} nicht unter Erklärkasten/Tacho`, frei); }
     }
     await page.evaluate(() => document.querySelector("#lzZu").click());
   }
@@ -74,6 +75,8 @@ console.log(JSON.stringify(fach));
 pruefe("Bahnübergang: Zug sichtbar im Zeitfenster", fach.bahn.zugDa > 50); pruefe("Bahnübergang: alle stehen, wenn der Zug kommt", fach.bahn.schlecht === 0, String(fach.bahn.schlecht)); pruefe("Bahnübergang: Fahrschule fährt am Ende über das Gleis", fach.bahn.fsEnde > 3, String(fach.bahn.fsEnde));
 pruefe("Straßenbahn: Fahrschule fährt nie auf Fahrgäste zu", fach.tram.schlecht === 0, String(fach.tram.schlecht)); pruefe("Straßenbahn: Schritttempo neben der haltenden Bahn", fach.tram.zuSchnell === 0, String(fach.tram.zuSchnell));
 pruefe("Abstand: Fahrschule hält mit Abstand", fach.abstand.minRichtig > 5, String(fach.abstand.minRichtig)); pruefe("Abstand: rotes Auto fährt auf (Abstand ≈ 0)", fach.abstand.minZuDicht < 0.5, String(fach.abstand.minZuDicht));
+{ const hv = await page.evaluate(() => { const s = window.Lernszenen._szenen.find(x => x.id === "halteverbot"); return { dauer: s.dauer, t: s.phasen.map(p => p.t) }; });
+  pruefe("Halteverbot: Dauer unter 90 s", hv.dauer < 90, String(hv.dauer)); pruefe("Halteverbot: Phasen steigend und verteilt, letzte vor dem Ende", hv.t.every((v, i) => i === 0 || v > hv.t[i - 1] + 1) && hv.t[hv.t.length - 1] < hv.dauer && hv.t[hv.t.length - 1] > hv.dauer * 0.5, JSON.stringify(hv)); }
 pruefe("Halteverbot: Fahrschule steht am Ende in der freien Zone (180–196 m)", fach.halte.x > 182 && fach.halte.x < 194 && fach.halte.v < 0.05, JSON.stringify(fach.halte));
 pruefe("Einsatz: alle stehen, solange der Rettungswagen die Kreuzung quert", fach.einsatz.schlecht === 0, String(fach.einsatz.schlecht)); pruefe("Einsatz: Fahrschule blockiert die Kreuzung nicht", fach.einsatz.inKreuzung === 0, String(fach.einsatz.inKreuzung));
 await browser.close(); server.close();
