@@ -37,7 +37,7 @@ for (const [w, h] of [[360, 640], [412, 915], [640, 360], [568, 320]]) {
     pruefe(t + "Phasen aufsteigend", s.ph.every((p, i) => i === 0 || p.t > s.ph[i - 1].t) && s.ph[s.ph.length - 1].t < s.d);
     for (const p of s.ph) {   // jede Phase erreichbar: Titel im Erklärkasten
       await page.evaluate(v => { const sl = document.querySelector("#lzSlider"); sl.value = v; sl.dispatchEvent(new Event("input")); }, p.t + 0.05);
-      await page.waitForTimeout(500);
+      await page.waitForTimeout(900);
       const cap = await page.$eval("#lzCap", e => e.textContent);
       pruefe(t + `Phase „${p.titel}“ erreichbar`, cap.includes(p.titel), cap.slice(0, 60));
       const r = await page.evaluate(() => { const L = window.Lernszenen, z = L._intern.zustand(), sz = L._szenen.find(x => x.id === z.szene), st = document.querySelector("#lzCanvas").getBoundingClientRect(), f = sz.fahrzeuge.find(x => x.fokus), q = L._intern.rohPos(f, z.zeit); const sx = st.width / 2 + (q.x - z.ansicht.px) * z.ansicht.zoom, sy = st.height / 2 + (q.y - z.ansicht.py) * z.ansicht.zoom; return sx >= 0 && sx <= st.width && sy >= 0 && sy <= st.height; });

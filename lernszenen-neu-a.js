@@ -57,7 +57,7 @@
     const gelb = pfad(bezier([0, 8], [0, 0.2], [0.2, 0], [8, 0], 14));                 // gelbes Band: Verlauf der Vorfahrtstraße
     neu({
       id: "abknick", plan: ["a_stadt", "a_30"], titel: "Abknickende Vorfahrtstraße", kurz: "Die Vorfahrtstraße macht eine Kurve: wer ihr folgt, blinkt und hat Vorfahrt",
-      dauer: 13, strasse: K, kamera: { fest: [3, 3], zoom: 17 },
+      dauer: 13, strasse: K, kamera: { fest: [3, 3], zoom: 17, quer: { zeige: ["b", "c"], radius: 30 } },
       fahrzeuge: [fs, bl, rot],
       overlayUnten: (c, X, Y, s) => {
         const P = [[0, 60], [0, 8]].concat(gelb.pts.map(q => [q.x, q.y])).concat([[8, 0], [60, 0]]);
@@ -87,7 +87,7 @@
     const rt = fahrt("c", "pkw", "#b3322c", [[150, -1.625], [-150, -1.625]], [[0, 40]], 150, 9.2);
     neu({
       id: "vorfahrt_gewaehren", plan: ["l_stop", "a_30"], titel: "Vorfahrt gewähren (Zeichen 205)", kurz: "Langsam herantasten, Sicht prüfen, Querverkehr durchlassen",
-      dauer: 18, strasse: K, kamera: { fest: [3, 4], zoom: 17 },
+      dauer: 18, strasse: K, kamera: { fest: [3, 4], zoom: 17, quer: { zeige: ["b", "c"], radius: 30 } },
       fahrzeuge: [fs, bl, rt],
       phasen: [
         { t: 0.2, titel: "Zeichen 205: Vorfahrt gewähren", text: "Das Dreieck heißt: Vorfahrt gewähren. Anders als beim Stoppschild muss man nicht immer anhalten, aber so langsam heranfahren, dass man jederzeit anhalten kann. Die Garage links verdeckt die Sicht.", regel: "Zeichen 205 · § 8 Abs. 2 StVO", frage: { text: "Was ist der Unterschied zu Zeichen 206 (Stopp)?", optionen: ["Kein Unterschied", "Bei 205 halte ich nur, wenn Verkehr kommt; bei Stopp immer", "Bei 205 habe ich Vorfahrt"], richtig: 1, erklaerung: "Zeichen 206: Anhalten ist immer Pflicht. Zeichen 205: Vorfahrt gewähren, anhalten nur wenn nötig." } },
@@ -109,21 +109,21 @@
     K.objekte.push({ art: "ampel", x: 4.4, y: HL + 0.3, h: PI / 2, phasen: gruen }, { art: "ampel", x: -4.4, y: -HL, h: -PI / 2, phasen: gruen },
       { art: "ampel", x: -12.8, y: 4.4, h: PI, phasen: rot }, { art: "ampel", x: 12.8, y: -4.4, h: 0, phasen: rot },
       { art: "ampel", fuss: true, x: 11.5, y: -4.6, h: PI / 2, phasen: gruen }, { art: "ampel", fuss: true, x: 14.7, y: 4.6, h: -PI / 2, phasen: gruen });
-    const pts = route("S", "O", { q: 1.625, e: 8.5, e2: 6.5, k: 0.5, L: 40 }), sRand = 40 - 8.5, sStop = sNahe(pts, 8.4, 1.625);
+    const pts = route("S", "O", { q: 1.625, e: 8.5, e2: 6.5, k: 0.5, L: 22 }), sRand = 22 - 8.5, sStop = sNahe(pts, 8.4, 1.625);
     const mk = bis => fahrt("fs", "fahrschule", "#f2f2ee", pts, fahrplan({ vMax: 30, grenzen: [{ von: sRand - 12, bis: 999, v: 9 }], halte: [{ s: sStop, bis }], dauer: 40 }), 0, 0, { fokus: true, bremsStand: true });
     const tStop = tBeiS(mk(99), sStop - 0.45), tR = tBeiS(mk(99), sRand);
-    const v = 1.3, w1 = tStop - 6.2 + 0.6, w2 = w1 + 3, ende2 = w2 + 10.4 / v, tGo = ende2 + 0.6;       // Fußgänger: Weg −7 → +3,4 m, 4,7 km/h
+    const v = 1.3, w1 = tStop - 5.5 + 0.6, w2 = w1 + 3, ende2 = w2 + 8.9 / v, tGo = ende2 + 0.6;       // Fußgänger: Weg −7 → +3,4 m, 4,7 km/h
     const fs = mk(tGo); fs.blinker = [{ von: 0.5, bis: tGo + 6, seite: "rechts" }]; fs.schulter = [{ von: tR - 2.2, bis: tR - 1.2, seite: "rechts" }];
     const gehen = [[0, 0], [0.3, 4.7], [60, 4.7]];
-    const f1 = person("fg", "fussgaenger", "#3a6ea5", [[13.1, -7], [13.1, 7]], [[0, 0], [w1, 0], [w1 + 0.2, 4.7], [60, 4.7]]);
-    const f2 = person("kd", "kind", "#e0b84a", [[13.7, -7], [13.7, 7]], [[0, 0], [w2, 0], [w2 + 0.2, 4.3], [60, 4.3]]);
+    const f1 = person("fg", "fussgaenger", "#3a6ea5", [[13.1, -5.5], [13.1, 7]], [[0, 0], [w1, 0], [w1 + 0.2, 4.7], [60, 4.7]]);
+    const f2 = person("kd", "kind", "#e0b84a", [[13.7, -5.5], [13.7, 7]], [[0, 0], [w2, 0], [w2 + 0.2, 4.3], [60, 4.3]]);
     void gehen;
     neu({
       id: "rechts_fussg", plan: ["g_abb1", "g_abb2", "a_stadt"], titel: "Rechtsabbiegen mit Fußgängern", kurz: "Grün gilt auch für die Fußgänger in der Querstraße: sie haben Vorrang",
-      dauer: Math.ceil(tGo + 7), strasse: K, kamera: { fest: [9, 3], zoom: 22 },
+      dauer: Math.ceil(tGo + 7), strasse: K, kamera: { fest: [9, 3], zoom: 22, quer: { zeige: ["fg", "kd"], radius: 70 } },
       fahrzeuge: [fs, f1, f2],
       phasen: [
-        { t: 0.2, titel: "Grün für beide", text: "Ich habe Grün und will rechts abbiegen. In der Querstraße haben die Fußgänger zur gleichen Zeit Grün. Wer abbiegt, muss sie durchlassen.", regel: "§ 37 Abs. 2 · § 9 Abs. 3 StVO", frage: { text: "Ich habe Grün. Wer hat auf dem Überweg der Querstraße Vorrang?", optionen: ["Ich, ich habe Grün", "Die Fußgänger, die bei Grün gehen", "Wer schneller ist"], richtig: 1, erklaerung: "Beim Abbiegen müssen Fußgänger durchgelassen werden, auch wenn man selbst Grün hat." } },
+        { t: 0.2, titel: "Grün für beide", text: "Ich habe Grün und will rechts abbiegen. Die Fußgänger in der Querstraße haben gleichzeitig Grün. Wer abbiegt, lässt sie durch.", regel: "§ 37 Abs. 2 · § 9 Abs. 3 StVO", frage: { text: "Ich habe Grün. Wer hat auf dem Überweg der Querstraße Vorrang?", optionen: ["Ich, ich habe Grün", "Die Fußgänger, die bei Grün gehen", "Wer schneller ist"], richtig: 1, erklaerung: "Beim Abbiegen müssen Fußgänger durchgelassen werden, auch wenn man selbst Grün hat." } },
         { t: tR - 2.4, titel: "Schulterblick rechts, langsam", text: "Vor dem Abbiegen: Spiegel, Schulterblick nach rechts (Radfahrer im toten Winkel). Dann sehr langsam abbiegen und schon in der Kurve auf den Überweg achten.", regel: "§ 9 Abs. 1 StVO" },
         { t: tStop - 1.6, titel: "Vor dem Überweg warten", text: "Die ersten Fußgänger sind schon auf dem Überweg. Ich halte davor an und lasse sie in Ruhe gehen. Nicht hupen, nicht drängeln.", regel: "§ 9 Abs. 3 StVO", frage: { text: "Fußgänger sind noch auf dem Überweg. Was tue ich?", optionen: ["Schnell davor vorbeifahren", "Anhalten und sie durchlassen", "Hupen, damit sie schneller gehen"], richtig: 1, erklaerung: "Auf Fußgänger ist besondere Rücksicht zu nehmen; wenn nötig, wird gewartet." } },
         { t: w2 + 1.5, titel: "Auch der Nächste kommt", text: "Ein Kind folgt ein Stück später. Kinder und ältere Menschen sind langsamer. Erst losfahren, wenn wirklich alle drüben sind.", regel: "§ 9 Abs. 3 StVO" },
@@ -151,7 +151,7 @@
     const rt = fahrt("c", "pkw", "#b3322c", [[150, -2.2], [-150, -2.2]], [[0, 35]], 150, 15.2);
     neu({
       id: "grundstueck", plan: ["g_anfahr", "a_stadt"], titel: "Aus der Einfahrt auf die Straße", kurz: "Vorrang hat der fließende Verkehr, auch Fußgänger auf dem Gehweg",
-      dauer: 22, strasse: st, kamera: { fest: [2, 6], zoom: 22 },
+      dauer: 22, strasse: st, kamera: { fest: [2, 6], zoom: 22, quer: { zeige: ["b", "c", "fg", "ew"], radius: 30 } },
       fahrzeuge: [fs, ew, ped, bl, rt],
       phasen: [
         { t: 0.2, titel: "Rundumblick, Blinker", text: "Ich stehe auf dem Grundstück und will auf die Straße. Erst Blinker rechts, dann Rundumblick. Wer so einfährt, darf niemanden gefährden: Der Verkehr auf Gehweg und Straße hat Vorrang.", regel: "§ 10 StVO", frage: { text: "Wer hat Vorrang: ich aus der Einfahrt oder der Verkehr auf Gehweg und Straße?", optionen: ["Ich, ich war zuerst da", "Der fließende Verkehr, auch Fußgänger auf dem Gehweg", "Der, der lauter hupt"], richtig: 1, erklaerung: "Wer aus einem Grundstück einfährt, muss eine Gefährdung anderer ausschließen. Vorrang hat der Verkehr auf Gehweg und Straße." } },
@@ -185,7 +185,7 @@
     const yF = rohPos(fs, tY).y - 2.25;                      // Front der Fahrschule beim Umschalten auf Gelb
     neu({
       id: "ampel_gelb", plan: ["g_brems", "a_stadt"], titel: "Ampel: Gelb und Rot-Gelb", kurz: "Bei Gelb vor der Kreuzung halten, wenn es sicher geht. Rot-Gelb ist noch Rot",
-      dauer: Math.ceil(tG + 5), strasse: K, kamera: { fokus: "fs", zoom: 6, vor: 0.16 },
+      dauer: Math.ceil(tG + 5), strasse: K, kamera: { fokus: "fs", zoom: 6, vor: 0.16, quer: { zeige: ["b", "q"], radius: 45 } },
       fahrzeuge: [fs, bl, q],
       overlayUnten: (c, X, Y, s, z) => {
         if (z < tY || z > tRg) return;

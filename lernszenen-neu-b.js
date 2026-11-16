@@ -123,7 +123,7 @@
     const zug = fahrt("zug", "zug", "#e4e4e6", [[0, -300], [0, 300]], [[0, 50]], 300, TZ);
     szene({
       id: "bahnuebergang", plan: ["l_bahn"], titel: "Bahnübergang (Andreaskreuz)", kurz: "Rotes Blinklicht und Schranke: warten – auch nach dem Zug nicht um die Schranke herum",
-      dauer: 29, strasse: { flaechen: fl, linien: li, objekte: obj, schilder: sch, bordsteine: [], bereich: [-90, 90], boden: "#6a9a52", boden3d: "#6f9a55" }, kamera: { fest: [-2, -10], zoom: 9 },
+      dauer: 29, strasse: { flaechen: fl, linien: li, objekte: obj, schilder: sch, bordsteine: [], bereich: [-90, 90], boden: "#6a9a52", boden3d: "#6f9a55" }, kamera: { fest: [-2, -10], zoom: 9, quer: { zeige: ["g", "zug"], radius: 70 } },
       fahrzeuge: [fs, g, zug],
       phasen: [
         { t: 0.2, titel: "Andreaskreuz: Schienenfahrzeuge haben Vorrang", text: "Vor dem Bahnübergang steht ein Andreaskreuz. Das Tempo senken, bremsbereit bleiben und nach beiden Seiten auf das Gleis schauen.", regel: "Zeichen 201 · § 19 Abs. 1 StVO", frage: { text: "Was bedeutet das Andreaskreuz?", optionen: ["Schienenfahrzeuge haben Vorrang", "Ich habe Vorfahrt, der Zug muss bremsen", "Hier gilt rechts vor links"], richtig: 0, erklaerung: "Das Andreaskreuz (Zeichen 201) zeigt: Schienenfahrzeuge haben Vorrang. Ein Zug kann nicht ausweichen und bremst nur sehr langsam." } },
@@ -162,7 +162,7 @@
     szene({
       id: "strassenbahn", plan: ["a_stadt"], titel: "Straßenbahn an der Haltestelle", kurz: "Bahn hält: Fahrgäste laufen über die Fahrbahn – anhalten, dann nur Schritttempo",
       dauer: Math.ceil(tAb + 3.5), strasse: { flaechen: fl, linien: li, objekte: obj, schilder: [{ typ: "z224", x: -7, y: 9.8, seite: 1 }], bordsteine: [{ pts: [[-80, 4.85], [80, 4.85]], seite: 1 }, { pts: [[-80, -4.85], [80, -4.85]], seite: -1 }], bereich: [-80, 80], boden: "#6a9a52", boden3d: "#6f9a55" },
-      kamera: { fest: [6, -6], zoom: 13 }, fahrzeuge: [fs, tram, gg, p1, p2, p3, p4],
+      kamera: { fest: [6, -6], zoom: 13, quer: { zeige: ["tram", "gg", "p1", "p2", "p3", "p4"], radius: 30 } }, fahrzeuge: [fs, tram, gg, p1, p2, p3, p4],
       phasen: [
         { t: 0.2, titel: "Haltestelle mit Straßenbahn", text: "Die Straßenbahn fährt auf ihren Gleisen in der Mitte der Fahrbahn. Schienenfahrzeuge lasse ich in Längsrichtung durchfahren. An der Haltestelle (Zeichen 224) fahre ich nur vorsichtig vorbei und rechne mit Fahrgästen auf der Fahrbahn.", regel: "Zeichen 224 · § 20 Abs. 1 StVO", frage: { text: "Die Bahn bremst vor der Haltestelle. Was erwarte ich?", optionen: ["Fahrgäste, die zur Bahn und von ihr weg über die Fahrbahn laufen", "Nichts – die Bahn fährt ja auf Schienen", "Freie Fahrt für mich"], richtig: 0, erklaerung: "An Haltestellen steigen Fahrgäste ein und aus und laufen oft über die Fahrspur. Darauf stelle ich mich schon beim Heranfahren ein." } },
         { t: tAnk - 0.2, titel: "Bahn hält mit Warnblinklicht", text: "Die Bahn steht und hat Warnblinklicht an. Fahrgäste steigen ein und aus und kommen über meine Fahrspur. Ich halte an und lasse sie durch.", regel: "§ 20 Abs. 2 StVO", frage: { text: "Fahrgäste laufen über deine Fahrspur. Was tust du?", optionen: ["Hupen und durchfahren", "Anhalten und warten, bis die Fahrgäste auf dem Gehweg oder in der Bahn sind", "Langsam an ihnen vorbeidrängeln"], richtig: 1, erklaerung: "Wenn nötig, muss gewartet werden. Fahrgäste dürfen nicht gefährdet werden – das gilt auch, wenn sie es eilig haben." } },
@@ -196,21 +196,21 @@
     const obj = []; for (let x = -280; x < 700; x += 40) obj.push({ art: "baum", x, y: 0, r: 1.8 });
     // Overlay: Abstandsklammer (live), Anhalteweg des Folgenden (Reaktionsweg gelb, Bremsweg rot), Aufprall
     const paar = [{ f: fs, l: lr, y: yS, yb: yS + 2.8, yt: yS + 4.2, s: sR, n: "Richtig", farbe: "#39d06a" }, { f: f2, l: lf, y: yN, yb: yN + 2.6, yt: yN + 3.9, s: sF, n: "Zu dicht", farbe: "#ff5a4a" }];
-    function bar(c, X, Y, s, x0, x1, y, farbe, text) { c.fillStyle = farbe; c.fillRect(X(x0), Y(y) - 0.45 * s, (x1 - x0) * s, 0.9 * s); c.fillStyle = "#fff"; c.font = `bold ${Math.max(10, 0.85 * s)}px sans-serif`; c.textAlign = "center"; c.textBaseline = "middle"; c.fillText(text, X((x0 + x1) / 2), Y(y)); }
+    function bar(c, X, Y, s, x0, x1, y, farbe, text) { c.fillStyle = farbe; c.fillRect(X(x0), Y(y) - 0.45 * s, (x1 - x0) * s, 0.9 * s); if (LZ.bau.vorschau.an) return; c.fillStyle = "#fff"; c.font = `bold ${Math.max(10, 0.85 * s)}px sans-serif`; c.textAlign = "center"; c.textBaseline = "middle"; c.fillText(text, X((x0 + x1) / 2), Y(y)); }
     const unten = (c, X, Y, s, t) => { if (t < TB) return; paar.forEach(p => { const x0 = rohPos(p.f, TB).x + TYPEN[p.f.typ].l / 2, r = V0 * TR, b = V0 * V0 / (2 * A); c.globalAlpha = 0.6; bar(c, X, Y, s, x0, x0 + r, p.y, "#d9a400", "Reaktion " + Math.round(r) + " m"); bar(c, X, Y, s, x0 + r, x0 + r + b, p.y, "#c62f26", "Bremsen " + Math.round(b) + " m"); c.globalAlpha = 1; }); };
     const oben = (c, X, Y, s, t) => {
       paar.forEach(p => {
         const a = rohPos(p.f, t).x + TYPEN[p.f.typ].l / 2, b = rohPos(p.l, t).x - TYPEN[p.l.typ].l / 2, yy = p.yb, g = Math.max(0, b - a);
         c.strokeStyle = p.farbe; c.lineWidth = Math.max(2, 0.22 * s); c.beginPath(); c.moveTo(X(a), Y(yy)); c.lineTo(X(b), Y(yy)); c.moveTo(X(a), Y(yy) - 0.5 * s); c.lineTo(X(a), Y(yy) + 0.5 * s); c.moveTo(X(b), Y(yy) - 0.5 * s); c.lineTo(X(b), Y(yy) + 0.5 * s); c.stroke();
-        c.fillStyle = "rgba(0,0,0,.6)"; const w = 7 * s; c.fillRect(X((a + b) / 2) - w / 2, Y(p.yt) - 0.8 * s, w, 1.6 * s);
-        c.fillStyle = "#fff"; c.font = `bold ${Math.max(11, 1.05 * s)}px sans-serif`; c.textAlign = "center"; c.textBaseline = "middle"; c.fillText(p.n + " " + Math.round(g) + " m", X((a + b) / 2), Y(p.yt));
+        if (!LZ.bau.vorschau.an) { c.fillStyle = "rgba(0,0,0,.6)"; const w = 7 * s; c.fillRect(X((a + b) / 2) - w / 2, Y(p.yt) - 0.8 * s, w, 1.6 * s);
+        c.fillStyle = "#fff"; c.font = `bold ${Math.max(11, 1.05 * s)}px sans-serif`; c.textAlign = "center"; c.textBaseline = "middle"; c.fillText(p.n + " " + Math.round(g) + " m", X((a + b) / 2), Y(p.yt)); }
         if (p.s.ct && t >= p.s.ct.t) { const px = X(rohPos(p.f, p.s.ct.t).x + 2.25), py = Y(p.y); c.fillStyle = "rgba(255,70,50,.85)"; c.beginPath(); for (let i = 0; i < 16; i++) { const r = (i % 2 ? 1.3 : 2.5) * s, an = i * PI / 8; c.lineTo(px + Math.cos(an) * r, py + Math.sin(an) * r); } c.fill(); }
       });
     };
     const aufprall = Math.round(sF.ct ? sF.ct.v : 0);
     szene({
       id: "abstand", plan: ["s_ueb_abstand", "s_ab_abst"], titel: "Sicherheitsabstand", kurz: "Halber Tachowert: Vordermann bremst – wer zu dicht fährt, fährt auf",
-      dauer: 17, strasse: { flaechen: fl, linien: li, objekte: obj, schilder: [], bordsteine: [], bereich: [-300, 700], boden: "#6a9a52", boden3d: "#6f9a55" }, kamera: { fokus: "fs", zoom: 13.5, vor: 0.2 },
+      dauer: 17, strasse: { flaechen: fl, linien: li, objekte: obj, schilder: [], bordsteine: [], bereich: [-300, 700], boden: "#6a9a52", boden3d: "#6f9a55" }, kamera: { fokus: "fs", zoom: 13.5, vor: 0.2, quer: { zeige: ["lr", "f2", "lf"], radius: 60, pad: 4 } },
       fahrzeuge: [fs, lr, f2, lf], overlayUnten: unten, overlay: oben,
       phasen: [
         { t: 0.2, titel: "Halber Tachowert", text: "Zwei Fahrer folgen ihrem Vordermann mit 50 km/h. Faustregel für den Abstand: der halbe Tachowert in Metern. Bei 50 km/h sind das 25 m, bei 100 km/h 50 m.", regel: "§ 4 Abs. 1 StVO", frage: { text: "Du fährst 80 km/h. Wie groß ist der Abstand nach der Faustregel?", optionen: ["8 m", "40 m", "80 m"], richtig: 1, erklaerung: "Halber Tachowert: 80 : 2 = 40 m. Bei Regen und Nässe deutlich mehr." } },
@@ -218,7 +218,7 @@
         { t: TB - 0.1, titel: "Der Vordermann bremst", text: "Beide Vordermänner bremsen plötzlich. Bis ich reagiert habe, vergeht etwa eine Sekunde – und das Auto rollt dabei bei 50 km/h rund 14 m weiter (gelb), erst danach beginnt der Bremsweg einer Gefahrbremsung (rot).", regel: "§ 4 Abs. 1 StVO", frage: { text: "Wie weit rollt dein Auto bei 50 km/h während einer Sekunde Reaktionszeit?", optionen: ["Etwa 5 m", "Etwa 14 m", "Etwa 25 m"], richtig: 1, erklaerung: "50 km/h sind rund 14 m pro Sekunde. In der Reaktionszeit rollst du also schon 14 m – ohne zu bremsen." } },
         { t: TB + 1.8, titel: "Reaktionsweg plus Bremsweg", text: "Die Fahrschule bremst mit 25 m Abstand und bleibt mit Platz stehen. Beim roten Auto reicht der Abstand nicht: Der Anhalteweg ist länger als die Lücke.", regel: "§ 4 Abs. 1 StVO" },
         { t: TB + 4.5, titel: "Ergebnis: zu dicht = Auffahrunfall", text: "Rot fährt mit etwa " + aufprall + " km/h auf. Der Abstand muss so groß sein, dass ich auch bei plötzlichem Bremsen des Vordermanns noch hinter ihm halten kann.", regel: "§ 4 Abs. 1 StVO" },
-        { t: 12.2, titel: "Merke: Zwei-Sekunden-Regel", text: "Alternativ zählen: Der Vordermann passiert eine Stelle – ich zähle „einundzwanzig, zweiundzwanzig“ und erreiche sie nicht früher. Faustformel „halber Tachowert“: bei 30 km/h etwa 15 m, bei 50 km/h etwa 25 m, bei 100 km/h etwa 50 m. Zwei Sekunden sind sogar rund 28 m (50 km/h) und 56 m (100 km/h). Bei Nässe, Dunkelheit und Anhänger mehr.", regel: "§ 4 Abs. 1 StVO" }
+        { t: 12.2, titel: "Merke: Zwei-Sekunden-Regel", text: "Zähle „einundzwanzig, zweiundzwanzig“, nachdem der Vordermann eine Stelle passiert hat: Du erreichst sie nicht früher. Halber Tachowert: 25 m bei 50 km/h, 50 m bei 100 km/h. Bei Nässe, Dunkelheit und Anhänger mehr.", regel: "§ 4 Abs. 1 StVO" }
       ]
     });
   })();
@@ -265,14 +265,14 @@
         const akt = t >= z.tp, vorbei = t > z.tp + 9, a = akt ? (vorbei ? 0.28 : 0.46) : 0.14;
         c.fillStyle = "rgba(" + farbe(z) + "," + a + ")"; c.fillRect(X(z.a), Y(3.4), (z.b - z.a) * s, (KANTE - 3.4) * s);
         c.strokeStyle = "rgba(" + farbe(z) + "," + (akt ? 0.95 : 0.3) + ")"; c.lineWidth = Math.max(1.5, 0.18 * s); c.strokeRect(X(z.a), Y(3.4), (z.b - z.a) * s, (KANTE - 3.4) * s);
-        if (akt && z.titel) { c.fillStyle = "#fff"; c.font = `bold ${Math.max(11, 1.05 * s)}px sans-serif`; c.textAlign = "center"; c.textBaseline = "middle"; c.fillText(z.rot ? "kein Halten/Parken" : z.nurP ? "kein Parken" : z.orange ? "Halten ≤ 3 min" : "frei", X((z.a + z.b) / 2), Y(4.45)); }
+        if (akt && z.titel && !LZ.bau.vorschau.an) { c.fillStyle = "#fff"; c.font = `bold ${Math.max(11, 1.05 * s)}px sans-serif`; c.textAlign = "center"; c.textBaseline = "middle"; c.fillText(z.rot ? "kein Halten/Parken" : z.nurP ? "kein Parken" : z.orange ? "Halten ≤ 3 min" : "frei", X((z.a + z.b) / 2), Y(4.45)); }
       });
     }
     function zonen3d(c, h, t) { ZONEN.forEach(z => { const akt = t >= z.tp; h.poly3d(c, [[z.a, 3.4, 0.03], [z.b, 3.4, 0.03], [z.b, KANTE, 0.03], [z.a, KANTE, 0.03]], "rgba(" + farbe(z) + "," + (akt ? 0.5 : 0.18) + ")"); }); }
     szene({
       id: "halteverbot", plan: ["gf_laengs"], titel: "Halten und Parken verboten", kurz: "Entlang einer Straße: Wo darf ich halten – und wo nicht?",
       dauer: Math.ceil(tBeiS(fs, sStop) + 3), strasse: { flaechen: fl, linien: li, objekte: obj, schilder: sch, bordsteine: [{ pts: [[X0, 3.3], [X1, 3.3]], seite: 1 }], bereich: [X0, X1], boden: "#6a9a52", boden3d: "#6f9a55" },
-      kamera: { fokus: "fs", zoom: 15, vor: 0.2 }, fahrzeuge: [fs].concat(parked.map(([x, f], i) => parkt("p" + i, "pkw", f, x, 4.4, 0))),
+      kamera: { fokus: "fs", zoom: 15, vor: 0.2, quer: { zeige: [], pad: 12 } }, fahrzeuge: [fs].concat(parked.map(([x, f], i) => parkt("p" + i, "pkw", f, x, 4.4, 0))),
       overlayUnten: zonenOben, overlay3d: (c, h, t) => zonen3d(c, h, t),
       phasen: ph.concat([{ t: tBeiS(fs, sStop) - 1.5, titel: "Merke", text: "Zum Parken brauche ich Abstand zu Kreuzungen, Überwegen und Einfahrten und kein Haltverbotsschild. Bin ich unsicher: lieber einen Meter weiter fahren.", regel: "§ 12 StVO" }])
     });
@@ -299,7 +299,7 @@
     };
     szene({
       id: "einsatz", plan: ["a_stadt"], titel: "Einsatzfahrzeug mit Blaulicht", kurz: "Blaulicht und Einsatzhorn: sofort freie Bahn schaffen, rechts halten, Kreuzung nicht blockieren",
-      dauer: 14, strasse: K, kamera: { fest: [-22, -6], zoom: 10 }, fahrzeuge: [fs, rtw, q], overlay: ringe,
+      dauer: 14, strasse: K, kamera: { fest: [-22, -6], zoom: 10, quer: { zeige: ["rtw", "q"], radius: 80 } }, fahrzeuge: [fs, rtw, q], overlay: ringe,
       phasen: [
         { t: 0.2, titel: "Blaulicht und Einsatzhorn", text: "Hinter mir nähert sich ein Rettungswagen mit Blaulicht und Einsatzhorn. Das bedeutet: Alle anderen müssen sofort freie Bahn schaffen – egal, wer sonst Vorfahrt hätte.", regel: "§ 38 Abs. 1 StVO", frage: { text: "Hinter dir kommt ein Rettungswagen mit Blaulicht und Einsatzhorn. Was tust du?", optionen: ["Weiterfahren und Gas geben", "Ruhig bleiben, rechts blinken, an den rechten Rand fahren und anhalten", "Mitten auf der Fahrbahn stehen bleiben"], richtig: 1, erklaerung: "Sofort freie Bahn schaffen: rechts blinken, so weit rechts wie möglich fahren und anhalten, damit der Rettungswagen vorbei kann." } },
         { t: 1.2, titel: "Rechts heranfahren", text: "Rechts blinken, nach rechts an den Rand fahren und anhalten – aber vor der Kreuzung, nicht mitten drin. Wer in der Kreuzung steht, versperrt dem Einsatzfahrzeug den Weg.", regel: "§ 38 Abs. 1 StVO" },
