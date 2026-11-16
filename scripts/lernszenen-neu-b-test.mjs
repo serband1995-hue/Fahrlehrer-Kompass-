@@ -74,7 +74,7 @@ console.log(JSON.stringify(fach));
 pruefe("Bahnübergang: Zug sichtbar im Zeitfenster", fach.bahn.zugDa > 50); pruefe("Bahnübergang: alle stehen, wenn der Zug kommt", fach.bahn.schlecht === 0, String(fach.bahn.schlecht)); pruefe("Bahnübergang: Fahrschule fährt am Ende über das Gleis", fach.bahn.fsEnde > 3, String(fach.bahn.fsEnde));
 pruefe("Straßenbahn: Fahrschule fährt nie auf Fahrgäste zu", fach.tram.schlecht === 0, String(fach.tram.schlecht)); pruefe("Straßenbahn: Schritttempo neben der haltenden Bahn", fach.tram.zuSchnell === 0, String(fach.tram.zuSchnell));
 pruefe("Abstand: Fahrschule hält mit Abstand", fach.abstand.minRichtig > 5, String(fach.abstand.minRichtig)); pruefe("Abstand: rotes Auto fährt auf (Abstand ≈ 0)", fach.abstand.minZuDicht < 0.5, String(fach.abstand.minZuDicht));
-pruefe("Halteverbot: Fahrschule steht am Ende in der freien Zone (176–194 m)", fach.halte.x > 178 && fach.halte.x < 192 && fach.halte.v < 0.05, JSON.stringify(fach.halte));
+pruefe("Halteverbot: Fahrschule steht am Ende in der freien Zone (180–196 m)", fach.halte.x > 182 && fach.halte.x < 194 && fach.halte.v < 0.05, JSON.stringify(fach.halte));
 pruefe("Einsatz: alle stehen, solange der Rettungswagen die Kreuzung quert", fach.einsatz.schlecht === 0, String(fach.einsatz.schlecht)); pruefe("Einsatz: Fahrschule blockiert die Kreuzung nicht", fach.einsatz.inKreuzung === 0, String(fach.einsatz.inKreuzung));
 await browser.close(); server.close();
 console.log(`Lernszenen-Neu-B-Test: ${ok} bestanden, ${fehler} Fehler`); process.exit(fehler ? 1 : 0);
