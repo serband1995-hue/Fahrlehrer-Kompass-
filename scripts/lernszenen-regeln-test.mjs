@@ -74,6 +74,16 @@ for (const [w, h, mobil] of [[360, 780, true], [780, 360, true], [568, 320, true
     for (const tp of ph2) { await page.evaluate(v => { const s = document.querySelector("#lzSlider"); s.value = v; s.dispatchEvent(new Event("input")); }, tp + 0.3); await page.waitForTimeout(300); if (await page.$("#lzCap .lz-parb")) break; }
     if (await page.$("#lzCap .lz-parb")) { await (await page.$("#lzCap .lz-parb")).tap(); await page.waitForTimeout(200); await page.evaluate(() => history.back()); await page.waitForTimeout(400); pruefe(t + "Zurück schließt §-Fenster, Szene bleibt", !(await page.$(".lz-parpop")) && !!(await page.$("#lzCap"))); }
   }
+  { // zwei Paragrafen: §-Fenster bleibt komplett im Bild (bahnuebergang, auffahren)
+    for (const sz of ["bahnuebergang", "auffahren"]) {
+      const t = `${w}×${h} ${sz} (2 §): `;
+      await page.evaluate(x => window.Lernszenen.open({ szene: x }), sz); await page.waitForSelector("#lzCap");
+      const pt = await page.evaluate(x => window.Lernszenen._szenen.find(z => z.id === x).phasen.map(p => p.t), sz);
+      for (const tp of pt) { await page.evaluate(v => { const s = document.querySelector("#lzSlider"); s.value = v; s.dispatchEvent(new Event("input")); }, tp + 0.3); await page.waitForTimeout(250); const b = await page.$("#lzCap .lz-parb"); if (!b) continue; await b.tap(); await page.waitForTimeout(200);
+        const g = await page.evaluate(() => { const p = document.querySelector(".lz-parpop"); if (!p) return null; const r = p.getBoundingClientRect(), s = document.querySelector("#lzStage").getBoundingClientRect(); return { ok: r.top >= s.top - 1 && r.bottom <= s.bottom + 1 && r.left >= s.left - 1 && r.right <= s.right + 1, r: [Math.round(r.top), Math.round(r.bottom)], s: [Math.round(s.top), Math.round(s.bottom)] }; });
+        pruefe(t + `Phase t=${tp}: §-Fenster ganz im Bild`, !!g && g.ok, JSON.stringify(g)); await page.evaluate(() => document.querySelector(".lz-parpop") && document.querySelector(".lz-parb").click()); await page.waitForTimeout(100); }
+    }
+  }
   pruefe(`${w}×${h}: keine Konsolenfehler`, konsole.length === 0, konsole.join(" | ").slice(0, 200));
   await ctx.close();
 }

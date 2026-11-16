@@ -1790,7 +1790,7 @@
   .lz-caption h3{margin:0 0 3px;font-size:15.5px;}
   .lz-caption p{margin:0;font-size:13.5px;line-height:1.45;color:#dce6df;}
   .lz-nochmal{display:inline-flex;align-items:center;gap:6px;margin-top:8px;min-height:44px;padding:0 12px;border-radius:10px;border:1px solid #2e4a40;background:#1a2f28;color:#eef3ef;font-size:13.5px;font-weight:600;cursor:pointer;pointer-events:auto;}
-  @media (max-height:480px){ .lz-caption.mit-par .lz-nochmal{right:90px;} .lz-caption.mit-par h3{padding-right:136px !important;} .lz-nochmal{position:absolute;top:3px;right:50px;min-height:26px;min-width:38px;justify-content:center;margin:0;padding:0 8px;font-size:12px;} .lz-nochmal::after{content:"";position:absolute;inset:-9px -6px;} .lz-nm-t{display:none;} .lz-caption:has(.lz-nochmal) h3{padding-right:96px;} }
+  @media (max-height:480px){ .lz-caption.mit-par .lz-nochmal{right:90px;} .lz-caption.mit-par:has(.lz-nochmal) h3{padding-right:136px !important;} .lz-nochmal{position:absolute;top:3px;right:50px;min-height:26px;min-width:38px;justify-content:center;margin:0;padding:0 8px;font-size:12px;} .lz-nochmal::after{content:"";position:absolute;inset:-9px -6px;} .lz-nm-t{display:none;} .lz-caption:has(.lz-nochmal) h3{padding-right:96px;} }
   .lz-info{margin:14px 0 0;padding:0 14px 12px;font-size:13px;color:#b1bfb5;}
   @media (min-height:481px){ #lzStimme{min-height:44px;min-width:44px;} }
   #lzStimme[aria-pressed="true"]{background:#2f6b4f;border-color:#4fae80;}
@@ -1806,7 +1806,7 @@
   .lz-capopen[hidden]{display:none;}
   .lz-parx{position:absolute;right:4px;top:4px;width:36px;height:36px;border:0;background:transparent;color:#e0b84a;font:700 18px/1 system-ui,sans-serif;cursor:pointer;padding:0;}
   .lz-parx::after{content:"";position:absolute;inset:-4px;}
-  .lz-parpop{padding-right:40px !important;}
+  .lz-parpop{padding-right:40px !important;max-height:calc(100% - 20px);overflow-y:auto;}
   @media (max-height:480px){ .lz-caption,.lz-caption.mit-par{padding-right:14px;} .lz-caption h3{padding-right:44px;} .lz-caption.mit-par h3{padding-right:90px;} .lz-caption p{margin-top:8px;} .lz-capx{width:36px;height:36px;right:6px;top:4px;} .lz-caption.mit-par .lz-parb{right:46px;width:36px;height:36px;top:4px;} }
   .lz-parpop{position:absolute;left:12px;bottom:12px;max-width:min(320px,calc(100% - 140px));background:rgba(10,18,14,.95);border:1px solid #e0b84a;border-radius:12px;padding:10px 12px;box-shadow:0 8px 24px rgba(0,0,0,.45);z-index:3;font-size:14px;line-height:1.45;color:#dce6df;}
   @media (max-height:480px){.lz-parpop{left:auto;right:12px;top:10px;bottom:auto;max-width:min(260px,calc(100% - 410px));padding:6px 10px;}.lz-parpop{line-height:1.3;}.lz-parpop a{min-height:34px;padding:0;}}
@@ -2042,7 +2042,7 @@
   function setzeModus(m) {
     stimmeStopp(); tippFrage = null; { const b = root.querySelector("#lzTipp"); if (b) b.remove(); }
     modus = m; laeuft = false; versatzFz = {}; zeit = 0; beantwortet = new Set(); punkte = { richtig: 0, gesamt: 0 }; schliesseSheet(); _hGlatt = null;
-    fahrStart = false; capSync();
+    fahrStart = false; capZu = false; capSync();
     root.querySelectorAll("[data-modus]").forEach(x => x.classList.toggle("on", x.dataset.modus === m));
     $("#lzDrive").hidden = !(m === "fahren" && szene.fahren); $("#lzRang").hidden = !(m === "fahren" && szene.rangieren); $("#lzReak").hidden = !(m === "fahren" && szene.reaktion);
     $("#lzPrev").hidden = $("#lzNext").hidden = $("#lzTime").hidden = m === "fahren";
