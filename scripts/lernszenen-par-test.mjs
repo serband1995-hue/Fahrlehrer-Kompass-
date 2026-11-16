@@ -28,7 +28,7 @@ for (const [w, h] of [[360, 640], [412, 915], [640, 360], [568, 320]]) {
   await page.goto(basis);
   await page.waitForFunction(() => window.Lernszenen && window.Lernszenen.open, null, { timeout: 15000 });
   const ids = await page.evaluate(() => (window.Lernszenen.alleIds ? window.Lernszenen.alleIds() : null));
-  const liste = ids || ["auffahren", "abfahren", "reissverschluss", "rettungsgasse", "laengs", "wenden", "ecke", "gefahr", "ueberholen", "schulbus", "rvl", "links_gegen", "voreinander", "rechts_rad", "doppel", "kreisel", "zebra", "eng", "stop", "gruenpfeil"];
+  const liste = ids || await page.evaluate(() => window.Lernszenen._szenen.map(s => s.id)) || ["auffahren", "abfahren", "reissverschluss", "rettungsgasse", "laengs", "wenden", "ecke", "gefahr", "ueberholen", "schulbus", "rvl", "links_gegen", "voreinander", "rechts_rad", "doppel", "kreisel", "zebra", "eng", "stop", "gruenpfeil"];
   for (const szene of liste) {
     const t = `${w}×${h} ${szene}: `;
     await page.evaluate(s => window.Lernszenen.open({ szene: s }), szene);

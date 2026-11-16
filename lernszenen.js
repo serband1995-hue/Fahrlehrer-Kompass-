@@ -196,6 +196,7 @@
   // Jede Szene liefert: strasse (Flächen, Linien, Schilder), fahrzeuge (Pfad + Tempo + Signale),
   // phasen (Zeitpunkt, Titel, Erklärung, Regel, Frage) und optional "fahren" für den Selbst-fahren-Modus.
   const SZENEN = [];
+  const EXT = { bild: {}, k3d: {}, objekt: {} };                 // Erweiterungen aus weiteren Szenen-Dateien (Fahrzeug-Bilder, 3D-Körper, Objekte)
 
   // ---- Hilfen für Szenen: gerade Fahrstreifen, Tempo über den Ort, Zeitpunkt an einem Ort
   function gerade(y, x0, x1) { return pfad([[x0 === undefined ? -4000 : x0, y], [x1 === undefined ? 4000 : x1, y]]); }
@@ -682,7 +683,7 @@
     const key = f.typ + "|" + f.farbe + "|" + (f.schulbus ? 1 : 0) + "|" + q; let m = FZB.get(key); if (m) return m;
     if (FZB.size > 90) FZB.clear();
     const M = 1.3, c = mkCv((T.l + 2 * M) * q, (T.b + 2 * M) * q), g = c.getContext("2d"); g.translate(c.width / 2, c.height / 2); g.scale(q, q);
-    (f.typ === "lkw" ? bildLkw : f.typ === "bus" ? bildBus : f.typ === "transporter" || f.typ === "rtw" ? bildKasten : bildPkw)(g, f, T);
+    (EXT.bild[f.typ] || (f.typ === "lkw" ? bildLkw : f.typ === "bus" ? bildBus : f.typ === "transporter" || f.typ === "rtw" ? bildKasten : bildPkw))(g, f, T);
     m = { c, w: c.width, h: c.height }; FZB.set(key, m); return m;
   }
   function fzSchatten(T, q) {
@@ -765,6 +766,7 @@
   const LAMPE = { rot: ["#ff3b2f", null, null], rotgelb: ["#ff3b2f", "#ffc21a", null], gelb: [null, "#ffc21a", null], gruen: [null, null, "#39d06a"], aus: [null, null, null] };
   function objektOben(o, X, Y, s) {
     if (o.art === "baum") { baumOben(o, X, Y, s); return; }
+    if (EXT.objekt[o.art]) { EXT.objekt[o.art].oben(ctx, o, X, Y, s, zeit); return; }
     ctx.save(); ctx.translate(X(o.x), Y(o.y)); ctx.rotate(o.h || 0);
     const hh = o.h || 0, ch = Math.cos(hh), sh = Math.sin(hh), lok = (dx, dy) => [dx * ch + dy * sh, -dx * sh + dy * ch];   // Bildschirm-Versatz -> Objekt-Koordinaten
     if (o.art === "haus") {
@@ -777,14 +779,15 @@
       ctx.fillStyle = "rgba(8,16,4,.3)"; ctx.fillRect(L * 0.22 + 0.2 * s, B * 0.12 + 0.2 * s, 0.9 * s, 0.9 * s); ctx.fillStyle = "#77716b"; ctx.fillRect(L * 0.22, B * 0.12, 0.9 * s, 0.9 * s); ctx.fillStyle = "#2b2825"; ctx.fillRect(L * 0.22 + 0.2 * s, B * 0.12 + 0.2 * s, 0.5 * s, 0.5 * s);
       ctx.strokeStyle = "rgba(0,0,0,.4)"; ctx.lineWidth = Math.max(1, 0.12 * s); ctx.strokeRect(-L / 2, -B / 2, L, B);
     } else if (o.art === "ampel") {
-      const f = LAMPE[ampelFarbe(o, zeit)] || LAMPE.aus, n = o.fuss ? 2 : 3, w = 0.55 * s, hgt = (n * 0.55 + 0.2) * s;
-      const [ox, oy] = lok(0.3 * s, 0.35 * s); ctx.fillStyle = "rgba(0,0,0,.25)"; rundRect(-w / 2 + ox, -hgt / 2 + oy, w, hgt, 0.15 * s); ctx.fill();
-      ctx.fillStyle = "#1c1e21"; rundRect(-w / 2, -hgt / 2, w, hgt, 0.15 * s); ctx.fill(); ctx.strokeStyle = "#3a3e43"; ctx.lineWidth = Math.max(1, 0.05 * s); ctx.stroke();
+      const sk = s * (o.k || 1);
+      const f = LAMPE[ampelFarbe(o, zeit)] || LAMPE.aus, n = o.fuss ? 2 : 3, w = 0.55 * sk, hgt = (n * 0.55 + 0.2) * sk;
+      const [ox, oy] = lok(0.3 * sk, 0.35 * sk); ctx.fillStyle = "rgba(0,0,0,.25)"; rundRect(-w / 2 + ox, -hgt / 2 + oy, w, hgt, 0.15 * sk); ctx.fill();
+      ctx.fillStyle = "#1c1e21"; rundRect(-w / 2, -hgt / 2, w, hgt, 0.15 * sk); ctx.fill(); ctx.strokeStyle = "#3a3e43"; ctx.lineWidth = Math.max(1, 0.05 * sk); ctx.stroke();
       const farben = o.fuss ? [f[0], f[2]] : f, leer = o.fuss ? ["#4a1512", "#12401f"] : ["#4a1512", "#4a3a10", "#12401f"];
-      for (let i = 0; i < n; i++) { const ly = -hgt / 2 + 0.38 * s + i * 0.55 * s; if (farben[i]) leuchte(0, ly, 0.62 * s, farben[i], 0.55); ctx.fillStyle = farben[i] || leer[i]; ctx.beginPath(); ctx.arc(0, ly, 0.2 * s, 0, 7); ctx.fill(); if (farben[i]) { ctx.fillStyle = "rgba(255,255,255,.45)"; ctx.beginPath(); ctx.arc(-0.06 * s, ly - 0.06 * s, 0.07 * s, 0, 7); ctx.fill(); } }
+      for (let i = 0; i < n; i++) { const ly = -hgt / 2 + 0.38 * sk + i * 0.55 * sk; if (farben[i]) leuchte(0, ly, 0.62 * sk, farben[i], 0.55); ctx.fillStyle = farben[i] || leer[i]; ctx.beginPath(); ctx.arc(0, ly, 0.2 * sk, 0, 7); ctx.fill(); if (farben[i]) { ctx.fillStyle = "rgba(255,255,255,.45)"; ctx.beginPath(); ctx.arc(-0.06 * sk, ly - 0.06 * sk, 0.07 * sk, 0, 7); ctx.fill(); } }
       if (o.gruenpfeil) {                                         // Zeichen 720 rechts neben dem Rotlicht (aus Sicht der Ankommenden)
-        ctx.rotate(-(o.h || 0)); const rx = Math.sin(o.h || 0), ry = -Math.cos(o.h || 0), gx = rx * 0.75 * s, gy = ry * 0.75 * s;
-        ctx.fillStyle = "#1c1e21"; ctx.fillRect(gx - 0.3 * s, gy - 0.25 * s, 0.6 * s, 0.5 * s); ctx.fillStyle = "#2fbf5a"; ctx.font = `bold ${Math.max(8, 0.45 * s)}px sans-serif`; ctx.textAlign = "center"; ctx.textBaseline = "middle"; ctx.fillText("➜", gx, gy);
+        ctx.rotate(-(o.h || 0)); const rx = Math.sin(o.h || 0), ry = -Math.cos(o.h || 0), gx = rx * 0.75 * sk, gy = ry * 0.75 * sk;
+        ctx.fillStyle = "#1c1e21"; ctx.fillRect(gx - 0.3 * sk, gy - 0.25 * sk, 0.6 * sk, 0.5 * sk); ctx.fillStyle = "#2fbf5a"; ctx.font = `bold ${Math.max(8, 0.45 * sk)}px sans-serif`; ctx.textAlign = "center"; ctx.textBaseline = "middle"; ctx.fillText("➜", gx, gy);
       }
     } else if (o.art === "poller" || o.art === "bake") {
       ctx.fillStyle = "rgba(0,0,0,.28)"; ctx.beginPath(); ctx.arc(0.18 * s, 0.22 * s, 0.25 * s, 0, 7); ctx.fill();
@@ -874,7 +877,7 @@
     const px = X(p.x), py = Y(p.y);
     ctx.save(); if (f.geist) ctx.globalAlpha = 0.45;
     const L = T.l * s, B = T.b * s;
-    if (T.person) { ctx.translate(px, py); ctx.rotate(p.h); personOben(f, T, sig, s); ctx.restore(); return; }
+    if (T.person) { ctx.translate(px, py); ctx.rotate(p.h); personOben(f, T, sig, s * (f.gr || 1)); ctx.restore(); return; }
     const q = fzQ(s), k = s / q, sb = fzBild(f, T, q), ss = fzSchatten(T, q);
     // weicher Schlagschatten (Licht von links oben), dann Karosserie-Bild
     ctx.save(); ctx.translate(px + 0.2 * T.h * s, py + 0.3 * T.h * s); ctx.rotate(p.h); ctx.drawImage(ss.c, -ss.w * k / 2, -ss.h * k / 2, ss.w * k, ss.h * k); ctx.restore();
@@ -895,7 +898,7 @@
     // Blinker-Pfeil (Lern-Hinweis): leuchtender Pfeil vor dem Fokus-Auto in Blinkrichtung (nur Vorführen/Mitdenken)
     if (f.fokus && modus !== "fahren" && sig.blinker && !sig.warn) {
       const sd = sig.blinker === "links" ? -1 : 1, an = blinkAn();
-      ctx.save(); ctx.translate(L / 2 + 2.3 * s, sd * 1.1 * s); ctx.rotate(sd * 0.55); ctx.globalAlpha *= an ? 0.95 : 0.35;
+      ctx.save(); ctx.translate(L / 2 + (2.3 + (f.pfeilDx || 0)) * s, sd * (1.1 + (f.pfeilDy || 0)) * s); ctx.rotate(sd * 0.55); ctx.scale(f.pfeilK || 1, f.pfeilK || 1); ctx.globalAlpha *= an ? 0.95 : 0.35;
       leuchte(0.3 * s, 0, 2.4 * s, "#ffae1a", 0.55);
       ctx.beginPath(); [[-1.4, -0.38], [0.2, -0.38], [0.2, -0.9], [1.5, 0], [0.2, 0.9], [0.2, 0.38], [-1.4, 0.38]].forEach(([x, y], i) => i ? ctx.lineTo(x * s, y * s) : ctx.moveTo(x * s, y * s)); ctx.closePath();
       ctx.fillStyle = "#ffb21f"; ctx.fill(); ctx.strokeStyle = "#fff4d0"; ctx.lineWidth = Math.max(1.5, 0.1 * s); ctx.stroke(); ctx.restore();
@@ -935,6 +938,7 @@
     ctx.strokeStyle = "rgba(0,0,0,.3)"; ctx.lineWidth = Math.max(1, 0.035 * s); ctx.beginPath(); ctx.ellipse(0, 0, 0.2 * s * sc, 0.3 * s * sc, 0, 0, 7); ctx.stroke();
     ctx.fillStyle = "#e8c4a0"; ctx.beginPath(); ctx.arc(0.02 * s, 0, 0.13 * s * sc, 0, 7); ctx.fill();
     ctx.fillStyle = f.typ === "rad" ? "#d9d9d4" : "#4a3426"; ctx.beginPath(); ctx.arc(-0.02 * s, 0, 0.1 * s * sc, 0, 7); ctx.fill();
+    if (f.rand) { ctx.strokeStyle = "rgba(255,255,255,.95)"; ctx.lineWidth = Math.max(1.5, 0.06 * s); ctx.beginPath(); ctx.ellipse(0, 0, 0.2 * s * sc + 0.03 * s, 0.3 * s * sc + 0.03 * s, 0, 0, 7); ctx.stroke(); }
     if (sig.schulter) { ctx.fillStyle = "rgba(255,230,120,.3)"; ctx.beginPath(); ctx.moveTo(0, 0); ctx.arc(0, 0, 5 * s, -0.5, 0.5); ctx.closePath(); ctx.fill(); }
   }
   function rundRect(x, y, w, h, r) { ctx.beginPath(); ctx.moveTo(x + r, y); ctx.arcTo(x + w, y, x + w, y + h, r); ctx.arcTo(x + w, y + h, x, y + h, r); ctx.arcTo(x, y + h, x, y, r); ctx.arcTo(x, y, x + w, y, r); ctx.closePath(); }
@@ -1108,7 +1112,7 @@
     if (f.unsichtbar && f.unsichtbar(zeit)) return;
     if (T.person) {
       if (f.typ === "ball") { quader(c, p.x, p.y, p.h, 0.3, 0.3, 0, 0.3, f.farbe || "#e53935"); return; }
-      const k = f.typ === "kind" ? 0.7 : 1;
+      const k = (f.typ === "kind" ? 0.7 : 1) * (f.gr || 1);
       if (f.typ === "rad") { quader(c, p.x, p.y, p.h, 1.75, 0.08, 0.3, 0.75, "#2a2d31"); quader(c, p.x - Math.cos(p.h) * 0.8, p.y - Math.sin(p.h) * 0.8, p.h, 0.05, 0.05, 0, 0.7, "#2a2d31"); }
       const z0 = f.typ === "rad" ? 0.75 : 0;
       quader(c, p.x, p.y, p.h, 0.3 * k, 0.45 * k, z0 + (f.typ === "rad" ? 0 : 0.05), z0 + (f.typ === "rad" ? 0.85 : 1.45 * k), f.farbe || "#3a6ea5");
@@ -1136,7 +1140,8 @@
       });
     };
     const zb = f.typ === "lkw" ? 0.5 : 0.28;
-    if (f.typ === "bus") {
+    if (EXT.k3d[f.typ]) EXT.k3d[f.typ](c, p, f, T, sig);
+    else if (f.typ === "bus") {
       quader(c, p.x, p.y, p.h, T.l, T.b, 0.35, T.h, f.farbe, 1, (fl, v) => {
         if (fl.name === "links" || fl.name === "rechts" || fl.name === "vorn") { const i = fl.i.map(j => v[j]); poly3d(c, [lerpP(i[0], i[1], .04, .45), lerpP(i[0], i[1], .96, .45), lerpP(i[3], i[2], .96, .85), lerpP(i[3], i[2], .04, .85)], "#2b3945"); }
         licht(fl, v);
@@ -1161,6 +1166,7 @@
     }
   }
   function objekt3d(c, o) {
+    if (EXT.objekt[o.art]) { EXT.objekt[o.art].d3(c, o, zeit); return; }
     if (o.art === "haus") {
       // steht die Kamera im oder direkt über dem Haus (z. B. bei starkem Lenkeinschlag), das Haus weglassen – sonst verdeckt es alles
       const hh = o.h || 0, dx = c.e[0] - o.x, dy = c.e[1] - o.y, lx = dx * Math.cos(hh) + dy * Math.sin(hh), ly = -dx * Math.sin(hh) + dy * Math.cos(hh);
@@ -1179,12 +1185,13 @@
       quader(c, o.x, o.y, 0, 0.35, 0.35, 0, 2.2, "#6b4a2f");
       const r = o.r || 2.2; quader(c, o.x, o.y, 0.6, r * 1.5, r * 1.5, 2, 2 + r * 1.7, "#3f7a34"); quader(c, o.x, o.y, 0, r, r, 2 + r * 1.2, 2 + r * 2.1, "#4d8a3e");
     } else if (o.art === "ampel") {
-      quader(c, o.x, o.y, o.h || 0, 0.14, 0.14, 0, 2.3, "#55595e");
+      const kk = o.k || 1, z0 = 2.3 + (kk - 1) * 0.6;
+      quader(c, o.x, o.y, o.h || 0, 0.14 * kk, 0.14 * kk, 0, z0, "#55595e");
       const n = o.fuss ? 2 : 3, f = LAMPE[ampelFarbe(o, zeit)] || LAMPE.aus, farben = o.fuss ? [f[0], f[2]] : f, leer = o.fuss ? ["#3a1210", "#0f3219"] : ["#3a1210", "#3a2e0c", "#0f3219"];
-      const z0 = 2.3, hk = n * 0.33 + 0.1; quader(c, o.x, o.y, o.h || 0, 0.3, 0.35, z0, z0 + hk, "#1c1e21");
+      const hk = (n * 0.33 + 0.1) * kk; quader(c, o.x, o.y, o.h || 0, 0.3 * kk, 0.35 * kk, z0, z0 + hk, "#1c1e21");
       // Lampen auf der Seite, die dem Verkehr zugewandt ist (o.h = Blickrichtung der Ampel)
-      const ch = Math.cos(o.h || 0), sh = Math.sin(o.h || 0), fx = o.x + ch * 0.17, fy = o.y + sh * 0.17;
-      for (let i = 0; i < n; i++) { const z = z0 + hk - 0.2 - i * 0.33; poly3d(c, [[fx - sh * 0.1, fy + ch * 0.1, z - 0.1], [fx + sh * 0.1, fy - ch * 0.1, z - 0.1], [fx + sh * 0.1, fy - ch * 0.1, z + 0.1], [fx - sh * 0.1, fy + ch * 0.1, z + 0.1]], farben[i] || leer[i]); }
+      const ch = Math.cos(o.h || 0), sh = Math.sin(o.h || 0), fx = o.x + ch * 0.17 * kk, fy = o.y + sh * 0.17 * kk;
+      for (let i = 0; i < n; i++) { const z = z0 + hk - 0.2 * kk - i * 0.33 * kk, q = 0.1 * kk; poly3d(c, [[fx - sh * q, fy + ch * q, z - q], [fx + sh * q, fy - ch * q, z - q], [fx + sh * q, fy - ch * q, z + q], [fx - sh * q, fy + ch * q, z + q]], farben[i] || leer[i]); }
       if (o.gruenpfeil) {                                         // Grünpfeil-Blechschild rechts neben dem Rotlicht
         const rx = sh, ry = -ch, gx = o.x + rx * 0.45 + ch * 0.18, gy = o.y + ry * 0.45 + sh * 0.18, zg = z0 + hk - 0.34;
         poly3d(c, [[gx - rx * 0.18, gy - ry * 0.18, zg - 0.15], [gx + rx * 0.18, gy + ry * 0.18, zg - 0.15], [gx + rx * 0.18, gy + ry * 0.18, zg + 0.15], [gx - rx * 0.18, gy - ry * 0.18, zg + 0.15]], "#111316");
@@ -1667,12 +1674,14 @@
         if (zeit >= szene.dauer) { laeuft = false; if (modus === "mitdenken") zeigeErgebnisMitdenken(); }
       }
     }
-    if (!zoomUser && modus !== "fahren" && kameraModus === "oben" && ansicht.folgen && !tippFrage && !szene.rangieren) ansicht.zoom += (zoomZiel() - ansicht.zoom) * (1 - Math.exp(-dt / 0.2));   // weich, ca. 0,6 s
+    const qr = !zoomUser && modus !== "fahren" && kameraModus === "oben" && ansicht.folgen && !tippFrage && !szene.rangieren ? querRahmen() : null;
+    if (!zoomUser && modus !== "fahren" && kameraModus === "oben" && ansicht.folgen && !tippFrage && !szene.rangieren) ansicht.zoom += ((qr ? qr.z : zoomZiel()) - ansicht.zoom) * (1 - Math.exp(-dt / 0.2));   // weich, ca. 0,6 s
     // Kamera folgt dem Fokus-Fahrzeug
     const fokus = fahrzeugListe().find(e => e.f.fokus);
     if (fokus && ansicht.folgen) {
       let zx, zy;
-      if (szene.kamera.fest) { zx = szene.kamera.fest[0]; zy = szene.kamera.fest[1]; }
+      if (qr) { zx = qr.px; zy = qr.py; }
+      else if (szene.kamera.fest) { zx = szene.kamera.fest[0]; zy = szene.kamera.fest[1]; }
       else { const vor = (szene.kamera.vor ?? 0.12) * (Wpx / dpr) / ansicht.zoom, hoch = kameraVersatz(true) / ansicht.zoom, hh = szene.kamera.richtung ? fokus.p.h : 0; zx = fokus.p.x + Math.cos(hh) * vor; zy = fokus.p.y + Math.sin(hh) * vor - hoch; }
       ansicht.px += (zx - ansicht.px) * 0.15; ansicht.py += (zy - ansicht.py) * 0.15;
     }
@@ -1816,6 +1825,9 @@
   .lz-pedal.gas{background:#2f6a44;} .lz-pedal.brems{background:#7a2c28;}
   .lz-sheet{position:absolute;inset:0;background:rgba(0,0,0,.55);display:flex;align-items:flex-end;justify-content:center;z-index:5;}
   .lz-card{background:#132420;border:1px solid #2e4a40;border-radius:18px 18px 0 0;width:100%;max-width:640px;max-height:82%;overflow:auto;padding:16px 16px calc(16px + env(safe-area-inset-bottom));}
+  #lzErkl{display:contents;}
+  .lz-weiter{margin-top:12px;position:sticky;bottom:0;background:#132420;padding:6px 0 2px;}
+  @media (max-height:480px){ .lz-card{max-height:100%;border-radius:0;padding:8px 14px 8px;} .lz-card h2{font-size:15px;margin-bottom:2px;} .lz-opt{padding:7px 11px;margin:4px 0;font-size:13px;} .lz-erkl{margin:4px 0 2px;font-size:12.5px;line-height:1.4;} .lz-weiter{margin-top:6px;padding-top:4px;} }
   .lz-card h2{margin:0 0 6px;font-family:'Anton',sans-serif;text-transform:uppercase;font-size:20px;letter-spacing:.02em;}
   .lz-opt{display:block;width:100%;text-align:left;margin:7px 0;padding:13px 14px;border-radius:12px;background:#1a2f28;border:1px solid #2e4a40;color:#eef3ef;font-size:14.5px;cursor:pointer;}
   .lz-opt.richtig{background:#23553a;border-color:#4f9a6b;} .lz-opt.falsch{background:#5a2522;border-color:#a44a44;}
@@ -1892,7 +1904,7 @@
       cv = c; dpr = Math.min(2, window.devicePixelRatio || 1); Wpx = c.width = Math.max(200, r.width) * dpr; Hpx = c.height = 130 * dpr; ctx = c.getContext("2d");
       szene = s; zeit = s.dauer * (s.vorschauZeit ?? 0.55); kameraModus = "oben"; const fk = s.fahrzeuge.find(f => f.fokus); const fp = fzPos(fk, zeit);
       ansicht = s.kamera.fest ? { zoom: s.kamera.zoom * 0.42, px: s.kamera.fest[0], py: s.kamera.fest[1], folgen: false } : { zoom: s.kamera.vorschauZoom || 2.4, px: fp.x + (s.kategorie && s.kategorie !== "autobahn" ? 0 : 20), py: fp.y, folgen: false };
-      try { zeichneOben(); } catch (e) {}
+      vorschau.an = true; try { zeichneOben(); } catch (e) {} vorschau.an = false;
       ({ cv, ctx, Wpx, Hpx, dpr, szene, zeit, kameraModus } = alt); ansicht = alt.ansicht;
     });
   }
@@ -1957,7 +1969,7 @@
       if (modus === "fahren" && fahr && fahr.ende) { schliesseSheet(); if (szene.reaktion) starteReaktion(fahr.vWahl); else starteFahren(); } if (!laeuft && zeit >= szene.dauer && modus !== "fahren") { zeit = 0; beantwortet = new Set(); } laeuft = !laeuft; if (modus !== "fahren") { stimmePause(!laeuft); stimmeNachholen(); } if (laeuft) { schliesseSheet(); ansicht.folgen = true; } };
     const tippZu = () => { if (!tippFrage) return; tippFrage = null; const b = root.querySelector("#lzTipp"); if (b) b.remove(); ansicht.folgen = true; ansicht.zoom = grundZoom(); };
     $("#lzSlider").oninput = e => { tippZu(); ansicht.folgen = true; zoomUser = false; zeit = +e.target.value; laeuft = false; const ph = aktuellePhase(); if (ph) zeigePhase(ph); };
-    $("#lzPrev").onclick = () => { tippZu(); zoomUser = false; springe(-1); }; $("#lzNext").onclick = () => { tippZu(); zoomUser = false; springe(1); };
+    $("#lzPrev").onclick = () => { schliesseSheet(); tippZu(); zoomUser = false; springe(-1); }; $("#lzNext").onclick = () => { schliesseSheet(); tippZu(); zoomUser = false; springe(1); };
     $("#lzTempo").onclick = () => { tempoFaktor = tempoFaktor === 1 ? 0.5 : tempoFaktor === 0.5 ? 2 : 1; $("#lzTempo").textContent = (tempoFaktor === 0.5 ? "½" : tempoFaktor) + "×"; };
     $("#lzReset").onclick = () => { zoomUser = false; ansicht.folgen = true; ansicht.zoom = grundZoom(); schliesseSheet(); tippFrage = null; { const b = root.querySelector("#lzTipp"); if (b) b.remove(); } _hGlatt = null; versatzFz = {}; zeit = 0; laeuft = false; beantwortet = new Set(); punkte = { richtig: 0, gesamt: 0 }; if (modus === "fahren") { starteFahren(); const c = $("#lzCap"); if (c) c.hidden = false; setzeModus("fahren"); } else zeigePhase(szene.phasen[0]); ansicht.folgen = true; };
     root.querySelectorAll("[data-kam]").forEach(b => b.onclick = () => { if (tippFrage) { zeigeToast("Zum Antippen bleibt die Ansicht von oben."); return; } kameraModus = b.dataset.kam; _hGlatt = null; root.querySelectorAll("[data-kam]").forEach(x => x.classList.toggle("on", x === b)); });
@@ -1999,6 +2011,18 @@
       }
     }
     return clamp(z, 1, 14);
+  }
+  // Querformat (Fensterhöhe ≤ 480): Szenen mit kamera.quer = { zeige: [IDs], radius, pad } halten Fokus-Auto und genannte Beteiligte (in Reichweite) unter dem Erklärkasten im Bild.
+  function querRahmen() {
+    const q = szene && szene.kamera && szene.kamera.quer; if (!q || !cv || !root || (window.innerHeight > 480 && !q.immer)) return null;
+    const cap = root.querySelector("#lzCap"); if (!cap || cap.hidden) return null;
+    const r = cv.getBoundingClientRect(), c = cap.getBoundingClientRect(), W = r.width, H = r.height, m = 12; if (!W || !H) return null;
+    const top = clamp(c.bottom - r.top + 6, 0, H - 70), liste = fahrzeugListe(), fk = liste.find(e => e.f.fokus); if (!fk) return null;
+    const mb = q.immer ? 44 : m, pad = q.pad ?? 3, rad = q.radius ?? 30, ids = q.zeige || []; let x0 = 1e9, x1 = -1e9, y0 = 1e9, y1 = -1e9;
+    liste.forEach(e => { if (!(e.f.fokus || (ids.includes(e.f.id) && Math.hypot(e.p.x - fk.p.x, e.p.y - fk.p.y) <= rad))) return; x0 = Math.min(x0, e.p.x); x1 = Math.max(x1, e.p.x); y0 = Math.min(y0, e.p.y); y1 = Math.max(y1, e.p.y); });
+    (q.punkte || []).forEach(([px2, py2]) => { x0 = Math.min(x0, px2); x1 = Math.max(x1, px2); y0 = Math.min(y0, py2); y1 = Math.max(y1, py2); });
+    const bw = x1 - x0 + 2 * pad, bh = y1 - y0 + 2 * pad, z = clamp(Math.min((W - 2 * m) / bw, (H - top - mb) / bh, grundZoom()), 1, 14), bandMitte = (top + H - mb) / 2;
+    return { z, px: (x0 + x1) / 2, py: (y0 + y1) / 2 - (bandMitte - H / 2) / z };
   }
   function setzeModus(m) {
     stimmeStopp(); tippFrage = null; { const b = root.querySelector("#lzTipp"); if (b) b.remove(); }
@@ -2084,7 +2108,7 @@
   }
   const stimmeInfo = () => (STIMME.index && Object.keys(STIMME.index).length) ? `<p class="lz-info">🔊 Sprecherstimme mit KI erzeugt.</p>` : "";
   // Geprüfte Fundstellen (15.11.2026 gegen StVO-Text, Prüfbericht Block 3; § 9a gibt es nicht, Kreisverkehr = § 8 Abs. 1a): nur diese bekommen das antippbare §. Neue Fundstellen erst nach Prüfung am Gesetzestext aufnehmen.
-  const PAR_GEPRUEFT = new Set(["1/2", "11/2", "11/3", "12/", "18/2", "18/3", "18/7", "2/2", "20/3", "20/4", "20/5", "26/1", "26/2", "26/3", "3/1", "3/2a", "3/3", "37/2", "38/1", "4/1", "5/2", "5/4", "5/4a", "6/", "7/4", "7/5", "7a/2", "7a/3", "8/1", "8/1a", "8/2", "9/1", "9/3", "9/4", "9/5"]);
+  const PAR_GEPRUEFT = new Set(["1/2", "11/2", "11/3", "12/", "18/2", "18/3", "18/7", "2/2", "20/3", "20/4", "20/5", "26/1", "26/2", "26/3", "3/1", "3/2a", "3/3", "37/2", "38/1", "4/1", "5/2", "5/4", "5/4a", "6/", "7/4", "7/5", "7a/2", "7a/3", "8/1", "8/1a", "8/2", "9/1", "9/3", "9/4", "9/5", "10/", "19/1", "19/2", "19/3", "20/1", "20/2", "2/3", "12/1", "12/2", "12/3"]);
   function parToken(regel) {
     // "§ 9 Abs. 1 · § 9 Abs. 3 StVO", "Zeichen 340 · § 7 Abs. 5 StVO" -> Liste der §-Stellen; null, wenn eine nicht geprüft ist
     const liste = []; const re = /§\s*(\d+[a-z]?)(?:\s*Abs\.\s*(\d+[a-z]?))?/g; let m;
@@ -2120,7 +2144,7 @@
       if (beantwortet.has(ph.t)) return; beantwortet.add(ph.t); punkte.gesamt++;
       const i = +b.dataset.i, ok = i === f.richtig; if (ok) punkte.richtig++;
       d.querySelectorAll(".lz-opt").forEach(x => x.classList.add(+x.dataset.i === f.richtig ? "richtig" : +x.dataset.i === i ? "falsch" : "x"));
-      d.querySelector("#lzErkl").innerHTML = `<p class="lz-erkl"><b>${ok ? "✓ Richtig." : "✗ Nicht ganz."}</b> ${esc(f.erklaerung)}</p><span class="lz-par">${esc(ph.regel)}</span><div style="margin-top:12px;"><button class="lz-btn on" id="lzWeiter" style="width:100%;">Weiter ▶</button></div>`;
+      d.querySelector("#lzErkl").innerHTML = `<p class="lz-erkl"><b>${ok ? "✓ Richtig." : "✗ Nicht ganz."}</b> ${esc(f.erklaerung)}</p><span class="lz-par">${esc(ph.regel)}</span><div class="lz-weiter"><button class="lz-btn on" id="lzWeiter" style="width:100%;">Weiter ▶</button></div>`;
       d.querySelector("#lzWeiter").onclick = () => { schliesseSheet(); laeuft = true; };
     });
   }
@@ -2242,6 +2266,7 @@
 
   function registriere(sz) { if (!sz || !sz.id || SZENEN.some(x => x.id === sz.id)) return; SZENEN.push(sz); }
   function szenenFuerPlan(planId) { return SZENEN.filter(x => (x.plan || []).includes(planId)).map(x => ({ id: x.id, titel: x.titel })); }
-  const bau = { W, KMH, clamp, lerp, smooth, pfad, spurPfad, bezier, versatz, band, tempoProfil, tempoStrecke, konstant, gerade, tBeiX, rohPos, TYPEN, rangierBahn, mitteAus, achseAus, ecken, raeder, bordAbstand, RAD, wegeOben };
+  const vorschau = { an: false };
+  const bau = { vorschau, W, KMH, clamp, lerp, smooth, pfad, spurPfad, bezier, versatz, band, tempoProfil, tempoStrecke, konstant, gerade, tBeiX, rohPos, TYPEN, EXT, rangierBahn, mitteAus, achseAus, ecken, raeder, bordAbstand, RAD, wegeOben, H: { rrg, quer, ton, leuchte, blinkAn, quader, poly3d, zuCam, proj, mkCv, SCHILD_BILD, SCHILD_NAME }, schildBilder: SCHILD_BILD, schildNamen: SCHILD_NAME };
   window.Lernszenen = { open, registriere, szenenFuerPlan, bau, _szenen: SZENEN, _intern: { messeOben: n => { const t0 = performance.now(); for (let i = 0; i < n; i++) { zeichneOben(); ctx.getImageData(0, 0, 1, 1); } return (performance.now() - t0) / n; }, rohPos, tBeiX, TYPEN, bewerte: () => bewerte(), zustand: () => ({ szene: szene && szene.id, zeit, modus, kameraModus, laeuft, fahr, ansicht: { ...ansicht } }) } };
 })();

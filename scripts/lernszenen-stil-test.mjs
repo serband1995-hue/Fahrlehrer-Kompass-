@@ -34,7 +34,7 @@ for (const [w, h] of [[360, 640], [640, 360]]) {
   await page.goto(basis);
   await page.waitForFunction(() => window.Lernszenen && window.Lernszenen.open, null, { timeout: 15000 });
   const ids = await page.evaluate(() => window.Lernszenen._szenen.map(s => s.id));
-  pruefe(`${w}×${h}: 22 Szenen vorhanden`, ids.length >= 20, String(ids.length));
+  pruefe(`${w}×${h}: 27 Szenen vorhanden`, ids.length >= 27, String(ids.length));
   for (const id of ids) {
     const t = `${w}×${h} ${id}: `; konsole.length = 0;
     await page.evaluate(s => window.Lernszenen.open({ szene: s }), id);
@@ -46,6 +46,10 @@ for (const [w, h] of [[360, 640], [640, 360]]) {
     summe += ms; n++; maxZeit = Math.max(maxZeit, ms);
     pruefe(t + "Zeichenzeit unter 12 ms", ms < 12, ms.toFixed(2) + " ms");
     pruefe(t + "keine Konsolenfehler", konsole.length === 0, konsole.join(" | "));
+    if (["bahnuebergang", "strassenbahn", "abstand", "halteverbot", "einsatz"].includes(id)) {
+      for (const k of ["3d", "fahrer", "oben"]) { await page.click(`[data-kam="${k}"]`); await page.waitForTimeout(500); const s2 = await stich(page); pruefe(t + `Ansicht ${k} zeichnet`, s2.farben >= 6, JSON.stringify(s2)); }
+      pruefe(t + "Ansichten ohne Konsolenfehler", konsole.length === 0, konsole.join(" | "));
+    }
     if (id === "auffahren") {
       for (const k of ["3d", "fahrer", "oben"]) {
         await page.click(`[data-kam="${k}"]`); await page.waitForTimeout(500);
