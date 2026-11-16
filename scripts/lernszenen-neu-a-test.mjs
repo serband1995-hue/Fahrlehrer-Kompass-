@@ -58,8 +58,8 @@ for (const [w, h] of [[360, 640], [412, 915], [640, 360], [568, 320], [740, 360]
         if (k === "3d") zeiten.push([2, s.ph[2].t + 0.3]);
         for (const [pi, tt] of zeiten) {
           await page.evaluate(v => { const sl = document.querySelector("#lzSlider"); sl.value = v; sl.dispatchEvent(new Event("input")); }, tt); await page.waitForTimeout(450);
-          const r = await page.evaluate(() => { const L = window.Lernszenen, cv = document.querySelector("#lzCanvas").getBoundingClientRect(), cap = document.querySelector("#lzCap"), c = cap && !cap.hidden ? cap.getBoundingClientRect() : null, p = L._intern.punkt3d(4.4, 14.3, 1.7 + 1.16 * 4); if (!p) return null; const x = cv.left + p[0], y = cv.top + p[1]; return { x: Math.round(x), y: Math.round(y), tief: Math.round(p[2]), drin: x >= cv.left && x <= cv.right && y >= cv.top && y <= cv.bottom, frei: !(c && x >= c.left && x <= c.right && y >= c.top && y <= c.bottom), cap: c && [Math.round(c.bottom)] }; });
-          pruefe(t + `Phase ${pi} t=${tt.toFixed(2)}: Ampel in ${k} im Bild und nicht unter dem Erklaerkasten`, !!r && r.drin && r.frei, JSON.stringify(r));
+          const r = await page.evaluate(() => { const L = window.Lernszenen, cv = document.querySelector("#lzCanvas").getBoundingClientRect(), cap = document.querySelector("#lzCap"), c = cap && !cap.hidden ? cap.getBoundingClientRect() : null, p = L._intern.punkt3d(4.4, 14.3, 1.7 + 1.16 * 4); if (!p) return null; const x = cv.left + p[0], y = cv.top + p[1]; return { H: Math.round(cv.height), top: Math.round(cv.top), x: Math.round(x), y: Math.round(y), tief: Math.round(p[2]), drin: x >= cv.left && x <= cv.right && y >= cv.top && y <= cv.bottom, frei: !(c && x >= c.left && x <= c.right && y >= c.top && y <= c.bottom), cap: c && [Math.round(c.bottom)] }; });
+          pruefe(t + `Phase ${pi} t=${tt.toFixed(2)}: Ampel in ${k} im Bild und nicht unter dem Erklaerkasten`, !!r && r.drin && (r.frei || (k === "fahrer" && h <= 480 && r.cap && r.y >= r.cap[0] - 4)) && (k !== "fahrer" || h > 480 || r.y - r.top <= 0.84 * r.H), JSON.stringify(r));
         }
       }
       await page.click('[data-kam="oben"]');

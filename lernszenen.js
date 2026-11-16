@@ -950,7 +950,7 @@
     const p = fokus.p;
     if (kameraModus === "fahrer") {
       const h = p.h, dx = Math.cos(h), dy = Math.sin(h);
-      return mkCam(p.x + dx * 0.2 + Math.sin(h) * 0.35, p.y + dy * 0.2 - Math.cos(h) * 0.35, 1.2, h, (szene.kamera.kam3d || {}).nickF ?? 0.05, 1.05);
+      return mkCam(p.x + dx * 0.2 + Math.sin(h) * 0.35, p.y + dy * 0.2 - Math.cos(h) * 0.35, 1.2, h, Object.assign({}, szene.kamera.kam3d, window.innerHeight <= 480 && szene.kamera.kam3d ? szene.kamera.kam3d.quer : null).nickF ?? 0.05, 1.05);
     }
     const h = fokus.hGlatt, dx = Math.cos(h), dy = Math.sin(h), k3 = Object.assign({}, szene.kamera.kam3d, window.innerHeight <= 480 && szene.kamera.kam3d ? szene.kamera.kam3d.quer : null);     // kamera.kam3d { ab, hoch, nick, nickF }: Szenen mit weit entfernten Zielen (Ampel) legen den Horizont tiefer
     const ab = k3.ab ?? 26, hoch = k3.hoch ?? 11;
