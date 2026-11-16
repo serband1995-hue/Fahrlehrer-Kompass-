@@ -186,7 +186,7 @@
     }
     neu({
       id: "ampel_gelb", plan: ["g_brems", "a_stadt"], titel: "Ampel: Gelb und Rot-Gelb", kurz: "Bei Gelb vor der Kreuzung halten, wenn es sicher geht. Rot-Gelb ist noch Rot",
-      dauer: Math.ceil(tG + 5), strasse: K, kamera: { fokus: "fs", zoom: 8, vor: 0.16, kam3d: { ab: 40, hoch: 11, nick: -0.2, nickF: -0.4 }, quer: { immer: true, zeige: ["b", "q"], radius: 45, punkte: [[4.4, 14.3]] } },
+      dauer: Math.ceil(tG + 5), strasse: K, kamera: { fokus: "fs", zoom: 8, vor: 0.16, kam3d: { ab: 40, hoch: 11, nick: -0.2, nickF: -0.4, quer: { ab: 34, hoch: 14, nick: 0.05 } }, quer: { immer: true, zeige: ["b", "q"], radius: 45, punkte: [[4.4, 14.3]] } },
       fahrzeuge: [fs, bl, q],
       overlayUnten: (c, X, Y, s, z) => {
         if (z < tY || z > tRg) return;

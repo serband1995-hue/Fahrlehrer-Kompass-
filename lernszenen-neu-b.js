@@ -333,7 +333,7 @@
       const p = rohPos(rtw, t); if (t > tMitte + 4.5) return; const d = dprVon(c), px = X(p.x), py = Y(p.y);
       c.save(); c.lineWidth = Math.max(3 * d, 0.4 * s); for (let i = 0; i < 3; i++) { const ph = (t * 0.9 + i / 3) % 1; c.strokeStyle = "rgba(70,130,255," + (0.85 * (1 - ph)).toFixed(2) + ")"; c.beginPath(); c.arc(px, py, (3 + ph * 15) * s, 0, 7); c.stroke(); }
       const w = Math.floor(performance.now() / 190) % 2; H.leuchte(px + Math.cos(p.h) * 1.4 * s - Math.sin(p.h) * (w ? 1.1 : -1.1) * s, py + Math.sin(p.h) * 1.4 * s + Math.cos(p.h) * (w ? 1.1 : -1.1) * s, 4.5 * s, "#3d7bff", 0.95); c.restore();
-      if (!LZ.bau.vorschau.an) pille(c, "Blaulicht + Einsatzhorn", px, py - 2.8 * s, "rgba(20,50,140,.92)", "#fff", 13);
+      if (!LZ.bau.vorschau.an) pille(c, "Blaulicht + Einsatzhorn", px, py - Math.max(2.8 * s, 20 * d), "rgba(20,50,140,.92)", "#fff", 13);
     };
     szene({
       id: "einsatz", plan: ["a_stadt"], titel: "Einsatzfahrzeug mit Blaulicht", kurz: "Blaulicht und Einsatzhorn: sofort freie Bahn schaffen, rechts halten, Kreuzung nicht blockieren",

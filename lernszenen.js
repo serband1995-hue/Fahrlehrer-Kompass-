@@ -952,7 +952,7 @@
       const h = p.h, dx = Math.cos(h), dy = Math.sin(h);
       return mkCam(p.x + dx * 0.2 + Math.sin(h) * 0.35, p.y + dy * 0.2 - Math.cos(h) * 0.35, 1.2, h, (szene.kamera.kam3d || {}).nickF ?? 0.05, 1.05);
     }
-    const h = fokus.hGlatt, dx = Math.cos(h), dy = Math.sin(h), k3 = szene.kamera.kam3d || {};     // kamera.kam3d { ab, hoch, nick, nickF }: Szenen mit weit entfernten Zielen (Ampel) legen den Horizont tiefer
+    const h = fokus.hGlatt, dx = Math.cos(h), dy = Math.sin(h), k3 = Object.assign({}, szene.kamera.kam3d, window.innerHeight <= 480 && szene.kamera.kam3d ? szene.kamera.kam3d.quer : null);     // kamera.kam3d { ab, hoch, nick, nickF }: Szenen mit weit entfernten Zielen (Ampel) legen den Horizont tiefer
     const ab = k3.ab ?? 26, hoch = k3.hoch ?? 11;
     return mkCam(p.x - dx * ab, p.y - dy * ab, hoch, h, k3.nick ?? 0.36, 0.95);
   }
@@ -1790,7 +1790,7 @@
   .lz-caption h3{margin:0 0 3px;font-size:15.5px;}
   .lz-caption p{margin:0;font-size:13.5px;line-height:1.45;color:#dce6df;}
   .lz-nochmal{display:inline-flex;align-items:center;gap:6px;margin-top:8px;min-height:44px;padding:0 12px;border-radius:10px;border:1px solid #2e4a40;background:#1a2f28;color:#eef3ef;font-size:13.5px;font-weight:600;cursor:pointer;pointer-events:auto;}
-  @media (max-height:480px){ .lz-nochmal{position:absolute;top:7px;right:50px;min-height:30px;margin:0;padding:0 8px;font-size:12px;} .lz-caption:has(.lz-nochmal) h3{padding-right:140px;} }
+  @media (max-height:480px){ .lz-nochmal{position:absolute;top:3px;right:50px;min-height:26px;min-width:38px;justify-content:center;margin:0;padding:0 8px;font-size:12px;} .lz-nochmal::after{content:"";position:absolute;inset:-9px -6px;} .lz-nm-t{display:none;} .lz-caption:has(.lz-nochmal) h3{padding-right:96px;} }
   .lz-info{margin:14px 0 0;padding:0 14px 12px;font-size:13px;color:#b1bfb5;}
   @media (min-height:481px){ #lzStimme{min-height:44px;min-width:44px;} }
   #lzStimme[aria-pressed="true"]{background:#2f6b4f;border-color:#4fae80;}
@@ -2004,13 +2004,13 @@
     else if (ph && WEIT[szene.id] && WEIT[szene.id + ":" + ph.titel]) f = WEIT[szene.id + ":" + ph.titel];
     let z = grundZoom() * f;
     if (szene.kamera.fest && cv) {        // feste Kamera: Fokus-Auto (und genannte Mitspieler) bleiben immer im Bild, Zoom passt sich an
-      const r = cv.getBoundingClientRect(), fest = szene.kamera.fest, m = 34, ids = ZEIGE[szene.id] || [], z0 = z, nah = 1.6 * Math.hypot(r.width, r.height) / 2 / z0; let zm = z0;   // Mitspieler zählen nur nahe der Kreuzung, mit Untergrenze 0,5 × Grundzoom
+      const strikt = !!(ph && SPIEGEL_RE.test(ph.titel)), r = cv.getBoundingClientRect(), fest = szene.kamera.fest, m = 34, ids = ZEIGE[szene.id] || [], z0 = z, nah = 1.6 * Math.hypot(r.width, r.height) / 2 / z0; let zm = z0;   // Mitspieler zählen nur nahe der Kreuzung, mit Untergrenze 0,5 × Grundzoom
       for (const e of fahrzeugListe()) {
         if (!e.f.fokus && !ids.includes(e.f.id)) continue;
         const dx = Math.abs(e.p.x - fest[0]), dy = Math.abs(e.p.y - fest[1]);
-        if (!e.f.fokus && Math.hypot(dx, dy) > nah) continue;
+        if (!e.f.fokus && !strikt && Math.hypot(dx, dy) > nah) continue;
         let zz = z0; if (dx > 0.01) zz = Math.min(zz, (r.width / 2 - m) / dx); if (dy > 0.01) zz = Math.min(zz, (r.height / 2 - m) / dy);
-        if (e.f.fokus) z = Math.min(z, zz); else zm = Math.min(zm, zz);
+        if (e.f.fokus || strikt) z = Math.min(z, zz); else zm = Math.min(zm, zz);
       }
       z = Math.min(z, Math.max(zm, 0.5 * z0));
     }
@@ -2133,7 +2133,7 @@
     const c = $("#lzCap"); if (!c) return; schliessePar();
     const ok = regel && parToken(regel);
     c.classList.toggle("mit-par", !!ok);
-    const nochmal = ph && stimmeAn() && stimmeFuer(ph) ? `<button class="lz-nochmal" type="button" data-nochmal>🔊 Nochmal hören</button>` : "";
+    const nochmal = ph && stimmeAn() && stimmeFuer(ph) ? `<button class="lz-nochmal" type="button" data-nochmal aria-label="Nochmal hören">🔊<span class="lz-nm-t"> Nochmal hören</span></button>` : "";
     c.innerHTML = `<h3>${esc(titel)}</h3><p>${esc(text)}</p>${nochmal}${ok ? `<button class="lz-parb" type="button" aria-label="Gesetzestext anzeigen" aria-expanded="false" data-regel="${esc(regel)}">§</button>` : ""}`;
   }
   function zeigePhase(p) { stimmeStopp(); zeigeCap(p.titel, p.text, p.regel, p); }
