@@ -49,7 +49,7 @@
   --elev-3:0 18px 44px rgba(0,0,0,.42);
   --inset-top:inset 0 1px 0 var(--glass-brd-top);
   --r-card:20px; --r-tile:16px; --r-field:12px;
-  --pad: clamp(16px, 4vw, 34px);
+  --pad: clamp(16px, 3vw, 24px);
   --ease: cubic-bezier(.4,0,.2,1);
   --pop: cubic-bezier(.34,1.56,.64,1);
   --smooth: cubic-bezier(.25,.46,.45,.94);
@@ -2697,6 +2697,24 @@ body:not(.light) .pill.sel,body:not(.light) .chip.chip-goal{color:var(--akzent-b
 .wait-card .wait-days[style*="--gruen"] .wd-n,.wait-card .wait-days[style*="--gruen"] .wd-l{color:#fff !important;opacity:.95;}
 body.light .fc-miss-sum{color:#8f3a2c !important;}
 body.light .fc-miss-sum b{color:#7a2a1e !important;}
+/* ===== Block 2b: kompaktere Abstände (Ränder, Lücken, Innenabstände). Tippflächen bleiben ≥44 px. ===== */
+/* Seitenrand: Handy 16 px wie bisher, große Fenster höchstens 24 px (vorher bis 34 px). */
+#view .view-inner{padding-top:12px;}
+.heute2{gap:14px;padding-top:12px !important;}
+.h2-jetzt{padding:16px;gap:12px;}
+.h2-danach,.h2-achtung{gap:6px;}
+.h2-kacheln{gap:8px;}
+.h2-kachel{padding:12px;min-height:72px;}
+.blk-h{margin:14px 0 8px;}
+.vd-card{padding:14px;margin-bottom:12px;}
+.vd-head{margin-bottom:10px;}
+.vd-bar-wrap{margin-bottom:12px;}
+.res-block{padding:14px;margin-top:10px;}
+.acc{margin-bottom:10px;}
+.acc-h{padding:12px 14px;}
+.stats{gap:8px;margin-top:10px;}
+.stat{padding:12px 14px;gap:8px;}
+#view[data-seite2] .set-titel{margin:0 0 10px;}
 </style>
 </head>
 <body>
@@ -7512,7 +7530,7 @@ window.addEventListener("load", () => {
 const STORE_KEY="serband-app-v1";
 /* Build-Version: bei jeder Auslieferung hier das Datum aktualisieren.
    Wird in den Einstellungen angezeigt + für den Update-Hinweis genutzt. */
-const APP_VERSION="2026.11.15.12";
+const APP_VERSION="2026.11.16.1";
 try{const f=document.getElementById("drawerFoot"); if(f)f.textContent="Fahrlehrer-Kompass · Version "+APP_VERSION;}catch(e){}
 // Nutzungsbedingungen & Haftungsausschluss (Bereich: rechtliche Absicherung) - Version hochzählen
 // und alle Nutzer müssen erneut zustimmen, sobald sich der Text inhaltlich ändert.
