@@ -1807,6 +1807,7 @@
   .lz-parx{position:absolute;right:4px;top:4px;width:36px;height:36px;border:0;background:transparent;color:#e0b84a;font:700 18px/1 system-ui,sans-serif;cursor:pointer;padding:0;}
   .lz-parx::after{content:"";position:absolute;inset:-4px;}
   .lz-parpop{padding-right:40px !important;}
+  @media (max-height:480px){ .lz-caption{padding-right:44px;} .lz-caption.mit-par{padding-right:82px;} .lz-capx{width:32px;height:32px;right:6px;top:6px;} .lz-caption.mit-par .lz-parb{right:44px;width:32px;height:32px;} }
   .lz-parpop{position:absolute;left:12px;bottom:12px;max-width:min(320px,calc(100% - 140px));background:rgba(10,18,14,.95);border:1px solid #e0b84a;border-radius:12px;padding:10px 12px;box-shadow:0 8px 24px rgba(0,0,0,.45);z-index:3;font-size:14px;line-height:1.45;color:#dce6df;}
   @media (max-height:480px){.lz-parpop{left:auto;right:12px;top:10px;bottom:auto;max-width:min(260px,calc(100% - 410px));padding:6px 10px;}.lz-parpop{line-height:1.3;}.lz-parpop a{min-height:34px;padding:0;}}
   @media (max-height:340px){.lz-stage.par-offen .lz-hud{visibility:hidden;}}
@@ -2137,7 +2138,7 @@
     const links = [...new Set(liste.map(x => x.par))].map(n => `<a href="https://www.gesetze-im-internet.de/stvo_2013/__${esc(n)}.html" target="_blank" rel="noopener">§ ${esc(n)} StVO – Gesetzestext lesen ↗</a>`).join("");
     const d = el(`<div class="lz-parpop" role="note"><button class="lz-parx" type="button" data-parx aria-label="Schließen">✕</button><b>${esc(btn.dataset.regel)}</b>${links}</div>`);
     $("#lzStage").appendChild(d); btn.setAttribute("aria-expanded", "true"); $("#lzStage").classList.add("par-offen");
-    if (window.innerHeight <= 480) { const st = $("#lzStage").getBoundingClientRect(), cp = $("#lzCap").getBoundingClientRect(), fr = st.right - cp.right - 20; if (fr >= 180) { d.style.left = Math.round(cp.right - st.left + 8) + "px"; d.style.right = "auto"; d.style.maxWidth = Math.min(260, fr) + "px"; } } else { const st = $("#lzStage").getBoundingClientRect(), cp = $("#lzCap").getBoundingClientRect(); d.style.left = "12px"; d.style.bottom = "auto"; d.style.top = Math.round(cp.bottom - st.top + 8) + "px"; d.style.maxWidth = "min(340px,calc(100% - 24px))"; }
+    if (window.innerHeight <= 480) { const st = $("#lzStage").getBoundingClientRect(), cp = $("#lzCap").getBoundingClientRect(), fr = st.right - cp.right - 20; if (fr >= 180) { d.style.left = Math.round(cp.right - st.left + 8) + "px"; d.style.right = "auto"; d.style.maxWidth = Math.min(260, fr) + "px"; } } else { const st = $("#lzStage").getBoundingClientRect(), cp = $("#lzCap").getBoundingClientRect(); d.style.left = "12px"; d.style.bottom = "auto"; d.style.top = Math.round(cp.bottom - st.top + 8) + "px"; d.style.maxWidth = "min(340px,calc(100% - 24px))"; for (const q of ["#lzHud", "#lzFahrer"]) { const hu = root.querySelector(q); if (hu && !hu.hidden) { const pr = d.getBoundingClientRect(), hr = hu.getBoundingClientRect(); if (hr.width > 0 && pr.right > hr.left - 6 && pr.bottom > hr.top && pr.top < hr.bottom) d.style.maxWidth = Math.max(150, Math.round(hr.left - st.left - 12 - 8)) + "px"; } } }
   }
   let capZu = false;
   function capSync() { const c = $("#lzCap"), o = $("#lzCapOpen"); if (!c || !o) return; const weg = modus === "fahren"; c.hidden = capZu || weg; o.hidden = !capZu || weg; }
