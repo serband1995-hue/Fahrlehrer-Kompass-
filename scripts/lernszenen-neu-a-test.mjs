@@ -44,7 +44,6 @@ for (const [w, h] of [[360, 640], [412, 915], [640, 360], [568, 320]]) {
       pruefe(t + `Phase „${p.titel}“: Fokus-Fahrzeug im Bild`, r);
     }
     for (const [pi, ids] of WICHTIG[id] || []) {
-      if (id === "ampel_gelb" && w > h) continue;   // Querformat: der Erklärkasten schiebt die Ansicht nach unten, das Auto vor der Ampel (Blau, 27 m voraus) liegt dann außerhalb; bekannt, siehe Bericht
       const t0 = s.ph[pi].t, t1 = pi + 1 < s.ph.length ? s.ph[pi + 1].t : s.d;
       await page.evaluate(v => { const sl = document.querySelector("#lzSlider"); sl.value = v; sl.dispatchEvent(new Event("input")); }, t0 + Math.min(1.2, (t1 - t0) / 2)); await page.waitForTimeout(700);
       const r = await page.evaluate(ids => { const L = window.Lernszenen, z = L._intern.zustand(), sz = L._szenen.find(x => x.id === z.szene), st = document.querySelector("#lzCanvas").getBoundingClientRect(); return ids.map(i => { const f = sz.fahrzeuge.find(x => x.id === i), q = L._intern.rohPos(f, z.zeit), sx = st.width / 2 + (q.x - z.ansicht.px) * z.ansicht.zoom, sy = st.height / 2 + (q.y - z.ansicht.py) * z.ansicht.zoom; return [i, sx >= 0 && sx <= st.width && sy >= 0 && sy <= st.height]; }); }, ids);
