@@ -196,6 +196,7 @@
   // Jede Szene liefert: strasse (Flächen, Linien, Schilder), fahrzeuge (Pfad + Tempo + Signale),
   // phasen (Zeitpunkt, Titel, Erklärung, Regel, Frage) und optional "fahren" für den Selbst-fahren-Modus.
   const SZENEN = [];
+  const EXT = { bild: {}, k3d: {}, objekt: {} };                 // Erweiterungen aus weiteren Szenen-Dateien (Fahrzeug-Bilder, 3D-Körper, Objekte)
 
   // ---- Hilfen für Szenen: gerade Fahrstreifen, Tempo über den Ort, Zeitpunkt an einem Ort
   function gerade(y, x0, x1) { return pfad([[x0 === undefined ? -4000 : x0, y], [x1 === undefined ? 4000 : x1, y]]); }
@@ -682,7 +683,7 @@
     const key = f.typ + "|" + f.farbe + "|" + (f.schulbus ? 1 : 0) + "|" + q; let m = FZB.get(key); if (m) return m;
     if (FZB.size > 90) FZB.clear();
     const M = 1.3, c = mkCv((T.l + 2 * M) * q, (T.b + 2 * M) * q), g = c.getContext("2d"); g.translate(c.width / 2, c.height / 2); g.scale(q, q);
-    (f.typ === "lkw" ? bildLkw : f.typ === "bus" ? bildBus : f.typ === "transporter" || f.typ === "rtw" ? bildKasten : bildPkw)(g, f, T);
+    (EXT.bild[f.typ] || (f.typ === "lkw" ? bildLkw : f.typ === "bus" ? bildBus : f.typ === "transporter" || f.typ === "rtw" ? bildKasten : bildPkw))(g, f, T);
     m = { c, w: c.width, h: c.height }; FZB.set(key, m); return m;
   }
   function fzSchatten(T, q) {
@@ -765,6 +766,7 @@
   const LAMPE = { rot: ["#ff3b2f", null, null], rotgelb: ["#ff3b2f", "#ffc21a", null], gelb: [null, "#ffc21a", null], gruen: [null, null, "#39d06a"], aus: [null, null, null] };
   function objektOben(o, X, Y, s) {
     if (o.art === "baum") { baumOben(o, X, Y, s); return; }
+    if (EXT.objekt[o.art]) { EXT.objekt[o.art].oben(ctx, o, X, Y, s, zeit); return; }
     ctx.save(); ctx.translate(X(o.x), Y(o.y)); ctx.rotate(o.h || 0);
     const hh = o.h || 0, ch = Math.cos(hh), sh = Math.sin(hh), lok = (dx, dy) => [dx * ch + dy * sh, -dx * sh + dy * ch];   // Bildschirm-Versatz -> Objekt-Koordinaten
     if (o.art === "haus") {
@@ -1136,7 +1138,8 @@
       });
     };
     const zb = f.typ === "lkw" ? 0.5 : 0.28;
-    if (f.typ === "bus") {
+    if (EXT.k3d[f.typ]) EXT.k3d[f.typ](c, p, f, T, sig);
+    else if (f.typ === "bus") {
       quader(c, p.x, p.y, p.h, T.l, T.b, 0.35, T.h, f.farbe, 1, (fl, v) => {
         if (fl.name === "links" || fl.name === "rechts" || fl.name === "vorn") { const i = fl.i.map(j => v[j]); poly3d(c, [lerpP(i[0], i[1], .04, .45), lerpP(i[0], i[1], .96, .45), lerpP(i[3], i[2], .96, .85), lerpP(i[3], i[2], .04, .85)], "#2b3945"); }
         licht(fl, v);
@@ -1161,6 +1164,7 @@
     }
   }
   function objekt3d(c, o) {
+    if (EXT.objekt[o.art]) { EXT.objekt[o.art].d3(c, o, zeit); return; }
     if (o.art === "haus") {
       // steht die Kamera im oder direkt über dem Haus (z. B. bei starkem Lenkeinschlag), das Haus weglassen – sonst verdeckt es alles
       const hh = o.h || 0, dx = c.e[0] - o.x, dy = c.e[1] - o.y, lx = dx * Math.cos(hh) + dy * Math.sin(hh), ly = -dx * Math.sin(hh) + dy * Math.cos(hh);
@@ -2242,6 +2246,6 @@
 
   function registriere(sz) { if (!sz || !sz.id || SZENEN.some(x => x.id === sz.id)) return; SZENEN.push(sz); }
   function szenenFuerPlan(planId) { return SZENEN.filter(x => (x.plan || []).includes(planId)).map(x => ({ id: x.id, titel: x.titel })); }
-  const bau = { W, KMH, clamp, lerp, smooth, pfad, spurPfad, bezier, versatz, band, tempoProfil, tempoStrecke, konstant, gerade, tBeiX, rohPos, TYPEN, rangierBahn, mitteAus, achseAus, ecken, raeder, bordAbstand, RAD, wegeOben };
+  const bau = { W, KMH, clamp, lerp, smooth, pfad, spurPfad, bezier, versatz, band, tempoProfil, tempoStrecke, konstant, gerade, tBeiX, rohPos, TYPEN, EXT, rangierBahn, mitteAus, achseAus, ecken, raeder, bordAbstand, RAD, wegeOben, H: { rrg, quer, ton, leuchte, blinkAn, quader, poly3d, zuCam, proj, mkCv, SCHILD_BILD, SCHILD_NAME } };
   window.Lernszenen = { open, registriere, szenenFuerPlan, bau, _szenen: SZENEN, _intern: { messeOben: n => { const t0 = performance.now(); for (let i = 0; i < n; i++) { zeichneOben(); ctx.getImageData(0, 0, 1, 1); } return (performance.now() - t0) / n; }, rohPos, tBeiX, TYPEN, bewerte: () => bewerte(), zustand: () => ({ szene: szene && szene.id, zeit, modus, kameraModus, laeuft, fahr, ansicht: { ...ansicht } }) } };
 })();

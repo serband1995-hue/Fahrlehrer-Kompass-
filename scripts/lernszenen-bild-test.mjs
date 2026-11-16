@@ -16,7 +16,7 @@ const server = createServer(async (req, res) => {
 await new Promise(ok => server.listen(0, "127.0.0.1", ok));
 const basis = `http://127.0.0.1:${server.address().port}/`;
 const browser = await chromium.launch({ executablePath: process.env.CHROMIUM_PATH || "/opt/pw-browsers/chromium" });
-const ZEIGE = { rechts_rad: ["rad", "rad2"], kreisel: ["k"] };
+const ZEIGE = { rechts_rad: ["rad", "rad2"], kreisel: ["k"], strassenbahn: ["tram"], abstand: ["f2", "lr"] };
 let ok = 0, fehler = 0;
 const pruefe = (n, c, g = "") => { if (c) ok++; else { fehler++; console.log("FEHLER " + n + (g ? " – " + g : "")); } };
 for (const [w, h] of [[360, 640], [640, 360], [568, 320]]) {
