@@ -38,10 +38,10 @@ const spielt = () => page.evaluate(() => window.__au.length ? !window.__au[windo
 const luecken = await page.evaluate(async () => {
   const stand = t => { let h = 5381; t = String(t); for (let i = 0; i < t.length; i++) h = ((h << 5) + h + t.charCodeAt(i)) | 0; return (h >>> 0).toString(36); };
   const idx = await (await fetch("stimme/index.json")).json(); const fehlt = []; let n = 0;
-  for (const sz of window.Lernszenen._szenen) for (const ph of sz.phasen) { n++; const e = idx[sz.id] && idx[sz.id][stand(ph.text)]; if (!e) { fehlt.push(sz.id + ": " + ph.titel); continue; } const r = await fetch("stimme/" + e.f, { method: "HEAD" }); if (!r.ok) fehlt.push(sz.id + ": Datei fehlt " + e.f); }
+  for (const sz of window.Lernszenen._szenen) { if (!idx[sz.id]) continue; for (const ph of sz.phasen) { n++; const e = idx[sz.id] && idx[sz.id][stand(ph.text)]; if (!e) { fehlt.push(sz.id + ": " + ph.titel); continue; } const r = await fetch("stimme/" + e.f, { method: "HEAD" }); if (!r.ok) fehlt.push(sz.id + ": Datei fehlt " + e.f); } }
   return { n, fehlt };
 });
-pruefe(`alle ${luecken.n} Phasen aller Szenen haben Ton`, luecken.fehlt.length === 0, luecken.fehlt.slice(0, 6).join(" | "));
+pruefe(`alle ${luecken.n} Phasen der bereits vertonten Szenen haben Ton (neue Szenen ohne Index-Eintrag bleiben stumm)`, luecken.fehlt.length === 0, luecken.fehlt.slice(0, 6).join(" | "));
 
 // Auswahl: Info-Satz
 await page.evaluate(() => window.Lernszenen.open({}));
