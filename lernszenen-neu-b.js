@@ -333,7 +333,15 @@
       const p = rohPos(rtw, t); if (t > tMitte + 4.5) return; const d = dprVon(c), px = X(p.x), py = Y(p.y);
       c.save(); c.lineWidth = Math.max(3 * d, 0.4 * s); for (let i = 0; i < 3; i++) { const ph = (t * 0.9 + i / 3) % 1; c.strokeStyle = "rgba(70,130,255," + (0.85 * (1 - ph)).toFixed(2) + ")"; c.beginPath(); c.arc(px, py, (3 + ph * 15) * s, 0, 7); c.stroke(); }
       const w = Math.floor(performance.now() / 190) % 2; H.leuchte(px + Math.cos(p.h) * 1.4 * s - Math.sin(p.h) * (w ? 1.1 : -1.1) * s, py + Math.sin(p.h) * 1.4 * s + Math.cos(p.h) * (w ? 1.1 : -1.1) * s, 4.5 * s, "#3d7bff", 0.95); c.restore();
-      if (!LZ.bau.vorschau.an) pille(c, "Blaulicht + Einsatzhorn", px, py - Math.max(2.8 * s, 20 * d), "rgba(20,50,140,.92)", "#fff", 13);
+      if (!LZ.bau.vorschau.an) {
+        const ab = Math.max(2.8 * s, 20 * d), kasten = document.querySelector("#lzCap"); let cy = py - ab;
+        if (kasten && !kasten.hidden) {                      // Pille darf den Erklärkasten nicht schneiden: sonst unter den RTW
+          const cr = kasten.getBoundingClientRect(), vr = c.canvas.getBoundingClientRect(); c.save(); c.font = "bold " + Math.round(13 * d) + "px sans-serif";
+          const w = c.measureText("Blaulicht + Einsatzhorn").width + 14 * d, h = Math.round(13 * d) + 8 * d, lx = Math.max(w / 2 + 4 * d, Math.min(c.canvas.width - w / 2 - 4 * d, px)); c.restore();
+          if (lx + w / 2 > (cr.left - vr.left) * d && lx - w / 2 < (cr.right - vr.left) * d && cy - h / 2 < (cr.bottom - vr.top) * d + 16 * d) cy = py + ab;
+        }
+        const pr = pille(c, "Blaulicht + Einsatzhorn", px, cy, "rgba(20,50,140,.92)", "#fff", 13); LZ._pillen = LZ._pillen || {}; LZ._pillen.einsatz = [pr[0] / d, (cy - pr[2] / 2) / d, pr[1] / d, (cy + pr[2] / 2) / d];   // für den Test
+      }
     };
     szene({
       id: "einsatz", plan: ["a_stadt"], titel: "Einsatzfahrzeug mit Blaulicht", kurz: "Blaulicht und Einsatzhorn: sofort freie Bahn schaffen, rechts halten, Kreuzung nicht blockieren",

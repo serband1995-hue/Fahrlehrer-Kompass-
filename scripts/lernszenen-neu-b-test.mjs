@@ -79,5 +79,19 @@ pruefe("Abstand: Fahrschule hält mit Abstand", fach.abstand.minRichtig > 5, Str
   pruefe("Halteverbot: Dauer unter 90 s", hv.dauer < 90, String(hv.dauer)); pruefe("Halteverbot: Phasen steigend und verteilt, letzte vor dem Ende", hv.t.every((v, i) => i === 0 || v > hv.t[i - 1] + 1) && hv.t[hv.t.length - 1] < hv.dauer && hv.t[hv.t.length - 1] > hv.dauer * 0.5, JSON.stringify(hv)); }
 pruefe("Halteverbot: Fahrschule steht am Ende in der freien Zone (180–196 m)", fach.halte.x > 182 && fach.halte.x < 194 && fach.halte.v < 0.05, JSON.stringify(fach.halte));
 pruefe("Einsatz: alle stehen, solange der Rettungswagen die Kreuzung quert", fach.einsatz.schlecht === 0, String(fach.einsatz.schlecht)); pruefe("Einsatz: Fahrschule blockiert die Kreuzung nicht", fach.einsatz.inKreuzung === 0, String(fach.einsatz.inKreuzung));
+// einsatz im Querformat: die Pille "Blaulicht + Einsatzhorn" schneidet den Erklaerkasten nicht und liegt im Bild (t = 0,5 .. 8,5 s im 1-s-Schritt)
+for (const [w, h] of [[568, 320], [640, 360], [740, 360]]) {
+  const ctx = await browser.newContext({ viewport: { width: w, height: h }, deviceScaleFactor: 1, hasTouch: true, isMobile: false });
+  const page = await ctx.newPage(); await page.route(/^https?:\/\/(?!127\.0\.0\.1)/, r => r.abort());
+  await page.goto(basis); await page.waitForFunction(() => window.Lernszenen && window.Lernszenen.open, null, { timeout: 15000 });
+  await page.evaluate(() => window.Lernszenen.open({ szene: "einsatz" })); await page.waitForSelector("#lzCap");
+  for (let t = 0.5; t <= 8.6; t += 1) {
+    await page.evaluate(v => { window.Lernszenen._pillen = {}; const sl = document.querySelector("#lzSlider"); sl.value = v; sl.dispatchEvent(new Event("input")); }, t); await page.waitForTimeout(500);
+    const r = await page.evaluate(() => { const pl = window.Lernszenen._pillen && window.Lernszenen._pillen.einsatz, cv = document.querySelector("#lzCanvas").getBoundingClientRect(), cap = document.querySelector("#lzCap"), c = cap && !cap.hidden ? cap.getBoundingClientRect() : null; if (!pl) return null;
+      const [l, o, ri, u] = [cv.left + pl[0], cv.top + pl[1], cv.left + pl[2], cv.top + pl[3]]; return { drin: l >= cv.left - 1 && ri <= cv.right + 1 && o >= cv.top - 1 && u <= cv.bottom + 1, frei: !(c && l < c.right && ri > c.left && o < c.bottom && u > c.top), pill: [l, o, ri, u].map(Math.round), kasten: c && [c.left, c.top, c.right, c.bottom].map(Math.round) }; });
+    pruefe(`${w}x${h} einsatz t=${t}: Pille vorhanden`, !!r); if (r) pruefe(`${w}x${h} einsatz t=${t}: Pille im Bild und ohne den Erklaerkasten zu schneiden`, r.drin && r.frei, JSON.stringify(r));
+  }
+  await ctx.close();
+}
 await browser.close(); server.close();
 console.log(`Lernszenen-Neu-B-Test: ${ok} bestanden, ${fehler} Fehler`); process.exit(fehler ? 1 : 0);

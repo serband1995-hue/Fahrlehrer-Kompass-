@@ -21,7 +21,7 @@ const WICHTIG = { abknick: [[1, ["c"]], [3, ["b"]]], vorfahrt_gewaehren: [[3, ["
 const IDS = ["abknick", "vorfahrt_gewaehren", "rechts_fussg", "grundstueck", "ampel_gelb"];
 let ok = 0, fehler = 0;
 const pruefe = (n, c, g = "") => { if (c) ok++; else { fehler++; console.log("FEHLER " + n + (g ? " – " + g : "")); } };
-for (const [w, h] of [[360, 640], [412, 915], [640, 360], [568, 320]]) {
+for (const [w, h] of [[360, 640], [412, 915], [640, 360], [568, 320], [740, 360]]) {
   const ctx = await browser.newContext({ viewport: { width: w, height: h }, hasTouch: true, isMobile: w < 500 });
   const page = await ctx.newPage(); const konsole = [];
   page.on("pageerror", e => konsole.push(e.message));
@@ -52,10 +52,14 @@ for (const [w, h] of [[360, 640], [412, 915], [640, 360], [568, 320]]) {
     if (id === "ampel_gelb") {   // Ampel (mittleres Licht, Gelb) in den Entscheidungsphasen in 3D und Fahrer im Bild und nicht unter dem Erklaerkasten
       for (const k of ["3d", "fahrer"]) {
         await page.click(`[data-kam="${k}"]`);
-        for (const pi of (k === "fahrer" ? [1] : [1, 2])) {
-          await page.evaluate(v => { const sl = document.querySelector("#lzSlider"); sl.value = v; sl.dispatchEvent(new Event("input")); }, s.ph[pi].t + 0.3); await page.waitForTimeout(1200);
-          const r = await page.evaluate(() => { const L = window.Lernszenen, cv = document.querySelector("#lzCanvas").getBoundingClientRect(), cap = document.querySelector("#lzCap"), c = cap && !cap.hidden ? cap.getBoundingClientRect() : null, p = L._intern.punkt3d(4.4, 14.3, 12.1); if (!p) return null; const x = cv.left + p[0], y = cv.top + p[1]; return { x: Math.round(x), y: Math.round(y), tief: Math.round(p[2]), drin: x >= cv.left && x <= cv.right && y >= cv.top && y <= cv.bottom, frei: !(c && x >= c.left && x <= c.right && y >= c.top && y <= c.bottom), cap: c && [Math.round(c.bottom)] }; });
-          pruefe(t + `Phase ${pi}: Ampel in ${k} im Bild und nicht unter dem Erklaerkasten`, !!r && r.drin && r.frei, JSON.stringify(r));
+        // Phase 1 (Gelb: Entscheidung) in 0,25-s-Schritten, Phase 2 nur in 3D; Lampenhoehe = Mitte des Gelblichts bei k3d 4 (1.7 + 1.16 * 4)
+        const zeiten = [];
+        for (let tt = s.ph[1].t + 0.05; tt < s.ph[2].t - 0.05; tt += 0.25) zeiten.push([1, tt]);
+        if (k === "3d") zeiten.push([2, s.ph[2].t + 0.3]);
+        for (const [pi, tt] of zeiten) {
+          await page.evaluate(v => { const sl = document.querySelector("#lzSlider"); sl.value = v; sl.dispatchEvent(new Event("input")); }, tt); await page.waitForTimeout(450);
+          const r = await page.evaluate(() => { const L = window.Lernszenen, cv = document.querySelector("#lzCanvas").getBoundingClientRect(), cap = document.querySelector("#lzCap"), c = cap && !cap.hidden ? cap.getBoundingClientRect() : null, p = L._intern.punkt3d(4.4, 14.3, 1.7 + 1.16 * 4); if (!p) return null; const x = cv.left + p[0], y = cv.top + p[1]; return { x: Math.round(x), y: Math.round(y), tief: Math.round(p[2]), drin: x >= cv.left && x <= cv.right && y >= cv.top && y <= cv.bottom, frei: !(c && x >= c.left && x <= c.right && y >= c.top && y <= c.bottom), cap: c && [Math.round(c.bottom)] }; });
+          pruefe(t + `Phase ${pi} t=${tt.toFixed(2)}: Ampel in ${k} im Bild und nicht unter dem Erklaerkasten`, !!r && r.drin && r.frei, JSON.stringify(r));
         }
       }
       await page.click('[data-kam="oben"]');
