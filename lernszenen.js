@@ -1653,7 +1653,7 @@
   let kopfW = 0;
   function ueberlapptR(a, b, m) { return a.left < b.right + m && a.right > b.left - m && a.top < b.bottom + m && a.bottom > b.top - m; }
   function platziereFahrer(cvF) {
-    const st = $("#lzStage"); if (!st) return false; const S = st.getBoundingClientRect(), w = 112, h = 96, hoch = S.height > S.width * 1.05;
+    const st = $("#lzStage"); if (!st) return false; const S = st.getBoundingClientRect(), klein = S.height < 260, w = klein ? 84 : 112, h = klein ? 72 : 96, hoch = window.innerHeight > 480;   // wie das CSS des §-Fensters: unten links, bei max. 480 px Fensterhöhe oben rechts
     const sperr = ["#lzCap", "#lzHud", ".lz-parpop", ".lz-parb", ".lz-tipp", ".lz-coach", ".lz-toast"].map(q => root.querySelector(q)).filter(e => e && !e.hidden).map(e => e.getBoundingClientRect());
     const cap = root.querySelector("#lzCap"), cr = cap ? cap.getBoundingClientRect() : null;
     const kand = hoch ? [[S.width - w - 10, (cr ? cr.bottom - S.top : 0) + 8]] : [[10, S.height - h - 10], [S.width * 0.38, S.height - h - 10]];
@@ -1661,7 +1661,7 @@
       const r = { left: S.left + x, top: S.top + y, right: S.left + x + w, bottom: S.top + y + h };
       if (x < 0 || y < 0 || r.right > S.right || r.bottom > S.bottom) continue;
       if (sperr.some(q => ueberlapptR(r, q, 6))) continue;
-      const k = Math.round(x) + "," + Math.round(y); if (k !== cvF.dataset.p) { cvF.dataset.p = k; cvF.style.left = Math.round(x) + "px"; cvF.style.top = Math.round(y) + "px"; }
+      const k = Math.round(x) + "," + Math.round(y) + "," + w; if (k !== cvF.dataset.p) { cvF.style.width = w + "px"; cvF.style.height = h + "px"; cvF.dataset.p = k; cvF.style.left = Math.round(x) + "px"; cvF.style.top = Math.round(y) + "px"; }
       return true;
     }
     return false;
