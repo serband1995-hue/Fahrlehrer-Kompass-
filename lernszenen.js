@@ -779,14 +779,15 @@
       ctx.fillStyle = "rgba(8,16,4,.3)"; ctx.fillRect(L * 0.22 + 0.2 * s, B * 0.12 + 0.2 * s, 0.9 * s, 0.9 * s); ctx.fillStyle = "#77716b"; ctx.fillRect(L * 0.22, B * 0.12, 0.9 * s, 0.9 * s); ctx.fillStyle = "#2b2825"; ctx.fillRect(L * 0.22 + 0.2 * s, B * 0.12 + 0.2 * s, 0.5 * s, 0.5 * s);
       ctx.strokeStyle = "rgba(0,0,0,.4)"; ctx.lineWidth = Math.max(1, 0.12 * s); ctx.strokeRect(-L / 2, -B / 2, L, B);
     } else if (o.art === "ampel") {
-      const f = LAMPE[ampelFarbe(o, zeit)] || LAMPE.aus, n = o.fuss ? 2 : 3, w = 0.55 * s, hgt = (n * 0.55 + 0.2) * s;
-      const [ox, oy] = lok(0.3 * s, 0.35 * s); ctx.fillStyle = "rgba(0,0,0,.25)"; rundRect(-w / 2 + ox, -hgt / 2 + oy, w, hgt, 0.15 * s); ctx.fill();
-      ctx.fillStyle = "#1c1e21"; rundRect(-w / 2, -hgt / 2, w, hgt, 0.15 * s); ctx.fill(); ctx.strokeStyle = "#3a3e43"; ctx.lineWidth = Math.max(1, 0.05 * s); ctx.stroke();
+      const sk = s * (o.k || 1);
+      const f = LAMPE[ampelFarbe(o, zeit)] || LAMPE.aus, n = o.fuss ? 2 : 3, w = 0.55 * sk, hgt = (n * 0.55 + 0.2) * sk;
+      const [ox, oy] = lok(0.3 * sk, 0.35 * sk); ctx.fillStyle = "rgba(0,0,0,.25)"; rundRect(-w / 2 + ox, -hgt / 2 + oy, w, hgt, 0.15 * sk); ctx.fill();
+      ctx.fillStyle = "#1c1e21"; rundRect(-w / 2, -hgt / 2, w, hgt, 0.15 * sk); ctx.fill(); ctx.strokeStyle = "#3a3e43"; ctx.lineWidth = Math.max(1, 0.05 * sk); ctx.stroke();
       const farben = o.fuss ? [f[0], f[2]] : f, leer = o.fuss ? ["#4a1512", "#12401f"] : ["#4a1512", "#4a3a10", "#12401f"];
-      for (let i = 0; i < n; i++) { const ly = -hgt / 2 + 0.38 * s + i * 0.55 * s; if (farben[i]) leuchte(0, ly, 0.62 * s, farben[i], 0.55); ctx.fillStyle = farben[i] || leer[i]; ctx.beginPath(); ctx.arc(0, ly, 0.2 * s, 0, 7); ctx.fill(); if (farben[i]) { ctx.fillStyle = "rgba(255,255,255,.45)"; ctx.beginPath(); ctx.arc(-0.06 * s, ly - 0.06 * s, 0.07 * s, 0, 7); ctx.fill(); } }
+      for (let i = 0; i < n; i++) { const ly = -hgt / 2 + 0.38 * sk + i * 0.55 * sk; if (farben[i]) leuchte(0, ly, 0.62 * sk, farben[i], 0.55); ctx.fillStyle = farben[i] || leer[i]; ctx.beginPath(); ctx.arc(0, ly, 0.2 * sk, 0, 7); ctx.fill(); if (farben[i]) { ctx.fillStyle = "rgba(255,255,255,.45)"; ctx.beginPath(); ctx.arc(-0.06 * sk, ly - 0.06 * sk, 0.07 * sk, 0, 7); ctx.fill(); } }
       if (o.gruenpfeil) {                                         // Zeichen 720 rechts neben dem Rotlicht (aus Sicht der Ankommenden)
-        ctx.rotate(-(o.h || 0)); const rx = Math.sin(o.h || 0), ry = -Math.cos(o.h || 0), gx = rx * 0.75 * s, gy = ry * 0.75 * s;
-        ctx.fillStyle = "#1c1e21"; ctx.fillRect(gx - 0.3 * s, gy - 0.25 * s, 0.6 * s, 0.5 * s); ctx.fillStyle = "#2fbf5a"; ctx.font = `bold ${Math.max(8, 0.45 * s)}px sans-serif`; ctx.textAlign = "center"; ctx.textBaseline = "middle"; ctx.fillText("➜", gx, gy);
+        ctx.rotate(-(o.h || 0)); const rx = Math.sin(o.h || 0), ry = -Math.cos(o.h || 0), gx = rx * 0.75 * sk, gy = ry * 0.75 * sk;
+        ctx.fillStyle = "#1c1e21"; ctx.fillRect(gx - 0.3 * sk, gy - 0.25 * sk, 0.6 * sk, 0.5 * sk); ctx.fillStyle = "#2fbf5a"; ctx.font = `bold ${Math.max(8, 0.45 * sk)}px sans-serif`; ctx.textAlign = "center"; ctx.textBaseline = "middle"; ctx.fillText("➜", gx, gy);
       }
     } else if (o.art === "poller" || o.art === "bake") {
       ctx.fillStyle = "rgba(0,0,0,.28)"; ctx.beginPath(); ctx.arc(0.18 * s, 0.22 * s, 0.25 * s, 0, 7); ctx.fill();
@@ -876,7 +877,7 @@
     const px = X(p.x), py = Y(p.y);
     ctx.save(); if (f.geist) ctx.globalAlpha = 0.45;
     const L = T.l * s, B = T.b * s;
-    if (T.person) { ctx.translate(px, py); ctx.rotate(p.h); personOben(f, T, sig, s); ctx.restore(); return; }
+    if (T.person) { ctx.translate(px, py); ctx.rotate(p.h); personOben(f, T, sig, s * (f.gr || 1)); ctx.restore(); return; }
     const q = fzQ(s), k = s / q, sb = fzBild(f, T, q), ss = fzSchatten(T, q);
     // weicher Schlagschatten (Licht von links oben), dann Karosserie-Bild
     ctx.save(); ctx.translate(px + 0.2 * T.h * s, py + 0.3 * T.h * s); ctx.rotate(p.h); ctx.drawImage(ss.c, -ss.w * k / 2, -ss.h * k / 2, ss.w * k, ss.h * k); ctx.restore();
@@ -897,7 +898,7 @@
     // Blinker-Pfeil (Lern-Hinweis): leuchtender Pfeil vor dem Fokus-Auto in Blinkrichtung (nur Vorführen/Mitdenken)
     if (f.fokus && modus !== "fahren" && sig.blinker && !sig.warn) {
       const sd = sig.blinker === "links" ? -1 : 1, an = blinkAn();
-      ctx.save(); ctx.translate(L / 2 + 2.3 * s, sd * 1.1 * s); ctx.rotate(sd * 0.55); ctx.globalAlpha *= an ? 0.95 : 0.35;
+      ctx.save(); ctx.translate(L / 2 + (2.3 + (f.pfeilDx || 0)) * s, sd * (1.1 + (f.pfeilDy || 0)) * s); ctx.rotate(sd * 0.55); ctx.scale(f.pfeilK || 1, f.pfeilK || 1); ctx.globalAlpha *= an ? 0.95 : 0.35;
       leuchte(0.3 * s, 0, 2.4 * s, "#ffae1a", 0.55);
       ctx.beginPath(); [[-1.4, -0.38], [0.2, -0.38], [0.2, -0.9], [1.5, 0], [0.2, 0.9], [0.2, 0.38], [-1.4, 0.38]].forEach(([x, y], i) => i ? ctx.lineTo(x * s, y * s) : ctx.moveTo(x * s, y * s)); ctx.closePath();
       ctx.fillStyle = "#ffb21f"; ctx.fill(); ctx.strokeStyle = "#fff4d0"; ctx.lineWidth = Math.max(1.5, 0.1 * s); ctx.stroke(); ctx.restore();
@@ -937,6 +938,7 @@
     ctx.strokeStyle = "rgba(0,0,0,.3)"; ctx.lineWidth = Math.max(1, 0.035 * s); ctx.beginPath(); ctx.ellipse(0, 0, 0.2 * s * sc, 0.3 * s * sc, 0, 0, 7); ctx.stroke();
     ctx.fillStyle = "#e8c4a0"; ctx.beginPath(); ctx.arc(0.02 * s, 0, 0.13 * s * sc, 0, 7); ctx.fill();
     ctx.fillStyle = f.typ === "rad" ? "#d9d9d4" : "#4a3426"; ctx.beginPath(); ctx.arc(-0.02 * s, 0, 0.1 * s * sc, 0, 7); ctx.fill();
+    if (f.rand) { ctx.strokeStyle = "rgba(255,255,255,.95)"; ctx.lineWidth = Math.max(1.5, 0.06 * s); ctx.beginPath(); ctx.ellipse(0, 0, 0.2 * s * sc + 0.03 * s, 0.3 * s * sc + 0.03 * s, 0, 0, 7); ctx.stroke(); }
     if (sig.schulter) { ctx.fillStyle = "rgba(255,230,120,.3)"; ctx.beginPath(); ctx.moveTo(0, 0); ctx.arc(0, 0, 5 * s, -0.5, 0.5); ctx.closePath(); ctx.fill(); }
   }
   function rundRect(x, y, w, h, r) { ctx.beginPath(); ctx.moveTo(x + r, y); ctx.arcTo(x + w, y, x + w, y + h, r); ctx.arcTo(x + w, y + h, x, y + h, r); ctx.arcTo(x, y + h, x, y, r); ctx.arcTo(x, y, x + w, y, r); ctx.closePath(); }
@@ -1110,7 +1112,7 @@
     if (f.unsichtbar && f.unsichtbar(zeit)) return;
     if (T.person) {
       if (f.typ === "ball") { quader(c, p.x, p.y, p.h, 0.3, 0.3, 0, 0.3, f.farbe || "#e53935"); return; }
-      const k = f.typ === "kind" ? 0.7 : 1;
+      const k = (f.typ === "kind" ? 0.7 : 1) * (f.gr || 1);
       if (f.typ === "rad") { quader(c, p.x, p.y, p.h, 1.75, 0.08, 0.3, 0.75, "#2a2d31"); quader(c, p.x - Math.cos(p.h) * 0.8, p.y - Math.sin(p.h) * 0.8, p.h, 0.05, 0.05, 0, 0.7, "#2a2d31"); }
       const z0 = f.typ === "rad" ? 0.75 : 0;
       quader(c, p.x, p.y, p.h, 0.3 * k, 0.45 * k, z0 + (f.typ === "rad" ? 0 : 0.05), z0 + (f.typ === "rad" ? 0.85 : 1.45 * k), f.farbe || "#3a6ea5");
@@ -1183,12 +1185,13 @@
       quader(c, o.x, o.y, 0, 0.35, 0.35, 0, 2.2, "#6b4a2f");
       const r = o.r || 2.2; quader(c, o.x, o.y, 0.6, r * 1.5, r * 1.5, 2, 2 + r * 1.7, "#3f7a34"); quader(c, o.x, o.y, 0, r, r, 2 + r * 1.2, 2 + r * 2.1, "#4d8a3e");
     } else if (o.art === "ampel") {
-      quader(c, o.x, o.y, o.h || 0, 0.14, 0.14, 0, 2.3, "#55595e");
+      const kk = o.k || 1, z0 = 2.3 + (kk - 1) * 0.6;
+      quader(c, o.x, o.y, o.h || 0, 0.14 * kk, 0.14 * kk, 0, z0, "#55595e");
       const n = o.fuss ? 2 : 3, f = LAMPE[ampelFarbe(o, zeit)] || LAMPE.aus, farben = o.fuss ? [f[0], f[2]] : f, leer = o.fuss ? ["#3a1210", "#0f3219"] : ["#3a1210", "#3a2e0c", "#0f3219"];
-      const z0 = 2.3, hk = n * 0.33 + 0.1; quader(c, o.x, o.y, o.h || 0, 0.3, 0.35, z0, z0 + hk, "#1c1e21");
+      const hk = (n * 0.33 + 0.1) * kk; quader(c, o.x, o.y, o.h || 0, 0.3 * kk, 0.35 * kk, z0, z0 + hk, "#1c1e21");
       // Lampen auf der Seite, die dem Verkehr zugewandt ist (o.h = Blickrichtung der Ampel)
-      const ch = Math.cos(o.h || 0), sh = Math.sin(o.h || 0), fx = o.x + ch * 0.17, fy = o.y + sh * 0.17;
-      for (let i = 0; i < n; i++) { const z = z0 + hk - 0.2 - i * 0.33; poly3d(c, [[fx - sh * 0.1, fy + ch * 0.1, z - 0.1], [fx + sh * 0.1, fy - ch * 0.1, z - 0.1], [fx + sh * 0.1, fy - ch * 0.1, z + 0.1], [fx - sh * 0.1, fy + ch * 0.1, z + 0.1]], farben[i] || leer[i]); }
+      const ch = Math.cos(o.h || 0), sh = Math.sin(o.h || 0), fx = o.x + ch * 0.17 * kk, fy = o.y + sh * 0.17 * kk;
+      for (let i = 0; i < n; i++) { const z = z0 + hk - 0.2 * kk - i * 0.33 * kk, q = 0.1 * kk; poly3d(c, [[fx - sh * q, fy + ch * q, z - q], [fx + sh * q, fy - ch * q, z - q], [fx + sh * q, fy - ch * q, z + q], [fx - sh * q, fy + ch * q, z + q]], farben[i] || leer[i]); }
       if (o.gruenpfeil) {                                         // Grünpfeil-Blechschild rechts neben dem Rotlicht
         const rx = sh, ry = -ch, gx = o.x + rx * 0.45 + ch * 0.18, gy = o.y + ry * 0.45 + sh * 0.18, zg = z0 + hk - 0.34;
         poly3d(c, [[gx - rx * 0.18, gy - ry * 0.18, zg - 0.15], [gx + rx * 0.18, gy + ry * 0.18, zg - 0.15], [gx + rx * 0.18, gy + ry * 0.18, zg + 0.15], [gx - rx * 0.18, gy - ry * 0.18, zg + 0.15]], "#111316");
@@ -2011,13 +2014,14 @@
   }
   // Querformat (Fensterhöhe ≤ 480): Szenen mit kamera.quer = { zeige: [IDs], radius, pad } halten Fokus-Auto und genannte Beteiligte (in Reichweite) unter dem Erklärkasten im Bild.
   function querRahmen() {
-    const q = szene && szene.kamera && szene.kamera.quer; if (!q || !cv || !root || window.innerHeight > 480) return null;
+    const q = szene && szene.kamera && szene.kamera.quer; if (!q || !cv || !root || (window.innerHeight > 480 && !q.immer)) return null;
     const cap = root.querySelector("#lzCap"); if (!cap || cap.hidden) return null;
     const r = cv.getBoundingClientRect(), c = cap.getBoundingClientRect(), W = r.width, H = r.height, m = 12; if (!W || !H) return null;
     const top = clamp(c.bottom - r.top + 6, 0, H - 70), liste = fahrzeugListe(), fk = liste.find(e => e.f.fokus); if (!fk) return null;
-    const pad = q.pad ?? 3, rad = q.radius ?? 30, ids = q.zeige || []; let x0 = 1e9, x1 = -1e9, y0 = 1e9, y1 = -1e9;
+    const mb = q.immer ? 44 : m, pad = q.pad ?? 3, rad = q.radius ?? 30, ids = q.zeige || []; let x0 = 1e9, x1 = -1e9, y0 = 1e9, y1 = -1e9;
     liste.forEach(e => { if (!(e.f.fokus || (ids.includes(e.f.id) && Math.hypot(e.p.x - fk.p.x, e.p.y - fk.p.y) <= rad))) return; x0 = Math.min(x0, e.p.x); x1 = Math.max(x1, e.p.x); y0 = Math.min(y0, e.p.y); y1 = Math.max(y1, e.p.y); });
-    const bw = x1 - x0 + 2 * pad, bh = y1 - y0 + 2 * pad, z = clamp(Math.min((W - 2 * m) / bw, (H - top - m) / bh, grundZoom()), 1, 14), bandMitte = (top + H - m) / 2;
+    (q.punkte || []).forEach(([px2, py2]) => { x0 = Math.min(x0, px2); x1 = Math.max(x1, px2); y0 = Math.min(y0, py2); y1 = Math.max(y1, py2); });
+    const bw = x1 - x0 + 2 * pad, bh = y1 - y0 + 2 * pad, z = clamp(Math.min((W - 2 * m) / bw, (H - top - mb) / bh, grundZoom()), 1, 14), bandMitte = (top + H - mb) / 2;
     return { z, px: (x0 + x1) / 2, py: (y0 + y1) / 2 - (bandMitte - H / 2) / z };
   }
   function setzeModus(m) {

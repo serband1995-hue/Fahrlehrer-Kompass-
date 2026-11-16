@@ -17,7 +17,7 @@ await new Promise(ok => server.listen(0, "127.0.0.1", ok));
 const basis = `http://127.0.0.1:${server.address().port}/`;
 const browser = await chromium.launch({ executablePath: process.env.CHROMIUM_PATH || "/opt/pw-browsers/chromium" });
 // wichtige Beteiligte, die in der genannten Phase (Index) im Bild sein müssen (Mitte der Phase)
-const WICHTIG = { abknick: [[2, ["c"]], [3, ["b"]]], vorfahrt_gewaehren: [[3, ["b", "c"]]], rechts_fussg: [[2, ["fg"]]], grundstueck: [[2, ["fg", "ew"]], [4, ["b"]]], ampel_gelb: [[3, ["b"]]] };
+const WICHTIG = { abknick: [[1, ["c"]], [3, ["b"]]], vorfahrt_gewaehren: [[3, ["b", "c"]]], rechts_fussg: [[2, ["fg"]]], grundstueck: [[2, ["fg", "ew"]], [4, ["b"]]], ampel_gelb: [[2, ["b"]]] };
 const IDS = ["abknick", "vorfahrt_gewaehren", "rechts_fussg", "grundstueck", "ampel_gelb"];
 let ok = 0, fehler = 0;
 const pruefe = (n, c, g = "") => { if (c) ok++; else { fehler++; console.log("FEHLER " + n + (g ? " – " + g : "")); } };

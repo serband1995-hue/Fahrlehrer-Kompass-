@@ -19,7 +19,10 @@ const browser = await chromium.launch({ executablePath: process.env.CHROMIUM_PAT
 const ZEIGE = { rechts_rad: ["rad", "rad2"], kreisel: ["k"], strassenbahn: ["tram"], abstand: ["fs", "lr"], einsatz: ["q"] };
 // Querformat, neue Szenen mit kamera.quer: Fokus-Auto und wichtige Beteiligte liegen im Bild UND nicht unter dem sichtbaren Erklaerkasten (#lzCap)
 const NEU = ["abknick", "vorfahrt_gewaehren", "rechts_fussg", "grundstueck", "ampel_gelb", "bahnuebergang", "strassenbahn", "abstand", "halteverbot", "einsatz"];
-const QUER = { abknick: [[2, ["c"]], [3, ["b", "c"]]], vorfahrt_gewaehren: [[3, ["b", "c"]]], rechts_fussg: [[0, ["fg", "kd"]], [1, ["fg", "kd"]], [2, ["fg", "kd"]]], grundstueck: [[2, ["fg", "ew"]], [4, ["b"]]], ampel_gelb: [[3, ["b"]]], abstand: [[1, ["f2", "lf"]], [2, ["f2", "lf"]], [3, ["f2", "lf"]], [4, ["f2", "lf"]], [5, ["f2", "lf"]]] };
+const QUER = { abknick: [[1, ["c"]], [3, ["b", "c"]]], vorfahrt_gewaehren: [[3, ["b", "c"]]], rechts_fussg: [[0, ["fg", "kd"]], [1, ["fg", "kd"]], [2, ["fg", "kd"]]], grundstueck: [[2, ["fg", "ew"]], [4, ["b"]]], ampel_gelb: [[2, ["b"]]], abstand: [[1, ["f2", "lf"]], [2, ["f2", "lf"]], [3, ["f2", "lf"]], [4, ["f2", "lf"]], [5, ["f2", "lf"]]] };
+// Feste Punkte der Szene (Ampel, Zusatzzeichen), die in den genannten Phasen im Bild und nicht unter dem Erklaerkasten liegen muessen
+const PUNKTE = { ampel_gelb: { phasen: [1, 2], punkte: [["Ampel", 4.4, 14.3]] }, abknick: { phasen: [0, 1], punkte: [["Zusatzzeichen", 4.9, 12]] } };
+const IMMER = ["ampel_gelb", "rechts_fussg", "grundstueck"];          // kamera.quer.immer: auch im Hochformat
 let ok = 0, fehler = 0;
 const pruefe = (n, c, g = "") => { if (c) ok++; else { fehler++; console.log("FEHLER " + n + (g ? " – " + g : "")); } };
 for (const [w, h] of [[360, 640], [640, 360], [568, 320]]) {
@@ -41,7 +44,7 @@ for (const [w, h] of [[360, 640], [640, 360], [568, 320]]) {
         for (const f of s.fahrzeuge) { if (!f.fokus && !(zeige || []).includes(f.id)) continue; const p = L._intern.rohPos(f, z.zeit); const sx = st.width / 2 + (p.x - z.ansicht.px) * z.ansicht.zoom, sy = st.height / 2 + (p.y - z.ansicht.py) * z.ansicht.zoom; out.push([f.id, Math.round(sx), Math.round(sy), sx >= 0 && sx <= st.width && sy >= 0 && sy <= st.height]); }
         return { out, b: [Math.round(st.width), Math.round(st.height)], zeit: z.zeit };
       }, ZEIGE[id]);
-      if (NEU.includes(id) && w > h) {
+      if (NEU.includes(id) && (w > h || IMMER.includes(id))) {
         const q = (QUER[id] || []).find(x => x[0] === i), ids = ["fokus"].concat(q ? q[1] : []);
         const rr = await page.evaluate(ids => {
           const L = window.Lernszenen, z = L._intern.zustand(), sz = L._szenen.find(x => x.id === z.szene), cv = document.querySelector("#lzCanvas").getBoundingClientRect(), cap = document.querySelector("#lzCap"), c = cap && !cap.hidden ? cap.getBoundingClientRect() : null;
@@ -51,6 +54,12 @@ for (const [w, h] of [[360, 640], [640, 360], [568, 320]]) {
             return [n, x >= cv.left && x <= cv.right && y >= cv.top && y <= cv.bottom, !(c && x >= c.left && x <= c.right && y >= c.top && y <= c.bottom), Math.round(x), Math.round(y), c ? [Math.round(c.left), Math.round(c.top), Math.round(c.right), Math.round(c.bottom)] : null];
           });
         }, ids);
+        const pk = PUNKTE[id];
+        if (pk && pk.phasen.includes(i)) {
+          const pp = await page.evaluate(pts => { const L = window.Lernszenen, z = L._intern.zustand(), cv = document.querySelector("#lzCanvas").getBoundingClientRect(), cap = document.querySelector("#lzCap"), c = cap && !cap.hidden ? cap.getBoundingClientRect() : null;
+            return pts.map(([n, wx, wy]) => { const x = cv.left + cv.width / 2 + (wx - z.ansicht.px) * z.ansicht.zoom, y = cv.top + cv.height / 2 + (wy - z.ansicht.py) * z.ansicht.zoom; return [n, x >= cv.left && x <= cv.right && y >= cv.top && y <= cv.bottom && !(c && x >= c.left && x <= c.right && y >= c.top && y <= c.bottom), Math.round(x), Math.round(y)]; }); }, pk.punkte);
+          for (const [n, gut, x, y] of pp) pruefe(`${w}x${h} ${id} Phase ${i}: ${n} im Bild und nicht unter dem Erklaerkasten`, gut, `(${x},${y})`);
+        }
         for (const [n, drin, frei, x, y, cr] of rr) pruefe(`${w}x${h} ${id} Phase ${i}: ${n} im Bild und nicht unter dem Erklaerkasten`, drin && frei, `Mitte (${x},${y}) Kasten ${JSON.stringify(cr)}`);
       }
       for (const [fid, sx, sy, drin] of r.out) pruefe(`${w}×${h} ${id} Phase ${i} t=${t.toFixed(1)}: ${fid} im Bild`, drin, `Bild ${r.b} Mitte (${sx},${sy})`);
