@@ -1086,7 +1086,7 @@
       return pk.every(d => d[0] + d[1] + d[2] < 12); } catch (e) { return false; }
   }
   function zeichneObenSicher() {
-    try { zeichneOben(); } catch (e) { if (musterAus) throw e; musterAus = true; ctx.setTransform(1, 0, 0, 1, 0, 0); ctx.globalAlpha = 1; zeichneOben(); return; }
+    try { zeichneOben(); } catch (e) { if (musterAus) throw e; musterAus = true; if (ctx.reset) ctx.reset(); else { for (let i = 0; i < 32; i++) ctx.restore(); ctx.setTransform(1, 0, 0, 1, 0, 0); ctx.globalAlpha = 1; } zeichneOben(); return; }
     if (!musterAus && obenPruef < 3 && ++obenPruef === 3 && bildSchwarz()) { musterAus = true; zeichneOben(); }
   }
   // Punkte im Abstand d entlang einer Polylinie
@@ -1827,7 +1827,8 @@
   .lz-capx{position:absolute;right:8px;top:8px;width:38px;height:38px;border-radius:50%;border:1px solid rgba(160,200,175,.55);background:rgba(30,50,42,.95);color:#eef3ef;font:700 16px/1 system-ui,sans-serif;cursor:pointer;pointer-events:auto;padding:0;}
   .lz-capx::after{content:"";position:absolute;inset:-6px;}
   .lz-caption{padding-right:54px;} .lz-caption.mit-par{padding-right:98px;} .lz-caption.mit-par .lz-parb{right:54px;width:38px;height:38px;}
-  .lz-capopen{position:absolute;left:12px;top:10px;min-height:44px;padding:0 14px;border-radius:12px;border:1px solid rgba(160,200,175,.55);background:rgba(10,18,14,.92);color:#eef3ef;font:600 13.5px system-ui,sans-serif;cursor:pointer;z-index:2;}
+  .lz-capbar{position:absolute;left:12px;top:10px;display:flex;gap:8px;z-index:2;pointer-events:none;} .lz-capbar>*{pointer-events:auto;} .lz-nm2{min-width:44px;padding:0 10px!important;font-size:17px!important;}
+  .lz-capopen{position:relative;min-height:44px;padding:0 14px;border-radius:12px;border:1.5px solid #3fae74;background:rgba(10,18,14,.92);color:#eef3ef;font:600 13.5px system-ui,sans-serif;cursor:pointer;z-index:2;}
   .lz-capopen[hidden]{display:none;}
   .lz-parx{position:absolute;right:4px;top:4px;width:36px;height:36px;border:0;background:transparent;color:#e0b84a;font:700 18px/1 system-ui,sans-serif;cursor:pointer;padding:0;}
   .lz-parx::after{content:"";position:absolute;inset:-4px;}
@@ -1878,6 +1879,8 @@
   .lz-toast{position:absolute;left:50%;bottom:16px;transform:translateX(-50%);background:rgba(20,30,26,.95);border:1px solid #4f7a63;border-radius:10px;padding:9px 14px;font-size:13.5px;max-width:90%;z-index:4;pointer-events:none;}
   .lz-coach{position:absolute;left:12px;bottom:12px;max-width:min(62%,420px);background:rgba(224,184,74,.95);color:#1b1b12;border-radius:12px;padding:9px 12px;font-size:13.5px;font-weight:600;pointer-events:none;}
   @media (max-height:520px){ .lz-top{padding-top:6px;padding-bottom:6px;} .lz-btn{min-height:34px;padding:5px 9px;font-size:12.5px;} .lz-bar{padding:5px 8px;gap:5px;} .lz-drive{grid-template-columns:repeat(8,1fr);grid-template-areas:"bl sl br2 br2 gas gas sr br" "wl wl wl wl wr wr wr wr";} .lz-drive .lz-btn{min-height:38px;font-size:12.5px;} .lz-caption{max-width:min(380px,calc(100% - 140px));padding:7px 10px;} .lz-caption p{font-size:12px;} .lz-coach{font-size:12px;max-width:45%;padding:6px 9px;} .lz-hud{padding:5px 9px;} .lz-hud b{font-size:19px;} }
+  .lz-bar [data-kam],.lz-bar [data-modus]{min-height:44px;} .lz-bar [data-kam]{min-width:56px;position:relative;}   /* Daumen-tauglich (Prüf-Team 17.11.) */
+  @media (max-height:520px){ .lz-bar [data-kam],.lz-bar [data-modus]{min-height:34px;} .lz-bar [data-kam]::after{content:"";position:absolute;left:-3px;right:-3px;top:-5px;bottom:-5px;} }
   @media (max-width:560px){ .lz-caption p{font-size:12.8px;} .lz-title{font-size:15px;} .lz-drive{grid-template-columns:repeat(4,1fr);grid-template-areas:"bl sl sr br" "br2 br2 gas gas" "wl wl wr wr";} .lz-drive .lz-btn{min-height:48px;font-size:13px;} }
   `;
 
@@ -1945,7 +1948,7 @@
     });
   }
   function starteSzene(id) {
-    szene = SZENEN.find(s => s.id === id); zeit = 0; laeuft = false; versatzFz = {}; beantwortet = new Set(); punkte = { richtig: 0, gesamt: 0 }; fahr = null; _hGlatt = null; obenPruef = 0; zoomUser = false; capZu = true; fahrStart = false;
+    szene = SZENEN.find(s => s.id === id); zeit = 0; laeuft = false; versatzFz = {}; beantwortet = new Set(); punkte = { richtig: 0, gesamt: 0 }; fahr = null; _hGlatt = null; obenPruef = 0; laufTempo = 1; zoomUser = false; capZu = true; fahrStart = false;
     modus = "vorfuehren"; kameraModus = "oben"; tempoFaktor = 1;
     ansicht = { zoom: grundZoom(), px: 0, py: 0, folgen: true };
     const fk = szene.fahrzeuge.find(f => f.fokus); const fp = fzPos(fk, 0); ansicht.px = fp.x; ansicht.py = fp.y;
@@ -1958,7 +1961,7 @@
         <button class="lz-btn" id="lzZu" aria-label="Schließen">✕</button>
       </div>
       <div class="lz-stage" id="lzStage"><canvas id="lzCanvas" aria-label="Animierte Verkehrsszene"></canvas>
-        <button class="lz-capopen" id="lzCapOpen" type="button" data-capopen hidden>▤ Text anzeigen</button>
+        <div class="lz-capbar"><button class="lz-capopen" id="lzCapOpen" type="button" data-capopen hidden>▤ Text anzeigen</button><button class="lz-capopen lz-nm2" id="lzNm2" type="button" data-nochmal hidden aria-label="Nochmal hören">🔊</button></div>
         <div class="lz-caption" id="lzCap"><h3>${esc(szene.titel)}</h3><p>Auf ▶ tippen – die Szene spielt sich von selbst ab. Mit ⏸ anhalten und Fahrzeuge verschieben.</p></div>
         <canvas class="lz-fahrer" id="lzFahrer" width="224" height="192" hidden aria-hidden="true"></canvas>
         <div class="lz-hud" id="lzHud"><b id="lzV">0</b><span>km/h</span><div class="lz-blink"><span id="lzBL">◀</span><span id="lzBR">▶</span></div></div>
@@ -2006,10 +2009,10 @@
       if (modus === "fahren") { fahrStart = true; capSync(); }
       if (modus === "fahren" && fahr && fahr.ende) { schliesseSheet(); if (szene.reaktion) starteReaktion(fahr.vWahl); else starteFahren(); } if (!laeuft && zeit >= szene.dauer && modus !== "fahren") { zeit = 0; beantwortet = new Set(); } laeuft = !laeuft; if (modus !== "fahren") { stimmePause(!laeuft); stimmeNachholen(); } if (laeuft) { schliesseSheet(); ansicht.folgen = true; } };
     const tippZu = () => { if (!tippFrage) return; tippFrage = null; const b = root.querySelector("#lzTipp"); if (b) b.remove(); ansicht.folgen = true; ansicht.zoom = grundZoom(); };
-    $("#lzSlider").oninput = e => { tippZu(); ansicht.folgen = true; zoomUser = false; zeit = +e.target.value; laeuft = false; const ph = aktuellePhase(); if (ph) zeigePhase(ph); };
+    $("#lzSlider").oninput = e => { tippZu(); laufTempo = 1; ansicht.folgen = true; zoomUser = false; zeit = +e.target.value; laeuft = false; const ph = aktuellePhase(); if (ph) zeigePhase(ph); };
     $("#lzPrev").onclick = () => { schliesseSheet(); tippZu(); zoomUser = false; springe(-1); }; $("#lzNext").onclick = () => { schliesseSheet(); tippZu(); zoomUser = false; springe(1); };
     $("#lzTempo").onclick = () => { tempoFaktor = tempoFaktor === 1 ? 0.5 : tempoFaktor === 0.5 ? 2 : 1; $("#lzTempo").textContent = (tempoFaktor === 0.5 ? "½" : tempoFaktor) + "×"; };
-    $("#lzReset").onclick = () => { zoomUser = false; ansicht.folgen = true; ansicht.zoom = grundZoom(); schliesseSheet(); tippFrage = null; { const b = root.querySelector("#lzTipp"); if (b) b.remove(); } _hGlatt = null; versatzFz = {}; zeit = 0; laeuft = false; beantwortet = new Set(); punkte = { richtig: 0, gesamt: 0 }; if (modus === "fahren") { starteFahren(); const c = $("#lzCap"); if (c) c.hidden = false; setzeModus("fahren"); } else zeigePhase(szene.phasen[0]); ansicht.folgen = true; };
+    $("#lzReset").onclick = () => { laufTempo = 1; zoomUser = false; ansicht.folgen = true; ansicht.zoom = grundZoom(); schliesseSheet(); tippFrage = null; { const b = root.querySelector("#lzTipp"); if (b) b.remove(); } _hGlatt = null; versatzFz = {}; zeit = 0; laeuft = false; beantwortet = new Set(); punkte = { richtig: 0, gesamt: 0 }; if (modus === "fahren") { starteFahren(); const c = $("#lzCap"); if (c) c.hidden = false; setzeModus("fahren"); } else zeigePhase(szene.phasen[0]); ansicht.folgen = true; };
     root.querySelectorAll("[data-kam]").forEach(b => b.onclick = () => { if (tippFrage) { zeigeToast("Zum Antippen bleibt die Ansicht von oben."); return; } kameraModus = b.dataset.kam === "3d" ? "3d" : "oben"; _hGlatt = null; root.querySelectorAll("[data-kam]").forEach(x => x.classList.toggle("on", x === b)); });
     root.querySelectorAll("[data-modus]").forEach(b => b.onclick = () => setzeModus(b.dataset.modus));
     bindeFahren(); bindeZiehen();
@@ -2066,9 +2069,9 @@
     return { z, px: (x0 + x1) / 2 + hud / 2 / z, py: (y0 + y1) / 2 - (bandMitte - H / 2) / z };
   }
   function setzeModus(m) {
-    stimmeStopp(); tippFrage = null; { const b = root.querySelector("#lzTipp"); if (b) b.remove(); }
+    const vorher = modus; stimmeStopp(); tippFrage = null; { const b = root.querySelector("#lzTipp"); if (b) b.remove(); }
     modus = m; laeuft = false; versatzFz = {}; zeit = 0; beantwortet = new Set(); punkte = { richtig: 0, gesamt: 0 }; schliesseSheet(); _hGlatt = null;
-    fahrStart = false; capZu = m !== "fahren"; capSync();
+    fahrStart = false; if (m === "fahren") capZu = false; else if (vorher === "fahren") capZu = true; capSync();   // offen/zu bleibt beim Wechsel Vorführen ↔ Mitdenken
     root.querySelectorAll("[data-modus]").forEach(x => x.classList.toggle("on", x.dataset.modus === m));
     $("#lzDrive").hidden = !(m === "fahren" && szene.fahren); $("#lzRang").hidden = !(m === "fahren" && szene.rangieren); $("#lzReak").hidden = !(m === "fahren" && szene.reaktion);
     $("#lzPrev").hidden = $("#lzNext").hidden = $("#lzTime").hidden = m === "fahren";
@@ -2086,6 +2089,7 @@
     else zeigePhase(szene.phasen[0]);
   }
   function springe(r) {
+    laufTempo = 1;
     const ph = szene.phasen; let i = ph.findIndex(p => p.t > zeit + 0.01);
     if (i < 0) i = ph.length;
     const ziel = r > 0 ? ph[i] : ph[Math.max(0, i - 2)];
@@ -2141,11 +2145,11 @@
     STIMME.pausiert = !!pause;
     try { if (pause) a.el.pause(); else { const pr = a.el.play(); if (pr && pr.catch) pr.catch(() => { a.fertig = true; }); } } catch (e) {}
   }
-  function stimmeNochmal() { const ph = aktuellePhase(); if (ph) stimmeSpiele(ph); }
+  function stimmeNochmal() { const ph = aktuellePhase() || (szene && szene.phasen[0]); if (ph) stimmeSpiele(ph); }
   function stimmeSchalter() {
     const b = $("#lzStimme"); if (!b) return;
     b.hidden = !stimmeSzene();
-    const an = stimmeAn(); b.textContent = an ? "🔊" : "🔇"; b.setAttribute("aria-label", an ? "Stimme ausschalten" : "Stimme einschalten"); b.setAttribute("aria-pressed", String(an));
+    const an = stimmeAn(); b.textContent = an ? "🔊" : "🔇"; b.setAttribute("aria-label", an ? "Stimme ausschalten" : "Stimme einschalten"); b.setAttribute("aria-pressed", String(an)); capSync();
   }
   const stimmeInfo = () => (STIMME.index && Object.keys(STIMME.index).length) ? `<p class="lz-info">🔊 Sprecherstimme mit KI erzeugt.</p>` : "";
   // Geprüfte Fundstellen (15.11.2026 gegen StVO-Text, Prüfbericht Block 3; § 9a gibt es nicht, Kreisverkehr = § 8 Abs. 1a): nur diese bekommen das antippbare §. Neue Fundstellen erst nach Prüfung am Gesetzestext aufnehmen.
@@ -2168,7 +2172,8 @@
     if (window.innerHeight <= 480) { const st = $("#lzStage").getBoundingClientRect(), cp = $("#lzCap").getBoundingClientRect(), fr = st.right - cp.right - 20; if (fr >= 180) { d.style.left = Math.round(cp.right - st.left + 8) + "px"; d.style.right = "auto"; d.style.maxWidth = Math.min(260, fr) + "px"; } } else { const st = $("#lzStage").getBoundingClientRect(), cp = $("#lzCap").getBoundingClientRect(); d.style.left = "12px"; d.style.bottom = "auto"; d.style.top = Math.round(cp.bottom - st.top + 8) + "px"; d.style.maxWidth = "min(340px,calc(100% - 24px))"; for (const q of ["#lzHud", "#lzFahrer"]) { const hu = root.querySelector(q); if (hu && !hu.hidden) { const pr = d.getBoundingClientRect(), hr = hu.getBoundingClientRect(); if (hr.width > 0 && pr.right > hr.left - 6 && pr.bottom > hr.top && pr.top < hr.bottom) d.style.maxWidth = Math.max(150, Math.round(hr.left - st.left - 12 - 8)) + "px"; } } }
   }
   let capZu = true, fahrStart = false;   // Erklärkasten startet zu (Wunsch 17.11.): „▤ Text anzeigen“ holt ihn; nur „Selbst fahren“ zeigt die Anleitung offen
-  function capSync() { const c = $("#lzCap"), o = $("#lzCapOpen"); if (!c || !o) return; const weg = modus === "fahren" && fahrStart; c.hidden = capZu || weg; o.hidden = !capZu || weg; }
+  function capSync() { const c = $("#lzCap"), o = $("#lzCapOpen"); if (!c || !o) return; const weg = modus === "fahren" && fahrStart; c.hidden = capZu || weg; o.hidden = !capZu || weg;
+    const n = $("#lzNm2"); if (n) { const ph = szene && (aktuellePhase() || szene.phasen[0]); n.hidden = o.hidden || modus === "fahren" || !stimmeAn() || !(ph && stimmeFuer(ph)); } }   // „Nochmal hören“ auch bei zugeklapptem Kasten
   function zeigeCap(titel, text, regel, ph) {
     const c = $("#lzCap"); if (!c) return; schliessePar();
     const ok = regel && parToken(regel);
