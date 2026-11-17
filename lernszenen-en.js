@@ -958,7 +958,7 @@ window.LernszenenEN = {
 ]
 },
 "eng": {
-"titel": "Narrow spot, obstacle on my side",
+"titel": "Narrow spot, obstacle on your side",
 "kurz": "Whoever has to get past the obstacle lets the oncoming traffic through first.",
 "phasen": [
 {
