@@ -91,6 +91,7 @@ def woerter(t, sprache):
     for w in t.split():
         if sprache == "de" and w.isdigit(): w = zahl_de(int(w)).replace("ß", "ss")
         elif sprache == "en" and w.isdigit(): w = zahl_en(int(w))
+        elif sprache == "en": w = re.sub(r"tre(s|d)?$", r"ter\1", re.sub(r"our(s|ing|hood)?$", r"or\1", {"kerb": "curb", "kerbs": "curbs", "practise": "practice"}.get(w, w)))   # britisch = amerikanisch (Scribe schreibt amerikanisch)
         else: w = z.get(w, w).replace("ß", "ss")
         if sprache == "de": w = {"einhundert": "hundert", "eintausend": "tausend", "eins": "ein", "eine": "ein", "einen": "ein", "einem": "ein", "einer": "ein", "eines": "ein"}.get(w, w)
         out.extend(w.split())
