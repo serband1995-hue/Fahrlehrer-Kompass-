@@ -16,6 +16,12 @@ DIR = os.path.join(ROOT, "stimme")
 API = "https://api.elevenlabs.io/v1"
 HDR = {"xi-api-key": "dummy"}
 
+# Sprech-Fassung nur für die Stimme (angezeigt bleibt der Text): Notruf wird Ziffer für Ziffer gesprochen
+SPRICH = {"de": [(r"\b112\b", "eins eins zwei")], "en": [(r"\b112\b", "one one two")]}
+def sprich(t, sprache):
+    for a, b in SPRICH.get(sprache, []): t = re.sub(a, b, t)
+    return t
+
 def stand(t):
     # gleicher Hash wie stimmeStand() in lernszenen.js (UTF-16-Codeeinheiten)
     h = 5381
@@ -128,16 +134,17 @@ def main():
             t = p["text"]; st = stand(t); f = f"{praefix}{sz['id']}-{i}-{st}.mp3"; pf = os.path.join(DIR, f)
             key = f"{sz['id']}/{i}"
             alt = bericht["eintraege"].get(key)
-            if alt and alt.get("stand") == st and alt.get("ok") and os.path.exists(pf):
+            if alt and alt.get("stand") == st and alt.get("ok") and alt.get("sprich", t) == sprich(t, sprache) and os.path.exists(pf):
                 neu[st] = {"f": f, "d": dauer(pf)}; continue
             versuche = []
             ok = False; bester = None
             for k in range(4):
                 if bericht["zeichen"] + len(t) > budget: print("BUDGET erreicht", file=sys.stderr); break
-                mp3 = tts(t, sprache, ph[i - 1]["text"] if i else None, ph[i + 1]["text"] if i + 1 < len(ph) else None)
+                ts = sprich(t, sprache)
+                mp3 = tts(ts, sprache, sprich(ph[i - 1]["text"], sprache) if i else None, sprich(ph[i + 1]["text"], sprache) if i + 1 < len(ph) else None)
                 bericht["zeichen"] += len(t)
                 ist, gedehnt = stt(mp3, sprache)
-                fehler, diff = abweichung(t, ist, sprache)
+                fehler, diff = abweichung(ts, ist, sprache)
                 fehler += len(gedehnt); diff += ["gedehnt " + g for g in gedehnt]
                 versuche.append({"ist": ist, "fehler": fehler, "diff": diff})
                 if bester is None or fehler < bester[0]: bester = (fehler, mp3)
@@ -145,7 +152,7 @@ def main():
                 if fehler == 0:
                     open(pf, "wb").write(mp3); ok = fehler == 0; break
                 if k == 3: open(pf, "wb").write(bester[1]); ok = False   # bester Versuch bleibt, Satz steht im Bericht
-            bericht["eintraege"][key] = {"stand": st, "text": t, "ok": ok, "versuche": versuche}
+            bericht["eintraege"][key] = {"stand": st, "text": t, "sprich": sprich(t, sprache), "ok": ok, "versuche": versuche}
             if os.path.exists(pf): neu[st] = {"f": f, "d": dauer(pf)}
             json.dump(bericht, open(bericht_pfad, "w", encoding="utf-8"), ensure_ascii=False, indent=1)
         idx[sz["id"]] = neu
