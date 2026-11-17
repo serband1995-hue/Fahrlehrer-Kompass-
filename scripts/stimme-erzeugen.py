@@ -200,6 +200,7 @@ def main():
                         print(f"{key} Tempo-Faktor {fak:.2f} zu weit weg, neuer Versuch", flush=True)
                         if bester[1] is mp3: bester = (1, mp3)
                         if k < 3: continue
+                        fehler = 1; diff.append(f"Tempo-Faktor {fak:.2f} nicht angeglichen")   # letzter Versuch: Datei bleibt, Bericht sagt nicht ok
                     else: mp3 = neu_mp3
                 if fehler == 0:
                     open(pf, "wb").write(mp3); ok = fehler == 0; break

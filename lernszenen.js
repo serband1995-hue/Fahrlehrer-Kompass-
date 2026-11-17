@@ -123,7 +123,24 @@
     let y = 0; teile.forEach(([sp, sg], i) => { vzMale(g, sp, (w - sp.mm) / 2, y, sg); y += hs[i] + 40; });
     return (VZ_BILD[typ] = { img: c, w, h });
   }
-  const VZ_OBEN = 2.5, VZ_3D = 1.8;   // Vergrößerung für die Lesbarkeit: in jeder Ansicht für alle Schilder gleich
+  const VZ_OBEN = 2.5, VZ_3D = 1.8, VZ_MIN = 34;   // Vergrößerung für die Lesbarkeit, je Ansicht für alle Schilder gleich; VZ_MIN: 900 mm sind oben mindestens so viele CSS-Pixel breit
+  // Ansicht von oben: Schild nach Vorlage neben dem Pfosten, auf der Seite weg von der Fahrbahn (sc.aussen); alle im selben Maßstab, am Handy mit Mindestgröße
+  function vzOben(st, X, Y, s) {
+    (st.schilder || []).forEach(sc => {
+      const vz = sc.aussen && vzBild(sc.typ); if (!vz) return;
+      const k = Math.max(VZ_OBEN * s / 1000, VZ_MIN * dpr / 900), w = vz.w * k, h = vz.h * k, bx = X(sc.x), by = Y(sc.y), ab = Math.max(0.35 * s, 3 * dpr), [ax, ay] = sc.aussen;
+      const x0 = ax > 0 ? bx + ab : ax < 0 ? bx - ab - w : bx - w / 2, y0 = ay > 0 ? by + ab : ay < 0 ? by - ab - h : by - h / 2;
+      ctx.fillStyle = "rgba(0,0,0,.28)"; ctx.drawImage(vzRueck(vz, "rgba(0,0,0,.35)"), x0 + 2 * dpr, y0 + 2 * dpr, w, h);
+      ctx.fillStyle = "#7f868c"; ctx.beginPath(); ctx.arc(bx, by, Math.max(1.5 * dpr, 0.12 * s), 0, 7); ctx.fill();
+      ctx.drawImage(vz.img, x0, y0, w, h);
+    });
+  }
+  function vzRueck(vz, farbe) {   // Umriss des Schilds in einer Farbe (Rückseite, Schatten)
+    vz.rueck = vz.rueck || {}; if (vz.rueck[farbe]) return vz.rueck[farbe];
+    const c = document.createElement("canvas"); c.width = vz.img.width; c.height = vz.img.height; const g = c.getContext("2d");
+    g.drawImage(vz.img, 0, 0); g.globalCompositeOperation = "source-in"; g.fillStyle = farbe; g.fillRect(0, 0, c.width, c.height);
+    return (vz.rueck[farbe] = c);
+  }
   // ------------------------------------------------------------- Verkehrszeichen
   // Werden einmal als Bild gezeichnet und in beiden Ansichten verwendet.
   const SCHILD_BILD = {};
@@ -815,15 +832,7 @@
     });
     st.linien.forEach(l => zeichneLinieOben(l, X, Y, s));
     (st.schilder || []).forEach(sc => {
-      const vz = szene.schilderNeu && sc.aussen && vzBild(sc.typ);
-      if (vz) {   // Schild nach Vorlage, fester Maßstab, neben der Fahrbahn (Richtung aussen = weg von der Fahrbahn)
-        const k = VZ_OBEN * s / 1000, w = vz.w * k, h = vz.h * k, bx = X(sc.x), by = Y(sc.y), ab = 0.35 * s, [ax, ay] = sc.aussen;
-        const x0 = ax > 0 ? bx + ab : ax < 0 ? bx - ab - w : bx - w / 2, y0 = ay > 0 ? by + ab : ay < 0 ? by - ab - h : by - h / 2;
-        ctx.fillStyle = "rgba(0,0,0,.25)"; ctx.fillRect(x0 + 0.12 * s, y0 + 0.12 * s, w, h);
-        ctx.fillStyle = "#7f868c"; ctx.beginPath(); ctx.arc(bx, by, Math.max(1.5, 0.12 * s), 0, 7); ctx.fill();
-        ctx.drawImage(vz.img, x0, y0, w, h);
-        return;
-      }
+      if (szene.schilderNeu && sc.aussen && vzBild(sc.typ)) return;   // wird zum Schluss über Flächen und Beschriftungen gezeichnet (vzOben)
       const img = schildBild(sc.typ), gr = 5 * s, bx = X(sc.x), by = Y(sc.y);
       ctx.fillStyle = "rgba(0,0,0,.28)"; ctx.beginPath(); ctx.ellipse(bx + 0.3 * s, by + 0.22 * s, 0.34 * s, 0.17 * s, 0, 0, 7); ctx.fill();
       ctx.fillStyle = "#7f868c"; ctx.fillRect(bx - 0.07 * s, by - 0.5 * s, 0.14 * s, 0.5 * s); ctx.fillStyle = "#b9bfc4"; ctx.fillRect(bx - 0.07 * s, by - 0.5 * s, 0.05 * s, 0.5 * s);
@@ -840,6 +849,7 @@
     etiketten = []; liste.forEach(e => zeichneFahrzeugOben(e, X, Y, s)); zeichneEtiketten(liste, X, Y, s);
     (st.objekte || []).filter(o => o.art === "haus" || o.art === "baum").forEach(o => objektOben(o, X, Y, s));
     if (szene.overlay) try { szene.overlay(ctx, X, Y, s, zeit, fahr); } catch (e) {}
+    if (szene.schilderNeu) vzOben(st, X, Y, s);
     if (modus === "fahren" && fahr && fahr.rang) hilfslinien(ctx, X, Y, s, fahr);
     if (tippFrage) tippFrage.markiert.forEach((id, i) => { const e = liste.find(x => x.f.id === id); if (!e) return; ctx.fillStyle = "#e0b84a"; ctx.beginPath(); ctx.arc(X(e.p.x), Y(e.p.y), Math.max(13 * dpr, 1.4 * s), 0, 7); ctx.fill(); ctx.fillStyle = "#111"; ctx.font = `bold ${Math.max(14 * dpr, 1.6 * s)}px sans-serif`; ctx.textAlign = "center"; ctx.textBaseline = "middle"; ctx.fillText(String(i + 1), X(e.p.x), Y(e.p.y) + 1); });
   }
@@ -1309,8 +1319,8 @@
       ctx.strokeStyle = "#8e9398"; ctx.lineWidth = Math.max(1, 0.08 * c.F / ecken[4][2]); ctx.beginPath(); ctx.moveTo(fu[0], fu[1]); ctx.lineTo((bl[0] + br[0]) / 2, (bl[1] + br[1]) / 2); ctx.stroke();
       const vorn = (c.e[0] - sc.x) * vx + (c.e[1] - sc.y) * vy > 0;
       ctx.globalAlpha = clamp(1 - ecken[0][2] / 1200, 0.25, 1);
-      if (vorn) { ctx.save(); ctx.transform((tr[0] - tl[0]) / vz.img.width, (tr[1] - tl[1]) / vz.img.width, (bl[0] - tl[0]) / vz.img.height, (bl[1] - tl[1]) / vz.img.height, tl[0], tl[1]); ctx.drawImage(vz.img, 0, 0); ctx.restore(); }
-      else { ctx.fillStyle = "#9aa0a5"; ctx.beginPath(); ctx.moveTo(tl[0], tl[1]); ctx.lineTo(tr[0], tr[1]); ctx.lineTo(br[0], br[1]); ctx.lineTo(bl[0], bl[1]); ctx.closePath(); ctx.fill(); }
+      ctx.save(); ctx.transform((tr[0] - tl[0]) / vz.img.width, (tr[1] - tl[1]) / vz.img.width, (bl[0] - tl[0]) / vz.img.height, (bl[1] - tl[1]) / vz.img.height, tl[0], tl[1]);
+      ctx.drawImage(vorn ? vz.img : vzRueck(vz, "#9aa0a5"), 0, 0); ctx.restore();   // von hinten: graue Rückseite in Schildform
       ctx.globalAlpha = 1; return;
     }
     const img = schildBild(sc.typ); const hoehe = sc.typ.startsWith("z450") ? 1.6 : 2.4;
@@ -2218,7 +2228,8 @@
     const a = { el, ph, d: e.d, fertig: false };
     el.addEventListener("ended", () => { setTimeout(() => { a.fertig = true; }, 350); });   // kurze Atempause, bevor die Szene weiterläuft
     el.addEventListener("error", () => { a.fertig = true; });
-    el.addEventListener("playing", () => { a.laeuft = true; if (STIMME.aktiv === a && !el.ended) a.fertig = false; });   // kam der Ton spät (nach der 4-s-Grenze): Szene wartet trotzdem, Satz wird nicht abgeschnitten
+    el.addEventListener("playing", () => { a.laeuft = true; if (STIMME.aktiv === a && !el.ended) a.fertig = false; });
+    el.addEventListener("waiting", () => { const t0 = el.currentTime; setTimeout(() => { if (STIMME.aktiv === a && !STIMME.pausiert && !a.fertig && el.currentTime === t0) a.fertig = true; }, 4000); });   // Ton hängt mitten im Satz (Funkloch): Szene nicht endlos aufhalten   // kam der Ton spät (nach der 4-s-Grenze): Szene wartet trotzdem, Satz wird nicht abgeschnitten
     setTimeout(() => { if (!a.laeuft && !STIMME.pausiert) a.fertig = true; }, 4000);   // Ton kommt nicht (Funkloch): Szene nicht aufhalten
     STIMME.aktiv = a;
     const pr = el.play(); if (pr && pr.catch) pr.catch(() => { a.fertig = true; });
@@ -2233,7 +2244,7 @@
     return clamp(fenster / Math.max(0.5, a.d * tempoFaktor), 0.25, 1);   // Ton läuft immer 1×, das Bild mit tempoFaktor
   }
   function stimmePause(pause) {
-    const a = STIMME.aktiv; if (!a || a.fertig) return;
+    const a = STIMME.aktiv; if (!a || a.fertig || a.el.ended) return;   // Satz schon zu Ende (Atempause läuft): nicht von vorn starten
     STIMME.pausiert = !!pause;
     try { if (pause) a.el.pause(); else { const pr = a.el.play(); if (pr && pr.catch) pr.catch(() => { a.fertig = true; }); } } catch (e) {}
   }

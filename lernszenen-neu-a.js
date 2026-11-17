@@ -59,7 +59,7 @@
     neu({
       id: "abknick", plan: ["a_stadt", "a_30"], titel: "Abknickende Vorfahrtstraße", kurz: "Die Vorfahrtstraße macht eine Kurve. Wer ihr folgt, blinkt und hat Vorfahrt.",
       schilderNeu: true,   // Probe: Schilder nach amtlicher Vorlage im festen Maßstab
-      dauer: 15, strasse: K, kamera: { fest: [3, 3], zoom: 17, quer: { zeige: ["b", "c"], radius: 40, punkte: [[4.9, 9.6], [4.9, 15]] } },
+      dauer: 15, strasse: K, kamera: { fest: [3, 3], zoom: 17, quer: { zeige: ["b", "c"], radius: 40, punkte: [[4.9, 9.6], [4.9, 15], [15, -9]] } },
       fahrzeuge: [fs, bl, rot],
       overlayUnten: (c, X, Y, s) => {
         const P = [[0, 60], [0, 8]].concat(gelb.pts.map(q => [q.x, q.y])).concat([[8, 0], [60, 0]]);
