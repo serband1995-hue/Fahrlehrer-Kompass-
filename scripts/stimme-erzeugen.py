@@ -7,6 +7,7 @@ Für jede Phase: Ton erzeugen (ElevenLabs, eleven_multilingual_v2), mit Scribe z
 Weicht die Abschrift ab, wird neu erzeugt (bis 4 Versuche). Schreibt stimme/<sprache-Präfix><id>-<i>-<stand>.mp3 und stimme/index.json.
 Schlüssel: keiner im Skript – der Proxy der Sitzung setzt ihn für api.elevenlabs.io ein.
 """
+import sys; sys.dont_write_bytecode = True
 import json, os, re, subprocess, sys, time, unicodedata, urllib.request, uuid
 
 STIMME_ID = "wbfCCbblStaYTE0JMoci"   # Serband 2

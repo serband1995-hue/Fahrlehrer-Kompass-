@@ -1,554 +1,526 @@
 {
  "stop": {
-  "c6ezuu": {
-   "f": "stop-0.mp3",
-   "d": 6.3
+  "fnstze": {
+   "f": "stop-0-fnstze.mp3",
+   "d": 5.88
   },
-  "pfavg4": {
-   "f": "stop-1.mp3",
-   "d": 5.56
+  "15rfl4t": {
+   "f": "stop-1-15rfl4t.mp3",
+   "d": 6.53
   },
-  "uzc4ol": {
-   "f": "stop-2.mp3",
-   "d": 4.55
+  "14u9625": {
+   "f": "stop-2-14u9625.mp3",
+   "d": 4.83
   },
-  "4ltjg4": {
-   "f": "stop-3.mp3",
-   "d": 5.09
+  "1b83ydd": {
+   "f": "stop-3-1b83ydd.mp3",
+   "d": 5.8
   }
  },
  "zebra": {
-  "1uesb0j": {
-   "f": "zebra-0.mp3",
-   "d": 5.25
+  "timro0": {
+   "f": "zebra-0-timro0.mp3",
+   "d": 7.0
   },
-  "v9vah": {
-   "f": "zebra-1.mp3",
-   "d": 7.37
+  "1fhzgli": {
+   "f": "zebra-1-1fhzgli.mp3",
+   "d": 8.86
   },
-  "ieahra": {
-   "f": "zebra-2.mp3",
-   "d": 5.75
+  "b793d4": {
+   "f": "zebra-2-b793d4.mp3",
+   "d": 6.64
   },
-  "19owrgk": {
-   "f": "zebra-3.mp3",
+  "1djq3o0": {
+   "f": "zebra-3-1djq3o0.mp3",
    "d": 4.96
   }
  },
  "auffahren": {
-  "1qj3kv4": {
-   "f": "auffahren-0.mp3",
-   "d": 8.31
+  "1mhp9zo": {
+   "f": "auffahren-0-1mhp9zo.mp3",
+   "d": 6.77
   },
-  "1su8skp": {
-   "f": "auffahren-1.mp3",
-   "d": 8.49
+  "1sb1um2": {
+   "f": "auffahren-1-1sb1um2.mp3",
+   "d": 7.84
   },
-  "jq3i8g": {
-   "f": "auffahren-2.mp3",
-   "d": 4.41
+  "1mb3hb7": {
+   "f": "auffahren-2-1mb3hb7.mp3",
+   "d": 3.84
   },
-  "18ccmyq": {
-   "f": "auffahren-3.mp3",
-   "d": 10.45
+  "k74tiy": {
+   "f": "auffahren-3-k74tiy.mp3",
+   "d": 11.42
   },
-  "19b4iz7": {
-   "f": "auffahren-4.mp3",
-   "d": 6.45
+  "10sgas1": {
+   "f": "auffahren-4-10sgas1.mp3",
+   "d": 7.55
   },
-  "74qjsg": {
-   "f": "auffahren-5.mp3",
-   "d": 9.27
+  "nxsqim": {
+   "f": "auffahren-5-nxsqim.mp3",
+   "d": 11.96
   },
-  "1yly1us": {
-   "f": "auffahren-6.mp3",
-   "d": 6.22
+  "nb7zqg": {
+   "f": "auffahren-6-nb7zqg.mp3",
+   "d": 5.69
   },
-  "13efoof": {
-   "f": "auffahren-7.mp3",
-   "d": 10.03
+  "1rcv3lo": {
+   "f": "auffahren-7-1rcv3lo.mp3",
+   "d": 11.13
   }
  },
  "abfahren": {
-  "1p5sdoe": {
-   "f": "abfahren-0.mp3",
-   "d": 8.31
+  "erurbc": {
+   "f": "abfahren-0-erurbc.mp3",
+   "d": 8.59
   },
-  "18o7stq": {
-   "f": "abfahren-1.mp3",
-   "d": 5.46
+  "ioh144": {
+   "f": "abfahren-1-ioh144.mp3",
+   "d": 6.45
   },
-  "pdjhi": {
-   "f": "abfahren-2.mp3",
-   "d": 3.94
+  "15gond6": {
+   "f": "abfahren-2-15gond6.mp3",
+   "d": 3.84
   },
-  "1hqrd9j": {
-   "f": "abfahren-3.mp3",
-   "d": 5.15
+  "1unqrwp": {
+   "f": "abfahren-3-1unqrwp.mp3",
+   "d": 4.73
   },
-  "82iwa": {
-   "f": "abfahren-4.mp3",
-   "d": 7.29
+  "33tr3q": {
+   "f": "abfahren-4-33tr3q.mp3",
+   "d": 6.71
   },
-  "1il7zgw": {
-   "f": "abfahren-5.mp3",
-   "d": 4.78
+  "22h0vd": {
+   "f": "abfahren-5-22h0vd.mp3",
+   "d": 5.75
   },
-  "fe82uy": {
-   "f": "abfahren-6.mp3",
-   "d": 5.02
+  "46uaio": {
+   "f": "abfahren-6-46uaio.mp3",
+   "d": 5.51
   },
-  "nr9ntg": {
-   "f": "abfahren-7.mp3",
-   "d": 8.78
+  "vqgzrx": {
+   "f": "abfahren-7-vqgzrx.mp3",
+   "d": 7.76
   },
-  "jf19u1": {
-   "f": "abfahren-8.mp3",
-   "d": 14.24
+  "v8ovwy": {
+   "f": "abfahren-8-v8ovwy.mp3",
+   "d": 10.95
   },
-  "1q0nc5k": {
-   "f": "abfahren-9.mp3",
-   "d": 7.0
+  "1n13jny": {
+   "f": "abfahren-9-1n13jny.mp3",
+   "d": 6.5
   }
  },
  "reissverschluss": {
-  "1jqyna9": {
-   "f": "reissverschluss-0.mp3",
-   "d": 6.87
+  "fo9jwj": {
+   "f": "reissverschluss-0-fo9jwj.mp3",
+   "d": 5.69
   },
-  "180vtiw": {
-   "f": "reissverschluss-1.mp3",
-   "d": 6.16
+  "ga1ero": {
+   "f": "reissverschluss-1-ga1ero.mp3",
+   "d": 5.51
   },
-  "gpwczn": {
-   "f": "reissverschluss-2.mp3",
-   "d": 5.98
+  "54tny0": {
+   "f": "reissverschluss-2-54tny0.mp3",
+   "d": 5.09
   },
-  "asirmh": {
-   "f": "reissverschluss-3.mp3",
-   "d": 7.34
+  "hope40": {
+   "f": "reissverschluss-3-hope40.mp3",
+   "d": 9.98
   },
-  "ax41r5": {
-   "f": "reissverschluss-4.mp3",
-   "d": 9.8
+  "15zhm8n": {
+   "f": "reissverschluss-4-15zhm8n.mp3",
+   "d": 9.22
   }
  },
  "rettungsgasse": {
-  "12f5a0h": {
-   "f": "rettungsgasse-0.mp3",
-   "d": 9.27
+  "1mjqj2c": {
+   "f": "rettungsgasse-0-1mjqj2c.mp3",
+   "d": 8.25
   },
-  "12ovue3": {
-   "f": "rettungsgasse-1.mp3",
-   "d": 10.53
+  "3p7am9": {
+   "f": "rettungsgasse-1-3p7am9.mp3",
+   "d": 10.34
   },
-  "1i11vko": {
-   "f": "rettungsgasse-2.mp3",
-   "d": 7.52
+  "ptlx8m": {
+   "f": "rettungsgasse-2-ptlx8m.mp3",
+   "d": 7.65
   },
-  "azk0bw": {
-   "f": "rettungsgasse-3.mp3",
-   "d": 5.8
+  "10fs5up": {
+   "f": "rettungsgasse-3-10fs5up.mp3",
+   "d": 6.3
   },
-  "1bf1csk": {
-   "f": "rettungsgasse-4.mp3",
+  "isc0mi": {
+   "f": "rettungsgasse-4-isc0mi.mp3",
    "d": 8.2
   }
  },
  "laengs": {
-  "89zv7s": {
-   "f": "laengs-0.mp3",
-   "d": 9.69
+  "1pphqpi": {
+   "f": "laengs-0-1pphqpi.mp3",
+   "d": 7.97
   },
-  "bivzdc": {
-   "f": "laengs-1.mp3",
-   "d": 8.62
+  "1dk3s0l": {
+   "f": "laengs-1-1dk3s0l.mp3",
+   "d": 8.78
   },
-  "2bs2k3": {
-   "f": "laengs-2.mp3",
-   "d": 11.1
+  "j2wjz1": {
+   "f": "laengs-2-j2wjz1.mp3",
+   "d": 11.0
   },
-  "1p1fmjn": {
-   "f": "laengs-3.mp3",
-   "d": 5.02
+  "17my6hu": {
+   "f": "laengs-3-17my6hu.mp3",
+   "d": 5.25
   },
-  "1grtdrl": {
-   "f": "laengs-4.mp3",
-   "d": 6.92
+  "1gvxlwj": {
+   "f": "laengs-4-1gvxlwj.mp3",
+   "d": 7.34
   },
-  "k005kh": {
-   "f": "laengs-5.mp3",
-   "d": 9.61
-  },
-  "1c6nm9f": {
-   "f": "laengs-6.mp3",
-   "d": 7.05
-  },
-  "1j70rwp": {
-   "f": "laengs-7.mp3",
-   "d": 8.07
-  },
-  "14s4fxy": {
-   "f": "laengs-8.mp3",
-   "d": 6.64
-  },
-  "1pi4x36": {
-   "f": "laengs-9.mp3",
-   "d": 7.18
-  },
-  "ex0x7f": {
-   "f": "laengs-10.mp3",
-   "d": 4.6
-  },
-  "1njviox": {
-   "f": "laengs-11.mp3",
-   "d": 5.43
-  },
-  "n35in": {
-   "f": "laengs-12.mp3",
-   "d": 6.45
+  "1wpmeum": {
+   "f": "laengs-5-1wpmeum.mp3",
+   "d": 10.16
   }
  },
  "wenden": {
-  "rivbkx": {
-   "f": "wenden-0.mp3",
-   "d": 7.6
+  "1w5tfol": {
+   "f": "wenden-0-1w5tfol.mp3",
+   "d": 6.77
   },
-  "3aakoa": {
-   "f": "wenden-1.mp3",
-   "d": 8.59
+  "1fdbvwk": {
+   "f": "wenden-1-1fdbvwk.mp3",
+   "d": 6.95
   },
-  "86gs71": {
-   "f": "wenden-2.mp3",
-   "d": 7.0
+  "21p64y": {
+   "f": "wenden-2-21p64y.mp3",
+   "d": 6.58
   },
-  "1tpagcx": {
-   "f": "wenden-3.mp3",
-   "d": 4.6
+  "135f682": {
+   "f": "wenden-3-135f682.mp3",
+   "d": 4.31
   },
-  "1u5qo5e": {
-   "f": "wenden-4.mp3",
-   "d": 7.47
+  "os4cjk": {
+   "f": "wenden-4-os4cjk.mp3",
+   "d": 8.96
   }
  },
  "ecke": {
-  "i1vblb": {
-   "f": "ecke-0.mp3",
-   "d": 7.29
-  },
-  "hzw6ke": {
-   "f": "ecke-1.mp3",
-   "d": 6.16
-  },
-  "1uf5vo1": {
-   "f": "ecke-2.mp3",
-   "d": 11.7
-  },
-  "1eqkgdx": {
-   "f": "ecke-3.mp3",
+  "akm4p6": {
+   "f": "ecke-0-akm4p6.mp3",
    "d": 6.77
+  },
+  "1p9omzn": {
+   "f": "ecke-1-1p9omzn.mp3",
+   "d": 6.58
+  },
+  "e6ekfi": {
+   "f": "ecke-2-e6ekfi.mp3",
+   "d": 10.11
+  },
+  "1ku8h57": {
+   "f": "ecke-3-1ku8h57.mp3",
+   "d": 7.29
   }
  },
  "gefahr": {
-  "1joh1wm": {
-   "f": "gefahr-0.mp3",
-   "d": 14.21
+  "1uag6bb": {
+   "f": "gefahr-0-1uag6bb.mp3",
+   "d": 11.52
   },
-  "1jvm8mo": {
-   "f": "gefahr-1.mp3",
-   "d": 12.02
+  "4awyhb": {
+   "f": "gefahr-1-4awyhb.mp3",
+   "d": 11.28
   },
-  "7lgki6": {
-   "f": "gefahr-2.mp3",
-   "d": 8.91
+  "ih28er": {
+   "f": "gefahr-2-ih28er.mp3",
+   "d": 8.44
   },
-  "1iv0rjo": {
-   "f": "gefahr-x.mp3",
-   "d": 12.15
+  "n6ydhq": {
+   "f": "gefahr-3-n6ydhq.mp3",
+   "d": 9.38
   }
  },
  "ueberholen": {
-  "1dmzsbc": {
-   "f": "ueberholen-0.mp3",
-   "d": 10.76
+  "r4edvb": {
+   "f": "ueberholen-0-r4edvb.mp3",
+   "d": 9.04
   },
-  "1pvyj4a": {
-   "f": "ueberholen-1.mp3",
-   "d": 3.29
+  "16oqbxl": {
+   "f": "ueberholen-1-16oqbxl.mp3",
+   "d": 3.42
   },
-  "1cqp4wc": {
-   "f": "ueberholen-2.mp3",
+  "1v5duvp": {
+   "f": "ueberholen-2-1v5duvp.mp3",
+   "d": 8.02
+  },
+  "ttdm02": {
+   "f": "ueberholen-3-ttdm02.mp3",
+   "d": 7.52
+  },
+  "x1xq4f": {
+   "f": "ueberholen-4-x1xq4f.mp3",
    "d": 6.5
   },
-  "arei1h": {
-   "f": "ueberholen-3.mp3",
-   "d": 6.95
-  },
-  "112hd72": {
-   "f": "ueberholen-4.mp3",
-   "d": 6.09
-  },
-  "7mq79v": {
-   "f": "ueberholen-x.mp3",
-   "d": 9.27
+  "1a4v04z": {
+   "f": "ueberholen-5-1a4v04z.mp3",
+   "d": 9.43
   }
  },
  "schulbus": {
-  "7wdz0n": {
-   "f": "schulbus-0.mp3",
-   "d": 5.93
+  "1upbiat": {
+   "f": "schulbus-0-1upbiat.mp3",
+   "d": 5.28
   },
-  "1jhnwt0": {
-   "f": "schulbus-1.mp3",
-   "d": 6.77
+  "imzphz": {
+   "f": "schulbus-1-imzphz.mp3",
+   "d": 7.84
   },
-  "j92sc4": {
-   "f": "schulbus-2.mp3",
-   "d": 8.59
+  "14ch3a7": {
+   "f": "schulbus-2-14ch3a7.mp3",
+   "d": 8.02
   },
-  "193390x": {
-   "f": "schulbus-3.mp3",
-   "d": 5.75
+  "4x9aid": {
+   "f": "schulbus-3-4x9aid.mp3",
+   "d": 5.28
   },
-  "17hpoie": {
-   "f": "schulbus-4.mp3",
-   "d": 6.82
+  "1yaxh0k": {
+   "f": "schulbus-4-1yaxh0k.mp3",
+   "d": 5.43
   }
  },
  "rvl": {
-  "11g3v9q": {
-   "f": "rvl-0.mp3",
-   "d": 7.0
+  "7bm9ne": {
+   "f": "rvl-0-7bm9ne.mp3",
+   "d": 7.13
   },
-  "rr50za": {
-   "f": "rvl-1.mp3",
-   "d": 4.49
+  "fg4zl6": {
+   "f": "rvl-1-fg4zl6.mp3",
+   "d": 5.62
   },
-  "1npt23u": {
-   "f": "rvl-2.mp3",
-   "d": 3.16
+  "1pk2u5l": {
+   "f": "rvl-2-1pk2u5l.mp3",
+   "d": 3.89
   },
-  "1n83j88": {
-   "f": "rvl-3.mp3",
-   "d": 3.76
+  "ygtiai": {
+   "f": "rvl-3-ygtiai.mp3",
+   "d": 4.44
   },
-  "1n9pct4": {
-   "f": "rvl-4.mp3",
-   "d": 4.13
+  "rhbabl": {
+   "f": "rvl-4-rhbabl.mp3",
+   "d": 3.66
   },
-  "1r3y1zb": {
-   "f": "rvl-5.mp3",
-   "d": 7.78
+  "1l5lu8f": {
+   "f": "rvl-5-1l5lu8f.mp3",
+   "d": 8.18
   }
  },
  "links_gegen": {
-  "1brjwvc": {
-   "f": "links_gegen-0.mp3",
-   "d": 6.71
+  "1f5kbg3": {
+   "f": "links_gegen-0-1f5kbg3.mp3",
+   "d": 5.98
   },
-  "1fxwia7": {
-   "f": "links_gegen-1.mp3",
-   "d": 6.58
-  },
-  "gmhboy": {
-   "f": "links_gegen-2.mp3",
+  "pt6ynt": {
+   "f": "links_gegen-1-pt6ynt.mp3",
    "d": 7.89
   },
-  "cb2vet": {
-   "f": "links_gegen-3.mp3",
-   "d": 6.87
+  "1w1rqoa": {
+   "f": "links_gegen-2-1w1rqoa.mp3",
+   "d": 8.31
   },
-  "mcmuvm": {
-   "f": "links_gegen-4.mp3",
-   "d": 6.58
+  "p9rxap": {
+   "f": "links_gegen-3-p9rxap.mp3",
+   "d": 8.31
+  },
+  "1u8a3pt": {
+   "f": "links_gegen-4-1u8a3pt.mp3",
+   "d": 7.76
   }
  },
  "voreinander": {
-  "4qjbha": {
-   "f": "voreinander-0.mp3",
-   "d": 4.49
+  "xnxip6": {
+   "f": "voreinander-0-xnxip6.mp3",
+   "d": 4.02
   },
-  "yhcg0u": {
-   "f": "voreinander-1.mp3",
-   "d": 12.07
+  "1ji060p": {
+   "f": "voreinander-1-1ji060p.mp3",
+   "d": 13.82
   },
-  "19xgja4": {
-   "f": "voreinander-2.mp3",
-   "d": 6.11
+  "68f5l0": {
+   "f": "voreinander-2-68f5l0.mp3",
+   "d": 5.04
   }
  },
  "rechts_rad": {
-  "f9lsof": {
-   "f": "rechts_rad-0.mp3",
-   "d": 7.0
+  "1r4m90k": {
+   "f": "rechts_rad-0-1r4m90k.mp3",
+   "d": 6.77
   },
-  "1hp9vri": {
-   "f": "rechts_rad-1.mp3",
-   "d": 5.85
+  "1blpt3c": {
+   "f": "rechts_rad-1-1blpt3c.mp3",
+   "d": 6.03
   },
-  "8j4rqs": {
-   "f": "rechts_rad-2.mp3",
-   "d": 7.29
+  "4m31il": {
+   "f": "rechts_rad-2-4m31il.mp3",
+   "d": 8.78
   },
-  "1gjfgv6": {
-   "f": "rechts_rad-3.mp3",
-   "d": 5.88
+  "1aq66bc": {
+   "f": "rechts_rad-3-1aq66bc.mp3",
+   "d": 7.47
   }
  },
  "doppel": {
-  "flffaa": {
-   "f": "doppel-0.mp3",
-   "d": 9.27
+  "1015qmp": {
+   "f": "doppel-0-1015qmp.mp3",
+   "d": 9.38
   },
-  "mz2v16": {
-   "f": "doppel-1.mp3",
-   "d": 7.11
+  "aikiz8": {
+   "f": "doppel-1-aikiz8.mp3",
+   "d": 9.22
   },
-  "pe0mak": {
-   "f": "doppel-2.mp3",
-   "d": 5.25
+  "1nv5ytr": {
+   "f": "doppel-2-1nv5ytr.mp3",
+   "d": 6.16
   }
  },
  "kreisel": {
-  "1f2hx58": {
-   "f": "kreisel-0.mp3",
-   "d": 6.87
+  "mcuta2": {
+   "f": "kreisel-0-mcuta2.mp3",
+   "d": 6.45
   },
-  "1yxvua8": {
-   "f": "kreisel-1.mp3",
-   "d": 5.04
+  "1bmn5e7": {
+   "f": "kreisel-1-1bmn5e7.mp3",
+   "d": 4.96
   },
-  "12q6r6y": {
-   "f": "kreisel-2.mp3",
-   "d": 7.24
+  "19odovz": {
+   "f": "kreisel-2-19odovz.mp3",
+   "d": 7.29
   },
-  "1fziuog": {
-   "f": "kreisel-3.mp3",
-   "d": 5.46
+  "1oqk1gi": {
+   "f": "kreisel-3-1oqk1gi.mp3",
+   "d": 7.47
   },
-  "1maw3wu": {
-   "f": "kreisel-4.mp3",
-   "d": 6.27
+  "gr7odi": {
+   "f": "kreisel-4-gr7odi.mp3",
+   "d": 7.05
   }
  },
  "eng": {
-  "mhirjs": {
-   "f": "eng-0.mp3",
-   "d": 6.5
+  "yggi4n": {
+   "f": "eng-0-yggi4n.mp3",
+   "d": 6.4
   },
-  "1ecct28": {
-   "f": "eng-1.mp3",
-   "d": 6.16
+  "17mhgbt": {
+   "f": "eng-1-17mhgbt.mp3",
+   "d": 5.98
   },
-  "1gmc1en": {
-   "f": "eng-2.mp3",
-   "d": 10.48
+  "a70xsn": {
+   "f": "eng-2-a70xsn.mp3",
+   "d": 9.01
   },
-  "xnw6s5": {
-   "f": "eng-3.mp3",
-   "d": 3.29
+  "1bxksfn": {
+   "f": "eng-3-1bxksfn.mp3",
+   "d": 3.47
   }
  },
  "gruenpfeil": {
-  "p97twx": {
-   "f": "gruenpfeil-0.mp3",
-   "d": 8.02
+  "tfogmu": {
+   "f": "gruenpfeil-0-tfogmu.mp3",
+   "d": 7.6
   },
-  "4jv29v": {
-   "f": "gruenpfeil-1.mp3",
+  "lx47li": {
+   "f": "gruenpfeil-1-lx47li.mp3",
+   "d": 4.0
+  },
+  "18s18ei": {
+   "f": "gruenpfeil-2-18s18ei.mp3",
    "d": 4.78
   },
-  "1c9zsac": {
-   "f": "gruenpfeil-2.mp3",
-   "d": 4.41
+  "1b9kz4r": {
+   "f": "gruenpfeil-3-1b9kz4r.mp3",
+   "d": 5.43
   },
-  "1pcugim": {
-   "f": "gruenpfeil-3.mp3",
-   "d": 5.28
+  "wgqvfb": {
+   "f": "gruenpfeil-4-wgqvfb.mp3",
+   "d": 6.53
   },
-  "s1y7ut": {
-   "f": "gruenpfeil-4.mp3",
-   "d": 6.11
-  },
-  "i57bnp": {
-   "f": "gruenpfeil-5.mp3",
-   "d": 9.61
+  "1g41a9y": {
+   "f": "gruenpfeil-5-1g41a9y.mp3",
+   "d": 9.27
   }
  },
  "quer_rueck": {
-  "1pi4x36": {
-   "f": "quer_rueck-0.mp3",
-   "d": 6.53
+  "1ugkett": {
+   "f": "quer_rueck-0-1ugkett.mp3",
+   "d": 7.05
   },
-  "ex0x7f": {
-   "f": "quer_rueck-1.mp3",
-   "d": 4.31
+  "1aodfk4": {
+   "f": "quer_rueck-1-1aodfk4.mp3",
+   "d": 5.28
   },
-  "1njviox": {
-   "f": "quer_rueck-2.mp3",
-   "d": 5.2
-  },
-  "n35in": {
-   "f": "quer_rueck-3.mp3",
+  "1nusabn": {
+   "f": "quer_rueck-2-1nusabn.mp3",
    "d": 5.8
+  },
+  "3f3uxl": {
+   "f": "quer_rueck-3-3f3uxl.mp3",
+   "d": 6.22
   }
  },
  "quer_vor": {
-  "1c6nm9f": {
-   "f": "quer_vor-0.mp3",
-   "d": 7.29
+  "107663j": {
+   "f": "quer_vor-0-107663j.mp3",
+   "d": 7.52
   },
-  "1j70rwp": {
-   "f": "quer_vor-1.mp3",
-   "d": 8.02
+  "1vxugt7": {
+   "f": "quer_vor-1-1vxugt7.mp3",
+   "d": 10.16
   },
-  "14s4fxy": {
-   "f": "quer_vor-2.mp3",
-   "d": 6.53
+  "rwu9ch": {
+   "f": "quer_vor-2-rwu9ch.mp3",
+   "d": 6.5
   }
  },
  "abknick": {
-  "1wapwz2": {
-   "f": "abknick-0.mp3",
-   "d": 11.5
+  "qk8g6j": {
+   "f": "abknick-0-qk8g6j.mp3",
+   "d": 11.83
   },
-  "xn6og0": {
-   "f": "abknick-1.mp3",
-   "d": 10.3
+  "18cc1fn": {
+   "f": "abknick-1-18cc1fn.mp3",
+   "d": 11.6
   },
-  "15tpj0h": {
-   "f": "abknick-2.mp3",
-   "d": 9.1
+  "105fdis": {
+   "f": "abknick-2-105fdis.mp3",
+   "d": 6.69
   },
-  "t2rlu7": {
-   "f": "abknick-3.mp3",
-   "d": 8.9
+  "1cfernp": {
+   "f": "abknick-3-1cfernp.mp3",
+   "d": 9.8
   },
-  "tsiulz": {
-   "f": "abknick-4.mp3",
-   "d": 6.3
+  "1w11obe": {
+   "f": "abknick-4-1w11obe.mp3",
+   "d": 7.34
   }
  },
  "vorfahrt_gewaehren": {
-  "1uailmn": {
-   "f": "vorfahrt_gewaehren-0.mp3",
-   "d": 11.0
+  "16fa3rg": {
+   "f": "vorfahrt_gewaehren-0-16fa3rg.mp3",
+   "d": 11.52
   },
-  "jsg4iw": {
-   "f": "vorfahrt_gewaehren-1.mp3",
-   "d": 6.2
+  "slbj5p": {
+   "f": "vorfahrt_gewaehren-1-slbj5p.mp3",
+   "d": 6.45
   },
-  "5t44py": {
-   "f": "vorfahrt_gewaehren-2.mp3",
-   "d": 8.7
+  "o8r42d": {
+   "f": "vorfahrt_gewaehren-2-o8r42d.mp3",
+   "d": 7.65
   },
-  "gsp8s7": {
-   "f": "vorfahrt_gewaehren-3.mp3",
-   "d": 6.1
+  "4y9lyq": {
+   "f": "vorfahrt_gewaehren-3-4y9lyq.mp3",
+   "d": 7.24
   },
-  "1b0gcgj": {
-   "f": "vorfahrt_gewaehren-4.mp3",
-   "d": 5.6
+  "1jljn1p": {
+   "f": "vorfahrt_gewaehren-4-1jljn1p.mp3",
+   "d": 7.37
   }
  },
  "rechts_fussg": {
