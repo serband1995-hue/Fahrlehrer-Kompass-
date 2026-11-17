@@ -734,5 +734,101 @@
    "f": "einsatz-4-w8u9rw.mp3",
    "d": 9.56
   }
+ },
+ "einbahn": {
+  "1v1crc0": {
+   "f": "einbahn-0-1v1crc0.mp3",
+   "d": 7.94
+  },
+  "mxpq4v": {
+   "f": "einbahn-1-mxpq4v.mp3",
+   "d": 9.85
+  },
+  "hh8f12": {
+   "f": "einbahn-2-hh8f12.mp3",
+   "d": 11.94
+  },
+  "9lxtlo": {
+   "f": "einbahn-3-9lxtlo.mp3",
+   "d": 10.81
+  },
+  "1qb26io": {
+   "f": "einbahn-4-1qb26io.mp3",
+   "d": 10.55
+  }
+ },
+ "fahrradstrasse": {
+  "8n99z": {
+   "f": "fahrradstrasse-0-8n99z.mp3",
+   "d": 9.12
+  },
+  "wwnl1": {
+   "f": "fahrradstrasse-1-wwnl1.mp3",
+   "d": 10.29
+  },
+  "1yeoewm": {
+   "f": "fahrradstrasse-2-1yeoewm.mp3",
+   "d": 10.76
+  },
+  "uj12nb": {
+   "f": "fahrradstrasse-3-uj12nb.mp3",
+   "d": 7.94
+  },
+  "15r5ttx": {
+   "f": "fahrradstrasse-4-15r5ttx.mp3",
+   "d": 7.94
+  },
+  "1q9ij1z": {
+   "f": "fahrradstrasse-5-1q9ij1z.mp3",
+   "d": 9.56
+  }
+ },
+ "verkehrsberuhigt": {
+  "i181w5": {
+   "f": "verkehrsberuhigt-0-i181w5.mp3",
+   "d": 8.41
+  },
+  "1icw35e": {
+   "f": "verkehrsberuhigt-1-1icw35e.mp3",
+   "d": 8.39
+  },
+  "1uopze3": {
+   "f": "verkehrsberuhigt-2-1uopze3.mp3",
+   "d": 11.23
+  },
+  "vw5koo": {
+   "f": "verkehrsberuhigt-3-vw5koo.mp3",
+   "d": 10.55
+  },
+  "1uf4u28": {
+   "f": "verkehrsberuhigt-4-1uf4u28.mp3",
+   "d": 8.15
+  },
+  "1v8uft3": {
+   "f": "verkehrsberuhigt-5-1v8uft3.mp3",
+   "d": 7.44
+  }
+ },
+ "einfahrt_verboten": {
+  "332wjg": {
+   "f": "einfahrt_verboten-0-332wjg.mp3",
+   "d": 9.38
+  },
+  "19mjsyz": {
+   "f": "einfahrt_verboten-1-19mjsyz.mp3",
+   "d": 10.29
+  },
+  "1dnfwmj": {
+   "f": "einfahrt_verboten-2-1dnfwmj.mp3",
+   "d": 9.33
+  },
+  "m99deg": {
+   "f": "einfahrt_verboten-3-m99deg.mp3",
+   "d": 10.76
+  },
+  "1gcv6e6": {
+   "f": "einfahrt_verboten-4-1gcv6e6.mp3",
+   "d": 12.67
+  }
  }
 }
