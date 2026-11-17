@@ -16,5 +16,125 @@
    "f": "en-stop-3-dg2t14.mp3",
    "d": 4.62
   }
+ },
+ "auffahren": {
+  "2xzc8c": {
+   "f": "en-auffahren-0-2xzc8c.mp3",
+   "d": 7.47
+  },
+  "1b7lszn": {
+   "f": "en-auffahren-1-1b7lszn.mp3",
+   "d": 6.95
+  },
+  "e1zse4": {
+   "f": "en-auffahren-2-e1zse4.mp3",
+   "d": 3.34
+  },
+  "csyee7": {
+   "f": "en-auffahren-3-csyee7.mp3",
+   "d": 12.15
+  },
+  "ddd7wg": {
+   "f": "en-auffahren-4-ddd7wg.mp3",
+   "d": 7.78
+  },
+  "156g5s": {
+   "f": "en-auffahren-5-156g5s.mp3",
+   "d": 8.49
+  },
+  "1wemy7s": {
+   "f": "en-auffahren-6-1wemy7s.mp3",
+   "d": 5.43
+  },
+  "fc4a2p": {
+   "f": "en-auffahren-7-fc4a2p.mp3",
+   "d": 12.25
+  }
+ },
+ "abfahren": {
+  "1ho0xvd": {
+   "f": "en-abfahren-0-1ho0xvd.mp3",
+   "d": 8.02
+  },
+  "sq8yqh": {
+   "f": "en-abfahren-1-sq8yqh.mp3",
+   "d": 5.75
+  },
+  "1li1gku": {
+   "f": "en-abfahren-2-1li1gku.mp3",
+   "d": 3.66
+  },
+  "snmiwv": {
+   "f": "en-abfahren-3-snmiwv.mp3",
+   "d": 5.2
+  },
+  "1hg8hy4": {
+   "f": "en-abfahren-4-1hg8hy4.mp3",
+   "d": 5.75
+  },
+  "mus9gf": {
+   "f": "en-abfahren-5-mus9gf.mp3",
+   "d": 5.62
+  },
+  "1rvu204": {
+   "f": "en-abfahren-6-1rvu204.mp3",
+   "d": 5.25
+  },
+  "1baiiqa": {
+   "f": "en-abfahren-7-1baiiqa.mp3",
+   "d": 6.3
+  },
+  "10u7exm": {
+   "f": "en-abfahren-8-10u7exm.mp3",
+   "d": 9.56
+  },
+  "f47vhk": {
+   "f": "en-abfahren-9-f47vhk.mp3",
+   "d": 6.27
+  }
+ },
+ "reissverschluss": {
+  "7696lv": {
+   "f": "en-reissverschluss-0-7696lv.mp3",
+   "d": 4.91
+  },
+  "1x59bmi": {
+   "f": "en-reissverschluss-1-1x59bmi.mp3",
+   "d": 7.42
+  },
+  "10ct8f6": {
+   "f": "en-reissverschluss-2-10ct8f6.mp3",
+   "d": 5.69
+  },
+  "1m18qap": {
+   "f": "en-reissverschluss-3-1m18qap.mp3",
+   "d": 7.34
+  },
+  "1g5f88x": {
+   "f": "en-reissverschluss-4-1g5f88x.mp3",
+   "d": 8.12
+  }
+ },
+ "rettungsgasse": {
+  "97690r": {
+   "f": "en-rettungsgasse-0-97690r.mp3",
+   "d": 9.22
+  },
+  "dx8erk": {
+   "f": "en-rettungsgasse-1-dx8erk.mp3",
+   "d": 9.98
+  },
+  "iy6zn3": {
+   "f": "en-rettungsgasse-2-iy6zn3.mp3",
+   "d": 7.78
+  },
+  "7fdxh2": {
+   "f": "en-rettungsgasse-3-7fdxh2.mp3",
+   "d": 6.77
+  },
+  "cdf7cv": {
+   "f": "en-rettungsgasse-4-cdf7cv.mp3",
+   "d": 7.89
+  }
  }
 }
