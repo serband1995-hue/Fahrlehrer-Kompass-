@@ -99,6 +99,31 @@
   }
   const aktivIn = (liste, t) => (liste || []).find(e => t >= e.von && t < e.bis) || null;
 
+  // ------------------------------------------------------------- Verkehrszeichen nach amtlicher Vorlage (Probe 17.11.)
+  // Umrisse aus den Vorlagen nach dem Verkehrszeichenkatalog (Wikimedia Commons, StVO 1970/1992), alle Schilder im selben Maßstab (Millimeter):
+  // Zeichen 205 Seitenlänge 900, Zeichen 306 Seitenlänge 600 (Breite über Eck 849), Zusatzzeichen 1002 600 × 600, Abstand 40.
+  const VZ = {"z205":{"vb":[847.159,743.623],"mm":900,"tr":[1.25,0.0,0.0,-1.25,0.0,743.62267],"p":[["#ffffff","m 338.859,0.398 c 7.516,0 15.028,2.867 20.758,8.598 1.879,1.879 3.445,3.953 4.707,6.152 l 15.246,26.156 0.071,0 293.101,508.039 c 0.055,0.098 0.098,0.196 0.153,0.293 1.488,2.395 2.656,5.043 3.425,7.911 4.196,15.656 -5.097,31.753 -20.758,35.949 -2.585,0.695 -5.183,1.012 -7.738,1 l -618.066,0 c -16.215,0 -29.356,-13.141 -29.356,-29.356 0,-5.304 1.414,-10.281 3.879,-14.578 0.02,-0.031 0.035,-0.062 0.055,-0.097 L 308.699,22.054 c 3.863,-6.664 5.653,-9.304 9.406,-13.058 5.731,-5.731 13.243,-8.598 20.754,-8.598 z","nonzero"],["#c1121c","m 338.859,7.754 c 7.125,-0.051 14.95,3.589 18.782,10.406 l 309.293,535.89 c 1.785,3.649 2.535,6.821 2.558,10.45 0,6.496 -2.875,12.66 -7.847,16.84 -4.383,3.394 -8.536,5.16 -14.122,5.16 l -617.906,0 c -3.769,0.035 -7.547,-0.871 -10.976,-3.133 -6.453,-3.899 -10.403,-10.883 -10.411,-18.426 0.184,-3.894 1.145,-8 2.879,-10.891 L 320.223,18.07 c 0.027,-0.047 0.062,-0.094 0.089,-0.141 0.032,-0.046 0.063,-0.093 0.094,-0.144 1.098,-1.754 2.473,-3.305 4.039,-4.633 3.59,-3.109 8.086,-4.977 12.825,-5.316 0.531,-0.047 1.062,-0.078 1.589,-0.082 z m 308.664,578.746 1.524,0 -1.555,0 0.031,0 z M 339.18,113.965 103.477,522.5 575.215,522.5 339.18,113.965 Z","nonzero"],["#000000","m 338.859,0 c 7.618,0 15.231,2.906 21.039,8.715 1.907,1.902 3.493,4.007 4.774,6.234 l 15.129,25.957 0.07,0 293.215,508.238 c 0.066,0.117 0.113,0.219 0.16,0.301 1.504,2.422 2.684,5.102 3.461,7.996 4.25,15.871 -5.172,32.192 -21.039,36.442 -2.621,0.703 -5.258,1.023 -7.844,1.015 l -618.066,0 C 13.328,594.898 0,581.57 0,565.14 c 0,-5.375 1.438,-10.418 3.934,-14.773 0.011,-0.024 0.027,-0.055 0.054,-0.102 L 308.352,21.851 c 3.871,-6.664 5.695,-9.363 9.468,-13.136 C 323.629,2.906 331.246,0 338.859,0 Z m 0,0.398 c -7.511,0 -15.023,2.867 -20.754,8.598 -3.753,3.754 -5.543,6.394 -9.406,13.058 L 4.336,550.465 c -0.02,0.035 -0.035,0.066 -0.055,0.097 -2.465,4.297 -3.879,9.274 -3.879,14.578 0,16.215 13.141,29.356 29.356,29.356 l 618.066,0 c 2.555,0.012 5.153,-0.305 7.738,-1 15.661,-4.196 24.954,-20.293 20.758,-35.949 -0.769,-2.868 -1.937,-5.516 -3.425,-7.911 -0.055,-0.097 -0.098,-0.195 -0.153,-0.293 L 379.641,41.304 l -0.071,0 -15.246,-26.156 c -1.262,-2.199 -2.828,-4.273 -4.707,-6.152 -5.73,-5.731 -13.242,-8.598 -20.758,-8.598 z","nonzero"]]},"z306":{"vb":[600.0,600.0],"mm":849,"tr":[1.25,0.0,0.0,-1.25,0.0,600.0],"p":[["#ffffff","M 223.758,7.562 6.582,224.734 c -9.98,9.977 -6.684,24.672 0.219,31.957 l 216.23,216.082 c 11.098,11.086 26.364,7.176 33.473,0.075 L 471.812,258.051 c 10.321,-10.313 10.547,-24.094 0.516,-34.121 L 256.16,7.508 C 239.863,-8.77 223.758,7.562 223.758,7.562 Z","nonzero"],["#000000","m 250.379,467.738 216.902,-216.89 c 10.629,-10.582 0.203,-20.539 0.203,-20.539 L 250.215,13.191 c 0,0 -9.965,-10.421 -20.551,0.2 L 12.621,230.145 c -10.598,10.644 -0.004,20.691 -0.004,20.691 72.328,72.355 144.692,144.617 217.055,216.906 0,0 10.058,10.586 20.707,-0.004 z m -6.199,-6.195 c -4.172,4.199 -8.371,-0.094 -8.371,-0.094 C 163.488,389.227 91.199,316.965 18.914,244.703 c 0,0 -4.297,-4.195 -0.094,-8.363 L 235.836,19.613 c 4.492,-4.34 8.211,0.032 8.211,0.032 72.445,72.16 144.707,144.496 216.98,216.828 0,0 4.371,3.718 0.032,8.203 L 244.18,461.543 Z","nonzero"],["#f7ba0b","M 240.004,107.648 372.996,240.547 240.004,373.449 107.012,240.547 240.004,107.648 Z","nonzero"],["#000000","m 240.004,103.496 -2.078,2.078 L 102.855,240.547 240.004,377.602 377.152,240.547 240.004,103.496 Z m 0,8.305 L 368.84,240.547 240.004,369.293 111.168,240.547 240.004,111.801 Z","nonzero"]]},"z1002_20":{"vb":[601.012,600.998],"mm":600,"tr":[1.25,0.0,0.0,-1.25,0.0,600.99804],"p":[["#ffffff","m 0.402,448.396 0,-415.992 C 0.402,14.724 14.723,0.4 32.395,0.4 l 416.015,0 c 17.672,0 32.004,14.324 32.004,32.004 l 0,415.992 c 0,17.672 -14.332,32.004 -32.004,32.004 l -416.015,0 C 14.723,480.4 0.402,466.068 0.402,448.396","nonzero"],["#231f20","M 8.398,32.404 C 8.398,19.15 19.148,8.396 32.395,8.396 l 416.015,0 c 13.254,0 23.996,10.754 23.996,24.008 l 0,416.008 c 0,13.242 -10.742,23.996 -23.996,23.996 l -416.015,0 c -13.247,0 -23.997,-10.754 -23.997,-23.996 l 0,-416.008 z m 11.997,0 0,416.008 c 0,6.613 5.371,11.984 12,11.984 l 416.015,0 c 6.629,0 12,-5.371 12,-11.984 l 0,-416.008 c 0,-6.625 -5.371,-12.008 -12,-12.008 l -416.015,0 c -6.629,0 -12,5.383 -12,12.008 z","nonzero"],["#231f20","m 420.406,200.396 -100.004,0 c -22.086,0 -40,-17.902 -40,-40 l 0,-99.988 -80,0 0,99.988 c 0,66.285 53.727,120.012 120,120.012 l 100.004,0","nonzero"],["#231f20","m 220.406,420.396 40,0 0,-119.996 -40,0 0,119.996 z","nonzero"],["#231f20","m 60.406,260.4 120,0 0,-39.996 -120,0 0,39.996 z","nonzero"]]}};
+  const VZ_PX = 0.2, VZ_BILD = {};   // Bildpunkte je Millimeter
+  function vzMale(g, sp, x0, y0, spiegel) {   // zeichnet eine Vorlage, linke obere Ecke bei x0|y0 (mm)
+    const k = sp.mm / sp.vb[0], t = sp.tr; g.save(); g.scale(VZ_PX, VZ_PX); g.translate(x0, y0);
+    if (spiegel) { g.translate(sp.mm, 0); g.scale(-1, 1); }
+    g.scale(k, k); g.transform(t[0], t[1], t[2], t[3], t[4], t[5]);
+    sp.p.forEach(([f, d, r]) => { g.fillStyle = f; g.fill(new Path2D(d), r); }); g.restore();
+  }
+  // Bild + Maße in mm; null = Schild ist (noch) nicht nach Vorlage gezeichnet
+  function vzBild(typ) {
+    if (VZ_BILD[typ] !== undefined) return VZ_BILD[typ];
+    let teile = null;
+    if (typ === "z205") teile = [[VZ.z205]];
+    else if (typ === "z306") teile = [[VZ.z306]];
+    else if (typ === "z306_zr" || typ === "z306_zl") teile = [[VZ.z306], [VZ.z1002_20, typ === "z306_zl"]];   // links abknickend = gespiegelt
+    if (!teile) return (VZ_BILD[typ] = null);
+    const w = Math.max(...teile.map(t => t[0].mm)), hs = teile.map(t => t[0].mm * t[0].vb[1] / t[0].vb[0]), h = hs.reduce((a, b) => a + b, 0) + 40 * (teile.length - 1);
+    const c = document.createElement("canvas"); c.width = Math.ceil(w * VZ_PX); c.height = Math.ceil(h * VZ_PX); const g = c.getContext("2d");
+    let y = 0; teile.forEach(([sp, sg], i) => { vzMale(g, sp, (w - sp.mm) / 2, y, sg); y += hs[i] + 40; });
+    return (VZ_BILD[typ] = { img: c, w, h });
+  }
+  const VZ_OBEN = 2.5, VZ_3D = 1.8;   // Vergrößerung für die Lesbarkeit: in jeder Ansicht für alle Schilder gleich
   // ------------------------------------------------------------- Verkehrszeichen
   // Werden einmal als Bild gezeichnet und in beiden Ansichten verwendet.
   const SCHILD_BILD = {};
@@ -790,6 +815,15 @@
     });
     st.linien.forEach(l => zeichneLinieOben(l, X, Y, s));
     (st.schilder || []).forEach(sc => {
+      const vz = szene.schilderNeu && sc.aussen && vzBild(sc.typ);
+      if (vz) {   // Schild nach Vorlage, fester Maßstab, neben der Fahrbahn (Richtung aussen = weg von der Fahrbahn)
+        const k = VZ_OBEN * s / 1000, w = vz.w * k, h = vz.h * k, bx = X(sc.x), by = Y(sc.y), ab = 0.35 * s, [ax, ay] = sc.aussen;
+        const x0 = ax > 0 ? bx + ab : ax < 0 ? bx - ab - w : bx - w / 2, y0 = ay > 0 ? by + ab : ay < 0 ? by - ab - h : by - h / 2;
+        ctx.fillStyle = "rgba(0,0,0,.25)"; ctx.fillRect(x0 + 0.12 * s, y0 + 0.12 * s, w, h);
+        ctx.fillStyle = "#7f868c"; ctx.beginPath(); ctx.arc(bx, by, Math.max(1.5, 0.12 * s), 0, 7); ctx.fill();
+        ctx.drawImage(vz.img, x0, y0, w, h);
+        return;
+      }
       const img = schildBild(sc.typ), gr = 5 * s, bx = X(sc.x), by = Y(sc.y);
       ctx.fillStyle = "rgba(0,0,0,.28)"; ctx.beginPath(); ctx.ellipse(bx + 0.3 * s, by + 0.22 * s, 0.34 * s, 0.17 * s, 0, 0, 7); ctx.fill();
       ctx.fillStyle = "#7f868c"; ctx.fillRect(bx - 0.07 * s, by - 0.5 * s, 0.14 * s, 0.5 * s); ctx.fillStyle = "#b9bfc4"; ctx.fillRect(bx - 0.07 * s, by - 0.5 * s, 0.05 * s, 0.5 * s);
@@ -1265,6 +1299,20 @@
   }
   function lerpP(a, b, t, zt) { return [lerp(a[0], b[0], t), lerp(a[1], b[1], t), lerp(a[2], b[2], zt)]; }
   function schild3d(c, sc) {
+    const vz = szene.schilderNeu && sc.blick && vzBild(sc.typ);
+    if (vz) {   // Schild nach Vorlage: steht quer zur Straße und schaut dem ankommenden Verkehr entgegen; von hinten graue Rückseite
+      const k = VZ_3D / 1000, w = vz.w * k, h = vz.h * k, z0 = 2.0, [vx, vy] = sc.blick, rx = vy, ry = -vx;   // rechts aus Sicht des Ankommenden
+      const P = (u, z) => zuCam(c, sc.x + rx * u, sc.y + ry * u, z);
+      const ecken = [P(-w / 2, z0 + h), P(w / 2, z0 + h), P(-w / 2, z0), P(w / 2, z0), P(0, 0)];
+      if (ecken.some(q => q[2] < c.near)) return;
+      const [tl, tr, bl, br, fu] = ecken.map(q => proj(c, q));
+      ctx.strokeStyle = "#8e9398"; ctx.lineWidth = Math.max(1, 0.08 * c.F / ecken[4][2]); ctx.beginPath(); ctx.moveTo(fu[0], fu[1]); ctx.lineTo((bl[0] + br[0]) / 2, (bl[1] + br[1]) / 2); ctx.stroke();
+      const vorn = (c.e[0] - sc.x) * vx + (c.e[1] - sc.y) * vy > 0;
+      ctx.globalAlpha = clamp(1 - ecken[0][2] / 1200, 0.25, 1);
+      if (vorn) { ctx.save(); ctx.transform((tr[0] - tl[0]) / vz.img.width, (tr[1] - tl[1]) / vz.img.width, (bl[0] - tl[0]) / vz.img.height, (bl[1] - tl[1]) / vz.img.height, tl[0], tl[1]); ctx.drawImage(vz.img, 0, 0); ctx.restore(); }
+      else { ctx.fillStyle = "#9aa0a5"; ctx.beginPath(); ctx.moveTo(tl[0], tl[1]); ctx.lineTo(tr[0], tr[1]); ctx.lineTo(br[0], br[1]); ctx.lineTo(bl[0], bl[1]); ctx.closePath(); ctx.fill(); }
+      ctx.globalAlpha = 1; return;
+    }
     const img = schildBild(sc.typ); const hoehe = sc.typ.startsWith("z450") ? 1.6 : 2.4;
     const fuss = zuCam(c, sc.x, sc.y, 0), kopf = zuCam(c, sc.x, sc.y, hoehe + 2.2);
     if (fuss[2] < c.near || kopf[2] < c.near) return;
@@ -2166,11 +2214,11 @@
     stimmeStopp();
     if (!stimmeAn() || modus === "fahren" || !szene) return;
     const e = stimmeFuer(ph); if (!e) return;
-    const el = new Audio("stimme/" + e.f); el.preload = "auto"; try { el.playbackRate = tempoFaktor; } catch (x) {}
-    const a = { el, ph, d: e.d / tempoFaktor, fertig: false };
-    el.addEventListener("ended", () => { a.fertig = true; });
+    const el = new Audio("stimme/" + e.f); el.preload = "auto";   // Stimme immer in normalem Tempo (gleichmäßiger Erzähler); ½×/2× wirkt nur auf das Bild
+    const a = { el, ph, d: e.d, fertig: false };
+    el.addEventListener("ended", () => { setTimeout(() => { a.fertig = true; }, 350); });   // kurze Atempause, bevor die Szene weiterläuft
     el.addEventListener("error", () => { a.fertig = true; });
-    el.addEventListener("playing", () => { a.laeuft = true; });
+    el.addEventListener("playing", () => { a.laeuft = true; if (STIMME.aktiv === a && !el.ended) a.fertig = false; });   // kam der Ton spät (nach der 4-s-Grenze): Szene wartet trotzdem, Satz wird nicht abgeschnitten
     setTimeout(() => { if (!a.laeuft && !STIMME.pausiert) a.fertig = true; }, 4000);   // Ton kommt nicht (Funkloch): Szene nicht aufhalten
     STIMME.aktiv = a;
     const pr = el.play(); if (pr && pr.catch) pr.catch(() => { a.fertig = true; });
@@ -2182,7 +2230,7 @@
   function stimmeFaktor() {
     const a = STIMME.aktiv; if (!a || a.fertig || !szene) return 1;
     const nxt = szene.phasen.find(p => p.t > a.ph.t); const fenster = (nxt ? nxt.t : szene.dauer) - a.ph.t;
-    return clamp(fenster / Math.max(0.5, a.d), 0.25, 1);
+    return clamp(fenster / Math.max(0.5, a.d * tempoFaktor), 0.25, 1);   // Ton läuft immer 1×, das Bild mit tempoFaktor
   }
   function stimmePause(pause) {
     const a = STIMME.aktiv; if (!a || a.fertig) return;
