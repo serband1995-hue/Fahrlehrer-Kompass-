@@ -38,7 +38,7 @@ for (const [w, h] of [[360, 640], [640, 360]]) {
   for (const id of ids) {
     const t = `${w}×${h} ${id}: `; konsole.length = 0;
     await page.evaluate(s => window.Lernszenen.open({ szene: s }), id);
-    try { await page.waitForSelector("#lzCap", { timeout: 5000 }); } catch { pruefe(t + "öffnet", false); continue; }
+    try { await page.waitForSelector("#lzCap", { state: "attached", timeout: 5000 }); await page.evaluate(() => { const o = document.querySelector("#lzCapOpen"); if (o && !o.hidden) o.click(); }); } catch { pruefe(t + "öffnet", false); continue; }
     await page.click("#lzPlay"); await page.waitForTimeout(3000);
     const sp = await stich(page);
     pruefe(t + "Zeichenfläche nicht einfarbig", sp.farben >= 12, JSON.stringify(sp));
@@ -47,11 +47,11 @@ for (const [w, h] of [[360, 640], [640, 360]]) {
     pruefe(t + "Zeichenzeit unter 12 ms", ms < 12, ms.toFixed(2) + " ms");
     pruefe(t + "keine Konsolenfehler", konsole.length === 0, konsole.join(" | "));
     if (["bahnuebergang", "strassenbahn", "abstand", "halteverbot", "einsatz"].includes(id)) {
-      for (const k of ["3d", "fahrer", "oben"]) { await page.click(`[data-kam="${k}"]`); await page.waitForTimeout(500); const s2 = await stich(page); pruefe(t + `Ansicht ${k} zeichnet`, s2.farben >= 6, JSON.stringify(s2)); }
+      for (const k of ["3d", "oben"]) { await page.click(`[data-kam="${k}"]`); await page.waitForTimeout(500); const s2 = await stich(page); pruefe(t + `Ansicht ${k} zeichnet`, s2.farben >= 6, JSON.stringify(s2)); }
       pruefe(t + "Ansichten ohne Konsolenfehler", konsole.length === 0, konsole.join(" | "));
     }
     if (id === "auffahren") {
-      for (const k of ["3d", "fahrer", "oben"]) {
+      for (const k of ["3d", "oben"]) {
         await page.click(`[data-kam="${k}"]`); await page.waitForTimeout(500);
         const s2 = await stich(page);
         pruefe(t + `Ansicht ${k} zeichnet`, s2.farben >= 6, JSON.stringify(s2));

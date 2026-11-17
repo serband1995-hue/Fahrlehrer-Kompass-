@@ -32,7 +32,7 @@ for (const [w, h] of [[360, 640], [412, 915], [640, 360], [568, 320]]) {
   for (const szene of liste) {
     const t = `${w}×${h} ${szene}: `;
     await page.evaluate(s => window.Lernszenen.open({ szene: s }), szene);
-    try { await page.waitForSelector("#lzCap", { timeout: 5000 }); } catch { pruefe(t + "öffnet", false); continue; }
+    try { await page.waitForSelector("#lzCap", { state: "attached", timeout: 5000 }); await page.evaluate(() => { const o = document.querySelector("#lzCapOpen"); if (o && !o.hidden) o.click(); }); } catch { pruefe(t + "öffnet", false); continue; }
     let btn = null;
     for (let i = 0; i < 12; i++) {
       btn = await page.$("#lzCap .lz-parb"); if (btn) break;
@@ -74,7 +74,7 @@ for (const [w, h] of [[360, 640], [412, 915], [640, 360], [568, 320]]) {
   const ueber = (a, b) => a.x < b.x + b.width && a.x + a.width > b.x && a.y < b.y + b.height && a.y + a.height > b.y;
   for (const { id, ts } of mitBlick) {
     const t = `${w}×${h} ${id} (Fahrer-Einsatz): `;
-    await page.evaluate(s => window.Lernszenen.open({ szene: s }), id); await page.waitForSelector("#lzCap");
+    await page.evaluate(s => window.Lernszenen.open({ szene: s }), id); await page.waitForSelector("#lzCap", { state: "attached" }); await page.evaluate(() => { const o = document.querySelector("#lzCapOpen"); if (o && !o.hidden) o.click(); });
     await page.evaluate(v => { const sl = document.querySelector("#lzSlider"); sl.value = v; sl.dispatchEvent(new Event("input")); }, ts[0] + 0.3);
     await page.waitForTimeout(400);
     const fa = await page.$("#lzFahrer"), sicht = fa && await fa.isVisible();

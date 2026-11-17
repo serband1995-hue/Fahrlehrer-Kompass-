@@ -25,7 +25,7 @@ for (const [w, h] of [[360, 640], [412, 915], [640, 360], [568, 320]]) {
   await page.goto(basis); await page.waitForFunction(() => window.Lernszenen && window.Lernszenen.open, null, { timeout: 15000 });
   for (const id of ["stop", "abstand", "rvl"]) {
     const t = `${w}x${h} ${id}: `;
-    await page.evaluate(s => window.Lernszenen.open({ szene: s }), id); await page.waitForSelector("#lzCap");
+    await page.evaluate(s => window.Lernszenen.open({ szene: s }), id); await page.waitForSelector("#lzCap", { state: "attached" }); await page.evaluate(() => { const o = document.querySelector("#lzCapOpen"); if (o && !o.hidden) o.click(); });
     await page.click('[data-modus="mitdenken"]'); await page.click("#lzPlay");
     try { await page.waitForSelector(".lz-sheet .lz-opt", { timeout: 8000 }); } catch { pruefe(t + "Frage-Fenster erscheint", false); continue; }
     await page.click("#lzNext"); await page.waitForTimeout(200);

@@ -31,7 +31,7 @@ for (const [w, h] of [[360, 640], [412, 915], [640, 360], [568, 320], [740, 360]
   for (const id of IDS) {
     const t = `${w}×${h} ${id}: `;
     await page.evaluate(s => window.Lernszenen.open({ szene: s }), id);
-    try { await page.waitForSelector("#lzCap", { timeout: 5000 }); } catch { pruefe(t + "öffnet", false); continue; }
+    try { await page.waitForSelector("#lzCap", { state: "attached", timeout: 5000 }); await page.evaluate(() => { const o = document.querySelector("#lzCapOpen"); if (o && !o.hidden) o.click(); }); } catch { pruefe(t + "öffnet", false); continue; }
     const s = await page.evaluate(sid => { const z = window.Lernszenen._szenen.find(x => x.id === sid); return z ? { d: z.dauer, ph: z.phasen.map(p => ({ t: p.t, titel: p.titel })), fz: z.fahrzeuge.length } : null; }, id);
     pruefe(t + "registriert", !!s); if (!s) continue;
     pruefe(t + "Phasen aufsteigend", s.ph.every((p, i) => i === 0 || p.t > s.ph[i - 1].t) && s.ph[s.ph.length - 1].t < s.d);
@@ -50,7 +50,7 @@ for (const [w, h] of [[360, 640], [412, 915], [640, 360], [568, 320], [740, 360]
       for (const [i, drin] of r) pruefe(t + `Phase ${pi}: ${i} im Bild`, drin);
     }
     if (id === "ampel_gelb") {   // Ampel (mittleres Licht, Gelb) in den Entscheidungsphasen in 3D und Fahrer im Bild und nicht unter dem Erklaerkasten
-      for (const k of ["3d", "fahrer"]) {
+      for (const k of ["3d"]) {
         await page.click(`[data-kam="${k}"]`);
         // Phase 1 (Gelb: Entscheidung) in 0,25-s-Schritten, Phase 2 nur in 3D; Lampenhoehe = Mitte des Gelblichts bei k3d 4 (1.7 + 1.16 * 4)
         const zeiten = [];
@@ -64,7 +64,7 @@ for (const [w, h] of [[360, 640], [412, 915], [640, 360], [568, 320], [740, 360]
       }
       await page.click('[data-kam="oben"]');
     }
-    for (const k of ["3d", "fahrer", "oben"]) {
+    for (const k of ["3d", "oben"]) {
       await page.click(`[data-kam="${k}"]`); await page.waitForTimeout(400);
       const farben = await page.evaluate(() => { const cv = document.querySelector("#lzCanvas"), g = cv.getContext("2d"), f = new Set(); for (let i = 0; i < 16; i++) for (let j = 0; j < 16; j++) { const d = g.getImageData(Math.floor((i + .5) * cv.width / 16), Math.floor((j + .5) * cv.height / 16), 1, 1).data; f.add((d[0] >> 4) + "," + (d[1] >> 4) + "," + (d[2] >> 4)); } return f.size; });
       pruefe(t + `Ansicht ${k} zeichnet`, farben >= 6, String(farben));

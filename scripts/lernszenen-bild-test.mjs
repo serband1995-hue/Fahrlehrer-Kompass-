@@ -34,7 +34,7 @@ for (const [w, h] of [[360, 640], [640, 360], [568, 320]]) {
   await page.waitForFunction(() => window.Lernszenen && window.Lernszenen.open, null, { timeout: 15000 });
   const ids = await page.evaluate(() => window.Lernszenen._szenen.map(s => s.id));
   for (const id of ids) {
-    await page.evaluate(s => window.Lernszenen.open({ szene: s }), id); await page.waitForSelector("#lzCap");
+    await page.evaluate(s => window.Lernszenen.open({ szene: s }), id); await page.waitForSelector("#lzCap", { state: "attached" }); await page.evaluate(() => { const o = document.querySelector("#lzCapOpen"); if (o && !o.hidden) o.click(); });
     const zeiten = await page.evaluate(sid => { const s = window.Lernszenen._szenen.find(x => x.id === sid), ph = s.phasen.map(p => p.t); return ph.map((t, i) => [i, (t + (i + 1 < ph.length ? ph[i + 1] : s.dauer)) / 2]).concat([[ph.length, s.dauer - 0.1]]); }, id);
     for (const [i, t] of zeiten) {
       await page.evaluate(v => { const sl = document.querySelector("#lzSlider"); sl.value = v; sl.dispatchEvent(new Event("input")); }, t);
