@@ -627,7 +627,7 @@
     const g1 = fahrt("g1", "pkw", "#b3322c", [[150, -1.65], [-150, -1.65]], [[0, 30]], 150 - 30, 3);
     const g2 = fahrt("g2", "pkw", "#2c5aa0", [[150, -1.65], [-150, -1.65]], [[0, 30]], 150 - 5, 6.8);
     innerortsSzene({
-      id: "eng", plan: ["l_eng"], titel: "Engstelle: Hindernis auf meiner Seite", kurz: "Wer am Hindernis vorbei muss, lässt zuerst den Gegenverkehr durch.",
+      id: "eng", plan: ["l_eng"], titel: "Engstelle: Hindernis auf deiner Seite", kurz: "Wer am Hindernis vorbei muss, lässt zuerst den Gegenverkehr durch.",
       dauer: 17, strasse: Object.assign(st, { bereich: [-80, 80] }), kamera: { fokus: "fs", zoom: 9, vor: 0.12 },
       fahrzeuge: [fs, lkw, g1, g2],
       phasen: [
@@ -648,7 +648,7 @@
     const q1 = fahrt("q1", "pkw", "#2c5aa0", route("W", "O", { q: 1.625, e: 10 }), [[0, 45]], 70, 9.5);
     const q2 = fahrt("q2", "transporter", "#e7e3d6", route("O", "W", { q: 1.625, e: 10 }), [[0, 42]], 70, 10.3);
     innerortsSzene({
-      id: "stop", plan: ["l_stop"], titel: "Stoppschild (Zeichen 206)", kurz: "Immer ganz an der Haltlinie anhalten, dann vortasten.",
+      id: "stop", plan: ["l_stop"], titel: "Stoppschild", kurz: "Immer ganz an der Haltlinie anhalten, dann vortasten.",
       dauer: 17, strasse: K, kamera: { fest: [3, 4], zoom: 9 },
       fahrzeuge: [fs, q1, q2],
       phasen: [
