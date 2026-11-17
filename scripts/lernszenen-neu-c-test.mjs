@@ -2,6 +2,7 @@
 // Prüft: Szenen registriert, 4–6 Phasen, mindestens 2 Fragen, Fragen gültig, Sprechtexte ≤ 200 Zeichen ohne Ziffern/Klammern/Doppelpunkte/Striche,
 // Fahrzeuge kollidieren nicht und bleiben auf der Fahrbahn, Schilder 0,5 m neben der Fahrbahn (nicht darauf), jede Phase erreichbar,
 // Fokus-Fahrzeug im Bild, 3D und Oben zeichnen, keine Konsolenfehler.
+// (Flag schilderNeu entfallen: seit 17.11. zeichnen alle Szenen ihre Schilder nach Vorlage; Aufstellung prüft lernszenen-schild-test.mjs)
 // Aufruf:  NODE_PATH=$(npm root -g) node scripts/lernszenen-neu-c-test.mjs [--bilder ORDNER]
 import { createRequire } from "node:module";
 import { createServer } from "node:http";
@@ -41,7 +42,7 @@ const setze = (page, v) => page.evaluate(v => { const sl = document.querySelecto
       const s = L._szenen.find(x => x.id === id), r = { id, fehler: [] };
       if (!s) { r.fehler.push("nicht registriert"); out.push(r); continue; }
       const F = (c, t) => { if (!c) r.fehler.push(t); };
-      F(s.kategorie === "innerorts", "kategorie"); F(s.schilderNeu === true, "schilderNeu"); F(s.titel && s.kurz && Array.isArray(s.plan), "titel/kurz/plan");
+      F(s.kategorie === "innerorts", "kategorie"); F(s.titel && s.kurz && Array.isArray(s.plan), "titel/kurz/plan");
       F(s.phasen.length >= 4 && s.phasen.length <= 6, "Phasenzahl " + s.phasen.length);
       F(s.phasen.filter(p => p.frage).length >= 2, "weniger als 2 Fragen");
       s.phasen.forEach((p, i) => {

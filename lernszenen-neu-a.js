@@ -30,27 +30,14 @@
   const leit = (K, ...p) => p.forEach(l => K.linien.push({ art: "leit_io", b: 0.12, pts: l }));
   function neu(sz) { sz.kategorie = "innerorts"; LZ.registriere(sz); }
 
-  // ------------------------------------------------------------ eigene Verkehrszeichen (Zeichen 306 + Zusatzzeichen)
-  function zusatzSchild(links) {
-    const c = document.createElement("canvas"); c.width = c.height = 128; const g = c.getContext("2d");
-    g.save(); g.translate(64, 33); g.rotate(PI / 4); g.fillStyle = "#fff"; g.fillRect(-22, -22, 44, 44); g.strokeStyle = "#333"; g.lineWidth = 2; g.strokeRect(-22, -22, 44, 44); g.fillStyle = "#f4c800"; g.fillRect(-15, -15, 30, 30); g.restore();
-    g.fillStyle = "#fff"; g.fillRect(6, 68, 116, 58); g.strokeStyle = "#333"; g.lineWidth = 3; g.strokeRect(6, 68, 116, 58);
-    const x1 = links ? 20 : 108; g.lineCap = "butt"; g.lineJoin = "miter";
-    g.strokeStyle = "#9a9a9a"; g.lineWidth = 5; g.beginPath(); g.moveTo(64, 98); g.lineTo(64, 74); g.moveTo(links ? 108 : 20, 98); g.lineTo(64, 98); g.stroke();
-    g.strokeStyle = "#111"; g.lineWidth = 16; g.beginPath(); g.moveTo(64, 126); g.lineTo(64, 98); g.lineTo(x1, 98); g.stroke();
-    return c;
-  }
-  if (LZ.bau.schildBilder) {
-    LZ.bau.schildBilder.z306_zr = zusatzSchild(false); LZ.bau.schildBilder.z306_zl = zusatzSchild(true);
-    if (LZ.bau.schildNamen) LZ.bau.schildNamen.z306_zr = LZ.bau.schildNamen.z306_zl = "Zeichen 306 mit Zusatzzeichen · Verlauf der Vorfahrtstraße";
-  }
-
   // ============================================================ 1. Abknickende Vorfahrt
   (function () {
     const K = stadtK({ b: 3.25, R: 6 });
     K.objekte = K.objekte.filter(o => !(o.art === "baum" && o.x > 0 && o.y > 0 && o.x < 12));   // Baum stand vor dem eigenen Schild (3D-Sicht)
     leit(K, [[0, 90], [0, 12]], [[0, -12], [0, -90]], [[-90, 0], [-12, 0]], [[12, 0], [90, 0]]);
-    K.schilder.push({ typ: "z306_zr", x: 4.9, y: 15, aussen: [1, 0], blick: [0, 1] }, { typ: "z306_zl", x: 15, y: -4.9, aussen: [0, -1], blick: [1, 0] }, { typ: "z205", x: -14, y: 4.9, aussen: [0, 1], blick: [-1, 0] }, { typ: "z205", x: -4.9, y: -14, aussen: [-1, 0], blick: [0, -1] });   // aussen: Seite weg von der Fahrbahn; blick: Richtung, aus der der Verkehr kommt
+    // aussen: Seite weg von der Fahrbahn; blick: Richtung, aus der der Verkehr kommt. Zusatzzeichen aus Sicht der eigenen Zufahrt (unten):
+    // Süd 306 + 1002-20, Ost 306 + 1002-10, West 205 + 1002-21, Nord 205 + 1002-11 (VwV zu 205/206 Rn. 6, zu 306/307 Rn. 4)
+    K.schilder.push({ typ: "z306_zr", x: 4.9, y: 15, aussen: [1, 0], blick: [0, 1] }, { typ: "z306_zl", x: 15, y: -4.9, aussen: [0, -1], blick: [1, 0] }, { typ: "z205_zr", x: -14, y: 4.9, aussen: [0, 1], blick: [-1, 0] }, { typ: "z205_zl", x: -4.9, y: -14, aussen: [-1, 0], blick: [0, -1] });
     const e = 9;
     const fs = fahrt("fs", "fahrschule", "#f2f2ee", route("S", "O", { q: 1.625, e, e2: 8, k: 0.5 }), [[0, 30], [3, 26], [5.5, 22], [8, 22], [11, 26], [19, 34]], 70 - e, 5.5, { fokus: true, blinker: [{ von: 1, bis: 11, seite: "rechts" }], schulter: [{ von: 3.6, bis: 4.6, seite: "rechts" }] });
     const bl = fahrt("b", "pkw", "#2c5aa0", route("O", "S", { q: 1.625, e, e2: 8, k: 0.62 }), [[0, 30], [3, 26], [5.8, 20], [8, 22], [11, 26], [19, 34]], 70 - e, 5.8, { blinker: [{ von: 1.6, bis: 11, seite: "links" }] });
@@ -58,7 +45,6 @@
     const gelb = pfad(bezier([0, 8], [0, 0.2], [0.2, 0], [8, 0], 14));                 // gelbes Band: Verlauf der Vorfahrtstraße
     neu({
       id: "abknick", plan: ["a_stadt", "a_30"], titel: "Abknickende Vorfahrtstraße", kurz: "Die Vorfahrtstraße macht eine Kurve. Wer ihr folgt, blinkt und hat Vorfahrt.",
-      schilderNeu: true,   // Probe: Schilder nach amtlicher Vorlage im festen Maßstab
       dauer: 15, strasse: K, kamera: { fest: [3, 3], zoom: 17, quer: { zeige: ["b", "c"], radius: 40, punkte: [[4.9, 9.6], [4.9, 15], [15, -9]] } },
       fahrzeuge: [fs, bl, rot],
       overlayUnten: (c, X, Y, s) => {
@@ -80,7 +66,7 @@
     const K = stadtK({ b: 3.25, R: 6, arme: { N: 0, S: 1, O: 1, W: 1 } });
     leit(K, [[-90, 0], [-11, 0]], [[11, 0], [90, 0]]);
     K.linien.push({ art: "leit_io", b: 0.12, pts: [[0, 90], [0, 12]] });
-    K.schilder.push({ typ: "z205", x: 4.9, y: 11.5 }, { typ: "z306", x: -12, y: 4.9 }, { typ: "z306", x: 12, y: -4.9 });
+    K.schilder.push({ typ: "z205", x: 4.9, y: 11.5, aussen: [1, 0], blick: [0, 1] }, { typ: "z306", x: -12, y: 4.9, aussen: [0, 1], blick: [-1, 0] }, { typ: "z306", x: 12, y: -4.9, aussen: [0, -1], blick: [1, 0] });
     haeuser(K.objekte, [[-9.3, 9.6, 5.6, 5, 2.2, "#cdd3d8", "#6d5a4a"]]);          // Garage: verdeckt die Sicht nach links
     const e = 9;
     const wegF = route("S", "O", { q: 1.625, e, e2: 8, k: 0.5 });
@@ -145,7 +131,7 @@
     const weg = [[0.15, 30], [0.15, 6.2]].concat(bezier([0.15, 6.2], [0.15, 4.0], [1.95, 2.2], [4.15, 2.2], 14)).concat([[150, 2.2]]);
     const fs = fahrt("fs", "fahrschule", "#f2f2ee", weg, [[0, 0], [1.2, 0], [2.8, 7], [4.2, 7], [5.6, 0], [9, 0], [10, 5], [11.6, 5], [12, 0], [15.4, 0], [18, 15], [24, 26]], 19.8, 5.6,
       { fokus: true, bremsStand: true, pfeilDx: -3, pfeilDy: 0.6, pfeilK: 0.7, blinker: [{ von: 0.4, bis: 21, seite: "rechts" }], schulter: [{ von: 0.4, bis: 1.4, seite: "rundum" }, { von: 14, bis: 15.3, seite: "links" }] });
-    const ew = person("ew", "fussgaenger", "#ff9f1a", [[2.9, 7.3], [2.9, 6.9]], [[0, 0]], { gr: 2.3, rand: true });
+    const ew = person("ew", "fussgaenger", "#f2f21a", [[2.9, 7.3], [2.9, 6.9]], [[0, 0]], { gr: 2.3, rand: true, weste: true });   // Einweiser in Warnweste (gelb, Reflexstreifen)
     const ped = person("fg", "fussgaenger", "#2f7de1", [[-9, 5.6], [20, 5.6]], [[0, 4.5]], { gr: 2.5, rand: true });
     const bl = fahrt("b", "pkw", "#2c5aa0", [[-150, 2.2], [150, 2.2]], [[0, 40]], 150, 13.6);
     const rt = fahrt("c", "pkw", "#b3322c", [[150, -2.2], [-150, -2.2]], [[0, 35]], 150, 15.2);

@@ -99,40 +99,239 @@
   }
   const aktivIn = (liste, t) => (liste || []).find(e => t >= e.von && t < e.bis) || null;
 
-  // ------------------------------------------------------------- Verkehrszeichen nach amtlicher Vorlage (Probe 17.11.)
-  // Umrisse aus den Vorlagen nach dem Verkehrszeichenkatalog (Wikimedia Commons, StVO 1970/1992), alle Schilder im selben Maßstab (Millimeter):
-  // Größe 2 nach VwV-StVO Rn. 13/15: Zeichen 205 Seitenlänge 900, Zeichen 306 Seitenlänge 600 (Breite über Eck 849), Zusatzzeichen 1002 600 × 600, direkt darunter.
-  const VZ = {"z205":{"vb":[847.159,743.623],"mm":900,"tr":[1.25,0.0,0.0,-1.25,0.0,743.62267],"p":[["#ffffff","m 338.859,0.398 c 7.516,0 15.028,2.867 20.758,8.598 1.879,1.879 3.445,3.953 4.707,6.152 l 15.246,26.156 0.071,0 293.101,508.039 c 0.055,0.098 0.098,0.196 0.153,0.293 1.488,2.395 2.656,5.043 3.425,7.911 4.196,15.656 -5.097,31.753 -20.758,35.949 -2.585,0.695 -5.183,1.012 -7.738,1 l -618.066,0 c -16.215,0 -29.356,-13.141 -29.356,-29.356 0,-5.304 1.414,-10.281 3.879,-14.578 0.02,-0.031 0.035,-0.062 0.055,-0.097 L 308.699,22.054 c 3.863,-6.664 5.653,-9.304 9.406,-13.058 5.731,-5.731 13.243,-8.598 20.754,-8.598 z","nonzero"],["#c1121c","m 338.859,7.754 c 7.125,-0.051 14.95,3.589 18.782,10.406 l 309.293,535.89 c 1.785,3.649 2.535,6.821 2.558,10.45 0,6.496 -2.875,12.66 -7.847,16.84 -4.383,3.394 -8.536,5.16 -14.122,5.16 l -617.906,0 c -3.769,0.035 -7.547,-0.871 -10.976,-3.133 -6.453,-3.899 -10.403,-10.883 -10.411,-18.426 0.184,-3.894 1.145,-8 2.879,-10.891 L 320.223,18.07 c 0.027,-0.047 0.062,-0.094 0.089,-0.141 0.032,-0.046 0.063,-0.093 0.094,-0.144 1.098,-1.754 2.473,-3.305 4.039,-4.633 3.59,-3.109 8.086,-4.977 12.825,-5.316 0.531,-0.047 1.062,-0.078 1.589,-0.082 z m 308.664,578.746 1.524,0 -1.555,0 0.031,0 z M 339.18,113.965 103.477,522.5 575.215,522.5 339.18,113.965 Z","nonzero"],["#000000","m 338.859,0 c 7.618,0 15.231,2.906 21.039,8.715 1.907,1.902 3.493,4.007 4.774,6.234 l 15.129,25.957 0.07,0 293.215,508.238 c 0.066,0.117 0.113,0.219 0.16,0.301 1.504,2.422 2.684,5.102 3.461,7.996 4.25,15.871 -5.172,32.192 -21.039,36.442 -2.621,0.703 -5.258,1.023 -7.844,1.015 l -618.066,0 C 13.328,594.898 0,581.57 0,565.14 c 0,-5.375 1.438,-10.418 3.934,-14.773 0.011,-0.024 0.027,-0.055 0.054,-0.102 L 308.352,21.851 c 3.871,-6.664 5.695,-9.363 9.468,-13.136 C 323.629,2.906 331.246,0 338.859,0 Z m 0,0.398 c -7.511,0 -15.023,2.867 -20.754,8.598 -3.753,3.754 -5.543,6.394 -9.406,13.058 L 4.336,550.465 c -0.02,0.035 -0.035,0.066 -0.055,0.097 -2.465,4.297 -3.879,9.274 -3.879,14.578 0,16.215 13.141,29.356 29.356,29.356 l 618.066,0 c 2.555,0.012 5.153,-0.305 7.738,-1 15.661,-4.196 24.954,-20.293 20.758,-35.949 -0.769,-2.868 -1.937,-5.516 -3.425,-7.911 -0.055,-0.097 -0.098,-0.195 -0.153,-0.293 L 379.641,41.304 l -0.071,0 -15.246,-26.156 c -1.262,-2.199 -2.828,-4.273 -4.707,-6.152 -5.73,-5.731 -13.242,-8.598 -20.758,-8.598 z","nonzero"]]},"z306":{"vb":[600.0,600.0],"mm":849,"tr":[1.25,0.0,0.0,-1.25,0.0,600.0],"p":[["#ffffff","M 223.758,7.562 6.582,224.734 c -9.98,9.977 -6.684,24.672 0.219,31.957 l 216.23,216.082 c 11.098,11.086 26.364,7.176 33.473,0.075 L 471.812,258.051 c 10.321,-10.313 10.547,-24.094 0.516,-34.121 L 256.16,7.508 C 239.863,-8.77 223.758,7.562 223.758,7.562 Z","nonzero"],["#000000","m 250.379,467.738 216.902,-216.89 c 10.629,-10.582 0.203,-20.539 0.203,-20.539 L 250.215,13.191 c 0,0 -9.965,-10.421 -20.551,0.2 L 12.621,230.145 c -10.598,10.644 -0.004,20.691 -0.004,20.691 72.328,72.355 144.692,144.617 217.055,216.906 0,0 10.058,10.586 20.707,-0.004 z m -6.199,-6.195 c -4.172,4.199 -8.371,-0.094 -8.371,-0.094 C 163.488,389.227 91.199,316.965 18.914,244.703 c 0,0 -4.297,-4.195 -0.094,-8.363 L 235.836,19.613 c 4.492,-4.34 8.211,0.032 8.211,0.032 72.445,72.16 144.707,144.496 216.98,216.828 0,0 4.371,3.718 0.032,8.203 L 244.18,461.543 Z","nonzero"],["#f7ba0b","M 240.004,107.648 372.996,240.547 240.004,373.449 107.012,240.547 240.004,107.648 Z","nonzero"],["#000000","m 240.004,103.496 -2.078,2.078 L 102.855,240.547 240.004,377.602 377.152,240.547 240.004,103.496 Z m 0,8.305 L 368.84,240.547 240.004,369.293 111.168,240.547 240.004,111.801 Z","nonzero"]]},"z1002_20":{"vb":[601.012,600.998],"mm":600,"tr":[1.25,0.0,0.0,-1.25,0.0,600.99804],"p":[["#ffffff","m 0.402,448.396 0,-415.992 C 0.402,14.724 14.723,0.4 32.395,0.4 l 416.015,0 c 17.672,0 32.004,14.324 32.004,32.004 l 0,415.992 c 0,17.672 -14.332,32.004 -32.004,32.004 l -416.015,0 C 14.723,480.4 0.402,466.068 0.402,448.396","nonzero"],["#231f20","M 8.398,32.404 C 8.398,19.15 19.148,8.396 32.395,8.396 l 416.015,0 c 13.254,0 23.996,10.754 23.996,24.008 l 0,416.008 c 0,13.242 -10.742,23.996 -23.996,23.996 l -416.015,0 c -13.247,0 -23.997,-10.754 -23.997,-23.996 l 0,-416.008 z m 11.997,0 0,416.008 c 0,6.613 5.371,11.984 12,11.984 l 416.015,0 c 6.629,0 12,-5.371 12,-11.984 l 0,-416.008 c 0,-6.625 -5.371,-12.008 -12,-12.008 l -416.015,0 c -6.629,0 -12,5.383 -12,12.008 z","nonzero"],["#231f20","m 420.406,200.396 -100.004,0 c -22.086,0 -40,-17.902 -40,-40 l 0,-99.988 -80,0 0,99.988 c 0,66.285 53.727,120.012 120,120.012 l 100.004,0","nonzero"],["#231f20","m 220.406,420.396 40,0 0,-119.996 -40,0 0,119.996 z","nonzero"],["#231f20","m 60.406,260.4 120,0 0,-39.996 -120,0 0,39.996 z","nonzero"]]}};
-  const VZ_PX = 0.2, VZ_BILD = {};   // Bildpunkte je Millimeter
-  function vzMale(g, sp, x0, y0, spiegel) {   // zeichnet eine Vorlage, linke obere Ecke bei x0|y0 (mm)
-    const k = sp.mm / sp.vb[0], t = sp.tr; g.save(); g.scale(VZ_PX, VZ_PX); g.translate(x0, y0);
-    if (spiegel) { g.translate(sp.mm, 0); g.scale(-1, 1); }
-    g.scale(k, k); g.transform(t[0], t[1], t[2], t[3], t[4], t[5]);
-    sp.p.forEach(([f, d, r]) => { g.fillStyle = f; g.fill(new Path2D(d), r); }); g.restore();
+  // ------------------------------------------------------------- Verkehrszeichen nach amtlicher Vorlage
+  // Vorlagen in schilder/*.svg (amtliche Zeichnungen nach dem Verkehrszeichenkatalog, Wikimedia Commons; 1 SVG-Einheit = 1 mm bei Größe 2,
+  // nur 306: Vorlage in Größe 1, darum ×√2). Wo keine Vorlage da ist, wird maßstabsgetreu selbst gezeichnet (Maße unten, in mm).
+  // Größen nach VwV-StVO zu §§ 39–43 Rn. 13/15: innerorts Größe 2 (Dreieck 900, Ronde 600, Quadrat 600, Zusatzzeichen 600 breit),
+  // Autobahn Größe 3 (Dreieck 1260, Ronde 750, Quadrat 840), Landstraße über 80 km/h Ronden Größe 3. Zusatzzeichen direkt darunter, ohne Abstand (§ 39 Abs. 3 StVO).
+  // Aufstellung (Rn. 42/43): Unterkante 2,0 m, Schildkante seitlich 0,5 m (innerorts) bzw. 1,5 m (außerorts) neben der Fahrbahn, rechts in Fahrtrichtung.
+  const VZ_ROT = "#c1121c", VZ_BLAU = "#154889", VZ_GELB = "#f7ba0b", VZ_GRUEN = "#1e7d3c", VZ_SCHWARZ = "#231f20";
+  const VZ_GR3 = { dreieck: 1.4, quadrat: 1.4, rechteck: 1.4, ronde: 1.25, zusatz: 1.25, achteck: 1050 / 900 };   // Größe 3 gegenüber Größe 2
+  const vzRR = (g, x, y, w, h, r) => { g.beginPath(); g.moveTo(x + r, y); g.arcTo(x + w, y, x + w, y + h, r); g.arcTo(x + w, y + h, x, y + h, r); g.arcTo(x, y + h, x, y, r); g.arcTo(x, y, x + w, y, r); g.closePath(); };
+  const vzKreis = (g, x, y, r, f) => { g.beginPath(); g.arc(x, y, r, 0, 2 * Math.PI); g.fillStyle = f; g.fill(); };
+  // Schrift wie DIN 1451 (Engschrift-Ersatz): Versalhöhe h in mm, höchstens maxW breit
+  function vzText(g, t, cx, cy, h, maxW, f) {
+    g.save(); g.font = `bold ${h / 0.72}px "DIN 1451 Mittelschrift","DIN Alternate","Roboto Condensed","Arial Narrow",Arial,sans-serif`;
+    const w = g.measureText(t).width, sx = Math.min(1, maxW / w); g.translate(cx, cy); g.scale(sx, 1);
+    g.textAlign = "center"; g.textBaseline = "alphabetic"; g.fillStyle = f; g.fillText(t, 0, h / 2); g.restore();
   }
-  // Bild + Maße in mm; null = Schild ist (noch) nicht nach Vorlage gezeichnet
-  function vzBild(typ) {
-    if (VZ_BILD[typ] !== undefined) return VZ_BILD[typ];
-    let teile = null;
-    if (typ === "z205") teile = [[VZ.z205]];
-    else if (typ === "z306") teile = [[VZ.z306]];
-    else if (typ === "z306_zr" || typ === "z306_zl") teile = [[VZ.z306], [VZ.z1002_20, typ === "z306_zl"]];   // links abknickend = gespiegelt
-    if (!teile) return (VZ_BILD[typ] = null);
-    const w = Math.max(...teile.map(t => t[0].mm)), hs = teile.map(t => t[0].mm * t[0].vb[1] / t[0].vb[0]), h = hs.reduce((a, b) => a + b, 0);   // Zusatzzeichen direkt unter dem Hauptzeichen (VwV-StVO: ohne Abstand)
+  // Ronde wie Zeichen 250 (Vorlage): Lichtkante 10 mm, Ring bis Innen-Ø 419 bei 600 mm (×D/600)
+  function vzRing(g, D, ring, innen, ri) {
+    const k = D / 600, r = D / 2; vzKreis(g, r, r, r, "#000"); vzKreis(g, r, r, r - 0.4 * k, "#fff"); vzKreis(g, r, r, r - 10 * k, ring); vzKreis(g, r, r, (ri || 209.6) * k, innen);
+  }
+  function vzRahmen(g, w, h, rand) {   // Zusatzzeichen/Tafel: Lichtkante 10, schwarzer Rand 15, Ecken r 40 (wie 1002)
+    vzRR(g, 0, 0, w, h, 40); g.fillStyle = "#000"; g.fill(); vzRR(g, 0.4, 0.4, w - 0.8, h - 0.8, 39.6); g.fillStyle = "#fff"; g.fill();
+    vzRR(g, 10, 10, w - 20, h - 20, 30); g.fillStyle = rand || VZ_SCHWARZ; g.fill(); vzRR(g, 25, 25, w - 50, h - 50, 15); g.fillStyle = "#fff"; g.fill();
+  }
+  function vzRad(g, cx, cy, s, f) {    // Fahrrad-Sinnbild, Breite ≈ 1,9·s
+    g.save(); g.strokeStyle = f; g.fillStyle = f; g.lineWidth = 0.09 * s; g.lineJoin = "round"; g.lineCap = "round";
+    const hr = [cx - 0.62 * s, cy + 0.22 * s], vr = [cx + 0.62 * s, cy + 0.22 * s], r = 0.36 * s, tr = [cx - 0.05 * s, cy + 0.22 * s], sa = [cx - 0.22 * s, cy - 0.28 * s], le = [cx + 0.42 * s, cy - 0.34 * s];
+    [hr, vr].forEach(p => { g.beginPath(); g.arc(p[0], p[1], r, 0, 7); g.stroke(); });
+    g.beginPath(); g.moveTo(hr[0], hr[1]); g.lineTo(sa[0] + 0.05 * s, sa[1] + 0.12 * s); g.lineTo(le[0] - 0.08 * s, sa[1] + 0.12 * s); g.lineTo(tr[0], tr[1]); g.closePath();
+    g.moveTo(sa[0], sa[1]); g.lineTo(tr[0], tr[1]); g.moveTo(le[0] - 0.08 * s, sa[1] + 0.12 * s); g.lineTo(vr[0], vr[1]); g.moveTo(le[0] - 0.1 * s, le[1]); g.lineTo(le[0] + 0.12 * s, le[1]); g.stroke();
+    g.beginPath(); g.moveTo(sa[0] - 0.14 * s, sa[1]); g.lineTo(sa[0] + 0.12 * s, sa[1]); g.stroke(); g.restore();
+  }
+  function vzPfeil(g, x0, x1, y, b, f) {   // waagrechter Doppelpfeil
+    const sp = 2.2 * b; g.fillStyle = f; g.beginPath(); g.moveTo(x0, y); g.lineTo(x0 + sp, y - 1.3 * b); g.lineTo(x0 + sp, y - b / 2); g.lineTo(x1 - sp, y - b / 2); g.lineTo(x1 - sp, y - 1.3 * b); g.lineTo(x1, y);
+    g.lineTo(x1 - sp, y + 1.3 * b); g.lineTo(x1 - sp, y + b / 2); g.lineTo(x0 + sp, y + b / 2); g.lineTo(x0 + sp, y + 1.3 * b); g.closePath(); g.fill();
+  }
+  function vzAuto(g, cx, cy, s, f) {    // Pkw von hinten (Sinnbild in 276/280/325), Breite s
+    g.fillStyle = f; vzRR(g, cx - 0.5 * s, cy - 0.15 * s, s, 0.62 * s, 0.1 * s); g.fill();
+    g.beginPath(); g.moveTo(cx - 0.38 * s, cy - 0.15 * s); g.lineTo(cx - 0.28 * s, cy - 0.55 * s); g.lineTo(cx + 0.28 * s, cy - 0.55 * s); g.lineTo(cx + 0.38 * s, cy - 0.15 * s); g.closePath(); g.fill();
+    g.fillRect(cx - 0.5 * s, cy + 0.4 * s, 0.2 * s, 0.25 * s); g.fillRect(cx + 0.3 * s, cy + 0.4 * s, 0.2 * s, 0.25 * s);
+    g.fillStyle = "#fff"; g.fillRect(cx - 0.42 * s, cy + 0.06 * s, 0.16 * s, 0.09 * s); g.fillRect(cx + 0.26 * s, cy + 0.06 * s, 0.16 * s, 0.09 * s);
+  }
+  function vzPerson(g, cx, fy, h, f) {  // Fußgänger-Sinnbild, Fuß bei fy, Höhe h
+    g.save(); g.strokeStyle = f; g.fillStyle = f; g.lineCap = "round"; g.lineWidth = 0.13 * h;
+    vzKreis(g, cx + 0.04 * h, fy - 0.9 * h, 0.1 * h, f);
+    g.beginPath(); g.moveTo(cx + 0.02 * h, fy - 0.72 * h); g.lineTo(cx - 0.03 * h, fy - 0.42 * h); g.lineTo(cx - 0.2 * h, fy - 0.04 * h); g.moveTo(cx - 0.03 * h, fy - 0.42 * h); g.lineTo(cx + 0.14 * h, fy - 0.22 * h); g.lineTo(cx + 0.16 * h, fy - 0.02 * h);
+    g.moveTo(cx + 0.01 * h, fy - 0.66 * h); g.lineTo(cx - 0.17 * h, fy - 0.5 * h); g.moveTo(cx + 0.01 * h, fy - 0.66 * h); g.lineTo(cx + 0.18 * h, fy - 0.52 * h); g.stroke(); g.restore();
+  }
+  function vzAlt(typ, q) {    // alte Zeichnung (128 × 128), Ausschnitt q = [x, y, w, h], in die volle Schildfläche gestreckt
+    return (g, w, h) => { const c = schildBild(typ); g.drawImage(c, q[0], q[1], q[2], q[3], 0, 0, w, h); };
+  }
+  // Teile: svg = Vorlage (Datei), mal = selbst gezeichnet (Koordinaten in mm); w/h in mm bei Größe 2; form für Größe 3; quelle für die Liste
+  const VZ_TEIL = {
+    z205: { svg: "z205", w: 847.16, h: 743.62, form: "dreieck" },                // Seitenlänge 900, Ecken gerundet
+    z206: { svg: "z206", w: 901, h: 901, form: "achteck" },
+    z215: { svg: "z215", w: 601, h: 601, form: "ronde" },
+    z306: { svg: "z306", w: 848.5, h: 848.5, form: "quadrat" },                  // Seitenlänge 600, über Eck 849
+    z1002_10: { svg: "z1002-10", w: 601, h: 601, form: "zusatz" }, z1002_11: { svg: "z1002-11", w: 601, h: 601, form: "zusatz" },
+    z1002_20: { svg: "z1002-20", w: 601, h: 601, form: "zusatz" }, z1002_21: { svg: "z1002-21", w: 601, h: 601, form: "zusatz" },
+    z1022_10: { svg: "z1022-10", w: 600, h: 450, form: "zusatz" },
+    z220_20: { svg: "z220-20", w: 727, h: 269, form: "rechteck" },
+    z220_10: { svg: "z220-20", spiegel: true, w: 727, h: 269, form: "rechteck", band: [40, 86, 498, 95] },   // Spiegelbild von 220-20, Schrift neu (Schriftfeld in mm)
+    z250: { svg: "z250", w: 601, h: 601, form: "ronde" },
+    z267: { svg: "z267", w: 601, h: 601, form: "ronde" },
+    // ---- selbst gezeichnet (keine Vorlage im Ordner): Maße in mm
+    z274: { w: 600, h: 600, form: "ronde", mal: (g, w, h, sc) => { vzRing(g, w, VZ_ROT, "#fff"); vzText(g, sc.zahl, w / 2, w / 2, 0.4 * w, 0.62 * w, "#000"); } },
+    z276: { w: 600, h: 600, form: "ronde", mal: (g, w) => { vzRing(g, w, VZ_ROT, "#fff"); vzAuto(g, 0.36 * w, 0.5 * w, 0.2 * w, VZ_ROT); vzAuto(g, 0.64 * w, 0.5 * w, 0.2 * w, "#000"); } },
+    z280: { w: 600, h: 600, form: "ronde", mal: (g, w) => {
+      const r = w / 2; vzKreis(g, r, r, r, "#000"); vzKreis(g, r, r, r - 0.4 * w / 600, "#fff"); vzKreis(g, r, r, r - 10 * w / 600, "#6f6f6f"); vzKreis(g, r, r, r - 18 * w / 600, "#fff");
+      vzAuto(g, 0.36 * w, 0.5 * w, 0.2 * w, "#8a8a8a"); vzAuto(g, 0.64 * w, 0.5 * w, 0.2 * w, "#8a8a8a");
+      g.save(); g.beginPath(); g.arc(r, r, r - 18 * w / 600, 0, 7); g.clip(); g.strokeStyle = "#000"; g.lineWidth = 0.012 * w;
+      for (let i = -2; i <= 2; i++) { const d = i * 0.035 * w; g.beginPath(); g.moveTo(r - 0.5 * w + d, r + 0.5 * w + d); g.lineTo(r + 0.5 * w + d, r - 0.5 * w + d); g.stroke(); } g.restore(); } },
+    z283: { w: 600, h: 600, form: "ronde", mal: (g, w) => vzHaltverbot(g, w, true) },
+    z286: { w: 600, h: 600, form: "ronde", mal: (g, w) => vzHaltverbot(g, w, false) },
+    z224: { w: 420, h: 420, form: "fest", mal: (g, w) => {   // Haltestelle (VzKat nur 420): gelb, grüner Ring, grünes H
+      const r = w / 2, k = w / 420; vzKreis(g, r, r, r, "#000"); vzKreis(g, r, r, r - 0.4 * k, "#fff"); vzKreis(g, r, r, r - 7 * k, VZ_GRUEN); vzKreis(g, r, r, r - 35 * k, VZ_GELB);
+      vzText(g, "H", r, r, 0.5 * w, 0.5 * w, VZ_GRUEN); } },
+    zone30: { w: 840, h: 840, form: "fest", mal: (g, w, h) => {   // 274.1 (VzKat 840 × 840): Zeichen 274 (Ø 480) über „ZONE“
+      vzRahmen(g, w, h); g.save(); g.translate(w / 2 - 240, 70); vzRing(g, 480, VZ_ROT, "#fff"); vzText(g, "30", 240, 240, 192, 300, "#000"); g.restore(); vzText(g, "ZONE", w / 2, 690, 120, 560, "#000"); } },
+    z201: { w: 1350 * Math.cos(0.611) + 180 * Math.sin(0.611), h: 1350 * Math.sin(0.611) + 180 * Math.cos(0.611), form: "fest", mal: (g, w, h) => {   // Andreaskreuz liegend: Balken 1350 × 180, rot gerandet
+      g.save(); g.translate(w / 2, h / 2); [0.611, -0.611].forEach(a => { g.save(); g.rotate(a); g.fillStyle = VZ_ROT; g.fillRect(-675, -90, 1350, 180); g.restore(); });
+      [0.611, -0.611].forEach(a => { g.save(); g.rotate(a); g.fillStyle = "#fff"; g.fillRect(-645, -60, 1290, 120); g.restore(); }); g.restore(); } },
+    z450: { w: 650, h: 1500, form: "fest", mal: (g, w, h, sc) => {   // Ankündigungsbake 650 × 1500, rote Schrägbalken zur Fahrbahn hin fallend
+      g.fillStyle = "#fff"; g.fillRect(0, 0, w, h); g.strokeStyle = "#9a9a9a"; g.lineWidth = 6; g.strokeRect(3, 3, w - 6, h - 6);
+      g.save(); g.beginPath(); g.rect(0, 0, w, h); g.clip(); g.fillStyle = VZ_ROT; const n = +sc.zahl, st = 220;
+      for (let i = 0; i < n; i++) { const y = h / 2 + (i - (n - 1) / 2) * 2.1 * st; g.beginPath(); g.moveTo(-20, y + 0.55 * w); g.lineTo(w + 20, y - 0.55 * w + 0); g.lineTo(w + 20, y - 0.55 * w + st); g.lineTo(-20, y + 0.55 * w + st); g.closePath(); g.fill(); }
+      g.restore(); } },
+    z1000_32: { w: 600, h: 450, form: "zusatz", mal: (g, w, h) => { vzRahmen(g, w, h); vzRad(g, w / 2, 0.37 * h, 0.25 * w, "#000"); vzPfeil(g, 70, w - 70, 0.78 * h, 30, "#000"); } },   // Radverkehr kreuzt von links und rechts
+    z1020_30: { w: 600, h: 330, form: "zusatz", mal: (g, w, h) => { vzRahmen(g, w, h); vzText(g, "Anlieger frei", w / 2, h / 2, 110, w - 110, "#000"); } },
+    zkfz: { w: 600, h: 450, form: "zusatz", mal: (g, w, h) => { vzRahmen(g, w, h); vzText(g, "Kraftfahrzeuge", w / 2, 0.36 * h, 92, w - 100, "#000"); vzText(g, "frei", w / 2, 0.7 * h, 92, w - 100, "#000"); } },
+    z244_1: { w: 600, h: 600, form: "quadrat", mal: (g, w, h) => vzFahrradstr(g, w, h, false) },
+    z244_2: { w: 600, h: 600, form: "quadrat", mal: (g, w, h) => vzFahrradstr(g, w, h, true) },
+    z325_1: { w: 900, h: 600, form: "rechteck", mal: (g, w, h) => vzBeruhigt(g, w, h, false) },
+    z325_2: { w: 900, h: 600, form: "rechteck", mal: (g, w, h) => vzBeruhigt(g, w, h, true) },
+    // ---- alte Zeichnung in richtiger Außengröße (Vorlage fehlt, Inhalt zu fein zum Nachzeichnen)
+    z350: { w: 600, h: 600, form: "quadrat", alt: true, mal: vzAlt("z350", [8, 8, 112, 112]) },
+    z330: { w: 600, h: 600, form: "quadrat", alt: true, mal: vzAlt("z330", [6, 6, 116, 116]) },
+    z531: { w: 1250, h: 1600, form: "fest", alt: true, mal: vzAlt("z531", [6, 6, 116, 116]) },
+    z332: { w: 3000, h: 2000, form: "fest", alt: true, mal: vzAlt("z332", [4, 24, 120, 80]) },
+    z333: { w: 1500, h: 1500, form: "fest", alt: true, mal: vzAlt("z333", [10, 10, 108, 108]) },
+    vorweg: { w: 3500, h: 2600, form: "fest", alt: true, mal: vzAlt("vorweg", [2, 18, 124, 92]) },
+    weg: { w: 3500, h: 2600, form: "fest", alt: true, mal: vzAlt("weg", [2, 18, 124, 92]) }
+  };
+  function vzHaltverbot(g, w, kreuz) {   // 283/286: Ring wie 274, blau innen, rote Schrägbalken 80 mm (×w/600)
+    const r = w / 2, k = w / 600; vzRing(g, w, VZ_ROT, VZ_BLAU);
+    g.save(); g.beginPath(); g.arc(r, r, 215 * k, 0, 7); g.clip(); g.strokeStyle = VZ_ROT; g.lineWidth = 80 * k; g.beginPath(); g.moveTo(r - r, r - r); g.lineTo(r + r, r + r); if (kreuz) { g.moveTo(r + r, r - r); g.lineTo(r - r, r + r); } g.stroke(); g.restore();
+  }
+  function vzFahrradstr(g, w, h, ende) {   // 244.1/244.2: weiße Tafel mit Rand, oben Zeichen 237 (Ø 330), darunter „Fahrradstraße“; Ende: grau, roter Schrägbalken
+    vzRahmen(g, w, h); const f = ende ? "#7a7a7a" : null;
+    vzKreis(g, w / 2, 230, 165, "#fff"); vzKreis(g, w / 2, 230, 160, f || VZ_BLAU); vzRad(g, w / 2, 225, 75, "#fff");
+    vzText(g, "Fahrradstraße", w / 2, 480, 70, w - 90, f || "#000");
+    if (ende) { g.save(); vzRR(g, 25, 25, w - 50, h - 50, 15); g.clip(); g.strokeStyle = VZ_ROT; g.lineWidth = 45; g.beginPath(); g.moveTo(30, h - 30); g.lineTo(w - 30, 30); g.stroke(); g.restore(); }
+  }
+  function vzBeruhigt(g, w, h, ende) {     // 325.1/325.2: blaue Tafel, weißer Rand, Haus, Erwachsener + Kind mit Ball, Auto; Ende: roter Schrägbalken
+    vzRR(g, 0, 0, w, h, 40); g.fillStyle = "#000"; g.fill(); vzRR(g, 0.4, 0.4, w - 0.8, h - 0.8, 39.6); g.fillStyle = "#fff"; g.fill(); vzRR(g, 16, 16, w - 32, h - 32, 26); g.fillStyle = VZ_BLAU; g.fill();
+    const ws = "#fff", by = h - 95; g.fillStyle = ws; g.fillRect(50, by, w - 100, 14);   // Boden
+    g.beginPath(); g.moveTo(70, by); g.lineTo(70, by - 170); g.lineTo(165, by - 260); g.lineTo(260, by - 170); g.lineTo(260, by); g.closePath(); g.fill();   // Haus
+    g.fillStyle = VZ_BLAU; g.fillRect(140, by - 110, 50, 110); g.fillRect(95, by - 150, 36, 36); g.fillRect(200, by - 150, 36, 36);
+    vzPerson(g, 360, by, 300, ws); vzPerson(g, 470, by, 190, ws); vzKreis(g, 545, by - 30, 26, ws);
+    g.save(); g.translate(720, by - 70); g.scale(1, 0.9); g.fillStyle = ws; vzRR(g, -110, -40, 220, 85, 18); g.fill(); g.beginPath(); g.moveTo(-70, -40); g.lineTo(-45, -95); g.lineTo(55, -95); g.lineTo(80, -40); g.closePath(); g.fill();
+    vzKreis(g, -60, 50, 30, ws); vzKreis(g, 60, 50, 30, ws); g.restore();
+    if (ende) { g.save(); vzRR(g, 16, 16, w - 32, h - 32, 26); g.clip(); g.strokeStyle = VZ_ROT; g.lineWidth = 50; g.beginPath(); g.moveTo(40, h - 30); g.lineTo(w - 40, 30); g.stroke(); g.restore(); }
+  }
+  // Schild-Typen der Szenen: Teile von oben nach unten (Hauptzeichen, darunter Zusatzzeichen); z0 = Unterkante in m
+  const VZ_TYP = {
+    z205: ["z205"], z206: ["z206"], z215: ["z215"], z306: ["z306"], z350: ["z350"], z250: ["z250"], z267: ["z267"], z220_20: ["z220_20"], z220_10: ["z220_10"],
+    z205_215: ["z205", "z215"],                                  // Kreisverkehr: an jeder Zufahrt 205 mit 215 (§ 8 Abs. 1a StVO)
+    z306_zr: ["z306", "z1002_20"], z306_zl: ["z306", "z1002_10"], z205_zr: ["z205", "z1002_21"], z205_zl: ["z205", "z1002_11"],   // abknickende Vorfahrt
+    z220_20_rad: ["z220_20", "z1000_32"], z220_10_rad: ["z220_10", "z1000_32"], z267_rad: ["z267", "z1022_10"],
+    z244_1: ["z244_1"], z244_1_kfz: ["z244_1", "zkfz"], z244_1_anl: ["z244_1", "z1020_30"], z244_2: ["z244_2"], z325_1: ["z325_1"], z325_2: ["z325_2"],
+    z276: ["z276"], z280: ["z280"], z283: ["z283"], z286: ["z286"], z224: ["z224"], z224g: ["z224"], zone30: ["zone30"], z201: ["z201"],
+    z330: ["z330"], z332: ["z332"], z333: ["z333"], vorweg: ["vorweg"], weg: ["weg"], z531: ["z531"]
+  };
+  function vzTeile(typ) {
+    if (VZ_TYP[typ]) return VZ_TYP[typ].map(n => ({ n, sc: {} }));
+    let m = /^z274_(\d+)$/.exec(typ); if (m) return [{ n: "z274", sc: { zahl: m[1] } }];
+    m = /^z450_(\d)$/.exec(typ); if (m) return [{ n: "z450", sc: { zahl: m[1] } }];
+    return null;
+  }
+  function punktIn(x, y, poly) { let c = false; for (let i = 0, j = poly.length - 1; i < poly.length; j = i++) { const [xi, yi] = poly[i], [xj, yj] = poly[j]; if ((yi > y) !== (yj > y) && x < (xj - xi) * (y - yi) / (yj - yi) + xi) c = !c; } return c; }
+  const VZ_SVG = {};
+  function vzSvg(name) {   // Vorlage laden (als Text, dann als SVG-Bild: unabhängig vom Content-Type des Servers); nach dem Laden werden die Schilder neu gebaut
+    if (VZ_SVG[name]) return VZ_SVG[name];
+    const e = VZ_SVG[name] = { img: new Image(), ok: false };
+    try {
+      fetch("schilder/" + name + ".svg").then(r => r.ok ? r.text() : Promise.reject(r.status)).then(t => {
+        e.img.onload = () => { e.ok = true; for (const k in VZ_BILD) if (VZ_BILD[k] && !VZ_BILD[k].fertig) delete VZ_BILD[k]; };
+        e.img.src = URL.createObjectURL(new Blob([t], { type: "image/svg+xml" }));
+      }).catch(() => {});
+    } catch (err) {}
+    return e;
+  }
+  // Größe eines Teils in mm (Größe 2 oder 3)
+  function vzMass(n, gr) { const t = VZ_TEIL[n], f = gr === 3 ? VZ_GR3[t.form] || 1 : 1; return [t.w * f, t.h * f]; }
+  // ein Teil in g zeichnen, linke obere Ecke 0|0, Einheit mm; true = fertig (Vorlage geladen oder selbst gezeichnet)
+  function vzTeilMalen(g, n, w, h, sc) {
+    const t = VZ_TEIL[n];
+    if (t.svg) {
+      const e = vzSvg(t.svg);
+      if (!e.ok) { const alt = SCHILD_BILD[n] || (n === "z205" || n === "z206" || n === "z215" || n === "z306" ? schildBild(n) : null); if (alt) g.drawImage(alt, 0, 0, w, h); return false; }
+      g.save(); if (t.spiegel) { g.translate(w, 0); g.scale(-1, 1); } g.drawImage(e.img, 0, 0, w, h); g.restore();
+      if (t.band) { const [bx, by, bw, bh] = t.band, k = w / t.w; g.fillStyle = "#fff"; g.fillRect(w - (bx + bw) * k, by * k, bw * k, bh * k); vzText(g, "Einbahnstraße", w - (bx + bw / 2) * k, (by + bh / 2) * k, 0.55 * bh * k, 0.92 * bw * k, "#000"); }
+      return true;
+    }
+    t.mal(g, w, h, sc); return true;
+  }
+  const VZ_PX = 0.35, VZ_BILD = {};   // Bildpunkte je Millimeter
+  // Bild + Maße in mm (alle Teile übereinander, mittig, ohne Abstand); gr = Größe 2 oder 3
+  function vzBild(typ, gr) {
+    const key = typ + "|" + (gr || 2); if (VZ_BILD[key] !== undefined) return VZ_BILD[key];
+    const teile = vzTeile(typ); if (!teile) return (VZ_BILD[key] = null);
+    const ms = teile.map(t => vzMass(t.n, gr)), w = Math.max(...ms.map(m => m[0])), h = ms.reduce((a, m) => a + m[1], 0);
     const c = document.createElement("canvas"); c.width = Math.ceil(w * VZ_PX); c.height = Math.ceil(h * VZ_PX); const g = c.getContext("2d");
-    let y = 0; teile.forEach(([sp, sg], i) => { vzMale(g, sp, (w - sp.mm) / 2, y, sg); y += hs[i]; });
-    return (VZ_BILD[typ] = { img: c, w, h });
+    let y = 0, fertig = true; g.scale(VZ_PX, VZ_PX);
+    teile.forEach((t, i) => { g.save(); g.translate((w - ms[i][0]) / 2, y); fertig = vzTeilMalen(g, t.n, ms[i][0], ms[i][1], t.sc) && fertig; g.restore(); y += ms[i][1]; });
+    return (VZ_BILD[key] = { img: c, w, h, fertig, teile: teile.map((t, i) => ({ n: t.n, w: ms[i][0], h: ms[i][1] })) });
   }
-  const VZ_OBEN = 2.5, VZ_3D = 1.8, VZ_MIN = 34;   // Vergrößerung für die Lesbarkeit, je Ansicht für alle Schilder gleich; VZ_MIN: 900 mm sind oben mindestens so viele CSS-Pixel breit
-  // Ansicht von oben: Schild nach Vorlage neben dem Pfosten, auf der Seite weg von der Fahrbahn (sc.aussen); alle im selben Maßstab, am Handy mit Mindestgröße
+  // Größe eines Schilds in der Szene: Autobahn Größe 3; Landstraße (über 80 km/h) Ronden Größe 3; sonst Größe 2
+  function vzGroesse(sc, kat) {
+    if (sc.gr) return sc.gr; const t = vzTeile(sc.typ), f = t && VZ_TEIL[t[0].n].form;
+    return kat === "autobahn" ? 3 : kat === "ueberland" && f === "ronde" ? 3 : 2;
+  }
+  const VZ_OBEN = 2.5, VZ_3D = 1, VZ_MIN = 34;   // Vergrößerung: von oben 2,5-fach (Lesbarkeit), in 3D echte Größe; VZ_MIN: 900 mm sind oben mindestens so viele CSS-Pixel breit
+  const VZ_Z0 = { z450: 0.6 };                  // Unterkante in m, sonst 2,0 (VwV Rn. 42)
+  const vzStrasse = (st, x, y) => { const f = st.flaechen; for (let i = f.length - 1; i >= 0; i--) { const p = f[i].poly, bb = p._bb || (p._bb = bbox(p)); if (x < bb[0] || x > bb[2] || y < bb[1] || y > bb[3]) continue; if (punktIn(x, y, p)) return !!(STRASSE[f[i].art] || f[i].art === "weiss"); } return false; };
+  // Schildfläche in 3D (von oben gesehen eine Strecke quer zur Blickrichtung): Endpunkte in m
+  function vzPlatte(sc, kat) {
+    const vz = vzBild(sc.typ, vzGroesse(sc, kat)); if (!vz || !sc.blick) return null;
+    const hw = vz.w * VZ_3D / 2000, rx = sc.blick[1], ry = -sc.blick[0];
+    return { a: [sc.x - rx * hw, sc.y - ry * hw], b: [sc.x + rx * hw, sc.y + ry * hw], hw, rx, ry, vz };
+  }
+  // hält die Schildfläche mindestens d Meter von jeder Fahrbahnfläche fern? (Proben auf der Fläche und im Kreis d darum)
+  function vzFrei(st, sc, kat, d) {
+    const P = vzPlatte(sc, kat); if (!P) return true;
+    for (let i = 0; i <= 6; i++) {
+      const x = lerp(P.a[0], P.b[0], i / 6), y = lerp(P.a[1], P.b[1], i / 6);
+      if (vzStrasse(st, x, y)) return false;
+      for (let j = 0; j < 16; j++) { const a = j * Math.PI / 8; if (vzStrasse(st, x + Math.cos(a) * d, y + Math.sin(a) * d) || (j % 2 === 0 && vzStrasse(st, x + Math.cos(a) * d / 2, y + Math.sin(a) * d / 2))) return false; }
+    }
+    return true;
+  }
+  // Aufstellen: Pfosten entlang „aussen“ so schieben, dass die Schildkante den Seitenabstand zur Fahrbahn hat (0,5 m innerorts, 1,5 m außerorts)
+  function vzAufstellen(sz) {
+    const st = sz.strasse; if (!st || st._vzGestellt) return; st._vzGestellt = true;
+    const kat = sz.kategorie || "autobahn", d0 = kat === "autobahn" || kat === "ueberland" ? 1.5 : 0.5;
+    (st.schilder || []).forEach(sc => {
+      if (!sc.aussen || !sc.blick || sc.frei) return;
+      const d = sc.abstand || d0, [ax, ay] = sc.aussen, x0 = sc.x, y0 = sc.y, an = t => { sc.x = x0 + ax * t; sc.y = y0 + ay * t; };
+      let t = 0;
+      if (!vzFrei(st, sc, kat, d)) { while (t < 10 && !vzFrei(st, sc, kat, d)) { t += 0.05; an(t); } }
+      else { while (t > -4) { an(t - 0.05); if (!vzFrei(st, sc, kat, d)) break; t -= 0.05; } }
+      an(t); sc.x = Math.round(sc.x * 100) / 100; sc.y = Math.round(sc.y * 100) / 100;
+    });
+  }
+  // Ansicht von oben: Schild nach Vorlage neben dem Pfosten, auf der Seite weg von der Fahrbahn (sc.aussen); alle im selben Maßstab,
+  // am Handy mit Mindestgröße. Würde das Bild eine Fahrbahn überdecken, rückt es entlang des Fahrbahnrands weiter (Lage wird je Maßstab gemerkt).
+  function vzObenLage(st, sc, kat, s) {
+    const vz = vzBild(sc.typ, vzGroesse(sc, kat)); if (!vz || !sc.aussen) return null;
+    const k = Math.max(VZ_OBEN * s / 1000, VZ_MIN * dpr / 900), w = vz.w * k / s, h = vz.h * k / s, ab = Math.max(0.35, 3 * dpr / s), [ax, ay] = sc.aussen;
+    const key = Math.round(w * 50); sc._oben = sc._oben || {}; if (sc._oben[key]) return Object.assign({ vz, w, h }, sc._oben[key]);
+    const x0 = ax > 0 ? sc.x + ab : ax < 0 ? sc.x - ab - w : sc.x - w / 2, y0 = ay > 0 ? sc.y + ab : ay < 0 ? sc.y - ab - h : sc.y - h / 2;
+    const frei = (x, y) => { for (let i = 0; i <= 4; i++) for (let j = 0; j <= 4; j++) if (vzStrasse(st, x + w * i / 4, y + h * j / 4)) return false; return true; };
+    let best = [x0, y0];
+    for (let n = 0; n <= 40 && !frei(...best); n++) for (const sg of [1, -1]) { const q = [x0 + (ax ? 0 : sg * n * 0.25), y0 + (ay ? 0 : sg * n * 0.25)]; if (frei(...q)) { best = q; break; } }
+    sc._oben[key] = { x0: best[0], y0: best[1] }; return { vz, w, h, x0: best[0], y0: best[1] };
+  }
   function vzOben(st, X, Y, s) {
     (st.schilder || []).forEach(sc => {
-      const vz = sc.aussen && vzBild(sc.typ); if (!vz) return;
-      const k = Math.max(VZ_OBEN * s / 1000, VZ_MIN * dpr / 900), w = vz.w * k, h = vz.h * k, bx = X(sc.x), by = Y(sc.y), ab = Math.max(0.35 * s, 3 * dpr), [ax, ay] = sc.aussen;
-      const x0 = ax > 0 ? bx + ab : ax < 0 ? bx - ab - w : bx - w / 2, y0 = ay > 0 ? by + ab : ay < 0 ? by - ab - h : by - h / 2;
-      ctx.fillStyle = "rgba(0,0,0,.28)"; ctx.drawImage(vzRueck(vz, "rgba(0,0,0,.35)"), x0 + 2 * dpr, y0 + 2 * dpr, w, h);
+      const L = vzObenLage(st, sc, szene.kategorie, s); if (!L) return;
+      const bx = X(sc.x), by = Y(sc.y), x0 = X(L.x0), y0 = Y(L.y0), w = L.w * s, h = L.h * s;
+      ctx.drawImage(vzRueck(L.vz, "rgba(0,0,0,.35)"), x0 + 2 * dpr, y0 + 2 * dpr, w, h);
       ctx.fillStyle = "#7f868c"; ctx.beginPath(); ctx.arc(bx, by, Math.max(1.5 * dpr, 0.12 * s), 0, 7); ctx.fill();
-      ctx.drawImage(vz.img, x0, y0, w, h);
+      ctx.drawImage(L.vz.img, x0, y0, w, h);
     });
   }
   function vzRueck(vz, farbe) {   // Umriss des Schilds in einer Farbe (Rückseite, Schatten)
@@ -225,7 +424,14 @@
     z330: "Zeichen 330.1 · Autobahn", z332: "Zeichen 332 · Ausfahrttafel", z333: "Zeichen 333 · Pfeilzeichen Ausfahrt",
     z450_3: "Zeichen 450 · Ankündigungsbake 300 m", z450_2: "Zeichen 450 · Ankündigungsbake 200 m", z450_1: "Zeichen 450 · Ankündigungsbake 100 m",
     z205: "Zeichen 205 · Vorfahrt gewähren", z206: "Zeichen 206 · Halt. Vorfahrt gewähren", z215: "Zeichen 215 · Kreisverkehr", z306: "Zeichen 306 · Vorfahrtstraße", z350: "Zeichen 350 · Fußgängerüberweg", z274_30: "Zeichen 274 · 30 km/h", zone30: "Zeichen 274.1 · Tempo-30-Zone", z224: "Zeichen 224 · Haltestelle", z276: "Zeichen 276 · Überholverbot für Kraftfahrzeuge aller Art", z280: "Zeichen 280 · Ende des Überholverbots", z274_100: "Zeichen 274 · 100 km/h",
-    vorweg: "Zeichen 449 · Vorwegweiser 1000 m", weg: "Zeichen 449 · Vorwegweiser 500 m", z531: "Zeichen 531 · Einengungstafel"
+    vorweg: "Zeichen 449 · Vorwegweiser 1000 m", weg: "Zeichen 449 · Vorwegweiser 500 m", z531: "Zeichen 531 · Einengungstafel",
+    z274_60: "Zeichen 274 · 60 km/h", z274_80: "Zeichen 274 · 80 km/h", z205_215: "Zeichen 205 mit Zeichen 215 · Vorfahrt gewähren, Kreisverkehr",
+    z306_zr: "Zeichen 306 mit Zusatzzeichen 1002-20 · Verlauf der Vorfahrtstraße", z306_zl: "Zeichen 306 mit Zusatzzeichen 1002-10 · Verlauf der Vorfahrtstraße",
+    z205_zr: "Zeichen 205 mit Zusatzzeichen 1002-21 · Verlauf der Vorfahrtstraße", z205_zl: "Zeichen 205 mit Zusatzzeichen 1002-11 · Verlauf der Vorfahrtstraße",
+    z220_20_rad: "Zeichen 220 mit Zusatzzeichen 1000-32 · Einbahnstraße, Radverkehr kreuzt von links und rechts", z220_10_rad: "Zeichen 220 mit Zusatzzeichen 1000-32 · Einbahnstraße, Radverkehr kreuzt von links und rechts",
+    z267: "Zeichen 267 · Verbot der Einfahrt", z267_rad: "Zeichen 267 mit Zusatzzeichen 1022-10 · Verbot der Einfahrt, Radverkehr frei", z250: "Zeichen 250 · Verbot für Fahrzeuge aller Art",
+    z244_1: "Zeichen 244.1 · Beginn einer Fahrradstraße", z244_1_kfz: "Zeichen 244.1 mit Zusatzzeichen · Fahrradstraße, Kraftfahrzeuge frei", z244_1_anl: "Zeichen 244.1 mit Zusatzzeichen 1020-30 · Fahrradstraße, Anlieger frei", z244_2: "Zeichen 244.2 · Ende einer Fahrradstraße",
+    z325_1: "Zeichen 325.1 · Beginn eines verkehrsberuhigten Bereichs", z325_2: "Zeichen 325.2 · Ende eines verkehrsberuhigten Bereichs"
   };
 
   // ---------------------------------------------------------------- Fahrzeuge
@@ -324,7 +530,7 @@
     g.linien.push({ art: "breit", b: 0.3, pts: [[EIN, W + 0.15], [ENDE, W + 0.15]] });     // Breitstrich (Zeichen 340, 6 m/6 m)
     g.linien.push({ art: "voll", b: 0.25, pts: versatz(rampeMitte, W / 2 - 0.15).concat([[ENDE, 2 * W - 0.15], [SPITZE, W + 0.15], [X1, W + 0.15]]) });
     g.linien.push({ art: "voll", b: 0.25, pts: versatz(rampeMitte, -W / 2 + 0.15).filter(p => p[0] <= xZw + 1) });
-    const schilder = [{ typ: "z330", x: -175, y: 104, seite: 1 }];
+    const schilder = [{ typ: "z330", x: rampeR[6][0], y: rampeR[6][1], aussen: [Math.SQRT1_2, Math.SQRT1_2], blick: [-Math.SQRT1_2, Math.SQRT1_2] }];   // rechts an der Rampe; Pfosten wird beim Öffnen auf 1,5 m Seitenabstand gestellt
 
     // Fahrschulauto: Rampe -> Einfädelungsstreifen -> Lücke hinter dem Lkw -> rechter Fahrstreifen
     const fsPfad = pfad(rampeMitte.concat(spurPfad(EIN + 2, X1 + 600, yE, [{ x: 110, y: yR, laenge: 60 }])));
@@ -400,12 +606,14 @@
     g.linien.push({ art: "voll", b: 0.25, pts: [[X0, W + 0.15], [-60, W + 0.15], [A, 2 * W - 0.15], [AE, 2 * W - 0.15]].concat(versatz(rampeMitte, W / 2 - 0.15)) });
     g.linien.push({ art: "breit", b: 0.3, pts: [[-60, W + 0.15], [AE, W + 0.15]] });
     g.linien.push({ art: "voll", b: 0.25, pts: versatz(rampeMitte, -W / 2 + 0.15).filter(p => p[0] >= AE + 20) });
-    const p60 = neben(rampeMitte, AE + 50, W / 2 + 2.2);
+    const p60 = neben(rampeMitte, AE + 50, W / 2), i60 = Math.max(1, rampeMitte.findIndex(p => p[0] >= AE + 50)), r60 = [rampeMitte[i60][0] - rampeMitte[i60 - 1][0], rampeMitte[i60][1] - rampeMitte[i60 - 1][1]], l60 = Math.hypot(...r60), a60 = [-r60[1] / l60, r60[0] / l60];   // rechter Rand der Rampe, nach außen
+    // Pfeilzeichen 333 in der Trenninsel: dort, wo Rampe und Seitenstreifen weit genug auseinander sind
+    const i333 = rampeL.findIndex(p => p[1] > W + 0.5 + 2.5 + 4.5), p333 = i333 > 0 ? [rampeL[i333][0], (rampeL[i333][1] + W + 3) / 2] : [AE + 60, W + 6];
     const schilder = [
-      { typ: "vorweg", x: -890, y: W + 5.5, seite: 1 }, { typ: "weg", x: -390, y: W + 5.5, seite: 1 },
-      { typ: "z450_3", x: -300, y: W + 4, seite: 1 }, { typ: "z450_2", x: -200, y: W + 4, seite: 1 }, { typ: "z450_1", x: -100, y: W + 4, seite: 1 },
-      { typ: "z332", x: -20, y: 2 * W + 3.5, seite: 1 }, { typ: "z333", x: xZw + 2, y: W + 3, seite: 1 }, { typ: "z274_60", x: p60[0], y: p60[1], seite: 1 }
-    ];
+      { typ: "vorweg", x: -890, y: W + 3 }, { typ: "weg", x: -390, y: W + 3 },
+      { typ: "z450_3", x: -300, y: W + 3 }, { typ: "z450_2", x: -200, y: W + 3 }, { typ: "z450_1", x: -100, y: W + 3 },
+      { typ: "z332", x: -20, y: 2 * W }, { typ: "z333", x: p333[0], y: p333[1], frei: true }, { typ: "z274_60", x: p60[0], y: p60[1], aussen: a60, blick: [-a60[1], a60[0]] }
+    ].map(sc => Object.assign({ aussen: [0, 1], blick: [-1, 0] }, sc));   // rechts der Fahrbahn, für den Verkehr nach Osten; 333 steht in der Trenninsel (frei: kein Normabstand)
     const fsPfad = pfad(spurPfad(-1100, AE, yLi, [{ x: -800, y: yR, laenge: 90 }, { x: 0, y: yA, laenge: 60 }]).concat(rampeMitte.slice(1)));
     const fs = { id: "fs", typ: "fahrschule", farbe: "#f2f2ee", fokus: true, pfad: fsPfad,
       tempo: tempoStrecke(fsPfad, [[-1100, 120], [-780, 115], [65, 115], [AE, 60], [AE + 200, 58]], fsPfad.sBeiX(-920)) };
@@ -462,7 +670,7 @@
     const X0 = -350, X1 = 450, ENG = 120;                       // rechter Fahrstreifen endet bei 120 m
     const g = autobahnGrund(X0, X1, {});
     g.flaechen.push({ art: "baustelle", poly: [[ENG, W + 0.4], [ENG + 50, 0.2], [X1, 0.2], [X1, W + 0.4]] });
-    const schilder = [{ typ: "z274_80", x: -230, y: W + 4.2, seite: 1 }, { typ: "z531", x: -150, y: W + 4, seite: 1 }, { typ: "z531", x: -20, y: W + 4, seite: 1 }];
+    const schilder = [{ typ: "z274_80", x: -230, y: W + 3 }, { typ: "z531", x: -150, y: W + 3 }, { typ: "z531", x: -20, y: W + 3 }].map(sc => Object.assign(sc, { aussen: [0, 1], blick: [-1, 0] }));
     const yR = W / 2, yLi = -W / 2;
     const fz = [], farben = ["#b3322c", "#2c5aa0", "#3a3f45", "#e0b84a", "#6a7d8f", "#7b8a52", "#d9d2c3", "#8e4b8a"];
     const ABST = 24, WX = ENG - 24, KMH_K = 30;                 // je Fahrstreifen 24 m Abstand; Wechsel unmittelbar vor der Engstelle
@@ -832,7 +1040,7 @@
     });
     st.linien.forEach(l => zeichneLinieOben(l, X, Y, s));
     (st.schilder || []).forEach(sc => {
-      if (szene.schilderNeu && sc.aussen && vzBild(sc.typ)) return;   // wird zum Schluss über Flächen und Beschriftungen gezeichnet (vzOben)
+      if (sc.aussen && vzBild(sc.typ, vzGroesse(sc, szene.kategorie))) return;   // nach Vorlage: wird zum Schluss über Flächen und Beschriftungen gezeichnet (vzOben)
       const img = schildBild(sc.typ), gr = 5 * s, bx = X(sc.x), by = Y(sc.y);
       ctx.fillStyle = "rgba(0,0,0,.28)"; ctx.beginPath(); ctx.ellipse(bx + 0.3 * s, by + 0.22 * s, 0.34 * s, 0.17 * s, 0, 0, 7); ctx.fill();
       ctx.fillStyle = "#7f868c"; ctx.fillRect(bx - 0.07 * s, by - 0.5 * s, 0.14 * s, 0.5 * s); ctx.fillStyle = "#b9bfc4"; ctx.fillRect(bx - 0.07 * s, by - 0.5 * s, 0.05 * s, 0.5 * s);
@@ -849,7 +1057,7 @@
     etiketten = []; liste.forEach(e => zeichneFahrzeugOben(e, X, Y, s)); zeichneEtiketten(liste, X, Y, s);
     (st.objekte || []).filter(o => o.art === "haus" || o.art === "baum").forEach(o => objektOben(o, X, Y, s));
     if (szene.overlay) try { szene.overlay(ctx, X, Y, s, zeit, fahr); } catch (e) {}
-    if (szene.schilderNeu) vzOben(st, X, Y, s);
+    vzOben(st, X, Y, s);
     if (modus === "fahren" && fahr && fahr.rang) hilfslinien(ctx, X, Y, s, fahr);
     if (tippFrage) tippFrage.markiert.forEach((id, i) => { const e = liste.find(x => x.f.id === id); if (!e) return; ctx.fillStyle = "#e0b84a"; ctx.beginPath(); ctx.arc(X(e.p.x), Y(e.p.y), Math.max(13 * dpr, 1.4 * s), 0, 7); ctx.fill(); ctx.fillStyle = "#111"; ctx.font = `bold ${Math.max(14 * dpr, 1.6 * s)}px sans-serif`; ctx.textAlign = "center"; ctx.textBaseline = "middle"; ctx.fillText(String(i + 1), X(e.p.x), Y(e.p.y) + 1); });
   }
@@ -1032,6 +1240,7 @@
     ctx.fillStyle = f.farbe || "#3a6ea5"; ctx.beginPath(); ctx.ellipse(0, 0, 0.2 * s * sc, 0.3 * s * sc, 0, 0, 7); ctx.fill();
     ctx.fillStyle = "rgba(255,255,255,.22)"; ctx.beginPath(); ctx.ellipse(-0.04 * s * sc, -0.08 * s * sc, 0.12 * s * sc, 0.17 * s * sc, 0, 0, 7); ctx.fill();
     ctx.strokeStyle = "rgba(0,0,0,.3)"; ctx.lineWidth = Math.max(1, 0.035 * s); ctx.beginPath(); ctx.ellipse(0, 0, 0.2 * s * sc, 0.3 * s * sc, 0, 0, 7); ctx.stroke();
+    if (f.weste) { ctx.strokeStyle = "#e4eaee"; ctx.lineWidth = Math.max(1.2, 0.045 * s); ctx.beginPath(); ctx.ellipse(0, 0, 0.15 * s * sc, 0.235 * s * sc, 0, 0, 7); ctx.stroke(); ctx.strokeStyle = "rgba(0,0,0,.25)"; ctx.lineWidth = Math.max(0.6, 0.012 * s); ctx.stroke(); }   // Warnweste: Reflexstreifen rundum
     ctx.fillStyle = "#e8c4a0"; ctx.beginPath(); ctx.arc(0.02 * s, 0, 0.13 * s * sc, 0, 7); ctx.fill();
     ctx.fillStyle = f.typ === "rad" ? "#d9d9d4" : "#4a3426"; ctx.beginPath(); ctx.arc(-0.02 * s, 0, 0.1 * s * sc, 0, 7); ctx.fill();
     if (f.rand) { ctx.strokeStyle = "rgba(255,255,255,.95)"; ctx.lineWidth = Math.max(1.5, 0.06 * s); ctx.beginPath(); ctx.ellipse(0, 0, 0.2 * s * sc + 0.03 * s, 0.3 * s * sc + 0.03 * s, 0, 0, 7); ctx.stroke(); }
@@ -1221,7 +1430,11 @@
       const k = (f.typ === "kind" ? 0.7 : 1) * (f.gr || 1);
       if (f.typ === "rad") { quader(c, p.x, p.y, p.h, 1.75, 0.08, 0.3, 0.75, "#2a2d31"); quader(c, p.x - Math.cos(p.h) * 0.8, p.y - Math.sin(p.h) * 0.8, p.h, 0.05, 0.05, 0, 0.7, "#2a2d31"); }
       const z0 = f.typ === "rad" ? 0.75 : 0;
-      quader(c, p.x, p.y, p.h, 0.3 * k, 0.45 * k, z0 + (f.typ === "rad" ? 0 : 0.05), z0 + (f.typ === "rad" ? 0.85 : 1.45 * k), f.farbe || "#3a6ea5");
+      if (f.weste) {                                            // Warnweste über dunkler Hose, zwei silberne Reflexstreifen rundum
+        quader(c, p.x, p.y, p.h, 0.26 * k, 0.4 * k, 0.05, 0.78 * k, "#2f3a4a");
+        quader(c, p.x, p.y, p.h, 0.32 * k, 0.47 * k, 0.78 * k, 1.45 * k, f.farbe || "#f2f21a");
+        [0.92, 1.18].forEach(z => quader(c, p.x, p.y, p.h, 0.335 * k, 0.485 * k, z * k, (z + 0.07) * k, "#e4eaee"));
+      } else quader(c, p.x, p.y, p.h, 0.3 * k, 0.45 * k, z0 + (f.typ === "rad" ? 0 : 0.05), z0 + (f.typ === "rad" ? 0.85 : 1.45 * k), f.farbe || "#3a6ea5");
       quader(c, p.x, p.y, p.h, 0.22 * k, 0.22 * k, z0 + (f.typ === "rad" ? 0.85 : 1.45 * k), z0 + (f.typ === "rad" ? 1.08 : 1.72 * k), "#e8c4a0");
       return;
     }
@@ -1309,14 +1522,16 @@
   }
   function lerpP(a, b, t, zt) { return [lerp(a[0], b[0], t), lerp(a[1], b[1], t), lerp(a[2], b[2], zt)]; }
   function schild3d(c, sc) {
-    const vz = szene.schilderNeu && sc.blick && vzBild(sc.typ);
-    if (vz) {   // Schild nach Vorlage: steht quer zur Straße und schaut dem ankommenden Verkehr entgegen; von hinten graue Rückseite
-      const k = VZ_3D / 1000, w = vz.w * k, h = vz.h * k, z0 = 2.0, [vx, vy] = sc.blick, rx = vy, ry = -vx;   // rechts aus Sicht des Ankommenden
-      const P = (u, z) => zuCam(c, sc.x + rx * u, sc.y + ry * u, z);
-      const ecken = [P(-w / 2, z0 + h), P(w / 2, z0 + h), P(-w / 2, z0), P(w / 2, z0), P(0, 0)];
+    const P = vzPlatte(sc, szene.kategorie);
+    if (P) {   // Schild nach Vorlage in echter Größe: steht quer zur Straße und schaut dem ankommenden Verkehr entgegen; von hinten graue Rückseite
+      const vz = P.vz, w = vz.w * VZ_3D / 1000, h = vz.h * VZ_3D / 1000, z0 = VZ_Z0[(vzTeile(sc.typ)[0] || {}).n] ?? 2.0, rx = P.rx, ry = P.ry, [vx, vy] = sc.blick;
+      const Q = (u, z) => zuCam(c, sc.x + rx * u, sc.y + ry * u, z);
+      const ecken = [Q(-w / 2, z0 + h), Q(w / 2, z0 + h), Q(-w / 2, z0), Q(w / 2, z0)];
       if (ecken.some(q => q[2] < c.near)) return;
-      const [tl, tr, bl, br, fu] = ecken.map(q => proj(c, q));
-      ctx.strokeStyle = "#8e9398"; ctx.lineWidth = Math.max(1, 0.08 * c.F / ecken[4][2]); ctx.beginPath(); ctx.moveTo(fu[0], fu[1]); ctx.lineTo((bl[0] + br[0]) / 2, (bl[1] + br[1]) / 2); ctx.stroke();
+      const [tl, tr, bl] = ecken.map(q => proj(c, q));
+      const pfosten = w > 1.6 ? [-w / 3, w / 3] : [0];            // breite Tafeln auf zwei Pfosten
+      pfosten.forEach(u => { const fu = Q(u, 0), ko = Q(u, z0 + h * 0.9); if (fu[2] < c.near) return; const a = proj(c, fu), b2 = proj(c, ko);
+        ctx.strokeStyle = "#8e9398"; ctx.lineWidth = Math.max(1, 0.076 * c.F / fu[2]); ctx.beginPath(); ctx.moveTo(a[0], a[1]); ctx.lineTo(b2[0], b2[1]); ctx.stroke(); });
       const vorn = (c.e[0] - sc.x) * vx + (c.e[1] - sc.y) * vy > 0;
       ctx.globalAlpha = clamp(1 - ecken[0][2] / 1200, 0.25, 1);
       ctx.save(); ctx.transform((tr[0] - tl[0]) / vz.img.width, (tr[1] - tl[1]) / vz.img.width, (bl[0] - tl[0]) / vz.img.height, (bl[1] - tl[1]) / vz.img.height, tl[0], tl[1]);
@@ -1988,6 +2203,7 @@
 
   function open(opts) {
     onCloseCb = opts && opts.onClose;
+    Object.values(VZ_TEIL).forEach(t => { if (t.svg) vzSvg(t.svg); });   // Vorlagen der Verkehrszeichen vorladen
     if (!document.getElementById("lzCss")) { const st = document.createElement("style"); st.id = "lzCss"; st.textContent = CSS; document.head.appendChild(st); }
     if (root) root.remove();
     root = el(`<div class="lz-root" role="dialog" aria-label="Lernszenen"></div>`);
@@ -2040,6 +2256,7 @@
       const s = SZENEN.find(x => x.id === c.dataset.vorschau); const r = c.getBoundingClientRect();
       const alt = { cv, ctx, Wpx, Hpx, dpr, szene, zeit, ansicht: { ...ansicht }, kameraModus };
       cv = c; dpr = Math.min(2, window.devicePixelRatio || 1); Wpx = c.width = Math.max(200, r.width) * dpr; Hpx = c.height = 130 * dpr; ctx = c.getContext("2d");
+      try { vzAufstellen(s); } catch (e) {}
       szene = s; zeit = s.dauer * (s.vorschauZeit ?? 0.55); kameraModus = "oben"; const fk = s.fahrzeuge.find(f => f.fokus); const fp = fzPos(fk, zeit);
       ansicht = s.kamera.fest ? { zoom: s.kamera.zoom * 0.42, px: s.kamera.fest[0], py: s.kamera.fest[1], folgen: false } : { zoom: s.kamera.vorschauZoom || 2.4, px: fp.x + (s.kategorie && s.kategorie !== "autobahn" ? 0 : 20), py: fp.y, folgen: false };
       vorschau.an = true; try { zeichneOben(); } catch (e) {} vorschau.an = false;
@@ -2049,6 +2266,7 @@
   function starteSzene(id) {
     szene = SZENEN.find(s => s.id === id); zeit = 0; laeuft = false; versatzFz = {}; beantwortet = new Set(); punkte = { richtig: 0, gesamt: 0 }; fahr = null; _hGlatt = null; obenPruef = 0; laufTempo = 1; zoomUser = false; capZu = true; fahrStart = false;
     modus = "vorfuehren"; kameraModus = "oben"; tempoFaktor = 1;
+    try { vzAufstellen(szene); } catch (e) {}
     ansicht = { zoom: grundZoom(), px: 0, py: 0, folgen: true };
     const fk = szene.fahrzeuge.find(f => f.fokus); const fp = fzPos(fk, 0); ansicht.px = fp.x; ansicht.py = fp.y;
     root.innerHTML = `
@@ -2421,5 +2639,5 @@
   function szenenFuerPlan(planId) { return SZENEN.filter(x => (x.plan || []).includes(planId)).map(x => ({ id: x.id, titel: (x._de || x).titel })); }
   const vorschau = { an: false };
   const bau = { vorschau, W, KMH, clamp, lerp, smooth, pfad, spurPfad, bezier, versatz, band, tempoProfil, tempoStrecke, konstant, gerade, tBeiX, rohPos, TYPEN, EXT, rangierBahn, mitteAus, achseAus, ecken, raeder, bordAbstand, RAD, wegeOben, H: { rrg, quer, ton, leuchte, blinkAn, quader, poly3d, zuCam, proj, mkCv, SCHILD_BILD, SCHILD_NAME }, schildBilder: SCHILD_BILD, schildNamen: SCHILD_NAME };
-  window.Lernszenen = { open, registriere, szenenFuerPlan, bau, _szenen: SZENEN, _intern: { messeOben: n => { const t0 = performance.now(); for (let i = 0; i < n; i++) { zeichneOben(); ctx.getImageData(0, 0, 1, 1); } return (performance.now() - t0) / n; }, rohPos, tBeiX, TYPEN, bewerte: () => bewerte(), zustand: () => ({ szene: szene && szene.id, zeit, modus, kameraModus, laeuft, musterAus, capZu, sprache, fahr, ansicht: { ...ansicht }, grund: grundZoom(), nah: cv && szene && szene.kamera.fest ? 1.6 * Math.hypot(cv.getBoundingClientRect().width, cv.getBoundingClientRect().height) / 2 / grundZoom() : 0, fest: szene && szene.kamera.fest }), punkt3d: (x, y, z) => { const l = fahrzeugListe(), f = l.find(e => e.f.fokus) || l[0]; f.hGlatt = _hGlatt === null ? f.p.h : _hGlatt; const c = kamera3d(f), q = zuCam(c, x, y, z); if (q[2] < c.near) return null; const pp = proj(c, q); return [pp[0] / dpr, pp[1] / dpr, q[2]]; } } };
+  window.Lernszenen = { open, registriere, szenenFuerPlan, bau, _szenen: SZENEN, _intern: { vz: { VZ_TEIL, VZ_TYP, VZ_OBEN, VZ_3D, VZ_Z0, vzTeile, vzMass, vzTeilMalen, vzBild, vzGroesse, vzPlatte, vzFrei, vzAufstellen, vzObenLage, vzStrasse, vzSvg, dpr: () => dpr }, messeOben: n => { const t0 = performance.now(); for (let i = 0; i < n; i++) { zeichneOben(); ctx.getImageData(0, 0, 1, 1); } return (performance.now() - t0) / n; }, rohPos, tBeiX, TYPEN, bewerte: () => bewerte(), zustand: () => ({ szene: szene && szene.id, zeit, modus, kameraModus, laeuft, musterAus, capZu, sprache, fahr, ansicht: { ...ansicht }, grund: grundZoom(), nah: cv && szene && szene.kamera.fest ? 1.6 * Math.hypot(cv.getBoundingClientRect().width, cv.getBoundingClientRect().height) / 2 / grundZoom() : 0, fest: szene && szene.kamera.fest }), punkt3d: (x, y, z) => { const l = fahrzeugListe(), f = l.find(e => e.f.fokus) || l[0]; f.hGlatt = _hGlatt === null ? f.p.h : _hGlatt; const c = kamera3d(f), q = zuCam(c, x, y, z); if (q[2] < c.near) return null; const pp = proj(c, q); return [pp[0] / dpr, pp[1] / dpr, q[2]]; } } };
 })();

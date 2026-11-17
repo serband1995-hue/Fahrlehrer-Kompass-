@@ -122,7 +122,7 @@
       { art: "leit_io", b: 0.12, pts: [[-90, 0], [-10, 0]] }, { art: "leit_io", b: 0.12, pts: [[10, 0], [90, 0]] },
       { art: "warte", b: 2.6, farbe: "#6d5a48", pts: [[0, -45], [0, -7]] }, { art: "warte", b: 2.6, farbe: "#6d5a48", pts: [[0, 7], [0, 45]] },
       { art: "voll", b: 0.2, farbe: SCHIENE, pts: [[-0.72, -45], [-0.72, 45]] }, { art: "voll", b: 0.2, farbe: SCHIENE, pts: [[0.72, -45], [0.72, 45]] });
-    sch.push({ typ: "z201", x: -5.6, y: 9.6, seite: 1 }, { typ: "z201", x: 5.6, y: -5.2, seite: 1 });
+    sch.push({ typ: "z201", x: -5.6, y: 4.5, aussen: [0, 1], blick: [-1, 0] }, { typ: "z201", x: 5.6, y: -4.5, aussen: [0, -1], blick: [1, 0] });
     const T_AN = 3.0, T_AUS = 22.0, SCHR = [5.0, 7.5, 19.0, 21.5], TZ = 13.5;
     obj.push({ art: "bue", x: -5.0, y: 5.0, h: PI, arm: -PI / 2, L: 4.7, an: [[T_AN, T_AUS]], schr: SCHR }, { art: "bue", x: 5.0, y: -5.0, h: 0, arm: PI / 2, L: 4.7, an: [[T_AN, T_AUS]], schr: SCHR });
     haeuser(obj, [[-30, 14, 11, 9, 7], [-14, 15, 9, 9, 6, "#e3d7c3"], [24, 15, 10, 9, 8, "#cdd3d8"], [-28, -14, 10, 9, 7, "#e3d7c3"], [20, -14, 11, 9, 6]]); baeume(obj, [[-8, 10, 1.8], [10, -10, 1.8], [30, 9, 1.8]]);
@@ -170,7 +170,7 @@
     const gg = fahrt("gg", "pkw", "#2c5aa0", [[150, -3.2], [-150, -3.2]], [[0, 35]], 150 - 40, 0);
     szene({
       id: "strassenbahn", plan: ["a_stadt"], titel: "Straßenbahn an der Haltestelle", kurz: "Wenn die Bahn hält, laufen Fahrgäste über die Fahrbahn. Du hältst an und fährst dann nur im Schritttempo",
-      dauer: Math.ceil(tAb + 3.5), strasse: { flaechen: fl, linien: li, objekte: obj, schilder: [{ typ: "z224g", x: -7, y: 9.6, seite: 1 }], bordsteine: [{ pts: [[-80, 4.85], [80, 4.85]], seite: 1 }, { pts: [[-80, -4.85], [80, -4.85]], seite: -1 }], bereich: [-80, 80], boden: "#6a9a52", boden3d: "#6f9a55" },
+      dauer: Math.ceil(tAb + 3.5), strasse: { flaechen: fl, linien: li, objekte: obj, schilder: [{ typ: "z224g", x: -7, y: 6, aussen: [0, 1], blick: [-1, 0] }], bordsteine: [{ pts: [[-80, 4.85], [80, 4.85]], seite: 1 }, { pts: [[-80, -4.85], [80, -4.85]], seite: -1 }], bereich: [-80, 80], boden: "#6a9a52", boden3d: "#6f9a55" },
       kamera: { fest: [6, -6], zoom: 13, quer: { immer: true, zeige: ["tram", "gg", "fa", "fb", "fc", "fd"], radius: 30 }, }, fahrzeuge: [fs, tram, gg, p1, p2, p3, p4], overlay: (c, X, Y, s, t) => { const d = dprVon(c); [p1, p2, p3, p4].forEach(f => { if (f.unsichtbar && f.unsichtbar(t)) return; const p = rohPos(f, t), r = Math.max(0.8 * s, 9 * d); c.fillStyle = "rgba(255,255,255,.3)"; c.beginPath(); c.arc(X(p.x), Y(p.y), r, 0, 7); c.fill(); c.strokeStyle = "#fff"; c.lineWidth = Math.max(2, 2 * d); c.stroke(); c.fillStyle = f.farbe; c.beginPath(); c.arc(X(p.x), Y(p.y), r * 0.42, 0, 7); c.fill(); }); },
       phasen: [
         { t: 0.2, titel: "Haltestelle mit Straßenbahn", text: "Die Straßenbahn fährt auf ihren Gleisen in der Mitte der Fahrbahn. Du lässt sie durchfahren. An der Haltestelle fährst du nur vorsichtig vorbei. Rechne mit Fahrgästen auf der Fahrbahn.", regel: "Zeichen 224 · § 20 Abs. 1 StVO", frage: { text: "Die Bahn bremst vor der Haltestelle. Was erwartest du?", optionen: ["Ich erwarte Fahrgäste, die zur Bahn und von ihr weg über die Fahrbahn laufen", "Ich erwarte nichts, die Bahn fährt ja auf Schienen", "Ich habe freie Fahrt"], richtig: 0, erklaerung: "An Haltestellen steigen Fahrgäste ein und aus und laufen oft über die Fahrspur. Darauf stellst du dich schon beim Heranfahren ein." } },
@@ -248,7 +248,7 @@
     for (let y = -3; y < 5.4; y += 1) fl.push({ art: "weiss", poly: rect(ZE[0], y, ZE[1], y + 0.5) });
     haeuser(obj, [[EF[0] - 12, 17, 10, 9, 7], [EF[1] + 8, 17, 10, 9, 6, "#e3d7c3"], [10, 17, 11, 9, 8, "#cdd3d8"], [60, 17, 10, 9, 7], [140, 17, 12, 9, 8], [-10, -14, 11, 9, 7, "#e3d7c3"], [60, -14, 11, 9, 8], [140, -14, 11, 9, 7]]);
     baeume(obj, [[28, 8, 1.7], [86, 8, 1.7], [118, 8, 1.7], [200, 8, 1.7]]);
-    sch.push({ typ: "z350", x: ZE[0] - 1, y: 9.8, seite: 1 }, { typ: "z283", x: 120, y: 9.8, seite: 1 }, { typ: "z286", x: 144, y: 9.8, seite: 1 });
+    sch.push({ typ: "z350", x: ZE[0] - 1, y: 6.5, aussen: [0, 1], blick: [-1, 0] }, { typ: "z283", x: 120, y: 6.5, aussen: [0, 1], blick: [-1, 0] }, { typ: "z286", x: 144, y: 6.5, aussen: [0, 1], blick: [-1, 0] });
     const ZONEN = [
       { a: EM[0] - 5, b: EM[0], nurP: 1, titel: "Einmündung", text: "Schau mal, vor und hinter einer Einmündung oder Kreuzung darfst du nicht parken, jeweils fünf Meter ab dem Schnittpunkt der Fahrbahnkanten. Kurz halten ist dort erlaubt, parken nicht.", regel: "§ 12 StVO", fr: { text: "Wie weit vor und hinter einer Einmündung darfst du nicht parken?", optionen: ["Ich denke, 1 Meter", "Ich denke, 5 Meter", "Ich denke, 20 Meter"], richtig: 1, erklaerung: "Je 5 Meter vor und hinter dem Schnittpunkt der Fahrbahnkanten darfst du nicht parken. Das gilt an Kreuzungen und Einmündungen." } },
       { a: EM[1], b: EM[1] + 5, nurP: 1 },

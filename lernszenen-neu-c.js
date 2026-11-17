@@ -2,8 +2,8 @@
    Fahrlehrer-Kompass · Lernszenen Block 6 (c): Einbahnstraße, Fahrradstraße, verkehrsberuhigter Bereich,
    Verbot der Einfahrt. Baut auf lernszenen.js und lernszenen-stadt.js auf.
    Welt in Metern: x nach Osten, y nach Süden. Rechtsverkehr. Fahrtrichtung Osten = 0, Norden = −π/2.
-   Schilder nach amtlicher Vorlage (schilderNeu): { typ, x, y, aussen: Seite weg von der Fahrbahn, blick: Richtung, aus der der Verkehr kommt }.
-   Neue Schild-Typen (Zeichnungen folgen in lernszenen.js; links: true = zweites Schild auf der linken Seite): z220_20, z220_10, z220_20_rad, z220_10_rad, z267, z267_rad, z250,
+   Schilder nach amtlicher Vorlage: { typ, x, y, aussen: Seite weg von der Fahrbahn, blick: Richtung, aus der der Verkehr kommt }.
+   Neue Schild-Typen (Zeichnungen in lernszenen.js, VZ_TYP; links: true = zweites Schild auf der linken Seite): z220_20, z220_10, z220_20_rad, z220_10_rad, z267, z267_rad, z250,
    z244_1, z244_1_anl, z244_1_kfz, z244_2, z325_1, z325_2.
    ============================================================================ */
 (function () {
@@ -24,7 +24,7 @@
   const haeuser = (obj, l) => l.forEach(([x, y, a, b, h, f, d]) => obj.push({ art: "haus", x, y, l: a, b, hoehe: h || 7, farbe: f || "#d9cfbf", dach: d || "#a7553f" }));
   const baeume = (obj, l) => l.forEach(([x, y, r]) => obj.push({ art: "baum", x, y, r: r || 2.2 }));
   const leit = (st, ...p) => p.forEach(l => st.linien.push({ art: "leit_io", b: 0.12, pts: l }));
-  function neu(sz) { sz.kategorie = "innerorts"; sz.schilderNeu = true; LZ.registriere(sz); }
+  function neu(sz) { sz.kategorie = "innerorts"; LZ.registriere(sz); }
 
   // Rechteck mit abgerundeten Ecken (r je Ecke: [oben links, oben rechts, unten rechts, unten links]; oben = Norden)
   function rrect(x0, y0, x1, y1, r) {
