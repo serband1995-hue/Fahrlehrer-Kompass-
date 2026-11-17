@@ -64,6 +64,15 @@ ZAHL_DE = {"0": "null", "1": "eins", "2": "zwei", "3": "drei", "4": "vier", "5":
 ZAHL_EN = {"0": "zero", "1": "one", "2": "two", "3": "three", "4": "four", "5": "five", "6": "six", "7": "seven", "8": "eight", "9": "nine", "10": "ten", "12": "twelve", "15": "fifteen",
            "20": "twenty", "30": "thirty", "40": "forty", "50": "fifty", "60": "sixty", "70": "seventy", "80": "eighty", "90": "ninety", "100": "hundred", "1000": "thousand", "500": "five hundred"}
 
+EIN = ["null", "ein", "zwei", "drei", "vier", "fünf", "sechs", "sieben", "acht", "neun", "zehn", "elf", "zwölf", "dreizehn", "vierzehn", "fünfzehn", "sechzehn", "siebzehn", "achtzehn", "neunzehn"]
+ZEHN = {2: "zwanzig", 3: "dreißig", 4: "vierzig", 5: "fünfzig", 6: "sechzig", 7: "siebzig", 8: "achtzig", 9: "neunzig"}
+def zahl_de(n):
+    if n < 20: return "eins" if n == 1 else EIN[n]
+    if n < 100: e, z = n % 10, n // 10; return (EIN[e] + "und" if e else "") + ZEHN[z]
+    if n < 1000: h, r = divmod(n, 100); return ("" if h == 1 else EIN[h]) + "hundert" + (zahl_de(r) if r else "")
+    if n < 1000000: t, r = divmod(n, 1000); return ("" if t == 1 else zahl_de(t)) + "tausend" + (zahl_de(r) if r else "")
+    return str(n)
+
 def woerter(t, sprache):
     t = unicodedata.normalize("NFC", t.lower()).replace("ß", "ss")
     t = re.sub(r"(\d)\.(\d{3})", r"\1\2", t)
@@ -71,7 +80,9 @@ def woerter(t, sprache):
     z = ZAHL_DE if sprache == "de" else ZAHL_EN
     out = []
     for w in t.split():
-        w = z.get(w, w).replace("ß", "ss")
+        if sprache == "de" and w.isdigit(): w = zahl_de(int(w)).replace("ß", "ss")
+        else: w = z.get(w, w).replace("ß", "ss")
+        if sprache == "de": w = {"einhundert": "hundert", "eintausend": "tausend", "eins": "ein", "eine": "ein", "einen": "ein", "einem": "ein", "einer": "ein", "eines": "ein"}.get(w, w)
         out.extend(w.split())
     return out
 
