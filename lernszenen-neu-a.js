@@ -86,7 +86,7 @@
     const bl = fahrt("b", "pkw", "#2c5aa0", [[-150, 1.625], [150, 1.625]], [[0, 45]], 150, 7.6);
     const rt = fahrt("c", "pkw", "#b3322c", [[150, -1.625], [-150, -1.625]], [[0, 40]], 150, 9.2);
     neu({
-      id: "vorfahrt_gewaehren", plan: ["l_stop", "a_30"], titel: "Vorfahrt gewähren (Zeichen 205)", kurz: "Langsam herantasten, Sicht prüfen, Querverkehr durchlassen.",
+      id: "vorfahrt_gewaehren", plan: ["l_stop", "a_30"], titel: "Vorfahrt gewähren", kurz: "Langsam herantasten, Sicht prüfen, Querverkehr durchlassen.",
       dauer: 18, strasse: K, kamera: { fest: [3, 4], zoom: 17, quer: { zeige: ["b", "c"], radius: 30 } },
       fahrzeuge: [fs, bl, rt],
       phasen: [
