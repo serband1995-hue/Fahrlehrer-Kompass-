@@ -1827,7 +1827,7 @@
   .lz-capx{position:absolute;right:8px;top:8px;width:38px;height:38px;border-radius:50%;border:1px solid rgba(160,200,175,.55);background:rgba(30,50,42,.95);color:#eef3ef;font:700 16px/1 system-ui,sans-serif;cursor:pointer;pointer-events:auto;padding:0;}
   .lz-capx::after{content:"";position:absolute;inset:-6px;}
   .lz-caption{padding-right:54px;} .lz-caption.mit-par{padding-right:98px;} .lz-caption.mit-par .lz-parb{right:54px;width:38px;height:38px;}
-  .lz-capopen{position:absolute;left:12px;top:10px;min-height:44px;padding:0 14px;border-radius:12px;border:1px solid rgba(160,200,175,.55);background:rgba(10,18,14,.92);color:#eef3ef;font:600 13.5px system-ui,sans-serif;cursor:pointer;z-index:2;}
+  .lz-capopen{position:absolute;left:12px;top:10px;min-height:44px;padding:0 14px;border-radius:12px;border:1.5px solid #3fae74;background:rgba(10,18,14,.92);color:#eef3ef;font:600 13.5px system-ui,sans-serif;cursor:pointer;z-index:2;}
   .lz-capopen[hidden]{display:none;}
   .lz-parx{position:absolute;right:4px;top:4px;width:36px;height:36px;border:0;background:transparent;color:#e0b84a;font:700 18px/1 system-ui,sans-serif;cursor:pointer;padding:0;}
   .lz-parx::after{content:"";position:absolute;inset:-4px;}
@@ -1878,6 +1878,8 @@
   .lz-toast{position:absolute;left:50%;bottom:16px;transform:translateX(-50%);background:rgba(20,30,26,.95);border:1px solid #4f7a63;border-radius:10px;padding:9px 14px;font-size:13.5px;max-width:90%;z-index:4;pointer-events:none;}
   .lz-coach{position:absolute;left:12px;bottom:12px;max-width:min(62%,420px);background:rgba(224,184,74,.95);color:#1b1b12;border-radius:12px;padding:9px 12px;font-size:13.5px;font-weight:600;pointer-events:none;}
   @media (max-height:520px){ .lz-top{padding-top:6px;padding-bottom:6px;} .lz-btn{min-height:34px;padding:5px 9px;font-size:12.5px;} .lz-bar{padding:5px 8px;gap:5px;} .lz-drive{grid-template-columns:repeat(8,1fr);grid-template-areas:"bl sl br2 br2 gas gas sr br" "wl wl wl wl wr wr wr wr";} .lz-drive .lz-btn{min-height:38px;font-size:12.5px;} .lz-caption{max-width:min(380px,calc(100% - 140px));padding:7px 10px;} .lz-caption p{font-size:12px;} .lz-coach{font-size:12px;max-width:45%;padding:6px 9px;} .lz-hud{padding:5px 9px;} .lz-hud b{font-size:19px;} }
+  .lz-bar [data-kam],.lz-bar [data-modus]{min-height:44px;} .lz-bar [data-kam]{min-width:56px;position:relative;}   /* Daumen-tauglich (Prüf-Team 17.11.) */
+  @media (max-height:520px){ .lz-bar [data-kam],.lz-bar [data-modus]{min-height:34px;} .lz-bar [data-kam]::after{content:"";position:absolute;left:-3px;right:-3px;top:-5px;bottom:-5px;} }
   @media (max-width:560px){ .lz-caption p{font-size:12.8px;} .lz-title{font-size:15px;} .lz-drive{grid-template-columns:repeat(4,1fr);grid-template-areas:"bl sl sr br" "br2 br2 gas gas" "wl wl wr wr";} .lz-drive .lz-btn{min-height:48px;font-size:13px;} }
   `;
 
