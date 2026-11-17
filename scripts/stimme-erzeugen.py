@@ -52,7 +52,11 @@ def stt(mp3, sprache):
     teile.append(f"--{grenze}\r\nContent-Disposition: form-data; name=\"file\"; filename=\"a.mp3\"\r\nContent-Type: audio/mpeg\r\n\r\n".encode() + mp3 + b"\r\n")
     teile.append(f"--{grenze}--\r\n".encode())
     r = post(f"{API}/speech-to-text", b"".join(teile), f"multipart/form-data; boundary={grenze}")
-    return json.loads(r).get("text", "")
+    j = json.loads(r)
+    # gedehnte Wörter (z. B. ein lang gezogenes „L“): Wortdauer je Buchstabe auffällig hoch
+    gedehnt = [f"{w['text']}:{w['end']-w['start']:.2f}s" for w in j.get("words", []) if w.get("type") == "word"
+               and (w["end"] - w["start"]) > 0.8 and (w["end"] - w["start"]) / max(1, len(w["text"].strip(".,?!"))) > 0.17]
+    return j.get("text", ""), gedehnt
 
 ZAHL_DE = {"0": "null", "1": "eins", "2": "zwei", "3": "drei", "4": "vier", "5": "fünf", "6": "sechs", "7": "sieben", "8": "acht", "9": "neun", "10": "zehn", "11": "elf", "12": "zwölf",
            "15": "fünfzehn", "20": "zwanzig", "30": "dreißig", "40": "vierzig", "50": "fünfzig", "60": "sechzig", "70": "siebzig", "80": "achtzig", "90": "neunzig", "100": "hundert", "120": "hundertzwanzig", "130": "hundertdreißig", "1000": "tausend", "500": "fünfhundert"}
@@ -118,8 +122,9 @@ def main():
                 if bericht["zeichen"] + len(t) > budget: print("BUDGET erreicht", file=sys.stderr); break
                 mp3 = tts(t, sprache, ph[i - 1]["text"] if i else None, ph[i + 1]["text"] if i + 1 < len(ph) else None)
                 bericht["zeichen"] += len(t)
-                ist = stt(mp3, sprache)
+                ist, gedehnt = stt(mp3, sprache)
                 fehler, diff = abweichung(t, ist, sprache)
+                fehler += len(gedehnt); diff += ["gedehnt " + g for g in gedehnt]
                 versuche.append({"ist": ist, "fehler": fehler, "diff": diff})
                 print(f"{key} Versuch {k+1}: {fehler} Abweichung(en) {diff}", flush=True)
                 if fehler == 0 or (k == 3 and fehler <= 1 and all("∅" not in d for d in diff)):
