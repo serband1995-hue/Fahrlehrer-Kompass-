@@ -10,6 +10,7 @@ const CORE_FILES = [
   "./lernszenen-stadt.js",
   "./lernszenen-neu-a.js",
   "./lernszenen-neu-b.js",
+  "./lernszenen-en.js",
   "./manifest.json",
   "./icon-192.png",
   "./icon-512.png",
