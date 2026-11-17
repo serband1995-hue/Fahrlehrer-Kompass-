@@ -1783,7 +1783,7 @@
   function fahrerEinsatz(dt) {
     const cvF = root && root.querySelector("#lzFahrer"); if (!cvF) return;
     const ph = szene && modus !== "fahren" && kameraModus === "oben" ? aktuellePhase() : null;
-    const an = !!(ph && SPIEGEL_RE.test(ph.titel)) && !tippFrage;
+    const an = !!(ph && istSpiegelPhase(ph)) && !tippFrage;
     if (!an || !platziereFahrer(cvF)) { if (!cvF.hidden) cvF.hidden = true; fahrerAn = false; return; }
     fahrerAn = true;
     if (cvF.hidden) cvF.hidden = false;
@@ -2080,13 +2080,14 @@
     return dy;
   }
   const SPIEGEL_RE = /Schulterblick|Spiegel|Rundumblick/;
+  function istSpiegelPhase(ph) { if (!ph) return false; const i = szene && szene._de ? szene.phasen.indexOf(ph) : -1; return SPIEGEL_RE.test(i >= 0 ? szene._de.phasen[i].titel : ph.titel); }   // deutscher Titel zählt, auch wenn Englisch angezeigt wird
   function zoomZiel() {
     const ph = aktuellePhase(); let f = 1;
-    if (ph && SPIEGEL_RE.test(ph.titel)) f = 1.3; else if (ph && ph.hinweis && ph.hinweis.luecke) f = WEIT[szene.id] || 1;
+    if (ph && istSpiegelPhase(ph)) f = 1.3; else if (ph && ph.hinweis && ph.hinweis.luecke) f = WEIT[szene.id] || 1;
     else if (ph && WEIT[szene.id] && WEIT[szene.id + ":" + ph.titel]) f = WEIT[szene.id + ":" + ph.titel];
     let z = grundZoom() * f;
     if (szene.kamera.fest && cv) {        // feste Kamera: Fokus-Auto (und genannte Mitspieler) bleiben immer im Bild, Zoom passt sich an
-      const strikt = !!(ph && SPIEGEL_RE.test(ph.titel)), r = cv.getBoundingClientRect(), fest = szene.kamera.fest, m = 34, ids = ZEIGE[szene.id] || [], z0 = z, nah = 1.6 * Math.hypot(r.width, r.height) / 2 / z0; let zm = z0;   // Mitspieler zählen nur nahe der Kreuzung, mit Untergrenze 0,5 × Grundzoom
+      const strikt = !!(ph && istSpiegelPhase(ph)), r = cv.getBoundingClientRect(), fest = szene.kamera.fest, m = 34, ids = ZEIGE[szene.id] || [], z0 = z, nah = 1.6 * Math.hypot(r.width, r.height) / 2 / z0; let zm = z0;   // Mitspieler zählen nur nahe der Kreuzung, mit Untergrenze 0,5 × Grundzoom
       for (const e of fahrzeugListe()) {
         if (!e.f.fokus && !ids.includes(e.f.id)) continue;
         const dx = Math.abs(e.p.x - fest[0]), dy = Math.abs(e.p.y - fest[1]);

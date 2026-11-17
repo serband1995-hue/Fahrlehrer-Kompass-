@@ -70,7 +70,7 @@ for (const [w, h] of [[360, 640], [412, 915], [640, 360], [568, 320]]) {
     pruefe(t + "schließt", !(await page.$("#lzCap")));
   }
   // Fahrer-Einsatz: in Phasen mit Schulterblick/Spiegel/Rundumblick im Titel sichtbar (außer in sehr kleinen Fenstern) und ohne Überdeckung
-  const mitBlick = await page.evaluate(() => window.Lernszenen._szenen.map(s => ({ id: s.id, ts: s.phasen.filter(p => /Schulterblick|Spiegel|Rundumblick/.test(p.titel)).map(p => p.t) })).filter(x => x.ts.length));
+  const mitBlick = await page.evaluate(() => window.Lernszenen._szenen.map(s => ({ id: s.id, ts: s.phasen.filter((p, i) => /Schulterblick|Spiegel|Rundumblick/.test(s._de ? s._de.phasen[i].titel : p.titel)).map(p => p.t) })).filter(x => x.ts.length));
   const ueber = (a, b) => a.x < b.x + b.width && a.x + a.width > b.x && a.y < b.y + b.height && a.y + a.height > b.y;
   for (const { id, ts } of mitBlick) {
     const t = `${w}×${h} ${id} (Fahrer-Einsatz): `;
