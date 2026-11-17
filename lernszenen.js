@@ -1086,7 +1086,7 @@
       return pk.every(d => d[0] + d[1] + d[2] < 12); } catch (e) { return false; }
   }
   function zeichneObenSicher() {
-    try { zeichneOben(); } catch (e) { if (musterAus) throw e; musterAus = true; ctx.setTransform(1, 0, 0, 1, 0, 0); ctx.globalAlpha = 1; zeichneOben(); return; }
+    try { zeichneOben(); } catch (e) { if (musterAus) throw e; musterAus = true; if (ctx.reset) ctx.reset(); else { for (let i = 0; i < 32; i++) ctx.restore(); ctx.setTransform(1, 0, 0, 1, 0, 0); ctx.globalAlpha = 1; } zeichneOben(); return; }
     if (!musterAus && obenPruef < 3 && ++obenPruef === 3 && bildSchwarz()) { musterAus = true; zeichneOben(); }
   }
   // Punkte im Abstand d entlang einer Polylinie
@@ -1947,7 +1947,7 @@
     });
   }
   function starteSzene(id) {
-    szene = SZENEN.find(s => s.id === id); zeit = 0; laeuft = false; versatzFz = {}; beantwortet = new Set(); punkte = { richtig: 0, gesamt: 0 }; fahr = null; _hGlatt = null; obenPruef = 0; zoomUser = false; capZu = true; fahrStart = false;
+    szene = SZENEN.find(s => s.id === id); zeit = 0; laeuft = false; versatzFz = {}; beantwortet = new Set(); punkte = { richtig: 0, gesamt: 0 }; fahr = null; _hGlatt = null; obenPruef = 0; laufTempo = 1; zoomUser = false; capZu = true; fahrStart = false;
     modus = "vorfuehren"; kameraModus = "oben"; tempoFaktor = 1;
     ansicht = { zoom: grundZoom(), px: 0, py: 0, folgen: true };
     const fk = szene.fahrzeuge.find(f => f.fokus); const fp = fzPos(fk, 0); ansicht.px = fp.x; ansicht.py = fp.y;
@@ -2008,10 +2008,10 @@
       if (modus === "fahren") { fahrStart = true; capSync(); }
       if (modus === "fahren" && fahr && fahr.ende) { schliesseSheet(); if (szene.reaktion) starteReaktion(fahr.vWahl); else starteFahren(); } if (!laeuft && zeit >= szene.dauer && modus !== "fahren") { zeit = 0; beantwortet = new Set(); } laeuft = !laeuft; if (modus !== "fahren") { stimmePause(!laeuft); stimmeNachholen(); } if (laeuft) { schliesseSheet(); ansicht.folgen = true; } };
     const tippZu = () => { if (!tippFrage) return; tippFrage = null; const b = root.querySelector("#lzTipp"); if (b) b.remove(); ansicht.folgen = true; ansicht.zoom = grundZoom(); };
-    $("#lzSlider").oninput = e => { tippZu(); ansicht.folgen = true; zoomUser = false; zeit = +e.target.value; laeuft = false; const ph = aktuellePhase(); if (ph) zeigePhase(ph); };
+    $("#lzSlider").oninput = e => { tippZu(); laufTempo = 1; ansicht.folgen = true; zoomUser = false; zeit = +e.target.value; laeuft = false; const ph = aktuellePhase(); if (ph) zeigePhase(ph); };
     $("#lzPrev").onclick = () => { schliesseSheet(); tippZu(); zoomUser = false; springe(-1); }; $("#lzNext").onclick = () => { schliesseSheet(); tippZu(); zoomUser = false; springe(1); };
     $("#lzTempo").onclick = () => { tempoFaktor = tempoFaktor === 1 ? 0.5 : tempoFaktor === 0.5 ? 2 : 1; $("#lzTempo").textContent = (tempoFaktor === 0.5 ? "½" : tempoFaktor) + "×"; };
-    $("#lzReset").onclick = () => { zoomUser = false; ansicht.folgen = true; ansicht.zoom = grundZoom(); schliesseSheet(); tippFrage = null; { const b = root.querySelector("#lzTipp"); if (b) b.remove(); } _hGlatt = null; versatzFz = {}; zeit = 0; laeuft = false; beantwortet = new Set(); punkte = { richtig: 0, gesamt: 0 }; if (modus === "fahren") { starteFahren(); const c = $("#lzCap"); if (c) c.hidden = false; setzeModus("fahren"); } else zeigePhase(szene.phasen[0]); ansicht.folgen = true; };
+    $("#lzReset").onclick = () => { laufTempo = 1; zoomUser = false; ansicht.folgen = true; ansicht.zoom = grundZoom(); schliesseSheet(); tippFrage = null; { const b = root.querySelector("#lzTipp"); if (b) b.remove(); } _hGlatt = null; versatzFz = {}; zeit = 0; laeuft = false; beantwortet = new Set(); punkte = { richtig: 0, gesamt: 0 }; if (modus === "fahren") { starteFahren(); const c = $("#lzCap"); if (c) c.hidden = false; setzeModus("fahren"); } else zeigePhase(szene.phasen[0]); ansicht.folgen = true; };
     root.querySelectorAll("[data-kam]").forEach(b => b.onclick = () => { if (tippFrage) { zeigeToast("Zum Antippen bleibt die Ansicht von oben."); return; } kameraModus = b.dataset.kam === "3d" ? "3d" : "oben"; _hGlatt = null; root.querySelectorAll("[data-kam]").forEach(x => x.classList.toggle("on", x === b)); });
     root.querySelectorAll("[data-modus]").forEach(b => b.onclick = () => setzeModus(b.dataset.modus));
     bindeFahren(); bindeZiehen();
@@ -2088,6 +2088,7 @@
     else zeigePhase(szene.phasen[0]);
   }
   function springe(r) {
+    laufTempo = 1;
     const ph = szene.phasen; let i = ph.findIndex(p => p.t > zeit + 0.01);
     if (i < 0) i = ph.length;
     const ziel = r > 0 ? ph[i] : ph[Math.max(0, i - 2)];
