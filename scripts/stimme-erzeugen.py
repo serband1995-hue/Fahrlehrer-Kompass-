@@ -1,7 +1,8 @@
 #!/usr/bin/env python3
 """Stimme „Serband 2“ für die Lernszenen erzeugen und per Speech-to-Text zurückhören.
 
-Aufruf:  python3 scripts/stimme-erzeugen.py TEXTE.json [--sprache de|en] [--nur ID,ID] [--budget 60000] [--bericht BERICHT.json]
+Aufruf:  python3 scripts/stimme-erzeugen.py TEXTE.json [--sprache de|en] [--nur ID,ID] [--budget 60000] [--bericht BERICHT.json] [--erzaehler 4.2]
+--erzaehler S: ruhiger Erzähler (Stabilität 0,7) und gleiches Sprechtempo S Silben/s für alle Sätze.
 TEXTE.json: Liste [{id, phasen:[{text}]}] (Ausgabe von dump.mjs bzw. die neuen Texte).
 Für jede Phase: Ton erzeugen (ElevenLabs, eleven_multilingual_v2), mit Scribe zurückhören, Wörter vergleichen.
 Weicht die Abschrift ab, wird neu erzeugt (bis 4 Versuche). Schreibt stimme/<sprache-Präfix><id>-<i>-<stand>.mp3 und stimme/index.json.
@@ -14,6 +15,8 @@ STIMME_ID = "wbfCCbblStaYTE0JMoci"   # Serband 2
 ROOT = os.path.join(os.path.dirname(os.path.abspath(__file__)), "..")
 DIR = os.path.join(ROOT, "stimme")
 API = "https://api.elevenlabs.io/v1"
+STABIL = 0.5          # --erzaehler: 0.7 (ruhiger, gleichmäßiger)
+ZIEL = None           # --erzaehler: Ziel-Sprechtempo in Silben pro Sekunde (gleichmäßiger Erzähler)
 HDR = {"xi-api-key": "dummy"}
 
 # Sprech-Fassung nur für die Stimme (angezeigt bleibt der Text): Notruf wird Ziffer für Ziffer gesprochen
@@ -46,7 +49,7 @@ def post(url, body, ctype="application/json", tries=4):
 
 def tts(text, sprache, prev, nxt):
     body = {"text": text, "model_id": "eleven_multilingual_v2",
-            "voice_settings": {"stability": 0.5, "similarity_boost": 0.8, "style": 0.0, "use_speaker_boost": True}}
+            "voice_settings": {"stability": STABIL, "similarity_boost": 0.8, "style": 0.0, "use_speaker_boost": True}}
     if prev: body["previous_text"] = prev
     if nxt: body["next_text"] = nxt
     return post(f"{API}/text-to-speech/{STIMME_ID}?output_format=mp3_44100_64", json.dumps(body).encode())
@@ -126,6 +129,32 @@ def abweichung(soll, ist, sprache):
         return 0, []   # nur Schreibweise einer Zusammensetzung („noch mal“/„nochmal“, „Vorfahrtsstraße“)
     return D[n][m], list(reversed(diff))
 
+def silben(t): return len(re.findall(r"[aeiouäöüy]+", t.lower()))
+
+def sprechzeit(pfad):
+    # Anfang und Ende der Sprache (Stille unter -40 dB, mind. 0,12 s, wird abgeschnitten)
+    o = subprocess.run(["ffmpeg", "-hide_banner", "-i", pfad, "-af", "silencedetect=n=-40dB:d=0.12", "-f", "null", "-"], capture_output=True, text=True).stderr
+    m = re.search(r"Duration: (\d+):(\d+):([\d.]+)", o); d = int(m.group(1)) * 3600 + int(m.group(2)) * 60 + float(m.group(3))
+    s = [float(x) for x in re.findall(r"silence_start: ([\d.]+)", o)]; e = [float(x) for x in re.findall(r"silence_end: ([\d.]+)", o)]
+    a = e[0] if s and s[0] < 0.05 and e else 0.0
+    b = s[-1] if s and len(e) < len(s) else d
+    return a, b
+
+def tempo_angleichen(mp3, text, ziel):
+    """Gleichmäßiges Erzähltempo: Stille vorn kürzen, Tempo auf ziel Silben/s bringen (Tonhöhe bleibt), 0,3 s Ruhe am Ende.
+    Gibt (neue mp3-Bytes, Faktor) zurück; Faktor außerhalb 0,85–1,15 → None (lieber neu erzeugen)."""
+    import tempfile
+    with tempfile.TemporaryDirectory() as d:
+        ein, aus = os.path.join(d, "a.mp3"), os.path.join(d, "b.mp3")
+        open(ein, "wb").write(mp3)
+        a, b = sprechzeit(ein)
+        f = ziel / (silben(text) / max(0.5, b - a))
+        if not 0.85 <= f <= 1.15: return None, f
+        start = max(0.0, a - 0.08)
+        subprocess.run(["ffmpeg", "-v", "quiet", "-y", "-i", ein, "-af", f"atrim=start={start:.3f}:end={b + 0.05:.3f},asetpts=PTS-STARTPTS,atempo={f:.4f},apad=pad_dur=0.3",
+                        "-ar", "44100", "-b:a", "64k", aus], check=True)
+        return open(aus, "rb").read(), f
+
 def dauer(pfad):
     return round(float(subprocess.check_output(["ffprobe", "-v", "quiet", "-show_entries", "format=duration", "-of", "csv=p=0", pfad])), 2)
 
@@ -133,6 +162,8 @@ def main():
     a = sys.argv[1:]
     texte = json.load(open(a[0], encoding="utf-8"))
     opt = {a[i]: a[i + 1] for i in range(1, len(a) - 1, 2)}
+    global STABIL, ZIEL
+    if "--erzaehler" in opt: ZIEL = float(opt["--erzaehler"]); STABIL = 0.7
     sprache = opt.get("--sprache", "de"); nur = set(filter(None, opt.get("--nur", "").split(",")))
     budget = int(opt.get("--budget", "60000")); bericht_pfad = opt.get("--bericht", os.path.join(ROOT, "stimme", f"bericht-{sprache}.json"))
     idx_pfad = os.path.join(DIR, "index.json" if sprache == "de" else f"index-{sprache}.json")
@@ -162,6 +193,15 @@ def main():
                 versuche.append({"ist": ist, "fehler": fehler, "diff": diff})
                 if bester is None or fehler < bester[0]: bester = (fehler, mp3)
                 print(f"{key} Versuch {k+1}: {fehler} Abweichung(en) {diff}", flush=True)
+                if fehler == 0 and ZIEL:
+                    neu_mp3, fak = tempo_angleichen(mp3, ts, ZIEL)
+                    versuche[-1]["tempo"] = round(fak, 3)
+                    if neu_mp3 is None:
+                        print(f"{key} Tempo-Faktor {fak:.2f} zu weit weg, neuer Versuch", flush=True)
+                        if bester[1] is mp3: bester = (1, mp3)
+                        if k < 3: continue
+                        fehler = 1; diff.append(f"Tempo-Faktor {fak:.2f} nicht angeglichen")   # letzter Versuch: Datei bleibt, Bericht sagt nicht ok
+                    else: mp3 = neu_mp3
                 if fehler == 0:
                     open(pf, "wb").write(mp3); ok = fehler == 0; break
                 if k == 3: open(pf, "wb").write(bester[1]); ok = False   # bester Versuch bleibt, Satz steht im Bericht

@@ -48,8 +48,9 @@
   // ============================================================ 1. Abknickende Vorfahrt
   (function () {
     const K = stadtK({ b: 3.25, R: 6 });
+    K.objekte = K.objekte.filter(o => !(o.art === "baum" && o.x > 0 && o.y > 0 && o.x < 12));   // Baum stand vor dem eigenen Schild (3D-Sicht)
     leit(K, [[0, 90], [0, 12]], [[0, -12], [0, -90]], [[-90, 0], [-12, 0]], [[12, 0], [90, 0]]);
-    K.schilder.push({ typ: "z306_zr", x: 4.9, y: 15 }, { typ: "z306_zl", x: 15, y: -4.9 }, { typ: "z205", x: -14, y: 4.9 }, { typ: "z205", x: -4.9, y: -14 });
+    K.schilder.push({ typ: "z306_zr", x: 4.9, y: 15, aussen: [1, 0], blick: [0, 1] }, { typ: "z306_zl", x: 15, y: -4.9, aussen: [0, -1], blick: [1, 0] }, { typ: "z205", x: -14, y: 4.9, aussen: [0, 1], blick: [-1, 0] }, { typ: "z205", x: -4.9, y: -14, aussen: [-1, 0], blick: [0, -1] });   // aussen: Seite weg von der Fahrbahn; blick: Richtung, aus der der Verkehr kommt
     const e = 9;
     const fs = fahrt("fs", "fahrschule", "#f2f2ee", route("S", "O", { q: 1.625, e, e2: 8, k: 0.5 }), [[0, 30], [3, 26], [5.5, 22], [8, 22], [11, 26], [19, 34]], 70 - e, 5.5, { fokus: true, blinker: [{ von: 1, bis: 11, seite: "rechts" }], schulter: [{ von: 3.6, bis: 4.6, seite: "rechts" }] });
     const bl = fahrt("b", "pkw", "#2c5aa0", route("O", "S", { q: 1.625, e, e2: 8, k: 0.62 }), [[0, 30], [3, 26], [5.8, 20], [8, 22], [11, 26], [19, 34]], 70 - e, 5.8, { blinker: [{ von: 1.6, bis: 11, seite: "links" }] });
@@ -57,18 +58,19 @@
     const gelb = pfad(bezier([0, 8], [0, 0.2], [0.2, 0], [8, 0], 14));                 // gelbes Band: Verlauf der Vorfahrtstraße
     neu({
       id: "abknick", plan: ["a_stadt", "a_30"], titel: "Abknickende Vorfahrtstraße", kurz: "Die Vorfahrtstraße macht eine Kurve. Wer ihr folgt, blinkt und hat Vorfahrt.",
-      dauer: 15, strasse: K, kamera: { fest: [3, 3], zoom: 17, quer: { zeige: ["b", "c"], radius: 40, punkte: [[4.9, 9.6], [4.9, 15]] } },
+      schilderNeu: true,   // Probe: Schilder nach amtlicher Vorlage im festen Maßstab
+      dauer: 15, strasse: K, kamera: { fest: [3, 3], zoom: 17, quer: { zeige: ["b", "c"], radius: 40, punkte: [[4.9, 9.6], [4.9, 15], [15, -9]] } },
       fahrzeuge: [fs, bl, rot],
       overlayUnten: (c, X, Y, s) => {
         const P = [[0, 60], [0, 8]].concat(gelb.pts.map(q => [q.x, q.y])).concat([[8, 0], [60, 0]]);
         c.save(); c.globalAlpha = 0.5; c.strokeStyle = "#f4c800"; c.lineWidth = 0.9 * s; c.lineJoin = c.lineCap = "round"; c.beginPath(); P.forEach(([x, y], i) => i ? c.lineTo(X(x), Y(y)) : c.moveTo(X(x), Y(y))); c.stroke(); c.restore();
       },
       phasen: [
-        { t: 0.2, titel: "Die Vorfahrtstraße knickt ab", text: "Das gelbe Band zeigt die Vorfahrtstraße. Sie führt von Süden nach Osten. Das Zusatzschild unter dem Schild Vorfahrtstraße zeigt den Verlauf. Wer ihr folgt, hat auch in der Kurve Vorfahrt.", regel: "Zeichen 306 · § 8 Abs. 1 StVO", frage: { text: "Wer hat hier Vorfahrt?", optionen: ["Alle, die dem Verlauf der Vorfahrtstraße folgen", "Wer von rechts kommt", "Wer zuerst da ist"], richtig: 0, erklaerung: "Das Schild Vorfahrtstraße mit dem Zusatzschild gilt für den ganzen Verlauf. Wer der Vorfahrtstraße folgt, hat Vorfahrt." } },
-        { t: 2.8, titel: "Rot muss warten", text: "Das rote Auto kommt aus der Seitenstraße, dort steht das Schild Vorfahrt gewähren. Es muss warten und zeigt das auch. Es will geradeaus und kommt damit beiden Fahrzeugen auf der Vorfahrtstraße in den Weg.", regel: "§ 8 Abs. 2 StVO", frage: { text: "Das rote Auto will geradeaus. Wer muss warten?", optionen: ["Das rote Auto, es kommt aus der Seitenstraße", "Du", "Das blaue Auto"], richtig: 0, erklaerung: "Die Fahrzeuge auf der Vorfahrtstraße gehen vor, auch wenn sie abbiegen." } },
-        { t: 5.0, titel: "Auch hier blinken", text: "Du bleibst auf der Vorfahrtstraße. Folgst du ihrem Verlauf, musst du trotzdem blinken. Achte besonders auf Fußgänger.", regel: "Zeichen 306 mit Zusatzzeichen", frage: { text: "Du folgst der Vorfahrtstraße nach rechts. Musst du blinken?", optionen: ["Nein, ich bleibe ja auf der Vorfahrtstraße", "Ja, ich biege ab", "Nur bei Dunkelheit"], richtig: 1, erklaerung: "Beim Zusatzschild für den Verlauf der Vorfahrtstraße musst du blinken, wenn du dem Verlauf folgst. Der Blinker zeigt dem Wartenden, was du vorhast." } },
-        { t: 7.4, titel: "Gegenrichtung der Vorfahrtstraße", text: "Das blaue Auto kommt aus Osten und folgt der Vorfahrtstraße nach links, mit Blinker. Auch das blaue Auto hat Vorfahrt. Beide bleiben rechts und begegnen sich wie Gegenverkehr.", regel: "Zeichen 306 mit Zusatzzeichen" },
-        { t: 10.4, titel: "Jetzt darf das rote Auto", text: "Erst wenn niemand mehr auf der Vorfahrtstraße kommt, fährt das rote Auto los. Schau beim Einbiegen lieber einmal mehr nach beiden Seiten.", regel: "§ 8 Abs. 2 StVO" }
+        { t: 0.2, titel: "Die Vorfahrtstraße knickt ab", text: "Schau mal, das gelbe Band ist die Vorfahrtstraße. Sie knickt von Süden nach Osten ab. Das Zusatzschild unter dem Schild Vorfahrtstraße zeigt den Verlauf. Wer ihr folgt, hat auch in der Kurve Vorfahrt.", regel: "Zeichen 306 · § 8 Abs. 1 StVO", frage: { text: "Wer hat hier Vorfahrt?", optionen: ["Alle, die dem Verlauf der Vorfahrtstraße folgen", "Wer von rechts kommt", "Wer zuerst da ist"], richtig: 0, erklaerung: "Das Schild Vorfahrtstraße mit dem Zusatzschild gilt für den ganzen Verlauf. Wer der Vorfahrtstraße folgt, hat Vorfahrt." } },
+        { t: 2.8, titel: "Rot muss warten", text: "Hier kommt das rote Auto aus der Seitenstraße. Dort steht das Schild Vorfahrt gewähren. Es muss warten und zeigt das auch. Es will geradeaus und kommt beiden Autos auf der Vorfahrtstraße in den Weg.", regel: "§ 8 Abs. 2 StVO", frage: { text: "Das rote Auto will geradeaus. Wer muss warten?", optionen: ["Das rote Auto, es kommt aus der Seitenstraße", "Du", "Das blaue Auto"], richtig: 0, erklaerung: "Die Fahrzeuge auf der Vorfahrtstraße gehen vor, auch wenn sie abbiegen." } },
+        { t: 5.0, titel: "Auch hier blinken", text: "So, jetzt zu dir. Du bleibst auf der Vorfahrtstraße. Auch wenn du nur ihrem Verlauf folgst, musst du blinken. Und achte dabei besonders auf Fußgänger.", regel: "Zeichen 306 mit Zusatzzeichen", frage: { text: "Du folgst der Vorfahrtstraße nach rechts. Musst du blinken?", optionen: ["Nein, ich bleibe ja auf der Vorfahrtstraße", "Ja, ich biege ab", "Nur bei Dunkelheit"], richtig: 1, erklaerung: "Beim Zusatzschild für den Verlauf der Vorfahrtstraße musst du blinken, wenn du dem Verlauf folgst. Der Blinker zeigt dem Wartenden, was du vorhast." } },
+        { t: 7.4, titel: "Gegenrichtung der Vorfahrtstraße", text: "Das blaue Auto kommt von Osten. Es folgt der Vorfahrtstraße nach links und blinkt dabei. Auch das blaue Auto hat Vorfahrt. Ihr bleibt beide rechts und begegnet euch wie im Gegenverkehr.", regel: "Zeichen 306 mit Zusatzzeichen" },
+        { t: 10.4, titel: "Jetzt darf das rote Auto", text: "Erst wenn niemand mehr auf der Vorfahrtstraße kommt, fährt das rote Auto los. Und du, schau beim Einbiegen lieber einmal mehr nach beiden Seiten.", regel: "§ 8 Abs. 2 StVO" }
       ]
     });
   })();
