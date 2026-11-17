@@ -103,6 +103,8 @@ def abweichung(soll, ist, sprache):
             i, j = i - 1, j - 1
         elif i > 0 and D[i][j] == D[i - 1][j] + 1: diff.append(f"{a[i-1]}→∅"); i -= 1
         else: diff.append(f"∅→{b[j-1]}"); j -= 1
+    if D[n][m] and "".join(a).replace("s", "") == "".join(b).replace("s", ""):
+        return 0, []   # nur Schreibweise einer Zusammensetzung („noch mal“/„nochmal“, „Vorfahrtsstraße“)
     return D[n][m], list(reversed(diff))
 
 def dauer(pfad):
@@ -129,7 +131,7 @@ def main():
             if alt and alt.get("stand") == st and alt.get("ok") and os.path.exists(pf):
                 neu[st] = {"f": f, "d": dauer(pf)}; continue
             versuche = []
-            ok = False
+            ok = False; bester = None
             for k in range(4):
                 if bericht["zeichen"] + len(t) > budget: print("BUDGET erreicht", file=sys.stderr); break
                 mp3 = tts(t, sprache, ph[i - 1]["text"] if i else None, ph[i + 1]["text"] if i + 1 < len(ph) else None)
@@ -138,10 +140,11 @@ def main():
                 fehler, diff = abweichung(t, ist, sprache)
                 fehler += len(gedehnt); diff += ["gedehnt " + g for g in gedehnt]
                 versuche.append({"ist": ist, "fehler": fehler, "diff": diff})
+                if bester is None or fehler < bester[0]: bester = (fehler, mp3)
                 print(f"{key} Versuch {k+1}: {fehler} Abweichung(en) {diff}", flush=True)
-                if fehler == 0 or (k == 3 and fehler <= 1 and all("∅" not in d for d in diff)):
+                if fehler == 0:
                     open(pf, "wb").write(mp3); ok = fehler == 0; break
-                if k == 3: open(pf, "wb").write(mp3)
+                if k == 3: open(pf, "wb").write(bester[1]); ok = False   # bester Versuch bleibt, Satz steht im Bericht
             bericht["eintraege"][key] = {"stand": st, "text": t, "ok": ok, "versuche": versuche}
             if os.path.exists(pf): neu[st] = {"f": f, "d": dauer(pf)}
             json.dump(bericht, open(bericht_pfad, "w", encoding="utf-8"), ensure_ascii=False, indent=1)
