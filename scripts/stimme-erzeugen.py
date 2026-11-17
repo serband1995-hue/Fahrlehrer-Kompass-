@@ -79,6 +79,15 @@ def zahl_de(n):
     if n < 1000000: t, r = divmod(n, 1000); return ("" if t == 1 else zahl_de(t)) + "tausend" + (zahl_de(r) if r else "")
     return str(n)
 
+EN1 = ["zero", "one", "two", "three", "four", "five", "six", "seven", "eight", "nine", "ten", "eleven", "twelve", "thirteen", "fourteen", "fifteen", "sixteen", "seventeen", "eighteen", "nineteen"]
+EN10 = {2: "twenty", 3: "thirty", 4: "forty", 5: "fifty", 6: "sixty", 7: "seventy", 8: "eighty", 9: "ninety"}
+def zahl_en(n):
+    if n < 20: return EN1[n]
+    if n < 100: z, e = divmod(n, 10); return EN10[z] + (" " + EN1[e] if e else "")
+    if n < 1000: h, r = divmod(n, 100); return EN1[h] + " hundred" + (" and " + zahl_en(r) if r else "")
+    if n < 1000000: t, r = divmod(n, 1000); return zahl_en(t) + " thousand" + ((" and " if r < 100 else " ") + zahl_en(r) if r else "")
+    return str(n)
+
 def woerter(t, sprache):
     t = unicodedata.normalize("NFC", t.lower()).replace("ß", "ss")
     t = re.sub(r"(\d)\.(\d{3})", r"\1\2", t)
@@ -87,6 +96,8 @@ def woerter(t, sprache):
     out = []
     for w in t.split():
         if sprache == "de" and w.isdigit(): w = zahl_de(int(w)).replace("ß", "ss")
+        elif sprache == "en" and w.isdigit(): w = zahl_en(int(w))
+        elif sprache == "en": w = re.sub(r"tre(s|d)?$", r"ter\1", re.sub(r"our(s|ing|hood)?$", r"or\1", {"kerb": "curb", "kerbs": "curbs", "practise": "practice"}.get(w, w)))   # britisch = amerikanisch (Scribe schreibt amerikanisch)
         else: w = z.get(w, w).replace("ß", "ss")
         if sprache == "de": w = {"einhundert": "hundert", "eintausend": "tausend", "eins": "ein", "eine": "ein", "einen": "ein", "einem": "ein", "einer": "ein", "eines": "ein"}.get(w, w)
         out.extend(w.split())
@@ -109,6 +120,8 @@ def abweichung(soll, ist, sprache):
             i, j = i - 1, j - 1
         elif i > 0 and D[i][j] == D[i - 1][j] + 1: diff.append(f"{a[i-1]}→∅"); i -= 1
         else: diff.append(f"∅→{b[j-1]}"); j -= 1
+    if D[n][m] and sprache == "en" and [w for w in a if w != "and"] == [w for w in b if w != "and"]:
+        return 0, []
     if D[n][m] and "".join(a).replace("s", "") == "".join(b).replace("s", ""):
         return 0, []   # nur Schreibweise einer Zusammensetzung („noch mal“/„nochmal“, „Vorfahrtsstraße“)
     return D[n][m], list(reversed(diff))

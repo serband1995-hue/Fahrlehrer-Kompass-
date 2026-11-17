@@ -22,7 +22,7 @@ const basis = `http://127.0.0.1:${server.address().port}/`;
 const browser = await chromium.launch({ executablePath: process.env.CHROMIUM_PATH || "/opt/pw-browsers/chromium", args: ["--autoplay-policy=no-user-gesture-required"] });
 let fehler = 0, ok = 0;
 const pruefe = (n, c, g = "") => { if (c) { ok++; console.log("ok     " + n); } else { fehler++; console.log("FEHLER " + n + (g ? " – " + g : "")); } };
-const ctx = await browser.newContext({ viewport: { width: 360, height: 640 }, hasTouch: true, isMobile: true, serviceWorkers: "block" });
+const ctx = await browser.newContext({ viewport: { width: 360, height: 640 }, hasTouch: true, isMobile: true, serviceWorkers: "block", locale: "de-DE" });
 const page = await ctx.newPage(); const konsole = [];
 page.on("pageerror", e => konsole.push("pageerror " + e.message));
 page.on("console", m => { if (m.type() === "error" && !/Failed to load resource|supabase|net::ERR/i.test(m.text())) konsole.push(m.text()); });
