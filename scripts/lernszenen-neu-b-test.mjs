@@ -26,7 +26,7 @@ for (const [w, h] of [[360, 640], [412, 915], [640, 360], [568, 320]]) {
   const alle = await page.evaluate(() => window.Lernszenen._szenen.map(s => s.id));
   for (const id of IDS) {
     const t = `${w}×${h} ${id}: `; pruefe(t + "registriert", alle.includes(id));
-    await page.evaluate(s => window.Lernszenen.open({ szene: s }), id); await page.waitForSelector("#lzCap");
+    await page.evaluate(s => window.Lernszenen.open({ szene: s }), id); await page.waitForSelector("#lzCap", { state: "attached" }); await page.evaluate(() => { const o = document.querySelector("#lzCapOpen"); if (o && !o.hidden) o.click(); });
     const info = await page.evaluate(sid => { const s = window.Lernszenen._szenen.find(x => x.id === sid); return { ph: s.phasen.map(p => [p.t, p.titel]), dauer: s.dauer }; }, id);
     for (const [i, [pt, titel]] of info.ph.entries()) {
       const nxt = i + 1 < info.ph.length ? info.ph[i + 1][0] : info.dauer, tm = (pt + nxt) / 2;
@@ -84,7 +84,7 @@ for (const [w, h] of [[568, 320], [640, 360], [740, 360]]) {
   const ctx = await browser.newContext({ viewport: { width: w, height: h }, deviceScaleFactor: 1, hasTouch: true, isMobile: false });
   const page = await ctx.newPage(); await page.route(/^https?:\/\/(?!127\.0\.0\.1)/, r => r.abort());
   await page.goto(basis); await page.waitForFunction(() => window.Lernszenen && window.Lernszenen.open, null, { timeout: 15000 });
-  await page.evaluate(() => window.Lernszenen.open({ szene: "einsatz" })); await page.waitForSelector("#lzCap");
+  await page.evaluate(() => window.Lernszenen.open({ szene: "einsatz" })); await page.waitForSelector("#lzCap", { state: "attached" }); await page.evaluate(() => { const o = document.querySelector("#lzCapOpen"); if (o && !o.hidden) o.click(); });
   for (let t = 0.5; t <= 8.6; t += 1) {
     await page.evaluate(v => { window.Lernszenen._pillen = {}; const sl = document.querySelector("#lzSlider"); sl.value = v; sl.dispatchEvent(new Event("input")); }, t); await page.waitForTimeout(500);
     const r = await page.evaluate(() => { const pl = window.Lernszenen._pillen && window.Lernszenen._pillen.einsatz, cv = document.querySelector("#lzCanvas").getBoundingClientRect(), cap = document.querySelector("#lzCap"), c = cap && !cap.hidden ? cap.getBoundingClientRect() : null; if (!pl) return null;

@@ -54,7 +54,7 @@ await page.evaluate(() => document.querySelector("#lzZu").click());
 await page.route("**/stimme/index.json", async route => { const r = await route.fetch(); const j = await r.json(); delete j.rvl; await route.fulfill({ response: r, json: j }); });
 await page.reload(); await page.waitForFunction(() => window.Lernszenen && window.Lernszenen.open, null, { timeout: 15000 });
 await page.evaluate(() => window.Lernszenen.open({ szene: "rvl" }));
-await page.waitForSelector("#lzCap"); await page.waitForTimeout(500);
+await page.waitForSelector("#lzCap", { state: "attached" }); await page.evaluate(() => { const o = document.querySelector("#lzCapOpen"); if (o && !o.hidden) o.click(); }); await page.waitForTimeout(500);
 pruefe("rvl (ohne Aufnahme): Stimmen-Knopf versteckt", await page.$eval("#lzStimme", e => e.hidden));
 await page.click("#lzPlay"); await page.waitForTimeout(1500);
 pruefe("rvl (ohne Aufnahme): kein Ton gestartet", (await anzahl()) === 0);
@@ -62,7 +62,7 @@ await page.evaluate(() => document.querySelector("#lzZu").click());
 await page.unroute("**/stimme/index.json");
 await page.reload(); await page.waitForFunction(() => window.Lernszenen && window.Lernszenen.open, null, { timeout: 15000 });
 await page.evaluate(() => window.Lernszenen.open({ szene: "rvl" }));
-await page.waitForSelector("#lzCap"); await page.waitForTimeout(500);
+await page.waitForSelector("#lzCap", { state: "attached" }); await page.evaluate(() => { const o = document.querySelector("#lzCapOpen"); if (o && !o.hidden) o.click(); }); await page.waitForTimeout(500);
 pruefe("rvl (mit Aufnahme): Stimmen-Knopf sichtbar", !(await page.$eval("#lzStimme", e => e.hidden)));
 await page.evaluate(() => document.querySelector("#lzZu").click());
 
@@ -72,7 +72,7 @@ await page.reload(); await page.waitForFunction(() => window.Lernszenen && windo
 await page.evaluate(() => window.Lernszenen.open({}));
 await page.waitForSelector("#lzGrid");
 await page.evaluate(() => window.Lernszenen.open({ szene: "stop" }));
-await page.waitForSelector("#lzCap"); await page.waitForTimeout(2500);
+await page.waitForSelector("#lzCap", { state: "attached" }); await page.evaluate(() => { const o = document.querySelector("#lzCapOpen"); if (o && !o.hidden) o.click(); }); await page.waitForTimeout(2500);
 pruefe("langsamer Index: Stimmen-Knopf erscheint trotzdem", !(await page.$eval("#lzStimme", e => e.hidden)));
 await page.evaluate(() => document.querySelector("#lzZu").click());
 await page.unroute("**/stimme/index.json");
@@ -80,7 +80,7 @@ await page.reload(); await page.waitForFunction(() => window.Lernszenen && windo
 
 // Szene mit Stimme (Stoppschild: Phasen bei 0,2 / 4,8 / 6,6 / 9 s)
 await page.evaluate(() => { try { localStorage.removeItem("lz_stimme"); } catch (e) {} window.__au.length = 0; window.Lernszenen.open({ szene: "stop" }); });
-await page.waitForSelector("#lzCap"); await page.waitForTimeout(500);
+await page.waitForSelector("#lzCap", { state: "attached" }); await page.evaluate(() => { const o = document.querySelector("#lzCapOpen"); if (o && !o.hidden) o.click(); }); await page.waitForTimeout(500);
 pruefe("stop: Stimmen-Knopf sichtbar und an", !(await page.$eval("#lzStimme", e => e.hidden)) && (await page.$eval("#lzStimme", e => e.getAttribute("aria-pressed"))) === "true");
 pruefe("stop: „Nochmal hören“ im Erklärkasten", !!(await page.$("#lzCap .lz-nochmal")));
 pruefe("nichts spielt vor dem Start", (await anzahl()) === 0);
