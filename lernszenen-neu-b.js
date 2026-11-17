@@ -351,7 +351,7 @@
         { t: 1.2, titel: "Rechts heranfahren", text: "So, jetzt blinkst du rechts, fährst an den rechten Rand und hältst an. Aber vor der Kreuzung, nicht mittendrin. Wer in der Kreuzung steht, versperrt dem Einsatzfahrzeug den Weg.", regel: "§ 38 Abs. 1 StVO" },
         { t: tFs - 0.8, titel: "Der Rettungswagen überholt", text: "Der Rettungswagen fährt auch auf der Gegenspur an dir vorbei. Du bleibst stehen, bewegst dich nicht mehr und fährst ihm nicht hinterher.", regel: "§ 38 Abs. 1 StVO" },
         { t: tMitte - 1.0, titel: "An der Kreuzung wartet auch der Querverkehr", text: "An der Kreuzung wartet jetzt auch der Querverkehr. Das blaue Auto kommt von rechts und hätte sonst Vorfahrt. Jetzt muss es warten. Das Einsatzfahrzeug hat freie Bahn.", regel: "§ 38 Abs. 1 StVO", frage: { text: "Das blaue Auto kommt von rechts. Darf es vor dem Rettungswagen in die Kreuzung fahren?", optionen: ["Ja, es darf, rechts vor links", "Nein, es muss warten, der Rettungswagen hat freie Bahn", "Ja, es darf, wenn es schnell ist"], richtig: 1, erklaerung: "Blaulicht mit Einsatzhorn heißt freie Bahn. Alle anderen warten, auch wer sonst Vorfahrt hätte." } },
-        { t: 9.3, titel: "Erst wenn alles frei ist", text: "Der Rettungswagen ist durch. Bevor du losfährst, schau, ob noch ein zweites Einsatzfahrzeug kommt. Dann blinkst du und ordnest dich mit Schulterblick wieder ein.", regel: "§ 38 Abs. 1 StVO" }
+        { t: 9.3, titel: "Erst wenn alles frei ist", text: "Der Rettungswagen ist durch. Bevor du losfährst, schau, ob noch ein zweites Einsatzfahrzeug kommt. Dann Spiegel, Blinker links und mit Schulterblick wieder einordnen.", regel: "§ 38 Abs. 1 StVO" }
       ]
     });
   })();
