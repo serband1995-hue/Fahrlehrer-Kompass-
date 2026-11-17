@@ -30,7 +30,7 @@ for (const [w, h, mobil] of [[360, 780, true], [780, 360, true], [568, 320, true
     const t = `${w}×${h} ${szene} ${modus}: `;
     await page.evaluate(s => window.Lernszenen.open({ szene: s }), szene);
     await page.waitForSelector("#lzCap", { state: "attached", timeout: 5000 }); await page.evaluate(() => { const o = document.querySelector("#lzCapOpen"); if (o && !o.hidden) o.click(); });
-    if (modus === "mitdenken") { const b = await page.$('[data-modus="mitdenken"]'); if (b) { await b.tap(); await page.waitForTimeout(400); } }
+    if (modus === "mitdenken") { const b = await page.$('[data-modus="mitdenken"]'); if (b) { await b.tap(); await page.waitForTimeout(400); await page.evaluate(() => { const o = document.querySelector("#lzCapOpen"); if (o && !o.hidden) o.click(); }); } }
     // eine Phase mit § suchen (Slider durchfahren)
     const ph = await page.evaluate(() => { const z = window.Lernszenen._intern.zustand(); return window.Lernszenen._szenen.find(x => x.id === z.szene).phasen.map(p => p.t); });
     let par = false;
