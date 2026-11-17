@@ -193,7 +193,7 @@
       overlayUnten: (c, X, Y, s, z) => {
         if (z < tY || z > tRg) return;
         c.save(); c.globalAlpha = 0.45; c.fillStyle = "#e53935"; c.fillRect(X(yL - 1.2), Y(yF - 15), 2.4 * s, 15 * s); c.fillStyle = "#f5a623"; c.fillRect(X(yL - 1.2), Y(yF - 40), 2.4 * s, 25 * s); c.globalAlpha = 1;
-        pille(c, X(yL - 1.5), Y(yF - 7.5), "Reaktion 15 m", s); pille(c, X(yL - 1.5), Y(yF - 27.5), "Bremsen 25 m", s); c.restore();
+        pille(c, X(yL - 1.5), Y(yF - 7.5), "Reaktion 15 Meter", s); pille(c, X(yL - 1.5), Y(yF - 27.5), "Bremsen 25 Meter", s); c.restore();
       },
       phasen: [
         { t: 0.2, titel: "Grün, aber bremsbereit", text: "Du fährst mit Tempo 50 auf eine Ampel zu. Sie ist noch grün, aber du beobachtest sie schon. Wie lange ist sie schon grün? Dein Fuß bleibt nah an der Bremse.", regel: "§ 37 Abs. 2 StVO" },

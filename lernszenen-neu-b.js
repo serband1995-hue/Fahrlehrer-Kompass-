@@ -214,7 +214,7 @@
         c.strokeStyle = p.farbe; c.lineWidth = Math.max(2, 2 * d); c.beginPath(); c.moveTo(X(a), Y(p.yb)); c.lineTo(X(b), Y(p.yb)); c.moveTo(X(a), Y(p.yb) - 4 * d); c.lineTo(X(a), Y(p.yb) + 4 * d); c.moveTo(X(b), Y(p.yb) - 4 * d); c.lineTo(X(b), Y(p.yb) + 4 * d); c.stroke();
         if (ct && t >= ct.t) { const px = X(rohPos(p.f, ct.t).x + 2.25), py = Y(p.y); c.fillStyle = "rgba(255,90,40,.9)"; c.beginPath(); for (let i = 0; i < 16; i++) { const r = (i % 2 ? 0.8 : 1.6) * s, an = i * PI / 8; c.lineTo(px + Math.cos(an) * r, py + Math.sin(an) * r); } c.fill(); }
         if (LZ.bau.vorschau.an) return;
-        const txt = ct && t >= ct.t ? "Aufprall mit ca. " + Math.round(ct.v) + " km/h" : t < TB ? p.n + ": " + Math.round(g) + " m Abstand" : v > 0.05 ? "Reaktion 14 m + Bremsen 12 m" : "Stillstand, " + Math.round(g) + " m Abstand";
+        const txt = ct && t >= ct.t ? "Aufprall mit etwa Tempo " + Math.round(ct.v) : t < TB ? p.n + ": " + Math.round(g) + " Meter Abstand" : v > 0.05 ? "Reaktion 14 Meter plus Bremsen 12 Meter" : "Stillstand, " + Math.round(g) + " Meter Abstand";
         pille(c, txt, X((a + b) / 2), Y(p.yt), p.farbe); mitte += X((a + b) / 2); n++;
       });
       if (!LZ.bau.vorschau.an) pille(c, "Vergleich: beide fahren nach rechts →", c.canvas.width * 0.3, Y(yS + 4.6), "rgba(30,34,40,.85)", "#fff", 11);
@@ -279,7 +279,7 @@
         c.strokeStyle = "rgba(" + farbe(z) + "," + (akt ? 0.95 : 0.3) + ")"; c.lineWidth = Math.max(1.5, 0.18 * s); c.strokeRect(X(z.a), Y(3.4), (z.b - z.a) * s, (KANTE - 3.4) * s);
       });
     }
-    const KURZ = z => z.rot ? "kein Halten" : z.nurP ? "kein Parken" : z.orange ? "Halten ≤ 3 min" : "frei", FPUNKT = ["255,60,48", "235,90,160", "255,170,30", "50,200,100"], FTEXT = ["kein Halten/Parken", "nur kein Parken", "Halten bis 3 min", "frei"];
+    const KURZ = z => z.rot ? "kein Halten" : z.nurP ? "kein Parken" : z.orange ? "Halten bis 3 Minuten" : "frei", FPUNKT = ["255,60,48", "235,90,160", "255,170,30", "50,200,100"], FTEXT = ["kein Halten, kein Parken", "nur kein Parken", "Halten bis 3 Minuten", "frei"];
     function obenText(c, X, Y, s, t) {
       if (LZ.bau.vorschau.an) return; const d = dprVon(c);
       c.save(); c.font = "bold " + Math.round(11 * d) + "px sans-serif"; const breite = tx => c.measureText(tx).width + 14 * d; c.restore(); const reihen = [-1e9, -1e9, -1e9];
