@@ -430,7 +430,7 @@
         { t: 5, titel: "Blau fährt", text: "Das blaue Auto hat niemanden von rechts. Es fährt als Erstes.", regel: "§ 8 Abs. 1 StVO" },
         { t: 8, titel: "Dann du", text: "Jetzt ist rechts von dir frei. Du fährst geradeaus über die Kreuzung.", regel: "§ 8 Abs. 1 StVO" },
         { t: 11, titel: "Zuletzt Rot", text: "Rot biegt links ab. Es musste warten, weil du von rechts kamst.", regel: "§ 8 Abs. 1 StVO" },
-        { t: 14.5, titel: "Zum Merken", text: "Wer warten muss, zeigt das rechtzeitig, indem er mäßig schnell heranfährt. Stehen an allen vier Seiten Autos, verständigen sich die Fahrer. Einer verzichtet.", regel: "§ 8 Abs. 2 · § 11 Abs. 3 StVO" }
+        { t: 14.5, titel: "Zum Merken", text: "Musst du warten, zeig das rechtzeitig. Fahr dazu mäßig schnell heran. Stehen an allen vier Seiten Autos, verständigt euch. Einer verzichtet.", regel: "§ 8 Abs. 2 · § 11 Abs. 3 StVO" }
       ]
     });
   })();
@@ -475,7 +475,7 @@
       phasen: [
         { t: 0.2, titel: "Zwei Linksabbieger", text: "Du und das rote Auto wollt beide nach links abbiegen. Ihr steht euch gegenüber.", regel: "§ 9 Abs. 4 StVO", frage: { text: "Wie biegen die beiden ab?", optionen: ["Voreinander. Jeder biegt vor dem anderen ab", "Umeinander herum", "Wer zuerst da ist, zuerst"], richtig: 0, erklaerung: "Entgegenkommende Linksabbieger biegen voreinander ab. Anders nur, wenn die Verkehrslage oder die Form der Kreuzung es verlangt." } },
         { t: 6, titel: "Voreinander abbiegen", text: "Ihr fahrt gleichzeitig los und biegt jeweils vor dem anderen ab. Die Autos begegnen sich rechts an rechts. Das spart Zeit. Der andere Linksabbieger verdeckt aber die Sicht auf den Gegenverkehr dahinter. Sei deshalb besonders aufmerksam.", regel: "§ 9 Abs. 4 StVO" },
-        { t: 10.5, titel: "Zum Merken", text: "Umeinander herum biegst du nur ab, wenn Markierungen, die Ampel oder die Form der Kreuzung es verlangen.", regel: "§ 9 Abs. 4 StVO" }
+        { t: 10.5, titel: "Zum Merken", text: "Umeinander herum biegt ihr nur ab, wenn Markierungen, die Ampel oder die Form der Kreuzung es verlangen.", regel: "§ 9 Abs. 4 StVO" }
       ]
     });
   })();
@@ -687,7 +687,7 @@
         { t: 13, titel: "Vortasten bis zur Sichtlinie", text: "Der Fußgängerübergang ist frei. Roll langsam bis zur Sichtlinie vor und halte erneut an.", regel: "§ 37 Abs. 2 Nr. 1 StVO" },
         { t: 16.8, titel: "Querverkehr hat Grün", text: "Von links kommt ein Auto mit Grün. Du darfst es nicht behindern oder gefährden. Warte.", regel: "§ 37 Abs. 2 Nr. 1 StVO" },
         { t: 18.8, titel: "Abbiegen", text: "Das blaue Auto ist vorbei. Mach den Schulterblick nach rechts und biege langsam ab. Das geht nur aus der rechten Spur.", regel: "§ 37 Abs. 2 Nr. 1 StVO" },
-        { t: 23, titel: "Zum Merken", text: "Ein leuchtender grüner Pfeil in der Ampel ist eine eigene Grünphase. Beim Blechschild mit grünem Pfeil erst anhalten, dann mit größter Vorsicht abbiegen.", regel: "§ 37 Abs. 2 StVO" }
+        { t: 23, titel: "Zum Merken", text: "Ein leuchtender grüner Pfeil in der Ampel ist eine eigene Grünphase. Beim Schild mit grünem Pfeil hältst du erst an. Dann biegst du mit größter Vorsicht ab.", regel: "§ 37 Abs. 2 StVO" }
       ]
     });
   })();
