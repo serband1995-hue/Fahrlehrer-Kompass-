@@ -50,7 +50,7 @@ def post(url, body, ctype="application/json", tries=4):
 
 def tts(text, sprache, prev, nxt):
     body = {"text": text, "model_id": "eleven_multilingual_v2",
-            "voice_settings": {"stability": STABIL, "similarity_boost": 0.8, "style": 0.0, "use_speaker_boost": True}}
+            "voice_settings": {"stability": STABIL, "similarity_boost": 0.8, "style": 0.0, "use_speaker_boost": True, **({"speed": 0.92} if ZIEL else {})}}   # Erzähler: etwas ruhiger erzeugen, weniger Nachbremsen
     if prev: body["previous_text"] = prev
     if nxt: body["next_text"] = nxt
     return post(f"{API}/text-to-speech/{STIMME_ID}?output_format=mp3_44100_64", json.dumps(body).encode())
@@ -159,14 +159,14 @@ def sprechzeit(pfad):
 
 def tempo_angleichen(mp3, text, ziel):
     """Gleichmäßiges Erzähltempo: Stille vorn kürzen, Tempo auf ziel Silben/s bringen (Tonhöhe bleibt), 0,3 s Ruhe am Ende.
-    Gibt (neue mp3-Bytes, Faktor) zurück; Faktor außerhalb 0,85–1,15 → None (lieber neu erzeugen)."""
+    Gibt (neue mp3-Bytes, Faktor) zurück; Faktor außerhalb 0,8–1,15 → None (lieber neu erzeugen)."""
     import tempfile
     with tempfile.TemporaryDirectory() as d:
         ein, aus = os.path.join(d, "a.mp3"), os.path.join(d, "b.mp3")
         open(ein, "wb").write(mp3)
         a, b = sprechzeit(ein)
         f = ziel / (silben(text) / max(0.5, b - a))
-        if not 0.85 <= f <= 1.15: return None, f
+        if not 0.8 <= f <= 1.15: return None, f
         start = max(0.0, a - 0.08)
         subprocess.run(["ffmpeg", "-v", "quiet", "-y", "-i", ein, "-af", f"atrim=start={start:.3f}:end={b + 0.05:.3f},asetpts=PTS-STARTPTS,atempo={f:.4f},apad=pad_dur=0.3",
                         "-ar", "44100", "-b:a", "64k", aus], check=True)
