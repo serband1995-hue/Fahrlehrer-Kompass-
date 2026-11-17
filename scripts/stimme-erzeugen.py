@@ -109,9 +109,19 @@ def woerter(t, sprache):
     return out
 
 EIN_FORMEN = {"ein", "eine", "einen", "einem", "einer", "eines", "eins"}
+def zeichen_abstand(x, y):
+    if abs(len(x) - len(y)) > 1: return 2
+    v = list(range(len(y) + 1))
+    for i, cx in enumerate(x, 1):
+        w = [i] + [0] * len(y)
+        for j, cy in enumerate(y, 1): w[j] = min(v[j] + 1, w[j - 1] + 1, v[j - 1] + (cx != cy))
+        v = w
+    return v[-1]
 def gleich(x, y):
     if x == y: return True
-    return (x == "#1" and y in EIN_FORMEN) or (y == "#1" and x in EIN_FORMEN)
+    if (x == "#1" and y in EIN_FORMEN) or (y == "#1" and x in EIN_FORMEN): return True
+    # lange Fachwörter: ein Buchstabe Unterschied ist Schreibweise der Abschrift („ausfedelungsstreifen“), kein Sprechfehler
+    return len(x) >= 10 and len(y) >= 10 and zeichen_abstand(x, y) <= 1
 
 def abweichung(soll, ist, sprache):
     a, b = woerter(soll, sprache), woerter(ist, sprache)
