@@ -575,11 +575,164 @@
   "1v0k4be": {
    "f": "en-ampel_gelb-0-1v0k4be.mp3",
    "d": 8.72
+  },
+  "ohoo80": {
+   "f": "en-ampel_gelb-1-ohoo80.mp3",
+   "d": 7.65
+  },
+  "1rrmx2t": {
+   "f": "en-ampel_gelb-2-1rrmx2t.mp3",
+   "d": 8.31
+  },
+  "2rdyb9": {
+   "f": "en-ampel_gelb-3-2rdyb9.mp3",
+   "d": 13.61
+  },
+  "9uujin": {
+   "f": "en-ampel_gelb-4-9uujin.mp3",
+   "d": 8.59
+  },
+  "g5hlxu": {
+   "f": "en-ampel_gelb-5-g5hlxu.mp3",
+   "d": 5.75
   }
  },
- "bahnuebergang": {},
- "strassenbahn": {},
- "abstand": {},
- "halteverbot": {},
- "einsatz": {}
+ "bahnuebergang": {
+  "1updd90": {
+   "f": "en-bahnuebergang-0-1updd90.mp3",
+   "d": 6.3
+  },
+  "1vzn62y": {
+   "f": "en-bahnuebergang-1-1vzn62y.mp3",
+   "d": 7.55
+  },
+  "1985x0p": {
+   "f": "en-bahnuebergang-2-1985x0p.mp3",
+   "d": 6.35
+  },
+  "req23s": {
+   "f": "en-bahnuebergang-3-req23s.mp3",
+   "d": 5.04
+  },
+  "rot6ka": {
+   "f": "en-bahnuebergang-4-rot6ka.mp3",
+   "d": 7.47
+  },
+  "t8dvv2": {
+   "f": "en-bahnuebergang-5-t8dvv2.mp3",
+   "d": 4.26
+  },
+  "1wbfjfh": {
+   "f": "en-bahnuebergang-6-1wbfjfh.mp3",
+   "d": 8.62
+  },
+  "sjpygp": {
+   "f": "en-bahnuebergang-7-sjpygp.mp3",
+   "d": 12.98
+  }
+ },
+ "strassenbahn": {
+  "1bef9pa": {
+   "f": "en-strassenbahn-0-1bef9pa.mp3",
+   "d": 8.07
+  },
+  "hksfaz": {
+   "f": "en-strassenbahn-1-hksfaz.mp3",
+   "d": 8.31
+  },
+  "l1z0p": {
+   "f": "en-strassenbahn-2-l1z0p.mp3",
+   "d": 8.18
+  },
+  "11it04n": {
+   "f": "en-strassenbahn-3-11it04n.mp3",
+   "d": 13.09
+  },
+  "cg1q5e": {
+   "f": "en-strassenbahn-4-cg1q5e.mp3",
+   "d": 7.0
+  }
+ },
+ "abstand": {
+  "cp569g": {
+   "f": "en-abstand-0-cp569g.mp3",
+   "d": 12.3
+  },
+  "4so0hs": {
+   "f": "en-abstand-1-4so0hs.mp3",
+   "d": 8.78
+  },
+  "a9ubse": {
+   "f": "en-abstand-2-a9ubse.mp3",
+   "d": 13.61
+  },
+  "lu4ylk": {
+   "f": "en-abstand-3-lu4ylk.mp3",
+   "d": 8.49
+  },
+  "2whdxj": {
+   "f": "en-abstand-4-2whdxj.mp3",
+   "d": 9.69
+  },
+  "1f30xdy": {
+   "f": "en-abstand-5-1f30xdy.mp3",
+   "d": 15.31
+  }
+ },
+ "halteverbot": {
+  "j25dxv": {
+   "f": "en-halteverbot-0-j25dxv.mp3",
+   "d": 9.74
+  },
+  "tfv6ml": {
+   "f": "en-halteverbot-1-tfv6ml.mp3",
+   "d": 9.09
+  },
+  "6n0fbk": {
+   "f": "en-halteverbot-2-6n0fbk.mp3",
+   "d": 6.92
+  },
+  "1mzivzs": {
+   "f": "en-halteverbot-3-1mzivzs.mp3",
+   "d": 7.97
+  },
+  "1m693ac": {
+   "f": "en-halteverbot-4-1m693ac.mp3",
+   "d": 4.62
+  },
+  "md7a9i": {
+   "f": "en-halteverbot-5-md7a9i.mp3",
+   "d": 12.98
+  },
+  "1dfvd02": {
+   "f": "en-halteverbot-6-1dfvd02.mp3",
+   "d": 12.02
+  },
+  "11mcryf": {
+   "f": "en-halteverbot-7-11mcryf.mp3",
+   "d": 9.2
+  }
+ },
+ "einsatz": {
+  "7g4sdv": {
+   "f": "en-einsatz-0-7g4sdv.mp3",
+   "d": 7.94
+  },
+  "rchuev": {
+   "f": "en-einsatz-1-rchuev.mp3",
+   "d": 9.61
+  },
+  "11b74hi": {
+   "f": "en-einsatz-2-11b74hi.mp3",
+   "d": 5.38
+  },
+  "mfms28": {
+   "f": "en-einsatz-3-mfms28.mp3",
+   "d": 5.62
+  },
+  "jl59vk": {
+   "f": "en-einsatz-4-jl59vk.mp3",
+   "d": 8.07
+  }
+ }
 }
