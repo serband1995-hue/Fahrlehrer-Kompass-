@@ -771,7 +771,7 @@ window.LernszenenEN = {
 ]
 },
 "voreinander": {
-"titel": "Two left turners, turning in front of each other",
+"titel": "Two left turners in front of each other",
 "kurz": "If you face each other and both turn left, you turn in front of each other",
 "phasen": [
 {
@@ -1284,7 +1284,7 @@ window.LernszenenEN = {
 ]
 },
 "ampel_gelb": {
-"titel": "Traffic light, amber and red and amber",
+"titel": "Amber and red with amber",
 "kurz": "At amber you stop before the junction if it is safe. Red and amber is still red.",
 "phasen": [
 {
@@ -1350,7 +1350,7 @@ window.LernszenenEN = {
 ]
 },
 "bahnuebergang": {
-"titel": "Level crossing and the St Andrew's cross",
+"titel": "Level crossing with St Andrew's cross",
 "kurz": "A red flashing light and a barrier mean wait, even after the train, never go round the barrier.",
 "phasen": [
 {

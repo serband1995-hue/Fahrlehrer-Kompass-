@@ -1922,7 +1922,7 @@
   @media (max-height:520px){ .lz-top{padding-top:6px;padding-bottom:6px;} .lz-btn{min-height:34px;padding:5px 9px;font-size:12.5px;} .lz-bar{padding:5px 8px;gap:5px;} .lz-drive{grid-template-columns:repeat(8,1fr);grid-template-areas:"bl sl br2 br2 gas gas sr br" "wl wl wl wl wr wr wr wr";} .lz-drive .lz-btn{min-height:38px;font-size:12.5px;} .lz-caption{max-width:min(380px,calc(100% - 140px));padding:7px 10px;} .lz-caption p{font-size:12px;} .lz-coach{font-size:12px;max-width:45%;padding:6px 9px;} .lz-hud{padding:5px 9px;} .lz-hud b{font-size:19px;} }
   .lz-bar [data-kam],.lz-bar [data-modus]{min-height:44px;} .lz-bar [data-kam]{min-width:56px;position:relative;}   /* Daumen-tauglich (Prüf-Team 17.11.) */
   @media (max-height:520px){ .lz-bar [data-kam],.lz-bar [data-modus]{min-height:34px;} .lz-bar [data-kam]::after{content:"";position:absolute;left:-3px;right:-3px;top:-5px;bottom:-5px;} }
-  @media (max-width:560px){ .lz-caption p{font-size:12.8px;} .lz-title{font-size:15px;} .lz-drive{grid-template-columns:repeat(4,1fr);grid-template-areas:"bl sl sr br" "br2 br2 gas gas" "wl wl wr wr";} .lz-drive .lz-btn{min-height:48px;font-size:13px;} }
+  @media (max-width:560px){ .lz-caption p{font-size:12.8px;} .lz-title{font-size:15px;} .lz-szkopf{flex-wrap:wrap;row-gap:2px;padding-top:max(5px,env(safe-area-inset-top));padding-bottom:5px;} .lz-szkopf .lz-title{order:-1;flex-basis:100%;white-space:normal;line-height:1.15;font-size:14px;} .lz-szkopf #lzZurueck{margin-right:auto;} .lz-drive{grid-template-columns:repeat(4,1fr);grid-template-areas:"bl sl sr br" "br2 br2 gas gas" "wl wl wr wr";} .lz-drive .lz-btn{min-height:48px;font-size:13px;} }
   `;
 
   function el(html) { const d = document.createElement("div"); d.innerHTML = html.trim(); return d.firstChild; }
@@ -1994,7 +1994,7 @@
     ansicht = { zoom: grundZoom(), px: 0, py: 0, folgen: true };
     const fk = szene.fahrzeuge.find(f => f.fokus); const fp = fzPos(fk, 0); ansicht.px = fp.x; ansicht.py = fp.y;
     root.innerHTML = `
-      <div class="lz-top">
+      <div class="lz-top lz-szkopf">
         <button class="lz-btn" id="lzZurueck" aria-label="Zur Auswahl">‹</button>
         <div class="lz-title">${esc(szene.titel)}</div>
         <button class="lz-btn" id="lzStimme" hidden aria-pressed="true" aria-label="Stimme ausschalten">🔊</button>
@@ -2359,7 +2359,7 @@
   }
 
   function registriere(sz) { if (!sz || !sz.id || SZENEN.some(x => x.id === sz.id)) return; SZENEN.push(sz); }
-  function szenenFuerPlan(planId) { return SZENEN.filter(x => (x.plan || []).includes(planId)).map(x => ({ id: x.id, titel: x.titel })); }
+  function szenenFuerPlan(planId) { return SZENEN.filter(x => (x.plan || []).includes(planId)).map(x => ({ id: x.id, titel: (x._de || x).titel })); }
   const vorschau = { an: false };
   const bau = { vorschau, W, KMH, clamp, lerp, smooth, pfad, spurPfad, bezier, versatz, band, tempoProfil, tempoStrecke, konstant, gerade, tBeiX, rohPos, TYPEN, EXT, rangierBahn, mitteAus, achseAus, ecken, raeder, bordAbstand, RAD, wegeOben, H: { rrg, quer, ton, leuchte, blinkAn, quader, poly3d, zuCam, proj, mkCv, SCHILD_BILD, SCHILD_NAME }, schildBilder: SCHILD_BILD, schildNamen: SCHILD_NAME };
   window.Lernszenen = { open, registriere, szenenFuerPlan, bau, _szenen: SZENEN, _intern: { messeOben: n => { const t0 = performance.now(); for (let i = 0; i < n; i++) { zeichneOben(); ctx.getImageData(0, 0, 1, 1); } return (performance.now() - t0) / n; }, rohPos, tBeiX, TYPEN, bewerte: () => bewerte(), zustand: () => ({ szene: szene && szene.id, zeit, modus, kameraModus, laeuft, musterAus, capZu, sprache, fahr, ansicht: { ...ansicht }, grund: grundZoom(), nah: cv && szene && szene.kamera.fest ? 1.6 * Math.hypot(cv.getBoundingClientRect().width, cv.getBoundingClientRect().height) / 2 / grundZoom() : 0, fest: szene && szene.kamera.fest }), punkt3d: (x, y, z) => { const l = fahrzeugListe(), f = l.find(e => e.f.fokus) || l[0]; f.hGlatt = _hGlatt === null ? f.p.h : _hGlatt; const c = kamera3d(f), q = zuCam(c, x, y, z); if (q[2] < c.near) return null; const pp = proj(c, q); return [pp[0] / dpr, pp[1] / dpr, q[2]]; } } };
