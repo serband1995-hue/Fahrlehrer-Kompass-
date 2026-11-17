@@ -511,6 +511,46 @@
   let zoomUser = false;                // Nutzer hat selbst gezoomt: keine automatische Kamera-Zoomfahrt mehr
   let onCloseCb = null, beob = null, tippFrage = null;
   const KATEGORIEN = [["innerorts", "Innerorts"], ["ueberland", "Überland"], ["grundfahr", "Grundfahraufgaben"], ["autobahn", "Autobahn"]];
+  // ---------------------------------------------------------------- Sprache (Deutsch / Englisch)
+  // Standard = Sprache des Handys (Englisch nur, wenn das Handy auf Englisch steht), Wahl wird gemerkt. Englische Texte: lernszenen-en.js (window.LernszenenEN).
+  let sprache = (() => { try { const v = localStorage.getItem("lz_sprache"); if (v === "de" || v === "en") return v; } catch (e) {} return /^en\b/i.test(navigator.language || "") ? "en" : "de"; })();
+  const UI = {
+    de: { lernszenen: "🎬 Lernszenen", passend: "Passend zum Ausbildungspunkt", alle: "Alle Szenen", vorfuehren: "Vorführen", mitdenken: "Mitdenken", oben: "Oben", regeln: "§ Regeln", textAn: "▤ Text anzeigen",
+      start: "Auf ▶ tippen – die Szene spielt sich von selbst ab. Mit ⏸ anhalten und Fahrzeuge verschieben.", nochmalHoeren: "Nochmal hören", textAus: "Text ausblenden", wasRichtig: "Was ist richtig?", richtig: "✓ Richtig.", richtigG: "✓ Richtig!", nicht: "✗ Nicht ganz.",
+      weiter: "Weiter ▶", richtigIst: "Richtig ist", angetippt: "von", angetippt2: "angetippt", neu: "↺ neu", stark: "Stark!", fast: "Gut – fast!", ueben: "Nochmal üben", fragenRichtig: "von {n} Fragen richtig", uebersprungen: "Frage(n) übersprungen.",
+      nochmal: "↺ Nochmal", alleRegeln: "§ Alle Regeln", regelnTitel: "§ Regeln", schilder: "Schilder in dieser Szene:", schliessen: "Schließen", mitdenkenText: "Die Szene hält an jedem wichtigen Schritt an und fragt: Was ist jetzt richtig?", tippePlay: "Tippe auf ▶",
+      stimmeInfo: "🔊 Sprecherstimme mit KI erzeugt.", sprache: "Sprache: Deutsch. Auf Englisch umschalten", kat: { innerorts: "Innerorts", ueberland: "Überland", grundfahr: "Grundfahraufgaben", autobahn: "Autobahn" }, zumAntippen: "Zum Antippen bleibt die Ansicht von oben." },
+    en: { lernszenen: "🎬 Learning scenes", passend: "Matching this training topic", alle: "All scenes", vorfuehren: "Watch", mitdenken: "Think along", oben: "Top", regeln: "§ Rules", textAn: "▤ Show text",
+      start: "Tap ▶ and the scene plays by itself. Tap ⏸ to pause and move vehicles.", nochmalHoeren: "Listen again", textAus: "Hide text", wasRichtig: "What is right?", richtig: "✓ Right.", richtigG: "✓ Right!", nicht: "✗ Not quite.",
+      weiter: "Next ▶", richtigIst: "The right order is", angetippt: "of", angetippt2: "tapped", neu: "↺ again", stark: "Great!", fast: "Good, almost!", ueben: "Practise again", fragenRichtig: "of {n} questions right", uebersprungen: "question(s) skipped.",
+      nochmal: "↺ Again", alleRegeln: "§ All rules", regelnTitel: "§ Rules", schilder: "Signs in this scene (German names):", schliessen: "Close", mitdenkenText: "The scene stops at every important step and asks: what is right now?", tippePlay: "Tap ▶",
+      stimmeInfo: "🔊 Voice created with AI.", sprache: "Language: English. Switch to German", kat: { innerorts: "In town", ueberland: "Country roads", grundfahr: "Basic manoeuvres", autobahn: "Autobahn" }, zumAntippen: "For tapping, the view stays on top." }
+  };
+  const T = k => (UI[sprache] && UI[sprache][k]) ?? UI.de[k];
+  // Texte der Szenen auf die gewählte Sprache setzen (deutsche Fassung wird beim ersten Mal gesichert; fehlt eine Übersetzung oder passt sie nicht, bleibt Deutsch)
+  function wendeSpracheAn() {
+    const EN = window.LernszenenEN || {};
+    SZENEN.forEach(s => {
+      if (!s._de) s._de = { titel: s.titel, kurz: s.kurz, anleitung: s.rangieren && s.rangieren.anleitung, phasen: s.phasen.map(p => ({ titel: p.titel, text: p.text, frage: p.frage ? { text: p.frage.text, optionen: p.frage.optionen && p.frage.optionen.slice(), erklaerung: p.frage.erklaerung, namen: p.frage.namen && Object.assign({}, p.frage.namen) } : null })) };
+      let q = sprache === "en" && EN[s.id];
+      if (q && (!q.phasen || q.phasen.length !== s.phasen.length)) q = null;
+      const src = q || s._de, de = s._de;
+      s.titel = src.titel || de.titel; s.kurz = src.kurz || de.kurz; if (s.rangieren && de.anleitung) s.rangieren.anleitung = src.anleitung || de.anleitung;
+      s.phasen.forEach((p, i) => {
+        const a = src.phasen[i] || {}, d = de.phasen[i];
+        p.titel = a.titel || d.titel; p.text = a.text || d.text;
+        if (p.frage && d.frage) { const af = a.frage || {}, ok = af.optionen && d.frage.optionen && af.optionen.length === d.frage.optionen.length;
+          p.frage.text = af.text || d.frage.text; p.frage.optionen = ok ? af.optionen.slice() : d.frage.optionen && d.frage.optionen.slice(); p.frage.erklaerung = af.erklaerung || d.frage.erklaerung;
+          if (d.frage.namen) p.frage.namen = Object.assign({}, d.frage.namen, af.namen || {}); }
+      });
+    });
+  }
+  function setzeSprache(sp) {
+    sprache = sp === "en" ? "en" : "de"; try { localStorage.setItem("lz_sprache", sprache); } catch (e) {}
+    stimmeStopp(); wendeSpracheAn(); if (root) root.setAttribute("lang", sprache);
+    if (szene) { const m = modus, id = szene.id; starteSzene(id); if (m !== "vorfuehren") setzeModus(m); } else if (root) zeigeAuswahl();
+  }
+  const spracheKnopf = () => `<button class="lz-btn lz-sprache" id="lzSprache" type="button" aria-label="${T("sprache")}">${sprache === "en" ? "EN" : "DE"}</button>`;
   let katAktiv = "innerorts", nurListe = null;
 
   // Position eines Fahrzeugs zur Zeit t (Vorführen/Mitdenken)
@@ -1820,6 +1860,7 @@
   @media (min-height:481px){ #lzStimme{min-height:44px;min-width:44px;} }
   #lzStimme[aria-pressed="true"]{background:#2f6b4f;border-color:#4fae80;}
   #lzStimme[aria-pressed="false"]{opacity:.6;}
+  .lz-top .lz-sprache{min-width:44px;padding-left:8px;padding-right:8px;font-weight:800;letter-spacing:.04em;}
   .lz-parb{position:absolute;right:8px;top:8px;width:34px;height:34px;border-radius:50%;border:2px solid #e0b84a;background:#e0b84a;color:#0c1410;font:800 17px/1 'Anton',sans-serif;cursor:pointer;pointer-events:auto;padding:0;box-shadow:0 2px 8px rgba(0,0,0,.4);}
   .lz-parb::after{content:"";position:absolute;inset:-6px;}
   .lz-parb[aria-expanded="true"]{background:#0c1410;color:#e0b84a;}
@@ -1889,7 +1930,7 @@
     if (!document.getElementById("lzCss")) { const st = document.createElement("style"); st.id = "lzCss"; st.textContent = CSS; document.head.appendChild(st); }
     if (root) root.remove();
     root = el(`<div class="lz-root" role="dialog" aria-label="Lernszenen"></div>`);
-    document.body.appendChild(root);
+    document.body.appendChild(root); wendeSpracheAn(); root.setAttribute("lang", sprache);
     nurListe = opts && opts.nur ? opts.nur.filter(id => SZENEN.some(x => x.id === id)) : null;
     const ziel = opts && opts.szene && SZENEN.find(x => x.id === opts.szene);
     if (ziel) { katAktiv = ziel.kategorie || "autobahn"; starteSzene(ziel.id); } else zeigeAuswahl();
@@ -1921,15 +1962,15 @@
     if (!kats.some(k => k[0] === katAktiv)) katAktiv = kats.length ? kats[0][0] : "autobahn";
     const liste = nurListe && nurListe.length ? SZENEN.filter(s => nurListe.includes(s.id)) : SZENEN.filter(s => (s.kategorie || "autobahn") === katAktiv);
     root.innerHTML = `
-      <div class="lz-top"><button class="lz-btn" id="lzZu" aria-label="Schließen">✕</button><div class="lz-title">🎬 Lernszenen</div></div>
-      <div class="lz-tabs">${nurListe && nurListe.length ? `<span style="font-size:13px;color:#b1bfb5;padding:8px 2px;">Passend zum Ausbildungspunkt</span><button class="lz-btn" id="lzAlle">Alle Szenen</button>` : ""}${(nurListe && nurListe.length ? [] : kats).map(k => `<button class="lz-btn${k[0] === katAktiv ? " on" : ""}" data-kat="${k[0]}">${esc(k[1])} <span class="lz-anz">${SZENEN.filter(s => (s.kategorie || "autobahn") === k[0]).length}</span></button>`).join("")}</div>
+      <div class="lz-top"><button class="lz-btn" id="lzZu" aria-label="Schließen">✕</button><div class="lz-title">${T("lernszenen")}</div>${spracheKnopf()}</div>
+      <div class="lz-tabs">${nurListe && nurListe.length ? `<span style="font-size:13px;color:#b1bfb5;padding:8px 2px;">${T("passend")}</span><button class="lz-btn" id="lzAlle">${T("alle")}</button>` : ""}${(nurListe && nurListe.length ? [] : kats).map(k => `<button class="lz-btn${k[0] === katAktiv ? " on" : ""}" data-kat="${k[0]}">${esc(T("kat")[k[0]] || k[1])} <span class="lz-anz">${SZENEN.filter(s => (s.kategorie || "autobahn") === k[0]).length}</span></button>`).join("")}</div>
       <div class="lz-grid" id="lzGrid">${liste.map(s => `
         <button class="lz-tile" data-szene="${s.id}"><canvas data-vorschau="${s.id}"></canvas>
           <h3>${esc(s.titel)}</h3><p>${esc(s.kurz)}</p>
-          <div class="lz-chips"><span class="lz-chip">Vorführen</span><span class="lz-chip">Mitdenken</span>${s.fahren || s.rangieren || s.reaktion ? `<span class="lz-chip">${s.rangieren ? "Selbst rangieren" : s.reaktion ? "Reaktionstest" : "Selbst fahren"}</span>` : ""}<span class="lz-chip">3D</span></div>
+          <div class="lz-chips"><span class="lz-chip">${T("vorfuehren")}</span><span class="lz-chip">${T("mitdenken")}</span>${s.fahren || s.rangieren || s.reaktion ? `<span class="lz-chip">${s.rangieren ? "Selbst rangieren" : s.reaktion ? "Reaktionstest" : "Selbst fahren"}</span>` : ""}<span class="lz-chip">3D</span></div>
         </button>`).join("")}</div>`;
     { const r0 = root; stimmeLade(() => { if (root !== r0 || szene) return; const g = root.querySelector("#lzGrid"); if (g && !root.querySelector(".lz-info")) g.insertAdjacentHTML("afterend", stimmeInfo()); }); }
-    $("#lzZu").onclick = schliessen;
+    $("#lzZu").onclick = schliessen; $("#lzSprache").onclick = () => setzeSprache(sprache === "en" ? "de" : "en");
     root.querySelectorAll("[data-kat]").forEach(b => b.onclick = () => { katAktiv = b.dataset.kat; zeigeAuswahl(); });
     { const a = root.querySelector("#lzAlle"); if (a) a.onclick = () => { nurListe = null; zeigeAuswahl(); }; }
     root.querySelectorAll("[data-szene]").forEach(b => b.onclick = () => starteSzene(b.dataset.szene));
@@ -1954,22 +1995,23 @@
         <button class="lz-btn" id="lzZurueck" aria-label="Zur Auswahl">‹</button>
         <div class="lz-title">${esc(szene.titel)}</div>
         <button class="lz-btn" id="lzStimme" hidden aria-pressed="true" aria-label="Stimme ausschalten">🔊</button>
-        <button class="lz-btn" id="lzRegeln">§ Regeln</button>
+        ${spracheKnopf()}
+        <button class="lz-btn" id="lzRegeln">${T("regeln")}</button>
         <button class="lz-btn" id="lzZu" aria-label="Schließen">✕</button>
       </div>
       <div class="lz-stage" id="lzStage"><canvas id="lzCanvas" aria-label="Animierte Verkehrsszene"></canvas>
-        <button class="lz-capopen" id="lzCapOpen" type="button" data-capopen hidden>▤ Text anzeigen</button>
-        <div class="lz-caption" id="lzCap"><h3>${esc(szene.titel)}</h3><p>Auf ▶ tippen – die Szene spielt sich von selbst ab. Mit ⏸ anhalten und Fahrzeuge verschieben.</p></div>
+        <button class="lz-capopen" id="lzCapOpen" type="button" data-capopen hidden>${T("textAn")}</button>
+        <div class="lz-caption" id="lzCap"><h3>${esc(szene.titel)}</h3><p>${T("start")}</p></div>
         <canvas class="lz-fahrer" id="lzFahrer" width="224" height="192" hidden aria-hidden="true"></canvas>
         <div class="lz-hud" id="lzHud"><b id="lzV">0</b><span>km/h</span><div class="lz-blink"><span id="lzBL">◀</span><span id="lzBR">▶</span></div></div>
       </div>
       <div class="lz-bar">
         <div class="lz-row">
-          <button class="lz-btn on" data-modus="vorfuehren">Vorführen</button>
-          <button class="lz-btn" data-modus="mitdenken">Mitdenken</button>
+          <button class="lz-btn on" data-modus="vorfuehren">${T("vorfuehren")}</button>
+          <button class="lz-btn" data-modus="mitdenken">${T("mitdenken")}</button>
           ${szene.fahren || szene.rangieren || szene.reaktion ? `<button class="lz-btn" data-modus="fahren">${szene.rangieren ? "Selbst rangieren" : szene.reaktion ? "Reaktionstest" : "Selbst fahren"}</button>` : ""}
           <span class="grow"></span>
-          <button class="lz-btn on" data-kam="oben">Oben</button><button class="lz-btn" data-kam="3d">3D</button>
+          <button class="lz-btn on" data-kam="oben">${T("oben")}</button><button class="lz-btn" data-kam="3d">3D</button>
         </div>
         <div class="lz-row" id="lzPlayRow">
           <button class="lz-btn" id="lzPrev" aria-label="Schritt zurück">⏮</button>
@@ -1999,7 +2041,7 @@
     if (window.ResizeObserver) { beob = new ResizeObserver(() => beiResize()); beob.observe($("#lzStage")); }   // z. B. wenn die Fahrleiste erscheint
     const marks = $("#lzTime"); szene.phasen.forEach(p => { const m = document.createElement("span"); m.className = "lz-mark"; m.style.left = `calc(${(p.t / szene.dauer) * 100}% - 1px)`; marks.appendChild(m); });
     $("#lzStage").addEventListener("click", e => { const nm = e.target.closest && e.target.closest("[data-nochmal]"); if (nm) { e.stopPropagation(); stimmeNochmal(); return; } const cx = e.target.closest && e.target.closest("[data-capx],[data-capopen]"); if (cx) { e.stopPropagation(); capZu = cx.hasAttribute("data-capx"); schliessePar(); capSync(); return; } if (e.target.closest && e.target.closest("[data-parx]")) { e.stopPropagation(); schliessePar(); return; } const b = e.target.closest && e.target.closest(".lz-parb"); if (b) { e.stopPropagation(); togglePar(b); } else if (!(e.target.closest && e.target.closest(".lz-parpop"))) schliessePar(); });
-    $("#lzZu").onclick = schliessen; $("#lzZurueck").onclick = zeigeAuswahl; $("#lzRegeln").onclick = zeigeRegeln;
+    $("#lzZu").onclick = schliessen; $("#lzZurueck").onclick = zeigeAuswahl; $("#lzRegeln").onclick = zeigeRegeln; $("#lzSprache").onclick = () => setzeSprache(sprache === "en" ? "de" : "en");
     stimmeLade(() => { if (!szene) return; stimmeSchalter(); stimmeNachholen(); const ph = aktuellePhase() || szene.phasen[0]; if (modus === "vorfuehren" && !laeuft && ph && !root.querySelector("#lzCap .lz-nochmal")) zeigePhase(ph); });
     $("#lzStimme").onclick = () => { const an = !stimmeAn(); try { localStorage.setItem("lz_stimme", an ? "1" : "0"); } catch (e) {} if (!an) stimmeStopp(); stimmeSchalter(); if (an) stimmeNachholen(); const ph = aktuellePhase() || szene.phasen[0]; if (ph && modus !== "fahren" && !laeuft) { const c = $("#lzCap"); if (c && !c.hidden && c.querySelector("h3")) zeigeCap(ph.titel, ph.text, ph.regel, ph); } };
     $("#lzPlay").onclick = () => { schliessePar(); if ((root.querySelector(".lz-sheet .lz-opt") && !root.querySelector("#lzWeiter")) || tippFrage) return;
@@ -2010,7 +2052,7 @@
     $("#lzPrev").onclick = () => { schliesseSheet(); tippZu(); zoomUser = false; springe(-1); }; $("#lzNext").onclick = () => { schliesseSheet(); tippZu(); zoomUser = false; springe(1); };
     $("#lzTempo").onclick = () => { tempoFaktor = tempoFaktor === 1 ? 0.5 : tempoFaktor === 0.5 ? 2 : 1; $("#lzTempo").textContent = (tempoFaktor === 0.5 ? "½" : tempoFaktor) + "×"; };
     $("#lzReset").onclick = () => { zoomUser = false; ansicht.folgen = true; ansicht.zoom = grundZoom(); schliesseSheet(); tippFrage = null; { const b = root.querySelector("#lzTipp"); if (b) b.remove(); } _hGlatt = null; versatzFz = {}; zeit = 0; laeuft = false; beantwortet = new Set(); punkte = { richtig: 0, gesamt: 0 }; if (modus === "fahren") { starteFahren(); const c = $("#lzCap"); if (c) c.hidden = false; setzeModus("fahren"); } else zeigePhase(szene.phasen[0]); ansicht.folgen = true; };
-    root.querySelectorAll("[data-kam]").forEach(b => b.onclick = () => { if (tippFrage) { zeigeToast("Zum Antippen bleibt die Ansicht von oben."); return; } kameraModus = b.dataset.kam === "3d" ? "3d" : "oben"; _hGlatt = null; root.querySelectorAll("[data-kam]").forEach(x => x.classList.toggle("on", x === b)); });
+    root.querySelectorAll("[data-kam]").forEach(b => b.onclick = () => { if (tippFrage) { zeigeToast(T("zumAntippen")); return; } kameraModus = b.dataset.kam === "3d" ? "3d" : "oben"; _hGlatt = null; root.querySelectorAll("[data-kam]").forEach(x => x.classList.toggle("on", x === b)); });
     root.querySelectorAll("[data-modus]").forEach(b => b.onclick = () => setzeModus(b.dataset.modus));
     bindeFahren(); bindeZiehen();
     letzterFrame = 0; cancelAnimationFrame(raf); raf = requestAnimationFrame(frame);
@@ -2082,7 +2124,7 @@
       else if (szene.reaktion) zeigeCap("Reaktionstest", "Das Auto fährt von selbst. Sobald eine Gefahr auftaucht, so schnell wie möglich auf BREMSEN tippen. Danach siehst du Reaktionsweg, Bremsweg und Anhalteweg.", "Tempo wählen, dann ▶");
       else zeigeCap("Selbst fahren", "Du steuerst das Fahrschulauto: Gas und Bremse halten, Blinker und Schulterblick antippen, dann den Fahrstreifen wechseln. Am Ende gibt es die Auswertung.", "Tippe auf ▶ zum Starten");
     }
-    else if (m === "mitdenken") zeigeCap("Mitdenken", "Die Szene hält an jedem wichtigen Schritt an und fragt: Was ist jetzt richtig?", "Tippe auf ▶");
+    else if (m === "mitdenken") zeigeCap(T("mitdenken"), T("mitdenkenText"), T("tippePlay"));
     else zeigePhase(szene.phasen[0]);
   }
   function springe(r) {
@@ -2096,16 +2138,17 @@
   // ---------------------------------------------------------------- Stimme (Sprecherstimme mit KI erzeugt)
   // Ein Satz je Phase, im Takt mit der Szene: die Szene läuft während des Sprechens langsamer und wartet am Phasenende, bis der Satz fertig ist.
   // Dateien liegen unter stimme/ (index.json: Szene -> Stand des Phasentexts -> Datei, Dauer). Ändert sich ein Text, passt der Stand nicht mehr: dann spricht nichts.
-  const STIMME = { index: null, laden: null, aktiv: null, fenster: 0, pausiert: false };
+  const STIMME = { index: null, idx: {}, ladeSp: {}, aktiv: null, fenster: 0, pausiert: false };
   const stimmeAn = () => { try { return localStorage.getItem("lz_stimme") !== "0"; } catch (e) { return true; } };
   function stimmeStand(t) { let h = 5381; t = String(t); for (let i = 0; i < t.length; i++) h = ((h << 5) + h + t.charCodeAt(i)) | 0; return (h >>> 0).toString(36); }
   function stimmeLade(fertig) {
+    const sp = sprache; STIMME.index = STIMME.idx[sp] || null;
     if (STIMME.index) { fertig(); return; }
-    if (!STIMME.laden) {
-      const fehl = () => { STIMME.laden = null; };
-      try { STIMME.laden = fetch("stimme/index.json", { cache: "no-cache" }).then(r => r.ok ? r.json() : null).then(j => { STIMME.index = j; if (!j) fehl(); }).catch(fehl); } catch (e) { fertig(); return; }
+    if (!STIMME.ladeSp[sp]) {
+      const fehl = () => { STIMME.ladeSp[sp] = null; };
+      try { STIMME.ladeSp[sp] = fetch(sp === "en" ? "stimme/index-en.json" : "stimme/index.json", { cache: "no-cache" }).then(r => r.ok ? r.json() : null).then(j => { STIMME.idx[sp] = j; if (sprache === sp) STIMME.index = j; if (!j) fehl(); }).catch(fehl); } catch (e) { fertig(); return; }
     }
-    STIMME.laden.then(fertig, fertig);   // alle Aufrufer warten auf denselben Ladevorgang
+    STIMME.ladeSp[sp].then(() => { if (sprache === sp) STIMME.index = STIMME.idx[sp] || null; fertig(); }, fertig);   // alle Aufrufer warten auf denselben Ladevorgang
   }
   const stimmeFuer = ph => { const i = STIMME.index && szene && STIMME.index[szene.id]; return (i && ph && i[stimmeStand(ph.text)]) || null; };
   const stimmeSzene = () => !!(STIMME.index && szene && STIMME.index[szene.id]);
@@ -2147,7 +2190,7 @@
     b.hidden = !stimmeSzene();
     const an = stimmeAn(); b.textContent = an ? "🔊" : "🔇"; b.setAttribute("aria-label", an ? "Stimme ausschalten" : "Stimme einschalten"); b.setAttribute("aria-pressed", String(an));
   }
-  const stimmeInfo = () => (STIMME.index && Object.keys(STIMME.index).length) ? `<p class="lz-info">🔊 Sprecherstimme mit KI erzeugt.</p>` : "";
+  const stimmeInfo = () => (STIMME.index && Object.keys(STIMME.index).length) ? `<p class="lz-info">${T("stimmeInfo")}</p>` : "";
   // Geprüfte Fundstellen (15.11.2026 gegen StVO-Text, Prüfbericht Block 3; § 9a gibt es nicht, Kreisverkehr = § 8 Abs. 1a): nur diese bekommen das antippbare §. Neue Fundstellen erst nach Prüfung am Gesetzestext aufnehmen.
   const PAR_GEPRUEFT = new Set(["1/2", "11/2", "11/3", "12/", "18/2", "18/3", "18/7", "2/2", "20/3", "20/4", "20/5", "26/1", "26/2", "26/3", "3/1", "3/2a", "3/3", "37/2", "38/1", "4/1", "5/2", "5/4", "5/4a", "6/", "7/4", "7/5", "7a/2", "7a/3", "8/1", "8/1a", "8/2", "9/1", "9/3", "9/4", "9/5", "10/", "19/1", "19/2", "19/3", "20/1", "20/2", "2/3", "12/1", "12/2", "12/3"]);
   function parToken(regel) {
@@ -2173,8 +2216,8 @@
     const c = $("#lzCap"); if (!c) return; schliessePar();
     const ok = regel && parToken(regel);
     c.classList.toggle("mit-par", !!ok);
-    const nochmal = ph && stimmeAn() && stimmeFuer(ph) ? `<button class="lz-nochmal" type="button" data-nochmal aria-label="Nochmal hören">🔊<span class="lz-nm-t"> Nochmal hören</span></button>` : "";
-    c.innerHTML = `<h3>${esc(titel)}</h3><p>${esc(text)}</p>${nochmal}<button class="lz-capx" type="button" data-capx aria-label="Text ausblenden">✕</button>${ok ? `<button class="lz-parb" type="button" aria-label="Gesetzestext anzeigen" aria-expanded="false" data-regel="${esc(regel)}">§</button>` : ""}`;
+    const nochmal = ph && stimmeAn() && stimmeFuer(ph) ? `<button class="lz-nochmal" type="button" data-nochmal aria-label="${T("nochmalHoeren")}">🔊<span class="lz-nm-t"> ${T("nochmalHoeren")}</span></button>` : "";
+    c.innerHTML = `<h3>${esc(titel)}</h3><p>${esc(text)}</p>${nochmal}<button class="lz-capx" type="button" data-capx aria-label="${T("textAus")}">✕</button>${ok ? `<button class="lz-parb" type="button" aria-label="Gesetzestext anzeigen" aria-expanded="false" data-regel="${esc(regel)}">§</button>` : ""}`;
     capSync();
   }
   function zeigePhase(p) { stimmeStopp(); zeigeCap(p.titel, p.text, p.regel, p); }
@@ -2184,12 +2227,12 @@
   function sheet(html) { schliessePar(); schliesseSheet(); const d = el(`<div class="lz-sheet"><div class="lz-card">${html}</div></div>`); $("#lzStage").appendChild(d); return d; }
   function zeigeFrage(ph) {
     if (ph.frage.art === "reihenfolge") return zeigeReihenfolge(ph);
-    const f = ph.frage; const d = sheet(`<h2>Was ist richtig?</h2><p class="lz-erkl" style="margin-top:2px;">${esc(f.text)}</p>${f.optionen.map((o, i) => `<button class="lz-opt" data-i="${i}">${esc(o)}</button>`).join("")}<div id="lzErkl"></div>`);
+    const f = ph.frage; const d = sheet(`<h2>${T("wasRichtig")}</h2><p class="lz-erkl" style="margin-top:2px;">${esc(f.text)}</p>${f.optionen.map((o, i) => `<button class="lz-opt" data-i="${i}">${esc(o)}</button>`).join("")}<div id="lzErkl"></div>`);
     d.querySelectorAll(".lz-opt").forEach(b => b.onclick = () => {
       if (beantwortet.has(ph.t)) return; beantwortet.add(ph.t); punkte.gesamt++;
       const i = +b.dataset.i, ok = i === f.richtig; if (ok) punkte.richtig++;
       d.querySelectorAll(".lz-opt").forEach(x => x.classList.add(+x.dataset.i === f.richtig ? "richtig" : +x.dataset.i === i ? "falsch" : "x"));
-      d.querySelector("#lzErkl").innerHTML = `<p class="lz-erkl"><b>${ok ? "✓ Richtig." : "✗ Nicht ganz."}</b> ${esc(f.erklaerung)}</p><span class="lz-par">${esc(ph.regel)}</span><div class="lz-weiter"><button class="lz-btn on" id="lzWeiter" style="width:100%;">Weiter ▶</button></div>`;
+      d.querySelector("#lzErkl").innerHTML = `<p class="lz-erkl"><b>${ok ? T("richtig") : T("nicht")}</b> ${esc(f.erklaerung)}</p><span class="lz-par">${esc(ph.regel)}</span><div class="lz-weiter"><button class="lz-btn on" id="lzWeiter" style="width:100%;">${T("weiter")}</button></div>`;
       d.querySelector("#lzWeiter").onclick = () => { schliesseSheet(); laeuft = true; };
     });
   }
@@ -2201,25 +2244,25 @@
     if (ps.length) { const xs = ps.map(p => p.x), ys = ps.map(p => p.y); ansicht.folgen = false; ansicht.px = (Math.min(...xs) + Math.max(...xs)) / 2; ansicht.py = (Math.min(...ys) + Math.max(...ys)) / 2;
       const r = cv.getBoundingClientRect(); ansicht.zoom = clamp(Math.min(r.width / (Math.max(...xs) - Math.min(...xs) + 24), (r.height - 140) / (Math.max(...ys) - Math.min(...ys) + 24)), 2, 14); }
     tippFrage = { ph, markiert: [] };
-    const box = el(`<div class="lz-tipp" id="lzTipp"><b>${esc(f.text)}</b><div class="lz-row"><span id="lzTippStand">0 von ${f.ids.length} angetippt</span><span class="grow"></span><button class="lz-btn" id="lzTippZurueck">↺ neu</button></div></div>`);
+    const box = el(`<div class="lz-tipp" id="lzTipp"><b>${esc(f.text)}</b><div class="lz-row"><span id="lzTippStand">0 ${T("angetippt")} ${f.ids.length} ${T("angetippt2")}</span><span class="grow"></span><button class="lz-btn" id="lzTippZurueck">${T("neu")}</button></div></div>`);
     $("#lzStage").appendChild(box);
-    $("#lzTippZurueck").onclick = () => { tippFrage.markiert = []; $("#lzTippStand").textContent = `0 von ${f.ids.length} angetippt`; };
+    $("#lzTippZurueck").onclick = () => { tippFrage.markiert = []; $("#lzTippStand").textContent = `0 ${T("angetippt")} ${f.ids.length} ${T("angetippt2")}`; };
   }
   function tippAuf(id) {
     const tf = tippFrage; if (!tf || tf.fertig) return;
     const f = tf.ph.frage; if (!f.ids.includes(id) || tf.markiert.includes(id)) return;
-    tf.markiert.push(id); $("#lzTippStand").textContent = `${tf.markiert.length} von ${f.ids.length} angetippt`;
+    tf.markiert.push(id); $("#lzTippStand").textContent = `${tf.markiert.length} ${T("angetippt")} ${f.ids.length} ${T("angetippt2")}`;
     if (tf.markiert.length < f.ids.length) return;
     tf.fertig = true; const ok = tf.markiert.every((x, i) => x === f.ids[i]);
     beantwortet.add(tf.ph.t); punkte.gesamt++; if (ok) punkte.richtig++;
     const box = $("#lzTipp"); if (box) box.remove();
-    const d = sheet(`<h2>${ok ? "✓ Richtig!" : "✗ Nicht ganz."}</h2><p class="lz-erkl">${ok ? "" : `Richtig ist: ${f.ids.map((x, i) => `${i + 1}. ${esc(f.namen && f.namen[x] || x)}`).join(" · ")}. `}${esc(f.erklaerung)}</p><span class="lz-par">${esc(tf.ph.regel)}</span><div style="margin-top:12px;"><button class="lz-btn on" id="lzWeiter" style="width:100%;">Weiter ▶</button></div>`);
+    const d = sheet(`<h2>${ok ? T("richtigG") : T("nicht")}</h2><p class="lz-erkl">${ok ? "" : `${T("richtigIst")}: ${f.ids.map((x, i) => `${i + 1}. ${esc(f.namen && f.namen[x] || x)}`).join(" · ")}. `}${esc(f.erklaerung)}</p><span class="lz-par">${esc(tf.ph.regel)}</span><div style="margin-top:12px;"><button class="lz-btn on" id="lzWeiter" style="width:100%;">${T("weiter")}</button></div>`);
     d.querySelector("#lzWeiter").onclick = () => { schliesseSheet(); tippFrage = null; ansicht.folgen = true; ansicht.zoom = grundZoom(); laeuft = true; };
   }
   function zeigeErgebnisMitdenken() {
     const n = szene.phasen.filter(p => p.frage).length, q = n ? Math.round(punkte.richtig / n * 100) : 0;
-    const d = sheet(`<h2>${q >= 80 ? "Stark!" : q >= 50 ? "Gut – fast!" : "Nochmal üben"}</h2><p class="lz-erkl">${punkte.richtig} von ${n} Fragen richtig (${q} %).${punkte.gesamt < n ? ` ${n - punkte.gesamt} Frage(n) übersprungen.` : ""}</p>
-      <div class="lz-row" style="margin-top:12px;"><button class="lz-btn" id="lzNochmal">↺ Nochmal</button>${szene.fahren || szene.rangieren || szene.reaktion ? `<button class="lz-btn on" id="lzSelbst">${szene.rangieren ? "Jetzt selbst rangieren" : szene.reaktion ? "Reaktionstest starten" : "Jetzt selbst fahren"}</button>` : ""}<button class="lz-btn" id="lzRegelnB">§ Alle Regeln</button></div>`);
+    const d = sheet(`<h2>${q >= 80 ? T("stark") : q >= 50 ? T("fast") : T("ueben")}</h2><p class="lz-erkl">${punkte.richtig} ${T("fragenRichtig").replace("{n}", n)} (${q} %).${punkte.gesamt < n ? ` ${n - punkte.gesamt} ${T("uebersprungen")}` : ""}</p>
+      <div class="lz-row" style="margin-top:12px;"><button class="lz-btn" id="lzNochmal">${T("nochmal")}</button>${szene.fahren || szene.rangieren || szene.reaktion ? `<button class="lz-btn on" id="lzSelbst">${szene.rangieren ? "Jetzt selbst rangieren" : szene.reaktion ? "Reaktionstest starten" : "Jetzt selbst fahren"}</button>` : ""}<button class="lz-btn" id="lzRegelnB">${T("alleRegeln")}</button></div>`);
     d.querySelector("#lzNochmal").onclick = () => setzeModus("mitdenken");
     const sf = d.querySelector("#lzSelbst"); if (sf) sf.onclick = () => setzeModus("fahren");
     d.querySelector("#lzRegelnB").onclick = zeigeRegeln;
@@ -2235,7 +2278,7 @@
   function zeigeRegeln() {
     const regeln = szene.phasen.map(p => `<li><b>${esc(p.titel)}</b><br>${esc(p.text)}<br><span class="lz-par">${esc(p.regel)}</span></li>`).join("");
     const schilder = [...new Set((szene.strasse.schilder || []).map(s => s.typ))].map(t => SCHILD_NAME[t]).filter(Boolean);
-    const d = sheet(`<h2>§ Regeln: ${esc(szene.titel)}</h2><ul class="lz-list">${regeln}</ul>${schilder.length ? `<p class="lz-erkl"><b>Schilder in dieser Szene:</b> ${schilder.map(esc).join(" · ")}</p>` : ""}${stimmeSzene() ? stimmeInfo() : ""}<button class="lz-btn on" id="lzOk" style="width:100%;margin-top:8px;">Schließen</button>`);
+    const d = sheet(`<h2>${T("regelnTitel")}: ${esc(szene.titel)}</h2><ul class="lz-list">${regeln}</ul>${schilder.length ? `<p class="lz-erkl"><b>${T("schilder")}</b> ${schilder.map(esc).join(" · ")}</p>` : ""}${stimmeSzene() ? stimmeInfo() : ""}<button class="lz-btn on" id="lzOk" style="width:100%;margin-top:8px;">${T("schliessen")}</button>`);
     d.querySelector("#lzOk").onclick = schliesseSheet;
   }
   function aktualisiereHud() {
@@ -2313,5 +2356,5 @@
   function szenenFuerPlan(planId) { return SZENEN.filter(x => (x.plan || []).includes(planId)).map(x => ({ id: x.id, titel: x.titel })); }
   const vorschau = { an: false };
   const bau = { vorschau, W, KMH, clamp, lerp, smooth, pfad, spurPfad, bezier, versatz, band, tempoProfil, tempoStrecke, konstant, gerade, tBeiX, rohPos, TYPEN, EXT, rangierBahn, mitteAus, achseAus, ecken, raeder, bordAbstand, RAD, wegeOben, H: { rrg, quer, ton, leuchte, blinkAn, quader, poly3d, zuCam, proj, mkCv, SCHILD_BILD, SCHILD_NAME }, schildBilder: SCHILD_BILD, schildNamen: SCHILD_NAME };
-  window.Lernszenen = { open, registriere, szenenFuerPlan, bau, _szenen: SZENEN, _intern: { messeOben: n => { const t0 = performance.now(); for (let i = 0; i < n; i++) { zeichneOben(); ctx.getImageData(0, 0, 1, 1); } return (performance.now() - t0) / n; }, rohPos, tBeiX, TYPEN, bewerte: () => bewerte(), zustand: () => ({ szene: szene && szene.id, zeit, modus, kameraModus, laeuft, musterAus, capZu, fahr, ansicht: { ...ansicht }, grund: grundZoom(), nah: cv && szene && szene.kamera.fest ? 1.6 * Math.hypot(cv.getBoundingClientRect().width, cv.getBoundingClientRect().height) / 2 / grundZoom() : 0, fest: szene && szene.kamera.fest }), punkt3d: (x, y, z) => { const l = fahrzeugListe(), f = l.find(e => e.f.fokus) || l[0]; f.hGlatt = _hGlatt === null ? f.p.h : _hGlatt; const c = kamera3d(f), q = zuCam(c, x, y, z); if (q[2] < c.near) return null; const pp = proj(c, q); return [pp[0] / dpr, pp[1] / dpr, q[2]]; } } };
+  window.Lernszenen = { open, registriere, szenenFuerPlan, bau, _szenen: SZENEN, _intern: { messeOben: n => { const t0 = performance.now(); for (let i = 0; i < n; i++) { zeichneOben(); ctx.getImageData(0, 0, 1, 1); } return (performance.now() - t0) / n; }, rohPos, tBeiX, TYPEN, bewerte: () => bewerte(), zustand: () => ({ szene: szene && szene.id, zeit, modus, kameraModus, laeuft, musterAus, capZu, sprache, fahr, ansicht: { ...ansicht }, grund: grundZoom(), nah: cv && szene && szene.kamera.fest ? 1.6 * Math.hypot(cv.getBoundingClientRect().width, cv.getBoundingClientRect().height) / 2 / grundZoom() : 0, fest: szene && szene.kamera.fest }), punkt3d: (x, y, z) => { const l = fahrzeugListe(), f = l.find(e => e.f.fokus) || l[0]; f.hGlatt = _hGlatt === null ? f.p.h : _hGlatt; const c = kamera3d(f), q = zuCam(c, x, y, z); if (q[2] < c.near) return null; const pp = proj(c, q); return [pp[0] / dpr, pp[1] / dpr, q[2]]; } } };
 })();
