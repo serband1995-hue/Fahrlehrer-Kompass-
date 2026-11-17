@@ -2298,7 +2298,7 @@
       const i = +b.dataset.i, ok = i === f.richtig; if (ok) punkte.richtig++;
       d.querySelectorAll(".lz-opt").forEach(x => x.classList.add(+x.dataset.i === f.richtig ? "richtig" : +x.dataset.i === i ? "falsch" : "x"));
       d.querySelector("#lzErkl").innerHTML = `<p class="lz-erkl"><b>${ok ? T("richtig") : T("nicht")}</b> ${esc(f.erklaerung)}</p><span class="lz-par">${esc(ph.regel)}</span><div class="lz-weiter"><button class="lz-btn on" id="lzWeiter" style="width:100%;">${T("weiter")}</button></div>`;
-      d.querySelector("#lzWeiter").onclick = () => { schliesseSheet(); laeuft = true; };
+      d.querySelector("#lzWeiter").onclick = () => { schliesseSheet(); laeuft = true; stimmeNachholen(); };
     });
   }
   // Frage „Wer fährt zuerst?“: Fahrzeuge in der Draufsicht nacheinander antippen
@@ -2322,7 +2322,7 @@
     beantwortet.add(tf.ph.t); punkte.gesamt++; if (ok) punkte.richtig++;
     const box = $("#lzTipp"); if (box) box.remove();
     const d = sheet(`<h2>${ok ? T("richtigG") : T("nicht")}</h2><p class="lz-erkl">${ok ? "" : `${T("richtigIst")}: ${f.ids.map((x, i) => `${i + 1}. ${esc(f.namen && f.namen[x] || x)}`).join(" · ")}. `}${esc(f.erklaerung)}</p><span class="lz-par">${esc(tf.ph.regel)}</span><div style="margin-top:12px;"><button class="lz-btn on" id="lzWeiter" style="width:100%;">${T("weiter")}</button></div>`);
-    d.querySelector("#lzWeiter").onclick = () => { schliesseSheet(); tippFrage = null; ansicht.folgen = true; ansicht.zoom = grundZoom(); laeuft = true; };
+    d.querySelector("#lzWeiter").onclick = () => { schliesseSheet(); tippFrage = null; ansicht.folgen = true; ansicht.zoom = grundZoom(); laeuft = true; stimmeNachholen(); };
   }
   function zeigeErgebnisMitdenken() {
     const n = szene.phasen.filter(p => p.frage).length, q = n ? Math.round(punkte.richtig / n * 100) : 0;
