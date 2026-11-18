@@ -1,738 +1,834 @@
 {
  "stop": {
-  "1h5ce0p": {
-   "f": "en-stop-0-1h5ce0p.mp3",
-   "d": 5.46
+  "1qde6qh": {
+   "f": "en-stop-0-1qde6qh.mp3",
+   "d": 7.05
   },
-  "1d1eghi": {
-   "f": "en-stop-1-1d1eghi.mp3",
-   "d": 4.44
+  "1h3uwpk": {
+   "f": "en-stop-1-1h3uwpk.mp3",
+   "d": 6.79
   },
-  "1mrwgf7": {
-   "f": "en-stop-2-1mrwgf7.mp3",
-   "d": 4.78
+  "1nsmqde": {
+   "f": "en-stop-2-1nsmqde.mp3",
+   "d": 4.68
   },
-  "dg2t14": {
-   "f": "en-stop-3-dg2t14.mp3",
-   "d": 4.62
+  "1u5u0qu": {
+   "f": "en-stop-3-1u5u0qu.mp3",
+   "d": 5.93
   }
  },
  "auffahren": {
   "2xzc8c": {
    "f": "en-auffahren-0-2xzc8c.mp3",
-   "d": 7.47
+   "d": 7.68
   },
-  "1b7lszn": {
-   "f": "en-auffahren-1-1b7lszn.mp3",
-   "d": 6.95
+  "1twsoes": {
+   "f": "en-auffahren-1-1twsoes.mp3",
+   "d": 8.52
   },
-  "e1zse4": {
-   "f": "en-auffahren-2-e1zse4.mp3",
-   "d": 3.34
+  "1ieod54": {
+   "f": "en-auffahren-2-1ieod54.mp3",
+   "d": 4.41
   },
-  "csyee7": {
-   "f": "en-auffahren-3-csyee7.mp3",
-   "d": 12.15
+  "19w3pyz": {
+   "f": "en-auffahren-3-19w3pyz.mp3",
+   "d": 10.32
   },
-  "ddd7wg": {
-   "f": "en-auffahren-4-ddd7wg.mp3",
-   "d": 7.78
+  "15elceq": {
+   "f": "en-auffahren-4-15elceq.mp3",
+   "d": 10.06
   },
-  "156g5s": {
-   "f": "en-auffahren-5-156g5s.mp3",
-   "d": 8.49
+  "1kibvdk": {
+   "f": "en-auffahren-5-1kibvdk.mp3",
+   "d": 10.06
   },
-  "1wemy7s": {
-   "f": "en-auffahren-6-1wemy7s.mp3",
-   "d": 5.43
+  "127zlbc": {
+   "f": "en-auffahren-6-127zlbc.mp3",
+   "d": 7.68
   },
-  "fc4a2p": {
-   "f": "en-auffahren-7-fc4a2p.mp3",
-   "d": 12.25
+  "sdxjyb": {
+   "f": "en-auffahren-7-sdxjyb.mp3",
+   "d": 12.67
   }
  },
  "abfahren": {
-  "1ho0xvd": {
-   "f": "en-abfahren-0-1ho0xvd.mp3",
-   "d": 8.02
+  "yka1eo": {
+   "f": "en-abfahren-0-yka1eo.mp3",
+   "d": 8.33
   },
-  "sq8yqh": {
-   "f": "en-abfahren-1-sq8yqh.mp3",
-   "d": 5.75
+  "nkaobq": {
+   "f": "en-abfahren-1-nkaobq.mp3",
+   "d": 8.99
   },
   "1li1gku": {
    "f": "en-abfahren-2-1li1gku.mp3",
-   "d": 3.66
+   "d": 3.58
   },
-  "snmiwv": {
-   "f": "en-abfahren-3-snmiwv.mp3",
-   "d": 5.2
+  "1eo71sx": {
+   "f": "en-abfahren-3-1eo71sx.mp3",
+   "d": 7.68
   },
-  "1hg8hy4": {
-   "f": "en-abfahren-4-1hg8hy4.mp3",
-   "d": 5.75
+  "1ngg5n8": {
+   "f": "en-abfahren-4-1ngg5n8.mp3",
+   "d": 8.07
   },
-  "mus9gf": {
-   "f": "en-abfahren-5-mus9gf.mp3",
-   "d": 5.62
+  "1w2htm": {
+   "f": "en-abfahren-5-1w2htm.mp3",
+   "d": 8.12
   },
-  "1rvu204": {
-   "f": "en-abfahren-6-1rvu204.mp3",
-   "d": 5.25
+  "42skhj": {
+   "f": "en-abfahren-6-42skhj.mp3",
+   "d": 6.58
   },
-  "1baiiqa": {
-   "f": "en-abfahren-7-1baiiqa.mp3",
-   "d": 6.3
+  "3exgqx": {
+   "f": "en-abfahren-7-3exgqx.mp3",
+   "d": 8.96
   },
-  "10u7exm": {
-   "f": "en-abfahren-8-10u7exm.mp3",
-   "d": 9.56
+  "1xyc16o": {
+   "f": "en-abfahren-8-1xyc16o.mp3",
+   "d": 9.01
   },
-  "f47vhk": {
-   "f": "en-abfahren-9-f47vhk.mp3",
-   "d": 6.27
+  "1mbds25": {
+   "f": "en-abfahren-9-1mbds25.mp3",
+   "d": 8.33
   }
  },
  "reissverschluss": {
-  "7696lv": {
-   "f": "en-reissverschluss-0-7696lv.mp3",
-   "d": 4.91
+  "1o59mvo": {
+   "f": "en-reissverschluss-0-1o59mvo.mp3",
+   "d": 5.28
   },
   "1x59bmi": {
    "f": "en-reissverschluss-1-1x59bmi.mp3",
-   "d": 7.42
+   "d": 7.68
   },
-  "10ct8f6": {
-   "f": "en-reissverschluss-2-10ct8f6.mp3",
-   "d": 5.69
+  "1x7m0zs": {
+   "f": "en-reissverschluss-2-1x7m0zs.mp3",
+   "d": 6.43
   },
-  "1m18qap": {
-   "f": "en-reissverschluss-3-1m18qap.mp3",
-   "d": 7.34
+  "1rejo1e": {
+   "f": "en-reissverschluss-3-1rejo1e.mp3",
+   "d": 10.27
   },
-  "1g5f88x": {
-   "f": "en-reissverschluss-4-1g5f88x.mp3",
-   "d": 8.12
+  "1xqgz3w": {
+   "f": "en-reissverschluss-4-1xqgz3w.mp3",
+   "d": 10.92
   }
  },
  "rettungsgasse": {
-  "97690r": {
-   "f": "en-rettungsgasse-0-97690r.mp3",
-   "d": 9.22
+  "3e4isd": {
+   "f": "en-rettungsgasse-0-3e4isd.mp3",
+   "d": 9.4
   },
-  "dx8erk": {
-   "f": "en-rettungsgasse-1-dx8erk.mp3",
-   "d": 9.98
+  "1bbjp17": {
+   "f": "en-rettungsgasse-1-1bbjp17.mp3",
+   "d": 10.27
   },
-  "iy6zn3": {
-   "f": "en-rettungsgasse-2-iy6zn3.mp3",
-   "d": 7.78
+  "150nxau": {
+   "f": "en-rettungsgasse-2-150nxau.mp3",
+   "d": 7.92
   },
-  "7fdxh2": {
-   "f": "en-rettungsgasse-3-7fdxh2.mp3",
-   "d": 6.77
+  "1chqiv8": {
+   "f": "en-rettungsgasse-3-1chqiv8.mp3",
+   "d": 8.12
   },
-  "cdf7cv": {
-   "f": "en-rettungsgasse-4-cdf7cv.mp3",
-   "d": 7.89
+  "2kr3ay": {
+   "f": "en-rettungsgasse-4-2kr3ay.mp3",
+   "d": 9.87
   }
  },
  "laengs": {
-  "10n1o7c": {
-   "f": "en-laengs-0-10n1o7c.mp3",
-   "d": 8.67
+  "8iz391": {
+   "f": "en-laengs-0-8iz391.mp3",
+   "d": 10.53
   },
-  "yu3hny": {
-   "f": "en-laengs-1-yu3hny.mp3",
-   "d": 7.18
+  "1m8r7aj": {
+   "f": "en-laengs-1-1m8r7aj.mp3",
+   "d": 7.92
   },
-  "1wke4ob": {
-   "f": "en-laengs-2-1wke4ob.mp3",
-   "d": 8.59
+  "sn8nuz": {
+   "f": "en-laengs-2-sn8nuz.mp3",
+   "d": 9.22
   },
-  "1og4duo": {
-   "f": "en-laengs-3-1og4duo.mp3",
-   "d": 4.08
+  "a7vp70": {
+   "f": "en-laengs-3-a7vp70.mp3",
+   "d": 5.54
   },
-  "1xtna3v": {
-   "f": "en-laengs-4-1xtna3v.mp3",
-   "d": 6.4
+  "dokzga": {
+   "f": "en-laengs-4-dokzga.mp3",
+   "d": 6.64
   },
-  "1w99zu2": {
-   "f": "en-laengs-5-1w99zu2.mp3",
-   "d": 11.65
+  "bm9n0q": {
+   "f": "en-laengs-5-bm9n0q.mp3",
+   "d": 12.49
   }
  },
  "quer_rueck": {
-  "b4ljzt": {
-   "f": "en-quer_rueck-0-b4ljzt.mp3",
-   "d": 6.3
+  "1sleyow": {
+   "f": "en-quer_rueck-0-1sleyow.mp3",
+   "d": 8.1
   },
-  "g42wc8": {
-   "f": "en-quer_rueck-1-g42wc8.mp3",
-   "d": 4.55
+  "pkgdhg": {
+   "f": "en-quer_rueck-1-pkgdhg.mp3",
+   "d": 4.86
   },
-  "1tequ55": {
-   "f": "en-quer_rueck-2-1tequ55.mp3",
-   "d": 5.15
+  "11ph52l": {
+   "f": "en-quer_rueck-2-11ph52l.mp3",
+   "d": 5.54
   },
-  "c78zek": {
-   "f": "en-quer_rueck-3-c78zek.mp3",
-   "d": 6.45
+  "1b4bdu3": {
+   "f": "en-quer_rueck-3-1b4bdu3.mp3",
+   "d": 6.77
   }
  },
  "quer_vor": {
   "mrk9v0": {
    "f": "en-quer_vor-0-mrk9v0.mp3",
-   "d": 6.71
+   "d": 8.75
   },
   "1a2ceqh": {
    "f": "en-quer_vor-1-1a2ceqh.mp3",
-   "d": 8.49
+   "d": 9.43
   },
-  "eef05m": {
-   "f": "en-quer_vor-2-eef05m.mp3",
-   "d": 7.78
+  "yb78mf": {
+   "f": "en-quer_vor-2-yb78mf.mp3",
+   "d": 8.07
   }
  },
  "wenden": {
-  "s6khne": {
-   "f": "en-wenden-0-s6khne.mp3",
-   "d": 6.69
+  "1mrylmc": {
+   "f": "en-wenden-0-1mrylmc.mp3",
+   "d": 7.89
   },
-  "8b7tc": {
-   "f": "en-wenden-1-8b7tc.mp3",
-   "d": 7.05
+  "1si9oo5": {
+   "f": "en-wenden-1-1si9oo5.mp3",
+   "d": 9.87
   },
-  "1t6m0lr": {
-   "f": "en-wenden-2-1t6m0lr.mp3",
-   "d": 5.67
+  "154yacl": {
+   "f": "en-wenden-2-154yacl.mp3",
+   "d": 8.12
   },
-  "1igbv5p": {
-   "f": "en-wenden-3-1igbv5p.mp3",
-   "d": 4.44
+  "qpvpe4": {
+   "f": "en-wenden-3-qpvpe4.mp3",
+   "d": 6.84
   },
-  "15atezc": {
-   "f": "en-wenden-4-15atezc.mp3",
-   "d": 7.71
+  "ld25k": {
+   "f": "en-wenden-4-ld25k.mp3",
+   "d": 8.99
   }
  },
  "ecke": {
-  "1t986qj": {
-   "f": "en-ecke-0-1t986qj.mp3",
-   "d": 6.4
+  "1g71jdm": {
+   "f": "en-ecke-0-1g71jdm.mp3",
+   "d": 8.33
   },
-  "p6b913": {
-   "f": "en-ecke-1-p6b913.mp3",
-   "d": 5.88
+  "1147i83": {
+   "f": "en-ecke-1-1147i83.mp3",
+   "d": 6.37
   },
   "le4h51": {
    "f": "en-ecke-2-le4h51.mp3",
-   "d": 10.53
+   "d": 10.11
   },
   "j0tj06": {
    "f": "en-ecke-3-j0tj06.mp3",
-   "d": 6.03
+   "d": 7.86
   }
  },
  "gefahr": {
-  "1h1jcdt": {
-   "f": "en-gefahr-0-1h1jcdt.mp3",
-   "d": 11.0
+  "3l1hd6": {
+   "f": "en-gefahr-0-3l1hd6.mp3",
+   "d": 10.92
   },
-  "1jdp16y": {
-   "f": "en-gefahr-1-1jdp16y.mp3",
-   "d": 10.48
+  "1ksn3df": {
+   "f": "en-gefahr-1-1ksn3df.mp3",
+   "d": 11.18
   },
-  "1ovinw6": {
-   "f": "en-gefahr-2-1ovinw6.mp3",
-   "d": 10.16
+  "psmvzb": {
+   "f": "en-gefahr-2-psmvzb.mp3",
+   "d": 10.95
   },
-  "1ykh2mj": {
-   "f": "en-gefahr-3-1ykh2mj.mp3",
-   "d": 9.51
+  "1dkxa6b": {
+   "f": "en-gefahr-3-1dkxa6b.mp3",
+   "d": 11.42
   }
  },
  "ueberholen": {
-  "1b3goee": {
-   "f": "en-ueberholen-0-1b3goee.mp3",
-   "d": 8.96
+  "16ocgxd": {
+   "f": "en-ueberholen-0-16ocgxd.mp3",
+   "d": 11.18
   },
   "zxfn9e": {
    "f": "en-ueberholen-1-zxfn9e.mp3",
-   "d": 4.31
+   "d": 3.34
   },
-  "41g2wg": {
-   "f": "en-ueberholen-2-41g2wg.mp3",
-   "d": 7.89
+  "1687ghh": {
+   "f": "en-ueberholen-2-1687ghh.mp3",
+   "d": 11.36
   },
-  "18ojb3w": {
-   "f": "en-ueberholen-3-18ojb3w.mp3",
-   "d": 5.85
+  "4gianu": {
+   "f": "en-ueberholen-3-4gianu.mp3",
+   "d": 7.68
   },
-  "qivxqm": {
-   "f": "en-ueberholen-4-qivxqm.mp3",
-   "d": 5.56
+  "18a0vfu": {
+   "f": "en-ueberholen-4-18a0vfu.mp3",
+   "d": 8.33
   },
-  "1m8mwk7": {
-   "f": "en-ueberholen-5-1m8mwk7.mp3",
-   "d": 10.71
+  "7grgp4": {
+   "f": "en-ueberholen-5-7grgp4.mp3",
+   "d": 13.74
   }
  },
  "schulbus": {
-  "zgk33n": {
-   "f": "en-schulbus-0-zgk33n.mp3",
-   "d": 5.04
+  "1rxku5w": {
+   "f": "en-schulbus-0-1rxku5w.mp3",
+   "d": 5.54
   },
-  "1lcy3el": {
-   "f": "en-schulbus-1-1lcy3el.mp3",
-   "d": 7.37
+  "o7ei6c": {
+   "f": "en-schulbus-1-o7ei6c.mp3",
+   "d": 10.08
   },
-  "17y9jmb": {
-   "f": "en-schulbus-2-17y9jmb.mp3",
-   "d": 8.96
+  "h8uj8x": {
+   "f": "en-schulbus-2-h8uj8x.mp3",
+   "d": 11.13
   },
-  "1an8lfs": {
-   "f": "en-schulbus-3-1an8lfs.mp3",
-   "d": 4.44
+  "1rpui0z": {
+   "f": "en-schulbus-3-1rpui0z.mp3",
+   "d": 5.72
   },
-  "5zypct": {
-   "f": "en-schulbus-4-5zypct.mp3",
-   "d": 5.46
+  "16zpfb1": {
+   "f": "en-schulbus-4-16zpfb1.mp3",
+   "d": 6.82
   }
  },
  "rvl": {
-  "1kazx5u": {
-   "f": "en-rvl-0-1kazx5u.mp3",
-   "d": 7.37
+  "1nkg26o": {
+   "f": "en-rvl-0-1nkg26o.mp3",
+   "d": 8.59
   },
-  "129djzy": {
-   "f": "en-rvl-1-129djzy.mp3",
-   "d": 4.18
+  "12y1gn0": {
+   "f": "en-rvl-1-12y1gn0.mp3",
+   "d": 6.14
   },
   "fcv4xx": {
    "f": "en-rvl-2-fcv4xx.mp3",
-   "d": 2.22
+   "d": 3.11
   },
   "zwdl6h": {
    "f": "en-rvl-3-zwdl6h.mp3",
-   "d": 3.42
+   "d": 4.0
   },
-  "1p4yk4v": {
-   "f": "en-rvl-4-1p4yk4v.mp3",
-   "d": 4.83
+  "1x0c5u8": {
+   "f": "en-rvl-4-1x0c5u8.mp3",
+   "d": 4.44
   },
-  "1vo92nm": {
-   "f": "en-rvl-5-1vo92nm.mp3",
-   "d": 10.48
+  "1iqs33x": {
+   "f": "en-rvl-5-1iqs33x.mp3",
+   "d": 12.9
   }
  },
  "links_gegen": {
-  "hlyawc": {
-   "f": "en-links_gegen-0-hlyawc.mp3",
-   "d": 5.28
+  "1xp0w7h": {
+   "f": "en-links_gegen-0-1xp0w7h.mp3",
+   "d": 7.03
   },
-  "1hmg7hp": {
-   "f": "en-links_gegen-1-1hmg7hp.mp3",
-   "d": 7.47
+  "1cee5hx": {
+   "f": "en-links_gegen-1-1cee5hx.mp3",
+   "d": 8.2
   },
   "qldnwb": {
    "f": "en-links_gegen-2-qldnwb.mp3",
-   "d": 8.67
+   "d": 9.85
   },
-  "1v83oia": {
-   "f": "en-links_gegen-3-1v83oia.mp3",
-   "d": 5.28
+  "beq50b": {
+   "f": "en-links_gegen-3-beq50b.mp3",
+   "d": 7.26
   },
   "15zho2r": {
    "f": "en-links_gegen-4-15zho2r.mp3",
-   "d": 7.18
+   "d": 8.99
   }
  },
  "voreinander": {
-  "140pxu9": {
-   "f": "en-voreinander-0-140pxu9.mp3",
-   "d": 3.11
+  "vc6lma": {
+   "f": "en-voreinander-0-vc6lma.mp3",
+   "d": 4.41
   },
-  "z8v3xd": {
-   "f": "en-voreinander-1-z8v3xd.mp3",
-   "d": 12.2
+  "1ge9mgc": {
+   "f": "en-voreinander-1-1ge9mgc.mp3",
+   "d": 11.81
   },
-  "13d2ce7": {
-   "f": "en-voreinander-2-13d2ce7.mp3",
-   "d": 5.43
+  "mnj2pq": {
+   "f": "en-voreinander-2-mnj2pq.mp3",
+   "d": 8.1
   }
  },
  "rechts_rad": {
-  "1wydgmj": {
-   "f": "en-rechts_rad-0-1wydgmj.mp3",
-   "d": 5.25
+  "uymels": {
+   "f": "en-rechts_rad-0-uymels.mp3",
+   "d": 7.24
   },
-  "z0jrhs": {
-   "f": "en-rechts_rad-1-z0jrhs.mp3",
-   "d": 4.78
+  "e7e5b7": {
+   "f": "en-rechts_rad-1-e7e5b7.mp3",
+   "d": 7.05
   },
-  "1h018e1": {
-   "f": "en-rechts_rad-2-1h018e1.mp3",
-   "d": 6.11
+  "l6pjck": {
+   "f": "en-rechts_rad-2-l6pjck.mp3",
+   "d": 6.84
   },
-  "1prgv7c": {
-   "f": "en-rechts_rad-3-1prgv7c.mp3",
-   "d": 7.84
+  "140jihh": {
+   "f": "en-rechts_rad-3-140jihh.mp3",
+   "d": 7.92
   }
  },
  "doppel": {
-  "brtdpx": {
-   "f": "en-doppel-0-brtdpx.mp3",
-   "d": 8.72
+  "1qs0di4": {
+   "f": "en-doppel-0-1qs0di4.mp3",
+   "d": 9.64
   },
-  "mxq941": {
-   "f": "en-doppel-1-mxq941.mp3",
-   "d": 6.95
+  "1xy621r": {
+   "f": "en-doppel-1-1xy621r.mp3",
+   "d": 8.12
   },
-  "1mwlpvh": {
-   "f": "en-doppel-2-1mwlpvh.mp3",
-   "d": 5.09
+  "188mueo": {
+   "f": "en-doppel-2-188mueo.mp3",
+   "d": 7.05
   }
  },
  "kreisel": {
-  "1bo4vq5": {
-   "f": "en-kreisel-0-1bo4vq5.mp3",
-   "d": 7.29
+  "wwiylu": {
+   "f": "en-kreisel-0-wwiylu.mp3",
+   "d": 10.29
   },
-  "4lagmd": {
-   "f": "en-kreisel-1-4lagmd.mp3",
-   "d": 4.86
+  "173kydq": {
+   "f": "en-kreisel-1-173kydq.mp3",
+   "d": 7.24
   },
-  "1ldke59": {
-   "f": "en-kreisel-2-1ldke59.mp3",
-   "d": 6.5
+  "1ayvdge": {
+   "f": "en-kreisel-2-1ayvdge.mp3",
+   "d": 7.26
   },
-  "2tcf14": {
-   "f": "en-kreisel-3-2tcf14.mp3",
-   "d": 7.18
+  "oidoz3": {
+   "f": "en-kreisel-3-oidoz3.mp3",
+   "d": 11.36
   },
-  "1c1icwc": {
-   "f": "en-kreisel-4-1c1icwc.mp3",
-   "d": 5.98
+  "ifsft2": {
+   "f": "en-kreisel-4-ifsft2.mp3",
+   "d": 8.75
   }
  },
  "zebra": {
-  "g97k75": {
-   "f": "en-zebra-0-g97k75.mp3",
-   "d": 6.87
+  "d2z8mw": {
+   "f": "en-zebra-0-d2z8mw.mp3",
+   "d": 10.08
   },
-  "mwza59": {
-   "f": "en-zebra-1-mwza59.mp3",
-   "d": 7.55
+  "13auylu": {
+   "f": "en-zebra-1-13auylu.mp3",
+   "d": 8.57
   },
-  "vc8d2k": {
-   "f": "en-zebra-2-vc8d2k.mp3",
-   "d": 6.27
+  "cha4v3": {
+   "f": "en-zebra-2-cha4v3.mp3",
+   "d": 7.47
   },
-  "1h8jdns": {
-   "f": "en-zebra-3-1h8jdns.mp3",
-   "d": 5.04
+  "19wnjms": {
+   "f": "en-zebra-3-19wnjms.mp3",
+   "d": 8.07
   }
  },
  "eng": {
-  "110wldx": {
-   "f": "en-eng-0-110wldx.mp3",
-   "d": 5.38
+  "1xlaxhi": {
+   "f": "en-eng-0-1xlaxhi.mp3",
+   "d": 7.24
   },
-  "hxc15y": {
-   "f": "en-eng-1-hxc15y.mp3",
-   "d": 6.5
+  "1v5jb6w": {
+   "f": "en-eng-1-1v5jb6w.mp3",
+   "d": 8.12
   },
-  "mjtppi": {
-   "f": "en-eng-2-mjtppi.mp3",
-   "d": 9.51
+  "f6pnzh": {
+   "f": "en-eng-2-f6pnzh.mp3",
+   "d": 10.03
   },
-  "1tt5hzc": {
-   "f": "en-eng-3-1tt5hzc.mp3",
-   "d": 3.47
+  "wtdsaj": {
+   "f": "en-eng-3-wtdsaj.mp3",
+   "d": 6.37
   }
  },
  "gruenpfeil": {
-  "kzv36d": {
-   "f": "en-gruenpfeil-0-kzv36d.mp3",
-   "d": 7.78
+  "1t5mh3q": {
+   "f": "en-gruenpfeil-0-1t5mh3q.mp3",
+   "d": 8.2
   },
-  "1wehu35": {
-   "f": "en-gruenpfeil-1-1wehu35.mp3",
-   "d": 4.02
+  "9f6po0": {
+   "f": "en-gruenpfeil-1-9f6po0.mp3",
+   "d": 4.65
   },
-  "123wrq5": {
-   "f": "en-gruenpfeil-2-123wrq5.mp3",
-   "d": 5.02
+  "yrlei9": {
+   "f": "en-gruenpfeil-2-yrlei9.mp3",
+   "d": 5.3
   },
-  "xbtbn6": {
-   "f": "en-gruenpfeil-3-xbtbn6.mp3",
-   "d": 3.79
+  "13ve6kq": {
+   "f": "en-gruenpfeil-3-13ve6kq.mp3",
+   "d": 6.03
   },
-  "149iz7y": {
-   "f": "en-gruenpfeil-4-149iz7y.mp3",
-   "d": 5.67
+  "awswpe": {
+   "f": "en-gruenpfeil-4-awswpe.mp3",
+   "d": 7.05
   },
-  "5vjo0p": {
-   "f": "en-gruenpfeil-5-5vjo0p.mp3",
-   "d": 7.34
+  "196uggl": {
+   "f": "en-gruenpfeil-5-196uggl.mp3",
+   "d": 10.71
   }
  },
  "abknick": {
-  "18n1j3h": {
-   "f": "en-abknick-0-18n1j3h.mp3",
-   "d": 10.45
+  "eril5l": {
+   "f": "en-abknick-0-eril5l.mp3",
+   "d": 10.53
   },
-  "b7f5hy": {
-   "f": "en-abknick-1-b7f5hy.mp3",
-   "d": 8.86
+  "fwf8ss": {
+   "f": "en-abknick-1-fwf8ss.mp3",
+   "d": 10.76
   },
-  "ohyg33": {
-   "f": "en-abknick-2-ohyg33.mp3",
-   "d": 5.56
+  "1hzaznl": {
+   "f": "en-abknick-2-1hzaznl.mp3",
+   "d": 8.99
   },
-  "atrld5": {
-   "f": "en-abknick-3-atrld5.mp3",
-   "d": 10.68
+  "yhk5qn": {
+   "f": "en-abknick-3-yhk5qn.mp3",
+   "d": 10.08
   },
-  "1hi55bf": {
-   "f": "en-abknick-4-1hi55bf.mp3",
-   "d": 6.58
+  "9ridyy": {
+   "f": "en-abknick-4-9ridyy.mp3",
+   "d": 9.17
   }
  },
  "vorfahrt_gewaehren": {
-  "1empmhv": {
-   "f": "en-vorfahrt_gewaehren-0-1empmhv.mp3",
-   "d": 9.87
+  "1f3yc4j": {
+   "f": "en-vorfahrt_gewaehren-0-1f3yc4j.mp3",
+   "d": 10.95
   },
-  "13165dk": {
-   "f": "en-vorfahrt_gewaehren-1-13165dk.mp3",
-   "d": 6.5
+  "1hqkqa": {
+   "f": "en-vorfahrt_gewaehren-1-1hqkqa.mp3",
+   "d": 9.64
   },
-  "g0tkfu": {
-   "f": "en-vorfahrt_gewaehren-2-g0tkfu.mp3",
-   "d": 9.01
+  "1x3y3vs": {
+   "f": "en-vorfahrt_gewaehren-2-1x3y3vs.mp3",
+   "d": 9.43
   },
-  "eyvb3m": {
-   "f": "en-vorfahrt_gewaehren-3-eyvb3m.mp3",
-   "d": 6.45
+  "uge5xv": {
+   "f": "en-vorfahrt_gewaehren-3-uge5xv.mp3",
+   "d": 8.12
   },
-  "1lfkz4y": {
-   "f": "en-vorfahrt_gewaehren-4-1lfkz4y.mp3",
-   "d": 6.35
+  "7b2l9z": {
+   "f": "en-vorfahrt_gewaehren-4-7b2l9z.mp3",
+   "d": 8.33
   }
  },
  "rechts_fussg": {
-  "1031srl": {
-   "f": "en-rechts_fussg-0-1031srl.mp3",
-   "d": 5.85
+  "1vnwu8c": {
+   "f": "en-rechts_fussg-0-1vnwu8c.mp3",
+   "d": 7.71
   },
-  "1krlzfd": {
-   "f": "en-rechts_fussg-1-1krlzfd.mp3",
-   "d": 10.45
+  "1crg421": {
+   "f": "en-rechts_fussg-1-1crg421.mp3",
+   "d": 10.08
   },
   "15o86cc": {
    "f": "en-rechts_fussg-2-15o86cc.mp3",
-   "d": 7.37
+   "d": 8.12
   },
-  "aqybci": {
-   "f": "en-rechts_fussg-3-aqybci.mp3",
-   "d": 7.05
+  "1lb91ex": {
+   "f": "en-rechts_fussg-3-1lb91ex.mp3",
+   "d": 8.54
   },
-  "1fpsnk6": {
-   "f": "en-rechts_fussg-4-1fpsnk6.mp3",
-   "d": 5.09
+  "1b4mivu": {
+   "f": "en-rechts_fussg-4-1b4mivu.mp3",
+   "d": 7.03
   }
  },
  "grundstueck": {
-  "9e6nds": {
-   "f": "en-grundstueck-0-9e6nds.mp3",
-   "d": 8.96
+  "1hisc2n": {
+   "f": "en-grundstueck-0-1hisc2n.mp3",
+   "d": 11.18
   },
-  "1nrth3x": {
-   "f": "en-grundstueck-1-1nrth3x.mp3",
-   "d": 12.62
+  "16j8pxx": {
+   "f": "en-grundstueck-1-16j8pxx.mp3",
+   "d": 12.25
   },
-  "z33ohy": {
-   "f": "en-grundstueck-2-z33ohy.mp3",
-   "d": 7.55
+  "d6axx": {
+   "f": "en-grundstueck-2-d6axx.mp3",
+   "d": 8.57
   },
-  "1dwkx7n": {
-   "f": "en-grundstueck-3-1dwkx7n.mp3",
-   "d": 6.11
+  "1ls0glr": {
+   "f": "en-grundstueck-3-1ls0glr.mp3",
+   "d": 6.64
   },
-  "i3r8eq": {
-   "f": "en-grundstueck-4-i3r8eq.mp3",
-   "d": 7.84
+  "14ukg11": {
+   "f": "en-grundstueck-4-14ukg11.mp3",
+   "d": 8.1
   },
-  "rek3c9": {
-   "f": "en-grundstueck-5-rek3c9.mp3",
-   "d": 8.2
+  "qredim": {
+   "f": "en-grundstueck-5-qredim.mp3",
+   "d": 10.08
   }
  },
  "ampel_gelb": {
-  "1v0k4be": {
-   "f": "en-ampel_gelb-0-1v0k4be.mp3",
-   "d": 8.72
+  "oiss6v": {
+   "f": "en-ampel_gelb-0-oiss6v.mp3",
+   "d": 9.4
   },
-  "ohoo80": {
-   "f": "en-ampel_gelb-1-ohoo80.mp3",
-   "d": 7.65
+  "3eidl5": {
+   "f": "en-ampel_gelb-1-3eidl5.mp3",
+   "d": 8.99
   },
-  "1rrmx2t": {
-   "f": "en-ampel_gelb-2-1rrmx2t.mp3",
-   "d": 8.31
+  "kex66t": {
+   "f": "en-ampel_gelb-2-kex66t.mp3",
+   "d": 10.71
   },
-  "2rdyb9": {
-   "f": "en-ampel_gelb-3-2rdyb9.mp3",
-   "d": 13.61
+  "npq1pm": {
+   "f": "en-ampel_gelb-3-npq1pm.mp3",
+   "d": 12.02
   },
-  "9uujin": {
-   "f": "en-ampel_gelb-4-9uujin.mp3",
-   "d": 8.59
+  "1xjxtgu": {
+   "f": "en-ampel_gelb-4-1xjxtgu.mp3",
+   "d": 9.22
   },
-  "g5hlxu": {
-   "f": "en-ampel_gelb-5-g5hlxu.mp3",
-   "d": 5.75
+  "1pr2yu1": {
+   "f": "en-ampel_gelb-5-1pr2yu1.mp3",
+   "d": 7.13
   }
  },
  "bahnuebergang": {
-  "1updd90": {
-   "f": "en-bahnuebergang-0-1updd90.mp3",
-   "d": 6.3
+  "19fz3jp": {
+   "f": "en-bahnuebergang-0-19fz3jp.mp3",
+   "d": 7.71
   },
   "1vzn62y": {
    "f": "en-bahnuebergang-1-1vzn62y.mp3",
-   "d": 7.55
+   "d": 6.61
   },
-  "1985x0p": {
-   "f": "en-bahnuebergang-2-1985x0p.mp3",
-   "d": 6.35
+  "35148t": {
+   "f": "en-bahnuebergang-2-35148t.mp3",
+   "d": 7.68
   },
   "req23s": {
    "f": "en-bahnuebergang-3-req23s.mp3",
-   "d": 5.04
+   "d": 5.75
   },
-  "rot6ka": {
-   "f": "en-bahnuebergang-4-rot6ka.mp3",
-   "d": 7.47
+  "h95jxx": {
+   "f": "en-bahnuebergang-4-h95jxx.mp3",
+   "d": 9.2
   },
-  "t8dvv2": {
-   "f": "en-bahnuebergang-5-t8dvv2.mp3",
-   "d": 4.26
+  "1b5ga5": {
+   "f": "en-bahnuebergang-5-1b5ga5.mp3",
+   "d": 5.72
   },
   "1wbfjfh": {
    "f": "en-bahnuebergang-6-1wbfjfh.mp3",
-   "d": 8.62
+   "d": 9.4
   },
-  "sjpygp": {
-   "f": "en-bahnuebergang-7-sjpygp.mp3",
-   "d": 12.98
+  "1569uxg": {
+   "f": "en-bahnuebergang-7-1569uxg.mp3",
+   "d": 10.74
   }
  },
  "strassenbahn": {
-  "1bef9pa": {
-   "f": "en-strassenbahn-0-1bef9pa.mp3",
-   "d": 8.07
+  "adv0kp": {
+   "f": "en-strassenbahn-0-adv0kp.mp3",
+   "d": 8.12
   },
-  "hksfaz": {
-   "f": "en-strassenbahn-1-hksfaz.mp3",
-   "d": 8.31
+  "10ixxwc": {
+   "f": "en-strassenbahn-1-10ixxwc.mp3",
+   "d": 7.21
   },
-  "l1z0p": {
-   "f": "en-strassenbahn-2-l1z0p.mp3",
-   "d": 8.18
+  "11vw9yv": {
+   "f": "en-strassenbahn-2-11vw9yv.mp3",
+   "d": 9.17
   },
-  "11it04n": {
-   "f": "en-strassenbahn-3-11it04n.mp3",
-   "d": 13.09
+  "xzv4l4": {
+   "f": "en-strassenbahn-3-xzv4l4.mp3",
+   "d": 11.39
   },
-  "cg1q5e": {
-   "f": "en-strassenbahn-4-cg1q5e.mp3",
-   "d": 7.0
+  "moum5t": {
+   "f": "en-strassenbahn-4-moum5t.mp3",
+   "d": 7.47
   }
  },
  "abstand": {
-  "cp569g": {
-   "f": "en-abstand-0-cp569g.mp3",
-   "d": 12.3
+  "1c32i2m": {
+   "f": "en-abstand-0-1c32i2m.mp3",
+   "d": 11.81
   },
-  "4so0hs": {
-   "f": "en-abstand-1-4so0hs.mp3",
-   "d": 8.78
+  "1uf4fbj": {
+   "f": "en-abstand-1-1uf4fbj.mp3",
+   "d": 9.67
   },
-  "a9ubse": {
-   "f": "en-abstand-2-a9ubse.mp3",
-   "d": 13.61
+  "kg3l8b": {
+   "f": "en-abstand-2-kg3l8b.mp3",
+   "d": 12.04
   },
-  "lu4ylk": {
-   "f": "en-abstand-3-lu4ylk.mp3",
-   "d": 8.49
+  "nwqvpf": {
+   "f": "en-abstand-3-nwqvpf.mp3",
+   "d": 9.2
   },
-  "2whdxj": {
-   "f": "en-abstand-4-2whdxj.mp3",
-   "d": 9.69
+  "4ul57k": {
+   "f": "en-abstand-4-4ul57k.mp3",
+   "d": 11.6
   },
-  "1f30xdy": {
-   "f": "en-abstand-5-1f30xdy.mp3",
-   "d": 15.31
+  "ujstbu": {
+   "f": "en-abstand-5-ujstbu.mp3",
+   "d": 12.02
   }
  },
  "halteverbot": {
-  "j25dxv": {
-   "f": "en-halteverbot-0-j25dxv.mp3",
-   "d": 9.74
+  "1o06g5v": {
+   "f": "en-halteverbot-0-1o06g5v.mp3",
+   "d": 9.87
   },
-  "tfv6ml": {
-   "f": "en-halteverbot-1-tfv6ml.mp3",
-   "d": 9.09
+  "ip4ls3": {
+   "f": "en-halteverbot-1-ip4ls3.mp3",
+   "d": 10.53
   },
-  "6n0fbk": {
-   "f": "en-halteverbot-2-6n0fbk.mp3",
-   "d": 6.92
+  "ywf4gp": {
+   "f": "en-halteverbot-2-ywf4gp.mp3",
+   "d": 8.33
   },
   "1mzivzs": {
    "f": "en-halteverbot-3-1mzivzs.mp3",
-   "d": 7.97
+   "d": 8.99
   },
-  "1m693ac": {
-   "f": "en-halteverbot-4-1m693ac.mp3",
-   "d": 4.62
+  "ohmslt": {
+   "f": "en-halteverbot-4-ohmslt.mp3",
+   "d": 5.33
   },
-  "md7a9i": {
-   "f": "en-halteverbot-5-md7a9i.mp3",
-   "d": 12.98
+  "xmt41f": {
+   "f": "en-halteverbot-5-xmt41f.mp3",
+   "d": 12.67
   },
   "1dfvd02": {
    "f": "en-halteverbot-6-1dfvd02.mp3",
-   "d": 12.02
+   "d": 11.83
   },
-  "11mcryf": {
-   "f": "en-halteverbot-7-11mcryf.mp3",
-   "d": 9.2
+  "4su3t1": {
+   "f": "en-halteverbot-7-4su3t1.mp3",
+   "d": 10.53
   }
  },
  "einsatz": {
-  "7g4sdv": {
-   "f": "en-einsatz-0-7g4sdv.mp3",
-   "d": 7.94
+  "wvs2up": {
+   "f": "en-einsatz-0-wvs2up.mp3",
+   "d": 10.27
   },
-  "rchuev": {
-   "f": "en-einsatz-1-rchuev.mp3",
-   "d": 9.61
+  "1kg0qk6": {
+   "f": "en-einsatz-1-1kg0qk6.mp3",
+   "d": 11.15
   },
-  "11b74hi": {
-   "f": "en-einsatz-2-11b74hi.mp3",
-   "d": 5.38
+  "1emgss1": {
+   "f": "en-einsatz-2-1emgss1.mp3",
+   "d": 7.92
   },
-  "mfms28": {
-   "f": "en-einsatz-3-mfms28.mp3",
-   "d": 5.62
+  "1mygg02": {
+   "f": "en-einsatz-3-1mygg02.mp3",
+   "d": 10.27
   },
-  "jl59vk": {
-   "f": "en-einsatz-4-jl59vk.mp3",
-   "d": 8.07
+  "ikjsiu": {
+   "f": "en-einsatz-4-ikjsiu.mp3",
+   "d": 10.74
+  }
+ },
+ "einbahn": {
+  "10m9tdj": {
+   "f": "en-einbahn-0-10m9tdj.mp3",
+   "d": 8.54
+  },
+  "iuvwvc": {
+   "f": "en-einbahn-1-iuvwvc.mp3",
+   "d": 8.33
+  },
+  "oncsi2": {
+   "f": "en-einbahn-2-oncsi2.mp3",
+   "d": 10.08
+  },
+  "12cdor6": {
+   "f": "en-einbahn-3-12cdor6.mp3",
+   "d": 10.11
+  },
+  "pj49s4": {
+   "f": "en-einbahn-4-pj49s4.mp3",
+   "d": 9.67
+  }
+ },
+ "fahrradstrasse": {
+  "10c35p4": {
+   "f": "en-fahrradstrasse-0-10c35p4.mp3",
+   "d": 9.22
+  },
+  "zsm7pf": {
+   "f": "en-fahrradstrasse-1-zsm7pf.mp3",
+   "d": 12.43
+  },
+  "1d6n122": {
+   "f": "en-fahrradstrasse-2-1d6n122.mp3",
+   "d": 10.03
+  },
+  "1a333gu": {
+   "f": "en-fahrradstrasse-3-1a333gu.mp3",
+   "d": 7.44
+  },
+  "pin1x5": {
+   "f": "en-fahrradstrasse-4-pin1x5.mp3",
+   "d": 7.92
+  },
+  "1f06ib": {
+   "f": "en-fahrradstrasse-5-1f06ib.mp3",
+   "d": 8.33
+  }
+ },
+ "verkehrsberuhigt": {
+  "3ua8hc": {
+   "f": "en-verkehrsberuhigt-0-3ua8hc.mp3",
+   "d": 8.1
+  },
+  "1lsbz68": {
+   "f": "en-verkehrsberuhigt-1-1lsbz68.mp3",
+   "d": 7.71
+  },
+  "15icvol": {
+   "f": "en-verkehrsberuhigt-2-15icvol.mp3",
+   "d": 9.46
+  },
+  "8rooet": {
+   "f": "en-verkehrsberuhigt-3-8rooet.mp3",
+   "d": 10.29
+  },
+  "ebozu5": {
+   "f": "en-verkehrsberuhigt-4-ebozu5.mp3",
+   "d": 9.01
+  },
+  "mp3o2v": {
+   "f": "en-verkehrsberuhigt-5-mp3o2v.mp3",
+   "d": 6.82
+  }
+ },
+ "einfahrt_verboten": {
+  "1ig1kxh": {
+   "f": "en-einfahrt_verboten-0-1ig1kxh.mp3",
+   "d": 8.33
+  },
+  "1vc4km7": {
+   "f": "en-einfahrt_verboten-1-1vc4km7.mp3",
+   "d": 10.68
+  },
+  "1pdlihz": {
+   "f": "en-einfahrt_verboten-2-1pdlihz.mp3",
+   "d": 8.57
+  },
+  "wwwu9o": {
+   "f": "en-einfahrt_verboten-3-wwwu9o.mp3",
+   "d": 11.81
+  },
+  "lchrnj": {
+   "f": "en-einfahrt_verboten-4-lchrnj.mp3",
+   "d": 9.64
   }
  }
 }

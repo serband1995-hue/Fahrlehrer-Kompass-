@@ -16,6 +16,7 @@ ROOT = os.path.join(os.path.dirname(os.path.abspath(__file__)), "..")
 DIR = os.path.join(ROOT, "stimme")
 API = "https://api.elevenlabs.io/v1"
 STABIL = 0.5          # --erzaehler: 0.7 (ruhiger, gleichmäßiger)
+STRENG = False        # --erzaehler: Zahlwörter streng prüfen („eins Sekunde“ ≠ „eine Sekunde“)
 ZIEL = None           # --erzaehler: Ziel-Sprechtempo in Silben pro Sekunde (gleichmäßiger Erzähler)
 HDR = {"xi-api-key": "dummy"}
 
@@ -49,7 +50,7 @@ def post(url, body, ctype="application/json", tries=4):
 
 def tts(text, sprache, prev, nxt):
     body = {"text": text, "model_id": "eleven_multilingual_v2",
-            "voice_settings": {"stability": STABIL, "similarity_boost": 0.8, "style": 0.0, "use_speaker_boost": True}}
+            "voice_settings": {"stability": STABIL, "similarity_boost": 0.8, "style": 0.0, "use_speaker_boost": True, **({"speed": 0.92} if ZIEL else {})}}   # Erzähler: etwas ruhiger erzeugen, weniger Nachbremsen
     if prev: body["previous_text"] = prev
     if nxt: body["next_text"] = nxt
     return post(f"{API}/text-to-speech/{STIMME_ID}?output_format=mp3_44100_64", json.dumps(body).encode())
@@ -98,13 +99,29 @@ def woerter(t, sprache):
     z = ZAHL_DE if sprache == "de" else ZAHL_EN
     out = []
     for w in t.split():
-        if sprache == "de" and w.isdigit(): w = zahl_de(int(w)).replace("ß", "ss")
+        if sprache == "de" and STRENG and w == "1": w = "#1"   # Ziffer 1 in der Abschrift passt zu „ein/eine/eins…“ (Abschrift schreibt oft Ziffern)
+        elif sprache == "de" and w.isdigit(): w = zahl_de(int(w)).replace("ß", "ss")
         elif sprache == "en" and w.isdigit(): w = zahl_en(int(w))
         elif sprache == "en": w = re.sub(r"tre(s|d)?$", r"ter\1", re.sub(r"our(s|ing|hood)?$", r"or\1", {"kerb": "curb", "kerbs": "curbs", "practise": "practice"}.get(w, w)))   # britisch = amerikanisch (Scribe schreibt amerikanisch)
         else: w = z.get(w, w).replace("ß", "ss")
-        if sprache == "de": w = {"einhundert": "hundert", "eintausend": "tausend", "eins": "ein", "eine": "ein", "einen": "ein", "einem": "ein", "einer": "ein", "eines": "ein"}.get(w, w)
+        if sprache == "de": w = {"einhundert": "hundert", "eintausend": "tausend"}.get(w, w) if STRENG else {"einhundert": "hundert", "eintausend": "tausend", "eins": "ein", "eine": "ein", "einen": "ein", "einem": "ein", "einer": "ein", "eines": "ein"}.get(w, w)
         out.extend(w.split())
     return out
+
+EIN_FORMEN = {"ein", "eine", "einen", "einem", "einer", "eines", "eins"}
+def zeichen_abstand(x, y):
+    if abs(len(x) - len(y)) > 1: return 2
+    v = list(range(len(y) + 1))
+    for i, cx in enumerate(x, 1):
+        w = [i] + [0] * len(y)
+        for j, cy in enumerate(y, 1): w[j] = min(v[j] + 1, w[j - 1] + 1, v[j - 1] + (cx != cy))
+        v = w
+    return v[-1]
+def gleich(x, y):
+    if x == y: return True
+    if (x == "#1" and y in EIN_FORMEN) or (y == "#1" and x in EIN_FORMEN): return True
+    # lange Fachwörter: ein Buchstabe Unterschied ist Schreibweise der Abschrift („ausfedelungsstreifen“), kein Sprechfehler
+    return len(x) >= 10 and len(y) >= 10 and zeichen_abstand(x, y) <= 1
 
 def abweichung(soll, ist, sprache):
     a, b = woerter(soll, sprache), woerter(ist, sprache)
@@ -115,11 +132,11 @@ def abweichung(soll, ist, sprache):
     for j in range(m + 1): D[0][j] = j
     for i in range(1, n + 1):
         for j in range(1, m + 1):
-            D[i][j] = min(D[i - 1][j] + 1, D[i][j - 1] + 1, D[i - 1][j - 1] + (0 if a[i - 1] == b[j - 1] else 1))
+            D[i][j] = min(D[i - 1][j] + 1, D[i][j - 1] + 1, D[i - 1][j - 1] + (0 if gleich(a[i - 1], b[j - 1]) else 1))
     i, j, diff = n, m, []
     while i > 0 or j > 0:
-        if i > 0 and j > 0 and D[i][j] == D[i - 1][j - 1] + (0 if a[i - 1] == b[j - 1] else 1):
-            if a[i - 1] != b[j - 1]: diff.append(f"{a[i-1]}→{b[j-1]}")
+        if i > 0 and j > 0 and D[i][j] == D[i - 1][j - 1] + (0 if gleich(a[i - 1], b[j - 1]) else 1):
+            if not gleich(a[i - 1], b[j - 1]): diff.append(f"{a[i-1]}→{b[j-1]}")
             i, j = i - 1, j - 1
         elif i > 0 and D[i][j] == D[i - 1][j] + 1: diff.append(f"{a[i-1]}→∅"); i -= 1
         else: diff.append(f"∅→{b[j-1]}"); j -= 1
@@ -142,14 +159,14 @@ def sprechzeit(pfad):
 
 def tempo_angleichen(mp3, text, ziel):
     """Gleichmäßiges Erzähltempo: Stille vorn kürzen, Tempo auf ziel Silben/s bringen (Tonhöhe bleibt), 0,3 s Ruhe am Ende.
-    Gibt (neue mp3-Bytes, Faktor) zurück; Faktor außerhalb 0,85–1,15 → None (lieber neu erzeugen)."""
+    Gibt (neue mp3-Bytes, Faktor) zurück; Faktor außerhalb 0,8–1,32 → None (lieber neu erzeugen)."""
     import tempfile
     with tempfile.TemporaryDirectory() as d:
         ein, aus = os.path.join(d, "a.mp3"), os.path.join(d, "b.mp3")
         open(ein, "wb").write(mp3)
         a, b = sprechzeit(ein)
         f = ziel / (silben(text) / max(0.5, b - a))
-        if not 0.85 <= f <= 1.15: return None, f
+        if not 0.8 <= f <= 1.32: return None, f
         start = max(0.0, a - 0.08)
         subprocess.run(["ffmpeg", "-v", "quiet", "-y", "-i", ein, "-af", f"atrim=start={start:.3f}:end={b + 0.05:.3f},asetpts=PTS-STARTPTS,atempo={f:.4f},apad=pad_dur=0.3",
                         "-ar", "44100", "-b:a", "64k", aus], check=True)
@@ -162,14 +179,17 @@ def main():
     a = sys.argv[1:]
     texte = json.load(open(a[0], encoding="utf-8"))
     opt = {a[i]: a[i + 1] for i in range(1, len(a) - 1, 2)}
-    global STABIL, ZIEL
-    if "--erzaehler" in opt: ZIEL = float(opt["--erzaehler"]); STABIL = 0.7
+    global STABIL, ZIEL, STRENG
+    if "--erzaehler" in opt: ZIEL = float(opt["--erzaehler"]); STABIL = 0.7; STRENG = True
     sprache = opt.get("--sprache", "de"); nur = set(filter(None, opt.get("--nur", "").split(",")))
     budget = int(opt.get("--budget", "60000")); bericht_pfad = opt.get("--bericht", os.path.join(ROOT, "stimme", f"bericht-{sprache}.json"))
     idx_pfad = os.path.join(DIR, "index.json" if sprache == "de" else f"index-{sprache}.json")
     idx = json.load(open(idx_pfad, encoding="utf-8")) if os.path.exists(idx_pfad) else {}
     bericht = json.load(open(bericht_pfad, encoding="utf-8")) if os.path.exists(bericht_pfad) else {"zeichen": 0, "eintraege": {}}
     praefix = "" if sprache == "de" else sprache + "-"
+    if STRENG:
+        mit = [f"{sz['id']}/{i}" for sz in texte for i, p in enumerate(sz["phasen"]) if re.search(r"\d", sprich(p["text"], sprache))]
+        if mit: print("Hinweis: Ziffern im Sprechtext (besser als Wort schreiben):", ", ".join(mit), file=sys.stderr)
     for sz in texte:
         if nur and sz["id"] not in nur: continue
         neu = {}
@@ -201,10 +221,20 @@ def main():
                         if bester[1] is mp3: bester = (1, mp3)
                         if k < 3: continue
                         fehler = 1; diff.append(f"Tempo-Faktor {fak:.2f} nicht angeglichen")   # letzter Versuch: Datei bleibt, Bericht sagt nicht ok
-                    else: mp3 = neu_mp3
+                    else:
+                        mp3 = neu_mp3
+                        ist2, ged2 = stt(mp3, sprache)   # die FERTIGE Datei zurückhören (nach Kürzen und Tempo)
+                        f2, d2 = abweichung(ts, ist2, sprache); f2 += len(ged2)
+                        versuche[-1]["fertig"] = {"ist": ist2, "fehler": f2, "diff": d2 + ["gedehnt " + g for g in ged2]}
+                        if f2:
+                            print(f"{key} fertige Datei: {f2} Abweichung(en) {d2}", flush=True)
+                            fehler = f2; diff += ["fertig: " + x for x in d2]
+                            if bester[1] is not mp3 and (bester[0] >= f2): bester = (f2, mp3)
+                            if k < 3: continue
                 if fehler == 0:
                     open(pf, "wb").write(mp3); ok = fehler == 0; break
                 if k == 3: open(pf, "wb").write(bester[1]); ok = False   # bester Versuch bleibt, Satz steht im Bericht
+            if not os.path.exists(pf) and bester: open(pf, "wb").write(bester[1]); ok = False   # z. B. Budget-Ende mitten in den Versuchen: besten Versuch behalten, keine Lücke im Index
             bericht["eintraege"][key] = {"stand": st, "text": t, "sprich": sprich(t, sprache), "ok": ok, "versuche": versuche}
             if os.path.exists(pf): neu[st] = {"f": f, "d": dauer(pf)}
             json.dump(bericht, open(bericht_pfad, "w", encoding="utf-8"), ensure_ascii=False, indent=1)
