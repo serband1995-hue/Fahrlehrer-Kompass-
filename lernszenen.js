@@ -808,12 +808,12 @@
   // Standard = Sprache des Handys (Englisch nur, wenn das Handy auf Englisch steht), Wahl wird gemerkt. Englische Texte: lernszenen-en.js (window.LernszenenEN).
   let sprache = (() => { try { const v = localStorage.getItem("lz_sprache"); if (v === "de" || v === "en") return v; } catch (e) {} return /^en\b/i.test(navigator.language || "") ? "en" : "de"; })();
   const UI = {
-    de: { lernszenen: "🎬 Lernszenen", passend: "Passend zum Ausbildungspunkt", alle: "Alle Szenen", vorfuehren: "Vorführen", kBlinker: "Blinker", kLinks: "links", kRechts: "rechts", kBremse: "Bremse", kGas: "Gas", kSpur: "Spur wechseln", kVoll: "voll", kGerade: "gerade", kRundum: "Rundumblick", kGang: "Gang", kHilf: "Hilfslinien", kFertig: "Fertig", kBremsen: "BREMSEN!", kGefahr: "Bremse, sobald Gefahr droht!", kStarte: "Starte mit ▶.", selbstFahren: "Selbst fahren", selbstRangieren: "Selbst rangieren", reaktionstest: "Reaktionstest", jetztFahren: "Jetzt selbst fahren", jetztRangieren: "Jetzt selbst rangieren", reaktionStarten: "Reaktionstest starten", capRangieren: "Lenkrad drehen, Gang wählen, Gas halten. Vor jedem Anfahren Rundumblick! Die gelben Hilfslinien zeigen, wohin das Auto mit diesem Lenkeinschlag fährt. Zum Schluss auf „Fertig“.", capReaktion: "Das Auto fährt von selbst. Sobald eine Gefahr auftaucht, so schnell wie möglich auf BREMSEN tippen. Danach siehst du Reaktionsweg, Bremsweg und Anhalteweg.", capFahren: "Du steuerst das Fahrschulauto: Gas und Bremse halten, Blinker und Schulterblick antippen, dann den Fahrstreifen wechseln. Am Ende gibt es die Auswertung.", zielGruen: "Grün markiert: Zielposition", tempoStart: "Tempo wählen, dann ▶", tippeStart: "Tippe auf ▶ zum Starten", mitdenken: "Mitdenken", oben: "Oben", regeln: "§ Regeln", textAn: "▤ Text anzeigen",
+    de: { lernszenen: "🎬 Lernszenen", passend: "Passend zum Ausbildungspunkt", alle: "Alle Szenen", vorfuehren: "Vorführen", tBlickR: "Vor dem Rückwärtsfahren: Rundumblick!", tBlickV: "Vor dem Anfahren: Rundumblick!", tAnhalten: "Erst anhalten.", tFrueh: "Zu früh, noch keine Gefahr. Nicht raten, beobachten!", tGang: "Gang nur im Stand wechseln.", tVerschoben: "Fahrzeug verschoben. ▶ zeigt, wie es weitergeht, ↺ setzt zurück.", kTempo: "Tempo", kBlinker: "Blinker", kLinks: "links", kRechts: "rechts", kBremse: "Bremse", kGas: "Gas", kSpur: "Spur wechseln", kVoll: "voll", kGerade: "gerade", kRundum: "Rundumblick", kGang: "Gang", kHilf: "Hilfslinien", kFertig: "Fertig", kBremsen: "BREMSEN!", kGefahr: "Bremse, sobald Gefahr droht!", kStarte: "Starte mit ▶.", selbstFahren: "Selbst fahren", selbstRangieren: "Selbst rangieren", reaktionstest: "Reaktionstest", jetztFahren: "Jetzt selbst fahren", jetztRangieren: "Jetzt selbst rangieren", reaktionStarten: "Reaktionstest starten", capRangieren: "Lenkrad drehen, Gang wählen, Gas halten. Vor jedem Anfahren Rundumblick! Die gelben Hilfslinien zeigen, wohin das Auto mit diesem Lenkeinschlag fährt. Zum Schluss auf „Fertig“.", capReaktion: "Das Auto fährt von selbst. Sobald eine Gefahr auftaucht, so schnell wie möglich auf BREMSEN tippen. Danach siehst du Reaktionsweg, Bremsweg und Anhalteweg.", capFahren: "Du steuerst das Fahrschulauto: Gas und Bremse halten, Blinker und Schulterblick antippen, dann den Fahrstreifen wechseln. Am Ende gibt es die Auswertung.", zielGruen: "Grün markiert: Zielposition", tempoStart: "Tempo wählen, dann ▶", tippeStart: "Tippe auf ▶ zum Starten", mitdenken: "Mitdenken", oben: "Oben", regeln: "§ Regeln", textAn: "▤ Text anzeigen",
       start: "Tippe auf ▶, dann spielt sich die Szene von selbst ab. Mit ⏸ hältst du an und kannst Fahrzeuge verschieben.", nochmalHoeren: "Nochmal hören", textAus: "Text ausblenden", wasRichtig: "Was ist richtig?", richtig: "✓ Richtig.", richtigG: "✓ Richtig!", nicht: "✗ Nicht ganz.",
       weiter: "Weiter ▶", richtigIst: "Richtig ist", angetippt: "von", angetippt2: "angetippt", neu: "↺ neu", stark: "Stark!", fast: "Gut – fast!", ueben: "Nochmal üben", fragenRichtig: "von {n} Fragen richtig", uebersprungen: "Frage(n) übersprungen.",
       nochmal: "↺ Nochmal", alleRegeln: "§ Alle Regeln", regelnTitel: "§ Regeln", schilder: "Schilder in dieser Szene:", schliessen: "Schließen", mitdenkenText: "Die Szene hält an jedem wichtigen Schritt an und fragt: Was ist jetzt richtig?", tippePlay: "Tippe auf ▶",
       stimmeInfo: "🔊 Sprecherstimme mit KI erzeugt.", sprache: "Sprache: Deutsch. Auf Englisch umschalten", kat: { innerorts: "Innerorts", ueberland: "Überland", grundfahr: "Grundfahraufgaben", autobahn: "Autobahn" }, zumAntippen: "Zum Antippen bleibt die Ansicht von oben." },
-    en: { lernszenen: "🎬 Learning scenes", passend: "Matching this training topic", alle: "All scenes", vorfuehren: "Watch", kBlinker: "Indicator", kLinks: "left", kRechts: "right", kBremse: "Brake", kGas: "Accelerator", kSpur: "Change lane", kVoll: "full", kGerade: "straight", kRundum: "Look all round", kGang: "Gear", kHilf: "Guide lines", kFertig: "Done", kBremsen: "BRAKE!", kGefahr: "Brake as soon as there is danger!", kStarte: "Start with ▶.", selbstFahren: "Drive yourself", selbstRangieren: "Manoeuvre yourself", reaktionstest: "Reaction test", jetztFahren: "Now drive yourself", jetztRangieren: "Now manoeuvre yourself", reaktionStarten: "Start reaction test", capRangieren: "Turn the steering wheel, choose a gear, hold the accelerator. Look all around before every start! The yellow guide lines show where the car goes with this steering angle. Finish with „Done“.", capReaktion: "The car drives by itself. As soon as a hazard appears, tap BRAKE as fast as you can. Then you see the reaction distance, braking distance and stopping distance.", capFahren: "You steer the driving school car: hold accelerator and brake, tap indicator and shoulder check, then change lanes. At the end you get your evaluation.", zielGruen: "Marked green: target position", tempoStart: "Choose a speed, then ▶", tippeStart: "Tap ▶ to start", mitdenken: "Think along", oben: "Top", regeln: "§ Rules", textAn: "▤ Show text",
+    en: { lernszenen: "🎬 Learning scenes", passend: "Matching this training topic", alle: "All scenes", vorfuehren: "Watch", tBlickR: "Before reversing: look all round!", tBlickV: "Before moving off: look all round!", tAnhalten: "Stop first.", tFrueh: "Too early, no danger yet. Don't guess, watch!", tGang: "Only change gear when stopped.", tVerschoben: "Vehicle moved. ▶ shows what happens next, ↺ resets.", tKontaktEN: "Stop, contact! Change gear and start again.", kTempo: "Speed", kBlinker: "Indicator", kLinks: "left", kRechts: "right", kBremse: "Brake", kGas: "Accelerator", kSpur: "Change lane", kVoll: "full", kGerade: "straight", kRundum: "Look all round", kGang: "Gear", kHilf: "Guide lines", kFertig: "Done", kBremsen: "BRAKE!", kGefahr: "Brake as soon as there is danger!", kStarte: "Start with ▶.", selbstFahren: "Drive yourself", selbstRangieren: "Manoeuvre yourself", reaktionstest: "Reaction test", jetztFahren: "Now drive yourself", jetztRangieren: "Now manoeuvre yourself", reaktionStarten: "Start reaction test", capRangieren: "Turn the steering wheel, choose a gear, hold the accelerator. Look all around before every start! The yellow guide lines show where the car goes with this steering angle. Finish with „Done“.", capReaktion: "The car drives by itself. As soon as a hazard appears, tap BRAKE as fast as you can. Then you see the reaction distance, braking distance and stopping distance.", capFahren: "You steer the driving school car: hold accelerator and brake, tap indicator and shoulder check, then change lanes. At the end you get your evaluation.", zielGruen: "Marked green: target position", tempoStart: "Choose a speed, then ▶", tippeStart: "Tap ▶ to start", mitdenken: "Think along", oben: "Top", regeln: "§ Rules", textAn: "▤ Show text",
       start: "Tap ▶ and the scene plays by itself. Tap ⏸ to pause and move vehicles.", nochmalHoeren: "Listen again", textAus: "Hide text", wasRichtig: "What is right?", richtig: "✓ Right.", richtigG: "✓ Right!", nicht: "✗ Not quite.",
       weiter: "Next ▶", richtigIst: "The right order is", angetippt: "of", angetippt2: "tapped", neu: "↺ again", stark: "Great!", fast: "Good, almost!", ueben: "Practise again", fragenRichtig: "of {n} questions right", uebersprungen: "question(s) skipped.",
       nochmal: "↺ Again", alleRegeln: "§ All rules", regelnTitel: "§ Rules", schilder: "Signs in this scene (German names):", schliessen: "Close", mitdenkenText: "The scene stops at every important step and asks: what is right now?", tippePlay: "Tap ▶",
@@ -1901,7 +1901,7 @@
       const blick = st.t - st.blickT <= 5;
       if (st.letzteRichtung !== st.gang) { st.zuege++; st.letzteRichtung = st.gang; }
       st.starts.push({ t: st.t, gang: st.gang, blick, zug: st.zuege });
-      if (!blick) zeigeToast(st.gang < 0 ? "Vor dem Rückwärtsfahren: Rundumblick!" : "Vor dem Anfahren: Rundumblick!");
+      if (!blick) zeigeToast(st.gang < 0 ? T("tBlickR") : T("tBlickV"));
     }
     st.v = vNeu;
     const nx = st.x + Math.cos(st.h) * st.v * st.gang * dt, ny = st.y + Math.sin(st.h) * st.v * st.gang * dt, nh = st.h + st.v * st.gang / RAD.L * Math.tan(st.d) * dt;
@@ -1912,14 +1912,14 @@
     if (!stop) raeder(nx, ny, nh).forEach(rp => (R.bordsteine || []).forEach(b => { if (bordAbstand(rp, b) < 0.1) stop = "den Bordstein"; }));
     if (stop && st.v > 0) {
       st.v = 0; st.sperre = st.gang; st.kontakte.push({ t: st.t, was: stop }); if (stop === "den Bordstein") st.bordKontakte++;
-      zeigeToast(`Stopp, Kontakt mit ${stop}! Wechsle den Gang und setze neu an.`); return;
+      zeigeToast(sprache === "en" ? T("tKontaktEN") : `Stopp, Kontakt mit ${stop}! Wechsle den Gang und setze neu an.`); return;
     }
     st.x = nx; st.y = ny; st.h = nh;
     if (st.t > 300) { st.ende = true; st.endeGrund = "zeit"; laeuft = false; zeigeAuswertung(bewerteRangieren()); }
   }
   function rangierFertig() {
     const st = fahr; if (!st || st.ende) return;
-    if (st.v > 0.05) { zeigeToast("Erst anhalten."); return; }
+    if (st.v > 0.05) { zeigeToast(T("tAnhalten")); return; }
     st.ende = true; laeuft = false; zeigeAuswertung(bewerteRangieren());
   }
   function bewerteRangieren() {
@@ -1998,7 +1998,7 @@
       }
     };
     zeit = 0; _hGlatt = null;
-    const e = $("#rkInfo"); if (e) e.textContent = `Tempo ${Math.round(v * KMH)}. ${T("kGefahr")}`;
+    const e = $("#rkInfo"); if (e) e.textContent = `${T("kTempo")} ${Math.round(v * KMH)}. ${T("kGefahr")}`;
   }
   function reaktionSchritt(dt) {
     const st = fahr, R = szene.reaktion; if (!st || st.ende) return;
@@ -2013,7 +2013,7 @@
   function reaktionBremse() {
     const st = fahr; if (!st || !st.reak || st.ende) return;
     if (!laeuft) { laeuft = true; return; }
-    if (st.phase === "fahrt") { zeigeToast("Zu früh, noch keine Gefahr. Nicht raten, beobachten!"); st.fruehstart = (st.fruehstart || 0) + 1; return; }
+    if (st.phase === "fahrt") { zeigeToast(T("tFrueh")); st.fruehstart = (st.fruehstart || 0) + 1; return; }
     if (st.phase === "gefahr") { st.phase = "bremsen"; st.tDruck = st.t; st.xDruck = st.x; }
   }
   function bewerteReaktion() {
@@ -2163,7 +2163,8 @@
   .lz-rad input{flex:1;accent-color:#e0b84a;height:34px;}
   .lz-reak{display:flex;gap:8px;align-items:center;flex-wrap:wrap;}
   .lz-reak .grow{flex:1;min-width:140px;font-size:13px;color:#b1bfb5;}
-  .lz-gross{min-height:64px!important;min-width:180px;font-size:20px!important;font-weight:800!important;touch-action:none;}
+  .lz-rang .lz-btn,.lz-reak .lz-btn,.lz-drive .lz-btn{min-height:44px;}   /* Tippfläche ≥ 44 px auch im Querformat (Design 18.11.) */
+  .lz-gross{min-height:64px!important;min-width:180px;flex:1 1 100%;font-size:20px!important;font-weight:800!important;touch-action:none;}
   .lz-tipp{position:absolute;left:50%;bottom:14px;transform:translateX(-50%);background:rgba(10,18,14,.94);border:1px solid #e0b84a;border-radius:12px;padding:10px 14px;max-width:min(560px,92%);z-index:5;font-size:14px;}
   .lz-tipp .lz-row{margin-top:8px;}
   .lz-top{display:flex;align-items:center;gap:8px;padding:10px 12px calc(10px) 12px;padding-top:max(10px,env(safe-area-inset-top));background:rgba(12,20,16,.92);border-bottom:1px solid #24413a;z-index:2;}
@@ -2360,7 +2361,7 @@
           <div class="lz-lenk"><button class="lz-btn" id="rBL">◀ ${T("kBlinker")}</button><button class="lz-btn" id="rBlick">👀 ${T("kRundum")}</button><button class="lz-btn" id="rGang">${T("kGang")}: V</button><button class="lz-btn lz-pedal brems" id="rBrems">${T("kBremse")}</button><button class="lz-btn lz-pedal gas" id="rGas">${T("kGas")}</button><button class="lz-btn" id="rBR">${T("kBlinker")} ▶</button><button class="lz-btn" id="rHilf">${T("kHilf")}</button><button class="lz-btn on" id="rFertig">${T("kFertig")} ✓</button></div>
         </div>
         <div class="lz-reak" id="lzReak" hidden>
-          <button class="lz-btn" data-rv="30">Tempo 30</button><button class="lz-btn on" data-rv="50">Tempo 50</button><span class="grow" id="rkInfo">${T("kStarte")} ${T("kGefahr")}</span>
+          <button class="lz-btn" data-rv="30">${T("kTempo")} 30</button><button class="lz-btn on" data-rv="50">${T("kTempo")} 50</button><span class="grow" id="rkInfo">${T("kStarte")} ${T("kGefahr")}</span>
           <button class="lz-btn lz-pedal brems lz-gross" id="rkBrems">${T("kBremsen")}</button>
         </div>
       </div>`;
@@ -2631,7 +2632,7 @@
     $("#rLinks").onclick = () => setzLenk(-1); $("#rRechts").onclick = () => setzLenk(1); $("#rGerade").onclick = () => setzLenk(0);
     halt("#rGas", () => { if (fahr && fahr.rang) { fahr.gas = true; if (!laeuft && !fahr.ende) laeuft = true; } }, () => { if (fahr) fahr.gas = false; });
     halt("#rBrems", () => { if (fahr) fahr.bremse = true; }, () => { if (fahr) fahr.bremse = false; });
-    $("#rGang").onclick = () => { if (!fahr || !fahr.rang) return; if (fahr.v > 0.03) { zeigeToast("Gang nur im Stand wechseln."); return; } fahr.gang = -fahr.gang; fahr.sperre = 0; aktualisiereRangUI(); };
+    $("#rGang").onclick = () => { if (!fahr || !fahr.rang) return; if (fahr.v > 0.03) { zeigeToast(T("tGang")); return; } fahr.gang = -fahr.gang; fahr.sperre = 0; aktualisiereRangUI(); };
     $("#rBlick").onclick = () => { if (!fahr || !fahr.rang) return; if (!laeuft && !fahr.ende) laeuft = true; fahr.blickT = fahr.t; fahr.schulter.push({ von: fahr.t, bis: fahr.t + 1.2, seite: "rundum" }); };
     const blink = seite => () => { if (!fahr || !fahr.rang) return; if (!laeuft && !fahr.ende) laeuft = true; fahr.blinker = fahr.blinker === seite ? null : seite; fahr.log.push({ t: fahr.t, typ: "blink", seite: fahr.blinker }); aktualisiereRangUI(); };
     $("#rBL").onclick = blink("links"); $("#rBR").onclick = blink("rechts");
@@ -2674,7 +2675,7 @@
       if (zug.art === "fz") { const w = welt(e.clientX, e.clientY); zug.o.dx = zug.dx0 + (w.x - zug.sx); zug.o.dy = zug.dy0 + (w.y - zug.sy); }
       else { ansicht.px = zug.px - (e.clientX - zug.sx) / ansicht.zoom; ansicht.py = zug.py - (e.clientY - zug.sy) / ansicht.zoom; }
     });
-    const ende = e => { zeiger.delete(e.pointerId); if (zeiger.size < 2) pinch = null; if (zug && zug.art === "fz" && (Math.abs(zug.o.dx - zug.dx0) > 0.5 || Math.abs(zug.o.dy - zug.dy0) > 0.3)) zeigeToast("Fahrzeug verschoben. ▶ zeigt, wie es weitergeht, ↺ setzt zurück."); zug = null; };
+    const ende = e => { zeiger.delete(e.pointerId); if (zeiger.size < 2) pinch = null; if (zug && zug.art === "fz" && (Math.abs(zug.o.dx - zug.dx0) > 0.5 || Math.abs(zug.o.dy - zug.dy0) > 0.3)) zeigeToast(T("tVerschoben")); zug = null; };
     stage.addEventListener("pointerup", ende); stage.addEventListener("pointercancel", ende);
     stage.addEventListener("wheel", e => { e.preventDefault(); ansicht.zoom = clamp(ansicht.zoom * (e.deltaY < 0 ? 1.1 : 0.9), 1, 14); zoomUser = true; }, { passive: false });
   }
