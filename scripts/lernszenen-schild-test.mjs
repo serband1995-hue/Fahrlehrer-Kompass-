@@ -16,7 +16,7 @@ import { fileURLToPath } from "node:url";
 const require = createRequire(import.meta.url);
 const { chromium } = require("playwright");
 const ROOT = join(fileURLToPath(new URL(".", import.meta.url)), "..");
-const TYPES = { ".html": "text/html", ".js": "text/javascript", ".css": "text/css", ".json": "application/json", ".png": "image/png", ".svg": "image/svg+xml" };
+const TYPES = { ".html": "text/html", ".js": "text/javascript", ".css": "text/css", ".json": "application/json", ".png": "image/png", ".svg": "image/svg+xml", ".webp": "image/webp" };
 const server = createServer(async (req, res) => {
   try { const p = normalize(decodeURIComponent(req.url.split("?")[0])).replace(/^(\.\.[/\\])+/, ""); const d = await readFile(join(ROOT, p === "/" ? "index.html" : p)); res.writeHead(200, { "Content-Type": TYPES[extname(p === "/" ? "index.html" : p)] || "application/octet-stream" }); res.end(d); } catch { res.writeHead(404); res.end(); }
 });
@@ -33,9 +33,11 @@ const setze = (page, v) => page.evaluate(v => { const sl = document.querySelecto
 const A35 = 35 * Math.PI / 180;
 const MASS = {
   z274: [600, 600], z276: [600, 600], z280: [600, 600], z283: [600, 600], z286: [600, 600], z224: [420, 420], zone30: [840, 840],
-  z201: [1350 * Math.cos(A35) + 180 * Math.sin(A35), 1350 * Math.sin(A35) + 180 * Math.cos(A35)], z450: [650, 1500],
+  z201: [850, 0], z450: [650, 1500],
   z1000_32: [600, 450], z1020_30: [600, 330], zkfz: [600, 450], z244_1: [600, 600], z244_2: [600, 600], z325_1: [900, 600], z325_2: [900, 600],
-  z350: [600, 600], z330: [600, 600], z531: [1250, 1600], z332: [3000, 2000], z333: [1500, 1500], vorweg: [3500, 2600], weg: [3500, 2600]
+  z350: [600, 600], z330: [600, 600], z531: [1250, 1600], z332: [2800, 0], z333: [1500, 0], vorweg: [3500, 2600], weg: [3500, 2600],
+  // Katalogteile: nur die Breite zählt (Höhe aus dem Seitenverhältnis des Bilds); z201 stehend geschätzt, z332/z333 Autobahntafeln geschätzt
+  z205: [847, 0], z206: [900, 0], z215: [600, 0], z306: [848.5, 0], z1022_10: [600, 0], z220_20: [800, 0], z220_10: [800, 0], z250: [600, 0], z267: [600, 0]
 };
 // Randmessung: Farbläufe von außen nach innen entlang einer Linie (mm): [Farbe, Länge] … Toleranz ±3 mm (bei 1 px/mm)
 const RING = [["weiss", 10], ["rot", 80.4]];            // Zeichen 274-Ring: Lichtkante 10, roter Ring bis Innen-Ø 419 (wie Vorlage 250)
@@ -56,15 +58,22 @@ const LAEUFE = {
   await page.route(/^https?:\/\/(?!127\.0\.0\.1)/, r => r.abort());
   await page.goto(basis); await page.waitForFunction(() => window.Lernszenen && window.Lernszenen.open, null, { timeout: 15000 });
   await page.evaluate(() => window.Lernszenen.open({}));
-  await page.waitForFunction(() => { const V = window.Lernszenen._intern.vz; return Object.values(V.VZ_TEIL).every(t => !t.svg || V.vzSvg(t.svg).ok); }, null, { timeout: 10000 }).catch(() => pruefe("Vorlagen (schilder/*.svg) geladen", false));
+  await page.waitForFunction(() => { const V = window.Lernszenen._intern.vz; return Object.values(V.VZ_TEIL).every(t => (!t.svg || V.vzSvg(t.svg).ok) && (!t.kat || V.vzSvg(t.kat, true).ok)); }, null, { timeout: 10000 }).catch(() => pruefe("Vorlagen (schilder/*.svg) und Katalogbilder (schilder/kat/*.webp) geladen", false));
   const erg = await page.evaluate(({ MASS, LAEUFE }) => {
     const L = window.Lernszenen, V = L._intern.vz, out = { szenen: [], teile: [] };
     const FARBE = { weiss: [255, 255, 255], rot: [193, 18, 28], schwarz: [35, 31, 32], blau: [21, 72, 137], gelb: [247, 186, 11], gruen: [30, 125, 60], grau: [111, 111, 111] };
     const klasse = d => { if (d[3] < 128) return "leer"; let b = null, m = 1e9; for (const [k, f] of Object.entries(FARBE)) { const e = (d[0] - f[0]) ** 2 + (d[1] - f[1]) ** 2 + (d[2] - f[2]) ** 2; if (e < m) { m = e; b = k; } } return b; };
     // ---- selbst gezeichnete Teile: Außenmaß und Randläufe, gerendert mit 1 px/mm
     for (const [n, t] of Object.entries(V.VZ_TEIL)) {
-      const r = { n, quelle: t.svg ? "Vorlage schilder/" + t.svg + ".svg" + (t.spiegel ? " (gespiegelt, Schrift neu gesetzt)" : "") : t.alt ? "alte Zeichnung, auf Außenmaß gestreckt" : "selbst gezeichnet", w: t.w, h: t.h, form: t.form, fehler: [] };
+      const r = { n, quelle: t.kat ? "Katalog schilder/kat/" + t.kat + ".webp" : t.svg ? "Vorlage schilder/" + t.svg + ".svg" : t.alt ? "alte Zeichnung, auf Außenmaß gestreckt" : "selbst gezeichnet", w: t.w, h: t.h, form: t.form, fehler: [] };
       out.teile.push(r); if (t.svg) continue;
+      if (t.kat) {   // Katalogbild: geladen, Seitenverhältnis exakt wie das Bild (±0,5 %), Breite = Sollbreite
+        const e = V.vzSvg(t.kat, true); if (!e.ok) { r.fehler.push("Katalogbild nicht geladen"); continue; }
+        const q = e.img.naturalHeight / e.img.naturalWidth; r.gemessen = [e.img.naturalWidth, e.img.naturalHeight];
+        if (Math.abs(t.h / t.w - q) > q * 0.005) r.fehler.push(`Seitenverhältnis ${(t.h / t.w).toFixed(4)} statt ${q.toFixed(4)} (Bild)`);
+        if (MASS[n] && Math.abs(t.w - MASS[n][0]) > MASS[n][0] * 0.012) r.fehler.push(`Breite ${t.w} statt ${MASS[n][0]}`);
+        continue;
+      }
       const [w, h] = V.vzMass(n, 2), c = document.createElement("canvas"); c.width = Math.ceil(w); c.height = Math.ceil(h); const g = c.getContext("2d");
       V.vzTeilMalen(g, n, w, h, { zahl: n === "z450" ? "3" : "60" });
       const d = g.getImageData(0, 0, c.width, c.height).data, px = (x, y) => d.subarray((Math.round(y) * c.width + Math.round(x)) * 4, (Math.round(y) * c.width + Math.round(x)) * 4 + 4);
@@ -148,7 +157,7 @@ const LAEUFE = {
   for (const id of ids) {
     await page.evaluate(s => window.Lernszenen.open({ szene: s }), id);
     try { await page.waitForSelector("#lzCap", { state: "attached", timeout: 5000 }); } catch { pruefe(id + ": öffnet", false); continue; }
-    await page.waitForFunction(() => { const V = window.Lernszenen._intern.vz; return Object.values(V.VZ_TEIL).every(t => !t.svg || V.vzSvg(t.svg).ok); }, null, { timeout: 8000 }).catch(() => {});
+    await page.waitForFunction(() => { const V = window.Lernszenen._intern.vz; return Object.values(V.VZ_TEIL).every(t => (!t.svg || V.vzSvg(t.svg).ok) && (!t.kat || V.vzSvg(t.kat, true).ok)); }, null, { timeout: 8000 }).catch(() => {});
     await page.click('[data-kam="oben"]'); await page.waitForTimeout(300);
     const r = await page.evaluate(() => {
       const L = window.Lernszenen, V = L._intern.vz, z = L._intern.zustand(), sz = L._szenen.find(x => x.id === z.szene), st = sz.strasse, s = z.ansicht.zoom * V.dpr(), f = [], ks = new Set();
