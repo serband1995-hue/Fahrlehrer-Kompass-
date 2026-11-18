@@ -281,7 +281,7 @@
     if (sc.gr) return sc.gr; const t = vzTeile(sc.typ), f = t && VZ_TEIL[t[0].n].form;
     return kat === "autobahn" ? 3 : kat === "ueberland" && f === "ronde" ? 3 : 2;
   }
-  const VZ_OBEN = 2.5, VZ_3D = 1.8, VZ_MIN = 34, VZ_MIN_QUER = 28;   // Vergrößerung: von oben 2,5-fach (Lesbarkeit), in 3D 1,8-fach (am Handy lesbar, für alle Schilder gleich); VZ_MIN: 900 mm sind oben mindestens so viele CSS-Pixel breit;
+  const VZ_OBEN = 2.5, VZ_3D = 2.2, VZ_MIN = 34, VZ_MIN_QUER = 28;   // Vergrößerung: von oben 2,5-fach (Lesbarkeit), in 3D 2,2-fach (am Handy lesbar, für alle Schilder gleich); VZ_MIN: 900 mm sind oben mindestens so viele CSS-Pixel breit;
   // VZ_MIN_QUER: Querformat-Tafeln (Hauptzeichen mindestens 1,4-mal so breit wie hoch, z. B. 220, 325) sind oben mindestens so viele CSS-Pixel hoch, sonst wären sie am Handy nur ein Strich
   const VZ_Z0 = { z450: 0.6 };                  // Unterkante in m, sonst 2,0 (VwV Rn. 42)
   const vzStrasse = (st, x, y) => { const f = st.flaechen; for (let i = f.length - 1; i >= 0; i--) { const p = f[i].poly, bb = p._bb || (p._bb = bbox(p)); if (x < bb[0] || x > bb[2] || y < bb[1] || y > bb[3]) continue; if (punktIn(x, y, p)) return !!(STRASSE[f[i].art] || f[i].art === "weiss"); } return false; };
@@ -808,12 +808,12 @@
   // Standard = Sprache des Handys (Englisch nur, wenn das Handy auf Englisch steht), Wahl wird gemerkt. Englische Texte: lernszenen-en.js (window.LernszenenEN).
   let sprache = (() => { try { const v = localStorage.getItem("lz_sprache"); if (v === "de" || v === "en") return v; } catch (e) {} return /^en\b/i.test(navigator.language || "") ? "en" : "de"; })();
   const UI = {
-    de: { lernszenen: "🎬 Lernszenen", passend: "Passend zum Ausbildungspunkt", alle: "Alle Szenen", vorfuehren: "Vorführen", mitdenken: "Mitdenken", oben: "Oben", regeln: "§ Regeln", textAn: "▤ Text anzeigen",
+    de: { lernszenen: "🎬 Lernszenen", passend: "Passend zum Ausbildungspunkt", alle: "Alle Szenen", vorfuehren: "Vorführen", kBlinker: "Blinker", kLinks: "links", kRechts: "rechts", kBremse: "Bremse", kGas: "Gas", kSpur: "Spur wechseln", kVoll: "voll", kGerade: "gerade", kRundum: "Rundumblick", kGang: "Gang", kHilf: "Hilfslinien", kFertig: "Fertig", kBremsen: "BREMSEN!", kGefahr: "Bremse, sobald Gefahr droht!", kStarte: "Starte mit ▶.", selbstFahren: "Selbst fahren", selbstRangieren: "Selbst rangieren", reaktionstest: "Reaktionstest", jetztFahren: "Jetzt selbst fahren", jetztRangieren: "Jetzt selbst rangieren", reaktionStarten: "Reaktionstest starten", capRangieren: "Lenkrad drehen, Gang wählen, Gas halten. Vor jedem Anfahren Rundumblick! Die gelben Hilfslinien zeigen, wohin das Auto mit diesem Lenkeinschlag fährt. Zum Schluss auf „Fertig“.", capReaktion: "Das Auto fährt von selbst. Sobald eine Gefahr auftaucht, so schnell wie möglich auf BREMSEN tippen. Danach siehst du Reaktionsweg, Bremsweg und Anhalteweg.", capFahren: "Du steuerst das Fahrschulauto: Gas und Bremse halten, Blinker und Schulterblick antippen, dann den Fahrstreifen wechseln. Am Ende gibt es die Auswertung.", zielGruen: "Grün markiert: Zielposition", tempoStart: "Tempo wählen, dann ▶", tippeStart: "Tippe auf ▶ zum Starten", mitdenken: "Mitdenken", oben: "Oben", regeln: "§ Regeln", textAn: "▤ Text anzeigen",
       start: "Tippe auf ▶, dann spielt sich die Szene von selbst ab. Mit ⏸ hältst du an und kannst Fahrzeuge verschieben.", nochmalHoeren: "Nochmal hören", textAus: "Text ausblenden", wasRichtig: "Was ist richtig?", richtig: "✓ Richtig.", richtigG: "✓ Richtig!", nicht: "✗ Nicht ganz.",
       weiter: "Weiter ▶", richtigIst: "Richtig ist", angetippt: "von", angetippt2: "angetippt", neu: "↺ neu", stark: "Stark!", fast: "Gut – fast!", ueben: "Nochmal üben", fragenRichtig: "von {n} Fragen richtig", uebersprungen: "Frage(n) übersprungen.",
       nochmal: "↺ Nochmal", alleRegeln: "§ Alle Regeln", regelnTitel: "§ Regeln", schilder: "Schilder in dieser Szene:", schliessen: "Schließen", mitdenkenText: "Die Szene hält an jedem wichtigen Schritt an und fragt: Was ist jetzt richtig?", tippePlay: "Tippe auf ▶",
       stimmeInfo: "🔊 Sprecherstimme mit KI erzeugt.", sprache: "Sprache: Deutsch. Auf Englisch umschalten", kat: { innerorts: "Innerorts", ueberland: "Überland", grundfahr: "Grundfahraufgaben", autobahn: "Autobahn" }, zumAntippen: "Zum Antippen bleibt die Ansicht von oben." },
-    en: { lernszenen: "🎬 Learning scenes", passend: "Matching this training topic", alle: "All scenes", vorfuehren: "Watch", mitdenken: "Think along", oben: "Top", regeln: "§ Rules", textAn: "▤ Show text",
+    en: { lernszenen: "🎬 Learning scenes", passend: "Matching this training topic", alle: "All scenes", vorfuehren: "Watch", kBlinker: "Indicator", kLinks: "left", kRechts: "right", kBremse: "Brake", kGas: "Accelerator", kSpur: "Change lane", kVoll: "full", kGerade: "straight", kRundum: "Look all round", kGang: "Gear", kHilf: "Guide lines", kFertig: "Done", kBremsen: "BRAKE!", kGefahr: "Brake as soon as there is danger!", kStarte: "Start with ▶.", selbstFahren: "Drive yourself", selbstRangieren: "Manoeuvre yourself", reaktionstest: "Reaction test", jetztFahren: "Now drive yourself", jetztRangieren: "Now manoeuvre yourself", reaktionStarten: "Start reaction test", capRangieren: "Turn the steering wheel, choose a gear, hold the accelerator. Look all around before every start! The yellow guide lines show where the car goes with this steering angle. Finish with „Done“.", capReaktion: "The car drives by itself. As soon as a hazard appears, tap BRAKE as fast as you can. Then you see the reaction distance, braking distance and stopping distance.", capFahren: "You steer the driving school car: hold accelerator and brake, tap indicator and shoulder check, then change lanes. At the end you get your evaluation.", zielGruen: "Marked green: target position", tempoStart: "Choose a speed, then ▶", tippeStart: "Tap ▶ to start", mitdenken: "Think along", oben: "Top", regeln: "§ Rules", textAn: "▤ Show text",
       start: "Tap ▶ and the scene plays by itself. Tap ⏸ to pause and move vehicles.", nochmalHoeren: "Listen again", textAus: "Hide text", wasRichtig: "What is right?", richtig: "✓ Right.", richtigG: "✓ Right!", nicht: "✗ Not quite.",
       weiter: "Next ▶", richtigIst: "The right order is", angetippt: "of", angetippt2: "tapped", neu: "↺ again", stark: "Great!", fast: "Good, almost!", ueben: "Practise again", fragenRichtig: "of {n} questions right", uebersprungen: "question(s) skipped.",
       nochmal: "↺ Again", alleRegeln: "§ All rules", regelnTitel: "§ Rules", schilder: "Signs in this scene (German names):", schliessen: "Close", mitdenkenText: "The scene stops at every important step and asks: what is right now?", tippePlay: "Tap ▶",
@@ -1975,7 +1975,7 @@
   }
   function aktualisiereRangUI() {
     const st = fahr; if (!st || !st.rang || !root) return;
-    const g = $("#rGang"); if (g) { g.textContent = st.gang > 0 ? "Gang: V" : "Gang: R"; g.classList.toggle("on", st.gang < 0); }
+    const g = $("#rGang"); if (g) { g.textContent = T("kGang") + (st.gang > 0 ? ": V" : ": R"); g.classList.toggle("on", st.gang < 0); }
     const hl = $("#rHilf"); if (hl) hl.classList.toggle("on", st.hilfslinien);
     const bl = $("#rBL"), br = $("#rBR"); if (bl) bl.classList.toggle("on", st.blinker === "links"); if (br) br.classList.toggle("on", st.blinker === "rechts");
   }
@@ -1998,7 +1998,7 @@
       }
     };
     zeit = 0; _hGlatt = null;
-    const e = $("#rkInfo"); if (e) e.textContent = `Tempo ${Math.round(v * KMH)}. Bremse, sobald Gefahr droht!`;
+    const e = $("#rkInfo"); if (e) e.textContent = `Tempo ${Math.round(v * KMH)}. ${T("kGefahr")}`;
   }
   function reaktionSchritt(dt) {
     const st = fahr, R = szene.reaktion; if (!st || st.ende) return;
@@ -2293,7 +2293,7 @@
       <div class="lz-grid" id="lzGrid">${liste.map(s => `
         <button class="lz-tile" data-szene="${s.id}"><canvas data-vorschau="${s.id}"></canvas>
           <h3>${esc(s.titel)}</h3><p>${esc(s.kurz)}</p>
-          <div class="lz-chips"><span class="lz-chip">${T("vorfuehren")}</span><span class="lz-chip">${T("mitdenken")}</span>${s.fahren || s.rangieren || s.reaktion ? `<span class="lz-chip">${s.rangieren ? "Selbst rangieren" : s.reaktion ? "Reaktionstest" : "Selbst fahren"}</span>` : ""}<span class="lz-chip">3D</span></div>
+          <div class="lz-chips"><span class="lz-chip">${T("vorfuehren")}</span><span class="lz-chip">${T("mitdenken")}</span>${s.fahren || s.rangieren || s.reaktion ? `<span class="lz-chip">${s.rangieren ? T("selbstRangieren") : s.reaktion ? T("reaktionstest") : T("selbstFahren")}</span>` : ""}<span class="lz-chip">3D</span></div>
         </button>`).join("")}</div>`;
     { const r0 = root; stimmeLade(() => { if (root !== r0 || szene) return; const g = root.querySelector("#lzGrid"); if (g && !root.querySelector(".lz-info")) g.insertAdjacentHTML("afterend", stimmeInfo()); }); }
     $("#lzZu").onclick = schliessen; $("#lzSprache").onclick = () => setzeSprache(sprache === "en" ? "de" : "en");
@@ -2337,7 +2337,7 @@
         <div class="lz-row">
           <button class="lz-btn on" data-modus="vorfuehren">${T("vorfuehren")}</button>
           <button class="lz-btn" data-modus="mitdenken">${T("mitdenken")}</button>
-          ${szene.fahren || szene.rangieren || szene.reaktion ? `<button class="lz-btn" data-modus="fahren">${szene.rangieren ? "Selbst rangieren" : szene.reaktion ? "Reaktionstest" : "Selbst fahren"}</button>` : ""}
+          ${szene.fahren || szene.rangieren || szene.reaktion ? `<button class="lz-btn" data-modus="fahren">${szene.rangieren ? T("selbstRangieren") : szene.reaktion ? T("reaktionstest") : T("selbstFahren")}</button>` : ""}
           <span class="grow"></span>
           <button class="lz-btn on" data-kam="oben">${T("oben")}</button><button class="lz-btn" data-kam="3d">3D</button>
         </div>
@@ -2350,18 +2350,18 @@
           <button class="lz-btn" id="lzReset" aria-label="Zurücksetzen">↺</button>
         </div>
         <div class="lz-drive" id="lzDrive" hidden>
-          <button class="lz-btn" id="dBL">◀ Blinker</button><button class="lz-btn" id="dSL">👀 links</button>
-          <button class="lz-btn lz-pedal brems" id="dBrems">Bremse</button><button class="lz-btn lz-pedal gas" id="dGas">Gas</button>
-          <button class="lz-btn" id="dSR">rechts 👀</button><button class="lz-btn" id="dBR">Blinker ▶</button>
-          <button class="lz-btn" id="dWL">⇤ Spur wechseln</button><button class="lz-btn" id="dWR">Spur wechseln ⇥</button>
+          <button class="lz-btn" id="dBL">◀ ${T("kBlinker")}</button><button class="lz-btn" id="dSL">👀 ${T("kLinks")}</button>
+          <button class="lz-btn lz-pedal brems" id="dBrems">${T("kBremse")}</button><button class="lz-btn lz-pedal gas" id="dGas">${T("kGas")}</button>
+          <button class="lz-btn" id="dSR">${T("kRechts")} 👀</button><button class="lz-btn" id="dBR">${T("kBlinker")} ▶</button>
+          <button class="lz-btn" id="dWL">⇤ ${T("kSpur")}</button><button class="lz-btn" id="dWR">${T("kSpur")} ⇥</button>
         </div>
         <div class="lz-rang" id="lzRang" hidden>
-          <div class="lz-lenk"><button class="lz-btn" id="rLinks">⟲ voll</button><div class="lz-rad"><span id="rRad">☸</span><input type="range" id="rLenk" min="-100" max="100" step="1" value="0" aria-label="Lenkrad"></div><button class="lz-btn" id="rRechts">voll ⟳</button><button class="lz-btn" id="rGerade">gerade</button></div>
-          <div class="lz-lenk"><button class="lz-btn" id="rBL">◀ Blinker</button><button class="lz-btn" id="rBlick">👀 Rundumblick</button><button class="lz-btn" id="rGang">Gang: V</button><button class="lz-btn lz-pedal brems" id="rBrems">Bremse</button><button class="lz-btn lz-pedal gas" id="rGas">Gas</button><button class="lz-btn" id="rBR">Blinker ▶</button><button class="lz-btn" id="rHilf">Hilfslinien</button><button class="lz-btn on" id="rFertig">Fertig ✓</button></div>
+          <div class="lz-lenk"><button class="lz-btn" id="rLinks">⟲ ${T("kVoll")}</button><div class="lz-rad"><span id="rRad">☸</span><input type="range" id="rLenk" min="-100" max="100" step="1" value="0" aria-label="Lenkrad"></div><button class="lz-btn" id="rRechts">${T("kVoll")} ⟳</button><button class="lz-btn" id="rGerade">${T("kGerade")}</button></div>
+          <div class="lz-lenk"><button class="lz-btn" id="rBL">◀ ${T("kBlinker")}</button><button class="lz-btn" id="rBlick">👀 ${T("kRundum")}</button><button class="lz-btn" id="rGang">${T("kGang")}: V</button><button class="lz-btn lz-pedal brems" id="rBrems">${T("kBremse")}</button><button class="lz-btn lz-pedal gas" id="rGas">${T("kGas")}</button><button class="lz-btn" id="rBR">${T("kBlinker")} ▶</button><button class="lz-btn" id="rHilf">${T("kHilf")}</button><button class="lz-btn on" id="rFertig">${T("kFertig")} ✓</button></div>
         </div>
         <div class="lz-reak" id="lzReak" hidden>
-          <button class="lz-btn" data-rv="30">Tempo 30</button><button class="lz-btn on" data-rv="50">Tempo 50</button><span class="grow" id="rkInfo">Starte mit ▶. Bremse, sobald Gefahr droht!</span>
-          <button class="lz-btn lz-pedal brems lz-gross" id="rkBrems">BREMSEN!</button>
+          <button class="lz-btn" data-rv="30">Tempo 30</button><button class="lz-btn on" data-rv="50">Tempo 50</button><span class="grow" id="rkInfo">${T("kStarte")} ${T("kGefahr")}</span>
+          <button class="lz-btn lz-pedal brems lz-gross" id="rkBrems">${T("kBremsen")}</button>
         </div>
       </div>`;
     cv = $("#lzCanvas"); ctx = cv.getContext("2d"); beiResize(); ansicht.zoom = grundZoom();
@@ -2449,9 +2449,9 @@
       if (szene.fahren) kameraModus = kameraModus === "oben" ? "3d" : kameraModus;
       if (szene.rangieren) { kameraModus = "oben"; ansicht.zoom = grundZoom() * (szene.rangieren.zoomFaktor || 1); }
       root.querySelectorAll("[data-kam]").forEach(x => x.classList.toggle("on", x.dataset.kam === kameraModus));
-      if (szene.rangieren) zeigeCap("Selbst rangieren", szene.rangieren.anleitung || "Lenkrad drehen, Gang wählen, Gas halten. Vor jedem Anfahren Rundumblick! Die gelben Hilfslinien zeigen, wohin das Auto mit diesem Lenkeinschlag fährt. Zum Schluss auf „Fertig“.", "Grün markiert: Zielposition");
-      else if (szene.reaktion) zeigeCap("Reaktionstest", "Das Auto fährt von selbst. Sobald eine Gefahr auftaucht, so schnell wie möglich auf BREMSEN tippen. Danach siehst du Reaktionsweg, Bremsweg und Anhalteweg.", "Tempo wählen, dann ▶");
-      else zeigeCap("Selbst fahren", "Du steuerst das Fahrschulauto: Gas und Bremse halten, Blinker und Schulterblick antippen, dann den Fahrstreifen wechseln. Am Ende gibt es die Auswertung.", "Tippe auf ▶ zum Starten");
+      if (szene.rangieren) zeigeCap(T("selbstRangieren"), szene.rangieren.anleitung || T("capRangieren"), T("zielGruen"));
+      else if (szene.reaktion) zeigeCap(T("reaktionstest"), T("capReaktion"), T("tempoStart"));
+      else zeigeCap(T("selbstFahren"), T("capFahren"), T("tippeStart"));
     }
     else if (m === "mitdenken") zeigeCap(T("mitdenken"), T("mitdenkenText"), T("tippePlay"));
     else zeigePhase(szene.phasen[0]);
@@ -2594,7 +2594,7 @@
   function zeigeErgebnisMitdenken() {
     const n = szene.phasen.filter(p => p.frage).length, q = n ? Math.round(punkte.richtig / n * 100) : 0;
     const d = sheet(`<h2>${q >= 80 ? T("stark") : q >= 50 ? T("fast") : T("ueben")}</h2><p class="lz-erkl">${punkte.richtig} ${T("fragenRichtig").replace("{n}", n)} (${q} %).${punkte.gesamt < n ? ` ${n - punkte.gesamt} ${T("uebersprungen")}` : ""}</p>
-      <div class="lz-row" style="margin-top:12px;"><button class="lz-btn" id="lzNochmal">${T("nochmal")}</button>${szene.fahren || szene.rangieren || szene.reaktion ? `<button class="lz-btn on" id="lzSelbst">${szene.rangieren ? "Jetzt selbst rangieren" : szene.reaktion ? "Reaktionstest starten" : "Jetzt selbst fahren"}</button>` : ""}<button class="lz-btn" id="lzRegelnB">${T("alleRegeln")}</button></div>`);
+      <div class="lz-row" style="margin-top:12px;"><button class="lz-btn" id="lzNochmal">${T("nochmal")}</button>${szene.fahren || szene.rangieren || szene.reaktion ? `<button class="lz-btn on" id="lzSelbst">${szene.rangieren ? T("jetztRangieren") : szene.reaktion ? T("reaktionStarten") : T("jetztFahren")}</button>` : ""}<button class="lz-btn" id="lzRegelnB">${T("alleRegeln")}</button></div>`);
     d.querySelector("#lzNochmal").onclick = () => setzeModus("mitdenken");
     const sf = d.querySelector("#lzSelbst"); if (sf) sf.onclick = () => setzeModus("fahren");
     d.querySelector("#lzRegelnB").onclick = zeigeRegeln;
