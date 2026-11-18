@@ -16412,7 +16412,7 @@ function routePrueferListe(){
   });
   html+=`</div>`; view.innerHTML=html;
   $("#backBtn").addEventListener("click",routePruefungen);
-  $("#addPruefer").addEventListener("click",()=>{ const name=(prompt("Name des Prüfers")||"").trim(); if(!name)return; if(!DB.pruefer.includes(name)){DB.pruefer.push(name);DB.pruefer.sort((a,b)=>a.localeCompare(b,'de'));} ensurePruefer(name); save(); routePrueferAkte(name); });
+  $("#addPruefer").addEventListener("click",()=>{ const name=(prompt("Name des Prüfers")||"").trim(); if(!name)return; if(!DB.pruefer.includes(name)){DB.pruefer.push(name);DB.pruefer.sort((a,b)=>a.localeCompare(b,'de'));} ensurePruefer(name); save(); _pfTab="schueler"; routePrueferAkte(name); });
   document.querySelectorAll(".pf-bang").forEach(b=>b.addEventListener("click",e=>{ e.stopPropagation(); const nm=b.dataset.bang; const q=document.querySelector(`.pf-quick[data-quick="${CSS.escape(nm)}"]`); const open=!q.hidden; document.querySelectorAll(".pf-quick").forEach(x=>x.hidden=true); document.querySelectorAll(".pf-bang").forEach(x=>x.classList.remove("on")); if(!open){ q.hidden=false; b.classList.add("on"); } }));
   document.querySelectorAll("[data-open]").forEach(b=>b.addEventListener("click",e=>{ e.stopPropagation(); _pfTab="schueler"; routePrueferAkte(b.dataset.open); }));
 }
