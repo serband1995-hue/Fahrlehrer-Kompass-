@@ -64,6 +64,7 @@
   // ============================================================ 2. Vorfahrt gewähren (Zeichen 205)
   (function () {
     const K = stadtK({ b: 3.25, R: 6, arme: { N: 0, S: 1, O: 1, W: 1 } });
+    K.objekte = K.objekte.filter(o => !(o.art === "baum" && o.x > 0 && o.y > 0 && o.x < 12));   // Baum stand vor dem eigenen Schild (3D-Sicht)
     leit(K, [[-90, 0], [-11, 0]], [[11, 0], [90, 0]]);
     K.linien.push({ art: "leit_io", b: 0.12, pts: [[0, 90], [0, 12]] });
     K.schilder.push({ typ: "z205", x: 4.9, y: 11.5, aussen: [1, 0], blick: [0, 1] }, { typ: "z306", x: -12, y: 4.9, aussen: [0, 1], blick: [-1, 0] }, { typ: "z306", x: 12, y: -4.9, aussen: [0, -1], blick: [1, 0] });

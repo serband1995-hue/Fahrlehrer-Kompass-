@@ -202,9 +202,9 @@
     baeume(st.objekte, [[-20, 5.9, 1.5], [56, 5.9, 1.5], [124, -5.9, 1.5], [-10, -5.9, 1.5]]);
     st.flaechen.push({ art: "sperr", poly: rect(XK - bS, -40, XK + bS, -38.5) });                 // Sperre weiter hinten im gesperrten Nord-Arm
     st.schilder.push(
-      // an der Einmündung schräg (45°) zur Hauptstraße gedreht: wer von Westen kommt und abbiegen will, sieht die Verbotszeichen von vorn
-      { typ: "z267_rad", x: XK - bS - 0.5, y: b + R + 1, aussen: [-1, 0], blick: [-D, -D] }, { typ: "z267_rad", x: XK + bS + 0.5, y: b + R + 1, aussen: [1, 0], blick: [-D, -D], links: true },
-      { typ: "z250", x: XK + bS + 0.5, y: -b - R - 1, aussen: [1, 0], blick: [-D, D] }, { typ: "z250", x: XK - bS - 0.5, y: -b - R - 1, aussen: [-1, 0], blick: [-D, D], links: true });
+      // an der Einmündung quer zur gesperrten Straße (wie in der Wirklichkeit): Abbieger aus beiden Richtungen sehen die Zeichen von vorn
+      { typ: "z267_rad", x: XK - bS - 0.5, y: b + R + 1, aussen: [-1, 0], blick: [0, -1] }, { typ: "z267_rad", x: XK + bS + 0.5, y: b + R + 1, aussen: [1, 0], blick: [0, -1], links: true },
+      { typ: "z250", x: XK + bS + 0.5, y: -b - R - 1, aussen: [1, 0], blick: [0, 1] }, { typ: "z250", x: XK - bS - 0.5, y: -b - R - 1, aussen: [-1, 0], blick: [0, 1], links: true });
     // Fahrschule: wollte zuerst rechts abbiegen, erkennt das Verbot, fährt geradeaus und biegt bei XT rechts ab
     const yA = 1.625, cx = XT - bT - R, cy = b + R, rr = cy - yA, xS = cx + rr;
     const pts = [[-150, yA], [cx, yA]].concat(bogen(cx, cy, rr, -PI / 2, 0, 12)).concat([[xS, 90]]);

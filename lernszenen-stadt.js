@@ -320,7 +320,7 @@
     li.push({ art: "leit", b: 0.15, pts: [[X0, 0], [xV0 - 150, 0]] }, { art: "voll", b: 0.15, pts: [[xV0 - 150, 0], [xV1, 0]] }, { art: "leit", b: 0.15, pts: [[xV1, 0], [X1, 0]] });
     for (let x = X0 + 20; x < X1; x += 50) { obj.push({ art: "poller", x, y: b + 1.2 }, { art: "poller", x: x + 25, y: -b - 1.2 }); }
     for (let x = X0 + 40; x < X1; x += 37) { if ((x / 37 | 0) % 3) obj.push({ art: "baum", x, y: (x / 37 | 0) % 2 ? b + 7 : -b - 7, r: 2.4 }); }
-    const schilder = [{ typ: "z274_100", x: -60, y: b + 1 }, { typ: "z276", x: xV0 - 150, y: b + 1 }, { typ: "z280", x: xV1, y: b + 1 }].map(sc => Object.assign(sc, { aussen: [0, 1], blick: [-1, 0] }));   // rechts, 1,5 m neben der Fahrbahn (beim Öffnen gestellt)
+    const schilder = [{ typ: "z276", x: xV0 - 150, y: b + 1 }, { typ: "z280", x: xV1, y: b + 1 }].map(sc => Object.assign(sc, { aussen: [0, 1], blick: [-1, 0] }));   // rechts, 1,5 m neben der Fahrbahn (beim Öffnen gestellt)
     const fs = fahrt("fs", "fahrschule", "#f2f2ee", spurPfad2(-400, X1 + 300, yR, [{ x: xA, y: yL, laenge: 38 }, { x: xB, y: yR, laenge: 38 }]), keys, 400 - 10.5, 0, { fokus: true,
       blinker: [{ von: tA - 1.8, bis: tA + 1.6, seite: "links" }, { von: tB - 0.8, bis: tE, seite: "rechts" }], schulter: [{ von: tA - 1.1, bis: tA - 0.3, seite: "links" }] });
     const lkw = fahrt("lkw", "lkw", "#c9ced6", [[-400, yR], [X1 + 500, yR]], [[0, 60]], 430, 0);
@@ -552,7 +552,7 @@
     haeuser(obj, [[32, 30, 12, 10, 9], [-32, 30, 12, 10, 8, "#cdd3d8"], [32, -30, 12, 10, 10, "#e3d7c3"], [-32, -30, 12, 10, 7, "#d9cfbf", "#6d5a4a"]]);
     baeume(obj, [[0, 0, 3], [3.5, -3, 1.8], [-3, 2.8, 1.6]]);
     // An jeder Zufahrt 205 mit 215 darunter (§ 8 Abs. 1a StVO, VwV zu Zeichen 215 Rn. 3), rechts in Fahrtrichtung; 350 am Zebrastreifen der Westausfahrt
-    const schilder = [{ typ: "z205_215", x: b + 1, y: RA + 9.5, aussen: [1, 0], blick: [0, 1] }, { typ: "z205_215", x: -b - 1, y: -RA - 9.5, aussen: [-1, 0], blick: [0, -1] }, { typ: "z205_215", x: RA + 9.5, y: -b - 1, aussen: [0, -1], blick: [1, 0] }, { typ: "z205_215", x: -RA - 9.5, y: b + 1, aussen: [0, 1], blick: [-1, 0] }, { typ: "z350", x: -RA - 8.6, y: -b - 1, aussen: [0, -1], blick: [1, 0] }];
+    const schilder = [{ typ: "z205_215", x: b + 1, y: RA + 9.5, aussen: [1, 0], blick: [0, 1] }, { typ: "z205_215", x: -b - 1, y: -RA - 9.5, aussen: [-1, 0], blick: [0, -1] }, { typ: "z205_215", x: RA + 9.5, y: -b - 1, aussen: [0, -1], blick: [1, 0] }, { typ: "z205_215", x: -RA - 9.5, y: b + 1, aussen: [0, 1], blick: [-1, 0] }, { typ: "z350", x: -RA - 8.6, y: -b - 1, aussen: [0, -1], blick: [1, 0] }, { typ: "z350", x: -RA - 14, y: b + 1, aussen: [0, 1], blick: [-1, 0] }];   // 350 je Fahrtrichtung
     // Kreisfahrbahn gegen den Uhrzeigersinn (von oben gesehen) = im Bild mit abnehmendem Winkel. Armachsen: S +π/2, O 0, N −π/2, W π.
     const rk = (RA + RI + 1.3) / 2 + 0.4, AX = { S: PI / 2, O: 0, N: -PI / 2, W: PI };
     const ringPt = a => [rk * Math.cos(a), rk * Math.sin(a)];
@@ -644,7 +644,8 @@
   (function () {
     const K = stadtKreuzung({ b: 3.25, R: 6, arme: { N: 0, S: 1, O: 1, W: 1 } });
     K.linien.push({ art: "voll", b: 0.5, pts: [[0.1, 9.8], [3.2, 9.8]] }, { art: "leit_io", b: 0.12, pts: [[-90, 0], [-11, 0]] }, { art: "leit_io", b: 0.12, pts: [[11, 0], [90, 0]] }, { art: "leit_io", b: 0.12, pts: [[0, 90], [0, 12]] });
-    K.schilder.push({ typ: "z206", x: 4.8, y: 11, aussen: [1, 0], blick: [0, 1] }, { typ: "z306", x: -12, y: 4.8, aussen: [0, 1], blick: [-1, 0] });
+    K.objekte = K.objekte.filter(o => !(o.art === "baum" && o.x > 0 && o.y > 0 && o.x < 12));   // Baum stand vor dem Stoppschild (3D-Sicht)
+    K.schilder.push({ typ: "z206", x: 4.8, y: 11, aussen: [1, 0], blick: [0, 1] }, { typ: "z306", x: -12, y: 4.8, aussen: [0, 1], blick: [-1, 0] }, { typ: "z306", x: 12, y: -4.8, aussen: [0, -1], blick: [1, 0] });   // 306 je Richtung des Querverkehrs
     const fs = fahrt("fs", "fahrschule", "#f2f2ee", route("S", "O", { q: 1.625, e: 12.1, e2: 8, k: 0.5 }), [[0, 30], [3, 12], [4.8, 0], [6.5, 0], [7.3, 4], [8.2, 0], [11.6, 0], [13.5, 15], [20, 30]], 70 - 12.1, 4.8, { fokus: true, bremsStand: true, blinker: [{ von: 0.5, bis: 15, seite: "rechts" }] });
     const q1 = fahrt("q1", "pkw", "#2c5aa0", route("W", "O", { q: 1.625, e: 10 }), [[0, 45]], 70, 9.5);
     const q2 = fahrt("q2", "transporter", "#e7e3d6", route("O", "W", { q: 1.625, e: 10 }), [[0, 42]], 70, 10.3);
