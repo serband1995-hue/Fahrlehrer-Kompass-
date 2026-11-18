@@ -552,7 +552,7 @@
     haeuser(obj, [[32, 30, 12, 10, 9], [-32, 30, 12, 10, 8, "#cdd3d8"], [32, -30, 12, 10, 10, "#e3d7c3"], [-32, -30, 12, 10, 7, "#d9cfbf", "#6d5a4a"]]);
     baeume(obj, [[0, 0, 3], [3.5, -3, 1.8], [-3, 2.8, 1.6]]);
     // An jeder Zufahrt 205 mit 215 darunter (§ 8 Abs. 1a StVO, VwV zu Zeichen 215 Rn. 3), rechts in Fahrtrichtung; 350 am Zebrastreifen der Westausfahrt
-    const schilder = [{ typ: "z205_215", x: b + 1, y: RA + 9.5, aussen: [1, 0], blick: [0, 1] }, { typ: "z205_215", x: -b - 1, y: -RA - 9.5, aussen: [-1, 0], blick: [0, -1] }, { typ: "z205_215", x: RA + 9.5, y: -b - 1, aussen: [0, -1], blick: [1, 0] }, { typ: "z205_215", x: -RA - 9.5, y: b + 1, aussen: [0, 1], blick: [-1, 0] }, { typ: "z350", x: -RA - 8.6, y: -b - 1, aussen: [0, -1], blick: [1, 0] }, { typ: "z350", x: -RA - 12.5, y: b + 1, aussen: [0, 1], blick: [-1, 0] }];   // 350 je Fahrtrichtung
+    const schilder = [{ typ: "z205_215", x: b + 1, y: RA + 9.5, aussen: [1, 0], blick: [0, 1] }, { typ: "z205_215", x: -b - 1, y: -RA - 9.5, aussen: [-1, 0], blick: [0, -1] }, { typ: "z205_215", x: RA + 9.5, y: -b - 1, aussen: [0, -1], blick: [1, 0] }, { typ: "z205_215", x: -RA - 9.5, y: b + 1, aussen: [0, 1], blick: [-1, 0] }, { typ: "z350", x: -RA - 8.6, y: -b - 1, aussen: [0, -1], blick: [1, 0] }, { typ: "z350", x: -RA - 14, y: b + 1, aussen: [0, 1], blick: [-1, 0] }];   // 350 je Fahrtrichtung
     // Kreisfahrbahn gegen den Uhrzeigersinn (von oben gesehen) = im Bild mit abnehmendem Winkel. Armachsen: S +π/2, O 0, N −π/2, W π.
     const rk = (RA + RI + 1.3) / 2 + 0.4, AX = { S: PI / 2, O: 0, N: -PI / 2, W: PI };
     const ringPt = a => [rk * Math.cos(a), rk * Math.sin(a)];
