@@ -105,6 +105,26 @@ for (const [w, h] of [[360, 780], [412, 915], [780, 360]]) {
   await pruefe(`F ${w}`, "keine JS-Fehler", async () => jsFehler);
   await ctx.close();
 }
+{
+  const { ctx, page, jsFehler } = await neueSeite(412, 915);
+  await pruefe("G", "Reaktivierte/doppelte alte Einträge nicht zeigen, Umbenennen nimmt alte Schüler mit", async () => {
+    return page.evaluate(() => {
+      const f = [];
+      const c = DB.students.find((x) => x.id === "t1");
+      DB.students.push(Object.assign({}, c, { id: "t4", name: "Reaktiviert", passed: undefined, passedPruefer: "Prüfer Test", passedStrecke: "x" }));
+      DB.students.push(Object.assign({}, c, { id: "t5", name: "Doppelt", passed: "2026-02-01", passedPruefer: "Prüfer Test", passedStrecke: "y" }));
+      DB.exams.push({ id: "e5", sid: "t5", name: "Doppelt", date: "2026-02-01", result: "pass", pruefer: "Anderer", attempt: 1, faults: [] });
+      const v = prueferVerlauf("Prüfer Test").map((e) => e.name);
+      if (v.includes("Reaktiviert")) f.push("reaktivierter Schüler erscheint");
+      if (v.includes("Doppelt")) f.push("doppelter alter Eintrag erscheint");
+      mergePruefer("Prüfer Test", "Prüfer Neu");
+      if (!prueferVerlauf("Prüfer Neu").some((e) => e.name === "Alte Testperson")) f.push("alter Schüler nach Umbenennen weg");
+      return f;
+    });
+  });
+  await pruefe("G2", "keine JS-Fehler", async () => jsFehler);
+  await ctx.close();
+}
 await browser.close(); server.close();
 console.log(`\n${okZahl} ok · ${fehlerZahl} Fehler · ${uebersprungen} übersprungen`);
 process.exit(fehlerZahl ? 1 : 0);

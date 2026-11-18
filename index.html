@@ -1247,12 +1247,22 @@ body.light .dt-n{background:linear-gradient(160deg,#1d3324 10%,#2f5d3f 90%);-web
 .pf-exam-btn{width:100%;text-align:left;background:transparent;color:inherit;min-height:44px;}
 .pf-exam-btn:active{opacity:.6;}
 .pe-name{min-width:0;overflow-wrap:anywhere;}
-.pe-note-ic{font-size:12px;}
 .pf-tabs{margin:2px 0 14px;}
 .pf-tabs .seg-i{flex:1;white-space:nowrap;}
 .pf-tab-n{font-size:11px;opacity:.7;font-weight:700;}
 .pf-nz{background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:12px 13px;margin-bottom:9px;}
-.pf-nz-h{display:flex;align-items:center;gap:10px;font-size:13px;}
+.pf-nz-h{display:flex;align-items:center;justify-content:space-between;gap:10px;font-size:13px;}
+.pf-nz-name{font-weight:700;font-size:14px;margin-top:4px;overflow-wrap:anywhere;}
+.pf-nz-t{border-top:1px solid var(--line-soft);padding-top:8px;}
+.pf-exam-btn .pe-res{white-space:nowrap;}
+.pe-alt{display:block;font-size:11px;font-weight:600;color:var(--muted);}
+.pf-pfeil{color:var(--muted);font-size:18px;margin-left:2px;}
+.pe-note-ic{font-size:11px;font-weight:700;color:var(--mint-soft);margin-left:4px;white-space:nowrap;}
+.pf-tabbody .pf-block,#view[data-seite2] .pf-tabbody .pf-block{padding:14px;border-radius:12px;}
+.pf-route-x{min-width:44px;min-height:44px;margin:-9px -9px -9px 0;}
+.pf-tag.add{min-height:44px;padding:0 16px;}
+body.light .pe-res.no,body.light .pf-tag.warn{color:#9b2c1f;}
+
 .pf-nz-t{font-size:13.5px;line-height:1.6;margin-top:8px;white-space:pre-wrap;overflow-wrap:anywhere;}
 .pf-exam{display:flex;align-items:center;gap:10px;padding:10px 0;border-bottom:1px solid var(--line-soft);font-size:13px;}
 .pe-date{color:var(--muted);font-weight:600;font-size:12.5px;min-width:62px;}
@@ -16412,6 +16422,7 @@ function mergePruefer(alt,neu){
   const exists=DB.prueferData[neu]||DB.pruefer.includes(neu);
   // Alle Prüfungen umhängen
   DB.exams.forEach(e=>{ if(e.pruefer===alt)e.pruefer=neu; });
+  (DB.students||[]).forEach(s=>{ if(s.passedPruefer===alt)s.passedPruefer=neu; });
   // B197-Schaltkompetenz-Einträge umhängen (falls vorhanden)
   (DB.students||[]).forEach(s=>{ if(s.b197pruefer===alt)s.b197pruefer=neu; });
   if(exists){
@@ -16439,8 +16450,9 @@ function mergePruefer(alt,neu){
 let _pfTab="schueler";
 function prueferVerlauf(nm){
   const ex=(DB.exams||[]).filter(e=>e.pruefer===nm).map(e=>({sid:e.sid,name:e.name,date:e.date,result:e.result,b197:!!e.b197,note:(e.note||"").trim(),faults:e.faults||[],eingriff:!!e.eingriff,eingNote:(e.eingNote||"").trim(),attempt:e.attempt,id:e.id}));
-  const mitEx=new Set(ex.filter(e=>e.result==="pass"&&!e.b197).map(e=>e.sid));
-  (DB.students||[]).forEach(s=>{ if(s.passedPruefer===nm&&!mitEx.has(s.id)){ const d=(typeof s.passed==="string"&&/^\d{4}-\d{2}-\d{2}/.test(s.passed))?s.passed.slice(0,10):""; ex.push({sid:s.id,name:s.name,date:d,result:"pass",b197:false,note:(s.passedStrecke||"").trim(),faults:[],eingriff:false,eingNote:"",alt:true}); } });
+  // Schüler mit eigenem bestandenen Prüfungseintrag (bei irgendeinem Prüfer) nicht doppelt aus s.passedPruefer zeigen.
+  const mitEx=new Set((DB.exams||[]).filter(e=>e.result==="pass"&&!e.b197).map(e=>e.sid));
+  (DB.students||[]).forEach(s=>{ if(s.passed&&s.passedPruefer===nm&&!mitEx.has(s.id)){ const d=(typeof s.passed==="string"&&/^\d{4}-\d{2}-\d{2}/.test(s.passed))?s.passed.slice(0,10):""; ex.push({sid:s.id,name:s.name,date:d,result:"pass",b197:false,note:(s.passedStrecke||"").trim(),faults:[],eingriff:false,eingNote:"",alt:true}); } });
   return ex.sort((a,b)=>(""+b.date).localeCompare(""+a.date));
 }
 function _pfErg(e){ return e.b197?'<span class="pe-res ok">B197</span>':e.result==='pass'?'<span class="pe-res ok">bestanden</span>':e.result==='fail'?'<span class="pe-res no">nicht best.</span>':`<span class="pe-res">${esc(e.result||"–")}</span>`; }
@@ -16452,9 +16464,9 @@ function routePrueferAkte(nm){
   const mitNotiz=verlauf.filter(e=>e.note||e.eingNote||(e.result==="fail"&&e.faults.length));
   if(!["schueler","strecken","profil"].includes(_pfTab))_pfTab="schueler";
   const bestanden=verlauf.filter(e=>!e.b197&&e.result==="pass").length, durch=verlauf.filter(e=>!e.b197&&e.result==="fail").length;
-  const tabSchueler=verlauf.length?`<p class="muted-p" style="font-size:12.5px;margin:0 0 6px;">${bestanden} bestanden · ${durch} nicht bestanden. Antippen öffnet den Schüler.</p>`+verlauf.map(e=>`<button class="pf-exam pf-exam-btn" data-sid="${esc(e.sid||"")}"><span class="pe-date">${e.date?isoDE(e.date):"—"}</span><span class="pe-name">${esc(e.name||"—")}${e.note?' <span class="pe-note-ic" aria-label="mit Notiz">📝</span>':''}</span>${_pfErg(e)}</button>`).join(""):`<p class="h2-nichts">Noch keine Prüfung mit ${esc(nm)} eingetragen.</p>`;
+  const tabSchueler=verlauf.length?`<p class="muted-p" style="font-size:12.5px;margin:0 0 6px;">${bestanden} bestanden · ${durch} nicht bestanden</p>`+verlauf.map(e=>`<button class="pf-exam pf-exam-btn" data-sid="${esc(e.sid||"")}"><span class="pe-date">${e.date?isoDE(e.date):"—"}</span><span class="pe-name">${esc(e.name||"—")}${e.note?' <span class="pe-note-ic">· Notiz</span>':''}${e.alt?' <span class="pe-alt">ohne Prüfungseintrag</span>':''}</span>${_pfErg(e)}<span class="pf-pfeil" aria-hidden="true">›</span></button>`).join(""):`<p class="h2-nichts">Noch keine Prüfung mit ${esc(nm)} eingetragen.</p>`;
   const tabStrecken=`${mitNotiz.length?mitNotiz.map(e=>`<div class="pf-nz">
-      <div class="pf-nz-h"><span class="pe-date">${e.date?isoDE(e.date):"—"}</span><span class="pe-name">${esc(e.name||"—")}</span>${_pfErg(e)}</div>
+      <div class="pf-nz-h"><span class="pe-date">${e.date?isoDE(e.date):"—"}</span>${_pfErg(e)}</div><div class="pf-nz-name">${esc(e.name||"—")}</div>
       ${e.note?`<div class="pf-nz-t">${esc(e.note)}</div>`:''}
       ${e.result==="fail"&&e.faults.length?`<div class="pf-tags" style="margin-top:8px;">${e.faults.map(f=>`<span class="pf-tag warn mini">${esc(FAULT_LABEL[f]||f)}</span>`).join("")}</div>`:''}
       ${e.eingNote?`<div class="pf-nz-t" style="margin-top:6px;"><b>Eingriff:</b> ${esc(e.eingNote)}</div>`:''}
@@ -16491,7 +16503,7 @@ function routePrueferAkte(nm){
     </div>
     ${exForPr.length?`<div style="text-align:center;margin:-4px 0 14px;font-size:13px;color:var(--muted);">Letzte ${Math.min(5,exForPr.length)}: ${exForPr.slice(0,5).reverse().map(e=>e.result==='pass'?'<span style="color:#4a8b45;">✓</span>':'<span style="color:#c83c3c;">✕</span>').join(" ")}</div>`:''}
     <div class="seg pf-tabs" role="tablist">
-      <button class="seg-i${_pfTab==='schueler'?' on':''}" data-pftab="schueler" role="tab" aria-selected="${_pfTab==='schueler'}">Schüler <span class="pf-tab-n">${verlauf.length}</span></button>
+      <button class="seg-i${_pfTab==='schueler'?' on':''}" data-pftab="schueler" role="tab" aria-selected="${_pfTab==='schueler'}">Schüler <span class="pf-tab-n">${bestanden+durch}</span></button>
       <button class="seg-i${_pfTab==='strecken'?' on':''}" data-pftab="strecken" role="tab" aria-selected="${_pfTab==='strecken'}">Strecken &amp; Notizen <span class="pf-tab-n">${mitNotiz.length}</span></button>
       <button class="seg-i${_pfTab==='profil'?' on':''}" data-pftab="profil" role="tab" aria-selected="${_pfTab==='profil'}">Profil</button>
     </div>
