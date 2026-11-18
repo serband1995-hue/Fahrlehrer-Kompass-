@@ -126,12 +126,12 @@
     st.linien.push({ art: "voll", b: 0.12, farbe: "#d8d6d0", pts: [[-80, YS], [-1.6, YS]] }, { art: "voll", b: 0.12, farbe: "#d8d6d0", pts: [[1.6, YS], [80, YS]] }, { art: "voll", b: 0.12, farbe: "#d8d6d0", pts: [[-80, YN], [80, YN]] });
     st.bordsteine.push({ pts: [[-80, YS], [-1.6, YS]], seite: 1 }, { pts: [[1.6, YS], [80, YS]], seite: 1 }, { pts: [[-80, YN], [80, YN]], seite: -1 });
     haeuser(st.objekte, [[-7.5, 13.5, 11, 9, 2.4, "#cdd3d8", "#6d5a4a"], [-22, 15, 10, 9, 7], [12, 15, 9, 8, 6, "#e3d7c3", "#8a4a36"], [26, 15, 10, 9, 7, "#d4c7b6"], [-10, -14, 10, 9, 7, "#e3d7c3"], [10, -14, 10, 9, 8], [28, -14, 10, 9, 7, "#cdd3d8"]]);
-    baeume(st.objekte, [[4.3, 8.8, 1.7], [-34, 8, 1.8], [-16, -8, 1.8]]);
+    baeume(st.objekte, [[6.4, 8.6, 1.6], [-34, 8, 1.8], [-16, -8, 1.8]]);   // Baum rechts der Einfahrt etwas abgerückt: verdeckt den Einweiser nicht
     Object.assign(st, { schilder: [], bereich: [-80, 80], boden: "#6a9a52", boden3d: "#6f9a55" });
     const weg = [[0.15, 30], [0.15, 6.2]].concat(bezier([0.15, 6.2], [0.15, 4.0], [1.95, 2.2], [4.15, 2.2], 14)).concat([[150, 2.2]]);
     const fs = fahrt("fs", "fahrschule", "#f2f2ee", weg, [[0, 0], [1.2, 0], [2.8, 7], [4.2, 7], [5.6, 0], [9, 0], [10, 5], [11.6, 5], [12, 0], [15.4, 0], [18, 15], [24, 26]], 19.8, 5.6,
       { fokus: true, bremsStand: true, pfeilDx: -3, pfeilDy: 0.6, pfeilK: 0.7, blinker: [{ von: 0.4, bis: 21, seite: "rechts" }], schulter: [{ von: 0.4, bis: 1.4, seite: "rundum" }, { von: 14, bis: 15.3, seite: "links" }] });
-    const ew = person("ew", "fussgaenger", "#f2f21a", [[2.9, 7.3], [2.9, 6.9]], [[0, 0]], { gr: 2.3, rand: true, weste: true });   // Einweiser in Warnweste (gelb, Reflexstreifen)
+    const ew = person("ew", "fussgaenger", "#f2f21a", [[2.9, 7.3], [2.9, 6.9]], [[0, 0]], { gr: 3, rand: true, weste: true });   // Einweiser in Warnweste (gelb, Reflexstreifen)
     const ped = person("fg", "fussgaenger", "#2f7de1", [[-9, 5.6], [20, 5.6]], [[0, 4.5]], { gr: 2.5, rand: true });
     const bl = fahrt("b", "pkw", "#2c5aa0", [[-150, 2.2], [150, 2.2]], [[0, 40]], 150, 13.6);
     const rt = fahrt("c", "pkw", "#b3322c", [[150, -2.2], [-150, -2.2]], [[0, 35]], 150, 15.2);

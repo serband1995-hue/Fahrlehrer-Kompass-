@@ -154,7 +154,16 @@ const LAEUFE = {
       const L = window.Lernszenen, V = L._intern.vz, z = L._intern.zustand(), sz = L._szenen.find(x => x.id === z.szene), st = sz.strasse, s = z.ansicht.zoom * V.dpr(), f = [], ks = new Set();
       st.schilder.forEach((sc, i) => {
         const Lg = V.vzObenLage(st, sc, sz.kategorie, s); if (!Lg) { f.push(`Schild ${i} ${sc.typ}: oben nicht nach Vorlage`); return; }
-        ks.add((Lg.w / Lg.vz.w * 1e6 / (sc.typ && V.vzGroesse(sc, sz.kategorie) ? 1 : 1)).toFixed(3));
+        // gleicher Maßstab (px je mm) für alle Schilder; Ausnahme: Querformat-Tafeln (220, 325 …) haben am Handy eine Mindesthöhe VZ_MIN_QUER CSS-px,
+        // damit sie kein Strich sind – sie sind dann höchstens so groß, nie kleiner als der gemeinsame Maßstab
+        const kBasis = Math.max(V.VZ_OBEN * s / 1000, V.VZ_MIN * V.dpr() / 900);
+        Lg.vz.teile.forEach((t0, j) => {
+          const q = Lg.teile[j], k = q.dw * s / t0.w, quer = t0.w >= 1.4 * t0.h;
+          if (Math.abs(q.dh * s / t0.h - k) > 1e-6 * k) f.push(`Schild ${i} ${sc.typ}: Teil ${t0.n} verzerrt`);
+          if (!quer) ks.add((k / s * 1e6).toFixed(3));
+          else { if (k < kBasis * 0.999) f.push(`Schild ${i} ${sc.typ}: Querformat kleiner als der gemeinsame Maßstab`); if (t0.h * k / V.dpr() < V.VZ_MIN_QUER - 0.5) f.push(`Schild ${i} ${sc.typ}: Querformat oben nur ${(t0.h * k / V.dpr()).toFixed(1)} px hoch`); }
+          if (j && Math.abs(q.dy - (Lg.teile[j - 1].dy + Lg.teile[j - 1].dh)) > 1e-6) f.push(`Schild ${i} ${sc.typ}: Zusatzzeichen oben nicht direkt darunter`);
+        });
         for (let a = 0; a <= 8; a++) for (let b = 0; b <= 8; b++) if (V.vzStrasse(st, Lg.x0 + Lg.w * a / 8, Lg.y0 + Lg.h * b / 8)) { f.push(`Schild ${i} ${sc.typ}: Bild oben überdeckt die Fahrbahn`); a = b = 99; }
       });
       if (ks.size > 1) f.push("Schilder oben nicht im selben Maßstab: " + [...ks].join(", "));
@@ -162,13 +171,28 @@ const LAEUFE = {
     });
     pruefe(id + ": Oben ohne Überdeckung, gleicher Maßstab", r.length === 0, r.join(" | "));
     // Bilder: Zeitpunkt, zu dem ein Schild 10–35 m vor dem Fokus-Fahrzeug liegt
-    const t3 = await page.evaluate(() => {
+    const tt = await page.evaluate(() => {
       const L = window.Lernszenen, z = L._intern.zustand(), sz = L._szenen.find(x => x.id === z.szene), f = sz.fahrzeuge.find(x => x.fokus);
       for (let t = 0; t <= sz.dauer; t += 0.2) { const q = L._intern.rohPos(f, t), c = Math.cos(q.h), s = Math.sin(q.h);
-        for (const sc of sz.strasse.schilder) { const dx = sc.x - q.x, dy = sc.y - q.y, vor = dx * c + dy * s, quer = Math.abs(-dx * s + dy * c); if (vor > 4 && vor < 16 && quer < vor * 0.8) return t; } }
-      return 0;
+        for (const [i, sc] of sz.strasse.schilder.entries()) { const dx = sc.x - q.x, dy = sc.y - q.y, vor = dx * c + dy * s, quer = Math.abs(-dx * s + dy * c); if (vor > 4 && vor < 16 && quer < vor * 0.8 && sc.blick[0] * c + sc.blick[1] * s < -0.3) return [t, i]; } }   // Schild für die eigene Fahrtrichtung
+      return [0, -1];
     });
-    await setze(page, t3); await page.waitForTimeout(400);
+    const [t3, i3] = tt;
+    await setze(page, t3); await page.waitForTimeout(1200);
+    // Kamera oben: jedes Schild, das (teilweise) zu sehen ist, ist ganz im Bild und nicht unter dem Tempo-Feld (sofern es neben das Fokus-Auto passt)
+    const rand = await page.evaluate(() => {
+      const L = window.Lernszenen, V = L._intern.vz, z = L._intern.zustand(), sz = L._szenen.find(x => x.id === z.szene), st = sz.strasse, cvr = document.querySelector("#lzCanvas").getBoundingClientRect(), W = cvr.width, H = cvr.height, zz = z.ansicht.zoom, s = zz * V.dpr(), f = [];
+      const hu = document.querySelector("#lzHud"), hr = hu && !hu.hidden ? hu.getBoundingClientRect() : null;
+      st.schilder.forEach((sc, i) => {
+        const Lg = V.vzObenLage(st, sc, sz.kategorie, s); if (!Lg) return;
+        const sx0 = W / 2 + (Lg.x0 - z.ansicht.px) * zz, sx1 = sx0 + Lg.w * zz, sy0 = H / 2 + (Lg.y0 - z.ansicht.py) * zz, sy1 = sy0 + Lg.h * zz;
+        if (sx1 < 0 || sx0 > W || sy1 < 0 || sy0 > H) return;
+        if (sx0 < -1 || sx1 > W + 1 || sy0 < -1 || sy1 > H + 1) f.push(`Schild ${i} ${sc.typ}: oben am Rand abgeschnitten (${sx0.toFixed(0)}–${sx1.toFixed(0)} × ${sy0.toFixed(0)}–${sy1.toFixed(0)} von ${W.toFixed(0)} × ${H.toFixed(0)})`);
+        if (hr && sx1 + cvr.left > hr.left + 2 && sx0 + cvr.left < hr.right && sy1 + cvr.top > hr.top + 2 && sy0 + cvr.top < hr.bottom) f.push(`Schild ${i} ${sc.typ}: oben unter dem Tempo-Feld`);
+      });
+      return f;
+    });
+    pruefe(id + ": Oben Schilder ganz im Bild, nicht unter dem Tempo-Feld", rand.length === 0, rand.join(" | "));
     await page.screenshot({ path: join(BILDER, `${id}-oben.png`) });
     await page.click('[data-kam="3d"]'); await setze(page, t3); await page.waitForTimeout(500);
     const vorne = await page.evaluate(() => {   // jedes sichtbare Schild: von vorn gesehen, wenn die Kamera auf der Blickseite ist
@@ -177,6 +201,15 @@ const LAEUFE = {
       return f;
     });
     pruefe(id + ": 3D zeichnet die Schilder", vorne.length === 0, vorne.join(" | "));
+    // 3D: das Schild vor dem Fokus-Auto zeigt mit der Vorderseite zur Kamera (Verfolger, 26 m hinter dem Auto), nicht fast von der Kante
+    if (i3 >= 0) {
+      const cosB = await page.evaluate(([t, i]) => {
+        const L = window.Lernszenen, z = L._intern.zustand(), sz = L._szenen.find(x => x.id === z.szene), f = sz.fahrzeuge.find(x => x.fokus), q = L._intern.rohPos(f, t), sc = sz.strasse.schilder[i];
+        const cx = q.x - Math.cos(q.h) * 26, cy = q.y - Math.sin(q.h) * 26, dx = cx - sc.x, dy = cy - sc.y, d = Math.hypot(dx, dy);
+        return (dx * sc.blick[0] + dy * sc.blick[1]) / d / Math.hypot(...sc.blick);
+      }, [t3, i3]);
+      pruefe(id + ": 3D Schild dem Verkehr zugewandt (Kamera sieht es von vorn)", cosB >= 0.35, "cos " + cosB.toFixed(2));
+    }
     await page.screenshot({ path: join(BILDER, `${id}-3d.png`) });
     await page.evaluate(() => document.querySelector("#lzZu").click());
   }

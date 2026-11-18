@@ -124,7 +124,7 @@
     fs.schulter = [{ von: 12.0, bis: 12.9, seite: "links" }, { von: tZur - 1.2, bis: tZur - 0.4, seite: "rechts" }];
     neu({
       id: "fahrradstrasse", plan: ["l_fahrrad"], titel: "Fahrradstraße", kurz: "Die Straße gehört den Radfahrern. Autos nur mit Zusatzzeichen, höchstens Tempo dreißig, Radfahrer nicht gefährden oder behindern",
-      dauer: Math.ceil(tEnde + 4.5), strasse: st, kamera: { fokus: "fs", zoom: 13, vor: 0.18, quer: { immer: true, zeige: ["r1", "r2", "r3"], radius: 30, pad: 5 } },
+      dauer: Math.ceil(tEnde + 4.5), strasse: st, kamera: { fokus: "fs", zoom: 13, vor: 0.3, quer: { immer: true, zeige: ["r1", "r2", "r3"], radius: 30, pad: 5 } },
       fahrzeuge: [fs, r1, r2, r3],
       phasen: [
         { t: 0.2, titel: "Beginn der Fahrradstraße", text: "Schau mal, hier beginnt eine Fahrradstraße. Sie ist für Radfahrer da. Mit dem Auto darfst du nur hinein, weil darunter Kraftfahrzeuge frei steht.", regel: "Zeichen 244.1 StVO", frage: { text: "Darfst du mit dem Auto in eine Fahrradstraße fahren?", optionen: ["Ja, ich darf immer hinein", "Ich darf nur hinein, wenn ein Zusatzzeichen das erlaubt", "Nein, ich darf nie hinein"], richtig: 1, erklaerung: "Außer Fahrrädern und Elektrorollern dürfen andere Fahrzeuge die Fahrradstraße nur benutzen, wenn ein Zusatzzeichen das erlaubt." } },
@@ -190,7 +190,7 @@
 
   // ============================================================ 4. Verbot der Einfahrt (Zeichen 267) und Verbot für Fahrzeuge aller Art (Zeichen 250)
   (function () {
-    const R = 6, g = 2.5, b = 3.25, XK = 30, bS = 2.75, XT = 100, bT = 3.25;
+    const R = 6, g = 2.5, b = 3.25, XK = 30, bS = 2.75, XT = 100, bT = 3.25, D = Math.SQRT1_2;
     // Hauptstraße Ost-West; bei XK: Süd-Arm = Ende einer Einbahnstraße (Verkehr nur nach Norden), Nord-Arm = gesperrt für Fahrzeuge aller Art; bei XT: normale Straße nach Süden
     const st = netz([-90, -90, 150, 90], [
       [-90, -90, XK - bS, -b, [0, 0, R, 0]], [XK + bS, -90, 150, -b, [0, 0, 0, R]],
@@ -202,8 +202,9 @@
     baeume(st.objekte, [[-20, 5.9, 1.5], [56, 5.9, 1.5], [124, -5.9, 1.5], [-10, -5.9, 1.5]]);
     st.flaechen.push({ art: "sperr", poly: rect(XK - bS, -40, XK + bS, -38.5) });                 // Sperre weiter hinten im gesperrten Nord-Arm
     st.schilder.push(
-      { typ: "z267_rad", x: XK - bS - 0.5, y: b + R + 1, aussen: [-1, 0], blick: [0, -1] }, { typ: "z267_rad", x: XK + bS + 0.5, y: b + R + 1, aussen: [1, 0], blick: [0, -1], links: true },
-      { typ: "z250", x: XK + bS + 0.5, y: -b - R - 1, aussen: [1, 0], blick: [0, 1] }, { typ: "z250", x: XK - bS - 0.5, y: -b - R - 1, aussen: [-1, 0], blick: [0, 1], links: true });
+      // an der Einmündung schräg (45°) zur Hauptstraße gedreht: wer von Westen kommt und abbiegen will, sieht die Verbotszeichen von vorn
+      { typ: "z267_rad", x: XK - bS - 0.5, y: b + R + 1, aussen: [-1, 0], blick: [-D, -D] }, { typ: "z267_rad", x: XK + bS + 0.5, y: b + R + 1, aussen: [1, 0], blick: [-D, -D], links: true },
+      { typ: "z250", x: XK + bS + 0.5, y: -b - R - 1, aussen: [1, 0], blick: [-D, D] }, { typ: "z250", x: XK - bS - 0.5, y: -b - R - 1, aussen: [-1, 0], blick: [-D, D], links: true });
     // Fahrschule: wollte zuerst rechts abbiegen, erkennt das Verbot, fährt geradeaus und biegt bei XT rechts ab
     const yA = 1.625, cx = XT - bT - R, cy = b + R, rr = cy - yA, xS = cx + rr;
     const pts = [[-150, yA], [cx, yA]].concat(bogen(cx, cy, rr, -PI / 2, 0, 12)).concat([[xS, 90]]);

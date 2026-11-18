@@ -281,7 +281,8 @@
     if (sc.gr) return sc.gr; const t = vzTeile(sc.typ), f = t && VZ_TEIL[t[0].n].form;
     return kat === "autobahn" ? 3 : kat === "ueberland" && f === "ronde" ? 3 : 2;
   }
-  const VZ_OBEN = 2.5, VZ_3D = 1.8, VZ_MIN = 34;   // Vergrößerung: von oben 2,5-fach (Lesbarkeit), in 3D 1,8-fach (am Handy lesbar, für alle Schilder gleich); VZ_MIN: 900 mm sind oben mindestens so viele CSS-Pixel breit
+  const VZ_OBEN = 2.5, VZ_3D = 1.8, VZ_MIN = 34, VZ_MIN_QUER = 28;   // Vergrößerung: von oben 2,5-fach (Lesbarkeit), in 3D 1,8-fach (am Handy lesbar, für alle Schilder gleich); VZ_MIN: 900 mm sind oben mindestens so viele CSS-Pixel breit;
+  // VZ_MIN_QUER: Querformat-Tafeln (Hauptzeichen mindestens 1,4-mal so breit wie hoch, z. B. 220, 325) sind oben mindestens so viele CSS-Pixel hoch, sonst wären sie am Handy nur ein Strich
   const VZ_Z0 = { z450: 0.6 };                  // Unterkante in m, sonst 2,0 (VwV Rn. 42)
   const vzStrasse = (st, x, y) => { const f = st.flaechen; for (let i = f.length - 1; i >= 0; i--) { const p = f[i].poly, bb = p._bb || (p._bb = bbox(p)); if (x < bb[0] || x > bb[2] || y < bb[1] || y > bb[3]) continue; if (punktIn(x, y, p)) return !!(STRASSE[f[i].art] || f[i].art === "weiss"); } return false; };
   // Schildfläche in 3D (von oben gesehen eine Strecke quer zur Blickrichtung): Endpunkte in m
@@ -317,21 +318,63 @@
   // am Handy mit Mindestgröße. Würde das Bild eine Fahrbahn überdecken, rückt es entlang des Fahrbahnrands weiter (Lage wird je Maßstab gemerkt).
   function vzObenLage(st, sc, kat, s) {
     const vz = vzBild(sc.typ, vzGroesse(sc, kat)); if (!vz || !sc.aussen) return null;
-    const k = Math.max(VZ_OBEN * s / 1000, VZ_MIN * dpr / 900), w = vz.w * k / s, h = vz.h * k / s, ab = Math.max(0.35, 3 * dpr / s), [ax, ay] = sc.aussen;
-    const key = Math.round(w * 50); sc._oben = sc._oben || {}; if (sc._oben[key]) return Object.assign({ vz, w, h }, sc._oben[key]);
+    // Teile einzeln skalieren (Querformat-Tafel ggf. größer, Zusatzzeichen im gemeinsamen Maßstab), übereinander, mittig
+    let yy = 0, my = 0; const teile = vz.teile.map(t => { const k = vzObenK(t, s), q = { sx: (vz.w - t.w) / 2, sw: t.w, sy: my, sh: t.h, dw: t.w * k / s, dh: t.h * k / s, dy: yy }; yy += q.dh; my += t.h; return q; });
+    const w = Math.max(...teile.map(q => q.dw)), h = yy, ab = Math.max(0.35, 3 * dpr / s), [ax, ay] = sc.aussen;
+    teile.forEach(q => { q.dx = (w - q.dw) / 2; });
+    const key = Math.round(w * 50) + "|" + Math.round(h * 50); sc._oben = sc._oben || {}; if (sc._oben[key]) return Object.assign({ vz, w, h, teile }, sc._oben[key]);
     const x0 = ax > 0 ? sc.x + ab : ax < 0 ? sc.x - ab - w : sc.x - w / 2, y0 = ay > 0 ? sc.y + ab : ay < 0 ? sc.y - ab - h : sc.y - h / 2;
     const frei = (x, y) => { for (let i = 0; i <= 4; i++) for (let j = 0; j <= 4; j++) if (vzStrasse(st, x + w * i / 4, y + h * j / 4)) return false; return true; };
     let best = [x0, y0];
     for (let n = 0; n <= 40 && !frei(...best); n++) for (const sg of [1, -1]) { const q = [x0 + (ax ? 0 : sg * n * 0.25), y0 + (ay ? 0 : sg * n * 0.25)]; if (frei(...q)) { best = q; break; } }
-    sc._oben[key] = { x0: best[0], y0: best[1] }; return { vz, w, h, x0: best[0], y0: best[1] };
+    sc._oben[key] = { x0: best[0], y0: best[1] }; return { vz, w, h, teile, x0: best[0], y0: best[1] };
+  }
+  // Bildpunkte je mm von oben für ein Teil (w/h in mm): für alle gleich (VZ_OBEN, am Handy Mindestbreite VZ_MIN); nur Querformat-Tafeln bekommen zusätzlich eine Mindesthöhe
+  function vzObenK(t, s) {
+    const k = Math.max(VZ_OBEN * s / 1000, VZ_MIN * dpr / 900);
+    return t.w >= 1.4 * t.h ? Math.max(k, VZ_MIN_QUER * dpr / t.h) : k;
+  }
+  // Kamera von oben: Schilder, deren Bild schon (teilweise) zu sehen ist, ganz ins Bild holen, nicht unter das Tempo-Feld; das Fokus-Auto bleibt im Bild.
+  // Gibt den verschobenen Mittelpunkt [x, y] zurück (Welt-m), z = CSS-Pixel je m.
+  function schilderImBild(zx, zy, z, fk) {
+    const st = szene.strasse; if (!st || !(st.schilder || []).length || !cv) return [zx, zy];
+    const r = cv.getBoundingClientRect(), W = r.width, H = r.height, m = 10, s = z * dpr; if (!W || !H) return [zx, zy];
+    const hud = root && root.querySelector("#lzHud"), hr = hud && !hud.hidden ? hud.getBoundingClientRect() : null;
+    const hx = hr && hr.width ? hr.left - r.left - 16 : W, hy = hr && hr.height ? hr.top - r.top - 12 : H;
+    const fm = 60;   // Fokus-Auto mindestens so weit vom Rand
+    let xa = fk.x - (W / 2 - fm) / z, xb = fk.x + (W / 2 - fm) / z, ya = fk.y - (H / 2 - fm) / z, yb = fk.y + (H / 2 - fm) / z;   // erlaubte Mittelpunkte
+    const rects = [];
+    st.schilder.forEach(sc => {
+      const L = vzObenLage(st, sc, szene.kategorie, s); if (!L) return;
+      const x0 = Math.min(L.x0, sc.x), x1 = Math.max(L.x0 + L.w, sc.x), y0 = Math.min(L.y0, sc.y), y1 = Math.max(L.y0 + L.h, sc.y);
+      const sx0 = W / 2 + (x0 - zx) * z, sx1 = W / 2 + (x1 - zx) * z, sy0 = H / 2 + (y0 - zy) * z, sy1 = H / 2 + (y1 - zy) * z;
+      if (sx1 < 0 || sx0 > W || sy1 < 0 || sy0 > H) return;                       // nicht zu sehen
+      if ((x1 - x0) * z > W - 2 * m || (y1 - y0) * z > H - 2 * m) return;        // passt nicht ganz hinein
+      rects.push({ x0, x1, y0, y1, d: Math.hypot((x0 + x1) / 2 - fk.x, (y0 + y1) / 2 - fk.y) });
+    });
+    rects.sort((a, b) => a.d - b.d);
+    for (const q of rects) {                                                     // nächstgelegene zuerst; was nicht mehr passt, bleibt wie es ist
+      let nxa = Math.max(xa, q.x1 - (W / 2 - m) / z), nxb = Math.min(xb, q.x0 + (W / 2 - m) / z); if (nxa > nxb) continue;
+      const cx = clamp(zx, nxa, nxb);
+      // Tempo-Feld unten rechts: liegt das Schild horizontal darüber, darf es nicht tiefer als dessen Oberkante
+      const ueberHud = W / 2 + (q.x1 - cx) * z > hx;
+      let nya = Math.max(ya, q.y1 - (ueberHud ? hy - H / 2 : H / 2 - m) / z), nyb = Math.min(yb, q.y0 + (H / 2 - m) / z);
+      if (nya > nyb) {                                                           // passt nicht über das Tempo-Feld: links daneben
+        if (!ueberHud) continue; const nxb2 = Math.min(nxb, q.x1 - (hx - W / 2) / z); if (nxa > nxb2) continue;
+        nxb = nxb2; nya = Math.max(ya, q.y1 - (H / 2 - m) / z); nyb = Math.min(yb, q.y0 + (H / 2 - m) / z); if (nya > nyb) continue;
+      }
+      xa = nxa; xb = nxb; ya = nya; yb = nyb; zx = clamp(zx, xa, xb); zy = clamp(zy, ya, yb);
+    }
+    return [zx, zy];
   }
   function vzOben(st, X, Y, s) {
     (st.schilder || []).forEach(sc => {
       const L = vzObenLage(st, sc, szene.kategorie, s); if (!L) return;
       const bx = X(sc.x), by = Y(sc.y), x0 = X(L.x0), y0 = Y(L.y0), w = L.w * s, h = L.h * s;
-      ctx.drawImage(vzRueck(L.vz, "rgba(0,0,0,.35)"), x0 + 2 * dpr, y0 + 2 * dpr, w, h);
+      const f = L.vz.img.height / L.vz.h, teil = (bild, ox) => L.teile.forEach(q => ctx.drawImage(bild, q.sx * f, q.sy * f, q.sw * f, q.sh * f, x0 + q.dx * s + ox, y0 + q.dy * s + ox, q.dw * s, q.dh * s));
+      teil(vzRueck(L.vz, "rgba(0,0,0,.35)"), 2 * dpr);
       ctx.fillStyle = "#7f868c"; ctx.beginPath(); ctx.arc(bx, by, Math.max(1.5 * dpr, 0.12 * s), 0, 7); ctx.fill();
-      ctx.drawImage(L.vz.img, x0, y0, w, h);
+      teil(L.vz.img, 0);
     });
   }
   function vzRueck(vz, farbe) {   // Umriss des Schilds in einer Farbe (Rückseite, Schatten)
@@ -1240,7 +1283,12 @@
     ctx.fillStyle = f.farbe || "#3a6ea5"; ctx.beginPath(); ctx.ellipse(0, 0, 0.2 * s * sc, 0.3 * s * sc, 0, 0, 7); ctx.fill();
     ctx.fillStyle = "rgba(255,255,255,.22)"; ctx.beginPath(); ctx.ellipse(-0.04 * s * sc, -0.08 * s * sc, 0.12 * s * sc, 0.17 * s * sc, 0, 0, 7); ctx.fill();
     ctx.strokeStyle = "rgba(0,0,0,.3)"; ctx.lineWidth = Math.max(1, 0.035 * s); ctx.beginPath(); ctx.ellipse(0, 0, 0.2 * s * sc, 0.3 * s * sc, 0, 0, 7); ctx.stroke();
-    if (f.weste) { ctx.strokeStyle = "#e4eaee"; ctx.lineWidth = Math.max(1.2, 0.045 * s); ctx.beginPath(); ctx.ellipse(0, 0, 0.15 * s * sc, 0.235 * s * sc, 0, 0, 7); ctx.stroke(); ctx.strokeStyle = "rgba(0,0,0,.25)"; ctx.lineWidth = Math.max(0.6, 0.012 * s); ctx.stroke(); }   // Warnweste: Reflexstreifen rundum
+    if (f.weste) {   // Warnweste von oben: gelber Körper mit dunklem Rand, zwei silberne Reflexstreifen über die Schultern (beidseits des Kopfes)
+      ctx.fillStyle = f.farbe || "#f2f21a"; ctx.beginPath(); ctx.ellipse(0, 0, 0.2 * s * sc, 0.3 * s * sc, 0, 0, 7); ctx.fill();
+      ctx.strokeStyle = "#3a3a2a"; ctx.lineWidth = Math.max(1, 0.03 * s); ctx.stroke();
+      ctx.fillStyle = "#e4eaee"; [-1, 1].forEach(sg => ctx.fillRect(-0.18 * s * sc, sg * 0.205 * s * sc - 0.035 * s * sc, 0.36 * s * sc, 0.07 * s * sc));
+      ctx.strokeStyle = "rgba(0,0,0,.35)"; ctx.lineWidth = Math.max(0.6, 0.01 * s); [-1, 1].forEach(sg => ctx.strokeRect(-0.18 * s * sc, sg * 0.205 * s * sc - 0.035 * s * sc, 0.36 * s * sc, 0.07 * s * sc));
+    }
     ctx.fillStyle = "#e8c4a0"; ctx.beginPath(); ctx.arc(0.02 * s, 0, 0.13 * s * sc, 0, 7); ctx.fill();
     ctx.fillStyle = f.typ === "rad" ? "#d9d9d4" : "#4a3426"; ctx.beginPath(); ctx.arc(-0.02 * s, 0, 0.1 * s * sc, 0, 7); ctx.fill();
     if (f.rand) { ctx.strokeStyle = "rgba(255,255,255,.95)"; ctx.lineWidth = Math.max(1.5, 0.06 * s); ctx.beginPath(); ctx.ellipse(0, 0, 0.2 * s * sc + 0.03 * s, 0.3 * s * sc + 0.03 * s, 0, 0, 7); ctx.stroke(); }
@@ -1427,7 +1475,7 @@
     if (f.unsichtbar && f.unsichtbar(zeit)) return;
     if (T.person) {
       if (f.typ === "ball") { quader(c, p.x, p.y, p.h, 0.3, 0.3, 0, 0.3, f.farbe || "#e53935"); return; }
-      const k = (f.typ === "kind" ? 0.7 : 1) * (f.gr || 1);
+      const k = (f.typ === "kind" ? 0.7 : 1) * (f.weste ? 1 : f.gr || 1);   // Einweiser in 3D in echter Größe (gr vergrößert nur oben)
       if (f.typ === "rad") { quader(c, p.x, p.y, p.h, 1.75, 0.08, 0.3, 0.75, "#2a2d31"); quader(c, p.x - Math.cos(p.h) * 0.8, p.y - Math.sin(p.h) * 0.8, p.h, 0.05, 0.05, 0, 0.7, "#2a2d31"); }
       const z0 = f.typ === "rad" ? 0.75 : 0;
       if (f.weste) {                                            // Warnweste über dunkler Hose, zwei silberne Reflexstreifen rundum
@@ -2020,7 +2068,8 @@
       let zx, zy;
       if (qr) { zx = qr.px; zy = qr.py; }
       else if (szene.kamera.fest) { zx = szene.kamera.fest[0]; zy = szene.kamera.fest[1]; }
-      else { const vor = (szene.kamera.vor ?? 0.12) * (Wpx / dpr) / ansicht.zoom, hoch = kameraVersatz(true) / ansicht.zoom, hh = szene.kamera.richtung ? fokus.p.h : 0; zx = fokus.p.x + Math.cos(hh) * vor; zy = fokus.p.y + Math.sin(hh) * vor - hoch; }
+      else { const vor = (szene.kamera.vor ?? 0.12) * (Wpx / dpr) / ansicht.zoom, hoch = kameraVersatz(true) / ansicht.zoom, hh = szene.kamera.richtung ? fokus.p.h : 0; zx = fokus.p.x + Math.cos(hh) * vor; zy = fokus.p.y + Math.sin(hh) * vor - hoch;
+        if (kameraModus === "oben" && modus !== "fahren") try { [zx, zy] = schilderImBild(zx, zy, ansicht.zoom, fokus.p); } catch (e) {} }
       const kf = 1 - Math.pow(0.85, bildDt * 60); ansicht.px += (zx - ansicht.px) * kf; ansicht.py += (zy - ansicht.py) * kf;   // bildrate-unabhängig
     }
     if (kameraModus === "oben") zeichneObenSicher(); else zeichne3d();
@@ -2639,5 +2688,5 @@
   function szenenFuerPlan(planId) { return SZENEN.filter(x => (x.plan || []).includes(planId)).map(x => ({ id: x.id, titel: (x._de || x).titel })); }
   const vorschau = { an: false };
   const bau = { vorschau, W, KMH, clamp, lerp, smooth, pfad, spurPfad, bezier, versatz, band, tempoProfil, tempoStrecke, konstant, gerade, tBeiX, rohPos, TYPEN, EXT, rangierBahn, mitteAus, achseAus, ecken, raeder, bordAbstand, RAD, wegeOben, H: { rrg, quer, ton, leuchte, blinkAn, quader, poly3d, zuCam, proj, mkCv, SCHILD_BILD, SCHILD_NAME }, schildBilder: SCHILD_BILD, schildNamen: SCHILD_NAME };
-  window.Lernszenen = { open, registriere, szenenFuerPlan, bau, _szenen: SZENEN, _intern: { vz: { VZ_TEIL, VZ_TYP, VZ_OBEN, VZ_3D, VZ_Z0, vzTeile, vzMass, vzTeilMalen, vzBild, vzGroesse, vzPlatte, vzFrei, vzAufstellen, vzObenLage, vzStrasse, vzSvg, dpr: () => dpr }, messeOben: n => { const t0 = performance.now(); for (let i = 0; i < n; i++) { zeichneOben(); ctx.getImageData(0, 0, 1, 1); } return (performance.now() - t0) / n; }, rohPos, tBeiX, TYPEN, bewerte: () => bewerte(), zustand: () => ({ szene: szene && szene.id, zeit, modus, kameraModus, laeuft, musterAus, capZu, sprache, fahr, ansicht: { ...ansicht }, grund: grundZoom(), nah: cv && szene && szene.kamera.fest ? 1.6 * Math.hypot(cv.getBoundingClientRect().width, cv.getBoundingClientRect().height) / 2 / grundZoom() : 0, fest: szene && szene.kamera.fest }), punkt3d: (x, y, z) => { const l = fahrzeugListe(), f = l.find(e => e.f.fokus) || l[0]; f.hGlatt = _hGlatt === null ? f.p.h : _hGlatt; const c = kamera3d(f), q = zuCam(c, x, y, z); if (q[2] < c.near) return null; const pp = proj(c, q); return [pp[0] / dpr, pp[1] / dpr, q[2]]; } } };
+  window.Lernszenen = { open, registriere, szenenFuerPlan, bau, _szenen: SZENEN, _intern: { vz: { VZ_TEIL, VZ_TYP, VZ_OBEN, VZ_3D, VZ_Z0, vzTeile, vzMass, vzTeilMalen, vzBild, vzGroesse, vzPlatte, vzFrei, vzAufstellen, vzObenLage, vzObenK, vzStrasse, vzSvg, schilderImBild, VZ_MIN, VZ_MIN_QUER, dpr: () => dpr }, messeOben: n => { const t0 = performance.now(); for (let i = 0; i < n; i++) { zeichneOben(); ctx.getImageData(0, 0, 1, 1); } return (performance.now() - t0) / n; }, rohPos, tBeiX, TYPEN, bewerte: () => bewerte(), zustand: () => ({ szene: szene && szene.id, zeit, modus, kameraModus, laeuft, musterAus, capZu, sprache, fahr, ansicht: { ...ansicht }, grund: grundZoom(), nah: cv && szene && szene.kamera.fest ? 1.6 * Math.hypot(cv.getBoundingClientRect().width, cv.getBoundingClientRect().height) / 2 / grundZoom() : 0, fest: szene && szene.kamera.fest }), punkt3d: (x, y, z) => { const l = fahrzeugListe(), f = l.find(e => e.f.fokus) || l[0]; f.hGlatt = _hGlatt === null ? f.p.h : _hGlatt; const c = kamera3d(f), q = zuCam(c, x, y, z); if (q[2] < c.near) return null; const pp = proj(c, q); return [pp[0] / dpr, pp[1] / dpr, q[2]]; } } };
 })();
