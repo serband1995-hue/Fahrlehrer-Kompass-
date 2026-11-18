@@ -281,7 +281,7 @@
     if (sc.gr) return sc.gr; const t = vzTeile(sc.typ), f = t && VZ_TEIL[t[0].n].form;
     return kat === "autobahn" ? 3 : kat === "ueberland" && f === "ronde" ? 3 : 2;
   }
-  const VZ_OBEN = 2.5, VZ_3D = 1.8, VZ_MIN = 34, VZ_MIN_QUER = 28;   // Vergrößerung: von oben 2,5-fach (Lesbarkeit), in 3D 1,8-fach (am Handy lesbar, für alle Schilder gleich); VZ_MIN: 900 mm sind oben mindestens so viele CSS-Pixel breit;
+  const VZ_OBEN = 2.5, VZ_3D = 2.2, VZ_MIN = 34, VZ_MIN_QUER = 28;   // Vergrößerung: von oben 2,5-fach (Lesbarkeit), in 3D 2,2-fach (am Handy lesbar, für alle Schilder gleich); VZ_MIN: 900 mm sind oben mindestens so viele CSS-Pixel breit;
   // VZ_MIN_QUER: Querformat-Tafeln (Hauptzeichen mindestens 1,4-mal so breit wie hoch, z. B. 220, 325) sind oben mindestens so viele CSS-Pixel hoch, sonst wären sie am Handy nur ein Strich
   const VZ_Z0 = { z450: 0.6 };                  // Unterkante in m, sonst 2,0 (VwV Rn. 42)
   const vzStrasse = (st, x, y) => { const f = st.flaechen; for (let i = f.length - 1; i >= 0; i--) { const p = f[i].poly, bb = p._bb || (p._bb = bbox(p)); if (x < bb[0] || x > bb[2] || y < bb[1] || y > bb[3]) continue; if (punktIn(x, y, p)) return !!(STRASSE[f[i].art] || f[i].art === "weiss"); } return false; };
@@ -808,12 +808,12 @@
   // Standard = Sprache des Handys (Englisch nur, wenn das Handy auf Englisch steht), Wahl wird gemerkt. Englische Texte: lernszenen-en.js (window.LernszenenEN).
   let sprache = (() => { try { const v = localStorage.getItem("lz_sprache"); if (v === "de" || v === "en") return v; } catch (e) {} return /^en\b/i.test(navigator.language || "") ? "en" : "de"; })();
   const UI = {
-    de: { lernszenen: "🎬 Lernszenen", passend: "Passend zum Ausbildungspunkt", alle: "Alle Szenen", vorfuehren: "Vorführen", mitdenken: "Mitdenken", oben: "Oben", regeln: "§ Regeln", textAn: "▤ Text anzeigen",
+    de: { lernszenen: "🎬 Lernszenen", passend: "Passend zum Ausbildungspunkt", alle: "Alle Szenen", vorfuehren: "Vorführen", tBlickR: "Vor dem Rückwärtsfahren: Rundumblick!", tBlickV: "Vor dem Anfahren: Rundumblick!", tAnhalten: "Erst anhalten.", tFrueh: "Zu früh, noch keine Gefahr. Nicht raten, beobachten!", tGang: "Gang nur im Stand wechseln.", tVerschoben: "Fahrzeug verschoben. ▶ zeigt, wie es weitergeht, ↺ setzt zurück.", kTempo: "Tempo", kBlinker: "Blinker", kLinks: "links", kRechts: "rechts", kBremse: "Bremse", kGas: "Gas", kSpur: "Spur wechseln", kVoll: "voll", kGerade: "gerade", kRundum: "Rundumblick", kGang: "Gang", kVor: "V", kHilf: "Hilfslinien", kFertig: "Fertig", kBremsen: "BREMSEN!", kGefahr: "Bremse, sobald Gefahr droht!", kStarte: "Starte mit ▶.", selbstFahren: "Selbst fahren", selbstRangieren: "Selbst rangieren", reaktionstest: "Reaktionstest", jetztFahren: "Jetzt selbst fahren", jetztRangieren: "Jetzt selbst rangieren", reaktionStarten: "Reaktionstest starten", capRangieren: "Lenkrad drehen, Gang wählen, Gas halten. Vor jedem Anfahren Rundumblick! Die gelben Hilfslinien zeigen, wohin das Auto mit diesem Lenkeinschlag fährt. Zum Schluss auf „Fertig“.", capReaktion: "Das Auto fährt von selbst. Sobald eine Gefahr auftaucht, so schnell wie möglich auf BREMSEN tippen. Danach siehst du Reaktionsweg, Bremsweg und Anhalteweg.", capFahren: "Du steuerst das Fahrschulauto: Gas und Bremse halten, Blinker und Schulterblick antippen, dann den Fahrstreifen wechseln. Am Ende gibt es die Auswertung.", zielGruen: "Grün markiert: Zielposition", tempoStart: "Tempo wählen, dann ▶", tippeStart: "Tippe auf ▶ zum Starten", mitdenken: "Mitdenken", oben: "Oben", regeln: "§ Regeln", textAn: "▤ Text anzeigen",
       start: "Tippe auf ▶, dann spielt sich die Szene von selbst ab. Mit ⏸ hältst du an und kannst Fahrzeuge verschieben.", nochmalHoeren: "Nochmal hören", textAus: "Text ausblenden", wasRichtig: "Was ist richtig?", richtig: "✓ Richtig.", richtigG: "✓ Richtig!", nicht: "✗ Nicht ganz.",
       weiter: "Weiter ▶", richtigIst: "Richtig ist", angetippt: "von", angetippt2: "angetippt", neu: "↺ neu", stark: "Stark!", fast: "Gut – fast!", ueben: "Nochmal üben", fragenRichtig: "von {n} Fragen richtig", uebersprungen: "Frage(n) übersprungen.",
       nochmal: "↺ Nochmal", alleRegeln: "§ Alle Regeln", regelnTitel: "§ Regeln", schilder: "Schilder in dieser Szene:", schliessen: "Schließen", mitdenkenText: "Die Szene hält an jedem wichtigen Schritt an und fragt: Was ist jetzt richtig?", tippePlay: "Tippe auf ▶",
       stimmeInfo: "🔊 Sprecherstimme mit KI erzeugt.", sprache: "Sprache: Deutsch. Auf Englisch umschalten", kat: { innerorts: "Innerorts", ueberland: "Überland", grundfahr: "Grundfahraufgaben", autobahn: "Autobahn" }, zumAntippen: "Zum Antippen bleibt die Ansicht von oben." },
-    en: { lernszenen: "🎬 Learning scenes", passend: "Matching this training topic", alle: "All scenes", vorfuehren: "Watch", mitdenken: "Think along", oben: "Top", regeln: "§ Rules", textAn: "▤ Show text",
+    en: { lernszenen: "🎬 Learning scenes", passend: "Matching this training topic", alle: "All scenes", vorfuehren: "Watch", tBlickR: "Before reversing: look all round!", tBlickV: "Before moving off: look all round!", tAnhalten: "Stop first.", tFrueh: "Too early, no danger yet. Don't guess, watch!", tGang: "Only change gear when stopped.", tVerschoben: "Vehicle moved. ▶ shows what happens next, ↺ resets.", tKontaktEN: "Stop, contact! Change gear and start again.", kTempo: "Speed", kBlinker: "Indicator", kLinks: "left", kRechts: "right", kBremse: "Brake", kGas: "Accelerator", kSpur: "Change lane", kVoll: "full", kGerade: "straight", kRundum: "Look all round", kGang: "Gear", kVor: "F", kHilf: "Guide lines", kFertig: "Done", kBremsen: "BRAKE!", kGefahr: "Brake as soon as there is danger!", kStarte: "Start with ▶.", selbstFahren: "Drive yourself", selbstRangieren: "Manoeuvre yourself", reaktionstest: "Reaction test", jetztFahren: "Now drive yourself", jetztRangieren: "Now manoeuvre yourself", reaktionStarten: "Start reaction test", capRangieren: "Turn the steering wheel, choose a gear, hold the accelerator. Look all around before every start! The yellow guide lines show where the car goes with this steering angle. Finish with \"Done\".", capReaktion: "The car drives by itself. As soon as a hazard appears, tap BRAKE as fast as you can. Then you see the reaction distance, braking distance and stopping distance.", capFahren: "You steer the driving school car: hold accelerator and brake, tap indicator and shoulder check, then change lanes. At the end you get your evaluation.", zielGruen: "Marked green: target position", tempoStart: "Choose a speed, then ▶", tippeStart: "Tap ▶ to start", mitdenken: "Think along", oben: "Top", regeln: "§ Rules", textAn: "▤ Show text",
       start: "Tap ▶ and the scene plays by itself. Tap ⏸ to pause and move vehicles.", nochmalHoeren: "Listen again", textAus: "Hide text", wasRichtig: "What is right?", richtig: "✓ Right.", richtigG: "✓ Right!", nicht: "✗ Not quite.",
       weiter: "Next ▶", richtigIst: "The right order is", angetippt: "of", angetippt2: "tapped", neu: "↺ again", stark: "Great!", fast: "Good, almost!", ueben: "Practise again", fragenRichtig: "of {n} questions right", uebersprungen: "question(s) skipped.",
       nochmal: "↺ Again", alleRegeln: "§ All rules", regelnTitel: "§ Rules", schilder: "Signs in this scene (German names):", schliessen: "Close", mitdenkenText: "The scene stops at every important step and asks: what is right now?", tippePlay: "Tap ▶",
@@ -1901,7 +1901,7 @@
       const blick = st.t - st.blickT <= 5;
       if (st.letzteRichtung !== st.gang) { st.zuege++; st.letzteRichtung = st.gang; }
       st.starts.push({ t: st.t, gang: st.gang, blick, zug: st.zuege });
-      if (!blick) zeigeToast(st.gang < 0 ? "Vor dem Rückwärtsfahren: Rundumblick!" : "Vor dem Anfahren: Rundumblick!");
+      if (!blick) zeigeToast(st.gang < 0 ? T("tBlickR") : T("tBlickV"));
     }
     st.v = vNeu;
     const nx = st.x + Math.cos(st.h) * st.v * st.gang * dt, ny = st.y + Math.sin(st.h) * st.v * st.gang * dt, nh = st.h + st.v * st.gang / RAD.L * Math.tan(st.d) * dt;
@@ -1912,14 +1912,14 @@
     if (!stop) raeder(nx, ny, nh).forEach(rp => (R.bordsteine || []).forEach(b => { if (bordAbstand(rp, b) < 0.1) stop = "den Bordstein"; }));
     if (stop && st.v > 0) {
       st.v = 0; st.sperre = st.gang; st.kontakte.push({ t: st.t, was: stop }); if (stop === "den Bordstein") st.bordKontakte++;
-      zeigeToast(`Stopp, Kontakt mit ${stop}! Wechsle den Gang und setze neu an.`); return;
+      zeigeToast(sprache === "en" ? T("tKontaktEN") : `Stopp, Kontakt mit ${stop}! Wechsle den Gang und setze neu an.`); return;
     }
     st.x = nx; st.y = ny; st.h = nh;
     if (st.t > 300) { st.ende = true; st.endeGrund = "zeit"; laeuft = false; zeigeAuswertung(bewerteRangieren()); }
   }
   function rangierFertig() {
     const st = fahr; if (!st || st.ende) return;
-    if (st.v > 0.05) { zeigeToast("Erst anhalten."); return; }
+    if (st.v > 0.05) { zeigeToast(T("tAnhalten")); return; }
     st.ende = true; laeuft = false; zeigeAuswertung(bewerteRangieren());
   }
   function bewerteRangieren() {
@@ -1975,7 +1975,7 @@
   }
   function aktualisiereRangUI() {
     const st = fahr; if (!st || !st.rang || !root) return;
-    const g = $("#rGang"); if (g) { g.textContent = st.gang > 0 ? "Gang: V" : "Gang: R"; g.classList.toggle("on", st.gang < 0); }
+    const g = $("#rGang"); if (g) { g.textContent = T("kGang") + ": " + (st.gang > 0 ? T("kVor") : "R"); g.classList.toggle("on", st.gang < 0); }
     const hl = $("#rHilf"); if (hl) hl.classList.toggle("on", st.hilfslinien);
     const bl = $("#rBL"), br = $("#rBR"); if (bl) bl.classList.toggle("on", st.blinker === "links"); if (br) br.classList.toggle("on", st.blinker === "rechts");
   }
@@ -1998,7 +1998,7 @@
       }
     };
     zeit = 0; _hGlatt = null;
-    const e = $("#rkInfo"); if (e) e.textContent = `Tempo ${Math.round(v * KMH)}. Bremse, sobald Gefahr droht!`;
+    const e = $("#rkInfo"); if (e) e.textContent = `${T("kTempo")} ${Math.round(v * KMH)}. ${T("kGefahr")}`;
   }
   function reaktionSchritt(dt) {
     const st = fahr, R = szene.reaktion; if (!st || st.ende) return;
@@ -2013,7 +2013,7 @@
   function reaktionBremse() {
     const st = fahr; if (!st || !st.reak || st.ende) return;
     if (!laeuft) { laeuft = true; return; }
-    if (st.phase === "fahrt") { zeigeToast("Zu früh, noch keine Gefahr. Nicht raten, beobachten!"); st.fruehstart = (st.fruehstart || 0) + 1; return; }
+    if (st.phase === "fahrt") { zeigeToast(T("tFrueh")); st.fruehstart = (st.fruehstart || 0) + 1; return; }
     if (st.phase === "gefahr") { st.phase = "bremsen"; st.tDruck = st.t; st.xDruck = st.x; }
   }
   function bewerteReaktion() {
@@ -2163,7 +2163,8 @@
   .lz-rad input{flex:1;accent-color:#e0b84a;height:34px;}
   .lz-reak{display:flex;gap:8px;align-items:center;flex-wrap:wrap;}
   .lz-reak .grow{flex:1;min-width:140px;font-size:13px;color:#b1bfb5;}
-  .lz-gross{min-height:64px!important;min-width:180px;font-size:20px!important;font-weight:800!important;touch-action:none;}
+  .lz-rang .lz-btn,.lz-reak .lz-btn,.lz-drive .lz-btn{min-height:44px;}   /* Tippfläche ≥ 44 px auch im Querformat (Design 18.11.) */
+  .lz-gross{min-height:64px!important;min-width:180px;flex:1 1 100%;font-size:20px!important;font-weight:800!important;touch-action:none;}
   .lz-tipp{position:absolute;left:50%;bottom:14px;transform:translateX(-50%);background:rgba(10,18,14,.94);border:1px solid #e0b84a;border-radius:12px;padding:10px 14px;max-width:min(560px,92%);z-index:5;font-size:14px;}
   .lz-tipp .lz-row{margin-top:8px;}
   .lz-top{display:flex;align-items:center;gap:8px;padding:10px 12px calc(10px) 12px;padding-top:max(10px,env(safe-area-inset-top));background:rgba(12,20,16,.92);border-bottom:1px solid #24413a;z-index:2;}
@@ -2241,7 +2242,7 @@
   .lz-chips{display:flex;gap:6px;flex-wrap:wrap;margin-top:8px;} .lz-chip{font-size:11px;padding:3px 8px;border-radius:20px;background:#1f3a31;color:#b9d9c5;}
   .lz-toast{position:absolute;left:50%;bottom:16px;transform:translateX(-50%);background:rgba(20,30,26,.95);border:1px solid #4f7a63;border-radius:10px;padding:9px 14px;font-size:13.5px;max-width:90%;z-index:4;pointer-events:none;}
   .lz-coach{position:absolute;left:12px;bottom:12px;max-width:min(62%,420px);background:rgba(224,184,74,.95);color:#1b1b12;border-radius:12px;padding:9px 12px;font-size:13.5px;font-weight:600;pointer-events:none;}
-  @media (max-height:520px){ .lz-top{padding-top:6px;padding-bottom:6px;} .lz-btn{min-height:34px;padding:5px 9px;font-size:12.5px;} .lz-bar{padding:5px 8px;gap:5px;} .lz-drive{grid-template-columns:repeat(8,1fr);grid-template-areas:"bl sl br2 br2 gas gas sr br" "wl wl wl wl wr wr wr wr";} .lz-drive .lz-btn{min-height:38px;font-size:12.5px;} .lz-caption{max-width:min(380px,calc(100% - 140px));padding:7px 10px;} .lz-caption p{font-size:12px;} .lz-coach{font-size:12px;max-width:45%;padding:6px 9px;} .lz-hud{padding:5px 9px;} .lz-hud b{font-size:19px;} }
+  @media (max-height:520px){ .lz-top{padding-top:6px;padding-bottom:6px;} .lz-btn{min-height:34px;padding:5px 9px;font-size:12.5px;} .lz-bar{padding:5px 8px;gap:5px;} .lz-drive{grid-template-columns:repeat(8,1fr);grid-template-areas:"bl sl br2 br2 gas gas sr br" "wl wl wl wl wr wr wr wr";} .lz-drive .lz-btn{min-height:44px;font-size:12.5px;} .lz-caption{max-width:min(380px,calc(100% - 140px));padding:7px 10px;} .lz-caption p{font-size:12px;} .lz-coach{font-size:12px;max-width:45%;padding:6px 9px;} .lz-hud{padding:5px 9px;} .lz-hud b{font-size:19px;} }
   .lz-bar [data-kam],.lz-bar [data-modus]{min-height:44px;} .lz-bar [data-kam]{min-width:56px;position:relative;}   /* Daumen-tauglich (Prüf-Team 17.11.) */
   @media (max-height:520px){ .lz-bar [data-kam],.lz-bar [data-modus]{min-height:34px;} .lz-bar [data-kam]::after{content:"";position:absolute;left:-3px;right:-3px;top:-5px;bottom:-5px;} }
   @media (max-width:560px){ .lz-caption p{font-size:12.8px;} .lz-title{font-size:15px;} .lz-szkopf{flex-wrap:wrap;row-gap:2px;padding-top:max(5px,env(safe-area-inset-top));padding-bottom:5px;} .lz-szkopf .lz-title{order:-1;flex-basis:100%;white-space:normal;line-height:1.15;font-size:14px;} .lz-szkopf #lzZurueck{margin-right:auto;} .lz-drive{grid-template-columns:repeat(4,1fr);grid-template-areas:"bl sl sr br" "br2 br2 gas gas" "wl wl wr wr";} .lz-drive .lz-btn{min-height:48px;font-size:13px;} }
@@ -2293,7 +2294,7 @@
       <div class="lz-grid" id="lzGrid">${liste.map(s => `
         <button class="lz-tile" data-szene="${s.id}"><canvas data-vorschau="${s.id}"></canvas>
           <h3>${esc(s.titel)}</h3><p>${esc(s.kurz)}</p>
-          <div class="lz-chips"><span class="lz-chip">${T("vorfuehren")}</span><span class="lz-chip">${T("mitdenken")}</span>${s.fahren || s.rangieren || s.reaktion ? `<span class="lz-chip">${s.rangieren ? "Selbst rangieren" : s.reaktion ? "Reaktionstest" : "Selbst fahren"}</span>` : ""}<span class="lz-chip">3D</span></div>
+          <div class="lz-chips"><span class="lz-chip">${T("vorfuehren")}</span><span class="lz-chip">${T("mitdenken")}</span>${s.fahren || s.rangieren || s.reaktion ? `<span class="lz-chip">${s.rangieren ? T("selbstRangieren") : s.reaktion ? T("reaktionstest") : T("selbstFahren")}</span>` : ""}<span class="lz-chip">3D</span></div>
         </button>`).join("")}</div>`;
     { const r0 = root; stimmeLade(() => { if (root !== r0 || szene) return; const g = root.querySelector("#lzGrid"); if (g && !root.querySelector(".lz-info")) g.insertAdjacentHTML("afterend", stimmeInfo()); }); }
     $("#lzZu").onclick = schliessen; $("#lzSprache").onclick = () => setzeSprache(sprache === "en" ? "de" : "en");
@@ -2337,7 +2338,7 @@
         <div class="lz-row">
           <button class="lz-btn on" data-modus="vorfuehren">${T("vorfuehren")}</button>
           <button class="lz-btn" data-modus="mitdenken">${T("mitdenken")}</button>
-          ${szene.fahren || szene.rangieren || szene.reaktion ? `<button class="lz-btn" data-modus="fahren">${szene.rangieren ? "Selbst rangieren" : szene.reaktion ? "Reaktionstest" : "Selbst fahren"}</button>` : ""}
+          ${szene.fahren || szene.rangieren || szene.reaktion ? `<button class="lz-btn" data-modus="fahren">${szene.rangieren ? T("selbstRangieren") : szene.reaktion ? T("reaktionstest") : T("selbstFahren")}</button>` : ""}
           <span class="grow"></span>
           <button class="lz-btn on" data-kam="oben">${T("oben")}</button><button class="lz-btn" data-kam="3d">3D</button>
         </div>
@@ -2350,18 +2351,18 @@
           <button class="lz-btn" id="lzReset" aria-label="Zurücksetzen">↺</button>
         </div>
         <div class="lz-drive" id="lzDrive" hidden>
-          <button class="lz-btn" id="dBL">◀ Blinker</button><button class="lz-btn" id="dSL">👀 links</button>
-          <button class="lz-btn lz-pedal brems" id="dBrems">Bremse</button><button class="lz-btn lz-pedal gas" id="dGas">Gas</button>
-          <button class="lz-btn" id="dSR">rechts 👀</button><button class="lz-btn" id="dBR">Blinker ▶</button>
-          <button class="lz-btn" id="dWL">⇤ Spur wechseln</button><button class="lz-btn" id="dWR">Spur wechseln ⇥</button>
+          <button class="lz-btn" id="dBL">◀ ${T("kBlinker")}</button><button class="lz-btn" id="dSL">👀 ${T("kLinks")}</button>
+          <button class="lz-btn lz-pedal brems" id="dBrems">${T("kBremse")}</button><button class="lz-btn lz-pedal gas" id="dGas">${T("kGas")}</button>
+          <button class="lz-btn" id="dSR">${T("kRechts")} 👀</button><button class="lz-btn" id="dBR">${T("kBlinker")} ▶</button>
+          <button class="lz-btn" id="dWL">⇤ ${T("kSpur")}</button><button class="lz-btn" id="dWR">${T("kSpur")} ⇥</button>
         </div>
         <div class="lz-rang" id="lzRang" hidden>
-          <div class="lz-lenk"><button class="lz-btn" id="rLinks">⟲ voll</button><div class="lz-rad"><span id="rRad">☸</span><input type="range" id="rLenk" min="-100" max="100" step="1" value="0" aria-label="Lenkrad"></div><button class="lz-btn" id="rRechts">voll ⟳</button><button class="lz-btn" id="rGerade">gerade</button></div>
-          <div class="lz-lenk"><button class="lz-btn" id="rBL">◀ Blinker</button><button class="lz-btn" id="rBlick">👀 Rundumblick</button><button class="lz-btn" id="rGang">Gang: V</button><button class="lz-btn lz-pedal brems" id="rBrems">Bremse</button><button class="lz-btn lz-pedal gas" id="rGas">Gas</button><button class="lz-btn" id="rBR">Blinker ▶</button><button class="lz-btn" id="rHilf">Hilfslinien</button><button class="lz-btn on" id="rFertig">Fertig ✓</button></div>
+          <div class="lz-lenk"><button class="lz-btn" id="rLinks">⟲ ${T("kVoll")}</button><div class="lz-rad"><span id="rRad">☸</span><input type="range" id="rLenk" min="-100" max="100" step="1" value="0" aria-label="Lenkrad"></div><button class="lz-btn" id="rRechts">${T("kVoll")} ⟳</button><button class="lz-btn" id="rGerade">${T("kGerade")}</button></div>
+          <div class="lz-lenk"><button class="lz-btn" id="rBL">◀ ${T("kBlinker")}</button><button class="lz-btn" id="rBlick">👀 ${T("kRundum")}</button><button class="lz-btn" id="rGang">${T("kGang")}: ${T("kVor")}</button><button class="lz-btn lz-pedal brems" id="rBrems">${T("kBremse")}</button><button class="lz-btn lz-pedal gas" id="rGas">${T("kGas")}</button><button class="lz-btn" id="rBR">${T("kBlinker")} ▶</button><button class="lz-btn" id="rHilf">${T("kHilf")}</button><button class="lz-btn on" id="rFertig">${T("kFertig")} ✓</button></div>
         </div>
         <div class="lz-reak" id="lzReak" hidden>
-          <button class="lz-btn" data-rv="30">Tempo 30</button><button class="lz-btn on" data-rv="50">Tempo 50</button><span class="grow" id="rkInfo">Starte mit ▶. Bremse, sobald Gefahr droht!</span>
-          <button class="lz-btn lz-pedal brems lz-gross" id="rkBrems">BREMSEN!</button>
+          <button class="lz-btn" data-rv="30">${T("kTempo")} 30</button><button class="lz-btn on" data-rv="50">${T("kTempo")} 50</button><span class="grow" id="rkInfo">${T("kStarte")} ${T("kGefahr")}</span>
+          <button class="lz-btn lz-pedal brems lz-gross" id="rkBrems">${T("kBremsen")}</button>
         </div>
       </div>`;
     cv = $("#lzCanvas"); ctx = cv.getContext("2d"); beiResize(); ansicht.zoom = grundZoom();
@@ -2449,9 +2450,9 @@
       if (szene.fahren) kameraModus = kameraModus === "oben" ? "3d" : kameraModus;
       if (szene.rangieren) { kameraModus = "oben"; ansicht.zoom = grundZoom() * (szene.rangieren.zoomFaktor || 1); }
       root.querySelectorAll("[data-kam]").forEach(x => x.classList.toggle("on", x.dataset.kam === kameraModus));
-      if (szene.rangieren) zeigeCap("Selbst rangieren", szene.rangieren.anleitung || "Lenkrad drehen, Gang wählen, Gas halten. Vor jedem Anfahren Rundumblick! Die gelben Hilfslinien zeigen, wohin das Auto mit diesem Lenkeinschlag fährt. Zum Schluss auf „Fertig“.", "Grün markiert: Zielposition");
-      else if (szene.reaktion) zeigeCap("Reaktionstest", "Das Auto fährt von selbst. Sobald eine Gefahr auftaucht, so schnell wie möglich auf BREMSEN tippen. Danach siehst du Reaktionsweg, Bremsweg und Anhalteweg.", "Tempo wählen, dann ▶");
-      else zeigeCap("Selbst fahren", "Du steuerst das Fahrschulauto: Gas und Bremse halten, Blinker und Schulterblick antippen, dann den Fahrstreifen wechseln. Am Ende gibt es die Auswertung.", "Tippe auf ▶ zum Starten");
+      if (szene.rangieren) zeigeCap(T("selbstRangieren"), szene.rangieren.anleitung || T("capRangieren"), T("zielGruen"));
+      else if (szene.reaktion) zeigeCap(T("reaktionstest"), T("capReaktion"), T("tempoStart"));
+      else zeigeCap(T("selbstFahren"), T("capFahren"), T("tippeStart"));
     }
     else if (m === "mitdenken") zeigeCap(T("mitdenken"), T("mitdenkenText"), T("tippePlay"));
     else zeigePhase(szene.phasen[0]);
@@ -2594,7 +2595,7 @@
   function zeigeErgebnisMitdenken() {
     const n = szene.phasen.filter(p => p.frage).length, q = n ? Math.round(punkte.richtig / n * 100) : 0;
     const d = sheet(`<h2>${q >= 80 ? T("stark") : q >= 50 ? T("fast") : T("ueben")}</h2><p class="lz-erkl">${punkte.richtig} ${T("fragenRichtig").replace("{n}", n)} (${q} %).${punkte.gesamt < n ? ` ${n - punkte.gesamt} ${T("uebersprungen")}` : ""}</p>
-      <div class="lz-row" style="margin-top:12px;"><button class="lz-btn" id="lzNochmal">${T("nochmal")}</button>${szene.fahren || szene.rangieren || szene.reaktion ? `<button class="lz-btn on" id="lzSelbst">${szene.rangieren ? "Jetzt selbst rangieren" : szene.reaktion ? "Reaktionstest starten" : "Jetzt selbst fahren"}</button>` : ""}<button class="lz-btn" id="lzRegelnB">${T("alleRegeln")}</button></div>`);
+      <div class="lz-row" style="margin-top:12px;"><button class="lz-btn" id="lzNochmal">${T("nochmal")}</button>${szene.fahren || szene.rangieren || szene.reaktion ? `<button class="lz-btn on" id="lzSelbst">${szene.rangieren ? T("jetztRangieren") : szene.reaktion ? T("reaktionStarten") : T("jetztFahren")}</button>` : ""}<button class="lz-btn" id="lzRegelnB">${T("alleRegeln")}</button></div>`);
     d.querySelector("#lzNochmal").onclick = () => setzeModus("mitdenken");
     const sf = d.querySelector("#lzSelbst"); if (sf) sf.onclick = () => setzeModus("fahren");
     d.querySelector("#lzRegelnB").onclick = zeigeRegeln;
@@ -2631,7 +2632,7 @@
     $("#rLinks").onclick = () => setzLenk(-1); $("#rRechts").onclick = () => setzLenk(1); $("#rGerade").onclick = () => setzLenk(0);
     halt("#rGas", () => { if (fahr && fahr.rang) { fahr.gas = true; if (!laeuft && !fahr.ende) laeuft = true; } }, () => { if (fahr) fahr.gas = false; });
     halt("#rBrems", () => { if (fahr) fahr.bremse = true; }, () => { if (fahr) fahr.bremse = false; });
-    $("#rGang").onclick = () => { if (!fahr || !fahr.rang) return; if (fahr.v > 0.03) { zeigeToast("Gang nur im Stand wechseln."); return; } fahr.gang = -fahr.gang; fahr.sperre = 0; aktualisiereRangUI(); };
+    $("#rGang").onclick = () => { if (!fahr || !fahr.rang) return; if (fahr.v > 0.03) { zeigeToast(T("tGang")); return; } fahr.gang = -fahr.gang; fahr.sperre = 0; aktualisiereRangUI(); };
     $("#rBlick").onclick = () => { if (!fahr || !fahr.rang) return; if (!laeuft && !fahr.ende) laeuft = true; fahr.blickT = fahr.t; fahr.schulter.push({ von: fahr.t, bis: fahr.t + 1.2, seite: "rundum" }); };
     const blink = seite => () => { if (!fahr || !fahr.rang) return; if (!laeuft && !fahr.ende) laeuft = true; fahr.blinker = fahr.blinker === seite ? null : seite; fahr.log.push({ t: fahr.t, typ: "blink", seite: fahr.blinker }); aktualisiereRangUI(); };
     $("#rBL").onclick = blink("links"); $("#rBR").onclick = blink("rechts");
@@ -2674,7 +2675,7 @@
       if (zug.art === "fz") { const w = welt(e.clientX, e.clientY); zug.o.dx = zug.dx0 + (w.x - zug.sx); zug.o.dy = zug.dy0 + (w.y - zug.sy); }
       else { ansicht.px = zug.px - (e.clientX - zug.sx) / ansicht.zoom; ansicht.py = zug.py - (e.clientY - zug.sy) / ansicht.zoom; }
     });
-    const ende = e => { zeiger.delete(e.pointerId); if (zeiger.size < 2) pinch = null; if (zug && zug.art === "fz" && (Math.abs(zug.o.dx - zug.dx0) > 0.5 || Math.abs(zug.o.dy - zug.dy0) > 0.3)) zeigeToast("Fahrzeug verschoben. ▶ zeigt, wie es weitergeht, ↺ setzt zurück."); zug = null; };
+    const ende = e => { zeiger.delete(e.pointerId); if (zeiger.size < 2) pinch = null; if (zug && zug.art === "fz" && (Math.abs(zug.o.dx - zug.dx0) > 0.5 || Math.abs(zug.o.dy - zug.dy0) > 0.3)) zeigeToast(T("tVerschoben")); zug = null; };
     stage.addEventListener("pointerup", ende); stage.addEventListener("pointercancel", ende);
     stage.addEventListener("wheel", e => { e.preventDefault(); ansicht.zoom = clamp(ansicht.zoom * (e.deltaY < 0 ? 1.1 : 0.9), 1, 14); zoomUser = true; }, { passive: false });
   }
