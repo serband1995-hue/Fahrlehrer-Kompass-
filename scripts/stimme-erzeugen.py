@@ -234,6 +234,7 @@ def main():
                 if fehler == 0:
                     open(pf, "wb").write(mp3); ok = fehler == 0; break
                 if k == 3: open(pf, "wb").write(bester[1]); ok = False   # bester Versuch bleibt, Satz steht im Bericht
+            if not os.path.exists(pf) and bester: open(pf, "wb").write(bester[1]); ok = False   # z. B. Budget-Ende mitten in den Versuchen: besten Versuch behalten, keine Lücke im Index
             bericht["eintraege"][key] = {"stand": st, "text": t, "sprich": sprich(t, sprache), "ok": ok, "versuche": versuche}
             if os.path.exists(pf): neu[st] = {"f": f, "d": dauer(pf)}
             json.dump(bericht, open(bericht_pfad, "w", encoding="utf-8"), ensure_ascii=False, indent=1)
