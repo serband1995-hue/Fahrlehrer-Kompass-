@@ -281,7 +281,7 @@
     if (sc.gr) return sc.gr; const t = vzTeile(sc.typ), f = t && VZ_TEIL[t[0].n].form;
     return kat === "autobahn" ? 3 : kat === "ueberland" && f === "ronde" ? 3 : 2;
   }
-  const VZ_OBEN = 2.5, VZ_3D = 1, VZ_MIN = 34;   // Vergrößerung: von oben 2,5-fach (Lesbarkeit), in 3D echte Größe; VZ_MIN: 900 mm sind oben mindestens so viele CSS-Pixel breit
+  const VZ_OBEN = 2.5, VZ_3D = 1.8, VZ_MIN = 34;   // Vergrößerung: von oben 2,5-fach (Lesbarkeit), in 3D 1,8-fach (am Handy lesbar, für alle Schilder gleich); VZ_MIN: 900 mm sind oben mindestens so viele CSS-Pixel breit
   const VZ_Z0 = { z450: 0.6 };                  // Unterkante in m, sonst 2,0 (VwV Rn. 42)
   const vzStrasse = (st, x, y) => { const f = st.flaechen; for (let i = f.length - 1; i >= 0; i--) { const p = f[i].poly, bb = p._bb || (p._bb = bbox(p)); if (x < bb[0] || x > bb[2] || y < bb[1] || y > bb[3]) continue; if (punktIn(x, y, p)) return !!(STRASSE[f[i].art] || f[i].art === "weiss"); } return false; };
   // Schildfläche in 3D (von oben gesehen eine Strecke quer zur Blickrichtung): Endpunkte in m

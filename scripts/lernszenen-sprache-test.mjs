@@ -67,7 +67,7 @@ for (const [loc, soll] of [["de-DE", "de"], ["en-GB", "en"], ["en-US", "en"], ["
     return { out, phasen, dateien: dateien.length, fehlen };
   });
   pruefe("Englisch: alle Szenen übersetzt, ohne Nummern, mit Aufnahme", r.out.length === 0, r.out.slice(0, 8).join(" | "));
-  pruefe("Englisch: 168 Phasen, 168 Aufnahmen abrufbar", r.phasen === 168 && r.dateien === 168 && r.fehlen === 0, JSON.stringify({ p: r.phasen, d: r.dateien, f: r.fehlen }));
+  pruefe("Englisch: 190 Phasen, 190 Aufnahmen abrufbar", r.phasen === 190 && r.dateien === 190 && r.fehlen === 0, JSON.stringify({ p: r.phasen, d: r.dateien, f: r.fehlen }));
   // Szene auf Englisch: Knöpfe, Mitdenken-Frage, Stimme spielt englische Datei
   let gespielt = [];
   await page.exposeFunction("merke", s => gespielt.push(s));

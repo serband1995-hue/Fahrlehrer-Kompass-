@@ -53,7 +53,7 @@ for (const quer of [false, true]) {
   await page.goto(basis); await page.waitForFunction(() => window.Lernszenen && window.Lernszenen.open, null, { timeout: 15000 });
   const t0 = quer ? "quer " : "hoch ";
   const ids = await page.evaluate(() => window.Lernszenen._szenen.map(s => s.id));
-  pruefe(t0 + "32 Szenen", ids.length === 32, String(ids.length));
+  pruefe(t0 + "36 Szenen", ids.length === 36, String(ids.length));
   for (const id of ids) {
     const t = t0 + id + ": ";
     await page.evaluate(() => window.Lernszenen.open({})); await page.waitForSelector("[data-kat]", { state: "attached" });
