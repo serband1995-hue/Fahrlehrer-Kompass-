@@ -277,7 +277,7 @@
     const t = VZ_TEIL[n];
     if (t.kat) {
       const e = vzSvg(t.kat, true);
-      if (e.ok) { g.drawImage(e.img, 0, 0, w, h); if (n === "z274" && sc.zahl && sc.zahl !== "60") { vzKreis(g, w / 2, h / 2, 0.33 * w, "#fff"); vzText(g, sc.zahl, w / 2, w / 2, (sc.zahl.length > 2 ? 0.27 : 0.3) * w, 0.54 * w, "#000"); } return true; }
+      if (e.ok) { g.drawImage(e.img, 0, 0, w, h); if (n === "z274" && sc.zahl && sc.zahl !== "60") { vzKreis(g, w / 2, h / 2, 0.33 * w, "#fff"); vzText(g, sc.zahl, w / 2, w / 2, (sc.zahl.length > 2 ? 0.36 : 0.4) * w, 0.54 * w, "#000"); } return true; }
       const alt = SCHILD_BILD[n] || (n === "z205" || n === "z206" || n === "z215" || n === "z306" ? schildBild(n) : null);
       if (t.mal) t.mal(g, w, h, sc); else if (alt) g.drawImage(alt, 0, 0, w, h); return false;
     }
@@ -683,11 +683,11 @@
       { typ: "z450_3", x: -360, y: W + 3 }, { typ: "z450_2", x: -260, y: W + 3 }, { typ: "z450_1", x: -160, y: W + 3 },
       { typ: "z332", x: -20, y: 2 * W }, { typ: "z333", x: p333[0], y: p333[1], frei: true }, { typ: "z274_60", x: p60[0], y: p60[1], aussen: a60, blick: [-a60[1], a60[0]] }
     ].map(sc => Object.assign({ aussen: [0, 1], blick: [-1, 0] }, sc));   // rechts der Fahrbahn, für den Verkehr nach Osten; 333 steht in der Trenninsel (frei: kein Normabstand)
-    const fsPfad = pfad(spurPfad(-1100, AE, yLi, [{ x: -800, y: yR, laenge: 90 }, { x: 0, y: yA, laenge: 60 }]).concat(rampeMitte.slice(1)));
+    const fsPfad = pfad(spurPfad(-1270, AE, yLi, [{ x: -970, y: yR, laenge: 90 }, { x: 0, y: yA, laenge: 60 }]).concat(rampeMitte.slice(1)));
     const fs = { id: "fs", typ: "fahrschule", farbe: "#f2f2ee", fokus: true, pfad: fsPfad,
       tempo: tempoStrecke(fsPfad, [[-1270, 120], [-950, 115], [65, 115], [AE, 60], [AE + 200, 58]], fsPfad.sBeiX(-1090)) };
     const tx = x => tBeiX(fs, x);
-    fs.blinker = [{ von: tx(-1055), bis: tx(-875), seite: "rechts" }, { von: tx(-150), bis: tx(64), seite: "rechts" }];
+    fs.blinker = [{ von: tx(-1035), bis: tx(-875), seite: "rechts" }, { von: tx(-150), bis: tx(64), seite: "rechts" }];
     fs.schulter = [{ von: tx(-1005), bis: tx(-1005) + 0.9, seite: "rechts" }, { von: tx(-30), bis: tx(-30) + 0.9, seite: "rechts" }];
     const fahrzeuge = [fs,
       konstant("lkw1", "lkw", "#c9ced6", yR, 85, -920 - 130, tx(-920)),
