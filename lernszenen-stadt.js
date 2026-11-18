@@ -320,7 +320,7 @@
     li.push({ art: "leit", b: 0.15, pts: [[X0, 0], [xV0 - 150, 0]] }, { art: "voll", b: 0.15, pts: [[xV0 - 150, 0], [xV1, 0]] }, { art: "leit", b: 0.15, pts: [[xV1, 0], [X1, 0]] });
     for (let x = X0 + 20; x < X1; x += 50) { obj.push({ art: "poller", x, y: b + 1.2 }, { art: "poller", x: x + 25, y: -b - 1.2 }); }
     for (let x = X0 + 40; x < X1; x += 37) { if ((x / 37 | 0) % 3) obj.push({ art: "baum", x, y: (x / 37 | 0) % 2 ? b + 7 : -b - 7, r: 2.4 }); }
-    const schilder = [{ typ: "z274_100", x: -60, y: b + 1 }, { typ: "z276", x: xV0 - 150, y: b + 1 }, { typ: "z280", x: xV1, y: b + 1 }].map(sc => Object.assign(sc, { aussen: [0, 1], blick: [-1, 0] }));   // rechts, 1,5 m neben der Fahrbahn (beim Öffnen gestellt)
+    const schilder = [{ typ: "z276", x: xV0 - 150, y: b + 1 }, { typ: "z280", x: xV1, y: b + 1 }].map(sc => Object.assign(sc, { aussen: [0, 1], blick: [-1, 0] }));   // rechts, 1,5 m neben der Fahrbahn (beim Öffnen gestellt)
     const fs = fahrt("fs", "fahrschule", "#f2f2ee", spurPfad2(-400, X1 + 300, yR, [{ x: xA, y: yL, laenge: 38 }, { x: xB, y: yR, laenge: 38 }]), keys, 400 - 10.5, 0, { fokus: true,
       blinker: [{ von: tA - 1.8, bis: tA + 1.6, seite: "links" }, { von: tB - 0.8, bis: tE, seite: "rechts" }], schulter: [{ von: tA - 1.1, bis: tA - 0.3, seite: "links" }] });
     const lkw = fahrt("lkw", "lkw", "#c9ced6", [[-400, yR], [X1 + 500, yR]], [[0, 60]], 430, 0);
