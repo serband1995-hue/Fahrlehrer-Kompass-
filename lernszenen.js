@@ -261,7 +261,7 @@
   function vzSvg(name, kat) {   // Vorlage laden (SVG als Text, dann als Bild: unabhängig vom Content-Type des Servers; Katalogbild als WebP direkt); nach dem Laden werden die Schilder neu gebaut
     const key = (kat ? "kat/" : "") + name; if (VZ_SVG[key]) return VZ_SVG[key];
     const e = VZ_SVG[key] = { img: new Image(), ok: false };
-    if (kat) { e.img.onload = () => { e.ok = true; for (const k in VZ_BILD) if (VZ_BILD[k] && !VZ_BILD[k].fertig) delete VZ_BILD[k]; }; e.img.src = "schilder/kat/" + name + ".webp"; return e; }
+    if (kat) { e.img.onload = () => { e.ok = true; for (const k in VZ_BILD) if (VZ_BILD[k] && !VZ_BILD[k].fertig) delete VZ_BILD[k]; }; e.img.onerror = () => { if (!e.nochmal) { e.nochmal = true; setTimeout(() => { e.img.src = "schilder/kat/" + name + ".webp?n=1"; }, 2000); } }; e.img.src = "schilder/kat/" + name + ".webp"; return e; }
     try {
       fetch("schilder/" + name + ".svg").then(r => r.ok ? r.text() : Promise.reject(r.status)).then(t => {
         e.img.onload = () => { e.ok = true; for (const k in VZ_BILD) if (VZ_BILD[k] && !VZ_BILD[k].fertig) delete VZ_BILD[k]; };
@@ -719,7 +719,7 @@
         wechselBis: { "rechts>aus": AE - 5 },
         rampe: rampeMitte, rampeAb: AE, kurveX: p60[0], ziel: "aus",
         verkehr: [
-          { typ: "lkw", y: yR, x0: -790, v: 85, farbe: "#c9ced6" }, { typ: "transporter", y: yR, x0: -380, v: 100, farbe: "#e7e3d6" },
+          { typ: "lkw", y: yR, x0: -790, v: 85, farbe: "#c9ced6" }, { typ: "transporter", y: yR, x0: -550, v: 100, farbe: "#e7e3d6" },
           { typ: "pkw", y: yLi, x0: -1270, v: 138, farbe: "#2c5aa0" }
         ],
         tipps: [
@@ -1820,7 +1820,7 @@
     } else {
       const w1 = wechsel.find(x => x.von === "links" && x.nach === "rechts");
       const w2 = wechsel.find(x => x.von === "rechts" && x.nach === "aus");
-      ok(w1 && w1.x <= -300, "Früh eingeordnet", w1 ? (w1.x <= -300 ? "Rechtzeitig vor den Baken rechts eingeordnet." : "Sehr spät nach rechts gewechselt. Besser vor der 300-Meter-Bake.") : "Nicht nach rechts gewechselt.", "§ 7 Abs. 5 StVO");
+      ok(w1 && w1.x <= -360, "Früh eingeordnet", w1 ? (w1.x <= -360 ? "Rechtzeitig vor den Baken rechts eingeordnet." : "Sehr spät nach rechts gewechselt. Besser vor der 300-Meter-Bake.") : "Nicht nach rechts gewechselt.", "§ 7 Abs. 5 StVO");
       if (w1) { ok(w1.blinkerDauer >= 2, "Blinker beim Wechsel nach rechts", w1.blinkerDauer >= 2 ? "Rechtzeitig geblinkt." : "Nicht oder zu spät geblinkt.", "§ 7 Abs. 5 StVO"); ok(w1.schulter, "Schulterblick rechts", w1.schulter ? "Schulterblick gemacht." : "Schulterblick fehlte.", "§ 7 Abs. 5 StVO"); }
       if (w1) ok(!st.blinkerVergessen, "Blinker wieder aus", !st.blinkerVergessen ? "Nach dem Wechsel Blinker aus. Setze ihn erst vor der Ausfahrt wieder." : "Der Blinker blieb nach dem Wechsel an. Andere wissen dann nicht, was du vorhast.", "§ 7 Abs. 5 StVO");
       if (st.minVHaupt < Infinity) ok(st.minVHaupt >= 80, "Tempo gehalten", st.minVHaupt >= 80 ? "Bis zur Ausfahrt zügig weitergefahren." : `Auf der Autobahn bis auf Tempo ${Math.round(st.minVHaupt)} verlangsamt. Fahr ohne Grund nicht so langsam. Bremse erst auf dem Ausfädelungsstreifen.`, "§ 3 Abs. 2 · § 7a Abs. 3 StVO");
