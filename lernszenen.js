@@ -194,15 +194,32 @@
     z244_2: { kat: "z244p2", w: 600, h: 597.9, form: "quadrat", mal: (g, w, h) => vzFahrradstr(g, w, h, true) },
     z325_1: { kat: "z325p1", w: 900, h: 607.5, form: "rechteck", mal: (g, w, h) => vzBeruhigt(g, w, h, false) },
     z325_2: { kat: "z325p2", w: 900, h: 607.5, form: "rechteck", mal: (g, w, h) => vzBeruhigt(g, w, h, true) },
-    // ---- Katalogbild, Ersatz alte Zeichnung; z531, vorweg, weg: nicht im Katalog, alte Zeichnung in Außengröße
+    // ---- Katalogbild, Ersatz alte Zeichnung; z531, vorweg, weg: nicht im Katalog, in mm gezeichnet (Ziele wie auf 332 aus dem Katalog)
     z350: { kat: "z350-10", w: 600, h: 600, form: "quadrat", alt: true, mal: vzAlt("z350", [8, 8, 112, 112]) },
     z330: { kat: "z330p1", w: 600, h: 600, form: "quadrat", alt: true, mal: vzAlt("z330", [6, 6, 116, 116]) },
-    z531: { w: 1250, h: 1600, form: "fest", alt: true, mal: vzAlt("z531", [6, 6, 116, 116]) },
+    z531: { w: 1250, h: 1600, form: "fest", mal: vzEinengung },
     z332: { kat: "z332", w: 2800, h: 2364.4, form: "fest", alt: true, mal: vzAlt("z332", [4, 24, 120, 80]) },
     z333: { kat: "z333", w: 1500, h: 400, form: "fest", alt: true, mal: vzAlt("z333", [10, 10, 108, 108]) },
-    vorweg: { w: 3500, h: 2600, form: "fest", alt: true, mal: vzAlt("vorweg", [2, 18, 124, 92]) },
-    weg: { w: 3500, h: 2600, form: "fest", alt: true, mal: vzAlt("weg", [2, 18, 124, 92]) }
+    vorweg: { w: 3500, h: 2600, form: "fest", mal: (g, w, h) => vzVorweg(g, w, h, "1000 m") },
+    weg: { w: 3500, h: 2600, form: "fest", mal: (g, w, h) => vzVorweg(g, w, h, "500 m") }
   };
+  function vzEinengung(g, w, h) {   // 531: gelbe Tafel (Arbeitsstelle), schwarzer Rand; linker Fahrstreifen geht weiter, rechter endet und führt nach links
+    vzRR(g, 0, 0, w, h, 60); g.fillStyle = "#000"; g.fill(); vzRR(g, 25, 25, w - 50, h - 50, 40); g.fillStyle = VZ_GELB; g.fill();
+    g.save(); g.strokeStyle = "#000"; g.fillStyle = "#000"; g.lineWidth = 120; g.lineCap = "butt"; g.lineJoin = "round";
+    const xl = 0.33 * w, xr = 0.7 * w, spitze = (x, y, dx, dy) => { const l = Math.hypot(dx, dy), ux = dx / l, uy = dy / l; g.beginPath(); g.moveTo(x + ux * 170, y + uy * 170); g.lineTo(x - uy * 150, y + ux * 150); g.lineTo(x + uy * 150, y - ux * 150); g.closePath(); g.fill(); };
+    g.beginPath(); g.moveTo(xl, h - 120); g.lineTo(xl, 330); g.stroke(); spitze(xl, 330, 0, -1);
+    g.beginPath(); g.moveTo(xr, h - 120); g.lineTo(xr, 0.62 * h); g.quadraticCurveTo(xr, 0.5 * h, xl + 230, 0.4 * h); g.stroke(); spitze(xl + 230, 0.4 * h, -(xr - xl - 230), -0.1 * h);
+    g.restore();
+  }
+  function vzVorweg(g, w, h, dist) {   // Vorwegweiser Ausfahrt (vereinfacht): blaue Tafel, weißer Rand, Ziele, Ausfahrt-Sinnbild, Entfernung
+    vzRR(g, 0, 0, w, h, 120); g.fillStyle = VZ_BLAU; g.fill(); g.lineWidth = 40; g.strokeStyle = "#fff"; vzRR(g, 45, 45, w - 90, h - 90, 90); g.stroke();
+    vzText(g, "Mainz", 1350, 620, 330, 2200, "#fff"); vzText(g, "Wiesbaden", 1350, 1120, 330, 2200, "#fff");
+    g.fillStyle = "#fff"; vzRR(g, w - 900, 300, 640, 800, 40); g.fill();
+    g.save(); g.strokeStyle = "#000"; g.fillStyle = "#000"; g.lineWidth = 70; g.lineCap = "butt";
+    const x0 = w - 700; g.beginPath(); g.moveTo(x0, 1030); g.lineTo(x0, 380); g.stroke(); g.beginPath(); g.moveTo(x0, 900); g.quadraticCurveTo(x0 + 40, 700, x0 + 300, 560); g.stroke();
+    g.beginPath(); g.moveTo(x0 + 400, 510); g.lineTo(x0 + 230, 470); g.lineTo(x0 + 330, 650); g.closePath(); g.fill(); g.restore();
+    vzText(g, dist, w / 2, 1950, 380, w - 400, "#fff");
+  }
   function vzHaltverbot(g, w, kreuz) {   // 283/286: Ring wie 274, blau innen, rote Schrägbalken 80 mm (×w/600)
     const r = w / 2, k = w / 600; vzRing(g, w, VZ_ROT, VZ_BLAU);
     g.save(); g.beginPath(); g.arc(r, r, 215 * k, 0, 7); g.clip(); g.strokeStyle = VZ_ROT; g.lineWidth = 80 * k; g.beginPath(); g.moveTo(r - r, r - r); g.lineTo(r + r, r + r); if (kreuz) { g.moveTo(r + r, r - r); g.lineTo(r - r, r + r); } g.stroke(); g.restore();
@@ -260,7 +277,7 @@
     const t = VZ_TEIL[n];
     if (t.kat) {
       const e = vzSvg(t.kat, true);
-      if (e.ok) { g.drawImage(e.img, 0, 0, w, h); if (n === "z274" && sc.zahl && sc.zahl !== "60") { vzKreis(g, w / 2, h / 2, 0.355 * w, "#fff"); vzText(g, sc.zahl, w / 2, w / 2, 0.4 * w, 0.62 * w, "#000"); } return true; }
+      if (e.ok) { g.drawImage(e.img, 0, 0, w, h); if (n === "z274" && sc.zahl && sc.zahl !== "60") { vzKreis(g, w / 2, h / 2, 0.33 * w, "#fff"); vzText(g, sc.zahl, w / 2, w / 2, (sc.zahl.length > 2 ? 0.27 : 0.3) * w, 0.54 * w, "#000"); } return true; }
       const alt = SCHILD_BILD[n] || (n === "z205" || n === "z206" || n === "z215" || n === "z306" ? schildBild(n) : null);
       if (t.mal) t.mal(g, w, h, sc); else if (alt) g.drawImage(alt, 0, 0, w, h); return false;
     }
@@ -581,7 +598,8 @@
     g.linien.push({ art: "breit", b: 0.3, pts: [[EIN, W + 0.15], [ENDE, W + 0.15]] });     // Breitstrich (Zeichen 340, 6 m/6 m)
     g.linien.push({ art: "voll", b: 0.25, pts: versatz(rampeMitte, W / 2 - 0.15).concat([[ENDE, 2 * W - 0.15], [SPITZE, W + 0.15], [X1, W + 0.15]]) });
     g.linien.push({ art: "voll", b: 0.25, pts: versatz(rampeMitte, -W / 2 + 0.15).filter(p => p[0] <= xZw + 1) });
-    const schilder = [{ typ: "z330", x: rampeR[6][0], y: rampeR[6][1], aussen: [Math.SQRT1_2, Math.SQRT1_2], blick: [-Math.SQRT1_2, Math.SQRT1_2] }];   // rechts an der Rampe; Pfosten wird beim Öffnen auf 1,5 m Seitenabstand gestellt
+    const i330 = Math.max(0, rampeR.findIndex(p => p[0] > -105)), a330x = rampeR[i330][0] - rampeMitte[i330][0], a330y = rampeR[i330][1] - rampeMitte[i330][1], a330l = Math.hypot(a330x, a330y), a330 = [a330x / a330l, a330y / a330l];
+    const schilder = [{ typ: "z330", x: rampeR[i330][0], y: rampeR[i330][1], aussen: a330, blick: [-a330[1], a330[0]] }];   // rechts an der Rampe, kurz vor dem Start des Autos (sichtbar); Pfosten wird beim Öffnen auf 1,5 m Seitenabstand gestellt
 
     // Fahrschulauto: Rampe -> Einfädelungsstreifen -> Lücke hinter dem Lkw -> rechter Fahrstreifen
     const fsPfad = pfad(rampeMitte.concat(spurPfad(EIN + 2, X1 + 600, yE, [{ x: 110, y: yR, laenge: 60 }])));
@@ -644,7 +662,7 @@
 
   // ======================= Szene 2: Verlassen der Autobahn =======================
   (function () {
-    const X0 = -950, X1 = 560, A = 0, AE = 250;                // Ausfädelungsstreifen voll ab 0, Trennung (Spitze) bei 250
+    const X0 = -1120, X1 = 560, A = 0, AE = 250;                // Ausfädelungsstreifen voll ab 0, Trennung (Spitze) bei 250
     const yA = W * 1.5, yR = W / 2, yLi = -W / 2;
     const rampeMitte = bezier([AE, yA], [AE + 100, yA], [AE + 190, yA + 30], [AE + 270, 150], 50);
     const rampeL = versatz(rampeMitte, -W / 2), rampeR = versatz(rampeMitte, W / 2);
@@ -661,20 +679,20 @@
     // Pfeilzeichen 333 in der Trenninsel: dort, wo Rampe und Seitenstreifen weit genug auseinander sind
     const i333 = rampeL.findIndex(p => p[1] > W + 0.5 + 2.5 + 4.5), p333 = i333 > 0 ? [rampeL[i333][0], (rampeL[i333][1] + W + 3) / 2] : [AE + 60, W + 6];
     const schilder = [
-      { typ: "vorweg", x: -890, y: W + 3 }, { typ: "weg", x: -390, y: W + 3 },
-      { typ: "z450_3", x: -300, y: W + 3 }, { typ: "z450_2", x: -200, y: W + 3 }, { typ: "z450_1", x: -100, y: W + 3 },
+      { typ: "vorweg", x: -1060, y: W + 3 }, { typ: "weg", x: -560, y: W + 3 },   // 1000 m und 500 m vor Beginn des Ausfädelungsstreifens (-60)
+      { typ: "z450_3", x: -360, y: W + 3 }, { typ: "z450_2", x: -260, y: W + 3 }, { typ: "z450_1", x: -160, y: W + 3 },
       { typ: "z332", x: -20, y: 2 * W }, { typ: "z333", x: p333[0], y: p333[1], frei: true }, { typ: "z274_60", x: p60[0], y: p60[1], aussen: a60, blick: [-a60[1], a60[0]] }
     ].map(sc => Object.assign({ aussen: [0, 1], blick: [-1, 0] }, sc));   // rechts der Fahrbahn, für den Verkehr nach Osten; 333 steht in der Trenninsel (frei: kein Normabstand)
     const fsPfad = pfad(spurPfad(-1100, AE, yLi, [{ x: -800, y: yR, laenge: 90 }, { x: 0, y: yA, laenge: 60 }]).concat(rampeMitte.slice(1)));
     const fs = { id: "fs", typ: "fahrschule", farbe: "#f2f2ee", fokus: true, pfad: fsPfad,
-      tempo: tempoStrecke(fsPfad, [[-1100, 120], [-780, 115], [65, 115], [AE, 60], [AE + 200, 58]], fsPfad.sBeiX(-920)) };
+      tempo: tempoStrecke(fsPfad, [[-1270, 120], [-950, 115], [65, 115], [AE, 60], [AE + 200, 58]], fsPfad.sBeiX(-1090)) };
     const tx = x => tBeiX(fs, x);
-    fs.blinker = [{ von: tx(-885), bis: tx(-705), seite: "rechts" }, { von: tx(-150), bis: tx(64), seite: "rechts" }];
-    fs.schulter = [{ von: tx(-835), bis: tx(-835) + 0.9, seite: "rechts" }, { von: tx(-30), bis: tx(-30) + 0.9, seite: "rechts" }];
+    fs.blinker = [{ von: tx(-1055), bis: tx(-875), seite: "rechts" }, { von: tx(-150), bis: tx(64), seite: "rechts" }];
+    fs.schulter = [{ von: tx(-1005), bis: tx(-1005) + 0.9, seite: "rechts" }, { von: tx(-30), bis: tx(-30) + 0.9, seite: "rechts" }];
     const fahrzeuge = [fs,
-      konstant("lkw1", "lkw", "#c9ced6", yR, 85, -750 - 130, tx(-750)),
-      konstant("pkw1", "pkw", "#2c5aa0", yLi, 135, -850, tx(-850) + 6),
-      konstant("pkw2", "transporter", "#e7e3d6", yR, 100, -750 + 420, tx(-750)),
+      konstant("lkw1", "lkw", "#c9ced6", yR, 85, -920 - 130, tx(-920)),
+      konstant("pkw1", "pkw", "#2c5aa0", yLi, 135, -1020, tx(-1020) + 6),
+      konstant("pkw2", "transporter", "#e7e3d6", yR, 100, -920 + 420, tx(-920)),
       konstant("gg1", "pkw", "#7b8a52", g.gegenInnen, 120, -300, 12, { gegen: true }),
       konstant("gg2", "lkw", "#d6c9a8", g.gegenAussen, 85, 100, 22, { gegen: true })
     ];
@@ -683,10 +701,10 @@
       dauer: Math.ceil(tx(AE + 150)), strasse: { ...g, schilder, bereich: [X0, X1] }, fahrzeuge, kamera: { fokus: "fs", zoom: 6.5 },
       phasen: [
         { t: 0.3, titel: "Ausfahrt angekündigt", text: "Das Schild kündigt die Ausfahrt tausend Meter vorher an. Plane jetzt. Fahr früh auf den rechten Fahrstreifen und nicht erst in letzter Sekunde von links.", regel: "Zeichen 449 · § 7 Abs. 5 StVO", frage: { text: "Wann wechselst du nach rechts?", optionen: ["Direkt an der Ausfahrt", "Früh, spätestens vor den Baken", "Egal, notfalls über die Sperrfläche"], richtig: 1, erklaerung: "Ordne dich rechtzeitig ein. Dann klappt der Wechsel ohne Hektik und ohne jemanden zu gefährden." } },
-        { t: tx(-870), titel: "Spiegel, Blinker, Schulterblick", text: "So, jetzt geht es nach rechts. Innenspiegel, Außenspiegel, Blinker rechts, Schulterblick nach rechts. Dann wechselst du zügig auf den rechten Fahrstreifen.", regel: "§ 7 Abs. 5 StVO" },
-        { t: tx(-690), titel: "Rechts einordnen", text: "Bleib rechts und halte das Tempo. Den Blinker machst du wieder aus.", regel: "§ 2 Abs. 2 StVO (Rechtsfahrgebot)" },
-        { t: tx(-395), titel: "Schild 500 Meter", text: "Und hier wird die Ausfahrt fünfhundert Meter vorher noch einmal angekündigt. Überhole ab jetzt möglichst nicht mehr.", regel: "Zeichen 449" },
-        { t: tx(-305), titel: "Ankündigungsbaken", text: "Siehst du die Baken? Drei, zwei und ein Streifen zeigen noch dreihundert, zweihundert und hundert Meter bis zum Ausfädelungsstreifen.", regel: "Zeichen 450", frage: { text: "Was bedeutet die Bake mit zwei Streifen?", optionen: ["Noch 200 Meter bis zur Ausfahrt", "Tempo 200", "Zwei Fahrstreifen frei"], richtig: 0, erklaerung: "Drei Streifen sind 300 Meter, zwei sind 200 Meter und einer ist 100 Meter." } },
+        { t: tx(-1040), titel: "Spiegel, Blinker, Schulterblick", text: "So, jetzt geht es nach rechts. Innenspiegel, Außenspiegel, Blinker rechts, Schulterblick nach rechts. Dann wechselst du zügig auf den rechten Fahrstreifen.", regel: "§ 7 Abs. 5 StVO" },
+        { t: tx(-860), titel: "Rechts einordnen", text: "Bleib rechts und halte das Tempo. Den Blinker machst du wieder aus.", regel: "§ 2 Abs. 2 StVO (Rechtsfahrgebot)" },
+        { t: tx(-565), titel: "Schild 500 Meter", text: "Und hier wird die Ausfahrt fünfhundert Meter vorher noch einmal angekündigt. Überhole ab jetzt möglichst nicht mehr.", regel: "Zeichen 449" },
+        { t: tx(-365), titel: "Ankündigungsbaken", text: "Siehst du die Baken? Drei, zwei und ein Streifen zeigen noch dreihundert, zweihundert und hundert Meter bis zum Ausfädelungsstreifen.", regel: "Zeichen 450", frage: { text: "Was bedeutet die Bake mit zwei Streifen?", optionen: ["Noch 200 Meter bis zur Ausfahrt", "Tempo 200", "Zwei Fahrstreifen frei"], richtig: 0, erklaerung: "Drei Streifen sind 300 Meter, zwei sind 200 Meter und einer ist 100 Meter." } },
         { t: tx(-150), titel: "Blinker rechts", text: "Schau in den Spiegel und blinke rechtzeitig vor dem Ausfädelungsstreifen nach rechts. Der Verkehr hinter dir soll es früh sehen.", regel: "§ 7 Abs. 5 StVO" },
         { t: tx(-30), titel: "Spiegel, Schulterblick, rüber", text: "Dann Spiegel, Schulterblick nach rechts und über die breite Leitlinie auf den Ausfädelungsstreifen.", regel: "Zeichen 340 · § 7 Abs. 5 StVO" },
         { t: tx(66), titel: "Erst jetzt bremsen", text: "Erst auf dem Ausfädelungsstreifen bremst du, nicht vorher auf der Autobahn. Auf diesem Streifen darfst du nicht schneller fahren als auf den durchgehenden Fahrstreifen.", regel: "§ 7a Abs. 3 StVO", frage: { text: "Wo baust du das Tempo ab?", optionen: ["Schon auf dem rechten Fahrstreifen", "Auf dem Ausfädelungsstreifen", "Erst in der Kurve"], richtig: 1, erklaerung: "Bremsen auf der Autobahn gefährdet die Fahrer hinter dir. Bremse erst auf dem Ausfädelungsstreifen, vor der Kurve bis auf das angezeigte Tempo." } },
@@ -694,19 +712,19 @@
         { t: tx(AE + 70), titel: "Zum Merken", text: "Und wenn du die Ausfahrt verpasst? Dann fährst du weiter bis zur nächsten. Auf der Autobahn nie rückwärtsfahren oder wenden, auch nicht auf dem Seitenstreifen.", regel: "§ 18 Abs. 7 StVO" }
       ],
       fahren: {
-        start: { pfad: pfad(spurPfad(-1100, X1 + 600, yLi)), s: 200, v: 120 },
+        start: { pfad: pfad(spurPfad(-1270, X1 + 600, yLi)), s: 200, v: 120 },
         spuren: { links: yLi, rechts: yR, aus: yA }, spurStart: "links",
         wechselErlaubt: (x, von, nach) => (von === "rechts" && nach === "aus") ? x >= -60 && x <= AE - 40 : (von === "links" && nach === "rechts") || (von === "rechts" && nach === "links"),
         wechselHinweis: (x, von, nach) => nach === "aus" ? (x < -60 ? "Noch nicht: Der Ausfädelungsstreifen beginnt an der breiten Leitlinie." : "Zu spät für diese Ausfahrt. Fahr weiter bis zur nächsten.") : "Hier ist kein Fahrstreifenwechsel möglich.",
         wechselBis: { "rechts>aus": AE - 5 },
         rampe: rampeMitte, rampeAb: AE, kurveX: p60[0], ziel: "aus",
         verkehr: [
-          { typ: "lkw", y: yR, x0: -620, v: 85, farbe: "#c9ced6" }, { typ: "transporter", y: yR, x0: -380, v: 100, farbe: "#e7e3d6" },
-          { typ: "pkw", y: yLi, x0: -1100, v: 138, farbe: "#2c5aa0" }
+          { typ: "lkw", y: yR, x0: -790, v: 85, farbe: "#c9ced6" }, { typ: "transporter", y: yR, x0: -380, v: 100, farbe: "#e7e3d6" },
+          { typ: "pkw", y: yLi, x0: -1270, v: 138, farbe: "#2c5aa0" }
         ],
         tipps: [
-          { x: -880, text: "Die Ausfahrt kommt: Blinker rechts, Schulterblick, auf den rechten Fahrstreifen." },
-          { x: -300, text: "Baken: noch 300 Meter. Rechts bleiben, Tempo halten." },
+          { x: -1050, text: "Die Ausfahrt kommt: Blinker rechts, Schulterblick, auf den rechten Fahrstreifen." },
+          { x: -360, text: "Baken: noch 300 Meter. Rechts bleiben, Tempo halten." },
           { x: -150, text: "Blinker rechts, gleich beginnt der Ausfädelungsstreifen." },
           { x: -40, text: "Schulterblick rechts und rüber. Erst dort bremsen!" },
           { x: 150, text: "Bremse bis zum Schild „60“ auf Tempo 60 herunter." }

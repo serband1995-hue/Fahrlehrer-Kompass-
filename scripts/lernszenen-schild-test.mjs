@@ -48,7 +48,8 @@ const LAEUFE = {
   zone30: { y: 420, l: RAHMEN.concat([["weiss", 30]]), x: 420, ly: RAHMEN.concat([["weiss", 45 + 8], ["rot", 64.3], ["weiss", 20]]) },
   z1000_32: { y: 225, l: RAHMEN.concat([["weiss", 20]]) }, z1020_30: { y: 165, l: RAHMEN.concat([["weiss", 20]]) }, zkfz: { y: 225, l: RAHMEN.concat([["weiss", 8]]) },
   z244_1: { y: 300, l: RAHMEN.concat([["weiss", 40]]) }, z325_1: { y: 300, l: [["weiss", 16], ["blau", 30]] }, z325_2: { y: 300, l: [["weiss", 16], ["blau", 20]] },
-  z450: { y: 40, l: [["grau", 6], ["weiss", 20]] }
+  z450: { y: 40, l: [["grau", 6], ["weiss", 20]] },
+  z531: { y: 800, l: [["schwarz", 25], ["gelb", 20]] }, vorweg: { y: 1300, l: [["blau", 25], ["weiss", 40], ["blau", 20]] }, weg: { y: 1300, l: [["blau", 25], ["weiss", 40], ["blau", 20]] }
 };
 
 // ------------------------------------------------------------ Geometrie und Bilder (ohne Ansicht)
