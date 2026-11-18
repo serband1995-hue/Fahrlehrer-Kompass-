@@ -1,7 +1,6 @@
 // Prüfer-Akte-Test (18.11.2026): Reiter „Schüler“, „Strecken & Notizen“, „Profil“; Notiz der Prüfung erscheint; Briefing zeigt letzte Strecke.
 // Keine Datenbank: Fremdanfragen blockiert, getSupa() ist eine Attrappe.
 // Aufruf:  NODE_PATH=$(npm root -g) node scripts/pruefer-akte-test.mjs
-// Aufruf:  NODE_PATH=$(npm root -g) node scripts/reiter-test.mjs
 import { createRequire } from "node:module";
 import { createServer } from "node:http";
 import { readFile } from "node:fs/promises";
@@ -88,12 +87,12 @@ for (const [w, h] of [[360, 780], [412, 915], [780, 360]]) {
     const f = [];
     for (const sel of ["#pfNote", "#tagAdd", "#renamePruefer", "#delPruefer"]) if (!(await page.locator(sel).count())) f.push(`fehlt ${sel}`);
     if (await breiter(page)) f.push("seitlich scrollbar");
-    await page.screenshot({ path: `/tmp/claude-0/-home-user/e43c3a71-465f-52f8-9cc8-559e63cf5278/scratchpad/akte-profil-${w}.png` }).catch(() => {});
+    await page.screenshot({ path: `${process.env.BILDER_DIR||"/tmp"}/akte-profil-${w}.png` }).catch(() => {});
     return f;
   });
   await pruefe(`D ${w}`, "Tipp auf Schüler öffnet den Schüler", async () => {
     await page.click('[data-pftab="schueler"]'); await page.waitForTimeout(200);
-    await page.screenshot({ path: `/tmp/claude-0/-home-user/e43c3a71-465f-52f8-9cc8-559e63cf5278/scratchpad/akte-schueler-${w}.png` }).catch(() => {});
+    await page.screenshot({ path: `${process.env.BILDER_DIR||"/tmp"}/akte-schueler-${w}.png` }).catch(() => {});
     await page.locator('.pf-exam-btn[data-sid="t1"]').click(); await page.waitForTimeout(300);
     const t = await text(page);
     if (!t.includes("Erfundene Testperson Eins")) return "Schülerseite nicht geöffnet";

@@ -16414,7 +16414,7 @@ function routePrueferListe(){
   $("#backBtn").addEventListener("click",routePruefungen);
   $("#addPruefer").addEventListener("click",()=>{ const name=(prompt("Name des Prüfers")||"").trim(); if(!name)return; if(!DB.pruefer.includes(name)){DB.pruefer.push(name);DB.pruefer.sort((a,b)=>a.localeCompare(b,'de'));} ensurePruefer(name); save(); routePrueferAkte(name); });
   document.querySelectorAll(".pf-bang").forEach(b=>b.addEventListener("click",e=>{ e.stopPropagation(); const nm=b.dataset.bang; const q=document.querySelector(`.pf-quick[data-quick="${CSS.escape(nm)}"]`); const open=!q.hidden; document.querySelectorAll(".pf-quick").forEach(x=>x.hidden=true); document.querySelectorAll(".pf-bang").forEach(x=>x.classList.remove("on")); if(!open){ q.hidden=false; b.classList.add("on"); } }));
-  document.querySelectorAll("[data-open]").forEach(b=>b.addEventListener("click",e=>{ e.stopPropagation(); routePrueferAkte(b.dataset.open); }));
+  document.querySelectorAll("[data-open]").forEach(b=>b.addEventListener("click",e=>{ e.stopPropagation(); _pfTab="schueler"; routePrueferAkte(b.dataset.open); }));
 }
 function routePruefer(){ routePrueferListe(); }
 function mergePruefer(alt,neu){
@@ -16461,7 +16461,7 @@ function routePrueferAkte(nm){
   $("#tbTitle").textContent="Prüfer"; setFab(false); view.scrollTop=0;
   const exForPr=DB.exams.filter(e=>e.pruefer===nm).sort((a,b)=>(""+b.date).localeCompare(""+a.date));
   const verlauf=prueferVerlauf(nm);
-  const mitNotiz=verlauf.filter(e=>e.note||e.eingNote||(e.result==="fail"&&e.faults.length));
+  const mitNotiz=verlauf.filter(e=>!e.b197&&(e.note||e.eingNote||(e.result==="fail"&&e.faults.length)));
   if(!["schueler","strecken","profil"].includes(_pfTab))_pfTab="schueler";
   const bestanden=verlauf.filter(e=>!e.b197&&e.result==="pass").length, durch=verlauf.filter(e=>!e.b197&&e.result==="fail").length;
   const tabSchueler=verlauf.length?`<p class="muted-p" style="font-size:12.5px;margin:0 0 6px;">${bestanden} bestanden · ${durch} nicht bestanden</p>`+verlauf.map(e=>`<button class="pf-exam pf-exam-btn" data-sid="${esc(e.sid||"")}"><span class="pe-date">${e.date?isoDE(e.date):"—"}</span><span class="pe-name">${esc(e.name||"—")}${e.note?' <span class="pe-note-ic">· Notiz</span>':''}${e.alt?' <span class="pe-alt">ohne Prüfungseintrag</span>':''}</span>${_pfErg(e)}<span class="pf-pfeil" aria-hidden="true">›</span></button>`).join(""):`<p class="h2-nichts">Noch keine Prüfung mit ${esc(nm)} eingetragen.</p>`;
