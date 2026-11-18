@@ -153,33 +153,33 @@
   // Teile: kat = Bild aus dem Verkehrszeichen-Katalog (schilder/kat/*.webp, aus dem FahrCampus, ADCO-Katalog 2026; h = w × Seitenverhältnis des Bilds),
   // svg = amtliche Vorlage (schilder/*.svg), mal = selbst gezeichnet (Koordinaten in mm) bzw. Ersatz, solange das Katalogbild lädt; w/h in mm bei Größe 2; form für Größe 3
   const VZ_TEIL = {
-    z205: { kat: "z205", w: 847.16, h: 749.7, form: "dreieck" },                // Seitenlänge 900, Ecken gerundet
-    z206: { kat: "z206", w: 900, h: 900, form: "achteck" },
-    z215: { kat: "z215", w: 600, h: 600, form: "ronde" },
-    z306: { kat: "z306", w: 848.5, h: 845.6, form: "quadrat" },                  // Seitenlänge 600, über Eck 849
+    z205: { kat: "z205", w: 847.16, h: 745.5, form: "dreieck" },                // Seitenlänge 900, Ecken gerundet
+    z206: { kat: "z206", w: 900, h: 900.0, form: "achteck" },
+    z215: { kat: "z215", w: 600, h: 600.0, form: "ronde" },
+    z306: { kat: "z306", w: 848.5, h: 848.5, form: "quadrat" },                  // Seitenlänge 600, über Eck 849
     z1002_10: { svg: "z1002-10", w: 601, h: 601, form: "zusatz" }, z1002_11: { svg: "z1002-11", w: 601, h: 601, form: "zusatz" },
     z1002_20: { svg: "z1002-20", w: 601, h: 601, form: "zusatz" }, z1002_21: { svg: "z1002-21", w: 601, h: 601, form: "zusatz" },
-    z1022_10: { kat: "z1022-10", w: 600, h: 458.1, form: "zusatz" },
-    z220_20: { kat: "z220-20", w: 800, h: 317.8, form: "rechteck" },
-    z220_10: { kat: "z220-10", w: 800, h: 318.6, form: "rechteck" },
-    z250: { kat: "z250", w: 600, h: 598, form: "ronde" },
-    z267: { kat: "z267", w: 600, h: 600, form: "ronde" },
+    z1022_10: { kat: "z1022-10", w: 600, h: 452.1, form: "zusatz" },
+    z220_20: { kat: "z220-20", w: 800, h: 305.7, form: "rechteck" },
+    z220_10: { kat: "z220-10", w: 800, h: 304.3, form: "rechteck" },
+    z250: { kat: "z250", w: 600, h: 600.0, form: "ronde" },
+    z267: { kat: "z267", w: 600, h: 600.0, form: "ronde" },
     // ---- Katalogbild; die Zeichnung (mal) dient nur als Ersatz, solange das Bild lädt. 274: Katalog zeigt „60“, andere Zahlen werden auf die weiße Fläche gesetzt
-    z274: { kat: "z274", w: 600, h: 600, form: "ronde", mal: (g, w, h, sc) => { vzRing(g, w, VZ_ROT, "#fff"); vzText(g, sc.zahl, w / 2, w / 2, 0.4 * w, 0.62 * w, "#000"); } },
-    z276: { kat: "z276", w: 600, h: 600, form: "ronde", mal: (g, w) => { vzRing(g, w, VZ_ROT, "#fff"); vzAuto(g, 0.36 * w, 0.5 * w, 0.2 * w, VZ_ROT); vzAuto(g, 0.64 * w, 0.5 * w, 0.2 * w, "#000"); } },
-    z280: { kat: "z280", w: 600, h: 598, form: "ronde", mal: (g, w) => {
+    z274: { kat: "z274", w: 600, h: 602.1, form: "ronde", mal: (g, w, h, sc) => { vzRing(g, w, VZ_ROT, "#fff"); vzText(g, sc.zahl, w / 2, w / 2, 0.4 * w, 0.62 * w, "#000"); } },
+    z276: { kat: "z276", w: 600, h: 602.1, form: "ronde", mal: (g, w) => { vzRing(g, w, VZ_ROT, "#fff"); vzAuto(g, 0.36 * w, 0.5 * w, 0.2 * w, VZ_ROT); vzAuto(g, 0.64 * w, 0.5 * w, 0.2 * w, "#000"); } },
+    z280: { kat: "z280", w: 600, h: 600.0, form: "ronde", mal: (g, w) => {
       const r = w / 2; vzKreis(g, r, r, r, "#000"); vzKreis(g, r, r, r - 0.4 * w / 600, "#fff"); vzKreis(g, r, r, r - 10 * w / 600, "#6f6f6f"); vzKreis(g, r, r, r - 18 * w / 600, "#fff");
       vzAuto(g, 0.36 * w, 0.5 * w, 0.2 * w, "#8a8a8a"); vzAuto(g, 0.64 * w, 0.5 * w, 0.2 * w, "#8a8a8a");
       g.save(); g.beginPath(); g.arc(r, r, r - 18 * w / 600, 0, 7); g.clip(); g.strokeStyle = "#000"; g.lineWidth = 0.012 * w;
       for (let i = -2; i <= 2; i++) { const d = i * 0.035 * w; g.beginPath(); g.moveTo(r - 0.5 * w + d, r + 0.5 * w + d); g.lineTo(r + 0.5 * w + d, r - 0.5 * w + d); g.stroke(); } g.restore(); } },
-    z283: { kat: "z283", w: 600, h: 602, form: "ronde", mal: (g, w) => vzHaltverbot(g, w, true) },
-    z286: { kat: "z286", w: 600, h: 600, form: "ronde", mal: (g, w) => vzHaltverbot(g, w, false) },
-    z224: { kat: "z224", w: 420, h: 420, form: "fest", mal: (g, w) => {   // Haltestelle (VzKat nur 420): gelb, grüner Ring, grünes H
+    z283: { kat: "z283", w: 600, h: 600.0, form: "ronde", mal: (g, w) => vzHaltverbot(g, w, true) },
+    z286: { kat: "z286", w: 600, h: 597.9, form: "ronde", mal: (g, w) => vzHaltverbot(g, w, false) },
+    z224: { kat: "z224", w: 420, h: 418.5, form: "fest", mal: (g, w) => {   // Haltestelle (VzKat nur 420): gelb, grüner Ring, grünes H
       const r = w / 2, k = w / 420; vzKreis(g, r, r, r, "#000"); vzKreis(g, r, r, r - 0.4 * k, "#fff"); vzKreis(g, r, r, r - 7 * k, VZ_GRUEN); vzKreis(g, r, r, r - 35 * k, VZ_GELB);
       vzText(g, "H", r, r, 0.5 * w, 0.5 * w, VZ_GRUEN); } },
-    zone30: { kat: "z274p1", w: 840, h: 840, form: "fest", mal: (g, w, h) => {   // 274.1 (VzKat 840 × 840): Zeichen 274 (Ø 480) über „ZONE“
+    zone30: { kat: "z274p1", w: 840, h: 840.0, form: "fest", mal: (g, w, h) => {   // 274.1 (VzKat 840 × 840): Zeichen 274 (Ø 480) über „ZONE“
       vzRahmen(g, w, h); g.save(); g.translate(w / 2 - 240, 70); vzRing(g, 480, VZ_ROT, "#fff"); vzText(g, "30", 240, 240, 192, 300, "#000"); g.restore(); vzText(g, "ZONE", w / 2, 690, 120, 560, "#000"); } },
-    z201: { kat: "z201-50", w: 850, h: 1256.9, form: "fest", mal: (g, w, h) => {   // Andreaskreuz (Katalog stehend; Maß geschätzt), Ersatz: Balken 1350 × 180
+    z201: { kat: "z201-50", w: 850, h: 1285.7, form: "fest", mal: (g, w, h) => {   // Andreaskreuz (Katalog stehend; Maß geschätzt), Ersatz: Balken 1350 × 180
       g.save(); g.translate(w / 2, h / 2); [0.611, -0.611].forEach(a => { g.save(); g.rotate(a); g.fillStyle = VZ_ROT; g.fillRect(-675, -90, 1350, 180); g.restore(); });
       [0.611, -0.611].forEach(a => { g.save(); g.rotate(a); g.fillStyle = "#fff"; g.fillRect(-645, -60, 1290, 120); g.restore(); }); g.restore(); } },
     z450: { w: 650, h: 1500, form: "fest", mal: (g, w, h, sc) => {   // Ankündigungsbake 650 × 1500, rote Schrägbalken zur Fahrbahn hin fallend
@@ -187,19 +187,19 @@
       g.save(); g.beginPath(); g.rect(0, 0, w, h); g.clip(); g.fillStyle = VZ_ROT; const n = +sc.zahl, st = 220;
       for (let i = 0; i < n; i++) { const y = h / 2 + (i - (n - 1) / 2) * 2.1 * st; g.beginPath(); g.moveTo(-20, y + 0.55 * w); g.lineTo(w + 20, y - 0.55 * w + 0); g.lineTo(w + 20, y - 0.55 * w + st); g.lineTo(-20, y + 0.55 * w + st); g.closePath(); g.fill(); }
       g.restore(); } },
-    z1000_32: { kat: "z1000-32", w: 600, h: 456.1, form: "zusatz", mal: (g, w, h) => { vzRahmen(g, w, h); vzRad(g, w / 2, 0.37 * h, 0.25 * w, "#000"); vzPfeil(g, 70, w - 70, 0.78 * h, 30, "#000"); } },   // Radverkehr kreuzt von links und rechts
-    z1020_30: { kat: "z1020-30", w: 600, h: 342.5, form: "zusatz", mal: (g, w, h) => { vzRahmen(g, w, h); vzText(g, "Anlieger frei", w / 2, h / 2, 110, w - 110, "#000"); } },
+    z1000_32: { kat: "z1000-32", w: 600, h: 454.2, form: "zusatz", mal: (g, w, h) => { vzRahmen(g, w, h); vzRad(g, w / 2, 0.37 * h, 0.25 * w, "#000"); vzPfeil(g, 70, w - 70, 0.78 * h, 30, "#000"); } },   // Radverkehr kreuzt von links und rechts
+    z1020_30: { kat: "z1020-30", w: 600, h: 331.7, form: "zusatz", mal: (g, w, h) => { vzRahmen(g, w, h); vzText(g, "Anlieger frei", w / 2, h / 2, 110, w - 110, "#000"); } },
     zkfz: { w: 600, h: 450, form: "zusatz", mal: (g, w, h) => { vzRahmen(g, w, h); vzText(g, "Kraftfahrzeuge", w / 2, 0.36 * h, 92, w - 100, "#000"); vzText(g, "frei", w / 2, 0.7 * h, 92, w - 100, "#000"); } },
-    z244_1: { kat: "z244p1", w: 600, h: 600, form: "quadrat", mal: (g, w, h) => vzFahrradstr(g, w, h, false) },
-    z244_2: { kat: "z244p2", w: 600, h: 597.9, form: "quadrat", mal: (g, w, h) => vzFahrradstr(g, w, h, true) },
-    z325_1: { kat: "z325p1", w: 900, h: 607.5, form: "rechteck", mal: (g, w, h) => vzBeruhigt(g, w, h, false) },
-    z325_2: { kat: "z325p2", w: 900, h: 607.5, form: "rechteck", mal: (g, w, h) => vzBeruhigt(g, w, h, true) },
+    z244_1: { kat: "z244p1", w: 600, h: 600.0, form: "quadrat", mal: (g, w, h) => vzFahrradstr(g, w, h, false) },
+    z244_2: { kat: "z244p2", w: 600, h: 600.0, form: "quadrat", mal: (g, w, h) => vzFahrradstr(g, w, h, true) },
+    z325_1: { kat: "z325p1", w: 900, h: 602.5, form: "rechteck", mal: (g, w, h) => vzBeruhigt(g, w, h, false) },
+    z325_2: { kat: "z325p2", w: 900, h: 602.5, form: "rechteck", mal: (g, w, h) => vzBeruhigt(g, w, h, true) },
     // ---- Katalogbild, Ersatz alte Zeichnung; z531, vorweg, weg: nicht im Katalog, in mm gezeichnet (Ziele wie auf 332 aus dem Katalog)
-    z350: { kat: "z350-10", w: 600, h: 600, form: "quadrat", alt: true, mal: vzAlt("z350", [8, 8, 112, 112]) },
-    z330: { kat: "z330p1", w: 600, h: 600, form: "quadrat", alt: true, mal: vzAlt("z330", [6, 6, 116, 116]) },
+    z350: { kat: "z350-10", w: 600, h: 597.8, form: "quadrat", alt: true, mal: vzAlt("z350", [8, 8, 112, 112]) },
+    z330: { kat: "z330p1", w: 600, h: 598.0, form: "quadrat", alt: true, mal: vzAlt("z330", [6, 6, 116, 116]) },
     z531: { w: 1250, h: 1600, form: "fest", mal: vzEinengung },
-    z332: { kat: "z332", w: 2800, h: 2364.4, form: "fest", alt: true, mal: vzAlt("z332", [4, 24, 120, 80]) },
-    z333: { kat: "z333", w: 1500, h: 400, form: "fest", alt: true, mal: vzAlt("z333", [10, 10, 108, 108]) },
+    z332: { kat: "z332", w: 2800, h: 2349.2, form: "fest", alt: true, mal: vzAlt("z332", [4, 24, 120, 80]) },
+    z333: { kat: "z333", w: 1500, h: 400.0, form: "fest", alt: true, mal: vzAlt("z333", [10, 10, 108, 108]) },
     vorweg: { w: 3500, h: 2600, form: "fest", mal: (g, w, h) => vzVorweg(g, w, h, "1000 m") },
     weg: { w: 3500, h: 2600, form: "fest", mal: (g, w, h) => vzVorweg(g, w, h, "500 m") }
   };
