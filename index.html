@@ -1244,6 +1244,26 @@ body.light .dt-n{background:linear-gradient(160deg,#1d3324 10%,#2f5d3f 90%);-web
 .pf-add-route{width:100%;border:1px dashed var(--line);border-radius:12px;padding:13px;color:var(--mint-soft);font-weight:700;font-size:13.5px;background:var(--gruen-soft);}
 #pfNote{width:100%;background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:13px;color:var(--txt);font-size:14px;font-family:inherit;resize:vertical;}
 .pf-note-hint{font-size:12px;color:var(--gruen-ampel,#4caf72);font-weight:700;margin-top:6px;}
+.pf-exam-btn{width:100%;text-align:left;background:transparent;color:inherit;min-height:44px;}
+.pf-exam-btn:active{opacity:.6;}
+.pe-name{min-width:0;overflow-wrap:anywhere;}
+.pf-tabs{margin:2px 0 14px;}
+.pf-tabs .seg-i{flex:1;white-space:nowrap;}
+.pf-tab-n{font-size:11px;opacity:.7;font-weight:700;}
+.pf-nz{background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:12px 13px;margin-bottom:9px;}
+.pf-nz-h{display:flex;align-items:center;justify-content:space-between;gap:10px;font-size:13px;}
+.pf-nz-name{font-weight:700;font-size:14px;margin-top:4px;overflow-wrap:anywhere;}
+.pf-nz-t{border-top:1px solid var(--line-soft);padding-top:8px;}
+.pf-exam-btn .pe-res{white-space:nowrap;}
+.pe-alt{display:block;font-size:11px;font-weight:600;color:var(--muted);}
+.pf-pfeil{color:var(--muted);font-size:18px;margin-left:2px;}
+.pe-note-ic{font-size:11px;font-weight:700;color:var(--mint-soft);margin-left:4px;white-space:nowrap;}
+.pf-tabbody .pf-block,#view[data-seite2] .pf-tabbody .pf-block{padding:14px;border-radius:12px;}
+.pf-route-x{min-width:44px;min-height:44px;margin:-9px -9px -9px 0;}
+.pf-tag.add{min-height:44px;padding:0 16px;}
+body.light .pe-res.no,body.light .pf-tag.warn{color:#9b2c1f;}
+
+.pf-nz-t{font-size:13.5px;line-height:1.6;margin-top:8px;white-space:pre-wrap;overflow-wrap:anywhere;}
 .pf-exam{display:flex;align-items:center;gap:10px;padding:10px 0;border-bottom:1px solid var(--line-soft);font-size:13px;}
 .pe-date{color:var(--muted);font-weight:600;font-size:12.5px;min-width:62px;}
 .pe-name{flex:1;font-weight:700;}
@@ -7534,7 +7554,7 @@ window.addEventListener("load", () => {
 const STORE_KEY="serband-app-v1";
 /* Build-Version: bei jeder Auslieferung hier das Datum aktualisieren.
    Wird in den Einstellungen angezeigt + für den Update-Hinweis genutzt. */
-const APP_VERSION="2026.11.18.2";
+const APP_VERSION="2026.11.18.3";
 try{const f=document.getElementById("drawerFoot"); if(f)f.textContent="Fahrlehrer-Kompass · Version "+APP_VERSION;}catch(e){}
 // Nutzungsbedingungen & Haftungsausschluss (Bereich: rechtliche Absicherung) - Version hochzählen
 // und alle Nutzer müssen erneut zustimmen, sobald sich der Text inhaltlich ändert.
@@ -14452,12 +14472,14 @@ function prueferHintHTML(nm){
   if(!nm)return "";
   const pd=DB.prueferData&&DB.prueferData[nm]; if(!pd)return "";
   const st=prueferStats(nm);
-  const hasContent=(pd.tags&&pd.tags.length)||(pd.routen&&pd.routen.length)||pd.notiz||st.total;
+  const hasContent=(pd.tags&&pd.tags.length)||(pd.routen&&pd.routen.length)||pd.notiz||st.total||prueferVerlauf(nm).length;
   if(!hasContent)return `<div class="pr-brief"><div class="pr-brief-h">Briefing · ${esc(nm)}</div><p class="pr-brief-empty">Noch keine Infos zu diesem Prüfer. Nach der Prüfung kannst du in der Prüfer-Akte festhalten, worauf er achtet.</p></div>`;
   let h=`<div class="pr-brief"><div class="pr-brief-h">Briefing · ${esc(nm)}${st.total?` <span class="pr-brief-q">${st.quote.pct==null?'':st.quote.pct+' % · '}${st.total}×</span>`:''}</div>`;
   if(pd.tags&&pd.tags.length)h+=`<div class="pf-tags" style="margin-bottom:10px;">${pd.tags.map(t=>`<span class="pf-tag mini">${esc(t)}</span>`).join("")}</div>`;
   if(pd.routen&&pd.routen.length)h+=`<div class="pr-brief-route">${ICN.map?'':''}<b>Übliche Strecke:</b> ${pd.routen[0].map(esc).join(' › ')}</div>`;
   if(pd.notiz)h+=`<div class="pr-brief-note">${esc(pd.notiz)}</div>`;
+  const letzte=prueferVerlauf(nm).find(e=>e.note&&!e.b197);
+  if(letzte)h+=`<div class="pr-brief-route" style="margin-top:8px;"><b>Zuletzt (${isoDE(letzte.date)}):</b> ${esc(letzte.note.length>160?letzte.note.slice(0,157)+"…":letzte.note)}</div>`;
   h+=`</div>`; return h;
 }
 function renderResultStep(s){
@@ -16390,9 +16412,9 @@ function routePrueferListe(){
   });
   html+=`</div>`; view.innerHTML=html;
   $("#backBtn").addEventListener("click",routePruefungen);
-  $("#addPruefer").addEventListener("click",()=>{ const name=(prompt("Name des Prüfers")||"").trim(); if(!name)return; if(!DB.pruefer.includes(name)){DB.pruefer.push(name);DB.pruefer.sort((a,b)=>a.localeCompare(b,'de'));} ensurePruefer(name); save(); routePrueferAkte(name); });
+  $("#addPruefer").addEventListener("click",()=>{ const name=(prompt("Name des Prüfers")||"").trim(); if(!name)return; if(!DB.pruefer.includes(name)){DB.pruefer.push(name);DB.pruefer.sort((a,b)=>a.localeCompare(b,'de'));} ensurePruefer(name); save(); _pfTab="schueler"; routePrueferAkte(name); });
   document.querySelectorAll(".pf-bang").forEach(b=>b.addEventListener("click",e=>{ e.stopPropagation(); const nm=b.dataset.bang; const q=document.querySelector(`.pf-quick[data-quick="${CSS.escape(nm)}"]`); const open=!q.hidden; document.querySelectorAll(".pf-quick").forEach(x=>x.hidden=true); document.querySelectorAll(".pf-bang").forEach(x=>x.classList.remove("on")); if(!open){ q.hidden=false; b.classList.add("on"); } }));
-  document.querySelectorAll("[data-open]").forEach(b=>b.addEventListener("click",e=>{ e.stopPropagation(); routePrueferAkte(b.dataset.open); }));
+  document.querySelectorAll("[data-open]").forEach(b=>b.addEventListener("click",e=>{ e.stopPropagation(); _pfTab="schueler"; routePrueferAkte(b.dataset.open); }));
 }
 function routePruefer(){ routePrueferListe(); }
 function mergePruefer(alt,neu){
@@ -16400,6 +16422,7 @@ function mergePruefer(alt,neu){
   const exists=DB.prueferData[neu]||DB.pruefer.includes(neu);
   // Alle Prüfungen umhängen
   DB.exams.forEach(e=>{ if(e.pruefer===alt)e.pruefer=neu; });
+  (DB.students||[]).forEach(s=>{ if(s.passedPruefer===alt)s.passedPruefer=neu; });
   // B197-Schaltkompetenz-Einträge umhängen (falls vorhanden)
   (DB.students||[]).forEach(s=>{ if(s.b197pruefer===alt)s.b197pruefer=neu; });
   if(exists){
@@ -16421,10 +16444,52 @@ function mergePruefer(alt,neu){
     save(); toast("Umbenannt ✓"); routePrueferAkte(neu);
   }
 }
+/* Prüfer-Akte mit Reitern (Serband 18.11.2026): „Schüler“ (wer bei ihm Prüfung hatte, bestanden oder nicht),
+   „Strecken & Notizen“ (die beim Eintragen notierte Strecke je Prüfung + zusammengestellte Strecken), „Profil“.
+   Die Notiz einer Prüfung steht in ex.note; ältere bestandene Schüler ohne Prüfungseintrag in s.passedStrecke. */
+let _pfTab="schueler";
+function prueferVerlauf(nm){
+  const ex=(DB.exams||[]).filter(e=>e.pruefer===nm).map(e=>({sid:e.sid,name:e.name,date:e.date,result:e.result,b197:!!e.b197,note:(e.note||"").trim(),faults:e.faults||[],eingriff:!!e.eingriff,eingNote:(e.eingNote||"").trim(),attempt:e.attempt,id:e.id}));
+  // Schüler mit eigenem bestandenen Prüfungseintrag (bei irgendeinem Prüfer) nicht doppelt aus s.passedPruefer zeigen.
+  const mitEx=new Set((DB.exams||[]).filter(e=>e.result==="pass"&&!e.b197).map(e=>e.sid));
+  (DB.students||[]).forEach(s=>{ if(s.passed&&s.passedPruefer===nm&&!mitEx.has(s.id)){ const d=(typeof s.passed==="string"&&/^\d{4}-\d{2}-\d{2}/.test(s.passed))?s.passed.slice(0,10):""; ex.push({sid:s.id,name:s.name,date:d,result:"pass",b197:false,note:(s.passedStrecke||"").trim(),faults:[],eingriff:false,eingNote:"",alt:true}); } });
+  return ex.sort((a,b)=>(""+b.date).localeCompare(""+a.date));
+}
+function _pfErg(e){ return e.b197?'<span class="pe-res ok">B197</span>':e.result==='pass'?'<span class="pe-res ok">bestanden</span>':e.result==='fail'?'<span class="pe-res no">nicht best.</span>':`<span class="pe-res">${esc(e.result||"–")}</span>`; }
 function routePrueferAkte(nm){
   ensureDB(); const pd=ensurePruefer(nm); const st=prueferStats(nm);
   $("#tbTitle").textContent="Prüfer"; setFab(false); view.scrollTop=0;
   const exForPr=DB.exams.filter(e=>e.pruefer===nm).sort((a,b)=>(""+b.date).localeCompare(""+a.date));
+  const verlauf=prueferVerlauf(nm);
+  const mitNotiz=verlauf.filter(e=>!e.b197&&(e.note||e.eingNote||(e.result==="fail"&&e.faults.length)));
+  if(!["schueler","strecken","profil"].includes(_pfTab))_pfTab="schueler";
+  const bestanden=verlauf.filter(e=>!e.b197&&e.result==="pass").length, durch=verlauf.filter(e=>!e.b197&&e.result==="fail").length;
+  const tabSchueler=verlauf.length?`<p class="muted-p" style="font-size:12.5px;margin:0 0 6px;">${bestanden} bestanden · ${durch} nicht bestanden</p>`+verlauf.map(e=>`<button class="pf-exam pf-exam-btn" data-sid="${esc(e.sid||"")}"><span class="pe-date">${e.date?isoDE(e.date):"—"}</span><span class="pe-name">${esc(e.name||"—")}${e.note?' <span class="pe-note-ic">· Notiz</span>':''}${e.alt?' <span class="pe-alt">ohne Prüfungseintrag</span>':''}</span>${_pfErg(e)}<span class="pf-pfeil" aria-hidden="true">›</span></button>`).join(""):`<p class="h2-nichts">Noch keine Prüfung mit ${esc(nm)} eingetragen.</p>`;
+  const tabStrecken=`${mitNotiz.length?mitNotiz.map(e=>`<div class="pf-nz">
+      <div class="pf-nz-h"><span class="pe-date">${e.date?isoDE(e.date):"—"}</span>${_pfErg(e)}</div><div class="pf-nz-name">${esc(e.name||"—")}</div>
+      ${e.note?`<div class="pf-nz-t">${esc(e.note)}</div>`:''}
+      ${e.result==="fail"&&e.faults.length?`<div class="pf-tags" style="margin-top:8px;">${e.faults.map(f=>`<span class="pf-tag warn mini">${esc(FAULT_LABEL[f]||f)}</span>`).join("")}</div>`:''}
+      ${e.eingNote?`<div class="pf-nz-t" style="margin-top:6px;"><b>Eingriff:</b> ${esc(e.eingNote)}</div>`:''}
+    </div>`).join(""):`<p class="h2-nichts">Noch keine Notiz zu einer Prüfung mit ${esc(nm)}. Was du beim Eintragen des Ergebnisses notierst, erscheint hier.</p>`}
+    <div class="pf-block" style="margin-top:18px;">
+      <div class="pf-block-h">Zusammengestellte Strecken</div>
+      <div id="routeWrap">${(pd.routen||[]).map((r,ri)=>`<div class="pf-route" data-ri="${ri}"><div class="pf-route-chain">${r.map(esc).join(' <span class="arr">›</span> ')}</div><button class="pf-route-x" data-rx="${ri}" aria-label="Strecke löschen">✕</button></div>`).join("")}</div>
+      <button class="pf-add-route" id="addRoute">+ Strecke zusammenstellen</button>
+    </div>`;
+  const tabProfil=`${st.faults&&st.faults.length?`<div class="pf-block"><div class="pf-block-h">Häufigste Fehler bei ${esc(nm)}</div><div class="pf-tags">${st.faults.map(([fid,c])=>`<span class="pf-tag warn">${esc(FAULT_LABEL[fid]||fid)} · ${c}×</span>`).join("")}</div></div>`:''}
+    <div class="pf-block">
+      <div class="pf-block-h">Charakter / worauf er achtet</div>
+      <div class="pf-tags" id="tagWrap">${(pd.tags||[]).map(t=>`<span class="pf-tag rm" data-tag="${esc(t)}">${esc(t)} <i>✕</i></span>`).join("")}<button class="pf-tag add" id="tagAdd">+ Tag</button></div>
+    </div>
+    <div class="pf-block">
+      <div class="pf-block-h">Notiz zum Prüfer</div>
+      <div class="mic-wrap"><textarea id="pfNote" rows="4" placeholder="Eigene Beobachtungen zu ${esc(nm)} …">${esc(pd.notiz||"")}</textarea>${micIcon()}</div>
+      <div class="pf-note-hint" id="noteHint" hidden>Gespeichert ✓</div>
+    </div>
+    <div style="display:flex;gap:9px;">
+      <button class="pf-rename" id="renamePruefer">Umbenennen / zusammenführen</button>
+      <button class="pf-del" id="delPruefer" style="flex:0;white-space:nowrap;">Löschen</button>
+    </div>`;
   view.innerHTML=`<div class="view-inner view-read fade-up">
     <div class="back-row"><button class="back-btn" id="backBtn">${ICN.back} Alle Prüfer</button></div>
     <div class="pf-hero">
@@ -16437,47 +16502,25 @@ function routePrueferAkte(nm){
       <div class="pf-stat"><div class="ps-n" style="font-size:18px;">${st.last?isoDE(st.last).slice(0,5):'—'}</div><div class="ps-l">zuletzt</div></div>
     </div>
     ${exForPr.length?`<div style="text-align:center;margin:-4px 0 14px;font-size:13px;color:var(--muted);">Letzte ${Math.min(5,exForPr.length)}: ${exForPr.slice(0,5).reverse().map(e=>e.result==='pass'?'<span style="color:#4a8b45;">✓</span>':'<span style="color:#c83c3c;">✕</span>').join(" ")}</div>`:''}
-    ${st.faults&&st.faults.length?`<div class="pf-block"><div class="pf-block-h">Häufigste Fehler bei ${esc(nm)}</div><div class="pf-tags">${st.faults.map(([fid,c])=>`<span class="pf-tag warn">${esc(FAULT_LABEL[fid]||fid)} · ${c}×</span>`).join("")}</div></div>`:''}
-
-    <div class="pf-block">
-      <div class="pf-block-h">Charakter / worauf er achtet</div>
-      <div class="pf-tags" id="tagWrap">${(pd.tags||[]).map(t=>`<span class="pf-tag rm" data-tag="${esc(t)}">${esc(t)} <i>✕</i></span>`).join("")}<button class="pf-tag add" id="tagAdd">+ Tag</button></div>
+    <div class="seg pf-tabs" role="tablist">
+      <button class="seg-i${_pfTab==='schueler'?' on':''}" data-pftab="schueler" role="tab" aria-selected="${_pfTab==='schueler'}">Schüler <span class="pf-tab-n">${bestanden+durch}</span></button>
+      <button class="seg-i${_pfTab==='strecken'?' on':''}" data-pftab="strecken" role="tab" aria-selected="${_pfTab==='strecken'}">Strecken &amp; Notizen <span class="pf-tab-n">${mitNotiz.length}</span></button>
+      <button class="seg-i${_pfTab==='profil'?' on':''}" data-pftab="profil" role="tab" aria-selected="${_pfTab==='profil'}">Profil</button>
     </div>
-
-    <div class="pf-block">
-      <div class="pf-block-h">Strecken</div>
-      <div id="routeWrap">${(pd.routen||[]).map((r,ri)=>`<div class="pf-route" data-ri="${ri}"><div class="pf-route-chain">${r.map(esc).join(' <span class="arr">›</span> ')}</div><button class="pf-route-x" data-rx="${ri}" aria-label="Strecke löschen">✕</button></div>`).join("")}</div>
-      <button class="pf-add-route" id="addRoute">+ Strecke zusammenstellen</button>
-    </div>
-
-    <div class="pf-block">
-      <div class="pf-block-h">Notiz</div>
-      <div class="mic-wrap"><textarea id="pfNote" rows="4" placeholder="Eigene Beobachtungen zu ${esc(nm)} …">${esc(pd.notiz||"")}</textarea>${micIcon()}</div>
-      <div class="pf-note-hint" id="noteHint" hidden>Gespeichert ✓</div>
-    </div>
-
-    ${exForPr.length?`<div class="pf-block"><div class="pf-block-h">Prüfungen mit ${esc(nm)}</div>${exForPr.map(e=>`<div class="pf-exam"><span class="pe-date">${isoDE(e.date)}</span><span class="pe-name">${esc(e.name)}</span><span class="pe-res ${e.result==='pass'?'ok':'no'}">${e.result==='pass'?'bestanden':'nicht best.'}</span></div>`).join("")}</div>`:''}
-
-    <div style="display:flex;gap:9px;">
-      <button class="pf-rename" id="renamePruefer">Umbenennen / zusammenführen</button>
-      <button class="pf-del" id="delPruefer" style="flex:0;white-space:nowrap;">Löschen</button>
-    </div>
+    <div class="pf-tabbody">${_pfTab==='schueler'?tabSchueler:_pfTab==='strecken'?tabStrecken:tabProfil}</div>
     </div>`;
-  $("#backBtn").addEventListener("click",routePrueferListe);
+  $("#backBtn").addEventListener("click",()=>{ _pfTab="schueler"; routePrueferListe(); });
+  document.querySelectorAll("[data-pftab]").forEach(b=>b.addEventListener("click",()=>{ _pfTab=b.dataset.pftab; routePrueferAkte(nm); }));
+  document.querySelectorAll(".pf-exam-btn").forEach(b=>b.addEventListener("click",()=>{ const sid=b.dataset.sid; if(sid&&DB.students.find(x=>x.id===sid))routeDetail(sid); else toast("Schüler nicht mehr vorhanden"); }));
   // Notiz: speichern bei Eingabe (debounced)
-  let noteT=null; const ta=$("#pfNote");
-  ta.addEventListener("input",()=>{ clearTimeout(noteT); noteT=setTimeout(()=>{ pd.notiz=ta.value.trim(); save(); const h=$("#noteHint"); if(h){h.hidden=false;setTimeout(()=>h.hidden=true,1400);} },500); });
-  // Tags entfernen
+  const ta=$("#pfNote");
+  if(ta){ let noteT=null; ta.addEventListener("input",()=>{ clearTimeout(noteT); noteT=setTimeout(()=>{ pd.notiz=ta.value.trim(); save(); const h=$("#noteHint"); if(h){h.hidden=false;setTimeout(()=>h.hidden=true,1400);} },500); }); }
   document.querySelectorAll("#tagWrap .pf-tag.rm").forEach(t=>t.addEventListener("click",()=>{ pd.tags=pd.tags.filter(x=>x!==t.dataset.tag); save(); routePrueferAkte(nm); }));
-  // Tag hinzufügen
-  $("#tagAdd").addEventListener("click",()=>openTagSheet(nm));
-  // Strecke löschen
+  const ta2=$("#tagAdd"); if(ta2)ta2.addEventListener("click",()=>openTagSheet(nm));
   document.querySelectorAll(".pf-route-x").forEach(b=>b.addEventListener("click",()=>{ pd.routen.splice(+b.dataset.rx,1); save(); routePrueferAkte(nm); }));
-  // Strecke zusammenstellen
-  $("#addRoute").addEventListener("click",()=>openRouteSheet(nm));
-  // Behörde / Löschen
-  $("#delPruefer").addEventListener("click",()=>{ if(confirm(`Prüfer „${nm}" wirklich löschen? Die Prüfungs-Historie bleibt erhalten.`)){ delete DB.prueferData[nm]; DB.pruefer=DB.pruefer.filter(x=>x!==nm); save(); routePrueferListe(); } });
-  $("#renamePruefer").addEventListener("click",()=>{ const neu=(prompt("Neuer Name für „"+nm+"\"\n\nWenn der Name bereits existiert, werden beide Prüfer (samt Prüfungen) zusammengeführt.",nm)||"").trim(); if(!neu||neu===nm)return; mergePruefer(nm,neu); });
+  const ar=$("#addRoute"); if(ar)ar.addEventListener("click",()=>openRouteSheet(nm));
+  const dp=$("#delPruefer"); if(dp)dp.addEventListener("click",()=>{ if(confirm(`Prüfer „${nm}" wirklich löschen? Die Prüfungs-Historie bleibt erhalten.`)){ delete DB.prueferData[nm]; DB.pruefer=DB.pruefer.filter(x=>x!==nm); save(); routePrueferListe(); } });
+  const rp=$("#renamePruefer"); if(rp)rp.addEventListener("click",()=>{ const neu=(prompt("Neuer Name für „"+nm+"\"\n\nWenn der Name bereits existiert, werden beide Prüfer (samt Prüfungen) zusammengeführt.",nm)||"").trim(); if(!neu||neu===nm)return; mergePruefer(nm,neu); });
 }
 /* Tag-Auswahl-Sheet */
 function openTagSheet(nm){
