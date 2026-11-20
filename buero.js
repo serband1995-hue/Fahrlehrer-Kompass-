@@ -4132,7 +4132,7 @@ function zeigeHinweis(titel, text, knoepfe) {
 async function abmelden() {
   verwirfGeparkt(); // sonst fragt der Browser beim Neuladen nach versteckten Eingaben
   await beendeSitzung();
-  try { await supa.auth.signOut(); } catch (e) { /* trotzdem neu laden */ }
+  try { await supa.auth.signOut({ scope: "local" }); } catch (e) { /* trotzdem neu laden */ } // nur dieser PC, andere Geräte bleiben angemeldet
   location.hash = "";
   location.reload();
 }

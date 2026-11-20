@@ -5563,7 +5563,8 @@ async function doLogout(opts) {
   if (_syncTimer) clearInterval(_syncTimer);
   _pullOk = false;
   if (!opts.alleGeraete) {
-    try { if (supa) await Promise.race([supa.auth.signOut(), new Promise(r => setTimeout(r, 4000))]); } catch (e) {}
+    // Nur dieses Gerät abmelden: signOut() ohne scope meldet in supabase-js v2 ALLE Geräte ab (Handy, PC, Laptop).
+    try { if (supa) await Promise.race([supa.auth.signOut({ scope: "local" }), new Promise(r => setTimeout(r, 4000))]); } catch (e) {}
   }
   // supabase-js behält die Sitzung, wenn der Server nicht erreichbar ist - hier wird sie in jedem Fall entfernt,
   // sonst wäre das Gerät offline weiterhin "angemeldet".
@@ -7554,7 +7555,7 @@ window.addEventListener("load", () => {
 const STORE_KEY="serband-app-v1";
 /* Build-Version: bei jeder Auslieferung hier das Datum aktualisieren.
    Wird in den Einstellungen angezeigt + für den Update-Hinweis genutzt. */
-const APP_VERSION="2026.11.18.4";
+const APP_VERSION="2026.11.20.1";
 try{const f=document.getElementById("drawerFoot"); if(f)f.textContent="Fahrlehrer-Kompass · Version "+APP_VERSION;}catch(e){}
 // Nutzungsbedingungen & Haftungsausschluss (Bereich: rechtliche Absicherung) - Version hochzählen
 // und alle Nutzer müssen erneut zustimmen, sobald sich der Text inhaltlich ändert.
