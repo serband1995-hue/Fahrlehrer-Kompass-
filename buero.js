@@ -3869,7 +3869,7 @@ async function beendeSitzung() {
   vergissSitzung();
   if (alt && alt.token) {
     try { sessionStorage.setItem("buero-abmelden", alt.token); } catch (e) { /* egal */ }
-    supa.rpc("buero_sitzung_beenden").catch(() => { /* läuft spätestens nach 12 Stunden ab */ })
+    return supa.rpc("buero_sitzung_beenden").catch(() => { /* läuft spätestens nach 12 Stunden ab */ })
       .finally(() => { try { sessionStorage.removeItem("buero-abmelden"); } catch (e) { /* egal */ } });
   }
 }
@@ -4131,7 +4131,8 @@ function zeigeHinweis(titel, text, knoepfe) {
 }
 async function abmelden() {
   verwirfGeparkt(); // sonst fragt der Browser beim Neuladen nach versteckten Eingaben
-  await beendeSitzung();
+  // Erst die PIN-Sitzung auf dem Server beenden (höchstens 3 s warten), dann lokal abmelden: sonst ginge der Aufruf ohne Anmeldung raus.
+  try { await Promise.race([beendeSitzung(), new Promise((r) => setTimeout(r, 3000))]); } catch (e) { /* egal */ }
   try { await supa.auth.signOut({ scope: "local" }); } catch (e) { /* trotzdem neu laden */ } // nur dieser PC, andere Geräte bleiben angemeldet
   location.hash = "";
   location.reload();
