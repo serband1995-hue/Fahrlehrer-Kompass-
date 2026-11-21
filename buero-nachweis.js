@@ -11,6 +11,7 @@
    legt den alten Abdruck in payload.signaturUngueltig ab. Gelöscht wird nie hart (geloescht=true, Papierkorb). */
 "use strict";
 const NACHWEIS_NEU_AB = "2027-07-01";
+let nwAlle = []; // Stunden des offenen Nachweises (für die Doppel-Prüfung beim Nachtragen)
 const NW_FAHRT_ARTEN = ["fahrstunde", "sonder", "nacht", "schalt"];
 const NW_SONDER = [["ueberland", "Überlandfahrt"], ["autobahn", "Autobahnfahrt"], ["nacht", "Fahrt bei Dämmerung oder Dunkelheit"]];
 const NW_ART_WAHL = [["fahrstunde", "Übungsfahrt (Grundausbildung)"], ["ueberland", "Sonderfahrt Überland"], ["autobahn", "Sonderfahrt Autobahn"], ["nacht", "Sonderfahrt Dämmerung/Dunkelheit"], ["schalt", "Schaltkompetenz"]];
@@ -167,6 +168,7 @@ async function nachweisDialog(sid) {
   const ziel = dlg.querySelector("#nwInhalt");
   const neu = async () => {
     d = await nwLaden(sid);
+    nwAlle = d.aktiv || [];
     if (!ziel.isConnected) return;
     if (d.fehler) { ziel.innerHTML = `<p class="fl-warnung">Fahrstunden konnten nicht geladen werden: ${esc(d.fehler)}</p>`; d = null; return; }
     const teil = !!dlg.querySelector("#nwTeil:checked");
@@ -190,10 +192,12 @@ function nwMerken(zeile) {
   else if (zeile.datum >= KR.addDaysISO(KR.todayISO(), -DATEN_TAGE)) S.termine.push(zeile);
 }
 // payload frisch lesen, damit eine Unterschrift oder ein Fahrcheck aus der App nicht überschrieben wird
-async function nwFrischePayload(id) {
-  const r = await supa.from("kalender_termine").select("payload").eq("id", id).maybeSingle();
-  return r && !r.error && r.data ? (r.data.payload || {}) : null;
+// Mit Zeitstempel: geschrieben wird nur, wenn die Stunde inzwischen nicht von der App geändert wurde (sonst ginge z. B. eine frische Unterschrift verloren)
+async function nwFrisch(id) {
+  const r = await supa.from("kalender_termine").select("payload,aktualisiert_am").eq("id", id).maybeSingle();
+  return r && !r.error && r.data ? { payload: r.data.payload || {}, am: r.data.aktualisiert_am } : null;
 }
+async function nwFrischePayload(id) { const f = await nwFrisch(id); return f ? f.payload : null; }
 
 // Ändern oder nachtragen (t = null)
 function nwStundeDialog(x, t, nachher) {
@@ -224,6 +228,8 @@ function nwStundeDialog(x, t, nachher) {
     const grund = (f.grund || "").trim();
     const jetzt = new Date().toISOString();
     if (neu) {
+      const gleich = (nwAlle || []).find((y) => !y.geloescht && y.datum === f.datum && y.von && y.bis && KR.hm2min(y.von) < KR.hm2min(f.bis) && KR.hm2min(y.bis) > KR.hm2min(f.von));
+      if (gleich && !(await bestaetige("Zeit schon belegt", `Am ${datumDE(f.datum)} gibt es schon eine Stunde ${gleich.von}–${gleich.bis}. Trotzdem nachtragen?`, "Ja, nachtragen"))) return false;
       const payload = sonderArt ? { sonderArt } : {};
       if (grund) payload.korrekturGrund = grund;
       const zeile = { id: "b" + Date.now().toString(36) + Math.random().toString(36).slice(2, 6), fahrschule_id: S.fsId, fahrlehrer_id: f.fahrlehrer_id, schueler_id: x.id,
@@ -237,14 +243,23 @@ function nwStundeDialog(x, t, nachher) {
       if (unterschrieben && zeitNeu && !(await bestaetige("Unterschrift wird ungültig", "Die Stunde ist schon unterschrieben. Nach der Änderung muss der Schüler neu unterschreiben. Trotzdem ändern?", "Ja, ändern"))) return false;
       const werte = { datum: f.datum, von: f.von, bis: f.bis, art, fahrlehrer_id: f.fahrlehrer_id, aktualisiert_am: jetzt };
       const sonderGeaendert = !artGleich && sonderArt !== (((v.payload || {}).sonderArt) || null);
-      if (grund || sonderGeaendert) {
-        const p = await nwFrischePayload(v.id);
-        if (!p) { toast("Nicht gespeichert: Stunde konnte nicht gelesen werden.", true); return false; }
+      const ungueltig = zeitNeu; // Datum, Zeit oder Art geändert
+      let frisch = null;
+      if (grund || sonderGeaendert || ungueltig) {
+        frisch = await nwFrisch(v.id);
+        if (!frisch) { toast("Nicht gespeichert: Stunde konnte nicht gelesen werden.", true); return false; }
+        const p = frisch.payload;
         // null statt löschen: die App übernimmt nur vorhandene Schlüssel (sonst bliebe ihr alter Wert stehen)
         werte.payload = Object.assign({}, p, sonderGeaendert ? { sonderArt } : {});
+        // Wie der Datenbank-Trigger (und auch ohne ihn): unterschriebene Stunde geändert → Unterschrift ungültig, Abdruck bleibt
+        if (ungueltig && p.signed) Object.assign(werte.payload, { signed: false, signatureSnap: null,
+          signaturUngueltig: { am: new Date().toISOString(), alt: { datum: v.datum, von: v.von, bis: v.bis, art: v.art }, signedAt: p.signedAt || null, snap: p.signatureSnap || null } });
         if (grund) werte.payload.korrekturGrund = grund;
       }
-      const res = await supa.from("kalender_termine").update(werte).eq("id", v.id).select("*");
+      let q = supa.from("kalender_termine").update(werte).eq("id", v.id);
+      if (frisch && frisch.am) q = q.eq("aktualisiert_am", frisch.am);
+      const res = await q.select("*");
+      if (!res.error && res.data && !res.data.length && frisch) { toast("Die Stunde wurde gerade in der App geändert. Bitte noch einmal öffnen und speichern.", true); nachher(); return true; }
       if (res.error || !res.data || !res.data.length) { toast("Nicht gespeichert: " + (res.error ? res.error.message : "keine Berechtigung"), true); return false; }
       nwMerken(res.data[0]);
       // Online gebuchte, künftige Stunde: Schüler bekommt wie beim Kalender eine E-Mail (Vergangenes nicht)
@@ -266,8 +281,9 @@ async function nwLoeschen(t, nachher) {
   const grund = await nwGrundFragen(`Fahrstunde vom ${datumDE(t.datum)} löschen?`, (nwUnterschrift(t) === "ok" ? "Die Stunde ist schon vom Schüler unterschrieben. " : "") + "Die Stunde kommt in den Papierkorb und verschwindet beim Fahrlehrer. Sie lässt sich zurückholen.", "Ja, löschen");
   if (grund === null) return;
   const werte = { geloescht: true, aktualisiert_am: new Date().toISOString() };
-  if (grund) { const p = await nwFrischePayload(t.id); if (p) werte.payload = Object.assign({}, p, { korrekturGrund: grund }); }
-  const res = await supa.from("kalender_termine").update(werte).eq("id", t.id).select("*");
+  let q = supa.from("kalender_termine").update(werte).eq("id", t.id);
+  if (grund) { const fr = await nwFrisch(t.id); if (fr) { werte.payload = Object.assign({}, fr.payload, { korrekturGrund: grund }); if (fr.am) q = q.eq("aktualisiert_am", fr.am); } }
+  const res = await q.select("*");
   if (res.error || !res.data || !res.data.length) { toast("Nicht gelöscht: " + (res.error ? res.error.message : "keine Berechtigung"), true); return; }
   nwMerken(res.data[0]); zeichne(); nachher();
   toastUndo("Fahrstunde im Papierkorb", async () => { await nwWiederherstellen(res.data[0], nachher, true); });

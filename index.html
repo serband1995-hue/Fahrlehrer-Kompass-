@@ -4583,7 +4583,8 @@ function _schuelerZeile(s) {
     name: s.name || "(ohne Namen)", telefon: s.telefon || null, bogen_ausgefuellt: !!s.bogen, status: "aktiv", ausbildung: rest };
 }
 function _terminZeile(l) {
-  const { id, sid, date, von, bis, art, fahrzeug, status, _syncedAt, ...rest } = l;
+  // korrekturGrund: nur Übergabe Büro → Datenbank-Spur, gehört nicht in den Termin (sonst Endlos-„aktualisiert“)
+  const { id, sid, date, von, bis, art, fahrzeug, status, _syncedAt, korrekturGrund, ...rest } = l;
   return { id: l.id, fahrschule_id: _authProfile.fahrschule_id, fahrlehrer_id: _authUser.id,
     schueler_id: l.sid || null, datum: l.date, von: l.von || null, bis: l.bis || null,
     art: l.art || null, fahrzeug: l.fahrzeug || null, status: l.status || null, geloescht: false, payload: rest };
@@ -5468,7 +5469,8 @@ async function pullSchuelerZuweisungen() {
    "Zuletzt geändert gewinnt" pro Termin, via aktualisiert_am - dein Kalender bleibt sonst unangetastet. */
 /* Termin aus Datenbankzeile: erst die Nutzlast, dann die geprüften Spalten (die Spalten gewinnen, wie in _fsMapTermin). */
 function _terminMerge(r) {
-  return Object.assign({}, r.payload || {}, { id: r.id, sid: r.schueler_id, date: r.datum, von: r.von, bis: r.bis, art: r.art, fahrzeug: r.fahrzeug, status: r.status });
+  const { korrekturGrund, ...p } = r.payload || {};
+  return Object.assign({}, p, { id: r.id, sid: r.schueler_id, date: r.datum, von: r.von, bis: r.bis, art: r.art, fahrzeug: r.fahrzeug, status: r.status });
 }
 async function pullTermineZuweisungen() {
   if (!_authUser || !_authProfile || !_authProfile.fahrschule_id || !DB.lessons || _fsAgg || _termineAbrufLaeuft) return;

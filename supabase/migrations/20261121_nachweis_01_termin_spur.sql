@@ -3,10 +3,12 @@
 -- 2. Vor jedem Update eines Termins: Ist die Fahrstunde unterschrieben und ändern sich Datum, Uhrzeit, Art oder Schüler,
 --    wird die Unterschrift ungültig (signed=false). Der alte Abdruck bleibt als Beweis in payload.signaturUngueltig.
 --    Kein stilles Umschreiben unterschriebener Daten.
--- 3. Jede Änderung der Nachweis-Felder kommt ins aenderungsprotokoll (wer, wann, alt, neu, Grund).
---    Neu angelegte Termine nur, wenn Büro oder Leitung sie anlegen (die App legt ständig an; das wäre nur Rauschen).
+-- 3. Eine veraltete App (lädt ihren alten Stand mit signed=true hoch) darf eine ungültig gemachte Unterschrift nicht
+--    wieder gültig machen: gültig wird sie nur durch eine NEUE Unterschrift (payload.signedTs nach signaturUngueltig.am).
+-- 4. Jede Änderung der Nachweis-Felder kommt ins aenderungsprotokoll (wer, wann, alt, neu, Grund).
+--    Neu angelegte Termine nur, wenn Büro oder Leitung sie im Büro anlegen (erstellt_von gesetzt; die App setzt es nicht).
 -- Den Grund schickt das Büro als payload.korrekturGrund mit; der Trigger nimmt ihn heraus (bleibt nicht im Termin stehen).
--- Rückweg: supabase/rueckweg/20261121_nachweis_rueckweg.sql
+-- Idempotent (mehrfach ausführbar). Rückweg: supabase/rueckweg/20261121_nachweis_rueckweg.sql
 
 alter table public.aenderungsprotokoll add column if not exists grund text;
 
@@ -18,8 +20,9 @@ create or replace function public.termin_nachweis_spur()
 as $function$
 declare
   g text;
-  f text; a text; n text;
+  r record;
   wer text;
+  u jsonb;
 begin
   g := nullif(left(coalesce(new.payload->>'korrekturGrund', ''), 300), '');
   if new.payload ? 'korrekturGrund' then new.payload := new.payload - 'korrekturGrund'; end if;
@@ -33,7 +36,7 @@ begin
   -- Unterschrift ungültig machen, wenn sich der Inhalt der unterschriebenen Stunde ändert
   if coalesce(old.payload->>'signed', '') = 'true'
      and (new.datum is distinct from old.datum or new.von is distinct from old.von or new.bis is distinct from old.bis
-          or new.art is distinct from old.art or new.schueler_id is distinct from old.schueler_id) then
+          or coalesce(new.art, 'fahrstunde') is distinct from coalesce(old.art, 'fahrstunde') or new.schueler_id is distinct from old.schueler_id) then
     new.payload := coalesce(new.payload, '{}'::jsonb) || jsonb_build_object(
       'signed', false,
       'signatureSnap', null,
@@ -42,20 +45,34 @@ begin
         'alt', jsonb_build_object('datum', old.datum, 'von', old.von, 'bis', old.bis, 'art', old.art),
         'signedAt', old.payload->'signedAt',
         'snap', old.payload->'signatureSnap'));
+  -- Veralteter Stand: ungültig gemachte Unterschrift kommt ohne neue Unterschrift zurück → bleibt ungültig
+  elsif jsonb_typeof(old.payload->'signaturUngueltig') = 'object'
+     and coalesce(old.payload->'signaturUngueltig'->>'erledigt', '') <> 'true'
+     and coalesce(old.payload->>'signed', '') <> 'true'
+     and coalesce(new.payload->>'signed', '') = 'true'
+     and left(coalesce(new.payload->>'signedTs', ''), 19) <= left(coalesce(old.payload->'signaturUngueltig'->>'am', ''), 19) then
+    u := old.payload->'signaturUngueltig';
+    new.payload := new.payload || jsonb_build_object('signed', false, 'signatureSnap', null, 'signaturUngueltig', u);
   end if;
 
-  foreach f in array array['datum','von','bis','art','schueler_id','fahrlehrer_id','geloescht','status','sonderArt','signed'] loop
-    if f in ('sonderArt', 'signed') then
-      a := old.payload->>f; n := new.payload->>f;
-      if f = 'signed' then a := coalesce(a, 'false'); n := coalesce(n, 'false'); end if;
-    else
-      execute format('select ($1).%I::text, ($2).%I::text', f, f) into a, n using old, new;
-    end if;
-    if a is distinct from n then
-      if wer is null then wer := coalesce(public.buero_bearbeiter(), ''); end if;
-      insert into public.aenderungsprotokoll (fahrschule_id, tabelle, datensatz_id, feld, alt, neu, geaendert_von, bearbeiter, grund)
-      values (new.fahrschule_id, 'kalender_termine', new.id, f, a, n, auth.uid(), nullif(wer, ''), g);
-    end if;
+  for r in
+    select * from (values
+      ('datum', old.datum::text, new.datum::text),
+      ('von', old.von, new.von),
+      ('bis', old.bis, new.bis),
+      ('art', old.art, new.art),
+      ('schueler_id', old.schueler_id, new.schueler_id),
+      ('fahrlehrer_id', old.fahrlehrer_id::text, new.fahrlehrer_id::text),
+      ('geloescht', coalesce(old.geloescht, false)::text, coalesce(new.geloescht, false)::text),
+      ('status', old.status, new.status),
+      ('sonderArt', old.payload->>'sonderArt', new.payload->>'sonderArt'),
+      ('signed', coalesce(old.payload->>'signed', 'false'), coalesce(new.payload->>'signed', 'false'))
+    ) as v(feld, alt, neu)
+    where v.alt is distinct from v.neu
+  loop
+    if wer is null then wer := coalesce(public.buero_bearbeiter(), ''); end if;
+    insert into public.aenderungsprotokoll (fahrschule_id, tabelle, datensatz_id, feld, alt, neu, geaendert_von, bearbeiter, grund)
+    values (new.fahrschule_id, 'kalender_termine', new.id, r.feld, r.alt, r.neu, auth.uid(), nullif(wer, ''), g);
   end loop;
   return new;
 end $function$;
@@ -68,7 +85,7 @@ create or replace function public.termin_nachweis_angelegt()
 as $function$
 declare g text;
 begin
-  if is_buero(auth.uid()) or is_fahrschule_admin(auth.uid()) or is_super_admin(auth.uid()) then
+  if new.erstellt_von is not null and (is_buero(auth.uid()) or is_fahrschule_admin(auth.uid()) or is_super_admin(auth.uid())) then
     g := nullif(current_setting('kompass.nachweis_grund', true), '');
     insert into public.aenderungsprotokoll (fahrschule_id, tabelle, datensatz_id, feld, alt, neu, geaendert_von, bearbeiter, grund)
     values (new.fahrschule_id, 'kalender_termine', new.id, 'angelegt', null,
