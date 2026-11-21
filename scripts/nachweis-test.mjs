@@ -131,11 +131,11 @@ const top = (page) => page.locator("dialog[open]").last();
   const [popup] = await Promise.all([page.waitForEvent("popup"), top(page).locator("footer button[value=ok]").click()]);
   await popup.waitForLoadState();
   const druck = await popup.evaluate(() => ({ h1: document.querySelector("h1").textContent, zeilen: document.querySelectorAll("tbody tr").length, bilder: document.querySelectorAll("td.us img").length,
-    neu: document.querySelectorAll(".neu").length, us: [...document.querySelectorAll("th")].some((th) => /Unterschrift Fahrschüler/.test(th.textContent)), korr: !!document.body.textContent.match(/Uhrzeit falsch eingetragen/) }));
+    neu: document.querySelectorAll(".neu").length, us: [...document.querySelectorAll("th")].some((th) => /Unterschrift Fahrschüler/.test(th.textContent)), korr: /Korrekturen durch die Fahrschule|Uhrzeit falsch eingetragen/.test(document.body.textContent) }));
   pruef(druck.h1 === "Ausbildungsnachweis", "Titel falsch: " + druck.h1);
   pruef(druck.bilder > 0 && druck.us, "Unterschriften fehlen im Druck");
   pruef(druck.neu >= 1, "„neu zu unterschreiben“ fehlt im Druck");
-  pruef(druck.korr, "Korrekturen mit Grund fehlen im Druck");
+  pruef(!druck.korr, "Korrekturen stehen noch im Druck (sollen nur im Büro-Verlauf stehen)");
   await popup.emulateMedia({ media: "print" });
   if (FOTOS) { await popup.pdf({ path: join(FOTOS, "nachweis-a4.pdf"), format: "A4", printBackground: true }); await popup.setViewportSize({ width: 794, height: 1123 }); await popup.screenshot({ path: join(FOTOS, "nachweis-druck-a4.png"), fullPage: false }); }
   const breit = await popup.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth + 1);

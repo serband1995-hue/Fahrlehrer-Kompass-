@@ -289,8 +289,7 @@ function nwDruckHTML(x, d, st, teil) {
   }).join("");
   const th = st.theorie;
   const theorieZeilen = th && th.geladen && th.pflicht && th.erfasst ? (S.theorie || []).filter((b) => b.schueler_id === x.id).sort((a, b) => lektOrd(a.lektion) - lektOrd(b.lektion) || String(a.datum).localeCompare(String(b.datum))) : [];
-  const termin = (id) => d.aktiv.concat(d.papierkorb).find((t) => t.id === id);
-  const korrekturen = d.spur.filter((p) => p.feld !== "signed" || p.neu === "false");
+  // Änderungs-Spur steht nur im Büro („Verlauf“), nicht im gedruckten Nachweis (🗣 Serband 21.11.2026)
   return `<!doctype html><html lang="de"><head><meta charset="utf-8"><title>${esc(titel)} ${esc(x.name)}</title>
 <style>
 @page{size:A4;margin:14mm 12mm 16mm}
@@ -332,7 +331,6 @@ ${zeilen ? `<table><thead><tr><th class="r">Nr.</th><th>Datum</th><th>Beginn</th
 <p class="klein">FL = Fahrlehrer: ${lehrer.map((id) => `${lehrerNr[id]} ${esc(lehrerName(id) || "–")}`).join(" · ") || "–"}</p>
 ${x.praxis_bestanden_am ? `<p>Praktische Prüfung bestanden am ${esc(datumDE(x.praxis_bestanden_am))}.</p>` : ""}
 ${teil ? `<h2>Teil-Nachweis</h2><p>Die Ausbildung wurde nicht abgeschlossen (Abbruch oder Wechsel der Fahrschule). Bestätigt werden die oben aufgeführten absolvierten Ausbildungsteile.</p>` : ""}
-${korrekturen.length ? `<h2>Korrekturen durch die Fahrschule</h2><ul class="klein">${korrekturen.slice(0, 60).map((p) => `<li>${nwSpurZeile(p, termin(p.datensatz_id))}</li>`).join("")}</ul>` : ""}
 <div class="sig"><div>Ort, Datum, Unterschrift Fahrlehrer / Fahrschule</div>${neuRecht ? "" : "<div>Unterschrift Fahrschüler</div>"}</div>
 <footer>Erstellt mit dem Fahrlehrer-Kompass am ${esc(new Date().toLocaleString("de-DE", { dateStyle: "short", timeStyle: "short" }))}. Aufbewahrung durch die Fahrschule: 5 Jahre nach Ende des Jahres, in dem die Ausbildung abgeschlossen wurde (§ 31 FahrlG).${neuRecht ? "" : " Elektronische Unterschrift nach § 6 Abs. 2 FahrschAusbO."}</footer>
 </div></body></html>`;
