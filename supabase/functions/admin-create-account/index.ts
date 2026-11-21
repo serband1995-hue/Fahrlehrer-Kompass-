@@ -1,7 +1,9 @@
 // Fahrlehrer-Kompass – Konten anlegen, Passwort neu erzeugen, Einladung per E-Mail senden.
 // Kopie der in Supabase laufenden Funktion (Projekt oectrvkjunntzsggyhxv, verify_jwt = false:
 // die Funktion prüft den Anmelde-Token und die Rolle selbst). Version 9 (30.10.2026): Einladungs-Mail; Profil nach dem Anlegen ersetzen statt doppelt einfügen.
+// Version 10 (21.11.2026): Zugang bearbeiten (update_account) und löschen (delete_account), Regeln in regeln.ts.
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
+import { berlinJetzt, darfVerwalten, klassenListe, likeGenau, platzhalterEmail, pruefeAenderung, ROLLE_ENTFERNT, terminKommtNoch, uebergabeNoetig } from "./regeln.ts";
 
 const SUPABASE_URL = Deno.env.get("SUPABASE_URL");
 const SERVICE_ROLE_KEY = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY");
@@ -27,11 +29,6 @@ function randomPassword(n = 12) {
 async function sha256Hex(s: string) {
   const d = await crypto.subtle.digest("SHA-256", new TextEncoder().encode(s));
   return Array.from(new Uint8Array(d)).map((b) => b.toString(16).padStart(2, "0")).join("");
-}
-
-function klassenListe(k: unknown): string[] {
-  if (!Array.isArray(k)) return [];
-  return [...new Set(k.map((x) => String(x)).filter((x) => /^[A-Z0-9+]{1,6}$/.test(x)))].sort();
 }
 
 function esc(s: string): string {
@@ -226,6 +223,123 @@ Deno.serve(async (req) => {
       const ok = await sendeEinladung(supa, zielProfil.email, zielProfil.name || "", zielProfil.rolle, vonName);
       if (!ok) return json({ error: "Die E-Mail konnte nicht verschickt werden. Bitte stattdessen ein neues Passwort erzeugen und weitergeben." }, 502);
       return json({ ok: true, email: zielProfil.email });
+    }
+
+    // ---------- Zugang bearbeiten / löschen (Fahrlehrer, Büro; Leitung nur Super-Admin) ----------
+    if (action === "update_account" || action === "delete_account" || action === "check_delete") {
+      const { target_user_id } = body;
+      if (!target_user_id || typeof target_user_id !== "string") return json({ error: "target_user_id erforderlich" }, 400);
+      const { data: ziel } = await supa.from("profiles").select("id, rolle, fahrschule_id, ohne_app, aktiv, name, email, klassen, fahrlehrerlaubnis, slug").eq("id", target_user_id).maybeSingle();
+      if (!ziel) return json({ error: "Zugang nicht gefunden" }, 404);
+      const wer = { requester: requesterProfile, isSuperAdmin, isFahrschuleAdmin, isBueroVerwalter };
+      const verboten = darfVerwalten(wer, ziel);
+      if (verboten) return json({ error: verboten }, 403);
+
+      // Was hängt noch an diesem Fahrlehrer? (Schüler, künftige Termine ohne Blocker, geplante Prüfungen)
+      const offenBeiFahrlehrer = async () => {
+        const jetzt = berlinJetzt();
+        const [sch, ter, pt, kp, pb] = await Promise.all([
+          supa.from("schueler").select("id", { count: "exact", head: true }).eq("fahrlehrer_id", ziel.id).neq("status", "geloescht"),
+          supa.from("kalender_termine").select("id, datum, bis, art").eq("fahrlehrer_id", ziel.id).eq("geloescht", false).gte("datum", jetzt.datum).limit(5000),
+          supa.from("pruefungstermine").select("id", { count: "exact", head: true }).eq("fahrlehrer_id", ziel.id).eq("status", "geplant").gte("datum", jetzt.datum),
+          supa.from("kalender_pruefungen").select("id, result").eq("fahrlehrer_id", ziel.id).eq("geloescht", false).gte("datum", jetzt.datum).limit(1000),
+          // Online-Buchungen, die noch nicht im Kalender stehen (sonst gingen sie beim Löschen unter)
+          supa.from("public_bookings").select("id", { count: "exact", head: true }).eq("fahrlehrer_id", ziel.id).eq("merged", false).eq("status", "bestaetigt").gte("datum", jetzt.datum),
+        ]);
+        const fehler = sch.error || ter.error || pt.error || kp.error || pb.error;
+        if (fehler) throw new Error("Prüfung fehlgeschlagen: " + fehler.message);
+        const kommend = (ter.data || []).filter((t: any) => terminKommtNoch(t, jetzt));
+        return {
+          offen: { schueler: sch.count || 0, termine: kommend.filter((t: any) => t.art !== "block").length + (pb.count || 0), pruefungen: (pt.count || 0) + (kp.data || []).filter((x: any) => !x.result).length },
+          bloecke: kommend.filter((t: any) => t.art === "block").map((t: any) => t.id as string),
+        };
+      };
+
+      if (action === "update_account") {
+        const aend = pruefeAenderung(wer, ziel, { name: body.name, klassen: body.klassen, rolle: body.rolle, email: body.email });
+        if (aend.fehler) return json({ error: aend.fehler }, aend.status || 400);
+        if (!Object.keys(aend.profil).length) return json({ ok: true, geaendert: false });
+        if (aend.rolleWeg) {
+          const { offen } = await offenBeiFahrlehrer();
+          const grund = uebergabeNoetig(offen, ziel.name || "");
+          if (grund) return json({ error: grund.replace("dann noch einmal löschen", "dann die Rolle ändern"), offen }, 409);
+        }
+        if (aend.neueEmail) {
+          // Ohne App → mit App: echte E-Mail ins Anmeldekonto, damit die Einladung ankommt
+          const { error: mailErr } = await supa.auth.admin.updateUserById(ziel.id, { email: aend.neueEmail, email_confirm: true });
+          if (mailErr) {
+            const schonDa = /already|registered|exists/i.test(mailErr.message || "");
+            return json({ error: schonDa ? "Diese E-Mail hat schon einen Zugang." : mailErr.message }, schonDa ? 409 : 500);
+          }
+        }
+        const profilNeu: Record<string, unknown> = { ...aend.profil };
+        if (aend.profil.rolle === "buero" || aend.profil.rolle === "fahrschule_admin") profilNeu.slug = null; // Buchungslink gilt nur für Fahrlehrer
+        const { error: upErr } = await supa.from("profiles").update(profilNeu).eq("id", ziel.id);
+        if (upErr) {
+          // Anmeldekonto nicht halb umgestellt lassen (sonst scheitert ein zweiter Versuch an „schon einen Zugang“)
+          if (aend.neueEmail && ziel.email) await supa.auth.admin.updateUserById(ziel.id, { email: ziel.email, email_confirm: true }).catch(() => {});
+          return json({ error: "Nicht gespeichert: " + upErr.message }, 500);
+        }
+        if (aend.rolleWeg) {
+          // Nachprüfung: wurde während des Wechsels ein Schüler oder Termin zugeteilt, Rolle zurück
+          const { offen: nachher } = await offenBeiFahrlehrer();
+          const grund2 = uebergabeNoetig(nachher, ziel.name || "");
+          if (grund2) {
+            await supa.from("profiles").update({ rolle: ziel.rolle, slug: ziel.slug ?? null }).eq("id", ziel.id);
+            return json({ error: grund2.replace("dann noch einmal löschen", "dann die Rolle ändern"), offen: nachher }, 409);
+          }
+        }
+        if (typeof aend.profil.name === "string" && ziel.name && ziel.fahrschule_id) {
+          // Urlaub und Schichtplan merken sich den Namen als Text: mit umbenennen, damit der Urlaub weiter greift
+          for (const tabelle of ["fahrschule_urlaub", "fahrschule_schichten"]) {
+            const { error: nErr } = await supa.from(tabelle).update({ mitarbeiter_name: aend.profil.name }).eq("fahrschule_id", ziel.fahrschule_id).ilike("mitarbeiter_name", likeGenau(ziel.name));
+            if (nErr) console.warn("Name in " + tabelle + " nicht angepasst:", nErr.message);
+          }
+        }
+        if (!aend.neueEmail) return json({ ok: true, geaendert: true });
+        const rolleNeu = String(aend.profil.rolle || ziel.rolle);
+        const mailGesendet = body.einladung_senden === true ? await sendeEinladung(supa, aend.neueEmail, String(aend.profil.name || ziel.name || ""), rolleNeu, vonName) : false;
+        if (mailGesendet) return json({ ok: true, geaendert: true, email: aend.neueEmail, mail_gesendet: true });
+        const passwort = randomPassword();
+        const { error: pwErr } = await supa.auth.admin.updateUserById(ziel.id, { password: passwort });
+        if (pwErr) return json({ ok: true, geaendert: true, email: aend.neueEmail, mail_gesendet: false, hinweis: "Bitte „Neues Passwort“ drücken." });
+        return json({ ok: true, geaendert: true, email: aend.neueEmail, mail_gesendet: false, passwort });
+      }
+
+      // Löschen: nur wenn nichts mehr offen ist. Sonst klar sagen, was noch übergeben werden muss.
+      const { offen, bloecke } = await offenBeiFahrlehrer();
+      const grund = uebergabeNoetig(offen, ziel.name || "");
+      if (action === "check_delete") return json({ ok: !grund, offen, hinweis: grund });
+      if (grund) return json({ error: grund, offen }, 409);
+
+      // Der Zugang bleibt als Eintrag erhalten (Name für Verlauf, Fahrstunden, Fahrcheck, Provisionen),
+      // fällt aber aus allen Listen, kann sich nicht mehr anmelden und gibt die E-Mail-Adresse wieder frei.
+      // Reihenfolge: erst das Anmeldekonto sperren (dann ist die Person sicher draußen), dann das Profil.
+      const ersatz = platzhalterEmail(ziel.id);
+      // Echte E-Mail aus dem Anmeldekonto (alte Profile haben teils keine), damit ein Zurückdrehen sie sicher wiederherstellt.
+      // Kein neues Passwort: Die Sperre reicht, und beim Zurückdrehen bliebe sonst ein unbekanntes Passwort zurück.
+      const { data: authAlt } = await supa.auth.admin.getUserById(ziel.id);
+      const alteMail = authAlt?.user?.email || ziel.email;
+      const { error: authErr } = await supa.auth.admin.updateUserById(ziel.id, { email: ersatz, email_confirm: true, ban_duration: "876000h" });
+      if (authErr) return json({ error: "Nicht gelöscht: Das Anmeldekonto ließ sich nicht sperren (" + authErr.message + ")" }, 500);
+      const authZurueck = () => supa.auth.admin.updateUserById(ziel.id, { ...(alteMail ? { email: alteMail, email_confirm: true } : {}), ban_duration: "none" }).catch(() => {});
+      const { error: delErr } = await supa.from("profiles").update({ rolle: ROLLE_ENTFERNT, aktiv: false, email: ersatz, slug: null }).eq("id", ziel.id);
+      if (delErr) { await authZurueck(); return json({ error: "Nicht gelöscht: " + delErr.message }, 500); }
+      // Nachprüfung: wurde in der Zwischenzeit doch etwas zugeteilt, alles zurück
+      const { offen: nachher } = await offenBeiFahrlehrer();
+      const grund2 = uebergabeNoetig(nachher, ziel.name || "");
+      if (grund2) {
+        await supa.from("profiles").update({ rolle: ziel.rolle, aktiv: ziel.aktiv !== false, email: ziel.email, slug: ziel.slug ?? null }).eq("id", ziel.id);
+        await authZurueck();
+        return json({ error: grund2, offen: nachher }, 409);
+      }
+      const hinweise: string[] = [];
+      if (bloecke.length) {
+        // Künftige Blocker (Urlaub, Pause) des Gelöschten haben keinen Sinn mehr und stünden sonst ohne Fahrlehrer im Kalender
+        await supa.from("kalender_termine").update({ geloescht: true, aktualisiert_am: new Date().toISOString() }).in("id", bloecke);
+      }
+      await supa.from("push_subscriptions").delete().eq("user_id", ziel.id);
+      return json({ ok: true, geloescht: true, hinweis: hinweise.join(" ") || undefined });
     }
 
     return json({ error: "Unbekannte action: " + action }, 400);

@@ -34,3 +34,5 @@ jobs:
         run: node scripts/rechnen-test.mjs
       - name: Cache-Test (nur eigene Caches löschen)
         run: node scripts/cache-test.mjs
+      - name: Zugang-Regeln (bearbeiten/löschen, Rechte)
+        run: node scripts/zugang-regeln-test.mjs

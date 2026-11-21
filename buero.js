@@ -124,7 +124,8 @@ function pruefe(res, was) {
   return res ? res.data : null;
 }
 function lehrerName(id) {
-  const l = S.lehrer.find((x) => x.id === id);
+  // Gelöschte Fahrlehrer (Rolle „entfernt“) stehen nicht mehr in S.lehrer, ihr Name bleibt für alte Termine über S.team sichtbar
+  const l = S.lehrer.find((x) => x.id === id) || (id ? (S.team || []).find((x) => x.id === id) : null);
   return l ? (l.name || l.email) : "ohne Fahrlehrer";
 }
 function schuelerName(id) {
@@ -673,7 +674,7 @@ async function ladeProtokoll(tabelle, id) {
   if (res.error) { ziel.innerHTML = ""; return; }
   const zeilen = (res.data || []).map((p) => {
     // Gemeinsames Büro-Konto ohne PIN (z. B. aus der Fahrschul-Ansicht der App): kein Name bekannt
-    const wer = p.bearbeiter || (S.lehrer.find((l) => l.id === p.geaendert_von) || {}).name || (p.geaendert_von === S.user.id ? (werNoetig() ? "Büro (ohne PIN)" : "du") : "Büro");
+    const wer = p.bearbeiter || (teamPerson(p.geaendert_von) || {}).name || (p.geaendert_von === S.user.id ? (werNoetig() ? "Büro (ohne PIN)" : "du") : "Büro");
     const wann = new Date(p.geaendert_am).toLocaleString("de-DE", { dateStyle: "short", timeStyle: "short" });
     const wert = (v) => {
       if (p.feld === "auslands_fs") return v ? "(Angaben)" : "–"; // Führerscheinnummern nicht im Verlauf ausschreiben
@@ -2233,7 +2234,7 @@ function terminDialog(id, vorgabe) {
   const body = `<div class="formular">
       <label class="voll">Schüler<select name="schueler_id"><option value="">– ohne Schüler –</option>${schuelerOptionen(t.schueler_id)}</select></label>
       <label>Art<select name="art">${Object.entries(ARTEN).map(([k, v]) => `<option value="${k}"${t.art === k ? " selected" : ""}>${v}</option>`).join("")}</select></label>
-      <label>Fahrlehrer<select name="fahrlehrer_id" required>${S.lehrer.map((l) => `<option value="${esc(l.id)}"${l.id === t.fahrlehrer_id ? " selected" : ""}>${esc(l.name || l.email)}</option>`).join("")}</select></label>
+      <label>Fahrlehrer<select name="fahrlehrer_id" required>${lehrerAuswahl(t.fahrlehrer_id).map((l) => `<option value="${esc(l.id)}"${l.id === t.fahrlehrer_id ? " selected" : ""}>${esc(l.name || l.email)}</option>`).join("")}</select></label>
       <label>Datum<input type="date" name="datum" required value="${esc(t.datum || "")}"></label>
       <label>Fahrzeug<select name="fahrzeug"><option value="">–</option>${fahrzeuge.map((f) => `<option${t.fahrzeug === f ? " selected" : ""}>${esc(f)}</option>`).join("")}</select></label>
       <label>Von<input type="time" name="von" required value="${esc(t.von || "")}"></label>
@@ -2292,7 +2293,7 @@ function terminDialog(id, vorgabe) {
   });
   // Felder für Fahrlehrer ohne App ein- und ausblenden
   const ohneAppNeu = () => {
-    const fl = S.lehrer.find((l) => l.id === tdlg.querySelector("select[name=fahrlehrer_id]").value) || {};
+    const fl = teamPerson(tdlg.querySelector("select[name=fahrlehrer_id]").value) || {};
     const art = tdlg.querySelector("select[name=art]").value;
     const sx = S.schueler.find((x) => x.id === tdlg.querySelector("select[name=schueler_id]").value);
     const kl = sx ? lkwKlassenWahl(sx) : null;
@@ -2396,7 +2397,7 @@ function letzteQuittung(lehrerId, von) {
 function fcOffeneAbgaben() {
   if (!S.geladenAm) return [];
   const [von, bis] = KR.fcVorZeitraum(KR.fcZeitraum(KR.todayISO())[0]);
-  return S.lehrer.filter((l) => !letzteQuittung(l.id, von) && fcFuerLehrer(l.id, von, bis).soll > 0).map((l) => ({ lehrer: l, von, bis }));
+  return lehrerMitEhemaligen((id) => fcFuerLehrer(id, von, bis).soll > 0).filter((l) => !letzteQuittung(l.id, von) && fcFuerLehrer(l.id, von, bis).soll > 0).map((l) => ({ lehrer: l, von, bis }));
 }
 // Gewählter Abgabe-Zeitraum: jetzt | vor | Startdatum eines früheren Halbmonats (JJJJ-MM-TT)
 function fcPeriode() {
@@ -2432,7 +2433,7 @@ function renderFahrchecks() {
   const statusF = ["ohne", "fehlend", "ok"].includes(fristenParam("status")) ? fristenParam("status") : "";
   const suche = (fristenParam("suche") || "").trim().toLowerCase();
   let summeSoll = 0, summeIst = 0, offen = 0;
-  const zeilen = S.lehrer.filter((l) => (!lehrerF || l.id === lehrerF) && (!suche || (l.name || l.email || "").toLowerCase().includes(suche))).map((l) => {
+  const zeilen = lehrerMitEhemaligen((id) => fcFuerLehrer(id, von, bis).soll > 0 || !!letzteQuittung(id, von)).filter((l) => (!lehrerF || l.id === lehrerF) && (!suche || (l.name || l.email || "").toLowerCase().includes(suche))).map((l) => {
     const r = fcFuerLehrer(l.id, von, bis);
     const q = letzteQuittung(l.id, von);
     summeSoll += r.soll;
@@ -3061,7 +3062,7 @@ function renderZahlen() {
   </div>`;
   const anmPunkte = monate.map((m) => ({ x: monatKurz(m), wert: anm[m] || 0, text: String(anm[m] || 0), zeigen: m === dieser || m === vorher, tip: `${monatKurz(m)}: ${anm[m] || 0} Anmeldungen · anklicken für die Namen`, link: zLink({ liste: "anmeldungen", monat: m }) }));
   const qp = (q, art) => monate.map((m) => { const v = q[m]; return { x: monatKurz(m), wert: v ? Math.round(v.ok / v.n * 100) : null, text: v ? Math.round(v.ok / v.n * 100) + " %" : "", zeigen: !!v && letzte3.includes(m), tip: v ? `${monatKurz(m)}: ${Math.round(v.ok / v.n * 100)} % (${v.ok} von ${v.n} bestanden) · anklicken für die Namen` : `${monatKurz(m)}: keine Prüfungen`, link: v ? zLink({ liste: art, monat: m }) : "" }; });
-  const lehrerZeilen = S.lehrer.filter((l) => !f.lehrer || l.id === f.lehrer).map((l) => ({ name: l.name || l.email, wert: ue[l.id] || 0, text: zahlDE(ue[l.id] || 0, 0) + " UE", tip: `${l.name || l.email}: ${zahlDE(ue[l.id] || 0, 1)} Unterrichtseinheiten · anklicken für die Termine`, link: zLink({ liste: "ue", monat: dieser, lehrer: l.id }) })).sort((a, b) => b.wert - a.wert);
+  const lehrerZeilen = lehrerMitEhemaligen((id) => (ue[id] || 0) > 0).filter((l) => !f.lehrer || l.id === f.lehrer).map((l) => ({ name: l.name || l.email, wert: ue[l.id] || 0, text: zahlDE(ue[l.id] || 0, 0) + " UE", tip: `${l.name || l.email}: ${zahlDE(ue[l.id] || 0, 1)} Unterrichtseinheiten · anklicken für die Termine`, link: zLink({ liste: "ue", monat: dieser, lehrer: l.id }) })).sort((a, b) => b.wert - a.wert);
   const hinweis = S.lehrer.length <= 1 ? `<p class="leise klein">Hinweis: Zahlen sind nur so vollständig wie die Daten im Kompass. Solange nicht alle Fahrlehrer den Kompass nutzen, fehlen ihre Stunden.</p>` : "";
   // Termine und Prüfungstafel werden nur für ~400 Tage geladen: ältere Jahre nicht anbieten, angeschnittene mit Hinweis
   const grenze = KR.addDaysISO(heute, -DATEN_TAGE);
@@ -3216,7 +3217,7 @@ function renderTeam() {
       ${mitZahlen ? `<td class="zahlspalte">${schuelerZahl[p.id] || 0}</td><td class="zahlspalte">${zahlDE(ue[p.id] || 0)}</td>` : ""}
       <td>${p.aktiv === false ? '<span class="marke-pill rot">gesperrt</span>' : p.ohne_app ? '<span class="marke-pill">ohne App</span>' : '<span class="marke-pill gruen">aktiv</span>'}</td>
       <td class="aktionen"><div class="aktionen-box">${mitZahlen ? `<button class="knopf klein" data-flakte="${esc(p.id)}" type="button">${darfPersonenVerwalten() ? "Akte & Klassen" : "Akte"}</button>` : ""}${admin && p.rolle !== "super_admin" && p.id !== S.user.id ? `${p.ohne_app ? "" : `<button class="knopf klein" data-einladung="${esc(p.id)}" type="button">Einladung senden</button><button class="knopf klein" data-pwreset="${esc(p.id)}" type="button">Neues Passwort</button>`}
-        ${S.profil.rolle === "super_admin" ? `<button class="knopf klein" data-sperren="${esc(p.id)}" type="button">${p.aktiv === false ? "Freischalten" : "Sperren"}</button>` : ""}` : ""}</div></td></tr>`;
+        ${S.profil.rolle === "super_admin" ? `<button class="knopf klein" data-sperren="${esc(p.id)}" type="button">${p.aktiv === false ? "Freischalten" : "Sperren"}</button>` : ""}` : ""}${darfZugangAendern(p) ? `<button class="knopf klein" data-zbearb="${esc(p.id)}" type="button">Bearbeiten</button><button class="knopf klein gefahr" data-zloesch="${esc(p.id)}" type="button">Löschen</button>` : ""}</div></td></tr>`;
   const lehrer = S.lehrer;
   const buero = S.team.filter((p) => p.rolle === "buero" || p.rolle === "fahrschule_admin");
   return `<div class="karte"><div class="karte-kopf"><h2>Fahrlehrer (${lehrer.length})</h2>${admin || darfPersonenVerwalten() ? '<button class="knopf haupt" id="tNeuFl" type="button">+ Fahrlehrer anlegen</button>' : ""}</div>
@@ -3310,6 +3311,8 @@ function bindeTeam(ziel) {
   ziel.querySelectorAll("[data-pwreset]").forEach((b) => b.addEventListener("click", () => passwortNeu(b.dataset.pwreset)));
   ziel.querySelectorAll("[data-einladung]").forEach((b) => b.addEventListener("click", () => einladungSenden(b.dataset.einladung)));
   ziel.querySelectorAll("[data-sperren]").forEach((b) => b.addEventListener("click", () => zugangSperren(b.dataset.sperren)));
+  ziel.querySelectorAll("[data-zbearb]").forEach((b) => b.addEventListener("click", () => zugangBearbeiten(b.dataset.zbearb)));
+  ziel.querySelectorAll("[data-zloesch]").forEach((b) => b.addEventListener("click", () => zugangLoeschen(b.dataset.zloesch)));
   bindePersonen(ziel);
 }
 /* ---------- Fahrlehrer-Akte (🗣 Serband 14.10.2026): Kennzahlen, Fahrlehrerlaubnis, eigener Führerschein, Fristen ---------- */
@@ -3380,6 +3383,19 @@ function fahrlehrerAkte(id) {
   ladeProtokoll("profiles", id);
 }
 function teamPerson(id) { return S.team.find((p) => p.id === id) || S.lehrer.find((p) => p.id === id); }
+// Gelöschte oder zum Büro gewechselte Fahrlehrer stehen nicht mehr in S.lehrer. Für Auswertungen (Fahrcheck, Statistik)
+// kommen sie dazu, solange sie im Zeitraum noch Daten haben, damit nichts verschwindet.
+function ehemaligName(p) { return (p.name || p.email || "") + (p.rolle === "entfernt" ? " (gelöscht)" : " (jetzt " + (ROLLEN[p.rolle] || p.rolle) + ")"); }
+function lehrerMitEhemaligen(hatDaten) {
+  const da = new Set(S.lehrer.map((l) => l.id));
+  return S.lehrer.concat((S.team || []).filter((p) => !da.has(p.id) && p.rolle !== "super_admin" && hatDaten(p.id)).map((p) => Object.assign({}, p, { name: ehemaligName(p) })));
+}
+// Fahrlehrer-Auswahl im Termin: ein alter Termin eines Ehemaligen behält ihn (sonst spränge die Auswahl still auf den ersten)
+function lehrerAuswahl(gewaehlt) {
+  if (!gewaehlt || S.lehrer.some((l) => l.id === gewaehlt)) return S.lehrer;
+  const p = teamPerson(gewaehlt);
+  return [p ? Object.assign({}, p, { name: ehemaligName(p) }) : { id: gewaehlt, name: "(nicht mehr da)" }].concat(S.lehrer);
+}
 function zeigePasswort(email, passwort) {
   let versucht = false;
   oeffneDialog("Zugangsdaten", `<p>Bitte jetzt weitergeben. Das Passwort wird <b>nur dieses eine Mal</b> angezeigt.</p>
@@ -3444,12 +3460,78 @@ async function zugangSperren(id) {
   if (!p) return;
   const sperren = p.aktiv !== false;
   // Die Datenbank lässt „aktiv“ nur den Betreiber (Super-Admin) ändern. Der Leitung das vorher klar sagen statt einer Fehlermeldung danach.
-  if (!S.profil || S.profil.rolle !== "super_admin") { toast(sperren ? "Sperren kann im Moment nur der Betreiber. Bitte „Neues Passwort“ drücken: Dann kommt die Person nicht mehr hinein." : "Freischalten kann im Moment nur der Betreiber.", true); return; }
+  if (!S.profil || S.profil.rolle !== "super_admin") { toast(sperren ? "Sperren kann nur der Betreiber. Wer aufhört: „Löschen“ drücken." : "Freischalten kann im Moment nur der Betreiber.", true); return; }
   if (!(await bestaetige(sperren ? "Zugang sperren?" : "Zugang freischalten?", sperren ? `${p.name || p.email} kann die App beim nächsten Start nicht mehr öffnen. Ist sie gerade offen, läuft sie bis dahin weiter. Bei Austritt zusätzlich „Neues Passwort“ drücken.` : `${p.name || p.email} kann sich wieder anmelden.`, sperren ? "Ja, sperren" : "Ja, freischalten"))) return;
   const res = await supa.from("profiles").update({ aktiv: !sperren }).eq("id", id).select("id");
   if (res.error || !res.data || !res.data.length) { toast("Nicht gespeichert: " + (res.error ? res.error.message : "keine Berechtigung"), true); return; }
   for (const l of [S.team, S.lehrer]) { const x = l.find((y) => y.id === id); if (x) x.aktiv = !sperren; }
   toast(sperren ? "Gesperrt" : "Freigeschaltet"); zeichne();
+}
+
+/* ---------- Zugang bearbeiten / löschen (🗣 Serband 21.11.2026) ----------
+   Die Server-Funktion prüft die Rechte noch einmal (update_account / delete_account). Hier nur, wer die Knöpfe sieht:
+   Leitung: Fahrlehrer und Büro der eigenen Fahrschule. Betreiber: auch Leitung. Büro mit Verwalten-Recht (PIN): nur Fahrlehrer, ohne Rollenwechsel. */
+function darfZugangAendern(p) {
+  if (!p || !S.profil || p.rolle === "super_admin" || p.rolle === "entfernt" || p.id === S.user.id) return false;
+  if (S.profil.rolle === "super_admin") return true;
+  if (S.profil.rolle === "fahrschule_admin") return ["fahrlehrer", "buero"].includes(p.rolle);
+  return p.rolle === "fahrlehrer" && darfPersonenVerwalten();
+}
+function zugangBearbeiten(id) {
+  const p = teamPerson(id);
+  if (!p || !darfZugangAendern(p)) return;
+  const fl = p.rolle === "fahrlehrer", flErlaubnis = (p.fahrlehrerlaubnis || []).length > 0;
+  const rollen = [["fahrlehrer", "Fahrlehrer"], ["buero", "Büro"]].concat(S.profil.rolle === "super_admin" ? [["fahrschule_admin", "Fahrschul-Leitung"]] : []);
+  const rolleWahl = istAdmin()
+    ? `<label class="voll">Rolle<select name="rolle">${rollen.map(([w, t]) => `<option value="${w}"${w === p.rolle ? " selected" : ""}>${esc(t)}</option>`).join("")}</select></label>` : "";
+  const klassenTeil = flErlaubnis
+    ? `<p class="leise klein voll" id="zbKlassen">Klassen: ${esc((p.klassen || []).join(", ") || "–")}. Sie kommen aus der Fahrlehrerlaubnis, ändern unter „Akte &amp; Klassen“.</p>`
+    : `<div class="voll" id="zbKlassen"${fl ? "" : " hidden"}>${klassenHaken(p.klassen || [])}</div>`;
+  const dlg = oeffneDialog(`${p.name || p.email} bearbeiten`, `<div class="formular">
+      <label class="voll">Name<input type="text" name="name" maxlength="100" required value="${esc(p.name || "")}"></label>
+      ${rolleWahl}
+      ${klassenTeil}
+      ${p.ohne_app ? `<label class="voll">E-Mail für einen App-Zugang (freiwillig)<input type="email" name="email" placeholder="leer lassen = weiter ohne App"></label>
+        <p class="leise klein voll">Mit E-Mail bekommt ${esc(p.name || "die Person")} eine Einladung und kann die App dann selbst nutzen.</p>` : ""}
+      <p class="leise klein voll" id="zbRolleHinweis" hidden>Als Büro oder Leitung hat die Person keine eigenen Schüler mehr. Vorher alle Schüler und künftigen Termine einem anderen Fahrlehrer geben.</p>
+    </div>`, async (form) => {
+    const body = { action: "update_account", target_user_id: id, name: form.name.value.trim() };
+    if (!body.name) { toast("Bitte einen Namen eintragen.", true); return false; }
+    if (form.rolle) body.rolle = form.rolle.value;
+    if (fl && !flErlaubnis && (!form.rolle || form.rolle.value === "fahrlehrer")) body.klassen = [...form.querySelectorAll("input[name=kl]:checked")].map((x) => x.value);
+    const mail = form.email ? form.email.value.trim() : "";
+    if (mail) { body.email = mail; body.einladung_senden = true; }
+    try {
+      const res = await adminFunktion(body);
+      if (res.passwort) setTimeout(() => { toast("Die E-Mail ging nicht raus. Bitte das Passwort selbst weitergeben.", true); zeigePasswort(res.email, res.passwort); }, 50);
+      else toast(res.mail_gesendet ? `Gespeichert. Die Einladung ist an ${res.email} unterwegs.` : res.geaendert === false ? "Nichts geändert" : "Gespeichert");
+      ladeDaten();
+      return true;
+    } catch (e) { toast("Nicht gespeichert: " + e.message, true); return false; }
+  }, "Speichern");
+  const sel = dlg.querySelector("select[name=rolle]");
+  if (sel) sel.addEventListener("change", () => {
+    const k = dlg.querySelector("#zbKlassen"); if (k && !flErlaubnis) k.hidden = sel.value !== "fahrlehrer";
+    dlg.querySelector("#zbRolleHinweis").hidden = !(fl && sel.value !== "fahrlehrer");
+  });
+}
+async function zugangLoeschen(id) {
+  const p = teamPerson(id);
+  if (!p || !darfZugangAendern(p)) return;
+  const name = p.name || p.email || "Dieser Zugang";
+  let check;
+  try { check = await adminFunktion({ action: "check_delete", target_user_id: id }); }
+  catch (e) { toast("Nicht möglich: " + e.message, true); return; }
+  if (!check.ok) {
+    oeffneDialog("Noch nicht löschen", `<p>${esc(check.hinweis || "Es ist noch etwas offen.")}</p>`, async () => true, "Verstanden", { festhalten: true });
+    return;
+  }
+  if (!(await bestaetige(`${name} löschen?`, `${name} kann sich danach nicht mehr anmelden und verschwindet aus den Listen. Gefahrene Stunden, Verlauf und Abrechnungen bleiben erhalten. Die E-Mail-Adresse wird frei. Rückgängig machen geht nur über den Betreiber.`, `Ja, ${name} löschen`, "Abbrechen", true))) return;
+  try {
+    const res = await adminFunktion({ action: "delete_account", target_user_id: id });
+    toast(`${name} ist gelöscht.${res.hinweis ? " " + res.hinweis : ""}`);
+    ladeDaten();
+  } catch (e) { toast("Nicht gelöscht: " + e.message, true); }
 }
 
 /* ---------- Fahrzeuge ---------- */

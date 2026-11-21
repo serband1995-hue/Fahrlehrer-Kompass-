@@ -2032,7 +2032,8 @@ body.light .lo-err.ok{color:#1e6b46;}
 body:not(.light) .fs-status-off{color:#ff8a80;}
 body:not(.light) .fs-btn-kill{color:#ff8a80;} /* K3: „Sperren“ dunkel lesbar (Richter K2) */ /* K2: „GESPERRT“ dunkel 2,85:1 war zu blass */
 .fs-actions{display:flex;gap:8px;margin-top:10px;flex-wrap:wrap;}
-.fs-btn-kill{min-height:44px;background:rgba(200,60,60,.12);color:#c83c3c;border:1px solid rgba(200,60,60,.3);border-radius:10px;padding:7px 14px;font-size:12px;font-weight:700;cursor:pointer;}
+.fs-zugang{display:flex;gap:8px;flex-basis:100%;}.fs-zugang>button{flex:1;}
+.fs-btn-kill{min-height:44px;background:rgba(200,60,60,.12);color:#a03a2b;border:1px solid rgba(200,60,60,.3);border-radius:10px;padding:7px 14px;font-size:12px;font-weight:700;cursor:pointer;}
 .fs-btn-activate{min-height:44px;background:rgba(74,139,69,.12);color:#4a8b45;border:1px solid rgba(74,139,69,.3);border-radius:10px;padding:7px 14px;font-size:12px;font-weight:700;cursor:pointer;}
 .ap-actions{display:flex;gap:8px;margin-top:12px;}
 .ap-kill{background:rgba(200,60,60,.15);border:1px solid rgba(200,60,60,.3);color:#f08080;border-radius:8px;padding:7px 14px;font-size:12px;font-weight:700;cursor:pointer;}
@@ -2695,6 +2696,7 @@ body:not(.light) .tab-i.on{color:var(--akzent-bright);}
 .fs-status-on,.fs-btn-activate{color:var(--akzent-dark) !important;}
 .fs-btn-activate{background:var(--orange-soft) !important;border-color:var(--orange-line) !important;border-radius:999px !important;}
 .fs-btn-kill,.ap-kill{border-radius:999px !important;}
+.fs-btn-activate.fs-btn-leise{background:transparent !important;border-color:var(--line-soft,rgba(0,0,0,.18)) !important;color:var(--txt) !important;}
 /* K2: dunkel war Dunkelgrün auf Dunkelgrün kaum lesbar */
 body:not(.light) .fs-status-on,body:not(.light) .fs-btn-activate{color:var(--akzent-bright) !important;}
 .mini-btn,.pt-tab,.cal-kw,.seg-i,.tab-i span{white-space:nowrap !important;}
@@ -5718,11 +5720,11 @@ async function renderAdminPanel() {
     el.innerHTML = profiles.map(p => {
       const isMe = p.id === _authUser.id;
       const displayEmail = p.email || (isMe ? _authUser.email : '— E-Mail nicht bekannt —');
-      const rolleLabel = p.rolle === 'super_admin' ? '👑 Super-Admin' : (p.rolle === 'fahrlehrer' ? `<span class="ic ic-clay" style="font-size:12px;">${ICN.car}</span> Fahrlehrer` : esc(p.rolle));
+      const rolleLabel = p.rolle === 'entfernt' ? '🗑 gelöscht' : p.rolle === 'super_admin' ? '👑 Super-Admin' : (p.rolle === 'fahrlehrer' ? `<span class="ic ic-clay" style="font-size:12px;">${ICN.car}</span> Fahrlehrer` : esc(p.rolle));
       return `<div class="ap-card">
         <div class="ap-email">${esc(displayEmail)}${isMe ? ' <span style="font-size:10px;color:#4a8b45;font-weight:700">(Du)</span>' : ''}</div>
         <div class="ap-role">${rolleLabel} &nbsp;<span class="${p.aktiv ? 'ap-status-on' : 'ap-status-off'}">${p.aktiv ? 'Aktiv' : 'GESPERRT'}</span></div>
-        ${!isMe ? `<div class="ap-actions">
+        ${!isMe && p.rolle !== 'entfernt' ? `<div class="ap-actions">
           ${p.aktiv
             ? `<button class="ap-kill" onclick="toggleUser(${_jsArg(p.id)}, false)">Sperren</button>`
             : `<button class="ap-activate" onclick="toggleUser(${_jsArg(p.id)}, true)">Freischalten</button>`
@@ -5830,9 +5832,9 @@ async function _fsLoadAggData(fahrschuleId){
   const supa=getSupa();
   // Schüler, Termine und Prüfungen seitenweise (mehr als 1000 Zeilen). Schlägt eine Abfrage fehl, bleibt der
   // bisherige Stand stehen - sonst sähe die Ansicht leer aus und ungespeicherte Änderungen wären weg.
-  let fsR,lehrerR,schuelerR,termineR,pruefungenR,fahrzeugeR,paketeR,urlaubR;
+  let fsR,lehrerR,schuelerR,termineR,pruefungenR,fahrzeugeR,paketeR,urlaubR,namenR;
   try{
-    [fsR,lehrerR,schuelerR,termineR,pruefungenR,fahrzeugeR,paketeR,urlaubR]=await Promise.all([
+    [fsR,lehrerR,schuelerR,termineR,pruefungenR,fahrzeugeR,paketeR,urlaubR,namenR]=await Promise.all([
       supa.from("fahrschulen").select("*").eq("id",fahrschuleId).single(),
       supa.from("profiles").select("*").eq("fahrschule_id",fahrschuleId).in("rolle",["fahrlehrer","super_admin"]).order("email"),
       _alleSeiten(()=>supa.from("schueler").select("*").eq("fahrschule_id",fahrschuleId).neq("status","geloescht")).then(data=>({data})),
@@ -5840,7 +5842,9 @@ async function _fsLoadAggData(fahrschuleId){
       _alleSeiten(()=>supa.from("kalender_pruefungen").select("*").eq("fahrschule_id",fahrschuleId).eq("geloescht",false)).then(data=>({data})),
       supa.from("fahrschule_fahrzeuge").select("*").eq("fahrschule_id",fahrschuleId).eq("aktiv",true).order("erstellt_am"),
       supa.from("fahrschule_pakete").select("*").eq("fahrschule_id",fahrschuleId),
-      supa.from("fahrschule_urlaub").select("*").eq("fahrschule_id",fahrschuleId).gte("bis",todayISO())
+      supa.from("fahrschule_urlaub").select("*").eq("fahrschule_id",fahrschuleId).gte("bis",todayISO()),
+      // Namen aller Zugänge (auch gelöschte oder zum Büro gewechselte Fahrlehrer), nur zum Anzeigen alter Termine
+      Promise.resolve(supa.from("profiles").select("id,name,email").eq("fahrschule_id",fahrschuleId)).catch(()=>({data:null}))
     ]);
     if(lehrerR.error) throw lehrerR.error;
   }catch(e){
@@ -5851,7 +5855,8 @@ async function _fsLoadAggData(fahrschuleId){
   if(gen!==_fsAggGen)return false;
   if(standVorher!==null&&standVorher!==JSON.stringify([DB.students,DB.lessons,DB.exams])){ _fsSyncAggChanges(); return false; }
   const lehrer=lehrerR.data||[];
-  const lehrerName=id=>{ const l=lehrer.find(x=>x.id===id); return l?(l.name||l.email):"Unbekannt"; };
+  window._fsAlleNamen={}; ((namenR&&!namenR.error&&namenR.data)||[]).forEach(p=>{ if(p&&p.id) window._fsAlleNamen[p.id]=p.name||p.email||""; });
+  const lehrerName=id=>{ const l=lehrer.find(x=>x.id===id); return l?(l.name||l.email):_fsNameAusAlle(id,"Unbekannt"); };
   DB.students=(schuelerR.data||[]).map(r=>_fsMapSchueler(r,lehrerName));
   _merkeFristen(schuelerR.data);
   _ladeTheorieBesuch(supa, (schuelerR.data||[]).map(r=>r.id));
@@ -6265,7 +6270,8 @@ async function routeFahrschuleDetail(fahrschuleId){
         ${l.aktiv
           ?`<button class="fs-btn-kill" onclick="toggleFahrlehrerAktiv(${_jsArg(l.id)},false,${_jsArg(fahrschuleId)})">Sperren</button>`
           :`<button class="fs-btn-activate" onclick="toggleFahrlehrerAktiv(${_jsArg(l.id)},true,${_jsArg(fahrschuleId)})">Freischalten</button>`}
-        <button class="fs-btn-activate" onclick="fahrlehrerPasswortZuruecksetzen(${_jsArg(l.id)})">Passwort zurücksetzen</button>
+        ${_flZugangKnoepfe(l,fahrschuleId)}
+        <button class="fs-btn-activate fs-btn-leise" onclick="fahrlehrerPasswortZuruecksetzen(${_jsArg(l.id)})">Passwort zurücksetzen</button>
       </div>`}
     </div>`;}).join("")||'<p class="muted-p" style="font-size:13px;">Noch keine Fahrlehrer.</p>';
 
@@ -6367,12 +6373,114 @@ async function fahrlehrerPasswortZuruecksetzen(userId){
 }
 
 async function toggleFahrlehrerAktiv(userId,aktiv,fahrschuleId){
-  if(!isSuperAdmin()){toast(aktiv?"Freischalten kann im Moment nur der Betreiber.":"Sperren kann im Moment nur der Betreiber. Bitte „Passwort zurücksetzen“ drücken.");return;}
+  if(!isSuperAdmin()){toast(aktiv?"Freischalten kann im Moment nur der Betreiber.":"Sperren kann nur der Betreiber. Wer aufhört: „Löschen“ drücken.");return;}
   if(!aktiv&&!confirm("Diesen Fahrlehrer wirklich sperren?\n\nEr kann die App beim nächsten Start nicht mehr öffnen. Ein Gerät, auf dem die App gerade offen ist, arbeitet bis dahin weiter. Bei Austritt zusätzlich „Passwort zurücksetzen“ drücken."))return;
   const supa=getSupa();
   const {error}=await supa.from("profiles").update({aktiv}).eq("id",userId);
   if(error){toast("Fehler: "+error.message);return;}
   _fsNachFahrlehrerAktion(fahrschuleId);
+}
+
+// Name eines Zugangs, der nicht mehr in der Fahrlehrer-Liste steht (gelöscht oder jetzt Büro): für alte Termine, Prüfungen, Provisionen
+function _fsNameAusAlle(id,sonst){ const n=id&&window._fsAlleNamen?window._fsAlleNamen[id]:""; return n||sonst; }
+// Zugang bearbeiten / löschen (🗣 Serband 21.11.2026). Rechte prüft die Server-Funktion (update_account / delete_account).
+const _FL_LEHR_KLASSEN=["B","BE","C1","C1E","C","CE"];
+function _flZugangFinden(id){
+  const listen=[(window._fsCache&&window._fsCache.lehrer)||[],(_fsAgg&&_fsAgg.lehrer)||[]];
+  for(const l of listen){ const x=l.find(y=>y.id===id); if(x)return x; }
+  return null;
+}
+function _flDarfVerwalten(l){
+  return !!(l&&l.rolle!=="super_admin"&&l.rolle!=="entfernt"&&!(_authUser&&l.id===_authUser.id)&&(isSuperAdmin()||(_authProfile&&_authProfile.rolle==="fahrschule_admin")));
+}
+function _flZugangKnoepfe(l,fahrschuleId){
+  if(!_flDarfVerwalten(l))return "";
+  return `<div class="fs-zugang"><button class="fs-btn-activate" onclick="fahrlehrerBearbeitenSheet(${_jsArg(l.id)},${_jsArg(fahrschuleId)})">Bearbeiten</button>
+        <button class="fs-btn-kill" onclick="fahrlehrerLoeschenSheet(${_jsArg(l.id)},${_jsArg(fahrschuleId)})">Löschen</button></div>`;
+}
+function fahrlehrerBearbeitenSheet(userId,fahrschuleId){
+  const l=_flZugangFinden(userId);
+  if(!l){toast("Zugang nicht gefunden. Bitte neu laden.");return;}
+  const flErlaubnis=(l.fahrlehrerlaubnis||[]).length>0;
+  const kl=l.klassen||[];
+  const rollen=[["fahrlehrer","Fahrlehrer"],["buero","Büro"]].concat(isSuperAdmin()?[["fahrschule_admin","Fahrschul-Leitung"]]:[]);
+  const rolleWahl=["fahrlehrer","buero"].includes(l.rolle)||isSuperAdmin()
+    ?`<div class="field"><label for="flbRolle">Rolle</label><select id="flbRolle" style="width:100%;">${rollen.map(([w,t])=>`<option value="${w}"${w===l.rolle?" selected":""}>${t}</option>`).join("")}</select></div>`:"";
+  const klassenTeil=`<div id="flbKlassen"${l.rolle==="fahrlehrer"?"":" hidden"}>
+      <div class="fs-check-group-label">Klassen, die er/sie unterrichtet</div>
+      ${flErlaubnis
+        ?`<p class="muted-p" style="font-size:13px;">${esc(kl.join(", ")||"–")} · Die Klassen kommen aus der Fahrlehrerlaubnis. Ändern im Büro unter „Akte &amp; Klassen“.</p>`
+        :`<div style="display:flex;flex-wrap:wrap;gap:0 16px;">${_FL_LEHR_KLASSEN.map(k=>`<label class="fs-check-row"><input type="checkbox" class="flbKl" value="${k}"${kl.includes(k)?" checked":""}><span>${k}</span></label>`).join("")}</div>`}
+    </div>`;
+  const ohneAppTeil=l.ohne_app?`<div class="field"><label for="flbEmail">E-Mail für einen App-Zugang (freiwillig)</label><input type="email" id="flbEmail" placeholder="leer lassen = weiter ohne App" style="width:100%;" autocomplete="off"></div>
+      <p class="muted-p" style="font-size:12.5px;margin-top:-4px;">Mit E-Mail bekommt ${esc(l.name||"er/sie")} eine Einladung und kann die App dann selbst nutzen.</p>`:"";
+  openSheet(`<div class="sheet-h">Zugang bearbeiten</div>
+    <p class="muted-p" style="font-size:13px;margin:-4px 0 12px;">${l.ohne_app?"Ohne App":esc(l.email||"")}</p>
+    <div class="field"><label for="flbName">Name</label><input type="text" id="flbName" maxlength="100" value="${esc(l.name||"")}" style="width:100%;" autocomplete="off"></div>
+    ${rolleWahl}
+    ${klassenTeil}
+    ${ohneAppTeil}
+    <p class="muted-p" id="flbRolleHinweis" style="font-size:12.5px;" hidden>Als Büro oder Leitung hat die Person keine eigenen Schüler mehr. Vorher alle Schüler und künftigen Termine übergeben.</p>
+    <div class="btn-row"><button class="btn btn-ghost" id="flbAbbr" style="flex:0;padding:13px 18px;">Abbrechen</button><button class="btn btn-primary" id="flbSpeichern">Speichern</button></div>`);
+  const rolleSel=$("#flbRolle");
+  if(rolleSel)rolleSel.addEventListener("change",()=>{
+    $("#flbKlassen").hidden=rolleSel.value!=="fahrlehrer";
+    $("#flbRolleHinweis").hidden=!(l.rolle==="fahrlehrer"&&rolleSel.value!=="fahrlehrer");
+  });
+  $("#flbAbbr").addEventListener("click",closeSheet);
+  $("#flbSpeichern").addEventListener("click",async()=>{
+    const knopf=$("#flbSpeichern"); if(knopf.disabled)return;
+    const name=$("#flbName").value.trim();
+    if(!name){toast("Bitte einen Namen eintragen");return;}
+    const body={action:"update_account",target_user_id:l.id,name};
+    if(rolleSel)body.rolle=rolleSel.value;
+    if(!flErlaubnis&&(!rolleSel||rolleSel.value==="fahrlehrer")&&l.rolle==="fahrlehrer")body.klassen=[...document.querySelectorAll(".flbKl:checked")].map(x=>x.value);
+    const mail=$("#flbEmail")?$("#flbEmail").value.trim():"";
+    if(mail){body.email=mail;body.einladung_senden=true;}
+    knopf.disabled=true; knopf.textContent="Speichere…";
+    try{
+      const res=await _callAdminFn(body);
+      closeSheet();
+      if(res.passwort) alert(`Gespeichert ✓\n\nDie E-Mail ging nicht raus. Bitte selbst weitergeben:\nE-Mail: ${res.email}\nPasswort: ${res.passwort}\n\nWird nur einmal angezeigt!`);
+      else toast(res.mail_gesendet?"Gespeichert ✓ Die Einladung ist an "+res.email+" unterwegs.":res.geaendert===false?"Nichts geändert":"Gespeichert ✓");
+      _fsNachFahrlehrerAktion(fahrschuleId);
+    }catch(e){ knopf.disabled=false; knopf.textContent="Speichern"; toast("Nicht gespeichert: "+e.message); }
+  });
+}
+async function fahrlehrerLoeschenSheet(userId,fahrschuleId){
+  const l=_flZugangFinden(userId);
+  if(!l){toast("Zugang nicht gefunden. Bitte neu laden.");return;}
+  const name=l.name||l.email||"Dieser Zugang";
+  if(window._flLoeschPruefung)return; // Doppeltipp: nur eine Prüfung
+  window._flLoeschPruefung=true;
+  openSheet(`<div class="sheet-h">Zugang löschen</div><p class="muted-p" id="fllWarte" style="text-align:center;padding:12px 0;">Prüfe, ob noch etwas offen ist…</p>`);
+  let check;
+  try{ check=await _callAdminFn({action:"check_delete",target_user_id:l.id}); }
+  catch(e){ if($("#sheet").classList.contains("open")&&$("#fllWarte"))closeSheet(); toast("Nicht möglich: "+e.message); return; }
+  finally{ window._flLoeschPruefung=false; }
+  // Inzwischen zurück gegangen oder Fenster geschlossen: keine Frage mehr aufdrängen
+  if(!$("#sheet").classList.contains("open")||!$("#fllWarte"))return;
+  if(!check.ok){
+    openSheet(`<div class="sheet-h">Noch nicht löschen</div>
+      <p style="font-size:14px;line-height:1.5;">${esc(check.hinweis||"Es ist noch etwas offen.")}</p>
+      <div class="btn-row"><button class="btn btn-primary" id="fllOk">Verstanden</button></div>`,{neu:true});
+    $("#fllOk").addEventListener("click",closeSheet);
+    return;
+  }
+  openSheet(`<div class="sheet-h">${esc(name)} löschen?</div>
+    <p style="font-size:14px;line-height:1.5;">${esc(name)} kann sich danach nicht mehr anmelden. Gefahrene Stunden und Verlauf bleiben erhalten.</p>
+    <p class="muted-p" style="font-size:13px;line-height:1.5;">Rückgängig machen geht nur über den Betreiber.</p>
+    <div class="btn-row"><button class="btn btn-ghost" id="fllAbbr" style="flex:0;padding:13px 18px;">Abbrechen</button><button class="btn fs-btn-kill" id="fllJa" style="flex:1;font-size:14px;">Ja, ${esc(name)} löschen</button></div>`,{neu:true});
+  $("#fllAbbr").addEventListener("click",closeSheet);
+  $("#fllJa").addEventListener("click",async()=>{
+    const knopf=$("#fllJa"); if(knopf.disabled)return;
+    knopf.disabled=true; knopf.textContent="Lösche…";
+    try{
+      const res=await _callAdminFn({action:"delete_account",target_user_id:l.id});
+      closeSheet(); toast(name+" ist gelöscht ✓"+(res.hinweis?" "+res.hinweis:""));
+      _fsNachFahrlehrerAktion(fahrschuleId);
+    }catch(e){ knopf.disabled=false; knopf.textContent="Ja, "+name+" löschen"; toast("Nicht gelöscht: "+e.message); }
+  });
 }
 
 // Künftige Termine des Schülers beim bisherigen Fahrlehrer auf Wunsch mit umverteilen.
@@ -6452,9 +6560,10 @@ function routeFahrschuleLehrer(){
       <div class="fs-sub">${l.aktiv?'<span class="fs-status-on">Aktiv</span>':'<span class="fs-status-off">GESPERRT</span>'} &nbsp;·&nbsp; Auslastung ${l.auslastung_pct!=null?`<span style="color:${l.auslastung_pct>=100?'#c83c3c':l.auslastung_pct>=85?'#cf9a3e':'inherit'};font-weight:${l.auslastung_pct>=85?'700':'400'};">${l.auslastung_pct}%</span>`:'—'} &nbsp;·&nbsp; ${meineSchueler.length} Schüler &nbsp;·&nbsp; ${q.pct==null?'Quote —':'Quote '+q.pct+'%'}</div>
       ${(istSuperAdmin||buero)?'':`<div class="fs-actions">
         ${l.aktiv
-          ?(isSuperAdmin()?`<button class="fs-btn-kill" onclick="toggleFahrlehrerAktiv(${_jsArg(l.id)},false,${_jsArg(_fsAgg.fahrschuleId)})">Sperren</button>`:`<span class="muted-p">Sperren kann im Moment nur der Betreiber. Bitte „Passwort zurücksetzen“ drücken.</span>`)
+          ?(isSuperAdmin()?`<button class="fs-btn-kill" onclick="toggleFahrlehrerAktiv(${_jsArg(l.id)},false,${_jsArg(_fsAgg.fahrschuleId)})">Sperren</button>`:`<span class="muted-p">Sperren kann nur der Betreiber. Wer aufhört: „Löschen“.</span>`)
           :(isSuperAdmin()?`<button class="fs-btn-activate" onclick="toggleFahrlehrerAktiv(${_jsArg(l.id)},true,${_jsArg(_fsAgg.fahrschuleId)})">Freischalten</button>`:`<span class="muted-p">Freischalten kann im Moment nur der Betreiber.</span>`)}
-        <button class="fs-btn-activate" onclick="fahrlehrerPasswortZuruecksetzen(${_jsArg(l.id)})">Passwort zurücksetzen</button>
+        ${_flZugangKnoepfe(l,_fsAgg.fahrschuleId)}
+        <button class="fs-btn-activate fs-btn-leise" onclick="fahrlehrerPasswortZuruecksetzen(${_jsArg(l.id)})">Passwort zurücksetzen</button>
       </div>`}
       ${l.slug?`<div class="fs-actions"><button class="fs-btn-activate" onclick="document.getElementById(${_jsArg(linksId)}).style.display=document.getElementById(${_jsArg(linksId)}).style.display==='none'?'block':'none';">🔗 Buchungslinks</button></div>
       <div id="${linksId}" style="display:none;margin-top:6px;">${_fsBuchungslinksHTML(l.slug,l.name||l.email)}</div>`:'<p class="muted-p" style="margin-top:4px;">Noch kein Buchungslink eingerichtet.</p>'}
@@ -6814,7 +6923,7 @@ async function routeFahrschuleVerschiebungsverlauf(){
   const supa=getSupa();
   const {data}=await supa.from("schueler_verschiebungen").select("*").eq("fahrschule_id",_fsAgg.fahrschuleId).order("erstellt_am",{ascending:false}).limit(100);
   const lehrer=_fsAgg.lehrer||[];
-  const lehrerName=id=>{ if(!id)return "— Pool —"; const l=lehrer.find(x=>x.id===id); return l?(l.name||l.email):"Unbekannt"; };
+  const lehrerName=id=>{ if(!id)return "— Pool —"; const l=lehrer.find(x=>x.id===id); return l?(l.name||l.email):_fsNameAusAlle(id,"Unbekannt"); };
   const schuelerName=id=>{ const s=(DB.students||[]).find(x=>x.id===id); return s?s.name:"(gelöschter Schüler)"; };
   const rows=(data||[]).map(v=>`<div class="fs-card">
     <div class="fs-name">${esc(schuelerName(v.schueler_id))}</div>
@@ -7254,7 +7363,7 @@ async function routeFahrschuleProvisionen(){
   const supa=getSupa();
   const {data}=await supa.from("provisionen").select("*").eq("fahrschule_id",_fsAgg.fahrschuleId).order("erstellt_am",{ascending:false});
   const lehrer=_fsAgg.lehrer||[];
-  const lehrerName=id=>{const l=lehrer.find(x=>x.id===id);return l?(l.name||l.email):"—";};
+  const lehrerName=id=>{const l=lehrer.find(x=>x.id===id);return l?(l.name||l.email):_fsNameAusAlle(id,"—");};
   const gesamt={};
   (data||[]).filter(p=>p.status==='offen').forEach(p=>{gesamt[p.fahrlehrer_id]=(gesamt[p.fahrlehrer_id]||0)+Number(p.betrag||0);});
   const eurCent=v=>Number(v||0).toLocaleString("de-DE",{style:"currency",currency:"EUR"});
@@ -7428,7 +7537,7 @@ async function routeFahrschuleKalender(fahrschuleId,weekStart){
     const rows=tagTermine.map(t=>{
       const farbe=_fsKalFarbeFuer(t.fahrlehrer_id,lehrer);
       const l=lehrer.find(x=>x.id===t.fahrlehrer_id);
-      const lehrerName=l?(l.name||l.email):"?";
+      const lehrerName=l?(l.name||l.email):_fsNameAusAlle(t.fahrlehrer_id,"?");
       const schuelerName=schuelerNamen[t.schueler_id]||(t.payload&&t.payload.name)||"–";
       return `<button class="fs-card" style="width:100%;text-align:left;border:none;border-left:4px solid ${farbe};cursor:pointer;" onclick="fsTerminBearbeiten(${_jsArg(t.id)})">
         <div class="fs-name">${esc(t.von||"")}–${esc(t.bis||"")} · ${esc(schuelerName)}</div>
@@ -7555,7 +7664,7 @@ window.addEventListener("load", () => {
 const STORE_KEY="serband-app-v1";
 /* Build-Version: bei jeder Auslieferung hier das Datum aktualisieren.
    Wird in den Einstellungen angezeigt + für den Update-Hinweis genutzt. */
-const APP_VERSION="2026.11.20.1";
+const APP_VERSION="2026.11.21.1";
 try{const f=document.getElementById("drawerFoot"); if(f)f.textContent="Fahrlehrer-Kompass · Version "+APP_VERSION;}catch(e){}
 // Nutzungsbedingungen & Haftungsausschluss (Bereich: rechtliche Absicherung) - Version hochzählen
 // und alle Nutzer müssen erneut zustimmen, sobald sich der Text inhaltlich ändert.
