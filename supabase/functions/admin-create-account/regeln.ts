@@ -10,7 +10,13 @@ export type Profil = {
   fahrlehrerlaubnis?: string[] | null;
   klassen?: string[] | null;
   name?: string | null;
+  faehrt_selbst?: boolean | null;
 };
+
+// Unterrichtet diese Person selbst (eigene Schüler)? Fahrlehrer und die Leitung mit Kennzeichen „fährt selbst“.
+export function unterrichtet(rolle: string, faehrtSelbst: unknown): boolean {
+  return rolle === "fahrlehrer" || (rolle === "fahrschule_admin" && faehrtSelbst === true);
+}
 
 export type Wer = {
   requester: Profil;
@@ -54,13 +60,13 @@ export function darfVerwalten(wer: Wer, ziel: Profil): string | null {
   return "Keine Berechtigung";
 }
 
-export type Wunsch = { name?: unknown; klassen?: unknown; rolle?: unknown; email?: unknown };
+export type Wunsch = { name?: unknown; klassen?: unknown; rolle?: unknown; email?: unknown; faehrt_selbst?: unknown };
 export type Aenderung = {
   fehler?: string;
   status?: number;
   profil: Record<string, unknown>;   // Felder für profiles
   neueEmail?: string;                // ohne App → mit App
-  rolleWeg?: boolean;                // Fahrlehrer wird Büro/Leitung: vorher Übergabe nötig
+  rolleWeg?: boolean;                // unterrichtet danach nicht mehr (z. B. Fahrlehrer wird Büro): vorher Übergabe nötig
 };
 
 const ROLLEN_ERLAUBT = ["fahrlehrer", "buero", "fahrschule_admin"];
@@ -96,12 +102,21 @@ export function pruefeAenderung(wer: Wer, ziel: Profil, w: Wunsch): Aenderung {
   }
   if (ohneApp && rolle !== "fahrlehrer") return nein("Ohne App geht nur bei Fahrlehrern. Bitte zuerst eine E-Mail eintragen.");
 
+  // „Fährt selbst“ gibt es nur bei der Leitung; die Leitung bearbeitet nur der Betreiber (darfVerwalten)
+  let faehrt = ziel.faehrt_selbst === true;
+  if (rolle !== "fahrschule_admin") faehrt = false;
+  else if (w.faehrt_selbst !== undefined && w.faehrt_selbst !== null) {
+    if (!wer.isSuperAdmin) return nein("„Fährt selbst“ stellt nur der Betreiber ein.", 403);
+    faehrt = w.faehrt_selbst === true;
+  }
+  if (faehrt !== (ziel.faehrt_selbst === true)) profil.faehrt_selbst = faehrt;
+
   if (w.klassen !== undefined && w.klassen !== null) {
     const kl = klassenListe(w.klassen);
     const alt = klassenListe(ziel.klassen || []);
     if (kl.join(",") !== alt.join(",")) {
       if ((ziel.fahrlehrerlaubnis || []).length) return nein("Die Klassen kommen aus der Fahrlehrerlaubnis. Bitte in der Fahrlehrer-Akte ändern.");
-      if (rolle !== "fahrlehrer") return nein("Klassen gibt es nur bei Fahrlehrern.");
+      if (!unterrichtet(rolle, faehrt)) return nein("Klassen gibt es nur bei Fahrlehrern.");
       profil.klassen = kl;
     }
   }
@@ -109,7 +124,7 @@ export function pruefeAenderung(wer: Wer, ziel: Profil, w: Wunsch): Aenderung {
   return {
     profil,
     neueEmail: typeof profil.email === "string" ? profil.email as string : undefined,
-    rolleWeg: ziel.rolle === "fahrlehrer" && rolle !== "fahrlehrer",
+    rolleWeg: unterrichtet(ziel.rolle, ziel.faehrt_selbst) && !unterrichtet(rolle, faehrt),
   };
 }
 

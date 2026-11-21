@@ -29,3 +29,12 @@ begin
 end;
 $function$;
 -- Gelöschte Zugänge (rolle = 'entfernt') bleiben so; zurückholen nur von Hand (Rolle, aktiv, E-Mail, Sperre im Anmeldekonto).
+
+-- ===== Abschnitt 2: Rückweg zu 20261121_zugang_02_leitung_faehrt_selbst.sql =====
+-- Die drei Funktionen nehmen wieder nur Fahrlehrer/Super-Admin als Ziel an (Bedingung in der ersten Zeile zurück):
+--   buero_fahrlehrer_akte / buero_fahrlehrer_klassen:  z.rolle not in ('fahrlehrer', 'super_admin')
+--   fahrstunden_uebertragen:                            ... where id = p_ziel and rolle = 'fahrlehrer' and aktiv;
+-- Am einfachsten: die Funktionsdefinitionen aus dieser Migration nehmen und nur diese Bedingungen zurücksetzen.
+-- Die Spalte erst danach entfernen (die App liest sie über select * und kommt ohne sie aus; vorher App-Stand zurücksetzen,
+-- weil die Fahrlehrer-Listen in der App nach faehrt_selbst filtern):
+-- alter table public.profiles drop column if exists faehrt_selbst;

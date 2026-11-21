@@ -3480,25 +3480,33 @@ function darfZugangAendern(p) {
 function zugangBearbeiten(id) {
   const p = teamPerson(id);
   if (!p || !darfZugangAendern(p)) return;
-  const fl = p.rolle === "fahrlehrer", flErlaubnis = (p.fahrlehrerlaubnis || []).length > 0;
-  const rollen = [["fahrlehrer", "Fahrlehrer"], ["buero", "Büro"]].concat(S.profil.rolle === "super_admin" ? [["fahrschule_admin", "Fahrschul-Leitung"]] : []);
+  const flErlaubnis = (p.fahrlehrerlaubnis || []).length > 0, betreiber = S.profil.rolle === "super_admin";
+  // Unterrichtet selbst: Fahrlehrer und die Leitung mit „fährt selbst“
+  const lehrt = (r, f) => r === "fahrlehrer" || (r === "fahrschule_admin" && f);
+  const lehrtVorher = lehrt(p.rolle, p.faehrt_selbst === true);
+  const rollen = [["fahrlehrer", "Fahrlehrer"], ["buero", "Büro"]].concat(betreiber ? [["fahrschule_admin", "Fahrschul-Leitung"]] : []);
   const rolleWahl = istAdmin()
     ? `<label class="voll">Rolle<select name="rolle">${rollen.map(([w, t]) => `<option value="${w}"${w === p.rolle ? " selected" : ""}>${esc(t)}</option>`).join("")}</select></label>` : "";
+  const faehrtTeil = betreiber ? `<label class="voll login-zeig" id="zbFaehrtZeile"${p.rolle === "fahrschule_admin" ? "" : " hidden"}><input type="checkbox" name="faehrt"${p.faehrt_selbst ? " checked" : ""}> Fährt selbst: eigene Schüler und Fahrlehrer-Ansicht in der App, Gesamtübersicht im Menü</label>` : "";
   const klassenTeil = flErlaubnis
     ? `<p class="leise klein voll" id="zbKlassen">Klassen: ${esc((p.klassen || []).join(", ") || "–")}. Sie kommen aus der Fahrlehrerlaubnis, ändern unter „Akte &amp; Klassen“.</p>`
-    : `<div class="voll" id="zbKlassen"${fl ? "" : " hidden"}>${klassenHaken(p.klassen || [])}</div>`;
+    : `<div class="voll" id="zbKlassen"${lehrtVorher ? "" : " hidden"}>${klassenHaken(p.klassen || [])}</div>`;
   const dlg = oeffneDialog(`${p.name || p.email} bearbeiten`, `<div class="formular">
       <label class="voll">Name<input type="text" name="name" maxlength="100" required value="${esc(p.name || "")}"></label>
       ${rolleWahl}
+      ${faehrtTeil}
       ${klassenTeil}
       ${p.ohne_app ? `<label class="voll">E-Mail für einen App-Zugang (freiwillig)<input type="email" name="email" placeholder="leer lassen = weiter ohne App"></label>
         <p class="leise klein voll">Mit E-Mail bekommt ${esc(p.name || "die Person")} eine Einladung und kann die App dann selbst nutzen.</p>` : ""}
-      <p class="leise klein voll" id="zbRolleHinweis" hidden>Als Büro oder Leitung hat die Person keine eigenen Schüler mehr. Vorher alle Schüler und künftigen Termine einem anderen Fahrlehrer geben.</p>
+      <p class="leise klein voll" id="zbRolleHinweis" hidden>So hat die Person keine eigenen Schüler mehr. Vorher alle Schüler und künftigen Termine einem anderen Fahrlehrer geben.</p>
     </div>`, async (form) => {
     const body = { action: "update_account", target_user_id: id, name: form.name.value.trim() };
     if (!body.name) { toast("Bitte einen Namen eintragen.", true); return false; }
     if (form.rolle) body.rolle = form.rolle.value;
-    if (fl && !flErlaubnis && (!form.rolle || form.rolle.value === "fahrlehrer")) body.klassen = [...form.querySelectorAll("input[name=kl]:checked")].map((x) => x.value);
+    const rolle = form.rolle ? form.rolle.value : p.rolle;
+    if (form.faehrt && rolle === "fahrschule_admin") body.faehrt_selbst = form.faehrt.checked;
+    const faehrt = rolle === "fahrschule_admin" && (form.faehrt ? form.faehrt.checked : p.faehrt_selbst === true);
+    if (!flErlaubnis && lehrt(rolle, faehrt)) body.klassen = [...form.querySelectorAll("input[name=kl]:checked")].map((x) => x.value);
     const mail = form.email ? form.email.value.trim() : "";
     if (mail) { body.email = mail; body.einladung_senden = true; }
     try {
@@ -3509,11 +3517,16 @@ function zugangBearbeiten(id) {
       return true;
     } catch (e) { toast("Nicht gespeichert: " + e.message, true); return false; }
   }, "Speichern");
-  const sel = dlg.querySelector("select[name=rolle]");
-  if (sel) sel.addEventListener("change", () => {
-    const k = dlg.querySelector("#zbKlassen"); if (k && !flErlaubnis) k.hidden = sel.value !== "fahrlehrer";
-    dlg.querySelector("#zbRolleHinweis").hidden = !(fl && sel.value !== "fahrlehrer");
-  });
+  const sel = dlg.querySelector("select[name=rolle]"), box = dlg.querySelector("input[name=faehrt]");
+  const umschalten = () => {
+    const rolle = sel ? sel.value : p.rolle;
+    const faehrt = rolle === "fahrschule_admin" && (box ? box.checked : p.faehrt_selbst === true);
+    const z = dlg.querySelector("#zbFaehrtZeile"); if (z) z.hidden = rolle !== "fahrschule_admin";
+    const k = dlg.querySelector("#zbKlassen"); if (k && !flErlaubnis) k.hidden = !lehrt(rolle, faehrt);
+    dlg.querySelector("#zbRolleHinweis").hidden = !(lehrtVorher && !lehrt(rolle, faehrt));
+  };
+  if (sel) sel.addEventListener("change", umschalten);
+  if (box) box.addEventListener("change", umschalten);
 }
 async function zugangLoeschen(id) {
   const p = teamPerson(id);
@@ -3836,7 +3849,8 @@ async function ladeDaten() {
   try {
     const [fs, lehrer, schueler, termine, pruefungen, fahrzeuge, pakete, pTermine, fcAbg, verk, prov, team, notizen, gelesen, aufgaben, personen, theorie, fahrzeugeWeg] = await Promise.all([
       supa.from("fahrschulen").select("*").eq("id", fsId).single(),
-      supa.from("profiles").select("*").eq("fahrschule_id", fsId).in("rolle", ["fahrlehrer", "super_admin"]).order("name"),
+      // Fahrlehrer: auch die Leitung, die selbst fährt (faehrt_selbst), nicht die reine Leitung
+      supa.from("profiles").select("*").eq("fahrschule_id", fsId).in("rolle", ["fahrlehrer", "super_admin", "fahrschule_admin"]).order("name"),
       supa.from("schueler").select("*").eq("fahrschule_id", fsId).neq("status", "geloescht").order("name"),
       alleSeiten(() => supa.from("kalender_termine").select("*").eq("fahrschule_id", fsId).eq("geloescht", false).gte("datum", KR.addDaysISO(KR.todayISO(), -DATEN_TAGE)).order("datum").order("id")),
       supa.from("kalender_pruefungen").select("*").eq("fahrschule_id", fsId).eq("geloescht", false),
@@ -3856,7 +3870,7 @@ async function ladeDaten() {
     ]);
     if (nr !== S.ladeNr) return; // inzwischen wurde neu geladen oder die Fahrschule gewechselt
     S.fs = pruefe(fs, "Fahrschule");
-    S.lehrer = pruefe(lehrer, "Fahrlehrer") || [];
+    S.lehrer = (pruefe(lehrer, "Fahrlehrer") || []).filter((p) => p.rolle !== "fahrschule_admin" || p.faehrt_selbst === true);
     S.schueler = pruefe(schueler, "Schüler") || [];
     S.termine = pruefe(termine, "Termine") || [];
     S.pruefungen = pruefe(pruefungen, "Prüfungen") || [];

@@ -4079,12 +4079,25 @@ function _uidAus(sessionData) {
 function isSuperAdmin() {
   return _authProfile && _authProfile.rolle === "super_admin";
 }
+// Leitung, die selbst fährt (🗣 Serband 21.11.2026, Jelena): eigene Fahrlehrer-Ansicht wie der Betreiber,
+// die Gesamtübersicht über das Menü. Reine Leitung (ohne Kennzeichen) und Büro sehen nur die Gesamtansicht.
+function _leitungFaehrtSelbst(p) { p = p || _authProfile; return !!(p && p.rolle === "fahrschule_admin" && p.faehrt_selbst === true); }
+function _hatAdminUmschalter() { return !!(isSuperAdmin() || _leitungFaehrtSelbst()); }
+function _nurGesamtansicht(p) { p = p || _authProfile; return !!(p && (p.rolle === "buero" || (p.rolle === "fahrschule_admin" && !_leitungFaehrtSelbst(p)))); }
+// Fahrlehrer-Listen: Fahrlehrer, Betreiber und die Leitung, die selbst fährt (reine Leitung nicht)
+function _fsNurUnterrichtende(res) {
+  if (res && Array.isArray(res.data)) res.data = res.data.filter((p) => p.rolle !== "fahrschule_admin" || p.faehrt_selbst === true);
+  return res;
+}
 // Streifen oben „Super-Admin · alle Rechte“: nur sichtbar, wenn man als Super-Admin angemeldet ist
 function _zeigeSaStreifen() {
   const el = document.getElementById("saStreifen");
   if (!el) return;
-  const an = !!isSuperAdmin();
+  const an = _hatAdminUmschalter();
   el.hidden = !an;
+  const t = el.querySelectorAll("span");
+  if (t[0]) t[0].textContent = isSuperAdmin() ? "Super-Admin" : "Fahrschul-Leitung";
+  if (t[1]) t[1].textContent = isSuperAdmin() ? "· alle Rechte" : "· Gesamtübersicht im Menü";
   const app = document.querySelector(".app");
   if (app) app.classList.toggle("mit-sa-streifen", an);
 }
@@ -4366,7 +4379,7 @@ async function afterLogin(user) {
     }
   }
   // Umschalter "Admin-Gesamtübersicht" einblenden, nur für dich
-  if (isSuperAdmin()) {
+  if (_hatAdminUmschalter()) {
     _fsSetDrawer(false);
   }
   _zeigeSaStreifen();
@@ -4381,7 +4394,7 @@ async function afterLogin(user) {
 }
 async function _continueLoginFlow(prof) {
   // Fahrschule-Admin: exakt dieselbe App, nur mit den zusammengeführten Daten der ganzen Fahrschule
-  if (prof && (prof.rolle === "fahrschule_admin" || prof.rolle === "buero")) {
+  if (_nurGesamtansicht(prof)) {
     document.getElementById("loginOverlay").classList.add("hidden");
     // Schlägt das Laden fehl (z.B. kein Netz), alle 20 s erneut versuchen statt eine leere Ansicht zu zeigen.
     const versuch = async () => { if (_fsAgg || !_authUser) return; if (!(await _fsEnterAggMode(prof.fahrschule_id)) && !_fsAgg) setTimeout(versuch, 20000); };
@@ -4898,8 +4911,9 @@ function _pushFertig(d, gespeichert) {
 }
 async function _pushToCloudJetzt(gen) {
   if (!_authUser) return false;
-  // Büro und Fahrschul-Admin arbeiten nur auf den Fahrschul-Tabellen, einen persönlichen Snapshot gibt es nicht.
-  if (_authProfile && (_authProfile.rolle === "buero" || _authProfile.rolle === "fahrschule_admin")) return true;
+  // Büro und reine Leitung arbeiten nur auf den Fahrschul-Tabellen, einen persönlichen Snapshot gibt es nicht.
+  // Die Leitung, die selbst fährt, hat wie jeder Fahrlehrer einen eigenen Stand.
+  if (_nurGesamtansicht()) return true;
   if (!_pullOk) { console.warn("[Kompass] Push übersprungen: Cloud-Stand noch nicht gelesen."); return false; }
   const daten = _persoenlicheDaten();
   if (!daten) { console.warn("[Kompass] Push übersprungen: persönlicher Stand nicht verfügbar."); return false; }
@@ -5793,7 +5807,7 @@ function _fsSetDrawer(fahrschuleMode){
   const navEl=document.querySelector(".drawer-nav");
   if(!navEl)return;
   if(_normalDrawerNavHTML===null) _normalDrawerNavHTML=navEl.innerHTML;
-  navEl.innerHTML = fahrschuleMode ? _fsDrawerNavHTML(isSuperAdmin()) : (_normalDrawerNavHTML+_fsSuperAdminToggleBtn());
+  navEl.innerHTML = fahrschuleMode ? _fsDrawerNavHTML(_hatAdminUmschalter()) : (_normalDrawerNavHTML+_fsSuperAdminToggleBtn());
   const brandEye=document.querySelector(".brand-eye");
   if(brandEye) brandEye.textContent = fahrschuleMode && _fsAgg ? (_fsAgg.fahrschule.name||"Fahrschule") : (_authProfile&&_authProfile.name?"Fahrlehrer "+_authProfile.name:"Fahrlehrer");
 }
@@ -5836,7 +5850,7 @@ async function _fsLoadAggData(fahrschuleId){
   try{
     [fsR,lehrerR,schuelerR,termineR,pruefungenR,fahrzeugeR,paketeR,urlaubR,namenR]=await Promise.all([
       supa.from("fahrschulen").select("*").eq("id",fahrschuleId).single(),
-      supa.from("profiles").select("*").eq("fahrschule_id",fahrschuleId).in("rolle",["fahrlehrer","super_admin"]).order("email"),
+      supa.from("profiles").select("*").eq("fahrschule_id",fahrschuleId).in("rolle",["fahrlehrer","super_admin","fahrschule_admin"]).order("email").then(_fsNurUnterrichtende),
       _alleSeiten(()=>supa.from("schueler").select("*").eq("fahrschule_id",fahrschuleId).neq("status","geloescht")).then(data=>({data})),
       _alleSeiten(()=>supa.from("kalender_termine").select("*").eq("fahrschule_id",fahrschuleId).eq("geloescht",false)).then(data=>({data})),
       _alleSeiten(()=>supa.from("kalender_pruefungen").select("*").eq("fahrschule_id",fahrschuleId).eq("geloescht",false)).then(data=>({data})),
@@ -5949,7 +5963,7 @@ async function _fsRefreshAggData(){
   }
 }
 function _fsSuperAdminToggleBtn(){
-  if(!isSuperAdmin())return "";
+  if(!_hatAdminUmschalter())return "";
   return `<button class="nav-item" data-nav="__fstoggle" onclick="${_fsAgg?'_fsExitAggMode()':`_fsEnterAggMode(${_jsArg((_authProfile&&_authProfile.fahrschule_id)||'')})`}" style="border-top:1px solid var(--line);">
     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 21h18M5 21V7l7-4 7 4v14M9 9h1M9 13h1M14 9h1M14 13h1"/></svg>
     ${_fsAgg?'Zu meiner Fahrlehrer-Ansicht':'Admin-Gesamtübersicht'}</button>`;
@@ -6240,7 +6254,7 @@ async function routeFahrschuleDetail(fahrschuleId){
   const binSuper=isSuperAdmin();
   const [fsR,lehrerR,adminR,schuelerR,paketeR]=await Promise.all([
     supa.from("fahrschulen").select("*").eq("id",fahrschuleId).single(),
-    supa.from("profiles").select("*").eq("fahrschule_id",fahrschuleId).in("rolle",["fahrlehrer","super_admin"]).order("email"),
+    supa.from("profiles").select("*").eq("fahrschule_id",fahrschuleId).in("rolle",["fahrlehrer","super_admin","fahrschule_admin"]).order("email").then(_fsNurUnterrichtende),
     supa.from("profiles").select("*").eq("fahrschule_id",fahrschuleId).eq("rolle","fahrschule_admin"),
     supa.from("schueler").select("*").eq("fahrschule_id",fahrschuleId).neq("status","geloescht").order("name"),
     supa.from("fahrschule_pakete").select("*").eq("fahrschule_id",fahrschuleId).order("reihenfolge")
@@ -6248,7 +6262,7 @@ async function routeFahrschuleDetail(fahrschuleId){
   const fs=fsR.data, lehrer=lehrerR.data||[], admins=adminR.data||[], schueler=schuelerR.data||[], pakete=paketeR.data||[];
   const wrap=$("#fsDetailWrap");
   if(!fs){if(wrap)wrap.innerHTML='<p class="muted-p">Fahrschule nicht gefunden.</p>';return;}
-  window._fsCache={fahrschuleId,lehrer,pakete};
+  window._fsCache={fahrschuleId,lehrer,pakete,admins};
 
   const backBtn=binSuper?`<button class="btn btn-ghost" style="margin-bottom:10px;" onclick="routeFahrschulenListe()">← Alle Fahrschulen</button>`:"";
   const killSwitch=binSuper?`<div class="res-block" style="animation:none;${fs.aktiv?'':'background:rgba(200,60,60,.1);border-color:rgba(200,60,60,.3)'}">
@@ -6314,7 +6328,10 @@ async function routeFahrschuleDetail(fahrschuleId){
     </div>`).join("");
 
   const adminZugang=binSuper?(admins.length
-    ?`<div class="res-block" style="animation:none;"><h4>🔑 Fahrschule-Admin-Zugang</h4><p style="font-size:13px;color:var(--muted);">${admins.map(a=>esc(a.name||a.email)).join(", ")}</p></div>`
+    ?`<div class="res-block" style="animation:none;"><h4>🔑 Fahrschule-Admin-Zugang</h4>${admins.map(a=>`<div class="fs-card">
+        <div class="fs-name">${esc(a.name||a.email)}${a.faehrt_selbst?' <span style="color:var(--muted);font-size:11px;">(fährt selbst)</span>':''}</div>
+        <div class="fs-sub">${a.aktiv?'<span class="fs-status-on">Aktiv</span>':'<span class="fs-status-off">GESPERRT</span>'}</div>
+        <div class="fs-actions">${_flZugangKnoepfe(a,fahrschuleId)}</div></div>`).join("")}</div>`
     :`<div class="res-block" style="animation:none;"><h4>🔑 Fahrschule-Admin-Zugang</h4>
         <p style="font-size:13px;color:var(--muted);">Noch kein eigener Zugang für den Fahrschul-Inhaber.</p>
         <div class="btn-row"><button class="btn btn-primary" onclick="neuenFahrschuleAdminAnlegen(${_jsArg(fahrschuleId)})">+ Fahrschule-Admin-Zugang anlegen</button></div>
@@ -6386,11 +6403,12 @@ function _fsNameAusAlle(id,sonst){ const n=id&&window._fsAlleNamen?window._fsAll
 // Zugang bearbeiten / löschen (🗣 Serband 21.11.2026). Rechte prüft die Server-Funktion (update_account / delete_account).
 const _FL_LEHR_KLASSEN=["B","BE","C1","C1E","C","CE"];
 function _flZugangFinden(id){
-  const listen=[(window._fsCache&&window._fsCache.lehrer)||[],(_fsAgg&&_fsAgg.lehrer)||[]];
+  const listen=[(window._fsCache&&window._fsCache.lehrer)||[],(window._fsCache&&window._fsCache.admins)||[],(_fsAgg&&_fsAgg.lehrer)||[]];
   for(const l of listen){ const x=l.find(y=>y.id===id); if(x)return x; }
   return null;
 }
 function _flDarfVerwalten(l){
+  if(l&&l.rolle==="fahrschule_admin"&&!isSuperAdmin())return false; // die Leitung bearbeitet nur der Betreiber
   return !!(l&&l.rolle!=="super_admin"&&l.rolle!=="entfernt"&&!(_authUser&&l.id===_authUser.id)&&(isSuperAdmin()||(_authProfile&&_authProfile.rolle==="fahrschule_admin")));
 }
 function _flZugangKnoepfe(l,fahrschuleId){
@@ -6403,10 +6421,14 @@ function fahrlehrerBearbeitenSheet(userId,fahrschuleId){
   if(!l){toast("Zugang nicht gefunden. Bitte neu laden.");return;}
   const flErlaubnis=(l.fahrlehrerlaubnis||[]).length>0;
   const kl=l.klassen||[];
+  const lehrtNach=(r,f)=>r==="fahrlehrer"||(r==="fahrschule_admin"&&f);
+  const lehrtVorher=lehrtNach(l.rolle,l.faehrt_selbst===true);
   const rollen=[["fahrlehrer","Fahrlehrer"],["buero","Büro"]].concat(isSuperAdmin()?[["fahrschule_admin","Fahrschul-Leitung"]]:[]);
   const rolleWahl=["fahrlehrer","buero"].includes(l.rolle)||isSuperAdmin()
     ?`<div class="field"><label for="flbRolle">Rolle</label><select id="flbRolle" style="width:100%;">${rollen.map(([w,t])=>`<option value="${w}"${w===l.rolle?" selected":""}>${t}</option>`).join("")}</select></div>`:"";
-  const klassenTeil=`<div id="flbKlassen"${l.rolle==="fahrlehrer"?"":" hidden"}>
+  // „Fährt selbst“: nur der Betreiber, nur bei der Leitung (eigene Schüler + Gesamtübersicht im Menü)
+  const faehrtTeil=isSuperAdmin()?`<label class="fs-check-row" id="flbFaehrtZeile"${l.rolle==="fahrschule_admin"?"":" hidden"}><input type="checkbox" id="flbFaehrt"${l.faehrt_selbst?" checked":""}><span>Fährt selbst: eigene Schüler und Fahrlehrer-Ansicht, Gesamtübersicht im Menü</span></label>`:"";
+  const klassenTeil=`<div id="flbKlassen"${lehrtVorher?"":" hidden"}>
       <div class="fs-check-group-label">Klassen, die er/sie unterrichtet</div>
       ${flErlaubnis
         ?`<p class="muted-p" style="font-size:13px;">${esc(kl.join(", ")||"–")} · Die Klassen kommen aus der Fahrlehrerlaubnis. Ändern im Büro unter „Akte &amp; Klassen“.</p>`
@@ -6418,15 +6440,21 @@ function fahrlehrerBearbeitenSheet(userId,fahrschuleId){
     <p class="muted-p" style="font-size:13px;margin:-4px 0 12px;">${l.ohne_app?"Ohne App":esc(l.email||"")}</p>
     <div class="field"><label for="flbName">Name</label><input type="text" id="flbName" maxlength="100" value="${esc(l.name||"")}" style="width:100%;" autocomplete="off"></div>
     ${rolleWahl}
+    ${faehrtTeil}
     ${klassenTeil}
     ${ohneAppTeil}
-    <p class="muted-p" id="flbRolleHinweis" style="font-size:12.5px;" hidden>Als Büro oder Leitung hat die Person keine eigenen Schüler mehr. Vorher alle Schüler und künftigen Termine übergeben.</p>
+    <p class="muted-p" id="flbRolleHinweis" style="font-size:12.5px;" hidden>So hat die Person keine eigenen Schüler mehr. Vorher alle Schüler und künftigen Termine übergeben.</p>
     <div class="btn-row"><button class="btn btn-ghost" id="flbAbbr" style="flex:0;padding:13px 18px;">Abbrechen</button><button class="btn btn-primary" id="flbSpeichern">Speichern</button></div>`);
-  const rolleSel=$("#flbRolle");
-  if(rolleSel)rolleSel.addEventListener("change",()=>{
-    $("#flbKlassen").hidden=rolleSel.value!=="fahrlehrer";
-    $("#flbRolleHinweis").hidden=!(l.rolle==="fahrlehrer"&&rolleSel.value!=="fahrlehrer");
-  });
+  const rolleSel=$("#flbRolle"), faehrtBox=$("#flbFaehrt");
+  const rolleJetzt=()=>rolleSel?rolleSel.value:l.rolle;
+  const faehrtJetzt=()=>rolleJetzt()==="fahrschule_admin"&&(faehrtBox?faehrtBox.checked:l.faehrt_selbst===true);
+  const umschalten=()=>{
+    const z=$("#flbFaehrtZeile"); if(z)z.hidden=rolleJetzt()!=="fahrschule_admin";
+    $("#flbKlassen").hidden=!lehrtNach(rolleJetzt(),faehrtJetzt());
+    $("#flbRolleHinweis").hidden=!(lehrtVorher&&!lehrtNach(rolleJetzt(),faehrtJetzt()));
+  };
+  if(rolleSel)rolleSel.addEventListener("change",umschalten);
+  if(faehrtBox)faehrtBox.addEventListener("change",umschalten);
   $("#flbAbbr").addEventListener("click",closeSheet);
   $("#flbSpeichern").addEventListener("click",async()=>{
     const knopf=$("#flbSpeichern"); if(knopf.disabled)return;
@@ -6434,7 +6462,8 @@ function fahrlehrerBearbeitenSheet(userId,fahrschuleId){
     if(!name){toast("Bitte einen Namen eintragen");return;}
     const body={action:"update_account",target_user_id:l.id,name};
     if(rolleSel)body.rolle=rolleSel.value;
-    if(!flErlaubnis&&(!rolleSel||rolleSel.value==="fahrlehrer")&&l.rolle==="fahrlehrer")body.klassen=[...document.querySelectorAll(".flbKl:checked")].map(x=>x.value);
+    if(faehrtBox&&rolleJetzt()==="fahrschule_admin")body.faehrt_selbst=faehrtBox.checked;
+    if(!flErlaubnis&&lehrtNach(rolleJetzt(),faehrtJetzt()))body.klassen=[...document.querySelectorAll(".flbKl:checked")].map(x=>x.value);
     const mail=$("#flbEmail")?$("#flbEmail").value.trim():"";
     if(mail){body.email=mail;body.einladung_senden=true;}
     knopf.disabled=true; knopf.textContent="Speichere…";
@@ -7513,7 +7542,7 @@ async function routeFahrschuleKalender(fahrschuleId,weekStart){
   const supa=getSupa();
   const sonntag=new Date(monday); sonntag.setDate(sonntag.getDate()+6);
   const [lehrerR,termineR,schuelerR]=await Promise.all([
-    supa.from("profiles").select("*").eq("fahrschule_id",fahrschuleId).in("rolle",["fahrlehrer","super_admin"]).order("email"),
+    supa.from("profiles").select("*").eq("fahrschule_id",fahrschuleId).in("rolle",["fahrlehrer","super_admin","fahrschule_admin"]).order("email").then(_fsNurUnterrichtende),
     supa.from("kalender_termine").select("*").eq("fahrschule_id",fahrschuleId).eq("geloescht",false)
         .gte("datum",_fsFmtDate(monday)).lte("datum",_fsFmtDate(sonntag)).order("von"),
     supa.from("schueler").select("id,name").eq("fahrschule_id",fahrschuleId)
@@ -7664,7 +7693,7 @@ window.addEventListener("load", () => {
 const STORE_KEY="serband-app-v1";
 /* Build-Version: bei jeder Auslieferung hier das Datum aktualisieren.
    Wird in den Einstellungen angezeigt + für den Update-Hinweis genutzt. */
-const APP_VERSION="2026.11.21.1";
+const APP_VERSION="2026.11.21.2";
 try{const f=document.getElementById("drawerFoot"); if(f)f.textContent="Fahrlehrer-Kompass · Version "+APP_VERSION;}catch(e){}
 // Nutzungsbedingungen & Haftungsausschluss (Bereich: rechtliche Absicherung) - Version hochzählen
 // und alle Nutzer müssen erneut zustimmen, sobald sich der Text inhaltlich ändert.

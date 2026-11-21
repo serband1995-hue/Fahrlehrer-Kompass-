@@ -64,6 +64,18 @@ ist("Ungültige E-Mail", R.pruefeAenderung(LEIT, oa, { email: "kaputt" }).fehler
 ist("E-Mail bei App-Zugang nicht änderbar", !!R.pruefeAenderung(LEIT, fl, { email: "neu@beispiel.de" }).fehler, true);
 ist("Klassen bei Büro nicht", !!R.pruefeAenderung(LEIT, bu, { klassen: ["B"] }).fehler, true);
 
+// --- Leitung, die selbst fährt ---
+const leitF = p("l3", "fahrschule_admin", FS, { faehrt_selbst: true, klassen: ["B"] });
+ist("Super: Leitung fährt selbst an", R.pruefeAenderung(SUPER, leit2, { faehrt_selbst: true }).profil, { faehrt_selbst: true });
+ist("Super: fährt selbst aus = Übergabe nötig", R.pruefeAenderung(SUPER, leitF, { faehrt_selbst: false }), { profil: { faehrt_selbst: false }, rolleWeg: true });
+ist("Leitung fährt selbst: Klassen erlaubt", R.pruefeAenderung(SUPER, leitF, { klassen: ["B", "BE"] }).profil, { klassen: ["B", "BE"] });
+ist("Reine Leitung: keine Klassen", !!R.pruefeAenderung(SUPER, leit2, { klassen: ["B"] }).fehler, true);
+ist("Fahrlehrer → Leitung fährt selbst: keine Übergabe", R.pruefeAenderung(SUPER, fl, { rolle: "fahrschule_admin", faehrt_selbst: true }), { profil: { rolle: "fahrschule_admin", faehrt_selbst: true }, rolleWeg: false });
+ist("Fahrlehrer → reine Leitung: Übergabe", R.pruefeAenderung(SUPER, fl, { rolle: "fahrschule_admin" }).rolleWeg, true);
+ist("Leitung fährt selbst → Büro: Kennzeichen weg", R.pruefeAenderung(SUPER, leitF, { rolle: "buero" }).profil, { rolle: "buero", faehrt_selbst: false });
+ist("Kennzeichen bei Fahrlehrer wirkungslos", R.pruefeAenderung(LEIT, fl, { faehrt_selbst: true }).profil, {});
+ist("unterrichtet()", [R.unterrichtet("fahrlehrer"), R.unterrichtet("fahrschule_admin", true), R.unterrichtet("fahrschule_admin", false), R.unterrichtet("buero", true)], [true, true, false, false]);
+
 // --- Übergabe ---
 ist("nichts offen", R.uebergabeNoetig({ schueler: 0, termine: 0, pruefungen: 0 }, "Anna"), null);
 ist("Schüler offen", R.uebergabeNoetig({ schueler: 3, termine: 1, pruefungen: 0 }, "Anna").startsWith("Anna hat noch 3 Schüler, 1 künftiger Termin."), true);
