@@ -180,7 +180,7 @@ function vorfuehrKonto(b, F) {
   const heute = new Date().toISOString().slice(0, 10);
   if (b && (b.action === "check_delete" || b.action === "delete_account")) {
     if (!ziel) throw new Error("Zugang nicht gefunden");
-    const sch = ((F.tabellen.schueler) || []).filter((x) => x.fahrlehrer_id === ziel.id && x.status !== "geloescht").length;
+    const sch = ((F.tabellen.schueler) || []).filter((x) => x.fahrlehrer_id === ziel.id && x.status !== "geloescht" && !x.inaktiv_seit).length; // Archiv zählt nicht (wie der Server)
     const ter = ((F.tabellen.kalender_termine) || []).filter((x) => x.fahrlehrer_id === ziel.id && !x.geloescht && x.art !== "block" && x.datum > heute).length;
     const offen = sch || ter;
     const hinweis = offen ? `${ziel.name || "Dieser Fahrlehrer"} hat noch ${[sch ? sch + " Schüler" : "", ter ? ter + " künftige Termine" : ""].filter(Boolean).join(", ")}. Bitte zuerst einem anderen Fahrlehrer geben (Schüler öffnen und den Fahrlehrer wechseln), dann noch einmal löschen.` : null;

@@ -6,8 +6,41 @@
 -- 2) Drei Funktionen, die als Ziel nur Fahrlehrer annahmen, nehmen auch diese Leitung an:
 --    buero_fahrlehrer_akte, buero_fahrlehrer_klassen (Büro pflegt Klassen/Akte), fahrstunden_uebertragen (Übergabe an sie).
 --    Sonst ist jede Zeile wie vorher.
+-- 3) profil_schutz: faehrt_selbst darf wie Rolle/Aktiv nur der Super-Admin oder die Server-Funktion ändern
+--    (Prüf-Team 21.11.: sonst könnte eine Leitung sich das Kennzeichen über die REST-Schnittstelle selbst setzen).
 -- Rückweg: supabase/rueckweg/20261121_zugang_rueckweg.sql, Abschnitt 2.
 alter table public.profiles add column if not exists faehrt_selbst boolean not null default false;
+
+create or replace function public.profil_schutz()
+ returns trigger
+ language plpgsql
+ security definer
+ set search_path to 'public'
+as $function$
+begin
+  if (new.rolle is distinct from old.rolle
+      or new.fahrschule_id is distinct from old.fahrschule_id
+      or new.email is distinct from old.email
+      or new.aktiv is distinct from old.aktiv
+      or new.faehrt_selbst is distinct from old.faehrt_selbst) then
+    if not is_super_admin(auth.uid())
+       and coalesce(auth.jwt() ->> 'role', '') <> 'service_role' then
+      raise exception 'Rolle, Fahrschule-Zuordnung, E-Mail, Aktiv-Status und „fährt selbst“ dürfen nur vom Super-Admin geändert werden.';
+    end if;
+  end if;
+  -- „ohne App“, Klassen und Fahrlehrer-Akte: nur Super-Admin, Server (Edge-Funktion) oder die Büro-Funktionen mit Verwalten-Recht (Protokoll)
+  if (new.ohne_app is distinct from old.ohne_app or new.klassen is distinct from old.klassen
+      or new.fahrlehrerlaubnis is distinct from old.fahrlehrerlaubnis or new.fuehrerschein_klassen is distinct from old.fuehrerschein_klassen
+      or new.fuehrerschein_c_bis is distinct from old.fuehrerschein_c_bis or new.fuehrerschein_d_bis is distinct from old.fuehrerschein_d_bis
+      or new.sz95_bis is distinct from old.sz95_bis or new.fortbildung_bis is distinct from old.fortbildung_bis
+      or new.fahrlehrer_zusatz is distinct from old.fahrlehrer_zusatz)
+     and auth.uid() is not null and not is_super_admin(auth.uid())
+     and not (new.ohne_app is not distinct from old.ohne_app and coalesce(current_setting('kompass.klassen_ok', true), '') = '1') then
+    raise exception '„Ohne App“, Klassen und Fahrlehrer-Akte ändert nur das Büro mit Verwalten-Recht.';
+  end if;
+  return new;
+end;
+$function$;
 
 create or replace function public.buero_fahrlehrer_akte(p_id uuid, p_daten jsonb)
  returns jsonb

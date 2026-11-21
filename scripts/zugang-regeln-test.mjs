@@ -41,6 +41,9 @@ ist("Fahrlehrer selbst darf nicht (sich)", R.darfVerwalten(FL, p("f0", "fahrlehr
 ist("schon gelöscht", R.darfVerwalten(SUPER, p("x", "entfernt")), "Dieser Zugang ist schon gelöscht.");
 ist("Leitung ohne Fahrschule darf nichts", R.darfVerwalten(wer(p("l", "fahrschule_admin", null), "leitung"), p("f9", "fahrlehrer", null)), "Keine Berechtigung");
 
+ist("Leitung: fremder Betreiber-Zugang verrät nichts", R.darfVerwalten(LEIT, p("s2", "super_admin", ANDERE)), "Keine Berechtigung");
+ist("Leitung: fremder gelöschter Zugang verrät nichts", R.darfVerwalten(LEIT, p("x2", "entfernt", ANDERE)), "Keine Berechtigung");
+
 // --- pruefeAenderung ---
 ist("Name ändern", R.pruefeAenderung(LEIT, fl, { name: "  Anna Neu " }).profil, { name: "Anna Neu" });
 ist("Name leer", R.pruefeAenderung(LEIT, fl, { name: "  " }).fehler, "Bitte einen Namen eintragen.");
@@ -91,7 +94,7 @@ ist("Platzhalter-E-Mail", R.platzhalterEmail("abc"), "entfernt-abc@entfernt.inva
 
 // --- index.ts nutzt die Regeln wirklich (nicht nur hier getestet) ---
 const ts = readFileSync(join(ROOT, "supabase/functions/admin-create-account/index.ts"), "utf8");
-for (const w of ["darfVerwalten(wer, ziel)", "pruefeAenderung(wer, ziel", "uebergabeNoetig(offen", '"update_account"', '"delete_account"', "ban_duration", 'ban_duration: "none"', "likeGenau(ziel.name)", 'eq("status", "bestaetigt")']) ist("index.ts enthält " + w, ts.includes(w), true);
+for (const w of ["darfVerwalten(wer, ziel)", "pruefeAenderung(wer, ziel", "uebergabeNoetig(offen", '"update_account"', '"delete_account"', "ban_duration", 'ban_duration: "none"', "likeGenau(ziel.name)", 'eq("status", "bestaetigt")', '.is("inaktiv_seit", null)', 'from("buero_sitzungen").delete()']) ist("index.ts enthält " + w, ts.includes(w), true);
 
 console.log(`${faelle - fehler} von ${faelle} Fällen richtig.`);
 process.exit(fehler ? 1 : 0);

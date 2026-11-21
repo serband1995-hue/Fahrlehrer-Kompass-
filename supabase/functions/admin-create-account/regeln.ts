@@ -49,12 +49,13 @@ export function istEmail(s: unknown): boolean {
 
 // null = darf; sonst Fehlertext (für Bearbeiten und Löschen gleich)
 export function darfVerwalten(wer: Wer, ziel: Profil): string | null {
+  // Fremde Fahrschule zuerst: dann verrät die Antwort nichts über Zugänge anderer Fahrschulen
+  const gleicheSchule = !!wer.requester.fahrschule_id && ziel.fahrschule_id === wer.requester.fahrschule_id;
+  if (!wer.isSuperAdmin && !gleicheSchule) return "Keine Berechtigung";
   if (ziel.rolle === "super_admin") return "Der Zugang des Betreibers kann hier nicht geändert werden.";
   if (ziel.id === wer.requester.id) return "Den eigenen Zugang kann man hier nicht ändern oder löschen.";
   if (ziel.rolle === ROLLE_ENTFERNT) return "Dieser Zugang ist schon gelöscht.";
   if (wer.isSuperAdmin) return null;
-  const gleicheSchule = !!wer.requester.fahrschule_id && ziel.fahrschule_id === wer.requester.fahrschule_id;
-  if (!gleicheSchule) return "Keine Berechtigung";
   if (wer.isFahrschuleAdmin && ["fahrlehrer", "buero"].includes(ziel.rolle)) return null;
   if (wer.isBueroVerwalter && ziel.rolle === "fahrlehrer") return null;
   return "Keine Berechtigung";

@@ -4101,7 +4101,7 @@ function _zeigeSaStreifen() {
   // Leitung, die selbst fährt: Streifen sagt, wo sie gerade ist, und wechselt per Tipp (🗣 Design-Prüfung 21.11.)
   const leitung = !isSuperAdmin() && an;
   if (t[0]) t[0].textContent = isSuperAdmin() ? "Super-Admin" : _fsAgg ? "Ganze Fahrschule" : "Du bist Leitung";
-  if (t[1]) t[1].textContent = isSuperAdmin() ? "· alle Rechte" : _fsAgg ? "· zurück zu meinen Schülern: hier tippen" : "· ganze Fahrschule: hier tippen";
+  if (t[1]) t[1].textContent = isSuperAdmin() ? "· alle Rechte" : _fsAgg ? "· zurück zu mir: tippen" : "· ganze Fahrschule: tippen";
   el.classList.toggle("sa-tippbar", leitung);
   if (leitung) { el.setAttribute("role", "button"); el.tabIndex = 0; } else { el.setAttribute("role", "status"); el.removeAttribute("tabindex"); }
   if (!el._tippGebunden) {
@@ -4318,7 +4318,8 @@ function _profilNachladen(uid){
       const { data, error } = await getSupa().from("profiles").select("*").eq("id", uid).single();
       if (error || !data) throw error || new Error("leer");
       _profilMerken(Object.assign({}, data, { fahrschule_name: _authProfile && _authProfile.fahrschule_name }));
-      if (!data.aktiv || data.agb_akzeptiert_version !== AGB_VERSION || data.rolle !== (_authProfile && _authProfile.rolle)) { location.reload(); return; }
+      // „Fährt selbst“ geändert: Startansicht ist eine andere → neu starten (Prüf-Team 21.11.)
+      if (!data.aktiv || data.agb_akzeptiert_version !== AGB_VERSION || data.rolle !== (_authProfile && _authProfile.rolle) || (data.faehrt_selbst === true) !== !!(_authProfile && _authProfile.faehrt_selbst === true)) { location.reload(); return; }
       _authProfile = Object.assign({}, _authProfile, data);
     } catch (e) { _profilNachladen(uid); }
   }, 20000);
@@ -5870,7 +5871,7 @@ async function _fsLoadAggData(fahrschuleId){
       supa.from("fahrschule_pakete").select("*").eq("fahrschule_id",fahrschuleId),
       supa.from("fahrschule_urlaub").select("*").eq("fahrschule_id",fahrschuleId).gte("bis",todayISO()),
       // Namen aller Zugänge (auch gelöschte oder zum Büro gewechselte Fahrlehrer), nur zum Anzeigen alter Termine
-      Promise.resolve(supa.from("profiles").select("id,name,email").eq("fahrschule_id",fahrschuleId)).catch(()=>({data:null}))
+      Promise.resolve(supa.from("profiles").select("id,name,email,rolle").eq("fahrschule_id",fahrschuleId)).catch(()=>({data:null}))
     ]);
     if(lehrerR.error) throw lehrerR.error;
   }catch(e){
@@ -5881,7 +5882,7 @@ async function _fsLoadAggData(fahrschuleId){
   if(gen!==_fsAggGen)return false;
   if(standVorher!==null&&standVorher!==JSON.stringify([DB.students,DB.lessons,DB.exams])){ _fsSyncAggChanges(); return false; }
   const lehrer=lehrerR.data||[];
-  window._fsAlleNamen={}; ((namenR&&!namenR.error&&namenR.data)||[]).forEach(p=>{ if(p&&p.id) window._fsAlleNamen[p.id]=p.name||p.email||""; });
+  window._fsAlleNamen={}; ((namenR&&!namenR.error&&namenR.data)||[]).forEach(p=>{ if(p&&p.id) window._fsAlleNamen[p.id]=p.name||(p.rolle==="entfernt"?"Ehemaliger Fahrlehrer":p.email)||""; });
   const lehrerName=id=>{ const l=lehrer.find(x=>x.id===id); return l?(l.name||l.email):_fsNameAusAlle(id,"Unbekannt"); };
   DB.students=(schuelerR.data||[]).map(r=>_fsMapSchueler(r,lehrerName));
   _merkeFristen(schuelerR.data);
@@ -6345,7 +6346,7 @@ async function routeFahrschuleDetail(fahrschuleId){
     ?`<div class="res-block" style="animation:none;"><h4>🔑 Zugang der Leitung</h4>${admins.map(a=>`<div class="fs-card">
         <div class="fs-name">${esc(a.name||a.email)}${a.faehrt_selbst?' <span class="fs-status-on" style="font-size:12px;">· fährt selbst</span>':''}</div>
         <div class="fs-sub">${a.aktiv?'<span class="fs-status-on">Aktiv</span>':'<span class="fs-status-off">GESPERRT</span>'}</div>
-        <div class="fs-actions">${_flZugangKnoepfe(a,fahrschuleId)}</div></div>`).join("")}</div>`
+        ${a.faehrt_selbst?'<div class="fs-sub">Bearbeiten und Löschen oben bei den Fahrlehrern.</div>':`<div class="fs-actions">${_flZugangKnoepfe(a,fahrschuleId)}</div>`}</div>`).join("")}</div>`
     :`<div class="res-block" style="animation:none;"><h4>🔑 Zugang der Leitung</h4>
         <p style="font-size:13px;color:var(--muted);">Noch kein eigener Zugang für den Fahrschul-Inhaber.</p>
         <div class="btn-row"><button class="btn btn-primary" onclick="neuenFahrschuleAdminAnlegen(${_jsArg(fahrschuleId)})">+ Fahrschule-Admin-Zugang anlegen</button></div>
@@ -6510,7 +6511,9 @@ async function fahrlehrerLoeschenSheet(userId,fahrschuleId){
     $("#fllOk").addEventListener("click",closeSheet);
     return;
   }
+  const bueroKonto=l.rolle==="buero";
   openSheet(`<div class="sheet-h">${esc(name)} löschen?</div>
+    ${bueroKonto?`<p style="font-size:14px;line-height:1.5;color:var(--rot,#c83c3c);font-weight:700;">Das ist das gemeinsame Büro-Konto. Danach kommt niemand im Büro mehr hinein, auch nicht mit PIN.</p>`:""}
     <p style="font-size:14px;line-height:1.5;">${esc(name)} kann sich danach nicht mehr anmelden. Gefahrene Stunden und Verlauf bleiben erhalten.</p>
     <p class="muted-p" style="font-size:13px;line-height:1.5;">Rückgängig machen geht nur über den Betreiber.</p>
     <div class="btn-row"><button class="btn btn-ghost" id="fllAbbr" style="flex:0;padding:13px 18px;">Abbrechen</button><button class="btn fs-btn-kill" id="fllJa" style="flex:1;font-size:14px;">Ja, ${esc(name)} löschen</button></div>`,{neu:true});
@@ -12124,7 +12127,7 @@ function routeSettings(){
   <div class="res-block" style="animation:none;"><h4>🏫 Fahrschulen</h4><p>Fahrschulen, Fahrlehrer, Schüler und Pakete verwalten.</p><div class="btn-row"><button class="btn btn-ghost" onclick="routeFahrschulenListe()">Fahrschulen verwalten</button></div></div>
   <div class="res-block" style="animation:none;"><h4>🎓 Akademie-Vermittlung</h4><p style="font-size:13px;color:var(--muted);">Beträge & Aufteilung für Simulator-/Videoakademie-Empfehlungen. Solange leer, wird bei einer Auszahlung nur "noch nicht konfiguriert" angezeigt — nichts wird stillschweigend falsch berechnet.</p><div id="akadVermittlungCfg"><p class="muted-p" style="font-size:12.5px;">Lade …</p></div></div>`:"";
   const eigenerSlug=_authProfile&&_authProfile.slug;
-  const buchungslinksBtn=(eigenerSlug&&_authProfile&&(_authProfile.rolle==="fahrlehrer"||_authProfile.rolle==="super_admin"))?_fsBuchungslinksHTML(eigenerSlug,"Meine"):"";
+  const buchungslinksBtn=(eigenerSlug&&_authProfile&&(_authProfile.rolle==="fahrlehrer"||_authProfile.rolle==="super_admin"||_leitungFaehrtSelbst()))?_fsBuchungslinksHTML(eigenerSlug,"Meine"):"";
   const logoutBtn=_authUser?`<div class="res-block" style="animation:none;background:rgba(200,60,60,.1);border-color:rgba(200,60,60,.3)"><h4 style="color:#f08080">🚪 Abmelden</h4><p style="color:var(--muted)">Meldet dich sicher aus der App ab.</p><div class="btn-row"><button class="btn" style="background:#c83c3c;color:#fff;border:none;padding:12px 24px;border-radius:12px;font-weight:700;font-size:14px;" onclick="doLogout()">Jetzt abmelden</button></div></div>`:"";
   const kapWoche=kapazitaetAutoWoche();
   view.innerHTML=`<div class="view-inner view-read fade-up">

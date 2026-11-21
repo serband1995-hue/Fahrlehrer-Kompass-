@@ -35,6 +35,7 @@ $function$;
 --   buero_fahrlehrer_akte / buero_fahrlehrer_klassen:  z.rolle not in ('fahrlehrer', 'super_admin')
 --   fahrstunden_uebertragen:                            ... where id = p_ziel and rolle = 'fahrlehrer' and aktiv;
 -- Am einfachsten: die Funktionsdefinitionen aus dieser Migration nehmen und nur diese Bedingungen zurücksetzen.
+-- profil_schutz: die Fassung aus 20261121_zugang_01_profil_schutz_server.sql erneut einspielen (ohne faehrt_selbst).
 -- Die Spalte erst danach entfernen (die App liest sie über select * und kommt ohne sie aus; vorher App-Stand zurücksetzen,
 -- weil die Fahrlehrer-Listen in der App nach faehrt_selbst filtern):
 -- alter table public.profiles drop column if exists faehrt_selbst;

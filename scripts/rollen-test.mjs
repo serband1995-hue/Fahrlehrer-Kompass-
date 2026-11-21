@@ -1,7 +1,8 @@
 // Rollen-Test (🗣 Serband 21.11.2026: „sorge dafür, dass solche Fehler nicht nochmal vorkommen“).
 // Anlass: Jelena (Leitung und Fahrlehrerin) fand in der App keinen Weg, Schüler anzulegen, und bekam nicht
 // ihre eigene Fahrlehrer-Ansicht. Dieser Test spielt JEDE Rolle vom Start der App bis zum gespeicherten Schüler durch:
-//   Fahrlehrer · Leitung (reine) · Leitung, die selbst fährt · Büro · Super-Admin
+//   Fahrlehrer · Leitung (reine) · Leitung, die selbst fährt · Büro · Super-Admin · gesperrt · gelöscht
+// über den echten Anmeldeweg (afterLogin), am Handy hoch (360) und quer (740×360)
 // Je Rolle wird geprüft:
 //   (1) die richtige Startansicht (eigene Fahrlehrer-Ansicht oder Gesamtansicht der Fahrschule)
 //   (2) der Umschalter in die Gesamtübersicht ist genau bei Betreiber und Leitung-fährt-selbst da
@@ -52,10 +53,14 @@ const ROLLEN = [
   { n: "Leitung fährt selbst", prof: { rolle: "fahrschule_admin", faehrt_selbst: true }, eigen: true, umschalter: true },
   { n: "Büro", prof: { rolle: "buero" }, eigen: false, umschalter: false },
   { n: "Super-Admin", prof: { rolle: "super_admin" }, eigen: true, umschalter: true },
+  // Gesperrter oder gelöschter Zugang (Fable 21.11.): kommt gar nicht erst hinein
+  { n: "Gesperrt", prof: { rolle: "fahrlehrer", aktiv: false }, gesperrt: true },
+  { n: "Gelöscht", prof: { rolle: "entfernt", aktiv: false }, gesperrt: true },
 ];
+const GROESSEN = [{ n: "360", w: 360, h: 780 }, { n: "quer", w: 740, h: 360 }];
 
 for (const R of ROLLEN) {
-  for (const g of [{ n: "360", w: 360, h: 780 }]) {
+  for (const g of R.gesperrt ? GROESSEN.slice(0, 1) : GROESSEN) {
     const ctx = await browser.newContext({ viewport: { width: g.w, height: g.h }, isMobile: true, hasTouch: true, timezoneId: "Europe/Berlin", locale: "de-DE" });
     const page = await ctx.newPage();
     const jsFehler = [];
@@ -73,7 +78,7 @@ for (const R of ROLLEN) {
       const user = { id: "u-ich", email: "ich@example.org" };
       const antwort = (tab, art, einzeln) => {
         if (tab === "fahrschulen" && einzeln) return { data: { id: FS, name: "Fahrschule Muster", aktiv: true, konfiguration: {} }, error: null };
-        if (tab === "profiles" && einzeln) return { data: Object.assign({ id: "u-ich", name: "Ich Muster", fahrschule_id: FS, aktiv: true, agb_akzeptiert_version: "1.0" }, prof), error: null };
+        if (tab === "profiles" && einzeln) return { data: Object.assign({ id: "u-ich", name: "Ich Muster", email: user.email, fahrschule_id: FS, aktiv: true, agb_akzeptiert_version: typeof AGB_VERSION !== "undefined" ? AGB_VERSION : "1.0" }, prof), error: null };
         if (tab === "profiles") return { data: [{ id: "u-ich", name: "Ich Muster", fahrschule_id: FS, aktiv: true, ...prof }, { id: "u-anna", name: "Anna Muster", rolle: "fahrlehrer", fahrschule_id: FS, aktiv: true }], error: null };
         return { data: einzeln ? null : [], error: null, count: 0 };
       };
@@ -100,16 +105,22 @@ for (const R of ROLLEN) {
       try { localStorage.clear(); localStorage.setItem(OWNER_KEY, user.id); } catch (e) {}
       _dbEigentuemer = user.id;
       ensureDB(); DB.students = []; DB.lessons = []; DB.exams = [];
+      // Der echte Anmeldeweg der App (Profil laden, Sperre, Fahrschule, Menü, Streifen, Startansicht) – keine Abkürzung
       _authUser = user;
-      _authProfile = Object.assign({ id: "u-ich", name: "Ich Muster", fahrschule_id: FS, aktiv: true, agb_akzeptiert_version: "1.0" }, prof);
-      // wie _nachAnmeldung: Menü und Streifen nach der Rolle
-      if (typeof _hatAdminUmschalter === "function" ? _hatAdminUmschalter() : isSuperAdmin()) _fsSetDrawer(false); // alter Stand: nur Betreiber
-      _zeigeSaStreifen();
-      await _continueLoginFlow(_authProfile);
+      await afterLogin(user);
     }, { prof: R.prof, FS });
     await warte(page, 800);
     // Die Anmeldemaske ist hier nicht Gegenstand (sie wird über die Attrappe übersprungen)
     const maskeWeg = () => page.evaluate(() => { for (const id of ["loginOverlay", "splash"]) { const e = document.getElementById(id); if (e) { e.classList.add("hidden"); e.style.display = "none"; } } });
+    if (R.gesperrt) {
+      await pruefe("R0", `${P} kommt nicht hinein, sieht die Sperr-Meldung`, () => page.evaluate(() => {
+        const err = (document.getElementById("loErr") || {}).textContent || "";
+        return !_authUser && /gesperrt/i.test(err) ? null : "angemeldet=" + !!_authUser + " Meldung: " + String(err).slice(0, 80);
+      }));
+      await pruefe("R5", `${P} keine JS-Fehler`, () => jsFehler);
+      await ctx.close();
+      continue;
+    }
     await maskeWeg();
 
     await pruefe("R1", `${P} Startansicht: ${R.eigen ? "eigene Fahrlehrer-Ansicht" : "Gesamtansicht der Fahrschule"}`, () => page.evaluate(() => (_fsAgg ? "gesamt" : "eigen")).then((v) => (v === (R.eigen ? "eigen" : "gesamt") ? null : "ist " + v)));
@@ -117,16 +128,21 @@ for (const R of ROLLEN) {
 
     // Reiter „Schüler“: Knopf zum Anlegen sichtbar
     await page.evaluate(() => tabGo("schueler")); await warte(page, 400);
+    // Ein Knopf zählt nur, wenn er ganz zu sehen ist und nichts darüber liegt (Mitte und beide Enden wirklich antippbar)
     const knopf = await page.evaluate(() => {
-      const kand = [document.getElementById("emptyAdd"), document.getElementById("fab")].filter((b) => b && getComputedStyle(b).display !== "none" && b.getBoundingClientRect().height > 0);
-      const b = kand[0]; if (!b) return null;
-      const r = b.getBoundingClientRect();
-      return { id: b.id, h: Math.round(r.height), sichtbar: r.bottom <= innerHeight + 1 && r.top >= 0 };
+      const frei = (b) => {
+        const r = b.getBoundingClientRect();
+        if (getComputedStyle(b).display === "none" || r.height <= 0 || r.top < 0 || r.bottom > innerHeight + 1) return false;
+        return [[r.left + r.width / 2, r.top + r.height / 2], [r.left + 6, r.top + r.height / 2], [r.right - 6, r.top + r.height / 2]].every(([x, y]) => { const e = document.elementFromPoint(x, y); return e && (e === b || b.contains(e)); });
+      };
+      const kand = [document.getElementById("emptyAdd"), document.getElementById("fab")].filter(Boolean);
+      const b = kand.find(frei); if (!b) return { keiner: kand.filter((x) => getComputedStyle(x).display !== "none").map((x) => x.id).join(",") || "–" };
+      return { id: b.id, h: Math.round(b.getBoundingClientRect().height) };
     });
-    await pruefe("R3", `${P} Reiter „Schüler“ hat einen sichtbaren Knopf zum Anlegen`, () => (!knopf ? "kein Knopf" : !knopf.sichtbar ? "Knopf außerhalb des Bildschirms" : knopf.h < 43.5 ? `nur ${knopf.h} px hoch` : null));
+    await pruefe("R3", `${P} Reiter „Schüler“ hat einen freien, antippbaren Knopf zum Anlegen`, () => (knopf.keiner ? "kein Knopf frei (verdeckt oder außerhalb): " + knopf.keiner : knopf.h < 43.5 ? `nur ${knopf.h} px hoch` : null));
 
     // Schüler anlegen und speichern
-    if (knopf) {
+    if (knopf && knopf.id) {
       await maskeWeg();
       await page.click("#" + knopf.id, { timeout: 5000 }); await warte(page, 400);
       await page.fill("#f_name", "Rollen Muster");

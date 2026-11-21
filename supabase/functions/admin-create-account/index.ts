@@ -231,7 +231,8 @@ Deno.serve(async (req) => {
       const { target_user_id } = body;
       if (!target_user_id || typeof target_user_id !== "string") return json({ error: "target_user_id erforderlich" }, 400);
       const { data: ziel } = await supa.from("profiles").select("id, rolle, fahrschule_id, ohne_app, aktiv, name, email, klassen, fahrlehrerlaubnis, slug, faehrt_selbst").eq("id", target_user_id).maybeSingle();
-      if (!ziel) return json({ error: "Zugang nicht gefunden" }, 404);
+      // Für Nicht-Betreiber sehen fremde und nicht vorhandene Zugänge gleich aus (keine Rückschlüsse auf andere Fahrschulen)
+      if (!ziel) return isSuperAdmin ? json({ error: "Zugang nicht gefunden" }, 404) : json({ error: "Keine Berechtigung" }, 403);
       const wer = { requester: requesterProfile, isSuperAdmin, isFahrschuleAdmin, isBueroVerwalter };
       const verboten = darfVerwalten(wer, ziel);
       if (verboten) return json({ error: verboten }, 403);
@@ -240,7 +241,8 @@ Deno.serve(async (req) => {
       const offenBeiFahrlehrer = async () => {
         const jetzt = berlinJetzt();
         const [sch, ter, pt, kp, pb] = await Promise.all([
-          supa.from("schueler").select("id", { count: "exact", head: true }).eq("fahrlehrer_id", ziel.id).neq("status", "geloescht"),
+          // Schüler im Archiv (inaktiv_seit gesetzt) sind fertig und bleiben beim bisherigen Fahrlehrer – sie blockieren nicht
+          supa.from("schueler").select("id", { count: "exact", head: true }).eq("fahrlehrer_id", ziel.id).neq("status", "geloescht").is("inaktiv_seit", null),
           supa.from("kalender_termine").select("id, datum, bis, art").eq("fahrlehrer_id", ziel.id).eq("geloescht", false).gte("datum", jetzt.datum).limit(5000),
           supa.from("pruefungstermine").select("id", { count: "exact", head: true }).eq("fahrlehrer_id", ziel.id).eq("status", "geplant").gte("datum", jetzt.datum),
           supa.from("kalender_pruefungen").select("id, result").eq("fahrlehrer_id", ziel.id).eq("geloescht", false).gte("datum", jetzt.datum).limit(1000),
@@ -288,10 +290,15 @@ Deno.serve(async (req) => {
           const { offen: nachher } = await offenBeiFahrlehrer();
           const grund2 = uebergabeNoetig(nachher, ziel.name || "");
           if (grund2) {
-            await supa.from("profiles").update({ rolle: ziel.rolle, slug: ziel.slug ?? null, faehrt_selbst: ziel.faehrt_selbst === true }).eq("id", ziel.id);
+            const zurueck: Record<string, unknown> = { rolle: ziel.rolle, slug: ziel.slug ?? null, faehrt_selbst: ziel.faehrt_selbst === true };
+            if (aend.neueEmail) { zurueck.email = ziel.email; zurueck.ohne_app = ziel.ohne_app === true; }
+            await supa.from("profiles").update(zurueck).eq("id", ziel.id);
+            if (aend.neueEmail && ziel.email) await supa.auth.admin.updateUserById(ziel.id, { email: ziel.email, email_confirm: true }).catch(() => {});
             return json({ error: grund2.replace("dann noch einmal löschen", "dann die Rolle ändern"), offen: nachher }, 409);
           }
         }
+        // A2: Wechselt ein Büro-Konto die Rolle, gelten seine PIN-Sitzungen nicht mehr
+        if (aend.profil.rolle && ziel.rolle === "buero") await supa.from("buero_sitzungen").delete().eq("user_id", ziel.id);
         if (typeof aend.profil.name === "string" && ziel.name && ziel.fahrschule_id) {
           // Urlaub und Schichtplan merken sich den Namen als Text: mit umbenennen, damit der Urlaub weiter greift
           for (const tabelle of ["fahrschule_urlaub", "fahrschule_schichten"]) {
@@ -342,6 +349,7 @@ Deno.serve(async (req) => {
         await supa.from("kalender_termine").update({ geloescht: true, aktualisiert_am: new Date().toISOString() }).in("id", bloecke);
       }
       await supa.from("push_subscriptions").delete().eq("user_id", ziel.id);
+      await supa.from("buero_sitzungen").delete().eq("user_id", ziel.id); // PIN-Sitzungen eines gelöschten Büro-Kontos enden sofort
       return json({ ok: true, geloescht: true, hinweis: hinweise.join(" ") || undefined });
     }
 
