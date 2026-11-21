@@ -1,7 +1,7 @@
 name: Prüfung vor dem Live-Gang
 
-# Läuft bei jedem Pull Request und nach dem Merge auf main. Nur schnelle Tests ohne Browser,
-# ohne Netz-Zugriff auf Datenbanken und ohne Geheimnisse.
+# Läuft bei jedem Pull Request und nach dem Merge auf main. Schnelle Tests ohne Browser und
+# (seit 21.11.2026) ein Browser-Job für Rollen und Zugänge – alles ohne Netz-Zugriff auf Datenbanken und ohne Geheimnisse.
 # Ändert nichts am Live-Gang (GitHub Pages aus dem Branch main).
 on:
   push:
@@ -36,3 +36,23 @@ jobs:
         run: node scripts/cache-test.mjs
       - name: Zugang-Regeln (bearbeiten/löschen, Rechte)
         run: node scripts/zugang-regeln-test.mjs
+
+  # 🗣 Serband 21.11.2026: „sorge dafür, dass solche Fehler nicht nochmal vorkommen“ (Jelena: Leitung, die selbst fährt,
+  # fand keinen Weg, Schüler anzulegen). Jede Rolle wird vom Start bis zum gespeicherten Schüler durchgespielt.
+  rollen:
+    name: Rollen und Zugänge (Browser)
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Playwright mit Chromium
+        run: |
+          npm install -g playwright@1.63.0
+          npx -y playwright@1.63.0 install --with-deps chromium
+      - name: Rollen-Test (jede Rolle: Startansicht, Schüler anlegen, gespeichert)
+        run: NODE_PATH=$(npm root -g) node scripts/rollen-test.mjs
+      - name: Zugang-Test (Fahrlehrer bearbeiten und löschen, Rechte je Rolle)
+        run: NODE_PATH=$(npm root -g) node scripts/zugang-test.mjs
