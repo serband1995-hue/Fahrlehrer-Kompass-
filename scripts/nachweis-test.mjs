@@ -134,7 +134,7 @@ const top = (page) => page.locator("dialog[open]").last();
     neu: document.querySelectorAll(".neu").length, us: [...document.querySelectorAll("th")].some((th) => /Unterschrift Fahrschüler/.test(th.textContent)), korr: /Korrekturen durch die Fahrschule|Uhrzeit falsch eingetragen/.test(document.body.textContent) }));
   pruef(druck.h1 === "Ausbildungsnachweis", "Titel falsch: " + druck.h1);
   pruef(druck.bilder > 0 && druck.us, "Unterschriften fehlen im Druck");
-  pruef(druck.neu >= 1, "„neu zu unterschreiben“ fehlt im Druck");
+  pruef(druck.neu === 0, "Korrektur-Hinweis „neu zu unterschreiben“ steht im Druck (soll leer bleiben)");
   pruef(!druck.korr, "Korrekturen stehen noch im Druck (sollen nur im Büro-Verlauf stehen)");
   await popup.emulateMedia({ media: "print" });
   if (FOTOS) { await popup.pdf({ path: join(FOTOS, "nachweis-a4.pdf"), format: "A4", printBackground: true }); await popup.setViewportSize({ width: 794, height: 1123 }); await popup.screenshot({ path: join(FOTOS, "nachweis-druck-a4.png"), fullPage: false }); }
