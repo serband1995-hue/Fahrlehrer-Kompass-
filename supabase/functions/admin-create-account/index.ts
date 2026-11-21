@@ -316,9 +316,13 @@ Deno.serve(async (req) => {
       // fällt aber aus allen Listen, kann sich nicht mehr anmelden und gibt die E-Mail-Adresse wieder frei.
       // Reihenfolge: erst das Anmeldekonto sperren (dann ist die Person sicher draußen), dann das Profil.
       const ersatz = platzhalterEmail(ziel.id);
-      const { error: authErr } = await supa.auth.admin.updateUserById(ziel.id, { email: ersatz, email_confirm: true, ban_duration: "876000h", password: randomPassword(32) });
+      // Echte E-Mail aus dem Anmeldekonto (alte Profile haben teils keine), damit ein Zurückdrehen sie sicher wiederherstellt.
+      // Kein neues Passwort: Die Sperre reicht, und beim Zurückdrehen bliebe sonst ein unbekanntes Passwort zurück.
+      const { data: authAlt } = await supa.auth.admin.getUserById(ziel.id);
+      const alteMail = authAlt?.user?.email || ziel.email;
+      const { error: authErr } = await supa.auth.admin.updateUserById(ziel.id, { email: ersatz, email_confirm: true, ban_duration: "876000h" });
       if (authErr) return json({ error: "Nicht gelöscht: Das Anmeldekonto ließ sich nicht sperren (" + authErr.message + ")" }, 500);
-      const authZurueck = () => supa.auth.admin.updateUserById(ziel.id, { email: ziel.email, email_confirm: true, ban_duration: "none" }).catch(() => {});
+      const authZurueck = () => supa.auth.admin.updateUserById(ziel.id, { ...(alteMail ? { email: alteMail, email_confirm: true } : {}), ban_duration: "none" }).catch(() => {});
       const { error: delErr } = await supa.from("profiles").update({ rolle: ROLLE_ENTFERNT, aktiv: false, email: ersatz, slug: null }).eq("id", ziel.id);
       if (delErr) { await authZurueck(); return json({ error: "Nicht gelöscht: " + delErr.message }, 500); }
       // Nachprüfung: wurde in der Zwischenzeit doch etwas zugeteilt, alles zurück

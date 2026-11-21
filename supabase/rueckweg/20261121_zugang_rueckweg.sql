@@ -15,6 +15,7 @@ begin
       raise exception 'Rolle, Fahrschule-Zuordnung, E-Mail und Aktiv-Status dürfen nur vom Super-Admin geändert werden.';
     end if;
   end if;
+  -- „ohne App“, Klassen und Fahrlehrer-Akte: nur Super-Admin, Server (Edge-Funktion) oder die Büro-Funktionen mit Verwalten-Recht (Protokoll)
   if (new.ohne_app is distinct from old.ohne_app or new.klassen is distinct from old.klassen
       or new.fahrlehrerlaubnis is distinct from old.fahrlehrerlaubnis or new.fuehrerschein_klassen is distinct from old.fuehrerschein_klassen
       or new.fuehrerschein_c_bis is distinct from old.fuehrerschein_c_bis or new.fuehrerschein_d_bis is distinct from old.fuehrerschein_d_bis
