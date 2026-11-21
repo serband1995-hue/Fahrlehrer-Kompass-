@@ -96,6 +96,35 @@ const top = (page) => page.locator("dialog[open]").last();
   await top(page).locator(".nw-details summary:has-text('Verlauf')").click();
   pruef(await top(page).locator(".nw-spur li:has-text('Uhrzeit falsch eingetragen')").count() >= 1, "Verlauf zeigt den Grund nicht");
 
+  // Nacht-Sonderfahrt aus der App (art „sonder“ + srcSonder), unterschrieben: unverändert speichern → keine Rückfrage, nichts ungültig
+  const nachtId = await page.evaluate((sid) => { const t = window.__FAKE.tabellen.kalender_termine.find((x) => x.schueler_id === sid && x.datum < KR.todayISO() && x.payload && x.payload.signed);
+    t.art = "sonder"; t.payload.srcSonder = sid + ":nacht:0"; return t.id; }, sid);
+  // Nachweis neu öffnen, damit die geänderten Testdaten frisch geladen werden
+  await page.locator("dialog[open]").last().locator("footer [data-schliessen]").click(); await page.waitForTimeout(200);
+  await page.click("#nwOeffnen"); await page.waitForSelector(".nw-kacheln");
+  await top(page).locator(`[data-nwaendern="${nachtId}"]`).click(); await page.waitForTimeout(150);
+  pruef(await top(page).locator("select[name=artwahl]").inputValue() === "nacht", "Nacht-Sonderfahrt der App nicht als Nacht erkannt");
+  await top(page).locator("button[value=ok]").click(); await page.waitForTimeout(300);
+  pruef(await page.locator("dialog[open] button:has-text('Ja, ändern')").count() === 0, "falsche Rückfrage „Unterschrift wird ungültig“ ohne Änderung");
+  const tn = await page.evaluate((id) => window.__FAKE.tabellen.kalender_termine.find((t) => t.id === id), nachtId);
+  pruef(tn.art === "sonder" && tn.payload.signed === true, "unverändert gespeichert, aber Art/Unterschrift verändert: " + JSON.stringify([tn.art, tn.payload.signed]));
+  // Sonderfahrt ohne Art: Auswahl startet leer, Überland wählen → gespeichert, Warnung weg; Art-Wechsel setzt sonderArt auf null statt zu löschen
+  const ohneId = await page.evaluate((sid) => { const t = window.__FAKE.tabellen.kalender_termine.find((x) => x.schueler_id === sid && x.datum < KR.todayISO() && !(x.payload || {}).signed && x.art === "fahrstunde");
+    t.art = "sonder"; return t.id; }, sid);
+  await page.locator("dialog[open]").last().locator("footer [data-schliessen]").click(); await page.waitForTimeout(200);
+  await page.click("#nwOeffnen"); await page.waitForSelector(".nw-kacheln");
+  pruef(await top(page).locator(".nw-fehlt li:has-text('ohne Art')").count() === 1, "Warnung „Sonderfahrt ohne Art“ fehlt");
+  await top(page).locator(`[data-nwaendern="${ohneId}"]`).click(); await page.waitForTimeout(150);
+  pruef(await top(page).locator("select[name=artwahl]").inputValue() === "", "Art-Auswahl startet nicht leer");
+  await top(page).locator("select[name=artwahl]").selectOption("ueberland");
+  await top(page).locator("button[value=ok]").click(); await page.waitForTimeout(400);
+  let to = await page.evaluate((id) => window.__FAKE.tabellen.kalender_termine.find((t) => t.id === id), ohneId);
+  pruef(to.art === "sonder" && to.payload.sonderArt === "ueberland", "Art nicht gespeichert: " + JSON.stringify([to.art, to.payload.sonderArt]));
+  await top(page).locator(`[data-nwaendern="${ohneId}"]`).click(); await page.waitForTimeout(150);
+  await top(page).locator("select[name=artwahl]").selectOption("fahrstunde");
+  await top(page).locator("button[value=ok]").click(); await page.waitForTimeout(400);
+  to = await page.evaluate((id) => window.__FAKE.tabellen.kalender_termine.find((t) => t.id === id), ohneId);
+  pruef(to.art === "fahrstunde" && "sonderArt" in to.payload && to.payload.sonderArt === null, "sonderArt nicht auf null gesetzt: " + JSON.stringify(to.payload));
   // Löschen in den Papierkorb, zurückholen
   const vorher = await top(page).locator(".nw-liste").first().locator(".nw-zeile").count();
   await top(page).locator("[data-nwloeschen]").first().click();

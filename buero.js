@@ -2247,6 +2247,7 @@ function terminDialog(id, vorgabe) {
         <label id="lkwKlasseFeld">Klasse dieser Stunde<select name="lkwKlasse"></select></label>
         <p class="voll leise klein">Fahrlehrer ohne App: Das Büro trägt hier ein, was die App sonst selbst zählt (Sonderfahrten nach Anlage 4).</p>
       </div>
+      ${id && (t.payload || {}).signed ? `<p class="voll fl-warnung bald">Diese Stunde ist vom Schüler unterschrieben. Ändern Sie Datum, Uhrzeit, Art oder Schüler, muss er neu unterschreiben. Korrekturen mit Grund: Schüler öffnen → „Ausbildungsnachweis“.</p>` : ""}
       ${id ? `<label class="voll wahl"><input type="checkbox" name="absagen"> Termin absagen (löschen)</label>` : ""}
       ${id && t.art === "theorie" ? anwesenheitTerminHTML(t) : ""}
     </div>

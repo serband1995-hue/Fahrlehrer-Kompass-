@@ -26,7 +26,8 @@ function nwSonderArt(t) {
   const g = String(p.srcSonder || "").split(":")[1] || "";
   return ["ueberland", "autobahn", "nacht"].includes(g) ? g : "";
 }
-function nwArtWahl(t) { return t.art === "schalt" ? "schalt" : (nwSonderArt(t) || (t.art === "sonder" ? "ueberland" : "fahrstunde")); }
+// "" = Sonderfahrt ohne Art: das Büro muss die Art erst wählen
+function nwArtWahl(t) { return t.art === "schalt" ? "schalt" : (nwSonderArt(t) || (t.art === "sonder" ? "" : "fahrstunde")); }
 function nwArtText(t) {
   const s = nwSonderArt(t);
   if (s) return (NW_SONDER.find((x) => x[0] === s) || [, "Sonderfahrt"])[1];
@@ -41,7 +42,7 @@ function nwVorbei(t, heute, jetztMin) { return t.datum < heute || (t.datum === h
 function nwUnterschrift(t) {
   const p = t.payload || {};
   if (p.signed && p.signatureSnap) return "ok";
-  return p.signaturUngueltig ? "neu" : "offen";
+  return p.signaturUngueltig && !p.signaturUngueltig.erledigt ? "neu" : "offen";
 }
 function nwBildUrl(u) { return /^data:image\/(png|jpeg|webp);base64,[A-Za-z0-9+/=]+$/.test(String(u || "")) ? u : ""; }
 
@@ -107,7 +108,7 @@ function nwSpurWert(p, v) {
   if (/^\d{4}-\d\d-\d\d/.test(v)) return datumDE(v.slice(0, 10)) + v.slice(10);
   return v;
 }
-function nwSpurWer(p) { return p.bearbeiter || (teamPerson(p.geaendert_von) || {}).name || (p.geaendert_von ? "Büro" : "System"); }
+function nwSpurWer(p) { return p.bearbeiter || (teamPerson(p.geaendert_von) || {}).name || (p.geaendert_von ? "unbekannt" : "System"); }
 function nwSpurZeile(p, t) {
   const wann = new Date(p.geaendert_am).toLocaleString("de-DE", { dateStyle: "short", timeStyle: "short" });
   const was = p.feld === "angelegt" ? `Fahrstunde nachgetragen (${esc(nwSpurWert(p, p.neu))})`
@@ -137,7 +138,7 @@ function nwUebersichtHTML(x, d, st) {
       <div class="nw-kachel"><span class="leise klein">Übungsfahrten</span><b>${nwMin(st.grundMin)}</b><span class="leise klein">${st.gelaufen.filter((t) => !nwSonderArt(t) && t.art !== "sonder" && t.art !== "schalt").length} Termine</span></div>
       <div class="nw-kachel nw-sonder"><span class="leise klein">Sonderfahrten (je 45 Min.)</span><b>${sonderSoll ? `${sonderIst}/${sonderSoll}` : "–"}</b><span class="leise klein">${sonderSoll ? esc(sonder) : "keine nötig"}</span></div>
       <div class="nw-kachel"><span class="leise klein">Theorie</span><b>${st.theorie && st.theorie.geladen && st.theorie.pflicht ? `${st.theorie.ist}/${st.theorie.soll}` : "–"}</b><span class="leise klein">${x.theorie_bestanden_am ? "Prüfung bestanden " + esc(datumDE(x.theorie_bestanden_am)) : "Prüfung offen"}</span></div>
-      ${alt ? `<div class="nw-kachel"><span class="leise klein">Unterschriften</span><b>${u.ok}/${st.gelaufen.length}</b><span class="leise klein">${u.neu ? `${u.neu} neu nötig` : u.offen ? `${u.offen} offen` : "vollständig"}</span></div>` : ""}
+      ${alt ? `<div class="nw-kachel"><span class="leise klein">Unterschriften</span><b>${st.gelaufen.length ? `${u.ok}/${st.gelaufen.length}` : "–"}</b><span class="leise klein">${!st.gelaufen.length ? "noch keine Stunde" : u.neu ? `${u.neu} neu nötig` : u.offen ? `${u.offen} offen` : "vollständig"}</span></div>` : ""}
     </div>
     ${st.fehlt.length ? `<div class="nw-fehlt"><b>Noch offen</b><ul>${st.fehlt.map((f) => `<li${f.dringend ? ' class="dringend"' : ""}>${esc(f.t)}</li>`).join("")}</ul></div>` : `<p class="nw-fehlt gut"><b>✓ Alles da.</b></p>`}
     ${planHinweis.length ? `<p class="fl-warnung bald">${planHinweis.map(esc).join("<br>")}. Im Nachweis stehen nur Fahrten mit Datum und Uhrzeit: bitte nachtragen.</p>` : ""}
@@ -204,7 +205,7 @@ function nwStundeDialog(x, t, nachher) {
       <label>Fahrlehrer<select name="fahrlehrer_id" required>${lehrerAuswahl(v.fahrlehrer_id).map((l) => `<option value="${esc(l.id)}"${l.id === v.fahrlehrer_id ? " selected" : ""}>${esc(l.name || l.email)}</option>`).join("")}</select></label>
       <label>Beginn<input type="time" name="von" required value="${esc(v.von || "")}"></label>
       <label>Ende<input type="time" name="bis" required value="${esc(v.bis || "")}"></label>
-      <label class="voll">Art und Inhalt<select name="artwahl">${NW_ART_WAHL.map(([k, n]) => `<option value="${k}"${nwArtWahl(v) === k ? " selected" : ""}>${esc(n)}</option>`).join("")}</select></label>
+      <label class="voll">Art und Inhalt<select name="artwahl" required>${nwArtWahl(v) === "" ? '<option value="" selected>– bitte wählen –</option>' : ""}${NW_ART_WAHL.map(([k, n]) => `<option value="${k}"${nwArtWahl(v) === k ? " selected" : ""}>${esc(n)}</option>`).join("")}</select></label>
       <label class="voll">Grund (freiwillig, steht im Verlauf)<input type="text" name="grund" maxlength="200" placeholder="${neu ? "z. B. Fahrlehrer hat die Stunde nicht eingetragen" : "z. B. Uhrzeit war falsch eingetragen"}"></label>
       ${unterschrieben ? `<p class="voll fl-warnung bald">Diese Stunde ist schon unterschrieben. Ändern Sie Datum, Uhrzeit oder Art, wird die Unterschrift ungültig und der Schüler muss in der App neu unterschreiben. Der alte Stand bleibt im Verlauf.</p>` : ""}
     </div>
@@ -213,8 +214,13 @@ function nwStundeDialog(x, t, nachher) {
     const f = Object.fromEntries(new FormData(form).entries());
     if (!f.datum || !f.von || !f.bis || !f.fahrlehrer_id) { toast("Bitte Datum, Beginn, Ende und Fahrlehrer eintragen.", true); return false; }
     if (KR.hm2min(f.bis) <= KR.hm2min(f.von)) { toast("„Ende“ muss nach „Beginn“ liegen.", true); return false; }
-    const art = ["ueberland", "autobahn"].includes(f.artwahl) ? "sonder" : f.artwahl;
-    const sonderArt = ["ueberland", "autobahn", "nacht"].includes(f.artwahl) ? f.artwahl : null;
+    // Art nicht angefasst: Spalte und payload so lassen, wie sie sind (z. B. Nacht-Sonderfahrt der App = art „sonder“ + srcSonder)
+    const artGleich = !neu && f.artwahl === nwArtWahl(v);
+    // Sonderfahrten wie im Termin-Fenster: art „sonder“ + payload.sonderArt (auch Nacht)
+    if (!f.artwahl) { toast("Bitte die Art der Fahrt wählen.", true); return false; }
+    const istSonder = ["ueberland", "autobahn", "nacht"].includes(f.artwahl);
+    const art = artGleich ? v.art : istSonder ? "sonder" : f.artwahl;
+    const sonderArt = artGleich ? (((v.payload || {}).sonderArt) || null) : istSonder ? f.artwahl : null;
     const grund = (f.grund || "").trim();
     const jetzt = new Date().toISOString();
     if (neu) {
@@ -227,15 +233,15 @@ function nwStundeDialog(x, t, nachher) {
       nwMerken(res.data[0]);
       toast("Fahrstunde nachgetragen");
     } else {
-      const zeitNeu = f.datum !== v.datum || f.von !== v.von || f.bis !== v.bis || art !== v.art || sonderArt !== (nwSonderArt(v) || null);
+      const zeitNeu = f.datum !== v.datum || f.von !== v.von || f.bis !== v.bis || !artGleich;
       if (unterschrieben && zeitNeu && !(await bestaetige("Unterschrift wird ungültig", "Die Stunde ist schon unterschrieben. Nach der Änderung muss der Schüler neu unterschreiben. Trotzdem ändern?", "Ja, ändern"))) return false;
       const werte = { datum: f.datum, von: f.von, bis: f.bis, art, fahrlehrer_id: f.fahrlehrer_id, aktualisiert_am: jetzt };
-      const sonderGeaendert = sonderArt !== (((v.payload || {}).sonderArt) || null) && (art === "sonder" || (v.payload || {}).sonderArt);
+      const sonderGeaendert = !artGleich && sonderArt !== (((v.payload || {}).sonderArt) || null);
       if (grund || sonderGeaendert) {
         const p = await nwFrischePayload(v.id);
         if (!p) { toast("Nicht gespeichert: Stunde konnte nicht gelesen werden.", true); return false; }
-        werte.payload = Object.assign({}, p, art === "sonder" ? { sonderArt } : {});
-        if (art !== "sonder") delete werte.payload.sonderArt;
+        // null statt löschen: die App übernimmt nur vorhandene Schlüssel (sonst bliebe ihr alter Wert stehen)
+        werte.payload = Object.assign({}, p, sonderGeaendert ? { sonderArt } : {});
         if (grund) werte.payload.korrekturGrund = grund;
       }
       const res = await supa.from("kalender_termine").update(werte).eq("id", v.id).select("*");
@@ -245,13 +251,19 @@ function nwStundeDialog(x, t, nachher) {
       if ((f.datum !== v.datum || f.von !== v.von || f.bis !== v.bis) && f.datum >= KR.todayISO() && typeof onlineBuchungMelden === "function") onlineBuchungMelden(v.id, "changed", { new_date: f.datum, new_von: f.von, new_bis: f.bis });
       toast(unterschrieben && zeitNeu ? "Gespeichert. Der Schüler muss neu unterschreiben." : "Gespeichert");
     }
-    zeichne(); nachher(); return true;
+    zeichne(); nachher(); nwKurzSperren(); return true;
   });
+}
+// Doppeltipp auf „Speichern“ soll nicht den gleich platzierten Knopf des Nachweis-Fensters darunter treffen
+function nwKurzSperren() {
+  const k = [...document.querySelectorAll("dialog[open] footer button")];
+  k.forEach((b) => { b.disabled = true; });
+  setTimeout(() => k.forEach((b) => { if (b.isConnected) b.disabled = false; }), 400);
 }
 
 async function nwLoeschen(t, nachher) {
   if (!t) return;
-  const grund = await nwGrundFragen(`Fahrstunde vom ${datumDE(t.datum)} löschen?`, "Die Stunde kommt in den Papierkorb und verschwindet beim Fahrlehrer. Sie lässt sich zurückholen.", "Ja, löschen");
+  const grund = await nwGrundFragen(`Fahrstunde vom ${datumDE(t.datum)} löschen?`, (nwUnterschrift(t) === "ok" ? "Die Stunde ist schon vom Schüler unterschrieben. " : "") + "Die Stunde kommt in den Papierkorb und verschwindet beim Fahrlehrer. Sie lässt sich zurückholen.", "Ja, löschen");
   if (grund === null) return;
   const werte = { geloescht: true, aktualisiert_am: new Date().toISOString() };
   if (grund) { const p = await nwFrischePayload(t.id); if (p) werte.payload = Object.assign({}, p, { korrekturGrund: grund }); }
@@ -274,7 +286,7 @@ function nwGrundFragen(titel, text, jaText) {
     const dlg = oeffneDialog(titel, `<p>${esc(text)}</p><label class="voll">Grund (freiwillig, steht im Verlauf)<input type="text" name="grund" maxlength="200"></label>`, async (form) => {
       ergebnis = String(new FormData(form).get("grund") || "").trim(); return true;
     }, jaText);
-    dlg.addEventListener("close", () => fertig(ergebnis));
+    dlg.addEventListener("close", () => { if (ergebnis !== null) nwKurzSperren(); fertig(ergebnis); });
   });
 }
 
@@ -314,7 +326,8 @@ td.r,th.r{text-align:right}td.us{width:34mm;height:11mm;padding:1px}td.us img{ma
 ul{margin:4px 0;padding-left:18px}li{margin:1px 0}
 footer{margin-top:10mm;font-size:8pt;color:#555;border-top:1px solid #ccc;padding-top:4px}
 @media print{.leiste,.leiste-hinweis{display:none}.blatt{padding:0;max-width:none}}
-@media (max-width:600px){.kopf{grid-template-columns:1fr}.sig{grid-template-columns:1fr;gap:12mm}table{font-size:8.5pt}}
+@media screen{.breit{overflow-x:auto}}
+@media (max-width:600px){.kopf{grid-template-columns:1fr}td.us{width:auto;min-width:24mm}.sig{grid-template-columns:1fr;gap:12mm}table{font-size:8.5pt}}
 </style></head><body>
 <div class="leiste"><button class="haupt" id="nwDruck">Drucken / als PDF speichern</button>${x.email ? `<a href="mailto:${encodeURIComponent(x.email)}?subject=${encodeURIComponent(titel)}&body=${encodeURIComponent("Hallo " + x.name + ",\n\nanbei Ihr " + titel + " als PDF.\n\nViele Grüße\n" + (fs.name || ""))}">E-Mail vorbereiten</a>` : ""}<button id="nwZu">Schließen</button></div>
 <p class="hinweis leiste-hinweis">Für die E-Mail: erst als PDF speichern, dann die PDF an die E-Mail anhängen.</p>
@@ -331,7 +344,7 @@ ${theorieZeilen.length ? `<table><thead><tr><th>Lektion</th><th>Datum</th><th>Fa
     : `<p>${th && th.grund ? esc(th.grund) : "Nicht erfasst"}${x.theorie_bestanden_am ? ` · Theorieprüfung bestanden am ${esc(datumDE(x.theorie_bestanden_am))}` : ""}</p>`}
 <h2>Praktischer Unterricht</h2>
 <div class="summen"><span>Übungsfahrten: <b>${nwMin(st.grundMin)}</b></span>${NW_SONDER.map(([k, n], i) => `<span>${esc(n)}: <b>${st.ist[k]}</b> × 45 Min.${st.soll[i] ? ` (Soll ${st.soll[i]})` : ""}</span>`).join("")}${st.schaltMin ? `<span>Schaltkompetenz: <b>${nwMin(st.schaltMin)}</b></span>` : ""}</div>
-${zeilen ? `<table><thead><tr><th class="r">Nr.</th><th>Datum</th><th>Beginn</th><th class="r">Min.</th><th>Art und Inhalt</th><th class="r">FL</th>${neuRecht ? "" : "<th>Unterschrift Fahrschüler</th>"}</tr></thead><tbody>${zeilen}</tbody></table>` : `<p>Noch keine gefahrene Stunde.</p>`}
+${zeilen ? `<div class="breit"><table><thead><tr><th class="r">Nr.</th><th>Datum</th><th>Beginn</th><th class="r">Min.</th><th>Art und Inhalt</th><th class="r">FL</th>${neuRecht ? "" : "<th>Unterschrift Fahrschüler</th>"}</tr></thead><tbody>${zeilen}</tbody></table></div>` : `<p>Noch keine gefahrene Stunde.</p>`}
 <p class="klein">FL = Fahrlehrer: ${lehrer.map((id) => `${lehrerNr[id]} ${esc(lehrerName(id) || "–")}`).join(" · ") || "–"}</p>
 ${x.praxis_bestanden_am ? `<p>Praktische Prüfung bestanden am ${esc(datumDE(x.praxis_bestanden_am))}.</p>` : ""}
 ${teil ? `<h2>Teil-Nachweis</h2><p>Die Ausbildung wurde nicht abgeschlossen (Abbruch oder Wechsel der Fahrschule). Bestätigt werden die oben aufgeführten absolvierten Ausbildungsteile.</p>` : ""}

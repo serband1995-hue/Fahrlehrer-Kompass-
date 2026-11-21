@@ -12664,7 +12664,7 @@ function openEventSheet(kind,id,sid){
       ${l.art==="theorie"&&_authProfile&&_authProfile.fahrschule_id?`<button class="es-act primary" id="esAnwesend">Anwesenheit eintragen</button>`:''}
       ${fcRelevant&&st&&lkwZweiKlassen(st)?`<button class="es-act" id="esLkwKl">${lkwKlKnopf(st,l)}</button>`:''}
       ${fcRelevant&&sichtbar("fahrcheck")?`<button class="es-act" id="esFC">Fahrcheck · <b>${fcLab}</b></button>`:''}
-      ${fcRelevant&&st?`<button class="es-act" id="esSig">Unterschrift · <b>${l.signed?'✓ vorhanden':l.signaturUngueltig?'neu nötig':'noch offen'}</b></button>`:''}
+      ${fcRelevant&&st?`<button class="es-act" id="esSig">Unterschrift · <b>${l.signed?'✓ vorhanden':l.signaturUngueltig&&!l.signaturUngueltig.erledigt?'neu nötig':'noch offen'}</b></button>`:''}
       ${l.art==="block"?'':`<button class="es-act" id="esEdit">Bearbeiten / verschieben</button>
       <button class="es-act" id="esOther">Mit anderem Schüler gefahren</button>
       <button class="es-act" id="esNoshow">Nicht erschienen</button>
@@ -12706,10 +12706,10 @@ function openSignatureSheet(lessonId){
     return;
   }
   // Ausbildungsnachweis (21.11.2026): Hat das Büro die Stunde nach der Unterschrift geändert, ist sie ungültig (Datenbank-Trigger).
-  const ungueltig=l.signaturUngueltig&&l.signaturUngueltig.alt?l.signaturUngueltig.alt:null;
+  const ungueltig=l.signaturUngueltig&&l.signaturUngueltig.alt&&!l.signaturUngueltig.erledigt?l.signaturUngueltig.alt:null;
   const hinweis=ungueltig?`<p class="muted-p" style="font-size:13px;margin:-4px 0 12px;color:var(--warn,#b45309);">Die Stunde wurde nach der Unterschrift geändert (vorher ${isoDE(ungueltig.datum)} ${esc(ungueltig.von||"")}–${esc(ungueltig.bis||"")}). Bitte neu unterschreiben lassen.</p>`:"";
-  // signArt: "vorOrt" = in dieser Stunde gezeichnet, "uebernommen" = gespeicherte Unterschrift übernommen (steht so im Nachweis-Verlauf)
-  const setze=(dataUrl,art)=>{ l.signed=true; l.signedAt=todayISO(); l.signedTs=new Date().toISOString(); l.signArt=art; l.signatureSnap=dataUrl; save(); };
+  // signArt: "vorOrt" = in dieser Stunde gezeichnet, "uebernommen" = gespeicherte Unterschrift übernommen (liegt im payload, fürs Büro nachvollziehbar)
+  const setze=(dataUrl,art)=>{ l.signed=true; l.signedAt=todayISO(); l.signedTs=new Date().toISOString(); l.signArt=art; l.signatureSnap=dataUrl; if(l.signaturUngueltig)l.signaturUngueltig.erledigt=true; save(); };  // Beweis bleibt, gilt aber als erledigt
   const vorOrt=()=>openSignaturePad(dataUrl=>{ s.signature={dataUrl,date:todayISO()}; setze(dataUrl,"vorOrt"); toast("Unterschrift gespeichert ✓"); closeSheet(); });
   if(s.signature&&s.signature.dataUrl){
     openSheet(`<div class="sheet-h">Unterschrift</div>${hinweis}
@@ -16074,7 +16074,7 @@ function routeStundeFertig(lid){
       <div class="sf-info">${esc(l.von)}–${esc(l.bis)} · ${fmtUE(ueOf(l.art,l.von,l.bis,l.tatsaechlicheDauer))} UE · Stand jetzt <b class="${plus?"hoch":""}">${pct} %</b>${plus}</div></header>
     <section class="sf-karte"><div class="h2-ueber">Heute bewertet</div>
       ${chips.length?`<div class="sf-chips">${chips.map(c=>`<span class="sf-chip ${c.k}">${esc(c.it.t)} · ${c.lab}</span>`).join("")}</div>`:`<p class="h2-nichts">Heute wurde nichts bewertet.</p>`}</section>
-    <button class="sf-knopf sf-unterschrift" id="sfSig"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 17c3-1 4-6 6-6s1 5 3 5 3-4 4-4 2 3 5 3M3 21h18"/></svg><span class="sf-knopf-t">Unterschrift</span><span class="sf-status ${l.signed?"gruen":"gelb"}">${l.signed?"✓ vorhanden":l.signaturUngueltig?"neu nötig":"noch offen"}</span></button>
+    <button class="sf-knopf sf-unterschrift" id="sfSig"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 17c3-1 4-6 6-6s1 5 3 5 3-4 4-4 2 3 5 3M3 21h18"/></svg><span class="sf-knopf-t">Unterschrift</span><span class="sf-status ${l.signed?"gruen":"gelb"}">${l.signed?"✓ vorhanden":l.signaturUngueltig&&!l.signaturUngueltig.erledigt?"neu nötig":"noch offen"}</span></button>
     <button class="sf-knopf sf-protokoll${_sfGesendet[lid]?" gesendet":""}" id="sfProt"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 11.5a8.4 8.4 0 0 1-12.4 7.4L3 21l2.1-5.5A8.4 8.4 0 1 1 21 11.5z"/></svg><span class="sf-knopf-t">${_sfGesendet[lid]?"Protokoll gesendet ✓":`Protokoll per WhatsApp an ${esc(vn)}`}</span></button>
     <section class="sf-karte"><div class="sf-karte-t">Nächster Termin für ${esc(vn)}</div><div class="sf-unter">Freie Lücken ab morgen</div>
       ${naechsterTermin?`<div class="sf-naechster">Nächster Termin: ${isoDE(naechsterTermin.date).slice(0,6)} ${esc(naechsterTermin.von)}</div>`:''}
