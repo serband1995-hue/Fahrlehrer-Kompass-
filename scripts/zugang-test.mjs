@@ -200,7 +200,7 @@ for (const g of GROESSEN) {
     _fsSetDrawer(false); _zeigeSaStreifen();
     if (!/Admin-Gesamtübersicht/.test(document.querySelector(".drawer-nav").textContent)) f.push("Umschalter fehlt");
     const st = document.getElementById("saStreifen");
-    if (st.hidden || !/Fahrschul-Leitung/.test(st.textContent)) f.push("Streifen fehlt");
+    if (st.hidden || !/Du bist Leitung/.test(st.textContent) || !st.classList.contains("sa-tippbar") || st.getBoundingClientRect().height < 43.5) f.push("Streifen fehlt/zu klein: " + st.textContent);
     _authProfile = { id: "u1", rolle: "fahrschule_admin", fahrschule_id: "f1", name: "Leitung Muster", faehrt_selbst: false };
     if (!_nurGesamtansicht()) f.push("reine Leitung nicht nur Gesamtansicht");
     _fsSetDrawer(false); _zeigeSaStreifen();

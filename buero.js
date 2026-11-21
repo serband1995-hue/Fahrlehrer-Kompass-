@@ -3487,7 +3487,7 @@ function zugangBearbeiten(id) {
   const rollen = [["fahrlehrer", "Fahrlehrer"], ["buero", "Büro"]].concat(betreiber ? [["fahrschule_admin", "Fahrschul-Leitung"]] : []);
   const rolleWahl = istAdmin()
     ? `<label class="voll">Rolle<select name="rolle">${rollen.map(([w, t]) => `<option value="${w}"${w === p.rolle ? " selected" : ""}>${esc(t)}</option>`).join("")}</select></label>` : "";
-  const faehrtTeil = betreiber ? `<label class="voll login-zeig" id="zbFaehrtZeile"${p.rolle === "fahrschule_admin" ? "" : " hidden"}><input type="checkbox" name="faehrt"${p.faehrt_selbst ? " checked" : ""}> Fährt selbst: eigene Schüler und Fahrlehrer-Ansicht in der App, Gesamtübersicht im Menü</label>` : "";
+  const faehrtTeil = betreiber ? `<label class="voll login-zeig" id="zbFaehrtZeile"${p.rolle === "fahrschule_admin" ? "" : " hidden"}><input type="checkbox" name="faehrt"${p.faehrt_selbst ? " checked" : ""}> Fährt selbst (eigene Schüler in der App, ganze Fahrschule per Tipp oben)</label>` : "";
   const klassenTeil = flErlaubnis
     ? `<p class="leise klein voll" id="zbKlassen">Klassen: ${esc((p.klassen || []).join(", ") || "–")}. Sie kommen aus der Fahrlehrerlaubnis, ändern unter „Akte &amp; Klassen“.</p>`
     : `<div class="voll" id="zbKlassen"${lehrtVorher ? "" : " hidden"}>${klassenHaken(p.klassen || [])}</div>`;

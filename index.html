@@ -200,6 +200,8 @@ input,select,textarea{font-family:inherit;font-size:16px;color:var(--txt);}
 .sa-streifen[hidden]{display:none;}
 .sa-streifen svg{width:18px;height:18px;flex:0 0 auto;color:#f0cd72;}
 .sa-streifen .sa-zusatz{font-weight:500;opacity:.92;}
+.sa-streifen.sa-tippbar{min-height:44px;cursor:pointer;flex-wrap:wrap;text-align:center;}
+.sa-streifen.sa-tippbar:active{filter:brightness(1.15);}
 .app.mit-sa-streifen .topbar{padding-top:12px;}
 .app{display:flex;flex-direction:column;height:100dvh;position:relative;overflow:hidden;z-index:1;}
 .topbar{display:grid;grid-template-columns:minmax(0,1fr) auto minmax(0,1fr);align-items:center;gap:10px;
@@ -4096,8 +4098,18 @@ function _zeigeSaStreifen() {
   const an = _hatAdminUmschalter();
   el.hidden = !an;
   const t = el.querySelectorAll("span");
-  if (t[0]) t[0].textContent = isSuperAdmin() ? "Super-Admin" : "Fahrschul-Leitung";
-  if (t[1]) t[1].textContent = isSuperAdmin() ? "· alle Rechte" : "· Gesamtübersicht im Menü";
+  // Leitung, die selbst fährt: Streifen sagt, wo sie gerade ist, und wechselt per Tipp (🗣 Design-Prüfung 21.11.)
+  const leitung = !isSuperAdmin() && an;
+  if (t[0]) t[0].textContent = isSuperAdmin() ? "Super-Admin" : _fsAgg ? "Ganze Fahrschule" : "Du bist Leitung";
+  if (t[1]) t[1].textContent = isSuperAdmin() ? "· alle Rechte" : _fsAgg ? "· zurück zu meinen Schülern: hier tippen" : "· ganze Fahrschule: hier tippen";
+  el.classList.toggle("sa-tippbar", leitung);
+  if (leitung) { el.setAttribute("role", "button"); el.tabIndex = 0; } else { el.setAttribute("role", "status"); el.removeAttribute("tabindex"); }
+  if (!el._tippGebunden) {
+    el._tippGebunden = true;
+    const wechseln = () => { if (!el.classList.contains("sa-tippbar")) return; if (_fsAgg) _fsExitAggMode(); else _fsEnterAggMode((_authProfile && _authProfile.fahrschule_id) || ""); };
+    el.addEventListener("click", wechseln);
+    el.addEventListener("keydown", (e) => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); wechseln(); } });
+  }
   const app = document.querySelector(".app");
   if (app) app.classList.toggle("mit-sa-streifen", an);
 }
@@ -5913,6 +5925,7 @@ async function _fsEnterAggMode(fahrschuleId){
     return false;
   }
   _fsSetDrawer(true);
+  _zeigeSaStreifen();
   routeFahrschuleDashboard();
   clearInterval(_fsRefreshTimer);
   _fsRefreshTimer=setInterval(()=>_fsRefreshAggData(),120000);
@@ -5940,6 +5953,7 @@ async function _fsExitAggModeJetzt(){
   _fsAgg=null; _fsBaseline=null; _fsCalFahrzeugFilter=[]; _fsCalLehrerFilter=[]; _fsCalBueroFilter=[]; _fsFilterPanelOpen=false; _fsTileOpen={fahrzeug:false,lehrer:false};
   document.getElementById("fsCalTiles")?.remove();
   _fsSetDrawer(false);
+  _zeigeSaStreifen();
   routeDashboard();
   // Was in der Gesamtansicht verschoben wurde (Zusammenführen mit dem anderen Gerät), jetzt nachholen.
   if(_authUser&&_pullOk) pushToCloud();
@@ -6328,11 +6342,11 @@ async function routeFahrschuleDetail(fahrschuleId){
     </div>`).join("");
 
   const adminZugang=binSuper?(admins.length
-    ?`<div class="res-block" style="animation:none;"><h4>🔑 Fahrschule-Admin-Zugang</h4>${admins.map(a=>`<div class="fs-card">
-        <div class="fs-name">${esc(a.name||a.email)}${a.faehrt_selbst?' <span style="color:var(--muted);font-size:11px;">(fährt selbst)</span>':''}</div>
+    ?`<div class="res-block" style="animation:none;"><h4>🔑 Zugang der Leitung</h4>${admins.map(a=>`<div class="fs-card">
+        <div class="fs-name">${esc(a.name||a.email)}${a.faehrt_selbst?' <span class="fs-status-on" style="font-size:12px;">· fährt selbst</span>':''}</div>
         <div class="fs-sub">${a.aktiv?'<span class="fs-status-on">Aktiv</span>':'<span class="fs-status-off">GESPERRT</span>'}</div>
         <div class="fs-actions">${_flZugangKnoepfe(a,fahrschuleId)}</div></div>`).join("")}</div>`
-    :`<div class="res-block" style="animation:none;"><h4>🔑 Fahrschule-Admin-Zugang</h4>
+    :`<div class="res-block" style="animation:none;"><h4>🔑 Zugang der Leitung</h4>
         <p style="font-size:13px;color:var(--muted);">Noch kein eigener Zugang für den Fahrschul-Inhaber.</p>
         <div class="btn-row"><button class="btn btn-primary" onclick="neuenFahrschuleAdminAnlegen(${_jsArg(fahrschuleId)})">+ Fahrschule-Admin-Zugang anlegen</button></div>
       </div>`):"";
@@ -6427,7 +6441,7 @@ function fahrlehrerBearbeitenSheet(userId,fahrschuleId){
   const rolleWahl=["fahrlehrer","buero"].includes(l.rolle)||isSuperAdmin()
     ?`<div class="field"><label for="flbRolle">Rolle</label><select id="flbRolle" style="width:100%;">${rollen.map(([w,t])=>`<option value="${w}"${w===l.rolle?" selected":""}>${t}</option>`).join("")}</select></div>`:"";
   // „Fährt selbst“: nur der Betreiber, nur bei der Leitung (eigene Schüler + Gesamtübersicht im Menü)
-  const faehrtTeil=isSuperAdmin()?`<label class="fs-check-row" id="flbFaehrtZeile"${l.rolle==="fahrschule_admin"?"":" hidden"}><input type="checkbox" id="flbFaehrt"${l.faehrt_selbst?" checked":""}><span>Fährt selbst: eigene Schüler und Fahrlehrer-Ansicht, Gesamtübersicht im Menü</span></label>`:"";
+  const faehrtTeil=isSuperAdmin()?`<label class="fs-check-row" id="flbFaehrtZeile"${l.rolle==="fahrschule_admin"?"":" hidden"}><input type="checkbox" id="flbFaehrt"${l.faehrt_selbst?" checked":""}><span>Fährt selbst (eigene Schüler)<br><small class="muted-p" style="font-size:12px;">Ganze Fahrschule bleibt per Tipp oben erreichbar</small></span></label>`:"";
   const klassenTeil=`<div id="flbKlassen"${lehrtVorher?"":" hidden"}>
       <div class="fs-check-group-label">Klassen, die er/sie unterrichtet</div>
       ${flErlaubnis

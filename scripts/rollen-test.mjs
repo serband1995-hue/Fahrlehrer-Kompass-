@@ -143,6 +143,16 @@ for (const R of ROLLEN) {
         return null;
       }, R.eigen));
     }
+    // Leitung, die selbst fährt: Streifen oben wechselt per Tipp in die ganze Fahrschule und zurück
+    if (R.prof.faehrt_selbst) {
+      await maskeWeg();
+      const st = await page.evaluate(() => { const e = document.getElementById("saStreifen"); return e && !e.hidden ? { t: e.textContent, h: e.getBoundingClientRect().height } : null; });
+      await pruefe("R6", `${P} Streifen „Du bist Leitung“ sichtbar und antippbar (≥ 44 px)`, () => (!st ? "kein Streifen" : !/Du bist Leitung/.test(st.t) ? "Text: " + st.t : st.h < 43.5 ? `nur ${Math.round(st.h)} px` : null));
+      await page.click("#saStreifen", { timeout: 5000 }).catch(() => {}); await warte(page, 900);
+      await pruefe("R7", `${P} Tipp auf den Streifen → ganze Fahrschule, Streifen sagt das`, () => page.evaluate(() => (_fsAgg && /Ganze Fahrschule/.test(document.getElementById("saStreifen").textContent) ? null : "ist " + (_fsAgg ? "gesamt" : "eigen") + ": " + document.getElementById("saStreifen").textContent)));
+      await page.click("#saStreifen", { timeout: 5000 }).catch(() => {}); await warte(page, 900);
+      await pruefe("R8", `${P} zweiter Tipp → zurück zu den eigenen Schülern`, () => page.evaluate(() => (!_fsAgg && /Du bist Leitung/.test(document.getElementById("saStreifen").textContent) ? null : "ist " + (_fsAgg ? "gesamt" : "eigen"))));
+    }
     await pruefe("R5", `${P} keine JS-Fehler`, () => jsFehler);
     await ctx.close();
   }
