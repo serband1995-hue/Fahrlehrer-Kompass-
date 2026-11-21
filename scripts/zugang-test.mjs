@@ -190,6 +190,10 @@ async function buero(nutzer, wer) {
   const daten = bauDaten(new Date().toISOString().slice(0, 10));
   // Ein Fahrlehrer ohne Schüler und ohne Termine, der gelöscht werden darf
   daten.tabellen.profiles.push({ id: "fl-9", name: "Frei Muster", email: "frei@example.org", rolle: "fahrlehrer", fahrschule_id: daten.FS, aktiv: true, agb_akzeptiert_version: "1.0", klassen: ["B"] });
+  // Ein schon gelöschter Fahrlehrer mit einem alten Termin (gestern): Name und Zuordnung müssen bleiben
+  daten.tabellen.profiles.push({ id: "fl-8", name: "Weg Muster", email: "entfernt-fl-8@entfernt.invalid", rolle: "entfernt", fahrschule_id: daten.FS, aktiv: false });
+  const gestern = new Date(Date.now() - 86400000).toISOString().slice(0, 10);
+  daten.tabellen.kalender_termine.push({ id: "t-weg", fahrschule_id: daten.FS, fahrlehrer_id: "fl-8", schueler_id: null, datum: gestern, von: "08:00", bis: "09:30", art: "fahrstunde", status: "geplant", geloescht: false, payload: {}, buero_fc_status: "offen" });
   const ctx = await browser.newContext({ viewport: { width: 1366, height: 900 }, timezoneId: "Europe/Berlin", locale: "de-DE" });
   const page = await ctx.newPage();
   const konsole = [];
@@ -244,6 +248,14 @@ const knoepfe = (page) => page.evaluate(() => [...document.querySelectorAll("[da
   await page.locator("dialog[open] input[name=name]").fill("Berta Muster-Neu");
   await page.locator("dialog[open]").last().locator("button[value=ok]").click(); await warte(page, 600);
   await pruefe("B6", "[Büro Leitung] neuer Name steht in der Liste", () => page.evaluate(() => /Berta Muster-Neu/.test(document.body.textContent) ? null : "nicht da"));
+  await pruefe("B12", "[Büro Leitung] gelöschter Fahrlehrer steht nicht in der Fahrlehrer-Liste", () => page.evaluate(() => [...document.querySelectorAll("table.tabelle tr")].some((tr) => /Weg Muster/.test(tr.textContent)) ? "steht da" : null));
+  await page.evaluate(() => terminDialog("t-weg")); await warte(page, 400);
+  await pruefe("B13", "[Büro Leitung] alter Termin eines Gelöschten behält ihn als Fahrlehrer", () => page.evaluate(() => {
+    const sel = [...document.querySelectorAll("dialog[open] select[name=fahrlehrer_id]")].pop();
+    if (!sel) return "kein Termin-Fenster";
+    return sel.value === "fl-8" && /Weg Muster \(gelöscht\)/.test(sel.selectedOptions[0].textContent) ? null : "Auswahl: " + sel.value + " " + sel.selectedOptions[0].textContent;
+  }));
+  await page.keyboard.press("Escape"); await warte(page, 200);
   await pruefe("B7", "[Büro Leitung] keine Fehler in der Konsole", () => konsole);
   await ctx.close();
 }

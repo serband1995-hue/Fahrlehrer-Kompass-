@@ -74,11 +74,12 @@ ist("heute vorbei nicht", R.terminKommtNoch({ datum: "2026-11-21", bis: "14:00" 
 ist("heute später kommt", R.terminKommtNoch({ datum: "2026-11-21", bis: "15:30" }, jetzt), true);
 ist("Berlin-Zeit Winter", R.berlinJetzt(new Date("2026-11-21T23:30:00Z")), { datum: "2026-11-22", zeit: "00:30" });
 ist("Berlin-Zeit Sommer", R.berlinJetzt(new Date("2026-07-01T22:15:00Z")), { datum: "2026-07-02", zeit: "00:15" });
+ist("likeGenau entschärft", R.likeGenau(" Anna_Muster 100% "), "Anna\\_Muster 100\\%");
 ist("Platzhalter-E-Mail", R.platzhalterEmail("abc"), "entfernt-abc@entfernt.invalid");
 
 // --- index.ts nutzt die Regeln wirklich (nicht nur hier getestet) ---
 const ts = readFileSync(join(ROOT, "supabase/functions/admin-create-account/index.ts"), "utf8");
-for (const w of ["darfVerwalten(wer, ziel)", "pruefeAenderung(wer, ziel", "uebergabeNoetig(offen", '"update_account"', '"delete_account"', "ban_duration"]) ist("index.ts enthält " + w, ts.includes(w), true);
+for (const w of ["darfVerwalten(wer, ziel)", "pruefeAenderung(wer, ziel", "uebergabeNoetig(offen", '"update_account"', '"delete_account"', "ban_duration", 'ban_duration: "none"', "likeGenau(ziel.name)", 'eq("status", "bestaetigt")']) ist("index.ts enthält " + w, ts.includes(w), true);
 
 console.log(`${faelle - fehler} von ${faelle} Fällen richtig.`);
 process.exit(fehler ? 1 : 0);

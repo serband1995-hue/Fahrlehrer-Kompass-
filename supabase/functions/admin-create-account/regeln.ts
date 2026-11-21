@@ -32,6 +32,11 @@ export function platzhalterEmail(id: string): string {
   return `entfernt-${id}@entfernt.invalid`;
 }
 
+// Muster für ilike, das genau diesen Text trifft (ohne Groß/klein): % _ und \ werden entschärft
+export function likeGenau(s: string): string {
+  return String(s || "").trim().replace(/[\\%_]/g, (c) => "\\" + c);
+}
+
 export function istEmail(s: unknown): boolean {
   return typeof s === "string" && s.length <= 200 && /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(s);
 }

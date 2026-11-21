@@ -5832,9 +5832,9 @@ async function _fsLoadAggData(fahrschuleId){
   const supa=getSupa();
   // Schüler, Termine und Prüfungen seitenweise (mehr als 1000 Zeilen). Schlägt eine Abfrage fehl, bleibt der
   // bisherige Stand stehen - sonst sähe die Ansicht leer aus und ungespeicherte Änderungen wären weg.
-  let fsR,lehrerR,schuelerR,termineR,pruefungenR,fahrzeugeR,paketeR,urlaubR;
+  let fsR,lehrerR,schuelerR,termineR,pruefungenR,fahrzeugeR,paketeR,urlaubR,namenR;
   try{
-    [fsR,lehrerR,schuelerR,termineR,pruefungenR,fahrzeugeR,paketeR,urlaubR]=await Promise.all([
+    [fsR,lehrerR,schuelerR,termineR,pruefungenR,fahrzeugeR,paketeR,urlaubR,namenR]=await Promise.all([
       supa.from("fahrschulen").select("*").eq("id",fahrschuleId).single(),
       supa.from("profiles").select("*").eq("fahrschule_id",fahrschuleId).in("rolle",["fahrlehrer","super_admin"]).order("email"),
       _alleSeiten(()=>supa.from("schueler").select("*").eq("fahrschule_id",fahrschuleId).neq("status","geloescht")).then(data=>({data})),
@@ -5842,7 +5842,9 @@ async function _fsLoadAggData(fahrschuleId){
       _alleSeiten(()=>supa.from("kalender_pruefungen").select("*").eq("fahrschule_id",fahrschuleId).eq("geloescht",false)).then(data=>({data})),
       supa.from("fahrschule_fahrzeuge").select("*").eq("fahrschule_id",fahrschuleId).eq("aktiv",true).order("erstellt_am"),
       supa.from("fahrschule_pakete").select("*").eq("fahrschule_id",fahrschuleId),
-      supa.from("fahrschule_urlaub").select("*").eq("fahrschule_id",fahrschuleId).gte("bis",todayISO())
+      supa.from("fahrschule_urlaub").select("*").eq("fahrschule_id",fahrschuleId).gte("bis",todayISO()),
+      // Namen aller Zugänge (auch gelöschte oder zum Büro gewechselte Fahrlehrer), nur zum Anzeigen alter Termine
+      Promise.resolve(supa.from("profiles").select("id,name,email").eq("fahrschule_id",fahrschuleId)).catch(()=>({data:null}))
     ]);
     if(lehrerR.error) throw lehrerR.error;
   }catch(e){
@@ -5853,7 +5855,8 @@ async function _fsLoadAggData(fahrschuleId){
   if(gen!==_fsAggGen)return false;
   if(standVorher!==null&&standVorher!==JSON.stringify([DB.students,DB.lessons,DB.exams])){ _fsSyncAggChanges(); return false; }
   const lehrer=lehrerR.data||[];
-  const lehrerName=id=>{ const l=lehrer.find(x=>x.id===id); return l?(l.name||l.email):"Unbekannt"; };
+  window._fsAlleNamen={}; ((namenR&&!namenR.error&&namenR.data)||[]).forEach(p=>{ if(p&&p.id) window._fsAlleNamen[p.id]=p.name||p.email||""; });
+  const lehrerName=id=>{ const l=lehrer.find(x=>x.id===id); return l?(l.name||l.email):_fsNameAusAlle(id,"Unbekannt"); };
   DB.students=(schuelerR.data||[]).map(r=>_fsMapSchueler(r,lehrerName));
   _merkeFristen(schuelerR.data);
   _ladeTheorieBesuch(supa, (schuelerR.data||[]).map(r=>r.id));
@@ -6378,6 +6381,8 @@ async function toggleFahrlehrerAktiv(userId,aktiv,fahrschuleId){
   _fsNachFahrlehrerAktion(fahrschuleId);
 }
 
+// Name eines Zugangs, der nicht mehr in der Fahrlehrer-Liste steht (gelöscht oder jetzt Büro): für alte Termine, Prüfungen, Provisionen
+function _fsNameAusAlle(id,sonst){ const n=id&&window._fsAlleNamen?window._fsAlleNamen[id]:""; return n||sonst; }
 // Zugang bearbeiten / löschen (🗣 Serband 21.11.2026). Rechte prüft die Server-Funktion (update_account / delete_account).
 const _FL_LEHR_KLASSEN=["B","BE","C1","C1E","C","CE"];
 function _flZugangFinden(id){
@@ -6918,7 +6923,7 @@ async function routeFahrschuleVerschiebungsverlauf(){
   const supa=getSupa();
   const {data}=await supa.from("schueler_verschiebungen").select("*").eq("fahrschule_id",_fsAgg.fahrschuleId).order("erstellt_am",{ascending:false}).limit(100);
   const lehrer=_fsAgg.lehrer||[];
-  const lehrerName=id=>{ if(!id)return "— Pool —"; const l=lehrer.find(x=>x.id===id); return l?(l.name||l.email):"Unbekannt"; };
+  const lehrerName=id=>{ if(!id)return "— Pool —"; const l=lehrer.find(x=>x.id===id); return l?(l.name||l.email):_fsNameAusAlle(id,"Unbekannt"); };
   const schuelerName=id=>{ const s=(DB.students||[]).find(x=>x.id===id); return s?s.name:"(gelöschter Schüler)"; };
   const rows=(data||[]).map(v=>`<div class="fs-card">
     <div class="fs-name">${esc(schuelerName(v.schueler_id))}</div>
@@ -7358,7 +7363,7 @@ async function routeFahrschuleProvisionen(){
   const supa=getSupa();
   const {data}=await supa.from("provisionen").select("*").eq("fahrschule_id",_fsAgg.fahrschuleId).order("erstellt_am",{ascending:false});
   const lehrer=_fsAgg.lehrer||[];
-  const lehrerName=id=>{const l=lehrer.find(x=>x.id===id);return l?(l.name||l.email):"—";};
+  const lehrerName=id=>{const l=lehrer.find(x=>x.id===id);return l?(l.name||l.email):_fsNameAusAlle(id,"—");};
   const gesamt={};
   (data||[]).filter(p=>p.status==='offen').forEach(p=>{gesamt[p.fahrlehrer_id]=(gesamt[p.fahrlehrer_id]||0)+Number(p.betrag||0);});
   const eurCent=v=>Number(v||0).toLocaleString("de-DE",{style:"currency",currency:"EUR"});
@@ -7532,7 +7537,7 @@ async function routeFahrschuleKalender(fahrschuleId,weekStart){
     const rows=tagTermine.map(t=>{
       const farbe=_fsKalFarbeFuer(t.fahrlehrer_id,lehrer);
       const l=lehrer.find(x=>x.id===t.fahrlehrer_id);
-      const lehrerName=l?(l.name||l.email):"?";
+      const lehrerName=l?(l.name||l.email):_fsNameAusAlle(t.fahrlehrer_id,"?");
       const schuelerName=schuelerNamen[t.schueler_id]||(t.payload&&t.payload.name)||"–";
       return `<button class="fs-card" style="width:100%;text-align:left;border:none;border-left:4px solid ${farbe};cursor:pointer;" onclick="fsTerminBearbeiten(${_jsArg(t.id)})">
         <div class="fs-name">${esc(t.von||"")}–${esc(t.bis||"")} · ${esc(schuelerName)}</div>

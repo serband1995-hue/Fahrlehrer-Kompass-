@@ -674,7 +674,7 @@ async function ladeProtokoll(tabelle, id) {
   if (res.error) { ziel.innerHTML = ""; return; }
   const zeilen = (res.data || []).map((p) => {
     // Gemeinsames Büro-Konto ohne PIN (z. B. aus der Fahrschul-Ansicht der App): kein Name bekannt
-    const wer = p.bearbeiter || (S.lehrer.find((l) => l.id === p.geaendert_von) || {}).name || (p.geaendert_von === S.user.id ? (werNoetig() ? "Büro (ohne PIN)" : "du") : "Büro");
+    const wer = p.bearbeiter || (teamPerson(p.geaendert_von) || {}).name || (p.geaendert_von === S.user.id ? (werNoetig() ? "Büro (ohne PIN)" : "du") : "Büro");
     const wann = new Date(p.geaendert_am).toLocaleString("de-DE", { dateStyle: "short", timeStyle: "short" });
     const wert = (v) => {
       if (p.feld === "auslands_fs") return v ? "(Angaben)" : "–"; // Führerscheinnummern nicht im Verlauf ausschreiben
@@ -2234,7 +2234,7 @@ function terminDialog(id, vorgabe) {
   const body = `<div class="formular">
       <label class="voll">Schüler<select name="schueler_id"><option value="">– ohne Schüler –</option>${schuelerOptionen(t.schueler_id)}</select></label>
       <label>Art<select name="art">${Object.entries(ARTEN).map(([k, v]) => `<option value="${k}"${t.art === k ? " selected" : ""}>${v}</option>`).join("")}</select></label>
-      <label>Fahrlehrer<select name="fahrlehrer_id" required>${S.lehrer.map((l) => `<option value="${esc(l.id)}"${l.id === t.fahrlehrer_id ? " selected" : ""}>${esc(l.name || l.email)}</option>`).join("")}</select></label>
+      <label>Fahrlehrer<select name="fahrlehrer_id" required>${lehrerAuswahl(t.fahrlehrer_id).map((l) => `<option value="${esc(l.id)}"${l.id === t.fahrlehrer_id ? " selected" : ""}>${esc(l.name || l.email)}</option>`).join("")}</select></label>
       <label>Datum<input type="date" name="datum" required value="${esc(t.datum || "")}"></label>
       <label>Fahrzeug<select name="fahrzeug"><option value="">–</option>${fahrzeuge.map((f) => `<option${t.fahrzeug === f ? " selected" : ""}>${esc(f)}</option>`).join("")}</select></label>
       <label>Von<input type="time" name="von" required value="${esc(t.von || "")}"></label>
@@ -2293,7 +2293,7 @@ function terminDialog(id, vorgabe) {
   });
   // Felder für Fahrlehrer ohne App ein- und ausblenden
   const ohneAppNeu = () => {
-    const fl = S.lehrer.find((l) => l.id === tdlg.querySelector("select[name=fahrlehrer_id]").value) || {};
+    const fl = teamPerson(tdlg.querySelector("select[name=fahrlehrer_id]").value) || {};
     const art = tdlg.querySelector("select[name=art]").value;
     const sx = S.schueler.find((x) => x.id === tdlg.querySelector("select[name=schueler_id]").value);
     const kl = sx ? lkwKlassenWahl(sx) : null;
@@ -2397,7 +2397,7 @@ function letzteQuittung(lehrerId, von) {
 function fcOffeneAbgaben() {
   if (!S.geladenAm) return [];
   const [von, bis] = KR.fcVorZeitraum(KR.fcZeitraum(KR.todayISO())[0]);
-  return S.lehrer.filter((l) => !letzteQuittung(l.id, von) && fcFuerLehrer(l.id, von, bis).soll > 0).map((l) => ({ lehrer: l, von, bis }));
+  return lehrerMitEhemaligen((id) => fcFuerLehrer(id, von, bis).soll > 0).filter((l) => !letzteQuittung(l.id, von) && fcFuerLehrer(l.id, von, bis).soll > 0).map((l) => ({ lehrer: l, von, bis }));
 }
 // Gewählter Abgabe-Zeitraum: jetzt | vor | Startdatum eines früheren Halbmonats (JJJJ-MM-TT)
 function fcPeriode() {
@@ -2433,7 +2433,7 @@ function renderFahrchecks() {
   const statusF = ["ohne", "fehlend", "ok"].includes(fristenParam("status")) ? fristenParam("status") : "";
   const suche = (fristenParam("suche") || "").trim().toLowerCase();
   let summeSoll = 0, summeIst = 0, offen = 0;
-  const zeilen = S.lehrer.filter((l) => (!lehrerF || l.id === lehrerF) && (!suche || (l.name || l.email || "").toLowerCase().includes(suche))).map((l) => {
+  const zeilen = lehrerMitEhemaligen((id) => fcFuerLehrer(id, von, bis).soll > 0 || !!letzteQuittung(id, von)).filter((l) => (!lehrerF || l.id === lehrerF) && (!suche || (l.name || l.email || "").toLowerCase().includes(suche))).map((l) => {
     const r = fcFuerLehrer(l.id, von, bis);
     const q = letzteQuittung(l.id, von);
     summeSoll += r.soll;
@@ -3062,7 +3062,7 @@ function renderZahlen() {
   </div>`;
   const anmPunkte = monate.map((m) => ({ x: monatKurz(m), wert: anm[m] || 0, text: String(anm[m] || 0), zeigen: m === dieser || m === vorher, tip: `${monatKurz(m)}: ${anm[m] || 0} Anmeldungen · anklicken für die Namen`, link: zLink({ liste: "anmeldungen", monat: m }) }));
   const qp = (q, art) => monate.map((m) => { const v = q[m]; return { x: monatKurz(m), wert: v ? Math.round(v.ok / v.n * 100) : null, text: v ? Math.round(v.ok / v.n * 100) + " %" : "", zeigen: !!v && letzte3.includes(m), tip: v ? `${monatKurz(m)}: ${Math.round(v.ok / v.n * 100)} % (${v.ok} von ${v.n} bestanden) · anklicken für die Namen` : `${monatKurz(m)}: keine Prüfungen`, link: v ? zLink({ liste: art, monat: m }) : "" }; });
-  const lehrerZeilen = S.lehrer.filter((l) => !f.lehrer || l.id === f.lehrer).map((l) => ({ name: l.name || l.email, wert: ue[l.id] || 0, text: zahlDE(ue[l.id] || 0, 0) + " UE", tip: `${l.name || l.email}: ${zahlDE(ue[l.id] || 0, 1)} Unterrichtseinheiten · anklicken für die Termine`, link: zLink({ liste: "ue", monat: dieser, lehrer: l.id }) })).sort((a, b) => b.wert - a.wert);
+  const lehrerZeilen = lehrerMitEhemaligen((id) => (ue[id] || 0) > 0).filter((l) => !f.lehrer || l.id === f.lehrer).map((l) => ({ name: l.name || l.email, wert: ue[l.id] || 0, text: zahlDE(ue[l.id] || 0, 0) + " UE", tip: `${l.name || l.email}: ${zahlDE(ue[l.id] || 0, 1)} Unterrichtseinheiten · anklicken für die Termine`, link: zLink({ liste: "ue", monat: dieser, lehrer: l.id }) })).sort((a, b) => b.wert - a.wert);
   const hinweis = S.lehrer.length <= 1 ? `<p class="leise klein">Hinweis: Zahlen sind nur so vollständig wie die Daten im Kompass. Solange nicht alle Fahrlehrer den Kompass nutzen, fehlen ihre Stunden.</p>` : "";
   // Termine und Prüfungstafel werden nur für ~400 Tage geladen: ältere Jahre nicht anbieten, angeschnittene mit Hinweis
   const grenze = KR.addDaysISO(heute, -DATEN_TAGE);
@@ -3383,6 +3383,19 @@ function fahrlehrerAkte(id) {
   ladeProtokoll("profiles", id);
 }
 function teamPerson(id) { return S.team.find((p) => p.id === id) || S.lehrer.find((p) => p.id === id); }
+// Gelöschte oder zum Büro gewechselte Fahrlehrer stehen nicht mehr in S.lehrer. Für Auswertungen (Fahrcheck, Statistik)
+// kommen sie dazu, solange sie im Zeitraum noch Daten haben, damit nichts verschwindet.
+function ehemaligName(p) { return (p.name || p.email || "") + (p.rolle === "entfernt" ? " (gelöscht)" : " (jetzt " + (ROLLEN[p.rolle] || p.rolle) + ")"); }
+function lehrerMitEhemaligen(hatDaten) {
+  const da = new Set(S.lehrer.map((l) => l.id));
+  return S.lehrer.concat((S.team || []).filter((p) => !da.has(p.id) && p.rolle !== "super_admin" && hatDaten(p.id)).map((p) => Object.assign({}, p, { name: ehemaligName(p) })));
+}
+// Fahrlehrer-Auswahl im Termin: ein alter Termin eines Ehemaligen behält ihn (sonst spränge die Auswahl still auf den ersten)
+function lehrerAuswahl(gewaehlt) {
+  if (!gewaehlt || S.lehrer.some((l) => l.id === gewaehlt)) return S.lehrer;
+  const p = teamPerson(gewaehlt);
+  return [p ? Object.assign({}, p, { name: ehemaligName(p) }) : { id: gewaehlt, name: "(nicht mehr da)" }].concat(S.lehrer);
+}
 function zeigePasswort(email, passwort) {
   let versucht = false;
   oeffneDialog("Zugangsdaten", `<p>Bitte jetzt weitergeben. Das Passwort wird <b>nur dieses eine Mal</b> angezeigt.</p>
