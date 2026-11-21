@@ -8,6 +8,8 @@ const VORNAMEN = ["Lena", "Jonas", "Greta", "Elias", "Sofia", "Max", "Emilia", "
 // Nachnamen, die die Schüler klar als erfunden kennzeichnen (im Wechsel)
 const NACHNAMEN = ["Beispiel", "Probe", "Vorlage", "Muster"];
 
+// Ein erfundener Unterschrift-Strich als PNG (keine echte Unterschrift)
+const UNTERSCHRIFT_PROBE = "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAHgAAAAoCAAAAAAQgWH5AAAAr0lEQVR42u3W2wqAIAwG4P8h9v6vWoRBarqDjkWwXUWDfXZwE8dHgYQTTjjhK6hENExPhMJESzI82Oo6Cu4sgwxP1yJj01Xc8oeHiFaGs6uWodoqJoCRqxSUO3Sx/LucDFMX/O8sZvsyYNlZM5ZaxXCh7T3IDal9ft1EYJfNwNy7UvZk9ktN4Gll0ywQFgqDW7L2ucXv4zu/MNI3TyBr49wVDj9zBap5vE044YR/CZ9VC4/Y4oFrmgAAAABJRU5ErkJggg==";
 function addTage(iso, n) { const d = new Date(iso + "T12:00:00"); d.setDate(d.getDate() + n); return d.toISOString().slice(0, 10); }
 function addMonate(iso, n) { const d = new Date(iso + "T12:00:00"); d.setMonth(d.getMonth() + n); return d.toISOString().slice(0, 10); }
 
@@ -63,7 +65,9 @@ function bauDaten(heute) {
         termine.push({
           id: "t" + t, fahrschule_id: FS, fahrlehrer_id: l.id, schueler_id: s.id, datum, von, bis,
           art: zi === 5 && tag % 4 === 0 ? "sonder" : "fahrstunde", fahrzeug: FAHRZEUGE[li],
-          status: "geplant", geloescht: false, payload: t % 13 === 0 ? { fc: "v1" } : (t % 17 === 0 ? { fc: "v2" } : {}), buero_fc_status: "offen",
+          status: "geplant", geloescht: false, payload: Object.assign(t % 13 === 0 ? { fc: "v1" } : (t % 17 === 0 ? { fc: "v2" } : {}),
+            // erfundene Unterschrift (kleines Strich-Bild) bei jeder zweiten vergangenen Stunde: für den Ausbildungsnachweis
+            tag < 0 && tag % 2 === 0 ? { signed: true, signedAt: datum, signatureSnap: UNTERSCHRIFT_PROBE } : {}), buero_fc_status: "offen",
         });
       });
     });
@@ -304,6 +308,20 @@ if (typeof module !== "undefined" && module.exports) { module.exports = { bauDat
   function kopie(x) { return JSON.parse(JSON.stringify(x)); }
   function tabelle(name) { if (!F.tabellen[name]) F.tabellen[name] = []; return F.tabellen[name]; }
 
+  // Wie der Trigger trg_termin_zz_nachweis_spur (supabase/migrations/20261121_nachweis_01_termin_spur.sql)
+  function terminSpur(alt, r) {
+    const p = r.payload || {}; const grund = p.korrekturGrund || null; delete p.korrekturGrund;
+    const si = meineSitzung(); const per = si && personen().find((x) => x.id === si.person);
+    const zeile = (feld, a, n) => tabelle("aenderungsprotokoll").push({ id: tabelle("aenderungsprotokoll").length + 1, fahrschule_id: r.fahrschule_id, tabelle: "kalender_termine", datensatz_id: r.id, feld, alt: a, neu: n, geaendert_von: (F.session && F.session.user && F.session.user.id) || null, geaendert_am: new Date().toISOString(), bearbeiter: per ? per.name : null, grund });
+    if (!alt) { zeile("angelegt", null, `${r.datum} ${r.von || ""}–${r.bis || ""}`); return; }
+    const ap = alt.payload || {};
+    if (ap.signed && ["datum", "von", "bis", "art", "schueler_id"].some((k) => alt[k] !== r[k])) {
+      Object.assign(p, { signed: false, signatureSnap: null, signaturUngueltig: { am: new Date().toISOString(), alt: { datum: alt.datum, von: alt.von, bis: alt.bis, art: alt.art }, signedAt: ap.signedAt || null, snap: ap.signatureSnap || null } });
+    }
+    r.payload = p;
+    for (const k of ["datum", "von", "bis", "art", "schueler_id", "fahrlehrer_id", "geloescht", "status"]) if (String(alt[k] ?? "") !== String(r[k] ?? "")) zeile(k, alt[k] == null ? null : String(alt[k]), r[k] == null ? null : String(r[k]));
+    for (const k of ["sonderArt", "signed"]) { const a = k === "signed" ? String(!!ap[k]) : ap[k] ?? null, n = k === "signed" ? String(!!p[k]) : p[k] ?? null; if (a !== n) zeile(k, a, n); }
+  }
   class Abfrage {
     constructor(name) { this.name = name; this.filter = []; this.art = "select"; this.einzeln = null; this.sort = []; this.grenze = null; this.nachher = false; }
     select() { if (this.art !== "select") this.nachher = true; return this; }
@@ -335,6 +353,7 @@ if (typeof module !== "undefined" && module.exports) { module.exports = { bauDat
         // wie der Trigger in der Datenbank: wer die Aufgabe anlegt, kommt aus der PIN-Sitzung
         if (this.name === "schueler_aufgaben") { const si = meineSitzung(); const p = si && personen().find((x) => x.id === si.person); daten.forEach((r) => { r.von_person_id = si ? si.person : null; r.bearbeiter = p ? p.name : null; }); }
         t.push(...daten);
+        if (this.name === "kalender_termine") daten.forEach((r) => terminSpur(null, r));
       } else if (this.art === "upsert") {
         const k = this.konflikt.split(",");
         daten = this.daten.map((r) => {
@@ -344,7 +363,7 @@ if (typeof module !== "undefined" && module.exports) { module.exports = { bauDat
         });
       } else if (this.art === "update") {
         daten = t.filter((r) => this.passt(r));
-        daten.forEach((r) => Object.assign(r, kopie(this.werte)));
+        daten.forEach((r) => { const alt = kopie(r); Object.assign(r, kopie(this.werte)); if (this.name === "kalender_termine") terminSpur(alt, r); });
       } else if (this.art === "delete") {
         daten = t.filter((r) => this.passt(r));
         F.tabellen[this.name] = t.filter((r) => !this.passt(r));

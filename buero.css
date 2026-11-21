@@ -645,3 +645,23 @@ body.kiosk .rollen-streifen{display:none;}
   .formular,.formular .raster-zwei,.formular fieldset.raster-feld{grid-template-columns:minmax(0,1fr);}
   .formular label{min-width:0;}
 }
+/* Ausbildungsnachweis (buero-nachweis.js) */
+.nw-akte{display:flex;align-items:center;gap:10px;flex-wrap:wrap;}
+.dialog.dialog-breit{width:min(940px,96vw);}
+.nw-kacheln{display:grid;grid-template-columns:repeat(auto-fit,minmax(170px,1fr));gap:10px;margin-bottom:10px;}
+.nw-kachel{display:flex;flex-direction:column;gap:4px;padding:10px 12px;border:1px solid var(--line);border-radius:var(--r-klein);background:var(--surface-2);}
+.nw-kachel b{font-size:20px;}
+.nw-kachel span:not(.leise){display:flex;flex-wrap:wrap;gap:4px;}
+.nw-fehlt{margin:6px 0;padding:8px 12px;border-radius:var(--r-klein);background:var(--rot-soft);}
+.nw-fehlt.gut{background:var(--gruen-soft);}
+.nw-kopf{display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap;margin-top:12px;}
+.nw-liste,.nw-spur{list-style:none;margin:6px 0;padding:0;}
+.nw-zeile{display:grid;grid-template-columns:minmax(150px,auto) 1fr auto auto;gap:6px 12px;align-items:center;padding:8px 0;border-bottom:1px solid var(--line-soft);}
+.nw-knoepfe{display:flex;gap:6px;}
+.nw-spur li{padding:4px 0;border-bottom:1px solid var(--line-soft);font-size:15px;}
+.nw-details{margin-top:10px;}
+.nw-details summary{cursor:pointer;min-height:44px;display:flex;align-items:center;font-weight:600;}
+.nw-teil{margin-top:12px;}
+.nw-zeile>*{min-width:0;}
+@media (max-width:640px){.nw-zeile{grid-template-columns:minmax(0,1fr) auto;}.nw-wann,.nw-was{grid-column:1/-1;}.nw-us{grid-column:1;}.nw-knoepfe{grid-column:2;}
+  .dialog-breit .dialog-form footer{flex-wrap:wrap;}.dialog-breit .dialog-form footer .knopf{flex:1 1 auto;}}
