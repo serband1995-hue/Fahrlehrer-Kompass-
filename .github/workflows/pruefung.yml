@@ -52,7 +52,7 @@ jobs:
         run: |
           npm install -g playwright@1.63.0
           npx -y playwright@1.63.0 install --with-deps chromium
-      - name: Rollen-Test (jede Rolle: Startansicht, Schüler anlegen, gespeichert)
+      - name: "Rollen-Test (jede Rolle: Startansicht, Schüler anlegen, gespeichert)"
         run: NODE_PATH=$(npm root -g) node scripts/rollen-test.mjs
-      - name: Zugang-Test (Fahrlehrer bearbeiten und löschen, Rechte je Rolle)
+      - name: "Zugang-Test (Fahrlehrer bearbeiten und löschen, Rechte je Rolle)"
         run: NODE_PATH=$(npm root -g) node scripts/zugang-test.mjs
