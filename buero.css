@@ -539,6 +539,8 @@ a.kachel:hover,a.kachel:focus-visible{border-color:var(--akzent);}
 .knopf.ergebnis-ja{border-color:var(--gruen);color:var(--gruen);font-weight:700;}
 .knopf.ergebnis-ja:hover{background:var(--gruen-soft);}
 .knopf.ergebnis-nein{border-color:var(--rot);color:var(--rot);font-weight:700;}
+.knopf.gefahr{color:var(--pill-rot);border-color:var(--rot);}
+.knopf.gefahr:hover{background:var(--rot-soft);}
 .knopf.ergebnis-nein:hover{background:var(--rot-soft);}
 .pruef-akte{list-style:none;margin:0;padding:0;display:grid;gap:6px;}
 .pruef-akte li{display:flex;flex-wrap:wrap;gap:8px;align-items:center;}

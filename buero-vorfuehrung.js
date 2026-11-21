@@ -173,7 +173,35 @@ function vorfuehrZusatz(tab, heute) {
   return tab;
 }
 
-if (typeof module !== "undefined" && module.exports) { module.exports = { bauDaten, vorfuehrZusatz }; } else
+// Konten-Funktion der Vorführung (und der Tests): ahmt admin-create-account vereinfacht nach, ohne Rechteprüfung.
+function vorfuehrKonto(b, F) {
+  const profile = (F && F.tabellen && F.tabellen.profiles) || [];
+  const ziel = b && b.target_user_id ? profile.find((p) => p.id === b.target_user_id) : null;
+  const heute = new Date().toISOString().slice(0, 10);
+  if (b && (b.action === "check_delete" || b.action === "delete_account")) {
+    if (!ziel) throw new Error("Zugang nicht gefunden");
+    const sch = ((F.tabellen.schueler) || []).filter((x) => x.fahrlehrer_id === ziel.id && x.status !== "geloescht").length;
+    const ter = ((F.tabellen.kalender_termine) || []).filter((x) => x.fahrlehrer_id === ziel.id && !x.geloescht && x.art !== "block" && x.datum > heute).length;
+    const offen = sch || ter;
+    const hinweis = offen ? `${ziel.name || "Dieser Fahrlehrer"} hat noch ${[sch ? sch + " Schüler" : "", ter ? ter + " künftige Termine" : ""].filter(Boolean).join(", ")}. Bitte zuerst einem anderen Fahrlehrer geben (Schüler öffnen und den Fahrlehrer wechseln), dann noch einmal löschen.` : null;
+    if (b.action === "check_delete") return { ok: !offen, hinweis };
+    if (offen) throw new Error(hinweis);
+    Object.assign(ziel, { rolle: "entfernt", aktiv: false, email: "entfernt-" + ziel.id + "@entfernt.invalid", slug: null });
+    return { ok: true, geloescht: true };
+  }
+  if (b && b.action === "update_account") {
+    if (!ziel) throw new Error("Zugang nicht gefunden");
+    const neu = {};
+    if (b.name !== undefined) neu.name = String(b.name).trim();
+    if (b.rolle) neu.rolle = b.rolle;
+    if (Array.isArray(b.klassen)) neu.klassen = b.klassen.slice().sort();
+    if (b.email) { neu.email = b.email; neu.ohne_app = false; }
+    Object.assign(ziel, neu);
+    return b.email ? { ok: true, geaendert: true, email: b.email, mail_gesendet: true } : { ok: true, geaendert: true };
+  }
+  return { email: (b && b.email) || "beispiel@example.org", passwort: "Vorfuehrung-1234" };
+}
+if (typeof module !== "undefined" && module.exports) { module.exports = { bauDaten, vorfuehrZusatz, vorfuehrKonto }; } else
 (function () {
   "use strict";
   // Ohne Test-Daten: Vorführung mit erfundener Fahrschule, angemeldet als Fahrschul-Leitung
@@ -181,7 +209,7 @@ if (typeof module !== "undefined" && module.exports) { module.exports = { bauDat
     const h = new Date().toISOString().slice(0, 10);
     const d = bauDaten(h);
     window.__FAKE = { tabellen: vorfuehrZusatz(d.tabellen, h), konten: d.konten, session: { user: { id: "ad-1", email: "leitung@example.org" } }, vorfuehrung: true,
-      functions: { "admin-create-account": (b) => ({ email: b.email || "beispiel@example.org", passwort: "Vorfuehrung-1234" }) } };
+      functions: { "admin-create-account": vorfuehrKonto } };
   }
   const F = window.__FAKE;
   F.log = [];
