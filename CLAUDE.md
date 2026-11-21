@@ -23,6 +23,7 @@ Fahrlehrer-Kompass: PWA for driving instructors, plain HTML/CSS/JS (no build, al
 - Bump `APP_VERSION` (`index.html`) and `CACHE_VERSION` (`sw.js`) with every release.
 - Before every merge run the review team `/pruefen` (two bug hunters, one design critic, Opus judge in `.claude/agents/`); merge only after the judge says „abgenommen“.
 - Before shipping run `bash scripts/release-check.sh` (versions bumped, no secrets) and `NODE_PATH=$(npm root -g) node scripts/handy-test.mjs` (pages at 360/412 px, portrait and landscape).
+- Roles (🗣 21.11.2026, after the Jelena case): any change to login, views, menus, rights or student/appointment creation must keep `NODE_PATH=$(npm root -g) node scripts/rollen-test.mjs` green (also runs in the GitHub check). It plays every role from app start to a saved student: Fahrlehrer, Leitung, Leitung that drives herself (`profiles.faehrt_selbst`), Büro, Super-Admin. New role-dependent features extend this test.
 - End of a session or "Vault aktualisieren": run `/vault-abschluss`.
 - Video with captions/pictures/cinematic look: run `/video-overlay` (tools in `scripts/video-overlay/`).
 - Never write to the Fahr-Akademie Supabase project (`fxgljvhpikjcejhghgbp`) from here.

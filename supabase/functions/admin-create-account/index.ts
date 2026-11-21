@@ -2,8 +2,9 @@
 // Kopie der in Supabase laufenden Funktion (Projekt oectrvkjunntzsggyhxv, verify_jwt = false:
 // die Funktion prüft den Anmelde-Token und die Rolle selbst). Version 9 (30.10.2026): Einladungs-Mail; Profil nach dem Anlegen ersetzen statt doppelt einfügen.
 // Version 10 (21.11.2026): Zugang bearbeiten (update_account) und löschen (delete_account), Regeln in regeln.ts.
+// Version 11 (21.11.2026): Kennzeichen „fährt selbst“ für die Leitung (faehrt_selbst, nur Betreiber).
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
-import { berlinJetzt, darfVerwalten, klassenListe, likeGenau, platzhalterEmail, pruefeAenderung, ROLLE_ENTFERNT, terminKommtNoch, uebergabeNoetig } from "./regeln.ts";
+import { berlinJetzt, darfVerwalten, klassenListe, likeGenau, platzhalterEmail, pruefeAenderung, ROLLE_ENTFERNT, terminKommtNoch, uebergabeNoetig, unterrichtet } from "./regeln.ts";
 
 const SUPABASE_URL = Deno.env.get("SUPABASE_URL");
 const SERVICE_ROLE_KEY = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY");
@@ -229,8 +230,9 @@ Deno.serve(async (req) => {
     if (action === "update_account" || action === "delete_account" || action === "check_delete") {
       const { target_user_id } = body;
       if (!target_user_id || typeof target_user_id !== "string") return json({ error: "target_user_id erforderlich" }, 400);
-      const { data: ziel } = await supa.from("profiles").select("id, rolle, fahrschule_id, ohne_app, aktiv, name, email, klassen, fahrlehrerlaubnis, slug").eq("id", target_user_id).maybeSingle();
-      if (!ziel) return json({ error: "Zugang nicht gefunden" }, 404);
+      const { data: ziel } = await supa.from("profiles").select("id, rolle, fahrschule_id, ohne_app, aktiv, name, email, klassen, fahrlehrerlaubnis, slug, faehrt_selbst").eq("id", target_user_id).maybeSingle();
+      // Für Nicht-Betreiber sehen fremde und nicht vorhandene Zugänge gleich aus (keine Rückschlüsse auf andere Fahrschulen)
+      if (!ziel) return isSuperAdmin ? json({ error: "Zugang nicht gefunden" }, 404) : json({ error: "Keine Berechtigung" }, 403);
       const wer = { requester: requesterProfile, isSuperAdmin, isFahrschuleAdmin, isBueroVerwalter };
       const verboten = darfVerwalten(wer, ziel);
       if (verboten) return json({ error: verboten }, 403);
@@ -239,7 +241,8 @@ Deno.serve(async (req) => {
       const offenBeiFahrlehrer = async () => {
         const jetzt = berlinJetzt();
         const [sch, ter, pt, kp, pb] = await Promise.all([
-          supa.from("schueler").select("id", { count: "exact", head: true }).eq("fahrlehrer_id", ziel.id).neq("status", "geloescht"),
+          // Schüler im Archiv (inaktiv_seit gesetzt) sind fertig und bleiben beim bisherigen Fahrlehrer – sie blockieren nicht
+          supa.from("schueler").select("id", { count: "exact", head: true }).eq("fahrlehrer_id", ziel.id).neq("status", "geloescht").is("inaktiv_seit", null),
           supa.from("kalender_termine").select("id, datum, bis, art").eq("fahrlehrer_id", ziel.id).eq("geloescht", false).gte("datum", jetzt.datum).limit(5000),
           supa.from("pruefungstermine").select("id", { count: "exact", head: true }).eq("fahrlehrer_id", ziel.id).eq("status", "geplant").gte("datum", jetzt.datum),
           supa.from("kalender_pruefungen").select("id, result").eq("fahrlehrer_id", ziel.id).eq("geloescht", false).gte("datum", jetzt.datum).limit(1000),
@@ -256,7 +259,7 @@ Deno.serve(async (req) => {
       };
 
       if (action === "update_account") {
-        const aend = pruefeAenderung(wer, ziel, { name: body.name, klassen: body.klassen, rolle: body.rolle, email: body.email });
+        const aend = pruefeAenderung(wer, ziel, { name: body.name, klassen: body.klassen, rolle: body.rolle, email: body.email, faehrt_selbst: body.faehrt_selbst });
         if (aend.fehler) return json({ error: aend.fehler }, aend.status || 400);
         if (!Object.keys(aend.profil).length) return json({ ok: true, geaendert: false });
         if (aend.rolleWeg) {
@@ -273,7 +276,9 @@ Deno.serve(async (req) => {
           }
         }
         const profilNeu: Record<string, unknown> = { ...aend.profil };
-        if (aend.profil.rolle === "buero" || aend.profil.rolle === "fahrschule_admin") profilNeu.slug = null; // Buchungslink gilt nur für Fahrlehrer
+        const rolleDanach = String(aend.profil.rolle || ziel.rolle);
+        const faehrtDanach = aend.profil.faehrt_selbst !== undefined ? aend.profil.faehrt_selbst : ziel.faehrt_selbst;
+        if (!unterrichtet(rolleDanach, faehrtDanach)) profilNeu.slug = null; // Buchungslink gilt nur für Fahrlehrer
         const { error: upErr } = await supa.from("profiles").update(profilNeu).eq("id", ziel.id);
         if (upErr) {
           // Anmeldekonto nicht halb umgestellt lassen (sonst scheitert ein zweiter Versuch an „schon einen Zugang“)
@@ -285,10 +290,15 @@ Deno.serve(async (req) => {
           const { offen: nachher } = await offenBeiFahrlehrer();
           const grund2 = uebergabeNoetig(nachher, ziel.name || "");
           if (grund2) {
-            await supa.from("profiles").update({ rolle: ziel.rolle, slug: ziel.slug ?? null }).eq("id", ziel.id);
+            const zurueck: Record<string, unknown> = { rolle: ziel.rolle, slug: ziel.slug ?? null, faehrt_selbst: ziel.faehrt_selbst === true };
+            if (aend.neueEmail) { zurueck.email = ziel.email; zurueck.ohne_app = ziel.ohne_app === true; }
+            await supa.from("profiles").update(zurueck).eq("id", ziel.id);
+            if (aend.neueEmail && ziel.email) await supa.auth.admin.updateUserById(ziel.id, { email: ziel.email, email_confirm: true }).catch(() => {});
             return json({ error: grund2.replace("dann noch einmal löschen", "dann die Rolle ändern"), offen: nachher }, 409);
           }
         }
+        // A2: Wechselt ein Büro-Konto die Rolle, gelten seine PIN-Sitzungen nicht mehr
+        if (aend.profil.rolle && ziel.rolle === "buero") await supa.from("buero_sitzungen").delete().eq("user_id", ziel.id);
         if (typeof aend.profil.name === "string" && ziel.name && ziel.fahrschule_id) {
           // Urlaub und Schichtplan merken sich den Namen als Text: mit umbenennen, damit der Urlaub weiter greift
           for (const tabelle of ["fahrschule_urlaub", "fahrschule_schichten"]) {
@@ -339,6 +349,7 @@ Deno.serve(async (req) => {
         await supa.from("kalender_termine").update({ geloescht: true, aktualisiert_am: new Date().toISOString() }).in("id", bloecke);
       }
       await supa.from("push_subscriptions").delete().eq("user_id", ziel.id);
+      await supa.from("buero_sitzungen").delete().eq("user_id", ziel.id); // PIN-Sitzungen eines gelöschten Büro-Kontos enden sofort
       return json({ ok: true, geloescht: true, hinweis: hinweise.join(" ") || undefined });
     }
 

@@ -179,6 +179,39 @@ for (const g of GROESSEN) {
   await setze("super_admin"); await warte(page);
   await page.click(".fs-card:has-text('Anna') button[onclick^=fahrlehrerBearbeitenSheet]"); await warte(page, 400);
   await pruefe("A12", `${P} Super-Admin kann Leitung wählen`, () => page.evaluate(() => [...document.querySelectorAll("#flbRolle option")].some((o) => o.value === "fahrschule_admin") ? null : "fehlt"));
+  // „Fährt selbst“ (🗣 21.11., Jelena): Haken nur bei Rolle Leitung, Klassen dann sichtbar, Speichern schickt faehrt_selbst
+  await page.evaluate(() => { window.__aufrufe = []; });
+  await pruefe("A17", `${P} „Fährt selbst“ erst bei Rolle Leitung sichtbar`, () => page.evaluate(() => document.getElementById("flbFaehrtZeile") && document.getElementById("flbFaehrtZeile").hidden ? null : "sichtbar bei Fahrlehrer"));
+  await page.selectOption("#flbRolle", "fahrschule_admin"); await warte(page, 100);
+  await pruefe("A18", `${P} Leitung ohne Haken: Klassen aus, Übergabe-Hinweis an`, () => page.evaluate(() => !document.getElementById("flbFaehrtZeile").hidden && document.getElementById("flbKlassen").hidden && !document.getElementById("flbRolleHinweis").hidden ? null : "falsch"));
+  await page.check("#flbFaehrt"); await warte(page, 100);
+  await pruefe("A19", `${P} Leitung mit Haken: Klassen an, kein Übergabe-Hinweis`, () => page.evaluate(() => !document.getElementById("flbKlassen").hidden && document.getElementById("flbRolleHinweis").hidden ? null : "falsch"));
+  await page.click("#flbSpeichern"); await warte(page, 400);
+  await pruefe("A20", `${P} Speichern schickt rolle Leitung + faehrt_selbst + Klassen`, () => page.evaluate(() => {
+    const b = window.__aufrufe.find((x) => x.action === "update_account");
+    return b && b.rolle === "fahrschule_admin" && b.faehrt_selbst === true && Array.isArray(b.klassen) ? null : JSON.stringify(b);
+  }));
+  // Ansicht: Leitung mit Kennzeichen hat den Umschalter wie der Betreiber, reine Leitung nicht
+  await pruefe("A21", `${P} Leitung fährt selbst: eigene Ansicht + Umschalter + Streifen; reine Leitung nur Gesamtansicht`, () => page.evaluate(() => {
+    const f = [];
+    _fsAgg = null;
+    _authProfile = { id: "u1", rolle: "fahrschule_admin", fahrschule_id: "f1", name: "Leitung Muster", faehrt_selbst: true };
+    if (_nurGesamtansicht()) f.push("fährt selbst gilt als nur Gesamtansicht");
+    _fsSetDrawer(false); _zeigeSaStreifen();
+    if (!/Admin-Gesamtübersicht/.test(document.querySelector(".drawer-nav").textContent)) f.push("Umschalter fehlt");
+    const st = document.getElementById("saStreifen");
+    if (st.hidden || !/Du bist Leitung/.test(st.textContent) || !st.classList.contains("sa-tippbar") || st.getBoundingClientRect().height < 43.5) f.push("Streifen fehlt/zu klein: " + st.textContent);
+    _authProfile = { id: "u1", rolle: "fahrschule_admin", fahrschule_id: "f1", name: "Leitung Muster", faehrt_selbst: false };
+    if (!_nurGesamtansicht()) f.push("reine Leitung nicht nur Gesamtansicht");
+    _fsSetDrawer(false); _zeigeSaStreifen();
+    if (/Admin-Gesamtübersicht/.test(document.querySelector(".drawer-nav").textContent)) f.push("reine Leitung hat Umschalter");
+    if (!st.hidden) f.push("reine Leitung hat Streifen");
+    _authProfile = { id: "u2", rolle: "buero", fahrschule_id: "f1" };
+    if (!_nurGesamtansicht()) f.push("Büro nicht nur Gesamtansicht");
+    const r = _fsNurUnterrichtende({ data: [{ rolle: "fahrlehrer" }, { rolle: "fahrschule_admin", faehrt_selbst: true }, { rolle: "fahrschule_admin" }, { rolle: "super_admin" }] });
+    if (r.data.length !== 3) f.push("Fahrlehrer-Liste: " + r.data.length);
+    return f;
+  }));
   await pruefe("A13", `${P} keine JS-Fehler`, () => jsFehler);
   await ctx.close();
 }
@@ -190,6 +223,8 @@ async function buero(nutzer, wer) {
   const daten = bauDaten(new Date().toISOString().slice(0, 10));
   // Ein Fahrlehrer ohne Schüler und ohne Termine, der gelöscht werden darf
   daten.tabellen.profiles.push({ id: "fl-9", name: "Frei Muster", email: "frei@example.org", rolle: "fahrlehrer", fahrschule_id: daten.FS, aktiv: true, agb_akzeptiert_version: "1.0", klassen: ["B"] });
+  // Eine Leitung, die selbst fährt: steht auch in der Fahrlehrer-Liste
+  daten.tabellen.profiles.push({ id: "ad-2", name: "Jule Muster", email: "jule@example.org", rolle: "fahrschule_admin", faehrt_selbst: true, fahrschule_id: daten.FS, aktiv: true, agb_akzeptiert_version: "1.0" });
   // Ein schon gelöschter Fahrlehrer mit einem alten Termin (gestern): Name und Zuordnung müssen bleiben
   daten.tabellen.profiles.push({ id: "fl-8", name: "Weg Muster", email: "entfernt-fl-8@entfernt.invalid", rolle: "entfernt", fahrschule_id: daten.FS, aktiv: false });
   const gestern = new Date(Date.now() - 86400000).toISOString().slice(0, 10);
@@ -256,6 +291,10 @@ const knoepfe = (page) => page.evaluate(() => [...document.querySelectorAll("[da
     return sel.value === "fl-8" && /Weg Muster \(gelöscht\)/.test(sel.selectedOptions[0].textContent) ? null : "Auswahl: " + sel.value + " " + sel.selectedOptions[0].textContent;
   }));
   await page.keyboard.press("Escape"); await warte(page, 200);
+  await pruefe("B14", "[Büro Leitung] Leitung, die selbst fährt, steht in der Fahrlehrer-Tabelle; reine Leitung nicht", () => page.evaluate(() => {
+    const t = document.querySelector("table.tabelle"); const txt = t ? t.textContent : "";
+    return /Jule Muster/.test(txt) && !/Leitung Muster/.test(txt) ? null : "Fahrlehrer-Tabelle: " + txt.slice(0, 200);
+  }));
   await pruefe("B7", "[Büro Leitung] keine Fehler in der Konsole", () => konsole);
   await ctx.close();
 }

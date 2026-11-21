@@ -40,5 +40,18 @@ mails=$(grep -rnIoE '[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[a-z]{2,}' --include='*.h
   | grep -viE 'example\.|noreply@|@anthropic\.com|serband' | head -5 || true)
 if [ -n "$mails" ]; then echo "HINWEIS: fremde E-Mail-Adressen im Code, bitte prüfen:"; echo "$mails"; fi
 
+# GitHub-Prüfung: Ist eine Workflow-Datei kein gültiges YAML, läuft die Prüfung GAR NICHT – und niemand merkt es
+# (21.11.2026: Doppelpunkt in einem Schritt-Namen). Deshalb hier jede Datei lesen.
+if command -v python3 >/dev/null 2>&1 && python3 -c "import yaml" 2>/dev/null; then
+  for wf in .github/workflows/*.yml .github/workflows/*.yaml; do
+    [ -f "$wf" ] || continue
+    if ! python3 -c "import sys,yaml; d=yaml.safe_load(open(sys.argv[1])); assert isinstance(d,dict) and d.get('jobs'), 'keine jobs'" "$wf" 2>/tmp/yaml-fehler.txt; then
+      echo "FEHLER: $wf ist ungültig, die GitHub-Prüfung würde nicht laufen:"; tail -2 /tmp/yaml-fehler.txt; fehler=1
+    fi
+  done
+else
+  echo "HINWEIS: python3/yaml fehlt, Workflow-Dateien nicht geprüft."
+fi
+
 [ "$fehler" -eq 0 ] && echo "Release-Check: in Ordnung." || echo "Release-Check: FEHLER, nicht ausliefern."
 exit "$fehler"

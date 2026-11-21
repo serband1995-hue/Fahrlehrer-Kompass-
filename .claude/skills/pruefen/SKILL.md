@@ -11,6 +11,14 @@ Die Agenten liegen in `.claude/agents/`: `fehlersucher-daten`, `fehlersucher-bed
 
 🗣 Zusatz 11.10.2026: App und Büro-Seite (PC) müssen immer zusammenpassen – deshalb prüft `pruefer-buero` jede Änderung an der Fahrlehrer-App mit.
 
+🗣 Zusatz 21.11.2026 („sorge dafür, dass solche Fehler nicht nochmal vorkommen“): Jelena (Leitung und Fahrlehrerin) bekam die falsche Ansicht und fand keinen Weg, Schüler anzulegen – kein Test hatte die Rolle Leitung durchgespielt. Deshalb gilt die **Rollen-Matrix**:
+- Rollen: Fahrlehrer · Fahrlehrer ohne App · Leitung · Leitung, die selbst fährt (`faehrt_selbst`) · Büro ohne PIN-Recht · Büro mit PIN-Recht · Super-Admin.
+- Im Auftrag an jeden Prüfer steht, welche Rollen die Änderung berührt. `fehlersucher-bedienung` spielt die Änderung **in jeder berührten Rolle** durch (Startansicht, Schüler anlegen, Termin anlegen, Knöpfe sichtbar oder bewusst nicht).
+- `scripts/rollen-test.mjs` muss grün sein (läuft auch in der GitHub-Prüfung). Neue rollenabhängige Funktion → den Rollen-Test um sie erweitern, bevor sie „fertig“ heißt.
+- Pflichtfrage im Auftrag an Prüfer und Richter: **„Welche neuen Zustände kann eine Person nach dieser Änderung haben (neue Rolle, neues Kennzeichen, gelöscht, umgestuft), und was sieht sie dann beim Start?“**
+- Rechte-Änderungen: `supabase/schema/rechte-abzug.sql` (Abzug der Zugriffsregeln und Trigger) mit der Migration neu ziehen, damit Prüfer ohne Datenbank-Zugang sie lesen können.
+- Gemergt wird erst, wenn auch die GitHub-Prüfung (beide Jobs, auch „Rollen und Zugänge (Browser)“) grün ist.
+
 ## Ablauf (verbindlich vor jedem Merge)
 
 1. **Vorher selbst:** Änderung auf einem Branch fertig, alle Tests grün (`NODE_PATH=$(npm root -g) node scripts/<name>-test.mjs` für alle `scripts/*-test.mjs`, `node scripts/rechnen-test.mjs`, `bash scripts/release-check.sh`), Stand gepusht. Diff ablegen: `git diff origin/main > /tmp/claude-0/pruefen/aenderung.diff`.
