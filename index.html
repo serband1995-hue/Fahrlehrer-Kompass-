@@ -6446,21 +6446,26 @@ async function fahrlehrerLoeschenSheet(userId,fahrschuleId){
   const l=_flZugangFinden(userId);
   if(!l){toast("Zugang nicht gefunden. Bitte neu laden.");return;}
   const name=l.name||l.email||"Dieser Zugang";
-  openSheet(`<div class="sheet-h">Zugang löschen</div><p class="muted-p" style="text-align:center;padding:12px 0;">Prüfe, ob noch etwas offen ist…</p>`);
+  if(window._flLoeschPruefung)return; // Doppeltipp: nur eine Prüfung
+  window._flLoeschPruefung=true;
+  openSheet(`<div class="sheet-h">Zugang löschen</div><p class="muted-p" id="fllWarte" style="text-align:center;padding:12px 0;">Prüfe, ob noch etwas offen ist…</p>`);
   let check;
   try{ check=await _callAdminFn({action:"check_delete",target_user_id:l.id}); }
-  catch(e){ closeSheet(); toast("Nicht möglich: "+e.message); return; }
+  catch(e){ if($("#sheet").classList.contains("open")&&$("#fllWarte"))closeSheet(); toast("Nicht möglich: "+e.message); return; }
+  finally{ window._flLoeschPruefung=false; }
+  // Inzwischen zurück gegangen oder Fenster geschlossen: keine Frage mehr aufdrängen
+  if(!$("#sheet").classList.contains("open")||!$("#fllWarte"))return;
   if(!check.ok){
     openSheet(`<div class="sheet-h">Noch nicht löschen</div>
       <p style="font-size:14px;line-height:1.5;">${esc(check.hinweis||"Es ist noch etwas offen.")}</p>
-      <div class="btn-row"><button class="btn btn-primary" id="fllOk">Verstanden</button></div>`);
+      <div class="btn-row"><button class="btn btn-primary" id="fllOk">Verstanden</button></div>`,{neu:true});
     $("#fllOk").addEventListener("click",closeSheet);
     return;
   }
   openSheet(`<div class="sheet-h">${esc(name)} löschen?</div>
     <p style="font-size:14px;line-height:1.5;">${esc(name)} kann sich danach nicht mehr anmelden. Gefahrene Stunden und Verlauf bleiben erhalten.</p>
     <p class="muted-p" style="font-size:13px;line-height:1.5;">Rückgängig machen geht nur über den Betreiber.</p>
-    <div class="btn-row"><button class="btn btn-ghost" id="fllAbbr" style="flex:0;padding:13px 18px;">Abbrechen</button><button class="btn fs-btn-kill" id="fllJa" style="flex:1;font-size:14px;">Ja, ${esc(name)} löschen</button></div>`);
+    <div class="btn-row"><button class="btn btn-ghost" id="fllAbbr" style="flex:0;padding:13px 18px;">Abbrechen</button><button class="btn fs-btn-kill" id="fllJa" style="flex:1;font-size:14px;">Ja, ${esc(name)} löschen</button></div>`,{neu:true});
   $("#fllAbbr").addEventListener("click",closeSheet);
   $("#fllJa").addEventListener("click",async()=>{
     const knopf=$("#fllJa"); if(knopf.disabled)return;

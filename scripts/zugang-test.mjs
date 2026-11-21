@@ -154,6 +154,22 @@ for (const g of GROESSEN) {
   await page.click("#fllJa"); await warte(page, 400);
   await pruefe("A10", `${P} Ja: delete_account für Bernd`, () => page.evaluate(() => window.__aufrufe.filter((x) => x.action === "delete_account").map((x) => x.target_user_id).join(",") === "L2" ? null : JSON.stringify(window.__aufrufe)));
 
+  // Zurück-Taste in der Löschfrage schließt ganz (kein leeres „Prüfe …“-Fenster), Doppeltipp prüft nur einmal
+  await page.evaluate(() => { window.__aufrufe = []; });
+  await page.evaluate(() => { const b = document.querySelector(".fs-card:nth-child(3) button[onclick^=fahrlehrerLoeschenSheet]") || [...document.querySelectorAll("button[onclick^=fahrlehrerLoeschenSheet]")][1]; b.click(); b.click(); });
+  await warte(page, 500);
+  await pruefe("A14", `${P} Doppeltipp auf Löschen: nur eine Prüfung`, () => page.evaluate(() => window.__aufrufe.filter((x) => x.action === "check_delete").length === 1 ? null : JSON.stringify(window.__aufrufe)));
+  await page.evaluate(() => history.back()); await warte(page, 500);
+  await pruefe("A15", `${P} Zurück in der Löschfrage schließt das Fenster ganz`, () => page.evaluate(() => document.getElementById("sheet").classList.contains("open") ? "noch offen: " + document.getElementById("sheet").textContent.slice(0, 60) : null));
+  // Zurück während der Prüfung: danach keine Frage aufdrängen
+  await page.evaluate(() => {
+    const alt = window.getSupa;
+    window.getSupa = () => { const s = alt(); const inv = s.functions.invoke; s.functions.invoke = async (n, o) => { await new Promise((r) => setTimeout(r, 600)); return inv(n, o); }; return s; };
+    [...document.querySelectorAll("button[onclick^=fahrlehrerLoeschenSheet]")][1].click();
+  });
+  await warte(page, 150); await page.evaluate(() => history.back()); await warte(page, 900);
+  await pruefe("A16", `${P} Zurück während der Prüfung: keine Löschfrage danach`, () => page.evaluate(() => document.getElementById("sheet").classList.contains("open") ? "Fenster ging wieder auf" : null));
+
   // Büro und Fahrlehrer sehen keine Knöpfe
   for (const rolle of ["buero", "fahrlehrer"]) {
     await setze(rolle); await warte(page);
