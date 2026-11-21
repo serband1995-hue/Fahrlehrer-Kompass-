@@ -3447,7 +3447,7 @@ async function zugangSperren(id) {
   if (!p) return;
   const sperren = p.aktiv !== false;
   // Die Datenbank lässt „aktiv“ nur den Betreiber (Super-Admin) ändern. Der Leitung das vorher klar sagen statt einer Fehlermeldung danach.
-  if (!S.profil || S.profil.rolle !== "super_admin") { toast(sperren ? "Sperren kann im Moment nur der Betreiber. Bitte „Neues Passwort“ drücken: Dann kommt die Person nicht mehr hinein." : "Freischalten kann im Moment nur der Betreiber.", true); return; }
+  if (!S.profil || S.profil.rolle !== "super_admin") { toast(sperren ? "Sperren kann nur der Betreiber. Wer aufhört: „Löschen“ drücken." : "Freischalten kann im Moment nur der Betreiber.", true); return; }
   if (!(await bestaetige(sperren ? "Zugang sperren?" : "Zugang freischalten?", sperren ? `${p.name || p.email} kann die App beim nächsten Start nicht mehr öffnen. Ist sie gerade offen, läuft sie bis dahin weiter. Bei Austritt zusätzlich „Neues Passwort“ drücken.` : `${p.name || p.email} kann sich wieder anmelden.`, sperren ? "Ja, sperren" : "Ja, freischalten"))) return;
   const res = await supa.from("profiles").update({ aktiv: !sperren }).eq("id", id).select("id");
   if (res.error || !res.data || !res.data.length) { toast("Nicht gespeichert: " + (res.error ? res.error.message : "keine Berechtigung"), true); return; }
@@ -3510,7 +3510,7 @@ async function zugangLoeschen(id) {
   try { check = await adminFunktion({ action: "check_delete", target_user_id: id }); }
   catch (e) { toast("Nicht möglich: " + e.message, true); return; }
   if (!check.ok) {
-    oeffneDialog("Noch nicht löschen", `<p>${esc(check.hinweis || "Es ist noch etwas offen.")}</p>`, async () => true, "Verstanden", { abbrechenText: "Schließen" });
+    oeffneDialog("Noch nicht löschen", `<p>${esc(check.hinweis || "Es ist noch etwas offen.")}</p>`, async () => true, "Verstanden", { festhalten: true });
     return;
   }
   if (!(await bestaetige(`${name} löschen?`, `${name} kann sich danach nicht mehr anmelden und verschwindet aus den Listen. Gefahrene Stunden, Verlauf und Abrechnungen bleiben erhalten. Die E-Mail-Adresse wird frei. Rückgängig machen geht nur über den Betreiber.`, `Ja, ${name} löschen`, "Abbrechen", true))) return;

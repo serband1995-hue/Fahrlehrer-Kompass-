@@ -2032,7 +2032,8 @@ body.light .lo-err.ok{color:#1e6b46;}
 body:not(.light) .fs-status-off{color:#ff8a80;}
 body:not(.light) .fs-btn-kill{color:#ff8a80;} /* K3: „Sperren“ dunkel lesbar (Richter K2) */ /* K2: „GESPERRT“ dunkel 2,85:1 war zu blass */
 .fs-actions{display:flex;gap:8px;margin-top:10px;flex-wrap:wrap;}
-.fs-btn-kill{min-height:44px;background:rgba(200,60,60,.12);color:#c83c3c;border:1px solid rgba(200,60,60,.3);border-radius:10px;padding:7px 14px;font-size:12px;font-weight:700;cursor:pointer;}
+.fs-zugang{display:flex;gap:8px;flex-basis:100%;}.fs-zugang>button{flex:1;}
+.fs-btn-kill{min-height:44px;background:rgba(200,60,60,.12);color:#a03a2b;border:1px solid rgba(200,60,60,.3);border-radius:10px;padding:7px 14px;font-size:12px;font-weight:700;cursor:pointer;}
 .fs-btn-activate{min-height:44px;background:rgba(74,139,69,.12);color:#4a8b45;border:1px solid rgba(74,139,69,.3);border-radius:10px;padding:7px 14px;font-size:12px;font-weight:700;cursor:pointer;}
 .ap-actions{display:flex;gap:8px;margin-top:12px;}
 .ap-kill{background:rgba(200,60,60,.15);border:1px solid rgba(200,60,60,.3);color:#f08080;border-radius:8px;padding:7px 14px;font-size:12px;font-weight:700;cursor:pointer;}
@@ -2695,6 +2696,7 @@ body:not(.light) .tab-i.on{color:var(--akzent-bright);}
 .fs-status-on,.fs-btn-activate{color:var(--akzent-dark) !important;}
 .fs-btn-activate{background:var(--orange-soft) !important;border-color:var(--orange-line) !important;border-radius:999px !important;}
 .fs-btn-kill,.ap-kill{border-radius:999px !important;}
+.fs-btn-activate.fs-btn-leise{background:transparent !important;border-color:var(--line-soft,rgba(0,0,0,.18)) !important;color:var(--txt) !important;}
 /* K2: dunkel war Dunkelgrün auf Dunkelgrün kaum lesbar */
 body:not(.light) .fs-status-on,body:not(.light) .fs-btn-activate{color:var(--akzent-bright) !important;}
 .mini-btn,.pt-tab,.cal-kw,.seg-i,.tab-i span{white-space:nowrap !important;}
@@ -6265,8 +6267,8 @@ async function routeFahrschuleDetail(fahrschuleId){
         ${l.aktiv
           ?`<button class="fs-btn-kill" onclick="toggleFahrlehrerAktiv(${_jsArg(l.id)},false,${_jsArg(fahrschuleId)})">Sperren</button>`
           :`<button class="fs-btn-activate" onclick="toggleFahrlehrerAktiv(${_jsArg(l.id)},true,${_jsArg(fahrschuleId)})">Freischalten</button>`}
-        <button class="fs-btn-activate" onclick="fahrlehrerPasswortZuruecksetzen(${_jsArg(l.id)})">Passwort zurücksetzen</button>
         ${_flZugangKnoepfe(l,fahrschuleId)}
+        <button class="fs-btn-activate fs-btn-leise" onclick="fahrlehrerPasswortZuruecksetzen(${_jsArg(l.id)})">Passwort zurücksetzen</button>
       </div>`}
     </div>`;}).join("")||'<p class="muted-p" style="font-size:13px;">Noch keine Fahrlehrer.</p>';
 
@@ -6368,7 +6370,7 @@ async function fahrlehrerPasswortZuruecksetzen(userId){
 }
 
 async function toggleFahrlehrerAktiv(userId,aktiv,fahrschuleId){
-  if(!isSuperAdmin()){toast(aktiv?"Freischalten kann im Moment nur der Betreiber.":"Sperren kann im Moment nur der Betreiber. Bitte „Passwort zurücksetzen“ drücken.");return;}
+  if(!isSuperAdmin()){toast(aktiv?"Freischalten kann im Moment nur der Betreiber.":"Sperren kann nur der Betreiber. Wer aufhört: „Löschen“ drücken.");return;}
   if(!aktiv&&!confirm("Diesen Fahrlehrer wirklich sperren?\n\nEr kann die App beim nächsten Start nicht mehr öffnen. Ein Gerät, auf dem die App gerade offen ist, arbeitet bis dahin weiter. Bei Austritt zusätzlich „Passwort zurücksetzen“ drücken."))return;
   const supa=getSupa();
   const {error}=await supa.from("profiles").update({aktiv}).eq("id",userId);
@@ -6388,8 +6390,8 @@ function _flDarfVerwalten(l){
 }
 function _flZugangKnoepfe(l,fahrschuleId){
   if(!_flDarfVerwalten(l))return "";
-  return `<button class="fs-btn-activate" onclick="fahrlehrerBearbeitenSheet(${_jsArg(l.id)},${_jsArg(fahrschuleId)})">Bearbeiten</button>
-        <button class="fs-btn-kill" onclick="fahrlehrerLoeschenSheet(${_jsArg(l.id)},${_jsArg(fahrschuleId)})">Löschen</button>`;
+  return `<div class="fs-zugang"><button class="fs-btn-activate" onclick="fahrlehrerBearbeitenSheet(${_jsArg(l.id)},${_jsArg(fahrschuleId)})">Bearbeiten</button>
+        <button class="fs-btn-kill" onclick="fahrlehrerLoeschenSheet(${_jsArg(l.id)},${_jsArg(fahrschuleId)})">Löschen</button></div>`;
 }
 function fahrlehrerBearbeitenSheet(userId,fahrschuleId){
   const l=_flZugangFinden(userId);
@@ -6456,8 +6458,8 @@ async function fahrlehrerLoeschenSheet(userId,fahrschuleId){
     return;
   }
   openSheet(`<div class="sheet-h">${esc(name)} löschen?</div>
-    <p style="font-size:14px;line-height:1.5;"><b>${esc(name)}</b> kann sich danach nicht mehr anmelden und verschwindet aus den Listen.</p>
-    <p class="muted-p" style="font-size:13px;line-height:1.5;">Gefahrene Stunden, Verlauf und Abrechnungen bleiben erhalten. Die E-Mail-Adresse wird frei und kann später neu angelegt werden. Rückgängig machen geht nur über den Betreiber.</p>
+    <p style="font-size:14px;line-height:1.5;">${esc(name)} kann sich danach nicht mehr anmelden. Gefahrene Stunden und Verlauf bleiben erhalten.</p>
+    <p class="muted-p" style="font-size:13px;line-height:1.5;">Rückgängig machen geht nur über den Betreiber.</p>
     <div class="btn-row"><button class="btn btn-ghost" id="fllAbbr" style="flex:0;padding:13px 18px;">Abbrechen</button><button class="btn fs-btn-kill" id="fllJa" style="flex:1;font-size:14px;">Ja, ${esc(name)} löschen</button></div>`);
   $("#fllAbbr").addEventListener("click",closeSheet);
   $("#fllJa").addEventListener("click",async()=>{
@@ -6548,10 +6550,10 @@ function routeFahrschuleLehrer(){
       <div class="fs-sub">${l.aktiv?'<span class="fs-status-on">Aktiv</span>':'<span class="fs-status-off">GESPERRT</span>'} &nbsp;·&nbsp; Auslastung ${l.auslastung_pct!=null?`<span style="color:${l.auslastung_pct>=100?'#c83c3c':l.auslastung_pct>=85?'#cf9a3e':'inherit'};font-weight:${l.auslastung_pct>=85?'700':'400'};">${l.auslastung_pct}%</span>`:'—'} &nbsp;·&nbsp; ${meineSchueler.length} Schüler &nbsp;·&nbsp; ${q.pct==null?'Quote —':'Quote '+q.pct+'%'}</div>
       ${(istSuperAdmin||buero)?'':`<div class="fs-actions">
         ${l.aktiv
-          ?(isSuperAdmin()?`<button class="fs-btn-kill" onclick="toggleFahrlehrerAktiv(${_jsArg(l.id)},false,${_jsArg(_fsAgg.fahrschuleId)})">Sperren</button>`:`<span class="muted-p">Sperren kann im Moment nur der Betreiber. Bitte „Passwort zurücksetzen“ drücken.</span>`)
+          ?(isSuperAdmin()?`<button class="fs-btn-kill" onclick="toggleFahrlehrerAktiv(${_jsArg(l.id)},false,${_jsArg(_fsAgg.fahrschuleId)})">Sperren</button>`:`<span class="muted-p">Sperren kann nur der Betreiber. Wer aufhört: „Löschen“.</span>`)
           :(isSuperAdmin()?`<button class="fs-btn-activate" onclick="toggleFahrlehrerAktiv(${_jsArg(l.id)},true,${_jsArg(_fsAgg.fahrschuleId)})">Freischalten</button>`:`<span class="muted-p">Freischalten kann im Moment nur der Betreiber.</span>`)}
-        <button class="fs-btn-activate" onclick="fahrlehrerPasswortZuruecksetzen(${_jsArg(l.id)})">Passwort zurücksetzen</button>
         ${_flZugangKnoepfe(l,_fsAgg.fahrschuleId)}
+        <button class="fs-btn-activate fs-btn-leise" onclick="fahrlehrerPasswortZuruecksetzen(${_jsArg(l.id)})">Passwort zurücksetzen</button>
       </div>`}
       ${l.slug?`<div class="fs-actions"><button class="fs-btn-activate" onclick="document.getElementById(${_jsArg(linksId)}).style.display=document.getElementById(${_jsArg(linksId)}).style.display==='none'?'block':'none';">🔗 Buchungslinks</button></div>
       <div id="${linksId}" style="display:none;margin-top:6px;">${_fsBuchungslinksHTML(l.slug,l.name||l.email)}</div>`:'<p class="muted-p" style="margin-top:4px;">Noch kein Buchungslink eingerichtet.</p>'}
