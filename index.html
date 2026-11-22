@@ -17574,23 +17574,28 @@ function _klappAnker(h){
   // Reicht der Platz nach oben nicht (Seite schon ganz oben), gleitet die Überschrift gleichmäßig an ihr Ziel statt zu springen.
   const messen=()=>{
     let verschiebung=0;
-    vw.querySelectorAll(".acc").forEach(acc=>{
+    vw.querySelectorAll(".acc, .facc-sec").forEach(acc=>{
       if(acc.contains(h))return;
-      const body=acc.querySelector(":scope > .acc-body"); if(!body)return;
+      const body=acc.querySelector(":scope > .acc-body, :scope > .facc-body"); if(!body)return;
       if(body.getBoundingClientRect().top>=h.getBoundingClientRect().top)return; // nur was darüber liegt
       const inner=body.firstElementChild; const jetzt=body.getBoundingClientRect().height;
-      const soll=acc.classList.contains("open")?(inner?inner.scrollHeight:jetzt):0;
+      const facc=body.classList.contains("facc-body");
+      const soll=acc.classList.contains("open")?(facc?Math.min(body.scrollHeight,640):(inner?inner.scrollHeight:jetzt)):0;
       verschiebung+=soll-jetzt;
     });
     const platz=vw.scrollTop+(start-y0)+verschiebung; // so weit kann gescrollt werden, um den Platz zu halten
     ende=platz<0?start+platz:start;
   };
   const dauer=320, glatt=x=>x*x*(3-2*x);
-  const schritt=(t)=>{ if(!h.isConnected){ vw.style.overflowAnchor=altAnker; return; }
+  // Wischt der Nutzer selbst, hört der Ausgleich sofort auf (nicht gegen den Finger arbeiten)
+  let stopp=false; const halt=()=>{ stopp=true; };
+  ["touchstart","wheel"].forEach(ev=>vw.addEventListener(ev,halt,{passive:true,once:true}));
+  const fertig=()=>{ vw.style.overflowAnchor=altAnker; ["touchstart","wheel"].forEach(ev=>vw.removeEventListener(ev,halt)); };
+  const schritt=(t)=>{ if(!h.isConnected||stopp){ fertig(); return; }
     if(!t0){ t0=t; messen(); }
     const p=Math.min(1,(t-t0)/dauer), ziel=start+(ende-start)*glatt(p);
     const d=oben()-ziel; if(Math.abs(d)>=1)vw.scrollTop+=d;
-    if(t-t0<dauer+200)requestAnimationFrame(schritt); else vw.style.overflowAnchor=altAnker; };
+    if(t-t0<dauer+200)requestAnimationFrame(schritt); else fertig(); };
   requestAnimationFrame(schritt);
 }
 (function(){ const vw=document.getElementById("view"); if(!vw)return;
