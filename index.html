@@ -1913,6 +1913,7 @@ body:not(.light) #sheet .sheet-pills .pill.sel{background:#123A2A !important;bor
 .wx-forecast{display:flex;gap:8px;margin-top:22px;overflow-x:auto;padding-bottom:4px;scrollbar-width:none;}
 .wx-forecast::-webkit-scrollbar{display:none;}
 .wx-fc-loading{font-size:13px;color:var(--muted);padding:10px;}
+.wx-quelle{text-align:center;font-size:12px;color:var(--muted);margin:14px 0 4px;}
 .wx-fc-day{flex:1 0 76px;background:var(--surface);border:1px solid var(--line);border-radius:14px;padding:12px 8px;text-align:center;}
 .wx-fc-lbl{font-size:11px;font-weight:800;letter-spacing:.04em;text-transform:uppercase;color:var(--muted);}
 .wx-fc-ic{font-size:24px;margin:6px 0;}
@@ -7721,7 +7722,9 @@ window.addEventListener("load", () => {
       const zeige = (n) => {
         const ov = document.getElementById("loginOverlay");
         const anmeldungOffen = ov && getComputedStyle(ov).display !== "none" && !ov.classList.contains("hidden");
-        if (anmeldungOffen) { if (n < 1800) setTimeout(() => zeige(n + 1), 1000); return; }
+        // auch nicht unter einem anderen Vollbild (Nutzungsbedingungen, Büro-Nachricht, Bio-Sperre) verstecken
+        const verdeckt = anmeldungOffen || ["agbGate", "bueroNotizPopup", "bioLockOverlay"].some((id) => { const x = document.getElementById(id); return x && getComputedStyle(x).display !== "none"; });
+        if (verdeckt) { if (n < 1800) setTimeout(() => zeige(n + 1), 1000); return; }
         toast(neu && neu.kurz ? neu.kurz : "Kompass wurde aktualisiert ✓");
         try { localStorage.setItem("serband-app-version", APP_VERSION); } catch (e) {}
       };
@@ -7737,7 +7740,9 @@ window.addEventListener("load", () => {
 const STORE_KEY="serband-app-v1";
 /* Build-Version: bei jeder Auslieferung hier das Datum aktualisieren.
    Wird in den Einstellungen angezeigt + für den Update-Hinweis genutzt. */
-const APP_VERSION="2026.11.22.1";
+// K1: voreingestellter Wetter-Ort (früh definiert, weil ensureDB ihn schon beim Start braucht)
+const WETTER_START={city:"Offenbach",lat:50.1006,lon:8.7665};
+const APP_VERSION="2026.11.22.2";
 try{const f=document.getElementById("drawerFoot"); if(f)f.textContent="Fahrlehrer-Kompass · Version "+APP_VERSION;}catch(e){}
 // Nutzungsbedingungen & Haftungsausschluss (Bereich: rechtliche Absicherung) - Version hochzählen
 // und alle Nutzer müssen erneut zustimmen, sobald sich der Text inhaltlich ändert.
@@ -12180,10 +12185,10 @@ function routeSettings(){
           <div class="field"><div class="toggle-row"><div><div class="tc-name" style="font-weight:800;font-size:14px;">Videoakademie-Empfehlung</div><div class="tc-sub" style="font-size:12.5px;color:var(--muted);margin-top:2px;">Karte in der Schülerakte</div></div><button class="check-toggle${DB.sichtbarkeit.akademie?' on':''}" data-vis="akademie"></button></div></div>
         </div>
         <div class="res-block" style="animation:none;"><h4>🌤 Wetter-Widget</h4>
-          <p>Kostenlosen API-Key auf <b>openweathermap.org</b> holen (Registrierung reicht), hier eintragen — dann erscheint das aktuelle Wetter oben im Dashboard.</p>
-          <div class="field" style="margin-top:8px;"><label>API-Key</label><input id="weatherKeyInput" type="text" placeholder="z.B. a1b2c3d4e5f6..." value="${esc(DB.weatherCfg.apiKey||"")}" autocomplete="off"></div>
-          <div class="field"><label>Stadt</label><input id="weatherCityInput" type="text" placeholder="Offenbach,DE" value="${esc(DB.weatherCfg.city||"Offenbach,DE")}" autocomplete="off"></div>
-          <div class="btn-row"><button class="btn btn-ghost" id="weatherSaveBtn">Speichern</button></div>
+          <p>Das Wetter kommt kostenlos vom Deutschen Wetterdienst. Du brauchst nichts einzurichten. Unten kannst du deinen Ort einstellen.</p>
+          <div class="field"><div class="toggle-row"><div><div class="tc-name" style="font-weight:800;font-size:14px;">Wetter zeigen</div></div><button type="button" class="check-toggle${_wetterAn()?' on':''}" id="weatherOnToggle" aria-label="Wetter zeigen"></button></div></div>
+          <div class="field"><label for="weatherCityInput">Ort</label><input id="weatherCityInput" type="text" placeholder="Offenbach" value="${esc(String(DB.weatherCfg.city||"Offenbach").replace(/,\s*[A-Z]{2}$/,""))}" autocomplete="off" enterkeyhint="done"></div>
+          <div class="btn-row"><button type="button" class="btn btn-ghost" id="weatherSaveBtn">Ort speichern</button></div>
         </div>
       </div></div>
     </div>
@@ -12331,11 +12336,25 @@ function routeSettings(){
     toast(DB.verdienstAutoLock?"Auto-Sperre aktiviert ✓":"Auto-Sperre deaktiviert");
   });
   const wSave=$("#weatherSaveBtn");
-  if(wSave)wSave.addEventListener("click",()=>{
-    DB.weatherCfg.apiKey=$("#weatherKeyInput").value.trim();
-    DB.weatherCfg.city=$("#weatherCityInput").value.trim()||"Offenbach,DE";
-    localStorage.removeItem("serband-weather-cache");
-    save();toast("Wetter-Einstellungen gespeichert ✓");
+  if(wSave)wSave.addEventListener("click",async()=>{
+    const inp=$("#weatherCityInput"); const q=(inp.value||"").trim()||WETTER_START.city;
+    wSave.disabled=true; const alt=wSave.textContent; wSave.textContent="Suche …";
+    const t=/^offenbach$/i.test(q)?{name:WETTER_START.city,lat:WETTER_START.lat,lon:WETTER_START.lon}:await _ortSuchen(q);
+    wSave.disabled=false; wSave.textContent=alt;
+    if(t&&t.fehler){ toast("Keine Verbindung. Bitte später noch einmal."); return; }
+    if(!t){ toast("Ort nicht gefunden. Bitte anders schreiben, z. B. „Hanau“."); return; }
+    Object.assign(DB.weatherCfg,{city:t.name,lat:t.lat,lon:t.lon});
+    delete DB.weatherCfg.apiKey;
+    try{ localStorage.removeItem("serband-weather-cache"); localStorage.removeItem("serband-weather-forecast-cache"); }catch(e){}
+    inp.value=t.name; save(); toast(`Wetter-Ort: ${t.name} ✓`);
+  });
+  const wOrt=$("#weatherCityInput");
+  if(wOrt&&wSave)wOrt.addEventListener("keydown",ev=>{ if(ev.key==="Enter"){ ev.preventDefault(); if(!wSave.disabled)wSave.click(); } });
+  const wOn=$("#weatherOnToggle");
+  if(wOn)wOn.addEventListener("click",()=>{
+    DB.weatherCfg.aus=_wetterAn(); // an → aus, aus → an
+    wOn.classList.toggle("on",_wetterAn()); save();
+    toast(_wetterAn()?"Wetter wird gezeigt ✓":"Wetter ausgeblendet. Wieder an: Einstellungen › App.");
   });
   const pushTxt=$("#pushStatusTxt");
   if(pushTxt){
@@ -14078,7 +14097,12 @@ function ensureDB(){ let _ensureDirty=false; if(!Array.isArray(DB.exams))DB.exam
   ["dash_nextexam","dash_nextstudent","dash_fcpending","dash_capacity","dash_wocheverdienst","dash_naechstetheorie"].forEach(k=>{
     if(DB.sichtbarkeit[k]===undefined)DB.sichtbarkeit[k]=true;
   });
-  if(!DB.weatherCfg||typeof DB.weatherCfg!=="object"){ DB.weatherCfg={apiKey:"",city:"Offenbach,DE"}; }
+  if(!DB.weatherCfg||typeof DB.weatherCfg!=="object"||Array.isArray(DB.weatherCfg)){ DB.weatherCfg={city:"Offenbach"}; }
+  // K1: Wetter ohne eigenen Schlüssel (Deutscher Wetterdienst über Bright Sky). Offenbach ist voreingestellt.
+  // Bewusst KEINE Koordinaten beim Start hineinschreiben: sonst überschreibt ein frisch aktualisiertes zweites Gerät
+  // beim Cloud-Abgleich den Ort, den der Nutzer auf dem ersten Gerät gewählt hat. Fehlende Koordinaten löst _wetterOrt
+  // gerätelokal auf. Nur kaputte Werte werden repariert, der alte Schlüssel fällt weg.
+  { const w=DB.weatherCfg; if(typeof w.city!=="string"||!w.city.trim())w.city="Offenbach"; if("apiKey" in w)delete w.apiKey; }
   if(!DB.workCfg||typeof DB.workCfg!=="object"){ DB.workCfg={
     // T6: neutrale Vorgabe für neue Nutzer (keine Zeiten einer bestimmten Fahrschule). Der Merker zeitenVorgabe
     // zeigt den Hinweis „Arbeitszeiten eintragen“, bis der Nutzer seine Zeiten einmal gespeichert hat.
@@ -15249,7 +15273,7 @@ function nextStudentCardHTML(){
 // damit das Dashboard nicht auf die Wetter-API warten muss.
 async function _fillNsWetterHinweis(){
   const box=document.getElementById("nsWetterHinweis"); if(!box)return;
-  if(!DB.weatherCfg||!DB.weatherCfg.apiKey)return;
+  if(!_wetterAn())return;
   const e=nextLessonEvent(); if(!e)return;
   try{
     let text=null;
@@ -15421,10 +15445,57 @@ function openCapacitySheet(){
     openAssignSlotSheet(date,von,bis,art);
   }));
 }
+/* K1 Wetter: kostenlos und ohne Schlüssel vom Deutschen Wetterdienst (offene Daten, abgerufen über api.brightsky.dev).
+   Jeder Nutzer sieht sofort Offenbach; den Ort kann er in den Einstellungen ändern (Suche über OpenStreetMap).
+   Die Bright-Sky-Symbole werden auf die bisherigen Wetter-Codes (01 Sonne … 50 Nebel, Endung n = Nacht) übersetzt,
+   damit Emoji, Wetterbild und Wetter-Seite unverändert weiterlaufen. */
+function _wetterAn(){ return !(DB.weatherCfg&&DB.weatherCfg.aus); }
+const _BS_ICON={"clear-day":["01d","Sonnig"],"clear-night":["01n","Klar"],"partly-cloudy-day":["02d","Leicht bewölkt"],"partly-cloudy-night":["02n","Leicht bewölkt"],
+  "cloudy":["04","Bewölkt"],"fog":["50","Nebel"],"wind":["03","Windig"],"rain":["10","Regen"],"sleet":["13","Schneeregen"],"snow":["13","Schnee"],"hail":["09","Hagel"],"thunderstorm":["11","Gewitter"]};
+function _bsIcon(icon,condition,stamp){
+  let e=_BS_ICON[icon];
+  if(!e){ const c=String(condition||""); e=c==="rain"?["10","Regen"]:c==="snow"||c==="sleet"?["13","Schnee"]:c==="fog"?["50","Nebel"]:c==="thunderstorm"?["11","Gewitter"]:["03","Bewölkt"]; }
+  let code=e[0];
+  if(code.length===2){ const m=/T(\d{2})/.exec(String(stamp||"")); const h=m?Number(m[1]):12; code+=(h<7||h>=18)?"n":"d"; }
+  return {icon:code,desc:e[1]};
+}
+// Koordinaten des eingestellten Orts (null = unbekannt, dann kein Wetter statt falschem Wetter).
+// Gespeicherte Koordinaten (Einstellungen › Ort speichern) gelten. Ohne sie: Offenbach direkt; ein alter Ortsname
+// (früher OpenWeatherMap) wird einmal gesucht und NUR auf diesem Gerät gemerkt (nicht in DB, siehe ensureDB).
+// Eine Suche gleichzeitig; nach einem Fehlschlag 10 Minuten keine neue Suche (Nominatim: höchstens 1 Anfrage/s).
+let _wetterOrtLauf=null;
+function _istOffenbach(c){ return /^offenbach(\s*(am main)?)?(,\s*de)?$/i.test(String(c||"").trim()); }
+async function _wetterOrt(){
+  const cfg=DB.weatherCfg||{};
+  if(typeof cfg.lat==="number"&&typeof cfg.lon==="number"&&Number.isFinite(cfg.lat)&&Number.isFinite(cfg.lon))return {lat:cfg.lat,lon:cfg.lon};
+  if(_istOffenbach(cfg.city))return {lat:WETTER_START.lat,lon:WETTER_START.lon};
+  const name=String(cfg.city||"").replace(/,\s*[A-Z]{2}$/,"").trim();
+  try{ const m=JSON.parse(localStorage.getItem("serband-wetter-ort")||"null");
+    if(m&&m.q===name){ if(typeof m.lat==="number")return {lat:m.lat,lon:m.lon}; if(Date.now()-(m.fehlTs||0)<10*60*1000)return null; } }catch(e){}
+  if(!_wetterOrtLauf)_wetterOrtLauf=_ortSuchen(name).then(t=>{ if(t&&t.fehler)t=null;
+    try{ localStorage.setItem("serband-wetter-ort",JSON.stringify(t?{q:name,lat:t.lat,lon:t.lon}:{q:name,fehlTs:Date.now()})); }catch(e){}
+    return t?{lat:t.lat,lon:t.lon}:null;
+  }).finally(()=>{ _wetterOrtLauf=null; });
+  return _wetterOrtLauf;
+}
+// Zeitgrenze für Wetter-Anfragen (schlechter Empfang im Auto): nach 8 s aufgeben statt ewig warten.
+function _wetterSignal(){ try{ return (typeof AbortSignal!=="undefined"&&AbortSignal.timeout)?AbortSignal.timeout(8000):undefined; }catch(e){ return undefined; } }
+// Ergebnis: {name,lat,lon} | null (Ort unbekannt) | {fehler:true} (keine Verbindung / Dienst gestört)
+async function _ortSuchen(q){
+  q=String(q||"").trim(); if(!q)return null;
+  try{
+    const res=await fetch(`https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(q)}&format=json&limit=1&countrycodes=de&accept-language=de`,{signal:_wetterSignal()});
+    if(!res.ok)return {fehler:true};
+    const d=(await res.json())[0]; if(!d)return null;
+    const lat=Math.round(Number(d.lat)*10000)/10000, lon=Math.round(Number(d.lon)*10000)/10000;
+    if(!Number.isFinite(lat)||!Number.isFinite(lon))return null;
+    return {name:(d.name||String(d.display_name||q).split(",")[0]).trim()||q,lat,lon};
+  }catch(e){ return {fehler:true}; }
+}
 // Wetter: höchstens alle 30 Minuten neu abfragen (spart Anfragen, reicht für Tagesplanung völlig)
 async function fetchWeather(){
   const cfg=DB.weatherCfg;
-  if(!cfg||!cfg.apiKey)return null;
+  if(!cfg||!_wetterAn())return null;
   try{
     const cacheRaw=localStorage.getItem("serband-weather-cache");
     if(cacheRaw){
@@ -15433,20 +15504,22 @@ async function fetchWeather(){
     }
   }catch(e){}
   try{
-    const city=encodeURIComponent(cfg.city||"Offenbach,DE");
-    const res=await fetch(`https://api.openweathermap.org/data/2.5/weather?q=${city}&appid=${cfg.apiKey}&units=metric&lang=de`);
+    const o=await _wetterOrt(); if(!o)return null;
+    const res=await fetch(`https://api.brightsky.dev/current_weather?lat=${o.lat}&lon=${o.lon}&tz=Europe/Berlin`,{signal:_wetterSignal()});
     if(!res.ok)return null;
-    const data=await res.json();
-    const result={temp:Math.round(data.main.temp),desc:data.weather[0].description,icon:data.weather[0].icon};
+    const w=((await res.json())||{}).weather;
+    if(!w||typeof w.temperature!=="number")return null;
+    const ic=_bsIcon(w.icon,w.condition,w.timestamp);
+    const result={temp:Math.round(w.temperature),desc:ic.desc,icon:ic.icon};
     localStorage.setItem("serband-weather-cache",JSON.stringify({ts:Date.now(),city:cfg.city,data:result}));
     return result;
   }catch(e){ return null; }
 }
-/* 5-Tage-Vorhersage (3-Stunden-Schritte von OpenWeatherMap), zu Tageswerten zusammengefasst.
-   Gibt die kommenden Tage zurück (heute ausgeschlossen, das zeigt schon die große Ansicht). */
+/* Vorhersage der kommenden 5 Tage (stündliche DWD-Werte), zu Tageswerten zusammengefasst.
+   Heute ist ausgeschlossen, das zeigt schon die große Ansicht. Das Tagessymbol kommt aus den Stunden 8–18 Uhr. */
 async function fetchWeatherForecast(){
   const cfg=DB.weatherCfg;
-  if(!cfg||!cfg.apiKey)return [];
+  if(!cfg||!_wetterAn())return [];
   try{
     const cacheRaw=localStorage.getItem("serband-weather-forecast-cache");
     if(cacheRaw){
@@ -15455,24 +15528,26 @@ async function fetchWeatherForecast(){
     }
   }catch(e){}
   try{
-    const city=encodeURIComponent(cfg.city||"Offenbach,DE");
-    const res=await fetch(`https://api.openweathermap.org/data/2.5/forecast?q=${city}&appid=${cfg.apiKey}&units=metric&lang=de`);
+    const o=await _wetterOrt(); if(!o)return [];
+    const heuteStr=todayISO();
+    const von=addDays(heuteStr,1), bis=addDays(heuteStr,6);
+    const res=await fetch(`https://api.brightsky.dev/weather?lat=${o.lat}&lon=${o.lon}&date=${von}&last_date=${bis}&tz=Europe/Berlin`,{signal:_wetterSignal()});
     if(!res.ok)return [];
     const data=await res.json();
-    const todayISOStr=todayISO();
     const byDay={};
-    (data.list||[]).forEach(item=>{
-      const dISO=item.dt_txt.slice(0,10);
-      if(dISO===todayISOStr)return; // heute zeigt schon die große Ansicht
-      if(!byDay[dISO])byDay[dISO]={min:item.main.temp_min,max:item.main.temp_max,icons:{}};
-      byDay[dISO].min=Math.min(byDay[dISO].min,item.main.temp_min);
-      byDay[dISO].max=Math.max(byDay[dISO].max,item.main.temp_max);
-      const ic=item.weather[0].icon.slice(0,2);
-      byDay[dISO].icons[ic]=(byDay[dISO].icons[ic]||0)+1;
+    (data.weather||[]).forEach(item=>{
+      if(typeof item.temperature!=="number")return;
+      const dISO=String(item.timestamp||"").slice(0,10);
+      if(!dISO||dISO<=heuteStr)return; // heute zeigt schon die große Ansicht
+      if(!byDay[dISO])byDay[dISO]={min:item.temperature,max:item.temperature,icons:{}};
+      byDay[dISO].min=Math.min(byDay[dISO].min,item.temperature);
+      byDay[dISO].max=Math.max(byDay[dISO].max,item.temperature);
+      const h=Number(String(item.timestamp).slice(11,13));
+      if(h>=8&&h<=18){ const ic=_bsIcon(item.icon,item.condition,item.timestamp).icon.slice(0,2); byDay[dISO].icons[ic]=(byDay[dISO].icons[ic]||0)+1; }
     });
     const result=Object.keys(byDay).sort().slice(0,5).map(dISO=>{
       const d=byDay[dISO];
-      const topIcon=Object.keys(d.icons).sort((a,b)=>d.icons[b]-d.icons[a])[0];
+      const topIcon=Object.keys(d.icons).sort((a,b)=>d.icons[b]-d.icons[a])[0]||"03";
       return {date:dISO,min:Math.round(d.min),max:Math.round(d.max),icon:topIcon};
     });
     localStorage.setItem("serband-weather-forecast-cache",JSON.stringify({ts:Date.now(),city:cfg.city,data:result}));
@@ -15605,7 +15680,7 @@ function routeWetter(w){
   if(!w){ toast("Keine Wetterdaten verfügbar"); routeDashboard(); return; }
   const cat=weatherCategory(w.icon);
   const night=isNightIcon(w.icon);
-  const cityLabel=((DB.weatherCfg&&DB.weatherCfg.city)||"Offenbach,DE").split(",")[0];
+  const cityLabel=String((DB.weatherCfg&&DB.weatherCfg.city)||"Offenbach").split(",")[0];
   // Umbau Schritt 6a: ruhige, flüssige Bühne – nur transform/opacity werden bewegt (läuft auf dem Handy ohne Ruckeln)
   const r=(i,m,a)=>((i*a+7)%m); // feste, gleichmäßig gestreute Werte (keine Zufallszahlen: Bild bleibt beim Neuzeichnen gleich)
   const stars=(n)=>Array.from({length:n}).map((_,i)=>`<i class="wx-star" style="left:${r(i,97,37)+1}%;top:${r(i,52,23)+3}%;animation-delay:-${(i%7)*.45}s;animation-duration:${2.6+(i%4)*.6}s"></i>`).join("");
@@ -15643,6 +15718,7 @@ function routeWetter(w){
       <div class="wx-city">${esc(cityLabel)}</div>
     </div>
     <div class="wx-forecast" id="wxForecast"><div class="wx-fc-loading">Vorschau lädt …</div></div>
+    <div class="wx-quelle">Daten: Deutscher Wetterdienst</div>
   </div>`;
   $("#backBtn").addEventListener("click",routeDashboard);
   fetchWeatherForecast().then(days=>{
@@ -15876,7 +15952,7 @@ function routeDashboard(){
   const heute=todayISO();
   const e=nextLessonEvents(1)[0]||null;
   const hinweise=_h2Hinweise();
-  const wetterAn=!!(DB.weatherCfg&&DB.weatherCfg.apiKey);
+  const wetterAn=_wetterAn();
   view.innerHTML=`<div class="view-inner heute2 fade-up">
     <header class="h2-kopf">
       <div><div class="h2-datum">${esc(_h2DatumZeile(heute))}</div><h1 class="h2-titel">Heute</h1></div>

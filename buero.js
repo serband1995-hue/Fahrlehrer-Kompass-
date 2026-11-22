@@ -272,13 +272,17 @@ function renderNeuigkeiten() {
       <div class="nz-ver">Version ${esc(e.version || "")}</div></li>`).join("")}</ol></div>`;
 }
 // Nach einem Update einmal kurz zeigen, was neu ist (verschwindet von selbst, nichts zu bestätigen). Erster Besuch: still merken.
+let _neuGeplant = false; // verhindert einen zweiten Hinweis, wenn die Daten in den 2,5 s noch einmal laden
 function zeigeNeuNachUpdate() {
-  const neu = neuListe()[0]; if (!neu) return;
+  const neu = neuListe()[0]; if (!neu || _neuGeplant) return;
   try {
     const alt = localStorage.getItem("buero-neu-gesehen");
-    localStorage.setItem("buero-neu-gesehen", neu.version);
-    // etwas später, damit andere Meldungen nach dem Laden (Absagen, Aufgaben) ihn nicht sofort überschreiben
-    if (alt && alt !== neu.version) setTimeout(() => toast(neu.kurz || "Kompass wurde aktualisiert."), 2500);
+    if (!alt) { localStorage.setItem("buero-neu-gesehen", neu.version); return; }
+    if (alt === neu.version) return;
+    // etwas später, damit andere Meldungen nach dem Laden (Absagen, Aufgaben) ihn nicht sofort überschreiben;
+    // erst beim Zeigen merken, damit er nicht verloren geht, wenn die Seite vorher zugeht
+    _neuGeplant = true;
+    setTimeout(() => { toast(neu.kurz || "Kompass wurde aktualisiert."); try { localStorage.setItem("buero-neu-gesehen", neu.version); } catch (e) {} }, 2500);
   } catch (e) { /* ohne Speicher kein Hinweis */ }
 }
 

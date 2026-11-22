@@ -300,7 +300,7 @@ details summary{cursor:pointer;font-weight:700;margin:6px 0;}
 .protokoll ul{margin:0;padding-left:20px;color:var(--muted);font-size:15px;}
 
 /* Meldung unten */
-.toast{position:fixed;left:50%;bottom:28px;transform:translate(-50%,20px);background:var(--txt);color:var(--bg);padding:14px 22px;border-radius:12px;font-weight:600;opacity:0;pointer-events:none;transition:opacity .2s,transform .2s;z-index:50;max-width:min(640px,90vw);}
+.toast{position:fixed;left:50%;bottom:28px;transform:translate(-50%,20px);background:var(--txt);color:var(--bg);padding:14px 22px;border-radius:12px;font-weight:600;opacity:0;pointer-events:none;transition:opacity .2s,transform .2s;z-index:50;max-width:min(640px,90vw);width:max-content;box-sizing:border-box;text-align:center;}
 .toast.zeigen{opacity:1;transform:translate(-50%,0);}
 .toast.fehler{background:var(--rot);color:#fff;}
 /* Rückgängig-Hinweis: klickbar, über dem normalen Hinweis, auch über einem offenen Fenster */
