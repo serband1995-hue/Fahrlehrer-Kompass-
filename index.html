@@ -534,6 +534,38 @@ input,select,textarea{font-family:inherit;font-size:16px;color:var(--txt);}
 .na-arrow{color:var(--faint);flex:0 0 auto;}
 .na-arrow svg{width:18px;height:18px;}
 .termine{display:grid;grid-template-columns:1fr 1fr;gap:13px;margin-bottom:14px;}
+/* K3 Buchungs-QR */
+.bq-wahl{display:flex;gap:8px;margin:0 0 14px;}
+.bq-w{flex:1;min-height:46px;border-radius:12px;border:1.5px solid var(--line);background:var(--surface);color:var(--txt);font-weight:800;font-size:15px;}
+.bq-w.on{background:#1E6B46;border-color:#1E6B46;color:#fff;} /* Dunkelgrün = jetzt gewählt, Kontrast ≥ 6:1 */
+.bq-karte{background:#fff;color:#111;border:1px solid var(--line);border-radius:16px;padding:18px 16px 14px;text-align:center;max-width:360px;margin:0 auto;}
+.bq-titel{font-size:20px;font-weight:800;margin-bottom:8px;}
+.bq-bild{width:100%;max-width:240px;aspect-ratio:1;display:block;margin:0 auto;image-rendering:pixelated;}
+.bq-unter{font-size:15px;font-weight:700;margin-top:8px;}
+.bq-knoepfe{display:flex;flex-wrap:wrap;gap:8px;margin:16px 0 8px;}
+.bq-knoepfe .btn{flex:1 1 140px;min-height:46px;}
+.bq-zulang{font-size:14px;color:#111;padding:24px 6px;margin:0;}
+@media (orientation:landscape) and (max-height:500px){ /* quer: Code und Knöpfe gleich im Bild */
+  .bq-seite > .bq-intro{display:none;}
+  .bq-seite{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);column-gap:16px;align-items:start;}
+  .bq-karte{grid-column:1;grid-row:1 / span 3;padding:10px 12px 8px;}
+  .bq-titel{font-size:16px;margin-bottom:4px;}
+  .bq-bild{max-width:160px;}
+  .bq-wahl,.bq-knoepfe,.bq-link{grid-column:2;}
+  .bq-wahl{margin:0 0 8px;}
+  .bq-knoepfe{margin:0;}
+}
+.bq-link{font-size:13px;color:var(--muted);overflow-wrap:anywhere;margin:6px 0 0;}
+#bqDruck{display:none;}
+@media print{
+  body.bq-drucken > *:not(#bqDruck){display:none !important;}
+  body.bq-drucken::before,body.bq-drucken::after{display:none !important;} /* Hintergrund-Verlauf würde das Blatt überdecken */
+  body.bq-drucken #bqDruck{display:block !important;text-align:center;color:#000;background:#fff;padding:10mm 0;}
+  #bqDruck .bqd-titel{font:800 30pt system-ui,sans-serif;margin-bottom:4mm;}
+  #bqDruck .bqd-zeile{font:16pt system-ui,sans-serif;margin-bottom:8mm;}
+  #bqDruck img{width:120mm;height:120mm;image-rendering:pixelated;}
+  #bqDruck .bqd-typ{font:800 22pt system-ui,sans-serif;margin-top:6mm;}
+}
 .nz-zs{list-style:none;margin:0;padding:0 0 0 18px;border-left:2px solid var(--line);}
 .nz-e{position:relative;margin:0 0 18px;padding:0 0 0 4px;}
 .nz-e::before{content:"";position:absolute;left:-25px;top:4px;width:10px;height:10px;border-radius:50%;background:var(--surface);border:2px solid var(--muted);}
@@ -675,6 +707,8 @@ input,select,textarea{font-family:inherit;font-size:16px;color:var(--txt);}
 .check-toggle::after{content:"";position:absolute;left:3px;top:3px;width:25px;height:25px;border-radius:50%;
   background:var(--muted);transition:all .22s var(--pop);}
 .check-toggle.on{background:var(--gruen);border-color:var(--gruen);}
+/* K2+K4: unsichtbar größere Tippfläche (mind. 44 px hoch), der Schalter selbst sieht gleich aus */
+.check-toggle::before{content:"";position:absolute;left:-6px;right:-6px;top:-6px;bottom:-6px;}
 .check-toggle.on::after{left:23px;background:#fff;}
 .plan-sec{margin-top:22px;}
 .plan-sec-h{display:flex;align-items:baseline;gap:10px;margin-bottom:12px;}
@@ -2188,6 +2222,8 @@ body:not(.light) .heute2{--h-karte:var(--surface);--h-rand:var(--line);--h-tinte
 .h2-wetter-text{display:flex;flex-direction:column;align-items:flex-start;min-width:0;line-height:1.15;}
 .h2-wetter-d{font-size:12px;font-weight:600;color:var(--h-text2);max-width:118px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
 @media (max-width:380px){.h2-wetter{padding:5px 12px 5px 8px;gap:6px;}.h2-wetter-d{max-width:84px;}}
+/* Ort nicht gefunden: leise, aber mit gelbem Rand (Gelb = bald etwas tun) */
+.h2-wetter.h2-wetter-leise{border-color:var(--gelb);}.h2-wetter.h2-wetter-leise .h2-wetter-t{font-size:14px;}.h2-wetter.h2-wetter-leise .h2-wetter-ic{color:var(--gelb);display:flex;align-items:center;justify-content:center;}
 .h2-kopf>div:first-child{min-width:0;}
 .h2-wx{width:38px;height:38px;display:block;overflow:visible;}
 .h2-wx .wx-strahlen{animation:wxDreh 24s linear infinite;}
@@ -2879,6 +2915,9 @@ if(_tok&&!_bio){ document.getElementById("loginOverlay").classList.add("hidden")
     <a class="nav-item" href="theorie.html" onclick="return _seiteVerlassenOk()" style="text-decoration:none;">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="12" rx="1"/><path d="M12 16v4M8 20h8"/></svg>
       Theorieunterricht</a>
+    <button class="nav-item" data-nav="buchqr">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><path d="M14 14h3v3M21 14v7h-7M17 21v-4"/></svg>
+      Buchungs-QR fürs Auto</button>
     <button class="nav-item" data-nav="neuigkeiten">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 8v4l3 2"/><circle cx="12" cy="12" r="9"/></svg>
       Neuigkeiten</button>
@@ -4146,10 +4185,11 @@ function _lokalerDatenEigentuemer() {
 // Entfernt alle personenbezogenen App-Daten vom Gerät (nicht die App-Version und Geräte-Einstellungen).
 function _lokaleNutzerdatenLoeschen() {
   ["serband-app-v1", "serband-sync-stamp", "serband-restore-stamp", "serband-session-cache", "serband-backup-stamp",
-   "serband-weather-cache", "serband-weather-forecast-cache", "serband-abgleich-v1", "serband-db-defekt", "serband-vor-import", "serband-snapbasis-v1", "serband-gefeiert", "kompass-fahrstunde", OWNER_KEY].forEach(k => {
+   "serband-weather-cache", "serband-weather-forecast-cache", "serband-wetter-ort", "kompass-bq-typ", "serband-abgleich-v1", "serband-db-defekt", "serband-vor-import", "serband-snapbasis-v1", "serband-gefeiert", "kompass-fahrstunde", OWNER_KEY].forEach(k => {
     try { localStorage.removeItem(k); } catch (e) {}
   });
   try { sessionStorage.removeItem("vd_unlocked"); } catch (e) {}
+  try { if (window.PW) PW.vergessen(); } catch (e) {} // K5: gemeinsames Prüfer-Wissen dieses Kontos
   try { localStorage.removeItem("kompass-su-v1"); } catch (e) {} // K6: Merker Schüler-Überblick
 }
 // Hat das Gerät überhaupt eigene Einträge, die beim Abmelden verloren gehen könnten?
@@ -4435,6 +4475,7 @@ async function _continueLoginFlow(prof) {
   await pullPublicBookings();
   await pullSchuelerZuweisungen();
   await pullTermineZuweisungen();
+  try{ if(window.PW)PW.laden({sofort:true}); }catch(e){} // K5: gemeinsames Prüfer-Wissen der Fahrschule
   try{ if(window.SU)SU.pruefen(); }catch(e){} // K6: Schüler-Überblick der Fahrschule
   // Login-Overlay verstecken
   document.getElementById("loginOverlay").classList.add("hidden");
@@ -5826,6 +5867,9 @@ function _fsDrawerNavHTML(zeigeZurueck){
     <button class="nav-item" data-nav="fs_stats">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 20V10M10 20V4M16 20v-7M21 20H3"/></svg>
       Statistiken</button>
+    ${_leitungFaehrtSelbst()?`<button class="nav-item" data-nav="buchqr">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><path d="M14 14h3v3M21 14v7h-7M17 21v-4"/></svg>
+      Buchungs-QR fürs Auto</button>`:''}
     <button class="nav-item" data-nav="neuigkeiten">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 8v4l3 2"/><circle cx="12" cy="12" r="9"/></svg>
       Neuigkeiten</button>
@@ -6633,7 +6677,7 @@ function routeFahrschuleLehrer(){
         <button class="fs-btn-activate fs-btn-leise" onclick="fahrlehrerPasswortZuruecksetzen(${_jsArg(l.id)})">Passwort zurücksetzen</button>
       </div>`}
       ${l.slug?`<div class="fs-actions"><button class="fs-btn-activate" onclick="document.getElementById(${_jsArg(linksId)}).style.display=document.getElementById(${_jsArg(linksId)}).style.display==='none'?'block':'none';">🔗 Buchungslinks</button></div>
-      <div id="${linksId}" style="display:none;margin-top:6px;">${_fsBuchungslinksHTML(l.slug,l.name||l.email)}</div>`:'<p class="muted-p" style="margin-top:4px;">Noch kein Buchungslink eingerichtet.</p>'}
+      <div id="${linksId}" style="display:none;margin-top:6px;">${_fsBuchungslinksHTML(l.slug,l.name||l.email,l.name||"")}</div>`:'<p class="muted-p" style="margin-top:4px;">Noch kein Buchungslink eingerichtet.</p>'}
     </div>`;
   }).join("")||'<p class="muted-p">Noch keine Fahrlehrer.</p>';
   view.innerHTML=`<div class="view-inner view-read fade-up">
@@ -6926,18 +6970,16 @@ function _buchungslinkFuerSchueler(s){
   const typ=(s.form==="Automatik")?"automatik":(s.form==="B197")?(s.b197nachweis?"automatik":"schalt"):"schalt";
   return `${BUCHUNG_BASE_URL}?typ=${typ}&lehrer=${encodeURIComponent(_authProfile.slug)}`;
 }
-function _fsBuchungslinksHTML(slug,label){
+function _fsBuchungslinksHTML(slug,label,druckName){
   if(!slug)return "";
   const schaltLink=`${BUCHUNG_BASE_URL}?typ=schalt&lehrer=${encodeURIComponent(slug)}`;
   const automatikLink=`${BUCHUNG_BASE_URL}?typ=automatik&lehrer=${encodeURIComponent(slug)}`;
   const rid="bl_"+slug.replace(/[^a-zA-Z0-9]/g,"");
   return `<div class="res-block" style="animation:none;"><h4>🔗 ${esc(label)} Buchungslinks</h4>
     <div class="field"><label style="font-size:11px;">Schalter</label>
-      <div style="display:flex;gap:6px;"><input readonly id="${rid}_s" value="${esc(schaltLink)}" style="flex:1;font-size:11.5px;"><button class="btn btn-ghost" style="padding:8px 12px;" onclick="_fsKopieren('${rid}_s')">Kopieren</button><button class="btn btn-ghost" style="padding:8px 12px;" onclick="_fsQrToggle('${rid}_s')">QR</button></div>
-      <div id="${rid}_s_qr" style="display:none;margin-top:8px;text-align:center;"><img src="${qrBild(schaltLink,360)}" alt="QR-Code Schalter" style="border-radius:8px;background:#fff;padding:8px;width:180px;height:180px;"></div></div>
+      <div style="display:flex;gap:6px;"><input readonly id="${rid}_s" value="${esc(schaltLink)}" style="flex:1;font-size:11.5px;"><button class="btn btn-ghost" style="padding:8px 12px;" onclick="_fsKopieren('${rid}_s')">Kopieren</button><button class="btn btn-ghost" style="padding:8px 12px;" onclick="_bqOeffnen(${_jsArg(slug)},${_jsArg(druckName||"")},'schalt')">QR</button></div></div>
     <div class="field" style="margin-top:8px;"><label style="font-size:11px;">Automatik</label>
-      <div style="display:flex;gap:6px;"><input readonly id="${rid}_a" value="${esc(automatikLink)}" style="flex:1;font-size:11.5px;"><button class="btn btn-ghost" style="padding:8px 12px;" onclick="_fsKopieren('${rid}_a')">Kopieren</button><button class="btn btn-ghost" style="padding:8px 12px;" onclick="_fsQrToggle('${rid}_a')">QR</button></div>
-      <div id="${rid}_a_qr" style="display:none;margin-top:8px;text-align:center;"><img src="${qrBild(automatikLink,360)}" alt="QR-Code Automatik" style="border-radius:8px;background:#fff;padding:8px;width:180px;height:180px;"></div></div>
+      <div style="display:flex;gap:6px;"><input readonly id="${rid}_a" value="${esc(automatikLink)}" style="flex:1;font-size:11.5px;"><button class="btn btn-ghost" style="padding:8px 12px;" onclick="_fsKopieren('${rid}_a')">Kopieren</button><button class="btn btn-ghost" style="padding:8px 12px;" onclick="_bqOeffnen(${_jsArg(slug)},${_jsArg(druckName||"")},'automatik')">QR</button></div></div>
   </div>`;
 }
 function _fsQrToggle(inputId){
@@ -7744,7 +7786,7 @@ const STORE_KEY="serband-app-v1";
    Wird in den Einstellungen angezeigt + für den Update-Hinweis genutzt. */
 // K1: voreingestellter Wetter-Ort (früh definiert, weil ensureDB ihn schon beim Start braucht)
 const WETTER_START={city:"Offenbach",lat:50.1006,lon:8.7665};
-const APP_VERSION="2026.11.22.4";
+const APP_VERSION="2026.11.22.7";
 try{const f=document.getElementById("drawerFoot"); if(f)f.textContent="Fahrlehrer-Kompass · Version "+APP_VERSION;}catch(e){}
 // Nutzungsbedingungen & Haftungsausschluss (Bereich: rechtliche Absicherung) - Version hochzählen
 // und alle Nutzer müssen erneut zustimmen, sobald sich der Text inhaltlich ändert.
@@ -7779,6 +7821,7 @@ const AGB_HTML=`
 <p>Wird die App von mehreren Personen einer Fahrschule genutzt (Fahrlehrer, Büro-Mitarbeiter), handelt jede Person im Rahmen ihrer eigenen beruflichen und gesetzlichen Verantwortung. Der Anbieter übernimmt keine Verantwortung für das Verhalten einzelner Nutzer untereinander oder gegenüber Dritten.</p>
 <h3>§14 Datenschutz der Fahrschülerdaten</h3>
 <p>Alle in der App erfassten Schülerdaten werden ausschließlich innerhalb der App und der zugehörigen Datenbank verarbeitet und nicht an unbeteiligte Dritte weitergegeben. Für die datenschutzrechtliche Aufklärung der Fahrschüler ist die Datenschutzerklärung der jeweiligen Fahrschule maßgeblich; die App selbst stellt gegenüber den Fahrschülern keine eigene, gesonderte Datenschutzerklärung bereit. Der Nutzer versichert, personenbezogene Daten von Fahrschülern nur dann in die App einzugeben, wenn seine Fahrschule über eine gültige, den Einsatz digitaler Verwaltungssoftware abdeckende Datenschutzerklärung verfügt. Die Verantwortung hierfür liegt beim Nutzer bzw. dessen Fahrschule.</p>
+<p><b>Wetteranzeige:</b> Das Wetter kommt vom Deutschen Wetterdienst über den Dienst Bright Sky (api.brightsky.dev). Wer einen eigenen Ort einstellt, für den wird der Ort über OpenStreetMap (Nominatim) gesucht. Dabei wird die IP-Adresse des Geräts an diese Dienste übertragen, aber keine Schülerdaten und keine Namen. Das Wetter lässt sich unter Einstellungen › App › Wetter-Widget ausschalten.</p>
 <h3>§15 Meldepflicht bei erkennbaren Fehlern</h3>
 <p>Erkennt der Nutzer offensichtliche Fehler oder Fehlfunktionen der App (z. B. erkennbar fehlerhafte Berechnungen), ist er gehalten, dies dem Anbieter zeitnah mitzuteilen. Die Fortsetzung der Nutzung in Kenntnis eines solchen Fehlers erfolgt auf eigenes Risiko des Nutzers.</p>
 <h3>§16 Änderungen</h3>
@@ -8398,7 +8441,10 @@ function toggleTheme(){
 /* ============================================================
    DRAWER + FAB
    ============================================================ */
-function openDrawer(){_zurueckSperreNachholen();$("#drawer").classList.add("open");$("#scrim").classList.add("open");}
+function openDrawer(){_zurueckSperreNachholen();
+  // K3: „Buchungs-QR fürs Auto“ nur zeigen, wenn ein eigener Buchungslink eingerichtet ist
+  try{ const hat=!!(_authProfile&&_authProfile.slug); document.querySelectorAll('#drawer [data-nav="buchqr"]').forEach(b=>{ b.hidden=!hat; }); }catch(e){}
+  $("#drawer").classList.add("open");$("#scrim").classList.add("open");}
 function closeDrawer(){$("#drawer").classList.remove("open");$("#scrim").classList.remove("open");}
 $("#menuBtn").addEventListener("click",openDrawer);
 $("#scrim").addEventListener("click",closeDrawer);
@@ -8428,6 +8474,7 @@ document.querySelector(".drawer-nav").addEventListener("click",(e)=>{
     else if(nav==="draw")routeDraw();
     else if(nav==="settings")routeSettings();
     else if(nav==="neuigkeiten")routeNeuigkeiten();
+    else if(nav==="buchqr")routeBuchungsQR();
     else if(nav==="fs_dash")routeFahrschuleDashboard();
     else if(nav==="fs_schueler"){routeHome();}
     else if(nav==="fs_lehrer")routeFahrschuleLehrer();
@@ -12164,7 +12211,7 @@ function routeSettings(){
   <div class="res-block" style="animation:none;"><h4>🏫 Fahrschulen</h4><p>Fahrschulen, Fahrlehrer, Schüler und Pakete verwalten.</p><div class="btn-row"><button class="btn btn-ghost" onclick="routeFahrschulenListe()">Fahrschulen verwalten</button></div></div>
   <div class="res-block" style="animation:none;"><h4>🎓 Akademie-Vermittlung</h4><p style="font-size:13px;color:var(--muted);">Beträge & Aufteilung für Simulator-/Videoakademie-Empfehlungen. Solange leer, wird bei einer Auszahlung nur "noch nicht konfiguriert" angezeigt — nichts wird stillschweigend falsch berechnet.</p><div id="akadVermittlungCfg"><p class="muted-p" style="font-size:12.5px;">Lade …</p></div></div>`:"";
   const eigenerSlug=_authProfile&&_authProfile.slug;
-  const buchungslinksBtn=(eigenerSlug&&_authProfile&&(_authProfile.rolle==="fahrlehrer"||_authProfile.rolle==="super_admin"||_leitungFaehrtSelbst()))?_fsBuchungslinksHTML(eigenerSlug,"Meine"):"";
+  const buchungslinksBtn=(eigenerSlug&&_authProfile&&(_authProfile.rolle==="fahrlehrer"||_authProfile.rolle==="super_admin"||_leitungFaehrtSelbst()))?`<div class="res-block" style="animation:none;"><h4>🚗 Mein Buchungs-QR fürs Auto</h4><p>Großer QR-Code für Schalter oder Automatik, zum Ausdrucken fürs Auto. Schüler scannen ihn und buchen direkt bei dir.</p><div class="btn-row"><button type="button" class="btn btn-primary" onclick="routeBuchungsQR()">Buchungs-QR öffnen</button></div></div>`+_fsBuchungslinksHTML(eigenerSlug,"Meine"):"";
   const logoutBtn=_authUser?`<div class="res-block" style="animation:none;background:rgba(200,60,60,.1);border-color:rgba(200,60,60,.3)"><h4 style="color:#f08080">🚪 Abmelden</h4><p style="color:var(--muted)">Meldet dich sicher aus der App ab.</p><div class="btn-row"><button class="btn" style="background:#c83c3c;color:#fff;border:none;padding:12px 24px;border-radius:12px;font-weight:700;font-size:14px;" onclick="doLogout()">Jetzt abmelden</button></div></div>`:"";
   const kapWoche=kapazitaetAutoWoche();
   view.innerHTML=`<div class="view-inner view-read fade-up">
@@ -12190,8 +12237,10 @@ function routeSettings(){
         </div>
         <div class="res-block" style="animation:none;"><h4>🌤 Wetter-Widget</h4>
           <p>Das Wetter kommt kostenlos vom Deutschen Wetterdienst. Du brauchst nichts einzurichten. Unten kannst du deinen Ort einstellen.</p>
+          <p style="font-size:13px;color:var(--muted);margin:6px 0 12px;">Für das Wetter erfährt der Wetterdienst die Internet-Adresse deines Geräts, aber keine Schülerdaten.</p>
           <div class="field"><div class="toggle-row"><div><div class="tc-name" style="font-weight:800;font-size:14px;">Wetter zeigen</div></div><button type="button" class="check-toggle${_wetterAn()?' on':''}" id="weatherOnToggle" aria-label="Wetter zeigen"></button></div></div>
           <div class="field"><label for="weatherCityInput">Ort</label><input id="weatherCityInput" type="text" placeholder="Offenbach" value="${esc(String(DB.weatherCfg.city||"Offenbach").replace(/,\s*[A-Z]{2}$/,""))}" autocomplete="off" enterkeyhint="done"></div>
+          ${_wetterOrtFehlt()?`<p class="wx-ort-fehlt" style="font-size:13px;color:var(--txt);margin:-2px 0 10px;padding-left:10px;border-left:3px solid var(--gelb);">Ort nicht gefunden. Bitte neu eingeben und speichern.</p>`:''}
           <div class="btn-row"><button type="button" class="btn btn-ghost" id="weatherSaveBtn">Ort speichern</button></div>
         </div>
       </div></div>
@@ -12207,8 +12256,8 @@ function routeSettings(){
         <div class="res-block" style="animation:none;"><h4>📋 Ausbildungsplan-Vorlagen</h4>
           <p>Grundstufe, Aufbaustufe und Leistungsstufe individuell gestalten — z.B. eigene Prüfgebiete anlegen.</p>
           <div class="btn-row"><button class="btn btn-ghost" onclick="routePlanVorlagen()">Vorlagen verwalten</button></div></div>
-        <div class="res-block" style="animation:none;"><h4>⬛ QR-Code erzeugen</h4>
-          <p>Für Präsentationen, Aushänge oder Flyer. Der Code entsteht im Gerät — kein fremder Dienst, keine Kosten, funktioniert auch offline.</p>
+        <div class="res-block" style="animation:none;"><h4>⬛ QR-Code für andere Links</h4>
+          <p>Für Aushänge oder Flyer mit einem beliebigen Link. <b>Nicht für Buchungen</b>${eigenerSlug?": deinen Buchungs-QR fürs Auto findest du unter Mehr › Buchungs-QR fürs Auto":""}. Der Code entsteht im Gerät, ohne fremden Dienst.</p>
           <div class="field"><input type="text" id="qrEingabe" placeholder="https://…" autocomplete="off" value="https://serband1995-hue.github.io/Fahrlehrer-Kompass-/check.html"></div>
           <div class="btn-row"><button class="btn btn-ghost" id="qrErzeugen">Code erzeugen</button></div>
           <div id="qrAusgabe" style="margin-top:12px;text-align:center;"></div></div>
@@ -14182,7 +14231,7 @@ function ensureDB(){ let _ensureDirty=false; if(!Array.isArray(DB.exams))DB.exam
 }
 function ensurePruefer(nm){ if(!DB.prueferData[nm])DB.prueferData[nm]={behoerde:"",tags:[],routen:[],notiz:"",created:Date.now()}; return DB.prueferData[nm]; }
 /* Statistik pro Prüfer aus den Prüfungen ableiten */
-function prueferStats(nm){ const ex=DB.exams.filter(e=>e.pruefer===nm); const q=quoteOf(ex); const dates=ex.filter(istPruefung).map(e=>e.date).filter(Boolean).sort(); const last=dates.length?dates[dates.length-1]:null; return {total:ex.filter(istPruefung).length,last,quote:q,faults:faultCounts(ex).slice(0,3),eingriff:eingriffQuote(ex)}; }
+function prueferStats(nm){ const ex=window.PW?PW.examsFuer(nm):DB.exams.filter(e=>e.pruefer===nm); /* K5: mit den Prüfungen der anderen Fahrlehrer */ const q=quoteOf(ex); const dates=ex.filter(istPruefung).map(e=>e.date).filter(Boolean).sort(); const last=dates.length?dates[dates.length-1]:null; return {total:ex.filter(istPruefung).length,last,quote:q,faults:faultCounts(ex).slice(0,3),eingriff:eingriffQuote(ex)}; }
 ensureDB();
 
 const FAULTS=[
@@ -14692,12 +14741,13 @@ function prueferHintHTML(nm){
   if(!nm)return "";
   const pd=DB.prueferData&&DB.prueferData[nm]; if(!pd)return "";
   const st=prueferStats(nm);
-  const hasContent=(pd.tags&&pd.tags.length)||(pd.routen&&pd.routen.length)||pd.notiz||st.total||prueferVerlauf(nm).length;
+  const notizText=window.PW&&PW.aktiv()?PW.letzteNotiz(nm):pd.notiz; // K5: neueste gemeinsame Notiz
+  const hasContent=(pd.tags&&pd.tags.length)||(pd.routen&&pd.routen.length)||notizText||st.total||prueferVerlauf(nm).length;
   if(!hasContent)return `<div class="pr-brief"><div class="pr-brief-h">Briefing · ${esc(nm)}</div><p class="pr-brief-empty">Noch keine Infos zu diesem Prüfer. Nach der Prüfung kannst du in der Prüfer-Akte festhalten, worauf er achtet.</p></div>`;
   let h=`<div class="pr-brief"><div class="pr-brief-h">Briefing · ${esc(nm)}${st.total?` <span class="pr-brief-q">${st.quote.pct==null?'':st.quote.pct+' % · '}${st.total}×</span>`:''}</div>`;
   if(pd.tags&&pd.tags.length)h+=`<div class="pf-tags" style="margin-bottom:10px;">${pd.tags.map(t=>`<span class="pf-tag mini">${esc(t)}</span>`).join("")}</div>`;
   if(pd.routen&&pd.routen.length)h+=`<div class="pr-brief-route">${ICN.map?'':''}<b>Übliche Strecke:</b> ${pd.routen[0].map(esc).join(' › ')}</div>`;
-  if(pd.notiz)h+=`<div class="pr-brief-note">${esc(pd.notiz)}</div>`;
+  if(notizText)h+=`<div class="pr-brief-note">${esc(notizText)}</div>`;
   const letzte=prueferVerlauf(nm).find(e=>e.note&&!e.b197);
   if(letzte)h+=`<div class="pr-brief-route" style="margin-top:8px;"><b>Zuletzt (${isoDE(letzte.date)}):</b> ${esc(letzte.note.length>160?letzte.note.slice(0,157)+"…":letzte.note)}</div>`;
   h+=`</div>`; return h;
@@ -14740,7 +14790,7 @@ function renderResultStep(s){
     <p style="color:var(--muted);font-size:13.5px;margin-bottom:16px;">${esc(s.name)} · Prüfer: <b style="color:var(--txt)">${esc(_examPr)}</b></p>
     <div class="field"><label>Datum</label><input type="date" id="exDate" value="${esc(defDate)}"></div>
     ${t?`<p class="muted-p" style="font-size:12px;margin:-6px 0 12px;">Übernommen vom Prüfungstermin am ${isoDE(t.date)}${t.date<todayISO()?" (vergangen)":""} — bei Bedarf ändern.</p>`:`<p class="muted-p" style="font-size:12px;margin:-6px 0 12px;">Kein Prüfungstermin gefunden — heutiges Datum eingesetzt. <b>Bitte prüfen.</b></p>`}
-    ${pass?`<div class="field"><label>Notiz (optional)</label><div class="mic-wrap"><textarea id="exNote" rows="3" placeholder="Worauf hat der Prüfer geachtet?"></textarea>${micIcon()}</div></div>`
+    ${pass?`<div class="field"><label>Notiz (optional)</label><div class="mic-wrap"><textarea id="exNote" rows="3" placeholder="${window.PW&&PW.aktiv()?"Worauf hat der Prüfer geachtet? Sehen alle Fahrlehrer der Fahrschule.":"Worauf hat der Prüfer geachtet?"}"></textarea>${micIcon()}</div></div>`
     :`<div class="field"><label>Fehler (Mehrfachauswahl)</label><div class="facc" id="faultAcc">${FAULTS.map((g,gi)=>{const cnt=g.items.filter(([fid])=>_examFaults.indexOf(fid)>=0).length;return `
       <div class="facc-sec${cnt?' open':''}">
         <button class="facc-h" data-acc="${gi}"><span>${g.area}</span><span class="facc-cnt${cnt?' on':''}" data-cnt="${gi}">${cnt}</span><span class="facc-chev">${ICN.chev}</span></button>
@@ -14749,7 +14799,7 @@ function renderResultStep(s){
     <div class="field"><div class="toggle-row"><div><div class="tc-name" style="font-weight:800;font-size:14px;">Fahrlehrer musste eingreifen</div><div class="tc-sub" style="font-size:12.5px;color:var(--muted);margin-top:2px;">sofortiger Durchfall-Grund</div></div>
       <button class="check-toggle${_examEingriff?' on':''}" id="eingToggle"></button></div>
       <textarea id="eingNote" rows="2" placeholder="Was ist passiert?" style="margin-top:10px;display:${_examEingriff?'block':'none'};"></textarea></div>
-    <div class="field"><label>Notiz (optional)</label><div class="mic-wrap"><textarea id="exNote" rows="2" placeholder="Frei notieren"></textarea>${micIcon()}</div></div>`}
+    <div class="field"><label>Notiz (optional)</label><div class="mic-wrap"><textarea id="exNote" rows="2" placeholder="${window.PW&&PW.aktiv()?"Frei notieren – sehen alle Fahrlehrer der Fahrschule (sachlich bleiben)":"Frei notieren"}"></textarea>${micIcon()}</div></div>`}
     <div class="btn-row" style="margin-top:8px;">
       <button class="btn btn-primary" id="saveExam">${pass?'Als bestanden eintragen':'Als nicht bestanden eintragen'}</button>
     </div></div>`;
@@ -14863,7 +14913,7 @@ function renderExam(s){
     ${datumHinweis}
     <div class="field"><label>Prüfer</label>
       <div class="pr-wrap" id="prWrap">${prChips}<button class="pr-chip add" id="prAdd">+ Neuer Prüfer</button></div></div>
-    ${pass?`<div class="field"><label>Notiz (optional)</label><div class="mic-wrap"><textarea id="exNote" rows="3" placeholder="Worauf hat der Prüfer geachtet?"></textarea>${micIcon()}</div></div>`
+    ${pass?`<div class="field"><label>Notiz (optional)</label><div class="mic-wrap"><textarea id="exNote" rows="3" placeholder="${window.PW&&PW.aktiv()?"Worauf hat der Prüfer geachtet? Sehen alle Fahrlehrer der Fahrschule.":"Worauf hat der Prüfer geachtet?"}"></textarea>${micIcon()}</div></div>`
     :`<div class="field"><label>Fehler (Mehrfachauswahl)</label><div class="facc" id="faultAcc">${FAULTS.map((g,gi)=>{const cnt=g.items.filter(([fid])=>_examFaults.indexOf(fid)>=0).length;return `
         <div class="facc-sec${cnt?' open':''}">
           <button class="facc-h" data-acc="${gi}"><span>${g.area}</span><span class="facc-cnt${cnt?' on':''}" data-cnt="${gi}">${cnt}</span><span class="facc-chev">${ICN.chev}</span></button>
@@ -14872,7 +14922,7 @@ function renderExam(s){
       <div class="field"><div class="toggle-row"><div><div class="tc-name" style="font-weight:800;font-size:14px;">Fahrlehrer musste eingreifen</div><div class="tc-sub" style="font-size:12.5px;color:var(--muted);margin-top:2px;">sofortiger Durchfall-Grund</div></div>
         <button class="check-toggle${_examEingriff?' on':''}" id="eingToggle"></button></div>
         <textarea id="eingNote" rows="2" placeholder="Was ist passiert?" style="margin-top:10px;display:${_examEingriff?'block':'none'};"></textarea></div>
-      <div class="field"><label>Notiz (optional)</label><div class="mic-wrap"><textarea id="exNote" rows="2" placeholder="Frei notieren"></textarea>${micIcon()}</div></div>`}
+      <div class="field"><label>Notiz (optional)</label><div class="mic-wrap"><textarea id="exNote" rows="2" placeholder="${window.PW&&PW.aktiv()?"Frei notieren – sehen alle Fahrlehrer der Fahrschule (sachlich bleiben)":"Frei notieren"}"></textarea>${micIcon()}</div></div>`}
     <div class="btn-row" style="margin-top:8px;">
       <button class="btn btn-primary" id="saveExam">${pass?'Als bestanden eintragen':'Als nicht bestanden eintragen'}</button>
     </div></div>`;
@@ -15454,13 +15504,17 @@ function openCapacitySheet(){
    Die Bright-Sky-Symbole werden auf die bisherigen Wetter-Codes (01 Sonne … 50 Nebel, Endung n = Nacht) übersetzt,
    damit Emoji, Wetterbild und Wetter-Seite unverändert weiterlaufen. */
 function _wetterAn(){ return !(DB.weatherCfg&&DB.weatherCfg.aus); }
-const _BS_ICON={"clear-day":["01d","Sonnig"],"clear-night":["01n","Klar"],"partly-cloudy-day":["02d","Leicht bewölkt"],"partly-cloudy-night":["02n","Leicht bewölkt"],
-  "cloudy":["04","Bewölkt"],"fog":["50","Nebel"],"wind":["03","Windig"],"rain":["10","Regen"],"sleet":["13","Schneeregen"],"snow":["13","Schnee"],"hail":["09","Hagel"],"thunderstorm":["11","Gewitter"]};
+// Beschreibungen wie in der Pille (_wetterKurz), damit Pille und Wetter-Seite dieselben Wörter zeigen
+const _BS_ICON={"clear-day":["01d","Sonnig"],"clear-night":["01n","Klar"],"partly-cloudy-day":["02d","Heiter"],"partly-cloudy-night":["02n","Wolkig"],
+  "cloudy":["04","Bedeckt"],"fog":["50","Nebel"],"wind":["03","Bewölkt"],"rain":["10","Regen"],"sleet":["13","Schnee"],"snow":["13","Schnee"],"hail":["09","Schauer"],"thunderstorm":["11","Gewitter"]};
 function _bsIcon(icon,condition,stamp){
   let e=_BS_ICON[icon];
   if(!e){ const c=String(condition||""); e=c==="rain"?["10","Regen"]:c==="snow"||c==="sleet"?["13","Schnee"]:c==="fog"?["50","Nebel"]:c==="thunderstorm"?["11","Gewitter"]:["03","Bewölkt"]; }
   let code=e[0];
-  if(code.length===2){ const m=/T(\d{2})/.exec(String(stamp||"")); const h=m?Number(m[1]):12; code+=(h<7||h>=18)?"n":"d"; }
+  if(code.length===2){ const m=/T(\d{2})/.exec(String(stamp||"")); const h=m?Number(m[1]):12, mo=m?Number(String(stamp).slice(5,7)):6;
+    // grob die Hellzeit im Rhein-Main-Gebiet je Monat (Sommerzeit eingerechnet): [hell ab, dunkel ab]
+    const hell=[[8,17],[8,18],[7,19],[7,20],[6,21],[6,22],[6,22],[7,21],[7,20],[8,19],[7,17],[8,17]][(mo>=1&&mo<=12?mo:6)-1];
+    code+=(h<hell[0]||h>=hell[1])?"n":"d"; }
   return {icon:code,desc:e[1]};
 }
 // Koordinaten des eingestellten Orts (null = unbekannt, dann kein Wetter statt falschem Wetter).
@@ -15468,6 +15522,13 @@ function _bsIcon(icon,condition,stamp){
 // (früher OpenWeatherMap) wird einmal gesucht und NUR auf diesem Gerät gemerkt (nicht in DB, siehe ensureDB).
 // Eine Suche gleichzeitig; nach einem Fehlschlag 10 Minuten keine neue Suche (Nominatim: höchstens 1 Anfrage/s).
 let _wetterOrtLauf=null;
+// Ein alter eigener Ort wurde zuletzt nicht gefunden (dann zeigt „Heute“ einen leisen Hinweis statt des Wetters)
+function _wetterOrtFehlt(){
+  const cfg=(typeof DB!=="undefined"&&DB&&DB.weatherCfg)||{};
+  if(!_wetterAn()||(typeof cfg.lat==="number"&&typeof cfg.lon==="number")||_istOffenbach(cfg.city))return false;
+  const name=String(cfg.city||"").replace(/,\s*[A-Z]{2}$/,"").trim();
+  try{ const m=JSON.parse(localStorage.getItem("serband-wetter-ort")||"null"); return !!(m&&m.q===name&&m.fehlTs); }catch(e){ return false; }
+}
 function _istOffenbach(c){ return /^offenbach(\s*(am main)?)?(,\s*de)?$/i.test(String(c||"").trim()); }
 async function _wetterOrt(){
   const cfg=DB.weatherCfg||{};
@@ -15475,10 +15536,14 @@ async function _wetterOrt(){
   if(_istOffenbach(cfg.city))return {lat:WETTER_START.lat,lon:WETTER_START.lon};
   const name=String(cfg.city||"").replace(/,\s*[A-Z]{2}$/,"").trim();
   try{ const m=JSON.parse(localStorage.getItem("serband-wetter-ort")||"null");
-    if(m&&m.q===name){ if(typeof m.lat==="number")return {lat:m.lat,lon:m.lon}; if(Date.now()-(m.fehlTs||0)<10*60*1000)return null; } }catch(e){}
-  if(!_wetterOrtLauf)_wetterOrtLauf=_ortSuchen(name).then(t=>{ if(t&&t.fehler)t=null;
-    try{ localStorage.setItem("serband-wetter-ort",JSON.stringify(t?{q:name,lat:t.lat,lon:t.lon}:{q:name,fehlTs:Date.now()})); }catch(e){}
-    return t?{lat:t.lat,lon:t.lon}:null;
+    if(m&&m.q===name){ if(typeof m.lat==="number")return {lat:m.lat,lon:m.lon}; if(Date.now()-Math.max(m.fehlTs||0,m.netzTs||0)<10*60*1000)return null; } }catch(e){}
+  // fehlTs = Ort wirklich unbekannt (dann Hinweis „Ort prüfen“); netzTs = nur keine Verbindung (kein Hinweis, nur Pause)
+  if(!_wetterOrtLauf)_wetterOrtLauf=_ortSuchen(name).then(t=>{
+    // Kein Netz: ein schon bekanntes „nicht gefunden“ bleibt stehen (Hinweis verschwindet nicht nur wegen Funkloch)
+    let altFehl=null; try{ const a=JSON.parse(localStorage.getItem("serband-wetter-ort")||"null"); if(a&&a.q===name&&a.fehlTs)altFehl=a.fehlTs; }catch(e){}
+    const eintrag=t&&t.fehler?(altFehl?{q:name,fehlTs:altFehl,netzTs:Date.now()}:{q:name,netzTs:Date.now()}):t?{q:name,lat:t.lat,lon:t.lon}:{q:name,fehlTs:Date.now()};
+    try{ localStorage.setItem("serband-wetter-ort",JSON.stringify(eintrag)); }catch(e){}
+    return t&&!t.fehler?{lat:t.lat,lon:t.lon}:null;
   }).finally(()=>{ _wetterOrtLauf=null; });
   return _wetterOrtLauf;
 }
@@ -15988,7 +16053,13 @@ function routeDashboard(){
   const cap=$("#capCard"); if(cap)cap.addEventListener("click",openCapacitySheet);
   bindFC();
   if(wetterAn){
-    fetchWeather().then(w=>{ const b=$("#h2Wetter"); if(!b)return; if(!w){ b.remove(); return; }
+    fetchWeather().then(w=>{ const b=$("#h2Wetter"); if(!b)return;
+      if(!w&&_wetterOrtFehlt()){ // leiser Hinweis statt Wetter: der eingestellte Ort wurde nicht gefunden
+        b.classList.add("h2-wetter-leise"); b.querySelector(".h2-wetter-ic").innerHTML='<svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 21s-6-5.6-6-10.5a6 6 0 0 1 12 0C18 15.4 12 21 12 21z"/><circle cx="12" cy="10.5" r="2.2"/></svg>';
+        b.querySelector(".h2-wetter-t").textContent="Wetter"; b.querySelector(".h2-wetter-d").textContent="Ort prüfen";
+        b.setAttribute("aria-label","Wetter-Ort nicht gefunden – in den Einstellungen ändern"); b.style.visibility="";
+        b.addEventListener("click",()=>{ _settingsAccOpen="app"; routeSettings(); setTimeout(()=>{ const i=$("#weatherCityInput"); if(i){ i.scrollIntoView({block:"center"}); } },60); }); return; }
+      if(!w){ b.remove(); return; }
       const d=String(w.desc||""); const dGross=d?d.charAt(0).toUpperCase()+d.slice(1):"";
       // In der Pille nur ein kurzes Wort (passt bei 360 px ganz hinein); die volle Beschreibung steht im Vorlesetext und auf der Wetter-Seite
       b.querySelector(".h2-wetter-ic").innerHTML=_wetterIconSVG(w.icon); const grad=Math.round(+w.temp); if(!isFinite(grad)){ b.remove(); return; } b.querySelector(".h2-wetter-t").textContent=`${grad}°`;
@@ -16653,7 +16724,8 @@ function routePrueferListe(){
   ensureDB();
   $("#tbTitle").textContent="Prüfer"; setFab(false); view.scrollTop=0;
   // Alle Namen: aus prueferData, DB.pruefer und exams
-  const names=new Set([...Object.keys(DB.prueferData),...DB.pruefer]);
+  if(window.PW)PW.laden(); // K5: gemeinsamen Stand holen (höchstens alle 30 s)
+  const names=new Set([...Object.keys(DB.prueferData),...DB.pruefer,...(window.PW?PW.fremdeNamen():[])]);
   DB.exams.forEach(e=>{ if(e.pruefer)names.add(e.pruefer); });
   const arr=[...names].filter(Boolean).sort((a,b)=>a.localeCompare(b,'de'));
   let html=`<div class="view-inner view-read fade-up">
@@ -16678,7 +16750,7 @@ function routePrueferListe(){
       <div class="pf-quick" data-quick="${esc(nm)}" hidden>
         ${tagsMini?`<div class="pf-tags" style="margin-top:14px;">${tagsMini}</div>`:''}
         ${(pd.routen&&pd.routen.length)?`<div class="pf-route-mini">${pd.routen[0].map(esc).join(' › ')}</div>`:''}
-        ${pd.notiz?`<div class="pf-quick-note">${esc(pd.notiz)}</div>`:''}
+        ${(window.PW&&PW.aktiv()?PW.letzteNotiz(nm):pd.notiz)?`<div class="pf-quick-note">${esc(window.PW&&PW.aktiv()?PW.letzteNotiz(nm):pd.notiz)}</div>`:''}
         <button class="pf-more" data-open="${esc(nm)}">Ganze Akte öffnen ${ICN.arrow}</button>
       </div></div>`;
   });
@@ -16721,7 +16793,7 @@ function mergePruefer(alt,neu){
    Die Notiz einer Prüfung steht in ex.note; ältere bestandene Schüler ohne Prüfungseintrag in s.passedStrecke. */
 let _pfTab="schueler";
 function prueferVerlauf(nm){
-  const ex=(DB.exams||[]).filter(e=>e.pruefer===nm).map(e=>({sid:e.sid,name:e.name,date:e.date,result:e.result,b197:!!e.b197,note:(e.note||"").trim(),faults:e.faults||[],eingriff:!!e.eingriff,eingNote:(e.eingNote||"").trim(),attempt:e.attempt,id:e.id}));
+  const ex=(window.PW?PW.examsFuer(nm):(DB.exams||[]).filter(e=>e.pruefer===nm)).map(e=>({sid:e.sid,name:e.name,date:e.date,result:e.result,b197:!!e.b197,note:(e.note||"").trim(),faults:e.faults||[],eingriff:!!e.eingriff,eingNote:(e.eingNote||"").trim(),attempt:e.attempt,id:e.id,_fremd:!!e._fremd,_von:e._von||""}));
   // Schüler mit eigenem bestandenen Prüfungseintrag (bei irgendeinem Prüfer) nicht doppelt aus s.passedPruefer zeigen.
   const mitEx=new Set((DB.exams||[]).filter(e=>e.result==="pass"&&!e.b197).map(e=>e.sid));
   (DB.students||[]).forEach(s=>{ if(s.passed&&s.passedPruefer===nm&&!mitEx.has(s.id)){ const d=(typeof s.passed==="string"&&/^\d{4}-\d{2}-\d{2}/.test(s.passed))?s.passed.slice(0,10):""; ex.push({sid:s.id,name:s.name,date:d,result:"pass",b197:false,note:(s.passedStrecke||"").trim(),faults:[],eingriff:false,eingNote:"",alt:true}); } });
@@ -16731,14 +16803,19 @@ function _pfErg(e){ return e.b197?'<span class="pe-res ok">B197</span>':e.result
 function routePrueferAkte(nm){
   ensureDB(); const pd=ensurePruefer(nm); const st=prueferStats(nm);
   $("#tbTitle").textContent="Prüfer"; setFab(false); view.scrollTop=0;
-  const exForPr=DB.exams.filter(e=>e.pruefer===nm).sort((a,b)=>(""+b.date).localeCompare(""+a.date));
+  if(window.PW)PW.laden(); // K5: gemeinsamen Stand holen (höchstens alle 30 s), zeichnet bei Änderung neu
+  const exForPr=(window.PW?PW.examsFuer(nm):DB.exams.filter(e=>e.pruefer===nm)).sort((a,b)=>(""+b.date).localeCompare(""+a.date));
   const verlauf=prueferVerlauf(nm);
   const mitNotiz=verlauf.filter(e=>!e.b197&&(e.note||e.eingNote||(e.result==="fail"&&e.faults.length)));
   if(!["schueler","strecken","profil"].includes(_pfTab))_pfTab="schueler";
   const bestanden=verlauf.filter(e=>!e.b197&&e.result==="pass").length, durch=verlauf.filter(e=>!e.b197&&e.result==="fail").length;
-  const tabSchueler=verlauf.length?`<p class="muted-p" style="font-size:12.5px;margin:0 0 6px;">${bestanden} bestanden · ${durch} nicht bestanden</p>`+verlauf.map(e=>`<button class="pf-exam pf-exam-btn" data-sid="${esc(e.sid||"")}"><span class="pe-date">${e.date?isoDE(e.date):"—"}</span><span class="pe-name">${esc(e.name||"—")}${e.note?' <span class="pe-note-ic">· Notiz</span>':''}${e.alt?' <span class="pe-alt">ohne Prüfungseintrag</span>':''}</span>${_pfErg(e)}<span class="pf-pfeil" aria-hidden="true">›</span></button>`).join(""):`<p class="h2-nichts">Noch keine Prüfung mit ${esc(nm)} eingetragen.</p>`;
+  // K5: Prüfungen anderer Fahrlehrer ohne Schülernamen (Fahrlehrer-Ansicht) nur als Zahlen je Fahrlehrer
+  const _pwOhneName=verlauf.filter(e=>e._fremd&&!e.name), _pwMitName=verlauf.filter(e=>!(e._fremd&&!e.name));
+  const _pwJe={}; _pwOhneName.filter(e=>!e.b197).forEach(e=>{ const g=_pwJe[e._von]||(_pwJe[e._von]={n:0,ok:0}); g.n++; if(e.result==="pass")g.ok++; });
+  const _pwAndere=Object.keys(_pwJe).length?`<div class="pf-block-h" style="margin-top:16px;">Andere Fahrlehrer</div>`+Object.keys(_pwJe).sort((a,b)=>a.localeCompare(b,'de')).map(v=>`<div class="pf-exam pw-andere"><span class="pe-name">${esc(v)}</span><span class="pe-date">${_pwJe[v].n} Prüfung${_pwJe[v].n===1?"":"en"} · ${_pwJe[v].ok} bestanden</span></div>`).join(""):"";
+  const tabSchueler=verlauf.length?`<p class="muted-p" style="font-size:12.5px;margin:0 0 6px;">${bestanden} bestanden · ${durch} nicht bestanden</p>`+_pwMitName.map(e=>e._fremd?`<div class="pf-exam"><span class="pe-date">${e.date?isoDE(e.date):"—"}</span><span class="pe-name">${esc(e.name||"—")} <span class="pe-alt">bei ${esc(e._von)}</span></span>${_pfErg(e)}</div>`:`<button class="pf-exam pf-exam-btn" data-sid="${esc(e.sid||"")}"><span class="pe-date">${e.date?isoDE(e.date):"—"}</span><span class="pe-name">${esc(e.name||"—")}${e.note?' <span class="pe-note-ic">· Notiz</span>':''}${e.alt?' <span class="pe-alt">ohne Prüfungseintrag</span>':''}</span>${_pfErg(e)}<span class="pf-pfeil" aria-hidden="true">›</span></button>`).join("")+_pwAndere:`<p class="h2-nichts">Noch keine Prüfung mit ${esc(nm)} eingetragen.</p>`;
   const tabStrecken=`${mitNotiz.length?mitNotiz.map(e=>`<div class="pf-nz">
-      <div class="pf-nz-h"><span class="pe-date">${e.date?isoDE(e.date):"—"}</span>${_pfErg(e)}</div><div class="pf-nz-name">${esc(e.name||"—")}</div>
+      <div class="pf-nz-h"><span class="pe-date">${e.date?isoDE(e.date):"—"}</span>${_pfErg(e)}</div><div class="pf-nz-name">${e._fremd?`${e.name?esc(e.name)+" · ":""}<span class="pe-alt">von ${esc(e._von)}</span>`:esc(e.name||"—")}</div>
       ${e.note?`<div class="pf-nz-t">${esc(e.note)}</div>`:''}
       ${e.result==="fail"&&e.faults.length?`<div class="pf-tags" style="margin-top:8px;">${e.faults.map(f=>`<span class="pf-tag warn mini">${esc(FAULT_LABEL[f]||f)}</span>`).join("")}</div>`:''}
       ${e.eingNote?`<div class="pf-nz-t" style="margin-top:6px;"><b>Eingriff:</b> ${esc(e.eingNote)}</div>`:''}
@@ -16753,14 +16830,14 @@ function routePrueferAkte(nm){
       <div class="pf-block-h">Charakter / worauf er achtet</div>
       <div class="pf-tags" id="tagWrap">${(pd.tags||[]).map(t=>`<span class="pf-tag rm" data-tag="${esc(t)}">${esc(t)} <i>✕</i></span>`).join("")}<button class="pf-tag add" id="tagAdd">+ Tag</button></div>
     </div>
-    <div class="pf-block">
+    ${window.PW&&PW.aktiv()?PW.notizBlockHTML(nm):`<div class="pf-block">
       <div class="pf-block-h">Notiz zum Prüfer</div>
       <div class="mic-wrap"><textarea id="pfNote" rows="4" placeholder="Eigene Beobachtungen zu ${esc(nm)} …">${esc(pd.notiz||"")}</textarea>${micIcon()}</div>
       <div class="pf-note-hint" id="noteHint" hidden>Gespeichert ✓</div>
-    </div>
+    </div>`}
     <div style="display:flex;gap:9px;">
-      <button class="pf-rename" id="renamePruefer">Umbenennen / zusammenführen</button>
-      <button class="pf-del" id="delPruefer" style="flex:0;white-space:nowrap;">Löschen</button>
+      ${!window.PW||PW.darfLoeschen(nm)?`<button class="pf-rename" id="renamePruefer">Umbenennen / zusammenführen</button>`:""}
+      ${!window.PW||PW.darfLoeschen(nm)?`<button class="pf-del" id="delPruefer" style="flex:0;white-space:nowrap;">Löschen</button>`:""}
     </div>`;
   view.innerHTML=`<div class="view-inner view-read fade-up">
     <div class="back-row"><button class="back-btn" id="backBtn">${ICN.back} Alle Prüfer</button></div>
@@ -16784,6 +16861,7 @@ function routePrueferAkte(nm){
   $("#backBtn").addEventListener("click",()=>{ _pfTab="schueler"; routePrueferListe(); });
   document.querySelectorAll("[data-pftab]").forEach(b=>b.addEventListener("click",()=>{ _pfTab=b.dataset.pftab; routePrueferAkte(nm); }));
   document.querySelectorAll(".pf-exam-btn").forEach(b=>b.addEventListener("click",()=>{ const sid=b.dataset.sid; if(sid&&DB.students.find(x=>x.id===sid))routeDetail(sid); else toast("Schüler nicht mehr vorhanden"); }));
+  if(window.PW&&PW.aktiv())PW.bindeNotizBlock(nm,()=>routePrueferAkte(nm)); // K5: gemeinsame Notizen mit Verfasser
   // Notiz: speichern bei Eingabe (debounced)
   const ta=$("#pfNote");
   if(ta){ let noteT=null; ta.addEventListener("input",()=>{ clearTimeout(noteT); noteT=setTimeout(()=>{ pd.notiz=ta.value.trim(); save(); const h=$("#noteHint"); if(h){h.hidden=false;setTimeout(()=>h.hidden=true,1400);} },500); }); }
@@ -16791,8 +16869,8 @@ function routePrueferAkte(nm){
   const ta2=$("#tagAdd"); if(ta2)ta2.addEventListener("click",()=>openTagSheet(nm));
   document.querySelectorAll(".pf-route-x").forEach(b=>b.addEventListener("click",()=>{ pd.routen.splice(+b.dataset.rx,1); save(); routePrueferAkte(nm); }));
   const ar=$("#addRoute"); if(ar)ar.addEventListener("click",()=>openRouteSheet(nm));
-  const dp=$("#delPruefer"); if(dp)dp.addEventListener("click",()=>{ if(confirm(`Prüfer „${nm}" wirklich löschen? Die Prüfungs-Historie bleibt erhalten.`)){ delete DB.prueferData[nm]; DB.pruefer=DB.pruefer.filter(x=>x!==nm); save(); routePrueferListe(); } });
-  const rp=$("#renamePruefer"); if(rp)rp.addEventListener("click",()=>{ const neu=(prompt("Neuer Name für „"+nm+"\"\n\nWenn der Name bereits existiert, werden beide Prüfer (samt Prüfungen) zusammengeführt.",nm)||"").trim(); if(!neu||neu===nm)return; mergePruefer(nm,neu); });
+  const dp=$("#delPruefer"); if(dp)dp.addEventListener("click",async()=>{ if(confirm(`Prüfer „${nm}" wirklich löschen? Die Prüfungs-Historie bleibt erhalten.`)){ if(window.PW&&PW.aktiv()&&!(await PW.loeschen(nm))){ toast("Nicht gelöscht – bitte mit Internet nochmal"); return; } delete DB.prueferData[nm]; DB.pruefer=DB.pruefer.filter(x=>x!==nm); save(); routePrueferListe(); } });
+  const rp=$("#renamePruefer"); if(rp)rp.addEventListener("click",async()=>{ const neu=(prompt("Neuer Name für „"+nm+"\"\n\nWenn der Name bereits existiert, werden beide Prüfer (samt Prüfungen) zusammengeführt.",nm)||"").trim(); if(!neu||neu===nm)return; if(window.PW&&PW.aktiv()){ const r=await PW.umbenennen(nm,neu); if(r!==true){ toast(r==="keine_berechtigung"?"Umbenennen darf nur, wer ihn angelegt hat, oder das Büro.":"Nicht umbenannt – bitte mit Internet nochmal"); return; } } mergePruefer(nm,neu); });
 }
 /* Tag-Auswahl-Sheet */
 function openTagSheet(nm){
@@ -16831,6 +16909,105 @@ let _archFormFilter=[], _archColorFilter=[];
 /* K11 (🗣 22.11.2026): Zeitstrahl aller Updates in einfachen Worten. Daten in neuigkeiten.js (gemeinsam mit dem Büro). */
 function _neuListe(){ return Array.isArray(window.KOMPASS_NEU)?window.KOMPASS_NEU:[]; }
 function _neuEintrag(v){ return _neuListe().find(e=>e&&e.version===v)||null; }
+/* K3 (🗣 22.11.2026): „Mein Buchungs-QR fürs Auto“ – großer QR-Code mit dem eigenen Buchungslink (Schalter oder Automatik),
+   druckfertig (eigenes Druckblatt, nur der Code) und als Bild zum Speichern. Ohne Aufruf: eigener Link; mit slug/name:
+   ein Fahrlehrer aus der Liste der Fahrschule (Leitung/Büro). Nichts wird gespeichert außer der Getriebe-Wahl auf dem Gerät. */
+let _bqWahl=null;          // Getriebe-Wahl für den EIGENEN Code (dazu der Gerätemerker kompass-bq-typ)
+let _bqWahlFremd=null;
+// „QR“ bei den Buchungslinks: große Seite mit genau diesem Getriebe öffnen (eigener oder fremder Code)
+function _bqOeffnen(slug,name,typ){
+  const eigen=!!(_authProfile&&_authProfile.slug&&_authProfile.slug===slug);
+  if(eigen){ _bqWahl=typ; try{ localStorage.setItem("kompass-bq-typ",typ); }catch(e){} routeBuchungsQR(); }
+  else { _bqWahlFremd={slug,typ}; routeBuchungsQR(slug,name); }
+}     // {slug,typ}: Wahl für den Code eines anderen Fahrlehrers (Leitung/Büro), getrennt vom eigenen
+function _bqStandardTyp(){
+  try{ const m=localStorage.getItem("kompass-bq-typ"); if(m==="schalt"||m==="automatik")return m; }catch(e){}
+  const fz=((typeof DB!=="undefined"&&DB&&DB.workCfg&&DB.workCfg.fahrzeuge)||[]).filter(f=>f&&f.typ);
+  return fz.length&&fz.every(f=>f.typ==="automatik")?"automatik":"schalt";
+}
+function _bqLink(slug,typ){ return `${BUCHUNG_BASE_URL}?typ=${typ==="automatik"?"automatik":"schalt"}&lehrer=${encodeURIComponent(slug)}`; }
+function routeBuchungsQR(slug,name){
+  const eigen=!slug;
+  if(eigen){ slug=_authProfile&&_authProfile.slug; name=(_authProfile&&(_authProfile.name||""))||""; }
+  $("#tbTitle").textContent="Buchungs-QR"; setFab(false); view.scrollTop=0;
+  if(!slug){
+    view.innerHTML=`<div class="view-inner view-read fade-up">
+      <p class="muted-p">Für dich ist noch kein Buchungslink eingerichtet. Er wird in der Verwaltung der Fahrschule eingerichtet.</p></div>`;
+    return;
+  }
+  // Eigener Code: gemerkte Wahl bzw. eigene Fahrzeuge. Fremder Code: nur die Wahl für genau diesen Fahrlehrer, sonst Schalter.
+  const typ=eigen?(_bqWahl||_bqStandardTyp()):((_bqWahlFremd&&_bqWahlFremd.slug===slug&&_bqWahlFremd.typ)||"schalt");
+  const link=_bqLink(slug,typ);
+  let bildUrl=null; try{ bildUrl=qrBild(link,640); }catch(e){ bildUrl=null; } // sehr langer Link passt nicht in einen QR-Code
+  view.innerHTML=`<div class="view-inner view-read fade-up bq-seite">
+    <p class="muted-p bq-intro" style="margin:0 0 12px;">${eigen?"Schüler scannen ihn und buchen bei dir.":`Code${name?` von ${esc(name)}`:""}: Schüler scannen ihn und buchen dort.`}</p>
+    <div class="bq-wahl" role="group" aria-label="Getriebe">
+      <button type="button" class="bq-w${typ==="schalt"?" on":""}" data-bqtyp="schalt" aria-pressed="${typ==="schalt"}">Schalter</button>
+      <button type="button" class="bq-w${typ==="automatik"?" on":""}" data-bqtyp="automatik" aria-pressed="${typ==="automatik"}">Automatik</button>
+    </div>
+    <div class="bq-karte">
+      <div class="bq-titel">Fahrstunde buchen</div>
+      ${bildUrl?`<img class="bq-bild" src="${bildUrl}" alt="QR-Code: Fahrstunde buchen, ${typ==="automatik"?"Automatik":"Schalter"}">`:`<p class="bq-zulang">Dieser Link ist zu lang für einen QR-Code. Bitte den Link unten kopieren und weitergeben.</p>`}
+      <div class="bq-unter">${typ==="automatik"?"Automatik":"Schalter"}${name?` · ${esc(name)}`:""}</div>
+    </div>
+    <div class="bq-knoepfe">
+      <button type="button" class="btn btn-primary" id="bqDrucken">Drucken</button>
+      <button type="button" class="btn btn-ghost" id="bqBild">Bild speichern</button>
+      <button type="button" class="btn btn-ghost" id="bqKopieren">Link kopieren</button>
+    </div>
+    <p class="bq-link">${esc(link)}</p>
+  </div>`;
+  view.querySelectorAll("[data-bqtyp]").forEach(b=>b.addEventListener("click",()=>{
+    if(eigen){ _bqWahl=b.dataset.bqtyp; try{ localStorage.setItem("kompass-bq-typ",_bqWahl); }catch(e){} }
+    else _bqWahlFremd={slug,typ:b.dataset.bqtyp};
+    if(eigen)routeBuchungsQR(); else routeBuchungsQR(slug,name); // gleicher Aufruf wie vorher: Seite bleibt an der Stelle (K4)
+  }));
+  $("#bqKopieren").addEventListener("click",()=>{
+    const fertig=()=>toast("Link kopiert ✓");
+    try{ navigator.clipboard.writeText(link).then(fertig).catch(()=>toast("Kopieren ging nicht – Link steht unten zum Markieren")); }catch(e){ toast("Kopieren ging nicht – Link steht unten zum Markieren"); }
+  });
+  $("#bqBild").addEventListener("click",()=>{
+    try{
+      const url=_bqBildDatei(link,typ,name);
+      const a=document.createElement("a"); a.href=url; a.download=`Buchungs-QR-${typ==="automatik"?"Automatik":"Schalter"}.png`;
+      document.body.appendChild(a); a.click(); a.remove(); toast("Bild gespeichert ✓");
+    }catch(e){ toast("Bild speichern ging nicht"); }
+  });
+  if(!bildUrl){ ["bqDrucken","bqBild"].forEach(id=>{ const k=document.getElementById(id); if(k)k.disabled=true; }); }
+  $("#bqDrucken").addEventListener("click",()=>_bqDrucken(link,typ,name));
+}
+// Bild zum Speichern: weißes Blatt mit Überschrift, großem Code und Getriebe (gut lesbar hinter der Scheibe)
+function _bqBildDatei(link,typ,name){
+  const c=document.createElement("canvas"); c.width=1200; c.height=1500; const x=c.getContext("2d");
+  x.fillStyle="#fff"; x.fillRect(0,0,1200,1500); x.fillStyle="#111"; x.textAlign="center";
+  x.font="bold 92px system-ui, sans-serif"; x.fillText("Fahrstunde buchen",600,150);
+  x.font="48px system-ui, sans-serif"; x.fillText("QR-Code mit der Handy-Kamera scannen",600,230);
+  // Code direkt aufs Blatt zeichnen (ein geladenes Bild wäre hier noch nicht fertig)
+  const q=erzeugeQR(link,"M"), n=q.groesse, rand=4, skal=Math.floor(960/(n+rand*2)), gr=(n+rand*2)*skal, ox=Math.round((1200-gr)/2), oy=290+Math.round((960-gr)/2);
+  for(let i=0;i<n;i++)for(let j=0;j<n;j++) if(q.module[i][j])x.fillRect(ox+(j+rand)*skal,oy+(i+rand)*skal,skal,skal);
+  // Unterzeile: Schrift verkleinern, bis sie aufs Blatt passt (lange Namen)
+  const unter=(typ==="automatik"?"Automatik":"Schalter")+(name?" · "+name:""); let gr2=64;
+  do{ x.font=`bold ${gr2}px system-ui, sans-serif`; gr2-=4; }while(gr2>=28&&x.measureText(unter).width>1100);
+  x.fillText(unter,600,1360,1100);
+  return c.toDataURL("image/png");
+}
+// Drucken: eigenes Blatt nur mit dem Code (alles andere wird beim Drucken ausgeblendet), danach wieder weg
+let _bqDruckWeg=null;
+function _bqDrucken(link,typ,name){
+  if(_bqDruckWeg)_bqDruckWeg(); // vorigen Druck sauber aufräumen (mehrfach getippt)
+  document.getElementById("bqDruck")?.remove();
+  const d=document.createElement("div"); d.id="bqDruck";
+  d.innerHTML=`<div class="bqd-titel">Fahrstunde buchen</div><div class="bqd-zeile">QR-Code mit der Handy-Kamera scannen</div>
+    <img src="${qrBild(link,900)}" alt=""><div class="bqd-typ">${typ==="automatik"?"Automatik":"Schalter"}${name?` · ${esc(name)}`:""}</div>`;
+  document.body.appendChild(d); document.body.classList.add("bq-drucken");
+  let uhr=null;
+  const weg=()=>{ if(d.isConnected){ document.body.classList.remove("bq-drucken"); d.remove(); } window.removeEventListener("afterprint",weg); clearTimeout(uhr); if(_bqDruckWeg===weg)_bqDruckWeg=null; };
+  _bqDruckWeg=weg;
+  window.addEventListener("afterprint",weg);
+  const los=()=>{ if(!d.isConnected)return; /* schon von einem neueren Druck ersetzt */ try{ window.print(); }catch(e){ weg(); toast("Drucken ging nicht – bitte „Bild speichern“ nutzen"); } uhr=setTimeout(weg,60000); };
+  const bild=d.querySelector("img"); // erst drucken, wenn das Bild fertig ist (sonst bleibt es auf manchen Handys leer)
+  Promise.resolve(bild&&bild.decode?bild.decode().catch(()=>{}):null).then(()=>setTimeout(los,60));
+}
 function routeNeuigkeiten(){
   $("#tbTitle").textContent="Neuigkeiten"; setFab(false); view.scrollTop=0;
   const liste=_neuListe();
@@ -17540,6 +17717,50 @@ function setSplashQuote(){ const q=SPLASH_QUOTES[Math.floor(Math.random()*SPLASH
    dieser hier sitzt fest oben links in der Kopfleiste und gilt überall. */
 let _navStack=[];
 let _navFahrt=false;   // true, solange ein Zurueck-Sprung laeuft (verhindert Endlosschleife)
+/* K4: woher kam der letzte Tipp? innen = Seite oder Fenster; außen = Reiterleiste, Menü, Kopfleiste */
+let _letzterKlick=null;
+document.addEventListener("click",e=>{ try{ const t=e.target; _letzterKlick={t:Date.now(),innen:!!(t&&t.closest&&t.closest("#view, #sheet, .sheet"))}; }catch(err){} },true);
+/* K2 (🗣 22.11.2026): Beim Auf- und Zuklappen bleibt die angetippte Überschrift ruhig an ihrem Platz, auch wenn
+   darüber gleichzeitig ein anderer Bereich zuklappt (vorher flog sie aus dem Bild). Lag sie oben außerhalb, rückt
+   sie an den oberen Rand. Gilt für alle Klapp-Bereiche der App (.acc-h, .facc-h) in der Seite. */
+function _klappAnker(h){
+  const vw=document.getElementById("view"); if(!vw||!h||!vw.contains(h))return;
+  const oben=()=>h.getBoundingClientRect().top-vw.getBoundingClientRect().top;
+  const y0=oben(), start=y0<0?8:y0;
+  // Ein neuer Tipp beendet einen noch laufenden Ausgleich; danach immer die Browser-Automatik wieder einschalten
+  const lauf=(_klappAnker.lauf=(_klappAnker.lauf||0)+1);
+  vw.style.overflowAnchor="none"; // eigener Ausgleich statt Browser-Automatik
+  let ende=start, t0=0;
+  // Erst im nächsten Bild steht fest, was auf- und zuklappt: dann ausrechnen, wie weit sich alles darüber verschiebt.
+  // Reicht der Platz nach oben nicht (Seite schon ganz oben), gleitet die Überschrift gleichmäßig an ihr Ziel statt zu springen.
+  const messen=()=>{
+    let verschiebung=0;
+    vw.querySelectorAll(".acc, .facc-sec").forEach(acc=>{
+      if(acc.contains(h))return;
+      const body=acc.querySelector(":scope > .acc-body, :scope > .facc-body"); if(!body)return;
+      if(body.getBoundingClientRect().top>=h.getBoundingClientRect().top)return; // nur was darüber liegt
+      const inner=body.firstElementChild; const jetzt=body.getBoundingClientRect().height;
+      const facc=body.classList.contains("facc-body");
+      const soll=acc.classList.contains("open")?(facc?Math.min(body.scrollHeight,640):(inner?inner.scrollHeight:jetzt)):0;
+      verschiebung+=soll-jetzt;
+    });
+    const platz=vw.scrollTop+(y0-start)+verschiebung; // Scrollstand, der nötig wäre, um die Überschrift am Ziel zu halten
+    ende=platz<0?start+platz:start;
+  };
+  const dauer=320, glatt=x=>x*x*(3-2*x);
+  // Wischt der Nutzer selbst, hört der Ausgleich sofort auf (nicht gegen den Finger arbeiten)
+  let stopp=false; const halt=()=>{ stopp=true; };
+  ["touchstart","wheel"].forEach(ev=>vw.addEventListener(ev,halt,{passive:true,once:true}));
+  const fertig=()=>{ if(_klappAnker.lauf===lauf)vw.style.overflowAnchor=""; ["touchstart","wheel"].forEach(ev=>vw.removeEventListener(ev,halt)); };
+  const schritt=(t)=>{ if(!h.isConnected||stopp||_klappAnker.lauf!==lauf){ fertig(); return; }
+    if(!t0){ t0=t; messen(); }
+    const p=Math.min(1,(t-t0)/dauer), ziel=start+(ende-start)*glatt(p);
+    const d=oben()-ziel; if(Math.abs(d)>=1)vw.scrollTop+=d;
+    if(t-t0<dauer+200)requestAnimationFrame(schritt); else fertig(); };
+  requestAnimationFrame(schritt);
+}
+(function(){ const vw=document.getElementById("view"); if(!vw)return;
+  vw.addEventListener("click",e=>{ const h=e.target&&e.target.closest&&e.target.closest(".acc-h, .facc-h"); if(h)_klappAnker(h); },true); })();
 const _NAV_MAX=25;
 
 function _navAktualisiereKnopf(){
@@ -17617,6 +17838,7 @@ function _seite2Markieren(name){
         let args=Array.prototype.slice.call(arguments);
         // Kalender ohne Angaben: den Zustand (Ansicht, Tag) merken, damit Zurück genau dorthin führt
         if(name==="routeKalender"&&!args.length)args=[_calView,_calDate||todayISO()];
+        let gleichSeite=false;
         if(!_navFahrt){
           _zurueckSperreNachholen();
           const letzte=_navStack[_navStack.length-1];
@@ -17624,15 +17846,23 @@ function _seite2Markieren(name){
           try{ gleich=!!letzte&&letzte.name===name&&JSON.stringify(letzte.args)===JSON.stringify(args); }catch(e){}
           // Dieselbe Ansicht erneut aufrufen (z.B. nach dem Speichern) erzeugt keinen
           // neuen Eintrag - sonst muesste man mehrfach zurueck fuer einen Schritt.
+          gleichSeite=gleich;
           if(gleich)_navStack[_navStack.length-1]={name,fn:orig,args};
           else{ _navStack.push({name,fn:orig,args}); if(_navStack.length>_NAV_MAX)_navStack.shift(); }
         }
+        // K4 (🗣 22.11.2026): Zeichnet sich dieselbe Seite neu (Schalter, Speichern, Abgleich), bleibt man an derselben Stelle.
+        // Nur ein Tipp auf Reiter, Menü oder Kopfleiste (bewusst „diese Seite neu“) darf nach oben führen.
+        let haltY=null;
+        try{ const vw=document.getElementById("view"); const aussen=_letzterKlick&&Date.now()-_letzterKlick.t<1500&&!_letzterKlick.innen;
+          // Der Kalender hält seine Stelle selbst (K3: _calY, „Heute“ springt zur Jetzt-Linie) – hier nicht überschreiben
+          if(gleichSeite&&vw&&!aussen&&name!=="routeKalender")haltY={y:vw.scrollTop,titel:($("#tbTitle")&&$("#tbTitle").textContent)||""}; }catch(e){}
         const vorher=_seite2Zaehler;
         if(_notizSofort){ const f=_notizSofort; _notizSofort=null; try{ f(); }catch(e){} }
         _seiteGeaendert=false; _seiteZurueckFn=null;
         const r=orig.apply(this,name==="routeKalender"?args:arguments);
         // Hat die Seite intern auf eine andere Seite umgeleitet (z. B. Akte ohne Schüler → Liste), gilt deren Merkmal
         if(_seite2Zaehler===vorher)_seite2Markieren(name);
+        if(haltY){ const vw=document.getElementById("view"); const t=($("#tbTitle")&&$("#tbTitle").textContent)||""; if(vw&&t===haltY.titel)vw.scrollTop=haltY.y; }
         _navAktualisiereKnopf();
         return r;
       };
@@ -17679,6 +17909,7 @@ routeDashboard();
   });
 })();
 </script>
+<script src="pruefer-wissen.js"></script>
 <script src="schueler-ueberblick.js"></script>
 <script>
 /* Redesign v2: markiert nur den aktiven Tab anhand des Seitentitels — reine Anzeige, keine Logik. */

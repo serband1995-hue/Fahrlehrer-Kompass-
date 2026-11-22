@@ -159,6 +159,23 @@ for (const R of ROLLEN) {
         return null;
       }, R.eigen));
     }
+    // K3 (22.11.2026): Menüpunkt „Buchungs-QR fürs Auto“ nur mit eigenem Buchungslink und nur in der eigenen Ansicht
+    // (Fahrlehrer, fahrende Leitung, Super-Admin); Leitung ohne Fahren und Büro haben ihn nie.
+    await maskeWeg();
+    const bq = await page.evaluate(() => {
+      document.getElementById("bueroNotizPopup")?.remove();
+      const blick = () => { openDrawer(); const b = [...document.querySelectorAll('#drawer [data-nav="buchqr"]')].filter((x) => getComputedStyle(x).display !== "none" && x.getBoundingClientRect().height > 0).length; closeDrawer(); return b; };
+      const alt = _authProfile.slug; _authProfile.slug = null; const ohne = blick();
+      _authProfile.slug = "ich-muster"; const mit = blick(); _authProfile.slug = alt;
+      return { ohne, mit };
+    });
+    await pruefe("R9", `${P} Menüpunkt „Buchungs-QR fürs Auto“: ohne Buchungslink weg, mit Link ${R.eigen ? "sichtbar" : "nicht da"}`, () => {
+      const f = [];
+      if (bq.ohne) f.push("ohne Link sichtbar");
+      if (R.eigen && bq.mit !== 1) f.push(`mit Link ${bq.mit}× sichtbar statt 1×`);
+      if (!R.eigen && bq.mit) f.push("mit Link sichtbar, obwohl Gesamtansicht");
+      return f.length ? f : null;
+    });
     // Leitung, die selbst fährt: Streifen oben wechselt per Tipp in die ganze Fahrschule und zurück
     if (R.prof.faehrt_selbst) {
       await maskeWeg();
