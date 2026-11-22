@@ -228,7 +228,7 @@ function klappWieder(ziel, m) {
    des Browsers/Handys führen genau dorthin zurück. Der Knopf erscheint, sobald es eine vorige Seite gibt. */
 // Jede Seite im Browser-Verlauf trägt eine laufende Nummer (history.state.buNr). So erkennt der Verlauf ein echtes Zurück
 // sicher – auch wenn Filter/Suche die Adresse ändern (replaceState) oder man über das Menü auf eine frühere Seite tippt.
-const buVerlauf = []; let buNrZaehler = 0;
+const buVerlauf = []; let buNrZaehler = 0; let buKalenderZuletzt = "";
 const _buReplace = history.replaceState.bind(history), _buPush = history.pushState.bind(history);
 function buNr() { return history.state && typeof history.state.buNr === "number" ? history.state.buNr : null; }
 function buNeuerEintrag() {
@@ -266,7 +266,11 @@ window.addEventListener("hashchange", () => {
     // Startseite ohne Adresse („“) und „#heute“ sind dieselbe Seite: dann keine neue Seite, sonst führte Zurück auf dieselbe
     const norm = (h) => (h && h !== "#" ? h : "#" + BEREICHE[0].id);
     if (alt && norm(alt.hash) === norm(location.hash)) { try { _buReplace(Object.assign({}, history.state || {}, { buNr: alt.nr }), "", location.href); } catch (e) {} alt.hash = location.hash; ziel = null; }
-    else buNeuerEintrag(); // neue Seite (Menü, Link)
+    else {
+      // Kalender über das Menü: mit dem zuletzt gezeigten Tag/Monat weiter (Blättern ist keine eigene Seite)
+      if (location.hash === "#kalender" && buKalenderZuletzt) { try { _buReplace(history.state, "", "#kalender?" + buKalenderZuletzt); } catch (e) {} }
+      buNeuerEintrag(); // neue Seite (Menü, Link)
+    }
   }
   zeichne(); $("ansicht").focus({ preventScroll: true });
   menueOffen(false); // immer zu, auch wenn das Gerät inzwischen gedreht wurde (am PC ohne sichtbare Wirkung)
@@ -1393,8 +1397,10 @@ function setzeFilter(bereich, werte, neuerEintrag) {
   const p = new URLSearchParams((location.hash.split("?")[1]) || "");
   for (const [k, v] of Object.entries(werte)) { if (v) p.set(k, v); else p.delete(k); }
   const q = p.toString();
-  // Blättern (←/→) legt einen Eintrag im Verlauf an, damit „Zurück“ im Browser den vorigen Tag/Monat zeigt
-  history[neuerEintrag ? "pushState" : "replaceState"](null, "", "#" + bereich + (q ? "?" + q : ""));
+  // K10 (🗣 22.11.): Blättern (←/→) ist keine neue Seite – Adresse nur ersetzen. „‹ Zurück“ und die Zurück-Taste führen
+  // sofort zum vorigen Bereich; kommt man wieder, zeigt der Kalender den zuletzt gezeigten Tag/Monat.
+  history.replaceState(null, "", "#" + bereich + (q ? "?" + q : ""));
+  if (bereich === "kalender") buKalenderZuletzt = q; // beim Wiederkommen über das Menü denselben Tag/Monat zeigen
   zeichne();
 }
 function bindeSchueler(ziel) {

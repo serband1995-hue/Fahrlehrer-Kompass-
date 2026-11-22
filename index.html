@@ -17856,10 +17856,13 @@ function _seite2Markieren(name){
           const letzte=_navStack[_navStack.length-1];
           let gleich=false;
           try{ gleich=!!letzte&&letzte.name===name&&JSON.stringify(letzte.args)===JSON.stringify(args); }catch(e){}
+          // K10 (🗣 Hauptsitzung 22.11.): Blättern im Kalender (Tag/Woche/Monat vor oder zurück) ist keine neue Seite.
+          // Der Eintrag wird ersetzt: Zurück führt sofort aus dem Kalender, und der Kalender kommt mit dem zuletzt gezeigten Tag wieder.
+          const kalBlaettern=!gleich&&!!letzte&&name==="routeKalender"&&letzte.name==="routeKalender"&&String(letzte.args&&letzte.args[0])===String(args[0]); // gleiche Ansicht (Woche bleibt Woche); Woche → Tag ist ein Schritt tiefer = neue Seite
           // Dieselbe Ansicht erneut aufrufen (z.B. nach dem Speichern) erzeugt keinen
           // neuen Eintrag - sonst muesste man mehrfach zurueck fuer einen Schritt.
           gleichSeite=gleich;
-          if(gleich)_navStack[_navStack.length-1]={name,fn:orig,args,y:letzte.y,titel:letzte.titel};
+          if(gleich||kalBlaettern)_navStack[_navStack.length-1]={name,fn:orig,args,y:gleich?letzte.y:0,titel:letzte.titel,agg:letzte.agg};
           else{
             // K10: Stelle der Seite merken, die man gerade verlässt – Zurück führt genau dorthin
             if(letzte){ try{ const vw=document.getElementById("view"); if(vw)letzte.y=vw.scrollTop; letzte.titel=(($("#tbTitle")&&$("#tbTitle").textContent)||"").trim(); }catch(e){} }

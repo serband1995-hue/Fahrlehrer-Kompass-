@@ -834,12 +834,12 @@ for (const [breite, hoehe] of [[1920, 1080], [1366, 768], [1024, 768]]) {
   await page.goto(page.url().split("#")[0] + "#kalender?ansicht=jahr"); await page.waitForTimeout(400);
   const farben = await page.$$eval(".j-tag", (e) => [...new Set(e.map((x) => getComputedStyle(x).backgroundColor))].length);
   if (farben < 2) fehler("Kalender Jahr: Auslastungsfarben fehlen (" + farben + " Farben)");
-  // Blättern legt Verlaufseinträge an (Zurück zeigt den vorigen Monat)
+  // K10 (🗣 22.11.): Blättern ist keine neue Seite – Zurück im Browser führt zur vorigen Seite (hier: Jahresansicht), nicht zum vorigen Monat
   await page.goto(page.url().split("#")[0] + "#kalender?ansicht=monat&tag=2026-05-15"); await page.waitForTimeout(300);
   await page.click('[data-ktag] >> nth=2'); await page.waitForTimeout(250);
   if (!/Juni 2026/.test(await page.textContent(".k-titel"))) fehler("Monat →: " + await page.textContent(".k-titel"));
   await page.goBack(); await page.waitForTimeout(300);
-  if (!/Mai 2026/.test(await page.textContent(".k-titel"))) fehler("Zurück im Browser springt nicht zum vorigen Monat: " + await page.textContent(".k-titel"));
+  if (!/ansicht=jahr/.test(await page.evaluate(() => location.hash))) fehler("Zurück im Browser nach dem Blättern führt nicht zur vorigen Seite: " + await page.evaluate(() => location.hash));
   // Druck als PDF: keine leere Zusatzseite bei kurzer Liste
   await page.goto(page.url().split("#")[0] + "#kalender?ansicht=monat"); await page.waitForTimeout(300);
   await page.emulateMedia({ media: "print" });

@@ -148,6 +148,24 @@ await pruefe("Z10", "Wechsel eigene Ansicht ↔ ganze Fahrschule: Pfeil überspr
   });
   if (r.nach !== "Kalender") return `nach Zurück „${r.nach}“ statt „Kalender“`;
 });
+await pruefe("Z11", "Kalender blättern ist keine neue Seite: Pfeil führt sofort zurück, Kalender kommt mit der zuletzt gezeigten Woche wieder; Woche → Tag bleibt ein Schritt", async () => {
+  const f = [];
+  await p.evaluate(() => { _navStack.length = 0; routeDashboard(); _calView = "woche"; _calDate = todayISO(); routeKalender(); });
+  await warte(p, 300);
+  const len0 = await p.evaluate(() => _navStack.length);
+  for (let i = 0; i < 3; i++) { await p.evaluate(() => document.getElementById("calNext").click()); await warte(p, 150); }
+  const nachBlaettern = await p.evaluate(() => ({ len: _navStack.length, datum: _calDate }));
+  if (nachBlaettern.len !== len0) f.push(`Blättern legt ${nachBlaettern.len - len0} Zurück-Einträge an`);
+  await p.click("#navBackBtn"); await warte(p, 300);
+  if ((await titel()) !== "Heute") f.push("Pfeil führt nicht sofort aus dem Kalender (" + (await titel()) + ")");
+  await p.click('#tabbar [data-tab="kalender"]'); await warte(p, 300);
+  if ((await p.evaluate(() => _calDate)) !== nachBlaettern.datum) f.push("Kalender kommt nicht mit der zuletzt gezeigten Woche");
+  // Woche → Tag (antippen) bleibt ein eigener Schritt
+  await p.evaluate(() => document.querySelector("[data-calday]")?.click()); await warte(p, 300);
+  await p.click("#navBackBtn"); await warte(p, 300);
+  if ((await p.evaluate(() => _calView)) !== "woche" || (await titel()) !== "Kalender") f.push("Tag → Zurück: nicht wieder Woche");
+  return f;
+});
 await pruefe("Z7", "App: keine JS-Fehler, kein Dialog", () => a.js);
 await a.ctx.close();
 
@@ -218,6 +236,20 @@ for (const [w, h, n] of [[360, 740, "Handy"], [1024, 768, "Tablet quer"], [1280,
     if (!(await knopf())) f.push("kein Zurück-Knopf nach Menü-Tipp");
     await q.click("#kopfZurueck"); await warte(q, 400);
     if ((await q.evaluate(() => document.body.dataset.bereich)) !== "schueler") f.push("Zurück führt zu " + (await q.evaluate(() => document.body.dataset.bereich)));
+    return f;
+  });
+  await pruefe(`B6 [${n}]`, "Büro: Kalender blättern ist keine neue Seite; „‹ Zurück“ führt sofort zum vorigen Bereich; über das Menü kommt der zuletzt gezeigte Tag", async () => {
+    const f = [];
+    await q.evaluate(() => { location.hash = "schueler"; }); await warte(q, 300);
+    await q.evaluate(() => { location.hash = "kalender"; }); await warte(q, 300);
+    const vor = await q.evaluate(() => location.hash);
+    for (let i = 0; i < 3; i++) { const ok = await q.evaluate(() => { const k = [...document.querySelectorAll("#ansicht [data-ktag]")].pop(); if (!k) return false; k.click(); return true; }); if (!ok) { f.push("kein Blätter-Knopf"); break; } await warte(q, 200); }
+    const geblaettert = await q.evaluate(() => location.hash);
+    if (geblaettert === vor) f.push("Testaufbau: Blättern ändert nichts");
+    await q.click("#kopfZurueck"); await warte(q, 400);
+    if ((await q.evaluate(() => document.body.dataset.bereich)) !== "schueler") f.push("Zurück führt zu " + (await q.evaluate(() => location.hash)));
+    await q.evaluate(() => { location.hash = "kalender"; }); await warte(q, 400);
+    if ((await q.evaluate(() => location.hash)) !== geblaettert) f.push("Menü: nicht der zuletzt gezeigte Tag (" + (await q.evaluate(() => location.hash)) + ")");
     return f;
   });
   await pruefe(`B3 [${n}]`, "Büro: keine JS-Fehler, kein Dialog", () => b.js);
