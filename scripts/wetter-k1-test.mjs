@@ -7,6 +7,7 @@
 // K1d Einstellungen: Ort ändern → gespeichert, Zwischenspeicher geleert, Hinweis ohne Knopf, kein Dialog.
 // K1e Unbekannter Ort: Hinweis, nichts geändert. K1f Ausschalten: keine Pille, keine Anfrage, Seite springt nicht.
 // K1i Abgleich-sicher (Start schreibt nichts außer Schlüssel-Wegfall). K1j Suche scheitert: kein falsches Wetter, eine Suche, 10 min Pause.
+// K1m Kein Netz bei der Ortssuche → kein falscher Hinweis.
 // K1l Ort nicht gefunden → leiser Hinweis auf „Heute“ und in den Einstellungen.
 // K1k Enter speichert, kein Netz → eigener Hinweis.
 // K1g Symbole: Bright-Sky-Symbole → bisherige Wetter-Codes. K1h 360 px: Einstellungen ohne Querscrollen, keine JS-Fehler.
@@ -190,6 +191,21 @@ await pruefe("K1l", "Ort nicht gefunden: „Heute“ zeigt leisen Hinweis, Tipp 
   await page.click("#h2Wetter"); await page.waitForTimeout(300);
   if (!(await page.$("#weatherCityInput"))) f.push("Tipp führt nicht zum Ortsfeld");
   if (!(await page.$(".wx-ort-fehlt"))) f.push("Einstellungen ohne Hinweis");
+  await page.evaluate(() => { localStorage.removeItem("serband-wetter-ort"); DB.weatherCfg = { city: "Offenbach" }; });
+  return f;
+});
+
+await pruefe("K1m", "kein Netz bei der Ortssuche: kein falscher Hinweis „Ort prüfen“, Pille verschwindet, 10 min Pause", async () => {
+  const f = [];
+  await leereSpeicher(page);
+  await page.evaluate(() => { localStorage.removeItem("serband-wetter-ort"); DB.weatherCfg = { city: "Mainz" }; routeDashboard(); });
+  await page.waitForTimeout(700);
+  if (await page.$("#h2Wetter")) f.push("Pille bleibt: " + (await page.textContent("#h2Wetter")).replace(/\s+/g, " ").trim());
+  const m = await page.evaluate(() => JSON.parse(localStorage.getItem("serband-wetter-ort") || "null"));
+  if (!m || !m.netzTs || m.fehlTs) f.push("Merker falsch: " + JSON.stringify(m));
+  if (await page.evaluate(() => _wetterOrtFehlt())) f.push("gilt als „nicht gefunden“");
+  const v = s.anfragen.length; await page.evaluate(() => fetchWeather());
+  if (s.anfragen.length > v) f.push("neue Suche innerhalb der Pause");
   await page.evaluate(() => { localStorage.removeItem("serband-wetter-ort"); DB.weatherCfg = { city: "Offenbach" }; });
   return f;
 });

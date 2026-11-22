@@ -7746,7 +7746,7 @@ const STORE_KEY="serband-app-v1";
    Wird in den Einstellungen angezeigt + für den Update-Hinweis genutzt. */
 // K1: voreingestellter Wetter-Ort (früh definiert, weil ensureDB ihn schon beim Start braucht)
 const WETTER_START={city:"Offenbach",lat:50.1006,lon:8.7665};
-const APP_VERSION="2026.11.22.3";
+const APP_VERSION="2026.11.22.4";
 try{const f=document.getElementById("drawerFoot"); if(f)f.textContent="Fahrlehrer-Kompass · Version "+APP_VERSION;}catch(e){}
 // Nutzungsbedingungen & Haftungsausschluss (Bereich: rechtliche Absicherung) - Version hochzählen
 // und alle Nutzer müssen erneut zustimmen, sobald sich der Text inhaltlich ändert.
@@ -15489,10 +15489,12 @@ async function _wetterOrt(){
   if(_istOffenbach(cfg.city))return {lat:WETTER_START.lat,lon:WETTER_START.lon};
   const name=String(cfg.city||"").replace(/,\s*[A-Z]{2}$/,"").trim();
   try{ const m=JSON.parse(localStorage.getItem("serband-wetter-ort")||"null");
-    if(m&&m.q===name){ if(typeof m.lat==="number")return {lat:m.lat,lon:m.lon}; if(Date.now()-(m.fehlTs||0)<10*60*1000)return null; } }catch(e){}
-  if(!_wetterOrtLauf)_wetterOrtLauf=_ortSuchen(name).then(t=>{ if(t&&t.fehler)t=null;
-    try{ localStorage.setItem("serband-wetter-ort",JSON.stringify(t?{q:name,lat:t.lat,lon:t.lon}:{q:name,fehlTs:Date.now()})); }catch(e){}
-    return t?{lat:t.lat,lon:t.lon}:null;
+    if(m&&m.q===name){ if(typeof m.lat==="number")return {lat:m.lat,lon:m.lon}; if(Date.now()-(m.fehlTs||m.netzTs||0)<10*60*1000)return null; } }catch(e){}
+  // fehlTs = Ort wirklich unbekannt (dann Hinweis „Ort prüfen“); netzTs = nur keine Verbindung (kein Hinweis, nur Pause)
+  if(!_wetterOrtLauf)_wetterOrtLauf=_ortSuchen(name).then(t=>{
+    const eintrag=t&&t.fehler?{q:name,netzTs:Date.now()}:t?{q:name,lat:t.lat,lon:t.lon}:{q:name,fehlTs:Date.now()};
+    try{ localStorage.setItem("serband-wetter-ort",JSON.stringify(eintrag)); }catch(e){}
+    return t&&!t.fehler?{lat:t.lat,lon:t.lon}:null;
   }).finally(()=>{ _wetterOrtLauf=null; });
   return _wetterOrtLauf;
 }
@@ -17587,7 +17589,7 @@ function _klappAnker(h){
       const soll=acc.classList.contains("open")?(facc?Math.min(body.scrollHeight,640):(inner?inner.scrollHeight:jetzt)):0;
       verschiebung+=soll-jetzt;
     });
-    const platz=vw.scrollTop+(start-y0)+verschiebung; // so weit kann gescrollt werden, um den Platz zu halten
+    const platz=vw.scrollTop+(y0-start)+verschiebung; // Scrollstand, der nötig wäre, um die Überschrift am Ziel zu halten
     ende=platz<0?start+platz:start;
   };
   const dauer=320, glatt=x=>x*x*(3-2*x);
