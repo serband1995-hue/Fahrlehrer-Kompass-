@@ -147,7 +147,7 @@ const BEDIEN = {
   "detail": {"ids": ["akadOn", "akademieFortschrittSlot", "backBtn", "dashEmpfehlungen", "dashFormPills", "dashTheoToggle", "dashUmschreiberToggle", "delBtn", "editBtn", "pruefReifBtn", "sehhilfeBtn", "shareStandBtn", "simOn", "theoEdit", "theoFill", "theoPct", "waKontaktBtn"], "daten": ["data-akte", "data-form", "data-go"], "knoepfe": 23},
   "plan": {"ids": ["backBtn", "c_autobahn", "c_nacht", "c_ueberland", "pdfPlanBtn", "planActions", "planPrognose", "planRing", "readyForce", "readyLk", "stdGrid", "stufenWrap"], "daten": ["data-akte", "data-done", "data-faid", "data-info", "data-lz", "data-lzalle", "data-note", "data-sn", "data-std", "data-v"], "knoepfe": 323},
   "notes": {"ids": ["backBtn", "noteArea", "saveNote"], "daten": ["data-akte"], "knoepfe": 8},
-  "settings": {"ids": ["allDevicesLogoutBtn", "expBtn", "impBtn", "impFile", "qrAusgabe", "qrEingabe", "qrErzeugen", "weatherCityInput", "weatherKeyInput", "weatherSaveBtn"], "daten": ["data-vis"], "knoepfe": 23},
+  "settings": {"ids": ["allDevicesLogoutBtn", "expBtn", "impBtn", "impFile", "qrAusgabe", "qrEingabe", "qrErzeugen", "weatherCityInput", "weatherOnToggle", "weatherSaveBtn"], "daten": ["data-vis"], "knoepfe": 23},
 };
 // Text von #tbTitle und markierter Reiter unten (.tab-i.on) je Seite – muss nach dem Umbau gleich bleiben.
 const TITEL = {
@@ -274,7 +274,7 @@ async function setze(page, sz) {
     delete DB.workCfg.zeitenVorgabe;
     if (!DB.workCfg.pausen || !DB.workCfg.pausen.length) DB.workCfg.pausen = [{ days: [0, 1, 2, 3, 4], von: "12:00", bis: "12:30" }];
     // Wetter ohne Netz: aus den Zwischenspeichern (wie wetter2-test.mjs)
-    DB.weatherCfg = Object.assign({}, DB.weatherCfg, { apiKey: "erfundener-test-schluessel", city: STADT });
+    DB.weatherCfg = Object.assign({}, DB.weatherCfg, { aus: false, city: STADT });
     const stadt = DB.weatherCfg.city;
     if (sz.wetter) localStorage.setItem("serband-weather-cache", JSON.stringify({ ts: Date.now() - 60000, city: stadt, data: sz.wetter }));
     else localStorage.removeItem("serband-weather-cache");

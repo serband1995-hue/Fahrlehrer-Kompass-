@@ -4,7 +4,7 @@
 // Jeder Prüfpunkt (W0 … W10) gibt eine Zeile „ok“ oder „FEHLER“ aus. Fehlt etwas, wird der Punkt rot mit Grund, nichts stürzt ab.
 // Zeilen „info“ sind nur Messwerte (Maße, Kontrast) für den Bericht, keine Prüfung.
 // Die Uhr steht fest auf Mittwoch, 14.10.2026, 10:30 Uhr (Europe/Berlin).
-// Nur erfundene Testdaten. Keine Datenbank und kein Wetterdienst: alle Fremdanfragen (auch api.openweathermap.org) sind blockiert,
+// Nur erfundene Testdaten. Keine Datenbank und kein Wetterdienst: alle Fremdanfragen (auch api.brightsky.dev) sind blockiert,
 // getSupa() ist eine Attrappe. Das Wetter kommt aus dem Zwischenspeicher „serband-weather-cache“ (so wie fetchWeather() ihn liest).
 // Aufruf:  NODE_PATH=$(npm root -g) node scripts/wetter-test.mjs
 // Optional: KOMPASS_ROOT=/pfad/zur/kopie (anderer Stand), WETTER_SCHNELL=1 (W10: die anderen Tests nicht mitlaufen lassen).
@@ -83,7 +83,7 @@ function basisSzenario() {
       { id: "WL1", date: TAG, von: "10:00", bis: "11:30", sid: "w1" },   // läuft gerade (10:30)
       { id: "WL2", date: TAG, von: "13:30", bis: "15:00", sid: "w2" },
     ],
-    // apiKey: Schlüssel gesetzt? wetter: Inhalt des Zwischenspeichers (null = kein Speicher), alt: Speicher älter als 30 min
+    // apiKey: Wetter eingeschaltet (seit K1 ohne Schlüssel; false = in den Einstellungen ausgeschaltet)? wetter: Inhalt des Zwischenspeichers (null = kein Speicher), alt: Speicher älter als 30 min
     apiKey: true,
     wetter: wetterVon("01d"),
     alt: false,
@@ -133,7 +133,7 @@ async function setze(page, sz, route = "routeDashboard()") {
     localStorage.setItem("serband-backup-stamp", String(Date.now()));
     localStorage.removeItem("kompass-fahrstunde");
     localStorage.removeItem("serband-weather-forecast-cache");
-    DB.weatherCfg = Object.assign({}, DB.weatherCfg, { apiKey: sz.apiKey ? "erfundener-test-schluessel" : "", city: STADT });
+    DB.weatherCfg = Object.assign({}, DB.weatherCfg, { aus: !sz.apiKey, city: STADT });
     if (sz.wetter) localStorage.setItem("serband-weather-cache", JSON.stringify({ ts: Date.now() - (sz.alt ? 35 * 60000 : 60000), city: STADT, data: sz.wetter }));
     else localStorage.removeItem("serband-weather-cache");
     localStorage.setItem(THEME_KEY, sz.theme || "light"); applyTheme();
@@ -203,11 +203,11 @@ await pruefe("W0b", "Testaufbau: fetchWeather() liefert die erfundenen Daten aus
   const w = await page.evaluate(() => fetchWeather());
   const f = [];
   if (!w || w.icon !== "01d" || w.temp !== 14) f.push(`fetchWeather() = ${JSON.stringify(w)}`);
-  const ow = haupt.anfragen.slice(vorher).filter((u) => /openweathermap/i.test(u));
+  const ow = haupt.anfragen.slice(vorher).filter((u) => /brightsky|openweathermap|nominatim/i.test(u));
   if (ow.length) f.push(`${ow.length} Anfrage(n) an den Wetterdienst`);
   return f;
 });
-await pruefe("W0c", "bleibt: Heute (.heute2) mit Pille #h2Wetter, wenn Schlüssel + Daten da sind", async () => {
+await pruefe("W0c", "bleibt: Heute (.heute2) mit Pille #h2Wetter, wenn Wetter an + Daten da sind", async () => {
   const f = [];
   if ((await titel(page)) !== "Heute") f.push(`Titel „${await titel(page)}“`);
   if (!(await da(page, "#view .heute2"))) f.push("kein .heute2");
@@ -377,18 +377,18 @@ await pruefe("W7b", "Zurück aus „Wetter“ führt nach „Heute“ (Knopf in 
 });
 
 // ----- W8 bleibt -----
-await pruefe("W8a", "bleibt: ohne Schlüssel keine Pille und keine Anfrage an den Wetterdienst", async () => {
+await pruefe("W8a", "bleibt: Wetter ausgeschaltet → keine Pille und keine Anfrage an den Wetterdienst", async () => {
   const vorher = haupt.anfragen.length;
   await setze(page, { ...basisSzenario(), apiKey: false });
   await page.waitForTimeout(400);
   const f = [];
   if (!(await da(page, "#view .heute2"))) f.push("kein .heute2");
   if (await da(page, "#view #h2Wetter, #view .h2-wetter")) f.push("Pille trotzdem da");
-  const ow = haupt.anfragen.slice(vorher).filter((u) => /openweathermap/i.test(u));
+  const ow = haupt.anfragen.slice(vorher).filter((u) => /brightsky|openweathermap|nominatim/i.test(u));
   if (ow.length) f.push(`${ow.length} Wetter-Anfrage(n)`);
   return f;
 });
-await pruefe("W8b", "bleibt: Schlüssel, aber keine Daten (kein bzw. veralteter Zwischenspeicher, Netz blockiert) → Pille verschwindet ohne JS-Fehler", async () => {
+await pruefe("W8b", "bleibt: Wetter an, aber keine Daten (kein bzw. veralteter Zwischenspeicher, Netz blockiert) → Pille verschwindet ohne JS-Fehler", async () => {
   const f = [];
   for (const [n, sz] of [["kein Speicher", { wetter: null }], ["Speicher 35 min alt", { alt: true }]]) {
     const vorher = haupt.jsFehler.length;
@@ -400,11 +400,11 @@ await pruefe("W8b", "bleibt: Schlüssel, aber keine Daten (kein bzw. veralteter 
   }
   return f;
 });
-await pruefe("W8c", "bleibt: Einstellungen haben #weatherKeyInput und #weatherCityInput", async () => {
+await pruefe("W8c", "bleibt: Einstellungen haben #weatherOnToggle und #weatherCityInput (K1: kein Schlüssel-Feld mehr)", async () => {
   await setze(page, basisSzenario(), "_settingsAccOpen='app'; routeSettings()");
   await page.waitForTimeout(300);
   const f = [];
-  for (const id of ["weatherKeyInput", "weatherCityInput"]) if (!(await da(page, `#view #${id}`))) f.push(`#${id} fehlt`);
+  for (const id of ["weatherOnToggle", "weatherCityInput"]) if (!(await da(page, `#view #${id}`))) f.push(`#${id} fehlt`);
   return f;
 });
 await pruefe("W8d", "bleibt: routeWetter(w) zeigt „Wetter“ (.wx-screen, Temperatur) ohne JS-Fehler für alle Icons", async () => {

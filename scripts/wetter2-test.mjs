@@ -4,7 +4,7 @@
 // Jeder Prüfpunkt (V0 … V10) gibt eine Zeile „ok“ oder „FEHLER“ aus. Fehlt etwas, wird der Punkt rot mit Grund, nichts stürzt ab.
 // Zeilen „info“ sind nur Messwerte (Maße, Kontrast, Animationen) für den Bericht, keine Prüfung.
 // Die Uhr steht fest auf Mittwoch, 14.10.2026, 10:30 Uhr (Europe/Berlin).
-// Nur erfundene Testdaten. Keine Datenbank und kein Wetterdienst: alle Fremdanfragen (auch api.openweathermap.org) sind blockiert,
+// Nur erfundene Testdaten. Keine Datenbank und kein Wetterdienst: alle Fremdanfragen (auch api.brightsky.dev) sind blockiert,
 // getSupa() ist eine Attrappe. Das Wetter kommt aus den Zwischenspeichern „serband-weather-cache“ ({ts,city,data:{temp,desc,icon}})
 // und „serband-weather-forecast-cache“ ({ts,city,data:[{date,min,max,icon}]}); city ist immer DB.weatherCfg.city.
 // Die Vorschau speichert die App mit zweistelligem Icon-Code („10“, ohne d/n) – so legt auch dieser Test sie ab.
@@ -130,7 +130,7 @@ async function setze(page, sz, route = "routeDashboard()") {
     try { _schuelerFristen = {}; _bueroNotizen = {}; } catch (e) {}
     localStorage.setItem("serband-backup-stamp", String(Date.now()));
     localStorage.removeItem("kompass-fahrstunde");
-    DB.weatherCfg = Object.assign({}, DB.weatherCfg, { apiKey: sz.apiKey ? "erfundener-test-schluessel" : "", city: STADT });
+    DB.weatherCfg = Object.assign({}, DB.weatherCfg, { aus: !sz.apiKey, city: STADT });
     const stadt = DB.weatherCfg.city;
     if (sz.wetter) localStorage.setItem("serband-weather-cache", JSON.stringify({ ts: Date.now() - 60000, city: stadt, data: sz.wetter }));
     else localStorage.removeItem("serband-weather-cache");
@@ -250,7 +250,7 @@ await pruefe("V0b", "Testaufbau: fetchWeather() und fetchWeatherForecast() liefe
   const f = [];
   if (!r.w || r.w.icon !== "01d" || r.w.temp !== 14) f.push(`fetchWeather() = ${JSON.stringify(r.w)}`);
   if (!Array.isArray(r.v) || r.v.length !== 5 || r.v[2].icon !== "10") f.push(`fetchWeatherForecast() = ${JSON.stringify(r.v)}`);
-  const ow = haupt.anfragen.slice(vorher).filter((u) => /openweathermap/i.test(u));
+  const ow = haupt.anfragen.slice(vorher).filter((u) => /brightsky|openweathermap|nominatim/i.test(u));
   if (ow.length) f.push(`${ow.length} Anfrage(n) an den Wetterdienst`);
   return f;
 });
@@ -573,11 +573,11 @@ await pruefe("V9b", "bleibt: ohne Vorschau-Daten (kein Speicher, Netz blockiert;
   }
   return f;
 });
-await pruefe("V9c", "bleibt: Einstellungen haben #weatherKeyInput und #weatherCityInput", async () => {
+await pruefe("V9c", "bleibt: Einstellungen haben #weatherOnToggle und #weatherCityInput (K1: kein Schlüssel-Feld mehr)", async () => {
   await setze(page, basisSzenario(), "_settingsAccOpen='app'; routeSettings()");
   await page.waitForTimeout(300);
   const f = [];
-  for (const id of ["weatherKeyInput", "weatherCityInput"]) if (!(await da(page, `#view #${id}`))) f.push(`#${id} fehlt`);
+  for (const id of ["weatherOnToggle", "weatherCityInput"]) if (!(await da(page, `#view #${id}`))) f.push(`#${id} fehlt`);
   return f;
 });
 await pruefe("V9d", "keine JS-Fehler im Hauptlauf", () => (haupt.jsFehler.length ? `${haupt.jsFehler.length} JS-Fehler, z. B. ${haupt.jsFehler[0]}` : null));

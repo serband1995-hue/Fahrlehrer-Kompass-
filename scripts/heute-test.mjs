@@ -168,10 +168,10 @@ async function setze(page, sz) {
     else if (sz.backup === "alt") localStorage.setItem("serband-backup-stamp", String(Date.now() - 10 * 86400000));
     else localStorage.removeItem("serband-backup-stamp");
     if (sz.wetter) {
-      DB.weatherCfg = Object.assign({}, DB.weatherCfg, { apiKey: "erfundener-test-schluessel", city: "Teststadt" });
+      DB.weatherCfg = Object.assign({}, DB.weatherCfg, { aus: false, city: "Teststadt" });
       localStorage.setItem("serband-weather-cache", JSON.stringify({ ts: Date.now(), city: "Teststadt", data: { temp: 17, desc: "leicht bewölkt", icon: "03d" } }));
     } else {
-      DB.weatherCfg = Object.assign({}, DB.weatherCfg, { apiKey: "", city: "Offenbach,DE" });
+      DB.weatherCfg = Object.assign({}, DB.weatherCfg, { aus: true, city: "Offenbach,DE" });
       localStorage.removeItem("serband-weather-cache");
     }
     localStorage.setItem(THEME_KEY, sz.theme || "light"); applyTheme();
@@ -708,7 +708,7 @@ await pruefe("H6d", "Wetter ohne Schlüssel: kein .h2-wetter, keine Anfrage an d
   const f = [];
   if (!h) f.push(KEIN_H2);
   if (await da(page, ".heute2 .h2-wetter")) f.push(".h2-wetter trotzdem da");
-  const w = anfragen.slice(vorher).filter((u) => /openweathermap/i.test(u));
+  const w = anfragen.slice(vorher).filter((u) => /brightsky|openweathermap|nominatim/i.test(u));
   if (w.length) f.push(`${w.length} Wetter-Anfrage(n)`);
   return f;
 });

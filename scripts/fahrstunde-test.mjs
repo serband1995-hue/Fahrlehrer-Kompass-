@@ -129,7 +129,7 @@ async function setze(page, sz) {
     DB.termine = sz.termine.map((t) => ({ id: t.id, date: t.date, plaetze: t.slots.length, slots: t.slots.slice(), von: t.von, bis: min2hm(hm2min(t.von) + PRUEF_MIN) }));
     DB.exams = []; DB.todos = [];
     Object.assign(DB.workCfg, sz.workCfg); DB.workCfg.pausen = []; DB.workCfg.fahrzeuge = JSON.parse(JSON.stringify(sz.fahrzeuge || []));
-    DB.weatherCfg = Object.assign({}, DB.weatherCfg, { apiKey: "", city: "Offenbach,DE" });
+    DB.weatherCfg = Object.assign({}, DB.weatherCfg, { aus: true, city: "Offenbach,DE" });
     try { localStorage.removeItem("serband-weather-cache"); } catch (e) {}
     try { localStorage.setItem("serband-backup-stamp", String(Date.now())); } catch (e) {}
     _schuelerFristen = {}; _bueroNotizen = {};
