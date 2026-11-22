@@ -45,7 +45,9 @@ begin
   if (new.fahrlehrer_id is distinct from old.fahrlehrer_id or new.fahrschule_id is distinct from old.fahrschule_id) then
     if not (is_super_admin(auth.uid()) or is_fahrschule_admin(auth.uid()) or is_buero(auth.uid()))
        -- K6: nur innerhalb von schueler_weitergeben und nur der Fahrlehrer, nie die Fahrschule
-       and not (coalesce(current_setting('kompass.weitergabe', true), '') = '1' and new.fahrschule_id is not distinct from old.fahrschule_id) then
+       and not (coalesce(current_setting('kompass.weitergabe', true), '') = '1' and new.fahrschule_id is not distinct from old.fahrschule_id
+                and old.fahrlehrer_id = auth.uid()
+                and exists (select 1 from public.profiles z where z.id = new.fahrlehrer_id and z.fahrschule_id = old.fahrschule_id and coalesce(z.aktiv, true))) then
       raise exception 'Nur Fahrschule-Admin, Büro oder Super-Admin dürfen Schüler verschieben.';
     end if;
   end if;
@@ -63,7 +65,9 @@ begin
   if (new.fahrlehrer_id is distinct from old.fahrlehrer_id or new.fahrschule_id is distinct from old.fahrschule_id) then
     if not (is_super_admin(auth.uid()) or is_fahrschule_admin(auth.uid()) or is_buero(auth.uid()))
        -- K6: nur innerhalb von schueler_weitergeben und nur der Fahrlehrer, nie die Fahrschule
-       and not (coalesce(current_setting('kompass.weitergabe', true), '') = '1' and new.fahrschule_id is not distinct from old.fahrschule_id) then
+       and not (coalesce(current_setting('kompass.weitergabe', true), '') = '1' and new.fahrschule_id is not distinct from old.fahrschule_id
+                and old.fahrlehrer_id = auth.uid()
+                and exists (select 1 from public.profiles z where z.id = new.fahrlehrer_id and z.fahrschule_id = old.fahrschule_id and coalesce(z.aktiv, true))) then
       raise exception 'Nur Fahrschule-Admin, Büro oder Super-Admin dürfen einen Termin einem anderen Fahrlehrer zuordnen.';
     end if;
   end if;
@@ -72,10 +76,11 @@ end;
 $function$;
 
 -- 1) Überblick
+drop function if exists public.fs_schueler_ueberblick();
 create or replace function public.fs_schueler_ueberblick()
  returns table (id text, name text, fahrlehrer_id uuid, fahrlehrer_name text, eigen boolean, stand_pct integer,
                 klasse text, form text, ausbildungsart text, vorbesitz jsonb, umschreiber boolean,
-                theorie_bestanden_am date, theorie_lektionen text[])
+                theorie_bestanden_am date, theorie_lektionen text[], lkw_weg text)
  language plpgsql
  stable
  security definer
@@ -91,13 +96,14 @@ begin
          case when (s.ausbildung->>'standPct') ~ '^-?[0-9]+(\.[0-9]+)?$' then greatest(0, least(100, round((s.ausbildung->>'standPct')::numeric)))::integer end,
          s.klasse::text, (s.ausbildung->>'form'), s.ausbildungsart::text,
          case when jsonb_typeof(to_jsonb(s.vorbesitz)) = 'array' then to_jsonb(s.vorbesitz) else '[]'::jsonb end,
-         (coalesce(s.ausbildungsart::text, '') = 'umschreibung' or coalesce((s.ausbildung->>'umschreiber')::boolean, false)),
+         (coalesce(s.ausbildungsart::text, '') = 'umschreibung' or coalesce(s.ausbildung->>'umschreiber', '') in ('true', 't', '1')),
          s.theorie_bestanden_am::date,
          coalesce((select array_agg(distinct t.lektion::text) from public.theorie_teilnahme t
-                    where t.schueler_id::text = s.id::text and t.entfernt_am is null), '{}')
+                    where t.schueler_id::text = s.id::text and t.entfernt_am is null), '{}'),
+         nullif(s.ausbildung->>'lkwWeg', '')
     from public.schueler s
     left join public.profiles p on p.id = s.fahrlehrer_id
-   where s.fahrschule_id = fs and s.status = 'aktiv'
+   where s.fahrschule_id = fs and s.status = 'aktiv' and s.inaktiv_seit is null -- archivierte nicht (wie im Büro)
    order by s.name
    limit 3000;
 end;
@@ -134,7 +140,9 @@ create or replace function public.schueler_weitergeben(p_schueler text, p_an uui
  security definer
  set search_path to 'public'
 as $function$
-declare fs uuid := k6_meine_fahrschule(); s public.schueler; ziel public.profiles; alt uuid; n integer := 0;
+declare fs uuid := k6_meine_fahrschule(); s public.schueler; ziel public.profiles; alt uuid; n integer := 0; pr text;
+  h_tag text := to_char(now() at time zone 'Europe/Berlin', 'YYYY-MM-DD');
+  h_zeit text := to_char(now() at time zone 'Europe/Berlin', 'HH24:MI');
 begin
   if fs is null or auth.uid() is null then return jsonb_build_object('fehler', 'keine_fahrschule'); end if;
   select * into s from public.schueler where id::text = p_schueler and fahrschule_id = fs and status = 'aktiv' for update;
@@ -149,14 +157,19 @@ begin
   -- Erst die künftigen Termine, dann der Schüler (wie im Büro): so landet nichts Ungefahrenes in der Übergabe-Spur
   if alt is not null then
     update public.kalender_termine set fahrlehrer_id = p_an, aktualisiert_am = now()
-     where schueler_id::text = s.id::text and fahrlehrer_id = alt and datum >= current_date and not coalesce(geloescht, false)
+     where schueler_id::text = s.id::text and fahrlehrer_id = alt and not coalesce(geloescht, false)
+       -- nur was noch nicht vorbei ist (deutsche Zeit): heute schon Gefahrenes bleibt beim bisherigen Fahrlehrer
+       and (datum::text > h_tag or (datum::text = h_tag and coalesce(nullif(bis::text, ''), '23:59') > h_zeit))
        and admin_entfernt_am is null; -- von der Leitung entfernte Termine bleiben (Trigger termin_entfernt_schutz)
     get diagnostics n = row_count;
+    -- Geplante Prüfung bleibt beim bisherigen Fahrlehrer (Ergebnis trägt er ein): Datum für den Hinweis
+    select min(k.datum::text) into pr from public.kalender_pruefungen k
+     where k.schueler_id::text = s.id::text and k.fahrlehrer_id = alt and not coalesce(k.geloescht, false) and k.datum::text >= h_tag;
   end if;
   update public.schueler set fahrlehrer_id = p_an, aktualisiert_am = now() where id = s.id;
   insert into public.schueler_verschiebungen (schueler_id, von_fahrlehrer_id, zu_fahrlehrer_id, verschoben_von, fahrschule_id)
   values (s.id, alt, p_an, auth.uid(), fs);
-  return jsonb_build_object('ok', true, 'termine', n, 'an_name', coalesce(nullif(btrim(ziel.name), ''), split_part(ziel.email, '@', 1)));
+  return jsonb_build_object('ok', true, 'termine', n, 'pruefung', pr, 'an_name', coalesce(nullif(btrim(ziel.name), ''), split_part(ziel.email, '@', 1)));
 end;
 $function$;
 revoke all on function public.schueler_weitergeben(text, uuid) from public, anon;

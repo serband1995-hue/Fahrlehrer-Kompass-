@@ -7,7 +7,7 @@ window.KOMPASS_NEU = [
   { version: "2026.11.22.7", datum: "2026-11-22", kurz: "Neu: Alle Schüler der Fahrschule im Überblick.",
     punkte: ["Unter „Schüler“ gibt es unten „Alle Schüler der Fahrschule“: Name, Fahrlehrer, Stand in Prozent und Stand Theorie.",
              "Die Akte eines Schülers öffnet nur sein eigener Fahrlehrer.",
-             "Eigene Schüler kannst du dort an einen Kollegen weitergeben. Künftige Termine gehen mit.",
+             "Eigene Schüler kannst du dort an einen Kollegen weitergeben. Künftige Termine gehen mit, heute schon Gefahrenes und eine geplante Prüfung bleiben bei dir.",
              "Zurückholen geht über das Büro."] },
   { version: "2026.11.22.6", datum: "2026-11-22", kurz: "Prüfer-Wissen jetzt für die ganze Fahrschule.",
     punkte: ["Prüfer, Strecken und Notizen sehen jetzt alle Fahrlehrer deiner Fahrschule.",

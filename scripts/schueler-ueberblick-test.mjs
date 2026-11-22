@@ -78,9 +78,10 @@ async function starte({ alteDB = false, w = 360, h = 780 } = {}) {
       if (name === "fs_kollegen") return { data: [{ id: "u-ich", name: "Ich Muster", klassen: ["B"] }, { id: "u-jelena", name: "Jelena", klassen: ["B"] }], error: null };
       if (name === "fs_schueler_ueberblick") return { data: JSON.parse(JSON.stringify(ueb)), error: null };
       if (name === "schueler_weitergeben") {
+        if (window.__weiterAntwort) return window.__weiterAntwort;
         const z = ueb.find((x) => x.id === args.p_schueler); z.eigen = false; z.fahrlehrer_id = args.p_an; z.fahrlehrer_name = "Jelena";
         window.__db.schueler_verschiebungen.push({ id: "v-1", schueler_id: args.p_schueler, von_fahrlehrer_id: "u-ich", zu_fahrlehrer_id: args.p_an, gesehen_von_alt: false, gesehen_von_neu: false });
-        return { data: { ok: true, termine: 2, an_name: "Jelena" }, error: null };
+        return { data: { ok: true, termine: 2, an_name: "Jelena", pruefung: "2026-12-03" }, error: null };
       }
       return { data: null, error: null };
     };
@@ -112,16 +113,29 @@ const breit = (page) => page.evaluate(() => { const d = document.documentElement
     return document.querySelector('[data-weiter="s-eigen"]') ? null : "eigener ohne Weitergeben";
   }));
   await pruefe("U6", "360 px: nichts ragt seitlich heraus", () => breit(page));
+  await pruefe("U8a", "Reiter „Schüler“ bleibt markiert", () => page.evaluate(() => { const b = document.querySelector('.tab-i.on'); return b && b.dataset.tab === "schueler" ? null : "markiert: " + (b && b.dataset.tab); }));
+  await pruefe("U8b", "Zurück-Stapel kennt den Überblick", () => page.evaluate(() => { const l = _navStack[_navStack.length - 1]; return l && l.name === "routeSchuelerUeberblick" ? null : "oben: " + (l && l.name); }));
   await page.click('[data-akte="s-eigen"]'); await warte(page, 400);
   await pruefe("U3", "eigener Schüler öffnet die Akte", () => page.evaluate(() => (document.getElementById("tbTitle").textContent !== "Alle Schüler" && /Eigen Muster/.test(document.getElementById("view").textContent) ? null : document.getElementById("tbTitle").textContent)));
+  await page.evaluate(() => history.back()); await warte(page, 700);
+  await pruefe("U8c", "Zurück aus der Akte führt in den Überblick", () => page.evaluate(() => (document.getElementById("tbTitle").textContent === "Alle Schüler" ? null : "Titel: " + document.getElementById("tbTitle").textContent)));
   await page.evaluate(() => SU.route()); await warte(page, 400);
+  // Fehlschlag: Fenster bleibt offen, Knöpfe wieder frei
+  await page.evaluate(() => { window.__weiterAntwort = { data: null, error: { message: "Failed to fetch" } }; });
+  await page.click('[data-weiter="s-eigen"]'); await warte(page, 500);
+  await page.click('[data-an="u-jelena"]'); await warte(page, 800);
+  await pruefe("U9", "Fehlschlag: Hinweis, Fenster bleibt offen, Knopf wieder antippbar", () => page.evaluate(() => {
+    const t = document.getElementById("toast").textContent; if (!/Nicht weitergegeben/.test(t)) return "Hinweis: " + t;
+    const b = document.querySelector('[data-an="u-jelena"]'); return b && !b.disabled ? null : (b ? "Knopf gesperrt" : "Fenster zu");
+  }));
+  await page.evaluate(() => { window.__weiterAntwort = null; if (typeof closeSheet === "function") closeSheet(); }); await warte(page, 400);
   await page.click('[data-weiter="s-eigen"]'); await warte(page, 500);
   await pruefe("U4a", "Auswahl zeigt „An Jelena“, nicht sich selbst", () => page.evaluate(() => { const t = document.getElementById("sheet").textContent; return /An Jelena/.test(t) && !/An Ich Muster/.test(t) ? null : t.slice(0, 200); }));
   await page.click('[data-an="u-jelena"]'); await warte(page, 2600);
   await pruefe("U4", "Weitergeben: Server-Funktion, kein Bestätigen-Fenster, Hinweis, Schüler weg vom Gerät", () => page.evaluate((dlg) => {
     const c = __rpc.find((x) => x.name === "schueler_weitergeben"); if (!c || c.args.p_schueler !== "s-eigen" || c.args.p_an !== "u-jelena") return "Aufruf: " + JSON.stringify(c);
     if (dlg.length) return "Fenster: " + dlg.join(" | ");
-    const t = document.getElementById("toast").textContent; if (!/ist jetzt bei Jelena/.test(t)) return "Hinweis: " + t;
+    const t = document.getElementById("toast").textContent; if (!/ist jetzt bei Jelena/.test(t) || !/Prüfung am 03\.12\.2026 bleibt bei dir/.test(t)) return "Hinweis: " + t;
     if (DB.students.some((s) => s.id === "s-eigen")) return "Schüler noch auf dem Gerät";
     const k = document.querySelector('.su-karte[data-sid="s-eigen"]'); return k && !k.querySelector("[data-weiter]") && /bei Jelena/.test(k.textContent) ? null : "Liste nicht aktualisiert";
   }, dialoge));

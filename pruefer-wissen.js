@@ -39,6 +39,8 @@
       return true;
     } catch (e) { return false; }
   }
+  /* Gerät hat seinen ganzen Stand aus der Cloud ersetzt: die Basis passt nicht mehr – beim nächsten Laden gilt der Serverstand */
+  PW.basisLeeren = function () { st.basis = {}; cacheSchreiben(); };
   PW.vergessen = function () {
     st = leer();
     try { localStorage.removeItem(CACHE); for (let i = localStorage.length - 1; i >= 0; i--) { const k = localStorage.key(i); if (k && k.indexOf("kompass-pw-hoch-") === 0) localStorage.removeItem(k); } } catch (e) {}
@@ -144,7 +146,8 @@
       await einmalHochladen();
       const g = inDBuebernehmen();
       cacheSchreiben();
-      if (g && typeof save === "function") save();
+      // Gesamtansicht: nichts speichern (dort ist der Stand nur geliehen, save() meldete sonst „Gespeichert ✓“)
+      if (g && typeof save === "function" && !(typeof _fsAgg !== "undefined" && _fsAgg)) save();
       neuZeichnen();
       return true;
     } catch (e) {
