@@ -4,6 +4,12 @@
    "kurz" (höchstens ~60 Zeichen) erscheint nach dem Update einmal als kleiner Hinweis (verschwindet von selbst, kein Knopf).
    Einfache Worte, keine Fachwörter, keine Schülerdaten. */
 window.KOMPASS_NEU = [
+  { version: "2026.11.22.3", datum: "2026-11-22", kurz: "Neu: Auf- und Zuklappen läuft jetzt ruhig.",
+    punkte: ["Beim Auf- und Zuklappen bleibt die Überschrift ruhig stehen und springt nicht mehr weg.",
+             "Wer einen Schalter umlegt oder etwas speichert, bleibt an derselben Stelle der Seite.",
+             "Im Büro bleiben aufgeklappte Listen nach dem Speichern offen.",
+             "Schalter in der App lassen sich leichter antippen.",
+             "Wird ein eigener Wetter-Ort nicht gefunden, steht auf „Heute“ ein leiser Hinweis."] },
   { version: "2026.11.22.2", datum: "2026-11-22", kurz: "Neu in der App: Wetter ohne Einrichten.",
     punkte: ["In der App ist das Wetter für Offenbach sofort da. Es kommt kostenlos vom Deutschen Wetterdienst, du musst nichts einrichten.",
              "Den Ort kannst du in der App unter Einstellungen › App › Wetter-Widget ändern, zum Beispiel auf Hanau.",

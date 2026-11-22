@@ -675,6 +675,8 @@ input,select,textarea{font-family:inherit;font-size:16px;color:var(--txt);}
 .check-toggle::after{content:"";position:absolute;left:3px;top:3px;width:25px;height:25px;border-radius:50%;
   background:var(--muted);transition:all .22s var(--pop);}
 .check-toggle.on{background:var(--gruen);border-color:var(--gruen);}
+/* K2+K4: unsichtbar größere Tippfläche (mind. 44 px hoch), der Schalter selbst sieht gleich aus */
+.check-toggle::before{content:"";position:absolute;left:-6px;right:-6px;top:-6px;bottom:-6px;}
 .check-toggle.on::after{left:23px;background:#fff;}
 .plan-sec{margin-top:22px;}
 .plan-sec-h{display:flex;align-items:baseline;gap:10px;margin-bottom:12px;}
@@ -2188,6 +2190,8 @@ body:not(.light) .heute2{--h-karte:var(--surface);--h-rand:var(--line);--h-tinte
 .h2-wetter-text{display:flex;flex-direction:column;align-items:flex-start;min-width:0;line-height:1.15;}
 .h2-wetter-d{font-size:12px;font-weight:600;color:var(--h-text2);max-width:118px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
 @media (max-width:380px){.h2-wetter{padding:5px 12px 5px 8px;gap:6px;}.h2-wetter-d{max-width:84px;}}
+/* Ort nicht gefunden: leise, aber mit gelbem Rand (Gelb = bald etwas tun) */
+.h2-wetter.h2-wetter-leise{border-color:var(--gelb);}.h2-wetter.h2-wetter-leise .h2-wetter-t{font-size:14px;}.h2-wetter.h2-wetter-leise .h2-wetter-ic{color:var(--gelb);display:flex;align-items:center;justify-content:center;}
 .h2-kopf>div:first-child{min-width:0;}
 .h2-wx{width:38px;height:38px;display:block;overflow:visible;}
 .h2-wx .wx-strahlen{animation:wxDreh 24s linear infinite;}
@@ -4146,7 +4150,7 @@ function _lokalerDatenEigentuemer() {
 // Entfernt alle personenbezogenen App-Daten vom Gerät (nicht die App-Version und Geräte-Einstellungen).
 function _lokaleNutzerdatenLoeschen() {
   ["serband-app-v1", "serband-sync-stamp", "serband-restore-stamp", "serband-session-cache", "serband-backup-stamp",
-   "serband-weather-cache", "serband-weather-forecast-cache", "serband-abgleich-v1", "serband-db-defekt", "serband-vor-import", "serband-snapbasis-v1", "serband-gefeiert", "kompass-fahrstunde", OWNER_KEY].forEach(k => {
+   "serband-weather-cache", "serband-weather-forecast-cache", "serband-wetter-ort", "serband-abgleich-v1", "serband-db-defekt", "serband-vor-import", "serband-snapbasis-v1", "serband-gefeiert", "kompass-fahrstunde", OWNER_KEY].forEach(k => {
     try { localStorage.removeItem(k); } catch (e) {}
   });
   try { sessionStorage.removeItem("vd_unlocked"); } catch (e) {}
@@ -7742,7 +7746,7 @@ const STORE_KEY="serband-app-v1";
    Wird in den Einstellungen angezeigt + für den Update-Hinweis genutzt. */
 // K1: voreingestellter Wetter-Ort (früh definiert, weil ensureDB ihn schon beim Start braucht)
 const WETTER_START={city:"Offenbach",lat:50.1006,lon:8.7665};
-const APP_VERSION="2026.11.22.2";
+const APP_VERSION="2026.11.22.3";
 try{const f=document.getElementById("drawerFoot"); if(f)f.textContent="Fahrlehrer-Kompass · Version "+APP_VERSION;}catch(e){}
 // Nutzungsbedingungen & Haftungsausschluss (Bereich: rechtliche Absicherung) - Version hochzählen
 // und alle Nutzer müssen erneut zustimmen, sobald sich der Text inhaltlich ändert.
@@ -7777,6 +7781,7 @@ const AGB_HTML=`
 <p>Wird die App von mehreren Personen einer Fahrschule genutzt (Fahrlehrer, Büro-Mitarbeiter), handelt jede Person im Rahmen ihrer eigenen beruflichen und gesetzlichen Verantwortung. Der Anbieter übernimmt keine Verantwortung für das Verhalten einzelner Nutzer untereinander oder gegenüber Dritten.</p>
 <h3>§14 Datenschutz der Fahrschülerdaten</h3>
 <p>Alle in der App erfassten Schülerdaten werden ausschließlich innerhalb der App und der zugehörigen Datenbank verarbeitet und nicht an unbeteiligte Dritte weitergegeben. Für die datenschutzrechtliche Aufklärung der Fahrschüler ist die Datenschutzerklärung der jeweiligen Fahrschule maßgeblich; die App selbst stellt gegenüber den Fahrschülern keine eigene, gesonderte Datenschutzerklärung bereit. Der Nutzer versichert, personenbezogene Daten von Fahrschülern nur dann in die App einzugeben, wenn seine Fahrschule über eine gültige, den Einsatz digitaler Verwaltungssoftware abdeckende Datenschutzerklärung verfügt. Die Verantwortung hierfür liegt beim Nutzer bzw. dessen Fahrschule.</p>
+<p><b>Wetteranzeige:</b> Das Wetter kommt vom Deutschen Wetterdienst über den Dienst Bright Sky (api.brightsky.dev). Wer einen eigenen Ort einstellt, für den wird der Ort über OpenStreetMap (Nominatim) gesucht. Dabei wird die IP-Adresse des Geräts an diese Dienste übertragen, aber keine Schülerdaten und keine Namen. Das Wetter lässt sich unter Einstellungen › App › Wetter-Widget ausschalten.</p>
 <h3>§15 Meldepflicht bei erkennbaren Fehlern</h3>
 <p>Erkennt der Nutzer offensichtliche Fehler oder Fehlfunktionen der App (z. B. erkennbar fehlerhafte Berechnungen), ist er gehalten, dies dem Anbieter zeitnah mitzuteilen. Die Fortsetzung der Nutzung in Kenntnis eines solchen Fehlers erfolgt auf eigenes Risiko des Nutzers.</p>
 <h3>§16 Änderungen</h3>
@@ -12186,8 +12191,10 @@ function routeSettings(){
         </div>
         <div class="res-block" style="animation:none;"><h4>🌤 Wetter-Widget</h4>
           <p>Das Wetter kommt kostenlos vom Deutschen Wetterdienst. Du brauchst nichts einzurichten. Unten kannst du deinen Ort einstellen.</p>
+          <p style="font-size:13px;color:var(--muted);margin:6px 0 12px;">Für das Wetter erfährt der Wetterdienst die Internet-Adresse deines Geräts, aber keine Schülerdaten.</p>
           <div class="field"><div class="toggle-row"><div><div class="tc-name" style="font-weight:800;font-size:14px;">Wetter zeigen</div></div><button type="button" class="check-toggle${_wetterAn()?' on':''}" id="weatherOnToggle" aria-label="Wetter zeigen"></button></div></div>
           <div class="field"><label for="weatherCityInput">Ort</label><input id="weatherCityInput" type="text" placeholder="Offenbach" value="${esc(String(DB.weatherCfg.city||"Offenbach").replace(/,\s*[A-Z]{2}$/,""))}" autocomplete="off" enterkeyhint="done"></div>
+          ${_wetterOrtFehlt()?`<p class="wx-ort-fehlt" style="font-size:13px;color:var(--txt);margin:-2px 0 10px;padding-left:10px;border-left:3px solid var(--gelb);">Ort nicht gefunden. Bitte neu eingeben und speichern.</p>`:''}
           <div class="btn-row"><button type="button" class="btn btn-ghost" id="weatherSaveBtn">Ort speichern</button></div>
         </div>
       </div></div>
@@ -15450,13 +15457,17 @@ function openCapacitySheet(){
    Die Bright-Sky-Symbole werden auf die bisherigen Wetter-Codes (01 Sonne … 50 Nebel, Endung n = Nacht) übersetzt,
    damit Emoji, Wetterbild und Wetter-Seite unverändert weiterlaufen. */
 function _wetterAn(){ return !(DB.weatherCfg&&DB.weatherCfg.aus); }
-const _BS_ICON={"clear-day":["01d","Sonnig"],"clear-night":["01n","Klar"],"partly-cloudy-day":["02d","Leicht bewölkt"],"partly-cloudy-night":["02n","Leicht bewölkt"],
-  "cloudy":["04","Bewölkt"],"fog":["50","Nebel"],"wind":["03","Windig"],"rain":["10","Regen"],"sleet":["13","Schneeregen"],"snow":["13","Schnee"],"hail":["09","Hagel"],"thunderstorm":["11","Gewitter"]};
+// Beschreibungen wie in der Pille (_wetterKurz), damit Pille und Wetter-Seite dieselben Wörter zeigen
+const _BS_ICON={"clear-day":["01d","Sonnig"],"clear-night":["01n","Klar"],"partly-cloudy-day":["02d","Heiter"],"partly-cloudy-night":["02n","Wolkig"],
+  "cloudy":["04","Bedeckt"],"fog":["50","Nebel"],"wind":["03","Bewölkt"],"rain":["10","Regen"],"sleet":["13","Schnee"],"snow":["13","Schnee"],"hail":["09","Schauer"],"thunderstorm":["11","Gewitter"]};
 function _bsIcon(icon,condition,stamp){
   let e=_BS_ICON[icon];
   if(!e){ const c=String(condition||""); e=c==="rain"?["10","Regen"]:c==="snow"||c==="sleet"?["13","Schnee"]:c==="fog"?["50","Nebel"]:c==="thunderstorm"?["11","Gewitter"]:["03","Bewölkt"]; }
   let code=e[0];
-  if(code.length===2){ const m=/T(\d{2})/.exec(String(stamp||"")); const h=m?Number(m[1]):12; code+=(h<7||h>=18)?"n":"d"; }
+  if(code.length===2){ const m=/T(\d{2})/.exec(String(stamp||"")); const h=m?Number(m[1]):12, mo=m?Number(String(stamp).slice(5,7)):6;
+    // grob die Hellzeit im Rhein-Main-Gebiet je Monat (Sommerzeit eingerechnet): [hell ab, dunkel ab]
+    const hell=[[8,17],[8,18],[7,19],[7,20],[6,21],[6,22],[6,22],[7,21],[7,20],[8,19],[7,17],[8,17]][(mo>=1&&mo<=12?mo:6)-1];
+    code+=(h<hell[0]||h>=hell[1])?"n":"d"; }
   return {icon:code,desc:e[1]};
 }
 // Koordinaten des eingestellten Orts (null = unbekannt, dann kein Wetter statt falschem Wetter).
@@ -15464,6 +15475,13 @@ function _bsIcon(icon,condition,stamp){
 // (früher OpenWeatherMap) wird einmal gesucht und NUR auf diesem Gerät gemerkt (nicht in DB, siehe ensureDB).
 // Eine Suche gleichzeitig; nach einem Fehlschlag 10 Minuten keine neue Suche (Nominatim: höchstens 1 Anfrage/s).
 let _wetterOrtLauf=null;
+// Ein alter eigener Ort wurde zuletzt nicht gefunden (dann zeigt „Heute“ einen leisen Hinweis statt des Wetters)
+function _wetterOrtFehlt(){
+  const cfg=(typeof DB!=="undefined"&&DB&&DB.weatherCfg)||{};
+  if(!_wetterAn()||(typeof cfg.lat==="number"&&typeof cfg.lon==="number")||_istOffenbach(cfg.city))return false;
+  const name=String(cfg.city||"").replace(/,\s*[A-Z]{2}$/,"").trim();
+  try{ const m=JSON.parse(localStorage.getItem("serband-wetter-ort")||"null"); return !!(m&&m.q===name&&m.fehlTs); }catch(e){ return false; }
+}
 function _istOffenbach(c){ return /^offenbach(\s*(am main)?)?(,\s*de)?$/i.test(String(c||"").trim()); }
 async function _wetterOrt(){
   const cfg=DB.weatherCfg||{};
@@ -15984,7 +16002,13 @@ function routeDashboard(){
   const cap=$("#capCard"); if(cap)cap.addEventListener("click",openCapacitySheet);
   bindFC();
   if(wetterAn){
-    fetchWeather().then(w=>{ const b=$("#h2Wetter"); if(!b)return; if(!w){ b.remove(); return; }
+    fetchWeather().then(w=>{ const b=$("#h2Wetter"); if(!b)return;
+      if(!w&&_wetterOrtFehlt()){ // leiser Hinweis statt Wetter: der eingestellte Ort wurde nicht gefunden
+        b.classList.add("h2-wetter-leise"); b.querySelector(".h2-wetter-ic").innerHTML='<svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 21s-6-5.6-6-10.5a6 6 0 0 1 12 0C18 15.4 12 21 12 21z"/><circle cx="12" cy="10.5" r="2.2"/></svg>';
+        b.querySelector(".h2-wetter-t").textContent="Wetter"; b.querySelector(".h2-wetter-d").textContent="Ort prüfen";
+        b.setAttribute("aria-label","Wetter-Ort nicht gefunden – in den Einstellungen ändern"); b.style.visibility="";
+        b.addEventListener("click",()=>{ _settingsAccOpen="app"; routeSettings(); setTimeout(()=>{ const i=$("#weatherCityInput"); if(i){ i.scrollIntoView({block:"center"}); } },60); }); return; }
+      if(!w){ b.remove(); return; }
       const d=String(w.desc||""); const dGross=d?d.charAt(0).toUpperCase()+d.slice(1):"";
       // In der Pille nur ein kurzes Wort (passt bei 360 px ganz hinein); die volle Beschreibung steht im Vorlesetext und auf der Wetter-Seite
       b.querySelector(".h2-wetter-ic").innerHTML=_wetterIconSVG(w.icon); const grad=Math.round(+w.temp); if(!isFinite(grad)){ b.remove(); return; } b.querySelector(".h2-wetter-t").textContent=`${grad}°`;
@@ -17536,6 +17560,50 @@ function setSplashQuote(){ const q=SPLASH_QUOTES[Math.floor(Math.random()*SPLASH
    dieser hier sitzt fest oben links in der Kopfleiste und gilt überall. */
 let _navStack=[];
 let _navFahrt=false;   // true, solange ein Zurueck-Sprung laeuft (verhindert Endlosschleife)
+/* K4: woher kam der letzte Tipp? innen = Seite oder Fenster; außen = Reiterleiste, Menü, Kopfleiste */
+let _letzterKlick=null;
+document.addEventListener("click",e=>{ try{ const t=e.target; _letzterKlick={t:Date.now(),innen:!!(t&&t.closest&&t.closest("#view, #sheet, .sheet"))}; }catch(err){} },true);
+/* K2 (🗣 22.11.2026): Beim Auf- und Zuklappen bleibt die angetippte Überschrift ruhig an ihrem Platz, auch wenn
+   darüber gleichzeitig ein anderer Bereich zuklappt (vorher flog sie aus dem Bild). Lag sie oben außerhalb, rückt
+   sie an den oberen Rand. Gilt für alle Klapp-Bereiche der App (.acc-h, .facc-h) in der Seite. */
+function _klappAnker(h){
+  const vw=document.getElementById("view"); if(!vw||!h||!vw.contains(h))return;
+  const oben=()=>h.getBoundingClientRect().top-vw.getBoundingClientRect().top;
+  const y0=oben(), start=y0<0?8:y0;
+  // Ein neuer Tipp beendet einen noch laufenden Ausgleich; danach immer die Browser-Automatik wieder einschalten
+  const lauf=(_klappAnker.lauf=(_klappAnker.lauf||0)+1);
+  vw.style.overflowAnchor="none"; // eigener Ausgleich statt Browser-Automatik
+  let ende=start, t0=0;
+  // Erst im nächsten Bild steht fest, was auf- und zuklappt: dann ausrechnen, wie weit sich alles darüber verschiebt.
+  // Reicht der Platz nach oben nicht (Seite schon ganz oben), gleitet die Überschrift gleichmäßig an ihr Ziel statt zu springen.
+  const messen=()=>{
+    let verschiebung=0;
+    vw.querySelectorAll(".acc, .facc-sec").forEach(acc=>{
+      if(acc.contains(h))return;
+      const body=acc.querySelector(":scope > .acc-body, :scope > .facc-body"); if(!body)return;
+      if(body.getBoundingClientRect().top>=h.getBoundingClientRect().top)return; // nur was darüber liegt
+      const inner=body.firstElementChild; const jetzt=body.getBoundingClientRect().height;
+      const facc=body.classList.contains("facc-body");
+      const soll=acc.classList.contains("open")?(facc?Math.min(body.scrollHeight,640):(inner?inner.scrollHeight:jetzt)):0;
+      verschiebung+=soll-jetzt;
+    });
+    const platz=vw.scrollTop+(start-y0)+verschiebung; // so weit kann gescrollt werden, um den Platz zu halten
+    ende=platz<0?start+platz:start;
+  };
+  const dauer=320, glatt=x=>x*x*(3-2*x);
+  // Wischt der Nutzer selbst, hört der Ausgleich sofort auf (nicht gegen den Finger arbeiten)
+  let stopp=false; const halt=()=>{ stopp=true; };
+  ["touchstart","wheel"].forEach(ev=>vw.addEventListener(ev,halt,{passive:true,once:true}));
+  const fertig=()=>{ if(_klappAnker.lauf===lauf)vw.style.overflowAnchor=""; ["touchstart","wheel"].forEach(ev=>vw.removeEventListener(ev,halt)); };
+  const schritt=(t)=>{ if(!h.isConnected||stopp||_klappAnker.lauf!==lauf){ fertig(); return; }
+    if(!t0){ t0=t; messen(); }
+    const p=Math.min(1,(t-t0)/dauer), ziel=start+(ende-start)*glatt(p);
+    const d=oben()-ziel; if(Math.abs(d)>=1)vw.scrollTop+=d;
+    if(t-t0<dauer+200)requestAnimationFrame(schritt); else fertig(); };
+  requestAnimationFrame(schritt);
+}
+(function(){ const vw=document.getElementById("view"); if(!vw)return;
+  vw.addEventListener("click",e=>{ const h=e.target&&e.target.closest&&e.target.closest(".acc-h, .facc-h"); if(h)_klappAnker(h); },true); })();
 const _NAV_MAX=25;
 
 function _navAktualisiereKnopf(){
@@ -17613,6 +17681,7 @@ function _seite2Markieren(name){
         let args=Array.prototype.slice.call(arguments);
         // Kalender ohne Angaben: den Zustand (Ansicht, Tag) merken, damit Zurück genau dorthin führt
         if(name==="routeKalender"&&!args.length)args=[_calView,_calDate||todayISO()];
+        let gleichSeite=false;
         if(!_navFahrt){
           _zurueckSperreNachholen();
           const letzte=_navStack[_navStack.length-1];
@@ -17620,15 +17689,23 @@ function _seite2Markieren(name){
           try{ gleich=!!letzte&&letzte.name===name&&JSON.stringify(letzte.args)===JSON.stringify(args); }catch(e){}
           // Dieselbe Ansicht erneut aufrufen (z.B. nach dem Speichern) erzeugt keinen
           // neuen Eintrag - sonst muesste man mehrfach zurueck fuer einen Schritt.
+          gleichSeite=gleich;
           if(gleich)_navStack[_navStack.length-1]={name,fn:orig,args};
           else{ _navStack.push({name,fn:orig,args}); if(_navStack.length>_NAV_MAX)_navStack.shift(); }
         }
+        // K4 (🗣 22.11.2026): Zeichnet sich dieselbe Seite neu (Schalter, Speichern, Abgleich), bleibt man an derselben Stelle.
+        // Nur ein Tipp auf Reiter, Menü oder Kopfleiste (bewusst „diese Seite neu“) darf nach oben führen.
+        let haltY=null;
+        try{ const vw=document.getElementById("view"); const aussen=_letzterKlick&&Date.now()-_letzterKlick.t<1500&&!_letzterKlick.innen;
+          // Der Kalender hält seine Stelle selbst (K3: _calY, „Heute“ springt zur Jetzt-Linie) – hier nicht überschreiben
+          if(gleichSeite&&vw&&!aussen&&name!=="routeKalender")haltY={y:vw.scrollTop,titel:($("#tbTitle")&&$("#tbTitle").textContent)||""}; }catch(e){}
         const vorher=_seite2Zaehler;
         if(_notizSofort){ const f=_notizSofort; _notizSofort=null; try{ f(); }catch(e){} }
         _seiteGeaendert=false; _seiteZurueckFn=null;
         const r=orig.apply(this,name==="routeKalender"?args:arguments);
         // Hat die Seite intern auf eine andere Seite umgeleitet (z. B. Akte ohne Schüler → Liste), gilt deren Merkmal
         if(_seite2Zaehler===vorher)_seite2Markieren(name);
+        if(haltY){ const vw=document.getElementById("view"); const t=($("#tbTitle")&&$("#tbTitle").textContent)||""; if(vw&&t===haltY.titel)vw.scrollTop=haltY.y; }
         _navAktualisiereKnopf();
         return r;
       };

@@ -62,3 +62,5 @@ jobs:
         run: NODE_PATH=$(npm root -g) node scripts/neuigkeiten-test.mjs
       - name: Wetter ohne Schlüssel (K1, Dienste nachgestellt)
         run: NODE_PATH=$(npm root -g) node scripts/wetter-k1-test.mjs
+      - name: "Ruhiges Klappen (K2+K4, App und Büro)"
+        run: NODE_PATH=$(npm root -g) node scripts/klapp-test.mjs

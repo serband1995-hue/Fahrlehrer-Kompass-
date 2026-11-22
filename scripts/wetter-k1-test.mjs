@@ -7,6 +7,7 @@
 // K1d Einstellungen: Ort ändern → gespeichert, Zwischenspeicher geleert, Hinweis ohne Knopf, kein Dialog.
 // K1e Unbekannter Ort: Hinweis, nichts geändert. K1f Ausschalten: keine Pille, keine Anfrage, Seite springt nicht.
 // K1i Abgleich-sicher (Start schreibt nichts außer Schlüssel-Wegfall). K1j Suche scheitert: kein falsches Wetter, eine Suche, 10 min Pause.
+// K1l Ort nicht gefunden → leiser Hinweis auf „Heute“ und in den Einstellungen.
 // K1k Enter speichert, kein Netz → eigener Hinweis.
 // K1g Symbole: Bright-Sky-Symbole → bisherige Wetter-Codes. K1h 360 px: Einstellungen ohne Querscrollen, keine JS-Fehler.
 // Aufruf: NODE_PATH=$(npm root -g) node scripts/wetter-k1-test.mjs
@@ -55,7 +56,7 @@ function vorschau(von, bis) {
 
 async function seite(width = 360, height = 740) {
   const ctx = await browser.newContext({ viewport: { width, height }, isMobile: true, hasTouch: true, locale: "de-DE", timezoneId: "Europe/Berlin" });
-  await ctx.addInitScript(() => { try { localStorage.setItem("serband-theme", "light"); localStorage.setItem("serband-app-version", "x"); } catch (e) {} });
+  await ctx.addInitScript(() => { try { localStorage.setItem("serband-theme", "light"); localStorage.removeItem("serband-app-version"); } catch (e) {} });
   const page = await ctx.newPage(); const js = [], anfragen = [];
   page.on("pageerror", (e) => js.push(e.message));
   page.on("dialog", (d) => { js.push("Dialog: " + d.message()); d.dismiss(); });
@@ -176,6 +177,23 @@ await pruefe("K1j", "Ortssuche scheitert: kein Wetter (statt Offenbach unter fal
   return f;
 });
 
+await pruefe("K1l", "Ort nicht gefunden: „Heute“ zeigt leisen Hinweis, Tipp führt zum Ortsfeld; Einstellungen zeigen den Hinweis", async () => {
+  const f = [];
+  await leereSpeicher(page);
+  await page.evaluate(() => { DB.weatherCfg = { city: "Xyzqw" }; localStorage.setItem("serband-wetter-ort", JSON.stringify({ q: "Xyzqw", fehlTs: Date.now() })); routeDashboard(); });
+  await page.waitForTimeout(600);
+  const p = await page.evaluate(() => { const b = document.getElementById("h2Wetter"); return b ? { text: b.textContent.replace(/\s+/g, " ").trim(), vis: getComputedStyle(b).visibility, label: b.getAttribute("aria-label") } : null; });
+  if (!p || !/Ort prüfen/.test(p.text) || p.vis === "hidden") f.push("kein Hinweis: " + JSON.stringify(p));
+  if (p && !/Einstellungen/.test(p.label || "")) f.push("Vorlesetext ohne Weg");
+  const abgeschnitten = await page.evaluate(() => [...document.querySelectorAll("#h2Wetter .h2-wetter-t, #h2Wetter .h2-wetter-d")].some((e) => e.scrollWidth > e.clientWidth + 1));
+  if (abgeschnitten) f.push("Text in der Pille abgeschnitten");
+  await page.click("#h2Wetter"); await page.waitForTimeout(300);
+  if (!(await page.$("#weatherCityInput"))) f.push("Tipp führt nicht zum Ortsfeld");
+  if (!(await page.$(".wx-ort-fehlt"))) f.push("Einstellungen ohne Hinweis");
+  await page.evaluate(() => { localStorage.removeItem("serband-wetter-ort"); DB.weatherCfg = { city: "Offenbach" }; });
+  return f;
+});
+
 async function einstellungen() {
   await page.evaluate(() => { _settingsAccOpen = "app"; routeSettings(); });
   await page.waitForSelector("#weatherCityInput");
@@ -243,12 +261,12 @@ await pruefe("K1f", "Ausschalten: Schalter wechselt ohne Neuzeichnen, danach kei
 await pruefe("K1g", "Symbole: Bright Sky → bisherige Wetter-Codes (Tag/Nacht, unbekannt)", async () => {
   const r = await page.evaluate(() => [
     _bsIcon("clear-day", "dry", "2026-11-22T12:00:00+01:00").icon, _bsIcon("clear-night", "dry", "2026-11-22T23:00:00+01:00").icon,
-    _bsIcon("cloudy", "dry", "2026-11-22T12:00:00+01:00").icon, _bsIcon("cloudy", "dry", "2026-11-22T21:00:00+01:00").icon,
+    _bsIcon("cloudy", "dry", "2026-11-22T12:00:00+01:00").icon, _bsIcon("cloudy", "dry", "2026-11-22T21:00:00+01:00").icon, _bsIcon("cloudy", "dry", "2026-06-22T19:30:00+02:00").icon,
     _bsIcon("rain", "rain", "2026-11-22T12:00:00+01:00").icon, _bsIcon("thunderstorm", "", "2026-11-22T12:00:00+01:00").icon,
     _bsIcon("snow", "", "2026-11-22T12:00:00+01:00").icon, _bsIcon("fog", "", "2026-11-22T12:00:00+01:00").icon,
     _bsIcon(null, "rain", "2026-11-22T12:00:00+01:00").icon, _bsIcon(null, null, "").icon,
     _bsIcon("rain", "rain", "2026-11-22T12:00:00+01:00").desc]);
-  const soll = ["01d", "01n", "04d", "04n", "10d", "11d", "13d", "50d", "10d", "03d", "Regen"];
+  const soll = ["01d", "01n", "04d", "04n", "04d", "10d", "11d", "13d", "50d", "10d", "03d", "Regen"];
   return r.map((x, i) => (x === soll[i] ? null : `${i}: ${x} statt ${soll[i]}`)).filter(Boolean);
 });
 
