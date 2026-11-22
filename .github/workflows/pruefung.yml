@@ -58,3 +58,5 @@ jobs:
         run: NODE_PATH=$(npm root -g) node scripts/zugang-test.mjs
       - name: "Ausbildungsnachweis (Büro: Übersicht, Ändern mit Spur, Papierkorb, Druck)"
         run: NODE_PATH=$(npm root -g) node scripts/nachweis-test.mjs
+      - name: "Neuigkeiten (Zeitstrahl, Hinweis nach Update ohne Knopf)"
+        run: NODE_PATH=$(npm root -g) node scripts/neuigkeiten-test.mjs

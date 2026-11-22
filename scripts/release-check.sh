@@ -23,6 +23,9 @@ geaendert=$(git diff --name-only "$BASIS"...HEAD -- . ':!scripts' ':!.claude' ':
 if [ -n "$geaendert" ]; then
   [ "$app_neu" != "$app_alt" ] || { echo "FEHLER: APP_VERSION nicht erhöht."; fehler=1; }
   [ "$cache_neu" != "$cache_alt" ] || { echo "FEHLER: CACHE_VERSION nicht erhöht."; fehler=1; }
+  # K11 (22.11.2026): Jedes Update steht im Zeitstrahl „Neuigkeiten“ – oberster Eintrag in neuigkeiten.js = APP_VERSION.
+  neu_oben=$(grep -oP 'version:\s*"\K[^"]+' neuigkeiten.js 2>/dev/null | head -1)
+  [ "$neu_oben" = "$app_neu" ] || { echo "FEHLER: neuigkeiten.js – oberster Eintrag (${neu_oben:-keiner}) ist nicht APP_VERSION ($app_neu). Eintrag in einfachen Worten oben ergänzen."; fehler=1; }
 else
   echo "Keine ausgelieferten Dateien geändert: Versionsprüfung übersprungen."
 fi

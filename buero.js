@@ -148,6 +148,7 @@ const BEREICHE = [
   { id: "zahlen", titel: "Zahlen", gruppe: "Geld", render: renderZahlen, nachher: bindeZahlen },
   { id: "team", titel: "Fahrlehrer & Zugänge", gruppe: "Verwaltung", render: renderTeam, nachher: bindeTeam },
   { id: "flotte", titel: "Fahrzeuge", gruppe: "Verwaltung", render: renderFlotte, nachher: bindeFlotte, zahl: () => fahrzeugKonflikte().length || "" },
+  { id: "neuigkeiten", titel: "Neuigkeiten", gruppe: "Verwaltung", render: renderNeuigkeiten },
 ];
 function aktuellerBereich() {
   const id = (location.hash || "#heute").slice(1).split("?")[0];
@@ -257,6 +258,28 @@ new MutationObserver(() => {
   namenGeplant = true;
   requestAnimationFrame(() => { namenGeplant = false; markiereNamensspalten(); });
 }).observe(document.body, { childList: true, subtree: true });
+
+/* ---------- Neuigkeiten (K11, 🗣 22.11.2026): Zeitstrahl aller Updates, Daten in neuigkeiten.js (gemeinsam mit der App) ---------- */
+function neuListe() { return Array.isArray(window.KOMPASS_NEU) ? window.KOMPASS_NEU : []; }
+function renderNeuigkeiten() {
+  const liste = neuListe();
+  if (!liste.length) return `<div class="karte"><p class="leer">Noch keine Einträge.</p></div>`;
+  return `<div class="karte"><p class="leise" style="margin-top:0">Was sich in jedem Update geändert hat. Neuestes oben.</p>
+    <ol class="nz-zs">${liste.map((e, i) => `<li class="nz-e${i === 0 ? " nz-jetzt" : ""}">
+      <div class="nz-kopf">${esc(datumDE(e.datum || ""))}${i === 0 ? ' <span class="nz-tag">Aktuell</span>' : ""}</div>
+      <div class="nz-titel">${esc(e.kurz || "")}</div>
+      ${(e.punkte || []).length ? `<ul class="nz-p">${e.punkte.map((p) => `<li>${esc(p)}</li>`).join("")}</ul>` : ""}
+      <div class="nz-ver">Version ${esc(e.version || "")}</div></li>`).join("")}</ol></div>`;
+}
+// Nach einem Update einmal kurz zeigen, was neu ist (verschwindet von selbst, nichts zu bestätigen). Erster Besuch: still merken.
+function zeigeNeuNachUpdate() {
+  const neu = neuListe()[0]; if (!neu) return;
+  try {
+    const alt = localStorage.getItem("buero-neu-gesehen");
+    localStorage.setItem("buero-neu-gesehen", neu.version);
+    if (alt && alt !== neu.version) toast((neu.kurz || "Kompass wurde aktualisiert.") + " (Menü › Neuigkeiten)");
+  } catch (e) { /* ohne Speicher kein Hinweis */ }
+}
 
 function renderBald(b) {
   return `<div class="karte"><h2>${esc(b.titel)}</h2>
@@ -3901,6 +3924,7 @@ async function ladeDaten() {
     pruefeSitzungNoch(); // alle 2 Minuten mit: PIN zurückgesetzt oder Person ausgetreten → neu anmelden
     holeAbsagenNach();
     zeigeNeueAufgaben(); // neue Aufgabe von einer Kollegin erscheint ohne Neuladen
+    zeigeNeuNachUpdate();
   } catch (e) {
     if (nr !== S.ladeNr) return;
     console.error(e);
