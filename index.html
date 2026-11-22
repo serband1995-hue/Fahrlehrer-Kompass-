@@ -233,6 +233,8 @@ input,select,textarea{font-family:inherit;font-size:16px;color:var(--txt);}
 .tb-mitte{display:flex;align-items:center;justify-content:center;gap:0;min-width:0;}
 /* Block 2: Logo exakt mittig (Spalten links/rechts gleich breit); der Seitentitel steht links neben dem Zurück-Pfeil */
 .tb-left .icon-btn{flex:0 0 auto;} /* Pfeil bleibt voll breit (44-px-Tippfläche), auch bei langem Titel */
+/* K10: der Zurück-Pfeil ist auf jeder Seite da – immer mindestens 44×44 px, auch auf kleinen Handys */
+.topbar #navBackBtn{width:44px !important;height:44px !important;margin-left:-2px;}
 .tb-left .tb-title{flex:1 1 auto;margin-left:4px;}
 .tb-left:has(#navBackBtn[hidden]) .tb-title{margin-left:2px;}
 /* Platz für Menü + Zurück immer reservieren, damit das Logo beim Seitenwechsel nicht springt. */
@@ -2597,7 +2599,9 @@ body:has(#view[data-seite2] #calBody) #fab span{display:none;}
 /* Einstellungen: Abschnittsnamen in normaler Schreibweise, fett */
 #view[data-seite2] .acc-h .ti,#view[data-seite2] .set-acc .acc-h > span[style*="uppercase"]{text-transform:none !important;letter-spacing:0 !important;font-weight:800 !important;font-size:16px !important;}
 /* Zurück-Zeile in der Seite nur, wenn oben kein Zurück-Pfeil steht (sonst zwei Wege für dasselbe) */
-body:has(#navBackBtn:not([hidden])) #view:is([data-seite2="routePruefungenWoche"],[data-seite2="routePrueferListe"],[data-seite2="routeNichtBesteher"],[data-seite2="routeArbeitszeit"],[data-seite2="routeHistorie"],[data-seite2="routeWetter"]) .back-row:has(> .back-btn:only-child){display:none !important;}
+body:has(#navBackBtn:not([hidden])) #view .back-row:has(> .back-btn:only-child){display:none !important;}
+/* K10: steht neben dem Zurück-Knopf noch etwas in der Zeile, bleibt die Zeile, nur der doppelte Zurück-Knopf geht */
+body:has(#navBackBtn:not([hidden])) #view .back-row > .back-btn{display:none !important;}
 /* Erledigte To-dos lesbarer */
 body.light #view[data-seite2] .todo-item.done .todo-txt{color:#6B776F !important;}
 /* Umbau Schritt 6a: Wetter-Seite – weich und flüssig (nur transform/opacity animiert) */
@@ -7782,7 +7786,7 @@ const STORE_KEY="serband-app-v1";
    Wird in den Einstellungen angezeigt + für den Update-Hinweis genutzt. */
 // K1: voreingestellter Wetter-Ort (früh definiert, weil ensureDB ihn schon beim Start braucht)
 const WETTER_START={city:"Offenbach",lat:50.1006,lon:8.7665};
-const APP_VERSION="2026.11.22.5";
+const APP_VERSION="2026.11.22.6";
 try{const f=document.getElementById("drawerFoot"); if(f)f.textContent="Fahrlehrer-Kompass · Version "+APP_VERSION;}catch(e){}
 // Nutzungsbedingungen & Haftungsausschluss (Bereich: rechtliche Absicherung) - Version hochzählen
 // und alle Nutzer müssen erneut zustimmen, sobald sich der Text inhaltlich ändert.
@@ -17751,10 +17755,9 @@ const _NAV_MAX=25;
 
 function _navAktualisiereKnopf(){
   const b=document.getElementById("navBackBtn");
-  // Auf den Hauptseiten der Reiter kein Zurück-Pfeil (Reiterwechsel ist kein Zurück); Android-Zurück geht weiter.
-  const t=(($("#tbTitle")&&$("#tbTitle").textContent)||"").trim();
-  const haupt=["Heute","Start","Kalender","Schüler","Prüfungen"].indexOf(t)>=0;
-  if(b)b.hidden=_navStack.length<2||haupt;
+  // K10 (🗣 22.11.2026): „Auf jeder Seite ein Knopf, der eine Seite zurückspringt.“ Der Pfeil oben links steht überall,
+  // sobald es eine vorige Seite gibt (auch auf den Hauptseiten der Reiter). Android-Zurück macht dasselbe.
+  if(b)b.hidden=_navStack.length<2;
 }
 /* A5: Läuft der Persönlichkeitsbogen, blättert Zurück (Android-Taste, Pfeil oben) eine Seite zurück;
    auf der ersten Seite kommt dieselbe Rückfrage wie bei „Abbrechen“. Liefert true, wenn erledigt. */
@@ -17793,6 +17796,16 @@ function navZurueck(){
   catch(e){ console.warn("[Kompass] Zurueck fehlgeschlagen:",e.message); }
   _navFahrt=false;
   _navAktualisiereKnopf();
+  _navStelleZurueck(ziel.y);
+}
+/* K10: nach dem Zurück an dieselbe Stelle wie vorher. Lädt die Seite Teile nach (Liste, Bilder), wird kurz danach
+   noch einmal nachgezogen – aber nur, solange man selbst nicht weitergescrollt hat. */
+function _navStelleZurueck(y){
+  if(typeof y!=="number"||!(y>0))return;
+  const vw=document.getElementById("view"); if(!vw)return;
+  vw.scrollTop=y; let zuletzt=vw.scrollTop;
+  const nach=()=>{ if(Math.abs(vw.scrollTop-zuletzt)>2)return; /* Nutzer hat selbst gescrollt */ if(vw.scrollTop<y-2){ vw.scrollTop=y; } zuletzt=vw.scrollTop; };
+  requestAnimationFrame(nach); setTimeout(nach,120); setTimeout(nach,400);
 }
 // Umbau Schritt 5a: diese Seiten bekommen den neuen Look (nur Aussehen, siehe CSS „#view[data-seite2]“).
 // Das Merkmal sitzt an #view, damit es ein Neuzeichnen innerhalb der Seite übersteht.
@@ -17833,8 +17846,11 @@ function _seite2Markieren(name){
           // Dieselbe Ansicht erneut aufrufen (z.B. nach dem Speichern) erzeugt keinen
           // neuen Eintrag - sonst muesste man mehrfach zurueck fuer einen Schritt.
           gleichSeite=gleich;
-          if(gleich)_navStack[_navStack.length-1]={name,fn:orig,args};
-          else{ _navStack.push({name,fn:orig,args}); if(_navStack.length>_NAV_MAX)_navStack.shift(); }
+          if(gleich)_navStack[_navStack.length-1]={name,fn:orig,args,y:letzte.y};
+          else{
+            // K10: Stelle der Seite merken, die man gerade verlässt – Zurück führt genau dorthin
+            if(letzte){ try{ const vw=document.getElementById("view"); if(vw)letzte.y=vw.scrollTop; }catch(e){} }
+            _navStack.push({name,fn:orig,args}); if(_navStack.length>_NAV_MAX)_navStack.shift(); }
         }
         // K4 (🗣 22.11.2026): Zeichnet sich dieselbe Seite neu (Schalter, Speichern, Abgleich), bleibt man an derselben Stelle.
         // Nur ein Tipp auf Reiter, Menü oder Kopfleiste (bewusst „diese Seite neu“) darf nach oben führen.

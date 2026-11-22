@@ -223,15 +223,32 @@ function klappWieder(ziel, m) {
   if (!m || !m.size) return;
   klappListe(ziel).forEach(([k, d]) => { if (m.has(k)) d.open = m.get(k); });
 }
+/* K10 (🗣 22.11.2026): „Auf jeder Seite ein Knopf, der eine Seite zurückspringt.“ Eigener Verlauf der besuchten Bereiche:
+   jeder Eintrag merkt sich die Stelle (scrollY) und die aufgeklappten Listen. „‹ Zurück“ oben links und die Zurück-Taste
+   des Browsers/Handys führen genau dorthin zurück. Der Knopf erscheint, sobald es eine vorige Seite gibt. */
+const buVerlauf = [{ hash: location.hash || "" }];
+function buZurueckKnopf() { const k = $("kopfZurueck"); if (k) k.hidden = buVerlauf.length < 2; }
 window.addEventListener("hashchange", () => {
   // Zurück-Taste (oder Link) wechselt die Seite: offene Fenster ohne Eingaben schließen, damit nichts über der falschen Seite stehen bleibt
   document.querySelectorAll("dialog[open]").forEach((d) => { if (!d.dataset.festhalten && !hatEingabe(d)) { d._verlauf = false; d.close(); } });
   const g = aktuellerBereich().gruppe;
   if (navZu().includes(g)) setzeNavZu(navZu().filter((x) => x !== g));
+  // Stelle der Seite merken, die man gerade verlässt (der Inhalt steht noch)
+  const alt = buVerlauf[buVerlauf.length - 1];
+  if (alt) { alt.y = window.scrollY; try { alt.klapp = klappZustand($("ansicht")); } catch (e) {} }
+  const neu = location.hash || "";
+  const zurueck = buVerlauf.length > 1 && buVerlauf[buVerlauf.length - 2].hash === neu;
+  let ziel = null;
+  if (zurueck) { buVerlauf.pop(); ziel = buVerlauf[buVerlauf.length - 1]; }
+  else if (!alt || alt.hash !== neu) { buVerlauf.push({ hash: neu }); if (buVerlauf.length > 30) buVerlauf.shift(); }
   zeichne(); $("ansicht").focus({ preventScroll: true });
   menueOffen(false); // immer zu, auch wenn das Gerät inzwischen gedreht wurde (am PC ohne sichtbare Wirkung)
-  if (istSchmal()) springeZumTitel(); else window.scrollTo(0, 0);
+  if (ziel && ziel.klapp) { try { klappWieder($("ansicht"), ziel.klapp); } catch (e) {} }
+  if (ziel && typeof ziel.y === "number") window.scrollTo(0, ziel.y);
+  else if (istSchmal()) springeZumTitel(); else window.scrollTo(0, 0);
+  buZurueckKnopf();
 });
+if ($("kopfZurueck")) $("kopfZurueck").addEventListener("click", () => { if (buVerlauf.length > 1) history.back(); });
 
 /* Handy und kleines Tablet (bis 900 px): Das Menü ist ein Block zum Aufklappen, beim Start zu.
    Nach dem Tipp auf einen Bereich klappt es zu und die Seite springt zum Titel des Bereichs. */

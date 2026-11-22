@@ -66,3 +66,5 @@ jobs:
         run: NODE_PATH=$(npm root -g) node scripts/klapp-test.mjs
       - name: "Buchungs-QR fürs Auto (K3)"
         run: NODE_PATH=$(npm root -g) node scripts/buchqr-test.mjs
+      - name: "Zurück auf jeder Seite (K10, App und Büro)"
+        run: NODE_PATH=$(npm root -g) node scripts/zurueck-test.mjs
