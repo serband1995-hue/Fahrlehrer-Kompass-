@@ -287,6 +287,8 @@
         <div class="pw-meta"><span><b>${e_(n.verfasser_name || "Fahrlehrer")}</b> · ${e_(datumDE(n.erstellt_am))}</span>${darfNotiz(n) ? `<button class="pw-weg" type="button" data-weg="${e_(n.id)}" aria-label="Notiz löschen">Löschen</button>` : ""}</div>
       </div>`).join("") : `<p class="h2-nichts">Noch keine Notiz zu ${e_(nm)}.</p>`;
   }
+  /* E2 (Fable K5): angefangene Notiz je Prüfer merken (nur in dieser Sitzung), damit sie beim Zurück nicht verloren geht */
+  const entwurf = {};
   /* Liste zuerst (Wissen der Kollegen sofort sehen), darunter „Notiz hinzufügen“ */
   PW.notizBlockHTML = function (nm) {
     const mic = typeof micIcon === "function" ? micIcon() : "";
@@ -295,7 +297,7 @@
       <div class="pw-liste" id="pwListe">${listeHTML(nm)}</div>
       <div class="pw-neu-h">Notiz hinzufügen</div>
       <p class="pw-hinweis">Alle Fahrlehrer deiner Fahrschule sehen das. Bitte sachlich.</p>
-      <div class="mic-wrap"><textarea id="pwNeu" rows="3" maxlength="2000" placeholder="Worauf achtet ${e_(nm)}?"></textarea>${mic}</div>
+      <div class="mic-wrap"><textarea id="pwNeu" rows="3" maxlength="2000" placeholder="Worauf achtet ${e_(nm)}?">${e_(entwurf[klein(nm)] || "")}</textarea>${mic}</div>
       <button class="btn btn-primary pw-senden" id="pwSenden" type="button">Notiz speichern</button>
     </div>`;
   };
@@ -318,13 +320,14 @@
   }
   PW.bindeNotizBlock = function (nm) {
     const btn = document.getElementById("pwSenden"), ta = document.getElementById("pwNeu");
+    if (ta) ta.addEventListener("input", () => { const v = ta.value; if (v.trim()) entwurf[klein(nm)] = v; else delete entwurf[klein(nm)]; });
     if (btn && ta) btn.addEventListener("click", async () => {
       const text = ta.value.trim(); if (!text) { ta.focus(); return; }
       btn.disabled = true;
       const ok = await PW.notizSchreiben(nm, text);
       btn.disabled = false;
       if (ok) {
-        ta.value = ""; listeNeu(nm);
+        ta.value = ""; delete entwurf[klein(nm)]; listeNeu(nm);
         const erste = document.querySelector("#pwListe .pw-notiz"); if (erste && erste.scrollIntoView) erste.scrollIntoView({ block: "nearest" });
         if (typeof toast === "function") toast("Notiz gespeichert ✓");
       } else if (typeof toast === "function") toast("Notiz nicht gespeichert – bitte mit Internet nochmal");
