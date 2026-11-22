@@ -62,3 +62,5 @@ jobs:
         run: NODE_PATH=$(npm root -g) node scripts/neuigkeiten-test.mjs
       - name: Wetter ohne Schlüssel (K1, Dienste nachgestellt)
         run: NODE_PATH=$(npm root -g) node scripts/wetter-k1-test.mjs
+      - name: "Prüfer-Wissen gemeinsam (K5: Notizen mit Verfasser, keine fremden Schülernamen)"
+        run: NODE_PATH=$(npm root -g) node scripts/pruefer-gemeinsam-test.mjs
