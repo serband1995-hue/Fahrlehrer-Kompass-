@@ -6,3 +6,20 @@ drop function if exists public.fs_kollegen();
 drop function if exists public.fs_schueler_ueberblick();
 drop function if exists public.k6_darf_verwalten();
 drop function if exists public.k6_meine_fahrschule();
+-- Schutz-Trigger ohne die Ausnahme „kompass.weitergabe“ (Stand vor K6):
+create or replace function public.schueler_verschiebung_schutz() returns trigger language plpgsql security definer set search_path to 'public' as $function$
+begin
+  if (new.fahrlehrer_id is distinct from old.fahrlehrer_id or new.fahrschule_id is distinct from old.fahrschule_id)
+     and not (is_super_admin(auth.uid()) or is_fahrschule_admin(auth.uid()) or is_buero(auth.uid())) then
+    raise exception 'Nur Fahrschule-Admin, Büro oder Super-Admin dürfen Schüler verschieben.';
+  end if;
+  return new;
+end; $function$;
+create or replace function public.termin_verschiebung_schutz() returns trigger language plpgsql security definer set search_path to 'public' as $function$
+begin
+  if (new.fahrlehrer_id is distinct from old.fahrlehrer_id or new.fahrschule_id is distinct from old.fahrschule_id)
+     and not (is_super_admin(auth.uid()) or is_fahrschule_admin(auth.uid()) or is_buero(auth.uid())) then
+    raise exception 'Nur Fahrschule-Admin, Büro oder Super-Admin dürfen Termine verschieben.';
+  end if;
+  return new;
+end; $function$;

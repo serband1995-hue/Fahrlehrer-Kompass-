@@ -32,6 +32,41 @@ as $function$
   select coalesce(is_super_admin(auth.uid()) or is_buero(auth.uid()) or is_fahrschule_admin(auth.uid()), false)
 $function$;
 
+-- 0) Die Schutz-Trigger für Schüler und Termine (nur Leitung/Büro/Super-Admin dürfen verschieben) bekommen EINE Ausnahme:
+--    die Server-Funktion schueler_weitergeben setzt innerhalb ihrer Transaktion kompass.weitergabe = '1'.
+--    Von außen (REST) lässt sich das nicht setzen; sonst bleibt jede Zeile wie vorher (Stand 22.11.2026 laut Hauptsitzung).
+create or replace function public.schueler_verschiebung_schutz()
+ returns trigger
+ language plpgsql
+ security definer
+ set search_path to 'public'
+as $function$
+begin
+  if (new.fahrlehrer_id is distinct from old.fahrlehrer_id or new.fahrschule_id is distinct from old.fahrschule_id)
+     and not (is_super_admin(auth.uid()) or is_fahrschule_admin(auth.uid()) or is_buero(auth.uid()))
+     and not (coalesce(current_setting('kompass.weitergabe', true), '') = '1' and new.fahrschule_id is not distinct from old.fahrschule_id) then
+    raise exception 'Nur Fahrschule-Admin, Büro oder Super-Admin dürfen Schüler verschieben.';
+  end if;
+  return new;
+end;
+$function$;
+
+create or replace function public.termin_verschiebung_schutz()
+ returns trigger
+ language plpgsql
+ security definer
+ set search_path to 'public'
+as $function$
+begin
+  if (new.fahrlehrer_id is distinct from old.fahrlehrer_id or new.fahrschule_id is distinct from old.fahrschule_id)
+     and not (is_super_admin(auth.uid()) or is_fahrschule_admin(auth.uid()) or is_buero(auth.uid()))
+     and not (coalesce(current_setting('kompass.weitergabe', true), '') = '1' and new.fahrschule_id is not distinct from old.fahrschule_id) then
+    raise exception 'Nur Fahrschule-Admin, Büro oder Super-Admin dürfen Termine verschieben.';
+  end if;
+  return new;
+end;
+$function$;
+
 -- 1) Überblick
 create or replace function public.fs_schueler_ueberblick()
  returns table (id text, name text, fahrlehrer_id uuid, fahrlehrer_name text, eigen boolean, stand_pct integer,
@@ -106,10 +141,12 @@ begin
   if ziel.id is null then return jsonb_build_object('fehler', 'empfaenger'); end if;
   alt := s.fahrlehrer_id;
   if alt = p_an then return jsonb_build_object('ok', true, 'termine', 0); end if;
+  perform set_config('kompass.weitergabe', '1', true); -- nur für diese Transaktion (Ausnahme in den Schutz-Triggern)
   -- Erst die künftigen Termine, dann der Schüler (wie im Büro): so landet nichts Ungefahrenes in der Übergabe-Spur
   if alt is not null then
     update public.kalender_termine set fahrlehrer_id = p_an, aktualisiert_am = now()
-     where schueler_id::text = s.id::text and fahrlehrer_id = alt and datum >= current_date and not coalesce(geloescht, false);
+     where schueler_id::text = s.id::text and fahrlehrer_id = alt and datum >= current_date and not coalesce(geloescht, false)
+       and admin_entfernt_am is null; -- von der Leitung entfernte Termine bleiben (Trigger termin_entfernt_schutz)
     get diagnostics n = row_count;
   end if;
   update public.schueler set fahrlehrer_id = p_an, aktualisiert_am = now() where id = s.id;
