@@ -123,9 +123,30 @@ await pruefe("Q5", "Drucken: nur das Druckblatt mit Code sichtbar, danach wieder
   return f;
 });
 
+await pruefe("Q5b", "dreimal schnell Drucken: ein Blatt, danach sauber weg; langer Name passt aufs Bild", async () => {
+  const f = [];
+  await page.evaluate(() => { window.print = () => {}; routeBuchungsQR(); });
+  for (let i = 0; i < 3; i++) await page.evaluate(() => document.getElementById("bqDrucken").click());
+  await page.waitForTimeout(300);
+  if ((await page.$$("#bqDruck")).length !== 1) f.push("nicht genau ein Druckblatt");
+  await page.evaluate(() => window.dispatchEvent(new Event("afterprint"))); await page.waitForTimeout(100);
+  if (await page.$("#bqDruck") || (await page.evaluate(() => document.body.classList.contains("bq-drucken")))) f.push("bleibt nach afterprint");
+  const breite = await page.evaluate(async () => {
+    const img = new Image(); img.src = _bqBildDatei(_bqLink("x", "schalt"), "schalt", "Maximilian Alexander von Hohenzollern-Sigmaringen"); await img.decode();
+    const c = document.createElement("canvas"); c.width = 1200; c.height = 1500; const x = c.getContext("2d"); x.drawImage(img, 0, 0);
+    const z = x.getImageData(0, 1300, 1200, 80).data; let links = 0, rechts = 0;
+    for (let yy = 0; yy < 80; yy++) { if (z[(yy * 1200 + 10) * 4] < 128) links++; if (z[(yy * 1200 + 1189) * 4] < 128) rechts++; }
+    return { links, rechts };
+  });
+  if (breite.links || breite.rechts) f.push("langer Name am Rand abgeschnitten");
+  return f;
+});
+
 await pruefe("Q6", "ohne Buchungslink: Hinweis statt Code", async () => {
   const r = await page.evaluate(() => { const alt = _authProfile.slug; _authProfile.slug = null; routeBuchungsQR(); const t = document.getElementById("view").textContent; const img = !!document.querySelector(".bq-bild"); _authProfile.slug = alt; return { t, img }; });
   if (r.img || !/noch kein Buchungslink/.test(r.t)) return "Hinweis fehlt";
+  const v = await page.evaluate(() => { const alt = _authProfile.slug; _authProfile.slug = null; openDrawer(); const h = document.querySelector('#drawer [data-nav="buchqr"]').hidden; _authProfile.slug = alt; openDrawer(); const h2 = document.querySelector('#drawer [data-nav="buchqr"]').hidden; closeDrawer(); return { h, h2 }; });
+  if (!v.h || v.h2) return "Menüpunkt-Sichtbarkeit falsch " + JSON.stringify(v);
 });
 
 await pruefe("Q7", "Leitung/Büro: Code eines anderen Fahrlehrers mit Name, eigene Wahl bleibt unberührt", async () => {

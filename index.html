@@ -545,10 +545,18 @@ input,select,textarea{font-family:inherit;font-size:16px;color:var(--txt);}
 .bq-knoepfe{display:flex;flex-wrap:wrap;gap:8px;margin:16px 0 8px;}
 .bq-knoepfe .btn{flex:1 1 140px;min-height:46px;}
 .bq-zulang{font-size:14px;color:#111;padding:24px 6px;margin:0;}
+@media (orientation:landscape) and (max-height:500px){ /* quer: Code und Knöpfe gleich im Bild */
+  .bq-seite > .muted-p{display:none;}
+  .bq-seite{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);column-gap:16px;align-items:start;}
+  .bq-seite > .sec-h,.bq-seite > .bq-wahl{grid-column:1 / -1;}
+  .bq-karte{grid-row:span 2;}
+  .bq-bild{max-width:210px;}
+}
 .bq-link{font-size:12px;color:var(--muted);word-break:break-all;margin:6px 0 0;}
 #bqDruck{display:none;}
 @media print{
   body.bq-drucken > *:not(#bqDruck){display:none !important;}
+  body.bq-drucken::before,body.bq-drucken::after{display:none !important;} /* Hintergrund-Verlauf würde das Blatt überdecken */
   body.bq-drucken #bqDruck{display:block !important;text-align:center;color:#000;background:#fff;padding:10mm 0;}
   #bqDruck .bqd-titel{font:800 30pt system-ui,sans-serif;margin-bottom:4mm;}
   #bqDruck .bqd-zeile{font:16pt system-ui,sans-serif;margin-bottom:8mm;}
@@ -8428,7 +8436,10 @@ function toggleTheme(){
 /* ============================================================
    DRAWER + FAB
    ============================================================ */
-function openDrawer(){_zurueckSperreNachholen();$("#drawer").classList.add("open");$("#scrim").classList.add("open");}
+function openDrawer(){_zurueckSperreNachholen();
+  // K3: „Buchungs-QR fürs Auto“ nur zeigen, wenn ein eigener Buchungslink eingerichtet ist
+  try{ const hat=!!(_authProfile&&_authProfile.slug); document.querySelectorAll('#drawer [data-nav="buchqr"]').forEach(b=>{ b.hidden=!hat; }); }catch(e){}
+  $("#drawer").classList.add("open");$("#scrim").classList.add("open");}
 function closeDrawer(){$("#drawer").classList.remove("open");$("#scrim").classList.remove("open");}
 $("#menuBtn").addEventListener("click",openDrawer);
 $("#scrim").addEventListener("click",closeDrawer);
@@ -16954,19 +16965,26 @@ function _bqBildDatei(link,typ,name){
   // Code direkt aufs Blatt zeichnen (ein geladenes Bild wäre hier noch nicht fertig)
   const q=erzeugeQR(link,"M"), n=q.groesse, rand=4, skal=Math.floor(960/(n+rand*2)), gr=(n+rand*2)*skal, ox=Math.round((1200-gr)/2), oy=290+Math.round((960-gr)/2);
   for(let i=0;i<n;i++)for(let j=0;j<n;j++) if(q.module[i][j])x.fillRect(ox+(j+rand)*skal,oy+(i+rand)*skal,skal,skal);
-  x.font="bold 64px system-ui, sans-serif"; x.fillText((typ==="automatik"?"Automatik":"Schalter")+(name?" · "+name:""),600,1360);
+  // Unterzeile: Schrift verkleinern, bis sie aufs Blatt passt (lange Namen)
+  const unter=(typ==="automatik"?"Automatik":"Schalter")+(name?" · "+name:""); let gr2=64;
+  do{ x.font=`bold ${gr2}px system-ui, sans-serif`; gr2-=4; }while(gr2>=28&&x.measureText(unter).width>1100);
+  x.fillText(unter,600,1360,1100);
   return c.toDataURL("image/png");
 }
 // Drucken: eigenes Blatt nur mit dem Code (alles andere wird beim Drucken ausgeblendet), danach wieder weg
+let _bqDruckWeg=null;
 function _bqDrucken(link,typ,name){
+  if(_bqDruckWeg)_bqDruckWeg(); // vorigen Druck sauber aufräumen (mehrfach getippt)
   document.getElementById("bqDruck")?.remove();
   const d=document.createElement("div"); d.id="bqDruck";
   d.innerHTML=`<div class="bqd-titel">Fahrstunde buchen</div><div class="bqd-zeile">QR-Code mit der Handy-Kamera scannen</div>
     <img src="${qrBild(link,900)}" alt=""><div class="bqd-typ">${typ==="automatik"?"Automatik":"Schalter"}${name?` · ${esc(name)}`:""}</div>`;
   document.body.appendChild(d); document.body.classList.add("bq-drucken");
-  const weg=()=>{ document.body.classList.remove("bq-drucken"); d.remove(); window.removeEventListener("afterprint",weg); };
+  let uhr=null;
+  const weg=()=>{ if(d.isConnected){ document.body.classList.remove("bq-drucken"); d.remove(); } window.removeEventListener("afterprint",weg); clearTimeout(uhr); if(_bqDruckWeg===weg)_bqDruckWeg=null; };
+  _bqDruckWeg=weg;
   window.addEventListener("afterprint",weg);
-  const los=()=>{ try{ window.print(); }catch(e){ weg(); toast("Drucken ging nicht – bitte „Bild speichern“ nutzen"); } setTimeout(()=>{ if(document.getElementById("bqDruck"))weg(); },60000); };
+  const los=()=>{ try{ window.print(); }catch(e){ weg(); toast("Drucken ging nicht – bitte „Bild speichern“ nutzen"); } uhr=setTimeout(weg,60000); };
   const bild=d.querySelector("img"); // erst drucken, wenn das Bild fertig ist (sonst bleibt es auf manchen Handys leer)
   Promise.resolve(bild&&bild.decode?bild.decode().catch(()=>{}):null).then(()=>setTimeout(los,60));
 }
