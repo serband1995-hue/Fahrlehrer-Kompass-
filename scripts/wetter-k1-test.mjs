@@ -6,6 +6,7 @@
 // K1c Alter Nutzer mit Ortsname ohne Koordinaten (früher OpenWeatherMap): Ort wird einmal gesucht und gemerkt.
 // K1d Einstellungen: Ort ändern → gespeichert, Zwischenspeicher geleert, Hinweis ohne Knopf, kein Dialog.
 // K1e Unbekannter Ort: Hinweis, nichts geändert. K1f Ausschalten: keine Pille, keine Anfrage, Seite springt nicht.
+// K1i Abgleich-sicher (Start schreibt nichts außer Schlüssel-Wegfall). K1j Suche scheitert: kein falsches Wetter, eine Suche, 10 min Pause.
 // K1g Symbole: Bright-Sky-Symbole → bisherige Wetter-Codes. K1h 360 px: Einstellungen ohne Querscrollen, keine JS-Fehler.
 // Aufruf: NODE_PATH=$(npm root -g) node scripts/wetter-k1-test.mjs
 import { createRequire } from "node:module";
@@ -93,7 +94,7 @@ await pruefe("K1a", "neuer Nutzer: Offenbach voreingestellt, Pille auf „Heute�
   const f = [];
   await leereSpeicher(page);
   const cfg = await page.evaluate(() => { DB.weatherCfg = undefined; ensureDB(); return DB.weatherCfg; });
-  if (cfg.city !== "Offenbach" || cfg.lat !== 50.1006 || cfg.lon !== 8.7665) f.push("Vorgabe falsch: " + JSON.stringify(cfg));
+  if (cfg.city !== "Offenbach" || "lat" in cfg) f.push("Vorgabe falsch: " + JSON.stringify(cfg));
   if ("apiKey" in cfg) f.push("apiKey noch da");
   const vorher = s.anfragen.length;
   await page.evaluate(() => routeDashboard());
@@ -122,24 +123,54 @@ await pruefe("K1b", "Wetter-Seite: 5 Tage Vorschau mit richtigen Werten, Quelle 
   return f;
 });
 
-await pruefe("K1c", "alter Nutzer „Hanau,DE“ ohne Koordinaten: Ort wird einmal gesucht und gemerkt", async () => {
+await pruefe("K1c", "alter Nutzer „Hanau,DE“ ohne Koordinaten: Ort einmal gesucht, nur auf dem Gerät gemerkt (DB unverändert)", async () => {
   const f = [];
   await leereSpeicher(page);
-  await page.evaluate(() => { DB.weatherCfg = { apiKey: "alt", city: "Hanau,DE" }; ensureDB(); });
+  await page.evaluate(() => { localStorage.removeItem("serband-wetter-ort"); DB.weatherCfg = { apiKey: "alt", city: "Hanau,DE" }; ensureDB(); });
   const vorher = s.anfragen.length;
   const w = await page.evaluate(() => fetchWeather());
   if (!w || w.temp !== 7) f.push("kein Wetter: " + JSON.stringify(w));
   const cfg = await page.evaluate(() => DB.weatherCfg);
-  if (cfg.city !== "Hanau" || cfg.lat !== 50.1329 || cfg.lon !== 8.9167) f.push("nicht gemerkt: " + JSON.stringify(cfg));
+  if (JSON.stringify(cfg) !== JSON.stringify({ city: "Hanau,DE" })) f.push("DB verändert: " + JSON.stringify(cfg));
+  const m = await page.evaluate(() => JSON.parse(localStorage.getItem("serband-wetter-ort") || "null"));
+  if (!m || m.q !== "Hanau" || m.lat !== 50.1329) f.push("nicht gemerkt: " + JSON.stringify(m));
   const neu = s.anfragen.slice(vorher);
   if (neu.filter((u) => /nominatim/.test(u)).length !== 1) f.push("Ortssuchen: " + neu.filter((u) => /nominatim/.test(u)).length);
   if (!neu.some((u) => /lat=50\.1329&lon=8\.9167/.test(u))) f.push("Wetter nicht für Hanau geholt");
   await leereSpeicher(page);
   const v2 = s.anfragen.length; await page.evaluate(() => fetchWeather());
   if (s.anfragen.slice(v2).some((u) => /nominatim/.test(u))) f.push("zweite Ortssuche");
-  // „Offenbach,DE“ vom alten Stand → sofort Koordinaten, ohne Suche
-  const o = await page.evaluate(() => { DB.weatherCfg = { apiKey: "", city: "Offenbach,DE" }; ensureDB(); return DB.weatherCfg; });
-  if (o.city !== "Offenbach" || o.lat !== 50.1006) f.push("Offenbach,DE nicht übernommen: " + JSON.stringify(o));
+  return f;
+});
+
+await pruefe("K1i", "Abgleich-sicher: Start auf einem alten Stand schreibt außer dem Wegfall des Schlüssels nichts in die Daten", async () => {
+  const f = [];
+  for (const alt of [{ apiKey: "k", city: "Offenbach,DE" }, { apiKey: "", city: "Hanau,DE" }, { city: "Darmstadt", lat: 49.8728, lon: 8.6512 }, { city: "Offenbach", aus: true }]) {
+    const r = await page.evaluate((a) => { DB.weatherCfg = JSON.parse(JSON.stringify(a)); ensureDB(); return DB.weatherCfg; }, alt);
+    const soll = { ...alt }; delete soll.apiKey;
+    if (JSON.stringify(r) !== JSON.stringify(soll)) f.push(JSON.stringify(alt) + " → " + JSON.stringify(r));
+  }
+  for (const kaputt of [{ city: 123 }, { city: { a: 1 } }, []]) {
+    const r = await page.evaluate((a) => { DB.weatherCfg = a; ensureDB(); return DB.weatherCfg.city; }, kaputt);
+    if (r !== "Offenbach") f.push("kaputt " + JSON.stringify(kaputt) + " → " + r);
+  }
+  return f;
+});
+
+await pruefe("K1j", "Ortssuche scheitert: kein Wetter (statt Offenbach unter falschem Namen), eine Suche gleichzeitig, 10 min Pause", async () => {
+  const f = [];
+  await leereSpeicher(page);
+  await page.evaluate(() => { localStorage.removeItem("serband-wetter-ort"); DB.weatherCfg = { city: "Xyzqw,DE" }; });
+  const vorher = s.anfragen.length;
+  const r = await page.evaluate(() => Promise.all([fetchWeather(), fetchWeather(), fetchWeatherForecast()]));
+  if (r[0] !== null || r[1] !== null || r[2].length) f.push("trotzdem Wetter: " + JSON.stringify(r).slice(0, 80));
+  const neu = s.anfragen.slice(vorher);
+  if (neu.filter((u) => /nominatim/.test(u)).length !== 1) f.push(neu.filter((u) => /nominatim/.test(u)).length + " Ortssuchen gleichzeitig");
+  if (neu.some((u) => /brightsky/.test(u))) f.push("Wetter für falschen Ort geholt");
+  if (await page.evaluate(() => localStorage.getItem("serband-weather-cache"))) f.push("falsches Wetter gespeichert");
+  const v2 = s.anfragen.length; await page.evaluate(() => fetchWeather());
+  if (s.anfragen.length > v2) f.push("neue Suche innerhalb der Pause");
+  await page.evaluate(() => { localStorage.removeItem("serband-wetter-ort"); DB.weatherCfg = { city: "Offenbach" }; });
   return f;
 });
 
