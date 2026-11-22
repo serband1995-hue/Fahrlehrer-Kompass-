@@ -45,7 +45,7 @@ const server = createServer(async (req, res) => {
 });
 await new Promise((r) => server.listen(0, "127.0.0.1", r));
 const basis = `http://127.0.0.1:${server.address().port}/`;
-const browser = await chromium.launch({ executablePath: process.env.CHROMIUM_PATH || "/opt/pw-browsers/chromium" });
+const browser = await chromium.launch(process.env.CHROMIUM_PATH ? { executablePath: process.env.CHROMIUM_PATH } : {});
 
 async function appSeite(gesehen) {
   const ctx = await browser.newContext({ viewport: { width: 360, height: 740 }, isMobile: true, hasTouch: true, locale: "de-DE" });
@@ -58,8 +58,13 @@ async function appSeite(gesehen) {
 }
 const toastText = (page) => page.evaluate(() => { const t = document.getElementById("toast"); return t && t.classList.contains("show") ? { text: t.textContent, knopf: !!t.querySelector("button") } : null; });
 
-await pruefe("N2", "nach Update: Hinweis mit dem Neu-Text, ohne Knopf, verschwindet von selbst", async () => {
+await pruefe("N2", "nach Update: Hinweis erst nach der Anmeldung, mit dem Neu-Text, ohne Knopf, verschwindet von selbst", async () => {
   const { ctx, page, js } = await appSeite("2000.01.01.1");
+  // Anmeldeseite offen: Hinweis wartet und wird noch nicht als gesehen gemerkt
+  await page.waitForTimeout(3500);
+  const vorher = await page.evaluate(() => localStorage.getItem("serband-app-version"));
+  if (vorher !== "2000.01.01.1") { await ctx.close(); return "bei offener Anmeldeseite schon als gesehen gemerkt"; }
+  await page.evaluate(() => { const e = document.getElementById("loginOverlay"); if (e) e.classList.add("hidden"); const sp = document.getElementById("splash"); if (sp) sp.style.display = "none"; });
   let gesehen = null;
   for (let i = 0; i < 30 && !gesehen; i++) { await page.waitForTimeout(200); const t = await toastText(page); if (t && t.text.includes(LISTE[0].kurz)) gesehen = t; }
   if (!gesehen) { await ctx.close(); return "kein Hinweis mit „" + LISTE[0].kurz + "“"; }

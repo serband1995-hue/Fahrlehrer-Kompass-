@@ -7715,11 +7715,18 @@ window.addEventListener("load", () => {
   try {
     const seen = localStorage.getItem("serband-app-version");
     if (seen && seen !== APP_VERSION) {
-      // K11: einmal kurz zeigen, was neu ist – verschwindet von selbst, nichts zu bestätigen. Erst nach dem Startbild.
+      // K11: einmal kurz zeigen, was neu ist – verschwindet von selbst, nichts zu bestätigen. Erst nach dem Startbild
+      // und erst, wenn die Anmeldeseite weg ist (sonst läge der Hinweis unsichtbar dahinter); erst dann als gesehen merken.
       const neu = _neuEintrag(APP_VERSION);
-      setTimeout(() => toast(neu && neu.kurz ? neu.kurz : "Kompass wurde aktualisiert ✓"), 2300);
-    }
-    localStorage.setItem("serband-app-version", APP_VERSION);
+      const zeige = (n) => {
+        const ov = document.getElementById("loginOverlay");
+        const anmeldungOffen = ov && getComputedStyle(ov).display !== "none" && !ov.classList.contains("hidden");
+        if (anmeldungOffen) { if (n < 1800) setTimeout(() => zeige(n + 1), 1000); return; }
+        toast(neu && neu.kurz ? neu.kurz : "Kompass wurde aktualisiert ✓");
+        try { localStorage.setItem("serband-app-version", APP_VERSION); } catch (e) {}
+      };
+      setTimeout(() => zeige(0), 2300);
+    } else localStorage.setItem("serband-app-version", APP_VERSION);
   } catch (e) {}
 });
 
