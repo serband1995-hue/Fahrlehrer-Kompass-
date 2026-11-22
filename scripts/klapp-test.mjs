@@ -30,7 +30,7 @@ const browser = await chromium.launch(process.env.CHROMIUM_PATH ? { executablePa
 
 async function seite(url) {
   const ctx = await browser.newContext({ viewport: { width: 360, height: 740 }, isMobile: true, hasTouch: true, locale: "de-DE" });
-  await ctx.addInitScript(() => { try { localStorage.setItem("serband-theme", "light"); localStorage.setItem("serband-app-version", "x"); localStorage.setItem("buero-neu-gesehen", "x"); } catch (e) {} });
+  await ctx.addInitScript(() => { try { localStorage.setItem("serband-theme", "light"); localStorage.removeItem("serband-app-version"); localStorage.removeItem("buero-neu-gesehen"); } catch (e) {} });
   const page = await ctx.newPage(); const js = [];
   page.on("pageerror", (e) => js.push(e.message)); page.on("dialog", (d) => { js.push("Dialog: " + d.message()); d.dismiss(); });
   await page.route("**/*", (r) => (r.request().url().startsWith(basis) ? r.continue() : r.abort()));
@@ -91,6 +91,18 @@ await pruefe("A2", "Einstellungen: Schalter umlegen → Seite bleibt an derselbe
   if (nach.on === vor.on) f.push("Schalter hat nicht gewechselt");
   await a.page.click(sel); // zurück
   return f;
+});
+
+await pruefe("A2b", "Schalter: Tippfläche mindestens 44 px hoch (Aussehen unverändert 54×34)", async () => {
+  return a.page.evaluate(() => {
+    const b = document.querySelector('.set-acc[data-acckey="app"] [data-vis]'); b.scrollIntoView({ block: "center" }); const r = b.getBoundingClientRect();
+    const v = getComputedStyle(b, "::before"); const h = r.height - parseFloat(v.top) - parseFloat(v.bottom);
+    const f = []; if (Math.round(r.height) !== 34 || Math.round(r.width) !== 54) f.push(`Größe ${r.width}×${r.height}`);
+    if (h < 44) f.push("Tippfläche " + h + " px");
+    // Tipp knapp über dem Schalter trifft ihn
+    const t = document.elementFromPoint(r.left + r.width / 2, r.top - 4); if (!(t === b || b.contains(t))) f.push("Tipp 4 px darüber trifft nicht");
+    return f;
+  });
 });
 
 await pruefe("A3", "Reiter der offenen Seite antippen → nach oben (bewusst neu)", async () => {

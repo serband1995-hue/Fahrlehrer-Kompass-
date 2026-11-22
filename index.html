@@ -675,6 +675,8 @@ input,select,textarea{font-family:inherit;font-size:16px;color:var(--txt);}
 .check-toggle::after{content:"";position:absolute;left:3px;top:3px;width:25px;height:25px;border-radius:50%;
   background:var(--muted);transition:all .22s var(--pop);}
 .check-toggle.on{background:var(--gruen);border-color:var(--gruen);}
+/* K2+K4: unsichtbar größere Tippfläche (mind. 44 px hoch), der Schalter selbst sieht gleich aus */
+.check-toggle::before{content:"";position:absolute;left:-6px;right:-6px;top:-6px;bottom:-6px;}
 .check-toggle.on::after{left:23px;background:#fff;}
 .plan-sec{margin-top:22px;}
 .plan-sec-h{display:flex;align-items:baseline;gap:10px;margin-bottom:12px;}
@@ -2188,6 +2190,7 @@ body:not(.light) .heute2{--h-karte:var(--surface);--h-rand:var(--line);--h-tinte
 .h2-wetter-text{display:flex;flex-direction:column;align-items:flex-start;min-width:0;line-height:1.15;}
 .h2-wetter-d{font-size:12px;font-weight:600;color:var(--h-text2);max-width:118px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
 @media (max-width:380px){.h2-wetter{padding:5px 12px 5px 8px;gap:6px;}.h2-wetter-d{max-width:84px;}}
+.h2-wetter.h2-wetter-leise{color:var(--muted);}.h2-wetter.h2-wetter-leise .h2-wetter-t{font-size:14px;}
 .h2-kopf>div:first-child{min-width:0;}
 .h2-wx{width:38px;height:38px;display:block;overflow:visible;}
 .h2-wx .wx-strahlen{animation:wxDreh 24s linear infinite;}
@@ -7777,6 +7780,7 @@ const AGB_HTML=`
 <p>Wird die App von mehreren Personen einer Fahrschule genutzt (Fahrlehrer, Büro-Mitarbeiter), handelt jede Person im Rahmen ihrer eigenen beruflichen und gesetzlichen Verantwortung. Der Anbieter übernimmt keine Verantwortung für das Verhalten einzelner Nutzer untereinander oder gegenüber Dritten.</p>
 <h3>§14 Datenschutz der Fahrschülerdaten</h3>
 <p>Alle in der App erfassten Schülerdaten werden ausschließlich innerhalb der App und der zugehörigen Datenbank verarbeitet und nicht an unbeteiligte Dritte weitergegeben. Für die datenschutzrechtliche Aufklärung der Fahrschüler ist die Datenschutzerklärung der jeweiligen Fahrschule maßgeblich; die App selbst stellt gegenüber den Fahrschülern keine eigene, gesonderte Datenschutzerklärung bereit. Der Nutzer versichert, personenbezogene Daten von Fahrschülern nur dann in die App einzugeben, wenn seine Fahrschule über eine gültige, den Einsatz digitaler Verwaltungssoftware abdeckende Datenschutzerklärung verfügt. Die Verantwortung hierfür liegt beim Nutzer bzw. dessen Fahrschule.</p>
+<p><b>Wetteranzeige:</b> Das Wetter kommt vom Deutschen Wetterdienst über den Dienst Bright Sky (api.brightsky.dev). Wer einen eigenen Ort einstellt, für den wird der Ort über OpenStreetMap (Nominatim) gesucht. Dabei wird die IP-Adresse des Geräts an diese Dienste übertragen, aber keine Schülerdaten und keine Namen. Das Wetter lässt sich unter Einstellungen › App › Wetter-Widget ausschalten.</p>
 <h3>§15 Meldepflicht bei erkennbaren Fehlern</h3>
 <p>Erkennt der Nutzer offensichtliche Fehler oder Fehlfunktionen der App (z. B. erkennbar fehlerhafte Berechnungen), ist er gehalten, dies dem Anbieter zeitnah mitzuteilen. Die Fortsetzung der Nutzung in Kenntnis eines solchen Fehlers erfolgt auf eigenes Risiko des Nutzers.</p>
 <h3>§16 Änderungen</h3>
@@ -12186,8 +12190,10 @@ function routeSettings(){
         </div>
         <div class="res-block" style="animation:none;"><h4>🌤 Wetter-Widget</h4>
           <p>Das Wetter kommt kostenlos vom Deutschen Wetterdienst. Du brauchst nichts einzurichten. Unten kannst du deinen Ort einstellen.</p>
+          <p style="font-size:12.5px;color:var(--muted);">Für das Wetter erfährt der Wetterdienst die Internet-Adresse deines Geräts, aber keine Schülerdaten.</p>
           <div class="field"><div class="toggle-row"><div><div class="tc-name" style="font-weight:800;font-size:14px;">Wetter zeigen</div></div><button type="button" class="check-toggle${_wetterAn()?' on':''}" id="weatherOnToggle" aria-label="Wetter zeigen"></button></div></div>
           <div class="field"><label for="weatherCityInput">Ort</label><input id="weatherCityInput" type="text" placeholder="Offenbach" value="${esc(String(DB.weatherCfg.city||"Offenbach").replace(/,\s*[A-Z]{2}$/,""))}" autocomplete="off" enterkeyhint="done"></div>
+          ${_wetterOrtFehlt()?`<p class="wx-ort-fehlt" style="font-size:12.5px;color:var(--muted);margin:-4px 0 8px;">Ort nicht gefunden. Bitte neu eingeben und speichern.</p>`:''}
           <div class="btn-row"><button type="button" class="btn btn-ghost" id="weatherSaveBtn">Ort speichern</button></div>
         </div>
       </div></div>
@@ -15468,6 +15474,13 @@ function _bsIcon(icon,condition,stamp){
 // (früher OpenWeatherMap) wird einmal gesucht und NUR auf diesem Gerät gemerkt (nicht in DB, siehe ensureDB).
 // Eine Suche gleichzeitig; nach einem Fehlschlag 10 Minuten keine neue Suche (Nominatim: höchstens 1 Anfrage/s).
 let _wetterOrtLauf=null;
+// Ein alter eigener Ort wurde zuletzt nicht gefunden (dann zeigt „Heute“ einen leisen Hinweis statt des Wetters)
+function _wetterOrtFehlt(){
+  const cfg=(typeof DB!=="undefined"&&DB&&DB.weatherCfg)||{};
+  if(!_wetterAn()||(typeof cfg.lat==="number"&&typeof cfg.lon==="number")||_istOffenbach(cfg.city))return false;
+  const name=String(cfg.city||"").replace(/,\s*[A-Z]{2}$/,"").trim();
+  try{ const m=JSON.parse(localStorage.getItem("serband-wetter-ort")||"null"); return !!(m&&m.q===name&&m.fehlTs); }catch(e){ return false; }
+}
 function _istOffenbach(c){ return /^offenbach(\s*(am main)?)?(,\s*de)?$/i.test(String(c||"").trim()); }
 async function _wetterOrt(){
   const cfg=DB.weatherCfg||{};
@@ -15988,7 +16001,12 @@ function routeDashboard(){
   const cap=$("#capCard"); if(cap)cap.addEventListener("click",openCapacitySheet);
   bindFC();
   if(wetterAn){
-    fetchWeather().then(w=>{ const b=$("#h2Wetter"); if(!b)return; if(!w){ b.remove(); return; }
+    fetchWeather().then(w=>{ const b=$("#h2Wetter"); if(!b)return;
+      if(!w&&_wetterOrtFehlt()){ // leiser Hinweis statt Wetter: der eingestellte Ort wurde nicht gefunden
+        b.classList.add("h2-wetter-leise"); b.querySelector(".h2-wetter-t").textContent="Ort"; b.querySelector(".h2-wetter-d").textContent="nicht gefunden";
+        b.setAttribute("aria-label","Wetter-Ort nicht gefunden – in den Einstellungen ändern"); b.style.visibility="";
+        b.addEventListener("click",()=>{ _settingsAccOpen="app"; routeSettings(); setTimeout(()=>{ const i=$("#weatherCityInput"); if(i){ i.scrollIntoView({block:"center"}); } },60); }); return; }
+      if(!w){ b.remove(); return; }
       const d=String(w.desc||""); const dGross=d?d.charAt(0).toUpperCase()+d.slice(1):"";
       // In der Pille nur ein kurzes Wort (passt bei 360 px ganz hinein); die volle Beschreibung steht im Vorlesetext und auf der Wetter-Seite
       b.querySelector(".h2-wetter-ic").innerHTML=_wetterIconSVG(w.icon); const grad=Math.round(+w.temp); if(!isFinite(grad)){ b.remove(); return; } b.querySelector(".h2-wetter-t").textContent=`${grad}°`;

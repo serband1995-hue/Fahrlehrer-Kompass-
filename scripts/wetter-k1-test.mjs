@@ -7,6 +7,7 @@
 // K1d Einstellungen: Ort ändern → gespeichert, Zwischenspeicher geleert, Hinweis ohne Knopf, kein Dialog.
 // K1e Unbekannter Ort: Hinweis, nichts geändert. K1f Ausschalten: keine Pille, keine Anfrage, Seite springt nicht.
 // K1i Abgleich-sicher (Start schreibt nichts außer Schlüssel-Wegfall). K1j Suche scheitert: kein falsches Wetter, eine Suche, 10 min Pause.
+// K1l Ort nicht gefunden → leiser Hinweis auf „Heute“ und in den Einstellungen.
 // K1k Enter speichert, kein Netz → eigener Hinweis.
 // K1g Symbole: Bright-Sky-Symbole → bisherige Wetter-Codes. K1h 360 px: Einstellungen ohne Querscrollen, keine JS-Fehler.
 // Aufruf: NODE_PATH=$(npm root -g) node scripts/wetter-k1-test.mjs
@@ -55,7 +56,7 @@ function vorschau(von, bis) {
 
 async function seite(width = 360, height = 740) {
   const ctx = await browser.newContext({ viewport: { width, height }, isMobile: true, hasTouch: true, locale: "de-DE", timezoneId: "Europe/Berlin" });
-  await ctx.addInitScript(() => { try { localStorage.setItem("serband-theme", "light"); localStorage.setItem("serband-app-version", "x"); } catch (e) {} });
+  await ctx.addInitScript(() => { try { localStorage.setItem("serband-theme", "light"); localStorage.removeItem("serband-app-version"); } catch (e) {} });
   const page = await ctx.newPage(); const js = [], anfragen = [];
   page.on("pageerror", (e) => js.push(e.message));
   page.on("dialog", (d) => { js.push("Dialog: " + d.message()); d.dismiss(); });
@@ -172,6 +173,21 @@ await pruefe("K1j", "Ortssuche scheitert: kein Wetter (statt Offenbach unter fal
   if (await page.evaluate(() => localStorage.getItem("serband-weather-cache"))) f.push("falsches Wetter gespeichert");
   const v2 = s.anfragen.length; await page.evaluate(() => fetchWeather());
   if (s.anfragen.length > v2) f.push("neue Suche innerhalb der Pause");
+  await page.evaluate(() => { localStorage.removeItem("serband-wetter-ort"); DB.weatherCfg = { city: "Offenbach" }; });
+  return f;
+});
+
+await pruefe("K1l", "Ort nicht gefunden: „Heute“ zeigt leisen Hinweis, Tipp führt zum Ortsfeld; Einstellungen zeigen den Hinweis", async () => {
+  const f = [];
+  await leereSpeicher(page);
+  await page.evaluate(() => { DB.weatherCfg = { city: "Xyzqw" }; localStorage.setItem("serband-wetter-ort", JSON.stringify({ q: "Xyzqw", fehlTs: Date.now() })); routeDashboard(); });
+  await page.waitForTimeout(600);
+  const p = await page.evaluate(() => { const b = document.getElementById("h2Wetter"); return b ? { text: b.textContent.replace(/\s+/g, " ").trim(), vis: getComputedStyle(b).visibility, label: b.getAttribute("aria-label") } : null; });
+  if (!p || !/nicht gefunden/.test(p.text) || p.vis === "hidden") f.push("kein Hinweis: " + JSON.stringify(p));
+  if (p && !/Einstellungen/.test(p.label || "")) f.push("Vorlesetext ohne Weg");
+  await page.click("#h2Wetter"); await page.waitForTimeout(300);
+  if (!(await page.$("#weatherCityInput"))) f.push("Tipp führt nicht zum Ortsfeld");
+  if (!(await page.$(".wx-ort-fehlt"))) f.push("Einstellungen ohne Hinweis");
   await page.evaluate(() => { localStorage.removeItem("serband-wetter-ort"); DB.weatherCfg = { city: "Offenbach" }; });
   return f;
 });
