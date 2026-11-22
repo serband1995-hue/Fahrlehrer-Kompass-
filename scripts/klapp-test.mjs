@@ -143,6 +143,17 @@ await pruefe("A4", "Ausbildungsplan: Klapp-Bereich „Fahrstunden“ → Übersc
   }
   return f;
 });
+await pruefe("A4b", "schnell zweimal tippen: Klappzustand stimmt, Browser-Automatik danach wieder an", async () => {
+  const f = [];
+  const r = await a.page.evaluate(async () => {
+    const h = document.querySelector('[data-acc="fahrstunden"] > .acc-h'); const vor = h.closest(".acc").classList.contains("open");
+    h.click(); await new Promise((x) => setTimeout(x, 60)); h.click(); await new Promise((x) => setTimeout(x, 900));
+    return { gleich: h.closest(".acc").classList.contains("open") === vor, anker: document.getElementById("view").style.overflowAnchor };
+  });
+  if (!r.gleich) f.push("Zustand falsch");
+  if (r.anker !== "") f.push("overflow-anchor bleibt " + r.anker);
+  return f;
+});
 await pruefe("A5", "App: keine JS-Fehler, kein Dialog", () => a.js);
 await a.ctx.close();
 

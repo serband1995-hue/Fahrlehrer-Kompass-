@@ -17568,7 +17568,9 @@ function _klappAnker(h){
   const vw=document.getElementById("view"); if(!vw||!h||!vw.contains(h))return;
   const oben=()=>h.getBoundingClientRect().top-vw.getBoundingClientRect().top;
   const y0=oben(), start=y0<0?8:y0;
-  const altAnker=vw.style.overflowAnchor; vw.style.overflowAnchor="none"; // eigener Ausgleich statt Browser-Automatik
+  // Ein neuer Tipp beendet einen noch laufenden Ausgleich; danach immer die Browser-Automatik wieder einschalten
+  const lauf=(_klappAnker.lauf=(_klappAnker.lauf||0)+1);
+  vw.style.overflowAnchor="none"; // eigener Ausgleich statt Browser-Automatik
   let ende=start, t0=0;
   // Erst im nächsten Bild steht fest, was auf- und zuklappt: dann ausrechnen, wie weit sich alles darüber verschiebt.
   // Reicht der Platz nach oben nicht (Seite schon ganz oben), gleitet die Überschrift gleichmäßig an ihr Ziel statt zu springen.
@@ -17590,8 +17592,8 @@ function _klappAnker(h){
   // Wischt der Nutzer selbst, hört der Ausgleich sofort auf (nicht gegen den Finger arbeiten)
   let stopp=false; const halt=()=>{ stopp=true; };
   ["touchstart","wheel"].forEach(ev=>vw.addEventListener(ev,halt,{passive:true,once:true}));
-  const fertig=()=>{ vw.style.overflowAnchor=altAnker; ["touchstart","wheel"].forEach(ev=>vw.removeEventListener(ev,halt)); };
-  const schritt=(t)=>{ if(!h.isConnected||stopp){ fertig(); return; }
+  const fertig=()=>{ if(_klappAnker.lauf===lauf)vw.style.overflowAnchor=""; ["touchstart","wheel"].forEach(ev=>vw.removeEventListener(ev,halt)); };
+  const schritt=(t)=>{ if(!h.isConnected||stopp||_klappAnker.lauf!==lauf){ fertig(); return; }
     if(!t0){ t0=t; messen(); }
     const p=Math.min(1,(t-t0)/dauer), ziel=start+(ende-start)*glatt(p);
     const d=oben()-ziel; if(Math.abs(d)>=1)vw.scrollTop+=d;
