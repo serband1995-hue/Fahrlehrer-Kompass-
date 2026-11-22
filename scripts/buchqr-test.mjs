@@ -2,6 +2,7 @@
 // Q1 Seite über Mehr: großer Code, Link = eigener Buchungslink (Schalter). Q2 Umschalten auf Automatik: Link wechselt, Wahl gemerkt, Stelle bleibt.
 // Q3 Nur Automatik-Fahrzeuge → Automatik voreingestellt. Q4 „Bild speichern“ liefert ein PNG mit Code. Q5 Drucken: nur das Druckblatt sichtbar, danach weg.
 // Q6 Ohne Buchungslink: Hinweis statt Code. Q7 Leitung/Büro: Code eines anderen Fahrlehrers, eigene Wahl bleibt unberührt.
+// Q10 Design (Kontrast, Knöpfe im Bild, quer). Q11 „QR“ bei den Buchungslinks öffnet die große Seite.
 // Q8 Einstellungen: Verweis da, allgemeiner QR-Ersteller klar als „für andere Links“ beschriftet. Q9 360 px hell/dunkel: kein Querscrollen, Knöpfe ≥ 44 px, Code auf Weiß.
 // Nur erfundene Daten, keine Datenbank. Aufruf: NODE_PATH=$(npm root -g) node scripts/buchqr-test.mjs
 import { createRequire } from "node:module";
@@ -199,6 +200,38 @@ await pruefe("Q9", "360 px hell und dunkel: kein Querscrollen, Knöpfe ≥ 44 px
     if (t !== s) { if (t.js.length) f.push("dunkel: " + t.js[0]); await t.ctx.close(); }
   }
   if (s.js.length) f.push(s.js.slice(0, 2).join(" / "));
+  return f;
+});
+
+await pruefe("Q10", "Design: aktive Wahl Kontrast ≥ 4.5:1; hoch 360×740 alle drei Knöpfe ohne Scrollen; quer 740×360 Code ganz im ersten Bild", async () => {
+  const f = [];
+  const k = await page.evaluate(() => {
+    routeBuchungsQR(); const b = document.querySelector(".bq-w.on"); const cs = getComputedStyle(b);
+    const rgb = (x) => x.match(/\d+/g).slice(0, 3).map(Number).map((v) => { v /= 255; return v <= 0.03928 ? v / 12.92 : ((v + 0.055) / 1.055) ** 2.4; });
+    const L = (c) => { const [r, g, bb] = rgb(c); return 0.2126 * r + 0.7152 * g + 0.0722 * bb; };
+    const a = L(cs.color), h = L(cs.backgroundColor); return (Math.max(a, h) + 0.05) / (Math.min(a, h) + 0.05);
+  });
+  if (k < 4.5) f.push("Kontrast aktive Wahl " + k.toFixed(1));
+  const unten = await page.evaluate(() => { const v = document.getElementById("view"); v.scrollTop = 0; const vb = v.getBoundingClientRect().bottom, tb = document.getElementById("tabbar")?.getBoundingClientRect().top || vb; const grenze = Math.min(vb, tb);
+    return [...document.querySelectorAll(".bq-knoepfe .btn")].filter((b) => b.getBoundingClientRect().bottom > grenze).map((b) => b.textContent); });
+  if (unten.length) f.push("hoch nicht im Bild: " + unten.join(", "));
+  await page.setViewportSize({ width: 740, height: 360 }); await page.evaluate(() => routeBuchungsQR()); await page.waitForTimeout(250);
+  const q = await page.evaluate(() => { const v = document.getElementById("view"); v.scrollTop = 0; const i = document.querySelector(".bq-bild").getBoundingClientRect(); const vb = v.getBoundingClientRect(); const tb = document.getElementById("tabbar")?.getBoundingClientRect().top || vb.bottom;
+    return { oben: i.top >= vb.top - 1, unten: i.bottom <= Math.min(vb.bottom, tb) + 1, quer: document.documentElement.scrollWidth - window.innerWidth }; });
+  if (!q.oben || !q.unten) f.push("quer: Code nicht ganz im ersten Bild");
+  if (q.quer > 0) f.push("quer: " + q.quer + " px zu breit");
+  await page.setViewportSize({ width: 360, height: 740 });
+  return f;
+});
+await pruefe("Q11", "Buchungslinks: „QR“ öffnet die große Seite mit genau diesem Getriebe", async () => {
+  const f = [];
+  await page.evaluate(() => { localStorage.setItem("kompass-bq-typ", "schalt"); _bqWahl = null; _settingsAccOpen = "geld"; routeSettings(); });
+  await page.waitForTimeout(250);
+  const qr = await page.$$('button[onclick^="_bqOeffnen"]');
+  if (qr.length !== 2) return qr.length + " QR-Knöpfe statt 2";
+  await page.evaluate(() => document.querySelectorAll('button[onclick^="_bqOeffnen"]')[1].click()); await page.waitForTimeout(250);
+  if ((await page.textContent("#tbTitle")) !== "Buchungs-QR") f.push("Seite nicht geöffnet");
+  if (!/typ=automatik/.test(await linkText())) f.push("nicht Automatik");
   return f;
 });
 
