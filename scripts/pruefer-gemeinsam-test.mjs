@@ -194,6 +194,25 @@ async function starte({ rolle = "fahrlehrer", alteDB = false } = {}) {
     if (document.querySelector(".pf-hero-name")) return "in die Akte gesprungen";
     const n = __db.fahrschule_pruefer_notizen.find((x) => x.id === id); return !id || (n && !n.geloescht) ? null : "nicht zurück";
   }, eigene));
+  // Fable 22.11.2026: Änderung eines Kollegen darf durch eigene Änderung nicht verschwinden
+  await page.evaluate(() => { const z = __db.fahrschule_pruefer.find((x) => x.name === "Schmidt"); z.tags = z.tags.concat(["Kollege X"]); z.routen = z.routen.concat([["Kollege", "Strecke"]]);
+    DB.prueferData.Schmidt.tags.push("Mein Y"); PW.nachSpeichern(); });
+  await warte(page, 4500);
+  await pruefe("P18", "eigener Tag kommt dazu, Tag und Strecke des Kollegen bleiben", () => page.evaluate(() => {
+    const z = __db.fahrschule_pruefer.find((x) => x.name === "Schmidt");
+    const fehlt = ["Streng: Schulterblick", "Kollege X", "Mein Y"].filter((t) => !z.tags.includes(t));
+    if (!z.routen.some((r) => r[0] === "Kollege")) fehlt.push("Strecke Kollege");
+    return fehlt.length ? "fehlt: " + fehlt.join(", ") : null;
+  }));
+  // Fable 22.11.2026: gelöschte alte Notiz wird beim zweiten Gerät / neu Anmelden nicht wieder veröffentlicht
+  await page.evaluate(async () => { const n = __db.fahrschule_pruefer_notizen.find((x) => x.pruefer_name === "Müller" && !x.geloescht); if (n) await PW.notizLoeschen(n.id, true); DB.prueferData["Müller"].notiz = "Lässt Zeit beim Einparken."; // wie ein zweites Gerät mit altem Stand
+   
+    Object.keys(localStorage).filter((k) => /^kompass-pw-hoch-/.test(k)).forEach((k) => localStorage.removeItem(k)); await PW.laden({ sofort: true }); });
+  await warte(page, 800);
+  await pruefe("P19", "gelöschte alte Prüfer-Notiz kommt nach erneutem Hochladen nicht zurück", () => page.evaluate(() => {
+    const n = __db.fahrschule_pruefer_notizen.filter((x) => x.pruefer_name === "Müller");
+    if (!n.length) return "Notiz war nie hochgeladen"; return n.some((x) => !x.geloescht) ? "wieder sichtbar (" + n.length + " Einträge)" : null;
+  }));
   await pruefe("P16", "Abmelden entfernt das Prüfer-Wissen vom Gerät", () => page.evaluate(() => { _lokaleNutzerdatenLoeschen(); const k = Object.keys(localStorage).filter((x) => /^kompass-pw/.test(x)); return k.length ? k.join(",") : (PW.aktiv() ? "noch aktiv" : null); }));
   await pruefe("P9", "keine JS-Fehler (Fahrlehrer)", () => jsFehler);
   await ctx.close();

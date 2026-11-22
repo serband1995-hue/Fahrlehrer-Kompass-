@@ -164,6 +164,13 @@
     const namen = [...new Set([...(DB.pruefer || []), ...Object.keys(daten).filter((n) => mitInhalt(daten[n]))])].filter((n) => n && String(n).trim());
     let fehler = false;
     schreibZaehler++;
+    // Eigene Notizen samt gelöschten: eine gelöschte alte Notiz wird nicht neu veröffentlicht (zweites Gerät, neu anmelden)
+    let eigene = st.notizen.filter((n) => n.verfasser_id === u.id);
+    try {
+      const e = await s.from("fahrschule_pruefer_notizen").select("pruefer_name,text").eq("fahrschule_id", st.fs).eq("verfasser_id", u.id);
+      if (e.error) return; // lieber später nochmal als doppelt
+      if (Array.isArray(e.data)) eigene = eigene.concat(e.data);
+    } catch (err) { return; }
     for (const nm of namen) {
       const pd = daten[nm] || {};
       const sp = serverPruefer(nm);
@@ -183,7 +190,7 @@
         }
       }
       const text = String(pd.notiz || "").trim();
-      if (text && !st.notizen.some((n) => n.verfasser_id === u.id && klein(n.pruefer_name) === klein(nm) && String(n.text).trim() === text)) {
+      if (text && !eigene.some((n) => klein(n.pruefer_name) === klein(nm) && String(n.text).trim() === text)) {
         const r = await s.from("fahrschule_pruefer_notizen").insert({ fahrschule_id: st.fs, pruefer_name: String(nm).trim().slice(0, 80), text: text.slice(0, 2000), verfasser_id: u.id }).select("*");
         if (r.error) fehler = true; else if (r.data && r.data[0]) st.notizen.unshift(r.data[0]);
       }
@@ -242,7 +249,8 @@
         const routen = zr.filter((x) => !rMinus.includes(x)).concat(rPlus.filter((x) => !zr.includes(x))).map((x) => JSON.parse(x));
         const upd = { tags, routen }; if (behNeu) upd.behoerde = pd.behoerde || null;
         const r = await s.from("fahrschule_pruefer").update(upd).eq("id", sp.id).select("*");
-        if (!r.error && r.data && r.data[0]) { Object.assign(sp, r.data[0]); st.basis[k] = { tags: kopie(sp.tags || []), routen: kopie(sp.routen || []), behoerde: sp.behoerde || "" }; neu = true; }
+        // Basis = mein gesendeter Stand (nicht der Serverstand): Änderungen anderer gelten sonst beim nächsten Übernehmen als meine Streichung (Fable 22.11.2026)
+        if (!r.error && r.data && r.data[0]) { Object.assign(sp, r.data[0]); st.basis[k] = { tags: tl.slice(), routen: rl.map((x) => JSON.parse(x)), behoerde: behNeu ? (pd.behoerde || "") : (b.behoerde || "") }; neu = true; }
       }
       if (neu) { inDBuebernehmen(); cacheSchreiben(); }
     } catch (e) { console.warn("[Kompass] Prüfer-Abgleich:", e && e.message); }
