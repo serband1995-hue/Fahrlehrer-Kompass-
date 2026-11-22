@@ -4,6 +4,11 @@
    "kurz" (höchstens ~60 Zeichen) erscheint nach dem Update einmal als kleiner Hinweis (verschwindet von selbst, kein Knopf).
    Einfache Worte, keine Fachwörter, keine Schülerdaten. */
 window.KOMPASS_NEU = [
+  { version: "2026.11.22.3", datum: "2026-11-22", kurz: "Prüfer-Wissen jetzt für die ganze Fahrschule.",
+    punkte: ["Prüfer, Strecken und Notizen sehen jetzt alle Fahrlehrer deiner Fahrschule.",
+             "Jede Notiz zeigt klein, wer sie geschrieben hat und wann.",
+             "Bei Prüfungen anderer Fahrlehrer siehst du nur Zahlen, keine Namen von Schülern.",
+             "Bitte sachlich schreiben: alle in der Fahrschule lesen mit."] },
   { version: "2026.11.22.2", datum: "2026-11-22", kurz: "Neu in der App: Wetter ohne Einrichten.",
     punkte: ["In der App ist das Wetter für Offenbach sofort da. Es kommt kostenlos vom Deutschen Wetterdienst, du musst nichts einrichten.",
              "Den Ort kannst du in der App unter Einstellungen › App › Wetter-Widget ändern, zum Beispiel auf Hanau.",
