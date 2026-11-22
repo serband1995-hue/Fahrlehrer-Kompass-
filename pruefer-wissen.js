@@ -39,7 +39,10 @@
       return true;
     } catch (e) { return false; }
   }
+  /* E2 (Fable K5): angefangene Notiz je Prüfer merken (nur in dieser Sitzung), damit sie beim Zurück nicht verloren geht */
+  const entwurf = {};
   PW.vergessen = function () {
+    for (const k of Object.keys(entwurf)) delete entwurf[k]; // E2: angefangene Notizen gehören zum Konto
     st = leer();
     try { localStorage.removeItem(CACHE); for (let i = localStorage.length - 1; i >= 0; i--) { const k = localStorage.key(i); if (k && k.indexOf("kompass-pw-hoch-") === 0) localStorage.removeItem(k); } } catch (e) {}
   };
@@ -287,8 +290,6 @@
         <div class="pw-meta"><span><b>${e_(n.verfasser_name || "Fahrlehrer")}</b> · ${e_(datumDE(n.erstellt_am))}</span>${darfNotiz(n) ? `<button class="pw-weg" type="button" data-weg="${e_(n.id)}" aria-label="Notiz löschen">Löschen</button>` : ""}</div>
       </div>`).join("") : `<p class="h2-nichts">Noch keine Notiz zu ${e_(nm)}.</p>`;
   }
-  /* E2 (Fable K5): angefangene Notiz je Prüfer merken (nur in dieser Sitzung), damit sie beim Zurück nicht verloren geht */
-  const entwurf = {};
   /* Liste zuerst (Wissen der Kollegen sofort sehen), darunter „Notiz hinzufügen“ */
   PW.notizBlockHTML = function (nm) {
     const mic = typeof micIcon === "function" ? micIcon() : "";
