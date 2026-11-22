@@ -4,7 +4,7 @@
    "kurz" (höchstens ~60 Zeichen) erscheint nach dem Update einmal als kleiner Hinweis (verschwindet von selbst, kein Knopf).
    Einfache Worte, keine Fachwörter, keine Schülerdaten. */
 window.KOMPASS_NEU = [
-  { version: "2026.11.22.1", datum: "2026-11-22", kurz: "Neu: „Was ist neu?“ steht jetzt unter „Mehr“.",
+  { version: "2026.11.22.1", datum: "2026-11-22", kurz: "Neu: Die Seite „Neuigkeiten“ zeigt alle Updates.",
     punkte: ["Neue Seite „Neuigkeiten“ unter „Mehr“ (im Büro im Menü): alle Updates als Zeitstrahl.", "Nach jedem Update erscheint einmal ein kleiner Hinweis, was neu ist. Er verschwindet von selbst."] },
   { version: "2026.11.21.3", datum: "2026-11-22", kurz: "Ausbildungsnachweis im Büro.",
     punkte: ["Büro sieht und druckt den Ausbildungsnachweis jedes Schülers.", "Änderungen am Nachweis werden mit Name und Zeit festgehalten.", "Unterschriebene Stunden sind geschützt."] },
