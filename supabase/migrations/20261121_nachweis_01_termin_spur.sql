@@ -70,7 +70,7 @@ begin
       ('sonderArt', old.payload->>'sonderArt', new.payload->>'sonderArt'),
       ('signed', coalesce(old.payload->>'signed', 'false'), coalesce(new.payload->>'signed', 'false'))
     ) as v(feld, alt, neu)
-    where v.alt is distinct from v.neu
+    where v.alt is distinct from v.neu and new.fahrschule_id is not null
   loop
     if wer is null then wer := coalesce(public.buero_bearbeiter(), ''); end if;
     insert into public.aenderungsprotokoll (fahrschule_id, tabelle, datensatz_id, feld, alt, neu, geaendert_von, bearbeiter, grund)
@@ -87,7 +87,7 @@ create or replace function public.termin_nachweis_angelegt()
 as $function$
 declare g text;
 begin
-  if new.erstellt_von is not null and (is_buero(auth.uid()) or is_fahrschule_admin(auth.uid()) or is_super_admin(auth.uid())) then
+  if new.erstellt_von is not null and new.fahrschule_id is not null and (is_buero(auth.uid()) or is_fahrschule_admin(auth.uid()) or is_super_admin(auth.uid())) then
     g := nullif(current_setting('kompass.nachweis_grund', true), '');
     insert into public.aenderungsprotokoll (fahrschule_id, tabelle, datensatz_id, feld, alt, neu, geaendert_von, bearbeiter, grund)
     values (new.fahrschule_id, 'kalender_termine', new.id, 'angelegt', null,
