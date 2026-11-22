@@ -534,6 +534,38 @@ input,select,textarea{font-family:inherit;font-size:16px;color:var(--txt);}
 .na-arrow{color:var(--faint);flex:0 0 auto;}
 .na-arrow svg{width:18px;height:18px;}
 .termine{display:grid;grid-template-columns:1fr 1fr;gap:13px;margin-bottom:14px;}
+/* K3 Buchungs-QR */
+.bq-wahl{display:flex;gap:8px;margin:0 0 14px;}
+.bq-w{flex:1;min-height:46px;border-radius:12px;border:1.5px solid var(--line);background:var(--surface);color:var(--txt);font-weight:800;font-size:15px;}
+.bq-w.on{background:#1E6B46;border-color:#1E6B46;color:#fff;} /* Dunkelgrün = jetzt gewählt, Kontrast ≥ 6:1 */
+.bq-karte{background:#fff;color:#111;border:1px solid var(--line);border-radius:16px;padding:18px 16px 14px;text-align:center;max-width:360px;margin:0 auto;}
+.bq-titel{font-size:20px;font-weight:800;margin-bottom:8px;}
+.bq-bild{width:100%;max-width:240px;aspect-ratio:1;display:block;margin:0 auto;image-rendering:pixelated;}
+.bq-unter{font-size:15px;font-weight:700;margin-top:8px;}
+.bq-knoepfe{display:flex;flex-wrap:wrap;gap:8px;margin:16px 0 8px;}
+.bq-knoepfe .btn{flex:1 1 140px;min-height:46px;}
+.bq-zulang{font-size:14px;color:#111;padding:24px 6px;margin:0;}
+@media (orientation:landscape) and (max-height:500px){ /* quer: Code und Knöpfe gleich im Bild */
+  .bq-seite > .bq-intro{display:none;}
+  .bq-seite{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);column-gap:16px;align-items:start;}
+  .bq-karte{grid-column:1;grid-row:1 / span 3;padding:10px 12px 8px;}
+  .bq-titel{font-size:16px;margin-bottom:4px;}
+  .bq-bild{max-width:160px;}
+  .bq-wahl,.bq-knoepfe,.bq-link{grid-column:2;}
+  .bq-wahl{margin:0 0 8px;}
+  .bq-knoepfe{margin:0;}
+}
+.bq-link{font-size:13px;color:var(--muted);overflow-wrap:anywhere;margin:6px 0 0;}
+#bqDruck{display:none;}
+@media print{
+  body.bq-drucken > *:not(#bqDruck){display:none !important;}
+  body.bq-drucken::before,body.bq-drucken::after{display:none !important;} /* Hintergrund-Verlauf würde das Blatt überdecken */
+  body.bq-drucken #bqDruck{display:block !important;text-align:center;color:#000;background:#fff;padding:10mm 0;}
+  #bqDruck .bqd-titel{font:800 30pt system-ui,sans-serif;margin-bottom:4mm;}
+  #bqDruck .bqd-zeile{font:16pt system-ui,sans-serif;margin-bottom:8mm;}
+  #bqDruck img{width:120mm;height:120mm;image-rendering:pixelated;}
+  #bqDruck .bqd-typ{font:800 22pt system-ui,sans-serif;margin-top:6mm;}
+}
 .nz-zs{list-style:none;margin:0;padding:0 0 0 18px;border-left:2px solid var(--line);}
 .nz-e{position:relative;margin:0 0 18px;padding:0 0 0 4px;}
 .nz-e::before{content:"";position:absolute;left:-25px;top:4px;width:10px;height:10px;border-radius:50%;background:var(--surface);border:2px solid var(--muted);}
@@ -2883,6 +2915,9 @@ if(_tok&&!_bio){ document.getElementById("loginOverlay").classList.add("hidden")
     <a class="nav-item" href="theorie.html" onclick="return _seiteVerlassenOk()" style="text-decoration:none;">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="12" rx="1"/><path d="M12 16v4M8 20h8"/></svg>
       Theorieunterricht</a>
+    <button class="nav-item" data-nav="buchqr">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><path d="M14 14h3v3M21 14v7h-7M17 21v-4"/></svg>
+      Buchungs-QR fürs Auto</button>
     <button class="nav-item" data-nav="neuigkeiten">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 8v4l3 2"/><circle cx="12" cy="12" r="9"/></svg>
       Neuigkeiten</button>
@@ -4150,7 +4185,7 @@ function _lokalerDatenEigentuemer() {
 // Entfernt alle personenbezogenen App-Daten vom Gerät (nicht die App-Version und Geräte-Einstellungen).
 function _lokaleNutzerdatenLoeschen() {
   ["serband-app-v1", "serband-sync-stamp", "serband-restore-stamp", "serband-session-cache", "serband-backup-stamp",
-   "serband-weather-cache", "serband-weather-forecast-cache", "serband-wetter-ort", "serband-abgleich-v1", "serband-db-defekt", "serband-vor-import", "serband-snapbasis-v1", "serband-gefeiert", "kompass-fahrstunde", OWNER_KEY].forEach(k => {
+   "serband-weather-cache", "serband-weather-forecast-cache", "serband-wetter-ort", "kompass-bq-typ", "serband-abgleich-v1", "serband-db-defekt", "serband-vor-import", "serband-snapbasis-v1", "serband-gefeiert", "kompass-fahrstunde", OWNER_KEY].forEach(k => {
     try { localStorage.removeItem(k); } catch (e) {}
   });
   try { sessionStorage.removeItem("vd_unlocked"); } catch (e) {}
@@ -5828,6 +5863,9 @@ function _fsDrawerNavHTML(zeigeZurueck){
     <button class="nav-item" data-nav="fs_stats">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 20V10M10 20V4M16 20v-7M21 20H3"/></svg>
       Statistiken</button>
+    ${_leitungFaehrtSelbst()?`<button class="nav-item" data-nav="buchqr">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><path d="M14 14h3v3M21 14v7h-7M17 21v-4"/></svg>
+      Buchungs-QR fürs Auto</button>`:''}
     <button class="nav-item" data-nav="neuigkeiten">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 8v4l3 2"/><circle cx="12" cy="12" r="9"/></svg>
       Neuigkeiten</button>
@@ -6635,7 +6673,7 @@ function routeFahrschuleLehrer(){
         <button class="fs-btn-activate fs-btn-leise" onclick="fahrlehrerPasswortZuruecksetzen(${_jsArg(l.id)})">Passwort zurücksetzen</button>
       </div>`}
       ${l.slug?`<div class="fs-actions"><button class="fs-btn-activate" onclick="document.getElementById(${_jsArg(linksId)}).style.display=document.getElementById(${_jsArg(linksId)}).style.display==='none'?'block':'none';">🔗 Buchungslinks</button></div>
-      <div id="${linksId}" style="display:none;margin-top:6px;">${_fsBuchungslinksHTML(l.slug,l.name||l.email)}</div>`:'<p class="muted-p" style="margin-top:4px;">Noch kein Buchungslink eingerichtet.</p>'}
+      <div id="${linksId}" style="display:none;margin-top:6px;">${_fsBuchungslinksHTML(l.slug,l.name||l.email,l.name||"")}</div>`:'<p class="muted-p" style="margin-top:4px;">Noch kein Buchungslink eingerichtet.</p>'}
     </div>`;
   }).join("")||'<p class="muted-p">Noch keine Fahrlehrer.</p>';
   view.innerHTML=`<div class="view-inner view-read fade-up">
@@ -6928,18 +6966,16 @@ function _buchungslinkFuerSchueler(s){
   const typ=(s.form==="Automatik")?"automatik":(s.form==="B197")?(s.b197nachweis?"automatik":"schalt"):"schalt";
   return `${BUCHUNG_BASE_URL}?typ=${typ}&lehrer=${encodeURIComponent(_authProfile.slug)}`;
 }
-function _fsBuchungslinksHTML(slug,label){
+function _fsBuchungslinksHTML(slug,label,druckName){
   if(!slug)return "";
   const schaltLink=`${BUCHUNG_BASE_URL}?typ=schalt&lehrer=${encodeURIComponent(slug)}`;
   const automatikLink=`${BUCHUNG_BASE_URL}?typ=automatik&lehrer=${encodeURIComponent(slug)}`;
   const rid="bl_"+slug.replace(/[^a-zA-Z0-9]/g,"");
   return `<div class="res-block" style="animation:none;"><h4>🔗 ${esc(label)} Buchungslinks</h4>
     <div class="field"><label style="font-size:11px;">Schalter</label>
-      <div style="display:flex;gap:6px;"><input readonly id="${rid}_s" value="${esc(schaltLink)}" style="flex:1;font-size:11.5px;"><button class="btn btn-ghost" style="padding:8px 12px;" onclick="_fsKopieren('${rid}_s')">Kopieren</button><button class="btn btn-ghost" style="padding:8px 12px;" onclick="_fsQrToggle('${rid}_s')">QR</button></div>
-      <div id="${rid}_s_qr" style="display:none;margin-top:8px;text-align:center;"><img src="${qrBild(schaltLink,360)}" alt="QR-Code Schalter" style="border-radius:8px;background:#fff;padding:8px;width:180px;height:180px;"></div></div>
+      <div style="display:flex;gap:6px;"><input readonly id="${rid}_s" value="${esc(schaltLink)}" style="flex:1;font-size:11.5px;"><button class="btn btn-ghost" style="padding:8px 12px;" onclick="_fsKopieren('${rid}_s')">Kopieren</button><button class="btn btn-ghost" style="padding:8px 12px;" onclick="_bqOeffnen(${_jsArg(slug)},${_jsArg(druckName||"")},'schalt')">QR</button></div></div>
     <div class="field" style="margin-top:8px;"><label style="font-size:11px;">Automatik</label>
-      <div style="display:flex;gap:6px;"><input readonly id="${rid}_a" value="${esc(automatikLink)}" style="flex:1;font-size:11.5px;"><button class="btn btn-ghost" style="padding:8px 12px;" onclick="_fsKopieren('${rid}_a')">Kopieren</button><button class="btn btn-ghost" style="padding:8px 12px;" onclick="_fsQrToggle('${rid}_a')">QR</button></div>
-      <div id="${rid}_a_qr" style="display:none;margin-top:8px;text-align:center;"><img src="${qrBild(automatikLink,360)}" alt="QR-Code Automatik" style="border-radius:8px;background:#fff;padding:8px;width:180px;height:180px;"></div></div>
+      <div style="display:flex;gap:6px;"><input readonly id="${rid}_a" value="${esc(automatikLink)}" style="flex:1;font-size:11.5px;"><button class="btn btn-ghost" style="padding:8px 12px;" onclick="_fsKopieren('${rid}_a')">Kopieren</button><button class="btn btn-ghost" style="padding:8px 12px;" onclick="_bqOeffnen(${_jsArg(slug)},${_jsArg(druckName||"")},'automatik')">QR</button></div></div>
   </div>`;
 }
 function _fsQrToggle(inputId){
@@ -7746,7 +7782,7 @@ const STORE_KEY="serband-app-v1";
    Wird in den Einstellungen angezeigt + für den Update-Hinweis genutzt. */
 // K1: voreingestellter Wetter-Ort (früh definiert, weil ensureDB ihn schon beim Start braucht)
 const WETTER_START={city:"Offenbach",lat:50.1006,lon:8.7665};
-const APP_VERSION="2026.11.22.4";
+const APP_VERSION="2026.11.22.5";
 try{const f=document.getElementById("drawerFoot"); if(f)f.textContent="Fahrlehrer-Kompass · Version "+APP_VERSION;}catch(e){}
 // Nutzungsbedingungen & Haftungsausschluss (Bereich: rechtliche Absicherung) - Version hochzählen
 // und alle Nutzer müssen erneut zustimmen, sobald sich der Text inhaltlich ändert.
@@ -8401,7 +8437,10 @@ function toggleTheme(){
 /* ============================================================
    DRAWER + FAB
    ============================================================ */
-function openDrawer(){_zurueckSperreNachholen();$("#drawer").classList.add("open");$("#scrim").classList.add("open");}
+function openDrawer(){_zurueckSperreNachholen();
+  // K3: „Buchungs-QR fürs Auto“ nur zeigen, wenn ein eigener Buchungslink eingerichtet ist
+  try{ const hat=!!(_authProfile&&_authProfile.slug); document.querySelectorAll('#drawer [data-nav="buchqr"]').forEach(b=>{ b.hidden=!hat; }); }catch(e){}
+  $("#drawer").classList.add("open");$("#scrim").classList.add("open");}
 function closeDrawer(){$("#drawer").classList.remove("open");$("#scrim").classList.remove("open");}
 $("#menuBtn").addEventListener("click",openDrawer);
 $("#scrim").addEventListener("click",closeDrawer);
@@ -8431,6 +8470,7 @@ document.querySelector(".drawer-nav").addEventListener("click",(e)=>{
     else if(nav==="draw")routeDraw();
     else if(nav==="settings")routeSettings();
     else if(nav==="neuigkeiten")routeNeuigkeiten();
+    else if(nav==="buchqr")routeBuchungsQR();
     else if(nav==="fs_dash")routeFahrschuleDashboard();
     else if(nav==="fs_schueler"){routeHome();}
     else if(nav==="fs_lehrer")routeFahrschuleLehrer();
@@ -12165,7 +12205,7 @@ function routeSettings(){
   <div class="res-block" style="animation:none;"><h4>🏫 Fahrschulen</h4><p>Fahrschulen, Fahrlehrer, Schüler und Pakete verwalten.</p><div class="btn-row"><button class="btn btn-ghost" onclick="routeFahrschulenListe()">Fahrschulen verwalten</button></div></div>
   <div class="res-block" style="animation:none;"><h4>🎓 Akademie-Vermittlung</h4><p style="font-size:13px;color:var(--muted);">Beträge & Aufteilung für Simulator-/Videoakademie-Empfehlungen. Solange leer, wird bei einer Auszahlung nur "noch nicht konfiguriert" angezeigt — nichts wird stillschweigend falsch berechnet.</p><div id="akadVermittlungCfg"><p class="muted-p" style="font-size:12.5px;">Lade …</p></div></div>`:"";
   const eigenerSlug=_authProfile&&_authProfile.slug;
-  const buchungslinksBtn=(eigenerSlug&&_authProfile&&(_authProfile.rolle==="fahrlehrer"||_authProfile.rolle==="super_admin"||_leitungFaehrtSelbst()))?_fsBuchungslinksHTML(eigenerSlug,"Meine"):"";
+  const buchungslinksBtn=(eigenerSlug&&_authProfile&&(_authProfile.rolle==="fahrlehrer"||_authProfile.rolle==="super_admin"||_leitungFaehrtSelbst()))?`<div class="res-block" style="animation:none;"><h4>🚗 Mein Buchungs-QR fürs Auto</h4><p>Großer QR-Code für Schalter oder Automatik, zum Ausdrucken fürs Auto. Schüler scannen ihn und buchen direkt bei dir.</p><div class="btn-row"><button type="button" class="btn btn-primary" onclick="routeBuchungsQR()">Buchungs-QR öffnen</button></div></div>`+_fsBuchungslinksHTML(eigenerSlug,"Meine"):"";
   const logoutBtn=_authUser?`<div class="res-block" style="animation:none;background:rgba(200,60,60,.1);border-color:rgba(200,60,60,.3)"><h4 style="color:#f08080">🚪 Abmelden</h4><p style="color:var(--muted)">Meldet dich sicher aus der App ab.</p><div class="btn-row"><button class="btn" style="background:#c83c3c;color:#fff;border:none;padding:12px 24px;border-radius:12px;font-weight:700;font-size:14px;" onclick="doLogout()">Jetzt abmelden</button></div></div>`:"";
   const kapWoche=kapazitaetAutoWoche();
   view.innerHTML=`<div class="view-inner view-read fade-up">
@@ -12210,8 +12250,8 @@ function routeSettings(){
         <div class="res-block" style="animation:none;"><h4>📋 Ausbildungsplan-Vorlagen</h4>
           <p>Grundstufe, Aufbaustufe und Leistungsstufe individuell gestalten — z.B. eigene Prüfgebiete anlegen.</p>
           <div class="btn-row"><button class="btn btn-ghost" onclick="routePlanVorlagen()">Vorlagen verwalten</button></div></div>
-        <div class="res-block" style="animation:none;"><h4>⬛ QR-Code erzeugen</h4>
-          <p>Für Präsentationen, Aushänge oder Flyer. Der Code entsteht im Gerät — kein fremder Dienst, keine Kosten, funktioniert auch offline.</p>
+        <div class="res-block" style="animation:none;"><h4>⬛ QR-Code für andere Links</h4>
+          <p>Für Aushänge oder Flyer mit einem beliebigen Link. <b>Nicht für Buchungen</b>${eigenerSlug?": deinen Buchungs-QR fürs Auto findest du unter Mehr › Buchungs-QR fürs Auto":""}. Der Code entsteht im Gerät, ohne fremden Dienst.</p>
           <div class="field"><input type="text" id="qrEingabe" placeholder="https://…" autocomplete="off" value="https://serband1995-hue.github.io/Fahrlehrer-Kompass-/check.html"></div>
           <div class="btn-row"><button class="btn btn-ghost" id="qrErzeugen">Code erzeugen</button></div>
           <div id="qrAusgabe" style="margin-top:12px;text-align:center;"></div></div>
@@ -16855,6 +16895,105 @@ let _archFormFilter=[], _archColorFilter=[];
 /* K11 (🗣 22.11.2026): Zeitstrahl aller Updates in einfachen Worten. Daten in neuigkeiten.js (gemeinsam mit dem Büro). */
 function _neuListe(){ return Array.isArray(window.KOMPASS_NEU)?window.KOMPASS_NEU:[]; }
 function _neuEintrag(v){ return _neuListe().find(e=>e&&e.version===v)||null; }
+/* K3 (🗣 22.11.2026): „Mein Buchungs-QR fürs Auto“ – großer QR-Code mit dem eigenen Buchungslink (Schalter oder Automatik),
+   druckfertig (eigenes Druckblatt, nur der Code) und als Bild zum Speichern. Ohne Aufruf: eigener Link; mit slug/name:
+   ein Fahrlehrer aus der Liste der Fahrschule (Leitung/Büro). Nichts wird gespeichert außer der Getriebe-Wahl auf dem Gerät. */
+let _bqWahl=null;          // Getriebe-Wahl für den EIGENEN Code (dazu der Gerätemerker kompass-bq-typ)
+let _bqWahlFremd=null;
+// „QR“ bei den Buchungslinks: große Seite mit genau diesem Getriebe öffnen (eigener oder fremder Code)
+function _bqOeffnen(slug,name,typ){
+  const eigen=!!(_authProfile&&_authProfile.slug&&_authProfile.slug===slug);
+  if(eigen){ _bqWahl=typ; try{ localStorage.setItem("kompass-bq-typ",typ); }catch(e){} routeBuchungsQR(); }
+  else { _bqWahlFremd={slug,typ}; routeBuchungsQR(slug,name); }
+}     // {slug,typ}: Wahl für den Code eines anderen Fahrlehrers (Leitung/Büro), getrennt vom eigenen
+function _bqStandardTyp(){
+  try{ const m=localStorage.getItem("kompass-bq-typ"); if(m==="schalt"||m==="automatik")return m; }catch(e){}
+  const fz=((typeof DB!=="undefined"&&DB&&DB.workCfg&&DB.workCfg.fahrzeuge)||[]).filter(f=>f&&f.typ);
+  return fz.length&&fz.every(f=>f.typ==="automatik")?"automatik":"schalt";
+}
+function _bqLink(slug,typ){ return `${BUCHUNG_BASE_URL}?typ=${typ==="automatik"?"automatik":"schalt"}&lehrer=${encodeURIComponent(slug)}`; }
+function routeBuchungsQR(slug,name){
+  const eigen=!slug;
+  if(eigen){ slug=_authProfile&&_authProfile.slug; name=(_authProfile&&(_authProfile.name||""))||""; }
+  $("#tbTitle").textContent="Buchungs-QR"; setFab(false); view.scrollTop=0;
+  if(!slug){
+    view.innerHTML=`<div class="view-inner view-read fade-up">
+      <p class="muted-p">Für dich ist noch kein Buchungslink eingerichtet. Er wird in der Verwaltung der Fahrschule eingerichtet.</p></div>`;
+    return;
+  }
+  // Eigener Code: gemerkte Wahl bzw. eigene Fahrzeuge. Fremder Code: nur die Wahl für genau diesen Fahrlehrer, sonst Schalter.
+  const typ=eigen?(_bqWahl||_bqStandardTyp()):((_bqWahlFremd&&_bqWahlFremd.slug===slug&&_bqWahlFremd.typ)||"schalt");
+  const link=_bqLink(slug,typ);
+  let bildUrl=null; try{ bildUrl=qrBild(link,640); }catch(e){ bildUrl=null; } // sehr langer Link passt nicht in einen QR-Code
+  view.innerHTML=`<div class="view-inner view-read fade-up bq-seite">
+    <p class="muted-p bq-intro" style="margin:0 0 12px;">${eigen?"Schüler scannen ihn und buchen bei dir.":`Code${name?` von ${esc(name)}`:""}: Schüler scannen ihn und buchen dort.`}</p>
+    <div class="bq-wahl" role="group" aria-label="Getriebe">
+      <button type="button" class="bq-w${typ==="schalt"?" on":""}" data-bqtyp="schalt" aria-pressed="${typ==="schalt"}">Schalter</button>
+      <button type="button" class="bq-w${typ==="automatik"?" on":""}" data-bqtyp="automatik" aria-pressed="${typ==="automatik"}">Automatik</button>
+    </div>
+    <div class="bq-karte">
+      <div class="bq-titel">Fahrstunde buchen</div>
+      ${bildUrl?`<img class="bq-bild" src="${bildUrl}" alt="QR-Code: Fahrstunde buchen, ${typ==="automatik"?"Automatik":"Schalter"}">`:`<p class="bq-zulang">Dieser Link ist zu lang für einen QR-Code. Bitte den Link unten kopieren und weitergeben.</p>`}
+      <div class="bq-unter">${typ==="automatik"?"Automatik":"Schalter"}${name?` · ${esc(name)}`:""}</div>
+    </div>
+    <div class="bq-knoepfe">
+      <button type="button" class="btn btn-primary" id="bqDrucken">Drucken</button>
+      <button type="button" class="btn btn-ghost" id="bqBild">Bild speichern</button>
+      <button type="button" class="btn btn-ghost" id="bqKopieren">Link kopieren</button>
+    </div>
+    <p class="bq-link">${esc(link)}</p>
+  </div>`;
+  view.querySelectorAll("[data-bqtyp]").forEach(b=>b.addEventListener("click",()=>{
+    if(eigen){ _bqWahl=b.dataset.bqtyp; try{ localStorage.setItem("kompass-bq-typ",_bqWahl); }catch(e){} }
+    else _bqWahlFremd={slug,typ:b.dataset.bqtyp};
+    if(eigen)routeBuchungsQR(); else routeBuchungsQR(slug,name); // gleicher Aufruf wie vorher: Seite bleibt an der Stelle (K4)
+  }));
+  $("#bqKopieren").addEventListener("click",()=>{
+    const fertig=()=>toast("Link kopiert ✓");
+    try{ navigator.clipboard.writeText(link).then(fertig).catch(()=>toast("Kopieren ging nicht – Link steht unten zum Markieren")); }catch(e){ toast("Kopieren ging nicht – Link steht unten zum Markieren"); }
+  });
+  $("#bqBild").addEventListener("click",()=>{
+    try{
+      const url=_bqBildDatei(link,typ,name);
+      const a=document.createElement("a"); a.href=url; a.download=`Buchungs-QR-${typ==="automatik"?"Automatik":"Schalter"}.png`;
+      document.body.appendChild(a); a.click(); a.remove(); toast("Bild gespeichert ✓");
+    }catch(e){ toast("Bild speichern ging nicht"); }
+  });
+  if(!bildUrl){ ["bqDrucken","bqBild"].forEach(id=>{ const k=document.getElementById(id); if(k)k.disabled=true; }); }
+  $("#bqDrucken").addEventListener("click",()=>_bqDrucken(link,typ,name));
+}
+// Bild zum Speichern: weißes Blatt mit Überschrift, großem Code und Getriebe (gut lesbar hinter der Scheibe)
+function _bqBildDatei(link,typ,name){
+  const c=document.createElement("canvas"); c.width=1200; c.height=1500; const x=c.getContext("2d");
+  x.fillStyle="#fff"; x.fillRect(0,0,1200,1500); x.fillStyle="#111"; x.textAlign="center";
+  x.font="bold 92px system-ui, sans-serif"; x.fillText("Fahrstunde buchen",600,150);
+  x.font="48px system-ui, sans-serif"; x.fillText("QR-Code mit der Handy-Kamera scannen",600,230);
+  // Code direkt aufs Blatt zeichnen (ein geladenes Bild wäre hier noch nicht fertig)
+  const q=erzeugeQR(link,"M"), n=q.groesse, rand=4, skal=Math.floor(960/(n+rand*2)), gr=(n+rand*2)*skal, ox=Math.round((1200-gr)/2), oy=290+Math.round((960-gr)/2);
+  for(let i=0;i<n;i++)for(let j=0;j<n;j++) if(q.module[i][j])x.fillRect(ox+(j+rand)*skal,oy+(i+rand)*skal,skal,skal);
+  // Unterzeile: Schrift verkleinern, bis sie aufs Blatt passt (lange Namen)
+  const unter=(typ==="automatik"?"Automatik":"Schalter")+(name?" · "+name:""); let gr2=64;
+  do{ x.font=`bold ${gr2}px system-ui, sans-serif`; gr2-=4; }while(gr2>=28&&x.measureText(unter).width>1100);
+  x.fillText(unter,600,1360,1100);
+  return c.toDataURL("image/png");
+}
+// Drucken: eigenes Blatt nur mit dem Code (alles andere wird beim Drucken ausgeblendet), danach wieder weg
+let _bqDruckWeg=null;
+function _bqDrucken(link,typ,name){
+  if(_bqDruckWeg)_bqDruckWeg(); // vorigen Druck sauber aufräumen (mehrfach getippt)
+  document.getElementById("bqDruck")?.remove();
+  const d=document.createElement("div"); d.id="bqDruck";
+  d.innerHTML=`<div class="bqd-titel">Fahrstunde buchen</div><div class="bqd-zeile">QR-Code mit der Handy-Kamera scannen</div>
+    <img src="${qrBild(link,900)}" alt=""><div class="bqd-typ">${typ==="automatik"?"Automatik":"Schalter"}${name?` · ${esc(name)}`:""}</div>`;
+  document.body.appendChild(d); document.body.classList.add("bq-drucken");
+  let uhr=null;
+  const weg=()=>{ if(d.isConnected){ document.body.classList.remove("bq-drucken"); d.remove(); } window.removeEventListener("afterprint",weg); clearTimeout(uhr); if(_bqDruckWeg===weg)_bqDruckWeg=null; };
+  _bqDruckWeg=weg;
+  window.addEventListener("afterprint",weg);
+  const los=()=>{ if(!d.isConnected)return; /* schon von einem neueren Druck ersetzt */ try{ window.print(); }catch(e){ weg(); toast("Drucken ging nicht – bitte „Bild speichern“ nutzen"); } uhr=setTimeout(weg,60000); };
+  const bild=d.querySelector("img"); // erst drucken, wenn das Bild fertig ist (sonst bleibt es auf manchen Handys leer)
+  Promise.resolve(bild&&bild.decode?bild.decode().catch(()=>{}):null).then(()=>setTimeout(los,60));
+}
 function routeNeuigkeiten(){
   $("#tbTitle").textContent="Neuigkeiten"; setFab(false); view.scrollTop=0;
   const liste=_neuListe();

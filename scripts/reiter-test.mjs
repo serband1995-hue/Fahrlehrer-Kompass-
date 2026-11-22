@@ -196,7 +196,8 @@ await pruefe("A7", "Kalender: nur ein Plus-Knopf; „Neuer Termin“ ohne vergan
 });
 
 // B. Menü „Mehr“
-const navWerte = () => page.evaluate(() => [...document.querySelectorAll(".drawer-nav [data-nav]")].map((b) => b.dataset.nav));
+// nur sichtbare Menüpunkte (z. B. „Buchungs-QR“ ist ohne eigenen Buchungslink ausgeblendet, K3)
+const navWerte = () => page.evaluate(() => [...document.querySelectorAll(".drawer-nav [data-nav]")].filter((b) => !b.hidden).map((b) => b.dataset.nav));
 await pruefe("B1", "Menü ohne dash, new, home, kalender, pruef", async () => {
   const n = await navWerte();
   const da = VERBOTEN.filter((v) => n.includes(v));

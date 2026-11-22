@@ -64,3 +64,5 @@ jobs:
         run: NODE_PATH=$(npm root -g) node scripts/wetter-k1-test.mjs
       - name: "Ruhiges Klappen (K2+K4, App und Büro)"
         run: NODE_PATH=$(npm root -g) node scripts/klapp-test.mjs
+      - name: "Buchungs-QR fürs Auto (K3)"
+        run: NODE_PATH=$(npm root -g) node scripts/buchqr-test.mjs
