@@ -4,6 +4,8 @@
    "kurz" (höchstens ~60 Zeichen) erscheint nach dem Update einmal als kleiner Hinweis (verschwindet von selbst, kein Knopf).
    Einfache Worte, keine Fachwörter, keine Schülerdaten. */
 window.KOMPASS_NEU = [
+  { version: "2026.11.22.4", datum: "2026-11-22", kurz: "Korrektur: Wetter-Hinweis nur noch, wenn er stimmt.",
+    punkte: ["Ohne Internet steht beim Wetter kein falscher Hinweis „Ort prüfen“ mehr."] },
   { version: "2026.11.22.3", datum: "2026-11-22", kurz: "Neu: Auf- und Zuklappen läuft jetzt ruhig.",
     punkte: ["Beim Auf- und Zuklappen bleibt die Überschrift ruhig stehen und springt nicht mehr weg.",
              "Wer einen Schalter umlegt oder etwas speichert, bleibt an derselben Stelle der Seite.",
