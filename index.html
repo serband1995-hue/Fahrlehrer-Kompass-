@@ -12251,7 +12251,7 @@ function routeSettings(){
           <p>Grundstufe, Aufbaustufe und Leistungsstufe individuell gestalten — z.B. eigene Prüfgebiete anlegen.</p>
           <div class="btn-row"><button class="btn btn-ghost" onclick="routePlanVorlagen()">Vorlagen verwalten</button></div></div>
         <div class="res-block" style="animation:none;"><h4>⬛ QR-Code für andere Links</h4>
-          <p>Für Aushänge oder Flyer mit einem beliebigen Link. <b>Nicht für Buchungen</b>: deinen Buchungs-QR fürs Auto findest du unter Mehr › Buchungs-QR fürs Auto. Der Code entsteht im Gerät, ohne fremden Dienst.</p>
+          <p>Für Aushänge oder Flyer mit einem beliebigen Link. <b>Nicht für Buchungen</b>${eigenerSlug?": deinen Buchungs-QR fürs Auto findest du unter Mehr › Buchungs-QR fürs Auto":""}. Der Code entsteht im Gerät, ohne fremden Dienst.</p>
           <div class="field"><input type="text" id="qrEingabe" placeholder="https://…" autocomplete="off" value="https://serband1995-hue.github.io/Fahrlehrer-Kompass-/check.html"></div>
           <div class="btn-row"><button class="btn btn-ghost" id="qrErzeugen">Code erzeugen</button></div>
           <div id="qrAusgabe" style="margin-top:12px;text-align:center;"></div></div>
@@ -16990,7 +16990,7 @@ function _bqDrucken(link,typ,name){
   const weg=()=>{ if(d.isConnected){ document.body.classList.remove("bq-drucken"); d.remove(); } window.removeEventListener("afterprint",weg); clearTimeout(uhr); if(_bqDruckWeg===weg)_bqDruckWeg=null; };
   _bqDruckWeg=weg;
   window.addEventListener("afterprint",weg);
-  const los=()=>{ try{ window.print(); }catch(e){ weg(); toast("Drucken ging nicht – bitte „Bild speichern“ nutzen"); } uhr=setTimeout(weg,60000); };
+  const los=()=>{ if(!d.isConnected)return; /* schon von einem neueren Druck ersetzt */ try{ window.print(); }catch(e){ weg(); toast("Drucken ging nicht – bitte „Bild speichern“ nutzen"); } uhr=setTimeout(weg,60000); };
   const bild=d.querySelector("img"); // erst drucken, wenn das Bild fertig ist (sonst bleibt es auf manchen Handys leer)
   Promise.resolve(bild&&bild.decode?bild.decode().catch(()=>{}):null).then(()=>setTimeout(los,60));
 }

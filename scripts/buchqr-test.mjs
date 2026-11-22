@@ -126,10 +126,11 @@ await pruefe("Q5", "Drucken: nur das Druckblatt mit Code sichtbar, danach wieder
 
 await pruefe("Q5b", "dreimal schnell Drucken: ein Blatt, danach sauber weg; langer Name passt aufs Bild", async () => {
   const f = [];
-  await page.evaluate(() => { window.print = () => {}; routeBuchungsQR(); });
+  await page.evaluate(() => { window._gedruckt = 0; window.print = () => { window._gedruckt++; }; routeBuchungsQR(); });
   for (let i = 0; i < 3; i++) await page.evaluate(() => document.getElementById("bqDrucken").click());
   await page.waitForTimeout(300);
   if ((await page.$$("#bqDruck")).length !== 1) f.push("nicht genau ein Druckblatt");
+  if ((await page.evaluate(() => window._gedruckt)) !== 1) f.push((await page.evaluate(() => window._gedruckt)) + "× gedruckt statt 1×");
   await page.evaluate(() => window.dispatchEvent(new Event("afterprint"))); await page.waitForTimeout(100);
   if (await page.$("#bqDruck") || (await page.evaluate(() => document.body.classList.contains("bq-drucken")))) f.push("bleibt nach afterprint");
   const breite = await page.evaluate(async () => {
