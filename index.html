@@ -4434,6 +4434,7 @@ async function _continueLoginFlow(prof) {
   await pullPublicBookings();
   await pullSchuelerZuweisungen();
   await pullTermineZuweisungen();
+  try{ if(window.SU)SU.pruefen(); }catch(e){} // K6: Schüler-Überblick der Fahrschule
   // Login-Overlay verstecken
   document.getElementById("loginOverlay").classList.add("hidden");
   updateBell();
@@ -8517,6 +8518,7 @@ function routeHome(){
       <h2>Noch keine <span class="o">Schüler</span></h2>
       <p>Leg deinen ersten Schüler an. Er füllt den Persönlichkeitsbogen aus, und du hast sofort seine Datei mit Profil und Ausbildungsstand.</p>
       <button class="btn btn-primary" id="emptyAdd" style="flex:0;padding-left:28px;padding-right:28px;">Ersten Schüler anlegen</button>
+      ${window.SU?SU.knopfHTML():""}
     </div>`;
     $("#emptyAdd").addEventListener("click",()=>routeSchuelerForm(null));return;
   }
@@ -8555,6 +8557,7 @@ function routeHome(){
     ${sortBar}
     <div id="studentGrid">${gridHTML}</div>
     <div class="no-hit" id="noHit" style="display:none;">Kein Schüler gefunden.</div>
+    ${window.SU?SU.knopfHTML():""}
     </div>
     <div style="position:fixed;right:6px;top:50%;transform:translateY(-50%);z-index:30;display:flex;flex-direction:column;align-items:center;background:var(--surface);border-radius:12px;padding:4px 3px;box-shadow:var(--elev-2);${(sortiertAlpha&&!gruppiertNachFahrlehrer&&list.length)?'':'display:none;'}" id="alphaNav">${letterNav}</div>`;
   animateRings();
@@ -17675,6 +17678,7 @@ routeDashboard();
   });
 })();
 </script>
+<script src="schueler-ueberblick.js"></script>
 <script>
 /* Redesign v2: markiert nur den aktiven Tab anhand des Seitentitels — reine Anzeige, keine Logik. */
 (function(){
