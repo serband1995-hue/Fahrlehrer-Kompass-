@@ -226,28 +226,57 @@ function klappWieder(ziel, m) {
 /* K10 (🗣 22.11.2026): „Auf jeder Seite ein Knopf, der eine Seite zurückspringt.“ Eigener Verlauf der besuchten Bereiche:
    jeder Eintrag merkt sich die Stelle (scrollY) und die aufgeklappten Listen. „‹ Zurück“ oben links und die Zurück-Taste
    des Browsers/Handys führen genau dorthin zurück. Der Knopf erscheint, sobald es eine vorige Seite gibt. */
-const buVerlauf = [{ hash: location.hash || "" }];
-function buZurueckKnopf() { const k = $("kopfZurueck"); if (k) k.hidden = buVerlauf.length < 2; }
+// Jede Seite im Browser-Verlauf trägt eine laufende Nummer (history.state.buNr). So erkennt der Verlauf ein echtes Zurück
+// sicher – auch wenn Filter/Suche die Adresse ändern (replaceState) oder man über das Menü auf eine frühere Seite tippt.
+const buVerlauf = []; let buNrZaehler = 0;
+const _buReplace = history.replaceState.bind(history), _buPush = history.pushState.bind(history);
+function buNr() { return history.state && typeof history.state.buNr === "number" ? history.state.buNr : null; }
+function buNeuerEintrag() {
+  const nr = ++buNrZaehler;
+  try { _buReplace(Object.assign({}, history.state || {}, { buNr: nr }), "", location.href); } catch (e) {}
+  buVerlauf.push({ nr, hash: location.hash || "" }); if (buVerlauf.length > 30) buVerlauf.shift();
+}
+// Filter/Suche ersetzen die Adresse: Nummer behalten, gemerkten Hash nachziehen
+history.replaceState = function (st, t, u) {
+  const nr = buNr(); const r = _buReplace(nr != null && !(st && st.fenster != null) ? Object.assign({}, st || {}, { buNr: nr }) : st, t, u);
+  const e = buVerlauf.find((x) => x.nr === nr); if (e) e.hash = location.hash || "";
+  return r;
+};
+// Blättern (←/→) legt eine neue Seite an; Fenster-Einträge ({fenster}) zählen nicht als Seite
+history.pushState = function (st, t, u) {
+  const alt = buVerlauf.find((x) => x.nr === buNr()); if (alt) { alt.y = window.scrollY; try { alt.klapp = klappZustand($("ansicht")); } catch (e) {} }
+  const r = _buPush(st, t, u);
+  if (!(st && st.fenster != null)) { buNeuerEintrag(); buLetzteNr = buNr(); buZurueckKnopf(); }
+  return r;
+};
+buNeuerEintrag(); // die Startseite
+function buZurueckKnopf() { const k = $("kopfZurueck"); if (k) k.hidden = buVerlauf.findIndex((x) => x.nr === buNr()) < 1; }
 window.addEventListener("hashchange", () => {
   // Zurück-Taste (oder Link) wechselt die Seite: offene Fenster ohne Eingaben schließen, damit nichts über der falschen Seite stehen bleibt
   document.querySelectorAll("dialog[open]").forEach((d) => { if (!d.dataset.festhalten && !hatEingabe(d)) { d._verlauf = false; d.close(); } });
   const g = aktuellerBereich().gruppe;
   if (navZu().includes(g)) setzeNavZu(navZu().filter((x) => x !== g));
-  // Stelle der Seite merken, die man gerade verlässt (der Inhalt steht noch)
-  const alt = buVerlauf[buVerlauf.length - 1];
+  // Stelle der Seite merken, die man gerade verlässt (der Inhalt steht noch); sie ist die zuletzt aktive Nummer
+  const alt = buVerlauf.find((x) => x.nr === buLetzteNr);
   if (alt) { alt.y = window.scrollY; try { alt.klapp = klappZustand($("ansicht")); } catch (e) {} }
-  const neu = location.hash || "";
-  const zurueck = buVerlauf.length > 1 && buVerlauf[buVerlauf.length - 2].hash === neu;
   let ziel = null;
-  if (zurueck) { buVerlauf.pop(); ziel = buVerlauf[buVerlauf.length - 1]; }
-  else if (!alt || alt.hash !== neu) { buVerlauf.push({ hash: neu }); if (buVerlauf.length > 30) buVerlauf.shift(); }
+  const nr = buNr(); const i = nr != null ? buVerlauf.findIndex((x) => x.nr === nr) : -1;
+  if (i >= 0) { ziel = buVerlauf[i]; buVerlauf.length = i + 1; } // echtes Zurück (oder Vor) auf eine bekannte Seite
+  else {
+    // Startseite ohne Adresse („“) und „#heute“ sind dieselbe Seite: dann keine neue Seite, sonst führte Zurück auf dieselbe
+    const norm = (h) => (h && h !== "#" ? h : "#" + BEREICHE[0].id);
+    if (alt && norm(alt.hash) === norm(location.hash)) { try { _buReplace(Object.assign({}, history.state || {}, { buNr: alt.nr }), "", location.href); } catch (e) {} alt.hash = location.hash; ziel = null; }
+    else buNeuerEintrag(); // neue Seite (Menü, Link)
+  }
   zeichne(); $("ansicht").focus({ preventScroll: true });
   menueOffen(false); // immer zu, auch wenn das Gerät inzwischen gedreht wurde (am PC ohne sichtbare Wirkung)
   if (ziel && ziel.klapp) { try { klappWieder($("ansicht"), ziel.klapp); } catch (e) {} }
-  if (ziel && typeof ziel.y === "number") window.scrollTo(0, ziel.y);
+  if (ziel && typeof ziel.y === "number") { const yy = ziel.y; window.scrollTo(0, yy); setTimeout(() => { if (window.scrollY < yy - 2) window.scrollTo(0, yy); }, 150); }
   else if (istSchmal()) springeZumTitel(); else window.scrollTo(0, 0);
-  buZurueckKnopf();
+  buLetzteNr = buNr(); buZurueckKnopf();
 });
+let buLetzteNr = buNr();
+window.addEventListener("popstate", () => { setTimeout(() => { if (buNr() != null) { buLetzteNr = buNr(); buZurueckKnopf(); } }, 0); });
 if ($("kopfZurueck")) $("kopfZurueck").addEventListener("click", () => { if (buVerlauf.length > 1) history.back(); });
 
 /* Handy und kleines Tablet (bis 900 px): Das Menü ist ein Block zum Aufklappen, beim Start zu.

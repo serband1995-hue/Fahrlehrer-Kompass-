@@ -14903,7 +14903,7 @@ function renderExam(s){
     : `<p class="muted-p" style="font-size:12px;margin:-6px 0 12px;">Kein Prüfungstermin gefunden — heutiges Datum eingesetzt. <b>Bitte prüfen.</b></p>`;
   const pass=_examChoice==='pass';
   const prChips=DB.pruefer.map(p=>`<button class="pr-chip${p===_examPr?' on':''}" data-pr="${esc(p)}">${esc(p)}</button>`).join("");
-  view.innerHTML=`<div class="view-inner view-read fade-up">
+  view.innerHTML=`<div class="view-inner view-read fade-up" data-entwurf>
     <div class="back-row"><button class="back-btn" id="backBtn">${ICN.back} Zurück</button></div>
     <div class="sec-h" style="margin:4px 0 16px;">${pass?'<span class="o">Bestanden</span>':'Nicht <span class="o">bestanden</span>'}</div>
     <div class="field"><label>Datum</label><input type="date" id="exDate" value="${esc(defDate)}"></div>
@@ -14924,6 +14924,8 @@ function renderExam(s){
       <button class="btn btn-primary" id="saveExam">${pass?'Als bestanden eintragen':'Als nicht bestanden eintragen'}</button>
     </div></div>`;
   $("#backBtn").addEventListener("click",()=>{_examChoice=null;renderExam(s);});
+  // K10: Pfeil oben und Android-Zurück gehen hier einen Schritt zurück (Auswahl bestanden/nicht bestanden), nicht aus der Prüfung
+  _seiteZurueckFn=()=>{ if(!_seiteVerlassenOk())return true; _examChoice=null; renderExam(s); return true; };
   document.querySelectorAll("#prWrap .pr-chip[data-pr]").forEach(c=>c.addEventListener("click",()=>{ _examPr=(_examPr===c.dataset.pr)?null:c.dataset.pr; document.querySelectorAll("#prWrap .pr-chip[data-pr]").forEach(x=>x.classList.toggle("on",x.dataset.pr===_examPr)); }));
   $("#prAdd").addEventListener("click",()=>{ const name=(prompt("Name des Prüfers")||"").trim(); if(!name)return; if(!DB.pruefer.includes(name)){DB.pruefer.push(name);DB.pruefer.sort((a,b)=>a.localeCompare(b,'de'));save();} _examPr=name; renderExam(s); });
   if(!pass){
@@ -17789,14 +17791,18 @@ function navZurueck(){
   if(!_seiteVerlassenOk())return;
   if(_navStack.length<2)return;
   _navStack.pop();
+  // K10: Einträge überspringen, deren Schüler es nicht mehr gibt (gelöscht oder an einen anderen Fahrlehrer gegangen)
+  const schuelerWeg=(e)=>{ try{ return /^route(Detail|Plan|Notes|Historie|Exam|AkteTermine|AktePruefung|SchuelerForm|Bogen|Fahrstunde)$/.test(e.name)&&e.args&&e.args[0]&&typeof e.args[0]==="string"&&!DB.students.some(st=>st.id===e.args[0]); }catch(err){ return false; } };
+  while(_navStack.length>1&&schuelerWeg(_navStack[_navStack.length-1]))_navStack.pop();
   const ziel=_navStack[_navStack.length-1];
   if(!ziel)return;
+  const titelVor=(($("#tbTitle")&&$("#tbTitle").textContent)||"");
   _navFahrt=true;
   try{ ziel.fn.apply(null,ziel.args); _seite2Markieren(ziel.name); } // Look der Zielseite auch beim Zurück setzen
   catch(e){ console.warn("[Kompass] Zurueck fehlgeschlagen:",e.message); }
   _navFahrt=false;
   _navAktualisiereKnopf();
-  _navStelleZurueck(ziel.y);
+  if(ziel===_navStack[_navStack.length-1])_navStelleZurueck(ziel.y);
 }
 /* K10: nach dem Zurück an dieselbe Stelle wie vorher. Lädt die Seite Teile nach (Liste, Bilder), wird kurz danach
    noch einmal nachgezogen – aber nur, solange man selbst nicht weitergescrollt hat. */
