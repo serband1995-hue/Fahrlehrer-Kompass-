@@ -139,11 +139,20 @@ await pruefe("Z9", "Zurück auf die Akte eines Schülers, den es nicht mehr gibt
   if (await y() > 5) f.push("falsche Stelle " + (await y()));
   return f;
 });
+await pruefe("Z10", "Wechsel eigene Ansicht ↔ ganze Fahrschule: Pfeil überspringt Seiten der anderen Ansicht (kein toter Tipp)", async () => {
+  const r = await p.evaluate(() => {
+    _navStack.length = 0; routeDashboard(); routeKalender();
+    _navStack.push({ name: "routeFahrschuleDashboard", fn: () => {}, args: [], agg: true }); // Seite der Gesamtansicht
+    routeTodos(); const vor = document.getElementById("tbTitle").textContent;
+    navZurueck(); return { vor, nach: document.getElementById("tbTitle").textContent, len: _navStack.length };
+  });
+  if (r.nach !== "Kalender") return `nach Zurück „${r.nach}“ statt „Kalender“`;
+});
 await pruefe("Z7", "App: keine JS-Fehler, kein Dialog", () => a.js);
 await a.ctx.close();
 
 // ---------- Büro ----------
-for (const [w, h, n] of [[360, 740, "Handy"], [1280, 800, "PC"]]) {
+for (const [w, h, n] of [[360, 740, "Handy"], [1024, 768, "Tablet quer"], [1280, 800, "PC"]]) {
   const b = await seite("buero.html?vorfuehrung", w, h);
   const q = b.page;
   await q.waitForFunction(() => window.S && S.geladenAm, null, { timeout: 8000 }).catch(() => {});
@@ -180,6 +189,10 @@ for (const [w, h, n] of [[360, 740, "Handy"], [1280, 800, "PC"]]) {
       const x = (a, b) => a && b && b.width && a.width && !(a.right <= b.left || b.right <= a.left || a.bottom <= b.top || b.bottom <= a.top);
       return x(rc("titel"), v) || x(rc("kopfZurueck"), v); });
     if (ueber) f.push("Kopfzeile überlappt");
+    // Titel bricht nicht mitten im Wort um (auch mit Zurück-Knopf daneben)
+    await q.evaluate(() => { location.hash = "neuigkeiten"; }); await warte(q, 300);
+    const zeilen = await q.evaluate(() => { const h = document.getElementById("titel"); const lh = parseFloat(getComputedStyle(h).lineHeight) || parseFloat(getComputedStyle(h).fontSize) * 1.2; return Math.round(h.getBoundingClientRect().height / lh); });
+    if (zeilen > 1) f.push(`Titel „Neuigkeiten“ in ${zeilen} Zeilen`);
     return f;
   });
   await pruefe(`B4 [${n}]`, "Büro: Suche/Filter ändern die Adresse → anderer Bereich → Zurück: Suche und Stelle wieder da", async () => {

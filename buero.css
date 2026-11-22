@@ -101,10 +101,11 @@ nav{display:grid;gap:2px;}
 .nutzer-rolle{color:var(--muted);font-size:14px;}
 
 .inhalt{min-width:0;padding:28px 40px 60px;}
-.kopf{display:flex;align-items:center;justify-content:space-between;gap:20px;margin-bottom:24px;}
+.kopf{display:flex;align-items:center;justify-content:space-between;gap:12px 20px;margin-bottom:24px;flex-wrap:wrap;}
 /* K10: Zurück-Knopf links neben dem Titel */
 .kopf-links{display:flex;align-items:center;gap:12px;min-width:0;flex:1 1 auto;}
-.kopf-links h1{min-width:0;overflow-wrap:anywhere;}
+/* Titel bricht nur zwischen Wörtern um; reicht der Platz nicht, rutscht die rechte Gruppe in die nächste Zeile */
+.kopf-links h1{min-width:min(100%,11ch);overflow-wrap:normal;hyphens:manual;}
 .knopf.klein.kopf-zurueck{flex:0 0 auto;min-height:44px;padding:0 14px;}
 @media print{.kopf-zurueck{display:none !important;}}
 .kopf h1{font-size:34px;}

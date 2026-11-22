@@ -17794,12 +17794,15 @@ function navZurueck(){
   if(_seiteZurueckFn){ const f=_seiteZurueckFn; _seiteZurueckFn=null; if(f())return; }
   if(!_seiteVerlassenOk())return;
   if(_navStack.length<2)return;
-  _navStack.pop();
+  const aktuell=_navStack.pop();
   // K10: Einträge überspringen, deren Schüler es nicht mehr gibt (gelöscht oder an einen anderen Fahrlehrer gegangen)
   const schuelerWeg=(e)=>{ try{ return /^route(Detail|Plan|Notes|Historie|Exam|AkteTermine|AktePruefung|SchuelerForm|Bogen|Fahrstunde)$/.test(e.name)&&e.args&&e.args[0]&&typeof e.args[0]==="string"&&!DB.students.some(st=>st.id===e.args[0]); }catch(err){ return false; } };
-  while(_navStack.length>1&&schuelerWeg(_navStack[_navStack.length-1]))_navStack.pop();
+  // … und Einträge der anderen Ansicht (nach dem Wechsel eigene Ansicht ↔ ganze Fahrschule zeichnen sie nichts mehr)
+  const andereAnsicht=(e)=>{ try{ return e.agg!==undefined&&e.agg!==!!_fsAgg; }catch(err){ return false; } };
+  while(_navStack.length>1&&(schuelerWeg(_navStack[_navStack.length-1])||andereAnsicht(_navStack[_navStack.length-1])))_navStack.pop();
   const ziel=_navStack[_navStack.length-1];
   if(!ziel)return;
+  if(andereAnsicht(ziel)||schuelerWeg(ziel)){ _navStack=[aktuell]; _navAktualisiereKnopf(); return; } // nichts Gültiges mehr davor
   const titelVor=(($("#tbTitle")&&$("#tbTitle").textContent)||"");
   _navFahrt=true;
   try{ ziel.fn.apply(null,ziel.args); _seite2Markieren(ziel.name); } // Look der Zielseite auch beim Zurück setzen
@@ -17872,6 +17875,8 @@ function _seite2Markieren(name){
         if(_notizSofort){ const f=_notizSofort; _notizSofort=null; try{ f(); }catch(e){} }
         _seiteGeaendert=false; _seiteZurueckFn=null;
         const r=orig.apply(this,name==="routeKalender"?args:arguments);
+        // K10: merken, in welcher Ansicht (eigene oder ganze Fahrschule) der Eintrag entstand – Zurück bleibt in der Ansicht
+        try{ const e=_navStack[_navStack.length-1]; if(e&&e.name===name&&e.agg===undefined)e.agg=!!_fsAgg; }catch(e){}
         // Hat die Seite intern auf eine andere Seite umgeleitet (z. B. Akte ohne Schüler → Liste), gilt deren Merkmal
         if(_seite2Zaehler===vorher)_seite2Markieren(name);
         if(haltY){ const vw=document.getElementById("view"); const t=($("#tbTitle")&&$("#tbTitle").textContent)||""; if(vw&&t===haltY.titel)vw.scrollTop=haltY.y; }
