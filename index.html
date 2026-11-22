@@ -544,6 +544,7 @@ input,select,textarea{font-family:inherit;font-size:16px;color:var(--txt);}
 .bq-unter{font-size:15px;font-weight:700;margin-top:8px;}
 .bq-knoepfe{display:flex;flex-wrap:wrap;gap:8px;margin:16px 0 8px;}
 .bq-knoepfe .btn{flex:1 1 140px;min-height:46px;}
+.bq-zulang{font-size:14px;color:#111;padding:24px 6px;margin:0;}
 .bq-link{font-size:12px;color:var(--muted);word-break:break-all;margin:6px 0 0;}
 #bqDruck{display:none;}
 @media print{
@@ -4173,7 +4174,7 @@ function _lokalerDatenEigentuemer() {
 // Entfernt alle personenbezogenen App-Daten vom Gerät (nicht die App-Version und Geräte-Einstellungen).
 function _lokaleNutzerdatenLoeschen() {
   ["serband-app-v1", "serband-sync-stamp", "serband-restore-stamp", "serband-session-cache", "serband-backup-stamp",
-   "serband-weather-cache", "serband-weather-forecast-cache", "serband-wetter-ort", "serband-abgleich-v1", "serband-db-defekt", "serband-vor-import", "serband-snapbasis-v1", "serband-gefeiert", "kompass-fahrstunde", OWNER_KEY].forEach(k => {
+   "serband-weather-cache", "serband-weather-forecast-cache", "serband-wetter-ort", "kompass-bq-typ", "serband-abgleich-v1", "serband-db-defekt", "serband-vor-import", "serband-snapbasis-v1", "serband-gefeiert", "kompass-fahrstunde", OWNER_KEY].forEach(k => {
     try { localStorage.removeItem(k); } catch (e) {}
   });
   try { sessionStorage.removeItem("vd_unlocked"); } catch (e) {}
@@ -16885,7 +16886,8 @@ function _neuEintrag(v){ return _neuListe().find(e=>e&&e.version===v)||null; }
 /* K3 (🗣 22.11.2026): „Mein Buchungs-QR fürs Auto“ – großer QR-Code mit dem eigenen Buchungslink (Schalter oder Automatik),
    druckfertig (eigenes Druckblatt, nur der Code) und als Bild zum Speichern. Ohne Aufruf: eigener Link; mit slug/name:
    ein Fahrlehrer aus der Liste der Fahrschule (Leitung/Büro). Nichts wird gespeichert außer der Getriebe-Wahl auf dem Gerät. */
-let _bqWahl=null;
+let _bqWahl=null;          // Getriebe-Wahl für den EIGENEN Code (dazu der Gerätemerker kompass-bq-typ)
+let _bqWahlFremd=null;     // {slug,typ}: Wahl für den Code eines anderen Fahrlehrers (Leitung/Büro), getrennt vom eigenen
 function _bqStandardTyp(){
   try{ const m=localStorage.getItem("kompass-bq-typ"); if(m==="schalt"||m==="automatik")return m; }catch(e){}
   const fz=((typeof DB!=="undefined"&&DB&&DB.workCfg&&DB.workCfg.fahrzeuge)||[]).filter(f=>f&&f.typ);
@@ -16898,11 +16900,13 @@ function routeBuchungsQR(slug,name){
   $("#tbTitle").textContent="Buchungs-QR"; setFab(false); view.scrollTop=0;
   if(!slug){
     view.innerHTML=`<div class="view-inner view-read fade-up"><div class="sec-h" style="margin-bottom:6px;">Buchungs-<span class="o">QR</span></div>
-      <p class="muted-p">Für dich ist noch kein Buchungslink eingerichtet. Das richtet die Fahrschule (Büro oder Leitung) ein.</p></div>`;
+      <p class="muted-p">Für dich ist noch kein Buchungslink eingerichtet. Er wird in der Verwaltung der Fahrschule eingerichtet.</p></div>`;
     return;
   }
-  const typ=_bqWahl||_bqStandardTyp();
+  // Eigener Code: gemerkte Wahl bzw. eigene Fahrzeuge. Fremder Code: nur die Wahl für genau diesen Fahrlehrer, sonst Schalter.
+  const typ=eigen?(_bqWahl||_bqStandardTyp()):((_bqWahlFremd&&_bqWahlFremd.slug===slug&&_bqWahlFremd.typ)||"schalt");
   const link=_bqLink(slug,typ);
+  let bildUrl=null; try{ bildUrl=qrBild(link,640); }catch(e){ bildUrl=null; } // sehr langer Link passt nicht in einen QR-Code
   view.innerHTML=`<div class="view-inner view-read fade-up bq-seite">
     <div class="sec-h" style="margin-bottom:6px;">Buchungs-<span class="o">QR</span></div>
     <p class="muted-p" style="margin:0 0 12px;">${eigen?"Dein":"Der"} Code fürs Auto${!eigen&&name?` von ${esc(name)}`:""}. Schüler scannen ihn mit der Handy-Kamera und buchen direkt ${eigen?"bei dir":"bei diesem Fahrlehrer"}.</p>
@@ -16912,7 +16916,7 @@ function routeBuchungsQR(slug,name){
     </div>
     <div class="bq-karte">
       <div class="bq-titel">Fahrstunde buchen</div>
-      <img class="bq-bild" src="${qrBild(link,640)}" alt="QR-Code: Fahrstunde buchen, ${typ==="automatik"?"Automatik":"Schalter"}">
+      ${bildUrl?`<img class="bq-bild" src="${bildUrl}" alt="QR-Code: Fahrstunde buchen, ${typ==="automatik"?"Automatik":"Schalter"}">`:`<p class="bq-zulang">Dieser Link ist zu lang für einen QR-Code. Bitte den Link unten kopieren und weitergeben.</p>`}
       <div class="bq-unter">${typ==="automatik"?"Automatik":"Schalter"}${name?` · ${esc(name)}`:""}</div>
     </div>
     <div class="bq-knoepfe">
@@ -16923,7 +16927,8 @@ function routeBuchungsQR(slug,name){
     <p class="bq-link">${esc(link)}</p>
   </div>`;
   view.querySelectorAll("[data-bqtyp]").forEach(b=>b.addEventListener("click",()=>{
-    _bqWahl=b.dataset.bqtyp; if(eigen){ try{ localStorage.setItem("kompass-bq-typ",_bqWahl); }catch(e){} }
+    if(eigen){ _bqWahl=b.dataset.bqtyp; try{ localStorage.setItem("kompass-bq-typ",_bqWahl); }catch(e){} }
+    else _bqWahlFremd={slug,typ:b.dataset.bqtyp};
     if(eigen)routeBuchungsQR(); else routeBuchungsQR(slug,name); // gleicher Aufruf wie vorher: Seite bleibt an der Stelle (K4)
   }));
   $("#bqKopieren").addEventListener("click",()=>{
@@ -16937,6 +16942,7 @@ function routeBuchungsQR(slug,name){
       document.body.appendChild(a); a.click(); a.remove(); toast("Bild gespeichert ✓");
     }catch(e){ toast("Bild speichern ging nicht"); }
   });
+  if(!bildUrl){ ["bqDrucken","bqBild"].forEach(id=>{ const k=document.getElementById(id); if(k)k.disabled=true; }); }
   $("#bqDrucken").addEventListener("click",()=>_bqDrucken(link,typ,name));
 }
 // Bild zum Speichern: weißes Blatt mit Überschrift, großem Code und Getriebe (gut lesbar hinter der Scheibe)
@@ -16960,7 +16966,9 @@ function _bqDrucken(link,typ,name){
   document.body.appendChild(d); document.body.classList.add("bq-drucken");
   const weg=()=>{ document.body.classList.remove("bq-drucken"); d.remove(); window.removeEventListener("afterprint",weg); };
   window.addEventListener("afterprint",weg);
-  setTimeout(()=>{ try{ window.print(); }catch(e){ weg(); toast("Drucken ging nicht – bitte „Bild speichern“ nutzen"); } setTimeout(()=>{ if(document.getElementById("bqDruck"))weg(); },60000); },120);
+  const los=()=>{ try{ window.print(); }catch(e){ weg(); toast("Drucken ging nicht – bitte „Bild speichern“ nutzen"); } setTimeout(()=>{ if(document.getElementById("bqDruck"))weg(); },60000); };
+  const bild=d.querySelector("img"); // erst drucken, wenn das Bild fertig ist (sonst bleibt es auf manchen Handys leer)
+  Promise.resolve(bild&&bild.decode?bild.decode().catch(()=>{}):null).then(()=>setTimeout(los,60));
 }
 function routeNeuigkeiten(){
   $("#tbTitle").textContent="Neuigkeiten"; setFab(false); view.scrollTop=0;

@@ -136,7 +136,20 @@ await pruefe("Q7", "Leitung/Büro: Code eines anderen Fahrlehrers mit Name, eige
   await page.click('[data-bqtyp="automatik"]'); await page.waitForTimeout(150);
   if (!/lehrer=anderer-erfunden/.test(await linkText()) || !/typ=automatik/.test(await linkText())) f.push("Umschalten verliert den Fahrlehrer");
   if ((await page.evaluate(() => localStorage.getItem("kompass-bq-typ"))) !== "schalt") f.push("eigene Wahl überschrieben");
-  await page.evaluate(() => { _bqWahl = null; });
+  // danach den eigenen Code öffnen: bleibt Schalter (keine Vermischung mit der Wahl für den Kollegen)
+  await page.evaluate(() => routeBuchungsQR()); await page.waitForTimeout(150);
+  if (!/typ=schalt/.test(await linkText()) || !new RegExp("lehrer=" + "erfundener-testlehrer").test(await linkText())) f.push("eigener Code übernimmt fremde Wahl: " + (await linkText()));
+  // anderer fremder Fahrlehrer: Standard Schalter, nicht die Wahl des ersten Kollegen
+  await page.evaluate(() => routeBuchungsQR("dritter-erfunden", "")); await page.waitForTimeout(150);
+  if (!/typ=schalt/.test(await linkText())) f.push("Wahl springt auf anderen Kollegen über");
+  return f;
+});
+
+await pruefe("Q7b", "sehr langer Link: Hinweis statt Absturz, Drucken/Bild gesperrt, Link bleibt sichtbar", async () => {
+  const f = [];
+  await page.evaluate(() => routeBuchungsQR("x".repeat(400), "")); await page.waitForTimeout(150);
+  const r = await page.evaluate(() => ({ titel: document.getElementById("tbTitle").textContent, hinweis: !!document.querySelector(".bq-zulang"), druck: document.getElementById("bqDrucken")?.disabled, link: (document.querySelector(".bq-link")?.textContent || "").length }));
+  if (!r.hinweis) f.push("kein Hinweis"); if (!r.druck) f.push("Drucken nicht gesperrt"); if (r.link < 400) f.push("Link fehlt");
   return f;
 });
 
