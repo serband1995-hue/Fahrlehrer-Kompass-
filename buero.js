@@ -2307,6 +2307,7 @@ function kalenderJahr(tag) {
   </div>`;
 }
 function bindeKalender(ziel) {
+  if (typeof pkZeigen === "function") pkZeigen(ziel); // K7: Papierkorb der Fahrschule (buero-nachweis.js)
   ziel.querySelectorAll("[data-ktag]").forEach((b) => b.addEventListener("click", () => setzeFilter("kalender", { tag: b.dataset.ktag }, true)));
   ziel.querySelectorAll("[data-ksprung]").forEach((b) => b.addEventListener("click", () => { location.hash = linkMit("kalender", { ansicht: "", tag: b.dataset.ksprung }); }));
   ziel.querySelector("#kDatum").addEventListener("change", (e) => e.target.value && setzeFilter("kalender", { tag: e.target.value }));
@@ -2421,6 +2422,7 @@ async function sageTermineAb(termine, text) {
   const weg = new Set(res.data.map((r) => r.id));
   const echt = termine.filter((t) => weg.has(t.id));
   S.termine = S.termine.filter((x) => !weg.has(x.id));
+  if (typeof PK !== "undefined") PK.zeit = 0; // K7: Papierkorb neu laden
   zeichne();
   toastUndo(text, async () => {
     const r = await supa.from("kalender_termine").update({ geloescht: false, aktualisiert_am: new Date().toISOString() }).in("id", echt.map((t) => t.id)).select("id");

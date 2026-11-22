@@ -369,6 +369,21 @@
       st.bekannt = st.bekannt.filter((k) => k !== klein(nm));
       if (!st.geloescht.includes(klein(nm))) st.geloescht.push(klein(nm));
       schreibZaehler++; cacheSchreiben();
+      zuletztWeg[klein(nm)] = sp.id;
+      return true;
+    } catch (e) { return false; }
+  };
+  /* K7: „Rückgängig“ nach dem Löschen – Zeile wieder aktiv, danach frisch laden */
+  const zuletztWeg = {};
+  PW.wiederherstellen = async function (nm) {
+    const id = zuletztWeg[klein(nm)], s = supa(); if (!PW.aktiv() || !id) return true;
+    try {
+      const r = await s.from("fahrschule_pruefer").update({ geloescht: false }).eq("id", id).select("id");
+      if (r.error || !r.data || !r.data.length) return false;
+      delete zuletztWeg[klein(nm)];
+      st.geloescht = st.geloescht.filter((k) => k !== klein(nm));
+      schreibZaehler++; cacheSchreiben();
+      if (typeof PW.laden === "function") PW.laden({ sofort: true });
       return true;
     } catch (e) { return false; }
   };

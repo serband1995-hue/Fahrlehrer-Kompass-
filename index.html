@@ -4190,7 +4190,7 @@ function _lokalerDatenEigentuemer() {
 // Entfernt alle personenbezogenen App-Daten vom Gerät (nicht die App-Version und Geräte-Einstellungen).
 function _lokaleNutzerdatenLoeschen() {
   ["serband-app-v1", "serband-sync-stamp", "serband-restore-stamp", "serband-session-cache", "serband-backup-stamp",
-   "serband-weather-cache", "serband-weather-forecast-cache", "serband-wetter-ort", "kompass-bq-typ", "serband-abgleich-v1", "serband-db-defekt", "serband-vor-import", "serband-snapbasis-v1", "serband-gefeiert", "kompass-fahrstunde", OWNER_KEY].forEach(k => {
+   "serband-weather-cache", "serband-weather-forecast-cache", "serband-wetter-ort", "kompass-bq-typ", "serband-abgleich-v1", "kompass-storno-offen", "serband-db-defekt", "serband-vor-import", "serband-snapbasis-v1", "serband-gefeiert", "kompass-fahrstunde", OWNER_KEY].forEach(k => {
     try { localStorage.removeItem(k); } catch (e) {}
   });
   try { sessionStorage.removeItem("vd_unlocked"); } catch (e) {}
@@ -4674,7 +4674,7 @@ async function _alleSeiten(bau) {
 }
 // Gemeinsamer Ablauf der drei Brücken: nur Geändertes schreiben, nur Bekanntes löschen.
 // Liefert die IDs, die geschrieben wurden.
-async function _brueckeAbgleichen({ tabelle, art, eintraege, zeileVon, loeschWert, aktivFilter }) {
+async function _brueckeAbgleichen({ tabelle, art, eintraege, zeileVon, loeschWert, aktivFilter, loeschWertFuer }) {
   const supa = getSupa(); const merk = _abglLaden()[art];
   const nowIso = new Date().toISOString();
   const offen = [];
@@ -4697,7 +4697,19 @@ async function _brueckeAbgleichen({ tabelle, art, eintraege, zeileVon, loeschWer
       const teil = bekanntWeg.slice(i, i + 150);
       const { data: noch, error } = await aktivFilter(supa.from(tabelle).select("id").eq("fahrlehrer_id", _authUser.id).in("id", teil));
       if (error) throw error;
-      const zuLoeschen = (noch || []).map(r => r.id);
+      let zuLoeschen = (noch || []).map(r => r.id);
+      // K7: Stornierte Stunden einzeln (mit Grund und Vermerk); was es aktiv nicht mehr gibt, braucht keinen Storno mehr
+      if (loeschWertFuer) {
+        const aktiv = new Set(zuLoeschen);
+        for (const id of teil) {
+          const w = loeschWertFuer(id); if (!w) continue;
+          if (aktiv.has(id)) {
+            const { error: sErr } = await supa.from(tabelle).update(Object.assign({}, w, { aktualisiert_am: nowIso })).eq("id", id);
+            if (sErr) throw sErr;
+          }
+          zuLoeschen = zuLoeschen.filter(x => x !== id); _stornoVergessen(id);
+        }
+      }
       if (zuLoeschen.length) {
         const upd = Object.assign({}, loeschWert); if (art !== "schueler") upd.aktualisiert_am = nowIso;
         const { error: dErr } = await supa.from(tabelle).update(upd).in("id", zuLoeschen);
@@ -6756,11 +6768,10 @@ async function fsFahrzeugHinzufuegen(){
   routeFahrschuleFahrzeuge();
 }
 async function fsFahrzeugLoeschen(id,name){
-  if(!confirm(`"${name}" wirklich aus der Flotte entfernen?`))return;
   const supa=getSupa();
   const {error}=await supa.from("fahrschule_fahrzeuge").update({aktiv:false}).eq("id",id);
   if(error){toast("Fehler: "+error.message);return;}
-  toast("Fahrzeug entfernt ✓");
+  toastUndo(`${name} entfernt`,async()=>{ const {error:e2}=await supa.from("fahrschule_fahrzeuge").update({aktiv:true}).eq("id",id); if(e2){ toast("Fehler: "+e2.message); return; } toast("Wiederhergestellt ✓"); await _fsRefreshAggData(); if(typeof routeFahrschuleFahrzeuge==="function"&&_navStack.length&&_navStack[_navStack.length-1].name==="routeFahrschuleFahrzeuge")routeFahrschuleFahrzeuge(); },6000);
   await _fsRefreshAggData();
   routeFahrschuleFahrzeuge();
 }
@@ -7273,13 +7284,19 @@ async function fsSchichtHinzufuegen(datum){
   toast("Eingetragen ✓");
   _fsLadeSchichtplan();
 }
-async function fsSchichtLoeschen(id){
-  if(!confirm("Eintrag löschen?"))return;
+/* K7 (🗣 „keine Meldungen, wo ich etwas bestätigen soll“): Zeile sofort löschen, 6 s „Rückgängig“ setzt sie wieder ein */
+async function _cloudLoeschenMitRueckgaengig(tabelle,id,text,neuLaden){
   const supa=getSupa();
-  const {error}=await supa.from("fahrschule_schichten").delete().eq("id",id);
-  if(error){toast("Fehler: "+error.message);return;}
-  toast("Gelöscht ✓");
-  _fsLadeSchichtplan();
+  const {data:alt}=await supa.from(tabelle).select("*").eq("id",id).maybeSingle();
+  const {error}=await supa.from(tabelle).delete().eq("id",id);
+  if(error){toast("Fehler: "+error.message);return false;}
+  try{ neuLaden&&neuLaden(); }catch(e){}
+  if(!alt){ toast(text); return true; }
+  toastUndo(text,async()=>{ const {error:e2}=await supa.from(tabelle).insert(alt); if(e2){ toast("Nicht wiederhergestellt: "+e2.message); return; } toast("Wiederhergestellt ✓"); try{ neuLaden&&neuLaden(); }catch(e){} },6000);
+  return true;
+}
+async function fsSchichtLoeschen(id){
+  await _cloudLoeschenMitRueckgaengig("fahrschule_schichten",id,"Eintrag gelöscht",()=>_fsLadeSchichtplan());
 }
 
 /* ===== Urlaubskalender (alle Mitarbeiter) ===== */
@@ -7320,12 +7337,7 @@ async function fsUrlaubHinzufuegen(){
   _fsLadeUrlaub();
 }
 async function fsUrlaubLoeschen(id){
-  if(!confirm("Urlaubseintrag löschen?"))return;
-  const supa=getSupa();
-  const {error}=await supa.from("fahrschule_urlaub").delete().eq("id",id);
-  if(error){toast("Fehler: "+error.message);return;}
-  toast("Gelöscht ✓");
-  _fsLadeUrlaub();
+  await _cloudLoeschenMitRueckgaengig("fahrschule_urlaub",id,"Urlaubseintrag gelöscht",()=>_fsLadeUrlaub());
 }
 
 /* ===== Zusatzblock in der Schülerakte: Fahrlehrer verschieben + Büro-Notiz/To-do ===== */
@@ -7951,7 +7963,11 @@ async function _fsSyncAggJetztKern(){
       });
       const termineDeletes=(_fsBaseline.lessons||[]).filter(b=>!curTIds.has(b.id)).map(b=>b.id);
       if(termineUpserts.length) _fsPruefe(await supa.from("kalender_termine").upsert(termineUpserts,{onConflict:"id"}));
-      if(termineDeletes.length) _fsPruefe(await supa.from("kalender_termine").update({geloescht:true,aktualisiert_am:nowIso}).in("id",termineDeletes));
+      // K7: Stornierte Stunden einzeln mit Grund und Vermerk, der Rest wie bisher in den Papierkorb
+      const termineStorno=termineDeletes.filter(id=>_stornoWert(id));
+      for(const id of termineStorno){ _fsPruefe(await supa.from("kalender_termine").update(Object.assign({},_stornoWert(id),{aktualisiert_am:nowIso})).eq("id",id)); _stornoVergessen(id); }
+      const termineWeg=termineDeletes.filter(id=>termineStorno.indexOf(id)<0);
+      if(termineWeg.length) _fsPruefe(await supa.from("kalender_termine").update({geloescht:true,aktualisiert_am:nowIso}).in("id",termineWeg));
 
       // ---- PRÜFUNGEN ----
       const baseP={}; (_fsBaseline.exams||[]).forEach(e=>baseP[e.id]=e);
@@ -8043,7 +8059,7 @@ function _syncTermineBridge(warte){
     if(!_termineAbgerufen){ setTimeout(_syncTermineBridge,6000); return; }
     try{
       const geschrieben=await _brueckeAbgleichen({ tabelle:"kalender_termine", art:"termine", eintraege:P.lessons, zeileVon:_terminZeile,
-        loeschWert:{geloescht:true}, aktivFilter:q=>q.eq("geloescht",false) });
+        loeschWert:{geloescht:true}, aktivFilter:q=>q.eq("geloescht",false), loeschWertFuer:_stornoWert });
       if(geschrieben.length) _lokalAblegen();
     }catch(e){ console.warn("[Kompass] Kalender-Sync fehlgeschlagen:",e.message); }
   },warte===0?0:4000);
@@ -8882,7 +8898,7 @@ function openErgebnisKorrektur(exId,nachher){
     nachher&&nachher();
   });
   $("#ekLoeschen").addEventListener("click",()=>{
-    if(!confirm("Diesen Prüfungseintrag löschen? Er zählt dann nicht mehr in Quote, Versuchen und Verdienst."))return;
+
     const alt={result:ex.result,date:ex.date,b197:ex.b197};
     _sheetEbene&&(_sheetEbene.geaendert=false); closeSheet();
     _ergebnisAnwenden(s,null,alt);
@@ -8927,9 +8943,12 @@ function routeWaitlist(){
     const sid=btn.dataset.removeId;
     const s=DB.students.find(x=>x.id===sid);
     if(!s)return;
-    if(confirm(`${s.name} von der Warteliste entfernen?`)){
+    {
       // Merker: bewusst entfernt - die Automatik (Theorie + 90 %) setzt ihn dann nicht wieder drauf.
-      delete s.ready;delete s.waitOrder;s.wartelisteRaus=true;save();routeWaitlist();toast(s.name+" von der Warteliste entfernt");
+      const alt={ready:s.ready,waitOrder:s.waitOrder,raus:s.wartelisteRaus};
+      delete s.ready;delete s.waitOrder;s.wartelisteRaus=true;save();routeWaitlist();
+      const zeichne=_undoNeuZeichnen(_navStack[_navStack.length-1],()=>routeWaitlist());
+      toastUndo(s.name+" von der Warteliste entfernt",()=>{ ["ready","waitOrder"].forEach(k=>{ if(alt[k]!==undefined)s[k]=alt[k]; }); if(alt.raus)s.wartelisteRaus=alt.raus; else delete s.wartelisteRaus; save(); zeichne(); toast("Wiederhergestellt ✓"); },6000);
     }
   }));
 }
@@ -9692,13 +9711,17 @@ function _tbAkteKlick(ev){
 let _tbBusy=false;
 async function _tbEntfernen(sid,lektion,datum,btn){
   if(_tbBusy){ toast("Einen Moment … die letzte Änderung wird noch gespeichert"); return; }
-  if(!confirm("Lektion "+lektion+" vom "+isoDE(datum)+" wirklich entfernen?"))return;
   _tbBusy=true; if(btn)btn.disabled=true;
   try{
     const r=await _tbSetzen(sid,datum,[String(lektion)],false);
     if(r.erledigt&&r.erledigt.length) _tbLokal(sid,datum,r.erledigt,false);
     if(!r.ok){ toast(r.fehler); if(btn)btn.disabled=false; return; }
-    toast("✓ Lektion "+lektion+" entfernt");
+    toastUndo("Lektion "+lektion+" vom "+isoDE(datum)+" entfernt",async()=>{
+      if(_tbBusy){ toast("Einen Moment … bitte gleich nochmal"); return; }
+      _tbBusy=true;
+      try{ const r2=await _tbSetzen(sid,datum,[String(lektion)],true); if(r2.erledigt&&r2.erledigt.length)_tbLokal(sid,datum,r2.erledigt,true);
+        toast(r2.ok?"Wiederhergestellt ✓":r2.fehler); } finally { _tbBusy=false; }
+      _tbCardNeu(sid); },6000);
   } finally { _tbBusy=false; }
   _tbCardNeu(sid);
 }
@@ -10415,10 +10438,12 @@ function routePlanVorlagen(){
     const p=DB.ausbildungsplaene.find(x=>x.id===b.dataset.delplan);
     const n=activeStudents().filter(s=>s.planId===p.id).length;
     const warn=n?` ${n} Schüler nutzen sie noch — sie behalten ihren Stand, sind aber keiner Vorlage mehr zugeordnet.`:"";
-    if(!confirm(`"${p.name}" wirklich löschen?${warn}`))return;
+    const vorher=DB.ausbildungsplaene.slice(), stdVorher=vorher.map(x=>!!x.standard);
     DB.ausbildungsplaene=DB.ausbildungsplaene.filter(x=>x.id!==p.id);
     if(!DB.ausbildungsplaene.some(x=>x.standard))DB.ausbildungsplaene[0].standard=true;
-    save();routePlanVorlagen();toast("Vorlage gelöscht");
+    save();routePlanVorlagen();
+    const zeichne=_undoNeuZeichnen(_navStack[_navStack.length-1],()=>routePlanVorlagen());
+    toastUndo(`Vorlage „${p.name}“ gelöscht${n?` (${n} Schüler behalten ihren Stand)`:""}`,()=>{ DB.ausbildungsplaene=vorher; vorher.forEach((x,i)=>{ if(stdVorher[i])x.standard=true; else delete x.standard; }); save(); zeichne(); toast("Wiederhergestellt ✓"); },6000);
   }));
   $("#newPlanBtn").addEventListener("click",()=>{
     const src=DB.ausbildungsplaene.find(p=>p.standard)||DB.ausbildungsplaene[0];
@@ -10453,8 +10478,9 @@ function wireStufeBlock(p,planId,stKey){
   }));
   block.querySelectorAll("[data-delitem]").forEach(b=>b.addEventListener("click",()=>{
     const itemId=b.dataset.delitem;
-    if(!confirm("Diesen Punkt wirklich löschen?"))return;
+    const vorher=st.items.slice();
     st.items=st.items.filter(x=>x.id!==itemId);save();refreshStufeBlock(p,planId,stKey);
+    toastUndo("Punkt gelöscht",()=>{ st.items=vorher; save(); try{ refreshStufeBlock(p,planId,stKey); }catch(e){} toast("Wiederhergestellt ✓"); },6000);
   }));
   const rowsWrap=block.querySelector(".stufe-rows");
   if(rowsWrap)wireDragReorder(rowsWrap,st,()=>save());
@@ -11671,8 +11697,8 @@ function openFilmListe(){
   $("#sheet").querySelectorAll("[data-fp]").forEach(b=>b.addEventListener("click",()=>{
     const f=(DB.films||[]).find(x=>x.id===b.dataset.fp);closeSheet();closeTafelDrawer();filmPlayFilm(f,f&&f.name);}));
   $("#sheet").querySelectorAll("[data-fd]").forEach(b=>b.addEventListener("click",()=>{
-    if(!confirm("Film löschen?"))return;
-    DB.films=(DB.films||[]).filter(x=>x.id!==b.dataset.fd);save();openFilmListe();}));
+    const f=(DB.films||[]).find(x=>x.id===b.dataset.fd); if(!f)return;
+    _loeschenMitRueckgaengig(()=>DB.films||(DB.films=[]),f,"Film gelöscht",()=>{ if(sheetOffen())openFilmListe(); });}));
   $("#fmListOk").addEventListener("click",closeSheet);
 }
 function filmBarUI(){
@@ -11829,7 +11855,7 @@ function _doShareBoard(note){
 function persistBoard(){try{DB.boardCurrent={objects:DRAW.objects,strokes:DRAW.strokes,marks:DRAW.marks,seq:DRAW.seq,night:!!DRAW.night};save();}catch(_){}}
 function saveBoard(){const name=((typeof prompt==="function"?prompt("Name für das Tafelbild:"):"")||"").trim();if(!name)return;if(!DB.boards)DB.boards=[];DB.boards.push({id:Date.now(),name,ts:heute().d,objects:JSON.parse(JSON.stringify(DRAW.objects)),strokes:JSON.parse(JSON.stringify(DRAW.strokes)),marks:JSON.parse(JSON.stringify(DRAW.marks||[]))});save();toast("Tafelbild gespeichert");}
 function loadBoard(id){const b=(DB.boards||[]).find(x=>x.id===id);if(!b)return;DRAW.objects=JSON.parse(JSON.stringify(b.objects||[]));DRAW.strokes=JSON.parse(JSON.stringify(b.strokes||[]));DRAW.marks=JSON.parse(JSON.stringify(b.marks||[]));DRAW.selId=null;DRAW.seq=(DRAW.objects.reduce((m,o)=>Math.max(m,o.id||0),0)||0)+1;rebuildStrokes();render();persistBoard();closeTafelDrawer();toast("Tafelbild geladen");}
-function deleteBoard(id){if(!confirm("Dieses Tafelbild löschen?"))return;DB.boards=(DB.boards||[]).filter(x=>x.id!==id);save();renderDrawerBody();}
+function deleteBoard(id){const b=(DB.boards||[]).find(x=>x.id===id);if(!b)return;_loeschenMitRueckgaengig(()=>DB.boards||(DB.boards=[]),b,"Tafelbild gelöscht",()=>{ try{ renderDrawerBody(); }catch(e){} });}
 
 /* ===== Fahrschulweite Tafelbild-Bibliothek (Bereich 9, Punkt 5) =====
    Gute Erklär-Zeichnungen von Kollegen wiederverwenden statt jeder zeichnet alles neu.
@@ -11886,12 +11912,7 @@ async function shareBoardToLibrary(){
   renderSharedBoardList();
 }
 async function deleteSharedBoard(id){
-  if(!confirm("Dieses geteilte Tafelbild löschen?"))return;
-  const supa=getSupa();
-  const{error}=await supa.from("fahrschule_tafelbilder").delete().eq("id",id);
-  if(error){toast("Fehler: "+error.message);return;}
-  toast("Gelöscht ✓");
-  renderSharedBoardList();
+  await _cloudLoeschenMitRueckgaengig("fahrschule_tafelbilder",id,"Tafelbild gelöscht",()=>renderSharedBoardList());
 }
 
 /* ---------- Schubfach: ein einziges Panel, niemals doppelt offen ---------- */
@@ -12738,7 +12759,7 @@ function openEventSheet(kind,id,sid){
     $("#esResult").addEventListener("click",()=>{ closeSheet(); routeErgebnis(sid); });
     $("#esTime").addEventListener("click",()=>{ closeSheet(); openTerminEdit(id,routeKalender); });
     $("#esToPruef").addEventListener("click",()=>{ closeSheet(); routePruefungen(); });
-    $("#esDelP").addEventListener("click",()=>{ if(confirm("Prüfungstermin löschen? Die Einteilung wird aufgehoben.")){ const t=DB.termine.find(x=>x.id===id); closeSheet(); if(t)_loeschenMitRueckgaengig(()=>DB.termine,t,"Prüfungstermin gelöscht",()=>routeKalender()); } });
+    $("#esDelP").addEventListener("click",()=>{ { const t=DB.termine.find(x=>x.id===id); closeSheet(); if(t)_loeschenMitRueckgaengig(()=>DB.termine,t,"Prüfungstermin gelöscht",()=>routeKalender()); } });
     return;
   }
   const l=(DB.lessons||[]).find(x=>x.id===id); if(!l){ toast("Termin nicht gefunden"); return; }
@@ -12773,7 +12794,7 @@ function openEventSheet(kind,id,sid){
       <button class="es-act" id="esCancel">Abgebrochen</button>`}
       ${fcRelevant?`<button class="es-act" id="esGift">🎁 Zeit verschenkt${typeof l.tatsaechlicheDauer==="number"?` · <b>${l.tatsaechlicheDauer} Min berechnet</b>`:''}</button>`:''}
       ${l.status&&l.status!=="geplant"?`<button class="es-act" id="esReset">Status zurücksetzen</button>`:''}
-      <button class="es-act danger" id="esDelete">Termin löschen</button>
+      <button class="es-act danger" id="esDelete">${istNachweisStunde(l)?"Stornieren":"Termin löschen"}</button>
     </div>`);
   const prot=$("#esProtokoll"); if(prot)prot.addEventListener("click",()=>{ closeSheet(); sendeStundenProtokoll(st,l.date); });
   const ak=$("#esAkte"); if(ak)ak.addEventListener("click",()=>{ closeSheet(); routeDetail(l.sid); });
@@ -12804,7 +12825,9 @@ function openSignatureSheet(lessonId){
       <div class="sig-preview"><img src="${_sichereBildUrl(l.signatureSnap)}" alt="Unterschrift"></div>
       <div class="btn-row" style="margin-top:14px;"><button class="btn btn-ghost" id="sigUndo">Entfernen</button><button class="btn btn-primary" id="sigClose">Fertig</button></div>`);
     $("#sigClose").addEventListener("click",closeSheet);
-    $("#sigUndo").addEventListener("click",()=>{ if(confirm("Unterschrift für diesen Termin entfernen?")){ l.signed=false; l.signatureSnap=null; l.signedAt=null; save(); toast("Entfernt"); closeSheet(); } });
+    $("#sigUndo").addEventListener("click",()=>{ const alt={signed:l.signed,signatureSnap:l.signatureSnap,signedAt:l.signedAt};
+      l.signed=false; l.signatureSnap=null; l.signedAt=null; save(); closeSheet();
+      toastUndo("Unterschrift entfernt",()=>{ Object.assign(l,alt); delete l._syncedAt; save(); toast("Wiederhergestellt ✓"); try{ refreshCurrentView(); }catch(e){} },6000); });
     return;
   }
   // Ausbildungsnachweis (21.11.2026): Hat das Büro die Stunde nach der Unterschrift geändert, ist sie ungültig (Datenbank-Trigger).
@@ -14109,17 +14132,78 @@ function _loeschenMitRueckgaengig(holen, eintrag, text, neuZeichnen, nachAblauf,
     save(); zeichne(); toast("Wiederhergestellt ✓"); },6000);
   if(nachAblauf)setTimeout(()=>{ if(!rueck)try{ nachAblauf(); }catch(e){} },6300);
 }
-// Termin löschen mit Rückgängig. Online gebuchte Termine: Absage geht sofort raus, darum dort Rückfrage statt Rückgängig.
-function deleteLessonMitRueckgaengig(id, neuZeichnen){
-  const l=(DB.lessons||[]).find(x=>x.id===id); if(!l)return false;
-  if(l.onlineBookingId){
-    if(!confirm("Termin löschen? Der Schüler hat online gebucht und bekommt sofort eine Absage."))return false;
-    deleteLesson(id); toast("Termin gelöscht"); try{ neuZeichnen&&neuZeichnen(); }catch(e){} return true;
-  }
+/* K7 Löschen (🗣 Serband 22.11.2026: „Ich will keinen unnötigen Ballast.“ / „keine Meldungen, wo ich etwas bestätigen soll“)
+   Fehleintrag → sofort weg, 6 s „Rückgängig“ (Cloud: Papierkorb, nach 30 Tagen endgültig leer).
+   Gelaufene oder (je) unterschriebene Nachweis-Stunde → nicht löschen, nur „stornieren“ mit kurzem Grund: sie bleibt
+   im Ausbildungsnachweis als storniert aufbewahrt (gleiche Regel wie termin_ist_nachweis in der Datenbank). */
+function istNachweisStunde(l){
+  if(!l||!["fahrstunde","sonder","nacht","schalt"].includes(l.art||"fahrstunde"))return false;
+  if(l.signed||(l.signaturUngueltig&&typeof l.signaturUngueltig==="object"))return true;
+  if(["abgebrochen","nicht erschienen"].includes(l.status))return false;
+  return !!l.date&&isAbsolved(l.date,l.bis);
+}
+// Offene Stornos bis zum Abgleich: { id: { uid, grund, am, payload } } – die Brücke schreibt Grund und Vermerk mit
+const _STORNO_KEY="kompass-storno-offen";
+function _stornoLaden(){ try{ const o=JSON.parse(localStorage.getItem(_STORNO_KEY)||"{}"); return o&&typeof o==="object"&&!Array.isArray(o)?o:{}; }catch(e){ return {}; } }
+function _stornoSpeichern(o){ try{ if(Object.keys(o).length)localStorage.setItem(_STORNO_KEY,JSON.stringify(o)); else localStorage.removeItem(_STORNO_KEY); }catch(e){} }
+function _stornoVergessen(id){ const o=_stornoLaden(); if(o[id]){ delete o[id]; _stornoSpeichern(o); } }
+// Zeile für die Datenbank: Papierkorb + Storno-Vermerk + Grund für die Spur (korrekturGrund nimmt der Trigger heraus)
+function _stornoWert(id){
+  const o=_stornoLaden()[id]; const uid=_authUser&&_authUser.id;
+  if(!o||(o.uid&&uid&&o.uid!==uid))return null;
+  return { geloescht:true, payload:Object.assign({},o.payload||{},{ storno:{ grund:o.grund, am:o.am, von:o.von||null }, korrekturGrund:o.grund }) };
+}
+function _stornoPayload(l){
+  if(_fsAgg){ const {id,sid,date,von,bis,art,fahrzeug,status,_fahrlehrerId,_fahrlehrerName,_syncedAt,...rest}=l; return rest; }
+  try{ return _terminZeile(l).payload; }catch(e){ const {id,sid,date,von,bis,art,fahrzeug,status,_syncedAt,...rest}=l; return rest; }
+}
+function _lessonEntfernen(l, text, neuZeichnen, nachAblauf, beiRueckgaengig){
   let sonderAlt;
   if(l.srcSonder){ const [sid,grp,idx]=l.srcSonder.split(":"); const st=DB.students.find(x=>x.id===sid); if(st&&st.plan&&st.plan.sonder&&st.plan.sonder[grp]){ sonderAlt=st.plan.sonder[grp][+idx]; st.plan.sonder[grp][+idx]=null; } }
-  _loeschenMitRueckgaengig(()=>DB.lessons||(DB.lessons=[]), l, "Termin gelöscht", neuZeichnen, null, ()=>{
-    if(l.srcSonder&&sonderAlt!==undefined){ const [sid,grp,idx]=l.srcSonder.split(":"); const st=DB.students.find(x=>x.id===sid); if(st&&st.plan&&st.plan.sonder&&st.plan.sonder[grp])st.plan.sonder[grp][+idx]=sonderAlt; } });
+  const id=l.id;
+  _loeschenMitRueckgaengig(()=>DB.lessons||(DB.lessons=[]), l, text, neuZeichnen,
+    // Online gebucht: Die Absage an den Schüler geht erst raus, wenn nicht rückgängig gemacht wurde
+    ()=>{ if(l.onlineBookingId)_notifyOnlineBookingChange(id,"cancelled"); try{ nachAblauf&&nachAblauf(); }catch(e){} },
+    ()=>{ if(l.srcSonder&&sonderAlt!==undefined){ const [sid,grp,idx]=l.srcSonder.split(":"); const st=DB.students.find(x=>x.id===sid); if(st&&st.plan&&st.plan.sonder&&st.plan.sonder[grp])st.plan.sonder[grp][+idx]=sonderAlt; }
+      try{ beiRueckgaengig&&beiRueckgaengig(); }catch(e){} });
+}
+// Termin löschen mit Rückgängig (ohne Rückfrage). Gelaufene/unterschriebene Stunde: stattdessen Stornieren mit Grund.
+function deleteLessonMitRueckgaengig(id, neuZeichnen){
+  const l=(DB.lessons||[]).find(x=>x.id===id); if(!l)return false;
+  if(istNachweisStunde(l)){ openStornoSheet(id,neuZeichnen); return false; }
+  _lessonEntfernen(l, l.onlineBookingId?"Termin gelöscht · Absage geht gleich raus":"Termin gelöscht", neuZeichnen);
+  return true;
+}
+const STORNO_GRUENDE=["Falsch eingetragen","Doppelt eingetragen","Hat nicht stattgefunden"];
+function openStornoSheet(id, neuZeichnen){
+  const l=(DB.lessons||[]).find(x=>x.id===id); if(!l)return;
+  const st=DB.students.find(s=>s.id===l.sid);
+  openSheet(`<div class="sheet-h">Stunde stornieren</div>
+    <p class="muted-p" style="font-size:13.5px;margin:-4px 0 14px;">${st?esc(st.name)+" · ":""}${isoDE(l.date)} · ${esc(l.von||"")}–${esc(l.bis||"")}<br>${l.signed?"Unterschrieben":"Schon gelaufen"} – darum nicht löschen. Sie verschwindet aus Kalender und Zählung und bleibt im Ausbildungsnachweis als storniert aufbewahrt. Warum?</p>
+    <div class="es-actions" id="stoGruende">
+      ${STORNO_GRUENDE.map((g,i)=>`<button class="es-act" type="button" data-stogrund="${i}">${esc(g)}</button>`).join("")}
+    </div>
+    <label class="muted-p" for="stoText" style="display:block;font-size:13px;margin:14px 0 6px;">Anderer Grund</label>
+    <div style="display:flex;gap:8px;align-items:stretch;"><input id="stoText" type="text" maxlength="120" autocomplete="off" placeholder="kurz, z. B. Schüler krank" style="flex:1;min-width:0;min-height:44px;">
+    <button class="btn btn-danger" id="stoLos" type="button" style="min-height:44px;flex:none;" disabled>Stornieren</button></div>`);
+  const los=grund=>{ grund=String(grund||"").trim().slice(0,120); if(!grund)return; closeSheet(); stornoLesson(id,grund,neuZeichnen); };
+  document.querySelectorAll("[data-stogrund]").forEach(b=>b.addEventListener("click",()=>los(STORNO_GRUENDE[+b.dataset.stogrund])));
+  const t=$("#stoText"), k=$("#stoLos");
+  t.addEventListener("input",()=>{ k.disabled=!t.value.trim(); });
+  t.addEventListener("keydown",e=>{ if(e.key==="Enter"){ e.preventDefault(); los(t.value); } });
+  k.addEventListener("click",()=>los(t.value));
+}
+function stornoLesson(id, grund, neuZeichnen){
+  const l=(DB.lessons||[]).find(x=>x.id===id); if(!l)return false;
+  if(_authProfile&&_authProfile.fahrschule_id){
+    const o=_stornoLaden(); const ich=(_authProfile&&_authProfile.name)||null;
+    o[id]={ uid:_authUser&&_authUser.id||null, grund, am:new Date().toISOString(), von:ich, payload:_stornoPayload(l) }; _stornoSpeichern(o);
+  }
+  const st=DB.students.find(s=>s.id===l.sid);
+  let hEintrag=null;
+  if(st)try{ logHist(st,"storno",`Fahrstunde ${isoDE(l.date)} ${l.von||""}–${l.bis||""} storniert: ${grund}`); hEintrag=st.hist[st.hist.length-1]; }catch(e){}
+  _lessonEntfernen(l, "Stunde storniert", neuZeichnen, null, ()=>{ _stornoVergessen(id);
+    if(st&&hEintrag&&Array.isArray(st.hist)){ const i=st.hist.indexOf(hEintrag); if(i>=0)st.hist.splice(i,1); } });
   return true;
 }
 function deleteLesson(id){
@@ -14282,20 +14366,18 @@ function istArchiviert(s){ if(s&&s.ausgeblendetAm)return true; const f=_schueler
    Ausbildungsstand ans Büro). Das Büro behält Akte, Fristen und Notizen. Wieder einblenden: Archiv › Ausgeblendet. */
 function schuelerAusblenden(id){
   const s=DB.students.find(x=>x.id===id); if(!s)return;
-  if(!confirm(`${s.name} bei dir ausblenden?\n\nDu siehst ${s.name.split(" ")[0]} dann nicht mehr in deinen Listen.${_authProfile&&_authProfile.fahrschule_id?" Die Fahrschule (Büro) behält den Schüler mit Akte, Fristen und Notizen.":""}\nWieder einblenden: Mehr › Archiv › Ausgeblendet.`))return;
   const heute=todayISO(), _d=new Date(), jetzt=String(_d.getHours()).padStart(2,"0")+":"+String(_d.getMinutes()).padStart(2,"0");
   const kuenftig=(DB.lessons||[]).filter(l=>l.sid===id&&(l.status||"geplant")==="geplant"&&(l.date>heute||(l.date===heute&&(l.von||"00:00")>jetzt)));
-  let abgesagt=[];
-  if(kuenftig.length&&confirm(`${kuenftig.length} künftige${kuenftig.length===1?"r Termin":" Termine"} von ${s.name.split(" ")[0]} auch absagen?\n\nOK = absagen · Abbrechen = im Kalender lassen`)){
-    abgesagt=kuenftig.slice();
-  }
+  // K7: ohne Rückfrage. Künftige Termine werden mit abgesagt; „Rückgängig“ holt Schüler und Termine zurück.
+  const abgesagt=kuenftig.slice();
   const plaetze=[]; (DB.termine||[]).forEach(t=>(t.slots||[]).forEach((x,i)=>{ if(x===id)plaetze.push({t,i}); }));
   s.ausgeblendetAm=new Date().toISOString(); logHist(s,"note","Bei mir ausgeblendet");
   clearSlot(id); // Platz auf der Prüfungstafel freigeben
-  const online=abgesagt.filter(l=>l.onlineBookingId), ohne=abgesagt.filter(l=>!l.onlineBookingId);
-  online.forEach(l=>deleteLesson(l.id)); // Online-Buchungen: Absage geht sofort raus
+  const ohne=abgesagt, online=[]; let rueck=false;
   DB.lessons=(DB.lessons||[]).filter(l=>!ohne.includes(l)); save(); routeHome();
-  toastUndo(`${s.name} ausgeblendet`+(abgesagt.length?` · ${abgesagt.length} Termin${abgesagt.length===1?"":"e"} abgesagt`:""),()=>{
+  // Online-Buchungen: Die Absage an den Schüler geht erst raus, wenn nicht rückgängig gemacht wurde
+  setTimeout(()=>{ if(!rueck)ohne.forEach(l=>{ if(l.onlineBookingId)_notifyOnlineBookingChange(l.id,"cancelled"); }); },6300);
+  toastUndo(`${s.name} ausgeblendet · Archiv › Ausgeblendet`+(abgesagt.length?` · ${abgesagt.length} Termin${abgesagt.length===1?"":"e"} abgesagt`:""),()=>{ rueck=true;
     delete s.ausgeblendetAm; logHist(s,"note","Wieder eingeblendet");
     ohne.forEach(l=>{ delete l._syncedAt; if(!DB.lessons.some(x=>x.id===l.id))DB.lessons.push(l); });
     plaetze.forEach(({t,i})=>{ if(t.slots&&!t.slots[i]&&(DB.termine||[]).includes(t))t.slots[i]=id; }); // nur den eigenen Platz zurück
@@ -15028,7 +15110,7 @@ function routePruefungen(){
   $("#openPruefWoche").addEventListener("click",routePruefungenWoche);
   $("#openPruefer").addEventListener("click",routePrueferListe);
   document.querySelectorAll(".wait-card").forEach(c=>c.addEventListener("click",()=>routeDetail(c.dataset.id)));
-  document.querySelectorAll(".tb-del").forEach(b=>b.addEventListener("click",()=>{ if(confirm("Termin löschen? Die Einteilung wird aufgehoben.")){ const t=DB.termine.find(x=>x.id===b.dataset.del); if(t)_loeschenMitRueckgaengig(()=>DB.termine,t,"Prüfungstermin gelöscht",()=>routePruefungen()); } }));
+  document.querySelectorAll(".tb-del").forEach(b=>b.addEventListener("click",()=>{ { const t=DB.termine.find(x=>x.id===b.dataset.del); if(t)_loeschenMitRueckgaengig(()=>DB.termine,t,"Prüfungstermin gelöscht",()=>routePruefungen()); } }));
   document.querySelectorAll(".tb-edit").forEach(b=>b.addEventListener("click",()=>openTerminEdit(b.dataset.tedit)));
   document.querySelectorAll(".slot-x").forEach(b=>b.addEventListener("click",e=>{ e.stopPropagation(); const t=DB.termine.find(x=>x.id===b.dataset.tid); if(t){ t.slots[+b.dataset.slot]=null; save(); routePruefungen(); } }));
   document.querySelectorAll(".slot-result").forEach(b=>b.addEventListener("click",e=>{ e.stopPropagation(); routeErgebnis(b.dataset.result); }));
@@ -15121,7 +15203,7 @@ function openTerminEdit(tid,retFn){
     t.date=d; t.von=von; t.bis=min2hm(hm2min(von)+lang);
     save(); closeSheet(); toast("Termin aktualisiert ✓"); retFn();
   });
-  $("#teDel").addEventListener("click",()=>{ if(confirm("Termin löschen? Die Einteilung wird aufgehoben.")){ const t=DB.termine.find(x=>x.id===tid); closeSheet(); if(t)_loeschenMitRueckgaengig(()=>DB.termine,t,"Prüfungstermin gelöscht",()=>retFn()); } });
+  $("#teDel").addEventListener("click",()=>{ { const t=DB.termine.find(x=>x.id===tid); closeSheet(); if(t)_loeschenMitRueckgaengig(()=>DB.termine,t,"Prüfungstermin gelöscht",()=>retFn()); } });
 }
 function openSlotSheet(tid,slot){
   const taken=assignedSet();
@@ -16873,7 +16955,11 @@ function routePrueferAkte(nm){
   const ta2=$("#tagAdd"); if(ta2)ta2.addEventListener("click",()=>openTagSheet(nm));
   document.querySelectorAll(".pf-route-x").forEach(b=>b.addEventListener("click",()=>{ pd.routen.splice(+b.dataset.rx,1); save(); routePrueferAkte(nm); }));
   const ar=$("#addRoute"); if(ar)ar.addEventListener("click",()=>openRouteSheet(nm));
-  const dp=$("#delPruefer"); if(dp)dp.addEventListener("click",async()=>{ if(confirm(`Prüfer „${nm}" wirklich löschen? Die Prüfungs-Historie bleibt erhalten.`)){ if(window.PW&&PW.aktiv()&&!(await PW.loeschen(nm))){ toast("Nicht gelöscht – bitte mit Internet nochmal"); return; } delete DB.prueferData[nm]; DB.pruefer=DB.pruefer.filter(x=>x!==nm); save(); routePrueferListe(); } });
+  const dp=$("#delPruefer"); if(dp)dp.addEventListener("click",async()=>{ { if(window.PW&&PW.aktiv()&&!(await PW.loeschen(nm))){ toast("Nicht gelöscht – bitte mit Internet nochmal"); return; }
+      const daten=DB.prueferData[nm], liste=DB.pruefer.slice(); delete DB.prueferData[nm]; DB.pruefer=DB.pruefer.filter(x=>x!==nm); save(); routePrueferListe();
+      toastUndo(`Prüfer „${nm}“ gelöscht · Prüfungen bleiben`,async()=>{
+        if(window.PW&&PW.aktiv()&&typeof PW.wiederherstellen==="function"&&!(await PW.wiederherstellen(nm))){ toast("Nicht wiederhergestellt – bitte mit Internet nochmal"); return; }
+        if(daten)DB.prueferData[nm]=daten; DB.pruefer=liste; save(); toast("Wiederhergestellt ✓"); if(_navStack.length&&_navStack[_navStack.length-1].name==="routePrueferListe")routePrueferListe(); },6000); } });
   const rp=$("#renamePruefer"); if(rp)rp.addEventListener("click",async()=>{ const neu=(prompt("Neuer Name für „"+nm+"\"\n\nWenn der Name bereits existiert, werden beide Prüfer (samt Prüfungen) zusammengeführt.",nm)||"").trim(); if(!neu||neu===nm)return; if(window.PW&&PW.aktiv()){ const r=await PW.umbenennen(nm,neu); if(r!==true){ toast(r==="keine_berechtigung"?"Umbenennen darf nur, wer ihn angelegt hat, oder das Büro.":"Nicht umbenannt – bitte mit Internet nochmal"); return; } } mergePruefer(nm,neu); });
 }
 /* Tag-Auswahl-Sheet */
@@ -17067,7 +17153,6 @@ function routeArchive(){
   document.querySelectorAll("[data-einblenden]").forEach(b=>b.addEventListener("click",()=>schuelerEinblenden(b.dataset.einblenden)));
   // Ohne Fahrschule (kein Büro): endgültig löschen möglich, Termine und Prüfungen bleiben mit Namen im Kalender
   document.querySelectorAll("[data-endgueltig]").forEach(b=>b.addEventListener("click",()=>{ const x=DB.students.find(y=>y.id===b.dataset.endgueltig); if(!x)return;
-    if(!confirm(`${x.name} endgültig löschen? Termine und Prüfungen bleiben mit Namen im Kalender.`))return;
     (DB.lessons||[]).forEach(l=>{ if(l.sid===x.id&&!l.name)l.name=x.name; }); (DB.exams||[]).forEach(ex=>{ if(ex.sid===x.id&&!ex.name)ex.name=x.name; });
     _loeschenMitRueckgaengig(()=>DB.students,x,`${x.name} gelöscht`,()=>routeArchive()); }));
   document.querySelectorAll("[data-archform]").forEach(b=>b.addEventListener("click",()=>{
