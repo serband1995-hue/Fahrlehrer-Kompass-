@@ -1928,6 +1928,7 @@ function schuelerDialog(id) {
       </div>
       ${id ? `<div class="voll schalter-zeile"><label class="schalter"><input type="checkbox" name="aktiv" role="switch"${istAktiv(x) ? " checked" : ""}><span class="schalter-bahn" aria-hidden="true"></span><span class="schalter-text"><b id="aktivText">${istAktiv(x) ? "Aktiv" : "Im Archiv"}</b><span class="leise klein"> Archiv heißt: bestanden oder nicht mehr dabei. Der Schüler verschwindet überall (auch aus der Fahrlehrer-App) und zählt nicht bei Fristen, Reaktivierung und Auslastung. Jederzeit zurückholbar.</span></span></label></div>` : ""}
       ${id ? akademieZugangHTML() : ""}
+      ${id ? `<div class="voll nw-akte"><button type="button" class="knopf klein" id="nwOeffnen">Ausbildungsnachweis</button><span class="leise klein">Fahrstunden, Unterschriften, Druck</span></div>` : ""}
       ${id ? `<div class="voll">${pruefungenAkteHTML(id)}</div>` : ""}
       ${id ? `<div class="voll">${theorieAkteHTML(id)}</div>` : ""}
       ${id && sonderZaehlerHTML(x) ? `<div class="voll">${sonderZaehlerHTML(x)}</div>` : ""}
@@ -1990,6 +1991,8 @@ function schuelerDialog(id) {
   });
   if (id) bindeNotizBlock(dlg, id, x.fahrlehrer_id);
   if (id) bindeAufgabenBlock(dlg, id);
+  if (id && typeof nachweisDialog === "function") dlg.querySelector("#nwOeffnen").addEventListener("click", () => nachweisDialog(id));
+  else if (id) dlg.querySelector("#nwOeffnen").hidden = true;
   bindeBehoerde(dlg, x);
   const klasseSel = dlg.querySelector("select[name=klasse]"), testBox = dlg.querySelector("input[name=testfahrt]"), testDat = dlg.querySelector("input[name=testfahrt_am]");
   klasseSel.addEventListener("change", () => {
@@ -2244,6 +2247,7 @@ function terminDialog(id, vorgabe) {
         <label id="lkwKlasseFeld">Klasse dieser Stunde<select name="lkwKlasse"></select></label>
         <p class="voll leise klein">Fahrlehrer ohne App: Das Büro trägt hier ein, was die App sonst selbst zählt (Sonderfahrten nach Anlage 4).</p>
       </div>
+      ${id && (t.payload || {}).signed ? `<p class="voll fl-warnung bald">Diese Stunde ist vom Schüler unterschrieben. Ändern Sie Datum, Uhrzeit, Art oder Schüler, muss er neu unterschreiben. Korrekturen mit Grund: Schüler öffnen → „Ausbildungsnachweis“.</p>` : ""}
       ${id ? `<label class="voll wahl"><input type="checkbox" name="absagen"> Termin absagen (löschen)</label>` : ""}
       ${id && t.art === "theorie" ? anwesenheitTerminHTML(t) : ""}
     </div>

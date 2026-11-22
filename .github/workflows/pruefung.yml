@@ -56,3 +56,5 @@ jobs:
         run: NODE_PATH=$(npm root -g) node scripts/rollen-test.mjs
       - name: "Zugang-Test (Fahrlehrer bearbeiten und löschen, Rechte je Rolle)"
         run: NODE_PATH=$(npm root -g) node scripts/zugang-test.mjs
+      - name: "Ausbildungsnachweis (Büro: Übersicht, Ändern mit Spur, Papierkorb, Druck)"
+        run: NODE_PATH=$(npm root -g) node scripts/nachweis-test.mjs

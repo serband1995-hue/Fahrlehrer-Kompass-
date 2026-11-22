@@ -663,6 +663,23 @@ await pruefe("F3d", "Unterschrift .sf-unterschrift: Status „noch offen“ → 
   if (s1 === null || !/✓\s*vorhanden/.test(s1)) fl.push(`Status danach „${(s1 || "").slice(0, 60)}“ statt „✓ vorhanden“`);
   return fl;
 });
+await pruefe("F3d2", "Ausbildungsnachweis: Büro hat die unterschriebene Stunde geändert → „neu nötig“, Hinweis mit altem Termin, vor Ort neu unterschreiben ist der Hauptknopf", async () => {
+  const e = await brauchtFertig(page); if (e) return e;
+  const fl = [];
+  await page.evaluate(() => { const l = DB.lessons.find((x) => x.id === "L1"); l.signed = false; l.signatureSnap = null; l.signaturUngueltig = { am: new Date().toISOString(), alt: { datum: l.date, von: "07:00", bis: "08:30", art: "fahrstunde" } }; routeStundeFertig("L1"); });
+  await warte(page, 300);
+  const st = await page.evaluate(() => (document.querySelector("#view .fertig2 .sf-unterschrift") || {}).textContent || "");
+  if (!/neu nötig/.test(st)) fl.push(`Status „${st.replace(/\s+/g, " ").slice(0, 60)}“ statt „neu nötig“`);
+  const k = await klick(page, "#view .fertig2 .sf-unterschrift"); if (k) return fl.concat(k);
+  const sh = await page.evaluate(() => { const b = document.querySelector("#sigRedo"); return { text: (document.querySelector(".sheet, #sheet") || document.body).textContent, haupt: b ? b.className : "" }; });
+  if (!/nach der Unterschrift geändert/.test(sh.text) || !/07:00/.test(sh.text)) fl.push("Hinweis mit altem Termin fehlt");
+  if (!/btn-primary/.test(sh.haupt)) fl.push("„Jetzt unterschreiben lassen“ ist nicht der Hauptknopf");
+  const k2 = await klick(page, "#sigUse"); if (k2) return fl.concat(k2);
+  await warte(page, 300);
+  const l = await stunde(page);
+  if (!l.signed || l.signArt !== "uebernommen" || !l.signedTs) fl.push("Unterschrift/Art nicht gespeichert: " + JSON.stringify({ s: l.signed, a: l.signArt }));
+  return fl;
+});
 await pruefe("F3e", "Protokoll .sf-protokoll „Protokoll per WhatsApp an Erfundene“ → wa.me mit Tagesprotokoll; danach „Protokoll gesendet ✓“", async () => {
   const e = await brauchtFertig(page); if (e) return e;
   const t = await text(page, "#view .fertig2 .sf-protokoll");
