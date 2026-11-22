@@ -15489,10 +15489,12 @@ async function _wetterOrt(){
   if(_istOffenbach(cfg.city))return {lat:WETTER_START.lat,lon:WETTER_START.lon};
   const name=String(cfg.city||"").replace(/,\s*[A-Z]{2}$/,"").trim();
   try{ const m=JSON.parse(localStorage.getItem("serband-wetter-ort")||"null");
-    if(m&&m.q===name){ if(typeof m.lat==="number")return {lat:m.lat,lon:m.lon}; if(Date.now()-(m.fehlTs||m.netzTs||0)<10*60*1000)return null; } }catch(e){}
+    if(m&&m.q===name){ if(typeof m.lat==="number")return {lat:m.lat,lon:m.lon}; if(Date.now()-Math.max(m.fehlTs||0,m.netzTs||0)<10*60*1000)return null; } }catch(e){}
   // fehlTs = Ort wirklich unbekannt (dann Hinweis „Ort prüfen“); netzTs = nur keine Verbindung (kein Hinweis, nur Pause)
   if(!_wetterOrtLauf)_wetterOrtLauf=_ortSuchen(name).then(t=>{
-    const eintrag=t&&t.fehler?{q:name,netzTs:Date.now()}:t?{q:name,lat:t.lat,lon:t.lon}:{q:name,fehlTs:Date.now()};
+    // Kein Netz: ein schon bekanntes „nicht gefunden“ bleibt stehen (Hinweis verschwindet nicht nur wegen Funkloch)
+    let altFehl=null; try{ const a=JSON.parse(localStorage.getItem("serband-wetter-ort")||"null"); if(a&&a.q===name&&a.fehlTs)altFehl=a.fehlTs; }catch(e){}
+    const eintrag=t&&t.fehler?(altFehl?{q:name,fehlTs:altFehl,netzTs:Date.now()}:{q:name,netzTs:Date.now()}):t?{q:name,lat:t.lat,lon:t.lon}:{q:name,fehlTs:Date.now()};
     try{ localStorage.setItem("serband-wetter-ort",JSON.stringify(eintrag)); }catch(e){}
     return t&&!t.fehler?{lat:t.lat,lon:t.lon}:null;
   }).finally(()=>{ _wetterOrtLauf=null; });
