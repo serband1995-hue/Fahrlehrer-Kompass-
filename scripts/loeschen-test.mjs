@@ -140,10 +140,11 @@ const sheetKnopf = () => p.evaluate(() => { const b = document.getElementById("e
 const oeffneStunde = async (id) => { await p.evaluate((id) => { closeSheet(); openEventSheet("lesson", id, "sm1"); }, id); await warte(p, 350); };
 const schreibzeilen = (id) => p.evaluate((id) => window.__schreib.filter((x) => x.tab === "kalender_termine" && (x.ids || []).includes(id)), id);
 const bruecke = async (id) => { await p.evaluate(() => _syncTermineBridge(0)); await p.waitForFunction((id) => window.__schreib.some((x) => x.tab === "kalender_termine" && x.art === "upsert" && (x.ids || []).includes(id)), id, { timeout: 8000 }).catch(() => {}); };
+const toastWeg = () => p.waitForFunction(() => { const t = document.getElementById("toast"); return !t || !t.classList.contains("show"); }, null, { timeout: 9000 }).catch(() => {});
 const dialoge = () => A.js.filter((x) => /^Dialog/.test(x)).length;
 
 await pruefe("L1", "künftige Stunde: „Termin löschen“ ohne Dialog, sofort weg, Hinweis mit „Rückgängig“; Rückgängig holt sie zurück, kein Storno", async () => {
-  const f = []; const d0 = dialoge();
+  const f = []; const d0 = dialoge(); await toastWeg();
   await stunde("l1", { date: 1 }); await oeffneStunde("l1");
   const k = await sheetKnopf(); if (k !== "Termin löschen") f.push("Knopf heißt „" + k + "“");
   await p.click("#esDelete"); await warte(p, 400);
@@ -159,7 +160,7 @@ await pruefe("L1", "künftige Stunde: „Termin löschen“ ohne Dialog, sofort 
 });
 
 await pruefe("L2", "gelaufene Stunde: Knopf „Stornieren“, Fenster mit Grund-Knöpfen und Freitext, weg aus DB.lessons, Brücke schreibt Storno-Zeile mit Grund", async () => {
-  const f = []; const d0 = dialoge();
+  const f = []; const d0 = dialoge(); await toastWeg();
   await stunde("l2", { date: -1 }); await bruecke("l2"); await p.evaluate(() => { window.__schreib.length = 0; });
   await oeffneStunde("l2");
   const k = await sheetKnopf(); if (k !== "Stornieren") f.push("Knopf heißt „" + k + "“");
@@ -194,19 +195,20 @@ await pruefe("L2", "gelaufene Stunde: Knopf „Stornieren“, Fenster mit Grund-
 });
 
 await pruefe("L3", "unterschriebene künftige Stunde: „Stornieren“, Grund-Knopf genügt; Rückgängig nimmt Storno zurück (kein Eintrag, nichts geschrieben)", async () => {
-  const f = []; const d0 = dialoge();
+  const f = []; const d0 = dialoge(); await toastWeg();
   await stunde("l3", { date: 2, signed: true, signatureSnap: "data:image/png;base64,AAAA", signedAt: "2026-11-20" }); await bruecke("l3"); await p.evaluate(() => { window.__schreib.length = 0; });
+  const hist0 = await p.evaluate(() => (DB.students[0].hist || []).filter((h) => h.typ === "storno").length);
   await oeffneStunde("l3");
   const k = await sheetKnopf(); if (k !== "Stornieren") f.push("Knopf heißt „" + k + "“");
   await p.click("#esDelete"); await warte(p, 450);
   await p.click('[data-stogrund="0"]'); await warte(p, 400);
   if (await lokal("l3")) f.push("Stunde noch da");
   const s = (await storno()).l3; if (!s || s.grund !== "Falsch eingetragen") f.push("Storno-Eintrag: " + JSON.stringify(s && s.grund));
-  const hist = await p.evaluate(() => (DB.students[0].hist || []).filter((h) => h.typ === "storno").length); if (hist !== 1) f.push("Verlauf: " + hist + " Storno-Einträge");
+  const hist = await p.evaluate(() => (DB.students[0].hist || []).filter((h) => h.typ === "storno").length); if (hist !== hist0 + 1) f.push("Verlauf: " + hist + " Storno-Einträge statt " + (hist0 + 1));
   await p.click("#toast .ut-btn"); await warte(p, 400);
   if (!(await lokal("l3"))) f.push("Rückgängig holt die Stunde nicht zurück");
   if ((await storno()).l3) f.push("Rückgängig lässt den Storno-Eintrag liegen");
-  const hist2 = await p.evaluate(() => (DB.students[0].hist || []).filter((h) => h.typ === "storno").length); if (hist2 !== 0) f.push("Verlauf nach Rückgängig: " + hist2);
+  const hist2 = await p.evaluate(() => (DB.students[0].hist || []).filter((h) => h.typ === "storno").length); if (hist2 !== hist0) f.push("Verlauf nach Rückgängig: " + hist2 + " (vorher " + hist0 + ", nach Storno " + hist + ")");
   await bruecke("l3"); await warte(p, 500);
   const z = await schreibzeilen("l3"); if (z.some((x) => x.art === "update" && x.werte.geloescht === true)) f.push("trotz Rückgängig in den Papierkorb geschrieben");
   if (dialoge() !== d0) f.push("Dialog erschienen");
@@ -214,7 +216,7 @@ await pruefe("L3", "unterschriebene künftige Stunde: „Stornieren“, Grund-Kn
 });
 
 await pruefe("L4", "online gebucht: ohne Dialog gelöscht; Absage geht erst nach Ablauf (> 6 s), nach Rückgängig gar nicht", async () => {
-  const f = []; const d0 = dialoge();
+  const f = []; const d0 = dialoge(); await toastWeg();
   await p.evaluate(() => { window.__abs.length = 0; });
   // A: Rückgängig → keine Absage
   await stunde("l4a", { date: 3, onlineBookingId: "ob-a" }); await oeffneStunde("l4a");
@@ -236,7 +238,7 @@ await pruefe("L4", "online gebucht: ohne Dialog gelöscht; Absage geht erst nach
 });
 
 await pruefe("L5", "Schüler ausblenden: kein Dialog, künftige Termine abgesagt, Hinweis mit Rückgängig; Rückgängig holt alles zurück", async () => {
-  const f = []; const d0 = dialoge();
+  const f = []; const d0 = dialoge(); await toastWeg();
   await p.evaluate(() => { DB.lessons = []; window.__abs.length = 0; });
   await stunde("l5a", { date: 5 }); await stunde("l5b", { date: 6, onlineBookingId: "ob-5" });
   await p.evaluate(() => routeDetail("sm1")); await warte(p, 400);
@@ -336,7 +338,7 @@ await A.ctx.close();
     await b.evaluate(() => { document.getElementById("pkKarte").open = true; }); await warte(b, 200);
     const t = await b.evaluate(() => document.getElementById("pkKarte").innerText);
     if (!/wird in 25 Tagen endgültig gelöscht/.test(t)) f.push("Resttage fehlen: " + t.replace(/\s+/g, " ").slice(0, 200));
-    const u = await b.evaluate(() => { const s = document.getElementById("pkStorno"); return s ? { kopf: s.querySelector("summary").textContent.trim(), zeilen: s.querySelectorAll("li").length, text: s.innerText } : null; });
+    const u = await b.evaluate(() => { const s = document.getElementById("pkStorno"); return s ? { kopf: s.querySelector("summary").textContent.trim(), zeilen: s.querySelectorAll("li").length, text: s.textContent.replace(/\s+/g, " ") } : null; });
     if (!u) return f.concat("Unterliste „Storniert“ fehlt");
     if (!/^Storniert, bleibt aufbewahrt \(2\)$/.test(u.kopf)) f.push("Unterkopf „" + u.kopf + "“");
     if (!/Schüler krank/.test(u.text)) f.push("Grund „Schüler krank“ fehlt"); if (!/unterschrieben · bleibt aufbewahrt/.test(u.text)) f.push("unterschriebene Stunde nicht als „bleibt aufbewahrt“");
@@ -381,7 +383,7 @@ await A.ctx.close();
     else { const s = (row.payload || {}).storno; if (!s || s.grund !== "doppelt eingetragen" || s.von !== "Büro" || !s.am) f.push("storno: " + JSON.stringify(s)); }
     if ((await b.evaluate(() => window.__FAKE.log.filter((l) => l.tabelle === "kalender_termine" && l.art === "delete").length)) !== 0) f.push("hart gelöscht");
     if ((await top.locator(".nw-liste").first().locator(".nw-zeile").count()) !== vorher - 1) f.push("Stunde nicht aus der Liste weg");
-    const hinw = await b.evaluate(() => { const t = document.getElementById("toast"); return t ? t.textContent : ""; }); if (!/storniert/.test(hinw)) f.push("Hinweis: " + hinw.slice(0, 60));
+    const hinw = await b.evaluate(() => { const t = document.querySelector(".toast-undo .toast-text"); return t ? t.textContent : ""; }); if (!/storniert/.test(hinw)) f.push("Hinweis: " + hinw.slice(0, 60));
     await top.locator(".nw-details summary:has-text('Papierkorb')").click(); await warte(b, 150);
     const pk = await top.locator(".nw-details", { hasText: "Papierkorb" }).first().innerText();
     if (!/storniert: „doppelt eingetragen“ · bleibt aufbewahrt/.test(pk)) f.push("Nachweis-Papierkorb zeigt kein „storniert“: " + pk.replace(/\s+/g, " ").slice(0, 160));
