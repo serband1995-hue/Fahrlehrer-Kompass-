@@ -534,6 +534,15 @@ input,select,textarea{font-family:inherit;font-size:16px;color:var(--txt);}
 .na-arrow{color:var(--faint);flex:0 0 auto;}
 .na-arrow svg{width:18px;height:18px;}
 .termine{display:grid;grid-template-columns:1fr 1fr;gap:13px;margin-bottom:14px;}
+.nz-zs{list-style:none;margin:0;padding:0 0 0 18px;border-left:2px solid var(--line);}
+.nz-e{position:relative;margin:0 0 18px;padding:0 0 0 4px;}
+.nz-e::before{content:"";position:absolute;left:-25px;top:4px;width:10px;height:10px;border-radius:50%;background:var(--surface);border:2px solid var(--muted);}
+.nz-e.nz-jetzt::before{background:var(--akzent);border-color:var(--akzent);}
+.nz-kopf{display:flex;gap:8px;align-items:center;font-size:13px;color:var(--muted);font-weight:700;}
+.nz-tag{background:var(--akzent);color:#fff;border-radius:999px;padding:1px 8px;font-size:12px;}
+.nz-titel{font-weight:700;font-size:15px;line-height:1.35;margin:3px 0 2px;}
+.nz-p{margin:4px 0 0;padding-left:18px;font-size:13.5px;line-height:1.5;color:var(--txt);}
+.nz-ver{font-size:12px;color:var(--muted);margin-top:4px;}
 .termin-card{background:var(--surface);border:1px solid var(--line);border-radius:var(--r-tile);padding:15px 17px;}
 .tm-label{font-family:'Anton',sans-serif;font-size:10.5px;letter-spacing:.22em;text-transform:uppercase;color:var(--muted);}
 .tm-date{font-family:'Anton',sans-serif;font-size:23px;letter-spacing:.02em;margin-top:8px;line-height:1.05;}
@@ -1936,6 +1945,7 @@ body:not(.light) #sheet .sheet-pills .pill.sel{background:#123A2A !important;bor
 <!-- Supabase Client -->
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script src="kompass-rechnen.js"></script>
+<script src="neuigkeiten.js"></script>
 <script src="lernszenen.js" defer></script>
 <script src="lernszenen-stadt.js" defer></script>
 <script src="lernszenen-neu-a.js" defer></script>
@@ -2868,6 +2878,9 @@ if(_tok&&!_bio){ document.getElementById("loginOverlay").classList.add("hidden")
     <a class="nav-item" href="theorie.html" onclick="return _seiteVerlassenOk()" style="text-decoration:none;">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="12" rx="1"/><path d="M12 16v4M8 20h8"/></svg>
       Theorieunterricht</a>
+    <button class="nav-item" data-nav="neuigkeiten">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 8v4l3 2"/><circle cx="12" cy="12" r="9"/></svg>
+      Neuigkeiten</button>
     <div class="nav-sep"></div>
     <button class="nav-item" data-nav="settings">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
@@ -5810,6 +5823,9 @@ function _fsDrawerNavHTML(zeigeZurueck){
     <button class="nav-item" data-nav="fs_stats">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 20V10M10 20V4M16 20v-7M21 20H3"/></svg>
       Statistiken</button>
+    <button class="nav-item" data-nav="neuigkeiten">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 8v4l3 2"/><circle cx="12" cy="12" r="9"/></svg>
+      Neuigkeiten</button>
     <div class="nav-sep"></div>
     ${zeigeZurueck?`<button class="nav-item primary" data-nav="fs_exit">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 12H5M12 19l-7-7 7-7"/></svg>
@@ -7699,9 +7715,18 @@ window.addEventListener("load", () => {
   try {
     const seen = localStorage.getItem("serband-app-version");
     if (seen && seen !== APP_VERSION) {
-      setTimeout(() => toast("Kompass wurde aktualisiert ✓"), 900);
-    }
-    localStorage.setItem("serband-app-version", APP_VERSION);
+      // K11: einmal kurz zeigen, was neu ist – verschwindet von selbst, nichts zu bestätigen. Erst nach dem Startbild
+      // und erst, wenn die Anmeldeseite weg ist (sonst läge der Hinweis unsichtbar dahinter); erst dann als gesehen merken.
+      const neu = _neuEintrag(APP_VERSION);
+      const zeige = (n) => {
+        const ov = document.getElementById("loginOverlay");
+        const anmeldungOffen = ov && getComputedStyle(ov).display !== "none" && !ov.classList.contains("hidden");
+        if (anmeldungOffen) { if (n < 1800) setTimeout(() => zeige(n + 1), 1000); return; }
+        toast(neu && neu.kurz ? neu.kurz : "Kompass wurde aktualisiert ✓");
+        try { localStorage.setItem("serband-app-version", APP_VERSION); } catch (e) {}
+      };
+      setTimeout(() => zeige(0), 2300);
+    } else localStorage.setItem("serband-app-version", APP_VERSION);
   } catch (e) {}
 });
 
@@ -7712,7 +7737,7 @@ window.addEventListener("load", () => {
 const STORE_KEY="serband-app-v1";
 /* Build-Version: bei jeder Auslieferung hier das Datum aktualisieren.
    Wird in den Einstellungen angezeigt + für den Update-Hinweis genutzt. */
-const APP_VERSION="2026.11.21.3";
+const APP_VERSION="2026.11.22.1";
 try{const f=document.getElementById("drawerFoot"); if(f)f.textContent="Fahrlehrer-Kompass · Version "+APP_VERSION;}catch(e){}
 // Nutzungsbedingungen & Haftungsausschluss (Bereich: rechtliche Absicherung) - Version hochzählen
 // und alle Nutzer müssen erneut zustimmen, sobald sich der Text inhaltlich ändert.
@@ -8395,6 +8420,7 @@ document.querySelector(".drawer-nav").addEventListener("click",(e)=>{
     else if(nav==="archive")routeArchive();
     else if(nav==="draw")routeDraw();
     else if(nav==="settings")routeSettings();
+    else if(nav==="neuigkeiten")routeNeuigkeiten();
     else if(nav==="fs_dash")routeFahrschuleDashboard();
     else if(nav==="fs_schueler"){routeHome();}
     else if(nav==="fs_lehrer")routeFahrschuleLehrer();
@@ -12253,6 +12279,7 @@ function routeSettings(){
     </div>
 
     <div style="text-align:center;padding:14px 0 4px;color:var(--muted);font-size:11.5px;">Kompass · Version ${APP_VERSION}</div>
+    <div style="text-align:center;"><button type="button" class="btn btn-ghost" onclick="routeNeuigkeiten()" style="min-height:44px;padding:12px 16px;font-size:14px;">Was ist neu?</button></div>
   </div>`;
   $("#expBtn").addEventListener("click",()=>{
     try{ _backupHerunterladen(""); localStorage.setItem("serband-backup-stamp",Date.now()+""); toast("Backup erstellt ✓"); }
@@ -16721,6 +16748,23 @@ function renderRouteSheet(nm){
 }
 /* ---------- Archiv ---------- */
 let _archFormFilter=[], _archColorFilter=[];
+/* K11 (🗣 22.11.2026): Zeitstrahl aller Updates in einfachen Worten. Daten in neuigkeiten.js (gemeinsam mit dem Büro). */
+function _neuListe(){ return Array.isArray(window.KOMPASS_NEU)?window.KOMPASS_NEU:[]; }
+function _neuEintrag(v){ return _neuListe().find(e=>e&&e.version===v)||null; }
+function routeNeuigkeiten(){
+  $("#tbTitle").textContent="Neuigkeiten"; setFab(false); view.scrollTop=0;
+  const liste=_neuListe();
+  const punkte=liste.map((e,i)=>`<li class="nz-e${e.version===APP_VERSION?' nz-jetzt':''}">
+      <div class="nz-kopf"><span class="nz-dat">${esc(String(e.datum||"").split("-").reverse().join("."))}</span>${e.version===APP_VERSION?'<span class="nz-tag">Aktuell</span>':''}</div>
+      <div class="nz-titel">${esc(e.kurz||"")}</div>
+      ${(e.punkte&&e.punkte.length)?`<ul class="nz-p">${e.punkte.map(p=>`<li>${esc(p)}</li>`).join("")}</ul>`:''}
+      <div class="nz-ver">Version ${esc(e.version||"")}</div></li>`).join("");
+  view.innerHTML=`<div class="view-inner view-read fade-up">
+    <div class="sec-h" style="margin-bottom:6px;">Neuig<span class="o">keiten</span></div>
+    <p class="muted-p" style="margin:0 0 14px;">Was sich in jedem Update geändert hat. Neuestes oben.</p>
+    ${liste.length?`<ol class="nz-zs">${punkte}</ol>`:'<p class="muted-p">Noch keine Einträge.</p>'}
+  </div>`;
+}
 function routeArchive(){
   $("#tbTitle").textContent="Archiv"; setFab(false); view.scrollTop=0;
   let list=DB.students.filter(s=>s.passed&&!s.ausgeblendetAm).sort((a,b)=>(a.name||"").localeCompare(b.name||"","de"));

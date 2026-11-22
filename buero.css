@@ -670,3 +670,13 @@ body.kiosk .rollen-streifen{display:none;}
   .dialog-breit .dialog-form footer{flex-direction:column-reverse;align-items:stretch;}
   .nw-zeile{grid-template-columns:minmax(0,1fr) auto;}.nw-wann,.nw-was{grid-column:1/-1;}.nw-us{grid-column:1;}.nw-knoepfe{grid-column:2;}
   .dialog-breit .dialog-form footer{flex-wrap:wrap;}.dialog-breit .dialog-form footer .knopf{flex:1 1 auto;}}
+/* Neuigkeiten (K11): Zeitstrahl */
+.nz-zs{list-style:none;margin:8px 0 0;padding:0 0 0 20px;border-left:2px solid var(--line);}
+.nz-e{position:relative;margin:0 0 20px;}
+.nz-e::before{content:"";position:absolute;left:-27px;top:4px;width:10px;height:10px;border-radius:50%;background:var(--surface);border:2px solid var(--muted);}
+.nz-e.nz-jetzt::before{background:var(--akzent);border-color:var(--akzent);}
+.nz-kopf{font-size:13px;color:var(--muted);font-weight:700;}
+.nz-tag{background:var(--akzent);color:#fff;border-radius:999px;padding:1px 8px;font-size:12px;margin-left:6px;}
+.nz-titel{font-weight:700;font-size:16px;margin:3px 0 2px;}
+.nz-p{margin:4px 0 0;padding-left:20px;line-height:1.5;}
+.nz-ver{font-size:12px;color:var(--muted);margin-top:4px;}

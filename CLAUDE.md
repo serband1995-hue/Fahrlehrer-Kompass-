@@ -36,3 +36,13 @@ Fahrlehrer-Kompass: PWA for driving instructors, plain HTML/CSS/JS (no build, al
 - Opus übernimmt an drei Punkten: **bevor ein Plan feststeht**, **wenn ein Teammitglied blockiert ist**, **bevor etwas „fertig“ heißt** (gesamten Diff ansehen, Ablauf prüfen).
 - Team nur bei Aufgaben mit mindestens zwei unabhängigen Teilen. Kleine Aufgaben macht der Lead allein (Teams kosten deutlich mehr Kontingent).
 - Bestehende Regeln gelten weiter: Prüf-Team/Richter vor dem Merge, Tests grün, selbst mergen nach Serbands Merge-Regel.
+
+## Neuigkeiten-Zeitstrahl (K11, 🗣 22.11.2026) – Pflicht für jede Werkstatt
+Jedes Update bekommt einen Eintrag in `neuigkeiten.js` (gilt für App und Büro), **oben** einfügen:
+```js
+{ version: "<APP_VERSION>", datum: "JJJJ-MM-TT", kurz: "Ein kurzer Satz (höchstens ~60 Zeichen), erscheint einmal als Hinweis.",
+  punkte: ["Was man jetzt anders sieht oder tun kann, in einfachen Worten.", "…"] },
+```
+- `version` = die neue `APP_VERSION`; `release-check.sh` und `scripts/neuigkeiten-test.mjs` brechen ab, wenn der Eintrag fehlt.
+- Einfache Worte ohne Fachwörter, keine Schülerdaten, keine Namen von Schülern. Kein Bestätigen-Knopf: der Hinweis verschwindet von selbst.
+
