@@ -297,7 +297,7 @@
       <div class="pw-liste" id="pwListe">${listeHTML(nm)}</div>
       <div class="pw-neu-h">Notiz hinzufügen</div>
       <p class="pw-hinweis">Alle Fahrlehrer deiner Fahrschule sehen das. Bitte sachlich.</p>
-      <div class="mic-wrap"><textarea id="pwNeu" rows="3" maxlength="2000" placeholder="Worauf achtet ${e_(nm)}?">${e_(entwurf[klein(nm)] || "")}</textarea>${mic}</div>
+      <div class="mic-wrap"><textarea id="pwNeu" rows="3" maxlength="2000" placeholder="Worauf achtet ${e_(nm)}?">\n${e_(entwurf[klein(nm)] || "")}</textarea>${mic}</div>
       <button class="btn btn-primary pw-senden" id="pwSenden" type="button">Notiz speichern</button>
     </div>`;
   };
@@ -364,6 +364,7 @@
     return !sp || PW.darfVerwalten() || (u && sp.angelegt_von === u.id);
   };
   PW.loeschen = async function (nm) {
+    delete entwurf[klein(nm)];
     const sp = serverPruefer(nm), s = supa(); if (!PW.aktiv() || !sp) return true;
     try {
       const r = await s.from("fahrschule_pruefer").update({ geloescht: true }).eq("id", sp.id).select("id");
@@ -377,6 +378,7 @@
   };
   /* Umbenennen / zusammenführen für die ganze Fahrschule (Server), danach wie bisher auf dem Gerät */
   PW.umbenennen = async function (alt, neu) {
+    delete entwurf[klein(alt)]; // Entwurf gehört zum alten Namen
     const s = supa(); if (!PW.aktiv() || !s) return true;
     try {
       schreibZaehler++;
