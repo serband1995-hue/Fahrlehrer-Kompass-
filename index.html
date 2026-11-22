@@ -538,11 +538,11 @@ input,select,textarea{font-family:inherit;font-size:16px;color:var(--txt);}
 .nz-e{position:relative;margin:0 0 18px;padding:0 0 0 4px;}
 .nz-e::before{content:"";position:absolute;left:-25px;top:4px;width:10px;height:10px;border-radius:50%;background:var(--surface);border:2px solid var(--muted);}
 .nz-e.nz-jetzt::before{background:var(--akzent);border-color:var(--akzent);}
-.nz-kopf{display:flex;gap:8px;align-items:center;font-size:12px;color:var(--muted);font-weight:700;}
-.nz-tag{background:var(--akzent);color:#fff;border-radius:999px;padding:1px 8px;font-size:11px;}
+.nz-kopf{display:flex;gap:8px;align-items:center;font-size:13px;color:var(--muted);font-weight:700;}
+.nz-tag{background:var(--akzent);color:#fff;border-radius:999px;padding:1px 8px;font-size:12px;}
 .nz-titel{font-weight:700;font-size:15px;line-height:1.35;margin:3px 0 2px;}
 .nz-p{margin:4px 0 0;padding-left:18px;font-size:13.5px;line-height:1.5;color:var(--txt);}
-.nz-ver{font-size:11px;color:var(--muted);margin-top:4px;}
+.nz-ver{font-size:12px;color:var(--muted);margin-top:4px;}
 .termin-card{background:var(--surface);border:1px solid var(--line);border-radius:var(--r-tile);padding:15px 17px;}
 .tm-label{font-family:'Anton',sans-serif;font-size:10.5px;letter-spacing:.22em;text-transform:uppercase;color:var(--muted);}
 .tm-date{font-family:'Anton',sans-serif;font-size:23px;letter-spacing:.02em;margin-top:8px;line-height:1.05;}
@@ -7717,7 +7717,7 @@ window.addEventListener("load", () => {
     if (seen && seen !== APP_VERSION) {
       // K11: einmal kurz zeigen, was neu ist – verschwindet von selbst, nichts zu bestätigen. Erst nach dem Startbild.
       const neu = _neuEintrag(APP_VERSION);
-      setTimeout(() => toast(neu && neu.kurz ? neu.kurz + " (Mehr › Neuigkeiten)" : "Kompass wurde aktualisiert ✓"), 2300);
+      setTimeout(() => toast(neu && neu.kurz ? neu.kurz : "Kompass wurde aktualisiert ✓"), 2300);
     }
     localStorage.setItem("serband-app-version", APP_VERSION);
   } catch (e) {}
@@ -12271,7 +12271,8 @@ function routeSettings(){
       </div></div>
     </div>
 
-    <div style="text-align:center;padding:14px 0 4px;color:var(--muted);font-size:11.5px;">Kompass · Version ${APP_VERSION} · <button type="button" onclick="routeNeuigkeiten()" style="background:none;border:0;padding:6px 2px;color:inherit;font:inherit;font-weight:700;text-decoration:underline;cursor:pointer;">Was ist neu?</button></div>
+    <div style="text-align:center;padding:14px 0 4px;color:var(--muted);font-size:11.5px;">Kompass · Version ${APP_VERSION}</div>
+    <div style="text-align:center;"><button type="button" class="btn btn-ghost" onclick="routeNeuigkeiten()" style="min-height:44px;padding:12px 16px;font-size:14px;">Was ist neu?</button></div>
   </div>`;
   $("#expBtn").addEventListener("click",()=>{
     try{ _backupHerunterladen(""); localStorage.setItem("serband-backup-stamp",Date.now()+""); toast("Backup erstellt ✓"); }
@@ -16747,7 +16748,7 @@ function routeNeuigkeiten(){
   $("#tbTitle").textContent="Neuigkeiten"; setFab(false); view.scrollTop=0;
   const liste=_neuListe();
   const punkte=liste.map((e,i)=>`<li class="nz-e${e.version===APP_VERSION?' nz-jetzt':''}">
-      <div class="nz-kopf"><span class="nz-dat">${esc(isoDE(e.datum||""))}</span>${e.version===APP_VERSION?'<span class="nz-tag">Deine Version</span>':''}</div>
+      <div class="nz-kopf"><span class="nz-dat">${esc(String(e.datum||"").split("-").reverse().join("."))}</span>${e.version===APP_VERSION?'<span class="nz-tag">Aktuell</span>':''}</div>
       <div class="nz-titel">${esc(e.kurz||"")}</div>
       ${(e.punkte&&e.punkte.length)?`<ul class="nz-p">${e.punkte.map(p=>`<li>${esc(p)}</li>`).join("")}</ul>`:''}
       <div class="nz-ver">Version ${esc(e.version||"")}</div></li>`).join("");

@@ -40,7 +40,7 @@ Fahrlehrer-Kompass: PWA for driving instructors, plain HTML/CSS/JS (no build, al
 ## Neuigkeiten-Zeitstrahl (K11, 🗣 22.11.2026) – Pflicht für jede Werkstatt
 Jedes Update bekommt einen Eintrag in `neuigkeiten.js` (gilt für App und Büro), **oben** einfügen:
 ```js
-{ version: "<APP_VERSION>", datum: "JJJJ-MM-TT", kurz: "Ein Satz, was neu ist (erscheint einmal als Hinweis).",
+{ version: "<APP_VERSION>", datum: "JJJJ-MM-TT", kurz: "Ein kurzer Satz (höchstens ~60 Zeichen), erscheint einmal als Hinweis.",
   punkte: ["Was man jetzt anders sieht oder tun kann, in einfachen Worten.", "…"] },
 ```
 - `version` = die neue `APP_VERSION`; `release-check.sh` und `scripts/neuigkeiten-test.mjs` brechen ab, wenn der Eintrag fehlt.

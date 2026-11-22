@@ -1,10 +1,10 @@
 /* Fahrlehrer-Kompass – Neuigkeiten (Zeitstrahl aller Updates in einfachen Worten).
    Gilt für App (index.html) und Büro (buero.html). Neuester Eintrag steht OBEN.
    Bei jedem Update: oben einen Eintrag ergänzen, "version" = APP_VERSION aus index.html.
-   "kurz" erscheint nach dem Update einmal als kleiner Hinweis (verschwindet von selbst, kein Knopf).
+   "kurz" (höchstens ~60 Zeichen) erscheint nach dem Update einmal als kleiner Hinweis (verschwindet von selbst, kein Knopf).
    Einfache Worte, keine Fachwörter, keine Schülerdaten. */
 window.KOMPASS_NEU = [
-  { version: "2026.11.22.1", datum: "2026-11-22", kurz: "Neu: Unter „Mehr“ steht jetzt, was sich in jedem Update geändert hat.",
+  { version: "2026.11.22.1", datum: "2026-11-22", kurz: "Neu: „Was ist neu?“ steht jetzt unter „Mehr“.",
     punkte: ["Neue Seite „Neuigkeiten“ unter „Mehr“ (im Büro im Menü): alle Updates als Zeitstrahl.", "Nach jedem Update erscheint einmal ein kleiner Hinweis, was neu ist. Er verschwindet von selbst."] },
   { version: "2026.11.21.3", datum: "2026-11-22", kurz: "Ausbildungsnachweis im Büro.",
     punkte: ["Büro sieht und druckt den Ausbildungsnachweis jedes Schülers.", "Änderungen am Nachweis werden mit Name und Zeit festgehalten.", "Unterschriebene Stunden sind geschützt."] },

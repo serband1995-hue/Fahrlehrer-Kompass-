@@ -277,7 +277,7 @@ function zeigeNeuNachUpdate() {
   try {
     const alt = localStorage.getItem("buero-neu-gesehen");
     localStorage.setItem("buero-neu-gesehen", neu.version);
-    if (alt && alt !== neu.version) toast((neu.kurz || "Kompass wurde aktualisiert.") + " (Menü › Neuigkeiten)");
+    if (alt && alt !== neu.version) toast(neu.kurz || "Kompass wurde aktualisiert.");
   } catch (e) { /* ohne Speicher kein Hinweis */ }
 }
 

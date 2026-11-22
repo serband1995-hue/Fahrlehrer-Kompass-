@@ -1,7 +1,7 @@
 // Neuigkeiten-Test (K11, 🗣 22.11.2026): Zeitstrahl aller Updates + kleiner Hinweis nach dem Update, ohne Knopf.
 // N1 Datei neuigkeiten.js: oberster Eintrag = APP_VERSION (jede Werkstatt trägt ihr Update ein), Felder vollständig.
 // N2 Update-Hinweis erscheint einmal mit dem Text „kurz“ und verschwindet von selbst; N3 Erst-Installation: kein Hinweis.
-// N4 App: Mehr › Neuigkeiten zeigt alle Einträge, „Deine Version“ genau einmal, 360 px ohne Querscrollen.
+// N4 App: Mehr › Neuigkeiten zeigt alle Einträge, „Aktuell“ genau einmal, 360 px ohne Querscrollen.
 // N5 Büro (Vorführung, erfundene Daten): Menü › Neuigkeiten zeigt den Zeitstrahl.
 // Keine Datenbank, keine Schülerdaten. Aufruf: NODE_PATH=$(npm root -g) node scripts/neuigkeiten-test.mjs
 import { createRequire } from "node:module";
@@ -90,7 +90,7 @@ await pruefe("N4", "App: Mehr › Neuigkeiten zeigt den Zeitstrahl (360 px)", as
   await ctx.close();
   if (r.titel !== "Neuigkeiten") return "Titel " + r.titel;
   if (r.n !== LISTE.length) return `Einträge ${r.n} statt ${LISTE.length}`;
-  if (r.tag !== 1) return "„Deine Version“ " + r.tag + "×";
+  if (r.tag !== 1) return "„Aktuell“ " + r.tag + "×";
   if (r.quer) return "Querscrollen bei 360 px";
   if (js.length) return "JS-Fehler: " + js[0];
 });
