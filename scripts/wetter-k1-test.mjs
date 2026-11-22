@@ -183,8 +183,10 @@ await pruefe("K1l", "Ort nicht gefunden: „Heute“ zeigt leisen Hinweis, Tipp 
   await page.evaluate(() => { DB.weatherCfg = { city: "Xyzqw" }; localStorage.setItem("serband-wetter-ort", JSON.stringify({ q: "Xyzqw", fehlTs: Date.now() })); routeDashboard(); });
   await page.waitForTimeout(600);
   const p = await page.evaluate(() => { const b = document.getElementById("h2Wetter"); return b ? { text: b.textContent.replace(/\s+/g, " ").trim(), vis: getComputedStyle(b).visibility, label: b.getAttribute("aria-label") } : null; });
-  if (!p || !/nicht gefunden/.test(p.text) || p.vis === "hidden") f.push("kein Hinweis: " + JSON.stringify(p));
+  if (!p || !/Ort prüfen/.test(p.text) || p.vis === "hidden") f.push("kein Hinweis: " + JSON.stringify(p));
   if (p && !/Einstellungen/.test(p.label || "")) f.push("Vorlesetext ohne Weg");
+  const abgeschnitten = await page.evaluate(() => [...document.querySelectorAll("#h2Wetter .h2-wetter-t, #h2Wetter .h2-wetter-d")].some((e) => e.scrollWidth > e.clientWidth + 1));
+  if (abgeschnitten) f.push("Text in der Pille abgeschnitten");
   await page.click("#h2Wetter"); await page.waitForTimeout(300);
   if (!(await page.$("#weatherCityInput"))) f.push("Tipp führt nicht zum Ortsfeld");
   if (!(await page.$(".wx-ort-fehlt"))) f.push("Einstellungen ohne Hinweis");

@@ -2190,7 +2190,8 @@ body:not(.light) .heute2{--h-karte:var(--surface);--h-rand:var(--line);--h-tinte
 .h2-wetter-text{display:flex;flex-direction:column;align-items:flex-start;min-width:0;line-height:1.15;}
 .h2-wetter-d{font-size:12px;font-weight:600;color:var(--h-text2);max-width:118px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
 @media (max-width:380px){.h2-wetter{padding:5px 12px 5px 8px;gap:6px;}.h2-wetter-d{max-width:84px;}}
-.h2-wetter.h2-wetter-leise{color:var(--muted);}.h2-wetter.h2-wetter-leise .h2-wetter-t{font-size:14px;}
+/* Ort nicht gefunden: leise, aber mit gelbem Rand (Gelb = bald etwas tun) */
+.h2-wetter.h2-wetter-leise{border-color:var(--gelb);}.h2-wetter.h2-wetter-leise .h2-wetter-t{font-size:14px;}.h2-wetter.h2-wetter-leise .h2-wetter-ic{color:var(--gelb);display:flex;align-items:center;justify-content:center;}
 .h2-kopf>div:first-child{min-width:0;}
 .h2-wx{width:38px;height:38px;display:block;overflow:visible;}
 .h2-wx .wx-strahlen{animation:wxDreh 24s linear infinite;}
@@ -12190,10 +12191,10 @@ function routeSettings(){
         </div>
         <div class="res-block" style="animation:none;"><h4>🌤 Wetter-Widget</h4>
           <p>Das Wetter kommt kostenlos vom Deutschen Wetterdienst. Du brauchst nichts einzurichten. Unten kannst du deinen Ort einstellen.</p>
-          <p style="font-size:12.5px;color:var(--muted);">Für das Wetter erfährt der Wetterdienst die Internet-Adresse deines Geräts, aber keine Schülerdaten.</p>
+          <p style="font-size:13px;color:var(--muted);margin:6px 0 12px;">Für das Wetter erfährt der Wetterdienst die Internet-Adresse deines Geräts, aber keine Schülerdaten.</p>
           <div class="field"><div class="toggle-row"><div><div class="tc-name" style="font-weight:800;font-size:14px;">Wetter zeigen</div></div><button type="button" class="check-toggle${_wetterAn()?' on':''}" id="weatherOnToggle" aria-label="Wetter zeigen"></button></div></div>
           <div class="field"><label for="weatherCityInput">Ort</label><input id="weatherCityInput" type="text" placeholder="Offenbach" value="${esc(String(DB.weatherCfg.city||"Offenbach").replace(/,\s*[A-Z]{2}$/,""))}" autocomplete="off" enterkeyhint="done"></div>
-          ${_wetterOrtFehlt()?`<p class="wx-ort-fehlt" style="font-size:12.5px;color:var(--muted);margin:-4px 0 8px;">Ort nicht gefunden. Bitte neu eingeben und speichern.</p>`:''}
+          ${_wetterOrtFehlt()?`<p class="wx-ort-fehlt" style="font-size:13px;color:var(--txt);margin:-2px 0 10px;padding-left:10px;border-left:3px solid var(--gelb);">Ort nicht gefunden. Bitte neu eingeben und speichern.</p>`:''}
           <div class="btn-row"><button type="button" class="btn btn-ghost" id="weatherSaveBtn">Ort speichern</button></div>
         </div>
       </div></div>
@@ -16003,7 +16004,8 @@ function routeDashboard(){
   if(wetterAn){
     fetchWeather().then(w=>{ const b=$("#h2Wetter"); if(!b)return;
       if(!w&&_wetterOrtFehlt()){ // leiser Hinweis statt Wetter: der eingestellte Ort wurde nicht gefunden
-        b.classList.add("h2-wetter-leise"); b.querySelector(".h2-wetter-t").textContent="Ort"; b.querySelector(".h2-wetter-d").textContent="nicht gefunden";
+        b.classList.add("h2-wetter-leise"); b.querySelector(".h2-wetter-ic").innerHTML='<svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 21s-6-5.6-6-10.5a6 6 0 0 1 12 0C18 15.4 12 21 12 21z"/><circle cx="12" cy="10.5" r="2.2"/></svg>';
+        b.querySelector(".h2-wetter-t").textContent="Wetter"; b.querySelector(".h2-wetter-d").textContent="Ort prüfen";
         b.setAttribute("aria-label","Wetter-Ort nicht gefunden – in den Einstellungen ändern"); b.style.visibility="";
         b.addEventListener("click",()=>{ _settingsAccOpen="app"; routeSettings(); setTimeout(()=>{ const i=$("#weatherCityInput"); if(i){ i.scrollIntoView({block:"center"}); } },60); }); return; }
       if(!w){ b.remove(); return; }
