@@ -34,7 +34,7 @@ $function$;
 
 -- 0) Die Schutz-Trigger für Schüler und Termine (nur Leitung/Büro/Super-Admin dürfen verschieben) bekommen EINE Ausnahme:
 --    die Server-Funktion schueler_weitergeben setzt innerhalb ihrer Transaktion kompass.weitergabe = '1'.
---    Von außen (REST) lässt sich das nicht setzen; sonst bleibt jede Zeile wie vorher (Stand 22.11.2026 laut Hauptsitzung).
+--    Von außen (REST) lässt sich das nicht setzen; sonst bleibt jede Zeile wie vorher (Text wie live am 22.11.2026, pg_get_functiondef; nur die Ausnahme ist neu).
 create or replace function public.schueler_verschiebung_schutz()
  returns trigger
  language plpgsql
@@ -42,10 +42,12 @@ create or replace function public.schueler_verschiebung_schutz()
  set search_path to 'public'
 as $function$
 begin
-  if (new.fahrlehrer_id is distinct from old.fahrlehrer_id or new.fahrschule_id is distinct from old.fahrschule_id)
-     and not (is_super_admin(auth.uid()) or is_fahrschule_admin(auth.uid()) or is_buero(auth.uid()))
-     and not (coalesce(current_setting('kompass.weitergabe', true), '') = '1' and new.fahrschule_id is not distinct from old.fahrschule_id) then
-    raise exception 'Nur Fahrschule-Admin, Büro oder Super-Admin dürfen Schüler verschieben.';
+  if (new.fahrlehrer_id is distinct from old.fahrlehrer_id or new.fahrschule_id is distinct from old.fahrschule_id) then
+    if not (is_super_admin(auth.uid()) or is_fahrschule_admin(auth.uid()) or is_buero(auth.uid()))
+       -- K6: nur innerhalb von schueler_weitergeben und nur der Fahrlehrer, nie die Fahrschule
+       and not (coalesce(current_setting('kompass.weitergabe', true), '') = '1' and new.fahrschule_id is not distinct from old.fahrschule_id) then
+      raise exception 'Nur Fahrschule-Admin, Büro oder Super-Admin dürfen Schüler verschieben.';
+    end if;
   end if;
   return new;
 end;
@@ -58,10 +60,12 @@ create or replace function public.termin_verschiebung_schutz()
  set search_path to 'public'
 as $function$
 begin
-  if (new.fahrlehrer_id is distinct from old.fahrlehrer_id or new.fahrschule_id is distinct from old.fahrschule_id)
-     and not (is_super_admin(auth.uid()) or is_fahrschule_admin(auth.uid()) or is_buero(auth.uid()))
-     and not (coalesce(current_setting('kompass.weitergabe', true), '') = '1' and new.fahrschule_id is not distinct from old.fahrschule_id) then
-    raise exception 'Nur Fahrschule-Admin, Büro oder Super-Admin dürfen Termine verschieben.';
+  if (new.fahrlehrer_id is distinct from old.fahrlehrer_id or new.fahrschule_id is distinct from old.fahrschule_id) then
+    if not (is_super_admin(auth.uid()) or is_fahrschule_admin(auth.uid()) or is_buero(auth.uid()))
+       -- K6: nur innerhalb von schueler_weitergeben und nur der Fahrlehrer, nie die Fahrschule
+       and not (coalesce(current_setting('kompass.weitergabe', true), '') = '1' and new.fahrschule_id is not distinct from old.fahrschule_id) then
+      raise exception 'Nur Fahrschule-Admin, Büro oder Super-Admin dürfen einen Termin einem anderen Fahrlehrer zuordnen.';
+    end if;
   end if;
   return new;
 end;
