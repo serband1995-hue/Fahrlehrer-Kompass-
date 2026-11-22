@@ -199,8 +199,29 @@ function zeichne() {
   zeichneNav();
   const ziel = $("ansicht");
   if (!S.geladenAm) { ziel.innerHTML = `<p class="leer">Daten werden geladen …</p>`; return; }
+  // K2/K4 (🗣 22.11.2026): Zeichnet sich derselbe Bereich neu (Speichern, Schalter, Auffrischen), bleiben
+  // aufgeklappte Listen offen und die Seite an derselben Stelle. Ein Bereichswechsel springt wie bisher (hashchange).
+  // „gleich“ = derselbe Bereich mit derselben Unter-Ansicht, Fahrschule und Person (sonst gilt er als neu)
+  let pers = ""; try { pers = (PIN && PIN.person && PIN.person.id) || ""; } catch (e) {}
+  const kontext = [b.id, location.hash, S.fsId || "", pers].join("|");
+  const gleich = ziel.dataset.kontext === kontext;
+  const klapp = gleich ? klappZustand(ziel) : null, y = window.scrollY;
   ziel.innerHTML = b.render ? b.render() : renderBald(b);
+  ziel.dataset.kontext = kontext;
   if (b.nachher) b.nachher(ziel);
+  if (gleich) { klappWieder(ziel, klapp); window.scrollTo(0, y); }
+}
+// Schlüssel einer Klapp-Liste: Text der Überschrift ohne Zahlen (die Anzahl in Klammern ändert sich beim Speichern)
+function klappSchluessel(sum) { return (sum.textContent || "").replace(/\d+/g, "#").replace(/\s+/g, " ").trim(); }
+// Gleich lautende Listen (z. B. dreimal „Als Tabelle“) bekommen eine laufende Nummer, damit keine verwechselt wird
+function klappListe(ziel) {
+  const zahl = new Map();
+  return [...ziel.querySelectorAll("details > summary")].map((s) => { const k = klappSchluessel(s); const n = (zahl.get(k) || 0) + 1; zahl.set(k, n); return [k + "§" + n, s.parentElement]; });
+}
+function klappZustand(ziel) { return new Map(klappListe(ziel).map(([k, d]) => [k, d.open])); }
+function klappWieder(ziel, m) {
+  if (!m || !m.size) return;
+  klappListe(ziel).forEach(([k, d]) => { if (m.has(k)) d.open = m.get(k); });
 }
 window.addEventListener("hashchange", () => {
   // Zurück-Taste (oder Link) wechselt die Seite: offene Fenster ohne Eingaben schließen, damit nichts über der falschen Seite stehen bleibt

@@ -241,6 +241,13 @@ for (const [w, h, n] of [[360, 780, "360 hoch"], [412, 915, "412 hoch"], [740, 3
     if (!(b.scroll > 0)) f.push("„Heute“ springt nicht");
     return f;
   });
+  await pruefe(`C6b [${n}]`, "schon auf heute, nach oben gewischt: echter Tipp auf „Heute“ springt zur Jetzt-Linie (K2+K4 darf das nicht überschreiben)", async () => {
+    await page.evaluate((t) => routeKalender("tag", t), TAG); await page.waitForTimeout(300);
+    await page.evaluate(() => { document.getElementById("view").scrollTop = 0; }); await page.waitForTimeout(100);
+    await page.click("#calToday"); await page.waitForTimeout(300);
+    const b = await lage();
+    if (!(b.scroll > 0)) return "„Heute“ springt nicht (scrollTop " + b.scroll + ")";
+  });
   await pruefe(`C7 [${n}]`, "nach dem Sprung steht die Datumszeile (‹ Datum ›) oben im Bild", async () => {
     await page.evaluate(() => routeKalender("woche", "2026-11-11")); await page.waitForTimeout(100);
     await page.evaluate((t) => routeKalender("tag", t), TAG); await page.waitForTimeout(700);
