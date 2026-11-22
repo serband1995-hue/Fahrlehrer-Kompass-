@@ -12185,7 +12185,7 @@ function routeSettings(){
           <div class="field"><div class="toggle-row"><div><div class="tc-name" style="font-weight:800;font-size:14px;">Videoakademie-Empfehlung</div><div class="tc-sub" style="font-size:12.5px;color:var(--muted);margin-top:2px;">Karte in der Schülerakte</div></div><button class="check-toggle${DB.sichtbarkeit.akademie?' on':''}" data-vis="akademie"></button></div></div>
         </div>
         <div class="res-block" style="animation:none;"><h4>🌤 Wetter-Widget</h4>
-          <p>Das Wetter kommt kostenlos vom Deutschen Wetterdienst. Du brauchst nichts einzurichten.</p>
+          <p>Das Wetter kommt kostenlos vom Deutschen Wetterdienst. Du brauchst nichts einzurichten. Unten kannst du deinen Ort einstellen.</p>
           <div class="field"><div class="toggle-row"><div><div class="tc-name" style="font-weight:800;font-size:14px;">Wetter zeigen</div></div><button type="button" class="check-toggle${_wetterAn()?' on':''}" id="weatherOnToggle" aria-label="Wetter zeigen"></button></div></div>
           <div class="field"><label for="weatherCityInput">Ort</label><input id="weatherCityInput" type="text" placeholder="Offenbach" value="${esc(String(DB.weatherCfg.city||"Offenbach").replace(/,\s*[A-Z]{2}$/,""))}" autocomplete="off" enterkeyhint="done"></div>
           <div class="btn-row"><button type="button" class="btn btn-ghost" id="weatherSaveBtn">Ort speichern</button></div>
@@ -12341,17 +12341,20 @@ function routeSettings(){
     wSave.disabled=true; const alt=wSave.textContent; wSave.textContent="Suche …";
     const t=/^offenbach$/i.test(q)?{name:WETTER_START.city,lat:WETTER_START.lat,lon:WETTER_START.lon}:await _ortSuchen(q);
     wSave.disabled=false; wSave.textContent=alt;
+    if(t&&t.fehler){ toast("Keine Verbindung. Bitte später noch einmal."); return; }
     if(!t){ toast("Ort nicht gefunden. Bitte anders schreiben, z. B. „Hanau“."); return; }
     Object.assign(DB.weatherCfg,{city:t.name,lat:t.lat,lon:t.lon});
     delete DB.weatherCfg.apiKey;
     try{ localStorage.removeItem("serband-weather-cache"); localStorage.removeItem("serband-weather-forecast-cache"); }catch(e){}
     inp.value=t.name; save(); toast(`Wetter-Ort: ${t.name} ✓`);
   });
+  const wOrt=$("#weatherCityInput");
+  if(wOrt&&wSave)wOrt.addEventListener("keydown",ev=>{ if(ev.key==="Enter"){ ev.preventDefault(); if(!wSave.disabled)wSave.click(); } });
   const wOn=$("#weatherOnToggle");
   if(wOn)wOn.addEventListener("click",()=>{
     DB.weatherCfg.aus=_wetterAn(); // an → aus, aus → an
     wOn.classList.toggle("on",_wetterAn()); save();
-    toast(_wetterAn()?"Wetter wird gezeigt ✓":"Wetter ausgeblendet");
+    toast(_wetterAn()?"Wetter wird gezeigt ✓":"Wetter ausgeblendet. Wieder an: Einstellungen › App.");
   });
   const pushTxt=$("#pushStatusTxt");
   if(pushTxt){
@@ -15469,22 +15472,25 @@ async function _wetterOrt(){
   const name=String(cfg.city||"").replace(/,\s*[A-Z]{2}$/,"").trim();
   try{ const m=JSON.parse(localStorage.getItem("serband-wetter-ort")||"null");
     if(m&&m.q===name){ if(typeof m.lat==="number")return {lat:m.lat,lon:m.lon}; if(Date.now()-(m.fehlTs||0)<10*60*1000)return null; } }catch(e){}
-  if(!_wetterOrtLauf)_wetterOrtLauf=_ortSuchen(name).then(t=>{
+  if(!_wetterOrtLauf)_wetterOrtLauf=_ortSuchen(name).then(t=>{ if(t&&t.fehler)t=null;
     try{ localStorage.setItem("serband-wetter-ort",JSON.stringify(t?{q:name,lat:t.lat,lon:t.lon}:{q:name,fehlTs:Date.now()})); }catch(e){}
     return t?{lat:t.lat,lon:t.lon}:null;
   }).finally(()=>{ _wetterOrtLauf=null; });
   return _wetterOrtLauf;
 }
+// Zeitgrenze für Wetter-Anfragen (schlechter Empfang im Auto): nach 8 s aufgeben statt ewig warten.
+function _wetterSignal(){ try{ return (typeof AbortSignal!=="undefined"&&AbortSignal.timeout)?AbortSignal.timeout(8000):undefined; }catch(e){ return undefined; } }
+// Ergebnis: {name,lat,lon} | null (Ort unbekannt) | {fehler:true} (keine Verbindung / Dienst gestört)
 async function _ortSuchen(q){
   q=String(q||"").trim(); if(!q)return null;
   try{
-    const res=await fetch(`https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(q)}&format=json&limit=1&countrycodes=de&accept-language=de`);
-    if(!res.ok)return null;
+    const res=await fetch(`https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(q)}&format=json&limit=1&countrycodes=de&accept-language=de`,{signal:_wetterSignal()});
+    if(!res.ok)return {fehler:true};
     const d=(await res.json())[0]; if(!d)return null;
     const lat=Math.round(Number(d.lat)*10000)/10000, lon=Math.round(Number(d.lon)*10000)/10000;
     if(!Number.isFinite(lat)||!Number.isFinite(lon))return null;
     return {name:(d.name||String(d.display_name||q).split(",")[0]).trim()||q,lat,lon};
-  }catch(e){ return null; }
+  }catch(e){ return {fehler:true}; }
 }
 // Wetter: höchstens alle 30 Minuten neu abfragen (spart Anfragen, reicht für Tagesplanung völlig)
 async function fetchWeather(){
@@ -15499,7 +15505,7 @@ async function fetchWeather(){
   }catch(e){}
   try{
     const o=await _wetterOrt(); if(!o)return null;
-    const res=await fetch(`https://api.brightsky.dev/current_weather?lat=${o.lat}&lon=${o.lon}&tz=Europe/Berlin`);
+    const res=await fetch(`https://api.brightsky.dev/current_weather?lat=${o.lat}&lon=${o.lon}&tz=Europe/Berlin`,{signal:_wetterSignal()});
     if(!res.ok)return null;
     const w=((await res.json())||{}).weather;
     if(!w||typeof w.temperature!=="number")return null;
@@ -15525,7 +15531,7 @@ async function fetchWeatherForecast(){
     const o=await _wetterOrt(); if(!o)return [];
     const heuteStr=todayISO();
     const von=addDays(heuteStr,1), bis=addDays(heuteStr,6);
-    const res=await fetch(`https://api.brightsky.dev/weather?lat=${o.lat}&lon=${o.lon}&date=${von}&last_date=${bis}&tz=Europe/Berlin`);
+    const res=await fetch(`https://api.brightsky.dev/weather?lat=${o.lat}&lon=${o.lon}&date=${von}&last_date=${bis}&tz=Europe/Berlin`,{signal:_wetterSignal()});
     if(!res.ok)return [];
     const data=await res.json();
     const byDay={};

@@ -7,6 +7,7 @@
 // K1d Einstellungen: Ort ändern → gespeichert, Zwischenspeicher geleert, Hinweis ohne Knopf, kein Dialog.
 // K1e Unbekannter Ort: Hinweis, nichts geändert. K1f Ausschalten: keine Pille, keine Anfrage, Seite springt nicht.
 // K1i Abgleich-sicher (Start schreibt nichts außer Schlüssel-Wegfall). K1j Suche scheitert: kein falsches Wetter, eine Suche, 10 min Pause.
+// K1k Enter speichert, kein Netz → eigener Hinweis.
 // K1g Symbole: Bright-Sky-Symbole → bisherige Wetter-Codes. K1h 360 px: Einstellungen ohne Querscrollen, keine JS-Fehler.
 // Aufruf: NODE_PATH=$(npm root -g) node scripts/wetter-k1-test.mjs
 import { createRequire } from "node:module";
@@ -69,6 +70,7 @@ async function seite(width = 360, height = 740) {
     if (q.host === "api.brightsky.dev" && q.pathname === "/weather")
       return r.fulfill({ json: vorschau(q.searchParams.get("date"), q.searchParams.get("last_date")) });
     if (q.host === "nominatim.openstreetmap.org") {
+      if ((q.searchParams.get("q") || "").toLowerCase() === "mainz") return r.abort(); // kein Netz
       const o = ORTE[(q.searchParams.get("q") || "").toLowerCase()];
       return r.fulfill({ json: o ? [o] : [] });
     }
@@ -203,6 +205,20 @@ await pruefe("K1e", "unbekannter Ort: Hinweis, Einstellung bleibt", async () => 
   await page.waitForFunction(() => /nicht gefunden/.test(document.getElementById("toast")?.textContent || ""), null, { timeout: 4000 }).catch(() => f.push("kein Hinweis"));
   if ((await page.evaluate(() => DB.weatherCfg.city)) !== "Darmstadt") f.push("Ort trotzdem geändert");
   if (await page.$eval("#weatherSaveBtn", (b) => b.disabled)) f.push("Knopf bleibt gesperrt");
+  return f;
+});
+
+await pruefe("K1k", "Enter im Ortsfeld speichert; kein Netz → „Keine Verbindung“ statt „nicht gefunden“", async () => {
+  const f = [];
+  await einstellungen();
+  await page.fill("#weatherCityInput", "Hanau");
+  await page.press("#weatherCityInput", "Enter");
+  await page.waitForFunction(() => DB.weatherCfg.city === "Hanau", null, { timeout: 4000 }).catch(() => f.push("Enter speichert nicht"));
+  await page.fill("#weatherCityInput", "Mainz");
+  await page.click("#weatherSaveBtn");
+  await page.waitForFunction(() => /Keine Verbindung/.test(document.getElementById("toast")?.textContent || ""), null, { timeout: 4000 }).catch(() => f.push("kein Verbindungs-Hinweis"));
+  if ((await page.evaluate(() => DB.weatherCfg.city)) !== "Hanau") f.push("Ort trotz Fehler geändert");
+  await page.evaluate(() => { DB.weatherCfg = { city: "Darmstadt", lat: 49.8728, lon: 8.6512 }; });
   return f;
 });
 
