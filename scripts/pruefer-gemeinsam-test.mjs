@@ -143,7 +143,8 @@ async function starte({ rolle = "fahrlehrer", alteDB = false } = {}) {
   await pruefe("P5", "Notiz zeigt Verfasser + Datum, Hinweis sachlich/alle sehen es", () => page.evaluate(() => {
     const t = document.getElementById("view").textContent; const ph = (document.getElementById("pwNeu") || {}).placeholder || "";
     if (!/Achtet sehr auf Tempo 30\./.test(t)) return "Notiz fehlt"; if (!/Jelena · 20\.11\.2026/.test(t)) return "Verfasser/Datum fehlt";
-    if (!/Sachlich/i.test(ph) || !/Alle Fahrlehrer deiner Fahrschule sehen das/.test(t)) return "Hinweis fehlt"; if (document.getElementById("pfNote")) return "altes Einzel-Notizfeld noch da";
+    if (!/Worauf achtet/.test(ph) || !/Alle Fahrlehrer deiner Fahrschule sehen das\. Bitte sachlich\./.test(t)) return "Hinweis fehlt";
+    const kette = [...document.querySelectorAll("#pwNotizen > *")].map((x) => x.id || x.className); if (kette.indexOf("pwListe") > kette.indexOf("pwSenden")) return "Liste nicht vor dem Schreibfeld"; if (document.getElementById("pfNote")) return "altes Einzel-Notizfeld noch da";
     return /Löschen/.test(document.querySelector("#pwNotizen").textContent) && document.querySelector('[data-weg="n-1"]') ? "fremde Notiz löschbar" : null;
   }));
   await page.fill("#pwNeu", "Fährt gern Autobahn.");
@@ -160,6 +161,40 @@ async function starte({ rolle = "fahrlehrer", alteDB = false } = {}) {
     return a && s.tags.includes("Mag Kreisel") && s.tags.includes("Streng: Schulterblick") ? null : "neu=" + !!a + " tags=" + JSON.stringify(s.tags);
   }));
   await pruefe("P8b", "Löschen-Knopf beim fremden Prüfer nicht da (nur Ersteller/Büro/Leitung)", () => page.evaluate(() => { _pfTab = "profil"; routePrueferAkte("Schmidt"); return document.getElementById("delPruefer") ? "Knopf da" : null; }));
+  // Funde Prüf-Team 22.11.2026
+  await page.evaluate(() => { DB.prueferData.Schmidt.tags.push("Mag Parken"); save(); PW.laden({ sofort: true }); });
+  await warte(page, 3500);
+  await pruefe("P10", "neuer Tag geht nicht verloren, wenn gleichzeitig nachgeladen wird", () => page.evaluate(() => {
+    const s = __db.fahrschule_pruefer.find((x) => x.name === "Schmidt");
+    return DB.prueferData.Schmidt.tags.includes("Mag Parken") && s.tags.includes("Mag Parken") ? null : "lokal=" + DB.prueferData.Schmidt.tags.includes("Mag Parken") + " server=" + s.tags.includes("Mag Parken");
+  }));
+  await page.evaluate(async () => { DB.exams.push({ id: "e-2", sid: "s-eigen", name: "Eigen Muster", date: "2026-11-06", result: "fail", pruefer: "Müller", attempt: 1, faults: [] });
+    _pfTab = "profil"; routePrueferAkte("Müller"); });
+  await warte(page, 200);
+  await pruefe("P11", "eigener Prüfer: Löschen und Umbenennen da", () => page.evaluate(() => (document.getElementById("delPruefer") && document.getElementById("renamePruefer") ? null : "Knöpfe fehlen")));
+  await page.click("#delPruefer"); await warte(page, 600);
+  await page.evaluate(() => { routePrueferAkte("Müller"); DB.prueferData.Müller && DB.prueferData.Müller.tags.push("x"); save(); });
+  await warte(page, 2600);
+  await pruefe("P12", "gelöschter Prüfer mit Prüfungen kommt durch Öffnen der Akte nicht zurück", () => page.evaluate(() => {
+    const z = __db.fahrschule_pruefer.filter((x) => x.name === "Müller"); return z.length === 1 && z[0].geloescht ? null : JSON.stringify(z.map((x) => x.geloescht));
+  }));
+  await page.evaluate(() => { _pfTab = "profil"; routePrueferAkte("Schmidt"); });
+  await warte(page, 200);
+  await pruefe("P13", "fremder Prüfer: kein Umbenennen-Knopf", () => page.evaluate(() => (document.getElementById("renamePruefer") ? "Knopf da" : null)));
+  await page.fill("#pwNeu", "Angefangen");
+  await page.evaluate(() => document.getElementById("pwNeu").blur());
+  const eigene = await page.evaluate(() => { const b = document.querySelector("#pwListe [data-weg]"); return b ? b.dataset.weg : null; });
+  if (eigene) await page.click(`[data-weg="${eigene}"]`);
+  await warte(page, 400);
+  await page.evaluate(() => PW.laden({ sofort: true })); await warte(page, 600);
+  await pruefe("P14", "angefangener Text bleibt beim Löschen und Nachladen stehen", () => page.evaluate(() => { const t = document.getElementById("pwNeu"); return t && t.value === "Angefangen" ? null : "Text: " + (t && t.value); }));
+  await page.evaluate(() => routePrueferListe()); await warte(page, 200);
+  await page.evaluate(() => { const b = document.querySelector("#toast .ut-btn"); if (b) b.click(); }); await warte(page, 600);
+  await pruefe("P15", "Rückgängig in der Liste springt nicht in die Akte, Notiz ist wieder da", () => page.evaluate((id) => {
+    if (document.querySelector(".pf-hero-name")) return "in die Akte gesprungen";
+    const n = __db.fahrschule_pruefer_notizen.find((x) => x.id === id); return !id || (n && !n.geloescht) ? null : "nicht zurück";
+  }, eigene));
+  await pruefe("P16", "Abmelden entfernt das Prüfer-Wissen vom Gerät", () => page.evaluate(() => { _lokaleNutzerdatenLoeschen(); const k = Object.keys(localStorage).filter((x) => /^kompass-pw/.test(x)); return k.length ? k.join(",") : (PW.aktiv() ? "noch aktiv" : null); }));
   await pruefe("P9", "keine JS-Fehler (Fahrlehrer)", () => jsFehler);
   await ctx.close();
 }

@@ -13,6 +13,7 @@
 --
 -- Rechte: lesen/anlegen alle aktiven Konten derselben Fahrschule (Fahrlehrer, Leitung, Büro; nicht „entfernt“).
 --   Tags/Strecken ändern: alle derselben Fahrschule. Prüfer ausblenden (geloescht): wer ihn angelegt hat, Büro, Leitung.
+--   Umbenennen/zusammenführen (ganze Fahrschule): wer den Prüfer angelegt hat, Büro, Leitung.
 --   Notiz ändern/löschen: nur der Verfasser, Büro, Leitung. Endgültig löschen: nur Super-Admin.
 -- Einmal ausführbar und wiederholbar (if not exists / create or replace / drop policy if exists).
 -- Rückweg: supabase/rueckweg/20261122_k5_rueckweg.sql
@@ -87,7 +88,8 @@ begin
     raise exception 'Fahrschule und Ersteller eines Prüfers bleiben unverändert.';
   end if;
   if new.geloescht is distinct from old.geloescht and auth.uid() is not null
-     and old.angelegt_von is distinct from auth.uid() and not k5_darf_verwalten() then
+     and old.angelegt_von is distinct from auth.uid() and not k5_darf_verwalten()
+     and coalesce(current_setting('kompass.pruefer_umbenennen', true), '') <> '1' then
     raise exception 'Einen gemeinsamen Prüfer löschen nur, wer ihn angelegt hat, das Büro oder die Leitung.';
   end if;
   -- Umbenennen geht über fs_pruefer_umbenennen (sonst passen die Prüfungen nicht mehr)
@@ -181,10 +183,10 @@ begin
          coalesce(nullif(btrim(p.name), ''), split_part(p.email, '@', 1), 'Fahrlehrer'),
          (k.fahrlehrer_id = auth.uid()),
          k.pruefer, k.datum::date, k.result, k.attempt,
-         coalesce((k.payload->>'b197')::boolean, false),
+         coalesce(k.payload->>'b197', '') in ('true', 't', '1'),
          nullif(btrim(coalesce(k.payload->>'note', '')), ''),
          case when jsonb_typeof(k.payload->'faults') = 'array' then k.payload->'faults' else '[]'::jsonb end,
-         coalesce((k.payload->>'eingriff')::boolean, false),
+         coalesce(k.payload->>'eingriff', '') in ('true', 't', '1'),
          nullif(btrim(coalesce(k.payload->>'eingNote', '')), ''),
          case when voll or k.fahrlehrer_id = auth.uid() then k.schueler_id::text end,
          case when voll or k.fahrlehrer_id = auth.uid() then coalesce(s.name, k.payload->>'name') end
@@ -213,8 +215,12 @@ begin
   if fs is null then return jsonb_build_object('fehler', 'keine_fahrschule'); end if;
   if p_alt = '' or p_neu = '' or length(p_neu) > 80 then return jsonb_build_object('fehler', 'name'); end if;
   if p_alt = p_neu then return jsonb_build_object('ok', true, 'pruefungen', 0); end if;
-  perform set_config('kompass.pruefer_umbenennen', '1', true);
   select * into a from public.fahrschule_pruefer where fahrschule_id = fs and not geloescht and lower(name) = lower(p_alt) limit 1;
+  -- Wirkt auf die ganze Fahrschule: nur wer den Prüfer angelegt hat, Büro oder Leitung (Prüf-Team 22.11.2026)
+  if a.id is not null and a.angelegt_von is distinct from auth.uid() and not k5_darf_verwalten() then
+    return jsonb_build_object('fehler', 'keine_berechtigung');
+  end if;
+  perform set_config('kompass.pruefer_umbenennen', '1', true);
   select * into b from public.fahrschule_pruefer where fahrschule_id = fs and not geloescht and lower(name) = lower(p_neu)
      and (a.id is null or id <> a.id) limit 1;
   if a.id is not null and b.id is not null then
@@ -232,7 +238,7 @@ begin
   end if;
   update public.fahrschule_pruefer_notizen set pruefer_name = p_neu where fahrschule_id = fs and lower(pruefer_name) = lower(p_alt);
   update public.kalender_pruefungen set pruefer = p_neu, aktualisiert_am = now()
-   where fahrschule_id = fs and pruefer = p_alt;
+   where fahrschule_id = fs and lower(btrim(pruefer)) = lower(p_alt);
   get diagnostics n = row_count;
   return jsonb_build_object('ok', true, 'pruefungen', n);
 end;

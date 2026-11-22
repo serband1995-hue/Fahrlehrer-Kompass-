@@ -4150,6 +4150,7 @@ function _lokaleNutzerdatenLoeschen() {
     try { localStorage.removeItem(k); } catch (e) {}
   });
   try { sessionStorage.removeItem("vd_unlocked"); } catch (e) {}
+  try { if (window.PW) PW.vergessen(); } catch (e) {} // K5: gemeinsames Prüfer-Wissen dieses Kontos
 }
 // Hat das Gerät überhaupt eigene Einträge, die beim Abmelden verloren gehen könnten?
 function _lokaleDatenVorhanden() {
@@ -16763,7 +16764,7 @@ function routePrueferAkte(nm){
       <div class="pf-note-hint" id="noteHint" hidden>Gespeichert ✓</div>
     </div>`}
     <div style="display:flex;gap:9px;">
-      <button class="pf-rename" id="renamePruefer">Umbenennen / zusammenführen</button>
+      ${!window.PW||PW.darfLoeschen(nm)?`<button class="pf-rename" id="renamePruefer">Umbenennen / zusammenführen</button>`:""}
       ${!window.PW||PW.darfLoeschen(nm)?`<button class="pf-del" id="delPruefer" style="flex:0;white-space:nowrap;">Löschen</button>`:""}
     </div>`;
   view.innerHTML=`<div class="view-inner view-read fade-up">
@@ -16797,7 +16798,7 @@ function routePrueferAkte(nm){
   document.querySelectorAll(".pf-route-x").forEach(b=>b.addEventListener("click",()=>{ pd.routen.splice(+b.dataset.rx,1); save(); routePrueferAkte(nm); }));
   const ar=$("#addRoute"); if(ar)ar.addEventListener("click",()=>openRouteSheet(nm));
   const dp=$("#delPruefer"); if(dp)dp.addEventListener("click",async()=>{ if(confirm(`Prüfer „${nm}" wirklich löschen? Die Prüfungs-Historie bleibt erhalten.`)){ if(window.PW&&PW.aktiv()&&!(await PW.loeschen(nm))){ toast("Nicht gelöscht – bitte mit Internet nochmal"); return; } delete DB.prueferData[nm]; DB.pruefer=DB.pruefer.filter(x=>x!==nm); save(); routePrueferListe(); } });
-  const rp=$("#renamePruefer"); if(rp)rp.addEventListener("click",async()=>{ const neu=(prompt("Neuer Name für „"+nm+"\"\n\nWenn der Name bereits existiert, werden beide Prüfer (samt Prüfungen) zusammengeführt.",nm)||"").trim(); if(!neu||neu===nm)return; if(window.PW&&PW.aktiv()&&!(await PW.umbenennen(nm,neu))){ toast("Nicht umbenannt – bitte mit Internet nochmal"); return; } mergePruefer(nm,neu); });
+  const rp=$("#renamePruefer"); if(rp)rp.addEventListener("click",async()=>{ const neu=(prompt("Neuer Name für „"+nm+"\"\n\nWenn der Name bereits existiert, werden beide Prüfer (samt Prüfungen) zusammengeführt.",nm)||"").trim(); if(!neu||neu===nm)return; if(window.PW&&PW.aktiv()){ const r=await PW.umbenennen(nm,neu); if(r!==true){ toast(r==="keine_berechtigung"?"Umbenennen darf nur, wer ihn angelegt hat, oder das Büro.":"Nicht umbenannt – bitte mit Internet nochmal"); return; } } mergePruefer(nm,neu); });
 }
 /* Tag-Auswahl-Sheet */
 function openTagSheet(nm){

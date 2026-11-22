@@ -8,6 +8,7 @@ window.KOMPASS_NEU = [
     punkte: ["Prüfer, Strecken und Notizen sehen jetzt alle Fahrlehrer deiner Fahrschule.",
              "Jede Notiz zeigt klein, wer sie geschrieben hat und wann.",
              "Bei Prüfungen anderer Fahrlehrer siehst du nur Zahlen, keine Namen von Schülern.",
+             "Auch deine bisherigen Prüfer-Notizen und Strecken sind jetzt für alle sichtbar. Was nicht passt, kannst du in der Prüfer-Akte löschen.",
              "Bitte sachlich schreiben: alle in der Fahrschule lesen mit."] },
   { version: "2026.11.22.2", datum: "2026-11-22", kurz: "Neu in der App: Wetter ohne Einrichten.",
     punkte: ["In der App ist das Wetter für Offenbach sofort da. Es kommt kostenlos vom Deutschen Wetterdienst, du musst nichts einrichten.",
