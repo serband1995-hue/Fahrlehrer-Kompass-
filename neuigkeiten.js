@@ -4,6 +4,12 @@
    "kurz" (höchstens ~60 Zeichen) erscheint nach dem Update einmal als kleiner Hinweis (verschwindet von selbst, kein Knopf).
    Einfache Worte, keine Fachwörter, keine Schülerdaten. */
 window.KOMPASS_NEU = [
+  { version: "2026.11.22.6", datum: "2026-11-22", kurz: "Prüfer-Wissen jetzt für die ganze Fahrschule.",
+    punkte: ["Prüfer, Strecken und Notizen sehen jetzt alle Fahrlehrer deiner Fahrschule.",
+             "Jede Notiz zeigt klein, wer sie geschrieben hat und wann.",
+             "Bei Prüfungen anderer Fahrlehrer siehst du nur Zahlen, keine Namen von Schülern.",
+             "Auch deine bisherigen Prüfer-Notizen, Strecken und Notizen zu Prüfungen sind jetzt für alle sichtbar. Prüfer-Notizen löschst du in der Prüfer-Akte, Notizen zu einer Prüfung in der Prüfung selbst.",
+             "Bitte sachlich schreiben: alle in der Fahrschule lesen mit."] },
   { version: "2026.11.22.5", datum: "2026-11-22", kurz: "Neu: Buchungs-QR fürs Auto zum Ausdrucken.",
     punkte: ["In der App unter Mehr › Buchungs-QR fürs Auto: großer QR-Code mit deinem Buchungslink, für Schalter oder Automatik.",
              "Drucken gibt ein Blatt nur mit dem Code. „Bild speichern“ legt ihn als Bild ab.",

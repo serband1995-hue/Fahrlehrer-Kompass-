@@ -66,3 +66,5 @@ jobs:
         run: NODE_PATH=$(npm root -g) node scripts/klapp-test.mjs
       - name: "Buchungs-QR fürs Auto (K3)"
         run: NODE_PATH=$(npm root -g) node scripts/buchqr-test.mjs
+      - name: "Prüfer-Wissen gemeinsam (K5: Notizen mit Verfasser, keine fremden Schülernamen)"
+        run: NODE_PATH=$(npm root -g) node scripts/pruefer-gemeinsam-test.mjs
