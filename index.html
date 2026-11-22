@@ -233,6 +233,8 @@ input,select,textarea{font-family:inherit;font-size:16px;color:var(--txt);}
 .tb-mitte{display:flex;align-items:center;justify-content:center;gap:0;min-width:0;}
 /* Block 2: Logo exakt mittig (Spalten links/rechts gleich breit); der Seitentitel steht links neben dem Zurück-Pfeil */
 .tb-left .icon-btn{flex:0 0 auto;} /* Pfeil bleibt voll breit (44-px-Tippfläche), auch bei langem Titel */
+/* K10: der Zurück-Pfeil ist auf jeder Seite da – immer mindestens 44×44 px, auch auf kleinen Handys */
+.topbar #navBackBtn{width:44px !important;height:44px !important;margin-left:-2px;}
 .tb-left .tb-title{flex:1 1 auto;margin-left:4px;}
 .tb-left:has(#navBackBtn[hidden]) .tb-title{margin-left:2px;}
 /* Platz für Menü + Zurück immer reservieren, damit das Logo beim Seitenwechsel nicht springt. */
@@ -2597,7 +2599,10 @@ body:has(#view[data-seite2] #calBody) #fab span{display:none;}
 /* Einstellungen: Abschnittsnamen in normaler Schreibweise, fett */
 #view[data-seite2] .acc-h .ti,#view[data-seite2] .set-acc .acc-h > span[style*="uppercase"]{text-transform:none !important;letter-spacing:0 !important;font-weight:800 !important;font-size:16px !important;}
 /* Zurück-Zeile in der Seite nur, wenn oben kein Zurück-Pfeil steht (sonst zwei Wege für dasselbe) */
-body:has(#navBackBtn:not([hidden])) #view:is([data-seite2="routePruefungenWoche"],[data-seite2="routePrueferListe"],[data-seite2="routeNichtBesteher"],[data-seite2="routeArbeitszeit"],[data-seite2="routeHistorie"],[data-seite2="routeWetter"]) .back-row:has(> .back-btn:only-child){display:none !important;}
+body:has(#navBackBtn:not([hidden])) #view .back-row:has(> .back-btn:only-child){display:none !important;}
+/* K10: steht neben dem Zurück-Knopf noch etwas in der Zeile, bleibt die Zeile, nur der doppelte Zurück-Knopf geht */
+body:has(#navBackBtn:not([hidden])) #view .back-row > .back-btn{display:none !important;}
+body:has(#navBackBtn:not([hidden])) #view .back-row:has(> .back-btn){justify-content:flex-end;}
 /* Erledigte To-dos lesbarer */
 body.light #view[data-seite2] .todo-item.done .todo-txt{color:#6B776F !important;}
 /* Umbau Schritt 6a: Wetter-Seite – weich und flüssig (nur transform/opacity animiert) */
@@ -7784,7 +7789,7 @@ const STORE_KEY="serband-app-v1";
    Wird in den Einstellungen angezeigt + für den Update-Hinweis genutzt. */
 // K1: voreingestellter Wetter-Ort (früh definiert, weil ensureDB ihn schon beim Start braucht)
 const WETTER_START={city:"Offenbach",lat:50.1006,lon:8.7665};
-const APP_VERSION="2026.11.22.6";
+const APP_VERSION="2026.11.22.7";
 try{const f=document.getElementById("drawerFoot"); if(f)f.textContent="Fahrlehrer-Kompass · Version "+APP_VERSION;}catch(e){}
 // Nutzungsbedingungen & Haftungsausschluss (Bereich: rechtliche Absicherung) - Version hochzählen
 // und alle Nutzer müssen erneut zustimmen, sobald sich der Text inhaltlich ändert.
@@ -14902,7 +14907,7 @@ function renderExam(s){
     : `<p class="muted-p" style="font-size:12px;margin:-6px 0 12px;">Kein Prüfungstermin gefunden — heutiges Datum eingesetzt. <b>Bitte prüfen.</b></p>`;
   const pass=_examChoice==='pass';
   const prChips=DB.pruefer.map(p=>`<button class="pr-chip${p===_examPr?' on':''}" data-pr="${esc(p)}">${esc(p)}</button>`).join("");
-  view.innerHTML=`<div class="view-inner view-read fade-up">
+  view.innerHTML=`<div class="view-inner view-read fade-up" data-entwurf>
     <div class="back-row"><button class="back-btn" id="backBtn">${ICN.back} Zurück</button></div>
     <div class="sec-h" style="margin:4px 0 16px;">${pass?'<span class="o">Bestanden</span>':'Nicht <span class="o">bestanden</span>'}</div>
     <div class="field"><label>Datum</label><input type="date" id="exDate" value="${esc(defDate)}"></div>
@@ -14923,6 +14928,9 @@ function renderExam(s){
       <button class="btn btn-primary" id="saveExam">${pass?'Als bestanden eintragen':'Als nicht bestanden eintragen'}</button>
     </div></div>`;
   $("#backBtn").addEventListener("click",()=>{_examChoice=null;renderExam(s);});
+  // K10: Pfeil oben und Android-Zurück gehen hier einen Schritt zurück (Auswahl bestanden/nicht bestanden), nicht aus der Prüfung
+  const _schritt2Zurueck=()=>{ if(!_seiteVerlassenOk()){ _seiteZurueckFn=_schritt2Zurueck; return true; } _examChoice=null; renderExam(s); return true; };
+  _seiteZurueckFn=_schritt2Zurueck; // bei „Abbrechen“ in der Rückfrage bleibt der Schritt-Zurück erhalten
   document.querySelectorAll("#prWrap .pr-chip[data-pr]").forEach(c=>c.addEventListener("click",()=>{ _examPr=(_examPr===c.dataset.pr)?null:c.dataset.pr; document.querySelectorAll("#prWrap .pr-chip[data-pr]").forEach(x=>x.classList.toggle("on",x.dataset.pr===_examPr)); }));
   $("#prAdd").addEventListener("click",()=>{ const name=(prompt("Name des Prüfers")||"").trim(); if(!name)return; if(!DB.pruefer.includes(name)){DB.pruefer.push(name);DB.pruefer.sort((a,b)=>a.localeCompare(b,'de'));save();} _examPr=name; renderExam(s); });
   if(!pass){
@@ -17761,10 +17769,12 @@ const _NAV_MAX=25;
 
 function _navAktualisiereKnopf(){
   const b=document.getElementById("navBackBtn");
-  // Auf den Hauptseiten der Reiter kein Zurück-Pfeil (Reiterwechsel ist kein Zurück); Android-Zurück geht weiter.
-  const t=(($("#tbTitle")&&$("#tbTitle").textContent)||"").trim();
-  const haupt=["Heute","Start","Kalender","Schüler","Prüfungen"].indexOf(t)>=0;
-  if(b)b.hidden=_navStack.length<2||haupt;
+  // K10 (🗣 22.11.2026): „Auf jeder Seite ein Knopf, der eine Seite zurückspringt.“ Der Pfeil oben links steht überall,
+  // sobald es eine vorige Seite gibt (auch auf den Hauptseiten der Reiter). Android-Zurück macht dasselbe.
+  if(b){ b.hidden=_navStack.length<2;
+    // Wohin führt der Pfeil? Für Vorlesen und langes Drücken („Zurück zu Einstellungen“)
+    const vor=_navStack.length>1?_navStack[_navStack.length-2]:null; const ziel=vor&&vor.titel?`Zurück zu ${vor.titel}`:"Zurück";
+    b.setAttribute("aria-label",ziel); b.title=ziel; }
 }
 /* A5: Läuft der Persönlichkeitsbogen, blättert Zurück (Android-Taste, Pfeil oben) eine Seite zurück;
    auf der ersten Seite kommt dieselbe Rückfrage wie bei „Abbrechen“. Liefert true, wenn erledigt. */
@@ -17795,14 +17805,31 @@ function navZurueck(){
   if(_seiteZurueckFn){ const f=_seiteZurueckFn; _seiteZurueckFn=null; if(f())return; }
   if(!_seiteVerlassenOk())return;
   if(_navStack.length<2)return;
-  _navStack.pop();
+  const aktuell=_navStack.pop();
+  // K10: Einträge überspringen, deren Schüler es nicht mehr gibt (gelöscht oder an einen anderen Fahrlehrer gegangen)
+  const schuelerWeg=(e)=>{ try{ return /^route(Detail|Plan|Notes|Historie|Exam|AkteTermine|AktePruefung|SchuelerForm|Bogen|Fahrstunde)$/.test(e.name)&&e.args&&e.args[0]&&typeof e.args[0]==="string"&&!DB.students.some(st=>st.id===e.args[0]); }catch(err){ return false; } };
+  // … und Einträge der anderen Ansicht (nach dem Wechsel eigene Ansicht ↔ ganze Fahrschule zeichnen sie nichts mehr)
+  const andereAnsicht=(e)=>{ try{ return e.agg!==undefined&&e.agg!==!!_fsAgg; }catch(err){ return false; } };
+  while(_navStack.length>1&&(schuelerWeg(_navStack[_navStack.length-1])||andereAnsicht(_navStack[_navStack.length-1])))_navStack.pop();
   const ziel=_navStack[_navStack.length-1];
   if(!ziel)return;
+  if(andereAnsicht(ziel)||schuelerWeg(ziel)){ _navStack=[aktuell]; _navAktualisiereKnopf(); return; } // nichts Gültiges mehr davor
+  const titelVor=(($("#tbTitle")&&$("#tbTitle").textContent)||"");
   _navFahrt=true;
   try{ ziel.fn.apply(null,ziel.args); _seite2Markieren(ziel.name); } // Look der Zielseite auch beim Zurück setzen
   catch(e){ console.warn("[Kompass] Zurueck fehlgeschlagen:",e.message); }
   _navFahrt=false;
   _navAktualisiereKnopf();
+  if(ziel===_navStack[_navStack.length-1])_navStelleZurueck(ziel.y);
+}
+/* K10: nach dem Zurück an dieselbe Stelle wie vorher. Lädt die Seite Teile nach (Liste, Bilder), wird kurz danach
+   noch einmal nachgezogen – aber nur, solange man selbst nicht weitergescrollt hat. */
+function _navStelleZurueck(y){
+  if(typeof y!=="number"||!(y>0))return;
+  const vw=document.getElementById("view"); if(!vw)return;
+  vw.scrollTop=y; let zuletzt=vw.scrollTop;
+  const nach=()=>{ if(Math.abs(vw.scrollTop-zuletzt)>2)return; /* Nutzer hat selbst gescrollt */ if(vw.scrollTop<y-2){ vw.scrollTop=y; } zuletzt=vw.scrollTop; };
+  requestAnimationFrame(nach); setTimeout(nach,120); setTimeout(nach,400);
 }
 // Umbau Schritt 5a: diese Seiten bekommen den neuen Look (nur Aussehen, siehe CSS „#view[data-seite2]“).
 // Das Merkmal sitzt an #view, damit es ein Neuzeichnen innerhalb der Seite übersteht.
@@ -17840,11 +17867,17 @@ function _seite2Markieren(name){
           const letzte=_navStack[_navStack.length-1];
           let gleich=false;
           try{ gleich=!!letzte&&letzte.name===name&&JSON.stringify(letzte.args)===JSON.stringify(args); }catch(e){}
+          // K10 (🗣 Hauptsitzung 22.11.): Blättern im Kalender (Tag/Woche/Monat vor oder zurück) ist keine neue Seite.
+          // Der Eintrag wird ersetzt: Zurück führt sofort aus dem Kalender, und der Kalender kommt mit dem zuletzt gezeigten Tag wieder.
+          const kalBlaettern=!gleich&&!!letzte&&name==="routeKalender"&&letzte.name==="routeKalender"&&String(letzte.args&&letzte.args[0])===String(args[0]); // gleiche Ansicht (Woche bleibt Woche); Woche → Tag ist ein Schritt tiefer = neue Seite
           // Dieselbe Ansicht erneut aufrufen (z.B. nach dem Speichern) erzeugt keinen
           // neuen Eintrag - sonst muesste man mehrfach zurueck fuer einen Schritt.
           gleichSeite=gleich;
-          if(gleich)_navStack[_navStack.length-1]={name,fn:orig,args};
-          else{ _navStack.push({name,fn:orig,args}); if(_navStack.length>_NAV_MAX)_navStack.shift(); }
+          if(gleich||kalBlaettern)_navStack[_navStack.length-1]={name,fn:orig,args,y:gleich?letzte.y:0,titel:letzte.titel,agg:letzte.agg};
+          else{
+            // K10: Stelle der Seite merken, die man gerade verlässt – Zurück führt genau dorthin
+            if(letzte){ try{ const vw=document.getElementById("view"); if(vw)letzte.y=vw.scrollTop; letzte.titel=(($("#tbTitle")&&$("#tbTitle").textContent)||"").trim(); }catch(e){} }
+            _navStack.push({name,fn:orig,args}); if(_navStack.length>_NAV_MAX)_navStack.shift(); }
         }
         // K4 (🗣 22.11.2026): Zeichnet sich dieselbe Seite neu (Schalter, Speichern, Abgleich), bleibt man an derselben Stelle.
         // Nur ein Tipp auf Reiter, Menü oder Kopfleiste (bewusst „diese Seite neu“) darf nach oben führen.
@@ -17856,6 +17889,12 @@ function _seite2Markieren(name){
         if(_notizSofort){ const f=_notizSofort; _notizSofort=null; try{ f(); }catch(e){} }
         _seiteGeaendert=false; _seiteZurueckFn=null;
         const r=orig.apply(this,name==="routeKalender"?args:arguments);
+        // K10: merken, in welcher Ansicht (eigene oder ganze Fahrschule) der Eintrag entstand – Zurück bleibt in der Ansicht
+        try{ const e=_navStack[_navStack.length-1]; if(e&&e.name===name&&e.agg===undefined)e.agg=!!_fsAgg;
+          // Fable K10: nach einem Ansichtswechsel (auch beim Start von Leitung/Büro) Einträge der anderen Ansicht gleich entfernen,
+          // sonst stünde ein Pfeil da, dessen Tipp nichts tut
+          if(!_navFahrt){ const a=!!_fsAgg, top=_navStack[_navStack.length-1]; _navStack=_navStack.filter(x=>x===top||x.agg===undefined||x.agg===a); }
+        }catch(e){}
         // Hat die Seite intern auf eine andere Seite umgeleitet (z. B. Akte ohne Schüler → Liste), gilt deren Merkmal
         if(_seite2Zaehler===vorher)_seite2Markieren(name);
         if(haltY){ const vw=document.getElementById("view"); const t=($("#tbTitle")&&$("#tbTitle").textContent)||""; if(vw&&t===haltY.titel)vw.scrollTop=haltY.y; }
