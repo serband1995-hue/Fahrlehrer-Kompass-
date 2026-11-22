@@ -17697,7 +17697,8 @@ function _seite2Markieren(name){
         // Nur ein Tipp auf Reiter, Menü oder Kopfleiste (bewusst „diese Seite neu“) darf nach oben führen.
         let haltY=null;
         try{ const vw=document.getElementById("view"); const aussen=_letzterKlick&&Date.now()-_letzterKlick.t<1500&&!_letzterKlick.innen;
-          if(gleichSeite&&vw&&!aussen)haltY={y:vw.scrollTop,titel:($("#tbTitle")&&$("#tbTitle").textContent)||""}; }catch(e){}
+          // Der Kalender hält seine Stelle selbst (K3: _calY, „Heute“ springt zur Jetzt-Linie) – hier nicht überschreiben
+          if(gleichSeite&&vw&&!aussen&&name!=="routeKalender")haltY={y:vw.scrollTop,titel:($("#tbTitle")&&$("#tbTitle").textContent)||""}; }catch(e){}
         const vorher=_seite2Zaehler;
         if(_notizSofort){ const f=_notizSofort; _notizSofort=null; try{ f(); }catch(e){} }
         _seiteGeaendert=false; _seiteZurueckFn=null;
