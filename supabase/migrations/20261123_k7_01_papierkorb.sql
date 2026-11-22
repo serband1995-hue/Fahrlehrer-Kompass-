@@ -130,7 +130,9 @@ update public.kalender_termine t
                       then coalesce(t.payload, '{}'::jsonb) || jsonb_build_object('storno',
                            jsonb_build_object('am', now(), 'grund', 'vor dem Update gelöscht', 'automatisch', true))
                       else t.payload end
- where t.geloescht and t.geloescht_am is null;
+ where t.geloescht and t.geloescht_am is null
+   -- vom Admin entfernte Zeilen nicht anfassen (termin_entfernt_schutz bricht dort jede Änderung ab); to_jsonb: auch ohne die Spalte
+   and (to_jsonb(t)->>'admin_entfernt_am') is null;
 
 -- Täglich um 03:17 leeren, wenn pg_cron da ist (sonst nur beim Laden der Büro-Seite)
 do $$
@@ -148,5 +150,5 @@ end $$;
 select (select count(*) from information_schema.columns where table_schema = 'public' and table_name = 'kalender_termine' and column_name = 'geloescht_am') as spalte,
        (select count(*) from pg_trigger where tgrelid = 'public.kalender_termine'::regclass and tgname = 'trg_termin_zy_papierkorb') as trigger,
        (select count(*) from pg_proc where proname in ('termin_ist_nachweis', 'termin_papierkorb', 'papierkorb_leeren') and pronamespace = 'public'::regnamespace) as funktionen,
-       (select count(*) from public.kalender_termine where geloescht and geloescht_am is null) as ohne_zeit,
+       (select count(*) from public.kalender_termine t where t.geloescht and t.geloescht_am is null and (to_jsonb(t)->>'admin_entfernt_am') is null) as ohne_zeit,
        (select count(*) from public.kalender_termine where geloescht and jsonb_typeof(payload->'storno') = 'object') as aufbewahrt;
