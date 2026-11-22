@@ -4,9 +4,9 @@
    "kurz" (höchstens ~60 Zeichen) erscheint nach dem Update einmal als kleiner Hinweis (verschwindet von selbst, kein Knopf).
    Einfache Worte, keine Fachwörter, keine Schülerdaten. */
 window.KOMPASS_NEU = [
-  { version: "2026.11.22.2", datum: "2026-11-22", kurz: "Neu: Das Wetter für Offenbach ist jetzt sofort da.",
-    punkte: ["Das Wetter kommt jetzt kostenlos vom Deutschen Wetterdienst. Du musst nichts mehr einrichten.",
-             "Den Ort kannst du in den Einstellungen unter „Wetter“ ändern, zum Beispiel auf Hanau.",
+  { version: "2026.11.22.2", datum: "2026-11-22", kurz: "Neu in der App: Wetter ohne Einrichten.",
+    punkte: ["In der App ist das Wetter für Offenbach sofort da. Es kommt kostenlos vom Deutschen Wetterdienst, du musst nichts einrichten.",
+             "Den Ort kannst du in der App unter Einstellungen › Wetter ändern, zum Beispiel auf Hanau.",
              "Wer kein Wetter möchte, kann es dort ausschalten."] },
   { version: "2026.11.22.1", datum: "2026-11-22", kurz: "Neu: Die Seite „Neuigkeiten“ zeigt alle Updates.",
     punkte: ["Neue Seite „Neuigkeiten“ unter „Mehr“ (im Büro im Menü): alle Updates als Zeitstrahl.", "Nach jedem Update erscheint einmal ein kleiner Hinweis, was neu ist. Er verschwindet von selbst."] },
