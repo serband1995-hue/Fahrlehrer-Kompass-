@@ -5,3 +5,4 @@ drop trigger if exists trg_termin_zz_nachweis_spur on public.kalender_termine;
 drop trigger if exists trg_termin_zz_nachweis_angelegt on public.kalender_termine;
 drop function if exists public.termin_nachweis_spur();
 drop function if exists public.termin_nachweis_angelegt();
+drop index if exists public.aenderungsprotokoll_tabelle_datensatz_idx;

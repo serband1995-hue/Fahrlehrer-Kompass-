@@ -4,13 +4,16 @@
 --    wird die Unterschrift ungültig (signed=false). Der alte Abdruck bleibt als Beweis in payload.signaturUngueltig.
 --    Kein stilles Umschreiben unterschriebener Daten.
 -- 3. Eine veraltete App (lädt ihren alten Stand mit signed=true hoch) darf eine ungültig gemachte Unterschrift nicht
---    wieder gültig machen: gültig wird sie nur durch eine NEUE Unterschrift (payload.signedTs nach signaturUngueltig.am).
+--    wieder gültig machen. Erkennung ohne Uhr: Ein Gerät, das die Ungültigkeit abgeholt hat, schickt dasselbe
+--    signaturUngueltig.am zurück (dann zählt die neue Unterschrift, auch aus App-Version 82); ein veraltetes kennt es nicht.
 -- 4. Jede Änderung der Nachweis-Felder kommt ins aenderungsprotokoll (wer, wann, alt, neu, Grund).
 --    Neu angelegte Termine nur, wenn Büro oder Leitung sie im Büro anlegen (erstellt_von gesetzt; die App setzt es nicht).
 -- Den Grund schickt das Büro als payload.korrekturGrund mit; der Trigger nimmt ihn heraus (bleibt nicht im Termin stehen).
+-- Hinweis: Beim Einfügen mehrerer Zeilen in einem Befehl und beim Upsert-Update geht der Grund verloren (kein Büro-Weg nutzt das).
 -- Idempotent (mehrfach ausführbar). Rückweg: supabase/rueckweg/20261121_nachweis_rueckweg.sql
 
 alter table public.aenderungsprotokoll add column if not exists grund text;
+create index if not exists aenderungsprotokoll_tabelle_datensatz_idx on public.aenderungsprotokoll (tabelle, datensatz_id);
 
 create or replace function public.termin_nachweis_spur()
  returns trigger
@@ -50,7 +53,7 @@ begin
      and coalesce(old.payload->'signaturUngueltig'->>'erledigt', '') <> 'true'
      and coalesce(old.payload->>'signed', '') <> 'true'
      and coalesce(new.payload->>'signed', '') = 'true'
-     and left(coalesce(new.payload->>'signedTs', ''), 19) <= left(coalesce(old.payload->'signaturUngueltig'->>'am', ''), 19) then
+     and (new.payload->'signaturUngueltig'->>'am') is distinct from (old.payload->'signaturUngueltig'->>'am') then
     u := old.payload->'signaturUngueltig';
     new.payload := new.payload || jsonb_build_object('signed', false, 'signatureSnap', null, 'signaturUngueltig', u);
   end if;
