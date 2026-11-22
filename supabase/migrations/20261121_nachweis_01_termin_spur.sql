@@ -13,7 +13,6 @@
 -- Idempotent (mehrfach ausführbar). Rückweg: supabase/rueckweg/20261121_nachweis_rueckweg.sql
 
 alter table public.aenderungsprotokoll add column if not exists grund text;
-create index if not exists aenderungsprotokoll_tabelle_datensatz_idx on public.aenderungsprotokoll (tabelle, datensatz_id);
 
 create or replace function public.termin_nachweis_spur()
  returns trigger
@@ -105,3 +104,8 @@ create trigger trg_termin_zz_nachweis_spur before insert or update on public.kal
 drop trigger if exists trg_termin_zz_nachweis_angelegt on public.kalender_termine;
 create trigger trg_termin_zz_nachweis_angelegt after insert on public.kalender_termine
   for each row execute function public.termin_nachweis_angelegt();
+
+-- Ergebnis-Abfrage: erwartet grund_spalte = 1, trigger = 2, funktionen = 2
+select (select count(*) from information_schema.columns where table_schema = 'public' and table_name = 'aenderungsprotokoll' and column_name = 'grund') as grund_spalte,
+       (select count(*) from pg_trigger where tgrelid = 'public.kalender_termine'::regclass and tgname in ('trg_termin_zz_nachweis_spur', 'trg_termin_zz_nachweis_angelegt')) as trigger,
+       (select count(*) from pg_proc where proname in ('termin_nachweis_spur', 'termin_nachweis_angelegt') and pronamespace = 'public'::regnamespace) as funktionen;
