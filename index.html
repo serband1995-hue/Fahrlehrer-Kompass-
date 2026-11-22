@@ -4194,6 +4194,7 @@ function _lokaleNutzerdatenLoeschen() {
     try { localStorage.removeItem(k); } catch (e) {}
   });
   try { sessionStorage.removeItem("vd_unlocked"); } catch (e) {}
+  try { if (window.PW) PW.vergessen(); } catch (e) {} // K5: gemeinsames Prüfer-Wissen dieses Kontos
 }
 // Hat das Gerät überhaupt eigene Einträge, die beim Abmelden verloren gehen könnten?
 function _lokaleDatenVorhanden() {
@@ -4478,6 +4479,7 @@ async function _continueLoginFlow(prof) {
   await pullPublicBookings();
   await pullSchuelerZuweisungen();
   await pullTermineZuweisungen();
+  try{ if(window.PW)PW.laden({sofort:true}); }catch(e){} // K5: gemeinsames Prüfer-Wissen der Fahrschule
   // Login-Overlay verstecken
   document.getElementById("loginOverlay").classList.add("hidden");
   updateBell();
@@ -7787,7 +7789,7 @@ const STORE_KEY="serband-app-v1";
    Wird in den Einstellungen angezeigt + für den Update-Hinweis genutzt. */
 // K1: voreingestellter Wetter-Ort (früh definiert, weil ensureDB ihn schon beim Start braucht)
 const WETTER_START={city:"Offenbach",lat:50.1006,lon:8.7665};
-const APP_VERSION="2026.11.22.6";
+const APP_VERSION="2026.11.22.7";
 try{const f=document.getElementById("drawerFoot"); if(f)f.textContent="Fahrlehrer-Kompass · Version "+APP_VERSION;}catch(e){}
 // Nutzungsbedingungen & Haftungsausschluss (Bereich: rechtliche Absicherung) - Version hochzählen
 // und alle Nutzer müssen erneut zustimmen, sobald sich der Text inhaltlich ändert.
@@ -14230,7 +14232,7 @@ function ensureDB(){ let _ensureDirty=false; if(!Array.isArray(DB.exams))DB.exam
 }
 function ensurePruefer(nm){ if(!DB.prueferData[nm])DB.prueferData[nm]={behoerde:"",tags:[],routen:[],notiz:"",created:Date.now()}; return DB.prueferData[nm]; }
 /* Statistik pro Prüfer aus den Prüfungen ableiten */
-function prueferStats(nm){ const ex=DB.exams.filter(e=>e.pruefer===nm); const q=quoteOf(ex); const dates=ex.filter(istPruefung).map(e=>e.date).filter(Boolean).sort(); const last=dates.length?dates[dates.length-1]:null; return {total:ex.filter(istPruefung).length,last,quote:q,faults:faultCounts(ex).slice(0,3),eingriff:eingriffQuote(ex)}; }
+function prueferStats(nm){ const ex=window.PW?PW.examsFuer(nm):DB.exams.filter(e=>e.pruefer===nm); /* K5: mit den Prüfungen der anderen Fahrlehrer */ const q=quoteOf(ex); const dates=ex.filter(istPruefung).map(e=>e.date).filter(Boolean).sort(); const last=dates.length?dates[dates.length-1]:null; return {total:ex.filter(istPruefung).length,last,quote:q,faults:faultCounts(ex).slice(0,3),eingriff:eingriffQuote(ex)}; }
 ensureDB();
 
 const FAULTS=[
@@ -14740,12 +14742,13 @@ function prueferHintHTML(nm){
   if(!nm)return "";
   const pd=DB.prueferData&&DB.prueferData[nm]; if(!pd)return "";
   const st=prueferStats(nm);
-  const hasContent=(pd.tags&&pd.tags.length)||(pd.routen&&pd.routen.length)||pd.notiz||st.total||prueferVerlauf(nm).length;
+  const notizText=window.PW&&PW.aktiv()?PW.letzteNotiz(nm):pd.notiz; // K5: neueste gemeinsame Notiz
+  const hasContent=(pd.tags&&pd.tags.length)||(pd.routen&&pd.routen.length)||notizText||st.total||prueferVerlauf(nm).length;
   if(!hasContent)return `<div class="pr-brief"><div class="pr-brief-h">Briefing · ${esc(nm)}</div><p class="pr-brief-empty">Noch keine Infos zu diesem Prüfer. Nach der Prüfung kannst du in der Prüfer-Akte festhalten, worauf er achtet.</p></div>`;
   let h=`<div class="pr-brief"><div class="pr-brief-h">Briefing · ${esc(nm)}${st.total?` <span class="pr-brief-q">${st.quote.pct==null?'':st.quote.pct+' % · '}${st.total}×</span>`:''}</div>`;
   if(pd.tags&&pd.tags.length)h+=`<div class="pf-tags" style="margin-bottom:10px;">${pd.tags.map(t=>`<span class="pf-tag mini">${esc(t)}</span>`).join("")}</div>`;
   if(pd.routen&&pd.routen.length)h+=`<div class="pr-brief-route">${ICN.map?'':''}<b>Übliche Strecke:</b> ${pd.routen[0].map(esc).join(' › ')}</div>`;
-  if(pd.notiz)h+=`<div class="pr-brief-note">${esc(pd.notiz)}</div>`;
+  if(notizText)h+=`<div class="pr-brief-note">${esc(notizText)}</div>`;
   const letzte=prueferVerlauf(nm).find(e=>e.note&&!e.b197);
   if(letzte)h+=`<div class="pr-brief-route" style="margin-top:8px;"><b>Zuletzt (${isoDE(letzte.date)}):</b> ${esc(letzte.note.length>160?letzte.note.slice(0,157)+"…":letzte.note)}</div>`;
   h+=`</div>`; return h;
@@ -14788,7 +14791,7 @@ function renderResultStep(s){
     <p style="color:var(--muted);font-size:13.5px;margin-bottom:16px;">${esc(s.name)} · Prüfer: <b style="color:var(--txt)">${esc(_examPr)}</b></p>
     <div class="field"><label>Datum</label><input type="date" id="exDate" value="${esc(defDate)}"></div>
     ${t?`<p class="muted-p" style="font-size:12px;margin:-6px 0 12px;">Übernommen vom Prüfungstermin am ${isoDE(t.date)}${t.date<todayISO()?" (vergangen)":""} — bei Bedarf ändern.</p>`:`<p class="muted-p" style="font-size:12px;margin:-6px 0 12px;">Kein Prüfungstermin gefunden — heutiges Datum eingesetzt. <b>Bitte prüfen.</b></p>`}
-    ${pass?`<div class="field"><label>Notiz (optional)</label><div class="mic-wrap"><textarea id="exNote" rows="3" placeholder="Worauf hat der Prüfer geachtet?"></textarea>${micIcon()}</div></div>`
+    ${pass?`<div class="field"><label>Notiz (optional)</label><div class="mic-wrap"><textarea id="exNote" rows="3" placeholder="${window.PW&&PW.aktiv()?"Worauf hat der Prüfer geachtet? Sehen alle Fahrlehrer der Fahrschule.":"Worauf hat der Prüfer geachtet?"}"></textarea>${micIcon()}</div></div>`
     :`<div class="field"><label>Fehler (Mehrfachauswahl)</label><div class="facc" id="faultAcc">${FAULTS.map((g,gi)=>{const cnt=g.items.filter(([fid])=>_examFaults.indexOf(fid)>=0).length;return `
       <div class="facc-sec${cnt?' open':''}">
         <button class="facc-h" data-acc="${gi}"><span>${g.area}</span><span class="facc-cnt${cnt?' on':''}" data-cnt="${gi}">${cnt}</span><span class="facc-chev">${ICN.chev}</span></button>
@@ -14797,7 +14800,7 @@ function renderResultStep(s){
     <div class="field"><div class="toggle-row"><div><div class="tc-name" style="font-weight:800;font-size:14px;">Fahrlehrer musste eingreifen</div><div class="tc-sub" style="font-size:12.5px;color:var(--muted);margin-top:2px;">sofortiger Durchfall-Grund</div></div>
       <button class="check-toggle${_examEingriff?' on':''}" id="eingToggle"></button></div>
       <textarea id="eingNote" rows="2" placeholder="Was ist passiert?" style="margin-top:10px;display:${_examEingriff?'block':'none'};"></textarea></div>
-    <div class="field"><label>Notiz (optional)</label><div class="mic-wrap"><textarea id="exNote" rows="2" placeholder="Frei notieren"></textarea>${micIcon()}</div></div>`}
+    <div class="field"><label>Notiz (optional)</label><div class="mic-wrap"><textarea id="exNote" rows="2" placeholder="${window.PW&&PW.aktiv()?"Frei notieren – sehen alle Fahrlehrer der Fahrschule (sachlich bleiben)":"Frei notieren"}"></textarea>${micIcon()}</div></div>`}
     <div class="btn-row" style="margin-top:8px;">
       <button class="btn btn-primary" id="saveExam">${pass?'Als bestanden eintragen':'Als nicht bestanden eintragen'}</button>
     </div></div>`;
@@ -14911,7 +14914,7 @@ function renderExam(s){
     ${datumHinweis}
     <div class="field"><label>Prüfer</label>
       <div class="pr-wrap" id="prWrap">${prChips}<button class="pr-chip add" id="prAdd">+ Neuer Prüfer</button></div></div>
-    ${pass?`<div class="field"><label>Notiz (optional)</label><div class="mic-wrap"><textarea id="exNote" rows="3" placeholder="Worauf hat der Prüfer geachtet?"></textarea>${micIcon()}</div></div>`
+    ${pass?`<div class="field"><label>Notiz (optional)</label><div class="mic-wrap"><textarea id="exNote" rows="3" placeholder="${window.PW&&PW.aktiv()?"Worauf hat der Prüfer geachtet? Sehen alle Fahrlehrer der Fahrschule.":"Worauf hat der Prüfer geachtet?"}"></textarea>${micIcon()}</div></div>`
     :`<div class="field"><label>Fehler (Mehrfachauswahl)</label><div class="facc" id="faultAcc">${FAULTS.map((g,gi)=>{const cnt=g.items.filter(([fid])=>_examFaults.indexOf(fid)>=0).length;return `
         <div class="facc-sec${cnt?' open':''}">
           <button class="facc-h" data-acc="${gi}"><span>${g.area}</span><span class="facc-cnt${cnt?' on':''}" data-cnt="${gi}">${cnt}</span><span class="facc-chev">${ICN.chev}</span></button>
@@ -14920,7 +14923,7 @@ function renderExam(s){
       <div class="field"><div class="toggle-row"><div><div class="tc-name" style="font-weight:800;font-size:14px;">Fahrlehrer musste eingreifen</div><div class="tc-sub" style="font-size:12.5px;color:var(--muted);margin-top:2px;">sofortiger Durchfall-Grund</div></div>
         <button class="check-toggle${_examEingriff?' on':''}" id="eingToggle"></button></div>
         <textarea id="eingNote" rows="2" placeholder="Was ist passiert?" style="margin-top:10px;display:${_examEingriff?'block':'none'};"></textarea></div>
-      <div class="field"><label>Notiz (optional)</label><div class="mic-wrap"><textarea id="exNote" rows="2" placeholder="Frei notieren"></textarea>${micIcon()}</div></div>`}
+      <div class="field"><label>Notiz (optional)</label><div class="mic-wrap"><textarea id="exNote" rows="2" placeholder="${window.PW&&PW.aktiv()?"Frei notieren – sehen alle Fahrlehrer der Fahrschule (sachlich bleiben)":"Frei notieren"}"></textarea>${micIcon()}</div></div>`}
     <div class="btn-row" style="margin-top:8px;">
       <button class="btn btn-primary" id="saveExam">${pass?'Als bestanden eintragen':'Als nicht bestanden eintragen'}</button>
     </div></div>`;
@@ -16725,7 +16728,8 @@ function routePrueferListe(){
   ensureDB();
   $("#tbTitle").textContent="Prüfer"; setFab(false); view.scrollTop=0;
   // Alle Namen: aus prueferData, DB.pruefer und exams
-  const names=new Set([...Object.keys(DB.prueferData),...DB.pruefer]);
+  if(window.PW)PW.laden(); // K5: gemeinsamen Stand holen (höchstens alle 30 s)
+  const names=new Set([...Object.keys(DB.prueferData),...DB.pruefer,...(window.PW?PW.fremdeNamen():[])]);
   DB.exams.forEach(e=>{ if(e.pruefer)names.add(e.pruefer); });
   const arr=[...names].filter(Boolean).sort((a,b)=>a.localeCompare(b,'de'));
   let html=`<div class="view-inner view-read fade-up">
@@ -16750,7 +16754,7 @@ function routePrueferListe(){
       <div class="pf-quick" data-quick="${esc(nm)}" hidden>
         ${tagsMini?`<div class="pf-tags" style="margin-top:14px;">${tagsMini}</div>`:''}
         ${(pd.routen&&pd.routen.length)?`<div class="pf-route-mini">${pd.routen[0].map(esc).join(' › ')}</div>`:''}
-        ${pd.notiz?`<div class="pf-quick-note">${esc(pd.notiz)}</div>`:''}
+        ${(window.PW&&PW.aktiv()?PW.letzteNotiz(nm):pd.notiz)?`<div class="pf-quick-note">${esc(window.PW&&PW.aktiv()?PW.letzteNotiz(nm):pd.notiz)}</div>`:''}
         <button class="pf-more" data-open="${esc(nm)}">Ganze Akte öffnen ${ICN.arrow}</button>
       </div></div>`;
   });
@@ -16793,7 +16797,7 @@ function mergePruefer(alt,neu){
    Die Notiz einer Prüfung steht in ex.note; ältere bestandene Schüler ohne Prüfungseintrag in s.passedStrecke. */
 let _pfTab="schueler";
 function prueferVerlauf(nm){
-  const ex=(DB.exams||[]).filter(e=>e.pruefer===nm).map(e=>({sid:e.sid,name:e.name,date:e.date,result:e.result,b197:!!e.b197,note:(e.note||"").trim(),faults:e.faults||[],eingriff:!!e.eingriff,eingNote:(e.eingNote||"").trim(),attempt:e.attempt,id:e.id}));
+  const ex=(window.PW?PW.examsFuer(nm):(DB.exams||[]).filter(e=>e.pruefer===nm)).map(e=>({sid:e.sid,name:e.name,date:e.date,result:e.result,b197:!!e.b197,note:(e.note||"").trim(),faults:e.faults||[],eingriff:!!e.eingriff,eingNote:(e.eingNote||"").trim(),attempt:e.attempt,id:e.id,_fremd:!!e._fremd,_von:e._von||""}));
   // Schüler mit eigenem bestandenen Prüfungseintrag (bei irgendeinem Prüfer) nicht doppelt aus s.passedPruefer zeigen.
   const mitEx=new Set((DB.exams||[]).filter(e=>e.result==="pass"&&!e.b197).map(e=>e.sid));
   (DB.students||[]).forEach(s=>{ if(s.passed&&s.passedPruefer===nm&&!mitEx.has(s.id)){ const d=(typeof s.passed==="string"&&/^\d{4}-\d{2}-\d{2}/.test(s.passed))?s.passed.slice(0,10):""; ex.push({sid:s.id,name:s.name,date:d,result:"pass",b197:false,note:(s.passedStrecke||"").trim(),faults:[],eingriff:false,eingNote:"",alt:true}); } });
@@ -16803,14 +16807,19 @@ function _pfErg(e){ return e.b197?'<span class="pe-res ok">B197</span>':e.result
 function routePrueferAkte(nm){
   ensureDB(); const pd=ensurePruefer(nm); const st=prueferStats(nm);
   $("#tbTitle").textContent="Prüfer"; setFab(false); view.scrollTop=0;
-  const exForPr=DB.exams.filter(e=>e.pruefer===nm).sort((a,b)=>(""+b.date).localeCompare(""+a.date));
+  if(window.PW)PW.laden(); // K5: gemeinsamen Stand holen (höchstens alle 30 s), zeichnet bei Änderung neu
+  const exForPr=(window.PW?PW.examsFuer(nm):DB.exams.filter(e=>e.pruefer===nm)).sort((a,b)=>(""+b.date).localeCompare(""+a.date));
   const verlauf=prueferVerlauf(nm);
   const mitNotiz=verlauf.filter(e=>!e.b197&&(e.note||e.eingNote||(e.result==="fail"&&e.faults.length)));
   if(!["schueler","strecken","profil"].includes(_pfTab))_pfTab="schueler";
   const bestanden=verlauf.filter(e=>!e.b197&&e.result==="pass").length, durch=verlauf.filter(e=>!e.b197&&e.result==="fail").length;
-  const tabSchueler=verlauf.length?`<p class="muted-p" style="font-size:12.5px;margin:0 0 6px;">${bestanden} bestanden · ${durch} nicht bestanden</p>`+verlauf.map(e=>`<button class="pf-exam pf-exam-btn" data-sid="${esc(e.sid||"")}"><span class="pe-date">${e.date?isoDE(e.date):"—"}</span><span class="pe-name">${esc(e.name||"—")}${e.note?' <span class="pe-note-ic">· Notiz</span>':''}${e.alt?' <span class="pe-alt">ohne Prüfungseintrag</span>':''}</span>${_pfErg(e)}<span class="pf-pfeil" aria-hidden="true">›</span></button>`).join(""):`<p class="h2-nichts">Noch keine Prüfung mit ${esc(nm)} eingetragen.</p>`;
+  // K5: Prüfungen anderer Fahrlehrer ohne Schülernamen (Fahrlehrer-Ansicht) nur als Zahlen je Fahrlehrer
+  const _pwOhneName=verlauf.filter(e=>e._fremd&&!e.name), _pwMitName=verlauf.filter(e=>!(e._fremd&&!e.name));
+  const _pwJe={}; _pwOhneName.filter(e=>!e.b197).forEach(e=>{ const g=_pwJe[e._von]||(_pwJe[e._von]={n:0,ok:0}); g.n++; if(e.result==="pass")g.ok++; });
+  const _pwAndere=Object.keys(_pwJe).length?`<div class="pf-block-h" style="margin-top:16px;">Andere Fahrlehrer</div>`+Object.keys(_pwJe).sort((a,b)=>a.localeCompare(b,'de')).map(v=>`<div class="pf-exam pw-andere"><span class="pe-name">${esc(v)}</span><span class="pe-date">${_pwJe[v].n} Prüfung${_pwJe[v].n===1?"":"en"} · ${_pwJe[v].ok} bestanden</span></div>`).join(""):"";
+  const tabSchueler=verlauf.length?`<p class="muted-p" style="font-size:12.5px;margin:0 0 6px;">${bestanden} bestanden · ${durch} nicht bestanden</p>`+_pwMitName.map(e=>e._fremd?`<div class="pf-exam"><span class="pe-date">${e.date?isoDE(e.date):"—"}</span><span class="pe-name">${esc(e.name||"—")} <span class="pe-alt">bei ${esc(e._von)}</span></span>${_pfErg(e)}</div>`:`<button class="pf-exam pf-exam-btn" data-sid="${esc(e.sid||"")}"><span class="pe-date">${e.date?isoDE(e.date):"—"}</span><span class="pe-name">${esc(e.name||"—")}${e.note?' <span class="pe-note-ic">· Notiz</span>':''}${e.alt?' <span class="pe-alt">ohne Prüfungseintrag</span>':''}</span>${_pfErg(e)}<span class="pf-pfeil" aria-hidden="true">›</span></button>`).join("")+_pwAndere:`<p class="h2-nichts">Noch keine Prüfung mit ${esc(nm)} eingetragen.</p>`;
   const tabStrecken=`${mitNotiz.length?mitNotiz.map(e=>`<div class="pf-nz">
-      <div class="pf-nz-h"><span class="pe-date">${e.date?isoDE(e.date):"—"}</span>${_pfErg(e)}</div><div class="pf-nz-name">${esc(e.name||"—")}</div>
+      <div class="pf-nz-h"><span class="pe-date">${e.date?isoDE(e.date):"—"}</span>${_pfErg(e)}</div><div class="pf-nz-name">${e._fremd?`${e.name?esc(e.name)+" · ":""}<span class="pe-alt">von ${esc(e._von)}</span>`:esc(e.name||"—")}</div>
       ${e.note?`<div class="pf-nz-t">${esc(e.note)}</div>`:''}
       ${e.result==="fail"&&e.faults.length?`<div class="pf-tags" style="margin-top:8px;">${e.faults.map(f=>`<span class="pf-tag warn mini">${esc(FAULT_LABEL[f]||f)}</span>`).join("")}</div>`:''}
       ${e.eingNote?`<div class="pf-nz-t" style="margin-top:6px;"><b>Eingriff:</b> ${esc(e.eingNote)}</div>`:''}
@@ -16825,14 +16834,14 @@ function routePrueferAkte(nm){
       <div class="pf-block-h">Charakter / worauf er achtet</div>
       <div class="pf-tags" id="tagWrap">${(pd.tags||[]).map(t=>`<span class="pf-tag rm" data-tag="${esc(t)}">${esc(t)} <i>✕</i></span>`).join("")}<button class="pf-tag add" id="tagAdd">+ Tag</button></div>
     </div>
-    <div class="pf-block">
+    ${window.PW&&PW.aktiv()?PW.notizBlockHTML(nm):`<div class="pf-block">
       <div class="pf-block-h">Notiz zum Prüfer</div>
       <div class="mic-wrap"><textarea id="pfNote" rows="4" placeholder="Eigene Beobachtungen zu ${esc(nm)} …">${esc(pd.notiz||"")}</textarea>${micIcon()}</div>
       <div class="pf-note-hint" id="noteHint" hidden>Gespeichert ✓</div>
-    </div>
+    </div>`}
     <div style="display:flex;gap:9px;">
-      <button class="pf-rename" id="renamePruefer">Umbenennen / zusammenführen</button>
-      <button class="pf-del" id="delPruefer" style="flex:0;white-space:nowrap;">Löschen</button>
+      ${!window.PW||PW.darfLoeschen(nm)?`<button class="pf-rename" id="renamePruefer">Umbenennen / zusammenführen</button>`:""}
+      ${!window.PW||PW.darfLoeschen(nm)?`<button class="pf-del" id="delPruefer" style="flex:0;white-space:nowrap;">Löschen</button>`:""}
     </div>`;
   view.innerHTML=`<div class="view-inner view-read fade-up">
     <div class="back-row"><button class="back-btn" id="backBtn">${ICN.back} Alle Prüfer</button></div>
@@ -16856,6 +16865,7 @@ function routePrueferAkte(nm){
   $("#backBtn").addEventListener("click",()=>{ _pfTab="schueler"; routePrueferListe(); });
   document.querySelectorAll("[data-pftab]").forEach(b=>b.addEventListener("click",()=>{ _pfTab=b.dataset.pftab; routePrueferAkte(nm); }));
   document.querySelectorAll(".pf-exam-btn").forEach(b=>b.addEventListener("click",()=>{ const sid=b.dataset.sid; if(sid&&DB.students.find(x=>x.id===sid))routeDetail(sid); else toast("Schüler nicht mehr vorhanden"); }));
+  if(window.PW&&PW.aktiv())PW.bindeNotizBlock(nm,()=>routePrueferAkte(nm)); // K5: gemeinsame Notizen mit Verfasser
   // Notiz: speichern bei Eingabe (debounced)
   const ta=$("#pfNote");
   if(ta){ let noteT=null; ta.addEventListener("input",()=>{ clearTimeout(noteT); noteT=setTimeout(()=>{ pd.notiz=ta.value.trim(); save(); const h=$("#noteHint"); if(h){h.hidden=false;setTimeout(()=>h.hidden=true,1400);} },500); }); }
@@ -16863,8 +16873,8 @@ function routePrueferAkte(nm){
   const ta2=$("#tagAdd"); if(ta2)ta2.addEventListener("click",()=>openTagSheet(nm));
   document.querySelectorAll(".pf-route-x").forEach(b=>b.addEventListener("click",()=>{ pd.routen.splice(+b.dataset.rx,1); save(); routePrueferAkte(nm); }));
   const ar=$("#addRoute"); if(ar)ar.addEventListener("click",()=>openRouteSheet(nm));
-  const dp=$("#delPruefer"); if(dp)dp.addEventListener("click",()=>{ if(confirm(`Prüfer „${nm}" wirklich löschen? Die Prüfungs-Historie bleibt erhalten.`)){ delete DB.prueferData[nm]; DB.pruefer=DB.pruefer.filter(x=>x!==nm); save(); routePrueferListe(); } });
-  const rp=$("#renamePruefer"); if(rp)rp.addEventListener("click",()=>{ const neu=(prompt("Neuer Name für „"+nm+"\"\n\nWenn der Name bereits existiert, werden beide Prüfer (samt Prüfungen) zusammengeführt.",nm)||"").trim(); if(!neu||neu===nm)return; mergePruefer(nm,neu); });
+  const dp=$("#delPruefer"); if(dp)dp.addEventListener("click",async()=>{ if(confirm(`Prüfer „${nm}" wirklich löschen? Die Prüfungs-Historie bleibt erhalten.`)){ if(window.PW&&PW.aktiv()&&!(await PW.loeschen(nm))){ toast("Nicht gelöscht – bitte mit Internet nochmal"); return; } delete DB.prueferData[nm]; DB.pruefer=DB.pruefer.filter(x=>x!==nm); save(); routePrueferListe(); } });
+  const rp=$("#renamePruefer"); if(rp)rp.addEventListener("click",async()=>{ const neu=(prompt("Neuer Name für „"+nm+"\"\n\nWenn der Name bereits existiert, werden beide Prüfer (samt Prüfungen) zusammengeführt.",nm)||"").trim(); if(!neu||neu===nm)return; if(window.PW&&PW.aktiv()){ const r=await PW.umbenennen(nm,neu); if(r!==true){ toast(r==="keine_berechtigung"?"Umbenennen darf nur, wer ihn angelegt hat, oder das Büro.":"Nicht umbenannt – bitte mit Internet nochmal"); return; } } mergePruefer(nm,neu); });
 }
 /* Tag-Auswahl-Sheet */
 function openTagSheet(nm){
@@ -17934,6 +17944,7 @@ routeDashboard();
   });
 })();
 </script>
+<script src="pruefer-wissen.js"></script>
 <script>
 /* Redesign v2: markiert nur den aktiven Tab anhand des Seitentitels — reine Anzeige, keine Logik. */
 (function(){
