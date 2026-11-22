@@ -4,6 +4,11 @@
    "kurz" (höchstens ~60 Zeichen) erscheint nach dem Update einmal als kleiner Hinweis (verschwindet von selbst, kein Knopf).
    Einfache Worte, keine Fachwörter, keine Schülerdaten. */
 window.KOMPASS_NEU = [
+  { version: "2026.11.22.5", datum: "2026-11-22", kurz: "Neu: Buchungs-QR fürs Auto zum Ausdrucken.",
+    punkte: ["In der App unter Mehr › Buchungs-QR fürs Auto: großer QR-Code mit deinem Buchungslink, für Schalter oder Automatik.",
+             "Drucken gibt ein Blatt nur mit dem Code. „Bild speichern“ legt ihn als Bild ab.",
+             "Leitung und Büro finden den Code jedes Fahrlehrers in der Fahrlehrer-Liste der App.",
+             "Der allgemeine QR-Ersteller heißt jetzt „QR-Code für andere Links“."] },
   { version: "2026.11.22.4", datum: "2026-11-22", kurz: "Korrektur: Wetter-Hinweis nur noch, wenn er stimmt.",
     punkte: ["Ohne Internet steht beim Wetter kein falscher Hinweis „Ort prüfen“ mehr."] },
   { version: "2026.11.22.3", datum: "2026-11-22", kurz: "Neu: Auf- und Zuklappen läuft jetzt ruhig.",

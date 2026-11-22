@@ -7,6 +7,7 @@
 // K1d Einstellungen: Ort ändern → gespeichert, Zwischenspeicher geleert, Hinweis ohne Knopf, kein Dialog.
 // K1e Unbekannter Ort: Hinweis, nichts geändert. K1f Ausschalten: keine Pille, keine Anfrage, Seite springt nicht.
 // K1i Abgleich-sicher (Start schreibt nichts außer Schlüssel-Wegfall). K1j Suche scheitert: kein falsches Wetter, eine Suche, 10 min Pause.
+// K1n Alter „nicht gefunden“-Merker heilt nach 10 min.
 // K1m Kein Netz bei der Ortssuche → kein falscher Hinweis.
 // K1l Ort nicht gefunden → leiser Hinweis auf „Heute“ und in den Einstellungen.
 // K1k Enter speichert, kein Netz → eigener Hinweis.
@@ -206,6 +207,20 @@ await pruefe("K1m", "kein Netz bei der Ortssuche: kein falscher Hinweis „Ort p
   if (await page.evaluate(() => _wetterOrtFehlt())) f.push("gilt als „nicht gefunden“");
   const v = s.anfragen.length; await page.evaluate(() => fetchWeather());
   if (s.anfragen.length > v) f.push("neue Suche innerhalb der Pause");
+  await page.evaluate(() => { localStorage.removeItem("serband-wetter-ort"); DB.weatherCfg = { city: "Offenbach" }; });
+  return f;
+});
+
+await pruefe("K1n", "alter Merker „nicht gefunden“ (älter als 10 min) heilt: neue Suche findet den Ort, Hinweis verschwindet", async () => {
+  const f = [];
+  await leereSpeicher(page);
+  await page.evaluate(() => { DB.weatherCfg = { city: "Hanau" }; localStorage.setItem("serband-wetter-ort", JSON.stringify({ q: "Hanau", fehlTs: Date.now() - 11 * 60000 })); });
+  if (!(await page.evaluate(() => _wetterOrtFehlt()))) f.push("Testaufbau: Hinweis vorher nicht aktiv");
+  const w = await page.evaluate(() => fetchWeather());
+  if (!w) f.push("kein Wetter nach Heilung");
+  const m = await page.evaluate(() => JSON.parse(localStorage.getItem("serband-wetter-ort") || "null"));
+  if (!m || typeof m.lat !== "number" || m.fehlTs) f.push("Merker nicht geheilt: " + JSON.stringify(m));
+  if (await page.evaluate(() => _wetterOrtFehlt())) f.push("Hinweis bleibt");
   await page.evaluate(() => { localStorage.removeItem("serband-wetter-ort"); DB.weatherCfg = { city: "Offenbach" }; });
   return f;
 });

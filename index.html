@@ -534,6 +534,26 @@ input,select,textarea{font-family:inherit;font-size:16px;color:var(--txt);}
 .na-arrow{color:var(--faint);flex:0 0 auto;}
 .na-arrow svg{width:18px;height:18px;}
 .termine{display:grid;grid-template-columns:1fr 1fr;gap:13px;margin-bottom:14px;}
+/* K3 Buchungs-QR */
+.bq-wahl{display:flex;gap:8px;margin:0 0 14px;}
+.bq-w{flex:1;min-height:46px;border-radius:12px;border:1.5px solid var(--line);background:var(--surface);color:var(--txt);font-weight:800;font-size:15px;}
+.bq-w.on{background:var(--gruen);border-color:var(--gruen);color:#fff;}
+.bq-karte{background:#fff;color:#111;border:1px solid var(--line);border-radius:16px;padding:18px 16px 14px;text-align:center;max-width:360px;margin:0 auto;}
+.bq-titel{font-size:20px;font-weight:800;margin-bottom:8px;}
+.bq-bild{width:100%;max-width:280px;aspect-ratio:1;display:block;margin:0 auto;image-rendering:pixelated;}
+.bq-unter{font-size:15px;font-weight:700;margin-top:8px;}
+.bq-knoepfe{display:flex;flex-wrap:wrap;gap:8px;margin:16px 0 8px;}
+.bq-knoepfe .btn{flex:1 1 140px;min-height:46px;}
+.bq-link{font-size:12px;color:var(--muted);word-break:break-all;margin:6px 0 0;}
+#bqDruck{display:none;}
+@media print{
+  body.bq-drucken > *:not(#bqDruck){display:none !important;}
+  body.bq-drucken #bqDruck{display:block !important;text-align:center;color:#000;background:#fff;padding:10mm 0;}
+  #bqDruck .bqd-titel{font:800 30pt system-ui,sans-serif;margin-bottom:4mm;}
+  #bqDruck .bqd-zeile{font:16pt system-ui,sans-serif;margin-bottom:8mm;}
+  #bqDruck img{width:120mm;height:120mm;image-rendering:pixelated;}
+  #bqDruck .bqd-typ{font:800 22pt system-ui,sans-serif;margin-top:6mm;}
+}
 .nz-zs{list-style:none;margin:0;padding:0 0 0 18px;border-left:2px solid var(--line);}
 .nz-e{position:relative;margin:0 0 18px;padding:0 0 0 4px;}
 .nz-e::before{content:"";position:absolute;left:-25px;top:4px;width:10px;height:10px;border-radius:50%;background:var(--surface);border:2px solid var(--muted);}
@@ -2883,6 +2903,9 @@ if(_tok&&!_bio){ document.getElementById("loginOverlay").classList.add("hidden")
     <a class="nav-item" href="theorie.html" onclick="return _seiteVerlassenOk()" style="text-decoration:none;">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="12" rx="1"/><path d="M12 16v4M8 20h8"/></svg>
       Theorieunterricht</a>
+    <button class="nav-item" data-nav="buchqr">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><path d="M14 14h3v3M21 14v7h-7M17 21v-4"/></svg>
+      Buchungs-QR fürs Auto</button>
     <button class="nav-item" data-nav="neuigkeiten">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 8v4l3 2"/><circle cx="12" cy="12" r="9"/></svg>
       Neuigkeiten</button>
@@ -5828,6 +5851,9 @@ function _fsDrawerNavHTML(zeigeZurueck){
     <button class="nav-item" data-nav="fs_stats">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 20V10M10 20V4M16 20v-7M21 20H3"/></svg>
       Statistiken</button>
+    ${_leitungFaehrtSelbst()?`<button class="nav-item" data-nav="buchqr">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><path d="M14 14h3v3M21 14v7h-7M17 21v-4"/></svg>
+      Buchungs-QR fürs Auto</button>`:''}
     <button class="nav-item" data-nav="neuigkeiten">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 8v4l3 2"/><circle cx="12" cy="12" r="9"/></svg>
       Neuigkeiten</button>
@@ -6635,7 +6661,7 @@ function routeFahrschuleLehrer(){
         <button class="fs-btn-activate fs-btn-leise" onclick="fahrlehrerPasswortZuruecksetzen(${_jsArg(l.id)})">Passwort zurücksetzen</button>
       </div>`}
       ${l.slug?`<div class="fs-actions"><button class="fs-btn-activate" onclick="document.getElementById(${_jsArg(linksId)}).style.display=document.getElementById(${_jsArg(linksId)}).style.display==='none'?'block':'none';">🔗 Buchungslinks</button></div>
-      <div id="${linksId}" style="display:none;margin-top:6px;">${_fsBuchungslinksHTML(l.slug,l.name||l.email)}</div>`:'<p class="muted-p" style="margin-top:4px;">Noch kein Buchungslink eingerichtet.</p>'}
+      <div id="${linksId}" style="display:none;margin-top:6px;">${_fsBuchungslinksHTML(l.slug,l.name||l.email)}<div class="btn-row"><button class="btn btn-ghost" onclick="routeBuchungsQR(${_jsArg(l.slug)},${_jsArg(l.name||"")})">QR fürs Auto zum Drucken</button></div></div>`:'<p class="muted-p" style="margin-top:4px;">Noch kein Buchungslink eingerichtet.</p>'}
     </div>`;
   }).join("")||'<p class="muted-p">Noch keine Fahrlehrer.</p>';
   view.innerHTML=`<div class="view-inner view-read fade-up">
@@ -7746,7 +7772,7 @@ const STORE_KEY="serband-app-v1";
    Wird in den Einstellungen angezeigt + für den Update-Hinweis genutzt. */
 // K1: voreingestellter Wetter-Ort (früh definiert, weil ensureDB ihn schon beim Start braucht)
 const WETTER_START={city:"Offenbach",lat:50.1006,lon:8.7665};
-const APP_VERSION="2026.11.22.4";
+const APP_VERSION="2026.11.22.5";
 try{const f=document.getElementById("drawerFoot"); if(f)f.textContent="Fahrlehrer-Kompass · Version "+APP_VERSION;}catch(e){}
 // Nutzungsbedingungen & Haftungsausschluss (Bereich: rechtliche Absicherung) - Version hochzählen
 // und alle Nutzer müssen erneut zustimmen, sobald sich der Text inhaltlich ändert.
@@ -8431,6 +8457,7 @@ document.querySelector(".drawer-nav").addEventListener("click",(e)=>{
     else if(nav==="draw")routeDraw();
     else if(nav==="settings")routeSettings();
     else if(nav==="neuigkeiten")routeNeuigkeiten();
+    else if(nav==="buchqr")routeBuchungsQR();
     else if(nav==="fs_dash")routeFahrschuleDashboard();
     else if(nav==="fs_schueler"){routeHome();}
     else if(nav==="fs_lehrer")routeFahrschuleLehrer();
@@ -12165,7 +12192,7 @@ function routeSettings(){
   <div class="res-block" style="animation:none;"><h4>🏫 Fahrschulen</h4><p>Fahrschulen, Fahrlehrer, Schüler und Pakete verwalten.</p><div class="btn-row"><button class="btn btn-ghost" onclick="routeFahrschulenListe()">Fahrschulen verwalten</button></div></div>
   <div class="res-block" style="animation:none;"><h4>🎓 Akademie-Vermittlung</h4><p style="font-size:13px;color:var(--muted);">Beträge & Aufteilung für Simulator-/Videoakademie-Empfehlungen. Solange leer, wird bei einer Auszahlung nur "noch nicht konfiguriert" angezeigt — nichts wird stillschweigend falsch berechnet.</p><div id="akadVermittlungCfg"><p class="muted-p" style="font-size:12.5px;">Lade …</p></div></div>`:"";
   const eigenerSlug=_authProfile&&_authProfile.slug;
-  const buchungslinksBtn=(eigenerSlug&&_authProfile&&(_authProfile.rolle==="fahrlehrer"||_authProfile.rolle==="super_admin"||_leitungFaehrtSelbst()))?_fsBuchungslinksHTML(eigenerSlug,"Meine"):"";
+  const buchungslinksBtn=(eigenerSlug&&_authProfile&&(_authProfile.rolle==="fahrlehrer"||_authProfile.rolle==="super_admin"||_leitungFaehrtSelbst()))?`<div class="res-block" style="animation:none;"><h4>🚗 Mein Buchungs-QR fürs Auto</h4><p>Großer QR-Code für Schalter oder Automatik, zum Ausdrucken fürs Auto. Schüler scannen ihn und buchen direkt bei dir.</p><div class="btn-row"><button type="button" class="btn btn-primary" onclick="routeBuchungsQR()">Buchungs-QR öffnen</button></div></div>`+_fsBuchungslinksHTML(eigenerSlug,"Meine"):"";
   const logoutBtn=_authUser?`<div class="res-block" style="animation:none;background:rgba(200,60,60,.1);border-color:rgba(200,60,60,.3)"><h4 style="color:#f08080">🚪 Abmelden</h4><p style="color:var(--muted)">Meldet dich sicher aus der App ab.</p><div class="btn-row"><button class="btn" style="background:#c83c3c;color:#fff;border:none;padding:12px 24px;border-radius:12px;font-weight:700;font-size:14px;" onclick="doLogout()">Jetzt abmelden</button></div></div>`:"";
   const kapWoche=kapazitaetAutoWoche();
   view.innerHTML=`<div class="view-inner view-read fade-up">
@@ -12210,8 +12237,8 @@ function routeSettings(){
         <div class="res-block" style="animation:none;"><h4>📋 Ausbildungsplan-Vorlagen</h4>
           <p>Grundstufe, Aufbaustufe und Leistungsstufe individuell gestalten — z.B. eigene Prüfgebiete anlegen.</p>
           <div class="btn-row"><button class="btn btn-ghost" onclick="routePlanVorlagen()">Vorlagen verwalten</button></div></div>
-        <div class="res-block" style="animation:none;"><h4>⬛ QR-Code erzeugen</h4>
-          <p>Für Präsentationen, Aushänge oder Flyer. Der Code entsteht im Gerät — kein fremder Dienst, keine Kosten, funktioniert auch offline.</p>
+        <div class="res-block" style="animation:none;"><h4>⬛ QR-Code für andere Links</h4>
+          <p>Für Aushänge oder Flyer mit einem beliebigen Link. <b>Nicht für Buchungen</b>: deinen Buchungs-QR fürs Auto findest du unter Mehr › Buchungs-QR fürs Auto. Der Code entsteht im Gerät, ohne fremden Dienst.</p>
           <div class="field"><input type="text" id="qrEingabe" placeholder="https://…" autocomplete="off" value="https://serband1995-hue.github.io/Fahrlehrer-Kompass-/check.html"></div>
           <div class="btn-row"><button class="btn btn-ghost" id="qrErzeugen">Code erzeugen</button></div>
           <div id="qrAusgabe" style="margin-top:12px;text-align:center;"></div></div>
@@ -16855,6 +16882,86 @@ let _archFormFilter=[], _archColorFilter=[];
 /* K11 (🗣 22.11.2026): Zeitstrahl aller Updates in einfachen Worten. Daten in neuigkeiten.js (gemeinsam mit dem Büro). */
 function _neuListe(){ return Array.isArray(window.KOMPASS_NEU)?window.KOMPASS_NEU:[]; }
 function _neuEintrag(v){ return _neuListe().find(e=>e&&e.version===v)||null; }
+/* K3 (🗣 22.11.2026): „Mein Buchungs-QR fürs Auto“ – großer QR-Code mit dem eigenen Buchungslink (Schalter oder Automatik),
+   druckfertig (eigenes Druckblatt, nur der Code) und als Bild zum Speichern. Ohne Aufruf: eigener Link; mit slug/name:
+   ein Fahrlehrer aus der Liste der Fahrschule (Leitung/Büro). Nichts wird gespeichert außer der Getriebe-Wahl auf dem Gerät. */
+let _bqWahl=null;
+function _bqStandardTyp(){
+  try{ const m=localStorage.getItem("kompass-bq-typ"); if(m==="schalt"||m==="automatik")return m; }catch(e){}
+  const fz=((typeof DB!=="undefined"&&DB&&DB.workCfg&&DB.workCfg.fahrzeuge)||[]).filter(f=>f&&f.typ);
+  return fz.length&&fz.every(f=>f.typ==="automatik")?"automatik":"schalt";
+}
+function _bqLink(slug,typ){ return `${BUCHUNG_BASE_URL}?typ=${typ==="automatik"?"automatik":"schalt"}&lehrer=${encodeURIComponent(slug)}`; }
+function routeBuchungsQR(slug,name){
+  const eigen=!slug;
+  if(eigen){ slug=_authProfile&&_authProfile.slug; name=(_authProfile&&(_authProfile.name||""))||""; }
+  $("#tbTitle").textContent="Buchungs-QR"; setFab(false); view.scrollTop=0;
+  if(!slug){
+    view.innerHTML=`<div class="view-inner view-read fade-up"><div class="sec-h" style="margin-bottom:6px;">Buchungs-<span class="o">QR</span></div>
+      <p class="muted-p">Für dich ist noch kein Buchungslink eingerichtet. Das richtet die Fahrschule (Büro oder Leitung) ein.</p></div>`;
+    return;
+  }
+  const typ=_bqWahl||_bqStandardTyp();
+  const link=_bqLink(slug,typ);
+  view.innerHTML=`<div class="view-inner view-read fade-up bq-seite">
+    <div class="sec-h" style="margin-bottom:6px;">Buchungs-<span class="o">QR</span></div>
+    <p class="muted-p" style="margin:0 0 12px;">${eigen?"Dein":"Der"} Code fürs Auto${!eigen&&name?` von ${esc(name)}`:""}. Schüler scannen ihn mit der Handy-Kamera und buchen direkt ${eigen?"bei dir":"bei diesem Fahrlehrer"}.</p>
+    <div class="bq-wahl" role="group" aria-label="Getriebe">
+      <button type="button" class="bq-w${typ==="schalt"?" on":""}" data-bqtyp="schalt" aria-pressed="${typ==="schalt"}">Schalter</button>
+      <button type="button" class="bq-w${typ==="automatik"?" on":""}" data-bqtyp="automatik" aria-pressed="${typ==="automatik"}">Automatik</button>
+    </div>
+    <div class="bq-karte">
+      <div class="bq-titel">Fahrstunde buchen</div>
+      <img class="bq-bild" src="${qrBild(link,640)}" alt="QR-Code: Fahrstunde buchen, ${typ==="automatik"?"Automatik":"Schalter"}">
+      <div class="bq-unter">${typ==="automatik"?"Automatik":"Schalter"}${name?` · ${esc(name)}`:""}</div>
+    </div>
+    <div class="bq-knoepfe">
+      <button type="button" class="btn btn-primary" id="bqDrucken">Drucken</button>
+      <button type="button" class="btn btn-ghost" id="bqBild">Bild speichern</button>
+      <button type="button" class="btn btn-ghost" id="bqKopieren">Link kopieren</button>
+    </div>
+    <p class="bq-link">${esc(link)}</p>
+  </div>`;
+  view.querySelectorAll("[data-bqtyp]").forEach(b=>b.addEventListener("click",()=>{
+    _bqWahl=b.dataset.bqtyp; if(eigen){ try{ localStorage.setItem("kompass-bq-typ",_bqWahl); }catch(e){} }
+    if(eigen)routeBuchungsQR(); else routeBuchungsQR(slug,name); // gleicher Aufruf wie vorher: Seite bleibt an der Stelle (K4)
+  }));
+  $("#bqKopieren").addEventListener("click",()=>{
+    const fertig=()=>toast("Link kopiert ✓");
+    try{ navigator.clipboard.writeText(link).then(fertig).catch(()=>toast("Kopieren ging nicht – Link steht unten zum Markieren")); }catch(e){ toast("Kopieren ging nicht – Link steht unten zum Markieren"); }
+  });
+  $("#bqBild").addEventListener("click",()=>{
+    try{
+      const url=_bqBildDatei(link,typ,name);
+      const a=document.createElement("a"); a.href=url; a.download=`Buchungs-QR-${typ==="automatik"?"Automatik":"Schalter"}.png`;
+      document.body.appendChild(a); a.click(); a.remove(); toast("Bild gespeichert ✓");
+    }catch(e){ toast("Bild speichern ging nicht"); }
+  });
+  $("#bqDrucken").addEventListener("click",()=>_bqDrucken(link,typ,name));
+}
+// Bild zum Speichern: weißes Blatt mit Überschrift, großem Code und Getriebe (gut lesbar hinter der Scheibe)
+function _bqBildDatei(link,typ,name){
+  const c=document.createElement("canvas"); c.width=1200; c.height=1500; const x=c.getContext("2d");
+  x.fillStyle="#fff"; x.fillRect(0,0,1200,1500); x.fillStyle="#111"; x.textAlign="center";
+  x.font="bold 92px system-ui, sans-serif"; x.fillText("Fahrstunde buchen",600,150);
+  x.font="48px system-ui, sans-serif"; x.fillText("QR-Code mit der Handy-Kamera scannen",600,230);
+  // Code direkt aufs Blatt zeichnen (ein geladenes Bild wäre hier noch nicht fertig)
+  const q=erzeugeQR(link,"M"), n=q.groesse, rand=4, skal=Math.floor(960/(n+rand*2)), gr=(n+rand*2)*skal, ox=Math.round((1200-gr)/2), oy=290+Math.round((960-gr)/2);
+  for(let i=0;i<n;i++)for(let j=0;j<n;j++) if(q.module[i][j])x.fillRect(ox+(j+rand)*skal,oy+(i+rand)*skal,skal,skal);
+  x.font="bold 64px system-ui, sans-serif"; x.fillText((typ==="automatik"?"Automatik":"Schalter")+(name?" · "+name:""),600,1360);
+  return c.toDataURL("image/png");
+}
+// Drucken: eigenes Blatt nur mit dem Code (alles andere wird beim Drucken ausgeblendet), danach wieder weg
+function _bqDrucken(link,typ,name){
+  document.getElementById("bqDruck")?.remove();
+  const d=document.createElement("div"); d.id="bqDruck";
+  d.innerHTML=`<div class="bqd-titel">Fahrstunde buchen</div><div class="bqd-zeile">QR-Code mit der Handy-Kamera scannen</div>
+    <img src="${qrBild(link,900)}" alt=""><div class="bqd-typ">${typ==="automatik"?"Automatik":"Schalter"}${name?` · ${esc(name)}`:""}</div>`;
+  document.body.appendChild(d); document.body.classList.add("bq-drucken");
+  const weg=()=>{ document.body.classList.remove("bq-drucken"); d.remove(); window.removeEventListener("afterprint",weg); };
+  window.addEventListener("afterprint",weg);
+  setTimeout(()=>{ try{ window.print(); }catch(e){ weg(); toast("Drucken ging nicht – bitte „Bild speichern“ nutzen"); } setTimeout(()=>{ if(document.getElementById("bqDruck"))weg(); },60000); },120);
+}
 function routeNeuigkeiten(){
   $("#tbTitle").textContent="Neuigkeiten"; setFab(false); view.scrollTop=0;
   const liste=_neuListe();
