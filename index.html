@@ -14926,7 +14926,8 @@ function renderExam(s){
     </div></div>`;
   $("#backBtn").addEventListener("click",()=>{_examChoice=null;renderExam(s);});
   // K10: Pfeil oben und Android-Zurück gehen hier einen Schritt zurück (Auswahl bestanden/nicht bestanden), nicht aus der Prüfung
-  _seiteZurueckFn=()=>{ if(!_seiteVerlassenOk())return true; _examChoice=null; renderExam(s); return true; };
+  const _schritt2Zurueck=()=>{ if(!_seiteVerlassenOk()){ _seiteZurueckFn=_schritt2Zurueck; return true; } _examChoice=null; renderExam(s); return true; };
+  _seiteZurueckFn=_schritt2Zurueck; // bei „Abbrechen“ in der Rückfrage bleibt der Schritt-Zurück erhalten
   document.querySelectorAll("#prWrap .pr-chip[data-pr]").forEach(c=>c.addEventListener("click",()=>{ _examPr=(_examPr===c.dataset.pr)?null:c.dataset.pr; document.querySelectorAll("#prWrap .pr-chip[data-pr]").forEach(x=>x.classList.toggle("on",x.dataset.pr===_examPr)); }));
   $("#prAdd").addEventListener("click",()=>{ const name=(prompt("Name des Prüfers")||"").trim(); if(!name)return; if(!DB.pruefer.includes(name)){DB.pruefer.push(name);DB.pruefer.sort((a,b)=>a.localeCompare(b,'de'));save();} _examPr=name; renderExam(s); });
   if(!pass){
@@ -17879,7 +17880,11 @@ function _seite2Markieren(name){
         _seiteGeaendert=false; _seiteZurueckFn=null;
         const r=orig.apply(this,name==="routeKalender"?args:arguments);
         // K10: merken, in welcher Ansicht (eigene oder ganze Fahrschule) der Eintrag entstand – Zurück bleibt in der Ansicht
-        try{ const e=_navStack[_navStack.length-1]; if(e&&e.name===name&&e.agg===undefined)e.agg=!!_fsAgg; }catch(e){}
+        try{ const e=_navStack[_navStack.length-1]; if(e&&e.name===name&&e.agg===undefined)e.agg=!!_fsAgg;
+          // Fable K10: nach einem Ansichtswechsel (auch beim Start von Leitung/Büro) Einträge der anderen Ansicht gleich entfernen,
+          // sonst stünde ein Pfeil da, dessen Tipp nichts tut
+          if(!_navFahrt){ const a=!!_fsAgg, top=_navStack[_navStack.length-1]; _navStack=_navStack.filter(x=>x===top||x.agg===undefined||x.agg===a); }
+        }catch(e){}
         // Hat die Seite intern auf eine andere Seite umgeleitet (z. B. Akte ohne Schüler → Liste), gilt deren Merkmal
         if(_seite2Zaehler===vorher)_seite2Markieren(name);
         if(haltY){ const vw=document.getElementById("view"); const t=($("#tbTitle")&&$("#tbTitle").textContent)||""; if(vw&&t===haltY.titel)vw.scrollTop=haltY.y; }

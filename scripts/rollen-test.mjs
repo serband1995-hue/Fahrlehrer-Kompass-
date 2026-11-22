@@ -122,6 +122,9 @@ for (const R of ROLLEN) {
       continue;
     }
     await maskeWeg();
+    // K10 (Fable 22.11.): direkt nach der Anmeldung kein Zurück-Pfeil (es gibt keine vorige Seite) – in jeder Rolle
+    const pfeilStart = await page.evaluate(() => { const b = document.getElementById("navBackBtn"); return !!b && !b.hidden; });
+    await pruefe("R10", `${P} beim Start kein Zurück-Pfeil (keine tote Taste)`, async () => (pfeilStart ? "Pfeil sichtbar, Stapel: " + (await page.evaluate(() => _navStack.map((x) => x.name + (x.agg ? "*" : "")).join(" > "))) : null));
 
     await pruefe("R1", `${P} Startansicht: ${R.eigen ? "eigene Fahrlehrer-Ansicht" : "Gesamtansicht der Fahrschule"}`, () => page.evaluate(() => (_fsAgg ? "gesamt" : "eigen")).then((v) => (v === (R.eigen ? "eigen" : "gesamt") ? null : "ist " + v)));
     await pruefe("R2", `${P} Umschalter „Admin-Gesamtübersicht“ ${R.umschalter ? "da" : "nicht da"}`, () => page.evaluate(() => /Admin-Gesamtübersicht|Zu meiner Fahrlehrer-Ansicht/.test(document.querySelector(".drawer-nav").textContent)).then((v) => (v === R.umschalter ? null : "ist " + v)));
@@ -185,6 +188,7 @@ for (const R of ROLLEN) {
       await pruefe("R7", `${P} Tipp auf den Streifen → ganze Fahrschule, Streifen sagt das`, () => page.evaluate(() => (_fsAgg && /Ganze Fahrschule/.test(document.getElementById("saStreifen").textContent) ? null : "ist " + (_fsAgg ? "gesamt" : "eigen") + ": " + document.getElementById("saStreifen").textContent)));
       await page.click("#saStreifen", { timeout: 5000 }).catch(() => {}); await warte(page, 900);
       await pruefe("R8", `${P} zweiter Tipp → zurück zu den eigenen Schülern`, () => page.evaluate(() => (!_fsAgg && /Du bist Leitung/.test(document.getElementById("saStreifen").textContent) ? null : "ist " + (_fsAgg ? "gesamt" : "eigen"))));
+      await pruefe("R11", `${P} nach dem Umschalten nur Zurück-Einträge der aktuellen Ansicht (kein toter Pfeil)`, () => page.evaluate(() => { const a = !!_fsAgg; const fremd = _navStack.filter((x) => x.agg !== undefined && x.agg !== a).length; return fremd ? fremd + " Einträge der anderen Ansicht" : null; }));
     }
     await pruefe("R5", `${P} keine JS-Fehler`, () => jsFehler);
     await ctx.close();
