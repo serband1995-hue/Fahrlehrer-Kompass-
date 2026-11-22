@@ -328,7 +328,9 @@
       const ok = await PW.notizSchreiben(nm, text);
       btn.disabled = false;
       if (ok) {
-        ta.value = ""; delete entwurf[klein(nm)]; listeNeu(nm);
+        // Während des Speicherns weitergetippt: das Neue bleibt stehen
+        if (ta.value.trim() === text) { ta.value = ""; delete entwurf[klein(nm)]; } else { ta.value = ta.value.replace(text, "").trim(); entwurf[klein(nm)] = ta.value; }
+        listeNeu(nm);
         const erste = document.querySelector("#pwListe .pw-notiz"); if (erste && erste.scrollIntoView) erste.scrollIntoView({ block: "nearest" });
         if (typeof toast === "function") toast("Notiz gespeichert ✓");
       } else if (typeof toast === "function") toast("Notiz nicht gespeichert – bitte mit Internet nochmal");
