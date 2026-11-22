@@ -109,6 +109,8 @@ function nwSpurWert(p, v) {
   if (/^\d{4}-\d\d-\d\d/.test(v)) return datumDE(v.slice(0, 10)) + v.slice(10);
   return v;
 }
+// P0001 = Termin wurde von der Leitung entfernt (termin_entfernt_schutz) – verständlich statt Fehlertext
+function nwFehlerText(e, sonst) { return !e ? sonst : e.code === "P0001" ? "die Leitung hat diesen Termin entfernt" : e.message; }
 // K7: Papierkorb – storniert (bleibt aufbewahrt) oder Fehleintrag (nach 30 Tagen endgültig weg)
 const NW_PAPIERKORB_TAGE = 30;
 function nwStorno(t) { const s = (t.payload || {}).storno; return s && typeof s === "object" ? s : null; }
@@ -319,14 +321,14 @@ async function nwLoeschen(t, nachher) {
     if (fr && fr.am) q = q.eq("aktualisiert_am", fr.am);
   }
   const res = await q.select("*");
-  if (res.error || !res.data || !res.data.length) { toast((storno ? "Nicht storniert: " : "Nicht gelöscht: ") + (res.error ? res.error.message : "keine Berechtigung oder gerade geändert"), true); return; }
+  if (res.error || !res.data || !res.data.length) { toast((storno ? "Nicht storniert: " : "Nicht gelöscht: ") + nwFehlerText(res.error, "keine Berechtigung oder gerade geändert"), true); return; }
   PK.zeit = 0; nwMerken(res.data[0]); zeichne(); nachher();
   toastUndo(storno ? "Fahrstunde storniert" : "Fahrstunde im Papierkorb", async () => { await nwWiederherstellen(res.data[0], nachher, true); });
 }
 async function nwWiederherstellen(t, nachher, still) {
   if (!t) return;
   const res = await supa.from("kalender_termine").update({ geloescht: false, aktualisiert_am: new Date().toISOString() }).eq("id", t.id).select("*");
-  if (res.error || !res.data || !res.data.length) { toast("Zurückholen ging nicht: " + (res.error ? res.error.message : "keine Berechtigung"), true); return; }
+  if (res.error || !res.data || !res.data.length) { toast("Zurückholen ging nicht: " + nwFehlerText(res.error, "keine Berechtigung"), true); return; }
   PK.zeit = 0; nwMerken(res.data[0]); zeichne(); nachher();
   toast(still ? "Fahrstunde ist wieder da" : "Fahrstunde wiederhergestellt");
 }
@@ -458,7 +460,7 @@ function pkZeigen(ziel) {
       const t = (PK.daten || []).find((x) => x.id === b.dataset.pkzurueck); if (!t) return;
       b.disabled = true;
       const res = await supa.from("kalender_termine").update({ geloescht: false, aktualisiert_am: new Date().toISOString() }).eq("id", t.id).select("*");
-      if (res.error || !res.data || !res.data.length) { b.disabled = false; toast("Zurückholen ging nicht: " + (res.error ? res.error.message : "keine Berechtigung"), true); return; }
+      if (res.error || !res.data || !res.data.length) { b.disabled = false; toast("Zurückholen ging nicht: " + nwFehlerText(res.error, "keine Berechtigung"), true); return; }
       PK.daten = (PK.daten || []).filter((x) => x.id !== t.id);
       nwMerken(res.data[0]); zeichne();
       toast(`${pkArt(t)} vom ${datumDE(t.datum)} ist wieder da`);

@@ -4705,7 +4705,8 @@ async function _brueckeAbgleichen({ tabelle, art, eintraege, zeileVon, loeschWer
           const w = loeschWertFuer(id); if (!w) continue;
           if (aktiv.has(id)) {
             const { error: sErr } = await supa.from(tabelle).update(Object.assign({}, w, { aktualisiert_am: nowIso })).eq("id", id);
-            if (sErr) throw sErr;
+            // P0001 = von der Leitung entfernt (termin_entfernt_schutz): nichts mehr zu tun, still überspringen
+            if (sErr && sErr.code !== "P0001") throw sErr;
           }
           zuLoeschen = zuLoeschen.filter(x => x !== id); _stornoVergessen(id);
         }
@@ -7965,7 +7966,8 @@ async function _fsSyncAggJetztKern(){
       if(termineUpserts.length) _fsPruefe(await supa.from("kalender_termine").upsert(termineUpserts,{onConflict:"id"}));
       // K7: Stornierte Stunden einzeln mit Grund und Vermerk, der Rest wie bisher in den Papierkorb
       const termineStorno=termineDeletes.filter(id=>_stornoWert(id));
-      for(const id of termineStorno){ _fsPruefe(await supa.from("kalender_termine").update(Object.assign({},_stornoWert(id),{aktualisiert_am:nowIso})).eq("id",id)); _stornoVergessen(id); }
+      for(const id of termineStorno){ const r=await supa.from("kalender_termine").update(Object.assign({},_stornoWert(id),{aktualisiert_am:nowIso})).eq("id",id);
+        if(!(r&&r.error&&r.error.code==="P0001"))_fsPruefe(r); _stornoVergessen(id); } // P0001: von der Leitung entfernt, still überspringen
       const termineWeg=termineDeletes.filter(id=>termineStorno.indexOf(id)<0);
       if(termineWeg.length) _fsPruefe(await supa.from("kalender_termine").update({geloescht:true,aktualisiert_am:nowIso}).in("id",termineWeg));
 
