@@ -17,6 +17,10 @@ CREATE TRIGGER trg_fc_abgaben_bearbeiter BEFORE INSERT ON public.fc_abgaben FOR 
 CREATE TRIGGER trg_pruefung_verschiebung_schutz BEFORE UPDATE ON public.kalender_pruefungen FOR EACH ROW EXECUTE FUNCTION termin_verschiebung_schutz();
 CREATE TRIGGER trg_termin_entfernt_schutz BEFORE UPDATE ON public.kalender_termine FOR EACH ROW EXECUTE FUNCTION termin_entfernt_schutz();
 CREATE TRIGGER trg_termin_verschiebung_schutz BEFORE UPDATE ON public.kalender_termine FOR EACH ROW EXECUTE FUNCTION termin_verschiebung_schutz();
+-- K7 (Migration 20261123_k7_01): Papierkorb. geloescht_am setzt nur der Server; gelaufene/unterschriebene Nachweis-Stunden
+-- bekommen beim Löschen payload.storno (nie endgültig weg). papierkorb_leeren() (security definer, Büro/Leitung/Super-Admin
+-- nur eigene Fahrschule, pg_cron alle) löscht endgültig nur > 30 Tage im Papierkorb, ohne Storno, nie unterschrieben.
+CREATE TRIGGER trg_termin_zy_papierkorb BEFORE INSERT OR UPDATE ON public.kalender_termine FOR EACH ROW EXECUTE FUNCTION termin_papierkorb();
 CREATE TRIGGER trg_profil_schutz BEFORE UPDATE ON public.profiles FOR EACH ROW EXECUTE FUNCTION profil_schutz();
 CREATE TRIGGER trg_akademie_sync AFTER INSERT OR DELETE OR UPDATE ON public.schueler FOR EACH STATEMENT EXECUTE FUNCTION akademie_sync_anstossen();
 CREATE TRIGGER trg_schueler_bogen_entfernen BEFORE INSERT OR UPDATE ON public.schueler FOR EACH ROW EXECUTE FUNCTION schueler_bogen_entfernen();

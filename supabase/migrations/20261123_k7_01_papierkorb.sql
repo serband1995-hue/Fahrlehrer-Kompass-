@@ -85,6 +85,7 @@ as $function$
 declare
   fs uuid;
   n integer := 0;
+  r record;
 begin
   if auth.uid() is not null then
     -- Aufruf aus der Büro-Seite: nur die eigene Fahrschule, nur Büro/Leitung/Super-Admin
@@ -92,8 +93,9 @@ begin
     fs := my_fahrschule_id();
     if fs is null and not is_super_admin(auth.uid()) then return 0; end if;
   end if;
-  with weg as (
-    delete from public.kalender_termine t
+  -- Je Stunde einzeln: hängt noch etwas an einer Stunde (Fremdschlüssel), bleibt sie liegen, der Rest wird trotzdem leer
+  for r in
+    select t.id, t.fahrschule_id, t.datum, t.von, t.bis from public.kalender_termine t
      where t.geloescht
        and t.geloescht_am is not null
        and t.geloescht_am < now() - interval '30 days'
@@ -101,16 +103,20 @@ begin
        and coalesce(t.payload->>'signed', '') <> 'true'
        and jsonb_typeof(t.payload->'signaturUngueltig') is distinct from 'object'
        and (fs is null or t.fahrschule_id = fs)
-    returning t.id, t.fahrschule_id, t.datum, t.von, t.bis
-  ), spur as (
-    insert into public.aenderungsprotokoll (fahrschule_id, tabelle, datensatz_id, feld, alt, neu, geaendert_von, bearbeiter, grund)
-    select w.fahrschule_id, 'kalender_termine', w.id, 'endgueltig_geloescht',
-           coalesce(w.datum::text, '') || ' ' || coalesce(w.von, '') || '–' || coalesce(w.bis, ''), null, auth.uid(), null,
-           'Papierkorb nach 30 Tagen geleert'
-      from weg w where w.fahrschule_id is not null
-    returning 1
-  )
-  select count(*) into n from weg;
+     limit 5000
+  loop
+    begin
+      delete from public.kalender_termine where id = r.id;
+      if r.fahrschule_id is not null then
+        insert into public.aenderungsprotokoll (fahrschule_id, tabelle, datensatz_id, feld, alt, neu, geaendert_von, bearbeiter, grund)
+        values (r.fahrschule_id, 'kalender_termine', r.id, 'endgueltig_geloescht',
+                coalesce(r.datum::text, '') || ' ' || coalesce(r.von, '') || '–' || coalesce(r.bis, ''), null, auth.uid(), null,
+                'Papierkorb nach 30 Tagen geleert');
+      end if;
+      n := n + 1;
+    exception when foreign_key_violation then null;
+    end;
+  end loop;
   return n;
 end $function$;
 
