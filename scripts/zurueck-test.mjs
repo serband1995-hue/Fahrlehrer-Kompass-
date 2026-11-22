@@ -64,6 +64,8 @@ await pruefe("Z2", "Einstellungen weit unten → Reiter „Schüler“ → Pfeil
   if ((await titel()) !== "Schüler") f.push("Reiter öffnet " + (await titel()));
   const pf = await pfeil();
   if (!pf) f.push("kein Pfeil auf der Hauptseite Schüler"); else { if (pf.h < 44 || pf.w < 44) f.push(`Pfeil ${pf.w}×${pf.h}`); if (pf.x > 80) f.push("Pfeil nicht links"); }
+  const ansage = await p.evaluate(() => document.getElementById("navBackBtn").getAttribute("aria-label"));
+  if (ansage !== "Zurück zu Einstellungen") f.push("Ansage „" + ansage + "“");
   await p.click("#navBackBtn"); await warte(p, 600);
   if ((await titel()) !== "Einstellungen") f.push("zurück zu " + (await titel()));
   const nach = await y(); if (Math.abs(nach - vor) > 3) f.push(`Stelle ${vor} → ${nach}`);
@@ -172,6 +174,12 @@ for (const [w, h, n] of [[360, 740, "Handy"], [1280, 800, "PC"]]) {
     if ((await q.evaluate(() => document.body.dataset.bereich)) !== mitListe) f.push("Browser-Zurück landet falsch");
     const nach2 = await q.evaluate(() => window.scrollY); if (Math.abs(nach2 - 200) > 3) f.push(`Browser-Zurück Stelle 200 → ${nach2}`);
     const quer = await q.evaluate(() => document.documentElement.scrollWidth - window.innerWidth); if (quer > 0) f.push(quer + " px zu breit");
+    // Kopfzeile: Zurück-Knopf und Titel stoßen nicht mit dem Vorführungs-Schild zusammen
+    await q.evaluate(() => { location.hash = "fristen"; }); await warte(q, 300);
+    const ueber = await q.evaluate(() => { const rc = (id) => document.getElementById(id)?.getBoundingClientRect(); const v = rc("vorfuehrung");
+      const x = (a, b) => a && b && b.width && a.width && !(a.right <= b.left || b.right <= a.left || a.bottom <= b.top || b.bottom <= a.top);
+      return x(rc("titel"), v) || x(rc("kopfZurueck"), v); });
+    if (ueber) f.push("Kopfzeile überlappt");
     return f;
   });
   await pruefe(`B4 [${n}]`, "Büro: Suche/Filter ändern die Adresse → anderer Bereich → Zurück: Suche und Stelle wieder da", async () => {

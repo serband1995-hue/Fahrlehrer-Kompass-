@@ -2602,6 +2602,7 @@ body:has(#view[data-seite2] #calBody) #fab span{display:none;}
 body:has(#navBackBtn:not([hidden])) #view .back-row:has(> .back-btn:only-child){display:none !important;}
 /* K10: steht neben dem Zurück-Knopf noch etwas in der Zeile, bleibt die Zeile, nur der doppelte Zurück-Knopf geht */
 body:has(#navBackBtn:not([hidden])) #view .back-row > .back-btn{display:none !important;}
+body:has(#navBackBtn:not([hidden])) #view .back-row:has(> .back-btn){justify-content:flex-end;}
 /* Erledigte To-dos lesbarer */
 body.light #view[data-seite2] .todo-item.done .todo-txt{color:#6B776F !important;}
 /* Umbau Schritt 6a: Wetter-Seite – weich und flüssig (nur transform/opacity animiert) */
@@ -17759,7 +17760,10 @@ function _navAktualisiereKnopf(){
   const b=document.getElementById("navBackBtn");
   // K10 (🗣 22.11.2026): „Auf jeder Seite ein Knopf, der eine Seite zurückspringt.“ Der Pfeil oben links steht überall,
   // sobald es eine vorige Seite gibt (auch auf den Hauptseiten der Reiter). Android-Zurück macht dasselbe.
-  if(b)b.hidden=_navStack.length<2;
+  if(b){ b.hidden=_navStack.length<2;
+    // Wohin führt der Pfeil? Für Vorlesen und langes Drücken („Zurück zu Einstellungen“)
+    const vor=_navStack.length>1?_navStack[_navStack.length-2]:null; const ziel=vor&&vor.titel?`Zurück zu ${vor.titel}`:"Zurück";
+    b.setAttribute("aria-label",ziel); b.title=ziel; }
 }
 /* A5: Läuft der Persönlichkeitsbogen, blättert Zurück (Android-Taste, Pfeil oben) eine Seite zurück;
    auf der ersten Seite kommt dieselbe Rückfrage wie bei „Abbrechen“. Liefert true, wenn erledigt. */
@@ -17852,10 +17856,10 @@ function _seite2Markieren(name){
           // Dieselbe Ansicht erneut aufrufen (z.B. nach dem Speichern) erzeugt keinen
           // neuen Eintrag - sonst muesste man mehrfach zurueck fuer einen Schritt.
           gleichSeite=gleich;
-          if(gleich)_navStack[_navStack.length-1]={name,fn:orig,args,y:letzte.y};
+          if(gleich)_navStack[_navStack.length-1]={name,fn:orig,args,y:letzte.y,titel:letzte.titel};
           else{
             // K10: Stelle der Seite merken, die man gerade verlässt – Zurück führt genau dorthin
-            if(letzte){ try{ const vw=document.getElementById("view"); if(vw)letzte.y=vw.scrollTop; }catch(e){} }
+            if(letzte){ try{ const vw=document.getElementById("view"); if(vw)letzte.y=vw.scrollTop; letzte.titel=(($("#tbTitle")&&$("#tbTitle").textContent)||"").trim(); }catch(e){} }
             _navStack.push({name,fn:orig,args}); if(_navStack.length>_NAV_MAX)_navStack.shift(); }
         }
         // K4 (🗣 22.11.2026): Zeichnet sich dieselbe Seite neu (Schalter, Speichern, Abgleich), bleibt man an derselben Stelle.
