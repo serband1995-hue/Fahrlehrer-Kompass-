@@ -62,3 +62,5 @@ jobs:
         run: NODE_PATH=$(npm root -g) node scripts/neuigkeiten-test.mjs
       - name: Wetter ohne Schlüssel (K1, Dienste nachgestellt)
         run: NODE_PATH=$(npm root -g) node scripts/wetter-k1-test.mjs
+      - name: "Schüler-Überblick und Weitergeben (K6: Akte gesperrt, kein Bestätigen-Fenster)"
+        run: NODE_PATH=$(npm root -g) node scripts/schueler-ueberblick-test.mjs
