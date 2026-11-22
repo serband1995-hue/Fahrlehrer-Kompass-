@@ -216,6 +216,15 @@ async function starte({ rolle = "fahrlehrer", alteDB = false } = {}) {
   await pruefe("P9c", "keine JS-Fehler (alte Datenbank)", () => jsFehler);
   await ctx.close();
 }
+// ---------- Migration: Umbenennen ohne gemeinsamen Eintrag (Richter 22.11.2026) ----------
+{
+  const sql = await readFile(join(fileURLToPath(new URL("..", import.meta.url)), "supabase/migrations/20261122_k5_01_pruefer_gemeinsam.sql"), "utf8");
+  await pruefe("P17", "Umbenennen ohne gemeinsamen Eintrag ändert bei Fahrlehrern nur eigene Prüfungen und Notizen", async () => {
+    const f = sql.slice(sql.indexOf("function public.fs_pruefer_umbenennen"));
+    const fehlt = [/nur_eigene := a\.id is null and not k5_darf_verwalten\(\)/, /not nur_eigene or verfasser_id = auth\.uid\(\)/, /not nur_eigene or fahrlehrer_id = auth\.uid\(\)/].filter((r) => !r.test(f));
+    return fehlt.length ? "fehlt: " + fehlt.join(" ") : null;
+  });
+}
 await browser.close(); server.close();
 console.log(`\nPrüfer-gemeinsam-Test: ${okZahl} ok, ${fehlerZahl} Fehler`);
 process.exit(fehlerZahl ? 1 : 0);

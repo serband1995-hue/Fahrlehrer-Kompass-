@@ -209,7 +209,7 @@ create or replace function public.fs_pruefer_umbenennen(p_alt text, p_neu text)
  security definer
  set search_path to 'public'
 as $function$
-declare fs uuid := k5_meine_fahrschule(); a public.fahrschule_pruefer; b public.fahrschule_pruefer; n integer := 0;
+declare fs uuid := k5_meine_fahrschule(); a public.fahrschule_pruefer; b public.fahrschule_pruefer; n integer := 0; nur_eigene boolean := false;
 begin
   p_alt := btrim(coalesce(p_alt, '')); p_neu := btrim(coalesce(p_neu, ''));
   if fs is null then return jsonb_build_object('fehler', 'keine_fahrschule'); end if;
@@ -220,6 +220,8 @@ begin
   if a.id is not null and a.angelegt_von is distinct from auth.uid() and not k5_darf_verwalten() then
     return jsonb_build_object('fehler', 'keine_berechtigung');
   end if;
+  -- Ohne gemeinsamen Eintrag (gelöscht oder nur in Prüfungen): Fahrlehrer ändern nur eigene Notizen/Prüfungen (Richter 22.11.2026)
+  nur_eigene := a.id is null and not k5_darf_verwalten();
   perform set_config('kompass.pruefer_umbenennen', '1', true);
   select * into b from public.fahrschule_pruefer where fahrschule_id = fs and not geloescht and lower(name) = lower(p_neu)
      and (a.id is null or id <> a.id) limit 1;
@@ -236,9 +238,11 @@ begin
   elsif b.id is null then
     insert into public.fahrschule_pruefer (fahrschule_id, name, angelegt_von) values (fs, p_neu, auth.uid());
   end if;
-  update public.fahrschule_pruefer_notizen set pruefer_name = p_neu where fahrschule_id = fs and lower(pruefer_name) = lower(p_alt);
+  update public.fahrschule_pruefer_notizen set pruefer_name = p_neu where fahrschule_id = fs and lower(pruefer_name) = lower(p_alt)
+     and (not nur_eigene or verfasser_id = auth.uid());
   update public.kalender_pruefungen set pruefer = p_neu, aktualisiert_am = now()
-   where fahrschule_id = fs and lower(btrim(pruefer)) = lower(p_alt);
+   where fahrschule_id = fs and lower(btrim(pruefer)) = lower(p_alt)
+     and (not nur_eigene or fahrlehrer_id = auth.uid());
   get diagnostics n = row_count;
   return jsonb_build_object('ok', true, 'pruefungen', n);
 end;
