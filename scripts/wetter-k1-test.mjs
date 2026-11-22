@@ -243,12 +243,12 @@ await pruefe("K1f", "Ausschalten: Schalter wechselt ohne Neuzeichnen, danach kei
 await pruefe("K1g", "Symbole: Bright Sky → bisherige Wetter-Codes (Tag/Nacht, unbekannt)", async () => {
   const r = await page.evaluate(() => [
     _bsIcon("clear-day", "dry", "2026-11-22T12:00:00+01:00").icon, _bsIcon("clear-night", "dry", "2026-11-22T23:00:00+01:00").icon,
-    _bsIcon("cloudy", "dry", "2026-11-22T12:00:00+01:00").icon, _bsIcon("cloudy", "dry", "2026-11-22T21:00:00+01:00").icon,
+    _bsIcon("cloudy", "dry", "2026-11-22T12:00:00+01:00").icon, _bsIcon("cloudy", "dry", "2026-11-22T21:00:00+01:00").icon, _bsIcon("cloudy", "dry", "2026-06-22T19:30:00+02:00").icon,
     _bsIcon("rain", "rain", "2026-11-22T12:00:00+01:00").icon, _bsIcon("thunderstorm", "", "2026-11-22T12:00:00+01:00").icon,
     _bsIcon("snow", "", "2026-11-22T12:00:00+01:00").icon, _bsIcon("fog", "", "2026-11-22T12:00:00+01:00").icon,
     _bsIcon(null, "rain", "2026-11-22T12:00:00+01:00").icon, _bsIcon(null, null, "").icon,
     _bsIcon("rain", "rain", "2026-11-22T12:00:00+01:00").desc]);
-  const soll = ["01d", "01n", "04d", "04n", "10d", "11d", "13d", "50d", "10d", "03d", "Regen"];
+  const soll = ["01d", "01n", "04d", "04n", "04d", "10d", "11d", "13d", "50d", "10d", "03d", "Regen"];
   return r.map((x, i) => (x === soll[i] ? null : `${i}: ${x} statt ${soll[i]}`)).filter(Boolean);
 });
 

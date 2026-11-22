@@ -199,8 +199,26 @@ function zeichne() {
   zeichneNav();
   const ziel = $("ansicht");
   if (!S.geladenAm) { ziel.innerHTML = `<p class="leer">Daten werden geladen …</p>`; return; }
+  // K2/K4 (🗣 22.11.2026): Zeichnet sich derselbe Bereich neu (Speichern, Schalter, Auffrischen), bleiben
+  // aufgeklappte Listen offen und die Seite an derselben Stelle. Ein Bereichswechsel springt wie bisher (hashchange).
+  const gleich = ziel.dataset.bereich === b.id;
+  const klapp = gleich ? klappZustand(ziel) : null, y = window.scrollY;
   ziel.innerHTML = b.render ? b.render() : renderBald(b);
+  ziel.dataset.bereich = b.id;
   if (b.nachher) b.nachher(ziel);
+  if (gleich) { klappWieder(ziel, klapp); window.scrollTo(0, y); }
+}
+// Schlüssel einer Klapp-Liste: Text der Überschrift ohne Zahlen (die Anzahl in Klammern ändert sich beim Speichern)
+function klappSchluessel(sum) { return (sum.textContent || "").replace(/\d+/g, "#").replace(/\s+/g, " ").trim(); }
+function klappZustand(ziel) {
+  const m = new Map();
+  ziel.querySelectorAll("details > summary").forEach((s) => { const k = klappSchluessel(s); if (!m.has(k)) m.set(k, s.parentElement.open); });
+  return m;
+}
+function klappWieder(ziel, m) {
+  if (!m || !m.size) return;
+  const gesehen = new Set();
+  ziel.querySelectorAll("details > summary").forEach((s) => { const k = klappSchluessel(s); if (gesehen.has(k)) return; gesehen.add(k); if (m.has(k)) s.parentElement.open = m.get(k); });
 }
 window.addEventListener("hashchange", () => {
   // Zurück-Taste (oder Link) wechselt die Seite: offene Fenster ohne Eingaben schließen, damit nichts über der falschen Seite stehen bleibt

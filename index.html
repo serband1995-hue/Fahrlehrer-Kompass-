@@ -4146,7 +4146,7 @@ function _lokalerDatenEigentuemer() {
 // Entfernt alle personenbezogenen App-Daten vom Gerät (nicht die App-Version und Geräte-Einstellungen).
 function _lokaleNutzerdatenLoeschen() {
   ["serband-app-v1", "serband-sync-stamp", "serband-restore-stamp", "serband-session-cache", "serband-backup-stamp",
-   "serband-weather-cache", "serband-weather-forecast-cache", "serband-abgleich-v1", "serband-db-defekt", "serband-vor-import", "serband-snapbasis-v1", "serband-gefeiert", "kompass-fahrstunde", OWNER_KEY].forEach(k => {
+   "serband-weather-cache", "serband-weather-forecast-cache", "serband-wetter-ort", "serband-abgleich-v1", "serband-db-defekt", "serband-vor-import", "serband-snapbasis-v1", "serband-gefeiert", "kompass-fahrstunde", OWNER_KEY].forEach(k => {
     try { localStorage.removeItem(k); } catch (e) {}
   });
   try { sessionStorage.removeItem("vd_unlocked"); } catch (e) {}
@@ -7742,7 +7742,7 @@ const STORE_KEY="serband-app-v1";
    Wird in den Einstellungen angezeigt + für den Update-Hinweis genutzt. */
 // K1: voreingestellter Wetter-Ort (früh definiert, weil ensureDB ihn schon beim Start braucht)
 const WETTER_START={city:"Offenbach",lat:50.1006,lon:8.7665};
-const APP_VERSION="2026.11.22.2";
+const APP_VERSION="2026.11.22.3";
 try{const f=document.getElementById("drawerFoot"); if(f)f.textContent="Fahrlehrer-Kompass · Version "+APP_VERSION;}catch(e){}
 // Nutzungsbedingungen & Haftungsausschluss (Bereich: rechtliche Absicherung) - Version hochzählen
 // und alle Nutzer müssen erneut zustimmen, sobald sich der Text inhaltlich ändert.
@@ -15450,13 +15450,17 @@ function openCapacitySheet(){
    Die Bright-Sky-Symbole werden auf die bisherigen Wetter-Codes (01 Sonne … 50 Nebel, Endung n = Nacht) übersetzt,
    damit Emoji, Wetterbild und Wetter-Seite unverändert weiterlaufen. */
 function _wetterAn(){ return !(DB.weatherCfg&&DB.weatherCfg.aus); }
-const _BS_ICON={"clear-day":["01d","Sonnig"],"clear-night":["01n","Klar"],"partly-cloudy-day":["02d","Leicht bewölkt"],"partly-cloudy-night":["02n","Leicht bewölkt"],
-  "cloudy":["04","Bewölkt"],"fog":["50","Nebel"],"wind":["03","Windig"],"rain":["10","Regen"],"sleet":["13","Schneeregen"],"snow":["13","Schnee"],"hail":["09","Hagel"],"thunderstorm":["11","Gewitter"]};
+// Beschreibungen wie in der Pille (_wetterKurz), damit Pille und Wetter-Seite dieselben Wörter zeigen
+const _BS_ICON={"clear-day":["01d","Sonnig"],"clear-night":["01n","Klar"],"partly-cloudy-day":["02d","Heiter"],"partly-cloudy-night":["02n","Wolkig"],
+  "cloudy":["04","Bedeckt"],"fog":["50","Nebel"],"wind":["03","Bewölkt"],"rain":["10","Regen"],"sleet":["13","Schnee"],"snow":["13","Schnee"],"hail":["09","Schauer"],"thunderstorm":["11","Gewitter"]};
 function _bsIcon(icon,condition,stamp){
   let e=_BS_ICON[icon];
   if(!e){ const c=String(condition||""); e=c==="rain"?["10","Regen"]:c==="snow"||c==="sleet"?["13","Schnee"]:c==="fog"?["50","Nebel"]:c==="thunderstorm"?["11","Gewitter"]:["03","Bewölkt"]; }
   let code=e[0];
-  if(code.length===2){ const m=/T(\d{2})/.exec(String(stamp||"")); const h=m?Number(m[1]):12; code+=(h<7||h>=18)?"n":"d"; }
+  if(code.length===2){ const m=/T(\d{2})/.exec(String(stamp||"")); const h=m?Number(m[1]):12, mo=m?Number(String(stamp).slice(5,7)):6;
+    // grob die Hellzeit im Rhein-Main-Gebiet je Monat (Sommerzeit eingerechnet): [hell ab, dunkel ab]
+    const hell=[[8,17],[8,18],[7,19],[7,20],[6,21],[6,22],[6,22],[7,21],[7,20],[8,19],[7,17],[8,17]][(mo>=1&&mo<=12?mo:6)-1];
+    code+=(h<hell[0]||h>=hell[1])?"n":"d"; }
   return {icon:code,desc:e[1]};
 }
 // Koordinaten des eingestellten Orts (null = unbekannt, dann kein Wetter statt falschem Wetter).
@@ -17536,6 +17540,43 @@ function setSplashQuote(){ const q=SPLASH_QUOTES[Math.floor(Math.random()*SPLASH
    dieser hier sitzt fest oben links in der Kopfleiste und gilt überall. */
 let _navStack=[];
 let _navFahrt=false;   // true, solange ein Zurueck-Sprung laeuft (verhindert Endlosschleife)
+/* K4: woher kam der letzte Tipp? innen = Seite oder Fenster; außen = Reiterleiste, Menü, Kopfleiste */
+let _letzterKlick=null;
+document.addEventListener("click",e=>{ try{ const t=e.target; _letzterKlick={t:Date.now(),innen:!!(t&&t.closest&&t.closest("#view, #sheet, .sheet"))}; }catch(err){} },true);
+/* K2 (🗣 22.11.2026): Beim Auf- und Zuklappen bleibt die angetippte Überschrift ruhig an ihrem Platz, auch wenn
+   darüber gleichzeitig ein anderer Bereich zuklappt (vorher flog sie aus dem Bild). Lag sie oben außerhalb, rückt
+   sie an den oberen Rand. Gilt für alle Klapp-Bereiche der App (.acc-h, .facc-h) in der Seite. */
+function _klappAnker(h){
+  const vw=document.getElementById("view"); if(!vw||!h||!vw.contains(h))return;
+  const oben=()=>h.getBoundingClientRect().top-vw.getBoundingClientRect().top;
+  const y0=oben(), start=y0<0?8:y0;
+  const altAnker=vw.style.overflowAnchor; vw.style.overflowAnchor="none"; // eigener Ausgleich statt Browser-Automatik
+  let ende=start, t0=0;
+  // Erst im nächsten Bild steht fest, was auf- und zuklappt: dann ausrechnen, wie weit sich alles darüber verschiebt.
+  // Reicht der Platz nach oben nicht (Seite schon ganz oben), gleitet die Überschrift gleichmäßig an ihr Ziel statt zu springen.
+  const messen=()=>{
+    let verschiebung=0;
+    vw.querySelectorAll(".acc").forEach(acc=>{
+      if(acc.contains(h))return;
+      const body=acc.querySelector(":scope > .acc-body"); if(!body)return;
+      if(body.getBoundingClientRect().top>=h.getBoundingClientRect().top)return; // nur was darüber liegt
+      const inner=body.firstElementChild; const jetzt=body.getBoundingClientRect().height;
+      const soll=acc.classList.contains("open")?(inner?inner.scrollHeight:jetzt):0;
+      verschiebung+=soll-jetzt;
+    });
+    const platz=vw.scrollTop+(start-y0)+verschiebung; // so weit kann gescrollt werden, um den Platz zu halten
+    ende=platz<0?start+platz:start;
+  };
+  const dauer=320, glatt=x=>x*x*(3-2*x);
+  const schritt=(t)=>{ if(!h.isConnected){ vw.style.overflowAnchor=altAnker; return; }
+    if(!t0){ t0=t; messen(); }
+    const p=Math.min(1,(t-t0)/dauer), ziel=start+(ende-start)*glatt(p);
+    const d=oben()-ziel; if(Math.abs(d)>=1)vw.scrollTop+=d;
+    if(t-t0<dauer+200)requestAnimationFrame(schritt); else vw.style.overflowAnchor=altAnker; };
+  requestAnimationFrame(schritt);
+}
+(function(){ const vw=document.getElementById("view"); if(!vw)return;
+  vw.addEventListener("click",e=>{ const h=e.target&&e.target.closest&&e.target.closest(".acc-h, .facc-h"); if(h)_klappAnker(h); },true); })();
 const _NAV_MAX=25;
 
 function _navAktualisiereKnopf(){
@@ -17613,6 +17654,7 @@ function _seite2Markieren(name){
         let args=Array.prototype.slice.call(arguments);
         // Kalender ohne Angaben: den Zustand (Ansicht, Tag) merken, damit Zurück genau dorthin führt
         if(name==="routeKalender"&&!args.length)args=[_calView,_calDate||todayISO()];
+        let gleichSeite=false;
         if(!_navFahrt){
           _zurueckSperreNachholen();
           const letzte=_navStack[_navStack.length-1];
@@ -17620,15 +17662,22 @@ function _seite2Markieren(name){
           try{ gleich=!!letzte&&letzte.name===name&&JSON.stringify(letzte.args)===JSON.stringify(args); }catch(e){}
           // Dieselbe Ansicht erneut aufrufen (z.B. nach dem Speichern) erzeugt keinen
           // neuen Eintrag - sonst muesste man mehrfach zurueck fuer einen Schritt.
+          gleichSeite=gleich;
           if(gleich)_navStack[_navStack.length-1]={name,fn:orig,args};
           else{ _navStack.push({name,fn:orig,args}); if(_navStack.length>_NAV_MAX)_navStack.shift(); }
         }
+        // K4 (🗣 22.11.2026): Zeichnet sich dieselbe Seite neu (Schalter, Speichern, Abgleich), bleibt man an derselben Stelle.
+        // Nur ein Tipp auf Reiter, Menü oder Kopfleiste (bewusst „diese Seite neu“) darf nach oben führen.
+        let haltY=null;
+        try{ const vw=document.getElementById("view"); const aussen=_letzterKlick&&Date.now()-_letzterKlick.t<1500&&!_letzterKlick.innen;
+          if(gleichSeite&&vw&&!aussen)haltY={y:vw.scrollTop,titel:($("#tbTitle")&&$("#tbTitle").textContent)||""}; }catch(e){}
         const vorher=_seite2Zaehler;
         if(_notizSofort){ const f=_notizSofort; _notizSofort=null; try{ f(); }catch(e){} }
         _seiteGeaendert=false; _seiteZurueckFn=null;
         const r=orig.apply(this,name==="routeKalender"?args:arguments);
         // Hat die Seite intern auf eine andere Seite umgeleitet (z. B. Akte ohne Schüler → Liste), gilt deren Merkmal
         if(_seite2Zaehler===vorher)_seite2Markieren(name);
+        if(haltY){ const vw=document.getElementById("view"); const t=($("#tbTitle")&&$("#tbTitle").textContent)||""; if(vw&&t===haltY.titel)vw.scrollTop=haltY.y; }
         _navAktualisiereKnopf();
         return r;
       };
