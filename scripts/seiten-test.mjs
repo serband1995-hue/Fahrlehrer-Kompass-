@@ -529,7 +529,7 @@ for (const g of GROESSEN) {
         auslesen[seite.k] = m.bedien;
         if (process.env.SEITEN_AUSLESEN && m.kartenArtig.length) console.log(`KARTENARTIG ${seite.n}: ${m.kartenArtig.join(" | ")}`);
       }
-      if (theme === "light" && !/^rgb\(243, 245, 241\)$/.test(m.bodyBg)) merk("S2", `${wo}: ${m.bodyBg}`);
+      if (theme === "light" && !/^rgb\(241, 241, 244\)$/.test(m.bodyBg)) merk("S2", `${wo}: ${m.bodyBg}`);
       for (const t of m.titel) {
         const f = [];
         if (!/^["']?Playfair Display/i.test(t.font)) f.push(`Schrift ${t.font.split(",")[0]}`);
@@ -546,7 +546,7 @@ for (const g of GROESSEN) {
           if (f.length) merk("S5a", `${wo}: ${k.sel} „${k.text}“ ${f.join(", ")}`);
         } else if (k.bg === "rgb(255, 255, 255)") merk("S5b", `${wo}: ${k.sel} „${k.text}“ weiß`);
       }
-      if (theme === "light") for (const c of m.chipsOn) if (c.bg !== "rgb(20, 33, 26)" || c.farbe !== "rgb(255, 255, 255)") merk("S6", `${wo}: ${c.sel} „${c.text}“ Grund ${c.bg}, Schrift ${c.farbe}`);
+      if (theme === "light") for (const c of m.chipsOn) if (c.bg !== "rgb(36, 36, 42)" || c.farbe !== "rgb(255, 255, 255)") merk("S6", `${wo}: ${c.sel} „${c.text}“ Grund ${c.bg}, Schrift ${c.farbe}`);
       if (m.tipp.length) merk("S7", `${wo}: ${erste(m.tipp, 4)}`);
       if (m.ueberlapp.length) merk("S8", `${wo}: ${erste(m.ueberlapp, 3)}`);
       if (m.wisch) merk("S9a", `${wo}: seitlich wischbar`);
@@ -650,12 +650,12 @@ await pruefe("S16", "Akte mit unbekannter ID leitet zur Liste: dort kein data-se
   await p.evaluate(() => routeDetail("gibt-es-nicht")); await warte(p, 300);
   return (await seite2(p)) ? "Liste hat data-seite2" : [];
 });
-await pruefe("S2", "hell: Grund von body rgb(243, 245, 241) auf allen Seiten", () => kurz(sammel.S2 || []));
+await pruefe("S2", "hell: Grund von body rgb(241, 241, 244) auf allen Seiten (Farbe B, 23.11.2026)", () => kurz(sammel.S2 || []));
 await pruefe("S3", "Seitentitel (h1/h2/.sec-h/.display/.detail-name/.plan-title) in Playfair Display und einfarbig (.o wie der Rest)", () => kurz(sammel.S3 || []));
 await pruefe("S4", "Text in #view .view-inner in Manrope (Playfair nur Titel/große Zahlen ≥ 22 px)", () => kurz(sammel.S4 || []));
 await pruefe("S5a", "hell: Karten weiß, Rahmen 1px, Ecken 14–24 px", () => kurz(sammel.S5a || [], 12));
 await pruefe("S5b", "dunkel: Karten nicht weiß", () => kurz(sammel.S5b || []));
-await pruefe("S6", "hell: aktive Chips/Reiter (.pill/.f-chip/.pr-chip/.pt-tab/.seg-i .on) Grund rgb(20, 33, 26), Schrift weiß", () => kurz(sammel.S6 || []));
+await pruefe("S6", "hell: aktive Chips/Reiter (.pill/.f-chip/.pr-chip/.pt-tab/.seg-i .on) Grund rgb(36, 36, 42), Schrift weiß (Farbe B)", () => kurz(sammel.S6 || []));
 await pruefe("S7", "Tippflächen (.btn/.pill/.f-chip/.pr-chip/.pt-tab/.mini-btn/.seg-i/.chip/.back-btn) ≥ 44 px", () => kurz(sammel.S7 || [], 12));
 await pruefe("S8", "kein Text über anderem Text (> 2 px)", () => kurz(sammel.S8 || [], 12));
 

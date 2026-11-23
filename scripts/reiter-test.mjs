@@ -420,8 +420,9 @@ await pruefe("D5", "Fenster „Neuer Termin“: Lücken als Knöpfe → „Termi
 // E. CSS-Variablen und Schrift
 await pruefe("E1", "Farb- und Schrift-Variablen --k-* auf :root", async () => {
   const soll = {
-    "--k-grund": "#F3F5F1", "--k-tinte": "#14211A", "--k-text2": "#55645A", "--k-rand": "#E1E7DF", "--k-karte": "#FFFFFF",
-    "--k-akzent": "#1E6B46", "--k-akzent-hell": "#E3EFE7", "--k-jetzt": "#14211A", "--k-mint": "#5BD18E", "--k-mint-hell": "#9FD3B4",
+    // Farbe B „sehr hell und ruhig“ (Serband, 23.11.2026): neutrale Flächen, Grün nur als Akzent
+    "--k-grund": "#F1F1F4", "--k-tinte": "#24242A", "--k-text2": "#5A5A65", "--k-rand": "#CDCDD5", "--k-karte": "#FFFFFF",
+    "--k-akzent": "#2F6B47", "--k-akzent-hell": "#E9E9EE", "--k-jetzt": "#1F3A2C", "--k-mint": "#5BD18E", "--k-mint-hell": "#9FD3B4",
     "--k-gelb": "#FBEFD9", "--k-gelb-text": "#7A4508", "--k-rot": "#F8E3DF", "--k-rot-text": "#8E2A1E", "--k-whatsapp": "#0F7D6E",
     "--k-radius": "16px", "--k-tipp": "44px",
   };
