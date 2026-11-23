@@ -48,8 +48,12 @@ Deno.serve(async (req) => {
   // „Zahlung ausstehend“ nur, solange der Schüler wirklich gesperrt ist (K8; Fable M3)
   if (d.art === "zahlung_offen") {
     const { data: sperre, error: sperreErr } = await service.rpc("schueler_buchung_gesperrt", { sid: String(schueler_id) });
-    if (sperreErr || !sperre) {
-      await merke({ status: "fehler", fehler: sperreErr ? "Sperre nicht prüfbar" : "Keine Zahlung offen, nicht gesendet" });
+    if (sperreErr) {
+      await merke({ status: "fehler", fehler: "Sperre nicht prüfbar, nicht gesendet" });
+      return json({ fehler: "versand_fehlgeschlagen" }, 500);
+    }
+    if (!sperre) {
+      await merke({ status: "fehler", fehler: "Keine Zahlung offen, nicht gesendet" });
       return json({ fehler: "nicht_gesperrt" }, 409);
     }
   }
