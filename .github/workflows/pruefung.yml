@@ -79,6 +79,8 @@ jobs:
       - name: "Preisliste im Büro (K9: gültig ab, Verlauf, Herunterladen)"
         run: NODE_PATH=$(npm root -g) node scripts/preisliste-test.mjs
       - name: "Zahlungsaufforderung per Mail (Mail-Inhalt, GiroCode)"
-        run: node scripts/zahlungsmail-mail-test.mjs
+        run: |
+          npm i --silent --no-save --prefix /tmp/zm-qr jsqr@1.4.0 pngjs@7.0.0
+          ZM_QR_DIR=/tmp/zm-qr node scripts/zahlungsmail-mail-test.mjs
       - name: "Zahlungsaufforderung per Mail im Büro (Knopf, Haken, Rückgängig)"
         run: NODE_PATH=$(npm root -g) node scripts/zahlungsmail-test.mjs
