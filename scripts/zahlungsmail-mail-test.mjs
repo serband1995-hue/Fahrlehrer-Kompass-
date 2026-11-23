@@ -43,7 +43,7 @@ gleich("paypalLink Name wird kodiert", M.paypalLink("a b/c", 100), "https://www.
 // ---- Mail ----
 const d = { modus: "echt", art: "pruefung", betrag_cent: 12000, wofuer: "Prüfung B", verwendungszweck: "Max Muster, Prüfung B", schueler_name: "Max Muster",
   fahrschule: "Fahrschule Boost", kontoinhaber: "Fahrschule Boost", iban: "DE89370400440532013000", bic: "COBADEFFXXX", paypal: "boost", impressum: "Fahrschule Boost\nMusterstr. 1" };
-for (const [art, betreffSoll] of [["pruefung", "Zahlungsinformation zu Ihrer Prüfung"], ["reaktivierung", "Zahlungsinformation: Reaktivierung"], ["zahlung_offen", "Offene Zahlung: Ihre Termine sind gesperrt"]]) {
+for (const [art, betreffSoll] of [["pruefung", "Zahlungsinformation zu Ihrer Prüfung"], ["reaktivierung", "Zahlungsinformation: Reaktivierung"], ["zahlung_offen", "Wichtige Information zu Ihren Terminen"]]) {
   gleich("Betreff " + art, M.betreff({ ...d, art }), "Fahrschule Boost: " + betreffSoll);
   gleich("Betreff " + art + " im Test", M.betreff({ ...d, art, modus: "test" }), "[TEST] Fahrschule Boost: " + betreffSoll);
 }

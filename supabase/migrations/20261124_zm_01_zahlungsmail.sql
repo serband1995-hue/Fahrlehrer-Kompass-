@@ -288,18 +288,7 @@ revoke all on function public.fahrschule_zahlungsdaten_schutz() from public, ano
 revoke all on function public.fahrschule_zahlungsdaten_spur() from public, anon, authenticated;
 grant execute on function public.zahlungs_mail_vorbereiten(text, text, integer, text) to authenticated;
 
--- Schüler gelöscht: seine Mail-Spur (Freitext „wofür“, gekürzte Adresse) geht mit (Fable 24.11.)
-create or replace function public.zahlungs_mails_schueler_weg()
- returns trigger
- language plpgsql
- security definer
- set search_path to 'public'
-as $function$
-begin
-  delete from public.zahlungs_mails where schueler_id = old.id::text;
-  return null;
-end $function$;
-revoke all on function public.zahlungs_mails_schueler_weg() from public, anon, authenticated;
+-- Schüler gelöscht: die Mail-Spur BLEIBT (Aufbewahrung; Hauptsitzung 23.11.). schueler_id ist Text ohne Fremdschlüssel,
+-- darum kein Cascade. Ein früherer Entwurf hatte einen Lösch-Trigger: hier entfernen, falls er schon da ist.
 drop trigger if exists zahlungs_mails_schueler_weg on public.schueler;
-create trigger zahlungs_mails_schueler_weg after delete on public.schueler
-  for each row execute function public.zahlungs_mails_schueler_weg();
+drop function if exists public.zahlungs_mails_schueler_weg();

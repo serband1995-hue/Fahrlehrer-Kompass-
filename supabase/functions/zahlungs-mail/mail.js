@@ -74,7 +74,7 @@ export function paypalLink(name, cent) {
 const BETREFF = {
   pruefung: "Zahlungsinformation zu Ihrer Prüfung",
   reaktivierung: "Zahlungsinformation: Reaktivierung",
-  zahlung_offen: "Offene Zahlung: Ihre Termine sind gesperrt",
+  zahlung_offen: "Wichtige Information zu Ihren Terminen",
 };
 const SATZ = {
   pruefung: "für Ihre Prüfung bitten wir um folgende Zahlung:",
