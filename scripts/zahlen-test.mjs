@@ -249,7 +249,7 @@ fall("11 Urlaub/Blocker ist im Kalender nicht ziehbar", async (f) => {
   if (r.blockDrag) f("Block-Chip hat data-dragid (ist ziehbar)");
 });
 
-fall("12 'Hat nicht stattgefunden (löschen)' löscht sofort mit 6 s „Rückgängig“ (Paket 2, A18)", async (f) => {
+fall("12 'Hat nicht stattgefunden': gelaufene Stunde sofort storniert (K7, ohne zweites Fenster) mit 6 s „Rückgängig“ (Paket 2, A18)", async (f) => {
   const mk = () => neu({ students: [schueler("S1", "Anna Muster")], lessons: [les("FS", "2026-11-10", "10:00", "11:30", { sid: "S1" })] });
   const offen = async () => { await ruf(() => openFCMenu("FS")); const b = await page.$("[data-fcdel]"); if (!b) throw new Error("data-fcdel nicht gefunden"); return b; };
   await mk();

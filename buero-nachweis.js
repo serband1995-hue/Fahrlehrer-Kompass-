@@ -109,11 +109,31 @@ function nwSpurWert(p, v) {
   if (/^\d{4}-\d\d-\d\d/.test(v)) return datumDE(v.slice(0, 10)) + v.slice(10);
   return v;
 }
+// P0001 = Termin wurde von der Leitung entfernt (termin_entfernt_schutz) – verständlich statt Fehlertext
+function nwFehlerText(e, sonst) { return !e ? sonst : e.code === "P0001" ? "die Leitung hat diesen Termin entfernt" : e.message; }
+// K7: Papierkorb – storniert (bleibt aufbewahrt) oder Fehleintrag (nach 30 Tagen endgültig weg)
+const NW_PAPIERKORB_TAGE = 30;
+function nwStorno(t) { const s = (t.payload || {}).storno; return s && typeof s === "object" ? s : null; }
+function nwRestTage(t) {
+  const ab = Date.parse(t.geloescht_am || t.aktualisiert_am || "");
+  if (isNaN(ab)) return NW_PAPIERKORB_TAGE;
+  return Math.max(0, NW_PAPIERKORB_TAGE - Math.floor((Date.now() - ab) / 86400000));
+}
+function nwPapierkorbText(t) {
+  const s = nwStorno(t);
+  if (s) return `storniert${s.grund ? ": „" + s.grund + "“" : ""} · bleibt aufbewahrt`;
+  const p = t.payload || {};
+  if (p.signed || (p.signaturUngueltig && typeof p.signaturUngueltig === "object")) return "unterschrieben · bleibt aufbewahrt";
+  if (!t.geloescht_am) return "liegt im Papierkorb";
+  const n = nwRestTage(t);
+  return n > 1 ? `wird in ${n} Tagen endgültig gelöscht` : n === 1 ? "wird morgen endgültig gelöscht" : "wird heute endgültig gelöscht";
+}
 function nwSpurWer(p) { return p.bearbeiter || (teamPerson(p.geaendert_von) || {}).name || (p.geaendert_von ? "unbekannt" : "System"); }
 function nwSpurZeile(p, t) {
   const wann = new Date(p.geaendert_am).toLocaleString("de-DE", { dateStyle: "short", timeStyle: "short" });
   const was = p.feld === "angelegt" ? `Fahrstunde nachgetragen (${esc(nwSpurWert(p, p.neu))})`
     : p.feld === "geloescht" ? (p.neu === "true" ? "in den Papierkorb gelegt" : "aus dem Papierkorb zurückgeholt")
+    : p.feld === "endgueltig_geloescht" ? `endgültig gelöscht (${esc(nwSpurWert(p, p.alt))})`
     : p.feld === "signed" ? (p.neu === "true" ? "vom Schüler unterschrieben" : "Unterschrift ungültig oder entfernt")
     : `${esc(NW_FELD[p.feld] || p.feld)} ${esc(nwSpurWert(p, p.alt))} → ${esc(nwSpurWert(p, p.neu))}`;
   return `${esc(wann)} · ${esc(nwSpurWer(p))}: ${t ? `Stunde vom ${esc(datumDE(t.datum))} · ` : ""}${was}${p.grund ? ` · Grund: „${esc(p.grund)}“` : ""}`;
@@ -132,7 +152,7 @@ function nwUebersichtHTML(x, d, st) {
     return `<li class="nw-zeile"><span class="nw-wann"><b>${esc(datumDE(t.datum))}</b> ${esc(t.von || "")}–${esc(t.bis || "")}</span>
       <span class="nw-was">${esc(nwArtText(t))} · <span class="nw-nb">${nwMinuten(t)} Min.</span> · <span class="nw-nb">${esc(lehrerName(t.fahrlehrer_id) || "–")}</span></span>
       <span class="nw-us">${usTxt}</span>
-      <span class="nw-knoepfe"><button type="button" class="knopf klein" data-nwaendern="${esc(t.id)}">Ändern</button><button type="button" class="knopf klein" data-nwloeschen="${esc(t.id)}" aria-label="Fahrstunde vom ${esc(datumDE(t.datum))} löschen">Löschen</button></span></li>`;
+      <span class="nw-knoepfe"><button type="button" class="knopf klein" data-nwaendern="${esc(t.id)}">Ändern</button><button type="button" class="knopf klein" data-nwloeschen="${esc(t.id)}" aria-label="Fahrstunde vom ${esc(datumDE(t.datum))} ${nwIstNachweis(t) ? "stornieren" : "löschen"}">${nwIstNachweis(t) ? "Stornieren" : "Löschen"}</button></span></li>`;
   }).join("");
   const termin = (id) => d.aktiv.concat(d.papierkorb).find((t) => t.id === id);
   return `<div class="nw-kacheln">
@@ -147,7 +167,7 @@ function nwUebersichtHTML(x, d, st) {
     <div class="nw-kopf"><h3>Gefahrene Stunden (${st.gelaufen.length})</h3><button type="button" class="knopf klein" id="nwNeu">+ Fahrstunde nachtragen</button></div>
     ${zeilen ? `<ul class="nw-liste">${zeilen}</ul>` : `<p class="leise klein">Noch keine gefahrene Stunde im Kalender.</p>`}
     <details class="nw-details"><summary>Papierkorb (${d.papierkorb.length})</summary>
-      ${d.papierkorb.length ? `<ul class="nw-liste">${d.papierkorb.map((t) => `<li class="nw-zeile"><span class="nw-wann">${esc(datumDE(t.datum))} ${esc(t.von || "")}–${esc(t.bis || "")}</span><span class="nw-was">${esc(nwArtText(t))} · ${esc(lehrerName(t.fahrlehrer_id) || "–")}</span><span class="nw-knoepfe"><button type="button" class="knopf klein" data-nwzurueck="${esc(t.id)}">Wiederherstellen</button></span></li>`).join("")}</ul>` : `<p class="leise klein">Leer. Gelöschte Stunden landen hier und lassen sich zurückholen.</p>`}
+      ${d.papierkorb.length ? `<ul class="nw-liste">${d.papierkorb.map((t) => `<li class="nw-zeile"><span class="nw-wann">${esc(datumDE(t.datum))} ${esc(t.von || "")}–${esc(t.bis || "")}</span><span class="nw-was">${esc(nwArtText(t))} · ${esc(lehrerName(t.fahrlehrer_id) || "–")}<br><span class="leise klein">${esc(nwPapierkorbText(t))}</span></span><span class="nw-knoepfe"><button type="button" class="knopf klein" data-nwzurueck="${esc(t.id)}">Wiederherstellen</button></span></li>`).join("")}</ul>` : `<p class="leise klein">Leer. Gelöschte Stunden landen hier und lassen sich zurückholen.</p>`}
     </details>
     <details class="nw-details"><summary>Verlauf der Änderungen (${d.spur.length})</summary>
       ${d.spurFehlt ? `<p class="leise klein">Verlauf konnte nicht geladen werden.</p>` : d.spur.length ? `<ul class="nw-spur">${d.spur.map((p) => `<li>${nwSpurZeile(p, termin(p.datensatz_id))}</li>`).join("")}</ul>` : `<p class="leise klein">Noch keine Änderung. Jede Änderung wird hier mit Name, Zeit, altem und neuem Wert festgehalten.</p>`}
@@ -276,32 +296,54 @@ function nwKurzSperren() {
   setTimeout(() => k.forEach((b) => { if (b.isConnected) b.disabled = false; }), 400);
 }
 
+/* K7 (🗣 Serband 22.11.2026): Fehleintrag (noch nicht gelaufen, nie unterschrieben) → sofort in den Papierkorb, ohne Rückfrage,
+   „Rückgängig“; nach 30 Tagen endgültig leer. Gelaufene oder (je) unterschriebene Stunde → nur „stornieren“ mit kurzem Grund:
+   bleibt im Nachweis-Papierkorb als storniert aufbewahrt (gleiche Regel wie termin_ist_nachweis in der Datenbank). */
+function nwIstNachweis(t) {
+  const p = t.payload || {};
+  if (p.signed || (p.signaturUngueltig && typeof p.signaturUngueltig === "object")) return true;
+  const j = new Date();
+  if (!t.datum || !nwVorbei(t, KR.todayISO(), j.getHours() * 60 + j.getMinutes())) return false;
+  // Ausfall mit Berechnung ist Abrechnungs-Beleg (wie App und Datenbank)
+  if (p.noshow || (typeof p.tatsaechlicheDauer === "number" && p.tatsaechlicheDauer > 0)) return true;
+  return !nwAusgefallen(t);
+}
 async function nwLoeschen(t, nachher) {
   if (!t) return;
-  const grund = await nwGrundFragen(`Fahrstunde vom ${datumDE(t.datum)} löschen?`, (nwUnterschrift(t) === "ok" ? "Die Stunde ist schon vom Schüler unterschrieben. " : "") + "Die Stunde kommt in den Papierkorb und verschwindet beim Fahrlehrer. Sie lässt sich zurückholen.", "Ja, löschen");
-  if (grund === null) return;
+  const storno = nwIstNachweis(t);
+  let grund = "";
+  if (storno) {
+    grund = await nwGrundFragen(`Fahrstunde vom ${datumDE(t.datum)} stornieren`, (nwUnterschrift(t) === "ok" ? "Die Stunde ist schon vom Schüler unterschrieben. " : "Die Stunde ist schon gelaufen. ") + "Sie verschwindet beim Fahrlehrer und aus der Zählung und bleibt als storniert aufbewahrt (nicht endgültig löschbar).", "Stornieren", true);
+    if (grund === null) return;
+  }
   const werte = { geloescht: true, aktualisiert_am: new Date().toISOString() };
   let q = supa.from("kalender_termine").update(werte).eq("id", t.id);
-  if (grund) { const fr = await nwFrisch(t.id); if (fr) { werte.payload = Object.assign({}, fr.payload, { korrekturGrund: grund }); if (fr.am) q = q.eq("aktualisiert_am", fr.am); } }
+  if (storno) {
+    const fr = await nwFrisch(t.id);
+    werte.payload = Object.assign({}, fr ? fr.payload : t.payload || {}, { storno: { grund, am: new Date().toISOString(), von: "Büro" }, korrekturGrund: grund });
+    if (fr && fr.am) q = q.eq("aktualisiert_am", fr.am);
+  }
   const res = await q.select("*");
-  if (res.error || !res.data || !res.data.length) { toast("Nicht gelöscht: " + (res.error ? res.error.message : "keine Berechtigung"), true); return; }
-  nwMerken(res.data[0]); zeichne(); nachher();
-  toastUndo("Fahrstunde im Papierkorb", async () => { await nwWiederherstellen(res.data[0], nachher, true); });
+  if (res.error || !res.data || !res.data.length) { toast((storno ? "Nicht storniert: " : "Nicht gelöscht: ") + nwFehlerText(res.error, "keine Berechtigung oder gerade geändert"), true); return; }
+  PK.zeit = 0; nwMerken(res.data[0]); zeichne(); nachher();
+  toastUndo(storno ? "Fahrstunde storniert" : "Fahrstunde im Papierkorb", async () => { await nwWiederherstellen(res.data[0], nachher, true); });
 }
 async function nwWiederherstellen(t, nachher, still) {
   if (!t) return;
   const res = await supa.from("kalender_termine").update({ geloescht: false, aktualisiert_am: new Date().toISOString() }).eq("id", t.id).select("*");
-  if (res.error || !res.data || !res.data.length) { toast("Zurückholen ging nicht: " + (res.error ? res.error.message : "keine Berechtigung"), true); return; }
-  nwMerken(res.data[0]); zeichne(); nachher();
+  if (res.error || !res.data || !res.data.length) { toast("Zurückholen ging nicht: " + nwFehlerText(res.error, "keine Berechtigung"), true); return; }
+  PK.zeit = 0; nwMerken(res.data[0]); zeichne(); nachher();
   toast(still ? "Fahrstunde ist wieder da" : "Fahrstunde wiederhergestellt");
 }
 // Rückfrage mit freiwilligem Grund: liefert den Text ("" = ohne Grund) oder null (abgebrochen)
-function nwGrundFragen(titel, text, jaText) {
+function nwGrundFragen(titel, text, jaText, pflicht) {
   return new Promise((fertig) => {
     let ergebnis = null;
-    const dlg = oeffneDialog(titel, `<p>${esc(text)}</p><label class="voll">Grund (freiwillig, steht im Verlauf)<input type="text" name="grund" maxlength="200"></label>`, async (form) => {
-      ergebnis = String(new FormData(form).get("grund") || "").trim(); return true;
+    const dlg = oeffneDialog(titel, `<p>${esc(text)}</p><label class="voll">Grund (${pflicht ? "kurz" : "freiwillig"}, steht im Verlauf)<input type="text" name="grund" maxlength="200"${pflicht ? ' required placeholder="z. B. falsch eingetragen"' : ""}></label>`, async (form) => {
+      ergebnis = String(new FormData(form).get("grund") || "").trim(); if (pflicht && !ergebnis) { ergebnis = null; return false; } return true;
     }, jaText);
+    // Design K7: Stornieren ist dieselbe Aktion wie in der App → Warnfarbe statt grünem Hauptknopf
+    if (pflicht) { const k = dlg.querySelector("footer button[value=ok]"); if (k) { k.classList.remove("haupt"); k.classList.add("gefahr"); } }
     dlg.addEventListener("close", () => { if (ergebnis !== null) nwKurzSperren(); fertig(ergebnis); });
   });
 }
@@ -375,4 +417,71 @@ function nwDrucken(x, d, st, teil) {
   w.document.close(); w.focus();
   const k = (id, f) => { const b = w.document.getElementById(id); if (b) b.addEventListener("click", f); };
   k("nwDruck", () => w.print()); k("nwZu", () => w.close());
+}
+
+/* ---------- K7: Papierkorb der ganzen Fahrschule (unten im Kalender, einklappbar) ----------
+   Gelöschte Termine der letzten Zeit mit „Wiederherstellen“. Fehleinträge: „wird in X Tagen endgültig gelöscht“
+   (Datenbank-Funktion papierkorb_leeren, täglich und beim Laden). Stornierte/unterschriebene Stunden: eigene Liste,
+   bleiben aufbewahrt. Läuft auch mit alter Datenbank (ohne geloescht_am / papierkorb_leeren). */
+const PK_MAX = 300;
+const PK = { fs: null, voll: false, daten: null, zeit: 0, laedt: false, offen: false, stornoOffen: false, geleert: false, fehler: "" };
+async function pkHolen() {
+  if (PK.laedt) return; PK.laedt = true;
+  const fs = S.fsId;
+  try {
+    if (!PK.geleert) { PK.geleert = true; try { await supa.rpc("papierkorb_leeren"); } catch (e) { /* alte Datenbank: ohne */ } }
+    const spalten = "id,datum,von,bis,art,fahrlehrer_id,schueler_id,status,payload,aktualisiert_am";
+    const hol = (sp) => supa.from("kalender_termine").select(sp).eq("fahrschule_id", S.fsId).eq("geloescht", true).order("aktualisiert_am", { ascending: false }).limit(PK_MAX);
+    let r = await hol(spalten + ",geloescht_am,admin_entfernt_am");
+    if (r.error) r = await hol(spalten + ",geloescht_am");
+    if (r.error) r = await hol(spalten);
+    if (fs !== S.fsId) return; // während des Ladens Fahrschule gewechselt
+    if (r.error) { PK.fehler = r.error.message; PK.daten = PK.daten || []; }
+    // Von der Leitung entfernte Termine gehören nicht in den Papierkorb (gesperrt, lassen sich nicht zurückholen)
+    else { PK.fehler = ""; PK.voll = (r.data || []).length >= PK_MAX; PK.daten = (r.data || []).filter((t) => t.art !== "block" && !t.admin_entfernt_am); }
+    PK.zeit = Date.now();
+  } finally { PK.laedt = false; }
+}
+function pkArt(t) { return NW_FAHRT_ARTEN.includes(t.art || "fahrstunde") ? nwArtText(t) : (ARTEN[t.art] || t.art || "Termin"); }
+// Abgesagte Prüfung (Prüfungstafel hat die Verknüpfung gelöst) und online gebuchte Stunde (Absage ist raus): nicht zurückholen
+function pkNichtZurueck(t) { return t.art === "pruefung" ? "Prüfung: bitte auf der Prüfungstafel neu planen" : (t.payload || {}).onlineBookingId ? "online gebucht: Absage ist raus, bitte neu buchen" : ""; }
+function pkZeile(t) {
+  const nein = pkNichtZurueck(t);
+  return `<li class="nw-zeile"><span class="nw-wann"><b>${esc(datumDE(t.datum))}</b> ${esc(t.von || "")}–${esc(t.bis || "")}</span>
+    <span class="nw-was">${esc(pkArt(t))} · ${esc(schuelerName(t.schueler_id) || "ohne Schüler")} · ${esc(lehrerName(t.fahrlehrer_id) || "–")}<br><span class="leise klein">${esc(nwPapierkorbText(t))}</span></span>
+    <span class="nw-knoepfe">${nein ? `<span class="leise klein">${esc(nein)}</span>` : `<button type="button" class="knopf klein" data-pkzurueck="${esc(t.id)}">Wiederherstellen</button>`}</span></li>`;
+}
+function pkHTML() {
+  const alle = PK.daten || [];
+  const bleibt = alle.filter((t) => { const p = t.payload || {}; return nwStorno(t) || p.signed || (p.signaturUngueltig && typeof p.signaturUngueltig === "object"); });
+  const weg = alle.filter((t) => !bleibt.includes(t));
+  return `<details class="karte nw-details pk-karte" id="pkKarte"${PK.offen ? " open" : ""}><summary>Papierkorb (${PK.daten ? alle.length + (PK.voll ? "+" : "") : "…"})</summary>
+    ${PK.fehler ? `<p class="leise klein">Papierkorb konnte nicht geladen werden.</p>` : !PK.daten ? `<p class="leise klein">Lädt …</p>` : `
+    <p class="leise klein">Gelöschte Termine. Fehleinträge werden nach ${NW_PAPIERKORB_TAGE} Tagen endgültig gelöscht; stornierte und unterschriebene Stunden bleiben aufbewahrt. Der Verlauf jeder Stunde bleibt.</p>
+    ${PK.voll ? `<p class="leise klein">Gezeigt werden die letzten ${PK_MAX} gelöschten Termine.</p>` : ""}
+    ${weg.length ? `<ul class="nw-liste">${weg.map(pkZeile).join("")}</ul>` : `<p class="leise klein">Keine gelöschten Termine.</p>`}
+    ${bleibt.length ? `<details class="nw-details" id="pkStorno"${PK.stornoOffen ? " open" : ""}><summary>Storniert, bleibt aufbewahrt (${bleibt.length})</summary><ul class="nw-liste">${bleibt.map(pkZeile).join("")}</ul></details>` : ""}`}
+  </details>`;
+}
+function pkZeigen(ziel) {
+  if (!ziel || !S.fsId) return;
+  if (PK.fs !== S.fsId) { PK.fs = S.fsId; PK.daten = null; PK.zeit = 0; PK.geleert = false; PK.fehler = ""; } // andere Fahrschule: nichts von der vorigen zeigen
+  let box = ziel.querySelector("#buPapierkorb");
+  if (!box) { box = document.createElement("div"); box.id = "buPapierkorb"; ziel.appendChild(box); }
+  const neu = () => {
+    box.innerHTML = pkHTML();
+    const k = box.querySelector("#pkKarte"); if (k) k.addEventListener("toggle", () => { PK.offen = k.open; });
+    const s = box.querySelector("#pkStorno"); if (s) s.addEventListener("toggle", () => { PK.stornoOffen = s.open; });
+    box.querySelectorAll("[data-pkzurueck]").forEach((b) => b.addEventListener("click", async () => {
+      const t = (PK.daten || []).find((x) => x.id === b.dataset.pkzurueck); if (!t) return;
+      b.disabled = true;
+      const res = await supa.from("kalender_termine").update({ geloescht: false, aktualisiert_am: new Date().toISOString() }).eq("id", t.id).select("*");
+      if (res.error || !res.data || !res.data.length) { b.disabled = false; toast("Zurückholen ging nicht: " + nwFehlerText(res.error, "keine Berechtigung"), true); return; }
+      PK.daten = (PK.daten || []).filter((x) => x.id !== t.id);
+      nwMerken(res.data[0]); zeichne();
+      toast(`${pkArt(t)} vom ${datumDE(t.datum)} ist wieder da`);
+    }));
+  };
+  neu();
+  if (!PK.daten || Date.now() - PK.zeit > 60000) pkHolen().then(() => { if (box.isConnected) neu(); });
 }
