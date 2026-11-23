@@ -7704,7 +7704,6 @@ async function fsTerminBearbeiten(terminId){
   const supa=getSupa();
   const {data:t}=await supa.from("kalender_termine").select("*").eq("id",terminId).single();
   if(!t)return;
-  if(!confirm(`Termin ${t.von}–${t.bis} am ${t.datum}\n\nOK = bearbeiten, Abbrechen = zurück`))return;
   const neuVon=(prompt("Von (HH:MM):",t.von||"")||"").trim();
   if(!neuVon)return;
   const neuBis=(prompt("Bis (HH:MM):",t.bis||"")||"").trim();
@@ -7717,12 +7716,8 @@ async function fsTerminBearbeiten(terminId){
     const idx=parseInt(wahl)-1;
     if(!isNaN(idx)&&lehrer[idx])neuerLehrerId=lehrer[idx].id;
   }
-  const loeschen=confirm("Diesen Termin stattdessen LÖSCHEN? (Abbrechen = nur speichern)");
-  if(loeschen){
-    const {error}=await supa.from("kalender_termine").update({geloescht:true,aktualisiert_am:new Date().toISOString()}).eq("id",terminId);
-    if(error){toast("Fehler: "+error.message);return;}
-    toast("Termin gelöscht ✓");
-  }else{
+  // K7: keine Lösch-Rückfrage mehr hier – Löschen/Stornieren geht im Kalender (mit Rückgängig, gelaufene Stunden mit Grund)
+  {
     const {error}=await supa.from("kalender_termine").update({von:neuVon,bis:neuBis,fahrlehrer_id:neuerLehrerId,aktualisiert_am:new Date().toISOString()}).eq("id",terminId);
     if(error){toast("Fehler: "+error.message);return;}
     toast("Termin aktualisiert ✓");
@@ -12808,7 +12803,7 @@ function openEventSheet(kind,id,sid){
   if($("#esCancel"))$("#esCancel").addEventListener("click",()=>{ l.status="abgebrochen"; save(); _notifyOnlineBookingChange(id,"cancelled"); closeSheet(); toast("Als abgebrochen vermerkt"); routeKalender(); });
   const gb=$("#esGift"); if(gb)gb.addEventListener("click",()=>openGiftTimeSheet(id,routeKalender));
   const rs=$("#esReset"); if(rs)rs.addEventListener("click",()=>{ l.status="geplant"; save(); closeSheet(); toast("Status zurückgesetzt"); routeKalender(); });
-  $("#esDelete").addEventListener("click",()=>{ closeSheet(); deleteLessonMitRueckgaengig(id,()=>routeKalender()); });
+  $("#esDelete").addEventListener("click",()=>{ closeSheet(); deleteLessonMitRueckgaengig(id,()=>refreshCurrentView()); });
 }
 /* ===== Digitale Unterschrift für Fahrstundennachweis =====
    Master-Unterschrift wird einmal pro Schüler gespeichert (s.signature).
@@ -14129,7 +14124,11 @@ function _loeschenMitRueckgaengig(holen, eintrag, text, neuZeichnen, nachAblauf,
     if(eintrag&&typeof eintrag==="object")delete eintrag._syncedAt;
     try{ beiRueckgaengig&&beiRueckgaengig(); }catch(e){}
     save(); zeichne(); toast("Wiederhergestellt ✓"); },6000);
-  if(nachAblauf)setTimeout(()=>{ if(!rueck)try{ nachAblauf(); }catch(e){} },6300);
+  // Fehlersucher Bedienung K7: Mehrere Löschungen fasst toastUndo zusammen und verlängert das Rückgängig –
+  // dann erst nach dem Ende des Hinweises (sonst ginge z. B. eine Absage raus, obwohl Rückgängig noch angeboten wird)
+  if(nachAblauf){ const pruef=()=>{ if(rueck)return; const t=$("#toast");
+    if(t&&t.classList.contains("show")&&t.classList.contains("undo")&&t._undos&&t._undos.length){ setTimeout(pruef,400); return; }
+    try{ nachAblauf(); }catch(e){} }; setTimeout(pruef,6300); }
 }
 /* K7 Löschen (🗣 Serband 22.11.2026: „Ich will keinen unnötigen Ballast.“ / „keine Meldungen, wo ich etwas bestätigen soll“)
    Fehleintrag → sofort weg, 6 s „Rückgängig“ (Cloud: Papierkorb, nach 30 Tagen endgültig leer).
@@ -14208,7 +14207,7 @@ function openStornoSheet(id, neuZeichnen){
       ${STORNO_GRUENDE.map((g,i)=>`<button class="es-act" type="button" data-stogrund="${i}">${esc(g)}</button>`).join("")}
     </div>
     <label class="muted-p" for="stoText" style="display:block;font-size:13px;margin:14px 0 6px;">Anderer Grund</label>
-    <div style="display:flex;gap:8px;align-items:stretch;"><input id="stoText" type="text" maxlength="120" autocomplete="off" placeholder="kurz, z. B. Schüler krank" style="flex:1;min-width:0;min-height:44px;">
+    <div style="display:flex;gap:8px;align-items:stretch;"><input id="stoText" type="text" maxlength="120" autocomplete="off" data-kein-entwurf placeholder="kurz, z. B. Schüler krank" style="flex:1;min-width:0;min-height:44px;background:var(--surface);color:var(--txt);border:1px solid var(--line);border-radius:10px;padding:0 12px;font:inherit;">
     <button class="btn btn-danger" id="stoLos" type="button" style="min-height:44px;flex:none;" disabled>Stornieren</button></div>`);
   const los=grund=>{ grund=String(grund||"").trim().slice(0,120); if(!grund)return; closeSheet(); stornoLesson(id,grund,neuZeichnen); };
   document.querySelectorAll("[data-stogrund]").forEach(b=>b.addEventListener("click",()=>los(STORNO_GRUENDE[+b.dataset.stogrund])));
@@ -14718,10 +14717,17 @@ function bindExamReady(s,rerender){
   const on=$("#readyOn"); if(on)on.addEventListener("click",()=>{ setReady(s); logHist(s,"ready","Auf die Praxis-Warteliste gesetzt"); save(); toast("Auf die Warteliste gesetzt"); celebrate(); rerender(); });
   const off=$("#readyOff"); if(off)off.addEventListener("click",()=>{
     const hatTermin=!!terminFor(s.id);
-    if(hatTermin&&!confirm("Der geplante Prüfungstermin wird dabei mit gelöscht. Fortfahren?"))return;
     // Termin lösen: nur den Termin, der Platz auf der Warteliste bleibt. Ohne Termin: von der Warteliste nehmen.
+    // K7: ohne Rückfrage, 6 s Rückgängig
+    const plaetze=[]; (DB.termine||[]).forEach(t=>(t.slots||[]).forEach((x,i)=>{ if(x===s.id)plaetze.push({t,i}); }));
+    const alt={ready:s.ready,waitOrder:s.waitOrder,raus:s.wartelisteRaus};
     if(hatTermin){ clearSlot(s.id); } else { delete s.ready; delete s.waitOrder; s.wartelisteRaus=true; } save();
-    toast(hatTermin?"Termin gelöst":"Von der Warteliste genommen"); rerender();
+    rerender();
+    const zeichne=_undoNeuZeichnen(_navStack[_navStack.length-1],rerender);
+    toastUndo(hatTermin?"Prüfungstermin gelöst":"Von der Warteliste genommen",()=>{
+      if(hatTermin)plaetze.forEach(({t,i})=>{ if(t.slots&&!t.slots[i]&&(DB.termine||[]).includes(t))t.slots[i]=s.id; });
+      else { ["ready","waitOrder"].forEach(k=>{ if(alt[k]!==undefined)s[k]=alt[k]; }); if(alt.raus)s.wartelisteRaus=alt.raus; else delete s.wartelisteRaus; }
+      save(); zeichne(); toast("Wiederhergestellt ✓"); },6000);
   });
   const force=$("#readyForce"); if(force)force.addEventListener("click",()=>{ if(confirm("Diesen Schüler trotz offener Punkte manuell auf die Warteliste setzen?")){ setReady(s); save(); toast("Manuell auf die Warteliste gesetzt"); rerender(); } });
   const ex=$("#examBtn"); if(ex)ex.addEventListener("click",()=>routeExam(s.id));

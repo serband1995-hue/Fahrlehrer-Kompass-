@@ -241,6 +241,19 @@ await pruefe("L4", "online gebucht: ohne Dialog gelöscht; Absage geht erst nach
   return f;
 });
 
+await pruefe("L4c", "Sammel-Rückgängig: zweite Löschung verlängert das Rückgängig – Absage der ersten geht erst nach dem Ende raus, nach Rückgängig gar nicht", async () => {
+  const f = []; await toastWeg();
+  await p.evaluate(() => { window.__abs.length = 0; });
+  await stunde("l4c1", { date: 7, onlineBookingId: "ob-c" }); await stunde("l4c2", { date: 8 });
+  await oeffneStunde("l4c1"); await p.click("#esDelete"); await warte(p, 4000);
+  await oeffneStunde("l4c2"); await p.click("#esDelete"); await warte(p, 3000); // 7 s nach der ersten Löschung
+  if (await p.evaluate(() => window.__abs.length)) f.push("Absage raus, obwohl Rückgängig noch angeboten wird");
+  if (!(await toastRueck())) f.push("kein Rückgängig mehr");
+  await p.click("#toast .ut-btn"); await warte(p, 1500);
+  if (!(await lokal("l4c1")) || !(await lokal("l4c2"))) f.push("Rückgängig holt nicht beide zurück");
+  if (await p.evaluate(() => window.__abs.length)) f.push("Absage trotz Rückgängig: " + JSON.stringify(await p.evaluate(() => window.__abs)));
+  return f;
+});
 await pruefe("L5", "Schüler ausblenden: kein Dialog, künftige Termine bleiben im Kalender (Hinweis sagt es), keine Absage; Rückgängig blendet wieder ein", async () => {
   const f = []; const d0 = dialoge(); await toastWeg();
   await p.evaluate(() => { DB.lessons = []; window.__abs.length = 0; });
