@@ -45,6 +45,14 @@ Deno.serve(async (req) => {
     if (error) console.warn("zahlungs_mails update:", error.message);
   };
   // Der Bildschirm zeigte einen anderen Modus (jemand hat inzwischen umgeschaltet): nichts senden.
+  // „Zahlung ausstehend“ nur, solange der Schüler wirklich gesperrt ist (K8; Fable M3)
+  if (d.art === "zahlung_offen") {
+    const { data: sperre, error: sperreErr } = await service.rpc("schueler_buchung_gesperrt", { sid: String(schueler_id) });
+    if (sperreErr || !sperre) {
+      await merke({ status: "fehler", fehler: sperreErr ? "Sperre nicht prüfbar" : "Keine Zahlung offen, nicht gesendet" });
+      return json({ fehler: "nicht_gesperrt" }, 409);
+    }
+  }
   if (String(erwarteter_modus) !== String(d.modus)) {
     await merke({ status: "fehler", fehler: "Modus geändert, nicht gesendet" });
     return json({ fehler: "modus_geaendert", modus: d.modus }, 409);
