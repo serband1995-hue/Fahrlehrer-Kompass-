@@ -70,3 +70,5 @@ jobs:
         run: NODE_PATH=$(npm root -g) node scripts/pruefer-gemeinsam-test.mjs
       - name: "Schüler-Überblick und Weitergeben (K6: Akte gesperrt, kein Bestätigen-Fenster)"
         run: NODE_PATH=$(npm root -g) node scripts/schueler-ueberblick-test.mjs
+      - name: "Zurück auf jeder Seite (K10, App und Büro)"
+        run: NODE_PATH=$(npm root -g) node scripts/zurueck-test.mjs

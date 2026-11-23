@@ -152,17 +152,23 @@ await pruefe("A4", "aktiver Reiter passt zur Seite (genau einer)", async () => {
   return f;
 });
 
-await pruefe("A6", "Zurück: auf Hauptseiten kein Pfeil, Android-Zurück Prüfungen → Heute, Pfeil in der Akte führt zurück", async () => {
+await pruefe("A6", "Zurück (K10): Pfeil auch auf Hauptseiten, sobald es eine vorige Seite gibt; Pfeil und Android-Zurück Prüfungen → Heute; Pfeil in der Akte führt zurück", async () => {
   await aufraeumen(page);
   let e = await reiterKlick(page, "heute"); if (e) return e;
   e = await reiterKlick(page, "pruefungen"); if (e) return e;
   if ((await titel(page)) !== "Prüfungen") return "Prüfungen-Reiter öffnet nicht „Prüfungen“";
   const btn = page.locator("#navBackBtn");
-  if (await btn.isVisible()) return "Zurück-Pfeil auf der Hauptseite Prüfungen sichtbar";
+  // K10 (🗣 22.11.2026): „Auf jeder Seite ein Knopf, der eine Seite zurückspringt“ – also auch auf der Hauptseite Prüfungen
+  if (!(await btn.isVisible())) return "Zurück-Pfeil auf der Hauptseite Prüfungen fehlt";
   if (await page.locator("#menuBtn").isVisible()) return "Menü-Knopf oben noch sichtbar (doppelt zu „Mehr“)";
-  await page.evaluate(() => window.dispatchEvent(new PopStateEvent("popstate")));
+  await btn.click();
   await warte(page);
   let ti = await titel(page);
+  if (ti !== "Heute") return `nach Pfeil Titel „${ti}“`;
+  e = await reiterKlick(page, "pruefungen"); if (e) return e;
+  await page.evaluate(() => window.dispatchEvent(new PopStateEvent("popstate")));
+  await warte(page);
+  ti = await titel(page);
   if (ti !== "Heute") return `nach Android-Zurück Titel „${ti}“`;
   e = await reiterKlick(page, "schueler"); if (e) return e;
   await page.evaluate(() => routeDetail("t1"));

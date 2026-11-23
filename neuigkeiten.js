@@ -4,11 +4,19 @@
    "kurz" (höchstens ~60 Zeichen) erscheint nach dem Update einmal als kleiner Hinweis (verschwindet von selbst, kein Knopf).
    Einfache Worte, keine Fachwörter, keine Schülerdaten. */
 window.KOMPASS_NEU = [
-  { version: "2026.11.22.7", datum: "2026-11-22", kurz: "Neu: Alle Schüler der Fahrschule im Überblick.",
+  { version: "2026.11.23.3", datum: "2026-11-23", kurz: "Neu: Alle Schüler der Fahrschule im Überblick.",
     punkte: ["Unter „Schüler“ gibt es unten „Alle Schüler der Fahrschule“: Name, Fahrlehrer, Stand in Prozent und Stand Theorie.",
              "Die Akte eines Schülers öffnet nur sein eigener Fahrlehrer.",
              "Eigene Schüler kannst du dort an einen Kollegen weitergeben. Künftige Termine gehen mit, heute schon Gefahrenes und eine geplante Prüfung bleiben bei dir.",
              "Zurückholen geht über das Büro."] },
+  { version: "2026.11.23.2", datum: "2026-11-23", kurz: "Zurück klappt jetzt überall, Prüfer-Notiz bleibt.",
+    punkte: ["Nach dem Knopf „Prüfer“ und ähnlichen Knöpfen führt der Zurück-Pfeil wieder richtig zurück.",
+             "Eine angefangene Notiz zu einem Prüfer bleibt stehen, wenn du kurz zurückgehst und wiederkommst."] },
+  { version: "2026.11.22.7", datum: "2026-11-22", kurz: "Neu: Zurück-Knopf auf jeder Seite.",
+    punkte: ["Oben links steht auf jeder Seite ein Zurück-Knopf, sobald es eine vorige Seite gibt.",
+             "Zurück führt genau an die Stelle, an der du vorher warst. Die Zurück-Taste am Handy macht dasselbe.",
+             "Auch im Büro gibt es den Knopf „‹ Zurück“ neben dem Titel.",
+             "Im Kalender zählt Blättern nicht als neue Seite: Zurück führt sofort aus dem Kalender."] },
   { version: "2026.11.22.6", datum: "2026-11-22", kurz: "Prüfer-Wissen jetzt für die ganze Fahrschule.",
     punkte: ["Prüfer, Strecken und Notizen sehen jetzt alle Fahrlehrer deiner Fahrschule.",
              "Jede Notiz zeigt klein, wer sie geschrieben hat und wann.",
