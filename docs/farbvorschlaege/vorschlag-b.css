@@ -1,0 +1,48 @@
+/* Vorschlag B "Sehr hell und ruhig" (Überschreib-Datei, nur für die Bilder, nicht live).
+   Hell fast weiß, dünne Linien, kaum Schatten, mehr Luft. Dunkel weiches Grau-Blau. Grün noch sparsamer. */
+:root{
+  --bg:#fbfbfc; --surface:#ffffff; --surface-2:#f4f4f6;
+  --line:#e2e2e7; --line-soft:#ececf0;
+  --txt:#24242a; --muted:#5a5a65; --faint:#73737f;
+  --akzent:#2f6b47; --akzent-dark:#2f6b47;
+  --akzent-soft:rgba(36,36,42,.045); --akzent-line:rgba(47,107,71,.5);
+  --schatten:none;
+  --r:14px;
+}
+@media (prefers-color-scheme:dark){
+  :root{
+    --bg:#1b1f27; --surface:#232933; --surface-2:#2b323e;
+    --line:#38414f; --line-soft:#2e3643;
+    --txt:#eceff4; --muted:#b2bac7; --faint:#8893a3;
+    --akzent:#3f7f58; --akzent-dark:#8fcaa4;
+    --akzent-soft:rgba(255,255,255,.06); --akzent-line:rgba(143,202,164,.55);
+    --schatten:none;
+  }
+}
+/* dünne Linien statt Schatten, mehr Luft in Karten und Kacheln */
+.karte,.kachel{box-shadow:none;border:1px solid var(--line-soft);}
+.karte{padding:26px 28px;}
+.kachel{padding:24px 26px;}
+.kachel.gruen .wert,.kachel.gold .wert{color:var(--txt);}
+.kachel .wert{font-weight:600;}
+.kacheln{gap:22px;}
+.login-karte,.wer-karte{box-shadow:none;}
+.seite{border-right:1px solid var(--line-soft);}
+/* Seitenleiste: aktiver Eintrag nur schmaler Strich + fett, keine Fläche */
+.nav-punkt[aria-current="page"]{background:transparent;color:var(--txt);font-weight:700;box-shadow:inset 3px 0 0 var(--akzent);border-radius:0 var(--r-klein) var(--r-klein) 0;}
+.nav-punkt:hover{background:var(--surface-2);}
+/* Reiter: aktiv = nur Unterstrich */
+.tab[aria-current="page"]{background:transparent;border-color:var(--line);color:var(--txt);font-weight:700;box-shadow:inset 0 -2px 0 var(--akzent);}
+.formular .zm-wahl:has(input:checked){border-color:var(--txt);background:var(--surface-2);}
+.wer-zeile,.akademie-meldung{background:var(--surface-2);border-color:var(--line-soft);}
+.akademie-meldung.fehler{background:var(--rot-soft);border-color:var(--rot);}
+.menue-offen .menue-knopf{background:var(--surface-2);border-color:var(--line);}
+.nw-fehlt.gut{background:var(--surface-2);}
+.kopf-wer{border-color:var(--line);}
+.pr-betrag{color:var(--txt);}
+.h1,.j-tag.h1{background:color-mix(in srgb,var(--txt) 5%,var(--surface));}
+.h2,.j-tag.h2{background:color-mix(in srgb,var(--txt) 12%,var(--surface));}
+.dialog{box-shadow:0 12px 40px rgba(20,22,30,.18);}
+.dialog::backdrop{background:rgba(20,22,30,.4);}
+.wer{background:rgba(20,22,30,.45);} .wer.ohne-sitzung{background:rgba(20,22,30,.8);}
+.rollen-streifen.rs-buero{background:#555a66;border-bottom-color:#c8cbd2;}

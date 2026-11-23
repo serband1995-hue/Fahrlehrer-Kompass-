@@ -1,0 +1,38 @@
+/* Vorschlag A "Anthrazit, neutral" (Überschreib-Datei, nur für die Bilder, nicht live).
+   Flächen: echtes Grau/Weiß ohne Grünstich. Grün nur als Akzent: Hauptknöpfe, schmaler Strich beim aktiven Eintrag, Haken, Fokus. */
+:root{
+  --bg:#f4f4f5; --surface:#ffffff; --surface-2:#ececee;
+  --line:#d2d2d7; --line-soft:#e3e3e7;
+  --txt:#1c1c1f; --muted:#52525a; --faint:#74747d;
+  --akzent:#3a7350; --akzent-dark:#2f5d3f;
+  --akzent-soft:rgba(28,28,31,.06); --akzent-line:rgba(58,115,80,.55);
+  --schatten:0 1px 2px rgba(20,20,25,.06),0 6px 18px rgba(20,20,25,.06);
+}
+@media (prefers-color-scheme:dark){
+  :root{
+    --bg:#18181b; --surface:#232327; --surface-2:#2d2d32;
+    --line:#3f3f46; --line-soft:#2f2f35;
+    --txt:#f2f2f4; --muted:#b6b6be; --faint:#8b8b95;
+    --akzent:#3f8453; --akzent-dark:#86c79c;
+    --akzent-soft:rgba(255,255,255,.07); --akzent-line:rgba(134,199,156,.6);
+    --schatten:0 1px 2px rgba(0,0,0,.35),0 6px 18px rgba(0,0,0,.3);
+  }
+}
+/* Seitenleiste: aktiver Eintrag = neutrale Fläche + schmaler grüner Strich links */
+.nav-punkt[aria-current="page"]{background:var(--surface-2);color:var(--txt);box-shadow:inset 4px 0 0 var(--akzent);}
+/* Reiter: aktiv = neutral mit grünem Strich unten */
+.tab[aria-current="page"]{background:var(--surface-2);border-color:var(--line);color:var(--txt);box-shadow:inset 0 -3px 0 var(--akzent);}
+/* Auswahlflächen, Meldungen, Personenzeilen: neutral, grün nur am Rand/Auswahlpunkt */
+.formular .zm-wahl:has(input:checked){border-color:var(--txt);background:var(--surface-2);}
+.wer-zeile,.akademie-meldung{background:var(--surface-2);border-color:var(--line);}
+.akademie-meldung.fehler{background:var(--rot-soft);border-color:var(--rot);}
+.menue-offen .menue-knopf{background:var(--surface-2);border-color:var(--line);}
+.nw-fehlt.gut{background:var(--surface-2);}
+.kopf-wer{border-color:var(--line);}
+/* Heatmap-Zellen: Grauabstufung */
+.h1,.j-tag.h1{background:color-mix(in srgb,var(--txt) 7%,var(--surface));}
+.h2,.j-tag.h2{background:color-mix(in srgb,var(--txt) 16%,var(--surface));}
+/* Hintergrundschleier und Rollenstreifen ohne Grünstich */
+.dialog::backdrop{background:rgba(15,15,18,.5);}
+.wer{background:rgba(15,15,18,.55);} .wer.ohne-sitzung{background:rgba(15,15,18,.82);}
+.rollen-streifen.rs-buero{background:#4c4f57;border-bottom-color:#c4c6cc;}
