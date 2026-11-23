@@ -739,7 +739,7 @@ body.kiosk .rollen-streifen{display:none;}
 .formular .zm-modus-wahl{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px;}
 .formular .zm-modus-wahl legend{grid-column:1/-1;}
 .formular .zm-modus-wahl .zm-fehler{grid-column:1/-1;}
-.formular .zm-wahl{display:flex;align-items:flex-start;gap:12px;min-height:56px;padding:12px 14px;border:2px solid var(--line);border-radius:var(--r-klein);background:var(--bg);cursor:pointer;font-weight:500;}
+.formular .zm-wahl{display:flex;align-items:flex-start;gap:12px;min-height:56px;padding:12px 14px;border:2px solid var(--faint);border-radius:var(--r-klein);background:var(--bg);cursor:pointer;font-weight:500;}
 .formular .zm-wahl > span{display:grid;gap:2px;min-width:0;}
 .formular .zm-wahl input{flex:0 0 auto;margin-top:3px;min-height:auto;width:22px;height:22px;}
 .formular .zm-wahl:has(input:checked){border-color:var(--akzent);background:var(--akzent-soft);}
