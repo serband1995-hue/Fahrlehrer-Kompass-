@@ -91,7 +91,7 @@
     if (filterFl && !fls.includes(filterFl)) filterFl = ""; // der Fahrlehrer ist nicht mehr da: wieder alle zeigen
     const liste = daten.filter((r) => (!q || String(r.name || "").toLowerCase().includes(q) || String(r.fahrlehrer_name || "").toLowerCase().includes(q)) && (!filterFl || flKey(r) === filterFl));
     const wahl = document.getElementById("suFl");
-    if (wahl) { wahl.innerHTML = `<option value="">Alle Fahrlehrer</option>` + fls.map((k) => `<option value="${e_(k)}"${k === filterFl ? " selected" : ""}>${e_(k)}</option>`).join(""); wahl.value = filterFl; }
+    if (wahl) { wahl.innerHTML = `<option value="">Alle Fahrlehrer</option>` + fls.map((k) => `<option value="${e_(k)}"${k === filterFl ? " selected" : ""}>${e_(k)}</option>`).join(""); wahl.value = filterFl; wahl.classList.toggle("su-fl-aktiv", !!filterFl); }
     document.querySelectorAll("#suSort [data-sort]").forEach((b) => { const an = b.dataset.sort === sortWahl; b.classList.toggle("on", an); b.setAttribute("aria-pressed", an ? "true" : "false"); });
     let h = "";
     if (sortWahl === "fahrlehrer") {
@@ -146,7 +146,7 @@
       <div class="back-row"><button class="back-btn su-zurueck" id="suZurueck">${zurueck} Schüler</button></div>
       <p class="muted-p" style="font-size:12.5px;margin:2px 0 12px;">Überblick der ganzen Fahrschule. Die Akte öffnet nur der eigene Fahrlehrer.</p>
       <div class="search-wrap" style="margin:0 0 12px;"><input id="suSuche" type="search" placeholder="Name oder Fahrlehrer suchen" autocomplete="off" aria-label="Suchen" value="${suche.replace(/[&"<>]/g, (c) => ({ "&": "&amp;", '"': "&quot;", "<": "&lt;", ">": "&gt;" })[c])}"></div>
-      <div class="su-ordnung"><div class="su-sort" id="suSort" role="group" aria-label="Sortieren">${Object.keys(SORTEN).map((k) => `<button type="button" class="su-sortbtn" data-sort="${k}">${SORTEN[k]}</button>`).join("")}</div>
+      <div class="su-ordnung"><span class="su-sortlabel">Sortieren:</span><div class="su-sort" id="suSort" role="group" aria-label="Sortieren">${Object.keys(SORTEN).map((k) => `<button type="button" class="su-sortbtn" data-sort="${k}">${SORTEN[k]}</button>`).join("")}</div>
         <select id="suFl" class="su-fl-wahl" aria-label="Fahrlehrer"><option value="">Alle Fahrlehrer</option></select></div>
       <div id="suListe"></div>
     </div>`;
@@ -260,7 +260,7 @@
     const css = document.createElement("style"); css.id = "suCss";
     css.textContent = ".su-oeffnen{display:flex;flex-wrap:wrap;align-items:center;gap:2px 10px;width:100%;min-height:52px;margin:16px 0 6px;padding:11px 14px;background:var(--surface);border:1px solid var(--line);border-radius:14px;color:var(--txt);font:inherit;font-weight:700;font-size:14.5px;text-align:left;cursor:pointer}"
       + ".su-oeffnen small{flex-basis:100%;order:3;font-weight:500;font-size:12px;color:var(--muted)}.su-oeffnen .su-pfeil{margin-left:auto;color:var(--muted);font-size:20px}"
-      + ".su-ordnung{display:flex;flex-wrap:wrap;gap:8px;margin:0 0 4px}.su-sort{display:flex;gap:6px}.su-sortbtn{min-height:44px;padding:8px 14px;border-radius:11px;border:1px solid var(--line);background:var(--surface);color:var(--txt);font:inherit;font-weight:700;font-size:13.5px;cursor:pointer}.su-sortbtn.on{border-color:var(--txt)}"
+      + ".su-ordnung{display:flex;flex-wrap:wrap;gap:8px;margin:0 0 4px}.su-sort{display:flex;gap:6px}.su-sortbtn{min-height:44px;padding:8px 14px;border-radius:11px;border:1px solid var(--line);background:var(--surface);color:var(--txt);font:inherit;font-weight:700;font-size:13.5px;cursor:pointer}.su-sortbtn.on{border-color:var(--txt);background:var(--txt);color:var(--surface)}.su-sortlabel{align-self:center;color:var(--muted);font-size:13px;font-weight:600}.su-fl-aktiv{border-color:var(--txt)!important;font-weight:700}"
       + ".su-fl-wahl{flex:1 1 150px;min-width:0;min-height:44px;padding:8px 10px;border-radius:11px;border:1px solid var(--line);background:var(--surface);color:var(--txt);font:inherit;font-size:13.5px}"
       + ".su-gruppe{font-size:13.5px;font-weight:800;color:var(--txt);letter-spacing:.02em;padding:22px 0 8px}.su-zurueck{min-height:44px}.su-sheet-name{font-weight:700;font-size:15px;margin:-2px 0 6px;overflow-wrap:anywhere}"
       + ".su-karte{background:var(--surface);border:1px solid var(--line);border-radius:14px;padding:11px 13px;margin-bottom:9px}"

@@ -15215,6 +15215,8 @@ function routePruefungen(){
   $("#openPruefWoche").addEventListener("click",routePruefungenWoche);
   $("#openPruefer").addEventListener("click",routePrueferListe);
   document.querySelectorAll("[data-theo-ok]").forEach(b=>b.addEventListener("click",()=>{
+    // Doppeltipp: Die Liste rückt nach, der zweite Tipp träfe sonst den nächsten Schüler
+    if(Date.now()<(window._theoOkSperre||0))return; window._theoOkSperre=Date.now()+800;
     const s=DB.students.find(x=>x.id===b.dataset.theoOk); if(!s||s.plan&&s.plan.theorie)return;
     ensure(s); const alt=theorieStandMerken(s);
     theorieBestandenSetzen(s,true,true); save(); routePruefungen();
