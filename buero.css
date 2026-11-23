@@ -164,7 +164,7 @@ nav{display:grid;gap:2px;}
 .tabs{display:flex;gap:6px;flex-wrap:wrap;}
 .tab{padding:8px 14px;border-radius:999px;text-decoration:none;color:var(--muted);font-weight:600;border:1px solid var(--line-soft);}
 .tab:hover{background:var(--surface-2);}
-.tab[aria-current="page"]{background:var(--surface);border:2px solid var(--fokus);padding:7px 13px;color:var(--txt);font-weight:700;}
+.tab[aria-current="page"]{background:var(--txt);border-color:var(--txt);color:var(--bg);font-weight:700;}
 .filterzeile{display:flex;flex-wrap:wrap;gap:10px;align-items:center;margin:4px 0 14px;}
 .filterzeile .suche{min-width:0;flex:0 1 auto;max-width:100%;}
 .filterzeile input[type=search]{flex:1 1 260px;}
@@ -458,17 +458,17 @@ details summary{cursor:pointer;font-weight:700;margin:6px 0;}
 @page{size:A4 landscape;margin:12mm 12mm 16mm 12mm;@bottom-center{content:"Vertraulich: enthält Personendaten. Nach Gebrauch bitte vernichten.";font-size:8pt;color:#555;}}
 @media print{
   :root{color-scheme:light;
-  --bg:#f3f1e9; --surface:#fffdf7; --surface-2:#ece7d8;
-  --line:#ddd5bd; --line-soft:#e8e2cd;
-  --txt:#23261d; --muted:#5f5e4b; --faint:#8d8a6a;
-  --akzent:#3a7350; --akzent-dark:#2f5d3f; --akzent-soft:rgba(58,115,80,.12); --akzent-line:rgba(58,115,80,.28);
+  --bg:#ffffff; --surface:#ffffff; --surface-2:#e9e9ee;
+  --line:#cdcdd5; --line-soft:#dcdce2;
+  --txt:#24242a; --muted:#5a5a65; --faint:#66666f;
+  --akzent:#2f6b47; --akzent-dark:#2f6b47; --akzent-soft:rgba(36,36,42,.05); --akzent-line:#2f6b47;
   --gold:#b8873a; --gold-soft:rgba(184,135,58,.14);
   --rot:#c0503f; --rot-soft:rgba(192,80,63,.12);
   --gelb:#b9862f; --gelb-soft:rgba(207,154,62,.16);
   --gruen:#3f9a62; --gruen-soft:rgba(76,175,114,.14);
   --blau:#2F7DD1; --blau-soft:rgba(47,125,209,.12);
   --pill-gelb:#7a5410; --pill-gruen:#24693f; --pill-rot:#a03a2b; /* Pill-Text hell: Kontrast ≥ 4,5:1 */
-  --schatten:0 1px 2px rgba(60,50,20,.06),0 6px 18px rgba(60,50,20,.07);
+  --schatten:none;
   --r:16px; --r-klein:10px;
   --seite:272px;
   --diagramm:#2e8550;
@@ -790,6 +790,7 @@ body.kiosk .rollen-streifen{display:none;}
 /* Farbwahl B: Zusatzregeln (neutrale Flächen, Grün nur als Akzent) */
 @media (prefers-color-scheme:dark){
   .aufgabe-zeile .gelesen,.knopf.ergebnis-ja{color:var(--gruen);}
+  .haken.blau.an,.haken.gruen.an,.haken.rot.an{color:#14181f;}
   .knopf.haupt:hover{background:#336a4a;}
   .nav-punkt .zahl,.nav-gruppe .zahl.klein,.toast.fehler{background:#b3392b;}
 }
@@ -798,3 +799,6 @@ body.kiosk .rollen-streifen{display:none;}
 .zm-form input{border-color:var(--feld);}
 .formular .zm-wahl{border-color:var(--line);}
 ::placeholder{color:var(--muted);opacity:1;}
+.chip:has(input:checked){background:var(--txt);border-color:var(--txt);color:var(--bg);}
+/* am Handy weniger Innenabstand in Karten, damit lange Eingaben (IBAN) ganz sichtbar sind */
+@media (max-width:640px){ .karte{padding:20px 16px;} .kachel{padding:20px 18px;} }

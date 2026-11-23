@@ -24,7 +24,7 @@
   --txt:#eceff4; --muted:#b2bac7; --faint:#98a2b2;
   /* === Waldgrün-Akzent (ersetzt Orange; Variablennamen bleiben für Kompatibilität) === */
   --orange:#3f7f58; --orange-soft:rgba(255,255,255,.07); --orange-line:rgba(255,255,255,.16);
-  --akzent:#3f7f58; --akzent-dark:#336a4a; --akzent-bright:#8fcaa4; --fokus:#8fcaa4;
+  --akzent:#3f7f58; --akzent-dark:#336a4a; --akzent-bright:#8fcaa4; --fokus:#8fcaa4; --sel-bg:#3d4a5e; --sel-rand:#8fcaa4; --sel-txt:#ffffff;
   /* Alias — an mehreren Stellen (Nächste-Prüfung-Karte, Nächster-Schüler-Karte, Prüfungs-Tags) referenziert,
      bisher nirgends definiert gewesen -> Karten hatten unsichtbaren Hintergrund/Rand. */
   --gruen-soft:var(--orange-soft); --gruen-line:var(--orange-line);
@@ -1561,6 +1561,7 @@ body:not(.light) .cw-col.today .cw-dnum{color:var(--gold);}
 .cw-dnum{font-size:18px;font-weight:800;font-family:'Playfair Display',serif;}
 .cw-col.today .cw-dnum{color:var(--mint);}
 .cw-events{display:flex;flex-direction:column;gap:4px;}
+.cw-ev[style*="border-left-color:#88939a"],.ct-ev[style*="border-left-color:#88939a"]{background-image:repeating-linear-gradient(135deg,rgba(128,128,140,.28) 0,rgba(128,128,140,.28) 6px,transparent 6px,transparent 12px);}
 .cw-ev{border-left:3px solid var(--gruen-bright,#4a8b45);background:var(--bg-soft);border-radius:6px;padding:5px 6px;text-align:left;}
 .cw-ev.exam-soon{box-shadow:0 0 0 1.5px #c9a227 inset;background:rgba(201,162,39,.1);}
 .cw-ev.exam-done{background:var(--bg-soft);opacity:.92;}
@@ -1756,7 +1757,7 @@ body:not(.light) .fs-buero-link .fbl-ic,body:not(.light) .fs-buero-link .fbl-pfe
 .vortest-big .vb-ic{font-size:22px;flex:0 0 auto;}
 .vortest-big .vb-body .vb-name{color:#fff;font-weight:800;font-size:15px;}
 .vortest-big .vb-body .vb-sub{color:rgba(255,255,255,.88);font-size:12px;margin-top:1px;}
-.vortest-big .vb-arr{color:rgba(255,255,255,.6);font-size:18px;margin-left:auto;}
+.vortest-big .vb-arr{color:#fff;font-size:18px;margin-left:auto;}
 .vortest-big:active{opacity:.85;}
 /* Sehhilfe */
 .chip.sehhilfe{color:var(--muted);border-color:var(--line-soft);cursor:pointer;}
@@ -2106,7 +2107,7 @@ body:not(.light) .fs-btn-kill{color:#ff8a80;} /* K3: „Sperren“ dunkel lesbar
   --line:#38414f; --line-soft:#2e3643; --feld:#7a8598;
   --txt:#eceff4; --muted:#b2bac7; --faint:#98a2b2;
   --orange:#3f7f58; --orange-soft:rgba(255,255,255,.07); --orange-line:rgba(255,255,255,.16);
-  --akzent:#3f7f58; --akzent-dark:#336a4a; --akzent-bright:#8fcaa4; --fokus:#8fcaa4;
+  --akzent:#3f7f58; --akzent-dark:#336a4a; --akzent-bright:#8fcaa4; --fokus:#8fcaa4; --sel-bg:#3d4a5e; --sel-rand:#8fcaa4; --sel-txt:#ffffff;
   --gruen-soft:var(--orange-soft); --gruen-line:var(--orange-line);
   --mint:#bcd6c5; --mint-soft:#9fc3ab;
   --gold:#c9a227; --gold-soft:rgba(201,162,39,.16); --gold-line:rgba(201,162,39,.4);
@@ -2123,7 +2124,7 @@ body.light{
   --line:#cdcdd5; --line-soft:#dcdce2; --feld:#85858f;
   --txt:#24242a; --muted:#5a5a65; --faint:#66666f;
   --orange:#2f6b47; --orange-soft:rgba(36,36,42,.06); --orange-line:rgba(36,36,42,.18);
-  --akzent:#2f6b47; --akzent-dark:#2f6b47; --akzent-bright:#2f6b47; --fokus:#2f6b47;
+  --akzent:#2f6b47; --akzent-dark:#2f6b47; --akzent-bright:#2f6b47; --fokus:#2f6b47; --sel-bg:#24242a; --sel-rand:#24242a; --sel-txt:#ffffff;
   --gruen-soft:var(--orange-soft); --gruen-line:var(--orange-line);
   --mint:#2f6b47; --mint-soft:#2f6b47; --mint-ok:var(--gruen);
   --gold:#b8873a; --gold-soft:rgba(184,135,58,.14); --gold-line:rgba(184,135,58,.35);
@@ -2146,7 +2147,7 @@ body{font-size:15.5px;line-height:1.5;letter-spacing:0;}
 .res-block h4{color:var(--muted) !important;}
 .o{color:var(--akzent) !important;}
 body:not(.light) .o,body:not(.light) .brand-script b,body:not(.light) .sp-name b,body:not(.light) .ap-title{color:var(--akzent-bright) !important;}
-body:not(.light) .pill.on,body:not(.light) .f-chip.on,body:not(.light) .pr-chip.on,body:not(.light) .pt-tab.on,body:not(.light) .fs-status-on,body:not(.light) .es-act.good{color:var(--akzent-bright) !important;}
+body:not(.light) .fs-status-on,body:not(.light) .es-act.good{color:var(--akzent-bright) !important;}
 body::before{background:var(--bg) !important;}
 body::after{display:none !important;}
 body.light::before{background:var(--bg) !important;}
@@ -2178,7 +2179,7 @@ body.light::before{background:var(--bg) !important;}
 .btn-primary{background:var(--akzent) !important;color:#fff !important;border:none !important;}
 .btn-primary:active{background:var(--akzent-dark) !important;}
 .btn-ghost{background:transparent !important;border:1px solid var(--line) !important;color:var(--txt) !important;}
-.pill.on,.f-chip.on,.pr-chip.on,.pt-tab.on{background:var(--orange-soft) !important;border-color:var(--orange-line) !important;color:var(--akzent-dark) !important;}
+.pill.on,.f-chip.on,.pr-chip.on,.pt-tab.on{background:var(--sel-bg) !important;border-color:var(--sel-rand) !important;color:var(--sel-txt) !important;}
 .nex-card::before{background:var(--akzent) !important;width:4px !important;border-radius:4px;top:14px !important;height:calc(100% - 28px) !important;}
 .hc-n{font-size:34px !important;font-weight:600 !important;letter-spacing:-.02em !important;}
 .stat .badge,.na-ic,.ns-ic,.nex-ic{border-radius:999px !important;background:var(--orange-soft) !important;box-shadow:none !important;}
@@ -2206,7 +2207,7 @@ body:has(#sheet.open) .toast{bottom:auto !important;top:calc(14px + env(safe-are
 .view-inner{padding-bottom:160px !important;}
 /* Umbau 2026-10: Farb- und Schrift-Grundlagen aus dem freigegebenen Entwurf (werden ab Schritt 2 genutzt) */
 :root{--k-grund:#F1F1F4;--k-tinte:#24242A;--k-text2:#5A5A65;--k-rand:#CDCDD5;--k-karte:#FFFFFF;
-  --k-akzent:#2F6B47;--k-akzent-hell:#E9E9EE;--k-jetzt:#24242A;--k-mint:#5BD18E;--k-mint-hell:#9FD3B4;
+  --k-akzent:#2F6B47;--k-akzent-hell:#E9E9EE;--k-jetzt:#1F3A2C;--k-mint:#5BD18E;--k-mint-hell:#9FD3B4;
   --k-gelb:#FBEFD9;--k-gelb-text:#7A4508;--k-rot:#F8E3DF;--k-rot-text:#8E2A1E;--k-whatsapp:#0F7D6E;
   --k-font-titel:"Playfair Display",Georgia,serif;--k-font-text:"Manrope",system-ui,sans-serif;--k-radius:16px;--k-tipp:44px;}
 /* Umbau Schritt 2: Startseite „Heute“ nach dem freigegebenen Entwurf. Hell = Entwurf, Dunkel = gleiche Ordnung auf dunklem Grund. */
@@ -2254,7 +2255,7 @@ body:not(.light) .h2-wx .wx-wolke-f:not([fill*="wxd"]){fill:#DDE6E0;}
 body:not(.light) .h2-wx .wx-wolke-f{stroke:#b8bfcb;}
 body:not(.light) .h2-wx.wx-nebel g{stroke:#b8bfcb;}
 /* Jetzt dran: immer dunkelgrün mit Mint */
-.h2-jetzt{background:var(--k-jetzt);color:#fff;border:1px solid #454d5c;border-radius:24px;padding:20px;display:flex;flex-direction:column;gap:14px;}
+.h2-jetzt{background:var(--k-jetzt);color:#fff;border:1px solid #3b5a49;border-radius:24px;padding:20px;display:flex;flex-direction:column;gap:14px;}
 .h2-jetzt-kopf{display:flex;align-items:center;justify-content:space-between;gap:10px;}
 .h2-jetzt-label{display:flex;align-items:center;gap:8px;font-size:12px;font-weight:800;letter-spacing:.08em;text-transform:uppercase;color:var(--k-mint-hell);}
 .h2-live{width:8px;height:8px;border-radius:50%;background:var(--k-mint);display:inline-block;animation:h2puls 1.6s ease-in-out infinite;flex:0 0 auto;}
@@ -2268,12 +2269,12 @@ body:not(.light) .h2-wx.wx-nebel g{stroke:#b8bfcb;}
 .h2-jetzt-fokus{font-size:13.5px;color:#d4d7de;overflow-wrap:anywhere;}
 .h2-jetzt-pct{margin-left:auto;font-family:var(--k-font-titel);font-size:22px;font-weight:700;color:var(--k-mint-hell);flex:0 0 auto;}
 .h2-kontakt{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px;}
-.h2-knopf{min-height:46px;border-radius:14px;border:1px solid #454d5c;background:#2d3440;color:#fff;font-weight:700;font-size:14px;display:flex;align-items:center;justify-content:center;gap:8px;text-decoration:none;padding:0 10px;}
+.h2-knopf{min-height:46px;border-radius:14px;border:1px solid rgba(255,255,255,.22);background:rgba(255,255,255,.08);color:#fff;font-weight:700;font-size:14px;display:flex;align-items:center;justify-content:center;gap:8px;text-decoration:none;padding:0 10px;}
 .h2-knopf svg{width:18px;height:18px;}
 .h2-haupt{min-height:54px;border-radius:16px;background:var(--k-mint);color:#0E2A1B;font-size:16px;font-weight:800;display:flex;align-items:center;justify-content:center;gap:10px;border:0;width:100%;}
 .h2-haupt svg{width:20px;height:20px;}
 .h2-schnell{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:6px;}
-.h2-mini{min-height:48px;padding:4px 6px;border-radius:12px;background:#2d3440;border:1px solid #454d5c;color:#d4d7de;font-size:12px;font-weight:700;line-height:1.2;display:flex;align-items:center;justify-content:center;text-align:center;}
+.h2-mini{min-height:48px;padding:4px 6px;border-radius:12px;background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.22);color:#d4d7de;font-size:12px;font-weight:700;line-height:1.2;display:flex;align-items:center;justify-content:center;text-align:center;}
 .h2-leer{align-items:flex-start;}
 .h2-fortsetzen{display:flex;align-items:center;gap:10px;min-height:52px;padding:0 16px;border-radius:16px;border:1px solid var(--k-mint);background:#2f3846;color:#fff;font-size:15px;font-weight:800;text-align:left;width:100%;}
 .h2-fortsetzen .h2-fs-zeit{margin-left:auto;font-size:12.5px;font-weight:700;color:#c5c9d2;}
@@ -2326,6 +2327,7 @@ body:not(.light) .h2-knopf,body:not(.light) .h2-mini{background:#2b323e;border-c
 .heute2 .cap-title{color:var(--h-text2);}
 .heute2 .cap-pct{color:var(--h-tinte) !important;font-weight:800;font-variant-numeric:lining-nums;}
 .heute2 .cap-foot{color:var(--h-text2);}
+body.light .fc-missing-link{color:var(--zahl-rot);}
 .heute2 .fc-missing-link,.heute2 .cap-card,.heute2 #capCard{min-height:48px;}
 /* Querformat: rechts Platz für den Plus-Knopf, damit er keine Knöpfe verdeckt */
 @media (orientation:landscape) and (max-height:520px){ .heute2{padding-right:calc(var(--pad,16px) + 72px) !important;} .tabbar{background:var(--bg) !important;} }
@@ -2473,7 +2475,7 @@ body:not(.light) .ap-zeile b.ok{color:var(--mint-ok);} body:not(.light) .ap-zeil
 /* Umbau Schritt 5a: übrige Seiten im gleichen Stil wie Heute/Schüler. Nur Aussehen.
    #view bekommt data-seite2 (gesetzt in navInstallieren, siehe SEITE2_ROUTEN); die ID-Stärke schlägt die alten !important-Regeln. */
 #view[data-seite2]{--s2-karte:var(--k-karte);--s2-rand:var(--k-rand);--s2-tinte:var(--k-tinte);--s2-text2:var(--k-text2);--s2-on:var(--k-tinte);--s2-on-t:#fff;--s2-akzent:var(--k-akzent);--s2-trenn:#EEF2EC;}
-body:not(.light) #view[data-seite2]{--s2-karte:var(--surface);--s2-rand:var(--line);--s2-tinte:var(--txt);--s2-text2:#b2bac7;--s2-on:#2f3846;--s2-on-t:#fff;--s2-akzent:var(--mint-ok,#7fbf95);--s2-trenn:var(--line-soft);}
+body:not(.light) #view[data-seite2]{--s2-karte:var(--surface);--s2-rand:var(--line);--s2-tinte:var(--txt);--s2-text2:#b2bac7;--s2-on:#3d4a5e;--s2-on-t:#fff;--s2-akzent:var(--mint-ok,#7fbf95);--s2-trenn:var(--line-soft);}
 body.light:has(#view[data-seite2]){background:var(--k-grund) !important;}
 body.light:has(#view[data-seite2])::before{background:var(--k-grund) !important;}
 #view[data-seite2] .view-inner,#view[data-seite2] .view-inner *:not(svg):not(svg *){font-family:var(--k-font-text) !important;}
@@ -2728,9 +2730,10 @@ body:not(.light) #view[data-seite2] .cw-col.today{background:rgba(91,209,142,.10
   color:var(--muted);font-size:11px;font-weight:600;letter-spacing:.02em;border-radius:18px;transition:color .15s var(--ease);}
 .tab-ic{width:56px;height:30px;border-radius:999px;display:flex;align-items:center;justify-content:center;transition:background .18s var(--ease),transform .18s var(--pop);}
 .tab-i svg{width:22px;height:22px;stroke:currentColor;}
-.tab-i.on{color:var(--akzent-dark);}
+.tab-i.on{color:#24573a;}
 body:not(.light) .tab-i.on{color:var(--akzent-bright);}
-.tab-i.on .tab-ic{background:var(--orange-soft);}
+.tab-i.on .tab-ic{background:rgba(47,107,71,.16);}
+body:not(.light) .tab-i.on .tab-ic{background:rgba(143,202,164,.22);}
 .tab-i:active .tab-ic{transform:scale(.9);}
 #alphaNav{border-radius:999px !important;}
 /* Kalender-/Statistik-Akzente, die bisher Waldgrün waren (nicht die Ampel — die bleibt) */
@@ -2773,9 +2776,9 @@ body:not(.light) .lo-logo span{color:var(--akzent-bright) !important;}
 .lo-btn{background:var(--akzent) !important;color:#fff !important;border-radius:999px !important;box-shadow:none !important;font-weight:600 !important;}
 .lo-err{border-radius:16px !important;}
 /* Zustands-Farben, die der Design-Hintergrund sonst verschluckt (Weiß auf Weiß) */
-.pill.sel{background:var(--orange-soft) !important;border-color:var(--orange-line) !important;color:var(--akzent-dark) !important;}
+.pill.sel{background:var(--sel-bg) !important;border-color:var(--sel-rand) !important;color:var(--sel-txt) !important;}
 .chip.chip-goal{background:var(--orange-soft) !important;border-color:var(--orange-line) !important;color:var(--akzent-dark) !important;}
-body:not(.light) .pill.sel,body:not(.light) .chip.chip-goal{color:var(--akzent-bright) !important;}
+body:not(.light) .chip.chip-goal{color:var(--akzent-bright) !important;}
 .std.filled{background:var(--orange-soft) !important;border-color:var(--akzent) !important;}
 .sonder-row .std.filled{background:var(--clay-soft) !important;border-color:var(--clay) !important;}
 .wait-card .wait-days[style*="--gruen"] .wd-n,.wait-card .wait-days[style*="--gruen"] .wd-l{color:#fff !important;opacity:.95;}
@@ -2802,6 +2805,21 @@ body.light .fc-miss-sum b{color:#7a2a1e !important;}
 /* Farbwahl B: Fokus-Ring deutlich (mindestens 3:1), Platzhalter lesbar */
 button:focus-visible,a:focus-visible,input:focus-visible,select:focus-visible,textarea:focus-visible,[role="button"]:focus-visible,[tabindex]:focus-visible{outline:3px solid var(--fokus);outline-offset:2px;}
 ::placeholder{color:var(--muted);opacity:1;}
+/* Farbwahl B, Nachbesserung: kleine Texte mit Kontrast >= 4,5:1 */
+.cw-evstat{color:var(--zahl-rot);}
+.fc-no .fcheck-mark{color:#8a2a18;}
+body:not(.light) .fc-no .fcheck-mark{color:var(--zahl-rot);}
+.fc-ok .fcheck-mark{color:#24693f;}
+body:not(.light) .fc-ok .fcheck-mark{color:#8fd6a9;}
+.amp[data-v="gruen"].on,.amp.chk.on{color:#10261a;}
+.amp.chk.on::after{color:#10261a;}
+.skill .sk-ort{opacity:1 !important;}
+.skill-info b,.res-block h4,.plan-sec-h .nr,.acc-h .nr,.tm-btn,.sim-plus,.slot-free,.wait-days .wd-n,.fs-status-on{color:var(--akzent-bright);}
+.sonder-row .std.filled .n,.sonder-row .top span:first-child,.sonder-row .soll b{color:var(--clay-text);}
+:root{--clay-text:#a85a38;}
+body:not(.light){--clay-text:#e8a283;}
+/* Fahrmodus (immer dunkel): heller Fokus-Ring */
+.fahrmodus :focus-visible,.fahrmodus button:focus-visible{outline-color:#8fcaa4;}
 </style>
 </head>
 <body>
@@ -6433,7 +6451,7 @@ async function routeFahrschuleDetail(fahrschuleId){
   const schuelerRows=schueler.map(s=>{
     const paketName=s.paket_id?esc((pakete.find(p=>p.id===s.paket_id)||{}).name||""):"";
     const badges=[
-      s.bogen_ausgefuellt?'<span style="color:#4a8b45;">✓ Bogen</span>':'<span style="color:var(--muted);">– kein Bogen</span>',
+      s.bogen_ausgefuellt?'<span style="color:var(--akzent-bright);">✓ Bogen</span>':'<span style="color:var(--muted);">– kein Bogen</span>',
       paketName?`<span style="color:var(--muted);">${paketName}</span>`:"",
       s.hat_simulator?"🎮":"", s.hat_theorie_app?"📘":""
     ].filter(Boolean).join(" &nbsp;·&nbsp; ");
@@ -7188,7 +7206,7 @@ function routeFahrschuleKategorie(key){
     let extra="";
     if(key==="simulator") extra=`<div class="fs-sub">Zeitraum: ${esc(t.von||"")}–${esc(t.bis||"")}</div>`;
     if(key==="beratung"&&!t.sid) extra=`<div class="fs-sub">Interessent (noch kein Schüler) &nbsp;·&nbsp; ${esc(t.interessent_telefon||"– keine Nummer –")}</div>`;
-    if(key==="theorie_pruefung") extra=`<div class="fs-sub" style="margin-top:4px;">${t.theorie_bestanden==null?"Noch offen":(t.theorie_bestanden?'<span style="color:#4a8b45;">✅ Bestanden</span>':'<span style="color:#c83c3c;">❌ Nicht bestanden</span>'+(t.theorie_gesperrt_bis?` · Sperre bis ${isoDE(t.theorie_gesperrt_bis)}`:''))}</div>
+    if(key==="theorie_pruefung") extra=`<div class="fs-sub" style="margin-top:4px;">${t.theorie_bestanden==null?"Noch offen":(t.theorie_bestanden?'<span style="color:var(--akzent-bright);">✅ Bestanden</span>':'<span style="color:#c83c3c;">❌ Nicht bestanden</span>'+(t.theorie_gesperrt_bis?` · Sperre bis ${isoDE(t.theorie_gesperrt_bis)}`:''))}</div>
       <div class="fs-actions"><button class="fs-btn-activate" onclick="fsTheorieErgebnis(${_jsArg(t.id)},true)">Bestanden</button><button class="fs-btn-kill" onclick="fsTheorieErgebnis(${_jsArg(t.id)},false)">Nicht bestanden</button></div>`;
     if(key==="ersthilfe") extra=`<div class="toggle-row" style="margin-top:6px;"><div class="tc-name" style="font-size:13px;">Bezahlt</div><button class="check-toggle${t.kurs_bezahlt?' on':''}" onclick="fsKursBezahltToggle(${_jsArg(t.id)},${!t.kurs_bezahlt})"></button></div>`;
     return `<div class="fs-card">
@@ -7659,7 +7677,7 @@ async function neuenSchuelerAnlegenFS(fahrschuleId){
 /* ============================================================
    FAHRSCHULE-KALENDER (Wochenansicht, alle Fahrlehrer, filterbar)
    ============================================================ */
-const FS_KAL_FARBEN=["#7d7d86","#4a8bd6","#cf9a3e","#b23a6b","#3aa7b2","#8a5fd6","#c85a3a","#5f9e3a"];
+const FS_KAL_FARBEN=["#9a8f7e","#4a8bd6","#cf9a3e","#b23a6b","#3aa7b2","#8a5fd6","#c85a3a","#5f9e3a"];
 function _fsKalFarbeFuer(fahrlehrerId,lehrerListe){
   const idx=lehrerListe.findIndex(l=>l.id===fahrlehrerId);
   return FS_KAL_FARBEN[(idx<0?0:idx)%FS_KAL_FARBEN.length];
@@ -9915,7 +9933,7 @@ function uePrognoseKachel(s){
   const persoenlich=ueDurchschnittPersoenlich();
   const zeilePersoenlich=persoenlich!=null
     ?`<div style="display:flex;justify-content:space-between;align-items:center;margin:5px 0;font-size:13px;"><span style="color:var(--muted);">Ø bei mir bis bestanden</span><b>${Math.round(persoenlich)} UE</b></div>
-      <div style="display:flex;justify-content:space-between;align-items:center;margin:5px 0;font-size:13px;color:#4a8b45;"><span>Voraussichtlich noch offen</span><b>~${Math.max(0,Math.round(persoenlich+UE_PROGNOSE_PUFFER-bisher))} UE</b></div>`
+      <div style="display:flex;justify-content:space-between;align-items:center;margin:5px 0;font-size:13px;color:var(--akzent-bright);"><span>Voraussichtlich noch offen</span><b>~${Math.max(0,Math.round(persoenlich+UE_PROGNOSE_PUFFER-bisher))} UE</b></div>`
     :`<p class="muted-p" style="font-size:12px;margin:4px 0 0;">Noch keine eigenen bestandenen Prüfungen für einen Durchschnitt.</p>`;
   return `<div class="res-block" style="animation:none;margin-top:9px;">
     <h4>📊 UE-Prognose</h4>
@@ -9954,9 +9972,9 @@ function examPrognose(s){
   const allExams=(DB.exams||[]).filter(istPruefung);
   const passRate=allExams.length?Math.round(allExams.filter(e=>e.result==="pass").length/allExams.length*100):null;
   let label,color,hint;
-  if(pct>=90&&theorieOk){label="Sehr gut vorbereitet";color="var(--gruen)";hint="Ausbildungsstand und Theorie passen — bereit für die Prüfungsanmeldung.";}
-  else if(pct>=70){label="Auf gutem Weg";color="#cf9a3e";hint=theorieOk?"Ausbildungsstand steigt, Theorie schon bestanden.":"Noch ein paar Themen offen, Theorie im Blick behalten.";}
-  else{label="Noch Zeit nötig";color="#cf5a48";hint="Ausbildungsstand braucht noch Übung, bevor eine Prüfung Sinn ergibt.";}
+  if(pct>=90&&theorieOk){label="Sehr gut vorbereitet";color="#2c7a4f";hint="Ausbildungsstand und Theorie passen — bereit für die Prüfungsanmeldung.";}
+  else if(pct>=70){label="Auf gutem Weg";color="#8a5a12";hint=theorieOk?"Ausbildungsstand steigt, Theorie schon bestanden.":"Noch ein paar Themen offen, Theorie im Blick behalten.";}
+  else{label="Noch Zeit nötig";color="#b3392b";hint="Ausbildungsstand braucht noch Übung, bevor eine Prüfung Sinn ergibt.";}
   return `<div class="res-block prognose-card" style="animation:none;">
     <h4><span class="ic ic-gold" style="font-size:14px;">${ICN.target}</span> Prüfungs-Einschätzung</h4>
     <div style="display:flex;align-items:center;gap:12px;margin:8px 0;">
@@ -10454,7 +10472,7 @@ function routePlanVorlagen(){
     const n=activeStudents().filter(s=>s.planId===p.id).length;
     const canDelete=DB.ausbildungsplaene.length>1;
     return `<div class="res-block" style="animation:none;">
-      <h4>${esc(p.name)}${p.standard?' <span style="color:#4a8b45;font-size:12px;font-weight:700;">· Standard</span>':''}</h4>
+      <h4>${esc(p.name)}${p.standard?' <span style="color:var(--akzent-bright);font-size:12px;font-weight:700;">· Standard</span>':''}</h4>
       <p>${n} aktive${n===1?'r':''} Schüler nutzt${n===1?'':'en'} diese Vorlage.</p>
       <div class="btn-row" style="flex-wrap:wrap;">
         <button class="btn btn-ghost" data-editplan="${p.id}">Bearbeiten</button>
@@ -12285,7 +12303,7 @@ function routeSettings(){
   view.innerHTML=`<div class="view-inner view-read fade-up">
     <h1 class="sec-h set-titel">Einstellungen</h1>
     ${logoutBtn}
-    ${_authUser?`<div class="res-block" style="animation:none;background:rgba(74,139,69,.06);border-color:rgba(74,139,69,.2);"><h4 style="color:#4a8b45">☁ Cloud-Konto</h4><p style="color:#98a2b2;font-size:13px;">${esc(_authUser.email)}</p><p style="color:var(--muted);font-size:12px;margin-top:4px;">Daten werden automatisch gesichert.</p></div>`:""}
+    ${_authUser?`<div class="res-block" style="animation:none;background:rgba(74,139,69,.06);border-color:rgba(74,139,69,.2);"><h4 style="color:var(--akzent-bright)">☁ Cloud-Konto</h4><p style="color:#98a2b2;font-size:13px;">${esc(_authUser.email)}</p><p style="color:var(--muted);font-size:12px;margin-top:4px;">Daten werden automatisch gesichert.</p></div>`:""}
 
     <div class="acc set-acc${_settingsAccOpen==='app'?' open':''}" data-acckey="app"><button class="acc-h" onclick="_settingsAccToggle('app')" style="cursor:pointer;"><span class="set-ic" style="width:30px;">${_li("handy")}</span><span style="flex:1;text-align:left;font-family:'Anton',sans-serif;text-transform:uppercase;font-size:15px;letter-spacing:.03em;">App anpassen</span><span class="chev">${ICN.chev}</span></button>
       <div class="acc-body"><div class="acc-inner" style="padding:0 16px 16px;">
@@ -12383,16 +12401,16 @@ function routeSettings(){
           <details style="margin-top:4px;">
             <summary style="color:var(--muted);font-size:13px;cursor:pointer;padding:4px 0;">Anzeigen</summary>
             <div style="margin-top:12px;display:flex;flex-direction:column;gap:10px;font-size:13px;color:var(--txt);line-height:1.6;">
-              <div><b style="color:#4a8b45">🏠 Dashboard</b><br>Übersicht: aktive Schüler, Kapazität, nächste Prüfungen. Kacheln antippen für Schnellzugriff.</div>
-              <div><b style="color:#4a8b45"><span class="ic ic-gruen" style="font-size:14px;">${ICN.users}</span> Schüler</b><br>Alle aktiven Schüler. + oben rechts = neuer Schüler. Schüler antippen = Detailansicht mit Plan, Bogen, Historie.</div>
-              <div><b style="color:#4a8b45">📋 Ausbildungsplan</b><br>Grüne Ampel = geschafft, Gelb = in Arbeit, Rot = fehlt noch. FC = Fahrcheck. Sonderfahrten einzeln abhaken.</div>
-              <div><b style="color:#4a8b45">🧠 Persönlichkeitsbogen</b><br>65 Fragen → DISC-Profil (Rot/Gelb/Grün/Blau). Zeigt Coaching-Hinweise für den Umgang mit dem Schüler.</div>
-              <div><b style="color:#4a8b45"><span class="ic ic-gold" style="font-size:14px;">${ICN.trophy}</span> Prüfungen</b><br>Termin eintragen → Ergebnis eintragen. Bestandene Prüfungen verschwinden automatisch ins Archiv.</div>
-              <div><b style="color:#4a8b45"><span class="ic ic-gold" style="font-size:14px;">${ICN.cal}</span> Kalender</b><br>Fahrstunden planen, Fahrzeug zuweisen, Sonderfahrten eintragen. Feiertage (Hessen) automatisch markiert.</div>
-              <div><b style="color:#4a8b45">⏳ Warteliste</b><br>Schüler landen hier ab 90 % Ausbildungsstand + bestandener Theorie. Reihenfolge = ältestes Datum zuerst.</div>
-              <div><b style="color:#4a8b45"><span class="ic ic-gold" style="font-size:14px;">${ICN.chart}</span> Statistik</b><br>Prüfungsquote, Durchfallanalyse, Prüfer-Statistik, monatlicher Verdienst (PIN-geschützt).</div>
-              <div><b style="color:#4a8b45"><span class="ic ic-blau" style="font-size:14px;">${ICN.pencil}</span> Zeichenfläche</b><br>Kreuzungen und Situationen zeichnen. Objekte aus dem Panel per Drag&amp;Drop platzieren. Stift, Radierer, Undo.</div>
-              <div><b style="color:#4a8b45"><span class="ic ic-gold" style="font-size:14px;">${ICN.save}</span> Backup</b><br>Daten werden automatisch in der Cloud gespeichert. Manuelles Backup zusätzlich empfohlen — z.B. einmal pro Woche.</div>
+              <div><b style="color:var(--akzent-bright)">🏠 Dashboard</b><br>Übersicht: aktive Schüler, Kapazität, nächste Prüfungen. Kacheln antippen für Schnellzugriff.</div>
+              <div><b style="color:var(--akzent-bright)"><span class="ic ic-gruen" style="font-size:14px;">${ICN.users}</span> Schüler</b><br>Alle aktiven Schüler. + oben rechts = neuer Schüler. Schüler antippen = Detailansicht mit Plan, Bogen, Historie.</div>
+              <div><b style="color:var(--akzent-bright)">📋 Ausbildungsplan</b><br>Grüne Ampel = geschafft, Gelb = in Arbeit, Rot = fehlt noch. FC = Fahrcheck. Sonderfahrten einzeln abhaken.</div>
+              <div><b style="color:var(--akzent-bright)">🧠 Persönlichkeitsbogen</b><br>65 Fragen → DISC-Profil (Rot/Gelb/Grün/Blau). Zeigt Coaching-Hinweise für den Umgang mit dem Schüler.</div>
+              <div><b style="color:var(--akzent-bright)"><span class="ic ic-gold" style="font-size:14px;">${ICN.trophy}</span> Prüfungen</b><br>Termin eintragen → Ergebnis eintragen. Bestandene Prüfungen verschwinden automatisch ins Archiv.</div>
+              <div><b style="color:var(--akzent-bright)"><span class="ic ic-gold" style="font-size:14px;">${ICN.cal}</span> Kalender</b><br>Fahrstunden planen, Fahrzeug zuweisen, Sonderfahrten eintragen. Feiertage (Hessen) automatisch markiert.</div>
+              <div><b style="color:var(--akzent-bright)">⏳ Warteliste</b><br>Schüler landen hier ab 90 % Ausbildungsstand + bestandener Theorie. Reihenfolge = ältestes Datum zuerst.</div>
+              <div><b style="color:var(--akzent-bright)"><span class="ic ic-gold" style="font-size:14px;">${ICN.chart}</span> Statistik</b><br>Prüfungsquote, Durchfallanalyse, Prüfer-Statistik, monatlicher Verdienst (PIN-geschützt).</div>
+              <div><b style="color:var(--akzent-bright)"><span class="ic ic-blau" style="font-size:14px;">${ICN.pencil}</span> Zeichenfläche</b><br>Kreuzungen und Situationen zeichnen. Objekte aus dem Panel per Drag&amp;Drop platzieren. Stift, Radierer, Undo.</div>
+              <div><b style="color:var(--akzent-bright)"><span class="ic ic-gold" style="font-size:14px;">${ICN.save}</span> Backup</b><br>Daten werden automatisch in der Cloud gespeichert. Manuelles Backup zusätzlich empfohlen — z.B. einmal pro Woche.</div>
             </div>
           </details>
         </div>
@@ -13377,7 +13395,7 @@ function routeArbeitszeit(){
 /* ===================== KALENDER-ANSICHT ===================== */
 let _calView="woche", _calDate=null, _calFilter="alle";
 let _calFzFilter=null, _calNurFrei=false, _calFcOffen=false; // erweiterte Filter
-const CAL_ARTEN={ fahrstunde:{lab:"Fahrstunde",col:"#7d7d86"}, nacht:{lab:"Nachtfahrt",col:"#5a7da8",hideleg:true}, sonder:{lab:"Sonderfahrt",col:"#5a7da8",sf:true}, pruefung:{lab:"Prüfung",col:"#c9a227"}, theorie:{lab:"Theorie",col:"#9b7dc4"}, schalt:{lab:"Schaltkompetenz",col:"#c4607d",min:15}, block:{lab:"Blockiert",col:"#88939a"}, vortest:{lab:"Vortest",col:"#d68a3e",hideleg:true}, simulator:{lab:"Simulator",col:"#3ea6a0",hideleg:true}, beratung:{lab:"Beratung",col:"#7a8fd6",hideleg:true}, ersthilfe:{lab:"Erste Hilfe",col:"#d65a5a",hideleg:true} };
+const CAL_ARTEN={ fahrstunde:{lab:"Fahrstunde",col:"#6a6a74"}, nacht:{lab:"Nachtfahrt",col:"#5a7da8",hideleg:true}, sonder:{lab:"Sonderfahrt",col:"#5a7da8",sf:true}, pruefung:{lab:"Prüfung",col:"#c9a227"}, theorie:{lab:"Theorie",col:"#9b7dc4"}, schalt:{lab:"Schaltkompetenz",col:"#c4607d",min:15}, block:{lab:"Blockiert",col:"#88939a"}, vortest:{lab:"Vortest",col:"#d68a3e",hideleg:true}, simulator:{lab:"Simulator",col:"#3ea6a0",hideleg:true}, beratung:{lab:"Beratung",col:"#7a8fd6",hideleg:true}, ersthilfe:{lab:"Erste Hilfe",col:"#d65a5a",hideleg:true} };
 /* Theorie-Lektionen 1-14 nach DEGENER-Ausbildungsplan (Marktstandard, den die meisten Fahrschulen
    nutzen): Grundstoff 1-12 nach Anlage 1 FahrschAusbO (alle Klassen), Zusatzstoff 13-14 nach
    Anlage 2.2 (Klasse B). Grundstoff darf laut FahrschAusbO mehrfach besucht werden, Zusatzstoff nicht. */
@@ -17035,7 +17053,7 @@ function routePrueferAkte(nm){
       <div class="pf-stat"><div class="ps-n">${st.quote.pct==null?'—':st.quote.pct+'%'}</div><div class="ps-l">bestanden</div></div>
       <div class="pf-stat"><div class="ps-n" style="font-size:18px;">${st.last?isoDE(st.last).slice(0,5):'—'}</div><div class="ps-l">zuletzt</div></div>
     </div>
-    ${exForPr.length?`<div style="text-align:center;margin:-4px 0 14px;font-size:13px;color:var(--muted);">Letzte ${Math.min(5,exForPr.length)}: ${exForPr.slice(0,5).reverse().map(e=>e.result==='pass'?'<span style="color:#4a8b45;">✓</span>':'<span style="color:#c83c3c;">✕</span>').join(" ")}</div>`:''}
+    ${exForPr.length?`<div style="text-align:center;margin:-4px 0 14px;font-size:13px;color:var(--muted);">Letzte ${Math.min(5,exForPr.length)}: ${exForPr.slice(0,5).reverse().map(e=>e.result==='pass'?'<span style="color:var(--akzent-bright);">✓</span>':'<span style="color:#c83c3c;">✕</span>').join(" ")}</div>`:''}
     <div class="seg pf-tabs" role="tablist">
       <button class="seg-i${_pfTab==='schueler'?' on':''}" data-pftab="schueler" role="tab" aria-selected="${_pfTab==='schueler'}">Schüler <span class="pf-tab-n">${bestanden+durch}</span></button>
       <button class="seg-i${_pfTab==='strecken'?' on':''}" data-pftab="strecken" role="tab" aria-selected="${_pfTab==='strecken'}">Strecken &amp; Notizen <span class="pf-tab-n">${mitNotiz.length}</span></button>

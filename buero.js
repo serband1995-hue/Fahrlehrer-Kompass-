@@ -2258,7 +2258,7 @@ function kBereichSetzen(termine) {
   }
   K_START = a; K_ENDE = Math.min(e, 24 * 60);
 }
-const K_FARBEN = { fahrstunde: "#7d7d86", nacht: "#5a7da8", sonder: "#5a7da8", pruefung: "#c9a227", theorie: "#9b7dc4", schalt: "#c4607d", block: "#88939a", vortest: "#d68a3e", simulator: "#3ea6a0", beratung: "#7a8fd6", ersthilfe: "#d65a5a" };
+const K_FARBEN = { fahrstunde: "#6a6a74", nacht: "#5a7da8", sonder: "#5a7da8", pruefung: "#c9a227", theorie: "#9b7dc4", schalt: "#c4607d", block: "#88939a", vortest: "#d68a3e", simulator: "#3ea6a0", beratung: "#7a8fd6", ersthilfe: "#d65a5a" };
 const K_ANSICHTEN = [["tag", "Tag"], ["woche", "Woche"], ["monat", "Monat"], ["jahr", "Jahr"]];
 const MONATE = ["Januar", "Februar", "März", "April", "Mai", "Juni", "Juli", "August", "September", "Oktober", "November", "Dezember"];
 const WOCHENTAGE_KURZ = ["Mo", "Di", "Mi", "Do", "Fr", "Sa", "So"];
@@ -2270,7 +2270,7 @@ function kTerminBlock(t) {
   if (b <= a) return "";
   const sn = schuelerName(t.schueler_id) || t.interessent_name || (t.payload && t.payload.note) || ARTEN[t.art] || "";
   const gesperrt = t.schueler_id && bueroGesperrt(S.schueler.find((x) => x.id === t.schueler_id));
-  return `<button type="button" class="k-termin${t.art === "block" ? " block" : ""}${gesperrt ? " gesperrt" : ""}" data-termin="${esc(t.id)}"${gesperrt ? ' title="Zahlung ausstehend" data-zahlung-hinweis' : ""} style="top:${(a - K_START) * K_PX}px;height:${Math.max((b - a) * K_PX - 2, 22)}px;--farbe:${K_FARBEN[t.art] || "#7d7d86"}">
+  return `<button type="button" class="k-termin${t.art === "block" ? " block" : ""}${gesperrt ? " gesperrt" : ""}" data-termin="${esc(t.id)}"${gesperrt ? ' title="Zahlung ausstehend" data-zahlung-hinweis' : ""} style="top:${(a - K_START) * K_PX}px;height:${Math.max((b - a) * K_PX - 2, 22)}px;--farbe:${K_FARBEN[t.art] || "#6a6a74"}">
         <span class="k-zeit">${esc(t.von)}–${esc(t.bis)}</span><span class="k-name">${gesperrt ? "⚠ " : ""}${esc(sn)}</span>${gesperrt ? `<span class="k-fz k-zahlung">Zahlung ausstehend</span>` : ""}${t.fahrzeug ? `<span class="k-fz">${esc(t.fahrzeug)}</span>` : ""}</button>`;
 }
 function kStundenAchse() {
