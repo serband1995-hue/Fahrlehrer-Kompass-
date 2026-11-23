@@ -8,7 +8,8 @@
 --       „Bezahlt“ leert die Felder. Setzen und aufheben dürfen nur Büro, Leitung, Super-Admin (sonst bleibt der alte Wert).
 --       🗣 Keine automatische Sperre (z. B. nach vergessenen Fahrchecks): das Büro entscheidet per Knopf.
 -- Gesperrt heißt: kein NEUER künftiger Termin (Fahrstunde, Sonderfahrt, Nacht, Schalt, Prüfung) für diesen Schüler –
---   angelegt, auf ihn umgelegt, auf ein anderes Datum verschoben oder aus dem Papierkorb geholt. Bestehende Termine
+--   angelegt, auf ihn umgelegt, auf ein anderes Datum verschoben oder aus dem Papierkorb geholt (außer „Rückgängig“
+--   innerhalb von 15 Minuten). Bestehende Termine
 --   bleiben (das Büro entscheidet). Theorie und Blocker sind nicht betroffen. Fehler: P0001 „Zahlung ausstehend …“
 --   (die App überspringt so eine Zeile einzeln, die anderen werden weiter gespeichert).
 -- Online-Buchung (public_bookings): passt Telefon oder E-Mail zu einem gesperrten Schüler derselben Fahrschule,
@@ -73,6 +74,14 @@ begin
      and new.datum is not distinct from old.datum
      and not coalesce(old.geloescht, false) then
     return new; -- nichts Neues (Notiz, Unterschrift, Fahrcheck … an einem bestehenden Termin)
+  end if;
+  -- „Rückgängig“ gleich nach dem Löschen (gleicher Schüler, gleiches Datum, höchstens 15 Minuten im Papierkorb):
+  -- das ist kein neuer Termin, sondern ein Versehen. geloescht_am kommt aus K7 (20261123_k7_01); fehlt die Spalte, gilt die Sperre.
+  if tg_op = 'UPDATE' and coalesce(old.geloescht, false)
+     and new.schueler_id is not distinct from old.schueler_id
+     and new.datum is not distinct from old.datum
+     and coalesce(nullif(to_jsonb(old)->>'geloescht_am', '')::timestamptz > now() - interval '15 minutes', false) then
+    return new;
   end if;
   g := public.schueler_buchung_gesperrt(new.schueler_id);
   if g is not null then
