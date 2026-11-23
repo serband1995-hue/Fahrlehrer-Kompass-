@@ -40,7 +40,8 @@
     } catch (e) { return false; }
   }
   /* Gerät hat seinen ganzen Stand aus der Cloud ersetzt: die Basis passt nicht mehr – beim nächsten Laden gilt der Serverstand */
-  PW.basisLeeren = function () { st.basis = {}; cacheSchreiben(); };
+  // Fable K6 E4: noch nicht geladen → erst den Zwischenspeicher lesen, nie einen leeren Stand (uid null) darüberschreiben
+  PW.basisLeeren = function () { if (!st.uid) cacheLesen(); st.basis = {}; if (st.uid) cacheSchreiben(); };
   /* E2 (Fable K5): angefangene Notiz je Prüfer merken (nur in dieser Sitzung), damit sie beim Zurück nicht verloren geht */
   const entwurf = {};
   PW.vergessen = function () {

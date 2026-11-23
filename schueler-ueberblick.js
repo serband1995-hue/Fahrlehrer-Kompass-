@@ -100,25 +100,37 @@
   SU.route = function () {
     if (typeof _seiteVerlassenOk === "function" && !_seiteVerlassenOk()) return;
     const view = document.getElementById("view"); if (!view) return;
-    document.getElementById("tbTitle").textContent = "Alle Schüler";
-    if (typeof setFab === "function") setFab(false);
-    view.scrollTop = 0; suche = "";
+    // Fable K6 E3: in der Gesamtansicht (oder ohne Server-Funktion) gibt es den Überblick nicht – auch nicht per Zurück
+    if (!SU.verfuegbar() || (typeof _fsAgg !== "undefined" && _fsAgg)) { if (typeof routeHome === "function") routeHome(); return; }
+    const zurueckFahrt = typeof _navFahrt !== "undefined" && !!_navFahrt;
     // Zurück (Android-Taste, Pfeil) führt hierher zurück: wie die route…-Seiten in den Stapel eintragen
     try {
-      if (typeof _navStack !== "undefined" && !(typeof _navFahrt !== "undefined" && _navFahrt)) {
+      if (typeof _navStack !== "undefined" && !zurueckFahrt) {
         const l = _navStack[_navStack.length - 1];
-        if (!l || l.name !== "routeSchuelerUeberblick") _navStack.push({ name: "routeSchuelerUeberblick", fn: SU.route, args: [] });
+        if (!l || l.name !== "routeSchuelerUeberblick") {
+          // K10: Stelle und Titel der Seite merken, die man verlässt (Zurück führt genau dorthin)
+          if (l) { l.y = view.scrollTop; l.titel = ((document.getElementById("tbTitle") || {}).textContent || "").trim(); }
+          _navStack.push({ name: "routeSchuelerUeberblick", fn: SU.route, args: [], agg: false });
+        }
       }
       if (typeof _navAktualisiereKnopf === "function") _navAktualisiereKnopf();
     } catch (e) {}
+    document.getElementById("tbTitle").textContent = "Alle Schüler";
+    if (typeof setFab === "function") setFab(false);
+    view.scrollTop = 0;
+    if (!zurueckFahrt) suche = ""; // Fable K6 E5: beim Zurück aus der Akte bleibt die Suche (die gemerkte Stelle passt dann)
     const zurueck = typeof ICN !== "undefined" && ICN.back ? ICN.back : "‹";
     view.innerHTML = `<div class="view-inner view-read fade-up">
       <div class="back-row"><button class="back-btn su-zurueck" id="suZurueck">${zurueck} Schüler</button></div>
       <p class="muted-p" style="font-size:12.5px;margin:2px 0 12px;">Überblick der ganzen Fahrschule. Die Akte öffnet nur der eigene Fahrlehrer.</p>
-      <div class="search-wrap" style="margin:0 0 12px;"><input id="suSuche" type="search" placeholder="Name oder Fahrlehrer suchen" autocomplete="off" aria-label="Suchen"></div>
+      <div class="search-wrap" style="margin:0 0 12px;"><input id="suSuche" type="search" placeholder="Name oder Fahrlehrer suchen" autocomplete="off" aria-label="Suchen" value="${suche.replace(/[&"<>]/g, (c) => ({ "&": "&amp;", '"': "&quot;", "<": "&lt;", ">": "&gt;" })[c])}"></div>
       <div id="suListe"></div>
     </div>`;
-    document.getElementById("suZurueck").addEventListener("click", () => { if (typeof routeHome === "function") routeHome(); });
+    // Fable K6 E2: wie überall in der App einen Schritt zurück (nicht neu „Schüler“ öffnen, sonst springt der Pfeil wieder hierher)
+    document.getElementById("suZurueck").addEventListener("click", () => {
+      if (typeof _navStack !== "undefined" && _navStack.length > 1 && typeof navZurueck === "function") navZurueck();
+      else if (typeof routeHome === "function") routeHome();
+    });
     document.getElementById("suSuche").addEventListener("input", (ev) => { suche = ev.target.value; zeichne(); });
     zeichne(); laden();
   };

@@ -155,6 +155,12 @@ const breit = (page) => page.evaluate(() => { const d = document.documentElement
   await pruefe("U7c", "keine JS-Fehler (alte Datenbank)", () => jsFehler);
   await ctx.close();
 }
+// U10 Server (statisch, nachgespielt in Postgres): Schüler ohne Fahrlehrer kann ein Fahrlehrer nicht an sich nehmen (Fable F1)
+{
+  const sql = await readFile(join(ROOT, "supabase/migrations/20261122_k6_01_schueler_ueberblick.sql"), "utf8");
+  await pruefe("U10", "Migration: „is distinct from auth.uid()“ beim eigenen Schüler, Ausnahme im Trigger mit coalesce(…, false)", async () =>
+    /if s\.fahrlehrer_id is distinct from auth\.uid\(\) and not k6_darf_verwalten\(\)/.test(sql) && (sql.match(/coalesce\(z\.aktiv, true\)\)\), false\) then/g) || []).length === 2 ? null : "Schutz fehlt");
+}
 await browser.close(); server.close();
 console.log(`\nSchüler-Überblick-Test: ${okZahl} ok, ${fehlerZahl} Fehler`);
 process.exit(fehlerZahl ? 1 : 0);
