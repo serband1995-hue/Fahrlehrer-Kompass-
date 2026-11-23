@@ -4,6 +4,8 @@
    "kurz" (höchstens ~60 Zeichen) erscheint nach dem Update einmal als kleiner Hinweis (verschwindet von selbst, kein Knopf).
    Einfache Worte, keine Fachwörter, keine Schülerdaten. */
 window.KOMPASS_NEU = [
+  { version: "2026.11.23.8", datum: "2026-11-23", kurz: "Büro: Auswahl Test oder Echt wird wieder richtig angezeigt.",
+    punkte: ["Bei den Zahlungsdaten für Mails stehen die Karten „Test“ und „Echt“ wieder ordentlich nebeneinander, mit lesbarem Text."] },
   { version: "2026.11.23.7", datum: "2026-11-23", kurz: "Neu im Büro: Zahlungsaufforderung per Mail.",
     punkte: ["In den Büro-Einstellungen gibt es „Zahlungsdaten für Mails“: Kontoinhaber, IBAN, PayPal und Kontakt der Fahrschule.",
              "In der Akte eines Schülers schickt das Büro mit einem Knopf eine Zahlungsaufforderung: für die Prüfung, die Reaktivierung oder eine offene Zahlung.",

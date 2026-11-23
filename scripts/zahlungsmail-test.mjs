@@ -461,6 +461,17 @@ try {
     pruefe("Z10p Eintrag neuer als Ladebeginn bleibt, älterer fehlender nicht", JSON.stringify(k5) === '["neu1"]', JSON.stringify(k5));
     await f.ctx.close();
   }
+  // Z11: Test/Echt-Karten nicht zerlegt (Fehler 23.11.: #zmForm input{width:100%} machte den Auswahlpunkt kartenbreit, Text 0 px)
+  for (const breite of [360, 768, 1024, 1280]) {
+    const f = await oeffne({ nutzer: "ad-1", vorbereiten: vor(), breite });
+    const k = await f.page.evaluate(() => [...document.querySelectorAll("#zmEinst .zm-wahl")].map((l) => {
+      const i = l.querySelector("input").getBoundingClientRect(), s = l.querySelector(":scope > span").getBoundingClientRect(), c = l.getBoundingClientRect();
+      return { input: Math.round(i.width), text: Math.round(s.width), hoehe: Math.round(c.height) };
+    }));
+    pruefe(`Z11 ${breite} px: Test/Echt-Karten mit Auswahlpunkt ≤ 30 px, Text ≥ 120 px breit, Karte ≤ 200 px hoch`,
+      k.length === 2 && k.every((x) => x.input <= 30 && x.text >= 120 && x.hoehe <= 200), JSON.stringify(k));
+    await f.ctx.close();
+  }
 } finally {
   await browser.close();
   server.close();
