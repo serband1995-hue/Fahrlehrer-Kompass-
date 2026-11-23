@@ -472,6 +472,8 @@ function reaktBetrag(s) {
   // Prüf-Team K9: 0 € (Aktion) und „entfällt“ gelten wie eingetragen; nur ohne Eintrag (undefined) der alte Betrag
   return p === undefined ? reaktBetragAlt() : (p || 0);
 }
+// „entfällt“ statt „0 €“, wenn die Reaktivierung in der Preisliste heute entfällt (Prüf-Team Bedienung)
+function reaktHeuteText() { return typeof preisAm === "function" && preisAm("reaktivierung", null, null, KR.todayISO()) === null ? "entfällt" : euro(reaktBetrag()); }
 function reaktInPreisliste() { return typeof preisAm === "function" && preisAm("reaktivierung", null, null, "9999-12-31") !== undefined; }
 // Wer im Büro bedient: Namen für „Wer bist du?“ (einstellbar durch den Super-Admin)
 const PERSONEN_STANDARD = []; // keine festen Namen im Code: Büro-Personen kommen aus der Datenbank oder aus konfiguration.bueroPersonen
@@ -625,7 +627,7 @@ function renderFristen() {
       <p class="leise klein">Führerscheine aus Ländern außerhalb der EU/des EWR gelten in Deutschland nur 6 Monate ab Wohnsitz (§ 29 FeV). Danach darf der Schüler nicht mehr selbst fahren, bis der deutsche Führerschein da ist. Verlängern kann die Behörde nur, wenn er höchstens 12 Monate in Deutschland bleibt, bei Umschreibern also meist nicht.</p>` : `<p class="leer">Keine Umschreiber.</p>`) : ""}
     ${ansicht === "antrag" || ansicht === "umschreiber" ? "" : liste.length ? `<table class="tabelle"><thead><tr><th>Schüler</th><th>Fahrlehrer</th><th class="nur-breit">Vertrag</th><th>Reaktivierung</th><th>Theorie</th><th></th></tr></thead><tbody>${zeilen}</tbody></table>`
       : `<p class="leer">${ansicht === "handeln" ? "Kein Handlungsbedarf. Sehr gut." : "Keine Schüler in dieser Ansicht."}</p>`}
-    <p class="leise klein">Reaktivierung: ${reaktInPreisliste() ? `${euro(reaktBetrag())} für neue Verträge (alte Verträge zahlen den Preis ihres Vertragsdatums)` : euro(reaktBetrag())}, fällig 12 Monate nach Vertragsabschluss und dann jährlich. „Gesperrt“ heißt: keine weiteren Leistungen, bis bezahlt ist. Jede Änderung wird mit Name und Uhrzeit protokolliert.</p>
+    <p class="leise klein">Reaktivierung: ${reaktInPreisliste() ? `${reaktHeuteText()} für neue Verträge (alte Verträge zahlen den Preis ihres Vertragsdatums)` : euro(reaktBetrag())}, fällig 12 Monate nach Vertragsabschluss und dann jährlich. „Gesperrt“ heißt: keine weiteren Leistungen, bis bezahlt ist. Jede Änderung wird mit Name und Uhrzeit protokolliert.</p>
   </div>${renderBueroEinstellungen()}`;
 }
 function renderBueroEinstellungen() {
@@ -633,7 +635,7 @@ function renderBueroEinstellungen() {
   const darf = S.profil && S.profil.rolle === "super_admin";
   return `<div class="karte nicht-drucken"><div class="karte-kopf"><h2>Einstellungen</h2></div>
     <form id="einstForm" class="formular">
-      ${reaktInPreisliste() ? `<p class="voll">Reaktivierung heute: <b>${esc(euro(reaktBetrag()))}</b> · steht in der <a href="#preise">Preisliste</a> (dort mit „gültig ab“ ändern).</p>` : ""}
+      ${reaktInPreisliste() ? `<p class="voll">Reaktivierung heute: <b>${esc(reaktHeuteText())}</b> · steht in der <a href="#preise">Preisliste</a> (dort mit „gültig ab“ ändern).</p>` : ""}
       <label>${reaktInPreisliste() ? "Reaktivierung für Verträge vor dem ersten Eintrag der Preisliste in €" : "Standardbetrag Reaktivierung in €"}<input type="number" name="betrag" min="1" max="9999" step="0.01" value="${esc(k.reaktivierungBetrag || REAKT_STANDARD)}"${darf ? "" : " disabled"}></label>
       <label>Unterrichtseinheiten pro Fahrlehrer und Woche (12 pro Tag × 5 Tage)<input type="number" name="ue" min="1" max="200" step="1" value="${esc(ueProWoche())}"${darf ? "" : " disabled"}></label>
       <div class="voll knopfreihe">${darf ? `<button class="knopf haupt" type="submit">Einstellungen speichern</button>` : `<span class="leise klein">Diese Einstellungen ändert der Super-Admin${reaktInPreisliste() ? " (die Preise ändern Büro und Leitung in der Preisliste)" : ""}. Eine abweichende Zahlung (z. B. Sonderangebot) trägst du direkt beim Eintragen der Zahlung ein.</span>`}</div>

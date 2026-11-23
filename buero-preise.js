@@ -176,13 +176,14 @@ function prNeu() {
   const dlg = document.querySelector("dialog.dialog:last-of-type");
   const form = dlg && dlg.querySelector("form");
   if (!form || !form.art) return;
-  let eigen = false;
+  let eigen = false, warReakt = false; // nach „Reaktivierung“ nicht deren feste Bezeichnung mitnehmen
   form.bezeichnung.addEventListener("input", () => { eigen = true; });
   const passe = () => {
     const a = prArt(form.art.value);
     form.einheit.value = a[2];
     form.klasse.disabled = !a[3];
-    if (!eigen || form.art.value === "reaktivierung") form.bezeichnung.value = a[4];
+    if (!eigen || form.art.value === "reaktivierung" || warReakt) { form.bezeichnung.value = a[4]; if (warReakt) eigen = false; }
+    warReakt = form.art.value === "reaktivierung";
     form.bezeichnung.readOnly = form.art.value === "reaktivierung";
   };
   form.art.addEventListener("change", passe);
