@@ -60,4 +60,4 @@
 .zm-pill-test{background:#d9a64a;}
 
 /* Fable N1: Gelb und Orange im Dunkeln wieder hell (die hellen Werte oben gelten nur im hellen Modus); weißer Haken auf hellen Farben dunkel */
-@media (prefers-color-scheme:dark){ :root{--gelb:#d9a64a; --orange:#ec9a4f;} .haken.an{color:#14161a;} }
+@media (prefers-color-scheme:dark){ :root{--gelb:#d9a64a; --orange:#ec9a4f;} .haken.blau.an,.haken.rot.an,.haken.gruen.an{color:#14161a;} }
