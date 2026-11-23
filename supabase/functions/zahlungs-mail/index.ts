@@ -25,9 +25,9 @@ Deno.serve(async (req) => {
 
   let body: any;
   try { body = await req.json(); } catch { return json({ fehler: "ungueltige_anfrage" }, 400); }
-  const { requester_token, buero_sitzung, schueler_id, art, betrag_cent, wofuer } = body || {};
+  const { requester_token, buero_sitzung, schueler_id, art, betrag_cent, wofuer, erwarteter_modus } = body || {};
   if (!requester_token) return json({ fehler: "nicht_angemeldet" }, 401);
-  if (!schueler_id || !art || !Number.isInteger(betrag_cent)) return json({ fehler: "ungueltige_anfrage" }, 400);
+  if (!schueler_id || !art || !Number.isInteger(betrag_cent) || !["test", "echt"].includes(String(erwarteter_modus))) return json({ fehler: "ungueltige_anfrage" }, 400);
 
   const headers: Record<string, string> = { Authorization: "Bearer " + requester_token };
   if (buero_sitzung) headers["x-buero-sitzung"] = String(buero_sitzung);
@@ -44,6 +44,11 @@ Deno.serve(async (req) => {
     const { error } = await service.from("zahlungs_mails").update(felder).eq("id", d.id);
     if (error) console.warn("zahlungs_mails update:", error.message);
   };
+  // Der Bildschirm zeigte einen anderen Modus (jemand hat inzwischen umgeschaltet): nichts senden.
+  if (String(erwarteter_modus) !== String(d.modus)) {
+    await merke({ status: "fehler", fehler: "Modus geändert, nicht gesendet" });
+    return json({ fehler: "modus_geaendert", modus: d.modus }, 409);
+  }
   const scheitern = async (kurz: string, status = 500) => {
     await merke({ status: "fehler", fehler: kurz.slice(0, 200) });
     return json({ fehler: "versand_fehlgeschlagen", grund: kurz.split(":")[0].slice(0, 40) }, status);
