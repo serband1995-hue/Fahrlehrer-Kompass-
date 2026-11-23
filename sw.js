@@ -8,6 +8,7 @@ const CORE_FILES = [
   "./kompass-rechnen.js",
   "./neuigkeiten.js",
   "./pruefer-wissen.js",
+  "./schueler-ueberblick.js",
   "./lernszenen.js",
   "./lernszenen-stadt.js",
   "./lernszenen-neu-a.js",

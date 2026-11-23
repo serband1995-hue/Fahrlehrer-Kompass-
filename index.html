@@ -4195,6 +4195,7 @@ function _lokaleNutzerdatenLoeschen() {
   });
   try { sessionStorage.removeItem("vd_unlocked"); } catch (e) {}
   try { if (window.PW) PW.vergessen(); } catch (e) {} // K5: gemeinsames Prüfer-Wissen dieses Kontos
+  try { localStorage.removeItem("kompass-su-v1"); } catch (e) {} // K6: Merker Schüler-Überblick
 }
 // Hat das Gerät überhaupt eigene Einträge, die beim Abmelden verloren gehen könnten?
 function _lokaleDatenVorhanden() {
@@ -4471,6 +4472,7 @@ async function _continueLoginFlow(prof) {
     // Schlägt das Laden fehl (z.B. kein Netz), alle 20 s erneut versuchen statt eine leere Ansicht zu zeigen.
     const versuch = async () => { if (_fsAgg || !_authUser) return; if (!(await _fsEnterAggMode(prof.fahrschule_id)) && !_fsAgg) setTimeout(versuch, 20000); };
     await versuch();
+    try{ if(window.PW)PW.laden({sofort:true}); }catch(e){} // K5: Prüfer-Wissen gleich laden (sonst kurz die alte Akte)
     return;
   }
   // Cloud-Daten laden (falls neuere als localStorage)
@@ -4480,6 +4482,7 @@ async function _continueLoginFlow(prof) {
   await pullSchuelerZuweisungen();
   await pullTermineZuweisungen();
   try{ if(window.PW)PW.laden({sofort:true}); }catch(e){} // K5: gemeinsames Prüfer-Wissen der Fahrschule
+  try{ if(window.SU)SU.pruefen(); }catch(e){} // K6: Schüler-Überblick der Fahrschule
   // Login-Overlay verstecken
   document.getElementById("loginOverlay").classList.add("hidden");
   updateBell();
@@ -4942,6 +4945,7 @@ function _snapErsetzeDurch(data) {
   // Einträge gelöscht. (Unbekanntes wird nie gelöscht.)
   _abglSpeichern({ user: _authUser.id, schueler: {}, termine: {}, pruefungen: {} });
   _termineAbgerufen = false; _schuelerAbgerufen = false;
+  try { if (window.PW && PW.basisLeeren) PW.basisLeeren(); } catch (e) {} // K5: Prüfer-Abgleich-Basis passt auch nicht mehr
   let lokalOk = true;
   try { localStorage.setItem(STORE_KEY, JSON.stringify(DB)); } catch (e) { lokalOk = false; }
   const t = new Date(data.updated_at).getTime();
@@ -8569,6 +8573,7 @@ function routeHome(){
       <h2>Noch keine <span class="o">Schüler</span></h2>
       <p>Leg deinen ersten Schüler an. Er füllt den Persönlichkeitsbogen aus, und du hast sofort seine Datei mit Profil und Ausbildungsstand.</p>
       <button class="btn btn-primary" id="emptyAdd" style="flex:0;padding-left:28px;padding-right:28px;">Ersten Schüler anlegen</button>
+      ${window.SU?SU.knopfHTML():""}
     </div>`;
     $("#emptyAdd").addEventListener("click",()=>routeSchuelerForm(null));return;
   }
@@ -8607,6 +8612,7 @@ function routeHome(){
     ${sortBar}
     <div id="studentGrid">${gridHTML}</div>
     <div class="no-hit" id="noHit" style="display:none;">Kein Schüler gefunden.</div>
+    ${window.SU?SU.knopfHTML():""}
     </div>
     <div style="position:fixed;right:6px;top:50%;transform:translateY(-50%);z-index:30;display:flex;flex-direction:column;align-items:center;background:var(--surface);border-radius:12px;padding:4px 3px;box-shadow:var(--elev-2);${(sortiertAlpha&&!gruppiertNachFahrlehrer&&list.length)?'':'display:none;'}" id="alphaNav">${letterNav}</div>`;
   animateRings();
@@ -17950,10 +17956,11 @@ routeDashboard();
 })();
 </script>
 <script src="pruefer-wissen.js"></script>
+<script src="schueler-ueberblick.js"></script>
 <script>
 /* Redesign v2: markiert nur den aktiven Tab anhand des Seitentitels — reine Anzeige, keine Logik. */
 (function(){
-  const map={"Heute":"heute","Start":"heute","Fahrstunde":"heute","Nach der Stunde":"heute","Termine":"schueler","Prüfung":"schueler","Schüler":"schueler","Kalender":"kalender","Prüfungen":"pruefungen","Diese Woche":"pruefungen","Prüfer":"pruefungen","Warteliste":"schueler","Ausbildungsplan":"schueler","Notizen":"schueler","Persönlichkeitsbogen":"schueler","Persönlichkeitsprofil":"schueler","Prüfung eintragen":"schueler","Risiko-Themen":"schueler","Schülerdatei":"schueler","Historie":"schueler","Ergebnis eintragen":"schueler","Neuer Schüler":"schueler","Schüler bearbeiten":"schueler","Bestehens-Daten":"schueler"};
+  const map={"Heute":"heute","Start":"heute","Alle Schüler":"schueler","Fahrstunde":"heute","Nach der Stunde":"heute","Termine":"schueler","Prüfung":"schueler","Schüler":"schueler","Kalender":"kalender","Prüfungen":"pruefungen","Diese Woche":"pruefungen","Prüfer":"pruefungen","Warteliste":"schueler","Ausbildungsplan":"schueler","Notizen":"schueler","Persönlichkeitsbogen":"schueler","Persönlichkeitsprofil":"schueler","Prüfung eintragen":"schueler","Risiko-Themen":"schueler","Schülerdatei":"schueler","Historie":"schueler","Ergebnis eintragen":"schueler","Neuer Schüler":"schueler","Schüler bearbeiten":"schueler","Bestehens-Daten":"schueler"};
   const t=document.getElementById("tbTitle"); if(!t)return;
   const paint=()=>{ try{ if(typeof _titelDoppeltPruefen==="function")_titelDoppeltPruefen(); }catch(e){} const k=map[(t.textContent||"").trim()]||"mehr"; t.classList.toggle("tb-lang",!/\s/.test((t.textContent||"").trim())&&(t.textContent||"").trim().length>13); t.classList.toggle("tb-sehrlang",!/\s/.test((t.textContent||"").trim())&&(t.textContent||"").trim().length>=19); /* langes Einzelwort: etwas kleiner statt abschneiden */ document.querySelectorAll(".tab-i").forEach(b=>b.classList.toggle("on",b.dataset.tab===k)); };
   new MutationObserver(paint).observe(t,{childList:true,characterData:true,subtree:true});
