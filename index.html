@@ -5845,6 +5845,7 @@ async function _tryOfflineSession() {
   _authUser = { id: u.id, email: u.email };
   _authProfile = { id: u.id, email: u.email, aktiv: true };
   document.getElementById("loginOverlay").classList.add("hidden");
+  _zeigeAbmelden(); // K13: Abmelden unter „Mehr“ auch beim Start ohne Netz
   updateBell();
   toast("Offline-Modus · Daten werden beim nächsten Start synchronisiert");
   return true;
@@ -6094,7 +6095,7 @@ async function _fsExitAggModeJetzt(){
 }
 async function _fsRefreshAggData(){
   if(!_fsAgg)return;
-  if(!_fsDarfGesamt()){ _fsAgg=null; _fsSetDrawer(false); return; } // Rolle weg: Gesamtansicht schließen
+  if(!_fsDarfGesamt()){ await _fsExitAggModeJetzt(); return; } // Rolle weg: sauber zurück (speichert, stellt eigene Daten wieder her)
   // Ungespeicherte Änderungen zuerst schreiben. Klappt das nicht, wird nicht neu geladen -
   // das Neuladen würde sie sonst still verwerfen.
   if(_fsSyncDebounce||_fsUngespeichert){
