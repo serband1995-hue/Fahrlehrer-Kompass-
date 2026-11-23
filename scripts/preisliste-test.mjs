@@ -125,10 +125,10 @@ try {
     pruefe("P1d keine Fehler in der Konsole", konsole.length === 0, konsole.join(" | "));
     await ctx.close();
   }
-  // P6 Büro sieht, darf nicht ändern
+  // P6 Büro sieht und darf ändern (🗣 Serband)
   {
     const { page, ctx, konsole } = await oeffne({ nutzer: "bu-1", vorbereiten: mitPreisen });
-    pruefe("P6a Büro: kein „Neuer Preis“, kein „Ändern“", await page.locator("#prNeu").count() === 0 && await page.locator("[data-pr-aendern]").count() === 0);
+    pruefe("P6a Büro: „Neuer Preis“ und „Ändern“ da", await page.locator("#prNeu").count() === 1 && await page.locator("[data-pr-aendern]").count() >= 1);
     const t = await page.locator("#inhalt").innerText();
     pruefe("P6b gleicher Tag zwei Zeilen: die zuletzt eingetragene gilt (65,00 € statt 60,00 €)", /Übungsfahrstunde[\s\S]*65,00\s*€/.test(t) && !/60,00\s*€\s*\n?\s*je 45/.test(t), t.slice(0, 500));
     pruefe("P6c Reaktivierung heute 260 €, geplant 280 €", /260,00\s*€/.test(t) && /280,00\s*€/.test(t));
@@ -174,7 +174,7 @@ try {
   {
     const sql = await readFile(join(ROOT, "supabase/migrations/20261123_k9_01_preisliste.sql"), "utf8");
     pruefe("P11a keine update-Regel und kein update-Recht", !/for update/i.test(sql) && !/grant[^;]*update/i.test(sql));
-    pruefe("P11b Anlegen nur Leitung/Super-Admin", /Preise anlegen Leitung[\s\S]*is_fahrschule_admin/.test(sql));
+    pruefe("P11b Anlegen nur Büro/Leitung/Super-Admin", /Preise anlegen Buero Leitung[\s\S]*is_fahrschule_admin\(auth.uid\(\)\) or is_buero/.test(sql));
     pruefe("P11c Rückdatieren nur Super-Admin", /gueltig_ab < \(now\(\) at time zone 'Europe\/Berlin'\)::date and not coalesce\(is_super_admin/.test(sql));
     pruefe("P11d Rückweg vorhanden", (await readFile(join(ROOT, "supabase/rueckweg/20261123_k9_rueckweg.sql"), "utf8")).includes("drop table if exists public.fahrschule_preise"));
   }

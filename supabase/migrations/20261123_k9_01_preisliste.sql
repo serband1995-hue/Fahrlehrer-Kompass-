@@ -9,7 +9,8 @@
 --   Gleiche Preisposition = gleiche Fahrschule, Art, Klasse und Bezeichnung (Groß/klein egal).
 --   Bei zwei Zeilen mit gleichem „gültig ab“ gilt die zuletzt angelegte (Tippfehler am selben Tag korrigieren).
 -- Rechte: lesen alle aktiven Konten derselben Fahrschule (Fahrlehrer, Leitung, Büro) und Super-Admin.
---   Anlegen: Leitung (fahrschule_admin) und Super-Admin. Ändern geht nicht (Verlauf bleibt).
+--   Anlegen: Büro, Leitung (fahrschule_admin) und Super-Admin (🗣 Serband: „Büro braucht in den Einstellungen eine
+--   Stelle, an der alle Zahlen einstellbar und später änderbar sind“). Ändern einer Zeile geht nicht (Verlauf bleibt).
 --   Löschen: nur Super-Admin (Notfall). „gültig ab“ in der Vergangenheit: nur Super-Admin,
 --   damit niemand nachträglich den Preis eines schon geschlossenen Vertrags ändert.
 -- Einmal ausführbar und wiederholbar (if not exists / create or replace / drop policy if exists).
@@ -37,10 +38,11 @@ drop policy if exists "Preise lesen Fahrschule" on public.fahrschule_preise;
 create policy "Preise lesen Fahrschule" on public.fahrschule_preise for select to authenticated
   using (fahrschule_id = k5_meine_fahrschule() or is_super_admin(auth.uid()));
 drop policy if exists "Preise anlegen Leitung" on public.fahrschule_preise;
-create policy "Preise anlegen Leitung" on public.fahrschule_preise for insert to authenticated
+drop policy if exists "Preise anlegen Buero Leitung" on public.fahrschule_preise;
+create policy "Preise anlegen Buero Leitung" on public.fahrschule_preise for insert to authenticated
   with check (
     (is_super_admin(auth.uid()))
-    or (fahrschule_id = k5_meine_fahrschule() and coalesce(is_fahrschule_admin(auth.uid()), false))
+    or (fahrschule_id = k5_meine_fahrschule() and coalesce(is_fahrschule_admin(auth.uid()) or is_buero(auth.uid()), false))
   );
 drop policy if exists "Preise loeschen nur Super-Admin" on public.fahrschule_preise;
 create policy "Preise loeschen nur Super-Admin" on public.fahrschule_preise for delete to authenticated

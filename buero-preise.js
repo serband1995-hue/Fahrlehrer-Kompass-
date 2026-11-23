@@ -25,7 +25,8 @@ const PR_FORMAT_VERSION = 1;
 function prArt(art) { return PR_ARTEN.find((a) => a[0] === art) || [art, art, "pauschal", false, ""]; }
 function prEinheit(e) { const x = PR_EINHEITEN.find((a) => a[0] === e); return x ? x[1] : e; }
 function prSchluessel(r) { return [r.art, r.klasse || "", String(r.bezeichnung || "").trim().toLowerCase()].join("|"); }
-function prDarf() { return !!(S.profil && (S.profil.rolle === "fahrschule_admin" || S.profil.rolle === "super_admin")); }
+// 🗣 Serband: Büro stellt alle Zahlen ein → Büro, Leitung, Super-Admin; Fahrlehrer nur lesen
+function prDarf() { return !!(S.profil && ["buero", "fahrschule_admin", "super_admin"].includes(S.profil.rolle)); }
 function prIstSuper() { return !!(S.profil && S.profil.rolle === "super_admin"); }
 function prEuro(cent) { return cent == null ? "entfällt" : (cent / 100).toLocaleString("de-DE", { style: "currency", currency: "EUR" }); }
 function prOrdnen(a, b) { return a.gueltig_ab < b.gueltig_ab ? -1 : a.gueltig_ab > b.gueltig_ab ? 1 : String(a.angelegt_am || "").localeCompare(String(b.angelegt_am || "")); }
@@ -93,7 +94,7 @@ function renderPreise() {
         <button class="knopf" type="button" id="prCsv">Herunterladen (CSV)</button></div></div>
     ${gruppen || `<p class="leer">Noch keine Preise eingetragen.${darf ? " Mit „Neuer Preis“ anfangen: Grundbetrag, Übungsfahrstunde und Sonderfahrten je Klasse, Prüfungsvorstellung, Reaktivierung, Pakete." : ""}</p>`}
     <p class="leise klein">Ein geänderter Preis gilt ab dem gewählten Tag. Alte Verträge behalten den Preis von ihrem Vertragsdatum. Nichts wird überschrieben: der Verlauf zeigt jeden Stand.
-      ${darf ? "" : "Preise ändert die Leitung."}</p>
+      ${darf ? "" : "Preise ändern Büro und Leitung."}</p>
   </div>`;
 }
 function prWer(id) {

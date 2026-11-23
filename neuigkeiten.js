@@ -7,7 +7,7 @@ window.KOMPASS_NEU = [
   { version: "2026.11.23.4", datum: "2026-11-23", kurz: "Neu im Büro: Preisliste mit „gültig ab“.",
     punkte: ["Im Büro gibt es unter „Geld“ die Seite „Preisliste“: Grundbetrag, Fahrstunde je Klasse, Sonderfahrten, Prüfungen, Reaktivierung und Pakete.",
              "Ein neuer Preis gilt ab dem Tag, den du wählst. Alte Verträge behalten ihren Preis, der Verlauf zeigt jeden Stand.",
-             "Preise ändert die Leitung. Die Liste lässt sich als Datei herunterladen.",
+             "Preise ändern Büro und Leitung, jede Änderung steht mit Namen im Verlauf. Die Liste lässt sich als Datei herunterladen.",
              "Steht die Reaktivierung in der Preisliste, nimmt das Büro diesen Betrag."] },
   { version: "2026.11.23.2", datum: "2026-11-23", kurz: "Zurück klappt jetzt überall, Prüfer-Notiz bleibt.",
     punkte: ["Nach dem Knopf „Prüfer“ und ähnlichen Knöpfen führt der Zurück-Pfeil wieder richtig zurück.",
