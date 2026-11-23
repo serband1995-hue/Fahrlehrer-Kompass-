@@ -222,7 +222,7 @@
     const wer = r.data.an_name || anName || "Kollegen";
     await nachher(); // danach der eigene Hinweis (er ersetzt den allgemeinen „wurde umverteilt“)
     // Richter K6 (B1): auch ein Prüfungstermin im Kalender geht mit – kein Hinweis „Prüfung bleibt bei dir“
-    hinweis(`${name} ist jetzt bei ${wer}${r.data.termine ? ` (${r.data.termine} Termin${r.data.termine === 1 ? "" : "e"} gehen mit)` : ""}.`);
+    hinweis(`${name} ist jetzt bei ${wer}${r.data.termine ? ` (${r.data.termine === 1 ? "1 Termin geht" : r.data.termine + " Termine gehen"} mit)` : ""}.`);
     const z = (daten || []).find((x) => x.id === sid);
     if (z) { z.eigen = false; z.fahrlehrer_id = an; z.fahrlehrer_name = wer; }
     zeichne(); laden();
