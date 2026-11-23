@@ -6,8 +6,8 @@
   "start_url": "/Fahrlehrer-Kompass-/buero.html",
   "scope": "/Fahrlehrer-Kompass-/",
   "display": "standalone",
-  "background_color": "#f3f1e9",
-  "theme_color": "#3a7350",
+  "background_color": "#f1f1f4",
+  "theme_color": "#f1f1f4",
   "lang": "de",
   "dir": "ltr",
   "icons": [
