@@ -70,3 +70,5 @@ jobs:
         run: NODE_PATH=$(npm root -g) node scripts/pruefer-gemeinsam-test.mjs
       - name: "Zurück auf jeder Seite (K10, App und Büro)"
         run: NODE_PATH=$(npm root -g) node scripts/zurueck-test.mjs
+      - name: "Preisliste im Büro (K9: gültig ab, Verlauf, Herunterladen)"
+        run: NODE_PATH=$(npm root -g) node scripts/preisliste-test.mjs

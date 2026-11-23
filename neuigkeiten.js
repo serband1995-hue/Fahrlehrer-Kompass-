@@ -4,6 +4,11 @@
    "kurz" (höchstens ~60 Zeichen) erscheint nach dem Update einmal als kleiner Hinweis (verschwindet von selbst, kein Knopf).
    Einfache Worte, keine Fachwörter, keine Schülerdaten. */
 window.KOMPASS_NEU = [
+  { version: "2026.11.23.4", datum: "2026-11-23", kurz: "Neu im Büro: Preisliste mit „gültig ab“.",
+    punkte: ["Im Büro gibt es unter „Geld“ die Seite „Preisliste“: Grundbetrag, Fahrstunde je Klasse, Sonderfahrten, Prüfungen, Reaktivierung und Pakete.",
+             "Ein neuer Preis gilt ab dem Tag, den du wählst. Alte Verträge behalten ihren Preis, der Verlauf zeigt jeden Stand.",
+             "Preise ändert die Leitung. Die Liste lässt sich als Datei herunterladen.",
+             "Steht die Reaktivierung in der Preisliste, nimmt das Büro diesen Betrag."] },
   { version: "2026.11.23.2", datum: "2026-11-23", kurz: "Zurück klappt jetzt überall, Prüfer-Notiz bleibt.",
     punkte: ["Nach dem Knopf „Prüfer“ und ähnlichen Knöpfen führt der Zurück-Pfeil wieder richtig zurück.",
              "Eine angefangene Notiz zu einem Prüfer bleibt stehen, wenn du kurz zurückgehst und wiederkommst."] },

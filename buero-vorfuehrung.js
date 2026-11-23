@@ -352,6 +352,8 @@ if (typeof module !== "undefined" && module.exports) { module.exports = { bauDat
         daten = this.daten.map((r) => Object.assign({ id: r.id || ("fake-" + Math.random().toString(36).slice(2, 10)), erstellt_am: new Date().toISOString() }, kopie(r)));
         // wie der Trigger in der Datenbank: wer die Aufgabe anlegt, kommt aus der PIN-Sitzung
         if (this.name === "schueler_aufgaben") { const si = meineSitzung(); const p = si && personen().find((x) => x.id === si.person); daten.forEach((r) => { r.von_person_id = si ? si.person : null; r.bearbeiter = p ? p.name : null; }); }
+        // wie der Schutz-Trigger der Preisliste (K9): Verfasser und Zeit vom Server
+        if (this.name === "fahrschule_preise") daten.forEach((r) => { r.angelegt_von = (F.session && F.session.user && F.session.user.id) || null; r.angelegt_am = new Date().toISOString(); });
         t.push(...daten);
         if (this.name === "kalender_termine") daten.forEach((r) => terminSpur(null, r));
       } else if (this.art === "upsert") {
