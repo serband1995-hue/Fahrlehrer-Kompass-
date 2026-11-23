@@ -37,7 +37,8 @@ as $function$
               and t.datum is not null
               and (t.datum < (now() at time zone 'Europe/Berlin')::date
                    or (t.datum = (now() at time zone 'Europe/Berlin')::date
-                       and (case when coalesce(t.bis, '') ~ '^\d{1,2}:\d{2}$' then t.bis::time end) <= (now() at time zone 'Europe/Berlin')::time))));
+                       -- nur gültige Uhrzeiten vergleichen (die App kann „24:30“ erzeugen → kein Abbruch, zählt als noch nicht vorbei)
+                       and coalesce((case when coalesce(t.bis, '') ~ '^([01]?\d|2[0-3]):[0-5]\d$' then t.bis::time end) <= (now() at time zone 'Europe/Berlin')::time, false)))));
 $function$;
 
 create or replace function public.termin_papierkorb()

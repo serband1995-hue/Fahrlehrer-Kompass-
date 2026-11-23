@@ -14178,6 +14178,8 @@ function _absageMerken(id){ const a=_absagenLesen().filter(x=>x.id!==id); a.push
 function _absageVergessen(id){ _absagenSchreiben(_absagenLesen().filter(x=>x.id!==id)); }
 function _absageSenden(id){ _absageVergessen(id); _notifyOnlineBookingChange(id,"cancelled"); }
 function _absagenNachholen(){ if(!_authUser)return; const uid=_authUser.id, jetzt=Date.now();
+  // Fable K7: läuft noch ein (zusammengefasstes) Rückgängig, wartet die Absage (sonst Mail trotz „Rückgängig“)
+  try{ const t=$("#toast"); if(t&&t.classList.contains("show")&&t.classList.contains("undo")&&t._undos&&t._undos.length){ setTimeout(_absagenNachholen,1500); return; } }catch(e){}
   _absagenLesen().forEach(x=>{ if(x.uid&&x.uid!==uid)return; if(jetzt-x.t>7000&&!(DB.lessons||[]).some(l=>l.id===x.id))_absageSenden(x.id); }); }
 function _lessonEntfernen(l, text, neuZeichnen, nachAblauf, beiRueckgaengig, ohneAbsage){
   let sonderAlt;
@@ -14402,9 +14404,7 @@ function schuelerAusblenden(id){
   s.ausgeblendetAm=new Date().toISOString(); logHist(s,"note","Bei mir ausgeblendet");
   clearSlot(id); // Platz auf der Prüfungstafel freigeben
   const ohne=abgesagt, online=[]; let rueck=false;
-  DB.lessons=(DB.lessons||[]).filter(l=>!ohne.includes(l)); save(); routeHome();
-  // Online-Buchungen: Die Absage an den Schüler geht erst raus, wenn nicht rückgängig gemacht wurde
-  setTimeout(()=>{ if(!rueck)ohne.forEach(l=>{ if(l.onlineBookingId)_notifyOnlineBookingChange(l.id,"cancelled"); }); },6300);
+  save(); routeHome();
   toastUndo(`${s.name.split(" ")[0]} ausgeblendet · wieder da unter Archiv`+(kuenftig.length?` · Termine bleiben`:""),()=>{ rueck=true;
     delete s.ausgeblendetAm; logHist(s,"note","Wieder eingeblendet");
     ohne.forEach(l=>{ delete l._syncedAt; if(!DB.lessons.some(x=>x.id===l.id))DB.lessons.push(l); });
@@ -15368,13 +15368,15 @@ function openFCMenu(id){
   acts+=tag("v2","2 FC vergessen","0 €");
   acts+=tag("geschenkt","45 Min geschenkt","0 €");
   if(cur==="v1"||cur==="v2"||cur==="halb_bewusst"){ acts+=tag("nachgereicht","FC nachgereicht","Verdienst kommt zurück (akt. Monat)","good"); }
-  acts+=`<button class="es-act danger" data-fcdel="${id}">Hat nicht stattgefunden (löschen)</button>`;
+  acts+=`<button class="es-act danger" data-fcdel="${id}">Hat nicht stattgefunden</button>`;
   openSheet(`<div class="sheet-h">Fahrcheck · ${esc(st?st.name:"")}</div>
     <p class="muted-p" style="font-size:13px;margin:-4px 0 14px;">${isoDE(l.date)} · ${esc(l.von)} · ${(CAL_ARTEN[l.art]||CAL_ARTEN.fahrstunde).lab}</p>
     <p class="muted-p" style="font-size:12.5px;margin:-6px 0 14px;color:var(--faint);">Standard ist „2 FC erhalten“ – hier nur Ausnahmen vermerken.</p>
     <div class="es-actions">${acts}</div>`);
   document.querySelectorAll("[data-fcset]").forEach(b=>b.addEventListener("click",()=>{ closeSheet(); setFC(id,b.dataset.fcset); }));
-  document.querySelectorAll("[data-fcdel]").forEach(b=>b.addEventListener("click",()=>{ closeSheet(); deleteLessonMitRueckgaengig(b.dataset.fcdel,()=>refreshCurrentView()); }));
+  // K7: der Knopf nennt den Grund schon – gelaufene Stunde direkt stornieren (kein zweites Fenster), sonst löschen; je 6 s Rückgängig
+  document.querySelectorAll("[data-fcdel]").forEach(b=>b.addEventListener("click",()=>{ closeSheet(); const l=(DB.lessons||[]).find(x=>x.id===b.dataset.fcdel);
+    if(l&&istNachweisStunde(l))stornoLesson(l.id,"Hat nicht stattgefunden",()=>refreshCurrentView()); else deleteLessonMitRueckgaengig(b.dataset.fcdel,()=>refreshCurrentView()); }));
 }
 
 /* Übersicht „FC vergessen“ – welche Schüler, wie oft, wie viel Geld entgeht */

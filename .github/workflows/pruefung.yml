@@ -70,3 +70,5 @@ jobs:
         run: NODE_PATH=$(npm root -g) node scripts/pruefer-gemeinsam-test.mjs
       - name: "Zurück auf jeder Seite (K10, App und Büro)"
         run: NODE_PATH=$(npm root -g) node scripts/zurueck-test.mjs
+      - name: "Löschen, Stornieren, Papierkorb (K7)"
+        run: NODE_PATH=$(npm root -g) node scripts/loeschen-test.mjs

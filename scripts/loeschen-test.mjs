@@ -245,8 +245,10 @@ await pruefe("L4c", "Sammel-Rückgängig: zweite Löschung verlängert das Rück
   const f = []; await toastWeg();
   await p.evaluate(() => { window.__abs.length = 0; });
   await stunde("l4c1", { date: 7, onlineBookingId: "ob-c" }); await stunde("l4c2", { date: 8 });
-  await oeffneStunde("l4c1"); await p.click("#esDelete"); await warte(p, 4000);
-  await oeffneStunde("l4c2"); await p.click("#esDelete"); await warte(p, 3000); // 7 s nach der ersten Löschung
+  await oeffneStunde("l4c1"); await p.click("#esDelete"); await warte(p, 5000);
+  // Fable K7: 2. Löschung bei 5 s; bei ~9,5 s ist der Abgleich (4 s nach dem Speichern) schon gelaufen, Rückgängig läuft noch
+  await oeffneStunde("l4c2"); await p.click("#esDelete"); await warte(p, 4500);
+  await p.evaluate(() => { try { _absagenNachholen(); } catch (e) {} }); await warte(p, 200); // Abgleich-Weg ausdrücklich
   if (await p.evaluate(() => window.__abs.length)) f.push("Absage raus, obwohl Rückgängig noch angeboten wird");
   if (!(await toastRueck())) f.push("kein Rückgängig mehr");
   await p.click("#toast .ut-btn"); await warte(p, 1500);

@@ -1526,7 +1526,7 @@ function bindeNotizBlock(dlg, sid, fahrlehrerId) {
     }));
     block.querySelectorAll("[data-notizweg]").forEach((b) => b.addEventListener("click", async () => {
       const n = S.notizen.find((x) => x.id === b.dataset.notizweg);
-      if (!n || !(await bestaetige("Notiz löschen?", `„${String(n.text || "").slice(0, 80)}${String(n.text || "").length > 80 ? " …" : ""}“ wird gelöscht und verschwindet auch beim Fahrlehrer. Danach hast du 6 Sekunden, es rückgängig zu machen.`, "Ja, löschen"))) return;
+      if (!n) return; // K7: ohne Rückfrage, 6 s Rückgängig
       const res = await supa.from("schueler_notizen").delete().eq("id", n.id).select("id");
       if (res.error || !res.data || !res.data.length) { toast("Nicht gelöscht: " + (res.error ? res.error.message : "keine Berechtigung"), true); return; }
       S.notizen = S.notizen.filter((x) => x.id !== n.id);
@@ -1678,7 +1678,7 @@ async function erledigeAufgabe(id, nachher) {
 }
 async function loescheAufgabe(id, nachher) {
   const a = S.aufgaben.find((x) => x.id === id);
-  if (!a || !(await bestaetige("Aufgabe löschen?", `„${String(a.text || "").slice(0, 80)}${String(a.text || "").length > 80 ? " …" : ""}“ wird gelöscht. Danach hast du 6 Sekunden, es rückgängig zu machen.`, "Ja, löschen"))) return false;
+  if (!a) return false; // K7: ohne Rückfrage, 6 s Rückgängig
   const res = await supa.from("schueler_aufgaben").delete().eq("id", id).select("id");
   if (res.error || !res.data || !res.data.length) { toast("Nicht gelöscht: " + (res.error ? res.error.message : "keine Berechtigung"), true); return false; }
   S.aufgaben = S.aufgaben.filter((x) => x.id !== id);
@@ -3754,7 +3754,7 @@ function bindeFlotte(ziel) {
   }));
   ziel.querySelectorAll("[data-fzweg]").forEach((b) => b.addEventListener("click", async () => {
     const f = S.fahrzeuge.find((x) => x.id === b.dataset.fzweg);
-    if (!f || !(await bestaetige("Fahrzeug entfernen?", `${f.name || ""} wird aus der Liste genommen. Alte Termine bleiben unverändert. Unter „Entfernte Fahrzeuge“ kannst du es zurückholen.`, "Ja, entfernen"))) return;
+    if (!f) return; // K7: ohne Rückfrage, Rückgängig und „Entfernte Fahrzeuge“
     const res = await supa.from("fahrschule_fahrzeuge").update({ aktiv: false }).eq("id", f.id).select("id");
     if (res.error || !res.data || !res.data.length) { toast("Nicht gespeichert: " + (res.error ? res.error.message : "keine Berechtigung"), true); return; }
     S.fahrzeuge = S.fahrzeuge.filter((x) => x.id !== f.id); S.fahrzeugeWeg = (S.fahrzeugeWeg || []).concat(Object.assign(f, { aktiv: false }));

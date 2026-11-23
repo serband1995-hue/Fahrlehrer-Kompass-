@@ -302,9 +302,11 @@ function nwKurzSperren() {
 function nwIstNachweis(t) {
   const p = t.payload || {};
   if (p.signed || (p.signaturUngueltig && typeof p.signaturUngueltig === "object")) return true;
-  if (nwAusgefallen(t)) return false;
   const j = new Date();
-  return !!t.datum && nwVorbei(t, KR.todayISO(), j.getHours() * 60 + j.getMinutes());
+  if (!t.datum || !nwVorbei(t, KR.todayISO(), j.getHours() * 60 + j.getMinutes())) return false;
+  // Ausfall mit Berechnung ist Abrechnungs-Beleg (wie App und Datenbank)
+  if (p.noshow || (typeof p.tatsaechlicheDauer === "number" && p.tatsaechlicheDauer > 0)) return true;
+  return !nwAusgefallen(t);
 }
 async function nwLoeschen(t, nachher) {
   if (!t) return;
