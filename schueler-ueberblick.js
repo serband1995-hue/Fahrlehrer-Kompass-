@@ -15,7 +15,8 @@
   const SORT_KEY = "kompass-su-sort-v1";
   const SORTEN = { fahrlehrer: "Fahrlehrer", name: "Name", stand: "Stand" };
   let sortWahl = "fahrlehrer", filterFl = "";
-  (function () { try { const o = JSON.parse(localStorage.getItem(SORT_KEY) || "null"); if (o && SORTEN[o.sort]) sortWahl = o.sort; if (o && typeof o.fl === "string") filterFl = o.fl; } catch (e) {} })();
+  function sortLesen() { try { const o = JSON.parse(localStorage.getItem(SORT_KEY) || "null"); if (o && SORTEN[o.sort]) sortWahl = o.sort; if (o && typeof o.fl === "string") filterFl = o.fl; } catch (e) {} }
+  sortLesen();
   function sortMerken() { try { localStorage.setItem(SORT_KEY, JSON.stringify({ sort: sortWahl, fl: filterFl })); } catch (e) {} }
   const nameKey = (r) => String(r.name || "");
   const flKey = (r) => r.fahrlehrer_name || "Ohne Fahrlehrer";
@@ -139,7 +140,7 @@
     document.getElementById("tbTitle").textContent = "Alle Schüler";
     if (typeof setFab === "function") setFab(false);
     view.scrollTop = 0;
-    if (!zurueckFahrt) suche = ""; // Fable K6 E5: beim Zurück aus der Akte bleibt die Suche (die gemerkte Stelle passt dann)
+    if (!zurueckFahrt) { suche = ""; sortLesen(); } // Fable K6 E5: beim Zurück aus der Akte bleibt die Suche (die gemerkte Stelle passt dann)
     const zurueck = typeof ICN !== "undefined" && ICN.back ? ICN.back : "‹";
     view.innerHTML = `<div class="view-inner view-read fade-up">
       <div class="back-row"><button class="back-btn su-zurueck" id="suZurueck">${zurueck} Schüler</button></div>
