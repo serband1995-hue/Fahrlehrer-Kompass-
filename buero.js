@@ -3922,6 +3922,9 @@ async function konfGesehenSetzen(schluessel) {
 }
 async function konfGesehenLoeschen(id, text) {
   const res = await supa.from("fahrzeug_konflikt_gesehen").delete().eq("id", id).select("id");
+  if (!res.error && res.data && !res.data.length) { // schon von jemand anderem zurückgenommen: wie Erfolg
+    S.konfGesehen = (S.konfGesehen || []).filter((x) => x.id !== id); zeichne(); if (text) toast(text); return;
+  }
   if (res.error || !res.data || !res.data.length) { toast("Nicht gespeichert: " + (res.error ? dbFehlerText(res.error) : "keine Berechtigung"), true); return; }
   S.konfGesehen = (S.konfGesehen || []).filter((x) => x.id !== id);
   zeichne();
@@ -4190,7 +4193,8 @@ async function ladeDaten() {
     // K9: null = Preisliste (noch) nicht da → alter Reaktivierungsbetrag. Ein kurzer Ladefehler behält den letzten Stand (Prüf-Team).
     if (preise && !preise.error) S.preise = preise.data || [];
     else if (!(S.preise && S.preise.length) || (typeof prTabelleFehlt !== "function" || prTabelleFehlt(preise && preise.error))) S.preise = null;
-    S.konfGesehen = konfGes && !konfGes.error ? (konfGes.data || []) : null;   // null = Tabelle fehlt oder Fehler: ohne „Gesehen“, Warnung wie bisher
+    // null = Tabelle fehlt (alte Datenbank): ohne „Gesehen“, Warnung wie bisher. Anderer Ladefehler: letzten Stand behalten
+    S.konfGesehen = konfGes && !konfGes.error ? (konfGes.data || []) : (konfGes && konfGes.error && !konfTabelleFehlt(konfGes.error) ? S.konfGesehen : null);
     if (typeof zmLaden === "function") zmLaden(zahlungsdaten, zahlungsMails, zmT0); // Werkstatt 11: Fehler tolerant
     S.geladenAm = new Date();
     $("schulName").textContent = S.fs ? S.fs.name : "";
@@ -4602,6 +4606,7 @@ $("schulWahl").addEventListener("change", (e) => {
   try { localStorage.setItem("buero-fahrschule", S.fsId); } catch (err) { /* egal */ }
   S.geladenAm = null;
   S.preise = null; // K9 (Fable B1): Preise der vorigen Fahrschule nie in der neuen zeigen oder behalten
+  S.konfGesehen = null; // K18: „gesehen“-Vermerke gehören zur Fahrschule
   if (typeof zmLeeren === "function") zmLeeren(); // Werkstatt 11: Zahlungsdaten und Mail-Spur der vorigen Fahrschule weg
   zeigeRollenStreifen();
   zeichne();
