@@ -220,6 +220,39 @@ if (typeof module !== "undefined" && module.exports) { module.exports = { bauDat
   F.tabellen = F.tabellen || {};
   F.rpcs = F.rpcs || {};
   F.functions = F.functions || {};
+  // Zahlungsaufforderung (Werkstatt 11): ahmt die Funktion zahlungs-mail nach (Prüfungen wie der Server, kein Versand). Steuerbar:
+  // F.fehler["zahlungs-mail"] = "zu_viele" (oder anderer Code) → Antwort { fehler: code }; F.fehler["zahlungs-mail"] = "netz" → Funktion nicht erreichbar.
+  if (!F.functions["zahlungs-mail"]) F.functions["zahlungs-mail"] = (b) => {
+    const f = F.fehler && F.fehler["zahlungs-mail"];
+    if (f === "netz") throw new Error("Failed to fetch");
+    if (f) return { fehler: f };
+    const profile = F.tabellen.profiles || [];
+    const ich = F.session && profile.find((p) => p.id === F.session.user.id);
+    if (!ich) return { fehler: "nicht_angemeldet" };
+    if (!["buero", "fahrschule_admin", "super_admin"].includes(ich.rolle)) return { fehler: "keine_berechtigung" };
+    const s = (F.tabellen.schueler || []).find((x) => x.id === b.schueler_id && x.fahrschule_id === ich.fahrschule_id);
+    if (!s) return { fehler: "kein_schueler" };
+    if (!["pruefung", "reaktivierung", "zahlung_offen"].includes(b.art)) return { fehler: "art_unbekannt" };
+    if (!Number.isInteger(b.betrag_cent) || b.betrag_cent < 100 || b.betrag_cent > 1000000) return { fehler: "betrag" };
+    const w = String(b.wofuer || "").trim();
+    if (!w || w.length > 80) return { fehler: "wofuer" };
+    const z = (F.tabellen.fahrschule_zahlungsdaten || []).find((x) => x.fahrschule_id === ich.fahrschule_id);
+    if (!z || !z.kontoinhaber || !z.iban) return { fehler: "zahlungsdaten_fehlen" };
+    if (b.art === "zahlung_offen" && !s.zahlung_gesperrt_seit) return { fehler: "nicht_gesperrt" }; // wie der Server (409): die Sperre ist inzwischen weg
+    if (b.erwarteter_modus !== "test" && b.erwarteter_modus !== "echt") return { fehler: "ungueltige_anfrage" }; // Pflichtfeld seit Commit 963ac7d
+    if (b.erwarteter_modus !== z.modus) return { fehler: "modus_geaendert", modus: z.modus }; // wie der Server (409): nichts wird gesendet
+    const heute = new Date().toISOString().slice(0, 10);
+    const mails = F.tabellen.zahlungs_mails || (F.tabellen.zahlungs_mails = []);
+    const echt = z.modus === "echt", heuteMails = mails.filter((m) => String(m.angelegt_am || "").slice(0, 10) === heute);
+    if (heuteMails.length >= 100) return { fehler: "zu_viele_schule" };
+    if (heuteMails.filter((m) => m.schueler_id === s.id && m.modus === (echt ? "echt" : "test")).length >= 5) return { fehler: "zu_viele" }; // je Schüler, Test und Echt getrennt
+    const an = echt ? (s.email || (s.ausbildung || {}).email || "") : (z.test_email || "betreiber@example.org");
+    if (echt && !an) return { fehler: "keine_email" };
+    const jetzt = new Date().toISOString(), id = "zm-" + Math.random().toString(36).slice(2, 10);
+    const kurz = an.slice(0, 1) + "***@" + (an.split("@")[1] || "");
+    mails.push({ id, fahrschule_id: ich.fahrschule_id, schueler_id: s.id, art: b.art, betrag_cent: b.betrag_cent, wofuer: w, modus: echt ? "echt" : "test", empfaenger_kurz: kurz, status: "gesendet", gesendet_von: ich.id, bearbeiter: ich.name, angelegt_am: jetzt, gesendet_am: jetzt });
+    return { ok: true, id, modus: echt ? "echt" : "test", gesendet_am: jetzt, empfaenger_kurz: kurz };
+  };
   // PIN-Funktionen wie in der Datenbank (vereinfacht). Der Schlüssel kommt hier aus dem Tab-Speicher statt aus der Kopfzeile.
   F.sitzungen = F.sitzungen || {};
   const zuEinfach = (p) => {
@@ -355,13 +388,16 @@ if (typeof module !== "undefined" && module.exports) { module.exports = { bauDat
         // wie der Schutz-Trigger der Preisliste (K9): Verfasser und Zeit vom Server
         if (this.name === "fahrschule_preise") { const si = meineSitzung(); const p = si && personen().find((x) => x.id === si.person); daten.forEach((r) => { r.angelegt_von = (F.session && F.session.user && F.session.user.id) || null; r.angelegt_am = new Date().toISOString(); r.bearbeiter = p ? p.name : null; }); }
         t.push(...daten);
+        if (this.name === "zahlungs_mails") daten.forEach((r) => { r.angelegt_am = r.angelegt_am || new Date().toISOString(); });
         if (this.name === "kalender_termine") daten.forEach((r) => terminSpur(null, r));
       } else if (this.art === "upsert") {
         const k = this.konflikt.split(",");
         daten = this.daten.map((r) => {
           const alt = t.find((x) => k.every((s) => x[s] === r[s]));
-          if (alt) { Object.assign(alt, kopie(r)); return alt; }
-          const neu = Object.assign({ id: r.id || ("fake-" + Math.random().toString(36).slice(2, 10)) }, kopie(r)); t.push(neu); return neu;
+          // wie der Schutz-Trigger der Zahlungsdaten (Werkstatt 11): Zeit und Bearbeiter kommen vom Server
+          const spur = (z) => { if (this.name === "fahrschule_zahlungsdaten") { const si = meineSitzung(); const p = si && personen().find((x) => x.id === si.person); z.geaendert_am = new Date().toISOString(); z.geaendert_von = (F.session && F.session.user && F.session.user.id) || null; z.bearbeiter = p ? p.name : null; } return z; };
+          if (alt) { Object.assign(alt, kopie(r)); return spur(alt); }
+          const neu = Object.assign(this.name === "fahrschule_zahlungsdaten" ? {} : { id: r.id || ("fake-" + Math.random().toString(36).slice(2, 10)) }, kopie(r)); t.push(neu); return spur(neu);
         });
       } else if (this.art === "update") {
         daten = t.filter((r) => this.passt(r));

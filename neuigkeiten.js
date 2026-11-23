@@ -4,6 +4,12 @@
    "kurz" (höchstens ~60 Zeichen) erscheint nach dem Update einmal als kleiner Hinweis (verschwindet von selbst, kein Knopf).
    Einfache Worte, keine Fachwörter, keine Schülerdaten. */
 window.KOMPASS_NEU = [
+  { version: "2026.11.23.7", datum: "2026-11-23", kurz: "Neu im Büro: Zahlungsaufforderung per Mail.",
+    punkte: ["In den Büro-Einstellungen gibt es „Zahlungsdaten für Mails“: Kontoinhaber, IBAN, PayPal und Kontakt der Fahrschule.",
+             "In der Akte eines Schülers schickt das Büro mit einem Knopf eine Zahlungsaufforderung: für die Prüfung, die Reaktivierung oder eine offene Zahlung.",
+             "Die Mail zeigt den Betrag groß, die Bankdaten mit einem Code für die Banking-App und auf Wunsch einen PayPal-Knopf.",
+             "Nach dem Senden steht dort ein Haken mit Datum. Ein paar Sekunden lang geht noch „Rückgängig“.",
+             "Bis zum Umschalten auf „Echt“ gehen alle Mails nur an die Test-Adresse."] },
   { version: "2026.11.23.6", datum: "2026-11-23", kurz: "Neu: Zahlung offen – keine neuen Termine.",
     punkte: ["Das Büro kann bei einem Schüler „Zahlung offen“ eintragen und später „Bezahlt“. Danach kommt ein Hinweis mit „Rückgängig“.",
              "Solange eine Zahlung offen ist, gibt es für den Schüler keine neuen Termine: nicht in der App, nicht im Büro und nicht online.",

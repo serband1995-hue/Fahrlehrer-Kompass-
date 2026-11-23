@@ -552,7 +552,7 @@ function zahlBlockHTML(x) {
 function bindeZahlBlock(dlg, id) {
   const block = dlg.querySelector("#zahlBlock");
   if (!block) return;
-  const neu = () => { const x = S.schueler.find((y) => y.id === id); if (x) { block.innerHTML = zahlBlockHTML(x); bind(); } };
+  const neu = () => { const x = S.schueler.find((y) => y.id === id); if (x) { block.innerHTML = zahlBlockHTML(x); bind(); } if (typeof zmNeuZeichnen === "function") zmNeuZeichnen(id); }; // Werkstatt 11: Mail-Knöpfe hängen an der Sperre
   const bind = () => {
     block.querySelectorAll("[data-zsperre]").forEach((b) => b.addEventListener("click", () => zahlungAusstehendDialog(id, neu)));
     block.querySelectorAll("[data-zbezahlt]").forEach((b) => b.addEventListener("click", () => zahlungBezahlt(id, neu)));
@@ -720,7 +720,7 @@ function renderFristen() {
     ${ansicht === "antrag" || ansicht === "umschreiber" ? "" : liste.length ? `<table class="tabelle"><thead><tr><th>Schüler</th><th>Fahrlehrer</th><th class="nur-breit">Vertrag</th><th>Reaktivierung</th><th>Theorie</th><th></th></tr></thead><tbody>${zeilen}</tbody></table>`
       : `<p class="leer">${ansicht === "handeln" ? "Kein Handlungsbedarf. Sehr gut." : "Keine Schüler in dieser Ansicht."}</p>`}
     <p class="leise klein">Reaktivierung: ${reaktInPreisliste() ? `${reaktHeuteText()} für neue Verträge (alte Verträge zahlen den Preis ihres Vertragsdatums)` : euro(reaktBetrag())}, fällig 12 Monate nach Vertragsabschluss und dann jährlich. „Gesperrt“ heißt: keine weiteren Leistungen, bis bezahlt ist. Jede Änderung wird mit Name und Uhrzeit protokolliert.</p>
-  </div>${renderBueroEinstellungen()}`;
+  </div>${renderBueroEinstellungen()}${typeof zmEinstellungenHTML === "function" ? zmEinstellungenHTML() : ""}`; // Werkstatt 11: Zahlungsdaten für Mails (buero-zahlungsmail.js)
 }
 function renderBueroEinstellungen() {
   const k = (S.fs && S.fs.konfiguration) || {};
@@ -734,6 +734,7 @@ function renderBueroEinstellungen() {
     </form></div>`;
 }
 function bindeEinstellungen(ziel) {
+  if (typeof zmBindeEinstellungen === "function") zmBindeEinstellungen(ziel); // Werkstatt 11
   const f = ziel.querySelector("#einstForm");
   if (!f || !f.ue || f.ue.disabled) return;
   f.addEventListener("submit", async (e) => {
@@ -2150,6 +2151,7 @@ function schuelerDialog(id) {
       ${id ? akademieZugangHTML() : ""}
       ${id ? `<div class="voll nw-akte"><button type="button" class="knopf klein" id="nwOeffnen">Ausbildungsnachweis</button><span class="leise klein">Fahrstunden, Unterschriften, Druck</span></div>` : ""}
       ${id ? `<div class="voll">${pruefungenAkteHTML(id)}</div>` : ""}
+      ${id && typeof zmBlockHTML === "function" ? zmBlockHTML(id) : ""}
       ${id ? `<div class="voll">${theorieAkteHTML(id)}</div>` : ""}
       ${id && sonderZaehlerHTML(x) ? `<div class="voll">${sonderZaehlerHTML(x)}</div>` : ""}
       ${id ? `<div class="voll" id="notizBlock" data-entwurf>${notizBlockHTML(id, x.fahrlehrer_id)}</div>` : ""}
@@ -2212,6 +2214,7 @@ function schuelerDialog(id) {
   if (id) bindeZahlBlock(dlg, id);
   if (id) bindeNotizBlock(dlg, id, x.fahrlehrer_id);
   if (id) bindeAufgabenBlock(dlg, id);
+  if (id && typeof zmBindeBlock === "function") zmBindeBlock(dlg, id); // Werkstatt 11
   if (id && typeof nachweisDialog === "function") dlg.querySelector("#nwOeffnen").addEventListener("click", () => nachweisDialog(id));
   else if (id) dlg.querySelector("#nwOeffnen").hidden = true;
   bindeBehoerde(dlg, x);
@@ -4095,9 +4098,10 @@ async function alleSeiten(abfrage, seite = 1000) {
 async function ladeDaten() {
   const nr = ++S.ladeNr;
   const fsId = S.fsId;
+  const zmT0 = Date.now(); // Werkstatt 11: ein Eintrag, der nach Ladebeginn entsteht, darf nicht verloren gehen
   setStatus("", "lade …");
   try {
-    const [fs, lehrer, schueler, termine, pruefungen, fahrzeuge, pakete, pTermine, fcAbg, verk, prov, team, notizen, gelesen, aufgaben, personen, theorie, fahrzeugeWeg, preise] = await Promise.all([
+    const [fs, lehrer, schueler, termine, pruefungen, fahrzeuge, pakete, pTermine, fcAbg, verk, prov, team, notizen, gelesen, aufgaben, personen, theorie, fahrzeugeWeg, preise, zahlungsdaten, zahlungsMails] = await Promise.all([
       supa.from("fahrschulen").select("*").eq("id", fsId).single(),
       // Fahrlehrer: auch die Leitung, die selbst fährt (faehrt_selbst), nicht die reine Leitung
       supa.from("profiles").select("*").eq("fahrschule_id", fsId).in("rolle", ["fahrlehrer", "super_admin", "fahrschule_admin"]).order("name"),
@@ -4118,6 +4122,8 @@ async function ladeDaten() {
       alleSeiten(() => supa.from("theorie_teilnahme").select("id,schueler_id,lektion,datum,bearbeiter").eq("fahrschule_id", fsId).is("entfernt_am", null).order("datum").order("id")).catch(() => null),
       supa.from("fahrschule_fahrzeuge").select("*").eq("fahrschule_id", fsId).eq("aktiv", false).order("erstellt_am"),
       supa.from("fahrschule_preise").select("*").eq("fahrschule_id", fsId).order("gueltig_ab").order("angelegt_am"),   // K9; fehlt die Tabelle → null
+      supa.from("fahrschule_zahlungsdaten").select("*").eq("fahrschule_id", fsId).maybeSingle(),   // Werkstatt 11 (Zahlungsmail); fehlt die Tabelle → Abschnitt „noch nicht eingerichtet“
+      supa.from("zahlungs_mails").select("*").eq("fahrschule_id", fsId).order("angelegt_am", { ascending: false }).limit(2000),
     ]);
     if (nr !== S.ladeNr) return; // inzwischen wurde neu geladen oder die Fahrschule gewechselt
     S.fs = pruefe(fs, "Fahrschule");
@@ -4141,6 +4147,7 @@ async function ladeDaten() {
     // K9: null = Preisliste (noch) nicht da → alter Reaktivierungsbetrag. Ein kurzer Ladefehler behält den letzten Stand (Prüf-Team).
     if (preise && !preise.error) S.preise = preise.data || [];
     else if (!(S.preise && S.preise.length) || (typeof prTabelleFehlt !== "function" || prTabelleFehlt(preise && preise.error))) S.preise = null;
+    if (typeof zmLaden === "function") zmLaden(zahlungsdaten, zahlungsMails, zmT0); // Werkstatt 11: Fehler tolerant
     S.geladenAm = new Date();
     $("schulName").textContent = S.fs ? S.fs.name : "";
     setStatus("ok", "verbunden · " + S.geladenAm.toLocaleTimeString("de-DE", { hour: "2-digit", minute: "2-digit" }));
@@ -4551,6 +4558,7 @@ $("schulWahl").addEventListener("change", (e) => {
   try { localStorage.setItem("buero-fahrschule", S.fsId); } catch (err) { /* egal */ }
   S.geladenAm = null;
   S.preise = null; // K9 (Fable B1): Preise der vorigen Fahrschule nie in der neuen zeigen oder behalten
+  if (typeof zmLeeren === "function") zmLeeren(); // Werkstatt 11: Zahlungsdaten und Mail-Spur der vorigen Fahrschule weg
   zeigeRollenStreifen();
   zeichne();
   ladeDaten();

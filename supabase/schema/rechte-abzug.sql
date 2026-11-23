@@ -26,6 +26,10 @@ CREATE TRIGGER trg_termin_zy_papierkorb BEFORE INSERT OR UPDATE ON public.kalend
 -- K9 (Migration 20261123_k9_01, nach der Datei nachgetragen, nicht live gezogen): Verfasser/Zeit/PIN-Person setzt der Server,
 -- Rückdatieren nur Super-Admin, Paket muss zur eigenen Fahrschule gehören.
 CREATE TRIGGER fahrschule_preise_schutz BEFORE INSERT ON public.fahrschule_preise FOR EACH ROW EXECUTE FUNCTION fahrschule_preise_schutz();
+-- Auftrag 4 Zahlungsmail (Migration 20261124_zm_01, aus der Datei nachgetragen, nicht live gezogen): Verfasser/Zeit/PIN-Person
+-- setzt der Server, IBAN-Prüfziffer, Texte ohne Steuerzeichen, „echt“ nur mit Kontoinhaber+IBAN; jede Änderung in aenderungsprotokoll.
+CREATE TRIGGER fahrschule_zahlungsdaten_schutz BEFORE INSERT OR UPDATE ON public.fahrschule_zahlungsdaten FOR EACH ROW EXECUTE FUNCTION fahrschule_zahlungsdaten_schutz();
+CREATE TRIGGER fahrschule_zahlungsdaten_spur AFTER INSERT OR UPDATE ON public.fahrschule_zahlungsdaten FOR EACH ROW EXECUTE FUNCTION fahrschule_zahlungsdaten_spur();
 CREATE TRIGGER trg_profil_schutz BEFORE UPDATE ON public.profiles FOR EACH ROW EXECUTE FUNCTION profil_schutz();
 CREATE TRIGGER trg_akademie_sync AFTER INSERT OR DELETE OR UPDATE ON public.schueler FOR EACH STATEMENT EXECUTE FUNCTION akademie_sync_anstossen();
 CREATE TRIGGER trg_schueler_bogen_entfernen BEFORE INSERT OR UPDATE ON public.schueler FOR EACH ROW EXECUTE FUNCTION schueler_bogen_entfernen();
@@ -92,6 +96,18 @@ create policy "Preise anlegen Buero Leitung" on public.fahrschule_preise as PERM
   with check ((is_super_admin(auth.uid()) OR ((fahrschule_id = k5_meine_fahrschule()) AND COALESCE((is_fahrschule_admin(auth.uid()) OR is_buero(auth.uid())), false))));
 create policy "Preise loeschen nur Super-Admin" on public.fahrschule_preise as PERMISSIVE for DELETE to authenticated
   using (is_super_admin(auth.uid()));
+-- Auftrag 4 (nach der Migration nachgetragen): zm_darf(fs) = aktives Konto UND (Super-Admin ODER eigene Fahrschule als Büro/Leitung).
+-- fahrschule_zahlungsdaten: anon nichts, authenticated nur select/insert/update, kein Löschen.
+create policy "Zahlungsdaten lesen Buero Leitung" on public.fahrschule_zahlungsdaten as PERMISSIVE for SELECT to authenticated
+  using (zm_darf(fahrschule_id));
+create policy "Zahlungsdaten anlegen Buero Leitung" on public.fahrschule_zahlungsdaten as PERMISSIVE for INSERT to authenticated
+  with check (zm_darf(fahrschule_id));
+create policy "Zahlungsdaten aendern Buero Leitung" on public.fahrschule_zahlungsdaten as PERMISSIVE for UPDATE to authenticated
+  using (zm_darf(fahrschule_id)) with check (zm_darf(fahrschule_id));
+-- zahlungs_mails: nur lesen (authenticated select); schreiben nur zahlungs_mail_vorbereiten() (security definer: Rolle, Fahrschule,
+-- Limit 5 je Schüler und Modus / 100 je Fahrschule in 24 h, Empfänger im Test NUR Test-Adresse) und die Edge-Funktion zahlungs-mail.
+create policy "Zahlungsmails lesen Buero Leitung" on public.zahlungs_mails as PERMISSIVE for SELECT to authenticated
+  using (zm_darf(fahrschule_id));
 create policy "Fahrlehrer sieht Schichten seiner Fahrschule" on public.fahrschule_schichten as PERMISSIVE for SELECT to public
   using ((fahrschule_id = my_fahrschule_id()));
 create policy "Fahrschule-Admin/Buero verwaltet Schichten" on public.fahrschule_schichten as PERMISSIVE for ALL to public

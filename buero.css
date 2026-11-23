@@ -730,3 +730,55 @@ body.kiosk .rollen-streifen{display:none;}
   .pr-tabelle td.pr-plan { grid-column:1 / -1; }
   .pr-tabelle td.pr-tun .knopf { min-height:44px; }
 }
+
+/* Zahlung per Mail (Werkstatt 11): Einstellungen „Zahlungsdaten für Mails“ und Block in der Schüler-Akte */
+.formular textarea{min-height:96px;padding:10px 12px;border:1px solid var(--line);border-radius:var(--r-klein);background:var(--bg);font:inherit;font-weight:400;resize:vertical;max-width:100%;}
+.formular textarea:focus-visible{outline:3px solid var(--akzent-line);outline-offset:2px;}
+.zm-fehler{color:var(--rot);font-weight:600;font-size:15px;margin:0;}
+.zm-fehler[hidden]{display:none;}
+.formular .zm-modus-wahl{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px;}
+.formular .zm-modus-wahl legend{grid-column:1/-1;}
+.formular .zm-modus-wahl .zm-fehler{grid-column:1/-1;}
+.formular .zm-wahl{display:flex;align-items:flex-start;gap:12px;min-height:56px;padding:12px 14px;border:2px solid var(--line);border-radius:var(--r-klein);background:var(--bg);cursor:pointer;font-weight:500;}
+.formular .zm-wahl > span{display:grid;gap:2px;min-width:0;}
+.formular .zm-wahl input{flex:0 0 auto;margin-top:3px;min-height:auto;width:22px;height:22px;}
+.formular .zm-wahl:has(input:checked){border-color:var(--akzent);background:var(--akzent-soft);}
+.formular .zm-wahl:has(input:focus-visible){outline:3px solid var(--akzent-line);outline-offset:2px;}
+.zm-block{display:grid;gap:10px;}
+.zm-block h3{margin:0;}
+.zm-modus-zeile,.zm-hinweis{margin:0;}
+.zm-test{display:inline-block;padding:8px 12px;border-radius:var(--r-klein);background:var(--gelb-soft);color:var(--txt);font-weight:600;border:1px solid var(--gelb);}
+.zm-hinweis{padding:10px 12px;border-radius:var(--r-klein);background:var(--rot-soft);color:var(--txt);}
+.zm-art{display:grid;gap:8px;padding:12px 14px;border:1px solid var(--line-soft);border-radius:12px;background:var(--bg);min-width:0;}
+.zm-art-kopf{display:flex;flex-wrap:wrap;align-items:baseline;gap:4px 12px;}
+.zm-haken{margin:0;color:var(--gruen);font-weight:600;overflow-wrap:anywhere;}
+.zm-art > .knopf{min-height:44px;height:auto;padding-top:8px;padding-bottom:8px;white-space:normal;text-align:center;justify-self:start;}
+.zm-form{display:grid;gap:10px;}
+.zm-form[hidden]{display:none;}
+.zm-form label{display:grid;gap:6px;font-weight:600;}
+.zm-form input{min-height:46px;padding:0 12px;border:1px solid var(--line);border-radius:var(--r-klein);background:var(--surface);font:inherit;font-weight:400;min-width:0;width:100%;box-sizing:border-box;}
+.zm-form .knopf{min-height:46px;}
+@media (max-width:640px){
+  .formular .zm-modus-wahl{grid-template-columns:minmax(0,1fr);}
+  .zm-art > .knopf{justify-self:stretch;}
+  .zm-form .knopfreihe .knopf{flex:1 1 100%;}
+}
+/* Zahlung per Mail, Nachbesserung: Test und Echt unverwechselbar, Haken, Rückgängig-Hinweis */
+.zm-echt{margin:0;padding:10px 14px;border-radius:var(--r-klein);background:#8f2a1b;color:#fff;font-weight:800;font-size:17px;overflow-wrap:anywhere;}
+.zm-aktuell{margin:0;padding:10px 14px;border-radius:var(--r-klein);font-weight:800;overflow-wrap:anywhere;}
+.zm-aktuell.echt{background:#8f2a1b;color:#fff;}
+.zm-aktuell.test{background:var(--gelb-soft);color:var(--txt);border:1px solid var(--gelb);}
+.zm-pill-test{display:inline-block;padding:1px 10px;border-radius:999px;background:var(--gelb);color:#1d1f17;font-weight:700;font-size:14px;vertical-align:baseline;}
+.zm-haken{color:var(--pill-gruen);}
+.zm-grund{margin:0;}
+.formular .zm-wahl input{accent-color:var(--akzent);}
+.zm-form .zm-fehler{margin:0;}
+.toast.toast-undo.zm-toast{bottom:auto;top:72px;}
+.toast-undo.zm-toast .toast-knopf{min-height:44px;min-width:44px;padding:8px 16px;}
+/* Zahlungsdaten: IBAN und alle Felder bei 360 px nicht abschneiden */
+#zmForm input,#zmForm textarea{min-width:0;width:100%;box-sizing:border-box;}
+#zmForm label{min-width:0;}
+@media (max-width:640px){ #zmForm{grid-template-columns:minmax(0,1fr);} #zmForm input[name=iban]{font-size:16px;letter-spacing:0;} }
+.formular .zm-modus-wahl{min-width:0;}
+.formular .zm-wahl{min-width:0;}
+.formular .zm-wahl > span,.formular .zm-wahl .leise{min-width:0;overflow-wrap:anywhere;}
