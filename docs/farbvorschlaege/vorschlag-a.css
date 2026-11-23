@@ -3,36 +3,58 @@
 :root{
   --bg:#f4f4f5; --surface:#ffffff; --surface-2:#ececee;
   --line:#d2d2d7; --line-soft:#e3e3e7;
-  --txt:#1c1c1f; --muted:#52525a; --faint:#74747d;
+  --feld:#85858e;                       /* eigener Rahmen für Eingabefelder, ≥3:1 */
+  --txt:#1c1c1f; --muted:#52525a; --faint:#66666e;
   --akzent:#3a7350; --akzent-dark:#2f5d3f;
-  --akzent-soft:rgba(28,28,31,.06); --akzent-line:rgba(58,115,80,.55);
+  --fokus:#2f6b47;                      /* Fokus-Ring deckend, ≥3:1 */
+  --akzent-soft:rgba(28,28,31,.06); --akzent-line:var(--fokus);
+  --blau:#1d62b0; --gelb:#a07018; --orange:#b05a14; --pill-rot:#a03a2b;
   --schatten:0 1px 2px rgba(20,20,25,.06),0 6px 18px rgba(20,20,25,.06);
 }
 @media (prefers-color-scheme:dark){
   :root{
     --bg:#18181b; --surface:#232327; --surface-2:#2d2d32;
     --line:#3f3f46; --line-soft:#2f2f35;
-    --txt:#f2f2f4; --muted:#b6b6be; --faint:#8b8b95;
+    --feld:#7b7b86;
+    --txt:#f2f2f4; --muted:#b6b6be; --faint:#9b9ba6;
     --akzent:#3f8453; --akzent-dark:#86c79c;
-    --akzent-soft:rgba(255,255,255,.07); --akzent-line:rgba(134,199,156,.6);
+    --fokus:#86c79c;
+    --akzent-soft:rgba(255,255,255,.07); --akzent-line:var(--fokus);
+    --blau:#7db4f0; --pill-rot:#f5a094;
     --schatten:0 1px 2px rgba(0,0,0,.35),0 6px 18px rgba(0,0,0,.3);
   }
+  .knopf.haupt:hover{background:#306d43;}
+  .nav-punkt .zahl,.nav-gruppe .zahl.klein,.toast.fehler{background:#b3392b;}
 }
+/* Eingabefelder und Auswahllisten: eigener, deutlicher Rahmen */
+.login-karte input,.schulwahl select,.suche,.formular input,.formular select,.formular textarea,.notiz-neu textarea,.zm-form input,#zmForm input,#zmForm textarea,.gross-eingabe{border-color:var(--feld);}
 /* Seitenleiste: aktiver Eintrag = neutrale Fläche + schmaler grüner Strich links */
-.nav-punkt[aria-current="page"]{background:var(--surface-2);color:var(--txt);box-shadow:inset 4px 0 0 var(--akzent);}
-/* Reiter: aktiv = neutral mit grünem Strich unten */
-.tab[aria-current="page"]{background:var(--surface-2);border-color:var(--line);color:var(--txt);box-shadow:inset 0 -3px 0 var(--akzent);}
-/* Auswahlflächen, Meldungen, Personenzeilen: neutral, grün nur am Rand/Auswahlpunkt */
+.nav-punkt[aria-current="page"]{background:var(--surface-2);color:var(--txt);box-shadow:inset 4px 0 0 var(--fokus);}
+/* Reiter (Pille): aktiv = neutral mit grünem Ring (Rahmen, kein Strich) */
+.tab[aria-current="page"]{background:var(--surface-2);border:2px solid var(--fokus);padding:7px 13px;color:var(--txt);box-shadow:none;}
+/* Auswahlflächen, Meldungen, Personenzeilen: neutral */
 .formular .zm-wahl:has(input:checked){border-color:var(--txt);background:var(--surface-2);}
 .wer-zeile,.akademie-meldung{background:var(--surface-2);border-color:var(--line);}
 .akademie-meldung.fehler{background:var(--rot-soft);border-color:var(--rot);}
 .menue-offen .menue-knopf{background:var(--surface-2);border-color:var(--line);}
 .nw-fehlt.gut{background:var(--surface-2);}
 .kopf-wer{border-color:var(--line);}
+/* Grüne Flächen und Text zurücknehmen */
+.knopf.klein.haupt[data-zahlung],.knopf.klein.haupt[data-zreakt],.knopf.klein.haupt[data-zbezahlt]{background:transparent;color:var(--akzent-dark);border-color:var(--akzent);}
+.knopf.klein.haupt[data-zahlung]:hover,.knopf.klein.haupt[data-zreakt]:hover,.knopf.klein.haupt[data-zbezahlt]:hover{background:var(--surface-2);}
+.aufgabe-zeile .gelesen,.knopf.ergebnis-ja{color:var(--pill-gruen);}
+@media (prefers-color-scheme:dark){ .aufgabe-zeile .gelesen,.knopf.ergebnis-ja{color:var(--gruen);} }
+/* Kalender: Fahrstunden nicht mehr grün, sondern Blaugrau (Farbe steckt im Skript, daher per Attribut) */
+.k-termin[style*="--farbe:#3a7350"]{--farbe:#66778a !important;}
 /* Heatmap-Zellen: Grauabstufung */
 .h1,.j-tag.h1{background:color-mix(in srgb,var(--txt) 7%,var(--surface));}
 .h2,.j-tag.h2{background:color-mix(in srgb,var(--txt) 16%,var(--surface));}
-/* Hintergrundschleier und Rollenstreifen ohne Grünstich */
+/* Hintergrundschleier und Rollenstreifen ohne Grünstich (Super-Admin, Büro) */
 .dialog::backdrop{background:rgba(15,15,18,.5);}
 .wer{background:rgba(15,15,18,.55);} .wer.ohne-sitzung{background:rgba(15,15,18,.82);}
+.rollen-streifen{background:#2b2d33;}
 .rollen-streifen.rs-buero{background:#4c4f57;border-bottom-color:#c4c6cc;}
+/* Schalter „aus“ und Platzhalter besser sichtbar */
+.schalter-bahn{background:var(--feld);}
+::placeholder{color:var(--muted);opacity:1;}
+.zm-pill-test{background:#d9a64a;}

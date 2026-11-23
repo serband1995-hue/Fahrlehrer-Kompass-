@@ -1,48 +1,67 @@
 /* Vorschlag B "Sehr hell und ruhig" (Überschreib-Datei, nur für die Bilder, nicht live).
-   Hell fast weiß, dünne Linien, kaum Schatten, mehr Luft. Dunkel weiches Grau-Blau. Grün noch sparsamer. */
+   Hell sehr ruhig, aber Karten und Felder bleiben in der Sonne sichtbar (Grund etwas dunkler, Linien kräftiger).
+   Dunkel weiches Grau-Blau. Grün noch sparsamer. */
 :root{
-  --bg:#fbfbfc; --surface:#ffffff; --surface-2:#f4f4f6;
-  --line:#e2e2e7; --line-soft:#ececf0;
-  --txt:#24242a; --muted:#5a5a65; --faint:#73737f;
+  --bg:#f1f1f4; --surface:#ffffff; --surface-2:#e9e9ee;
+  --line:#cdcdd5; --line-soft:#dcdce2;
+  --feld:#85858f;
+  --txt:#24242a; --muted:#5a5a65; --faint:#66666f;
   --akzent:#2f6b47; --akzent-dark:#2f6b47;
-  --akzent-soft:rgba(36,36,42,.045); --akzent-line:rgba(47,107,71,.5);
-  --schatten:none;
+  --fokus:#2f6b47;
+  --akzent-soft:rgba(36,36,42,.05); --akzent-line:var(--fokus);
+  --blau:#1d62b0; --gelb:#a07018; --orange:#b05a14; --pill-rot:#a03a2b;
+  --schatten:0 1px 2px rgba(30,30,45,.05);
   --r:14px;
 }
 @media (prefers-color-scheme:dark){
   :root{
     --bg:#1b1f27; --surface:#232933; --surface-2:#2b323e;
     --line:#38414f; --line-soft:#2e3643;
-    --txt:#eceff4; --muted:#b2bac7; --faint:#8893a3;
+    --feld:#7a8598;
+    --txt:#eceff4; --muted:#b2bac7; --faint:#98a2b2;
     --akzent:#3f7f58; --akzent-dark:#8fcaa4;
-    --akzent-soft:rgba(255,255,255,.06); --akzent-line:rgba(143,202,164,.55);
+    --fokus:#8fcaa4;
+    --akzent-soft:rgba(255,255,255,.06); --akzent-line:var(--fokus);
+    --blau:#7db4f0; --pill-rot:#f5a094;
     --schatten:none;
   }
+  .knopf.haupt:hover{background:#336a4a;}
+  .nav-punkt .zahl,.nav-gruppe .zahl.klein,.toast.fehler{background:#b3392b;}
 }
-/* dünne Linien statt Schatten, mehr Luft in Karten und Kacheln */
-.karte,.kachel{box-shadow:none;border:1px solid var(--line-soft);}
+.login-karte input,.schulwahl select,.suche,.formular input,.formular select,.formular textarea,.notiz-neu textarea,.zm-form input,#zmForm input,#zmForm textarea,.gross-eingabe{border-color:var(--feld);}
+/* dünne, aber deutliche Linien statt Schatten, mehr Luft in Karten und Kacheln */
+.karte,.kachel{border:1px solid var(--line);}
 .karte{padding:26px 28px;}
 .kachel{padding:24px 26px;}
 .kachel.gruen .wert,.kachel.gold .wert{color:var(--txt);}
 .kachel .wert{font-weight:600;}
 .kacheln{gap:22px;}
 .login-karte,.wer-karte{box-shadow:none;}
-.seite{border-right:1px solid var(--line-soft);}
-/* Seitenleiste: aktiver Eintrag nur schmaler Strich + fett, keine Fläche */
-.nav-punkt[aria-current="page"]{background:transparent;color:var(--txt);font-weight:700;box-shadow:inset 3px 0 0 var(--akzent);border-radius:0 var(--r-klein) var(--r-klein) 0;}
+/* Seitenleiste: aktiver Eintrag = leichte Fläche + schmaler grüner Strich */
+.nav-punkt[aria-current="page"]{background:var(--surface-2);color:var(--txt);font-weight:700;box-shadow:inset 3px 0 0 var(--fokus);}
 .nav-punkt:hover{background:var(--surface-2);}
-/* Reiter: aktiv = nur Unterstrich */
-.tab[aria-current="page"]{background:transparent;border-color:var(--line);color:var(--txt);font-weight:700;box-shadow:inset 0 -2px 0 var(--akzent);}
+/* Reiter (Pille): aktiv = grüner Ring */
+.tab[aria-current="page"]{background:var(--surface);border:2px solid var(--fokus);padding:7px 13px;color:var(--txt);font-weight:700;box-shadow:none;}
 .formular .zm-wahl:has(input:checked){border-color:var(--txt);background:var(--surface-2);}
-.wer-zeile,.akademie-meldung{background:var(--surface-2);border-color:var(--line-soft);}
+.wer-zeile,.akademie-meldung{background:var(--surface-2);border-color:var(--line);}
 .akademie-meldung.fehler{background:var(--rot-soft);border-color:var(--rot);}
 .menue-offen .menue-knopf{background:var(--surface-2);border-color:var(--line);}
 .nw-fehlt.gut{background:var(--surface-2);}
 .kopf-wer{border-color:var(--line);}
 .pr-betrag{color:var(--txt);}
-.h1,.j-tag.h1{background:color-mix(in srgb,var(--txt) 5%,var(--surface));}
-.h2,.j-tag.h2{background:color-mix(in srgb,var(--txt) 12%,var(--surface));}
+.knopf.klein.haupt[data-zahlung],.knopf.klein.haupt[data-zreakt],.knopf.klein.haupt[data-zbezahlt]{background:transparent;color:var(--akzent-dark);border-color:var(--akzent);}
+.knopf.klein.haupt[data-zahlung]:hover,.knopf.klein.haupt[data-zreakt]:hover,.knopf.klein.haupt[data-zbezahlt]:hover{background:var(--surface-2);}
+.aufgabe-zeile .gelesen,.knopf.ergebnis-ja{color:var(--pill-gruen);}
+@media (prefers-color-scheme:dark){ .aufgabe-zeile .gelesen,.knopf.ergebnis-ja{color:var(--gruen);} }
+.k-termin[style*="--farbe:#3a7350"]{--farbe:#66778a !important;}
+.h1,.j-tag.h1{background:color-mix(in srgb,var(--txt) 6%,var(--surface));}
+.h2,.j-tag.h2{background:color-mix(in srgb,var(--txt) 13%,var(--surface));}
 .dialog{box-shadow:0 12px 40px rgba(20,22,30,.18);}
 .dialog::backdrop{background:rgba(20,22,30,.4);}
 .wer{background:rgba(20,22,30,.45);} .wer.ohne-sitzung{background:rgba(20,22,30,.8);}
+.rollen-streifen{background:#2b2d33;}
 .rollen-streifen.rs-buero{background:#555a66;border-bottom-color:#c8cbd2;}
+/* Schalter „aus“ und Platzhalter besser sichtbar */
+.schalter-bahn{background:var(--feld);}
+::placeholder{color:var(--muted);opacity:1;}
+.zm-pill-test{background:#d9a64a;}
