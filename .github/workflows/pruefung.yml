@@ -78,3 +78,7 @@ jobs:
         run: NODE_PATH=$(npm root -g) node scripts/loeschen-test.mjs
       - name: "Preisliste im Büro (K9: gültig ab, Verlauf, Herunterladen)"
         run: NODE_PATH=$(npm root -g) node scripts/preisliste-test.mjs
+      - name: "Zahlungsaufforderung per Mail (Mail-Inhalt, GiroCode)"
+        run: node scripts/zahlungsmail-mail-test.mjs
+      - name: "Zahlungsaufforderung per Mail im Büro (Knopf, Haken, Rückgängig)"
+        run: NODE_PATH=$(npm root -g) node scripts/zahlungsmail-test.mjs
