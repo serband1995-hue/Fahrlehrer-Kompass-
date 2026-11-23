@@ -690,3 +690,7 @@ body.kiosk .rollen-streifen{display:none;}
 .k-termin .k-zahlung{color:var(--pill-rot);font-weight:700;}
 .zahl-block{border-top:1px solid var(--linie,#ddd);padding-top:8px;}
 .zahl-gruende{display:flex;gap:8px;flex-wrap:wrap;}
+/* K8: Zahlungs-Knöpfe dürfen auf schmalem Bildschirm umbrechen statt unter der festen Namensspalte zu verschwinden */
+@media (max-width:1100px){
+  .tabelle td .knopf[data-zsperre],.tabelle td .knopf[data-zbezahlt],.tabelle td .knopf[data-zreakt]{white-space:normal;max-width:100%;line-height:1.2;padding-top:6px;padding-bottom:6px;text-align:center;}
+}

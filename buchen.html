@@ -199,9 +199,14 @@ if(TYP === "schalt" || TYP === "automatik"){
           email: document.getElementById("fEmail").value.trim()
         })
       });
-      let data = {}; try { data = await res.json(); } catch (e2) {}
-      // K8 (Hauptsitzung): bei jedem Fehler der Buchung eine freundliche Meldung – verrät nichts über Zahlungen oder Interna
-      if(!res.ok){ errEl.textContent = "Buchung gerade nicht möglich – bitte ruf kurz in der Fahrschule an."; btn.disabled=false; btn.textContent="Termin buchen"; return; }
+      let data = {}, jsonOk = true; try { data = await res.json(); } catch (e2) { jsonOk = false; }
+      // K8: Server-Text zeigen (z. B. „Termin ist leider schon vergeben“). Nur bei Netz-/Serverfehler, ohne Text oder bei
+      // „Online-Buchung gerade nicht möglich“ der neutrale Satz – verrät nichts über Zahlungen oder Interna.
+      if(!res.ok){
+        const st = (data && typeof data.error === "string") ? data.error.trim() : "";
+        errEl.textContent = (!jsonOk || res.status >= 500 || !st || /Online-Buchung gerade nicht möglich|zahlung|rechnung/i.test(st))
+          ? "Buchung gerade nicht möglich – bitte ruf kurz in der Fahrschule an." : st;
+        btn.disabled=false; btn.textContent="Termin buchen"; return; }
       document.getElementById("step3").style.display="none";
       document.getElementById("step4").style.display="block";
       const d = new Date(selDate+"T00:00:00");

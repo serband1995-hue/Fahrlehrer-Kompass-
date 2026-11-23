@@ -118,6 +118,15 @@ const dlgZahl = (page) => page.evaluate(() => window.__dlg);
     if ((await zeileText("za")) !== false) f.push("Anna mit Pill");
     return f;
   });
+  await pruefe("Z1n", "Büro: Knopftexte – Aktion und Zustand heißen nicht gleich: Anna „Zahlung offen“, Berta „Bezahlt“, Clara (nur überfällig) „Reaktivierung bezahlt“ + Pill „Reaktivierung offen“", () =>
+    page.evaluate(() => { const f = []; const t = (sel) => { const e = document.querySelector(sel); return e ? e.textContent.trim() : null; };
+      const za = t('[data-zsperre="za"]'), zb = t('[data-zbezahlt="zb"]'), zc = t('[data-zreakt="zc"]');
+      if (za !== "Zahlung offen") f.push("Anna: " + za); if (zb !== "Bezahlt") f.push("Berta: " + zb);
+      if (!zc || !/^Reaktivierung bezahlt/.test(zc)) f.push("Clara: " + zc);
+      if (document.querySelector('[data-zsperre="zc"]')) f.push("Clara hat zusätzlich „Zahlung offen“");
+      const pz = (id) => { const b = document.querySelector(`[data-sbearb="${id}"]`); const p = b && b.closest("tr").querySelector("[data-zahlungpill]"); return p ? p.textContent.trim() : null; };
+      if (pz("zb") !== "Zahlung ausstehend") f.push("Pill Berta: " + pz("zb")); if (pz("zc") !== "Reaktivierung offen") f.push("Pill Clara: " + pz("zc"));
+      return f; }));
   // Z1: Anna sperren
   await page.click('[data-zsperre="za"]'); await warte(page, 250);
   await pruefe("Z1c", "Büro: „Zahlung ausstehend“ öffnet das kleine Fenster mit Vorschlägen und Grundfeld (kein Bestätigen-Fenster)", async () => {
@@ -199,6 +208,16 @@ const dlgZahl = (page) => page.evaluate(() => window.__dlg);
     if ((await page.locator("dialog[open]").count()) !== 1) f.push("offene Fenster: " + (await page.locator("dialog[open]").count()));
     return f;
   });
+  await page.click(".toast-undo [data-undo]"); await warte(page, 500);
+  await pruefe("Z1j2", "Büro: in der Akte „Rückgängig“ im Hinweis → Block zeichnet sich neu (Text weg, „Zahlung offen“ wieder da)", async () => {
+    const f = [];
+    if (await page.isVisible("#zahlBlock [data-zahlungtext]")) f.push("Text steht noch im Block");
+    if (!(await page.isVisible("#zahlBlock [data-zsperre=za]"))) f.push("„Zahlung offen“ fehlt");
+    if (await page.isVisible("#zahlBlock [data-zbezahlt=za]")) f.push("„Bezahlt“ steht noch da");
+    return f;
+  });
+  await page.click("#zahlBlock [data-zsperre=za]"); await warte(page, 250);
+  await page.locator("dialog[open]").last().locator("button[value=ok]").click(); await warte(page, 400);
   await page.click("#zahlBlock [data-zbezahlt=za]"); await warte(page, 300);
   await pruefe("Z1k", "Büro: in der Akte „Bezahlt“ → Block wieder frei", async () => ((await page.isVisible("#zahlBlock [data-zsperre=za]")) && !(await page.isVisible("#zahlBlock [data-zahlungtext]")) ? null : "Block nicht zurückgesetzt"));
   await page.evaluate(() => { document.querySelectorAll("dialog[open]").forEach((d) => d.close()); });
@@ -246,7 +265,13 @@ const dlgZahl = (page) => page.evaluate(() => window.__dlg);
     await schliesseAlle();
     return f;
   });
-  await page.evaluate(() => { location.hash = "#kalender"; }); await warte(page, 500);
+  // Tag und Ansicht ausdrücklich setzen (die Termine stehen auf dem UTC-Tag von „heute“), bei Misserfolg einmal neu laden
+  for (let versuch = 0; versuch < 2; versuch++) {
+    await page.evaluate((h) => { location.hash = h; }, "#kalender?ansicht=tag&tag=" + tag(0) + (versuch ? "&x=" + versuch : "")); await warte(page, 600);
+    if (await page.waitForSelector('.k-termin[data-termin="zt-b"]', { timeout: 4000 }).then(() => true, () => false)) break;
+  }
+  await page.waitForSelector('.k-termin[data-termin="zt-b"]', { timeout: 6000 }).catch(() => {});
+  await page.waitForSelector('.k-termin[data-termin="zt-a"]', { timeout: 6000 }).catch(() => {});
   await pruefe("Z4a", "Büro-Kalender: Termin heute von Berta trägt den Hinweis „Zahlung ausstehend“, der von Anna nicht", () =>
     page.evaluate(() => { const h = (id) => { const e = document.querySelector(`.k-termin[data-termin="${id}"]`); return e ? { hinweis: e.hasAttribute("data-zahlung-hinweis"), text: !!e.querySelector(".k-zahlung") } : null; };
       const b = h("zt-b"), a = h("zt-a"); const f = [];
@@ -313,6 +338,36 @@ const dlgZahl = (page) => page.evaluate(() => window.__dlg);
     return u.length === 0 && (await page.locator("dialog[open]").count()) === 1 ? null : `PATCH ${u.length}, Fenster ${await page.locator("dialog[open]").count()}`;
   });
   await schliesseAlle();
+  // B1: Prüfung planen
+  const pEin = () => log(page, "pruefungstermine", "insert");
+  const pruefungPlanen = async (sid) => {
+    await page.evaluate(() => pruefungDialog(null)); await warte(page, 250);
+    await page.selectOption("dialog[open] select[name=schueler_id]", sid);
+    await page.selectOption("dialog[open] select[name=art]", "praxis");
+    await page.fill("dialog[open] input[name=datum]", tag(9));
+    await page.fill("dialog[open] input[name=von]", "09:00");
+    await page.selectOption("dialog[open] select[name=fahrlehrer_id]", "fl-1");
+    await page.locator("dialog[open]").last().locator("button[value=ok]").click(); await warte(page, 500);
+  };
+  await pruefungPlanen("zb");
+  await pruefe("Z4m", "Büro: Praxisprüfung planen für Berta (gesperrt) → Meldung, nichts gespeichert, Fenster bleibt offen", async () => {
+    const f = [];
+    if ((await pEin()).length) f.push("Prüfung wurde gespeichert");
+    if ((await page.locator("dialog[open]").count()) !== 1) f.push("Fenster nicht offen");
+    if (!/Zahlung ausstehend/.test(await toastText())) f.push("Meldung: " + (await toastText()));
+    return f;
+  });
+  await schliesseAlle();
+  const kEin = (await einfuegen()).length;
+  await pruefungPlanen("za");
+  await pruefe("Z4n", "Büro: Praxisprüfung planen für Anna (frei) → gespeichert und im Kalender des Fahrlehrers", async () => {
+    const f = [];
+    if ((await pEin()).length !== 1) f.push("Prüfung nicht gespeichert: " + (await toastText()));
+    if ((await einfuegen()).length !== kEin + 1) f.push("Kalender-Eintrag fehlt");
+    if (!/Prüfung gespeichert/.test(await toastText())) f.push("Meldung: " + (await toastText()));
+    return f;
+  });
+  await schliesseAlle();
   // Server sagt trotzdem P0001 (Büro-Seite hat alte Daten): verständliche Meldung statt Rohtext
   await page.evaluate(() => { window.__FAKE.hook = (a) => (a.tabelle === "kalender_termine" && a.art === "insert" ? { data: null, error: { code: "P0001", message: "Zahlung ausstehend: Rechnung offen" } } : null); });
   await neuerTermin("za", tag(7), "11:00");
@@ -352,9 +407,10 @@ for (const [name, fehler] of [["Postgres 42703", { code: "42703", message: 'colu
   });
   await pruefe("Z8c", `Büro (${name}): die Seite läuft weiter (Reiter wechseln, normaler Termin), keine Konsolenfehler`, async () => {
     await page.evaluate(() => document.querySelectorAll("dialog[open]").forEach((d) => d.close()));
-    await page.evaluate(() => { location.hash = "#fristen"; }); await warte(page, 400);
+    await page.evaluate(() => { location.hash = "#fristen?ansicht=alle"; }); await warte(page, 400);
     const f = [];
-    if (!(await page.isVisible('[data-zsperre="za"]'))) f.push("Fristen ohne Knopf");
+    await page.waitForSelector('[data-zsperre="za"]', { timeout: 6000 }).catch(() => {});
+    if (!(await page.isVisible('[data-zsperre="za"]'))) f.push("Fristen (alle) ohne Knopf bei Anna");
     await page.evaluate(() => { location.hash = "#kalender"; }); await warte(page, 400);
     await page.evaluate((d) => terminDialog(null, { datum: d, von: "08:00", fahrlehrer_id: "fl-1" }), tag(5)); await warte(page, 250);
     await page.selectOption("dialog[open] select[name=schueler_id]", "za");
@@ -520,6 +576,87 @@ const lesson = (id, sid, date, von, bis) => ({ id, date, von, bis, art: "fahrstu
     const f = [];
     if ((await page.evaluate(() => window.__confirm)) !== 0) f.push("confirm aufgerufen");
     if (!/Zahlung ausstehend/.test(await toastApp())) f.push("kein Hinweis: " + (await toastApp()));
+    return f;
+  });
+  // A1 Ziehen im Kalender
+  await page.evaluate(() => { try { closeSheet(); } catch (e) {} _calView = "woche"; _calDate = "2026-11-24"; routeKalender(); }); await warte(page, 600);
+  const ziehen = async (lid, zielTag) => {
+    const chip = page.locator(`[data-dragid="${lid}"]`).first();
+    await chip.scrollIntoViewIfNeeded();
+    const cb = await chip.boundingBox(); if (!cb) return "Termin " + lid + " nicht sichtbar";
+    const ziel = page.locator(`.cw-free[data-freeslot^="${zielTag}|"]`).first();
+    await ziel.scrollIntoViewIfNeeded();
+    const zb = await ziel.boundingBox(); if (!zb) return "kein freier Platz am " + zielTag;
+    await page.mouse.move(cb.x + cb.width / 2, cb.y + cb.height / 2); await page.mouse.down();
+    await page.mouse.move(cb.x + cb.width / 2 + 15, cb.y + cb.height / 2 + 15, { steps: 3 });
+    await page.mouse.move(zb.x + zb.width / 2, zb.y + zb.height / 2, { steps: 8 }); await warte(page, 150);
+    await page.mouse.up(); await warte(page, 500);
+    return null;
+  };
+  const dat = (id) => page.evaluate((i) => DB.lessons.find((x) => x.id === i).date, id);
+  const zA = await ziehen("L-a", M2);
+  await pruefe("Z6m", "App-Kalender: Anna (frei) lässt sich auf einen anderen Tag ziehen (Gegenprobe, der Test zieht wirklich)", async () => zA || ((await dat("L-a")) === M2 ? null : "Datum " + (await dat("L-a"))));
+  const zB = await ziehen("L-b", M2);
+  await pruefe("Z6n", "App-Kalender: Berta (gesperrt) auf einen anderen Tag ziehen → geblockt, Termin bleibt, Hinweis", async () => zB || ((await dat("L-b")) === M1 && /Zahlung ausstehend/.test(await toastApp()) ? null : "Datum " + (await dat("L-b")) + " · " + (await toastApp())));
+  // A2 Sonderfahrt: Datum durchreichen, Vergangenheit bleibt erlaubt
+  await pruefe("Z6o", "App: Sonderfahrt-Stopp mit Datum – Berta künftig geblockt, in der Vergangenheit erlaubt, Anna erlaubt", () =>
+    page.evaluate(() => { const f = []; if (_stoppErlaubt("s-b", "2026-11-25") !== false) f.push("künftig nicht geblockt");
+      if (_stoppErlaubt("s-b", "2026-11-20") !== true) f.push("Vergangenheit geblockt"); if (_stoppErlaubt("s-a", "2026-11-25") !== true) f.push("Anna geblockt"); return f; }));
+  // A4 Archiv
+  await pruefe("Z6p", "App: Archivierter Schüler (inaktiv_seit) mit altem Sperr-Vermerk ist nicht gesperrt (wie der Server)", () =>
+    page.evaluate(() => { const alt = _schuelerFristen["s-b"].inaktiv_seit; _schuelerFristen["s-b"].inaktiv_seit = "2026-10-01"; const g = _zahlungGesperrt("s-b"); _schuelerFristen["s-b"].inaktiv_seit = alt; return g === false && _zahlungGesperrt("s-b") === true ? null : "archiv gesperrt=" + g; }));
+  // A3 Online-Buchung
+  await page.evaluate(() => { window.__T.public_bookings = [
+    { id: "pb-b", status: "bestaetigt", merged: false, fahrlehrer_id: "u-ich", art: "fahrstunde", subtyp: "normal", datum: "2026-11-27", von: "08:00", bis: "09:30", schueler_name: "Berta Muster", created_at: "2026-11-23T08:00:00Z" },
+    { id: "pb-a", status: "bestaetigt", merged: false, fahrlehrer_id: "u-ich", art: "fahrstunde", subtyp: "normal", datum: "2026-11-27", von: "10:00", bis: "11:30", schueler_name: "Anna Muster", created_at: "2026-11-23T08:00:00Z" }]; });
+  await page.evaluate(() => pullPublicBookings()); await warte(page, 700);
+  await pruefe("Z6q", "App: Online-Buchung von Berta (gesperrt) bleibt liegen (kein Termin, nicht als übernommen vermerkt); die von Anna wird übernommen", () =>
+    page.evaluate(() => { const f = [];
+      if (DB.lessons.some((l) => l.onlineBookingId === "pb-b")) f.push("Buchung von Berta wurde übernommen");
+      if (!DB.lessons.some((l) => l.onlineBookingId === "pb-a")) f.push("Buchung von Anna fehlt");
+      const u = window.__schreib.filter((x) => x.tab === "public_bookings" && x.art === "update");
+      if (u.length !== 1) f.push("Vermerke: " + u.length + " (erwartet 1, nur Anna)"); return f; }));
+  // A5 Akte, A9 Text
+  await page.evaluate(() => { routeDetail("s-b"); }); await warte(page, 600);
+  await pruefe("Z6r", "App-Akte von Berta: roter Chip und Hinweis „Zahlung ausstehend: Rechnung offen. Bitte ans Büro, keine neuen Termine.“ stehen oben (ohne Scrollen)", async () => {
+    const f = [];
+    const chip = page.locator("[data-zahlung-chip]").first(), box = page.locator("[data-zahlung-ausstehend]").first();
+    if (!(await chip.isVisible())) f.push("Chip fehlt"); if (!(await box.isVisible())) f.push("Hinweis fehlt");
+    const cb = await chip.boundingBox(), bb = await box.boundingBox();
+    if (cb && cb.y + cb.height > 780) f.push("Chip unterhalb des Bildschirms: " + cb.y); if (bb && bb.y + bb.height > 780) f.push("Hinweis unterhalb des Bildschirms: " + bb.y);
+    const t = (await box.evaluate((e) => e.parentElement.textContent)).replace(/\s+/g, " ");
+    if (!/Zahlung ausstehend: Rechnung offen\. Bitte ans Büro, keine neuen Termine\./.test(t)) f.push("Text: " + t);
+    return f;
+  });
+  // A6 Kontrast, A7 Kalender, A8 Heute
+  const kontrast = (modus) => page.evaluate((m) => {
+    document.body.classList.toggle("light", m === "hell");
+    const lum = (c) => { const v = c.match(/[\d.]+/g).map(Number); const l = v.slice(0, 3).map((x) => { x /= 255; return x <= .03928 ? x / 12.92 : Math.pow((x + .055) / 1.055, 2.4); }); return .2126 * l[0] + .7152 * l[1] + .0722 * l[2]; };
+    const bgVon = (el) => { let e = el; while (e) { const b = getComputedStyle(e).backgroundColor; const v = b.match(/[\d.]+/g).map(Number); if (v.length < 4 || v[3] >= .99) { if (!(v.length === 4 && v[3] === 0)) return b; } e = e.parentElement; } return "rgb(255,255,255)"; };
+    const r = (el) => { const a = lum(getComputedStyle(el).color), b = lum(bgVon(el)); return (Math.max(a, b) + .05) / (Math.min(a, b) + .05); };
+    const out = {}; const k = document.querySelector('[data-zahlung-hinweis]'); out.kalender = k ? r(k) : null;
+    const c = document.querySelector("[data-zahlung-chip]"); out.chip = c ? r(c) : null; return out;
+  }, modus);
+  await page.evaluate(() => { _calView = "woche"; _calDate = "2026-11-24"; routeKalender(); }); await warte(page, 600);
+  await pruefe("Z6s", "App-Kalender: Zahlungs-Hinweis ist ein kurzes Zeichen „€!“ (nicht abgeschnitten) mit title/aria-label „Zahlung ausstehend“ und rotem Randstreifen", async () => {
+    const f = [];
+    const h = await page.evaluate(() => { const e = document.querySelector('[data-evedit="lesson|L-b|s-b"]'); const z = e && e.querySelector("[data-zahlung-hinweis]"); return z ? { t: z.textContent, title: z.title, aria: z.getAttribute("aria-label"), voll: z.scrollWidth <= z.clientWidth + 1, rand: getComputedStyle(e).borderRightWidth, cls: e.classList.contains("zahl-offen") } : null; });
+    if (!h) return "Hinweis fehlt";
+    if (h.t.trim() !== "€!") f.push("Text: " + h.t); if (h.title !== "Zahlung ausstehend" || h.aria !== "Zahlung ausstehend") f.push("title/aria: " + h.title + "/" + h.aria);
+    if (!h.voll) f.push("abgeschnitten"); if (!h.cls || parseFloat(h.rand) < 2) f.push("kein roter Randstreifen " + h.rand);
+    return f;
+  });
+  await pruefe("Z6t", "App: Kontrast des Zahlungs-Rots mindestens 4,5:1 im Kalenderkärtchen (hell und dunkel)", async () => {
+    const f = [];
+    for (const m of ["hell", "dunkel"]) { const k = await kontrast(m); if (!k.kalender || k.kalender < 4.5) f.push(m + " Kalender " + (k.kalender && k.kalender.toFixed(2))); }
+    await page.evaluate(() => document.body.classList.add("light"));
+    return f;
+  });
+  await page.evaluate(() => { tabGo("heute"); }); await warte(page, 600);
+  await pruefe("Z6u", "App-Heute: Warnung steht nur einmal in der Karte; Kontrast im Hinweiskasten ausreichend", async () => {
+    const f = [];
+    const n = await page.evaluate(() => { const k = document.querySelector(".h2-jetzt"); return k ? (k.textContent.match(/Zahlung ausstehend/g) || []).length : -1; });
+    if (n !== 1) f.push("„Zahlung ausstehend“ kommt " + n + "× in der Karte vor");
     return f;
   });
   await pruefe("Z6l", "App (Fahrlehrer): keine JS-Fehler, kein echtes Browser-Fenster", () => jsFehler);
