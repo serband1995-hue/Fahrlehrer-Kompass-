@@ -17,12 +17,18 @@ CREATE TRIGGER trg_fc_abgaben_bearbeiter BEFORE INSERT ON public.fc_abgaben FOR 
 CREATE TRIGGER trg_pruefung_verschiebung_schutz BEFORE UPDATE ON public.kalender_pruefungen FOR EACH ROW EXECUTE FUNCTION termin_verschiebung_schutz();
 CREATE TRIGGER trg_termin_entfernt_schutz BEFORE UPDATE ON public.kalender_termine FOR EACH ROW EXECUTE FUNCTION termin_entfernt_schutz();
 CREATE TRIGGER trg_termin_verschiebung_schutz BEFORE UPDATE ON public.kalender_termine FOR EACH ROW EXECUTE FUNCTION termin_verschiebung_schutz();
+-- ab Migration 20261123_k8_01 (Sperre bei offener Zahlung):
+CREATE TRIGGER trg_termin_zx_zahlung BEFORE INSERT OR UPDATE ON public.kalender_termine FOR EACH ROW EXECUTE FUNCTION termin_zahlung_sperre();
 CREATE TRIGGER trg_profil_schutz BEFORE UPDATE ON public.profiles FOR EACH ROW EXECUTE FUNCTION profil_schutz();
 CREATE TRIGGER trg_akademie_sync AFTER INSERT OR DELETE OR UPDATE ON public.schueler FOR EACH STATEMENT EXECUTE FUNCTION akademie_sync_anstossen();
 CREATE TRIGGER trg_schueler_bogen_entfernen BEFORE INSERT OR UPDATE ON public.schueler FOR EACH ROW EXECUTE FUNCTION schueler_bogen_entfernen();
 CREATE TRIGGER trg_schueler_buero_felder_schutz BEFORE INSERT OR UPDATE ON public.schueler FOR EACH ROW EXECUTE FUNCTION schueler_buero_felder_schutz();
 CREATE TRIGGER trg_schueler_protokoll AFTER UPDATE ON public.schueler FOR EACH ROW EXECUTE FUNCTION schueler_protokoll();
 CREATE TRIGGER trg_schueler_verschiebung_schutz BEFORE UPDATE ON public.schueler FOR EACH ROW EXECUTE FUNCTION schueler_verschiebung_schutz();
+-- ab Migration 20261123_k8_01: zahlung_gesperrt_* nur Büro/Leitung/Super-Admin; Spur ins aenderungsprotokoll; Online-Buchung gesperrter Schüler neutral abgewiesen
+CREATE TRIGGER trg_schueler_zahlung_schutz BEFORE INSERT OR UPDATE ON public.schueler FOR EACH ROW EXECUTE FUNCTION schueler_zahlung_schutz();
+CREATE TRIGGER trg_schueler_zahlung_spur AFTER UPDATE ON public.schueler FOR EACH ROW EXECUTE FUNCTION schueler_zahlung_spur();
+CREATE TRIGGER trg_buchung_zahlung_sperre BEFORE INSERT ON public.public_bookings FOR EACH ROW EXECUTE FUNCTION buchung_zahlung_sperre();
 CREATE TRIGGER trg_aufgaben_bearbeiter BEFORE INSERT OR UPDATE ON public.schueler_aufgaben FOR EACH ROW EXECUTE FUNCTION notizen_bearbeiter();
 CREATE TRIGGER trg_aufgaben_von_person BEFORE INSERT OR UPDATE ON public.schueler_aufgaben FOR EACH ROW EXECUTE FUNCTION aufgaben_von_person();
 CREATE TRIGGER trg_notizen_bearbeiter BEFORE INSERT OR UPDATE ON public.schueler_notizen FOR EACH ROW EXECUTE FUNCTION notizen_bearbeiter();
