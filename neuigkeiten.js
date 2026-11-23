@@ -4,6 +4,11 @@
    "kurz" (höchstens ~60 Zeichen) erscheint nach dem Update einmal als kleiner Hinweis (verschwindet von selbst, kein Knopf).
    Einfache Worte, keine Fachwörter, keine Schülerdaten. */
 window.KOMPASS_NEU = [
+  { version: "2026.11.23.3", datum: "2026-11-23", kurz: "Neu: Alle Schüler der Fahrschule im Überblick.",
+    punkte: ["Unter „Schüler“ gibt es unten „Alle Schüler der Fahrschule“: Name, Fahrlehrer, Stand in Prozent und Stand Theorie.",
+             "Die Akte eines Schülers öffnet nur sein eigener Fahrlehrer.",
+             "Eigene Schüler kannst du dort an einen Kollegen weitergeben. Künftige Termine gehen mit, auch ein Prüfungstermin im Kalender. Heute schon Gefahrenes bleibt bei dir.",
+             "Zurückholen geht über das Büro."] },
   { version: "2026.11.23.2", datum: "2026-11-23", kurz: "Zurück klappt jetzt überall, Prüfer-Notiz bleibt.",
     punkte: ["Nach dem Knopf „Prüfer“ und ähnlichen Knöpfen führt der Zurück-Pfeil wieder richtig zurück.",
              "Eine angefangene Notiz zu einem Prüfer bleibt stehen, wenn du kurz zurückgehst und wiederkommst."] },
