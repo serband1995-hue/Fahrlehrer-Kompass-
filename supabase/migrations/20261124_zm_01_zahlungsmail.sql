@@ -20,7 +20,7 @@ create or replace function public.iban_gueltig(p text)
  set search_path to 'public'
 as $function$
 declare
-  s text := upper(regexp_replace(coalesce(p, ''), '\s', '', 'g'));
+  s text := upper(regexp_replace(coalesce(p, ''), '[^A-Za-z0-9]', '', 'g'));
   r text;
   rest int := 0;
   c text;
@@ -72,8 +72,8 @@ create or replace function public.zm_darf(fs uuid)
  security definer
  set search_path to 'public'
 as $function$
-  select coalesce(is_super_admin(auth.uid())
-    or (fs is not null and fs = k5_meine_fahrschule() and (is_buero(auth.uid()) or is_fahrschule_admin(auth.uid()))), false);
+  select coalesce(exists (select 1 from public.profiles p where p.id = auth.uid() and coalesce(p.aktiv, true)) and (is_super_admin(auth.uid())
+    or (fs is not null and fs = k5_meine_fahrschule() and (is_buero(auth.uid()) or is_fahrschule_admin(auth.uid())))), false);
 $function$;
 revoke all on function public.zm_darf(uuid) from public, anon;
 grant execute on function public.zm_darf(uuid) to authenticated;
@@ -100,12 +100,12 @@ begin
   new.geaendert_von := auth.uid();
   new.geaendert_am := now();
   new.bearbeiter := public.buero_bearbeiter();
-  new.kontoinhaber := nullif(btrim(regexp_replace(coalesce(new.kontoinhaber, ''), '[\r\n\t]+', ' ', 'g')), '');
-  new.iban := nullif(upper(regexp_replace(coalesce(new.iban, ''), '\s', '', 'g')), '');
+  new.kontoinhaber := nullif(btrim(regexp_replace(coalesce(new.kontoinhaber, ''), '[[:cntrl:]\u0085\u2028\u2029]+', ' ', 'g')), '');
+  new.iban := nullif(upper(regexp_replace(coalesce(new.iban, ''), '[^A-Za-z0-9]', '', 'g')), '');
   new.bic := nullif(upper(regexp_replace(coalesce(new.bic, ''), '\s', '', 'g')), '');
   -- PayPal: nur der Name (aus „https://www.paypal.me/name“ oder „paypal.me/name/10EUR“ wird „name“)
   new.paypal := nullif(regexp_replace(regexp_replace(btrim(coalesce(new.paypal, '')),
-                  '^(https?://)?(www\.)?paypal\.me/', '', 'i'), '/.*$', ''), '');
+                  '^(https?://)?(www\.)?paypal\.(me|com/paypalme)/', '', 'i'), '/.*$', ''), '');
   new.impressum := nullif(btrim(coalesce(new.impressum, '')), '');
   new.test_email := nullif(lower(btrim(coalesce(new.test_email, ''))), '');
   new.modus := coalesce(nullif(btrim(new.modus), ''), 'test');
@@ -115,7 +115,7 @@ begin
   if new.bic is not null and new.bic !~ '^[A-Z]{6}[A-Z0-9]{2}([A-Z0-9]{3})?$' then
     raise exception 'BIC ungültig' using errcode = '22023';
   end if;
-  if new.paypal is not null and new.paypal !~ '^[A-Za-z0-9._-]{1,60}$' then
+  if new.paypal is not null and new.paypal !~ '^[A-Za-z0-9_-]{1,60}$' then
     raise exception 'PayPal.me-Name ungültig' using errcode = '22023';
   end if;
   if new.test_email is not null and new.test_email !~ '^[^@\s<>",;]+@[^@\s<>",;]+\.[a-z]{2,}$' then
@@ -210,13 +210,14 @@ declare
   s record;
   z public.fahrschule_zahlungsdaten;
   an text;
-  wf text := btrim(regexp_replace(coalesce(p_wofuer, ''), '[\r\n\t]+', ' ', 'g'));
+  wf text := btrim(regexp_replace(coalesce(p_wofuer, ''), '[[:cntrl:]\u0085\u2028\u2029]+', ' ', 'g'));
+  sname text;
   zweck text;
   mid uuid;
   fsname text;
 begin
   if u is null then return jsonb_build_object('fehler', 'nicht_angemeldet'); end if;
-  if not exists (select 1 from profiles p where p.id = u and coalesce(p.aktiv, true)) then
+  if not exists (select 1 from public.profiles p where p.id = u and coalesce(p.aktiv, true)) then
     return jsonb_build_object('fehler', 'keine_berechtigung');
   end if;
   select x.id::text as id, x.fahrschule_id, x.name, x.email, x.ausbildung into s
@@ -236,9 +237,16 @@ begin
     return jsonb_build_object('fehler', 'zahlungsdaten_fehlen');
   end if;
 
+  -- Limit (gleichzeitige Aufrufe nacheinander): 5 je Schüler und Modus, 100 je Fahrschule in 24 h
+  perform pg_advisory_xact_lock(hashtext('zm:' || s.fahrschule_id::text));
   if (select count(*) from public.zahlungs_mails m
-       where m.schueler_id = s.id and m.status <> 'fehler' and m.angelegt_am > now() - interval '24 hours') >= 5 then
+       where m.fahrschule_id = s.fahrschule_id and m.schueler_id = s.id and m.modus = z.modus
+         and m.status <> 'fehler' and m.angelegt_am > now() - interval '24 hours') >= 5 then
     return jsonb_build_object('fehler', 'zu_viele');
+  end if;
+  if (select count(*) from public.zahlungs_mails m
+       where m.fahrschule_id = s.fahrschule_id and m.status <> 'fehler' and m.angelegt_am > now() - interval '24 hours') >= 100 then
+    return jsonb_build_object('fehler', 'zu_viele_schule');
   end if;
 
   if z.modus = 'echt' then
@@ -249,7 +257,7 @@ begin
     -- TEST: nie die Schüler-Adresse. Test-Adresse, sonst die Adresse eines Super-Admins.
     an := z.test_email;
     if an is null then
-      select lower(btrim(p.email)) into an from profiles p
+      select lower(btrim(p.email)) into an from public.profiles p
        where p.rolle = 'super_admin' and coalesce(p.aktiv, true) and nullif(btrim(p.email), '') is not null
        order by p.id limit 1;
     end if;
@@ -257,8 +265,9 @@ begin
   end if;
   if an !~ '^[^@\s<>",;]+@[^@\s<>",;]+\.[a-z]{2,}$' then return jsonb_build_object('fehler', 'keine_email'); end if;
 
-  -- Verwendungszweck: Name + wofür (EPC: höchstens 140 Zeichen)
-  zweck := left(btrim(coalesce(s.name, '')) || ', ' || wf, 140);
+  -- Verwendungszweck: Name + wofür (EPC: höchstens 140 Zeichen; Name ohne Steuerzeichen, höchstens 57)
+  sname := left(btrim(regexp_replace(coalesce(s.name, ''), '[[:cntrl:]\u0085\u2028\u2029]+', ' ', 'g')), 57);
+  zweck := left(sname || ', ' || wf, 140);
   select f.name into fsname from public.fahrschulen f where f.id = s.fahrschule_id;
 
   insert into public.zahlungs_mails (fahrschule_id, schueler_id, art, betrag_cent, wofuer, modus, empfaenger_kurz, gesendet_von, bearbeiter)
@@ -267,10 +276,30 @@ begin
   returning id into mid;
 
   return jsonb_build_object('ok', true, 'id', mid, 'empfaenger', an, 'modus', z.modus, 'art', p_art,
-    'betrag_cent', p_betrag_cent, 'wofuer', wf, 'verwendungszweck', zweck, 'schueler_name', s.name,
+    'betrag_cent', p_betrag_cent, 'wofuer', wf, 'verwendungszweck', zweck, 'schueler_name', sname,
     'fahrschule', fsname, 'kontoinhaber', z.kontoinhaber, 'iban', z.iban, 'bic', z.bic,
     'paypal', z.paypal, 'impressum', z.impressum);
 end $function$;
 
 revoke all on function public.zahlungs_mail_vorbereiten(text, text, integer, text) from public, anon;
+revoke all on function public.iban_gueltig(text) from public, anon;
+grant execute on function public.iban_gueltig(text) to authenticated;
+revoke all on function public.fahrschule_zahlungsdaten_schutz() from public, anon, authenticated;
+revoke all on function public.fahrschule_zahlungsdaten_spur() from public, anon, authenticated;
 grant execute on function public.zahlungs_mail_vorbereiten(text, text, integer, text) to authenticated;
+
+-- Schüler gelöscht: seine Mail-Spur (Freitext „wofür“, gekürzte Adresse) geht mit (Fable 24.11.)
+create or replace function public.zahlungs_mails_schueler_weg()
+ returns trigger
+ language plpgsql
+ security definer
+ set search_path to 'public'
+as $function$
+begin
+  delete from public.zahlungs_mails where schueler_id = old.id::text;
+  return null;
+end $function$;
+revoke all on function public.zahlungs_mails_schueler_weg() from public, anon, authenticated;
+drop trigger if exists zahlungs_mails_schueler_weg on public.schueler;
+create trigger zahlungs_mails_schueler_weg after delete on public.schueler
+  for each row execute function public.zahlungs_mails_schueler_weg();
