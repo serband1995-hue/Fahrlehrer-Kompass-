@@ -756,7 +756,7 @@ body.kiosk .rollen-streifen{display:none;}
 .zm-form{display:grid;gap:10px;}
 .zm-form[hidden]{display:none;}
 .zm-form label{display:grid;gap:6px;font-weight:600;}
-.zm-form input{min-height:46px;padding:0 12px;border:1px solid var(--line);border-radius:var(--r-klein);background:var(--surface);font:inherit;font-weight:400;min-width:0;width:100%;box-sizing:border-box;}
+.zm-form input:not([type=radio]):not([type=checkbox]){min-height:46px;padding:0 12px;border:1px solid var(--line);border-radius:var(--r-klein);background:var(--surface);font:inherit;font-weight:400;min-width:0;width:100%;box-sizing:border-box;}
 .zm-form .knopf{min-height:46px;}
 @media (max-width:640px){
   .formular .zm-modus-wahl{grid-template-columns:minmax(0,1fr);}
@@ -776,7 +776,7 @@ body.kiosk .rollen-streifen{display:none;}
 .toast.toast-undo.zm-toast{bottom:auto;top:72px;}
 .toast-undo.zm-toast .toast-knopf{min-height:44px;min-width:44px;padding:8px 16px;}
 /* Zahlungsdaten: IBAN und alle Felder bei 360 px nicht abschneiden */
-#zmForm input,#zmForm textarea{min-width:0;width:100%;box-sizing:border-box;}
+#zmForm input:not([type=radio]):not([type=checkbox]),#zmForm textarea{min-width:0;width:100%;box-sizing:border-box;}
 #zmForm label{min-width:0;}
 @media (max-width:640px){ #zmForm{grid-template-columns:minmax(0,1fr);} #zmForm input[name=iban]{font-size:16px;letter-spacing:0;} }
 .formular .zm-modus-wahl{min-width:0;}
