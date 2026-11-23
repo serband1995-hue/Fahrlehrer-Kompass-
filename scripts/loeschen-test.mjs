@@ -4,7 +4,7 @@
 // App (Handy 360 px, Attrappe der Datenbank im Arbeitsspeicher, nur erfundene „Muster“-Namen):
 //   L1 künftige Stunde löschen ohne Dialog + Rückgängig      L2 gelaufene Stunde → Stornieren, Grund, Brücke schreibt Storno-Zeile
 //   L3 unterschriebene künftige Stunde → Stornieren (+ Rückgängig nimmt Storno zurück)
-//   L4 online gebucht: Absage erst nach Ablauf, nach Rückgängig gar nicht      L5 Schüler ausblenden ohne Dialog + Rückgängig
+//   L4 online gebucht: Absage erst nach Ablauf, nach Rückgängig gar nicht      L5 Schüler ausblenden ohne Dialog, Termine bleiben, Rückgängig
 //   L6 Leitung in der Fahrschul-Ansicht storniert eine gelaufene Stunde → Storno-Zeile
 //   L7 Büro: Papierkorb im Kalender (zu, aufklappen, Resttage, „Storniert, bleibt aufbewahrt“, Wiederherstellen), Nachweis-Storno mit Pflicht-Grund
 //   L8 keine JS-Fehler, kein Dialog
@@ -228,16 +228,20 @@ await pruefe("L4", "online gebucht: ohne Dialog gelöscht; Absage geht erst nach
   if (!(await lokal("l4a"))) f.push("Rückgängig holt Stunde nicht zurück");
   // B: Ablauf → genau eine Absage, erst danach
   await stunde("l4b", { date: 4, onlineBookingId: "ob-b" }); await oeffneStunde("l4b");
-  await p.click("#esDelete"); await warte(p, 2500);
+  await p.click("#esDelete"); await warte(p, 400);
+  // Fehlersucher Daten: Absage überlebt Schließen der App → bis zum Ablauf gemerkt
+  if (!(await p.evaluate(() => (JSON.parse(localStorage.getItem("kompass-absage-offen") || "[]")).some((x) => x.id === "l4b")))) f.push("offene Absage nicht gemerkt");
+  await warte(p, 2100);
   if (await p.evaluate(() => window.__abs.length)) f.push("Absage schon nach 2,5 s");
   await warte(p, 4500);
+  if (await p.evaluate(() => localStorage.getItem("kompass-absage-offen"))) f.push("gemerkte Absage nach dem Senden nicht gelöscht");
   const abs = await p.evaluate(() => window.__abs);
   if (abs.length !== 1 || abs[0][0] !== "l4b" || abs[0][1] !== "cancelled") f.push("Absagen nach Ablauf: " + JSON.stringify(abs));
   if (dialoge() !== d0) f.push("Dialog erschienen");
   return f;
 });
 
-await pruefe("L5", "Schüler ausblenden: kein Dialog, künftige Termine abgesagt, Hinweis mit Rückgängig; Rückgängig holt alles zurück", async () => {
+await pruefe("L5", "Schüler ausblenden: kein Dialog, künftige Termine bleiben im Kalender (Hinweis sagt es), keine Absage; Rückgängig blendet wieder ein", async () => {
   const f = []; const d0 = dialoge(); await toastWeg();
   await p.evaluate(() => { DB.lessons = []; window.__abs.length = 0; });
   await stunde("l5a", { date: 5 }); await stunde("l5b", { date: 6, onlineBookingId: "ob-5" });
@@ -245,10 +249,10 @@ await pruefe("L5", "Schüler ausblenden: kein Dialog, künftige Termine abgesagt
   if (!(await p.$("#delBtn"))) return "Knopf „Bei mir ausblenden“ nicht gefunden";
   await p.click("#delBtn"); await warte(p, 500);
   const r = await p.evaluate(() => ({ aus: !!DB.students.find((s) => s.id === "sm1").ausgeblendetAm, n: DB.lessons.length }));
-  if (!r.aus) f.push("Schüler nicht ausgeblendet"); if (r.n) f.push(r.n + " künftige Termine nicht abgesagt");
+  if (!r.aus) f.push("Schüler nicht ausgeblendet"); if (r.n !== 2) f.push(`künftige Termine: ${r.n} statt 2 im Kalender`);
   if (!(await toastRueck())) f.push("kein Rückgängig-Hinweis: " + (await toastText()));
-  if (!/2 Termine abgesagt/.test(await toastText())) f.push("Hinweis nennt die Termine nicht: " + (await toastText()));
-  if (await p.evaluate(() => window.__abs.length)) f.push("Absage sofort verschickt");
+  if (!/2 künftige Termine bleiben im Kalender/.test(await toastText())) f.push("Hinweis nennt die Termine nicht: " + (await toastText()));
+  if (await p.evaluate(() => window.__abs.length)) f.push("Absage verschickt");
   await p.click("#toast .ut-btn"); await warte(p, 400);
   const r2 = await p.evaluate(() => ({ aus: !!DB.students.find((s) => s.id === "sm1").ausgeblendetAm, ids: DB.lessons.map((l) => l.id).sort().join(",") }));
   if (r2.aus) f.push("Rückgängig blendet den Schüler nicht wieder ein"); if (r2.ids !== "l5a,l5b") f.push("Termine nach Rückgängig: " + r2.ids);

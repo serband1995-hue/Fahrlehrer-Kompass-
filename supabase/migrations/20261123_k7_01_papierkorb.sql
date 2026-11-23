@@ -13,6 +13,7 @@
 -- 4. Alter Papierkorb: geloescht_am = Zeitpunkt des Einspielens (30 Tage Schonfrist). Schon gelöschte gelaufene oder
 --    unterschriebene Nachweis-Stunden bekommen vorsichtshalber den Storno-Vermerk (bleiben aufbewahrt).
 -- ❓ Aufbewahrung der Ausbildungsaufzeichnung (§ 31 FahrlG) – rechtlich nicht geprüft, darum: im Zweifel aufbewahren.
+-- Voraussetzung: 20261121_nachweis_01_termin_spur.sql (Spalte aenderungsprotokoll.grund) ist eingespielt.
 -- Idempotent (mehrfach ausführbar). Rückweg: supabase/rueckweg/20261123_k7_rueckweg.sql
 
 alter table public.kalender_termine add column if not exists geloescht_am timestamptz;
@@ -28,13 +29,15 @@ as $function$
   select coalesce(t.art, 'fahrstunde') in ('fahrstunde', 'sonder', 'nacht', 'schalt')
      and (coalesce(t.payload->>'signed', '') = 'true'
           or jsonb_typeof(t.payload->'signaturUngueltig') = 'object'
+          -- Ausfall mit Berechnung (nicht erschienen, berechnete Dauer) ist Abrechnungs-Beleg (gelaufen vorausgesetzt, unten)
+          or ((nullif(t.payload->>'noshow', '') is not null or coalesce(t.payload->>'tatsaechlicheDauer', '') ~ '^[1-9]')
+              and t.datum is not null and t.datum < (now() at time zone 'Europe/Berlin')::date)
           or (coalesce(t.status, '') not in ('abgebrochen', 'nicht erschienen')
               and coalesce(t.payload->>'status', '') not in ('abgebrochen', 'nicht erschienen')
               and t.datum is not null
               and (t.datum < (now() at time zone 'Europe/Berlin')::date
                    or (t.datum = (now() at time zone 'Europe/Berlin')::date
-                       and coalesce(t.bis, '') ~ '^\d{1,2}:\d{2}'
-                       and t.bis::time <= (now() at time zone 'Europe/Berlin')::time))));
+                       and (case when coalesce(t.bis, '') ~ '^\d{1,2}:\d{2}$' then t.bis::time end) <= (now() at time zone 'Europe/Berlin')::time))));
 $function$;
 
 create or replace function public.termin_papierkorb()
@@ -91,7 +94,8 @@ begin
     -- Aufruf aus der Büro-Seite: nur die eigene Fahrschule, nur Büro/Leitung/Super-Admin
     if not (is_buero(auth.uid()) or is_fahrschule_admin(auth.uid()) or is_super_admin(auth.uid())) then return 0; end if;
     fs := my_fahrschule_id();
-    if fs is null and not is_super_admin(auth.uid()) then return 0; end if;
+    if fs is null then return 0; end if; -- ohne eigene Fahrschule (z. B. Super-Admin) leert nur der tägliche Zeitplan alle
+
   end if;
   -- Je Stunde einzeln: hängt noch etwas an einer Stunde (Fremdschlüssel), bleibt sie liegen, der Rest wird trotzdem leer
   for r in

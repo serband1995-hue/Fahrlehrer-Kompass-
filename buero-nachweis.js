@@ -418,14 +418,16 @@ function nwDrucken(x, d, st, teil) {
    Gelöschte Termine der letzten Zeit mit „Wiederherstellen“. Fehleinträge: „wird in X Tagen endgültig gelöscht“
    (Datenbank-Funktion papierkorb_leeren, täglich und beim Laden). Stornierte/unterschriebene Stunden: eigene Liste,
    bleiben aufbewahrt. Läuft auch mit alter Datenbank (ohne geloescht_am / papierkorb_leeren). */
-const PK = { daten: null, zeit: 0, laedt: false, offen: false, stornoOffen: false, geleert: false, fehler: "" };
+const PK = { fs: null, daten: null, zeit: 0, laedt: false, offen: false, stornoOffen: false, geleert: false, fehler: "" };
 async function pkHolen() {
   if (PK.laedt) return; PK.laedt = true;
+  const fs = S.fsId;
   try {
     if (!PK.geleert) { PK.geleert = true; try { await supa.rpc("papierkorb_leeren"); } catch (e) { /* alte Datenbank: ohne */ } }
     const spalten = "id,datum,von,bis,art,fahrlehrer_id,schueler_id,status,payload,aktualisiert_am";
     let r = await supa.from("kalender_termine").select(spalten + ",geloescht_am").eq("fahrschule_id", S.fsId).eq("geloescht", true).order("aktualisiert_am", { ascending: false }).limit(300);
     if (r.error) r = await supa.from("kalender_termine").select(spalten).eq("fahrschule_id", S.fsId).eq("geloescht", true).order("aktualisiert_am", { ascending: false }).limit(300);
+    if (fs !== S.fsId) return; // während des Ladens Fahrschule gewechselt
     if (r.error) { PK.fehler = r.error.message; PK.daten = PK.daten || []; }
     else { PK.fehler = ""; PK.daten = (r.data || []).filter((t) => t.art !== "block"); }
     PK.zeit = Date.now();
@@ -450,6 +452,7 @@ function pkHTML() {
 }
 function pkZeigen(ziel) {
   if (!ziel || !S.fsId) return;
+  if (PK.fs !== S.fsId) { PK.fs = S.fsId; PK.daten = null; PK.zeit = 0; PK.geleert = false; PK.fehler = ""; } // andere Fahrschule: nichts von der vorigen zeigen
   let box = ziel.querySelector("#buPapierkorb");
   if (!box) { box = document.createElement("div"); box.id = "buPapierkorb"; ziel.appendChild(box); }
   const neu = () => {
