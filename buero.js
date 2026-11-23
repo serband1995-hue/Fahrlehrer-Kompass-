@@ -156,20 +156,18 @@ function aktuellerBereich() {
   const id = (location.hash || "#heute").slice(1).split("?")[0];
   return BEREICHE.find((b) => b.id === id) || BEREICHE[0];
 }
-// Gruppen der Seitenleiste lassen sich auf- und zuklappen; wer eine Seite in einer zugeklappten Gruppe öffnet, sieht sie wieder offen
-function navZu() {
-  try { return JSON.parse(localStorage.getItem("buero-nav-zu") || "[]"); } catch (e) { return []; }
-}
-function setzeNavZu(liste) {
-  try { localStorage.setItem("buero-nav-zu", JSON.stringify(liste)); } catch (e) { /* ohne Speicher weiter */ }
-}
+// K16 (🗣 23.11.2026): Die Gruppen der Seitenleiste starten zu. Nur die Gruppe der offenen Seite ist auf; wer die Seite wechselt,
+// sieht deren Gruppe aufklappen. Von Hand auf- und zuklappen geht weiter. Gemerkt wird nur bis zum Neuladen (früher stand es in
+// localStorage „buero-nav-zu“: dieser alte Wert wird nicht mehr gelesen und hält den neuen Start nicht auf).
+const navAuf = new Set();
+let navLetzteGruppe = null;
 function zeichneNav() {
   const aktiv = aktuellerBereich();
-  const zu = navZu();
+  if (navLetzteGruppe !== aktiv.gruppe) { navLetzteGruppe = aktiv.gruppe; navAuf.add(aktiv.gruppe); }
   const gruppen = [...new Set(BEREICHE.map((b) => b.gruppe))];
   $("nav").innerHTML = gruppen.map((g) => {
     const punkte = BEREICHE.filter((b) => b.gruppe === g);
-    const offen = !zu.includes(g);
+    const offen = navAuf.has(g);
     const summe = punkte.reduce((a, b) => a + (b.render && b.zahl && S.geladenAm ? Number(b.zahl()) || 0 : 0), 0);
     const liste = punkte.map((b) => {
       const z = b.render && b.zahl && S.geladenAm ? b.zahl() : "";
@@ -184,8 +182,7 @@ document.addEventListener("click", (e) => {
   const knopf = e.target.closest("[data-gruppe]");
   if (!knopf) return;
   const g = knopf.dataset.gruppe;
-  const zu = navZu();
-  setzeNavZu(zu.includes(g) ? zu.filter((x) => x !== g) : zu.concat(g));
+  if (navAuf.has(g)) navAuf.delete(g); else navAuf.add(g);
   zeichneNav();
   const neu = [...document.querySelectorAll("[data-gruppe]")].find((b) => b.dataset.gruppe === g);
   if (neu) neu.focus();
@@ -256,8 +253,6 @@ function buZurueckKnopf() { const k = $("kopfZurueck"); if (k) k.hidden = buVerl
 window.addEventListener("hashchange", () => {
   // Zurück-Taste (oder Link) wechselt die Seite: offene Fenster ohne Eingaben schließen, damit nichts über der falschen Seite stehen bleibt
   document.querySelectorAll("dialog[open]").forEach((d) => { if (!d.dataset.festhalten && !hatEingabe(d)) { d._verlauf = false; d.close(); } });
-  const g = aktuellerBereich().gruppe;
-  if (navZu().includes(g)) setzeNavZu(navZu().filter((x) => x !== g));
   // Stelle der Seite merken, die man gerade verlässt (der Inhalt steht noch); sie ist die zuletzt aktive Nummer
   const alt = buVerlauf.find((x) => x.nr === buLetzteNr);
   if (alt) { alt.y = window.scrollY; try { alt.klapp = klappZustand($("ansicht")); } catch (e) {} }
@@ -3802,7 +3797,7 @@ async function zugangLoeschen(id) {
 
 /* ---------- Fahrzeuge ---------- */
 // Doppelt belegte Fahrzeuge in den nächsten 14 Tagen (gleiches Fahrzeug, überschneidende Zeit)
-function fahrzeugKonflikte() {
+function fahrzeugKonflikteAlle() {
   const heute = KR.todayISO(), bis = KR.addDaysISO(heute, 14), out = [];
   const nach = {};
   for (const t of S.termine) {
@@ -3817,16 +3812,40 @@ function fahrzeugKonflikte() {
   }
   return out;
 }
+// K18 (🗣 23.11.2026): „Gesehen“. Schlüssel = beide Termine als „id|datum|von|bis|fahrzeug“, sortiert, mit „#“ verbunden.
+// Ändert sich ein Termin (Zeit, Tag, Fahrzeug), ändert sich der Schlüssel und die Warnung kommt wieder.
+function konfSchluessel(a, b) {
+  const f = (t) => [t.id, t.datum, t.von, t.bis, t.fahrzeug].join("|");
+  return [f(a), f(b)].sort().join("#");
+}
+function konfTabelleFehlt(err) { return !!err && (["42P01", "PGRST205"].includes(err.code) || err.status === 404 || /does not exist|could not find the table|not found/i.test(String(err.message || ""))); }
+function konfGesehenSet() { return new Set((S.konfGesehen || []).map((x) => x.schluessel)); }
+function fahrzeugKonflikte() {
+  const alle = fahrzeugKonflikteAlle();
+  if (!S.konfGesehen || !S.konfGesehen.length) return alle;
+  const g = konfGesehenSet();
+  return alle.filter(([a, b]) => !g.has(konfSchluessel(a, b)));
+}
+function konfGesehenListe() {
+  if (!S.konfGesehen || !S.konfGesehen.length) return [];
+  const g = new Map(S.konfGesehen.map((x) => [x.schluessel, x]));
+  return fahrzeugKonflikteAlle().map(([a, b]) => ({ a, b, eintrag: g.get(konfSchluessel(a, b)) })).filter((x) => x.eintrag);
+}
 function renderFlotte() {
   const heute = KR.todayISO(), bis = KR.addDaysISO(heute, 6);
   const nutzung = {};
   for (const t of S.termine) if (t.fahrzeug && t.datum >= heute && t.datum <= bis && t.art !== "block") nutzung[t.fahrzeug] = (nutzung[t.fahrzeug] || 0) + 1;
-  const konf = fahrzeugKonflikte();
+  const konf = fahrzeugKonflikte(), gesehenListe = konfGesehenListe();
   const admin = istAdmin() || darfPersonenVerwalten();
   const typName = FZ_TYPEN;
   return `${konf.length ? `<div class="karte warnkarte"><h2>${konf.length} Doppelbelegung${konf.length === 1 ? "" : "en"} in den nächsten 14 Tagen</h2><table class="tabelle"><tbody>${konf.map(([a, b]) => `<tr>
       <td class="zeitspalte">${esc(datumDE(a.datum))}</td><td><b>${esc(a.fahrzeug)}</b></td>
-      <td>${esc(a.von)}–${esc(a.bis)} ${esc(lehrerName(a.fahrlehrer_id))}</td><td>${esc(b.von)}–${esc(b.bis)} ${esc(lehrerName(b.fahrlehrer_id))}</td></tr>`).join("")}</tbody></table></div>` : ""}
+      <td>${esc(a.von)}–${esc(a.bis)} ${esc(lehrerName(a.fahrlehrer_id))}</td><td>${esc(b.von)}–${esc(b.bis)} ${esc(lehrerName(b.fahrlehrer_id))}</td>${S.konfGesehen ? `<td class="aktionen"><div class="aktionen-box"><button class="knopf" type="button" data-konfgesehen="${esc(konfSchluessel(a, b))}">Gesehen</button></div></td>` : ""}</tr>`).join("")}</tbody></table></div>` : ""}
+    ${gesehenListe.length ? `<details class="fz-weg fz-gesehen"><summary>${gesehenListe.length} als gesehen markiert</summary><table class="tabelle"><tbody>${gesehenListe.map(({ a, b, eintrag }) => `<tr>
+      <td class="zeitspalte">${esc(datumDE(a.datum))}</td><td><b>${esc(a.fahrzeug)}</b></td>
+      <td>${esc(a.von)}–${esc(a.bis)} ${esc(lehrerName(a.fahrlehrer_id))}<br>${esc(b.von)}–${esc(b.bis)} ${esc(lehrerName(b.fahrlehrer_id))}</td>
+      <td class="leise">${esc(eintrag.bearbeiter || "Büro")}${eintrag.gesehen_am ? ", " + esc(datumDE(String(eintrag.gesehen_am).slice(0, 10))) : ""}</td>
+      <td class="aktionen"><div class="aktionen-box"><button class="knopf" type="button" data-konfwieder="${esc(eintrag.id)}">Wieder anzeigen</button></div></td></tr>`).join("")}</tbody></table></details>` : ""}
     <div class="karte"><div class="karte-kopf"><h2>Fahrzeuge (${S.fahrzeuge.length})</h2>${admin ? '<button class="knopf haupt" id="fzNeu" type="button">+ Fahrzeug</button>' : ""}</div>
       ${S.fahrzeuge.length ? `<table class="tabelle"><thead><tr><th>Fahrzeug</th><th>Typ</th><th class="zahlspalte">Termine in 7 Tagen</th><th></th></tr></thead><tbody>${S.fahrzeuge.map((f) => `<tr>
         <td><b>${esc(f.name || f.bezeichnung || "")}</b></td><td>${esc(typName[String(f.typ || "").toLowerCase()] || f.typ || "")}${f.klasse ? ` <span class="marke-pill">${esc(f.klasse)}</span>` : ""}</td><td class="zahlspalte">${nutzung[f.name || f.bezeichnung] || 0}</td>
@@ -3887,7 +3906,25 @@ function fahrzeugDialog(f) {
   const typ = dlg.querySelector("select[name=typ]"), kl = dlg.querySelector("select[name=klasse]");
   typ.addEventListener("change", () => { kl.value = FZ_KLASSE_VORSCHLAG[typ.value] || "B"; });
 }
+async function konfGesehenSetzen(schluessel) {
+  const res = await supa.from("fahrzeug_konflikt_gesehen").insert({ fahrschule_id: S.fsId, schluessel }).select("*");
+  if (res.error && konfTabelleFehlt(res.error)) { S.konfGesehen = null; zeichne(); return; }
+  if (res.error || !res.data || !res.data.length) { toast("Nicht gespeichert: " + (res.error ? dbFehlerText(res.error) : "keine Berechtigung"), true); return; }
+  const z = res.data[0];
+  S.konfGesehen = (S.konfGesehen || []).concat(z);
+  zeichne();
+  toastUndo("Doppelbelegung als gesehen markiert", async () => { await konfGesehenLoeschen(z.id, "Wieder in der Warnung"); });
+}
+async function konfGesehenLoeschen(id, text) {
+  const res = await supa.from("fahrzeug_konflikt_gesehen").delete().eq("id", id).select("id");
+  if (res.error || !res.data || !res.data.length) { toast("Nicht gespeichert: " + (res.error ? dbFehlerText(res.error) : "keine Berechtigung"), true); return; }
+  S.konfGesehen = (S.konfGesehen || []).filter((x) => x.id !== id);
+  zeichne();
+  if (text) toast(text);
+}
 function bindeFlotte(ziel) {
+  ziel.querySelectorAll("[data-konfgesehen]").forEach((b) => b.addEventListener("click", async () => { b.disabled = true; await konfGesehenSetzen(b.dataset.konfgesehen); b.disabled = false; }));
+  ziel.querySelectorAll("[data-konfwieder]").forEach((b) => b.addEventListener("click", async () => { b.disabled = true; await konfGesehenLoeschen(b.dataset.konfwieder, "Wieder in der Warnung"); b.disabled = false; }));
   const neu = ziel.querySelector("#fzNeu");
   if (neu) neu.addEventListener("click", () => fahrzeugDialog(null));
   ziel.querySelectorAll("[data-fzbearb]").forEach((b) => b.addEventListener("click", () => {
@@ -4101,7 +4138,7 @@ async function ladeDaten() {
   const zmT0 = Date.now(); // Werkstatt 11: ein Eintrag, der nach Ladebeginn entsteht, darf nicht verloren gehen
   setStatus("", "lade …");
   try {
-    const [fs, lehrer, schueler, termine, pruefungen, fahrzeuge, pakete, pTermine, fcAbg, verk, prov, team, notizen, gelesen, aufgaben, personen, theorie, fahrzeugeWeg, preise, zahlungsdaten, zahlungsMails] = await Promise.all([
+    const [fs, lehrer, schueler, termine, pruefungen, fahrzeuge, pakete, pTermine, fcAbg, verk, prov, team, notizen, gelesen, aufgaben, personen, theorie, fahrzeugeWeg, preise, zahlungsdaten, zahlungsMails, konfGes] = await Promise.all([
       supa.from("fahrschulen").select("*").eq("id", fsId).single(),
       // Fahrlehrer: auch die Leitung, die selbst fährt (faehrt_selbst), nicht die reine Leitung
       supa.from("profiles").select("*").eq("fahrschule_id", fsId).in("rolle", ["fahrlehrer", "super_admin", "fahrschule_admin"]).order("name"),
@@ -4124,6 +4161,7 @@ async function ladeDaten() {
       supa.from("fahrschule_preise").select("*").eq("fahrschule_id", fsId).order("gueltig_ab").order("angelegt_am"),   // K9; fehlt die Tabelle → null
       supa.from("fahrschule_zahlungsdaten").select("*").eq("fahrschule_id", fsId).maybeSingle(),   // Werkstatt 11 (Zahlungsmail); fehlt die Tabelle → Abschnitt „noch nicht eingerichtet“
       supa.from("zahlungs_mails").select("*").eq("fahrschule_id", fsId).order("angelegt_am", { ascending: false }).limit(2000),
+      supa.from("fahrzeug_konflikt_gesehen").select("*").eq("fahrschule_id", fsId).order("gesehen_am", { ascending: false }).limit(2000),   // K18; fehlt die Tabelle → null, kein „Gesehen“-Knopf
     ]);
     if (nr !== S.ladeNr) return; // inzwischen wurde neu geladen oder die Fahrschule gewechselt
     S.fs = pruefe(fs, "Fahrschule");
@@ -4147,6 +4185,7 @@ async function ladeDaten() {
     // K9: null = Preisliste (noch) nicht da → alter Reaktivierungsbetrag. Ein kurzer Ladefehler behält den letzten Stand (Prüf-Team).
     if (preise && !preise.error) S.preise = preise.data || [];
     else if (!(S.preise && S.preise.length) || (typeof prTabelleFehlt !== "function" || prTabelleFehlt(preise && preise.error))) S.preise = null;
+    S.konfGesehen = konfGes && !konfGes.error ? (konfGes.data || []) : null;   // null = Tabelle fehlt oder Fehler: ohne „Gesehen“, Warnung wie bisher
     if (typeof zmLaden === "function") zmLaden(zahlungsdaten, zahlungsMails, zmT0); // Werkstatt 11: Fehler tolerant
     S.geladenAm = new Date();
     $("schulName").textContent = S.fs ? S.fs.name : "";
