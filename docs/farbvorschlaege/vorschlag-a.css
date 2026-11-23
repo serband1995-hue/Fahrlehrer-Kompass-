@@ -45,7 +45,7 @@
 .aufgabe-zeile .gelesen,.knopf.ergebnis-ja{color:var(--pill-gruen);}
 @media (prefers-color-scheme:dark){ .aufgabe-zeile .gelesen,.knopf.ergebnis-ja{color:var(--gruen);} }
 /* Kalender: Fahrstunden nicht mehr grün, sondern Blaugrau (Farbe steckt im Skript, daher per Attribut) */
-.k-termin[style*="--farbe:#3a7350"]{--farbe:#66778a !important;}
+.k-termin[style*="--farbe:#3a7350"]{--farbe:#7d7d86 !important;} /* Fahrstunde neutral grau, klar anders als Nacht/Sonder (blau) */
 /* Heatmap-Zellen: Grauabstufung */
 .h1,.j-tag.h1{background:color-mix(in srgb,var(--txt) 7%,var(--surface));}
 .h2,.j-tag.h2{background:color-mix(in srgb,var(--txt) 16%,var(--surface));}
@@ -58,3 +58,6 @@
 .schalter-bahn{background:var(--feld);}
 ::placeholder{color:var(--muted);opacity:1;}
 .zm-pill-test{background:#d9a64a;}
+
+/* Fable N1: Gelb und Orange im Dunkeln wieder hell (die hellen Werte oben gelten nur im hellen Modus); weißer Haken auf hellen Farben dunkel */
+@media (prefers-color-scheme:dark){ :root{--gelb:#d9a64a; --orange:#ec9a4f;} .haken.an{color:#14161a;} }

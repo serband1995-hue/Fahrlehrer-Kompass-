@@ -53,7 +53,7 @@
 .knopf.klein.haupt[data-zahlung]:hover,.knopf.klein.haupt[data-zreakt]:hover,.knopf.klein.haupt[data-zbezahlt]:hover{background:var(--surface-2);}
 .aufgabe-zeile .gelesen,.knopf.ergebnis-ja{color:var(--pill-gruen);}
 @media (prefers-color-scheme:dark){ .aufgabe-zeile .gelesen,.knopf.ergebnis-ja{color:var(--gruen);} }
-.k-termin[style*="--farbe:#3a7350"]{--farbe:#66778a !important;}
+.k-termin[style*="--farbe:#3a7350"]{--farbe:#7d7d86 !important;} /* Fahrstunde neutral grau, klar anders als Nacht/Sonder (blau) */
 .h1,.j-tag.h1{background:color-mix(in srgb,var(--txt) 6%,var(--surface));}
 .h2,.j-tag.h2{background:color-mix(in srgb,var(--txt) 13%,var(--surface));}
 .dialog{box-shadow:0 12px 40px rgba(20,22,30,.18);}
@@ -65,3 +65,6 @@
 .schalter-bahn{background:var(--feld);}
 ::placeholder{color:var(--muted);opacity:1;}
 .zm-pill-test{background:#d9a64a;}
+
+/* Fable N1: Gelb und Orange im Dunkeln wieder hell (die hellen Werte oben gelten nur im hellen Modus); weißer Haken auf hellen Farben dunkel */
+@media (prefers-color-scheme:dark){ :root{--gelb:#d9a64a; --orange:#ec9a4f;} .haken.an{color:#14161a;} }

@@ -29,9 +29,9 @@ Nachteil: Flächen heben sich weniger ab als in A; braucht mehr Platz in Karten.
 - Grüner Text hell („gelesen“, „Ergebnis ja“) in dunklerem Grün: 6,6:1 statt 3,4:1.
 - Weiße Zahl im roten Punkt dunkel: Punkt dunkler (#b3392b), 5,9:1 statt 3,2:1.
 - Schalter „aus“ in Feldrahmen-Farbe (3,7:1), Platzhaltertext in Nebentext-Farbe (≥ 6:1).
-- Hell: Gelb (#a07018) und Orange (#b05a14) dunkler, damit gelbe Zahlen und Orange-Text lesbar sind (3,8:1 und 4,9:1 statt 2,8 und 3,2). Das gelbe „Test“-Pillchen behält ein helles Gelb mit dunkler Schrift.
+- Hell: Gelb (#a07018) und Orange (#b05a14) dunkler, damit gelbe Zahlen und Orange-Text lesbar sind (3,8:1 und 4,9:1 statt 2,8 und 3,2). Das gelbe „Test“-Pillchen behält ein helles Gelb mit dunkler Schrift. Im dunklen Modus gelten wieder die hellen Töne (#d9a64a, #ec9a4f), sonst wären gelbe Pills dort zu blass.
 - Rollenstreifen: Super-Admin (`.rollen-streifen`, war Dunkelgrün) jetzt neutral #2b2d33, Büro #4c4f57 (A) bzw. #555a66 (B).
-- Kalender: Fahrstunden waren grün (`K_FARBEN.fahrstunde`, `#3a7350` in buero.js, Zeile 2261). Per CSS-Attribut überschrieben auf Blaugrau (#66778a), siehe Bilder `kalender`. Beim Einbau besser direkt in `K_FARBEN` ändern.
+- Kalender: Fahrstunden waren grün (`K_FARBEN.fahrstunde`, `#3a7350` in buero.js, Zeile 2261). Per CSS-Attribut überschrieben auf neutrales Grau (#7d7d86, klar anders als Nacht/Sonder in Blau), siehe Bilder `kalender`. Beim Einbau besser direkt in `K_FARBEN` ändern.
 - Beim Einbau werden `theme-color` (buero.html Zeile 10) und buero-manifest.json (Zeilen 9 bis 10) ebenfalls neutral.
 
 ## Kontrastwerte (Verhältnis; ✗ = unter dem Mindestwert; „min“ 0 = nur zum Vergleich der Abhebung)
