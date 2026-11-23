@@ -106,7 +106,7 @@ function toastUndo(text, rueckgaengig, optionen) {
     if (UNDO.offen !== u) return;
     e.target.disabled = true;
     UNDO.offen = null; clearTimeout(u.timer); el.remove();
-    try { await rueckgaengig(); } catch (err) { toast("Rückgängig ging nicht: " + (err && err.message ? err.message : "Fehler"), true); }
+    try { await rueckgaengig(); } catch (err) { toast("Rückgängig ging nicht: " + (err && err.message ? dbFehlerText(err) : "Fehler"), true); }
   });
   undoPlatzieren();
   return u;
@@ -475,6 +475,96 @@ function reaktBetrag(s) {
 // „entfällt“ statt „0 €“, wenn die Reaktivierung in der Preisliste heute entfällt (Prüf-Team Bedienung)
 function reaktHeuteText() { return typeof preisAm === "function" && preisAm("reaktivierung", null, null, KR.todayISO()) === null ? "entfällt" : euro(reaktBetrag()); }
 function reaktInPreisliste() { return typeof preisAm === "function" && preisAm("reaktivierung", null, null, "9999-12-31") !== undefined; }
+/* K8 (🗣 23.11.): Zahlung ausstehend. Gesperrt = Reaktivierung überfällig (wie KR.reaktInfo) ODER das Büro hat „Zahlung ausstehend“ gedrückt
+   (schueler.zahlung_gesperrt_seit/_grund). Gesperrte bekommen keine neuen künftigen Termine; bestehende bleiben. Keine automatische Sperre. */
+const ZAHLUNG_MELDUNG = "Zahlung ausstehend – erst „Bezahlt“ eintragen.";
+const ZAHLUNG_GRUENDE = ["Reaktivierung", "Rechnung offen"];
+function zahlungSperre(s) { return s && s.zahlung_gesperrt_seit ? { seit: String(s.zahlung_gesperrt_seit).slice(0, 10), grund: String(s.zahlung_gesperrt_grund || "").trim() } : null; }
+function bueroGesperrt(s) { return !!s && istAktiv(s) && (!!zahlungSperre(s) || !!KR.reaktInfo(s).gesperrt); } // Archiv: keine Sperre (wie der Server)
+// Betrag der Reaktivierung je Schüler: kommt seit K9 aus reaktBetrag(s) (Preisliste zum Vertragsdatum)
+function reaktBetragFuer(s) { return reaktBetrag(s); }
+// Fehler der Datenbank verständlich: Sperre (P0001) und noch fehlende Spalten (Migration nicht eingespielt)
+function dbFehlerText(err) {
+  const m = (err && err.message) || "";
+  if (/zahlung_gesperrt/.test(m) && /column|schema cache|does not exist|Could not find/i.test(m)) return "Datenbank noch nicht bereit (Zahlungssperre). Bitte später noch einmal versuchen.";
+  if (/Zahlung ausstehend/.test(m)) return ZAHLUNG_MELDUNG;
+  return m;
+}
+function zahlungPill(s) {
+  const z = zahlungSperre(s);
+  if (z && !istAktiv(s)) return "";
+  if (z) return `<span class="marke-pill rot" data-zahlungpill title="Zahlung ausstehend seit ${esc(datumDE(z.seit))}${z.grund ? ": " + esc(z.grund) : ""}">Zahlung ausstehend</span>`;
+  return s && istAktiv(s) && KR.reaktInfo(s).gesperrt ? `<span class="marke-pill rot" data-zahlungpill title="Reaktivierung überfällig, Zahlung ausstehend">Reaktivierung offen</span>` : "";
+}
+async function setzeZahlungSperre(id, seit, grund, text, vorher, nachher) {
+  const s = S.schueler.find((x) => x.id === id);
+  if (!s) return false;
+  const alt = vorher || { seit: s.zahlung_gesperrt_seit || null, grund: s.zahlung_gesperrt_grund || null };
+  const res = await supa.from("schueler").update({ zahlung_gesperrt_seit: seit, zahlung_gesperrt_grund: grund }).eq("id", id).select("*");
+  if (res.error) { toast("Nicht gespeichert: " + dbFehlerText(res.error), true); return false; }
+  if (!res.data || !res.data.length) { toast("Nicht gespeichert: keine Berechtigung für diesen Schüler", true); return false; }
+  if (!!res.data[0].zahlung_gesperrt_seit !== !!seit) { toast("Nicht gespeichert: Nur Büro und Leitung dürfen die Zahlung vermerken.", true); return false; }
+  Object.assign(s, res.data[0]);
+  zeichne();
+  if (!vorher) toastUndo(text, async () => { await setzeZahlungSperre(id, alt.seit, alt.grund, "", alt); if (nachher) nachher(); toast("Zurückgenommen"); });
+  return true;
+}
+// Dialog: kurzer Grund (freiwillig, Vorschläge zum Antippen), Knopf sperrt sofort, danach „Rückgängig“ (kein Bestätigen-Fenster)
+function zahlungAusstehendDialog(id, nachher) {
+  const s = S.schueler.find((x) => x.id === id);
+  if (!s) return;
+  const body = `<p>Für <b>${esc(s.name)}</b> werden keine neuen Termine mehr angelegt, bis „Bezahlt“ eingetragen ist. Bestehende Termine bleiben.</p>
+    <div class="formular"><div class="voll zahl-gruende">${ZAHLUNG_GRUENDE.map((g) => `<button type="button" class="knopf klein" data-zgrund="${esc(g)}">${esc(g)}</button>`).join("")}</div>
+    <label class="voll">Grund (freiwillig)<input type="text" name="grund" maxlength="120" placeholder="z. B. Rechnung offen"></label></div>`;
+  const dlg = oeffneDialog(`Zahlung ausstehend: ${s.name}`, body, async (form) => {
+    const grund = form.grund.value.trim() || null;
+    const ok = await setzeZahlungSperre(id, new Date().toISOString(), grund, `${s.name}: Zahlung ausstehend vermerkt`, null, nachher);
+    if (ok && nachher) nachher();
+    return ok;
+  }, "Zahlung ausstehend");
+  dlg.querySelectorAll("[data-zgrund]").forEach((b) => b.addEventListener("click", () => { dlg.querySelector("input[name=grund]").value = b.dataset.zgrund; }));
+}
+async function zahlungBezahlt(id, nachher) {
+  const s = S.schueler.find((x) => x.id === id);
+  if (!s) return;
+  const ok = await setzeZahlungSperre(id, null, null, `${s.name}: Bezahlt eingetragen`, null, nachher);
+  if (ok && nachher) nachher();
+}
+// Block in der Schüler-Akte und die Knöpfe in Listen
+function zahlungKnoepfe(s, o) {
+  if (!s) return "";
+  const z = zahlungSperre(s), bezahlt = `<button class="knopf klein haupt" data-zbezahlt="${esc(s.id)}" type="button">Bezahlt</button>`;
+  if (!istAktiv(s)) return z ? bezahlt : ""; // Archiv: alten Vermerk löschen können
+  const r = KR.reaktInfo(s);
+  const reakt = r.gesperrt && !(o && o.ohneReakt) ? `<button class="knopf klein haupt" data-zreakt="${esc(s.id)}" type="button">Reaktivierung bezahlt${o && o.kurz ? "" : ` (${esc(euro(reaktBetragFuer(s)))})`}</button>` : "";
+  if (z) return bezahlt + reakt;
+  if (r.gesperrt) return reakt; // nur Reaktivierung überfällig: die Handlung ist „Reaktivierung bezahlt“
+  return `<button class="knopf klein" data-zsperre="${esc(s.id)}" type="button">Zahlung offen</button>`;
+}
+function zahlBlockHTML(x) {
+  const z = zahlungSperre(x), r = istAktiv(x) ? KR.reaktInfo(x) : { gesperrt: false };
+  let t = "";
+  if (z && istAktiv(x)) t += `<p class="fl-warnung abgelaufen" data-zahlungtext>Zahlung ausstehend seit ${esc(datumDE(z.seit))}${z.grund ? ": " + esc(z.grund) : ""}. Keine neuen Termine, bis „Bezahlt“ eingetragen ist.</p>`;
+  else if (z) t += `<p class="fl-warnung" data-zahlungtext>Alter Vermerk „Zahlung ausstehend“ seit ${esc(datumDE(z.seit))}${z.grund ? ": " + esc(z.grund) : ""}. Der Schüler ist im Archiv, der Vermerk sperrt nichts. Mit „Bezahlt“ wird er gelöscht.</p>`;
+  if (r.gesperrt) t += `<p class="fl-warnung abgelaufen" data-zahlungtext>Zahlung ausstehend: Reaktivierung überfällig seit ${esc(datumDE(r.faellig))}. Keine neuen Termine, bis sie bezahlt ist.</p>`;
+  return `${t}<div class="knopfreihe">${zahlungKnoepfe(x)}</div>`;
+}
+function bindeZahlBlock(dlg, id) {
+  const block = dlg.querySelector("#zahlBlock");
+  if (!block) return;
+  const neu = () => { const x = S.schueler.find((y) => y.id === id); if (x) { block.innerHTML = zahlBlockHTML(x); bind(); } };
+  const bind = () => {
+    block.querySelectorAll("[data-zsperre]").forEach((b) => b.addEventListener("click", () => zahlungAusstehendDialog(id, neu)));
+    block.querySelectorAll("[data-zbezahlt]").forEach((b) => b.addEventListener("click", () => zahlungBezahlt(id, neu)));
+    block.querySelectorAll("[data-zreakt]").forEach((b) => b.addEventListener("click", () => zahlungErhalten(id, neu)));
+  };
+  bind();
+}
+function bindeZahlKnoepfe(ziel) {
+  ziel.querySelectorAll("[data-zsperre]").forEach((b) => b.addEventListener("click", () => zahlungAusstehendDialog(b.dataset.zsperre)));
+  ziel.querySelectorAll("[data-zbezahlt]").forEach((b) => b.addEventListener("click", () => zahlungBezahlt(b.dataset.zbezahlt)));
+  ziel.querySelectorAll("[data-zreakt]").forEach((b) => b.addEventListener("click", () => zahlungErhalten(b.dataset.zreakt)));
+}
 // Wer im Büro bedient: Namen für „Wer bist du?“ (einstellbar durch den Super-Admin)
 const PERSONEN_STANDARD = []; // keine festen Namen im Code: Büro-Personen kommen aus der Datenbank oder aus konfiguration.bueroPersonen
 function bueroPersonen() {
@@ -527,7 +617,8 @@ function zaehleFristen() {
     if (tf.stufe === "abgelaufen") z.fristAb++; else if (tf.stufe === "bald") z.fristBald++;
     if (u.stufe === "abgelaufen") z.umAb++; else if (u.stufe === "bald") z.umBald++; else if (u.stufe === "land_pruefen" || u.stufe === "ohne_datum") z.umPruefen++;
   }
-  z.handeln = z.gesperrt + z.pruefen + z.antragAb + z.fristAb + z.umAb + z.umBald;
+  z.manuell = aktiveSchueler().filter((s) => zahlungSperre(s) && KR.reaktInfo(s, heute).stufe !== "gesperrt" && KR.reaktInfo(s, heute).stufe !== "pruefen_faellig").length;
+  z.handeln = z.manuell + z.gesperrt + z.pruefen + z.antragAb + z.fristAb + z.umAb + z.umBald;
   return z;
 }
 const REAKT_TEXT = {
@@ -565,7 +656,7 @@ function renderFristen() {
   </div>`;
   let liste = aktiveSchueler().map((s) => ({ s, r: KR.reaktInfo(s, heute), t: KR.theorieInfo(s, heute), a: KR.antragInfo(s, heute), tf: KR.theorieFristInfo(s, heute), u: KR.umschreibInfo(s, heute) }));
   if (ansicht === "handeln") liste = liste.filter((x) => ["gesperrt", "pruefen_faellig", "bald"].includes(x.r.stufe) || ["abgelaufen", "bald"].includes(x.t.stufe) || x.a.stufe === "abgelaufen"
-    || ["abgelaufen", "bald"].includes(x.tf.stufe) || x.u.stufe === "bald" || x.u.stufe === "abgelaufen");
+    || ["abgelaufen", "bald"].includes(x.tf.stufe) || x.u.stufe === "bald" || x.u.stufe === "abgelaufen" || !!zahlungSperre(x.s));
   const ohneAntrag = liste.filter((x) => x.a.stufe === "ohne_datum").length;
   if (ansicht === "antrag") liste = liste.filter((x) => x.a.stufe !== "ohne_datum" || !["ohne_datum", "erledigt"].includes(x.tf.stufe));
   if (ansicht === "umschreiber") liste = liste.filter((x) => istUmschreiber(x.s));
@@ -610,8 +701,9 @@ function renderFristen() {
     let zahlen = (r.stufe === "gesperrt" || r.stufe === "pruefen_faellig" || r.stufe === "bald")
       ? `<button class="knopf klein haupt" data-zahlung="${esc(s.id)}" type="button">${euro(reaktBetrag(s))} erhalten</button>` : "";
     if (r.stufe === "pruefen_faellig") zahlen += `<button class="knopf klein" data-nichtbezahlt="${esc(s.id)}" type="button">Nicht bezahlt</button>`;
+    zahlen += zahlungKnoepfe(s, { ohneReakt: true }); // „… erhalten“ steht schon da
     return `<tr>
-      <td><b>${esc(s.name)}</b><div class="unter">${esc(artName(s.ausbildungsart))}${s.klasse ? " · " + esc(s.klasse) : ""}<span class="nur-schmal"> · Vertrag ${s.vertrag_am ? esc(datumDE(s.vertrag_am)) : "fehlt"}</span></div></td>
+      <td><b>${esc(s.name)}</b><div class="unter">${esc(artName(s.ausbildungsart))}${s.klasse ? " · " + esc(s.klasse) : ""}<span class="nur-schmal"> · Vertrag ${s.vertrag_am ? esc(datumDE(s.vertrag_am)) : "fehlt"}</span></div>${zahlungSperre(s) ? `<div class="unter">${zahlungPill(s)}${zahlungSperre(s).grund ? " " + esc(zahlungSperre(s).grund) : ""} · seit ${esc(datumDE(zahlungSperre(s).seit))}</div>` : ""}</td>
       <td>${esc(lehrerName(s.fahrlehrer_id))}</td>
       <td class="zeitspalte nur-breit">${s.vertrag_am ? esc(datumDE(s.vertrag_am)) : '<span class="leise">fehlt</span>'}</td>
       <td><span class="marke-pill ${rf}">${rt}</span>${rDatum}</td>
@@ -653,7 +745,7 @@ function bindeEinstellungen(ziel) {
     if (!(ue >= 1)) { toast("Bitte die Unterrichtseinheiten pro Woche eintragen.", true); return; }
     const neu = Object.assign({}, (S.fs && S.fs.konfiguration) || {}, { reaktivierungBetrag: betrag, ueProWoche: ue });
     const res = await supa.from("fahrschulen").update({ konfiguration: neu }).eq("id", S.fsId).select("id");
-    if (res.error || !res.data || !res.data.length) { toast("Nicht gespeichert: " + (res.error ? res.error.message : "keine Berechtigung"), true); return; }
+    if (res.error || !res.data || !res.data.length) { toast("Nicht gespeichert: " + (res.error ? dbFehlerText(res.error) : "keine Berechtigung"), true); return; }
     S.fs.konfiguration = neu;
     toast("Einstellungen gespeichert");
     zeichne();
@@ -675,6 +767,7 @@ function bindeFristen(ziel) {
     });
   }
   ziel.querySelectorAll("[data-zahlung]").forEach((b) => b.addEventListener("click", () => zahlungErhalten(b.dataset.zahlung)));
+  bindeZahlKnoepfe(ziel);
   ziel.querySelectorAll("[data-nichtbezahlt]").forEach((b) => b.addEventListener("click", () => nichtBezahlt(b.dataset.nichtbezahlt)));
   ziel.querySelectorAll("[data-fristen]").forEach((b) => b.addEventListener("click", () => fristenDialog(b.dataset.fristen)));
   ziel.querySelectorAll("[data-umschueler]").forEach((b) => b.addEventListener("click", () => schuelerDialog(b.dataset.umschueler)));
@@ -686,7 +779,7 @@ function bindeFristen(ziel) {
 async function speichereSchueler(id, werte, meldung) {
   const res = await supa.from("schueler").update(werte).eq("id", id).select("id");
   if (res.error || !res.data || !res.data.length) {
-    toast("Nicht gespeichert: " + (res.error ? res.error.message : "keine Berechtigung für diesen Schüler"), true);
+    toast("Nicht gespeichert: " + (res.error ? dbFehlerText(res.error) : "keine Berechtigung für diesen Schüler"), true);
     return false;
   }
   const s = S.schueler.find((x) => x.id === id);
@@ -695,7 +788,7 @@ async function speichereSchueler(id, werte, meldung) {
   zeichne();
   return true;
 }
-async function zahlungErhalten(id) {
+async function zahlungErhalten(id, nachher) {
   const s = S.schueler.find((x) => x.id === id);
   if (!s) return;
   const neu = KR.reaktNachZahlung(s);
@@ -715,7 +808,9 @@ async function zahlungErhalten(id) {
     const abspr = form.absprache.value, notiz = form.notiz.value.trim();
     if (Math.abs(betrag - reaktBetrag(s)) > 0.005 && !abspr && !notiz) { toast(`Der Betrag weicht von ${euro(reaktBetrag(s))} ab. Bitte „Nach Absprache mit“ oder eine Notiz eintragen.`, true); return false; }
     const text = `Bezahlt ${euro(betrag)} am ${datumDE(form.am.value)}${abspr ? " · nach Absprache mit " + abspr : ""}${notiz ? " · " + notiz : ""}`;
-    return speichereSchueler(id, { reakt_status: "bezahlt", reakt_bezahlt_bis: neu, reakt_betrag: betrag, reakt_notiz: text }, `Gespeichert. Nächste Reaktivierung am ${datumDE(neu)}.`);
+    const ok = await speichereSchueler(id, { reakt_status: "bezahlt", reakt_bezahlt_bis: neu, reakt_betrag: betrag, reakt_notiz: text }, `Gespeichert. Nächste Reaktivierung am ${datumDE(neu)}.`);
+    if (ok && nachher) nachher();
+    return ok;
   }, "Als bezahlt eintragen");
 }
 // Geprüft, nicht bezahlt: Fälligkeit bleibt in der Vergangenheit -> Schüler ist gesperrt
@@ -984,7 +1079,7 @@ window.addEventListener("hashchange", () => { if (aktuellerBereich().id !== "pru
 async function speicherePruefung(id, werte) {
   werte.aktualisiert_am = new Date().toISOString();
   const res = await supa.from("pruefungstermine").update(werte).eq("id", id).select("*");
-  if (res.error || !res.data || !res.data.length) { toast("Nicht gespeichert: " + (res.error ? res.error.message : "keine Berechtigung"), true); return null; }
+  if (res.error || !res.data || !res.data.length) { toast("Nicht gespeichert: " + (res.error ? dbFehlerText(res.error) : "keine Berechtigung"), true); return null; }
   const i = S.pruefungstermine.findIndex((x) => x.id === id);
   if (i >= 0) S.pruefungstermine[i] = res.data[0];
   return res.data[0];
@@ -1018,8 +1113,10 @@ async function abgleichKalender(p) {
     }
   } catch (e) {
     console.error(e);
-    toast("Prüfung gespeichert, aber nicht im Kalender des Fahrlehrers: " + e.message, true);
+    toast("Prüfung gespeichert, aber nicht im Kalender des Fahrlehrers: " + dbFehlerText(e), true);
+    return false;
   }
+  return true;
 }
 function schuelerOptionen(gewaehlt) {
   return S.schueler.filter((x) => istAktiv(x) || x.id === gewaehlt).sort((a, b) => String(a.name).localeCompare(String(b.name), "de"))
@@ -1068,6 +1165,11 @@ function pruefungDialog(id) {
     const d = Object.fromEntries(new FormData(form).entries());
     if (!d.schueler_id) { toast("Bitte einen Schüler wählen.", true); return false; }
     if (!d.datum) { toast("Bitte ein Datum eintragen.", true); return false; }
+    { // K8: Zahlung ausstehend – keine neue künftige Praxisprüfung im Kalender des Fahrlehrers
+      const sx = S.schueler.find((x) => x.id === d.schueler_id);
+      const neuImKalender = !id || !p.kalender_termin_id || d.datum !== p.datum;
+      if (d.art === "praxis" && d.datum >= KR.todayISO() && d.fahrlehrer_id && d.von && neuImKalender && sx && bueroGesperrt(sx)) { toast(ZAHLUNG_MELDUNG, true); return false; }
+    }
     const werte = {
       schueler_id: d.schueler_id, art: d.art, klasse: d.klasse || null, datum: d.datum, von: d.von || null,
       fahrlehrer_id: d.fahrlehrer_id || null, pruefer: (d.pruefer || "").trim() || null, notiz: (d.notiz || "").trim() || null,
@@ -1079,7 +1181,7 @@ function pruefungDialog(id) {
     if (id) gespeichert = await speicherePruefung(id, werte);
     else {
       const res = await supa.from("pruefungstermine").insert(Object.assign({ fahrschule_id: S.fsId, status: "geplant" }, werte)).select("*");
-      if (res.error || !res.data || !res.data.length) { toast("Nicht gespeichert: " + (res.error ? res.error.message : "keine Berechtigung"), true); return false; }
+      if (res.error || !res.data || !res.data.length) { toast("Nicht gespeichert: " + (res.error ? dbFehlerText(res.error) : "keine Berechtigung"), true); return false; }
       gespeichert = res.data[0];
       S.pruefungstermine.push(gespeichert);
     }
@@ -1095,8 +1197,8 @@ function pruefungDialog(id) {
         if (!res.error && res.data && res.data.length) Object.assign(sx, neuW);
       }
     }
-    await abgleichKalender(gespeichert);
-    toast(d.absagen ? "Prüfung abgesagt" : "Prüfung gespeichert");
+    const kalenderOk = await abgleichKalender(gespeichert);
+    if (kalenderOk) toast(d.absagen ? "Prüfung abgesagt" : "Prüfung gespeichert");
     zeichne();
     return true;
   });
@@ -1142,7 +1244,7 @@ async function uebertrageErgebnis(p, neu, alt, vorher) {
   for (const k of Object.keys(werte)) alteWerte[k] = s[k] == null ? null : s[k];
   if (Object.keys(werte).length) {
     const res = await supa.from("schueler").update(werte).eq("id", s.id).select("id");
-    if (res.error || !res.data || !res.data.length) toast("Ergebnis steht auf der Tafel, aber nicht in der Akte: " + (res.error ? res.error.message : "keine Berechtigung"), true);
+    if (res.error || !res.data || !res.data.length) toast("Ergebnis steht auf der Tafel, aber nicht in der Akte: " + (res.error ? dbFehlerText(res.error) : "keine Berechtigung"), true);
     else Object.assign(s, werte);
   }
   let aufgabeId = null;
@@ -1364,13 +1466,13 @@ function renderSchueler() {
     const b197 = x.klasse === "B197";
     const testfahrt = b197 ? (x.b197_testfahrt_am ? `<span class="marke-pill gruen">Testfahrt ✓ ${esc(datumDE(x.b197_testfahrt_am).slice(0, 6))}</span>` : `<span class="marke-pill gelb">Testfahrt offen</span>`) : "";
     return `<tr${istAktiv(x) ? "" : ' class="inaktivzeile"'}>
-      <td><div class="name-zeile">${farbPunkt(a)}<b>${esc(x.name)}</b></div><div class="unter">${istAktiv(x) ? "" : `im Archiv seit ${esc(datumDE(x.inaktiv_seit))} · `}${ausgeblendetAm(x) ? `<span class="hinweis-ausgeblendet-klein">vom Fahrlehrer ausgeblendet am ${esc(datumDE(ausgeblendetAm(x).slice(0, 10)))}</span> · ` : ""}${wartetArt(x) ? `<span class="marke-pill gelb">${esc(WARTE_TEXT[wartetArt(x)])}</span> ` : ""}${esc(x.telefon || "")}${x.email ? " · " + esc(x.email) : ""}</div><div class="unter nur-unter">${esc(klasseVon(x))} · ${esc(artName(x.ausbildungsart))}${x.paket_id ? " · " + esc(paketName(x.paket_id)) : ""}</div></td>
+      <td><div class="name-zeile">${farbPunkt(a)}<b>${esc(x.name)}</b></div><div class="unter">${istAktiv(x) ? "" : `im Archiv seit ${esc(datumDE(x.inaktiv_seit))} · `}${ausgeblendetAm(x) ? `<span class="hinweis-ausgeblendet-klein">vom Fahrlehrer ausgeblendet am ${esc(datumDE(ausgeblendetAm(x).slice(0, 10)))}</span> · ` : ""}${wartetArt(x) ? `<span class="marke-pill gelb">${esc(WARTE_TEXT[wartetArt(x)])}</span> ` : ""}${istAktiv(x) && bueroGesperrt(x) ? zahlungPill(x) + " " : ""}${esc(x.telefon || "")}${x.email ? " · " + esc(x.email) : ""}</div><div class="unter nur-unter">${esc(klasseVon(x))} · ${esc(artName(x.ausbildungsart))}${x.paket_id ? " · " + esc(paketName(x.paket_id)) : ""}</div></td>
       <td>${x.fahrlehrer_id ? esc(lehrerName(x.fahrlehrer_id)) : '<span class="marke-pill rot">ohne Fahrlehrer</span>'}</td>
       <td class="nur-sehr-breit">${esc(klasseVon(x))}<div class="unter">${esc(artName(x.ausbildungsart))}${x.paket_id ? " · " + esc(paketName(x.paket_id)) : ""}${a.beginn ? ` · seit <span class="datum">${esc(datumDE(a.beginn))}</span>` : ""}</div></td>
       <td>${standHTML(a)}<div class="unter">Theorie ${esc(theo)}</div></td>
       <td class="nur-sehr-breit">${naechster[x.id] ? esc(datumDE(naechster[x.id])) : '<span class="leise">–</span>'}</td>
       <td>${istAktiv(x) ? `<span class="marke-pill ${rf}">${rt}</span>` : '<span class="leise">–</span>'}${testfahrt ? `<div class="unter">${testfahrt}</div>` : ""}${notizPill(x.id)}${aufgabePill(x.id)}</td>
-      <td class="aktionen"><div class="aktionen-box">${b197 && !x.b197_testfahrt_am && istAktiv(x) ? `<button class="knopf klein" data-testfahrt="${esc(x.id)}" type="button">Testfahrt ✓</button>` : ""}<button class="knopf klein" data-sbearb="${esc(x.id)}" type="button">Bearbeiten</button></div></td>
+      <td class="aktionen"><div class="aktionen-box">${b197 && !x.b197_testfahrt_am && istAktiv(x) ? `<button class="knopf klein" data-testfahrt="${esc(x.id)}" type="button">Testfahrt ✓</button>` : ""}${zahlungKnoepfe(x, { kurz: true })}<button class="knopf klein" data-sbearb="${esc(x.id)}" type="button">Bearbeiten</button></div></td>
     </tr>`;
   }).join("");
   const lehrerOpt = `<option value="">Alle Fahrlehrer</option><option value="ohne"${lehrerFilter === "ohne" ? " selected" : ""}>Ohne Fahrlehrer</option>` +
@@ -1433,6 +1535,7 @@ function bindeSchueler(ziel) {
     clearTimeout(t);
     t = setTimeout(() => { setzeFilter("schueler", { suche: su.value }); const n = $("sSuche"); if (n) { n.focus(); n.setSelectionRange(n.value.length, n.value.length); } }, 250);
   });
+  bindeZahlKnoepfe(ziel);
   ziel.querySelectorAll("[data-sbearb]").forEach((b) => b.addEventListener("click", () => schuelerDialog(b.dataset.sbearb)));
 }
 /* ---------- Notizen ans Team (Fahrlehrer bekommt sie als Popup, bis er „Gelesen“ tippt) ---------- */
@@ -1488,7 +1591,7 @@ async function notizUngelesen(id, spaet) {
 }
 async function aendereNotiz(id, werte) {
   const res = await supa.from("schueler_notizen").update(werte).eq("id", id).select("*");
-  if (res.error || !res.data || !res.data.length) { toast("Nicht gespeichert: " + (res.error ? res.error.message : "keine Berechtigung"), true); return false; }
+  if (res.error || !res.data || !res.data.length) { toast("Nicht gespeichert: " + (res.error ? dbFehlerText(res.error) : "keine Berechtigung"), true); return false; }
   const n = S.notizen.find((x) => x.id === id);
   if (n) Object.assign(n, res.data[0], { bearbeiter: res.data[0].bearbeiter || n.bearbeiter || null, erledigt_bearbeiter: "erledigt_am" in werte && !werte.erledigt_am ? null : (res.data[0].erledigt_bearbeiter || n.erledigt_bearbeiter || null) });
   return true;
@@ -1502,7 +1605,7 @@ function bindeNotizBlock(dlg, sid, fahrlehrerId) {
       if (!text) { toast("Bitte einen Text eintragen.", true); return; }
       e.target.disabled = true;
       const res = await supa.from("schueler_notizen").insert({ fahrschule_id: S.fsId, schueler_id: sid, text, art: block.querySelector("#nzArt").value, erstellt_von: S.user.id }).select("*");
-      if (res.error || !res.data || !res.data.length) { toast("Notiz nicht gesendet: " + (res.error ? res.error.message : "keine Berechtigung"), true); e.target.disabled = false; return; }
+      if (res.error || !res.data || !res.data.length) { toast("Notiz nicht gesendet: " + (res.error ? dbFehlerText(res.error) : "keine Berechtigung"), true); e.target.disabled = false; return; }
       S.notizen.unshift(Object.assign({}, res.data[0], { bearbeiter: res.data[0].bearbeiter || null }));
       toast("Notiz gesendet. Der Fahrlehrer sieht sie innerhalb einer Minute.");
       neu();
@@ -1511,7 +1614,7 @@ function bindeNotizBlock(dlg, sid, fahrlehrerId) {
       b.disabled = true;
       const jetzt = new Date().toISOString();
       const res = await supa.from("schueler_notizen").update({ erledigt_am: jetzt, erledigt_von: S.user.id }).eq("id", b.dataset.notizerledigt).select("*");
-      if (res.error || !res.data || !res.data.length) { toast("Nicht gespeichert: " + (res.error ? res.error.message : "keine Berechtigung"), true); b.disabled = false; return; }
+      if (res.error || !res.data || !res.data.length) { toast("Nicht gespeichert: " + (res.error ? dbFehlerText(res.error) : "keine Berechtigung"), true); b.disabled = false; return; }
       const n = S.notizen.find((x) => x.id === b.dataset.notizerledigt);
       if (n) Object.assign(n, res.data[0], { erledigt_bearbeiter: res.data[0].erledigt_bearbeiter || null });
       neu();
@@ -1543,12 +1646,12 @@ function bindeNotizBlock(dlg, sid, fahrlehrerId) {
       const n = S.notizen.find((x) => x.id === b.dataset.notizweg);
       if (!n) return; // K7: ohne Rückfrage, 6 s Rückgängig
       const res = await supa.from("schueler_notizen").delete().eq("id", n.id).select("id");
-      if (res.error || !res.data || !res.data.length) { toast("Nicht gelöscht: " + (res.error ? res.error.message : "keine Berechtigung"), true); return; }
+      if (res.error || !res.data || !res.data.length) { toast("Nicht gelöscht: " + (res.error ? dbFehlerText(res.error) : "keine Berechtigung"), true); return; }
       S.notizen = S.notizen.filter((x) => x.id !== n.id);
       neu();
       toastUndo("Notiz gelöscht", async () => {
         const r = await supa.from("schueler_notizen").insert(zeileFuerInsert(n)).select("*");
-        if (r.error || !r.data || !r.data.length) { toast("Rückgängig ging nicht: " + (r.error ? r.error.message : "keine Berechtigung"), true); return; }
+        if (r.error || !r.data || !r.data.length) { toast("Rückgängig ging nicht: " + (r.error ? dbFehlerText(r.error) : "keine Berechtigung"), true); return; }
         S.notizen.unshift(Object.assign({}, r.data[0], { bearbeiter: r.data[0].bearbeiter || n.bearbeiter || null }));
         toast("Notiz ist wieder da"); neu();
       });
@@ -1620,7 +1723,7 @@ function aufgabeDialog(vorgabe) {
     const zeile = { fahrschule_id: S.fsId, schueler_id: form.schueler.value || null, text, heute: false, faellig_am: form.faellig.value || null,
       fuer_person_id: form.fuer.value || null, dringend: form.dringend.checked, erstellt_von: S.user.id };
     const res = await supa.from("schueler_aufgaben").insert(zeile).select("*");
-    if (res.error || !res.data || !res.data.length) { toast("Aufgabe nicht gespeichert: " + (res.error ? res.error.message : "keine Berechtigung"), true); return false; }
+    if (res.error || !res.data || !res.data.length) { toast("Aufgabe nicht gespeichert: " + (res.error ? dbFehlerText(res.error) : "keine Berechtigung"), true); return false; }
     S.aufgaben.unshift(res.data[0]);
     toast(zeile.fuer_person_id && (!S.sitzung || zeile.fuer_person_id !== S.sitzung.id) ? `Aufgabe an ${personName(zeile.fuer_person_id)} geschickt` : "Aufgabe gespeichert");
     zeichne();
@@ -1674,7 +1777,7 @@ function aufgabenBlockHTML(sid) {
 }
 async function aendereAufgabe(id, werte, hinweis) {
   const res = await supa.from("schueler_aufgaben").update(werte).eq("id", id).select("*");
-  if (res.error || !res.data || !res.data.length) { toast("Nicht gespeichert: " + (res.error ? res.error.message : "keine Berechtigung"), true); return false; }
+  if (res.error || !res.data || !res.data.length) { toast("Nicht gespeichert: " + (res.error ? dbFehlerText(res.error) : "keine Berechtigung"), true); return false; }
   const a = S.aufgaben.find((x) => x.id === id);
   if (a) Object.assign(a, res.data[0]);
   if (hinweis) toast(hinweis);
@@ -1695,12 +1798,12 @@ async function loescheAufgabe(id, nachher) {
   const a = S.aufgaben.find((x) => x.id === id);
   if (!a) return false; // K7: ohne Rückfrage, 6 s Rückgängig
   const res = await supa.from("schueler_aufgaben").delete().eq("id", id).select("id");
-  if (res.error || !res.data || !res.data.length) { toast("Nicht gelöscht: " + (res.error ? res.error.message : "keine Berechtigung"), true); return false; }
+  if (res.error || !res.data || !res.data.length) { toast("Nicht gelöscht: " + (res.error ? dbFehlerText(res.error) : "keine Berechtigung"), true); return false; }
   S.aufgaben = S.aufgaben.filter((x) => x.id !== id);
   nachher();
   toastUndo("Aufgabe gelöscht", async () => {
     const r = await supa.from("schueler_aufgaben").insert(zeileFuerInsert(a)).select("*");
-    if (r.error || !r.data || !r.data.length) { toast("Rückgängig ging nicht: " + (r.error ? r.error.message : "keine Berechtigung"), true); return; }
+    if (r.error || !r.data || !r.data.length) { toast("Rückgängig ging nicht: " + (r.error ? dbFehlerText(r.error) : "keine Berechtigung"), true); return; }
     S.aufgaben.unshift(r.data[0]);
     toast("Aufgabe ist wieder da"); nachher();
   });
@@ -1740,7 +1843,7 @@ function bindeAufgabenBlock(dlg, sid) {
     const faellig = block.querySelector("#agDatum").value || null;
     const res = await supa.from("schueler_aufgaben").insert({ fahrschule_id: S.fsId, schueler_id: sid, text, heute, faellig_am: faellig, erstellt_von: S.user.id,
       fuer_person_id: block.querySelector("#agFuer").value || null, dringend: block.querySelector("#agDringend").checked }).select("*");
-    if (res.error || !res.data || !res.data.length) { toast("Aufgabe nicht gespeichert: " + (res.error ? res.error.message : "keine Berechtigung"), true); knopf.disabled = false; return; }
+    if (res.error || !res.data || !res.data.length) { toast("Aufgabe nicht gespeichert: " + (res.error ? dbFehlerText(res.error) : "keine Berechtigung"), true); knopf.disabled = false; return; }
     S.aufgaben.unshift(res.data[0]);
     toast(heute ? "Aufgabe steht jetzt unter „Heute zu tun“." : "Aufgabe gespeichert.");
     neu();
@@ -2043,6 +2146,7 @@ function schuelerDialog(id) {
         <label class="datum-klein">am<input type="date" name="testfahrt_am" value="${esc(x.b197_testfahrt_am || "")}"></label>
       </div>
       ${id ? `<div class="voll schalter-zeile"><label class="schalter"><input type="checkbox" name="aktiv" role="switch"${istAktiv(x) ? " checked" : ""}><span class="schalter-bahn" aria-hidden="true"></span><span class="schalter-text"><b id="aktivText">${istAktiv(x) ? "Aktiv" : "Im Archiv"}</b><span class="leise klein"> Archiv heißt: bestanden oder nicht mehr dabei. Der Schüler verschwindet überall (auch aus der Fahrlehrer-App) und zählt nicht bei Fristen, Reaktivierung und Auslastung. Jederzeit zurückholbar.</span></span></label></div>` : ""}
+      ${id && istAktiv(x) ? `<div class="voll zahl-block" id="zahlBlock">${zahlBlockHTML(x)}</div>` : ""}
       ${id ? akademieZugangHTML() : ""}
       ${id ? `<div class="voll nw-akte"><button type="button" class="knopf klein" id="nwOeffnen">Ausbildungsnachweis</button><span class="leise klein">Fahrstunden, Unterschriften, Druck</span></div>` : ""}
       ${id ? `<div class="voll">${pruefungenAkteHTML(id)}</div>` : ""}
@@ -2089,7 +2193,7 @@ function schuelerDialog(id) {
       const zeile = Object.assign({ id: neueId, fahrschule_id: S.fsId, fahrlehrer_id: neuerLehrer, status: "aktiv", erstellt_von: S.user.id,
         ausbildung: { form: formAusKlasse(werte.klasse), umschreiber: werte.ausbildungsart === "umschreibung" } }, werte);
       const res = await supa.from("schueler").insert(zeile).select("*");
-      if (res.error || !res.data || !res.data.length) { toast("Nicht angelegt: " + (res.error ? res.error.message : "keine Berechtigung"), true); return false; }
+      if (res.error || !res.data || !res.data.length) { toast("Nicht angelegt: " + (res.error ? dbFehlerText(res.error) : "keine Berechtigung"), true); return false; }
       S.schueler.push(res.data[0]);
       toast(`${name} angelegt${neuerLehrer ? " und " + lehrerName(neuerLehrer) + " zugeordnet" : " (noch ohne Fahrlehrer)"}`);
       zeichne();
@@ -2105,6 +2209,7 @@ function schuelerDialog(id) {
     if (absagen.length) await sageTermineAb(absagen, `${name} liegt im Archiv, ${absagen.length === 1 ? "1 Termin" : absagen.length + " Termine"} abgesagt`);
     return true;
   });
+  if (id) bindeZahlBlock(dlg, id);
   if (id) bindeNotizBlock(dlg, id, x.fahrlehrer_id);
   if (id) bindeAufgabenBlock(dlg, id);
   if (id && typeof nachweisDialog === "function") dlg.querySelector("#nwOeffnen").addEventListener("click", () => nachweisDialog(id));
@@ -2129,7 +2234,7 @@ async function verschiebeSchueler(x, neuerLehrer) {
     const kuenftig = S.termine.filter((t) => t.schueler_id === x.id && t.fahrlehrer_id === alter && t.datum >= heute);
     if (kuenftig.length && await bestaetige("Künftige Termine mitnehmen?", `${kuenftig.length} künftige Termine von ${x.name} liegen noch bei ${lehrerName(alter)}. Zu ${lehrerName(neuerLehrer)} übertragen?`, "Ja, übertragen")) {
       const res = await supa.from("kalender_termine").update({ fahrlehrer_id: neuerLehrer, aktualisiert_am: new Date().toISOString() }).in("id", kuenftig.map((t) => t.id)).select("id");
-      if (res.error) toast("Termine nicht übertragen: " + res.error.message, true);
+      if (res.error) toast("Termine nicht übertragen: " + dbFehlerText(res.error), true);
       else kuenftig.forEach((t) => { t.fahrlehrer_id = neuerLehrer; });
     }
   }
@@ -2161,9 +2266,9 @@ function kTerminBlock(t) {
   const a = Math.max(KR.hm2min(t.von), K_START), b = Math.min(KR.hm2min(t.bis), K_ENDE);
   if (b <= a) return "";
   const sn = schuelerName(t.schueler_id) || t.interessent_name || (t.payload && t.payload.note) || ARTEN[t.art] || "";
-  const gesperrt = t.schueler_id && KR.reaktInfo(S.schueler.find((x) => x.id === t.schueler_id) || {}).gesperrt;
-  return `<button type="button" class="k-termin${t.art === "block" ? " block" : ""}${gesperrt ? " gesperrt" : ""}" data-termin="${esc(t.id)}" style="top:${(a - K_START) * K_PX}px;height:${Math.max((b - a) * K_PX - 2, 22)}px;--farbe:${K_FARBEN[t.art] || "#3a7350"}">
-        <span class="k-zeit">${esc(t.von)}–${esc(t.bis)}</span><span class="k-name">${gesperrt ? "⚠ " : ""}${esc(sn)}</span>${t.fahrzeug ? `<span class="k-fz">${esc(t.fahrzeug)}</span>` : ""}</button>`;
+  const gesperrt = t.schueler_id && bueroGesperrt(S.schueler.find((x) => x.id === t.schueler_id));
+  return `<button type="button" class="k-termin${t.art === "block" ? " block" : ""}${gesperrt ? " gesperrt" : ""}" data-termin="${esc(t.id)}"${gesperrt ? ' title="Zahlung ausstehend" data-zahlung-hinweis' : ""} style="top:${(a - K_START) * K_PX}px;height:${Math.max((b - a) * K_PX - 2, 22)}px;--farbe:${K_FARBEN[t.art] || "#3a7350"}">
+        <span class="k-zeit">${esc(t.von)}–${esc(t.bis)}</span><span class="k-name">${gesperrt ? "⚠ " : ""}${esc(sn)}</span>${gesperrt ? `<span class="k-fz k-zahlung">Zahlung ausstehend</span>` : ""}${t.fahrzeug ? `<span class="k-fz">${esc(t.fahrzeug)}</span>` : ""}</button>`;
 }
 function kStundenAchse() {
   const stunden = [];
@@ -2346,6 +2451,13 @@ function bindeKalender(ziel) {
     terminDialog(null, { fahrlehrer_id: f.dataset.lehrer, datum: f.dataset.datum || kTag(), von: KR.pad2(Math.floor(min / 60)) + ":" + KR.pad2(min % 60) });
   }));
 }
+// K8: Wäre das ein neuer künftiger Termin (neu, anderer Schüler, anderes Datum) für einen gesperrten Schüler? Wie die Datenbank: nur Fahrstunde, Sonder, Nacht, Schalt, Prüfung
+function neuerTerminGesperrt(t, id, d) {
+  if (!d.schueler_id || !["fahrstunde", "sonder", "nacht", "schalt", "pruefung"].includes(d.art) || d.datum < KR.todayISO()) return false;
+  if (id && t.schueler_id === d.schueler_id && t.datum === d.datum) return false;
+  return bueroGesperrt(S.schueler.find((x) => x.id === d.schueler_id));
+}
+function zahlHinweisZeigen(dlg, an) { const h = dlg.querySelector("#zahlHinweis"); if (h) { h.textContent = ZAHLUNG_MELDUNG; h.hidden = !an; } }
 function plusMinuten(hm, n) { const m = Math.min(KR.hm2min(hm) + n, 23 * 60 + 59); return KR.pad2(Math.floor(m / 60)) + ":" + KR.pad2(m % 60); }
 function terminDialog(id, vorgabe) {
   const t = id ? S.termine.find((x) => x.id === id) : Object.assign({ art: "fahrstunde" }, vorgabe, { bis: plusMinuten(vorgabe.von, 90) });
@@ -2365,6 +2477,7 @@ function terminDialog(id, vorgabe) {
         <p class="voll leise klein">Fahrlehrer ohne App: Das Büro trägt hier ein, was die App sonst selbst zählt (Sonderfahrten nach Anlage 4).</p>
       </div>
       ${id && (t.payload || {}).signed ? `<p class="voll fl-warnung bald">Diese Stunde ist vom Schüler unterschrieben. Ändern Sie Datum, Uhrzeit, Art oder Schüler, muss er neu unterschreiben. Korrekturen mit Grund: Schüler öffnen → „Ausbildungsnachweis“.</p>` : ""}
+      <p class="voll fl-warnung abgelaufen" id="zahlHinweis" hidden>${ZAHLUNG_MELDUNG}</p>
       ${id ? `<label class="voll wahl"><input type="checkbox" name="absagen"> Termin absagen (löschen)</label>` : ""}
       ${id && t.art === "theorie" ? anwesenheitTerminHTML(t) : ""}
     </div>
@@ -2379,12 +2492,13 @@ function terminDialog(id, vorgabe) {
       if (typeof nwIstNachweis === "function" && NW_FAHRT_ARTEN.includes(t.art || "fahrstunde") && nwIstNachweis(t)) { setTimeout(() => nwLoeschen(t, () => {}), 0); return true; }
       return sageTermineAb([t], "Termin abgesagt");
     }
-    // Stopp-Notiz oder offene Reaktivierung: Büro vor dem Buchen warnen (wie in der Fahrlehrer-App)
+    // K8: gesperrter Schüler (Zahlung ausstehend): kein neuer künftiger Termin, kein „Trotzdem“ (bestehende Termine bleiben, die Datenbank prüft ebenso)
+    if (neuerTerminGesperrt(t, id, d)) { zahlHinweisZeigen(tdlg, true); toast(ZAHLUNG_MELDUNG, true); return false; }
+    // Stopp-Notiz: Büro vor dem Buchen warnen (wie in der Fahrlehrer-App)
     if (!id && d.schueler_id && ["fahrstunde", "sonder", "nacht", "schalt"].includes(d.art)) {
       const sch = S.schueler.find((x) => x.id === d.schueler_id) || {};
       const stopp = offeneNotizen(d.schueler_id).filter((n) => n.art === "stopp");
-      const gesperrtR = KR.reaktInfo(sch).gesperrt;
-      if ((stopp.length || gesperrtR) && !(await bestaetige("Achtung bei " + (sch.name || "diesem Schüler"), (stopp.length ? "Stopp-Notiz: " + stopp.map((n) => n.text).join(" / ") + ". " : "") + (gesperrtR ? "Die Reaktivierung ist überfällig. " : "") + "Trotzdem buchen?", "Trotzdem buchen"))) return false;
+      if (stopp.length && !(await bestaetige("Achtung bei " + (sch.name || "diesem Schüler"), "Stopp-Notiz: " + stopp.map((n) => n.text).join(" / ") + ". Trotzdem buchen?", "Trotzdem buchen"))) return false;
     }
     // Überschneidung beim selben Fahrlehrer warnen
     const kollision = S.termine.find((x) => x.id !== id && x.fahrlehrer_id === d.fahrlehrer_id && x.datum === d.datum && x.von && x.bis
@@ -2401,14 +2515,14 @@ function terminDialog(id, vorgabe) {
     }
     if (id) {
       const res = await supa.from("kalender_termine").update(werte).eq("id", id).select("*");
-      if (res.error || !res.data || !res.data.length) { toast("Nicht gespeichert: " + (res.error ? res.error.message : "keine Berechtigung"), true); return false; }
+      if (res.error || !res.data || !res.data.length) { toast("Nicht gespeichert: " + (res.error ? dbFehlerText(res.error) : "keine Berechtigung"), true); return false; }
       const zeitGeaendert = d.datum !== t.datum || d.von !== t.von || d.bis !== t.bis;
       Object.assign(t, res.data[0]);
       if (zeitGeaendert) onlineBuchungMelden(id, "changed", { new_date: d.datum, new_von: d.von, new_bis: d.bis });
     } else {
       const zeile = Object.assign({ id: "b" + Date.now().toString(36) + Math.random().toString(36).slice(2, 6), fahrschule_id: S.fsId, status: "geplant", geloescht: false, payload: {}, erstellt_von: S.user.id }, werte);
       const res = await supa.from("kalender_termine").insert(zeile).select("*");
-      if (res.error || !res.data || !res.data.length) { toast("Nicht angelegt: " + (res.error ? res.error.message : "keine Berechtigung"), true); return false; }
+      if (res.error || !res.data || !res.data.length) { toast("Nicht angelegt: " + (res.error ? dbFehlerText(res.error) : "keine Berechtigung"), true); return false; }
       S.termine.push(res.data[0]);
     }
     toast("Termin gespeichert"); zeichne(); return true;
@@ -2428,13 +2542,23 @@ function terminDialog(id, vorgabe) {
   };
   ["fahrlehrer_id", "art", "schueler_id"].forEach((n) => tdlg.querySelector(`select[name=${n}]`).addEventListener("change", ohneAppNeu));
   ohneAppNeu();
+  // Hinweis „Zahlung ausstehend“: bei neuem Termin als Sperre, bei bestehendem Termin nur zur Information
+  const zahlNeu = () => {
+    const sx = S.schueler.find((x) => x.id === tdlg.querySelector("select[name=schueler_id]").value);
+    const h = tdlg.querySelector("#zahlHinweis");
+    const gesperrt = !!sx && bueroGesperrt(sx);
+    h.textContent = id && sx && sx.id === t.schueler_id ? "Zahlung ausstehend. Dieser Termin bleibt; neue Termine sind erst nach „Bezahlt“ möglich." : ZAHLUNG_MELDUNG;
+    h.hidden = !gesperrt;
+  };
+  tdlg.querySelector("select[name=schueler_id]").addEventListener("change", zahlNeu);
+  zahlNeu();
   const druck = tdlg.querySelector("[data-anwdruck]");
   if (druck) druck.addEventListener("click", () => druckeAnwesenheit(druck.dataset.anwdruck, (t.payload || {}).lektion, t));
 }
 // Termine absagen (geloescht: true). 6 Sekunden „Rückgängig“; die Absage-Mail an Online-Buchende geht erst nach Ablauf raus
 async function sageTermineAb(termine, text) {
   const res = await supa.from("kalender_termine").update({ geloescht: true, aktualisiert_am: new Date().toISOString() }).in("id", termine.map((t) => t.id)).select("id");
-  if (res.error || !res.data || !res.data.length) { toast("Nicht abgesagt: " + (res.error ? res.error.message : "keine Berechtigung"), true); return false; }
+  if (res.error || !res.data || !res.data.length) { toast("Nicht abgesagt: " + (res.error ? dbFehlerText(res.error) : "keine Berechtigung"), true); return false; }
   const weg = new Set(res.data.map((r) => r.id));
   const echt = termine.filter((t) => weg.has(t.id));
   S.termine = S.termine.filter((x) => !weg.has(x.id));
@@ -2442,7 +2566,7 @@ async function sageTermineAb(termine, text) {
   zeichne();
   toastUndo(text, async () => {
     const r = await supa.from("kalender_termine").update({ geloescht: false, aktualisiert_am: new Date().toISOString() }).in("id", echt.map((t) => t.id)).select("id");
-    if (r.error || !r.data || !r.data.length) { toast("Rückgängig ging nicht: " + (r.error ? r.error.message : "keine Berechtigung"), true); return; }
+    if (r.error || !r.data || !r.data.length) { toast("Rückgängig ging nicht: " + (r.error ? dbFehlerText(r.error) : "keine Berechtigung"), true); return; }
     vergissAbsagen(echt.map((t) => t.id));
     for (const t of echt) if (!S.termine.some((x) => x.id === t.id)) S.termine.push(t);
     toast(echt.length === 1 ? "Termin ist wieder da" : `${echt.length} Termine sind wieder da`);
@@ -2719,7 +2843,7 @@ async function fcSetzeStatus(id, status, nachAm) {
   const upd = { buero_fc_status: status };
   if (nachAm !== undefined) upd.buero_fc_nachgereicht_am = nachAm || null;
   const res = await supa.from("kalender_termine").update(upd).eq("id", id).select("id");
-  if (res.error || !res.data || !res.data.length) { toast("Nicht gespeichert: " + (res.error ? res.error.message : "keine Berechtigung"), true); return false; }
+  if (res.error || !res.data || !res.data.length) { toast("Nicht gespeichert: " + (res.error ? dbFehlerText(res.error) : "keine Berechtigung"), true); return false; }
   const t = S.termine.find((x) => x.id === id);
   if (t) { Object.assign(t, upd); }
   return true;
@@ -2817,7 +2941,7 @@ function fcAbgabeDialog(lehrerId) {
     const fehlend = [...form.querySelectorAll("input[name=fehlt]:checked")].map((c) => c.value);
     if (ist < r.soll && !fehlend.length && !(await bestaetige("Es fehlen Fahrchecks", `Es fehlen ${r.soll - ist}. Ohne Angabe, bei welchen Stunden, weiß der Fahrlehrer nicht, was fehlt. Trotzdem speichern?`, "Trotzdem speichern"))) return false;
     const res = await supa.from("fc_abgaben").insert({ fahrschule_id: S.fsId, fahrlehrer_id: lehrerId, zeitraum_von: von, zeitraum_bis: bis, soll: r.soll, ist, fehlend, notiz: (form.notiz.value || "").trim() || null, bestaetigt_von: S.user.id }).select("*");
-    if (res.error || !res.data || !res.data.length) { toast("Nicht gespeichert: " + (res.error ? res.error.message : "keine Berechtigung"), true); return false; }
+    if (res.error || !res.data || !res.data.length) { toast("Nicht gespeichert: " + (res.error ? dbFehlerText(res.error) : "keine Berechtigung"), true); return false; }
     S.fcAbgaben.unshift(res.data[0]);
     // Büro-Status je Termin setzen: angekreuzt = fehlt, Rest = abgegeben
     const ids = r.posten.filter((p) => p.n && p.fc !== "nachgereicht").map((p) => p.id);
@@ -2929,7 +3053,7 @@ function bindeVerkaeufe(ziel) {
 async function verkaufStatus(id, werte, meldung) {
   werte.aktualisiert_am = new Date().toISOString();
   const res = await supa.from("fahrschule_empfehlungen").update(werte).eq("id", id).select("*");
-  if (res.error || !res.data || !res.data.length) { toast("Nicht gespeichert: " + (res.error ? res.error.message : "keine Berechtigung"), true); return null; }
+  if (res.error || !res.data || !res.data.length) { toast("Nicht gespeichert: " + (res.error ? dbFehlerText(res.error) : "keine Berechtigung"), true); return null; }
   const i = S.verkaeufe.findIndex((v) => v.id === id);
   if (i >= 0) S.verkaeufe[i] = res.data[0];
   if (meldung) { toast(meldung); zeichne(); }
@@ -2963,7 +3087,7 @@ function verkaufBezahltDialog(id) {
       const gueltig = S.provisionen.filter((p) => gleich(p) && p.status !== "storniert").length;
       if (gueltig < bezahlt) {
         const res = await supa.from("provisionen").insert({ fahrlehrer_id: v.fahrlehrer_id, fahrschule_id: S.fsId, typ: v.typ, schueler_id: v.schueler_id, betrag: auf.fahrlehrer, status: "offen" }).select("*");
-        if (res.error || !res.data || !res.data.length) { fehler = true; toast("Zahlung gespeichert, Provision aber nicht: " + (res.error ? res.error.message : "keine Berechtigung"), true); }
+        if (res.error || !res.data || !res.data.length) { fehler = true; toast("Zahlung gespeichert, Provision aber nicht: " + (res.error ? dbFehlerText(res.error) : "keine Berechtigung"), true); }
         else { S.provisionen.unshift(res.data[0]); gebucht = true; }
       }
     }
@@ -3002,7 +3126,7 @@ async function verkaufStorno(id) {
   const eine = offen.find((p) => Number(p.betrag) === Number(v.aufteilung.fahrlehrer)) || offen[0];
   if (eine) {
     const res = await supa.from("provisionen").update({ status: "storniert" }).eq("id", eine.id).select("id");
-    if (res.error || !res.data || !res.data.length) toast("Zahlung zurückgenommen, Provision aber nicht: " + (res.error ? res.error.message : "keine Berechtigung"), true);
+    if (res.error || !res.data || !res.data.length) toast("Zahlung zurückgenommen, Provision aber nicht: " + (res.error ? dbFehlerText(res.error) : "keine Berechtigung"), true);
     else { eine.status = "storniert"; zeichne(); }
   } else if (passend.some((p) => p.status === "ausgezahlt")) toast("Achtung: Die Provision wurde schon ausgezahlt und muss mit dem Fahrlehrer geklärt werden.", true);
 }
@@ -3014,12 +3138,12 @@ async function provisionAusgezahlt(lehrerId) {
   const summe = offen.reduce((a, p) => a + Number(p.betrag || 0), 0);
   if (!(await bestaetige("Provision ausgezahlt?", `${euro(summe)} an ${lehrerName(lehrerId)} (${offen.length} Verkäufe) als ausgezahlt markieren?`, "Ja, ausgezahlt"))) return;
   const res = await supa.from("provisionen").update({ status: "ausgezahlt" }).in("id", offen.map((p) => p.id)).select("id");
-  if (res.error) { toast("Nicht gespeichert: " + res.error.message, true); return; }
+  if (res.error) { toast("Nicht gespeichert: " + dbFehlerText(res.error), true); return; }
   offen.forEach((p) => { p.status = "ausgezahlt"; });
   zeichne();
   toastUndo(`${euro(summe)} als ausgezahlt vermerkt`, async () => {
     const r = await supa.from("provisionen").update({ status: "offen" }).in("id", offen.map((p) => p.id)).select("id");
-    if (r.error) { toast("Rückgängig ging nicht: " + r.error.message, true); return; }
+    if (r.error) { toast("Rückgängig ging nicht: " + dbFehlerText(r.error), true); return; }
     offen.forEach((p) => { p.status = "offen"; });
     toast("Wieder offen"); zeichne();
   });
@@ -3039,7 +3163,7 @@ function verkaufNeuDialog() {
       fahrschule_id: S.fsId, schueler_id: d.schueler_id, schueler_name: schuelerName(d.schueler_id), typ: d.typ, status: "empfohlen",
       fahrlehrer_id: d.fahrlehrer_id || null, fahrlehrer_name: d.fahrlehrer_id ? lehrerName(d.fahrlehrer_id) : null,
     }).select("*");
-    if (res.error || !res.data || !res.data.length) { toast("Nicht gespeichert: " + (res.error ? res.error.message : "keine Berechtigung"), true); return false; }
+    if (res.error || !res.data || !res.data.length) { toast("Nicht gespeichert: " + (res.error ? dbFehlerText(res.error) : "keine Berechtigung"), true); return false; }
     S.verkaeufe.unshift(res.data[0]);
     toast("Verkauf erfasst"); zeichne(); return true;
   });
@@ -3392,14 +3516,14 @@ function personDialog(id) {
     try {
       await personRpc("buero_person_speichern", { p_id: id || null, p_fahrschule: S.fsId, p_name: form.name.value, p_telefon: form.telefon.value, p_darf_verwalten: form.verwalten ? form.verwalten.checked : null, p_aktiv: true });
       await ladePersonen(); toast(id ? "Gespeichert" : "Person angelegt"); zeichne(); return true;
-    } catch (e) { toast("Nicht gespeichert: " + e.message, true); return false; }
+    } catch (e) { toast("Nicht gespeichert: " + dbFehlerText(e), true); return false; }
   }, id ? "Speichern" : "Anlegen");
   const aus = document.querySelector("dialog[open] #pAustritt");
   if (aus) aus.addEventListener("click", async () => {
     document.querySelector("dialog[open]").close();
     if (!(await bestaetige("Ausgetreten?", `${p.name} kann sich dann nicht mehr mit der eigenen PIN anmelden. Zurückholen geht jederzeit. Das gemeinsame Büro-Passwort gilt weiter: Die Leitung setzt es unter „Fahrlehrer & Zugänge“ neu.`, "Ja, ausgetreten"))) return;
     try { await personRpc("buero_person_speichern", { p_id: p.id, p_fahrschule: S.fsId, p_name: p.name, p_telefon: p.telefon, p_darf_verwalten: null, p_aktiv: false }); }
-    catch (e) { toast("Nicht gespeichert: " + e.message, true); return; }
+    catch (e) { toast("Nicht gespeichert: " + dbFehlerText(e), true); return; }
     await ladePersonen(); toast("Gespeichert"); zeichne();
     if (S.sitzung && S.sitzung.id === p.id) { vergissSitzung(); zeigeWer(); }
   });
@@ -3412,7 +3536,7 @@ function bindePersonen(ziel) {
     const p = (S.personen || []).find((x) => x.id === b.dataset.pzurueck);
     if (!p) return;
     try { await personRpc("buero_person_speichern", { p_id: p.id, p_fahrschule: S.fsId, p_name: p.name, p_telefon: p.telefon, p_darf_verwalten: null, p_aktiv: true }); }
-    catch (e) { toast("Nicht gespeichert: " + e.message, true); return; }
+    catch (e) { toast("Nicht gespeichert: " + dbFehlerText(e), true); return; }
     await ladePersonen(); toast(`${p.name} ist wieder dabei`); zeichne();
   }));
   ziel.querySelectorAll("[data-preset]").forEach((b) => b.addEventListener("click", async () => {
@@ -3421,7 +3545,7 @@ function bindePersonen(ziel) {
     const titel = p.hat_pin ? `PIN von ${p.name} zurücksetzen?` : `PIN für ${p.name} freigeben?`;
     if (!(await bestaetige(titel, `${p.hat_pin ? `Die alte PIN von ${p.name} gilt dann nicht mehr. ` : ""}${p.name} hat danach 24 Stunden Zeit, auf den eigenen Namen zu tippen und selbst eine neue PIN festzulegen. Wer zuerst auf den Namen tippt, legt die PIN fest. Bitte nur machen, wenn ${p.name} die PIN heute selbst festlegt.`, p.hat_pin ? "Ja, zurücksetzen" : "Ja, freigeben"))) return;
     try { await personRpc("buero_pin_zuruecksetzen", { p_person: p.id }); }
-    catch (e) { toast("Nicht möglich: " + e.message, true); return; }
+    catch (e) { toast("Nicht möglich: " + dbFehlerText(e), true); return; }
     await ladePersonen(); toast(`${p.name} kann jetzt 24 Stunden lang eine neue PIN festlegen`); zeichne();
     if (S.sitzung && S.sitzung.id === p.id) { vergissSitzung(); zeigeWer(); }
   }));
@@ -3564,7 +3688,7 @@ function zugangDialog(rolle) {
       else setTimeout(() => { toast("Die E-Mail ging nicht raus. Bitte das Passwort selbst weitergeben.", true); zeigePasswort(res.email || email, res.passwort); }, 50);
       ladeDaten();
       return true;
-    } catch (e) { toast("Nicht angelegt: " + e.message, true); return false; }
+    } catch (e) { toast("Nicht angelegt: " + dbFehlerText(e), true); return false; }
   }, "Anlegen");
   const oa = dlg.querySelector("input[name=ohneapp]");
   if (oa) oa.addEventListener("change", () => { dlg.querySelector("#zMail").hidden = oa.checked; dlg.querySelector("#zHinweis").hidden = oa.checked; });
@@ -3573,13 +3697,13 @@ async function passwortNeu(id) {
   const p = teamPerson(id);
   if (!p || !(await bestaetige("Neues Passwort?", `Für ${p.name || p.email} wird ein neues Passwort erzeugt. Das alte gilt dann nicht mehr.`, "Ja, neues Passwort"))) return;
   try { const res = await adminFunktion({ action: "reset_password", target_user_id: id }); zeigePasswort(res.email || p.email, res.passwort); }
-  catch (e) { toast("Nicht möglich: " + e.message, true); }
+  catch (e) { toast("Nicht möglich: " + dbFehlerText(e), true); }
 }
 async function einladungSenden(id) {
   const p = teamPerson(id);
   if (!p || !(await bestaetige("Einladung senden?", `${p.name || p.email} bekommt eine E-Mail mit einem neuen Link zum Festlegen des Passworts.`, "Ja, senden"))) return;
   try { const res = await adminFunktion({ action: "send_invite", target_user_id: id }); toast(`Einladung an ${res.email} verschickt.`); }
-  catch (e) { toast("Nicht verschickt: " + e.message, true); }
+  catch (e) { toast("Nicht verschickt: " + dbFehlerText(e), true); }
 }
 async function zugangSperren(id) {
   const p = teamPerson(id);
@@ -3589,7 +3713,7 @@ async function zugangSperren(id) {
   if (!S.profil || S.profil.rolle !== "super_admin") { toast(sperren ? "Sperren kann nur der Betreiber. Wer aufhört: „Löschen“ drücken." : "Freischalten kann im Moment nur der Betreiber.", true); return; }
   if (!(await bestaetige(sperren ? "Zugang sperren?" : "Zugang freischalten?", sperren ? `${p.name || p.email} kann die App beim nächsten Start nicht mehr öffnen. Ist sie gerade offen, läuft sie bis dahin weiter. Bei Austritt zusätzlich „Neues Passwort“ drücken.` : `${p.name || p.email} kann sich wieder anmelden.`, sperren ? "Ja, sperren" : "Ja, freischalten"))) return;
   const res = await supa.from("profiles").update({ aktiv: !sperren }).eq("id", id).select("id");
-  if (res.error || !res.data || !res.data.length) { toast("Nicht gespeichert: " + (res.error ? res.error.message : "keine Berechtigung"), true); return; }
+  if (res.error || !res.data || !res.data.length) { toast("Nicht gespeichert: " + (res.error ? dbFehlerText(res.error) : "keine Berechtigung"), true); return; }
   for (const l of [S.team, S.lehrer]) { const x = l.find((y) => y.id === id); if (x) x.aktiv = !sperren; }
   toast(sperren ? "Gesperrt" : "Freigeschaltet"); zeichne();
 }
@@ -3641,7 +3765,7 @@ function zugangBearbeiten(id) {
       else toast(res.mail_gesendet ? `Gespeichert. Die Einladung ist an ${res.email} unterwegs.` : res.geaendert === false ? "Nichts geändert" : "Gespeichert");
       ladeDaten();
       return true;
-    } catch (e) { toast("Nicht gespeichert: " + e.message, true); return false; }
+    } catch (e) { toast("Nicht gespeichert: " + dbFehlerText(e), true); return false; }
   }, "Speichern");
   const sel = dlg.querySelector("select[name=rolle]"), box = dlg.querySelector("input[name=faehrt]");
   const umschalten = () => {
@@ -3660,7 +3784,7 @@ async function zugangLoeschen(id) {
   const name = p.name || p.email || "Dieser Zugang";
   let check;
   try { check = await adminFunktion({ action: "check_delete", target_user_id: id }); }
-  catch (e) { toast("Nicht möglich: " + e.message, true); return; }
+  catch (e) { toast("Nicht möglich: " + dbFehlerText(e), true); return; }
   if (!check.ok) {
     oeffneDialog("Noch nicht löschen", `<p>${esc(check.hinweis || "Es ist noch etwas offen.")}</p>`, async () => true, "Verstanden", { festhalten: true });
     return;
@@ -3670,7 +3794,7 @@ async function zugangLoeschen(id) {
     const res = await adminFunktion({ action: "delete_account", target_user_id: id });
     toast(`${name} ist gelöscht.${res.hinweis ? " " + res.hinweis : ""}`);
     ladeDaten();
-  } catch (e) { toast("Nicht gelöscht: " + e.message, true); }
+  } catch (e) { toast("Nicht gelöscht: " + dbFehlerText(e), true); }
 }
 
 /* ---------- Fahrzeuge ---------- */
@@ -3743,18 +3867,18 @@ function fahrzeugDialog(f) {
       }
       const werte = { name, typ: form.typ.value, klasse: form.klasse.value };
       const res = await supa.from("fahrschule_fahrzeuge").update(werte).eq("id", f.id).select("*");
-      if (res.error || !res.data || !res.data.length) { toast("Nicht gespeichert: " + (res.error ? res.error.message : "keine Berechtigung"), true); return false; }
+      if (res.error || !res.data || !res.data.length) { toast("Nicht gespeichert: " + (res.error ? dbFehlerText(res.error) : "keine Berechtigung"), true); return false; }
       Object.assign(f, res.data[0]);
       let hinweis = "Fahrzeug geändert";
       if (umbenennen) {
         const r = await supa.from("kalender_termine").update({ fahrzeug: name, aktualisiert_am: new Date().toISOString() }).eq("fahrschule_id", S.fsId).eq("fahrzeug", alt).gte("datum", heute).eq("geloescht", false).select("id");
-        if (r.error) toast("Fahrzeug geändert, die Termine aber nicht: " + r.error.message, true);
+        if (r.error) toast("Fahrzeug geändert, die Termine aber nicht: " + dbFehlerText(r.error), true);
         else { const ids = new Set((r.data || []).map((x) => x.id)); S.termine.forEach((t) => { if (ids.has(t.id)) t.fahrzeug = name; }); hinweis = `Fahrzeug geändert, ${ids.size} künftige Termine umbenannt`; }
       }
       toast(hinweis); zeichne(); return true;
     }
     const res = await supa.from("fahrschule_fahrzeuge").insert({ fahrschule_id: S.fsId, name, typ: form.typ.value, klasse: form.klasse.value, aktiv: true }).select("*");
-    if (res.error || !res.data || !res.data.length) { toast("Nicht gespeichert: " + (res.error ? res.error.message : "keine Berechtigung"), true); return false; }
+    if (res.error || !res.data || !res.data.length) { toast("Nicht gespeichert: " + (res.error ? dbFehlerText(res.error) : "keine Berechtigung"), true); return false; }
     S.fahrzeuge.push(res.data[0]); toast("Fahrzeug angelegt"); zeichne(); return true;
   }, f ? "Speichern" : "Anlegen");
   const typ = dlg.querySelector("select[name=typ]"), kl = dlg.querySelector("select[name=klasse]");
@@ -3771,7 +3895,7 @@ function bindeFlotte(ziel) {
     const f = S.fahrzeuge.find((x) => x.id === b.dataset.fzweg);
     if (!f) return; // K7: ohne Rückfrage, Rückgängig und „Entfernte Fahrzeuge“
     const res = await supa.from("fahrschule_fahrzeuge").update({ aktiv: false }).eq("id", f.id).select("id");
-    if (res.error || !res.data || !res.data.length) { toast("Nicht gespeichert: " + (res.error ? res.error.message : "keine Berechtigung"), true); return; }
+    if (res.error || !res.data || !res.data.length) { toast("Nicht gespeichert: " + (res.error ? dbFehlerText(res.error) : "keine Berechtigung"), true); return; }
     S.fahrzeuge = S.fahrzeuge.filter((x) => x.id !== f.id); S.fahrzeugeWeg = (S.fahrzeugeWeg || []).concat(Object.assign(f, { aktiv: false }));
     zeichne();
     toastUndo("Fahrzeug entfernt", async () => { if (await fahrzeugZurueck(f.id)) toast("Fahrzeug ist wieder da"); });
@@ -3787,7 +3911,7 @@ async function fahrzeugZurueck(id) {
   const f = (S.fahrzeugeWeg || []).find((x) => x.id === id);
   if (!f) return false;
   const res = await supa.from("fahrschule_fahrzeuge").update({ aktiv: true }).eq("id", id).select("id");
-  if (res.error || !res.data || !res.data.length) { toast("Nicht gespeichert: " + (res.error ? res.error.message : "keine Berechtigung"), true); return false; }
+  if (res.error || !res.data || !res.data.length) { toast("Nicht gespeichert: " + (res.error ? dbFehlerText(res.error) : "keine Berechtigung"), true); return false; }
   S.fahrzeugeWeg = S.fahrzeugeWeg.filter((x) => x.id !== id);
   f.aktiv = true;
   if (!S.fahrzeuge.some((x) => x.id === id)) S.fahrzeuge.push(f);

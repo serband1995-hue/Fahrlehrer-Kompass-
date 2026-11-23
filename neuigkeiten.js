@@ -4,6 +4,12 @@
    "kurz" (höchstens ~60 Zeichen) erscheint nach dem Update einmal als kleiner Hinweis (verschwindet von selbst, kein Knopf).
    Einfache Worte, keine Fachwörter, keine Schülerdaten. */
 window.KOMPASS_NEU = [
+  { version: "2026.11.23.6", datum: "2026-11-23", kurz: "Neu: Zahlung offen – keine neuen Termine.",
+    punkte: ["Das Büro kann bei einem Schüler „Zahlung offen“ eintragen und später „Bezahlt“. Danach kommt ein Hinweis mit „Rückgängig“.",
+             "Solange eine Zahlung offen ist, gibt es für den Schüler keine neuen Termine: nicht in der App, nicht im Büro und nicht online.",
+             "Das gilt auch, wenn die Reaktivierung überfällig ist.",
+             "Termine, die schon stehen, bleiben. Du siehst daran „Zahlung ausstehend“, im Kalender „€!“.",
+             "Wartet eine Online-Buchung wegen offener Zahlung, bekommst du einen kurzen Hinweis."] },
   { version: "2026.11.23.5", datum: "2026-11-23", kurz: "Neu im Büro: Preisliste mit „gültig ab“.",
     punkte: ["Im Büro gibt es unter „Geld“ die Seite „Preisliste“: Grundbetrag, Fahrstunde je Klasse, Sonderfahrten, Prüfungen, Reaktivierung und Pakete.",
              "Ein neuer Preis gilt ab dem Tag, den du wählst. Alte Verträge behalten ihren Preis, der Verlauf zeigt jeden Stand.",

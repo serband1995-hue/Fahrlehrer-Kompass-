@@ -36,7 +36,7 @@
   --clay:#c4744f; --clay-soft:rgba(196,116,79,.16);
   --brand-accent:var(--gold);
   /* === Ampel-Farben (UNVERÄNDERT – sonst werden Skills unkenntlich) === */
-  --rot:#cf5a48; --gelb:#cf9a3e; --gruen:#4caf72; --blau:#2F7DD1;
+  --rot:#cf5a48; --zahl-rot:#ff9a8a; --gelb:#cf9a3e; --gruen:#4caf72; --blau:#2F7DD1;
   /* heller Grünton für Kalender/Dashboard-Akzente (war bisher nur per Fallback gesetzt) */
   --gruen-bright:#4a8b45;
   /* === Glasmorphism === */
@@ -1594,6 +1594,10 @@ body:not(.light) .cw-col.today .cw-dnum{color:var(--gold);}
 body:not(.light) .fs-buero-link .fbl-ic,body:not(.light) .fs-buero-link .fbl-pfeil{color:var(--akzent-bright);}
 .cw-fz{display:block;font-size:10px;font-weight:800;color:var(--gruen-bright,#4a8b45);opacity:.85;margin-top:1px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
 .cw-evstat{color:var(--rot);font-size:9px;}
+.cw-zahl{display:block;font-size:11px;font-weight:900;line-height:1.1;color:var(--zahl-rot);margin-top:1px;white-space:nowrap;}
+.cw-ev.zahl-offen{border-right:3px solid var(--zahl-rot);}
+.chip.chip-zahl{color:var(--zahl-rot);border-color:var(--zahl-rot);font-weight:800;}
+.h2-jetzt .chip-zahl,.h2-jetzt .cw-zahl{color:#ffb4a8;}
 .cw-empty{text-align:center;color:var(--faint);font-size:12px;padding:8px 0;}
 /* Tag */
 .cd-summary{display:flex;gap:10px;margin-bottom:14px;}
@@ -2115,6 +2119,7 @@ body:not(.light) .fs-btn-kill{color:#ff8a80;} /* K3: „Sperren“ dunkel lesbar
   --r-card:22px; --r-tile:20px; --r-field:16px;
 }
 body.light{
+  --zahl-rot:#a8321f; /* K8: Text-Rot mit Kontrast >= 4,5:1 auf Weiß und auf hellen Kärtchen */
   --bg:#f2f4f1; --bg-soft:#e9ece8; --surface:#ffffff; --surface-2:#e8ece8;
   --line:#d3d9d4; --line-soft:#e3e8e4;
   --txt:#1a231d; --muted:#5a655d; --faint:#949d96;
@@ -4739,7 +4744,13 @@ async function _upsertRobust(tabelle, rows, konflikt) {
     if (netzFehler && !rechteFehler) { console.warn("[Kompass] " + tabelle + " nicht gespeichert:", error.message); continue; }
     for (const r of block) {
       const { error: e1 } = await supa.from(tabelle).upsert([r], { onConflict: konflikt });
-      if (!e1) ok.push(r[konflikt]); else console.warn("[Kompass] " + tabelle + " " + r[konflikt] + " übersprungen:", e1.message);
+      if (!e1) ok.push(r[konflikt]); else {
+        console.warn("[Kompass] " + tabelle + " " + r[konflikt] + " übersprungen:", e1.message);
+        // K8: Server sperrt (App hatte die Sperre noch nicht) – einmal je Termin sichtbar melden
+        if (e1.code === "P0001" && /Zahlung ausstehend/.test(e1.message || "") && !_zahlungAbgelehntGemeldet.has(r[konflikt])) {
+          _zahlungAbgelehntGemeldet.add(r[konflikt]); toast("Termin nicht gespeichert: Zahlung ausstehend – bitte ans Büro");
+        }
+      }
     }
   }
   return ok;
@@ -5209,6 +5220,12 @@ async function pullPublicBookings() {
         }
         if (!l) {
           const s = schuelerZuBuchung(r);
+          // K8: Zahlung ausstehend – Buchung ab heute bleibt liegen (nicht übernommen, nicht vermerkt) und kommt nach „Bezahlt“.
+          if (s && r.datum >= todayISO() && _zahlungGesperrt(s.id)) {
+            // Sichtbar machen (einmal je Buchung), sonst sieht die Zeit beim Fahrlehrer frei aus.
+            if (!_buchungWartetGemeldet.has(r.id)) { _buchungWartetGemeldet.add(r.id); toast("Online-Buchung am " + String(r.datum).split("-").reverse().join(".") + (r.von ? " um " + r.von : "") + " wartet: Zahlung ausstehend – bitte ans Büro"); }
+            continue;
+          }
           l = addLesson({ date: r.datum, von: r.von, bis: r.bis, art, sid: s ? s.id : null, name: s ? "" : r.schueler_name,
             note: noteParts.join(" · "), onlineBookingId: r.id, fahrzeug: r.fahrzeug || null });
         }
@@ -5263,7 +5280,7 @@ let _termineFehlversuche = 0;
 let _schuelerFristen = {};
 function _merkeFristen(rows){
   (rows||[]).forEach(r=>{ _schuelerFristen[r.id]={reakt_status:r.reakt_status,vertrag_am:r.vertrag_am,reakt_bezahlt_bis:r.reakt_bezahlt_bis,
-    theorie_abgeschlossen_am:r.theorie_abgeschlossen_am,theorie_bestanden_am:r.theorie_bestanden_am,praxis_bestanden_am:r.praxis_bestanden_am||null,antrag_am:r.antrag_am,inaktiv_seit:r.inaktiv_seit,
+    theorie_abgeschlossen_am:r.theorie_abgeschlossen_am,theorie_bestanden_am:r.theorie_bestanden_am,praxis_bestanden_am:r.praxis_bestanden_am||null,antrag_am:r.antrag_am,inaktiv_seit:r.inaktiv_seit,zahlung_gesperrt_seit:r.zahlung_gesperrt_seit||null,zahlung_gesperrt_grund:r.zahlung_gesperrt_grund||null,
     ausbildungsart:r.ausbildungsart||null,klasse:r.klasse||null,bewerbernummer:r.bewerbernummer||null,theorie_frist_bis:r.theorie_frist_bis||null,sehhilfe:r.sehhilfe==null?null:!!r.sehhilfe,
     vorbesitz:Array.isArray(r.vorbesitz)?r.vorbesitz:[],auslands_fs:Array.isArray(r.auslands_fs)?r.auslands_fs:[],wohnsitz_de_seit:r.wohnsitz_de_seit||null,uebersetzung_vorhanden:!!r.uebersetzung_vorhanden}; });
   _meldeBueroErgebnisse(rows);
@@ -5332,10 +5349,33 @@ function zeigeBueroNotizPopup(){
     box.remove();
   });
 }
+/* K8 (🗣 23.11.): Zahlung ausstehend = Reaktivierung überfällig ODER das Büro hat „Zahlung ausstehend“ gedrückt (zahlung_gesperrt_seit).
+   Dann keine NEUEN künftigen Termine (Fahrstunde, Sonder, Nacht, Schalt, Prüfung); bestehende bleiben. Die Datenbank prüft ebenso (P0001). Kein Nachfragen, nur Hinweis. */
+const _ZAHLUNG_TEXT="Zahlung ausstehend – bitte ans Büro";
+function _zahlungGesperrt(sid){
+  const f=sid&&typeof _schuelerFristen!=="undefined"?_schuelerFristen[sid]:null; if(!f)return false;
+  if(f.inaktiv_seit)return false; // Archiv: keine Sperre (wie Server)
+  if(f.zahlung_gesperrt_seit)return true;
+  return !f.inaktiv_seit&&!!(window.KR&&KR.reaktInfo(f).gesperrt);
+}
+// true = gesperrt: Hinweis zeigen, nichts anlegen. Nur für neue künftige Termine der fünf Fahrarten (Theorie, Blocker nie).
+const _buchungWartetGemeldet=new Set(), _zahlungAbgelehntGemeldet=new Set();
+function _zahlungStopp(sid,date,art){
+  if(!sid||!_zahlungGesperrt(sid))return false;
+  if(art&&["fahrstunde","sonder","nacht","schalt","pruefung"].indexOf(art)<0)return false;
+  if(date&&date<todayISO())return false;
+  toast(_ZAHLUNG_TEXT+" – kein neuer Termin"); return true;
+}
+function _zahlungZeile(sid){
+  const f=_schuelerFristen[sid]; if(!_zahlungGesperrt(sid))return "";
+  return f&&f.zahlung_gesperrt_grund?` (${esc(f.zahlung_gesperrt_grund)})`:"";
+}
 function fristenHinweisHTML(sid){
   const f=_schuelerFristen[sid]||(_bueroNotizen[sid]?{}:null); if(!f||!window.KR)return "";
   const r=KR.reaktInfo(f), t=KR.theorieInfo(f), teile=[];
-  if(r.gesperrt) teile.push(`<b>Reaktivierung offen seit ${isoDE(r.faellig)}.</b> Keine weiteren Fahrstunden, bis im Büro bezahlt ist.`);
+  const zahlungOffen=_zahlungGesperrt(sid);
+  if(zahlungOffen){ const grund=f.zahlung_gesperrt_grund?esc(f.zahlung_gesperrt_grund):(r.gesperrt?`Reaktivierung offen seit ${isoDE(r.faellig)}`:"");
+    teile.push(`<b data-zahlung-ausstehend data-zahlung-hinweis>${grund?`Zahlung ausstehend: ${grund}.`:"Zahlung ausstehend."}</b> Bitte ans Büro, keine neuen Termine.`); }
   if(t.stufe==="abgelaufen") teile.push(`<b>Theorie abgelaufen seit ${isoDE(t.ablauf)}.</b> Bitte mit dem Büro klären.`);
   else if(t.stufe==="bald") teile.push(`Theorie gilt nur noch bis ${isoDE(t.ablauf)}${t.grund==="praxis"?" (Praxisprüfung bis dahin)":""}.`);
   const a=KR.antragInfo?KR.antragInfo(f):null;
@@ -5356,7 +5396,7 @@ function fristenHinweisHTML(sid){
   if(f.praxis_bestanden_am) gut.push(`✓ Praxisprüfung bestanden am ${isoDE(f.praxis_bestanden_am)} (Büro)`);
   const gutHTML=gut.length?`<div style="margin:10px 0;padding:10px 14px;border-radius:14px;font-size:14px;line-height:1.45;background:rgba(76,175,114,.14);border:1px solid rgba(76,175,114,.4);">${gut.join("<br>")}</div>`:"";
   if(!teile.length)return gutHTML;
-  const rot=r.gesperrt||t.stufe==="abgelaufen"||stopp.length>0||(a&&a.stufe==="abgelaufen")||(tf&&tf.stufe==="abgelaufen")||(um&&um.stufe==="abgelaufen");
+  const rot=zahlungOffen||t.stufe==="abgelaufen"||stopp.length>0||(a&&a.stufe==="abgelaufen")||(tf&&tf.stufe==="abgelaufen")||(um&&um.stufe==="abgelaufen");
   return gutHTML+`<div role="alert" style="margin:10px 0;padding:12px 14px;border-radius:14px;font-size:14px;line-height:1.45;background:${rot?"rgba(207,90,72,.14)":"rgba(207,154,62,.16)"};border:1px solid ${rot?"rgba(207,90,72,.45)":"rgba(207,154,62,.45)"};">⚠️ ${teile.join("<br>")}</div>`;
 }
 /* T1: „Theorie bestanden“ vom Büro in den Ausbildungsplan übernehmen (wie der Schalter in der Akte).
@@ -7798,7 +7838,7 @@ const STORE_KEY="serband-app-v1";
    Wird in den Einstellungen angezeigt + für den Update-Hinweis genutzt. */
 // K1: voreingestellter Wetter-Ort (früh definiert, weil ensureDB ihn schon beim Start braucht)
 const WETTER_START={city:"Offenbach",lat:50.1006,lon:8.7665};
-const APP_VERSION="2026.11.23.5";
+const APP_VERSION="2026.11.23.6";
 try{const f=document.getElementById("drawerFoot"); if(f)f.textContent="Fahrlehrer-Kompass · Version "+APP_VERSION;}catch(e){}
 // Nutzungsbedingungen & Haftungsausschluss (Bereich: rechtliche Absicherung) - Version hochzählen
 // und alle Nutzer müssen erneut zustimmen, sobald sich der Text inhaltlich ändert.
@@ -9011,6 +9051,7 @@ function routeDetail(id){
           <span class="chip chip-form">${esc(s.form||"B")}</span>
           ${E?`<span class="chip"><span class="cdot" style="background:${PROFILE[E.top].hex}"></span>${profSub}</span>`:`<span class="chip" style="color:var(--muted)">Profil noch offen</span>`}
           ${done?`<span class="chip chip-goal"><span class="ic ic-gold" style="font-size:11px;">${ICN.flag}</span> Am Ziel</span>`:""}
+          ${_zahlungGesperrt(s.id)?`<span class="chip chip-zahl" data-zahlung-chip>Zahlung ausstehend</span>`:""}
           ${s.beginn?`<span class="chip" style="color:var(--muted)">seit ${esc(s.beginn)}</span>`:""}
           ${s.telefon?`<a class="chip" href="tel:${esc(s.telefon.replace(/\s+/g,''))}" style="color:var(--gruen);text-decoration:none;"><span class="ic" style="font-size:12px;">${ICN.phone}</span> ${esc(s.telefon)}</a>`:`<button class="chip" id="telFehltBtn" style="border-color:var(--orange-line);color:var(--orange);">📵 Nummer fehlt – eintragen</button>`}
           <button class="chip sehhilfe${s.sehhilfe?' on':''}" id="sehhilfeBtn">${_li("brille")} ${s.sehhilfe?'Sehhilfe':'keine'}</button>
@@ -9018,6 +9059,7 @@ function routeDetail(id){
         </div>
       </div>
     </div>
+    ${fristenHinweisHTML(s.id)}
     <div class="lage-focus" style="margin-top:10px;"><div class="lage-lab">Stand</div><div class="lage-val">${esc(standortSatz)}</div></div>
     <div class="lage-focus" style="margin-top:8px;"><div class="lage-lab">Nächster Fokus</div><div class="lage-val">${esc(ns.text)}</div></div>
     ${wlPos?`<button class="wait-card-wrap" id="wlLeiste" style="display:flex;align-items:center;gap:10px;width:100%;text-align:left;background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:10px 14px;margin-top:8px;cursor:pointer;">
@@ -9038,7 +9080,6 @@ function routeDetail(id){
       <button class="check-toggle ${s.theorieWait?'on':''}" id="dashTheorieWaitToggle" aria-label="Wartet auf Theorie"></button>
     </div>`:''}
     <div id="dashEmpfehlungen" style="margin-top:9px;">${simCard(s)}${akademieCard(s)}</div>
-    ${fristenHinweisHTML(s.id)}
     ${uebernahmeCard(s)}
     ${behoerdeCard(s)}
     ${theorieCard(s)}
@@ -10108,7 +10149,8 @@ function openSonderKalenderSheet(sid,grp,idx){
   });
 }
 // Büro-Stopp: vor jedem NEUEN Fahrtermin nachfragen, genau wie beim normalen „Termin vergeben“ (finishBooking). true = eintragen.
-function _stoppErlaubt(sid){
+function _stoppErlaubt(sid,datum){
+  if(_zahlungStopp(sid,datum||null,"sonder"))return false; // K8: Zahlung ausstehend – kein neuer Termin (Hinweis statt Rückfrage)
   const stoppN=((typeof _bueroNotizen!=="undefined"&&_bueroNotizen&&_bueroNotizen[sid])||[]).filter(n=>n&&n.art==="stopp");
   if(!stoppN.length)return true;
   const st=DB.students.find(x=>x.id===sid);
@@ -10119,7 +10161,9 @@ function commitSonderZeit(s,grp,idx,date,von){
   // Nur wenn wirklich ein neuer Termin entsteht (kein verknüpfter, kein umwandelbarer am selben Tag), bei Büro-Stopp nachfragen – vor jeder Änderung
   { const k0=s.id+":"+grp+":"+idx;
     const schonDa=(DB.lessons||[]).some(l=>l.srcSonder===k0)||(DB.lessons||[]).some(l=>l.sid===s.id&&l.date===date&&!l.srcSonder&&["fahrstunde","sonder"].includes(l.art)&&l.status!=="abgebrochen"&&l.status!=="nicht erschienen");
-    if(!schonDa&&!_stoppErlaubt(s.id)){ buildSonder(s); return; } }
+    const exVorab=(DB.lessons||[]).find(l=>l.srcSonder===k0);
+    if(exVorab&&exVorab.date!==date&&_zahlungStopp(s.id,date,"sonder")){ buildSonder(s); return; } // K8: bestehende Sonderfahrt nur bei Datumsänderung sperren
+    if(!schonDa&&!_stoppErlaubt(s.id,date)){ buildSonder(s); return; } }
   const arr=s.plan.sonder[grp]||(s.plan.sonder[grp]=[]);
   const vorherPlan=arr[idx]?Object.assign({},arr[idx]):null;
   arr[idx]={d:isoToShort(date),iso:date};
@@ -12711,6 +12755,7 @@ function openAddLessonSheet(art){
     $("#alSave").addEventListener("click",()=>{
       const date=$("#alDate").value, von=$("#alTime").value, note=$("#alNote").value.trim();
       if(!date||!von){toast("Datum & Zeit wählen");return;}
+      if(_zahlungStopp(sid,date,art))return;
       const stoppN=(_bueroNotizen[sid]||[]).filter(n=>n.art==="stopp");
       if(stoppN.length&&["fahrstunde","sonder","nacht","schalt"].indexOf(art)>=0&&!confirm("STOPP vom Büro bei "+(st?st.name:"diesem Schüler")+":\n\n"+stoppN.map(n=>n.text).join("\n")+"\n\nTrotzdem eintragen?"))return;
       const doBook=(fzName)=>{
@@ -13037,6 +13082,8 @@ function openEventEdit(id,overrides){
     const dur=(newArt===l.art&&altDauer>0)?altDauer:(newArt==="schalt"?15:(DB.workCfg.blockMin||90));
     const bis=min2hm(hm2min(von)+dur);
     const note=$("#esNote").value.trim();
+    // K8: Verschieben auf ein anderes Datum = neuer Termin; gleicher Tag oder Art-Wechsel bleibt erlaubt (wie in der Datenbank)
+    if(date!==l.date&&_zahlungStopp(l.sid,date,newArt))return;
     if(newArt==="sonder"&&l.art!=="sonder"&&l.sid){
       // Art wird auf Sonderfahrt geändert → SF-Picker anzeigen
       openSFPickerForLesson(id,l.sid,date,von,bis,note,"sonder",newFahrzeug);
@@ -13068,6 +13115,7 @@ function openAssignSlotSheet(date,von,bis,art,opts){
   let asHalf=false;
   document.querySelectorAll("#asDur .dur-opt").forEach(b=>b.addEventListener("click",()=>{ asHalf=b.dataset.half==="1"; document.querySelectorAll("#asDur .dur-opt").forEach(x=>x.classList.toggle("on",x===b)); }));
   const finishBooking=(sid)=>{
+    if(_zahlungStopp(sid,date,curArt))return;
     // Büro-Stopp: gleiche Rückfrage wie beim Termin über den Kalender (Prüfer Büro, 11.10.2026)
     const stoppN=(_bueroNotizen[sid]||[]).filter(n=>n.art==="stopp");
     if(stoppN.length&&["fahrstunde","sonder","nacht","schalt"].indexOf(curArt)>=0){ const st=DB.students.find(x=>x.id===sid);
@@ -13631,6 +13679,7 @@ function wireCalendarDrag(){
             // Nichts tun, wenn der Termin dort schon liegt - sonst entsteht ein
             // sinnloser Rückgängig-Eintrag für eine Verschiebung, die keine war.
             if(prevDate===date&&prevVon===von){ routeKalender(); return; }
+            if(l.sid&&date!==prevDate&&_zahlungStopp(l.sid,date,l.art)){ routeKalender(); return; } // K8: Zahlung ausstehend – nicht auf einen anderen Tag ziehen
             const durMin=hm2min(l.bis)-hm2min(l.von);
             l.date=date;l.von=von;l.bis=min2hm(hm2min(von)+durMin);
             save();
@@ -13746,11 +13795,12 @@ function calEventChip(e,iso){
   const sf=c.sf?`<span class="cw-sf">${sfKuerzel(e)}</span>`:'';
   const examSoon=e.sid&&!!terminFor(e.sid);
   const fzTag=e.fahrzeug?`<span class="cw-fz">${esc(e.fahrzeug)}</span>`:'';
+  const zahlTag=e.sid&&iso>=todayISO()&&["fahrstunde","sonder","nacht","schalt","pruefung"].indexOf(e.art)>=0&&_zahlungGesperrt(e.sid)?`<span class="cw-zahl" data-zahlung-hinweis title="Zahlung ausstehend" aria-label="Zahlung ausstehend" role="img">€!</span>`:'';
   const pruefLabel=e.pruefTime?`<span class="cw-fz" style="color:${c.col}">Prüfung ${esc(e.pruefTime)}</span>`:'';
   // Urlaub/Blocker sind ganze Tage (00:00–23:59) und nicht ziehbar - beim Verschieben gingen sie kaputt.
   const draggable=e.kind==="lesson"&&e.status==="geplant"&&e.art!=="block"&&!e.doppelt;
   const dispName=(e.art==="theorie"&&e.lektion)?esc("Lektion "+e.lektion):esc(e.name||"");
-  return `<div class="cw-ev${off?' off':''}${examSoon?' exam-soon':''}${draggable?' cw-draggable':''}" style="border-left-color:${c.col}" data-evedit="${esc(e.kind)}|${esc(e.id)}|${esc(e.sid||'')}"${draggable?` data-dragid="${esc(e.id)}"`:''}><span class="cw-evt">${esc(e.von)}</span><span class="cw-evn">${dispName}${sf}${stat}${fzTag}${pruefLabel}</span>${flTag}</div>`;
+  return `<div class="cw-ev${off?' off':''}${examSoon?' exam-soon':''}${draggable?' cw-draggable':''}${zahlTag?' zahl-offen':''}" style="border-left-color:${c.col}" data-evedit="${esc(e.kind)}|${esc(e.id)}|${esc(e.sid||'')}"${draggable?` data-dragid="${esc(e.id)}"`:''}><span class="cw-evt">${esc(e.von)}</span><span class="cw-evn">${dispName}${sf}${stat}${fzTag}${zahlTag}${pruefLabel}</span>${flTag}</div>`;
 }
 // TAGESANSICHT
 function calDayHTML(){
@@ -14062,10 +14112,11 @@ function syncSonderToKalender(s,grp,idx,iso){
     if(ex)deleteLesson(ex.id);
     return;
   }
-  if(ex){ if(ex.date!==iso){ ex.date=iso; save(); } return; } // Datum aktualisieren falls geändert
+  if(ex){ if(ex.date!==iso){ if(_zahlungStopp(s.id,iso,"sonder"))return; ex.date=iso; save(); } return; } // Datum aktualisieren falls geändert
   const kuerzel=SF_KUERZEL[grp]||"SF";
   const von=grp==="nacht"?"19:30":"10:00";
-  if(!_stoppErlaubt(s.id)){ toast("Nicht in den Kalender übernommen (Stopp vom Büro)"); return; }
+  if(_zahlungGesperrt(s.id)){ toast(_ZAHLUNG_TEXT+" – nicht in den Kalender übernommen"); return; }
+  if(!_stoppErlaubt(s.id,iso)){ toast("Nicht in den Kalender übernommen (Stopp vom Büro)"); return; }
   addLesson({date:iso,von,art:"sonder",sid:s.id,note:SF_LABEL[grp]||"Sonderfahrt",srcSonder:key});
   toast(`${SF_LABEL[grp]||"Sonderfahrt"} in den Kalender übernommen`);
 }
@@ -14840,6 +14891,7 @@ function openExamPlanSheet(s){
   $("#epSave").addEventListener("click",()=>{
     const d=$("#epDate").value; if(!d){toast("Bitte Datum wählen");return;}
     const von=$("#epTime").value||"09:00";
+    if(_zahlungStopp(s.id,d,"pruefung"))return;
     if(d<todayISO()&&!confirm("Das Datum liegt in der Vergangenheit. Trotzdem setzen?"))return;
     if(!s.ready&&!s.passed){ setReady(s); }
     // Alter Termin des Schülers: wird er dadurch leer, kommt er weg (sonst bliebe ein leerer Termin stehen).
@@ -15239,6 +15291,7 @@ function openTerminEdit(tid,retFn){
     <div class="btn-row"><button class="btn btn-ghost" id="teDel" style="flex:0;padding:13px 16px;color:#ff7a6b;">Löschen</button><button class="btn btn-primary" id="teSave">Speichern</button></div>`);
   $("#teSave").addEventListener("click",()=>{
     const d=$("#teDate").value; if(!d){toast("Bitte Datum wählen");return;}
+    if(d!==t.date&&(t.slots||[]).some(sid=>sid&&_zahlungStopp(sid,d,"pruefung")))return;
     const von=$("#teTime").value||"09:00";
     const lang=Math.max(PRUEF_MIN,...(t.slots||[]).map(sid=>pruefMinFuer(DB.students.find(x=>x.id===sid))));
     t.date=d; t.von=von; t.bis=min2hm(hm2min(von)+lang);
@@ -15264,7 +15317,7 @@ function openSlotSheet(tid,slot){
   $("#slCancel").addEventListener("click",closeSheet);
   const slc=$("#slClear"); if(slc)slc.addEventListener("click",()=>{if(t)t.slots[slot]=null;save();closeSheet();routePruefungen();});
   document.querySelectorAll(".sl-item").forEach(b=>b.addEventListener("click",()=>{
-    const t=DB.termine.find(x=>x.id===tid); if(t){ clearSlot(b.dataset.id); t.slots[slot]=b.dataset.id; save(); }
+    const t=DB.termine.find(x=>x.id===tid); if(t){ if(_zahlungStopp(b.dataset.id,t.date,"pruefung"))return; clearSlot(b.dataset.id); t.slots[slot]=b.dataset.id; save(); }
     closeSheet(); routePruefungen();
   }));
 }
@@ -15491,7 +15544,7 @@ function nsQuickAction(act,lid,kind,retFn){
       <p class="muted-p" style="font-size:13px;margin:-4px 0 12px;">Wer ist stattdessen gefahren?</p>
       <div class="field"><input type="text" id="nsoSearch" placeholder="Schüler suchen …" autocomplete="off"></div>
       <div class="as-list" id="nsoList">${cand.map(s=>`<button class="as-item" data-sid="${s.id}"><span class="as-nm">${esc(s.name)}</span><span class="as-cls">${esc(s.form||'')}</span></button>`).join("")}</div>`);
-    const bind=()=>{ document.querySelectorAll("#nsoList .as-item").forEach(b=>b.addEventListener("click",()=>{ l.sid=b.dataset.sid; l.status="geplant"; save(); closeSheet(); toast("Schüler getauscht ✓"); retFn(); })); };
+    const bind=()=>{ document.querySelectorAll("#nsoList .as-item").forEach(b=>b.addEventListener("click",()=>{ if(_zahlungStopp(b.dataset.sid,l.date,l.art))return; l.sid=b.dataset.sid; l.status="geplant"; save(); closeSheet(); toast("Schüler getauscht ✓"); retFn(); })); };
     $("#nsoSearch").addEventListener("input",ev=>{ const q=ev.target.value.toLowerCase(); const list=cand.filter(s=>matchStudent(s.name,q)); $("#nsoList").innerHTML=list.map(s=>`<button class="as-item" data-sid="${s.id}"><span class="as-nm">${esc(s.name)}</span><span class="as-cls">${esc(s.form||'')}</span></button>`).join("")||'<p class="muted-p" style="font-size:13px;">Kein Treffer</p>'; bind(); });
     bind();
   } else if(act==="noshow"){
@@ -16003,9 +16056,9 @@ function _h2Hinweise(){
     const notizen=(typeof _bueroNotizen!=="undefined"&&_bueroNotizen[s.id])||[];
     if(notizen.some(n=>n.art==="stopp")) out.push({sid:s.id,name:s.name,text:"Stopp vom Büro",farbe:"rot"});
     const f=typeof _schuelerFristen!=="undefined"?_schuelerFristen[s.id]:null;
+    if(_zahlungGesperrt(s.id)) out.push({sid:s.id,name:s.name,text:"Zahlung ausstehend"+(f&&!f.zahlung_gesperrt_seit?" · Reaktivierung":""),farbe:"rot"}); // K8
     if(f&&window.KR){
       const r=KR.reaktInfo(f), t=KR.theorieInfo(f), a=KR.antragInfo?KR.antragInfo(f):null;
-      if(r&&r.gesperrt) out.push({sid:s.id,name:s.name,text:"Reaktivierung offen",farbe:"rot"});
       if(t&&t.stufe==="abgelaufen") out.push({sid:s.id,name:s.name,text:"Theorie abgelaufen",farbe:"rot"});
       else if(t&&t.stufe==="bald") out.push({sid:s.id,name:s.name,text:`Theorie bis ${isoDE(t.ablauf).slice(0,6)}`,farbe:"gelb"});
       if(!f.inaktiv_seit&&a&&a.stufe==="abgelaufen") out.push({sid:s.id,name:s.name,text:"Antrag abgelaufen",farbe:"rot"});
@@ -16232,9 +16285,10 @@ function startFahrstunde(lid){
   const l=(DB.lessons||[]).find(x=>x.id===lid); if(!l)return;
   // Büro-Stopp oder gesperrte Reaktivierung: erst bewusst bestätigen (wie beim Termin eintragen)
   const stoppN=(_bueroNotizen[l.sid]||[]).filter(n=>n.art==="stopp");
-  const fr=_schuelerFristen[l.sid], gesperrt=!!(fr&&window.KR&&KR.reaktInfo(fr).gesperrt);
-  if((stoppN.length||gesperrt)&&!_fmLaeuft(lid)){ const st=DB.students.find(x=>x.id===l.sid);
-    const grund=[stoppN.length?"STOPP vom Büro: "+stoppN.map(n=>n.text).join(" / "):"",gesperrt?"Reaktivierung offen – keine weiteren Fahrstunden, bis im Büro bezahlt ist.":""].filter(Boolean).join("\n");
+  // K8: Zahlung ausstehend – der bestehende Termin darf stattfinden, nur ein Hinweis (kein Bestätigen)
+  if(_zahlungGesperrt(l.sid)&&!_fmLaeuft(lid))toast(_ZAHLUNG_TEXT);
+  if(stoppN.length&&!_fmLaeuft(lid)){ const st=DB.students.find(x=>x.id===l.sid);
+    const grund="STOPP vom Büro: "+stoppN.map(n=>n.text).join(" / ");
     if(!confirm((st?st.name:"Schüler")+":\n\n"+grund+"\n\nFahrstunde trotzdem starten?"))return; }
   const o=_fmLaden();
   if(!o||o.lid!==lid){
