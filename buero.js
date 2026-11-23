@@ -146,6 +146,8 @@ const BEREICHE = [
   { id: "schueler", titel: "Schüler", gruppe: "Planung", render: renderSchueler, nachher: bindeSchueler, zahl: () => aktiveSchueler().filter((x) => !x.fahrlehrer_id).length || "" },
   { id: "verkaeufe", titel: "Verkäufe & Provision", gruppe: "Geld", render: renderVerkaeufe, nachher: bindeVerkaeufe, zahl: () => S.verkaeufe.filter((v) => v.status === "empfohlen").length || "" },
   { id: "zahlen", titel: "Zahlen", gruppe: "Geld", render: renderZahlen, nachher: bindeZahlen },
+  // K9: Preisliste steht in buero-preise.js (lädt vor buero.js; Aufruf über Pfeil, damit die Reihenfolge egal ist)
+  { id: "preise", titel: "Preisliste", gruppe: "Geld", render: (...a) => renderPreise(...a), nachher: (...a) => bindePreise(...a) },
   { id: "team", titel: "Fahrlehrer & Zugänge", gruppe: "Verwaltung", render: renderTeam, nachher: bindeTeam },
   { id: "flotte", titel: "Fahrzeuge", gruppe: "Verwaltung", render: renderFlotte, nachher: bindeFlotte, zahl: () => fahrzeugKonflikte().length || "" },
   { id: "neuigkeiten", titel: "Neuigkeiten", gruppe: "Verwaltung", render: renderNeuigkeiten },
@@ -388,7 +390,7 @@ function renderHeute() {
       : `<p class="leer">Heute stehen keine Termine im Kalender.</p>`}</div>`;
   const f = zaehleFristen();
   const aufgaben = [];
-  if (f.gesperrt) aufgaben.push(`<a class="aufgabe rot" href="#fristen"><b>${f.gesperrt}</b> Reaktivierung${f.gesperrt === 1 ? "" : "en"} überfällig · ${euro(f.gesperrt * reaktBetrag())} offen</a>`);
+  if (f.gesperrt) aufgaben.push(`<a class="aufgabe rot" href="#fristen"><b>${f.gesperrt}</b> Reaktivierung${f.gesperrt === 1 ? "" : "en"} überfällig · ${euro((f.gesperrtSumme || 0))} offen</a>`);
   if (f.pruefen) aufgaben.push(`<a class="aufgabe gelb" href="#fristen"><b>${f.pruefen}</b> Schüler mit möglicher Reaktivierung: in ClickClickDrive prüfen</a>`);
   if (f.bald) aufgaben.push(`<a class="aufgabe gelb" href="#fristen"><b>${f.bald}</b> Reaktivierung${f.bald === 1 ? "" : "en"} in den nächsten 30 Tagen fällig</a>`);
   if (f.theorie) aufgaben.push(`<a class="aufgabe gelb" href="#fristen?ansicht=theorie"><b>${f.theorie}</b> Theorie läuft in 60 Tagen ab oder ist abgelaufen</a>`);
@@ -458,24 +460,29 @@ function klassenOptionen(gewaehlt) {
 }
 // Standardbetrag der Reaktivierung: 240 € (Vorgabe des Büros, 09.10.2026); einstellbar durch den Super-Admin, im Einzelfall je Zahlung änderbar
 const REAKT_STANDARD = 240;
-function reaktBetrag() {
+// K9: steht die Reaktivierung in der Preisliste, gilt der Preis vom Vertragsdatum des Schülers (alte Verträge behalten ihren Preis),
+// ohne Schüler der Preis von heute; vor dem ersten Eintrag (oder ohne Preisliste) der alte Betrag aus den Einstellungen
+function reaktBetragAlt() {
   const k = (S.fs && S.fs.konfiguration) || {};
   return Number(k.reaktivierungBetrag) > 0 ? Number(k.reaktivierungBetrag) : REAKT_STANDARD;
 }
+function reaktBetrag(s) {
+  const tag = (s && s.vertrag_am) || KR.todayISO();
+  const p = typeof preisAm === "function" ? preisAm("reaktivierung", null, null, tag) : undefined;
+  // Prüf-Team K9: 0 € (Aktion) und „entfällt“ gelten wie eingetragen; nur ohne Eintrag (undefined) der alte Betrag
+  return p === undefined ? reaktBetragAlt() : (p || 0);
+}
+// „entfällt“ statt „0 €“, wenn die Reaktivierung in der Preisliste heute entfällt (Prüf-Team Bedienung)
+function reaktHeuteText() { return typeof preisAm === "function" && preisAm("reaktivierung", null, null, KR.todayISO()) === null ? "entfällt" : euro(reaktBetrag()); }
+function reaktInPreisliste() { return typeof preisAm === "function" && preisAm("reaktivierung", null, null, "9999-12-31") !== undefined; }
 /* K8 (🗣 23.11.): Zahlung ausstehend. Gesperrt = Reaktivierung überfällig (wie KR.reaktInfo) ODER das Büro hat „Zahlung ausstehend“ gedrückt
    (schueler.zahlung_gesperrt_seit/_grund). Gesperrte bekommen keine neuen künftigen Termine; bestehende bleiben. Keine automatische Sperre. */
 const ZAHLUNG_MELDUNG = "Zahlung ausstehend – erst „Bezahlt“ eintragen.";
 const ZAHLUNG_GRUENDE = ["Reaktivierung", "Rechnung offen"];
 function zahlungSperre(s) { return s && s.zahlung_gesperrt_seit ? { seit: String(s.zahlung_gesperrt_seit).slice(0, 10), grund: String(s.zahlung_gesperrt_grund || "").trim() } : null; }
 function bueroGesperrt(s) { return !!s && istAktiv(s) && (!!zahlungSperre(s) || !!KR.reaktInfo(s).gesperrt); } // Archiv: keine Sperre (wie der Server)
-// Betrag der Reaktivierung: Preisliste (K9) zum Vertragsdatum, wenn vorhanden, sonst wie bisher
-function reaktBetragFuer(s) {
-  if (typeof preisAm === "function") {
-    const p = preisAm("reaktivierung", null, null, (s && s.vertrag_am) || KR.todayISO());
-    if (p !== undefined) return p || 0;
-  }
-  return reaktBetrag();
-}
+// Betrag der Reaktivierung je Schüler: kommt seit K9 aus reaktBetrag(s) (Preisliste zum Vertragsdatum)
+function reaktBetragFuer(s) { return reaktBetrag(s); }
 // Fehler der Datenbank verständlich: Sperre (P0001) und noch fehlende Spalten (Migration nicht eingespielt)
 function dbFehlerText(err) {
   const m = (err && err.message) || "";
@@ -598,7 +605,7 @@ function zaehleFristen() {
   const z = { gesperrt: 0, pruefen: 0, bald: 0, theorie: 0, ohneDatum: 0, handeln: 0, antragAb: 0, antragBald: 0, fristAb: 0, fristBald: 0, umAb: 0, umBald: 0, umPruefen: 0 };
   for (const s of aktiveSchueler()) {
     const r = KR.reaktInfo(s, heute), t = KR.theorieInfo(s, heute);
-    if (r.stufe === "gesperrt") z.gesperrt++;
+    if (r.stufe === "gesperrt") { z.gesperrt++; z.gesperrtSumme = (z.gesperrtSumme || 0) + reaktBetrag(s); }
     else if (r.stufe === "pruefen_faellig") z.pruefen++;
     else if (r.stufe === "bald") z.bald++;
     if (r.stufe === "ohne_datum") z.ohneDatum++;
@@ -640,7 +647,7 @@ function renderFristen() {
   const suche = (fristenParam("suche") || "").trim().toLowerCase();
   const f = zaehleFristen();
   const kacheln = `<div class="kacheln">
-    <div class="kachel${f.gesperrt ? " rot" : ""}"><div class="wert">${euro(f.gesperrt * reaktBetrag())}</div><div class="name">offen: ${f.gesperrt} Reaktivierung${f.gesperrt === 1 ? "" : "en"} überfällig</div></div>
+    <div class="kachel${f.gesperrt ? " rot" : ""}"><div class="wert">${euro((f.gesperrtSumme || 0))}</div><div class="name">offen: ${f.gesperrt} Reaktivierung${f.gesperrt === 1 ? "" : "en"} überfällig</div></div>
     <div class="kachel${f.pruefen ? " rot" : ""}"><div class="wert">${f.pruefen}</div><div class="name">fällig, noch nicht geprüft</div></div>
     <div class="kachel${f.bald ? " gold" : ""}"><div class="wert">${f.bald}</div><div class="name">in 30 Tagen fällig</div></div>
     <div class="kachel"><div class="wert">${f.ohneDatum}</div><div class="name">ohne Vertragsdatum</div></div>
@@ -692,7 +699,7 @@ function renderFristen() {
     const rDatum = r.faellig ? `<div class="unter">${r.tage < 0 ? "seit " + datumDE(r.faellig) : "am " + datumDE(r.faellig)}</div>` : "";
     const tDatum = t.ablauf ? `<div class="unter">${t.tage < 0 ? "seit " : "bis "}${datumDE(t.ablauf)}${t.grund === "praxis" ? " (Praxisprüfung)" : ""}</div>` : "";
     let zahlen = (r.stufe === "gesperrt" || r.stufe === "pruefen_faellig" || r.stufe === "bald")
-      ? `<button class="knopf klein haupt" data-zahlung="${esc(s.id)}" type="button">${euro(reaktBetrag())} erhalten</button>` : "";
+      ? `<button class="knopf klein haupt" data-zahlung="${esc(s.id)}" type="button">${euro(reaktBetrag(s))} erhalten</button>` : "";
     if (r.stufe === "pruefen_faellig") zahlen += `<button class="knopf klein" data-nichtbezahlt="${esc(s.id)}" type="button">Nicht bezahlt</button>`;
     zahlen += zahlungKnoepfe(s, { ohneReakt: true }); // „… erhalten“ steht schon da
     return `<tr>
@@ -712,7 +719,7 @@ function renderFristen() {
       <p class="leise klein">Führerscheine aus Ländern außerhalb der EU/des EWR gelten in Deutschland nur 6 Monate ab Wohnsitz (§ 29 FeV). Danach darf der Schüler nicht mehr selbst fahren, bis der deutsche Führerschein da ist. Verlängern kann die Behörde nur, wenn er höchstens 12 Monate in Deutschland bleibt, bei Umschreibern also meist nicht.</p>` : `<p class="leer">Keine Umschreiber.</p>`) : ""}
     ${ansicht === "antrag" || ansicht === "umschreiber" ? "" : liste.length ? `<table class="tabelle"><thead><tr><th>Schüler</th><th>Fahrlehrer</th><th class="nur-breit">Vertrag</th><th>Reaktivierung</th><th>Theorie</th><th></th></tr></thead><tbody>${zeilen}</tbody></table>`
       : `<p class="leer">${ansicht === "handeln" ? "Kein Handlungsbedarf. Sehr gut." : "Keine Schüler in dieser Ansicht."}</p>`}
-    <p class="leise klein">Reaktivierung: ${euro(reaktBetrag())}, fällig 12 Monate nach Vertragsabschluss und dann jährlich. „Gesperrt“ heißt: keine weiteren Leistungen, bis bezahlt ist. Jede Änderung wird mit Name und Uhrzeit protokolliert.</p>
+    <p class="leise klein">Reaktivierung: ${reaktInPreisliste() ? `${reaktHeuteText()} für neue Verträge (alte Verträge zahlen den Preis ihres Vertragsdatums)` : euro(reaktBetrag())}, fällig 12 Monate nach Vertragsabschluss und dann jährlich. „Gesperrt“ heißt: keine weiteren Leistungen, bis bezahlt ist. Jede Änderung wird mit Name und Uhrzeit protokolliert.</p>
   </div>${renderBueroEinstellungen()}`;
 }
 function renderBueroEinstellungen() {
@@ -720,17 +727,19 @@ function renderBueroEinstellungen() {
   const darf = S.profil && S.profil.rolle === "super_admin";
   return `<div class="karte nicht-drucken"><div class="karte-kopf"><h2>Einstellungen</h2></div>
     <form id="einstForm" class="formular">
-      <label>Standardbetrag Reaktivierung in €<input type="number" name="betrag" min="1" max="9999" step="0.01" value="${esc(k.reaktivierungBetrag || REAKT_STANDARD)}"${darf ? "" : " disabled"}></label>
+      ${reaktInPreisliste() ? `<p class="voll">Reaktivierung heute: <b>${esc(reaktHeuteText())}</b> · steht in der <a href="#preise">Preisliste</a> (dort mit „gültig ab“ ändern).</p>` : ""}
+      <label>${reaktInPreisliste() ? "Reaktivierung für Verträge vor dem ersten Eintrag der Preisliste in €" : "Standardbetrag Reaktivierung in €"}<input type="number" name="betrag" min="1" max="9999" step="0.01" value="${esc(k.reaktivierungBetrag || REAKT_STANDARD)}"${darf ? "" : " disabled"}></label>
       <label>Unterrichtseinheiten pro Fahrlehrer und Woche (12 pro Tag × 5 Tage)<input type="number" name="ue" min="1" max="200" step="1" value="${esc(ueProWoche())}"${darf ? "" : " disabled"}></label>
-      <div class="voll knopfreihe">${darf ? `<button class="knopf haupt" type="submit">Einstellungen speichern</button>` : `<span class="leise klein">Diese Einstellungen ändert der Super-Admin. Eine abweichende Zahlung (z. B. Sonderangebot) trägst du direkt beim Eintragen der Zahlung ein.</span>`}</div>
+      <div class="voll knopfreihe">${darf ? `<button class="knopf haupt" type="submit">Einstellungen speichern</button>` : `<span class="leise klein">Diese Einstellungen ändert der Super-Admin${reaktInPreisliste() ? " (die Preise ändern Büro und Leitung in der Preisliste)" : ""}. Eine abweichende Zahlung (z. B. Sonderangebot) trägst du direkt beim Eintragen der Zahlung ein.</span>`}</div>
     </form></div>`;
 }
 function bindeEinstellungen(ziel) {
   const f = ziel.querySelector("#einstForm");
-  if (!f || f.betrag.disabled) return;
+  if (!f || !f.ue || f.ue.disabled) return;
   f.addEventListener("submit", async (e) => {
     e.preventDefault();
-    const betrag = Number(String(f.betrag.value).replace(",", "."));
+    // K9: Feld fehlt (keine Berechtigung, siehe oben) → alter Wert bleibt
+    const betrag = f.betrag ? Number(String(f.betrag.value).replace(",", ".")) : reaktBetragAlt();
     if (!(betrag > 0)) { toast("Bitte einen Betrag eintragen.", true); return; }
     const ue = Number(f.ue.value);
     if (!(ue >= 1)) { toast("Bitte die Unterrichtseinheiten pro Woche eintragen.", true); return; }
@@ -788,9 +797,9 @@ async function zahlungErhalten(id, nachher) {
   const personen = bueroPersonen();
   const body = `<p>Reaktivierung von <b>${esc(s.name)}</b>. Die nächste ist dann am <b>${esc(datumDE(neu))}</b> fällig. Bitte die Zahlung auch in ClickClickDrive vermerken.</p>
     <div class="formular">
-      <label>Bezahlter Betrag in €<input type="number" name="betrag" min="0" max="9999" step="0.01" inputmode="decimal" required value="${reaktBetragFuer(s)}"></label>
+      <label>Bezahlter Betrag in €<input type="number" name="betrag" min="0" max="9999" step="0.01" inputmode="decimal" required value="${reaktBetrag(s)}"></label>
       <label>Bezahlt am<input type="date" name="am" required value="${esc(KR.todayISO())}"></label>
-      <label class="voll">Nach Absprache mit (nur nötig, wenn der Betrag vom Standard ${euro(betragStd)} abweicht)
+      <label class="voll">Nach Absprache mit (nur nötig, wenn der Betrag vom Standard ${euro(reaktBetrag(s))} abweicht)
         <select name="absprache"><option value="">– keine Absprache –</option>${personen.map((n) => `<option>${esc(n)}</option>`).join("")}</select></label>
       <label class="voll">Notiz (z. B. Sonderangebot)<input type="text" name="notiz" maxlength="150"></label>
     </div>`;
@@ -798,7 +807,7 @@ async function zahlungErhalten(id, nachher) {
     const betrag = Number(String(form.betrag.value).replace(",", "."));
     if (!isFinite(betrag) || betrag < 0) { toast("Bitte einen gültigen Betrag eintragen.", true); return false; }
     const abspr = form.absprache.value, notiz = form.notiz.value.trim();
-    if (Math.abs(betrag - betragStd) > 0.005 && !abspr && !notiz) { toast(`Der Betrag weicht von ${euro(betragStd)} ab. Bitte „Nach Absprache mit“ oder eine Notiz eintragen.`, true); return false; }
+    if (Math.abs(betrag - reaktBetrag(s)) > 0.005 && !abspr && !notiz) { toast(`Der Betrag weicht von ${euro(reaktBetrag(s))} ab. Bitte „Nach Absprache mit“ oder eine Notiz eintragen.`, true); return false; }
     const text = `Bezahlt ${euro(betrag)} am ${datumDE(form.am.value)}${abspr ? " · nach Absprache mit " + abspr : ""}${notiz ? " · " + notiz : ""}`;
     const ok = await speichereSchueler(id, { reakt_status: "bezahlt", reakt_bezahlt_bis: neu, reakt_betrag: betrag, reakt_notiz: text }, `Gespeichert. Nächste Reaktivierung am ${datumDE(neu)}.`);
     if (ok && nachher) nachher();
@@ -811,7 +820,7 @@ async function nichtBezahlt(id) {
   const f = s && KR.reaktFaellig(s);
   if (!f) return;
   const ok = await bestaetige(`${s.name}: Reaktivierung nicht bezahlt?`,
-    `Dann ist ${s.name} ab sofort gesperrt (keine weiteren Leistungen), bis ${euro(reaktBetrag())} bezahlt sind.`, "Ja, sperren");
+    `Dann ist ${s.name} ab sofort gesperrt (keine weiteren Leistungen), bis ${euro(reaktBetrag(s))} bezahlt sind.`, "Ja, sperren");
   if (!ok) return;
   await speichereSchueler(id, { reakt_status: "bezahlt", reakt_bezahlt_bis: f }, `${s.name} ist gesperrt, bis die Reaktivierung bezahlt ist.`);
 }
@@ -1636,7 +1645,7 @@ function bindeNotizBlock(dlg, sid, fahrlehrerId) {
     }));
     block.querySelectorAll("[data-notizweg]").forEach((b) => b.addEventListener("click", async () => {
       const n = S.notizen.find((x) => x.id === b.dataset.notizweg);
-      if (!n || !(await bestaetige("Notiz löschen?", `„${String(n.text || "").slice(0, 80)}${String(n.text || "").length > 80 ? " …" : ""}“ wird gelöscht und verschwindet auch beim Fahrlehrer. Danach hast du 6 Sekunden, es rückgängig zu machen.`, "Ja, löschen"))) return;
+      if (!n) return; // K7: ohne Rückfrage, 6 s Rückgängig
       const res = await supa.from("schueler_notizen").delete().eq("id", n.id).select("id");
       if (res.error || !res.data || !res.data.length) { toast("Nicht gelöscht: " + (res.error ? dbFehlerText(res.error) : "keine Berechtigung"), true); return; }
       S.notizen = S.notizen.filter((x) => x.id !== n.id);
@@ -1788,7 +1797,7 @@ async function erledigeAufgabe(id, nachher) {
 }
 async function loescheAufgabe(id, nachher) {
   const a = S.aufgaben.find((x) => x.id === id);
-  if (!a || !(await bestaetige("Aufgabe löschen?", `„${String(a.text || "").slice(0, 80)}${String(a.text || "").length > 80 ? " …" : ""}“ wird gelöscht. Danach hast du 6 Sekunden, es rückgängig zu machen.`, "Ja, löschen"))) return false;
+  if (!a) return false; // K7: ohne Rückfrage, 6 s Rückgängig
   const res = await supa.from("schueler_aufgaben").delete().eq("id", id).select("id");
   if (res.error || !res.data || !res.data.length) { toast("Nicht gelöscht: " + (res.error ? dbFehlerText(res.error) : "keine Berechtigung"), true); return false; }
   S.aufgaben = S.aufgaben.filter((x) => x.id !== id);
@@ -2419,6 +2428,7 @@ function kalenderJahr(tag) {
   </div>`;
 }
 function bindeKalender(ziel) {
+  if (typeof pkZeigen === "function") pkZeigen(ziel); // K7: Papierkorb der Fahrschule (buero-nachweis.js)
   ziel.querySelectorAll("[data-ktag]").forEach((b) => b.addEventListener("click", () => setzeFilter("kalender", { tag: b.dataset.ktag }, true)));
   ziel.querySelectorAll("[data-ksprung]").forEach((b) => b.addEventListener("click", () => { location.hash = linkMit("kalender", { ansicht: "", tag: b.dataset.ksprung }); }));
   ziel.querySelector("#kDatum").addEventListener("change", (e) => e.target.value && setzeFilter("kalender", { tag: e.target.value }));
@@ -2479,7 +2489,8 @@ function terminDialog(id, vorgabe) {
     if (KR.hm2min(d.bis) <= KR.hm2min(d.von)) { toast("„Bis“ muss nach „Von“ liegen.", true); return false; }
     const jetzt = new Date().toISOString();
     if (d.absagen) {
-      if (!(await bestaetige("Termin absagen?", "Der Termin wird gelöscht und verschwindet beim Fahrlehrer.", "Ja, absagen"))) return false;
+      // K7: ohne Rückfrage (Rückgängig 6 s). Gelaufene/unterschriebene Nachweis-Stunde: stornieren mit Grund (buero-nachweis.js)
+      if (typeof nwIstNachweis === "function" && NW_FAHRT_ARTEN.includes(t.art || "fahrstunde") && nwIstNachweis(t)) { setTimeout(() => nwLoeschen(t, () => {}), 0); return true; }
       return sageTermineAb([t], "Termin abgesagt");
     }
     // K8: gesperrter Schüler (Zahlung ausstehend): kein neuer künftiger Termin, kein „Trotzdem“ (bestehende Termine bleiben, die Datenbank prüft ebenso)
@@ -2552,6 +2563,7 @@ async function sageTermineAb(termine, text) {
   const weg = new Set(res.data.map((r) => r.id));
   const echt = termine.filter((t) => weg.has(t.id));
   S.termine = S.termine.filter((x) => !weg.has(x.id));
+  if (typeof PK !== "undefined") PK.zeit = 0; // K7: Papierkorb neu laden
   zeichne();
   toastUndo(text, async () => {
     const r = await supa.from("kalender_termine").update({ geloescht: false, aktualisiert_am: new Date().toISOString() }).in("id", echt.map((t) => t.id)).select("id");
@@ -3294,7 +3306,7 @@ function renderZahlen() {
     <a class="kachel gruen" href="${zLink({ liste: "praxis", monat: bereich3 })}"><div class="wert">${q3.n ? Math.round(q3.ok / q3.n * 100) + " %" : "–"}</div><div class="name">Bestehensquote Praxis, 3 Monate (${q3.ok} von ${q3.n})</div></a>
     <a class="kachel gruen" href="${zLink({ liste: "theorie", monat: bereich3 })}"><div class="wert">${t3.n ? Math.round(t3.ok / t3.n * 100) + " %" : "–"}</div><div class="name">Bestehensquote Theorie, 3 Monate (${t3.ok} von ${t3.n})</div></a>
     <a class="kachel" href="${zLink({ liste: "ue", monat: dieser })}"><div class="wert">${zahlDE(ueGesamt.v)}</div><div class="name">Unterrichtseinheiten im ${esc(monatKurz(dieser))}${dieser === heute.slice(0, 7) ? " (bis heute)" : ""}</div></a>
-    <a class="kachel${fr.gesperrt ? " rot" : ""}" href="#fristen"><div class="wert">${euro(fr.gesperrt * reaktBetrag())}</div><div class="name">offene Reaktivierungen</div></a>
+    <a class="kachel${fr.gesperrt ? " rot" : ""}" href="#fristen"><div class="wert">${euro((fr.gesperrtSumme || 0))}</div><div class="name">offene Reaktivierungen</div></a>
   </div>`;
   const anmPunkte = monate.map((m) => ({ x: monatKurz(m), wert: anm[m] || 0, text: String(anm[m] || 0), zeigen: m === dieser || m === vorher, tip: `${monatKurz(m)}: ${anm[m] || 0} Anmeldungen · anklicken für die Namen`, link: zLink({ liste: "anmeldungen", monat: m }) }));
   const qp = (q, art) => monate.map((m) => { const v = q[m]; return { x: monatKurz(m), wert: v ? Math.round(v.ok / v.n * 100) : null, text: v ? Math.round(v.ok / v.n * 100) + " %" : "", zeigen: !!v && letzte3.includes(m), tip: v ? `${monatKurz(m)}: ${Math.round(v.ok / v.n * 100)} % (${v.ok} von ${v.n} bestanden) · anklicken für die Namen` : `${monatKurz(m)}: keine Prüfungen`, link: v ? zLink({ liste: art, monat: m }) : "" }; });
@@ -3326,7 +3338,7 @@ function renderZahlen() {
   </div>
   <div class="karte"><h2>Offenes Geld und Verkäufe</h2>
       <table class="tabelle"><tbody>
-        <tr><td><a href="#fristen">Reaktivierungen überfällig</a> (${fr.gesperrt} × ${euro(reaktBetrag())})</td><td class="zahlspalte"><b>${euro(fr.gesperrt * reaktBetrag())}</b></td></tr>
+        <tr><td><a href="#fristen">Reaktivierungen überfällig</a> (${fr.gesperrt})</td><td class="zahlspalte"><b>${euro((fr.gesperrtSumme || 0))}</b></td></tr>
         <tr><td><a href="#fristen">Reaktivierung fällig, noch nicht geprüft</a></td><td class="zahlspalte">${fr.pruefen} Schüler</td></tr>
         <tr><td><a href="#fahrchecks">Fahrchecks fehlend laut Quittungen</a></td><td class="zahlspalte">${fcFehlt}</td></tr>
         <tr><td><a href="#verkaeufe">Provision an Fahrlehrer offen</a></td><td class="zahlspalte">${euro(provOffen)}</td></tr>
@@ -3882,7 +3894,7 @@ function bindeFlotte(ziel) {
   }));
   ziel.querySelectorAll("[data-fzweg]").forEach((b) => b.addEventListener("click", async () => {
     const f = S.fahrzeuge.find((x) => x.id === b.dataset.fzweg);
-    if (!f || !(await bestaetige("Fahrzeug entfernen?", `${f.name || ""} wird aus der Liste genommen. Alte Termine bleiben unverändert. Unter „Entfernte Fahrzeuge“ kannst du es zurückholen.`, "Ja, entfernen"))) return;
+    if (!f) return; // K7: ohne Rückfrage, Rückgängig und „Entfernte Fahrzeuge“
     const res = await supa.from("fahrschule_fahrzeuge").update({ aktiv: false }).eq("id", f.id).select("id");
     if (res.error || !res.data || !res.data.length) { toast("Nicht gespeichert: " + (res.error ? dbFehlerText(res.error) : "keine Berechtigung"), true); return; }
     S.fahrzeuge = S.fahrzeuge.filter((x) => x.id !== f.id); S.fahrzeugeWeg = (S.fahrzeugeWeg || []).concat(Object.assign(f, { aktiv: false }));
@@ -4086,7 +4098,7 @@ async function ladeDaten() {
   const fsId = S.fsId;
   setStatus("", "lade …");
   try {
-    const [fs, lehrer, schueler, termine, pruefungen, fahrzeuge, pakete, pTermine, fcAbg, verk, prov, team, notizen, gelesen, aufgaben, personen, theorie, fahrzeugeWeg] = await Promise.all([
+    const [fs, lehrer, schueler, termine, pruefungen, fahrzeuge, pakete, pTermine, fcAbg, verk, prov, team, notizen, gelesen, aufgaben, personen, theorie, fahrzeugeWeg, preise] = await Promise.all([
       supa.from("fahrschulen").select("*").eq("id", fsId).single(),
       // Fahrlehrer: auch die Leitung, die selbst fährt (faehrt_selbst), nicht die reine Leitung
       supa.from("profiles").select("*").eq("fahrschule_id", fsId).in("rolle", ["fahrlehrer", "super_admin", "fahrschule_admin"]).order("name"),
@@ -4106,6 +4118,7 @@ async function ladeDaten() {
       supa.from("buero_personen").select("id,name,telefon,hat_pin,pin_neu_noetig,pin_frei_bis,darf_verwalten,aktiv,gesperrt_bis").eq("fahrschule_id", fsId).order("name"),
       alleSeiten(() => supa.from("theorie_teilnahme").select("id,schueler_id,lektion,datum,bearbeiter").eq("fahrschule_id", fsId).is("entfernt_am", null).order("datum").order("id")).catch(() => null),
       supa.from("fahrschule_fahrzeuge").select("*").eq("fahrschule_id", fsId).eq("aktiv", false).order("erstellt_am"),
+      supa.from("fahrschule_preise").select("*").eq("fahrschule_id", fsId).order("gueltig_ab").order("angelegt_am"),   // K9; fehlt die Tabelle → null
     ]);
     if (nr !== S.ladeNr) return; // inzwischen wurde neu geladen oder die Fahrschule gewechselt
     S.fs = pruefe(fs, "Fahrschule");
@@ -4126,6 +4139,9 @@ async function ladeDaten() {
     S.aufgaben = (aufgaben && !aufgaben.error && aufgaben.data) || [];   // Aufgaben sind Zusatz: Fehler ignorieren
     if (personen && !personen.error) S.personen = personen.data || [];
     S.theorie = theorie && !theorie.error ? (theorie.data || []) : null;   // null = nicht geladen: dann „Stand unbekannt“ statt 0/14
+    // K9: null = Preisliste (noch) nicht da → alter Reaktivierungsbetrag. Ein kurzer Ladefehler behält den letzten Stand (Prüf-Team).
+    if (preise && !preise.error) S.preise = preise.data || [];
+    else if (!(S.preise && S.preise.length) || (typeof prTabelleFehlt !== "function" || prTabelleFehlt(preise && preise.error))) S.preise = null;
     S.geladenAm = new Date();
     $("schulName").textContent = S.fs ? S.fs.name : "";
     setStatus("ok", "verbunden · " + S.geladenAm.toLocaleTimeString("de-DE", { hour: "2-digit", minute: "2-digit" }));
@@ -4535,6 +4551,7 @@ $("schulWahl").addEventListener("change", (e) => {
   S.fsId = e.target.value;
   try { localStorage.setItem("buero-fahrschule", S.fsId); } catch (err) { /* egal */ }
   S.geladenAm = null;
+  S.preise = null; // K9 (Fable B1): Preise der vorigen Fahrschule nie in der neuen zeigen oder behalten
   zeigeRollenStreifen();
   zeichne();
   ladeDaten();

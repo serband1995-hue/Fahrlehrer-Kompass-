@@ -67,7 +67,8 @@ for (const R of ROLLEN) {
     const page = await ctx.newPage();
     const jsFehler = [];
     page.on("pageerror", (e) => jsFehler.push(e.message));
-    page.on("dialog", (d) => d.dismiss().catch(() => {}));
+    let dialogZahl = 0; // K7: Löschen/Stornieren darf keinen Dialog öffnen
+    page.on("dialog", (d) => { dialogZahl++; d.dismiss().catch(() => {}); });
     if (process.env.ROLLEN_DEBUG) page.on("console", (m) => { if (m.type() === "warning" || m.type() === "error") console.log("  konsole:", m.text().slice(0, 200)); });
     await page.route("**/*", (r) => (r.request().url().startsWith(basis) ? r.continue() : r.abort()));
     await page.goto(basis + "index.html", { waitUntil: "load", timeout: 20000 });
@@ -192,6 +193,33 @@ for (const R of ROLLEN) {
       await pruefe("R8", `${P} zweiter Tipp → zurück zu den eigenen Schülern`, () => page.evaluate(() => (!_fsAgg && /Du bist Leitung/.test(document.getElementById("saStreifen").textContent) ? null : "ist " + (_fsAgg ? "gesamt" : "eigen"))));
       await pruefe("R11", `${P} nach dem Umschalten nur Zurück-Einträge der aktuellen Ansicht (kein toter Pfeil)`, () => page.evaluate(() => { const a = !!_fsAgg; const fremd = _navStack.filter((x) => x.agg !== undefined && x.agg !== a).length; return fremd ? fremd + " Einträge der anderen Ansicht" : null; }));
     }
+    // K7 (22.11.2026): in der eigenen Ansicht wird eine gelaufene Stunde nicht gelöscht, sondern storniert (mit Grund), ohne Dialog
+    if (R.eigen) {
+      await maskeWeg();
+      await pruefe("R12", `${P} gelaufene Stunde: „Stornieren“ statt „Termin löschen“, Grund wählen, ohne Dialog`, async () => {
+        const f = []; const d0 = dialogZahl;
+        await page.evaluate(() => {
+          closeSheet(); ensureAusbildungsplaene(); const c = DB.ausbildungsplaene.find((x) => x.standard) || DB.ausbildungsplaene[0];
+          const g = new Date(Date.now() - 864e5), iso = g.getFullYear() + "-" + String(g.getMonth() + 1).padStart(2, "0") + "-" + String(g.getDate()).padStart(2, "0");
+          DB.students = [{ id: "stk1", name: "Storno Muster", form: "B", created: Date.now(), plan: newPlan(), planId: c.id, planSnapshot: JSON.parse(JSON.stringify(c.stufen)), telefon: "", todos: [] }];
+          DB.lessons = [{ id: "stl1", sid: "stk1", date: iso, von: "10:00", bis: "11:30", art: "fahrstunde", name: "", status: "geplant", note: "", fc: null }];
+          openEventSheet("lesson", "stl1", "stk1");
+        });
+        await warte(page, 350);
+        const k = await page.evaluate(() => (document.getElementById("esDelete") || {}).textContent);
+        if ((k || "").trim() !== "Stornieren") f.push("Knopf heißt „" + (k || "").trim() + "“");
+        await page.click("#esDelete", { timeout: 4000 }); await warte(page, 450);
+        const so = await page.evaluate(() => ({ g: document.querySelectorAll("[data-stogrund]").length, t: !!document.getElementById("stoText"), noch: DB.lessons.some((l) => l.id === "stl1") }));
+        if (so.g !== 3 || !so.t) f.push("Storno-Fenster unvollständig (" + so.g + " Grund-Knöpfe)");
+        if (!so.noch) f.push("Stunde schon vor der Grund-Wahl weg");
+        await page.click('[data-stogrund="0"]', { timeout: 4000 }); await warte(page, 400);
+        const nach = await page.evaluate(() => { let o = {}; try { o = JSON.parse(localStorage.getItem("kompass-storno-offen") || "{}"); } catch (e) {} return { weg: !DB.lessons.some((l) => l.id === "stl1"), grund: o.stl1 && o.stl1.grund }; });
+        if (!nach.weg) f.push("Stunde nach dem Stornieren noch da");
+        if (nach.grund !== "Falsch eingetragen") f.push("Grund nicht gemerkt: " + nach.grund);
+        if (dialogZahl !== d0) f.push("Dialog erschienen");
+        return f;
+      });
+    }
     // K8 (23.11.2026): „Zahlung ausstehend“. Fahrlehrer und Leitung sehen am bestehenden künftigen Termin einen Hinweis und
     // können für den Schüler keinen neuen Termin anlegen; die Büro-Knöpfe gibt es in der App nirgends.
     await maskeWeg();
@@ -214,7 +242,7 @@ for (const R of ROLLEN) {
         buero: document.querySelectorAll("[data-zsperre],[data-zbezahlt],[data-zreakt],[data-zahlungpill]").length };
       return r;
     });
-    await pruefe("R12", `${P} K8: Hinweis „Zahlung ausstehend“ am Termin des gesperrten Schülers, neuer Termin geblockt, keine Büro-Knöpfe in der App`, () => {
+    await pruefe("R14", `${P} K8: Hinweis „Zahlung ausstehend“ am Termin des gesperrten Schülers, neuer Termin geblockt, keine Büro-Knöpfe in der App`, () => {
       const f = [];
       if (!k8.gesperrt || k8.frei) f.push(`Sperre: gesperrt=${k8.gesperrt} frei=${k8.frei}`);
       if (k8.hinweisZahl !== true) f.push("kein Hinweis am Termin (" + k8.hinweisZahl + ")");

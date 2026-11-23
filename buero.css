@@ -694,3 +694,39 @@ body.kiosk .rollen-streifen{display:none;}
 @media (max-width:1100px){
   .tabelle td .knopf[data-zsperre],.tabelle td .knopf[data-zbezahlt],.tabelle td .knopf[data-zreakt]{white-space:normal;max-width:100%;line-height:1.2;padding-top:6px;padding-bottom:6px;text-align:center;}
 }
+
+/* K9 Preisliste (eine Tabelle, je Art eine Zwischenzeile; am Handy jede Zeile eine Karte) */
+.pr-kopf { display:flex; flex-wrap:wrap; gap:10px 18px; align-items:center; justify-content:space-between; margin-bottom:10px; }
+.pr-speichern { display:flex; flex-wrap:wrap; gap:8px; align-items:center; }
+.pr-tabelle { table-layout:fixed; }
+.pr-tabelle .pr-c-preis { width:190px; } .pr-tabelle .pr-c-plan { width:200px; } .pr-tabelle .pr-c-tun { width:100px; }
+.pr-tabelle tbody tr.pr-zeile:hover { background:transparent; }
+.pr-tabelle tr.pr-gruppe th { font-size:15px; text-transform:none; letter-spacing:0; color:var(--txt, inherit); padding:20px 12px 6px; border-bottom:2px solid var(--line-soft); white-space:normal; }
+.pr-tabelle tbody tr.pr-gruppe:first-child th { padding-top:8px; }
+.pr-name b { margin-right:8px; }
+.pr-klasse { font-weight:600; }
+.pr-betrag { font-size:17px; font-weight:700; color:var(--akzent-dark, var(--akzent)); }
+.pr-bald { background:var(--gelb-soft); color:var(--pill-gelb); border-radius:6px; padding:2px 6px; }
+.pr-tun { text-align:right; }
+.pr-verlauf { margin-top:4px; }
+.pr-verlauf summary { cursor:pointer; color:var(--muted); min-height:28px; display:inline-flex; align-items:center; }
+.pr-verlauf ul { margin:6px 0 0; padding:6px 0 6px 14px; list-style:none; border-left:2px solid var(--line-soft); }
+.pr-verlauf li { margin:0 0 6px; }
+.pr-wahl { min-height:44px; display:flex; flex-wrap:wrap; align-items:center; gap:4px 10px; cursor:pointer; }
+.pr-wahl input { width:22px; height:22px; }
+.pr-wahl .klein { flex-basis:100%; }
+.nur-leser { position:absolute; width:1px; height:1px; overflow:hidden; clip:rect(0 0 0 0); white-space:nowrap; }
+@media (max-width:640px) {
+  .pr-tabelle, .pr-tabelle tbody { display:block; }
+  .pr-tabelle thead, .pr-tabelle colgroup { display:none; }
+  .pr-tabelle tr.pr-gruppe { display:block; }
+  .pr-tabelle tr.pr-gruppe th { display:block; padding:18px 0 6px; }
+  .pr-tabelle tr.pr-zeile { display:grid; grid-template-columns:1fr auto; gap:4px 12px; padding:12px 0; border-bottom:1px solid var(--line-soft); }
+  .pr-tabelle tr.pr-zeile td { display:block; padding:0; border:none; }
+  .pr-tabelle td.pr-name { grid-column:1 / -1; }
+  .pr-tabelle td.pr-plan:empty { display:none; }
+  .pr-tabelle td.pr-tun { grid-column:2; grid-row:2; align-self:center; }
+  .pr-tabelle td.pr-preis { grid-column:1; grid-row:2; }
+  .pr-tabelle td.pr-plan { grid-column:1 / -1; }
+  .pr-tabelle td.pr-tun .knopf { min-height:44px; }
+}

@@ -196,7 +196,7 @@ await fall("A18 Termin löschen: sofort weg, „Rückgängig“ holt ihn zurück
   if (!(await page.evaluate(() => DB.lessons.some((l) => l.id === "L1")))) f.push("Rückgängig holt den Termin nicht zurück");
   return f;
 });
-await fall("D1/D7 Schüler „bei mir ausblenden“: bleibt in DB, künftige Termine abgesagt, Einblenden geht", async () => {
+await fall("D1/D7 Schüler „bei mir ausblenden“: bleibt in DB, künftige Termine bleiben im Kalender (K7), Einblenden geht", async () => {
   const f = [];
   await vorbereiten();
   dialogAntwort = true;
@@ -207,7 +207,7 @@ await fall("D1/D7 Schüler „bei mir ausblenden“: bleibt in DB, künftige Ter
     zeile: _schuelerZeile ? true : false }));
   if (!r.da || !r.aus) f.push("Schüler nicht nur ausgeblendet: " + JSON.stringify(r));
   if (r.liste) f.push("ausgeblendeter Schüler noch in der Liste");
-  if (r.L1) f.push("künftiger Termin nicht abgesagt");
+  if (!r.L1) f.push("künftiger Termin wurde abgesagt (K7: bleibt im Kalender)");
   if (!r.L2) f.push("vergangener Termin wurde gelöscht");
   await page.evaluate(() => { routeArchive(); }); await w();
   const ein = await page.$('[data-einblenden="s1"]');
