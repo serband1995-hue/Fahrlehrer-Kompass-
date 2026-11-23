@@ -4732,7 +4732,13 @@ async function _upsertRobust(tabelle, rows, konflikt) {
     if (netzFehler && !rechteFehler) { console.warn("[Kompass] " + tabelle + " nicht gespeichert:", error.message); continue; }
     for (const r of block) {
       const { error: e1 } = await supa.from(tabelle).upsert([r], { onConflict: konflikt });
-      if (!e1) ok.push(r[konflikt]); else console.warn("[Kompass] " + tabelle + " " + r[konflikt] + " übersprungen:", e1.message);
+      if (!e1) ok.push(r[konflikt]); else {
+        console.warn("[Kompass] " + tabelle + " " + r[konflikt] + " übersprungen:", e1.message);
+        // K8: Server sperrt (App hatte die Sperre noch nicht) – einmal je Termin sichtbar melden
+        if (e1.code === "P0001" && /Zahlung ausstehend/.test(e1.message || "") && !_zahlungAbgelehntGemeldet.has(r[konflikt])) {
+          _zahlungAbgelehntGemeldet.add(r[konflikt]); toast("Termin nicht gespeichert: Zahlung ausstehend – bitte ans Büro");
+        }
+      }
     }
   }
   return ok;
@@ -5202,7 +5208,11 @@ async function pullPublicBookings() {
         if (!l) {
           const s = schuelerZuBuchung(r);
           // K8: Zahlung ausstehend – Buchung ab heute bleibt liegen (nicht übernommen, nicht vermerkt) und kommt nach „Bezahlt“.
-          if (s && r.datum >= todayISO() && _zahlungGesperrt(s.id)) { console.info("[Kompass] Online-Buchung wartet (Zahlung ausstehend):", r.id); continue; }
+          if (s && r.datum >= todayISO() && _zahlungGesperrt(s.id)) {
+            // Sichtbar machen (einmal je Buchung), sonst sieht die Zeit beim Fahrlehrer frei aus.
+            if (!_buchungWartetGemeldet.has(r.id)) { _buchungWartetGemeldet.add(r.id); toast("Online-Buchung am " + String(r.datum).split("-").reverse().join(".") + (r.von ? " um " + r.von : "") + " wartet: Zahlung ausstehend – bitte ans Büro"); }
+            continue;
+          }
           l = addLesson({ date: r.datum, von: r.von, bis: r.bis, art, sid: s ? s.id : null, name: s ? "" : r.schueler_name,
             note: noteParts.join(" · "), onlineBookingId: r.id, fahrzeug: r.fahrzeug || null });
         }
@@ -5336,6 +5346,7 @@ function _zahlungGesperrt(sid){
   return !f.inaktiv_seit&&!!(window.KR&&KR.reaktInfo(f).gesperrt);
 }
 // true = gesperrt: Hinweis zeigen, nichts anlegen. Nur für neue künftige Termine der fünf Fahrarten (Theorie, Blocker nie).
+const _buchungWartetGemeldet=new Set(), _zahlungAbgelehntGemeldet=new Set();
 function _zahlungStopp(sid,date,art){
   if(!sid||!_zahlungGesperrt(sid))return false;
   if(art&&["fahrstunde","sonder","nacht","schalt","pruefung"].indexOf(art)<0)return false;
@@ -15408,7 +15419,7 @@ function nsQuickAction(act,lid,kind,retFn){
       <p class="muted-p" style="font-size:13px;margin:-4px 0 12px;">Wer ist stattdessen gefahren?</p>
       <div class="field"><input type="text" id="nsoSearch" placeholder="Schüler suchen …" autocomplete="off"></div>
       <div class="as-list" id="nsoList">${cand.map(s=>`<button class="as-item" data-sid="${s.id}"><span class="as-nm">${esc(s.name)}</span><span class="as-cls">${esc(s.form||'')}</span></button>`).join("")}</div>`);
-    const bind=()=>{ document.querySelectorAll("#nsoList .as-item").forEach(b=>b.addEventListener("click",()=>{ l.sid=b.dataset.sid; l.status="geplant"; save(); closeSheet(); toast("Schüler getauscht ✓"); retFn(); })); };
+    const bind=()=>{ document.querySelectorAll("#nsoList .as-item").forEach(b=>b.addEventListener("click",()=>{ if(_zahlungStopp(b.dataset.sid,l.date,l.art))return; l.sid=b.dataset.sid; l.status="geplant"; save(); closeSheet(); toast("Schüler getauscht ✓"); retFn(); })); };
     $("#nsoSearch").addEventListener("input",ev=>{ const q=ev.target.value.toLowerCase(); const list=cand.filter(s=>matchStudent(s.name,q)); $("#nsoList").innerHTML=list.map(s=>`<button class="as-item" data-sid="${s.id}"><span class="as-nm">${esc(s.name)}</span><span class="as-cls">${esc(s.form||'')}</span></button>`).join("")||'<p class="muted-p" style="font-size:13px;">Kein Treffer</p>'; bind(); });
     bind();
   } else if(act==="noshow"){

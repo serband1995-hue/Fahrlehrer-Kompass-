@@ -7,6 +7,7 @@
 //   Z5  Büro: Reaktivierung überfällig = gesperrt; „noch nicht geprüft“ und „befreit“ nicht
 //   Z6  App (Fahrlehrer): neuer Termin für Gesperrten geblockt (Toast, kein Eintrag), Hinweis am bestehenden Termin, kein confirm
 //   Z7  App: Server lehnt eine Zeile mit P0001 ab → die anderen werden gespeichert, keine Fehlerseite
+//   Z6v App: „Mit anderem Schüler gefahren“ – Tausch auf Gesperrten geblockt, auf Freien erlaubt; Z6q Toast „Online-Buchung wartet“ einmal je Buchung; Z7e Toast „Termin nicht gespeichert“
 //   Z8  Alte Datenbank (Spalten fehlen): App und Büro laufen, Büro zeigt eine verständliche Meldung statt Rohfehler
 //   Z9  Leitung (Fahrschul-Ansicht, _fsAgg): Hinweis am bestehenden Termin eines Gesperrten
 // Aufruf:  NODE_PATH=$(npm root -g) node scripts/zahlung-test.mjs        (Exit-Code 1 bei Fehler)
@@ -609,13 +610,42 @@ const lesson = (id, sid, date, von, bis) => ({ id, date, von, bis, art: "fahrstu
   await page.evaluate(() => { window.__T.public_bookings = [
     { id: "pb-b", status: "bestaetigt", merged: false, fahrlehrer_id: "u-ich", art: "fahrstunde", subtyp: "normal", datum: "2026-11-27", von: "08:00", bis: "09:30", schueler_name: "Berta Muster", created_at: "2026-11-23T08:00:00Z" },
     { id: "pb-a", status: "bestaetigt", merged: false, fahrlehrer_id: "u-ich", art: "fahrstunde", subtyp: "normal", datum: "2026-11-27", von: "10:00", bis: "11:30", schueler_name: "Anna Muster", created_at: "2026-11-23T08:00:00Z" }]; });
+  // Alle Toasts mitschreiben (Annas „Neuer Termin“-Hinweis überschreibt sonst den von Berta)
+  await page.evaluate(() => { window.__toasts = []; const o = window.toast; window.toast = function (t) { window.__toasts.push(String(t)); return o.apply(this, arguments); }; });
   await page.evaluate(() => pullPublicBookings()); await warte(page, 700);
-  await pruefe("Z6q", "App: Online-Buchung von Berta (gesperrt) bleibt liegen (kein Termin, nicht als übernommen vermerkt); die von Anna wird übernommen", () =>
-    page.evaluate(() => { const f = [];
+  const toastQ1 = await page.evaluate(() => window.__toasts.join(" | "));
+  const vermerkQ1 = await page.evaluate(() => window.__schreib.filter((x) => x.tab === "public_bookings" && x.art === "update").length);
+  await page.evaluate(() => { window.__toasts = []; }); // zweiter Abruf derselben Buchungen
+  await page.evaluate(() => pullPublicBookings()); await warte(page, 700);
+  const toastQ2 = await page.evaluate(() => window.__toasts.join(" | "));
+  await pruefe("Z6q", "App: Online-Buchung von Berta (gesperrt) bleibt liegen (kein Termin, nicht als übernommen vermerkt); die von Anna wird übernommen; Toast „Online-Buchung am 27.11.2026 um 08:00 wartet: Zahlung ausstehend“ einmal je Buchung (zweiter Abruf still)", () =>
+    page.evaluate(([t1, t2, vq]) => { const f = [];
+      if (!/Online-Buchung am 27\.11\.2026 um 08:00 wartet: Zahlung ausstehend – bitte ans Büro/.test(t1)) f.push("Toast beim 1. Abruf: " + t1);
+      if (/Online-Buchung am/.test(t2)) f.push("Toast beim 2. Abruf nochmal: " + t2);
       if (DB.lessons.some((l) => l.onlineBookingId === "pb-b")) f.push("Buchung von Berta wurde übernommen");
       if (!DB.lessons.some((l) => l.onlineBookingId === "pb-a")) f.push("Buchung von Anna fehlt");
-      const u = window.__schreib.filter((x) => x.tab === "public_bookings" && x.art === "update");
-      if (u.length !== 1) f.push("Vermerke: " + u.length + " (erwartet 1, nur Anna)"); return f; }));
+      if (vq !== 1) f.push("Vermerke: " + vq + " (erwartet 1, nur Anna)"); return f; }, [toastQ1, toastQ2, vermerkQ1]));
+  // Z6v: „Mit anderem Schüler gefahren“ – Tausch auf Gesperrten geblockt, auf Freien erlaubt
+  await page.evaluate(() => { try { closeSheet(); } catch (e) {} DB.lessons.push(
+    { id: "L-t1", date: "2026-11-30", von: "08:00", bis: "09:30", art: "fahrstunde", sid: "s-a", name: "", status: "geplant", note: "", fc: null },
+    { id: "L-t2", date: "2026-11-30", von: "10:00", bis: "11:30", art: "fahrstunde", sid: "s-b", name: "", status: "geplant", note: "", fc: null }); save(); });
+  const tausch = async (lid, ziel) => {
+    await page.evaluate((i) => { try { closeSheet(); } catch (e) {} nsQuickAction("other", i, "fahrstunde", () => {}); }, lid); await warte(page, 300);
+    await page.evaluate(() => { document.getElementById("toast").textContent = ""; });
+    await page.click(`#nsoList [data-sid="${ziel}"]`); await warte(page, 400);
+  };
+  await tausch("L-t1", "s-b");
+  const geblockt = await page.evaluate(() => ({ sid: DB.lessons.find((l) => l.id === "L-t1").sid, st: DB.lessons.find((l) => l.id === "L-t1").status }));
+  const toastV1 = await toastApp();
+  await tausch("L-t2", "s-a");
+  const frei = await page.evaluate(() => DB.lessons.find((l) => l.id === "L-t2").sid);
+  await pruefe("Z6v", "App: „Mit anderem Schüler gefahren“ – Tausch auf Berta (gesperrt) geblockt (sid bleibt Anna, Hinweis), Tausch auf Anna (frei) erlaubt", () => {
+    const f = [];
+    if (geblockt.sid !== "s-a") f.push("Tausch auf Gesperrten ging durch: sid=" + geblockt.sid);
+    if (geblockt.st !== "geplant") f.push("Status geändert: " + geblockt.st);
+    if (!/Zahlung ausstehend/.test(toastV1)) f.push("kein Hinweis: " + toastV1);
+    if (frei !== "s-a") f.push("Tausch auf Freien geblockt: sid=" + frei);
+    return f; });
   // A5 Akte, A9 Text
   await page.evaluate(() => { routeDetail("s-b"); }); await warte(page, 600);
   await pruefe("Z6r", "App-Akte von Berta: roter Chip und Hinweis „Zahlung ausstehend: Rechnung offen. Bitte ans Büro, keine neuen Termine.“ stehen oben (ohne Scrollen)", async () => {
@@ -682,6 +712,10 @@ const lesson = (id, sid, date, von, bis) => ({ id, date, von, bis, art: "fahrstu
   await warte(page, 500);
   await pruefe("Z7a", "App: der Server lehnt Bertas Termin mit P0001 ab → Annas Termine werden trotzdem gespeichert", () =>
     page.evaluate(() => { const ids = (window.__T.kalender_termine || []).map((x) => x.id).sort().join(); return ids === "L1,L3" ? null : "auf dem Server: " + ids; }));
+  await pruefe("Z7e", "App: P0001 pro Zeile → einmal der Hinweis „Termin nicht gespeichert: Zahlung ausstehend – bitte ans Büro“", async () => {
+    const t = await page.evaluate(() => document.getElementById("toast").textContent);
+    const n = await page.evaluate(() => (window.__schreib.filter((x) => x.tab === "kalender_termine" && x.art === "upsert" && x.fehler === "P0001" && x.werte.length === 1)).length);
+    return /Termin nicht gespeichert: Zahlung ausstehend – bitte ans Büro/.test(t) ? (n === 1 ? null : "Einzelablehnungen " + n) : "Toast: " + t; });
   await pruefe("Z7b", "App: abgelehnte Zeile wird einzeln übersprungen (Block abgelehnt, dann Zeile für Zeile)", () =>
     page.evaluate(() => { const w = window.__schreib.filter((x) => x.tab === "kalender_termine" && x.art === "upsert"); const f = [];
       if (!w.some((x) => x.fehler === "P0001" && x.werte.length > 1)) f.push("kein abgelehnter Block");
