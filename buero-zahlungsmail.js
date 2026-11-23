@@ -24,11 +24,14 @@ const ZM_FEHLER = {
   zu_viele: "Heute schon 5 Mails an diesen Schüler.",
   zu_viele_schule: "Heute wurden schon 100 Mails verschickt. Morgen geht es wieder.",
   ungueltige_anfrage: ZM_NICHT_MOEGLICH_TEXT,
+  modus_geaendert: null, // Text hängt vom neuen Modus ab (zmModusText)
   keine_email: "Keine E-Mail-Adresse in der Akte.",
   keine_testadresse: "Es ist keine Test-Adresse hinterlegt. Bitte unter Einstellungen eine eintragen.",
 };
 const ZM_NICHT_MOEGLICH = ZM_NICHT_MOEGLICH_TEXT;
-const ZM = { laeuft: new Set() }; // Schlüssel „schueler|art“ solange Warten oder Senden läuft
+const LADEFEHLER_TEXT = "Zahlungsdaten konnten nicht geladen werden. Bitte Seite neu laden.";
+// laeuft: Schlüssel „schueler|art“ solange Warten oder Senden läuft (nur EINE Mail gleichzeitig); offen: aufgeklappte Formulare; entwurf: Betrag/Wofür je Schlüssel
+const ZM = { laeuft: new Set(), offen: new Set(), entwurf: {} };
 
 // Wer darf? Büro, Leitung, Super-Admin (wie prDarf); Fahrlehrer sehen nichts davon
 function zmDarf() { return !!(S.profil && ["buero", "fahrschule_admin", "super_admin"].includes(S.profil.rolle)); }
@@ -37,11 +40,14 @@ function zmTabelleFehlt(err) { return !!err && (["42P01", "PGRST205"].includes(e
 function zmLaden(zd, zm) {
   const fehlt = zmTabelleFehlt(zd && zd.error) || zmTabelleFehlt(zm && zm.error);
   S.zmFehlt = fehlt;
-  if (fehlt) { S.zahlungsdaten = null; S.zahlungsMails = []; return; }
-  if (zd && !zd.error) S.zahlungsdaten = zd.data || null; else if (S.zahlungsdaten === undefined) S.zahlungsdaten = null;
+  if (fehlt) { S.zahlungsdaten = null; S.zahlungsMails = []; S.zmLadefehler = false; S.zmGeladen = false; return; }
+  if (zd && !zd.error) { S.zahlungsdaten = zd.data || null; S.zmGeladen = true; S.zmLadefehler = false; }
+  else if (!S.zmGeladen) { S.zahlungsdaten = null; S.zmLadefehler = true; } // nie geladen: „konnte nicht geladen werden“; ein früherer Erfolg behält den Stand
   if (zm && !zm.error) S.zahlungsMails = zm.data || []; else if (!Array.isArray(S.zahlungsMails)) S.zahlungsMails = [];
 }
-function zmLeeren() { S.zahlungsdaten = null; S.zahlungsMails = []; S.zmFehlt = false; }
+function zmLeeren() { S.zahlungsdaten = null; S.zahlungsMails = []; S.zmFehlt = false; S.zmLadefehler = false; S.zmGeladen = false; S.zmEntwurf = null; ZM.offen.clear(); ZM.entwurf = {}; }
+function zmModus() { return zmEcht() ? "echt" : "test"; }
+function zmModusText(m) { return m === "echt" ? "Echt" : m === "test" ? "Test" : null; }
 
 /* ---------- Hilfen ---------- */
 // IBAN prüfen (ISO 13616, mod 97) – gleiche Regeln wie iban_gueltig() in der Datenbank
@@ -78,45 +84,57 @@ function zmEcht() { return !!(S.zahlungsdaten && S.zahlungsdaten.modus === "echt
 /* ---------- 1. Einstellungen ---------- */
 function zmEinstellungenHTML() {
   if (!zmDarf()) return "";
-  if (S.zmFehlt) return `<div class="karte nicht-drucken" id="zmEinst"><div class="karte-kopf"><h2>Zahlungsdaten für Mails</h2></div><p class="leer">Noch nicht eingerichtet. Sobald das Datenbank-Update da ist, erscheint hier der Abschnitt.</p></div>`;
-  const z = S.zahlungsdaten || {};
-  const modus = z.modus === "echt" ? "echt" : "test";
-  const wann = z.geaendert_am ? `<p class="voll leise klein" data-zmzuletzt>Zuletzt geändert am ${esc(zmZeit(z.geaendert_am))}${z.bearbeiter ? " von " + esc(z.bearbeiter) : ""}.</p>` : `<p class="voll leise klein" data-zmzuletzt>Noch nichts eingetragen.</p>`;
-  return `<div class="karte nicht-drucken" id="zmEinst"><div class="karte-kopf"><h2>Zahlungsdaten für Mails</h2></div>
+  const kopf = `<div class="karte nicht-drucken" id="zmEinst"><div class="karte-kopf"><h2>Zahlungsdaten für Mails</h2></div>`;
+  if (S.zmFehlt) return kopf + `<p class="leer">Noch nicht eingerichtet. Sobald das Datenbank-Update da ist, erscheint hier der Abschnitt.</p></div>`;
+  if (S.zmLadefehler) return kopf + `<p class="zm-hinweis" data-zmladefehler>${esc(LADEFEHLER_TEXT)}</p></div>`;
+  const z0 = S.zahlungsdaten || {};
+  const d = S.zmEntwurf || {}; // ungespeicherte Eingaben überstehen das Neuzeichnen
+  const wert = (k) => (k in d ? d[k] : k === "iban" ? zmIbanZeigen(z0.iban) : (z0[k] || ""));
+  const modus = (d.modus || z0.modus) === "echt" ? "echt" : "test";
+  const wann = z0.geaendert_am ? `<p class="voll leise klein" data-zmzuletzt>Zuletzt geändert am ${esc(zmZeit(z0.geaendert_am))}${z0.bearbeiter ? " von " + esc(z0.bearbeiter) : ""}.</p>` : `<p class="voll leise klein" data-zmzuletzt>Noch nichts eingetragen.</p>`;
+  const aktuell = z0.modus === "echt"
+    ? `<p class="voll zm-aktuell echt" data-zmaktuell>Aktuell: ECHT. Mails gehen an die Schüler.</p>`
+    : `<p class="voll zm-aktuell test" data-zmaktuell>Aktuell: TEST. Mails gehen nur an ${z0.test_email ? esc(z0.test_email) : "die Adresse des Betreibers"}.</p>`;
+  return kopf + `
     <form id="zmForm" class="formular" novalidate>
-      <p class="voll leise klein">Diese Angaben stehen in der Zahlungsaufforderung an den Schüler (Überweisung oder PayPal).</p>
-      <label>Kontoinhaber<input type="text" name="kontoinhaber" maxlength="70" autocomplete="off" value="${esc(z.kontoinhaber || "")}"></label>
-      <label>IBAN<input type="text" name="iban" maxlength="42" autocomplete="off" autocapitalize="characters" spellcheck="false" value="${esc(zmIbanZeigen(z.iban))}"><span class="zm-fehler" data-zmiban role="alert" hidden></span></label>
-      <label>BIC (freiwillig)<input type="text" name="bic" maxlength="11" autocomplete="off" autocapitalize="characters" value="${esc(z.bic || "")}"></label>
-      <label>PayPal.me-Name oder -Link<input type="text" name="paypal" maxlength="60" autocomplete="off" value="${esc(z.paypal || "")}"></label>
-      <label class="voll">Impressum/Kontakt für Mails<textarea name="impressum" rows="4" maxlength="1000">${esc(z.impressum || "")}</textarea><span class="leise klein">Name, Anschrift, Telefon, E-Mail. Steht unten in jeder Mail.</span></label>
+      ${aktuell}
       <fieldset class="voll zm-modus-wahl"><legend>Wohin gehen die Mails?</legend>
         <label class="zm-wahl"><input type="radio" name="modus" value="test"${modus === "test" ? " checked" : ""}><span><b>Test</b><span class="leise klein">Alle Mails gehen nur an die Test-Adresse. Kein Schüler bekommt etwas.</span></span></label>
         <label class="zm-wahl"><input type="radio" name="modus" value="echt"${modus === "echt" ? " checked" : ""}><span><b>Echt</b><span class="leise klein">Die Mails gehen an die Schüler. Geht erst mit Kontoinhaber und gültiger IBAN.</span></span></label>
         <span class="zm-fehler" data-zmmodus role="alert" hidden></span>
       </fieldset>
-      <label class="voll">Test-Adresse<input type="email" name="test_email" maxlength="200" autocomplete="off" value="${esc(z.test_email || "")}"><span class="leise klein">Leer = Adresse des Betreibers.</span></label>
+      <label class="voll">Test-Adresse<input type="email" name="test_email" maxlength="200" autocomplete="off" value="${esc(wert("test_email"))}"><span class="leise klein">Leer = Adresse des Betreibers.</span></label>
+      <p class="voll leise klein">Diese Angaben stehen in der Zahlungsaufforderung an den Schüler (Überweisung oder PayPal).</p>
+      <label>Kontoinhaber<input type="text" name="kontoinhaber" maxlength="70" autocomplete="off" value="${esc(wert("kontoinhaber"))}"></label>
+      <label>IBAN<input type="text" name="iban" maxlength="42" autocomplete="off" autocapitalize="characters" spellcheck="false" value="${esc(wert("iban"))}"><span class="zm-fehler" data-zmiban role="alert" hidden></span></label>
+      <label>BIC (freiwillig)<input type="text" name="bic" maxlength="11" autocomplete="off" autocapitalize="characters" value="${esc(wert("bic"))}"></label>
+      <label>PayPal.me-Name oder -Link<input type="text" name="paypal" maxlength="60" autocomplete="off" value="${esc(wert("paypal"))}"></label>
+      <label class="voll">Impressum/Kontakt für Mails<textarea name="impressum" rows="4" maxlength="1000">${esc(wert("impressum"))}</textarea><span class="leise klein">Name, Anschrift, Telefon, E-Mail. Steht unten in jeder Mail.</span></label>
       <div class="voll knopfreihe"><button class="knopf haupt" type="submit" id="zmSpeichern">Zahlungsdaten speichern</button></div>
+      <p class="zm-fehler voll" data-zmspeicher role="alert" hidden></p>
       ${wann}
     </form></div>`;
 }
 function zmBindeEinstellungen(ziel) {
   const f = ziel.querySelector("#zmForm");
   if (!f) return;
-  const ibanFehler = f.querySelector("[data-zmiban]"), modusFehler = f.querySelector("[data-zmmodus]");
+  const ibanFehler = f.querySelector("[data-zmiban]"), modusFehler = f.querySelector("[data-zmmodus]"), speicherFehler = f.querySelector("[data-zmspeicher]");
   const zeige = (el, text) => { el.textContent = text || ""; el.hidden = !text; };
   const pruefeIban = () => {
     const v = f.iban.value.trim();
     zeige(ibanFehler, v && !zmIbanOk(v) ? "Diese IBAN stimmt nicht (Prüfziffer). Bitte mit dem Kontoauszug vergleichen." : "");
     return !v || zmIbanOk(v);
   };
+  const merke = () => { S.zmEntwurf = { kontoinhaber: f.kontoinhaber.value, iban: f.iban.value, bic: f.bic.value, paypal: f.paypal.value, impressum: f.impressum.value, modus: f.modus.value, test_email: f.test_email.value }; };
+  f.addEventListener("input", merke);
+  f.addEventListener("change", () => { merke(); zeige(modusFehler, ""); });
   f.iban.addEventListener("blur", pruefeIban);
   f.iban.addEventListener("input", () => { if (!ibanFehler.hidden) pruefeIban(); });
-  f.addEventListener("change", () => zeige(modusFehler, ""));
   f.addEventListener("submit", async (e) => {
     e.preventDefault();
     const knopf = f.querySelector("#zmSpeichern");
     if (knopf.disabled) return;
+    zeige(speicherFehler, "");
     if (!pruefeIban()) { f.iban.focus(); return; }
     const inhaber = f.kontoinhaber.value.trim(), iban = zmIbanNorm(f.iban.value), modus = f.modus.value === "echt" ? "echt" : "test";
     if (modus === "echt" && (!inhaber || !zmIbanOk(iban))) {
@@ -129,10 +147,15 @@ function zmBindeEinstellungen(ziel) {
     };
     knopf.disabled = true;
     try {
+      // nicht blind überschreiben: hat inzwischen jemand anderes gespeichert?
+      const frisch = await supa.from("fahrschule_zahlungsdaten").select("geaendert_am").eq("fahrschule_id", S.fsId).maybeSingle();
+      if (frisch.error) { zeige(speicherFehler, zmTabelleFehlt(frisch.error) ? "Noch nicht eingerichtet (Datenbank-Update fehlt)." : "Nicht gespeichert: Der Stand konnte nicht geprüft werden. Bitte Seite neu laden."); return; }
+      const jetzt = frisch.data ? String(frisch.data.geaendert_am || "") : "", geladen = S.zahlungsdaten ? String(S.zahlungsdaten.geaendert_am || "") : "";
+      if (jetzt !== geladen) { zeige(speicherFehler, "Die Zahlungsdaten wurden inzwischen von jemand anderem geändert. Bitte Seite neu laden."); return; }
       const res = await supa.from("fahrschule_zahlungsdaten").upsert(zeile, { onConflict: "fahrschule_id" }).select("*");
       if (res.error) { toast(zmTabelleFehlt(res.error) ? "Noch nicht eingerichtet (Datenbank-Update fehlt)." : "Nicht gespeichert: " + dbFehlerText(res.error), true); return; }
       if (!res.data || !res.data.length) { toast("Nicht gespeichert: keine Berechtigung", true); return; }
-      S.zahlungsdaten = res.data[0];
+      S.zahlungsdaten = res.data[0]; S.zmGeladen = true; S.zmLadefehler = false; S.zmEntwurf = null;
       toast("Zahlungsdaten gespeichert");
       zeichne();
     } finally { knopf.disabled = false; }
@@ -164,135 +187,164 @@ function zmAngebote(x) {
   if (z && istAktiv(x)) liste.push({ art: "zahlung_offen", betrag: "", wofuer: (z.grund || "Offene Zahlung").slice(0, 80) });
   return liste;
 }
-// letzte erfolgreich gesendete Mail dieser Art (S.zahlungsMails ist nach Anlegen absteigend, neue Einträge stehen vorn)
+// letzte erfolgreich gesendete Mail dieser Art IM AKTUELLEN MODUS (Test-Haken zählen im Echt-Modus nicht und umgekehrt)
 function zmLetzte(sid, art) {
+  const modus = zmModus();
   let best = null;
   for (const m of S.zahlungsMails || []) {
-    if (m.schueler_id !== sid || m.art !== art || m.status !== "gesendet") continue;
+    if (m.schueler_id !== sid || m.art !== art || m.status !== "gesendet" || m.modus !== modus) continue;
     const t = Date.parse(m.gesendet_am || m.angelegt_am || "") || 0;
     if (!best || t > best.t) best = { m, t };
   }
   return best && best.m;
 }
+function zmFinde(sid) { return [...document.querySelectorAll("#zmBlock")].find((b) => b.dataset.zmsid === sid) || null; }
 function zmBlockHTML(sid) {
   if (!zmDarf() || S.zmFehlt) return "";
   const x = S.schueler.find((y) => y.id === sid);
   if (!x) return "";
   const angebote = zmAngebote(x);
   if (!angebote.length) return "";
-  const echt = zmEcht(), daten = zmDatenDa(), mail = zmMailAdresse(x);
+  const echt = zmEcht(), daten = zmDatenDa(), mail = zmMailAdresse(x), ladefehler = !!S.zmLadefehler;
   const ohneMail = echt && !mail;
   const hinweise = [];
-  if (!daten) hinweise.push(`<p class="zm-hinweis" data-zmohnedaten>Bitte zuerst unter <a href="#fristen" data-zmeinst>Einstellungen</a> die Zahlungsdaten eintragen.</p>`);
-  else if (echt) hinweise.push(`<p class="leise klein zm-modus-zeile">Echt-Modus: Die Mail geht an die E-Mail-Adresse des Schülers.</p>`);
+  if (ladefehler) hinweise.push(`<p class="zm-hinweis" data-zmladefehler>${esc(LADEFEHLER_TEXT)}</p>`);
+  else if (!daten) hinweise.push(`<p class="zm-hinweis" data-zmohnedaten>Bitte zuerst unter <a href="#fristen" data-zmeinst>Einstellungen</a> die Zahlungsdaten eintragen.</p>`);
+  else if (echt) hinweise.push(`<p class="zm-echt" data-zmecht>Echt: Mail geht an ${mail ? esc(mail) : "den Schüler (E-Mail fehlt)"}</p>`);
   else hinweise.push(`<p class="zm-modus-zeile zm-test" data-zmtest>Test-Modus: Mail geht an die Test-Adresse</p>`);
-  if (ohneMail) hinweise.push(`<p class="zm-hinweis" data-zmkeinemail>Keine E-Mail-Adresse in der Akte.</p>`);
+  if (ohneMail && daten && !ladefehler) hinweise.push(`<p class="zm-hinweis" data-zmkeinemail>Keine E-Mail-Adresse in der Akte.</p>`);
   const zeilen = angebote.map((a) => {
-    const k = ZM_ARTEN[a.art], letzte = zmLetzte(sid, a.art), schluessel = sid + "|" + a.art, laeuft = ZM.laeuft.has(schluessel);
-    const sperre = !daten || ohneMail || laeuft;
-    const haken = letzte ? `<p class="zm-haken" data-zmhaken="${esc(a.art)}">✓ gesendet am ${esc(zmZeit(letzte.gesendet_am || letzte.angelegt_am))} · ${esc(zmEuroText(letzte.betrag_cent))}${letzte.modus === "test" ? " · Test" : ""}</p>` : "";
+    const k = ZM_ARTEN[a.art], letzte = zmLetzte(sid, a.art), schluessel = sid + "|" + a.art;
+    const eigene = ZM.laeuft.has(schluessel), andere = ZM.laeuft.size > 0 && !eigene;
+    const grund = ladefehler ? "Zahlungsdaten konnten nicht geladen werden" : !daten ? "Zahlungsdaten fehlen" : ohneMail ? "E-Mail fehlt" : eigene ? "Gerade wird gesendet" : andere ? "Erst die laufende Mail abwarten" : "";
+    const e = ZM.entwurf[schluessel] || {};
+    const betrag = "betrag" in e ? e.betrag : a.betrag, wofuer = "wofuer" in e ? e.wofuer : a.wofuer;
+    const offen = ZM.offen.has(schluessel);
+    const haken = letzte ? `<p class="zm-haken" data-zmhaken="${esc(a.art)}">✓ gesendet am ${esc(zmZeit(letzte.gesendet_am || letzte.angelegt_am))} · ${esc(zmEuroText(letzte.betrag_cent))} · ${esc(letzte.wofuer || "")}${letzte.modus === "test" ? ` <span class="zm-pill-test">Test</span>` : ""}</p>` : "";
     return `<div class="zm-art" data-zmart="${esc(a.art)}">
       <div class="zm-art-kopf"><b>${esc(k.titel)}</b>${haken}</div>
-      <button type="button" class="knopf" data-zmoeffne="${esc(a.art)}"${sperre ? " disabled" : ""}>${esc(letzte ? "Erinnerung schicken" : k.knopf)}</button>
-      <div class="zm-form" data-zmform hidden>
-        <label>Betrag in €<input type="text" inputmode="decimal" maxlength="10" autocomplete="off" data-zmbetrag value="${esc(a.betrag)}" placeholder="z. B. 120,00"></label>
-        <label>Wofür<input type="text" maxlength="80" autocomplete="off" data-zmwofuer value="${esc(a.wofuer)}"><span class="leise klein">Erscheint in der Mail und im Verwendungszweck, der Name wird automatisch ergänzt. Bitte keine weiteren Namen eintragen.</span></label>
-        <div class="knopfreihe"><button type="button" class="knopf haupt" data-zmsenden="${esc(a.art)}"${laeuft ? " disabled" : ""}>Senden</button></div>
+      <button type="button" class="knopf" data-zmoeffne="${esc(a.art)}"${grund ? " disabled" : ""}>${esc(letzte ? "Erinnerung schicken" : k.knopf)}</button>
+      ${grund ? `<p class="leise klein zm-grund" data-zmgrund>${esc(grund)}</p>` : ""}
+      <div class="zm-form" data-zmform${offen ? "" : " hidden"}>
+        <label>Betrag in €<input type="text" inputmode="decimal" maxlength="10" autocomplete="off" data-zmbetrag value="${esc(betrag)}" placeholder="z. B. 120,00"></label>
+        <label>Wofür<input type="text" maxlength="80" autocomplete="off" data-zmwofuer value="${esc(wofuer)}"><span class="leise klein">Erscheint in der Mail und im Verwendungszweck, der Name wird automatisch ergänzt. Bitte keine weiteren Namen eintragen.</span></label>
         <p class="zm-fehler" data-zmmeldung role="alert" hidden></p>
+        <div class="knopfreihe"><button type="button" class="knopf haupt" data-zmsenden="${esc(a.art)}"${grund ? " disabled" : ""}>${echt ? "Mail an Schüler senden" : "Test-Mail senden"}</button></div>
+        ${grund ? `<p class="leise klein zm-grund" data-zmgrund>${esc(grund)}</p>` : ""}
       </div>
     </div>`;
   }).join("");
-  return `<div class="voll zm-block" id="zmBlock" data-entwurf><h3>Zahlung per Mail</h3>${hinweise.join("")}${zeilen}</div>`;
+  return `<div class="voll zm-block" id="zmBlock" data-zmsid="${esc(sid)}" data-entwurf><h3>Zahlung per Mail</h3>${hinweise.join("")}${zeilen}</div>`;
 }
-function zmBindeBlock(dlg, sid) {
-  const block = dlg.querySelector("#zmBlock");
-  if (!block) return;
-  const neu = (oeffne, meldung) => {
-    const alt = dlg.querySelector("#zmBlock");
-    if (!alt) return;
-    const t = document.createElement("div");
-    t.innerHTML = zmBlockHTML(sid);
-    const frisch = t.firstElementChild;
-    if (!frisch) { alt.remove(); return; }
-    alt.replaceWith(frisch);
-    zmBindeBlock(dlg, sid);
-    if (oeffne) {
-      const z = dlg.querySelector(`[data-zmart="${oeffne}"]`);
-      if (z) {
-        z.querySelector("[data-zmform]").hidden = false;
-        if (meldung) { const m = z.querySelector("[data-zmmeldung]"); m.textContent = meldung; m.hidden = false; }
-      }
-    }
-  };
+// Block neu zeichnen (immer über die Schüler-Nummer gefunden: die Akte kann inzwischen zu und wieder offen sein)
+function zmNeuZeichnen(sid, meldungArt, meldung) {
+  const alt = zmFinde(sid);
+  if (!alt) return null;
+  const dlg = alt.closest("dialog");
+  const t = document.createElement("div");
+  t.innerHTML = zmBlockHTML(sid);
+  const frisch = t.firstElementChild;
+  if (!frisch) { alt.remove(); return null; }
+  alt.replaceWith(frisch);
+  zmBinde(frisch, dlg, sid);
+  if (meldungArt && meldung) {
+    const z = frisch.querySelector(`[data-zmart="${meldungArt}"]`);
+    if (z) { const m = z.querySelector("[data-zmmeldung]"); m.textContent = meldung; m.hidden = false; if (!z.querySelector("[data-zmform]").hidden && m.scrollIntoView) m.scrollIntoView({ block: "center", behavior: "smooth" }); }
+  }
+  return frisch;
+}
+function zmBindeBlock(dlg, sid) { const b = dlg.querySelector("#zmBlock"); if (b) zmBinde(b, dlg, sid); }
+function zmBinde(block, dlg, sid) {
   block.querySelectorAll("[data-zmeinst]").forEach((a) => a.addEventListener("click", (e) => {
     e.preventDefault();
     versucheSchliessen(dlg).then((ok) => { if (ok) location.hash = "#fristen"; });
   }));
-  block.querySelectorAll("[data-zmoeffne]").forEach((b) => b.addEventListener("click", () => {
-    const f = b.closest("[data-zmart]").querySelector("[data-zmform]");
-    f.hidden = !f.hidden;
-    if (!f.hidden) { const feld = f.querySelector("[data-zmbetrag]").value ? f.querySelector("[data-zmwofuer]") : f.querySelector("[data-zmbetrag]"); feld.focus(); }
-  }));
   block.querySelectorAll("[data-zmart]").forEach((zeile) => {
-    const art = zeile.dataset.zmart, melde = zeile.querySelector("[data-zmmeldung]");
+    const art = zeile.dataset.zmart, schluessel = sid + "|" + art, melde = zeile.querySelector("[data-zmmeldung]");
     const zeigeFehler = (t) => { melde.textContent = t; melde.hidden = !t; };
+    const form = zeile.querySelector("[data-zmform]"), betragFeld = zeile.querySelector("[data-zmbetrag]"), wofuerFeld = zeile.querySelector("[data-zmwofuer]");
     const senden = zeile.querySelector("[data-zmsenden]");
-    zeile.querySelectorAll("input").forEach((i) => {
-      i.addEventListener("input", () => zeigeFehler(""));
+    zeile.querySelector("[data-zmoeffne]").addEventListener("click", () => {
+      form.hidden = !form.hidden;
+      if (form.hidden) ZM.offen.delete(schluessel); else { ZM.offen.add(schluessel); (betragFeld.value ? wofuerFeld : betragFeld).focus(); }
+    });
+    [betragFeld, wofuerFeld].forEach((i) => {
+      i.addEventListener("input", () => { zeigeFehler(""); ZM.entwurf[schluessel] = { betrag: betragFeld.value, wofuer: wofuerFeld.value }; });
       // Enter darf nicht die ganze Akte speichern: er sendet nur diese Mail
       i.addEventListener("keydown", (e) => { if (e.key === "Enter") { e.preventDefault(); e.stopPropagation(); senden.click(); } });
     });
-    senden.addEventListener("click", () => {
-      if (senden.disabled) return;
-      const cent = zmBetragCent(zeile.querySelector("[data-zmbetrag]").value);
-      const wofuer = zeile.querySelector("[data-zmwofuer]").value.trim();
-      if (cent == null) { zeigeFehler("Bitte einen Betrag zwischen 1 und 10.000 € eintragen."); zeile.querySelector("[data-zmbetrag]").focus(); return; }
-      if (!wofuer || wofuer.length > 80) { zeigeFehler("Bitte eintragen, wofür gezahlt werden soll (höchstens 80 Zeichen)."); zeile.querySelector("[data-zmwofuer]").focus(); return; }
+    senden.addEventListener("click", async () => {
+      if (senden.disabled || ZM.laeuft.size) return;
+      const cent = zmBetragCent(betragFeld.value), wofuer = wofuerFeld.value.trim();
+      if (cent == null) { zeigeFehler("Bitte einen Betrag zwischen 1 und 10.000 € eintragen."); betragFeld.focus(); return; }
+      if (!wofuer || wofuer.length > 80) { zeigeFehler("Bitte eintragen, wofür gezahlt werden soll (höchstens 80 Zeichen)."); wofuerFeld.focus(); return; }
       zeigeFehler("");
-      const schluessel = sid + "|" + art;
-      ZM.laeuft.add(schluessel);
-      neu(art);
+      const x = S.schueler.find((y) => y.id === sid) || {}, name = x.name || "Schüler";
+      const modus = zmModus(); // genau der Modus, den der Bildschirm jetzt zeigt; der Server lehnt ab, wenn er inzwischen anders ist
+      senden.disabled = true; ZM.laeuft.add(schluessel);
+      ZM.entwurf[schluessel] = { betrag: betragFeld.value, wofuer: wofuerFeld.value }; ZM.offen.add(schluessel);
+      const sitz = await zmSitzung(); // Token und PIN-Sitzung jetzt merken, nicht erst nach der Wartezeit
+      zmNeuZeichnen(sid);
       // 5 Sekunden „Rückgängig“; erst danach geht die Mail wirklich los (Zeit um oder nächster Rückgängig-Hinweis)
-      toastUndo(`Mail wird gesendet … (${zmEuroText(cent)})`, async () => {
+      const u = toastUndo(`Wird gesendet · ${zmEuroText(cent)} · ${name}`, async () => {
         ZM.laeuft.delete(schluessel);
-        neu(art);
-        toast("Abgebrochen, es wurde nichts gesendet");
+        zmNeuZeichnen(sid);
+        toast(`Abgebrochen, an ${name} wurde nichts gesendet`);
       }, {
         ms: Number(window.ZM_WARTE_MS) > 0 ? Number(window.ZM_WARTE_MS) : 5000, // Vorgabe 5 Sekunden; Tests setzen window.ZM_WARTE_MS
         nachAblauf: async (verlassen) => {
           if (verlassen) { ZM.laeuft.delete(schluessel); return; } // Seite wird verlassen: lieber nichts senden
-          const erg = await zmSende(sid, art, cent, wofuer);
+          const erg = await zmSende(sid, art, cent, wofuer, modus, sitz, name);
           ZM.laeuft.delete(schluessel);
-          if (erg.ok) { neu(null); return; }
-          toast(erg.text, true);
-          neu(art, erg.text);
+          if (erg.ok) { delete ZM.entwurf[schluessel]; ZM.offen.delete(schluessel); zmNeuZeichnen(sid); return; }
+          if (erg.code === "modus_geaendert") await zmDatenNeuLaden();
+          const text = `Mail an ${name}: ${erg.text}`;
+          const b = zmFinde(sid), sichtbar = !!(b && b.closest("dialog") && b.closest("dialog").open);
+          if (sichtbar) zmNeuZeichnen(sid, art, text); // Fehler nur einmal: im offenen Formular, sonst als Hinweis oben
+          else { zmNeuZeichnen(sid); toast(text, true); }
         },
       });
+      if (u && u.el) u.el.classList.add("zm-toast");
     });
   });
 }
-
-// Aufruf der Edge-Funktion; Rückgabe { ok } oder { ok:false, text }
-async function zmSende(sid, art, betragCent, wofuer) {
+async function zmSitzung() {
   let token = null;
   try { const { data: sd } = await supa.auth.getSession(); token = sd && sd.session ? sd.session.access_token : null; } catch (e) { /* ohne Token: der Server sagt nicht_angemeldet */ }
+  return { token, sitzung: S.sitzung ? S.sitzung.token : undefined };
+}
+// Zahlungsdaten frisch holen (nach „Modus geändert“): Bildschirm und Server sind danach wieder gleich
+async function zmDatenNeuLaden() {
+  try {
+    const r = await supa.from("fahrschule_zahlungsdaten").select("*").eq("fahrschule_id", S.fsId).maybeSingle();
+    if (!r.error) { S.zahlungsdaten = r.data || null; S.zmGeladen = true; S.zmLadefehler = false; S.zmEntwurf = null; }
+  } catch (e) { /* bleibt beim alten Stand */ }
+  if ($("zmEinst")) zeichne();
+}
+
+// Aufruf der Edge-Funktion; Rückgabe { ok } oder { ok:false, code, text }
+async function zmSende(sid, art, betragCent, wofuer, erwarteterModus, sitz, name) {
   let data = null, error = null;
   try {
-    ({ data, error } = await supa.functions.invoke("zahlungs-mail", { body: { requester_token: token, buero_sitzung: S.sitzung ? S.sitzung.token : undefined, schueler_id: sid, art, betrag_cent: betragCent, wofuer } }));
+    ({ data, error } = await supa.functions.invoke("zahlungs-mail", { body: { requester_token: sitz.token, buero_sitzung: sitz.sitzung, schueler_id: sid, art, betrag_cent: betragCent, wofuer, erwarteter_modus: erwarteterModus } }));
   } catch (e) { error = e || new Error("Netz"); }
-  let code = (data && data.fehler) || null;
+  let code = (data && data.fehler) || null, neuerModus = data && data.modus;
   if (!code && error) {
-    // Die Funktion schickt bei Fehlern einen Code mit; ohne Antwort (Netz, Funktion nicht da) bleibt es beim allgemeinen Text
-    try { const b = await error.context.json(); code = (b && (b.fehler || b.error)) || null; } catch (e) { /* keine Erklärung */ }
-    if (!code && error.message && ZM_FEHLER[error.message]) code = error.message;
+    // Die Funktion schickt bei Fehlern einen Code mit (z. B. 409 modus_geaendert); ohne Antwort (Netz, Funktion nicht da) bleibt es beim allgemeinen Text
+    try { const b = await error.context.json(); code = (b && (b.fehler || b.error)) || null; neuerModus = b && b.modus; } catch (e) { /* keine Erklärung */ }
+    if (!code && error.message && ZM_FEHLER[error.message] !== undefined) code = error.message;
   }
-  if (code) return { ok: false, text: ZM_FEHLER[code] || ZM_NICHT_MOEGLICH };
-  if (error || !data || data.ok === false) return { ok: false, text: ZM_NICHT_MOEGLICH };
+  if (code === "modus_geaendert") {
+    const m = zmModusText(neuerModus);
+    return { ok: false, code, text: `Der Modus wurde inzwischen ${m ? "auf " + m + " " : ""}umgestellt. Es wurde nichts gesendet. Bitte prüfen und noch einmal senden.` };
+  }
+  if (code) return { ok: false, code, text: ZM_FEHLER[code] || ZM_NICHT_MOEGLICH };
+  if (error || !data || data.ok === false) return { ok: false, code: null, text: ZM_NICHT_MOEGLICH };
   const jetzt = data.gesendet_am || new Date().toISOString();
   const person = (typeof PIN !== "undefined" && PIN && PIN.person && PIN.person.name) || (S.profil && S.profil.name) || null;
   if (!Array.isArray(S.zahlungsMails)) S.zahlungsMails = [];
-  S.zahlungsMails.unshift({ id: data.id || "lokal-" + Date.now(), fahrschule_id: S.fsId, schueler_id: sid, art, betrag_cent: betragCent, wofuer, modus: data.modus || (zmEcht() ? "echt" : "test"),
+  S.zahlungsMails.unshift({ id: data.id || "lokal-" + Date.now(), fahrschule_id: S.fsId, schueler_id: sid, art, betrag_cent: betragCent, wofuer, modus: data.modus || erwarteterModus,
     empfaenger_kurz: data.empfaenger_kurz || null, status: "gesendet", bearbeiter: person, angelegt_am: jetzt, gesendet_am: jetzt });
-  toast(data.modus === "test" ? "Gesendet ✓ (Test: an die Test-Adresse)" : "Gesendet ✓");
+  toast(`Gesendet an ${name} ✓${data.modus === "test" ? " (Test: an die Test-Adresse)" : ""}`);
   return { ok: true };
 }

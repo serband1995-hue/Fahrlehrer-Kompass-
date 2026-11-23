@@ -238,6 +238,8 @@ if (typeof module !== "undefined" && module.exports) { module.exports = { bauDat
     if (!w || w.length > 80) return { fehler: "wofuer" };
     const z = (F.tabellen.fahrschule_zahlungsdaten || []).find((x) => x.fahrschule_id === ich.fahrschule_id);
     if (!z || !z.kontoinhaber || !z.iban) return { fehler: "zahlungsdaten_fehlen" };
+    if (b.erwarteter_modus !== "test" && b.erwarteter_modus !== "echt") return { fehler: "ungueltige_anfrage" }; // Pflichtfeld seit Commit 963ac7d
+    if (b.erwarteter_modus !== z.modus) return { fehler: "modus_geaendert", modus: z.modus }; // wie der Server (409): nichts wird gesendet
     const heute = new Date().toISOString().slice(0, 10);
     const mails = F.tabellen.zahlungs_mails || (F.tabellen.zahlungs_mails = []);
     const echt = z.modus === "echt", heuteMails = mails.filter((m) => String(m.angelegt_am || "").slice(0, 10) === heute);

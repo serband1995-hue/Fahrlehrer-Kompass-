@@ -157,23 +157,27 @@ try {
     // Enter im Betragsfeld sendet nur diese Mail (Hinweis „Mail wird gesendet“), die Akte bleibt offen
     // Senden, dann Rückgängig innerhalb der Wartezeit
     await dlg.locator("[data-zmsenden]").click();
-    pruefe("Z3k nach „Senden“: Hinweis „Mail wird gesendet …“ mit „Rückgängig“", await page.locator(".toast-undo", { hasText: "Mail wird gesendet" }).count() === 1);
+    const s3name = await page.evaluate(() => S.schueler.find((x) => x.id === "s3").name);
+    await page.locator(".toast-undo").waitFor({ timeout: 2000 });
+    pruefe("Z3k nach „Senden“: Hinweis „Wird gesendet · 120,00 € · Name“ mit „Rückgängig“", (await page.locator(".toast-undo .toast-text").innerText()).replace(/\s+/g, " ") === `Wird gesendet · 120,00 € · ${s3name}`, await page.locator(".toast-undo .toast-text").innerText());
+    pruefe("Z3k2 Rückgängig-Knopf mindestens 44 px, „Senden“ während des Wartens gesperrt mit Grund", (await page.locator(".toast-undo [data-undo]").evaluate((e) => e.getBoundingClientRect().height)) >= 44 && await dlg.locator("[data-zmsenden]").isDisabled() && /Gerade wird gesendet/.test(await dlg.locator("[data-zmgrund]").first().innerText()));
     pruefe("Z3l während des Wartens noch kein Aufruf", (await anrufe(page)).length === 0);
     await page.locator(".toast-undo [data-undo]").click(); await page.waitForTimeout(800);
     pruefe("Z3m Rückgängig: nie ein Aufruf, nichts gespeichert, kein Haken", (await anrufe(page)).length === 0 && (await page.evaluate(() => (window.__FAKE.tabellen.zahlungs_mails || []).length)) === 0 && await dlg.locator("[data-zmhaken]").count() === 0);
-    pruefe("Z3n nach Rückgängig ist „Senden“ wieder frei", await dlg.locator("[data-zmsenden]").isEnabled());
+    pruefe("Z3n nach Rückgängig ist „Senden“ wieder frei, Eingaben bleiben", await dlg.locator("[data-zmsenden]").isEnabled() && (await dlg.locator("[data-zmbetrag]").inputValue()) === "120,00");
     // wirklich senden (Enter im Feld)
     pruefe("Z3n2 nach Rückgängig bleibt das Formular offen", await dlg.locator("[data-zmform]").isVisible());
     await dlg.locator("[data-zmbetrag]").press("Enter");
+    await page.locator(".toast-undo").waitFor({ timeout: 2000 });
     pruefe("Z3o Enter im Feld schließt die Akte nicht (sendet nur die Mail)", await page.locator("dialog[open]").count() >= 1 && await page.locator(".toast-undo").count() === 1);
     await page.waitForTimeout(1300);
     const a = await anrufe(page);
-    pruefe("Z3p nach der Wartezeit genau ein Aufruf mit Schüler, Art, Betrag in Cent, Wofür", a.length === 1 && a[0].body.schueler_id === "s3" && a[0].body.art === "pruefung" && a[0].body.betrag_cent === 12000 && a[0].body.wofuer === "Praktische Prüfung Klasse B", JSON.stringify(a));
+    pruefe("Z3p nach der Wartezeit genau ein Aufruf mit Schüler, Art, Betrag in Cent, Wofür", a.length === 1 && a[0].body.schueler_id === "s3" && a[0].body.art === "pruefung" && a[0].body.betrag_cent === 12000 && a[0].body.wofuer === "Praktische Prüfung Klasse B" && a[0].body.erwarteter_modus === "test", JSON.stringify(a));
     pruefe("Z3q der Browser schickt keinen Empfänger", a.length === 1 && !("an" in a[0].body) && !("email" in a[0].body) && !("empfaenger" in a[0].body));
     const haken = await dlg.locator("[data-zmhaken=pruefung]").innerText();
-    pruefe("Z3r Haken: „✓ gesendet am TT.MM.JJJJ HH:MM · 120,00 € · Test“", /^✓ gesendet am \d\d\.\d\d\.\d{4} \d\d:\d\d · 120,00\s*€ · Test$/.test(haken), haken);
+    pruefe("Z3r Haken: „✓ gesendet am TT.MM.JJJJ HH:MM · 120,00 € · Wofür“ mit eigener Pill „Test“", /^✓ gesendet am \d\d\.\d\d\.\d{4} \d\d:\d\d · 120,00\s*€ · Praktische Prüfung Klasse B\s*Test$/.test(haken) && (await dlg.locator("[data-zmhaken] .zm-pill-test").innerText()) === "Test", haken);
     pruefe("Z3s Knopf heißt jetzt „Erinnerung schicken“", (await dlg.locator('[data-zmoeffne=pruefung]').innerText()) === "Erinnerung schicken");
-    pruefe("Z3t Spur lokal und in der Tabelle, Erfolgs-Toast", (await page.evaluate(() => S.zahlungsMails.length)) === 1 && (await page.evaluate(() => window.__FAKE.tabellen.zahlungs_mails.length)) === 1 && /Gesendet ✓ \(Test: an die Test-Adresse\)/.test(await page.locator("#toast").innerText().catch(() => "Gesendet ✓ (Test: an die Test-Adresse)")));
+    pruefe("Z3t Spur lokal und in der Tabelle, Erfolgs-Toast", (await page.evaluate(() => S.zahlungsMails.length)) === 1 && (await page.evaluate(() => window.__FAKE.tabellen.zahlungs_mails.length)) === 1 && await page.evaluate(() => [...document.querySelectorAll(".toast")].some((t) => /Gesendet an .+ ✓ \(Test: an die Test-Adresse\)/.test(t.textContent))));
     // Haken bleibt nach Neuladen der Daten (Spur kommt aus der Tabelle)
     await page.evaluate(async () => { await ladeDaten(); });
     await schliesseAlle(page); await oeffneAkte(page, "s3");
@@ -183,7 +187,7 @@ try {
     await page.locator('[data-zmoeffne=pruefung]').click();
     await page.locator("[data-zmbetrag]").fill("50");
     await page.locator("[data-zmsenden]").click(); await page.waitForTimeout(1300);
-    pruefe("Z3v Fehler zu_viele: „Heute schon 5 Mails an diesen Schüler“ im Block", /Heute schon 5 Mails an diesen Schüler/.test(await page.locator("[data-zmmeldung]").innerText()));
+    pruefe("Z3v Fehler zu_viele: „Heute schon 5 Mails an diesen Schüler“ im Block", new RegExp(`^Mail an ${s3name}: Heute schon 5 Mails an diesen Schüler`).test(await page.locator("[data-zmmeldung]").innerText()));
     pruefe("Z3w Fehler: Formular bleibt offen, kein neuer Haken-Eintrag", await page.locator("[data-zmform]").isVisible() && (await page.evaluate(() => S.zahlungsMails.length)) === 1);
     await page.evaluate(() => { window.__FAKE.fehler = { "zahlungs-mail": "netz" }; });
     await page.locator("[data-zmsenden]").click(); await page.waitForTimeout(1300);
@@ -219,7 +223,7 @@ try {
       const erwartet = await page.evaluate((i) => (reaktBetrag(S.schueler.find((s) => s.id === i))).toFixed(2).replace(".", ","), reakt);
       pruefe("Z4e Betrag = Reaktivierungsbetrag (alter Betrag 240,00), Wofür „Reaktivierung“", (await dlg.locator("[data-zmbetrag]").inputValue()) === erwartet && erwartet === "240,00" && (await dlg.locator("[data-zmwofuer]").inputValue()) === "Reaktivierung", erwartet);
       await dlg.locator("[data-zmsenden]").click(); await page.waitForTimeout(1300);
-      pruefe("Z4f gesendet: Haken bei Reaktivierung, Betrag 240,00 €", /gesendet am .* 240,00\s*€ · Test/.test(await dlg.locator("[data-zmhaken=reaktivierung]").innerText()));
+      pruefe("Z4f gesendet: Haken bei Reaktivierung, Betrag 240,00 €", /gesendet am .* 240,00\s*€ · Reaktivierung\s*Test/.test(await dlg.locator("[data-zmhaken=reaktivierung]").innerText()));
       await schliesseAlle(page);
     }
     // Zahlung ausstehend (K8): s12
@@ -250,16 +254,18 @@ try {
     await oeffneAkte(e.page, "s3");
     dlg = e.page.locator("dialog[open]").last();
     pruefe("Z5c Echt-Modus ohne E-Mail: Knopf grau, Hinweis „Keine E-Mail-Adresse in der Akte“", await dlg.locator("[data-zmoeffne]").isDisabled() && /Keine E-Mail-Adresse in der Akte/.test(await dlg.locator("[data-zmkeinemail]").innerText()));
-    pruefe("Z5d Echt-Modus: kein Test-Hinweis", await dlg.locator("[data-zmtest]").count() === 0);
+    pruefe("Z5d Echt-Modus: kein Test-Hinweis, Knopf „Mail an Schüler senden“", await dlg.locator("[data-zmtest]").count() === 0);
     await schliesseAlle(e.page);
     await e.page.evaluate(() => { S.schueler.find((s) => s.id === "s3").email = "schueler@example.org"; window.__FAKE.tabellen.schueler.find((s) => s.id === "s3").email = "schueler@example.org"; });
     await oeffneAkte(e.page, "s3");
     dlg = e.page.locator("dialog[open]").last();
+    pruefe("Z5d2 Echt-Zeile kräftig: „Echt: Mail geht an schueler@example.org“", (await dlg.locator("[data-zmecht]").innerText()) === "Echt: Mail geht an schueler@example.org");
     await dlg.locator("[data-zmoeffne]").click();
+    pruefe("Z5d3 Senden-Knopf heißt „Mail an Schüler senden“", (await dlg.locator("[data-zmsenden]").innerText()) === "Mail an Schüler senden");
     await dlg.locator("[data-zmbetrag]").fill("120");
     await dlg.locator("[data-zmsenden]").click(); await e.page.waitForTimeout(1300);
     const haken = await dlg.locator("[data-zmhaken=pruefung]").innerText();
-    pruefe("Z5e Echt mit E-Mail: Haken ohne „Test“", /^✓ gesendet am .* 120,00\s*€$/.test(haken), haken);
+    pruefe("Z5e Echt mit E-Mail: Haken ohne „Test“", /^✓ gesendet am .* 120,00\s*€ · Praktische Prüfung Klasse B$/.test(haken), haken);
     await e.ctx.close();
   }
 
@@ -296,11 +302,13 @@ try {
     const dlg = page.locator("dialog[open]").last();
     await dlg.locator("[data-zmoeffne]").click();
     await dlg.locator("[data-zmbetrag]").fill("50");
-    await dlg.locator("[data-zmsenden]").click(); await page.waitForTimeout(100);
+    await dlg.locator("[data-zmsenden]").click(); await page.locator(".toast-undo").waitFor({ timeout: 2000 });
     const dl = await dlg.evaluate((d) => [d.scrollWidth, d.clientWidth, document.documentElement.scrollWidth - window.innerWidth, [...d.querySelectorAll("#zmBlock *")].filter((e) => e.getBoundingClientRect().right > window.innerWidth + 1).length]);
     pruefe("Z7d Akte mit offenem Formular 360 px: kein seitliches Wischen", dl[0] <= dl[1] + 1 && dl[2] <= 0 && dl[3] === 0, JSON.stringify(dl));
     const hohe = await dlg.evaluate((d) => [...d.querySelectorAll("[data-zmoeffne], [data-zmsenden], [data-zmbetrag], [data-zmwofuer]")].filter((e) => e.getBoundingClientRect().height < 44).length);
     pruefe("Z7e Knöpfe und Felder im Block mindestens 44 px", hohe === 0, String(hohe));
+    const lage = await page.evaluate(() => { const t = document.querySelector(".toast-undo").getBoundingClientRect(), f = document.querySelector("dialog[open] footer").getBoundingClientRect(); return [t.bottom, f.top, t.left, t.right]; });
+    pruefe("Z7e2 Rückgängig-Hinweis liegt nicht über „Abbrechen/Speichern“ (360 px) und ragt nicht seitlich hinaus", lage[0] <= lage[1] && lage[2] >= 0 && lage[3] <= 360, JSON.stringify(lage));
     await page.waitForTimeout(1200);
     pruefe("Z7f keine JS-Fehler", jsFehler(konsole).length === 0, konsole.join(" | "));
     await ctx.close();
@@ -314,6 +322,64 @@ try {
     const farben = await page.evaluate(() => { const t = document.querySelector("[data-zmtest]"), a = document.querySelector(".zm-art"); return [getComputedStyle(t).color, getComputedStyle(t).backgroundColor, getComputedStyle(a).backgroundColor]; });
     pruefe("Z8 dunkel: Test-Hinweis hat Text- und Hintergrundfarbe aus den Variablen (nicht gleich)", farben[0] !== farben[1], JSON.stringify(farben));
     await ctx.close();
+  }
+
+  // Z9 Nachbesserung: Modus geändert, Haken je Modus, Ladefehler, Konflikt beim Speichern, Entwürfe, nur eine Mail zugleich
+  {
+    // a) Modus inzwischen umgestellt: Server lehnt ab, nichts gesendet, Bildschirm zieht nach
+    const a = await oeffne({ nutzer: "ad-1", vorbereiten: vor() });
+    await oeffneAkte(a.page, "s3");
+    let dlg = a.page.locator("dialog[open]").last();
+    await dlg.locator("[data-zmoeffne]").click();
+    await a.page.evaluate(() => { window.__FAKE.tabellen.fahrschule_zahlungsdaten[0].modus = "echt"; });
+    await dlg.locator("[data-zmsenden]").click(); await a.page.waitForTimeout(1500);
+    const t = await dlg.locator("[data-zmmeldung]").innerText();
+    pruefe("Z9a Modus inzwischen Echt: „Der Modus wurde inzwischen auf Echt umgestellt. Es wurde nichts gesendet …“ mit Namen", /^Mail an .+: Der Modus wurde inzwischen auf Echt umgestellt\. Es wurde nichts gesendet\. Bitte prüfen und noch einmal senden\.$/.test(t), t);
+    pruefe("Z9b nichts gesendet, Bildschirm zeigt jetzt Echt (Zeile und Knopf)", (await a.page.evaluate(() => (window.__FAKE.tabellen.zahlungs_mails || []).length)) === 0 && await dlg.locator("[data-zmecht]").count() === 1 && (await dlg.locator("[data-zmsenden]").innerText()) === "Mail an Schüler senden" && await a.page.evaluate(() => S.zahlungsdaten.modus === "echt"));
+    pruefe("Z9b2 Fehler steht nur einmal (kein Toast-Duplikat)", await a.page.evaluate(() => [...document.querySelectorAll(".toast.fehler.zeigen")].filter((x) => /Mail an/.test(x.textContent)).length) === 0);
+    await a.ctx.close();
+    // b) Haken nur im aktuellen Modus: Test-Mail alt, Modus Echt → kein Haken, Knopf nicht „Erinnerung“
+    const b = await oeffne({ nutzer: "ad-1", vorbereiten: vor({ modus: "echt", extra: `F.tabellen.schueler.find((x) => x.id === "s3").email = "schueler@example.org"; F.tabellen.zahlungs_mails = [{ id: "m1", fahrschule_id: "fs-test-1", schueler_id: "s3", art: "pruefung", betrag_cent: 12000, wofuer: "Praktische Prüfung Klasse B", modus: "test", status: "gesendet", angelegt_am: new Date().toISOString(), gesendet_am: new Date().toISOString() }];` }) });
+    await oeffneAkte(b.page, "s3");
+    dlg = b.page.locator("dialog[open]").last();
+    pruefe("Z9c Echt-Modus: Test-Haken erscheint nicht, Knopf heißt nicht „Erinnerung schicken“", await dlg.locator("[data-zmhaken]").count() === 0 && (await dlg.locator("[data-zmoeffne]").innerText()) === "Zahlungsaufforderung verschicken");
+    await b.ctx.close();
+    // c) Ladefehler (nicht „Tabelle fehlt“)
+    const c = await oeffne({ nutzer: "ad-1", vorbereiten: vor({ extra: `F.fehler = { fahrschule_zahlungsdaten: "Failed to fetch" };` }) });
+    pruefe("Z9d Ladefehler: Einstellungen zeigen Hinweis statt Formular", /Zahlungsdaten konnten nicht geladen werden\. Bitte Seite neu laden\./.test(await c.page.locator("#zmEinst").innerText()) && await c.page.locator("#zmForm").count() === 0);
+    await oeffneAkte(c.page, "s3");
+    dlg = c.page.locator("dialog[open]").last();
+    pruefe("Z9e Ladefehler: Akte mit demselben Hinweis, Knopf gesperrt", /nicht geladen werden/.test(await dlg.locator("[data-zmladefehler]").innerText()) && await dlg.locator("[data-zmoeffne]").isDisabled());
+    await c.page.evaluate(() => { window.__FAKE.fehler = {}; });
+    await c.page.evaluate(async () => { await ladeDaten(); });
+    pruefe("Z9f später erfolgreich geladen: Hinweis weg, Formular da", await c.page.locator("#zmForm").count() === 1);
+    await c.ctx.close();
+    // d) Konflikt beim Speichern + Entwurf übersteht Neuzeichnen
+    const d = await oeffne({ nutzer: "ad-1", vorbereiten: vor() });
+    await d.page.fill("#zmForm input[name=kontoinhaber]", "Neuer Entwurf Muster");
+    await d.page.evaluate(() => zeichne());
+    pruefe("Z9g ungespeicherte Eingabe überlebt das Neuzeichnen", (await d.page.locator("#zmForm input[name=kontoinhaber]").inputValue()) === "Neuer Entwurf Muster");
+    await d.page.evaluate(() => { window.__FAKE.tabellen.fahrschule_zahlungsdaten[0].geaendert_am = "2026-11-22T08:00:00Z"; window.__FAKE.tabellen.fahrschule_zahlungsdaten[0].kontoinhaber = "Andere Person"; });
+    await d.page.click("#zmSpeichern"); await d.page.waitForTimeout(300);
+    pruefe("Z9h Jemand anderes hat geändert: Hinweis, nichts überschrieben", /inzwischen von jemand anderem geändert/.test(await d.page.locator("[data-zmspeicher]").innerText()) && (await d.page.evaluate(() => window.__FAKE.tabellen.fahrschule_zahlungsdaten[0].kontoinhaber)) === "Andere Person");
+    await d.ctx.close();
+    // e) nur eine Mail zugleich; Entwurf bleibt nach Rückgängig
+    const e = await oeffne({ nutzer: "ad-1", vorbereiten: vor({ extra: `const q = F.tabellen.schueler.find((x) => x.id === "s3"); q.zahlung_gesperrt_seit = ${JSON.stringify(HEUTE)};` }) });
+    await oeffneAkte(e.page, "s3");
+    dlg = e.page.locator("dialog[open]").last();
+    await dlg.locator("[data-zmoeffne=pruefung]").click();
+    await dlg.locator('[data-zmart=pruefung] [data-zmbetrag]').fill("88");
+    await dlg.locator("[data-zmsenden=pruefung]").click(); await e.page.locator(".toast-undo").waitFor({ timeout: 2000 });
+    const anderes = dlg.locator("[data-zmart=zahlung_offen]");
+    pruefe("Z9i andere Art während der Wartezeit gesperrt: „Erst die laufende Mail abwarten“", await anderes.locator("[data-zmoeffne]").isDisabled() && /Erst die laufende Mail abwarten/.test(await anderes.locator("[data-zmgrund]").first().innerText()));
+    await e.page.locator(".toast-undo [data-undo]").click(); await e.page.waitForTimeout(400);
+    pruefe("Z9j nach Rückgängig sind beide wieder frei, Betrag „88“ bleibt stehen", await anderes.locator("[data-zmoeffne]").isEnabled() && (await dlg.locator('[data-zmart=pruefung] [data-zmbetrag]').inputValue()) === "88");
+    // Akte zu und wieder auf, während die Mail wartet: Block wird neu gefunden
+    await dlg.locator("[data-zmsenden=pruefung]").click(); await e.page.locator(".toast-undo").waitFor({ timeout: 2000 });
+    await schliesseAlle(e.page); await oeffneAkte(e.page, "s3");
+    await e.page.waitForTimeout(1500);
+    pruefe("Z9k Akte zu und wieder auf während des Wartens: Mail geht raus, Haken erscheint im neuen Fenster", await e.page.locator("[data-zmhaken=pruefung]").count() === 1 && (await anrufe(e.page)).length === 1);
+    await e.ctx.close();
   }
 } finally {
   await browser.close();

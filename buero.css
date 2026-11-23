@@ -763,3 +763,15 @@ body.kiosk .rollen-streifen{display:none;}
   .zm-art > .knopf{justify-self:stretch;}
   .zm-form .knopfreihe .knopf{flex:1 1 100%;}
 }
+/* Zahlung per Mail, Nachbesserung: Test und Echt unverwechselbar, Haken, Rückgängig-Hinweis */
+.zm-echt{margin:0;padding:10px 14px;border-radius:var(--r-klein);background:#8f2a1b;color:#fff;font-weight:800;font-size:17px;overflow-wrap:anywhere;}
+.zm-aktuell{margin:0;padding:10px 14px;border-radius:var(--r-klein);font-weight:800;overflow-wrap:anywhere;}
+.zm-aktuell.echt{background:#8f2a1b;color:#fff;}
+.zm-aktuell.test{background:var(--gelb-soft);color:var(--txt);border:1px solid var(--gelb);}
+.zm-pill-test{display:inline-block;padding:1px 10px;border-radius:999px;background:var(--gelb);color:#1d1f17;font-weight:700;font-size:14px;vertical-align:baseline;}
+.zm-haken{color:var(--pill-gruen);}
+.zm-grund{margin:0;}
+.formular .zm-wahl input{accent-color:var(--akzent);}
+.zm-form .zm-fehler{margin:0;}
+.toast.toast-undo.zm-toast{bottom:auto;top:72px;}
+.toast-undo.zm-toast .toast-knopf{min-height:44px;min-width:44px;padding:8px 16px;}
