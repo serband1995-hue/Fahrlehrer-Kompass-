@@ -10,6 +10,7 @@
 //   Z6v App: „Mit anderem Schüler gefahren“ – Tausch auf Gesperrten geblockt, auf Freien erlaubt; Z6q Toast „Online-Buchung wartet“ einmal je Buchung; Z7e Toast „Termin nicht gespeichert“
 //   Z8  Alte Datenbank (Spalten fehlen): App und Büro laufen, Büro zeigt eine verständliche Meldung statt Rohfehler
 //   Z9  Leitung (Fahrschul-Ansicht, _fsAgg): Hinweis am bestehenden Termin eines Gesperrten
+//   Z10 Büro-Papierkorb: „Wiederherstellen“ bei P0001 „Zahlung ausstehend“ zeigt die Zahlungs-Meldung (nicht „Leitung“); anderes P0001 weiter „Leitung hat entfernt“
 // Aufruf:  NODE_PATH=$(npm root -g) node scripts/zahlung-test.mjs        (Exit-Code 1 bei Fehler)
 import { createRequire } from "node:module";
 import { createServer } from "node:http";
@@ -766,6 +767,48 @@ const lesson = (id, sid, date, von, bis) => ({ id, date, von, bis, art: "fahrstu
       if (a === null) f.push("Termin Anna nicht sichtbar"); else if (a) f.push("Anna mit Hinweis");
       return f; }));
   await pruefe("Z9c", "Leitung: keine JS-Fehler, kein confirm", async () => (jsFehler.length || (await page.evaluate(() => window.__confirm)) ? jsFehler.concat("confirm " + (await page.evaluate(() => window.__confirm))) : null));
+  await ctx.close();
+  });
+}
+
+// ---- Z10: Büro-Papierkorb, „Wiederherstellen“ bei Zahlungssperre ----
+{
+  await abschnitt("Büro-Papierkorb Z10", async () => {
+  const vor = new Date(Date.now() - 864e5).toISOString();
+  const { page, ctx, konsole } = await oeffneBuero({ hash: "#kalender", code: `
+    const pk = (id, sid) => ({ id, fahrschule_id: "${FS}", fahrlehrer_id: "fl-1", schueler_id: sid, datum: t(-1), von: "08:00", bis: "09:30", art: "fahrstunde", fahrzeug: null, status: "geplant", geloescht: true, geloescht_am: "${vor}", aktualisiert_am: "${vor}", payload: {}, buero_fc_status: "offen" });
+    F.tabellen.kalender_termine.push(pk("pk-zahl", "zb"), pk("pk-leitung", "za"));` });
+  const toastText = () => page.evaluate(() => (document.getElementById("toast") || {}).textContent || "");
+  for (let versuch = 0; versuch < 2; versuch++) {
+    await page.evaluate((h) => { location.hash = h; }, "#kalender?ansicht=tag&tag=" + tag(0) + (versuch ? "&x=" + versuch : "")); await warte(page, 600);
+    if (await page.waitForSelector("#pkKarte", { timeout: 4000 }).then(() => true, () => false)) break;
+  }
+  await page.waitForFunction(() => /Papierkorb \(\d+\)/.test((document.querySelector("#pkKarte summary") || {}).textContent || ""), null, { timeout: 8000 }).catch(() => {});
+  await page.evaluate(() => { const k = document.getElementById("pkKarte"); if (k) k.open = true; }); await warte(page, 200);
+  await page.evaluate(() => { window.__FAKE.hook = (a) => (a.tabelle === "kalender_termine" && a.art === "update"
+    ? { data: null, error: a.werte && a.werte.geloescht === false && window.__pkFehler ? window.__pkFehler : null } : null); });
+  const zurueck = async (id, fehler) => {
+    await page.evaluate((e) => { window.__pkFehler = e; document.getElementById("toast").textContent = ""; }, fehler);
+    await page.click(`[data-pkzurueck="${id}"]`); await warte(page, 500);
+    return toastText();
+  };
+  await pruefe("Z10a", "Büro-Papierkorb: Termin eines Gesperrten, „Wiederherstellen“ → Server P0001 „Zahlung ausstehend“ → Toast mit „Zahlung ausstehend“, ohne „Leitung“", async () => {
+    if (!(await page.$('[data-pkzurueck="pk-zahl"]'))) return "Wiederherstellen-Knopf fehlt";
+    const m = await zurueck("pk-zahl", { code: "P0001", message: "Zahlung ausstehend: Rechnung offen" });
+    const f = [];
+    if (!/Zahlung ausstehend/.test(m)) f.push("kein „Zahlung ausstehend“");
+    if (/Leitung/.test(m)) f.push("fälschlich „Leitung“");
+    return f.length ? f.concat("Toast: " + m) : null;
+  });
+  await pruefe("Z10b", "Büro-Papierkorb: P0001 ohne Zahlungstext („Termin entfernt …“) zeigt weiter „die Leitung hat diesen Termin entfernt“", async () => {
+    if (!(await page.$('[data-pkzurueck="pk-leitung"]'))) return "Wiederherstellen-Knopf fehlt";
+    const m = await zurueck("pk-leitung", { code: "P0001", message: "Termin entfernt: von der Leitung gelöscht" });
+    return /die Leitung hat diesen Termin entfernt/.test(m) && !/Zahlung ausstehend/.test(m) ? null : "Toast: " + m;
+  });
+  await pruefe("Z10c", "Büro-Papierkorb: Termine bleiben im Papierkorb (kein Erfolg vorgetäuscht), keine Konsolenfehler, kein Fenster", async () => {
+    const n = await page.locator("[data-pkzurueck]").count();
+    return n === 2 && !konsole.length ? null : `Zeilen im Papierkorb ${n} · ${konsole.join(" | ")}`;
+  });
   await ctx.close();
   });
 }

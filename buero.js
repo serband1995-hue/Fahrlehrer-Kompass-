@@ -793,7 +793,6 @@ async function zahlungErhalten(id, nachher) {
   if (!s) return;
   const neu = KR.reaktNachZahlung(s);
   if (!neu) { fristenDialog(id); return; }
-  const betragStd = reaktBetragFuer(s);
   const personen = bueroPersonen();
   const body = `<p>Reaktivierung von <b>${esc(s.name)}</b>. Die nächste ist dann am <b>${esc(datumDE(neu))}</b> fällig. Bitte die Zahlung auch in ClickClickDrive vermerken.</p>
     <div class="formular">

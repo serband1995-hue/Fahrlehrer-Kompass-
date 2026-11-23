@@ -8,7 +8,7 @@ window.KOMPASS_NEU = [
     punkte: ["Das Büro kann bei einem Schüler „Zahlung offen“ eintragen und später „Bezahlt“. Danach kommt ein Hinweis mit „Rückgängig“.",
              "Solange eine Zahlung offen ist, gibt es für den Schüler keine neuen Termine: nicht in der App, nicht im Büro und nicht online.",
              "Das gilt auch, wenn die Reaktivierung überfällig ist.",
-             "Termine, die schon stehen, bleiben. Du siehst daran „Zahlung ausstehend“ bzw. im Kalender „€!“.",
+             "Termine, die schon stehen, bleiben. Du siehst daran „Zahlung ausstehend“, im Kalender „€!“.",
              "Wartet eine Online-Buchung wegen offener Zahlung, bekommst du einen kurzen Hinweis."] },
   { version: "2026.11.23.5", datum: "2026-11-23", kurz: "Neu im Büro: Preisliste mit „gültig ab“.",
     punkte: ["Im Büro gibt es unter „Geld“ die Seite „Preisliste“: Grundbetrag, Fahrstunde je Klasse, Sonderfahrten, Prüfungen, Reaktivierung und Pakete.",
