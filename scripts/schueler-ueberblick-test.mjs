@@ -123,7 +123,7 @@ const breit = (page) => page.evaluate(() => { const d = document.documentElement
   // Fehlschlag: Fenster bleibt offen, Knöpfe wieder frei
   await page.evaluate(() => { window.__weiterAntwort = { data: null, error: { message: "Failed to fetch" } }; });
   await page.click('[data-weiter="s-eigen"]'); await warte(page, 500);
-  await page.click('[data-an="u-jelena"]'); await warte(page, 800);
+  await page.click('[data-an="u-jelena"]'); await warte(page, 2300); // 1,5 s Hochladen abwarten (Richter E1), dann Antwort
   await pruefe("U9", "Fehlschlag: Hinweis, Fenster bleibt offen, Knopf wieder antippbar", () => page.evaluate(() => {
     const t = document.getElementById("toast").textContent; if (!/Nicht weitergegeben/.test(t)) return "Hinweis: " + t;
     const b = document.querySelector('[data-an="u-jelena"]'); return b && !b.disabled ? null : (b ? "Knopf gesperrt" : "Fenster zu");
@@ -131,7 +131,7 @@ const breit = (page) => page.evaluate(() => { const d = document.documentElement
   await page.evaluate(() => { window.__weiterAntwort = null; if (typeof closeSheet === "function") closeSheet(); }); await warte(page, 400);
   await page.click('[data-weiter="s-eigen"]'); await warte(page, 500);
   await pruefe("U4a", "Auswahl zeigt „An Jelena“, nicht sich selbst", () => page.evaluate(() => { const t = document.getElementById("sheet").textContent; return /An Jelena/.test(t) && !/An Ich Muster/.test(t) ? null : t.slice(0, 200); }));
-  await page.click('[data-an="u-jelena"]'); await warte(page, 2600);
+  await page.click('[data-an="u-jelena"]'); await warte(page, 3800);
   await pruefe("U4", "Weitergeben: Server-Funktion, kein Bestätigen-Fenster, Hinweis, Schüler weg vom Gerät", () => page.evaluate((dlg) => {
     const c = __rpc.find((x) => x.name === "schueler_weitergeben"); if (!c || c.args.p_schueler !== "s-eigen" || c.args.p_an !== "u-jelena") return "Aufruf: " + JSON.stringify(c);
     if (dlg.length) return "Fenster: " + dlg.join(" | ");
