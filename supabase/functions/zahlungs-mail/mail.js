@@ -162,7 +162,7 @@ ${test}
     </table>
     <div style="text-align:center;padding:16px 0 4px;">
       <img src="cid:girocode" width="160" height="160" alt="GiroCode">
-      <div style="${font}font-size:14px;color:#5a5a50;margin-top:8px;">Am Handy: IBAN antippen und kopieren. Am Computer: Code mit der Banking-App scannen, dann ist alles ausgefüllt.</div>
+      <div style="${font}font-size:14px;color:#5a5a50;margin-top:8px;">Am Handy: IBAN gedrückt halten und kopieren. Am Computer: Code mit der Banking-App scannen, dann ist alles ausgefüllt.</div>
     </div>
   </td></tr></table>
 </td></tr>
