@@ -2936,7 +2936,7 @@ if(_tok&&!_bio){ document.getElementById("loginOverlay").classList.add("hidden")
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
       Einstellungen</button>
   </nav>
-  <div class="drawer-logout" id="drawerLogout" hidden style="padding:0 12px 8px;">
+  <div class="drawer-logout" id="drawerLogout" hidden style="padding:6px 12px 8px;border-top:1px solid var(--line);">
     <button class="nav-item" id="drawerLogoutBtn" type="button" onclick="closeDrawer();if(confirm('Wirklich abmelden?'))doLogout();">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4M16 17l5-5-5-5M21 12H9"/></svg>
       Abmelden</button>
@@ -5942,8 +5942,8 @@ function _fsDrawerNavHTML(zeigeZurueck){
     <button class="nav-item" data-nav="neuigkeiten">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 8v4l3 2"/><circle cx="12" cy="12" r="9"/></svg>
       Neuigkeiten</button>
-    <div class="nav-sep"></div>
-    ${zeigeZurueck?`<button class="nav-item primary" data-nav="fs_exit">
+    ${zeigeZurueck?`<div class="nav-sep"></div>
+    <button class="nav-item primary" data-nav="fs_exit">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 12H5M12 19l-7-7 7-7"/></svg>
       Zu meiner Fahrlehrer-Ansicht</button>`:''}`;
 }
