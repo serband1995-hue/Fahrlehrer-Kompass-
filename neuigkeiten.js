@@ -4,6 +4,12 @@
    "kurz" (höchstens ~60 Zeichen) erscheint nach dem Update einmal als kleiner Hinweis (verschwindet von selbst, kein Knopf).
    Einfache Worte, keine Fachwörter, keine Schülerdaten. */
 window.KOMPASS_NEU = [
+  { version: "2026.11.23.3", datum: "2026-11-23", kurz: "Löschen ohne Rückfrage, mit Rückgängig.",
+    punkte: ["Beim Löschen kommt keine Rückfrage mehr, sondern ein kurzer Hinweis mit „Rückgängig“.",
+             "Ein falsch eingetragener Termin verschwindet sofort aus allen Ansichten.",
+             "Gefahrene oder unterschriebene Stunden werden nicht gelöscht, sondern mit kurzem Grund storniert. Sie bleiben aufbewahrt.",
+             "Im Büro-Kalender gibt es einen Papierkorb zum Aufklappen. Er leert sich nach 30 Tagen von selbst.",
+             "Ausgeblendete Schüler liegen im Archiv und werden nicht von selbst gelöscht."] },
   { version: "2026.11.23.2", datum: "2026-11-23", kurz: "Zurück klappt jetzt überall, Prüfer-Notiz bleibt.",
     punkte: ["Nach dem Knopf „Prüfer“ und ähnlichen Knöpfen führt der Zurück-Pfeil wieder richtig zurück.",
              "Eine angefangene Notiz zu einem Prüfer bleibt stehen, wenn du kurz zurückgehst und wiederkommst."] },
