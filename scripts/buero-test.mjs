@@ -324,8 +324,7 @@ for (const [breite, hoehe] of [[1920, 1080], [1366, 768], [1024, 768]]) {
     if (t2.von !== "19:00") fehler("Kalender: Verschieben nicht gespeichert");
     await page.click(`[data-termin="${t.id}"]`);
     await page.check("dialog input[name=absagen]");
-    await page.click("dialog button[value=ok]");
-    await page.click("dialog >> nth=1 >> button[value=ok]");
+    await page.click("dialog button[value=ok]"); // K7: ohne Rückfrage, Rückgängig
     await page.waitForTimeout(300);
     const t3 = await page.evaluate((id) => window.__FAKE.tabellen.kalender_termine.find((x) => x.id === id), t.id);
     if (!t3.geloescht) fehler("Kalender: Absagen nicht gespeichert");
@@ -1700,7 +1699,7 @@ for (const nutzer of ["ad-1", "sa-1"]) {
   await page.evaluate(() => terminDialog("t-ob")); await page.waitForTimeout(200);
   await page.check("dialog input[name=absagen]");
   await page.click("dialog button[value=ok]"); await page.waitForTimeout(150);
-  await page.locator("dialog[open]").last().locator("button[value=ok]").click(); await page.waitForTimeout(400);
+  await page.waitForTimeout(400); // K7: Absagen ohne Rückfrage
   if (!(await T("t-ob")).geloescht) fehler("P2 B9: Absage nicht gespeichert");
   if (!(await undoDa()) || !/Termin abgesagt/.test(await page.textContent(".toast-undo"))) fehler("P2 B9: kein Rückgängig-Hinweis nach dem Absagen");
   if (await page.evaluate(() => S.termine.some((x) => x.id === "t-ob"))) fehler("P2 B9: abgesagter Termin steht noch im Büro");
@@ -1713,7 +1712,7 @@ for (const nutzer of ["ad-1", "sa-1"]) {
   await page.evaluate(() => terminDialog("t-ob")); await page.waitForTimeout(200);
   await page.check("dialog input[name=absagen]");
   await page.click("dialog button[value=ok]"); await page.waitForTimeout(150);
-  await page.locator("dialog[open]").last().locator("button[value=ok]").click(); await page.waitForTimeout(3000);
+  await page.waitForTimeout(3000); // K7: Absagen ohne Rückfrage
   if (mails !== 0) fehler("P2 B9: Mail schon nach 3 Sekunden");
   await page.waitForTimeout(4000);
   if (mails !== 1) fehler(`P2 B9: Absage-Mail nach Ablauf: ${mails} statt 1`);
@@ -1816,21 +1815,17 @@ for (const nutzer of ["ad-1", "sa-1"]) {
     await page.click("[data-notizoeffnen]"); await page.waitForTimeout(300);
     if ((await tab("schueler_notizen"))[0].erledigt_am) fehler("P2 B10: Wieder öffnen setzt erledigt_am nicht zurück");
   }
-  // Löschen mit Rückfrage, dann Rückgängig (gleiche Notiz kommt zurück)
+  // K7 (🗣 „keine Meldungen, wo ich etwas bestätigen soll“): Löschen ohne Rückfrage, dann Rückgängig (gleiche Notiz kommt zurück)
   const nid = (await tab("schueler_notizen"))[0].id;
-  await page.click("[data-notizweg]"); await page.waitForTimeout(200);
-  if (!/Notiz löschen\?/.test(await page.locator("dialog[open]").last().textContent())) fehler("P2 D13: Löschen ohne Rückfrage");
-  await page.locator("dialog[open]").last().locator("footer [data-schliessen]").click(); await page.waitForTimeout(200);
-  if ((await tab("schueler_notizen")).length !== 1) fehler("P2 D13: Abbrechen löscht trotzdem");
-  await page.click("[data-notizweg]"); await page.waitForTimeout(200);
-  await page.locator("dialog[open]").last().locator("button[value=ok]").click(); await page.waitForTimeout(300);
+  const dlgVor = await page.locator("dialog[open]").count();
+  await page.click("[data-notizweg]"); await page.waitForTimeout(300);
+  if ((await page.locator("dialog[open]").count()) > dlgVor) fehler("K7: Notiz löschen fragt noch nach");
   if ((await tab("schueler_notizen")).length !== 0) fehler("P2 D13: Notiz nicht gelöscht");
   if (await page.evaluate(() => S.notizen.length) !== 0) fehler("P2 D13: gelöschte Notiz steht noch im Büro");
   await undo().locator("[data-undo]").click(); await page.waitForTimeout(300);
   const nz = await tab("schueler_notizen");
   if (nz.length !== 1 || nz[0].id !== nid || nz[0].text !== "Geänderte Notiz" || nz[0].art !== "stopp") fehler("P2 D13: Rückgängig nach Löschen stellt die Notiz nicht her " + JSON.stringify(nz));
-  await page.click("[data-notizweg]"); await page.waitForTimeout(200);
-  await page.locator("dialog[open]").last().locator("button[value=ok]").click(); await page.waitForTimeout(300);
+  await page.click("[data-notizweg]"); await page.waitForTimeout(300);
   await page.evaluate(() => undoAblaufen()); await page.waitForTimeout(200);
   if ((await tab("schueler_notizen")).length !== 0) fehler("P2 D13: Notiz nach Ablauf wieder da");
 
@@ -1851,9 +1846,9 @@ for (const nutzer of ["ad-1", "sa-1"]) {
   a = (await tab("schueler_aufgaben"))[0];
   if (a.erledigt_am || a.erledigt_von) fehler("P2: Rückgängig bei Aufgabe erledigt " + JSON.stringify(a));
   const aid = a.id;
-  await page.click("[data-agweg]"); await page.waitForTimeout(200);
-  if (!/Aufgabe löschen\?/.test(await page.locator("dialog[open]").last().textContent())) fehler("P2 D13: Aufgabe löschen ohne Rückfrage");
-  await page.locator("dialog[open]").last().locator("button[value=ok]").click(); await page.waitForTimeout(300);
+  const dlgVorA = await page.locator("dialog[open]").count();
+  await page.click("[data-agweg]"); await page.waitForTimeout(300);
+  if ((await page.locator("dialog[open]").count()) > dlgVorA) fehler("K7: Aufgabe löschen fragt noch nach");
   if ((await tab("schueler_aufgaben")).length !== 0) fehler("P2 D13: Aufgabe nicht gelöscht");
   await undo().locator("[data-undo]").click(); await page.waitForTimeout(300);
   const ag = await tab("schueler_aufgaben");
@@ -1873,8 +1868,7 @@ for (const nutzer of ["ad-1", "sa-1"]) {
   await page.locator("dialog[open]").last().locator("textarea[name=text]").fill("Heute zurückrufen");
   await page.locator("dialog[open]").last().locator("button[value=ok]").click(); await page.waitForTimeout(300);
   if ((await tab("schueler_aufgaben"))[0].text !== "Heute zurückrufen") fehler("P2: Aufgabe auf „Heute zu tun“ bearbeiten klappt nicht");
-  await page.click("[data-hagweg]"); await page.waitForTimeout(200);
-  await page.locator("dialog[open]").last().locator("button[value=ok]").click(); await page.waitForTimeout(300);
+  await page.click("[data-hagweg]"); await page.waitForTimeout(300); // K7: ohne Rückfrage
   if ((await tab("schueler_aufgaben")).length !== 0) fehler("P2: Aufgabe auf „Heute zu tun“ löschen klappt nicht");
   if (konsole.length) fehler("P2 Notizen/Aufgaben: Konsole: " + konsole.join(" | "));
   await ctx.close();
@@ -1908,8 +1902,7 @@ for (const breite of [1280, 1366, 1920]) {
   await page.locator("dialog[open]").first().locator("header [data-schliessen]").click(); await page.waitForTimeout(150); await verwerfenJa(page);
   if ((await page.evaluate(() => window.__FAKE.tabellen.fahrschule_fahrzeuge.length)) !== 4) fehler("P2 B10: Fahrzeug trotz Warnung/Abbrechen angelegt");
   // Entfernen → Rückgängig
-  await page.click('[data-fzweg="fz-4"]'); await page.waitForTimeout(200);
-  await page.locator("dialog[open]").last().locator("button[value=ok]").click(); await page.waitForTimeout(300);
+  await page.click('[data-fzweg="fz-4"]'); await page.waitForTimeout(300); // K7: ohne Rückfrage
   if ((await fz("fz-4")).aktiv !== false) fehler("P2 B10: Fahrzeug nicht entfernt");
   if (!(await undo().isVisible())) fehler("P2 B10: kein Rückgängig nach Entfernen");
   await pruefeLayout(page, `Flotte mit Rückgängig ${breite}`); await pruefeBreite(page, `Flotte mit Rückgängig ${breite}`);
@@ -1918,8 +1911,7 @@ for (const breite of [1280, 1366, 1920]) {
   await undo().locator("[data-undo]").click(); await page.waitForTimeout(300);
   if ((await fz("fz-4")).aktiv !== true || !(await page.$('[data-fzweg="fz-4"]'))) fehler("P2 B10: Rückgängig bringt das Fahrzeug nicht zurück");
   // Entfernen, Hinweis läuft ab: Liste „Entfernte Fahrzeuge“ mit „Zurückholen“
-  await page.click('[data-fzweg="fz-4"]'); await page.waitForTimeout(200);
-  await page.locator("dialog[open]").last().locator("button[value=ok]").click(); await page.waitForTimeout(300);
+  await page.click('[data-fzweg="fz-4"]'); await page.waitForTimeout(300); // K7: ohne Rückfrage
   await page.evaluate(() => undoAblaufen());
   await page.click(".fz-weg summary"); await page.waitForTimeout(150);
   if (!/Golf Automatik 2/.test(await page.textContent(".fz-weg"))) fehler("P2 B10: entferntes Fahrzeug nicht in der Liste");
@@ -1957,7 +1949,7 @@ for (const breite of [1280, 1366, 1920]) {
   await page.evaluate(() => terminDialog("t-ob")); await page.waitForTimeout(200);
   await page.check("dialog input[name=absagen]");
   await page.click("dialog button[value=ok]"); await page.waitForTimeout(150);
-  await page.locator("dialog[open]").last().locator("button[value=ok]").click(); await page.waitForTimeout(500);
+  await page.waitForTimeout(500); // K7: Absagen ohne Rückfrage
   if (await page.evaluate(() => JSON.parse(localStorage.getItem("buero-offene-absagen") || "[]").length) !== 1) fehler("P2 Mail: offene Absage wird nicht gemerkt");
   // Seite stirbt innerhalb der 6 Sekunden (Hinweis samt Zeitgeber weg, keine Mail): der nächste Start holt die Mail nach
   await page.evaluate(() => { clearTimeout(UNDO.offen.timer); UNDO.offen.el.remove(); UNDO.offen = null; });
@@ -1973,7 +1965,7 @@ for (const breite of [1280, 1366, 1920]) {
   await page.evaluate(() => terminDialog("t-ob")); await page.waitForTimeout(200);
   await page.check("dialog input[name=absagen]");
   await page.click("dialog button[value=ok]"); await page.waitForTimeout(150);
-  await page.locator("dialog[open]").last().locator("button[value=ok]").click(); await page.waitForTimeout(400);
+  await page.waitForTimeout(400); // K7: Absagen ohne Rückfrage
   await page.evaluate(() => window.dispatchEvent(new Event("pagehide"))); await page.waitForTimeout(1200);
   if (mails !== 2) fehler("P2 Mail: pagehide schickt die Mail nicht (" + mails + ")");
   if (await page.evaluate(() => JSON.parse(localStorage.getItem("buero-offene-absagen") || "[]").length) !== 0) fehler("P2 Mail: Merker nach pagehide nicht gelöscht");
@@ -1985,7 +1977,7 @@ for (const breite of [1280, 1366, 1920]) {
   await page.evaluate(() => terminDialog("t-ob")); await page.waitForTimeout(200);
   await page.check("dialog input[name=absagen]");
   await page.click("dialog button[value=ok]"); await page.waitForTimeout(150);
-  await page.locator("dialog[open]").last().locator("button[value=ok]").click(); await page.waitForTimeout(400);
+  await page.waitForTimeout(400); // K7: Absagen ohne Rückfrage
   await page.click(".toast-undo [data-undo]"); await page.waitForTimeout(300);
   if (await page.evaluate(() => JSON.parse(localStorage.getItem("buero-offene-absagen") || "[]").length) !== 0) fehler("P2 Mail: Rückgängig löscht den Merker nicht");
   if (konsole.length) fehler("P2 Mail: Konsole: " + konsole.join(" | "));
