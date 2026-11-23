@@ -200,7 +200,8 @@ if(TYP === "schalt" || TYP === "automatik"){
         })
       });
       let data = {}; try { data = await res.json(); } catch (e2) {}
-      if(!res.ok){ errEl.textContent = (data && data.error) || "Fehler beim Buchen. Bitte nochmal versuchen."; btn.disabled=false; btn.textContent="Termin buchen"; return; }
+      // K8 (Hauptsitzung): bei jedem Fehler der Buchung eine freundliche Meldung – verrät nichts über Zahlungen oder Interna
+      if(!res.ok){ errEl.textContent = "Buchung gerade nicht möglich – bitte ruf kurz in der Fahrschule an."; btn.disabled=false; btn.textContent="Termin buchen"; return; }
       document.getElementById("step3").style.display="none";
       document.getElementById("step4").style.display="block";
       const d = new Date(selDate+"T00:00:00");
