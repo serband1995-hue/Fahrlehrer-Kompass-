@@ -12,7 +12,7 @@
 --   innerhalb von 15 Minuten). Bestehende Termine
 --   bleiben (das Büro entscheidet). Theorie und Blocker sind nicht betroffen. Fehler: P0001 „Zahlung ausstehend …“
 --   (die App überspringt so eine Zeile einzeln, die anderen werden weiter gespeichert).
--- Online-Buchung (public_bookings): passt Telefon oder E-Mail zu einem gesperrten Schüler derselben Fahrschule,
+-- Online-Buchung (public_bookings): passt E-Mail, oder Telefon und Name, zu einem gesperrten Schüler derselben Fahrschule,
 --   wird die Buchung abgelehnt – mit einer neutralen Meldung, die nichts über Zahlungen verrät.
 -- Spur: jede Sperre und Aufhebung kommt ins aenderungsprotokoll (wer, wann, Grund).
 -- Voraussetzung: 20261121_nachweis_01 (aenderungsprotokoll.grund), buero_bearbeiter().
@@ -53,8 +53,8 @@ as $function$
      and (to_jsonb(s)->>'inaktiv_seit') is null
    limit 1;
 $function$;
-revoke all on function public.schueler_buchung_gesperrt(text) from public, anon;
-grant execute on function public.schueler_buchung_gesperrt(text) to authenticated;
+-- Nur für die Trigger (security definer). Kein direkter Aufruf aus App/Büro: sonst könnte jeder Angemeldete fremde Schüler abfragen.
+revoke all on function public.schueler_buchung_gesperrt(text) from public, anon, authenticated;
 
 -- Termine: kein neuer künftiger Termin für gesperrte Schüler
 create or replace function public.termin_zahlung_sperre()
@@ -63,25 +63,27 @@ create or replace function public.termin_zahlung_sperre()
  security definer
  set search_path to 'public'
 as $function$
-declare g text;
+declare
+  g text;
+  alt jsonb; -- bisherige Zeile: OLD bei UPDATE; bei INSERT … ON CONFLICT (Upsert der App) die schon gespeicherte Zeile
 begin
   if auth.uid() is null then return new; end if; -- Server, Nachtläufe, Migrationen
   if new.schueler_id is null or coalesce(new.geloescht, false) then return new; end if;
   if coalesce(new.art, 'fahrstunde') not in ('fahrstunde', 'sonder', 'nacht', 'schalt', 'pruefung') then return new; end if;
   if new.datum is null or new.datum < (now() at time zone 'Europe/Berlin')::date then return new; end if;
-  if tg_op = 'UPDATE'
-     and new.schueler_id is not distinct from old.schueler_id
-     and new.datum is not distinct from old.datum
-     and not coalesce(old.geloescht, false) then
-    return new; -- nichts Neues (Notiz, Unterschrift, Fahrcheck … an einem bestehenden Termin)
+  if tg_op = 'UPDATE' then
+    alt := to_jsonb(old);
+  else
+    select to_jsonb(k) into alt from public.kalender_termine k where k.id = new.id;
   end if;
-  -- „Rückgängig“ gleich nach dem Löschen (gleicher Schüler, gleiches Datum, höchstens 15 Minuten im Papierkorb):
-  -- das ist kein neuer Termin, sondern ein Versehen. geloescht_am kommt aus K7 (20261123_k7_01); fehlt die Spalte, gilt die Sperre.
-  if tg_op = 'UPDATE' and coalesce(old.geloescht, false)
-     and new.schueler_id is not distinct from old.schueler_id
-     and new.datum is not distinct from old.datum
-     and coalesce(nullif(to_jsonb(old)->>'geloescht_am', '')::timestamptz > now() - interval '15 minutes', false) then
-    return new;
+  if alt is not null
+     and new.schueler_id::text is not distinct from (alt->>'schueler_id')
+     and new.datum is not distinct from nullif(alt->>'datum', '')::date then
+    -- nichts Neues (Notiz, Unterschrift, Fahrcheck … an einem bestehenden Termin)
+    if not coalesce((alt->>'geloescht')::boolean, false) then return new; end if;
+    -- „Rückgängig“ gleich nach dem Löschen (höchstens 15 Minuten im Papierkorb): ein Versehen, kein neuer Termin.
+    -- geloescht_am kommt aus K7 (20261123_k7_01); fehlt die Spalte, gilt die Sperre.
+    if coalesce(nullif(alt->>'geloescht_am', '')::timestamptz > now() - interval '15 minutes', false) then return new; end if;
   end if;
   g := public.schueler_buchung_gesperrt(new.schueler_id);
   if g is not null then
@@ -156,6 +158,7 @@ declare
   fs uuid;
   tel text := right(regexp_replace(coalesce(j->>'schueler_telefon', ''), '\D', '', 'g'), 9);
   mail text := lower(btrim(coalesce(j->>'schueler_email', '')));
+  nam text := lower(regexp_replace(btrim(coalesce(j->>'schueler_name', j->>'name', '')), '\s+', ' ', 'g'));
 begin
   if length(tel) < 7 then tel := ''; end if;
   if position('@' in mail) = 0 then mail := ''; end if;
@@ -169,6 +172,9 @@ begin
     select 1 from public.schueler s
      where s.fahrschule_id = fs
        and ((tel <> '' and right(regexp_replace(coalesce(s.telefon, ''), '\D', '', 'g'), 9) = tel)
+            or (mail <> '' and lower(btrim(coalesce(to_jsonb(s)->>'email', s.ausbildung->>'email', ''))) = mail))
+       -- Geschwister oder Eltern teilen oft eine Nummer: steht ein Name in der Buchung, muss er auch passen
+       and (nam = '' or lower(regexp_replace(coalesce(s.name, ''), '\s+', ' ', 'g')) = nam
             or (mail <> '' and lower(btrim(coalesce(to_jsonb(s)->>'email', s.ausbildung->>'email', ''))) = mail))
        and public.schueler_buchung_gesperrt(s.id::text) is not null) then
     raise exception 'Online-Buchung gerade nicht möglich. Bitte melde dich kurz im Büro.' using errcode = 'P0001';
