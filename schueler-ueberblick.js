@@ -10,6 +10,16 @@
   const SU = (window.SU = {});
   const MERK = "kompass-su-v1";
   let daten = null, kollegen = [], kollegenOk = false, laedt = false, suche = "";
+  // K15: Ordnung (🗣 Serband 23.11.2026 „bitte ordnen“): Standard eigene zuerst, dann Fahrlehrer A–Z, dann Name A–Z.
+  // „Stand“ = Fortschritt in % (höchster zuerst); einen Prüfungstermin liefert fs_schueler_ueberblick() nicht (Prüfungsdaten bleiben gesperrt).
+  const SORT_KEY = "kompass-su-sort-v1";
+  const SORTEN = { fahrlehrer: "Fahrlehrer", name: "Name", stand: "Stand" };
+  let sortWahl = "fahrlehrer", filterFl = "";
+  (function () { try { const o = JSON.parse(localStorage.getItem(SORT_KEY) || "null"); if (o && SORTEN[o.sort]) sortWahl = o.sort; if (o && typeof o.fl === "string") filterFl = o.fl; } catch (e) {} })();
+  function sortMerken() { try { localStorage.setItem(SORT_KEY, JSON.stringify({ sort: sortWahl, fl: filterFl })); } catch (e) {} }
+  const nameKey = (r) => String(r.name || "");
+  const flKey = (r) => r.fahrlehrer_name || "Ohne Fahrlehrer";
+  const nachName = (a, b) => nameKey(a).localeCompare(nameKey(b), "de");
   const laeuft = new Set(); // Schüler, deren Weitergabe gerade läuft (kein zweiter Versuch)
   const ich = () => (typeof _authUser !== "undefined" && _authUser ? _authUser : null);
   const prof = () => (typeof _authProfile !== "undefined" && _authProfile ? _authProfile : null);
@@ -76,12 +86,23 @@
     const box = document.getElementById("suListe"); if (!box) return;
     if (!daten) { box.innerHTML = `<p class="muted-p" style="text-align:center;padding:20px;">${laedt ? "Lädt …" : "Gerade nicht erreichbar. Bitte mit Internet nochmal."}</p>`; return; }
     const q = suche.trim().toLowerCase();
-    const liste = daten.filter((r) => !q || String(r.name || "").toLowerCase().includes(q) || String(r.fahrlehrer_name || "").toLowerCase().includes(q));
-    const eigen = liste.filter((r) => r.eigen), andere = liste.filter((r) => !r.eigen);
-    const gruppen = {}; andere.forEach((r) => { const k = r.fahrlehrer_name || "Ohne Fahrlehrer"; (gruppen[k] = gruppen[k] || []).push(r); });
+    const fls = Array.from(new Set(daten.map(flKey))).sort((x, y) => x.localeCompare(y, "de"));
+    if (filterFl && !fls.includes(filterFl)) filterFl = ""; // der Fahrlehrer ist nicht mehr da: wieder alle zeigen
+    const liste = daten.filter((r) => (!q || String(r.name || "").toLowerCase().includes(q) || String(r.fahrlehrer_name || "").toLowerCase().includes(q)) && (!filterFl || flKey(r) === filterFl));
+    const wahl = document.getElementById("suFl");
+    if (wahl) { wahl.innerHTML = `<option value="">Alle Fahrlehrer</option>` + fls.map((k) => `<option value="${e_(k)}"${k === filterFl ? " selected" : ""}>${e_(k)}</option>`).join(""); wahl.value = filterFl; }
+    document.querySelectorAll("#suSort [data-sort]").forEach((b) => { const an = b.dataset.sort === sortWahl; b.classList.toggle("on", an); b.setAttribute("aria-pressed", an ? "true" : "false"); });
     let h = "";
-    if (eigen.length) h += `<div class="su-gruppe">Deine Schüler (${eigen.length})</div>` + eigen.map(karte).join("");
-    Object.keys(gruppen).sort((a, b) => a.localeCompare(b, "de")).forEach((k) => { h += `<div class="su-gruppe">${e_(k)} (${gruppen[k].length})</div>` + gruppen[k].map(karte).join(""); });
+    if (sortWahl === "fahrlehrer") {
+      const eigen = liste.filter((r) => r.eigen).sort(nachName), andere = liste.filter((r) => !r.eigen);
+      const gruppen = {}; andere.forEach((r) => { const k = flKey(r); (gruppen[k] = gruppen[k] || []).push(r); });
+      if (eigen.length) h += `<div class="su-gruppe">Deine Schüler (${eigen.length})</div>` + eigen.map(karte).join("");
+      Object.keys(gruppen).sort((a, b) => a.localeCompare(b, "de")).forEach((k) => { h += `<div class="su-gruppe">${e_(k)} (${gruppen[k].length})</div>` + gruppen[k].sort(nachName).map(karte).join(""); });
+    } else if (sortWahl === "name") {
+      h = liste.slice().sort(nachName).map(karte).join("");
+    } else {
+      h = liste.slice().sort((a, b) => ((typeof b.stand_pct === "number" ? b.stand_pct : -1) - (typeof a.stand_pct === "number" ? a.stand_pct : -1)) || nachName(a, b)).map(karte).join("");
+    }
     box.innerHTML = h || `<p class="muted-p" style="text-align:center;padding:20px;">${q ? "Kein Treffer." : "Noch keine Schüler in der Fahrschule."}</p>`;
     box.querySelectorAll("[data-akte]").forEach((b) => b.addEventListener("click", () => { if (typeof routeDetail === "function") routeDetail(b.dataset.akte); }));
     box.querySelectorAll("[data-weiter]").forEach((b) => b.addEventListener("click", () => weitergebenWahl(b.dataset.weiter)));
@@ -124,6 +145,8 @@
       <div class="back-row"><button class="back-btn su-zurueck" id="suZurueck">${zurueck} Schüler</button></div>
       <p class="muted-p" style="font-size:12.5px;margin:2px 0 12px;">Überblick der ganzen Fahrschule. Die Akte öffnet nur der eigene Fahrlehrer.</p>
       <div class="search-wrap" style="margin:0 0 12px;"><input id="suSuche" type="search" placeholder="Name oder Fahrlehrer suchen" autocomplete="off" aria-label="Suchen" value="${suche.replace(/[&"<>]/g, (c) => ({ "&": "&amp;", '"': "&quot;", "<": "&lt;", ">": "&gt;" })[c])}"></div>
+      <div class="su-ordnung"><div class="su-sort" id="suSort" role="group" aria-label="Sortieren">${Object.keys(SORTEN).map((k) => `<button type="button" class="su-sortbtn" data-sort="${k}">${SORTEN[k]}</button>`).join("")}</div>
+        <select id="suFl" class="su-fl-wahl" aria-label="Fahrlehrer"><option value="">Alle Fahrlehrer</option></select></div>
       <div id="suListe"></div>
     </div>`;
     // Fable K6 E2: wie überall in der App einen Schritt zurück (nicht neu „Schüler“ öffnen, sonst springt der Pfeil wieder hierher)
@@ -132,6 +155,8 @@
       else if (typeof routeHome === "function") routeHome();
     });
     document.getElementById("suSuche").addEventListener("input", (ev) => { suche = ev.target.value; zeichne(); });
+    document.querySelectorAll("#suSort [data-sort]").forEach((b) => b.addEventListener("click", () => { sortWahl = b.dataset.sort; sortMerken(); zeichne(); }));
+    document.getElementById("suFl").addEventListener("change", (ev) => { filterFl = ev.target.value; sortMerken(); zeichne(); });
     zeichne(); laden();
   };
 
@@ -234,6 +259,8 @@
     const css = document.createElement("style"); css.id = "suCss";
     css.textContent = ".su-oeffnen{display:flex;flex-wrap:wrap;align-items:center;gap:2px 10px;width:100%;min-height:52px;margin:16px 0 6px;padding:11px 14px;background:var(--surface);border:1px solid var(--line);border-radius:14px;color:var(--txt);font:inherit;font-weight:700;font-size:14.5px;text-align:left;cursor:pointer}"
       + ".su-oeffnen small{flex-basis:100%;order:3;font-weight:500;font-size:12px;color:var(--muted)}.su-oeffnen .su-pfeil{margin-left:auto;color:var(--muted);font-size:20px}"
+      + ".su-ordnung{display:flex;flex-wrap:wrap;gap:8px;margin:0 0 4px}.su-sort{display:flex;gap:6px}.su-sortbtn{min-height:44px;padding:8px 14px;border-radius:11px;border:1px solid var(--line);background:var(--surface);color:var(--txt);font:inherit;font-weight:700;font-size:13.5px;cursor:pointer}.su-sortbtn.on{border-color:var(--txt)}"
+      + ".su-fl-wahl{flex:1 1 150px;min-width:0;min-height:44px;padding:8px 10px;border-radius:11px;border:1px solid var(--line);background:var(--surface);color:var(--txt);font:inherit;font-size:13.5px}"
       + ".su-gruppe{font-size:13.5px;font-weight:800;color:var(--txt);letter-spacing:.02em;padding:22px 0 8px}.su-zurueck{min-height:44px}.su-sheet-name{font-weight:700;font-size:15px;margin:-2px 0 6px;overflow-wrap:anywhere}"
       + ".su-karte{background:var(--surface);border:1px solid var(--line);border-radius:14px;padding:11px 13px;margin-bottom:9px}"
       + ".su-kopf{display:flex;flex-direction:column;align-items:flex-start;gap:2px;width:100%;background:none;border:0;padding:0;color:inherit;font:inherit;text-align:left;min-height:44px;justify-content:center}"
