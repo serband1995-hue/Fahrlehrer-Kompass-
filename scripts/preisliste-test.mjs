@@ -175,11 +175,29 @@ try {
     pruefe("P9c keine Fehler in der Konsole (außer dem erwarteten Ladefehler)", konsole.filter((k) => !/fahrschule_preise/.test(k)).length === 0, konsole.join(" | "));
     await ctx.close();
   }
-  // P10 Handybreite: nichts seitlich wischbar
+  // P10 Handybreite: nichts seitlich wischbar, Preis und „Ändern“ ohne Wischen sichtbar (Design-Kritiker)
   {
     const { page, ctx } = await oeffne({ nutzer: "ad-1", vorbereiten: mitPreisen, breite: 390 });
     const breit = await page.evaluate(() => document.documentElement.scrollWidth - window.innerWidth);
     pruefe("P10 390 px: nichts seitlich wischbar", breit <= 1, "über " + breit + " px");
+    const raus = await page.evaluate(() => [...document.querySelectorAll(".pr-preis, .pr-tun .knopf")].filter((e) => { const r = e.getBoundingClientRect(); return r.right > window.innerWidth + 1 || r.left < -1; }).length);
+    const karteWischt = await page.evaluate(() => [...document.querySelectorAll("#ansicht .karte")].some((k) => k.scrollWidth > k.clientWidth + 1));
+    pruefe("P10b 390 px: Preis und „Ändern“ im Bild, Karte wischt nicht", raus === 0 && !karteWischt, `raus ${raus}, Karte wischt ${karteWischt}`);
+    await ctx.close();
+  }
+  // P12 Reaktivierung 0 € (Aktion) gilt als 0, nicht als alter Betrag; andere Bezeichnung zählt auch (Prüf-Team)
+  {
+    const { page, ctx } = await oeffne({ nutzer: "bu-1", vorbereiten: function () {
+      const fs = F.tabellen.fahrschulen[0].id;
+      F.tabellen.fahrschule_preise = [{ id: "r0", fahrschule_id: fs, art: "reaktivierung", klasse: null, bezeichnung: "Reaktivierungsgebühr", einheit: "pauschal", betrag_cent: 0, gueltig_ab: "2020-01-01", angelegt_von: "ad-1", angelegt_am: "2020-01-01T10:00:00Z" }];
+    } });
+    const b = await page.evaluate(() => [reaktBetrag(), reaktBetrag({ vertrag_am: "2019-01-01" })]);
+    pruefe("P12 Reaktivierung „Reaktivierungsgebühr“ 0 € → 0; Vertrag davor → alter Betrag 240", b[0] === 0 && b[1] === 240, JSON.stringify(b));
+    // P13 kurzer Ladefehler beim Neuladen: letzter Stand bleibt
+    await page.evaluate(async () => { window.__FAKE.fehler = { fahrschule_preise: "Failed to fetch" }; await ladeDaten(); });
+    pruefe("P13 Ladefehler (Netz) behält die Preisliste", await page.evaluate(() => Array.isArray(S.preise) && S.preise.length === 1));
+    await page.evaluate(async () => { window.__FAKE.fehler = { fahrschule_preise: 'relation "public.fahrschule_preise" does not exist' }; await ladeDaten(); });
+    pruefe("P13b Tabelle fehlt wirklich → „nicht eingerichtet“", await page.evaluate(() => S.preise === null));
     await ctx.close();
   }
   // P11 Migration (statisch): kein update, Schutz-Trigger, Rückdatieren nur Super-Admin

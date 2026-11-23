@@ -79,4 +79,7 @@ drop trigger if exists fahrschule_preise_schutz on public.fahrschule_preise;
 create trigger fahrschule_preise_schutz before insert on public.fahrschule_preise
   for each row execute function public.fahrschule_preise_schutz();
 
+-- Supabase gibt neuen Tabellen von sich aus alle Rechte (auch TRUNCATE, das RLS nicht prüft): erst wegnehmen, dann gezielt geben
+revoke all on public.fahrschule_preise from anon;
+revoke all on public.fahrschule_preise from authenticated;
 grant select, insert, delete on public.fahrschule_preise to authenticated;
