@@ -505,10 +505,11 @@ for (const [breite, hoehe] of [[1920, 1080], [1366, 768], [1024, 768]]) {
   // Seitenleiste
   const sichtbar = () => page.$$eval(".nav-liste:not([hidden]) .nav-punkt", (a) => a.length);
   const alle = await sichtbar();
+  const inGeld = await page.$$eval('.nav-liste:not([hidden]) .nav-punkt[href="#verkaeufe"], .nav-liste:not([hidden]) .nav-punkt[href="#zahlen"], .nav-liste:not([hidden]) .nav-punkt[href="#preise"]', (a) => a.length); // K9: Preisliste kam dazu
   await page.click('[data-gruppe="Geld"]');
-  if ((await sichtbar()) !== alle - 2) fehler("Seitenleiste: Gruppe „Geld“ klappt nicht zu");
+  if ((await sichtbar()) !== alle - inGeld || inGeld < 2) fehler("Seitenleiste: Gruppe „Geld“ klappt nicht zu");
   await page.evaluate(() => zeichneNav());
-  if ((await sichtbar()) !== alle - 2) fehler("Seitenleiste: zugeklappte Gruppe wird nicht gemerkt");
+  if ((await sichtbar()) !== alle - inGeld) fehler("Seitenleiste: zugeklappte Gruppe wird nicht gemerkt");
   // PIN-Anmeldung merkt sich der Browser-Tab (auch nach Neuladen), bis 20 Minuten nichts angeklickt wurde
   await page.evaluate(async () => { S.sitzung = null; S.wer = ""; await starteWer(); });
   if (await page.isVisible("#wer:not([hidden])")) fehler("PIN: Anmeldung wird nach Neuladen nicht übernommen");
