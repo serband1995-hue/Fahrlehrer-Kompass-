@@ -52,7 +52,8 @@ async function oeffne({ nutzer, hash = "#preise", vorbereiten, breite = 1366 }) 
     await page.keyboard.type(PIN["Paula Muster"], { delay: 20 });
     await page.waitForTimeout(400);
   }
-  await page.waitForSelector("#inhalt .karte", { timeout: 4000 }).catch(() => {});
+  await page.waitForFunction(() => { const a = document.getElementById("ansicht"); return a && !/Daten werden geladen/.test(a.textContent); }, null, { timeout: 8000 }).catch(() => {});
+  if (process.env.PR_DEBUG) console.log("KONSOLE", konsole.join(" | "));
   return { page, ctx, konsole };
 }
 const FS = "fs-1";
@@ -72,7 +73,7 @@ try {
   // P1 Leitung sieht die Seite, leere Liste, Knöpfe
   {
     const { page, ctx, konsole } = await oeffne({ nutzer: "ad-1" });
-    const txt = await page.locator("#inhalt").innerText();
+    const txt = await page.locator("#ansicht").innerText();
     pruefe("P1a Seite „Preisliste“ in der Leiste (Gruppe Geld)", await page.locator('nav a[href="#preise"]').count() === 1);
     pruefe("P1b leer: Hinweis „Noch keine Preise“", /Noch keine Preise eingetragen/.test(txt), txt.slice(0, 200));
     pruefe("P1c Leitung hat „Neuer Preis“", await page.locator("#prNeu").count() === 1);
@@ -88,7 +89,7 @@ try {
     await page.waitForTimeout(300);
     const zeilen = await page.evaluate(() => window.__FAKE.tabellen.fahrschule_preise || []);
     pruefe("P2b gespeichert: eine Zeile, 6550 Cent, Klasse B, gültig ab heute", zeilen.length === 1 && zeilen[0].betrag_cent === 6550 && zeilen[0].klasse === "B" && zeilen[0].gueltig_ab === HEUTE, JSON.stringify(zeilen));
-    const t2 = await page.locator("#inhalt").innerText();
+    const t2 = await page.locator("#ansicht").innerText();
     pruefe("P2c Liste zeigt 65,50 € unter „Übungsfahrstunde“", /Übungsfahrstunde[\s\S]*65,50\s*€/.test(t2), t2.slice(0, 300));
     // P3 doppelt anlegen geht nicht
     await page.click("#prNeu");
@@ -99,9 +100,10 @@ try {
     await d3.locator("footer button[value=ok]").click();
     await page.waitForTimeout(300);
     pruefe("P3 gleichen Preis nochmal anlegen → abgelehnt, Fenster bleibt offen", (await page.evaluate(() => window.__FAKE.tabellen.fahrschule_preise.length)) === 1 && await page.locator("dialog[open]").count() === 1);
-    await page.keyboard.press("Escape"); await page.waitForTimeout(150);
-    const weg = page.locator("dialog[open] footer button:not([value=ok])").last(); if (await weg.count()) await weg.click().catch(() => {});
-    await page.waitForTimeout(150);
+    // Fenster mit Eingaben schließen: ✕ → „Eingaben verwerfen?“ → Ja
+    await page.locator("dialog[open]").last().locator("[data-schliessen]").first().click(); await page.waitForTimeout(200);
+    if (await page.locator("dialog[open]").count()) { await page.locator("dialog[open]").last().locator("button[value=ok]").click(); await page.waitForTimeout(200); }
+    pruefe("P3b Fenster lässt sich schließen", await page.locator("dialog[open]").count() === 0);
     // P4 ändern ab später: alte Zeile bleibt, neue Zeile
     await page.locator("[data-pr-aendern]").first().click();
     const d4 = page.locator("dialog[open]").last();
@@ -111,7 +113,7 @@ try {
     await page.waitForTimeout(300);
     const z4 = await page.evaluate(() => window.__FAKE.tabellen.fahrschule_preise);
     pruefe("P4a Ändern legt neue Zeile an, alte bleibt (Verlauf)", z4.length === 2 && z4[0].betrag_cent === 6550 && z4[1].betrag_cent === 7000 && z4[1].gueltig_ab === tag(7));
-    const t4 = await page.locator("#inhalt").innerText();
+    const t4 = await page.locator("#ansicht").innerText();
     pruefe("P4b heute weiter 65,50 €, „Geplant“ zeigt 70,00 €", /65,50\s*€/.test(t4) && /ab \d\d\.\d\d\.\d{4}: 70,00\s*€/.test(t4), t4.slice(0, 400));
     // P5 Rückdatieren als Leitung abgelehnt
     await page.locator("[data-pr-aendern]").first().click();
@@ -129,7 +131,7 @@ try {
   {
     const { page, ctx, konsole } = await oeffne({ nutzer: "bu-1", vorbereiten: mitPreisen });
     pruefe("P6a Büro: „Neuer Preis“ und „Ändern“ da", await page.locator("#prNeu").count() === 1 && await page.locator("[data-pr-aendern]").count() >= 1);
-    const t = await page.locator("#inhalt").innerText();
+    const t = await page.locator("#ansicht").innerText();
     pruefe("P6b gleicher Tag zwei Zeilen: die zuletzt eingetragene gilt (65,00 € statt 60,00 €)", /Übungsfahrstunde[\s\S]*65,00\s*€/.test(t) && !/60,00\s*€\s*\n?\s*je 45/.test(t), t.slice(0, 500));
     pruefe("P6c Reaktivierung heute 260 €, geplant 280 €", /260,00\s*€/.test(t) && /280,00\s*€/.test(t));
     // P7 Export
@@ -146,8 +148,8 @@ try {
     pruefe("P7d CSV mit Semikolon, Komma-Beträgen, Kopfzeile", csv.startsWith("﻿art;art_name;klasse") && /;260,00;nein;/.test(csv), csv.slice(0, 200));
     // P8 Reaktivierung in den Fristen nimmt die Preisliste
     await page.goto(basis + "buero.html#fristen"); await page.waitForTimeout(600);
-    const f = await page.locator("#inhalt").innerText();
-    pruefe("P8a Fristen: „Reaktivierung heute 260 €“ mit Verweis auf die Preisliste", /Reaktivierung heute:\s*260\s*€/.test(f) && await page.locator('#inhalt a[href="#preise"]').count() >= 1, f.slice(-600));
+    const f = await page.locator("#ansicht").innerText();
+    pruefe("P8a Fristen: „Reaktivierung heute 260 €“ mit Verweis auf die Preisliste", /Reaktivierung heute:\s*260\s*€/.test(f) && await page.locator('#ansicht a[href="#preise"]').count() >= 1, f.slice(-600));
     const betrag = await page.evaluate(() => [reaktBetrag(), reaktBetrag({ vertrag_am: "2000-01-01" }), reaktBetrag({ vertrag_am: new Date(Date.now() + 40 * 864e5).toISOString().slice(0, 10) })]);
     pruefe("P8b alter Vertrag (vor der Preisliste) → alter Betrag 240; heute 260; Vertrag nach Erhöhung 280", betrag[0] === 260 && betrag[1] === 240 && betrag[2] === 280, JSON.stringify(betrag));
     // P6e Büro ändert: Verlauf zeigt die PIN-Person
@@ -159,17 +161,17 @@ try {
     await d6.locator("footer button[value=ok]").click();
     await page.waitForTimeout(300);
     const neu = await page.evaluate(() => window.__FAKE.tabellen.fahrschule_preise.slice(-1)[0]);
-    pruefe("P6e Büro ändert: Zeile mit PIN-Person, Verlauf zeigt „von Paula Muster“", neu && neu.bearbeiter === "Paula Muster" && /von Paula Muster/.test(await page.locator("#inhalt").textContent()), JSON.stringify(neu));
+    pruefe("P6e Büro ändert: Zeile mit PIN-Person, Verlauf zeigt „von Paula Muster“", neu && neu.bearbeiter === "Paula Muster" && /von Paula Muster/.test(await page.locator("#ansicht").textContent()), JSON.stringify(neu));
     pruefe("P6d keine Fehler in der Konsole", konsole.length === 0, konsole.join(" | "));
     await ctx.close();
   }
   // P9 alte Datenbank: Tabelle fehlt
   {
     const { page, ctx, konsole } = await oeffne({ nutzer: "bu-1", vorbereiten: function () { F.fehler = { fahrschule_preise: 'relation "public.fahrschule_preise" does not exist' }; } });
-    const t = await page.locator("#inhalt").innerText();
+    const t = await page.locator("#ansicht").innerText();
     pruefe("P9a ohne Tabelle: Hinweis statt Fehler", /noch nicht eingerichtet/.test(t), t.slice(0, 200));
     await page.goto(basis + "buero.html#fristen"); await page.waitForTimeout(600);
-    pruefe("P9b Fristen: altes Feld „Standardbetrag Reaktivierung“ bleibt, Betrag 240", await page.evaluate(() => reaktBetrag()) === 240 && /Standardbetrag Reaktivierung/.test(await page.locator("#inhalt").innerText()));
+    pruefe("P9b Fristen: altes Feld „Standardbetrag Reaktivierung“ bleibt, Betrag 240", await page.evaluate(() => reaktBetrag()) === 240 && /Standardbetrag Reaktivierung/.test(await page.locator("#ansicht").innerText()));
     pruefe("P9c keine Fehler in der Konsole (außer dem erwarteten Ladefehler)", konsole.filter((k) => !/fahrschule_preise/.test(k)).length === 0, konsole.join(" | "));
     await ctx.close();
   }

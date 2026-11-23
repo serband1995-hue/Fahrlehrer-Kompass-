@@ -146,7 +146,7 @@ const BEREICHE = [
   { id: "schueler", titel: "Schüler", gruppe: "Planung", render: renderSchueler, nachher: bindeSchueler, zahl: () => aktiveSchueler().filter((x) => !x.fahrlehrer_id).length || "" },
   { id: "verkaeufe", titel: "Verkäufe & Provision", gruppe: "Geld", render: renderVerkaeufe, nachher: bindeVerkaeufe, zahl: () => S.verkaeufe.filter((v) => v.status === "empfohlen").length || "" },
   { id: "zahlen", titel: "Zahlen", gruppe: "Geld", render: renderZahlen, nachher: bindeZahlen },
-  // K9: Preisliste steht in buero-preise.js (lädt danach, deshalb über Pfeil aufgerufen)
+  // K9: Preisliste steht in buero-preise.js (lädt vor buero.js; Aufruf über Pfeil, damit die Reihenfolge egal ist)
   { id: "preise", titel: "Preisliste", gruppe: "Geld", render: (...a) => renderPreise(...a), nachher: (...a) => bindePreise(...a) },
   { id: "team", titel: "Fahrlehrer & Zugänge", gruppe: "Verwaltung", render: renderTeam, nachher: bindeTeam },
   { id: "flotte", titel: "Fahrzeuge", gruppe: "Verwaltung", render: renderFlotte, nachher: bindeFlotte, zahl: () => fahrzeugKonflikte().length || "" },
