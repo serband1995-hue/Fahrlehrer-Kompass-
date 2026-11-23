@@ -150,6 +150,16 @@ try {
     pruefe("P8a Fristen: „Reaktivierung heute 260 €“ mit Verweis auf die Preisliste", /Reaktivierung heute:\s*260\s*€/.test(f) && await page.locator('#inhalt a[href="#preise"]').count() >= 1, f.slice(-600));
     const betrag = await page.evaluate(() => [reaktBetrag(), reaktBetrag({ vertrag_am: "2000-01-01" }), reaktBetrag({ vertrag_am: new Date(Date.now() + 40 * 864e5).toISOString().slice(0, 10) })]);
     pruefe("P8b alter Vertrag (vor der Preisliste) → alter Betrag 240; heute 260; Vertrag nach Erhöhung 280", betrag[0] === 260 && betrag[1] === 240 && betrag[2] === 280, JSON.stringify(betrag));
+    // P6e Büro ändert: Verlauf zeigt die PIN-Person
+    await page.goto(basis + "buero.html#preise"); await page.waitForTimeout(600);
+    await page.locator("[data-pr-aendern]").first().click();
+    const d6 = page.locator("dialog[open]").last();
+    await d6.locator("input[name=betrag]").fill("99");
+    await d6.locator("input[name=ab]").fill(tag(20));
+    await d6.locator("footer button[value=ok]").click();
+    await page.waitForTimeout(300);
+    const neu = await page.evaluate(() => window.__FAKE.tabellen.fahrschule_preise.slice(-1)[0]);
+    pruefe("P6e Büro ändert: Zeile mit PIN-Person, Verlauf zeigt „von Paula Muster“", neu && neu.bearbeiter === "Paula Muster" && /von Paula Muster/.test(await page.locator("#inhalt").textContent()), JSON.stringify(neu));
     pruefe("P6d keine Fehler in der Konsole", konsole.length === 0, konsole.join(" | "));
     await ctx.close();
   }

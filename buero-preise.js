@@ -75,7 +75,7 @@ function renderPreise() {
       const letzte = z[z.length - 1];
       const plan = kommend.length ? `ab ${esc(datumDE(kommend[kommend.length - 1].gueltig_ab))}: <b>${esc(prEuro(kommend[kommend.length - 1].betrag_cent))}</b>` : "";
       const verlauf = z.slice().reverse().map((r) => `<li>ab ${esc(datumDE(r.gueltig_ab))}: <b>${esc(prEuro(r.betrag_cent))}</b>
-          <span class="leise klein">· eingetragen am ${esc(datumDE(String(r.angelegt_am || "").slice(0, 10)))}${r.angelegt_von ? " von " + esc(prWer(r.angelegt_von)) : ""}</span></li>`).join("");
+          <span class="leise klein">· eingetragen am ${esc(datumDE(String(r.angelegt_am || "").slice(0, 10)))}${r.bearbeiter ? " von " + esc(r.bearbeiter) : r.angelegt_von ? " von " + esc(prWer(r.angelegt_von)) : ""}</span></li>`).join("");
       return `<tr>
         <td><b>${esc(letzte.bezeichnung)}</b>${letzte.inhalt ? `<div class="leise klein">${esc(letzte.inhalt)}</div>` : ""}
           <details class="pr-verlauf"><summary class="klein">Verlauf (${z.length})</summary><ul>${verlauf}</ul></details></td>

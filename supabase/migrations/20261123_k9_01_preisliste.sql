@@ -15,7 +15,7 @@
 --   damit niemand nachträglich den Preis eines schon geschlossenen Vertrags ändert.
 -- Einmal ausführbar und wiederholbar (if not exists / create or replace / drop policy if exists).
 -- Rückweg: supabase/rueckweg/20261123_k9_rueckweg.sql
--- Braucht k5_meine_fahrschule() aus der K5-Migration (ist live).
+-- Braucht k5_meine_fahrschule() (K5) und buero_bearbeiter() (Büro-PIN), beide live.
 
 create table if not exists public.fahrschule_preise (
   id uuid primary key default gen_random_uuid(),
@@ -29,8 +29,10 @@ create table if not exists public.fahrschule_preise (
   paket_id uuid references public.fahrschule_pakete(id) on delete set null,
   gueltig_ab date not null,
   angelegt_von uuid default auth.uid(),
-  angelegt_am timestamptz not null default now()
+  angelegt_am timestamptz not null default now(),
+  bearbeiter text   -- Büro-Person mit PIN (gemeinsamer Zugang), vom Server gesetzt
 );
+alter table public.fahrschule_preise add column if not exists bearbeiter text;
 create index if not exists fahrschule_preise_fs on public.fahrschule_preise (fahrschule_id, art, gueltig_ab);
 alter table public.fahrschule_preise enable row level security;
 
@@ -59,6 +61,7 @@ as $function$
 begin
   new.angelegt_von := auth.uid();
   new.angelegt_am := now();
+  new.bearbeiter := public.buero_bearbeiter();   -- wie bei Notizen und Aufgaben: PIN-Person, sonst null
   new.bezeichnung := btrim(new.bezeichnung);
   new.klasse := nullif(btrim(coalesce(new.klasse, '')), '');
   if new.gueltig_ab < (now() at time zone 'Europe/Berlin')::date and not coalesce(is_super_admin(auth.uid()), false) then
