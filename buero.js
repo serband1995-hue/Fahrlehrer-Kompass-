@@ -646,7 +646,7 @@ function bindeEinstellungen(ziel) {
   if (!f || !f.ue || f.ue.disabled) return;
   f.addEventListener("submit", async (e) => {
     e.preventDefault();
-    // K9: steht die Reaktivierung in der Preisliste, gibt es das Feld nicht mehr – alter Wert bleibt
+    // K9: Feld fehlt (keine Berechtigung, siehe oben) → alter Wert bleibt
     const betrag = f.betrag ? Number(String(f.betrag.value).replace(",", ".")) : reaktBetragAlt();
     if (!(betrag > 0)) { toast("Bitte einen Betrag eintragen.", true); return; }
     const ue = Number(f.ue.value);
@@ -4013,7 +4013,7 @@ async function ladeDaten() {
     S.theorie = theorie && !theorie.error ? (theorie.data || []) : null;   // null = nicht geladen: dann „Stand unbekannt“ statt 0/14
     // K9: null = Preisliste (noch) nicht da → alter Reaktivierungsbetrag. Ein kurzer Ladefehler behält den letzten Stand (Prüf-Team).
     if (preise && !preise.error) S.preise = preise.data || [];
-    else if (!(S.preise && S.preise.length) || prTabelleFehlt(preise && preise.error)) S.preise = null;
+    else if (!(S.preise && S.preise.length) || (typeof prTabelleFehlt !== "function" || prTabelleFehlt(preise && preise.error))) S.preise = null;
     S.geladenAm = new Date();
     $("schulName").textContent = S.fs ? S.fs.name : "";
     setStatus("ok", "verbunden · " + S.geladenAm.toLocaleTimeString("de-DE", { hour: "2-digit", minute: "2-digit" }));
@@ -4423,6 +4423,7 @@ $("schulWahl").addEventListener("change", (e) => {
   S.fsId = e.target.value;
   try { localStorage.setItem("buero-fahrschule", S.fsId); } catch (err) { /* egal */ }
   S.geladenAm = null;
+  S.preise = null; // K9 (Fable B1): Preise der vorigen Fahrschule nie in der neuen zeigen oder behalten
   zeigeRollenStreifen();
   zeichne();
   ladeDaten();

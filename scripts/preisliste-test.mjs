@@ -200,6 +200,17 @@ try {
     pruefe("P13b Tabelle fehlt wirklich → „nicht eingerichtet“", await page.evaluate(() => S.preise === null));
     await ctx.close();
   }
+  // P14 Super-Admin wechselt die Fahrschule, Preis-Abfrage schlägt kurz fehl: keine Preise der vorigen Schule (Fable B1)
+  {
+    const { page, ctx, konsole } = await oeffne({ nutzer: "sa-1", vorbereiten: mitPreisen });
+    const vorher = await page.evaluate(() => (S.preise || []).length);
+    await page.evaluate(() => { window.__FAKE.fehler = { fahrschule_preise: "Failed to fetch" }; });
+    const wahl = page.locator("#schulWahl");
+    if (await wahl.count()) { await wahl.selectOption("fs-test-2"); await page.waitForTimeout(800); }
+    const nachher = await page.evaluate(() => [S.fsId, S.preise]);
+    pruefe("P14 Schulwechsel mit Ladefehler: Preise der vorigen Schule weg (null)", vorher === 4 && nachher[0] === "fs-test-2" && nachher[1] === null, JSON.stringify([vorher, nachher[0], nachher[1] && nachher[1].length]));
+    await ctx.close();
+  }
   // P11 Migration (statisch): kein update, Schutz-Trigger, Rückdatieren nur Super-Admin
   {
     const sql = await readFile(join(ROOT, "supabase/migrations/20261123_k9_01_preisliste.sql"), "utf8");
