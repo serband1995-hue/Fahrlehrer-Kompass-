@@ -5,7 +5,7 @@
    Einfache Worte, keine Fachwörter, keine Schülerdaten. */
 window.KOMPASS_NEU = [
   { version: "2026.11.23.9", datum: "2026-11-23", kurz: "Neue, ruhigere Farben: hell, klar, weniger Grün.",
-    punkte: ["App und Büro sehen jetzt heller und ruhiger aus. Grün gibt es nur noch an Knöpfen, Haken und als schmale Markierung.",
+    punkte: ["App und Büro sehen jetzt heller und ruhiger aus. Grün gibt es fast nur noch an Knöpfen, Haken und als schmale Markierung. Die Karte „Als nächstes“ bleibt dunkelgrün, damit man sie sofort sieht.",
              "Eingabefelder haben deutlichere Rahmen und sind leichter zu treffen, auch draußen am Handy.",
              "Im dunklen Design sind die Flächen jetzt grau statt grünlich.",
              "Fahrstunden sind im Kalender grau, Nacht- und Sonderfahrten bleiben blau."] },

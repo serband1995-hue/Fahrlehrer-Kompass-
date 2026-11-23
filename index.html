@@ -1561,7 +1561,7 @@ body:not(.light) .cw-col.today .cw-dnum{color:var(--gold);}
 .cw-dnum{font-size:18px;font-weight:800;font-family:'Playfair Display',serif;}
 .cw-col.today .cw-dnum{color:var(--mint);}
 .cw-events{display:flex;flex-direction:column;gap:4px;}
-.cw-ev[style*="border-left-color:#88939a"],.ct-ev[style*="border-left-color:#88939a"]{background-image:repeating-linear-gradient(135deg,rgba(128,128,140,.28) 0,rgba(128,128,140,.28) 6px,transparent 6px,transparent 12px);}
+.cw-ev[style*="border-left-color:#88939a"],.ct-ev[style*="border-left-color:#88939a"]{background-image:repeating-linear-gradient(135deg,rgba(128,128,140,.20) 0,rgba(128,128,140,.20) 6px,transparent 6px,transparent 12px);}
 .cw-ev{border-left:3px solid var(--gruen-bright,#4a8b45);background:var(--bg-soft);border-radius:6px;padding:5px 6px;text-align:left;}
 .cw-ev.exam-soon{box-shadow:0 0 0 1.5px #c9a227 inset;background:rgba(201,162,39,.1);}
 .cw-ev.exam-done{background:var(--bg-soft);opacity:.92;}
@@ -2164,6 +2164,7 @@ body.light::before{background:var(--bg) !important;}
 .res-block,.termin-card,.acc,.heute-card,.nex-card,.mini-dash,.month-bars,body.light .month-bars,.theorie-card,.wait-card,.tile,
 .dq-btn,.toggle-row,.seg,.search-wrap,.std,.sonder-row,.mini-btn,.chip,.pill,.f-chip,.s-form-chip,body.light .s-form-chip,.na-card{
   background:var(--surface) !important;border:1px solid var(--line-soft) !important;box-shadow:var(--elev-1) !important;backdrop-filter:none !important;}
+.search-wrap{border-color:var(--feld) !important;} /* Suchfeld als Feld erkennbar ≥3:1 (Fable R3) */
 .s-card:active,.d-tile:active,.nav-action:active{transform:translateY(0) scale(.985) !important;box-shadow:var(--elev-1) !important;}
 .d-tile::before,.stat::before{display:none !important;}
 .dt-n,body.light .dt-n,.stat .sv{background:none !important;-webkit-background-clip:initial !important;background-clip:initial !important;color:var(--txt) !important;-webkit-text-fill-color:var(--txt) !important;font-weight:600 !important;letter-spacing:-.02em !important;}
@@ -2254,7 +2255,7 @@ body:not(.light) .heute2{--h-karte:var(--surface);--h-rand:var(--line);--h-tinte
 body:not(.light) .h2-wx .wx-wolke-f:not([fill*="wxd"]){fill:#DDE6E0;}
 body:not(.light) .h2-wx .wx-wolke-f{stroke:#b8bfcb;}
 body:not(.light) .h2-wx.wx-nebel g{stroke:#b8bfcb;}
-/* Jetzt dran: immer dunkelgrün mit Mint */
+/* Jetzt dran: hell sehr dunkles Grün (#1F3A2C), dunkel Grau-Blau (#2f3846), jeweils mit Mint (Farbe B) */
 .h2-jetzt{background:var(--k-jetzt);color:#fff;border:1px solid #3b5a49;border-radius:24px;padding:20px;display:flex;flex-direction:column;gap:14px;}
 .h2-jetzt-kopf{display:flex;align-items:center;justify-content:space-between;gap:10px;}
 .h2-jetzt-label{display:flex;align-items:center;gap:8px;font-size:12px;font-weight:800;letter-spacing:.08em;text-transform:uppercase;color:var(--k-mint-hell);}
@@ -2819,7 +2820,7 @@ body:not(.light) .fc-ok .fcheck-mark{color:#8fd6a9;}
 :root{--clay-text:#a85a38;}
 body:not(.light){--clay-text:#e8a283;}
 /* Fahrmodus (immer dunkel): heller Fokus-Ring */
-.fahrmodus :focus-visible,.fahrmodus button:focus-visible{outline-color:#8fcaa4;}
+.fahrmodus :focus-visible,.fahrmodus button:focus-visible,.h2-jetzt :focus-visible,body:has(#view .fahrmodus) .topbar :focus-visible{outline-color:#8fcaa4;} /* Fokus auf dunklen Flächen ≥3:1 (Fable R2) */
 </style>
 </head>
 <body>
@@ -12303,7 +12304,7 @@ function routeSettings(){
   view.innerHTML=`<div class="view-inner view-read fade-up">
     <h1 class="sec-h set-titel">Einstellungen</h1>
     ${logoutBtn}
-    ${_authUser?`<div class="res-block" style="animation:none;background:rgba(74,139,69,.06);border-color:rgba(74,139,69,.2);"><h4 style="color:var(--akzent-bright)">☁ Cloud-Konto</h4><p style="color:#98a2b2;font-size:13px;">${esc(_authUser.email)}</p><p style="color:var(--muted);font-size:12px;margin-top:4px;">Daten werden automatisch gesichert.</p></div>`:""}
+    ${_authUser?`<div class="res-block" style="animation:none;background:rgba(74,139,69,.06);border-color:rgba(74,139,69,.2);"><h4 style="color:var(--akzent-bright)">☁ Cloud-Konto</h4><p style="color:var(--muted);font-size:13px;">${esc(_authUser.email)}</p><p style="color:var(--muted);font-size:12px;margin-top:4px;">Daten werden automatisch gesichert.</p></div>`:""}
 
     <div class="acc set-acc${_settingsAccOpen==='app'?' open':''}" data-acckey="app"><button class="acc-h" onclick="_settingsAccToggle('app')" style="cursor:pointer;"><span class="set-ic" style="width:30px;">${_li("handy")}</span><span style="flex:1;text-align:left;font-family:'Anton',sans-serif;text-transform:uppercase;font-size:15px;letter-spacing:.03em;">App anpassen</span><span class="chev">${ICN.chev}</span></button>
       <div class="acc-body"><div class="acc-inner" style="padding:0 16px 16px;">
@@ -16839,7 +16840,7 @@ function routeStats(period){
     <div style="display:flex;gap:10px;margin:8px 0 18px;font-size:11px;font-weight:700;">
       <span style="display:flex;align-items:center;gap:4px;color:var(--gruen)"><i style="width:10px;height:10px;border-radius:3px;background:var(--gruen);display:inline-block"></i>≥70%</span>
       <span style="display:flex;align-items:center;gap:4px;color:var(--gelb)"><i style="width:10px;height:10px;border-radius:3px;background:var(--gelb);display:inline-block"></i>50–69%</span>
-      <span style="display:flex;align-items:center;gap:4px;color:var(--rot)"><i style="width:10px;height:10px;border-radius:3px;background:var(--rot);display:inline-block"></i>&lt;50%</span>
+      <span style="display:flex;align-items:center;gap:4px;color:var(--zahl-rot)"><i style="width:10px;height:10px;border-radius:3px;background:var(--rot);display:inline-block"></i>&lt;50%</span>
     </div>
     <div class="blk-h">Häufigste Fehler</div>
     ${faultBarsHTML}
