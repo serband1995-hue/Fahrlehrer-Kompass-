@@ -194,6 +194,14 @@ async function starte({ rolle = "fahrlehrer", alteDB = false } = {}) {
     if (document.querySelector(".pf-hero-name")) return "in die Akte gesprungen";
     const n = __db.fahrschule_pruefer_notizen.find((x) => x.id === id); return !id || (n && !n.geloescht) ? null : "nicht zurück";
   }, eigene));
+  // E2 (Fable K5): angefangene Notiz bleibt beim Zurück (Liste → wieder in die Akte) erhalten, beim anderen Prüfer nicht
+  await page.evaluate(() => { _pfTab = "profil"; routePrueferAkte("Müller"); }); await warte(page, 200);
+  const beiMueller = await page.evaluate(() => (document.getElementById("pwNeu") || {}).value);
+  await page.evaluate(() => { _pfTab = "profil"; routePrueferAkte("Schmidt"); }); await warte(page, 200);
+  await pruefe("P14b", "E2: angefangene Notiz ist nach Zurück wieder da (nur beim selben Prüfer)", () => page.evaluate((m) => {
+    const t = document.getElementById("pwNeu"); if (m) return "Entwurf steht auch bei Müller";
+    return t && t.value === "Angefangen" ? null : "Text: " + (t && t.value);
+  }, beiMueller));
   // Fable 22.11.2026: Änderung eines Kollegen darf durch eigene Änderung nicht verschwinden
   await page.evaluate(() => { const z = __db.fahrschule_pruefer.find((x) => x.name === "Schmidt"); z.tags = z.tags.concat(["Kollege X"]); z.routen = z.routen.concat([["Kollege", "Strecke"]]);
     DB.prueferData.Schmidt.tags.push("Mein Y"); PW.nachSpeichern(); });

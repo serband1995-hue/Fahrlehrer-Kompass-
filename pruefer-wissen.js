@@ -39,7 +39,10 @@
       return true;
     } catch (e) { return false; }
   }
+  /* E2 (Fable K5): angefangene Notiz je Prüfer merken (nur in dieser Sitzung), damit sie beim Zurück nicht verloren geht */
+  const entwurf = {};
   PW.vergessen = function () {
+    for (const k of Object.keys(entwurf)) delete entwurf[k]; // E2: angefangene Notizen gehören zum Konto
     st = leer();
     try { localStorage.removeItem(CACHE); for (let i = localStorage.length - 1; i >= 0; i--) { const k = localStorage.key(i); if (k && k.indexOf("kompass-pw-hoch-") === 0) localStorage.removeItem(k); } } catch (e) {}
   };
@@ -295,7 +298,7 @@
       <div class="pw-liste" id="pwListe">${listeHTML(nm)}</div>
       <div class="pw-neu-h">Notiz hinzufügen</div>
       <p class="pw-hinweis">Alle Fahrlehrer deiner Fahrschule sehen das. Bitte sachlich.</p>
-      <div class="mic-wrap"><textarea id="pwNeu" rows="3" maxlength="2000" placeholder="Worauf achtet ${e_(nm)}?"></textarea>${mic}</div>
+      <div class="mic-wrap"><textarea id="pwNeu" rows="3" maxlength="2000" placeholder="Worauf achtet ${e_(nm)}?">\n${e_(entwurf[klein(nm)] || "")}</textarea>${mic}</div>
       <button class="btn btn-primary pw-senden" id="pwSenden" type="button">Notiz speichern</button>
     </div>`;
   };
@@ -318,13 +321,16 @@
   }
   PW.bindeNotizBlock = function (nm) {
     const btn = document.getElementById("pwSenden"), ta = document.getElementById("pwNeu");
+    if (ta) ta.addEventListener("input", () => { const v = ta.value; if (v.trim()) entwurf[klein(nm)] = v; else delete entwurf[klein(nm)]; });
     if (btn && ta) btn.addEventListener("click", async () => {
       const text = ta.value.trim(); if (!text) { ta.focus(); return; }
       btn.disabled = true;
       const ok = await PW.notizSchreiben(nm, text);
       btn.disabled = false;
       if (ok) {
-        ta.value = ""; listeNeu(nm);
+        // Während des Speicherns weitergetippt: das Neue bleibt stehen
+        if (ta.value.trim() === text) { ta.value = ""; delete entwurf[klein(nm)]; } else { ta.value = ta.value.replace(text, "").trim(); entwurf[klein(nm)] = ta.value; }
+        listeNeu(nm);
         const erste = document.querySelector("#pwListe .pw-notiz"); if (erste && erste.scrollIntoView) erste.scrollIntoView({ block: "nearest" });
         if (typeof toast === "function") toast("Notiz gespeichert ✓");
       } else if (typeof toast === "function") toast("Notiz nicht gespeichert – bitte mit Internet nochmal");
@@ -361,6 +367,7 @@
     return !sp || PW.darfVerwalten() || (u && sp.angelegt_von === u.id);
   };
   PW.loeschen = async function (nm) {
+    delete entwurf[klein(nm)];
     const sp = serverPruefer(nm), s = supa(); if (!PW.aktiv() || !sp) return true;
     try {
       const r = await s.from("fahrschule_pruefer").update({ geloescht: true }).eq("id", sp.id).select("id");
@@ -389,12 +396,13 @@
   };
   /* Umbenennen / zusammenführen für die ganze Fahrschule (Server), danach wie bisher auf dem Gerät */
   PW.umbenennen = async function (alt, neu) {
-    const s = supa(); if (!PW.aktiv() || !s) return true;
+    const s = supa(); if (!PW.aktiv() || !s) { delete entwurf[klein(alt)]; return true; }
     try {
       schreibZaehler++;
       const r = await s.rpc("fs_pruefer_umbenennen", { p_alt: alt, p_neu: neu });
       if (r.error || !r.data) return false;
       if (r.data.fehler) return r.data.fehler; // z. B. "keine_berechtigung"
+      delete entwurf[klein(alt)]; // erst nach Erfolg: Entwurf gehört zum alten Namen
       st.bekannt = st.bekannt.filter((k) => k !== klein(alt));
       st.ergebnisse.forEach((x) => { if (x.pruefer === alt) x.pruefer = neu; });
       st.notizen.forEach((x) => { if (klein(x.pruefer_name) === klein(alt)) x.pruefer_name = neu; });
