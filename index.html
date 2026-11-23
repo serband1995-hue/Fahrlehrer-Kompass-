@@ -7789,7 +7789,7 @@ const STORE_KEY="serband-app-v1";
    Wird in den Einstellungen angezeigt + für den Update-Hinweis genutzt. */
 // K1: voreingestellter Wetter-Ort (früh definiert, weil ensureDB ihn schon beim Start braucht)
 const WETTER_START={city:"Offenbach",lat:50.1006,lon:8.7665};
-const APP_VERSION="2026.11.22.7";
+const APP_VERSION="2026.11.23.2";
 try{const f=document.getElementById("drawerFoot"); if(f)f.textContent="Fahrlehrer-Kompass · Version "+APP_VERSION;}catch(e){}
 // Nutzungsbedingungen & Haftungsausschluss (Bereich: rechtliche Absicherung) - Version hochzählen
 // und alle Nutzer müssen erneut zustimmen, sobald sich der Text inhaltlich ändert.
@@ -17852,13 +17852,18 @@ function _seite2Markieren(name){
   if(SEITE2_ROUTEN.has(name))v.setAttribute("data-seite2",name); else v.removeAttribute("data-seite2");
 }
 (function navInstallieren(){
-  const ueberspringen=new Set(["routeKalenderRefresh"]);
+  // routePruefer leitet nur auf routePrueferListe weiter: nicht selbst in den Verlauf (sonst doppelter Eintrag, erster Zurück-Tipp tot – Fable E1)
+  const ueberspringen=new Set(["routeKalenderRefresh","routePruefer"]);
   Object.getOwnPropertyNames(window)
     .filter(n=>/^route[A-Z]/.test(n)&&typeof window[n]==="function"&&!ueberspringen.has(n))
     .forEach(name=>{
       const orig=window[name];
       window[name]=function(){
         let args=Array.prototype.slice.call(arguments);
+        // E1 (Fable K5): addEventListener("click",routeX) übergibt das Klick-Ereignis als Argument. Das gehört nicht
+        // in den Verlauf (Zurück-Tipp sonst tot: Ereignis lässt sich nicht merken) und nicht an die Seite.
+        while(args.length&&typeof Event!=="undefined"&&args[args.length-1] instanceof Event)args.pop();
+        const ohneEreignis=args.slice();
         // Kalender ohne Angaben: den Zustand (Ansicht, Tag) merken, damit Zurück genau dorthin führt
         if(name==="routeKalender"&&!args.length)args=[_calView,_calDate||todayISO()];
         let gleichSeite=false;
@@ -17888,7 +17893,7 @@ function _seite2Markieren(name){
         const vorher=_seite2Zaehler;
         if(_notizSofort){ const f=_notizSofort; _notizSofort=null; try{ f(); }catch(e){} }
         _seiteGeaendert=false; _seiteZurueckFn=null;
-        const r=orig.apply(this,name==="routeKalender"?args:arguments);
+        const r=orig.apply(this,name==="routeKalender"?args:ohneEreignis);
         // K10: merken, in welcher Ansicht (eigene oder ganze Fahrschule) der Eintrag entstand – Zurück bleibt in der Ansicht
         try{ const e=_navStack[_navStack.length-1]; if(e&&e.name===name&&e.agg===undefined)e.agg=!!_fsAgg;
           // Fable K10: nach einem Ansichtswechsel (auch beim Start von Leitung/Büro) Einträge der anderen Ansicht gleich entfernen,

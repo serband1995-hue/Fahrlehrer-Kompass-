@@ -4,6 +4,9 @@
    "kurz" (höchstens ~60 Zeichen) erscheint nach dem Update einmal als kleiner Hinweis (verschwindet von selbst, kein Knopf).
    Einfache Worte, keine Fachwörter, keine Schülerdaten. */
 window.KOMPASS_NEU = [
+  { version: "2026.11.23.2", datum: "2026-11-23", kurz: "Zurück klappt jetzt überall, Prüfer-Notiz bleibt.",
+    punkte: ["Nach dem Knopf „Prüfer“ und ähnlichen Knöpfen führt der Zurück-Pfeil wieder richtig zurück.",
+             "Eine angefangene Notiz zu einem Prüfer bleibt stehen, wenn du kurz zurückgehst und wiederkommst."] },
   { version: "2026.11.22.7", datum: "2026-11-22", kurz: "Neu: Zurück-Knopf auf jeder Seite.",
     punkte: ["Oben links steht auf jeder Seite ein Zurück-Knopf, sobald es eine vorige Seite gibt.",
              "Zurück führt genau an die Stelle, an der du vorher warst. Die Zurück-Taste am Handy macht dasselbe.",
