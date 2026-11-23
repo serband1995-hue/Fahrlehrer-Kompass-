@@ -21,6 +21,9 @@ CREATE TRIGGER trg_termin_verschiebung_schutz BEFORE UPDATE ON public.kalender_t
 -- bekommen beim Löschen payload.storno (nie endgültig weg). papierkorb_leeren() (security definer, Büro/Leitung/Super-Admin
 -- nur eigene Fahrschule, pg_cron alle) löscht endgültig nur > 30 Tage im Papierkorb, ohne Storno, nie unterschrieben.
 CREATE TRIGGER trg_termin_zy_papierkorb BEFORE INSERT OR UPDATE ON public.kalender_termine FOR EACH ROW EXECUTE FUNCTION termin_papierkorb();
+-- K9 (Migration 20261123_k9_01, nach der Datei nachgetragen, nicht live gezogen): Verfasser/Zeit/PIN-Person setzt der Server,
+-- Rückdatieren nur Super-Admin, Paket muss zur eigenen Fahrschule gehören.
+CREATE TRIGGER fahrschule_preise_schutz BEFORE INSERT ON public.fahrschule_preise FOR EACH ROW EXECUTE FUNCTION fahrschule_preise_schutz();
 CREATE TRIGGER trg_profil_schutz BEFORE UPDATE ON public.profiles FOR EACH ROW EXECUTE FUNCTION profil_schutz();
 CREATE TRIGGER trg_akademie_sync AFTER INSERT OR DELETE OR UPDATE ON public.schueler FOR EACH STATEMENT EXECUTE FUNCTION akademie_sync_anstossen();
 CREATE TRIGGER trg_schueler_bogen_entfernen BEFORE INSERT OR UPDATE ON public.schueler FOR EACH ROW EXECUTE FUNCTION schueler_bogen_entfernen();
@@ -75,6 +78,13 @@ create policy "Fahrschule-Admin verwaltet eigene Pakete" on public.fahrschule_pa
   using ((is_fahrschule_admin(auth.uid()) AND (fahrschule_id = my_fahrschule_id())))
   with check ((fahrschule_id = my_fahrschule_id()));
 create policy "Super Admin alles - Pakete" on public.fahrschule_pakete as PERMISSIVE for ALL to public
+  using (is_super_admin(auth.uid()));
+-- K9 fahrschule_preise (nach der Migration nachgetragen): kein UPDATE; anon keine Rechte, authenticated nur select/insert/delete.
+create policy "Preise lesen Fahrschule" on public.fahrschule_preise as PERMISSIVE for SELECT to authenticated
+  using (((fahrschule_id = k5_meine_fahrschule()) OR is_super_admin(auth.uid())));
+create policy "Preise anlegen Buero Leitung" on public.fahrschule_preise as PERMISSIVE for INSERT to authenticated
+  with check ((is_super_admin(auth.uid()) OR ((fahrschule_id = k5_meine_fahrschule()) AND COALESCE((is_fahrschule_admin(auth.uid()) OR is_buero(auth.uid())), false))));
+create policy "Preise loeschen nur Super-Admin" on public.fahrschule_preise as PERMISSIVE for DELETE to authenticated
   using (is_super_admin(auth.uid()));
 create policy "Fahrlehrer sieht Schichten seiner Fahrschule" on public.fahrschule_schichten as PERMISSIVE for SELECT to public
   using ((fahrschule_id = my_fahrschule_id()));
