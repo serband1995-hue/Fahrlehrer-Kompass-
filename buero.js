@@ -3909,6 +3909,11 @@ function fahrzeugDialog(f) {
 async function konfGesehenSetzen(schluessel) {
   const res = await supa.from("fahrzeug_konflikt_gesehen").insert({ fahrschule_id: S.fsId, schluessel }).select("*");
   if (res.error && konfTabelleFehlt(res.error)) { S.konfGesehen = null; zeichne(); return; }
+  if (res.error && res.error.code === "23505") { // schon von jemand anderem als gesehen markiert: frisch laden statt Fehler
+    const neu = await supa.from("fahrzeug_konflikt_gesehen").select("*").eq("fahrschule_id", S.fsId);
+    if (!neu.error && Array.isArray(neu.data)) S.konfGesehen = neu.data;
+    zeichne(); toast("Schon als gesehen markiert"); return;
+  }
   if (res.error || !res.data || !res.data.length) { toast("Nicht gespeichert: " + (res.error ? dbFehlerText(res.error) : "keine Berechtigung"), true); return; }
   const z = res.data[0];
   S.konfGesehen = (S.konfGesehen || []).concat(z);
