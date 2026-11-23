@@ -2360,7 +2360,8 @@ function terminDialog(id, vorgabe) {
     if (KR.hm2min(d.bis) <= KR.hm2min(d.von)) { toast("„Bis“ muss nach „Von“ liegen.", true); return false; }
     const jetzt = new Date().toISOString();
     if (d.absagen) {
-      if (!(await bestaetige("Termin absagen?", "Der Termin wird gelöscht und verschwindet beim Fahrlehrer.", "Ja, absagen"))) return false;
+      // K7: ohne Rückfrage (Rückgängig 6 s). Gelaufene/unterschriebene Nachweis-Stunde: stornieren mit Grund (buero-nachweis.js)
+      if (typeof nwIstNachweis === "function" && NW_FAHRT_ARTEN.includes(t.art || "fahrstunde") && nwIstNachweis(t)) { setTimeout(() => nwLoeschen(t, () => {}), 0); return true; }
       return sageTermineAb([t], "Termin abgesagt");
     }
     // Stopp-Notiz oder offene Reaktivierung: Büro vor dem Buchen warnen (wie in der Fahrlehrer-App)

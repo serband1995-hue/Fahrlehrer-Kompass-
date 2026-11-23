@@ -124,6 +124,7 @@ function nwPapierkorbText(t) {
   if (s) return `storniert${s.grund ? ": „" + s.grund + "“" : ""} · bleibt aufbewahrt`;
   const p = t.payload || {};
   if (p.signed || (p.signaturUngueltig && typeof p.signaturUngueltig === "object")) return "unterschrieben · bleibt aufbewahrt";
+  if (!t.geloescht_am) return "liegt im Papierkorb";
   const n = nwRestTage(t);
   return n > 1 ? `wird in ${n} Tagen endgültig gelöscht` : n === 1 ? "wird morgen endgültig gelöscht" : "wird heute endgültig gelöscht";
 }
@@ -418,34 +419,42 @@ function nwDrucken(x, d, st, teil) {
    Gelöschte Termine der letzten Zeit mit „Wiederherstellen“. Fehleinträge: „wird in X Tagen endgültig gelöscht“
    (Datenbank-Funktion papierkorb_leeren, täglich und beim Laden). Stornierte/unterschriebene Stunden: eigene Liste,
    bleiben aufbewahrt. Läuft auch mit alter Datenbank (ohne geloescht_am / papierkorb_leeren). */
-const PK = { fs: null, daten: null, zeit: 0, laedt: false, offen: false, stornoOffen: false, geleert: false, fehler: "" };
+const PK_MAX = 300;
+const PK = { fs: null, voll: false, daten: null, zeit: 0, laedt: false, offen: false, stornoOffen: false, geleert: false, fehler: "" };
 async function pkHolen() {
   if (PK.laedt) return; PK.laedt = true;
   const fs = S.fsId;
   try {
     if (!PK.geleert) { PK.geleert = true; try { await supa.rpc("papierkorb_leeren"); } catch (e) { /* alte Datenbank: ohne */ } }
     const spalten = "id,datum,von,bis,art,fahrlehrer_id,schueler_id,status,payload,aktualisiert_am";
-    let r = await supa.from("kalender_termine").select(spalten + ",geloescht_am").eq("fahrschule_id", S.fsId).eq("geloescht", true).order("aktualisiert_am", { ascending: false }).limit(300);
-    if (r.error) r = await supa.from("kalender_termine").select(spalten).eq("fahrschule_id", S.fsId).eq("geloescht", true).order("aktualisiert_am", { ascending: false }).limit(300);
+    const hol = (sp) => supa.from("kalender_termine").select(sp).eq("fahrschule_id", S.fsId).eq("geloescht", true).order("aktualisiert_am", { ascending: false }).limit(PK_MAX);
+    let r = await hol(spalten + ",geloescht_am,admin_entfernt_am");
+    if (r.error) r = await hol(spalten + ",geloescht_am");
+    if (r.error) r = await hol(spalten);
     if (fs !== S.fsId) return; // während des Ladens Fahrschule gewechselt
     if (r.error) { PK.fehler = r.error.message; PK.daten = PK.daten || []; }
-    else { PK.fehler = ""; PK.daten = (r.data || []).filter((t) => t.art !== "block"); }
+    // Von der Leitung entfernte Termine gehören nicht in den Papierkorb (gesperrt, lassen sich nicht zurückholen)
+    else { PK.fehler = ""; PK.voll = (r.data || []).length >= PK_MAX; PK.daten = (r.data || []).filter((t) => t.art !== "block" && !t.admin_entfernt_am); }
     PK.zeit = Date.now();
   } finally { PK.laedt = false; }
 }
 function pkArt(t) { return NW_FAHRT_ARTEN.includes(t.art || "fahrstunde") ? nwArtText(t) : (ARTEN[t.art] || t.art || "Termin"); }
+// Abgesagte Prüfung (Prüfungstafel hat die Verknüpfung gelöst) und online gebuchte Stunde (Absage ist raus): nicht zurückholen
+function pkNichtZurueck(t) { return t.art === "pruefung" ? "Prüfung: bitte auf der Prüfungstafel neu planen" : (t.payload || {}).onlineBookingId ? "online gebucht: Absage ist raus, bitte neu buchen" : ""; }
 function pkZeile(t) {
+  const nein = pkNichtZurueck(t);
   return `<li class="nw-zeile"><span class="nw-wann"><b>${esc(datumDE(t.datum))}</b> ${esc(t.von || "")}–${esc(t.bis || "")}</span>
     <span class="nw-was">${esc(pkArt(t))} · ${esc(schuelerName(t.schueler_id) || "ohne Schüler")} · ${esc(lehrerName(t.fahrlehrer_id) || "–")}<br><span class="leise klein">${esc(nwPapierkorbText(t))}</span></span>
-    <span class="nw-knoepfe"><button type="button" class="knopf klein" data-pkzurueck="${esc(t.id)}">Wiederherstellen</button></span></li>`;
+    <span class="nw-knoepfe">${nein ? `<span class="leise klein">${esc(nein)}</span>` : `<button type="button" class="knopf klein" data-pkzurueck="${esc(t.id)}">Wiederherstellen</button>`}</span></li>`;
 }
 function pkHTML() {
   const alle = PK.daten || [];
   const bleibt = alle.filter((t) => { const p = t.payload || {}; return nwStorno(t) || p.signed || (p.signaturUngueltig && typeof p.signaturUngueltig === "object"); });
   const weg = alle.filter((t) => !bleibt.includes(t));
-  return `<details class="karte nw-details pk-karte" id="pkKarte"${PK.offen ? " open" : ""}><summary>Papierkorb (${PK.daten ? alle.length : "…"})</summary>
+  return `<details class="karte nw-details pk-karte" id="pkKarte"${PK.offen ? " open" : ""}><summary>Papierkorb (${PK.daten ? alle.length + (PK.voll ? "+" : "") : "…"})</summary>
     ${PK.fehler ? `<p class="leise klein">Papierkorb konnte nicht geladen werden.</p>` : !PK.daten ? `<p class="leise klein">Lädt …</p>` : `
     <p class="leise klein">Gelöschte Termine. Fehleinträge werden nach ${NW_PAPIERKORB_TAGE} Tagen endgültig gelöscht; stornierte und unterschriebene Stunden bleiben aufbewahrt. Der Verlauf jeder Stunde bleibt.</p>
+    ${PK.voll ? `<p class="leise klein">Gezeigt werden die letzten ${PK_MAX} gelöschten Termine.</p>` : ""}
     ${weg.length ? `<ul class="nw-liste">${weg.map(pkZeile).join("")}</ul>` : `<p class="leise klein">Keine gelöschten Termine.</p>`}
     ${bleibt.length ? `<details class="nw-details" id="pkStorno"${PK.stornoOffen ? " open" : ""}><summary>Storniert, bleibt aufbewahrt (${bleibt.length})</summary><ul class="nw-liste">${bleibt.map(pkZeile).join("")}</ul></details>` : ""}`}
   </details>`;
