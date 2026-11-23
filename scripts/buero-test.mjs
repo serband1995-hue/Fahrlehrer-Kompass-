@@ -33,7 +33,7 @@ const browser = await chromium.launch({ executablePath: process.env.CHROMIUM_PAT
 let probleme = 0;
 function fehler(text) { probleme++; console.log("FEHLER:", text); }
 
-async function oeffne({ nutzer, breite = 1366, hoehe = 860, hash = "", dunkel = false, vorbereiten, wer = "Paula Muster" }) {
+async function oeffne({ nutzer, breite = 1366, hoehe = 860, hash = "", dunkel = false, vorbereiten, wer = "Paula Muster", uhr }) {
   const daten = bauDaten(HEUTE);
   const session = nutzer ? { user: { id: nutzer, email: nutzer + "@example.org" } } : null;
   const ctx = await browser.newContext({ viewport: { width: breite, height: hoehe }, colorScheme: dunkel ? "dark" : "light" });
@@ -47,6 +47,7 @@ async function oeffne({ nutzer, breite = 1366, hoehe = 860, hash = "", dunkel = 
     window.__FAKE = { tabellen: d.tabellen, konten: d.konten, session: s };
     if (v) (new Function("F", v))(window.__FAKE);
   }, [daten, session, vorbereiten ? vorbereiten.toString().replace(/^[^{]*{/, "").replace(/}\s*$/, "") : ""]);
+  if (uhr) await page.clock.install({ time: new Date(uhr) }); // Uhrzeit fest vorgeben (läuft ab da weiter)
   await page.goto(basis + "buero.html" + hash);
   await page.waitForTimeout(400);
   // Gemeinsamer Büro-Zugang: „Wer bedient gerade?“ beantworten (Super-Admin wird nicht gefragt)
@@ -301,7 +302,9 @@ for (const [breite, hoehe] of [[1920, 1080], [1366, 768], [1024, 768]]) {
 }
 // 4d) Kalender: Termin anlegen per Klick, verschieben, absagen
 {
-  const { page, ctx, konsole } = await oeffne({ nutzer: "bu-1", hash: "#kalender", breite: 1920, hoehe: 1080 });
+  // Uhr auf 10:00: Der Termin (19:00) liegt so immer in der Zukunft. Abends war er sonst schon vorbei, und seit K7
+  // wird eine gelaufene Stunde nicht abgesagt, sondern mit Grund storniert – der Test schlug dann ab 19:30 fehl.
+  const { page, ctx, konsole } = await oeffne({ nutzer: "bu-1", hash: "#kalender", breite: 1920, hoehe: 1080, uhr: `${HEUTE}T10:00:00` });
   if (FOTOS) await page.screenshot({ path: join(FOTOS, "kalender.png"), fullPage: true });
   const flaeche = await page.$('.k-flaeche[data-lehrer="fl-1"]');
   const box = await flaeche.boundingBox();

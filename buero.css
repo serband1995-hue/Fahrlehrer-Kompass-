@@ -743,7 +743,7 @@ body.kiosk .rollen-streifen{display:none;}
 .formular .zm-modus-wahl{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px;}
 .formular .zm-modus-wahl legend{grid-column:1/-1;}
 .formular .zm-modus-wahl .zm-fehler{grid-column:1/-1;}
-.formular .zm-wahl{display:flex;align-items:flex-start;gap:12px;min-height:56px;padding:12px 14px;border:2px solid var(--line);border-radius:var(--r-klein);background:var(--bg);cursor:pointer;font-weight:500;}
+.formular .zm-wahl{display:flex;align-items:flex-start;gap:12px;min-height:56px;padding:12px 14px;border:2px solid var(--faint);border-radius:var(--r-klein);background:var(--bg);cursor:pointer;font-weight:500;}
 .formular .zm-wahl > span{display:grid;gap:2px;min-width:0;}
 .formular .zm-wahl input{flex:0 0 auto;margin-top:3px;min-height:auto;width:22px;height:22px;}
 .formular .zm-wahl:has(input:checked){border-color:var(--txt);background:var(--surface-2);}
@@ -760,7 +760,7 @@ body.kiosk .rollen-streifen{display:none;}
 .zm-form{display:grid;gap:10px;}
 .zm-form[hidden]{display:none;}
 .zm-form label{display:grid;gap:6px;font-weight:600;}
-.zm-form input{min-height:46px;padding:0 12px;border:1px solid var(--line);border-radius:var(--r-klein);background:var(--surface);font:inherit;font-weight:400;min-width:0;width:100%;box-sizing:border-box;}
+.zm-form input:not([type=radio]):not([type=checkbox]){min-height:46px;padding:0 12px;border:1px solid var(--line);border-radius:var(--r-klein);background:var(--surface);font:inherit;font-weight:400;min-width:0;width:100%;box-sizing:border-box;}
 .zm-form .knopf{min-height:46px;}
 @media (max-width:640px){
   .formular .zm-modus-wahl{grid-template-columns:minmax(0,1fr);}
@@ -780,7 +780,7 @@ body.kiosk .rollen-streifen{display:none;}
 .toast.toast-undo.zm-toast{bottom:auto;top:72px;}
 .toast-undo.zm-toast .toast-knopf{min-height:44px;min-width:44px;padding:8px 16px;}
 /* Zahlungsdaten: IBAN und alle Felder bei 360 px nicht abschneiden */
-#zmForm input,#zmForm textarea{min-width:0;width:100%;box-sizing:border-box;}
+#zmForm input:not([type=radio]):not([type=checkbox]),#zmForm textarea{min-width:0;width:100%;box-sizing:border-box;}
 #zmForm label{min-width:0;}
 @media (max-width:640px){ #zmForm{grid-template-columns:minmax(0,1fr);} #zmForm input[name=iban]{font-size:16px;letter-spacing:0;} }
 .formular .zm-modus-wahl{min-width:0;}
