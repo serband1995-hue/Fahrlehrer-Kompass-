@@ -775,3 +775,10 @@ body.kiosk .rollen-streifen{display:none;}
 .zm-form .zm-fehler{margin:0;}
 .toast.toast-undo.zm-toast{bottom:auto;top:72px;}
 .toast-undo.zm-toast .toast-knopf{min-height:44px;min-width:44px;padding:8px 16px;}
+/* Zahlungsdaten: IBAN und alle Felder bei 360 px nicht abschneiden */
+#zmForm input,#zmForm textarea{min-width:0;width:100%;box-sizing:border-box;}
+#zmForm label{min-width:0;}
+@media (max-width:640px){ #zmForm{grid-template-columns:minmax(0,1fr);} #zmForm input[name=iban]{font-size:16px;letter-spacing:0;} }
+.formular .zm-modus-wahl{min-width:0;}
+.formular .zm-wahl{min-width:0;}
+.formular .zm-wahl > span,.formular .zm-wahl .leise{min-width:0;overflow-wrap:anywhere;}

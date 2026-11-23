@@ -128,7 +128,7 @@ try {
   {
     const { page, ctx, konsole } = await oeffne({ nutzer: "ad-1", vorbereiten: vor() });
     const kein = await page.evaluate(() => S.schueler.find((s) => istAktiv(s) && !zmAngebote(s).length && !zahlungSperre(s)).id);
-    pruefe("Z3a Schüler ohne geplante Prüfung, ohne Sperre: kein Block", (await (async () => { await oeffneAkte(page, kein); return page.locator("#zmBlock").count(); })()) === 0);
+    pruefe("Z3a Schüler ohne geplante Prüfung, ohne Sperre: kein Block", (await (async () => { await oeffneAkte(page, kein); return page.locator("#zmBlock h3").count(); })()) === 0);
     await schliesseAlle(page);
     // s3: Praxisprüfung Klasse B in 2 Tagen (Tafel), Preis 120 €
     pruefe("Z3b s3 hat genau den Knopf „Prüfung“", JSON.stringify(await arten(page, "s3")) === '["pruefung"]');
@@ -159,7 +159,7 @@ try {
     await dlg.locator("[data-zmsenden]").click();
     const s3name = await page.evaluate(() => S.schueler.find((x) => x.id === "s3").name);
     await page.locator(".toast-undo").waitFor({ timeout: 2000 });
-    pruefe("Z3k nach „Senden“: Hinweis „Wird gesendet · 120,00 € · Name“ mit „Rückgängig“", (await page.locator(".toast-undo .toast-text").innerText()).replace(/\s+/g, " ") === `Wird gesendet · 120,00 € · ${s3name}`, await page.locator(".toast-undo .toast-text").innerText());
+    pruefe("Z3k nach „Senden“: Hinweis „Test-Mail wird gesendet · 120,00 € · Name“ mit „Rückgängig“", (await page.locator(".toast-undo .toast-text").innerText()).replace(/\s+/g, " ") === `Test-Mail wird gesendet · 120,00 € · ${s3name}`, await page.locator(".toast-undo .toast-text").innerText());
     pruefe("Z3k2 Rückgängig-Knopf mindestens 44 px, „Senden“ während des Wartens gesperrt mit Grund", (await page.locator(".toast-undo [data-undo]").evaluate((e) => e.getBoundingClientRect().height)) >= 44 && await dlg.locator("[data-zmsenden]").isDisabled() && /Gerade wird gesendet/.test(await dlg.locator("[data-zmgrund]").first().innerText()));
     pruefe("Z3l während des Wartens noch kein Aufruf", (await anrufe(page)).length === 0);
     await page.locator(".toast-undo [data-undo]").click(); await page.waitForTimeout(800);
@@ -380,6 +380,86 @@ try {
     await e.page.waitForTimeout(1500);
     pruefe("Z9k Akte zu und wieder auf während des Wartens: Mail geht raus, Haken erscheint im neuen Fenster", await e.page.locator("[data-zmhaken=pruefung]").count() === 1 && (await anrufe(e.page)).length === 1);
     await e.ctx.close();
+  }
+
+  // Z10 Prüf-Reparatur: Modus im offenen Block, Entwurf-Basis, Zahl-Block, Fokus, IBAN, Verlauf, lokale Einträge
+  {
+    const mitMail = `F.tabellen.schueler.find((x) => x.id === "s3").email = "schueler@example.org";`;
+    // M1a: Daten werden bei offener Akte neu geladen, Modus inzwischen Echt: Block zieht nach, Entwurf bleibt
+    const a = await oeffne({ nutzer: "ad-1", vorbereiten: vor({ extra: mitMail }) });
+    await oeffneAkte(a.page, "s3");
+    let dlg = a.page.locator("dialog[open]").last();
+    await dlg.locator("[data-zmoeffne]").click();
+    await dlg.locator("[data-zmbetrag]").fill("55");
+    await a.page.evaluate(async () => { const z = window.__FAKE.tabellen.fahrschule_zahlungsdaten[0]; z.modus = "echt"; z.geaendert_am = new Date().toISOString(); await ladeDaten(); });
+    pruefe("Z10a offene Akte nach dem Laden: Echt-Zeile, Knopf „Mail an Schüler senden“, Betrag „55“ bleibt, Formular offen", await dlg.locator("[data-zmecht]").count() === 1 && (await dlg.locator("[data-zmsenden]").innerText()) === "Mail an Schüler senden" && (await dlg.locator("[data-zmbetrag]").inputValue()) === "55" && await dlg.locator("[data-zmform]").isVisible() && (await dlg.locator("#zmBlock").getAttribute("data-zmmodus")) === "echt");
+    await dlg.locator("[data-zmsenden]").click(); await a.page.locator(".toast-undo").waitFor({ timeout: 2000 });
+    pruefe("Z10b Hinweis im Echt-Modus: „Wird an den Schüler gesendet · 55,00 € · Name“", /^Wird an den Schüler gesendet · 55,00\s*€ · .+$/.test((await a.page.locator(".toast-undo .toast-text").innerText()).trim()));
+    await a.page.waitForTimeout(1300);
+    pruefe("Z10c gesendet mit erwarteter Modus „echt“", (await anrufe(a.page)).length === 1 && (await anrufe(a.page))[0].body.erwarteter_modus === "echt");
+    await a.ctx.close();
+    // M1b: Block ist älter als S (kein Neuzeichnen): nicht senden, Hinweis
+    const b = await oeffne({ nutzer: "ad-1", vorbereiten: vor({ extra: mitMail }) });
+    await oeffneAkte(b.page, "s3");
+    dlg = b.page.locator("dialog[open]").last();
+    await dlg.locator("[data-zmoeffne]").click();
+    await b.page.evaluate(() => { S.zahlungsdaten.modus = "echt"; }); // nur im Speicher, der Block zeigt noch Test
+    await dlg.locator("[data-zmsenden]").click(); await b.page.waitForTimeout(300);
+    pruefe("Z10d Block zeigt Test, Speicher Echt: nichts gesendet, Hinweis „Modus … Echt umgestellt“, Block neu gezeichnet", (await anrufe(b.page)).length === 0 && /Der Modus wurde inzwischen auf Echt umgestellt\. Es wurde nichts gesendet/.test(await dlg.locator("[data-zmmeldung]").innerText()) && (await dlg.locator("#zmBlock").getAttribute("data-zmmodus")) === "echt" && await b.page.locator(".toast-undo").count() === 0);
+    await b.ctx.close();
+    // M2: Entwurf beruht auf altem Stand, inzwischen neuer Stand geladen: Hinweis, Speichern gesperrt
+    const c = await oeffne({ nutzer: "ad-1", vorbereiten: vor() });
+    await c.page.fill("#zmForm input[name=kontoinhaber]", "Mein Entwurf");
+    await c.page.evaluate(async () => { const z = window.__FAKE.tabellen.fahrschule_zahlungsdaten[0]; z.geaendert_am = "2026-11-23T09:00:00Z"; z.bic = "ABCDDEFFXXX"; await ladeDaten(); });
+    pruefe("Z10e neuer Stand bei offenem Entwurf: Hinweis über dem Formular, Entwurf bleibt", await c.page.locator("[data-zmneuer]").count() === 1 && (await c.page.locator("#zmForm input[name=kontoinhaber]").inputValue()) === "Mein Entwurf");
+    await c.page.click("#zmSpeichern"); await c.page.waitForTimeout(300);
+    pruefe("Z10f Speichern gegen die Basis: „inzwischen von jemand anderem geändert“, nichts überschrieben", /inzwischen von jemand anderem geändert/.test(await c.page.locator("[data-zmspeicher]").innerText()) && (await c.page.evaluate(() => window.__FAKE.tabellen.fahrschule_zahlungsdaten[0].kontoinhaber)) === "Boost Fahrschule Muster");
+    await c.ctx.close();
+    // M3: „Bezahlt“ und „Zahlung offen“ in der offenen Akte ziehen den Mail-Block mit
+    const d = await oeffne({ nutzer: "ad-1", vorbereiten: vor() });
+    await oeffneAkte(d.page, "s12");
+    dlg = d.page.locator("dialog[open]").last();
+    pruefe("Z10g s12 gesperrt: Mail-Knopf „Zahlung offen“ da", await dlg.locator('[data-zmart=zahlung_offen]').count() === 1);
+    await dlg.locator("#zahlBlock [data-zbezahlt]").click(); await d.page.waitForTimeout(400);
+    pruefe("Z10h nach „Bezahlt“: Mail-Knopf sofort weg", await dlg.locator("[data-zmart]").count() === 0);
+    await dlg.locator("#zahlBlock [data-zsperre]").click(); await d.page.waitForTimeout(300);
+    await d.page.locator("dialog[open]").last().locator("footer button[value=ok]").click(); await d.page.waitForTimeout(500);
+    dlg = d.page.locator("dialog[open]").first();
+    pruefe("Z10i „Zahlung offen“ gesetzt: Mail-Knopf sofort da", await dlg.locator('[data-zmart=zahlung_offen]').count() === 1);
+    // Server sagt nicht_gesperrt (Sperre inzwischen weg)
+    await dlg.locator("[data-zmoeffne]").click(); await dlg.locator("[data-zmbetrag]").fill("50");
+    await d.page.evaluate(() => { const q = window.__FAKE.tabellen.schueler.find((x) => x.id === "s12"); q.zahlung_gesperrt_seit = null; });
+    const n12 = await d.page.evaluate(() => S.schueler.find((x) => x.id === "s12").name);
+    await dlg.locator("[data-zmsenden]").click(); await d.page.waitForTimeout(1500);
+    pruefe("Z10j nicht_gesperrt: Hinweis „Für <Name> ist keine Zahlung mehr offen. Es wurde nichts gesendet.“ (einmal), Knopf weg", (await d.page.evaluate(() => [...document.querySelectorAll(".toast.fehler")].map((t) => t.textContent))).includes(`Für ${n12} ist keine Zahlung mehr offen. Es wurde nichts gesendet.`) && await dlg.locator("[data-zmart]").count() === 0);
+    await d.ctx.close();
+    // K1 Fokus und Cursor, K3 IBAN bei 360 px
+    const e = await oeffne({ nutzer: "ad-1", vorbereiten: vor(), breite: 360, hoehe: 740 });
+    await e.page.fill("#zmForm input[name=kontoinhaber]", "Abcdefgh");
+    await e.page.keyboard.press("Home"); for (let i = 0; i < 3; i++) await e.page.keyboard.press("ArrowRight");
+    await e.page.evaluate(() => zeichne());
+    const fk = await e.page.evaluate(() => [document.activeElement.name, document.activeElement.selectionStart]);
+    pruefe("Z10k Neuzeichnen: aktives Feld und Cursor-Stelle bleiben", fk[0] === "kontoinhaber" && fk[1] === 3, JSON.stringify(fk));
+    const ib = await e.page.evaluate(() => { const i = document.querySelector("#zmForm input[name=iban]"), r = i.getBoundingClientRect(); return [i.scrollWidth, i.clientWidth, r.left, r.right]; });
+    pruefe("Z10l IBAN-Feld bei 360 px: Text passt, Feld ragt nicht hinaus", ib[0] <= ib[1] && ib[2] >= 0 && ib[3] <= 360, JSON.stringify(ib));
+    await e.ctx.close();
+    // K4 Verlauf
+    const f = await oeffne({ nutzer: "ad-1", vorbereiten: vor({ extra: `F.fehler = { zahlungs_mails: "Failed to fetch" };` }) });
+    await oeffneAkte(f.page, "s3");
+    pruefe("Z10m Verlauf nicht geladen: Hinweis „Verlauf konnte nicht geladen werden“", await f.page.locator("[data-zmverlauf]").count() === 1);
+    await f.page.evaluate(async () => { window.__FAKE.fehler = {}; await ladeDaten(); });
+    pruefe("Z10n später geladen: Hinweis weg", await f.page.locator("[data-zmverlauf]").count() === 0);
+    await f.page.evaluate(async () => { window.__FAKE.fehler = { zahlungs_mails: "Failed to fetch" }; await ladeDaten(); });
+    pruefe("Z10o Fehler nach Erfolg: letzter Stand bleibt, kein Hinweis", await f.page.locator("[data-zmverlauf]").count() === 0);
+    // K5 lokale Einträge, die neuer als der Ladebeginn sind
+    const k5 = await f.page.evaluate(() => {
+      const row = (id) => ({ id, schueler_id: "s3", art: "pruefung", status: "gesendet", modus: "test", betrag_cent: 100, angelegt_am: new Date().toISOString() });
+      ZM.lokal = [{ t: Date.now() + 500, row: row("neu1") }, { t: Date.now() - 5000, row: row("alt1") }];
+      zmLaden({ data: S.zahlungsdaten, error: null }, { data: [], error: null }, Date.now());
+      return S.zahlungsMails.map((m) => m.id);
+    });
+    pruefe("Z10p Eintrag neuer als Ladebeginn bleibt, älterer fehlender nicht", JSON.stringify(k5) === '["neu1"]', JSON.stringify(k5));
+    await f.ctx.close();
   }
 } finally {
   await browser.close();

@@ -552,7 +552,7 @@ function zahlBlockHTML(x) {
 function bindeZahlBlock(dlg, id) {
   const block = dlg.querySelector("#zahlBlock");
   if (!block) return;
-  const neu = () => { const x = S.schueler.find((y) => y.id === id); if (x) { block.innerHTML = zahlBlockHTML(x); bind(); } };
+  const neu = () => { const x = S.schueler.find((y) => y.id === id); if (x) { block.innerHTML = zahlBlockHTML(x); bind(); } if (typeof zmNeuZeichnen === "function") zmNeuZeichnen(id); }; // Werkstatt 11: Mail-Knöpfe hängen an der Sperre
   const bind = () => {
     block.querySelectorAll("[data-zsperre]").forEach((b) => b.addEventListener("click", () => zahlungAusstehendDialog(id, neu)));
     block.querySelectorAll("[data-zbezahlt]").forEach((b) => b.addEventListener("click", () => zahlungBezahlt(id, neu)));
@@ -4098,6 +4098,7 @@ async function alleSeiten(abfrage, seite = 1000) {
 async function ladeDaten() {
   const nr = ++S.ladeNr;
   const fsId = S.fsId;
+  const zmT0 = Date.now(); // Werkstatt 11: ein Eintrag, der nach Ladebeginn entsteht, darf nicht verloren gehen
   setStatus("", "lade …");
   try {
     const [fs, lehrer, schueler, termine, pruefungen, fahrzeuge, pakete, pTermine, fcAbg, verk, prov, team, notizen, gelesen, aufgaben, personen, theorie, fahrzeugeWeg, preise, zahlungsdaten, zahlungsMails] = await Promise.all([
@@ -4146,7 +4147,7 @@ async function ladeDaten() {
     // K9: null = Preisliste (noch) nicht da → alter Reaktivierungsbetrag. Ein kurzer Ladefehler behält den letzten Stand (Prüf-Team).
     if (preise && !preise.error) S.preise = preise.data || [];
     else if (!(S.preise && S.preise.length) || (typeof prTabelleFehlt !== "function" || prTabelleFehlt(preise && preise.error))) S.preise = null;
-    if (typeof zmLaden === "function") zmLaden(zahlungsdaten, zahlungsMails); // Werkstatt 11: Fehler tolerant
+    if (typeof zmLaden === "function") zmLaden(zahlungsdaten, zahlungsMails, zmT0); // Werkstatt 11: Fehler tolerant
     S.geladenAm = new Date();
     $("schulName").textContent = S.fs ? S.fs.name : "";
     setStatus("ok", "verbunden · " + S.geladenAm.toLocaleTimeString("de-DE", { hour: "2-digit", minute: "2-digit" }));

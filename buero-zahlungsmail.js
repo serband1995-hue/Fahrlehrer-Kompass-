@@ -25,27 +25,43 @@ const ZM_FEHLER = {
   zu_viele_schule: "Heute wurden schon 100 Mails verschickt. Morgen geht es wieder.",
   ungueltige_anfrage: ZM_NICHT_MOEGLICH_TEXT,
   modus_geaendert: null, // Text hängt vom neuen Modus ab (zmModusText)
+  nicht_gesperrt: null, // Text mit Namen in zmSende
   keine_email: "Keine E-Mail-Adresse in der Akte.",
   keine_testadresse: "Es ist keine Test-Adresse hinterlegt. Bitte unter Einstellungen eine eintragen.",
 };
 const ZM_NICHT_MOEGLICH = ZM_NICHT_MOEGLICH_TEXT;
 const LADEFEHLER_TEXT = "Zahlungsdaten konnten nicht geladen werden. Bitte Seite neu laden.";
 // laeuft: Schlüssel „schueler|art“ solange Warten oder Senden läuft (nur EINE Mail gleichzeitig); offen: aufgeklappte Formulare; entwurf: Betrag/Wofür je Schlüssel
-const ZM = { laeuft: new Set(), offen: new Set(), entwurf: {} };
+const ZM = { laeuft: new Set(), offen: new Set(), entwurf: {}, lokal: [], fokus: null };
+window.addEventListener("hashchange", () => { ZM.fokus = null; });
 
 // Wer darf? Büro, Leitung, Super-Admin (wie prDarf); Fahrlehrer sehen nichts davon
 function zmDarf() { return !!(S.profil && ["buero", "fahrschule_admin", "super_admin"].includes(S.profil.rolle)); }
 function zmTabelleFehlt(err) { return !!err && (["42P01", "PGRST205"].includes(err.code) || /does not exist|could not find the table/i.test(String(err.message || ""))); }
 // Aufruf aus ladeDaten: Netzfehler behalten den letzten Stand, fehlende Tabelle = „nicht eingerichtet“
-function zmLaden(zd, zm) {
+function zmLaden(zd, zm, t0) {
   const fehlt = zmTabelleFehlt(zd && zd.error) || zmTabelleFehlt(zm && zm.error);
   S.zmFehlt = fehlt;
-  if (fehlt) { S.zahlungsdaten = null; S.zahlungsMails = []; S.zmLadefehler = false; S.zmGeladen = false; return; }
+  if (fehlt) { S.zahlungsdaten = null; S.zahlungsMails = []; S.zmLadefehler = false; S.zmGeladen = false; S.zmVerlaufFehler = false; return; }
   if (zd && !zd.error) { S.zahlungsdaten = zd.data || null; S.zmGeladen = true; S.zmLadefehler = false; }
   else if (!S.zmGeladen) { S.zahlungsdaten = null; S.zmLadefehler = true; } // nie geladen: „konnte nicht geladen werden“; ein früherer Erfolg behält den Stand
-  if (zm && !zm.error) S.zahlungsMails = zm.data || []; else if (!Array.isArray(S.zahlungsMails)) S.zahlungsMails = [];
+  if (zm && !zm.error) {
+    const liste = (zm.data || []).slice();
+    // eine Mail, die nach Beginn dieses Ladens gesendet wurde, steht noch nicht in der Antwort: nicht verlieren
+    const jetzt = Date.now();
+    ZM.lokal = ZM.lokal.filter((l) => jetzt - l.t < 3600000);
+    if (t0) for (const l of ZM.lokal) if (l.t > t0 && !liste.some((m) => m.id === l.row.id)) liste.unshift(l.row);
+    S.zahlungsMails = liste; S.zmMailsGeladen = true; S.zmVerlaufFehler = false;
+  } else {
+    if (!Array.isArray(S.zahlungsMails)) S.zahlungsMails = [];
+    if (!S.zmMailsGeladen) S.zmVerlaufFehler = true; // früherer Erfolg: letzten Stand behalten
+  }
+  zmBloeckAktualisieren();
 }
-function zmLeeren() { S.zahlungsdaten = null; S.zahlungsMails = []; S.zmFehlt = false; S.zmLadefehler = false; S.zmGeladen = false; S.zmEntwurf = null; ZM.offen.clear(); ZM.entwurf = {}; }
+function zmLeeren() { S.zahlungsdaten = null; S.zahlungsMails = []; S.zmFehlt = false; S.zmLadefehler = false; S.zmGeladen = false; S.zmMailsGeladen = false; S.zmVerlaufFehler = false; S.zmEntwurf = null; ZM.offen.clear(); ZM.entwurf = {}; ZM.lokal = []; }
+// Offene Akten: Block nach jedem Laden neu zeichnen, wenn sich etwas geändert hat (z. B. der Modus); Entwurf und Fokus bleiben
+function zmBloeckAktualisieren() { document.querySelectorAll("#zmBlock").forEach((b) => { if (b.dataset.zmsid) zmNeuZeichnen(b.dataset.zmsid, null, null, true); }); }
+function zmStand() { return S.zahlungsdaten ? String(S.zahlungsdaten.geaendert_am || "") : ""; }
 function zmModus() { return zmEcht() ? "echt" : "test"; }
 function zmModusText(m) { return m === "echt" ? "Echt" : m === "test" ? "Test" : null; }
 
@@ -97,6 +113,7 @@ function zmEinstellungenHTML() {
     : `<p class="voll zm-aktuell test" data-zmaktuell>Aktuell: TEST. Mails gehen nur an ${z0.test_email ? esc(z0.test_email) : "die Adresse des Betreibers"}.</p>`;
   return kopf + `
     <form id="zmForm" class="formular" novalidate>
+      ${S.zmEntwurf && S.zmEntwurf.basis !== zmStand() ? `<p class="voll zm-hinweis" data-zmneuer>Die Zahlungsdaten wurden inzwischen von jemand anderem geändert. Deine Eingaben stehen noch hier, gespeichert wird aber erst nach „Seite neu laden“.</p>` : ""}
       ${aktuell}
       <fieldset class="voll zm-modus-wahl"><legend>Wohin gehen die Mails?</legend>
         <label class="zm-wahl"><input type="radio" name="modus" value="test"${modus === "test" ? " checked" : ""}><span><b>Test</b><span class="leise klein">Alle Mails gehen nur an die Test-Adresse. Kein Schüler bekommt etwas.</span></span></label>
@@ -125,7 +142,16 @@ function zmBindeEinstellungen(ziel) {
     zeige(ibanFehler, v && !zmIbanOk(v) ? "Diese IBAN stimmt nicht (Prüfziffer). Bitte mit dem Kontoauszug vergleichen." : "");
     return !v || zmIbanOk(v);
   };
-  const merke = () => { S.zmEntwurf = { kontoinhaber: f.kontoinhaber.value, iban: f.iban.value, bic: f.bic.value, paypal: f.paypal.value, impressum: f.impressum.value, modus: f.modus.value, test_email: f.test_email.value }; };
+  // basis = Stand (geaendert_am), auf dem die Eingaben beruhen; beim Speichern wird gegen sie geprüft, nicht gegen den inzwischen neu geladenen Stand
+  const merke = () => { const basis = S.zmEntwurf && "basis" in S.zmEntwurf ? S.zmEntwurf.basis : zmStand(); S.zmEntwurf = { kontoinhaber: f.kontoinhaber.value, iban: f.iban.value, bic: f.bic.value, paypal: f.paypal.value, impressum: f.impressum.value, modus: f.modus.value, test_email: f.test_email.value, basis }; };
+  // aktives Feld und Cursor überstehen das Neuzeichnen
+  const fokusMerken = (e) => { const t = e.target; if (t && t.name && f.contains(t)) ZM.fokus = { name: t.name, a: t.selectionStart, b: t.selectionEnd }; };
+  ["focusin", "input", "keyup", "click", "select"].forEach((ev) => f.addEventListener(ev, fokusMerken));
+  f.addEventListener("focusout", () => setTimeout(() => { if (f.isConnected && !f.contains(document.activeElement)) ZM.fokus = null; }, 0));
+  if (ZM.fokus && (!document.activeElement || document.activeElement === document.body)) {
+    const el = f.elements[ZM.fokus.name], von = ZM.fokus.a, bis = ZM.fokus.b; // vorher kopieren: focus() löst den Merker aus
+    if (el && el.tagName && el.focus) { el.focus({ preventScroll: true }); try { el.setSelectionRange(von, bis); } catch (e) { /* Feldart ohne Cursor */ } }
+  }
   f.addEventListener("input", merke);
   f.addEventListener("change", () => { merke(); zeige(modusFehler, ""); });
   f.iban.addEventListener("blur", pruefeIban);
@@ -150,7 +176,7 @@ function zmBindeEinstellungen(ziel) {
       // nicht blind überschreiben: hat inzwischen jemand anderes gespeichert?
       const frisch = await supa.from("fahrschule_zahlungsdaten").select("geaendert_am").eq("fahrschule_id", S.fsId).maybeSingle();
       if (frisch.error) { zeige(speicherFehler, zmTabelleFehlt(frisch.error) ? "Noch nicht eingerichtet (Datenbank-Update fehlt)." : "Nicht gespeichert: Der Stand konnte nicht geprüft werden. Bitte Seite neu laden."); return; }
-      const jetzt = frisch.data ? String(frisch.data.geaendert_am || "") : "", geladen = S.zahlungsdaten ? String(S.zahlungsdaten.geaendert_am || "") : "";
+      const jetzt = frisch.data ? String(frisch.data.geaendert_am || "") : "", geladen = S.zmEntwurf && "basis" in S.zmEntwurf ? S.zmEntwurf.basis : zmStand();
       if (jetzt !== geladen) { zeige(speicherFehler, "Die Zahlungsdaten wurden inzwischen von jemand anderem geändert. Bitte Seite neu laden."); return; }
       const res = await supa.from("fahrschule_zahlungsdaten").upsert(zeile, { onConflict: "fahrschule_id" }).select("*");
       if (res.error) { toast(zmTabelleFehlt(res.error) ? "Noch nicht eingerichtet (Datenbank-Update fehlt)." : "Nicht gespeichert: " + dbFehlerText(res.error), true); return; }
@@ -204,7 +230,7 @@ function zmBlockHTML(sid) {
   const x = S.schueler.find((y) => y.id === sid);
   if (!x) return "";
   const angebote = zmAngebote(x);
-  if (!angebote.length) return "";
+  if (!angebote.length) return `<div class="voll" id="zmBlock" data-zmsid="${esc(sid)}" hidden></div>`; // leerer Platz: ein späteres „Zahlung offen“ kann den Block füllen
   const echt = zmEcht(), daten = zmDatenDa(), mail = zmMailAdresse(x), ladefehler = !!S.zmLadefehler;
   const ohneMail = echt && !mail;
   const hinweise = [];
@@ -212,6 +238,7 @@ function zmBlockHTML(sid) {
   else if (!daten) hinweise.push(`<p class="zm-hinweis" data-zmohnedaten>Bitte zuerst unter <a href="#fristen" data-zmeinst>Einstellungen</a> die Zahlungsdaten eintragen.</p>`);
   else if (echt) hinweise.push(`<p class="zm-echt" data-zmecht>Echt: Mail geht an ${mail ? esc(mail) : "den Schüler (E-Mail fehlt)"}</p>`);
   else hinweise.push(`<p class="zm-modus-zeile zm-test" data-zmtest>Test-Modus: Mail geht an die Test-Adresse</p>`);
+  if (S.zmVerlaufFehler) hinweise.push(`<p class="zm-hinweis" data-zmverlauf>Verlauf konnte nicht geladen werden. Haken können fehlen.</p>`);
   if (ohneMail && daten && !ladefehler) hinweise.push(`<p class="zm-hinweis" data-zmkeinemail>Keine E-Mail-Adresse in der Akte.</p>`);
   const zeilen = angebote.map((a) => {
     const k = ZM_ARTEN[a.art], letzte = zmLetzte(sid, a.art), schluessel = sid + "|" + a.art;
@@ -234,26 +261,33 @@ function zmBlockHTML(sid) {
       </div>
     </div>`;
   }).join("");
-  return `<div class="voll zm-block" id="zmBlock" data-zmsid="${esc(sid)}" data-entwurf><h3>Zahlung per Mail</h3>${hinweise.join("")}${zeilen}</div>`;
+  return `<div class="voll zm-block" id="zmBlock" data-zmsid="${esc(sid)}" data-zmmodus="${zmModus()}" data-entwurf><h3>Zahlung per Mail</h3>${hinweise.join("")}${zeilen}</div>`;
 }
 // Block neu zeichnen (immer über die Schüler-Nummer gefunden: die Akte kann inzwischen zu und wieder offen sein)
-function zmNeuZeichnen(sid, meldungArt, meldung) {
+function zmNeuZeichnen(sid, meldungArt, meldung, nurWennGeaendert) {
   const alt = zmFinde(sid);
   if (!alt) return null;
+  const html = zmBlockHTML(sid);
+  if (!html) { alt.remove(); return null; }
+  if (nurWennGeaendert && alt._zmHtml === html && !meldung) return alt;
   const dlg = alt.closest("dialog");
+  // aktives Feld und Cursor merken
+  const ak = document.activeElement; let fok = null;
+  if (ak && alt.contains(ak) && (ak.hasAttribute("data-zmbetrag") || ak.hasAttribute("data-zmwofuer"))) fok = { art: ak.closest("[data-zmart]").dataset.zmart, feld: ak.hasAttribute("data-zmbetrag") ? "data-zmbetrag" : "data-zmwofuer", a: ak.selectionStart, b: ak.selectionEnd };
   const t = document.createElement("div");
-  t.innerHTML = zmBlockHTML(sid);
+  t.innerHTML = html;
   const frisch = t.firstElementChild;
-  if (!frisch) { alt.remove(); return null; }
+  frisch._zmHtml = html;
   alt.replaceWith(frisch);
   zmBinde(frisch, dlg, sid);
+  if (fok) { const el = frisch.querySelector(`[data-zmart="${fok.art}"] [${fok.feld}]`); if (el) { el.focus({ preventScroll: true }); try { el.setSelectionRange(fok.a, fok.b); } catch (e) { /* egal */ } } }
   if (meldungArt && meldung) {
     const z = frisch.querySelector(`[data-zmart="${meldungArt}"]`);
     if (z) { const m = z.querySelector("[data-zmmeldung]"); m.textContent = meldung; m.hidden = false; if (!z.querySelector("[data-zmform]").hidden && m.scrollIntoView) m.scrollIntoView({ block: "center", behavior: "smooth" }); }
   }
   return frisch;
 }
-function zmBindeBlock(dlg, sid) { const b = dlg.querySelector("#zmBlock"); if (b) zmBinde(b, dlg, sid); }
+function zmBindeBlock(dlg, sid) { const b = dlg.querySelector("#zmBlock"); if (b) { b._zmHtml = zmBlockHTML(sid); zmBinde(b, dlg, sid); } }
 function zmBinde(block, dlg, sid) {
   block.querySelectorAll("[data-zmeinst]").forEach((a) => a.addEventListener("click", (e) => {
     e.preventDefault();
@@ -280,13 +314,14 @@ function zmBinde(block, dlg, sid) {
       if (!wofuer || wofuer.length > 80) { zeigeFehler("Bitte eintragen, wofür gezahlt werden soll (höchstens 80 Zeichen)."); wofuerFeld.focus(); return; }
       zeigeFehler("");
       const x = S.schueler.find((y) => y.id === sid) || {}, name = x.name || "Schüler";
-      const modus = zmModus(); // genau der Modus, den der Bildschirm jetzt zeigt; der Server lehnt ab, wenn er inzwischen anders ist
-      senden.disabled = true; ZM.laeuft.add(schluessel);
+      const modus = block.dataset.zmmodus; // genau der Modus, den dieser Bildschirm zeigt (nicht der aus S: der Block kann älter sein); der Server prüft ebenfalls
       ZM.entwurf[schluessel] = { betrag: betragFeld.value, wofuer: wofuerFeld.value }; ZM.offen.add(schluessel);
+      if (modus !== zmModus()) { zmNeuZeichnen(sid, art, `Mail an ${name}: Der Modus wurde inzwischen auf ${zmModusText(zmModus())} umgestellt. Es wurde nichts gesendet. Bitte prüfen und noch einmal senden.`); return; }
+      senden.disabled = true; ZM.laeuft.add(schluessel);
       const sitz = await zmSitzung(); // Token und PIN-Sitzung jetzt merken, nicht erst nach der Wartezeit
       zmNeuZeichnen(sid);
       // 5 Sekunden „Rückgängig“; erst danach geht die Mail wirklich los (Zeit um oder nächster Rückgängig-Hinweis)
-      const u = toastUndo(`Wird gesendet · ${zmEuroText(cent)} · ${name}`, async () => {
+      const u = toastUndo(`${modus === "echt" ? "Wird an den Schüler gesendet" : "Test-Mail wird gesendet"} · ${zmEuroText(cent)} · ${name}`, async () => {
         ZM.laeuft.delete(schluessel);
         zmNeuZeichnen(sid);
         toast(`Abgebrochen, an ${name} wurde nichts gesendet`);
@@ -298,9 +333,10 @@ function zmBinde(block, dlg, sid) {
           ZM.laeuft.delete(schluessel);
           if (erg.ok) { delete ZM.entwurf[schluessel]; ZM.offen.delete(schluessel); zmNeuZeichnen(sid); return; }
           if (erg.code === "modus_geaendert") await zmDatenNeuLaden();
-          const text = `Mail an ${name}: ${erg.text}`;
+          if (erg.code === "nicht_gesperrt" && typeof ladeDaten === "function") ladeDaten(); // Stand der Schüler auffrischen
+          const text = erg.code === "nicht_gesperrt" ? erg.text : `Mail an ${name}: ${erg.text}`;
           const b = zmFinde(sid), sichtbar = !!(b && b.closest("dialog") && b.closest("dialog").open);
-          if (sichtbar) zmNeuZeichnen(sid, art, text); // Fehler nur einmal: im offenen Formular, sonst als Hinweis oben
+          if (sichtbar && erg.code !== "nicht_gesperrt") zmNeuZeichnen(sid, art, text); // Fehler nur einmal: im offenen Formular, sonst als Hinweis oben
           else { zmNeuZeichnen(sid); toast(text, true); }
         },
       });
@@ -338,13 +374,15 @@ async function zmSende(sid, art, betragCent, wofuer, erwarteterModus, sitz, name
     const m = zmModusText(neuerModus);
     return { ok: false, code, text: `Der Modus wurde inzwischen ${m ? "auf " + m + " " : ""}umgestellt. Es wurde nichts gesendet. Bitte prüfen und noch einmal senden.` };
   }
+  if (code === "nicht_gesperrt") return { ok: false, code, text: `Für ${name} ist keine Zahlung mehr offen. Es wurde nichts gesendet.` };
   if (code) return { ok: false, code, text: ZM_FEHLER[code] || ZM_NICHT_MOEGLICH };
   if (error || !data || data.ok === false) return { ok: false, code: null, text: ZM_NICHT_MOEGLICH };
   const jetzt = data.gesendet_am || new Date().toISOString();
   const person = (typeof PIN !== "undefined" && PIN && PIN.person && PIN.person.name) || (S.profil && S.profil.name) || null;
   if (!Array.isArray(S.zahlungsMails)) S.zahlungsMails = [];
-  S.zahlungsMails.unshift({ id: data.id || "lokal-" + Date.now(), fahrschule_id: S.fsId, schueler_id: sid, art, betrag_cent: betragCent, wofuer, modus: data.modus || erwarteterModus,
-    empfaenger_kurz: data.empfaenger_kurz || null, status: "gesendet", bearbeiter: person, angelegt_am: jetzt, gesendet_am: jetzt });
+  const zeile = { id: data.id || "lokal-" + Date.now(), fahrschule_id: S.fsId, schueler_id: sid, art, betrag_cent: betragCent, wofuer, modus: data.modus || erwarteterModus,
+    empfaenger_kurz: data.empfaenger_kurz || null, status: "gesendet", bearbeiter: person, angelegt_am: jetzt, gesendet_am: jetzt };
+  S.zahlungsMails.unshift(zeile); ZM.lokal.push({ t: Date.now(), row: zeile }); // ein gerade laufendes Laden darf den Eintrag nicht verlieren
   toast(`Gesendet an ${name} ✓${data.modus === "test" ? " (Test: an die Test-Adresse)" : ""}`);
   return { ok: true };
 }
