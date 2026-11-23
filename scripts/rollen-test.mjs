@@ -9,6 +9,8 @@
 //   (3) auf dem Reiter „Schüler“ gibt es einen sichtbaren Knopf zum Anlegen (mind. 44 px hoch)
 //   (4) ein neuer Schüler wird wirklich in die Datenbank geschrieben – in der eigenen Ansicht beim eigenen Fahrlehrer
 //   (5) keine JS-Fehler
+//   (6) K8 „Zahlung ausstehend“ (23.11.2026): R12 Hinweis am bestehenden Termin + Sperre für neue Termine, keine Büro-Knöpfe in der App;
+//       R13 Büro-Seite: Büro, Leitung, Super-Admin sehen die Knöpfe, ein Fahrlehrer kommt nicht hinein
 // Die App läuft lokal mit einer Attrappe statt Datenbank (kein Netz, erfundene Namen „Muster“).
 // Aufruf:  NODE_PATH=$(npm root -g) node scripts/rollen-test.mjs        (auch in der GitHub-Prüfung)
 // Gegenprobe: ROLLEN_SEITE=/tmp/alt/index.html … (alter Stand muss bei „Leitung fährt selbst“ durchfallen)
@@ -190,9 +192,80 @@ for (const R of ROLLEN) {
       await pruefe("R8", `${P} zweiter Tipp → zurück zu den eigenen Schülern`, () => page.evaluate(() => (!_fsAgg && /Du bist Leitung/.test(document.getElementById("saStreifen").textContent) ? null : "ist " + (_fsAgg ? "gesamt" : "eigen"))));
       await pruefe("R11", `${P} nach dem Umschalten nur Zurück-Einträge der aktuellen Ansicht (kein toter Pfeil)`, () => page.evaluate(() => { const a = !!_fsAgg; const fremd = _navStack.filter((x) => x.agg !== undefined && x.agg !== a).length; return fremd ? fremd + " Einträge der anderen Ansicht" : null; }));
     }
+    // K8 (23.11.2026): „Zahlung ausstehend“. Fahrlehrer und Leitung sehen am bestehenden künftigen Termin einen Hinweis und
+    // können für den Schüler keinen neuen Termin anlegen; die Büro-Knöpfe gibt es in der App nirgends.
+    await maskeWeg();
+    const k8 = await page.evaluate(() => {
+      try { closeSheet(); } catch (e) {}
+      const iso = KR.addDaysISO(todayISO(), 1);
+      ensureAusbildungsplaene();
+      const c = DB.ausbildungsplaene.find((p) => p.standard) || DB.ausbildungsplaene[0];
+      const mk = (id, name) => { const st = { id, name, form: "B", created: Date.now(), plan: newPlan(), planId: c.id, planSnapshot: JSON.parse(JSON.stringify(c.stufen)), telefon: "" }; ensure(st); return st; };
+      DB.students = [mk("s-zahl", "Zahl Muster"), mk("s-frei", "Frei Muster")];
+      const fl = _fsAgg ? { _fahrlehrerId: "u-anna", _fahrlehrerName: "Anna Muster" } : {};
+      DB.lessons = [Object.assign({ id: "L-zahl", date: iso, von: "09:00", bis: "10:30", art: "fahrstunde", sid: "s-zahl", name: "", status: "geplant", note: "", fc: null }, fl),
+        Object.assign({ id: "L-frei", date: iso, von: "11:00", bis: "12:30", art: "fahrstunde", sid: "s-frei", name: "", status: "geplant", note: "", fc: null }, fl)];
+      _merkeFristen([{ id: "s-zahl", zahlung_gesperrt_seit: "2026-11-20T09:00:00Z", zahlung_gesperrt_grund: "Rechnung offen" }]);
+      if (_fsAgg) _fsCalLehrerFilter = ["u-anna"];
+      _calView = "woche"; _calDate = iso; routeKalender();
+      const ev = (id) => { const e = document.querySelector(`[data-evedit^="lesson|${id}|"]`); return e ? e.querySelector("[data-zahlung-hinweis]") !== null : null; };
+      const r = { gesperrt: _zahlungGesperrt("s-zahl"), frei: _zahlungGesperrt("s-frei"), hinweisZahl: ev("L-zahl"), hinweisFrei: ev("L-frei"),
+        stoppZahl: _zahlungStopp("s-zahl", iso, "fahrstunde"), stoppFrei: _zahlungStopp("s-frei", iso, "fahrstunde"), toast: document.getElementById("toast").textContent,
+        buero: document.querySelectorAll("[data-zsperre],[data-zbezahlt],[data-zreakt],[data-zahlungpill]").length };
+      return r;
+    });
+    await pruefe("R12", `${P} K8: Hinweis „Zahlung ausstehend“ am Termin des gesperrten Schülers, neuer Termin geblockt, keine Büro-Knöpfe in der App`, () => {
+      const f = [];
+      if (!k8.gesperrt || k8.frei) f.push(`Sperre: gesperrt=${k8.gesperrt} frei=${k8.frei}`);
+      if (k8.hinweisZahl !== true) f.push("kein Hinweis am Termin (" + k8.hinweisZahl + ")");
+      if (k8.hinweisFrei !== false) f.push("Hinweis am freien Schüler (" + k8.hinweisFrei + ")");
+      if (k8.stoppZahl !== true || !/Zahlung ausstehend/.test(k8.toast)) f.push("neuer Termin nicht geblockt: " + k8.stoppZahl + " · " + k8.toast);
+      if (k8.stoppFrei !== false) f.push("freier Schüler geblockt");
+      if (k8.buero) f.push(k8.buero + " Büro-Knöpfe in der App");
+      return f;
+    });
     await pruefe("R5", `${P} keine JS-Fehler`, () => jsFehler);
     await ctx.close();
   }
+}
+
+// R13 (K8): Büro-Seite je Rolle. Büro, Leitung und Super-Admin sehen „Zahlung ausstehend“ bei den Schülern, ein Fahrlehrer kommt nicht hinein.
+{
+  const { bauDaten } = require("../buero-vorfuehrung.js");
+  const fake = await readFile(join(ROOT, "buero-vorfuehrung.js"), "utf8");
+  const bServer = createServer(async (req, res) => {
+    try { const pfad = normalize(decodeURIComponent(req.url.split("?")[0])).replace(/^(\.\.[/\\])+/, ""); const datei = await readFile(join(ROOT, pfad === "/" ? "buero.html" : pfad)); res.writeHead(200, { "Content-Type": TYPES[extname(pfad)] || "application/octet-stream" }); res.end(datei); }
+    catch { res.writeHead(404); res.end(); }
+  });
+  await new Promise((ok) => bServer.listen(0, "127.0.0.1", ok));
+  const bBasis = `http://127.0.0.1:${bServer.address().port}/`;
+  const BUERO_ROLLEN = [{ n: "Büro", id: "bu-1", knoepfe: true }, { n: "Leitung", id: "ad-1", knoepfe: true }, { n: "Super-Admin", id: "sa-1", knoepfe: true }, { n: "Fahrlehrer", id: "fl-x", knoepfe: false }];
+  for (const B of BUERO_ROLLEN) {
+    const ctx = await browser.newContext({ viewport: { width: 1366, height: 860 } });
+    const page = await ctx.newPage();
+    const konsole = [];
+    page.on("pageerror", (e) => konsole.push(String(e)));
+    await page.route("https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2", (r) => r.fulfill({ contentType: "text/javascript", body: fake }));
+    await page.route(/fonts\.(googleapis|gstatic)\.com/, (r) => r.fulfill({ status: 200, body: "" }));
+    const daten = bauDaten(new Date().toISOString().slice(0, 10));
+    await page.addInitScript(([d, ses]) => {
+      window.__FAKE = { tabellen: d.tabellen, konten: d.konten, session: ses };
+      const sa = d.tabellen.schueler.find((x) => x.status === "aktiv" && !x.inaktiv_seit); if (sa) { sa.zahlung_gesperrt_seit = new Date().toISOString(); sa.zahlung_gesperrt_grund = "Rechnung offen"; }
+    }, [daten, { user: { id: B.id, email: B.id + "@example.org" } }]);
+    await page.goto(bBasis + "buero.html#schueler");
+    await warte(page, 700);
+    const frage = await page.waitForSelector("#wer:not([hidden])", { timeout: 1200 }).catch(() => null);
+    if (frage) { await page.click('#werListe button:has-text("Paula Muster")'); await page.keyboard.type("7352", { delay: 20 }); await warte(page, 500); }
+    const r = await page.evaluate(() => ({ sperre: document.querySelectorAll("[data-zsperre]").length, bezahlt: document.querySelectorAll("[data-zbezahlt]").length, pill: document.querySelectorAll("[data-zahlungpill]").length, app: !!document.getElementById("app") && !document.getElementById("app").hidden }));
+    await pruefe("R13", `[${B.n}] Büro-Seite: Knöpfe „Zahlung ausstehend“ / „Bezahlt“ ${B.knoepfe ? "sichtbar" : "nicht da (kein Zugang)"}`, () => {
+      const f = [];
+      if (B.knoepfe) { if (!r.app) f.push("Seite nicht offen"); if (!r.sperre) f.push("kein Knopf „Zahlung ausstehend“"); if (!r.bezahlt) f.push("kein Knopf „Bezahlt“ beim gesperrten Schüler"); if (!r.pill) f.push("keine Pill"); }
+      else if (r.sperre || r.bezahlt || r.pill) f.push(`Fahrlehrer sieht Knöpfe (${r.sperre}/${r.bezahlt}/${r.pill})`);
+      return f.concat(konsole);
+    });
+    await ctx.close();
+  }
+  bServer.close();
 }
 
 await browser.close();
