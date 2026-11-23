@@ -176,6 +176,14 @@ await pruefe("Z12", "E1: Knopf „Prüfer“ (Klick-Ereignis als Argument) → P
   if (eintrag.args !== 0) f.push(`Verlauf hat ${eintrag.args} Argument(e) statt 0`);
   await p.click("#navBackBtn"); await warte(p, 300);
   if ((await titel()) !== t0) f.push(`Pfeil führt nicht zurück zu „${t0}“ (${await titel()})`);
+  // Fable: Statistik → „Prüfer“ (routePruefer leitet weiter) → ein Tipp zurück reicht
+  await p.evaluate(() => { _navStack.length = 0; routeDashboard(); routeStats(); }); await warte(p, 300);
+  const s0 = await titel(), n0 = await p.evaluate(() => _navStack.length);
+  await p.evaluate(() => document.getElementById("toPruefer").click()); await warte(p, 300);
+  const n1 = await p.evaluate(() => _navStack.length);
+  if (n1 !== n0 + 1) f.push(`Statistik → Prüfer legt ${n1 - n0} Einträge an statt 1`);
+  await p.click("#navBackBtn"); await warte(p, 300);
+  if ((await titel()) !== s0) f.push(`Statistik → Prüfer → Zurück: nicht bei „${s0}“ (${await titel()})`);
   return f;
 });
 await pruefe("Z7", "App: keine JS-Fehler, kein Dialog", () => a.js);

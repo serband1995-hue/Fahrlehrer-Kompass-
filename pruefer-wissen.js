@@ -381,13 +381,13 @@
   };
   /* Umbenennen / zusammenführen für die ganze Fahrschule (Server), danach wie bisher auf dem Gerät */
   PW.umbenennen = async function (alt, neu) {
-    delete entwurf[klein(alt)]; // Entwurf gehört zum alten Namen
-    const s = supa(); if (!PW.aktiv() || !s) return true;
+    const s = supa(); if (!PW.aktiv() || !s) { delete entwurf[klein(alt)]; return true; }
     try {
       schreibZaehler++;
       const r = await s.rpc("fs_pruefer_umbenennen", { p_alt: alt, p_neu: neu });
       if (r.error || !r.data) return false;
       if (r.data.fehler) return r.data.fehler; // z. B. "keine_berechtigung"
+      delete entwurf[klein(alt)]; // erst nach Erfolg: Entwurf gehört zum alten Namen
       st.bekannt = st.bekannt.filter((k) => k !== klein(alt));
       st.ergebnisse.forEach((x) => { if (x.pruefer === alt) x.pruefer = neu; });
       st.notizen.forEach((x) => { if (klein(x.pruefer_name) === klein(alt)) x.pruefer_name = neu; });

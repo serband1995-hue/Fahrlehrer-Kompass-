@@ -17852,7 +17852,8 @@ function _seite2Markieren(name){
   if(SEITE2_ROUTEN.has(name))v.setAttribute("data-seite2",name); else v.removeAttribute("data-seite2");
 }
 (function navInstallieren(){
-  const ueberspringen=new Set(["routeKalenderRefresh"]);
+  // routePruefer leitet nur auf routePrueferListe weiter: nicht selbst in den Verlauf (sonst doppelter Eintrag, erster Zurück-Tipp tot – Fable E1)
+  const ueberspringen=new Set(["routeKalenderRefresh","routePruefer"]);
   Object.getOwnPropertyNames(window)
     .filter(n=>/^route[A-Z]/.test(n)&&typeof window[n]==="function"&&!ueberspringen.has(n))
     .forEach(name=>{
