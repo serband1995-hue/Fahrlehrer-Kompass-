@@ -2936,6 +2936,11 @@ if(_tok&&!_bio){ document.getElementById("loginOverlay").classList.add("hidden")
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
       Einstellungen</button>
   </nav>
+  <div class="drawer-logout" id="drawerLogout" hidden style="padding:0 12px 8px;">
+    <button class="nav-item" id="drawerLogoutBtn" type="button" onclick="closeDrawer();if(confirm('Wirklich abmelden?'))doLogout();">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4M16 17l5-5-5-5M21 12H9"/></svg>
+      Abmelden</button>
+  </div>
   <div class="drawer-foot" id="drawerFoot">Fahrlehrer-Kompass · läuft offline auf deinem Gerät</div>
 </aside>
 
@@ -4148,17 +4153,23 @@ function isSuperAdmin() {
 // die Gesamtübersicht über das Menü. Reine Leitung (ohne Kennzeichen) und Büro sehen nur die Gesamtansicht.
 function _leitungFaehrtSelbst(p) { p = p || _authProfile; return !!(p && p.rolle === "fahrschule_admin" && p.faehrt_selbst === true); }
 function _hatAdminUmschalter() { return !!(isSuperAdmin() || _leitungFaehrtSelbst()); }
+// K12/K17: Die Gesamtansicht (Gesamtübersicht) und der Weg zur Büro-Seite gehören nur Büro, Leitung und Super-Admin.
+// Ein Fahrlehrer sieht keinen Knopf dafür und kommt auch über Funktionsaufrufe nicht hinein.
+function _fsDarfGesamt() { const r = _authProfile && _authProfile.rolle; return r === "fahrschule_admin" || r === "buero" || r === "super_admin"; }
 function _nurGesamtansicht(p) { p = p || _authProfile; return !!(p && (p.rolle === "buero" || (p.rolle === "fahrschule_admin" && !_leitungFaehrtSelbst(p)))); }
 // Fahrlehrer-Listen: Fahrlehrer, Betreiber und die Leitung, die selbst fährt (reine Leitung nicht)
 function _fsNurUnterrichtende(res) {
   if (res && Array.isArray(res.data)) res.data = res.data.filter((p) => p.rolle !== "fahrschule_admin" || p.faehrt_selbst === true);
   return res;
 }
+// K13: „Abmelden“ steht ganz unten unter „Mehr“ (nicht mehr in den Einstellungen); nur wenn jemand angemeldet ist
+function _zeigeAbmelden() { const b = document.getElementById("drawerLogout"); if (b) b.hidden = !_authUser; }
 // Streifen oben „Super-Admin · alle Rechte“: nur sichtbar, wenn man als Super-Admin angemeldet ist
 function _zeigeSaStreifen() {
   const el = document.getElementById("saStreifen");
   if (!el) return;
   const an = _hatAdminUmschalter();
+  _zeigeAbmelden();
   el.hidden = !an;
   const t = el.querySelectorAll("span");
   // Leitung, die selbst fährt: Streifen sagt, wo sie gerade ist, und wechselt per Tipp (🗣 Design-Prüfung 21.11.)
@@ -5901,10 +5912,11 @@ let _fsBaseline=null; // letzter geladener Stand, für Diff-Erkennung beim Speic
 let _normalDrawerNavHTML=null;
 
 function _fsDrawerNavHTML(zeigeZurueck){
+  if(!_fsDarfGesamt())return ""; // K12/K17: ein Fahrlehrer bekommt diese Schublade nie
   return `
-    <a class="nav-item" href="buero.html" onclick="return _fsZurBueroSeite(event)" style="text-decoration:none;font-weight:700;">
+    ${_fsDarfBueroSeite()?`<a class="nav-item" href="buero.html" onclick="return _fsZurBueroSeite(event)" style="text-decoration:none;font-weight:700;">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="4" width="20" height="13" rx="2"/><path d="M8 21h8M12 17v4"/></svg>
-      Büro-Seite am PC öffnen</a>
+      Büro-Seite am PC öffnen</a>`:''}
     <button class="nav-item" data-nav="fs_dash">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="9" rx="1.5"/><rect x="14" y="3" width="7" height="5" rx="1.5"/><rect x="14" y="12" width="7" height="9" rx="1.5"/><rect x="3" y="16" width="7" height="5" rx="1.5"/></svg>
       Übersicht</button>
@@ -5932,15 +5944,14 @@ function _fsDrawerNavHTML(zeigeZurueck){
     <div class="nav-sep"></div>
     ${zeigeZurueck?`<button class="nav-item primary" data-nav="fs_exit">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 12H5M12 19l-7-7 7-7"/></svg>
-      Zu meiner Fahrlehrer-Ansicht</button>`:`<button class="nav-item" onclick="closeDrawer();if(confirm('Wirklich abmelden?'))doLogout();">
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4M16 17l5-5-5-5M21 12H9"/></svg>
-      Abmelden</button>`}`;
+      Zu meiner Fahrlehrer-Ansicht</button>`:''}`;
 }
 
 function _fsSetDrawer(fahrschuleMode){
   const navEl=document.querySelector(".drawer-nav");
   if(!navEl)return;
   if(_normalDrawerNavHTML===null) _normalDrawerNavHTML=navEl.innerHTML;
+  if(fahrschuleMode&&!_fsDarfGesamt())fahrschuleMode=false;
   navEl.innerHTML = fahrschuleMode ? _fsDrawerNavHTML(_hatAdminUmschalter()) : (_normalDrawerNavHTML+_fsSuperAdminToggleBtn());
   const brandEye=document.querySelector(".brand-eye");
   if(brandEye) brandEye.textContent = fahrschuleMode && _fsAgg ? (_fsAgg.fahrschule.name||"Fahrschule") : (_authProfile&&_authProfile.name?"Fahrlehrer "+_authProfile.name:"Fahrlehrer");
@@ -6033,6 +6044,7 @@ async function _fsLoadAggData(fahrschuleId){
 
 let _fsRefreshTimer=null;
 async function _fsEnterAggMode(fahrschuleId){
+  if(!_fsDarfGesamt())return false; // K12: nur Büro, Leitung, Super-Admin (auch nicht über die Konsole)
   _fsAggGen++;
   const meinGen=_fsAggGen;
   const neuGesichert=_fsPersonalBackup===null;
@@ -6082,6 +6094,7 @@ async function _fsExitAggModeJetzt(){
 }
 async function _fsRefreshAggData(){
   if(!_fsAgg)return;
+  if(!_fsDarfGesamt()){ _fsAgg=null; _fsSetDrawer(false); return; } // Rolle weg: Gesamtansicht schließen
   // Ungespeicherte Änderungen zuerst schreiben. Klappt das nicht, wird nicht neu geladen -
   // das Neuladen würde sie sonst still verwerfen.
   if(_fsSyncDebounce||_fsUngespeichert){
@@ -6099,7 +6112,7 @@ async function _fsRefreshAggData(){
   }
 }
 function _fsSuperAdminToggleBtn(){
-  if(!_hatAdminUmschalter())return "";
+  if(!_hatAdminUmschalter()||!_fsDarfGesamt())return "";
   return `<button class="nav-item" data-nav="__fstoggle" onclick="${_fsAgg?'_fsExitAggMode()':`_fsEnterAggMode(${_jsArg((_authProfile&&_authProfile.fahrschule_id)||'')})`}" style="border-top:1px solid var(--line);">
     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 21h18M5 21V7l7-4 7 4v14M9 9h1M9 13h1M14 9h1M14 13h1"/></svg>
     ${_fsAgg?'Zu meiner Fahrlehrer-Ansicht':'Admin-Gesamtübersicht'}</button>`;
@@ -6111,6 +6124,7 @@ let _fsZurBueroLaeuft=false;
 let _fsBedienZaehler=0; ["pointerdown","keydown"].forEach(e=>document.addEventListener(e,()=>{ _fsBedienZaehler++; },true)); // zählt Tipps/Tasten (K3)
 async function _fsZurBueroSeite(ev){
   if(ev)ev.preventDefault();
+  if(!_fsDarfBueroSeite())return false; // K17: nur Büro, Leitung, Super-Admin
   if(_fsZurBueroLaeuft)return false; // Doppeltipp: der erste Tipp speichert noch
   if(!_seiteVerlassenOk())return false;
   _fsZurBueroLaeuft=true;
@@ -6148,7 +6162,7 @@ async function _fsZurBueroSeite(ev){
   }
 }
 function routeFahrschuleDashboard(){
-  if(!_fsAgg)return;
+  if(!_fsAgg||!_fsDarfGesamt())return;
   const name=_fsAgg.fahrschule.name||"Fahrschule";
   const lehrer=_fsAgg.lehrer||[];
   const act=activeStudents().length;
@@ -6711,7 +6725,7 @@ async function paketUmbenennen(paketId,fahrschuleId){
 }
 
 function routeFahrschuleLehrer(){
-  if(!_fsAgg)return;
+  if(!_fsAgg||!_fsDarfGesamt())return;
   window._fsAktuelleRoute=routeFahrschuleLehrer;
   const lehrer=_fsAgg.lehrer||[];
   const buero=_authProfile&&_authProfile.rolle==="buero";
@@ -6758,7 +6772,7 @@ async function neuenBueroZugangAnlegen(fahrschuleId){
 }
 
 function routeFahrschuleFahrzeuge(){
-  if(!_fsAgg)return;
+  if(!_fsAgg||!_fsDarfGesamt())return;
   $("#tbTitle").textContent="Fahrzeugflotte"; setFab(false); view.scrollTop=0;
   const heute=todayISO();
   const monatPrefix=heute.slice(0,7);
@@ -6818,7 +6832,7 @@ async function fsFahrzeugLoeschen(id,name){
 }
 
 function routeFahrschuleStatistik(){
-  if(!_fsAgg)return;
+  if(!_fsAgg||!_fsDarfGesamt())return;
   $("#tbTitle").textContent="Statistiken"; setFab(false); view.scrollTop=0;
   const lehrer=_fsAgg.lehrer||[];
   const schueler=DB.students||[];
@@ -8524,6 +8538,7 @@ document.querySelector(".drawer-nav").addEventListener("click",(e)=>{
   if(!b)return;
   if(!_seiteVerlassenOk())return; // ungespeicherte Formular-Eingaben: erst fragen (wie Zurück und Reiterleiste)
   const nav=b.dataset.nav;closeDrawer();
+  if(/^fs_/.test(nav)&&nav!=="fs_exit"&&!_fsDarfGesamt())return; // K12: Gesamtansicht nur für Büro, Leitung, Super-Admin
   _fsFilterWeg();
   setTimeout(()=>{if(nav==="todos")routeTodos();
     else if(nav==="stats")routeStats("cur");
@@ -12278,11 +12293,10 @@ function routeSettings(){
   <div class="res-block" style="animation:none;"><h4>🎓 Akademie-Vermittlung</h4><p style="font-size:13px;color:var(--muted);">Beträge & Aufteilung für Simulator-/Videoakademie-Empfehlungen. Solange leer, wird bei einer Auszahlung nur "noch nicht konfiguriert" angezeigt — nichts wird stillschweigend falsch berechnet.</p><div id="akadVermittlungCfg"><p class="muted-p" style="font-size:12.5px;">Lade …</p></div></div>`:"";
   const eigenerSlug=_authProfile&&_authProfile.slug;
   const buchungslinksBtn=(eigenerSlug&&_authProfile&&(_authProfile.rolle==="fahrlehrer"||_authProfile.rolle==="super_admin"||_leitungFaehrtSelbst()))?`<div class="res-block" style="animation:none;"><h4>🚗 Mein Buchungs-QR fürs Auto</h4><p>Großer QR-Code für Schalter oder Automatik, zum Ausdrucken fürs Auto. Schüler scannen ihn und buchen direkt bei dir.</p><div class="btn-row"><button type="button" class="btn btn-primary" onclick="routeBuchungsQR()">Buchungs-QR öffnen</button></div></div>`+_fsBuchungslinksHTML(eigenerSlug,"Meine"):"";
-  const logoutBtn=_authUser?`<div class="res-block" style="animation:none;background:rgba(200,60,60,.1);border-color:rgba(200,60,60,.3)"><h4 style="color:#f08080">🚪 Abmelden</h4><p style="color:var(--muted)">Meldet dich sicher aus der App ab.</p><div class="btn-row"><button class="btn" style="background:#c83c3c;color:#fff;border:none;padding:12px 24px;border-radius:12px;font-weight:700;font-size:14px;" onclick="doLogout()">Jetzt abmelden</button></div></div>`:"";
+  // K13: Abmelden steht jetzt ganz unten unter „Mehr“, nicht mehr hier
   const kapWoche=kapazitaetAutoWoche();
   view.innerHTML=`<div class="view-inner view-read fade-up">
     <h1 class="sec-h set-titel">Einstellungen</h1>
-    ${logoutBtn}
     ${_authUser?`<div class="res-block" style="animation:none;background:rgba(74,139,69,.06);border-color:rgba(74,139,69,.2);"><h4 style="color:#4a8b45">☁ Cloud-Konto</h4><p style="color:#6a9b7a;font-size:13px;">${esc(_authUser.email)}</p><p style="color:var(--muted);font-size:12px;margin-top:4px;">Daten werden automatisch gesichert.</p></div>`:""}
 
     <div class="acc set-acc${_settingsAccOpen==='app'?' open':''}" data-acckey="app"><button class="acc-h" onclick="_settingsAccToggle('app')" style="cursor:pointer;"><span class="set-ic" style="width:30px;">${_li("handy")}</span><span style="flex:1;text-align:left;font-family:'Anton',sans-serif;text-transform:uppercase;font-size:15px;letter-spacing:.03em;">App anpassen</span><span class="chev">${ICN.chev}</span></button>

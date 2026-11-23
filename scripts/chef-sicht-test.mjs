@@ -408,7 +408,8 @@ for (const g of GROESSEN) {
   await pruefe(`G2 ${P}`, "Büro-Rolle: Knopf sichtbar; Fahrlehrer-Rolle: kein Knopf", async () => {
     await daten(page, "fs", "buero"); await ev(page, `routeFahrschuleDashboard()`); await warte(page, 300);
     const buero = await page.evaluate(() => [...document.querySelectorAll("#view a")].some((x) => /Zur Büro-Seite/i.test(x.innerText) && x.getAttribute("href") === "buero.html"));
-    await daten(page, "fs", "fahrlehrer"); await ev(page, `routeFahrschuleDashboard()`); await warte(page, 300);
+    await daten(page, "fs", "fahrlehrer"); await ev(page, `document.getElementById("view").innerHTML=""; routeFahrschuleDashboard()`); // K12: für einen Fahrlehrer zeichnet die Gesamtansicht gar nichts (Ansicht vorher leeren)
+    await ev(page, `void 0`); await warte(page, 300);
     const fl = await page.evaluate(() => /Zur Büro-Seite/i.test(document.getElementById("view").innerText));
     await daten(page, "normal"); await ev(page, `routeDashboard()`); await warte(page, 300);
     const normal = await page.evaluate(() => /Zur Büro-Seite/i.test(document.getElementById("view").innerText) || !!document.querySelector('#view a[href="buero.html"]'));
