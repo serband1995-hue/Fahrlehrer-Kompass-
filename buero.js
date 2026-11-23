@@ -462,6 +462,95 @@ function reaktBetrag() {
   const k = (S.fs && S.fs.konfiguration) || {};
   return Number(k.reaktivierungBetrag) > 0 ? Number(k.reaktivierungBetrag) : REAKT_STANDARD;
 }
+/* K8 (🗣 23.11.): Zahlung ausstehend. Gesperrt = Reaktivierung überfällig (wie KR.reaktInfo) ODER das Büro hat „Zahlung ausstehend“ gedrückt
+   (schueler.zahlung_gesperrt_seit/_grund). Gesperrte bekommen keine neuen künftigen Termine; bestehende bleiben. Keine automatische Sperre. */
+const ZAHLUNG_MELDUNG = "Zahlung ausstehend – erst „Bezahlt“ eintragen.";
+const ZAHLUNG_GRUENDE = ["Reaktivierung", "Rechnung offen"];
+function zahlungSperre(s) { return s && s.zahlung_gesperrt_seit ? { seit: String(s.zahlung_gesperrt_seit).slice(0, 10), grund: String(s.zahlung_gesperrt_grund || "").trim() } : null; }
+function bueroGesperrt(s) { return !!s && (!!zahlungSperre(s) || (istAktiv(s) && !!KR.reaktInfo(s).gesperrt)); }
+// Betrag der Reaktivierung: Preisliste (K9) zum Vertragsdatum, wenn vorhanden, sonst wie bisher
+function reaktBetragFuer(s) {
+  if (typeof preisAm === "function") {
+    const p = preisAm("reaktivierung", null, null, (s && s.vertrag_am) || KR.todayISO());
+    if (p !== undefined) return p || 0;
+  }
+  return reaktBetrag();
+}
+// Fehler der Datenbank verständlich: Sperre (P0001) und noch fehlende Spalten (Migration nicht eingespielt)
+function dbFehlerText(err) {
+  const m = (err && err.message) || "";
+  if (/zahlung_gesperrt/.test(m) && /column|schema cache|does not exist|Could not find/i.test(m)) return "Datenbank noch nicht bereit (Zahlungssperre). Bitte später noch einmal versuchen.";
+  if (/Zahlung ausstehend/.test(m)) return ZAHLUNG_MELDUNG;
+  return m;
+}
+function zahlungPill(s) {
+  const z = zahlungSperre(s);
+  if (z) return `<span class="marke-pill rot" data-zahlungpill title="Zahlung ausstehend seit ${esc(datumDE(z.seit))}${z.grund ? ": " + esc(z.grund) : ""}">Zahlung ausstehend</span>`;
+  return s && istAktiv(s) && KR.reaktInfo(s).gesperrt ? `<span class="marke-pill rot" data-zahlungpill title="Reaktivierung überfällig">Zahlung ausstehend</span>` : "";
+}
+async function setzeZahlungSperre(id, seit, grund, text, vorher) {
+  const s = S.schueler.find((x) => x.id === id);
+  if (!s) return false;
+  const alt = vorher || { seit: s.zahlung_gesperrt_seit || null, grund: s.zahlung_gesperrt_grund || null };
+  const res = await supa.from("schueler").update({ zahlung_gesperrt_seit: seit, zahlung_gesperrt_grund: grund }).eq("id", id).select("*");
+  if (res.error) { toast("Nicht gespeichert: " + dbFehlerText(res.error), true); return false; }
+  if (!res.data || !res.data.length) { toast("Nicht gespeichert: keine Berechtigung für diesen Schüler", true); return false; }
+  if (!!res.data[0].zahlung_gesperrt_seit !== !!seit) { toast("Nicht gespeichert: Nur Büro und Leitung dürfen die Zahlung vermerken.", true); return false; }
+  Object.assign(s, res.data[0]);
+  zeichne();
+  if (!vorher) toastUndo(text, async () => { await setzeZahlungSperre(id, alt.seit, alt.grund, "", alt); toast("Zurückgenommen"); });
+  return true;
+}
+// Dialog: kurzer Grund (freiwillig, Vorschläge zum Antippen), Knopf sperrt sofort, danach „Rückgängig“ (kein Bestätigen-Fenster)
+function zahlungAusstehendDialog(id, nachher) {
+  const s = S.schueler.find((x) => x.id === id);
+  if (!s) return;
+  const body = `<p>Für <b>${esc(s.name)}</b> werden keine neuen Termine mehr angelegt, bis „Bezahlt“ eingetragen ist. Bestehende Termine bleiben.</p>
+    <div class="formular"><div class="voll zahl-gruende">${ZAHLUNG_GRUENDE.map((g) => `<button type="button" class="knopf klein" data-zgrund="${esc(g)}">${esc(g)}</button>`).join("")}</div>
+    <label class="voll">Grund (freiwillig)<input type="text" name="grund" maxlength="120" placeholder="z. B. Rechnung offen"></label></div>`;
+  const dlg = oeffneDialog(`Zahlung ausstehend: ${s.name}`, body, async (form) => {
+    const grund = form.grund.value.trim() || null;
+    const ok = await setzeZahlungSperre(id, new Date().toISOString(), grund, `${s.name}: Zahlung ausstehend vermerkt`);
+    if (ok && nachher) nachher();
+    return ok;
+  }, "Zahlung ausstehend");
+  dlg.querySelectorAll("[data-zgrund]").forEach((b) => b.addEventListener("click", () => { dlg.querySelector("input[name=grund]").value = b.dataset.zgrund; }));
+}
+async function zahlungBezahlt(id, nachher) {
+  const s = S.schueler.find((x) => x.id === id);
+  if (!s) return;
+  const ok = await setzeZahlungSperre(id, null, null, `${s.name}: Bezahlt eingetragen`);
+  if (ok && nachher) nachher();
+}
+// Block in der Schüler-Akte und die Knöpfe in Listen
+function zahlungKnoepfe(s) {
+  if (!s || !istAktiv(s)) return "";
+  const z = zahlungSperre(s), r = KR.reaktInfo(s);
+  if (z) return `<button class="knopf klein haupt" data-zbezahlt="${esc(s.id)}" type="button">Bezahlt</button>`;
+  return `<button class="knopf klein" data-zsperre="${esc(s.id)}" type="button">Zahlung ausstehend</button>`;
+}
+function zahlBlockHTML(x) {
+  const z = zahlungSperre(x), r = KR.reaktInfo(x);
+  let t = "";
+  if (z) t += `<p class="fl-warnung abgelaufen" data-zahlungtext>Zahlung ausstehend seit ${esc(datumDE(z.seit))}${z.grund ? ": " + esc(z.grund) : ""}. Keine neuen Termine, bis „Bezahlt“ eingetragen ist.</p>`;
+  if (r.gesperrt) t += `<p class="fl-warnung abgelaufen" data-zahlungtext>Zahlung ausstehend: Reaktivierung überfällig seit ${esc(datumDE(r.faellig))}. Keine neuen Termine, bis sie bezahlt ist.</p>`;
+  return `${t}<div class="knopfreihe">${zahlungKnoepfe(x)}${r.gesperrt ? `<button class="knopf klein haupt" data-zreakt="${esc(x.id)}" type="button">Reaktivierung bezahlt (${esc(euro(reaktBetragFuer(x)))})</button>` : ""}</div>`;
+}
+function bindeZahlBlock(dlg, id) {
+  const block = dlg.querySelector("#zahlBlock");
+  if (!block) return;
+  const neu = () => { const x = S.schueler.find((y) => y.id === id); if (x) { block.innerHTML = zahlBlockHTML(x); bind(); } };
+  const bind = () => {
+    block.querySelectorAll("[data-zsperre]").forEach((b) => b.addEventListener("click", () => zahlungAusstehendDialog(id, neu)));
+    block.querySelectorAll("[data-zbezahlt]").forEach((b) => b.addEventListener("click", () => zahlungBezahlt(id, neu)));
+    block.querySelectorAll("[data-zreakt]").forEach((b) => b.addEventListener("click", () => zahlungErhalten(id, neu)));
+  };
+  bind();
+}
+function bindeZahlKnoepfe(ziel) {
+  ziel.querySelectorAll("[data-zsperre]").forEach((b) => b.addEventListener("click", () => zahlungAusstehendDialog(b.dataset.zsperre)));
+  ziel.querySelectorAll("[data-zbezahlt]").forEach((b) => b.addEventListener("click", () => zahlungBezahlt(b.dataset.zbezahlt)));
+}
 // Wer im Büro bedient: Namen für „Wer bist du?“ (einstellbar durch den Super-Admin)
 const PERSONEN_STANDARD = []; // keine festen Namen im Code: Büro-Personen kommen aus der Datenbank oder aus konfiguration.bueroPersonen
 function bueroPersonen() {
@@ -514,7 +603,8 @@ function zaehleFristen() {
     if (tf.stufe === "abgelaufen") z.fristAb++; else if (tf.stufe === "bald") z.fristBald++;
     if (u.stufe === "abgelaufen") z.umAb++; else if (u.stufe === "bald") z.umBald++; else if (u.stufe === "land_pruefen" || u.stufe === "ohne_datum") z.umPruefen++;
   }
-  z.handeln = z.gesperrt + z.pruefen + z.antragAb + z.fristAb + z.umAb + z.umBald;
+  z.manuell = aktiveSchueler().filter((s) => zahlungSperre(s) && KR.reaktInfo(s, heute).stufe !== "gesperrt" && KR.reaktInfo(s, heute).stufe !== "pruefen_faellig").length;
+  z.handeln = z.manuell + z.gesperrt + z.pruefen + z.antragAb + z.fristAb + z.umAb + z.umBald;
   return z;
 }
 const REAKT_TEXT = {
@@ -552,7 +642,7 @@ function renderFristen() {
   </div>`;
   let liste = aktiveSchueler().map((s) => ({ s, r: KR.reaktInfo(s, heute), t: KR.theorieInfo(s, heute), a: KR.antragInfo(s, heute), tf: KR.theorieFristInfo(s, heute), u: KR.umschreibInfo(s, heute) }));
   if (ansicht === "handeln") liste = liste.filter((x) => ["gesperrt", "pruefen_faellig", "bald"].includes(x.r.stufe) || ["abgelaufen", "bald"].includes(x.t.stufe) || x.a.stufe === "abgelaufen"
-    || ["abgelaufen", "bald"].includes(x.tf.stufe) || x.u.stufe === "bald" || x.u.stufe === "abgelaufen");
+    || ["abgelaufen", "bald"].includes(x.tf.stufe) || x.u.stufe === "bald" || x.u.stufe === "abgelaufen" || !!zahlungSperre(x.s));
   const ohneAntrag = liste.filter((x) => x.a.stufe === "ohne_datum").length;
   if (ansicht === "antrag") liste = liste.filter((x) => x.a.stufe !== "ohne_datum" || !["ohne_datum", "erledigt"].includes(x.tf.stufe));
   if (ansicht === "umschreiber") liste = liste.filter((x) => istUmschreiber(x.s));
@@ -597,8 +687,9 @@ function renderFristen() {
     let zahlen = (r.stufe === "gesperrt" || r.stufe === "pruefen_faellig" || r.stufe === "bald")
       ? `<button class="knopf klein haupt" data-zahlung="${esc(s.id)}" type="button">${euro(reaktBetrag())} erhalten</button>` : "";
     if (r.stufe === "pruefen_faellig") zahlen += `<button class="knopf klein" data-nichtbezahlt="${esc(s.id)}" type="button">Nicht bezahlt</button>`;
+    zahlen += zahlungKnoepfe(s);
     return `<tr>
-      <td><b>${esc(s.name)}</b><div class="unter">${esc(artName(s.ausbildungsart))}${s.klasse ? " · " + esc(s.klasse) : ""}<span class="nur-schmal"> · Vertrag ${s.vertrag_am ? esc(datumDE(s.vertrag_am)) : "fehlt"}</span></div></td>
+      <td><b>${esc(s.name)}</b><div class="unter">${esc(artName(s.ausbildungsart))}${s.klasse ? " · " + esc(s.klasse) : ""}<span class="nur-schmal"> · Vertrag ${s.vertrag_am ? esc(datumDE(s.vertrag_am)) : "fehlt"}</span></div>${zahlungSperre(s) ? `<div class="unter">${zahlungPill(s)}${zahlungSperre(s).grund ? " " + esc(zahlungSperre(s).grund) : ""} · seit ${esc(datumDE(zahlungSperre(s).seit))}</div>` : ""}</td>
       <td>${esc(lehrerName(s.fahrlehrer_id))}</td>
       <td class="zeitspalte nur-breit">${s.vertrag_am ? esc(datumDE(s.vertrag_am)) : '<span class="leise">fehlt</span>'}</td>
       <td><span class="marke-pill ${rf}">${rt}</span>${rDatum}</td>
@@ -660,6 +751,7 @@ function bindeFristen(ziel) {
     });
   }
   ziel.querySelectorAll("[data-zahlung]").forEach((b) => b.addEventListener("click", () => zahlungErhalten(b.dataset.zahlung)));
+  bindeZahlKnoepfe(ziel);
   ziel.querySelectorAll("[data-nichtbezahlt]").forEach((b) => b.addEventListener("click", () => nichtBezahlt(b.dataset.nichtbezahlt)));
   ziel.querySelectorAll("[data-fristen]").forEach((b) => b.addEventListener("click", () => fristenDialog(b.dataset.fristen)));
   ziel.querySelectorAll("[data-umschueler]").forEach((b) => b.addEventListener("click", () => schuelerDialog(b.dataset.umschueler)));
@@ -680,17 +772,18 @@ async function speichereSchueler(id, werte, meldung) {
   zeichne();
   return true;
 }
-async function zahlungErhalten(id) {
+async function zahlungErhalten(id, nachher) {
   const s = S.schueler.find((x) => x.id === id);
   if (!s) return;
   const neu = KR.reaktNachZahlung(s);
   if (!neu) { fristenDialog(id); return; }
+  const betragStd = reaktBetragFuer(s);
   const personen = bueroPersonen();
   const body = `<p>Reaktivierung von <b>${esc(s.name)}</b>. Die nächste ist dann am <b>${esc(datumDE(neu))}</b> fällig. Bitte die Zahlung auch in ClickClickDrive vermerken.</p>
     <div class="formular">
-      <label>Bezahlter Betrag in €<input type="number" name="betrag" min="0" max="9999" step="0.01" inputmode="decimal" required value="${reaktBetrag()}"></label>
+      <label>Bezahlter Betrag in €<input type="number" name="betrag" min="0" max="9999" step="0.01" inputmode="decimal" required value="${reaktBetragFuer(s)}"></label>
       <label>Bezahlt am<input type="date" name="am" required value="${esc(KR.todayISO())}"></label>
-      <label class="voll">Nach Absprache mit (nur nötig, wenn der Betrag vom Standard ${euro(reaktBetrag())} abweicht)
+      <label class="voll">Nach Absprache mit (nur nötig, wenn der Betrag vom Standard ${euro(betragStd)} abweicht)
         <select name="absprache"><option value="">– keine Absprache –</option>${personen.map((n) => `<option>${esc(n)}</option>`).join("")}</select></label>
       <label class="voll">Notiz (z. B. Sonderangebot)<input type="text" name="notiz" maxlength="150"></label>
     </div>`;
@@ -698,9 +791,11 @@ async function zahlungErhalten(id) {
     const betrag = Number(String(form.betrag.value).replace(",", "."));
     if (!isFinite(betrag) || betrag < 0) { toast("Bitte einen gültigen Betrag eintragen.", true); return false; }
     const abspr = form.absprache.value, notiz = form.notiz.value.trim();
-    if (Math.abs(betrag - reaktBetrag()) > 0.005 && !abspr && !notiz) { toast(`Der Betrag weicht von ${euro(reaktBetrag())} ab. Bitte „Nach Absprache mit“ oder eine Notiz eintragen.`, true); return false; }
+    if (Math.abs(betrag - betragStd) > 0.005 && !abspr && !notiz) { toast(`Der Betrag weicht von ${euro(betragStd)} ab. Bitte „Nach Absprache mit“ oder eine Notiz eintragen.`, true); return false; }
     const text = `Bezahlt ${euro(betrag)} am ${datumDE(form.am.value)}${abspr ? " · nach Absprache mit " + abspr : ""}${notiz ? " · " + notiz : ""}`;
-    return speichereSchueler(id, { reakt_status: "bezahlt", reakt_bezahlt_bis: neu, reakt_betrag: betrag, reakt_notiz: text }, `Gespeichert. Nächste Reaktivierung am ${datumDE(neu)}.`);
+    const ok = await speichereSchueler(id, { reakt_status: "bezahlt", reakt_bezahlt_bis: neu, reakt_betrag: betrag, reakt_notiz: text }, `Gespeichert. Nächste Reaktivierung am ${datumDE(neu)}.`);
+    if (ok && nachher) nachher();
+    return ok;
   }, "Als bezahlt eintragen");
 }
 // Geprüft, nicht bezahlt: Fälligkeit bleibt in der Vergangenheit -> Schüler ist gesperrt
@@ -1349,13 +1444,13 @@ function renderSchueler() {
     const b197 = x.klasse === "B197";
     const testfahrt = b197 ? (x.b197_testfahrt_am ? `<span class="marke-pill gruen">Testfahrt ✓ ${esc(datumDE(x.b197_testfahrt_am).slice(0, 6))}</span>` : `<span class="marke-pill gelb">Testfahrt offen</span>`) : "";
     return `<tr${istAktiv(x) ? "" : ' class="inaktivzeile"'}>
-      <td><div class="name-zeile">${farbPunkt(a)}<b>${esc(x.name)}</b></div><div class="unter">${istAktiv(x) ? "" : `im Archiv seit ${esc(datumDE(x.inaktiv_seit))} · `}${ausgeblendetAm(x) ? `<span class="hinweis-ausgeblendet-klein">vom Fahrlehrer ausgeblendet am ${esc(datumDE(ausgeblendetAm(x).slice(0, 10)))}</span> · ` : ""}${wartetArt(x) ? `<span class="marke-pill gelb">${esc(WARTE_TEXT[wartetArt(x)])}</span> ` : ""}${esc(x.telefon || "")}${x.email ? " · " + esc(x.email) : ""}</div><div class="unter nur-unter">${esc(klasseVon(x))} · ${esc(artName(x.ausbildungsart))}${x.paket_id ? " · " + esc(paketName(x.paket_id)) : ""}</div></td>
+      <td><div class="name-zeile">${farbPunkt(a)}<b>${esc(x.name)}</b></div><div class="unter">${istAktiv(x) ? "" : `im Archiv seit ${esc(datumDE(x.inaktiv_seit))} · `}${ausgeblendetAm(x) ? `<span class="hinweis-ausgeblendet-klein">vom Fahrlehrer ausgeblendet am ${esc(datumDE(ausgeblendetAm(x).slice(0, 10)))}</span> · ` : ""}${wartetArt(x) ? `<span class="marke-pill gelb">${esc(WARTE_TEXT[wartetArt(x)])}</span> ` : ""}${istAktiv(x) && bueroGesperrt(x) ? zahlungPill(x) + " " : ""}${esc(x.telefon || "")}${x.email ? " · " + esc(x.email) : ""}</div><div class="unter nur-unter">${esc(klasseVon(x))} · ${esc(artName(x.ausbildungsart))}${x.paket_id ? " · " + esc(paketName(x.paket_id)) : ""}</div></td>
       <td>${x.fahrlehrer_id ? esc(lehrerName(x.fahrlehrer_id)) : '<span class="marke-pill rot">ohne Fahrlehrer</span>'}</td>
       <td class="nur-sehr-breit">${esc(klasseVon(x))}<div class="unter">${esc(artName(x.ausbildungsart))}${x.paket_id ? " · " + esc(paketName(x.paket_id)) : ""}${a.beginn ? ` · seit <span class="datum">${esc(datumDE(a.beginn))}</span>` : ""}</div></td>
       <td>${standHTML(a)}<div class="unter">Theorie ${esc(theo)}</div></td>
       <td class="nur-sehr-breit">${naechster[x.id] ? esc(datumDE(naechster[x.id])) : '<span class="leise">–</span>'}</td>
       <td>${istAktiv(x) ? `<span class="marke-pill ${rf}">${rt}</span>` : '<span class="leise">–</span>'}${testfahrt ? `<div class="unter">${testfahrt}</div>` : ""}${notizPill(x.id)}${aufgabePill(x.id)}</td>
-      <td class="aktionen"><div class="aktionen-box">${b197 && !x.b197_testfahrt_am && istAktiv(x) ? `<button class="knopf klein" data-testfahrt="${esc(x.id)}" type="button">Testfahrt ✓</button>` : ""}<button class="knopf klein" data-sbearb="${esc(x.id)}" type="button">Bearbeiten</button></div></td>
+      <td class="aktionen"><div class="aktionen-box">${b197 && !x.b197_testfahrt_am && istAktiv(x) ? `<button class="knopf klein" data-testfahrt="${esc(x.id)}" type="button">Testfahrt ✓</button>` : ""}${zahlungKnoepfe(x)}<button class="knopf klein" data-sbearb="${esc(x.id)}" type="button">Bearbeiten</button></div></td>
     </tr>`;
   }).join("");
   const lehrerOpt = `<option value="">Alle Fahrlehrer</option><option value="ohne"${lehrerFilter === "ohne" ? " selected" : ""}>Ohne Fahrlehrer</option>` +
@@ -1418,6 +1513,7 @@ function bindeSchueler(ziel) {
     clearTimeout(t);
     t = setTimeout(() => { setzeFilter("schueler", { suche: su.value }); const n = $("sSuche"); if (n) { n.focus(); n.setSelectionRange(n.value.length, n.value.length); } }, 250);
   });
+  bindeZahlKnoepfe(ziel);
   ziel.querySelectorAll("[data-sbearb]").forEach((b) => b.addEventListener("click", () => schuelerDialog(b.dataset.sbearb)));
 }
 /* ---------- Notizen ans Team (Fahrlehrer bekommt sie als Popup, bis er „Gelesen“ tippt) ---------- */
@@ -2028,6 +2124,7 @@ function schuelerDialog(id) {
         <label class="datum-klein">am<input type="date" name="testfahrt_am" value="${esc(x.b197_testfahrt_am || "")}"></label>
       </div>
       ${id ? `<div class="voll schalter-zeile"><label class="schalter"><input type="checkbox" name="aktiv" role="switch"${istAktiv(x) ? " checked" : ""}><span class="schalter-bahn" aria-hidden="true"></span><span class="schalter-text"><b id="aktivText">${istAktiv(x) ? "Aktiv" : "Im Archiv"}</b><span class="leise klein"> Archiv heißt: bestanden oder nicht mehr dabei. Der Schüler verschwindet überall (auch aus der Fahrlehrer-App) und zählt nicht bei Fristen, Reaktivierung und Auslastung. Jederzeit zurückholbar.</span></span></label></div>` : ""}
+      ${id && istAktiv(x) ? `<div class="voll zahl-block" id="zahlBlock">${zahlBlockHTML(x)}</div>` : ""}
       ${id ? akademieZugangHTML() : ""}
       ${id ? `<div class="voll nw-akte"><button type="button" class="knopf klein" id="nwOeffnen">Ausbildungsnachweis</button><span class="leise klein">Fahrstunden, Unterschriften, Druck</span></div>` : ""}
       ${id ? `<div class="voll">${pruefungenAkteHTML(id)}</div>` : ""}
@@ -2090,6 +2187,7 @@ function schuelerDialog(id) {
     if (absagen.length) await sageTermineAb(absagen, `${name} liegt im Archiv, ${absagen.length === 1 ? "1 Termin" : absagen.length + " Termine"} abgesagt`);
     return true;
   });
+  if (id) bindeZahlBlock(dlg, id);
   if (id) bindeNotizBlock(dlg, id, x.fahrlehrer_id);
   if (id) bindeAufgabenBlock(dlg, id);
   if (id && typeof nachweisDialog === "function") dlg.querySelector("#nwOeffnen").addEventListener("click", () => nachweisDialog(id));
@@ -2146,9 +2244,9 @@ function kTerminBlock(t) {
   const a = Math.max(KR.hm2min(t.von), K_START), b = Math.min(KR.hm2min(t.bis), K_ENDE);
   if (b <= a) return "";
   const sn = schuelerName(t.schueler_id) || t.interessent_name || (t.payload && t.payload.note) || ARTEN[t.art] || "";
-  const gesperrt = t.schueler_id && KR.reaktInfo(S.schueler.find((x) => x.id === t.schueler_id) || {}).gesperrt;
-  return `<button type="button" class="k-termin${t.art === "block" ? " block" : ""}${gesperrt ? " gesperrt" : ""}" data-termin="${esc(t.id)}" style="top:${(a - K_START) * K_PX}px;height:${Math.max((b - a) * K_PX - 2, 22)}px;--farbe:${K_FARBEN[t.art] || "#3a7350"}">
-        <span class="k-zeit">${esc(t.von)}–${esc(t.bis)}</span><span class="k-name">${gesperrt ? "⚠ " : ""}${esc(sn)}</span>${t.fahrzeug ? `<span class="k-fz">${esc(t.fahrzeug)}</span>` : ""}</button>`;
+  const gesperrt = t.schueler_id && bueroGesperrt(S.schueler.find((x) => x.id === t.schueler_id));
+  return `<button type="button" class="k-termin${t.art === "block" ? " block" : ""}${gesperrt ? " gesperrt" : ""}" data-termin="${esc(t.id)}"${gesperrt ? ' title="Zahlung ausstehend" data-zahlung-hinweis' : ""} style="top:${(a - K_START) * K_PX}px;height:${Math.max((b - a) * K_PX - 2, 22)}px;--farbe:${K_FARBEN[t.art] || "#3a7350"}">
+        <span class="k-zeit">${esc(t.von)}–${esc(t.bis)}</span><span class="k-name">${gesperrt ? "⚠ " : ""}${esc(sn)}</span>${gesperrt ? `<span class="k-fz k-zahlung">Zahlung ausstehend</span>` : ""}${t.fahrzeug ? `<span class="k-fz">${esc(t.fahrzeug)}</span>` : ""}</button>`;
 }
 function kStundenAchse() {
   const stunden = [];
@@ -2330,6 +2428,13 @@ function bindeKalender(ziel) {
     terminDialog(null, { fahrlehrer_id: f.dataset.lehrer, datum: f.dataset.datum || kTag(), von: KR.pad2(Math.floor(min / 60)) + ":" + KR.pad2(min % 60) });
   }));
 }
+// K8: Wäre das ein neuer künftiger Termin (neu, anderer Schüler, anderes Datum) für einen gesperrten Schüler? Wie die Datenbank: nur Fahrstunde, Sonder, Nacht, Schalt, Prüfung
+function neuerTerminGesperrt(t, id, d) {
+  if (!d.schueler_id || !["fahrstunde", "sonder", "nacht", "schalt", "pruefung"].includes(d.art) || d.datum < KR.todayISO()) return false;
+  if (id && t.schueler_id === d.schueler_id && t.datum === d.datum) return false;
+  return bueroGesperrt(S.schueler.find((x) => x.id === d.schueler_id));
+}
+function zahlHinweisZeigen(dlg, an) { const h = dlg.querySelector("#zahlHinweis"); if (h) { h.textContent = ZAHLUNG_MELDUNG; h.hidden = !an; } }
 function plusMinuten(hm, n) { const m = Math.min(KR.hm2min(hm) + n, 23 * 60 + 59); return KR.pad2(Math.floor(m / 60)) + ":" + KR.pad2(m % 60); }
 function terminDialog(id, vorgabe) {
   const t = id ? S.termine.find((x) => x.id === id) : Object.assign({ art: "fahrstunde" }, vorgabe, { bis: plusMinuten(vorgabe.von, 90) });
@@ -2349,6 +2454,7 @@ function terminDialog(id, vorgabe) {
         <p class="voll leise klein">Fahrlehrer ohne App: Das Büro trägt hier ein, was die App sonst selbst zählt (Sonderfahrten nach Anlage 4).</p>
       </div>
       ${id && (t.payload || {}).signed ? `<p class="voll fl-warnung bald">Diese Stunde ist vom Schüler unterschrieben. Ändern Sie Datum, Uhrzeit, Art oder Schüler, muss er neu unterschreiben. Korrekturen mit Grund: Schüler öffnen → „Ausbildungsnachweis“.</p>` : ""}
+      <p class="voll fl-warnung abgelaufen" id="zahlHinweis" hidden>${ZAHLUNG_MELDUNG}</p>
       ${id ? `<label class="voll wahl"><input type="checkbox" name="absagen"> Termin absagen (löschen)</label>` : ""}
       ${id && t.art === "theorie" ? anwesenheitTerminHTML(t) : ""}
     </div>
@@ -2362,12 +2468,13 @@ function terminDialog(id, vorgabe) {
       if (!(await bestaetige("Termin absagen?", "Der Termin wird gelöscht und verschwindet beim Fahrlehrer.", "Ja, absagen"))) return false;
       return sageTermineAb([t], "Termin abgesagt");
     }
-    // Stopp-Notiz oder offene Reaktivierung: Büro vor dem Buchen warnen (wie in der Fahrlehrer-App)
+    // K8: gesperrter Schüler (Zahlung ausstehend): kein neuer künftiger Termin, kein „Trotzdem“ (bestehende Termine bleiben, die Datenbank prüft ebenso)
+    if (neuerTerminGesperrt(t, id, d)) { zahlHinweisZeigen(tdlg, true); toast(ZAHLUNG_MELDUNG, true); return false; }
+    // Stopp-Notiz: Büro vor dem Buchen warnen (wie in der Fahrlehrer-App)
     if (!id && d.schueler_id && ["fahrstunde", "sonder", "nacht", "schalt"].includes(d.art)) {
       const sch = S.schueler.find((x) => x.id === d.schueler_id) || {};
       const stopp = offeneNotizen(d.schueler_id).filter((n) => n.art === "stopp");
-      const gesperrtR = KR.reaktInfo(sch).gesperrt;
-      if ((stopp.length || gesperrtR) && !(await bestaetige("Achtung bei " + (sch.name || "diesem Schüler"), (stopp.length ? "Stopp-Notiz: " + stopp.map((n) => n.text).join(" / ") + ". " : "") + (gesperrtR ? "Die Reaktivierung ist überfällig. " : "") + "Trotzdem buchen?", "Trotzdem buchen"))) return false;
+      if (stopp.length && !(await bestaetige("Achtung bei " + (sch.name || "diesem Schüler"), "Stopp-Notiz: " + stopp.map((n) => n.text).join(" / ") + ". Trotzdem buchen?", "Trotzdem buchen"))) return false;
     }
     // Überschneidung beim selben Fahrlehrer warnen
     const kollision = S.termine.find((x) => x.id !== id && x.fahrlehrer_id === d.fahrlehrer_id && x.datum === d.datum && x.von && x.bis
@@ -2384,14 +2491,14 @@ function terminDialog(id, vorgabe) {
     }
     if (id) {
       const res = await supa.from("kalender_termine").update(werte).eq("id", id).select("*");
-      if (res.error || !res.data || !res.data.length) { toast("Nicht gespeichert: " + (res.error ? res.error.message : "keine Berechtigung"), true); return false; }
+      if (res.error || !res.data || !res.data.length) { toast("Nicht gespeichert: " + (res.error ? dbFehlerText(res.error) : "keine Berechtigung"), true); return false; }
       const zeitGeaendert = d.datum !== t.datum || d.von !== t.von || d.bis !== t.bis;
       Object.assign(t, res.data[0]);
       if (zeitGeaendert) onlineBuchungMelden(id, "changed", { new_date: d.datum, new_von: d.von, new_bis: d.bis });
     } else {
       const zeile = Object.assign({ id: "b" + Date.now().toString(36) + Math.random().toString(36).slice(2, 6), fahrschule_id: S.fsId, status: "geplant", geloescht: false, payload: {}, erstellt_von: S.user.id }, werte);
       const res = await supa.from("kalender_termine").insert(zeile).select("*");
-      if (res.error || !res.data || !res.data.length) { toast("Nicht angelegt: " + (res.error ? res.error.message : "keine Berechtigung"), true); return false; }
+      if (res.error || !res.data || !res.data.length) { toast("Nicht angelegt: " + (res.error ? dbFehlerText(res.error) : "keine Berechtigung"), true); return false; }
       S.termine.push(res.data[0]);
     }
     toast("Termin gespeichert"); zeichne(); return true;
@@ -2411,6 +2518,16 @@ function terminDialog(id, vorgabe) {
   };
   ["fahrlehrer_id", "art", "schueler_id"].forEach((n) => tdlg.querySelector(`select[name=${n}]`).addEventListener("change", ohneAppNeu));
   ohneAppNeu();
+  // Hinweis „Zahlung ausstehend“: bei neuem Termin als Sperre, bei bestehendem Termin nur zur Information
+  const zahlNeu = () => {
+    const sx = S.schueler.find((x) => x.id === tdlg.querySelector("select[name=schueler_id]").value);
+    const h = tdlg.querySelector("#zahlHinweis");
+    const gesperrt = !!sx && bueroGesperrt(sx);
+    h.textContent = id && sx && sx.id === t.schueler_id ? "Zahlung ausstehend. Dieser Termin bleibt; neue Termine sind erst nach „Bezahlt“ möglich." : ZAHLUNG_MELDUNG;
+    h.hidden = !gesperrt;
+  };
+  tdlg.querySelector("select[name=schueler_id]").addEventListener("change", zahlNeu);
+  zahlNeu();
   const druck = tdlg.querySelector("[data-anwdruck]");
   if (druck) druck.addEventListener("click", () => druckeAnwesenheit(druck.dataset.anwdruck, (t.payload || {}).lektion, t));
 }

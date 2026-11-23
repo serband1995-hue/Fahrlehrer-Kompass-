@@ -235,7 +235,7 @@ function nwStundeDialog(x, t, nachher) {
       const zeile = { id: "b" + Date.now().toString(36) + Math.random().toString(36).slice(2, 6), fahrschule_id: S.fsId, fahrlehrer_id: f.fahrlehrer_id, schueler_id: x.id,
         datum: f.datum, von: f.von, bis: f.bis, art, status: "geplant", geloescht: false, payload, erstellt_von: S.user.id, aktualisiert_am: jetzt };
       const res = await supa.from("kalender_termine").insert(zeile).select("*");
-      if (res.error || !res.data || !res.data.length) { toast("Nicht gespeichert: " + (res.error ? res.error.message : "keine Berechtigung"), true); return false; }
+      if (res.error || !res.data || !res.data.length) { toast("Nicht gespeichert: " + (res.error ? (typeof dbFehlerText === "function" ? dbFehlerText(res.error) : res.error.message) : "keine Berechtigung"), true); return false; }
       nwMerken(res.data[0]);
       toast("Fahrstunde nachgetragen");
     } else {
@@ -260,7 +260,7 @@ function nwStundeDialog(x, t, nachher) {
       if (frisch && frisch.am) q = q.eq("aktualisiert_am", frisch.am);
       const res = await q.select("*");
       if (!res.error && res.data && !res.data.length && frisch) { toast("Die Stunde wurde gerade in der App geändert. Bitte noch einmal öffnen und speichern.", true); nachher(); return true; }
-      if (res.error || !res.data || !res.data.length) { toast("Nicht gespeichert: " + (res.error ? res.error.message : "keine Berechtigung"), true); return false; }
+      if (res.error || !res.data || !res.data.length) { toast("Nicht gespeichert: " + (res.error ? (typeof dbFehlerText === "function" ? dbFehlerText(res.error) : res.error.message) : "keine Berechtigung"), true); return false; }
       nwMerken(res.data[0]);
       // Online gebuchte, künftige Stunde: Schüler bekommt wie beim Kalender eine E-Mail (Vergangenes nicht)
       if ((f.datum !== v.datum || f.von !== v.von || f.bis !== v.bis) && f.datum >= KR.todayISO() && typeof onlineBuchungMelden === "function") onlineBuchungMelden(v.id, "changed", { new_date: f.datum, new_von: f.von, new_bis: f.bis });
