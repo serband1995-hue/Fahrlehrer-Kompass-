@@ -6,7 +6,7 @@
 window.KOMPASS_NEU = [
   { version: "2026.11.24.1", datum: "2026-11-24", kurz: "Abmelden steht jetzt unten im Menü „Mehr“.",
     punkte: ["„Abmelden“ findest du jetzt ganz unten im Menü „Mehr“, nicht mehr in den Einstellungen.",
-             "Die Gesamtübersicht und der Wechsel zur Büro-Seite sind nur für Leitung, Büro und Super-Admin da."] },
+             "Die Gesamtübersicht und der Wechsel zur Büro-Seite sind nur für Leitung, Büro und den Betreiber da."] },
   { version: "2026.11.23.9", datum: "2026-11-23", kurz: "Neue, ruhigere Farben: hell, klar, weniger Grün.",
     punkte: ["App und Büro sehen jetzt heller und ruhiger aus. Grün gibt es fast nur noch an Knöpfen, Haken und als schmale Markierung. Die Karte „Als nächstes“ bleibt dunkelgrün, damit man sie sofort sieht.",
              "Eingabefelder haben deutlichere Rahmen und sind leichter zu treffen, auch draußen am Handy.",
