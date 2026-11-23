@@ -264,7 +264,7 @@ await pruefe("L5", "Schüler ausblenden: kein Dialog, künftige Termine bleiben 
   const r = await p.evaluate(() => ({ aus: !!DB.students.find((s) => s.id === "sm1").ausgeblendetAm, n: DB.lessons.length }));
   if (!r.aus) f.push("Schüler nicht ausgeblendet"); if (r.n !== 2) f.push(`künftige Termine: ${r.n} statt 2 im Kalender`);
   if (!(await toastRueck())) f.push("kein Rückgängig-Hinweis: " + (await toastText()));
-  if (!/2 künftige Termine bleiben im Kalender/.test(await toastText())) f.push("Hinweis nennt die Termine nicht: " + (await toastText()));
+  if (!/Termine bleiben/.test(await toastText())) f.push("Hinweis nennt die Termine nicht: " + (await toastText()));
   if (await p.evaluate(() => window.__abs.length)) f.push("Absage verschickt");
   await p.click("#toast .ut-btn"); await warte(p, 400);
   const r2 = await p.evaluate(() => ({ aus: !!DB.students.find((s) => s.id === "sm1").ausgeblendetAm, ids: DB.lessons.map((l) => l.id).sort().join(",") }));

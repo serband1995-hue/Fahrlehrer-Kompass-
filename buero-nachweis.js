@@ -340,6 +340,8 @@ function nwGrundFragen(titel, text, jaText, pflicht) {
     const dlg = oeffneDialog(titel, `<p>${esc(text)}</p><label class="voll">Grund (${pflicht ? "kurz" : "freiwillig"}, steht im Verlauf)<input type="text" name="grund" maxlength="200"${pflicht ? ' required placeholder="z. B. falsch eingetragen"' : ""}></label>`, async (form) => {
       ergebnis = String(new FormData(form).get("grund") || "").trim(); if (pflicht && !ergebnis) { ergebnis = null; return false; } return true;
     }, jaText);
+    // Design K7: Stornieren ist dieselbe Aktion wie in der App → Warnfarbe statt grünem Hauptknopf
+    if (pflicht) { const k = dlg.querySelector("footer button[value=ok]"); if (k) { k.classList.remove("haupt"); k.classList.add("gefahr"); } }
     dlg.addEventListener("close", () => { if (ergebnis !== null) nwKurzSperren(); fertig(ergebnis); });
   });
 }

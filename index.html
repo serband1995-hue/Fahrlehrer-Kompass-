@@ -14201,18 +14201,22 @@ const STORNO_GRUENDE=["Falsch eingetragen","Doppelt eingetragen","Hat nicht stat
 function openStornoSheet(id, neuZeichnen){
   const l=(DB.lessons||[]).find(x=>x.id===id); if(!l)return;
   const st=DB.students.find(s=>s.id===l.sid);
+  // Design K7: ein alter Hinweis (z. B. „Wiederhergestellt“) gehört nicht zu diesem Fenster; laufendes Rückgängig bleibt
+  try{ const tt=$("#toast"); if(tt&&!tt.classList.contains("undo"))tt.classList.remove("show"); }catch(e){}
   openSheet(`<div class="sheet-h">Stunde stornieren</div>
-    <p class="muted-p" style="font-size:13.5px;margin:-4px 0 14px;">${st?esc(st.name)+" · ":""}${isoDE(l.date)} · ${esc(l.von||"")}–${esc(l.bis||"")}<br>${l.signed?"Unterschrieben":"Schon gelaufen"} – darum nicht einfach löschen. Sie verschwindet aus Kalender und Zählung${_authProfile&&_authProfile.fahrschule_id?" und bleibt im Ausbildungsnachweis der Fahrschule als storniert aufbewahrt":"; der Grund bleibt im Verlauf des Schülers"}. Warum?</p>
+    <p class="muted-p" style="font-size:13.5px;margin:-4px 0 14px;">${st?esc(st.name)+" · ":""}${isoDE(l.date)} · ${esc(l.von||"")}–${esc(l.bis||"")}<br>${l.signed?"Schon unterschrieben.":"Schon gelaufen."} Sie verschwindet aus Kalender und Zählung${_authProfile&&_authProfile.fahrschule_id?" und bleibt im Nachweis als storniert":", der Grund bleibt im Verlauf"}. Warum?</p>
     <div class="es-actions" id="stoGruende">
       ${STORNO_GRUENDE.map((g,i)=>`<button class="es-act" type="button" data-stogrund="${i}">${esc(g)}</button>`).join("")}
     </div>
     <label class="muted-p" for="stoText" style="display:block;font-size:13px;margin:14px 0 6px;">Anderer Grund</label>
     <div style="display:flex;gap:8px;align-items:stretch;"><input id="stoText" type="text" maxlength="120" autocomplete="off" data-kein-entwurf placeholder="kurz, z. B. Schüler krank" style="flex:1;min-width:0;min-height:44px;background:var(--surface);color:var(--txt);border:1px solid var(--line);border-radius:10px;padding:0 12px;font:inherit;">
-    <button class="btn btn-danger" id="stoLos" type="button" style="min-height:44px;flex:none;" disabled>Stornieren</button></div>`);
+    <button class="btn" id="stoLos" type="button" style="min-height:44px;flex:none;" disabled>Stornieren</button></div>`);
   const los=grund=>{ grund=String(grund||"").trim().slice(0,120); if(!grund)return; closeSheet(); stornoLesson(id,grund,neuZeichnen); };
   document.querySelectorAll("[data-stogrund]").forEach(b=>b.addEventListener("click",()=>los(STORNO_GRUENDE[+b.dataset.stogrund])));
   const t=$("#stoText"), k=$("#stoLos");
-  t.addEventListener("input",()=>{ k.disabled=!t.value.trim(); });
+  // Design K7: gesperrt klar grau, bereit kräftiges Rot (lesbar bei Sonne)
+  const knopfFarbe=()=>{ const an=!!t.value.trim(); k.disabled=!an; k.style.background=an?"#B3261E":"var(--line)"; k.style.color=an?"#fff":"var(--muted)"; k.style.borderColor=an?"#B3261E":"var(--line)"; };
+  knopfFarbe(); t.addEventListener("input",knopfFarbe);
   t.addEventListener("keydown",e=>{ if(e.key==="Enter"){ e.preventDefault(); los(t.value); } });
   k.addEventListener("click",()=>los(t.value));
 }
@@ -14401,7 +14405,7 @@ function schuelerAusblenden(id){
   DB.lessons=(DB.lessons||[]).filter(l=>!ohne.includes(l)); save(); routeHome();
   // Online-Buchungen: Die Absage an den Schüler geht erst raus, wenn nicht rückgängig gemacht wurde
   setTimeout(()=>{ if(!rueck)ohne.forEach(l=>{ if(l.onlineBookingId)_notifyOnlineBookingChange(l.id,"cancelled"); }); },6300);
-  toastUndo(`${s.name} ausgeblendet · Archiv › Ausgeblendet`+(kuenftig.length?` · ${kuenftig.length} künftige${kuenftig.length===1?"r Termin bleibt":" Termine bleiben"} im Kalender`:""),()=>{ rueck=true;
+  toastUndo(`${s.name.split(" ")[0]} ausgeblendet · wieder da unter Archiv`+(kuenftig.length?` · Termine bleiben`:""),()=>{ rueck=true;
     delete s.ausgeblendetAm; logHist(s,"note","Wieder eingeblendet");
     ohne.forEach(l=>{ delete l._syncedAt; if(!DB.lessons.some(x=>x.id===l.id))DB.lessons.push(l); });
     plaetze.forEach(({t,i})=>{ if(t.slots&&!t.slots[i]&&(DB.termine||[]).includes(t))t.slots[i]=id; }); // nur den eigenen Platz zurück
