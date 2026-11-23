@@ -7,7 +7,7 @@ window.KOMPASS_NEU = [
   { version: "2026.11.23.3", datum: "2026-11-23", kurz: "Neu: Alle Schüler der Fahrschule im Überblick.",
     punkte: ["Unter „Schüler“ gibt es unten „Alle Schüler der Fahrschule“: Name, Fahrlehrer, Stand in Prozent und Stand Theorie.",
              "Die Akte eines Schülers öffnet nur sein eigener Fahrlehrer.",
-             "Eigene Schüler kannst du dort an einen Kollegen weitergeben. Künftige Termine gehen mit, heute schon Gefahrenes und eine geplante Prüfung bleiben bei dir.",
+             "Eigene Schüler kannst du dort an einen Kollegen weitergeben. Künftige Termine gehen mit, auch ein Prüfungstermin im Kalender. Heute schon Gefahrenes bleibt bei dir.",
              "Zurückholen geht über das Büro."] },
   { version: "2026.11.23.2", datum: "2026-11-23", kurz: "Zurück klappt jetzt überall, Prüfer-Notiz bleibt.",
     punkte: ["Nach dem Knopf „Prüfer“ und ähnlichen Knöpfen führt der Zurück-Pfeil wieder richtig zurück.",

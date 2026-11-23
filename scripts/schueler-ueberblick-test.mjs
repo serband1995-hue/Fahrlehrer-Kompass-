@@ -135,7 +135,7 @@ const breit = (page) => page.evaluate(() => { const d = document.documentElement
   await pruefe("U4", "Weitergeben: Server-Funktion, kein Bestätigen-Fenster, Hinweis, Schüler weg vom Gerät", () => page.evaluate((dlg) => {
     const c = __rpc.find((x) => x.name === "schueler_weitergeben"); if (!c || c.args.p_schueler !== "s-eigen" || c.args.p_an !== "u-jelena") return "Aufruf: " + JSON.stringify(c);
     if (dlg.length) return "Fenster: " + dlg.join(" | ");
-    const t = document.getElementById("toast").textContent; if (!/ist jetzt bei Jelena/.test(t) || !/Prüfung am 03\.12\.2026 bleibt bei dir/.test(t)) return "Hinweis: " + t;
+    const t = document.getElementById("toast").textContent; if (!/ist jetzt bei Jelena \(2 Termine gehen mit\)\./.test(t) || /bleibt bei dir/.test(t)) return "Hinweis: " + t;
     if (DB.students.some((s) => s.id === "s-eigen")) return "Schüler noch auf dem Gerät";
     const k = document.querySelector('.su-karte[data-sid="s-eigen"]'); return k && !k.querySelector("[data-weiter]") && /bei Jelena/.test(k.textContent) ? null : "Liste nicht aktualisiert";
   }, dialoge));

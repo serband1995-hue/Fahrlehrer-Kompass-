@@ -180,8 +180,10 @@
     try {
       // Eigene Änderungen zuerst hochladen und abwarten – sonst bekäme der neue Fahrlehrer einen alten Stand
       // und die späte Änderung würde abgelehnt (der Schüler gehört dann nicht mehr diesem Gerät).
+      // Immer anstoßen und kurz warten: auch ein eben gelöschter Termin muss oben sein (offen() sieht Löschungen nicht)
+      try { if (typeof _brueckenSofort === "function") _brueckenSofort(); } catch (e) {}
+      await warte(1500);
       if (offen(sid)) {
-        try { if (typeof _brueckenSofort === "function") _brueckenSofort(); } catch (e) {}
         const bis = Date.now() + 10000;
         while (offen(sid) && Date.now() < bis) await warte(400);
         if (offen(sid)) { hinweis("Noch nicht alles hochgeladen – bitte gleich nochmal."); return false; }
@@ -207,8 +209,8 @@
     }
     const wer = r.data.an_name || anName || "Kollegen";
     await nachher(); // danach der eigene Hinweis (er ersetzt den allgemeinen „wurde umverteilt“)
-    const pr = r.data.pruefung ? String(r.data.pruefung).slice(0, 10).split("-").reverse().join(".") : "";
-    hinweis(`${name} ist jetzt bei ${wer}${r.data.termine ? ` (${r.data.termine} Termin${r.data.termine === 1 ? "" : "e"})` : ""}.${pr ? ` Die Prüfung am ${pr} bleibt bei dir.` : ""}`);
+    // Richter K6 (B1): auch ein Prüfungstermin im Kalender geht mit – kein Hinweis „Prüfung bleibt bei dir“
+    hinweis(`${name} ist jetzt bei ${wer}${r.data.termine ? ` (${r.data.termine} Termin${r.data.termine === 1 ? "" : "e"} gehen mit)` : ""}.`);
     const z = (daten || []).find((x) => x.id === sid);
     if (z) { z.eigen = false; z.fahrlehrer_id = an; z.fahrlehrer_name = wer; }
     zeichne(); laden();
