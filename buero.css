@@ -812,6 +812,6 @@ body.kiosk .rollen-streifen{display:none;}
   .konf-tab tr:last-child{border-bottom:none;}
   .konf-tab td{display:block;padding:2px 0;border-bottom:none;}
   .konf-tab td.aktionen{padding-top:8px;}
-  .konf-tab .aktionen-box{flex-direction:column;align-items:stretch;}
+  .konf-tab .aktionen-box{flex-direction:column;align-items:stretch;max-width:none;margin-left:0;}
   .konf-tab td .knopf{width:100%;min-height:44px;}
 }
