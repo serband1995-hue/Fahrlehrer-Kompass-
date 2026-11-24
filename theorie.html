@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<meta name="theme-color" content="#3a7350">
+<meta name="theme-color" content="#f1f1f4">
 <meta name="robots" content="noindex">
 <title>Theorieunterricht – Fahrlehrer-Kompass</title>
 <link rel="icon" href="icon-192.png">
@@ -14,11 +14,12 @@
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
 <style>
 :root{
-  --bg:#f3f1e9; --surface:#fffdf7; --surface-2:#ece7d8; --line:#ddd5bd;
-  --txt:#2a2c22; --muted:#6b6a55; --akzent:#3a7350; --akzent-dark:#2f5d3f; --akzent-soft:rgba(58,115,80,.12);
+  --bg:#f1f1f4; --surface:#ffffff; --surface-2:#e9e9ee; --line:#cdcdd5; --feld:#85858f;
+  --txt:#24242a; --muted:#5a5a65; --akzent:#2f6b47; --akzent-dark:#2f6b47; --akzent-soft:rgba(36,36,42,.06);
   --gold:#b8873a; --rot:#b4483a; --r:16px; --pad:clamp(16px,4vw,32px);
 }
 *{box-sizing:border-box}
+:focus-visible{outline:3px solid #2f6b47;outline-offset:2px}
 html,body{margin:0;background:var(--bg);color:var(--txt);font:16px/1.45 system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;-webkit-text-size-adjust:100%}
 body{min-height:100vh;overflow-x:hidden}
 h1,h2,h3{font-family:"Source Serif 4",Georgia,serif;margin:0;line-height:1.2}
@@ -39,17 +40,18 @@ header.top .wrap{display:flex;align-items:center;gap:10px;padding-top:12px;paddi
 .btn:disabled{opacity:.5;cursor:not-allowed}
 .tabs{display:flex;gap:6px;margin:18px 0 6px;flex-wrap:wrap}
 .tab{border:1px solid var(--line);background:var(--surface);border-radius:999px;padding:9px 16px;font-weight:600;white-space:nowrap;min-height:42px}
-.tab.on{background:var(--akzent);border-color:var(--akzent);color:#fff}
+.tab.on{background:var(--txt);border-color:var(--txt);color:#fff}
 .chips{display:flex;gap:8px;flex-wrap:wrap;margin:14px 0}
 .chip{border:1px solid var(--line);background:var(--surface);border-radius:12px;padding:8px 14px;font-weight:700;min-width:56px;min-height:44px}
-.chip.on{border-color:var(--akzent);background:var(--akzent-soft);color:var(--akzent-dark)}
+.chip.on{border-color:var(--txt);background:var(--txt);color:#fff}
+.chip.on .n{color:#d4d7de}
 .chip .n{font-weight:500;color:var(--muted);font-size:.8rem;margin-left:4px}
 .hint{color:var(--muted);font-size:.92rem}
 .box{background:var(--surface);border:1px solid var(--line);border-radius:var(--r);padding:16px}
 .abend{margin:22px 0 8px;font-size:.9rem;letter-spacing:.06em;text-transform:uppercase;color:var(--akzent-dark);font-weight:700}
 .grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:14px}
 .card{background:var(--surface);border:1px solid var(--line);border-radius:var(--r);overflow:hidden;display:flex;flex-direction:column}
-.card .thumb{aspect-ratio:16/9;background:#1c2b24 center/cover no-repeat;position:relative}
+.card .thumb{aspect-ratio:16/9;background:#23262d center/cover no-repeat;position:relative}
 .card .thumb .code{position:absolute;left:10px;bottom:10px;background:rgba(0,0,0,.6);color:#fff;font-weight:700;border-radius:8px;padding:3px 9px;font-size:.85rem}
 .card .body{padding:12px 14px 14px;display:flex;flex-direction:column;gap:8px;flex:1}
 .card h3{font-size:1.08rem}
@@ -78,12 +80,12 @@ header.top .wrap{display:flex;align-items:center;gap:10px;padding-top:12px;paddi
 .item .t span{font-size:.85rem;color:var(--muted)}
 .item .t span.zuletzt{display:block;margin-top:2px;color:var(--akzent-dark);font-weight:600}
 label.f{display:block;font-weight:600;font-size:.9rem;margin:12px 0 4px}
-input[type=text],input[type=email],input[type=password],select,textarea{width:100%;border:1px solid var(--line);background:#fff;border-radius:12px;padding:11px 12px;min-height:44px}
+input[type=text],input[type=email],input[type=password],select,textarea{width:100%;border:1px solid var(--feld);background:#fff;border-radius:12px;padding:11px 12px;min-height:44px}
 textarea{min-height:80px;resize:vertical}
 input[type=file]{width:100%;max-width:100%;min-height:44px;padding:8px 0}
 .login{max-width:420px;margin:40px auto}
 .err{color:var(--rot);font-size:.9rem;margin-top:8px;min-height:1.2em}
-.toast{position:fixed;left:50%;top:14px;cursor:pointer;transform:translateX(-50%);background:#2a2c22;color:#fff;padding:12px 18px;border-radius:12px;z-index:200;max-width:calc(100vw - 32px);box-shadow:0 8px 30px rgba(0,0,0,.25);font-size:.95rem}
+.toast{position:fixed;left:50%;top:14px;cursor:pointer;transform:translateX(-50%);background:#24242a;color:#fff;padding:12px 18px;border-radius:12px;z-index:200;max-width:calc(100vw - 32px);box-shadow:0 8px 30px rgba(0,0,0,.25);font-size:.95rem}
 /* Fenster */
 .modal{position:fixed;inset:0;background:rgba(20,24,20,.55);z-index:100;display:flex;align-items:flex-end;justify-content:center}
 .modal .sheet{background:var(--bg);width:100%;max-width:760px;max-height:92vh;overflow:auto;border-radius:20px 20px 0 0;padding:18px var(--pad) 26px}
@@ -92,29 +94,29 @@ input[type=file]{width:100%;max-width:100%;min-height:44px;padding:8px 0}
 .sheet .head h2{flex:1;font-size:1.25rem}
 .x{border:0;background:var(--surface-2);border-radius:10px;width:44px;height:44px;font-size:1.3rem}
 .pick{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:10px}
-.pick label{position:relative;display:block;border-radius:10px;overflow:hidden;border:3px solid var(--akzent);cursor:pointer;background:#1c2b24}
+.pick label{position:relative;display:block;border-radius:10px;overflow:hidden;border:3px solid var(--akzent);cursor:pointer;background:#23262d}
 .pick label.off{border-color:var(--line);opacity:.35;filter:grayscale(1)}
 .pick label.off::after{content:"aus";position:absolute;inset:auto 6px 6px auto;background:#b4483a;color:#fff;font-size:.75rem;font-weight:700;border-radius:6px;padding:1px 6px}
 .pick img{display:block;width:100%;aspect-ratio:16/9;object-fit:cover}
 .pick input{position:absolute;right:6px;top:6px;width:22px;height:22px;accent-color:var(--akzent)}
 .pick .nr{position:absolute;left:6px;bottom:6px;background:rgba(0,0,0,.65);color:#fff;font-size:.75rem;border-radius:6px;padding:1px 6px}
 /* Folien-Ansicht */
-.viewer{position:fixed;inset:0;background:#0b0f0d;z-index:150;display:flex;flex-direction:column;color:#eee}
+.viewer{position:fixed;inset:0;background:#0e1015;z-index:150;display:flex;flex-direction:column;color:#eee}
 .viewer .stage{flex:1;display:flex;align-items:center;justify-content:center;min-height:0;position:relative}
 .viewer .stage img{width:100%;height:100%;max-width:100%;max-height:100%;object-fit:contain;user-select:none}
 .viewer .stage img:not([src]),.viewer .stage img.kaputt{visibility:hidden}
-.viewer .bar{display:flex;gap:8px;align-items:center;padding:8px 10px;background:#141a17;flex:none}
-.viewer .mehr{display:none;gap:8px;padding:0 10px 8px;background:#141a17;flex-wrap:wrap;justify-content:flex-end;flex:none}
+.viewer .bar{display:flex;gap:8px;align-items:center;padding:8px 10px;background:#171a20;flex:none}
+.viewer .mehr{display:none;gap:8px;padding:0 10px 8px;background:#171a20;flex-wrap:wrap;justify-content:flex-end;flex:none}
 .viewer.mehr-auf .mehr{display:flex}
 body.viewer-offen{overflow:hidden}
 .viewer .bar .btn,.viewer .mehr .btn{min-height:44px}
-.viewer .bar .btn,.viewer .mehr .btn{background:#2a3a32}
-.viewer .bar .btn:hover{background:#3a4f44}
+.viewer .bar .btn,.viewer .mehr .btn{background:#2f3440}
+.viewer .bar .btn:hover{background:#3f4553}
 .viewer .count{flex:1;text-align:center;min-width:80px;font-variant-numeric:tabular-nums}
-.viewer .notes{flex:none;background:#141a17;border-top:1px solid #2a3a32;padding:10px 16px;max-height:24vh;overflow:auto;white-space:pre-wrap;font-size:.95rem;line-height:1.5}
+.viewer .notes{flex:none;background:#171a20;border-top:1px solid #2f3440;padding:10px 16px;max-height:24vh;overflow:auto;white-space:pre-wrap;font-size:.95rem;line-height:1.5}
 .viewer .navzone{position:absolute;top:0;bottom:0;width:30%;cursor:pointer}
 .viewer .navzone.l{left:0}.viewer .navzone.r{right:0}
-.viewer .note-flag{position:absolute;left:12px;top:12px;background:rgba(255,255,255,.14);color:#dfe8e2;font-size:.8rem;border-radius:8px;padding:3px 8px}
+.viewer .note-flag{position:absolute;left:12px;top:12px;background:rgba(255,255,255,.14);color:#e3e6ec;font-size:.8rem;border-radius:8px;padding:3px 8px}
 body.board .viewer .bar,body.board .viewer .notes,body.board .viewer .mehr,body.board .viewer .note-flag{display:none}
 .viewer .stage{overflow:hidden}
 .how{font-size:.9rem;color:var(--muted);margin-top:6px}

@@ -804,8 +804,8 @@ input,select,textarea{font-family:inherit;font-size:16px;color:var(--txt);}
 .ampel{display:flex;gap:7px;flex:0 0 auto;}
 .amp{width:26px;height:26px;border-radius:50%;border:2px solid var(--line);background:transparent;transition:all .15s var(--pop);font-size:13px;line-height:1;font-weight:900;color:#fff;display:inline-flex;align-items:center;justify-content:center;padding:0;}
 .amp:active{transform:scale(.85);}
-.amp[data-v="rot"].on{background:var(--rot);border-color:var(--rot);}
-.amp[data-v="gelb"].on{background:var(--gelb);border-color:var(--gelb);}
+.amp[data-v="rot"].on{background:var(--rot);border-color:var(--rot);color:#0b0d10;}
+.amp[data-v="gelb"].on{background:var(--gelb);border-color:var(--gelb);color:#1b1f27;}
 .amp[data-v="gruen"].on{background:var(--gruen);border-color:var(--gruen);}
 .amp.chk{width:28px;height:28px;border-radius:8px;position:relative;}
 .amp.chk.on::after{content:"✓";position:absolute;inset:0;display:flex;align-items:center;justify-content:center;color:#fff;font-weight:700;font-size:15px;}
@@ -6450,7 +6450,7 @@ async function routeFahrschuleDetail(fahrschuleId){
       <h4>🏫 ${esc(fs.name)}</h4>
       <p style="color:var(--muted);font-size:13px;">${fs.aktiv?'Aktiv':'GESPERRT'}</p>
       <div class="btn-row">${fs.aktiv
-        ?`<button class="btn btn-ghost" style="color:#c83c3c;" onclick="toggleFahrschuleAktiv(${_jsArg(fs.id)},false)">Fahrschule sperren</button>`
+        ?`<button class="btn btn-ghost" style="color:var(--zahl-rot);" onclick="toggleFahrschuleAktiv(${_jsArg(fs.id)},false)">Fahrschule sperren</button>`
         :`<button class="btn btn-primary" onclick="toggleFahrschuleAktiv(${_jsArg(fs.id)},true)">Fahrschule freischalten</button>`}</div>
     </div>` : `<div class="res-block" style="animation:none;"><h4>🏫 ${esc(fs.name)}</h4></div>`;
   const kalenderBtn=`<div class="res-block" style="animation:none;"><h4>📅 Kalender</h4><p style="font-size:13px;color:var(--muted);">Alle Termine aller Fahrlehrer, filterbar, bearbeitbar.</p><div class="btn-row"><button class="btn btn-primary" onclick="_fsOpenEchterKalenderAusAdmin(${_jsArg(fahrschuleId)})">Kalender öffnen</button></div></div>`;
@@ -6769,7 +6769,7 @@ function routeFahrschuleLehrer(){
     const linksId="lehrerlinks_"+l.id.replace(/[^a-zA-Z0-9]/g,"");
     return `<div class="fs-card">
       <div class="fs-name">${esc(l.name||l.email)}${istSuperAdmin?' <span style="color:var(--orange);font-size:11px;">(Super-Admin)</span>':''}</div>
-      <div class="fs-sub">${l.aktiv?'<span class="fs-status-on">Aktiv</span>':'<span class="fs-status-off">GESPERRT</span>'} &nbsp;·&nbsp; Auslastung ${l.auslastung_pct!=null?`<span style="color:${l.auslastung_pct>=100?'#c83c3c':l.auslastung_pct>=85?'#cf9a3e':'inherit'};font-weight:${l.auslastung_pct>=85?'700':'400'};">${l.auslastung_pct}%</span>`:'—'} &nbsp;·&nbsp; ${meineSchueler.length} Schüler &nbsp;·&nbsp; ${q.pct==null?'Quote —':'Quote '+q.pct+'%'}</div>
+      <div class="fs-sub">${l.aktiv?'<span class="fs-status-on">Aktiv</span>':'<span class="fs-status-off">GESPERRT</span>'} &nbsp;·&nbsp; Auslastung ${l.auslastung_pct!=null?`<span style="color:${l.auslastung_pct>=100?'var(--zahl-rot)':l.auslastung_pct>=85?'#cf9a3e':'inherit'};font-weight:${l.auslastung_pct>=85?'700':'400'};">${l.auslastung_pct}%</span>`:'—'} &nbsp;·&nbsp; ${meineSchueler.length} Schüler &nbsp;·&nbsp; ${q.pct==null?'Quote —':'Quote '+q.pct+'%'}</div>
       ${(istSuperAdmin||buero)?'':`<div class="fs-actions">
         ${l.aktiv
           ?(isSuperAdmin()?`<button class="fs-btn-kill" onclick="toggleFahrlehrerAktiv(${_jsArg(l.id)},false,${_jsArg(_fsAgg.fahrschuleId)})">Sperren</button>`:`<span class="muted-p">Sperren kann nur der Betreiber. Wer aufhört: „Löschen“.</span>`)
@@ -6898,7 +6898,7 @@ function routeFahrschuleStatistik(){
       <div class="dash-tiles">
         <button class="d-tile" style="cursor:default;"><div class="dt-n" data-count="${act}">0</div><div class="dt-l">Aktive Schüler</div></button>
         <button class="d-tile" style="cursor:default;"><div class="dt-n" data-count="${lehrer.length}">0</div><div class="dt-l">Fahrlehrer</div></button>
-        <button class="d-tile" style="cursor:default;">${oAuslastung==null?'<div class="dt-n">–</div>':`<div class="dt-n" data-count="${oAuslastung}" data-suffix="%" style="color:${oAuslastung>=100?'#c83c3c':oAuslastung>=85?'#cf9a3e':'inherit'};">0</div>`}<div class="dt-l">Ø Auslastung</div></button>
+        <button class="d-tile" style="cursor:default;">${oAuslastung==null?'<div class="dt-n">–</div>':`<div class="dt-n" data-count="${oAuslastung}" data-suffix="%" style="color:${oAuslastung>=100?'var(--zahl-rot)':oAuslastung>=85?'#cf9a3e':'inherit'};">0</div>`}<div class="dt-l">Ø Auslastung</div></button>
       </div>
     </div>
 
@@ -7231,7 +7231,7 @@ function routeFahrschuleKategorie(key){
     let extra="";
     if(key==="simulator") extra=`<div class="fs-sub">Zeitraum: ${esc(t.von||"")}–${esc(t.bis||"")}</div>`;
     if(key==="beratung"&&!t.sid) extra=`<div class="fs-sub">Interessent (noch kein Schüler) &nbsp;·&nbsp; ${esc(t.interessent_telefon||"– keine Nummer –")}</div>`;
-    if(key==="theorie_pruefung") extra=`<div class="fs-sub" style="margin-top:4px;">${t.theorie_bestanden==null?"Noch offen":(t.theorie_bestanden?'<span style="color:var(--akzent-bright);">✅ Bestanden</span>':'<span style="color:#c83c3c;">❌ Nicht bestanden</span>'+(t.theorie_gesperrt_bis?` · Sperre bis ${isoDE(t.theorie_gesperrt_bis)}`:''))}</div>
+    if(key==="theorie_pruefung") extra=`<div class="fs-sub" style="margin-top:4px;">${t.theorie_bestanden==null?"Noch offen":(t.theorie_bestanden?'<span style="color:var(--akzent-bright);">✅ Bestanden</span>':'<span style="color:var(--zahl-rot);">❌ Nicht bestanden</span>'+(t.theorie_gesperrt_bis?` · Sperre bis ${isoDE(t.theorie_gesperrt_bis)}`:''))}</div>
       <div class="fs-actions"><button class="fs-btn-activate" onclick="fsTheorieErgebnis(${_jsArg(t.id)},true)">Bestanden</button><button class="fs-btn-kill" onclick="fsTheorieErgebnis(${_jsArg(t.id)},false)">Nicht bestanden</button></div>`;
     if(key==="ersthilfe") extra=`<div class="toggle-row" style="margin-top:6px;"><div class="tc-name" style="font-size:13px;">Bezahlt</div><button class="check-toggle${t.kurs_bezahlt?' on':''}" onclick="fsKursBezahltToggle(${_jsArg(t.id)},${!t.kurs_bezahlt})"></button></div>`;
     return `<div class="fs-card">
@@ -7345,10 +7345,10 @@ async function _fsLadeSchichtplan(){
     const d=new Date(montag); d.setDate(d.getDate()+i);
     const dStr=_fsFmtDate(d);
     const eintraege=(data||[]).filter(s=>s.datum===dStr);
-    const statusFarbe={arbeitet:"#4a8b45",frei:"var(--muted)",krank:"#c83c3c"};
+    const statusFarbe={arbeitet:"#4a8b45",frei:"var(--muted)",krank:"var(--zahl-rot)"};
     html+=`<div class="fs-card">
       <div class="fs-name">${tage[(d.getDay()+6)%7]} · ${d.getDate()}.${d.getMonth()+1}.</div>
-      ${eintraege.map(e=>`<div class="fs-sub" style="color:${statusFarbe[e.status]||'var(--muted)'};">${esc(e.mitarbeiter_name)} — ${esc(e.status)}${e.notiz?` (${esc(e.notiz)})`:''} <span onclick="fsSchichtLoeschen(${_jsArg(e.id)})" style="cursor:pointer;color:#c83c3c;">✕</span></div>`).join("")||'<div class="fs-sub" style="opacity:.5;">Keine Einträge</div>'}
+      ${eintraege.map(e=>`<div class="fs-sub" style="color:${statusFarbe[e.status]||'var(--muted)'};">${esc(e.mitarbeiter_name)} — ${esc(e.status)}${e.notiz?` (${esc(e.notiz)})`:''} <span onclick="fsSchichtLoeschen(${_jsArg(e.id)})" style="cursor:pointer;color:var(--zahl-rot);">✕</span></div>`).join("")||'<div class="fs-sub" style="opacity:.5;">Keine Einträge</div>'}
       <div class="btn-row" style="margin-top:6px;"><button class="btn btn-ghost" style="padding:6px 12px;font-size:12px;" onclick="fsSchichtHinzufuegen(${_jsArg(dStr)})">+ Eintrag</button></div>
     </div>`;
   }
@@ -7450,7 +7450,7 @@ async function _fsInjectDetailExtras(sid){
     anmeldeBlock=`<div class="field" style="margin-top:8px;"><label style="font-size:11px;">Angemeldet seit</label>
       <p style="margin:2px 0 0;font-size:13.5px;">${erstellt.toLocaleDateString('de-DE')}</p></div>
       <div class="field" style="margin-top:6px;"><label style="font-size:11px;">Papiere laufen ab (1 Jahr nach Anmeldung)</label>
-      <p style="margin:2px 0 0;font-size:13.5px;${warnung?'color:#c83c3c;font-weight:700;':''}">${ablauf.toLocaleDateString('de-DE')}${warnung?(tageBisAblauf<0?' · ABGELAUFEN':` · noch ${tageBisAblauf} Tage`):''}</p></div>`;
+      <p style="margin:2px 0 0;font-size:13.5px;${warnung?'color:var(--zahl-rot);font-weight:700;':''}">${ablauf.toLocaleDateString('de-DE')}${warnung?(tageBisAblauf<0?' · ABGELAUFEN':` · noch ${tageBisAblauf} Tage`):''}</p></div>`;
   }
   const html=`<div id="fsDetailExtras" class="res-block" style="animation:none;">
     <h4>🏫 Fahrschule</h4>
@@ -7883,7 +7883,7 @@ const STORE_KEY="serband-app-v1";
    Wird in den Einstellungen angezeigt + für den Update-Hinweis genutzt. */
 // K1: voreingestellter Wetter-Ort (früh definiert, weil ensureDB ihn schon beim Start braucht)
 const WETTER_START={city:"Offenbach",lat:50.1006,lon:8.7665};
-const APP_VERSION="2026.11.24.4";
+const APP_VERSION="2026.11.24.5";
 try{const f=document.getElementById("drawerFoot"); if(f)f.textContent="Fahrlehrer-Kompass · Version "+APP_VERSION;}catch(e){}
 // Nutzungsbedingungen & Haftungsausschluss (Bereich: rechtliche Absicherung) - Version hochzählen
 // und alle Nutzer müssen erneut zustimmen, sobald sich der Text inhaltlich ändert.
@@ -8640,6 +8640,7 @@ function applyTheme(){
   const pref=localStorage.getItem(THEME_KEY)||'dark';
   const effective=pref==='auto'?(_isDaytimeNow()?'light':'dark'):pref;
   document.body.classList.toggle('light',effective==='light');
+  try{const tc=document.querySelector('meta[name="theme-color"]'); if(tc) tc.setAttribute('content',effective==='light'?'#f1f1f4':'#1b1f27');}catch(e){} // Browserleiste passend zum Design
   const ic=$("#themeIcon"); if(!ic)return;
   if(pref==='auto'){
     // Auto-Symbol: halb Sonne/halb Mond im Kreis
@@ -17213,7 +17214,7 @@ function routePrueferAkte(nm){
       <div class="pf-stat"><div class="ps-n">${st.quote.pct==null?'—':st.quote.pct+'%'}</div><div class="ps-l">bestanden</div></div>
       <div class="pf-stat"><div class="ps-n" style="font-size:18px;">${st.last?isoDE(st.last).slice(0,5):'—'}</div><div class="ps-l">zuletzt</div></div>
     </div>
-    ${exForPr.length?`<div style="text-align:center;margin:-4px 0 14px;font-size:13px;color:var(--muted);">Letzte ${Math.min(5,exForPr.length)}: ${exForPr.slice(0,5).reverse().map(e=>e.result==='pass'?'<span style="color:var(--akzent-bright);">✓</span>':'<span style="color:#c83c3c;">✕</span>').join(" ")}</div>`:''}
+    ${exForPr.length?`<div style="text-align:center;margin:-4px 0 14px;font-size:13px;color:var(--muted);">Letzte ${Math.min(5,exForPr.length)}: ${exForPr.slice(0,5).reverse().map(e=>e.result==='pass'?'<span style="color:var(--akzent-bright);">✓</span>':'<span style="color:var(--zahl-rot);">✕</span>').join(" ")}</div>`:''}
     <div class="seg pf-tabs" role="tablist">
       <button class="seg-i${_pfTab==='schueler'?' on':''}" data-pftab="schueler" role="tab" aria-selected="${_pfTab==='schueler'}">Schüler <span class="pf-tab-n">${bestanden+durch}</span></button>
       <button class="seg-i${_pfTab==='strecken'?' on':''}" data-pftab="strecken" role="tab" aria-selected="${_pfTab==='strecken'}">Strecken &amp; Notizen <span class="pf-tab-n">${mitNotiz.length}</span></button>
@@ -17595,7 +17596,7 @@ function bogenAlsBild(s,E,I,headline,who){
   const ctx=canvas.getContext("2d");
   const farbe=PROFILE[E.top].hex;
   const grad=ctx.createLinearGradient(0,0,0,h);
-  grad.addColorStop(0,"#0c1410"); grad.addColorStop(1,"#1c2820");
+  grad.addColorStop(0,"#1b1f27"); grad.addColorStop(1,"#2b323e");
   ctx.fillStyle=grad; ctx.fillRect(0,0,w,h);
   ctx.beginPath(); ctx.arc(w/2,340,140,0,Math.PI*2); ctx.fillStyle=farbe; ctx.fill();
   ctx.fillStyle="#fff"; ctx.font="900 110px sans-serif"; ctx.textAlign="center"; ctx.textBaseline="middle";

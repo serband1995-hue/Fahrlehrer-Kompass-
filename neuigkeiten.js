@@ -4,6 +4,10 @@
    "kurz" (höchstens ~60 Zeichen) erscheint nach dem Update einmal als kleiner Hinweis (verschwindet von selbst, kein Knopf).
    Einfache Worte, keine Fachwörter, keine Schülerdaten. */
 window.KOMPASS_NEU = [
+  { version: "2026.11.24.5", datum: "2026-11-24", kurz: "Die neuen ruhigen Farben jetzt auch auf den übrigen Seiten.",
+    punkte: ["Einladung, Theorie-Seite, Lernszenen und der Druck im Büro haben jetzt dieselben ruhigen Farben wie die App.",
+             "Einige kleine Zeichen sind besser lesbar, zum Beispiel die Ampel im Ausbildungsplan.",
+             "Im hellen Design ist auch die Leiste oben im Handy hell."] },
   { version: "2026.11.24.4", datum: "2026-11-24", kurz: "„Theorie bestanden“ kommt jetzt auch im Büro an.",
     punkte: ["Wenn du in der App „Theorie bestanden“ setzt, sieht das Büro das Häkchen mit dem Datum von heute.",
              "Zurücknehmen kannst du es am selben Tag. Danach ändert es nur noch das Büro.",
