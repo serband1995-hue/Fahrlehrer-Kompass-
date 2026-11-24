@@ -356,6 +356,8 @@ for (const R of ROLLEN) {
         if (!_fsAgg) f.push("nicht in der Gesamtansicht");
         if (KS_START.lesen(_authProfile) !== "gesamt") f.push("gemerkt: " + KS_START.lesen(_authProfile));
         if (/Zu meiner Fahrlehrer-Ansicht|Admin-Gesamtübersicht/.test(document.querySelector(".drawer-nav").textContent)) f.push("Umschalter im Menü der Gesamtansicht");
+        // Super-Admin: Admin-Panel auch in den Einstellungen der Gesamtansicht (ohne die Startseite umzustellen)
+        if (isSuperAdmin()) { routeSettings(); if (!view.querySelector('[onclick="openAdminPanel()"]')) f.push("Admin-Panel fehlt in den Einstellungen der Gesamtansicht"); }
         return f;
       }));
       await page.evaluate(() => openDrawer()); await warte(page, 350);
