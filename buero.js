@@ -396,7 +396,7 @@ function renderHeute() {
   const fcOffen = fcOffeneAbgaben();
   if (fcOffen.length) aufgaben.push(`<a class="aufgabe gelb" href="#fahrchecks?z=vor"><b>${fcOffen.length}</b> Fahrcheck-Abgabe${fcOffen.length === 1 ? "" : "n"} für ${esc(datumDE(fcOffen[0].von))}–${esc(datumDE(fcOffen[0].bis))} noch nicht bestätigt</a>`);
   const neuVerk = S.verkaeufe.filter((v) => v.status === "empfohlen").length;
-  if (neuVerk) aufgaben.push(`<a class="aufgabe" href="#verkaeufe"><b>${neuVerk}</b> neue Empfehlung${neuVerk === 1 ? "" : "en"} von Fahrlehrern (Akademie/Simulator): Zugang ausgeben, Zahlung eintragen</a>`);
+  if (neuVerk) aufgaben.push(`<a class="aufgabe" href="#verkaeufe"><b>${neuVerk}</b> neue Empfehlung${neuVerk === 1 ? "" : "en"} (Akademie/Simulator): Zugang ausgeben, Zahlung eintragen</a>`);
   const ungelesen = S.notizen.filter((n) => !n.erledigt_am && !S.gelesen.some((g) => g.notiz_id === n.id) && aktiveSchueler().some((x) => x.id === n.schueler_id));
   if (ungelesen.length) aufgaben.push(`<a class="aufgabe gelb" href="#schueler?notiz=ungelesen"><b>${ungelesen.length}</b> Notiz${ungelesen.length === 1 ? "" : "en"} an Fahrlehrer noch nicht gelesen</a>`);
   const beiGesperrten = aktiveSchueler().filter((x) => x.fahrlehrer_id && (S.lehrer.find((l) => l.id === x.fahrlehrer_id) || {}).aktiv === false).length;
@@ -785,6 +785,152 @@ async function speichereSchueler(id, werte, meldung) {
   zeichne();
   return true;
 }
+/* ---------- W14: Akte sicher speichern (Datenverlust, Hauptsitzung 24.11.2026) ----------
+   Ein Fenster zeigt den Stand beim Öffnen (basis). Früher gingen beim Speichern ALLE Felder mit diesem Stand zur Datenbank:
+   War das Fenster länger offen (oder beim PIN-Wechsel geparkt), überschrieb das Büro still, was Fahrlehrer-App oder ein
+   anderer PC inzwischen geändert hatten. Jetzt: nur die im Fenster geänderten Felder; direkt davor der frische Stand.
+   Hat jemand anderes DASSELBE Feld inzwischen geändert, bleibt sein neuer Stand und das Fenster zeigt den Unterschied
+   (Knopf „Meine Eingabe nehmen“). Geschrieben wird nur, solange das Feld noch so ist wie gerade gelesen. */
+function aktenWert(x, k) { return k === "sehhilfe" ? sehhilfeVon(x) : (x && x[k] !== undefined ? x[k] : null); }
+function akteNorm(k, v) {
+  if (k === "ausbildungsart") return artKey(v);
+  if (k === "reakt_status") return v || "pruefen";
+  if (k === "inaktiv_seit") return v ? "archiv" : null; // im Archiv ist im Archiv, egal seit wann
+  return v;
+}
+function akteGleich(a, b, k) { return gleicherWert(akteNorm(k, a), akteNorm(k, b), k); }
+// Felder, die nur zusammen gelten: ist eines woanders geändert, wird keines davon von hier geschrieben
+const AKTE_GRUPPEN = [["reakt_status", "reakt_bezahlt_bis", "reakt_notiz"]];
+// nurPruefen: Felder, die hier nur geprüft und nicht geschrieben werden (Fahrlehrerwechsel macht verschiebeSchueler)
+// Ergebnis: { ok, leer, konflikte: [{k, frisch, mein}], frei: {k: wert}, zeile } – ok=false: Meldung ist schon gezeigt
+async function speichereAkteSicher(id, basis, werte, nurPruefen) {
+  const pruefen = new Set(nurPruefen || []), geaendert = {};
+  for (const k of Object.keys(werte)) if (!akteGleich(werte[k], aktenWert(basis, k), k)) geaendert[k] = werte[k];
+  const erg = { ok: true, leer: !Object.keys(geaendert).length, konflikte: [], frei: {}, zeile: null };
+  if (erg.leer) return erg;
+  let vorher = null, ohneBedingung = false;
+  for (let versuch = 0; versuch < 4; versuch++) {
+    const f = await supa.from("schueler").select("*").eq("id", id).maybeSingle();
+    if (f.error || !f.data) { toast("Nicht gespeichert: " + (f.error ? dbFehlerText(f.error) : "Schüler nicht gefunden"), true); return { ok: false }; }
+    const frisch = f.data, senden = {}, konflikte = [], frei = {};
+    for (const [k, mein] of Object.entries(geaendert)) {
+      const jetzt = aktenWert(frisch, k);
+      if (akteGleich(jetzt, mein, k)) continue; // steht schon so da
+      if (!akteGleich(jetzt, aktenWert(basis, k), k)) { konflikte.push({ k, frisch: jetzt, mein }); continue; } // woanders geändert
+      if (pruefen.has(k)) frei[k] = mein; else senden[k] = mein;
+    }
+    // Zusammengehörende Felder (Prüf-Team W14): kein gemischter Stand aus zwei Quellen
+    const halte = (k) => { if (k in senden) { konflikte.push({ k, frisch: aktenWert(frisch, k), mein: senden[k] }); delete senden[k]; } };
+    for (const gruppe of AKTE_GRUPPEN) {
+      const woanders = gruppe.filter((k) => !akteGleich(aktenWert(frisch, k), aktenWert(basis, k), k));
+      if (!woanders.length || !gruppe.some((k) => k in senden || konflikte.some((c) => c.k === k))) continue;
+      gruppe.forEach(halte);
+      // auch zeigen, was woanders an der Gruppe geändert wurde (das Fenster zeigt danach den neuen Stand)
+      for (const k of woanders) if (k in werte && !konflikte.some((c) => c.k === k)) konflikte.push({ k, frisch: aktenWert(frisch, k), mein: werte[k], nurInfo: true });
+    }
+    const ab = "theorie_abgeschlossen_am" in senden ? senden.theorie_abgeschlossen_am : frisch.theorie_abgeschlossen_am;
+    const be = "theorie_bestanden_am" in senden ? senden.theorie_bestanden_am : frisch.theorie_bestanden_am;
+    if (ab && be && be < ab) { halte("theorie_bestanden_am"); halte("theorie_abgeschlossen_am"); } // Prüfung nicht vor dem Unterricht
+    if (!Object.keys(senden).length) return Object.assign(erg, { konflikte, frei, zeile: frisch });
+    // Kamen beim letzten Versuch 0 Zeilen zurück, obwohl sich die Felder nicht geändert haben, passt die Bedingung nicht
+    // (z. B. Schreibweise in der Datenbank): dann nur noch nach der Nummer schreiben, sonst bliebe die Akte unspeicherbar
+    if (vorher && Object.keys(senden).every((k) => JSON.stringify(vorher[k]) === JSON.stringify(frisch[k]))) ohneBedingung = true;
+    let q = supa.from("schueler").update(senden).eq("id", id);
+    if (!ohneBedingung) for (const k of Object.keys(senden)) {
+      const roh = frisch[k];
+      if (roh == null) q = q.is(k, null); else if (typeof roh !== "object") q = q.eq(k, roh); // Listen/jsonb: ohne Bedingung
+    }
+    const res = await q.select("*");
+    if (res.error) { toast("Nicht gespeichert: " + dbFehlerText(res.error), true); return { ok: false }; }
+    if (res.data && res.data.length) return Object.assign(erg, { konflikte, frei, zeile: res.data[0] });
+    if (ohneBedingung) break; // auch nur nach der Nummer nichts geschrieben: keine Berechtigung
+    vorher = frisch; // jemand war schneller (oder Bedingung passt nicht): frisch lesen und noch einmal prüfen
+  }
+  toast("Nicht gespeichert: keine Berechtigung für diesen Schüler", true);
+  return { ok: false };
+}
+const AKTE_FELD_NAMEN = { name: "Name", telefon: "Telefon", email: "E-Mail", paket_id: "Paket", buero_notiz: "Interne Notiz", fahrlehrer_id: "Fahrlehrer", inaktiv_seit: "Aktiv / Archiv" };
+function akteFeldName(k) { return AKTE_FELD_NAMEN[k] || FELD_NAMEN[k] || k; }
+function akteWertText(k, v) {
+  if (k === "inaktiv_seit") return v ? "im Archiv" : "aktiv";
+  if (k === "reakt_status") return { pruefen: "noch nicht geprüft", bezahlt: "bezahlt", befreit: "befreit" }[v || "pruefen"] || String(v);
+  if (v == null || v === "" || (Array.isArray(v) && !v.length)) return "leer";
+  if (k === "paket_id") return paketName(v) || "anderes Paket";
+  if (k === "fahrlehrer_id") return lehrerName(v);
+  if (k === "ausbildungsart") return artName(v);
+  if (k === "auslands_fs") return v.map((f) => [f.land, f.klasse].filter(Boolean).join(" ") || "Führerschein").join(", ");
+  if (typeof v === "boolean") return v ? "ja" : "nein";
+  if (Array.isArray(v)) return v.join(", ");
+  if (/^\d{4}-\d{2}-\d{2}$/.test(String(v))) return datumDE(v);
+  return String(v);
+}
+// Ein Feld im Fenster auf einen Wert setzen (Akte und Fristen-Fenster)
+function akteFeldSetzen(dlg, k, v) {
+  const f = dlg.querySelector("form"), feld = (n) => f.querySelector(`[name="${n}"]`);
+  const melde = (e) => { if (e) e.dispatchEvent(new Event("change", { bubbles: true })); };
+  if (k === "vorbesitz") { f.querySelectorAll("input[name=vorbesitz]").forEach((i) => { i.checked = Array.isArray(v) && v.includes(i.value); }); return; }
+  if (k === "uebersetzung_vorhanden") { const i = feld(k); if (i) i.checked = !!v; return; }
+  if (k === "auslands_fs") { const l = dlg.querySelector("#afsListe"); if (l) l.innerHTML = (Array.isArray(v) && v.length ? v : [{}]).map(afsZeileHTML).join(""); return; }
+  if (k === "inaktiv_seit") { const i = feld("aktiv"); if (i) { i.checked = !v; melde(i); } return; }
+  if (k === "b197_testfahrt_am") { const c = feld("testfahrt"), d = feld("testfahrt_am"); if (c) c.checked = !!v; if (d) d.value = v || ""; return; }
+  if (k === "reakt_status") { f.querySelectorAll("input[name=reakt_status]").forEach((r) => { r.checked = r.value === (v || "pruefen"); if (r.checked) melde(r); }); return; }
+  if (k === "sehhilfe") {
+    const s = feld(k); if (!s) return;
+    if (v == null && !s.querySelector('option[value=""]')) s.insertAdjacentHTML("afterbegin", '<option value="">noch nicht bekannt</option>');
+    s.value = v === true ? "ja" : v === false ? "nein" : ""; return;
+  }
+  if (k === "ausbildungsart") v = artKey(v);
+  const e = feld(k); if (!e) return;
+  if (e.tagName === "SELECT" && v != null && v !== "" && ![...e.options].some((o) => o.value === String(v))) e.insertAdjacentHTML("beforeend", `<option value="${esc(String(v))}">${esc(akteWertText(k, v))}</option>`);
+  e.value = v == null ? "" : String(v);
+  if (e.tagName === "SELECT") melde(e);
+}
+// Gelber Hinweis oben im Fenster: was woanders geändert wurde. Die Felder zeigen danach den neuen Stand.
+function akteKonfliktZeigen(dlg, konflikte) {
+  const alt = dlg.querySelector("[data-aktekonflikt]"); if (alt) alt.remove();
+  if (!konflikte.length) return;
+  konflikte.forEach((c) => akteFeldSetzen(dlg, c.k, c.frisch));
+  delete dlg.dataset.geaendert; // alles andere ist gespeichert: Schließen verliert nichts
+  const box = document.createElement("div");
+  box.className = "akte-konflikt voll"; box.dataset.aktekonflikt = ""; box.setAttribute("role", "alert");
+  box.innerHTML = `<b>Nicht alles gespeichert</b>
+    <p>Während das Fenster offen war, hat jemand anderes (Fahrlehrer-App oder anderer PC) ${konflikte.length === 1 ? "dieses Feld" : "diese Felder"} geändert. Gespeichert ist alles außer:</p>
+    <ul>${konflikte.map((c, i) => c.nurInfo ? `<li data-konfliktfeld="${esc(c.k)}"><span><b>${esc(akteFeldName(c.k))}:</b> jetzt „${esc(akteWertText(c.k, c.frisch))}“ (woanders geändert, gehört dazu)</span></li>`
+      : `<li data-konfliktfeld="${esc(c.k)}"><span><b>${esc(akteFeldName(c.k))}:</b> jetzt „${esc(akteWertText(c.k, c.frisch))}“ · <b>deine Eingabe „${esc(akteWertText(c.k, c.mein))}“</b> (nicht gespeichert)</span>
+      <button type="button" class="knopf klein" data-meinenehmen="${i}">Meine Eingabe nehmen</button></li>`).join("")}</ul>
+    <p class="klein">Passt der neue Wert, ist nichts mehr zu tun. Sonst „Meine Eingabe nehmen“ und dann „Speichern“.</p>`;
+  box.querySelectorAll("[data-meinenehmen]").forEach((b) => b.addEventListener("click", () => {
+    const c = konflikte[Number(b.dataset.meinenehmen)];
+    akteFeldSetzen(dlg, c.k, c.mein);
+    dlg.dataset.geaendert = "1";
+    b.closest("li").innerHTML = `<span><b>${esc(akteFeldName(c.k))}:</b> deine Eingabe steht wieder im Feld. Zum Übernehmen „Speichern“ tippen.</span>`;
+  }));
+  const inhalt = dlg.querySelector(".dialog-inhalt");
+  inhalt.prepend(box);
+  inhalt.scrollTop = 0;
+}
+// Konflikt, Fenster bleibt offen: Felder, die hier niemand angefasst hat, auf den neuen Stand bringen. Sonst gälte ein
+// alter Wert im Feld beim nächsten Speichern als „geändert“ und überschriebe den neuen (Prüfer Büro, W14).
+const AKTE_FELDER = ["name", "telefon", "email", "paket_id", "ausbildungsart", "klasse", "vertrag_am", "buero_notiz", "bewerbernummer", "theorie_frist_bis",
+  "sehhilfe", "vorbesitz", "auslands_fs", "wohnsitz_de_seit", "uebersetzung_vorhanden", "b197_testfahrt_am", "inaktiv_seit", "fahrlehrer_id"];
+function akteFensterAuffrischen(dlg, altBasis, werte, zeile, konflikte, felder) {
+  if (!zeile) return;
+  const kk = new Set(konflikte.map((c) => c.k));
+  for (const k of felder) {
+    if (kk.has(k)) continue; // zeigt akteKonfliktZeigen
+    const vorher = aktenWert(altBasis, k), jetzt = aktenWert(zeile, k);
+    if (akteGleich(vorher, jetzt, k)) continue; // nichts Neues
+    if (k in werte && !akteGleich(werte[k], vorher, k)) continue; // hier geändert (und gespeichert oder schon so da)
+    akteFeldSetzen(dlg, k, jetzt);
+  }
+}
+// Nach dem Speichern: Stand im Speicher der Seite und im Fenster (basis) auf den Server-Stand bringen
+function akteNachziehen(id, basis, zeile) {
+  if (!zeile) return;
+  const s = S.schueler.find((y) => y.id === id);
+  if (s) Object.assign(s, zeile);
+  if (basis && basis !== s) Object.assign(basis, zeile);
+}
 async function zahlungErhalten(id, nachher) {
   const s = S.schueler.find((x) => x.id === id);
   if (!s) return;
@@ -823,6 +969,7 @@ async function nichtBezahlt(id) {
 function fristenDialog(id) {
   const s = S.schueler.find((x) => x.id === id);
   if (!s) return;
+  const basisS = JSON.parse(JSON.stringify(s)); // W14 (Fable B1): Vergleichsstand vom Öffnen, unabhängig von S.schueler
   const r = KR.reaktInfo(s);
   const body = `
     <div class="formular">
@@ -849,7 +996,7 @@ function fristenDialog(id) {
       ausbildungsart: d.ausbildungsart || "ersterwerb",
       klasse: d.klasse || null,
       reakt_status: d.reakt_status || "pruefen",
-      reakt_bezahlt_bis: d.reakt_status === "bezahlt" ? (d.reakt_bezahlt_bis || null) : (s.reakt_bezahlt_bis || null),
+      reakt_bezahlt_bis: d.reakt_status === "bezahlt" ? (d.reakt_bezahlt_bis || null) : (basisS.reakt_bezahlt_bis || null),
       reakt_notiz: (d.reakt_notiz || "").trim() || null,
       theorie_abgeschlossen_am: d.theorie_abgeschlossen_am || null,
       theorie_bestanden_am: d.theorie_bestanden_am || null,
@@ -861,7 +1008,15 @@ function fristenDialog(id) {
     if (werte.theorie_bestanden_am && werte.theorie_abgeschlossen_am && werte.theorie_bestanden_am < werte.theorie_abgeschlossen_am) {
       toast("Die Theorieprüfung kann nicht vor dem Abschluss des Unterrichts liegen.", true); return false;
     }
-    return speichereSchueler(id, werte);
+    // W14: nur Geändertes, nichts überschreiben, was App (z. B. Theorie bestanden) oder anderer PC inzwischen geändert haben
+    const erg = await speichereAkteSicher(id, basisS, werte);
+    if (!erg.ok) return false;
+    const altBasis = Object.assign({}, basisS);
+    akteNachziehen(id, basisS, erg.zeile);
+    zeichne();
+    if (erg.konflikte.length) { akteFensterAuffrischen(fdlg, altBasis, werte, erg.zeile, erg.konflikte, Object.keys(werte)); akteKonfliktZeigen(fdlg, erg.konflikte); return false; } // der gelbe Kasten im Fenster erklärt alles
+    toast(erg.leer ? "Nichts geändert" : "Gespeichert");
+    return true;
   });
   fdlg.querySelector("#antragHeute").addEventListener("click", () => { fdlg.querySelector("input[name=antrag_am]").value = KR.todayISO(); });
   const faellig = fdlg.querySelector("input[name=reakt_bezahlt_bis]");
@@ -1137,7 +1292,9 @@ function lehrerOptionen(gewaehlt, mitAuslastung, klasse) {
   if (mitAuslastung) { const rang = auslastungListe().map((x) => x.l.id); l2 = l2.slice().sort((a, b) => (rang.indexOf(a.id) + 1 || 999) - (rang.indexOf(b.id) + 1 || 999)); }
   // Wer die Klasse unterrichtet, steht oben; wer sie sicher nicht unterrichtet, unten mit Hinweis
   if (klasse) l2 = l2.slice().sort((a, b) => (lehrtKlasse(a, klasse) === false) - (lehrtKlasse(b, klasse) === false));
-  return `<option value="">– kein Fahrlehrer –</option>` + l2.map((l) => `<option value="${esc(l.id)}"${l.id === gewaehlt ? " selected" : ""}>${esc(l.name || l.email)}${mitAuslastung ? esc(auslastungKurz(l.id)) : ""}${klasse && lehrtKlasse(l, klasse) === false ? ` (nicht ${esc(klasse)})` : ""}</option>`).join("");
+  // Der bisherige Fahrlehrer fehlt in der Liste (z. B. Leitung, die nicht mehr fährt): trotzdem zeigen, sonst wechselte Speichern still auf „kein Fahrlehrer“
+  const fehlt = gewaehlt && !l2.some((l) => l.id === gewaehlt) ? `<option value="${esc(gewaehlt)}" selected>${esc(lehrerName(gewaehlt))}</option>` : "";
+  return `<option value="">– kein Fahrlehrer –</option>` + fehlt + l2.map((l) => `<option value="${esc(l.id)}"${l.id === gewaehlt ? " selected" : ""}>${esc(l.name || l.email)}${mitAuslastung ? esc(auslastungKurz(l.id)) : ""}${klasse && lehrtKlasse(l, klasse) === false ? ` (nicht ${esc(klasse)})` : ""}</option>`).join("");
 }
 function pruefungDialog(id) {
   const p = id ? S.pruefungstermine.find((x) => x.id === id) : { art: "praxis", datum: KR.addDaysISO(KR.todayISO(), 7), status: "geplant" };
@@ -2128,12 +2285,15 @@ function bindeAkademieZugang(dlg, x) {
 function schuelerDialog(id) {
   const x = id ? S.schueler.find((y) => y.id === id) : { ausbildungsart: "ersterwerb", klasse: "B", vertrag_am: KR.todayISO() };
   if (!x) return;
+  // W14 (Fable B1): Vergleichsstand ist eine KOPIE vom Öffnen. Das Objekt in S.schueler ändern auch andere Knöpfe im Fenster
+  // (z. B. „Zahlung ausstehend“ kopiert die ganze frische Zeile hinein) – dann gälte ein alter Wert im Feld als „von mir geändert“.
+  const basisX = id ? JSON.parse(JSON.stringify(x)) : x;
   const body = `${ausgeblendetAm(x) ? `<p class="hinweis-ausgeblendet" id="ausgeblendetHinweis">Vom Fahrlehrer ausgeblendet am ${esc(datumDE(ausgeblendetAm(x).slice(0, 10)))}. Im Büro bleibt der Schüler ganz normal.</p>` : ""}<div class="formular">
       <label class="voll">Name<input type="text" name="name" required maxlength="100" value="${esc(x.name || "")}"></label>
       <label>Telefon (Login für die Fahr-Akademie)<input type="tel" name="telefon" maxlength="40" value="${esc(x.telefon || "")}"></label>
       <label>E-Mail<input type="email" name="email" maxlength="200" value="${esc(x.email || "")}"></label>
       <label>Fahrlehrer (passende Klasse und viel Platz zuerst)<select name="fahrlehrer_id">${lehrerOptionen(x.fahrlehrer_id, true, klasseVon(x) || "B")}</select></label>
-      <label>Paket<select name="paket_id"><option value="">– ohne Paket –</option>${S.pakete.map((p) => `<option value="${esc(p.id)}"${p.id === x.paket_id ? " selected" : ""}>${esc(p.name)}</option>`).join("")}</select></label>
+      <label>Paket<select name="paket_id"><option value="">– ohne Paket –</option>${S.pakete.map((p) => `<option value="${esc(p.id)}"${p.id === x.paket_id ? " selected" : ""}>${esc(p.name)}</option>`).join("")}${x.paket_id && !S.pakete.some((p) => p.id === x.paket_id) ? `<option value="${esc(x.paket_id)}" selected>(Paket nicht mehr in der Liste)</option>` : ""}</select></label>
       <label>Ausbildungsart<select name="ausbildungsart">${artOptionen(x.ausbildungsart)}</select></label>
       <label>Klasse<select name="klasse">${klassenOptionen(x.klasse)}</select></label>
       <label>Vertrag abgeschlossen am<input type="date" name="vertrag_am" value="${esc(x.vertrag_am || "")}"></label>
@@ -2171,10 +2331,7 @@ function schuelerDialog(id) {
       buero_notiz: (d.buero_notiz || "").trim() || null,
     };
     Object.assign(werte, behoerdeWerte(form, dlg, d));
-    // Nur geänderte Behörde-Felder senden: sonst überschriebe ein länger offenes Fenster neuere Eingaben des Fahrlehrers
-    if (id) for (const k of ["bewerbernummer", "sehhilfe", "vorbesitz", "auslands_fs", "wohnsitz_de_seit", "uebersetzung_vorhanden"]) {
-      if ((k in werte) && gleicherWert(werte[k], k === "sehhilfe" ? sehhilfeVon(x) : x[k], k)) delete werte[k];
-    }
+    // Bestehende Akte: gesendet wird nur, was im Fenster geändert wurde (speichereAkteSicher, W14)
     const ohneLand = [...dlg.querySelectorAll(".afs-zeile")].find((z) => [...z.querySelectorAll("[data-afs]")].some((i) => i.value.trim()) && !z.querySelector('[data-afs="land"]').value.trim());
     if (ohneLand && !dlg.querySelector("#umschreiberFeld").hidden) {
       const feld = ohneLand.querySelector('[data-afs="land"]');
@@ -2184,8 +2341,8 @@ function schuelerDialog(id) {
     }
     const neuerLehrer = d.fahrlehrer_id || null;
     // B197-Testfahrt: Haken setzen = Datum (heute, wenn leer); Haken weg oder andere Klasse = leer
-    werte.b197_testfahrt_am = werte.klasse === "B197" && d.testfahrt ? (d.testfahrt_am || x.b197_testfahrt_am || KR.todayISO()) : null;
-    if (id) werte.inaktiv_seit = d.aktiv ? null : (x.inaktiv_seit || KR.todayISO());
+    werte.b197_testfahrt_am = werte.klasse === "B197" && d.testfahrt ? (d.testfahrt_am || basisX.b197_testfahrt_am || KR.todayISO()) : null;
+    if (id) werte.inaktiv_seit = d.aktiv ? null : (basisX.inaktiv_seit || KR.todayISO());
     if (!id) {
       const neueId = neueSchuelerId();
       const zeile = Object.assign({ id: neueId, fahrschule_id: S.fsId, fahrlehrer_id: neuerLehrer, status: "aktiv", erstellt_von: S.user.id,
@@ -2199,12 +2356,27 @@ function schuelerDialog(id) {
     }
     // Umschreiber: die Fahrlehrer-App liest die Spalte ausbildungsart selbst (nicht ins jsonb schreiben,
     // sonst überschreibt der nächste Abgleich des Fahrlehrers den Wert)
-    const wirdArchiviert = istAktiv(x) && !!werte.inaktiv_seit;
+    const wirdArchiviert = istAktiv(basisX) && !!werte.inaktiv_seit;
     let absagen = [];
     if (wirdArchiviert) { absagen = await frageKuenftigeTermine(x); if (absagen === null) return false; } // Abbrechen: Fenster bleibt offen
-    if (!(await speichereSchueler(id, werte, wirdArchiviert ? `${name} liegt jetzt im Archiv.` : "Gespeichert"))) return false;
-    if ((x.fahrlehrer_id || null) !== neuerLehrer) await verschiebeSchueler(x, neuerLehrer);
-    if (absagen.length) await sageTermineAb(absagen, `${name} liegt im Archiv, ${absagen.length === 1 ? "1 Termin" : absagen.length + " Termine"} abgesagt`);
+    // W14: nur Geändertes senden; was App oder anderer PC inzwischen am selben Feld geändert haben, bleibt stehen.
+    // Den Fahrlehrer wechselt verschiebeSchueler (Termine, Übergabe-Eintrag), aber nur, wenn ihn niemand inzwischen verschoben hat.
+    const basisLehrer = basisX.fahrlehrer_id || null;
+    const werteAlle = Object.assign({}, werte, { fahrlehrer_id: neuerLehrer });
+    const erg = await speichereAkteSicher(id, basisX, werteAlle, ["fahrlehrer_id"]);
+    if (!erg.ok) return false;
+    const altBasis = Object.assign({}, basisX);
+    akteNachziehen(id, basisX, erg.zeile);
+    const archiviert = wirdArchiviert && !erg.konflikte.some((c) => c.k === "inaktiv_seit");
+    if (!erg.konflikte.length) toast(erg.leer ? "Nichts geändert" : archiviert ? `${name} liegt jetzt im Archiv.` : "Gespeichert"); // bei Konflikt erklärt der Kasten
+    zeichne();
+    if ("fahrlehrer_id" in erg.frei) await verschiebeSchueler(Object.assign({}, basisX, { fahrlehrer_id: basisLehrer }), neuerLehrer);
+    if (absagen.length && archiviert) await sageTermineAb(absagen, `${name} liegt im Archiv, ${absagen.length === 1 ? "1 Termin" : absagen.length + " Termine"} abgesagt`);
+    if (erg.konflikte.length) {
+      akteFensterAuffrischen(dlg, altBasis, werteAlle, erg.zeile, erg.konflikte, AKTE_FELDER);
+      akteKonfliktZeigen(dlg, erg.konflikte); // der gelbe Kasten im Fenster erklärt alles
+      return false; // Fenster bleibt offen und zeigt den Unterschied
+    }
     return true;
   });
   if (id) bindeZahlBlock(dlg, id);
@@ -2977,13 +3149,17 @@ function vkVorschlag(typ) {
   const b = typ === "simulator" ? c.betragSimulator : c.betragAkademie;
   return b != null && b !== "" ? Number(b) : (typ === "akademie" ? 100 : 149); // Akademie 100 € (Serband 08.10.2026), Simulator-Flat 149 € (Webseite)
 }
+// Werkstatt 12: Ein Verkauf durch das Büro (oder ein alter Eintrag ohne Fahrlehrer) zählt nie als Provision für eine Person.
+// Die Datenbank verlangt eine Fahrlehrer-ID; darum steht dort die ID des Büro-Nutzers und aufteilung.keine_provision = true.
+function istKeineProvision(e) { return !!e && (!e.fahrlehrer_id || !!(e.aufteilung && e.aufteilung.keine_provision === true)); }
+function vkLehrerId(e) { return istKeineProvision(e) ? null : e.fahrlehrer_id; }
 function monatVon(iso) { return String(iso || "").slice(0, 7); }
 function renderVerkaeufe() {
   const monat = /^\d{4}-\d\d$/.test(fristenParam("monat")) ? fristenParam("monat") : KR.todayISO().slice(0, 7);
   const lehrerF = fristenParam("lehrer");
   const statusF = fristenParam("status");
   let liste = S.verkaeufe.filter((v) => monatVon(v.erstellt_am) === monat || (v.status === "bezahlt" && monatVon(v.aktualisiert_am) === monat) || (v.status !== "bezahlt" && v.status !== "storniert"));
-  if (lehrerF) liste = liste.filter((v) => v.fahrlehrer_id === lehrerF);
+  if (lehrerF) liste = liste.filter((v) => vkLehrerId(v) === lehrerF);
   if (statusF) liste = liste.filter((v) => v.status === statusF);
   const bezahltMonat = S.verkaeufe.filter((v) => v.status === "bezahlt" && monatVon(v.aktualisiert_am || v.erstellt_am) === monat);
   const umsatz = bezahltMonat.reduce((a, v) => a + Number(v.betrag || 0), 0);
@@ -3000,7 +3176,7 @@ function renderVerkaeufe() {
     if (v.status === "storniert") knoepfe.push(`<button class="knopf klein" data-vwieder="${esc(v.id)}" type="button">Wieder öffnen</button>`);
     if (v.status !== "storniert") knoepfe.push(`<button class="knopf klein" data-vstorno="${esc(v.id)}" type="button">${v.status === "bezahlt" ? "Zurücknehmen" : "Stornieren"}</button>`);
     return `<tr>
-      <td><b>${esc(v.schueler_name || schuelerName(v.schueler_id))}</b><div class="unter">${esc(datumDE(String(v.erstellt_am).slice(0, 10)))} · ${v.fahrlehrer_id ? "von " + esc(v.fahrlehrer_name || lehrerName(v.fahrlehrer_id)) : "Büro"}</div></td>
+      <td><b>${esc(v.schueler_name || schuelerName(v.schueler_id))}</b><div class="unter">${esc(datumDE(String(v.erstellt_am).slice(0, 10)))} · ${istKeineProvision(v) ? "Büro (keine Provision)" : "von " + esc(v.fahrlehrer_name || lehrerName(v.fahrlehrer_id))}</div></td>
       <td><span class="marke-pill ${v.typ === "simulator" ? "blau" : "gruen"}">${esc(V_TYP[v.typ] || v.typ)}</span></td>
       <td><span class="marke-pill ${sf}">${esc(st)}</span></td>
       <td class="zahlspalte">${v.betrag != null ? euro(v.betrag) : "–"}</td>
@@ -3030,7 +3206,7 @@ function renderVerkaeufe() {
         ${sel("vLehrer", `<option value="">Alle Fahrlehrer</option>` + S.lehrer.map((l) => `<option value="${esc(l.id)}"${l.id === lehrerF ? " selected" : ""}>${esc(l.name || l.email)}</option>`).join(""))}
         ${sel("vStatus", `<option value="">Alle Stände</option>` + Object.entries(V_STATUS).map(([k, [, n]]) => `<option value="${k}"${k === statusF ? " selected" : ""}>${n}</option>`).join(""))}
       </div><button class="knopf haupt" id="vNeu" type="button">+ Verkauf erfassen</button></div>
-      <p class="leise klein">Fahrlehrer empfehlen in ihrer App („Akademie empfehlen“, „Simulator empfehlen“). Hier sieht das Büro, von wem es kam, gibt den Zugang aus und trägt die Zahlung ein. Bei „bezahlt“ wird die Provision des Fahrlehrers automatisch gebucht.</p>
+      <p class="leise klein">Fahrlehrer empfehlen in ihrer App („Akademie empfehlen“, „Simulator empfehlen“). Hier sieht das Büro, von wem es kam, gibt den Zugang aus und trägt die Zahlung ein. Bei „bezahlt“ wird die Provision des Fahrlehrers automatisch gebucht. Verkäufe durch das Büro bringen keine Provision.</p>
       ${liste.length ? `<table class="tabelle"><thead><tr><th>Schüler</th><th>Was</th><th>Stand</th><th class="zahlspalte">Betrag</th><th class="zahlspalte nur-breit">Provision</th><th></th></tr></thead><tbody>${zeilen}</tbody></table>` : `<p class="leer">Keine Verkäufe in dieser Auswahl.</p>`}
       <p class="leise klein">${esc(splitText)}</p>
     </div>
@@ -3062,13 +3238,14 @@ function verkaufBezahltDialog(id) {
   const v = S.verkaeufe.find((x) => x.id === id);
   if (!v) return;
   const split = vkKonfig().splitKollege;
-  const body = `<p>${esc(V_TYP[v.typ] || v.typ)} für <b>${esc(v.schueler_name || schuelerName(v.schueler_id))}</b>${v.fahrlehrer_id ? ", vermittelt von " + esc(v.fahrlehrer_name || lehrerName(v.fahrlehrer_id)) : ""}.</p>
+  const body = `<p>${esc(V_TYP[v.typ] || v.typ)} für <b>${esc(v.schueler_name || schuelerName(v.schueler_id))}</b>${istKeineProvision(v) ? "" : ", vermittelt von " + esc(v.fahrlehrer_name || lehrerName(v.fahrlehrer_id))}.</p>
     <div class="formular"><label>Bezahlter Betrag (€)<input type="number" name="betrag" min="0" step="1" value="${vkVorschlag(v.typ)}" required></label></div>
     <div id="vSplit" class="split"></div>`;
   const dlg = oeffneDialog("Zahlung eintragen", body, async (form) => {
     const betrag = Number(form.betrag.value);
     if (!(betrag >= 0) || form.betrag.value === "") { toast("Bitte den Betrag eintragen.", true); return false; }
-    const auf = v.fahrlehrer_id ? KR.aufteilung(betrag, split) : null;
+    const keine = istKeineProvision(v);
+    const auf = keine ? { keine_provision: true } : KR.aufteilung(betrag, split);
     const neu = await verkaufStatus(id, { status: "bezahlt", betrag, aufteilung: auf });
     if (!neu) return false;
     // Je bezahltem Verkauf mit Provision genau eine nicht stornierte Provision (B1). Die Tabelle provisionen kennt den
@@ -3092,14 +3269,14 @@ function verkaufBezahltDialog(id) {
     }
     if (v.typ === "simulator" && v.schueler_id) await supa.from("schueler").update({ hat_simulator: true }).eq("id", v.schueler_id);
     if (!fehler) toast(gebucht ? `Bezahlt. Provision ${euro(auf.fahrlehrer)} für ${lehrerName(v.fahrlehrer_id)} gebucht.`
-      : (v.fahrlehrer_id && auf && auf.fahrlehrer > 0 ? "Bezahlt eingetragen. Die Provision dafür ist schon gebucht." : "Bezahlt eingetragen"));
+      : (!istKeineProvision(v) && auf && auf.fahrlehrer > 0 ? "Bezahlt eingetragen. Die Provision dafür ist schon gebucht." : "Bezahlt eingetragen"));
     zeichne();
     return true;
   }, "Bezahlt speichern");
   const feld = dlg.querySelector("input[name=betrag]");
   const zeig = () => {
     const box = dlg.querySelector("#vSplit");
-    if (!v.fahrlehrer_id) { box.innerHTML = `<p class="leise klein">Direktverkauf durch das Büro: keine Provision.</p>`; return; }
+    if (istKeineProvision(v)) { box.innerHTML = `<p class="leise klein">Direktverkauf durch das Büro: keine Provision.</p>`; return; }
     const a = KR.aufteilung(Number(feld.value || 0), split);
     box.innerHTML = a ? `<table class="tabelle"><tbody>
         <tr><td>${esc(v.fahrlehrer_name || lehrerName(v.fahrlehrer_id))} (Provision)</td><td class="zahlspalte"><b>${euro(a.fahrlehrer)}</b></td></tr>
@@ -3115,7 +3292,7 @@ async function verkaufStorno(id) {
   if (!v) return;
   const war = v.status === "bezahlt";
   if (!(await bestaetige(war ? "Zahlung zurücknehmen?" : "Empfehlung stornieren?", war ? "Betrag und Aufteilung werden zurückgesetzt. Eine schon gebuchte Provision bitte bei „Offene Provisionen“ prüfen." : "Die Empfehlung wird als storniert markiert.", "Ja"))) return;
-  const neu = await verkaufStatus(id, { status: "storniert", betrag: null, aufteilung: null }, war ? "Zurückgenommen" : "Storniert");
+  const neu = await verkaufStatus(id, { status: "storniert", betrag: null, aufteilung: istKeineProvision(v) ? { keine_provision: true } : null }, war ? "Zurückgenommen" : "Storniert");
   if (!neu) return;
   // Nur eine bezahlte Zahlung hat eine Provision. Davon fällt genau EINE noch nicht ausgezahlte weg (bei zwei
   // Verkäufen gleicher Art bleibt die andere stehen); ist keine mehr offen, aber schon ausgezahlt, wird das gemeldet.
@@ -3158,9 +3335,16 @@ function verkaufNeuDialog() {
     if (!d.schueler_id) { toast("Bitte einen Schüler wählen.", true); return false; }
     const doppelt = S.verkaeufe.find((v) => v.schueler_id === d.schueler_id && v.typ === d.typ && v.status !== "storniert");
     if (doppelt && !(await bestaetige("Schon vorhanden", `Für diesen Schüler gibt es schon einen Eintrag (${(V_STATUS[doppelt.status] || ["", doppelt.status])[1]}). Trotzdem neu anlegen?`, "Ja"))) return false;
+    // „Büro (keine Provision)“: die Datenbank verlangt eine Fahrlehrer-ID (NOT NULL). Darum die eigene ID des angemeldeten
+    // Büro-Nutzers und sein Profilname; das Kennzeichen in aufteilung sorgt dafür, dass nie eine Provision daraus wird.
+    const keine = !d.fahrlehrer_id;
+    const eigenId = S.user && S.user.id;
+    if (keine && !eigenId) { toast("Nicht angemeldet. Bitte neu anmelden.", true); return false; }
     const res = await supa.from("fahrschule_empfehlungen").insert({
       fahrschule_id: S.fsId, schueler_id: d.schueler_id, schueler_name: schuelerName(d.schueler_id), typ: d.typ, status: "empfohlen",
-      fahrlehrer_id: d.fahrlehrer_id || null, fahrlehrer_name: d.fahrlehrer_id ? lehrerName(d.fahrlehrer_id) : null,
+      fahrlehrer_id: keine ? eigenId : d.fahrlehrer_id,
+      fahrlehrer_name: keine ? ((S.profil && S.profil.name) || (S.user && S.user.email) || "Büro") : lehrerName(d.fahrlehrer_id),
+      ...(keine ? { aufteilung: { keine_provision: true } } : {}),
     }).select("*");
     if (res.error || !res.data || !res.data.length) { toast("Nicht gespeichert: " + (res.error ? dbFehlerText(res.error) : "keine Berechtigung"), true); return false; }
     S.verkaeufe.unshift(res.data[0]);

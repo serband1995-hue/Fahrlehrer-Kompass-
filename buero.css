@@ -819,3 +819,12 @@ body.kiosk .rollen-streifen{display:none;}
 /* Haken hell: kräftigeres Grün, weiße Schrift mindestens 4,5:1 */
 .haken.gruen.an{background:#2c7a4f;border-color:#2c7a4f;}
 @media (prefers-color-scheme:dark){ .haken.gruen.an{background:var(--gruen);border-color:var(--gruen);} }
+/* W14: Akte – inzwischen woanders geändert (gelber Hinweis oben im Fenster) */
+.akte-konflikt{grid-column:1/-1;margin:0 0 14px;padding:12px 14px;border-radius:10px;background:var(--gelb-soft);border:1px solid var(--gelb);color:var(--txt);}
+.akte-konflikt>b{color:var(--pill-gelb, #7a5410);}
+.akte-konflikt p{margin:4px 0 8px;}
+.akte-konflikt ul{margin:0;padding:0;list-style:none;display:grid;gap:8px;}
+.akte-konflikt li{display:flex;flex-wrap:wrap;align-items:center;gap:8px 12px;justify-content:space-between;}
+.akte-konflikt li span{overflow-wrap:anywhere;}
+.akte-konflikt .knopf{min-height:44px;}
+.akte-konflikt p.klein{margin:8px 0 0;}
