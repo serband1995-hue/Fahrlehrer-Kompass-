@@ -472,6 +472,69 @@ try {
       k.length === 2 && k.every((x) => x.input <= 30 && x.text >= 120 && x.hoehe <= 200), JSON.stringify(k));
     await f.ctx.close();
   }
+  // Z12 W14 Eltern-Mail: Feld in der Akte, Wahl je Schüler, Empfänger nur vom Server, Test nur an die Test-Adresse
+  {
+    const extra = `F.tabellen.schueler.find((x) => x.id === "s3").email = "schueler@example.org"; F.tabellen.schueler_eltern = [];`;
+    const e = await oeffne({ nutzer: "ad-1", vorbereiten: vor({ modus: "echt", extra }) });
+    const pg = e.page;
+    await oeffneAkte(pg, "s3");
+    let dlg = pg.locator("dialog[open]").last();
+    pruefe("Z12a Akte: Feld „E-Mail Eltern“ da, Wahl erst mit Adresse sichtbar", (await dlg.locator("input[name=eltern_email]").count()) === 1 && !(await dlg.locator("#elternWahl").isVisible()));
+    await dlg.locator("input[name=eltern_email]").fill("Eltern@Example.org");
+    pruefe("Z12b nach Eingabe: Wahl sichtbar, Vorgabe „Schüler und Eltern“", (await dlg.locator("#elternWahl").isVisible()) && (await dlg.locator("input[name=zahlungsmail_an][value=beide]").isChecked()));
+    await dlg.locator("button[value=ok]").click(); await pg.waitForTimeout(400);
+    let zeile = await pg.evaluate(() => JSON.parse(JSON.stringify((window.__FAKE.tabellen.schueler_eltern || []).find((x) => x.schueler_id === "s3") || null)));
+    pruefe("Z12c gespeichert in schueler_eltern (klein geschrieben, beide)", !!zeile && zeile.email === "eltern@example.org" && zeile.mail_an === "beide", JSON.stringify(zeile));
+    await oeffneAkte(pg, "s3"); dlg = pg.locator("dialog[open]").last();
+    pruefe("Z12d Echt-Zeile nennt beide", (await dlg.locator("[data-zmecht]").innerText()) === "Echt: Mail geht an Schüler (schueler@example.org) und Eltern (eltern@example.org)", await dlg.locator("[data-zmecht]").innerText());
+    await dlg.locator("[data-zmoeffne]").click();
+    pruefe("Z12e Knopf „Mail an Schüler und Eltern senden“", (await dlg.locator("[data-zmsenden]").innerText()) === "Mail an Schüler und Eltern senden");
+    await dlg.locator("[data-zmbetrag]").fill("120");
+    await dlg.locator("[data-zmsenden]").click(); await pg.waitForTimeout(1300);
+    let an = await pg.evaluate(() => window.__FAKE.letzteEmpfaenger);
+    pruefe("Z12f Versand an Schüler und Eltern", JSON.stringify(an) === JSON.stringify(["schueler@example.org", "eltern@example.org"]), JSON.stringify(an));
+    await schliesseAlle(pg);
+    await oeffneAkte(pg, "s3"); dlg = pg.locator("dialog[open]").last();
+    await dlg.locator("input[name=zahlungsmail_an][value=eltern]").check();
+    await dlg.locator("button[value=ok]").click(); await pg.waitForTimeout(400);
+    await oeffneAkte(pg, "s3"); dlg = pg.locator("dialog[open]").last();
+    pruefe("Z12g „nur Eltern“: Echt-Zeile nennt nur die Eltern", (await dlg.locator("[data-zmecht]").innerText()) === "Echt: Mail geht an Eltern (eltern@example.org)", await dlg.locator("[data-zmecht]").innerText());
+    await dlg.locator("[data-zmoeffne]").click(); await dlg.locator("[data-zmbetrag]").fill("120");
+    await dlg.locator("[data-zmsenden]").click(); await pg.waitForTimeout(1300);
+    an = await pg.evaluate(() => window.__FAKE.letzteEmpfaenger);
+    pruefe("Z12h Versand nur an die Eltern", JSON.stringify(an) === JSON.stringify(["eltern@example.org"]), JSON.stringify(an));
+    await schliesseAlle(pg);
+    // Test-Modus: egal was gewählt ist, nur die Test-Adresse
+    await pg.evaluate(async () => { const z = window.__FAKE.tabellen.fahrschule_zahlungsdaten[0]; z.modus = "test"; z.geaendert_am = new Date().toISOString(); await ladeDaten(); });
+    await oeffneAkte(pg, "s3"); dlg = pg.locator("dialog[open]").last();
+    await dlg.locator("[data-zmoeffne]").click(); await dlg.locator("[data-zmbetrag]").fill("120");
+    await dlg.locator("[data-zmsenden]").click(); await pg.waitForTimeout(1300);
+    an = await pg.evaluate(() => window.__FAKE.letzteEmpfaenger);
+    pruefe("Z12i Test-Modus: nur an die Test-Adresse", JSON.stringify(an) === JSON.stringify(["test@example.org"]), JSON.stringify(an));
+    await schliesseAlle(pg);
+    // Konflikt: anderer PC ändert die Eltern-Adresse, während die Akte offen ist
+    await oeffneAkte(pg, "s3"); dlg = pg.locator("dialog[open]").last();
+    await pg.evaluate(() => { window.__FAKE.tabellen.schueler_eltern.find((x) => x.schueler_id === "s3").email = "anderer@example.org"; });
+    await dlg.locator("input[name=eltern_email]").fill("meine@example.org");
+    await dlg.locator("button[value=ok]").click(); await pg.waitForTimeout(400);
+    zeile = await pg.evaluate(() => JSON.parse(JSON.stringify(window.__FAKE.tabellen.schueler_eltern.find((x) => x.schueler_id === "s3"))));
+    const box = await dlg.locator("[data-aktekonflikt]").innerText().catch(() => "");
+    pruefe("Z12j Konflikt: Adresse vom anderen PC bleibt, Hinweis nennt „E-Mail Eltern“", zeile.email === "anderer@example.org" && /E-Mail Eltern/.test(box), zeile.email + " | " + box);
+    await dlg.locator("[data-meinenehmen]").click();
+    await dlg.locator("button[value=ok]").click(); await pg.waitForTimeout(400);
+    zeile = await pg.evaluate(() => JSON.parse(JSON.stringify(window.__FAKE.tabellen.schueler_eltern.find((x) => x.schueler_id === "s3"))));
+    pruefe("Z12k „Meine Eingabe nehmen“ + Speichern: meine Adresse gilt, Wahl bleibt „nur Eltern“", zeile.email === "meine@example.org" && zeile.mail_an === "eltern", JSON.stringify(zeile));
+    pruefe("Z12l keine Fehler in der Konsole", !jsFehler(e.konsole).length, jsFehler(e.konsole).join(" | "));
+    await e.ctx.close();
+    // Alte Datenbank ohne Tabelle: kein Eltern-Feld, Akte speichert wie bisher
+    const f = await oeffne({ nutzer: "ad-1", vorbereiten: new Function("F", `${vor().toString().replace(/^[^{]*{/, "").replace(/}\s*$/, "")}\n F.fehler = { schueler_eltern: 'relation "public.schueler_eltern" does not exist' };`) });
+    await oeffneAkte(f.page, "s3"); dlg = f.page.locator("dialog[open]").last();
+    pruefe("Z12m ohne Tabelle: kein Eltern-Feld", (await dlg.locator("input[name=eltern_email]").count()) === 0);
+    await dlg.locator("input[name=buero_notiz]").fill("Notiz ohne Eltern");
+    await dlg.locator("button[value=ok]").click(); await f.page.waitForTimeout(400);
+    pruefe("Z12n ohne Tabelle: Akte gespeichert", (await f.page.evaluate(() => window.__FAKE.tabellen.schueler.find((x) => x.id === "s3").buero_notiz)) === "Notiz ohne Eltern");
+    await f.ctx.close();
+  }
 } finally {
   await browser.close();
   server.close();

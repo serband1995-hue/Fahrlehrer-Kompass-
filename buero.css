@@ -828,3 +828,9 @@ body.kiosk .rollen-streifen{display:none;}
 .akte-konflikt li span{overflow-wrap:anywhere;}
 .akte-konflikt .knopf{min-height:44px;}
 .akte-konflikt p.klein{margin:8px 0 0;}
+/* W14: E-Mail der Eltern und an wen die Zahlungs-Mail geht (Schüler-Akte) */
+.eltern-block{display:flex;flex-wrap:wrap;gap:8px 24px;align-items:flex-end;}
+.eltern-block>label{flex:1 1 260px;}
+.eltern-wahl{flex:1 1 260px;display:flex;flex-wrap:wrap;gap:4px 16px;align-items:center;}
+.eltern-wahl .feld-titel{flex-basis:100%;}
+.eltern-wahl .wahl{min-height:44px;display:inline-flex;align-items:center;gap:6px;}

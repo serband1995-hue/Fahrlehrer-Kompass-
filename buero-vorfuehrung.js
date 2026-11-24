@@ -246,10 +246,18 @@ if (typeof module !== "undefined" && module.exports) { module.exports = { bauDat
     const echt = z.modus === "echt", heuteMails = mails.filter((m) => String(m.angelegt_am || "").slice(0, 10) === heute);
     if (heuteMails.length >= 100) return { fehler: "zu_viele_schule" };
     if (heuteMails.filter((m) => m.schueler_id === s.id && m.modus === (echt ? "echt" : "test")).length >= 5) return { fehler: "zu_viele" }; // je Schüler, Test und Echt getrennt
-    const an = echt ? (s.email || (s.ausbildung || {}).email || "") : (z.test_email || "betreiber@example.org");
-    if (echt && !an) return { fehler: "keine_email" };
+    // W14: Empfänger nach der Wahl in der Akte (schueler_eltern), wie der Server; Test: nur die Test-Adresse
+    const anS = String(s.email || (s.ausbildung || {}).email || "").trim().toLowerCase();
+    const el = (F.tabellen.schueler_eltern || []).find((e) => e.schueler_id === s.id) || {}, anE = String(el.email || "").trim().toLowerCase();
+    const wahl = anE ? (["schueler", "eltern", "beide"].includes(el.mail_an) ? el.mail_an : "beide") : "schueler";
+    const alle = [];
+    if ((wahl === "schueler" || wahl === "beide") && anS) alle.push(anS);
+    if ((wahl === "eltern" || wahl === "beide") && anE && !alle.includes(anE)) alle.push(anE);
+    const liste = echt ? alle : [z.test_email || "betreiber@example.org"];
+    if (echt && !liste.length) return { fehler: "keine_email" };
+    F.letzteEmpfaenger = liste.slice(); // für Tests: an wen die Mail ginge
     const jetzt = new Date().toISOString(), id = "zm-" + Math.random().toString(36).slice(2, 10);
-    const kurz = an.slice(0, 1) + "***@" + (an.split("@")[1] || "");
+    const kurz = liste.map((an) => an.slice(0, 1) + "***@" + (an.split("@")[1] || "")).join(", ");
     mails.push({ id, fahrschule_id: ich.fahrschule_id, schueler_id: s.id, art: b.art, betrag_cent: b.betrag_cent, wofuer: w, modus: echt ? "echt" : "test", empfaenger_kurz: kurz, status: "gesendet", gesendet_von: ich.id, bearbeiter: ich.name, angelegt_am: jetzt, gesendet_am: jetzt });
     return { ok: true, id, modus: echt ? "echt" : "test", gesendet_am: jetzt, empfaenger_kurz: kurz };
   };

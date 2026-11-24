@@ -72,6 +72,10 @@ Deno.serve(async (req) => {
 
     // Sichere Seite: alles außer „echt“ gilt als Test
     if (d.modus !== "echt") d.modus = "test";
+    // W14: Empfänger nach der Wahl in der Akte (Schüler, Eltern oder beide); bestimmt hat sie der Server (RPC).
+    // Test: nur die Test-Adresse. Ältere Datenbank ohne empfaenger_alle: wie bisher nur „empfaenger“.
+    const empfaenger: string[] = d.modus === "echt" && Array.isArray(d.empfaenger_alle) && d.empfaenger_alle.length
+      ? d.empfaenger_alle.map(String).slice(0, 2) : [String(d.empfaenger)];
     let betrf = betreff(d);
     if (d.modus === "test" && !betrf.startsWith("[TEST] ")) betrf = "[TEST] " + betrf;
     const png = await qrPng(epcText(d));
@@ -82,7 +86,7 @@ Deno.serve(async (req) => {
       headers: { Authorization: `Bearer ${key}`, "Content-Type": "application/json" },
       body: JSON.stringify({
         from: absender(d),
-        to: [d.empfaenger],
+        to: empfaenger,
         subject: betrf,
         html: mailHtml(d),
         text: mailText(d),
@@ -94,8 +98,8 @@ Deno.serve(async (req) => {
 
     const gesendetAm = new Date().toISOString();
     await merke({ status: "gesendet", resend_id: antwort?.id ?? null, gesendet_am: gesendetAm, fehler: null });
-    const e = String(d.empfaenger);
-    return json({ ok: true, id: d.id, modus: d.modus, gesendet_am: gesendetAm, empfaenger_kurz: e.slice(0, 1) + "***@" + e.split("@")[1] });
+    const kurz = empfaenger.map((e) => e.slice(0, 1) + "***@" + e.split("@")[1]).join(", ");
+    return json({ ok: true, id: d.id, modus: d.modus, gesendet_am: gesendetAm, empfaenger_kurz: kurz });
   } catch (e) {
     console.warn("zahlungs-mail:", String(e).slice(0, 200));
     return await scheitern("Fehler beim Versand");

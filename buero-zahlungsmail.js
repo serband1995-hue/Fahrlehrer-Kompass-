@@ -190,6 +190,20 @@ function zmBindeEinstellungen(ziel) {
 
 /* ---------- 2. Schüler-Akte: Block „Zahlung per Mail“ ---------- */
 function zmMailAdresse(x) { return String((x && x.email) || ((x && x.ausbildung) || {}).email || "").trim(); }
+// W14: an wen die echte Mail geht – gleiche Regel wie der Server (zahlungs_mail_vorbereiten): Wahl in der Akte
+// (Schüler, Eltern, beide; Vorgabe beide), ohne Eltern-Adresse nur der Schüler. Liste von [wer, adresse].
+function zmEmpfaenger(x) {
+  const s = zmMailAdresse(x), el = (S.eltern && x && S.eltern[x.id]) || null, e = el && el.email ? String(el.email).trim() : "";
+  const wahl = e ? (["schueler", "eltern", "beide"].includes(el.mail_an) ? el.mail_an : "beide") : "schueler";
+  const liste = [];
+  if ((wahl === "schueler" || wahl === "beide") && s) liste.push(["Schüler", s]);
+  if ((wahl === "eltern" || wahl === "beide") && e && e.toLowerCase() !== s.toLowerCase()) liste.push(["Eltern", e]);
+  return liste;
+}
+function zmEmpfaengerText(liste) {
+  if (liste.length === 1 && liste[0][0] === "Schüler") return liste[0][1]; // wie bisher: nur die Adresse
+  return liste.map(([w, a]) => `${w} (${a})`).join(" und ");
+}
 // Welche Knöpfe gibt es für diesen Schüler, mit vorbelegtem Betrag und „wofür“?
 function zmAngebote(x) {
   const heute = KR.todayISO(), liste = [];
@@ -231,12 +245,12 @@ function zmBlockHTML(sid) {
   if (!x) return "";
   const angebote = zmAngebote(x);
   if (!angebote.length) return `<div class="voll" id="zmBlock" data-zmsid="${esc(sid)}" hidden></div>`; // leerer Platz: ein späteres „Zahlung offen“ kann den Block füllen
-  const echt = zmEcht(), daten = zmDatenDa(), mail = zmMailAdresse(x), ladefehler = !!S.zmLadefehler;
-  const ohneMail = echt && !mail;
+  const echt = zmEcht(), daten = zmDatenDa(), empf = zmEmpfaenger(x), ladefehler = !!S.zmLadefehler;
+  const ohneMail = echt && !empf.length;
   const hinweise = [];
   if (ladefehler) hinweise.push(`<p class="zm-hinweis" data-zmladefehler>${esc(LADEFEHLER_TEXT)}</p>`);
   else if (!daten) hinweise.push(`<p class="zm-hinweis" data-zmohnedaten>Bitte zuerst unter <a href="#fristen" data-zmeinst>Einstellungen</a> die Zahlungsdaten eintragen.</p>`);
-  else if (echt) hinweise.push(`<p class="zm-echt" data-zmecht>Echt: Mail geht an ${mail ? esc(mail) : "den Schüler (E-Mail fehlt)"}</p>`);
+  else if (echt) hinweise.push(`<p class="zm-echt" data-zmecht>Echt: Mail geht an ${empf.length ? esc(zmEmpfaengerText(empf)) : "den Schüler (E-Mail fehlt)"}</p>`);
   else hinweise.push(`<p class="zm-modus-zeile zm-test" data-zmtest>Test-Modus: Mail geht an die Test-Adresse</p>`);
   if (S.zmVerlaufFehler) hinweise.push(`<p class="zm-hinweis" data-zmverlauf>Verlauf konnte nicht geladen werden. Haken können fehlen.</p>`);
   if (ohneMail && daten && !ladefehler) hinweise.push(`<p class="zm-hinweis" data-zmkeinemail>Keine E-Mail-Adresse in der Akte.</p>`);
@@ -256,7 +270,7 @@ function zmBlockHTML(sid) {
         <label>Betrag in €<input type="text" inputmode="decimal" maxlength="10" autocomplete="off" data-zmbetrag value="${esc(betrag)}" placeholder="z. B. 120,00"></label>
         <label>Wofür<input type="text" maxlength="80" autocomplete="off" data-zmwofuer value="${esc(wofuer)}"><span class="leise klein">Erscheint in der Mail und im Verwendungszweck, der Name wird automatisch ergänzt. Bitte keine weiteren Namen eintragen.</span></label>
         <p class="zm-fehler" data-zmmeldung role="alert" hidden></p>
-        <div class="knopfreihe"><button type="button" class="knopf haupt" data-zmsenden="${esc(a.art)}"${grund ? " disabled" : ""}>${echt ? "Mail an Schüler senden" : "Test-Mail senden"}</button></div>
+        <div class="knopfreihe"><button type="button" class="knopf haupt" data-zmsenden="${esc(a.art)}"${grund ? " disabled" : ""}>${echt ? `Mail an ${empf.length ? empf.map(([w]) => w).join(" und ") : "Schüler"} senden` : "Test-Mail senden"}</button></div>
         ${grund ? `<p class="leise klein zm-grund" data-zmgrund>${esc(grund)}</p>` : ""}
       </div>
     </div>`;
@@ -321,7 +335,8 @@ function zmBinde(block, dlg, sid) {
       const sitz = await zmSitzung(); // Token und PIN-Sitzung jetzt merken, nicht erst nach der Wartezeit
       zmNeuZeichnen(sid);
       // 5 Sekunden „Rückgängig“; erst danach geht die Mail wirklich los (Zeit um oder nächster Rückgängig-Hinweis)
-      const u = toastUndo(`${modus === "echt" ? "Wird an den Schüler gesendet" : "Test-Mail wird gesendet"} · ${zmEuroText(cent)} · ${name}`, async () => {
+      const anWen = zmEmpfaenger(x).map(([w]) => w === "Schüler" ? "den Schüler" : "die Eltern").join(" und ") || "den Schüler";
+      const u = toastUndo(`${modus === "echt" ? "Wird an " + anWen + " gesendet" : "Test-Mail wird gesendet"} · ${zmEuroText(cent)} · ${name}`, async () => {
         ZM.laeuft.delete(schluessel);
         zmNeuZeichnen(sid);
         toast(`Abgebrochen, an ${name} wurde nichts gesendet`);
