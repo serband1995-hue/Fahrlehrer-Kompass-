@@ -9894,7 +9894,7 @@ function openBehoerdeSheet(s){
       toastUndo(`Gespeichert, außer ${was}: das Büro war schneller`,async()=>{
         const ok=await _schuelerServerSetzen(s.id,mein);
         toast(ok?"Deine Eingabe gilt ✓":"Nicht gespeichert – bitte später nochmal"); if(ok)zurAkte();
-      },9000,"Meine nehmen");
+      },15000,"Meine nehmen"); // länger als sonst: im Auto braucht man Zeit
     } else toast("Gespeichert ✓ – das Büro sieht es sofort");
     if(nochOffen){ closeSheet(); const y=view.scrollTop; routeDetail(s.id); view.scrollTop=y; }
   });

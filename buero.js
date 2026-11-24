@@ -799,6 +799,8 @@ function akteNorm(k, v) {
   return v;
 }
 function akteGleich(a, b, k) { return gleicherWert(akteNorm(k, a), akteNorm(k, b), k); }
+// Felder, die nur zusammen gelten: ist eines woanders geändert, wird keines davon von hier geschrieben
+const AKTE_GRUPPEN = [["reakt_status", "reakt_bezahlt_bis", "reakt_notiz"]];
 // nurPruefen: Felder, die hier nur geprüft und nicht geschrieben werden (Fahrlehrerwechsel macht verschiebeSchueler)
 // Ergebnis: { ok, leer, konflikte: [{k, frisch, mein}], frei: {k: wert}, zeile } – ok=false: Meldung ist schon gezeigt
 async function speichereAkteSicher(id, basis, werte, nurPruefen) {
@@ -817,6 +819,18 @@ async function speichereAkteSicher(id, basis, werte, nurPruefen) {
       if (!akteGleich(jetzt, aktenWert(basis, k), k)) { konflikte.push({ k, frisch: jetzt, mein }); continue; } // woanders geändert
       if (pruefen.has(k)) frei[k] = mein; else senden[k] = mein;
     }
+    // Zusammengehörende Felder (Prüf-Team W14): kein gemischter Stand aus zwei Quellen
+    const halte = (k) => { if (k in senden) { konflikte.push({ k, frisch: aktenWert(frisch, k), mein: senden[k] }); delete senden[k]; } };
+    for (const gruppe of AKTE_GRUPPEN) {
+      const woanders = gruppe.filter((k) => !akteGleich(aktenWert(frisch, k), aktenWert(basis, k), k));
+      if (!woanders.length || !gruppe.some((k) => k in senden || konflikte.some((c) => c.k === k))) continue;
+      gruppe.forEach(halte);
+      // auch zeigen, was woanders an der Gruppe geändert wurde (das Fenster zeigt danach den neuen Stand)
+      for (const k of woanders) if (k in werte && !konflikte.some((c) => c.k === k)) konflikte.push({ k, frisch: aktenWert(frisch, k), mein: werte[k] });
+    }
+    const ab = "theorie_abgeschlossen_am" in senden ? senden.theorie_abgeschlossen_am : frisch.theorie_abgeschlossen_am;
+    const be = "theorie_bestanden_am" in senden ? senden.theorie_bestanden_am : frisch.theorie_bestanden_am;
+    if (ab && be && be < ab) { halte("theorie_bestanden_am"); halte("theorie_abgeschlossen_am"); } // Prüfung nicht vor dem Unterricht
     if (!Object.keys(senden).length) return Object.assign(erg, { konflikte, frei, zeile: frisch });
     // Kamen beim letzten Versuch 0 Zeilen zurück, obwohl sich die Felder nicht geändert haben, passt die Bedingung nicht
     // (z. B. Schreibweise in der Datenbank): dann nur noch nach der Nummer schreiben, sonst bliebe die Akte unspeicherbar
