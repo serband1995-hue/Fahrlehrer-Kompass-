@@ -330,6 +330,8 @@ try {
     if (offen) { await page.locator(dlgSel).last().locator("button[value=ok]").click(); await page.waitForTimeout(500); }
     const n2 = (await rpcs(page, "schueler_paket_verkaufen")).length;
     pruefe("V15 Konflikt beim Telefon: Fenster bleibt offen, Paket einmal verkauft, zweites Speichern verkauft nicht neu", offen === 1 && n1 === 1 && n2 === 1 && (await sp(page)).filter((x) => !x.storniert_am).length === 1, [offen, n1, n2]);
+    const kasten = await page.locator("dialog[open] [data-aktekonflikt]").allInnerTexts().catch(() => []);
+    pruefe("V15b nach dem zweiten Speichern: paket_id bleibt beim verkauften Paket, kein Konflikt-Hinweis zum Paket", (await schueler(page, S1)).paket_id === "p-2" && !kasten.some((t) => /Paket/.test(t)), [(await schueler(page, S1)).paket_id, kasten]);
     await ctx.close();
   }
   // V16 Verkauftes Paket, dann Turboboost (ohne Posten) wählen: verkauftes wird storniert, Turboboost zugeordnet; Rückgängig holt das verkaufte zurück

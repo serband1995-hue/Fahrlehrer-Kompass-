@@ -2450,7 +2450,13 @@ function schuelerDialog(id) {
     zeichne();
     if ("fahrlehrer_id" in erg.frei) await verschiebeSchueler(Object.assign({}, basisX, { fahrlehrer_id: basisLehrer }), neuerLehrer);
     if (absagen.length && archiviert) await sageTermineAb(absagen, `${name} liegt im Archiv, ${absagen.length === 1 ? "1 Termin" : absagen.length + " Termine"} abgesagt`);
-    if (bkAnm) await bkAnm.nachSpeichern(id, erg.konflikte); // Werkstatt 13: Verkauf oder Storno des Pakets (merkt sich den Stand, bleibt das Fenster offen)
+    if (bkAnm) {
+      await bkAnm.nachSpeichern(id, erg.konflikte); // Werkstatt 13: Verkauf oder Storno des Pakets (merkt sich den Stand, bleibt das Fenster offen)
+      // Hinweis Fable (W14): Verkauf, Storno und Zuordnung schreiben paket_id an der Akte vorbei. Die Basis des offenen Fensters
+      // nachziehen, sonst gälte beim nächsten Speichern der eigene Verkauf als „woanders geändert“
+      const jetzt = S.schueler.find((y) => y.id === id);
+      if (jetzt) basisX.paket_id = jetzt.paket_id;
+    }
     const konflikte = erg.konflikte.concat(elt.konflikte || []);
     if (konflikte.length) {
       akteFensterAuffrischen(dlg, altBasis, werteAlle, erg.zeile, erg.konflikte, AKTE_FELDER);
