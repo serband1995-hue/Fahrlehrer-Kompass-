@@ -323,6 +323,24 @@ try {
     pruefe("B16 Fenster bleibt oben (Kopfzeile mit ✕ sichtbar, Fenster selbst scrollt nicht)", m.oben === 0 && m.ueber <= 1 && m.kopf, JSON.stringify(m));
     await ctx.close();
   }
+  // B17 (Fable) Enter im Preisfeld speichert nicht; Sonderfahrt-Preis bei klein geschriebener Preisliste; doppelte Sonderfahrt
+  {
+    const { page, ctx } = await oeffne({ nutzer: "ad-1", vorbereiten: function () {
+      const fs = F.tabellen.fahrschulen[0].id;
+      F.tabellen.fahrschule_preise = [{ id: "pu", fahrschule_id: fs, art: "sonderfahrt", klasse: "B", bezeichnung: "überlandfahrt", einheit: "45min", betrag_cent: 9900, gueltig_ab: "2026-01-01", angelegt_von: "ad-1", angelegt_am: "2026-01-01T10:00:00Z" }];
+    } });
+    await page.click("#bkNeu"); await page.waitForTimeout(150);
+    const d = page.locator(dlgSel).last();
+    await d.locator('input[name="name"]').fill("Enter-Test");
+    await chip(page, "Sonderfahrt"); await chip(page, "Sonderfahrt");
+    pruefe("B17a „überlandfahrt“ (klein) gilt für Überland, nicht für Autobahn", (await d.locator('[data-bk-preis="0"]').inputValue()) === "99,00" && (await d.locator('[data-bk-preis="1"]').inputValue()) === "", [await d.locator('[data-bk-preis="0"]').inputValue(), await d.locator('[data-bk-preis="1"]').inputValue()]);
+    await d.locator('[data-bk-preis="1"]').fill("88");
+    await d.locator('[data-bk-preis="1"]').press("Enter"); await page.waitForTimeout(200);
+    pruefe("B17b Enter im Preisfeld: Fenster bleibt offen, nichts gespeichert", await page.locator(dlgSel).count() === 1 && !(await pakete(page)).some((p) => p.name === "Enter-Test"));
+    await d.locator('[data-bk-sonder="1"]').selectOption("Überlandfahrt"); await page.waitForTimeout(100);
+    pruefe("B17c dieselbe Sonderfahrt zweimal wird abgelehnt", (await d.locator('[data-bk-sonder="1"]').inputValue()) === "Autobahnfahrt");
+    await ctx.close();
+  }
   // B10 Migration (statisch): Büro ohne Löschrecht, feste Kopie, Rückweg
   {
     const sql = await readFile(join(ROOT, "supabase/migrations/20261124_paket_01_baukasten.sql"), "utf8");

@@ -865,6 +865,7 @@ body.kiosk .rollen-streifen{display:none;}
 .bk-gesamt .klein:empty{display:none;}
 .bk-gesamt .klein .marke-pill{white-space:normal;}
 .bk-dialog .toast.toast-undo{bottom:auto;top:84px;}
+.bk-dialog .toast-undo .toast-knopf{min-height:44px;}
 @media (max-width:520px){
   .bk-dialog .dialog-inhalt{padding:16px 14px;}
   .bk-gesamt{margin:16px -14px -16px;padding:12px 14px;bottom:-16px;}

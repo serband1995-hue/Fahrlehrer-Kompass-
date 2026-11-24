@@ -55,6 +55,7 @@ function bkFreierName(basis) {
    undefined = steht nicht in der Preisliste, null = dort „entfällt“.
    Reihenfolge: genaue Bezeichnung, dann die übliche Bezeichnung der Art, dann – wenn es genau eine Preisposition dieser Art gibt –
    diese. Erst mit der Klasse des Pakets, dann ohne Klasse (z. B. Lernapp und Simulator gibt es meist nur einmal). */
+function bkIstSonderName(n) { const k = String(n || "").trim().toLowerCase(); return PR_SONDER.some((x) => x.toLowerCase() === k); }
 function bkListenCent(posten, klasse, datum) { const q = bkListe(posten, klasse, datum); return q === undefined ? undefined : q.cent; }
 // Wie bkListenCent, dazu die Bezeichnung der verwendeten Preisposition (Hinweis „aus: …“, Fehlersucher Daten 24.11.)
 function bkListe(posten, klasse, datum) {
@@ -65,11 +66,11 @@ function bkListe(posten, klasse, datum) {
     let e = bez ? preisAm(art, k, bez, datum) : undefined, quelle = bez;
     if (e === undefined && art !== "sonstiges") {
       const std = prArt(art)[4];
-      if (std && std.toLowerCase() !== bez.toLowerCase() && !(art === "sonderfahrt" && PR_SONDER.includes(std))) { e = preisAm(art, k, std, datum); quelle = std; }
+      if (std && std.toLowerCase() !== bez.toLowerCase() && !(art === "sonderfahrt" && bkIstSonderName(std))) { e = preisAm(art, k, std, datum); quelle = std; }
       if (e === undefined) {
         const pos = [...prPositionen().values()].filter((z) => z[0].art === art && (z[0].klasse || null) === k);
         // Sonderfahrten: eine andere Sonderfahrt (z. B. nur „Autobahnfahrt“ eingetragen) gilt nicht für „Überlandfahrt“
-        if (pos.length === 1 && !(art === "sonderfahrt" && PR_SONDER.includes(pos[0][0].bezeichnung))) { quelle = pos[0][0].bezeichnung; e = preisAm(art, k, quelle, datum); }
+        if (pos.length === 1 && !(art === "sonderfahrt" && bkIstSonderName(pos[0][0].bezeichnung))) { quelle = pos[0][0].bezeichnung; e = preisAm(art, k, quelle, datum); }
       }
     }
     if (e !== undefined) return { cent: e == null ? null : Math.round(e * 100), bez: quelle, klasse: k };
@@ -162,9 +163,13 @@ async function bkSchreiben(id, werte, stand) {
   if (res.error || !res.data || !res.data.length) {
     if (res.error && bkSpalteFehlt(res.error)) { S.bkFehlt = true; toast("Die Pakete sind in der Datenbank noch nicht eingerichtet.", true); zeichne(); return null; }
     if (!res.error && id && stand !== undefined) {
-      toast("Jemand anderes hat dieses Paket gerade geändert. Die Liste wird neu geladen, bitte noch einmal öffnen.", true);
-      if (typeof ladeDaten === "function") ladeDaten();
-      return null;
+      const jetzt = await supa.from("fahrschule_pakete").select("id,aktualisiert_am").eq("id", id).maybeSingle();
+      const anders = jetzt && !jetzt.error && jetzt.data && (jetzt.data.aktualisiert_am || null) !== (stand || null);
+      if (anders) {
+        toast("Jemand anderes hat dieses Paket gerade geändert. Die Liste wird neu geladen, bitte noch einmal öffnen.", true);
+        if (typeof ladeDaten === "function") ladeDaten();
+        return null;
+      }
     }
     toast("Nicht gespeichert: " + (res.error ? dbFehlerText(res.error) : "keine Berechtigung"), true);
     return null;
@@ -202,7 +207,7 @@ function bkCentAusText(t) {
   let s = String(t || "").replace(/[\s€]/g, "");
   if (!s) return null;
   if (s.includes(",")) s = s.replace(/\./g, "").replace(",", ".");
-  else if (/^\d{1,3}(\.\d{3})+$/.test(s)) s = s.replace(/\./g, "");
+  else if (/^[1-9]\d{0,2}(\.\d{3})+$/.test(s)) s = s.replace(/\./g, "");
   if (!/^\d+(\.\d{1,2})?$/.test(s)) return NaN;
   const c = Math.round(Number(s) * 100);
   return c > BK_MAX_CENT ? NaN : c;
@@ -299,7 +304,8 @@ function bkEditor(vorlage, kopie) {
     return true;
   }, neu ? "Paket speichern" : "Speichern");
   dlg.classList.add("bk-dialog");
-  dlg.addEventListener("close", () => { bkFensterZu = Date.now(); });
+  let undoFenster = null; // Rückgängig für „Posten entfernt“ gilt nur, solange das Fenster offen ist
+  dlg.addEventListener("close", () => { bkFensterZu = Date.now(); if (undoFenster && typeof UNDO !== "undefined" && UNDO.offen === undoFenster) undoAblaufen(); });
   const form = dlg.querySelector("form");
   const listeEl = dlg.querySelector("[data-bk-liste-posten]");
   const chipsEl = dlg.querySelector("[data-bk-chips]");
@@ -312,7 +318,7 @@ function bkEditor(vorlage, kopie) {
     dlg.querySelector("[data-bk-gesamt]").textContent = (s.fehlt ? "ab " : "") + prEuro(s.cent);
     dlg.querySelector(".bk-gesamt").hidden = !st.posten.length; // leer: Platz für die Knöpfe zum Hinzufügen
     const h = dlg.querySelector("[data-bk-gesamt-hinweis]");
-    h.innerHTML = s.fehlt ? `<span class="marke-pill gelb">${s.fehlt} ${s.fehlt === 1 ? "Posten" : "Posten"} ohne Preis, noch nicht eingerechnet</span>` : "";
+    h.innerHTML = s.fehlt ? `<span class="marke-pill gelb">${s.fehlt} Posten ohne Preis, noch nicht eingerechnet</span>` : "";
     st.posten.forEach((p, i) => {
       const e = bkEinzelCent(p, klasse());
       const z = dlg.querySelector(`[data-bk-zsumme="${i}"]`);
@@ -329,6 +335,7 @@ function bkEditor(vorlage, kopie) {
       || `<span class="leise klein">${voll ? `Höchstens ${BK_MAX_POSTEN} Posten.` : "Alle Posten sind schon drin."}</span>`;
   }
   function zeichneListe(fokus) {
+    st.posten.forEach((p) => { p._ungueltig = false; }); // Felder zeigen danach wieder den gültigen Preis
     listeEl.innerHTML = st.posten.length ? st.posten.map((p, i) => bkPostenZeile(p, i, klasse())).join("")
       : `<li class="leise klein bk-leer">Noch keine Posten. Unten antippen, was ins Paket gehört.</li>`;
     zeichneChips();
@@ -366,7 +373,7 @@ function bkEditor(vorlage, kopie) {
     } else if (d.bkWeg != null) {
       const i = +d.bkWeg, weg = st.posten.splice(i, 1)[0];
       geaendert(); zeichneListe();
-      toastUndo(`„${weg.bezeichnung || bkName(weg.art)}“ entfernt`, () => { st.posten.splice(Math.min(i, st.posten.length), 0, weg); zeichneListe(); });
+      undoFenster = toastUndo(`„${weg.bezeichnung || bkName(weg.art)}“ entfernt`, () => { st.posten.splice(Math.min(i, st.posten.length), 0, weg); zeichneListe(); });
     }
   });
   listeEl.addEventListener("input", (e) => {
@@ -382,10 +389,21 @@ function bkEditor(vorlage, kopie) {
       geaendert(); rechne();
     } else if (d.bkName != null) { const p = st.posten[+d.bkName]; if (p) p.bezeichnung = t.value; }
   });
+  // Enter (oder „Los“ auf der Handy-Tastatur) in einem Posten-Feld speichert nicht das halbe Paket, sondern beendet nur die Eingabe
+  listeEl.addEventListener("keydown", (e) => {
+    if (e.key !== "Enter" || !e.target.matches("[data-bk-anzahl], [data-bk-preis], [data-bk-name]")) return;
+    e.preventDefault();
+    e.target.dispatchEvent(new Event("change", { bubbles: true }));
+    e.target.blur();
+  });
   listeEl.addEventListener("change", (e) => {
     const t = e.target, d = t.dataset;
     if (d.bkAnzahl != null) setzeAnzahl(+d.bkAnzahl, t.value === "" ? st.posten[+d.bkAnzahl].anzahl : t.value);
-    else if (d.bkSonder != null) { const p = st.posten[+d.bkSonder]; if (p) { p.bezeichnung = t.value; geaendert(); zeichneListe(+d.bkSonder); } }
+    else if (d.bkSonder != null) {
+      const i = +d.bkSonder, p = st.posten[i]; if (!p) return;
+      if (st.posten.some((x, j) => j !== i && x.art === "sonderfahrt" && x.bezeichnung === t.value)) { toast(`„${t.value}“ ist schon im Paket.`, true); t.value = p.bezeichnung; return; }
+      p.bezeichnung = t.value; geaendert(); zeichneListe(i);
+    }
   });
   form.klasse.addEventListener("change", () => zeichneListe());
   zeichneListe();
