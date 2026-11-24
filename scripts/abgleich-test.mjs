@@ -588,6 +588,32 @@ fall("20e W14c: Fragebogen geht einmal nicht hoch, dann ändert das Büro das Te
   if (z.telefon !== "0170 3333333") f("Telefon zurückgedreht: " + z.telefon);
 });
 
+fall("20f W14c: Netzfehler beim update – nicht als geschrieben gemerkt, nächster Lauf holt nach, Telefon vom Büro bleibt, Fragebogen kommt an (Richter)", async (f) => {
+  await neu();
+  await setzeLokal("students", [{ id: "S1", name: "Anna Muster", telefon: "0151 1", notiz: "", bogen: { a: 1 } }, { id: "S2", name: "Ben Muster", telefon: "0151 2", notiz: "" }]);
+  await bruecke();
+  await aendereZeile("schueler", "S1", { telefon: "0170 5", aktualisiert_am: "+1s" });
+  await ruf(() => { const F = window.__fake; const alt = F.client.from; F.client.from = (t) => { const b = alt(t);
+    if (t === "schueler") { const u = b.update; b.update = (o) => { const x = u(o); if (!F.netzAus) return x; let id = null; const e = x.eq; x.eq = (c, v) => { id = v; return e(c, v); };
+      const th = x.then; x.then = (ok, fail) => id === "S1" ? Promise.resolve({ data: null, error: { message: "TypeError: Failed to fetch" } }).then(ok, fail) : th(ok, fail); return x; }; }
+    return b; }; F.netzAus = true;
+    DB.students.forEach((x) => { x.notiz = "neu"; }); DB.students[0].bogen = { a: 2 }; });
+  await bruecke();
+  let z1 = await zeile("schueler", "S1"); const z2 = await zeile("schueler", "S2");
+  if (z1.ausbildung.notiz === "neu") f("S1 trotz Netzfehler geschrieben?");
+  if (z2.ausbildung.notiz !== "neu") f("S2 nicht geschrieben");
+  if (z1.telefon !== "0170 5") f("Telefon zurückgedreht (1): " + z1.telefon);
+  await ruf(() => { window.__fake.netzAus = false; });
+  await bruecke();
+  z1 = await zeile("schueler", "S1");
+  if (z1.ausbildung.notiz !== "neu") f("S1 nach Netz zurück nicht nachgeholt");
+  if (z1.telefon !== "0170 5") f("Telefon zurückgedreht (2): " + z1.telefon);
+  const p = (await tabelle("schueler_privat")).find((r) => r.schueler_id === "S1");
+  if (!p || !p.bogen || p.bogen.a !== 2) f("Fragebogen nicht angekommen: " + JSON.stringify(p));
+  await zaehlerNull(); await bruecke();
+  if ((await zaehler("updates", "schueler")) || (await zaehler("upserts", "schueler"))) f("hängt: schreibt erneut");
+});
+
 fall("21 W14: Gerät ändert Telefon selbst – eigener Stand gilt weiter (wie bisher)", async (f) => {
   await neu();
   await setzeLokal("students", [{ id: "S1", name: "Anna Muster", telefon: "0151 1111111" }]);

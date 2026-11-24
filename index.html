@@ -5596,7 +5596,8 @@ async function pullSchuelerZuweisungen() {
     }
     // Name und Telefon pflegt das Büro: Hat dieses Gerät den Schüler seit dem letzten Abgleich nicht selbst
     // geändert, gilt der Stand vom Büro (sonst schrieb die Brücke den alten Namen zurück).
-    // (Neue Schüler kommen bewusst nicht ins Gedächtnis: die Brücke lädt ihren vollen Ausbildungsstand einmal hoch.)
+    // (Neue Schüler kommen bewusst nicht ins Gedächtnis: die Brücke lädt ihren vollen Ausbildungsstand einmal hoch.
+    //  Nur nt[id] – den gemeinsamen Stand von Name und Telefon – bekommen sie gleich, W14c.)
     const memS = _abglLaden(); const neuIds = new Set(neu.map(r => r.id)); let namenNeu = false;
     for (const r of (gen === _abglGen ? (rows||[]) : [])) { // Brücke hat inzwischen geschrieben: Namen erst nächste Runde
       const lok = DB.students.find(x => x.id === r.id); if (!lok) continue;
