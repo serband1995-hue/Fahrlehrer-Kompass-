@@ -174,6 +174,38 @@ await fall("F2 Fristen: dasselbe Feld – Hinweis, Fenster bleibt offen", async 
   return f;
 });
 
+await fall("A6 Akte: zwei Felder woanders geändert, eins davon auch hier – zweites Speichern dreht das andere nicht zurück", async () => {
+  const f = [];
+  await page.evaluate(() => document.querySelectorAll("dialog[open]").forEach((d) => d.close())); // Fenster aus F2 schließen
+  await page.evaluate(() => schuelerDialog("s7"));
+  await woanders(page, "s7", { telefon: "0151 0000007", email: "neu7@example.org" });
+  await page.fill("dialog[open] input[name=telefon]", "0160 7777777");
+  await speichern(page);
+  if ((await page.inputValue("dialog[open] input[name=email]")) !== "neu7@example.org") f.push("E-Mail-Feld zeigt nicht den neuen Stand");
+  await page.click("dialog[open] [data-meinenehmen]");
+  await speichern(page);
+  const s = await server_(page, "s7");
+  if (s.email !== "neu7@example.org") f.push("E-Mail beim zweiten Speichern zurückgedreht: " + s.email);
+  if (s.telefon !== "0160 7777777") f.push("Meine Eingabe nicht gespeichert: " + s.telefon);
+  if (await offen(page)) f.push("Fenster blieb offen");
+  return f;
+});
+
+await fall("F3 Fristen: zwei Felder woanders, eins davon auch hier – zweites Speichern dreht das andere nicht zurück", async () => {
+  const f = [];
+  await page.evaluate(() => document.querySelectorAll("dialog[open]").forEach((d) => d.close()));
+  await page.evaluate(() => fristenDialog("s8"));
+  await woanders(page, "s8", { reakt_notiz: "anderer PC", antrag_am: "2026-01-02" });
+  await page.fill("dialog[open] input[name=reakt_notiz]", "ich");
+  await speichern(page);
+  await page.click("dialog[open] [data-meinenehmen]");
+  await speichern(page);
+  const s = await server_(page, "s8");
+  if (s.antrag_am !== "2026-01-02") f.push("Antrag zurückgedreht: " + s.antrag_am);
+  if (s.reakt_notiz !== "ich") f.push("Meine Eingabe nicht gespeichert: " + s.reakt_notiz);
+  return f;
+});
+
 await fall("K1 keine Fehler in der Konsole", async () => konsole.length ? [konsole.slice(0, 3).join(" | ")] : []);
 await ctx.close();
 await browser.close();

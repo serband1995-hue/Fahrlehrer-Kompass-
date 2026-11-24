@@ -826,3 +826,5 @@ body.kiosk .rollen-streifen{display:none;}
 .akte-konflikt ul{margin:0;padding:0;list-style:none;display:grid;gap:8px;}
 .akte-konflikt li{display:flex;flex-wrap:wrap;align-items:center;gap:8px 12px;justify-content:space-between;}
 .akte-konflikt li span{overflow-wrap:anywhere;}
+.akte-konflikt .knopf{min-height:44px;}
+.akte-konflikt p.klein{margin:8px 0 0;}

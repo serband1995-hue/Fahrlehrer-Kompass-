@@ -585,7 +585,7 @@ fall("22 W14: Behörde-Blatt – Büro hat Bewerbernummer inzwischen geändert: 
   if (z.bewerbernummer !== "BUERO-2") f("Büro-Änderung überschrieben: " + z.bewerbernummer);
   if (JSON.stringify(z.vorbesitz) !== JSON.stringify(["AM"])) f("Vorbesitz nicht gespeichert: " + JSON.stringify(z.vorbesitz));
   const t = await page.textContent("#toast");
-  if (!/Bewerbernummer/.test(t) || !/Rückgängig/.test(t)) return f("Hinweis fehlt: " + t + " · Server: " + JSON.stringify({ b: z.bewerbernummer, v: z.vorbesitz }));
+  if (!/Bewerbernummer/.test(t) || !/Meine nehmen/.test(t) || !/Gespeichert/.test(t)) return f("Hinweis fehlt: " + t + " · Server: " + JSON.stringify({ b: z.bewerbernummer, v: z.vorbesitz }));
   await ruf(() => document.querySelector("#toast .ut-btn").click());
   await page.waitForTimeout(150); await page.waitForFunction(() => !window.__fake || window.__fake.stats.inflight === 0);
   z = await zeile("schueler", "S1");
@@ -612,6 +612,22 @@ fall("23 W14: Gesamtansicht – Leitung ändert Paket und Notiz, App/Büro haben
   if (z.telefon !== "0170 5555555") f("Telefon vom Büro überschrieben: " + z.telefon);
   if (!z.ausbildung || !z.ausbildung.plan || z.ausbildung.plan.a !== 2) f("Ausbildungsstand der App überschrieben: " + JSON.stringify(z.ausbildung && z.ausbildung.plan));
   if (!z.ausbildung || z.ausbildung.notiz !== "von Leitung") f("Notiz der Leitung fehlt: " + JSON.stringify(z.ausbildung && z.ausbildung.notiz));
+});
+
+fall("24 W14: Büro ändert Klasse – Gerät übernimmt und lädt den Schüler nicht erneut hoch", async (f) => {
+  await neu();
+  await setzeLokal("students", [{ id: "S1", name: "Anna Muster", telefon: "0151 1111111", form: "B" }]);
+  await bruecke();
+  await ruf(() => pullSchuelerZuweisungen());
+  await bruecke();
+  await aendereZeile("schueler", "S1", { klasse: "CE", aktualisiert_am: "+1s" });
+  await ruf(() => pullSchuelerZuweisungen());
+  const form = await ruf(() => DB.students.find((x) => x.id === "S1").form);
+  if (form !== "CE") return f("Klasse vom Büro nicht übernommen: " + form);
+  await zaehlerNull();
+  await bruecke();
+  const n = await zaehler("upserts", "schueler");
+  if (n !== 0) f("Übernahme vom Büro gilt als eigene Änderung: " + n + " Schüler hochgeladen");
 });
 
 /* ---------- Ausführen ---------- */

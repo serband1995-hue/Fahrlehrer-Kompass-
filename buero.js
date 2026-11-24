@@ -879,10 +879,11 @@ function akteKonfliktZeigen(dlg, konflikte) {
   delete dlg.dataset.geaendert; // alles andere ist gespeichert: Schließen verliert nichts
   const box = document.createElement("div");
   box.className = "akte-konflikt voll"; box.dataset.aktekonflikt = ""; box.setAttribute("role", "alert");
-  box.innerHTML = `<b>Inzwischen woanders geändert</b>
-    <p>Während das Fenster offen war, wurde ${konflikte.length === 1 ? "dieses Feld" : "Folgendes"} in der Fahrlehrer-App oder an einem anderen PC geändert. Dort gilt jetzt der neue Stand. Alles andere ist gespeichert.</p>
-    <ul>${konflikte.map((c, i) => `<li data-konfliktfeld="${esc(c.k)}"><span><b>${esc(akteFeldName(c.k))}:</b> jetzt „${esc(akteWertText(c.k, c.frisch))}“ · deine Eingabe „${esc(akteWertText(c.k, c.mein))}“</span>
-      <button type="button" class="knopf klein" data-meinenehmen="${i}">Meine Eingabe nehmen</button></li>`).join("")}</ul>`;
+  box.innerHTML = `<b>Nicht alles gespeichert</b>
+    <p>Während das Fenster offen war, hat jemand anderes (Fahrlehrer-App oder anderer PC) ${konflikte.length === 1 ? "dieses Feld" : "diese Felder"} geändert. Gespeichert ist alles außer:</p>
+    <ul>${konflikte.map((c, i) => `<li data-konfliktfeld="${esc(c.k)}"><span><b>${esc(akteFeldName(c.k))}:</b> jetzt „${esc(akteWertText(c.k, c.frisch))}“ · <b>deine Eingabe „${esc(akteWertText(c.k, c.mein))}“</b> (nicht gespeichert)</span>
+      <button type="button" class="knopf klein" data-meinenehmen="${i}">Meine Eingabe nehmen</button></li>`).join("")}</ul>
+    <p class="klein">Passt der neue Wert, ist nichts mehr zu tun. Sonst „Meine Eingabe nehmen“ und dann „Speichern“.</p>`;
   box.querySelectorAll("[data-meinenehmen]").forEach((b) => b.addEventListener("click", () => {
     const c = konflikte[Number(b.dataset.meinenehmen)];
     akteFeldSetzen(dlg, c.k, c.mein);
@@ -892,6 +893,21 @@ function akteKonfliktZeigen(dlg, konflikte) {
   const inhalt = dlg.querySelector(".dialog-inhalt");
   inhalt.prepend(box);
   inhalt.scrollTop = 0;
+}
+// Konflikt, Fenster bleibt offen: Felder, die hier niemand angefasst hat, auf den neuen Stand bringen. Sonst gälte ein
+// alter Wert im Feld beim nächsten Speichern als „geändert“ und überschriebe den neuen (Prüfer Büro, W14).
+const AKTE_FELDER = ["name", "telefon", "email", "paket_id", "ausbildungsart", "klasse", "vertrag_am", "buero_notiz", "bewerbernummer", "theorie_frist_bis",
+  "sehhilfe", "vorbesitz", "auslands_fs", "wohnsitz_de_seit", "uebersetzung_vorhanden", "b197_testfahrt_am", "inaktiv_seit", "fahrlehrer_id"];
+function akteFensterAuffrischen(dlg, altBasis, werte, zeile, konflikte, felder) {
+  if (!zeile) return;
+  const kk = new Set(konflikte.map((c) => c.k));
+  for (const k of felder) {
+    if (kk.has(k)) continue; // zeigt akteKonfliktZeigen
+    const vorher = aktenWert(altBasis, k), jetzt = aktenWert(zeile, k);
+    if (akteGleich(vorher, jetzt, k)) continue; // nichts Neues
+    if (k in werte && !akteGleich(werte[k], vorher, k)) continue; // hier geändert (und gespeichert oder schon so da)
+    akteFeldSetzen(dlg, k, jetzt);
+  }
 }
 // Nach dem Speichern: Stand im Speicher der Seite und im Fenster (basis) auf den Server-Stand bringen
 function akteNachziehen(id, basis, zeile) {
@@ -979,9 +995,10 @@ function fristenDialog(id) {
     // W14: nur Geändertes, nichts überschreiben, was App (z. B. Theorie bestanden) oder anderer PC inzwischen geändert haben
     const erg = await speichereAkteSicher(id, s, werte);
     if (!erg.ok) return false;
+    const altBasis = Object.assign({}, s);
     akteNachziehen(id, s, erg.zeile);
     zeichne();
-    if (erg.konflikte.length) { akteKonfliktZeigen(fdlg, erg.konflikte); toast("Gespeichert, bis auf das, was inzwischen woanders geändert wurde (siehe oben)."); return false; }
+    if (erg.konflikte.length) { akteFensterAuffrischen(fdlg, altBasis, werte, erg.zeile, erg.konflikte, Object.keys(werte)); akteKonfliktZeigen(fdlg, erg.konflikte); return false; } // der gelbe Kasten im Fenster erklärt alles
     toast(erg.leer ? "Nichts geändert" : "Gespeichert");
     return true;
   });
@@ -2326,8 +2343,10 @@ function schuelerDialog(id) {
     // W14: nur Geändertes senden; was App oder anderer PC inzwischen am selben Feld geändert haben, bleibt stehen.
     // Den Fahrlehrer wechselt verschiebeSchueler (Termine, Übergabe-Eintrag), aber nur, wenn ihn niemand inzwischen verschoben hat.
     const basisLehrer = x.fahrlehrer_id || null;
-    const erg = await speichereAkteSicher(id, x, Object.assign({}, werte, { fahrlehrer_id: neuerLehrer }), ["fahrlehrer_id"]);
+    const werteAlle = Object.assign({}, werte, { fahrlehrer_id: neuerLehrer });
+    const erg = await speichereAkteSicher(id, x, werteAlle, ["fahrlehrer_id"]);
     if (!erg.ok) return false;
+    const altBasis = Object.assign({}, x);
     akteNachziehen(id, x, erg.zeile);
     const archiviert = wirdArchiviert && !erg.konflikte.some((c) => c.k === "inaktiv_seit");
     toast(erg.leer ? "Nichts geändert" : archiviert ? `${name} liegt jetzt im Archiv.` : "Gespeichert");
@@ -2335,8 +2354,8 @@ function schuelerDialog(id) {
     if ("fahrlehrer_id" in erg.frei) await verschiebeSchueler(Object.assign({}, x, { fahrlehrer_id: basisLehrer }), neuerLehrer);
     if (absagen.length && archiviert) await sageTermineAb(absagen, `${name} liegt im Archiv, ${absagen.length === 1 ? "1 Termin" : absagen.length + " Termine"} abgesagt`);
     if (erg.konflikte.length) {
-      akteKonfliktZeigen(dlg, erg.konflikte);
-      toast("Gespeichert, bis auf das, was inzwischen woanders geändert wurde (siehe oben).");
+      akteFensterAuffrischen(dlg, altBasis, werteAlle, erg.zeile, erg.konflikte, AKTE_FELDER);
+      akteKonfliktZeigen(dlg, erg.konflikte); // der gelbe Kasten im Fenster erklärt alles
       return false; // Fenster bleibt offen und zeigt den Unterschied
     }
     return true;

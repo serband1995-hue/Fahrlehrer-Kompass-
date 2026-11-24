@@ -5585,8 +5585,8 @@ async function pullSchuelerZuweisungen() {
       const getippt = erwartet !== undefined && _abglWertVon("schueler", lok) !== erwartet;
       const n = (r.name && !(r.name === "(ohne Namen)" && !lok.name)) ? r.name : lok.name, t = r.telefon || "";
       if (n !== lok.name || t !== (lok.telefon || "")) { lok.name = n; lok.telefon = t; if (!getippt) memS.schueler[r.id] = _abglWertVon("schueler", lok); namenNeu = true; }
-      if (_abglNT(lok.name || "(ohne Namen)", lok.telefon || "") === ntServer) memS.nt[r.id] = ntServer; // gemeinsamer Stand Name/Telefon
       else if (!getippt && bekannt && bekannt === vorherWert[r.id] && nachherWert[r.id]) memS.schueler[r.id] = nachherWert[r.id]; // Übernahmen vom Büro gelten nicht als eigene Änderung (spätere eigene Änderungen schon)
+      if (_abglNT(lok.name || "(ohne Namen)", lok.telefon || "") === ntServer) memS.nt[r.id] = ntServer; // gemeinsamer Stand Name/Telefon (W14)
     }
     _abglSpeichern(memS);
     _schuelerAbgerufen = true;
@@ -7889,7 +7889,7 @@ const STORE_KEY="serband-app-v1";
    Wird in den Einstellungen angezeigt + für den Update-Hinweis genutzt. */
 // K1: voreingestellter Wetter-Ort (früh definiert, weil ensureDB ihn schon beim Start braucht)
 const WETTER_START={city:"Offenbach",lat:50.1006,lon:8.7665};
-const APP_VERSION="2026.11.24.5";
+const APP_VERSION="2026.11.24.6";
 try{const f=document.getElementById("drawerFoot"); if(f)f.textContent="Fahrlehrer-Kompass · Version "+APP_VERSION;}catch(e){}
 // Nutzungsbedingungen & Haftungsausschluss (Bereich: rechtliche Absicherung) - Version hochzählen
 // und alle Nutzer müssen erneut zustimmen, sobald sich der Text inhaltlich ändert.
@@ -8052,7 +8052,8 @@ async function _fsSyncAggJetztKern(){
           }
           if(!Object.keys(upd).length) continue;
           upd.aktualisiert_am=nowIso;
-          _fsPruefe(await supa.from("schueler").update(upd).eq("id",mein.id));
+          const uR=_fsPruefe(await supa.from("schueler").update(upd).eq("id",mein.id).select("id"));
+          if(!uR.data||!uR.data.length) throw new Error("Schüler nicht gespeichert (keine Berechtigung)");
         }
         if(woanders) toast(woanders===1?"Eine Angabe wurde inzwischen woanders geändert – der neue Stand bleibt":"Einige Angaben wurden inzwischen woanders geändert – der neue Stand bleibt");
       }
@@ -8542,7 +8543,7 @@ function theorieBestandenSetzen(s,an,leise){
   }catch(e){}
   if(an){ delete s.wartelisteRaus; if(!s.theoryPassed)s.theoryPassed=new Date().toISOString(); if(!(s.hist||[]).some(h=>h.typ==="theorie"||h.type==="theorie"))logHist(s,"theorie","Theorieprüfung bestanden"); if(stand(s)>=90&&!s.ready&&!s.passed){ s.ready=s.theoryPassed; if(!leise)toast("Theorie bestanden – auf die Praxis-Warteliste gesetzt"); } else if(stand(s)<90&&!s.ready&&!s.passed){ if(!leise)toast("Theorie bestanden – erst ab 90 % kommt er auf die Warteliste"); } if(s.theorieWait)s.theorieWaitBis=new Date().toISOString(); delete s.theorieWait; } else { if(s.ready&&s.ready===s.theoryPassed&&!s.pruefungsreifManuell)delete s.ready; delete s.theoryPassed; delete s.theorieWaitBis; }
 }
-function toastUndo(msg,onUndo,ms){
+function toastUndo(msg,onUndo,ms,knopf){ // knopf: eigene Beschriftung (nur wenn nicht mit einem früheren Hinweis zusammengefasst)
   const t=$("#toast"); ms=ms||5000; t.classList.remove("t-ok","t-info","t-fehler");
   // Läuft noch ein Rückgängig: zusammenfassen, ein Tipp macht beides rückgängig (neueste zuerst)
   if(t._undos&&t._undos.length&&t.classList.contains("undo")&&t.classList.contains("show")){
@@ -8554,6 +8555,7 @@ function toastUndo(msg,onUndo,ms){
   t.classList.add("undo","show");
   t.innerHTML=`<span class="ut-txt"></span><button class="ut-btn" type="button">Rückgängig</button>`;
   t.querySelector(".ut-txt").textContent=msg;
+  if(knopf&&t._undos.length===1)t.querySelector(".ut-btn").textContent=knopf;
   const close=()=>{ t._undos=null; t.classList.remove("show"); setTimeout(()=>{ if(t.classList.contains("show"))return; t.classList.remove("undo");t.innerHTML="";},300); };
   t.querySelector(".ut-btn").onclick=()=>{ clearTimeout(t._t); close(); try{onUndo&&onUndo();}catch(e){} };
   clearTimeout(t._t); t._t=setTimeout(close,ms);
@@ -9888,10 +9890,11 @@ function openBehoerdeSheet(s){
       // Kein Bestätigen-Fenster: der Büro-Stand bleibt, „Rückgängig“ nimmt doch die eigene Eingabe
       const namen={bewerbernummer:"Bewerbernummer",vorbesitz:"Vorbesitz",auslands_fs:"Führerschein",wohnsitz_de_seit:"Wohnsitz seit",uebersetzung_vorhanden:"Übersetzung"};
       const mein={}; erg.konflikte.forEach(k=>{ mein[k]=werte[k]; });
-      toastUndo(`Büro hat ${erg.konflikte.map(k=>namen[k]||k).join(", ")} inzwischen geändert – Büro-Stand bleibt`,async()=>{
+      const was=erg.konflikte.length>2?erg.konflikte.length+" Angaben":erg.konflikte.map(k=>namen[k]||k).join(" und ");
+      toastUndo(`Gespeichert, außer ${was}: das Büro war schneller`,async()=>{
         const ok=await _schuelerServerSetzen(s.id,mein);
         toast(ok?"Deine Eingabe gilt ✓":"Nicht gespeichert – bitte später nochmal"); if(ok)zurAkte();
-      },9000);
+      },9000,"Meine nehmen");
     } else toast("Gespeichert ✓ – das Büro sieht es sofort");
     if(nochOffen){ closeSheet(); const y=view.scrollTop; routeDetail(s.id); view.scrollTop=y; }
   });
