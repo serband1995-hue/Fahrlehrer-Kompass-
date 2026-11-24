@@ -350,32 +350,54 @@
     }
     return liste;
   }
-  // Unterrichtseinheiten (45 min) und Sonderfahrten aus Kalender-Terminen ({art, datum, von, bis, status, sonderArt, tatsaechlicheDauer}),
-  // nur vorbei (heute erst nach dem Ende), ohne „abgebrochen“/„nicht erschienen“/abgesagt. jetztMin = Minuten seit Mitternacht.
-  function paketQuelleAusTerminen(termine, heute, jetztMin) {
+  /* Verbrauch aus Kalender-Terminen ({art, datum, von, bis, status, sonderArt, srcSonder, tatsaechlicheDauer}): nur vorbei (heute erst
+     nach dem Ende), ohne abgebrochen/nicht erschienen/abgesagt/geplatzt (wie countRange in der App). Fahrstunden, Nacht- und
+     Sonderfahrten in UE zu 45 min mit der tatsächlichen Dauer (ueOf). extra (beides freiwillig):
+     - pruefDaten: Tage mit Ergebnis einer Praxisprüfung (App oder Prüfungstafel). Kalendertermin und Ergebnis bis 3 Tage danach sind
+       dieselbe Prüfung (wie dayEvents); eine Wiederholung liegt frühestens 2 Wochen später.
+     - plan: Ausbildungsplan der App (plan.sonder). Je Art zählt das Größere aus Plan und Kalender: dieselbe Fahrt steht oft in beiden,
+       nachgetragene Büro-Fahrten oder alte Plan-Einträge nur in einem. jetztMin = Minuten seit Mitternacht. */
+  const PAKET_NICHT = ["abgebrochen", "nicht erschienen", "abgesagt", "geplatzt"];
+  function paketSonderArt(t) {
+    if (t.art === "nacht") return "nacht";
+    if (["ueberland", "autobahn", "nacht"].includes(t.sonderArt)) return t.sonderArt;
+    const g = String(t.srcSonder || "").split(":")[1] || "";
+    return ["ueberland", "autobahn", "nacht"].includes(g) ? g : "";
+  }
+  function paketPruefZahl(tage) {
+    let n = 0, anker = null;
+    for (const d of Array.from(new Set(tage)).sort()) {
+      if (anker && daysBetweenISO(anker, d) <= 3) continue;
+      n++; anker = d;
+    }
+    return n;
+  }
+  function paketQuelleAusTerminen(termine, heute, jetztMin, extra) {
     const q = { fahrstunden: 0, sonder: { ueberland: 0, autobahn: 0, nacht: 0 }, pruefungen: 0, simulator: 0 };
+    const ex = extra || {}, pTage = [];
     for (const t of termine || []) {
       if (!t || !t.datum || !t.von || !t.bis || t.datum > heute) continue;
       if (t.datum === heute && hm2min(t.bis) > jetztMin) continue;
-      if (["abgebrochen", "nicht erschienen", "abgesagt"].includes(t.status)) continue;
-      const dauer = hm2min(t.bis) - hm2min(t.von);
+      if (PAKET_NICHT.includes(t.status)) continue;
       if (t.art === "fahrstunde") q.fahrstunden += ueOf(t.art, t.von, t.bis, t.tatsaechlicheDauer);
-      else if (t.art === "nacht") q.sonder.nacht += Math.floor(dauer / 45);
-      else if (t.art === "sonder" && q.sonder[t.sonderArt] != null) q.sonder[t.sonderArt] += Math.floor(dauer / 45);
-      else if (t.art === "pruefung") q.pruefungen += 1;
+      else if (t.art === "nacht" || t.art === "sonder") { const a = paketSonderArt(t); if (a) q.sonder[a] += ueOf(t.art, t.von, t.bis, t.tatsaechlicheDauer); }
+      else if (t.art === "pruefung") pTage.push(t.datum);
       else if (t.art === "simulator") q.simulator += 1;
     }
+    for (const d of ex.pruefDaten || []) if (d && String(d).slice(0, 10) <= heute) pTage.push(String(d).slice(0, 10));
+    q.pruefungen = paketPruefZahl(pTage);
+    const plan = paketSonderAusPlan(ex.plan, heute);
+    for (const a of Object.keys(q.sonder)) q.sonder[a] = Math.round(Math.max(q.sonder[a], plan ? plan[a] : 0) * 100) / 100;
     q.fahrstunden = Math.round(q.fahrstunden * 100) / 100;
     return q;
   }
-  // Sonderfahrten aus dem Ausbildungsplan der App (plan.sonder: je Art Felder, ein ausgefülltes Feld = 45 Minuten); null = kein Plan
-  function paketSonderAusPlan(plan) {
+  // heute (freiwillig): nur Fahrten bis heute zählen; ein für nächste Woche eingetragenes Feld ist noch nicht gefahren (Fable W5)
+  function paketSonderAusPlan(plan, heute) {
     const sd = plan && plan.sonder;
     if (!sd || typeof sd !== "object") return null;
-    const zaehle = (a) => (Array.isArray(a) ? a.filter((o) => !!(o && o.iso)).length : 0);
+    const zaehle = (a) => (Array.isArray(a) ? a.filter((o) => !!(o && o.iso) && (!heute || String(o.iso).slice(0, 10) <= heute)).length : 0);
     return { ueberland: zaehle(sd.ueberland), autobahn: zaehle(sd.autobahn), nacht: zaehle(sd.nacht) };
   }
-
   const api = { paketVerbrauch, paketQuelleAusTerminen, paketSonderAusPlan, PAKET_SONDER, FS_BUERO_ARTEN, pad2, hm2min, parseISO, dateISO, todayISO, ueOf, addMonthsISO, addDaysISO, daysBetweenISO, reaktFaellig, reaktNachZahlung, reaktInfo, theorieInfo, antragInfo, theorieFristInfo, umschreibInfo, istEuEwr, EU_EWR, UMSCHREIB_MONATE, theorieSoll, theorieStand, sonderSoll, FAHRLEHRERLAUBNIS, ausbildungsKlassen, fahrlehrerFristen, lkwWegAusVorbesitz, LEKT_GRUND, LEKT_B, LEKT_C, LEKT_CE, fcGebucht, fcErhalten, fcGueltigBis, fcGueltigkeit, fcZeitraum, fcVorZeitraum, fcSoll, aufteilung, FAHR_ARTEN, wartetInfo, istDrittstaat, landKey, DRITTSTAATEN };
   if (typeof module !== "undefined" && module.exports) module.exports = api;
   else root.KR = api;

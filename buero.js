@@ -1465,9 +1465,9 @@ function renderSchueler() {
     const b197 = x.klasse === "B197";
     const testfahrt = b197 ? (x.b197_testfahrt_am ? `<span class="marke-pill gruen">Testfahrt ✓ ${esc(datumDE(x.b197_testfahrt_am).slice(0, 6))}</span>` : `<span class="marke-pill gelb">Testfahrt offen</span>`) : "";
     return `<tr${istAktiv(x) ? "" : ' class="inaktivzeile"'}>
-      <td><div class="name-zeile">${farbPunkt(a)}<b>${esc(x.name)}</b></div><div class="unter">${istAktiv(x) ? "" : `im Archiv seit ${esc(datumDE(x.inaktiv_seit))} · `}${ausgeblendetAm(x) ? `<span class="hinweis-ausgeblendet-klein">vom Fahrlehrer ausgeblendet am ${esc(datumDE(ausgeblendetAm(x).slice(0, 10)))}</span> · ` : ""}${wartetArt(x) ? `<span class="marke-pill gelb">${esc(WARTE_TEXT[wartetArt(x)])}</span> ` : ""}${istAktiv(x) && bueroGesperrt(x) ? zahlungPill(x) + " " : ""}${esc(x.telefon || "")}${x.email ? " · " + esc(x.email) : ""}</div><div class="unter nur-unter">${esc(klasseVon(x))} · ${esc(artName(x.ausbildungsart))}${x.paket_id ? " · " + esc(paketName(x.paket_id)) : ""}</div></td>
+      <td><div class="name-zeile">${farbPunkt(a)}<b>${esc(x.name)}</b></div><div class="unter">${istAktiv(x) ? "" : `im Archiv seit ${esc(datumDE(x.inaktiv_seit))} · `}${ausgeblendetAm(x) ? `<span class="hinweis-ausgeblendet-klein">vom Fahrlehrer ausgeblendet am ${esc(datumDE(ausgeblendetAm(x).slice(0, 10)))}</span> · ` : ""}${wartetArt(x) ? `<span class="marke-pill gelb">${esc(WARTE_TEXT[wartetArt(x)])}</span> ` : ""}${istAktiv(x) && bueroGesperrt(x) ? zahlungPill(x) + " " : ""}${esc(x.telefon || "")}${x.email ? " · " + esc(x.email) : ""}</div><div class="unter nur-unter">${esc(klasseVon(x))} · ${esc(artName(x.ausbildungsart))}${bkListenPaket(x)}</div></td>
       <td>${x.fahrlehrer_id ? esc(lehrerName(x.fahrlehrer_id)) : '<span class="marke-pill rot">ohne Fahrlehrer</span>'}</td>
-      <td class="nur-sehr-breit">${esc(klasseVon(x))}<div class="unter">${esc(artName(x.ausbildungsart))}${x.paket_id ? " · " + esc(paketName(x.paket_id)) : ""}${a.beginn ? ` · seit <span class="datum">${esc(datumDE(a.beginn))}</span>` : ""}</div></td>
+      <td class="nur-sehr-breit">${esc(klasseVon(x))}<div class="unter">${esc(artName(x.ausbildungsart))}${bkListenPaket(x)}${a.beginn ? ` · seit <span class="datum">${esc(datumDE(a.beginn))}</span>` : ""}</div></td>
       <td>${standHTML(a)}<div class="unter">Theorie ${esc(theo)}</div></td>
       <td class="nur-sehr-breit">${naechster[x.id] ? esc(datumDE(naechster[x.id])) : '<span class="leise">–</span>'}</td>
       <td>${istAktiv(x) ? `<span class="marke-pill ${rf}">${rt}</span>` : '<span class="leise">–</span>'}${testfahrt ? `<div class="unter">${testfahrt}</div>` : ""}${notizPill(x.id)}${aufgabePill(x.id)}</td>
@@ -3386,7 +3386,7 @@ function renderZahlenListe() {
     return kopf(`Anmeldungen (${l.length})`, `<p>${Object.entries(nachArt).map(([k, v]) => `<span class="marke-pill">${esc(k)}: ${v}</span>`).join(" ")}</p>`) +
       (l.length ? `<table class="tabelle"><thead><tr><th>Datum</th><th>Schüler</th><th>Klasse</th><th>Ausbildungsart</th><th>Fahrlehrer</th><th>Paket</th><th>Stand</th></tr></thead><tbody>${l.map((x) => `<tr>
         <td class="zeitspalte">${esc(datumDE(anmeldeDatum(x)))}</td><td>${name(x.id)}</td><td>${esc(klasseVon(x))}</td><td>${esc(artName(x.ausbildungsart))}</td>
-        <td>${esc(x.fahrlehrer_id ? lehrerName(x.fahrlehrer_id) : "–")}</td><td>${esc(x.paket_id ? paketName(x.paket_id) : "–")}</td>
+        <td>${esc(x.fahrlehrer_id ? lehrerName(x.fahrlehrer_id) : "–")}</td><td>${esc((bkAktivesPaket(x.id) || {}).name || (x.paket_id ? paketName(x.paket_id) : "–"))}</td>
         <td>${istAktiv(x) ? (x.praxis_bestanden_am ? '<span class="marke-pill gruen">bestanden</span>' : '<span class="marke-pill">aktiv</span>') : '<span class="marke-pill">Archiv</span>'}</td></tr>`).join("")}</tbody></table>` : `<p class="leer">Keine Anmeldungen in diesem Zeitraum.</p>`) + "</div>";
   }
   if (liste === "praxis" || liste === "theorie") {
@@ -4206,7 +4206,7 @@ async function ladeDaten() {
       supa.from("fahrschule_zahlungsdaten").select("*").eq("fahrschule_id", fsId).maybeSingle(),   // Werkstatt 11 (Zahlungsmail); fehlt die Tabelle → Abschnitt „noch nicht eingerichtet“
       supa.from("zahlungs_mails").select("*").eq("fahrschule_id", fsId).order("angelegt_am", { ascending: false }).limit(2000),
       supa.from("fahrzeug_konflikt_gesehen").select("*").eq("fahrschule_id", fsId).order("gesehen_am", { ascending: false }).limit(2000),   // K18; fehlt die Tabelle → null, kein „Gesehen“-Knopf
-      supa.from("schueler_pakete").select("*").eq("fahrschule_id", fsId).is("storniert_am", null).limit(5000),   // Werkstatt 13: aktive verkaufte Pakete; fehlt die Tabelle → null
+      alleSeiten(() => supa.from("schueler_pakete").select("*").eq("fahrschule_id", fsId).is("storniert_am", null).order("id")),   // Werkstatt 13: aktive verkaufte Pakete; fehlt die Tabelle → null
     ]);
     if (nr !== S.ladeNr) return; // inzwischen wurde neu geladen oder die Fahrschule gewechselt
     S.fs = pruefe(fs, "Fahrschule");
