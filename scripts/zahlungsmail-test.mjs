@@ -567,6 +567,15 @@ try {
     await oeffneAkte(pg, "s3"); dlg = pg.locator("dialog[open]").last();
     pruefe("Z13d Ladefehler: Hinweis in der Akte, Senden gesperrt", (await dlg.locator("[data-elternfehler]").count()) === 1 && await dlg.locator("[data-zmoeffne]").isDisabled());
     await pg.evaluate(() => { window.__FAKE.fehler = {}; });
+    // Zwei getrennte Mails (Schüler und Eltern): scheitert die zweite, sagt das Büro es deutlich
+    await pg.evaluate(async () => { window.__FAKE.tabellen.schueler_eltern[0].mail_an = "beide"; window.__FAKE.fehler = { "zahlungs-mail": "zweite" }; await ladeDaten(); });
+    await schliesseAlle(pg); await oeffneAkte(pg, "s3"); dlg = pg.locator("dialog[open]").last();
+    if (!(await dlg.locator("[data-zmform]").first().isVisible())) await dlg.locator("[data-zmoeffne]").click(); // Formular bleibt nach Z13b offen
+    await dlg.locator("[data-zmbetrag]").fill("120");
+    await dlg.locator("[data-zmsenden]").click(); await pg.waitForTimeout(1500);
+    const t2 = await pg.locator("#toast").innerText();
+    pruefe("Z13f zweite Mail (Eltern) nicht gesendet: rote Meldung nennt die Eltern", /Gesendet, aber nicht an die Eltern/.test(t2), t2);
+    await pg.evaluate(() => { window.__FAKE.fehler = {}; });
     pruefe("Z13e keine Fehler in der Konsole", !jsFehler(e.konsole).length, jsFehler(e.konsole).join(" | "));
     await e.ctx.close();
   }

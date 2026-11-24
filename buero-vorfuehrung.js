@@ -225,7 +225,7 @@ if (typeof module !== "undefined" && module.exports) { module.exports = { bauDat
   if (!F.functions["zahlungs-mail"]) F.functions["zahlungs-mail"] = (b) => {
     const f = F.fehler && F.fehler["zahlungs-mail"];
     if (f === "netz") throw new Error("Failed to fetch");
-    if (f) return { fehler: f };
+    if (f && f !== "zweite") return { fehler: f };
     const profile = F.tabellen.profiles || [];
     const ich = F.session && profile.find((p) => p.id === F.session.user.id);
     if (!ich) return { fehler: "nicht_angemeldet" };
@@ -256,11 +256,12 @@ if (typeof module !== "undefined" && module.exports) { module.exports = { bauDat
     const liste = echt ? alle : [z.test_email || "betreiber@example.org"];
     if (echt && !liste.length) return { fehler: "keine_email" };
     if (echt && Array.isArray(b.erwartete_empfaenger) && b.erwartete_empfaenger.map((x) => String(x).toLowerCase()).sort().join(",") !== liste.slice().sort().join(",")) return { fehler: "empfaenger_geaendert" }; // wie der Server (409)
-    F.letzteEmpfaenger = liste.slice(); // für Tests: an wen die Mail ginge
+    F.letzteEmpfaenger = liste.slice(); // für Tests: an wen die Mail ginge (je Adresse eine eigene Mail, wie der Server)
+    const nichtAn = f === "zweite" && liste.length === 2 ? ["Eltern"] : undefined; // Tests: zweite Mail scheitert
     const jetzt = new Date().toISOString(), id = "zm-" + Math.random().toString(36).slice(2, 10);
     const kurz = liste.map((an) => an.slice(0, 1) + "***@" + (an.split("@")[1] || "")).join(", ");
     mails.push({ id, fahrschule_id: ich.fahrschule_id, schueler_id: s.id, art: b.art, betrag_cent: b.betrag_cent, wofuer: w, modus: echt ? "echt" : "test", empfaenger_kurz: kurz, status: "gesendet", gesendet_von: ich.id, bearbeiter: ich.name, angelegt_am: jetzt, gesendet_am: jetzt });
-    return { ok: true, id, modus: echt ? "echt" : "test", gesendet_am: jetzt, empfaenger_kurz: kurz };
+    return { ok: true, id, modus: echt ? "echt" : "test", gesendet_am: jetzt, empfaenger_kurz: kurz, nicht_an: nichtAn };
   };
   // PIN-Funktionen wie in der Datenbank (vereinfacht). Der Schlüssel kommt hier aus dem Tab-Speicher statt aus der Kopfzeile.
   F.sitzungen = F.sitzungen || {};

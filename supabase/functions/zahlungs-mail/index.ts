@@ -86,30 +86,43 @@ Deno.serve(async (req) => {
     // Test: nur die Test-Adresse. Ältere Datenbank ohne empfaenger_alle: wie bisher nur „empfaenger“.
     const empfaenger: string[] = d.modus === "echt" && Array.isArray(d.empfaenger_alle) && d.empfaenger_alle.length
       ? d.empfaenger_alle.map(String).slice(0, 2) : [String(d.empfaenger)];
-    let betrf = betreff(d);
-    if (d.modus === "test" && !betrf.startsWith("[TEST] ")) betrf = "[TEST] " + betrf;
     const png = await qrPng(epcText(d));
-
-    const res = await fetch("https://api.resend.com/emails", {
-      method: "POST",
-      signal: AbortSignal.timeout(15000),
-      headers: { Authorization: `Bearer ${key}`, "Content-Type": "application/json" },
-      body: JSON.stringify({
-        from: absender(d),
-        to: empfaenger,
-        subject: betrf,
-        html: mailHtml(d),
-        text: mailText(d),
-        attachments: [{ filename: "girocode.png", content: base64(png), content_type: "image/png", content_id: "girocode" }],
-      }),
-    });
-    const antwort: any = await res.json().catch(() => ({}));
-    if (!res.ok) return await scheitern("Resend " + res.status + ": " + String(antwort?.message || antwort?.name || "").slice(0, 120), 502);
+    const kurzVon = (e: string) => e.slice(0, 1) + "***@" + e.split("@")[1];
+    // W14 (Hauptsitzung 24.11.): je Empfänger eine eigene Mail, niemand sieht die Adresse des anderen.
+    // Bei „beide“ liefert der Server zuerst den Schüler, dann die Eltern: jede Mail bekommt die passende Anrede.
+    const anFuer = (i: number) => (d.an === "beide" && empfaenger.length === 2 ? (i === 0 ? "schueler" : "eltern") : d.an);
+    const ids: string[] = [], nichtAn: string[] = [];
+    let ersterFehler = "";
+    for (let i = 0; i < empfaenger.length; i++) {
+      const dm = { ...d, an: anFuer(i) };
+      let betrf = betreff(dm);
+      if (d.modus === "test" && !betrf.startsWith("[TEST] ")) betrf = "[TEST] " + betrf;
+      const res = await fetch("https://api.resend.com/emails", {
+        method: "POST",
+        signal: AbortSignal.timeout(15000),
+        headers: { Authorization: `Bearer ${key}`, "Content-Type": "application/json" },
+        body: JSON.stringify({
+          from: absender(d),
+          to: [empfaenger[i]],
+          subject: betrf,
+          html: mailHtml(dm),
+          text: mailText(dm),
+          attachments: [{ filename: "girocode.png", content: base64(png), content_type: "image/png", content_id: "girocode" }],
+        }),
+      });
+      const antwort: any = await res.json().catch(() => ({}));
+      if (res.ok) { if (antwort?.id) ids.push(String(antwort.id)); continue; }
+      const grund = "Resend " + res.status + ": " + String(antwort?.message || antwort?.name || "").slice(0, 120);
+      if (i === 0) return await scheitern(grund, 502); // erste Mail gescheitert: nichts gesendet
+      ersterFehler = grund;
+      nichtAn.push(anFuer(i) === "eltern" ? "Eltern" : "Schüler");
+    }
 
     const gesendetAm = new Date().toISOString();
-    await merke({ status: "gesendet", resend_id: antwort?.id ?? null, gesendet_am: gesendetAm, fehler: null });
-    const kurz = empfaenger.map((e) => e.slice(0, 1) + "***@" + e.split("@")[1]).join(", ");
-    return json({ ok: true, id: d.id, modus: d.modus, gesendet_am: gesendetAm, empfaenger_kurz: kurz });
+    await merke({ status: "gesendet", resend_id: ids.join(",") || null, gesendet_am: gesendetAm,
+      fehler: nichtAn.length ? ("Nicht an " + nichtAn.join(", ") + ": " + ersterFehler).slice(0, 200) : null });
+    const kurz = empfaenger.map(kurzVon).join(", ");
+    return json({ ok: true, id: d.id, modus: d.modus, gesendet_am: gesendetAm, empfaenger_kurz: kurz, nicht_an: nichtAn.length ? nichtAn : undefined });
   } catch (e) {
     console.warn("zahlungs-mail:", String(e).slice(0, 200));
     return await scheitern("Fehler beim Versand");
