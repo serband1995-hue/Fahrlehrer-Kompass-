@@ -137,6 +137,7 @@ function renderPakete() {
 // Doppel-Tipp auf „Speichern“: der zweite Tipp landet nach dem Schließen auf dem Knopf darunter (z. B. „Archivieren“).
 // Darum Tipps in der Liste kurz nach dem Schließen eines Fensters nicht annehmen (Fehlersucher Bedienung 24.11.).
 let bkFensterZu = 0;
+let bkKonflikt = false; // letzte Speicherung scheiterte, weil jemand anderes das Paket gerade geändert hat
 function bkGeisterTipp() { return Date.now() - bkFensterZu < 500; }
 function bindePakete(ziel) {
   const neu = ziel.querySelector("#bkNeu"); if (neu) neu.addEventListener("click", () => { if (!bkGeisterTipp()) bkEditor(null); });
@@ -159,6 +160,7 @@ async function bkSchreiben(id, werte, stand) {
     q = q.select();
   } else q = supa.from("fahrschule_pakete").insert(Object.assign({ fahrschule_id: S.fsId }, werte)).select();
   const fs = S.fsId;
+  bkKonflikt = false;
   const res = await q;
   if (res.error || !res.data || !res.data.length) {
     if (res.error && bkSpalteFehlt(res.error)) { S.bkFehlt = true; toast("Die Pakete sind in der Datenbank noch nicht eingerichtet.", true); zeichne(); return null; }
@@ -166,6 +168,7 @@ async function bkSchreiben(id, werte, stand) {
       const jetzt = await supa.from("fahrschule_pakete").select("id,aktualisiert_am").eq("id", id).maybeSingle();
       const anders = jetzt && !jetzt.error && jetzt.data && (jetzt.data.aktualisiert_am || null) !== (stand || null);
       if (anders) {
+        bkKonflikt = true;
         toast("Jemand anderes hat dieses Paket gerade geändert. Die Liste wird neu geladen, bitte noch einmal öffnen.", true);
         if (typeof ladeDaten === "function") ladeDaten();
         return null;
@@ -202,9 +205,9 @@ async function bkAktiv(id, aktiv, knopf) {
 
 /* ---------- Der Baukasten (Fenster) ---------- */
 function bkEuroFeld(cent) { return cent == null ? "" : (cent / 100).toFixed(2).replace(".", ","); }
-/* Eingabe „65“, „65,5“, „65.50“, „1.299,00“ → Cent. "" → null (Preis aus der Liste), ungültig → NaN */
+/* Eingabe „65“, „65,“, „65,5“, „65.50“, „1.299,00“ → Cent. "" → null (Preis aus der Liste), ungültig → NaN */
 function bkCentAusText(t) {
-  let s = String(t || "").replace(/[\s€]/g, "");
+  let s = String(t || "").replace(/[\s€]/g, "").replace(/[.,]$/, ""); // „65,“ beim Tippen ist ein Zwischenstand, kein Fehler
   if (!s) return null;
   if (s.includes(",")) s = s.replace(/\./g, "").replace(",", ".");
   else if (/^[1-9]\d{0,2}(\.\d{3})+$/.test(s)) s = s.replace(/\./g, "");
@@ -296,7 +299,7 @@ function bkEditor(vorlage, kopie) {
     }
     const alt = { name: vorlage.name, klasse: vorlage.klasse || null, posten: bkPosten(vorlage) };
     const z = await bkSchreiben(vorlage.id, werte, vorlage.aktualisiert_am || null);
-    if (!z) return false;
+    if (!z) return bkKonflikt; // fremde Änderung: Fenster schließen, sonst scheitert jedes weitere Speichern auf dem alten Stand
     zeichne();
     toastUndo(`Paket „${name}“ gespeichert`, async () => {
       if (await bkSchreiben(vorlage.id, alt, z.aktualisiert_am || null)) { zeichne(); toast("Rückgängig gemacht"); }
@@ -315,7 +318,7 @@ function bkEditor(vorlage, kopie) {
   function rechne() {
     const s = bkSumme(st.posten.filter((p) => !p._ungueltig), klasse());
     s.fehlt += st.posten.filter((p) => p._ungueltig).length;
-    dlg.querySelector("[data-bk-gesamt]").textContent = (s.fehlt ? "ab " : "") + prEuro(s.cent);
+    dlg.querySelector("[data-bk-gesamt]").textContent = st.posten.length && s.fehlt >= st.posten.length ? "Preis fehlt" : (s.fehlt ? "ab " : "") + prEuro(s.cent);
     dlg.querySelector(".bk-gesamt").hidden = !st.posten.length; // leer: Platz für die Knöpfe zum Hinzufügen
     const h = dlg.querySelector("[data-bk-gesamt-hinweis]");
     h.innerHTML = s.fehlt ? `<span class="marke-pill gelb">${s.fehlt} Posten ohne Preis, noch nicht eingerechnet</span>` : "";

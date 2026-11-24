@@ -259,6 +259,7 @@ try {
     await d.locator("button[value=ok]").click(); await page.waitForTimeout(400);
     const p1 = (await pakete(page)).find((p) => p.id === "p-1");
     pruefe("B11 gleichzeitig geändert: nichts überschrieben, Hinweis, neu geladen", p1.name === "Von Kollegin" && p1.posten.length === 1 && /Jemand anderes/.test(await page.locator("body").innerText()), JSON.stringify([p1.name, p1.posten.length]));
+    pruefe("B11b nach dem Hinweis ist das Fenster zu (kein Speichern mehr auf altem Stand)", await page.locator(dlgSel).count() === 0);
     await ctx.close();
   }
   // B12 Preis mit Komma und Tausenderpunkt, unlesbarer Preis sperrt; B13 Hinweis nennt die verwendete Preisposition
@@ -273,6 +274,8 @@ try {
     pruefe("B12a „abc“: rot markiert, Gesamt mit „ab“", (await d.locator('[data-bk-preis="0"]').getAttribute("aria-invalid")) === "true" && /^ab /.test(await gesamt(page)));
     await d.locator("button[value=ok]").click(); await page.waitForTimeout(200);
     pruefe("B12b unlesbarer Preis: nicht gespeichert", await page.locator(dlgSel).count() === 1 && !(await pakete(page)).some((p) => p.name === "Komma-Test"));
+    await d.locator('[data-bk-preis="0"]').fill("65,");
+    pruefe("B12d „65,“ beim Tippen ist nicht rot", (await d.locator('[data-bk-preis="0"]').getAttribute("aria-invalid")) === "false");
     await d.locator('[data-bk-preis="0"]').fill("1.299,00");
     await d.locator("button[value=ok]").click(); await page.waitForTimeout(300);
     const neu = (await pakete(page)).find((p) => p.name === "Komma-Test");
@@ -339,6 +342,14 @@ try {
     pruefe("B17b Enter im Preisfeld: Fenster bleibt offen, nichts gespeichert", await page.locator(dlgSel).count() === 1 && !(await pakete(page)).some((p) => p.name === "Enter-Test"));
     await d.locator('[data-bk-sonder="1"]').selectOption("Überlandfahrt"); await page.waitForTimeout(100);
     pruefe("B17c dieselbe Sonderfahrt zweimal wird abgelehnt", (await d.locator('[data-bk-sonder="1"]').inputValue()) === "Autobahnfahrt");
+    await ctx.close();
+  }
+  // B18 Kein Posten hat einen Preis: unten steht „Preis fehlt“, nicht „ab 0,00 €“
+  {
+    const { page, ctx } = await oeffne({ nutzer: "ad-1", vorbereiten: function () { F.tabellen.fahrschule_preise = []; } });
+    await page.click("#bkNeu"); await page.waitForTimeout(150);
+    await chip(page, "Grundbetrag"); await chip(page, "Übungsstunden");
+    pruefe("B18 alle Preise fehlen: „Preis fehlt“", (await gesamt(page)) === "Preis fehlt", await gesamt(page));
     await ctx.close();
   }
   // B10 Migration (statisch): Büro ohne Löschrecht, feste Kopie, Rückweg
