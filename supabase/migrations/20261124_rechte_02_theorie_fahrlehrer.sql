@@ -40,9 +40,10 @@ begin
       select a.geaendert_von, a.geaendert_am into letzte
         from public.aenderungsprotokoll a
        where a.tabelle = 'schueler' and a.datensatz_id = old.id::text and a.feld = 'theorie_bestanden_am'
-       order by a.geaendert_am desc limit 1;
-      theorie_ok := found and letzte.geaendert_von = auth.uid()
-                    and (letzte.geaendert_am at time zone 'Europe/Berlin')::date = heute;
+       order by a.id desc limit 1; -- id: eindeutig in Schreib-Reihenfolge (geaendert_am ist der Beginn der Transaktion)
+      -- coalesce: ohne Nutzer (Server, SQL-Editor) ist geaendert_von leer – das zählt nicht als „selbst gesetzt“
+      theorie_ok := coalesce(found and letzte.geaendert_von = auth.uid()
+                    and (letzte.geaendert_am at time zone 'Europe/Berlin')::date = heute, false);
     end if;
     if not theorie_ok then
       raise exception 'Das Datum „Theorie bestanden“ kann nur das Büro ändern.';

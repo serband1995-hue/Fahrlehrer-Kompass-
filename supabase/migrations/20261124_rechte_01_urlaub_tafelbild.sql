@@ -28,7 +28,7 @@ begin
   new.erstellt_von := auth.uid();
   if tg_table_name = 'fahrschule_urlaub' then
     -- nur für sich selbst: der Name kommt aus dem eigenen Profil (der Kalender gleicht Urlaub über den Namen ab)
-    new.mitarbeiter_name := coalesce(nm, new.mitarbeiter_name);
+    new.mitarbeiter_name := coalesce(nm, nullif(btrim(coalesce(p->>'email', '')), ''), new.mitarbeiter_name); -- wie der Kalender: name, sonst E-Mail
   elsif tg_table_name = 'fahrschule_tafelbilder' then
     new.ersteller_name := coalesce(nm, nullif(btrim(coalesce(p->>'email', '')), ''), new.ersteller_name);
   end if;
