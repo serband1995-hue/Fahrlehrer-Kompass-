@@ -6235,6 +6235,8 @@ function routeFahrschuleDashboard(){
 }
 // Empfehlungen-Übersicht fürs Büro (Bug-Fix + neues Empfehlungs-Feature): zeigt, welcher
 // Fahrlehrer für welchen Schüler Simulator/Videoakademie empfohlen hat, mit Status-Pflege.
+// Werkstatt 12: Verkauf durchs Büro (Kennzeichen oder alter Eintrag ohne Fahrlehrer) ist nie eine Provision für eine Person.
+function istKeineProvision(e){return !!e&&(!e.fahrlehrer_id||!!(e.aufteilung&&e.aufteilung.keine_provision===true));}
 async function renderFsEmpfehlungenListe(){
   const el=document.getElementById("fsEmpfList");if(!el||!_fsAgg)return;
   const supa=getSupa();
@@ -6259,7 +6261,7 @@ async function renderFsEmpfehlungenListe(){
   })();
   el2.innerHTML=platSummeHTML+data.map(e=>`<div class="fs-card" data-empf="${e.id}">
     <div class="fs-name">${e.typ==="simulator"?"🕹️":"🎓"} ${esc(e.schueler_name)} <span style="font-size:11px;color:var(--muted);font-weight:400;">· ${e.typ==="simulator"?"Simulator":"Videoakademie"}</span></div>
-    <div class="fs-sub">von ${esc(e.fahrlehrer_name)} · ${isoDE((e.erstellt_am||"").slice(0,10))} · <b>${esc(STATUS_LABEL[e.status]||e.status)}</b>${e.betrag!=null?` · ${eur(e.betrag)}`:''}</div>
+    <div class="fs-sub">${istKeineProvision(e)?"Büro (keine Provision)":"von "+esc(e.fahrlehrer_name)} · ${isoDE((e.erstellt_am||"").slice(0,10))} · <b>${esc(STATUS_LABEL[e.status]||e.status)}</b>${e.betrag!=null?` · ${eur(e.betrag)}`:''}</div>
     <div class="fs-actions">
       ${e.status==="empfohlen"?`<button class="fs-btn-kill" style="background:var(--surface-2);color:var(--txt);" data-empf-zugang="${e.id}">Zugangsdaten ausgegeben</button>`:''}
       ${e.status!=="bezahlt"?`<button class="fs-btn-kill" style="background:#4a8b45;color:#fff;" data-empf-bezahlt="${e.id}">Bezahlt eintragen</button>`:''}
@@ -6275,7 +6277,7 @@ async function renderFsEmpfehlungenListe(){
     const empf=data.find(x=>x.id===b.dataset.empfStorno);
     const warBezahlt=empf&&empf.status==="bezahlt";
     if(!confirm(warBezahlt?"Diese Empfehlung war schon als bezahlt eingetragen (inkl. Aufteilung). Wirklich zurücknehmen? Betrag und Aufteilung werden zurückgesetzt.":"Diese Empfehlung wirklich stornieren?"))return;
-    await supa.from("fahrschule_empfehlungen").update({status:"storniert",betrag:null,aufteilung:null,aktualisiert_am:new Date().toISOString()}).eq("id",b.dataset.empfStorno);
+    await supa.from("fahrschule_empfehlungen").update({status:"storniert",betrag:null,aufteilung:istKeineProvision(empf)?{keine_provision:true}:null,aktualisiert_am:new Date().toISOString()}).eq("id",b.dataset.empfStorno);
     toast("Zurückgenommen ✓");
     renderFsEmpfehlungenListe();
   }));
@@ -6288,14 +6290,19 @@ async function openEmpfehlungBezahltSheet(id,empf){
   const cfg=(fs&&fs.konfiguration&&fs.konfiguration.akademieVermittlung)||{};
   const vorschlag=empf.typ==="simulator"?cfg.betragSimulator:cfg.betragAkademie;
   openSheet(`<div class="sheet-h">Bezahlt eintragen</div>
-    <p class="muted-p" style="font-size:13px;margin:-4px 0 12px;">${esc(empf.schueler_name)} · ${empf.typ==="simulator"?"Simulator":"Videoakademie"} · vermittelt von ${esc(empf.fahrlehrer_name)}</p>
+    <p class="muted-p" style="font-size:13px;margin:-4px 0 12px;">${esc(empf.schueler_name)} · ${empf.typ==="simulator"?"Simulator":"Videoakademie"} · ${istKeineProvision(empf)?"Büro (keine Provision)":"vermittelt von "+esc(empf.fahrlehrer_name)}</p>
     <div class="field"><label>Betrag (€)</label><input type="number" id="empfBetrag" value="${vorschlag!=null?vorschlag:''}" min="0" placeholder="Betrag eingeben"></div>
     <div id="empfSplitPreview" style="margin-top:10px;"></div>
     <div class="btn-row"><button class="btn btn-ghost" id="empfCancel" style="flex:0;padding:13px 18px;">Abbrechen</button><button class="btn btn-primary" id="empfSave">Speichern</button></div>`);
   const preview=()=>{
     const betrag=+($("#empfBetrag").value||0);
-    const istEigen=empf.fahrlehrer_id===(_authUser&&_authUser.id);
+    const keine=istKeineProvision(empf);
+    const istEigen=!keine&&empf.fahrlehrer_id===(_authUser&&_authUser.id);
     const box=$("#empfSplitPreview");
+    if(keine){
+      box.innerHTML=`<p class="muted-p" style="font-size:12px;">Direktverkauf durch das Büro — keine Provision.</p>`;
+      return;
+    }
     if(istEigen){
       box.innerHTML=`<p class="muted-p" style="font-size:12px;">Direktverkauf durch dich selbst — keine Aufteilung, das Geld bleibt komplett bei dir.</p>`;
       return;
@@ -6318,9 +6325,10 @@ async function openEmpfehlungBezahltSheet(id,empf){
   $("#empfSave").addEventListener("click",async()=>{
     const betrag=+($("#empfBetrag").value||0);
     if(!betrag){toast("Bitte einen Betrag eingeben");return;}
-    const istEigen=empf.fahrlehrer_id===(_authUser&&_authUser.id);
-    let aufteilung=null;
-    if(!istEigen){
+    const keine=istKeineProvision(empf);
+    const istEigen=!keine&&empf.fahrlehrer_id===(_authUser&&_authUser.id);
+    let aufteilung=keine?{keine_provision:true}:null;
+    if(!istEigen&&!keine){
       const split=cfg.splitKollege||{};
       if(split.akademie!=null&&split.fahrschule!=null&&split.fahrlehrer!=null&&split.plattform!=null){
         aufteilung={akademie:Math.round(betrag*split.akademie/100),fahrschule:Math.round(betrag*split.fahrschule/100),fahrlehrer:Math.round(betrag*split.fahrlehrer/100),plattform:Math.round(betrag*split.plattform/100)};
@@ -7875,7 +7883,7 @@ const STORE_KEY="serband-app-v1";
    Wird in den Einstellungen angezeigt + für den Update-Hinweis genutzt. */
 // K1: voreingestellter Wetter-Ort (früh definiert, weil ensureDB ihn schon beim Start braucht)
 const WETTER_START={city:"Offenbach",lat:50.1006,lon:8.7665};
-const APP_VERSION="2026.11.24.5";
+const APP_VERSION="2026.11.24.6";
 try{const f=document.getElementById("drawerFoot"); if(f)f.textContent="Fahrlehrer-Kompass · Version "+APP_VERSION;}catch(e){}
 // Nutzungsbedingungen & Haftungsausschluss (Bereich: rechtliche Absicherung) - Version hochzählen
 // und alle Nutzer müssen erneut zustimmen, sobald sich der Text inhaltlich ändert.

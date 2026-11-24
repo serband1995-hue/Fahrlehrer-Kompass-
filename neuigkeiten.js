@@ -4,6 +4,8 @@
    "kurz" (höchstens ~60 Zeichen) erscheint nach dem Update einmal als kleiner Hinweis (verschwindet von selbst, kein Knopf).
    Einfache Worte, keine Fachwörter, keine Schülerdaten. */
 window.KOMPASS_NEU = [
+  { version: "2026.11.24.6", datum: "2026-11-24", kurz: "Büro: Verkauf ohne Provision lässt sich jetzt speichern.",
+    punkte: ["Bei „Verkauf erfassen“ klappt die Wahl „Büro (keine Provision)“ wieder.", "Solche Verkäufe zeigen „Büro (keine Provision)“ und bringen nie eine Provision."] },
   { version: "2026.11.24.5", datum: "2026-11-24", kurz: "Die neuen ruhigen Farben jetzt auch auf den übrigen Seiten.",
     punkte: ["Einladung, Theorie-Seite, Lernszenen und der Druck im Büro haben jetzt dieselben ruhigen Farben wie die App.",
              "Einige kleine Zeichen sind besser lesbar, zum Beispiel die Ampel im Ausbildungsplan.",
