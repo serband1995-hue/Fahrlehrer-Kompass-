@@ -4,6 +4,22 @@
    "kurz" (höchstens ~60 Zeichen) erscheint nach dem Update einmal als kleiner Hinweis (verschwindet von selbst, kein Knopf).
    Einfache Worte, keine Fachwörter, keine Schülerdaten. */
 window.KOMPASS_NEU = [
+  { version: "2026.11.24.3", datum: "2026-11-24", kurz: "Büro: ruhigere Seitenleiste, Doppelbelegung „Gesehen“.",
+    punkte: ["Im Büro sind die Gruppen der Seitenleiste zu Beginn zugeklappt. Nur die Gruppe der offenen Seite ist auf.",
+             "Unter Fahrzeuge kannst du bei jeder Doppelbelegung „Gesehen“ tippen. Sie verschwindet aus der Warnung und kommt wieder, sobald sich einer der Termine ändert.",
+             "Darunter siehst du, wer was als gesehen markiert hat, und kannst es wieder anzeigen."] },
+  { version: "2026.11.24.2", datum: "2026-11-24", kurz: "Neu: Knopf „Theorie bestanden“ in der Warteliste.",
+    punkte: ["Unter Prüfungen bei „Wartet auf Theorie“ steht neben jedem Namen ein grüner Knopf „Theorie bestanden“. Ein Tipp genügt, die 20 % zählen sofort. Mit „Rückgängig“ nimmst du es zurück.",
+             "„Alle Schüler“ ist jetzt geordnet: deine Schüler zuerst, dann nach Fahrlehrer und Name.",
+             "Oben kannst du nach Fahrlehrer, Name oder Stand sortieren und einen Fahrlehrer auswählen. Das Handy merkt sich deine Wahl."] },
+  { version: "2026.11.24.1", datum: "2026-11-24", kurz: "Abmelden steht jetzt unten im Menü „Mehr“.",
+    punkte: ["„Abmelden“ findest du jetzt ganz unten im Menü „Mehr“, nicht mehr in den Einstellungen.",
+             "Die Gesamtübersicht und der Wechsel zur Büro-Seite sind nur für Leitung, Büro und den Betreiber da."] },
+  { version: "2026.11.23.9", datum: "2026-11-23", kurz: "Neue, ruhigere Farben: hell, klar, weniger Grün.",
+    punkte: ["App und Büro sehen jetzt heller und ruhiger aus. Grün gibt es fast nur noch an Knöpfen, Haken und als schmale Markierung. Die Karte „Als nächstes“ bleibt dunkelgrün, damit man sie sofort sieht.",
+             "Eingabefelder haben deutlichere Rahmen und sind leichter zu treffen, auch draußen am Handy.",
+             "Im dunklen Design sind die Flächen jetzt grau statt grünlich.",
+             "Fahrstunden sind im Kalender grau, Nacht- und Sonderfahrten bleiben blau."] },
   { version: "2026.11.23.8", datum: "2026-11-23", kurz: "Büro: Auswahl Test oder Echt wird wieder richtig angezeigt.",
     punkte: ["Bei den Zahlungsdaten für Mails stehen die Karten „Test“ und „Echt“ wieder ordentlich nebeneinander, mit lesbarem Text."] },
   { version: "2026.11.23.7", datum: "2026-11-23", kurz: "Neu im Büro: Zahlungsaufforderung per Mail.",
