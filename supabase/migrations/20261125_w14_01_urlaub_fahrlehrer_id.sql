@@ -2,11 +2,14 @@
 -- Bisher glich der Kalender Urlaub über den Namen ab (fahrschule_urlaub.mitarbeiter_name = Profilname). Wer seinen
 -- Profilnamen änderte, konnte so Urlaub unter fremdem Namen eintragen; ein Tippfehler im Büro blockierte niemanden.
 -- 1. Spalte fahrlehrer_id (leer = andere Person, z. B. Büro: steht nur in der Liste, blockt keinen Kalender).
--- 2. Altdaten: nur bei GENAU einem Namenstreffer in derselben Fahrschule zuordnen (gleiche Regel wie der Kalender bisher:
---    Profilname, sonst E-Mail, ohne Groß/klein und Leerzeichen am Rand). Mehrdeutige oder ohne Treffer bleiben leer.
+-- 2. Altdaten: nur bei GENAU einem Namenstreffer unter den Unterrichtenden derselben Fahrschule zuordnen (gleiche Regel wie
+--    der Kalender bisher: Fahrlehrer, Super-Admin, Leitung die selbst fährt; Profilname, sonst E-Mail, ohne Groß/klein und
+--    Leerzeichen am Rand). Mehrdeutige oder ohne Treffer bleiben leer. Live: 0 Zeilen (Hauptsitzung 24.11.).
 -- 3. Trigger trg_urlaub_fahrlehrer (läuft nach trg_urlaub_eigener_eintrag, Reihenfolge nach Name):
 --    Fahrlehrer: immer die eigene ID (eintragen nur für sich selbst). Büro/Leitung/Super-Admin: die ID muss ein Zugang
 --    DERSELBEN Fahrschule sein, der Name kommt dann aus dessen Profil. Gilt auch bei Änderungen (UPDATE).
+--    Ohne ID (z. B. ältere App im Zwischenspeicher): beim Anlegen wie bisher über den Namen zuordnen, aber nur bei genau
+--    einem Treffer unter den Unterrichtenden. Sonst bleibt die ID leer = andere Person.
 -- Idempotent. Rückweg: supabase/rueckweg/20261125_w14_urlaub_rueckweg.sql
 
 -- ---------- 1. Spalte ----------
@@ -19,6 +22,7 @@ from (
   select u2.id, min(p.id::text)::uuid as pid, count(*) as n
   from public.fahrschule_urlaub u2
   join public.profiles p on p.fahrschule_id = u2.fahrschule_id
+   and (p.rolle in ('fahrlehrer', 'super_admin') or (p.rolle = 'fahrschule_admin' and coalesce(p.faehrt_selbst, false)))
    and lower(btrim(coalesce(nullif(btrim(p.name), ''), p.email, ''))) = lower(btrim(coalesce(u2.mitarbeiter_name, '')))
   where u2.fahrlehrer_id is null and nullif(btrim(coalesce(u2.mitarbeiter_name, '')), '') is not null
   group by u2.id
@@ -34,12 +38,20 @@ create or replace function public.urlaub_fahrlehrer_setzen()
 as $function$
 declare
   p record;
+  treffer uuid[];
 begin
   if auth.uid() is null then return new; end if; -- Server, Nachtläufe
   if not (is_super_admin(auth.uid()) or is_buero(auth.uid()) or is_fahrschule_admin(auth.uid())) then
     -- Fahrlehrer (eine UPDATE-Regel hat er nicht): nur für sich selbst
     if tg_op = 'INSERT' then new.fahrlehrer_id := auth.uid(); else new.fahrlehrer_id := old.fahrlehrer_id; end if;
     return new;
+  end if;
+  if tg_op = 'INSERT' and new.fahrlehrer_id is null and nullif(btrim(coalesce(new.mitarbeiter_name, '')), '') is not null then
+    select array_agg(x.id) into treffer from public.profiles x
+     where x.fahrschule_id = new.fahrschule_id
+       and (x.rolle in ('fahrlehrer', 'super_admin') or (x.rolle = 'fahrschule_admin' and coalesce(x.faehrt_selbst, false)))
+       and lower(btrim(coalesce(nullif(btrim(x.name), ''), x.email, ''))) = lower(btrim(new.mitarbeiter_name));
+    if coalesce(array_length(treffer, 1), 0) = 1 then new.fahrlehrer_id := treffer[1]; end if;
   end if;
   if new.fahrlehrer_id is not null and (tg_op = 'INSERT' or new.fahrlehrer_id is distinct from old.fahrlehrer_id
                                         or new.fahrschule_id is distinct from old.fahrschule_id) then

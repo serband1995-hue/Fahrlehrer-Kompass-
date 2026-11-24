@@ -7392,7 +7392,8 @@ async function _fsLadeUrlaub(){
   const {data}=await supa.from("fahrschule_urlaub").select("*").eq("fahrschule_id",_fsAgg.fahrschuleId).gte("bis",heute).order("von");
   const rows=(data||[]).map(u=>`<div class="fs-card">
     <div class="fs-name">${esc(_fsUrlaubName(u))}</div>
-    <div class="fs-sub">${isoDE(u.von)} – ${isoDE(u.bis)}${u.notiz?` · ${esc(u.notiz)}`:''}${("fahrlehrer_id" in u)&&!u.fahrlehrer_id?" · ohne Kalender":""}</div>
+    <div class="fs-sub">${u.von===u.bis?isoDE(u.von):isoDE(u.von)+" – "+isoDE(u.bis)}${u.notiz?` · ${esc(u.notiz)}`:''}</div>
+    ${_fsUrlaubOhneKalender(u)?'<div class="fs-sub" style="font-weight:700;">Ohne Kalender (blockiert nichts)</div>':""}
     <div class="fs-actions"><button class="fs-btn-kill" onclick="fsUrlaubLoeschen(${_jsArg(u.id)})">Löschen</button></div>
   </div>`).join("")||'<p class="muted-p">Aktuell kein eingetragener Urlaub.</p>';
   const wrap=$("#fsUrlaubWrap");
@@ -7405,34 +7406,42 @@ function _fsUrlaubName(u){
   if(u.fahrlehrer_id){ const l=(_fsAgg&&_fsAgg.lehrer||[]).find(x=>x.id===u.fahrlehrer_id); if(l)return l.name||l.email||u.mitarbeiter_name||""; if(window._fsAlleNamen&&window._fsAlleNamen[u.fahrlehrer_id])return window._fsAlleNamen[u.fahrlehrer_id]; }
   return u.mitarbeiter_name||"";
 }
+// W14: blockiert dieser Urlaub keinen Kalender? (keine ID oder Person ist kein unterrichtender Fahrlehrer mehr)
+function _fsUrlaubOhneKalender(u){ if(!("fahrlehrer_id" in u))return false; return !u.fahrlehrer_id||!(_fsAgg&&_fsAgg.lehrer||[]).some(l=>l.id===u.fahrlehrer_id); }
 // W14: Eintragen per Blatt (statt dreimal Eingabefeld): Person wählen (Fahrlehrer der Fahrschule oder andere Person), von, bis
 function fsUrlaubHinzufuegen(){
   if(!_fsAgg)return;
   const lehrer=(_fsAgg.lehrer||[]).slice().sort((a,b)=>String(a.name||a.email||"").localeCompare(String(b.name||b.email||""),"de"));
   const h=todayISO();
+  const nameVon=l=>{ const n=l.name||l.email||""; return lehrer.filter(x=>(x.name||x.email||"")===n).length>1&&l.email?n+" ("+l.email+")":n; }; // gleiche Namen unterscheidbar
   openSheet(`<div class="sheet-h">Urlaub eintragen</div>
     <div class="field"><label for="urWer">Für wen?</label><select id="urWer">
       <option value="">– bitte wählen –</option>
-      ${lehrer.map(l=>`<option value="${esc(l.id)}">${esc(l.name||l.email||"")}</option>`).join("")}
-      <option value="_andere">Andere Person (nur in der Liste, ohne Kalender)</option></select></div>
-    <div class="field" id="urNameFeld" hidden><label for="urName">Name</label><input type="text" id="urName" maxlength="80" autocomplete="off"></div>
-    <div class="afs-zwei"><div class="field"><label for="urVon">Von</label><input type="date" id="urVon" value="${h}"></div>
-      <div class="field"><label for="urBis">Bis</label><input type="date" id="urBis" value="${h}"></div></div>
-    <p class="muted-p" id="urHinweis" style="font-size:12.5px;margin:-2px 0 10px;">Bei einem Fahrlehrer sind die Tage in seinem Kalender blockiert.</p>
+      ${lehrer.map(l=>`<option value="${esc(l.id)}">${esc(nameVon(l))}</option>`).join("")}
+      <option value="_andere">Andere Person (ohne Kalender)</option></select></div>
+    <p class="muted-p" id="urHinweis" style="font-size:14px;margin:-4px 0 10px;">Bei einem Fahrlehrer sind die Tage in seinem Kalender blockiert.</p>
+    <div class="field" id="urNameFeld" hidden><label for="urName">Name der Person</label><input type="text" id="urName" maxlength="80" autocomplete="off"></div>
+    <div class="afs-zwei"><div class="field"><label for="urVon">Von</label><input type="date" id="urVon" value="${h}" style="min-width:0;"></div>
+      <div class="field"><label for="urBis">Bis</label><input type="date" id="urBis" value="${h}" style="min-width:0;"></div></div>
     <div class="btn-row sheet-knoepfe"><button class="btn btn-ghost" id="urAbbr" style="flex:0;padding:13px 18px;">Abbrechen</button><button class="btn btn-primary" id="urSpeichern">Eintragen</button></div>`);
   const wer=$("#urWer"), nameFeld=$("#urNameFeld"), von=$("#urVon"), bis=$("#urBis");
-  wer.addEventListener("change",()=>{ nameFeld.hidden=wer.value!=="_andere"; $("#urHinweis").textContent=wer.value==="_andere"?"Steht nur in der Urlaubsliste und blockiert keinen Kalender.":"Bei einem Fahrlehrer sind die Tage in seinem Kalender blockiert."; if(wer.value==="_andere")$("#urName").focus(); });
+  wer.addEventListener("change",()=>{ nameFeld.hidden=wer.value!=="_andere"; $("#urHinweis").textContent=wer.value==="_andere"?"Steht nur in der Urlaubsliste (z. B. Büro) und blockiert keinen Kalender.":"Bei einem Fahrlehrer sind die Tage in seinem Kalender blockiert."; if(wer.value==="_andere")$("#urName").focus(); });
   von.addEventListener("change",()=>{ if(bis.value&&bis.value<von.value)bis.value=von.value; });
   $("#urAbbr").addEventListener("click",closeSheet);
   $("#urSpeichern").addEventListener("click",async()=>{
-    const andere=wer.value==="_andere", lid=andere?null:wer.value;
+    const andere=wer.value==="_andere";
+    const nameAndere=$("#urName").value.trim();
+    // Heißt die „andere Person“ genau wie ein Fahrlehrer (eindeutig), ist er gemeint – wie der Server es auch zuordnet
+    const gleich=andere?lehrer.filter(x=>(x.name||x.email||"").trim().toLowerCase()===nameAndere.toLowerCase()):[];
+    const lid=andere?(gleich.length===1?gleich[0].id:null):wer.value;
     const l=lid?lehrer.find(x=>x.id===lid):null;
-    const name=andere?$("#urName").value.trim():(l?(l.name||l.email||""):"");
+    const name=andere?nameAndere:(l?(l.name||l.email||""):"");
     if(!wer.value){ toast("Bitte wählen, für wen"); wer.focus(); return; }
     if(!name){ toast("Bitte einen Namen eintragen"); $("#urName").focus(); return; }
     if(!von.value||!bis.value){ toast("Bitte von und bis eintragen"); return; }
     if(bis.value<von.value){ toast("„Bis“ liegt vor „von“"); bis.focus(); return; }
-    if((new Date(bis.value+"T12:00:00")-new Date(von.value+"T12:00:00"))/864e5>365){ toast("Höchstens ein Jahr am Stück"); return; }
+    if(bis.value<todayISO()){ toast("Der Urlaub liegt schon in der Vergangenheit"); bis.focus(); return; }
+    if((Date.parse(bis.value+"T00:00:00Z")-Date.parse(von.value+"T00:00:00Z"))/864e5>365){ toast("Höchstens ein Jahr am Stück"); return; }
     const b=$("#urSpeichern"); b.disabled=true;
     const supa=getSupa();
     const {data:sessionData}=await supa.auth.getSession();
@@ -7440,7 +7449,7 @@ function fsUrlaubHinzufuegen(){
       fahrschule_id:_fsAgg.fahrschuleId, fahrlehrer_id:lid, mitarbeiter_name:name, von:von.value, bis:bis.value, erstellt_von:_uidAus(sessionData)
     });
     b.disabled=false;
-    if(error){ toast("Nicht eingetragen: "+(/fahrschule/i.test(error.message||"")?"diese Person gehört nicht zur Fahrschule":"bitte später nochmal")); return; }
+    if(error){ toast("Nicht eingetragen: "+(error.code==="22023"&&/gehört nicht zu dieser Fahrschule/.test(error.message||"")?"diese Person gehört nicht zur Fahrschule":"bitte später nochmal")); return; }
     closeSheet();
     toast("Urlaub eingetragen ✓");
     _fsLadeUrlaub();

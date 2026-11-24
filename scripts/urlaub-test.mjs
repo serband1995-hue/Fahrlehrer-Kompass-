@@ -104,7 +104,7 @@ await pruefe("U4", "Liste: aktueller Profilname über die ID, ohne ID der einget
   const t = await page.evaluate(() => [...document.querySelectorAll("#fsUrlaubWrap .fs-card")].map((c) => c.textContent.replace(/\s+/g, " ").trim()));
   const f = [];
   if (!t.some((x) => /Cem Muster/.test(x) && !/Alter Name/.test(x))) f.push("Profilname fehlt: " + t.join(" | "));
-  if (!t.some((x) => /Dora Muster/.test(x) && /ohne Kalender/.test(x))) f.push("andere Person ohne Hinweis: " + t.join(" | "));
+  if (!t.some((x) => /Dora Muster/.test(x) && /ohne Kalender/i.test(x))) f.push("andere Person ohne Hinweis: " + t.join(" | "));
   return f;
 });
 await pruefe("U5", "Blatt „Urlaub eintragen“: andere Person braucht einen Namen, bis vor von wird abgelehnt", async () => {
@@ -119,6 +119,36 @@ await pruefe("U5", "Blatt „Urlaub eintragen“: andere Person braucht einen Na
   await page.waitForTimeout(200);
   const ins = await page.evaluate(() => window.__ins);
   if (ins.length !== 1 || ins[0].fahrlehrer_id !== null || ins[0].mitarbeiter_name !== "Dora Muster") f.push("Eintrag falsch: " + JSON.stringify(ins));
+  return f;
+});
+await pruefe("U7", "Blatt: Zeitraum in der Vergangenheit abgelehnt; andere Person mit Fahrlehrer-Namen wird ihm zugeordnet", async () => {
+  const f = [];
+  await page.evaluate(() => { window.__ins = []; fsUrlaubHinzufuegen(); });
+  await page.waitForTimeout(300);
+  await page.evaluate(() => { const w = document.getElementById("urWer"); w.value = "fl-cem"; w.dispatchEvent(new Event("change")); document.getElementById("urVon").value = "2020-01-01"; document.getElementById("urBis").value = "2020-01-02"; document.getElementById("urSpeichern").click(); });
+  if (await page.evaluate(() => window.__ins.length)) f.push("Vergangenheit gespeichert");
+  await page.evaluate(() => { const w = document.getElementById("urWer"); w.value = "_andere"; w.dispatchEvent(new Event("change")); document.getElementById("urName").value = "cem muster"; const h = todayISO(); document.getElementById("urVon").value = h; document.getElementById("urBis").value = h; document.getElementById("urSpeichern").click(); });
+  await page.waitForTimeout(200);
+  const ins = await page.evaluate(() => window.__ins);
+  if (ins.length !== 1 || ins[0].fahrlehrer_id !== "fl-cem") f.push("nicht dem Fahrlehrer zugeordnet: " + JSON.stringify(ins));
+  return f;
+});
+await pruefe("U8", "Fehlermeldung: nur die Trigger-Ausnahme heißt „gehört nicht zur Fahrschule“", async () => {
+  const f = [];
+  // Attrappe: profiles.single() liefert die erste Zeile (ein Fahrlehrer) – Büro-Zustand vor jedem Fall neu setzen
+  const zurueck = async () => page.evaluate(async (L) => { _authProfile = { id: "u-buero", rolle: "buero", fahrschule_id: "fs-muster", name: "Büro Muster" }; window.__T = { fahrschulen: [{ id: "fs-muster", name: "Fahrschule Muster" }], profiles: L, fahrschule_urlaub: [] }; await _fsLoadAggData("fs-muster"); }, LEHRER);
+  for (const [fehler, erwartet] of [[{ code: "42501", message: 'new row violates row-level security policy for table "fahrschule_urlaub"' }, /bitte später nochmal/],
+    [{ code: "PGRST204", message: "Could not find the 'fahrlehrer_id' column of 'fahrschule_urlaub' in the schema cache" }, /bitte später nochmal/],
+    [{ code: "22023", message: "Diese Person gehört nicht zu dieser Fahrschule" }, /gehört nicht zur Fahrschule/]]) {
+    await zurueck();
+    await page.evaluate((fe) => { const alt = getSupa(); const from = alt.from; window.__ins = []; window.getSupa = () => Object.assign({}, alt, { from: (t) => (t === "fahrschule_urlaub" ? { insert: async () => ({ error: fe }), select: () => from(t) } : from(t)) }); fsUrlaubHinzufuegen(); }, fehler);
+    await page.waitForTimeout(250);
+    await page.evaluate(() => { const w = document.getElementById("urWer"); w.value = "fl-cem"; w.dispatchEvent(new Event("change")); document.getElementById("urSpeichern").click(); });
+    await page.waitForTimeout(250);
+    const t = await page.evaluate(() => document.getElementById("toast").textContent);
+    if (!erwartet.test(t)) f.push(fehler.code + ": " + t);
+    await page.evaluate(() => { try { closeSheet(); } catch (e) {} });
+  }
   return f;
 });
 await pruefe("U6", "keine JS-Fehler", async () => jsFehler);
