@@ -136,57 +136,99 @@ function istAdmin() { return S.profil && (S.profil.rolle === "fahrschule_admin" 
 
 /* ---------- Bereiche ---------- */
 // schritt = Bauplan-Schritt, in dem der Bereich fertig wird (nur Hinweis, solange er noch fehlt)
+// Werkstatt 11 Schritt 1 (🗣 Serband): flache Leiste mit 8 Hauptpunkten, darunter (kleiner) Team, Fahrzeuge, Neuigkeiten.
+// eltern = Unterseite ohne eigenen Leistenpunkt (leiste: false): in der Leiste ist der Elternpunkt markiert.
+const NAV_ICON = (inner) => `<svg class="nav-icon" viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${inner}</svg>`;
+const ICONS = {
+  heute: NAV_ICON('<path d="M4 11l8-7 8 7"/><path d="M6 10v9h12v-9"/><path d="M10 19v-5h4v5"/>'),
+  kalender: NAV_ICON('<rect x="4" y="5" width="16" height="15" rx="2"/><path d="M4 10h16M9 3v4M15 3v4"/>'),
+  schueler: NAV_ICON('<circle cx="12" cy="8" r="3.5"/><path d="M5 20c0-3.6 3-6 7-6s7 2.4 7 6"/>'),
+  pruefungen: NAV_ICON('<path d="M8 4h8v5a4 4 0 0 1-8 0z"/><path d="M12 13v4M8.5 20h7M8 6H5v1a3 3 0 0 0 3 3M16 6h3v1a3 3 0 0 1-3 3"/>'),
+  fristen: NAV_ICON('<rect x="5" y="3.5" width="14" height="17" rx="2"/><path d="M9 9h6M9 13h6M9 17h3"/>'),
+  zahlungen: NAV_ICON('<path d="M17 7.5A6 6 0 1 0 17 16.5"/><path d="M5 10.5h8M5 13.5h8"/>'),
+  fahrchecks: NAV_ICON('<path d="M4 7h10M4 12h8M4 17h6"/><path d="M14 16l2.5 2.5L21 13"/>'),
+  zahlen: NAV_ICON('<path d="M4 20h16"/><path d="M7 20v-6M12 20V6M17 20v-9"/>'),
+  team: NAV_ICON('<circle cx="9" cy="9" r="3"/><path d="M3.5 19c0-3 2.5-5 5.5-5s5.5 2 5.5 5"/><path d="M16 6.5a3 3 0 0 1 0 5.5M17.5 14.5c2 .6 3 2.3 3 4.5"/>'),
+  flotte: NAV_ICON('<path d="M4 15v-3l2-5h12l2 5v3z"/><path d="M4 12h16"/><circle cx="8" cy="17" r="1.6"/><circle cx="16" cy="17" r="1.6"/>'),
+  urlaub: NAV_ICON('<circle cx="12" cy="12" r="4"/><path d="M12 3v2M12 19v2M3 12h2M19 12h2M5.6 5.6L7 7M17 17l1.4 1.4M18.4 5.6L17 7M7 17l-1.4 1.4"/>'),
+  schichtplan: NAV_ICON('<rect x="4" y="4" width="16" height="16" rx="2"/><path d="M4 9.5h16M4 14.5h16M9.5 4v16M14.5 4v16"/>'),
+  backups: NAV_ICON('<path d="M20 12a8 8 0 1 1-2.6-5.9"/><path d="M20 4v4.5h-4.5"/><path d="M12 8.5V12l2.5 1.5"/>'),
+  neuigkeiten: NAV_ICON('<path d="M12 3l1.8 5.2L19 10l-5.2 1.8L12 17l-1.8-5.2L5 10l5.2-1.8z"/>'),
+};
 const BEREICHE = [
-  { id: "heute", titel: "Heute zu tun", gruppe: "Arbeit", render: renderHeute, nachher: bindeHeute, zahl: () => fuerMich().filter((a) => aufgabeStufe(a) !== "spaeter" || !a.faellig_am).length || "" },
-  { id: "pruefungen", titel: "Prüfungstafel", gruppe: "Arbeit", render: renderPruefungen, nachher: bindePruefungen, zahl: () => zaehlePruefungen().handeln || "" },
-  { id: "fahrchecks", titel: "Fahrchecks", gruppe: "Arbeit", render: renderFahrchecks, nachher: bindeFahrchecks, zahl: () => fcOffeneAbgaben().length || "" },
-  { id: "fristen", titel: "Fristen & Reaktivierung", gruppe: "Arbeit", render: renderFristen, nachher: bindeFristen, zahl: () => zaehleFristen().handeln || "" },
-  { id: "kalender", titel: "Kalender", gruppe: "Planung", render: renderKalender, nachher: bindeKalender },
-  { id: "auslastung", titel: "Auslastung", gruppe: "Planung", render: renderAuslastung },
-  { id: "schueler", titel: "Schüler", gruppe: "Planung", render: renderSchueler, nachher: bindeSchueler, zahl: () => aktiveSchueler().filter((x) => !x.fahrlehrer_id).length || "" },
-  { id: "verkaeufe", titel: "Verkäufe & Provision", gruppe: "Geld", render: renderVerkaeufe, nachher: bindeVerkaeufe, zahl: () => S.verkaeufe.filter((v) => v.status === "empfohlen").length || "" },
-  { id: "zahlen", titel: "Zahlen", gruppe: "Geld", render: renderZahlen, nachher: bindeZahlen },
-  // K9: Preisliste steht in buero-preise.js (lädt vor buero.js; Aufruf über Pfeil, damit die Reihenfolge egal ist)
-  // Werkstatt 13: Reiter „Preise | Pakete“ (Paket-Baukasten in buero-pakete.js); ohne die neue Datenbank nur „Preise“ wie bisher
-  { id: "preise", titel: "Preisliste", gruppe: "Geld", render: (...a) => renderPreisSeite(...a), nachher: (...a) => bindePreisSeite(...a) },
-  { id: "team", titel: "Fahrlehrer & Zugänge", gruppe: "Verwaltung", render: renderTeam, nachher: bindeTeam },
-  { id: "flotte", titel: "Fahrzeuge", gruppe: "Verwaltung", render: renderFlotte, nachher: bindeFlotte, zahl: () => fahrzeugKonflikte().length || "" },
-  { id: "neuigkeiten", titel: "Neuigkeiten", gruppe: "Verwaltung", render: renderNeuigkeiten },
+  { id: "heute", titel: "Heute", render: renderHeute, nachher: bindeHeute, zahl: () => fuerMich().filter((a) => aufgabeStufe(a) !== "spaeter" || !a.faellig_am).length || "" },
+  { id: "kalender", titel: "Kalender", render: renderKalender, nachher: bindeKalender },
+  { id: "schueler", titel: "Schüler", render: renderSchueler, nachher: bindeSchueler, zahl: () => aktiveSchueler().filter((x) => !x.fahrlehrer_id).length || "" },
+  { id: "pruefungen", titel: "Prüfungen", render: renderPruefungen, nachher: bindePruefungen, zahl: () => zaehlePruefungen().handeln || "" },
+  { id: "fristen", titel: "Fristen", render: renderFristen, nachher: bindeFristen, zahl: () => zaehleFristen().handeln || "" },
+  { id: "zahlungen", titel: "Zahlungen", render: () => zahlungsReiter(preisReiter()) + renderPreisSeite(), nachher: (...a) => bindePreisSeite(...a), zahl: () => S.verkaeufe.filter((v) => v.status === "empfohlen").length || "" },
+  { id: "fahrchecks", titel: "Fahrcheck", render: renderFahrchecks, nachher: bindeFahrchecks, zahl: () => fcOffeneAbgaben().length || "" },
+  { id: "zahlen", titel: "Statistik", render: renderZahlen, nachher: bindeZahlen },
+  { id: "team", titel: "Fahrlehrer & Büro", neben: true, render: renderTeam, nachher: bindeTeam },
+  { id: "flotte", titel: "Fahrzeuge", neben: true, render: renderFlotte, nachher: bindeFlotte, zahl: () => fahrzeugKonflikte().length || "" },
+  // Werkstatt 16 liefert buero-verwaltung.js: die drei Punkte erscheinen nur, wenn die Funktionen da sind (sonst fällt die Adresse auf Heute zurück)
+  { id: "urlaub", titel: "Urlaub", neben: true, wenn: () => typeof renderUrlaub === "function", render: (...a) => renderUrlaub(...a), nachher: (...a) => typeof bindeUrlaub === "function" && bindeUrlaub(...a) },
+  { id: "schichtplan", titel: "Schichtplan", neben: true, wenn: () => typeof renderSchichtplan === "function", render: (...a) => renderSchichtplan(...a), nachher: (...a) => typeof bindeSchichtplan === "function" && bindeSchichtplan(...a) },
+  { id: "backups", titel: "Backups", neben: true, wenn: () => typeof renderBackups === "function", render: (...a) => renderBackups(...a), nachher: (...a) => typeof bindeBackups === "function" && bindeBackups(...a) },
+  { id: "neuigkeiten", titel: "Neuigkeiten", neben: true, render: renderNeuigkeiten },
+  // Unterseiten: per Adresse erreichbar, in der Leiste ist der Elternpunkt markiert
+  { id: "auslastung", titel: "Wer hat Platz?", leiste: false, eltern: "kalender", render: renderAuslastung },
+  // K9: Preisliste steht in buero-preise.js (lädt vor buero.js; Aufruf über Pfeil, damit die Reihenfolge egal ist); Werkstatt 13: Reiter „Preise | Pakete“ in buero-pakete.js
+  { id: "preise", titel: "Preise & Pakete", leiste: false, eltern: "zahlungen", render: (...a) => zahlungsReiter(preisReiter()) + renderPreisSeite(...a), nachher: (...a) => bindePreisSeite(...a) },
+  { id: "verkaeufe", titel: "Verkäufe & Provision", leiste: false, eltern: "zahlungen", render: () => zahlungsReiter("verkaeufe") + renderVerkaeufe(), nachher: bindeVerkaeufe },
 ];
+// Reiterzeile der Seite „Zahlungen“ (auch auf #preise und #verkaeufe): EINE Zeile „Preise · Pakete · Verkäufe & Provision“.
+// „Pakete“ gibt es nur mit der Paket-Datenbank (bkDa in buero-pakete.js).
+function zahlungsReiter(aktiv) {
+  const pakete = typeof bkDa === "function" && bkDa();
+  const tab = (h, id, t) => `<a class="tab" href="${h}"${aktiv === id ? ' aria-current="page"' : ""}>${t}</a>`;
+  return `<div class="tabs zahl-reiter" role="tablist" aria-label="Zahlungen">${tab("#preise", "preise", "Preise")}${pakete ? tab("#preise?reiter=pakete", "pakete", "Pakete") : ""}${tab("#verkaeufe", "verkaeufe", "Verkäufe &amp; Provision")}</div>`;
+}
+function preisReiter() { return typeof bkReiter === "function" ? bkReiter() : "preise"; }
 function aktuellerBereich() {
   const id = (location.hash || "#heute").slice(1).split("?")[0];
-  return BEREICHE.find((b) => b.id === id) || BEREICHE[0];
+  return BEREICHE.find((b) => b.id === id && (!b.wenn || b.wenn())) || BEREICHE[0];
 }
-// K16 (🗣 23.11.2026): Die Gruppen der Seitenleiste starten zu. Nur die Gruppe der offenen Seite ist auf; wer die Seite wechselt,
-// sieht deren Gruppe aufklappen. Von Hand auf- und zuklappen geht weiter. Gemerkt wird nur bis zum Neuladen (früher stand es in
-// localStorage „buero-nav-zu“: dieser alte Wert wird nicht mehr gelesen und hält den neuen Start nicht auf).
-const navAuf = new Set();
-let navLetzteGruppe = null;
 function zeichneNav() {
   const aktiv = aktuellerBereich();
-  if (navLetzteGruppe !== aktiv.gruppe) { navLetzteGruppe = aktiv.gruppe; navAuf.add(aktiv.gruppe); }
-  const gruppen = [...new Set(BEREICHE.map((b) => b.gruppe))];
-  $("nav").innerHTML = gruppen.map((g) => {
-    const punkte = BEREICHE.filter((b) => b.gruppe === g);
-    const offen = navAuf.has(g);
-    const summe = punkte.reduce((a, b) => a + (b.render && b.zahl && S.geladenAm ? Number(b.zahl()) || 0 : 0), 0);
-    const liste = punkte.map((b) => {
-      const z = b.render && b.zahl && S.geladenAm ? b.zahl() : "";
-      const zusatz = b.render ? (z ? `<span class="zahl">${z}</span>` : "") : `<span class="bald">im Bau</span>`;
-      return `<a class="nav-punkt" href="#${b.id}"${b.id === aktiv.id ? ' aria-current="page"' : ""}>${esc(b.titel)}${zusatz}</a>`;
-    }).join("");
-    return `<div class="nav-block"><button type="button" class="nav-gruppe" data-gruppe="${esc(g)}" aria-expanded="${offen ? "true" : "false"}"><span class="pfeil" aria-hidden="true"></span>${esc(g)}${!offen && summe ? `<span class="zahl klein">${summe}</span>` : ""}</button>
-      <div class="nav-liste"${offen ? "" : " hidden"}>${liste}</div></div>`;
-  }).join("");
+  const aktivId = aktiv.eltern || aktiv.id;
+  const punkt = (b) => {
+    const z = b.zahl && S.geladenAm ? b.zahl() : "";
+    return `<a class="nav-punkt" href="#${b.id}"${b.id === aktivId ? ' aria-current="page"' : ""}>${ICONS[b.id] || ""}<span class="nav-text">${esc(b.titel)}</span>${z ? `<span class="zahl">${z}</span>` : ""}</a>`;
+  };
+  const sicht = BEREICHE.filter((b) => b.leiste !== false && (!b.wenn || b.wenn()));
+  const html = `<div class="nav-haupt">${sicht.filter((b) => !b.neben).map(punkt).join("")}</div><div class="nav-neben">${sicht.filter((b) => b.neben).map(punkt).join("")}</div>`;
+  const nav = $("nav"), alt = [...nav.querySelectorAll(".nav-punkt")];
+  if (alt.length === sicht.length && alt.every((a, i) => a.getAttribute("href") === "#" + sicht[i].id)) {
+    // gleiche Punkte: nur Markierung und Zähler nachziehen (Übergänge laufen weich, nichts flackert)
+    const tmp = document.createElement("div"); tmp.innerHTML = html;
+    const neu = [...tmp.querySelectorAll(".nav-punkt")];
+    alt.forEach((a, i) => {
+      if (neu[i].hasAttribute("aria-current")) a.setAttribute("aria-current", "page"); else a.removeAttribute("aria-current");
+      const za = a.querySelector(".zahl"), zn = neu[i].querySelector(".zahl");
+      if (za && zn) { if (za.textContent !== zn.textContent) za.textContent = zn.textContent; }
+      else if (za) za.remove(); else if (zn) a.appendChild(zn);
+    });
+  } else nav.innerHTML = html;
+}
+// Kalender-Knöpfe im Seitenkopf: „Wer hat Platz?“ und „+ Termin“ (Fahrlehrer, Tag und nächste volle Stunde vorbelegt)
+function kopfAktionenZeichnen(b) {
+  const k = $("kopfAktionen"); if (!k) return;
+  const html = b.id === "kalender" && S.geladenAm ? `<a class="knopf" id="kPlatz" href="#auslastung">Wer hat Platz?</a><button type="button" class="knopf haupt" id="kNeuTermin">+ Termin</button>` : "";
+  if (k.innerHTML !== html) k.innerHTML = html;
+  k.hidden = !html;
+}
+function kNeuTerminVorgabe() {
+  const aktive = S.lehrer.filter((l) => l.aktiv !== false);
+  const gew = kGewaehlteLehrer().filter((id) => aktive.some((l) => l.id === id));
+  const wl = fristenParam("wl");
+  const lehrer = (kAnsicht() === "woche" && aktive.some((l) => l.id === wl) ? wl : "") || gew[0] || (aktive[0] || {}).id || "";
+  const h = new Date().getHours() + 1;
+  const von = h * 60 >= K_START && h * 60 < K_ENDE ? KR.pad2(h) + ":00" : "08:00";
+  return { fahrlehrer_id: lehrer, datum: kTag(), von };
 }
 document.addEventListener("click", (e) => {
-  const knopf = e.target.closest("[data-gruppe]");
-  if (!knopf) return;
-  const g = knopf.dataset.gruppe;
-  if (navAuf.has(g)) navAuf.delete(g); else navAuf.add(g);
-  zeichneNav();
-  const neu = [...document.querySelectorAll("[data-gruppe]")].find((b) => b.dataset.gruppe === g);
-  if (neu) neu.focus();
+  if (e.target.closest("#kNeuTermin")) terminDialog(null, kNeuTerminVorgabe());
 });
 function zeichne() {
   wartIndex = null; // Warteliste neu rechnen (Termine können sich geändert haben)
@@ -197,6 +239,7 @@ function zeichne() {
   $("drucken").hidden = b.id === "team"; // Zugangsliste wird nicht gedruckt
   document.title = b.titel + " · Kompass Büro";
   zeichneNav();
+  kopfAktionenZeichnen(b);
   const ziel = $("ansicht");
   if (!S.geladenAm) { ziel.innerHTML = `<p class="leer">Daten werden geladen …</p>`; return; }
   // K2/K4 (🗣 22.11.2026): Zeichnet sich derselbe Bereich neu (Speichern, Schalter, Auffrischen), bleiben
@@ -208,6 +251,8 @@ function zeichne() {
   const klapp = gleich ? klappZustand(ziel) : null, y = window.scrollY;
   ziel.innerHTML = b.render ? b.render() : renderBald(b);
   ziel.dataset.kontext = kontext;
+  // Seitenwechsel: Inhalt blendet ein (nur bei neuer Seite, nicht beim Auffrischen derselben)
+  if (!gleich) { ziel.classList.remove("seite-ein"); void ziel.offsetWidth; ziel.classList.add("seite-ein"); }
   if (b.nachher) b.nachher(ziel);
   if (gleich) { klappWieder(ziel, klapp); window.scrollTo(0, y); }
 }

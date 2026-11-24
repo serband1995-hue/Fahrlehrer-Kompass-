@@ -2,7 +2,7 @@
    🗣 Serband: „Paket hinzufügen und dann gibt es frei wählbare Posten … diese Felder mit Zahlen belegen und auch mit Preisen.
    Unten soll sich dann der Gesamtpreis befinden … als Vorlage speichern … Der Name des Paketes kann auch frei gewählt werden.
    Alles aufgebaut wie ein Baukasten.“
-   - Büro › Preisliste bekommt zwei Reiter: „Preise“ und „Pakete“ (#preise und #preise?reiter=pakete).
+   - Büro › Zahlungen: Reiter: „Preise“ und „Pakete“ (#preise und #preise?reiter=pakete).
    - Eine Vorlage (fahrschule_pakete) hat Name, Klasse (frei) und Posten: {art, bezeichnung, anzahl, preis_cent_fest}.
      preis_cent_fest null = der Preis kommt aus der Preisliste und folgt ihr (Entscheidung der Hauptsitzung 24.11.2026).
      Ein eingetippter Preis bleibt fest („eigener Preis“, mit „zurück zur Preisliste“).
@@ -97,10 +97,8 @@ function bkKurz(posten) {
 }
 
 /* ---------- Reiter „Preise | Pakete“ ---------- */
-function bkReiterLeiste(aktiv) {
-  if (!bkDa()) return "";
-  return `<div class="tabs klein bk-reiter" role="tablist" aria-label="Preisliste"><a class="tab" href="#preise"${aktiv === "preise" ? ' aria-current="page"' : ""}>Preise</a><a class="tab" href="#preise?reiter=pakete"${aktiv === "pakete" ? ' aria-current="page"' : ""}>Pakete</a></div>`;
-}
+// Die Reiter „Preise · Pakete · Verkäufe“ stehen in EINER Zeile oben auf der Seite Zahlungen (zahlungsReiter in buero.js, nur mit Paket-Datenbank mit „Pakete“)
+function bkReiterLeiste() { return ""; }
 function renderPreisSeite() {
   const r = bkReiter();
   return bkReiterLeiste(r) + (r === "pakete" ? renderPakete() : renderPreise());

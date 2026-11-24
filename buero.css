@@ -84,21 +84,22 @@ a{color:var(--akzent-dark);}
 .marke-schule{color:var(--muted);font-size:15px;}
 .schulwahl{display:grid;gap:4px;font-size:14px;color:var(--muted);padding:0 6px;}
 .schulwahl select{min-height:40px;border:1px solid var(--feld);border-radius:var(--r-klein);background:var(--bg);padding:0 8px;}
-nav{display:grid;gap:2px;}
-.nav-block{display:grid;gap:2px;}
-.nav-gruppe{display:flex;align-items:center;gap:8px;width:100%;font:inherit;font-size:13px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:var(--faint);padding:12px 12px 6px;background:none;border:none;border-radius:var(--r-klein);cursor:pointer;text-align:left;min-height:40px;}
-.nav-gruppe:hover{background:var(--bg);color:var(--muted);}
-.nav-gruppe .pfeil{width:8px;height:8px;border-right:2px solid currentColor;border-bottom:2px solid currentColor;transform:rotate(45deg) translate(-2px,-2px);transition:transform .15s;flex:0 0 auto;}
-.nav-gruppe[aria-expanded="false"] .pfeil{transform:rotate(-45deg) translate(-1px,-1px);}
-.nav-gruppe .zahl.klein{margin-left:auto;min-width:22px;height:22px;padding:0 6px;border-radius:999px;background:var(--rot);color:#fff;font-size:13px;font-weight:700;display:inline-grid;place-items:center;letter-spacing:0;}
-.nav-liste{display:grid;gap:2px;}
-.nav-liste[hidden]{display:none;}
-.nav-punkt{display:flex;align-items:center;gap:10px;min-height:44px;padding:6px 12px;line-height:1.25;border-radius:var(--r-klein);text-decoration:none;color:var(--txt);font-weight:500;}
+nav{display:flex;flex-direction:column;gap:12px;}
+.nav-haupt,.nav-neben{display:grid;gap:4px;}
+.nav-neben{padding-top:12px;border-top:1px solid var(--line-soft);}
+.nav-punkt{position:relative;display:flex;align-items:center;gap:14px;min-height:44px;padding:6px 12px;line-height:1.25;border-radius:var(--r-klein);text-decoration:none;color:var(--txt);font-weight:500;transition:background-color .18s cubic-bezier(.2,.8,.2,1),color .18s cubic-bezier(.2,.8,.2,1);}
+.nav-punkt::before{content:"";position:absolute;left:0;top:8px;bottom:8px;width:3px;border-radius:3px;background:var(--akzent);opacity:0;transform:scaleY(.4);transition:opacity .18s cubic-bezier(.2,.8,.2,1),transform .18s cubic-bezier(.2,.8,.2,1);}
+.nav-punkt .nav-icon{flex:0 0 20px;color:var(--muted);transition:color .18s cubic-bezier(.2,.8,.2,1),transform .18s cubic-bezier(.2,.8,.2,1);}
+.nav-text{min-width:0;}
 .nav-punkt:hover{background:var(--surface-2);}
-.nav-punkt[aria-current="page"]{background:var(--surface-2);color:var(--txt);font-weight:700;box-shadow:inset 3px 0 0 var(--fokus);}
-.nav-punkt .zahl{margin-left:auto;min-width:26px;height:26px;padding:0 8px;border-radius:999px;background:var(--rot);color:#fff;font-size:14px;font-weight:700;display:inline-grid;place-items:center;}
-.nav-punkt .bald{margin-left:auto;flex-shrink:0;font-size:12px;color:var(--faint);white-space:nowrap;}
-.nav-punkt .zahl{flex-shrink:0;}
+.nav-punkt:hover .nav-icon{color:var(--txt);transform:translateX(1px);}
+.nav-punkt[aria-current="page"]{background:var(--surface-2);color:var(--txt);font-weight:700;}
+.nav-punkt[aria-current="page"]::before{opacity:1;transform:none;}
+.nav-punkt[aria-current="page"] .nav-icon{color:var(--akzent-dark);}
+/* Nebenpunkte unter dem Strich: kleiner und ruhiger */
+.nav-neben .nav-punkt{min-height:40px;font-size:15px;color:var(--muted);}
+.nav-neben .nav-punkt[aria-current="page"]{color:var(--txt);}
+.nav-punkt .zahl{margin-left:auto;flex-shrink:0;min-width:26px;height:26px;padding:0 8px;border-radius:999px;background:var(--rot);color:#fff;font-size:14px;font-weight:700;display:inline-grid;place-items:center;}
 .installieren{width:100%;margin-top:6px;border-style:dashed;}
 .seite-fuss{margin-top:auto;display:flex;align-items:center;justify-content:space-between;gap:10px;padding:14px 6px 0;border-top:1px solid var(--line-soft);}
 .nutzer-name{font-weight:600;}
@@ -113,7 +114,17 @@ nav{display:grid;gap:2px;}
 .knopf.klein.kopf-zurueck{flex:0 0 auto;min-height:44px;padding:0 14px;}
 @media print{.kopf-zurueck{display:none !important;}}
 .kopf h1{font-size:34px;}
-.kopf-rechts{display:flex;align-items:center;gap:14px;flex:0 1 auto;flex-wrap:wrap;justify-content:flex-end;}
+.kopf-rechts{display:flex;align-items:center;gap:12px;flex:0 1 auto;flex-wrap:wrap;justify-content:flex-end;}
+/* Werkstatt 11: Hinweis „Vorführung“ als eigene ruhige Zeile unter dem Kopf; Drucken/Aktualisieren am Laptop nur als Symbol (Text bleibt in aria-label/title) */
+.kopf>.vorfuehrung{flex:1 1 100%;order:9;text-align:center;border-radius:10px;}
+.ik-sym{display:none;flex:0 0 auto;}
+@media (max-width:1400px){
+  .kopf-ik .ik-text{display:none;} .kopf-ik .ik-sym{display:block;} .knopf.klein.kopf-ik{min-width:44px;min-height:44px;padding:0;}
+  /* Status: nur der Punkt, solange alles in Ordnung ist (Text bleibt für Vorlese-Programme); bei Warnung/Fehler steht der Text da */
+  .status.ok #statusText{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap;}
+  .status.ok .punkt{width:12px;height:12px;}
+}
+@media (max-width:1200px){ .kopf h1{font-size:28px;} }
 .vorfuehrung{background:var(--gold-soft);color:#7a5410;border:1px solid var(--gold);padding:6px 12px;border-radius:999px;font-weight:700;font-size:14px;}
 /* hell: dunklere Schrift (Kontrast über 4,5:1), dunkel wie bisher */
 @media (prefers-color-scheme:dark){ .vorfuehrung{color:var(--gold);} }
@@ -328,7 +339,7 @@ details summary{cursor:pointer;font-weight:700;margin:6px 0;}
 @media (max-width:1500px){ .nur-sehr-breit{display:none;} .nur-unter{display:block;} }
 
 /* Niedrige Bildschirme: Menü enger, damit Abmelden immer sichtbar bleibt */
-@media (max-height:820px){ .nav-punkt{min-height:38px;padding:4px 12px;} .nav-gruppe{padding:10px 12px 2px;} .seite{gap:8px;padding:16px 14px;} }
+@media (max-height:820px){ .nav-punkt{min-height:40px;padding:4px 12px;} .nav-neben .nav-punkt{min-height:36px;} nav{gap:8px;} .nav-haupt,.nav-neben{gap:2px;} .seite{gap:8px;padding:16px 14px;} }
 
 /* Kleinere Bildschirme (Laptop): Menü schmaler; unter 900 px oben statt links */
 @media (max-width:1200px){
@@ -348,7 +359,24 @@ details summary{cursor:pointer;font-weight:700;margin:6px 0;}
   .kopf h1{font-size:28px;}
   .tabelle{display:block;overflow-x:auto;}
 }
-@media (prefers-reduced-motion:reduce){ *{transition:none !important;} }
+/* Werkstatt 11: ruhige Bewegung (nur transform/opacity, 150-200 ms). Keine Bewegung, wenn der Browser es so wünscht. */
+.ansicht.seite-ein{animation:seite-ein .18s cubic-bezier(.2,.8,.2,1);}
+@keyframes seite-ein{from{opacity:0;transform:translateY(4px);}to{opacity:1;transform:none;}}
+.dialog{opacity:0;transform:translateY(6px) scale(.985);transition:opacity .18s cubic-bezier(.2,.8,.2,1),transform .18s cubic-bezier(.2,.8,.2,1),overlay .18s allow-discrete,display .18s allow-discrete;}
+.dialog[open]{opacity:1;transform:none;}
+@starting-style{.dialog[open]{opacity:0;transform:translateY(6px) scale(.985);}}
+.dialog:not([open]){pointer-events:none;}
+.dialog::backdrop{opacity:0;transition:opacity .18s cubic-bezier(.2,.8,.2,1),overlay .18s allow-discrete,display .18s allow-discrete;}
+.dialog[open]::backdrop{opacity:1;}
+@starting-style{.dialog[open]::backdrop{opacity:0;}}
+.knopf{transition:background-color .15s cubic-bezier(.2,.8,.2,1),border-color .15s cubic-bezier(.2,.8,.2,1),transform .15s cubic-bezier(.2,.8,.2,1);}
+.knopf:active{transform:scale(.98);}
+.tab{transition:background-color .15s cubic-bezier(.2,.8,.2,1),color .15s cubic-bezier(.2,.8,.2,1),border-color .15s cubic-bezier(.2,.8,.2,1);}
+.kopf-aktionen{display:flex;align-items:center;gap:10px;flex:0 0 auto;}
+@media print{.kopf-aktionen{display:none !important;}}
+.zahl-reiter{margin-bottom:18px;}
+.zahl-reiter .tab{min-height:44px;display:inline-flex;align-items:center;}
+@media (prefers-reduced-motion:reduce){ *,*::before,*::after{transition:none !important;animation:none !important;} .dialog,.dialog::backdrop{opacity:1;transform:none;} .dialog:not([open]){display:none;} }
 .tabelle .wahl{display:inline-flex;align-items:center;gap:6px;white-space:nowrap;cursor:pointer;}
 .tabelle .wahl input{width:20px;height:20px;}
 
@@ -628,7 +656,7 @@ body.kiosk .rollen-streifen{display:none;}
   .menue-offen .menue-knopf{border-color:var(--line);background:var(--surface-2);}
   body:not(.menue-offen) .seite>:not(.marke):not(.menue-knopf){display:none !important;}
   .seite-fuss{margin-top:0;}
-  .nav-punkt,.nav-gruppe,.seite .knopf,.kopf .knopf,.wer-knoepfe .knopf{min-height:44px;}
+  .nav-punkt,.nav-neben .nav-punkt,.seite .knopf,.kopf .knopf,.wer-knoepfe .knopf{min-height:44px;}
   .kopf{gap:10px 14px;margin-bottom:18px;}
   .kopf-rechts{flex-wrap:wrap;gap:8px 10px;max-width:100%;}
   #drucken{display:none !important;}
@@ -796,7 +824,7 @@ body.kiosk .rollen-streifen{display:none;}
   .aufgabe-zeile .gelesen,.knopf.ergebnis-ja{color:var(--gruen);}
   .haken.blau.an,.haken.gruen.an,.haken.rot.an{color:#14181f;}
   .knopf.haupt:hover{background:#336a4a;}
-  .nav-punkt .zahl,.nav-gruppe .zahl.klein,.toast.fehler{background:#b3392b;}
+  .nav-punkt .zahl,.toast.fehler{background:#b3392b;}
 }
 .knopf.klein.haupt[data-zahlung],.knopf.klein.haupt[data-zreakt],.knopf.klein.haupt[data-zbezahlt]{background:transparent;color:var(--akzent-dark);border-color:var(--akzent);}
 .knopf.klein.haupt[data-zahlung]:hover,.knopf.klein.haupt[data-zreakt]:hover,.knopf.klein.haupt[data-zbezahlt]:hover{background:var(--surface-2);}

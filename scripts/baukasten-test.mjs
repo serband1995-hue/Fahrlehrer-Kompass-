@@ -77,12 +77,12 @@ try {
   // B1 Reiter und Liste
   {
     const { page, ctx, konsole } = await oeffne({ nutzer: "ad-1", vorbereiten: preise });
-    pruefe("B1a Reiter „Preise | Pakete“ da, „Pakete“ gewählt", await page.locator('.bk-reiter a[aria-current="page"]').innerText() === "Pakete" && await page.locator(".bk-reiter a").count() === 2);
+    pruefe("B1a eine Reiterzeile „Preise · Pakete · Verkäufe“ da, „Pakete“ gewählt", await page.locator('.zahl-reiter a[aria-current="page"]').innerText() === "Pakete" && await page.locator(".zahl-reiter a").count() === 3 && await page.locator(".bk-reiter").count() === 0);
     const t = await page.locator("#ansicht").innerText();
     pruefe("B1b Vorlagen in Reihenfolge (Turboboost zuerst)", t.indexOf("Turboboost") >= 0 && t.indexOf("Turboboost") < t.indexOf("Boost-Paket 1"), t.slice(0, 300));
     pruefe("B1c Summe aus der Preisliste: 350 + 20 × 65 = 1.650,00 €", /1\.650,00\s*€/.test(t), t.slice(0, 400));
     pruefe("B1d Turboboost „noch leer“", /noch leer/.test(t));
-    await page.click('.bk-reiter a:has-text("Preise")'); await page.waitForTimeout(200);
+    await page.click('.zahl-reiter a:has-text("Preise")'); await page.waitForTimeout(200);
     pruefe("B1e Reiter „Preise“ zeigt die Preisliste", await page.locator("#prNeu").count() === 1 && await page.locator("#bkNeu").count() === 0);
     pruefe("B1f keine Konsolenfehler", !konsole.length, konsole.join(" | "));
     await ctx.close();
@@ -191,7 +191,7 @@ try {
   // B5 Alte Datenbank: kein Reiter, keine neuen Preis-Arten, kein Fehler
   {
     const { page, ctx, konsole } = await oeffne({ nutzer: "ad-1", vorbereiten: altDb });
-    pruefe("B5a alte DB: kein Reiter, #preise?reiter=pakete zeigt die Preise", await page.locator(".bk-reiter").count() === 0 && await page.locator("#prNeu").count() === 1 && await page.locator("#bkNeu").count() === 0);
+    pruefe("B5a alte DB: kein Reiter, #preise?reiter=pakete zeigt die Preise", await page.locator(".zahl-reiter a:has-text(\"Pakete\")").count() === 0 && await page.locator("#prNeu").count() === 1 && await page.locator("#bkNeu").count() === 0);
     await page.click("#prNeu"); await page.waitForTimeout(150);
     const arten = await page.locator(dlgSel).last().locator('select[name="art"] option').evaluateAll((o) => o.map((x) => x.value));
     pruefe("B5b alte DB: „Lernapp“ und „Simulator“ nicht wählbar", !arten.includes("lernapp") && !arten.includes("simulator") && arten.includes("grundbetrag"), arten.join(","));
@@ -207,7 +207,7 @@ try {
     pruefe("B6a Simulator wählbar, Bezeichnung vorgeschlagen, keine Klasse", (await d.locator('input[name="bezeichnung"]').inputValue()) === "Simulator" && await d.locator('select[name="klasse"]').isDisabled());
     await d.locator('input[name="betrag"]').fill("49");
     await d.locator("button[value=ok]").click(); await page.waitForTimeout(250);
-    await page.click('.bk-reiter a:has-text("Pakete")'); await page.waitForTimeout(200);
+    await page.click('.zahl-reiter a:has-text("Pakete")'); await page.waitForTimeout(200);
     await page.click("#bkNeu"); await page.waitForTimeout(150);
     await chip(page, "Simulator");
     pruefe("B6b Baukasten: Simulator 49 € aus der Preisliste", (await page.locator(dlgSel).last().locator('[data-bk-preis="0"]').inputValue()) === "49,00");
@@ -221,7 +221,7 @@ try {
     const d = page.locator(dlgSel).last();
     await d.locator('input[name="name"]').fill("X");
     await d.locator("button[value=ok]").click(); await page.waitForTimeout(250);
-    pruefe("B7 fehlende Spalte: Meldung, danach kein Reiter „Pakete“ mehr", /noch nicht eingerichtet/.test(await page.locator("body").innerText()) && await page.locator(".bk-reiter").count() === 0);
+    pruefe("B7 fehlende Spalte: Meldung, danach kein Reiter „Pakete“ mehr", /noch nicht eingerichtet/.test(await page.locator("body").innerText()) && await page.locator(".zahl-reiter a:has-text(\"Pakete\")").count() === 0);
     await ctx.close();
   }
   // B8 Handy 360 und 412 px: nichts ragt heraus, Tippflächen ≥ 44 px
@@ -285,10 +285,10 @@ try {
   // B14 Alte Datenbank und gar keine Vorlagen: Nachfrage erkennt die fehlende Spalte, kein Reiter
   {
     const { page, ctx } = await oeffne({ nutzer: "ad-1", vorbereiten: function () { F.tabellen.fahrschule_pakete = []; } });
-    pruefe("B14a ohne Vorlagen (neue DB): Reiter da", await page.locator(".bk-reiter").count() === 1);
+    pruefe("B14a ohne Vorlagen (neue DB): Reiter „Pakete“ da", await page.locator(".zahl-reiter a:has-text(\"Pakete\")").count() === 1);
     await page.evaluate(async () => { window.__FAKE.fehler = { fahrschule_pakete: 'column fahrschule_pakete.posten does not exist' }; S.bkFehlt = false; await bkPruefeSpalten(); });
     await page.waitForTimeout(150);
-    pruefe("B14b ohne Vorlagen (alte DB): Spalte fehlt erkannt, Reiter weg", await page.locator(".bk-reiter").count() === 0);
+    pruefe("B14b ohne Vorlagen (alte DB): Spalte fehlt erkannt, Reiter „Pakete“ weg", await page.locator(".zahl-reiter a:has-text(\"Pakete\")").count() === 0);
     await ctx.close();
   }
   // B15 Namen: kein zweites „Turboboost“, keine doppelten Namen, zweite Kopie bekommt „(Kopie 2)“; Geister-Tipp nach Speichern

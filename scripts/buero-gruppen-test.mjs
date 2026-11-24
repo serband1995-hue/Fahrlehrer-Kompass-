@@ -1,8 +1,8 @@
-// Büro-Test K16 + K18 (Werkstatt 12, 23.11.2026), erfundene Daten, keine Datenbank.
-//   G1  Start: alle Gruppen der Seitenleiste zu, nur die der offenen Seite auf (auch mit altem localStorage „buero-nav-zu“)
-//   G2  Seitenwechsel klappt die Zielgruppe auf, die alte bleibt wie sie war
-//   G3  Von Hand auf- und zuklappen (auch die aktive Gruppe)
-//   G4  Handy 375 px: Menü aufklappen, Gruppen zu, Seite wechseln klappt Zielgruppe auf, nichts wischt seitlich
+// Büro-Test Werkstatt 11 Schritt 1 (flache Leiste, Zahlungen, Kalender „+ Termin“, Bewegung) + K18, erfundene Daten, keine Datenbank.
+//   L   Leiste: 8 Hauptpunkte + 3 Nebenpunkte, Symbole, Zähler, keine Gruppen
+//   U   Unterseiten (#auslastung, #preise, #verkaeufe) markieren den Elternpunkt
+//   Z   #zahlungen mit Reitern; K  Kalender „+ Termin“ vorbelegt; A/R  Animation, reduzierte Bewegung
+//   G4  Handy 375 px: Menü aufklappen, Seite wechseln, nichts wischt seitlich
 //   D1  Doppelbelegung: Knopf „Gesehen“ (>= 44 px) → POST mit richtigem Schlüssel, Eintrag weg, Zähler im Menü weg
 //   D2  Hinweis „Rückgängig“ → DELETE, Eintrag wieder da
 //   D3  Zeile „N als gesehen markiert“ mit „wer, wann“ und „Wieder anzeigen“
@@ -69,41 +69,142 @@ const gruppen = (page) => page.evaluate(() => Object.fromEntries([...document.qu
 const offene = (g) => Object.entries(g).filter(([, v]) => v).map(([k]) => k).join(",");
 const log = (page, tab, art) => page.evaluate(([t, a]) => window.__FAKE.log.filter((x) => x.tabelle === t && x.art === a), [tab, art]);
 
-// ---- K16 Desktop ----
+// ---- Werkstatt 11 Schritt 1: flache Leiste ----
+const HAUPT = [["#heute", "Heute"], ["#kalender", "Kalender"], ["#schueler", "Schüler"], ["#pruefungen", "Prüfungen"], ["#fristen", "Fristen"], ["#zahlungen", "Zahlungen"], ["#fahrchecks", "Fahrcheck"], ["#zahlen", "Statistik"]];
+const NEBEN = [["#team", "Fahrlehrer & Büro"], ["#flotte", "Fahrzeuge"], ["#neuigkeiten", "Neuigkeiten"]];
+const punkte = (page) => page.$$eval("#nav .nav-punkt", (l) => l.map((a) => [a.getAttribute("href"), a.querySelector(".nav-text").textContent.trim(), !!a.querySelector("svg"), Math.round(a.getBoundingClientRect().height), a.getAttribute("aria-current") === "page"]));
+const markiert = (page) => page.$$eval('#nav .nav-punkt[aria-current="page"]', (l) => l.map((a) => a.getAttribute("href")).join(","));
 {
-  // alter Merker aus früherer Version darf den neuen Start nicht stören
-  const { page, ctx, konsole } = await oeffne({ hash: "#kalender", vorher: `try { localStorage.setItem("buero-nav-zu", JSON.stringify(["Planung"])); } catch (e) {}` });
-  let g = await gruppen(page);
-  pruefe("G1", "Start auf #kalender: nur „Planung“ ist auf (alter Merker stört nicht)", Object.keys(g).length >= 4 && offene(g) === "Planung" ? null : "offen: " + offene(g) + " von " + Object.keys(g));
-  await page.evaluate(() => { location.hash = "#zahlen"; }); await warte(page);
-  g = await gruppen(page);
-  pruefe("G2", "Seitenwechsel auf „Zahlen“ klappt „Geld“ auf, „Planung“ bleibt auf", offene(g) === "Planung,Geld" ? null : "offen: " + offene(g));
-  await page.click('[data-gruppe="Planung"]'); await warte(page, 150);
-  g = await gruppen(page);
-  pruefe("G3a", "Von Hand zuklappen geht", offene(g) === "Geld" ? null : "offen: " + offene(g));
-  await page.click('[data-gruppe="Verwaltung"]'); await warte(page, 150);
-  g = await gruppen(page);
-  pruefe("G3b", "Von Hand aufklappen geht", offene(g) === "Geld,Verwaltung" ? null : "offen: " + offene(g));
-  await page.click('[data-gruppe="Geld"]'); await warte(page, 150);
-  await page.evaluate(() => { location.hash = "#verkaeufe"; }); await warte(page);
-  g = await gruppen(page);
-  pruefe("G3c", "Von Hand zugeklappte Gruppe bleibt zu, solange man die Gruppe nicht verlässt", offene(g) === "Verwaltung" ? null : "offen: " + offene(g));
-  await page.evaluate(() => { location.hash = "#heute"; }); await warte(page);
-  g = await gruppen(page);
-  pruefe("G3d", "Wechsel in eine andere Gruppe klappt deren Gruppe auf", g.Arbeit ? null : "offen: " + offene(g));
-  pruefe("G1k", "keine Konsolenfehler", konsole);
+  const { page, ctx, konsole } = await oeffne({ hash: "#heute" });
+  const p = await punkte(page);
+  const soll = HAUPT.concat(NEBEN).map((x) => x.join("|")).join(" / ");
+  pruefe("L1", "Leiste: 8 Hauptpunkte + 3 darunter in der richtigen Reihenfolge, jeder mit Symbol", p.map((x) => x[0] + "|" + x[1]).join(" / ") === soll && p.every((x) => x[2]) ? null : p.map((x) => x[1]).join(", "));
+  pruefe("L2", "keine Gruppen mehr (kein Auf-/Zuklappen)", (await page.locator("[data-gruppe], .nav-gruppe").count()) === 0 ? null : "Gruppenknopf da");
+  const h = new Set(p.slice(0, 8).map((x) => x[3]));
+  pruefe("L3", "alle 8 Hauptpunkte gleich hoch (≥ 40 px)", h.size === 1 && [...h][0] >= 40 ? null : [...h].join(","));
+  pruefe("L4", "Heute ist markiert, der Titel heißt „Heute“", (await markiert(page)) === "#heute" && (await page.textContent("#titel")) === "Heute" ? null : await markiert(page));
+  const zahlen = await page.$$eval("#nav .nav-punkt .zahl", (z) => z.length);
+  pruefe("L5", "Zähler sichtbar (mindestens einer, rot)", zahlen >= 1 ? null : "keine Zähler");
+  // Zahlungen-Zähler = Verkäufe „empfohlen“
+  const emp = await page.evaluate(() => S.verkaeufe.filter((v) => v.status === "empfohlen").length);
+  const zz = await page.evaluate(() => { const z = document.querySelector('#nav .nav-punkt[href="#zahlungen"] .zahl'); return z ? Number(z.textContent) : 0; });
+  pruefe("L6", "Zähler bei „Zahlungen“ = Verkäufe „empfohlen“", zz === emp ? null : `Zähler ${zz} / empfohlen ${emp}`);
+  const rand = await page.evaluate(() => { const n = document.querySelector("#nav").getBoundingClientRect(), f = document.querySelector(".seite-fuss").getBoundingClientRect(); return { nb: n.bottom, ft: f.top, h: innerHeight }; });
+  pruefe("L7", "1366x900: Leiste und Fußzeile überlappen nicht", rand.nb <= rand.ft + 1 ? null : JSON.stringify(rand));
+  // Unterseiten markieren den Elternpunkt
+  for (const [hash, eltern, titel] of [["#auslastung", "#kalender", "Wer hat Platz?"], ["#preise", "#zahlungen", "Preise & Pakete"], ["#verkaeufe", "#zahlungen", "Verkäufe & Provision"], ["#zahlungen", "#zahlungen", "Zahlungen"], ["#team", "#team", "Fahrlehrer & Büro"]]) {
+    await page.evaluate((h) => { location.hash = h; }, hash); await warte(page, 350);
+    pruefe("U" + hash.slice(1), `${hash} erreichbar, in der Leiste markiert: ${eltern}`, (await markiert(page)) === eltern && (await page.textContent("#titel")) === titel ? null : `markiert ${await markiert(page)}, Titel ${await page.textContent("#titel")}`);
+  }
+  // Zahlungen: Reiterzeile in einer Linie
+  await page.evaluate(() => { location.hash = "#zahlungen"; }); await warte(page, 350);
+  const rz = await page.$$eval(".zahl-reiter .tab", (l) => l.map((a) => [a.textContent.trim(), a.getAttribute("href"), a.getAttribute("aria-current") === "page", Math.round(a.getBoundingClientRect().top)]));
+  const mitPakete = await page.evaluate(() => bkDa());
+  const rzSoll = (mitPakete ? ["Preise", "Pakete", "Verkäufe & Provision"] : ["Preise", "Verkäufe & Provision"]).join("|");
+  pruefe("Z1", "#zahlungen: EINE Reiterzeile „Preise · Pakete · Verkäufe & Provision“ in einer Linie, „Preise“ aktiv, keine zweite Reiterzeile", rz.map((x) => x[0]).join("|") === rzSoll && rz[0][2] && rz.slice(1).every((x) => !x[2]) && new Set(rz.map((x) => x[3])).size === 1 && (await page.locator(".bk-reiter").count()) === 0 ? null : JSON.stringify(rz));
+  if (mitPakete) {
+    await page.click('.zahl-reiter .tab[href="#preise?reiter=pakete"]'); await warte(page, 350);
+    pruefe("Z1b", "Reiter „Pakete“ zeigt die Pakete, bleibt auf der Seite Zahlungen", (await page.locator("#bkNeu").count()) === 1 && (await page.locator('.zahl-reiter .tab[aria-current=page]').textContent()) === "Pakete" && (await markiert(page)) === "#zahlungen" ? null : "bkNeu " + (await page.locator("#bkNeu").count()));
+  }
+  await page.evaluate(() => { location.hash = "#zahlungen"; }); await warte(page, 350);
+  pruefe("Z2", "#zahlungen zeigt die Preisseite", (await page.locator("#prNeu").count()) === 1 ? null : "keine Preisseite");
+  await page.click('.zahl-reiter .tab[href="#verkaeufe"]'); await warte(page, 350);
+  pruefe("Z3", "Reiter „Verkäufe & Provision“ zeigt die Verkäufe, Reiterzeile bleibt, Leiste markiert Zahlungen", (await page.locator("#vMonat").count()) === 1 && (await page.locator(".zahl-reiter .tab").count()) === rzSoll.split("|").length && (await markiert(page)) === "#zahlungen" ? null : "vMonat " + (await page.locator("#vMonat").count()));
+  await page.click('.zahl-reiter .tab[href="#preise"]'); await warte(page, 350);
+  pruefe("Z4", "Reiter zurück: Preise", (await page.locator("#prNeu").count()) === 1 && (await page.locator(".zahl-reiter .tab[aria-current=page]").textContent()).startsWith("Preise") ? null : "nicht Preise");
+  // Kalender
+  await page.click('#nav .nav-punkt[href="#kalender"]'); await warte(page, 350);
+  const kn = await page.$$eval("#kopfAktionen > *", (l) => l.map((a) => [a.textContent.trim(), a.className, Math.round(a.getBoundingClientRect().top), Math.round(a.getBoundingClientRect().height)]));
+  pruefe("K1", "Kalender: rechts im Seitenkopf „Wer hat Platz?“ und „+ Termin“ (Akzent) in einer Reihe", kn.length === 2 && kn[0][0] === "Wer hat Platz?" && kn[1][0] === "+ Termin" && /haupt/.test(kn[1][1]) && !/haupt/.test(kn[0][1]) && kn[0][2] === kn[1][2] ? null : JSON.stringify(kn));
+  for (const w of [1024, 1280, 1440]) {
+    await page.setViewportSize({ width: w, height: 800 }); await warte(page, 250);
+    const k = await page.evaluate(() => {
+      const r = (sel) => { const e = document.querySelector(sel); const b = e.getBoundingClientRect(); return { x: b.left, mitte: Math.round(b.top + b.height / 2), h: Math.round(b.height), w: Math.round(b.width), r: b.right }; };
+      const teile = { titel: r("#titel"), status: r("#status"), drucken: r("#drucken"), laden: r("#neuLaden"), platz: r("#kPlatz"), termin: r("#kNeuTermin") };
+      return { teile, sw: document.documentElement.scrollWidth, iw: innerWidth, la: document.querySelector("#neuLaden").getAttribute("aria-label"), ld: document.querySelector("#drucken").getAttribute("aria-label"), lt: document.querySelector("#drucken").title, kante: document.querySelector(".inhalt").getBoundingClientRect().right };
+    });
+    const T = k.teile, mitten = Object.values(T).map((x) => x.mitte);
+    const reihenfolge = T.status.x < T.drucken.x && T.drucken.x < T.laden.x && T.laden.x < T.platz.x && T.platz.x < T.termin.x && T.titel.x < T.status.x;
+    pruefe("H" + w, `Seitenkopf ${w} px: Titel, Status, Drucken, Aktualisieren, Wer hat Platz?, + Termin in EINER Zeile, in dieser Reihenfolge, Akzentknopf ganz rechts`, Math.max(...mitten) - Math.min(...mitten) <= 4 && reihenfolge && k.sw <= k.iw + 1 && T.termin.r <= k.kante + 1 ? null : JSON.stringify(k));
+    if (w <= 1280) pruefe("H" + w + "b", w + " px: Drucken und Aktualisieren als Symbol (≥ 44 px) mit aria-label und title", T.drucken.h >= 44 && T.drucken.w >= 44 && T.laden.h >= 44 && k.la === "Aktualisieren" && k.ld === "Drucken" && k.lt ? null : JSON.stringify(k));
+    if (w === 1440) pruefe("H1440b", "1440 px: Drucken und Aktualisieren mit Text", T.drucken.w > 60 && T.laden.w > 100 ? null : JSON.stringify(k));
+  }
+  await page.setViewportSize({ width: 1366, height: 900 }); await warte(page, 200);
+  const rechts = await page.evaluate(() => document.querySelector("#kNeuTermin").getBoundingClientRect().left > innerWidth / 2);
+  pruefe("K1b", "die Knöpfe stehen rechts", rechts ? null : "links");
+  await page.click("#kNeuTermin"); await warte(page, 400);
+  const v = await page.evaluate(() => {
+    const d = document.querySelector("dialog[open]"); if (!d) return null;
+    const f = (n) => d.querySelector(`[name="${n}"]`).value;
+    const aktive = S.lehrer.filter((l) => l.aktiv !== false);
+    const h = new Date().getHours() + 1;
+    return { datum: f("datum"), soll: kTag(), von: f("von"), bis: f("bis"), lehrer: f("fahrlehrer_id"), ersterLehrer: aktive[0].id, h, ks: K_START, ke: K_ENDE, titel: d.querySelector("h2").textContent };
+  });
+  const vonSoll = v && (v.h * 60 >= v.ks && v.h * 60 < v.ke ? String(v.h).padStart(2, "0") + ":00" : "08:00");
+  const bisSoll = v && (() => { const m = Number(vonSoll.slice(0, 2)) * 60 + 90; return String(Math.floor(m / 60)).padStart(2, "0") + ":" + String(m % 60).padStart(2, "0"); })();
+  pruefe("K2", "„+ Termin“ öffnet „Termin anlegen“ mit Tag, nächster voller Stunde (sonst 08:00), Fahrlehrer und Bis = +90 min", v && v.titel === "Termin anlegen" && v.datum === v.soll && v.von === vonSoll && v.bis === bisSoll && v.lehrer === v.ersterLehrer ? null : JSON.stringify([v, vonSoll, bisSoll]));
+  await page.keyboard.press("Escape"); await warte(page, 400);
+  pruefe("K3", "Dialog schließt (nach der Animation kein offenes Fenster)", (await page.locator("dialog[open]").count()) === 0 ? null : "noch offen");
+  // gefilterter Fahrlehrer
+  const zweiter = await page.evaluate(() => S.lehrer.filter((l) => l.aktiv !== false)[1].id);
+  await page.evaluate((id) => { location.hash = "#kalender?lehrer=" + id; }, zweiter); await warte(page, 350);
+  await page.click("#kNeuTermin"); await warte(page, 400);
+  const lv = await page.evaluate(() => document.querySelector('dialog[open] [name="fahrlehrer_id"]').value);
+  pruefe("K4", "Fahrlehrer-Filter im Kalender: „+ Termin“ nimmt diesen Fahrlehrer", lv === zweiter ? null : lv + " ≠ " + zweiter);
+  await page.keyboard.press("Escape"); await warte(page, 300);
+  await page.click('#kopfAktionen a[href="#auslastung"]'); await warte(page, 350);
+  pruefe("K5", "„Wer hat Platz?“ öffnet die Auslastung, Knöpfe nur im Kalender", (await page.locator("#ansicht table").count()) >= 1 && (await page.locator("#kopfAktionen").isHidden()) ? null : "Auslastung/Knöpfe");
+  // Bewegung: Seitenwechsel hat eine Einblendung
+  await page.evaluate(() => { location.hash = "#schueler"; });
+  const anim = await page.evaluate(() => getComputedStyle(document.getElementById("ansicht")).animationName);
+  pruefe("A1", "Seitenwechsel blendet ein (Animation „seite-ein“)", anim === "seite-ein" ? null : anim);
+  await page.evaluate(() => { location.hash = "#heute"; }); await warte(page, 350);
+  pruefe("A2", "kurz nach dem Wechsel sofort klickbar (Leiste, Seite)", await page.click('#nav .nav-punkt[href="#kalender"]', { timeout: 1500 }).then(() => true, () => false) ? null : "nicht klickbar");
+  pruefe("L9", "keine Konsolenfehler", konsole);
   await ctx.close();
 }
-// ---- K16 Handy ----
+// ---- Werkstatt 16: Urlaub, Schichtplan, Backups nur mit ihren Funktionen ----
+{
+  const { page, ctx, konsole } = await oeffne({ hash: "#urlaub" });
+  pruefe("V1", "ohne die Funktionen: kein Eintrag, #urlaub fällt auf Heute zurück", (await page.locator('#nav .nav-punkt[href="#urlaub"], #nav .nav-punkt[href="#schichtplan"], #nav .nav-punkt[href="#backups"]').count()) === 0 && (await page.textContent("#titel")) === "Heute" && (await markiert(page)) === "#heute" ? null : "Titel " + (await page.textContent("#titel")));
+  await ctx.close();
+  const att = `window.renderUrlaub = () => '<div class="karte" id="attUrlaub">Urlaub-Attrappe</div>'; window.renderSchichtplan = () => '<div class="karte" id="attSchicht">Schichtplan-Attrappe</div>'; window.renderBackups = () => '<div class="karte" id="attBackups">Backups-Attrappe</div>'; window.bindeBackups = () => { window.__backupsGebunden = true; };`;
+  const m = await oeffne({ hash: "#schichtplan", vorher: att });
+  const p = await punkte(m.page);
+  const sollNeben = ["Fahrlehrer & Büro", "Fahrzeuge", "Urlaub", "Schichtplan", "Backups", "Neuigkeiten"].join(" / ");
+  pruefe("V2", "mit den Funktionen: Urlaub, Schichtplan, Backups unten nach „Fahrzeuge“ und vor „Neuigkeiten“, mit Symbol", p.slice(8).map((x) => x[1]).join(" / ") === sollNeben && p.length === 14 && p.slice(8).every((x) => x[2]) ? null : p.map((x) => x[1]).join(", "));
+  pruefe("V3", "#schichtplan rendert die Seite, Punkt markiert, Titel „Schichtplan“", (await m.page.locator("#attSchicht").count()) === 1 && (await markiert(m.page)) === "#schichtplan" && (await m.page.textContent("#titel")) === "Schichtplan" ? null : await markiert(m.page));
+  await m.page.click('#nav .nav-punkt[href="#backups"]'); await warte(m.page, 350);
+  pruefe("V4", "Klick auf „Backups“ rendert die Seite und ruft bindeBackups", (await m.page.locator("#attBackups").count()) === 1 && (await m.page.evaluate(() => window.__backupsGebunden === true)) ? null : "nicht gerendert");
+  await m.page.click('#nav .nav-punkt[href="#urlaub"]'); await warte(m.page, 350);
+  pruefe("V5", "#urlaub rendert die Seite", (await m.page.locator("#attUrlaub").count()) === 1 ? null : "nicht gerendert");
+  pruefe("V6", "keine Konsolenfehler", m.konsole);
+  await m.ctx.close();
+}
+// ---- reduzierte Bewegung ----
+{
+  const { page, ctx, konsole } = await oeffne({ hash: "#kalender" });
+  await page.emulateMedia({ reducedMotion: "reduce" });
+  await page.evaluate(() => { location.hash = "#schueler"; }); await warte(page, 100);
+  const a = await page.evaluate(() => { const c = getComputedStyle(document.getElementById("ansicht")); const n = getComputedStyle(document.querySelector("#nav .nav-punkt")); return [c.animationName, n.transitionDuration]; });
+  pruefe("R1", "reduzierte Bewegung: keine Einblendung, keine Übergänge in der Leiste", a[0] === "none" && /^0s(, 0s)*$/.test(a[1]) ? null : JSON.stringify(a));
+  await page.evaluate(() => { location.hash = "#kalender"; }); await warte(page, 200);
+  await page.click("#kNeuTermin"); 
+  const dd = await page.evaluate(() => { const d = document.querySelector("dialog[open]"); const c = getComputedStyle(d); return [c.opacity, c.transitionDuration]; });
+  pruefe("R2", "reduzierte Bewegung: Dialog steht sofort da (Deckkraft 1, keine Übergangszeit)", dd[0] === "1" && /^0s(, 0s)*$/.test(dd[1]) ? null : JSON.stringify(dd));
+  await page.keyboard.press("Escape");
+  pruefe("R3", "reduzierte Bewegung: Dialog schließt sofort", (await page.locator("dialog[open]").count()) === 0 ? null : "noch offen");
+  pruefe("R4", "keine Konsolenfehler", konsole);
+  await ctx.close();
+}
+// ---- Handy ----
 {
   const { page, ctx, konsole } = await oeffne({ hash: "#flotte", breite: 375, hoehe: 740 });
   await page.click("#menueKnopf"); await warte(page, 200);
-  let g = await gruppen(page);
-  pruefe("G4a", "Handy: Menü auf, nur „Verwaltung“ ist auf", offene(g) === "Verwaltung" ? null : "offen: " + offene(g));
-  await page.click('[data-gruppe="Arbeit"]'); await warte(page, 150);
+  const m = await page.$$eval("#nav .nav-punkt", (l) => l.filter((a) => a.offsetParent).map((a) => Math.round(a.getBoundingClientRect().height)));
+  pruefe("G4a", "Handy: Menü auf, 11 Punkte, alle ≥ 44 px", m.length === 11 && m.every((h) => h >= 44) ? null : JSON.stringify(m));
   await page.click('.nav-punkt[href="#pruefungen"]'); await warte(page, 400);
-  g = await gruppen(page);
-  pruefe("G4b", "Handy: Seite wechseln klappt „Arbeit“ auf, Menü geht zu", g.Arbeit && !(await page.evaluate(() => document.body.classList.contains("menue-offen"))) ? null : "offen: " + offene(g));
+  pruefe("G4b", "Handy: Seite wechseln schließt das Menü", !(await page.evaluate(() => document.body.classList.contains("menue-offen"))) && /Prüfungen/.test(await page.textContent("#menueKnopf")) ? null : "Menü offen");
   pruefe("G4c", "Handy: nichts wischt seitlich", (await page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth + 1)) ? null : "seitlich wischbar");
   pruefe("G4k", "keine Konsolenfehler", konsole);
   await ctx.close();

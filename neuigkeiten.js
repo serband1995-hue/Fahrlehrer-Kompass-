@@ -4,6 +4,11 @@
    "kurz" (höchstens ~60 Zeichen) erscheint nach dem Update einmal als kleiner Hinweis (verschwindet von selbst, kein Knopf).
    Einfache Worte, keine Fachwörter, keine Schülerdaten. */
 window.KOMPASS_NEU = [
+  { version: "2026.11.25.1", datum: "2026-11-25", kurz: "Büro: links jetzt 8 feste Punkte, alles auf einen Blick.",
+    punkte: ["Links stehen jetzt immer dieselben 8 Punkte: Heute, Kalender, Schüler, Prüfungen, Fristen, Zahlungen, Fahrcheck, Statistik. Nichts mehr auf- und zuklappen.",
+             "Im Kalender gibt es oben den Knopf „+ Termin“ und „Wer hat Platz?“.",
+             "Unter „Zahlungen“ stehen Preise, Pakete und Verkäufe in einer Reihe.",
+             "Fenster und Seiten öffnen und schließen sich jetzt weich."] },
   { version: "2026.11.24.15", datum: "2026-11-24", kurz: "Neue Telefonnummer vom Büro bleibt jetzt sicher.",
     punkte: ["Ändert das Büro Name oder Telefon eines Schülers, schreibt die App die alte Nummer nicht mehr zurück. Das gilt auch, wenn du am Schüler etwas anderes geändert hast oder gerade offline warst.",
              "Änderst du Name oder Telefon selbst in der App, gelten wie bisher beide Angaben vom Handy."] },
