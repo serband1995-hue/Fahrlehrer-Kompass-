@@ -396,7 +396,7 @@ function renderHeute() {
   const fcOffen = fcOffeneAbgaben();
   if (fcOffen.length) aufgaben.push(`<a class="aufgabe gelb" href="#fahrchecks?z=vor"><b>${fcOffen.length}</b> Fahrcheck-Abgabe${fcOffen.length === 1 ? "" : "n"} für ${esc(datumDE(fcOffen[0].von))}–${esc(datumDE(fcOffen[0].bis))} noch nicht bestätigt</a>`);
   const neuVerk = S.verkaeufe.filter((v) => v.status === "empfohlen").length;
-  if (neuVerk) aufgaben.push(`<a class="aufgabe" href="#verkaeufe"><b>${neuVerk}</b> neue Empfehlung${neuVerk === 1 ? "" : "en"} von Fahrlehrern (Akademie/Simulator): Zugang ausgeben, Zahlung eintragen</a>`);
+  if (neuVerk) aufgaben.push(`<a class="aufgabe" href="#verkaeufe"><b>${neuVerk}</b> neue Empfehlung${neuVerk === 1 ? "" : "en"} (Akademie/Simulator): Zugang ausgeben, Zahlung eintragen</a>`);
   const ungelesen = S.notizen.filter((n) => !n.erledigt_am && !S.gelesen.some((g) => g.notiz_id === n.id) && aktiveSchueler().some((x) => x.id === n.schueler_id));
   if (ungelesen.length) aufgaben.push(`<a class="aufgabe gelb" href="#schueler?notiz=ungelesen"><b>${ungelesen.length}</b> Notiz${ungelesen.length === 1 ? "" : "en"} an Fahrlehrer noch nicht gelesen</a>`);
   const beiGesperrten = aktiveSchueler().filter((x) => x.fahrlehrer_id && (S.lehrer.find((l) => l.id === x.fahrlehrer_id) || {}).aktiv === false).length;
