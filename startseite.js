@@ -1,7 +1,7 @@
 /* Startseite je Rolle (Werkstatt 16, 🗣 Serband 24.11.2026: „je nachdem, wo man sich anmeldet, kommt dann die richtige Seite“).
    Gemeinsam für die App (index.html) und die Büro-Seite (buero.html), ohne Abhängigkeit von einer der beiden.
    - Fahrlehrer: nur die Fahrlehrer-Ansicht. Öffnet er buero.html, geht es sofort zur App.
-   - Büro: nur die Büro-Seite. Öffnet es die App, geht es nach der Anmeldung sofort zu buero.html.
+   - Büro: nur die Büro-Seite. Öffnet es die App, geht es nach der Anmeldung sofort zu buero.html (Schalter BUERO_NUR_BUEROSEITE).
    - Leitung und Super-Admin wählen ihre Startseite einmal; gewechselt wird nur in den Einstellungen.
    Gespeichert wird je Gerät und Konto nur ein Wort (eigen, gesamt oder buero) unter der Konto-ID, keine Schülerdaten.
    Je Gerät, weil App und Büro-Seite denselben Gerätespeicher teilen (die Büro-Seite lädt den eigenen Stand nicht)
@@ -13,6 +13,9 @@
   var WEITER_KEY = "kompass-weiterleitung"; // { nach: "buero" | "app", t: Zeit } – nur in diesem Tab, gegen Schleifen
   var SCHLEIFE_MS = 20000;
   var MAX_KONTEN = 8;
+  // Rolle Büro nur auf der Büro-Seite: erst an, wenn dort Urlaub, Schichtplan und Backups laufen (Hauptsitzung 24.11.:
+  // „Kristina darf nie eine Seite ohne Urlaub oder Backups bekommen“). Bis dahin arbeitet das Büro wie bisher auch in der App.
+  var BUERO_NUR_BUEROSEITE = false;
   var TEXTE = {
     eigen: { titel: "Fahrlehrer-Ansicht", text: "Deine Schüler, Termine und Fahrstunden" },
     gesamt: { titel: "Fahrschule", text: "Alle Fahrlehrer und Schüler in der App" },
@@ -22,7 +25,7 @@
   // Welche Startseiten eine Person haben kann. Die erste ist die Vorgabe (so startet die App heute schon).
   function erlaubt(p) {
     if (!p || p.aktiv === false || !p.rolle) return [];
-    if (p.rolle === "buero") return ["buero"];
+    if (p.rolle === "buero") return BUERO_NUR_BUEROSEITE ? ["buero"] : [];
     if (p.rolle === "super_admin") return p.fahrschule_id ? ["eigen", "gesamt", "buero"] : ["eigen", "buero"];
     if (p.rolle === "fahrschule_admin") return p.faehrt_selbst === true ? ["eigen", "gesamt", "buero"] : ["gesamt", "buero"];
     if (p.rolle === "fahrlehrer") return ["eigen"];
@@ -159,5 +162,5 @@
   }
 
   g.KS_START = { erlaubt: erlaubt, standard: standard, hatWahl: hatWahl, lesen: lesen, ziel: lesen, setzen: setzen,
-    weiter: weiter, gehe: gehe, einbauen: einbauen, TEXTE: TEXTE, KEY: KEY, WEITER_KEY: WEITER_KEY };
+    weiter: weiter, gehe: gehe, einbauen: einbauen, TEXTE: TEXTE, KEY: KEY, WEITER_KEY: WEITER_KEY, bueroNurBueroseite: BUERO_NUR_BUEROSEITE };
 })(window);

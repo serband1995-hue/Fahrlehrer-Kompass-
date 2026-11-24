@@ -53,6 +53,8 @@ async function pruefe(id, text, fn) {
 const warte = (page, ms = 250) => page.waitForTimeout(ms);
 
 const FS = "fs-muster";
+// W16: Schalter in startseite.js – erst wenn Urlaub, Schichtplan und Backups auf der Büro-Seite laufen, hat das Büro nur noch diese Seite
+const NUR_BUERO = /BUERO_NUR_BUEROSEITE\s*=\s*true/.test(await readFile(join(ROOT, "startseite.js"), "utf8"));
 // wahl: Startseiten in den Einstellungen (erste = Vorgabe). zumBuero: die App leitet gleich zu buero.html weiter (W16).
 // kurz: nur Start, Menü und Startseite prüfen (Sonderfälle). nurHoch: nur am Handy hoch.
 const ROLLEN = [
@@ -62,7 +64,7 @@ const ROLLEN = [
   { n: "Fahrlehrer mit faehrt_selbst", prof: { rolle: "fahrlehrer", faehrt_selbst: true }, eigen: true, wahl: [] },
   { n: "Leitung", prof: { rolle: "fahrschule_admin" }, eigen: false, wahl: ["gesamt", "buero"] },
   { n: "Leitung fährt selbst", prof: { rolle: "fahrschule_admin", faehrt_selbst: true }, eigen: true, wahl: ["eigen", "gesamt", "buero"] },
-  { n: "Büro", prof: { rolle: "buero" }, zumBuero: true },
+  NUR_BUERO ? { n: "Büro", prof: { rolle: "buero" }, zumBuero: true } : { n: "Büro", prof: { rolle: "buero" }, eigen: false, wahl: [] },
   { n: "Super-Admin", prof: { rolle: "super_admin" }, eigen: true, wahl: ["eigen", "gesamt", "buero"] },
   // Super-Admin ohne Fahrschule: keine „Fahrschule“ als Startseite (die Schul-Wahl bleibt im Büro)
   { n: "Super-Admin ohne Fahrschule", prof: { rolle: "super_admin", fahrschule_id: null }, eigen: true, wahl: ["eigen", "buero"], kurz: true, nurHoch: true },
@@ -451,22 +453,27 @@ for (const R of ROLLEN) {
   page.on("dialog", (d) => d.dismiss().catch(() => {}));
   await page.route("**/*", (r) => (r.request().url().startsWith(basis) ? r.continue() : r.abort()));
   const neu = async () => { await page.goto(basis + "index.html", { waitUntil: "load", timeout: 20000 }); await warte(page, 600); };
+  // Leitung mit der Startseite „Büro-Seite“ (dieselbe Weiterleitung wie später für die Rolle Büro)
+  const LEITUNG = { rolle: "fahrschule_admin" };
+  const merkeBuero = () => page.evaluate(() => localStorage.setItem("kompass-startseite", JSON.stringify({ "u-ich": "buero" })));
   // a) Die Büro-Seite hat in diesem Tab eben erst hierher geschickt → die App leitet nicht zurück (wie früher: Gesamtansicht)
   await neu();
+  await merkeBuero();
   await page.evaluate(() => sessionStorage.setItem("kompass-weiterleitung", JSON.stringify({ nach: "app", t: Date.now() })));
-  let u = await starteApp(page, { rolle: "buero" });
-  await pruefe("R22", "[Büro] eben von der Büro-Seite gekommen → keine Schleife, App zeigt die Gesamtansicht", async () => (aufBuero(u) ? "wieder weitergeleitet" : (await page.evaluate(() => !!_fsAgg)) ? null : "keine Gesamtansicht"));
+  let u = await starteApp(page, LEITUNG, { behalte: true });
+  await pruefe("R22", "[Leitung, Startseite Büro] eben von der Büro-Seite gekommen → keine Schleife, App zeigt die Gesamtansicht", async () => (aufBuero(u) ? "wieder weitergeleitet" : (await page.evaluate(() => !!_fsAgg)) ? null : "keine Gesamtansicht"));
   // b) Passwort-Link offen → erst das neue Passwort, dann zur Büro-Seite
   await neu();
+  await merkeBuero();
   await page.evaluate(() => sessionStorage.clear());
-  u = await starteApp(page, { rolle: "buero" }, { vorher: "_startWeiterWartet = true;" });
-  await pruefe("R22", "[Büro] Passwort-Link offen → bleibt, bis das neue Passwort gespeichert ist", () => (aufBuero(u) ? "zu früh weitergeleitet" : null));
+  u = await starteApp(page, LEITUNG, { behalte: true, vorher: "_startWeiterWartet = true;" });
+  await pruefe("R22", "[Leitung, Startseite Büro] Passwort-Link offen → bleibt, bis das neue Passwort gespeichert ist", () => (aufBuero(u) ? "zu früh weitergeleitet" : null));
   if (!aufBuero(u)) {
     await page.evaluate(() => { try { closeSheet(); } catch (e) {} _openNeuesPasswortSheet(); }); await warte(page, 400);
     await page.fill("#npwNeu", "Muster-1234"); await page.fill("#npwWdh", "Muster-1234");
     await page.click("#npwSave");
     const weiter = await page.waitForURL(/buero\.html/, { timeout: 8000 }).then(() => true).catch(() => false);
-    await pruefe("R22", "[Büro] nach dem neuen Passwort → Büro-Seite", () => (weiter ? null : "bleibt auf " + page.url()));
+    await pruefe("R22", "[Leitung, Startseite Büro] nach dem neuen Passwort → Büro-Seite", () => (weiter ? null : "bleibt auf " + page.url()));
   }
   // c) Offline-Start der PWA: die Rolle ist unbekannt → nie weiterleiten
   await neu();
@@ -480,7 +487,7 @@ for (const R of ROLLEN) {
     return { ok, ziel: _startZiel() };
   });
   await warte(page, 800);
-  await pruefe("R22", "[Büro] Offline-Start: Rolle unbekannt → keine Weiterleitung", () => (off.ok && off.ziel === null && !aufBuero(page.url()) ? null : JSON.stringify(off) + " " + page.url()));
+  await pruefe("R22", "[Büro im Zwischenspeicher] Offline-Start: Rolle unbekannt → keine Weiterleitung", () => (off.ok && off.ziel === null && !aufBuero(page.url()) ? null : JSON.stringify(off) + " " + page.url()));
   await pruefe("R5", "[R22] keine JS-Fehler", () => jsFehler);
   await ctx.close();
 }
@@ -562,9 +569,10 @@ for (const R of ROLLEN) {
         return { link: !!l && !l.hidden && l.getClientRects().length > 0, werte: k.map((b) => b.dataset.ksStart), an: k.filter((b) => b.getAttribute("aria-pressed") === "true").map((b) => b.dataset.ksStart),
           minH: k.length ? Math.min(...k.map((b) => b.getBoundingClientRect().height)) : 0 };
       });
-      await pruefe("R23", `[${B.n}] Büro-Fußzeile: ${B.wahl.length ? "Startseite " + B.wahl.join(" / ") : "kein Weg in die App"}`, () => {
+      const linkSoll = !B.wahl.length && !NUR_BUERO; // das Büro behält den Link, bis es nur noch die Büro-Seite hat
+      await pruefe("R23", `[${B.n}] Büro-Fußzeile: ${B.wahl.length ? "Startseite " + B.wahl.join(" / ") : linkSoll ? "Link zur App wie bisher" : "kein Weg in die App"}`, () => {
         const f = [];
-        if (fuss.link) f.push("Link „Zur Fahrlehrer-Ansicht“ sichtbar");
+        if (fuss.link !== linkSoll) f.push(`Link „Zur Fahrlehrer-Ansicht“ ${fuss.link ? "sichtbar" : "fehlt"}`);
         if (fuss.werte.join() !== B.wahl.join()) f.push("Wahl: " + (fuss.werte.join(" / ") || "keine"));
         if (B.wahl.length && fuss.an.join() !== B.wahl[0]) f.push("markiert: " + (fuss.an.join() || "nichts"));
         if (B.wahl.length && fuss.minH < 43.5) f.push("Knopf nur " + Math.round(fuss.minH) + " px hoch");

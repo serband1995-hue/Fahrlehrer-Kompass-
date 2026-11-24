@@ -151,10 +151,6 @@ const BEREICHE = [
   { id: "preise", titel: "Preisliste", gruppe: "Geld", render: (...a) => renderPreisSeite(...a), nachher: (...a) => bindePreisSeite(...a) },
   { id: "team", titel: "Fahrlehrer & Zugänge", gruppe: "Verwaltung", render: renderTeam, nachher: bindeTeam },
   { id: "flotte", titel: "Fahrzeuge", gruppe: "Verwaltung", render: renderFlotte, nachher: bindeFlotte, zahl: () => fahrzeugKonflikte().length || "" },
-  // W16: Urlaub, Schichtplan und Backups (buero-verwaltung.js) – bisher nur in der App-Gesamtansicht, das Büro hat jetzt nur noch diese Seite
-  { id: "urlaub", titel: "Urlaub", gruppe: "Verwaltung", render: (...a) => renderUrlaub(...a), nachher: (...a) => bindeUrlaub(...a) },
-  { id: "schichtplan", titel: "Schichtplan", gruppe: "Verwaltung", render: (...a) => renderSchichtplan(...a), nachher: (...a) => bindeSchichtplan(...a) },
-  { id: "backups", titel: "Backups", gruppe: "Verwaltung", render: (...a) => renderBackups(...a), nachher: (...a) => bindeBackups(...a) },
   { id: "neuigkeiten", titel: "Neuigkeiten", gruppe: "Verwaltung", render: renderNeuigkeiten },
 ];
 function aktuellerBereich() {
@@ -4828,14 +4824,16 @@ function zeigeRollenStreifen() {
   el.hidden = false;
   document.body.classList.add("mit-streifen");
 }
-// W16: Fußzeile. Das Büro hat keinen Weg in die App (die App schickte es gleich zurück). Leitung und Super-Admin wählen hier
-// vorläufig ihre Startseite (KS_START aus startseite.js); Werkstatt 11 hängt dieselbe Wahl in die Büro-Einstellungen.
+// W16: Fußzeile. Leitung und Super-Admin wählen hier vorläufig ihre Startseite (KS_START aus startseite.js); Werkstatt 11
+// hängt dieselbe Wahl in die Büro-Einstellungen. Das Büro behält den Link zur App, bis es nur noch die Büro-Seite hat
+// (KS_START.bueroNurBueroseite; danach schickte die App es gleich zurück).
 function zeigeStartWahl(profil) {
   const kasten = $("startWahl"), link = $("zurApp");
   if (!kasten || !link) return;
-  if (!window.KS_START) { kasten.hidden = true; link.hidden = profil.rolle === "buero"; return; } // alter Zwischenspeicher: wie bisher
-  link.hidden = true;
-  KS_START.einbauen(kasten, profil, { kompakt: true });
+  const ks = window.KS_START;
+  const hatWahl = !!(ks && ks.hatWahl(profil));
+  link.hidden = hatWahl || (profil.rolle === "buero" && !!(ks && ks.bueroNurBueroseite));
+  if (hatWahl) ks.einbauen(kasten, profil, { kompakt: true }); else kasten.hidden = true;
 }
 function zeigeHinweis(titel, text, knoepfe) {
   $("hinweisTitel").textContent = titel;
