@@ -828,3 +828,61 @@ body.kiosk .rollen-streifen{display:none;}
 .akte-konflikt li span{overflow-wrap:anywhere;}
 .akte-konflikt .knopf{min-height:44px;}
 .akte-konflikt p.klein{margin:8px 0 0;}
+
+/* Werkstatt 13 Paket-Baukasten: Reiter „Preise | Pakete“, Vorlagen-Liste, Baukasten im Fenster (alle Tippflächen ≥ 44 px) */
+.bk-reiter{margin:0 0 14px;}
+.bk-reiter .tab{min-height:44px;display:inline-flex;align-items:center;}
+.bk-liste{list-style:none;margin:0 0 12px;padding:0;}
+.bk-vorlage{padding:14px 0;border-bottom:1px solid var(--line-soft);display:grid;gap:6px;}
+.bk-vorlage:last-child{border-bottom:none;}
+.bk-v-kopf{display:flex;flex-wrap:wrap;align-items:baseline;gap:4px 10px;}
+.bk-v-name{font-size:18px;overflow-wrap:anywhere;}
+.bk-v-summe{margin-left:auto;display:inline-flex;flex-wrap:wrap;gap:6px 10px;align-items:center;}
+.bk-v-preis{font-size:18px;font-weight:700;white-space:nowrap;}
+.bk-v-knoepfe{margin-top:4px;}
+.bk-v-knoepfe .knopf.klein{min-height:44px;}
+.bk-archiv{margin-top:6px;}
+.bk-archiv summary{cursor:pointer;color:var(--muted);min-height:44px;display:flex;align-items:center;font-weight:600;}
+.bk-turbo{margin:-8px 0 0;}
+.bk-zwischen{font-size:18px;margin:20px 0 8px;}
+.bk-posten-liste{list-style:none;margin:0;padding:0;display:grid;gap:10px;}
+.bk-leer{padding:6px 0;}
+.bk-posten{border:1px solid var(--line-soft);border-radius:var(--r-klein);padding:10px 12px;background:var(--bg);display:grid;gap:8px;min-width:0;}
+.bk-p-titel{display:flex;align-items:center;gap:10px;justify-content:space-between;min-width:0;}
+.bk-p-titel b{font-size:17px;overflow-wrap:anywhere;}
+.bk-p-wahl{flex:1 1 auto;min-width:0;min-height:44px;padding:0 10px;border:1px solid var(--feld);border-radius:var(--r-klein);background:var(--surface);}
+.bk-weg{flex:0 0 auto;min-width:44px;min-height:44px !important;padding:0 !important;}
+.bk-p-zahlen{display:flex;flex-wrap:wrap;align-items:center;gap:8px 10px;}
+.bk-stepper{display:inline-flex;align-items:center;gap:4px;}
+.bk-stepper .knopf{min-width:44px;min-height:44px;padding:0;font-size:22px;font-weight:700;}
+.bk-stepper input{width:64px;min-height:44px;text-align:center;border:1px solid var(--feld);border-radius:var(--r-klein);background:var(--surface);}
+.bk-mal{color:var(--muted);}
+.bk-preisgruppe{display:inline-flex;align-items:center;gap:8px;}
+.bk-preisfeld{display:inline-flex;align-items:center;gap:6px;position:relative;}
+.bk-preisfeld input{width:112px;min-height:44px;padding:0 10px;border:1px solid var(--feld);border-radius:var(--r-klein);background:var(--surface);text-align:right;}
+.bk-preisfeld input.eigen{border:2px solid var(--blau);}
+.bk-preisfeld input[aria-invalid="true"]{border:2px solid var(--rot);}
+.bk-zeilensumme{margin-left:auto;font-weight:700;white-space:nowrap;}
+.bk-p-hinweis{display:flex;flex-wrap:wrap;align-items:center;gap:2px 8px;}
+.bk-p-hinweis .textknopf{min-height:44px;display:inline-flex;align-items:center;}
+.bk-chips-titel{margin:16px 0 0;}
+.bk-chip{min-height:44px;color:var(--txt);}
+.bk-gesamt{position:sticky;bottom:-20px;z-index:1;background:var(--surface);border-top:2px solid var(--line);margin:16px -24px -20px;padding:12px 24px;display:flex;flex-wrap:wrap;align-items:baseline;gap:2px 12px;}
+.bk-gesamt > span:first-child{font-weight:700;}
+.bk-gesamt b{font-size:24px;margin-left:auto;white-space:nowrap;}
+.bk-gesamt .klein{flex-basis:100%;text-align:right;color:var(--muted);}
+.bk-gesamt .klein:empty{display:none;}
+.bk-gesamt .klein .marke-pill{white-space:normal;}
+.bk-dialog .toast.toast-undo{bottom:auto;top:84px;}
+.bk-dialog .toast-undo .toast-knopf{min-height:44px;}
+@media (max-width:520px){
+  .bk-dialog .dialog-inhalt{padding:16px 14px;}
+  .bk-gesamt{margin:16px -14px -16px;padding:12px 14px;bottom:-16px;}
+  .bk-preisfeld input{width:100px;}
+}
+/* Handy quer: wenig Höhe – Gesamtpreis schmal, Hinweis steht dann nur an den Posten (Design-Kritiker 24.11.) */
+@media (max-height:480px){
+  .bk-gesamt{padding-top:6px;padding-bottom:6px;}
+  .bk-gesamt b{font-size:19px;}
+  .bk-gesamt .klein{display:none;}
+}
