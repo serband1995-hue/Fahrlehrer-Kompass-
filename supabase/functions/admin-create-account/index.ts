@@ -300,7 +300,7 @@ Deno.serve(async (req) => {
         // A2: Wechselt ein Büro-Konto die Rolle, gelten seine PIN-Sitzungen nicht mehr
         if (aend.profil.rolle && ziel.rolle === "buero") await supa.from("buero_sitzungen").delete().eq("user_id", ziel.id);
         if (typeof aend.profil.name === "string" && ziel.name && ziel.fahrschule_id) {
-          // Urlaub und Schichtplan merken sich den Namen als Text: mit umbenennen, damit der Urlaub weiter greift
+          // Urlaub und Schichtplan merken sich den Namen als Text: mit umbenennen (Urlaub greift seit W14 über fahrlehrer_id, der Name ist dort nur Anzeige)
           for (const tabelle of ["fahrschule_urlaub", "fahrschule_schichten"]) {
             const { error: nErr } = await supa.from(tabelle).update({ mitarbeiter_name: aend.profil.name }).eq("fahrschule_id", ziel.fahrschule_id).ilike("mitarbeiter_name", likeGenau(ziel.name));
             if (nErr) console.warn("Name in " + tabelle + " nicht angepasst:", nErr.message);

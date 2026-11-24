@@ -4,6 +4,10 @@
    "kurz" (höchstens ~60 Zeichen) erscheint nach dem Update einmal als kleiner Hinweis (verschwindet von selbst, kein Knopf).
    Einfache Worte, keine Fachwörter, keine Schülerdaten. */
 window.KOMPASS_NEU = [
+  { version: "2026.11.24.9", datum: "2026-11-24", kurz: "Urlaub wird jetzt sicher der richtigen Person zugeordnet.",
+    punkte: ["In der Gesamtansicht trägst du Urlaub jetzt in einem Fenster ein: Person aus der Liste wählen, von und bis.",
+             "Der Kalender blockiert den Urlaub bei genau dieser Person, auch wenn sie später ihren Namen ändert.",
+             "Urlaub von anderen Personen (zum Beispiel Büro) steht nur in der Liste und blockiert keinen Kalender."] },
   { version: "2026.11.24.8", datum: "2026-11-24", kurz: "Speichern überschreibt keine neueren Änderungen mehr.",
     punkte: ["Im Büro speichert die Schüler-Akte nur noch, was du im Fenster geändert hast. Was die App oder ein anderer PC inzwischen geändert hat, bleibt.",
              "Hat jemand dasselbe Feld gleichzeitig geändert, zeigt das Fenster beide Werte. Mit „Meine Eingabe nehmen“ gilt deine.",
