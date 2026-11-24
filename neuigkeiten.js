@@ -4,10 +4,15 @@
    "kurz" (höchstens ~60 Zeichen) erscheint nach dem Update einmal als kleiner Hinweis (verschwindet von selbst, kein Knopf).
    Einfache Worte, keine Fachwörter, keine Schülerdaten. */
 window.KOMPASS_NEU = [
-  { version: "2026.11.24.7", datum: "2026-11-24", kurz: "Speichern überschreibt keine neueren Änderungen mehr.",
+  { version: "2026.11.24.8", datum: "2026-11-24", kurz: "Speichern überschreibt keine neueren Änderungen mehr.",
     punkte: ["Im Büro speichert die Schüler-Akte nur noch, was du im Fenster geändert hast. Was die App oder ein anderer PC inzwischen geändert hat, bleibt.",
              "Hat jemand dasselbe Feld gleichzeitig geändert, zeigt das Fenster beide Werte. Mit „Meine Eingabe nehmen“ gilt deine.",
              "Ändert das Büro Name oder Telefon, übernimmt die App das jetzt auch, wenn du am Schüler unterwegs etwas anderes geändert hast."] },
+  { version: "2026.11.24.7", datum: "2026-11-24", kurz: "Büro: Pakete jetzt aus Bausteinen zusammenstellen.",
+    punkte: ["Im Büro unter Preisliste gibt es oben zwei Reiter: „Preise“ und „Pakete“.",
+             "Unter „Pakete“ baust du ein Paket aus Bausteinen, zum Beispiel Grundbetrag, Übungsstunden, Sonderfahrten und Prüfung. Unten siehst du sofort den Gesamtpreis.",
+             "Die Preise kommen aus deiner Preisliste und passen sich an, wenn du sie dort änderst. Du kannst auch einen eigenen Preis eintragen.",
+             "Pakete kannst du kopieren und archivieren. Archivierte Pakete sind für neue Schüler nicht mehr wählbar, Schüler mit diesem Paket behalten es."] },
   { version: "2026.11.24.6", datum: "2026-11-24", kurz: "Büro: Verkauf ohne Provision lässt sich jetzt speichern.",
     punkte: ["Bei „Verkauf erfassen“ klappt die Wahl „Büro (keine Provision)“ wieder.", "Solche Verkäufe zeigen „Büro (keine Provision)“ und bringen nie eine Provision."] },
   { version: "2026.11.24.5", datum: "2026-11-24", kurz: "Die neuen ruhigen Farben jetzt auch auf den übrigen Seiten.",

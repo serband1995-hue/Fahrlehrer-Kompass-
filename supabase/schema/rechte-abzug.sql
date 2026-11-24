@@ -26,6 +26,11 @@ CREATE TRIGGER trg_termin_zy_papierkorb BEFORE INSERT OR UPDATE ON public.kalend
 -- K9 (Migration 20261123_k9_01, nach der Datei nachgetragen, nicht live gezogen): Verfasser/Zeit/PIN-Person setzt der Server,
 -- Rückdatieren nur Super-Admin, Paket muss zur eigenen Fahrschule gehören.
 CREATE TRIGGER fahrschule_preise_schutz BEFORE INSERT ON public.fahrschule_preise FOR EACH ROW EXECUTE FUNCTION fahrschule_preise_schutz();
+-- Paket-Baukasten (Migration 20261124_paket_01, aus der Datei nachgetragen): Vorlagen bekommen Zeit/Bearbeiter vom Server;
+-- verkaufte Pakete bleiben fest (nur „storniert“ ändert sich), Gesamtpreis rechnet der Server, Spur ins aenderungsprotokoll.
+CREATE TRIGGER fahrschule_pakete_stempel BEFORE INSERT OR UPDATE ON public.fahrschule_pakete FOR EACH ROW EXECUTE FUNCTION fahrschule_pakete_stempel();
+CREATE TRIGGER schueler_pakete_schutz BEFORE INSERT OR UPDATE ON public.schueler_pakete FOR EACH ROW EXECUTE FUNCTION schueler_pakete_schutz();
+CREATE TRIGGER schueler_pakete_spur AFTER INSERT OR UPDATE ON public.schueler_pakete FOR EACH ROW EXECUTE FUNCTION schueler_pakete_spur();
 -- Auftrag 4 Zahlungsmail (Migration 20261124_zm_01, aus der Datei nachgetragen, nicht live gezogen): Verfasser/Zeit/PIN-Person
 -- setzt der Server, IBAN-Prüfziffer, Texte ohne Steuerzeichen, „echt“ nur mit Kontoinhaber+IBAN; jede Änderung in aenderungsprotokoll.
 CREATE TRIGGER fahrschule_zahlungsdaten_schutz BEFORE INSERT OR UPDATE ON public.fahrschule_zahlungsdaten FOR EACH ROW EXECUTE FUNCTION fahrschule_zahlungsdaten_schutz();
@@ -86,11 +91,29 @@ create policy "Super Admin alles - Fahrzeuge" on public.fahrschule_fahrzeuge as 
   using (is_super_admin(auth.uid()));
 create policy "Fahrlehrer sieht Pakete seiner Fahrschule" on public.fahrschule_pakete as PERMISSIVE for SELECT to public
   using ((fahrschule_id = my_fahrschule_id()));
+-- ab 20261124_paket_01 (Werkstatt 13, aus der Datei nachgetragen, nicht live gezogen): with check auch mit Rolle (vorher konnte
+-- jeder Fahrlehrer Vorlagen anlegen); Büro darf anlegen und ändern, nicht löschen (Archiv = aktiv false).
 create policy "Fahrschule-Admin verwaltet eigene Pakete" on public.fahrschule_pakete as PERMISSIVE for ALL to public
   using ((is_fahrschule_admin(auth.uid()) AND (fahrschule_id = my_fahrschule_id())))
-  with check ((fahrschule_id = my_fahrschule_id()));
+  with check ((is_fahrschule_admin(auth.uid()) AND (fahrschule_id = my_fahrschule_id())));
 create policy "Super Admin alles - Pakete" on public.fahrschule_pakete as PERMISSIVE for ALL to public
   using (is_super_admin(auth.uid()));
+create policy "Buero legt Pakete an" on public.fahrschule_pakete as PERMISSIVE for INSERT to authenticated
+  with check ((is_buero(auth.uid()) AND (fahrschule_id = k5_meine_fahrschule())));
+create policy "Buero aendert Pakete" on public.fahrschule_pakete as PERMISSIVE for UPDATE to authenticated
+  using ((is_buero(auth.uid()) AND (fahrschule_id = k5_meine_fahrschule())))
+  with check ((is_buero(auth.uid()) AND (fahrschule_id = k5_meine_fahrschule())));
+-- schueler_pakete (verkaufte Pakete, feste Kopie): kein DELETE; anon keine Rechte, authenticated select/insert/update.
+-- Schreiben am besten über schueler_paket_verkaufen()/schueler_paket_aktivieren() (security invoker, Rolle geprüft, Schüler gesperrt).
+create policy "Pakete Schueler lesen Buero Leitung" on public.schueler_pakete as PERMISSIVE for SELECT to authenticated
+  using ((is_super_admin(auth.uid()) OR ((is_buero(auth.uid()) OR is_fahrschule_admin(auth.uid())) AND (fahrschule_id = k5_meine_fahrschule()))));
+create policy "Pakete Schueler lesen Fahrlehrer" on public.schueler_pakete as PERMISSIVE for SELECT to authenticated
+  using ((EXISTS (SELECT 1 FROM schueler s WHERE ((s.id = schueler_pakete.schueler_id) AND (s.fahrlehrer_id = auth.uid())))));
+create policy "Pakete Schueler verkaufen" on public.schueler_pakete as PERMISSIVE for INSERT to authenticated
+  with check ((is_super_admin(auth.uid()) OR ((is_buero(auth.uid()) OR is_fahrschule_admin(auth.uid())) AND (fahrschule_id = k5_meine_fahrschule()))));
+create policy "Pakete Schueler stornieren" on public.schueler_pakete as PERMISSIVE for UPDATE to authenticated
+  using ((is_super_admin(auth.uid()) OR ((is_buero(auth.uid()) OR is_fahrschule_admin(auth.uid())) AND (fahrschule_id = k5_meine_fahrschule()))))
+  with check ((is_super_admin(auth.uid()) OR ((is_buero(auth.uid()) OR is_fahrschule_admin(auth.uid())) AND (fahrschule_id = k5_meine_fahrschule()))));
 -- K9 fahrschule_preise (nach der Migration nachgetragen): kein UPDATE; anon keine Rechte, authenticated nur select/insert/delete.
 create policy "Preise lesen Fahrschule" on public.fahrschule_preise as PERMISSIVE for SELECT to authenticated
   using (((fahrschule_id = k5_meine_fahrschule()) OR is_super_admin(auth.uid())));
