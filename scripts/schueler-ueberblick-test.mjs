@@ -36,7 +36,7 @@ async function pruefe(id, text, fn) {
 }
 const warte = (page, ms = 250) => page.waitForTimeout(ms);
 
-async function starte({ alteDB = false, w = 360, h = 780 } = {}) {
+async function starte({ alteDB = false, w = 360, h = 780, merk = null } = {}) {
   const ctx = await browser.newContext({ viewport: { width: w, height: h }, isMobile: true, hasTouch: true, timezoneId: "Europe/Berlin", locale: "de-DE" });
   const page = await ctx.newPage();
   const jsFehler = [], dialoge = [];
@@ -45,7 +45,7 @@ async function starte({ alteDB = false, w = 360, h = 780 } = {}) {
   await page.route("**/*", (r) => (r.request().url().startsWith(basis) ? r.continue() : r.abort()));
   await page.goto(basis + "index.html", { waitUntil: "load", timeout: 20000 });
   await warte(page, 600);
-  await page.evaluate(async ({ alteDB }) => {
+  await page.evaluate(async ({ alteDB, merk }) => {
     for (const id of ["loginOverlay", "splash"]) { const e = document.getElementById(id); if (e) e.style.display = "none"; }
     const FS = "fs-muster", user = { id: "u-ich", email: "ich@example.org" };
     window.__db = { schueler: [], schueler_verschiebungen: [] }; window.__rpc = [];
@@ -71,6 +71,9 @@ async function starte({ alteDB = false, w = 360, h = 780 } = {}) {
     const ueb = [
       { id: "s-eigen", name: "Eigen Muster", fahrlehrer_id: "u-ich", fahrlehrer_name: "Ich Muster", eigen: true, stand_pct: 40, klasse: "B", form: "B", ausbildungsart: null, vorbesitz: [], umschreiber: false, theorie_bestanden_am: "2026-11-01", theorie_lektionen: [] },
       { id: "s-fremd", name: "Fremd Muster", fahrlehrer_id: "u-jelena", fahrlehrer_name: "Jelena", eigen: false, stand_pct: 70, klasse: "B", form: "B", ausbildungsart: null, vorbesitz: [], umschreiber: false, theorie_bestanden_am: null, theorie_lektionen: ["1", "2", "3"] },
+      { id: "s-eigen2", name: "Berta Muster", fahrlehrer_id: "u-ich", fahrlehrer_name: "Ich Muster", eigen: true, stand_pct: 85, klasse: "B", form: "B", ausbildungsart: null, vorbesitz: [], umschreiber: false, theorie_bestanden_am: null, theorie_lektionen: [] },
+      { id: "s-z", name: "Zora Muster", fahrlehrer_id: "u-adam", fahrlehrer_name: "Adam", eigen: false, stand_pct: 95, klasse: "B", form: "B", ausbildungsart: null, vorbesitz: [], umschreiber: false, theorie_bestanden_am: null, theorie_lektionen: [] },
+      { id: "s-a", name: "Anton Muster", fahrlehrer_id: "u-adam", fahrlehrer_name: "Adam", eigen: false, stand_pct: 10, klasse: "B", form: "B", ausbildungsart: null, vorbesitz: [], umschreiber: false, theorie_bestanden_am: null, theorie_lektionen: [] },
     ];
     const rpc = async (name, args) => {
       window.__rpc.push({ name, args });
@@ -88,12 +91,12 @@ async function starte({ alteDB = false, w = 360, h = 780 } = {}) {
     const auth = { getUser: async () => ({ data: { user }, error: null }), getSession: async () => ({ data: { session: { user, access_token: "x" } }, error: null }), signOut: async () => ({ error: null }), onAuthStateChange: () => ({ data: { subscription: { unsubscribe() {} } } }) };
     const supa = { from: baue, rpc, auth, functions: { invoke: async () => ({ data: {}, error: null }) }, channel: () => ({ on() { return this; }, subscribe() { return this; } }), removeChannel() {} };
     window.getSupa = () => supa;
-    try { localStorage.clear(); localStorage.setItem(OWNER_KEY, user.id); } catch (e) {}
+    try { localStorage.clear(); localStorage.setItem(OWNER_KEY, user.id); if (merk) localStorage.setItem("kompass-su-sort-v1", merk); } catch (e) {}
     _dbEigentuemer = user.id;
     ensureDB(); DB.students = [{ id: "s-eigen", name: "Eigen Muster", telefon: "0170 000000", form: "B", created: Date.now() }]; DB.students.forEach((s) => { try { ensure(s); } catch (e) {} }); DB.lessons = []; DB.exams = [];
     _authUser = user;
     await afterLogin(user);
-  }, { alteDB });
+  }, { alteDB, merk });
   await warte(page, 900);
   await page.evaluate(async () => { for (const id of ["loginOverlay", "splash"]) { const e = document.getElementById(id); if (e) { e.classList.add("hidden"); e.style.display = "none"; } } await SU.pruefen(); tabGo("schueler"); });
   await warte(page, 400);
@@ -160,6 +163,41 @@ const breit = (page) => page.evaluate(() => { const d = document.documentElement
   const sql = await readFile(join(ROOT, "supabase/migrations/20261122_k6_01_schueler_ueberblick.sql"), "utf8");
   await pruefe("U10", "Migration: „is distinct from auth.uid()“ beim eigenen Schüler, Ausnahme im Trigger mit coalesce(…, false)", async () =>
     /if s\.fahrlehrer_id is distinct from auth\.uid\(\) and not k6_darf_verwalten\(\)/.test(sql) && (sql.match(/coalesce\(z\.aktiv, true\)\)\), false\) then/g) || []).length === 2 ? null : "Schutz fehlt");
+}
+// K15 Ordnung: Standard, Sortier-Wahl, Filter, Merken nach Neuladen
+{
+  const { ctx, page, jsFehler } = await starte();
+  const namen = () => page.evaluate(() => [...document.querySelectorAll("#suListe .su-karte .su-name")].map((e) => e.textContent));
+  const koepfe = () => page.evaluate(() => [...document.querySelectorAll("#suListe .su-gruppe")].map((e) => e.textContent.replace(/ \(\d+\)$/, "")));
+  const gleich = (ist, soll) => (JSON.stringify(ist) === JSON.stringify(soll) ? null : "ist " + JSON.stringify(ist) + " soll " + JSON.stringify(soll));
+  await page.evaluate(() => { try { localStorage.removeItem("kompass-su-sort-v1"); } catch (e) {} SU.route(); }); await warte(page, 700);
+  await pruefe("O1", "Standard: eigene zuerst, dann Fahrlehrer A–Z, dann Name A–Z", async () =>
+    gleich(await namen(), ["Berta Muster", "Eigen Muster", "Anton Muster", "Zora Muster", "Fremd Muster"]) || gleich(await koepfe(), ["Deine Schüler", "Adam", "Jelena"]));
+  await page.click('[data-sort="name"]'); await warte(page, 200);
+  await pruefe("O2", "Sortieren „Name“: eine Liste A–Z, keine Gruppen", async () => gleich(await namen(), ["Anton Muster", "Berta Muster", "Eigen Muster", "Fremd Muster", "Zora Muster"]) || gleich(await koepfe(), []));
+  await page.click('[data-sort="stand"]'); await warte(page, 200);
+  await pruefe("O3", "Sortieren „Stand“: höchster Fortschritt zuerst", async () => gleich(await namen(), ["Zora Muster", "Berta Muster", "Fremd Muster", "Eigen Muster", "Anton Muster"]));
+  await page.selectOption("#suFl", "Adam"); await warte(page, 200);
+  await pruefe("O4", "Filter „Adam“ wirkt (mit Stand-Sortierung)", async () => gleich(await namen(), ["Zora Muster", "Anton Muster"]));
+  await page.click('[data-sort="fahrlehrer"]'); await warte(page, 200);
+  await pruefe("O5", "Filter bleibt bei Wechsel der Sortierung, Gruppe nur „Adam“", async () => gleich(await namen(), ["Anton Muster", "Zora Muster"]) || gleich(await koepfe(), ["Adam"]));
+  await page.selectOption("#suFl", "Ich Muster"); await warte(page, 200);
+  await pruefe("O5b", "Filter auf den eigenen Namen zeigt nur eigene", async () => gleich(await namen(), ["Berta Muster", "Eigen Muster"]));
+  await page.click('[data-sort="stand"]'); await page.selectOption("#suFl", "Jelena"); await warte(page, 200);
+  await pruefe("O6", "Wahl im Gerät gemerkt (localStorage)", () => page.evaluate(() => { const o = JSON.parse(localStorage.getItem("kompass-su-sort-v1") || "null"); return o && o.sort === "stand" && o.fl === "Jelena" ? null : JSON.stringify(o); }));
+  await pruefe("O7", "keine JS-Fehler", () => jsFehler);
+  await ctx.close();
+}
+{
+  // Neuladen: die gemerkte Wahl (so wie das Gerät sie nach O5/O6 gespeichert hat) gilt sofort
+  const { ctx, page, jsFehler } = await starte({ merk: JSON.stringify({ sort: "name", fl: "Adam" }) });
+  await page.evaluate(() => SU.route()); await warte(page, 700);
+  await pruefe("O8", "Nach Neuladen: gemerkte Sortierung und Filter gelten", () => page.evaluate(() => {
+    const n = [...document.querySelectorAll("#suListe .su-name")].map((e) => e.textContent).join("|");
+    const an = document.querySelector('#suSort .on'); return n === "Anton Muster|Zora Muster" && an && an.dataset.sort === "name" && document.getElementById("suFl").value === "Adam" ? null : n + " / " + (an && an.dataset.sort);
+  }));
+  await pruefe("O9", "Kaputter Speicher: Standard, kein Fehler", async () => { await page.evaluate(() => { localStorage.setItem("kompass-su-sort-v1", "{kaputt"); }); return jsFehler; });
+  await ctx.close();
 }
 await browser.close(); server.close();
 console.log(`\nSchüler-Überblick-Test: ${okZahl} ok, ${fehlerZahl} Fehler`);

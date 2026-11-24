@@ -7874,7 +7874,7 @@ const STORE_KEY="serband-app-v1";
    Wird in den Einstellungen angezeigt + für den Update-Hinweis genutzt. */
 // K1: voreingestellter Wetter-Ort (früh definiert, weil ensureDB ihn schon beim Start braucht)
 const WETTER_START={city:"Offenbach",lat:50.1006,lon:8.7665};
-const APP_VERSION="2026.11.24.1";
+const APP_VERSION="2026.11.24.2";
 try{const f=document.getElementById("drawerFoot"); if(f)f.textContent="Fahrlehrer-Kompass · Version "+APP_VERSION;}catch(e){}
 // Nutzungsbedingungen & Haftungsausschluss (Bereich: rechtliche Absicherung) - Version hochzählen
 // und alle Nutzer müssen erneut zustimmen, sobald sich der Text inhaltlich ändert.
@@ -8376,6 +8376,18 @@ function _backupHerunterladen(zusatz){
   const a=document.createElement("a");a.href=URL.createObjectURL(blob);
   a.download="Fahrlehrer-Kompass_Backup_"+heute().d.replace(/\./g,"-")+(zusatz||"")+".json";a.click();
   setTimeout(()=>URL.revokeObjectURL(a.href),60000);
+}
+/* K14: EIN Weg für „Theorie bestanden“ (Schalter in der Akte und grüner Knopf in „Wartet auf Theorie“).
+   an=true: bestanden (Datum heute, „wartet“ aus, 20 % zählen sofort); an=false: zurücknehmen. Speichert NICHT (der Aufrufer ruft save()). */
+const _THEORIE_FELDER=["theoryPassed","theorieWait","theorieWaitBis","ready","wartelisteRaus"];
+function theorieStandMerken(s){ const o={plan:!!(s.plan&&s.plan.theorie),histLen:(s.hist||[]).length,hatteHist:Array.isArray(s.hist)}; _THEORIE_FELDER.forEach(k=>{ o[k]=s[k]; }); return o; }
+// Rückgängig: nur den dabei angefügten Verlaufs-Eintrag entfernen (alles andere im Verlauf bleibt)
+function theorieStandZurueck(s,o){ ensure(s); s.plan.theorie=o.plan; _THEORIE_FELDER.forEach(k=>{ if(o[k]===undefined)delete s[k]; else s[k]=o[k]; });
+  if(Array.isArray(s.hist)&&s.hist.length>o.histLen){ const i=s.hist.findIndex((h,j)=>j>=o.histLen&&(h.typ==="theorie"||h.type==="theorie")); if(i>=0)s.hist.splice(i,1); }
+  if(!o.hatteHist&&Array.isArray(s.hist)&&!s.hist.length)delete s.hist; }
+function theorieBestandenSetzen(s,an,leise){
+  const pl=s.plan; pl.theorie=!!an;
+  if(an){ delete s.wartelisteRaus; if(!s.theoryPassed)s.theoryPassed=new Date().toISOString(); if(!(s.hist||[]).some(h=>h.typ==="theorie"||h.type==="theorie"))logHist(s,"theorie","Theorieprüfung bestanden"); if(stand(s)>=90&&!s.ready&&!s.passed){ s.ready=s.theoryPassed; if(!leise)toast("Theorie bestanden – auf die Praxis-Warteliste gesetzt"); } else if(stand(s)<90&&!s.ready&&!s.passed){ if(!leise)toast("Theorie bestanden – erst ab 90 % kommt er auf die Warteliste"); } if(s.theorieWait)s.theorieWaitBis=new Date().toISOString(); delete s.theorieWait; } else { if(s.ready&&s.ready===s.theoryPassed&&!s.pruefungsreifManuell)delete s.ready; delete s.theoryPassed; delete s.theorieWaitBis; }
 }
 function toastUndo(msg,onUndo,ms){
   const t=$("#toast"); ms=ms||5000; t.classList.remove("t-ok","t-info","t-fehler");
@@ -9194,7 +9206,7 @@ function routeDetail(id){
   document.querySelectorAll("#dashLkwZug .pill").forEach(b=>b.addEventListener("click",()=>{ s.lkwZug=s.lkwZug===b.dataset.zug?"":b.dataset.zug; save(); toast(s.lkwZug?"Grundfahraufgaben für "+LKW_ZUEGE.find(z=>z[0]===s.lkwZug)[1]:"Alle 4 Grundfahraufgaben"); routeDetail(id); }));
   // Theorie-/Umschreiber-/Pausiert-Toggles (aus dem Ausbildungsplan hierher verschoben)
   const dtt=$("#dashTheoToggle"); if(dtt)dtt.addEventListener("click",()=>{
-    pl.theorie=!pl.theorie; if(pl.theorie){ delete s.wartelisteRaus; if(!s.theoryPassed)s.theoryPassed=new Date().toISOString(); if(!(s.hist||[]).some(h=>h.typ==="theorie"||h.type==="theorie"))logHist(s,"theorie","Theorieprüfung bestanden"); if(stand(s)>=90&&!s.ready&&!s.passed){ s.ready=s.theoryPassed; toast("Theorie bestanden – auf die Praxis-Warteliste gesetzt"); } else if(stand(s)<90&&!s.ready&&!s.passed){ toast("Theorie bestanden – erst ab 90 % kommt er auf die Warteliste"); } if(s.theorieWait)s.theorieWaitBis=new Date().toISOString(); delete s.theorieWait; } else { if(s.ready&&s.ready===s.theoryPassed&&!s.pruefungsreifManuell)delete s.ready; delete s.theoryPassed; delete s.theorieWaitBis; } save(); routeDetail(id);
+    theorieBestandenSetzen(s,!pl.theorie); save(); routeDetail(id);
   });
   const dwt=$("#dashTheorieWaitToggle"); if(dwt)dwt.addEventListener("click",()=>{
     if(s.theorieWait){ delete s.theorieWait; delete s.theorieWaitBis; toast("Fahrstunden wieder aufgenommen"); } else { s.theorieWait=new Date().toISOString(); toast("Pausiert – wartet auf Theorie"); }
@@ -15207,10 +15219,10 @@ function routePruefungen(){
     html+=`<p class="muted-p" style="font-size:13px;margin-bottom:14px;">Fahrstunden pausiert, bis die Theorie bestanden ist. Im Ausbildungsplan markiert.</p>`;
     if(!waitList.length)html+=`<p class="muted-p" style="text-align:center;padding:20px;">Niemand wartet aktuell.</p>`;
     else waitList.forEach(s=>{
-      html+=`<button class="wait-card" data-id="${s.id}">
+      html+=`<div class="wait-card-wrap" data-wid="${s.id}" style="display:flex;align-items:center;gap:8px;margin-bottom:8px;"><button class="wait-card" data-id="${s.id}" style="flex:1;margin-bottom:0;min-width:0;">
         <div class="wait-body"><div class="wait-name">${esc(s.name)}</div>
           <div class="wait-since">pausiert seit ${fmtDateDE(s.theorieWait)} · ${esc(s.form||'B')}</div></div>
-        <span class="na-arrow">${ICN.arrow}</span></button>`;
+        <span class="na-arrow">${ICN.arrow}</span></button><button type="button" class="btn btn-primary btn-theorie-ok" data-theo-ok="${s.id}" aria-label="Theorie bestanden für ${esc(s.name)}" style="flex:0 0 auto;min-width:92px;min-height:44px;padding:8px 12px;border-radius:12px;font-size:13px;font-weight:700;line-height:1.2;">Theorie bestanden</button></div>`;
     });
   } else if(_pruefTab==="theorie"){
     html+=`<p class="muted-p" style="font-size:13px;margin-bottom:14px;">Theorie bestanden, aber noch unter 90 % im Ausbildungsplan. Sobald 90 % erreicht sind, wandern sie automatisch zu „Bereit".</p>`;
@@ -15238,6 +15250,19 @@ function routePruefungen(){
   const _atw=$("#addTheorieWait"); if(_atw)_atw.addEventListener("click",openTheorieWaitHinzufuegen);
   $("#openPruefWoche").addEventListener("click",routePruefungenWoche);
   $("#openPruefer").addEventListener("click",routePrueferListe);
+  document.querySelectorAll("[data-theo-ok]").forEach(b=>b.addEventListener("click",()=>{
+    // Doppeltipp: Die Liste rückt nach, der zweite Tipp träfe sonst den nächsten Schüler
+    if(Date.now()<(window._theoOkSperre||0))return; window._theoOkSperre=Date.now()+800;
+    const s=DB.students.find(x=>x.id===b.dataset.theoOk); if(!s)return; // Altdaten (Theorie schon an, aber noch „wartet“): Knopf räumt das auf
+    ensure(s); const alt=theorieStandMerken(s);
+    theorieBestandenSetzen(s,true,true); save(); routePruefungen();
+    const sid=s.id, nm=s.name;
+    toastUndo(`${nm}: Theorie bestanden${s.ready?" · prüfungsbereit":""}`,()=>{
+      // Schüler frisch holen (die Liste kann inzwischen neu geladen sein); nur neu zeichnen, wenn die Prüfungen noch offen sind
+      const s2=DB.students.find(x=>x.id===sid); if(!s2)return;
+      theorieStandZurueck(s2,alt); save(); if(document.querySelector(".pt-tab"))routePruefungen();
+    },6000);
+  }));
   document.querySelectorAll(".wait-card").forEach(c=>c.addEventListener("click",()=>routeDetail(c.dataset.id)));
   document.querySelectorAll(".tb-del").forEach(b=>b.addEventListener("click",()=>{ { const t=DB.termine.find(x=>x.id===b.dataset.del); if(t)_loeschenMitRueckgaengig(()=>DB.termine,t,"Prüfungstermin gelöscht",()=>routePruefungen()); } }));
   document.querySelectorAll(".tb-edit").forEach(b=>b.addEventListener("click",()=>openTerminEdit(b.dataset.tedit)));
