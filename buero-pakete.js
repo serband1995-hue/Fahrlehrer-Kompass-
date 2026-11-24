@@ -256,14 +256,18 @@ function bkHinweisHTML(p, i, klasse) {
   const anders = q.bez && q.bez.toLowerCase() !== String(p.bezeichnung || "").trim().toLowerCase();
   return `<span class="leise">aus der Preisliste${anders || (klasse && !q.klasse) ? ` (${esc(q.bez)}${klasse && !q.klasse ? ", ohne Klasse" : ""})` : ""}, passt sich an</span>`;
 }
-function bkEditor(vorlage, kopie) {
+/* Der Baukasten. opt: true = Kopie; { verkauf: { titel, knopf, fertig(werte) } } = Paket für einen Schüler zusammenstellen
+   (schreibt nichts in die Vorlagen, gibt Name, Klasse und Posten an fertig() zurück; jeder Posten braucht dann einen Preis). */
+function bkEditor(vorlage, opt) {
+  const o = opt === true ? { kopie: true } : (opt || {});
+  const kopie = !!o.kopie, verkauf = o.verkauf || null;
   const neu = !vorlage || kopie;
   const st = {
     name: vorlage ? (kopie ? bkFreierName(vorlage.name) : vorlage.name) : "",
     klasse: vorlage ? vorlage.klasse || "" : "B",
     posten: bkPosten(vorlage).map((p) => ({ art: p.art, bezeichnung: p.bezeichnung, anzahl: Number(p.anzahl) || 1, preis_cent_fest: p.preis_cent_fest == null ? null : Number(p.preis_cent_fest) })),
   };
-  const turbo = !neu && bkTurbo(vorlage);
+  const turbo = !neu && !verkauf && bkTurbo(vorlage);
   const inhalt = `<div class="formular bk-form">
       <label class="voll">Name des Pakets<input type="text" name="name" maxlength="120" required value="${esc(st.name)}"${turbo ? " readonly" : ""} placeholder="z. B. Boost-Paket B"></label>
       ${turbo ? `<p class="voll leise klein bk-turbo">Der Name „Turboboost“ bleibt so: Die App zeigt daran das ⚡.</p>` : ""}
@@ -274,7 +278,7 @@ function bkEditor(vorlage, kopie) {
     <p class="leise klein bk-chips-titel">Hinzufügen:</p>
     <div class="chips bk-chips" data-bk-chips></div>
     <div class="bk-gesamt" aria-live="polite"><span>Gesamtpreis</span><b data-bk-gesamt></b><span class="klein" data-bk-gesamt-hinweis></span></div>`;
-  const dlg = oeffneDialog(neu ? (kopie ? "Paket kopieren" : "Neues Paket") : "Paket bearbeiten", inhalt, async (form) => {
+  const dlg = oeffneDialog(verkauf ? verkauf.titel : neu ? (kopie ? "Paket kopieren" : "Neues Paket") : "Paket bearbeiten", inhalt, async (form) => {
     const name = String(form.name.value || "").trim();
     if (!name) { toast("Bitte einen Namen für das Paket eintragen.", true); return false; }
     if (turbo && name !== "Turboboost") { toast("Der Name „Turboboost“ bleibt so.", true); return false; }
@@ -289,6 +293,13 @@ function bkEditor(vorlage, kopie) {
       name, klasse: form.klasse.value || null,
       posten: st.posten.map((p) => ({ art: p.art, bezeichnung: String(p.bezeichnung).trim(), anzahl: p.anzahl, preis_cent_fest: p.preis_cent_fest })),
     };
+    if (verkauf) {
+      if (!werte.posten.length) { toast("Bitte mindestens einen Posten hinzufügen.", true); return false; }
+      const ohne = werte.posten.find((p) => bkEinzelCent(p, werte.klasse) == null);
+      if (ohne) { toast(`Bei „${ohne.bezeichnung}“ fehlt der Preis. Bitte eintragen.`, true); return false; }
+      verkauf.fertig(werte);
+      return true;
+    }
     if (neu) {
       werte.reihenfolge = (S.pakete || []).reduce((m, p) => Math.max(m, Number(p.reihenfolge) || 0), 0) + 1;
       werte.aktiv = true;
@@ -305,7 +316,7 @@ function bkEditor(vorlage, kopie) {
       if (await bkSchreiben(vorlage.id, alt, z.aktualisiert_am || null)) { zeichne(); toast("Rückgängig gemacht"); }
     });
     return true;
-  }, neu ? "Paket speichern" : "Speichern");
+  }, verkauf ? verkauf.knopf : neu ? "Paket speichern" : "Speichern");
   dlg.classList.add("bk-dialog");
   let undoFenster = null; // Rückgängig für „Posten entfernt“ gilt nur, solange das Fenster offen ist
   dlg.addEventListener("close", () => { bkFensterZu = Date.now(); if (undoFenster && typeof UNDO !== "undefined" && UNDO.offen === undoFenster) undoAblaufen(); });
@@ -411,4 +422,146 @@ function bkEditor(vorlage, kopie) {
   form.klasse.addEventListener("change", () => zeichneListe());
   zeichneListe();
   if (neu && !kopie) form.name.focus();
+}
+
+/* ---------- Paket an einen Schüler verkaufen (Schritt 1, Teil B) ----------
+   🗣 „Wenn ein Schüler sich anmeldet, soll er dann entweder normale Anmeldung bekommen oder halt Pakete verkauft bekommen.“
+   Im Schüler-Fenster: Auswahl „Normale Anmeldung“ oder eine Vorlage, mit „Anpassen“ im selben Baukasten. Beim Speichern wird das Paket
+   als feste Kopie verkauft (schueler_pakete: Preise in Cent wie am Verkaufstag; spätere Änderungen an Vorlage oder Preisliste
+   ändern es nicht). Ein aktives Paket je Schüler: ein Wechsel storniert das alte (ein Schritt in der Datenbank,
+   schueler_paket_verkaufen). „Normale Anmeldung“ und Rückgängig laufen über schueler_paket_aktivieren. schueler.paket_id zeigt weiter
+   auf die Vorlage (Anzeige, ⚡ bei „Turboboost“). „Einzelabrechnung (ohne Paket)“ zählt als normale Anmeldung.
+   S.verkauft = aktive verkaufte Pakete der Fahrschule; null = Tabelle fehlt (alte Datenbank) → alte Paket-Auswahl. */
+function bkVerkaufDa() { return bkDa() && Array.isArray(S.verkauft); }
+function bkIstEinzel(v) { return /ohne paket|einzelabrechnung/i.test(String((v && v.name) || "")); }
+function bkAktivesPaket(sid) { return (S.verkauft || []).find((p) => p.schueler_id === sid && !p.storniert_am) || null; }
+function bkVorlagenZumVerkauf() { return bkSortiert((S.pakete || []).filter((p) => p.aktiv !== false && !bkIstEinzel(p))); }
+// Posten mit festem Preis (Cent) für den Verkauf; fehlt ein Preis, steht der Posten in „fehlt“
+function bkFest(posten, klasse) {
+  const fest = [], fehlt = [];
+  for (const p of posten) {
+    const e = bkEinzelCent(p, klasse);
+    if (e == null) fehlt.push(p.bezeichnung || bkName(p.art));
+    else fest.push({ art: p.art, bezeichnung: String(p.bezeichnung).trim(), anzahl: Number(p.anzahl), preis_cent: e });
+  }
+  return { posten: fest, fehlt, gesamt: fest.reduce((a, p) => a + p.anzahl * p.preis_cent, 0) };
+}
+function bkPostenListeHTML(posten) {
+  return `<ul class="bk-anm-posten">${posten.map((p) => `<li><span>${esc(String(p.anzahl))} × ${esc(p.bezeichnung)}</span>${p.preis_cent != null ? `<span>${esc(prEuro(p.anzahl * p.preis_cent))}</span>` : `<span class="marke-pill gelb">Preis fehlt</span>`}</li>`).join("")}</ul>`;
+}
+function bkAnmeldungHTML() {
+  return `<div class="voll bk-anmeldung" data-bk-anm>
+    <label>Anmeldung<select name="bk_wahl" data-bk-wahl></select></label>
+    <div class="bk-anm-info" data-bk-anm-info aria-live="polite"></div>
+  </div>`;
+}
+// Örtlichen Stand nach Verkauf, Storno oder Rückgängig nachziehen (zeile = jetzt aktives Paket oder null)
+function bkLokal(sid, zeile) {
+  S.verkauft = (S.verkauft || []).filter((p) => p.schueler_id !== sid);
+  if (zeile) S.verkauft.push(Object.assign({}, zeile, { storniert_am: null }));
+  const s = (S.schueler || []).find((y) => y.id === sid);
+  const v = zeile && zeile.vorlage_id && (S.pakete || []).some((p) => p.id === zeile.vorlage_id) ? zeile.vorlage_id : null;
+  if (s) s.paket_id = v;
+}
+async function bkAktivSetzen(sid, alt, text) {
+  const r = await supa.rpc("schueler_paket_aktivieren", { p_schueler: sid, p_paket: alt ? alt.id : null });
+  if (r.error) { toast("Rückgängig ging nicht: " + dbFehlerText(r.error), true); return false; }
+  bkLokal(sid, alt);
+  zeichne();
+  toast(text || "Rückgängig gemacht");
+  return true;
+}
+function bkAnmeldungBinden(dlg, x, id) {
+  const anfang = id ? bkAktivesPaket(id) : null;
+  const zugeordnet = !anfang && x.paket_id ? (S.pakete || []).find((p) => p.id === x.paket_id && !bkIstEinzel(p)) || null : null;
+  const sel = dlg.querySelector("[data-bk-wahl]"), info = dlg.querySelector("[data-bk-anm-info]");
+  const form = dlg.querySelector("form");
+  // wahl: "bleibt" (Stand wie bisher), "normal", "neu" (Paket aus Vorlage oder angepasst, steht in „neu“)
+  let wahl = anfang || zugeordnet ? "bleibt" : "normal", neu = null;
+  const schuelerKlasse = () => (form.klasse && form.klasse.value) || x.klasse || null;
+  const ausVorlage = (v) => ({ vorlage_id: v.id, name: v.name, klasse: v.klasse || schuelerKlasse(), posten: bkPosten(v).map((p) => Object.assign({}, p)), angepasst: false });
+  function optionen() {
+    const vorl = bkVorlagenZumVerkauf();
+    let h = "";
+    if (anfang) h += `<option value="bleibt">Paket „${esc(anfang.name)}“ · verkauft am ${esc(datumDE(String(anfang.verkauft_am || "").slice(0, 10)))}</option>`;
+    else if (zugeordnet) h += `<option value="bleibt">„${esc(zugeordnet.name)}“ (nur zugeordnet, nicht verkauft)</option>`;
+    h += `<option value="normal">Normale Anmeldung (ohne Paket)</option>`;
+    if (neu && neu.angepasst) h += `<option value="angepasst">Paket „${esc(neu.name)}“ (angepasst)</option>`;
+    if (vorl.length) h += `<optgroup label="Paket verkaufen">${vorl.map((v) => `<option value="v:${esc(v.id)}">${esc(v.name)}${v.klasse ? " · Klasse " + esc(v.klasse) : ""}</option>`).join("")}</optgroup>`;
+    sel.innerHTML = h;
+    sel.value = wahl === "neu" ? (neu.angepasst ? "angepasst" : "v:" + neu.vorlage_id) : wahl;
+  }
+  function zeige() {
+    let h = "";
+    if (wahl === "bleibt" && anfang) {
+      h = `${bkPostenListeHTML(bkPosten(anfang))}
+        <p class="bk-anm-summe"><span>Gesamt</span><b>${esc(prEuro(anfang.gesamt_cent))}</b></p>
+        <p class="leise klein">Verkauft am ${esc(datumDE(String(anfang.verkauft_am || "").slice(0, 10)))}${anfang.bearbeiter ? " von " + esc(anfang.bearbeiter) : ""}. Die Preise bleiben so, auch wenn sich die Preisliste ändert.</p>
+        <div class="knopfreihe"><button class="knopf klein" type="button" data-bk-anpassen>Paket ändern</button></div>`;
+    } else if (wahl === "bleibt") {
+      h = `<p class="leise klein">Das Paket ist nur zugeordnet (ohne Preise). Zum Verkaufen oben ein Paket wählen.</p>`;
+    } else if (wahl === "normal") {
+      h = anfang ? `<p class="bk-anm-warn">Beim Speichern wird das Paket „${esc(anfang.name)}“ storniert. Danach geht „Rückgängig“.</p>`
+        : `<p class="leise klein">Ohne Paket. Abgerechnet wird einzeln nach der Preisliste.</p>`;
+    } else {
+      const f = bkFest(neu.posten, neu.klasse);
+      const liste = neu.posten.map((p) => ({ anzahl: p.anzahl, bezeichnung: p.bezeichnung, preis_cent: bkEinzelCent(p, neu.klasse) }));
+      h = `${neu.posten.length ? bkPostenListeHTML(liste) : `<p class="bk-anm-warn">Dieses Paket hat noch keine Posten. Bitte „Anpassen“.</p>`}
+        <p class="bk-anm-summe"><span>Gesamt${f.fehlt.length ? " (ohne fehlende Preise)" : ""}</span><b>${esc(prEuro(f.gesamt))}</b></p>
+        ${f.fehlt.length ? `<p class="bk-anm-warn">Preis fehlt bei: ${esc(f.fehlt.join(", "))}. Bitte „Anpassen“ und den Preis eintragen.</p>` : ""}
+        <p class="leise klein">Wird beim Speichern verkauft${anfang ? ` und ersetzt „${esc(anfang.name)}“` : ""}. Die Preise werden dabei festgeschrieben.</p>
+        <div class="knopfreihe"><button class="knopf klein" type="button" data-bk-anpassen>Anpassen</button></div>`;
+    }
+    info.innerHTML = h;
+  }
+  sel.addEventListener("change", () => {
+    const w = sel.value;
+    if (w.startsWith("v:")) { const v = (S.pakete || []).find((p) => p.id === w.slice(2)); if (!v) return; neu = ausVorlage(v); wahl = "neu"; }
+    else if (w === "angepasst") wahl = "neu";
+    else { wahl = w; if (neu && !neu.angepasst) neu = null; }
+    dlg.dataset.geaendert = "1";
+    optionen(); zeige();
+  });
+  info.addEventListener("click", (e) => {
+    if (!e.target.closest("[data-bk-anpassen]")) return;
+    // Grundlage: das gewählte neue Paket, sonst das verkaufte (mit seinen festen Preisen als eigene Preise)
+    const basis = wahl === "neu" ? neu
+      : { vorlage_id: anfang.vorlage_id, name: anfang.name, klasse: anfang.klasse, posten: bkPosten(anfang).map((p) => ({ art: p.art, bezeichnung: p.bezeichnung, anzahl: p.anzahl, preis_cent_fest: p.preis_cent })) };
+    bkEditor({ name: basis.name, klasse: basis.klasse, posten: basis.posten }, { verkauf: { titel: `Paket für ${x.name || "den Schüler"}`, knopf: "Übernehmen", fertig: (w) => {
+      neu = { vorlage_id: basis.vorlage_id || null, name: w.name, klasse: w.klasse, posten: w.posten, angepasst: true };
+      wahl = "neu"; dlg.dataset.geaendert = "1";
+      optionen(); zeige();
+    } } });
+  });
+  // Klasse des Schülers geändert: Preise eines Pakets ohne eigene Klasse neu nachsehen
+  if (form.klasse) form.klasse.addEventListener("change", () => {
+    if (wahl === "neu" && !neu.angepasst) { const v = (S.pakete || []).find((p) => p.id === neu.vorlage_id); if (v && !v.klasse) { neu.klasse = schuelerKlasse(); zeige(); } }
+  });
+  optionen(); zeige();
+  return {
+    pruefen() {
+      if (wahl !== "neu") return "";
+      if (!neu.posten.length) return `Das Paket „${neu.name}“ hat noch keine Posten. Bitte „Anpassen“.`;
+      const f = bkFest(neu.posten, neu.klasse);
+      return f.fehlt.length ? `Beim Paket fehlt der Preis für „${f.fehlt[0]}“. Bitte „Anpassen“ und den Preis eintragen.` : "";
+    },
+    // Das Formular schreibt paket_id nicht selbst. Nur „Normale Anmeldung“ bei einem bloß zugeordneten Paket löscht die Zuordnung.
+    werte(werte) { delete werte.paket_id; if (wahl === "normal" && zugeordnet) werte.paket_id = null; },
+    async nachSpeichern(sid) {
+      if (wahl === "bleibt" || (wahl === "normal" && !anfang)) { if (wahl === "normal" && zugeordnet) bkLokal(sid, null); return; }
+      if (wahl === "normal") {
+        const r = await supa.rpc("schueler_paket_aktivieren", { p_schueler: sid, p_paket: null });
+        if (r.error) { toast("Das Paket wurde nicht storniert: " + dbFehlerText(r.error), true); return; }
+        bkLokal(sid, null); zeichne();
+        toastUndo(`Paket „${anfang.name}“ storniert: normale Anmeldung`, () => bkAktivSetzen(sid, anfang));
+        return;
+      }
+      const f = bkFest(neu.posten, neu.klasse);
+      const r = await supa.rpc("schueler_paket_verkaufen", { p_schueler: sid, p_vorlage: neu.vorlage_id || null, p_name: String(neu.name || "").trim(), p_klasse: neu.klasse || null, p_posten: f.posten });
+      const zeile = r && !r.error ? (Array.isArray(r.data) ? r.data[0] : r.data) : null;
+      if (!zeile) { toast("Der Schüler ist gespeichert, das Paket aber nicht verkauft: " + (r && r.error ? dbFehlerText(r.error) : "keine Antwort") + ". Bitte noch einmal öffnen und speichern.", true); return; }
+      bkLokal(sid, zeile); zeichne();
+      toastUndo(`Paket „${zeile.name}“ verkauft (${prEuro(zeile.gesamt_cent)})`, () => bkAktivSetzen(sid, anfang));
+    },
+  };
 }
