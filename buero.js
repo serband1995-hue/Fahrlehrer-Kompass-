@@ -151,6 +151,10 @@ const BEREICHE = [
   { id: "preise", titel: "Preisliste", gruppe: "Geld", render: (...a) => renderPreisSeite(...a), nachher: (...a) => bindePreisSeite(...a) },
   { id: "team", titel: "Fahrlehrer & Zugänge", gruppe: "Verwaltung", render: renderTeam, nachher: bindeTeam },
   { id: "flotte", titel: "Fahrzeuge", gruppe: "Verwaltung", render: renderFlotte, nachher: bindeFlotte, zahl: () => fahrzeugKonflikte().length || "" },
+  // W16: Urlaub, Schichtplan und Backups (buero-verwaltung.js) – bisher nur in der App-Gesamtansicht, das Büro hat jetzt nur noch diese Seite
+  { id: "urlaub", titel: "Urlaub", gruppe: "Verwaltung", render: (...a) => renderUrlaub(...a), nachher: (...a) => bindeUrlaub(...a) },
+  { id: "schichtplan", titel: "Schichtplan", gruppe: "Verwaltung", render: (...a) => renderSchichtplan(...a), nachher: (...a) => bindeSchichtplan(...a) },
+  { id: "backups", titel: "Backups", gruppe: "Verwaltung", render: (...a) => renderBackups(...a), nachher: (...a) => bindeBackups(...a) },
   { id: "neuigkeiten", titel: "Neuigkeiten", gruppe: "Verwaltung", render: renderNeuigkeiten },
 ];
 function aktuellerBereich() {

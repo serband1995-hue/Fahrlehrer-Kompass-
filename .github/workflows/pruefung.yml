@@ -82,6 +82,8 @@ jobs:
         run: NODE_PATH=$(npm root -g) node scripts/zahlung-test.mjs
       - name: "Büro: Gruppen der Seitenleiste zu (K16) und Doppelbelegung gesehen (K18)"
         run: NODE_PATH=$(npm root -g) node scripts/buero-gruppen-test.mjs
+      - name: "Büro: Urlaub, Schichtplan und Backups (W16)"
+        run: NODE_PATH=$(npm root -g) node scripts/buero-verwaltung-test.mjs
       - name: "Löschen, Stornieren, Papierkorb (K7)"
         run: NODE_PATH=$(npm root -g) node scripts/loeschen-test.mjs
       - name: "Preisliste im Büro (K9: gültig ab, Verlauf, Herunterladen)"
