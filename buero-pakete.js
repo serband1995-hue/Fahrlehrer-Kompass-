@@ -43,6 +43,13 @@ function bkSortiert(liste) {
 }
 function bkPosten(v) { return Array.isArray(v && v.posten) ? v.posten : []; }
 function bkTurbo(v) { return !!v && v.name === "Turboboost"; } // ⚡ in der App hängt am Namen: nicht umbenennen
+function bkNameKey(n) { return String(n || "").trim().toLowerCase(); }
+function bkNameBelegt(name, ausserId) { return (S.pakete || []).some((p) => p.id !== ausserId && bkNameKey(p.name) === bkNameKey(name)); }
+function bkFreierName(basis) {
+  let n = `${basis} (Kopie)`, i = 2;
+  while (bkNameBelegt(n)) n = `${basis} (Kopie ${i++})`;
+  return n;
+}
 
 /* Preis aus der Preisliste in Cent für einen Posten (am Tag „datum“, Standard heute).
    undefined = steht nicht in der Preisliste, null = dort „entfällt“.
@@ -105,7 +112,7 @@ function bkVorlageHTML(v, darf) {
   const posten = bkPosten(v);
   const s = bkSumme(posten, v.klasse);
   const preis = !posten.length ? `<span class="leise">noch leer</span>`
-    : `<span class="bk-v-preis">${s.fehlt ? "ab " : ""}${esc(prEuro(s.cent))}</span>${s.fehlt ? `<span class="marke-pill gelb">Preis fehlt bei ${s.fehlt} Posten</span>` : ""}`;
+    : `${s.fehlt < posten.length ? `<span class="bk-v-preis">${s.fehlt ? "ab " : ""}${esc(prEuro(s.cent))}</span>` : ""}${s.fehlt ? `<span class="marke-pill gelb">Preis fehlt bei ${s.fehlt} Posten</span>` : ""}`;
   const knoepfe = !darf ? "" : v.aktiv === false
     ? `<button class="knopf klein" type="button" data-bk-zurueck="${esc(v.id)}">Zurückholen</button>`
     : `<button class="knopf klein" type="button" data-bk-bearbeiten="${esc(v.id)}">Bearbeiten</button><button class="knopf klein" type="button" data-bk-kopie="${esc(v.id)}">Kopieren</button><button class="knopf klein" type="button" data-bk-archiv="${esc(v.id)}">Archivieren</button>`;
@@ -126,13 +133,18 @@ function renderPakete() {
     <p class="leise klein">Die Preise kommen aus dem Reiter „Preise“ und passen sich an, wenn sie sich dort ändern. Ein eigener Preis im Paket bleibt fest. Alle Preise sind Endpreise mit MwSt. Ob Pakete in den Preisaushang gehören, bitte prüfen lassen.</p>
   </div>`;
 }
+// Doppel-Tipp auf „Speichern“: der zweite Tipp landet nach dem Schließen auf dem Knopf darunter (z. B. „Archivieren“).
+// Darum Tipps in der Liste kurz nach dem Schließen eines Fensters nicht annehmen (Fehlersucher Bedienung 24.11.).
+let bkFensterZu = 0;
+function bkGeisterTipp() { return Date.now() - bkFensterZu < 500; }
 function bindePakete(ziel) {
-  const neu = ziel.querySelector("#bkNeu"); if (neu) neu.addEventListener("click", () => bkEditor(null));
+  const neu = ziel.querySelector("#bkNeu"); if (neu) neu.addEventListener("click", () => { if (!bkGeisterTipp()) bkEditor(null); });
   const finde = (id) => (S.pakete || []).find((p) => p.id === id);
-  ziel.querySelectorAll("[data-bk-bearbeiten]").forEach((b) => b.addEventListener("click", () => { const v = finde(b.dataset.bkBearbeiten); if (v) bkEditor(v); }));
-  ziel.querySelectorAll("[data-bk-kopie]").forEach((b) => b.addEventListener("click", () => { const v = finde(b.dataset.bkKopie); if (v) bkEditor(v, true); }));
-  ziel.querySelectorAll("[data-bk-archiv]").forEach((b) => b.addEventListener("click", () => bkAktiv(b.dataset.bkArchiv, false, b)));
-  ziel.querySelectorAll("[data-bk-zurueck]").forEach((b) => b.addEventListener("click", () => bkAktiv(b.dataset.bkZurueck, true, b)));
+  const an = (sel, f) => ziel.querySelectorAll(sel).forEach((b) => b.addEventListener("click", () => { if (!bkGeisterTipp()) f(b); }));
+  an("[data-bk-bearbeiten]", (b) => { const v = finde(b.dataset.bkBearbeiten); if (v) bkEditor(v); });
+  an("[data-bk-kopie]", (b) => { const v = finde(b.dataset.bkKopie); if (v) bkEditor(v, true); });
+  an("[data-bk-archiv]", (b) => bkAktiv(b.dataset.bkArchiv, false, b));
+  an("[data-bk-zurueck]", (b) => bkAktiv(b.dataset.bkZurueck, true, b));
 }
 
 /* ---------- Speichern ---------- */
@@ -239,7 +251,7 @@ function bkHinweisHTML(p, i, klasse) {
 function bkEditor(vorlage, kopie) {
   const neu = !vorlage || kopie;
   const st = {
-    name: vorlage ? (kopie ? `${vorlage.name} (Kopie)` : vorlage.name) : "",
+    name: vorlage ? (kopie ? bkFreierName(vorlage.name) : vorlage.name) : "",
     klasse: vorlage ? vorlage.klasse || "" : "B",
     posten: bkPosten(vorlage).map((p) => ({ art: p.art, bezeichnung: p.bezeichnung, anzahl: Number(p.anzahl) || 1, preis_cent_fest: p.preis_cent_fest == null ? null : Number(p.preis_cent_fest) })),
   };
@@ -258,6 +270,7 @@ function bkEditor(vorlage, kopie) {
     const name = String(form.name.value || "").trim();
     if (!name) { toast("Bitte einen Namen für das Paket eintragen.", true); return false; }
     if (turbo && name !== "Turboboost") { toast("Der Name „Turboboost“ bleibt so.", true); return false; }
+    if (bkNameBelegt(name, neu ? null : vorlage.id)) { toast(bkNameKey(name) === "turboboost" ? "„Turboboost“ gibt es schon (die App zeigt daran das ⚡). Bitte einen anderen Namen wählen." : "Ein Paket mit diesem Namen gibt es schon (auch im Archiv). Bitte einen anderen Namen wählen.", true); return false; }
     for (const p of st.posten) {
       if (p._ungueltig) { toast(`Bitte bei „${p.bezeichnung || bkName(p.art)}“ einen gültigen Preis eintragen, z. B. 65,00.`, true); return false; }
       if (p.art === "sonstiges" && !String(p.bezeichnung || "").trim()) { toast("Bitte bei „Sonstiges“ einen Namen eintragen.", true); return false; }
@@ -286,6 +299,7 @@ function bkEditor(vorlage, kopie) {
     return true;
   }, neu ? "Paket speichern" : "Speichern");
   dlg.classList.add("bk-dialog");
+  dlg.addEventListener("close", () => { bkFensterZu = Date.now(); });
   const form = dlg.querySelector("form");
   const listeEl = dlg.querySelector("[data-bk-liste-posten]");
   const chipsEl = dlg.querySelector("[data-bk-chips]");

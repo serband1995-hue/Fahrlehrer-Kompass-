@@ -180,6 +180,7 @@ try {
     await d.locator("button[value=ok]").click(); await page.waitForTimeout(250);
     const alle = await pakete(page);
     pruefe("B4e Kopie ist eine neue Vorlage, das Original bleibt", alle.length === 3 && alle.find((p) => p.id === "p-1").name === "Boost-Paket 1" && alle.some((p) => p.name === "Boost-Paket 1 (Kopie)" && p.id !== "p-1"));
+    await page.waitForTimeout(500); // nach dem Schließen nimmt die Liste kurz keine Tipps an (Geister-Tipp)
     await page.locator('[data-bk-bearbeiten="p-turbo"]').click(); await page.waitForTimeout(150);
     const dt = page.locator(dlgSel).last();
     pruefe("B4f Turboboost: Name nicht änderbar (⚡ hängt am Namen)", await dt.locator('input[name="name"]').getAttribute("readonly") !== null && /bleibt so/.test(await dt.innerText()));
@@ -285,6 +286,41 @@ try {
     await page.evaluate(async () => { window.__FAKE.fehler = { fahrschule_pakete: 'column fahrschule_pakete.posten does not exist' }; S.bkFehlt = false; await bkPruefeSpalten(); });
     await page.waitForTimeout(150);
     pruefe("B14b ohne Vorlagen (alte DB): Spalte fehlt erkannt, Reiter weg", await page.locator(".bk-reiter").count() === 0);
+    await ctx.close();
+  }
+  // B15 Namen: kein zweites „Turboboost“, keine doppelten Namen, zweite Kopie bekommt „(Kopie 2)“; Geister-Tipp nach Speichern
+  {
+    const { page, ctx } = await oeffne({ nutzer: "bu-1", vorbereiten: preise });
+    await page.click("#bkNeu"); await page.waitForTimeout(150);
+    let d = page.locator(dlgSel).last();
+    await d.locator('input[name="name"]').fill("turboboost");
+    await d.locator("button[value=ok]").click(); await page.waitForTimeout(200);
+    pruefe("B15a „turboboost“ als neuer Name abgelehnt", await page.locator(dlgSel).count() === 1 && (await pakete(page)).length === 2);
+    await d.locator('input[name="name"]').fill("Boost-Paket 1");
+    await d.locator("button[value=ok]").click(); await page.waitForTimeout(200);
+    pruefe("B15b doppelter Name abgelehnt", await page.locator(dlgSel).count() === 1 && (await pakete(page)).length === 2);
+    await d.locator("[data-schliessen]").first().click(); await page.waitForTimeout(100);
+    if (await page.locator(dlgSel).count()) { await page.locator(dlgSel).last().locator("button[value=ok]").click(); await page.waitForTimeout(150); }
+    await page.waitForTimeout(600);
+    await page.locator('[data-bk-kopie="p-1"]').click(); await page.waitForTimeout(150);
+    await page.locator(dlgSel).last().locator("button[value=ok]").click(); await page.waitForTimeout(700);
+    await page.locator('[data-bk-kopie="p-1"]').click(); await page.waitForTimeout(150);
+    pruefe("B15c zweite Kopie: „Boost-Paket 1 (Kopie 2)“", (await page.locator(dlgSel).last().locator('input[name="name"]').inputValue()) === "Boost-Paket 1 (Kopie 2)");
+    // Geister-Tipp: Speichern und sofort danach auf „Archivieren“ (liegt darunter)
+    await page.locator(dlgSel).last().locator("button[value=ok]").click();
+    await page.waitForTimeout(60);
+    await page.locator('[data-bk-archiv="p-1"]').click({ force: true }).catch(() => {});
+    await page.waitForTimeout(300);
+    pruefe("B15d Tipp direkt nach dem Schließen archiviert nichts", (await pakete(page)).every((p) => p.aktiv !== false));
+    await ctx.close();
+  }
+  // B16 Fenster verrutscht nicht, wenn Posten dazukommen (Vorlese-Text hängt am Preisfeld)
+  {
+    const { page, ctx } = await oeffne({ nutzer: "ad-1", vorbereiten: preise, breite: 412, hoehe: 800 });
+    await page.click("#bkNeu"); await page.waitForTimeout(150);
+    for (const c of ["Grundbetrag", "Übungsstunden", "Sonderfahrt", "Sonderfahrt", "Lernapp", "Simulator", "Sonstiges"]) await chip(page, c);
+    const m = await page.evaluate(() => { const d = [...document.querySelectorAll("dialog[open]")].pop(); return { oben: d.scrollTop, ueber: d.scrollHeight - d.clientHeight, kopf: d.querySelector("header").getBoundingClientRect().top >= d.getBoundingClientRect().top - 1 }; });
+    pruefe("B16 Fenster bleibt oben (Kopfzeile mit ✕ sichtbar, Fenster selbst scrollt nicht)", m.oben === 0 && m.ueber <= 1 && m.kopf, JSON.stringify(m));
     await ctx.close();
   }
   // B10 Migration (statisch): Büro ohne Löschrecht, feste Kopie, Rückweg

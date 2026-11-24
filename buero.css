@@ -849,7 +849,7 @@ body.kiosk .rollen-streifen{display:none;}
 .bk-stepper input{width:64px;min-height:44px;text-align:center;border:1px solid var(--feld);border-radius:var(--r-klein);background:var(--surface);}
 .bk-mal{color:var(--muted);}
 .bk-preisgruppe{display:inline-flex;align-items:center;gap:8px;}
-.bk-preisfeld{display:inline-flex;align-items:center;gap:6px;}
+.bk-preisfeld{display:inline-flex;align-items:center;gap:6px;position:relative;}
 .bk-preisfeld input{width:112px;min-height:44px;padding:0 10px;border:1px solid var(--feld);border-radius:var(--r-klein);background:var(--surface);text-align:right;}
 .bk-preisfeld input.eigen{border:2px solid var(--blau);}
 .bk-preisfeld input[aria-invalid="true"]{border:2px solid var(--rot);}
@@ -864,6 +864,7 @@ body.kiosk .rollen-streifen{display:none;}
 .bk-gesamt .klein{flex-basis:100%;text-align:right;color:var(--muted);}
 .bk-gesamt .klein:empty{display:none;}
 .bk-gesamt .klein .marke-pill{white-space:normal;}
+.bk-dialog .toast.toast-undo{bottom:auto;top:84px;}
 @media (max-width:520px){
   .bk-dialog .dialog-inhalt{padding:16px 14px;}
   .bk-gesamt{margin:16px -14px -16px;padding:12px 14px;bottom:-16px;}

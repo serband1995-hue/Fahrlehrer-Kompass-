@@ -132,7 +132,7 @@ function prFormular(vorlage, nurBetrag) {
       <label>Art<select name="art">${PR_ARTEN.filter(([a]) => !BK_NEUE_ARTEN_PR.includes(a) || v.art === a || (typeof bkDa === "function" && bkDa())).map(([a, n]) => `<option value="${a}"${v.art === a ? " selected" : ""}>${esc(n)}</option>`).join("")}</select></label>
       <label>Klasse<select name="klasse">${klassenOptionen(v.klasse || "")}</select></label>
       <label class="voll">Bezeichnung<input type="text" name="bezeichnung" maxlength="120" required list="prVorschlaege" value="${esc(v.bezeichnung || "Grundbetrag")}"></label>
-      <datalist id="prVorschlaege">${PR_SONDER.concat(PR_ARTEN.map((a) => a[4]).filter(Boolean), (S.pakete || []).map((p) => p.name)).map((n) => `<option value="${esc(n)}">`).join("")}</datalist>
+      <datalist id="prVorschlaege">${PR_SONDER.concat(PR_ARTEN.map((a) => a[4]).filter(Boolean), (S.pakete || []).filter((p) => p.aktiv !== false).map((p) => p.name)).map((n) => `<option value="${esc(n)}">`).join("")}</datalist>
       <label>Einheit<select name="einheit">${PR_EINHEITEN.map(([e, n]) => `<option value="${e}">${esc(n)}</option>`).join("")}</select></label>
       <label>Preis in €<input type="number" name="betrag" min="0" max="100000" step="0.01" inputmode="decimal" required></label>
       <label>Gültig ab<input type="date" name="ab" required value="${esc(heute)}"${min}></label>

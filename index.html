@@ -6496,7 +6496,7 @@ async function routeFahrschuleDetail(fahrschuleId){
 
   const paketeVerwaltung=pakete.map(p=>`
     <div class="field" style="display:flex;align-items:center;gap:8px;">
-      <span style="flex:1;">${esc(p.name)}</span>
+      <span style="flex:1;">${esc(p.name)}${p.aktiv===false?' <small style="color:var(--muted);">(archiviert, im Büro zurückholen)</small>':''}</span>
       <button class="btn btn-ghost" style="padding:6px 12px;font-size:12px;" onclick="paketUmbenennen(${_jsArg(p.id)},${_jsArg(fahrschuleId)})">Umbenennen</button>
     </div>`).join("");
 
