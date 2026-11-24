@@ -452,8 +452,7 @@ function bkFest(posten, klasse) {
   return { posten: fest, fehlt, gesamt: fest.reduce((a, p) => a + p.anzahl * p.preis_cent, 0) };
 }
 /* Schritt 2: „noch offen“ je Posten. Gleiche Rechnung wie in der App (KR.paketQuelleAusTerminen, KR.paketVerbrauch). Quelle: Termine im
-   Büro-Kalender (letzte DATEN_TAGE Tage), Praxisprüfungen mit Ergebnis (App und Tafel), Sonderfahrten auch aus dem Ausbildungsplan der App,
-   wenn der Fahrlehrer die App nutzt. */
+   Büro-Kalender (mit ganzem Verlauf, bkVerlaufLaden) mit dem Fahrcheck-Haken des Büros, Praxisprüfungen mit Ergebnis (App und Tafel). */
 function bkVerbrauchQuelle(x, voll) {
   const d = new Date(), heute = KR.todayISO();
   // Termine: die geladenen (letzte DATEN_TAGE Tage, die das Büro frisch hält) und aus dem Verlauf dieses Schülers (voll) nur, was
@@ -464,13 +463,12 @@ function bkVerbrauchQuelle(x, voll) {
   for (const t of S.termine || []) if (t.schueler_id === x.id) nachId.set(t.id, t);
   const termine = [...nachId.values()].filter((t) => t.schueler_id === x.id && !t.geloescht).map((t) => {
     const pl = t.payload || {};
-    return { art: t.art, datum: t.datum, von: t.von, bis: t.bis, status: pl.status || t.status, sonderArt: pl.sonderArt, srcSonder: pl.srcSonder, tatsaechlicheDauer: pl.tatsaechlicheDauer };
+    return { art: t.art, datum: t.datum, von: t.von, bis: t.bis, status: pl.status || t.status, sonderArt: pl.sonderArt, srcSonder: pl.srcSonder, bueroFc: t.buero_fc_status || "offen" };
   });
   const pruefDaten = typeof pruefErgebnisse === "function" ? pruefErgebnisse("praxis").filter((e) => e.schueler_id === x.id).map((e) => e.datum) : [];
   for (const p of (voll && voll.tafel) || []) if (p.art === "praxis" && (p.status === "bestanden" || p.status === "nicht_bestanden") && p.datum && p.datum < grenze) pruefDaten.push(p.datum);
-  const fl = (S.lehrer || []).find((l) => l.id === x.fahrlehrer_id);
-  const plan = fl && fl.ohne_app ? null : x.ausbildung && x.ausbildung.plan;
-  return KR.paketQuelleAusTerminen(termine, heute, d.getHours() * 60 + d.getMinutes(), { pruefDaten, plan });
+  // Fahrstunden und Sonderfahrten zählen erst mit dem Fahrcheck-Haken des Büros (KR.paketQuelleAusTerminen), der Plan der App nicht
+  return KR.paketQuelleAusTerminen(termine, heute, d.getHours() * 60 + d.getMinutes(), { pruefDaten });
 }
 /* Folgeauftrag W13: Das Büro lädt Termine und Prüfungstafel nur DATEN_TAGE Tage zurück. Für „noch offen“ zählt aber die ganze
    Ausbildung (Geld!). Darum beim Öffnen der Akte gezielt diesen einen Schüler ganz nachladen, statt alles neu zu laden.
@@ -579,11 +577,16 @@ function bkAnmeldungBinden(dlg, x, id) {
     if (wahl === "bleibt" && anfang) {
       ladeVoll();
       h = `<p class="bk-anm-verkauft">Verkauft am ${esc(datumDE(String(anfang.verkauft_am || "").slice(0, 10)))}${anfang.bearbeiter ? " von " + esc(anfang.bearbeiter) : ""}</p>
-        ${bkPostenListeHTML(bkPosten(anfang), vollStand === "laden" ? null : KR.paketVerbrauch(bkPosten(anfang), bkVerbrauchQuelle(x, voll)))}
+        ${(() => {
+          if (vollStand === "laden") return bkPostenListeHTML(bkPosten(anfang), null);
+          const q = bkVerbrauchQuelle(x, voll);
+          return bkPostenListeHTML(bkPosten(anfang), KR.paketVerbrauch(bkPosten(anfang), q))
+            + (q.ohneHaken ? `<p class="leise klein" data-bk-ohne-haken>${q.ohneHaken === 1 ? "1 Termin wartet" : q.ohneHaken + " Termine warten"} noch auf den Fahrcheck-Haken vom Büro. Erst danach zählt er im Paket.</p>` : "");
+        })()}
         ${vollStand === "laden" ? `<p class="leise klein" data-bk-voll-laedt>„Noch offen“ wird gezählt …</p>` : ""}
         ${vollStand === "fehler" ? `<p class="bk-anm-warn" data-bk-voll-fehlt>Ältere Termine fehlen: „noch offen“ kann zu hoch sein. Bitte die Akte später noch einmal öffnen.</p>` : ""}
         <p class="bk-anm-summe"><span>Gesamt</span><b>${esc(prEuro(anfang.gesamt_cent))}</b></p>
-        <p class="leise klein">Die Preise bleiben so, auch wenn sich die Preisliste ändert. Gezählt wird in Einheiten à 45 Min.</p>
+        <p class="leise klein">Die Preise bleiben so, auch wenn sich die Preisliste ändert. Gezählt wird je Fahrcheck (45 Min.), sobald das Büro ihn abgehakt hat.</p>
         <div class="knopfreihe"><button class="knopf klein" type="button" data-bk-anpassen>Paket ändern</button></div>`;
     } else if (wahl === "bleibt") {
       h = `<p class="leise klein">Das Paket ist nur zugeordnet (ohne Preise). Zum Verkaufen oben ein Paket wählen.</p>`;

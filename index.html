@@ -10193,6 +10193,9 @@ async function _ladeTheorieBesuch(supa, ids){
    keine Verbindung: keine Karte, kein Fehler. Später (Schritt 2) kommt „noch offen“ je Posten dazu. */
 let _paketVerkauft = null; // schueler_id -> {name, posten:[{art, bezeichnung, anzahl}]} oder null (kein Paket); null = nicht geladen
 let _paketLadeNr = 0; const _paketNrJe = {};
+// Termine der Schüler mit Paket vom Server, mit dem Fahrcheck-Haken des Büros (buero_fc_status). Die eigenen Termine des Geräts
+// kennen den Haken nicht; im Paket zählt eine Fahrstunde aber erst mit Haken (🗣 Serband 24.11.). schueler_id -> Liste oder fehlt
+const _paketTermine = {};
 async function _ladePakete(supa, ids){
   const nr=++_paketLadeNr;
   try{
@@ -10208,15 +10211,24 @@ async function _ladePakete(supa, ids){
     // wie beim Theorie-Besuch: hat ein neuerer Abruf den Schüler schon geladen, gilt dessen Stand
     _paketVerkauft=_paketVerkauft||{};
     for(const sid in neu){ if((_paketNrJe[sid]||0)<=nr){ _paketVerkauft[sid]=neu[sid]; _paketNrJe[sid]=nr; } }
+    // Termine nur für Schüler mit Paket (gelöschte nicht). Fehler: alten Stand behalten, die Karte zeigt dann keinen Zähler
+    const mitPaket=Object.keys(neu).filter(sid=>neu[sid]);
+    for(let i=0;i<mitPaket.length;i+=150){
+      const teil=mitPaket.slice(i,i+150);
+      const rows=await _alleSeiten(()=>supa.from("kalender_termine").select("id,schueler_id,art,datum,von,bis,status,payload,buero_fc_status").in("schueler_id",teil).eq("geloescht",false));
+      const je={}; teil.forEach(sid=>{ je[sid]=[]; });
+      rows.forEach(r=>{ if(je[r.schueler_id]){ const p=r.payload||{}; je[r.schueler_id].push({art:r.art,datum:r.datum,von:r.von,bis:r.bis,status:p.status||r.status,sonderArt:p.sonderArt,srcSonder:p.srcSonder,bueroFc:r.buero_fc_status||"offen"}); } });
+      for(const sid of teil) if((_paketNrJe[sid]||0)<=nr) _paketTermine[sid]=je[sid];
+    }
   }catch(e){ /* offline: alten Stand behalten */ }
 }
-/* Schritt 2: „noch offen“ je Posten, gleiche Rechnung wie im Büro (KR.paketQuelleAusTerminen, KR.paketVerbrauch). Quelle: eigene
-   Termine dieses Geräts, Prüfungen mit Ergebnis (DB.exams) und die Sonderfahrten aus dem Ausbildungsplan. */
+/* Schritt 2: „noch offen“ je Posten, gleiche Rechnung wie im Büro (KR.paketQuelleAusTerminen, KR.paketVerbrauch). Quelle: die Termine
+   vom Server mit dem Fahrcheck-Haken des Büros (_paketTermine) und die Prüfungen mit Ergebnis (DB.exams). Ohne geladene Termine: null. */
 function _paketQuelle(s){
-  if(!window.KR||!KR.paketQuelleAusTerminen)return null;
+  if(!window.KR||!KR.paketQuelleAusTerminen||!_paketTermine[s.id])return null;
   const d=new Date();
   const pruefDaten=(DB.exams||[]).filter(ex=>ex.sid===s.id&&istPruefung(ex)&&ex.date&&(ex.result==="pass"||ex.result==="fail")).map(ex=>ex.date);
-  return KR.paketQuelleAusTerminen((DB.lessons||[]).filter(l=>l.sid===s.id).map(l=>({art:l.art,datum:l.date,von:l.von,bis:l.bis,status:l.status,srcSonder:l.srcSonder,sonderArt:l.sonderArt,tatsaechlicheDauer:l.tatsaechlicheDauer})),todayISO(),d.getHours()*60+d.getMinutes(),{pruefDaten,plan:s.plan});
+  return KR.paketQuelleAusTerminen(_paketTermine[s.id],todayISO(),d.getHours()*60+d.getMinutes(),{pruefDaten});
 }
 function paketCard(s){
   const p=_paketVerkauft&&_paketVerkauft[s.id];
@@ -10229,7 +10241,9 @@ function paketCard(s){
   return `<div class="res-block paket-karte" style="animation:none;margin-top:9px;">
     <h4>${_li("bogen")} Paket: ${esc(p.name)}</h4>
     ${p.posten.map((x,i)=>`<div class="mini-dash-row"><span>${esc(x.bezeichnung)}</span><b>${rechts(x,i)}</b></div>`).join("")}
-    <p class="muted-p" style="font-size:12px;margin:6px 0 0;">Vom Büro verkauft. Gefahren von gebucht (Einheiten à 45 Min.). Ändern nur im Büro.</p>
+    ${q&&q.ohneHaken?`<p class="muted-p" style="font-size:12px;margin:6px 0 0;">${q.ohneHaken===1?"1 Termin wartet":q.ohneHaken+" Termine warten"} noch auf den Fahrcheck-Haken vom Büro. Erst danach zählt er im Paket.</p>`:""}
+    ${q?"":`<p class="muted-p" style="font-size:12px;margin:6px 0 0;">Stand gerade nicht abrufbar (offline?). Die Zahlen kommen beim nächsten Abruf.</p>`}
+    <p class="muted-p" style="font-size:12px;margin:6px 0 0;">Vom Büro verkauft. Gefahren von gebucht, je Fahrcheck (45 Min.), sobald das Büro ihn abgehakt hat. Ändern nur im Büro.</p>
   </div>`;
 }
 function theorieStandFuer(s){

@@ -350,13 +350,15 @@
     }
     return liste;
   }
-  /* Verbrauch aus Kalender-Terminen ({art, datum, von, bis, status, sonderArt, srcSonder, tatsaechlicheDauer}): nur vorbei (heute erst
-     nach dem Ende), ohne abgebrochen/nicht erschienen/abgesagt/geplatzt (wie countRange in der App). Fahrstunden, Nacht- und
-     Sonderfahrten in UE zu 45 min mit der tatsächlichen Dauer (ueOf). extra (beides freiwillig):
-     - pruefDaten: Tage mit Ergebnis einer Praxisprüfung (App oder Prüfungstafel). Kalendertermin und Ergebnis bis 3 Tage danach sind
-       dieselbe Prüfung (wie dayEvents); eine Wiederholung liegt frühestens 2 Wochen später.
-     - plan: Ausbildungsplan der App (plan.sonder). Je Art zählt das Größere aus Plan und Kalender: dieselbe Fahrt steht oft in beiden,
-       nachgetragene Büro-Fahrten oder alte Plan-Einträge nur in einem. jetztMin = Minuten seit Mitternacht. */
+  /* Verbrauch aus Kalender-Terminen ({art, datum, von, bis, status, sonderArt, srcSonder, bueroFc}).
+     🗣 Serband 24.11.2026: „Eine Fahrstunde zählt erst dann, wenn sie von Kristina abgehakt wird, dass die Fahrchecks da sind. Wird
+     der Termin gelöscht, weil der Schüler nicht da war, zählt das natürlich nicht.“ Darum zählen Fahrstunde, Sonder- und Nachtfahrt
+     nur mit Büro-Haken (bueroFc = kalender_termine.buero_fc_status = „abgegeben“), und zwar je Fahrcheck (45 min = 1, fcGebucht).
+     Ohne Haken (offen, fehlt) zählt der Termin bei „ohneHaken“ (Hinweis „warten noch auf den Haken vom Büro“).
+     Nie: Zukunft, heute vor dem Ende, abgebrochen/nicht erschienen/abgesagt/geplatzt (gelöschte Termine kommen gar nicht erst an).
+     Der Ausbildungsplan der App zählt fürs Paket nicht: dort hakt niemand vom Büro ab.
+     extra.pruefDaten: Tage mit Ergebnis einer Praxisprüfung (App oder Prüfungstafel). Kalendertermin und Ergebnis bis 3 Tage danach
+     sind dieselbe Prüfung (wie dayEvents); eine Wiederholung liegt frühestens 2 Wochen später. jetztMin = Minuten seit Mitternacht. */
   const PAKET_NICHT = ["abgebrochen", "nicht erschienen", "abgesagt", "geplatzt"];
   function paketSonderArt(t) {
     if (t.art === "nacht") return "nacht";
@@ -373,22 +375,23 @@
     return n;
   }
   function paketQuelleAusTerminen(termine, heute, jetztMin, extra) {
-    const q = { fahrstunden: 0, sonder: { ueberland: 0, autobahn: 0, nacht: 0 }, pruefungen: 0, simulator: 0 };
+    const q = { fahrstunden: 0, sonder: { ueberland: 0, autobahn: 0, nacht: 0 }, pruefungen: 0, simulator: 0, ohneHaken: 0 };
     const ex = extra || {}, pTage = [];
     for (const t of termine || []) {
       if (!t || !t.datum || !t.von || !t.bis || t.datum > heute) continue;
       if (t.datum === heute && hm2min(t.bis) > jetztMin) continue;
       if (PAKET_NICHT.includes(t.status)) continue;
-      if (t.art === "fahrstunde") q.fahrstunden += ueOf(t.art, t.von, t.bis, t.tatsaechlicheDauer);
-      else if (t.art === "nacht" || t.art === "sonder") { const a = paketSonderArt(t); if (a) q.sonder[a] += ueOf(t.art, t.von, t.bis, t.tatsaechlicheDauer); }
-      else if (t.art === "pruefung") pTage.push(t.datum);
+      if (FC_ARTEN.includes(t.art)) {
+        const fc = fcGebucht(t);
+        const a = t.art === "fahrstunde" ? "" : paketSonderArt(t);
+        if (!fc || (t.art !== "fahrstunde" && !a)) continue; // Sonderfahrt ohne Art: keinem Posten zuzuordnen
+        if (t.bueroFc !== "abgegeben") { q.ohneHaken++; continue; }
+        if (t.art === "fahrstunde") q.fahrstunden += fc; else q.sonder[a] += fc;
+      } else if (t.art === "pruefung") pTage.push(t.datum);
       else if (t.art === "simulator") q.simulator += 1;
     }
     for (const d of ex.pruefDaten || []) if (d && String(d).slice(0, 10) <= heute) pTage.push(String(d).slice(0, 10));
     q.pruefungen = paketPruefZahl(pTage);
-    const plan = paketSonderAusPlan(ex.plan, heute);
-    for (const a of Object.keys(q.sonder)) q.sonder[a] = Math.round(Math.max(q.sonder[a], plan ? plan[a] : 0) * 100) / 100;
-    q.fahrstunden = Math.round(q.fahrstunden * 100) / 100;
     return q;
   }
   // heute (freiwillig): nur Fahrten bis heute zählen; ein für nächste Woche eingetragenes Feld ist noch nicht gefahren (Fable W5)
