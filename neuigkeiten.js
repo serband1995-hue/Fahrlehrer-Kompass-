@@ -4,12 +4,16 @@
    "kurz" (höchstens ~60 Zeichen) erscheint nach dem Update einmal als kleiner Hinweis (verschwindet von selbst, kein Knopf).
    Einfache Worte, keine Fachwörter, keine Schülerdaten. */
 window.KOMPASS_NEU = [
-  { version: "2026.11.24.8", datum: "2026-11-24", kurz: "Büro: Pakete an Schüler verkaufen, „noch offen“ sehen.",
+  { version: "2026.11.24.9", datum: "2026-11-24", kurz: "Büro: Pakete an Schüler verkaufen, „noch offen“ sehen.",
     punkte: ["Im Schülerfenster wählst du „Normale Anmeldung“ oder ein Paket. Beim Speichern ist das Paket verkauft. Die Preise bleiben dann fest, auch wenn sich die Preisliste ändert.",
              "Mit „Anpassen“ änderst du das Paket nur für diesen Schüler, zum Beispiel mehr Übungsstunden.",
              "In der Akte steht bei jedem Posten, was schon gefahren ist und was noch offen ist, zum Beispiel „12 von 20 gefahren · noch 8 offen“.",
              "In der App sieht der Fahrlehrer das Paket mit demselben Stand, aber ohne Preise.",
              "Paket wechseln oder zurück zur normalen Anmeldung geht ohne Rückfrage, danach kannst du es rückgängig machen."] },
+  { version: "2026.11.24.8", datum: "2026-11-24", kurz: "Speichern überschreibt keine neueren Änderungen mehr.",
+    punkte: ["Im Büro speichert die Schüler-Akte nur noch, was du im Fenster geändert hast. Was die App oder ein anderer PC inzwischen geändert hat, bleibt.",
+             "Hat jemand dasselbe Feld gleichzeitig geändert, zeigt das Fenster beide Werte. Mit „Meine Eingabe nehmen“ gilt deine.",
+             "Ändert das Büro Name oder Telefon, übernimmt die App das jetzt auch, wenn du am Schüler unterwegs etwas anderes geändert hast."] },
   { version: "2026.11.24.7", datum: "2026-11-24", kurz: "Büro: Pakete jetzt aus Bausteinen zusammenstellen.",
     punkte: ["Im Büro unter Preisliste gibt es oben zwei Reiter: „Preise“ und „Pakete“.",
              "Unter „Pakete“ baust du ein Paket aus Bausteinen, zum Beispiel Grundbetrag, Übungsstunden, Sonderfahrten und Prüfung. Unten siehst du sofort den Gesamtpreis.",

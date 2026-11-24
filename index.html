@@ -4675,6 +4675,10 @@ function _abglWert(x) {
   let h = 2166136261; for (let i = 0; i < s.length; i++) { h ^= s.charCodeAt(i); h = Math.imul(h, 16777619); }
   return (h >>> 0).toString(36) + "." + s.length.toString(36);
 }
+// W14: Prüfwert nur für Name und Telefon (pflegt das Büro). Im Gedächtnis unter nt[id]: der Stand, den dieses Gerät und
+// der Server zuletzt gemeinsam hatten. Hat das Gerät genau diese zwei seitdem nicht geändert, gilt der Stand vom Büro –
+// auch wenn am Schüler sonst etwas geändert wurde (sonst schrieb die Brücke den alten Namen/die alte Nummer zurück).
+function _abglNT(name, tel) { return _abglWert([String(name || ""), String(tel || "")]); }
 // Die Zeilen, die in die Fahrschul-Tabellen gehen (ohne Zeitstempel - der kommt erst beim Schreiben dazu).
 function _schuelerZeile(s) {
   const { id, name, telefon, bogen, _sehhilfeOffen, ...rest } = s; // _sehhilfeOffen ist nur ein Merker dieses Geräts
@@ -4718,13 +4722,13 @@ async function _brueckeAbgleichen({ tabelle, art, eintraege, zeileVon, loeschWer
   const supa = getSupa(); const merk = _abglLaden()[art];
   const nowIso = new Date().toISOString();
   const offen = [];
-  eintraege.forEach(e => { if (!e || !e.id) return; const w = _abglWertVon(art, e); if (merk[e.id] !== w) offen.push({ e, z: zeileVon(e), w }); });
+  eintraege.forEach(e => { if (!e || !e.id) return; const w = _abglWertVon(art, e); if (merk[e.id] !== w) offen.push({ e, z: zeileVon(e), w, nt: art === "schueler" ? _abglNT(e.name || "(ohne Namen)", e.telefon || "") : null }); });
   let geschrieben = [];
   if (offen.length) {
     geschrieben = await _upsertRobust(tabelle, offen.map(o => Object.assign({}, o.z, { aktualisiert_am: nowIso })), "id");
     // Gedächtnis frisch lesen: ein Abruf kann es während des Schreibens ergänzt haben.
     const ok = new Set(geschrieben); const zeit = Date.parse(nowIso); const mem = _abglLaden();
-    offen.forEach(o => { if (!ok.has(o.e.id)) return; mem[art][o.e.id] = o.w; merk[o.e.id] = o.w; if (art !== "schueler") o.e._syncedAt = zeit; });
+    offen.forEach(o => { if (!ok.has(o.e.id)) return; mem[art][o.e.id] = o.w; merk[o.e.id] = o.w; if (art !== "schueler") o.e._syncedAt = zeit; else (mem.nt = mem.nt || {})[o.e.id] = o.nt; });
     _abglSpeichern(mem); _abglGen++;
   }
   // Löschen: nur Einträge, die dieses Gerät kannte und die es lokal nicht mehr gibt.
@@ -4754,7 +4758,7 @@ async function _brueckeAbgleichen({ tabelle, art, eintraege, zeileVon, loeschWer
       }
     }
     // Was gelöscht ist oder nicht mehr diesem Fahrlehrer gehört, muss sich das Gerät nicht mehr merken.
-    const m2 = _abglLaden(); bekanntWeg.forEach(id => delete m2[art][id]); _abglSpeichern(m2); _abglGen++;
+    const m2 = _abglLaden(); bekanntWeg.forEach(id => { delete m2[art][id]; if (art === "schueler" && m2.nt) delete m2.nt[id]; }); _abglSpeichern(m2); _abglGen++;
   }
   return geschrieben;
 }
@@ -5566,7 +5570,16 @@ async function pullSchuelerZuweisungen() {
       const lok = DB.students.find(x => x.id === r.id); if (!lok) continue;
       if (neuIds.has(r.id)) continue;
       const bekannt = memS.schueler[r.id];
-      if (bekannt && bekannt !== (vorherWert[r.id] !== undefined ? vorherWert[r.id] : _abglWertVon("schueler", lok))) continue; // selbst geändert: eigener Stand gilt
+      const ntServer = _abglNT(r.name || "(ohne Namen)", r.telefon || ""); memS.nt = memS.nt || {};
+      if (bekannt && bekannt !== (vorherWert[r.id] !== undefined ? vorherWert[r.id] : _abglWertVon("schueler", lok))) {
+        // Selbst geändert: der eigene Stand gilt – Name und Telefon aber nur, wenn das Gerät genau diese zwei geändert hat (W14).
+        // Sonst den Stand vom Büro übernehmen; die Brücke lädt ihn mit der eigenen Änderung hoch. Gedächtnis bleibt „geändert“.
+        const n0 = (r.name && !(r.name === "(ohne Namen)" && !lok.name)) ? r.name : lok.name, t0 = r.telefon || "";
+        const ntLokal = _abglNT(lok.name || "(ohne Namen)", lok.telefon || "");
+        if (ntLokal !== ntServer && memS.nt[r.id] && memS.nt[r.id] === ntLokal) { lok.name = n0; lok.telefon = t0; namenNeu = true; }
+        if (_abglNT(lok.name || "(ohne Namen)", lok.telefon || "") === ntServer) memS.nt[r.id] = ntServer; // jetzt wieder gleich
+        continue;
+      }
       const erwartet = nachherWert[r.id] || vorherWert[r.id];
       // Während des Abrufs selbst getippt: Namen vom Büro trotzdem übernehmen, aber nicht als „hochgeladen“ merken –
       // die Brücke lädt dann den neuen Namen zusammen mit der eigenen Änderung hoch (nichts geht verloren)
@@ -5574,6 +5587,7 @@ async function pullSchuelerZuweisungen() {
       const n = (r.name && !(r.name === "(ohne Namen)" && !lok.name)) ? r.name : lok.name, t = r.telefon || "";
       if (n !== lok.name || t !== (lok.telefon || "")) { lok.name = n; lok.telefon = t; if (!getippt) memS.schueler[r.id] = _abglWertVon("schueler", lok); namenNeu = true; }
       else if (!getippt && bekannt && bekannt === vorherWert[r.id] && nachherWert[r.id]) memS.schueler[r.id] = nachherWert[r.id]; // Übernahmen vom Büro gelten nicht als eigene Änderung (spätere eigene Änderungen schon)
+      if (_abglNT(lok.name || "(ohne Namen)", lok.telefon || "") === ntServer) memS.nt[r.id] = ntServer; // gemeinsamer Stand Name/Telefon (W14)
     }
     _abglSpeichern(memS);
     _schuelerAbgerufen = true;
@@ -7888,7 +7902,7 @@ const STORE_KEY="serband-app-v1";
    Wird in den Einstellungen angezeigt + für den Update-Hinweis genutzt. */
 // K1: voreingestellter Wetter-Ort (früh definiert, weil ensureDB ihn schon beim Start braucht)
 const WETTER_START={city:"Offenbach",lat:50.1006,lon:8.7665};
-const APP_VERSION="2026.11.24.8";
+const APP_VERSION="2026.11.24.9";
 try{const f=document.getElementById("drawerFoot"); if(f)f.textContent="Fahrlehrer-Kompass · Version "+APP_VERSION;}catch(e){}
 // Nutzungsbedingungen & Haftungsausschluss (Bereich: rechtliche Absicherung) - Version hochzählen
 // und alle Nutzer müssen erneut zustimmen, sobald sich der Text inhaltlich ändert.
@@ -8011,23 +8025,52 @@ async function _fsSyncAggJetztKern(){
       // ---- SCHÜLER ----
       const baseS={}; (_fsBaseline.students||[]).forEach(s=>baseS[s.id]=s);
       const curSIds=new Set(snap.students.map(s=>s.id));
-      const schuelerUpserts=[];
+      const schuelerUpserts=[], schuelerAend=[];
+      const sZeile=s=>{
+        const {id,name,telefon,_fahrlehrerId,_fahrlehrerName,_paketId,_hatSimulator,_hatTheorieApp,_bogenAusgefuellt,bogen,_fahrlehrerAusgeblendetAm,...rest}=s;
+        if(_fahrlehrerAusgeblendetAm)rest.ausgeblendetAm=_fahrlehrerAusgeblendetAm; // „bei mir ausgeblendet“ des Fahrlehrers bleibt
+        return { id:s.id, fahrschule_id:_fsAgg.fahrschuleId, fahrlehrer_id:s._fahrlehrerId||null,
+          name:s.name||"(ohne Namen)", telefon:s.telefon||null, status:"aktiv",
+          paket_id:s._paketId||null, hat_simulator:!!s._hatSimulator, hat_theorie_app:!!s._hatTheorieApp,
+          bogen_ausgefuellt:!!(s.bogen||s._bogenAusgefuellt), ausbildung:rest };
+      };
       snap.students.forEach(s=>{
         const b=baseS[s.id];
-        if(!b||JSON.stringify(s)!==JSON.stringify(b)){
-          const {id,name,telefon,_fahrlehrerId,_fahrlehrerName,_paketId,_hatSimulator,_hatTheorieApp,_bogenAusgefuellt,bogen,_fahrlehrerAusgeblendetAm,...rest}=s;
-          if(_fahrlehrerAusgeblendetAm)rest.ausgeblendetAm=_fahrlehrerAusgeblendetAm; // „bei mir ausgeblendet“ des Fahrlehrers bleibt
-          schuelerUpserts.push({
-            id:s.id, fahrschule_id:_fsAgg.fahrschuleId, fahrlehrer_id:s._fahrlehrerId||null,
-            name:s.name||"(ohne Namen)", telefon:s.telefon||null, status:"aktiv",
-            // Im Büro verkauft: paket_id folgt dem Verkauf (wie schueler_paket_verkaufen), sonst überschriebe ein alter Stand ihn
-            paket_id:(_paketVerkauft&&_paketVerkauft[s.id])?(_paketVerkauft[s.id].vorlage_id||null):(s._paketId||null), hat_simulator:!!s._hatSimulator, hat_theorie_app:!!s._hatTheorieApp,
-            bogen_ausgefuellt:!!(s.bogen||s._bogenAusgefuellt), ausbildung:rest, erstellt_von:b?undefined:meineId, aktualisiert_am:nowIso
-          });
-        }
+        if(!b) schuelerUpserts.push(Object.assign(sZeile(s),{erstellt_von:meineId,aktualisiert_am:nowIso}));
+        else if(JSON.stringify(s)!==JSON.stringify(b)) schuelerAend.push({mein:sZeile(s),basis:sZeile(b)});
       });
       const schuelerDeletes=(_fsBaseline.students||[]).filter(b=>!curSIds.has(b.id)).map(b=>b.id);
       if(schuelerUpserts.length) _fsPruefe(await supa.from("schueler").upsert(schuelerUpserts,{onConflict:"id"}));
+      /* W14: Bestehende Schüler nicht mehr ganz überschreiben (sonst drehte die Gesamtansicht zurück, was Fahrlehrer-App oder
+         Büro inzwischen geändert hatten, z. B. den Ausbildungsstand). Nur geänderte Spalten; frischen Stand lesen; hat jemand
+         dieselbe Spalte geändert, bleibt sein Stand. Ausbildungsstand (jsonb) Feld für Feld zusammenführen. */
+      let woanders=0; const serverZeilen={}; // Stand nach dem Speichern je geändertem Schüler (für Anzeige und Vergleichsstand)
+      if(schuelerAend.length){
+        const {data:frischL,error:fErr}=await supa.from("schueler").select("*").in("id",schuelerAend.map(a=>a.mein.id));
+        if(fErr) throw fErr;
+        const fMap={}; (frischL||[]).forEach(r=>{ fMap[r.id]=r; });
+        const stab=v=>_abglWert(v===undefined?null:v);
+        for(const {mein,basis} of schuelerAend){
+          const fr=fMap[mein.id]; if(!fr) continue; // inzwischen weg oder nicht mehr sichtbar: nichts zurückholen
+          const upd={};
+          const nz=(k,v)=>["hat_simulator","hat_theorie_app","bogen_ausgefuellt"].includes(k)?!!v:(v==null||v===""?null:v);
+          ["name","telefon","fahrlehrer_id","paket_id","hat_simulator","hat_theorie_app","bogen_ausgefuellt"].forEach(k=>{
+            const m=stab(nz(k,mein[k])), b0=stab(nz(k,basis[k])), f0=stab(nz(k,fr[k]));
+            if(m===b0||m===f0)return;                 // hier nicht geändert oder steht schon so da
+            if(f0!==b0){ woanders++; return; }        // woanders geändert: neuer Stand bleibt
+            upd[k]=mein[k];
+          });
+          if(stab(mein.ausbildung)!==stab(basis.ausbildung)){
+            const r=_snapDrei(mein.ausbildung,fr.ausbildung||{},_snapBaum(basis.ausbildung,3),3,false);
+            if(stab(r.wert)!==stab(fr.ausbildung||{})) upd.ausbildung=r.wert;
+          }
+          if(!Object.keys(upd).length){ serverZeilen[mein.id]=fr; continue; }
+          upd.aktualisiert_am=nowIso;
+          const uR=_fsPruefe(await supa.from("schueler").update(upd).eq("id",mein.id).select("*"));
+          if(!uR.data||!uR.data.length) throw new Error("Schüler nicht gespeichert (keine Berechtigung)");
+          serverZeilen[mein.id]=uR.data[0];
+        }
+      }
       if(schuelerDeletes.length) _fsPruefe(await supa.from("schueler").update({status:"geloescht",aktualisiert_am:nowIso}).in("id",schuelerDeletes));
 
       // ---- TERMINE ---- (künstliche Einträge wie Urlaubs-Blöcke werden NIE zurückgeschrieben)
@@ -8084,12 +8127,23 @@ async function _fsSyncAggJetztKern(){
       const altT={}; (_fsBaseline.lessons||[]).forEach(l=>altT[l.id]=l);
       const altP={}; (_fsBaseline.exams||[]).forEach(e=>altP[e.id]=e);
       const behalte=(liste,ohne,alt)=>liste.map(x=>ohne.has(x.id)?alt[x.id]:x).filter(Boolean);
+      // W14: Geänderte Schüler zeigen den Stand vom Server (dort kann inzwischen mehr stehen als hier, z. B. von der App).
+      // Nur, wenn hier während des Speicherns nichts mehr geändert wurde (sonst gilt der nächste Lauf).
+      if(Object.keys(serverZeilen).length){
+        const lehrerName=id=>{ const l=(_fsAgg.lehrer||[]).find(x=>x.id===id); return l?(l.name||l.email):_fsNameAusAlle(id,"Unbekannt"); };
+        snap.students.forEach((sn,i)=>{
+          const row=serverZeilen[sn.id]; if(!row)return;
+          const lok=(DB.students||[]).find(x=>x.id===sn.id), neu=_fsMapSchueler(row,lehrerName);
+          if(lok&&JSON.stringify(lok)===JSON.stringify(sn))_ersetzeInhalt(lok,JSON.parse(JSON.stringify(neu)));
+          snap.students[i]=neu;
+        });
+      }
       _fsBaseline={students:snap.students,lessons:behalte(snap.lessons,ohneLehrerT,altT),exams:behalte(snap.exams,ohneLehrerP,altP)};
       const ohne=ohneLehrerT.size+ohneLehrerP.size;
       _fsNurOhneLehrer=ohne>0;
       if(ohne){ _fsUngespeichert=true; toast(`⚠ ${ohne} ${ohne===1?"Eintrag":"Einträge"} ohne Fahrlehrer – bitte zuordnen`); return false; }
       _fsUngespeichert=false;
-      toast("Gespeichert ✓");
+      toast(woanders?`Gespeichert ✓ – ${woanders===1?"eine Angabe war":"einige Angaben waren"} inzwischen woanders geändert, der neue Stand bleibt`:"Gespeichert ✓");
       return true;
     }catch(e){ _fsUngespeichert=true; _fsNurOhneLehrer=false; console.warn("[Kompass] Fahrschul-Speichern fehlgeschlagen:",e.message); toast("Fehler beim Speichern: "+e.message); return false; }
 }
@@ -8514,10 +8568,11 @@ function theorieBestandenSetzen(s,an,leise){
   }catch(e){}
   if(an){ delete s.wartelisteRaus; if(!s.theoryPassed)s.theoryPassed=new Date().toISOString(); if(!(s.hist||[]).some(h=>h.typ==="theorie"||h.type==="theorie"))logHist(s,"theorie","Theorieprüfung bestanden"); if(stand(s)>=90&&!s.ready&&!s.passed){ s.ready=s.theoryPassed; if(!leise)toast("Theorie bestanden – auf die Praxis-Warteliste gesetzt"); } else if(stand(s)<90&&!s.ready&&!s.passed){ if(!leise)toast("Theorie bestanden – erst ab 90 % kommt er auf die Warteliste"); } if(s.theorieWait)s.theorieWaitBis=new Date().toISOString(); delete s.theorieWait; } else { if(s.ready&&s.ready===s.theoryPassed&&!s.pruefungsreifManuell)delete s.ready; delete s.theoryPassed; delete s.theorieWaitBis; }
 }
-function toastUndo(msg,onUndo,ms){
+function toastUndo(msg,onUndo,ms,knopf){ // knopf: eigene Beschriftung (nur wenn nicht mit einem früheren Hinweis zusammengefasst)
   const t=$("#toast"); ms=ms||5000; t.classList.remove("t-ok","t-info","t-fehler");
   // Läuft noch ein Rückgängig: zusammenfassen, ein Tipp macht beides rückgängig (neueste zuerst)
-  if(t._undos&&t._undos.length&&t.classList.contains("undo")&&t.classList.contains("show")){
+  // Hinweise mit eigenem Knopf (z. B. „Meine nehmen“) nie zusammenfassen: ein Tipp darf nur das tun, was dort steht
+  if(!knopf&&t._undos&&t._undos.length&&!t._eigenerKnopf&&t.classList.contains("undo")&&t.classList.contains("show")){
     const vorige=t._undos.slice(), alle=[onUndo].concat(vorige.map(x=>x.fn));
     t._undos=[{fn:onUndo}].concat(vorige);
     msg=`${t._undos.length} Änderungen`;
@@ -8526,6 +8581,7 @@ function toastUndo(msg,onUndo,ms){
   t.classList.add("undo","show");
   t.innerHTML=`<span class="ut-txt"></span><button class="ut-btn" type="button">Rückgängig</button>`;
   t.querySelector(".ut-txt").textContent=msg;
+  t._eigenerKnopf=!!knopf; if(knopf)t.querySelector(".ut-btn").textContent=knopf;
   const close=()=>{ t._undos=null; t.classList.remove("show"); setTimeout(()=>{ if(t.classList.contains("show"))return; t.classList.remove("undo");t.innerHTML="";},300); };
   t.querySelector(".ut-btn").onclick=()=>{ clearTimeout(t._t); close(); try{onUndo&&onUndo();}catch(e){} };
   clearTimeout(t._t); t._t=setTimeout(close,ms);
@@ -9753,6 +9809,33 @@ async function _schuelerServerSetzen(sid,werte){
     return true;
   }catch(e){ return false; }
 }
+/* W14: wie _schuelerServerSetzen, aber vorher frisch lesen. Hat das Büro DASSELBE Feld inzwischen geändert, bleibt der
+   Büro-Stand (Rückgabe konflikte: Feldnamen); geschrieben wird nur, solange das Feld noch so ist wie gerade gelesen.
+   vorher = Stand beim Öffnen, gleich(a,b) = Vergleich ohne Rücksicht auf Reihenfolge/leer. */
+async function _schuelerServerSicher(sid,vorher,werte,gleich){
+  try{
+    const supa=getSupa(); if(!supa||!_authUser||!navigator.onLine)return {ok:false};
+    const keys=Object.keys(werte); let alt=null, ohneBedingung=false;
+    for(let versuch=0;versuch<3;versuch++){
+      const {data:f,error:fe}=await supa.from("schueler").select(keys.join(",")).eq("id",sid).maybeSingle();
+      if(fe||!f)return {ok:false};
+      const senden={}, konflikte=[];
+      keys.forEach(k=>{ if(gleich(f[k],werte[k]))return; if(!gleich(f[k],vorher[k])){ konflikte.push(k); return; } senden[k]=werte[k]; });
+      const fertig=()=>{ _schuelerFristen[sid]=Object.assign(_schuelerFristen[sid]||{},f,senden); return {ok:true,konflikte}; };
+      if(!Object.keys(senden).length)return fertig();
+      // 0 Zeilen, obwohl sich nichts geändert hat: Bedingung passt nicht → nur nach der Nummer schreiben
+      if(alt&&Object.keys(senden).every(k=>JSON.stringify(alt[k])===JSON.stringify(f[k])))ohneBedingung=true;
+      let q=supa.from("schueler").update(senden).eq("id",sid);
+      if(!ohneBedingung)Object.keys(senden).forEach(k=>{ const r=f[k]; if(r==null)q=q.is(k,null); else if(typeof r!=="object")q=q.eq(k,r); });
+      const {data,error}=await q.select("id");
+      if(error)return {ok:false};
+      if(data&&data.length)return fertig();
+      if(ohneBedingung)return {ok:false};
+      alt=f;
+    }
+    return {ok:false};
+  }catch(e){ return {ok:false}; }
+}
 const VORBESITZ_KLASSEN=["AM","A1","A2","A","B","BE","C1","C1E","C","CE","D1","D1E","D","DE","L","T"];
 function istUmschreiberAkte(s){ const f=_schuelerFristen[s.id]||{}; return !!s.umschreiber||f.ausbildungsart==="umschreibung"; }
 function behoerdeCard(s){
@@ -9823,12 +9906,23 @@ function openBehoerdeSheet(s){
     Object.keys(werte).forEach(k=>{ if(stabil(werte[k])===stabil(vorher[k])) delete werte[k]; });
     if(!Object.keys(werte).length){ closeSheet(); toast("Nichts geändert"); return; }
     const b=$("#bhSpeichern"); b.disabled=true; b.textContent="Speichert …";
-    const ok=await _schuelerServerSetzen(s.id,werte);
+    // W14: vorher frisch lesen – was das Büro inzwischen am selben Feld geändert hat, bleibt (kein stilles Überschreiben)
+    const erg=await _schuelerServerSicher(s.id,vorher,werte,(x,y)=>stabil(x)===stabil(y));
     b.disabled=false; b.textContent="Speichern";
-    if(!ok){ toast(navigator.onLine?"Nicht gespeichert – bitte später nochmal":"Keine Verbindung – bitte online speichern"); return; }
+    if(!erg.ok){ toast(navigator.onLine?"Nicht gespeichert – bitte später nochmal":"Keine Verbindung – bitte online speichern"); return; }
     // Nur zurück in die Akte, wenn das Blatt noch offen ist (sonst hat der Fahrlehrer inzwischen woanders hin getippt)
     const nochOffen=b.isConnected&&$("#sheet").classList.contains("open");
-    toast("Gespeichert ✓ – das Büro sieht es sofort");
+    const zurAkte=()=>{ if($("#sheet").classList.contains("open"))return; const l=_navStack[_navStack.length-1]; if(l&&l.name==="routeDetail"){ const y=view.scrollTop; routeDetail(s.id); view.scrollTop=y; } };
+    if(erg.konflikte.length){
+      // Kein Bestätigen-Fenster: der Büro-Stand bleibt, „Rückgängig“ nimmt doch die eigene Eingabe
+      const namen={bewerbernummer:"Bewerbernummer",vorbesitz:"Vorbesitz",auslands_fs:"Führerschein",wohnsitz_de_seit:"Wohnsitz seit",uebersetzung_vorhanden:"Übersetzung"};
+      const mein={}; erg.konflikte.forEach(k=>{ mein[k]=werte[k]; });
+      const was=erg.konflikte.length>2?erg.konflikte.length+" Angaben":erg.konflikte.map(k=>namen[k]||k).join(" und ");
+      toastUndo(`Gespeichert, außer ${was}: das Büro war schneller`,async()=>{
+        const ok=await _schuelerServerSetzen(s.id,mein);
+        toast(ok?"Deine Eingabe gilt ✓":"Nicht gespeichert – bitte später nochmal"); if(ok)zurAkte();
+      },15000,"Meine nehmen"); // länger als sonst: im Auto braucht man Zeit
+    } else toast("Gespeichert ✓ – das Büro sieht es sofort");
     if(nochOffen){ closeSheet(); const y=view.scrollTop; routeDetail(s.id); view.scrollTop=y; }
   });
 }

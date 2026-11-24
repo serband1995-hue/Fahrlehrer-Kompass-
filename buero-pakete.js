@@ -521,8 +521,10 @@ async function bkAktivJetzt(sid) {
   return r && !r.error ? r.data || null : undefined;
 }
 function bkAnmeldungBinden(dlg, x, id) {
-  const anfang = id ? bkAktivesPaket(id) : null;
-  const zugeordnet = !anfang && x.paket_id ? (S.pakete || []).find((p) => p.id === x.paket_id && !bkIstEinzel(p)) || null : null;
+  // let: nach einem Verkauf oder Storno merkt sich das Fenster den neuen Stand (bleibt es offen, z. B. wegen eines Konflikts
+  // in anderen Feldern, verkauft ein zweites Speichern nicht noch einmal)
+  let anfang = id ? bkAktivesPaket(id) : null;
+  let zugeordnet = !anfang && x.paket_id ? (S.pakete || []).find((p) => p.id === x.paket_id && !bkIstEinzel(p)) || null : null;
   const sel = dlg.querySelector("[data-bk-wahl]"), info = dlg.querySelector("[data-bk-anm-info]");
   const form = dlg.querySelector("form");
   // wahl: "bleibt" (Stand wie bisher), "normal", "neu" (Paket aus Vorlage oder angepasst, steht in „neu“)
@@ -601,14 +603,15 @@ function bkAnmeldungBinden(dlg, x, id) {
     // Das Formular schreibt paket_id nicht selbst. Nur „Normale Anmeldung“ bei einem bloß zugeordneten Paket löscht die Zuordnung.
     werte(werte) { delete werte.paket_id; if (wahl === "normal" && zugeordnet) werte.paket_id = null; },
     async nachSpeichern(sid) {
-      if (wahl === "bleibt" || (wahl === "normal" && !anfang)) { if (wahl === "normal" && zugeordnet) bkLokal(sid, null); return; }
+      if (wahl === "bleibt" || (wahl === "normal" && !anfang)) { if (wahl === "normal" && zugeordnet) { bkLokal(sid, null); zugeordnet = null; optionen(); zeige(); } return; }
       const vorher = await bkAktivJetzt(sid); // Rückgängig holt das zurück, was wirklich aktiv war (zweites Fenster)
       const alt = vorher === undefined ? anfang : vorher;
       if (wahl === "normal") {
-        if (!alt) { bkLokal(sid, null); zeichne(); return; } // inzwischen schon storniert
+        const fertig = () => { anfang = null; zugeordnet = null; neu = null; optionen(); zeige(); };
+        if (!alt) { bkLokal(sid, null); zeichne(); fertig(); return; } // inzwischen schon storniert
         const r = await supa.rpc("schueler_paket_aktivieren", { p_schueler: sid, p_paket: null });
         if (r.error) { toast("Das Paket wurde nicht storniert: " + dbFehlerText(r.error), true); return; }
-        bkLokal(sid, null); zeichne();
+        bkLokal(sid, null); zeichne(); fertig();
         toastUndo(`Paket „${alt.name}“ storniert: normale Anmeldung`, () => bkAktivSetzen(sid, alt));
         return;
       }
@@ -619,7 +622,9 @@ function bkAnmeldungBinden(dlg, x, id) {
       const zeile = r && !r.error ? (Array.isArray(r.data) ? r.data[0] : r.data) : null;
       if (!zeile) { toast("Der Schüler ist gespeichert, das Paket aber nicht verkauft: " + (r && r.error ? String(dbFehlerText(r.error)).replace(/[.\s]+$/, "") : "keine Antwort") + ". Bitte noch einmal öffnen und speichern.", true); return; }
       bkLokal(sid, zeile); zeichne();
-      toastUndo(`Paket „${zeile.name}“ verkauft (${prEuro(zeile.gesamt_cent)})`, () => bkAktivSetzen(sid, alt, null, !alt && zugeordnet ? zugeordnet.id : null));
+      const warZugeordnet = !alt && zugeordnet ? zugeordnet.id : null;
+      anfang = Object.assign({}, zeile, { storniert_am: null }); zugeordnet = null; neu = null; wahl = "bleibt"; optionen(); zeige();
+      toastUndo(`Paket „${zeile.name}“ verkauft (${prEuro(zeile.gesamt_cent)})`, () => bkAktivSetzen(sid, alt, null, warZugeordnet));
     },
   };
 }

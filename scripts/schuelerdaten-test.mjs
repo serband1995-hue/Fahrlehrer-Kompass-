@@ -49,6 +49,7 @@ window.__t = {
     _schuelerFristen.ce1 = { vorbesitz: ["B", "C"] };
     _schuelerFristen.ce2 = { vorbesitz: ["B"] };
     _schuelerFristen.ce3 = { vorbesitz: ["B"] };
+    window.__srv = JSON.parse(JSON.stringify(_schuelerFristen)); // Server-Stand (W14: das Blatt liest vor dem Speichern frisch)
     save();
   },
   stud: (id) => DB.students.find((x) => x.id === id),
@@ -65,8 +66,12 @@ await page.evaluate((h) => {
   const leer = async () => ({ data: [], error: null });
   const q = new Proxy(function () {}, { get: (_t, k) => (k === "then" ? undefined : k === "single" || k === "maybeSingle" ? leer : () => q), apply: () => q });
   window.__schreib = [];
-  const upd = (tab) => ({ update: (w) => ({ eq: (_k, id) => ({ select: async () => { window.__schreib.push({ tab, id, w }); return { data: [{ id }], error: null }; } }) }) });
-  window.getSupa = () => ({ from: (tab) => Object.assign(Object.create(null), { update: upd(tab).update, select: () => q, upsert: leer, insert: () => q, delete: () => q, eq: () => q, in: () => q, is: () => q }), rpc: leer, auth: { getUser: leer, getSession: leer }, functions: { invoke: leer } });
+  // W14: Lesen eines Schülers liefert den Server-Stand aus window.__srv; Schreiben kennt Bedingungen (.eq/.is) und merkt sich den neuen Stand
+  const lese = (tab) => { const f = {}; const b = new Proxy(function () {}, { get: (_t, k) => (k === "then" ? undefined : k === "eq" ? (kk, v) => { f[kk] = v; return b; }
+    : k === "single" || k === "maybeSingle" ? async () => ({ data: tab === "schueler" && f.id && window.__srv && window.__srv[f.id] ? Object.assign({ id: f.id }, JSON.parse(JSON.stringify(window.__srv[f.id]))) : null, error: null }) : () => b), apply: () => b }); return b; };
+  const upd = (tab) => ({ update: (w) => { let id = null; const b = { eq: (k, v) => { if (k === "id") id = v; return b; }, is: () => b,
+    select: async () => { window.__schreib.push({ tab, id, w }); if (tab === "schueler" && id && window.__srv) Object.assign(window.__srv[id] = window.__srv[id] || {}, JSON.parse(JSON.stringify(w))); return { data: [{ id }], error: null }; } }; return b; } });
+  window.getSupa = () => ({ from: (tab) => Object.assign(Object.create(null), { update: upd(tab).update, select: tab === "schueler" ? () => lese(tab) : () => q, upsert: leer, insert: () => q, delete: () => q, eq: () => q, in: () => q, is: () => q }), rpc: leer, auth: { getUser: leer, getSession: leer }, functions: { invoke: leer } });
   (0, eval)(h);
   __t.setze();
 }, HILFEN);

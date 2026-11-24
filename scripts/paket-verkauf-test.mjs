@@ -316,6 +316,21 @@ try {
     pruefe("V14 Liste: „Boost-Paket 1“ (verkauft), nicht „Boost-Paket 2“", /Boost-Paket 1/.test(zeile) && !/Boost-Paket 2/.test(zeile), zeile);
     await ctx.close();
   }
+  // V15 (mit W14) Konflikt in einem anderen Feld: Fenster bleibt offen, das Paket ist schon verkauft, zweites Speichern verkauft nicht noch einmal
+  {
+    const { page, ctx } = await oeffne({ nutzer: "bu-1", vorbereiten: vb() });
+    const d = await oeffneAkte(page, S1);
+    await waehle(d, "Boost-Paket 2");
+    await d.locator('input[name="telefon"]').fill("0151 1111111");
+    await page.evaluate(() => { window.__FAKE.tabellen.schueler.find((s) => s.id === "s1").telefon = "0151 2222222"; }); // inzwischen woanders geändert
+    await d.locator("button[value=ok]").click(); await page.waitForTimeout(500);
+    const offen = await page.locator(dlgSel).count();
+    const n1 = (await rpcs(page, "schueler_paket_verkaufen")).length;
+    if (offen) { await page.locator(dlgSel).last().locator("button[value=ok]").click(); await page.waitForTimeout(500); }
+    const n2 = (await rpcs(page, "schueler_paket_verkaufen")).length;
+    pruefe("V15 Konflikt beim Telefon: Fenster bleibt offen, Paket einmal verkauft, zweites Speichern verkauft nicht neu", offen === 1 && n1 === 1 && n2 === 1 && (await sp(page)).filter((x) => !x.storniert_am).length === 1, [offen, n1, n2]);
+    await ctx.close();
+  }
 } catch (e) { schlecht++; console.log("FEHLER  Test-Ausnahme: " + (e && e.stack || e)); }
 
 // App: Karte „Paket“ in der Akte des Fahrlehrers (nur lesen, ohne Preise)
