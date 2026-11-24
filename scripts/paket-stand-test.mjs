@@ -1,6 +1,7 @@
 // Test Werkstatt 13 Schritt 2: „noch offen“ je Posten (KR.paketVerbrauch, paketQuelleAusTerminen, paketSonderAusPlan). Ohne Browser.
 // Regel (🗣 Serband 24.11.2026): Eine Fahrstunde zählt im Paket erst mit dem Fahrcheck-Haken des Büros (buero_fc_status „abgegeben“),
 // je Fahrcheck (45 min = 1). Gelöschte, geplatzte, abgebrochene … zählen nie. Der Ausbildungsplan der App zählt fürs Paket nicht.
+// Vermerke des Fahrlehrers (fc): gezählt wird, was an Fahrchecks beim Büro ist (KR.fcFuersBuero), nachgereicht = voll.
 // Aufruf:  node scripts/paket-stand-test.mjs
 import { createRequire } from "node:module";
 const require = createRequire(import.meta.url);
@@ -68,5 +69,16 @@ pruefe("S12 Plan der App zählt fürs Paket nicht mehr (dort hakt niemand vom B�
 // Fahrcheck-Zahl: 45 min = 1, 90 = 2, 60 = 1 (gerundet wie die Fahrcheck-Kontrolle)
 const q3 = KR.paketQuelleAusTerminen([T("fahrstunde", "2026-11-01", "10:00", "11:00", AB), T("fahrstunde", "2026-11-02", "10:00", "12:15", AB)], HEUTE, 600);
 pruefe("S13 Fahrchecks wie die Fahrcheck-Kontrolle: 60 min = 1, 135 min = 3", q3.fahrstunden === 4, q3);
+// Fable W1: Vermerke des Fahrlehrers. Gezählt wird, was an Fahrchecks beim Büro ist (KR.fcFuersBuero), sobald es abgehakt ist.
+const F = (fc, x) => T("fahrstunde", "2026-11-01", "10:00", "11:30", Object.assign({ bueroFc: "abgegeben", fc }, x || {}));
+const q4 = KR.paketQuelleAusTerminen([F("nachgereicht"), F("v1"), F("eins_ok"), F("halb_bewusst"), F("geschenkt"), F("v2"), F("offen"), F(null)], HEUTE, 600);
+pruefe("S14 mit Haken: nachgereicht 2 + v1 1 + eins_ok 1 + halb_bewusst 1 + geschenkt 0 + v2 0 + offen 0 + ohne Vermerk 2 = 7", q4.fahrstunden === 7 && q4.ohneHaken === 0, q4);
+const q5 = KR.paketQuelleAusTerminen([F("nachgereicht", { bueroFc: "offen" }), F("v1", { bueroFc: "fehlt" }), F("geschenkt", { bueroFc: "offen" }), F("v2", { bueroFc: "offen" }), F("nachgereicht", { bueroFc: "offen", status: "nicht erschienen" })], HEUTE, 600);
+pruefe("S15 ohne Haken: nachgereicht und v1 warten; geschenkt, beide vergessen, nicht erschienen warten nicht", q5.fahrstunden === 0 && q5.ohneHaken === 2, q5);
+pruefe("S16 fcFuersBuero: nachgereicht 90 min = 2, v1 = 1, geschenkt = 0, abgebrochen = 0", KR.fcFuersBuero(F("nachgereicht")) === 2 && KR.fcFuersBuero(F("v1")) === 1 && KR.fcFuersBuero(F("geschenkt")) === 0 && KR.fcFuersBuero(F("nachgereicht", { status: "abgebrochen" })) === 0);
+pruefe("S17 Sonderfahrt ohne Art: ohneArt 1 (mit Haken), zählt keinem Posten", q.ohneArt === 1, q);
+const h1 = KR.paketHinweise({ ohneHaken: 1, ohneArt: 2 }), h2 = KR.paketHinweise({ ohneHaken: 3, ohneArt: 1 });
+pruefe("S18 Hinweise in Einzahl und Mehrzahl", h1[0] === "1 Termin wartet noch auf den Fahrcheck-Haken vom Büro. Erst danach zählt er im Paket." && /^2 Sonderfahrten haben keine Art/.test(h1[1])
+  && h2[0] === "3 Termine warten noch auf den Fahrcheck-Haken vom Büro. Erst danach zählen sie im Paket." && /^1 Sonderfahrt hat keine Art/.test(h2[1]) && KR.paketHinweise({ ohneHaken: 0, ohneArt: 0 }).length === 0, [h1, h2]);
 console.log(`\n${ok} ok, ${fehler} Fehler`);
 process.exit(fehler ? 1 : 0);

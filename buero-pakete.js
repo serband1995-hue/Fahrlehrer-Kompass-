@@ -463,7 +463,7 @@ function bkVerbrauchQuelle(x, voll) {
   for (const t of S.termine || []) if (t.schueler_id === x.id) nachId.set(t.id, t);
   const termine = [...nachId.values()].filter((t) => t.schueler_id === x.id && !t.geloescht).map((t) => {
     const pl = t.payload || {};
-    return { art: t.art, datum: t.datum, von: t.von, bis: t.bis, status: pl.status || t.status, sonderArt: pl.sonderArt, srcSonder: pl.srcSonder, bueroFc: t.buero_fc_status || "offen" };
+    return { art: t.art, datum: t.datum, von: t.von, bis: t.bis, status: pl.status || t.status, sonderArt: pl.sonderArt, srcSonder: pl.srcSonder, fc: pl.fc || null, bueroFc: t.buero_fc_status || "offen" };
   });
   const pruefDaten = typeof pruefErgebnisse === "function" ? pruefErgebnisse("praxis").filter((e) => e.schueler_id === x.id).map((e) => e.datum) : [];
   for (const p of (voll && voll.tafel) || []) if (p.art === "praxis" && (p.status === "bestanden" || p.status === "nicht_bestanden") && p.datum && p.datum < grenze) pruefDaten.push(p.datum);
@@ -581,7 +581,7 @@ function bkAnmeldungBinden(dlg, x, id) {
           if (vollStand === "laden") return bkPostenListeHTML(bkPosten(anfang), null);
           const q = bkVerbrauchQuelle(x, voll);
           return bkPostenListeHTML(bkPosten(anfang), KR.paketVerbrauch(bkPosten(anfang), q))
-            + (q.ohneHaken ? `<p class="leise klein" data-bk-ohne-haken>${q.ohneHaken === 1 ? "1 Termin wartet" : q.ohneHaken + " Termine warten"} noch auf den Fahrcheck-Haken vom Büro. Erst danach zählt er im Paket.</p>` : "");
+            + KR.paketHinweise(q).map((h) => `<p class="leise klein" data-bk-ohne-haken>${esc(h)}</p>`).join("");
         })()}
         ${vollStand === "laden" ? `<p class="leise klein" data-bk-voll-laedt>„Noch offen“ wird gezählt …</p>` : ""}
         ${vollStand === "fehler" ? `<p class="bk-anm-warn" data-bk-voll-fehlt>Ältere Termine fehlen: „noch offen“ kann zu hoch sein. Bitte die Akte später noch einmal öffnen.</p>` : ""}
