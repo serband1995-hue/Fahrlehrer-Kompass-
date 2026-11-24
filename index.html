@@ -5424,7 +5424,8 @@ function fristenHinweisHTML(sid){
   stopp.forEach(n=>teile.push(`<b>STOPP vom Büro:</b> ${esc(n.text)}`));
   infos.forEach(n=>teile.push(`<b>Büro:</b> ${esc(n.text)}`));
   const gut=[];
-  if(f.theorie_bestanden_am) gut.push(`✓ Theorieprüfung bestanden am ${isoDE(f.theorie_bestanden_am)} (vom Büro eingetragen)`);
+  if(f.theorie_bestanden_am){ const _sT=(DB.students||[]).find(x=>x.id===sid); const _app=!!(_sT&&_sT.theorieVonApp&&_sT.theorieVonApp===f.theorie_bestanden_am);
+    gut.push(`✓ Theorieprüfung bestanden am ${isoDE(f.theorie_bestanden_am)}${_app?"":" (vom Büro eingetragen)"}`); }
   if(f.praxis_bestanden_am) gut.push(`✓ Praxisprüfung bestanden am ${isoDE(f.praxis_bestanden_am)} (Büro)`);
   const gutHTML=gut.length?`<div style="margin:10px 0;padding:10px 14px;border-radius:14px;font-size:14px;line-height:1.45;background:rgba(76,175,114,.14);border:1px solid rgba(76,175,114,.4);">${gut.join("<br>")}</div>`:"";
   if(!teile.length)return gutHTML;
@@ -8130,7 +8131,7 @@ function _syncTermineBridge(warte){
   _termineSyncDebounce=setTimeout(async()=>{
     const P=_persoenlicheDaten(); if(!P||!Array.isArray(P.lessons)||_lokalerSpeicherGehoertAnderem())return;
     if(!_termineAbgerufen){ setTimeout(_syncTermineBridge,6000); return; }
-    try{ _absagenNachholen(); _stornoAufraeumen(); }catch(e){}
+    try{ _absagenNachholen(); _stornoAufraeumen(); _theorieOffenNachholen(); }catch(e){}
     try{
       const geschrieben=await _brueckeAbgleichen({ tabelle:"kalender_termine", art:"termine", eintraege:P.lessons, zeileVon:_terminZeile,
         loeschWert:{geloescht:true}, aktivFilter:q=>q.eq("geloescht",false), loeschWertFuer:_stornoWert });
@@ -8380,13 +8381,61 @@ function _backupHerunterladen(zusatz){
 /* K14: EIN Weg für „Theorie bestanden“ (Schalter in der Akte und grüner Knopf in „Wartet auf Theorie“).
    an=true: bestanden (Datum heute, „wartet“ aus, 20 % zählen sofort); an=false: zurücknehmen. Speichert NICHT (der Aufrufer ruft save()). */
 const _THEORIE_FELDER=["theoryPassed","theorieWait","theorieWaitBis","ready","wartelisteRaus"];
-function theorieStandMerken(s){ const o={plan:!!(s.plan&&s.plan.theorie),histLen:(s.hist||[]).length,hatteHist:Array.isArray(s.hist)}; _THEORIE_FELDER.forEach(k=>{ o[k]=s[k]; }); return o; }
+function theorieStandMerken(s){ const o={plan:!!(s.plan&&s.plan.theorie),histLen:(s.hist||[]).length,hatteHist:Array.isArray(s.hist)}; _THEORIE_FELDER.forEach(k=>{ o[k]=s[k]; }); o.tbAlt=_theorieBueroWert(s.id); o.tbApp=s.theorieVonApp; return o; }
 // Rückgängig: nur den dabei angefügten Verlaufs-Eintrag entfernen (alles andere im Verlauf bleibt)
 function theorieStandZurueck(s,o){ ensure(s); s.plan.theorie=o.plan; _THEORIE_FELDER.forEach(k=>{ if(o[k]===undefined)delete s[k]; else s[k]=o[k]; });
   if(Array.isArray(s.hist)&&s.hist.length>o.histLen){ const i=s.hist.findIndex((h,j)=>j>=o.histLen&&(h.typ==="theorie"||h.type==="theorie")); if(i>=0)s.hist.splice(i,1); }
-  if(!o.hatteHist&&Array.isArray(s.hist)&&!s.hist.length)delete s.hist; }
+  if(!o.hatteHist&&Array.isArray(s.hist)&&!s.hist.length)delete s.hist;
+  // Büro-Häkchen mit zurücknehmen: der vorherige Wert geht zurück (nur wenn die App ihn geändert hatte)
+  if("tbAlt" in o&&(_theorieBueroWert(s.id)!==o.tbAlt||s.id in _theorieOffenLesen())){ _theorieBueroSchreiben(s,o.tbAlt); if(o.tbApp===undefined)delete s.theorieVonApp; else s.theorieVonApp=o.tbApp; } }
+/* Werkstatt 12: „Theorie bestanden“ der App setzt auch das Häkchen im Büro (schueler.theorie_bestanden_am).
+   Bewusst NICHT im normalen Abgleich (_schuelerZeile): dort würde die App Büro-Werte überschreiben und der ganze Upsert
+   scheitern, wenn die Migration fehlt. Stattdessen ein einzelnes Update; offline in kompass-theorie-offen {sid: wert}
+   (nur der letzte Wert je Schüler). „nur das Büro“/P0001 = alte Datenbank oder kein Recht: still verwerfen. */
+const _THEO_KEY="kompass-theorie-offen";
+function _theorieOffenLesen(){ try{ const o=JSON.parse(localStorage.getItem(_THEO_KEY)||"{}"); return o&&typeof o==="object"&&!Array.isArray(o)?o:{}; }catch(e){ return {}; } }
+function _theorieOffenSchreiben(o){ try{ if(Object.keys(o).length)localStorage.setItem(_THEO_KEY,JSON.stringify(o)); else localStorage.removeItem(_THEO_KEY); }catch(e){} }
+function _theorieBueroWert(sid){ const f=typeof _schuelerFristen!=="undefined"?_schuelerFristen[sid]:null; return (f&&f.theorie_bestanden_am)||null; }
+function _theorieBueroLokal(s,wert){ s.theorieBuero=wert; if(_schuelerFristen[s.id])_schuelerFristen[s.id].theorie_bestanden_am=wert; }
+async function _theorieSenden(sid,wert){
+  // true = erledigt (gesendet oder bewusst verworfen), false = später nochmal (kein Netz)
+  try{
+    const supa=getSupa(); if(!supa)return false;
+    const r=await supa.from("schueler").update({theorie_bestanden_am:wert}).eq("id",sid);
+    const e=r&&r.error;
+    if(!e){ const s=(DB.students||[]).find(x=>x.id===sid); if(s)_theorieBueroLokal(s,wert); return true; }
+    if(e.code==="P0001"||/nur das B(ü|ue)ro/i.test(String(e.message||""))){ console.info("[Kompass] Theorie-Häkchen im Büro nicht gesetzt (alte Datenbank oder kein Recht)."); return true; }
+    return false;
+  }catch(e){ return false; }
+}
+function _theorieBueroSchreiben(s,wert){
+  if(!s||!s.id)return; wert=wert||null;
+  const o=_theorieOffenLesen(); o[s.id]=wert; _theorieOffenSchreiben(o);
+  _theorieOffenNachholen();
+}
+let _theorieNachholLaeuft=false, _theorieNochmal=false;
+async function _theorieOffenNachholen(){
+  if(!_authUser)return;
+  if(_theorieNachholLaeuft){ _theorieNochmal=true; return; }
+  _theorieNachholLaeuft=true;
+  try{
+    do{
+      _theorieNochmal=false; const o=_theorieOffenLesen();
+      for(const sid of Object.keys(o)){
+        const w=o[sid]; if(!(await _theorieSenden(sid,w)))continue;
+        const neu=_theorieOffenLesen(); if(neu[sid]===w){ delete neu[sid]; _theorieOffenSchreiben(neu); } // inzwischen neuer Wert (Rückgängig): bleibt, nächste Runde
+        else _theorieNochmal=true;
+      }
+    }while(_theorieNochmal);
+  }finally{ _theorieNachholLaeuft=false; }
+}
 function theorieBestandenSetzen(s,an,leise){
   const pl=s.plan; pl.theorie=!!an;
+  try{
+    const alt=_theorieBueroWert(s.id);
+    if(an){ if(!alt){ s.theorieVonApp=todayISO(); _theorieBueroSchreiben(s,s.theorieVonApp); } } // Büro-Datum nie überschreiben
+    else if(s.theorieVonApp&&(!alt||alt===s.theorieVonApp)){ _theorieBueroSchreiben(s,null); delete s.theorieVonApp; } // nur eigenen Wert zurücknehmen
+  }catch(e){}
   if(an){ delete s.wartelisteRaus; if(!s.theoryPassed)s.theoryPassed=new Date().toISOString(); if(!(s.hist||[]).some(h=>h.typ==="theorie"||h.type==="theorie"))logHist(s,"theorie","Theorieprüfung bestanden"); if(stand(s)>=90&&!s.ready&&!s.passed){ s.ready=s.theoryPassed; if(!leise)toast("Theorie bestanden – auf die Praxis-Warteliste gesetzt"); } else if(stand(s)<90&&!s.ready&&!s.passed){ if(!leise)toast("Theorie bestanden – erst ab 90 % kommt er auf die Warteliste"); } if(s.theorieWait)s.theorieWaitBis=new Date().toISOString(); delete s.theorieWait; } else { if(s.ready&&s.ready===s.theoryPassed&&!s.pruefungsreifManuell)delete s.ready; delete s.theoryPassed; delete s.theorieWaitBis; }
 }
 function toastUndo(msg,onUndo,ms){

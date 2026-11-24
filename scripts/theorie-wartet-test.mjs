@@ -113,6 +113,74 @@ const zustand = (page, id) => page.evaluate((id) => { const r = DB.students.find
   await pruefe("W5b", "keine JS-Fehler (quer)", () => jsFehler);
   await ctx.close();
 }
+// Werkstatt 12: „Theorie bestanden“ der App setzt auch das Büro-Häkchen (schueler.theorie_bestanden_am), als einzelnes Update
+{
+  const { ctx, page, jsFehler } = await starte();
+  await page.evaluate(() => {
+    _authUser = { id: "u-ich" }; _authProfile = { fahrschule_id: "fs-muster" };
+    window._rec = []; window._modus = "ok";
+    ["w1", "w2", "w3"].forEach((i) => { _schuelerFristen[i] = { theorie_bestanden_am: null, vorbesitz: [] }; });
+    window.getSupa = () => ({ from: (tab) => ({ update: (v) => ({ eq: (c, id) => { window._rec.push({ tab, v, c, id, modus: window._modus });
+      if (window._modus === "netz") return Promise.resolve({ error: { message: "Failed to fetch" } });
+      if (window._modus === "buero") return Promise.resolve({ error: { code: "P0001", message: "Fristen, Reaktivierung und Aktiv-Status darf nur das Büro ändern." } });
+      return Promise.resolve({ error: null }); } }) }) });
+    localStorage.removeItem("kompass-theorie-offen");
+  });
+  const heute = await page.evaluate(() => todayISO());
+  const rec = () => page.evaluate(() => window._rec.map((r) => ({ tab: r.tab, v: r.v, id: r.id })));
+  const setzeModus = (m) => page.evaluate((m) => { window._modus = m; }, m);
+  const tipp = async (id) => { await page.click(`[data-theo-ok="${id}"]`); await warte(page, 350); };
+  const schlange = () => page.evaluate(() => localStorage.getItem("kompass-theorie-offen"));
+  await tipp("w2");
+  await pruefe("T1a", "grüner Knopf sendet ein Update an schueler mit theorie_bestanden_am = heute", async () => {
+    const r = await rec(); return r.length === 1 && r[0].tab === "schueler" && r[0].v.theorie_bestanden_am === heute && r[0].id === "w2" && Object.keys(r[0].v).length === 1 ? null : JSON.stringify(r);
+  });
+  await pruefe("T1b", "Akte zeigt ohne „vom Büro“", () => page.evaluate(() => { routeDetail("w2"); const h = fristenHinweisHTML("w2"); return /Theorieprüfung bestanden am/.test(h) && !/vom Büro/.test(h) ? null : h.slice(0, 200); }));
+  await pruefe("T3", "Schalter aus in der Akte sendet null", async () => {
+    await page.evaluate(() => document.getElementById("dashTheoToggle").click()); await warte(page, 350);
+    const r = await rec(); return r.length === 2 && r[1].v.theorie_bestanden_am === null && r[1].id === "w2" ? null : JSON.stringify(r);
+  });
+  await pruefe("T1c", "Schalter an in der Akte sendet heute", async () => {
+    await page.evaluate(() => { routeDetail("w2"); document.getElementById("dashTheoToggle").click(); }); await warte(page, 350);
+    const r = await rec(); return r.length === 3 && r[2].v.theorie_bestanden_am === heute ? null : JSON.stringify(r);
+  });
+  await page.evaluate(() => { _pruefTab = "wait"; routePruefungen(); });
+  await tipp("w1");
+  await pruefe("T2", "Rückgängig sendet den alten Wert (null)", async () => {
+    const n0 = (await rec()).length;
+    await page.evaluate(() => { const b = document.getElementById("toast").querySelector("button"); if (b) b.click(); }); await warte(page, 400);
+    const r = await rec(); return r.length === n0 + 1 && r[n0].v.theorie_bestanden_am === null && r[n0].id === "w1" ? null : JSON.stringify(r.slice(n0 - 1));
+  });
+  await pruefe("T2b", "Schlange danach leer", async () => (await schlange()) === null ? null : await schlange());
+  // Ohne Netz: Schlange, später gesendet; nur der letzte Wert je Schüler
+  await setzeModus("netz");
+  await page.evaluate(() => { _pruefTab = "wait"; routePruefungen(); });
+  await tipp("w1");
+  await pruefe("T4a", "ohne Netz: Änderung liegt in kompass-theorie-offen", async () => { const s = await schlange(); return s && JSON.parse(s).w1 === heute ? null : String(s); });
+  await pruefe("T4b", "später (Netz da) wird sie gesendet und die Schlange geleert", async () => {
+    await setzeModus("ok"); const n0 = (await rec()).length;
+    await page.evaluate(() => _theorieOffenNachholen()); await warte(page, 300);
+    const r = await rec(); const letzte = r[r.length - 1];
+    return r.length > n0 && letzte.id === "w1" && letzte.v.theorie_bestanden_am === heute && (await schlange()) === null ? null : JSON.stringify(r.slice(n0)) + " Schlange " + (await schlange());
+  });
+  // Server lehnt ab: still verwerfen
+  await page.evaluate(() => { localStorage.setItem("kompass-theorie-offen", JSON.stringify({ w3: "2026-11-24" })); });
+  await setzeModus("buero");
+  await pruefe("T5", "Server: „nur das Büro“ – keine Meldung, Eintrag weg", async () => {
+    await page.evaluate(() => _theorieOffenNachholen()); await warte(page, 300);
+    const z = await page.evaluate(() => { const e = document.getElementById("toast"); return { an: e.classList.contains("show") && /Büro|Fehler|nicht/i.test(e.textContent), text: e.textContent }; });
+    return (await schlange()) === null && !z.an ? null : "Schlange " + (await schlange()) + " Meldung " + JSON.stringify(z);
+  });
+  await pruefe("T6", "normaler Upsert (_schuelerZeile) enthält theorie_bestanden_am nicht", () => page.evaluate(() => {
+    const z = _schuelerZeile(DB.students.find((s) => s.id === "w2")); return !("theorie_bestanden_am" in z) && !JSON.stringify(z).includes("theorie_bestanden_am") ? null : "enthalten";
+  }));
+  await pruefe("T7", "Rückkehr desselben Werts vom Abruf: kein zweiter Verlauf, Stand bleibt", () => page.evaluate(() => {
+    const s = DB.students.find((x) => x.id === "w2"); ensure(s); const h0 = (s.hist || []).length, pl0 = !!s.plan.theorie;
+    _theorieVomBuero(s, s.theorieVonApp || todayISO()); return (s.hist || []).length === h0 && !!s.plan.theorie === pl0 && !s.theoryVomBuero ? null : "Verlauf " + h0 + "->" + (s.hist || []).length;
+  }));
+  await pruefe("T8", "keine JS-Fehler", () => jsFehler);
+  await ctx.close();
+}
 await browser.close(); server.close();
 console.log(`\nTheorie-wartet-Test: ${okZahl} ok, ${fehlerZahl} Fehler`);
 process.exit(fehlerZahl ? 1 : 0);
