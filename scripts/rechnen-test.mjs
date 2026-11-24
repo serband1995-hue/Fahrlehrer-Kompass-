@@ -81,6 +81,40 @@ gleich("Reakt bezahlt_bis hat Vorrang", "2027-05-01", KR.reaktFaellig({ reakt_st
 gleich("Zahlung: +12 Monate ab Fälligkeit", "2026-09-08", KR.reaktNachZahlung({ reakt_status: "pruefen", vertrag_am: "2024-09-08" }));
 gleich("Zahlung bei 2 Jahren Rückstand bleibt überfällig", "gesperrt", fall({ reakt_status: "bezahlt", reakt_bezahlt_bis: KR.reaktNachZahlung({ vertrag_am: "2023-09-08" }) }).stufe);
 gleich("Schaltjahr-Vertrag", "2025-02-28", KR.reaktFaellig({ reakt_status: "bezahlt", vertrag_am: "2024-02-29" }));
+// W15: Regel der Fahrschule (entfällt/0 € heute oder am Vertragstag = keine Sperre; Monate). Ohne Regel wie oben.
+gleich("W15 ohne gesetzte Regel: keine", null, KR.holeReaktRegel());
+const RG = (frei, monate) => ({ monate: monate || 12, frei });
+const gesperrtAlt = { reakt_status: "bezahlt", vertrag_am: "2025-09-08" };
+gleich("W15 Regel ohne freie Zeit = wie vorher", "gesperrt", KR.reaktInfo(gesperrtAlt, H, RG([])).stufe);
+gleich("W15 entfällt heute (offen) → entfaellt", "entfaellt", KR.reaktInfo(gesperrtAlt, H, RG([{ ab: "2026-10-01", bis: null }])).stufe);
+gleich("W15 entfällt heute → nicht gesperrt", false, KR.reaktInfo(gesperrtAlt, H, RG([{ ab: "2026-10-01", bis: null }])).gesperrt);
+gleich("W15 entfällt heute, Zeitraum endet heute", "entfaellt", KR.reaktInfo(gesperrtAlt, H, RG([{ ab: "2026-01-01", bis: H }])).stufe);
+gleich("W15 entfiel bis gestern, Vertrag davor → gesperrt", "gesperrt", KR.reaktInfo(gesperrtAlt, H, RG([{ ab: "2026-01-01", bis: "2026-10-07" }])).stufe);
+gleich("W15 entfiel am Vertragstag → entfaellt", "entfaellt", KR.reaktInfo(gesperrtAlt, H, RG([{ ab: "2025-09-01", bis: "2025-09-30" }])).stufe);
+gleich("W15 entfiel erst nach dem Vertrag (vorbei) → gesperrt", "gesperrt", KR.reaktInfo(gesperrtAlt, H, RG([{ ab: "2025-09-09", bis: "2026-01-01" }])).stufe);
+gleich("W15 entfällt erst morgen → heute noch gesperrt", "gesperrt", KR.reaktInfo(gesperrtAlt, H, RG([{ ab: "2026-10-09", bis: null }])).stufe);
+gleich("W15 befreit bleibt befreit", "befreit", KR.reaktInfo({ reakt_status: "befreit", vertrag_am: "2025-01-01" }, H, RG([{ ab: "2026-01-01", bis: null }])).stufe);
+gleich("W15 entfällt heute ohne Vertragsdatum → entfaellt", "entfaellt", KR.reaktInfo({ reakt_status: "pruefen" }, H, RG([{ ab: "2026-01-01", bis: null }])).stufe);
+gleich("W15 ungeprüft + entfällt → entfaellt", "entfaellt", KR.reaktInfo({ reakt_status: "pruefen", vertrag_am: "2025-09-08" }, H, RG([{ ab: "2026-01-01", bis: null }])).stufe);
+gleich("W15 18 Monate: Fälligkeit", "2027-03-08", KR.reaktFaellig({ reakt_status: "bezahlt", vertrag_am: "2025-09-08" }, RG([], 18)));
+gleich("W15 18 Monate: nach Zahlung", "2028-09-08", KR.reaktNachZahlung({ reakt_status: "bezahlt", vertrag_am: "2025-09-08" }, RG([], 18)));
+gleich("W15 18 Monate: nicht mehr gesperrt", "ok", KR.reaktInfo(gesperrtAlt, H, RG([], 18)).stufe);
+gleich("W15 unsinnige Monate → 12", 12, KR.reaktMonate({ monate: 0, frei: [] }));
+gleich("W15 kaputte Zeiträume werden ignoriert", false, KR.reaktFreiAm({ monate: 12, frei: [{ ab: "x" }, null, { ab: "2026-13" }] }, H));
+// gesetzte Regel gilt für alle Aufrufe ohne drittes Argument; null = alte Regel
+KR.setzeReaktRegel(RG([{ ab: "2026-10-01", bis: null }]));
+gleich("W15 gesetzte Regel greift ohne Argument", "entfaellt", KR.reaktInfo(gesperrtAlt, H).stufe);
+gleich("W15 Argument null geht vor (alte Regel)", "gesperrt", KR.reaktInfo(gesperrtAlt, H, null).stufe);
+KR.setzeReaktRegel(null);
+gleich("W15 Regel zurückgesetzt", "gesperrt", KR.reaktInfo(gesperrtAlt, H).stufe);
+// Regel aus Zeilen der Preisliste (gleich wie reakt_regel in der Datenbank; scripts/reakt-sql-test.mjs vergleicht beide)
+const PZ = (ab, cent, zeit, extra) => Object.assign({ art: "reaktivierung", klasse: null, bezeichnung: "Reaktivierung", gueltig_ab: ab, betrag_cent: cent, angelegt_am: zeit || ab + "T10:00:00Z" }, extra || {});
+gleich("W15 Preise: nichts = nie frei", JSON.stringify([]), JSON.stringify(KR.reaktRegelAusPreisen([]).frei));
+gleich("W15 Preise: 240 dann entfällt", JSON.stringify([{ ab: "2026-11-24", bis: null }]), JSON.stringify(KR.reaktRegelAusPreisen([PZ("2026-05-02", 24000), PZ("2026-11-24", null)]).frei));
+gleich("W15 Preise: entfällt, dann wieder 240", JSON.stringify([{ ab: "2026-01-01", bis: "2026-06-30" }]), JSON.stringify(KR.reaktRegelAusPreisen([PZ("2026-07-01", 24000), PZ("2026-01-01", null)]).frei));
+gleich("W15 Preise: 0 € ist frei", JSON.stringify([{ ab: "2026-03-01", bis: null }]), JSON.stringify(KR.reaktRegelAusPreisen([PZ("2026-01-01", 24000), PZ("2026-03-01", 0)]).frei));
+gleich("W15 Preise: gleicher Tag, später angelegt gilt", JSON.stringify([]), JSON.stringify(KR.reaktRegelAusPreisen([PZ("2026-03-01", null, "2026-03-01T08:00:00Z"), PZ("2026-03-01", 24000, "2026-03-01T09:00:00Z")]).frei));
+gleich("W15 Preise: andere Arten zählen nicht", JSON.stringify([]), JSON.stringify(KR.reaktRegelAusPreisen([PZ("2026-03-01", null, null, { art: "grundbetrag" })]).frei));
 const th = (s) => KR.theorieInfo(s, H);
 gleich("Theorie ohne Datum", "ohne_datum", th({}).stufe);
 gleich("Theorie Unterricht vor 11 Monaten", "bald", th({ theorie_abgeschlossen_am: "2025-11-01" }).stufe);

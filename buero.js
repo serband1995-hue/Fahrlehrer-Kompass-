@@ -14,6 +14,8 @@ const NEU_LADEN_MS = 120000;
 if (!KR.theorieFristInfo) KR.theorieFristInfo = () => ({ stufe: "ohne_datum", ablauf: null, tage: null });
 if (!KR.umschreibInfo) KR.umschreibInfo = () => ({ stufe: "kein", bis: null, tage: null, drittstaat: false });
 if (!KR.EU_EWR) KR.EU_EWR = [];
+// W15: alte kompass-rechnen.js ohne Regel der Reaktivierung → alte Regel (12 Monate, „entfällt“ zählt nicht)
+if (!KR.setzeReaktRegel) { KR.setzeReaktRegel = () => null; KR.holeReaktRegel = () => null; KR.reaktMonate = () => 12; KR.reaktFreiAm = () => false; }
 if (!KR.DRITTSTAATEN) KR.DRITTSTAATEN = [];
 if (!KR.fahrlehrerFristen) { KR.fahrlehrerFristen = () => []; KR.ausbildungsKlassen = () => []; }
 if (!KR.sonderSoll) KR.sonderSoll = () => [0, 0, 0];
@@ -620,8 +622,33 @@ function zaehleFristen() {
 }
 const REAKT_TEXT = {
   gesperrt: ["rot", "überfällig · gesperrt"], pruefen_faellig: ["rot", "fällig · in CCD prüfen"], bald: ["gelb", "bald fällig"],
-  demnaechst: ["blau", "in 60 Tagen"], ok: ["gruen", "bezahlt"], befreit: ["", "befreit"], ohne_datum: ["", "Vertragsdatum fehlt"]
+  demnaechst: ["blau", "in 60 Tagen"], ok: ["gruen", "bezahlt"], befreit: ["", "befreit"], ohne_datum: ["", "Vertragsdatum fehlt"],
+  entfaellt: ["", "entfällt (Preisliste)"] // W15: laut Preisliste heute oder am Vertragstag frei – keine Fälligkeit, keine Sperre
 };
+/* W15: Regel der Reaktivierung vom Server (rpc reakt_regel, dieselbe Regel wie die Sperre in der Datenbank, ohne Preise).
+   Fehlt die Funktion (Datenbank-Update noch nicht da): alte Regel (12 Monate, „entfällt“ zählt nicht) – wie der Server dann auch.
+   Ein kurzer Ladefehler behält die zuletzt geladene Regel. */
+function reaktRegelFehlt(err) { return !!err && (["PGRST202", "42883"].includes(err.code) || /could not find the function|does not exist|rpc fehlt/i.test(String(err.message || ""))); }
+function uebernimmReaktRegel(res) {
+  if (res && !res.error) { KR.setzeReaktRegel(res.data || null); S.reaktRegelGeladen = true; return; }
+  if (!S.reaktRegelGeladen || reaktRegelFehlt(res && res.error)) { KR.setzeReaktRegel(null); S.reaktRegelGeladen = false; }
+}
+function holeReaktRegel(fsId) {
+  try { return Promise.resolve(supa.rpc("reakt_regel", { p_fs: fsId })).then((r) => r, (e) => ({ data: null, error: e || { message: "Netz" } })); }
+  catch (e) { return Promise.resolve({ data: null, error: e }); }
+}
+// Nach einer Änderung der Reaktivierung in der Preisliste: Regel sofort neu holen (der Server sperrt sofort nach der neuen Liste)
+async function ladeReaktRegelNeu() {
+  const fsId = S.fsId, res = await holeReaktRegel(fsId);
+  if (fsId !== S.fsId) return;
+  uebernimmReaktRegel(res);
+  zeichne();
+}
+// „fällig 12 Monate nach Vertragsabschluss und dann jährlich“ – mit den Monaten der Regel
+function reaktRegelText() {
+  const m = KR.reaktMonate();
+  return `fällig ${m} Monate nach Vertragsabschluss und dann ${m === 12 ? "jährlich" : "alle " + m + " Monate"}`;
+}
 // Stufe „ok“ heißt: nichts fällig; „bezahlt“ steht nur bei Schülern, deren Zahlung das Büro eingetragen hat
 function reaktText(s, r) {
   if (r.stufe === "ok" && s.reakt_status !== "bezahlt") return ["gruen", "nichts fällig"];
@@ -637,7 +664,7 @@ const FRISTEN_ANSICHTEN = [["handeln", "Handlungsbedarf"], ["alle", "Alle Schül
 const FRIST_TEXT = { abgelaufen: ["rot", "Behörden-Frist Theorie abgelaufen"], bald: ["gelb", "Behörden-Frist Theorie bald"], demnaechst: ["blau", "Behörden-Frist Theorie in 60 Tagen"], ok: ["gruen", "Behörden-Frist Theorie ok"], erledigt: ["gruen", "Theorie bestanden"], ohne_datum: ["", "–"] };
 const UMSCHREIB_TEXT = { abgelaufen: ["rot", "darf nicht mehr fahren"], bald: ["gelb", "darf bald nicht mehr fahren"], ok: ["gruen", "darf fahren"], ohne_datum: ["gelb", "Wohnsitz-Datum fehlt"], eu: ["gruen", "EU/EWR, keine Frist"], kein: ["", "Führerschein fehlt"], land_pruefen: ["gelb", "Land prüfen"] };
 const ANTRAG_TEXT = { abgelaufen: ["rot", "abgelaufen · neu stellen"], bald: ["gelb", "läuft bald ab"], ok: ["gruen", "gültig"], ohne_datum: ["", "Antragsdatum fehlt"] };
-const REAKT_RANG = { gesperrt: 0, pruefen_faellig: 1, bald: 2, demnaechst: 3, ohne_datum: 4, ok: 5, befreit: 6 };
+const REAKT_RANG = { gesperrt: 0, pruefen_faellig: 1, bald: 2, demnaechst: 3, ohne_datum: 4, ok: 5, befreit: 6, entfaellt: 7 };
 function renderFristen() {
   const heute = KR.todayISO();
   const ansicht = FRISTEN_ANSICHTEN.some(([id]) => id === fristenParam("ansicht")) ? fristenParam("ansicht") : "handeln";
@@ -716,7 +743,9 @@ function renderFristen() {
       <p class="leise klein">Führerscheine aus Ländern außerhalb der EU/des EWR gelten in Deutschland nur 6 Monate ab Wohnsitz (§ 29 FeV). Danach darf der Schüler nicht mehr selbst fahren, bis der deutsche Führerschein da ist. Verlängern kann die Behörde nur, wenn er höchstens 12 Monate in Deutschland bleibt, bei Umschreibern also meist nicht.</p>` : `<p class="leer">Keine Umschreiber.</p>`) : ""}
     ${ansicht === "antrag" || ansicht === "umschreiber" ? "" : liste.length ? `<table class="tabelle"><thead><tr><th>Schüler</th><th>Fahrlehrer</th><th class="nur-breit">Vertrag</th><th>Reaktivierung</th><th>Theorie</th><th></th></tr></thead><tbody>${zeilen}</tbody></table>`
       : `<p class="leer">${ansicht === "handeln" ? "Kein Handlungsbedarf. Sehr gut." : "Keine Schüler in dieser Ansicht."}</p>`}
-    <p class="leise klein">Reaktivierung: ${reaktInPreisliste() ? `${reaktHeuteText()} für neue Verträge (alte Verträge zahlen den Preis ihres Vertragsdatums)` : euro(reaktBetrag())}, fällig 12 Monate nach Vertragsabschluss und dann jährlich. „Gesperrt“ heißt: keine weiteren Leistungen, bis bezahlt ist. Jede Änderung wird mit Name und Uhrzeit protokolliert.</p>
+    <p class="leise klein" data-reaktregel>${KR.reaktFreiAm(undefined, heute)
+      ? "Reaktivierung entfällt laut Preisliste. Deshalb wird niemand gesperrt und nichts wird fällig."
+      : `Reaktivierung: ${reaktInPreisliste() ? `${reaktHeuteText()} für neue Verträge (alte Verträge zahlen den Preis ihres Vertragsdatums)` : euro(reaktBetrag())}, ${reaktRegelText()}. „Gesperrt“ heißt: keine weiteren Leistungen, bis bezahlt ist.`} Jede Änderung wird mit Name und Uhrzeit protokolliert.</p>
   </div>${renderBueroEinstellungen()}${typeof zmEinstellungenHTML === "function" ? zmEinstellungenHTML() : ""}`; // Werkstatt 11: Zahlungsdaten für Mails (buero-zahlungsmail.js)
 }
 function renderBueroEinstellungen() {
@@ -4432,7 +4461,7 @@ async function ladeDaten() {
   const zmT0 = Date.now(); // Werkstatt 11: ein Eintrag, der nach Ladebeginn entsteht, darf nicht verloren gehen
   setStatus("", "lade …");
   try {
-    const [fs, lehrer, schueler, termine, pruefungen, fahrzeuge, pakete, pTermine, fcAbg, verk, prov, team, notizen, gelesen, aufgaben, personen, theorie, fahrzeugeWeg, preise, zahlungsdaten, zahlungsMails, konfGes, verkauft, eltern] = await Promise.all([
+    const [fs, lehrer, schueler, termine, pruefungen, fahrzeuge, pakete, pTermine, fcAbg, verk, prov, team, notizen, gelesen, aufgaben, personen, theorie, fahrzeugeWeg, preise, zahlungsdaten, zahlungsMails, konfGes, verkauft, eltern, reaktRegel] = await Promise.all([
       supa.from("fahrschulen").select("*").eq("id", fsId).single(),
       // Fahrlehrer: auch die Leitung, die selbst fährt (faehrt_selbst), nicht die reine Leitung
       supa.from("profiles").select("*").eq("fahrschule_id", fsId).in("rolle", ["fahrlehrer", "super_admin", "fahrschule_admin"]).order("name"),
@@ -4458,6 +4487,7 @@ async function ladeDaten() {
       supa.from("fahrzeug_konflikt_gesehen").select("*").eq("fahrschule_id", fsId).order("gesehen_am", { ascending: false }).limit(2000),   // K18; fehlt die Tabelle → null, kein „Gesehen“-Knopf
       alleSeiten(() => supa.from("schueler_pakete").select("*").eq("fahrschule_id", fsId).is("storniert_am", null).order("id")),   // Werkstatt 13: aktive verkaufte Pakete; fehlt die Tabelle → null
       supa.from("schueler_eltern").select("*").eq("fahrschule_id", fsId),   // W14 Eltern-Mail; fehlt die Tabelle → kein Eltern-Feld
+      holeReaktRegel(fsId),   // W15: Regel der Reaktivierung (entfällt, Monate); fehlt die Funktion → alte Regel
     ]);
     if (nr !== S.ladeNr) return; // inzwischen wurde neu geladen oder die Fahrschule gewechselt
     S.fs = pruefe(fs, "Fahrschule");
@@ -4484,6 +4514,7 @@ async function ladeDaten() {
     // null = Tabelle fehlt (alte Datenbank): ohne „Gesehen“, Warnung wie bisher. Anderer Ladefehler: letzten Stand behalten
     S.konfGesehen = konfGes && !konfGes.error ? (konfGes.data || []) : (konfGes && konfGes.error && !konfTabelleFehlt(konfGes.error) ? S.konfGesehen : null);
     if (typeof zmLaden === "function") zmLaden(zahlungsdaten, zahlungsMails, zmT0); // Werkstatt 11: Fehler tolerant
+    uebernimmReaktRegel(reaktRegel); // W15: vor dem Zeichnen, damit Sperre und Fristen der Regel des Servers folgen
     // Werkstatt 13: null = Tabelle fehlt (alte Datenbank) → alte Paket-Auswahl im Schüler-Fenster. Anderer Ladefehler: letzten Stand behalten
     S.verkauft = verkauft && !verkauft.error ? (verkauft.data || []) : (verkauft && verkauft.error && !prTabelleFehlt(verkauft.error) ? S.verkauft : null);
     // W14: Eltern-Adressen je Schüler. null = Tabelle fehlt (alte Datenbank): Feld nicht zeigen. Anderer Ladefehler: letzten Stand behalten
@@ -4902,6 +4933,7 @@ $("schulWahl").addEventListener("change", (e) => {
   S.geladenAm = null;
   S.bkFehlt = false; S.verkauft = null; // Werkstatt 13: neue Fahrschule, Paket-Spalten und verkaufte Pakete neu prüfen
   S.preise = null; // K9 (Fable B1): Preise der vorigen Fahrschule nie in der neuen zeigen oder behalten
+  KR.setzeReaktRegel(null); S.reaktRegelGeladen = false; // W15: Regel der vorigen Fahrschule nicht mitnehmen
   S.konfGesehen = null; // K18: „gesehen“-Vermerke gehören zur Fahrschule
   if (typeof zmLeeren === "function") zmLeeren(); // Werkstatt 11: Zahlungsdaten und Mail-Spur der vorigen Fahrschule weg
   S.eltern = null; S.elternFehler = false; // W14: Eltern-Adressen gehören zur Fahrschule

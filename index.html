@@ -5319,6 +5319,23 @@ let _termineFehlversuche = 0;
 /* Fristen vom Büro (Reaktivierung, Theorie). Nur im Speicher, nie in DB.students:
    sonst landeten die Felder beim nächsten Abgleich in schueler.ausbildung. */
 let _schuelerFristen = {};
+/* W15: Regel der Reaktivierung vom Server (rpc reakt_regel: entfällt laut Preisliste heute oder am Vertragstag, Monate). Nur die Regel,
+   keine Preise (Fahrlehrer dürfen die Preisliste bald nicht mehr lesen). Dieselbe Regel nutzt die Datenbank für die Sperre und das Büro.
+   Fehlt die Funktion (Datenbank-Update noch nicht da): alte Regel, wie der Server. Für offline gemerkt (je Fahrschule). */
+const _REAKT_REGEL_KEY="kompass_reakt_regel";
+function _reaktRegelFehlt(err){ return !!err&&(["PGRST202","42883"].includes(err.code)||/could not find the function|does not exist/i.test(String(err.message||""))); }
+function _reaktRegelAusSpeicher(fs){ try{ const o=JSON.parse(localStorage.getItem(_REAKT_REGEL_KEY)||"null"); if(o&&o.fs===fs) KR.setzeReaktRegel(o.regel||null); }catch(e){ /* kaputter Eintrag: alte Regel */ } }
+async function _ladeReaktRegel(supa){
+  const fs=_authProfile&&_authProfile.fahrschule_id; if(!fs||!window.KR||!KR.setzeReaktRegel)return;
+  if(!KR.holeReaktRegel()) _reaktRegelAusSpeicher(fs);
+  try{
+    const {data,error}=await supa.rpc("reakt_regel",{p_fs:fs});
+    if(!_authProfile||_authProfile.fahrschule_id!==fs)return;
+    if(error){ if(_reaktRegelFehlt(error)){ KR.setzeReaktRegel(null); try{localStorage.removeItem(_REAKT_REGEL_KEY);}catch(e){} } return; }
+    KR.setzeReaktRegel(data||null);
+    try{ localStorage.setItem(_REAKT_REGEL_KEY,JSON.stringify({fs,regel:data||null})); }catch(e){ /* voll: nur im Speicher */ }
+  }catch(e){ /* Netz: gemerkte Regel bleibt */ }
+}
 function _merkeFristen(rows){
   (rows||[]).forEach(r=>{ _schuelerFristen[r.id]={reakt_status:r.reakt_status,vertrag_am:r.vertrag_am,reakt_bezahlt_bis:r.reakt_bezahlt_bis,
     theorie_abgeschlossen_am:r.theorie_abgeschlossen_am,theorie_bestanden_am:r.theorie_bestanden_am,praxis_bestanden_am:r.praxis_bestanden_am||null,antrag_am:r.antrag_am,inaktiv_seit:r.inaktiv_seit,zahlung_gesperrt_seit:r.zahlung_gesperrt_seit||null,zahlung_gesperrt_grund:r.zahlung_gesperrt_grund||null,
@@ -5473,7 +5490,8 @@ async function pullSchuelerZuweisungen() {
   try {
     const supa = getSupa();
     const gen = _abglGen;
-    const { data: rows, error: schErr } = await supa.from("schueler").select("*").eq("fahrlehrer_id", _authUser.id).eq("status", "aktiv");
+    // W15: Regel der Reaktivierung gleichzeitig holen, damit die Sperre beim ersten Zeichnen schon stimmt
+    const [{ data: rows, error: schErr }] = await Promise.all([supa.from("schueler").select("*").eq("fahrlehrer_id", _authUser.id).eq("status", "aktiv"), _ladeReaktRegel(supa)]);
     if (schErr) throw schErr;
     _merkeFristen(rows);
     _ladeTheorieBesuch(supa, (rows||[]).map(r=>r.id));
