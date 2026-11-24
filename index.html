@@ -8031,11 +8031,12 @@ async function _fsSyncAggJetztKern(){
       /* W14: Bestehende Schüler nicht mehr ganz überschreiben (sonst drehte die Gesamtansicht zurück, was Fahrlehrer-App oder
          Büro inzwischen geändert hatten, z. B. den Ausbildungsstand). Nur geänderte Spalten; frischen Stand lesen; hat jemand
          dieselbe Spalte geändert, bleibt sein Stand. Ausbildungsstand (jsonb) Feld für Feld zusammenführen. */
+      let woanders=0; const serverZeilen={}; // Stand nach dem Speichern je geändertem Schüler (für Anzeige und Vergleichsstand)
       if(schuelerAend.length){
         const {data:frischL,error:fErr}=await supa.from("schueler").select("*").in("id",schuelerAend.map(a=>a.mein.id));
         if(fErr) throw fErr;
         const fMap={}; (frischL||[]).forEach(r=>{ fMap[r.id]=r; });
-        const stab=v=>_abglWert(v===undefined?null:v); let woanders=0;
+        const stab=v=>_abglWert(v===undefined?null:v);
         for(const {mein,basis} of schuelerAend){
           const fr=fMap[mein.id]; if(!fr) continue; // inzwischen weg oder nicht mehr sichtbar: nichts zurückholen
           const upd={};
@@ -8050,12 +8051,12 @@ async function _fsSyncAggJetztKern(){
             const r=_snapDrei(mein.ausbildung,fr.ausbildung||{},_snapBaum(basis.ausbildung,3),3,false);
             if(stab(r.wert)!==stab(fr.ausbildung||{})) upd.ausbildung=r.wert;
           }
-          if(!Object.keys(upd).length) continue;
+          if(!Object.keys(upd).length){ serverZeilen[mein.id]=fr; continue; }
           upd.aktualisiert_am=nowIso;
-          const uR=_fsPruefe(await supa.from("schueler").update(upd).eq("id",mein.id).select("id"));
+          const uR=_fsPruefe(await supa.from("schueler").update(upd).eq("id",mein.id).select("*"));
           if(!uR.data||!uR.data.length) throw new Error("Schüler nicht gespeichert (keine Berechtigung)");
+          serverZeilen[mein.id]=uR.data[0];
         }
-        if(woanders) toast(woanders===1?"Eine Angabe wurde inzwischen woanders geändert – der neue Stand bleibt":"Einige Angaben wurden inzwischen woanders geändert – der neue Stand bleibt");
       }
       if(schuelerDeletes.length) _fsPruefe(await supa.from("schueler").update({status:"geloescht",aktualisiert_am:nowIso}).in("id",schuelerDeletes));
 
@@ -8113,12 +8114,23 @@ async function _fsSyncAggJetztKern(){
       const altT={}; (_fsBaseline.lessons||[]).forEach(l=>altT[l.id]=l);
       const altP={}; (_fsBaseline.exams||[]).forEach(e=>altP[e.id]=e);
       const behalte=(liste,ohne,alt)=>liste.map(x=>ohne.has(x.id)?alt[x.id]:x).filter(Boolean);
+      // W14: Geänderte Schüler zeigen den Stand vom Server (dort kann inzwischen mehr stehen als hier, z. B. von der App).
+      // Nur, wenn hier während des Speicherns nichts mehr geändert wurde (sonst gilt der nächste Lauf).
+      if(Object.keys(serverZeilen).length){
+        const lehrerName=id=>{ const l=(_fsAgg.lehrer||[]).find(x=>x.id===id); return l?(l.name||l.email):_fsNameAusAlle(id,"Unbekannt"); };
+        snap.students.forEach((sn,i)=>{
+          const row=serverZeilen[sn.id]; if(!row)return;
+          const lok=(DB.students||[]).find(x=>x.id===sn.id), neu=_fsMapSchueler(row,lehrerName);
+          if(lok&&JSON.stringify(lok)===JSON.stringify(sn))_ersetzeInhalt(lok,JSON.parse(JSON.stringify(neu)));
+          snap.students[i]=neu;
+        });
+      }
       _fsBaseline={students:snap.students,lessons:behalte(snap.lessons,ohneLehrerT,altT),exams:behalte(snap.exams,ohneLehrerP,altP)};
       const ohne=ohneLehrerT.size+ohneLehrerP.size;
       _fsNurOhneLehrer=ohne>0;
       if(ohne){ _fsUngespeichert=true; toast(`⚠ ${ohne} ${ohne===1?"Eintrag":"Einträge"} ohne Fahrlehrer – bitte zuordnen`); return false; }
       _fsUngespeichert=false;
-      toast("Gespeichert ✓");
+      toast(woanders?`Gespeichert ✓ – ${woanders===1?"eine Angabe war":"einige Angaben waren"} inzwischen woanders geändert, der neue Stand bleibt`:"Gespeichert ✓");
       return true;
     }catch(e){ _fsUngespeichert=true; _fsNurOhneLehrer=false; console.warn("[Kompass] Fahrschul-Speichern fehlgeschlagen:",e.message); toast("Fehler beim Speichern: "+e.message); return false; }
 }

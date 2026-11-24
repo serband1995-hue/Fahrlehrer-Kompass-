@@ -630,6 +630,26 @@ fall("24 W14: Büro ändert Klasse – Gerät übernimmt und lädt den Schüler 
   if (n !== 0) f("Übernahme vom Büro gilt als eigene Änderung: " + n + " Schüler hochgeladen");
 });
 
+fall("25 W14: Gesamtansicht – Leitung und Büro ändern dasselbe Telefon: Büro-Stand bleibt, Anzeige zeigt ihn, Hinweis", async (f) => {
+  await neu();
+  await setzeTabelle("schueler", [serverSchueler("S9", "Clara Muster", { ausbildung: { notiz: "alt" } })]);
+  await ruf(() => {
+    const row = window.__fake.T.schueler[0];
+    _fsAgg = { fahrschuleId: "fs-1", fahrschule: { name: "Testfahrschule" }, lehrer: [{ id: "fl-1", name: "Fahr Lehrer" }], fahrzeuge: [], pakete: [] };
+    DB = { students: [_fsMapSchueler(row, () => "Fahr Lehrer")], lessons: [], exams: [], termine: [] };
+    _fsBaseline = { students: JSON.parse(JSON.stringify(DB.students)), lessons: [], exams: [] };
+  });
+  await aendereZeile("schueler", "S9", { telefon: "0170 BUERO" });
+  await ruf(() => { DB.students[0].telefon = "0160 LEITUNG"; });
+  await ruf(() => _fsSyncAggJetzt());
+  const z = await zeile("schueler", "S9");
+  const r = await ruf(() => ({ t: DB.students[0].telefon, b: _fsBaseline.students[0].telefon, toast: document.getElementById("toast").textContent }));
+  await ruf(() => { _fsAgg = null; _fsBaseline = null; });
+  if (z.telefon !== "0170 BUERO") f("Büro-Stand überschrieben: " + z.telefon);
+  if (r.t !== "0170 BUERO" || r.b !== "0170 BUERO") f("Anzeige/Vergleichsstand zeigt nicht den Server-Stand: " + JSON.stringify(r));
+  if (!/woanders/.test(r.toast)) f("Hinweis fehlt: " + r.toast);
+});
+
 /* ---------- Ausführen ---------- */
 let rot = 0;
 for (const { name, fn } of faelle) {
