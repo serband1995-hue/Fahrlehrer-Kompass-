@@ -68,7 +68,9 @@ await fall("A1 Akte: nur Paket geändert – Telefon/Name aus der App bleiben", 
   const f = [];
   await page.evaluate(() => schuelerDialog("s1"));
   await woanders(page, "s1", { telefon: "0151 0000001", name: "Lena Beispiel-Neu" });
-  await page.selectOption("dialog[open] select[name=paket_id]", "p-turbo");
+  // Werkstatt 13: Mit verkauften Paketen heißt die Auswahl „Anmeldung“; Turboboost (ohne Posten) wird dort wie bisher nur zugeordnet
+  if (await page.locator("dialog[open] [data-bk-wahl]").count()) await page.selectOption("dialog[open] [data-bk-wahl]", "v:p-turbo");
+  else await page.selectOption("dialog[open] select[name=paket_id]", "p-turbo");
   await speichern(page);
   const s = await server_(page, "s1");
   if (s.telefon !== "0151 0000001") f.push("Telefon überschrieben: " + s.telefon);
