@@ -708,6 +708,7 @@ body.kiosk .rollen-streifen{display:none;}
 .pr-tabelle tbody tr.pr-zeile:hover { background:transparent; }
 .pr-tabelle tr.pr-gruppe th { font-size:15px; text-transform:none; letter-spacing:0; color:var(--txt, inherit); padding:20px 12px 6px; border-bottom:2px solid var(--line-soft); white-space:normal; }
 .pr-tabelle tbody tr.pr-gruppe:first-child th { padding-top:8px; }
+.pr-tabelle tr.pr-gruppe .pr-gruppe-hinweis { font-weight:normal; margin-top:2px; }
 .pr-name b { margin-right:8px; }
 .pr-klasse { font-weight:600; }
 .pr-betrag { font-size:17px; font-weight:700; color:var(--txt); }
