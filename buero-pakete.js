@@ -446,8 +446,32 @@ function bkFest(posten, klasse) {
   }
   return { posten: fest, fehlt, gesamt: fest.reduce((a, p) => a + p.anzahl * p.preis_cent, 0) };
 }
-function bkPostenListeHTML(posten) {
-  return `<ul class="bk-anm-posten">${posten.map((p) => `<li><span>${esc(String(p.anzahl))} × ${esc(p.bezeichnung)}</span>${p.preis_cent != null ? `<span>${esc(prEuro(p.anzahl * p.preis_cent))}</span>` : `<span class="marke-pill gelb">Preis fehlt</span>`}</li>`).join("")}</ul>`;
+/* Schritt 2: „noch offen“ je Posten. Gleiche Rechnung wie in der App (KR.paketVerbrauch). Quelle: Termine im Büro-Kalender
+   (letzte DATEN_TAGE Tage); Sonderfahrten aus dem Ausbildungsplan der App, wenn der Fahrlehrer die App nutzt (wie der Sonderfahrten-Zähler). */
+function bkVerbrauchQuelle(x) {
+  const d = new Date(), heute = KR.todayISO();
+  const termine = (S.termine || []).filter((t) => t.schueler_id === x.id && !t.geloescht).map((t) => {
+    const pl = t.payload || {};
+    return { art: t.art, datum: t.datum, von: t.von, bis: t.bis, status: pl.status || t.status, sonderArt: pl.sonderArt, tatsaechlicheDauer: pl.tatsaechlicheDauer };
+  });
+  const q = KR.paketQuelleAusTerminen(termine, heute, d.getHours() * 60 + d.getMinutes());
+  const fl = (S.lehrer || []).find((l) => l.id === x.fahrlehrer_id);
+  const plan = KR.paketSonderAusPlan(x.ausbildung && x.ausbildung.plan);
+  if (plan && !(fl && fl.ohne_app)) q.sonder = plan;
+  return q;
+}
+function bkZahl(n) { return (Math.round(Number(n) * 10) / 10).toLocaleString("de-DE"); }
+function bkVerbrauchText(v, art) {
+  if (!v || v.verbraucht == null) return "";
+  const wort = art === "pruefung_praxis" ? "vorgestellt" : art === "simulator" ? "gemacht" : "gefahren";
+  if (v.offen > 0) return `${bkZahl(v.verbraucht)} von ${bkZahl(v.anzahl)} ${wort} · noch ${bkZahl(v.offen)} offen`;
+  return `alle ${bkZahl(v.anzahl)} ${wort} ✓${v.mehr > 0 ? ` · ${bkZahl(v.mehr)} mehr als im Paket` : ""}`;
+}
+function bkPostenListeHTML(posten, verbrauch) {
+  return `<ul class="bk-anm-posten">${posten.map((p, i) => {
+    const vt = verbrauch ? bkVerbrauchText(verbrauch[i], p.art) : "";
+    return `<li><span>${esc(String(p.anzahl))} × ${esc(p.bezeichnung)}${vt ? `<small class="bk-anm-stand${verbrauch[i].offen > 0 ? "" : " fertig"}">${esc(vt)}</small>` : ""}</span>${p.preis_cent != null ? `<span>${esc(prEuro(p.anzahl * p.preis_cent))}</span>` : `<span class="marke-pill gelb">Preis fehlt</span>`}</li>`;
+  }).join("")}</ul>`;
 }
 function bkAnmeldungHTML() {
   return `<div class="voll bk-anmeldung" data-bk-anm>
@@ -494,7 +518,7 @@ function bkAnmeldungBinden(dlg, x, id) {
   function zeige() {
     let h = "";
     if (wahl === "bleibt" && anfang) {
-      h = `${bkPostenListeHTML(bkPosten(anfang))}
+      h = `${bkPostenListeHTML(bkPosten(anfang), KR.paketVerbrauch(bkPosten(anfang), bkVerbrauchQuelle(x)))}
         <p class="bk-anm-summe"><span>Gesamt</span><b>${esc(prEuro(anfang.gesamt_cent))}</b></p>
         <p class="leise klein">Verkauft am ${esc(datumDE(String(anfang.verkauft_am || "").slice(0, 10)))}${anfang.bearbeiter ? " von " + esc(anfang.bearbeiter) : ""}. Die Preise bleiben so, auch wenn sich die Preisliste ändert.</p>
         <div class="knopfreihe"><button class="knopf klein" type="button" data-bk-anpassen>Paket ändern</button></div>`;
