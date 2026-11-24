@@ -137,7 +137,7 @@ async function setze(page, sz, route = "routeDashboard()") {
     if (sz.wetter) localStorage.setItem("serband-weather-cache", JSON.stringify({ ts: Date.now() - (sz.alt ? 35 * 60000 : 60000), city: STADT, data: sz.wetter }));
     else localStorage.removeItem("serband-weather-cache");
     localStorage.setItem(THEME_KEY, sz.theme || "light"); applyTheme();
-    if (sz.fsAgg) _fsAgg = sz.fsAgg;
+    if (sz.fsAgg) { _fsAgg = sz.fsAgg; _authProfile = Object.assign({}, _authProfile || {}, { rolle: "fahrschule_admin" }); } // K12: Gesamtansicht nur mit Leitungs-Rolle
     (0, eval)(route);
   }, { sz, route, STADT });
   await page.waitForTimeout(450);
