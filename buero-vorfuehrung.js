@@ -388,6 +388,8 @@ if (typeof module !== "undefined" && module.exports) { module.exports = { bauDat
         // wie der Schutz-Trigger der Preisliste (K9): Verfasser und Zeit vom Server
         if (this.name === "fahrschule_preise") { const si = meineSitzung(); const p = si && personen().find((x) => x.id === si.person); daten.forEach((r) => { r.angelegt_von = (F.session && F.session.user && F.session.user.id) || null; r.angelegt_am = new Date().toISOString(); r.bearbeiter = p ? p.name : null; }); }
         t.push(...daten);
+        // wie der Schutz-Trigger von fahrzeug_konflikt_gesehen (K18): wer und wann kommen vom Server
+        if (this.name === "fahrzeug_konflikt_gesehen") { const si = meineSitzung(); const p = si && personen().find((x) => x.id === si.person); daten.forEach((r) => { r.gesehen_von = (F.session && F.session.user && F.session.user.id) || null; r.gesehen_am = new Date().toISOString(); r.bearbeiter = p ? p.name : null; }); }
         if (this.name === "zahlungs_mails") daten.forEach((r) => { r.angelegt_am = r.angelegt_am || new Date().toISOString(); });
         if (this.name === "kalender_termine") daten.forEach((r) => terminSpur(null, r));
       } else if (this.art === "upsert") {

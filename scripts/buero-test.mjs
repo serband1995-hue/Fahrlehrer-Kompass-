@@ -507,12 +507,18 @@ for (const [breite, hoehe] of [[1920, 1080], [1366, 768], [1024, 768]]) {
   const { page, ctx, konsole } = await oeffne({ nutzer: "bu-1", hash: "#heute", breite: 1366, hoehe: 900 });
   // Seitenleiste
   const sichtbar = () => page.$$eval(".nav-liste:not([hidden]) .nav-punkt", (a) => a.length);
-  const alle = await sichtbar();
-  const inGeld = await page.$$eval('.nav-liste:not([hidden]) .nav-punkt[href="#verkaeufe"], .nav-liste:not([hidden]) .nav-punkt[href="#zahlen"], .nav-liste:not([hidden]) .nav-punkt[href="#preise"]', (a) => a.length); // K9: Preisliste kam dazu
+  // K16: Start mit zugeklappten Gruppen, nur die der offenen Seite („Arbeit“) ist auf
+  const start = await sichtbar();
+  const inArbeit = await page.$$eval('.nav-punkt[href="#heute"], .nav-punkt[href="#pruefungen"], .nav-punkt[href="#fahrchecks"], .nav-punkt[href="#fristen"]', (a) => a.length);
+  if (start !== inArbeit || inArbeit < 2) fehler("Seitenleiste: Start nicht nur mit der Gruppe der offenen Seite (" + start + "/" + inArbeit + ")");
   await page.click('[data-gruppe="Geld"]');
-  if ((await sichtbar()) !== alle - inGeld || inGeld < 2) fehler("Seitenleiste: Gruppe „Geld“ klappt nicht zu");
+  const inGeld = (await sichtbar()) - start;
+  if (inGeld < 2) fehler("Seitenleiste: Gruppe „Geld“ klappt nicht auf");
   await page.evaluate(() => zeichneNav());
-  if ((await sichtbar()) !== alle - inGeld) fehler("Seitenleiste: zugeklappte Gruppe wird nicht gemerkt");
+  if ((await sichtbar()) !== start + inGeld) fehler("Seitenleiste: aufgeklappte Gruppe wird nicht gehalten");
+  await page.click('[data-gruppe="Geld"]');
+  if ((await sichtbar()) !== start) fehler("Seitenleiste: Gruppe „Geld“ klappt nicht zu");
+  const alle = start + inGeld;
   // PIN-Anmeldung merkt sich der Browser-Tab (auch nach Neuladen), bis 20 Minuten nichts angeklickt wurde
   await page.evaluate(async () => { S.sitzung = null; S.wer = ""; await starteWer(); });
   if (await page.isVisible("#wer:not([hidden])")) fehler("PIN: Anmeldung wird nach Neuladen nicht übernommen");
@@ -2158,6 +2164,8 @@ async function k2Kontrast(page, sel) {
     if (bereiche.length < 8) fehler(`K2 ${name}: nur ${bereiche.length} Menüpunkte`);
     for (const [href, titel] of bereiche) {
       if (!(await page.evaluate(() => document.body.classList.contains("menue-offen")))) await page.click("#menueKnopf");
+      // K16: Gruppen starten zu; ein Punkt in einer zugeklappten Gruppe braucht erst den Tipp auf die Gruppe
+      if (!(await page.isVisible(`.nav-punkt[href="${href}"]`))) await page.evaluate((h) => document.querySelector(`.nav-punkt[href="${h}"]`).closest(".nav-block").querySelector(".nav-gruppe").click(), href);
       await page.click(`.nav-punkt[href="${href}"]`); await page.waitForTimeout(300);
       const zu = await page.evaluate(() => !document.body.classList.contains("menue-offen"));
       if (!zu) fehler(`K2 ${name} ${href}: Menü bleibt nach dem Tipp offen`);
@@ -2216,6 +2224,7 @@ async function k2Kontrast(page, sel) {
     const { page, ctx, konsole } = await oeffne({ nutzer: "bu-1", breite: 768, hoehe: 1024, hash: "#heute" });
     await page.click("#menueKnopf"); await page.waitForTimeout(100);
     await page.setViewportSize({ width: 1024, height: 768 }); await page.waitForTimeout(150);
+    await page.click('[data-gruppe="Planung"]'); // K16: Gruppen starten zu
     await page.click('.nav-punkt[href="#schueler"]'); await page.waitForTimeout(300);
     await page.setViewportSize({ width: 768, height: 1024 }); await page.waitForTimeout(150);
     const r = await page.evaluate(() => ({ offen: document.body.classList.contains("menue-offen"), aria: document.getElementById("menueKnopf").getAttribute("aria-expanded"), titel: document.getElementById("titel").textContent }));
@@ -2228,7 +2237,8 @@ async function k2Kontrast(page, sel) {
   for (const [w, h] of [[901, 800], [1366, 860]]) {
     const { page, ctx } = await oeffne({ nutzer: "bu-1", breite: w, hoehe: h, hash: "#heute" });
     const r = await page.evaluate(() => ({ nav: [...document.querySelectorAll(".nav-punkt")].filter((a) => a.offsetParent).length, menue: !!document.getElementById("menueKnopf").offsetParent, drucken: !!document.getElementById("drucken").offsetParent, wer: !!document.getElementById("werZeile").offsetParent, seite: Math.round(document.querySelector(".seite").getBoundingClientRect().width) }));
-    if (r.nav < 8) fehler(`K2 PC ${w}: Menü nicht sichtbar (${r.nav} Punkte)`);
+    // K16: nur die Gruppe der offenen Seite ist auf (4 Punkte in „Arbeit“)
+    if (r.nav < 4) fehler(`K2 PC ${w}: Menü nicht sichtbar (${r.nav} Punkte)`);
     if (r.menue) fehler(`K2 PC ${w}: Knopf „Menü“ sichtbar`);
     if (!r.drucken) fehler(`K2 PC ${w}: „Drucken“ fehlt`);
     if (!r.wer) fehler(`K2 PC ${w}: „Bedient gerade“ fehlt in der Seitenleiste`);

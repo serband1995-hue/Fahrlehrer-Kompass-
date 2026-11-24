@@ -310,3 +310,10 @@ create policy theorie_unterrichte_eigen on public.theorie_unterrichte as PERMISS
 create policy "Nur Super Admin Trinkgeld" on public.trinkgeld_privat as PERMISSIVE for ALL to public using (is_super_admin(auth.uid()));
 -- storage.objects (Bucket „theorie“): theorie_bib_lesen, theorie_eigene_hochladen, theorie_eigene_lesen, theorie_eigene_loeschen
 --   (nur eigener Ordner eigene/<uid>/, Bibliothek nur mit theorie_darf_bibliothek()).
+
+-- K18 (Migration 20261124_k18_01): Doppelbelegung „gesehen“. Nur Büro/Leitung der eigenen Fahrschule und Super-Admin.
+create policy "Buero Leitung sehen Konflikt-Vermerke" on public.fahrzeug_konflikt_gesehen as PERMISSIVE for SELECT to authenticated using (is_super_admin(auth.uid()) or ((is_buero(auth.uid()) or is_fahrschule_admin(auth.uid())) and fahrschule_id = my_fahrschule_id()));
+create policy "Buero Leitung markieren Konflikte" on public.fahrzeug_konflikt_gesehen as PERMISSIVE for INSERT to authenticated with check (is_super_admin(auth.uid()) or ((is_buero(auth.uid()) or is_fahrschule_admin(auth.uid())) and fahrschule_id = my_fahrschule_id()));
+create policy "Buero Leitung nehmen Konflikt-Vermerke zurueck" on public.fahrzeug_konflikt_gesehen as PERMISSIVE for DELETE to authenticated using (is_super_admin(auth.uid()) or ((is_buero(auth.uid()) or is_fahrschule_admin(auth.uid())) and fahrschule_id = my_fahrschule_id()));
+CREATE TRIGGER trg_konflikt_gesehen_setzen BEFORE INSERT ON public.fahrzeug_konflikt_gesehen FOR EACH ROW EXECUTE FUNCTION konflikt_gesehen_setzen();
+CREATE TRIGGER trg_konflikt_gesehen_spur AFTER INSERT OR DELETE ON public.fahrzeug_konflikt_gesehen FOR EACH ROW EXECUTE FUNCTION konflikt_gesehen_spur();
