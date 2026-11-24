@@ -4726,17 +4726,21 @@ async function _brueckeAbgleichen({ tabelle, art, eintraege, zeileVon, loeschWer
   let geschrieben = [];
   if (offen.length) {
     // W14c (24.11.2026): Name und Telefon pflegt das Büro (Telefon = Login der Fahr-Akademie). Hat dieses Gerät genau diese
-    // zwei seit dem letzten gemeinsamen Stand nicht geändert, gehen sie nicht mit – sonst drehte jede andere Änderung am
+    // zwei seit dem letzten gemeinsamen Stand nicht geändert, gilt der Stand vom Server – sonst drehte jede andere Änderung am
     // Schüler (z. B. Ausbildungsstand, auch nach längerem Offline-Sein) eine neue Nummer vom Büro still zurück.
-    // Diese Schüler gehen als „update“: ein Upsert ohne Name scheitert schon vor dem Konflikt-Abgleich an „name not null“,
-    // und beim Sammel-Upsert füllt supabase-js fehlende Spalten mit null.
+    // (Ohne Bedingung auf merk: auch neu vom Büro abgerufene Schüler und solche, deren Fragebogen gerade nicht hochging – Daten-Prüfer.)
     const memNT = art === "schueler" ? (_abglLaden().nt || {}) : {};
-    // (Ohne Bedingung auf merk: auch neu vom Büro abgerufene Schüler und solche, deren Fragebogen gerade nicht hochging – Daten-Prüfer.
-    //  Gibt es die Zeile auf dem Server nicht, trifft das update nichts und der Schüler geht als ganze Zeile.)
-    const ohneNT = art === "schueler" ? offen.filter(o => memNT[o.e.id] && memNT[o.e.id] === o.nt) : [];
-    const voll = offen.filter(o => ohneNT.indexOf(o) < 0);
-    geschrieben = await _upsertRobust(tabelle, voll.map(o => Object.assign({}, o.z, { aktualisiert_am: nowIso })), "id");
-    if (ohneNT.length) geschrieben = geschrieben.concat(await _schuelerOhneNameTel(ohneNT.map(o => Object.assign({}, o.z, { aktualisiert_am: nowIso }))));
+    const ohneNT = new Set(art === "schueler" ? offen.filter(o => memNT[o.e.id] && memNT[o.e.id] === o.nt).map(o => o.e.id) : []);
+    const zeilen = offen.map(o => Object.assign({}, o.z, { aktualisiert_am: nowIso }));
+    const serverNT = ohneNT.size ? await _schuelerNameTelVomServer([...ohneNT]) : {};
+    // Alle in EINEM Schreibvorgang (der Server stößt je Schreibvorgang einen vollen Fahr-Akademie-Abgleich an) und alle mit
+    // denselben Spalten (beim Sammel-Upsert füllt supabase-js fehlende Spalten mit null; ein Upsert ohne Name scheitert schon vor
+    // dem Konflikt-Abgleich an „name not null“). Name/Telefon dieser Schüler kommen deshalb vom Server.
+    // Liest das Netz nichts, bleiben sie diesmal liegen (nächster Lauf); fehlt die Zeile auf dem Server, gilt wie bisher der Stand
+    // des Geräts (legt sie neu an bzw. die Datenbank lehnt eine fremde Zeile ab).
+    const senden = zeilen.filter(z => !ohneNT.has(z.id) || serverNT !== null);
+    senden.forEach(z => { const sv = serverNT && serverNT[z.id]; if (ohneNT.has(z.id) && sv) { z.name = sv.name; z.telefon = sv.telefon; } });
+    geschrieben = await _upsertRobust(tabelle, senden, "id");
     // Gedächtnis frisch lesen: ein Abruf kann es während des Schreibens ergänzt haben.
     const ok = new Set(geschrieben); const zeit = Date.parse(nowIso); const mem = _abglLaden();
     offen.forEach(o => { if (!ok.has(o.e.id)) return; mem[art][o.e.id] = o.w; merk[o.e.id] = o.w; if (art !== "schueler") o.e._syncedAt = zeit; else (mem.nt = mem.nt || {})[o.e.id] = o.nt; });
@@ -4775,21 +4779,16 @@ async function _brueckeAbgleichen({ tabelle, art, eintraege, zeileVon, loeschWer
 }
 // Speichert DB lokal, ohne die Brücken erneut auszulösen (für Merker wie _syncedAt).
 function _lokalAblegen() { if (_fsAgg || _lokalerSpeicherGehoertAnderem()) return; try { localStorage.setItem(STORE_KEY, JSON.stringify(DB)); } catch (e) {} }
-/* W14c: Bekannte Schüler ohne Name und Telefon schreiben (ein „update“ je Schüler, zehn gleichzeitig). Trifft das update
-   keine Zeile (Schüler auf dem Server nicht mehr da oder inzwischen bei einem anderen Fahrlehrer), gilt dasselbe wie bisher:
-   einmal als ganze Zeile über _upsertRobust (legt ihn neu an bzw. die Datenbank lehnt die fremde Zeile ab).
-   Netzfehler: nicht geschrieben, die Brücke versucht es beim nächsten Lauf. Liefert die geschriebenen IDs. */
-async function _schuelerOhneNameTel(rows) {
-  const supa = getSupa(); const ok = [], nochmal = [];
-  for (let i = 0; i < rows.length; i += 10) {
-    await Promise.all(rows.slice(i, i + 10).map(async r => {
-      const { id, name, telefon, ...upd } = r;
-      const { data, error } = await supa.from("schueler").update(upd).eq("id", id).select("id");
-      if (error) { console.warn("[Kompass] schueler " + id + " nicht gespeichert:", error.message); return; }
-      if (data && data.length) ok.push(id); else nochmal.push(r);
-    }));
+/* W14c: Aktueller Name und aktuelles Telefon dieser Schüler auf dem Server (eine Abfrage je 150). Liefert {id:{name,telefon}}
+   (fehlt ein Schüler, gibt es die Zeile nicht oder sie gehört einem anderen) oder null bei einem Lesefehler. */
+async function _schuelerNameTelVomServer(ids) {
+  const supa = getSupa(); const out = {};
+  for (let i = 0; i < ids.length; i += 150) {
+    const { data, error } = await supa.from("schueler").select("id,name,telefon").in("id", ids.slice(i, i + 150));
+    if (error) { console.warn("[Kompass] Name/Telefon vom Server nicht gelesen:", error.message); return null; }
+    (data || []).forEach(r => { out[r.id] = { name: r.name, telefon: r.telefon }; });
   }
-  return nochmal.length ? ok.concat(await _upsertRobust("schueler", nochmal, "id")) : ok;
+  return out;
 }
 /* Upsert, das an einzelnen Zeilen nicht komplett scheitert: Gehört ein Schüler oder Termin inzwischen
    einem anderen Fahrlehrer (Umverteilung durchs Büro), lehnt die Datenbank genau diese Zeile ab - die
