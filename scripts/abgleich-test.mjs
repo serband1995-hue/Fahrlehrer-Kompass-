@@ -658,16 +658,17 @@ const serverPruefung = (id, extra = {}) => Object.assign({
   geloescht: false, payload: {}, aktualisiert_am: "2026-10-09T08:00:00.000Z",
 }, extra);
 // Gesamtansicht mit dem Stand der Attrappe öffnen (wie _fsLoadAggData: Zeilen → Einträge, Vergleichsstand = Kopie)
-async function gesamt({ termine = [], pruefungen = [] } = {}) {
-  await setzeTabelle("schueler", []);
+async function gesamt({ termine = [], pruefungen = [], schueler = [] } = {}) {
+  await setzeTabelle("schueler", schueler);
   await setzeTabelle("kalender_termine", termine);
   await setzeTabelle("kalender_pruefungen", pruefungen);
   await ruf(() => {
     _fsAgg = { fahrschuleId: "fs-1", fahrschule: { name: "Testfahrschule" }, lehrer: [{ id: "fl-1", name: "Fahr Lehrer" }], fahrzeuge: [], pakete: [] };
+    const t = document.getElementById("toast"); t.classList.remove("show", "undo"); t.textContent = ""; // kein Hinweis aus dem Fall davor
     const T = window.__fake.T, ln = () => "Fahr Lehrer";
-    DB = { students: [], lessons: T.kalender_termine.map((r) => _fsMapTermin(JSON.parse(JSON.stringify(r)), ln)),
+    DB = { students: T.schueler.map((r) => _fsMapSchueler(JSON.parse(JSON.stringify(r)), ln)), lessons: T.kalender_termine.map((r) => _fsMapTermin(JSON.parse(JSON.stringify(r)), ln)),
       exams: T.kalender_pruefungen.map((r) => _fsMapPruefung(JSON.parse(JSON.stringify(r)), ln)), termine: [] };
-    _fsBaseline = JSON.parse(JSON.stringify({ students: [], lessons: DB.lessons, exams: DB.exams }));
+    _fsBaseline = JSON.parse(JSON.stringify({ students: DB.students, lessons: DB.lessons, exams: DB.exams }));
   });
 }
 const gesamtSpeichern = () => ruf(() => _fsSyncAggJetzt());
@@ -785,6 +786,35 @@ fall("32 W14b: Gesamtansicht – Löschen, Termin und Prüfung inzwischen woande
   if (r.t !== "T1:durchgefuehrt,T2:geplant" || r.p !== "P1:bestanden") f("Ansicht zeigt die Einträge nicht wieder: " + JSON.stringify(r));
   if (r.bT !== "T1,T2" || r.bP !== "P1") f("Vergleichsstand passt nicht: " + JSON.stringify(r));
   if (!/nicht gelöscht/.test(hinweis) || !/nochmal ansehen/.test(hinweis)) f("Hinweis fehlt: " + hinweis);
+});
+
+fall("32b W14b: Gesamtansicht – Storno abgelehnt (inzwischen geändert): Verlaufseintrag „storniert“ verschwindet wieder, Rückgängig-Hinweis bleibt", async (f) => {
+  await neu();
+  await gesamt({ schueler: [serverSchueler("S1", "Anna Muster", { ausbildung: { hist: [] } })], termine: [serverTermin("T1", { schueler_id: "S1" })] });
+  await ruf(() => { _authProfile = { id: "fl-1", fahrschule_id: "fs-1", rolle: "fahrschule_admin" }; stornoLesson("T1", "Falsch eingetragen", false); });
+  const vorher = await ruf(() => (DB.students[0].hist || []).filter((h) => h.typ === "storno").length);
+  await aendereZeile("kalender_termine", "T1", { status: "durchgefuehrt", aktualisiert_am: "+1s" });
+  await gesamtSpeichern();
+  const nachher = await ruf(() => (DB.students[0].hist || []).filter((h) => h.typ === "storno").length);
+  await lauf(2500); // der geänderte Verlauf geht mit dem nächsten Speichern hinaus
+  const s = await zeile("schueler", "S1"), t1 = await zeile("kalender_termine", "T1");
+  const storno = await ruf(() => _stornoWert("T1"));
+  await gesamtEnde();
+  if (vorher !== 1) return f("Testaufbau: Storno-Eintrag fehlt (" + vorher + ")");
+  if (t1.geloescht) f("Termin trotz Änderung woanders gelöscht");
+  if (nachher !== 0) f("Verlaufseintrag „storniert“ steht noch beim Schüler");
+  if (((s.ausbildung || {}).hist || []).some((h) => h.typ === "storno")) f("Verlaufseintrag „storniert“ steht noch auf dem Server");
+  if (storno) f("Storno-Wunsch nicht vergessen");
+});
+
+fall("32c W14b: Gesamtansicht – „Gespeichert ✓“ verdrängt keinen Rückgängig-Hinweis", async (f) => {
+  await neu();
+  await gesamt({ termine: [serverTermin("T1"), serverTermin("T2")] });
+  await ruf(() => { toastUndo("Stunde storniert", () => {}); DB.lessons[1].von = "16:00"; });
+  await gesamtSpeichern();
+  const r = await ruf(() => { const t = document.getElementById("toast"); return { undo: t.classList.contains("undo"), text: t.textContent }; });
+  await gesamtEnde();
+  if (!r.undo) f("Rückgängig-Hinweis ersetzt durch: " + r.text);
 });
 
 fall("33 W14b: Gesamtansicht – Löschen ohne Änderung woanders: wird gelöscht (wie bisher)", async (f) => {

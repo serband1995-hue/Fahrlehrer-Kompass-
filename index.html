@@ -4945,22 +4945,27 @@ function _abglNachZusammenfuehren(ids) {
   _abglSpeichern(mem);
 }
 // Zeigt die aktuelle Ansicht neu, wenn gerade nichts bearbeitet wird (kein offenes Fenster, kein Eingabefeld).
+// Liefert false, wenn gerade bearbeitet wird (dann später nochmal, z. B. nach dem Schließen des Blatts – W14b).
 function _ansichtNeuZeigen() {
   try {
     const sh = document.getElementById("sheet");
-    if (sh && sh.classList.contains("open")) return;
+    if (sh && sh.classList.contains("open")) return false;
     const a = document.activeElement;
-    if (a && /^(INPUT|TEXTAREA|SELECT)$/.test(a.tagName)) return;
+    if (a && /^(INPUT|TEXTAREA|SELECT)$/.test(a.tagName)) return false;
     const dr = document.getElementById("drawer");
-    if ((dr && dr.classList.contains("open")) || (typeof _calDragActive !== "undefined" && _calDragActive)) return;
+    if ((dr && dr.classList.contains("open")) || (typeof _calDragActive !== "undefined" && _calDragActive)) return false;
     const letzte = _navStack[_navStack.length - 1];
     // Nur reine Anzeigeseiten neu zeigen - Seiten mit halb ausgefüllten Eingaben (z.B. Prüfung eintragen) nie.
-    if (!letzte || !["routeDashboard", "routeHome", "routeKalender", "routeDetail", "routePlan"].includes(letzte.name)) return;
+    if (!letzte || !["routeDashboard", "routeHome", "routeKalender", "routeDetail", "routePlan"].includes(letzte.name)) return true;
     const y = view.scrollTop;
     _navFahrt = true; try { letzte.fn.apply(null, letzte.args); } finally { _navFahrt = false; }
     view.scrollTop = y;
   } catch (e) {}
+  return true;
 }
+// W14b: Gesamtansicht hat nach dem Speichern den Stand vom Server übernommen, die Ansicht war aber gerade in Bearbeitung
+let _fsNeuZeigenOffen = false;
+function _fsNeuZeigenNachholen() { if (!_fsNeuZeigenOffen) return; if (_ansichtNeuZeigen()) _fsNeuZeigenOffen = false; }
 // Holt den Cloud-Stand (oder nimmt den schon gelesenen) und führt ihn mit DB zusammen.
 // Liefert den Server-Zeitstempel (Text) oder wirft.
 async function _snapHolenUndZusammenfuehren(supa, vorrang, schonGelesen, gen) {
@@ -8233,6 +8238,15 @@ async function _fsSyncAggJetztKern(){
       const tErg=await _fsZeilenSicher(supa,"kalender_termine",termineAend,nowIso);
       // Löschen nur, was nirgends geändert wurde (sonst bleibt es; der Storno-Wunsch dafür verfällt)
       const tDel=await _fsLoeschenPruefen(supa,"kalender_termine",termineDeletes.map(id=>({id,roh:baseT[id]})));
+      // Storno nicht ausgeführt: auch den Verlaufseintrag „… storniert: Grund“ beim Schüler zurücknehmen (Bedienungs-Prüfer 24.11.)
+      let histZurueck=false;
+      tDel.bleibt.forEach(r=>{
+        if(!_stornoWert(r.id))return;
+        const b=baseT[r.id], st=b&&(DB.students||[]).find(x=>x.id===b.sid);
+        if(!st||!Array.isArray(st.hist))return;
+        const anfang=`Fahrstunde ${isoDE(b.date)} ${b.von||""}–${b.bis||""} storniert:`;
+        for(let i=st.hist.length-1;i>=0;i--){ const h=st.hist[i]; if(h&&h.typ==="storno"&&String(h.text||"").startsWith(anfang)){ st.hist.splice(i,1); histZurueck=true; break; } }
+      });
       [...tDel.weg,...tDel.bleibt.map(r=>r.id)].forEach(id=>{ if(_stornoWert(id)) _stornoVergessen(id); });
       // K7: Stornierte Stunden einzeln mit Grund und Vermerk, der Rest wie bisher in den Papierkorb
       const termineStorno=tDel.loeschen.filter(id=>_stornoWert(id));
@@ -8294,16 +8308,22 @@ async function _fsSyncAggJetztKern(){
       anServer("lessons",_fsMapTermin,tErg.zeilen,tErg.weg,tDel.bleibt);
       anServer("exams",_fsMapPruefung,pErg.zeilen,pErg.weg,pDel.bleibt);
       _fsBaseline={students:snap.students,lessons:behalte(snap.lessons,ohneLehrerT,altT),exams:behalte(snap.exams,ohneLehrerP,altP)};
-      if(neuZeigen) _ansichtNeuZeigen();
+      if(neuZeigen){ _fsNeuZeigenOffen=true; _fsNeuZeigenNachholen(); }
       const ohne=ohneLehrerT.size+ohneLehrerP.size;
       _fsNurOhneLehrer=ohne>0;
       if(ohne){ _fsUngespeichert=true; toast(`⚠ ${ohne} ${ohne===1?"Eintrag":"Einträge"} ohne Fahrlehrer – bitte zuordnen`); return false; }
       _fsUngespeichert=false;
-      const anders=woanders+tErg.woanders.size+tErg.weg.size+pErg.woanders.size+pErg.weg.size;
-      const nichtWeg=tDel.bleibt.length+pDel.bleibt.length;
-      let meldung=anders?`Gespeichert ✓ – ${anders===1?"eine Angabe war":"einige Angaben waren"} inzwischen woanders geändert, der neue Stand bleibt`:"Gespeichert ✓";
-      if(nichtWeg) meldung+=(anders?". ":" – ")+`${nichtWeg===1?"Ein Eintrag wurde":nichtWeg+" Einträge wurden"} inzwischen geändert und nicht gelöscht, bitte nochmal ansehen`;
-      toast(meldung);
+      if(histZurueck) _fsSyncAggChanges(); // geänderten Verlauf des Schülers gleich mit speichern
+      const anders=woanders+tErg.woanders.size+pErg.woanders.size, weg=tErg.weg.size+pErg.weg.size;
+      const nichtWeg=[...tDel.bleibt.map(r=>`Termin ${isoDE(r.datum)}${r.von?" "+r.von:""}`),...pDel.bleibt.map(r=>`Prüfung ${isoDE(r.datum)}`)];
+      const teile=[];
+      if(anders) teile.push(`${anders===1?"eine Angabe war":"einige Angaben waren"} inzwischen woanders geändert, der neue Stand bleibt`);
+      if(weg) teile.push(`${weg===1?"ein Eintrag wurde":weg+" Einträge wurden"} inzwischen woanders gelöscht`);
+      if(nichtWeg.length) teile.push(`${nichtWeg.length===1?nichtWeg[0]+" wurde":nichtWeg.length+" Einträge wurden"} inzwischen geändert und nicht gelöscht, bitte nochmal ansehen`);
+      // Ein „Rückgängig“-Hinweis (z. B. „Stunde storniert“) bleibt stehen, solange nur „Gespeichert ✓“ zu sagen ist
+      const tEl=document.getElementById("toast");
+      if(!teile.length&&tEl&&tEl.classList.contains("show")&&tEl.classList.contains("undo")) return true;
+      toast(teile.length?"Gespeichert ✓ – "+teile.join(". "):"Gespeichert ✓");
       return true;
     }catch(e){ _fsUngespeichert=true; _fsNurOhneLehrer=false; console.warn("[Kompass] Fahrschul-Speichern fehlgeschlagen:",e.message); toast("Fehler beim Speichern: "+e.message); return false; }
 }
@@ -15131,7 +15151,8 @@ function openSheet(html,opts){
 }
 function closeSheet(){ const sh=$("#sheet"); sh.classList.remove("open","sheet-wechsel"); sh.style.transform=""; $("#sheetScrim").classList.remove("open");
   _sheetStapel=[]; _sheetEbene=null;
-  const f=_sheetBeimSchliessen; _sheetBeimSchliessen=null; if(f){ try{ f(); }catch(e){ console.warn("[Kompass] Abschluss beim Schließen:",e.message); } } }
+  const f=_sheetBeimSchliessen; _sheetBeimSchliessen=null; if(f){ try{ f(); }catch(e){ console.warn("[Kompass] Abschluss beim Schließen:",e.message); } }
+  if(_fsNeuZeigenOffen) setTimeout(_fsNeuZeigenNachholen,0); } // W14b: Server-Stand aus der Gesamtansicht jetzt zeigen
 function sheetOffen(){ return $("#sheet").classList.contains("open"); }
 /* Eine Ebene zurück (für Nutzer-Gesten). Rückgabe: "zurueck" (vorige Ebene gezeigt), "zu" (ganz geschlossen),
    "bleibt" (Rückfrage abgelehnt), "leer" (nurEbene gesetzt und keine vorige Ebene – nichts getan). */
