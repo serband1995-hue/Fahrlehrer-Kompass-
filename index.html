@@ -6114,6 +6114,8 @@ async function _fsExitAggMode(){
   try{ await _fsExitAggModeJetzt(); }finally{ _fsExitLaeuft=false; }
 }
 async function _fsExitAggModeJetzt(){
+  // W14b (Daten-Prüfer): ein laufendes Speichern erst zu Ende kommen lassen (sonst bricht es mitten im Schreiben ab)
+  if(_fsSyncLaeuftP){ try{ await _fsSyncLaeuftP; }catch(e){} }
   // Noch nicht geschriebene Änderungen erst speichern - sonst gingen sie beim Umschalten verloren.
   if(_fsAgg&&(_fsSyncDebounce||_fsUngespeichert)){
     clearTimeout(_fsSyncDebounce);
@@ -6137,6 +6139,9 @@ async function _fsExitAggModeJetzt(){
 async function _fsRefreshAggData(){
   if(!_fsAgg)return;
   if(!_fsDarfGesamt()){ await _fsExitAggModeJetzt(); return; } // Rolle weg: sauber zurück (speichert, stellt eigene Daten wieder her)
+  // W14b (Daten-Prüfer): erst ein laufendes Speichern abwarten – sonst läse das Neuladen den Stand davor und das
+  // nächste Speichern drehte die eigene Änderung zurück
+  if(_fsSyncLaeuftP){ try{ await _fsSyncLaeuftP; }catch(e){} }
   // Ungespeicherte Änderungen zuerst schreiben. Klappt das nicht, wird nicht neu geladen -
   // das Neuladen würde sie sonst still verwerfen.
   if(_fsSyncDebounce||_fsUngespeichert){
@@ -8117,10 +8122,15 @@ async function _fsZeilenSicher(supa,tabelle,aend,nowIso){
         const r=_snapDrei(mP,fP,_snapBaum(bP,2),2,true);   // dasselbe Feld an beiden Orten: Stand von woanders bleibt
         if(_fsStab(r.wert)!==_fsStab(fP)) neuP=r.wert;
       }
-      // Alte Spalten-Kopien in der Nutzlast fallen beim Schreiben weg, wie früher beim Upsert der ganzen Zeile
-      // (z. B. payload.status: das Büro liest ihn vor der Spalte und zeigte sonst den alten Status, Büro-Prüfer 24.11.).
-      const kopienInP=Object.keys(fr.payload||{}).some(k=>a.kern.includes(k)||_FS_NUR_SPALTE.includes(k));
-      if(neuP||(kopienInP&&Object.keys(upd).length)) upd.payload=neuP||fP;
+      // Kopien von Kern-Spalten in der Nutzlast (z. B. payload.status: das Büro liest ihn vor der Spalte und zeigte sonst
+      // den alten Status, Büro-Prüfer 24.11.) fallen beim Schreiben weg, wie früher beim Upsert der ganzen Zeile.
+      // Ältere Kopien der Büro-Spalten (kurs_bezahlt …) bleiben stehen: die Fahrlehrer-App hat sie lokal, ohne sie meldete
+      // ihr Abruf jede Minute „aktualisiert“ (Daten-Prüfer 24.11.). Neu geschrieben werden sie nie.
+      const kernInP=Object.keys(fr.payload||{}).some(k=>a.kern.includes(k));
+      if(neuP||(kernInP&&Object.keys(upd).length)){
+        const bleibt={}; Object.keys(fr.payload||{}).forEach(k=>{ if(_FS_NUR_SPALTE.includes(k)) bleibt[k]=fr.payload[k]; });
+        upd.payload=Object.assign(bleibt,neuP||fP);
+      }
       if(!Object.keys(upd).length){ erg.zeilen[mein.id]=fr; continue; }
       upd.aktualisiert_am=nowIso;
       let q=supa.from(tabelle).update(upd).eq("id",mein.id);
@@ -8152,11 +8162,33 @@ async function _fsLoeschenPruefen(supa,tabelle,liste){
       ||_FS_BUERO_SPALTEN.some(k=>(k in roh)&&_fsStab(frM[k])!==_fsStab(roh[k]));
     if(anders) erg.bleibt.push(fr); else erg.loeschen.push(id);
   });
+  erg.zeilen=fMap;
   return erg;
+}
+// Löschen (in den Papierkorb) nur, solange die Zeile noch so ist wie in _fsLoeschenPruefen gelesen; sonst bleibt sie (Hinweis)
+async function _fsLoeschenSchreiben(supa,tabelle,del,nowIso){
+  for(const id of del.loeschen.slice()){
+    const fr=del.zeilen[id];
+    let q=supa.from(tabelle).update({geloescht:true,aktualisiert_am:nowIso}).eq("id",id);
+    q=fr.aktualisiert_am==null?q.is("aktualisiert_am",null):q.eq("aktualisiert_am",fr.aktualisiert_am);
+    const r=_fsPruefe(await q.select("id"));
+    if(r.data&&r.data.length)continue;
+    del.loeschen=del.loeschen.filter(x=>x!==id);
+    const neu=(await _fsLiesZeilen(supa,tabelle,[id]))[id];
+    if(neu&&!neu.geloescht) del.bleibt.push(neu); else del.weg.push(id);
+  }
+}
+// W14b (Daten-Prüfer): Geschriebene neue Einträge sofort in den Vergleichsstand. Scheitert danach etwas anderes, gelten sie
+// beim nächsten Lauf als bestehend (sicherer Weg) statt als neu (ganze Zeile darüber, z. B. über eine Unterschrift).
+function _fsInBasis(feld,snapListe,geschrieben){
+  if(!_fsBaseline)return;
+  const liste=_fsBaseline[feld]=_fsBaseline[feld]||[];
+  geschrieben.forEach(z=>{ const sn=snapListe.find(x=>x.id===z.id); if(sn&&!liste.some(x=>x.id===z.id)) liste.push(JSON.parse(JSON.stringify(sn))); });
 }
 async function _fsSyncAggJetztKern(){
     _fsSyncDebounce=null;
     if(!_fsAgg||!_fsBaseline)return true;
+    const basisStart=_fsBaseline; // W14b: wurde inzwischen neu geladen, gilt der neue Stand (nicht mit dem alten überschreiben)
     try{
       const supa=getSupa();
       const nowIso=new Date().toISOString();
@@ -8185,7 +8217,7 @@ async function _fsSyncAggJetztKern(){
         else if(JSON.stringify(s)!==JSON.stringify(b)) schuelerAend.push({mein:sZeile(s),basis:sZeile(b)});
       });
       const schuelerDeletes=(_fsBaseline.students||[]).filter(b=>!curSIds.has(b.id)).map(b=>b.id);
-      if(schuelerUpserts.length) _fsPruefe(await supa.from("schueler").upsert(schuelerUpserts,{onConflict:"id"}));
+      if(schuelerUpserts.length){ _fsPruefe(await supa.from("schueler").upsert(schuelerUpserts,{onConflict:"id"})); _fsInBasis("students",snap.students,schuelerUpserts); }
       /* W14: Bestehende Schüler nicht mehr ganz überschreiben (sonst drehte die Gesamtansicht zurück, was Fahrlehrer-App oder
          Büro inzwischen geändert hatten, z. B. den Ausbildungsstand). Nur geänderte Spalten; frischen Stand lesen; hat jemand
          dieselbe Spalte geändert, bleibt sein Stand. Ausbildungsstand (jsonb) Feld für Feld zusammenführen. */
@@ -8234,7 +8266,7 @@ async function _fsSyncAggJetztKern(){
         termineUpserts.push(Object.assign(t,{fahrschule_id:_fsAgg.fahrschuleId, geloescht:false, erstellt_von:meineId, aktualisiert_am:nowIso}));
       });
       const termineDeletes=(_fsBaseline.lessons||[]).filter(b=>!b._synthetic&&!curTIds.has(b.id)).map(b=>b.id);
-      if(termineUpserts.length) _fsPruefe(await supa.from("kalender_termine").upsert(termineUpserts,{onConflict:"id"}));
+      if(termineUpserts.length){ _fsPruefe(await supa.from("kalender_termine").upsert(termineUpserts,{onConflict:"id"})); _fsInBasis("lessons",snap.lessons,termineUpserts); }
       const tErg=await _fsZeilenSicher(supa,"kalender_termine",termineAend,nowIso);
       // Löschen nur, was nirgends geändert wurde (sonst bleibt es; der Storno-Wunsch dafür verfällt)
       const tDel=await _fsLoeschenPruefen(supa,"kalender_termine",termineDeletes.map(id=>({id,roh:baseT[id]})));
@@ -8251,8 +8283,8 @@ async function _fsSyncAggJetztKern(){
       // K7: Stornierte Stunden einzeln mit Grund und Vermerk, der Rest wie bisher in den Papierkorb
       const termineStorno=tDel.loeschen.filter(id=>_stornoWert(id));
       for(const id of termineStorno){ await _stornoSchreiben(id,nowIso); _stornoVergessen(id); }
-      const termineWeg=tDel.loeschen.filter(id=>termineStorno.indexOf(id)<0);
-      if(termineWeg.length) _fsPruefe(await supa.from("kalender_termine").update({geloescht:true,aktualisiert_am:nowIso}).in("id",termineWeg));
+      const termineStornoSet=new Set(termineStorno);
+      await _fsLoeschenSchreiben(supa,"kalender_termine",{...tDel,loeschen:tDel.loeschen.filter(id=>!termineStornoSet.has(id)),bleibt:tDel.bleibt,weg:tDel.weg},nowIso);
 
       // ---- PRÜFUNGEN ---- (W14b: wie Termine)
       const baseP={}; (_fsBaseline.exams||[]).forEach(e=>baseP[e.id]=e);
@@ -8268,29 +8300,40 @@ async function _fsSyncAggJetztKern(){
         pruefungenUpserts.push(Object.assign(p,{fahrschule_id:_fsAgg.fahrschuleId, geloescht:false, erstellt_von:meineId, aktualisiert_am:nowIso}));
       });
       const pruefungenDeletes=(_fsBaseline.exams||[]).filter(b=>!curPIds.has(b.id)).map(b=>b.id);
-      if(pruefungenUpserts.length) _fsPruefe(await supa.from("kalender_pruefungen").upsert(pruefungenUpserts,{onConflict:"id"}));
+      if(pruefungenUpserts.length){ _fsPruefe(await supa.from("kalender_pruefungen").upsert(pruefungenUpserts,{onConflict:"id"})); _fsInBasis("exams",snap.exams,pruefungenUpserts); }
       const pErg=await _fsZeilenSicher(supa,"kalender_pruefungen",pruefungenAend,nowIso);
       const pDel=await _fsLoeschenPruefen(supa,"kalender_pruefungen",pruefungenDeletes.map(id=>({id,roh:baseP[id]})));
-      if(pDel.loeschen.length) _fsPruefe(await supa.from("kalender_pruefungen").update({geloescht:true,aktualisiert_am:nowIso}).in("id",pDel.loeschen));
+      await _fsLoeschenSchreiben(supa,"kalender_pruefungen",pDel,nowIso);
 
       // Baseline auf den geschriebenen Stand heben. Einträge ohne Fahrlehrer wurden NICHT geschrieben:
       // für sie bleibt der alte Vergleichsstand, damit sie beim nächsten Lauf wieder auffallen.
       const altT={}; (_fsBaseline.lessons||[]).forEach(l=>altT[l.id]=l);
       const altP={}; (_fsBaseline.exams||[]).forEach(e=>altP[e.id]=e);
       const behalte=(liste,ohne,alt)=>liste.map(x=>ohne.has(x.id)?alt[x.id]:x).filter(Boolean);
-      // W14/W14b: Geschriebene Einträge zeigen den Stand vom Server (dort kann inzwischen mehr stehen als hier, z. B. von der App).
-      // Nur, wenn hier während des Speicherns nichts mehr geändert wurde; sonst bleibt der alte Vergleichsstand, damit der
-      // nächste Lauf nur die neue Eingabe schreibt (und nichts zurückdreht, was woanders geändert wurde).
+      // W14/W14b: Geschriebene Einträge zeigen den Stand vom Server (dort kann inzwischen mehr stehen als hier, z. B. von der App),
+      // und der Vergleichsstand ist der Server-Stand. Wurde hier während des Speicherns weitergetippt, bleibt genau das als
+      // eigene Änderung für den nächsten Lauf (nichts Woanders-Geändertes wird so zurückgedreht).
+      if(_fsBaseline!==basisStart||!_fsAgg){ toast("Gespeichert ✓"); return true; }
       const lehrerName=id=>{ const l=(_fsAgg.lehrer||[]).find(x=>x.id===id); return l?(l.name||l.email):_fsNameAusAlle(id,"Unbekannt"); };
       let neuZeigen=false;
       const anServer=(feld,mapF,zeilen,weg,dazu)=>{
         const sListe=snap[feld];
-        const unveraendert=(sn)=>{ const lok=(DB[feld]||[]).find(x=>x.id===sn.id); return lok&&JSON.stringify(lok)===JSON.stringify(sn)?lok:null; };
+        const j=x=>JSON.stringify(x);
         sListe.forEach((sn,i)=>{
           const row=zeilen[sn.id]; if(!row)return;
-          const neu=mapF(row,lehrerName); if(JSON.stringify(neu)===JSON.stringify(sn))return;
-          const lok=unveraendert(sn); if(!lok)return;
-          _ersetzeInhalt(lok,JSON.parse(JSON.stringify(neu))); sListe[i]=neu; neuZeigen=true;
+          const neu=mapF(row,lehrerName); if(j(neu)===j(sn))return;
+          const lok=(DB[feld]||[]).find(x=>x.id===sn.id);
+          if(lok){
+            if(j(lok)===j(sn)) _ersetzeInhalt(lok,JSON.parse(JSON.stringify(neu)));
+            // Während des Speicherns hier weitergetippt: nur die Felder, die hier unberührt blieben, vom Server übernehmen.
+            // Dann unterscheidet sich der Eintrag vom Vergleichsstand (= Server) genau um das neu Getippte (Daten-Prüfer, Fall E).
+            else new Set([...Object.keys(lok),...Object.keys(sn),...Object.keys(neu)]).forEach(k=>{
+              if(j(lok[k])!==j(sn[k]))return;
+              if(neu[k]!==undefined) lok[k]=JSON.parse(JSON.stringify(neu[k])); else delete lok[k];
+            });
+            neuZeigen=true;
+          }
+          sListe[i]=neu;
         });
         // woanders gelöscht: hier auch weg (sonst käme er beim nächsten Speichern als „neu“ zurück)
         if(weg.size){
