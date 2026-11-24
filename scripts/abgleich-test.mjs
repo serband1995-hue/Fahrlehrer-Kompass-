@@ -652,6 +652,41 @@ fall("25 W14: Gesamtansicht – Leitung und Büro ändern dasselbe Telefon: Bür
   if (!/woanders/.test(r.toast)) f("Hinweis fehlt: " + r.toast);
 });
 
+fall("20b W14c: Büro ändert Telefon, Gerät ändert sonst etwas und lädt hoch, BEVOR es abruft – Telefon vom Büro bleibt", async (f) => {
+  await neu();
+  await setzeLokal("students", [{ id: "S1", name: "Anna Muster", telefon: "0151 1111111", notiz: "" }]);
+  await bruecke();
+  if (!(await zeile("schueler", "S1"))) return f("S1 wurde nicht hochgeladen");
+  await aendereZeile("schueler", "S1", { telefon: "0170 3333333", name: "Anna Beispiel", aktualisiert_am: "+1s" });
+  // Fahrlehrer war offline und ändert etwas anderes am Schüler; die Brücke lädt hoch, bevor ein Abruf kommt
+  await ruf(() => { DB.students.find((x) => x.id === "S1").notiz = "offline geschrieben"; });
+  await bruecke();
+  const z = await zeile("schueler", "S1");
+  if (!z || z.telefon !== "0170 3333333" || z.name !== "Anna Beispiel") f("Brücke schrieb alten Namen/alte Nummer zurück: " + JSON.stringify(z && { n: z.name, t: z.telefon }));
+  if (!z || !z.ausbildung || z.ausbildung.notiz !== "offline geschrieben") f("eigene Änderung kam nicht an: " + JSON.stringify(z && z.ausbildung));
+  // danach holt das Gerät den Stand vom Büro und lädt nichts erneut hoch
+  await ruf(() => pullSchuelerZuweisungen());
+  const s = await ruf(() => { const x = DB.students.find((y) => y.id === "S1"); return { n: x.name, t: x.telefon, no: x.notiz }; });
+  if (s.t !== "0170 3333333" || s.n !== "Anna Beispiel") f("Gerät hat Name/Telefon vom Büro nicht übernommen: " + JSON.stringify(s));
+  if (s.no !== "offline geschrieben") f("eigene Änderung auf dem Gerät verloren");
+  await zaehlerNull();
+  await bruecke();
+  const z2 = await zeile("schueler", "S1");
+  if (!z2 || z2.telefon !== "0170 3333333") f("Zweiter Lauf drehte das Telefon zurück: " + (z2 && z2.telefon));
+});
+
+fall("20c W14c: Schüler auf dem Server nicht mehr da – Brücke legt ihn wie bisher neu an (mit Name)", async (f) => {
+  await neu();
+  await setzeLokal("students", [{ id: "S1", name: "Anna Muster", telefon: "0151 1111111", notiz: "" }]);
+  await bruecke();
+  await setzeTabelle("schueler", []);
+  await ruf(() => { DB.students.find((x) => x.id === "S1").notiz = "neu"; });
+  await bruecke();
+  const z = await zeile("schueler", "S1");
+  if (!z) return f("Schüler nicht wieder angelegt");
+  if (z.name !== "Anna Muster" || z.telefon !== "0151 1111111") f("Name/Telefon fehlen: " + JSON.stringify({ n: z.name, t: z.telefon }));
+});
+
 /* ---------- W14b: Gesamtansicht speichert Termine und Prüfungen sicher ---------- */
 const serverPruefung = (id, extra = {}) => Object.assign({
   id, fahrschule_id: "fs-1", fahrlehrer_id: "fl-1", schueler_id: "S1", datum: "2026-12-01", result: null, pruefer: null, attempt: 1,
