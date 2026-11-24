@@ -6060,12 +6060,12 @@ async function _fsLoadAggData(fahrschuleId){
   _ladePakete(supa, (schuelerR.data||[]).map(r=>r.id)); // Werkstatt 13
   DB.lessons=(termineR.data||[]).map(r=>_fsMapTermin(r,lehrerName));
   DB.exams=(pruefungenR.data||[]).map(r=>_fsMapPruefung(r,lehrerName));
-  // Urlaub als künstliche "Blockiert"-Termine einspeisen - Namensabgleich, da fahrschule_urlaub
-  // Namen als Freitext speichert statt als Fahrlehrer-ID. Bei keinem Treffer wird nichts blockiert
-  // (sicherer als fälschlich jemand anderen zu blockieren).
+  // Urlaub als künstliche "Blockiert"-Termine einspeisen. W14: Abgleich über die Fahrlehrer-ID (fahrschule_urlaub.fahrlehrer_id);
+  // ohne ID (andere Person, z. B. Büro) wird niemand blockiert. Nur eine alte Datenbank ohne die Spalte gleicht noch über den Namen ab.
   const urlaubBlocks=[];
   (urlaubR.data||[]).forEach(u=>{
-    const passendeLehrer=lehrer.filter(x=>((x.name||x.email||"").trim().toLowerCase())===((u.mitarbeiter_name||"").trim().toLowerCase()));
+    const passendeLehrer=("fahrlehrer_id" in u)?lehrer.filter(x=>u.fahrlehrer_id&&x.id===u.fahrlehrer_id)
+      :lehrer.filter(x=>((x.name||x.email||"").trim().toLowerCase())===((u.mitarbeiter_name||"").trim().toLowerCase()));
     passendeLehrer.forEach(lh=>{
       let d=new Date(u.von+"T00:00:00"); const bisD=new Date(u.bis+"T00:00:00"); let guard=0;
       while(d<=bisD&&guard++<400){
@@ -7418,8 +7418,9 @@ async function _fsLadeUrlaub(){
   const heute=todayISO();
   const {data}=await supa.from("fahrschule_urlaub").select("*").eq("fahrschule_id",_fsAgg.fahrschuleId).gte("bis",heute).order("von");
   const rows=(data||[]).map(u=>`<div class="fs-card">
-    <div class="fs-name">${esc(u.mitarbeiter_name)}</div>
-    <div class="fs-sub">${isoDE(u.von)} – ${isoDE(u.bis)}${u.notiz?` · ${esc(u.notiz)}`:''}</div>
+    <div class="fs-name">${esc(_fsUrlaubName(u))}</div>
+    <div class="fs-sub">${u.von===u.bis?isoDE(u.von):isoDE(u.von)+" – "+isoDE(u.bis)}${u.notiz?` · ${esc(u.notiz)}`:''}</div>
+    ${_fsUrlaubOhneKalender(u)?'<div class="fs-sub" style="font-weight:700;">Ohne Kalender (blockiert nichts)</div>':""}
     <div class="fs-actions"><button class="fs-btn-kill" onclick="fsUrlaubLoeschen(${_jsArg(u.id)})">Löschen</button></div>
   </div>`).join("")||'<p class="muted-p">Aktuell kein eingetragener Urlaub.</p>';
   const wrap=$("#fsUrlaubWrap");
@@ -7427,23 +7428,63 @@ async function _fsLadeUrlaub(){
     <div class="btn-row" style="margin-top:10px;"><button class="btn btn-primary" onclick="fsUrlaubHinzufuegen()">+ Urlaub eintragen</button></div>
   </div>`;
 }
-async function fsUrlaubHinzufuegen(){
-  const name=(prompt("Name:")||"").trim();
-  if(!name)return;
-  const von=(prompt("Von (JJJJ-MM-TT):",todayISO())||"").trim();
-  const bis=(prompt("Bis (JJJJ-MM-TT):",todayISO())||"").trim();
-  if(!von||!bis)return;
-  const supa=getSupa();
-  const {data:sessionData}=await supa.auth.getSession();
-  const {error}=await supa.from("fahrschule_urlaub").insert({
-    fahrschule_id:_fsAgg.fahrschuleId, mitarbeiter_name:name, von, bis, erstellt_von:_uidAus(sessionData)
+// W14: Name eines Urlaubs: bei einem Fahrlehrer der aktuelle Profilname (umbenennen ändert nichts am Abgleich), sonst der eingetragene Name
+function _fsUrlaubName(u){
+  if(u.fahrlehrer_id){ const l=(_fsAgg&&_fsAgg.lehrer||[]).find(x=>x.id===u.fahrlehrer_id); if(l)return l.name||l.email||u.mitarbeiter_name||""; if(window._fsAlleNamen&&window._fsAlleNamen[u.fahrlehrer_id])return window._fsAlleNamen[u.fahrlehrer_id]; }
+  return u.mitarbeiter_name||"";
+}
+// W14: blockiert dieser Urlaub keinen Kalender? (keine ID oder Person ist kein unterrichtender Fahrlehrer mehr)
+function _fsUrlaubOhneKalender(u){ if(!("fahrlehrer_id" in u))return false; return !u.fahrlehrer_id||!(_fsAgg&&_fsAgg.lehrer||[]).some(l=>l.id===u.fahrlehrer_id); }
+// W14: Eintragen per Blatt (statt dreimal Eingabefeld): Person wählen (Fahrlehrer der Fahrschule oder andere Person), von, bis
+function fsUrlaubHinzufuegen(){
+  if(!_fsAgg)return;
+  const lehrer=(_fsAgg.lehrer||[]).slice().sort((a,b)=>String(a.name||a.email||"").localeCompare(String(b.name||b.email||""),"de"));
+  const h=todayISO();
+  const nameVon=l=>{ const n=l.name||l.email||""; return lehrer.filter(x=>(x.name||x.email||"")===n).length>1&&l.email?n+" ("+l.email+")":n; }; // gleiche Namen unterscheidbar
+  openSheet(`<div class="sheet-h">Urlaub eintragen</div>
+    <div class="field"><label for="urWer">Für wen?</label><select id="urWer">
+      <option value="">– bitte wählen –</option>
+      ${lehrer.map(l=>`<option value="${esc(l.id)}">${esc(nameVon(l))}</option>`).join("")}
+      <option value="_andere">Andere Person (ohne Kalender)</option></select></div>
+    <p class="muted-p" id="urHinweis" style="font-size:14px;margin:-4px 0 10px;">Bei einem Fahrlehrer sind die Tage in seinem Kalender blockiert.</p>
+    <div class="field" id="urNameFeld" hidden><label for="urName">Name der Person</label><input type="text" id="urName" maxlength="80" autocomplete="off"></div>
+    <div class="afs-zwei"><div class="field"><label for="urVon">Von</label><input type="date" id="urVon" value="${h}" style="min-width:0;"></div>
+      <div class="field"><label for="urBis">Bis</label><input type="date" id="urBis" value="${h}" style="min-width:0;"></div></div>
+    <div class="btn-row sheet-knoepfe"><button class="btn btn-ghost" id="urAbbr" style="flex:0;padding:13px 18px;">Abbrechen</button><button class="btn btn-primary" id="urSpeichern">Eintragen</button></div>`);
+  const wer=$("#urWer"), nameFeld=$("#urNameFeld"), von=$("#urVon"), bis=$("#urBis");
+  wer.addEventListener("change",()=>{ nameFeld.hidden=wer.value!=="_andere"; $("#urHinweis").textContent=wer.value==="_andere"?"Steht nur in der Urlaubsliste (z. B. Büro) und blockiert keinen Kalender.":"Bei einem Fahrlehrer sind die Tage in seinem Kalender blockiert."; if(wer.value==="_andere")$("#urName").focus(); });
+  von.addEventListener("change",()=>{ if(bis.value&&bis.value<von.value)bis.value=von.value; });
+  $("#urAbbr").addEventListener("click",closeSheet);
+  $("#urSpeichern").addEventListener("click",async()=>{
+    const andere=wer.value==="_andere";
+    const nameAndere=$("#urName").value.trim();
+    // Heißt die „andere Person“ genau wie ein Fahrlehrer (eindeutig), ist er gemeint – wie der Server es auch zuordnet
+    const gleich=andere?lehrer.filter(x=>(x.name||x.email||"").trim().toLowerCase()===nameAndere.toLowerCase()):[];
+    const lid=andere?(gleich.length===1?gleich[0].id:null):wer.value;
+    const l=lid?lehrer.find(x=>x.id===lid):null;
+    const name=andere?nameAndere:(l?(l.name||l.email||""):"");
+    if(!wer.value){ toast("Bitte wählen, für wen"); wer.focus(); return; }
+    if(!name){ toast("Bitte einen Namen eintragen"); $("#urName").focus(); return; }
+    if(!von.value||!bis.value){ toast("Bitte von und bis eintragen"); return; }
+    if(bis.value<von.value){ toast("„Bis“ liegt vor „von“"); bis.focus(); return; }
+    if(bis.value<todayISO()){ toast("Der Urlaub liegt schon in der Vergangenheit"); bis.focus(); return; }
+    if((Date.parse(bis.value+"T00:00:00Z")-Date.parse(von.value+"T00:00:00Z"))/864e5>365){ toast("Höchstens ein Jahr am Stück"); return; }
+    const b=$("#urSpeichern"); b.disabled=true;
+    const supa=getSupa();
+    const {data:sessionData}=await supa.auth.getSession();
+    const {error}=await supa.from("fahrschule_urlaub").insert({
+      fahrschule_id:_fsAgg.fahrschuleId, fahrlehrer_id:lid, mitarbeiter_name:name, von:von.value, bis:bis.value, erstellt_von:_uidAus(sessionData)
+    });
+    b.disabled=false;
+    if(error){ toast("Nicht eingetragen: "+(error.code==="22023"&&/gehört nicht zu dieser Fahrschule/.test(error.message||"")?"diese Person gehört nicht zur Fahrschule":"bitte später nochmal")); return; }
+    closeSheet();
+    toast("Urlaub eingetragen ✓");
+    _fsLadeUrlaub();
+    if(lid&&typeof _fsRefreshAggData==="function")_fsRefreshAggData(); // Kalender zeigt die Tage gleich als blockiert
   });
-  if(error){toast("Fehler: "+error.message);return;}
-  toast("Urlaub eingetragen ✓");
-  _fsLadeUrlaub();
 }
 async function fsUrlaubLoeschen(id){
-  await _cloudLoeschenMitRueckgaengig("fahrschule_urlaub",id,"Urlaubseintrag gelöscht",()=>_fsLadeUrlaub());
+  await _cloudLoeschenMitRueckgaengig("fahrschule_urlaub",id,"Urlaubseintrag gelöscht",()=>{ _fsLadeUrlaub(); if(typeof _fsRefreshAggData==="function")_fsRefreshAggData(); });
 }
 
 /* ===== Zusatzblock in der Schülerakte: Fahrlehrer verschieben + Büro-Notiz/To-do ===== */
@@ -7902,7 +7943,7 @@ const STORE_KEY="serband-app-v1";
    Wird in den Einstellungen angezeigt + für den Update-Hinweis genutzt. */
 // K1: voreingestellter Wetter-Ort (früh definiert, weil ensureDB ihn schon beim Start braucht)
 const WETTER_START={city:"Offenbach",lat:50.1006,lon:8.7665};
-const APP_VERSION="2026.11.24.9";
+const APP_VERSION="2026.11.24.11";
 try{const f=document.getElementById("drawerFoot"); if(f)f.textContent="Fahrlehrer-Kompass · Version "+APP_VERSION;}catch(e){}
 // Nutzungsbedingungen & Haftungsausschluss (Bereich: rechtliche Absicherung) - Version hochzählen
 // und alle Nutzer müssen erneut zustimmen, sobald sich der Text inhaltlich ändert.

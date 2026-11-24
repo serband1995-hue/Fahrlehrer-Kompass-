@@ -166,6 +166,23 @@ for (const R of ROLLEN) {
       }
       return f;
     });
+    // W14 (24.11.2026): Urlaub trägt die Gesamtansicht per Blatt ein (Person aus der Liste), gespeichert mit Fahrlehrer-ID
+    if (darfGesamt) await pruefe("R19", `${P} W14 Urlaub eintragen: Person aus der Liste, mit Fahrlehrer-ID, ohne Eingabefenster`, async () => {
+      const f = [];
+      await page.evaluate(async () => { if (!_fsAgg) await _fsEnterAggMode((_authProfile && _authProfile.fahrschule_id) || "fs-muster"); }); await warte(page, 600);
+      const vorher = dialogZahl;
+      await page.evaluate(() => { window.__schreib = []; routeFahrschuleUrlaub(); fsUrlaubHinzufuegen(); }); await warte(page, 500);
+      const opt = await page.evaluate(() => [...document.querySelectorAll("#urWer option")].map((o) => o.value));
+      if (!opt.includes("u-anna")) f.push("Fahrlehrerin fehlt in der Auswahl: " + opt.join(","));
+      const knopf = await page.evaluate(() => { const b = document.getElementById("urSpeichern"); const r = b && b.getBoundingClientRect(); return r ? r.height : 0; });
+      if (knopf < 43.5) f.push("Knopf „Eintragen“ nur " + knopf + " px hoch");
+      await page.evaluate(() => { const w = document.getElementById("urWer"); w.value = "u-anna"; w.dispatchEvent(new Event("change")); document.getElementById("urSpeichern").click(); }); await warte(page, 600);
+      const ins = await page.evaluate(() => window.__schreib.filter((x) => x.tab === "fahrschule_urlaub" && x.art === "insert").map((x) => x.werte));
+      if (ins.length !== 1 || ins[0].fahrlehrer_id !== "u-anna" || ins[0].mitarbeiter_name !== "Anna Muster") f.push("Eintrag falsch: " + JSON.stringify(ins));
+      if (dialogZahl !== vorher) f.push("Eingabefenster (prompt) geöffnet");
+      await page.evaluate(async () => { try { closeSheet(); } catch (e) {} if (_hatAdminUmschalter() && _fsAgg) await _fsExitAggMode(); }); await warte(page, 500);
+      return f;
+    });
     if (!darfGesamt) {
       await pruefe("R17", `${P} #fs_dash und eingeschleuster Menüpunkt öffnen nichts`, async () => {
         const f = [];

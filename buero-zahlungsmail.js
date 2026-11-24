@@ -25,6 +25,7 @@ const ZM_FEHLER = {
   zu_viele_schule: "Heute wurden schon 100 Mails verschickt. Morgen geht es wieder.",
   ungueltige_anfrage: ZM_NICHT_MOEGLICH_TEXT,
   modus_geaendert: null, // Text hängt vom neuen Modus ab (zmModusText)
+  empfaenger_geaendert: "Die Empfänger wurden inzwischen geändert (z. B. an einem anderen PC). Es wurde nichts gesendet. Bitte prüfen und noch einmal senden.",
   nicht_gesperrt: null, // Text mit Namen in zmSende
   keine_email: "Keine E-Mail-Adresse in der Akte.",
   keine_testadresse: "Es ist keine Test-Adresse hinterlegt. Bitte unter Einstellungen eine eintragen.",
@@ -189,7 +190,21 @@ function zmBindeEinstellungen(ziel) {
 }
 
 /* ---------- 2. Schüler-Akte: Block „Zahlung per Mail“ ---------- */
-function zmMailAdresse(x) { return String((x && x.email) || ((x && x.ausbildung) || {}).email || "").trim(); }
+function zmMailAdresse(x) { return String((x && x.email) || "").trim() || String(((x && x.ausbildung) || {}).email || "").trim(); }
+// W14: an wen die echte Mail geht – gleiche Regel wie der Server (zahlungs_mail_vorbereiten): Wahl in der Akte
+// (Schüler, Eltern, beide; Vorgabe beide), ohne Eltern-Adresse nur der Schüler. Liste von [wer, adresse].
+function zmEmpfaenger(x) {
+  const s = zmMailAdresse(x), el = (S.eltern && x && S.eltern[x.id]) || null, e = el && el.email ? String(el.email).trim() : "";
+  const wahl = e ? (["schueler", "eltern", "beide"].includes(el.mail_an) ? el.mail_an : "beide") : "schueler";
+  const liste = [];
+  if ((wahl === "schueler" || wahl === "beide") && s) liste.push(["Schüler", s]);
+  if ((wahl === "eltern" || wahl === "beide") && e && !liste.some(([, a]) => a.toLowerCase() === e.toLowerCase())) liste.push(["Eltern", e]);
+  return liste;
+}
+function zmEmpfaengerText(liste) {
+  if (liste.length === 1 && liste[0][0] === "Schüler") return liste[0][1]; // wie bisher: nur die Adresse
+  return liste.map(([w, a]) => `${w} (${a})`).join(" und ");
+}
 // Welche Knöpfe gibt es für diesen Schüler, mit vorbelegtem Betrag und „wofür“?
 function zmAngebote(x) {
   const heute = KR.todayISO(), liste = [];
@@ -231,19 +246,19 @@ function zmBlockHTML(sid) {
   if (!x) return "";
   const angebote = zmAngebote(x);
   if (!angebote.length) return `<div class="voll" id="zmBlock" data-zmsid="${esc(sid)}" hidden></div>`; // leerer Platz: ein späteres „Zahlung offen“ kann den Block füllen
-  const echt = zmEcht(), daten = zmDatenDa(), mail = zmMailAdresse(x), ladefehler = !!S.zmLadefehler;
-  const ohneMail = echt && !mail;
+  const echt = zmEcht(), daten = zmDatenDa(), empf = zmEmpfaenger(x), ladefehler = !!S.zmLadefehler;
+  const ohneMail = echt && !empf.length;
   const hinweise = [];
   if (ladefehler) hinweise.push(`<p class="zm-hinweis" data-zmladefehler>${esc(LADEFEHLER_TEXT)}</p>`);
   else if (!daten) hinweise.push(`<p class="zm-hinweis" data-zmohnedaten>Bitte zuerst unter <a href="#fristen" data-zmeinst>Einstellungen</a> die Zahlungsdaten eintragen.</p>`);
-  else if (echt) hinweise.push(`<p class="zm-echt" data-zmecht>Echt: Mail geht an ${mail ? esc(mail) : "den Schüler (E-Mail fehlt)"}</p>`);
+  else if (echt) hinweise.push(`<p class="zm-echt" data-zmecht>Echt: Mail geht an ${empf.length ? esc(zmEmpfaengerText(empf)) : "den Schüler (E-Mail fehlt)"}</p>`);
   else hinweise.push(`<p class="zm-modus-zeile zm-test" data-zmtest>Test-Modus: Mail geht an die Test-Adresse</p>`);
   if (S.zmVerlaufFehler) hinweise.push(`<p class="zm-hinweis" data-zmverlauf>Verlauf konnte nicht geladen werden. Haken können fehlen.</p>`);
   if (ohneMail && daten && !ladefehler) hinweise.push(`<p class="zm-hinweis" data-zmkeinemail>Keine E-Mail-Adresse in der Akte.</p>`);
   const zeilen = angebote.map((a) => {
     const k = ZM_ARTEN[a.art], letzte = zmLetzte(sid, a.art), schluessel = sid + "|" + a.art;
     const eigene = ZM.laeuft.has(schluessel), andere = ZM.laeuft.size > 0 && !eigene;
-    const grund = ladefehler ? "Zahlungsdaten konnten nicht geladen werden" : !daten ? "Zahlungsdaten fehlen" : ohneMail ? "E-Mail fehlt" : eigene ? "Gerade wird gesendet" : andere ? "Erst die laufende Mail abwarten" : "";
+    const grund = ladefehler ? "Zahlungsdaten konnten nicht geladen werden" : echt && S.elternFehler ? "Eltern-Angaben konnten nicht geladen werden" : !daten ? "Zahlungsdaten fehlen" : ohneMail ? "E-Mail fehlt" : eigene ? "Gerade wird gesendet" : andere ? "Erst die laufende Mail abwarten" : "";
     const e = ZM.entwurf[schluessel] || {};
     const betrag = "betrag" in e ? e.betrag : a.betrag, wofuer = "wofuer" in e ? e.wofuer : a.wofuer;
     const offen = ZM.offen.has(schluessel);
@@ -256,7 +271,7 @@ function zmBlockHTML(sid) {
         <label>Betrag in €<input type="text" inputmode="decimal" maxlength="10" autocomplete="off" data-zmbetrag value="${esc(betrag)}" placeholder="z. B. 120,00"></label>
         <label>Wofür<input type="text" maxlength="80" autocomplete="off" data-zmwofuer value="${esc(wofuer)}"><span class="leise klein">Erscheint in der Mail und im Verwendungszweck, der Name wird automatisch ergänzt. Bitte keine weiteren Namen eintragen.</span></label>
         <p class="zm-fehler" data-zmmeldung role="alert" hidden></p>
-        <div class="knopfreihe"><button type="button" class="knopf haupt" data-zmsenden="${esc(a.art)}"${grund ? " disabled" : ""}>${echt ? "Mail an Schüler senden" : "Test-Mail senden"}</button></div>
+        <div class="knopfreihe"><button type="button" class="knopf haupt" data-zmsenden="${esc(a.art)}"${grund ? " disabled" : ""}>${echt ? `Mail an ${empf.length ? empf.map(([w]) => w).join(" und ") : "Schüler"} senden` : "Test-Mail senden"}</button></div>
         ${grund ? `<p class="leise klein zm-grund" data-zmgrund>${esc(grund)}</p>` : ""}
       </div>
     </div>`;
@@ -321,7 +336,9 @@ function zmBinde(block, dlg, sid) {
       const sitz = await zmSitzung(); // Token und PIN-Sitzung jetzt merken, nicht erst nach der Wartezeit
       zmNeuZeichnen(sid);
       // 5 Sekunden „Rückgängig“; erst danach geht die Mail wirklich los (Zeit um oder nächster Rückgängig-Hinweis)
-      const u = toastUndo(`${modus === "echt" ? "Wird an den Schüler gesendet" : "Test-Mail wird gesendet"} · ${zmEuroText(cent)} · ${name}`, async () => {
+      const anWen = zmEmpfaenger(x).map(([w]) => w === "Schüler" ? "den Schüler" : "die Eltern").join(" und ") || "den Schüler";
+      const empfAdr = zmEmpfaenger(x).map(([, a]) => a.toLowerCase()); // W14: der Server sendet nur, wenn er dieselben Empfänger bestimmt
+      const u = toastUndo(`${modus === "echt" ? "Wird an " + anWen + " gesendet" : "Test-Mail wird gesendet"} · ${zmEuroText(cent)} · ${name}`, async () => {
         ZM.laeuft.delete(schluessel);
         zmNeuZeichnen(sid);
         toast(`Abgebrochen, an ${name} wurde nichts gesendet`);
@@ -329,11 +346,11 @@ function zmBinde(block, dlg, sid) {
         ms: Number(window.ZM_WARTE_MS) > 0 ? Number(window.ZM_WARTE_MS) : 5000, // Vorgabe 5 Sekunden; Tests setzen window.ZM_WARTE_MS
         nachAblauf: async (verlassen) => {
           if (verlassen) { ZM.laeuft.delete(schluessel); return; } // Seite wird verlassen: lieber nichts senden
-          const erg = await zmSende(sid, art, cent, wofuer, modus, sitz, name);
+          const erg = await zmSende(sid, art, cent, wofuer, modus, sitz, name, empfAdr);
           ZM.laeuft.delete(schluessel);
           if (erg.ok) { delete ZM.entwurf[schluessel]; ZM.offen.delete(schluessel); zmNeuZeichnen(sid); return; }
           if (erg.code === "modus_geaendert") await zmDatenNeuLaden();
-          if (erg.code === "nicht_gesperrt" && typeof ladeDaten === "function") ladeDaten(); // Stand der Schüler auffrischen
+          if ((erg.code === "nicht_gesperrt" || erg.code === "empfaenger_geaendert") && typeof ladeDaten === "function") ladeDaten(); // Stand der Schüler (und Eltern-Wahl) auffrischen
           const text = erg.code === "nicht_gesperrt" ? erg.text : `Mail an ${name}: ${erg.text}`;
           const b = zmFinde(sid), sichtbar = !!(b && b.closest("dialog") && b.closest("dialog").open);
           if (sichtbar && erg.code !== "nicht_gesperrt") zmNeuZeichnen(sid, art, text); // Fehler nur einmal: im offenen Formular, sonst als Hinweis oben
@@ -359,10 +376,10 @@ async function zmDatenNeuLaden() {
 }
 
 // Aufruf der Edge-Funktion; Rückgabe { ok } oder { ok:false, code, text }
-async function zmSende(sid, art, betragCent, wofuer, erwarteterModus, sitz, name) {
+async function zmSende(sid, art, betragCent, wofuer, erwarteterModus, sitz, name, empfAdr) {
   let data = null, error = null;
   try {
-    ({ data, error } = await supa.functions.invoke("zahlungs-mail", { body: { requester_token: sitz.token, buero_sitzung: sitz.sitzung, schueler_id: sid, art, betrag_cent: betragCent, wofuer, erwarteter_modus: erwarteterModus } }));
+    ({ data, error } = await supa.functions.invoke("zahlungs-mail", { body: { requester_token: sitz.token, buero_sitzung: sitz.sitzung, schueler_id: sid, art, betrag_cent: betragCent, wofuer, erwartete_empfaenger: erwarteterModus === "echt" && Array.isArray(empfAdr) ? empfAdr : undefined, erwarteter_modus: erwarteterModus } }));
   } catch (e) { error = e || new Error("Netz"); }
   let code = (data && data.fehler) || null, neuerModus = data && data.modus;
   if (!code && error) {
@@ -383,6 +400,9 @@ async function zmSende(sid, art, betragCent, wofuer, erwarteterModus, sitz, name
   const zeile = { id: data.id || "lokal-" + Date.now(), fahrschule_id: S.fsId, schueler_id: sid, art, betrag_cent: betragCent, wofuer, modus: data.modus || erwarteterModus,
     empfaenger_kurz: data.empfaenger_kurz || null, status: "gesendet", bearbeiter: person, angelegt_am: jetzt, gesendet_am: jetzt };
   S.zahlungsMails.unshift(zeile); ZM.lokal.push({ t: Date.now(), row: zeile }); // ein gerade laufendes Laden darf den Eintrag nicht verlieren
-  toast(`Gesendet an ${name} ✓${data.modus === "test" ? " (Test: an die Test-Adresse)" : ""}`);
+  // W14: je Empfänger eine eigene Mail; ging eine davon nicht raus, deutlich sagen (die andere ist gesendet)
+  const nichtAn = Array.isArray(data.nicht_an) ? data.nicht_an.filter((w) => w === "Eltern" || w === "Schüler") : [];
+  if (nichtAn.length) toast(`Gesendet, aber nicht an ${nichtAn.map((w) => w === "Eltern" ? "die Eltern" : "den Schüler").join(" und ")}. Die andere Mail ist angekommen. Zum Nachsenden in der Akte „${nichtAn[0] === "Eltern" ? "nur Eltern" : "nur Schüler"}“ wählen, sonst bekommt sie der andere doppelt.`, true);
+  else toast(`Gesendet an ${name} ✓${data.modus === "test" ? " (Test: an die Test-Adresse)" : ""}`);
   return { ok: true };
 }

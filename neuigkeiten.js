@@ -4,12 +4,20 @@
    "kurz" (höchstens ~60 Zeichen) erscheint nach dem Update einmal als kleiner Hinweis (verschwindet von selbst, kein Knopf).
    Einfache Worte, keine Fachwörter, keine Schülerdaten. */
 window.KOMPASS_NEU = [
-  { version: "2026.11.24.9", datum: "2026-11-24", kurz: "Büro: Pakete an Schüler verkaufen, „noch offen“ sehen.",
+  { version: "2026.11.24.11", datum: "2026-11-24", kurz: "Büro: Pakete an Schüler verkaufen, „noch offen“ sehen.",
     punkte: ["Im Schülerfenster wählst du „Normale Anmeldung“ oder ein Paket. Beim Speichern ist das Paket verkauft. Die Preise bleiben dann fest, auch wenn sich die Preisliste ändert.",
              "Mit „Anpassen“ änderst du das Paket nur für diesen Schüler, zum Beispiel mehr Übungsstunden.",
              "In der Akte steht bei jedem Posten, was schon gefahren ist und was noch offen ist, zum Beispiel „12 von 20 gefahren · noch 8 offen“.",
              "In der App sieht der Fahrlehrer das Paket mit demselben Stand, aber ohne Preise.",
              "Paket wechseln oder zurück zur normalen Anmeldung geht ohne Rückfrage, danach kannst du es rückgängig machen."] },
+  { version: "2026.11.24.10", datum: "2026-11-24", kurz: "Büro: Zahlungs-Mails jetzt auch an die Eltern.",
+    punkte: ["In der Schüler-Akte gibt es ein Feld für die E-Mail der Eltern.",
+             "Darunter wählst du, wer die Zahlungs-Mail bekommt: Schüler und Eltern, nur Eltern oder nur Schüler.",
+             "Schüler und Eltern bekommen je eine eigene Mail. Niemand sieht die Adresse des anderen."] },
+  { version: "2026.11.24.9", datum: "2026-11-24", kurz: "Urlaub wird jetzt sicher der richtigen Person zugeordnet.",
+    punkte: ["In der Gesamtansicht trägst du Urlaub jetzt in einem Fenster ein: Person aus der Liste wählen, von und bis.",
+             "Der Kalender blockiert den Urlaub bei genau dieser Person, auch wenn sie später ihren Namen ändert.",
+             "Urlaub von anderen Personen (zum Beispiel Büro) steht nur in der Liste und blockiert keinen Kalender."] },
   { version: "2026.11.24.8", datum: "2026-11-24", kurz: "Speichern überschreibt keine neueren Änderungen mehr.",
     punkte: ["Im Büro speichert die Schüler-Akte nur noch, was du im Fenster geändert hast. Was die App oder ein anderer PC inzwischen geändert hat, bleibt.",
              "Hat jemand dasselbe Feld gleichzeitig geändert, zeigt das Fenster beide Werte. Mit „Meine Eingabe nehmen“ gilt deine.",
