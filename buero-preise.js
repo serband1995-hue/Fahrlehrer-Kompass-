@@ -14,6 +14,9 @@ const PR_ARTEN = [
   ["sonderfahrt", "Sonderfahrten", "45min", true, "Überlandfahrt"],
   ["pruefung_praxis", "Vorstellung praktische Prüfung", "pauschal", true, "Vorstellung zur praktischen Prüfung"],
   ["pruefung_theorie", "Vorstellung theoretische Prüfung", "pauschal", true, "Vorstellung zur theoretischen Prüfung"],
+  // Werkstatt 13 (Paket-Baukasten): Lernapp und Simulator als eigene Preise; erst wählbar, wenn die Datenbank sie kennt (bkDa)
+  ["lernapp", "Fahr-Akademie Lernapp", "pauschal", false, "Fahr-Akademie Lernapp"],
+  ["simulator", "Simulator", "pauschal", false, "Simulator"],
   ["reaktivierung", "Reaktivierung", "pauschal", false, "Reaktivierung"],
   ["paket", "Pakete", "paket", true, ""],
   ["sonstiges", "Sonstiges", "pauschal", false, ""],
@@ -21,6 +24,7 @@ const PR_ARTEN = [
 const PR_EINHEITEN = [["pauschal", "pauschal"], ["45min", "je 45 Minuten"], ["fahrt", "je Fahrt"], ["paket", "je Paket"]];
 const PR_SONDER = ["Überlandfahrt", "Autobahnfahrt", "Fahrt bei Dämmerung oder Dunkelheit"];
 const PR_FORMAT_VERSION = 1;
+const BK_NEUE_ARTEN_PR = ["lernapp", "simulator"]; // die Datenbank kennt sie erst ab Migration 20261124_paket_01
 
 function prArt(art) { return PR_ARTEN.find((a) => a[0] === art) || [art, art, "pauschal", false, ""]; }
 function prEinheit(e) { const x = PR_EINHEITEN.find((a) => a[0] === e); return x ? x[1] : e; }
@@ -125,10 +129,10 @@ function prFormular(vorlage, nurBetrag) {
       </div>`;
   }
   return `<div class="formular">
-      <label>Art<select name="art">${PR_ARTEN.map(([a, n]) => `<option value="${a}"${v.art === a ? " selected" : ""}>${esc(n)}</option>`).join("")}</select></label>
+      <label>Art<select name="art">${PR_ARTEN.filter(([a]) => !BK_NEUE_ARTEN_PR.includes(a) || v.art === a || (typeof bkDa === "function" && bkDa())).map(([a, n]) => `<option value="${a}"${v.art === a ? " selected" : ""}>${esc(n)}</option>`).join("")}</select></label>
       <label>Klasse<select name="klasse">${klassenOptionen(v.klasse || "")}</select></label>
       <label class="voll">Bezeichnung<input type="text" name="bezeichnung" maxlength="120" required list="prVorschlaege" value="${esc(v.bezeichnung || "Grundbetrag")}"></label>
-      <datalist id="prVorschlaege">${PR_SONDER.concat(PR_ARTEN.map((a) => a[4]).filter(Boolean), (S.pakete || []).map((p) => p.name)).map((n) => `<option value="${esc(n)}">`).join("")}</datalist>
+      <datalist id="prVorschlaege">${PR_SONDER.concat(PR_ARTEN.map((a) => a[4]).filter(Boolean), (S.pakete || []).filter((p) => p.aktiv !== false).map((p) => p.name)).map((n) => `<option value="${esc(n)}">`).join("")}</datalist>
       <label>Einheit<select name="einheit">${PR_EINHEITEN.map(([e, n]) => `<option value="${e}">${esc(n)}</option>`).join("")}</select></label>
       <label>Preis in €<input type="number" name="betrag" min="0" max="100000" step="0.01" inputmode="decimal" required></label>
       <label>Gültig ab<input type="date" name="ab" required value="${esc(heute)}"${min}></label>

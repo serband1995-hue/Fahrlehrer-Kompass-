@@ -6471,7 +6471,7 @@ async function routeFahrschuleDetail(fahrschuleId){
     </div>`;}).join("")||'<p class="muted-p" style="font-size:13px;">Noch keine Fahrlehrer.</p>';
 
   const lehrerOptionsFor=(sel)=>`<option value="">— nicht zugeordnet —</option>`+lehrer.map(l=>`<option value="${l.id}" ${l.id===sel?"selected":""}>${esc(l.name||l.email)}</option>`).join("");
-  const paketOptionsFor=(sel)=>`<option value="">— kein Paket —</option>`+pakete.map(p=>`<option value="${p.id}" ${p.id===sel?"selected":""}>${esc(p.name)}</option>`).join("");
+  const paketOptionsFor=(sel)=>`<option value="">— kein Paket —</option>`+pakete.filter(p=>p.aktiv!==false||p.id===sel).map(p=>`<option value="${p.id}" ${p.id===sel?"selected":""}>${esc(p.name)}</option>`).join("");
 
   const schuelerRows=schueler.map(s=>{
     const paketName=s.paket_id?esc((pakete.find(p=>p.id===s.paket_id)||{}).name||""):"";
@@ -6504,7 +6504,7 @@ async function routeFahrschuleDetail(fahrschuleId){
 
   const paketeVerwaltung=pakete.map(p=>`
     <div class="field" style="display:flex;align-items:center;gap:8px;">
-      <span style="flex:1;">${esc(p.name)}</span>
+      <span style="flex:1;">${esc(p.name)}${p.aktiv===false?' <small style="color:var(--muted);">(archiviert, im Büro zurückholen)</small>':''}</span>
       <button class="btn btn-ghost" style="padding:6px 12px;font-size:12px;" onclick="paketUmbenennen(${_jsArg(p.id)},${_jsArg(fahrschuleId)})">Umbenennen</button>
     </div>`).join("");
 
@@ -7883,7 +7883,7 @@ const STORE_KEY="serband-app-v1";
    Wird in den Einstellungen angezeigt + für den Update-Hinweis genutzt. */
 // K1: voreingestellter Wetter-Ort (früh definiert, weil ensureDB ihn schon beim Start braucht)
 const WETTER_START={city:"Offenbach",lat:50.1006,lon:8.7665};
-const APP_VERSION="2026.11.24.6";
+const APP_VERSION="2026.11.24.7";
 try{const f=document.getElementById("drawerFoot"); if(f)f.textContent="Fahrlehrer-Kompass · Version "+APP_VERSION;}catch(e){}
 // Nutzungsbedingungen & Haftungsausschluss (Bereich: rechtliche Absicherung) - Version hochzählen
 // und alle Nutzer müssen erneut zustimmen, sobald sich der Text inhaltlich ändert.
