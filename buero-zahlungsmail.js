@@ -25,6 +25,7 @@ const ZM_FEHLER = {
   zu_viele_schule: "Heute wurden schon 100 Mails verschickt. Morgen geht es wieder.",
   ungueltige_anfrage: ZM_NICHT_MOEGLICH_TEXT,
   modus_geaendert: null, // Text hängt vom neuen Modus ab (zmModusText)
+  empfaenger_geaendert: "Die Empfänger wurden inzwischen geändert (z. B. an einem anderen PC). Es wurde nichts gesendet. Bitte prüfen und noch einmal senden.",
   nicht_gesperrt: null, // Text mit Namen in zmSende
   keine_email: "Keine E-Mail-Adresse in der Akte.",
   keine_testadresse: "Es ist keine Test-Adresse hinterlegt. Bitte unter Einstellungen eine eintragen.",
@@ -189,7 +190,7 @@ function zmBindeEinstellungen(ziel) {
 }
 
 /* ---------- 2. Schüler-Akte: Block „Zahlung per Mail“ ---------- */
-function zmMailAdresse(x) { return String((x && x.email) || ((x && x.ausbildung) || {}).email || "").trim(); }
+function zmMailAdresse(x) { return String((x && x.email) || "").trim() || String(((x && x.ausbildung) || {}).email || "").trim(); }
 // W14: an wen die echte Mail geht – gleiche Regel wie der Server (zahlungs_mail_vorbereiten): Wahl in der Akte
 // (Schüler, Eltern, beide; Vorgabe beide), ohne Eltern-Adresse nur der Schüler. Liste von [wer, adresse].
 function zmEmpfaenger(x) {
@@ -197,7 +198,7 @@ function zmEmpfaenger(x) {
   const wahl = e ? (["schueler", "eltern", "beide"].includes(el.mail_an) ? el.mail_an : "beide") : "schueler";
   const liste = [];
   if ((wahl === "schueler" || wahl === "beide") && s) liste.push(["Schüler", s]);
-  if ((wahl === "eltern" || wahl === "beide") && e && e.toLowerCase() !== s.toLowerCase()) liste.push(["Eltern", e]);
+  if ((wahl === "eltern" || wahl === "beide") && e && !liste.some(([, a]) => a.toLowerCase() === e.toLowerCase())) liste.push(["Eltern", e]);
   return liste;
 }
 function zmEmpfaengerText(liste) {
@@ -257,7 +258,7 @@ function zmBlockHTML(sid) {
   const zeilen = angebote.map((a) => {
     const k = ZM_ARTEN[a.art], letzte = zmLetzte(sid, a.art), schluessel = sid + "|" + a.art;
     const eigene = ZM.laeuft.has(schluessel), andere = ZM.laeuft.size > 0 && !eigene;
-    const grund = ladefehler ? "Zahlungsdaten konnten nicht geladen werden" : !daten ? "Zahlungsdaten fehlen" : ohneMail ? "E-Mail fehlt" : eigene ? "Gerade wird gesendet" : andere ? "Erst die laufende Mail abwarten" : "";
+    const grund = ladefehler ? "Zahlungsdaten konnten nicht geladen werden" : echt && S.elternFehler ? "Eltern-Angaben konnten nicht geladen werden" : !daten ? "Zahlungsdaten fehlen" : ohneMail ? "E-Mail fehlt" : eigene ? "Gerade wird gesendet" : andere ? "Erst die laufende Mail abwarten" : "";
     const e = ZM.entwurf[schluessel] || {};
     const betrag = "betrag" in e ? e.betrag : a.betrag, wofuer = "wofuer" in e ? e.wofuer : a.wofuer;
     const offen = ZM.offen.has(schluessel);
@@ -336,6 +337,7 @@ function zmBinde(block, dlg, sid) {
       zmNeuZeichnen(sid);
       // 5 Sekunden „Rückgängig“; erst danach geht die Mail wirklich los (Zeit um oder nächster Rückgängig-Hinweis)
       const anWen = zmEmpfaenger(x).map(([w]) => w === "Schüler" ? "den Schüler" : "die Eltern").join(" und ") || "den Schüler";
+      const empfAdr = zmEmpfaenger(x).map(([, a]) => a.toLowerCase()); // W14: der Server sendet nur, wenn er dieselben Empfänger bestimmt
       const u = toastUndo(`${modus === "echt" ? "Wird an " + anWen + " gesendet" : "Test-Mail wird gesendet"} · ${zmEuroText(cent)} · ${name}`, async () => {
         ZM.laeuft.delete(schluessel);
         zmNeuZeichnen(sid);
@@ -344,11 +346,11 @@ function zmBinde(block, dlg, sid) {
         ms: Number(window.ZM_WARTE_MS) > 0 ? Number(window.ZM_WARTE_MS) : 5000, // Vorgabe 5 Sekunden; Tests setzen window.ZM_WARTE_MS
         nachAblauf: async (verlassen) => {
           if (verlassen) { ZM.laeuft.delete(schluessel); return; } // Seite wird verlassen: lieber nichts senden
-          const erg = await zmSende(sid, art, cent, wofuer, modus, sitz, name);
+          const erg = await zmSende(sid, art, cent, wofuer, modus, sitz, name, empfAdr);
           ZM.laeuft.delete(schluessel);
           if (erg.ok) { delete ZM.entwurf[schluessel]; ZM.offen.delete(schluessel); zmNeuZeichnen(sid); return; }
           if (erg.code === "modus_geaendert") await zmDatenNeuLaden();
-          if (erg.code === "nicht_gesperrt" && typeof ladeDaten === "function") ladeDaten(); // Stand der Schüler auffrischen
+          if ((erg.code === "nicht_gesperrt" || erg.code === "empfaenger_geaendert") && typeof ladeDaten === "function") ladeDaten(); // Stand der Schüler (und Eltern-Wahl) auffrischen
           const text = erg.code === "nicht_gesperrt" ? erg.text : `Mail an ${name}: ${erg.text}`;
           const b = zmFinde(sid), sichtbar = !!(b && b.closest("dialog") && b.closest("dialog").open);
           if (sichtbar && erg.code !== "nicht_gesperrt") zmNeuZeichnen(sid, art, text); // Fehler nur einmal: im offenen Formular, sonst als Hinweis oben
@@ -374,10 +376,10 @@ async function zmDatenNeuLaden() {
 }
 
 // Aufruf der Edge-Funktion; Rückgabe { ok } oder { ok:false, code, text }
-async function zmSende(sid, art, betragCent, wofuer, erwarteterModus, sitz, name) {
+async function zmSende(sid, art, betragCent, wofuer, erwarteterModus, sitz, name, empfAdr) {
   let data = null, error = null;
   try {
-    ({ data, error } = await supa.functions.invoke("zahlungs-mail", { body: { requester_token: sitz.token, buero_sitzung: sitz.sitzung, schueler_id: sid, art, betrag_cent: betragCent, wofuer, erwarteter_modus: erwarteterModus } }));
+    ({ data, error } = await supa.functions.invoke("zahlungs-mail", { body: { requester_token: sitz.token, buero_sitzung: sitz.sitzung, schueler_id: sid, art, betrag_cent: betragCent, wofuer, erwartete_empfaenger: erwarteterModus === "echt" && Array.isArray(empfAdr) ? empfAdr : undefined, erwarteter_modus: erwarteterModus } }));
   } catch (e) { error = e || new Error("Netz"); }
   let code = (data && data.fehler) || null, neuerModus = data && data.modus;
   if (!code && error) {

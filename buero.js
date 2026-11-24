@@ -1033,7 +1033,8 @@ const FELD_NAMEN = { vertrag_am: "Vertragsdatum", klasse: "Klasse", ausbildungsa
   fuehrerschein_d_bis: "Führerschein D bis", sz95_bis: "Schlüsselzahl 95 bis", fortbildung_bis: "Fortbildung bis", fahrlehrer_zusatz: "Weitere Erlaubnisse" };
 async function ladeProtokoll(tabelle, id) {
   const ziel = $("protokoll");
-  const res = await supa.from("aenderungsprotokoll").select("*").eq("tabelle", tabelle).eq("datensatz_id", id).order("geaendert_am", { ascending: false }).limit(20);
+  // W14: zum Schüler gehören auch die Eltern-Angaben (eigene Tabelle)
+  const res = await supa.from("aenderungsprotokoll").select("*").in("tabelle", tabelle === "schueler" ? ["schueler", "schueler_eltern"] : [tabelle]).eq("datensatz_id", id).order("geaendert_am", { ascending: false }).limit(20);
   if (!ziel || !ziel.isConnected) return;
   if (res.error) { ziel.innerHTML = ""; return; }
   const zeilen = (res.data || []).map((p) => {
@@ -1042,11 +1043,13 @@ async function ladeProtokoll(tabelle, id) {
     const wann = new Date(p.geaendert_am).toLocaleString("de-DE", { dateStyle: "short", timeStyle: "short" });
     const wert = (v) => {
       if (p.feld === "auslands_fs") return v ? "(Angaben)" : "–"; // Führerscheinnummern nicht im Verlauf ausschreiben
+      if (p.tabelle === "schueler_eltern" && p.feld === "mail_an") return v ? akteWertText("zahlungsmail_an", v) : "–";
       if (v === "true") return "ja"; if (v === "false") return "nein";
       if (/^\{.*\}$/.test(v || "")) return v.slice(1, -1).split(",").join(", ") || "–";
       return /^\d{4}-\d\d-\d\d$/.test(v || "") ? datumDE(v) : (v || "–");
     };
-    return `<li>${esc(wann)} · ${esc(wer)}: ${esc(FELD_NAMEN[p.feld] || p.feld)} ${esc(wert(p.alt))} → ${esc(wert(p.neu))}</li>`;
+    const feld = p.tabelle === "schueler_eltern" ? ({ email: "E-Mail Eltern", mail_an: "Zahlungs-Mails an" }[p.feld] || p.feld) : (FELD_NAMEN[p.feld] || p.feld);
+    return `<li>${esc(wann)} · ${esc(wer)}: ${esc(feld)} ${esc(wert(p.alt))} → ${esc(wert(p.neu))}</li>`;
   }).join("");
   ziel.innerHTML = zeilen ? `<h3>Verlauf</h3><ul>${zeilen}</ul>` : `<p class="leise klein">Noch keine Änderungen protokolliert.</p>`;
 }
@@ -2292,7 +2295,8 @@ function elternFelderHTML(x) {
   if (!S.eltern) return "";
   const e = (x.id && S.eltern[x.id]) || {}, an = e.mail_an || "beide";
   return `<div class="voll eltern-block" data-elternblock>
-      <label>E-Mail Eltern / Erziehungsberechtigte (optional)<input type="email" name="eltern_email" maxlength="200" autocomplete="off" value="${esc(e.email || "")}"></label>
+      <label>E-Mail Eltern (optional)<input type="email" name="eltern_email" maxlength="200" autocomplete="off" value="${esc(e.email || "")}"><span class="leise klein">Auch Erziehungsberechtigte. Nur das Büro sieht sie.</span></label>
+      ${S.elternFehler ? `<p class="fl-warnung bald" data-elternfehler>Eltern-Angaben konnten nicht geladen werden. Bitte die Seite neu laden.</p>` : ""}
       <div class="eltern-wahl" id="elternWahl" role="radiogroup" aria-label="Zahlungs-Mails gehen an"${e.email ? "" : " hidden"}><div class="feld-titel">Zahlungs-Mails gehen an</div>
         ${ZAHLUNGSMAIL_AN.map(([v, t]) => `<label class="wahl"><input type="radio" name="zahlungsmail_an" value="${v}"${an === v ? " checked" : ""}> ${t}</label>`).join("")}</div>
     </div>`;
@@ -2404,8 +2408,9 @@ function schuelerDialog(id) {
       const res = await supa.from("schueler").insert(zeile).select("*");
       if (res.error || !res.data || !res.data.length) { toast("Nicht angelegt: " + (res.error ? dbFehlerText(res.error) : "keine Berechtigung"), true); return false; }
       S.schueler.push(res.data[0]);
-      if (elternBasis) await speichereElternSicher(neueId, elternBasis, elternNeu); // Fehler meldet die Funktion selbst
-      toast(`${name} angelegt${neuerLehrer ? " und " + lehrerName(neuerLehrer) + " zugeordnet" : " (noch ohne Fahrlehrer)"}`);
+      const elt = elternBasis ? await speichereElternSicher(neueId, elternBasis, elternNeu) : { ok: true };
+      if (!elt.ok) toast(`${name} ist angelegt, aber die E-Mail der Eltern ist nicht gespeichert. Bitte in der Akte nachtragen.`, true); // Fenster zu: sonst legte ein zweites Speichern den Schüler doppelt an
+      else toast(`${name} angelegt${neuerLehrer ? " und " + lehrerName(neuerLehrer) + " zugeordnet" : " (noch ohne Fahrlehrer)"}`);
       zeichne();
       return true;
     }
@@ -4442,8 +4447,9 @@ async function ladeDaten() {
     S.konfGesehen = konfGes && !konfGes.error ? (konfGes.data || []) : (konfGes && konfGes.error && !konfTabelleFehlt(konfGes.error) ? S.konfGesehen : null);
     if (typeof zmLaden === "function") zmLaden(zahlungsdaten, zahlungsMails, zmT0); // Werkstatt 11: Fehler tolerant
     // W14: Eltern-Adressen je Schüler. null = Tabelle fehlt (alte Datenbank): Feld nicht zeigen. Anderer Ladefehler: letzten Stand behalten
-    if (eltern && !eltern.error) { S.eltern = {}; (eltern.data || []).forEach((e) => { S.eltern[e.schueler_id] = e; }); }
-    else if (!S.eltern || (eltern && eltern.error && elternTabelleFehlt(eltern.error))) S.eltern = null;
+    if (eltern && !eltern.error) { S.eltern = {}; S.elternFehler = false; (eltern.data || []).forEach((e) => { S.eltern[e.schueler_id] = e; }); }
+    else if (eltern && eltern.error && elternTabelleFehlt(eltern.error)) { S.eltern = null; S.elternFehler = false; }
+    else { S.elternFehler = true; if (!S.eltern) S.eltern = null; } // Ladefehler: Echt-Versand sperren (Empfänger unklar)
     S.geladenAm = new Date();
     $("schulName").textContent = S.fs ? S.fs.name : "";
     setStatus("ok", "verbunden · " + S.geladenAm.toLocaleTimeString("de-DE", { hour: "2-digit", minute: "2-digit" }));
@@ -4856,6 +4862,7 @@ $("schulWahl").addEventListener("change", (e) => {
   S.preise = null; // K9 (Fable B1): Preise der vorigen Fahrschule nie in der neuen zeigen oder behalten
   S.konfGesehen = null; // K18: „gesehen“-Vermerke gehören zur Fahrschule
   if (typeof zmLeeren === "function") zmLeeren(); // Werkstatt 11: Zahlungsdaten und Mail-Spur der vorigen Fahrschule weg
+  S.eltern = null; S.elternFehler = false; // W14: Eltern-Adressen gehören zur Fahrschule
   zeigeRollenStreifen();
   zeichne();
   ladeDaten();

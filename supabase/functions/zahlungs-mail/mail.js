@@ -92,8 +92,10 @@ export function absender(d) {
 }
 /** Betreff: nie Betrag, IBAN oder Name. */
 export function betreff(d) {
-  const text = BETREFF[d.art];
+  let text = BETREFF[d.art];
   if (!text) throw new Error("Art unbekannt");
+  const v = einzeilig(d.schueler_name).split(" ")[0];
+  if ((d.an === "eltern" || d.an === "beide") && v) text = BETREFF_ELTERN[d.art](v);
   return (d.modus === "test" ? "[TEST] " : "") + fahrschulName(d) + ": " + text;
 }
 // W14: d.an = wer angeschrieben wird ("schueler" | "eltern" | "beide"; fehlt = Schüler, wie bisher)
@@ -101,7 +103,7 @@ function vorname(d) { return einzeilig(d.schueler_name).split(" ")[0]; }
 function anrede(d) {
   const v = vorname(d);
   if (d.an === "eltern") return "Guten Tag,";
-  if (d.an === "beide") return v ? "Hallo " + v + ", guten Tag liebe Eltern," : "Guten Tag,";
+  if (d.an === "beide") return "Guten Tag,"; // Eltern lesen mit: neutral, dann „… von Lena“
   return v ? "Hallo " + v + "," : "Hallo,";
 }
 // Eltern lesen mit: dann geht es um die Ausbildung von <Vorname>, nicht um „Ihre“
@@ -117,12 +119,18 @@ function satz(d) {
 }
 // Test-Mail: an wen sie im Echt-Modus ginge
 function echtAn(d) { return d.an === "eltern" ? "die Eltern" : d.an === "beide" ? "Schüler und Eltern" : "den Schüler"; }
+// Betreff, wenn Eltern mitlesen: um wessen Prüfung/Termine es geht
+const BETREFF_ELTERN = {
+  pruefung: (v) => "Zahlungsinformation zur Prüfung von " + v,
+  reaktivierung: (v) => "Zahlungsinformation: Reaktivierung von " + v,
+  zahlung_offen: (v) => "Wichtige Information zu den Terminen von " + v,
+};
 
 /** Klartext-Fassung. @param {MailDaten} d */
 export function mailText(d) {
   const z = [];
   if (d.modus === "test") z.push("TEST-MAIL - NICHT BEZAHLEN", "");
-  if (d.modus === "test" && d.an) z.push("Im Echt-Modus ginge diese Mail an " + echtAn(d) + ".", "");
+  if (d.modus === "test" && d.an) z.push("Im Echt-Modus geht diese Mail an " + echtAn(d) + ".", "");
   z.push(anrede(d), "", satz(d), "");
   z.push("Betrag: " + betragText(d.betrag_cent), "Wofür: " + einzeilig(d.wofuer), "");
   z.push("PER ÜBERWEISUNG", "Kontoinhaber: " + einzeilig(d.kontoinhaber), "IBAN: " + ibanGruppiert(d.iban || ""));
@@ -141,7 +149,7 @@ export function mailHtml(d) {
   const font = "font-family:-apple-system,'Segoe UI',Arial,sans-serif;";
   const zeile = (k, v) => `<tr><td style="${font}padding:6px 10px 6px 0;font-size:13px;color:#5a5a50;vertical-align:top;white-space:nowrap;">${esc(k)}</td><td style="${font}padding:6px 0;font-size:16px;color:#2a2a24;font-weight:700;word-break:break-word;">${v}</td></tr>`;
   const test = d.modus === "test"
-    ? `<tr><td style="${font}background:#fff3b0;border:2px solid #d9b800;padding:14px;font-size:17px;font-weight:700;color:#5a4a00;text-align:center;">Test-Mail – nicht bezahlen${d.an ? `<div style="font-size:14px;font-weight:600;margin-top:6px;">Im Echt-Modus ginge diese Mail an ${esc(echtAn(d))}.</div>` : ""}</td></tr><tr><td style="height:12px;line-height:12px;font-size:12px;">&nbsp;</td></tr>`
+    ? `<tr><td style="${font}background:#fff3b0;border:2px solid #d9b800;padding:14px;font-size:17px;font-weight:700;color:#5a4a00;text-align:center;">Test-Mail – nicht bezahlen${d.an ? `<div style="font-size:14px;font-weight:600;margin-top:6px;">Im Echt-Modus geht diese Mail an ${esc(echtAn(d))}.</div>` : ""}</td></tr><tr><td style="height:12px;line-height:12px;font-size:12px;">&nbsp;</td></tr>`
     : "";
   const pp = paypalLink(d.paypal, d.betrag_cent);
   const paypalBlock = pp

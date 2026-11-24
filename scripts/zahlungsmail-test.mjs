@@ -535,6 +535,41 @@ try {
     pruefe("Z12n ohne Tabelle: Akte gespeichert", (await f.page.evaluate(() => window.__FAKE.tabellen.schueler.find((x) => x.id === "s3").buero_notiz)) === "Notiz ohne Eltern");
     await f.ctx.close();
   }
+  // Z13 W14 Prüf-Team: gleiche Adresse bei „nur Eltern“, Empfänger woanders geändert, Fehler beim Anlegen, Ladefehler
+  {
+    const extra = `F.tabellen.schueler.find((x) => x.id === "s3").email = "schueler@example.org"; F.tabellen.schueler_eltern = [{ schueler_id: "s3", fahrschule_id: "fs-test-1", email: "schueler@example.org", mail_an: "eltern" }];`;
+    const e = await oeffne({ nutzer: "ad-1", vorbereiten: vor({ modus: "echt", extra }) });
+    const pg = e.page;
+    await oeffneAkte(pg, "s3");
+    let dlg = pg.locator("dialog[open]").last();
+    pruefe("Z13a gleiche Adresse, „nur Eltern“: Echt-Zeile nennt die Eltern, Senden möglich", (await dlg.locator("[data-zmecht]").innerText()) === "Echt: Mail geht an Eltern (schueler@example.org)" && !(await dlg.locator("[data-zmoeffne]").isDisabled()), await dlg.locator("[data-zmecht]").innerText());
+    await schliesseAlle(pg);
+    // Anzeige zeigt „nur Eltern“ mit eigener Adresse, dann ändert ein anderer PC die Wahl auf „nur Schüler“
+    await pg.evaluate(async () => { window.__FAKE.tabellen.schueler_eltern[0].email = "eltern@example.org"; await ladeDaten(); });
+    await oeffneAkte(pg, "s3"); dlg = pg.locator("dialog[open]").last();
+    await dlg.locator("[data-zmoeffne]").click(); await dlg.locator("[data-zmbetrag]").fill("120");
+    await pg.evaluate(() => { window.__FAKE.tabellen.schueler_eltern[0].mail_an = "schueler"; window.__FAKE.letzteEmpfaenger = null; });
+    await dlg.locator("[data-zmsenden]").click(); await pg.waitForTimeout(1500);
+    const nichts = await pg.evaluate(() => window.__FAKE.letzteEmpfaenger);
+    const meld = await pg.locator("dialog[open] [data-zmmeldung]:not([hidden])").first().innerText().catch(() => "") || await pg.locator("#toast").innerText().catch(() => "");
+    pruefe("Z13b Empfänger woanders geändert: nichts gesendet, klare Meldung", nichts === null && /Empfänger wurden inzwischen geändert/.test(meld), JSON.stringify(nichts) + " | " + meld);
+    await schliesseAlle(pg);
+    // Anlegen mit Eltern-Adresse, Speichern der Eltern scheitert: rote Meldung bleibt stehen
+    await pg.evaluate(() => { window.__FAKE.fehler = { schueler_eltern: "Netz weg" }; schuelerDialog(null); });
+    dlg = pg.locator("dialog[open]").last();
+    await dlg.locator("input[name=name]").fill("Neu Muster");
+    await dlg.locator("input[name=eltern_email]").fill("eltern2@example.org");
+    await dlg.locator("button[value=ok]").click(); await pg.waitForTimeout(500);
+    const t = await pg.locator("#toast").innerText();
+    pruefe("Z13c Anlegen, Eltern-Adresse nicht gespeichert: Meldung bleibt sichtbar (nicht von „angelegt“ überdeckt)", /angelegt, aber die E-Mail der Eltern ist nicht gespeichert/.test(t) && await pg.evaluate(() => document.getElementById("toast").classList.contains("fehler")), t);
+    // Ladefehler der Eltern-Tabelle: Echt-Versand gesperrt, Hinweis in der Akte
+    await pg.evaluate(async () => { window.__FAKE.fehler = { schueler_eltern: "Zeitüberschreitung" }; await ladeDaten(); });
+    await oeffneAkte(pg, "s3"); dlg = pg.locator("dialog[open]").last();
+    pruefe("Z13d Ladefehler: Hinweis in der Akte, Senden gesperrt", (await dlg.locator("[data-elternfehler]").count()) === 1 && await dlg.locator("[data-zmoeffne]").isDisabled());
+    await pg.evaluate(() => { window.__FAKE.fehler = {}; });
+    pruefe("Z13e keine Fehler in der Konsole", !jsFehler(e.konsole).length, jsFehler(e.konsole).join(" | "));
+    await e.ctx.close();
+  }
 } finally {
   await browser.close();
   server.close();

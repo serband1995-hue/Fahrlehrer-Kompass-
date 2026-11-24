@@ -27,16 +27,18 @@ gleich("betragText 123456789", M.betragText(123456789), "1.234.567,89 €");
   pruefe("W14 ohne an: wie bisher „Hallo Lena,“ und „Ihre Prüfung“", /^Hallo Lena,$/m.test(t({})) && /für Ihre Prüfung/.test(t({})));
   pruefe("W14 an=schueler: wie bisher", t({ an: "schueler" }) === t({}));
   pruefe("W14 an=eltern: „Guten Tag,“ und „Prüfung von Lena“", /^Guten Tag,$/m.test(t({ an: "eltern" })) && /für die Prüfung von Lena/.test(t({ an: "eltern" })) && !/Hallo Lena/.test(t({ an: "eltern" })));
-  pruefe("W14 an=beide: Lena und Eltern angesprochen", /Hallo Lena, guten Tag liebe Eltern,/.test(t({ an: "beide" })) && /Prüfung von Lena/.test(t({ an: "beide" })));
+  pruefe("W14 an=beide: neutrale Anrede, „Prüfung von Lena“", /^Guten Tag,$/m.test(t({ an: "beide" })) && /Prüfung von Lena/.test(t({ an: "beide" })) && !/Hallo/.test(t({ an: "beide" })));
+  pruefe("W14 Betreff an Eltern nennt den Schüler", M.betreff({ ...d, an: "eltern" }).endsWith("Zahlungsinformation zur Prüfung von Lena") && M.betreff({ ...d, art: "zahlung_offen", an: "beide" }).endsWith("Wichtige Information zu den Terminen von Lena"));
+  pruefe("W14 Betreff an Schüler wie bisher", M.betreff({ ...d, an: "schueler" }) === M.betreff(d));
   pruefe("W14 Reaktivierung an Eltern", /die Reaktivierung von Lena ist fällig/.test(M.mailText({ ...d, art: "reaktivierung", an: "eltern" })));
   pruefe("W14 Zahlung offen an Eltern", /für die Ausbildung von Lena ist noch eine Zahlung offen/.test(M.mailText({ ...d, art: "zahlung_offen", an: "eltern" })));
-  pruefe("W14 Test-Mail nennt, an wen sie echt ginge (Text)", /Im Echt-Modus ginge diese Mail an Schüler und Eltern\./.test(t({ modus: "test", an: "beide" })));
-  pruefe("W14 Test-Mail nennt, an wen sie echt ginge (HTML)", /Im Echt-Modus ginge diese Mail an die Eltern\./.test(M.mailHtml({ ...d, modus: "test", an: "eltern" })));
+  pruefe("W14 Test-Mail nennt, an wen sie echt ginge (Text)", /Im Echt-Modus geht diese Mail an Schüler und Eltern\./.test(t({ modus: "test", an: "beide" })));
+  pruefe("W14 Test-Mail nennt, an wen sie echt ginge (HTML)", /Im Echt-Modus geht diese Mail an die Eltern\./.test(M.mailHtml({ ...d, modus: "test", an: "eltern" })));
   pruefe("W14 Echt-Mail ohne Test-Zeile", !/Echt-Modus/.test(t({ an: "beide" })) && !/Echt-Modus/.test(M.mailHtml({ ...d, an: "beide" })));
   pruefe("W14 HTML-Anrede escaped", !/<script/.test(M.mailHtml({ ...d, schueler_name: "<script>x", an: "beide" })));
 }
 
-// ---- EPC ----// ---- EPC ----
+// ---- EPC ----
 const basis = { kontoinhaber: "Fahrschule Boost", iban: "DE89 3704 0044 0532 0130 00", bic: "COBADEFFXXX", betrag_cent: 12000, verwendungszweck: "Max Muster, Prüfung B" };
 gleich("epcText Beispiel", M.epcText(basis), "BCD\n002\n1\nSCT\nCOBADEFFXXX\nFahrschule Boost\nDE89370400440532013000\nEUR120.00\n\n\nMax Muster, Prüfung B");
 gleich("epcText ohne BIC", M.epcText({ ...basis, bic: null }).split("\n")[4], "");

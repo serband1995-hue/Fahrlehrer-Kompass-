@@ -255,6 +255,7 @@ if (typeof module !== "undefined" && module.exports) { module.exports = { bauDat
     if ((wahl === "eltern" || wahl === "beide") && anE && !alle.includes(anE)) alle.push(anE);
     const liste = echt ? alle : [z.test_email || "betreiber@example.org"];
     if (echt && !liste.length) return { fehler: "keine_email" };
+    if (echt && Array.isArray(b.erwartete_empfaenger) && b.erwartete_empfaenger.map((x) => String(x).toLowerCase()).sort().join(",") !== liste.slice().sort().join(",")) return { fehler: "empfaenger_geaendert" }; // wie der Server (409)
     F.letzteEmpfaenger = liste.slice(); // für Tests: an wen die Mail ginge
     const jetzt = new Date().toISOString(), id = "zm-" + Math.random().toString(36).slice(2, 10);
     const kurz = liste.map((an) => an.slice(0, 1) + "***@" + (an.split("@")[1] || "")).join(", ");

@@ -25,7 +25,7 @@ Deno.serve(async (req) => {
 
   let body: any;
   try { body = await req.json(); } catch { return json({ fehler: "ungueltige_anfrage" }, 400); }
-  const { requester_token, buero_sitzung, schueler_id, art, betrag_cent, wofuer, erwarteter_modus } = body || {};
+  const { requester_token, buero_sitzung, schueler_id, art, betrag_cent, wofuer, erwarteter_modus, erwartete_empfaenger } = body || {};
   if (!requester_token) return json({ fehler: "nicht_angemeldet" }, 401);
   if (!schueler_id || !art || !Number.isInteger(betrag_cent) || !["test", "echt"].includes(String(erwarteter_modus))) return json({ fehler: "ungueltige_anfrage" }, 400);
 
@@ -60,6 +60,16 @@ Deno.serve(async (req) => {
   if (String(erwarteter_modus) !== String(d.modus)) {
     await merke({ status: "fehler", fehler: "Modus geändert, nicht gesendet" });
     return json({ fehler: "modus_geaendert", modus: d.modus }, 409);
+  }
+  // W14: Der Bildschirm zeigte andere Empfänger (z. B. Eltern-Wahl an einem anderen PC geändert): nichts senden.
+  // Ältere Büro-Seiten schicken die Liste nicht mit: dann wie bisher.
+  if (d.modus === "echt" && Array.isArray(erwartete_empfaenger)) {
+    const norm = (l: unknown[]) => l.map((x) => String(x).trim().toLowerCase()).sort().join(",");
+    const ist = Array.isArray(d.empfaenger_alle) && d.empfaenger_alle.length ? d.empfaenger_alle : [d.empfaenger];
+    if (norm(erwartete_empfaenger) !== norm(ist)) {
+      await merke({ status: "fehler", fehler: "Empfänger geändert, nicht gesendet" });
+      return json({ fehler: "empfaenger_geaendert" }, 409);
+    }
   }
   const scheitern = async (kurz: string, status = 500) => {
     await merke({ status: "fehler", fehler: kurz.slice(0, 200) });
