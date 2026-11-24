@@ -255,14 +255,15 @@ await pruefe("H1c", "Schrift: h1.h2-titel Playfair, .heute2 Manrope", async () =
   if (!/Manrope/i.test(r.text)) f.push(`Text-Schrift „${r.text}“`);
   return f;
 });
-await pruefe("H1d", "Hell: Hintergrund .heute2 bzw. Seite = #F3F5F1", async () => {
+// 🗣 23.11.2026: Serband hat Farbe B gewählt (neutrale Flächen statt Grün): Hell-Hintergrund jetzt #F1F1F4, „Jetzt dran“-Karte dunkel grau-blau statt dunkelgrün.
+await pruefe("H1d", "Hell: Hintergrund .heute2 bzw. Seite = #F1F1F4", async () => {
   const e = await brauchtHeute2(page); if (e) return e;
   const bg = await page.evaluate(() => {
     let el = document.querySelector(".heute2");
     while (el) { const c = getComputedStyle(el).backgroundColor; if (c && !/rgba\(0, 0, 0, 0\)|transparent/.test(c)) return c; el = el.parentElement; }
     return "transparent";
   });
-  if (bg.replace(/\s+/g, "") !== "rgb(243,245,241)") return `Hintergrund ${bg}`;
+  if (bg.replace(/\s+/g, "") !== "rgb(241,241,244)") return `Hintergrund ${bg}`;
 });
 
 // H2 „Jetzt dran“-Karte
@@ -814,7 +815,7 @@ for (const g of GROESSEN) {
       if (j) {
         const b = hg(j), n = j.querySelector(".h2-jetzt-name") || j;
         const c = rgb(getComputedStyle(n).color);
-        out.jetzt = { bgLum: lum(b), gruen: b.g >= b.r && b.g >= b.b, textLum: c ? lum(c) : 0, bg: `rgb(${Math.round(b.r)},${Math.round(b.g)},${Math.round(b.b)})` };
+        out.jetzt = { bgLum: lum(b), textLum: c ? lum(c) : 0, textKontrast: c ? ratio(c, b) : 0, bg: `rgb(${Math.round(b.r)},${Math.round(b.g)},${Math.round(b.b)})` };
         // Plus-Knopf überdeckt keinen Knopf der Karte (Seite ganz oben)
         const fab = document.getElementById("fab");
         if (fab && getComputedStyle(fab).display !== "none") {
@@ -841,7 +842,7 @@ for (const g of GROESSEN) {
       if (!m.dunkel) h8.kontrast.push(`${name}: Dunkel-Modus greift nicht`);
       if (m.kontrast.length) h8.kontrast.push(`${name}: ${m.kontrast.slice(0, 3).join(", ")}${m.kontrast.length > 3 ? ` (+${m.kontrast.length - 3})` : ""}`);
       if (!m.jetzt) h8.jetzt.push(`${name}: .h2-jetzt fehlt`);
-      else if (!(m.jetzt.bgLum < 0.12 && m.jetzt.gruen && m.jetzt.textLum > 0.5)) h8.jetzt.push(`${name}: Karte ${m.jetzt.bg}, Text-Helligkeit ${m.jetzt.textLum.toFixed(2)}`);
+      else if (!(m.jetzt.bgLum < 0.12 && m.jetzt.textKontrast >= 4.5)) h8.jetzt.push(`${name}: Karte ${m.jetzt.bg}, Text-Kontrast ${m.jetzt.textKontrast.toFixed(1)}:1`);
     }
     if (m.fab.length) h8.fab.push(`${name}: ${m.fab.join(", ")}`);
     if (g.w === 360 && m.scroll === false) h8.scroll.push(`${name}: Streifen scrollt nicht seitlich in sich`);
@@ -855,7 +856,7 @@ await pruefe("H3n", "Achtung-Streifen scrollt bei 360 px seitlich in sich, die S
 await pruefe("H8a", "360/412 hoch, 915 quer, hell+dunkel: nicht wischbar, nichts über den rechten Rand", () => h8Ergebnis(h8.rand));
 await pruefe("H8b", "alle Knöpfe/Links/Chips/Zeilen/Kacheln in .heute2 ≥ 44 px hoch", () => h8Ergebnis(h8.knopf));
 await pruefe("H8c", "Dunkel: Text in Kacheln und „Danach“ Kontrast ≥ 4.5:1", () => h8Ergebnis(h8.kontrast));
-await pruefe("H8d", "Dunkel: „Jetzt dran“-Karte dunkelgrün mit hellem Text", () => h8Ergebnis(h8.jetzt));
+await pruefe("H8d", "Dunkel: „Jetzt dran“-Karte dunkel (Helligkeit < 0,12) mit hellem Text (Kontrast ≥ 4,5:1)", () => h8Ergebnis(h8.jetzt));
 await pruefe("H8e", "Plus-Knopf (#fab) überdeckt oben keinen Knopf der „Jetzt dran“-Karte", () => h8Ergebnis(h8.fab));
 await pruefe("H8f", "keine JS-Fehler in den Handy-Größen", () => h8.fehler);
 

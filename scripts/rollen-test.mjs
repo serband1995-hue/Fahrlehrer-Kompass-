@@ -51,6 +51,8 @@ const warte = (page, ms = 250) => page.waitForTimeout(ms);
 const FS = "fs-muster";
 const ROLLEN = [
   { n: "Fahrlehrer", prof: { rolle: "fahrlehrer" }, eigen: true, umschalter: false },
+  // K12/K17: Kennzeichen „fährt selbst“ bei einem Fahrlehrer (falsch gesetzt) gibt keine Leitungs-Rechte
+  { n: "Fahrlehrer mit faehrt_selbst", prof: { rolle: "fahrlehrer", faehrt_selbst: true }, eigen: true, umschalter: false },
   { n: "Leitung", prof: { rolle: "fahrschule_admin" }, eigen: false, umschalter: false },
   { n: "Leitung fährt selbst", prof: { rolle: "fahrschule_admin", faehrt_selbst: true }, eigen: true, umschalter: true },
   { n: "Büro", prof: { rolle: "buero" }, eigen: false, umschalter: false },
@@ -132,6 +134,70 @@ for (const R of ROLLEN) {
     await pruefe("R1", `${P} Startansicht: ${R.eigen ? "eigene Fahrlehrer-Ansicht" : "Gesamtansicht der Fahrschule"}`, () => page.evaluate(() => (_fsAgg ? "gesamt" : "eigen")).then((v) => (v === (R.eigen ? "eigen" : "gesamt") ? null : "ist " + v)));
     await pruefe("R2", `${P} Umschalter „Admin-Gesamtübersicht“ ${R.umschalter ? "da" : "nicht da"}`, () => page.evaluate(() => /Admin-Gesamtübersicht|Zu meiner Fahrlehrer-Ansicht/.test(document.querySelector(".drawer-nav").textContent)).then((v) => (v === R.umschalter ? null : "ist " + v)));
 
+    // K12/K17/K13 (Werkstatt 12): Gesamtübersicht und Büro-Seite nur für Büro, Leitung, Super-Admin; Abmelden unter „Mehr“
+    const darfGesamt = R.prof.rolle !== "fahrlehrer";
+    const sichtbar = (sel) => page.evaluate((q) => [...document.querySelectorAll(q)].filter((e) => !e.closest("#loginOverlay") && getComputedStyle(e).display !== "none" && !e.closest("[hidden]")).length, sel);
+    const GESAMT_SEL = '#drawer [data-nav="__fstoggle"], #drawer [data-nav="fs_dash"], #drawer [data-nav="fs_exit"], #saStreifen:not([hidden])';
+    const BUERO_SEL = '#drawer a[href="buero.html"], a.fs-buero-link, #fsBueroLink';
+    await maskeWeg();
+    await pruefe("R15", `${P} Knopf Gesamtübersicht (Menü/Streifen) ${darfGesamt ? "da" : "nicht da"}`, async () => {
+      const n = await sichtbar(GESAMT_SEL);
+      const menueText = await page.evaluate(() => (document.querySelector(".drawer-nav") || {}).textContent || "");
+      const f = [];
+      if (darfGesamt && !n && !/Übersicht|Gesamt|Zu meiner/.test(menueText)) f.push("kein Weg in die Gesamtübersicht");
+      if (!darfGesamt && (n || /Übersicht|Büro/.test(menueText))) f.push("Fahrlehrer sieht Gesamtübersicht/Büro im Menü: " + menueText.replace(/\s+/g, " ").slice(0, 120));
+      return f;
+    });
+    await pruefe("R16", `${P} Knopf „Büro“ (Büro-Seite) ${darfGesamt ? "erreichbar" : "nirgends"}`, async () => {
+      const f = [];
+      if (!darfGesamt) {
+        if (await sichtbar(BUERO_SEL)) f.push("Büro-Knopf sichtbar");
+        const r = await page.evaluate(async () => { const a = await _fsEnterAggMode("fs-muster"); try { await _fsZurBueroSeite(null); } catch (e) {} return { a, agg: !!_fsAgg, href: location.pathname }; });
+        if (r.a !== false || r.agg) f.push("Gesamtansicht per Funktion geöffnet");
+        if (/buero\.html/.test(r.href)) f.push("Büro-Seite per Funktion geöffnet");
+        if (await sichtbar(BUERO_SEL)) f.push("Büro-Knopf nach Versuch sichtbar");
+      } else {
+        await page.evaluate(async () => { if (!_fsAgg) await _fsEnterAggMode((_authProfile && _authProfile.fahrschule_id) || "fs-muster"); }); await warte(page, 600);
+        const d = await page.evaluate(() => { openDrawer(); const n = document.querySelectorAll('#drawer a[href="buero.html"]').length; closeDrawer(); return { n, dash: !!document.getElementById("fsBueroLink") }; });
+        if (!d.n) f.push("Büro-Seite am PC fehlt im Menü");
+        if (!d.dash) f.push("„Zur Büro-Seite“ fehlt auf der Übersicht");
+        await page.evaluate(async () => { if (_hatAdminUmschalter() && _fsAgg) await _fsExitAggMode(); }); await warte(page, 500);
+      }
+      return f;
+    });
+    if (!darfGesamt) {
+      await pruefe("R17", `${P} #fs_dash und eingeschleuster Menüpunkt öffnen nichts`, async () => {
+        const f = [];
+        const vorher = await page.evaluate(() => (view.firstElementChild || {}).className + "|" + $("#tbTitle").textContent);
+        await page.evaluate(() => { location.hash = "#fs_dash"; routeFahrschuleDashboard(); routeFahrschuleLehrer(); routeFahrschuleFahrzeuge(); routeFahrschuleStatistik(); });
+        await page.evaluate(() => { const b = document.createElement("button"); b.className = "nav-item"; b.dataset.nav = "fs_dash"; b.id = "fakeFs"; document.querySelector(".drawer-nav").appendChild(b); b.click(); }); await warte(page, 500);
+        const nachher = await page.evaluate(() => (view.firstElementChild || {}).className + "|" + $("#tbTitle").textContent + "|" + !!_fsAgg);
+        if (/true$/.test(nachher)) f.push("Gesamtansicht offen");
+        if (nachher.replace(/\|(true|false)$/, "") !== vorher) f.push("Ansicht hat gewechselt: " + vorher + " → " + nachher);
+        await page.evaluate(() => { document.getElementById("fakeFs")?.remove(); location.hash = ""; });
+        return f;
+      });
+    }
+    await pruefe("R18", `${P} „Abmelden“ ganz unten unter „Mehr“, nicht in den Einstellungen`, async () => {
+      const f = [];
+      await page.evaluate(() => openDrawer()); await warte(page, 600);
+      const d = await page.evaluate(() => {
+        const b = document.getElementById("drawerLogoutBtn"), nav = document.querySelector(".drawer-nav");
+        const r = b ? b.getBoundingClientRect() : null, nr = nav.getBoundingClientRect();
+        const frei = r && r.width > 0 && r.top >= 0 && r.bottom <= innerHeight + 1 && (() => { const e = document.elementFromPoint(r.left + r.width / 2, r.top + r.height / 2); return e && (e === b || b.contains(e)); })();
+        const o = { da: !!r && r.height > 0, frei: !!frei, unterNav: !!r && r.top >= nr.bottom - 1, nachNav: !!b && !!(nav.compareDocumentPosition(b) & Node.DOCUMENT_POSITION_FOLLOWING), imNav: !!nav.querySelector("[onclick*='doLogout']"), h: r ? Math.round(r.height) : 0 };
+        closeDrawer(); routeSettings();
+        o.einst = /Abmelden/.test(view.textContent) || !!view.querySelector("[onclick*='doLogout']");
+        return o;
+      });
+      if (!d.da) f.push("Abmelden im Menü nicht sichtbar");
+      else { if (!d.frei) f.push("Abmelden verdeckt oder außerhalb des Bildschirms"); if (!d.nachNav || !d.unterNav) f.push("Abmelden steht nicht unter den Menüpunkten"); if (d.h < 43.5) f.push("nur " + d.h + " px hoch"); }
+      if (d.imNav) f.push("Abmelden doppelt im Menü");
+      if (d.einst) f.push("Abmelden steht noch in den Einstellungen");
+      return f;
+    });
+    await page.evaluate(() => { try { routeDashboard(); } catch (e) {} });
+
     // Reiter „Schüler“: Knopf zum Anlegen sichtbar
     await page.evaluate(() => tabGo("schueler")); await warte(page, 400);
     // Ein Knopf zählt nur, wenn er ganz zu sehen ist und nichts darüber liegt (Mitte und beide Enden wirklich antippbar)
@@ -183,7 +249,7 @@ for (const R of ROLLEN) {
       return f.length ? f : null;
     });
     // Leitung, die selbst fährt: Streifen oben wechselt per Tipp in die ganze Fahrschule und zurück
-    if (R.prof.faehrt_selbst) {
+    if (R.umschalter && R.prof.faehrt_selbst) {
       await maskeWeg();
       const st = await page.evaluate(() => { const e = document.getElementById("saStreifen"); return e && !e.hidden ? { t: e.textContent, h: e.getBoundingClientRect().height } : null; });
       await pruefe("R6", `${P} Streifen „Du bist Leitung“ sichtbar und antippbar (≥ 44 px)`, () => (!st ? "kein Streifen" : !/Du bist Leitung/.test(st.t) ? "Text: " + st.t : st.h < 43.5 ? `nur ${Math.round(st.h)} px` : null));

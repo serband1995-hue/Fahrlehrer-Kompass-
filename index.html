@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<meta name="theme-color" content="#0c1410">
+<meta name="theme-color" content="#1b1f27">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="apple-mobile-web-app-title" content="Fahrlehrer-Kompass">
@@ -19,12 +19,12 @@
 <style>
 :root{
   /* === Waldgrün-Basis, Dunkel-Modus nach Mockup A "Navigations-Route" === */
-  --bg:#0a1210; --bg-soft:#0d1a15; --surface:#132420; --surface-2:#1a2f28;
-  --line:#24413a; --line-soft:#1c332c;
-  --txt:#eef3ef; --muted:#8fada2; --faint:#5c766c;
+  --bg:#1b1f27; --bg-soft:#20252e; --surface:#232933; --surface-2:#2b323e;
+  --line:#38414f; --line-soft:#2e3643; --feld:#7a8598;
+  --txt:#eceff4; --muted:#b2bac7; --faint:#98a2b2;
   /* === Waldgrün-Akzent (ersetzt Orange; Variablennamen bleiben für Kompatibilität) === */
-  --orange:#3a7350; --orange-soft:rgba(58,115,80,.18); --orange-line:rgba(120,170,140,.34);
-  --akzent:#3a7350; --akzent-dark:#2f5d3f; --akzent-bright:#4a8b5c;
+  --orange:#3f7f58; --orange-soft:rgba(255,255,255,.07); --orange-line:rgba(255,255,255,.16);
+  --akzent:#3f7f58; --akzent-dark:#336a4a; --akzent-bright:#8fcaa4; --fokus:#8fcaa4; --sel-bg:#3d4a5e; --sel-rand:#8fcaa4; --sel-txt:#ffffff;
   /* Alias — an mehreren Stellen (Nächste-Prüfung-Karte, Nächster-Schüler-Karte, Prüfungs-Tags) referenziert,
      bisher nirgends definiert gewesen -> Karten hatten unsichtbaren Hintergrund/Rand. */
   --gruen-soft:var(--orange-soft); --gruen-line:var(--orange-line);
@@ -40,9 +40,9 @@
   /* heller Grünton für Kalender/Dashboard-Akzente (war bisher nur per Fallback gesetzt) */
   --gruen-bright:#4a8b45;
   /* === Glasmorphism === */
-  --glass:rgba(28, 48, 37, 0.55); --glass-2:rgba(34, 58, 45, 0.42);
-  --glass-brd:rgba(120, 170, 140, 0.16); --glass-brd-top:rgba(170, 210, 185, 0.26);
-  --glass-glow:rgba(60, 110, 75, 0.28);
+  --glass:rgba(35, 41, 51, 0.92); --glass-2:rgba(43, 50, 62, 0.9);
+  --glass-brd:rgba(255, 255, 255, 0.10); --glass-brd-top:rgba(255, 255, 255, 0.14);
+  --glass-glow:transparent;
   /* === 3D-Schatten === */
   --elev-1:0 2px 8px rgba(0,0,0,.28);
   --elev-2:0 12px 28px rgba(0,0,0,.34);
@@ -57,47 +57,46 @@
 /* ===== HELL-MODUS — nach Mockup B "Warmes Atelier" ===== */
 body{transition:background-color .3s var(--ease,ease),color .3s var(--ease,ease);}
 body.light{
-  --bg:#f3f1e9; --bg-soft:#ece7d8; --surface:#fffdf7; --surface-2:#ece7d8;
-  --line:#ddd5bd; --line-soft:#e8e2cd;
-  --txt:#2a2c22; --muted:#6b6a55; --faint:#96936f;
-  --glass:rgba(255,253,247,.95); --glass-2:rgba(236,231,216,.90);
-  --glass-brd:rgba(58,115,80,.18); --glass-brd-top:rgba(58,115,80,.28);
-  --glass-glow:rgba(58,115,80,.08);
-  --elev-1:0 2px 10px rgba(60,50,20,.07); --elev-2:0 6px 18px rgba(60,50,20,.10); --elev-3:0 12px 30px rgba(60,50,20,.13);
-  --orange-soft:rgba(58,115,80,.12); --orange-line:rgba(58,115,80,.25);
+  --bg:#f1f1f4; --bg-soft:#e9e9ee; --surface:#ffffff; --surface-2:#e9e9ee;
+  --line:#cdcdd5; --line-soft:#dcdce2; --feld:#85858f;
+  --txt:#24242a; --muted:#5a5a65; --faint:#66666f;
+  --glass:rgba(255,255,255,.95); --glass-2:rgba(233,233,238,.90);
+  --glass-brd:rgba(36,36,42,.14); --glass-brd-top:rgba(255,255,255,.9);
+  --glass-glow:transparent;
+  --elev-1:0 1px 3px rgba(30,30,45,.06); --elev-2:0 4px 14px rgba(30,30,45,.08); --elev-3:0 12px 30px rgba(30,30,45,.12);
+  --orange-soft:rgba(36,36,42,.06); --orange-line:rgba(36,36,42,.18);
   --gold:#b8873a; --gold-soft:rgba(184,135,58,.14); --gold-line:rgba(184,135,58,.35);
   --clay:#c4744f; --clay-soft:rgba(196,116,79,.14);
   --brand-accent:var(--orange);
   --mint:var(--akzent-dark); --mint-soft:var(--akzent-dark); --mint-ok:var(--gruen);
 }
 body.light::before{
-  background:radial-gradient(120% 80% at 50% -10%,rgba(184,135,58,.10) 0%,var(--bg) 55%),
-    radial-gradient(80% 50% at 80% 110%,rgba(58,115,80,.08) 0%,transparent 60%);}
+  background:var(--bg);}
 body.light::after{opacity:.05;}
-body.light .topbar{background:linear-gradient(180deg,rgba(255,253,247,.98),rgba(255,253,247,.85));}
-body.light .drawer{background:linear-gradient(170deg,#f8f4e8,#ece7d8);}
-body.light .sheet{background:#fffdf7;}
-body.light .splash-bg,body.light #splash{background:radial-gradient(120% 90% at 50% 20%,rgba(184,135,58,.12) 0%,#f3f1e9 70%);}
+body.light .topbar{background:linear-gradient(180deg,rgba(255,255,255,.98),rgba(255,255,255,.88));}
+body.light .drawer{background:#f6f6f8;}
+body.light .sheet{background:#ffffff;}
+body.light .splash-bg,body.light #splash{background:var(--bg);}
 /* Logo sichtbar im Hell-Modus */
 body.light .tb-logo-wrap{
-  background:radial-gradient(120% 120% at 50% 0%,rgba(40,90,55,.85),rgba(14,38,22,.95));
+  background:radial-gradient(120% 120% at 50% 0%,#3a3f4a,#1f232b);
   box-shadow:0 4px 14px rgba(0,0,0,.25),var(--inset-top);}
 body.light .brand-mark{
-  background:radial-gradient(120% 120% at 50% 0%,rgba(40,90,55,.85),rgba(14,38,22,.95));
+  background:radial-gradient(120% 120% at 50% 0%,#3a3f4a,#1f232b);
   box-shadow:0 4px 12px rgba(0,0,0,.2);}
 /* Cards im Hell-Modus — mehr Kontrast, warmes Beige statt Minz-Grün */
-body.light .s-card{background:linear-gradient(160deg,#fffdf7,#f8f4e8);border-color:var(--line);box-shadow:0 2px 10px rgba(60,50,20,.08);}
-body.light .s-name{color:#2a2c22;}
-body.light .s-meta{color:#6b6a55;}
-body.light .s-form-chip{background:#ece7d8;border-color:var(--line);color:#2a2c22;}
-body.light .d-tile{background:linear-gradient(160deg,#fffdf7,#f5f0de);border-color:var(--line);}
-body.light .nav-action{background:linear-gradient(160deg,#fffdf7,#f5f0de);border-color:var(--line);}
-body.light .mini-stat{background:#fffdf7;border-color:var(--line);}
-body.light .seg-i{background:#ece7d8;color:#2a2c22;border-color:var(--line);}
+body.light .s-card{background:#ffffff;border-color:var(--line);box-shadow:var(--elev-1);}
+body.light .s-name{color:var(--txt);}
+body.light .s-meta{color:var(--muted);}
+body.light .s-form-chip{background:var(--surface-2);border-color:var(--line);color:var(--txt);}
+body.light .d-tile{background:#ffffff;border-color:var(--line);}
+body.light .nav-action{background:#ffffff;border-color:var(--line);}
+body.light .mini-stat{background:#ffffff;border-color:var(--line);}
+body.light .seg-i{background:var(--surface-2);color:var(--txt);border-color:var(--line);}
 body.light .seg-i.on{background:var(--akzent);color:#fff;}
-body.light .month-bars{background:#fffdf7;border-color:var(--line);}
-body.light .blk-h{color:#2a2c22;}
-body.light .muted-p{color:#6b6a55;}
+body.light .month-bars{background:#ffffff;border-color:var(--line);}
+body.light .blk-h{color:var(--txt);}
+body.light .muted-p{color:var(--muted);}
 /* ===== THEME-TOGGLE BUTTON ===== */
 .theme-btn{width:36px;height:36px;border-radius:11px;display:flex;align-items:center;justify-content:center;
   background:var(--glass);border:1px solid var(--glass-brd);color:var(--muted);
@@ -119,7 +118,7 @@ body{background:var(--bg);color:var(--txt);font-family:'Barlow',system-ui,sans-s
   font-size:15px;line-height:1.5;-webkit-font-smoothing:antialiased;overflow:hidden;position:relative;}
 /* Waldgrün-Verlauf + dezentes Kartenraster im Hintergrund */
 body::before{content:"";position:fixed;inset:0;z-index:0;pointer-events:none;
-  background:radial-gradient(120% 80% at 50% -10%, #12211a 0%, var(--bg) 55%),radial-gradient(80% 50% at 80% 110%, #0e1c15 0%, transparent 60%);}
+  background:radial-gradient(120% 80% at 50% -10%, #20252e 0%, var(--bg) 55%),radial-gradient(80% 50% at 80% 110%, #1b1f27 0%, transparent 60%);}
 body::after{content:"";position:fixed;inset:0;z-index:0;pointer-events:none;opacity:.03;
   background-image:linear-gradient(rgba(150,200,165,.6) 1px,transparent 1px),linear-gradient(90deg,rgba(150,200,165,.6) 1px,transparent 1px);
   background-size:48px 48px,48px 48px;
@@ -130,7 +129,7 @@ input,select,textarea{font-family:inherit;font-size:16px;color:var(--txt);}
    zusätzlich nur auf iPhone/iPad (Safari kennt -webkit-touch-callout) auch Felder mit eigener kleinerer Schrift
    (!important). Schreibgeschützte Felder bleiben klein. */
 @supports (-webkit-touch-callout:none){input:not([type=checkbox]):not([type=radio]):not([type=range]):not([readonly]),select,textarea:not([readonly]){font-size:16px !important;}}
-::selection{background:rgba(74,139,92,.32);}
+::selection{background:rgba(143,202,164,.35);}
 .display{font-family:'Anton',sans-serif;font-weight:400;text-transform:uppercase;letter-spacing:.02em;}
 .script{font-family:'Kaushan Script',cursive;}
 .serif{font-family:'Playfair Display',Georgia,serif;}
@@ -140,7 +139,7 @@ input,select,textarea{font-family:inherit;font-size:16px;color:var(--txt);}
 /* Logo-Animation (Okt. 2026): das Symbol setzt sich beim Start zusammen */
 
 .kl-tile{position:relative;width:var(--kl-size,140px);aspect-ratio:1;border-radius:23%;overflow:hidden;
-  background:radial-gradient(75% 75% at 50% 42%,#164e34 0%,#0e3a26 55%,#072216 100%);
+  background:radial-gradient(75% 75% at 50% 42%,#2e3440 0%,#1f242d 55%,#14181f 100%);
   box-shadow:0 18px 44px rgba(0,0,0,.35);animation:klTile .45s cubic-bezier(.2,.9,.3,1.2) both}
 .kl-tile i{position:absolute;inset:5%;background-size:100% 100%;background-repeat:no-repeat;
   transform-origin:50.2% 47.8%;will-change:transform,opacity}
@@ -167,7 +166,7 @@ input,select,textarea{font-family:inherit;font-size:16px;color:var(--txt);}
 #splash.hide .kl-tile{animation:spOut .25s var(--ease) forwards}
 #splash .kl-tile{--kl-size:clamp(110px,30vw,148px)}
 /* ===== SPLASH ===== */
-#splash{position:fixed;inset:0;z-index:200;background:radial-gradient(120% 90% at 50% 20%,#12211a 0%,#0a110d 70%);
+#splash{position:fixed;inset:0;z-index:200;background:radial-gradient(120% 90% at 50% 20%,#20252e 0%,#14171d 70%);
   display:flex;flex-direction:column;align-items:center;justify-content:center;gap:16px;
   transition:opacity .25s var(--ease),visibility 0s linear .25s;}
 #splash.hide{opacity:0;visibility:hidden;pointer-events:none;}
@@ -191,12 +190,12 @@ input,select,textarea{font-family:inherit;font-size:16px;color:var(--txt);}
 #splash .sp-name b{font-style:italic;font-weight:600;color:var(--mint);}
 #splash .sp-quote{max-width:78%;text-align:center;color:var(--txt);font-size:14px;line-height:1.65;font-style:normal;
   animation:spIn .9s var(--ease) .25s both;}
-#splash .sp-by{display:block;margin-top:9px;font-style:normal;font-size:10.5px;letter-spacing:.1em;text-transform:uppercase;color:#7a9a82;}
+#splash .sp-by{display:block;margin-top:9px;font-style:normal;font-size:10.5px;letter-spacing:.1em;text-transform:uppercase;color:#98a2b2;}
 #splash .sp-by b{color:var(--mint);font-weight:700;}
 @keyframes spIn{from{opacity:0;transform:scale(.94) translateY(12px);}to{opacity:1;transform:none;}}
 
 /* ===== SHELL ===== */
-.sa-streifen{flex:0 0 auto;display:flex;align-items:center;justify-content:center;gap:8px;padding:calc(6px + env(safe-area-inset-top)) 14px 6px;font-size:13.5px;font-weight:700;letter-spacing:.02em;line-height:1.2;color:#fff;background:#1f4d38;border-bottom:3px solid #e0b84f;position:relative;z-index:6;}
+.sa-streifen{flex:0 0 auto;display:flex;align-items:center;justify-content:center;gap:8px;padding:calc(6px + env(safe-area-inset-top)) 14px 6px;font-size:13.5px;font-weight:700;letter-spacing:.02em;line-height:1.2;color:#fff;background:#2b2d33;border-bottom:3px solid #e0b84f;position:relative;z-index:6;}
 .sa-streifen[hidden]{display:none;}
 .sa-streifen svg{width:18px;height:18px;flex:0 0 auto;color:#f0cd72;}
 .sa-streifen .sa-zusatz{font-weight:500;opacity:.92;}
@@ -268,7 +267,7 @@ input,select,textarea{font-family:inherit;font-size:16px;color:var(--txt);}
   opacity:0;visibility:hidden;transition:opacity .26s var(--ease),visibility .26s var(--ease);z-index:40;}
 .scrim.open{opacity:1;visibility:visible;}
 .drawer{position:fixed;top:0;left:0;bottom:0;width:min(322px,86vw);
-  background:linear-gradient(170deg,#16241c,#101a14);
+  background:linear-gradient(170deg,#232933,#1b1f27);
   border-right:1px solid var(--line);z-index:50;transform:translateX(-104%);
   transition:transform .3s var(--ease);display:flex;flex-direction:column;padding-top:env(safe-area-inset-top);}
 .drawer.open{transform:translateX(0);box-shadow:24px 0 60px rgba(0,0,0,.5);}
@@ -304,7 +303,7 @@ input,select,textarea{font-family:inherit;font-size:16px;color:var(--txt);}
   padding:15px 16px;display:flex;flex-direction:column;align-items:flex-start;gap:10px;}
 .stat::before{content:"";position:absolute;inset:0;border-radius:inherit;pointer-events:none;background:linear-gradient(130deg,rgba(190,220,200,.08),transparent 35%);}
 .stat .badge{width:44px;height:44px;border-radius:13px;flex:0 0 auto;position:relative;z-index:1;
-  background:linear-gradient(150deg,#244134,#15231b);box-shadow:var(--inset-top),inset 0 -3px 8px rgba(0,0,0,.35),0 4px 12px rgba(0,0,0,.3);
+  background:linear-gradient(150deg,#38414f,#232933);box-shadow:var(--inset-top),inset 0 -3px 8px rgba(0,0,0,.35),0 4px 12px rgba(0,0,0,.3);
   display:flex;align-items:center;justify-content:center;}
 .stat .badge svg{width:22px;height:22px;color:#bcd6c5;}
 /* K2 GK5: Symbole der Start-Kacheln (Gesamtansicht und Heute) haben eine feste Größe, sonst fehlen sie */
@@ -527,7 +526,7 @@ input,select,textarea{font-family:inherit;font-size:16px;color:var(--txt);}
 .nav-action:hover{border-color:var(--glass-brd-top);}
 .nav-action:active{transform:translateY(-3px);box-shadow:var(--elev-2),var(--inset-top);}
 .na-ic{width:48px;height:48px;border-radius:14px;flex:0 0 auto;
-  background:linear-gradient(150deg,#244134,#15231b);box-shadow:var(--inset-top),inset 0 -3px 8px rgba(0,0,0,.35),0 4px 12px rgba(0,0,0,.3);
+  background:linear-gradient(150deg,#38414f,#232933);box-shadow:var(--inset-top),inset 0 -3px 8px rgba(0,0,0,.35),0 4px 12px rgba(0,0,0,.3);
   display:flex;align-items:center;justify-content:center;}
 .na-ic svg{width:22px;height:22px;color:#bcd6c5;}
 .na-body{flex:1;min-width:0;}
@@ -614,7 +613,7 @@ input,select,textarea{font-family:inherit;font-size:16px;color:var(--txt);}
 /* ===== FORM ===== */
 .form-block{display:flex;flex-direction:column;gap:20px;}
 .field label{display:block;font-size:12.5px;font-weight:700;color:var(--muted);margin-bottom:8px;letter-spacing:.02em;}
-.field input,.field textarea,.field select{width:100%;background:var(--surface);border:1px solid var(--line);border-radius:var(--r-field);
+.field input,.field textarea,.field select{width:100%;background:var(--surface);border:1px solid var(--feld);border-radius:var(--r-field);
   padding:13px 15px;outline:none;transition:border-color .16s var(--ease),background .16s var(--ease);}
 .field select{min-height:48px;color:var(--txt);font:inherit;}
 .field input::placeholder,.field textarea::placeholder{color:var(--faint);}
@@ -812,7 +811,7 @@ input,select,textarea{font-family:inherit;font-size:16px;color:var(--txt);}
 .amp.chk.on::after{content:"✓";position:absolute;inset:0;display:flex;align-items:center;justify-content:center;color:#fff;font-weight:700;font-size:15px;}
 .grp-label{font-family:'Anton',sans-serif;font-size:11px;letter-spacing:.18em;text-transform:uppercase;color:var(--muted);padding:12px 16px 2px;border-top:1px solid var(--line-soft);}
 .stufe-note{padding:12px 16px 16px;border-top:1px solid var(--line-soft);}
-.stufe-note textarea{width:100%;background:var(--bg);border:1px solid var(--line);border-radius:10px;padding:11px 13px;min-height:64px;font-size:13.5px;line-height:1.5;resize:vertical;outline:none;}
+.stufe-note textarea{width:100%;background:var(--bg);border:1px solid var(--feld);border-radius:10px;padding:11px 13px;min-height:64px;font-size:13.5px;line-height:1.5;resize:vertical;outline:none;}
 .stufe-note textarea:focus{border-color:var(--orange);}
 
 /* ===== SETTINGS / COMING ===== */
@@ -1020,7 +1019,7 @@ body:has(#sheet.open) .toast.show{transform:translateX(-50%) translateY(0);}
 .es-act.good{color:#bfe6c5;}
 /* Historie-Timeline */
 .hist-add{display:flex;gap:8px;margin-bottom:18px;}
-.hist-add input{flex:1;background:var(--surface-2);border:1px solid var(--line);border-radius:11px;padding:12px 14px;color:var(--txt);font-size:14px;font-family:inherit;}
+.hist-add input{flex:1;background:var(--surface-2);border:1px solid var(--feld);border-radius:11px;padding:12px 14px;color:var(--txt);font-size:14px;font-family:inherit;}
 .hist-add button{flex:0 0 auto;background:var(--gruen);border:none;border-radius:11px;padding:0 18px;color:#fff;font-weight:800;font-size:14px;cursor:pointer;}
 .htl{position:relative;padding-left:26px;}
 .htl::before{content:"";position:absolute;left:7px;top:6px;bottom:6px;width:2px;background:var(--line);}
@@ -1057,7 +1056,7 @@ body:has(#sheet.open) .toast.show{transform:translateX(-50%) translateY(0);}
 .ns-empty{font-size:15px;color:var(--muted);font-weight:600;}
 .next-stud.none .ns-ic{width:44px;height:44px;border-radius:13px;flex:0 0 auto;background:var(--surface-2);color:var(--faint);display:flex;align-items:center;justify-content:center;}
 .ne-ic{width:48px;height:48px;border-radius:14px;flex:0 0 auto;position:relative;z-index:1;
-  background:linear-gradient(150deg,#244134,#15231b);box-shadow:var(--inset-top),inset 0 -3px 8px rgba(0,0,0,.35),0 4px 12px rgba(0,0,0,.3);
+  background:linear-gradient(150deg,#38414f,#232933);box-shadow:var(--inset-top),inset 0 -3px 8px rgba(0,0,0,.35),0 4px 12px rgba(0,0,0,.3);
   display:flex;align-items:center;justify-content:center}
 .ne-ic svg{color:#bcd6c5}
 .ne-body{flex:1;min-width:0;position:relative;z-index:1}
@@ -1118,7 +1117,7 @@ body:has(#sheet.open) .toast.show{transform:translateX(-50%) translateY(0);}
 .d-tile:active{transform:translateY(-3px)}
 .dt-n{font-family:'Playfair Display',serif;font-weight:600;font-size:32px;line-height:1;position:relative;z-index:1;
   background:linear-gradient(160deg,#fff 10%,var(--mint) 90%);-webkit-background-clip:text;background-clip:text;color:transparent}
-body.light .dt-n{background:linear-gradient(160deg,#1d3324 10%,#2f5d3f 90%);-webkit-background-clip:text;background-clip:text;color:transparent}
+body.light .dt-n{background:linear-gradient(160deg,#24242a 10%,#2f5d3f 90%);-webkit-background-clip:text;background-clip:text;color:transparent}
 .dt-l{font-size:10.5px;color:var(--muted);font-weight:600;position:relative;z-index:1}
 .dash-nav{display:flex;flex-direction:column;gap:11px}
 /* ===== Dashboard-Kalender-Shortcut (Haupt-Einstieg) ===== */
@@ -1186,7 +1185,7 @@ body.light .dt-n{background:linear-gradient(160deg,#1d3324 10%,#2f5d3f 90%);-web
 .stat-grid4{display:grid;grid-template-columns:1fr 1fr;gap:10px}
 .two-mini{display:grid;grid-template-columns:1fr 1fr;gap:10px}
 .mini-stat{background:var(--surface);border:1px solid var(--line);border-radius:14px;padding:14px 15px;position:relative;overflow:hidden}
-.mini-stat::before{content:"";position:absolute;inset:0;border-radius:inherit;background:linear-gradient(135deg,rgba(74,139,92,.07),transparent 55%);pointer-events:none}
+.mini-stat::before{content:"";position:absolute;inset:0;border-radius:inherit;background:none;pointer-events:none}
 .ms-v{font-family:'Playfair Display',serif;font-weight:700;font-size:28px;line-height:1;color:var(--txt)}
 .ms-l{font-size:11.5px;font-weight:800;margin-top:7px;color:var(--muted);text-transform:uppercase;letter-spacing:.04em}
 .ms-s{font-size:11px;color:var(--faint);margin-top:2px}
@@ -1352,7 +1351,7 @@ body.light .pe-res.no,body.light .pf-tag.warn{color:#9b2c1f;}
 
 
 /* ===== Suche + PDF/Druck ===== */
-.search-wrap{display:flex;align-items:center;gap:8px;background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:0 12px;margin-bottom:16px}
+.search-wrap{display:flex;align-items:center;gap:8px;background:var(--surface);border:1px solid var(--feld);border-radius:12px;padding:0 12px;margin-bottom:16px}
 .search-wrap:focus-within{border-color:var(--orange-line)}
 .search-ic{color:var(--muted);display:flex;flex:0 0 auto}
 .search-ic svg{width:18px;height:18px}
@@ -1451,7 +1450,7 @@ body.light .pe-res.no,body.light .pf-tag.warn{color:#9b2c1f;}
 .cal-gear svg{width:19px;height:19px;}
 /* Kalender-Such-Button */
 .cal-search-btn{width:40px;height:40px;border-radius:12px;display:flex;align-items:center;justify-content:center;background:var(--glass);border:1px solid var(--glass-brd);color:var(--muted);box-shadow:var(--inset-top);}
-.cal-filter-badge{position:absolute;top:6px;right:6px;width:8px;height:8px;border-radius:50%;background:#c4744f;box-shadow:0 0 0 2px var(--bg,#0a1210);}
+.cal-filter-badge{position:absolute;top:6px;right:6px;width:8px;height:8px;border-radius:50%;background:#c4744f;box-shadow:0 0 0 2px var(--bg,#1b1f27);}
 .cal-search-btn:active{transform:scale(.9);}
 .cal-search-btn svg{width:19px;height:19px;}
 /* Kalender-Suche Sheet */
@@ -1492,7 +1491,7 @@ body.light .pe-res.no,body.light .pf-tag.warn{color:#9b2c1f;}
 .az-toggle-h{display:flex;align-items:center;justify-content:space-between;margin-bottom:11px;}
 .az-times{display:flex;align-items:center;gap:9px;}
 .az-times label{font-size:12.5px;color:var(--muted);font-weight:700;}
-.az-times input[type=time]{flex:1;background:var(--bg-soft);border:1px solid var(--line);border-radius:10px;padding:10px;color:var(--txt);font-size:14px;font-family:inherit;}
+.az-times input[type=time]{flex:1;background:var(--bg-soft);border:1px solid var(--feld);border-radius:10px;padding:10px;color:var(--txt);font-size:14px;font-family:inherit;}
 .cal-filters{display:flex;gap:7px;overflow-x:auto;padding-bottom:4px;margin-bottom:14px;-webkit-overflow-scrolling:touch;}
 .cal-filters::-webkit-scrollbar{display:none;}
 .cal-fchip{flex:0 0 auto;padding:7px 14px;border-radius:18px;font-size:13px;font-weight:700;background:var(--surface-2);border:1px solid var(--line);color:var(--muted);}
@@ -1562,6 +1561,7 @@ body:not(.light) .cw-col.today .cw-dnum{color:var(--gold);}
 .cw-dnum{font-size:18px;font-weight:800;font-family:'Playfair Display',serif;}
 .cw-col.today .cw-dnum{color:var(--mint);}
 .cw-events{display:flex;flex-direction:column;gap:4px;}
+.cw-ev[style*="border-left-color:#88939a"],.ct-ev[style*="border-left-color:#88939a"]{background-image:repeating-linear-gradient(135deg,rgba(128,128,140,.20) 0,rgba(128,128,140,.20) 6px,transparent 6px,transparent 12px);}
 .cw-ev{border-left:3px solid var(--gruen-bright,#4a8b45);background:var(--bg-soft);border-radius:6px;padding:5px 6px;text-align:left;}
 .cw-ev.exam-soon{box-shadow:0 0 0 1.5px #c9a227 inset;background:rgba(201,162,39,.1);}
 .cw-ev.exam-done{background:var(--bg-soft);opacity:.92;}
@@ -1757,7 +1757,7 @@ body:not(.light) .fs-buero-link .fbl-ic,body:not(.light) .fs-buero-link .fbl-pfe
 .vortest-big .vb-ic{font-size:22px;flex:0 0 auto;}
 .vortest-big .vb-body .vb-name{color:#fff;font-weight:800;font-size:15px;}
 .vortest-big .vb-body .vb-sub{color:rgba(255,255,255,.88);font-size:12px;margin-top:1px;}
-.vortest-big .vb-arr{color:rgba(255,255,255,.6);font-size:18px;margin-left:auto;}
+.vortest-big .vb-arr{color:#fff;font-size:18px;margin-left:auto;}
 .vortest-big:active{opacity:.85;}
 /* Sehhilfe */
 .chip.sehhilfe{color:var(--muted);border-color:var(--line-soft);cursor:pointer;}
@@ -1791,7 +1791,7 @@ body:not(.light) .fs-buero-link .fbl-ic,body:not(.light) .fs-buero-link .fbl-pfe
 #sheet .sheet-pills .pill{min-height:44px;padding:8px 4px;text-align:center;background:var(--k-karte,var(--surface)) !important;border:1px solid var(--k-rand,var(--line)) !important;color:var(--k-tinte,var(--txt)) !important;font-weight:700;}
 #sheet .sheet-pills .pill.sel{background:var(--k-tinte,#173a2b) !important;border-color:var(--k-tinte,#173a2b) !important;color:#fff !important;}
 body:not(.light) #sheet .sheet-pills .pill{background:var(--surface) !important;border-color:var(--line) !important;color:var(--txt) !important;}
-body:not(.light) #sheet .sheet-pills .pill.sel{background:#123A2A !important;border-color:var(--k-mint,#7fbf95) !important;color:#fff !important;}
+body:not(.light) #sheet .sheet-pills .pill.sel{background:#2f3846 !important;border-color:var(--k-mint,#7fbf95) !important;color:#fff !important;}
 #sheet .sheet-knoepfe{position:sticky;bottom:calc(-26px - env(safe-area-inset-bottom));background:inherit;padding:10px 0 calc(10px + env(safe-area-inset-bottom));margin-bottom:calc(-26px - env(safe-area-inset-bottom));z-index:2;}
 .bh-schalter{display:flex;align-items:center;justify-content:space-between;gap:12px;min-height:48px;margin:4px 0 12px;font-size:14.5px;}
 .afs-zwei{display:grid;grid-template-columns:1fr 1fr;gap:0 10px;}
@@ -1997,7 +1997,7 @@ body:not(.light) #sheet .sheet-pills .pill.sel{background:#123A2A !important;bor
 /* ===== LOGIN OVERLAY ===== */
 #loginOverlay{
   position:fixed;inset:0;z-index:9999;
-  background:radial-gradient(120% 90% at 50% 0%,#0f2018 0%,#0c1410 70%);
+  background:radial-gradient(120% 90% at 50% 0%,#252c38 0%,#1b1f27 70%);
   display:flex;flex-direction:column;align-items:center;justify-content:safe center;
   padding:24px;overflow-y:auto;-webkit-overflow-scrolling:touch;
 }
@@ -2006,7 +2006,7 @@ body:not(.light) #sheet .sheet-pills .pill.sel{background:#123A2A !important;bor
 .lo-logo-img{width:90px;height:90px;border-radius:22px;margin-bottom:16px;object-fit:cover;box-shadow:0 8px 32px rgba(0,0,0,.5);}
 .lo-logo{font-family:'Anton',sans-serif;font-size:26px;color:#e8f0eb;margin-bottom:4px;letter-spacing:1px;}
 .lo-logo span{color:#4a8b45;}
-.lo-sub{font-family:'Barlow',sans-serif;font-size:13px;color:#6a9b7a;margin-bottom:32px;letter-spacing:.5px;}
+.lo-sub{font-family:'Barlow',sans-serif;font-size:13px;color:#98a2b2;margin-bottom:32px;letter-spacing:.5px;}
 .lo-card{
   width:100%;max-width:380px;
   background:rgba(255,255,255,.04);
@@ -2029,7 +2029,7 @@ body:not(.light) #sheet .sheet-pills .pill.sel{background:#123A2A !important;bor
   transition:border-color .2s;
 }
 .lo-field input:focus{border-color:#4a8b45;background:rgba(74,139,69,.08);}
-.lo-eye{position:absolute;right:6px;top:50%;transform:translateY(-50%);background:none;border:none;color:#6a9b7a;cursor:pointer;padding:4px;display:flex;align-items:center;justify-content:center;min-width:44px;min-height:44px;}
+.lo-eye{position:absolute;right:6px;top:50%;transform:translateY(-50%);background:none;border:none;color:#98a2b2;cursor:pointer;padding:4px;display:flex;align-items:center;justify-content:center;min-width:44px;min-height:44px;}
 .lo-eye:active{color:var(--mint-soft);}
 .lo-btn{
   width:100%;padding:15px;
@@ -2064,7 +2064,7 @@ body.light .lo-err.ok{color:#1e6b46;}
 /* ===== ADMIN PANEL ===== */
 #adminPanel{
   position:fixed;inset:0;z-index:9998;
-  background:#0c1410;overflow-y:auto;
+  background:#1b1f27;overflow-y:auto;
   padding:24px 16px;
   display:none;
 }
@@ -2074,7 +2074,7 @@ body.light .lo-err.ok{color:#1e6b46;}
 .ap-title{font-family:'Anton',sans-serif;font-size:22px;color:#4a8b45;}
 .ap-card{background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.08);border-radius:16px;padding:16px;margin-bottom:12px;}
 .ap-email{font-size:14px;font-weight:700;color:#e8f0eb;}
-.ap-role{font-size:12px;color:#6a9b7a;margin-top:2px;}
+.ap-role{font-size:12px;color:#98a2b2;margin-top:2px;}
 /* Theme-sichere Varianten für die Fahrschule-Ansichten (laufen im normalen, hell/dunkel-abhängigen View,
    NICHT im fest-dunklen #adminPanel-Overlay - darum eigene Klassen statt ap-*). */
 .fs-card{background:var(--surface-2);border:1px solid var(--line);border-radius:14px;padding:14px;margin-bottom:10px;}
@@ -2091,7 +2091,7 @@ body:not(.light) .fs-btn-kill{color:#ff8a80;} /* K3: „Sperren“ dunkel lesbar
 .ap-actions{display:flex;gap:8px;margin-top:12px;}
 .ap-kill{background:rgba(200,60,60,.15);border:1px solid rgba(200,60,60,.3);color:#f08080;border-radius:8px;padding:7px 14px;font-size:12px;font-weight:700;cursor:pointer;}
 .ap-activate{background:rgba(63,174,107,.12);border:1px solid rgba(63,174,107,.25);color:#3fae6b;border-radius:8px;padding:7px 14px;font-size:12px;font-weight:700;cursor:pointer;}
-.ap-status-on{display:inline-block;background:#3fae6b;color:#0c1410;border-radius:6px;padding:2px 8px;font-size:11px;font-weight:700;}
+.ap-status-on{display:inline-block;background:#3fae6b;color:#1b1f27;border-radius:6px;padding:2px 8px;font-size:11px;font-weight:700;}
 .ap-status-off{display:inline-block;background:#c83c3c;color:#fff;border-radius:6px;padding:2px 8px;font-size:11px;font-weight:700;}
 .ap-sync-bar{background:rgba(74,139,69,.1);border:1px solid rgba(74,139,69,.2);border-radius:10px;padding:10px 14px;font-size:12px;color:var(--mint-soft);margin-bottom:16px;}
 #apSyncStatus{font-weight:700;color:#4a8b45;}
@@ -2103,35 +2103,35 @@ body:not(.light) .fs-btn-kill{color:#ff8a80;} /* K3: „Sperren“ dunkel lesbar
    weiche Radien, Haarlinien statt Glas. Ampelfarben (--rot/--gelb/--gruen/--blau) unverändert.
    ============================================================ */
 :root{
-  --bg:#0c1410; --bg-soft:#111b16; --surface:#16221c; --surface-2:#1f2d25;
-  --line:#2e3f35; --line-soft:#223029;
-  --txt:#eef3ef; --muted:#b1bfb5; --faint:#76867b;
-  --orange:#3a7350; --orange-soft:rgba(74,139,92,.20); --orange-line:rgba(120,170,140,.38);
-  --akzent:#3a7350; --akzent-dark:#2f5d3f; --akzent-bright:#7fbf95;
+  --bg:#1b1f27; --bg-soft:#20252e; --surface:#232933; --surface-2:#2b323e;
+  --line:#38414f; --line-soft:#2e3643; --feld:#7a8598;
+  --txt:#eceff4; --muted:#b2bac7; --faint:#98a2b2;
+  --orange:#3f7f58; --orange-soft:rgba(255,255,255,.07); --orange-line:rgba(255,255,255,.16);
+  --akzent:#3f7f58; --akzent-dark:#336a4a; --akzent-bright:#8fcaa4; --fokus:#8fcaa4; --sel-bg:#3d4a5e; --sel-rand:#8fcaa4; --sel-txt:#ffffff;
   --gruen-soft:var(--orange-soft); --gruen-line:var(--orange-line);
   --mint:#bcd6c5; --mint-soft:#9fc3ab;
   --gold:#c9a227; --gold-soft:rgba(201,162,39,.16); --gold-line:rgba(201,162,39,.4);
   --clay:#c4744f; --clay-soft:rgba(196,116,79,.16);
   --brand-accent:var(--akzent);
-  --glass:#16221c; --glass-2:#1b2821; --glass-brd:#2e3f35; --glass-brd-top:#2e3f35; --glass-glow:transparent;
+  --glass:#232933; --glass-2:#283040; --glass-brd:#38414f; --glass-brd-top:#38414f; --glass-glow:transparent;
   --elev-1:0 1px 2px rgba(0,0,0,.3); --elev-2:0 4px 14px rgba(0,0,0,.35); --elev-3:0 14px 36px rgba(0,0,0,.45);
   --inset-top:inset 0 0 0 0 transparent;
   --r-card:22px; --r-tile:20px; --r-field:16px;
 }
 body.light{
   --zahl-rot:#a8321f; /* K8: Text-Rot mit Kontrast >= 4,5:1 auf Weiß und auf hellen Kärtchen */
-  --bg:#f2f4f1; --bg-soft:#e9ece8; --surface:#ffffff; --surface-2:#e8ece8;
-  --line:#d3d9d4; --line-soft:#e3e8e4;
-  --txt:#1a231d; --muted:#5a655d; --faint:#949d96;
-  --orange:#3a7350; --orange-soft:rgba(58,115,80,.10); --orange-line:rgba(58,115,80,.30);
-  --akzent:#3a7350; --akzent-dark:#2f5d3f; --akzent-bright:#4a8b5c;
+  --bg:#f1f1f4; --bg-soft:#e9e9ee; --surface:#ffffff; --surface-2:#e9e9ee;
+  --line:#cdcdd5; --line-soft:#dcdce2; --feld:#85858f;
+  --txt:#24242a; --muted:#5a5a65; --faint:#66666f;
+  --orange:#2f6b47; --orange-soft:rgba(36,36,42,.06); --orange-line:rgba(36,36,42,.18);
+  --akzent:#2f6b47; --akzent-dark:#2f6b47; --akzent-bright:#2f6b47; --fokus:#2f6b47; --sel-bg:#24242a; --sel-rand:#24242a; --sel-txt:#ffffff;
   --gruen-soft:var(--orange-soft); --gruen-line:var(--orange-line);
-  --mint:#2f5d3f; --mint-soft:#3a7350; --mint-ok:var(--gruen);
+  --mint:#2f6b47; --mint-soft:#2f6b47; --mint-ok:var(--gruen);
   --gold:#b8873a; --gold-soft:rgba(184,135,58,.14); --gold-line:rgba(184,135,58,.35);
   --clay:#c4744f; --clay-soft:rgba(196,116,79,.14);
   --brand-accent:var(--akzent);
-  --glass:#ffffff; --glass-2:#f6f8f5; --glass-brd:#dfe5e0; --glass-brd-top:#ffffff; --glass-glow:transparent;
-  --elev-1:0 1px 2px rgba(26,40,31,.08); --elev-2:0 3px 12px rgba(26,40,31,.08); --elev-3:0 14px 36px rgba(26,40,31,.14);
+  --glass:#ffffff; --glass-2:#f4f4f6; --glass-brd:#cdcdd5; --glass-brd-top:#ffffff; --glass-glow:transparent;
+  --elev-1:0 1px 2px rgba(30,30,45,.06); --elev-2:0 3px 12px rgba(30,30,45,.08); --elev-3:0 14px 36px rgba(30,30,45,.13);
 }
 body, body *:not(svg):not(svg *){font-family:'Source Serif 4',Georgia,'Times New Roman',serif !important;}
 body{font-size:15.5px;line-height:1.5;letter-spacing:0;}
@@ -2147,7 +2147,7 @@ body{font-size:15.5px;line-height:1.5;letter-spacing:0;}
 .res-block h4{color:var(--muted) !important;}
 .o{color:var(--akzent) !important;}
 body:not(.light) .o,body:not(.light) .brand-script b,body:not(.light) .sp-name b,body:not(.light) .ap-title{color:var(--akzent-bright) !important;}
-body:not(.light) .pill.on,body:not(.light) .f-chip.on,body:not(.light) .pr-chip.on,body:not(.light) .pt-tab.on,body:not(.light) .fs-status-on,body:not(.light) .es-act.good{color:var(--akzent-bright) !important;}
+body:not(.light) .fs-status-on,body:not(.light) .es-act.good{color:var(--akzent-bright) !important;}
 body::before{background:var(--bg) !important;}
 body::after{display:none !important;}
 body.light::before{background:var(--bg) !important;}
@@ -2164,6 +2164,7 @@ body.light::before{background:var(--bg) !important;}
 .res-block,.termin-card,.acc,.heute-card,.nex-card,.mini-dash,.month-bars,body.light .month-bars,.theorie-card,.wait-card,.tile,
 .dq-btn,.toggle-row,.seg,.search-wrap,.std,.sonder-row,.mini-btn,.chip,.pill,.f-chip,.s-form-chip,body.light .s-form-chip,.na-card{
   background:var(--surface) !important;border:1px solid var(--line-soft) !important;box-shadow:var(--elev-1) !important;backdrop-filter:none !important;}
+.search-wrap{border-color:var(--feld) !important;} /* Suchfeld als Feld erkennbar ≥3:1 (Fable R3) */
 .s-card:active,.d-tile:active,.nav-action:active{transform:translateY(0) scale(.985) !important;box-shadow:var(--elev-1) !important;}
 .d-tile::before,.stat::before{display:none !important;}
 .dt-n,body.light .dt-n,.stat .sv{background:none !important;-webkit-background-clip:initial !important;background-clip:initial !important;color:var(--txt) !important;-webkit-text-fill-color:var(--txt) !important;font-weight:600 !important;letter-spacing:-.02em !important;}
@@ -2179,7 +2180,7 @@ body.light::before{background:var(--bg) !important;}
 .btn-primary{background:var(--akzent) !important;color:#fff !important;border:none !important;}
 .btn-primary:active{background:var(--akzent-dark) !important;}
 .btn-ghost{background:transparent !important;border:1px solid var(--line) !important;color:var(--txt) !important;}
-.pill.on,.f-chip.on,.pr-chip.on,.pt-tab.on{background:var(--orange-soft) !important;border-color:var(--orange-line) !important;color:var(--akzent-dark) !important;}
+.pill.on,.f-chip.on,.pr-chip.on,.pt-tab.on{background:var(--sel-bg) !important;border-color:var(--sel-rand) !important;color:var(--sel-txt) !important;}
 .nex-card::before{background:var(--akzent) !important;width:4px !important;border-radius:4px;top:14px !important;height:calc(100% - 28px) !important;}
 .hc-n{font-size:34px !important;font-weight:600 !important;letter-spacing:-.02em !important;}
 .stat .badge,.na-ic,.ns-ic,.nex-ic{border-radius:999px !important;background:var(--orange-soft) !important;box-shadow:none !important;}
@@ -2206,8 +2207,8 @@ body:not(.light) .nav-item.primary svg,body:not(.light) .nav-item.primary{color:
 body:has(#sheet.open) .toast{bottom:auto !important;top:calc(14px + env(safe-area-inset-top)) !important;}
 .view-inner{padding-bottom:160px !important;}
 /* Umbau 2026-10: Farb- und Schrift-Grundlagen aus dem freigegebenen Entwurf (werden ab Schritt 2 genutzt) */
-:root{--k-grund:#F3F5F1;--k-tinte:#14211A;--k-text2:#55645A;--k-rand:#E1E7DF;--k-karte:#FFFFFF;
-  --k-akzent:#1E6B46;--k-akzent-hell:#E3EFE7;--k-jetzt:#14211A;--k-mint:#5BD18E;--k-mint-hell:#9FD3B4;
+:root{--k-grund:#F1F1F4;--k-tinte:#24242A;--k-text2:#5A5A65;--k-rand:#CDCDD5;--k-karte:#FFFFFF;
+  --k-akzent:#2F6B47;--k-akzent-hell:#E9E9EE;--k-jetzt:#1F3A2C;--k-mint:#5BD18E;--k-mint-hell:#9FD3B4;
   --k-gelb:#FBEFD9;--k-gelb-text:#7A4508;--k-rot:#F8E3DF;--k-rot-text:#8E2A1E;--k-whatsapp:#0F7D6E;
   --k-font-titel:"Playfair Display",Georgia,serif;--k-font-text:"Manrope",system-ui,sans-serif;--k-radius:16px;--k-tipp:44px;}
 /* Umbau Schritt 2: Startseite „Heute“ nach dem freigegebenen Entwurf. Hell = Entwurf, Dunkel = gleiche Ordnung auf dunklem Grund. */
@@ -2216,7 +2217,7 @@ body.light:has(.heute2)::before,body.light:has(.heute2)::after{display:none;}
 .heute2{--h-karte:var(--k-karte);--h-rand:var(--k-rand);--h-tinte:var(--k-tinte);--h-text2:var(--k-text2);--h-akzent:var(--k-akzent);
   --h-gelb:var(--k-gelb);--h-gelb-t:var(--k-gelb-text);--h-rot:var(--k-rot);--h-rot-t:var(--k-rot-text);--h-trenn:#EEF2EC;
   font-family:var(--k-font-text);color:var(--h-tinte);display:flex;flex-direction:column;gap:18px;padding-top:18px !important;}
-body:not(.light) .heute2{--h-karte:var(--surface);--h-rand:var(--line);--h-tinte:var(--txt);--h-text2:#a9c2b7;--h-akzent:var(--mint-ok);
+body:not(.light) .heute2{--h-karte:var(--surface);--h-rand:var(--line);--h-tinte:var(--txt);--h-text2:#b2bac7;--h-akzent:var(--mint-ok);
   --h-gelb:rgba(207,154,62,.18);--h-gelb-t:#f0c987;--h-rot:rgba(207,90,72,.22);--h-rot-t:#f6b0a3;--h-trenn:var(--line-soft);}
 .heute2 button{font-family:inherit;}
 .h2-kopf{display:flex;align-items:center;justify-content:space-between;gap:12px;}
@@ -2252,32 +2253,32 @@ body:not(.light) .heute2{--h-karte:var(--surface);--h-rand:var(--line);--h-tinte
 @keyframes wxFunkel{0%,100%{opacity:1}50%{opacity:.3}}
 @media (prefers-reduced-motion:reduce){.h2-wx *{animation:none !important;opacity:1 !important;}}
 body:not(.light) .h2-wx .wx-wolke-f:not([fill*="wxd"]){fill:#DDE6E0;}
-body:not(.light) .h2-wx .wx-wolke-f{stroke:#A9B8AF;}
-body:not(.light) .h2-wx.wx-nebel g{stroke:#B9C7BF;}
-/* Jetzt dran: immer dunkelgrün mit Mint */
-.h2-jetzt{background:var(--k-jetzt);color:#fff;border:1px solid #2E4237;border-radius:24px;padding:20px;display:flex;flex-direction:column;gap:14px;}
+body:not(.light) .h2-wx .wx-wolke-f{stroke:#b8bfcb;}
+body:not(.light) .h2-wx.wx-nebel g{stroke:#b8bfcb;}
+/* Jetzt dran: hell sehr dunkles Grün (#1F3A2C), dunkel Grau-Blau (#2f3846), jeweils mit Mint (Farbe B) */
+.h2-jetzt{background:var(--k-jetzt);color:#fff;border:1px solid #3b5a49;border-radius:24px;padding:20px;display:flex;flex-direction:column;gap:14px;}
 .h2-jetzt-kopf{display:flex;align-items:center;justify-content:space-between;gap:10px;}
 .h2-jetzt-label{display:flex;align-items:center;gap:8px;font-size:12px;font-weight:800;letter-spacing:.08em;text-transform:uppercase;color:var(--k-mint-hell);}
 .h2-live{width:8px;height:8px;border-radius:50%;background:var(--k-mint);display:inline-block;animation:h2puls 1.6s ease-in-out infinite;flex:0 0 auto;}
 @keyframes h2puls{0%,100%{opacity:1}50%{opacity:.35}}
 @media (prefers-reduced-motion:reduce){.h2-live{animation:none;}}
-.h2-jetzt-ue{font-size:12px;font-weight:700;color:#B9C8BE;white-space:nowrap;}
+.h2-jetzt-ue{font-size:12px;font-weight:700;color:#c5c9d2;white-space:nowrap;}
 .h2-jetzt-mitte{display:flex;align-items:center;gap:14px;min-width:0;}
 .h2-avatar{width:52px;height:52px;border-radius:16px;background:var(--k-akzent);display:flex;align-items:center;justify-content:center;font-family:var(--k-font-titel);font-size:20px;font-weight:700;flex:0 0 auto;}
 .h2-jetzt-text{display:flex;flex-direction:column;gap:3px;min-width:0;}
 .h2-jetzt-name{font-size:21px;font-weight:800;overflow-wrap:anywhere;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;}
-.h2-jetzt-fokus{font-size:13.5px;color:#C8D6CC;overflow-wrap:anywhere;}
+.h2-jetzt-fokus{font-size:13.5px;color:#d4d7de;overflow-wrap:anywhere;}
 .h2-jetzt-pct{margin-left:auto;font-family:var(--k-font-titel);font-size:22px;font-weight:700;color:var(--k-mint-hell);flex:0 0 auto;}
 .h2-kontakt{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px;}
-.h2-knopf{min-height:46px;border-radius:14px;border:1px solid #2E4237;background:#1D2E25;color:#fff;font-weight:700;font-size:14px;display:flex;align-items:center;justify-content:center;gap:8px;text-decoration:none;padding:0 10px;}
+.h2-knopf{min-height:46px;border-radius:14px;border:1px solid rgba(255,255,255,.22);background:rgba(255,255,255,.08);color:#fff;font-weight:700;font-size:14px;display:flex;align-items:center;justify-content:center;gap:8px;text-decoration:none;padding:0 10px;}
 .h2-knopf svg{width:18px;height:18px;}
 .h2-haupt{min-height:54px;border-radius:16px;background:var(--k-mint);color:#0E2A1B;font-size:16px;font-weight:800;display:flex;align-items:center;justify-content:center;gap:10px;border:0;width:100%;}
 .h2-haupt svg{width:20px;height:20px;}
 .h2-schnell{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:6px;}
-.h2-mini{min-height:48px;padding:4px 6px;border-radius:12px;background:#1D2E25;border:1px solid #2E4237;color:#C8D6CC;font-size:12px;font-weight:700;line-height:1.2;display:flex;align-items:center;justify-content:center;text-align:center;}
+.h2-mini{min-height:48px;padding:4px 6px;border-radius:12px;background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.22);color:#d4d7de;font-size:12px;font-weight:700;line-height:1.2;display:flex;align-items:center;justify-content:center;text-align:center;}
 .h2-leer{align-items:flex-start;}
-.h2-fortsetzen{display:flex;align-items:center;gap:10px;min-height:52px;padding:0 16px;border-radius:16px;border:1px solid var(--k-mint);background:#123A2A;color:#fff;font-size:15px;font-weight:800;text-align:left;width:100%;}
-.h2-fortsetzen .h2-fs-zeit{margin-left:auto;font-size:12.5px;font-weight:700;color:#B9C8BE;}
+.h2-fortsetzen{display:flex;align-items:center;gap:10px;min-height:52px;padding:0 16px;border-radius:16px;border:1px solid var(--k-mint);background:#2f3846;color:#fff;font-size:15px;font-weight:800;text-align:left;width:100%;}
+.h2-fortsetzen .h2-fs-zeit{margin-left:auto;font-size:12.5px;font-weight:700;color:#c5c9d2;}
 .h2-leer-t{font-size:18px;font-weight:800;}
 .h2-knopf-hell{min-height:48px;padding:0 18px;border-radius:14px;background:var(--k-mint);color:#0E2A1B;font-weight:800;font-size:15px;border:0;}
 /* Überschriften der Abschnitte */
@@ -2316,9 +2317,9 @@ body:has(#view .heute2) #tbTitle{visibility:hidden;}
 /* Plus-Knopf auf Heute nur als runder Knopf, damit er wenig verdeckt */
 body:has(#view .heute2) #fab{width:56px;height:56px !important;padding:0 !important;justify-content:center;}
 body:has(#view .heute2) #fab span{display:none;}
-.h2-jetzt-fz{font-size:12.5px;color:#B9C8BE;margin-top:2px;}
-body:not(.light) .h2-jetzt{background:#123A2A;border-color:#2B6A4C;}
-body:not(.light) .h2-knopf,body:not(.light) .h2-mini{background:#0F2E22;border-color:#2B6A4C;}
+.h2-jetzt-fz{font-size:12.5px;color:#c5c9d2;margin-top:2px;}
+body:not(.light) .h2-jetzt{background:#2f3846;border-color:#46505f;}
+body:not(.light) .h2-knopf,body:not(.light) .h2-mini{background:#2b323e;border-color:#46505f;}
 .h2-weitere{justify-content:center;color:var(--h-akzent);}
 .h2-weitere .h2-wer{font-size:13px;font-weight:800;}
 /* Auslastung im gleichen Kartenstil wie die Kacheln */
@@ -2327,16 +2328,17 @@ body:not(.light) .h2-knopf,body:not(.light) .h2-mini{background:#0F2E22;border-c
 .heute2 .cap-title{color:var(--h-text2);}
 .heute2 .cap-pct{color:var(--h-tinte) !important;font-weight:800;font-variant-numeric:lining-nums;}
 .heute2 .cap-foot{color:var(--h-text2);}
+body.light .fc-missing-link{color:var(--zahl-rot);}
 .heute2 .fc-missing-link,.heute2 .cap-card,.heute2 #capCard{min-height:48px;}
 /* Querformat: rechts Platz für den Plus-Knopf, damit er keine Knöpfe verdeckt */
 @media (orientation:landscape) and (max-height:520px){ .heute2{padding-right:calc(var(--pad,16px) + 72px) !important;} .tabbar{background:var(--bg) !important;} }
 /* Umbau Schritt 3: Fahrstunden-Modus (dunkel, ohne Reiterleiste) und „Nach der Stunde“ (hell wie Heute) */
 body:has(#view .fahrmodus) .tabbar,body:has(#view .fahrmodus) #fab{display:none !important;}
-body:has(#view .fahrmodus){background:#0F1A14 !important;}
+body:has(#view .fahrmodus){background:#161a21 !important;}
 body:has(#view .fahrmodus)::before,body:has(#view .fahrmodus)::after{display:none;}
 body:has(#view .fertig2) #tbTitle{visibility:visible;}
 body.light:has(#view .fertig2){background:var(--k-grund) !important;}
-.fahrmodus{background:#0F1A14;color:#fff;display:flex;flex-direction:column;gap:14px;padding-top:16px !important;padding-bottom:40px !important;min-height:100%;}
+.fahrmodus{background:#161a21;color:#fff;display:flex;flex-direction:column;gap:14px;padding-top:16px !important;padding-bottom:40px !important;min-height:100%;}
 .fahrmodus,.fahrmodus *:not(svg):not(svg *){font-family:var(--k-font-text) !important;}
 .fahrmodus .fm-zeit,.fahrmodus .fm-ueben-t{font-family:var(--k-font-titel) !important;font-variant-numeric:lining-nums tabular-nums;}
 .fm-kopf{display:flex;align-items:center;gap:12px;}
@@ -2345,34 +2347,34 @@ body.light:has(#view .fertig2){background:var(--k-grund) !important;}
 .fm-name{font-size:20px;font-weight:800;overflow-wrap:anywhere;}
 .fm-uhr{margin-left:auto;text-align:right;flex:0 0 auto;}
 .fm-zeit{font-size:26px;font-weight:700;}
-.fm-von{font-size:11.5px;font-weight:700;color:#B9C8BE;}
-.fm-ueben{background:#1A2A21;border-radius:22px;padding:16px;display:flex;flex-direction:column;gap:6px;}
+.fm-von{font-size:11.5px;font-weight:700;color:#c5c9d2;}
+.fm-ueben{background:#232933;border-radius:22px;padding:16px;display:flex;flex-direction:column;gap:6px;}
 .fm-ueber{font-size:12px;font-weight:800;letter-spacing:.08em;text-transform:uppercase;color:var(--k-mint-hell);}
 .fm-ueben-t{font-size:22px;font-weight:700;line-height:1.25;}
-.fm-letzte{font-size:13.5px;color:#C8D6CC;overflow-wrap:anywhere;}
+.fm-letzte{font-size:13.5px;color:#d4d7de;overflow-wrap:anywhere;}
 .fm-zeile{display:flex;justify-content:space-between;align-items:baseline;gap:10px;}
-.fm-gruen{font-size:12px;font-weight:700;color:#B9C8BE;}
+.fm-gruen{font-size:12px;font-weight:700;color:#c5c9d2;}
 .fm-themen{display:flex;flex-direction:column;gap:8px;}
-.fm-thema{min-height:56px;border-radius:16px;border:1px solid #263A2F;background:#15221B;color:#fff;font-size:15px;font-weight:700;display:flex;align-items:center;gap:12px;padding:6px 14px;text-align:left;width:100%;}
+.fm-thema{min-height:56px;border-radius:16px;border:1px solid #38414f;background:#232933;color:#fff;font-size:15px;font-weight:700;display:flex;align-items:center;gap:12px;padding:6px 14px;text-align:left;width:100%;}
 .fm-thema-t{flex:1;min-width:0;overflow-wrap:anywhere;}
-.fm-punkt{width:14px;height:14px;border-radius:50%;flex:0 0 auto;background:transparent;border:2px solid #9DB0A4;box-sizing:border-box;}
+.fm-punkt{width:14px;height:14px;border-radius:50%;flex:0 0 auto;background:transparent;border:2px solid #a9b0bd;box-sizing:border-box;}
 .fm-thema:not([data-wert="offen"]) .fm-punkt{border:0;}
-.fm-chip{font-size:12.5px;font-weight:800;padding:6px 12px;border-radius:999px;background:#263A2F;color:#C8D6CC;flex:0 0 auto;}
+.fm-chip{font-size:12.5px;font-weight:800;padding:6px 12px;border-radius:999px;background:#38414f;color:#d4d7de;flex:0 0 auto;}
 .fm-thema[data-wert="gelb"] .fm-punkt{background:#F2B632;} .fm-thema[data-wert="gelb"] .fm-chip{background:#3D3016;color:#F7D37A;}
 .fm-thema[data-wert="gruen"] .fm-punkt{background:var(--k-mint);} .fm-thema[data-wert="gruen"] .fm-chip{background:#173A28;color:#9FE6BC;}
 .fm-thema[data-wert="rot"] .fm-punkt{background:#E5715E;} .fm-thema[data-wert="rot"] .fm-chip{background:#3D1E19;color:#F6B0A3;}
-.fm-mehr{min-height:48px;border-radius:14px;border:1px dashed #2E4237;background:transparent;color:var(--k-mint-hell);font-size:14px;font-weight:800;}
+.fm-mehr{min-height:48px;border-radius:14px;border:1px dashed #454d5c;background:transparent;color:var(--k-mint-hell);font-size:14px;font-weight:800;}
 .fm-notizen{display:flex;flex-direction:column;gap:8px;}
 .fm-chips{display:flex;flex-wrap:wrap;gap:8px;}
-.fm-notiz{min-height:44px;padding:0 14px;border-radius:999px;border:1px solid #263A2F;background:#15221B;color:#E3EDE6;font-size:13.5px;font-weight:700;max-width:100%;overflow-wrap:anywhere;}
+.fm-notiz{min-height:44px;padding:0 14px;border-radius:999px;border:1px solid #38414f;background:#232933;color:#eceff4;font-size:13.5px;font-weight:700;max-width:100%;overflow-wrap:anywhere;}
 .fm-notiz.an{background:#173A28;border-color:var(--k-mint);color:#9FE6BC;}
-.fm-fuss{display:flex;gap:10px;margin-top:6px;position:sticky;bottom:0;z-index:5;background:linear-gradient(180deg,rgba(15,26,20,0),#0F1A14 22%);padding:22px 0 calc(12px + env(safe-area-inset-bottom));}
+.fm-fuss{display:flex;gap:10px;margin-top:6px;position:sticky;bottom:0;z-index:5;background:linear-gradient(180deg,rgba(22,26,33,0),#161a21 22%);padding:22px 0 calc(12px + env(safe-area-inset-bottom));}
 /* Kopfleiste im Modus dunkel, damit es ein ruhiges Bild ist und nicht blendet */
-body:has(#view .fahrmodus) .topbar{background:#0F1A14 !important;border-color:#1E2E25 !important;color:#E3EDE6;}
-body:has(#view .fahrmodus) .topbar .tb-title,body:has(#view .fahrmodus) .topbar .icon-btn,body:has(#view .fahrmodus) .topbar .theme-btn{color:#E3EDE6 !important;}
+body:has(#view .fahrmodus) .topbar{background:#161a21 !important;border-color:#2e3643 !important;color:#eceff4;}
+body:has(#view .fahrmodus) .topbar .tb-title,body:has(#view .fahrmodus) .topbar .icon-btn,body:has(#view .fahrmodus) .topbar .theme-btn{color:#eceff4 !important;}
 /* Querformat: Karte „Heute üben“ knapp, Themen in zwei Spalten */
 @media (orientation:landscape) and (max-height:520px){ .fm-letzte{display:none;} .fm-ueben-t{font-size:16px;} .fm-themen{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));} .fm-mehr{grid-column:1/-1;} }
-.fm-abbrechen{flex:0 0 auto;min-height:56px;padding:0 16px;border-radius:18px;border:1px solid #2E4237;background:transparent;color:#C8D6CC;font-size:14px;font-weight:700;}
+.fm-abbrechen{flex:0 0 auto;min-height:56px;padding:0 16px;border-radius:18px;border:1px solid #454d5c;background:transparent;color:#d4d7de;font-size:14px;font-weight:700;}
 .fm-fertig{flex:1;min-height:56px;border-radius:18px;border:0;background:var(--k-mint);color:#0E2A1B;font-size:17px;font-weight:800;}
 /* Nach der Stunde */
 .fertig2 .sf-kopf{display:flex;flex-direction:column;align-items:center;gap:8px;text-align:center;}
@@ -2410,7 +2412,7 @@ body:not(.light) .sf-slot{background:var(--surface-2);}
 
 /* Umbau Schritt 4: Schülerliste und Akte mit Reitern (Formensprache wie Heute) */
 .schueler2{--sr-leer:#E7ECE6;--h-karte:var(--k-karte);--h-rand:var(--k-rand);--h-tinte:var(--k-tinte);--h-text2:var(--k-text2);}
-body:not(.light) .schueler2{--sr-leer:#24413a;--h-karte:var(--surface);--h-rand:var(--line);--h-tinte:var(--txt);--h-text2:#a9c2b7;}
+body:not(.light) .schueler2{--sr-leer:#38414f;--h-karte:var(--surface);--h-rand:var(--line);--h-tinte:var(--txt);--h-text2:#b2bac7;}
 body.light:has(#view .schueler2),body.light:has(#view .akte2){background:var(--k-grund) !important;}
 body.light:has(#view .schueler2)::before,body.light:has(#view .schueler2)::after,body.light:has(#view .akte2)::before,body.light:has(#view .akte2)::after{display:none;}
 .schueler2,.schueler2 *:not(svg):not(svg *),.akte-kopf,.akte-kopf *,.akte2 .at-zeile *,.akte2 .ap-karte *{font-family:var(--k-font-text) !important;}
@@ -2422,7 +2424,7 @@ body.light:has(#view .schueler2)::before,body.light:has(#view .schueler2)::after
 .sl-sorten::-webkit-scrollbar{display:none;}
 .sl-sort{flex:0 0 auto;min-height:44px;padding:0 14px;border-radius:999px;font-size:13.5px;font-weight:700;background:var(--h-karte);color:var(--h-tinte);border:1px solid var(--h-rand);}
 .sl-sort.on{background:var(--k-tinte);color:#fff;border-color:var(--k-tinte);}
-body:not(.light) .sl-sort.on{background:#123A2A;border-color:var(--k-mint);}
+body:not(.light) .sl-sort.on{background:#2f3846;border-color:var(--k-mint);}
 .schueler2 #studentGrid{display:flex;flex-direction:column;gap:8px;}
 .s-row{min-height:68px;width:100%;background:var(--h-karte);border:1px solid var(--h-rand);border-radius:18px;padding:10px 14px;display:flex;align-items:center;gap:12px;text-align:left;color:var(--h-tinte);}
 .sr-ring{flex:0 0 auto;width:46px;height:46px;border-radius:50%;display:flex;align-items:center;justify-content:center;}
@@ -2435,10 +2437,10 @@ body:not(.light) .sl-sort.on{background:#123A2A;border-color:var(--k-mint);}
 .sr-sub.rot{color:#9E2F22;} .sr-sub.gelb{color:#7A4508;} .sr-sub.heute{color:var(--k-akzent);font-weight:800;}
 body:not(.light) .sr-sub.heute{color:var(--mint-ok);}
 body:not(.light) .sr-sub.rot{color:#f6b0a3;} body:not(.light) .sr-sub.gelb{color:#f0c987;}
-.sr-pfeil{width:18px;height:18px;flex:0 0 auto;color:#8A988F;}
+.sr-pfeil{width:18px;height:18px;flex:0 0 auto;color:#8b93a1;}
 /* Akte */
 .akte2{--h-karte:var(--k-karte);--h-rand:var(--k-rand);--h-tinte:var(--k-tinte);--h-text2:var(--k-text2);}
-body:not(.light) .akte2{--h-karte:var(--surface);--h-rand:var(--line);--h-tinte:var(--txt);--h-text2:#a9c2b7;}
+body:not(.light) .akte2{--h-karte:var(--surface);--h-rand:var(--line);--h-tinte:var(--txt);--h-text2:#b2bac7;}
 .akte2 .back-row .back-btn{display:none !important;}
 .akte2 .at-neu,.akte2 .at-hist,.akte2 .h2-ueber,.akte2 .h2-nichts,.akte2 .ap-karte,.akte2 .ap-karte *{font-family:var(--k-font-text) !important;}
 .akte2 .back-row:has(> .back-btn:only-child){display:none !important;}
@@ -2474,7 +2476,7 @@ body:not(.light) .ap-zeile b.ok{color:var(--mint-ok);} body:not(.light) .ap-zeil
 /* Umbau Schritt 5a: übrige Seiten im gleichen Stil wie Heute/Schüler. Nur Aussehen.
    #view bekommt data-seite2 (gesetzt in navInstallieren, siehe SEITE2_ROUTEN); die ID-Stärke schlägt die alten !important-Regeln. */
 #view[data-seite2]{--s2-karte:var(--k-karte);--s2-rand:var(--k-rand);--s2-tinte:var(--k-tinte);--s2-text2:var(--k-text2);--s2-on:var(--k-tinte);--s2-on-t:#fff;--s2-akzent:var(--k-akzent);--s2-trenn:#EEF2EC;}
-body:not(.light) #view[data-seite2]{--s2-karte:var(--surface);--s2-rand:var(--line);--s2-tinte:var(--txt);--s2-text2:#a9c2b7;--s2-on:#123A2A;--s2-on-t:#fff;--s2-akzent:var(--mint-ok,#7fbf95);--s2-trenn:var(--line-soft);}
+body:not(.light) #view[data-seite2]{--s2-karte:var(--surface);--s2-rand:var(--line);--s2-tinte:var(--txt);--s2-text2:#b2bac7;--s2-on:#3d4a5e;--s2-on-t:#fff;--s2-akzent:var(--mint-ok,#7fbf95);--s2-trenn:var(--line-soft);}
 body.light:has(#view[data-seite2]){background:var(--k-grund) !important;}
 body.light:has(#view[data-seite2])::before{background:var(--k-grund) !important;}
 #view[data-seite2] .view-inner,#view[data-seite2] .view-inner *:not(svg):not(svg *){font-family:var(--k-font-text) !important;}
@@ -2515,8 +2517,8 @@ body:not(.light) #view[data-seite2] :is(.pill,.f-chip,.pr-chip,.pt-tab,.chip,.s-
 #view[data-seite2] .btn-primary{background:var(--k-akzent) !important;color:#fff !important;}
 #view[data-seite2] .btn-ghost{background:var(--s2-karte) !important;border:1px solid var(--s2-rand) !important;color:var(--s2-tinte) !important;}
 #view[data-seite2] .back-btn{min-height:44px;}
-#view[data-seite2] .search-wrap{background:var(--s2-karte) !important;border:1px solid var(--s2-rand) !important;box-shadow:none !important;min-height:48px;}
-#view[data-seite2] input:not([type="checkbox"]):not([type="radio"]):not([type="range"]),#view[data-seite2] select,#view[data-seite2] textarea{background:var(--s2-karte) !important;border:1px solid var(--s2-rand) !important;color:var(--s2-tinte) !important;border-radius:14px !important;}
+#view[data-seite2] .search-wrap{background:var(--s2-karte) !important;border:1px solid var(--feld) !important;box-shadow:none !important;min-height:48px;}
+#view[data-seite2] input:not([type="checkbox"]):not([type="radio"]):not([type="range"]),#view[data-seite2] select,#view[data-seite2] textarea{background:var(--s2-karte) !important;border:1px solid var(--feld) !important;color:var(--s2-tinte) !important;border-radius:14px !important;}
 #view[data-seite2] .o{color:inherit !important;}
 /* 5a Feinheiten: breitere Schrift darf nichts über den Rand schieben */
 #view[data-seite2] .az-times input[type=time]{min-width:0;padding:10px 8px;}
@@ -2552,8 +2554,8 @@ body:not(.light) #view[data-seite2] :is(.pill,.f-chip,.pr-chip,.pt-tab,.chip,.s-
 #view[data-seite2] .cal-filters{flex-wrap:wrap;overflow-x:visible;}
 
 /* 5a Kontrast: blasse Nebentexte auf den neuen weißen Karten gut lesbar (hell ≥ 4.5:1) */
-body.light #view[data-seite2]{--muted:#55645A;--faint:#5C6A61;--gruen-bright:#1E6B46;--orange:#1E6B46;--akzent-bright:#1E6B46;--mint-ok:#1E6B46;--gold:#7E5410;}
-body:not(.light) #view[data-seite2]{--faint:#a3b2a8;--gold:#e3bd55;}
+body.light #view[data-seite2]{--muted:#5a5a65;--faint:#66666f;--gruen-bright:#1E6B46;--orange:#1E6B46;--akzent-bright:#1E6B46;--mint-ok:#1E6B46;--gold:#7E5410;}
+body:not(.light) #view[data-seite2]{--faint:#a8b0bd;--gold:#e3bd55;}
 body:not(.light) #view[data-seite2] :is(.acc-h .nr,.slot-free,.sim-plus,.iBtn,#histAddBtn,.cw-free-p,.cw-fz){color:#8fd3a6 !important;}
 #view[data-seite2] .cw-fz{opacity:1;}
 #view[data-seite2] .az-times label,#view[data-seite2] .cw-wd,#view[data-seite2] .ct-hl,#view[data-seite2] .cm-num,#view[data-seite2] .th-val,#view[data-seite2] .thi-k,#view[data-seite2] .ms-s,#view[data-seite2] .wd-l{color:var(--s2-text2) !important;}
@@ -2609,7 +2611,7 @@ body:has(#navBackBtn:not([hidden])) #view .back-row:has(> .back-btn:only-child){
 body:has(#navBackBtn:not([hidden])) #view .back-row > .back-btn{display:none !important;}
 body:has(#navBackBtn:not([hidden])) #view .back-row:has(> .back-btn){justify-content:flex-end;}
 /* Erledigte To-dos lesbarer */
-body.light #view[data-seite2] .todo-item.done .todo-txt{color:#6B776F !important;}
+body.light #view[data-seite2] .todo-item.done .todo-txt{color:#66666f !important;}
 /* Umbau Schritt 6a: Wetter-Seite – weich und flüssig (nur transform/opacity animiert) */
 .wx-stage{height:clamp(220px,46vh,340px) !important;border-radius:24px !important;isolation:isolate;}
 .wx-stage > *{pointer-events:none;}
@@ -2729,9 +2731,10 @@ body:not(.light) #view[data-seite2] .cw-col.today{background:rgba(91,209,142,.10
   color:var(--muted);font-size:11px;font-weight:600;letter-spacing:.02em;border-radius:18px;transition:color .15s var(--ease);}
 .tab-ic{width:56px;height:30px;border-radius:999px;display:flex;align-items:center;justify-content:center;transition:background .18s var(--ease),transform .18s var(--pop);}
 .tab-i svg{width:22px;height:22px;stroke:currentColor;}
-.tab-i.on{color:var(--akzent-dark);}
+.tab-i.on{color:#24573a;}
 body:not(.light) .tab-i.on{color:var(--akzent-bright);}
-.tab-i.on .tab-ic{background:var(--orange-soft);}
+.tab-i.on .tab-ic{background:rgba(47,107,71,.16);}
+body:not(.light) .tab-i.on .tab-ic{background:rgba(143,202,164,.22);}
 .tab-i:active .tab-ic{transform:scale(.9);}
 #alphaNav{border-radius:999px !important;}
 /* Kalender-/Statistik-Akzente, die bisher Waldgrün waren (nicht die Ampel — die bleibt) */
@@ -2768,15 +2771,15 @@ body:not(.light) .lo-logo span{color:var(--akzent-bright) !important;}
 .lo-logo-img{border-radius:999px !important;box-shadow:var(--elev-3) !important;}
 .lo-card{background:var(--surface) !important;border:1px solid var(--line-soft) !important;box-shadow:var(--elev-2) !important;border-radius:26px !important;}
 .lo-field label{color:var(--muted) !important;letter-spacing:.14em !important;}
-.lo-field input{background:var(--bg-soft) !important;border:1px solid var(--line) !important;color:var(--txt) !important;border-radius:999px !important;}
+.lo-field input{background:var(--bg-soft) !important;border:1px solid var(--feld) !important;color:var(--txt) !important;border-radius:999px !important;}
 .lo-field input:focus{border-color:var(--akzent) !important;background:var(--surface) !important;box-shadow:0 0 0 3px var(--orange-soft) !important;}
 .lo-eye{color:var(--faint) !important;}
 .lo-btn{background:var(--akzent) !important;color:#fff !important;border-radius:999px !important;box-shadow:none !important;font-weight:600 !important;}
 .lo-err{border-radius:16px !important;}
 /* Zustands-Farben, die der Design-Hintergrund sonst verschluckt (Weiß auf Weiß) */
-.pill.sel{background:var(--orange-soft) !important;border-color:var(--orange-line) !important;color:var(--akzent-dark) !important;}
+.pill.sel{background:var(--sel-bg) !important;border-color:var(--sel-rand) !important;color:var(--sel-txt) !important;}
 .chip.chip-goal{background:var(--orange-soft) !important;border-color:var(--orange-line) !important;color:var(--akzent-dark) !important;}
-body:not(.light) .pill.sel,body:not(.light) .chip.chip-goal{color:var(--akzent-bright) !important;}
+body:not(.light) .chip.chip-goal{color:var(--akzent-bright) !important;}
 .std.filled{background:var(--orange-soft) !important;border-color:var(--akzent) !important;}
 .sonder-row .std.filled{background:var(--clay-soft) !important;border-color:var(--clay) !important;}
 .wait-card .wait-days[style*="--gruen"] .wd-n,.wait-card .wait-days[style*="--gruen"] .wd-l{color:#fff !important;opacity:.95;}
@@ -2800,6 +2803,24 @@ body.light .fc-miss-sum b{color:#7a2a1e !important;}
 .stats{gap:8px;margin-top:10px;}
 .stat{padding:12px 14px;gap:8px;}
 #view[data-seite2] .set-titel{margin:0 0 10px;}
+/* Farbwahl B: Fokus-Ring deutlich (mindestens 3:1), Platzhalter lesbar */
+button:focus-visible,a:focus-visible,input:focus-visible,select:focus-visible,textarea:focus-visible,[role="button"]:focus-visible,[tabindex]:focus-visible{outline:3px solid var(--fokus);outline-offset:2px;}
+::placeholder{color:var(--muted);opacity:1;}
+/* Farbwahl B, Nachbesserung: kleine Texte mit Kontrast >= 4,5:1 */
+.cw-evstat{color:var(--zahl-rot);}
+.fc-no .fcheck-mark{color:#8a2a18;}
+body:not(.light) .fc-no .fcheck-mark{color:var(--zahl-rot);}
+.fc-ok .fcheck-mark{color:#24693f;}
+body:not(.light) .fc-ok .fcheck-mark{color:#8fd6a9;}
+.amp[data-v="gruen"].on,.amp.chk.on{color:#10261a;}
+.amp.chk.on::after{color:#10261a;}
+.skill .sk-ort{opacity:1 !important;}
+.skill-info b,.res-block h4,.plan-sec-h .nr,.acc-h .nr,.tm-btn,.sim-plus,.slot-free,.wait-days .wd-n,.fs-status-on{color:var(--akzent-bright);}
+.sonder-row .std.filled .n,.sonder-row .top span:first-child,.sonder-row .soll b{color:var(--clay-text);}
+:root{--clay-text:#a85a38;}
+body:not(.light){--clay-text:#e8a283;}
+/* Fahrmodus (immer dunkel): heller Fokus-Ring */
+.fahrmodus :focus-visible,.fahrmodus button:focus-visible,.h2-jetzt :focus-visible,body:has(#view .fahrmodus) .topbar :focus-visible{outline-color:#8fcaa4;} /* Fokus auf dunklen Flächen ≥3:1 (Fable R2) */
 </style>
 </head>
 <body>
@@ -2936,6 +2957,11 @@ if(_tok&&!_bio){ document.getElementById("loginOverlay").classList.add("hidden")
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
       Einstellungen</button>
   </nav>
+  <div class="drawer-logout" id="drawerLogout" hidden style="padding:6px 12px 8px;border-top:1px solid var(--line-soft, var(--line));">
+    <button class="nav-item" id="drawerLogoutBtn" type="button" onclick="closeDrawer();if(confirm('Wirklich abmelden?'))doLogout();">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4M16 17l5-5-5-5M21 12H9"/></svg>
+      Abmelden</button>
+  </div>
   <div class="drawer-foot" id="drawerFoot">Fahrlehrer-Kompass · läuft offline auf deinem Gerät</div>
 </aside>
 
@@ -4148,17 +4174,23 @@ function isSuperAdmin() {
 // die Gesamtübersicht über das Menü. Reine Leitung (ohne Kennzeichen) und Büro sehen nur die Gesamtansicht.
 function _leitungFaehrtSelbst(p) { p = p || _authProfile; return !!(p && p.rolle === "fahrschule_admin" && p.faehrt_selbst === true); }
 function _hatAdminUmschalter() { return !!(isSuperAdmin() || _leitungFaehrtSelbst()); }
+// K12/K17: Die Gesamtansicht (Gesamtübersicht) und der Weg zur Büro-Seite gehören nur Büro, Leitung und Super-Admin.
+// Ein Fahrlehrer sieht keinen Knopf dafür und kommt auch über Funktionsaufrufe nicht hinein.
+function _fsDarfGesamt() { const r = _authProfile && _authProfile.rolle; return r === "fahrschule_admin" || r === "buero" || r === "super_admin"; }
 function _nurGesamtansicht(p) { p = p || _authProfile; return !!(p && (p.rolle === "buero" || (p.rolle === "fahrschule_admin" && !_leitungFaehrtSelbst(p)))); }
 // Fahrlehrer-Listen: Fahrlehrer, Betreiber und die Leitung, die selbst fährt (reine Leitung nicht)
 function _fsNurUnterrichtende(res) {
   if (res && Array.isArray(res.data)) res.data = res.data.filter((p) => p.rolle !== "fahrschule_admin" || p.faehrt_selbst === true);
   return res;
 }
+// K13: „Abmelden“ steht ganz unten unter „Mehr“ (nicht mehr in den Einstellungen); nur wenn jemand angemeldet ist
+function _zeigeAbmelden() { const b = document.getElementById("drawerLogout"); if (b) b.hidden = !_authUser; }
 // Streifen oben „Super-Admin · alle Rechte“: nur sichtbar, wenn man als Super-Admin angemeldet ist
 function _zeigeSaStreifen() {
   const el = document.getElementById("saStreifen");
   if (!el) return;
   const an = _hatAdminUmschalter();
+  _zeigeAbmelden();
   el.hidden = !an;
   const t = el.querySelectorAll("span");
   // Leitung, die selbst fährt: Streifen sagt, wo sie gerade ist, und wechselt per Tipp (🗣 Design-Prüfung 21.11.)
@@ -5834,6 +5866,7 @@ async function _tryOfflineSession() {
   _authUser = { id: u.id, email: u.email };
   _authProfile = { id: u.id, email: u.email, aktiv: true };
   document.getElementById("loginOverlay").classList.add("hidden");
+  _zeigeAbmelden(); // K13: Abmelden unter „Mehr“ auch beim Start ohne Netz
   updateBell();
   toast("Offline-Modus · Daten werden beim nächsten Start synchronisiert");
   return true;
@@ -5858,7 +5891,7 @@ async function renderAdminPanel() {
   try {
     const supa = getSupa();
     const { data: profiles } = await supa.from("profiles").select("*").order("created_at");
-    if (!profiles || !profiles.length) { el.innerHTML = '<div style="color:#6a9b7a;font-size:13px">Keine User gefunden.</div>'; return; }
+    if (!profiles || !profiles.length) { el.innerHTML = '<div style="color:#98a2b2;font-size:13px">Keine User gefunden.</div>'; return; }
     el.innerHTML = profiles.map(p => {
       const isMe = p.id === _authUser.id;
       const displayEmail = p.email || (isMe ? _authUser.email : '— E-Mail nicht bekannt —');
@@ -5901,10 +5934,11 @@ let _fsBaseline=null; // letzter geladener Stand, für Diff-Erkennung beim Speic
 let _normalDrawerNavHTML=null;
 
 function _fsDrawerNavHTML(zeigeZurueck){
+  if(!_fsDarfGesamt())return ""; // K12/K17: ein Fahrlehrer bekommt diese Schublade nie
   return `
-    <a class="nav-item" href="buero.html" onclick="return _fsZurBueroSeite(event)" style="text-decoration:none;font-weight:700;">
+    ${_fsDarfBueroSeite()?`<a class="nav-item" href="buero.html" onclick="return _fsZurBueroSeite(event)" style="text-decoration:none;font-weight:700;">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="4" width="20" height="13" rx="2"/><path d="M8 21h8M12 17v4"/></svg>
-      Büro-Seite am PC öffnen</a>
+      Büro-Seite am PC öffnen</a>`:''}
     <button class="nav-item" data-nav="fs_dash">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="9" rx="1.5"/><rect x="14" y="3" width="7" height="5" rx="1.5"/><rect x="14" y="12" width="7" height="9" rx="1.5"/><rect x="3" y="16" width="7" height="5" rx="1.5"/></svg>
       Übersicht</button>
@@ -5929,18 +5963,17 @@ function _fsDrawerNavHTML(zeigeZurueck){
     <button class="nav-item" data-nav="neuigkeiten">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 8v4l3 2"/><circle cx="12" cy="12" r="9"/></svg>
       Neuigkeiten</button>
-    <div class="nav-sep"></div>
-    ${zeigeZurueck?`<button class="nav-item primary" data-nav="fs_exit">
+    ${zeigeZurueck?`<div class="nav-sep"></div>
+    <button class="nav-item primary" data-nav="fs_exit">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 12H5M12 19l-7-7 7-7"/></svg>
-      Zu meiner Fahrlehrer-Ansicht</button>`:`<button class="nav-item" onclick="closeDrawer();if(confirm('Wirklich abmelden?'))doLogout();">
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4M16 17l5-5-5-5M21 12H9"/></svg>
-      Abmelden</button>`}`;
+      Zu meiner Fahrlehrer-Ansicht</button>`:''}`;
 }
 
 function _fsSetDrawer(fahrschuleMode){
   const navEl=document.querySelector(".drawer-nav");
   if(!navEl)return;
   if(_normalDrawerNavHTML===null) _normalDrawerNavHTML=navEl.innerHTML;
+  if(fahrschuleMode&&!_fsDarfGesamt())fahrschuleMode=false;
   navEl.innerHTML = fahrschuleMode ? _fsDrawerNavHTML(_hatAdminUmschalter()) : (_normalDrawerNavHTML+_fsSuperAdminToggleBtn());
   const brandEye=document.querySelector(".brand-eye");
   if(brandEye) brandEye.textContent = fahrschuleMode && _fsAgg ? (_fsAgg.fahrschule.name||"Fahrschule") : (_authProfile&&_authProfile.name?"Fahrlehrer "+_authProfile.name:"Fahrlehrer");
@@ -6033,6 +6066,7 @@ async function _fsLoadAggData(fahrschuleId){
 
 let _fsRefreshTimer=null;
 async function _fsEnterAggMode(fahrschuleId){
+  if(!_fsDarfGesamt())return false; // K12: nur Büro, Leitung, Super-Admin (auch nicht über die Konsole)
   _fsAggGen++;
   const meinGen=_fsAggGen;
   const neuGesichert=_fsPersonalBackup===null;
@@ -6082,6 +6116,7 @@ async function _fsExitAggModeJetzt(){
 }
 async function _fsRefreshAggData(){
   if(!_fsAgg)return;
+  if(!_fsDarfGesamt()){ await _fsExitAggModeJetzt(); return; } // Rolle weg: sauber zurück (speichert, stellt eigene Daten wieder her)
   // Ungespeicherte Änderungen zuerst schreiben. Klappt das nicht, wird nicht neu geladen -
   // das Neuladen würde sie sonst still verwerfen.
   if(_fsSyncDebounce||_fsUngespeichert){
@@ -6099,7 +6134,7 @@ async function _fsRefreshAggData(){
   }
 }
 function _fsSuperAdminToggleBtn(){
-  if(!_hatAdminUmschalter())return "";
+  if(!_hatAdminUmschalter()||!_fsDarfGesamt())return "";
   return `<button class="nav-item" data-nav="__fstoggle" onclick="${_fsAgg?'_fsExitAggMode()':`_fsEnterAggMode(${_jsArg((_authProfile&&_authProfile.fahrschule_id)||'')})`}" style="border-top:1px solid var(--line);">
     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 21h18M5 21V7l7-4 7 4v14M9 9h1M9 13h1M14 9h1M14 13h1"/></svg>
     ${_fsAgg?'Zu meiner Fahrlehrer-Ansicht':'Admin-Gesamtübersicht'}</button>`;
@@ -6111,6 +6146,7 @@ let _fsZurBueroLaeuft=false;
 let _fsBedienZaehler=0; ["pointerdown","keydown"].forEach(e=>document.addEventListener(e,()=>{ _fsBedienZaehler++; },true)); // zählt Tipps/Tasten (K3)
 async function _fsZurBueroSeite(ev){
   if(ev)ev.preventDefault();
+  if(!_fsDarfBueroSeite())return false; // K17: nur Büro, Leitung, Super-Admin
   if(_fsZurBueroLaeuft)return false; // Doppeltipp: der erste Tipp speichert noch
   if(!_seiteVerlassenOk())return false;
   _fsZurBueroLaeuft=true;
@@ -6148,7 +6184,7 @@ async function _fsZurBueroSeite(ev){
   }
 }
 function routeFahrschuleDashboard(){
-  if(!_fsAgg)return;
+  if(!_fsAgg||!_fsDarfGesamt())return;
   const name=_fsAgg.fahrschule.name||"Fahrschule";
   const lehrer=_fsAgg.lehrer||[];
   const act=activeStudents().length;
@@ -6431,7 +6467,7 @@ async function routeFahrschuleDetail(fahrschuleId){
   const schuelerRows=schueler.map(s=>{
     const paketName=s.paket_id?esc((pakete.find(p=>p.id===s.paket_id)||{}).name||""):"";
     const badges=[
-      s.bogen_ausgefuellt?'<span style="color:#4a8b45;">✓ Bogen</span>':'<span style="color:var(--muted);">– kein Bogen</span>',
+      s.bogen_ausgefuellt?'<span style="color:var(--akzent-bright);">✓ Bogen</span>':'<span style="color:var(--muted);">– kein Bogen</span>',
       paketName?`<span style="color:var(--muted);">${paketName}</span>`:"",
       s.hat_simulator?"🎮":"", s.hat_theorie_app?"📘":""
     ].filter(Boolean).join(" &nbsp;·&nbsp; ");
@@ -6711,7 +6747,7 @@ async function paketUmbenennen(paketId,fahrschuleId){
 }
 
 function routeFahrschuleLehrer(){
-  if(!_fsAgg)return;
+  if(!_fsAgg||!_fsDarfGesamt())return;
   window._fsAktuelleRoute=routeFahrschuleLehrer;
   const lehrer=_fsAgg.lehrer||[];
   const buero=_authProfile&&_authProfile.rolle==="buero";
@@ -6758,7 +6794,7 @@ async function neuenBueroZugangAnlegen(fahrschuleId){
 }
 
 function routeFahrschuleFahrzeuge(){
-  if(!_fsAgg)return;
+  if(!_fsAgg||!_fsDarfGesamt())return;
   $("#tbTitle").textContent="Fahrzeugflotte"; setFab(false); view.scrollTop=0;
   const heute=todayISO();
   const monatPrefix=heute.slice(0,7);
@@ -6818,7 +6854,7 @@ async function fsFahrzeugLoeschen(id,name){
 }
 
 function routeFahrschuleStatistik(){
-  if(!_fsAgg)return;
+  if(!_fsAgg||!_fsDarfGesamt())return;
   $("#tbTitle").textContent="Statistiken"; setFab(false); view.scrollTop=0;
   const lehrer=_fsAgg.lehrer||[];
   const schueler=DB.students||[];
@@ -7186,7 +7222,7 @@ function routeFahrschuleKategorie(key){
     let extra="";
     if(key==="simulator") extra=`<div class="fs-sub">Zeitraum: ${esc(t.von||"")}–${esc(t.bis||"")}</div>`;
     if(key==="beratung"&&!t.sid) extra=`<div class="fs-sub">Interessent (noch kein Schüler) &nbsp;·&nbsp; ${esc(t.interessent_telefon||"– keine Nummer –")}</div>`;
-    if(key==="theorie_pruefung") extra=`<div class="fs-sub" style="margin-top:4px;">${t.theorie_bestanden==null?"Noch offen":(t.theorie_bestanden?'<span style="color:#4a8b45;">✅ Bestanden</span>':'<span style="color:#c83c3c;">❌ Nicht bestanden</span>'+(t.theorie_gesperrt_bis?` · Sperre bis ${isoDE(t.theorie_gesperrt_bis)}`:''))}</div>
+    if(key==="theorie_pruefung") extra=`<div class="fs-sub" style="margin-top:4px;">${t.theorie_bestanden==null?"Noch offen":(t.theorie_bestanden?'<span style="color:var(--akzent-bright);">✅ Bestanden</span>':'<span style="color:#c83c3c;">❌ Nicht bestanden</span>'+(t.theorie_gesperrt_bis?` · Sperre bis ${isoDE(t.theorie_gesperrt_bis)}`:''))}</div>
       <div class="fs-actions"><button class="fs-btn-activate" onclick="fsTheorieErgebnis(${_jsArg(t.id)},true)">Bestanden</button><button class="fs-btn-kill" onclick="fsTheorieErgebnis(${_jsArg(t.id)},false)">Nicht bestanden</button></div>`;
     if(key==="ersthilfe") extra=`<div class="toggle-row" style="margin-top:6px;"><div class="tc-name" style="font-size:13px;">Bezahlt</div><button class="check-toggle${t.kurs_bezahlt?' on':''}" onclick="fsKursBezahltToggle(${_jsArg(t.id)},${!t.kurs_bezahlt})"></button></div>`;
     return `<div class="fs-card">
@@ -7657,7 +7693,7 @@ async function neuenSchuelerAnlegenFS(fahrschuleId){
 /* ============================================================
    FAHRSCHULE-KALENDER (Wochenansicht, alle Fahrlehrer, filterbar)
    ============================================================ */
-const FS_KAL_FARBEN=["#3a7350","#4a8bd6","#cf9a3e","#b23a6b","#3aa7b2","#8a5fd6","#c85a3a","#5f9e3a"];
+const FS_KAL_FARBEN=["#9a8f7e","#4a8bd6","#cf9a3e","#b23a6b","#3aa7b2","#8a5fd6","#c85a3a","#5f9e3a"];
 function _fsKalFarbeFuer(fahrlehrerId,lehrerListe){
   const idx=lehrerListe.findIndex(l=>l.id===fahrlehrerId);
   return FS_KAL_FARBEN[(idx<0?0:idx)%FS_KAL_FARBEN.length];
@@ -7838,7 +7874,7 @@ const STORE_KEY="serband-app-v1";
    Wird in den Einstellungen angezeigt + für den Update-Hinweis genutzt. */
 // K1: voreingestellter Wetter-Ort (früh definiert, weil ensureDB ihn schon beim Start braucht)
 const WETTER_START={city:"Offenbach",lat:50.1006,lon:8.7665};
-const APP_VERSION="2026.11.23.8";
+const APP_VERSION="2026.11.24.1";
 try{const f=document.getElementById("drawerFoot"); if(f)f.textContent="Fahrlehrer-Kompass · Version "+APP_VERSION;}catch(e){}
 // Nutzungsbedingungen & Haftungsausschluss (Bereich: rechtliche Absicherung) - Version hochzählen
 // und alle Nutzer müssen erneut zustimmen, sobald sich der Text inhaltlich ändert.
@@ -8536,6 +8572,7 @@ document.querySelector(".drawer-nav").addEventListener("click",(e)=>{
   if(!b)return;
   if(!_seiteVerlassenOk())return; // ungespeicherte Formular-Eingaben: erst fragen (wie Zurück und Reiterleiste)
   const nav=b.dataset.nav;closeDrawer();
+  if(/^fs_/.test(nav)&&nav!=="fs_exit"&&!_fsDarfGesamt())return; // K12: Gesamtansicht nur für Büro, Leitung, Super-Admin
   _fsFilterWeg();
   setTimeout(()=>{if(nav==="todos")routeTodos();
     else if(nav==="stats")routeStats("cur");
@@ -9925,7 +9962,7 @@ function uePrognoseKachel(s){
   const persoenlich=ueDurchschnittPersoenlich();
   const zeilePersoenlich=persoenlich!=null
     ?`<div style="display:flex;justify-content:space-between;align-items:center;margin:5px 0;font-size:13px;"><span style="color:var(--muted);">Ø bei mir bis bestanden</span><b>${Math.round(persoenlich)} UE</b></div>
-      <div style="display:flex;justify-content:space-between;align-items:center;margin:5px 0;font-size:13px;color:#4a8b45;"><span>Voraussichtlich noch offen</span><b>~${Math.max(0,Math.round(persoenlich+UE_PROGNOSE_PUFFER-bisher))} UE</b></div>`
+      <div style="display:flex;justify-content:space-between;align-items:center;margin:5px 0;font-size:13px;color:var(--akzent-bright);"><span>Voraussichtlich noch offen</span><b>~${Math.max(0,Math.round(persoenlich+UE_PROGNOSE_PUFFER-bisher))} UE</b></div>`
     :`<p class="muted-p" style="font-size:12px;margin:4px 0 0;">Noch keine eigenen bestandenen Prüfungen für einen Durchschnitt.</p>`;
   return `<div class="res-block" style="animation:none;margin-top:9px;">
     <h4>📊 UE-Prognose</h4>
@@ -9964,9 +10001,9 @@ function examPrognose(s){
   const allExams=(DB.exams||[]).filter(istPruefung);
   const passRate=allExams.length?Math.round(allExams.filter(e=>e.result==="pass").length/allExams.length*100):null;
   let label,color,hint;
-  if(pct>=90&&theorieOk){label="Sehr gut vorbereitet";color="var(--gruen)";hint="Ausbildungsstand und Theorie passen — bereit für die Prüfungsanmeldung.";}
-  else if(pct>=70){label="Auf gutem Weg";color="#cf9a3e";hint=theorieOk?"Ausbildungsstand steigt, Theorie schon bestanden.":"Noch ein paar Themen offen, Theorie im Blick behalten.";}
-  else{label="Noch Zeit nötig";color="#cf5a48";hint="Ausbildungsstand braucht noch Übung, bevor eine Prüfung Sinn ergibt.";}
+  if(pct>=90&&theorieOk){label="Sehr gut vorbereitet";color="#2c7a4f";hint="Ausbildungsstand und Theorie passen — bereit für die Prüfungsanmeldung.";}
+  else if(pct>=70){label="Auf gutem Weg";color="#8a5a12";hint=theorieOk?"Ausbildungsstand steigt, Theorie schon bestanden.":"Noch ein paar Themen offen, Theorie im Blick behalten.";}
+  else{label="Noch Zeit nötig";color="#b3392b";hint="Ausbildungsstand braucht noch Übung, bevor eine Prüfung Sinn ergibt.";}
   return `<div class="res-block prognose-card" style="animation:none;">
     <h4><span class="ic ic-gold" style="font-size:14px;">${ICN.target}</span> Prüfungs-Einschätzung</h4>
     <div style="display:flex;align-items:center;gap:12px;margin:8px 0;">
@@ -10464,7 +10501,7 @@ function routePlanVorlagen(){
     const n=activeStudents().filter(s=>s.planId===p.id).length;
     const canDelete=DB.ausbildungsplaene.length>1;
     return `<div class="res-block" style="animation:none;">
-      <h4>${esc(p.name)}${p.standard?' <span style="color:#4a8b45;font-size:12px;font-weight:700;">· Standard</span>':''}</h4>
+      <h4>${esc(p.name)}${p.standard?' <span style="color:var(--akzent-bright);font-size:12px;font-weight:700;">· Standard</span>':''}</h4>
       <p>${n} aktive${n===1?'r':''} Schüler nutzt${n===1?'':'en'} diese Vorlage.</p>
       <div class="btn-row" style="flex-wrap:wrap;">
         <button class="btn btn-ghost" data-editplan="${p.id}">Bearbeiten</button>
@@ -12290,12 +12327,11 @@ function routeSettings(){
   <div class="res-block" style="animation:none;"><h4>🎓 Akademie-Vermittlung</h4><p style="font-size:13px;color:var(--muted);">Beträge & Aufteilung für Simulator-/Videoakademie-Empfehlungen. Solange leer, wird bei einer Auszahlung nur "noch nicht konfiguriert" angezeigt — nichts wird stillschweigend falsch berechnet.</p><div id="akadVermittlungCfg"><p class="muted-p" style="font-size:12.5px;">Lade …</p></div></div>`:"";
   const eigenerSlug=_authProfile&&_authProfile.slug;
   const buchungslinksBtn=(eigenerSlug&&_authProfile&&(_authProfile.rolle==="fahrlehrer"||_authProfile.rolle==="super_admin"||_leitungFaehrtSelbst()))?`<div class="res-block" style="animation:none;"><h4>🚗 Mein Buchungs-QR fürs Auto</h4><p>Großer QR-Code für Schalter oder Automatik, zum Ausdrucken fürs Auto. Schüler scannen ihn und buchen direkt bei dir.</p><div class="btn-row"><button type="button" class="btn btn-primary" onclick="routeBuchungsQR()">Buchungs-QR öffnen</button></div></div>`+_fsBuchungslinksHTML(eigenerSlug,"Meine"):"";
-  const logoutBtn=_authUser?`<div class="res-block" style="animation:none;background:rgba(200,60,60,.1);border-color:rgba(200,60,60,.3)"><h4 style="color:#f08080">🚪 Abmelden</h4><p style="color:var(--muted)">Meldet dich sicher aus der App ab.</p><div class="btn-row"><button class="btn" style="background:#c83c3c;color:#fff;border:none;padding:12px 24px;border-radius:12px;font-weight:700;font-size:14px;" onclick="doLogout()">Jetzt abmelden</button></div></div>`:"";
+  // K13: Abmelden steht jetzt ganz unten unter „Mehr“, nicht mehr hier
   const kapWoche=kapazitaetAutoWoche();
   view.innerHTML=`<div class="view-inner view-read fade-up">
     <h1 class="sec-h set-titel">Einstellungen</h1>
-    ${logoutBtn}
-    ${_authUser?`<div class="res-block" style="animation:none;background:rgba(74,139,69,.06);border-color:rgba(74,139,69,.2);"><h4 style="color:#4a8b45">☁ Cloud-Konto</h4><p style="color:#6a9b7a;font-size:13px;">${esc(_authUser.email)}</p><p style="color:var(--muted);font-size:12px;margin-top:4px;">Daten werden automatisch gesichert.</p></div>`:""}
+    ${_authUser?`<div class="res-block" style="animation:none;background:rgba(74,139,69,.06);border-color:rgba(74,139,69,.2);"><h4 style="color:var(--akzent-bright)">☁ Cloud-Konto</h4><p style="color:var(--muted);font-size:13px;">${esc(_authUser.email)}</p><p style="color:var(--muted);font-size:12px;margin-top:4px;">Daten werden automatisch gesichert.</p></div>`:""}
 
     <div class="acc set-acc${_settingsAccOpen==='app'?' open':''}" data-acckey="app"><button class="acc-h" onclick="_settingsAccToggle('app')" style="cursor:pointer;"><span class="set-ic" style="width:30px;">${_li("handy")}</span><span style="flex:1;text-align:left;font-family:'Anton',sans-serif;text-transform:uppercase;font-size:15px;letter-spacing:.03em;">App anpassen</span><span class="chev">${ICN.chev}</span></button>
       <div class="acc-body"><div class="acc-inner" style="padding:0 16px 16px;">
@@ -12393,16 +12429,16 @@ function routeSettings(){
           <details style="margin-top:4px;">
             <summary style="color:var(--muted);font-size:13px;cursor:pointer;padding:4px 0;">Anzeigen</summary>
             <div style="margin-top:12px;display:flex;flex-direction:column;gap:10px;font-size:13px;color:var(--txt);line-height:1.6;">
-              <div><b style="color:#4a8b45">🏠 Dashboard</b><br>Übersicht: aktive Schüler, Kapazität, nächste Prüfungen. Kacheln antippen für Schnellzugriff.</div>
-              <div><b style="color:#4a8b45"><span class="ic ic-gruen" style="font-size:14px;">${ICN.users}</span> Schüler</b><br>Alle aktiven Schüler. + oben rechts = neuer Schüler. Schüler antippen = Detailansicht mit Plan, Bogen, Historie.</div>
-              <div><b style="color:#4a8b45">📋 Ausbildungsplan</b><br>Grüne Ampel = geschafft, Gelb = in Arbeit, Rot = fehlt noch. FC = Fahrcheck. Sonderfahrten einzeln abhaken.</div>
-              <div><b style="color:#4a8b45">🧠 Persönlichkeitsbogen</b><br>65 Fragen → DISC-Profil (Rot/Gelb/Grün/Blau). Zeigt Coaching-Hinweise für den Umgang mit dem Schüler.</div>
-              <div><b style="color:#4a8b45"><span class="ic ic-gold" style="font-size:14px;">${ICN.trophy}</span> Prüfungen</b><br>Termin eintragen → Ergebnis eintragen. Bestandene Prüfungen verschwinden automatisch ins Archiv.</div>
-              <div><b style="color:#4a8b45"><span class="ic ic-gold" style="font-size:14px;">${ICN.cal}</span> Kalender</b><br>Fahrstunden planen, Fahrzeug zuweisen, Sonderfahrten eintragen. Feiertage (Hessen) automatisch markiert.</div>
-              <div><b style="color:#4a8b45">⏳ Warteliste</b><br>Schüler landen hier ab 90 % Ausbildungsstand + bestandener Theorie. Reihenfolge = ältestes Datum zuerst.</div>
-              <div><b style="color:#4a8b45"><span class="ic ic-gold" style="font-size:14px;">${ICN.chart}</span> Statistik</b><br>Prüfungsquote, Durchfallanalyse, Prüfer-Statistik, monatlicher Verdienst (PIN-geschützt).</div>
-              <div><b style="color:#4a8b45"><span class="ic ic-blau" style="font-size:14px;">${ICN.pencil}</span> Zeichenfläche</b><br>Kreuzungen und Situationen zeichnen. Objekte aus dem Panel per Drag&amp;Drop platzieren. Stift, Radierer, Undo.</div>
-              <div><b style="color:#4a8b45"><span class="ic ic-gold" style="font-size:14px;">${ICN.save}</span> Backup</b><br>Daten werden automatisch in der Cloud gespeichert. Manuelles Backup zusätzlich empfohlen — z.B. einmal pro Woche.</div>
+              <div><b style="color:var(--akzent-bright)">🏠 Dashboard</b><br>Übersicht: aktive Schüler, Kapazität, nächste Prüfungen. Kacheln antippen für Schnellzugriff.</div>
+              <div><b style="color:var(--akzent-bright)"><span class="ic ic-gruen" style="font-size:14px;">${ICN.users}</span> Schüler</b><br>Alle aktiven Schüler. + oben rechts = neuer Schüler. Schüler antippen = Detailansicht mit Plan, Bogen, Historie.</div>
+              <div><b style="color:var(--akzent-bright)">📋 Ausbildungsplan</b><br>Grüne Ampel = geschafft, Gelb = in Arbeit, Rot = fehlt noch. FC = Fahrcheck. Sonderfahrten einzeln abhaken.</div>
+              <div><b style="color:var(--akzent-bright)">🧠 Persönlichkeitsbogen</b><br>65 Fragen → DISC-Profil (Rot/Gelb/Grün/Blau). Zeigt Coaching-Hinweise für den Umgang mit dem Schüler.</div>
+              <div><b style="color:var(--akzent-bright)"><span class="ic ic-gold" style="font-size:14px;">${ICN.trophy}</span> Prüfungen</b><br>Termin eintragen → Ergebnis eintragen. Bestandene Prüfungen verschwinden automatisch ins Archiv.</div>
+              <div><b style="color:var(--akzent-bright)"><span class="ic ic-gold" style="font-size:14px;">${ICN.cal}</span> Kalender</b><br>Fahrstunden planen, Fahrzeug zuweisen, Sonderfahrten eintragen. Feiertage (Hessen) automatisch markiert.</div>
+              <div><b style="color:var(--akzent-bright)">⏳ Warteliste</b><br>Schüler landen hier ab 90 % Ausbildungsstand + bestandener Theorie. Reihenfolge = ältestes Datum zuerst.</div>
+              <div><b style="color:var(--akzent-bright)"><span class="ic ic-gold" style="font-size:14px;">${ICN.chart}</span> Statistik</b><br>Prüfungsquote, Durchfallanalyse, Prüfer-Statistik, monatlicher Verdienst (PIN-geschützt).</div>
+              <div><b style="color:var(--akzent-bright)"><span class="ic ic-blau" style="font-size:14px;">${ICN.pencil}</span> Zeichenfläche</b><br>Kreuzungen und Situationen zeichnen. Objekte aus dem Panel per Drag&amp;Drop platzieren. Stift, Radierer, Undo.</div>
+              <div><b style="color:var(--akzent-bright)"><span class="ic ic-gold" style="font-size:14px;">${ICN.save}</span> Backup</b><br>Daten werden automatisch in der Cloud gespeichert. Manuelles Backup zusätzlich empfohlen — z.B. einmal pro Woche.</div>
             </div>
           </details>
         </div>
@@ -13387,7 +13423,7 @@ function routeArbeitszeit(){
 /* ===================== KALENDER-ANSICHT ===================== */
 let _calView="woche", _calDate=null, _calFilter="alle";
 let _calFzFilter=null, _calNurFrei=false, _calFcOffen=false; // erweiterte Filter
-const CAL_ARTEN={ fahrstunde:{lab:"Fahrstunde",col:"var(--gruen-bright,#4a8b45)"}, nacht:{lab:"Nachtfahrt",col:"#5a7da8",hideleg:true}, sonder:{lab:"Sonderfahrt",col:"#5a7da8",sf:true}, pruefung:{lab:"Prüfung",col:"#c9a227"}, theorie:{lab:"Theorie",col:"#9b7dc4"}, schalt:{lab:"Schaltkompetenz",col:"#c4607d",min:15}, block:{lab:"Blockiert",col:"#88939a"}, vortest:{lab:"Vortest",col:"#d68a3e",hideleg:true}, simulator:{lab:"Simulator",col:"#3ea6a0",hideleg:true}, beratung:{lab:"Beratung",col:"#7a8fd6",hideleg:true}, ersthilfe:{lab:"Erste Hilfe",col:"#d65a5a",hideleg:true} };
+const CAL_ARTEN={ fahrstunde:{lab:"Fahrstunde",col:"#6a6a74"}, nacht:{lab:"Nachtfahrt",col:"#5a7da8",hideleg:true}, sonder:{lab:"Sonderfahrt",col:"#5a7da8",sf:true}, pruefung:{lab:"Prüfung",col:"#c9a227"}, theorie:{lab:"Theorie",col:"#9b7dc4"}, schalt:{lab:"Schaltkompetenz",col:"#c4607d",min:15}, block:{lab:"Blockiert",col:"#88939a"}, vortest:{lab:"Vortest",col:"#d68a3e",hideleg:true}, simulator:{lab:"Simulator",col:"#3ea6a0",hideleg:true}, beratung:{lab:"Beratung",col:"#7a8fd6",hideleg:true}, ersthilfe:{lab:"Erste Hilfe",col:"#d65a5a",hideleg:true} };
 /* Theorie-Lektionen 1-14 nach DEGENER-Ausbildungsplan (Marktstandard, den die meisten Fahrschulen
    nutzen): Grundstoff 1-12 nach Anlage 1 FahrschAusbO (alle Klassen), Zusatzstoff 13-14 nach
    Anlage 2.2 (Klasse B). Grundstoff darf laut FahrschAusbO mehrfach besucht werden, Zusatzstoff nicht. */
@@ -16844,7 +16880,7 @@ function routeStats(period){
     <div style="display:flex;gap:10px;margin:8px 0 18px;font-size:11px;font-weight:700;">
       <span style="display:flex;align-items:center;gap:4px;color:var(--gruen)"><i style="width:10px;height:10px;border-radius:3px;background:var(--gruen);display:inline-block"></i>≥70%</span>
       <span style="display:flex;align-items:center;gap:4px;color:var(--gelb)"><i style="width:10px;height:10px;border-radius:3px;background:var(--gelb);display:inline-block"></i>50–69%</span>
-      <span style="display:flex;align-items:center;gap:4px;color:var(--rot)"><i style="width:10px;height:10px;border-radius:3px;background:var(--rot);display:inline-block"></i>&lt;50%</span>
+      <span style="display:flex;align-items:center;gap:4px;color:var(--zahl-rot)"><i style="width:10px;height:10px;border-radius:3px;background:var(--rot);display:inline-block"></i>&lt;50%</span>
     </div>
     <div class="blk-h">Häufigste Fehler</div>
     ${faultBarsHTML}
@@ -17058,7 +17094,7 @@ function routePrueferAkte(nm){
       <div class="pf-stat"><div class="ps-n">${st.quote.pct==null?'—':st.quote.pct+'%'}</div><div class="ps-l">bestanden</div></div>
       <div class="pf-stat"><div class="ps-n" style="font-size:18px;">${st.last?isoDE(st.last).slice(0,5):'—'}</div><div class="ps-l">zuletzt</div></div>
     </div>
-    ${exForPr.length?`<div style="text-align:center;margin:-4px 0 14px;font-size:13px;color:var(--muted);">Letzte ${Math.min(5,exForPr.length)}: ${exForPr.slice(0,5).reverse().map(e=>e.result==='pass'?'<span style="color:#4a8b45;">✓</span>':'<span style="color:#c83c3c;">✕</span>').join(" ")}</div>`:''}
+    ${exForPr.length?`<div style="text-align:center;margin:-4px 0 14px;font-size:13px;color:var(--muted);">Letzte ${Math.min(5,exForPr.length)}: ${exForPr.slice(0,5).reverse().map(e=>e.result==='pass'?'<span style="color:var(--akzent-bright);">✓</span>':'<span style="color:#c83c3c;">✕</span>').join(" ")}</div>`:''}
     <div class="seg pf-tabs" role="tablist">
       <button class="seg-i${_pfTab==='schueler'?' on':''}" data-pftab="schueler" role="tab" aria-selected="${_pfTab==='schueler'}">Schüler <span class="pf-tab-n">${bestanden+durch}</span></button>
       <button class="seg-i${_pfTab==='strecken'?' on':''}" data-pftab="strecken" role="tab" aria-selected="${_pfTab==='strecken'}">Strecken &amp; Notizen <span class="pf-tab-n">${mitNotiz.length}</span></button>

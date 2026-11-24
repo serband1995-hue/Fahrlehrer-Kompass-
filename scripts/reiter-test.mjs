@@ -244,13 +244,13 @@ await pruefe("B3", "Beschriftungen „Verkehrstafel“ und „Verdienst & Statis
 await pruefe("B4", "Super-Admin-Knopf wird im normalen Menü angehängt", async () => {
   if (!(await gibtFunktion(page, "_fsSetDrawer"))) return { skip: "_fsSetDrawer fehlt" };
   const r = await page.evaluate(() => {
-    const alt = window.isSuperAdmin;
-    window.isSuperAdmin = () => true;
+    const alt = window.isSuperAdmin, altP = _authProfile;
+    window.isSuperAdmin = () => true; _authProfile = Object.assign({}, altP || {}, { rolle: "super_admin" }); // K12: Menü hängt an der Rolle
     try {
       _fsSetDrawer(false);
       const n = [...document.querySelectorAll(".drawer-nav [data-nav]")].map((b) => b.dataset.nav);
       return { toggle: n.includes("__fstoggle"), verboten: n.filter((v) => ["dash", "new", "home", "kalender", "pruef"].includes(v)) };
-    } finally { window.isSuperAdmin = alt; _fsSetDrawer(false); }
+    } finally { window.isSuperAdmin = alt; _authProfile = altP; _fsSetDrawer(false); }
   });
   const f = [];
   if (!r.toggle) f.push("__fstoggle fehlt");
@@ -262,9 +262,12 @@ await pruefe("B4", "Super-Admin-Knopf wird im normalen Menü angehängt", async 
 await pruefe("C1", "Fahrschul-Menü unverändert (fs_dash … fs_stats, buero.html)", async () => {
   if (!(await gibtFunktion(page, "_fsSetDrawer"))) return { skip: "_fsSetDrawer fehlt" };
   const r = await page.evaluate(() => {
-    _fsSetDrawer(true);
-    const nav = document.querySelector(".drawer-nav");
-    return { n: [...nav.querySelectorAll("[data-nav]")].map((b) => b.dataset.nav), buero: !!nav.querySelector('a[href="buero.html"]') };
+    const altP = _authProfile; _authProfile = Object.assign({}, altP || {}, { rolle: "fahrschule_admin" }); // K12: nur Leitung/Büro/Super-Admin
+    try {
+      _fsSetDrawer(true);
+      const nav = document.querySelector(".drawer-nav");
+      return { n: [...nav.querySelectorAll("[data-nav]")].map((b) => b.dataset.nav), buero: !!nav.querySelector('a[href="buero.html"]') };
+    } finally { _authProfile = altP; _fsSetDrawer(false); }
   });
   const f = ["fs_dash", "fs_kalender", "fs_schueler", "fs_lehrer", "fs_fahrzeuge", "fs_stats"].filter((k) => !r.n.includes(k)).map((k) => `${k} fehlt`);
   if (!r.buero) f.push("Link buero.html fehlt");
@@ -273,7 +276,7 @@ await pruefe("C1", "Fahrschul-Menü unverändert (fs_dash … fs_stats, buero.ht
 
 await pruefe("C2", "nach _fsSetDrawer(true) → (false) ist das normale Menü zurück", async () => {
   if (!(await gibtFunktion(page, "_fsSetDrawer"))) return { skip: "_fsSetDrawer fehlt" };
-  const n = await page.evaluate(() => { _fsSetDrawer(true); _fsSetDrawer(false); return [...document.querySelectorAll(".drawer-nav [data-nav]")].map((b) => b.dataset.nav); });
+  const n = await page.evaluate(() => { const altP = _authProfile; _authProfile = Object.assign({}, altP || {}, { rolle: "fahrschule_admin" }); try { _fsSetDrawer(true); _fsSetDrawer(false); } finally { _authProfile = altP; } return [...document.querySelectorAll(".drawer-nav [data-nav]")].map((b) => b.dataset.nav); });
   const f = VERBOTEN.filter((v) => n.includes(v)).map((v) => `${v} noch im Menü`);
   if (!n.includes("settings")) f.push("settings fehlt");
   if (n.some((v) => v.startsWith("fs_"))) f.push("Fahrschul-Punkte noch im Menü");
@@ -420,8 +423,9 @@ await pruefe("D5", "Fenster „Neuer Termin“: Lücken als Knöpfe → „Termi
 // E. CSS-Variablen und Schrift
 await pruefe("E1", "Farb- und Schrift-Variablen --k-* auf :root", async () => {
   const soll = {
-    "--k-grund": "#F3F5F1", "--k-tinte": "#14211A", "--k-text2": "#55645A", "--k-rand": "#E1E7DF", "--k-karte": "#FFFFFF",
-    "--k-akzent": "#1E6B46", "--k-akzent-hell": "#E3EFE7", "--k-jetzt": "#14211A", "--k-mint": "#5BD18E", "--k-mint-hell": "#9FD3B4",
+    // Farbe B „sehr hell und ruhig“ (Serband, 23.11.2026): neutrale Flächen, Grün nur als Akzent
+    "--k-grund": "#F1F1F4", "--k-tinte": "#24242A", "--k-text2": "#5A5A65", "--k-rand": "#CDCDD5", "--k-karte": "#FFFFFF",
+    "--k-akzent": "#2F6B47", "--k-akzent-hell": "#E9E9EE", "--k-jetzt": "#1F3A2C", "--k-mint": "#5BD18E", "--k-mint-hell": "#9FD3B4",
     "--k-gelb": "#FBEFD9", "--k-gelb-text": "#7A4508", "--k-rot": "#F8E3DF", "--k-rot-text": "#8E2A1E", "--k-whatsapp": "#0F7D6E",
     "--k-radius": "16px", "--k-tipp": "44px",
   };
