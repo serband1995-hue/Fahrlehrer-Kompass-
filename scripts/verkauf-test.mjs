@@ -27,7 +27,7 @@ await new Promise((ok) => server.listen(0, "127.0.0.1", ok));
 const basis = `http://127.0.0.1:${server.address().port}/`;
 const fake = await readFile(join(ROOT, "buero-vorfuehrung.js"), "utf8");
 
-const browser = await chromium.launch({ executablePath: process.env.CHROMIUM_PATH || "/opt/pw-browsers/chromium" });
+const browser = await chromium.launch(process.env.CHROMIUM_PATH ? { executablePath: process.env.CHROMIUM_PATH } : {}); // GitHub: eigener Browser, hier: vorinstalliert
 let probleme = 0;
 function fehler(text) { probleme++; console.log("FEHLER:", text); }
 
