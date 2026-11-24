@@ -88,3 +88,21 @@ jobs:
           ZM_QR_DIR=/tmp/zm-qr node scripts/zahlungsmail-mail-test.mjs
       - name: "Zahlungsaufforderung per Mail im Büro (Knopf, Haken, Rückgängig)"
         run: NODE_PATH=$(npm root -g) node scripts/zahlungsmail-test.mjs
+
+  buero:
+    # Eigener Job (läuft parallel), weil der Büro-Test allein etwa 8 Minuten braucht.
+    # Seit 24.11.2026: lief vorher nicht auf GitHub – ein Fehler, der nur abends auftrat (Termin schon vorbei), blieb unbemerkt.
+    name: Büro-Seite (Browser)
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Playwright mit Chromium
+        run: |
+          npm install -g playwright@1.63.0
+          npx -y playwright@1.63.0 install --with-deps chromium
+      - name: "Büro-Test (alle Bereiche, Rollen, Kalender, Schüler, Fristen, Handy-Größen)"
+        run: NODE_PATH=$(npm root -g) node scripts/buero-test.mjs
