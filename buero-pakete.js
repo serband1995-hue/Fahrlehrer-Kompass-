@@ -282,7 +282,7 @@ function bkEditor(vorlage, opt) {
     const name = String(form.name.value || "").trim();
     if (!name) { toast("Bitte einen Namen für das Paket eintragen.", true); return false; }
     if (turbo && name !== "Turboboost") { toast("Der Name „Turboboost“ bleibt so.", true); return false; }
-    if (bkNameBelegt(name, neu ? null : vorlage.id)) { toast(bkNameKey(name) === "turboboost" ? "„Turboboost“ gibt es schon (die App zeigt daran das ⚡). Bitte einen anderen Namen wählen." : "Ein Paket mit diesem Namen gibt es schon (auch im Archiv). Bitte einen anderen Namen wählen.", true); return false; }
+    if (!verkauf && bkNameBelegt(name, neu ? null : vorlage.id)) { toast(bkNameKey(name) === "turboboost" ? "„Turboboost“ gibt es schon (die App zeigt daran das ⚡). Bitte einen anderen Namen wählen." : "Ein Paket mit diesem Namen gibt es schon (auch im Archiv). Bitte einen anderen Namen wählen.", true); return false; }
     for (const p of st.posten) {
       if (p._ungueltig) { toast(`Bitte bei „${p.bezeichnung || bkName(p.art)}“ einen gültigen Preis eintragen, z. B. 65,00.`, true); return false; }
       if (p.art === "sonstiges" && !String(p.bezeichnung || "").trim()) { toast("Bitte bei „Sonstiges“ einen Namen eintragen.", true); return false; }
