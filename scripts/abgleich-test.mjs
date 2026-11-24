@@ -951,6 +951,31 @@ fall("35d W14b: Gesamtansicht – Trigger ändert die Nutzlast beim eigenen Spei
   if (!z.geloescht) f("Nicht gelöscht, obwohl niemand sonst etwas geändert hat (" + hinweis + ")");
 });
 
+fall("35e W14b: Gesamtansicht – Löschen, dann „Rückgängig“: alte Kopien in der Nutzlast bleiben, keine Abruf-Schleife in der Fahrlehrer-App (Richter, R4)", async (f) => {
+  await neu();
+  const alt = serverTermin("T1", { kurs_bezahlt: true, buero_fc_status: "abgegeben", payload: { notiz: "x", kurs_bezahlt: false, buero_fc_status: "offen", interessent_name: "", theorie_gesperrt_bis: null, buero_fc_nachgereicht_am: null, interessent_telefon: "", signed: true }, erstellt_von: "bu-1" });
+  await setzeTabelle("kalender_termine", [JSON.parse(JSON.stringify(alt))]);
+  await ruf(() => pullTermineZuweisungen());
+  const appLessons = await ruf(() => JSON.parse(JSON.stringify(DB.lessons)));
+  await gesamt({ termine: [alt] });
+  await ruf(() => { window.__geloescht = DB.lessons[0]; DB.lessons = []; });
+  await gesamtSpeichern();
+  await ruf(() => { DB.lessons.push(window.__geloescht); });
+  await gesamtSpeichern();
+  const z = await zeile("kalender_termine", "T1");
+  await gesamtEnde();
+  // Fahrlehrer-App ruft danach dreimal ab
+  await ruf(() => { window.__toasts.length = 0; });
+  await setzeLokal("lessons", appLessons);
+  await ruf(() => { DB.students = []; });
+  const zahl = [];
+  for (let i = 0; i < 3; i++) { await ruf(() => pullTermineZuweisungen()); zahl.push(await ruf(() => window.__toasts.filter((t) => /aktualisiert/.test(t)).length)); await page.clock.runFor(61000); }
+  if (z.geloescht) f("„Rückgängig“ holt den Termin nicht zurück");
+  if (z.kurs_bezahlt !== true || z.buero_fc_status !== "abgegeben" || !z.payload.signed) f("Spalten/Nutzlast verloren: " + JSON.stringify(z));
+  if (z.erstellt_von !== "bu-1") f("Ersteller überschrieben: " + z.erstellt_von);
+  if (zahl[2] > zahl[0]) f("Fahrlehrer-App meldet bei jedem Abruf erneut „aktualisiert“: " + zahl.join(","));
+});
+
 fall("34 W14b: Gesamtansicht – Zeile ändert sich zwischen Lesen und Schreiben: neu gelesen, nichts zurückgedreht", async (f) => {
   await neu();
   await gesamt({ termine: [serverTermin("T1")] });

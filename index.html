@@ -8183,6 +8183,19 @@ async function _fsLoeschenSchreiben(supa,tabelle,del,nowIso){
     if(neu&&!neu.geloescht) del.bleibt.push(neu); else del.weg.push(id);
   }
 }
+// W14b (Richter): „Neue“ Einträge, die es auf dem Server schon gibt (z. B. „Rückgängig“ nach dem Löschen): alte Kopien der
+// Büro-Spalten in der Nutzlast und den ursprünglichen Ersteller stehen lassen. Ohne die Kopien meldete der Abruf der
+// Fahrlehrer-App jede Minute „aktualisiert“. Alle Zeilen behalten dieselben Felder (Sammel-Upsert füllt Fehlendes mit null).
+async function _fsNeuAberVorhanden(supa,tabelle,rows){
+  if(!rows.length)return;
+  const fMap=await _fsLiesZeilen(supa,tabelle,rows.map(r=>r.id));
+  rows.forEach(r=>{
+    const fr=fMap[r.id]; if(!fr)return;
+    const bleibt={}; Object.keys(fr.payload||{}).forEach(k=>{ if(_FS_NUR_SPALTE.includes(k)) bleibt[k]=fr.payload[k]; });
+    r.payload=Object.assign(bleibt,r.payload);
+    if(fr.erstellt_von) r.erstellt_von=fr.erstellt_von;
+  });
+}
 // W14b (Daten-Prüfer): Geschriebene neue Einträge sofort in den Vergleichsstand. Scheitert danach etwas anderes, gelten sie
 // beim nächsten Lauf als bestehend (sicherer Weg) statt als neu (ganze Zeile darüber, z. B. über eine Unterschrift).
 function _fsInBasis(feld,snapListe,geschrieben){
@@ -8271,7 +8284,7 @@ async function _fsSyncAggJetztKern(){
         termineUpserts.push(Object.assign(t,{fahrschule_id:_fsAgg.fahrschuleId, geloescht:false, erstellt_von:meineId, aktualisiert_am:nowIso}));
       });
       const termineDeletes=(_fsBaseline.lessons||[]).filter(b=>!b._synthetic&&!curTIds.has(b.id)).map(b=>b.id);
-      if(termineUpserts.length){ _fsPruefe(await supa.from("kalender_termine").upsert(termineUpserts,{onConflict:"id"})); _fsInBasis("lessons",snap.lessons,termineUpserts); }
+      if(termineUpserts.length){ await _fsNeuAberVorhanden(supa,"kalender_termine",termineUpserts); _fsPruefe(await supa.from("kalender_termine").upsert(termineUpserts,{onConflict:"id"})); _fsInBasis("lessons",snap.lessons,termineUpserts); }
       const tErg=await _fsZeilenSicher(supa,"kalender_termine",termineAend,nowIso);
       // Löschen nur, was nirgends geändert wurde (sonst bleibt es; der Storno-Wunsch dafür verfällt)
       const tDel=await _fsLoeschenPruefen(supa,"kalender_termine",termineDeletes.map(id=>({id,roh:baseT[id]})));
@@ -8305,7 +8318,7 @@ async function _fsSyncAggJetztKern(){
         pruefungenUpserts.push(Object.assign(p,{fahrschule_id:_fsAgg.fahrschuleId, geloescht:false, erstellt_von:meineId, aktualisiert_am:nowIso}));
       });
       const pruefungenDeletes=(_fsBaseline.exams||[]).filter(b=>!curPIds.has(b.id)).map(b=>b.id);
-      if(pruefungenUpserts.length){ _fsPruefe(await supa.from("kalender_pruefungen").upsert(pruefungenUpserts,{onConflict:"id"})); _fsInBasis("exams",snap.exams,pruefungenUpserts); }
+      if(pruefungenUpserts.length){ await _fsNeuAberVorhanden(supa,"kalender_pruefungen",pruefungenUpserts); _fsPruefe(await supa.from("kalender_pruefungen").upsert(pruefungenUpserts,{onConflict:"id"})); _fsInBasis("exams",snap.exams,pruefungenUpserts); }
       const pErg=await _fsZeilenSicher(supa,"kalender_pruefungen",pruefungenAend,nowIso);
       const pDel=await _fsLoeschenPruefen(supa,"kalender_pruefungen",pruefungenDeletes.map(id=>({id,roh:baseP[id]})));
       await _fsLoeschenSchreiben(supa,"kalender_pruefungen",pDel,nowIso);
