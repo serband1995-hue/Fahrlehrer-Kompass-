@@ -7,7 +7,7 @@ window.KOMPASS_NEU = [
   { version: "2026.11.24.6", datum: "2026-11-24", kurz: "Speichern überschreibt keine neueren Änderungen mehr.",
     punkte: ["Im Büro speichert die Schüler-Akte nur noch, was du im Fenster geändert hast. Was die App oder ein anderer PC inzwischen geändert hat, bleibt.",
              "Hat jemand dasselbe Feld gleichzeitig geändert, zeigt das Fenster beide Werte. Mit „Meine Eingabe nehmen“ gilt deine.",
-             "In der App bleiben Name und Telefon vom Büro erhalten, auch wenn du am Schüler etwas anderes geändert hast."] },
+             "Ändert das Büro Name oder Telefon, übernimmt die App das jetzt auch, wenn du am Schüler unterwegs etwas anderes geändert hast."] },
   { version: "2026.11.24.5", datum: "2026-11-24", kurz: "Die neuen ruhigen Farben jetzt auch auf den übrigen Seiten.",
     punkte: ["Einladung, Theorie-Seite, Lernszenen und der Druck im Büro haben jetzt dieselben ruhigen Farben wie die App.",
              "Einige kleine Zeichen sind besser lesbar, zum Beispiel die Ampel im Ausbildungsplan.",

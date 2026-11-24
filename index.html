@@ -8558,7 +8558,8 @@ function theorieBestandenSetzen(s,an,leise){
 function toastUndo(msg,onUndo,ms,knopf){ // knopf: eigene Beschriftung (nur wenn nicht mit einem früheren Hinweis zusammengefasst)
   const t=$("#toast"); ms=ms||5000; t.classList.remove("t-ok","t-info","t-fehler");
   // Läuft noch ein Rückgängig: zusammenfassen, ein Tipp macht beides rückgängig (neueste zuerst)
-  if(t._undos&&t._undos.length&&t.classList.contains("undo")&&t.classList.contains("show")){
+  // Hinweise mit eigenem Knopf (z. B. „Meine nehmen“) nie zusammenfassen: ein Tipp darf nur das tun, was dort steht
+  if(!knopf&&t._undos&&t._undos.length&&!t._eigenerKnopf&&t.classList.contains("undo")&&t.classList.contains("show")){
     const vorige=t._undos.slice(), alle=[onUndo].concat(vorige.map(x=>x.fn));
     t._undos=[{fn:onUndo}].concat(vorige);
     msg=`${t._undos.length} Änderungen`;
@@ -8567,7 +8568,7 @@ function toastUndo(msg,onUndo,ms,knopf){ // knopf: eigene Beschriftung (nur wenn
   t.classList.add("undo","show");
   t.innerHTML=`<span class="ut-txt"></span><button class="ut-btn" type="button">Rückgängig</button>`;
   t.querySelector(".ut-txt").textContent=msg;
-  if(knopf&&t._undos.length===1)t.querySelector(".ut-btn").textContent=knopf;
+  t._eigenerKnopf=!!knopf; if(knopf)t.querySelector(".ut-btn").textContent=knopf;
   const close=()=>{ t._undos=null; t.classList.remove("show"); setTimeout(()=>{ if(t.classList.contains("show"))return; t.classList.remove("undo");t.innerHTML="";},300); };
   t.querySelector(".ut-btn").onclick=()=>{ clearTimeout(t._t); close(); try{onUndo&&onUndo();}catch(e){} };
   clearTimeout(t._t); t._t=setTimeout(close,ms);

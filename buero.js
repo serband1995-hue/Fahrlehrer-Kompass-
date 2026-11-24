@@ -826,7 +826,7 @@ async function speichereAkteSicher(id, basis, werte, nurPruefen) {
       if (!woanders.length || !gruppe.some((k) => k in senden || konflikte.some((c) => c.k === k))) continue;
       gruppe.forEach(halte);
       // auch zeigen, was woanders an der Gruppe geändert wurde (das Fenster zeigt danach den neuen Stand)
-      for (const k of woanders) if (k in werte && !konflikte.some((c) => c.k === k)) konflikte.push({ k, frisch: aktenWert(frisch, k), mein: werte[k] });
+      for (const k of woanders) if (k in werte && !konflikte.some((c) => c.k === k)) konflikte.push({ k, frisch: aktenWert(frisch, k), mein: werte[k], nurInfo: true });
     }
     const ab = "theorie_abgeschlossen_am" in senden ? senden.theorie_abgeschlossen_am : frisch.theorie_abgeschlossen_am;
     const be = "theorie_bestanden_am" in senden ? senden.theorie_bestanden_am : frisch.theorie_bestanden_am;
@@ -895,7 +895,8 @@ function akteKonfliktZeigen(dlg, konflikte) {
   box.className = "akte-konflikt voll"; box.dataset.aktekonflikt = ""; box.setAttribute("role", "alert");
   box.innerHTML = `<b>Nicht alles gespeichert</b>
     <p>Während das Fenster offen war, hat jemand anderes (Fahrlehrer-App oder anderer PC) ${konflikte.length === 1 ? "dieses Feld" : "diese Felder"} geändert. Gespeichert ist alles außer:</p>
-    <ul>${konflikte.map((c, i) => `<li data-konfliktfeld="${esc(c.k)}"><span><b>${esc(akteFeldName(c.k))}:</b> jetzt „${esc(akteWertText(c.k, c.frisch))}“ · <b>deine Eingabe „${esc(akteWertText(c.k, c.mein))}“</b> (nicht gespeichert)</span>
+    <ul>${konflikte.map((c, i) => c.nurInfo ? `<li data-konfliktfeld="${esc(c.k)}"><span><b>${esc(akteFeldName(c.k))}:</b> jetzt „${esc(akteWertText(c.k, c.frisch))}“ (woanders geändert, gehört dazu)</span></li>`
+      : `<li data-konfliktfeld="${esc(c.k)}"><span><b>${esc(akteFeldName(c.k))}:</b> jetzt „${esc(akteWertText(c.k, c.frisch))}“ · <b>deine Eingabe „${esc(akteWertText(c.k, c.mein))}“</b> (nicht gespeichert)</span>
       <button type="button" class="knopf klein" data-meinenehmen="${i}">Meine Eingabe nehmen</button></li>`).join("")}</ul>
     <p class="klein">Passt der neue Wert, ist nichts mehr zu tun. Sonst „Meine Eingabe nehmen“ und dann „Speichern“.</p>`;
   box.querySelectorAll("[data-meinenehmen]").forEach((b) => b.addEventListener("click", () => {
@@ -968,6 +969,7 @@ async function nichtBezahlt(id) {
 function fristenDialog(id) {
   const s = S.schueler.find((x) => x.id === id);
   if (!s) return;
+  const basisS = JSON.parse(JSON.stringify(s)); // W14 (Fable B1): Vergleichsstand vom Öffnen, unabhängig von S.schueler
   const r = KR.reaktInfo(s);
   const body = `
     <div class="formular">
@@ -994,7 +996,7 @@ function fristenDialog(id) {
       ausbildungsart: d.ausbildungsart || "ersterwerb",
       klasse: d.klasse || null,
       reakt_status: d.reakt_status || "pruefen",
-      reakt_bezahlt_bis: d.reakt_status === "bezahlt" ? (d.reakt_bezahlt_bis || null) : (s.reakt_bezahlt_bis || null),
+      reakt_bezahlt_bis: d.reakt_status === "bezahlt" ? (d.reakt_bezahlt_bis || null) : (basisS.reakt_bezahlt_bis || null),
       reakt_notiz: (d.reakt_notiz || "").trim() || null,
       theorie_abgeschlossen_am: d.theorie_abgeschlossen_am || null,
       theorie_bestanden_am: d.theorie_bestanden_am || null,
@@ -1007,10 +1009,10 @@ function fristenDialog(id) {
       toast("Die Theorieprüfung kann nicht vor dem Abschluss des Unterrichts liegen.", true); return false;
     }
     // W14: nur Geändertes, nichts überschreiben, was App (z. B. Theorie bestanden) oder anderer PC inzwischen geändert haben
-    const erg = await speichereAkteSicher(id, s, werte);
+    const erg = await speichereAkteSicher(id, basisS, werte);
     if (!erg.ok) return false;
-    const altBasis = Object.assign({}, s);
-    akteNachziehen(id, s, erg.zeile);
+    const altBasis = Object.assign({}, basisS);
+    akteNachziehen(id, basisS, erg.zeile);
     zeichne();
     if (erg.konflikte.length) { akteFensterAuffrischen(fdlg, altBasis, werte, erg.zeile, erg.konflikte, Object.keys(werte)); akteKonfliktZeigen(fdlg, erg.konflikte); return false; } // der gelbe Kasten im Fenster erklärt alles
     toast(erg.leer ? "Nichts geändert" : "Gespeichert");
@@ -2283,6 +2285,9 @@ function bindeAkademieZugang(dlg, x) {
 function schuelerDialog(id) {
   const x = id ? S.schueler.find((y) => y.id === id) : { ausbildungsart: "ersterwerb", klasse: "B", vertrag_am: KR.todayISO() };
   if (!x) return;
+  // W14 (Fable B1): Vergleichsstand ist eine KOPIE vom Öffnen. Das Objekt in S.schueler ändern auch andere Knöpfe im Fenster
+  // (z. B. „Zahlung ausstehend“ kopiert die ganze frische Zeile hinein) – dann gälte ein alter Wert im Feld als „von mir geändert“.
+  const basisX = id ? JSON.parse(JSON.stringify(x)) : x;
   const body = `${ausgeblendetAm(x) ? `<p class="hinweis-ausgeblendet" id="ausgeblendetHinweis">Vom Fahrlehrer ausgeblendet am ${esc(datumDE(ausgeblendetAm(x).slice(0, 10)))}. Im Büro bleibt der Schüler ganz normal.</p>` : ""}<div class="formular">
       <label class="voll">Name<input type="text" name="name" required maxlength="100" value="${esc(x.name || "")}"></label>
       <label>Telefon (Login für die Fahr-Akademie)<input type="tel" name="telefon" maxlength="40" value="${esc(x.telefon || "")}"></label>
@@ -2336,8 +2341,8 @@ function schuelerDialog(id) {
     }
     const neuerLehrer = d.fahrlehrer_id || null;
     // B197-Testfahrt: Haken setzen = Datum (heute, wenn leer); Haken weg oder andere Klasse = leer
-    werte.b197_testfahrt_am = werte.klasse === "B197" && d.testfahrt ? (d.testfahrt_am || x.b197_testfahrt_am || KR.todayISO()) : null;
-    if (id) werte.inaktiv_seit = d.aktiv ? null : (x.inaktiv_seit || KR.todayISO());
+    werte.b197_testfahrt_am = werte.klasse === "B197" && d.testfahrt ? (d.testfahrt_am || basisX.b197_testfahrt_am || KR.todayISO()) : null;
+    if (id) werte.inaktiv_seit = d.aktiv ? null : (basisX.inaktiv_seit || KR.todayISO());
     if (!id) {
       const neueId = neueSchuelerId();
       const zeile = Object.assign({ id: neueId, fahrschule_id: S.fsId, fahrlehrer_id: neuerLehrer, status: "aktiv", erstellt_von: S.user.id,
@@ -2351,21 +2356,21 @@ function schuelerDialog(id) {
     }
     // Umschreiber: die Fahrlehrer-App liest die Spalte ausbildungsart selbst (nicht ins jsonb schreiben,
     // sonst überschreibt der nächste Abgleich des Fahrlehrers den Wert)
-    const wirdArchiviert = istAktiv(x) && !!werte.inaktiv_seit;
+    const wirdArchiviert = istAktiv(basisX) && !!werte.inaktiv_seit;
     let absagen = [];
     if (wirdArchiviert) { absagen = await frageKuenftigeTermine(x); if (absagen === null) return false; } // Abbrechen: Fenster bleibt offen
     // W14: nur Geändertes senden; was App oder anderer PC inzwischen am selben Feld geändert haben, bleibt stehen.
     // Den Fahrlehrer wechselt verschiebeSchueler (Termine, Übergabe-Eintrag), aber nur, wenn ihn niemand inzwischen verschoben hat.
-    const basisLehrer = x.fahrlehrer_id || null;
+    const basisLehrer = basisX.fahrlehrer_id || null;
     const werteAlle = Object.assign({}, werte, { fahrlehrer_id: neuerLehrer });
-    const erg = await speichereAkteSicher(id, x, werteAlle, ["fahrlehrer_id"]);
+    const erg = await speichereAkteSicher(id, basisX, werteAlle, ["fahrlehrer_id"]);
     if (!erg.ok) return false;
-    const altBasis = Object.assign({}, x);
-    akteNachziehen(id, x, erg.zeile);
+    const altBasis = Object.assign({}, basisX);
+    akteNachziehen(id, basisX, erg.zeile);
     const archiviert = wirdArchiviert && !erg.konflikte.some((c) => c.k === "inaktiv_seit");
-    toast(erg.leer ? "Nichts geändert" : archiviert ? `${name} liegt jetzt im Archiv.` : "Gespeichert");
+    if (!erg.konflikte.length) toast(erg.leer ? "Nichts geändert" : archiviert ? `${name} liegt jetzt im Archiv.` : "Gespeichert"); // bei Konflikt erklärt der Kasten
     zeichne();
-    if ("fahrlehrer_id" in erg.frei) await verschiebeSchueler(Object.assign({}, x, { fahrlehrer_id: basisLehrer }), neuerLehrer);
+    if ("fahrlehrer_id" in erg.frei) await verschiebeSchueler(Object.assign({}, basisX, { fahrlehrer_id: basisLehrer }), neuerLehrer);
     if (absagen.length && archiviert) await sageTermineAb(absagen, `${name} liegt im Archiv, ${absagen.length === 1 ? "1 Termin" : absagen.length + " Termine"} abgesagt`);
     if (erg.konflikte.length) {
       akteFensterAuffrischen(dlg, altBasis, werteAlle, erg.zeile, erg.konflikte, AKTE_FELDER);
