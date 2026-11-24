@@ -188,7 +188,7 @@ try {
     const d2 = await oeffneAkte(page, S1);
     await d2.locator("[data-bk-anpassen]").click(); await page.waitForTimeout(150);
     const e = page.locator(dlgSel).last();
-    pruefe("V4d „Paket ändern“: feste Preise als eigene Preise (300 €, 60 €)", (await e.locator('[data-bk-preis="0"]').inputValue()).startsWith("300") && (await e.locator('[data-bk-preis="1"]').inputValue()).startsWith("60") && /eigener Preis/.test(await e.locator('[data-bk-hinweis="0"]').innerText()));
+    pruefe("V4d „Paket ändern“: feste Preise als eigene Preise (300 €, 60 €)", (await e.locator('[data-bk-preis="0"]').inputValue()).startsWith("300") && (await e.locator('[data-bk-preis="1"]').inputValue()).startsWith("60") && /Eigener Preis/.test(await e.locator('[data-bk-hinweis="0"]').innerText()));
     await e.locator("[data-schliessen]").first().click(); await page.waitForTimeout(100);
     await ctx.close();
   }
