@@ -374,7 +374,7 @@ function nwDruckHTML(x, d, st, teil) {
 .blatt{max-width:186mm;margin:0 auto;padding:10px}
 .leiste{position:sticky;top:0;background:#f3f4f6;border-bottom:1px solid #ccc;padding:10px;display:flex;gap:8px;flex-wrap:wrap;justify-content:center}
 .leiste button,.leiste a{font:inherit;font-size:15px;min-height:44px;padding:0 16px;border-radius:8px;border:1px solid #888;background:#fff;color:#111;text-decoration:none;display:inline-flex;align-items:center;cursor:pointer}
-.leiste .haupt{background:#3a7350;border-color:#3a7350;color:#fff}.hinweis{text-align:center;font-size:12px;color:#555;margin:6px 0 0}
+.leiste .haupt{background:#2f6b47;border-color:#2f6b47;color:#fff}.hinweis{text-align:center;font-size:12px;color:#555;margin:6px 0 0}
 .fs{font-weight:700;font-size:11pt;margin-bottom:2px}.stand{text-align:right;white-space:nowrap}
 header{display:flex;justify-content:space-between;gap:12px;border-bottom:2px solid #111;padding-bottom:6px;margin-bottom:10px}
 h1{font-size:17pt;margin:0}h2{font-size:12pt;margin:14px 0 6px;border-bottom:1px solid #999;padding-bottom:2px}
