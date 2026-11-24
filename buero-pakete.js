@@ -454,16 +454,35 @@ function bkFest(posten, klasse) {
 /* Schritt 2: „noch offen“ je Posten. Gleiche Rechnung wie in der App (KR.paketQuelleAusTerminen, KR.paketVerbrauch). Quelle: Termine im
    Büro-Kalender (letzte DATEN_TAGE Tage), Praxisprüfungen mit Ergebnis (App und Tafel), Sonderfahrten auch aus dem Ausbildungsplan der App,
    wenn der Fahrlehrer die App nutzt. */
-function bkVerbrauchQuelle(x) {
+function bkVerbrauchQuelle(x, voll) {
   const d = new Date(), heute = KR.todayISO();
-  const termine = (S.termine || []).filter((t) => t.schueler_id === x.id && !t.geloescht).map((t) => {
+  // Termine: die geladenen (letzte DATEN_TAGE Tage, ggf. frischer) und dazu der ganze Verlauf dieses Schülers (voll), je Nummer einmal
+  const nachId = new Map();
+  for (const t of (voll && voll.termine) || []) nachId.set(t.id, t);
+  for (const t of S.termine || []) if (t.schueler_id === x.id) nachId.set(t.id, t);
+  const termine = [...nachId.values()].filter((t) => t.schueler_id === x.id && !t.geloescht).map((t) => {
     const pl = t.payload || {};
     return { art: t.art, datum: t.datum, von: t.von, bis: t.bis, status: pl.status || t.status, sonderArt: pl.sonderArt, srcSonder: pl.srcSonder, tatsaechlicheDauer: pl.tatsaechlicheDauer };
   });
   const pruefDaten = typeof pruefErgebnisse === "function" ? pruefErgebnisse("praxis").filter((e) => e.schueler_id === x.id).map((e) => e.datum) : [];
+  for (const p of (voll && voll.tafel) || []) if (p.art === "praxis" && (p.status === "bestanden" || p.status === "nicht_bestanden") && p.datum) pruefDaten.push(p.datum);
   const fl = (S.lehrer || []).find((l) => l.id === x.fahrlehrer_id);
   const plan = fl && fl.ohne_app ? null : x.ausbildung && x.ausbildung.plan;
   return KR.paketQuelleAusTerminen(termine, heute, d.getHours() * 60 + d.getMinutes(), { pruefDaten, plan });
+}
+/* Folgeauftrag W13: Das Büro lädt Termine und Prüfungstafel nur DATEN_TAGE Tage zurück. Für „noch offen“ zählt aber die ganze
+   Ausbildung (Geld!). Darum beim Öffnen der Akte gezielt diesen einen Schüler ganz nachladen, statt alles neu zu laden.
+   null = nicht ladbar (dann bleibt der Stand der letzten DATEN_TAGE Tage, mit Hinweis). */
+async function bkVerlaufLaden(sid) {
+  const fs = S.fsId;
+  try {
+    const [t, p] = await Promise.all([
+      alleSeiten(() => supa.from("kalender_termine").select("*").eq("fahrschule_id", fs).eq("schueler_id", sid).eq("geloescht", false).order("datum").order("id")),
+      alleSeiten(() => supa.from("pruefungstermine").select("*").eq("fahrschule_id", fs).eq("schueler_id", sid).order("datum").order("id")),
+    ]);
+    if (fs !== S.fsId || !t || t.error || !p || p.error) return null;
+    return { termine: t.data || [], tafel: p.data || [] };
+  } catch (e) { return null; }
 }
 function bkZahl(n) { return (Math.round(Number(n) * 10) / 10).toLocaleString("de-DE"); }
 function bkVerbrauchText(v, art) {
@@ -531,6 +550,15 @@ function bkAnmeldungBinden(dlg, x, id) {
   // wahl: "bleibt" (Stand wie bisher), "normal", "neu" (Paket aus Vorlage oder angepasst, steht in „neu“),
   // "zuordnen" (Vorlage noch ohne Posten, z. B. Turboboost: wie bisher nur zuordnen, ohne Preise; steht in „zuVorlage“)
   let wahl = anfang || zugeordnet ? "bleibt" : "normal", neu = null, zuVorlage = null;
+  let voll = null, vollStand = id ? "" : "neu"; // "" = noch nicht geladen, "laden", "ok", "fehler"
+  function ladeVoll() {
+    if (vollStand) return;
+    vollStand = "laden";
+    bkVerlaufLaden(id).then((v) => {
+      voll = v; vollStand = v ? "ok" : "fehler";
+      if (dlg.open && wahl === "bleibt" && anfang) zeige();
+    });
+  }
   const schuelerKlasse = () => (form.klasse && form.klasse.value) || x.klasse || null;
   const ausVorlage = (v) => ({ vorlage_id: v.id, name: v.name, klasse: v.klasse || schuelerKlasse(), posten: bkPosten(v).map((p) => Object.assign({}, p)), angepasst: false });
   function optionen() {
@@ -547,8 +575,10 @@ function bkAnmeldungBinden(dlg, x, id) {
   function zeige() {
     let h = "";
     if (wahl === "bleibt" && anfang) {
+      ladeVoll();
       h = `<p class="bk-anm-verkauft">Verkauft am ${esc(datumDE(String(anfang.verkauft_am || "").slice(0, 10)))}${anfang.bearbeiter ? " von " + esc(anfang.bearbeiter) : ""}</p>
-        ${bkPostenListeHTML(bkPosten(anfang), KR.paketVerbrauch(bkPosten(anfang), bkVerbrauchQuelle(x)))}
+        ${bkPostenListeHTML(bkPosten(anfang), KR.paketVerbrauch(bkPosten(anfang), bkVerbrauchQuelle(x, voll)))}
+        ${vollStand === "fehler" ? `<p class="leise klein" data-bk-voll-fehlt>Gezählt sind nur die Termine der letzten ${DATEN_TAGE} Tage. Ältere ließen sich gerade nicht laden.</p>` : ""}
         <p class="bk-anm-summe"><span>Gesamt</span><b>${esc(prEuro(anfang.gesamt_cent))}</b></p>
         <p class="leise klein">Die Preise bleiben so, auch wenn sich die Preisliste ändert. Gezählt wird in Einheiten à 45 Min.</p>
         <div class="knopfreihe"><button class="knopf klein" type="button" data-bk-anpassen>Paket ändern</button></div>`;
@@ -631,13 +661,14 @@ function bkAnmeldungBinden(dlg, x, id) {
           if (!(await bkAktivSetzen(sid, null, null, zu.id, true))) return;
           zeichne();
           if (alt) toastUndo(`Paket „${alt.name}“ storniert, „${zu.name}“ zugeordnet`, () => bkAktivSetzen(sid, alt));
+          else toast(`„${zu.name}“ zugeordnet. Das verkaufte Paket war schon storniert.`);
         }
         anfang = null; zugeordnet = zu; zuVorlage = null; wahl = "bleibt"; optionen(); zeige();
         return;
       }
       if (wahl === "normal") {
         const fertig = () => { anfang = null; zugeordnet = null; neu = null; optionen(); zeige(); };
-        if (!alt) { bkLokal(sid, null); zeichne(); fertig(); return; } // inzwischen schon storniert
+        if (!alt) { bkLokal(sid, null); zeichne(); fertig(); toast("Das Paket war schon storniert (zum Beispiel in einem anderen Fenster)."); return; } // inzwischen schon storniert
         const r = await supa.rpc("schueler_paket_aktivieren", { p_schueler: sid, p_paket: null });
         if (r.error) { toast("Das Paket wurde nicht storniert: " + dbFehlerText(r.error), true); return; }
         bkLokal(sid, null); zeichne(); fertig();

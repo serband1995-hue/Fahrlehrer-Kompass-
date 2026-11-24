@@ -357,6 +357,55 @@ try {
     pruefe("V17 nur Verkauf: „verkauft“ ja, „Nichts geändert“ nein", /verkauft/.test(t17) && !/Nichts geändert/.test(t17), t17.slice(-300));
     await ctx.close();
   }
+  // V18 (Folgeauftrag) „noch offen“ zählt die ganze Ausbildung, nicht nur die geladenen DATEN_TAGE Tage; ✕ mindestens 44×44 px
+  const mitAltenTerminen = function () {
+    F.tabellen.schueler_pakete.push({ id: "sp-alt", fahrschule_id: F.tabellen.fahrschulen[0].id, schueler_id: "s1", vorlage_id: "p-1", name: "Boost-Paket 1", klasse: "B",
+      posten: [{ art: "fahrstunde", bezeichnung: "Übungsstunden", anzahl: 20, preis_cent: 6000 }, { art: "pruefung_praxis", bezeichnung: "Vorstellung zur praktischen Prüfung", anzahl: 2, preis_cent: 20000 }],
+      gesamt_cent: 160000, verkauft_am: "2025-01-10T10:00:00Z", storniert_am: null });
+    const s = F.tabellen.schueler.find((x) => x.id === "s1"); s.paket_id = "p-1"; s.ausbildung = {};
+    const tag = (n) => { const d = new Date(); d.setDate(d.getDate() - n); return d.toISOString().slice(0, 10); };
+    F.tabellen.kalender_termine = F.tabellen.kalender_termine.filter((t) => t.schueler_id !== "s1").concat([
+      { id: "kt-neu", fahrschule_id: s.fahrschule_id, fahrlehrer_id: s.fahrlehrer_id, schueler_id: "s1", art: "fahrstunde", datum: tag(10), von: "10:00", bis: "11:30", status: "geplant", geloescht: false, payload: {} },
+      { id: "kt-alt", fahrschule_id: s.fahrschule_id, fahrlehrer_id: s.fahrlehrer_id, schueler_id: "s1", art: "fahrstunde", datum: tag(500), von: "10:00", bis: "11:30", status: "geplant", geloescht: false, payload: {} },
+    ]);
+    F.tabellen.kalender_pruefungen = (F.tabellen.kalender_pruefungen || []).filter((p) => p.schueler_id !== "s1"); // nur die alte Tafel-Prüfung zählt
+    F.tabellen.pruefungstermine = (F.tabellen.pruefungstermine || []).filter((p) => p.schueler_id !== "s1").concat([
+      { id: "pt-alt", fahrschule_id: s.fahrschule_id, schueler_id: "s1", fahrlehrer_id: s.fahrlehrer_id, art: "praxis", status: "nicht_bestanden", datum: tag(450), von: "09:00", klasse: "B" },
+    ]);
+  };
+  {
+    const { page, ctx, konsole } = await oeffne({ nutzer: "bu-1", vorbereiten: vb(mitAltenTerminen) });
+    const geladen = await page.evaluate(() => (S.termine || []).some((t) => t.id === "kt-alt"));
+    const d = await oeffneAkte(page, S1);
+    await page.waitForTimeout(300);
+    const t = await d.locator("[data-bk-anm-info]").innerText();
+    pruefe("V18a alter Termin (500 Tage) ist nicht im Büro geladen, zählt aber: „4 von 20 gefahren · noch 16 offen“", !geladen && /4 von 20 gefahren · noch 16 offen/.test(t), [geladen, t]);
+    pruefe("V18b alte Prüfung von der Tafel zählt: „1 von 2 vorgestellt“", /1 von 2 vorgestellt/.test(t), t);
+    const x = await d.locator("header [data-schliessen]").boundingBox();
+    pruefe("V18c ✕ im Fenster mindestens 44×44 px", x && x.width >= 44 && x.height >= 44, x);
+    pruefe("V18d keine Konsolenfehler", !konsole.length, konsole.join(" | "));
+    await ctx.close();
+  }
+  {
+    const { page, ctx } = await oeffne({ nutzer: "bu-1", vorbereiten: vb(mitAltenTerminen) });
+    await page.evaluate(() => { window.bkVerlaufLaden = async () => null; }); // älterer Verlauf nicht ladbar
+    const d = await oeffneAkte(page, S1);
+    await page.waitForTimeout(300);
+    const t = await d.locator("[data-bk-anm-info]").innerText();
+    pruefe("V18e nicht ladbar: Stand der letzten Tage mit Hinweis", /2 von 20 gefahren/.test(t) && /nur die Termine der letzten 400 Tage/.test(t), t);
+    await ctx.close();
+  }
+  // V19 (Folgeauftrag) Ein anderes Fenster hat das Paket schon storniert: Meldung statt Stille
+  {
+    const { page, ctx } = await oeffne({ nutzer: "bu-1", vorbereiten: vb(mitVerkauftem) });
+    const d = await oeffneAkte(page, S1);
+    await page.evaluate(() => { window.__FAKE.tabellen.schueler_pakete.find((x) => x.id === "sp-alt").storniert_am = new Date().toISOString(); });
+    await waehle(d, "Normale Anmeldung");
+    await d.locator("button[value=ok]").click(); await page.waitForTimeout(450);
+    const t19 = await page.locator("body").innerText();
+    pruefe("V19 schon storniert: Meldung „war schon storniert“, kein zweites Stornieren", /war schon storniert/.test(t19) && (await rpcs(page, "schueler_paket_aktivieren")).length === 0, t19.slice(-200));
+    await ctx.close();
+  }
 } catch (e) { schlecht++; console.log("FEHLER  Test-Ausnahme: " + (e && e.stack || e)); }
 
 // App: Karte „Paket“ in der Akte des Fahrlehrers (nur lesen, ohne Preise)
