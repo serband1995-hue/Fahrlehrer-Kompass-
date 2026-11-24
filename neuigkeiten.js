@@ -4,6 +4,10 @@
    "kurz" (höchstens ~60 Zeichen) erscheint nach dem Update einmal als kleiner Hinweis (verschwindet von selbst, kein Knopf).
    Einfache Worte, keine Fachwörter, keine Schülerdaten. */
 window.KOMPASS_NEU = [
+  { version: "2026.11.24.2", datum: "2026-11-24", kurz: "Neu: Knopf „Theorie bestanden“ in der Warteliste.",
+    punkte: ["Unter Prüfungen bei „Wartet auf Theorie“ steht neben jedem Namen ein grüner Knopf „Theorie bestanden“. Ein Tipp genügt, die 20 % zählen sofort. Mit „Rückgängig“ nimmst du es zurück.",
+             "„Alle Schüler“ ist jetzt geordnet: deine Schüler zuerst, dann nach Fahrlehrer und Name.",
+             "Oben kannst du nach Fahrlehrer, Name oder Stand sortieren und einen Fahrlehrer auswählen. Das Handy merkt sich deine Wahl."] },
   { version: "2026.11.24.1", datum: "2026-11-24", kurz: "Abmelden steht jetzt unten im Menü „Mehr“.",
     punkte: ["„Abmelden“ findest du jetzt ganz unten im Menü „Mehr“, nicht mehr in den Einstellungen.",
              "Die Gesamtübersicht und der Wechsel zur Büro-Seite sind nur für Leitung, Büro und den Betreiber da."] },

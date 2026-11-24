@@ -7874,7 +7874,7 @@ const STORE_KEY="serband-app-v1";
    Wird in den Einstellungen angezeigt + für den Update-Hinweis genutzt. */
 // K1: voreingestellter Wetter-Ort (früh definiert, weil ensureDB ihn schon beim Start braucht)
 const WETTER_START={city:"Offenbach",lat:50.1006,lon:8.7665};
-const APP_VERSION="2026.11.24.1";
+const APP_VERSION="2026.11.24.2";
 try{const f=document.getElementById("drawerFoot"); if(f)f.textContent="Fahrlehrer-Kompass · Version "+APP_VERSION;}catch(e){}
 // Nutzungsbedingungen & Haftungsausschluss (Bereich: rechtliche Absicherung) - Version hochzählen
 // und alle Nutzer müssen erneut zustimmen, sobald sich der Text inhaltlich ändert.
@@ -15222,7 +15222,7 @@ function routePruefungen(){
       html+=`<div class="wait-card-wrap" data-wid="${s.id}" style="display:flex;align-items:center;gap:8px;margin-bottom:8px;"><button class="wait-card" data-id="${s.id}" style="flex:1;margin-bottom:0;min-width:0;">
         <div class="wait-body"><div class="wait-name">${esc(s.name)}</div>
           <div class="wait-since">pausiert seit ${fmtDateDE(s.theorieWait)} · ${esc(s.form||'B')}</div></div>
-        <span class="na-arrow">${ICN.arrow}</span></button><button type="button" class="btn btn-primary btn-theorie-ok" data-theo-ok="${s.id}" aria-label="Theorie bestanden für ${esc(s.name)}" style="flex:0 0 auto;min-width:92px;min-height:44px;padding:8px 12px;border-radius:12px;font-size:12px;font-weight:700;line-height:1.2;background:var(--gruen);border-color:var(--gruen);color:#fff;">Theorie bestanden</button></div>`;
+        <span class="na-arrow">${ICN.arrow}</span></button><button type="button" class="btn btn-primary btn-theorie-ok" data-theo-ok="${s.id}" aria-label="Theorie bestanden für ${esc(s.name)}" style="flex:0 0 auto;min-width:92px;min-height:44px;padding:8px 12px;border-radius:12px;font-size:13px;font-weight:700;line-height:1.2;">Theorie bestanden</button></div>`;
     });
   } else if(_pruefTab==="theorie"){
     html+=`<p class="muted-p" style="font-size:13px;margin-bottom:14px;">Theorie bestanden, aber noch unter 90 % im Ausbildungsplan. Sobald 90 % erreicht sind, wandern sie automatisch zu „Bereit".</p>`;
@@ -15253,7 +15253,7 @@ function routePruefungen(){
   document.querySelectorAll("[data-theo-ok]").forEach(b=>b.addEventListener("click",()=>{
     // Doppeltipp: Die Liste rückt nach, der zweite Tipp träfe sonst den nächsten Schüler
     if(Date.now()<(window._theoOkSperre||0))return; window._theoOkSperre=Date.now()+800;
-    const s=DB.students.find(x=>x.id===b.dataset.theoOk); if(!s||s.plan&&s.plan.theorie)return;
+    const s=DB.students.find(x=>x.id===b.dataset.theoOk); if(!s)return; // Altdaten (Theorie schon an, aber noch „wartet“): Knopf räumt das auf
     ensure(s); const alt=theorieStandMerken(s);
     theorieBestandenSetzen(s,true,true); save(); routePruefungen();
     const sid=s.id, nm=s.name;
