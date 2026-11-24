@@ -190,7 +190,7 @@ for (const R of ROLLEN) {
     const sw = await startseite();
     await pruefe("R6", `${P} Einstellungen › Startseite: ${R.wahl.length ? R.wahl.join(" / ") : "keine Wahl"}`, () => {
       const f = [];
-      if (sw.keinMenue) f.push("„Einstellungen“ fehlt im Menü der Gesamtansicht");
+      if (sw.keinMenue && R.wahl.length) f.push("„Einstellungen“ fehlt im Menü der Gesamtansicht");
       if (sw.werte.join() !== R.wahl.join()) f.push("Wahl: " + (sw.werte.join(" / ") || "keine"));
       if (R.wahl.length && sw.an.join() !== R.wahl[0]) f.push("markiert: " + (sw.an.join() || "nichts"));
       if (R.wahl.length && sw.minH < 43.5) f.push("Knopf nur " + Math.round(sw.minH) + " px hoch");
@@ -351,6 +351,24 @@ for (const R of ROLLEN) {
         window._seiteVerlassenOk = window.__svo;
         return f;
       }));
+      // R25 (Daten-Prüfer): Schüler anlegen und sofort „Büro-Seite“ wählen → der Schüler ist oben, bevor die Seite wechselt
+      if (g.n === "360") {
+        await maskeWeg();
+        await page.evaluate(() => { try { closeSheet(); } catch (e) {} routeSchuelerForm(null); }); await warte(page, 400);
+        await page.fill("#f_name", "Bruecke Muster");
+        await page.evaluate(() => { window.__schreib = []; });
+        await page.click("#saveBtn"); await warte(page, 150);
+        await page.evaluate(() => { try { closeSheet(); } catch (e) {} window.__gehe = null; window.__geheAlt = KS_START.gehe;
+          KS_START.gehe = (n) => { window.__gehe = { n, schueler: window.__schreib.some((x) => x.tab === "schueler" && x.art === "upsert" && JSON.stringify(x.werte).includes("Bruecke Muster")) }; };
+          routeSettings(); });
+        await warte(page, 200);
+        await page.click('#ksStartKasten [data-ks-start="buero"]', { timeout: 5000 }).catch(() => {});
+        await page.waitForFunction(() => window.__gehe, null, { timeout: 12000 }).catch(() => {});
+        await pruefe("R25", `${P} neuer Schüler, sofort „Büro-Seite“: erst hochgeladen, dann gewechselt`, () => page.evaluate(() => {
+          const g = window.__gehe; KS_START.gehe = window.__geheAlt; KS_START.setzen(_authProfile, "eigen");
+          return !g ? "nicht gewechselt" : g.n !== "buero" ? "Ziel " + g.n : g.schueler ? null : "Schüler beim Wechsel noch nicht auf dem Server";
+        }));
+      }
       await page.evaluate(() => routeSettings()); await warte(page, 300);
       await page.click('#ksStartKasten [data-ks-start="gesamt"]', { timeout: 5000 }).catch(() => {}); await warte(page, 1000);
       await pruefe("R7", `${P} Startseite „Fahrschule“ antippen → ganze Fahrschule, gemerkt`, () => page.evaluate(() => {

@@ -4212,6 +4212,7 @@ function _lokaleNutzerdatenLoeschen() {
     try { localStorage.removeItem(k); } catch (e) {}
   });
   try { sessionStorage.removeItem("vd_unlocked"); } catch (e) {}
+  try { sessionStorage.removeItem("kompass-weiterleitung"); } catch (e) {} // W16: Schleifen-Merker gehört zur Sitzung
   try { if (window.PW) PW.vergessen(); } catch (e) {} // K5: gemeinsames Prüfer-Wissen dieses Kontos
   try { localStorage.removeItem("kompass-su-v1"); } catch (e) {} // K6: Merker Schüler-Überblick
 }
@@ -4489,8 +4490,9 @@ async function afterLogin(user) {
 async function _continueLoginFlow(prof) {
   // W16 (🗣 Serband 24.11.2026): Startseite je Rolle. Büro, und wer die Büro-Seite als Startseite gewählt hat, geht gleich zu
   // buero.html. Geht das nicht (Passwort-Link offen, Weiterleitungs-Schleife), startet die App wie bisher.
+  // Rollen mit eigenem Stand (Super-Admin, Leitung, die selbst fährt) sichern vorher alles (unten, nach dem Abgleich).
   let startZiel = _startZiel(prof);
-  if (startZiel === "buero") { if (_zurBueroWeiter()) return; startZiel = null; }
+  if (startZiel === "buero" && _nurGesamtansicht(prof)) { if (_zurBueroWeiter()) return; startZiel = null; }
   // Fahrschule-Admin: exakt dieselbe App, nur mit den zusammengeführten Daten der ganzen Fahrschule
   if (_nurGesamtansicht(prof)) {
     document.getElementById("loginOverlay").classList.add("hidden");
@@ -4534,6 +4536,11 @@ async function _continueLoginFlow(prof) {
   // W16: Leitung, die selbst fährt, oder Super-Admin mit der Startseite „Fahrschule“: nach dem eigenen Abgleich in die
   // Gesamtansicht (wie früher der Tipp auf den Streifen; die eigenen Daten bleiben gesichert und werden weiter abgeglichen).
   if (startZiel === "gesamt" && !_fsAgg && _fsDarfGesamt() && prof && prof.fahrschule_id) await _fsEnterAggMode(prof.fahrschule_id);
+  // Startseite „Büro-Seite“ mit eigenem Stand: erst alles hochladen (sonst bliebe Neues nur auf diesem Gerät), dann weiter
+  if (startZiel === "buero" && !_startWeiterWartet) {
+    if (await _eigenesSichern(8000)) _zurBueroWeiter();
+    else toast("Nicht alles gesichert (Internet?). Du bleibst in der App.");
+  }
 }
 // Zeigt die Nutzungsbedingungen als blockierendes Overlay - erst nach Scrollen ans Ende UND
 // Checkbox wird "Bestätigen" aktiv. Erst danach geht der normale Login-Ablauf weiter.
@@ -4709,7 +4716,16 @@ async function _alleSeiten(bau) {
 }
 // Gemeinsamer Ablauf der drei Brücken: nur Geändertes schreiben, nur Bekanntes löschen.
 // Liefert die IDs, die geschrieben wurden.
-async function _brueckeAbgleichen({ tabelle, art, eintraege, zeileVon, loeschWert, aktivFilter, loeschWertFuer }) {
+// W16: laufende Brücken-Abgleiche merken, damit ein Wechsel zur Büro-Seite sie abwarten kann (die Büro-Seite liest genau diese Tabellen)
+const _brueckenLauf = new Set();
+function _brueckeAbgleichen(o) {
+  const p = _brueckeAbgleichenJetzt(o);
+  _brueckenLauf.add(p);
+  const weg = () => { _brueckenLauf.delete(p); };
+  p.then(weg, weg);
+  return p;
+}
+async function _brueckeAbgleichenJetzt({ tabelle, art, eintraege, zeileVon, loeschWert, aktivFilter, loeschWertFuer }) {
   const supa = getSupa(); const merk = _abglLaden()[art];
   const nowIso = new Date().toISOString();
   const offen = [];
@@ -6190,7 +6206,7 @@ async function _fsZurBueroSeite(ev){
       if(!ok&&!confirm("Nicht alle Änderungen konnten gespeichert werden. Trotzdem zur Büro-Seite? Ungespeichertes geht dann verloren."))return false;
     }
     location.href="buero.html";
-    return false;
+    return true; // W16: gewechselt (onclick nutzt den Wert nicht, preventDefault ist oben schon geschehen)
   }finally{
     _fsZurBueroLaeuft=false;
     if(hinweisAn){ const t=$("#toast"); if(t.textContent==="Speichere Änderungen …")t.classList.remove("show"); }
@@ -12812,6 +12828,23 @@ function _settingsAccToggle(key){
   _settingsAccOpen=(_settingsAccOpen===key)?null:key;
   document.querySelectorAll(".set-acc").forEach(el=>{ el.classList.toggle("open",el.dataset.acckey===_settingsAccOpen); });
 }
+// W16 (Daten-Prüfer): Vor dem Sprung zur Büro-Seite den eigenen Stand UND die Brücken (Schüler, Termine, Prüfungen) sofort
+// hochladen und abwarten – die Büro-Seite liest die Fahrschul-Tabellen, und ein Seitenwechsel bricht laufende Anfragen ab.
+// true = alles oben (oder nichts offen), false = nicht sicher gesichert (dann nicht wechseln).
+async function _eigenesSichern(ms){
+  if(!_authUser||!_pullOk||_nurGesamtansicht())return !!_authUser&&_nurGesamtansicht();
+  clearTimeout(_saveSyncDebounce); _saveSyncDebounce=null;
+  const ende=Date.now()+ms;
+  const push=pushToCloud();
+  _brueckenSofort();
+  await new Promise(r=>setTimeout(r,60)); // die Brücken starten mit 0 ms Verzögerung
+  const alles=(async()=>{
+    const ok=await push;
+    while(_brueckenLauf.size&&Date.now()<ende) await Promise.race([Promise.allSettled([..._brueckenLauf]),new Promise(r=>setTimeout(r,Math.max(0,ende-Date.now())))]);
+    return ok!==false&&!_brueckenLauf.size;
+  })();
+  return await Promise.race([alles,new Promise(r=>setTimeout(()=>r(false),ms+200))]);
+}
 // W16 (🗣 Serband 24.11.2026): Startseite in den Einstellungen (Leitung und Super-Admin, startseite.js).
 // Tippen merkt die Wahl auf diesem Gerät und wechselt sofort; einen anderen Umschalter gibt es nicht mehr.
 function _startseiteEinbauen(){
@@ -12822,10 +12855,11 @@ function _startseiteEinbauen(){
 async function _startseiteWechseln(wert){
   if(!_startHatWahl())return false;
   if(wert==="buero"){
-    if(_fsAgg){ await _fsZurBueroSeite(null); return; } // speichert offene Änderungen der Gesamtansicht vorher
+    // Gesamtansicht: _fsZurBueroSeite speichert offene Änderungen vorher; true nur, wenn wirklich gewechselt wird
+    if(_fsAgg) return (await _fsZurBueroSeite(null))===true?undefined:false;
     if(!_seiteVerlassenOk())return false;
-    // Eigene Änderungen noch sichern (höchstens 4 s): die Büro-Seite lädt den eigenen Stand nicht
-    try{ if(_authUser&&_pullOk) await Promise.race([pushToCloud(),new Promise(r=>setTimeout(r,4000))]); }catch(e){}
+    toast("Sichere deine Daten …");
+    if(!(await _eigenesSichern(8000))){ toast("Noch nicht alles gesichert (Internet?). Bitte gleich nochmal tippen."); return false; }
     KS_START.gehe("buero"); return;
   }
   if(wert==="gesamt"){

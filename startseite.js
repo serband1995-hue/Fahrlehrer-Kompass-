@@ -57,7 +57,7 @@
     try { g.localStorage.setItem(KEY, JSON.stringify(m)); return true; } catch (e) { return false; }
   }
 
-  function _aufBuero() { return /buero\.html$/.test(g.location.pathname); }
+  function _aufBuero() { return /\/buero(\.html)?$/.test(g.location.pathname); } // auch /buero ohne Endung (GitHub Pages)
   function _merke(nach) { try { g.sessionStorage.setItem(WEITER_KEY, JSON.stringify({ nach: nach, t: Date.now() })); } catch (e) { /* ohne Merker weiter */ } }
 
   // Automatische Weiterleitung beim Start (nach = "buero" oder "app"). Gibt false zurück, wenn nicht weitergeleitet wird:

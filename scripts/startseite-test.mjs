@@ -92,6 +92,10 @@ const P = {
   pruefe("S4", "auf buero.html: „app“ → index.html", KS.weiter("app") === true && ziele[0] === "index.html" || ziele.join());
 }
 {
+  const { KS, ziele } = umgebung("/Fahrlehrer-Kompass-/buero");
+  pruefe("S4", "Adresse /buero ohne Endung gilt als Büro-Seite", KS.weiter("buero") === false && KS.weiter("app") === true && ziele[0] === "index.html" || ziele.join());
+}
+{
   const { KS, ziele, g } = umgebung("/Fahrlehrer-Kompass-/buero.html");
   g.sessionStorage.setItem(KS.WEITER_KEY, JSON.stringify({ nach: "buero", t: Date.now() }));
   pruefe("S4", "auf buero.html, eben von der App geschickt: nicht zurück", KS.weiter("app") === false && !ziele.length || ziele.join());
