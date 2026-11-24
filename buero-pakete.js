@@ -470,7 +470,8 @@ function bkVerbrauchText(v, art) {
   if (!v || v.verbraucht == null) return "";
   const wort = art === "pruefung_praxis" ? "vorgestellt" : art === "simulator" ? "gemacht" : "gefahren";
   if (v.offen > 0) return `${bkZahl(v.verbraucht)} von ${bkZahl(v.anzahl)} ${wort} · <b>noch ${bkZahl(v.offen)} offen</b>`;
-  return `alle ${bkZahl(v.anzahl)} ${wort} ✓${v.mehr > 0 ? ` · ${bkZahl(v.mehr)} mehr als im Paket` : ""}`;
+  // Mehr als im Paket kann Zusatzkosten bedeuten: nicht grün, sondern gelb (Richter 24.11.)
+  return `alle ${bkZahl(v.anzahl)} ${wort} ✓${v.mehr > 0 ? ` · <span class="bk-anm-mehr">${bkZahl(v.mehr)} mehr als im Paket</span>` : ""}`;
 }
 function bkPostenListeHTML(posten, verbrauch) {
   return `<ul class="bk-anm-posten">${posten.map((p, i) => {

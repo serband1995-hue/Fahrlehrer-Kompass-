@@ -6445,6 +6445,7 @@ async function routeFahrschuleDetail(fahrschuleId){
   const fs=fsR.data, lehrer=lehrerR.data||[], admins=adminR.data||[], schueler=schuelerR.data||[], pakete=paketeR.data||[];
   const wrap=$("#fsDetailWrap");
   if(!fs){if(wrap)wrap.innerHTML='<p class="muted-p">Fahrschule nicht gefunden.</p>';return;}
+  await _ladePakete(supa, schueler.map(s=>s.id)); // Werkstatt 13 (Richter): im Büro verkaufte Pakete auch hier schützen
   window._fsCache={fahrschuleId,lehrer,pakete,admins};
 
   const backBtn=binSuper?`<button class="btn btn-ghost" style="margin-bottom:10px;" onclick="routeFahrschulenListe()">← Alle Fahrschulen</button>`:"";
@@ -9889,7 +9890,7 @@ function paketCard(s){
   const zahl=n=>(Math.round(Number(n)*10)/10).toLocaleString("de-DE");
   // Ohne Zähler (Grundbetrag, Lernapp, Sonstiges): „enthalten“ bzw. „2 ×“; mit Zähler wie im Büro, Überzug als „+2“
   const rechts=(x,i)=>{ const z=v[i]; if(!z||z.verbraucht==null)return Number(x.anzahl)===1?"enthalten":esc(zahl(x.anzahl))+" ×";
-    return z.offen>0?`${zahl(z.verbraucht)} von ${zahl(z.anzahl)}`:`${zahl(z.anzahl)} von ${zahl(z.anzahl)} ✓${z.mehr>0?` · +${zahl(z.mehr)}`:""}`; };
+    return z.offen>0?`${zahl(z.verbraucht)} von ${zahl(z.anzahl)}`:`<span style="white-space:nowrap">${zahl(z.anzahl)} von ${zahl(z.anzahl)} ✓${z.mehr>0?` · +${zahl(z.mehr)}`:""}</span>`; };
   return `<div class="res-block paket-karte" style="animation:none;margin-top:9px;">
     <h4>${_li("bogen")} Paket: ${esc(p.name)}</h4>
     ${p.posten.map((x,i)=>`<div class="mini-dash-row"><span>${esc(x.bezeichnung)}</span><b>${rechts(x,i)}</b></div>`).join("")}

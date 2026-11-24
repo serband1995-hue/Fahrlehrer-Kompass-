@@ -890,7 +890,8 @@ body.kiosk .rollen-streifen{display:none;}
 .bk-anm-menge{white-space:nowrap;}
 .bk-anm-stand{display:block;color:var(--muted);font-size:14px;}
 .bk-anm-stand.fertig{color:var(--pill-gruen);font-weight:600;}
-.bk-anm-stand b{color:var(--txt, inherit);font-weight:700;} /* das Offene hebt sich ab (Design 24.11.) */
+.bk-anm-stand b{color:var(--txt, inherit);font-weight:700;}
+.bk-anm-stand .bk-anm-mehr{color:var(--pill-gelb);} /* das Offene hebt sich ab (Design 24.11.) */
 .bk-anm-verkauft{font-weight:600;}
 .bk-anm-posten li > span:last-child{white-space:nowrap;}
 .bk-anm-summe{display:flex;justify-content:space-between;align-items:baseline;gap:12px;}
