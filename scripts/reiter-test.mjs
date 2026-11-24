@@ -241,7 +241,8 @@ await pruefe("B3", "Beschriftungen „Verkehrstafel“ und „Verdienst & Statis
   return f;
 });
 
-await pruefe("B4", "Super-Admin-Knopf wird im normalen Menü angehängt", async () => {
+// W16 (24.11.2026): kein Umschalter mehr im Menü (Wechsel nur über die Startseite in den Einstellungen)
+await pruefe("B4", "Super-Admin: normales Menü ohne Umschalter", async () => {
   if (!(await gibtFunktion(page, "_fsSetDrawer"))) return { skip: "_fsSetDrawer fehlt" };
   const r = await page.evaluate(() => {
     const alt = window.isSuperAdmin, altP = _authProfile;
@@ -253,7 +254,7 @@ await pruefe("B4", "Super-Admin-Knopf wird im normalen Menü angehängt", async 
     } finally { window.isSuperAdmin = alt; _authProfile = altP; _fsSetDrawer(false); }
   });
   const f = [];
-  if (!r.toggle) f.push("__fstoggle fehlt");
+  if (r.toggle) f.push("__fstoggle noch im Menü");
   if (r.verboten.length) f.push(`zusätzlich noch im Menü: ${r.verboten.join(", ")}`);
   return f;
 });

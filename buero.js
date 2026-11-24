@@ -4824,6 +4824,15 @@ function zeigeRollenStreifen() {
   el.hidden = false;
   document.body.classList.add("mit-streifen");
 }
+// W16: Fußzeile. Das Büro hat keinen Weg in die App (die App schickte es gleich zurück). Leitung und Super-Admin wählen hier
+// vorläufig ihre Startseite (KS_START aus startseite.js); Werkstatt 11 hängt dieselbe Wahl in die Büro-Einstellungen.
+function zeigeStartWahl(profil) {
+  const kasten = $("startWahl"), link = $("zurApp");
+  if (!kasten || !link) return;
+  if (!window.KS_START) { kasten.hidden = true; link.hidden = profil.rolle === "buero"; return; } // alter Zwischenspeicher: wie bisher
+  link.hidden = true;
+  KS_START.einbauen(kasten, profil, { kompakt: true });
+}
 function zeigeHinweis(titel, text, knoepfe) {
   $("hinweisTitel").textContent = titel;
   $("hinweisText").textContent = text;
@@ -4857,6 +4866,9 @@ async function starte(user) {
     return;
   }
   if (!ROLLEN[profil.rolle]) {
+    // W16 (🗣 Serband 24.11.2026): Fahrlehrer arbeiten nur in der App, also gleich dorthin (gleiche Anmeldung).
+    // Nur wenn das nicht geht (die App hat in diesem Tab eben erst hierher geschickt), bleibt der Hinweis.
+    if (window.KS_START && KS_START.weiter("app")) return;
     zeigeHinweis("Nur für das Büro", "Diese Seite ist für Büro und Fahrschul-Leitung. Als Fahrlehrer arbeitest du in der Kompass-App.",
       `<a class="knopf haupt" href="index.html">Zur Kompass-App</a><button class="knopf" type="button" data-abmelden>Abmelden</button>`);
     return;
@@ -4888,6 +4900,7 @@ async function starte(user) {
   if (window.BUERO_VORFUEHRUNG) { $("vorfuehrung").hidden = false; document.title = "Vorführung · Kompass Büro"; }
   $("nutzerName").textContent = profil.name || user.email;
   $("nutzerRolle").textContent = ROLLEN[profil.rolle];
+  zeigeStartWahl(profil);
   zeigeWerAnzeige();
   zeigeNur("app");
   zeichne();

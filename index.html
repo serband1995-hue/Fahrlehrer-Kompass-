@@ -195,13 +195,6 @@ input,select,textarea{font-family:inherit;font-size:16px;color:var(--txt);}
 @keyframes spIn{from{opacity:0;transform:scale(.94) translateY(12px);}to{opacity:1;transform:none;}}
 
 /* ===== SHELL ===== */
-.sa-streifen{flex:0 0 auto;display:flex;align-items:center;justify-content:center;gap:8px;padding:calc(6px + env(safe-area-inset-top)) 14px 6px;font-size:13.5px;font-weight:700;letter-spacing:.02em;line-height:1.2;color:#fff;background:#2b2d33;border-bottom:3px solid #e0b84f;position:relative;z-index:6;}
-.sa-streifen[hidden]{display:none;}
-.sa-streifen svg{width:18px;height:18px;flex:0 0 auto;color:#f0cd72;}
-.sa-streifen .sa-zusatz{font-weight:500;opacity:.92;}
-.sa-streifen.sa-tippbar{min-height:44px;cursor:pointer;flex-wrap:wrap;text-align:center;}
-.sa-streifen.sa-tippbar:active{filter:brightness(1.15);}
-.app.mit-sa-streifen .topbar{padding-top:12px;}
 .app{display:flex;flex-direction:column;height:100dvh;position:relative;overflow:hidden;z-index:1;}
 .topbar{display:grid;grid-template-columns:minmax(0,1fr) auto minmax(0,1fr);align-items:center;gap:10px;
   padding:calc(8px + env(safe-area-inset-top)) var(--pad) 8px;
@@ -1987,6 +1980,7 @@ body:not(.light) #sheet .sheet-pills .pill.sel{background:#2f3846 !important;bor
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script src="kompass-rechnen.js"></script>
 <script src="neuigkeiten.js"></script>
+<script src="startseite.js"></script>
 <script src="lernszenen.js" defer></script>
 <script src="lernszenen-stadt.js" defer></script>
 <script src="lernszenen-neu-a.js" defer></script>
@@ -2014,8 +2008,6 @@ body:not(.light) #sheet .sheet-pills .pill.sel{background:#2f3846 !important;bor
   border-radius:24px;padding:32px 28px;
   box-shadow:0 20px 60px rgba(0,0,0,.4),inset 0 1px 0 rgba(190,220,200,.08);
 }
-.lo-buero{margin-top:18px;padding-top:16px;border-top:1px solid rgba(150,200,165,.16);display:grid;gap:8px;text-align:center;font-size:13px;color:var(--muted);}
-.lo-buero a{display:block;padding:12px 14px;border-radius:14px;border:1px solid var(--line-soft);background:var(--surface);color:var(--txt);font-weight:700;text-decoration:none;font-size:15px;}
 .lo-field{margin-bottom:18px;}
 .lo-field label{display:block;font-size:11px;color:var(--mint-soft);margin-bottom:7px;font-weight:700;letter-spacing:.8px;text-transform:uppercase;}
 .lo-field-wrap{position:relative;}
@@ -2849,7 +2841,7 @@ body:not(.light){--clay-text:#e8a283;}
     <button class="lo-btn" id="loBtn" onclick="doLogin()">Einloggen</button>
     <button type="button" id="loForgotBtn" style="background:none;border:none;color:var(--muted);font-size:12.5px;margin-top:10px;text-decoration:underline;cursor:pointer;width:100%;min-height:44px;">Passwort vergessen?</button>
     <div class="lo-err" id="loErr"></div>
-    <div class="lo-buero"><span>Du arbeitest im Büro oder in der Leitung?</span><a href="buero.html">Büro-Anmeldung (am PC)</a></div>
+    <!-- W16: kein eigener Link zur Büro-Anmeldung mehr. Wer zum Büro gehört, kommt nach der Anmeldung von selbst auf die Büro-Seite. -->
   </div>
 </div>
 
@@ -2878,8 +2870,7 @@ try{ var _tok=false,_bio=false; for(var _i=0;_i<localStorage.length;_i++){ var _
 if(_tok&&!_bio){ document.getElementById("loginOverlay").classList.add("hidden"); window._loginVersteckt=true; } }catch(e){}
 </script>
 <div class="app">
-  <!-- Streifen nur für den Super-Admin: zeigt, dass man mit allen Rechten angemeldet ist -->
-  <div class="sa-streifen" id="saStreifen" role="status" hidden><svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M3 8l4.5 4L12 5l4.5 7L21 8l-2 11H5L3 8z"/><rect x="5" y="20" width="14" height="2" rx="1"/></svg><span>Super-Admin</span><span class="sa-zusatz">· alle Rechte</span></div>
+  <!-- W16: Der Streifen oben (Super-Admin / „Du bist Leitung · tippen“) ist weggefallen. Gewechselt wird nur in den Einstellungen (Startseite). -->
   <header class="topbar">
     <div class="tb-side tb-left">
       <button class="icon-btn" id="menuBtn" aria-label="Menü" hidden>
@@ -4170,8 +4161,8 @@ function _uidAus(sessionData) {
 function isSuperAdmin() {
   return _authProfile && _authProfile.rolle === "super_admin";
 }
-// Leitung, die selbst fährt (🗣 Serband 21.11.2026, Jelena): eigene Fahrlehrer-Ansicht wie der Betreiber,
-// die Gesamtübersicht über das Menü. Reine Leitung (ohne Kennzeichen) und Büro sehen nur die Gesamtansicht.
+// Leitung, die selbst fährt (🗣 Serband 21.11.2026, Jelena): eigene Fahrlehrer-Ansicht wie der Betreiber.
+// W16: Die Gesamtübersicht wählt sie als Startseite in den Einstellungen. Reine Leitung (ohne Kennzeichen) und Büro sehen nur die Gesamtansicht.
 function _leitungFaehrtSelbst(p) { p = p || _authProfile; return !!(p && p.rolle === "fahrschule_admin" && p.faehrt_selbst === true); }
 function _hatAdminUmschalter() { return !!(isSuperAdmin() || _leitungFaehrtSelbst()); }
 // K12/K17: Die Gesamtansicht (Gesamtübersicht) und der Weg zur Büro-Seite gehören nur Büro, Leitung und Super-Admin.
@@ -4185,28 +4176,18 @@ function _fsNurUnterrichtende(res) {
 }
 // K13: „Abmelden“ steht ganz unten unter „Mehr“ (nicht mehr in den Einstellungen); nur wenn jemand angemeldet ist
 function _zeigeAbmelden() { const b = document.getElementById("drawerLogout"); if (b) b.hidden = !_authUser; }
-// Streifen oben „Super-Admin · alle Rechte“: nur sichtbar, wenn man als Super-Admin angemeldet ist
-function _zeigeSaStreifen() {
-  const el = document.getElementById("saStreifen");
-  if (!el) return;
-  const an = _hatAdminUmschalter();
-  _zeigeAbmelden();
-  el.hidden = !an;
-  const t = el.querySelectorAll("span");
-  // Leitung, die selbst fährt: Streifen sagt, wo sie gerade ist, und wechselt per Tipp (🗣 Design-Prüfung 21.11.)
-  const leitung = !isSuperAdmin() && an;
-  if (t[0]) t[0].textContent = isSuperAdmin() ? "Super-Admin" : _fsAgg ? "Ganze Fahrschule" : "Du bist Leitung";
-  if (t[1]) t[1].textContent = isSuperAdmin() ? "· alle Rechte" : _fsAgg ? "· zurück zu mir: tippen" : "· ganze Fahrschule: tippen";
-  el.classList.toggle("sa-tippbar", leitung);
-  if (leitung) { el.setAttribute("role", "button"); el.tabIndex = 0; } else { el.setAttribute("role", "status"); el.removeAttribute("tabindex"); }
-  if (!el._tippGebunden) {
-    el._tippGebunden = true;
-    const wechseln = () => { if (!el.classList.contains("sa-tippbar")) return; if (_fsAgg) _fsExitAggMode(); else _fsEnterAggMode((_authProfile && _authProfile.fahrschule_id) || ""); };
-    el.addEventListener("click", wechseln);
-    el.addEventListener("keydown", (e) => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); wechseln(); } });
-  }
-  const app = document.querySelector(".app");
-  if (app) app.classList.toggle("mit-sa-streifen", an);
+// W16 (🗣 Serband 24.11.2026): Der Streifen oben zum Umschalten ist weggefallen, gewechselt wird nur noch in den
+// Einstellungen („Startseite“). Der Name bleibt, weil Anmeldung und Ansichtswechsel ihn aufrufen (Abmelden-Knopf).
+function _zeigeSaStreifen() { _zeigeAbmelden(); }
+// W16: Startseite je Rolle (startseite.js): Fahrlehrer → eigene Ansicht, Büro → Büro-Seite, Leitung und Super-Admin wählen.
+// Ohne das Modul (alter Zwischenspeicher) gilt der bisherige Start; ohne bekannte Rolle (Offline-Start) wird nie weitergeleitet.
+function _startZiel(p) { try { return (window.KS_START && KS_START.ziel(p || _authProfile)) || null; } catch (e) { return null; } }
+function _startHatWahl(p) { try { return !!(window.KS_START && KS_START.hatWahl(p || _authProfile)); } catch (e) { return false; } }
+// Passwort-Link offen: erst das neue Passwort festlegen, dann weiter (sonst verschwände das Fenster mit der Seite)
+let _startWeiterWartet = false;
+function _zurBueroWeiter() {
+  if (_startWeiterWartet || !_authUser || !window.KS_START) return false;
+  return !!KS_START.weiter("buero");
 }
 
 /* ---- Lokale Daten gehören genau einem Konto ----
@@ -4341,14 +4322,17 @@ function _openNeuesPasswortSheet(){
       if(error)throw error;
       closeSheet(); toast("Passwort geändert ✓ — du bist jetzt angemeldet.");
       window.location.hash="";
+      _startWeiterWartet=false; // W16: jetzt darf die Startseite gelten (Büro → Büro-Seite)
       const {data:sessionData}=await supa.auth.getSession();
       if(sessionData&&sessionData.session&&!_authUser) afterLogin(sessionData.session.user);
+      else if(_authUser&&_startZiel()==="buero") setTimeout(()=>{ _zurBueroWeiter(); },1500);
     }catch(e){ toast("Fehler: "+(e.message||"unbekannt")); }
   });
 }
 // Beim Start merken: supabase-js entfernt den Link-Teil der Adresse, sobald es die Sitzung übernommen hat.
 const _PW_RESET_LINK = window.location.hash.includes("type=recovery");
 let _pwResetAusstehend = _PW_RESET_LINK; // gilt nur für die erste Anmeldung auf dieser Seite
+if(_PW_RESET_LINK) _startWeiterWartet = true; // W16: Büro erst nach dem neuen Passwort zur Büro-Seite
 if(_PW_RESET_LINK){
   if(window.supabase) _checkPasswordRecovery();
   else setTimeout(_checkPasswordRecovery,800);
@@ -4488,7 +4472,7 @@ async function afterLogin(user) {
       return;
     }
   }
-  // Umschalter "Admin-Gesamtübersicht" einblenden, nur für dich
+  // Menü der eigenen Ansicht festhalten (W16: ohne Umschalter; gewechselt wird in den Einstellungen)
   if (_hatAdminUmschalter()) {
     _fsSetDrawer(false);
   }
@@ -4503,6 +4487,10 @@ async function afterLogin(user) {
   await _continueLoginFlow(prof);
 }
 async function _continueLoginFlow(prof) {
+  // W16 (🗣 Serband 24.11.2026): Startseite je Rolle. Büro, und wer die Büro-Seite als Startseite gewählt hat, geht gleich zu
+  // buero.html. Geht das nicht (Passwort-Link offen, Weiterleitungs-Schleife), startet die App wie bisher.
+  let startZiel = _startZiel(prof);
+  if (startZiel === "buero") { if (_zurBueroWeiter()) return; startZiel = null; }
   // Fahrschule-Admin: exakt dieselbe App, nur mit den zusammengeführten Daten der ganzen Fahrschule
   if (_nurGesamtansicht(prof)) {
     document.getElementById("loginOverlay").classList.add("hidden");
@@ -4543,6 +4531,9 @@ async function _continueLoginFlow(prof) {
     _syncTermineBridge();
     _syncPruefungenBridge();
   }
+  // W16: Leitung, die selbst fährt, oder Super-Admin mit der Startseite „Fahrschule“: nach dem eigenen Abgleich in die
+  // Gesamtansicht (wie früher der Tipp auf den Streifen; die eigenen Daten bleiben gesichert und werden weiter abgeglichen).
+  if (startZiel === "gesamt" && !_fsAgg && _fsDarfGesamt() && prof && prof.fahrschule_id) await _fsEnterAggMode(prof.fahrschule_id);
 }
 // Zeigt die Nutzungsbedingungen als blockierendes Overlay - erst nach Scrollen ans Ende UND
 // Checkbox wird "Bestätigen" aktiv. Erst danach geht der normale Login-Ablauf weiter.
@@ -5868,6 +5859,7 @@ async function checkSession() {
   }
   if (session && session.user) {
     const direkt = !!(nachAnmeldung && nachAnmeldung.uid === session.user.id);
+    if (direkt && nachAnmeldung.pwReset) _startWeiterWartet = true; // W16: erst das neue Passwort, dann die Startseite
     const darfRein = direkt || await _bioVerifyOnUnlock(session.user.id);
     if (darfRein) await afterLogin(session.user); else _loginZeigen();
     if (direkt && nachAnmeldung.pwReset && _authUser) _openNeuesPasswortSheet();
@@ -5954,7 +5946,8 @@ let _fsPersonalBackup=null;
 let _fsBaseline=null; // letzter geladener Stand, für Diff-Erkennung beim Speichern
 let _normalDrawerNavHTML=null;
 
-function _fsDrawerNavHTML(zeigeZurueck){
+// W16: kein Menüpunkt „Zu meiner Fahrlehrer-Ansicht“ mehr; wer eine Startseite wählen kann, findet sie unter „Einstellungen“
+function _fsDrawerNavHTML(zeigeEinstellungen){
   if(!_fsDarfGesamt())return ""; // K12/K17: ein Fahrlehrer bekommt diese Schublade nie
   return `
     ${_fsDarfBueroSeite()?`<a class="nav-item" href="buero.html" onclick="return _fsZurBueroSeite(event)" style="text-decoration:none;font-weight:700;">
@@ -5984,10 +5977,10 @@ function _fsDrawerNavHTML(zeigeZurueck){
     <button class="nav-item" data-nav="neuigkeiten">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 8v4l3 2"/><circle cx="12" cy="12" r="9"/></svg>
       Neuigkeiten</button>
-    ${zeigeZurueck?`<div class="nav-sep"></div>
-    <button class="nav-item primary" data-nav="fs_exit">
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 12H5M12 19l-7-7 7-7"/></svg>
-      Zu meiner Fahrlehrer-Ansicht</button>`:''}`;
+    ${zeigeEinstellungen?`<div class="nav-sep"></div>
+    <button class="nav-item" data-nav="settings">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
+      Einstellungen</button>`:''}`;
 }
 
 function _fsSetDrawer(fahrschuleMode){
@@ -5995,7 +5988,7 @@ function _fsSetDrawer(fahrschuleMode){
   if(!navEl)return;
   if(_normalDrawerNavHTML===null) _normalDrawerNavHTML=navEl.innerHTML;
   if(fahrschuleMode&&!_fsDarfGesamt())fahrschuleMode=false;
-  navEl.innerHTML = fahrschuleMode ? _fsDrawerNavHTML(_hatAdminUmschalter()) : (_normalDrawerNavHTML+_fsSuperAdminToggleBtn());
+  navEl.innerHTML = fahrschuleMode ? _fsDrawerNavHTML(_startHatWahl()) : _normalDrawerNavHTML; // W16: kein Umschalter mehr im Menü
   const brandEye=document.querySelector(".brand-eye");
   if(brandEye) brandEye.textContent = fahrschuleMode && _fsAgg ? (_fsAgg.fahrschule.name||"Fahrschule") : (_authProfile&&_authProfile.name?"Fahrlehrer "+_authProfile.name:"Fahrlehrer");
 }
@@ -6159,12 +6152,6 @@ async function _fsRefreshAggData(){
     if(offenT.length) DB.lessons=[...DB.lessons,...offenT];
     if(offenP.length) DB.exams=[...DB.exams,...offenP];
   }
-}
-function _fsSuperAdminToggleBtn(){
-  if(!_hatAdminUmschalter()||!_fsDarfGesamt())return "";
-  return `<button class="nav-item" data-nav="__fstoggle" onclick="${_fsAgg?'_fsExitAggMode()':`_fsEnterAggMode(${_jsArg((_authProfile&&_authProfile.fahrschule_id)||'')})`}" style="border-top:1px solid var(--line);">
-    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 21h18M5 21V7l7-4 7 4v14M9 9h1M9 13h1M14 9h1M14 13h1"/></svg>
-    ${_fsAgg?'Zu meiner Fahrlehrer-Ansicht':'Admin-Gesamtübersicht'}</button>`;
 }
 
 // K2: Knopf „Zur Büro-Seite“ nur für Leitung, Büro und Super-Admin
@@ -8995,7 +8982,7 @@ document.querySelector(".drawer-nav").addEventListener("click",(e)=>{
   if(!b)return;
   if(!_seiteVerlassenOk())return; // ungespeicherte Formular-Eingaben: erst fragen (wie Zurück und Reiterleiste)
   const nav=b.dataset.nav;closeDrawer();
-  if(/^fs_/.test(nav)&&nav!=="fs_exit"&&!_fsDarfGesamt())return; // K12: Gesamtansicht nur für Büro, Leitung, Super-Admin
+  if(/^fs_/.test(nav)&&!_fsDarfGesamt())return; // K12: Gesamtansicht nur für Büro, Leitung, Super-Admin
   _fsFilterWeg();
   setTimeout(()=>{if(nav==="todos")routeTodos();
     else if(nav==="stats")routeStats("cur");
@@ -9009,8 +8996,7 @@ document.querySelector(".drawer-nav").addEventListener("click",(e)=>{
     else if(nav==="fs_lehrer")routeFahrschuleLehrer();
     else if(nav==="fs_fahrzeuge")routeFahrschuleFahrzeuge();
     else if(nav==="fs_stats")routeFahrschuleStatistik();
-    else if(nav==="fs_kalender"){routeKalender();if(_fsAgg)setFab(false);}
-    else if(nav==="fs_exit")_fsExitAggMode();},170);
+    else if(nav==="fs_kalender"){routeKalender();if(_fsAgg)setFab(false);}},170);
 });
 // Plus-Knopf je nach Seite: "termin" (Heute, Kalender) oder true = neuer Schüler (Schülerliste).
 let _fabArt="schueler";
@@ -12826,8 +12812,41 @@ function _settingsAccToggle(key){
   _settingsAccOpen=(_settingsAccOpen===key)?null:key;
   document.querySelectorAll(".set-acc").forEach(el=>{ el.classList.toggle("open",el.dataset.acckey===_settingsAccOpen); });
 }
+// W16 (🗣 Serband 24.11.2026): Startseite in den Einstellungen (Leitung und Super-Admin, startseite.js).
+// Tippen merkt die Wahl auf diesem Gerät und wechselt sofort; einen anderen Umschalter gibt es nicht mehr.
+function _startseiteEinbauen(){
+  const k=document.getElementById("ksStartKasten"); if(!k||!window.KS_START)return;
+  KS_START.einbauen(k,_authProfile,{hier:_fsAgg?"gesamt":"eigen",wechseln:_startseiteWechseln});
+}
+async function _startseiteWechseln(wert){
+  if(!_startHatWahl())return;
+  if(wert==="buero"){
+    if(_fsAgg){ await _fsZurBueroSeite(null); return; } // speichert offene Änderungen der Gesamtansicht vorher
+    if(!_seiteVerlassenOk())return;
+    // Eigene Änderungen noch sichern (höchstens 4 s): die Büro-Seite lädt den eigenen Stand nicht
+    try{ if(_authUser&&_pullOk) await Promise.race([pushToCloud(),new Promise(r=>setTimeout(r,4000))]); }catch(e){}
+    KS_START.gehe("buero"); return;
+  }
+  if(wert==="gesamt"){
+    if(_fsAgg)return;
+    const ok=await _fsEnterAggMode((_authProfile&&_authProfile.fahrschule_id)||"");
+    if(!ok&&!_fsAgg){ toast("Fahrschule gerade nicht erreichbar. Beim nächsten Start geht es dort los."); routeSettings(); }
+    return;
+  }
+  if(wert==="eigen"&&_fsAgg) await _fsExitAggMode();
+}
+// Gesamtansicht: Die Einstellungen der eigenen Ansicht gehören nicht hierher (sie schrieben sonst in den Fahrschul-Stand), nur die Startseite
+function _einstellungenGesamtansicht(){
+  view.innerHTML=`<div class="view-inner view-read fade-up">
+    <h1 class="sec-h set-titel">Einstellungen</h1>
+    ${_startHatWahl()?'<div class="res-block" id="ksStartKasten" style="animation:none;"></div>':''}
+    ${_hatAdminUmschalter()?'<p class="muted-p" style="font-size:13px;margin-top:4px;">Alle anderen Einstellungen findest du in der Fahrlehrer-Ansicht.</p>':''}
+  </div>`;
+  _startseiteEinbauen();
+}
 function routeSettings(){
   $("#tbTitle").textContent="Einstellungen";setFab(false);view.scrollTop=0;
+  if(_fsAgg){ _einstellungenGesamtansicht(); return; }
   const adminBtn=isSuperAdmin()?`<div class="res-block" style="animation:none;"><h4>👑 Admin-Panel</h4><p>Nutzer verwalten, Kill-Switch und Sync-Status.</p><div class="btn-row"><button class="btn btn-ghost" onclick="openAdminPanel()">Admin öffnen</button></div></div>
   <div class="res-block" style="animation:none;"><h4>🏫 Fahrschulen</h4><p>Fahrschulen, Fahrlehrer, Schüler und Pakete verwalten.</p><div class="btn-row"><button class="btn btn-ghost" onclick="routeFahrschulenListe()">Fahrschulen verwalten</button></div></div>
   <div class="res-block" style="animation:none;"><h4>🎓 Akademie-Vermittlung</h4><p style="font-size:13px;color:var(--muted);">Beträge & Aufteilung für Simulator-/Videoakademie-Empfehlungen. Solange leer, wird bei einer Auszahlung nur "noch nicht konfiguriert" angezeigt — nichts wird stillschweigend falsch berechnet.</p><div id="akadVermittlungCfg"><p class="muted-p" style="font-size:12.5px;">Lade …</p></div></div>`:"";
@@ -12837,6 +12856,7 @@ function routeSettings(){
   const kapWoche=kapazitaetAutoWoche();
   view.innerHTML=`<div class="view-inner view-read fade-up">
     <h1 class="sec-h set-titel">Einstellungen</h1>
+    ${_startHatWahl()?'<div class="res-block" id="ksStartKasten" style="animation:none;"></div>':''}
     ${_authUser?`<div class="res-block" style="animation:none;background:rgba(74,139,69,.06);border-color:rgba(74,139,69,.2);"><h4 style="color:var(--akzent-bright)">☁ Cloud-Konto</h4><p style="color:var(--muted);font-size:13px;">${esc(_authUser.email)}</p><p style="color:var(--muted);font-size:12px;margin-top:4px;">Daten werden automatisch gesichert.</p></div>`:""}
 
     <div class="acc set-acc${_settingsAccOpen==='app'?' open':''}" data-acckey="app"><button class="acc-h" onclick="_settingsAccToggle('app')" style="cursor:pointer;"><span class="set-ic" style="width:30px;">${_li("handy")}</span><span style="flex:1;text-align:left;font-family:'Anton',sans-serif;text-transform:uppercase;font-size:15px;letter-spacing:.03em;">App anpassen</span><span class="chev">${ICN.chev}</span></button>
@@ -13057,6 +13077,7 @@ function routeSettings(){
     await doLogout({ alleGeraete: true });
   });
   if(isSuperAdmin())renderAkademieVermittlungCfg();
+  _startseiteEinbauen();
 }
 /* ===================== ERWEITERUNG: Dashboard · Prüfungen · Statistik · Archiv ===================== */
 const READY_MIN=90;

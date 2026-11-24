@@ -12,6 +12,9 @@
 //   (6) K8 „Zahlung ausstehend“ (23.11.2026): R12 Hinweis am bestehenden Termin + Sperre für neue Termine, keine Büro-Knöpfe in der App;
 //       R13 Büro-Seite: Büro, Leitung, Super-Admin sehen die Knöpfe, ein Fahrlehrer kommt nicht hinein
 //   (7) Paket-Baukasten (Werkstatt 13, 24.11.2026): R19 Büro, Leitung und Super-Admin legen einen Schüler mit Paket an (Verkauf beim Speichern)
+//   (8) W16 Büro und Fahrlehrer trennen (🗣 Serband 24.11.2026): Büro öffnet die App → buero.html (R20), Fahrlehrer öffnet buero.html → App (R13),
+//       Leitung und Super-Admin wählen die Startseite nur in den Einstellungen (R6–R8, R21), kein Streifen und kein Umschalter mehr (R2),
+//       keine Weiterleitungs-Schleife, Passwort-Link und Offline-Start ohne Weiterleitung (R22)
 // Die App läuft lokal mit einer Attrappe statt Datenbank (kein Netz, erfundene Namen „Muster“).
 // Aufruf:  NODE_PATH=$(npm root -g) node scripts/rollen-test.mjs        (auch in der GitHub-Prüfung)
 // Gegenprobe: ROLLEN_SEITE=/tmp/alt/index.html … (alter Stand muss bei „Leitung fährt selbst“ durchfallen)
@@ -50,35 +53,32 @@ async function pruefe(id, text, fn) {
 const warte = (page, ms = 250) => page.waitForTimeout(ms);
 
 const FS = "fs-muster";
+// wahl: Startseiten in den Einstellungen (erste = Vorgabe). zumBuero: die App leitet gleich zu buero.html weiter (W16).
+// kurz: nur Start, Menü und Startseite prüfen (Sonderfälle). nurHoch: nur am Handy hoch.
 const ROLLEN = [
-  { n: "Fahrlehrer", prof: { rolle: "fahrlehrer" }, eigen: true, umschalter: false },
+  { n: "Fahrlehrer", prof: { rolle: "fahrlehrer" }, eigen: true, wahl: [] },
+  { n: "Fahrlehrer ohne App", prof: { rolle: "fahrlehrer", ohne_app: true }, eigen: true, wahl: [], kurz: true, nurHoch: true },
   // K12/K17: Kennzeichen „fährt selbst“ bei einem Fahrlehrer (falsch gesetzt) gibt keine Leitungs-Rechte
-  { n: "Fahrlehrer mit faehrt_selbst", prof: { rolle: "fahrlehrer", faehrt_selbst: true }, eigen: true, umschalter: false },
-  { n: "Leitung", prof: { rolle: "fahrschule_admin" }, eigen: false, umschalter: false },
-  { n: "Leitung fährt selbst", prof: { rolle: "fahrschule_admin", faehrt_selbst: true }, eigen: true, umschalter: true },
-  { n: "Büro", prof: { rolle: "buero" }, eigen: false, umschalter: false },
-  { n: "Super-Admin", prof: { rolle: "super_admin" }, eigen: true, umschalter: true },
+  { n: "Fahrlehrer mit faehrt_selbst", prof: { rolle: "fahrlehrer", faehrt_selbst: true }, eigen: true, wahl: [] },
+  { n: "Leitung", prof: { rolle: "fahrschule_admin" }, eigen: false, wahl: ["gesamt", "buero"] },
+  { n: "Leitung fährt selbst", prof: { rolle: "fahrschule_admin", faehrt_selbst: true }, eigen: true, wahl: ["eigen", "gesamt", "buero"] },
+  { n: "Büro", prof: { rolle: "buero" }, zumBuero: true },
+  { n: "Super-Admin", prof: { rolle: "super_admin" }, eigen: true, wahl: ["eigen", "gesamt", "buero"] },
+  // Super-Admin ohne Fahrschule: keine „Fahrschule“ als Startseite (die Schul-Wahl bleibt im Büro)
+  { n: "Super-Admin ohne Fahrschule", prof: { rolle: "super_admin", fahrschule_id: null }, eigen: true, wahl: ["eigen", "buero"], kurz: true, nurHoch: true },
+  // Unbekannte oder leere Rolle: nie weiterleiten, keine Wahl (W13: keine Schleifen)
+  { n: "Unbekannte Rolle", prof: { rolle: "" }, eigen: true, wahl: [], kurz: true, nurHoch: true },
   // Gesperrter oder gelöschter Zugang (Fable 21.11.): kommt gar nicht erst hinein
   { n: "Gesperrt", prof: { rolle: "fahrlehrer", aktiv: false }, gesperrt: true },
   { n: "Gelöscht", prof: { rolle: "entfernt", aktiv: false }, gesperrt: true },
 ];
 const GROESSEN = [{ n: "360", w: 360, h: 780 }, { n: "quer", w: 740, h: 360 }];
 
-for (const R of ROLLEN) {
-  for (const g of R.gesperrt ? GROESSEN.slice(0, 1) : GROESSEN) {
-    const ctx = await browser.newContext({ viewport: { width: g.w, height: g.h }, isMobile: true, hasTouch: true, timezoneId: "Europe/Berlin", locale: "de-DE" });
-    const page = await ctx.newPage();
-    const jsFehler = [];
-    page.on("pageerror", (e) => jsFehler.push(e.message));
-    let dialogZahl = 0; // K7: Löschen/Stornieren darf keinen Dialog öffnen
-    page.on("dialog", (d) => { dialogZahl++; d.dismiss().catch(() => {}); });
-    if (process.env.ROLLEN_DEBUG) page.on("console", (m) => { if (m.type() === "warning" || m.type() === "error") console.log("  konsole:", m.text().slice(0, 200)); });
-    await page.route("**/*", (r) => (r.request().url().startsWith(basis) ? r.continue() : r.abort()));
-    await page.goto(basis + "index.html", { waitUntil: "load", timeout: 20000 });
-    await warte(page, 600);
-    const P = `[${R.n} ${g.n}]`;
-    // Attrappe der Datenbank: merkt sich jede schreibende Anfrage; Lesen liefert leere Listen.
-    await page.evaluate(async ({ prof, FS }) => {
+// Startet die App mit der Attrappe über den echten Anmeldeweg. behalte: gemerkte Startseite (Gerätespeicher) nicht löschen.
+// vorher: Code, der vor afterLogin läuft (z. B. Passwort-Link offen). Leitet die App weiter, gibt das die Adresse zurück.
+async function starteApp(page, prof, { behalte = false, vorher = "" } = {}) {
+  try {
+    await page.evaluate(async ({ prof, FS, behalte, vorher }) => {
       for (const id of ["loginOverlay", "splash"]) { const e = document.getElementById(id); if (e) e.style.display = "none"; }
       window.__schreib = [];
       const user = { id: "u-ich", email: "ich@example.org" };
@@ -104,18 +104,50 @@ for (const R of ROLLEN) {
         });
         return q;
       };
-      const auth = { getUser: async () => ({ data: { user }, error: null }), getSession: async () => ({ data: { session: { user, access_token: "x" } }, error: null }), signOut: async () => ({ error: null }), onAuthStateChange: () => ({ data: { subscription: { unsubscribe() {} } } }) };
+      const auth = { getUser: async () => ({ data: { user }, error: null }), getSession: async () => ({ data: { session: { user, access_token: "x" } }, error: null }), signOut: async () => ({ error: null }), updateUser: async () => ({ data: { user }, error: null }), onAuthStateChange: () => ({ data: { subscription: { unsubscribe() {} } } }) };
       const supa = { from: baue, rpc: async () => ({ data: null, error: null }), auth, functions: { invoke: async () => ({ data: {}, error: null }) }, channel: () => ({ on() { return this; }, subscribe() { return this; } }), removeChannel() {} };
       window.getSupa = () => supa;
       // Gerätespeicher gehört diesem Konto (wie nach einer echten Anmeldung), sonst startet die App zum Schutz neu
-      try { localStorage.clear(); localStorage.setItem(OWNER_KEY, user.id); } catch (e) {}
+      try { const ks = localStorage.getItem("kompass-startseite"); localStorage.clear(); if (behalte && ks) localStorage.setItem("kompass-startseite", ks); localStorage.setItem(OWNER_KEY, user.id); } catch (e) {}
       _dbEigentuemer = user.id;
       ensureDB(); DB.students = []; DB.lessons = []; DB.exams = [];
-      // Der echte Anmeldeweg der App (Profil laden, Sperre, Fahrschule, Menü, Streifen, Startansicht) – keine Abkürzung
+      if (vorher) (0, eval)(vorher);
+      // Der echte Anmeldeweg der App (Profil laden, Sperre, Fahrschule, Menü, Startansicht) – keine Abkürzung
       _authUser = user;
       await afterLogin(user);
-    }, { prof: R.prof, FS });
-    await warte(page, 800);
+    }, { prof, FS, behalte, vorher });
+  } catch (e) {
+    // Weiterleitung mitten im Aufruf: die Seite ist weg, das ist hier gewollt (W16)
+    if (!/context was destroyed|navigation|Target closed|closed/i.test(String(e.message || e))) throw e;
+  }
+  await warte(page, 800);
+  return page.url();
+}
+const aufBuero = (url) => /buero\.html/.test(url);
+
+for (const R of ROLLEN) {
+  for (const g of R.gesperrt || R.nurHoch || R.zumBuero ? GROESSEN.slice(0, 1) : GROESSEN) {
+    const ctx = await browser.newContext({ viewport: { width: g.w, height: g.h }, isMobile: true, hasTouch: true, timezoneId: "Europe/Berlin", locale: "de-DE" });
+    const page = await ctx.newPage();
+    const jsFehler = [];
+    // Fehler zählen nur in der App; nach einer gewollten Weiterleitung lädt buero.html hier ohne Datenbank (W16)
+    page.on("pageerror", (e) => { if (!aufBuero(page.url())) jsFehler.push(e.message); });
+    let dialogZahl = 0; // K7: Löschen/Stornieren darf keinen Dialog öffnen
+    page.on("dialog", (d) => { dialogZahl++; d.dismiss().catch(() => {}); });
+    if (process.env.ROLLEN_DEBUG) page.on("console", (m) => { if (m.type() === "warning" || m.type() === "error") console.log("  konsole:", m.text().slice(0, 200)); });
+    await page.route("**/*", (r) => (r.request().url().startsWith(basis) ? r.continue() : r.abort()));
+    await page.goto(basis + "index.html", { waitUntil: "load", timeout: 20000 });
+    await warte(page, 600);
+    const P = `[${R.n} ${g.n}]`;
+    const url = await starteApp(page, R.prof);
+    // W16: Das Büro arbeitet nur auf der Büro-Seite. Die App schickt es nach der Anmeldung gleich dorthin.
+    if (R.zumBuero) {
+      await pruefe("R20", `${P} App leitet nach der Anmeldung zur Büro-Seite weiter`, () => (aufBuero(url) ? null : "bleibt auf " + url));
+      await pruefe("R5", `${P} keine JS-Fehler`, () => jsFehler);
+      await ctx.close();
+      continue;
+    }
+    await pruefe("R20", `${P} bleibt in der App (keine Weiterleitung)`, () => (aufBuero(url) ? "zur Büro-Seite weitergeleitet" : null));
     // Die Anmeldemaske ist hier nicht Gegenstand (sie wird über die Attrappe übersprungen)
     const maskeWeg = () => page.evaluate(() => { for (const id of ["loginOverlay", "splash"]) { const e = document.getElementById(id); if (e) { e.classList.add("hidden"); e.style.display = "none"; } } });
     if (R.gesperrt) {
@@ -133,22 +165,58 @@ for (const R of ROLLEN) {
     await pruefe("R10", `${P} beim Start kein Zurück-Pfeil (keine tote Taste)`, async () => (pfeilStart ? "Pfeil sichtbar, Stapel: " + (await page.evaluate(() => _navStack.map((x) => x.name + (x.agg ? "*" : "")).join(" > "))) : null));
 
     await pruefe("R1", `${P} Startansicht: ${R.eigen ? "eigene Fahrlehrer-Ansicht" : "Gesamtansicht der Fahrschule"}`, () => page.evaluate(() => (_fsAgg ? "gesamt" : "eigen")).then((v) => (v === (R.eigen ? "eigen" : "gesamt") ? null : "ist " + v)));
-    await pruefe("R2", `${P} Umschalter „Admin-Gesamtübersicht“ ${R.umschalter ? "da" : "nicht da"}`, () => page.evaluate(() => /Admin-Gesamtübersicht|Zu meiner Fahrlehrer-Ansicht/.test(document.querySelector(".drawer-nav").textContent)).then((v) => (v === R.umschalter ? null : "ist " + v)));
+    // W16: kein Umschalter im Menü und kein Streifen oben mehr; gewechselt wird nur in den Einstellungen (Startseite)
+    await pruefe("R2", `${P} kein Umschalter im Menü, kein Streifen oben`, () => page.evaluate(() => {
+      const f = [];
+      if (/Admin-Gesamtübersicht|Zu meiner Fahrlehrer-Ansicht/.test(document.querySelector(".drawer-nav").textContent)) f.push("Umschalter im Menü");
+      if (document.querySelector('#drawer [data-nav="__fstoggle"], #drawer [data-nav="fs_exit"]')) f.push("Umschalt-Knopf im Menü");
+      const st = document.getElementById("saStreifen"); if (st && !st.hidden) f.push("Streifen oben sichtbar");
+      return f;
+    }));
+    // W16: Startseite in den Einstellungen (in der Gesamtansicht über „Einstellungen“ im Menü)
+    const startseite = () => page.evaluate(async () => {
+      if (_fsAgg) {
+        openDrawer(); const b = document.querySelector('#drawer [data-nav="settings"]');
+        if (!b) { closeDrawer(); return { keinMenue: true, werte: [], an: [], minH: 0, agg: true }; }
+        b.click(); await new Promise((r) => setTimeout(r, 450));
+      } else routeSettings();
+      const k = [...document.querySelectorAll("#ksStartKasten [data-ks-start]")];
+      return { werte: k.map((b) => b.dataset.ksStart), an: k.filter((b) => b.getAttribute("aria-pressed") === "true").map((b) => b.dataset.ksStart),
+        minH: k.length ? Math.min(...k.map((b) => b.getBoundingClientRect().height)) : 0, agg: !!_fsAgg };
+    });
+    await maskeWeg();
+    const sw = await startseite();
+    await pruefe("R6", `${P} Einstellungen › Startseite: ${R.wahl.length ? R.wahl.join(" / ") : "keine Wahl"}`, () => {
+      const f = [];
+      if (sw.keinMenue) f.push("„Einstellungen“ fehlt im Menü der Gesamtansicht");
+      if (sw.werte.join() !== R.wahl.join()) f.push("Wahl: " + (sw.werte.join(" / ") || "keine"));
+      if (R.wahl.length && sw.an.join() !== R.wahl[0]) f.push("markiert: " + (sw.an.join() || "nichts"));
+      if (R.wahl.length && sw.minH < 43.5) f.push("Knopf nur " + Math.round(sw.minH) + " px hoch");
+      return f;
+    });
+    // Verlauf wie nach dem Start (die Prüfung oben hat nur nachgesehen; sonst führte ein späteres Zurück in die Einstellungen)
+    await page.evaluate(() => { try { _navStack.length = 0; if (_fsAgg) routeFahrschuleDashboard(); else routeDashboard(); } catch (e) {} });
 
     // K12/K17/K13 (Werkstatt 12): Gesamtübersicht und Büro-Seite nur für Büro, Leitung, Super-Admin; Abmelden unter „Mehr“
-    const darfGesamt = R.prof.rolle !== "fahrlehrer";
+    const darfGesamt = ["fahrschule_admin", "buero", "super_admin"].includes(R.prof.rolle);
+    const gesamtWeg = !R.eigen || R.wahl.includes("gesamt"); // W16: Weg in die Gesamtübersicht = Startseite in den Einstellungen
     const sichtbar = (sel) => page.evaluate((q) => [...document.querySelectorAll(q)].filter((e) => !e.closest("#loginOverlay") && getComputedStyle(e).display !== "none" && !e.closest("[hidden]")).length, sel);
     const GESAMT_SEL = '#drawer [data-nav="__fstoggle"], #drawer [data-nav="fs_dash"], #drawer [data-nav="fs_exit"], #saStreifen:not([hidden])';
     const BUERO_SEL = '#drawer a[href="buero.html"], a.fs-buero-link, #fsBueroLink';
     await maskeWeg();
-    await pruefe("R15", `${P} Knopf Gesamtübersicht (Menü/Streifen) ${darfGesamt ? "da" : "nicht da"}`, async () => {
+    await pruefe("R15", `${P} Weg in die Gesamtübersicht ${gesamtWeg ? "da (Startseite)" : darfGesamt ? "–" : "nicht da"}`, async () => {
       const n = await sichtbar(GESAMT_SEL);
       const menueText = await page.evaluate(() => (document.querySelector(".drawer-nav") || {}).textContent || "");
       const f = [];
-      if (darfGesamt && !n && !/Übersicht|Gesamt|Zu meiner/.test(menueText)) f.push("kein Weg in die Gesamtübersicht");
+      if (gesamtWeg && !sw.agg && !sw.werte.includes("gesamt")) f.push("kein Weg in die Gesamtübersicht");
       if (!darfGesamt && (n || /Übersicht|Büro/.test(menueText))) f.push("Fahrlehrer sieht Gesamtübersicht/Büro im Menü: " + menueText.replace(/\s+/g, " ").slice(0, 120));
       return f;
     });
+    if (R.kurz) {
+      await pruefe("R5", `${P} keine JS-Fehler`, () => jsFehler);
+      await ctx.close();
+      continue;
+    }
     await pruefe("R16", `${P} Knopf „Büro“ (Büro-Seite) ${darfGesamt ? "erreichbar" : "nirgends"}`, async () => {
       const f = [];
       if (!darfGesamt) {
@@ -266,15 +334,22 @@ for (const R of ROLLEN) {
       if (!R.eigen && bq.mit) f.push("mit Link sichtbar, obwohl Gesamtansicht");
       return f.length ? f : null;
     });
-    // Leitung, die selbst fährt: Streifen oben wechselt per Tipp in die ganze Fahrschule und zurück
-    if (R.umschalter && R.prof.faehrt_selbst) {
+    // W16: Leitung, die selbst fährt, und Super-Admin wechseln über die Startseite in den Einstellungen (statt Streifen und Menü)
+    if (R.wahl.includes("eigen") && R.wahl.includes("gesamt")) {
       await maskeWeg();
-      const st = await page.evaluate(() => { const e = document.getElementById("saStreifen"); return e && !e.hidden ? { t: e.textContent, h: e.getBoundingClientRect().height } : null; });
-      await pruefe("R6", `${P} Streifen „Du bist Leitung“ sichtbar und antippbar (≥ 44 px)`, () => (!st ? "kein Streifen" : !/Du bist Leitung/.test(st.t) ? "Text: " + st.t : st.h < 43.5 ? `nur ${Math.round(st.h)} px` : null));
-      await page.click("#saStreifen", { timeout: 5000 }).catch(() => {}); await warte(page, 900);
-      await pruefe("R7", `${P} Tipp auf den Streifen → ganze Fahrschule, Streifen sagt das`, () => page.evaluate(() => (_fsAgg && /Ganze Fahrschule/.test(document.getElementById("saStreifen").textContent) ? null : "ist " + (_fsAgg ? "gesamt" : "eigen") + ": " + document.getElementById("saStreifen").textContent)));
-      await page.click("#saStreifen", { timeout: 5000 }).catch(() => {}); await warte(page, 900);
-      await pruefe("R8", `${P} zweiter Tipp → zurück zu den eigenen Schülern`, () => page.evaluate(() => (!_fsAgg && /Du bist Leitung/.test(document.getElementById("saStreifen").textContent) ? null : "ist " + (_fsAgg ? "gesamt" : "eigen"))));
+      await page.evaluate(() => { try { closeSheet(); } catch (e) {} routeSettings(); }); await warte(page, 300);
+      await page.click('#ksStartKasten [data-ks-start="gesamt"]', { timeout: 5000 }).catch(() => {}); await warte(page, 1000);
+      await pruefe("R7", `${P} Startseite „Fahrschule“ antippen → ganze Fahrschule, gemerkt`, () => page.evaluate(() => {
+        const f = [];
+        if (!_fsAgg) f.push("nicht in der Gesamtansicht");
+        if (KS_START.lesen(_authProfile) !== "gesamt") f.push("gemerkt: " + KS_START.lesen(_authProfile));
+        if (/Zu meiner Fahrlehrer-Ansicht|Admin-Gesamtübersicht/.test(document.querySelector(".drawer-nav").textContent)) f.push("Umschalter im Menü der Gesamtansicht");
+        return f;
+      }));
+      await page.evaluate(() => openDrawer()); await warte(page, 350);
+      await page.click('#drawer [data-nav="settings"]', { timeout: 5000 }).catch(() => {}); await warte(page, 600);
+      await page.click('#ksStartKasten [data-ks-start="eigen"]', { timeout: 5000 }).catch(() => {}); await warte(page, 1000);
+      await pruefe("R8", `${P} Gesamtansicht › Menü › Einstellungen › „Fahrlehrer-Ansicht“ → zurück zu den eigenen Schülern, gemerkt`, () => page.evaluate(() => (!_fsAgg && KS_START.lesen(_authProfile) === "eigen" ? null : "ist " + (_fsAgg ? "gesamt" : "eigen") + ", gemerkt " + KS_START.lesen(_authProfile))));
       await pruefe("R11", `${P} nach dem Umschalten nur Zurück-Einträge der aktuellen Ansicht (kein toter Pfeil)`, () => page.evaluate(() => { const a = !!_fsAgg; const fremd = _navStack.filter((x) => x.agg !== undefined && x.agg !== a).length; return fremd ? fremd + " Einträge der anderen Ansicht" : null; }));
     }
     // K7 (22.11.2026): in der eigenen Ansicht wird eine gelaufene Stunde nicht gelöscht, sondern storniert (mit Grund), ohne Dialog
@@ -336,9 +411,64 @@ for (const R of ROLLEN) {
       if (k8.buero) f.push(k8.buero + " Büro-Knöpfe in der App");
       return f;
     });
+    // W16: Die Startseite bleibt nach einem Neustart (je Gerät und Konto); ein Wert, der nicht zur Rolle passt, gilt nicht
+    if (R.wahl.length > 1 && g.n === "360") {
+      const faelle = R.wahl.slice(1).concat(R.eigen ? [] : ["eigen"]).sort((x, y) => (x === "buero") - (y === "buero"));
+      for (const w of faelle) {
+        await page.evaluate((w) => { localStorage.setItem("kompass-startseite", JSON.stringify({ "u-ich": w })); sessionStorage.clear(); }, w);
+        await page.reload({ waitUntil: "load" }); await warte(page, 600);
+        const u = await starteApp(page, R.prof, { behalte: true });
+        const erwartet = R.wahl.includes(w) ? w : R.wahl[0];
+        const ist = aufBuero(u) ? "buero" : await page.evaluate(() => (_fsAgg ? "gesamt" : "eigen"));
+        await pruefe("R21", `${P} Startseite „${w}“ gemerkt → nach Neustart ${erwartet === "buero" ? "Büro-Seite" : erwartet === "gesamt" ? "Gesamtansicht" : "eigene Ansicht"}`, () => (ist === erwartet ? null : "ist " + ist));
+      }
+    }
     await pruefe("R5", `${P} keine JS-Fehler`, () => jsFehler);
     await ctx.close();
   }
+}
+
+// R22 (W16): keine Weiterleitungs-Schleife, Passwort-Link, Offline-Start
+{
+  const ctx = await browser.newContext({ viewport: { width: 360, height: 780 }, isMobile: true, hasTouch: true, timezoneId: "Europe/Berlin", locale: "de-DE" });
+  const page = await ctx.newPage();
+  const jsFehler = [];
+  page.on("pageerror", (e) => { if (!aufBuero(page.url())) jsFehler.push(e.message); });
+  page.on("dialog", (d) => d.dismiss().catch(() => {}));
+  await page.route("**/*", (r) => (r.request().url().startsWith(basis) ? r.continue() : r.abort()));
+  const neu = async () => { await page.goto(basis + "index.html", { waitUntil: "load", timeout: 20000 }); await warte(page, 600); };
+  // a) Die Büro-Seite hat in diesem Tab eben erst hierher geschickt → die App leitet nicht zurück (wie früher: Gesamtansicht)
+  await neu();
+  await page.evaluate(() => sessionStorage.setItem("kompass-weiterleitung", JSON.stringify({ nach: "app", t: Date.now() })));
+  let u = await starteApp(page, { rolle: "buero" });
+  await pruefe("R22", "[Büro] eben von der Büro-Seite gekommen → keine Schleife, App zeigt die Gesamtansicht", async () => (aufBuero(u) ? "wieder weitergeleitet" : (await page.evaluate(() => !!_fsAgg)) ? null : "keine Gesamtansicht"));
+  // b) Passwort-Link offen → erst das neue Passwort, dann zur Büro-Seite
+  await neu();
+  await page.evaluate(() => sessionStorage.clear());
+  u = await starteApp(page, { rolle: "buero" }, { vorher: "_startWeiterWartet = true;" });
+  await pruefe("R22", "[Büro] Passwort-Link offen → bleibt, bis das neue Passwort gespeichert ist", () => (aufBuero(u) ? "zu früh weitergeleitet" : null));
+  if (!aufBuero(u)) {
+    await page.evaluate(() => { try { closeSheet(); } catch (e) {} _openNeuesPasswortSheet(); }); await warte(page, 400);
+    await page.fill("#npwNeu", "Muster-1234"); await page.fill("#npwWdh", "Muster-1234");
+    await page.click("#npwSave");
+    const weiter = await page.waitForURL(/buero\.html/, { timeout: 8000 }).then(() => true).catch(() => false);
+    await pruefe("R22", "[Büro] nach dem neuen Passwort → Büro-Seite", () => (weiter ? null : "bleibt auf " + page.url()));
+  }
+  // c) Offline-Start der PWA: die Rolle ist unbekannt → nie weiterleiten
+  await neu();
+  const off = await page.evaluate(async () => {
+    localStorage.clear();
+    localStorage.setItem("sb-oectrvkjunntzsggyhxv-auth-token", JSON.stringify({ refresh_token: "x", user: { id: "u-off", email: "off@example.org" } }));
+    localStorage.setItem(OWNER_KEY, "u-off");
+    localStorage.setItem("kompass-profil-cache", JSON.stringify({ id: "u-off", rolle: "buero", aktiv: true }));
+    window._bioVerifyOnUnlock = async () => true;
+    const ok = await _tryOfflineSession();
+    return { ok, ziel: _startZiel() };
+  });
+  await warte(page, 800);
+  await pruefe("R22", "[Büro] Offline-Start: Rolle unbekannt → keine Weiterleitung", () => (off.ok && off.ziel === null && !aufBuero(page.url()) ? null : JSON.stringify(off) + " " + page.url()));
+  await pruefe("R5", "[R22] keine JS-Fehler", () => jsFehler);
+  await ctx.close();
 }
 
 // R13 (K8): Büro-Seite je Rolle. Büro, Leitung und Super-Admin sehen „Zahlung ausstehend“ bei den Schülern, ein Fahrlehrer kommt nicht hinein.
@@ -351,7 +481,9 @@ for (const R of ROLLEN) {
   });
   await new Promise((ok) => bServer.listen(0, "127.0.0.1", ok));
   const bBasis = `http://127.0.0.1:${bServer.address().port}/`;
-  const BUERO_ROLLEN = [{ n: "Büro", id: "bu-1", knoepfe: true }, { n: "Leitung", id: "ad-1", knoepfe: true }, { n: "Super-Admin", id: "sa-1", knoepfe: true }, { n: "Fahrlehrer", id: "fl-x", knoepfe: false }];
+  // W16: wahl = Startseiten in der Fußzeile; Fahrlehrer werden gleich zur App geschickt, außer die App hat sie eben erst hergeschickt (schleife)
+  const BUERO_ROLLEN = [{ n: "Büro", id: "bu-1", knoepfe: true, wahl: [] }, { n: "Leitung", id: "ad-1", knoepfe: true, wahl: ["gesamt", "buero"] }, { n: "Super-Admin", id: "sa-1", knoepfe: true, wahl: ["eigen", "gesamt", "buero"] },
+    { n: "Fahrlehrer", id: "fl-x", knoepfe: false }, { n: "Fahrlehrer ohne App", id: "fl-4", knoepfe: false }, { n: "Fahrlehrer, eben von der App geschickt", id: "fl-x", knoepfe: false, schleife: true }];
   for (const B of BUERO_ROLLEN) {
     const ctx = await browser.newContext({ viewport: { width: 1366, height: 860 } });
     const page = await ctx.newPage();
@@ -360,15 +492,23 @@ for (const R of ROLLEN) {
     await page.route("https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2", (r) => r.fulfill({ contentType: "text/javascript", body: fake }));
     await page.route(/fonts\.(googleapis|gstatic)\.com/, (r) => r.fulfill({ status: 200, body: "" }));
     const daten = bauDaten(new Date().toISOString().slice(0, 10));
-    await page.addInitScript(([d, ses]) => {
+    await page.addInitScript(([d, ses, schleife]) => {
       window.__FAKE = { tabellen: d.tabellen, konten: d.konten, session: ses };
       const sa = d.tabellen.schueler.find((x) => x.status === "aktiv" && !x.inaktiv_seit); if (sa) { sa.zahlung_gesperrt_seit = new Date().toISOString(); sa.zahlung_gesperrt_grund = "Rechnung offen"; }
       // Werkstatt 13: eine Vorlage mit festem Preis, damit „Schüler anlegen mit Paket“ ohne Preisliste geht
       d.tabellen.fahrschule_pakete.push({ id: "p-rolle", fahrschule_id: d.tabellen.fahrschulen[0].id, name: "Rollen-Paket", reihenfolge: 9, aktiv: true, klasse: "B", posten: [{ art: "grundbetrag", bezeichnung: "Grundbetrag", anzahl: 1, preis_cent_fest: 30000 }] });
       d.tabellen.schueler_pakete = [];
-    }, [daten, { user: { id: B.id, email: B.id + "@example.org" } }]);
+      if (schleife) try { sessionStorage.setItem("kompass-weiterleitung", JSON.stringify({ nach: "buero", t: Date.now() })); } catch (e) {}
+    }, [daten, { user: { id: B.id, email: B.id + "@example.org" } }, !!B.schleife]);
     await page.goto(bBasis + "buero.html#schueler");
     await warte(page, 700);
+    if (!B.knoepfe) {
+      const weg = await page.waitForURL(/index\.html/, { timeout: 4000 }).then(() => true).catch(() => false);
+      if (B.schleife) await pruefe("R13", `[${B.n}] Büro-Seite: keine Schleife, Hinweis „Nur für das Büro“ bleibt`, async () => (weg ? "wieder zur App geschickt" : /Nur für das Büro/.test(await page.textContent("#hinweisTitel").catch(() => "")) ? null : "kein Hinweis"));
+      else await pruefe("R13", `[${B.n}] Büro-Seite leitet sofort zur App weiter`, () => (weg ? null : "bleibt auf " + page.url()));
+      await ctx.close();
+      continue;
+    }
     const frage = await page.waitForSelector("#wer:not([hidden])", { timeout: 1200 }).catch(() => null);
     if (frage) { await page.click('#werListe button:has-text("Paula Muster")'); await page.keyboard.type("7352", { delay: 20 }); await warte(page, 500); }
     const r = await page.evaluate(() => ({ sperre: document.querySelectorAll("[data-zsperre]").length, bezahlt: document.querySelectorAll("[data-zbezahlt]").length, pill: document.querySelectorAll("[data-zahlungpill]").length, app: !!document.getElementById("app") && !document.getElementById("app").hidden }));
@@ -400,6 +540,28 @@ for (const R of ROLLEN) {
         if (v.offen) f.push("Fenster noch offen");
         return f.concat(konsole);
       });
+    }
+    // W16: Fußzeile. Büro: kein Weg in die App. Leitung und Super-Admin: Startseite wählen, Tipp führt in die App und bleibt gemerkt
+    if (B.knoepfe) {
+      const fuss = await page.evaluate(() => {
+        const l = document.getElementById("zurApp"), k = [...document.querySelectorAll("#startWahl [data-ks-start]")];
+        return { link: !!l && !l.hidden && l.getClientRects().length > 0, werte: k.map((b) => b.dataset.ksStart), an: k.filter((b) => b.getAttribute("aria-pressed") === "true").map((b) => b.dataset.ksStart),
+          minH: k.length ? Math.min(...k.map((b) => b.getBoundingClientRect().height)) : 0 };
+      });
+      await pruefe("R23", `[${B.n}] Büro-Fußzeile: ${B.wahl.length ? "Startseite " + B.wahl.join(" / ") : "kein Weg in die App"}`, () => {
+        const f = [];
+        if (fuss.link) f.push("Link „Zur Fahrlehrer-Ansicht“ sichtbar");
+        if (fuss.werte.join() !== B.wahl.join()) f.push("Wahl: " + (fuss.werte.join(" / ") || "keine"));
+        if (B.wahl.length && fuss.an.join() !== B.wahl[0]) f.push("markiert: " + (fuss.an.join() || "nichts"));
+        if (B.wahl.length && fuss.minH < 43.5) f.push("Knopf nur " + Math.round(fuss.minH) + " px hoch");
+        return f;
+      });
+      if (B.wahl.length) {
+        await page.click(`#startWahl [data-ks-start="${B.wahl[0]}"]`, { timeout: 5000 }).catch(() => {});
+        const weg = await page.waitForURL(/index\.html/, { timeout: 5000 }).then(() => true).catch(() => false);
+        const gemerkt = await page.evaluate((id) => { try { return JSON.parse(localStorage.getItem("kompass-startseite") || "{}")[id] || null; } catch (e) { return "?"; } }, B.id).catch(() => "?");
+        await pruefe("R23", `[${B.n}] Fußzeile: „${B.wahl[0]}“ antippen → zur App, gemerkt`, () => (weg && gemerkt === B.wahl[0] ? null : `zur App: ${weg}, gemerkt: ${gemerkt}`));
+      }
     }
     await ctx.close();
   }

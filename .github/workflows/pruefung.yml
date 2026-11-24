@@ -36,6 +36,8 @@ jobs:
         run: node scripts/cache-test.mjs
       - name: Zugang-Regeln (bearbeiten/löschen, Rechte)
         run: node scripts/zugang-regeln-test.mjs
+      - name: Startseite je Rolle (Weiterleitung ohne Schleife)
+        run: node scripts/startseite-test.mjs
 
   # 🗣 Serband 21.11.2026: „sorge dafür, dass solche Fehler nicht nochmal vorkommen“ (Jelena: Leitung, die selbst fährt,
   # fand keinen Weg, Schüler anzulegen). Jede Rolle wird vom Start bis zum gespeicherten Schüler durchgespielt.
