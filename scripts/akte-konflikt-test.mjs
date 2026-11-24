@@ -237,6 +237,36 @@ await fall("F5 Fristen: „bestanden“ vor dem woanders eingetragenen Unterrich
   return f;
 });
 
+await fall("B1 Akte offen, App ändert Telefon, Büro tippt „Zahlung ausstehend“ im Fenster, ändert Notiz – Telefon bleibt (Fable)", async () => {
+  const f = [];
+  await page.evaluate(() => document.querySelectorAll("dialog[open]").forEach((d) => d.close()));
+  await page.evaluate(() => schuelerDialog("s12"));
+  await woanders(page, "s12", { telefon: "0151 0000042" });
+  const ok = await page.evaluate(() => setzeZahlungSperre("s12", KR.todayISO(), "Test", "vermerkt")); // kopiert die frische Zeile nach S.schueler
+  if (!ok) f.push("Sperre nicht gesetzt");
+  await page.fill("dialog[open] input[name=buero_notiz]", "nur Notiz");
+  await speichern(page);
+  const s = await server_(page, "s12");
+  if (s.telefon !== "0151 0000042") f.push("Telefon der App überschrieben: " + s.telefon);
+  const letzte = (await updates(page)).filter((w) => "buero_notiz" in w).pop() || {};
+  if (Object.keys(letzte).join(",") !== "buero_notiz") f.push("gesendet: " + JSON.stringify(letzte));
+  return f;
+});
+
+await fall("B2 Fristen offen, App setzt Theorie bestanden, Büro tippt „Zahlung ausstehend“ – Theorie bleibt (Fable)", async () => {
+  const f = [];
+  await page.evaluate(() => document.querySelectorAll("dialog[open]").forEach((d) => d.close()));
+  await page.evaluate(() => fristenDialog("s13"));
+  await woanders(page, "s13", { theorie_bestanden_am: "2026-11-20" });
+  await page.evaluate(() => setzeZahlungSperre("s13", KR.todayISO(), "Test", "vermerkt"));
+  await page.fill("dialog[open] input[name=antrag_am]", "2026-11-21");
+  await speichern(page);
+  const s = await server_(page, "s13");
+  if (s.theorie_bestanden_am !== "2026-11-20") f.push("Theorie bestanden zurückgedreht: " + s.theorie_bestanden_am);
+  if (s.antrag_am !== "2026-11-21") f.push("Antrag nicht gespeichert");
+  return f;
+});
+
 await fall("K1 keine Fehler in der Konsole", async () => konsole.length ? [konsole.slice(0, 3).join(" | ")] : []);
 await ctx.close();
 await browser.close();

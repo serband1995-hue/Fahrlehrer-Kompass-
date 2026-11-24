@@ -322,6 +322,9 @@ CREATE TRIGGER trg_konflikt_gesehen_spur AFTER INSERT OR DELETE ON public.fahrze
 
 -- ab 20261124_rechte_01/02/03 (Werkstatt 12):
 CREATE TRIGGER trg_urlaub_eigener_eintrag BEFORE INSERT ON public.fahrschule_urlaub FOR EACH ROW EXECUTE FUNCTION eigener_eintrag_setzen();
+-- W14 (Migration 20261125_w14_01, aus der Datei nachgetragen): Urlaub über fahrschule_urlaub.fahrlehrer_id. Fahrlehrer: immer die eigene ID;
+-- Büro/Leitung/Super-Admin: ID muss ein Zugang derselben Fahrschule sein (Name kommt aus dem Profil), auch bei UPDATE.
+CREATE TRIGGER trg_urlaub_fahrlehrer BEFORE INSERT OR UPDATE ON public.fahrschule_urlaub FOR EACH ROW EXECUTE FUNCTION urlaub_fahrlehrer_setzen();
 CREATE TRIGGER trg_tafelbild_eigener_eintrag BEFORE INSERT ON public.fahrschule_tafelbilder FOR EACH ROW EXECUTE FUNCTION eigener_eintrag_setzen();
 CREATE TRIGGER trg_empfehlung_schutz BEFORE INSERT OR UPDATE ON public.fahrschule_empfehlungen FOR EACH ROW EXECUTE FUNCTION empfehlung_schutz();
 -- schueler_buero_felder_schutz (02): Ausnahme – der eigene Fahrlehrer setzt theorie_bestanden_am bis heute (Berlin),

@@ -54,6 +54,8 @@ jobs:
           npx -y playwright@1.63.0 install --with-deps chromium
       - name: "Rollen-Test (jede Rolle: Startansicht, Schüler anlegen, gespeichert)"
         run: NODE_PATH=$(npm root -g) node scripts/rollen-test.mjs
+      - name: "Verkauf ohne Provision (Büro, keine Provision ans Büro)"
+        run: NODE_PATH=$(npm root -g) node scripts/verkauf-test.mjs
       - name: "Zugang-Test (Fahrlehrer bearbeiten und löschen, Rechte je Rolle)"
         run: NODE_PATH=$(npm root -g) node scripts/zugang-test.mjs
       - name: "Ausbildungsnachweis (Büro: Übersicht, Ändern mit Spur, Papierkorb, Druck)"
@@ -88,6 +90,10 @@ jobs:
           ZM_QR_DIR=/tmp/zm-qr node scripts/zahlungsmail-mail-test.mjs
       - name: "Zahlungsaufforderung per Mail im Büro (Knopf, Haken, Rückgängig)"
         run: NODE_PATH=$(npm root -g) node scripts/zahlungsmail-test.mjs
+      - name: "W14 Akte überschreibt keine neueren Änderungen (Büro-Akte, Fristen)"
+        run: NODE_PATH=$(npm root -g) node scripts/akte-konflikt-test.mjs
+      - name: "Abgleich App ↔ Büro (Datenverlust-Fälle, W14 Name/Telefon, Gesamtansicht)"
+        run: NODE_PATH=$(npm root -g) node scripts/abgleich-test.mjs
 
   buero:
     # Eigener Job (läuft parallel), weil der Büro-Test allein etwa 8 Minuten braucht.

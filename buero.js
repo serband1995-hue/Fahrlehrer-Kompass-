@@ -396,7 +396,7 @@ function renderHeute() {
   const fcOffen = fcOffeneAbgaben();
   if (fcOffen.length) aufgaben.push(`<a class="aufgabe gelb" href="#fahrchecks?z=vor"><b>${fcOffen.length}</b> Fahrcheck-Abgabe${fcOffen.length === 1 ? "" : "n"} für ${esc(datumDE(fcOffen[0].von))}–${esc(datumDE(fcOffen[0].bis))} noch nicht bestätigt</a>`);
   const neuVerk = S.verkaeufe.filter((v) => v.status === "empfohlen").length;
-  if (neuVerk) aufgaben.push(`<a class="aufgabe" href="#verkaeufe"><b>${neuVerk}</b> neue Empfehlung${neuVerk === 1 ? "" : "en"} von Fahrlehrern (Akademie/Simulator): Zugang ausgeben, Zahlung eintragen</a>`);
+  if (neuVerk) aufgaben.push(`<a class="aufgabe" href="#verkaeufe"><b>${neuVerk}</b> neue Empfehlung${neuVerk === 1 ? "" : "en"} (Akademie/Simulator): Zugang ausgeben, Zahlung eintragen</a>`);
   const ungelesen = S.notizen.filter((n) => !n.erledigt_am && !S.gelesen.some((g) => g.notiz_id === n.id) && aktiveSchueler().some((x) => x.id === n.schueler_id));
   if (ungelesen.length) aufgaben.push(`<a class="aufgabe gelb" href="#schueler?notiz=ungelesen"><b>${ungelesen.length}</b> Notiz${ungelesen.length === 1 ? "" : "en"} an Fahrlehrer noch nicht gelesen</a>`);
   const beiGesperrten = aktiveSchueler().filter((x) => x.fahrlehrer_id && (S.lehrer.find((l) => l.id === x.fahrlehrer_id) || {}).aktiv === false).length;
@@ -826,7 +826,7 @@ async function speichereAkteSicher(id, basis, werte, nurPruefen) {
       if (!woanders.length || !gruppe.some((k) => k in senden || konflikte.some((c) => c.k === k))) continue;
       gruppe.forEach(halte);
       // auch zeigen, was woanders an der Gruppe geändert wurde (das Fenster zeigt danach den neuen Stand)
-      for (const k of woanders) if (k in werte && !konflikte.some((c) => c.k === k)) konflikte.push({ k, frisch: aktenWert(frisch, k), mein: werte[k] });
+      for (const k of woanders) if (k in werte && !konflikte.some((c) => c.k === k)) konflikte.push({ k, frisch: aktenWert(frisch, k), mein: werte[k], nurInfo: true });
     }
     const ab = "theorie_abgeschlossen_am" in senden ? senden.theorie_abgeschlossen_am : frisch.theorie_abgeschlossen_am;
     const be = "theorie_bestanden_am" in senden ? senden.theorie_bestanden_am : frisch.theorie_bestanden_am;
@@ -900,7 +900,8 @@ function akteKonfliktZeigen(dlg, konflikte) {
   box.className = "akte-konflikt voll"; box.dataset.aktekonflikt = ""; box.setAttribute("role", "alert");
   box.innerHTML = `<b>Nicht alles gespeichert</b>
     <p>Während das Fenster offen war, hat jemand anderes (Fahrlehrer-App oder anderer PC) ${konflikte.length === 1 ? "dieses Feld" : "diese Felder"} geändert. Gespeichert ist alles außer:</p>
-    <ul>${konflikte.map((c, i) => `<li data-konfliktfeld="${esc(c.k)}"><span><b>${esc(akteFeldName(c.k))}:</b> jetzt „${esc(akteWertText(c.k, c.frisch))}“ · <b>deine Eingabe „${esc(akteWertText(c.k, c.mein))}“</b> (nicht gespeichert)</span>
+    <ul>${konflikte.map((c, i) => c.nurInfo ? `<li data-konfliktfeld="${esc(c.k)}"><span><b>${esc(akteFeldName(c.k))}:</b> jetzt „${esc(akteWertText(c.k, c.frisch))}“ (woanders geändert, gehört dazu)</span></li>`
+      : `<li data-konfliktfeld="${esc(c.k)}"><span><b>${esc(akteFeldName(c.k))}:</b> jetzt „${esc(akteWertText(c.k, c.frisch))}“ · <b>deine Eingabe „${esc(akteWertText(c.k, c.mein))}“</b> (nicht gespeichert)</span>
       <button type="button" class="knopf klein" data-meinenehmen="${i}">Meine Eingabe nehmen</button></li>`).join("")}</ul>
     <p class="klein">Passt der neue Wert, ist nichts mehr zu tun. Sonst „Meine Eingabe nehmen“ und dann „Speichern“.</p>`;
   box.querySelectorAll("[data-meinenehmen]").forEach((b) => b.addEventListener("click", () => {
@@ -973,6 +974,7 @@ async function nichtBezahlt(id) {
 function fristenDialog(id) {
   const s = S.schueler.find((x) => x.id === id);
   if (!s) return;
+  const basisS = JSON.parse(JSON.stringify(s)); // W14 (Fable B1): Vergleichsstand vom Öffnen, unabhängig von S.schueler
   const r = KR.reaktInfo(s);
   const body = `
     <div class="formular">
@@ -999,7 +1001,7 @@ function fristenDialog(id) {
       ausbildungsart: d.ausbildungsart || "ersterwerb",
       klasse: d.klasse || null,
       reakt_status: d.reakt_status || "pruefen",
-      reakt_bezahlt_bis: d.reakt_status === "bezahlt" ? (d.reakt_bezahlt_bis || null) : (s.reakt_bezahlt_bis || null),
+      reakt_bezahlt_bis: d.reakt_status === "bezahlt" ? (d.reakt_bezahlt_bis || null) : (basisS.reakt_bezahlt_bis || null),
       reakt_notiz: (d.reakt_notiz || "").trim() || null,
       theorie_abgeschlossen_am: d.theorie_abgeschlossen_am || null,
       theorie_bestanden_am: d.theorie_bestanden_am || null,
@@ -1012,10 +1014,10 @@ function fristenDialog(id) {
       toast("Die Theorieprüfung kann nicht vor dem Abschluss des Unterrichts liegen.", true); return false;
     }
     // W14: nur Geändertes, nichts überschreiben, was App (z. B. Theorie bestanden) oder anderer PC inzwischen geändert haben
-    const erg = await speichereAkteSicher(id, s, werte);
+    const erg = await speichereAkteSicher(id, basisS, werte);
     if (!erg.ok) return false;
-    const altBasis = Object.assign({}, s);
-    akteNachziehen(id, s, erg.zeile);
+    const altBasis = Object.assign({}, basisS);
+    akteNachziehen(id, basisS, erg.zeile);
     zeichne();
     if (erg.konflikte.length) { akteFensterAuffrischen(fdlg, altBasis, werte, erg.zeile, erg.konflikte, Object.keys(werte)); akteKonfliktZeigen(fdlg, erg.konflikte); return false; } // der gelbe Kasten im Fenster erklärt alles
     toast(erg.leer ? "Nichts geändert" : "Gespeichert");
@@ -2343,6 +2345,9 @@ function elternNachKonflikt(dlg, basis, neu, erg) {
 function schuelerDialog(id) {
   const x = id ? S.schueler.find((y) => y.id === id) : { ausbildungsart: "ersterwerb", klasse: "B", vertrag_am: KR.todayISO() };
   if (!x) return;
+  // W14 (Fable B1): Vergleichsstand ist eine KOPIE vom Öffnen. Das Objekt in S.schueler ändern auch andere Knöpfe im Fenster
+  // (z. B. „Zahlung ausstehend“ kopiert die ganze frische Zeile hinein) – dann gälte ein alter Wert im Feld als „von mir geändert“.
+  const basisX = id ? JSON.parse(JSON.stringify(x)) : x;
   const body = `${ausgeblendetAm(x) ? `<p class="hinweis-ausgeblendet" id="ausgeblendetHinweis">Vom Fahrlehrer ausgeblendet am ${esc(datumDE(ausgeblendetAm(x).slice(0, 10)))}. Im Büro bleibt der Schüler ganz normal.</p>` : ""}<div class="formular">
       <label class="voll">Name<input type="text" name="name" required maxlength="100" value="${esc(x.name || "")}"></label>
       <label>Telefon (Login für die Fahr-Akademie)<input type="tel" name="telefon" maxlength="40" value="${esc(x.telefon || "")}"></label>
@@ -2399,8 +2404,8 @@ function schuelerDialog(id) {
     }
     const neuerLehrer = d.fahrlehrer_id || null;
     // B197-Testfahrt: Haken setzen = Datum (heute, wenn leer); Haken weg oder andere Klasse = leer
-    werte.b197_testfahrt_am = werte.klasse === "B197" && d.testfahrt ? (d.testfahrt_am || x.b197_testfahrt_am || KR.todayISO()) : null;
-    if (id) werte.inaktiv_seit = d.aktiv ? null : (x.inaktiv_seit || KR.todayISO());
+    werte.b197_testfahrt_am = werte.klasse === "B197" && d.testfahrt ? (d.testfahrt_am || basisX.b197_testfahrt_am || KR.todayISO()) : null;
+    if (id) werte.inaktiv_seit = d.aktiv ? null : (basisX.inaktiv_seit || KR.todayISO());
     if (!id) {
       const neueId = neueSchuelerId();
       const zeile = Object.assign({ id: neueId, fahrschule_id: S.fsId, fahrlehrer_id: neuerLehrer, status: "aktiv", erstellt_von: S.user.id,
@@ -2416,22 +2421,23 @@ function schuelerDialog(id) {
     }
     // Umschreiber: die Fahrlehrer-App liest die Spalte ausbildungsart selbst (nicht ins jsonb schreiben,
     // sonst überschreibt der nächste Abgleich des Fahrlehrers den Wert)
-    const wirdArchiviert = istAktiv(x) && !!werte.inaktiv_seit;
+    const wirdArchiviert = istAktiv(basisX) && !!werte.inaktiv_seit;
     let absagen = [];
     if (wirdArchiviert) { absagen = await frageKuenftigeTermine(x); if (absagen === null) return false; } // Abbrechen: Fenster bleibt offen
     // W14: nur Geändertes senden; was App oder anderer PC inzwischen am selben Feld geändert haben, bleibt stehen.
     // Den Fahrlehrer wechselt verschiebeSchueler (Termine, Übergabe-Eintrag), aber nur, wenn ihn niemand inzwischen verschoben hat.
-    const basisLehrer = x.fahrlehrer_id || null;
+    const basisLehrer = basisX.fahrlehrer_id || null;
     const werteAlle = Object.assign({}, werte, { fahrlehrer_id: neuerLehrer });
-    const erg = await speichereAkteSicher(id, x, werteAlle, ["fahrlehrer_id"]);
+    const erg = await speichereAkteSicher(id, basisX, werteAlle, ["fahrlehrer_id"]);
     if (!erg.ok) return false;
-    const altBasis = Object.assign({}, x);
-    akteNachziehen(id, x, erg.zeile);
+    const altBasis = Object.assign({}, basisX);
+    akteNachziehen(id, basisX, erg.zeile);
     const elt = elternBasis ? await speichereElternSicher(id, elternBasis, elternNeu) : { ok: true, leer: true, konflikte: [] };
     const archiviert = wirdArchiviert && !erg.konflikte.some((c) => c.k === "inaktiv_seit");
-    if (elt.ok) toast(erg.leer && elt.leer ? "Nichts geändert" : archiviert ? `${name} liegt jetzt im Archiv.` : "Gespeichert");
+    // bei Konflikt erklärt der Kasten; scheitert die Eltern-Adresse, steht deren Meldung
+    if (elt.ok && !erg.konflikte.length && !(elt.konflikte || []).length) toast(erg.leer && elt.leer ? "Nichts geändert" : archiviert ? `${name} liegt jetzt im Archiv.` : "Gespeichert");
     zeichne();
-    if ("fahrlehrer_id" in erg.frei) await verschiebeSchueler(Object.assign({}, x, { fahrlehrer_id: basisLehrer }), neuerLehrer);
+    if ("fahrlehrer_id" in erg.frei) await verschiebeSchueler(Object.assign({}, basisX, { fahrlehrer_id: basisLehrer }), neuerLehrer);
     if (absagen.length && archiviert) await sageTermineAb(absagen, `${name} liegt im Archiv, ${absagen.length === 1 ? "1 Termin" : absagen.length + " Termine"} abgesagt`);
     const konflikte = erg.konflikte.concat(elt.konflikte || []);
     if (konflikte.length) {
@@ -3214,13 +3220,17 @@ function vkVorschlag(typ) {
   const b = typ === "simulator" ? c.betragSimulator : c.betragAkademie;
   return b != null && b !== "" ? Number(b) : (typ === "akademie" ? 100 : 149); // Akademie 100 € (Serband 08.10.2026), Simulator-Flat 149 € (Webseite)
 }
+// Werkstatt 12: Ein Verkauf durch das Büro (oder ein alter Eintrag ohne Fahrlehrer) zählt nie als Provision für eine Person.
+// Die Datenbank verlangt eine Fahrlehrer-ID; darum steht dort die ID des Büro-Nutzers und aufteilung.keine_provision = true.
+function istKeineProvision(e) { return !!e && (!e.fahrlehrer_id || !!(e.aufteilung && e.aufteilung.keine_provision === true)); }
+function vkLehrerId(e) { return istKeineProvision(e) ? null : e.fahrlehrer_id; }
 function monatVon(iso) { return String(iso || "").slice(0, 7); }
 function renderVerkaeufe() {
   const monat = /^\d{4}-\d\d$/.test(fristenParam("monat")) ? fristenParam("monat") : KR.todayISO().slice(0, 7);
   const lehrerF = fristenParam("lehrer");
   const statusF = fristenParam("status");
   let liste = S.verkaeufe.filter((v) => monatVon(v.erstellt_am) === monat || (v.status === "bezahlt" && monatVon(v.aktualisiert_am) === monat) || (v.status !== "bezahlt" && v.status !== "storniert"));
-  if (lehrerF) liste = liste.filter((v) => v.fahrlehrer_id === lehrerF);
+  if (lehrerF) liste = liste.filter((v) => vkLehrerId(v) === lehrerF);
   if (statusF) liste = liste.filter((v) => v.status === statusF);
   const bezahltMonat = S.verkaeufe.filter((v) => v.status === "bezahlt" && monatVon(v.aktualisiert_am || v.erstellt_am) === monat);
   const umsatz = bezahltMonat.reduce((a, v) => a + Number(v.betrag || 0), 0);
@@ -3237,7 +3247,7 @@ function renderVerkaeufe() {
     if (v.status === "storniert") knoepfe.push(`<button class="knopf klein" data-vwieder="${esc(v.id)}" type="button">Wieder öffnen</button>`);
     if (v.status !== "storniert") knoepfe.push(`<button class="knopf klein" data-vstorno="${esc(v.id)}" type="button">${v.status === "bezahlt" ? "Zurücknehmen" : "Stornieren"}</button>`);
     return `<tr>
-      <td><b>${esc(v.schueler_name || schuelerName(v.schueler_id))}</b><div class="unter">${esc(datumDE(String(v.erstellt_am).slice(0, 10)))} · ${v.fahrlehrer_id ? "von " + esc(v.fahrlehrer_name || lehrerName(v.fahrlehrer_id)) : "Büro"}</div></td>
+      <td><b>${esc(v.schueler_name || schuelerName(v.schueler_id))}</b><div class="unter">${esc(datumDE(String(v.erstellt_am).slice(0, 10)))} · ${istKeineProvision(v) ? "Büro (keine Provision)" : "von " + esc(v.fahrlehrer_name || lehrerName(v.fahrlehrer_id))}</div></td>
       <td><span class="marke-pill ${v.typ === "simulator" ? "blau" : "gruen"}">${esc(V_TYP[v.typ] || v.typ)}</span></td>
       <td><span class="marke-pill ${sf}">${esc(st)}</span></td>
       <td class="zahlspalte">${v.betrag != null ? euro(v.betrag) : "–"}</td>
@@ -3267,7 +3277,7 @@ function renderVerkaeufe() {
         ${sel("vLehrer", `<option value="">Alle Fahrlehrer</option>` + S.lehrer.map((l) => `<option value="${esc(l.id)}"${l.id === lehrerF ? " selected" : ""}>${esc(l.name || l.email)}</option>`).join(""))}
         ${sel("vStatus", `<option value="">Alle Stände</option>` + Object.entries(V_STATUS).map(([k, [, n]]) => `<option value="${k}"${k === statusF ? " selected" : ""}>${n}</option>`).join(""))}
       </div><button class="knopf haupt" id="vNeu" type="button">+ Verkauf erfassen</button></div>
-      <p class="leise klein">Fahrlehrer empfehlen in ihrer App („Akademie empfehlen“, „Simulator empfehlen“). Hier sieht das Büro, von wem es kam, gibt den Zugang aus und trägt die Zahlung ein. Bei „bezahlt“ wird die Provision des Fahrlehrers automatisch gebucht.</p>
+      <p class="leise klein">Fahrlehrer empfehlen in ihrer App („Akademie empfehlen“, „Simulator empfehlen“). Hier sieht das Büro, von wem es kam, gibt den Zugang aus und trägt die Zahlung ein. Bei „bezahlt“ wird die Provision des Fahrlehrers automatisch gebucht. Verkäufe durch das Büro bringen keine Provision.</p>
       ${liste.length ? `<table class="tabelle"><thead><tr><th>Schüler</th><th>Was</th><th>Stand</th><th class="zahlspalte">Betrag</th><th class="zahlspalte nur-breit">Provision</th><th></th></tr></thead><tbody>${zeilen}</tbody></table>` : `<p class="leer">Keine Verkäufe in dieser Auswahl.</p>`}
       <p class="leise klein">${esc(splitText)}</p>
     </div>
@@ -3299,13 +3309,14 @@ function verkaufBezahltDialog(id) {
   const v = S.verkaeufe.find((x) => x.id === id);
   if (!v) return;
   const split = vkKonfig().splitKollege;
-  const body = `<p>${esc(V_TYP[v.typ] || v.typ)} für <b>${esc(v.schueler_name || schuelerName(v.schueler_id))}</b>${v.fahrlehrer_id ? ", vermittelt von " + esc(v.fahrlehrer_name || lehrerName(v.fahrlehrer_id)) : ""}.</p>
+  const body = `<p>${esc(V_TYP[v.typ] || v.typ)} für <b>${esc(v.schueler_name || schuelerName(v.schueler_id))}</b>${istKeineProvision(v) ? "" : ", vermittelt von " + esc(v.fahrlehrer_name || lehrerName(v.fahrlehrer_id))}.</p>
     <div class="formular"><label>Bezahlter Betrag (€)<input type="number" name="betrag" min="0" step="1" value="${vkVorschlag(v.typ)}" required></label></div>
     <div id="vSplit" class="split"></div>`;
   const dlg = oeffneDialog("Zahlung eintragen", body, async (form) => {
     const betrag = Number(form.betrag.value);
     if (!(betrag >= 0) || form.betrag.value === "") { toast("Bitte den Betrag eintragen.", true); return false; }
-    const auf = v.fahrlehrer_id ? KR.aufteilung(betrag, split) : null;
+    const keine = istKeineProvision(v);
+    const auf = keine ? { keine_provision: true } : KR.aufteilung(betrag, split);
     const neu = await verkaufStatus(id, { status: "bezahlt", betrag, aufteilung: auf });
     if (!neu) return false;
     // Je bezahltem Verkauf mit Provision genau eine nicht stornierte Provision (B1). Die Tabelle provisionen kennt den
@@ -3329,14 +3340,14 @@ function verkaufBezahltDialog(id) {
     }
     if (v.typ === "simulator" && v.schueler_id) await supa.from("schueler").update({ hat_simulator: true }).eq("id", v.schueler_id);
     if (!fehler) toast(gebucht ? `Bezahlt. Provision ${euro(auf.fahrlehrer)} für ${lehrerName(v.fahrlehrer_id)} gebucht.`
-      : (v.fahrlehrer_id && auf && auf.fahrlehrer > 0 ? "Bezahlt eingetragen. Die Provision dafür ist schon gebucht." : "Bezahlt eingetragen"));
+      : (!istKeineProvision(v) && auf && auf.fahrlehrer > 0 ? "Bezahlt eingetragen. Die Provision dafür ist schon gebucht." : "Bezahlt eingetragen"));
     zeichne();
     return true;
   }, "Bezahlt speichern");
   const feld = dlg.querySelector("input[name=betrag]");
   const zeig = () => {
     const box = dlg.querySelector("#vSplit");
-    if (!v.fahrlehrer_id) { box.innerHTML = `<p class="leise klein">Direktverkauf durch das Büro: keine Provision.</p>`; return; }
+    if (istKeineProvision(v)) { box.innerHTML = `<p class="leise klein">Direktverkauf durch das Büro: keine Provision.</p>`; return; }
     const a = KR.aufteilung(Number(feld.value || 0), split);
     box.innerHTML = a ? `<table class="tabelle"><tbody>
         <tr><td>${esc(v.fahrlehrer_name || lehrerName(v.fahrlehrer_id))} (Provision)</td><td class="zahlspalte"><b>${euro(a.fahrlehrer)}</b></td></tr>
@@ -3352,7 +3363,7 @@ async function verkaufStorno(id) {
   if (!v) return;
   const war = v.status === "bezahlt";
   if (!(await bestaetige(war ? "Zahlung zurücknehmen?" : "Empfehlung stornieren?", war ? "Betrag und Aufteilung werden zurückgesetzt. Eine schon gebuchte Provision bitte bei „Offene Provisionen“ prüfen." : "Die Empfehlung wird als storniert markiert.", "Ja"))) return;
-  const neu = await verkaufStatus(id, { status: "storniert", betrag: null, aufteilung: null }, war ? "Zurückgenommen" : "Storniert");
+  const neu = await verkaufStatus(id, { status: "storniert", betrag: null, aufteilung: istKeineProvision(v) ? { keine_provision: true } : null }, war ? "Zurückgenommen" : "Storniert");
   if (!neu) return;
   // Nur eine bezahlte Zahlung hat eine Provision. Davon fällt genau EINE noch nicht ausgezahlte weg (bei zwei
   // Verkäufen gleicher Art bleibt die andere stehen); ist keine mehr offen, aber schon ausgezahlt, wird das gemeldet.
@@ -3395,9 +3406,16 @@ function verkaufNeuDialog() {
     if (!d.schueler_id) { toast("Bitte einen Schüler wählen.", true); return false; }
     const doppelt = S.verkaeufe.find((v) => v.schueler_id === d.schueler_id && v.typ === d.typ && v.status !== "storniert");
     if (doppelt && !(await bestaetige("Schon vorhanden", `Für diesen Schüler gibt es schon einen Eintrag (${(V_STATUS[doppelt.status] || ["", doppelt.status])[1]}). Trotzdem neu anlegen?`, "Ja"))) return false;
+    // „Büro (keine Provision)“: die Datenbank verlangt eine Fahrlehrer-ID (NOT NULL). Darum die eigene ID des angemeldeten
+    // Büro-Nutzers und sein Profilname; das Kennzeichen in aufteilung sorgt dafür, dass nie eine Provision daraus wird.
+    const keine = !d.fahrlehrer_id;
+    const eigenId = S.user && S.user.id;
+    if (keine && !eigenId) { toast("Nicht angemeldet. Bitte neu anmelden.", true); return false; }
     const res = await supa.from("fahrschule_empfehlungen").insert({
       fahrschule_id: S.fsId, schueler_id: d.schueler_id, schueler_name: schuelerName(d.schueler_id), typ: d.typ, status: "empfohlen",
-      fahrlehrer_id: d.fahrlehrer_id || null, fahrlehrer_name: d.fahrlehrer_id ? lehrerName(d.fahrlehrer_id) : null,
+      fahrlehrer_id: keine ? eigenId : d.fahrlehrer_id,
+      fahrlehrer_name: keine ? ((S.profil && S.profil.name) || (S.user && S.user.email) || "Büro") : lehrerName(d.fahrlehrer_id),
+      ...(keine ? { aufteilung: { keine_provision: true } } : {}),
     }).select("*");
     if (res.error || !res.data || !res.data.length) { toast("Nicht gespeichert: " + (res.error ? dbFehlerText(res.error) : "keine Berechtigung"), true); return false; }
     S.verkaeufe.unshift(res.data[0]);
