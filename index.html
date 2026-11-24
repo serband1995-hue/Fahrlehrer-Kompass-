@@ -12905,7 +12905,7 @@ function _einstellungenGesamtansicht(){
     <h1 class="sec-h set-titel">Einstellungen</h1>
     ${_startHatWahl()?'<div class="res-block" id="ksStartKasten" style="animation:none;"></div>':''}
     ${isSuperAdmin()?`<div class="res-block" style="animation:none;"><h4>👑 Admin-Panel</h4><p>Nutzer verwalten, Kill-Switch und Sync-Status.</p><div class="btn-row"><button class="btn btn-ghost" onclick="openAdminPanel()">Admin öffnen</button></div></div>`:''}
-    ${_hatAdminUmschalter()?'<p class="muted-p" style="font-size:13px;margin-top:4px;">Alle anderen Einstellungen findest du in der Fahrlehrer-Ansicht.</p>':''}
+    ${_hatAdminUmschalter()?'<div class="res-block" style="animation:none;"><h4>⚙️ Weitere Einstellungen</h4><p>Alle anderen Einstellungen (App, Kalender, Verdienst) findest du in der Fahrlehrer-Ansicht. Dorthin: oben „Fahrlehrer-Ansicht“ antippen.</p></div>':''}
   </div>`;
   _startseiteEinbauen();
 }

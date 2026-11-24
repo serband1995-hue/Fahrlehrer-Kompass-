@@ -17,9 +17,9 @@
   // „Kristina darf nie eine Seite ohne Urlaub oder Backups bekommen“). Bis dahin arbeitet das Büro wie bisher auch in der App.
   var BUERO_NUR_BUEROSEITE = false;
   var TEXTE = {
-    eigen: { titel: "Fahrlehrer-Ansicht", text: "Deine Schüler, Termine und Fahrstunden" },
-    gesamt: { titel: "Fahrschule", text: "Alle Fahrlehrer und Schüler in der App" },
-    buero: { titel: "Büro-Seite", text: "Fristen, Prüfungen und Zahlungen, gut am PC" }
+    eigen: { titel: "Fahrlehrer-Ansicht", text: "Deine Schüler und Termine" },
+    gesamt: { titel: "Fahrschule", text: "Alle Fahrlehrer und Schüler" },
+    buero: { titel: "Büro-Seite", text: "Eigene Seite fürs Büro, gut am PC (verlässt die App)" }
   };
 
   // Welche Startseiten eine Person haben kann. Die erste ist die Vorgabe (so startet die App heute schon).
@@ -91,19 +91,23 @@
       ".ks-start{display:grid;gap:10px;text-align:left;}" +
       ".ks-start .ks-kopf b{display:block;font-size:15px;font-weight:800;color:var(--txt,inherit);}" +
       ".ks-start .ks-kopf span{display:block;font-size:13px;line-height:1.4;color:var(--muted,#5a5a65);margin-top:2px;}" +
+      ".ks-start .ks-kopf h4{margin:0;}.ks-start .ks-kopf p{margin:4px 0 0;}" +
+      ".ks-start .ks-wahl .ks-hier{grid-column:1;font-size:12px;font-weight:700;color:var(--muted,#5a5a65);}" +
+      ".ks-start .ks-wahl[aria-pressed=true] .ks-hier{display:none;}" +
       ".ks-start .ks-liste{display:grid;gap:8px;}" +
       ".ks-start .ks-wahl{display:grid;grid-template-columns:1fr auto;align-items:center;column-gap:10px;row-gap:1px;width:100%;box-sizing:border-box;min-height:52px;margin:0;padding:8px 14px;" +
       "border-radius:12px;border:1.5px solid var(--line,#cdcdd5);background:var(--surface,transparent);color:var(--txt,inherit);font:inherit;text-align:left;cursor:pointer;-webkit-tap-highlight-color:transparent;}" +
       ".ks-start .ks-wahl .ks-t{grid-column:1;font-weight:700;font-size:15px;line-height:1.25;}" +
       ".ks-start .ks-wahl .ks-s{grid-column:1;font-size:12.5px;line-height:1.35;color:var(--muted,#5a5a65);}" +
-      ".ks-start .ks-wahl .ks-haken{grid-column:2;grid-row:1 / span 2;font-size:12.5px;font-weight:800;color:var(--akzent-bright,var(--akzent,#2f6b47));visibility:hidden;white-space:nowrap;}" +
+      ".ks-start .ks-wahl .ks-haken{grid-column:2;grid-row:1 / span 3;font-size:12.5px;font-weight:800;color:var(--akzent-bright,var(--akzent,#2f6b47));visibility:hidden;white-space:nowrap;}" +
       ".ks-start .ks-wahl[aria-pressed=true]{border-color:var(--akzent,#2f6b47);box-shadow:inset 0 0 0 1.5px var(--akzent,#2f6b47);}" +
       ".ks-start .ks-wahl[aria-pressed=true] .ks-haken{visibility:visible;}" +
       ".ks-start .ks-wahl:focus-visible{outline:3px solid var(--fokus,var(--akzent,#2f6b47));outline-offset:2px;}" +
       ".ks-start .ks-wahl:disabled{opacity:.6;cursor:default;}" +
       ".ks-start.ks-kompakt .ks-wahl{min-height:44px;padding:6px 12px;}" +
       ".ks-start.ks-kompakt .ks-wahl .ks-t{font-size:14px;}" +
-      ".ks-start.ks-kompakt .ks-wahl .ks-haken{grid-row:1;}" +
+      ".ks-start.ks-kompakt .ks-wahl .ks-haken{grid-row:1 / span 2;}" +
+      ".ks-start.ks-kompakt .ks-wahl .ks-t{font-weight:600;}" +
       ".ks-start .ks-meldung{margin:0;font-size:13px;line-height:1.4;color:var(--muted,#5a5a65);}" +
       ".ks-start .ks-meldung:empty{display:none;}";
     (g.document.head || g.document.documentElement).appendChild(st);
@@ -120,15 +124,20 @@
     if (wahl.length < 2) { kasten.innerHTML = ""; kasten.hidden = true; return false; }
     _stil();
     var aktuell = lesen(profil);
+    // Wo man gerade ist (Design-Prüfung W16): z. B. auf der Büro-Seite, obwohl die Startseite die Fahrlehrer-Ansicht ist
+    var hier = o.hier || (_aufBuero() ? "buero" : aktuell);
     var kopfId = "ks-kopf-" + Math.random().toString(36).slice(2, 8);
     kasten.hidden = false;
     kasten.innerHTML = '<div class="ks-start' + (o.kompakt ? " ks-kompakt" : "") + '" role="group" aria-labelledby="' + kopfId + '">' +
-      '<div class="ks-kopf"><b id="' + kopfId + '">Startseite</b><span>Hier startet die App auf diesem Gerät. Tippen wechselt sofort.</span></div>' +
+      (o.kompakt
+        ? '<div class="ks-kopf"><b id="' + kopfId + '">Startseite auf diesem Gerät</b><span>Ein Tipp wechselt sofort.</span></div>'
+        : '<div class="ks-kopf"><h4 id="' + kopfId + '">🏠 Startseite</h4><p>Wo der Kompass auf diesem Gerät startet. Ein Tipp wechselt sofort dorthin.</p></div>') +
       '<div class="ks-liste">' + wahl.map(function (w) {
         return '<button type="button" class="ks-wahl" data-ks-start="' + w + '" aria-pressed="' + (w === aktuell) + '">' +
           '<span class="ks-t">' + _esc(TEXTE[w].titel) + "</span>" +
           (o.kompakt ? "" : '<span class="ks-s">' + _esc(TEXTE[w].text) + "</span>") +
-          '<span class="ks-haken" aria-hidden="true">✓ Start</span></button>';
+          (w === hier ? '<span class="ks-hier">du bist hier</span>' : "") +
+          '<span class="ks-haken">✓ Startseite</span></button>';
       }).join("") + "</div>" +
       '<p class="ks-meldung" role="status" aria-live="polite"></p></div>';
     var meldung = kasten.querySelector(".ks-meldung");
@@ -138,7 +147,6 @@
       b.addEventListener("click", function () {
         if (laeuft) return; // Doppeltipp: der erste Wechsel läuft noch
         var wert = b.getAttribute("data-ks-start");
-        var hier = o.hier || (_aufBuero() ? "buero" : lesen(profil));
         var vorher = lesen(profil);
         var markiere = function (w) { knoepfe.forEach(function (x) { x.setAttribute("aria-pressed", String(x.getAttribute("data-ks-start") === w)); }); };
         var gemerkt = setzen(profil, wert);
