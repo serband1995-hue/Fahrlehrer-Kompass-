@@ -5472,6 +5472,7 @@ async function pullSchuelerZuweisungen() {
     if (schErr) throw schErr;
     _merkeFristen(rows);
     _ladeTheorieBesuch(supa, (rows||[]).map(r=>r.id));
+    _ladePakete(supa, (rows||[]).map(r=>r.id)); // Werkstatt 13: verkauftes Paket (nur lesen)
     // Klassen des Fahrlehrers neu lesen: trägt das Büro CE ein, sind die Lkw-Klassen ohne neues Anmelden frei
     const uidKl = _authUser.id;
     supa.from("profiles").select("klassen,fahrlehrerlaubnis").eq("id", uidKl).maybeSingle().then(({ data: pr, error: prErr }) => {
@@ -6056,6 +6057,7 @@ async function _fsLoadAggData(fahrschuleId){
   DB.students=(schuelerR.data||[]).map(r=>_fsMapSchueler(r,lehrerName));
   _merkeFristen(schuelerR.data);
   _ladeTheorieBesuch(supa, (schuelerR.data||[]).map(r=>r.id));
+  _ladePakete(supa, (schuelerR.data||[]).map(r=>r.id)); // Werkstatt 13
   DB.lessons=(termineR.data||[]).map(r=>_fsMapTermin(r,lehrerName));
   DB.exams=(pruefungenR.data||[]).map(r=>_fsMapPruefung(r,lehrerName));
   // Urlaub als künstliche "Blockiert"-Termine einspeisen. W14: Abgleich über die Fahrlehrer-ID (fahrschule_urlaub.fahrlehrer_id);
@@ -6457,6 +6459,7 @@ async function routeFahrschuleDetail(fahrschuleId){
   const fs=fsR.data, lehrer=lehrerR.data||[], admins=adminR.data||[], schueler=schuelerR.data||[], pakete=paketeR.data||[];
   const wrap=$("#fsDetailWrap");
   if(!fs){if(wrap)wrap.innerHTML='<p class="muted-p">Fahrschule nicht gefunden.</p>';return;}
+  await _ladePakete(supa, schueler.map(s=>s.id)); // Werkstatt 13 (Richter): im Büro verkaufte Pakete auch hier schützen
   window._fsCache={fahrschuleId,lehrer,pakete,admins};
 
   const backBtn=binSuper?`<button class="btn btn-ghost" style="margin-bottom:10px;" onclick="routeFahrschulenListe()">← Alle Fahrschulen</button>`:"";
@@ -6506,7 +6509,8 @@ async function routeFahrschuleDetail(fahrschuleId){
         <div class="field"><label style="font-size:11px;">Fahrlehrer</label>
           <select onchange="schuelerVerschieben(${_jsArg(s.id)},this.value,${_jsArg(s.fahrlehrer_id||"")},${_jsArg(fahrschuleId)})" style="width:100%;">${lehrerOptionsFor(s.fahrlehrer_id)}</select></div>
         <div class="field"><label style="font-size:11px;">Paket</label>
-          <select onchange="schuelerPaketSetzen(${_jsArg(s.id)},this.value)" style="width:100%;">${paketOptionsFor(s.paket_id)}</select></div>
+          ${_paketVerkauft&&_paketVerkauft[s.id]?`<div class="fs-sub">„${esc(_paketVerkauft[s.id].name)}“ · im Büro verkauft, ändern nur dort</div>`
+          :`<select onchange="schuelerPaketSetzen(${_jsArg(s.id)},this.value)" style="width:100%;">${paketOptionsFor(s.paket_id)}</select>`}</div>
         <div class="toggle-row" style="margin-top:6px;"><div class="tc-name" style="font-size:13px;">Simulator gekauft</div>
           <button class="check-toggle${s.hat_simulator?' on':''}" onclick="schuelerFlagToggle(${_jsArg(s.id)},'hat_simulator',${!s.hat_simulator})"></button></div>
         <div class="toggle-row"><div class="tc-name" style="font-size:13px;">Theorie-App gekauft</div>
@@ -6740,6 +6744,7 @@ async function schuelerVerschieben(schuelerId,neuerLehrerId,alterLehrerId,fahrsc
 }
 
 async function schuelerPaketSetzen(schuelerId,paketId){
+  if(_paketVerkauft&&_paketVerkauft[schuelerId]){ toast("Dieses Paket ist im Büro verkauft. Ändern geht nur im Büro."); return; } // Werkstatt 13
   const supa=getSupa();
   await supa.from("schueler").update({paket_id:paketId||null}).eq("id",schuelerId);
   toast("Paket aktualisiert ✓");
@@ -7938,7 +7943,7 @@ const STORE_KEY="serband-app-v1";
    Wird in den Einstellungen angezeigt + für den Update-Hinweis genutzt. */
 // K1: voreingestellter Wetter-Ort (früh definiert, weil ensureDB ihn schon beim Start braucht)
 const WETTER_START={city:"Offenbach",lat:50.1006,lon:8.7665};
-const APP_VERSION="2026.11.24.10";
+const APP_VERSION="2026.11.24.11";
 try{const f=document.getElementById("drawerFoot"); if(f)f.textContent="Fahrlehrer-Kompass · Version "+APP_VERSION;}catch(e){}
 // Nutzungsbedingungen & Haftungsausschluss (Bereich: rechtliche Absicherung) - Version hochzählen
 // und alle Nutzer müssen erneut zustimmen, sobald sich der Text inhaltlich ändert.
@@ -9350,6 +9355,7 @@ function routeDetail(id){
     ${uebernahmeCard(s)}
     ${behoerdeCard(s)}
     ${theorieCard(s)}
+    ${paketCard(s)}
     <!-- Mini-Dashboard: alles Wichtige auf einen Blick (Bereich 3, Punkt 8) -->
     <div class="mini-dash">
       <div class="mini-dash-row"><span>📊 Ausbildungsstand</span><b>${pct}%</b></div>
@@ -9981,6 +9987,50 @@ async function _ladeTheorieBesuch(supa, ids){
     _theorieBesuch=_theorieBesuch||{};
     for(const sid in neu){ if((_theorieNrJe[sid]||0)<=nr){ _theorieBesuch[sid]=neu[sid]; _theorieNrJe[sid]=nr; } }
   }catch(e){ /* z. B. offline: alten Stand behalten */ }
+}
+/* Paket-Baukasten (Werkstatt 13, 🗣 Serband 24.11.2026): Das Büro verkauft ein Paket als feste Kopie (Tabelle schueler_pakete).
+   Der Fahrlehrer sieht in der Akte Name und Posten, nur lesend und ohne Preise. Fehlt die Tabelle (alte Datenbank) oder gibt es
+   keine Verbindung: keine Karte, kein Fehler. Später (Schritt 2) kommt „noch offen“ je Posten dazu. */
+let _paketVerkauft = null; // schueler_id -> {name, posten:[{art, bezeichnung, anzahl}]} oder null (kein Paket); null = nicht geladen
+let _paketLadeNr = 0; const _paketNrJe = {};
+async function _ladePakete(supa, ids){
+  const nr=++_paketLadeNr;
+  try{
+    if(!supa||!ids||!ids.length) return;
+    const neu={};
+    for(let i=0;i<ids.length;i+=150){
+      const teil=ids.slice(i,i+150);
+      const {data,error}=await supa.from("schueler_pakete").select("schueler_id,name,posten,vorlage_id").in("schueler_id",teil).is("storniert_am",null);
+      if(error) return; // Tabelle fehlt oder offline: alten Stand behalten
+      teil.forEach(sid=>{ neu[sid]=null; });
+      (data||[]).forEach(x=>{ neu[x.schueler_id]={ name:String(x.name||""), vorlage_id:x.vorlage_id||null, posten:(Array.isArray(x.posten)?x.posten:[]).map(p=>({art:p.art,bezeichnung:String(p.bezeichnung||""),anzahl:Number(p.anzahl)||0})) }; });
+    }
+    // wie beim Theorie-Besuch: hat ein neuerer Abruf den Schüler schon geladen, gilt dessen Stand
+    _paketVerkauft=_paketVerkauft||{};
+    for(const sid in neu){ if((_paketNrJe[sid]||0)<=nr){ _paketVerkauft[sid]=neu[sid]; _paketNrJe[sid]=nr; } }
+  }catch(e){ /* offline: alten Stand behalten */ }
+}
+/* Schritt 2: „noch offen“ je Posten, gleiche Rechnung wie im Büro (KR.paketQuelleAusTerminen, KR.paketVerbrauch). Quelle: eigene
+   Termine dieses Geräts, Prüfungen mit Ergebnis (DB.exams) und die Sonderfahrten aus dem Ausbildungsplan. */
+function _paketQuelle(s){
+  if(!window.KR||!KR.paketQuelleAusTerminen)return null;
+  const d=new Date();
+  const pruefDaten=(DB.exams||[]).filter(ex=>ex.sid===s.id&&istPruefung(ex)&&ex.date&&(ex.result==="pass"||ex.result==="fail")).map(ex=>ex.date);
+  return KR.paketQuelleAusTerminen((DB.lessons||[]).filter(l=>l.sid===s.id).map(l=>({art:l.art,datum:l.date,von:l.von,bis:l.bis,status:l.status,srcSonder:l.srcSonder,sonderArt:l.sonderArt,tatsaechlicheDauer:l.tatsaechlicheDauer})),todayISO(),d.getHours()*60+d.getMinutes(),{pruefDaten,plan:s.plan});
+}
+function paketCard(s){
+  const p=_paketVerkauft&&_paketVerkauft[s.id];
+  if(!p) return "";
+  const q=_paketQuelle(s), v=q?KR.paketVerbrauch(p.posten,q):[];
+  const zahl=n=>(Math.round(Number(n)*10)/10).toLocaleString("de-DE");
+  // Ohne Zähler (Grundbetrag, Lernapp, Sonstiges): „enthalten“ bzw. „2 ×“; mit Zähler wie im Büro, Überzug als „+2“
+  const rechts=(x,i)=>{ const z=v[i]; if(!z||z.verbraucht==null)return Number(x.anzahl)===1?"enthalten":esc(zahl(x.anzahl))+" ×";
+    return z.offen>0?`${zahl(z.verbraucht)} von ${zahl(z.anzahl)}`:`<span style="white-space:nowrap">${zahl(z.anzahl)} von ${zahl(z.anzahl)} ✓${z.mehr>0?` · +${zahl(z.mehr)}`:""}</span>`; };
+  return `<div class="res-block paket-karte" style="animation:none;margin-top:9px;">
+    <h4>${_li("bogen")} Paket: ${esc(p.name)}</h4>
+    ${p.posten.map((x,i)=>`<div class="mini-dash-row"><span>${esc(x.bezeichnung)}</span><b>${rechts(x,i)}</b></div>`).join("")}
+    <p class="muted-p" style="font-size:12px;margin:6px 0 0;">Vom Büro verkauft. Gefahren von gebucht (Einheiten à 45 Min.). Ändern nur im Büro.</p>
+  </div>`;
 }
 function theorieStandFuer(s){
   if(!window.KR||!KR.theorieSoll)return null;

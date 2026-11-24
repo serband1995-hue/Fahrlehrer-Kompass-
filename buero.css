@@ -708,6 +708,7 @@ body.kiosk .rollen-streifen{display:none;}
 .pr-tabelle tbody tr.pr-zeile:hover { background:transparent; }
 .pr-tabelle tr.pr-gruppe th { font-size:15px; text-transform:none; letter-spacing:0; color:var(--txt, inherit); padding:20px 12px 6px; border-bottom:2px solid var(--line-soft); white-space:normal; }
 .pr-tabelle tbody tr.pr-gruppe:first-child th { padding-top:8px; }
+.pr-tabelle tr.pr-gruppe .pr-gruppe-hinweis { font-weight:normal; margin-top:2px; }
 .pr-name b { margin-right:8px; }
 .pr-klasse { font-weight:600; }
 .pr-betrag { font-size:17px; font-weight:700; color:var(--txt); }
@@ -891,3 +892,22 @@ body.kiosk .rollen-streifen{display:none;}
   .bk-gesamt b{font-size:19px;}
   .bk-gesamt .klein{display:none;}
 }
+/* Werkstatt 13: Anmeldung im Schüler-Fenster (Normale Anmeldung oder Paket) */
+.bk-anmeldung{display:grid;gap:8px;border:1px solid var(--line-soft);border-radius:12px;padding:12px 14px;}
+.bk-anmeldung label{display:grid;gap:6px;font-weight:600;}
+.bk-anm-info{display:grid;gap:6px;}
+.bk-anm-info p{margin:0;}
+.bk-anm-info .knopf.klein{min-height:44px;}
+.bk-anm-posten{list-style:none;margin:0;padding:0;display:grid;gap:2px;}
+.bk-anm-posten li{display:flex;justify-content:space-between;gap:12px;padding:4px 0;border-bottom:1px solid var(--line-soft);}
+.bk-anm-posten li > span:first-child{overflow-wrap:anywhere;}
+.bk-anm-menge{white-space:nowrap;}
+.bk-anm-stand{display:block;color:var(--muted);font-size:14px;}
+.bk-anm-stand.fertig{color:var(--pill-gruen);font-weight:600;}
+.bk-anm-stand b{color:var(--txt, inherit);font-weight:700;}
+.bk-anm-stand .bk-anm-mehr{color:var(--pill-gelb);} /* das Offene hebt sich ab (Design 24.11.) */
+.bk-anm-verkauft{font-weight:600;}
+.bk-anm-posten li > span:last-child{white-space:nowrap;}
+.bk-anm-summe{display:flex;justify-content:space-between;align-items:baseline;gap:12px;}
+.bk-anm-summe b{font-size:19px;}
+.bk-anm-warn{color:var(--pill-gelb);font-weight:600;}

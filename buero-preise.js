@@ -78,6 +78,9 @@ function renderPreise() {
     const liste = [...pos.entries()].filter(([, z]) => z[0].art === art)
       .sort((a, b) => (a[1][0].klasse || "").localeCompare(b[1][0].klasse || "") || a[1][0].bezeichnung.localeCompare(b[1][0].bezeichnung, "de"));
     if (!liste.length) return "";
+    // Feste Paketpreise aus der Zeit vor dem Baukasten: zählen beim Verkauf nicht (Richter 24.11.: sonst zwei Preise für ein Paket)
+    const hinweis = art === "paket" && typeof bkDa === "function" && bkDa()
+      ? `<div class="leise klein pr-gruppe-hinweis">Nur zur Übersicht. Beim Verkauf gilt der Gesamtpreis aus dem Reiter „Pakete“.</div>` : "";
     const zeilen = liste.map(([k, z]) => {
       const jetzt = prZeileAm(z, heute);
       const kommend = z.filter((r) => r.gueltig_ab > heute);
@@ -87,7 +90,7 @@ function renderPreise() {
       const verlauf = z.slice().reverse().map((r) => `<li><b>${esc(prEuro(r.betrag_cent))}</b> ab ${esc(datumDE(r.gueltig_ab))}
           <div class="leise klein">eingetragen ${esc(datumDE(String(r.angelegt_am || "").slice(0, 10)))}${r.bearbeiter ? " von " + esc(r.bearbeiter) : r.angelegt_von ? " von " + esc(prWer(r.angelegt_von)) : ""}</div></li>`).join("");
       return `<tr class="pr-zeile">
-        <td class="pr-name">${name ? `<b>${esc(name)}</b>` : ""}${letzte.klasse ? `<span class="pr-klasse">Klasse ${esc(letzte.klasse)}</span>` : ""}${!name && !letzte.klasse ? `<b>${esc(letzte.bezeichnung)}</b>` : ""}
+        <td class="pr-name">${hinweis ? `<span class="marke-pill">nur Übersicht</span> ` : ""}${name ? `<b>${esc(name)}</b>` : ""}${letzte.klasse ? `<span class="pr-klasse">Klasse ${esc(letzte.klasse)}</span>` : ""}${!name && !letzte.klasse ? `<b>${esc(letzte.bezeichnung)}</b>` : ""}
           ${letzte.inhalt ? `<div class="leise klein">${esc(letzte.inhalt)}</div>` : ""}
           <details class="pr-verlauf"><summary class="klein">Verlauf (${z.length})</summary><ul>${verlauf}</ul></details></td>
         <td class="pr-preis">${jetzt ? `<span class="pr-betrag">${esc(prEuro(jetzt.betrag_cent))}</span><div class="leise klein">${esc(prEinheit(jetzt.einheit))} · seit ${esc(datumDE(jetzt.gueltig_ab))}</div>` : `<span class="leise">noch nicht gültig</span>`}</td>
@@ -95,7 +98,7 @@ function renderPreise() {
         <td class="pr-tun">${darf ? `<button class="knopf klein" type="button" data-pr-aendern="${esc(k)}">Ändern</button>` : ""}</td>
       </tr>`;
     }).join("");
-    return `<tr class="pr-gruppe"><th colspan="4" scope="colgroup">${esc(artName)}</th></tr>${zeilen}`;
+    return `<tr class="pr-gruppe"><th colspan="4" scope="colgroup">${esc(artName)}${hinweis}</th></tr>${zeilen}`;
   }).join("");
   return `<div class="karte">
     <div class="pr-kopf">${darf ? `<button class="knopf haupt" type="button" id="prNeu">Neuer Preis</button>` : `<span class="leise klein">Preise ändern Büro und Leitung.</span>`}

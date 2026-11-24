@@ -1,0 +1,430 @@
+// Test Werkstatt 13 Paket verkaufen (Schritt 1, Teil B): Büro-Schülerfenster „Normale Anmeldung“ oder Paket, Wechsel, Storno, Rückgängig;
+// App zeigt das verkaufte Paket nur lesend. Echter Browser mit erfundenen Daten (Attrappe), keine Datenbank.
+// Aufruf:  NODE_PATH=$(npm root -g) node scripts/paket-verkauf-test.mjs
+import { createRequire } from "node:module";
+import { createServer } from "node:http";
+import { readFile } from "node:fs/promises";
+import { extname, join, normalize } from "node:path";
+import { fileURLToPath } from "node:url";
+
+const require = createRequire(import.meta.url);
+const { bauDaten } = require("../buero-vorfuehrung.js");
+const { chromium } = require("playwright");
+const ROOT = join(fileURLToPath(new URL(".", import.meta.url)), "..");
+const TYPES = { ".html": "text/html", ".js": "text/javascript", ".css": "text/css", ".json": "application/json", ".png": "image/png" };
+const d0 = new Date(); const HEUTE = `${d0.getFullYear()}-${String(d0.getMonth() + 1).padStart(2, "0")}-${String(d0.getDate()).padStart(2, "0")}`;
+function tag(n) { const d = new Date(HEUTE + "T12:00:00"); d.setDate(d.getDate() + n); return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`; }
+
+const server = createServer(async (req, res) => {
+  try {
+    const pfad = normalize(decodeURIComponent(req.url.split("?")[0])).replace(/^(\.\.[/\\])+/, "");
+    const datei = await readFile(join(ROOT, pfad === "/" ? "buero.html" : pfad));
+    res.writeHead(200, { "Content-Type": TYPES[extname(pfad)] || "application/octet-stream" });
+    res.end(datei);
+  } catch { res.writeHead(404); res.end(); }
+});
+await new Promise((ok) => server.listen(0, "127.0.0.1", ok));
+const basis = `http://127.0.0.1:${server.address().port}/`;
+const fake = await readFile(join(ROOT, "buero-vorfuehrung.js"), "utf8");
+const browser = await chromium.launch(process.env.CHROMIUM_PATH ? { executablePath: process.env.CHROMIUM_PATH } : {}); // wie die anderen Tests: in GitHub ohne festen Pfad
+let ok = 0, schlecht = 0;
+function pruefe(name, bed, info) { if (bed) { ok++; console.log("ok  " + name); } else { schlecht++; console.log("FEHLER  " + name + (info ? " · " + info : "")); } }
+const PIN = { "Paula Muster": "7352" };
+
+async function oeffne({ nutzer, hash = "#schueler", vorbereiten, breite = 1366, hoehe = 860 }) {
+  const daten = bauDaten(HEUTE);
+  const session = { user: { id: nutzer, email: nutzer + "@example.org" } };
+  const ctx = await browser.newContext({ viewport: { width: breite, height: hoehe }, acceptDownloads: true });
+  const page = await ctx.newPage();
+  const konsole = [];
+  page.on("console", (m) => { if (m.type() === "error") konsole.push(m.text()); });
+  page.on("pageerror", (e) => konsole.push(String(e)));
+  await page.route("https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2", (r) => r.fulfill({ contentType: "text/javascript", body: fake }));
+  await page.route(/fonts\.(googleapis|gstatic)\.com/, (r) => r.fulfill({ status: 200, body: "" }));
+  await page.addInitScript(([d, s, v]) => {
+    window.__FAKE = { tabellen: d.tabellen, konten: d.konten, session: s };
+    if (v) (new Function("F", v))(window.__FAKE);
+  }, [daten, session, vorbereiten ? vorbereiten.toString().replace(/^[^{]*{/, "").replace(/}\s*$/, "") : ""]);
+  await page.goto(basis + "buero.html" + hash);
+  await page.waitForTimeout(400);
+  const frage = await page.waitForSelector("#wer:not([hidden])", { timeout: 1200 }).catch(() => null);
+  if (frage) {
+    await page.click(`#werListe button:has-text("Paula Muster")`);
+    await page.keyboard.type(PIN["Paula Muster"], { delay: 20 });
+    await page.waitForTimeout(400);
+  }
+  await page.waitForFunction(() => { const a = document.getElementById("ansicht"); return a && !/Daten werden geladen/.test(a.textContent); }, null, { timeout: 8000 }).catch(() => {});
+  if (process.env.BK_DEBUG) console.log("KONSOLE", konsole.join(" | "));
+  return { page, ctx, konsole };
+}
+
+// Preise (erfunden): Fahrstunde B 65 €, Grundbetrag B 350 €, Lernapp ohne Klasse 79 €; Überland B 80 €
+function preise(F) {
+  const fs = F.tabellen.fahrschulen[0].id, a = "2026-01-01T10:00:00Z";
+  F.tabellen.fahrschule_preise = [
+    { id: "p3", fahrschule_id: fs, art: "fahrstunde", klasse: "B", bezeichnung: "Übungsfahrstunde", einheit: "45min", betrag_cent: 6500, gueltig_ab: "2026-01-01", angelegt_von: "ad-1", angelegt_am: a },
+    { id: "p5", fahrschule_id: fs, art: "grundbetrag", klasse: "B", bezeichnung: "Grundbetrag", einheit: "pauschal", betrag_cent: 35000, gueltig_ab: "2026-01-01", angelegt_von: "ad-1", angelegt_am: a },
+    { id: "p6", fahrschule_id: fs, art: "lernapp", klasse: null, bezeichnung: "Fahr-Akademie Lernapp", einheit: "pauschal", betrag_cent: 7900, gueltig_ab: "2026-01-01", angelegt_von: "ad-1", angelegt_am: a },
+    { id: "p7", fahrschule_id: fs, art: "sonderfahrt", klasse: "B", bezeichnung: "Autobahnfahrt", einheit: "45min", betrag_cent: 8000, gueltig_ab: "2026-01-01", angelegt_von: "ad-1", angelegt_am: a },
+  ];
+}
+const altDb = function () { F.tabellen.fahrschule_pakete.forEach((p) => { delete p.posten; delete p.klasse; delete p.aktualisiert_am; delete p.bearbeiter; }); };
+const dlgSel = "dialog[open]";
+async function chip(page, text) { await page.locator(dlgSel).last().locator(`[data-bk-dazu]`, { hasText: text }).first().click(); await page.waitForTimeout(80); }
+async function gesamt(page) { return (await page.locator(dlgSel).last().locator("[data-bk-gesamt]").innerText()).replace(/\s/g, " ").trim(); }
+const pakete = (page) => page.evaluate(() => window.__FAKE.tabellen.fahrschule_pakete);
+
+const S1 = "s1";
+const sp = (page) => page.evaluate(() => window.__FAKE.tabellen.schueler_pakete || []);
+const rpcs = (page, n) => page.evaluate((n) => window.__FAKE.log.filter((x) => x.rpc === n).map((x) => x.args), n);
+const schueler = (page, id) => page.evaluate((id) => window.__FAKE.tabellen.schueler.find((s) => s.id === id), id);
+async function oeffneAkte(page, id) { await page.evaluate((id) => schuelerDialog(id), id); await page.waitForTimeout(150); return page.locator(dlgSel).last(); }
+async function waehle(d, text) {
+  const v = await d.locator("[data-bk-wahl] option").evaluateAll((o, t) => { const x = o.find((y) => y.value.startsWith("v:") && y.textContent.includes(t)) || o.find((y) => y.textContent.includes(t)); return x ? x.value : null; }, text);
+  if (v == null) throw new Error("Option fehlt: " + text);
+  await d.locator("[data-bk-wahl]").selectOption(v); await d.page().waitForTimeout(100);
+}
+const mitVerkauf = function () {
+  preise(F);
+  const fs = F.tabellen.fahrschulen[0].id;
+  F.tabellen.fahrschule_pakete.push({ id: "p-einzel", fahrschule_id: fs, name: "Einzelabrechnung (ohne Paket)", reihenfolge: 3, aktiv: true, klasse: null, posten: [] });
+  F.tabellen.fahrschule_pakete.push({ id: "p-2", fahrschule_id: fs, name: "Boost-Paket 2", reihenfolge: 2, aktiv: true, klasse: "B", posten: [{ art: "fahrstunde", bezeichnung: "Übungsstunden", anzahl: 30, preis_cent_fest: 6000 }] });
+  F.tabellen.schueler_pakete = [];
+};
+const mitVerkauftem = function () {
+  F.tabellen.schueler_pakete.push({ id: "sp-alt", fahrschule_id: F.tabellen.fahrschulen[0].id, schueler_id: "s1", vorlage_id: "p-1", name: "Boost-Paket 1", klasse: "B",
+    posten: [{ art: "grundbetrag", bezeichnung: "Grundbetrag", anzahl: 1, preis_cent: 30000 }, { art: "fahrstunde", bezeichnung: "Übungsstunden", anzahl: 20, preis_cent: 6000 }],
+    gesamt_cent: 150000, verkauft_am: "2026-10-01T10:00:00Z", verkauft_von: "bu-1", bearbeiter: "Mia Muster", storniert_am: null });
+  F.tabellen.schueler.find((s) => s.id === "s1").paket_id = "p-1";
+};
+// Vorbereitungen als eine Funktion (preise + Zusatz)
+function vb(zusatz) {
+  const p = preise.toString().replace(/^[^{]*{/, "").replace(/}\s*$/, "");
+  const m = mitVerkauf.toString().replace(/^[^{]*{/, "").replace(/}\s*$/, "").replace("preise(F);", "{" + p + "}");
+  const z = zusatz ? zusatz.toString().replace(/^[^{]*{/, "").replace(/}\s*$/, "") : "";
+  return new Function("F", "{" + m + "}\n{" + z + "}");
+}
+
+try {
+  // V1 Neuer Schüler mit Paket aus der Vorlage, Preise werden festgeschrieben, Rückgängig storniert
+  {
+    const { page, ctx, konsole } = await oeffne({ nutzer: "bu-1", vorbereiten: vb() });
+    await page.evaluate(() => schuelerDialog(null)); await page.waitForTimeout(150);
+    const d = page.locator(dlgSel).last();
+    pruefe("V1a Schüler anlegen: „Anmeldung“ statt alter Paket-Auswahl, Vorgabe „Normale Anmeldung“", await d.locator('select[name="paket_id"]').count() === 0 && /Normale Anmeldung/.test(await d.locator("[data-bk-wahl] option:checked").innerText()));
+    const opt = await d.locator("[data-bk-wahl] option").allInnerTexts();
+    pruefe("V1b Auswahl: Vorlagen in Reihenfolge, ohne „Einzelabrechnung“, ohne archivierte", !opt.some((o) => /Einzelabrechnung/.test(o)) && opt.findIndex((o) => /Boost-Paket 1/.test(o)) < opt.findIndex((o) => /Boost-Paket 2/.test(o)), opt.join(" | "));
+    await d.locator('input[name="name"]').fill("Erika Erfunden");
+    await waehle(d, "Boost-Paket 1");
+    const info = await d.locator("[data-bk-anm-info]").innerText();
+    pruefe("V1c Info: Posten mit Preisen aus der Liste und Gesamt 1.650,00 €", /20 × Übungsstunden/.test(info) && /1\.300,00/.test(info) && /1\.650,00\s*€/.test(info) && /beim Speichern verkauft/.test(info), info);
+    await d.locator("button[value=ok]").click(); await page.waitForTimeout(400);
+    const neu = (await page.evaluate(() => window.__FAKE.tabellen.schueler)).find((s) => s.name === "Erika Erfunden");
+    const r = await rpcs(page, "schueler_paket_verkaufen");
+    pruefe("V1d gespeichert: ein Verkauf mit festen Preisen in Cent", !!neu && r.length === 1 && r[0].p_schueler === neu.id && r[0].p_vorlage === "p-1"
+      && JSON.stringify(r[0].p_posten) === JSON.stringify([{ art: "grundbetrag", bezeichnung: "Grundbetrag", anzahl: 1, preis_cent: 35000 }, { art: "fahrstunde", bezeichnung: "Übungsstunden", anzahl: 20, preis_cent: 6500 }]), JSON.stringify(r));
+    pruefe("V1e Schüler zeigt auf die Vorlage, Paket aktiv, Gesamt 165000 Cent", !!neu && neu.paket_id === "p-1" && (await sp(page)).filter((x) => !x.storniert_am && x.schueler_id === neu.id && x.gesamt_cent === 165000).length === 1);
+    pruefe("V1f kein Fenster offen, Hinweis „verkauft“ mit Rückgängig", await page.locator(dlgSel).count() === 0 && /verkauft/.test(await page.locator(".toast-undo").innerText()));
+    await page.locator(".toast-undo [data-undo]").click(); await page.waitForTimeout(300);
+    pruefe("V1g Rückgängig: Paket storniert, Schüler ohne Paket", (await sp(page)).filter((x) => !x.storniert_am).length === 0 && (await schueler(page, neu.id)).paket_id === null);
+    pruefe("V1h keine Konsolenfehler", !konsole.length, konsole.join(" | "));
+    await ctx.close();
+  }
+  // V2 Preis fehlt: Speichern gesperrt, „Anpassen“ im Baukasten, eigener Preis wird verkauft
+  {
+    const { page, ctx } = await oeffne({ nutzer: "ad-1", vorbereiten: vb(function () { F.tabellen.fahrschule_preise = F.tabellen.fahrschule_preise.filter((p) => p.art !== "grundbetrag"); }) });
+    const d = await oeffneAkte(page, S1);
+    await waehle(d, "Boost-Paket 1");
+    pruefe("V2a Hinweis „Preis fehlt bei: Grundbetrag“", /Preis fehlt bei: Grundbetrag/.test(await d.locator("[data-bk-anm-info]").innerText()));
+    await d.locator("button[value=ok]").click(); await page.waitForTimeout(250);
+    pruefe("V2b Speichern gesperrt (kein Verkauf, Fenster bleibt offen)", (await rpcs(page, "schueler_paket_verkaufen")).length === 0 && await page.locator(dlgSel).count() === 1);
+    await d.locator("[data-bk-anpassen]").click(); await page.waitForTimeout(150);
+    const e = page.locator(dlgSel).last();
+    pruefe("V2c Baukasten öffnet sich mit „Übernehmen“", /Übernehmen/.test(await e.locator("button[value=ok]").innerText()) && await e.locator(".bk-posten").count() === 2);
+    await e.locator("button[value=ok]").click(); await page.waitForTimeout(150);
+    pruefe("V2d Übernehmen ohne Preis geht nicht", await page.locator(dlgSel).count() === 2);
+    await e.locator('[data-bk-preis="0"]').fill("299");
+    await e.locator('input[name="name"]').fill("Boost-Paket 1 Sonderpreis");
+    await e.locator("button[value=ok]").click(); await page.waitForTimeout(150);
+    pruefe("V2e zurück im Schülerfenster: „(angepasst)“ gewählt, Gesamt 1.599,00 €", await page.locator(dlgSel).count() === 1 && /angepasst/.test(await d.locator("[data-bk-wahl] option:checked").innerText()) && /1\.599,00\s*€/.test(await d.locator("[data-bk-anm-info]").innerText()));
+    await d.locator("button[value=ok]").click(); await page.waitForTimeout(400);
+    const r = await rpcs(page, "schueler_paket_verkaufen");
+    pruefe("V2f verkauft mit eigenem Namen und Preis (Vorlage bleibt verknüpft)", r.length === 1 && r[0].p_name === "Boost-Paket 1 Sonderpreis" && r[0].p_vorlage === "p-1" && r[0].p_posten[0].preis_cent === 29900, JSON.stringify(r));
+    const vorlage = (await page.evaluate(() => window.__FAKE.tabellen.fahrschule_pakete)).find((p) => p.id === "p-1");
+    pruefe("V2g Vorlage selbst unverändert", vorlage.name === "Boost-Paket 1" && vorlage.posten[0].preis_cent_fest === null);
+    await ctx.close();
+  }
+  // V3 Verkauftes Paket bleibt fest; Normale Anmeldung storniert; Rückgängig holt es zurück
+  {
+    const { page, ctx, konsole } = await oeffne({ nutzer: "bu-1", vorbereiten: vb(mitVerkauftem) });
+    const d = await oeffneAkte(page, S1);
+    const t = await d.locator("[data-bk-anm-info]").innerText();
+    pruefe("V3a Akte: Auswahl „… · seit 01.10.“, darunter „Verkauft am 01.10.2026“, feste Preise (Gesamt 1.500,00 € statt Liste 1.650,00 €)", /· seit 01\.10\.$/.test((await d.locator("[data-bk-wahl] option:checked").innerText()).trim()) && /^Verkauft am 01\.10\.2026/.test((await d.locator(".bk-anm-verkauft").innerText()).trim()) && /1\.500,00\s*€/.test(t) && !/1\.650/.test(t), t);
+    await d.locator('input[name="telefon"]').fill("0151 0000000");
+    await d.locator("button[value=ok]").click(); await page.waitForTimeout(350);
+    pruefe("V3b anderes Feld speichern: Paket bleibt (kein Aufruf, paket_id gleich)", (await rpcs(page, "schueler_paket_verkaufen")).length === 0 && (await rpcs(page, "schueler_paket_aktivieren")).length === 0 && (await schueler(page, S1)).paket_id === "p-1");
+    const d2 = await oeffneAkte(page, S1);
+    await waehle(d2, "Normale Anmeldung");
+    pruefe("V3c Hinweis: wird storniert, Rückgängig möglich", /storniert/.test(await d2.locator("[data-bk-anm-info]").innerText()));
+    await d2.locator("button[value=ok]").click(); await page.waitForTimeout(350);
+    pruefe("V3d Storno: kein aktives Paket, paket_id leer", (await sp(page)).every((x) => x.storniert_am) && (await schueler(page, S1)).paket_id === null);
+    await page.locator(".toast-undo [data-undo]").click(); await page.waitForTimeout(300);
+    pruefe("V3e Rückgängig: altes Paket wieder aktiv, paket_id zurück", (await sp(page)).find((x) => x.id === "sp-alt").storniert_am === null && (await schueler(page, S1)).paket_id === "p-1");
+    pruefe("V3f keine Konsolenfehler", !konsole.length, konsole.join(" | "));
+    await ctx.close();
+  }
+  // V4 Wechsel auf ein anderes Paket, Rückgängig; „Paket ändern“ übernimmt die festen Preise
+  {
+    const { page, ctx } = await oeffne({ nutzer: "ad-1", vorbereiten: vb(mitVerkauftem) });
+    const d = await oeffneAkte(page, S1);
+    await waehle(d, "Boost-Paket 2");
+    pruefe("V4a Hinweis „ersetzt „Boost-Paket 1““", /ersetzt „Boost-Paket 1“/.test(await d.locator("[data-bk-anm-info]").innerText()));
+    await d.locator("button[value=ok]").click(); await page.waitForTimeout(350);
+    const aktiv = (await sp(page)).filter((x) => !x.storniert_am);
+    pruefe("V4b Wechsel: genau ein aktives Paket (Boost-Paket 2, 1.800,00 €), altes storniert", aktiv.length === 1 && aktiv[0].name === "Boost-Paket 2" && aktiv[0].gesamt_cent === 180000 && (await schueler(page, S1)).paket_id === "p-2");
+    await page.locator(".toast-undo [data-undo]").click(); await page.waitForTimeout(300);
+    const aktiv2 = (await sp(page)).filter((x) => !x.storniert_am);
+    pruefe("V4c Rückgängig: wieder Boost-Paket 1", aktiv2.length === 1 && aktiv2[0].id === "sp-alt" && (await schueler(page, S1)).paket_id === "p-1");
+    const d2 = await oeffneAkte(page, S1);
+    await d2.locator("[data-bk-anpassen]").click(); await page.waitForTimeout(150);
+    const e = page.locator(dlgSel).last();
+    pruefe("V4d „Paket ändern“: feste Preise als eigene Preise (300 €, 60 €)", (await e.locator('[data-bk-preis="0"]').inputValue()).startsWith("300") && (await e.locator('[data-bk-preis="1"]').inputValue()).startsWith("60") && /Eigener Preis/.test(await e.locator('[data-bk-hinweis="0"]').innerText()));
+    await e.locator("[data-schliessen]").first().click(); await page.waitForTimeout(100);
+    await ctx.close();
+  }
+  // V5 Leere Vorlage (Turboboost) und archivierte Vorlage
+  {
+    const { page, ctx } = await oeffne({ nutzer: "bu-1", vorbereiten: vb(function () { F.tabellen.fahrschule_pakete.find((p) => p.id === "p-2").aktiv = false; }) });
+    const d = await oeffneAkte(page, S1);
+    const opt = await d.locator("[data-bk-wahl] option").allInnerTexts();
+    pruefe("V5a archiviertes Paket nicht in der Auswahl", !opt.some((o) => /Boost-Paket 2/.test(o)), opt.join(" | "));
+    await waehle(d, "Turboboost");
+    const t5 = await d.innerText();
+    await d.locator("button[value=ok]").click(); await page.waitForTimeout(350);
+    pruefe("V5b leere Vorlage (Turboboost): nur zugeordnet wie bisher, kein Verkauf, paket_id gesetzt", /nur zugeordnet/.test(t5) && (await rpcs(page, "schueler_paket_verkaufen")).length === 0 && await page.locator(dlgSel).count() === 0 && (await schueler(page, S1)).paket_id === "p-turbo", [t5.slice(0, 200), (await schueler(page, S1)).paket_id]);
+    await ctx.close();
+  }
+  // V6 Alte Datenbank (Tabelle schueler_pakete fehlt): alte Paket-Auswahl wie bisher
+  {
+    const { page, ctx, konsole } = await oeffne({ nutzer: "bu-1", vorbereiten: vb(function () { F.fehler = { schueler_pakete: 'relation "public.schueler_pakete" does not exist' }; }) });
+    const d = await oeffneAkte(page, S1);
+    pruefe("V6a alte DB: alte Auswahl „Paket“, keine Anmeldung", await d.locator('select[name="paket_id"]').count() === 1 && await d.locator("[data-bk-anm]").count() === 0);
+    await d.locator('select[name="paket_id"]').selectOption("p-1");
+    await d.locator("button[value=ok]").click(); await page.waitForTimeout(300);
+    pruefe("V6b alte DB: Paket wird wie bisher direkt zugeordnet", (await schueler(page, S1)).paket_id === "p-1" && (await rpcs(page, "schueler_paket_verkaufen")).length === 0);
+    pruefe("V6c alte DB: keine Konsolenfehler", !konsole.length, konsole.join(" | "));
+    await ctx.close();
+  }
+  // V7 Handy 360 px: Schülerfenster mit Paket ohne Überstand
+  {
+    const { page, ctx } = await oeffne({ nutzer: "bu-1", vorbereiten: vb(mitVerkauftem), breite: 360, hoehe: 740 });
+    const d = await oeffneAkte(page, S1);
+    const m = await page.evaluate(() => { const d = [...document.querySelectorAll("dialog[open]")].pop(); const b = d.querySelector("[data-bk-anm]"); const r = b.getBoundingClientRect(); const knopf = b.querySelector("[data-bk-anpassen]"); return { rechts: r.right <= d.getBoundingClientRect().right + 1, scroll: d.querySelector(".dialog-inhalt").scrollWidth - d.querySelector(".dialog-inhalt").clientWidth, knopf: knopf ? knopf.getBoundingClientRect().height : 0 }; });
+    pruefe("V7 360 px: Block passt, kein Querscrollen, Knopf ≥ 44 px", m.rechts && m.scroll <= 1 && m.knopf >= 43.5, JSON.stringify(m));
+    await ctx.close();
+  }
+  // V9 Schritt 2: „noch offen“ je Posten aus dem Büro-Kalender (Fahrlehrer ohne App → Sonderfahrten aus dem Kalender)
+  {
+    const { page, ctx } = await oeffne({ nutzer: "bu-1", vorbereiten: vb(function () {
+      F.tabellen.schueler_pakete.push({ id: "sp-alt", fahrschule_id: F.tabellen.fahrschulen[0].id, schueler_id: "s1", vorlage_id: "p-1", name: "Boost-Paket 1", klasse: "B",
+        posten: [{ art: "grundbetrag", bezeichnung: "Grundbetrag", anzahl: 1, preis_cent: 30000 }, { art: "fahrstunde", bezeichnung: "Übungsstunden", anzahl: 20, preis_cent: 6000 }, { art: "sonderfahrt", bezeichnung: "Überlandfahrt", anzahl: 5, preis_cent: 7000 }],
+        gesamt_cent: 185000, verkauft_am: "2026-10-01T10:00:00Z", bearbeiter: "Mia Muster", storniert_am: null });
+      const s = F.tabellen.schueler.find((x) => x.id === "s1"); s.paket_id = "p-1"; s.ausbildung = {};
+      const fl = F.tabellen.profiles.find((p) => p.id === s.fahrlehrer_id); if (fl) fl.ohne_app = true;
+      const tag = (n) => { const d = new Date(); d.setDate(d.getDate() - n); return d.toISOString().slice(0, 10); };
+      F.tabellen.kalender_termine = F.tabellen.kalender_termine.filter((t) => t.schueler_id !== "s1").concat([
+        { id: "kt-a", fahrschule_id: s.fahrschule_id, fahrlehrer_id: s.fahrlehrer_id, schueler_id: "s1", art: "fahrstunde", datum: tag(5), von: "10:00", bis: "11:30", status: "geplant", geloescht: false, payload: {} },
+        { id: "kt-b", fahrschule_id: s.fahrschule_id, fahrlehrer_id: s.fahrlehrer_id, schueler_id: "s1", art: "fahrstunde", datum: tag(4), von: "10:00", bis: "10:45", status: "geplant", geloescht: false, payload: { status: "abgebrochen" } },
+        { id: "kt-c", fahrschule_id: s.fahrschule_id, fahrlehrer_id: s.fahrlehrer_id, schueler_id: "s1", art: "sonder", datum: tag(3), von: "10:00", bis: "11:30", status: "geplant", geloescht: false, payload: { sonderArt: "ueberland" } },
+        { id: "kt-d", fahrschule_id: s.fahrschule_id, fahrlehrer_id: s.fahrlehrer_id, schueler_id: "s1", art: "fahrstunde", datum: tag(-3), von: "10:00", bis: "11:30", status: "geplant", geloescht: false, payload: {} },
+      ]);
+    }) });
+    const d = await oeffneAkte(page, S1);
+    const t = await d.locator("[data-bk-anm-info]").innerText();
+    pruefe("V9 Akte: „2 von 20 gefahren · noch 18 offen“ und „2 von 5 gefahren · noch 3 offen“, Grundbetrag ohne Zähler", /2 von 20 gefahren · noch 18 offen/.test(t) && /2 von 5 gefahren · noch 3 offen/.test(t) && !/Grundbetrag[^\n]*(gefahren|offen)/.test(t), t);
+    await ctx.close();
+  }
+  // V8 Fahrschulwechsel setzt die verkauften Pakete zurück (keine fremden Pakete in der neuen Schule)
+  {
+    const { page, ctx } = await oeffne({ nutzer: "bu-1", vorbereiten: vb(mitVerkauftem) });
+    const vorher = await page.evaluate(() => (S.verkauft || []).length);
+    const src = await readFile(join(ROOT, "buero.js"), "utf8");
+    pruefe("V8 geladen: 1 aktives Paket; Schulwechsel setzt S.verkauft = null", vorher === 1 && /S\.bkFehlt = false; S\.verkauft = null;/.test(src));
+    await ctx.close();
+  }
+  // V10 Preisliste: alte feste Paketpreise sind als „nur zur Übersicht“ gekennzeichnet (beim Verkauf gilt der Baukasten)
+  {
+    const paketPreis = function () { const fs = F.tabellen.fahrschulen[0].id; F.tabellen.fahrschule_preise.push({ id: "pp", fahrschule_id: fs, art: "paket", klasse: "B", bezeichnung: "Komfort", einheit: "paket", betrag_cent: 199900, gueltig_ab: "2026-01-01", angelegt_von: "ad-1", angelegt_am: "2026-01-01T10:00:00Z" }); };
+    const { page, ctx } = await oeffne({ nutzer: "ad-1", hash: "#preise", vorbereiten: vb(paketPreis) });
+    const t = await page.locator("#ansicht").innerText();
+    pruefe("V10a Gruppe „Pakete“: Hinweis, dass der Baukasten gilt", /Beim Verkauf gilt der Gesamtpreis aus dem Reiter „Pakete“/.test(t));
+    await ctx.close();
+    const paketPreisAlt = function () { const fs = F.tabellen.fahrschulen[0].id; F.tabellen.fahrschule_preise.push({ id: "pp", fahrschule_id: fs, art: "paket", klasse: "B", bezeichnung: "Komfort", einheit: "paket", betrag_cent: 199900, gueltig_ab: "2026-01-01", angelegt_von: "ad-1", angelegt_am: "2026-01-01T10:00:00Z" }); F.tabellen.fahrschule_pakete.forEach((p) => { delete p.posten; delete p.klasse; delete p.aktualisiert_am; delete p.bearbeiter; }); };
+    const alt = await oeffne({ nutzer: "ad-1", hash: "#preise", vorbereiten: vb(paketPreisAlt) });
+    pruefe("V10b alte Datenbank: kein Hinweis", !/Beim Verkauf gilt/.test(await alt.page.locator("#ansicht").innerText()));
+    await alt.ctx.close();
+  }
+  // V11 (Fable W1) Vorlage archiviert: „Paket ändern“ verkauft als freies Paket statt für immer zu scheitern
+  {
+    const { page, ctx } = await oeffne({ nutzer: "bu-1", vorbereiten: vb(function () {
+      F.tabellen.schueler_pakete.push({ id: "sp-alt", fahrschule_id: F.tabellen.fahrschulen[0].id, schueler_id: "s1", vorlage_id: "p-1", name: "Boost-Paket 1", klasse: "B",
+        posten: [{ art: "grundbetrag", bezeichnung: "Grundbetrag", anzahl: 1, preis_cent: 30000 }, { art: "fahrstunde", bezeichnung: "Übungsstunden", anzahl: 20, preis_cent: 6000 }],
+        gesamt_cent: 150000, verkauft_am: "2026-10-01T10:00:00Z", bearbeiter: "Mia Muster", storniert_am: null });
+      F.tabellen.schueler.find((s) => s.id === "s1").paket_id = "p-1";
+      F.tabellen.fahrschule_pakete.find((p) => p.id === "p-1").aktiv = false;
+    }) });
+    const d = await oeffneAkte(page, S1);
+    await d.locator("[data-bk-anpassen]").click(); await page.waitForTimeout(150);
+    const e = page.locator(dlgSel).last();
+    await e.locator('[data-bk-anzahl="1"]').fill("25"); await e.locator('[data-bk-anzahl="1"]').dispatchEvent("change");
+    await e.locator("button[value=ok]").click(); await page.waitForTimeout(150);
+    await d.locator("button[value=ok]").click(); await page.waitForTimeout(400);
+    const aufrufe = await rpcs(page, "schueler_paket_verkaufen"), aktiv = (await sp(page)).filter((x) => !x.storniert_am);
+    pruefe("V11 archivierte Vorlage: verkauft ohne Vorlage, 25 Stunden, kein Fehler", aufrufe.length === 1 && aufrufe[0].p_vorlage === null && aktiv.length === 1 && aktiv[0].posten[1].anzahl === 25 && !/nicht verkauft/.test(await page.locator("body").innerText()), [aufrufe, aktiv.map((x) => x.posten)]);
+    await ctx.close();
+  }
+  // V12 (Fable W2) Nur zugeordnet (z. B. Turboboost), versehentlich verkauft, Rückgängig: die Zuordnung ist wieder da
+  {
+    const { page, ctx } = await oeffne({ nutzer: "bu-1", vorbereiten: vb(function () { F.tabellen.schueler.find((s) => s.id === "s1").paket_id = "p-2"; }) });
+    const d = await oeffneAkte(page, S1);
+    await waehle(d, "Boost-Paket 1");
+    await d.locator("button[value=ok]").click(); await page.waitForTimeout(400);
+    const nach = (await schueler(page, S1)).paket_id;
+    await page.locator(".toast-undo [data-undo]").click(); await page.waitForTimeout(400);
+    pruefe("V12 Rückgängig nach Verkauf: kein aktives Paket, Zuordnung „Boost-Paket 2“ zurück", nach === "p-1" && (await sp(page)).every((x) => x.storniert_am) && (await schueler(page, S1)).paket_id === "p-2", [nach, (await schueler(page, S1)).paket_id]);
+    await ctx.close();
+  }
+  // V13 (Fable W7) „Paket ändern“ und „Übernehmen“ ohne Änderung: nichts wird neu verkauft
+  {
+    const { page, ctx } = await oeffne({ nutzer: "bu-1", vorbereiten: vb(mitVerkauftem) });
+    const d = await oeffneAkte(page, S1);
+    await d.locator("[data-bk-anpassen]").click(); await page.waitForTimeout(150);
+    await page.locator(dlgSel).last().locator("button[value=ok]").click(); await page.waitForTimeout(150);
+    pruefe("V13a Hinweis „Nichts geändert“, Auswahl bleibt beim verkauften Paket", /Nichts geändert/.test(await page.locator("body").innerText()) && (await d.locator("[data-bk-wahl]").inputValue()) === "bleibt");
+    await d.locator("button[value=ok]").click(); await page.waitForTimeout(350);
+    pruefe("V13b kein neuer Verkauf", (await rpcs(page, "schueler_paket_verkaufen")).length === 0 && (await sp(page)).length === 1);
+    await ctx.close();
+  }
+  // V14 (Prüfer Büro 1) Schülerliste zeigt das verkaufte Paket, auch wenn ein alter App-Stand paket_id überschrieben hat
+  {
+    const { page, ctx } = await oeffne({ nutzer: "bu-1", vorbereiten: vb(function () {
+      F.tabellen.schueler_pakete.push({ id: "sp-alt", fahrschule_id: F.tabellen.fahrschulen[0].id, schueler_id: "s1", vorlage_id: "p-1", name: "Boost-Paket 1", klasse: "B",
+        posten: [{ art: "fahrstunde", bezeichnung: "Übungsstunden", anzahl: 20, preis_cent: 6000 }], gesamt_cent: 120000, verkauft_am: "2026-10-01T10:00:00Z", storniert_am: null });
+      F.tabellen.schueler.find((s) => s.id === "s1").paket_id = "p-2";
+    }) });
+    const name = (await schueler(page, S1)).name;
+    const zeile = await page.locator("tr", { hasText: name }).first().innerText();
+    pruefe("V14 Liste: „Boost-Paket 1“ (verkauft), nicht „Boost-Paket 2“", /Boost-Paket 1/.test(zeile) && !/Boost-Paket 2/.test(zeile), zeile);
+    await ctx.close();
+  }
+  // V15 (mit W14) Konflikt in einem anderen Feld: Fenster bleibt offen, das Paket ist schon verkauft, zweites Speichern verkauft nicht noch einmal
+  {
+    const { page, ctx } = await oeffne({ nutzer: "bu-1", vorbereiten: vb() });
+    const d = await oeffneAkte(page, S1);
+    await waehle(d, "Boost-Paket 2");
+    await d.locator('input[name="telefon"]').fill("0151 1111111");
+    await page.evaluate(() => { window.__FAKE.tabellen.schueler.find((s) => s.id === "s1").telefon = "0151 2222222"; }); // inzwischen woanders geändert
+    await d.locator("button[value=ok]").click(); await page.waitForTimeout(500);
+    const offen = await page.locator(dlgSel).count();
+    const n1 = (await rpcs(page, "schueler_paket_verkaufen")).length;
+    if (offen) { await page.locator(dlgSel).last().locator("button[value=ok]").click(); await page.waitForTimeout(500); }
+    const n2 = (await rpcs(page, "schueler_paket_verkaufen")).length;
+    pruefe("V15 Konflikt beim Telefon: Fenster bleibt offen, Paket einmal verkauft, zweites Speichern verkauft nicht neu", offen === 1 && n1 === 1 && n2 === 1 && (await sp(page)).filter((x) => !x.storniert_am).length === 1, [offen, n1, n2]);
+    const kasten = await page.locator("dialog[open] [data-aktekonflikt]").allInnerTexts().catch(() => []);
+    pruefe("V15b nach dem zweiten Speichern: paket_id bleibt beim verkauften Paket, kein Konflikt-Hinweis zum Paket", (await schueler(page, S1)).paket_id === "p-2" && !kasten.some((t) => /Paket/.test(t)), [(await schueler(page, S1)).paket_id, kasten]);
+    await ctx.close();
+  }
+  // V16 Verkauftes Paket, dann Turboboost (ohne Posten) wählen: verkauftes wird storniert, Turboboost zugeordnet; Rückgängig holt das verkaufte zurück
+  {
+    const { page, ctx } = await oeffne({ nutzer: "bu-1", vorbereiten: vb(mitVerkauftem) });
+    const d = await oeffneAkte(page, S1);
+    await waehle(d, "Turboboost");
+    const t16 = await d.locator("[data-bk-anm-info]").innerText();
+    await d.locator("button[value=ok]").click(); await page.waitForTimeout(450);
+    const nachZu = { aktiv: (await sp(page)).filter((x) => !x.storniert_am).length, paket: (await schueler(page, S1)).paket_id };
+    await page.locator(".toast-undo [data-undo]").click(); await page.waitForTimeout(400);
+    const nachUndo = { aktiv: (await sp(page)).filter((x) => !x.storniert_am).map((x) => x.id), paket: (await schueler(page, S1)).paket_id };
+    pruefe("V16 Turboboost statt verkauftem Paket: Hinweis Storno, danach zugeordnet; Rückgängig: verkauftes wieder aktiv", /storniert/.test(t16) && /nur zugeordnet/.test(t16) && nachZu.aktiv === 0 && nachZu.paket === "p-turbo" && nachUndo.aktiv.join() === "sp-alt" && nachUndo.paket === "p-1", [nachZu, nachUndo]);
+    await ctx.close();
+  }
+  // V17 (Richter) Nur das Paket gewählt, sonst nichts geändert: kein „Nichts geändert“ neben „verkauft“
+  {
+    const { page, ctx } = await oeffne({ nutzer: "bu-1", vorbereiten: vb() });
+    const d = await oeffneAkte(page, S1);
+    await waehle(d, "Boost-Paket 2");
+    await d.locator("button[value=ok]").click(); await page.waitForTimeout(450);
+    const t17 = await page.locator("body").innerText();
+    pruefe("V17 nur Verkauf: „verkauft“ ja, „Nichts geändert“ nein", /verkauft/.test(t17) && !/Nichts geändert/.test(t17), t17.slice(-300));
+    await ctx.close();
+  }
+} catch (e) { schlecht++; console.log("FEHLER  Test-Ausnahme: " + (e && e.stack || e)); }
+
+// App: Karte „Paket“ in der Akte des Fahrlehrers (nur lesen, ohne Preise)
+try {
+  const appServer = createServer(async (req, res) => {
+    try {
+      const pfad = normalize(decodeURIComponent(req.url.split("?")[0])).replace(/^(\.\.[/\\])+/, "");
+      const datei = await readFile(join(ROOT, pfad === "/" ? "index.html" : pfad));
+      res.writeHead(200, { "Content-Type": TYPES[extname(pfad)] || "application/octet-stream" }); res.end(datei);
+    } catch { res.writeHead(404); res.end(); }
+  });
+  await new Promise((ok) => appServer.listen(0, "127.0.0.1", ok));
+  const ab = `http://127.0.0.1:${appServer.address().port}/`;
+  const ctx = await browser.newContext({ viewport: { width: 360, height: 780 }, isMobile: true, hasTouch: true, locale: "de-DE", timezoneId: "Europe/Berlin" });
+  const page = await ctx.newPage();
+  const jsF = []; page.on("pageerror", (e) => jsF.push(e.message));
+  await page.route("**/*", (r) => (r.request().url().startsWith(ab) ? r.continue() : r.abort()));
+  await page.goto(ab + "index.html", { waitUntil: "load", timeout: 20000 }); await page.waitForTimeout(600);
+  const erg = await page.evaluate(async () => {
+    for (const id of ["loginOverlay", "splash"]) { const e = document.getElementById(id); if (e) e.style.display = "none"; }
+    ensureAusbildungsplaene(); ensureDB();
+    const c = DB.ausbildungsplaene.find((p) => p.standard) || DB.ausbildungsplaene[0];
+    DB.students = ["a1", "a2"].map((id) => ({ id, name: id === "a1" ? "Anna Erfunden" : "Arne Erfunden", form: "B", created: Date.now(), plan: newPlan(), planId: c.id, planSnapshot: JSON.parse(JSON.stringify(c.stufen)), telefon: "" }));
+    DB.lessons = []; DB.termine = []; DB.exams = []; save();
+    // Attrappe: schueler_pakete (eine Zeile für a1, mit Preisen – die App zeigt sie nicht)
+    const zeilen = [{ schueler_id: "a1", name: "Boost-Paket B", posten: [{ art: "fahrstunde", bezeichnung: "Übungsstunden", anzahl: 20, preis_cent: 6500 }, { art: "sonderfahrt", bezeichnung: "Überlandfahrt", anzahl: 5, preis_cent: 8000 }] }];
+    const q = (fehler) => { const o = { select: () => o, in: () => o, is: () => o, then: (f) => f(fehler ? { data: null, error: { message: 'relation "public.schueler_pakete" does not exist' } } : { data: zeilen, error: null }) }; return o; };
+    await _ladePakete({ from: () => q(false) }, ["a1", "a2"]);
+    routeDetail("a1"); await new Promise((r) => setTimeout(r, 300));
+    const k1 = document.querySelector(".paket-karte"); const t1 = k1 ? k1.textContent : "";
+    routeDetail("a2"); await new Promise((r) => setTimeout(r, 200));
+    const k2 = !!document.querySelector(".paket-karte");
+    _paketVerkauft = null;
+    await _ladePakete({ from: () => q(true) }, ["a1"]);
+    routeDetail("a1"); await new Promise((r) => setTimeout(r, 200));
+    const k3 = !!document.querySelector(".paket-karte");
+    // Schritt 2: Termine des Geräts → „2 von 20“
+    const gestern = KR.addDaysISO(KR.todayISO(), -1);
+    DB.lessons = [{ id: "l1", sid: "a1", art: "fahrstunde", date: gestern, von: "10:00", bis: "11:30", status: "" }];
+    DB.students.find((x) => x.id === "a1").plan.sonder = { ueberland: [{ iso: gestern }], autobahn: [], nacht: [] };
+    _paketVerkauft = null; await _ladePakete({ from: () => q(false) }, ["a1"]);
+    routeDetail("a1"); await new Promise((r) => setTimeout(r, 200));
+    const k4 = (document.querySelector(".paket-karte") || {}).textContent || "";
+    // A6/A8/A9: mehr als im Paket (+2), Grundbetrag „enthalten“, Prüfung mit Ergebnis zählt
+    const zeilen2 = [{ schueler_id: "a1", name: "Boost-Paket B", vorlage_id: "v1", posten: [{ art: "grundbetrag", bezeichnung: "Grundbetrag", anzahl: 1, preis_cent: 30000 }, { art: "fahrstunde", bezeichnung: "Übungsstunden", anzahl: 20, preis_cent: 6500 }, { art: "pruefung_praxis", bezeichnung: "Vorstellung zur praktischen Prüfung", anzahl: 1, preis_cent: 20000 }] }];
+    DB.lessons = Array.from({ length: 11 }, (_, i) => ({ id: "m" + i, sid: "a1", art: "fahrstunde", date: KR.addDaysISO(KR.todayISO(), -2 - i), von: "10:00", bis: "11:30", status: "" }));
+    DB.exams = [{ id: "e1", sid: "a1", date: gestern, result: "fail" }];
+    _paketVerkauft = null; await _ladePakete({ from: () => { const o = { select: () => o, in: () => o, is: () => o, then: (f) => f({ data: zeilen2, error: null }) }; return o; } }, ["a1"]);
+    routeDetail("a1"); await new Promise((r) => setTimeout(r, 200));
+    const k5 = (document.querySelector(".paket-karte") || {}).textContent || "";
+    // A7: Leitung kann ein im Büro verkauftes Paket in der App nicht überschreiben
+    let geschrieben = false; const altSupa = window.getSupa;
+    window.getSupa = () => ({ from: () => { geschrieben = true; return { update: () => ({ eq: () => Promise.resolve({}) }) }; } });
+    await schuelerPaketSetzen("a1", "v2");
+    window.getSupa = altSupa;
+    return { t1, k2, k3, k4, k5, geschrieben, breit: document.documentElement.scrollWidth <= innerWidth + 1 };
+  });
+  pruefe("A1 App: Karte „Paket: Boost-Paket B“ mit Posten und Stand (noch nichts gefahren: „0 von 20“)", /Paket: Boost-Paket B/.test(erg.t1) && /Übungsstunden\s*0 von 20/.test(erg.t1) && /Überlandfahrt\s*0 von 5/.test(erg.t1), erg.t1);
+  pruefe("A2 App: keine Preise für den Fahrlehrer", !/€|65|80,00/.test(erg.t1), erg.t1);
+  pruefe("A3 App: Schüler ohne Paket → keine Karte", erg.k2 === false);
+  pruefe("A4 App: alte Datenbank (Tabelle fehlt) → keine Karte, kein Fehler", erg.k3 === false && !jsF.length, jsF.join(" | "));
+  pruefe("A5 App Schritt 2: „Übungsstunden 2 von 20“, „Überlandfahrt 1 von 5“", /Übungsstunden\s*2 von 20/.test(erg.k4) && /Überlandfahrt\s*1 von 5/.test(erg.k4), erg.k4);
+  pruefe("A6 App: 22 von 20 Einheiten → „20 von 20 ✓ · +2“", /Übungsstunden\s*20 von 20 ✓ · \+2/.test(erg.k5), erg.k5);
+  pruefe("A7 App: verkauftes Paket lässt sich in der App nicht überschreiben", erg.geschrieben === false);
+  pruefe("A8 App: Grundbetrag „enthalten“", /Grundbetrag\s*enthalten/.test(erg.k5), erg.k5);
+  pruefe("A9 App: Prüfung mit Ergebnis zählt („1 von 1 ✓“)", /Vorstellung zur praktischen Prüfung\s*1 von 1 ✓/.test(erg.k5), erg.k5);
+  await ctx.close(); appServer.close();
+} catch (e) { schlecht++; console.log("FEHLER  App-Test-Ausnahme: " + (e && e.stack || e)); }
+await browser.close(); server.close();
+console.log(`\n${ok} ok, ${schlecht} Fehler`);
+process.exit(schlecht ? 1 : 0);

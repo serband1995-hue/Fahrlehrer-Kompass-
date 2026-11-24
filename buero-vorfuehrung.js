@@ -285,7 +285,37 @@ if (typeof module !== "undefined" && module.exports) { module.exports = { bauDat
   };
   const meinProfil = () => (F.tabellen.profiles || []).find((p) => F.session && p.id === F.session.user.id) || {};
   const darfVerwalten = () => { const r = meinProfil().rolle; if (r === "super_admin" || r === "fahrschule_admin") return true; const s = meineSitzung(); const p = s && personen().find((x) => x.id === s.person); return !!(p && p.darf_verwalten); };
+  // Wie schueler_paket_verkaufen / schueler_paket_aktivieren (Migration 20261124_paket_01): Rolle prüfen, altes Paket stornieren,
+  // neues als feste Kopie (Gesamt rechnet der Server), schueler.paket_id = Vorlage. Fehler werden wie in der Datenbank geworfen.
+  const paketRolle = () => { const r = meinProfil().rolle; if (!["buero", "fahrschule_admin", "super_admin"].includes(r)) throw new Error("Pakete verkauft nur das Büro oder die Leitung."); };
+  const paketBearbeiter = () => { const si = meineSitzung(); const p = si && personen().find((x) => x.id === si.person); return p ? p.name : null; };
   const R = {
+    schueler_paket_verkaufen: ({ p_schueler, p_vorlage, p_name, p_klasse, p_posten }) => {
+      paketRolle();
+      if (!Array.isArray(p_posten) || !p_posten.length) throw new Error("Das Paket hat noch keine Posten.");
+      const s = tabelle("schueler").find((x) => x.id === p_schueler);
+      if (!s) throw new Error("Schüler nicht gefunden");
+      if (p_vorlage && tabelle("fahrschule_pakete").some((v) => v.id === p_vorlage && v.aktiv === false)) throw new Error("Diese Vorlage ist archiviert.");
+      for (const e of p_posten) if (!Number.isInteger(e.preis_cent) || !Number.isInteger(e.anzahl) || e.anzahl < 1) throw new Error('new row for relation "schueler_pakete" violates check constraint "schueler_pakete_posten_check"');
+      const jetzt = new Date().toISOString();
+      tabelle("schueler_pakete").filter((x) => x.schueler_id === p_schueler && !x.storniert_am).forEach((x) => { x.storniert_am = jetzt; });
+      const zeile = { id: "sp-" + Math.random().toString(36).slice(2, 10), fahrschule_id: s.fahrschule_id, schueler_id: p_schueler, vorlage_id: p_vorlage || null,
+        name: String(p_name || "").trim(), klasse: p_klasse || null, posten: JSON.parse(JSON.stringify(p_posten)),
+        gesamt_cent: p_posten.reduce((a, e) => a + e.anzahl * e.preis_cent, 0), verkauft_am: jetzt, verkauft_von: F.session && F.session.user.id, bearbeiter: paketBearbeiter(), storniert_am: null, storniert_von: null };
+      tabelle("schueler_pakete").push(zeile);
+      s.paket_id = p_vorlage || null;
+      return JSON.parse(JSON.stringify(zeile));
+    },
+    schueler_paket_aktivieren: ({ p_schueler, p_paket }) => {
+      paketRolle();
+      let v = null;
+      if (p_paket) { const z = tabelle("schueler_pakete").find((x) => x.id === p_paket && x.schueler_id === p_schueler); if (!z) throw new Error("Paket nicht gefunden"); v = z.vorlage_id; }
+      const jetzt = new Date().toISOString();
+      tabelle("schueler_pakete").filter((x) => x.schueler_id === p_schueler && !x.storniert_am && x.id !== p_paket).forEach((x) => { x.storniert_am = jetzt; });
+      if (p_paket) tabelle("schueler_pakete").filter((x) => x.id === p_paket).forEach((x) => { x.storniert_am = null; });
+      const s = tabelle("schueler").find((x) => x.id === p_schueler); if (s) s.paket_id = v;
+      return null;
+    },
     buero_pin_anmelden: ({ p_person, p_pin, p_erste }) => {
       const p = personen().find((x) => x.id === p_person && x.aktiv !== false);
       if (!p) return { fehler: "unbekannt" };
