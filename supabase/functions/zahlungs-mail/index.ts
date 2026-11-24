@@ -91,37 +91,42 @@ Deno.serve(async (req) => {
     // W14 (Hauptsitzung 24.11.): je Empfänger eine eigene Mail, niemand sieht die Adresse des anderen.
     // Bei „beide“ liefert der Server zuerst den Schüler, dann die Eltern: jede Mail bekommt die passende Anrede.
     const anFuer = (i: number) => (d.an === "beide" && empfaenger.length === 2 ? (i === 0 ? "schueler" : "eltern") : d.an);
-    const ids: string[] = [], nichtAn: string[] = [];
+    const ids: string[] = [], nichtAn: string[] = [], bedient: string[] = [];
     let ersterFehler = "";
     for (let i = 0; i < empfaenger.length; i++) {
       const dm = { ...d, an: anFuer(i) };
       let betrf = betreff(dm);
       if (d.modus === "test" && !betrf.startsWith("[TEST] ")) betrf = "[TEST] " + betrf;
-      const res = await fetch("https://api.resend.com/emails", {
-        method: "POST",
-        signal: AbortSignal.timeout(15000),
-        headers: { Authorization: `Bearer ${key}`, "Content-Type": "application/json" },
-        body: JSON.stringify({
-          from: absender(d),
-          to: [empfaenger[i]],
-          subject: betrf,
-          html: mailHtml(dm),
-          text: mailText(dm),
-          attachments: [{ filename: "girocode.png", content: base64(png), content_type: "image/png", content_id: "girocode" }],
-        }),
-      });
-      const antwort: any = await res.json().catch(() => ({}));
-      if (res.ok) { if (antwort?.id) ids.push(String(antwort.id)); continue; }
-      const grund = "Resend " + res.status + ": " + String(antwort?.message || antwort?.name || "").slice(0, 120);
+      let grund = "";
+      try {
+        const res = await fetch("https://api.resend.com/emails", {
+          method: "POST",
+          signal: AbortSignal.timeout(15000),
+          headers: { Authorization: `Bearer ${key}`, "Content-Type": "application/json" },
+          body: JSON.stringify({
+            from: absender(d),
+            to: [empfaenger[i]],
+            subject: betrf,
+            html: mailHtml(dm),
+            text: mailText(dm),
+            attachments: [{ filename: "girocode.png", content: base64(png), content_type: "image/png", content_id: "girocode" }],
+          }),
+        });
+        const antwort: any = await res.json().catch(() => ({}));
+        if (res.ok) { if (antwort?.id) ids.push(String(antwort.id)); bedient.push(empfaenger[i]); continue; }
+        grund = "Resend " + res.status + ": " + String(antwort?.message || antwort?.name || "").slice(0, 120);
+      } catch (e) {
+        grund = "Versand abgebrochen: " + String(e).slice(0, 100); // Zeitgrenze oder Netz (Fable): wie eine Fehlerantwort behandeln
+      }
       if (i === 0) return await scheitern(grund, 502); // erste Mail gescheitert: nichts gesendet
       ersterFehler = grund;
       nichtAn.push(anFuer(i) === "eltern" ? "Eltern" : "Schüler");
     }
 
     const gesendetAm = new Date().toISOString();
-    await merke({ status: "gesendet", resend_id: ids.join(",") || null, gesendet_am: gesendetAm,
+    const kurz = bedient.map(kurzVon).join(", "); // nur, wer die Mail wirklich bekommen hat (Verlauf im Büro)
+    await merke({ status: "gesendet", resend_id: ids.join(",") || null, gesendet_am: gesendetAm, empfaenger_kurz: kurz,
       fehler: nichtAn.length ? ("Nicht an " + nichtAn.join(", ") + ": " + ersterFehler).slice(0, 200) : null });
-    const kurz = empfaenger.map(kurzVon).join(", ");
     return json({ ok: true, id: d.id, modus: d.modus, gesendet_am: gesendetAm, empfaenger_kurz: kurz, nicht_an: nichtAn.length ? nichtAn : undefined });
   } catch (e) {
     console.warn("zahlungs-mail:", String(e).slice(0, 200));

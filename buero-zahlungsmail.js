@@ -402,7 +402,7 @@ async function zmSende(sid, art, betragCent, wofuer, erwarteterModus, sitz, name
   S.zahlungsMails.unshift(zeile); ZM.lokal.push({ t: Date.now(), row: zeile }); // ein gerade laufendes Laden darf den Eintrag nicht verlieren
   // W14: je Empfänger eine eigene Mail; ging eine davon nicht raus, deutlich sagen (die andere ist gesendet)
   const nichtAn = Array.isArray(data.nicht_an) ? data.nicht_an.filter((w) => w === "Eltern" || w === "Schüler") : [];
-  if (nichtAn.length) toast(`Gesendet, aber nicht an ${nichtAn.map((w) => w === "Eltern" ? "die Eltern" : "den Schüler").join(" und ")}. Bitte die Adresse prüfen und später noch einmal senden.`, true);
+  if (nichtAn.length) toast(`Gesendet, aber nicht an ${nichtAn.map((w) => w === "Eltern" ? "die Eltern" : "den Schüler").join(" und ")}. Die andere Mail ist angekommen. Zum Nachsenden in der Akte „${nichtAn[0] === "Eltern" ? "nur Eltern" : "nur Schüler"}“ wählen, sonst bekommt sie der andere doppelt.`, true);
   else toast(`Gesendet an ${name} ✓${data.modus === "test" ? " (Test: an die Test-Adresse)" : ""}`);
   return { ok: true };
 }
