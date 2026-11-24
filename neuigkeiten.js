@@ -4,6 +4,10 @@
    "kurz" (höchstens ~60 Zeichen) erscheint nach dem Update einmal als kleiner Hinweis (verschwindet von selbst, kein Knopf).
    Einfache Worte, keine Fachwörter, keine Schülerdaten. */
 window.KOMPASS_NEU = [
+  { version: "2026.11.24.14", datum: "2026-11-24", kurz: "Büro: „noch offen“ zählt jetzt die ganze Ausbildung.",
+    punkte: ["In der Akte zählt „noch offen“ beim Paket jetzt alle Fahrstunden und Prüfungen, auch die älter als ein Jahr. Darum kann die Zahl kleiner sein als vorher.",
+             "Während gezählt wird, steht kurz „wird gezählt …“. Klappt das Laden nicht, siehst du einen gelben Hinweis.",
+             "Das Kreuz zum Schließen der Fenster ist größer und am Handy leichter zu treffen."] },
   { version: "2026.11.24.12", datum: "2026-11-24", kurz: "Gesamtansicht: Termine überschreiben nichts Neueres mehr.",
     punkte: ["In der Gesamtansicht speichert ein Termin oder eine Prüfung nur noch, was du geändert hast. Was der Fahrlehrer inzwischen eingetragen hat, zum Beispiel „durchgeführt“ oder eine Unterschrift, bleibt.",
              "Hat jemand dieselbe Angabe gleichzeitig geändert, bleibt sein Stand. Ein Hinweis sagt dir das.",

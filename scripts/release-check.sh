@@ -8,6 +8,8 @@ cd "$(dirname "$0")/.."
 fehler=0
 BASIS="${BASIS:-origin/main}"
 
+# Immer den neuesten main holen: parallel arbeitende Werkstätten belegen Nummern (sonst vergliche ein alter origin/main falsch)
+if [ "$BASIS" = "origin/main" ]; then git fetch -q origin main 2>/dev/null || true; fi
 git rev-parse --verify -q "$BASIS" >/dev/null || git fetch -q origin main 2>/dev/null
 
 app_neu=$(grep -oP 'const APP_VERSION\s*=\s*"\K[^"]+' index.html | head -1)
@@ -21,8 +23,12 @@ echo "CACHE_VERSION  : ${cache_alt:-?} -> ${cache_neu:-?}"
 # Nur prüfen, wenn sich ausgelieferte Dateien geändert haben (nicht bei reinen Skript-, Workflow- oder Doku-Änderungen).
 geaendert=$(git diff --name-only "$BASIS"...HEAD -- . ':!scripts' ':!.claude' ':!.github' ':!CLAUDE.md' 2>/dev/null; git diff --name-only -- . ':!scripts' ':!.claude' ':!.github' ':!CLAUDE.md')
 if [ -n "$geaendert" ]; then
-  [ "$app_neu" != "$app_alt" ] || { echo "FEHLER: APP_VERSION nicht erhöht."; fehler=1; }
-  [ "$cache_neu" != "$cache_alt" ] || { echo "FEHLER: CACHE_VERSION nicht erhöht."; fehler=1; }
+  # Höher, nicht nur anders (W13, 24.11.2026): eine zurückgehende Nummer (z. B. nach dem Einmischen von main) ist ein Fehler.
+  # sort -V vergleicht 2026.11.24.10 > 2026.11.24.9 und kompass-v110 > kompass-v109 richtig.
+  hoeher() { [ -z "$1" ] || { [ "$1" != "$2" ] && [ "$(printf '%s\n%s\n' "$1" "$2" | sort -V | tail -1)" = "$2" ]; }; }
+  [ -n "$app_alt" ] && [ -n "$cache_alt" ] || echo "HINWEIS: Version auf $BASIS nicht lesbar, Vergleich „höher“ übersprungen."
+  hoeher "$app_alt" "$app_neu" || { echo "FEHLER: APP_VERSION nicht erhöht ($app_neu ist nicht höher als $app_alt auf main)."; fehler=1; }
+  hoeher "$cache_alt" "$cache_neu" || { echo "FEHLER: CACHE_VERSION nicht erhöht ($cache_neu ist nicht höher als $cache_alt auf main)."; fehler=1; }
   # K11 (22.11.2026): Jedes Update steht im Zeitstrahl „Neuigkeiten“ – oberster Eintrag in neuigkeiten.js = APP_VERSION.
   neu_oben=$(grep -oP '^\s*\{ *version:\s*"\K[^"]+' neuigkeiten.js 2>/dev/null | head -1)
   [ "$neu_oben" = "$app_neu" ] || { echo "FEHLER: neuigkeiten.js – oberster Eintrag (${neu_oben:-keiner}) ist nicht APP_VERSION ($app_neu). Eintrag in einfachen Worten oben ergänzen."; fehler=1; }
