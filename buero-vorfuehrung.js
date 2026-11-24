@@ -108,7 +108,11 @@ function bauDaten(heute) {
         { id: "fz-3", fahrschule_id: FS, name: "Golf Automatik 1", typ: "automatik", aktiv: true, erstellt_am: "2026-01-03" },
         { id: "fz-4", fahrschule_id: FS, name: "Golf Automatik 2", typ: "automatik", aktiv: true, erstellt_am: "2026-01-04" },
       ],
-      fahrschule_pakete: [{ id: "p-1", fahrschule_id: FS, name: "Boost-Paket 1" }, { id: "p-turbo", fahrschule_id: FS, name: "Turboboost" }],
+      // Werkstatt 13: mit Klasse und Posten (Paket-Baukasten). Ohne „posten“ gilt die Datenbank als alt (Reiter „Pakete“ verborgen).
+      fahrschule_pakete: [
+        { id: "p-1", fahrschule_id: FS, name: "Boost-Paket 1", reihenfolge: 1, aktiv: true, klasse: "B", posten: [{ art: "grundbetrag", bezeichnung: "Grundbetrag", anzahl: 1, preis_cent_fest: null }, { art: "fahrstunde", bezeichnung: "Übungsstunden", anzahl: 20, preis_cent_fest: null }], aktualisiert_am: null, bearbeiter: null },
+        { id: "p-turbo", fahrschule_id: FS, name: "Turboboost", reihenfolge: 0, aktiv: true, klasse: null, posten: [], aktualisiert_am: null, bearbeiter: null },
+      ],
       // Büro-Personen (erfunden). _pin gibt es nur in der Attrappe; die echte Datenbank speichert die PIN verschlüsselt.
       buero_personen: [
         { id: "bp-1", fahrschule_id: FS, name: "Mia Muster", telefon: null, hat_pin: true, _pin: "5917", darf_verwalten: true, aktiv: true, gesperrt_bis: null, fehlversuche: 0 },
@@ -355,6 +359,11 @@ if (typeof module !== "undefined" && module.exports) { module.exports = { bauDat
     for (const k of ["datum", "von", "bis", "art", "schueler_id", "fahrlehrer_id", "geloescht", "status"]) if (String(alt[k] ?? "") !== String(r[k] ?? "")) zeile(k, alt[k] == null ? null : String(alt[k]), r[k] == null ? null : String(r[k]));
     for (const k of ["sonderArt", "signed"]) { const a = k === "signed" ? String(!!ap[k]) : ap[k] ?? null, n = k === "signed" ? String(!!p[k]) : p[k] ?? null; if (a !== n) zeile(k, a, n); }
   }
+  // Wie der Trigger fahrschule_pakete_stempel (supabase/migrations/20261124_paket_01_baukasten.sql)
+  function paketStempel(zeilen) {
+    const si = meineSitzung(); const p = si && personen().find((x) => x.id === si.person);
+    zeilen.forEach((r) => { r.name = String(r.name || "").trim(); r.klasse = r.klasse ? String(r.klasse).trim() || null : null; r.aktualisiert_am = new Date().toISOString(); r.bearbeiter = p ? p.name : null; if (!Array.isArray(r.posten)) r.posten = []; if (r.aktiv == null) r.aktiv = true; });
+  }
   class Abfrage {
     constructor(name) { this.name = name; this.filter = []; this.art = "select"; this.einzeln = null; this.sort = []; this.grenze = null; this.nachher = false; }
     select() { if (this.art !== "select") this.nachher = true; return this; }
@@ -391,6 +400,7 @@ if (typeof module !== "undefined" && module.exports) { module.exports = { bauDat
         // wie der Schutz-Trigger von fahrzeug_konflikt_gesehen (K18): wer und wann kommen vom Server
         if (this.name === "fahrzeug_konflikt_gesehen") { const si = meineSitzung(); const p = si && personen().find((x) => x.id === si.person); daten.forEach((r) => { r.gesehen_von = (F.session && F.session.user && F.session.user.id) || null; r.gesehen_am = new Date().toISOString(); r.bearbeiter = p ? p.name : null; }); }
         if (this.name === "zahlungs_mails") daten.forEach((r) => { r.angelegt_am = r.angelegt_am || new Date().toISOString(); });
+        if (this.name === "fahrschule_pakete") paketStempel(daten);
         if (this.name === "kalender_termine") daten.forEach((r) => terminSpur(null, r));
       } else if (this.art === "upsert") {
         const k = this.konflikt.split(",");
@@ -404,6 +414,7 @@ if (typeof module !== "undefined" && module.exports) { module.exports = { bauDat
       } else if (this.art === "update") {
         daten = t.filter((r) => this.passt(r));
         daten.forEach((r) => { const alt = kopie(r); Object.assign(r, kopie(this.werte)); if (this.name === "kalender_termine") terminSpur(alt, r); });
+        if (this.name === "fahrschule_pakete") paketStempel(daten);
       } else if (this.art === "delete") {
         daten = t.filter((r) => this.passt(r));
         F.tabellen[this.name] = t.filter((r) => !this.passt(r));

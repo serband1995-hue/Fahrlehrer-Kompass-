@@ -6463,7 +6463,7 @@ async function routeFahrschuleDetail(fahrschuleId){
     </div>`;}).join("")||'<p class="muted-p" style="font-size:13px;">Noch keine Fahrlehrer.</p>';
 
   const lehrerOptionsFor=(sel)=>`<option value="">— nicht zugeordnet —</option>`+lehrer.map(l=>`<option value="${l.id}" ${l.id===sel?"selected":""}>${esc(l.name||l.email)}</option>`).join("");
-  const paketOptionsFor=(sel)=>`<option value="">— kein Paket —</option>`+pakete.map(p=>`<option value="${p.id}" ${p.id===sel?"selected":""}>${esc(p.name)}</option>`).join("");
+  const paketOptionsFor=(sel)=>`<option value="">— kein Paket —</option>`+pakete.filter(p=>p.aktiv!==false||p.id===sel).map(p=>`<option value="${p.id}" ${p.id===sel?"selected":""}>${esc(p.name)}</option>`).join("");
 
   const schuelerRows=schueler.map(s=>{
     const paketName=s.paket_id?esc((pakete.find(p=>p.id===s.paket_id)||{}).name||""):"";

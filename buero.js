@@ -147,7 +147,8 @@ const BEREICHE = [
   { id: "verkaeufe", titel: "Verkäufe & Provision", gruppe: "Geld", render: renderVerkaeufe, nachher: bindeVerkaeufe, zahl: () => S.verkaeufe.filter((v) => v.status === "empfohlen").length || "" },
   { id: "zahlen", titel: "Zahlen", gruppe: "Geld", render: renderZahlen, nachher: bindeZahlen },
   // K9: Preisliste steht in buero-preise.js (lädt vor buero.js; Aufruf über Pfeil, damit die Reihenfolge egal ist)
-  { id: "preise", titel: "Preisliste", gruppe: "Geld", render: (...a) => renderPreise(...a), nachher: (...a) => bindePreise(...a) },
+  // Werkstatt 13: Reiter „Preise | Pakete“ (Paket-Baukasten in buero-pakete.js); ohne die neue Datenbank nur „Preise“ wie bisher
+  { id: "preise", titel: "Preisliste", gruppe: "Geld", render: (...a) => renderPreisSeite(...a), nachher: (...a) => bindePreisSeite(...a) },
   { id: "team", titel: "Fahrlehrer & Zugänge", gruppe: "Verwaltung", render: renderTeam, nachher: bindeTeam },
   { id: "flotte", titel: "Fahrzeuge", gruppe: "Verwaltung", render: renderFlotte, nachher: bindeFlotte, zahl: () => fahrzeugKonflikte().length || "" },
   { id: "neuigkeiten", titel: "Neuigkeiten", gruppe: "Verwaltung", render: renderNeuigkeiten },
@@ -2133,7 +2134,7 @@ function schuelerDialog(id) {
       <label>Telefon (Login für die Fahr-Akademie)<input type="tel" name="telefon" maxlength="40" value="${esc(x.telefon || "")}"></label>
       <label>E-Mail<input type="email" name="email" maxlength="200" value="${esc(x.email || "")}"></label>
       <label>Fahrlehrer (passende Klasse und viel Platz zuerst)<select name="fahrlehrer_id">${lehrerOptionen(x.fahrlehrer_id, true, klasseVon(x) || "B")}</select></label>
-      <label>Paket<select name="paket_id"><option value="">– ohne Paket –</option>${S.pakete.map((p) => `<option value="${esc(p.id)}"${p.id === x.paket_id ? " selected" : ""}>${esc(p.name)}</option>`).join("")}</select></label>
+      <label>Paket<select name="paket_id"><option value="">– ohne Paket –</option>${S.pakete.filter((p) => p.aktiv !== false || p.id === x.paket_id).map((p) => `<option value="${esc(p.id)}"${p.id === x.paket_id ? " selected" : ""}>${esc(p.name)}</option>`).join("")}</select></label>
       <label>Ausbildungsart<select name="ausbildungsart">${artOptionen(x.ausbildungsart)}</select></label>
       <label>Klasse<select name="klasse">${klassenOptionen(x.klasse)}</select></label>
       <label>Vertrag abgeschlossen am<input type="date" name="vertrag_am" value="${esc(x.vertrag_am || "")}"></label>
@@ -4617,6 +4618,7 @@ $("schulWahl").addEventListener("change", (e) => {
   S.fsId = e.target.value;
   try { localStorage.setItem("buero-fahrschule", S.fsId); } catch (err) { /* egal */ }
   S.geladenAm = null;
+  S.bkFehlt = false; // Werkstatt 13: neue Fahrschule, Paket-Spalten neu prüfen
   S.preise = null; // K9 (Fable B1): Preise der vorigen Fahrschule nie in der neuen zeigen oder behalten
   S.konfGesehen = null; // K18: „gesehen“-Vermerke gehören zur Fahrschule
   if (typeof zmLeeren === "function") zmLeeren(); // Werkstatt 11: Zahlungsdaten und Mail-Spur der vorigen Fahrschule weg
