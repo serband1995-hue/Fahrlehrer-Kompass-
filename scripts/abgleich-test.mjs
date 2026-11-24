@@ -562,6 +562,72 @@ fall("20 W14: Büro ändert Telefon, Gerät hat sonst etwas am Schüler geänder
   if (!z || !z.ausbildung || z.ausbildung.notiz !== "offline geschrieben") f("eigene Änderung kam nicht an");
 });
 
+fall("20d W14c: Neuer Büro-Schüler (abgerufen), Büro ändert Telefon vor dem ersten Hochladen – Telefon bleibt (Daten-Prüfer)", async (f) => {
+  await neu();
+  await setzeTabelle("schueler", [serverSchueler("S9", "Uwe Muster", { telefon: "0151 0000000" })]);
+  await ruf(() => pullSchuelerZuweisungen());
+  await aendereZeile("schueler", "S9", { telefon: "0170 9999999", aktualisiert_am: "+1s" });
+  await ruf(() => { DB.students.find((x) => x.id === "S9").notiz = "x"; });
+  await bruecke();
+  const z = await zeile("schueler", "S9");
+  if (z.telefon !== "0170 9999999") f("Telefon zurückgedreht: " + z.telefon);
+  if (!z.ausbildung || z.ausbildung.notiz !== "x") f("eigene Änderung kam nicht an: " + JSON.stringify(z.ausbildung));
+});
+
+fall("20e W14c: Fragebogen geht einmal nicht hoch, dann ändert das Büro das Telefon – Telefon bleibt (Daten-Prüfer)", async (f) => {
+  await neu();
+  await setzeLokal("students", [{ id: "S1", name: "Anna Muster", telefon: "0151 1111111", bogen: { a: 1 } }]);
+  await ruf(() => { const F = window.__fake; const alt = F.client.from; F.client.from = (t) => { const b = alt(t);
+    if (t === "schueler_privat") { const u = b.upsert; b.upsert = (r, o) => F.privatFehler ? { then(ok) { return Promise.resolve({ data: null, error: { code: "", message: "Failed to fetch" } }).then(ok); } } : u(r, o); }
+    return b; }; F.privatFehler = true; });
+  await bruecke();
+  await ruf(() => { window.__fake.privatFehler = false; });
+  await aendereZeile("schueler", "S1", { telefon: "0170 3333333", aktualisiert_am: "+1s" });
+  await bruecke();
+  const z = await zeile("schueler", "S1");
+  if (z.telefon !== "0170 3333333") f("Telefon zurückgedreht: " + z.telefon);
+});
+
+fall("20f W14c: Netzfehler beim Lesen von Name/Telefon – nichts mit altem Stand geschrieben, nächster Lauf holt nach, Fragebogen kommt an (Richter)", async (f) => {
+  await neu();
+  await setzeLokal("students", [{ id: "S1", name: "Anna Muster", telefon: "0151 1", notiz: "", bogen: { a: 1 } }, { id: "S2", name: "Ben Muster", telefon: "0151 2", notiz: "" }]);
+  await bruecke();
+  await aendereZeile("schueler", "S1", { telefon: "0170 5", aktualisiert_am: "+1s" });
+  await ruf(() => { const F = window.__fake; const alt = F.client.from; F.client.from = (t) => { const b = alt(t);
+    if (t === "schueler") { const sel = b.select; b.select = (c) => { const x = sel(c); if (F.netzAus && c === "id,name,telefon") x.then = (ok, fail) => Promise.resolve({ data: null, error: { message: "TypeError: Failed to fetch" } }).then(ok, fail); return x; }; }
+    return b; }; F.netzAus = true;
+    DB.students.forEach((x) => { x.notiz = "neu"; }); DB.students[0].bogen = { a: 2 }; });
+  await bruecke();
+  let z1 = await zeile("schueler", "S1");
+  if (z1.ausbildung.notiz === "neu") f("S1 trotz Lesefehler geschrieben?");
+  if (z1.telefon !== "0170 5") f("Telefon zurückgedreht (1): " + z1.telefon);
+  await ruf(() => { window.__fake.netzAus = false; });
+  await bruecke();
+  z1 = await zeile("schueler", "S1"); const z2 = await zeile("schueler", "S2");
+  if (z1.ausbildung.notiz !== "neu" || z2.ausbildung.notiz !== "neu") f("Nach Netz zurück nicht nachgeholt: " + z1.ausbildung.notiz + " / " + z2.ausbildung.notiz);
+  if (z1.telefon !== "0170 5") f("Telefon zurückgedreht (2): " + z1.telefon);
+  const p = (await tabelle("schueler_privat")).find((r) => r.schueler_id === "S1");
+  if (!p || !p.bogen || p.bogen.a !== 2) f("Fragebogen nicht angekommen: " + JSON.stringify(p));
+  await zaehlerNull(); await bruecke();
+  if ((await zaehler("updates", "schueler")) || (await zaehler("upserts", "schueler"))) f("hängt: schreibt erneut");
+});
+
+fall("20g W14c: Mehrere Schüler gehen in EINEM Schreibvorgang (Fahr-Akademie-Abgleich je Schreibvorgang), Büro-Telefon bleibt, eigener Name gilt", async (f) => {
+  await neu();
+  await setzeLokal("students", [{ id: "S1", name: "Anna Muster", telefon: "0151 1", notiz: "" }, { id: "S2", name: "Ben Muster", telefon: "0151 2", notiz: "" }, { id: "S3", name: "Cem Muster", telefon: "0151 3", notiz: "" }]);
+  await bruecke();
+  await aendereZeile("schueler", "S1", { telefon: "0170 BUERO", aktualisiert_am: "+1s" });
+  await ruf(() => { DB.students[0].notiz = "a"; DB.students[1].name = "Ben Beispiel"; DB.students[2].notiz = "c"; });
+  await zaehlerNull();
+  await bruecke();
+  const aufrufe = await zaehler("upsertAufrufe", "schueler"), upd = await zaehler("updates", "schueler");
+  const z1 = await zeile("schueler", "S1"), z2 = await zeile("schueler", "S2"), z3 = await zeile("schueler", "S3");
+  if (aufrufe !== 1 || upd !== 0) f("Nicht in einem Schreibvorgang: " + aufrufe + " Upserts, " + upd + " Updates");
+  if (z1.telefon !== "0170 BUERO" || z1.ausbildung.notiz !== "a") f("S1: " + JSON.stringify({ t: z1.telefon, n: z1.ausbildung.notiz }));
+  if (z2.name !== "Ben Beispiel") f("Eigener Name nicht gespeichert: " + z2.name);
+  if (z3.ausbildung.notiz !== "c" || z3.name !== "Cem Muster") f("S3: " + JSON.stringify({ n: z3.name, no: z3.ausbildung.notiz }));
+});
+
 fall("21 W14: Gerät ändert Telefon selbst – eigener Stand gilt weiter (wie bisher)", async (f) => {
   await neu();
   await setzeLokal("students", [{ id: "S1", name: "Anna Muster", telefon: "0151 1111111" }]);
@@ -651,6 +717,41 @@ fall("25 W14: Gesamtansicht – Leitung und Büro ändern dasselbe Telefon: Bür
   if (z.telefon !== "0170 BUERO") f("Büro-Stand überschrieben: " + z.telefon);
   if (r.t !== "0170 BUERO" || r.b !== "0170 BUERO") f("Anzeige/Vergleichsstand zeigt nicht den Server-Stand: " + JSON.stringify(r));
   if (!/woanders/.test(r.toast)) f("Hinweis fehlt: " + r.toast);
+});
+
+fall("20b W14c: Büro ändert Telefon, Gerät ändert sonst etwas und lädt hoch, BEVOR es abruft – Telefon vom Büro bleibt", async (f) => {
+  await neu();
+  await setzeLokal("students", [{ id: "S1", name: "Anna Muster", telefon: "0151 1111111", notiz: "" }]);
+  await bruecke();
+  if (!(await zeile("schueler", "S1"))) return f("S1 wurde nicht hochgeladen");
+  await aendereZeile("schueler", "S1", { telefon: "0170 3333333", name: "Anna Beispiel", aktualisiert_am: "+1s" });
+  // Fahrlehrer war offline und ändert etwas anderes am Schüler; die Brücke lädt hoch, bevor ein Abruf kommt
+  await ruf(() => { DB.students.find((x) => x.id === "S1").notiz = "offline geschrieben"; });
+  await bruecke();
+  const z = await zeile("schueler", "S1");
+  if (!z || z.telefon !== "0170 3333333" || z.name !== "Anna Beispiel") f("Brücke schrieb alten Namen/alte Nummer zurück: " + JSON.stringify(z && { n: z.name, t: z.telefon }));
+  if (!z || !z.ausbildung || z.ausbildung.notiz !== "offline geschrieben") f("eigene Änderung kam nicht an: " + JSON.stringify(z && z.ausbildung));
+  // danach holt das Gerät den Stand vom Büro und lädt nichts erneut hoch
+  await ruf(() => pullSchuelerZuweisungen());
+  const s = await ruf(() => { const x = DB.students.find((y) => y.id === "S1"); return { n: x.name, t: x.telefon, no: x.notiz }; });
+  if (s.t !== "0170 3333333" || s.n !== "Anna Beispiel") f("Gerät hat Name/Telefon vom Büro nicht übernommen: " + JSON.stringify(s));
+  if (s.no !== "offline geschrieben") f("eigene Änderung auf dem Gerät verloren");
+  await zaehlerNull();
+  await bruecke();
+  const z2 = await zeile("schueler", "S1");
+  if (!z2 || z2.telefon !== "0170 3333333") f("Zweiter Lauf drehte das Telefon zurück: " + (z2 && z2.telefon));
+});
+
+fall("20c W14c: Schüler auf dem Server nicht mehr da – Brücke legt ihn wie bisher neu an (mit Name)", async (f) => {
+  await neu();
+  await setzeLokal("students", [{ id: "S1", name: "Anna Muster", telefon: "0151 1111111", notiz: "" }]);
+  await bruecke();
+  await setzeTabelle("schueler", []);
+  await ruf(() => { DB.students.find((x) => x.id === "S1").notiz = "neu"; });
+  await bruecke();
+  const z = await zeile("schueler", "S1");
+  if (!z) return f("Schüler nicht wieder angelegt");
+  if (z.name !== "Anna Muster" || z.telefon !== "0151 1111111") f("Name/Telefon fehlen: " + JSON.stringify({ n: z.name, t: z.telefon }));
 });
 
 /* ---------- W14b: Gesamtansicht speichert Termine und Prüfungen sicher ---------- */

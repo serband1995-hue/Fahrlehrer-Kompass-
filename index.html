@@ -4732,7 +4732,22 @@ async function _brueckeAbgleichenJetzt({ tabelle, art, eintraege, zeileVon, loes
   eintraege.forEach(e => { if (!e || !e.id) return; const w = _abglWertVon(art, e); if (merk[e.id] !== w) offen.push({ e, z: zeileVon(e), w, nt: art === "schueler" ? _abglNT(e.name || "(ohne Namen)", e.telefon || "") : null }); });
   let geschrieben = [];
   if (offen.length) {
-    geschrieben = await _upsertRobust(tabelle, offen.map(o => Object.assign({}, o.z, { aktualisiert_am: nowIso })), "id");
+    // W14c (24.11.2026): Name und Telefon pflegt das Büro (Telefon = Login der Fahr-Akademie). Hat dieses Gerät genau diese
+    // zwei seit dem letzten gemeinsamen Stand nicht geändert, gilt der Stand vom Server – sonst drehte jede andere Änderung am
+    // Schüler (z. B. Ausbildungsstand, auch nach längerem Offline-Sein) eine neue Nummer vom Büro still zurück.
+    // (Ohne Bedingung auf merk: auch neu vom Büro abgerufene Schüler und solche, deren Fragebogen gerade nicht hochging – Daten-Prüfer.)
+    const memNT = art === "schueler" ? (_abglLaden().nt || {}) : {};
+    const ohneNT = new Set(art === "schueler" ? offen.filter(o => memNT[o.e.id] && memNT[o.e.id] === o.nt).map(o => o.e.id) : []);
+    const zeilen = offen.map(o => Object.assign({}, o.z, { aktualisiert_am: nowIso }));
+    const serverNT = ohneNT.size ? await _schuelerNameTelVomServer([...ohneNT]) : {};
+    // Alle in EINEM Schreibvorgang (der Server stößt je Schreibvorgang einen vollen Fahr-Akademie-Abgleich an) und alle mit
+    // denselben Spalten (beim Sammel-Upsert füllt supabase-js fehlende Spalten mit null; ein Upsert ohne Name scheitert schon vor
+    // dem Konflikt-Abgleich an „name not null“). Name/Telefon dieser Schüler kommen deshalb vom Server.
+    // Liest das Netz nichts, bleiben sie diesmal liegen (nächster Lauf); fehlt die Zeile auf dem Server, gilt wie bisher der Stand
+    // des Geräts (legt sie neu an bzw. die Datenbank lehnt eine fremde Zeile ab).
+    const senden = zeilen.filter(z => !ohneNT.has(z.id) || serverNT !== null);
+    senden.forEach(z => { const sv = serverNT && serverNT[z.id]; if (ohneNT.has(z.id) && sv) { z.name = sv.name; z.telefon = sv.telefon; } });
+    geschrieben = await _upsertRobust(tabelle, senden, "id");
     // Gedächtnis frisch lesen: ein Abruf kann es während des Schreibens ergänzt haben.
     const ok = new Set(geschrieben); const zeit = Date.parse(nowIso); const mem = _abglLaden();
     offen.forEach(o => { if (!ok.has(o.e.id)) return; mem[art][o.e.id] = o.w; merk[o.e.id] = o.w; if (art !== "schueler") o.e._syncedAt = zeit; else (mem.nt = mem.nt || {})[o.e.id] = o.nt; });
@@ -4771,6 +4786,17 @@ async function _brueckeAbgleichenJetzt({ tabelle, art, eintraege, zeileVon, loes
 }
 // Speichert DB lokal, ohne die Brücken erneut auszulösen (für Merker wie _syncedAt).
 function _lokalAblegen() { if (_fsAgg || _lokalerSpeicherGehoertAnderem()) return; try { localStorage.setItem(STORE_KEY, JSON.stringify(DB)); } catch (e) {} }
+/* W14c: Aktueller Name und aktuelles Telefon dieser Schüler auf dem Server (eine Abfrage je 150). Liefert {id:{name,telefon}}
+   (fehlt ein Schüler, gibt es die Zeile nicht oder sie gehört einem anderen) oder null bei einem Lesefehler. */
+async function _schuelerNameTelVomServer(ids) {
+  const supa = getSupa(); const out = {};
+  for (let i = 0; i < ids.length; i += 150) {
+    const { data, error } = await supa.from("schueler").select("id,name,telefon").in("id", ids.slice(i, i + 150));
+    if (error) { console.warn("[Kompass] Name/Telefon vom Server nicht gelesen:", error.message); return null; }
+    (data || []).forEach(r => { out[r.id] = { name: r.name, telefon: r.telefon }; });
+  }
+  return out;
+}
 /* Upsert, das an einzelnen Zeilen nicht komplett scheitert: Gehört ein Schüler oder Termin inzwischen
    einem anderen Fahrlehrer (Umverteilung durchs Büro), lehnt die Datenbank genau diese Zeile ab - die
    übrigen werden trotzdem geschrieben. Liefert die IDs der erfolgreich geschriebenen Zeilen. */
@@ -5576,11 +5602,14 @@ async function pullSchuelerZuweisungen() {
     }
     // Name und Telefon pflegt das Büro: Hat dieses Gerät den Schüler seit dem letzten Abgleich nicht selbst
     // geändert, gilt der Stand vom Büro (sonst schrieb die Brücke den alten Namen zurück).
-    // (Neue Schüler kommen bewusst nicht ins Gedächtnis: die Brücke lädt ihren vollen Ausbildungsstand einmal hoch.)
+    // (Neue Schüler kommen bewusst nicht ins Gedächtnis: die Brücke lädt ihren vollen Ausbildungsstand einmal hoch.
+    //  Nur nt[id] – den gemeinsamen Stand von Name und Telefon – bekommen sie gleich, W14c.)
     const memS = _abglLaden(); const neuIds = new Set(neu.map(r => r.id)); let namenNeu = false;
     for (const r of (gen === _abglGen ? (rows||[]) : [])) { // Brücke hat inzwischen geschrieben: Namen erst nächste Runde
       const lok = DB.students.find(x => x.id === r.id); if (!lok) continue;
-      if (neuIds.has(r.id)) continue;
+      // W14c: auch für neu abgerufene Schüler den gemeinsamen Stand von Name/Telefon merken (sonst drehte die Brücke eine
+      // Büro-Änderung vor dem ersten Hochladen zurück)
+      if (neuIds.has(r.id)) { (memS.nt = memS.nt || {})[r.id] = _abglNT(lok.name || "(ohne Namen)", lok.telefon || ""); continue; }
       const bekannt = memS.schueler[r.id];
       const ntServer = _abglNT(r.name || "(ohne Namen)", r.telefon || ""); memS.nt = memS.nt || {};
       if (bekannt && bekannt !== (vorherWert[r.id] !== undefined ? vorherWert[r.id] : _abglWertVon("schueler", lok))) {
@@ -7956,7 +7985,7 @@ const STORE_KEY="serband-app-v1";
    Wird in den Einstellungen angezeigt + für den Update-Hinweis genutzt. */
 // K1: voreingestellter Wetter-Ort (früh definiert, weil ensureDB ihn schon beim Start braucht)
 const WETTER_START={city:"Offenbach",lat:50.1006,lon:8.7665};
-const APP_VERSION="2026.11.24.14";
+const APP_VERSION="2026.11.24.15";
 try{const f=document.getElementById("drawerFoot"); if(f)f.textContent="Fahrlehrer-Kompass · Version "+APP_VERSION;}catch(e){}
 // Nutzungsbedingungen & Haftungsausschluss (Bereich: rechtliche Absicherung) - Version hochzählen
 // und alle Nutzer müssen erneut zustimmen, sobald sich der Text inhaltlich ändert.
